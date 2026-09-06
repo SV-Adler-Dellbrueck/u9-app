@@ -1080,21 +1080,32 @@ function tpCoachSelect(stationId,ausschluss,wegOption){
    Plan, der mit einem „vielleicht" rechnet, fällt am Platz auseinander; wer es trotzdem
    will, tippt einmal. Abgesagt ist rot und ebenfalls offen.
    Farbe ist nie der einzige Träger: jedes Chip trägt zusätzlich ein Zeichen (✓ 🤔 ✕). */
-let TP_RSVP={}, TP_TRAINER_MANUELL={}, TP_VORBELEGT="";
+let TP_RSVP={}, TP_TRAINER_MANUELL={}, TP_VORBELEGT="", TP_ANWESEND=null;
 const TP_RSVP_MARKE={ja:{ico:"✓",farbe:"var(--green)",titel:"hat zugesagt"},
                      unsicher:{ico:"🤔",farbe:"var(--amber)",titel:"ist unsicher"},
                      nein:{ico:"✕",farbe:"var(--red)",titel:"hat abgesagt"}};
 function tpTrainerChipsRender(){
   const box=document.getElementById("tp-trainer-checks"); if(!box)return;
+  // Woher die Haken kommen – sonst ist unerklaerlich, warum jemand angehakt ist oder nicht.
+  const hinweis=document.getElementById("tp-trainer-quelle");
+  if(hinweis)hinweis.innerHTML=TP_ANWESEND
+    ? '<span title="Die Anwesenheitsliste dieses Tages ist bereits erfasst – sie zählt mehr als die vorherige Rückmeldung.">✅ Aus der <b>Anwesenheit</b> dieses Tages übernommen</span>'
+    : '<span title="Für diesen Tag ist noch keine Anwesenheit erfasst – es gelten die Rückmeldungen aus „Bist du dabei?“.">📣 Aus den <b>Rückmeldungen</b> – Anwesenheit für diesen Tag noch nicht erfasst</span>';
   const liste=(typeof TRAINER!=="undefined"&&Array.isArray(TRAINER))?TRAINER:[];
   box.innerHTML=liste.map(t=>{
     const st=TP_RSVP[t]||"", m=TP_RSVP_MARKE[st];
-    const an=(t in TP_TRAINER_MANUELL)?TP_TRAINER_MANUELL[t]:(st==="ja");
+    /* Tatsache schlaegt Vorhersage: liegt fuer den Tag schon Anwesenheit vor, zaehlt der
+       Haken dort – sonst wie bisher die Rueckmeldung. */
+    const auto=TP_ANWESEND?TP_ANWESEND.includes(t):(st==="ja");
+    const an=(t in TP_TRAINER_MANUELL)?TP_TRAINER_MANUELL[t]:auto;
     // angehakt gewinnt optisch (grün wie bisher), das Zeichen bleibt trotzdem stehen –
     // sonst sieht man nicht mehr, dass der Trainer eigentlich „unsicher" gesagt hat
     const stil=an?"" : (m?`border-color:${m.farbe};color:${m.farbe}`:"");
-    const titel=(m?m.titel:"noch keine Rückmeldung")
-      +(an&&st!=="ja"?(t===TP_VORBELEGT?" – du planst gerade, deshalb vorbelegt":" – von dir eingeplant"):"");
+    const grund=TP_ANWESEND
+      ? (TP_ANWESEND.includes(t)?"steht in der Anwesenheit als anwesend":"in der Anwesenheit nicht angehakt")+(m?" · Rückmeldung: "+m.titel:"")
+      : (m?m.titel:"noch keine Rückmeldung");
+    const titel=grund
+      +(an!==auto?(t===TP_VORBELEGT?" – du planst gerade, deshalb vorbelegt":" – von dir eingeplant"):"");
     return `<label class="tp-check"><input type="checkbox" value="${esc(t)}"${an?" checked":""}
       onchange="tpTrainerManuell('${String(t).replace(/'/g,"")}',this.checked)">
       <span style="${stil}" title="${esc(titel)}">${esc(t)}${m?" "+m.ico:""}</span></label>`;
@@ -1102,8 +1113,20 @@ function tpTrainerChipsRender(){
 }
 function tpTrainerManuell(name,an){ TP_TRAINER_MANUELL[name]=!!an; tpTrainerChipsRender(); tpRenderTimeline(); }
 async function tpTrainerRsvpLaden(datum){
-  TP_RSVP={}; TP_TRAINER_MANUELL={}; TP_VORBELEGT="";   // neuer Termin, neue Lage
+  TP_RSVP={}; TP_TRAINER_MANUELL={}; TP_VORBELEGT=""; TP_ANWESEND=null;   // neuer Termin, neue Lage
   datum=datum||document.getElementById("tp-date")?.value||"";
+  /* v470 – PO: „Check mal die Anwesenheiten der Trainer bezogen auf Trainingsplan und
+     Anwesenheit. Die scheinen sich nicht abzugleichen."
+     Sie taten es nicht: der Plan las `termine.trainer_status` (die Vorhersage aus „Bist du
+     dabei?"), die Anwesenheitsliste `anwesenheit.data._trainers` (die Tatsache). Am 07.09.
+     hatte Finn nie geantwortet, war aber angehakt – der Plan rechnete mit zwei Trainern
+     statt drei, und aus der Trainerzahl folgen Felder und Gruppen.
+     Regel jetzt: ist die Anwesenheit des Tages erfasst, gewinnt sie. Eine LEERE Liste gilt
+     als „nichts erfasst" – sonst plante man mit null Trainern. */
+  try{
+    const tag=(typeof AW_DATA==="object"&&AW_DATA)?AW_DATA[datum]:null;
+    if(tag&&Array.isArray(tag._trainers)&&tag._trainers.length)TP_ANWESEND=tag._trainers.slice();
+  }catch(e){}
   if(datum&&typeof sbAuthHeaders==="function"){
     try{
       /* typ=eq.training ist entscheidend: die Auswahl gab bisher den FRUEHESTEN Termin
@@ -1120,7 +1143,7 @@ async function tpTrainerRsvpLaden(datum){
      „Mindestens 1 Trainer auswählen" ab. Dann den eingeloggten Trainer vorbelegen: wer
      gerade plant, ist mit hoher Wahrscheinlichkeit dabei. Das ist immer noch eine
      Annahme, aber eine begründete – und sie steht im Titel des Chips. */
-  const jemand=Object.keys(TP_RSVP).some(k=>TP_RSVP[k]==="ja");
+  const jemand=!!TP_ANWESEND||Object.keys(TP_RSVP).some(k=>TP_RSVP[k]==="ja");
   if(!jemand&&typeof trainerMe==="function"){
     try{
       const me=await trainerMe();

@@ -956,7 +956,7 @@ html[data-theme="dark"] .aw-tile.on,body.dark .aw-tile.on{background:#14532d;bor
 /* Übungs-Picker-Button in der Planung (ersetzt das sichtbare Dropdown) */
 .tp-pick{flex:1;min-width:0;min-height:48px;text-align:left;border:var(--border-s);border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:8px 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-/* Trainer-Chips in der Planung: eine wischbare Zeile, Chips schrumpfen nicht */
+/* Trainer-Chips in der Planung: Chips schrumpfen nicht (die Zeile bricht seit v470 um) */
 #tp-trainer-checks .tp-check{flex:none}
 
 /* Der Browser laedt bei „nach unten wischen" die ganze Seite neu und landet auf der
