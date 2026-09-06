@@ -10,9 +10,12 @@ module.exports = async function (h) {
 
   async function lauf(mitTicker) {
     const s = await h.starten({ start: "/eltern/index.html", warten: 900, supabase: h.supabaseAttrappe({
-      matchday: mitTicker ? [{ datum: heute, clock_status: "running", ticker_open: null }]
-                          : [{ datum: heute, clock_status: "stopped", ticker_open: null }],
-      ticker_events: []            // bewusst leer: das Startsignal ist hier die laufende Uhr
+      /* Seit v468 ist das Startsignal der ausdrueckliche Schalter des Trainers, nicht mehr
+         die Krücke „Uhr laeuft ODER erster Eintrag". Die laufende Uhr darf die Kachel
+         NICHT mehr allein ausloesen – deshalb steht sie im Aus-Fall bewusst auf running. */
+      matchday: mitTicker ? [{ datum: heute, clock_status: "idle", ticker_open: true }]
+                          : [{ datum: heute, clock_status: "running", ticker_open: false }],
+      ticker_events: []
     }) });
     const r = await s.page.evaluate(async t => {
       let slot = document.getElementById("eltern-live-slot");
@@ -45,10 +48,10 @@ module.exports = async function (h) {
   if (mit.anim !== "elLivePuls") probleme.push(`Puls-Animation: ${mit.anim} (erwartet elLivePuls, kein hartes Blinken)`);
   if (!mit.teilen) probleme.push("Teilen-Knopf fehlt");
   if (mit.nachWeg !== "") probleme.push(`nach dem Wegklicken bleibt: „${mit.nachWeg}“`);
-  if (ohne.txt !== "") probleme.push(`ohne laufenden Ticker erscheint trotzdem eine Kachel: „${ohne.txt.slice(0, 90)}“`);
+  if (ohne.txt !== "") probleme.push(`ohne gestarteten Ticker erscheint trotzdem eine Kachel (Uhr allein darf nicht reichen): „${ohne.txt.slice(0, 90)}“`);
   if (mit.fehler.length) probleme.push(...mit.fehler.slice(0, 2));
   if (ohne.fehler.length) probleme.push(...ohne.fehler.slice(0, 2));
-  zeilen.push(`läuft: „${mit.txt.slice(0, 80)}“ · Puls ${mit.anim} · Teilen ${mit.teilen}`);
-  zeilen.push(`läuft nicht: ${ohne.txt === "" ? "keine Kachel ✓" : "„" + ohne.txt.slice(0, 60) + "“"} · weggeklickt bleibt weg ${mit.nachWeg === ""}`);
+  zeilen.push(`gestartet: „${mit.txt.slice(0, 80)}“ · Puls ${mit.anim} · Teilen ${mit.teilen}`);
+  zeilen.push(`nicht gestartet: ${ohne.txt === "" ? "keine Kachel ✓" : "„" + ohne.txt.slice(0, 60) + "“"} · weggeklickt bleibt weg ${mit.nachWeg === ""}`);
   return h.ergebnis("Live-Kachel: nur wenn getickert wird, mit Teilen-Link, ohne hartes Blinken", !probleme.length, zeilen.concat(probleme));
 };

@@ -1197,19 +1197,15 @@ async function elternLiveKachelLoad(termin,eigenesTeam){
   if(datum!==new Date().toISOString().slice(0,10))return;      // nur am Spieltag selbst
   if(elternLiveWeggeklickt(datum))return;
   const keys=[datum,datum+"__t2",datum+"__t3"];
-  let mds=[],evs=[];
+  let mds=[];
   try{
     const r=await fetch(`${SB_URL}/rest/v1/matchday?datum=in.(${keys.map(encodeURIComponent).join(",")})&select=datum,clock_status,ticker_open`,{headers:sbAuthHeaders()});
     if(r.ok)mds=await r.json();
   }catch(e){ return; }
-  try{
-    const r=await fetch(`${SB_URL}/rest/v1/ticker_events?datum=in.(${keys.map(encodeURIComponent).join(",")})&select=datum&limit=1`,{headers:sbAuthHeaders()});
-    if(r.ok)evs=await r.json();
-  }catch(e){}
-  const zu=new Set(mds.filter(m=>m.ticker_open===false).map(m=>m.datum));   // Wolff-Fuss respektieren
-  const laeuft=k=>{ if(zu.has(k))return false;
-    const m=mds.find(x=>x.datum===k);
-    return !!(m&&m.clock_status&&m.clock_status!=="stopped")||evs.some(e=>e.datum===k); };
+  /* v468: Seit der Trainer den Ticker ausdruecklich startet, gibt es ein sauberes Signal –
+     die Kruecke aus v467 („Uhr laeuft ODER erster Eintrag") kann weg. Die Kachel zeigt
+     genau das, was der Trainer entschieden hat. */
+  const laeuft=k=>{ const m=mds.find(x=>x.datum===k); return !!(m&&m.ticker_open===true); };
   const offen=keys.filter(laeuft);
   if(!offen.length)return;
   // Das eigene Team zuerst – sonst der erste laufende Ticker des Tages.

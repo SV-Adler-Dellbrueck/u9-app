@@ -17,6 +17,39 @@ function atOnFieldPlayers(){
   if(onField.length)return onField;
   return (typeof nominierteSpieler==="function"&&nominierteSpieler().length)?nominierteSpieler():KADER.filter(k=>k.aktiv!==false).map(k=>k.name);
 }
+/* v468 – PO: „dass der Liveticker auch bedient werden kann, selbst wenn die
+   Liveaufstellungen und Auswechslungen nicht vorgenommen werden."
+   Bisher war die Spielerauswahl alles-oder-nichts: entweder die Feldspieler (wenn
+   Aufstellung/Rotation gepflegt sind) ODER als Rueckfall alle Nominierten. Der schlimme
+   Fall lag dazwischen – Aufstellung gepflegt, aber veraltet: dann fehlte genau das Kind,
+   das gerade auf dem Platz steht. Jetzt zwei Bloecke: oben, was die App glaubt, darunter
+   alle uebrigen Kinder des Tages. Der untere Block aendert die Aufstellung NICHT (PO):
+   sonst korrigierte das Tickern still die Rotation und damit die Einsatzzeiten. */
+function atAlleHeute(){
+  const kader=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k.aktiv!==false).map(k=>k.name);
+  // Alle, die heute da sind – bewusst teamuebergreifend: bei Turnieren hilft mal jemand
+  // aus Adler 2 im anderen Team aus, und dann fehlte er sonst genau im Moment des Tores.
+  if(typeof nomStatus==="object"&&nomStatus){
+    const dabei=kader.filter(n=>nomStatus[n]==="dabei");
+    if(dabei.length)return dabei;
+  }
+  return kader;
+}
+function atWeitereSpieler(){
+  const oben=new Set(atOnFieldPlayers());
+  return atAlleHeute().filter(n=>!oben.has(n));
+}
+/* v469 – PO: „Bei Parade kann ich ausschliesslich die Torhueter anbieten, weil ein
+   Feldspieler keine Parade macht." Beim BEWERTEN unterscheidet die App das laengst
+   (atActionsFor gibt Torhuetern eigene Knoepfe); im Live-Vollbild war es vergessen.
+   Beruecksichtigt wird, wer im Kader als Torwart markiert ist UND wer laut Aufstellung
+   gerade im Tor steht. Ist niemand markiert, bleibt die volle Liste stehen – ein leerer
+   Bildschirm am Spielfeldrand waere schlimmer als eine zu lange Liste. */
+function atTorhueter(namen){
+  const imTor=(typeof rotTW!=="undefined"&&rotTW)?rotTW:null;
+  const tw=namen.filter(n=>n===imTor||(typeof getKader==="function"&&getKader(n)&&getKader(n).tw));
+  return tw.length?tw:namen;
+}
 let atLiveClockId=null;
 function atLiveOpen(){
   document.getElementById("at-live")?.remove();
@@ -87,10 +120,21 @@ function atLiveRender(){
     </div>`;
   }else{
     const a=AT_LIVE_ACTS.find(x=>x.key===atLiveAction)||{label:atLiveAction,emo:"",col:"#1e293b"};
-    const players=atOnFieldPlayers();
+    const nurTW=atLiveAction==="parade";
+    const players=nurTW?atTorhueter(atOnFieldPlayers()):atOnFieldPlayers();
+    const weitere=nurTW?atTorhueter(atWeitereSpieler()).filter(n=>!players.includes(n)):atWeitereSpieler();
+    const knopf=(n,dunkel)=>`<button onclick="atLiveRecord('${n.replace(/'/g,"")}')" style="min-height:66px;border:${dunkel?"none":"1.5px solid #334155"};border-radius:16px;background:${dunkel?"#1e293b":"transparent"};color:#fff;font-size:18px;font-weight:700;font-family:inherit;cursor:pointer">${getKader(n)?.tw?"🥅 ":(getKader(n)?.nr?getKader(n).nr+" ":"")}${esc(n)}</button>`;
+    const trenner=weitere.length?`<div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;margin:6px 0 2px">
+        <span style="flex:1;border-top:2px dashed #334155"></span>
+        <span style="font-size:10.5px;font-weight:800;letter-spacing:.5px;color:#94a3b8">${nurTW?"WEITERE TORHÜTER":"AUCH HEUTE DABEI"}</span>
+        <span style="flex:1;border-top:2px dashed #334155"></span>
+      </div>`:"";
     body=`<div style="padding:12px 14px;font-size:16px;font-weight:800;background:${a.col}"> ${a.emo} ${a.label} – wer war's?</div>
       <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px;overflow-y:auto;align-content:start">
-        ${players.map(n=>`<button onclick="atLiveRecord('${n.replace(/'/g,"")}')" style="min-height:66px;border:none;border-radius:16px;background:#1e293b;color:#fff;font-size:18px;font-weight:700;font-family:inherit;cursor:pointer">${getKader(n)?.tw?"🥅 ":(getKader(n)?.nr?getKader(n).nr+" ":"")}${esc(n)}</button>`).join("")||'<div style="color:#94a3b8;font-size:13px">Keine Feldspieler gesetzt – erst die Aufstellung/Rotation einrichten.</div>'}
+        ${players.map(n=>knopf(n,true)).join("")}
+        ${trenner}
+        ${weitere.map(n=>knopf(n,false)).join("")}
+        ${(!players.length&&!weitere.length)?'<div style="grid-column:1/-1;color:#94a3b8;font-size:13px">Für heute ist noch niemand als „dabei" eingetragen.</div>':""}
       </div>
       <button onclick="atLiveAction=null;atLiveRender()" style="margin:0 14px 14px;padding:14px;border:none;border-radius:14px;background:rgba(255,255,255,.12);color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer">← andere Aktion</button>`;
   }

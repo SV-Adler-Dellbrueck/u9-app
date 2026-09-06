@@ -7,7 +7,7 @@
 /* Standard 10 Minuten, eine Spielzeit (PO v397). Die U9 spielt in aller Regel kurze
    Einzelspiele; die alten 20 Minuten mit Halbzeit waren aus der Feldgröße geraten. */
 const MC_DAUER_STD=10, MC_HALBZEITEN_STD=1;
-let mcState=null, mcTickId=null, mcSpieldauer=MC_DAUER_STD, mcHalbzeiten=MC_HALBZEITEN_STD, mcTickerOpen=true, mcDelegateToken=null;
+let mcState=null, mcTickId=null, mcSpieldauer=MC_DAUER_STD, mcHalbzeiten=MC_HALBZEITEN_STD, mcTickerOpen=false, mcDelegateToken=null;
 function mcElapsedSec(mc){
   const paused=mc.paused_ms||0;
   if(mc.clock_status==="running"&&mc.started_at){
@@ -44,7 +44,10 @@ async function mcLoad(){
     mcSpieldauer=(tmRows[0]&&tmRows[0].spieldauer_min)||(mdRows[0]&&mdRows[0].spieldauer_min)||MC_DAUER_STD;
     mcHalbzeiten=(tmRows[0]&&tmRows[0].halbzeiten)||(mdRows[0]&&mdRows[0].halbzeiten)||MC_HALBZEITEN_STD;
     mcState=mdRows[0]||{half:1,clock_status:"idle",started_at:null,paused_ms:0};
-    mcTickerOpen=mdRows[0]?mdRows[0].ticker_open!==false:true;
+    /* v468: Der Ticker ist AUS, bis der Trainer ihn ausdruecklich startet. Frueher war
+       ticker_open ein Aus-Schalter (alles ausser false galt als an) – damit gab es keinen
+       Moment „wir tickern heute", und die Eltern-Kachel musste raten. */
+    mcTickerOpen=mdRows[0]?mdRows[0].ticker_open===true:false;
     mcDelegateToken=(mdRows[0]&&mdRows[0].delegate_token)||null;
   }catch(e){
     mcState=mcState||{half:1,clock_status:"idle",started_at:null,paused_ms:0};

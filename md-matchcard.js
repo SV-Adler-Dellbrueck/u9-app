@@ -93,12 +93,13 @@ async function elTickerLoad(datum,dauer){
       fetch(`${SB_URL}/rest/v1/matchday?datum=eq.${encodeURIComponent(datum)}&select=ticker_open`,{headers:elternHeaders()})
     ]);
     const mdRows=mdRes.ok?await mdRes.json():[];
-    if(mdRows.length&&mdRows[0].ticker_open===false){
+    const rows=evRes.ok?await evRes.json():[];
+    // Nichts geschrieben und Ticker nicht gestartet: dann gibt es hier nichts zu zeigen.
+    if(!rows.length&&!(mdRows.length&&mdRows[0].ticker_open===true)){
       box.innerHTML=wolffFussMsg;
       clearInterval(elTickerTimer);elTickerTimer=null;
       return;
     }
-    const rows=evRes.ok?await evRes.json():[];
     box.innerHTML=`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px">
       <div style="font-weight:700;margin-bottom:8px">📣 Liveticker</div>
       ${rows.length?rows.map(e=>`<div style="display:flex;gap:8px;align-items:baseline;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:13px"><span style="font-size:15px;flex:0 0 auto">${elTickerIcon(e.typ)}</span><span><strong style="color:#1e3a8a">${e.minute?elternEsc(e.minute):""}</strong> ${elternEsc(e.text)}</span></div>`).join(""):'<div style="font-size:12px;color:#94a3b8">Noch keine Ereignisse. Bleib dran!</div>'}
@@ -121,12 +122,23 @@ async function renderDelegateView(token){
     const rows=r.ok?await r.json():[];
     m=rows[0]||null;
   }catch(e){}
-  if(!m||m.ticker_open===false){
+  // v468: Der Helfer kann nur tickern, wenn der Trainer den Ticker gestartet hat.
+  if(!m||m.ticker_open!==true){
     root.innerHTML='<div style="text-align:center;padding:48px;color:#64748b">Der Liveticker ist gerade nicht aktiv.<br>Frag den Trainer, ob der Link noch gilt.</div>';
     return;
   }
   let selected=null;
-  const squad=KADER.map(k=>k.name); // KADER ist ohnehin oeffentlich im Client-Code enthalten
+  /* v469: Bis hierher stand `KADER.map(...)` – und KADER bleibt im Helfer-Modus LEER,
+     weil loadKader() ohne Trainer-Token an der RLS scheitert (steht so im Kommentar dort).
+     Der Helfer sah also gar keine Namen; der Link war unbenutzbar. Die Kinder kommen
+     jetzt ueber den Schluessel aus der RPC ticker_kader – zwei Bloecke wie beim Trainer,
+     dazu die Torhueter, damit „Parade" nur bei ihnen erscheint. */
+  let feld=[], weitere=[], twListe=[];
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/ticker_kader`,{method:"POST",headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_token:token})});
+    if(r.ok){ const j=await r.json(); if(j){ feld=j.feld||[]; weitere=j.weitere||[]; twListe=j.tw||[]; } }
+  }catch(e){}
+  const istTW=n=>twListe.includes(n);
   function draw(){
     const dauer=m.spieldauer_min||10;
     const minuteNow=mcMinuteLabel({half:m.half,clock_status:m.clock_status,started_at:m.started_at,paused_ms:m.paused_ms},dauer,m.halbzeiten||2);
@@ -137,13 +149,15 @@ async function renderDelegateView(token){
         <div style="font-size:12px;color:#64748b">Spielminute: ${elternEsc(minuteNow)} · Erst Kind, dann Aktion antippen.</div>
       </div>
       <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px;margin-bottom:12px">
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
-          ${squad.map(n=>`<button onclick="dgPick('${n.replace(/'/g,"")}')" style="font-size:12px;padding:7px 10px;border-radius:16px;border:1px solid var(--rand-bedien);background:${selected===n?"#1e3a8a":"#f1f5f9"};color:${selected===n?"#fff":"#1e293b"};cursor:pointer;font-family:inherit">${elternEsc(n)}</button>`).join("")}
-        </div>
+        ${(()=>{ const chip=n=>`<button onclick="dgPick('${n.replace(/'/g,"")}')" style="font-size:12px;padding:7px 10px;border-radius:16px;border:1px solid var(--rand-bedien);background:${selected===n?"#1e3a8a":"#f1f5f9"};color:${selected===n?"#fff":"#1e293b"};cursor:pointer;font-family:inherit">${elternEsc(n)}</button>`;
+          if(!feld.length&&!weitere.length)return '<div style="font-size:12.5px;color:#94a3b8;margin-bottom:12px">Für heute ist noch niemand eingetragen – frag kurz beim Trainer nach.</div>';
+          return `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:${weitere.length?"8":"12"}px">${feld.map(chip).join("")}</div>
+          ${weitere.length?`${feld.length?'<div style="display:flex;align-items:center;gap:8px;margin:2px 0 8px"><span style="flex:1;border-top:2px dashed #cbd5e1"></span><span style="font-size:10px;font-weight:800;letter-spacing:.5px;color:#94a3b8">AUCH HEUTE DABEI</span><span style="flex:1;border-top:2px dashed #cbd5e1"></span></div>':""}
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${weitere.map(chip).join("")}</div>`:""}`; })()}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
           <button onclick="dgSend('tor')" ${selected?"":"disabled"} style="min-height:52px;border:none;border-radius:12px;background:#15803d;color:#fff;font-weight:700;font-size:13px;cursor:pointer">⚽ Tor!</button>
           <button onclick="dgSend('aktion')" ${selected?"":"disabled"} style="min-height:52px;border:none;border-radius:12px;background:#1a56db;color:#fff;font-weight:700;font-size:13px;cursor:pointer">👏 Starke Aktion</button>
-          ${(selected&&getKader(selected)?.tw)?`<button onclick="dgSend('parade')" style="min-height:52px;border:none;border-radius:12px;background:#854d0e;color:#fff;font-weight:700;font-size:13px;cursor:pointer;grid-column:span 2">🧤 Parade</button>`:""}
+          ${(selected&&istTW(selected))?`<button onclick="dgSend('parade')" style="min-height:52px;border:none;border-radius:12px;background:#854d0e;color:#fff;font-weight:700;font-size:13px;cursor:pointer;grid-column:span 2">🧤 Parade</button>`:""}
         </div>
         <button onclick="dgSend('gegentor')" style="width:100%;margin-top:8px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:12px;background:#f1f5f9;color:#334155;font-size:12.5px;cursor:pointer">Gegentor melden</button>
       </div>
@@ -207,8 +221,11 @@ async function renderTickerView(key){
       const r=await fetch(`${SB_URL}/rest/v1/ticker_events?datum=in.(${keys.map(encodeURIComponent).join(",")})&select=datum,text,typ,minute,created_at&order=created_at.desc&limit=${konf?60:40}`,{headers:anon});
       events=r.ok?await r.json():[];
     }catch(e){}
-    // Wolff-Fuss je Team respektieren: Events eines Teams mit ticker_open=false ausblenden.
-    events=events.filter(e=>{const c=clocks[e.datum]; return !(c&&c.ticker_open===false);});
+    /* Bis v467 wurden hier ALLE Zeilen eines Teams ausgeblendet, sobald der Schalter
+       gerade aus stand – nicht nur die neuen. Ein Tap auf „Ticker AUS" am Ende eines
+       Turniertags nahm damit den ganzen Tag vom Netz und machte die Drei-Tage-Regel
+       wirkungslos. Geschrieben wird ohnehin nur, solange der Ticker laeuft; was da ist,
+       war also erlaubt und bleibt sichtbar (PO v468). */
     /* 3-Tage-Grenze (PO v467): „für den live ticker nach 3 tagen aber nicht mehr historisch
        sichtbar sein." Geloescht wird nichts – die Zeilen bleiben in der Datenbank und
        fuettern das Adler Nest. Nur der oeffentliche Link macht die Tuer zu: Aufbewahrung
@@ -217,6 +234,7 @@ async function renderTickerView(key){
     if(tickerArchiviert()){
       clearInterval(tickerViewTimer); clearInterval(tickerViewMinuteTimer);
       let t=0,g=0; events.forEach(e=>{ if(e.typ==="tor")t++; else if(e.typ==="gegentor")g++; });
+      const nix=!events.length;   // an diesem Tag wurde nie getickert – dann kein „0:0" erfinden
       const c0=clocks[key]||clocks[baseDatum]||{};
       const geg=c0.gegner?elternEsc(c0.gegner):"Gegner";
       const dStr=(()=>{ const d=new Date(baseDatum+"T12:00:00");
@@ -228,10 +246,11 @@ async function renderTickerView(key){
           <div style="font-size:12px;color:#64748b">${dStr}</div>
         </div>
         <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:20px;text-align:center">
-          <div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8">Endstand</div>
+          ${nix?'<div style="font-size:12.5px;color:#334155;line-height:1.5">Für diesen Spieltag gab es keinen Liveticker.</div>'
+               :`<div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8">Endstand</div>
           <div style="font-size:34px;font-weight:900;color:#1e3a8a;margin:4px 0">${t}:${g}</div>
           <div style="font-size:12.5px;color:#64748b">Adler U9 gegen ${geg}</div>
-          <div style="font-size:12.5px;color:#334155;margin-top:14px;line-height:1.5">Der Liveticker dieses Spieltags ist beendet.<br>Die Höhepunkte stehen im Adler Nest.</div>
+          <div style="font-size:12.5px;color:#334155;margin-top:14px;line-height:1.5">Der Liveticker dieses Spieltags ist beendet.<br>Die Höhepunkte stehen im Adler Nest.</div>`}
           <a href="${appRoot()}?heft" style="display:inline-block;margin-top:14px;min-height:46px;line-height:46px;padding:0 20px;border-radius:10px;background:#1e3a8a;color:#fff;text-decoration:none;font-weight:800;font-size:14px">📰 Zum Adler Nest</a>
         </div>
         <div style="text-align:center;font-size:11px;color:#94a3b8;margin-top:14px">SV Adler Dellbrück e.V.</div>`;
@@ -272,7 +291,9 @@ async function renderTickerView(key){
       return;
     }
     // Einzelteam (unverändertes Verhalten)
-    const c=clocks[key], wolffFuss=c&&c.ticker_open===false;
+    /* „Kein Ticker heute" gilt nur, solange nichts geschrieben wurde. Steht schon etwas
+       da, bleibt der Verlauf – mit einem Hinweis, dass gerade nichts Neues kommt. */
+    const c=clocks[key], aus=!(c&&c.ticker_open===true), wolffFuss=aus&&!events.length;
     const gegner=c&&c.gegner?` · gegen ${elternEsc(c.gegner)}`:"";
     root.innerHTML=`
       <div style="text-align:center;margin:8px 0 14px">
@@ -282,7 +303,8 @@ async function renderTickerView(key){
       </div>
       ${wolffFuss
         ? '<div style="text-align:center;font-size:12.5px;color:#64748b;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px">🤫 Trainer fokussieren sich zu 100% auf die Kids – kein Ticker heute.</div>'
-        : `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px">
+        : `${aus?'<div style="text-align:center;font-size:12px;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:9px;margin-bottom:8px">⏸️ Gerade läuft kein Spiel – der Ticker meldet sich wieder.</div>':""}
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px">
             ${events.length?events.map(e=>`<div style="display:flex;gap:8px;align-items:baseline;padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:13.5px"><span style="font-size:16px;flex:0 0 auto">${elTickerIcon(e.typ)}</span><span><strong style="color:#1e3a8a">${e.minute?elternEsc(e.minute):""}</strong> ${elternEsc(e.text)}</span></div>`).join(""):'<div style="font-size:12.5px;color:#94a3b8">Noch keine Ereignisse. Der Ticker startet mit dem Anpfiff – bleib dran!</div>'}
           </div>`}
       ${foot}`;
