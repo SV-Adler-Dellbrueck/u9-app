@@ -1501,7 +1501,9 @@ function _htTabelle(plan,idxs,teams){
   });
   return Object.values(t).sort((a,b)=>b.pkt-a.pkt||(b.tore-b.geg)-(a.tore-a.geg)||b.tore-a.tore);
 }
-async function htOpen(){
+/* v476: mit Datum aufgerufen (aus der Anwesenheit eines Heimturnier-Termins) oeffnet sich
+   das Turnier dieses Tages direkt – oder das Anlege-Formular steht schon mit Datum und Namen. */
+async function htOpen(datum,name){
   document.getElementById("hturnier-modal")?.remove();
   const m=document.createElement("div");m.id="hturnier-modal";
   m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Heimturnier");
@@ -1512,7 +1514,14 @@ async function htOpen(){
     <div id="ht-body"><div style="font-size:12px;color:var(--text3)">Lade…</div></div>
   </div>`;
   document.body.appendChild(m);
-  htListe();
+  const rows=await htListe();
+  if(datum){
+    const vorhanden=(rows||[]).find(t=>String(t.datum||"")===String(datum));
+    if(vorhanden){ htEdit(vorhanden.id); return; }
+    const d=document.getElementById("ht-datum"), n=document.getElementById("ht-name");
+    if(d)d.value=datum;
+    if(n&&name&&!n.value)n.value=String(name).replace(/\s*·\s*Heim\s*$/i,"").trim();
+  }
 }
 async function htListe(){
   _HT=null;
@@ -1531,6 +1540,7 @@ async function htListe(){
         <div style="font-size:11px;color:var(--text2)">${t.datum?new Date(t.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"})+" · ":""}${(t.teams||[]).length} Teams</div></div>
         <button class="btn btn-sm btn-p" onclick="htEdit(${t.id})">Öffnen</button>
       </div>`).join(""):'<div style="font-size:12px;color:var(--text3)">Noch kein Heimturnier angelegt.</div>'}`;
+  return rows;
 }
 async function htNeu(btn){
   const name=(document.getElementById("ht-name")?.value||"").trim();
