@@ -730,6 +730,11 @@ function tmJump(ziel,datum,spielform){
   }else if(ziel==="aufstellung"){
     sv("kombi");
     setTimeout(()=>{const d=document.getElementById("lineup-date");if(d)d.value=datum;kombiLoadLineup();},400);
+  }else if(ziel==="spieltag"){
+    /* v476: nur die Spieltag-Seite mit diesem Datum – ohne aufgeklapptes Blitz-Rating.
+       Von der Anwesenheit eines Spiel- oder Turniertags aus. */
+    switchTrainSub("spieltag");
+    setTimeout(()=>{ spieltagTeam=1; spieltagDatesLoad(datum); toast("Spieltag "+datum); },120);
   }else if(ziel==="blitz"){
     switchTrainSub("spieltag");
     setTimeout(()=>{
