@@ -16,6 +16,35 @@
    TEAM_STAB: wer überhaupt zuteilbar ist – der ganze Trainerstab (nicht nur wer
    mittrainiert), mit seiner Zusage zu diesem Termin. */
 let TEAMS={}, TEAM_ANZAHL=1, TEAM_STATS={}, TEAM_GRUND={}, TEAM_TRAINER={}, TEAM_STAB=[];
+/* v479 – PO (Kinderfestival): „Wir spielen auf mehreren Feldern parallel gegen verschiedene
+   Mannschaften, und das in verschiedenen Formaten – 4+1 oder FUNiño. Wie teilen wir dann
+   die Teams am besten ein?" TEAM_FORM: {teamnummer: "4+1"|"funino"|"5+1"} – die Spielform
+   je Team. Ohne Eintrag gilt die Spielform des Termins (tbFormation). Wohnt wie _trainer
+   in der „…__teams"-Zeile. */
+let TEAM_FORM={};
+function teamFormVon(t){ return TEAM_FORM[t]||(typeof tbFormation!=="undefined"&&tbFormation)||"4+1"; }
+function teamKaderFuer(t){ return teamKader(teamFormVon(t)); }
+/* Wie viele stehen bei dieser Spielform gleichzeitig auf dem Feld (Torwart mitgezaehlt)? */
+function teamAufDemFeld(t){
+  const f=(typeof FORMATIONS!=="undefined"&&FORMATIONS[teamFormVon(t)])||{tw:true,fieldCount:4};
+  return f.fieldCount+(f.tw?1:0);
+}
+/* Spielanteil je Kind in diesem Team: Feldplaetze geteilt durch Teamgroesse (1 = keiner sitzt). */
+function teamSpielanteil(t){
+  const groesse=Object.keys(TEAMS).filter(x=>TEAMS[x]===t).length, auf=teamAufDemFeld(t);
+  return {groesse,auf,anteil:groesse?Math.min(1,auf/groesse):1};
+}
+/* Wohin mit einem Kind ueber die Feldbesetzung hinaus? In das Team, dessen Spielanteil
+   gerade am hoechsten ist – dort tut ein Wechsler am wenigsten weh. Gleichstand: das
+   groessere Feld (laengeres Spiel, ein Wechsler wirkt mehr). PO-Wahl: „gleicher Spielanteil". */
+function teamZielFuerWechsler(){
+  let ziel=1, best=-1, bestAuf=-1;
+  for(let t=1;t<=TEAM_ANZAHL;t++){
+    const s=teamSpielanteil(t), a=s.auf/(s.groesse+1), auf=s.auf;
+    if(a>best||(a===best&&auf>bestAuf)){ best=a; bestAuf=auf; ziel=t; }
+  }
+  return ziel;
+}
 /* Welche Team-Kachel ist aufgeklappt (0 = alle zu). Eigener Zustand, NICHT spieltagTeam:
    ein Team ist immer ausgewaehlt, eine Kachel muss sich trotzdem schliessen lassen. */
 let TEAM_KARTE_OFFEN=0;
@@ -30,8 +59,8 @@ function teamSpielerId(n){ const k=getKader(n); return k&&k._id; }
      4+1     – 1 Torwart + 6 Feldspieler
      5+1     – 1 Torwart + 7 Feldspieler
    Torwart darf nur werden, wer im Kader den Haken "🥅 TW" hat. */
-function teamKader(){
-  const key=(typeof tbFormation!=="undefined"&&tbFormation)||"4+1";
+function teamKader(key){
+  key=key||(typeof tbFormation!=="undefined"&&tbFormation)||"4+1";
   if(key==="funino")return {tw:0,feld:4,gesamt:4};
   if(key==="5+1")   return {tw:1,feld:7,gesamt:8};
   return {tw:1,feld:6,gesamt:7};                 // 4+1
@@ -182,47 +211,61 @@ function teamPausenReihenfolge(pool){
 /* Genau ein Torwart je Team (nur Kinder mit TW-Haken), dann die Feldplätze auffüllen:
    stärkstes Kind zuerst in das aktuell schwächste Team. */
 function teamsAuto(){
-  const kd=teamKader(), n=TEAM_ANZAHL;
+  const n=TEAM_ANZAHL;
   let pool=teamZusagen();
   TEAMS={};
   if(!pool.length){ teamsRender(); return; }
-  /* Frueher setzte die Automatik „Ueberzaehlige" von sich aus auf die Bank, sobald mehr
-     Kinder zugesagt hatten als die Sollstaerke fasst. Seit v461 gilt: wer dabei ist,
-     spielt mit – die Automatik verteilt ALLE, und ob dafuer ein zweites Team noetig ist,
-     entscheidet der Trainer (Hinweis in teamsRender, Vorschlag ueber der Teamzahl). */
-
-  /* Sollstaerke je Team – nur noch fuer die REIHENFOLGE der Verteilung (das schwaechste
-     Team zuerst auffuellen), nicht mehr als harte Grenze: es bleibt niemand uebrig. */
-  const kap=Math.max(1,Math.ceil(pool.length/n));
+  /* v479: jedes Team hat seine Spielform. Reihenfolge (PO-Wahl):
+     1) Torwart-Kinder zuerst auf die Teams mit Torwart-Spielform, je eines, staerkster zuerst;
+     2) Feldplaetze fuellen: staerkstes Kind ins momentan schwaechste Team mit freiem Platz;
+     3) alle weiteren als Wechsler dorthin, wo der Spielanteil am hoechsten bleibt
+        (teamZielFuerWechsler) – 9 Kinder auf 4+1 und FUNiño ergibt 6 + 3 (83 % / 100 %),
+        10 Kinder 6 + 4. Es bleibt niemand uebrig (v461: wer dabei ist, spielt mit). */
   const wert=x=>Math.max(0,teamStaerke(x));           // unbewertet zählt als 0
   const summe=new Array(n+1).fill(0);
-  const twPlatz=new Array(n+1).fill(kd.tw);
-  const feldPlatz=new Array(n+1).fill(kap-kd.tw);     // Feldplätze = Sollgröße minus Torwart
+  const twPlatz=new Array(n+1).fill(0), feldPlatz=new Array(n+1).fill(0);
+  for(let t=1;t<=n;t++){ const f=(typeof FORMATIONS!=="undefined"&&FORMATIONS[teamFormVon(t)])||{tw:true,fieldCount:4}; twPlatz[t]=f.tw?1:0; feldPlatz[t]=f.fieldCount; }
   const einsetzen=(name,t,alsTw)=>{TEAMS[name]=t;summe[t]+=wert(name);if(alsTw)twPlatz[t]--;else feldPlatz[t]--;};
 
-  // 2) Torwarte: pro Team einer, stärkster zuerst
-  if(kd.tw){
-    const tw=pool.filter(istTorwart).sort((a,b)=>teamStaerke(b)-teamStaerke(a));
-    for(let t=1;t<=n&&tw.length;t++) einsetzen(tw.shift(),t,true);
-  }
+  // 1) Torwarte: je Team mit Torwart-Spielform einer, stärkster zuerst
+  const tw=pool.filter(istTorwart).sort((a,b)=>teamStaerke(b)-teamStaerke(a));
+  for(let t=1;t<=n&&tw.length;t++){ if(twPlatz[t]>0)einsetzen(tw.shift(),t,true); }
   /* Unbesetzte Torwart-Plätze werden zu Feldplätzen. Sonst blieb ein Platz je Team
      reserviert, obwohl gar kein Kind mit TW-Haken zugesagt hat – und ein Kind stand
-     grundlos daneben. Die Teamgröße (kap) ändert sich dadurch nicht. */
+     grundlos daneben. */
   for(let t=1;t<=n;t++){ if(twPlatz[t]>0){ feldPlatz[t]+=twPlatz[t]; twPlatz[t]=0; } }
-  // 3) Feldspieler: stärkstes Kind ins momentan schwächste Team mit freiem Platz
+  // 2) Feldspieler: stärkstes Kind ins momentan schwächste Team mit freiem Feldplatz
   const rest=pool.filter(x=>!TEAMS[x]).sort((a,b)=>teamStaerke(b)-teamStaerke(a));
   rest.forEach(name=>{
     let ziel=0;
     for(let t=1;t<=n;t++){ if(feldPlatz[t]<=0)continue; if(!ziel||summe[t]<summe[ziel])ziel=t; }
-    /* Sind alle Sollplaetze belegt, bleibt niemand mehr uebrig (v461): das Kind kommt ins
-       kleinste Team. Wer pausieren soll, wird vom Trainer auf „Pausiert" gestellt. */
-    if(!ziel){
-      const groesse=t=>Object.keys(TEAMS).filter(x=>TEAMS[x]===t).length;
-      ziel=1; for(let t=2;t<=n;t++) if(groesse(t)<groesse(ziel))ziel=t;
-    }
+    // 3) Feld voll: als Wechsler dorthin, wo der Spielanteil am höchsten bleibt
+    if(!ziel){ ziel=teamZielFuerWechsler(); TEAMS[name]=ziel; summe[ziel]+=wert(name); return; }
     einsetzen(name,ziel,false);
   });
   teamsRender();
+}
+/* v479: Spielform eines Teams setzen – verteilt neu, wie ein Wechsel der Teamzahl. */
+function teamFormSet(t,key){
+  if(typeof FORMATIONS!=="undefined"&&!FORMATIONS[key])return;
+  TEAM_FORM[t]=key;
+  teamsAuto(); teamsSpeichern(); teamsRender(); spieltagTeamKartenRender();
+  if(typeof spieltagTeam!=="undefined"&&spieltagTeam===t)teamFormAnwenden(t);
+}
+/* Die Werkzeuge in der Team-Kachel (Rotation, Match-Uhr, Aufstellung) lesen tbFormation –
+   beim Wechsel auf ein Team gilt dessen Spielform. */
+function teamFormAnwenden(t){
+  const key=teamFormVon(t);
+  if(typeof taktikSetFormation==="function")taktikSetFormation(key); else if(typeof tbFormation!=="undefined")tbFormation=key;
+}
+/* v479 – PO: „Bei den Anwesenheiten der Kinder beim Spieltag immer ‚Spielt' aktivieren, wenn
+   Dabei der Status ist." Auch nach dem Laden: wer dabei ist und in keinem Team steht (z. B.
+   nachtraeglich uebernommene Nominierungen), kommt in ein Team. */
+function teamsNachziehen(){
+  if(typeof nomStatus!=="object"||!nomStatus)return 0;
+  let n=0;
+  KADER.filter(k=>k.aktiv!==false&&nomStatus[k.name]==="dabei"&&!TEAMS[k.name]).forEach(k=>{ if(teamPlatzEinsortieren(k.name))n++; });
+  return n;
 }
 function teamSetAnzahl(n){
   TEAM_ANZAHL=Math.max(1,Math.min(TEAM_MAX,parseInt(n)||1));
@@ -230,6 +273,7 @@ function teamSetAnzahl(n){
   // Zuteilungen zu weggefallenen Teams aufräumen, sonst hängen Trainer an einem Team,
   // das es nicht mehr gibt – und tauchen später wieder auf, wenn man wieder hochstellt.
   Object.keys(TEAM_TRAINER).forEach(t=>{ if(Number(t)>TEAM_ANZAHL)delete TEAM_TRAINER[t]; });
+  Object.keys(TEAM_FORM).forEach(t=>{ if(Number(t)>TEAM_ANZAHL)delete TEAM_FORM[t]; });
   const wechselNoetig=(typeof spieltagTeam!=="undefined"&&spieltagTeam>TEAM_ANZAHL);
   teamsAuto();          // PO v392: neue Teamzahl -> sofort neu verteilen, nicht leer stehen lassen
   teamsSpeichern();
@@ -400,11 +444,14 @@ function teamKaderRender(){
    sagt der Hinweis darueber (teamsRender) – Pause ist eine Entscheidung, kein Restposten. */
 function teamPlatzEinsortieren(name){
   if(TEAMS[name])return false;
-  let ziel=1, klein=Infinity;
-  for(let t=1;t<=TEAM_ANZAHL;t++){
-    const n=Object.keys(TEAMS).filter(x=>TEAMS[x]===t).length;
-    if(n<klein){ klein=n; ziel=t; }
+  /* v479: erst ein Team mit freiem Feldplatz (Torwart-Kind bevorzugt auf ein Team mit
+     Torwart-Spielform ohne Torwart), sonst dorthin, wo der Spielanteil am hoechsten bleibt. */
+  let ziel=0;
+  if(istTorwart(name)){
+    for(let t=1;t<=TEAM_ANZAHL&&!ziel;t++){ const f=(typeof FORMATIONS!=="undefined"&&FORMATIONS[teamFormVon(t)])||{tw:true}; if(f.tw&&!Object.keys(TEAMS).some(x=>TEAMS[x]===t&&istTorwart(x)))ziel=t; }
   }
+  if(!ziel){ for(let t=1;t<=TEAM_ANZAHL&&!ziel;t++){ const s=teamSpielanteil(t); if(s.groesse<s.auf)ziel=t; } }
+  if(!ziel)ziel=teamZielFuerWechsler();
   TEAMS[name]=ziel;
   return true;
 }
@@ -417,7 +464,7 @@ function teamSet(name,nr){
 }
 
 async function teamsLoad(){
-  TEAMS={}; TEAM_ANZAHL=teamAnzahlVorschlag(); TEAM_TRAINER={};
+  TEAMS={}; TEAM_ANZAHL=teamAnzahlVorschlag(); TEAM_TRAINER={}; TEAM_FORM={};
   await teamStabLoad();
   await Promise.all([teamStatsLoad(),teamGruendeLaden(spieltagRawDate())]);   // Kennzahlen für die Pausen-Entscheidung
   try{
@@ -428,8 +475,9 @@ async function teamsLoad(){
         const d=kidMapFromIds(rows[0].data);
         if(d._anzahl)TEAM_ANZAHL=d._anzahl;
         if(d._trainer&&typeof d._trainer==="object")TEAM_TRAINER=d._trainer;
-        // BEIDE Sonderschluessel raus, sonst haelt die App "_trainer" fuer ein Kind
-        delete d._anzahl; delete d._trainer;
+        if(d._form&&typeof d._form==="object")TEAM_FORM=d._form;   // v479: Spielform je Team
+        // ALLE Sonderschluessel raus, sonst haelt die App "_trainer" fuer ein Kind
+        delete d._anzahl; delete d._trainer; delete d._form;
         TEAMS=d;
       }
     }
@@ -442,14 +490,16 @@ async function teamsLoad(){
      übertragen" verbindlich, sonst überschriebe ein blosses Öffnen des Spieltags eine
      Einteilung, die gerade jemand anders von Hand gemacht hat.
      teamsAuto() rendert selbst – deshalb hier nur der Fallback-Pfad. */
+  if(typeof spieltagTeam!=="undefined")teamFormAnwenden(spieltagTeam);   // v479: Werkzeuge lesen die Spielform dieses Teams
   if(!Object.keys(TEAMS).length&&teamZusagen().length){ teamsAuto(); spieltagTeamKartenRender(); return; }
+  teamsNachziehen();   // v479: Dabei heisst spielt mit – auch fuer Kinder, die nach der Einteilung dazukamen
   teamsRender(); spieltagTeamKartenRender();
 }
 async function teamsSpeichern(){
   try{
     await fetch(`${SB_URL}/rest/v1/nominierungen?on_conflict=datum`,{method:"POST",
       headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},
-      body:JSON.stringify({datum:teamsKey(),data:kidMapToIds({_anzahl:TEAM_ANZAHL,_trainer:TEAM_TRAINER,...TEAMS})})});
+      body:JSON.stringify({datum:teamsKey(),data:kidMapToIds({_anzahl:TEAM_ANZAHL,_trainer:TEAM_TRAINER,_form:TEAM_FORM,...TEAMS})})});
   }catch(e){}
 }
 /* Die Team-Zeilen ("<datum>", "<datum>__t2", …) sind ABGELEITET aus der globalen
@@ -616,15 +666,20 @@ function teamsRender(){
       <span style="font-size:11px;color:var(--text3);margin-left:auto">Vorschlag: ${vorschlag}</span>
     </div>
     <div class="seg-ctrl" style="margin-bottom:8px">${Array.from({length:TEAM_MAX},(_,i)=>segBtn(i+1)).join("")}</div>
-    <div style="font-size:11px;color:var(--text3);margin-bottom:8px">${esc(form)}: ${kd.tw?"1 Torwart + ":""}${kd.feld} Feldspieler = ${kd.gesamt} pro Team · ${pool.length} Kind${pool.length===1?"":"er"} dabei${teamPlatzProTeam()>kd.gesamt?" · ein Team nimmt ein Kind mehr auf, damit niemand zusehen muss":""}</div>`;
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px">${pool.length} Kind${pool.length===1?"":"er"} dabei · Spielform des Termins: ${esc(form)}</div>`;
 
   /* Trainer je Team – steht bewusst VOR der Kinder-Einteilung und auch dann schon da,
      wenn noch niemand zugesagt hat: erst legen wir fest, wie viele Teams wir stellen und
      wer sie betreut, dann verteilen wir die Kinder. Ein Team ohne Trainer wird angemahnt
      (PO: „es muss immer ein Trainer zugewiesen werden"). */
-  html+=`<div style="font-size:12px;font-weight:600;margin:12px 0 6px">Trainer je Team</div>`;
+  html+=`<div style="font-size:12px;font-weight:600;margin:12px 0 6px">Trainer und Spielform je Team</div>`;
+  const formen=[["funino","FUNiño"],["4+1","4+1"],["5+1","5+1"]];
   for(let t=1;t<=TEAM_ANZAHL;t++){
     const tr=TEAM_TRAINER[t]||[];
+    /* v479: Spielform je Team – beim Kinderfestival spielt Adler 1 auf dem 4+1-Feld und
+       Adler 2 FUNiño. Die Automatik und der Spielanteil rechnen damit. */
+    const fk=teamFormVon(t);
+    html+=`<div class="seg-ctrl" role="group" aria-label="Spielform Adler ${t}" style="margin-bottom:6px">${formen.map(([k,l])=>`<button class="seg-btn${fk===k?" active":""}" onclick="teamFormSet(${t},'${k}')" aria-pressed="${fk===k?"true":"false"}">${l}</button>`).join("")}</div>`;
     html+=`<button onclick="teamTrainerOpen(${t})" style="width:100%;min-height:48px;display:flex;align-items:center;gap:10px;text-align:left;margin-bottom:6px;padding:8px 12px;border:1px solid var(--rand-bedien);border-left:3px solid var(--fam-spieltag);border-radius:12px;background:var(--surface2);color:var(--text);font-family:inherit;cursor:pointer">
       <span style="font-size:16px">🧢</span>
       <span style="flex:1;min-width:0">
@@ -657,10 +712,11 @@ function teamsRender(){
   setTimeout(()=>{try{rollenHintFill();}catch(e){}},0); // A-lite: „noch nie im Tor"-Hinweis nachladen
 
   // Zu wenige Torwarte? Das merkt man sonst erst beim Anpfiff.
-  if(kd.tw&&!leer){
+  const twTeams=Array.from({length:TEAM_ANZAHL},(_,i)=>i+1).filter(t=>teamKaderFuer(t).tw).length;   // v479: nur Teams mit Torwart-Spielform
+  if(twTeams&&!leer){
     const twDa=pool.filter(istTorwart).length;
-    if(twDa<TEAM_ANZAHL*kd.tw)
-      html+=`<div style="font-size:11.5px;color:#b45309;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:8px 10px;margin-bottom:10px">🥅 Nur ${twDa} Kind${twDa===1?"":"er"} mit Torwart-Haken dabei, gebraucht werden ${TEAM_ANZAHL}. Ein Team bleibt ohne Torwart.</div>`;
+    if(twDa<twTeams)
+      html+=`<div style="font-size:11.5px;color:#b45309;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:8px 10px;margin-bottom:10px">🥅 Nur ${twDa} Kind${twDa===1?"":"er"} mit Torwart-Haken dabei, gebraucht werden ${twTeams}. Ein Team bleibt ohne Torwart.</div>`;
   }
 
   // Team-Übersicht: Größe, Torwart, Ø-Stärke
@@ -671,12 +727,14 @@ function teamsRender(){
     const bew=m.map(teamStaerke).filter(v=>v>=0);
     const schnitt=bew.length?Math.round(bew.reduce((a,b)=>a+b,0)/bew.length):null;
     const tw=m.filter(istTorwart).length;
-    const spielfaehig=m.length>=mindest;
-    zeilen.push(`<div style="flex:1;min-width:98px;background:var(--surface2);border-radius:var(--r);padding:8px">
-      <div style="font-size:11.5px;font-weight:700">Adler ${t}</div>
-      <div style="font-size:10.5px;color:${spielfaehig?"var(--text2)":"var(--red)"}" title="Sollgröße ${kd.gesamt}, mindestens ${mindest}">${m.length} Kinder${spielfaehig?"":" – zu wenige"}</div>
-      <div style="font-size:10.5px">${kd.tw?(tw?"🥅 ok":"<span style='color:var(--red)'>kein TW</span>"):"<span style='color:var(--text3)'>ohne TW</span>"}</div>
-      <div style="font-size:10.5px;color:var(--text2)">${schnitt!=null?"Ø "+schnitt+"%":"–"}</div>
+    const kdt=teamKaderFuer(t), sp=teamSpielanteil(t);
+    const spielfaehig=m.length>=sp.auf;   // v479: spielfaehig = das Feld dieser Spielform ist voll
+    const fl=((typeof FORMATIONS!=="undefined"&&FORMATIONS[teamFormVon(t)])||{label:teamFormVon(t)}).label;
+    zeilen.push(`<div class="team-anteil" data-team="${t}" style="flex:1;min-width:98px;background:var(--surface2);border-radius:var(--r);padding:8px">
+      <div style="font-size:11.5px;font-weight:700">Adler ${t} <span style="font-weight:500;color:var(--text2)">${esc(fl)}</span></div>
+      <div style="font-size:10.5px;color:${spielfaehig?"var(--text2)":"var(--red)"}" title="${sp.auf} auf dem Feld, Sollgröße ${kdt.gesamt}">${m.length} Kinder · ${sp.auf} auf dem Feld${spielfaehig?"":" – zu wenige"}</div>
+      <div style="font-size:10.5px;font-weight:700" title="Spielanteil je Kind: Feldplätze geteilt durch Teamgröße">je ≈ ${Math.round(sp.anteil*100)} % Spielzeit</div>
+      <div style="font-size:10.5px">${kdt.tw?(tw?"🥅 ok":"<span style='color:var(--red)'>kein TW</span>"):"<span style='color:var(--text3)'>ohne TW</span>"}${schnitt!=null?" · Ø "+schnitt+"%":""}</div>
     </div>`);
   }
   html+=`<div style="display:flex;gap:6px;margin-bottom:10px">${zeilen.join("")}</div>`;
@@ -739,13 +797,13 @@ function teamsRender(){
   const grosse=[];
   for(let t=1;t<=TEAM_ANZAHL;t++){
     const anz=Object.keys(TEAMS).filter(x=>TEAMS[x]===t).length;
-    if(anz>kd.gesamt+1)grosse.push({t,anz});
+    if(anz>teamKaderFuer(t).gesamt+1)grosse.push({t,anz});
   }
   if(grosse.length){
     const vor=teamAnzahlVorschlag();
     html+=`<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:10px;padding:8px 10px;margin-bottom:6px">
       <div style="font-size:12px;font-weight:700;color:var(--amber)">👥 ${grosse.length===1&&TEAM_ANZAHL===1?`${grosse[0].anz} Kinder in einem Team`:grosse.map(g=>`Team ${g.t}: ${g.anz} Kinder`).join(" · ")}</div>
-      <div style="font-size:11px;color:var(--amber);margin-top:2px">Sollstärke sind ${kd.gesamt} pro Team${vor>TEAM_ANZAHL?` – mit ${vor} Teams passt es`:""}. Alle spielen mit; wen du pausieren lassen willst, stellst du unten auf „Pausiert“.</div>
+      <div style="font-size:11px;color:var(--amber);margin-top:2px">Sollstärke sind ${grosse.map(g=>teamKaderFuer(g.t).gesamt).join("/")} pro Team${vor>TEAM_ANZAHL?` – mit ${vor} Teams passt es`:""}. Alle spielen mit; wen du pausieren lassen willst, stellst du unten auf „Pausiert“.</div>
     </div>`;
   }
   const ohneTeam=pool.filter(n=>!TEAMS[n]);
