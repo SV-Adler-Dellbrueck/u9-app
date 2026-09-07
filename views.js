@@ -3464,7 +3464,7 @@ const HELP=[
     {t:"Trainingsturnier", d:"Turnier zum Trainingsabschluss mit Zeitbudget-Automatik – vorab planbar: es hängt am gewählten Termin und wird gespeichert, du kannst es also Tage vorher vorbereiten und findest es am Trainingstag auf jedem Gerät wieder. Gesamtzeit (z. B. 40 Min.) und 1–4 Felder vorgeben, die Automatik wählt Format und Spielzeit (5–10 Min.; bleibt Zeit übrig, gibt es eine Rückrunde statt eines Finales – beim Training soll niemand am Ende nur zuschauen) – reicht die Zeit fair nicht, sagt sie ehrlich, wie viele Minuten fehlen. Ein Platzrechner sagt vorab, wie viele Kinder die gewählte Feld-/Formatkombination gleichzeitig braucht und ob alle Teams durchgehend im Spiel sind. Zwei Modi: Kinder-Turnier (Trainer spielen auf Wunsch in den Teams mit) oder Kinder gegen Eltern (1–4 Eltern-Teams, Duelle parallel auf den Feldern, Duell-Scoreboard, nie Kind gegen Kind). Spielform wählbar (FUNiño, 4+1, 5+1) mit Team-Vorschlag aus der Kinderzahl. Ein Pfiff für alle Felder.", run:"blitzOpen()"},
   ]},
   {cat:"⚽ Spieltag", items:[
-    {t:"Match", d:"Zuerst „Teams festlegen“: wer heute dabei ist (kommt aus den Eltern-Rückmeldungen), wie viele Teams wir stellen, welcher Trainer sie betreut – die Kinder werden dabei automatisch verteilt und lassen sich von Hand umsetzen. „Dabei“ heißt automatisch „Spielt mit“ – wen du pausieren lassen willst, stellst du selbst um. Neben jedem Kind stehen die Trainingsquote und die Zahl der Einsätze; beide zählen ab einem Stichtag (zurzeit: Trainings ab dem 31.08., Spiele ab dem 05.09.2026), damit die faire Einteilung nicht an alten Zahlen hängt. Danach hat jedes Team seine eigene Kachel mit Kader, Rollen, Match-Uhr, Rotations-Timer, Live-Aktionen und Liveticker. Den Liveticker startest du selbst mit „▶️ Liveticker starten“ – er hängt nicht am Anpfiff und nicht an der Aufstellung. Sobald er läuft, erscheint bei den Eltern ganz oben eine rote LIVE-Kachel mit Teilen-Knopf – der Link geht auch an Oma und Opa, ohne Anmeldung. Stoppst du ihn wieder, kommt nur nichts Neues mehr dazu – das Bisherige bleibt für die Eltern sichtbar. Drei Tage nach dem Spieltag zeigt der Link nur noch den Endstand; die Ereignisse bleiben gespeichert. In der Live-Aktion stehen oben die Kinder aus der Aufstellung und unter einer gestrichelten Linie alle weiteren, die heute dabei sind – du kannst also auch tickern, wenn die Aufstellung nicht gepflegt ist. Bei „Parade“ erscheinen nur die Torhüter. Hast du selbst keine Hand frei: „🙋 Jemand anderen tickern lassen“ verschickt einen Link an einen Helfer am Spielfeldrand; der sieht nur die Kinder von heute und die Aktionsknöpfe und kann Tore, Paraden und Gegentore melden – keine Bewertungen, keine Kaderdaten. Der Link gilt nur, solange der Ticker läuft. Die Team-Quests stehen darunter und gelten für alle Teams zusammen.", go:"spieltag"},
+    {t:"Match", d:"Zuerst „Teams festlegen“: wer heute dabei ist (kommt aus den Eltern-Rückmeldungen), wie viele Teams wir stellen, welcher Trainer sie betreut – die Kinder werden dabei automatisch verteilt und lassen sich von Hand umsetzen. „Dabei“ heißt automatisch „Spielt mit“ – wen du pausieren lassen willst, stellst du selbst um. Neben jedem Kind stehen die Trainingsquote und die Zahl der Einsätze; beide zählen ab einem Stichtag (zurzeit: Trainings ab dem 31.08., Spiele ab dem 05.09.2026), damit die faire Einteilung nicht an alten Zahlen hängt. Danach hat jedes Team seine eigene Kachel mit Kader, Rollen, Match-Uhr, Rotations-Timer, Live-Aktionen und Liveticker. Den Liveticker startest du selbst mit „▶️ Liveticker starten“ – er hängt nicht am Anpfiff und nicht an der Aufstellung. Sobald er läuft, erscheint bei den Eltern ganz oben eine rote LIVE-Kachel mit Teilen-Knopf – der Link geht auch an Oma und Opa, ohne Anmeldung. Stoppst du ihn wieder, kommt nur nichts Neues mehr dazu – das Bisherige bleibt für die Eltern sichtbar. Drei Tage nach dem Spieltag zeigt der Link nur noch den Endstand; die Ereignisse bleiben gespeichert. Beim Blitz-Rating nach dem Spiel zählt pro Kind, Trainer und Spieltag genau eine Bewertung – gehst du ein zweites Mal durch, korrigierst du die erste, statt sie zu verdoppeln. In der Live-Aktion stehen oben die Kinder aus der Aufstellung und unter einer gestrichelten Linie alle weiteren, die heute dabei sind – du kannst also auch tickern, wenn die Aufstellung nicht gepflegt ist. Bei „Parade“ erscheinen nur die Torhüter. Hast du selbst keine Hand frei: „🙋 Jemand anderen tickern lassen“ verschickt einen Link an einen Helfer am Spielfeldrand; der sieht nur die Kinder von heute und die Aktionsknöpfe und kann Tore, Paraden und Gegentore melden – keine Bewertungen, keine Kaderdaten. Der Link gilt nur, solange der Ticker läuft. Die Team-Quests stehen darunter und gelten für alle Teams zusammen.", go:"spieltag"},
     {t:"Aufstellung", d:"Rollen-Empfehlung aus den Bewertungen: wer passt als Aufpasser, Jäger, Flitzer links/rechts. Braucht mindestens 4 bewertete Kinder – wer noch niemanden bewertet hat, nutzt im Spieltag „Feld & Bank fair besetzen“ (verteilt nach Einsatzzeiten).", go:"kombi"},
     {t:"Analyse", d:"Auswertung nach dem Spiel.", go:"analyse"},
     {t:"Heimturnier ausrichten", d:"Eigenes Turnier: Teams aus der Gegner-DB (auch 2. Mannschaften), 2–4 Gruppen nach Meldezahl, 1–4 Felder parallel, Spielform (FUNiño, 4+1, 5+1 …) mit Regelwerk, Live-Ergebnisse, „Rest +5 Min.“-Verschieber, Live-Durchsage, Fair-Play-Pokal, Team-Urkunden- und Feld-Aushang-Druck – Zuschauer-Link/QR ohne Login (mit Team-Filter und Monitor-Modus), Helfer-Link fürs Ergebnis-Eintragen am Anzeigetisch.", run:"htOpen()"},
@@ -3530,7 +3530,7 @@ function hilfeRender(q){
   box.innerHTML=html||`<div style="font-size:12px;color:var(--text3);padding:10px 0">Nichts gefunden.</div>`;
 }
 const TOUR=[
-  {emo:"🦅", t:"Willkommen in der Adler-App", d:"Die Startseite ist bewusst schlank: Ganz oben erscheinen DEINE To-Dos (nur wenn etwas offen ist), darunter „Bist du dabei?“ – nur die Termine der nächsten 14 Tage, für die deine Antwort noch fehlt; ein Tap auf ✅ 🤔 ❌ genügt, und ist alles beantwortet, verschwindet die Karte. Danach „Diese Woche“ – die Termine der nächsten sieben Tage mit dem Stand (Zusagen, Trainer, Plan, Aufstellung); die erste Zeile ist der nächste Termin mit Wetter, Packtipp und Sprungknopf. Dann ein festgelegtes Trainer-Meeting (falls eines ansteht, mit der Zahl offener Themen), das Termin-Karussell, ein Knopf zu allen Terminen der Saison – und sechs große Kacheln. Hinter jeder Kachel wartet wieder ein Kachel-Menü. Diese Tour findest du jederzeit über ❓ oben rechts."},
+  {emo:"🦅", t:"Willkommen in der Adler-App", d:"Die Startseite ist bewusst schlank: Ganz oben erscheinen DEINE To-Dos (nur wenn etwas offen ist) – jedes führt dorthin, wo es sich erledigen lässt, und was du nicht mehr nachtragen willst, hakst du mit dem ✓ daneben für das ganze Trainerteam ab, darunter „Bist du dabei?“ – nur die Termine der nächsten 14 Tage, für die deine Antwort noch fehlt; ein Tap auf ✅ 🤔 ❌ genügt, und ist alles beantwortet, verschwindet die Karte. Danach „Diese Woche“ – die Termine der nächsten sieben Tage mit dem Stand (Zusagen, Trainer, Plan, Aufstellung); die erste Zeile ist der nächste Termin mit Wetter, Packtipp und Sprungknopf. Dann ein festgelegtes Trainer-Meeting (falls eines ansteht, mit der Zahl offener Themen), das Termin-Karussell, ein Knopf zu allen Terminen der Saison – und sechs große Kacheln. Hinter jeder Kachel wartet wieder ein Kachel-Menü. Diese Tour findest du jederzeit über ❓ oben rechts."},
   {emo:"🏃", t:"Kachel: Training", d:"Vier Wege: Anwesenheit (heute + kommende Termine), Trainingsplan mit Stationen und Trainingsstart (die Trainer-Reihe oben zeigt farbig, wer für den Termin zu-, ab- oder noch nicht geantwortet hat), die Übungs-Datenbank und das 🏆 Trainingsturnier, das du vorab planen kannst – auch Eltern gegen Kinder. Die Nachbewertung meldet sich nach dem Training von selbst als To-Do auf der Startseite."},
   {emo:"⚽", t:"Kachel: Spieltag", d:"Der Ablauf von oben nach unten: „Teams festlegen“ beantwortet einmal für den ganzen Tag, wer dabei ist und wie viele Teams wir stellen – die Kinder verteilt die App automatisch, du korrigierst nur. Darunter je Team eine Kachel mit Kader, Rollen, Uhr, Rotations-Timer und Liveticker; danach die Team-Quests für alle Teams zusammen. Beim Öffnen sind alle Abschnitte eingeklappt – du tippst auf, was du gerade brauchst. Dazu die Rollen-Empfehlung aus den Bewertungen und die Analyse. Steht ein Turnier an, erscheint ganz unten der Turnier-Bereich (Heimturnier ausrichten mit öffentlichem Link für die Gast-Trainer)."},
   {emo:"👥", t:"Kachel: Team", d:"Kader verwalten, Spieler alle 6 Wochen in 16 Kriterien bewerten (Live-Radar), Profil mit Sprachlob und Entwicklungs-Report, dazu Saison-Cockpit, Anwesenheit über die Saison und Rollen-Matrix. Auch Notfallkarten und Probetraining wohnen hier."},
@@ -4182,6 +4182,20 @@ async function trainerMe(){
   }catch(e){}
   return ""; // bewusst NICHT merken
 }
+/* v471: „Ohne Ergebnis abhaken." Der PO kommt nicht immer dazu, Ergebnis und Bericht
+   nachzutragen – dann soll das To-Do verschwinden duerfen, statt dauerhaft zu mahnen.
+   Die Entscheidung haengt am Termin und gilt fuer das ganze Trainerteam (PO): sonst
+   haekt sie jeder Trainer einzeln weg. Rueckgaengig geht es im Termin selbst, indem
+   doch ein Ergebnis eingetragen wird. */
+async function todoOhneErgebnis(id){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/termine?id=eq.${Number(id)}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify({ohne_ergebnis:true})});
+    if(typeof sbCheck401==="function"&&sbCheck401(r))return;
+    if(!r.ok){toast("Konnte nicht abgehakt werden","err");return;}
+  }catch(e){toast("Kein Netz – bitte gleich nochmal","err");return;}
+  toast("Abgehakt – ohne Ergebnis ✓");
+  trainerTodoLoad();
+}
 async function trainerTodoLoad(){
   const slot=document.getElementById("trainer-todo-slot"); if(!slot)return;
   if(!sbToken()){slot.innerHTML="";return;}
@@ -4246,17 +4260,29 @@ async function trainerTodoLoad(){
   // e) Ergebnis nachtragen: vergangene Spiele/Turniere ohne Ergebnis (füttert Cockpit,
   //    Spielbericht, Nach-dem-Spiel-Gruß und Team-Meilensteine – ohne Ergebnis bleibt alles stumm)
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/termine?select=id,datum,titel,gegner,spielform,uhrzeit_ende,ergebnis&typ=in.(spiel,turnier)&datum=gte.${vor14}&datum=lte.${heute}&order=datum.desc&limit=5`,{headers:sbAuthHeaders()});
+    const r=await fetch(`${SB_URL}/rest/v1/termine?select=id,datum,titel,gegner,spielform,uhrzeit_ende,ergebnis,ohne_ergebnis&typ=in.(spiel,turnier)&datum=gte.${vor14}&datum=lte.${heute}&order=datum.desc&limit=5`,{headers:sbAuthHeaders()});
     if(r.ok){
-      const offen=((await r.json())||[]).filter(t=>(typeof terminVorbei!=="function"||terminVorbei(t))&&!(t.ergebnis||"").trim());
+      /* v471 – PO: „das To-Do wird nicht gelöscht … dann ist es ärgerlich, wenn es als
+         dauerhaftes To-Do stehen bleibt."
+         Zwei Fehler steckten darin. Erstens fuehrte der Knopf ins Blitz-Rating – dort gibt
+         es gar kein Ergebnisfeld, das To-Do liess sich also durch Antippen nie erledigen.
+         Jetzt oeffnet er das Termin-Detail, wo das Ergebnis eingetragen wird.
+         Zweitens gab es keinen Weg, darauf zu verzichten: ohne_ergebnis am Termin ist
+         diese Entscheidung, und sie gilt fuer das ganze Trainerteam (PO). */
+      const offen=((await r.json())||[]).filter(t=>(typeof terminVorbei!=="function"||terminVorbei(t))&&!(t.ergebnis||"").trim()&&t.ohne_ergebnis!==true);
       offen.slice(0,2).forEach(t=>{const d=new Date(t.datum+"T00:00:00");
-        todos.push({emo:"⚽",txt:`Ergebnis &amp; Bericht für ${esc(t.titel||t.gegner||"das Spiel")} (${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}) nachtragen`,act:`tmJump('blitz','${t.datum}','${t.spielform||""}')`});});
+        todos.push({emo:"⚽",txt:`Ergebnis &amp; Bericht für ${esc(t.titel||t.gegner||"das Spiel")} (${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}) nachtragen`,
+          act:`(typeof tmDetailOpen==="function"?tmDetailOpen(${Number(t.id)}):go("termine"))`,
+          hakenAct:`todoOhneErgebnis(${Number(t.id)})`});});
     }
   }catch(e){}
   if(!todos.length){slot.innerHTML="";return;}
   slot.innerHTML=`<div class="card" style="border-left:4px solid var(--amber);padding:12px 14px;margin-bottom:10px">
     <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--amber);margin-bottom:8px">📌 Deine To-Dos, ${esc(me)}</div>
-    ${todos.map(t=>`<button onclick="${t.act}" style="display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:var(--surface);border:1px solid var(--rand-bedien);border-radius:10px;padding:10px 12px;margin-bottom:6px;font-family:inherit;cursor:pointer;color:var(--text)"><span style="font-size:17px;line-height:1">${t.emo}</span><span style="flex:1;font-size:12.5px;font-weight:600;line-height:1.4">${t.txt}</span><span style="color:var(--text3)">›</span></button>`).join("")}
+    ${todos.map(t=>`<div style="display:flex;gap:6px;align-items:stretch;margin-bottom:6px">
+      <button onclick="${t.act}" style="display:flex;gap:10px;align-items:center;flex:1;min-width:0;text-align:left;background:var(--surface);border:1px solid var(--rand-bedien);border-radius:10px;padding:10px 12px;font-family:inherit;cursor:pointer;color:var(--text)"><span style="font-size:17px;line-height:1">${t.emo}</span><span style="flex:1;font-size:12.5px;font-weight:600;line-height:1.4">${t.txt}</span><span style="color:var(--text3)">›</span></button>
+      ${t.hakenAct?`<button onclick="${t.hakenAct}" title="Erledigt – ohne Ergebnis abhaken. Gilt für das ganze Trainerteam." aria-label="To-Do abhaken" style="flex:none;min-width:48px;min-height:44px;background:var(--surface);border:1px solid var(--rand-bedien);border-radius:10px;font-size:17px;cursor:pointer;color:var(--green);font-family:inherit">✓</button>`:""}
+    </div>`).join("")}
   </div>`;
 }
 /* „Bist du dabei?": je ein Tap (✅/🤔/❌) speichert sofort – nochmal tippen nimmt die

@@ -302,7 +302,13 @@ async function blitzRate(){
   const wertung=avg>=2.5?"top":avg>=1.7?"solide":"blass"; // Gesamt für Rückwärtskompatibilität
   try{navigator.vibrate&&navigator.vibrate(30);}catch(e){}
   blitzIdx++;blitzCritPlayer=null;blitzRenderCard(); // optimistisch weiter
-  const res=await sbQueuedPost("blitz_ratings",{datum,spieler:name,wertung,autor,kriterien}); // offline -> Queue
+  /* v471 – PO: „die Bewertungen werden einfach nacheinander aufgelistet."
+     Jedes Speichern legte eine neue Zeile an; ein zweiter Durchgang verdoppelte alles
+     (22 Zeilen fuer 11 Kinder) und zaehlte in der Auswertung doppelt. Jetzt gilt:
+     ein Kind, ein Trainer, ein Spieltag – eine Bewertung. Der zweite Durchgang
+     korrigiert den ersten, statt ihn zu wiederholen. */
+  const res=await sbQueuedPost("blitz_ratings?on_conflict=datum,spieler,autor",
+    {datum,spieler:name,wertung,autor,kriterien},"resolution=merge-duplicates"); // offline -> Queue
   if(res.ok)blitzLoadSaved(); // bei Online: gespeicherte Liste aktualisieren
 }
 function blitzSkip(){blitzIdx++;blitzCritPlayer=null;blitzRenderCard();}
