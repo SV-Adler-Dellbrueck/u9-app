@@ -527,12 +527,16 @@ function terminSelectEnsure(selId, datum){
 async function awDatesLoad(){
   const hint=document.getElementById("aw-nachtragen");
   if(hint)hint.innerHTML=`<button class="btn btn-sm" style="margin-top:6px" onclick="awNachtragen()">🕘 Vergangenes nachtragen</button>`;
-  return terminSelectFill("aw-date",{future:true,onReady:awLoad});
+  /* v477 – PO: „Die Reiter Trainingsplan und Übungen sind immer noch da, obwohl es kein
+     Training ist. Und das Turnier läuft unter dem Reiter Training." Ein Ort je Termintyp:
+     hier nur Trainings. Spiel und Turnier haben ihre Anwesenheit in „Teams festlegen"
+     (Dabei = anwesend, zaehlt fuer die Spiele-Quote); Events brauchen keine – niemand las sie. */
+  return terminSelectFill("aw-date",{types:["training"],future:true,onReady:awLoad});
 }
 async function awNachtragen(){
   const hint=document.getElementById("aw-nachtragen");
   if(hint)hint.innerHTML=`<div style="font-size:11.5px;color:var(--text2);margin-top:6px">🕘 Auch vergangene Termine (3 Wochen) in der Liste</div>`;
-  return terminSelectFill("aw-date",{vonTagen:21,onReady:awLoad});
+  return terminSelectFill("aw-date",{types:["training"],vonTagen:21,onReady:awLoad});
 }
 function awRenderList(){
   const wrap=document.getElementById("aw-list");
@@ -724,26 +728,14 @@ function awLoad(){
   const optText=document.getElementById("aw-date")?.selectedOptions?.[0]?.textContent||"";
   terminDesTages(datum,optText).then(t=>{
     if(document.getElementById("aw-date")?.value!==datum)return;   // inzwischen umgeschaltet
-    awTerminKarte(datum,t);
     if(!(tatsache&&savedTrainers&&savedTrainers.length)){
       const ts=(t&&t.trainer_status)||{}; const ja=Object.keys(ts).filter(n=>ts[n]==="ja"); if(ja.length)apply(ja);
     }
   }).catch(()=>{});
   awRenderList();
-  awPrefillFromNomination(datum); // bei Spielen/Turnieren die nominierten „dabei"-Kinder vorhaken
 }
-// Vorbelegung der Anwesenheit aus der Nominierung (nur wenn für das Datum noch nichts erfasst ist):
-// Wer für ein Spiel/Turnier auf „dabei" steht, wird vorgehakt – der Trainer prüft & speichert.
-async function awPrefillFromNomination(datum){
-  if(!datum||AW_DATA[datum])return;          // bereits erfasst -> nicht überschreiben
-  let data=null;
-  try{ const r=await fetch(`${SB_URL}/rest/v1/nominierungen?datum=eq.${encodeURIComponent(datum)}&select=data`,{headers:sbAuthHeaders()});
-    if(!sbCheck401(r)&&r.ok){const rows=await r.json(); data=rows[0]&&kidMapFromIds(rows[0].data);} }catch(e){}
-  if(!data)return;
-  let n=0;
-  KADER.forEach(k=>{ if(data[k.name]==="dabei"){ const t=document.querySelector(`.aw-tile[data-player="${k.name}"]`); if(t&&!t.classList.contains("on")){t.classList.add("on");n++;} } });
-  if(n){ awRenderStats(); toast(`${n} nominierte Kinder vorgehakt – bitte prüfen & speichern`); }
-}
+/* v477: Das Vorhaken der Anwesenheit aus der Nominierung ist weg – Spieltage stehen
+   nicht mehr in dieser Auswahl. Die Anwesenheit eines Spieltags IST die Nominierung. */
 
 /* Saison-Übersichten hinter EINER Kachel (PO): Modal mit zwei großen Kacheln,
    die Inhalte rendern in die bekannten Container-IDs (aw-stats / aw-trainer-stats). */
@@ -1220,37 +1212,6 @@ async function terminDesTages(datum,optionText){
     if(passt)return passt;
   }
   return rows.find(t=>t.typ==="training")||rows[0];
-}
-/* v476 – PO: „Bei einem Spiel oder Turnier braucht es keinen Trainingsplan oder Übungen.
-   Hier könnte dann eher die Turnierplanung erscheinen." Die Anwesenheit ist das eine
-   Werkzeug, das an jedem Termin gebraucht wird – deshalb sagt sie hier, was zum gewaehlten
-   Termin sonst noch gehoert: Heimturnier planen, Spieltag, Mitbringliste. Ein Satz, ein Knopf. */
-function awTerminKarte(datum,t){
-  const box=document.getElementById("aw-termin-karte"); if(!box)return;
-  if(!t||t.typ==="training"){box.innerHTML="";return;}
-  const m=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅",label:t.typ,col:"var(--blue)"};
-  const titel=esc(t.titel||t.gegner||m.label);
-  const jsD=String(datum).replace(/'/g,"");
-  let satz="", knopf="", zusatz="";
-  if(t.typ==="turnier"&&t.heim){
-    satz="Wir richten aus – Spielplan, Gruppen und der Link für die Gast-Trainer entstehen in der Turnierplanung.";
-    knopf=`<button class="btn btn-p btn-sm" onclick="if(typeof htOpen==='function')htOpen('${jsD}','${esc(t.titel||"")}');else toast('Turnierplanung lädt noch')"><i class="ti ti-trophy"></i>Heimturnier planen</button>`;
-    zusatz=`<a href="#" onclick="if(typeof tmJump==='function')tmJump('spieltag','${jsD}');else go('spieltag');return false" style="font-size:12px;color:var(--blue-text);font-weight:700">Am Turniertag: Spieltag mit Turnier-Modus ›</a>`;
-  }else if(t.typ==="turnier"){
-    satz="Auswärts – den Spielplan macht der Ausrichter; unsere Kurzspiele erfasst der Turnier-Modus im Spieltag.";
-    knopf=`<button class="btn btn-p btn-sm" onclick="if(typeof tmJump==='function')tmJump('spieltag','${jsD}');else go('spieltag')"><i class="ti ti-ball-football"></i>Zum Spieltag</button>`;
-  }else if(t.typ==="spiel"){
-    satz="Für ein Spiel brauchst du keinen Trainingsplan – Aufstellung, Uhr und Ticker liegen im Spieltag.";
-    knopf=`<button class="btn btn-p btn-sm" onclick="if(typeof tmJump==='function')tmJump('spieltag','${jsD}');else go('spieltag')"><i class="ti ti-ball-football"></i>Zum Spieltag</button>`;
-  }else{
-    satz="Ein Event ohne Training – wer was mitbringt, steht in der Mitbringliste.";
-    knopf=`<button class="btn btn-p btn-sm" onclick="if(typeof mitbringTrainerOpen==='function')mitbringTrainerOpen();else toast('Mitbringliste lädt noch')"><i class="ti ti-basket"></i>Mitbringliste</button>`;
-  }
-  box.innerHTML=`<div class="card" style="padding:12px 14px;margin:8px 0 4px;border-left:4px solid ${m.col}">
-    <div style="font-size:13.5px;font-weight:800;line-height:1.25">${m.icon} ${titel}</div>
-    <div style="font-size:12px;color:var(--text2);margin:4px 0 10px;line-height:1.45">${satz}</div>
-    <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start">${knopf}${zusatz}</div>
-  </div>`;
 }
 /* Gilt eine erfasste Anwesenheit als Tatsache? Erst, wenn der Tag da ist. Eine im Voraus
    gespeicherte Liste ist nur ein Abzug der Rueckmeldungen von damals. */

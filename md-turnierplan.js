@@ -512,7 +512,25 @@ function nomRender(){
     </div>`;
   }
   const kaderAktiv=KADER.filter(k=>k.aktiv!==false).length;   // ausgetragene Kinder zaehlen nicht mit
-  box.innerHTML=`<div style="font-size:11px;color:var(--text2);margin-bottom:8px">${dabeiAlle} von ${kaderAktiv} dabei – gilt für den ganzen Spieltag</div>`+sum;
+  /* v477: Diese Liste IST die Anwesenheit des Spieltags (ein Ort je Termintyp, PO). Das
+     steht jetzt dran – und „offen" (Eltern haben nicht geantwortet) bekommt am Platz einen
+     Knopf, statt sechzehn einzelne Tipps. */
+  const offenAlle=KADER.filter(k=>k.aktiv!==false&&(nomStatus[k.name]==="offen"||nomStatus[k.name]==null)).length;
+  box.innerHTML=`<div style="font-size:11px;color:var(--text2);margin-bottom:4px">${dabeiAlle} von ${kaderAktiv} dabei – gilt für den ganzen Spieltag</div>
+    <div id="nom-quelle" style="font-size:10.5px;color:var(--text3);margin-bottom:8px;line-height:1.4">📣 Vorbelegt aus den Eltern-Rückmeldungen (zugesagt = Dabei, abgesagt = Nicht, ohne Antwort = offen). <b>Dabei</b> ist die Anwesenheit dieses Spieltags und zählt für die Spiele-Quote.</div>
+    ${offenAlle?`<button class="btn btn-sm" id="nom-offene-dabei" onclick="nomOffeneDabei()" style="margin-bottom:8px"><i class="ti ti-users-plus"></i>${offenAlle} Offene auf „Dabei“ setzen</button>`:""}`+sum;
+}
+/* v477: Wer ohne Eltern-Antwort am Platz steht, ist dabei – ein Tipp fuer alle Offenen. */
+function nomOffeneDabei(){
+  const offen=KADER.filter(k=>k.aktiv!==false&&(nomStatus[k.name]==="offen"||nomStatus[k.name]==null)).map(k=>k.name);
+  if(!offen.length){toast("Niemand mehr offen");return;}
+  offen.forEach(n=>{ nomStatus[n]="dabei"; nomOvr.add(n); if(typeof teamPlatzEinsortieren==="function")teamPlatzEinsortieren(n); });
+  if(typeof teamsSpeichern==="function")teamsSpeichern();
+  nomRender();
+  if(typeof teamsRender==="function")teamsRender();
+  if(typeof spieltagTeamKartenRender==="function")spieltagTeamKartenRender();
+  nomApplyToTools();nomSave();
+  toast(`${offen.length} Kinder auf „Dabei“ gesetzt`);
 }
 
 /* ═══════════════════════════════════
