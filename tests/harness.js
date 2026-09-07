@@ -68,7 +68,8 @@ async function starten(opt = {}) {
   await ctx.route("**/*", async r => {
     const req = r.request(), u = new URL(req.url());
     if (u.hostname.includes("supabase.co")) {
-      if (req.method() !== "GET") gesendet.push({ pfad: u.pathname, methode: req.method(), body: (() => { try { return JSON.parse(req.postData() || "null"); } catch (e) { return req.postData(); } })() });
+      // suche = Abfragezeichenkette: dort steht z. B. on_conflict=… (Upsert statt Anfuegen)
+      if (req.method() !== "GET") gesendet.push({ pfad: u.pathname, suche: u.search, methode: req.method(), body: (() => { try { return JSON.parse(req.postData() || "null"); } catch (e) { return req.postData(); } })() });
       const a = antwort(u, req) || { status: 200, body: "[]" };
       return r.fulfill({ status: a.status, contentType: "application/json", body: a.body });
     }
