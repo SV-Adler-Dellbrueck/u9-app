@@ -515,6 +515,7 @@ function clearForm(){
 
 function loadPlayerToForm(p){
   document.getElementById("p-name").value=p.name||"";
+  if(typeof bewLeerSetzen==="function")bewLeerSetzen(true);   // v474: vor buildDims, sonst Radar 0 px
   // p-date ist ein Termin-Dropdown: das Datum der geladenen Bewertung als Option sicherstellen.
   if(p.datum&&typeof terminSelectEnsure==="function")terminSelectEnsure("p-date",p.datum);
   else document.getElementById("p-date").value=p.datum||"";

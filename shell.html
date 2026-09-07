@@ -115,7 +115,10 @@
     </div>
   </div>
 
-  <div class="live-panel">
+  <!-- v474: bis ein Kind gewaehlt ist, nur ein Satz statt dreier leerer Kaesten (bewLeerSetzen) -->
+  <div id="bew-leer" class="empty" style="padding:1.5rem 1rem"><i class="ti ti-user-search"></i>Wähle oben ein Kind – dann erscheinen Kriterien, Live-Profil und Förderplan.
+    <div style="margin-top:10px"><button class="btn btn-sm" onclick="bewRundeStart()"><i class="ti ti-player-play"></i>Bewertungsrunde starten</button></div></div>
+  <div class="live-panel" id="bew-live-panel" style="display:none">
     <div class="radar-live-box">
       <div class="rbox-title"><i class="ti ti-chart-radar" style="font-size:14px"></i>Live-Profil
         <span id="live-prog" style="margin-left:auto;font-size:10px;color:var(--text3)">0 / 0</span>
@@ -154,7 +157,7 @@
   <div id="wiz-nav" style="display:none"></div>
   <div id="dims-wrap"></div>
 
-  <div class="fbox">
+  <div class="fbox" id="bew-fbox" style="display:none">
     <h3><i class="ti ti-sparkles" style="font-size:14px"></i>Profil & Förderplan</h3>
     <textarea id="fazit-out" class="fta" readonly placeholder="Alle Kriterien ausfüllen – Profil wird automatisch generiert..."></textarea>
     <div class="prow">
@@ -213,6 +216,9 @@
 <!-- KOMBI VIEW -->
 <div id="view-kombi" class="view">
   <div class="sl nt"><i class="ti ti-users-group"></i>Aufstellung</div>
+  <!-- v474: die Erklaerkaesten gehoeren zur fertigen Aufstellung – ohne bewertete Kinder
+       erklaerten sie einen Algorithmus, der nichts zu rechnen hatte (renderKombi blendet sie aus). -->
+  <div id="kombi-erklaer">
   <div style="background:var(--blue-bg);border:1px solid #93c5fd;border-radius:var(--rl);padding:12px;margin-bottom:1rem;font-size:12px;color:#1e40af;line-height:1.6">
     <strong>Wie funktioniert das?</strong> Der Algorithmus berechnet die beste Kombination aus dem Kader nach Rollenfit, Komplementarität und sozialer Verträglichkeit.
   </div>
@@ -222,6 +228,7 @@
     <strong>IGEL (defensiv, eng):</strong> Alle 4 Feldspieler ziehen zusammen, enge Abstände, Räume eng halten – Verteidigungspositionen, Pressing als Einheit.<br>
     <span style="font-size:11px;opacity:.8">Kommando "Adler!" = breit & offensiv · Kommando "Igel!" = eng & defensiv. Beide Begriffe direkt im Training als Zuruf nutzbar.</span>
   </div>
+  </div><!-- /kombi-erklaer -->
   <div id="kombi-content"><div class="empty"><i class="ti ti-users-group"></i>Noch keine Spieler bewertet</div></div>
   <button class="print-btn" style="margin-top:14px" onclick="printView('kombi')"><i class="ti ti-printer"></i>Aufstellung drucken</button>
 </div>
@@ -368,9 +375,11 @@
     <button class="btn btn-sm" onclick="trainerPlanOpen()" style="width:100%;min-height:44px;justify-content:center;margin-bottom:12px"><i class="ti ti-users-group"></i>Trainerplan – wer ist wann da?</button>
     <!-- Zugeklappt als Standard (PO): das Formular nahm den ganzen ersten Bildschirm ein,
          obwohl man meistens zu den TERMINEN will und nicht einen neuen anlegt. -->
-    <button class="sl nt" id="tm-neu-toggle" onclick="tmNeuToggle()" aria-expanded="false" aria-controls="tm-karte"
-            style="width:100%;min-height:44px;background:none;border:none;border-radius:8px;cursor:pointer;font-family:inherit;text-align:left">
-      <i class="ti ti-calendar-plus"></i><span style="flex:1">Neuer Termin</span><i class="ti ti-chevron-down" id="tm-neu-chev" style="transition:transform .15s"></i>
+    <!-- v474: als Knopf erkennbar (gleiche Bauart wie „Trainerplan" darueber). Vorher sah
+         die Zeile wie eine Abschnitts-Ueberschrift aus – ohne Rand, ohne Flaeche. -->
+    <button class="btn btn-sm" id="tm-neu-toggle" onclick="tmNeuToggle()" aria-expanded="false" aria-controls="tm-karte"
+            style="width:100%;min-height:44px;justify-content:center;margin-bottom:12px">
+      <i class="ti ti-calendar-plus"></i><span>Neuer Termin</span><i class="ti ti-chevron-down" id="tm-neu-chev" style="transition:transform .15s"></i>
     </button>
     <!-- Die Karte traegt eine Akzentfarbe (--tm-akzent), die tmSetTyp auf den Termintyp
          setzt: gruen Training, blau Spiel/Turnier, lila Event. Kopf, aktiver Umschalter

@@ -99,9 +99,18 @@ function onChange(){
   }
 }
 
+/* v474: Bis ein Kind gewaehlt ist, zeigt „Bewerten" nur die Stammdaten und einen Satz.
+   Vorher standen Live-Profil (0/0), leeres Radar und Foerderplan-Kasten schon da – drei
+   leere Kaesten, die so aussahen, als fehle etwas. Die Umschaltung passiert VOR buildDims,
+   damit das Radar nicht in einem unsichtbaren Kasten mit 0 px Breite gezeichnet wird. */
+function bewLeerSetzen(hatKind){
+  ["bew-live-panel","bew-fbox"].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=hatKind?"":"none";});
+  const leer=document.getElementById("bew-leer"); if(leer)leer.style.display=hatKind?"none":"";
+}
 function onPlayerSelect(){
   const name=document.getElementById("p-name").value;
-  if(!name)return;
+  if(!name){bewLeerSetzen(false);return;}
+  bewLeerSetzen(true);
   const k=getKader(name);
   const tw=k?.tw||false;
   // Nur neu bauen, wenn sich die Layout-Variante (Feld/TW) ändert – sonst nur Werte zurücksetzen.
@@ -134,6 +143,7 @@ function showBewSticky(name){
   const nm=document.getElementById("bs-name");
   if(nm)nm.textContent=(name||"")+(BEW_RUNDE.active?` · Spieler ${BEW_RUNDE.idx+1}/${BEW_RUNDE.queue.length}`:"");
   if(bar)bar.style.display=name?"flex":"none";
+  bewLeerSetzen(!!name);
 }
 
 /* Bewertungsrunde (Trainermeeting alle 6 Wochen): alle Spieler nacheinander bewerten.
@@ -3468,7 +3478,7 @@ async function saisonCockpitOpen(){
 ═══════════════════════════════════ */
 const HELP=[
   {cat:"🏠 Start", items:[
-    {t:"Diese Woche", d:"Alle Termine der nächsten 7 Tage auf einen Blick: wie viele Kinder zugesagt haben, ob genug Trainer da sind, ob der Trainingsplan steht und die Aufstellung fürs Spiel. Antippen öffnet den Termin.", run:"document.getElementById('home-woche')?.scrollIntoView({behavior:'smooth',block:'center'})"},
+    {t:"Diese Woche", d:"Alle Termine der nächsten 7 Tage auf einen Blick: wie viele Kinder zugesagt haben (aus den Eltern-Rückmeldungen), ob genug Trainer da sind (aus dem Trainerplan), ob der Trainingsplan steht und die Aufstellung fürs Spiel. Die Quelle steht unter der Karte. Rot wird ein Chip erst drei Tage vor dem Termin – vorher ist „0 zugesagt“ normal. Antippen öffnet den Termin.", run:"document.getElementById('home-woche')?.scrollIntoView({behavior:'smooth',block:'center'})"},
     {t:"Startseite", d:"To-Do-Banner (nur bei offenen Aufgaben), „Bist du dabei?“ mit den Terminen der nächsten 14 Tage, für die deine Antwort noch fehlt (beantwortet = Karte weg), „Diese Woche“ mit dem Stand je Termin – die erste Zeile ist der nächste Termin mit Wetter, Packtipp und den Sprungknöpfen „Anwesenheit“ und „Plan“ –, der Knopf zu allen Terminen und sechs große Kacheln – dahinter jeweils ein Kachel-Menü.", go:"home"},
   ]},
   {cat:"👥 Team", items:[
@@ -3476,7 +3486,7 @@ const HELP=[
     {t:"Anwesenheit (Saison)", d:"Drei Reiter: Quote je Kind im Training, Anwesenheit der Trainer, und die Quote inklusive Spiele aus den Nominierungen. Alle drei rechnen auf denselben Zähltagen wie die Zahlen neben der Nominierung: ab dem Saisonstichtag, und nur echte Trainings – Spiel- und Turniertage zählen nicht mit, auch nicht bei der Serie 🔥.", run:"awUebersichtOpen()"},
     {t:"Probetraining", d:"Schnupperkinder verwalten – bewusst getrennt vom Kader, Auto-Löschung nach Entscheidung.", run:"probeOpen()"},
     {t:"Kader", d:"Spieler anlegen/bearbeiten, Trikotnummer, Foto, Kontakte, Foto-Freigabe.", go:"kader"},
-    {t:"Bewerten", d:"Spieler in 16 Kriterien einschätzen – mit Live-Radar.", go:"bew"},
+    {t:"Bewerten", d:"Spieler in 16 Kriterien einschätzen – mit Live-Radar. Kriterien, Live-Profil und Förderplan erscheinen, sobald oben ein Kind gewählt ist; „Bewertungsrunde starten“ geht alle Kinder nacheinander durch.", go:"bew"},
     {t:"Profil", d:"Spielerprofil, Stärken, Adler-Karte, Entwicklungs-Report drucken.", go:"profil"},
     {t:"Entwicklung", d:"Entwicklung über die Zeit als Diagramm.", go:"verlauf"},
   ]},
@@ -3490,7 +3500,7 @@ const HELP=[
   {cat:"⚽ Spieltag", items:[
     {t:"Match", d:"Zuerst „Teams festlegen“: wer heute dabei ist (kommt aus den Eltern-Rückmeldungen), wie viele Teams wir stellen, welcher Trainer sie betreut – die Kinder werden dabei automatisch verteilt und lassen sich von Hand umsetzen. „Dabei“ heißt automatisch „Spielt mit“ – wen du pausieren lassen willst, stellst du selbst um. Neben jedem Kind stehen die Trainingsquote und die Zahl der Einsätze; beide zählen ab einem Stichtag (zurzeit: Trainings ab dem 31.08., Spiele ab dem 05.09.2026), damit die faire Einteilung nicht an alten Zahlen hängt. Danach hat jedes Team seine eigene Kachel mit Kader, Rollen, Match-Uhr, Rotations-Timer, Live-Aktionen und Liveticker. Den Liveticker startest du selbst mit „▶️ Liveticker starten“ – er hängt nicht am Anpfiff und nicht an der Aufstellung. Sobald er läuft, erscheint bei den Eltern ganz oben eine rote LIVE-Kachel mit Teilen-Knopf – der Link geht auch an Oma und Opa, ohne Anmeldung. Stoppst du ihn wieder, kommt nur nichts Neues mehr dazu – das Bisherige bleibt für die Eltern sichtbar. Drei Tage nach dem Spieltag zeigt der Link nur noch den Endstand; die Ereignisse bleiben gespeichert. Beim Blitz-Rating nach dem Spiel zählt pro Kind, Trainer und Spieltag genau eine Bewertung – gehst du ein zweites Mal durch, korrigierst du die erste, statt sie zu verdoppeln. In der Live-Aktion stehen oben die Kinder aus der Aufstellung und unter einer gestrichelten Linie alle weiteren, die heute dabei sind – du kannst also auch tickern, wenn die Aufstellung nicht gepflegt ist. Bei „Parade“ erscheinen nur die Torhüter. Hast du selbst keine Hand frei: „🙋 Jemand anderen tickern lassen“ verschickt einen Link an einen Helfer am Spielfeldrand; der sieht nur die Kinder von heute und die Aktionsknöpfe und kann Tore, Paraden und Gegentore melden – keine Bewertungen, keine Kaderdaten. Der Link gilt nur, solange der Ticker läuft. Die Team-Quests stehen darunter und gelten für alle Teams zusammen. Ist heute Spieltag, öffnet sich beim Betreten der Abschnitt, der zur Uhrzeit passt – vor dem Anpfiff „Vor dem Spiel“, während „Live“, danach „Nach dem Spiel“.", go:"spieltag"},
     {t:"Aufstellung", d:"Rollen-Empfehlung aus den Bewertungen: wer passt als Aufpasser, Jäger, Flitzer links/rechts. Braucht mindestens 4 bewertete Kinder – wer noch niemanden bewertet hat, nutzt im Spieltag „Feld & Bank fair besetzen“ (verteilt nach Einsatzzeiten).", go:"kombi"},
-    {t:"Analyse", d:"Auswertung nach dem Spiel.", go:"analyse"},
+    {t:"Analyse", d:"Auswertung nach dem Spiel: Entwicklungs-Meilensteine aus den Bewertungen, Einsatz-Fairness (zählt Spieltage mit Blitz-Rating je Kind) und Formtrend. Solange kein Spiel bewertet ist, steht dort nur ein Satz mit dem Weg zum Spieltag.", go:"analyse"},
     {t:"Heimturnier ausrichten", d:"Eigenes Turnier: Teams aus der Gegner-DB (auch 2. Mannschaften), 2–4 Gruppen nach Meldezahl, 1–4 Felder parallel, Spielform (FUNiño, 4+1, 5+1 …) mit Regelwerk, Live-Ergebnisse, „Rest +5 Min.“-Verschieber, Live-Durchsage, Fair-Play-Pokal, Team-Urkunden- und Feld-Aushang-Druck – Zuschauer-Link/QR ohne Login (mit Team-Filter und Monitor-Modus), Helfer-Link fürs Ergebnis-Eintragen am Anzeigetisch.", run:"htOpen()"},
   ]},
   {cat:"🎯 Taktik", items:[
@@ -3823,6 +3833,7 @@ async function topbarNaechsterTermin(){
    noch etwas tun muss. Eine Karte, sieben Tage, je Termin eine Zeile mit Chips. Die
    Chips tragen ihre Bedeutung im Text, die Farbe kommt nur dazu (Hausregel). */
 const WOCHE_TAGE=7;
+const WOCHE_ROT_AB=3;   // ab so vielen Tagen vor dem Termin darf ein Chip rot werden
 function _wocheChip(text,art){
   const f={ok:["var(--green-bg)","var(--green)"],warn:["var(--amber-bg)","var(--amber)"],rot:["var(--red-bg)","var(--red)"],neutral:["var(--surface2)","var(--text2)"]}[art||"neutral"];
   return `<span style="display:inline-block;font-size:11px;font-weight:700;line-height:1.3;padding:3px 8px;border-radius:10px;background:${f[0]};color:${f[1]};border:1px solid ${f[1]}33">${text}</span>`;
@@ -3837,11 +3848,14 @@ async function homeWocheLoad(){
   const heute=new Date().toISOString().slice(0,10);
   const bis=new Date(Date.now()+WOCHE_TAGE*864e5).toISOString().slice(0,10);
   let fern=false;   // kein Termin in 7 Tagen → der naechste danach
-  const karte=inner=>`<div class="card" style="padding:12px 14px;margin-bottom:10px">
+  /* v474: Jede gerechnete Zahl nennt ihre Quelle (Muster v470) – sonst raet der Trainer,
+     ob „3 zugesagt" aus den Eltern-Antworten oder aus seiner eigenen Anwesenheit stammt. */
+  const quelle=`<div class="woche-quelle" style="font-size:10.5px;color:var(--text3);margin-top:6px;line-height:1.4">Zusagen aus den Eltern-Rückmeldungen · Trainer aus dem Trainerplan · Plan und Aufstellung aus der App</div>`;
+  const karte=(inner,mitQuelle)=>`<div class="card" style="padding:12px 14px;margin-bottom:10px">
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px">
       <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text2)">🗓️ ${fern?"Als Nächstes":"Diese Woche"}</div>
       <div style="font-size:11px;color:var(--text3)">${fern?"kein Termin in den nächsten "+WOCHE_TAGE+" Tagen":"nächste "+WOCHE_TAGE+" Tage"}</div>
-    </div>${inner}</div>`;
+    </div>${inner}${mitQuelle?quelle:""}</div>`;
   let termine=[];
   try{
     const felder="id,datum,uhrzeit,uhrzeit_ende,typ,titel,gegner,ort,platz,spielform,trainer_status";
@@ -3876,6 +3890,10 @@ async function homeWocheLoad(){
     const d=new Date(t.datum+"T00:00:00");
     const wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
     const inTagen=Math.round((d-new Date(heute+"T00:00:00"))/864e5);
+    /* v474: Rot erst ab drei Tagen vor dem Termin. Ein Training in sechs Tagen mit null
+       Zusagen ist kein Alarm – die Eltern antworten meist erst kurz vorher. Vorher war
+       jede Woche beim Oeffnen rot, und Rot, das immer da ist, sieht keiner mehr. */
+    const nah=inTagen<=WOCHE_ROT_AB;
     const zeit=t.uhrzeit?String(t.uhrzeit).slice(0,5):"";
     const chips=[];
     if(t.typ==="training"||t.typ==="spiel"||t.typ==="turnier"){
@@ -3883,21 +3901,21 @@ async function homeWocheLoad(){
       const ja=rm.filter(x=>x.status==="zugesagt").length;
       const nein=rm.filter(x=>x.status==="abgesagt"||x.status==="krank").length;
       const offen=Math.max(0,aktive-rm.length);
-      chips.push(_wocheChip(`${ja} zugesagt`,ja>=6?"ok":ja?"warn":"rot"));
+      chips.push(_wocheChip(`${ja} zugesagt`,ja>=6?"ok":ja?"warn":nah?"rot":"neutral"));
       if(nein)chips.push(_wocheChip(`${nein} abgesagt`,"neutral"));
       if(offen)chips.push(_wocheChip(`${offen} offen`,"neutral"));
       const trainerJa=Object.keys(t.trainer_status||{}).filter(n=>t.trainer_status[n]==="ja").length;
-      chips.push(trainerJa?_wocheChip(`🧢 ${trainerJa} Trainer`,trainerJa>=2?"ok":"warn"):_wocheChip("🧢 kein Trainer",inTagen<=2?"rot":"warn"));
+      chips.push(trainerJa?_wocheChip(`🧢 ${trainerJa} Trainer`,trainerJa>=2?"ok":"warn"):_wocheChip("🧢 kein Trainer",nah?"rot":"warn"));
     }
     if(t.typ==="training"){
       const plan=plaene.find(p=>p.datum===t.datum&&Array.isArray(p.plan)&&p.plan.length);
-      chips.push(plan?_wocheChip("📋 Plan steht","ok"):_wocheChip("📋 kein Plan",inTagen<=2?"warn":"neutral"));
+      chips.push(plan?_wocheChip("📋 Plan steht","ok"):_wocheChip("📋 kein Plan",nah?"warn":"neutral"));
       if(gruppen.some(g=>g.datum===t.datum))chips.push(_wocheChip("👥 Gruppen","neutral"));
     }
     if(t.typ==="spiel"||t.typ==="turnier"){
       const nom=noms.find(n=>n.datum===t.datum+"__nom");
       const dabei=nom&&nom.data?Object.keys(nom.data).filter(k=>k.charAt(0)!=="_"&&nom.data[k]==="dabei").length:0;
-      chips.push(dabei?_wocheChip(`🧩 ${dabei} nominiert`,"ok"):_wocheChip("🧩 Aufstellung offen",inTagen<=2?"warn":"neutral"));
+      chips.push(dabei?_wocheChip(`🧩 ${dabei} nominiert`,"ok"):_wocheChip("🧩 Aufstellung offen",nah?"warn":"neutral"));
     }
     const titel=esc(t.titel||t.gegner||m.label);
     const ort=t.platz||t.ort;
@@ -3930,7 +3948,7 @@ async function homeWocheLoad(){
       <div aria-hidden="true" style="align-self:center;color:var(--text3);font-size:16px">›</div>
     </div>`;
   });
-  slot.innerHTML=karte(`<div style="margin:0 -4px">${zeilen.join("")}</div>`);
+  slot.innerHTML=karte(`<div style="margin:0 -4px">${zeilen.join("")}</div>`,true);
   // Wetter, Warnung und Gegner-Kontakt fuer den ersten Termin – wie frueher in der eigenen Karte
   const t0=termine[0];
   try{ if(typeof wetterInto==="function")wetterInto("wetter-home",t0.datum,t0.ort,t0.uhrzeit); }catch(e){}

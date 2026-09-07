@@ -61,12 +61,15 @@ async function anLoadServer(){
       if(val!=null){(formByPlayer[b.spieler]=formByPlayer[b.spieler]||[]).push({datum:b.datum,val});}
     });
     const counts=KADER.map(k=>({name:k.name,n:gamesByPlayer[k.name]?gamesByPlayer[k.name].size:0}));
-    const maxN=Math.max(1,...counts.map(c=>c.n));
+    /* v474: Math.max(1,…) machte den Leerzustand unerreichbar – ohne ein einziges Blitz-Rating
+       standen fuenfzehn Balken mit „0 Spiele" da. Jetzt: ein Satz, eine Aktion. */
+    const maxN=Math.max(0,...counts.map(c=>c.n));
     counts.sort((a,b)=>a.n-b.n);
-    fair.innerHTML=(maxN===0?'<div style="font-size:11px;color:var(--text3)">Noch keine Spiele bewertet.</div>':counts.map(c=>{
+    fair.innerHTML=(maxN===0?`<div class="empty" style="padding:1.2rem 1rem"><i class="ti ti-scale"></i>Noch kein Spiel bewertet – die Verteilung entsteht mit dem Blitz-Rating nach dem Spiel.
+        <div style="margin-top:10px"><button class="btn btn-sm" onclick="go('spieltag')"><i class="ti ti-ball-football"></i>Zum Spieltag</button></div></div>`:counts.map(c=>{
       const pct=Math.round(c.n/maxN*100),low=maxN>=2&&c.n<maxN*0.5;
       return `<div style="margin-bottom:6px"><div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:2px"><span>${low?"⚠️ ":""}${esc(c.name)}</span><span style="color:var(--text2)">${c.n} Spiele</span></div><div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${low?"#dc2626":"#15803d"};border-radius:4px"></div></div></div>`;
-    }).join("")+'<div style="font-size:10px;color:var(--text3);margin-top:4px">⚠️ = deutlich seltener im Einsatz. Auf faire Verteilung achten.</div>');
+    }).join("")+'<div style="font-size:10px;color:var(--text3);margin-top:4px">⚠️ = deutlich seltener im Einsatz. Auf faire Verteilung achten. Gezählt werden Spieltage mit Blitz-Rating.</div>');
     const formRows=Object.keys(formByPlayer).map(name=>{
       const list=formByPlayer[name].sort((a,b)=>a.datum.localeCompare(b.datum));
       const avg=arr=>arr.length?arr.reduce((s,x)=>s+x.val,0)/arr.length:null;

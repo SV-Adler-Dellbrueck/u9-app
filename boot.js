@@ -1389,7 +1389,9 @@ async function tpPrognoseLoad(){
     else if(st==="abgesagt"||st==="krank"){/* 0 */}
     else exp+=(anyHist?rate[k.name]:0.7);
   });
-  el.innerHTML=`<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;background:var(--surface2);border:var(--border);border-radius:20px;padding:4px 12px">👥 ~${Math.round(exp)} Kinder erwartet${sure?` <span style="font-weight:400;color:var(--text2)">(${sure} fix)</span>`:""}</span>`;
+  /* v474: Quelle dazu (Muster v470) – „~9 erwartet" ohne Herkunft liest sich wie eine Zusage. */
+  const quelle=sure?`${sure} zugesagt, Rest nach Trainingsquote`:(anyHist?"nach Trainingsquote":"Schätzung, noch keine Anwesenheit erfasst");
+  el.innerHTML=`<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;background:var(--surface2);border:var(--border);border-radius:20px;padding:4px 12px">👥 ~${Math.round(exp)} Kinder erwartet <span style="font-weight:400;color:var(--text2)">(${quelle})</span></span>`;
 }
 
 function tpOnSelectChange(sel){
