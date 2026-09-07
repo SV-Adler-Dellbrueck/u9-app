@@ -2239,7 +2239,7 @@ const SECS={
     // v413: Trainer-Chips aus den Rückmeldungen füllen (zieht tpRenderTimeline mit)
     const go=()=>{(typeof tpTrainerRsvpLaden==="function"?tpTrainerRsvpLaden():tpRenderTimeline());
       if(typeof tpPlanRestore==="function")tpPlanRestore();};
-    if(s&&s.options.length<=1&&typeof terminSelectFill==="function")terminSelectFill("tp-date",{types:["training"],future:true,onReady:go}); else go();
+    if(s&&s.options.length<=1&&typeof terminSelectFill==="function")terminSelectFill("tp-date",{types:["training"],future:true,vorbeiUeberspringen:true,onReady:go}); else go();
     if(typeof tpVorplanLoad==="function")tpVorplanLoad();}},
   anwesenheit:{cid:"train-sub-anwesenheit",sub:true, init:()=>awDatesLoad()},
   quizresults:{cid:"train-sub-quizresults",sub:true, init:()=>w2("tqRenderTrainerView")},
@@ -3813,9 +3813,10 @@ async function topbarNaechsterTermin(){
   if(!el||!sbToken())return;
   const heute=new Date().toISOString().slice(0,10);
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/termine?datum=gte.${heute}&select=datum,uhrzeit,typ,ort,platz&order=datum.asc&limit=1`,{headers:sbAuthHeaders()});
+    const r=await fetch(`${SB_URL}/rest/v1/termine?datum=gte.${heute}&select=datum,uhrzeit,uhrzeit_ende,typ,ort,platz&order=datum.asc,uhrzeit.asc.nullslast&limit=6`,{headers:sbAuthHeaders()});
     if(!r.ok)return;
-    const t=(await r.json())[0];
+    // v478: ein beendetes Training von heute ist nicht mehr „das Naechste"
+    const t=((await r.json())||[]).find(x=>!(typeof terminVorbei==="function"&&terminVorbei(x)));
     if(!t)return;
     const m=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅",label:t.typ};
     const d=new Date(t.datum+"T00:00:00");
