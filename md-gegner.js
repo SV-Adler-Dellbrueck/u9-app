@@ -175,7 +175,6 @@ async function tmLoad(){
     up.innerHTML=kommend.length
       ? kFull.map(tmCard).join("")+(kRest.length?`<button id="tm-more-btn" class="btn btn-sm" style="width:100%;margin:2px 0 8px" onclick="tmToggleMore()"><i class="ti ti-chevron-down"></i>Weitere ${kRest.length} Termine anzeigen</button><div id="tm-more" style="display:none">${kRest.map(tmRow).join("")}</div>`:"")
       : '<div style="font-size:11px;color:var(--text3);padding:6px">Keine kommenden Termine.</div>';
-    const car=document.getElementById("tm-carousel"); if(car)car.innerHTML=tmCarouselHtml(kommend); // Karussell der nächsten Termine
     pa.innerHTML=vergangen.length?vergangen.slice(0,40).map(tmRow).join(""):'<div style="font-size:11px;color:var(--text3);padding:6px">Noch keine vergangenen Termine.</div>';
     kFull.forEach(t=>wetterInto("wx-tm-"+t.id,t.datum,t.ort,t.uhrzeit)); // Wetter nur für die vollen Karten
     kFull.filter(t=>t.heim===true&&(t.typ==="spiel"||t.typ==="turnier")).forEach(buedchenTrainerFill); // Büdchen je Heimspiel
@@ -190,27 +189,6 @@ function ansageVomTermin(id){
   const ds=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()]+", "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
   const zeit=t.uhrzeit?String(t.uhrzeit).slice(0,5)+" Uhr":"";
   ansageTrainerOpen(`${m.icon} ${t.titel||m.label} am ${ds}${zeit?" um "+zeit:""}${t.ort?" · "+t.ort:""}\nTreffpunkt: `);
-}
-// Karussell der nächsten Termine (Trainer): kompakte, chronologische Karten; Klick springt zur Detailkarte.
-function tmCarouselHtml(rows){
-  const up=(rows||[]).slice(0,10);
-  if(up.length<2)return "";
-  const cards=up.map(t=>{
-    const m=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅",label:t.typ,col:"#1e3a8a"};
-    const d=new Date(t.datum+"T00:00:00");
-    const wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
-    const zeit=t.uhrzeit?String(t.uhrzeit).slice(0,5)+" Uhr":"";
-    const hb=heimLabel(t);
-    return `<div onclick="tmCarouselJump(${t.id})" style="min-width:180px;max-width:200px;flex:none;scroll-snap-align:start;background:var(--surface2);border:var(--border-s);border-left:3px solid ${m.col};border-radius:12px;padding:10px;cursor:pointer">
-      <div style="font-size:12.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.icon} ${esc(t.titel||m.label)}</div>
-      <div style="font-size:10.5px;color:var(--text2);margin-top:2px">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${zeit?" · "+zeit:""}</div>
-      ${hb?`<div style="font-size:10px;font-weight:700;margin-top:3px;color:${t.heim?"#15803d":"#b45309"}">${hb}</div>`:""}
-    </div>`;
-  }).join("");
-  return `<div style="margin-bottom:12px">
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);margin-bottom:6px">📅 Nächste Termine · wischen &amp; antippen für Details →</div>
-    <div style="display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px">${cards}</div>
-  </div>`;
 }
 // Kompakte Termin-Zeile (für den langen Schwanz kommender Termine + das Archiv).
 // Ein Tap öffnet das volle Detailfenster (tmDetailOpen) – so bleibt die Liste kurz.
@@ -236,13 +214,6 @@ function tmToggleMore(){
   const show=box.style.display==="none";
   box.style.display=show?"block":"none";
   if(btn)btn.innerHTML=`<i class="ti ti-chevron-${show?"up":"down"}"></i>Weitere Termine ${show?"ausblenden":"anzeigen"}`;
-}
-// Karussell-Klick: ist die Detailkarte auf der Seite (Termine-Tab), dorthin scrollen.
-// Sonst – z. B. von der Startseite – das Termin-Detailfenster öffnen.
-function tmCarouselJump(id){
-  const el=document.getElementById("tm-card-"+id);
-  if(el){el.scrollIntoView({behavior:"smooth",block:"start"});return;}
-  tmDetailOpen(id);
 }
 // Trainer-Termin-Detailfenster: zeigt die volle Terminkarte (mit allen Aktionen) als Overlay.
 function tmDetailOpen(id){

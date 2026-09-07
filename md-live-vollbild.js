@@ -392,19 +392,13 @@ function teamStatsRender(){
     });
     if(ges)quote=Math.round(da/ges*100)+"%";
   }
-  // Spieler ohne Bewertung seit > 6 Wochen (Bewertung alle 6 Wochen im Trainermeeting)
-  const limit=Date.now()-42*24*60*60*1000;
-  const stale=KADER.filter(k=>{
-    const snaps=DB[k.name];
-    if(!snaps||!snaps.length)return true;
-    const lat=snaps[snaps.length-1];
-    return !lat.datum||new Date(lat.datum).getTime()<limit;
-  });
+  /* v472: „Bewertung ueberfaellig" stand hier zum dritten Mal (Home-Kachel „15 Bewertungen
+     faellig", Team-Menue „15 ueberfaellig", und diese Karte). Der Nag bleibt dort, wo man
+     ihn erledigt – im Team-Menue –, die Kachel zeigt ihn als Hinweis. Hier ist er raus. */
   const tile=(title,body)=>`<div class="card" style="padding:10px 12px"><div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px">${title}</div>${body}</div>`;
   wrap.innerHTML=
     tile("Letzte Einheit",evalTile)+
-    tile("Anwesenheit (letzte 4)",`<div style="font-size:16px;font-weight:700;color:var(--teal)">${quote}</div><div style="font-size:10px;color:var(--text2)">${awDates.length} Termin${awDates.length!==1?"e":""}</div>`)+
-    tile("Bewertung überfällig",`<div style="font-size:16px;font-weight:700;color:${stale.length?"#dc2626":"#15803d"};cursor:pointer" onclick="sv('bew')">${stale.length} Spieler</div><div style="font-size:10px;color:var(--text2)">${stale.length?"> 6 Wochen ohne Bewertung":"alle aktuell"}</div>`);
+    tile("Anwesenheit (letzte 4)",`<div style="font-size:16px;font-weight:700;color:var(--teal)">${quote}</div><div style="font-size:10px;color:var(--text2)">${awDates.length} Termin${awDates.length!==1?"e":""}</div>`);
 }
 
 // L5: Daten-Backup – alle sechs Tabellen als eine JSON-Datei
