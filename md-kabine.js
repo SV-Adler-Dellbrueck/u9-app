@@ -1518,7 +1518,7 @@ function renderTrainerUI(){
   if(tp&&typeof tpTrainerChipsRender==="function")tpTrainerChipsRender();
   else if(tp)tp.innerHTML=TRAINER.map(t=>`<label class="tp-check"><input type="checkbox" value="${t}" onchange="tpRenderTimeline()"><span>${t}</span></label>`).join("");
   const aw=document.getElementById("aw-trainer-checks");
-  if(aw)aw.innerHTML=TRAINER.map(t=>`<label class="tp-check"><input type="checkbox" value="${t}"><span>${t}</span></label>`).join("");
+  if(aw)aw.innerHTML=TRAINER.map(t=>`<label class="tp-check"><input type="checkbox" value="${t}" onchange="if(typeof awTrainerToggle==='function')awTrainerToggle(this)"><span>${t}</span></label>`).join("");
   const tn=document.getElementById("tn-autor");
   if(tn)tn.innerHTML=TRAINER.map(t=>`<option value="${t}">${t}</option>`).join("");
   const tv=document.getElementById("tv-autor");
