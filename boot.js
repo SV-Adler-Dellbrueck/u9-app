@@ -355,7 +355,13 @@ async function teamSyncUpsert(table,datum,data,extra){
     const r=await fetch(`${SB_URL}/rest/v1/${table}?on_conflict=datum`,{
       method:"POST",
       headers:{...sbTeamHeaders(),'Prefer':'resolution=merge-duplicates'},
-      body:JSON.stringify(Object.assign({datum,data:(table==="anwesenheit"&&typeof kidMapToIds==="function")?kidMapToIds(data):data},extra||{})) // HOTFIX 3-FE: optional termin_id
+      /* v478: updated_at MUSS mit – ein Upsert per merge-duplicates laesst die Spalte sonst
+         auf dem Wert des ersten Anlegens stehen. Die Konfliktregel „juengerer updated_at
+         gewinnt" (teamSyncLoad) hielt den Server damit fuer immer aelter als jede lokale
+         Kopie, und zwei Handys ueberschrieben sich gegenseitig (07.09.: die Trainerliste
+         vom Platz wurde abends durch den Vorab-Stand von gestern ersetzt). Seit v478 setzt
+         zusaetzlich ein Datenbank-Trigger die Spalte bei jedem Update. */
+      body:JSON.stringify(Object.assign({datum,data:(table==="anwesenheit"&&typeof kidMapToIds==="function")?kidMapToIds(data):data,updated_at:new Date().toISOString()},extra||{})) // HOTFIX 3-FE: optional termin_id
     });
     /* Vorher wurde r.ok NIE geprueft: bei 403/500 glaubte der Trainer "gespeichert",
        das Zweitgeraet sah aber nichts. Einmal pro Minute ehrlich Bescheid geben. */
@@ -489,7 +495,7 @@ let _termineSel={rows:null,at:0};
 async function _termineSelLoad(){
   if(_termineSel.rows && Date.now()-_termineSel.at<45000) return _termineSel.rows;
   let rows=[];
-  try{const r=await fetch(`${SB_URL}/rest/v1/termine?select=datum,typ,titel,gegner,uhrzeit&order=datum.desc,uhrzeit.desc.nullslast&limit=120`,{headers:sbAuthHeaders()});if(!sbCheck401(r)&&r.ok)rows=await r.json();}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/termine?select=datum,typ,titel,gegner,uhrzeit,uhrzeit_ende&order=datum.desc,uhrzeit.desc.nullslast&limit=120`,{headers:sbAuthHeaders()});if(!sbCheck401(r)&&r.ok)rows=await r.json();}catch(e){}
   _termineSel={rows:rows||[],at:Date.now()};
   return _termineSel.rows;
 }
@@ -505,7 +511,11 @@ async function terminSelectFill(selId, opt){
   if(!rows.length){ sel.innerHTML=`<option value="${heute}">Heute (${heute}) – noch kein Termin hinterlegt</option>`; if(opt.onReady)opt.onReady(); return; }
   sel.innerHTML=rows.map(t=>`<option value="${t.datum}">${terminOptionLabel(t)}</option>`).join("");
   let def;
-  if(future){ def=(rows.find(t=>t.datum>=heute)||rows[rows.length-1]).datum; }   // nächster künftiger
+  /* v478: vorbeiUeberspringen – der Plan stand um 22 Uhr noch auf dem Training von 16:45.
+     Geplant wird fuer das naechste, nicht fuer das beendete. Die Anwesenheit dagegen
+     bleibt auf heute: nach dem Training wird nachgetragen. */
+  if(future){ const kand=opt.vorbeiUeberspringen?rows.find(t=>t.datum>=heute&&!(typeof terminVorbei==="function"&&terminVorbei(t))):null;
+    def=(kand||rows.find(t=>t.datum>=heute)||rows[rows.length-1]).datum; }   // nächster künftiger
   else { const past=rows.find(t=>t.datum<=heute); def=past?past.datum:rows[rows.length-1].datum; } // jüngster vergangener
   sel.value=def;
   if(opt.onReady)opt.onReady();
@@ -1126,13 +1136,18 @@ function tpTrainerChipsRender(){
   const liste=(typeof TRAINER!=="undefined"&&Array.isArray(TRAINER))?TRAINER:[];
   box.innerHTML=liste.map(t=>{
     const st=TP_RSVP[t]||"", m=TP_RSVP_MARKE[st]||TP_RSVP_MARKE.offen;
+    /* v478 – PO: „Die Haken oder Kreuze hinter den Namen stimmen irgendwie nicht." Am Tag
+       mit erfasster Anwesenheit stand „Charles ✕" auf einem gruenen Chip – die Rueckmeldung
+       (abgesagt) neben der Tatsache (war da). Zwei Wahrheiten in einem Chip. Am Tatsache-Tag
+       zeigt der Chip nur noch die Anwesenheit; die Rueckmeldung bleibt im Tooltip. */
+    const zeichen=TP_ANWESEND?"":(m?" "+m.ico:"");
     /* Tatsache schlaegt Vorhersage: liegt fuer den Tag schon Anwesenheit vor, zaehlt der
        Haken dort – sonst wie bisher die Rueckmeldung. */
     const auto=TP_ANWESEND?TP_ANWESEND.includes(t):(st==="ja");
     const an=(t in TP_TRAINER_MANUELL)?TP_TRAINER_MANUELL[t]:auto;
     // angehakt gewinnt optisch (grün wie bisher), das Zeichen bleibt trotzdem stehen –
     // sonst sieht man nicht mehr, dass der Trainer eigentlich „unsicher" gesagt hat
-    const stil=an?"" : (m?`border-color:${m.farbe};color:${m.farbe}`:"");
+    const stil=an?"" : ((m&&!TP_ANWESEND)?`border-color:${m.farbe};color:${m.farbe}`:"");
     const grund=TP_ANWESEND
       ? (TP_ANWESEND.includes(t)?"steht in der Anwesenheit als anwesend":"in der Anwesenheit nicht angehakt")+" · Rückmeldung: "+m.titel
       : m.titel;
@@ -1140,7 +1155,7 @@ function tpTrainerChipsRender(){
       +(an!==auto?(t===TP_VORBELEGT?" – du planst gerade, deshalb vorbelegt":" – von dir eingeplant"):"");
     return `<label class="tp-check"><input type="checkbox" value="${esc(t)}"${an?" checked":""}
       onchange="tpTrainerManuell('${String(t).replace(/'/g,"")}',this.checked)">
-      <span style="${stil}" title="${esc(titel)}">${esc(t)}${m?" "+m.ico:""}</span></label>`;
+      <span style="${stil}" title="${esc(titel)}">${esc(t)}${zeichen}</span></label>`;
   }).join("");
 }
 /* v475: Antippen schreibt in die Quelle. Liegt die Anwesenheit des Tages vor, in die

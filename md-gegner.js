@@ -763,6 +763,7 @@ function spieltagSetTeam(n,btn){
   const t=parseInt(n)||1;
   if(t===spieltagTeam)return;
   spieltagTeam=t;
+  if(typeof teamFormAnwenden==="function")teamFormAnwenden(t);   // v479: Rotation, Uhr, Aufstellung lesen die Spielform DIESES Teams
   if(btn){btn.parentElement.querySelectorAll(".seg-btn").forEach(b=>b.classList.remove("active"));btn.classList.add("active");}
   // Laufende Uhren stoppen, damit der Team-Wechsel nicht die Uhr des anderen Teams weiterlaufen lässt.
   if(typeof rotStop==="function")rotStop();
