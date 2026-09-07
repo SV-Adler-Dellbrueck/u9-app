@@ -1053,7 +1053,6 @@ function tpSetCoach(stationId,name){
   if(name==="__weg"){const m=String(stationId).match(/^tp-form-(\d+)-(\d+)$/); if(m)tpFeldWeglassen(+m[1],+m[2]); return;}
   tpCoaches[stationId]=name;
   tpPlanSaveDebounced();                        // Zuordnung am Datum festhalten
-  if(typeof evalRenderList==="function")evalRenderList(); // Bewertungs-Liste zieht nach
   // Trainer eines parallelen Blocks gewechselt → die Felder des Hauptteils rechnen neu
   const m=String(stationId).match(/^tp-form-(\d+)-0$/);
   if(m&&tpIstParallel(tpSlots[+m[1]]))tpRenderTimeline();
@@ -1153,6 +1152,12 @@ async function tpTrainerRsvpLaden(datum){
   tpTrainerChipsRender();
   tpRenderTimeline();
 }
+/* v473: Die Phasen-Hinweise standen als Absatz in JEDER Phase bei JEDEM Oeffnen – die
+   Planseite war 2500 px hoch, und wer den Satz kannte, scrollte trotzdem daran vorbei.
+   Jetzt ein zugeklappter Tipp: ein Tap zeigt ihn, die Erklaerung bleibt erreichbar. */
+function tpTipp(text){
+  return `<details class="tp-tipp"><summary>💡 Tipp</summary><div>${esc(text)}</div></details>`;
+}
 function tpRenderTimeline(){
   const wrap=document.getElementById("tp-timeline");
   if(!wrap)return;
@@ -1239,7 +1244,7 @@ function tpRenderTimeline(){
         </select></div>`;
     }
     if(typ==="main"&&(slot.dauer||0)>=15){
-      html+=`<div style="font-size:10.5px;color:var(--text3);padding:2px 0 4px">💡 Nach ~10 Min. variieren oder steigern – 20 Min. dieselbe Übung überfordert die Aufmerksamkeit von 7–9-Jährigen</div>`;
+      html+=tpTipp("Nach ~10 Min. variieren oder steigern – 20 Min. dieselbe Übung überfordert die Aufmerksamkeit von 7–9-Jährigen.");
     }
     if(typ==="main"&&(gebunden.size||weg.length)){
       const zusammen=(felderGruppen||[]).filter(f=>f.dazu.length).map(f=>`${f.dazu.join(" + ")} spielt bei ${f.emo} ${f.name.split(" + ")[0]} mit`).join(" · ");
@@ -1248,7 +1253,7 @@ function tpRenderTimeline(){
       html+=`<div class="tp-parallel-hinweis" style="font-size:11px;color:var(--text2);padding:2px 0 6px">${[grund,wegText].filter(Boolean).join(" · ")} – ${parallelSlots} Feld${parallelSlots===1?"":"er"} statt ${Math.max(1,trainersAlle.length)}${zusammen?" · "+esc(zusammen):""}${weg.length?` <button class="tp-feld-zurueck" onclick="tpFeldZurueck(${si})" style="margin-left:6px;min-height:28px;padding:2px 10px;border:1px solid var(--rand-bedien);border-radius:8px;background:var(--surface);color:var(--text);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer">↩ Feld wieder aufnehmen</button>`:""}</div>`;
     }
     if(typ==="warmup"){
-      html+=`<div style="font-size:10.5px;color:var(--text3);padding:2px 0 4px">🏃 Ankommensspiel wählen: ab dem ERSTEN Kind spielbar, Nachzügler docken einfach an – kein Warten, kein Laufen ohne Ball</div>`;
+      html+=tpTipp("Ankommensspiel wählen: ab dem ERSTEN Kind spielbar, Nachzügler docken einfach an – kein Warten, kein Laufen ohne Ball.");
     }
     if(noSelect){
       // PO-Wunsch: das Abschlussspiel kann direkt als Blitzturnier laufen – die Slot-Dauer
@@ -1340,7 +1345,7 @@ function tpRenderTimeline(){
   const sfq=(typeof tpSpielformQuote==="function")?null:null; // Quote wird nach dem DOM-Aufbau gefüllt (braucht die Selects)
   html+=`<div id="tp-sfq" style="text-align:right;font-size:11px;color:var(--text2);margin-top:8px"></div>`;
   html+=`<div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;font-size:12px;font-weight:${passt?"600":"800"};color:${passt?"var(--text2)":"#dc2626"};margin-top:6px">Gesamt: ${time} von
-    <select id="tp-dauer" onchange="tpRenderTimeline()" style="font-size:13px;min-height:40px;padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;background:var(--surface);color:var(--text)">${[60,75,90].map(d=>`<option value="${d}"${zielDauer===d?" selected":""}>${d}</option>`).join("")}</select>
+    <select id="tp-dauer" onchange="tpRenderTimeline()" style="font-size:13px;min-height:44px;padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;background:var(--surface);color:var(--text)">${[60,75,90].map(d=>`<option value="${d}"${zielDauer===d?" selected":""}>${d}</option>`).join("")}</select>
     Min.${passt?(frei>0?` · noch ${frei} Min. frei`:""):" – zu lang!"}</div>`;
   wrap.innerHTML=html;
   // Gemerkte Auswahl wieder einsetzen (siehe oben)
@@ -1384,7 +1389,9 @@ async function tpPrognoseLoad(){
     else if(st==="abgesagt"||st==="krank"){/* 0 */}
     else exp+=(anyHist?rate[k.name]:0.7);
   });
-  el.innerHTML=`<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;background:var(--surface2);border:var(--border);border-radius:20px;padding:4px 12px">👥 ~${Math.round(exp)} Kinder erwartet${sure?` <span style="font-weight:400;color:var(--text2)">(${sure} fix)</span>`:""}</span>`;
+  /* v474: Quelle dazu (Muster v470) – „~9 erwartet" ohne Herkunft liest sich wie eine Zusage. */
+  const quelle=sure?`${sure} zugesagt, Rest nach Trainingsquote`:(anyHist?"nach Trainingsquote":"Schätzung, noch keine Anwesenheit erfasst");
+  el.innerHTML=`<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;background:var(--surface2);border:var(--border);border-radius:20px;padding:4px 12px">👥 ~${Math.round(exp)} Kinder erwartet <span style="font-weight:400;color:var(--text2)">(${quelle})</span></span>`;
 }
 
 function tpOnSelectChange(sel){
@@ -1932,26 +1939,6 @@ function tpAddRecoExercise(formIdx){
   toast("Übung in den Plan übernommen ✓");
 }
 
-function addEvalSection(){
-  const sub=document.getElementById("train-sub-planung");
-  if(!sub)return;
-  let existing=document.getElementById("tp-eval-section");
-  if(existing){evalRenderList();return;}
-  const sec=document.createElement("div");
-  sec.id="tp-eval-section";
-  sec.style.marginTop="20px";
-  sec.innerHTML=`
-    <div style="font-size:13.5px;font-weight:800;margin:16px 0 8px">⭐ Nachbewertung der Einheit</div>
-    <div id="tp-eval-list"></div>
-    <button onclick="evalSave()" style="width:100%;min-height:56px;margin-top:10px;border:none;border-radius:14px;background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;font-family:inherit;font-size:15px;font-weight:900;cursor:pointer;box-shadow:0 2px 10px rgba(37,99,235,.3)">💾 Nachbewertung speichern</button>
-    <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:16px 0 6px">Bisherige Bewertungen</div>
-    <div id="tp-eval-history"></div>
-  `;
-  sub.appendChild(sec);
-  evalRenderList();
-  evalRenderHistory();
-}
-
 /* Der geplante Zeitplan als Datenstruktur – frueher nur inline in evalRenderList.
    Wird auch von tpPlanSave() gebraucht, damit "Einheit bewerten" spaeter weiss,
    welche Uebungen an einem vergangenen Termin geplant waren. */
@@ -2183,32 +2170,6 @@ function stTimerRender(done){
     </div>`;
 }
 
-function evalRenderList(){
-  const wrap=document.getElementById("tp-eval-list");
-  if(!wrap)return;
-  const entries=tpPlanEntries();
-  if(!entries.length){
-    wrap.innerHTML='<div style="color:var(--text2);font-size:12px;padding:8px">Erst Übungen im Zeitplan zuweisen, dann hier bewerten. Tipp: "Auto-Plan" generiert einen Vorschlag.</div>';
-    return;
-  }
-  const dims=[{key:"durchfuehrung",label:"Durchführung"},{key:"spass",label:"Spaßfaktor Kinder"},{key:"umsetzung",label:"Anforderung umgesetzt"}];
-  let html='';
-  entries.forEach((f,fi)=>{
-    const trainerBadge=f.trainer!=="Alle"?`<span style="display:inline-block;background:#e0e7ff;color:#3730a3;font-size:9px;padding:1px 6px;border-radius:4px;margin-left:6px">${f.trainer}</span>`:"";
-    html+=`<div class="tb-eval" data-trainer="${f.trainer}" data-form-idx="${f.formIdx}"><div class="tb-eval-head">${f.formName}${trainerBadge}</div>`;
-    dims.forEach(d=>{
-      html+=`<div class="tb-eval-row"><span class="tb-eval-label">${d.label}</span><div class="tb-eval-stars">`;
-      for(let s=1;s<=5;s++){
-        html+=`<button class="tb-eval-star" data-form="${fi}" data-dim="${d.key}" data-val="${s}" onclick="evalStar(this)">☆</button>`;
-      }
-      html+=`</div></div>`;
-    });
-    html+=`<div class="mg" style="margin-top:6px"><textarea rows="1" placeholder="Notiz..." style="resize:none;font-size:11px" id="eval-note-${fi}"></textarea></div>`;
-    html+='</div>';
-  });
-  wrap.innerHTML=html;
-}
-
 function evalStar(btn){
   const stars=btn.parentElement.querySelectorAll(".tb-eval-star");
   const val=parseInt(btn.dataset.val);
@@ -2218,68 +2179,6 @@ function evalStar(btn){
     s.classList.toggle("on",i<newVal);
     s.textContent=i<newVal?"★":"☆";
   });
-}
-
-function evalSave(){
-  const datum=document.getElementById("tp-date").value;
-  if(!datum){toast("Bitte Datum wählen","err");return;}
-  const evals=[];
-  document.querySelectorAll(".tb-eval").forEach((block,fi)=>{
-    const entry={name:block.querySelector(".tb-eval-head").textContent.replace(new RegExp(TRAINER.join("|"),"g"),"").trim()};
-    entry.trainer=block.dataset.trainer||"";
-    entry.formIdx=parseInt(block.dataset.formIdx)||0;
-    block.querySelectorAll(".tb-eval-row").forEach(row=>{
-      const stars=row.querySelectorAll(".tb-eval-star.on");
-      const label=row.querySelector(".tb-eval-label").textContent;
-      entry[label]=stars.length;
-    });
-    const note=document.getElementById("eval-note-"+fi);
-    entry.notiz=note?note.value:"";
-    evals.push(entry);
-  });
-  if(!evals.length){toast("Erst Übungen im Zeitplan zuweisen, dann bewerten.","err");return;}
-  EVAL_DATA[datum]=evals;
-  localStorage.setItem(EVAL_KEY,JSON.stringify(EVAL_DATA));
-  teamTsSet(EVAL_TS_KEY,datum); // G1
-  teamSyncUpsertDebounced("trainings_eval",datum,evals); // G1 local-first + Schritt-6-Debounce
-  const sels=document.querySelectorAll(".tp-form-sel");
-  const loggedForms=[];
-  sels.forEach(s=>{if(s.value)loggedForms.push(parseInt(s.value));});
-  if(loggedForms.length){tpExerciseLog[datum]=[...new Set(loggedForms)];localStorage.setItem("adler_exercise_log",JSON.stringify(tpExerciseLog));}
-  const twChecks=document.querySelectorAll(".tp-tw-player:checked");
-  if(twChecks.length){
-    const twLog=JSON.parse(localStorage.getItem("adler_tw_log")||"{}");
-    const twPlayers=Array.from(twChecks).map(c=>c.value);
-    if(!twLog[datum])twLog[datum]=[];
-    twLog[datum]=twPlayers;
-    localStorage.setItem("adler_tw_log",JSON.stringify(twLog));
-  }
-  evalRenderHistory();
-  toast("Bewertung gespeichert ✓");
-}
-
-function evalRenderHistory(){
-  const wrap=document.getElementById("tp-eval-history");
-  if(!wrap)return;
-  const dates=Object.keys(EVAL_DATA).sort().reverse();
-  if(!dates.length){wrap.innerHTML='<div style="color:var(--text2);font-size:12px;padding:8px">Noch keine Bewertungen</div>';return;}
-  let html='';
-  dates.slice(0,10).forEach(d=>{
-    const items=EVAL_DATA[d];
-    html+=`<div class="card" style="padding:10px;margin-bottom:6px">`;
-    html+=`<div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px">${new Date(d).toLocaleDateString("de-DE")}</div>`;
-    items.forEach(it=>{
-      const stars=k=>it[k]?"★".repeat(it[k])+"☆".repeat(5-it[k]):"–";
-      const trainerTag=it.trainer&&it.trainer!=="Alle"?` <span style="background:#e0e7ff;color:#3730a3;font-size:9px;padding:1px 4px;border-radius:3px">${esc(it.trainer)}</span>`:"";
-      html+=`<div style="font-size:11px;padding:2px 0;color:var(--text2)">
-        <strong style="color:var(--text)">${esc(it.name)}</strong>${trainerTag}:
-        ${it.skipped?'<em style="color:var(--text3)">übersprungen</em>':`Durchf. ${stars("Durchführung")} · Spaß ${stars("Spaßfaktor Kinder")} · Umgesetzt ${stars("Anforderung umgesetzt")}`}
-        ${it.notiz?`<br><em>${esc(it.notiz)}</em>`:""}
-      </div>`;
-    });
-    html+='</div>';
-  });
-  wrap.innerHTML=html;
 }
 
 /* ═══════════════════════════════════
@@ -2333,7 +2232,6 @@ function tpGenerate(){
     });
     tpRenderTeamFokus(); // Team-Trainingsgenerator: schwächster Mannschaftswert -> Übungen
     tpRenderMindsetTip(); // E3: Mindset-Baustein des Tages
-    setTimeout(()=>addEvalSection(),50);
   },100);
 }
 
@@ -3093,7 +2991,7 @@ function tgRender(){
     const kinder=tg.gruppen.reduce((s,g)=>s+g.kinder.length,0);
     az.innerHTML=`<span style="font-size:11.5px;color:var(--text2);margin-right:2px">Gruppen:</span>`
       +TG_NAMEN.map((_,i)=>{const n=i+1;const an=n===jetzt;
-        return `<button onclick="tgAnzahlSetzen(${n})" aria-pressed="${an?"true":"false"}" style="min-width:44px;min-height:40px;padding:0 12px;border:1px solid var(--rand-bedien);${an?"border-color:transparent;background:var(--fam-training);color:#fff;":"background:var(--surface2);color:var(--text);"}border-radius:16px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer">${an?"✓ ":""}${n}</button>`;
+        return `<button onclick="tgAnzahlSetzen(${n})" aria-pressed="${an?"true":"false"}" style="min-width:44px;min-height:44px;padding:0 12px;border:1px solid var(--rand-bedien);${an?"border-color:transparent;background:var(--fam-training);color:#fff;":"background:var(--surface2);color:var(--text);"}border-radius:16px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer">${an?"✓ ":""}${n}</button>`;
       }).join("")
       +`<span style="font-size:11px;color:var(--text3);margin-left:2px">${kinder} Kinder</span>`;
   }

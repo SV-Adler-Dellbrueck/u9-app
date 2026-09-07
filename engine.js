@@ -527,10 +527,17 @@ function renderKombi(){
 function _renderKombiInner(wrap){
   const nominiert=verfuegbareSpieler();
   const combos=calcBestCombos(nominiert);
+  /* v474: Leerzustand = ein Satz + eine Aktion. Die Erklaerkaesten (Algorithmus, Adler/Igel)
+     erscheinen erst, wenn es eine Aufstellung gibt, die sie erklaeren. */
+  const erklaer=document.getElementById("kombi-erklaer");
+  if(erklaer)erklaer.style.display=(combos&&combos.length)?"":"none";
   if(!combos||!combos.length){
     const bewertet=(nominiert||Object.keys(DB)).filter(n=>getPlayerData(n)).length;
     wrap.innerHTML=`<div class="empty"><i class="ti ti-users-group"></i>Für die Aufstellung braucht es mindestens 4 <b>bewertete</b> Kinder – bisher sind es ${bewertet}.
-      <div style="font-size:11.5px;color:var(--text2);margin-top:8px;line-height:1.5">Die Rollen-Empfehlung rechnet mit den Bewertungen aus dem Team-Bereich. Solange die fehlen, hilft im Spieltag der Knopf „🪄 Feld &amp; Bank fair besetzen" – der verteilt nach Einsatzzeiten statt nach Bewertung.</div></div>`;
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;align-items:center">
+        <button class="btn btn-sm" onclick="go('spieltag')">🪄 Feld &amp; Bank fair besetzen (Spieltag)</button>
+        <a href="#" onclick="go('bew');return false" style="font-size:12px;color:var(--blue-text);font-weight:700">oder Kinder bewerten ›</a>
+      </div></div>`;
     return;
   }
 
