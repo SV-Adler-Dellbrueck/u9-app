@@ -495,6 +495,10 @@ function spieltagTeamKartenRender(){
         </span>
         <span style="font-size:15px;color:var(--text3)">${auf?"▴":"▾"}</span>
       </button>
+      <div class="karte-kader" style="display:flex;flex-wrap:wrap;gap:5px;padding:0 14px 10px">${
+        /* v481: die Namen stehen in der Kachel – nicht erst nach dem Aufklappen und nicht
+           nur in der Anwesenheitsliste zum Zusammenzaehlen. */
+        Object.keys(TEAMS).filter(k=>TEAMS[k]===n).map(k=>`<span style="font-size:12px;font-weight:700;background:${TEAM_LEIH[k]?"var(--blue-bg)":"var(--surface2)"};border-radius:12px;padding:5px 10px">${getKader(k)&&getKader(k).nr?`<span style="font-weight:500;color:var(--text3)">${getKader(k).nr} </span>`:""}${esc(k)}${istTorwart(k)?" 🥅":""}${TEAM_LEIH[k]?" 🔁":""}</span>`).join("")||'<span style="font-size:12px;color:var(--text3)">noch niemand eingeteilt</span>'}</div>
       <div id="spieltag-karte-inhalt-${n}" style="padding:0 12px 12px"></div>
     </div>`;
   }).join("");
@@ -762,49 +766,92 @@ function teamGruendeAusDom(){
     if(el)TEAM_GRUND[k.name]=el.value;
   });
 }
+/* v481 – PO: „Die Kachel Teams festlegen ist viel zu überladen. Außerdem wäre es super,
+   wenn in der Kachel der eingeteilten Teams auch übersichtlich das Team zu sehen ist –
+   aktuell muss ich die Anwesenheit komplett durchscrollen und selbst zusammenzählen."
+   Vorher stand hier alles auf einer Wand: Teamzahl, Felder, Runde, Trainer, Erklaerabsatz,
+   Kacheln, Hinweise, dann 16 Kinder mit je bis zu acht Knoepfen. Jetzt zwei Bloecke:
+   (1) „Wer ist dabei?" – die Kinderliste mit Dabei/Nicht/Verletzt, zugeklappt, sobald
+       jemand dabei ist (nomRender, md-turnierplan.js);
+   (2) „Teams" – je Team eine Karte mit Trainer und den Namen als Chips; ein Tipp auf einen
+       Chip schiebt das Kind ins naechste Team, zuletzt in die Pause. Felder und Runde
+       liegen zugeklappt darunter. Eine Hauptaktion: „In die Nominierungen übertragen". */
 function teamsRender(){
   const box=document.getElementById("team-panel");
   if(!box)return;
   teamGruendeAusDom();
-  const kd=teamKader();
   const pool=teamZusagen();
   const vorschlag=teamAnzahlVorschlag();
-  const form=((typeof FORMATIONS!=="undefined"&&FORMATIONS[tbFormation])||{label:"4+1 Raute"}).label;
-  const segBtn=(n)=>`<button class="seg-btn${TEAM_ANZAHL===n?" active":""}" onclick="teamSetAnzahl(${n})">${n}</button>`;
+  const leer=!pool.length;
+  const flabel=k=>((typeof FORMATIONS!=="undefined"&&FORMATIONS[k])||{label:k}).label;
+  const formen=[["funino","FUNiño"],["4+1","4+1"],["5+1","5+1"]];
+  const felder=teamFelderAktiv();
+  const segBtn=(n)=>`<button class="seg-btn${TEAM_ANZAHL===n?" active":""}" onclick="teamSetAnzahl(${n})" aria-pressed="${TEAM_ANZAHL===n?"true":"false"}">${n}</button>`;
+  const chip=(n,t)=>{
+    const tw=istTorwart(n), leih=TEAM_LEIH[n];
+    const titel=`${teamQuoteText(n)} · ${teamEinsatzText(n)}${leih?" · Aushilfe aus Adler "+leih:""} – antippen: ins nächste Team`.replace(/<[^>]+>/g,"");
+    return `<button class="team-chip" onclick="teamChipTap('${jsq(n)}')" title="${esc(titel)}" aria-label="${esc(n)}${t?" in Adler "+t:" pausiert"}, antippen für das nächste Team"
+      style="min-height:44px;display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid var(--rand-bedien);border-radius:22px;background:${leih?"var(--blue-bg)":"var(--surface)"};color:var(--text);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">${getKader(n)&&getKader(n).nr?`<span style="font-weight:500;color:var(--text3)">${getKader(n).nr}</span>`:""}${esc(n)}${tw?" 🥅":""}${leih?" 🔁":""}</button>`;
+  };
 
-  /* Der Container hiess frueher class="seg" – die Klasse gibt es im CSS nicht (ueberall
-     sonst heisst sie seg-ctrl). Dadurch griff weder das Flex-Layout noch die Breite:
-     die drei Knoepfe schrumpften auf Textbreite und waren kaum zu treffen. Jetzt volle
-     Breite in eigener Zeile, die 44px aus .seg-btn kommen damit auch zur Geltung. */
-  let html=`<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-      <span style="font-size:12px;font-weight:600">Anzahl Teams</span>
+  let html=`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+      <span style="font-size:12px;font-weight:700">Anzahl Teams</span>
       <span style="font-size:11px;color:var(--text3);margin-left:auto">Vorschlag: ${vorschlag}</span>
     </div>
-    <div class="seg-ctrl" style="margin-bottom:8px">${Array.from({length:TEAM_MAX},(_,i)=>segBtn(i+1)).join("")}</div>
-    <div style="font-size:11px;color:var(--text3);margin-bottom:8px">${pool.length} Kind${pool.length===1?"":"er"} dabei · Spielform des Termins: ${esc(form)}</div>`;
+    <div class="seg-ctrl" style="margin-bottom:10px">${Array.from({length:TEAM_MAX},(_,i)=>segBtn(i+1)).join("")}</div>`;
 
-  /* Trainer je Team – steht bewusst VOR der Kinder-Einteilung und auch dann schon da,
-     wenn noch niemand zugesagt hat: erst legen wir fest, wie viele Teams wir stellen und
-     wer sie betreut, dann verteilen wir die Kinder. Ein Team ohne Trainer wird angemahnt
-     (PO: „es muss immer ein Trainer zugewiesen werden"). */
-  const formen=[["funino","FUNiño"],["4+1","4+1"],["5+1","5+1"]];
-  const flabel=k=>((typeof FORMATIONS!=="undefined"&&FORMATIONS[k])||{label:k}).label;
-  /* v480: Felder des Festivals. Stehen Felder, wandern die festen Teams je Runde ein Feld
-     weiter; die Spielform je Team folgt daraus und ist nicht mehr einzeln waehlbar. */
-  const felder=teamFelderAktiv();
-  html+=`<div id="team-felder" style="margin:12px 0 6px">
-    <div style="font-size:12px;font-weight:600;margin-bottom:4px">Felder beim Festival <span style="font-weight:400;color:var(--text3)">– die Teams wechseln jede Runde das Feld</span></div>
+  if(leer){
+    html+=`<div class="empty" style="padding:1rem"><i class="ti ti-users-group"></i>Noch niemand dabei – oben unter „Wer ist dabei?“ antippen. Eltern-Rückmeldungen werden automatisch übernommen.</div>`;
+  }
+
+  // Je Team eine Karte: Trainer, Feld/Spielform, Spielanteil, Namen als Chips
+  for(let t=1;t<=TEAM_ANZAHL;t++){
+    const m=pool.filter(n=>TEAMS[n]===t);
+    const tr=TEAM_TRAINER[t]||[];
+    const sp=teamSpielanteil(t), kdt=teamKaderFuer(t);
+    const pausiert=felder&&teamFeldIndex(t)<0;
+    const zuWenig=!pausiert&&!leer&&m.length<sp.auf;
+    const twFehlt=!pausiert&&!leer&&kdt.tw&&!m.some(istTorwart);
+    const fl=pausiert?"setzt diese Runde aus":`${felder?"Feld "+(teamFeldIndex(t)+1)+" · ":""}${esc(flabel(teamFormVon(t)))} · ${sp.auf} auf dem Feld · je ≈ ${Math.round(sp.anteil*100)} %`;
+    const fk=teamFormVon(t);
+    html+=`<div class="team-karte" data-team="${t}" style="border:1px solid var(--rand-bedien);border-left:4px solid var(--fam-spieltag);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--surface)">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:14px;font-weight:900">Adler ${t}</span>
+        <span style="font-size:11.5px;color:var(--text2)">${m.length} Kind${m.length===1?"":"er"}</span>
+        <button class="btn btn-sm" onclick="teamTrainerOpen(${t})" style="margin-left:auto;${tr.length?"":"color:var(--amber);border-color:var(--amber)"}" aria-label="Trainer für Adler ${t} wählen">🧢 ${tr.length?esc(tr.join(", ")):"Trainer wählen"}</button>
+      </div>
+      <div style="font-size:11px;color:${zuWenig?"var(--red)":"var(--text2)"};margin:4px 0 8px">${fl}${zuWenig?` – <b>${sp.auf-m.length} zu wenig</b>`:""}${twFehlt?' · <span style="color:var(--red)">kein Torwart-Kind</span>':""}</div>
+      ${!felder?`<div class="seg-ctrl" role="group" aria-label="Spielform Adler ${t}" style="margin-bottom:8px">${formen.map(([k,l])=>`<button class="seg-btn${fk===k?" active":""}" onclick="teamFormSet(${t},'${k}')" aria-pressed="${fk===k?"true":"false"}">${l}</button>`).join("")}</div>`:""}
+      <div class="team-chips" style="display:flex;flex-wrap:wrap;gap:6px">${m.length?m.map(n=>chip(n,t)).join(""):'<span style="font-size:12px;color:var(--text3)">noch niemand</span>'}</div>
+    </div>`;
+  }
+  // Pause: dabei, aber in keinem Team – eine Entscheidung des Trainers, mit Grund fuer die Eltern
+  const ohneTeam=pool.filter(n=>!TEAMS[n]);
+  if(ohneTeam.length){
+    html+=`<div class="team-karte" data-team="0" style="border:1px dashed var(--rand-bedien);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--surface2)">
+      <div style="font-size:12.5px;font-weight:800;margin-bottom:6px">⏸ Pause <span style="font-weight:500;color:var(--text2)">${ohneTeam.length} Kind${ohneTeam.length===1?"":"er"} – antippen holt ins Team</span></div>
+      <div class="team-chips" style="display:flex;flex-wrap:wrap;gap:6px">${ohneTeam.map(n=>chip(n,0)).join("")}</div>
+      ${ohneTeam.map(n=>`<input id="nh-${teamKaderIdx(n)}" value="${esc(TEAM_GRUND[n]||"")}" placeholder="${esc(n)}: Grund für die Eltern (optional)" style="width:100%;min-height:44px;margin-top:6px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:12px;background:var(--surface);color:var(--text);box-sizing:border-box">`).join("")}
+    </div>`;
+  }
+  // Zu grosse Teams – eine Information, keine Entscheidung
+  const grosse=[];
+  for(let t=1;t<=TEAM_ANZAHL;t++){ const anz=pool.filter(n=>TEAMS[n]===t).length; if(anz>teamKaderFuer(t).gesamt+1)grosse.push({t,anz}); }
+  if(grosse.length)html+=`<div style="font-size:11.5px;color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber);border-radius:10px;padding:8px 10px;margin-bottom:8px">👥 ${grosse.map(g=>`Adler ${g.t}: ${g.anz} Kinder`).join(" · ")} – Sollstärke ${grosse.map(g=>teamKaderFuer(g.t).gesamt).join("/")}${vorschlag>TEAM_ANZAHL?`, mit ${vorschlag} Teams passt es`:""}.</div>`;
+
+  // Felder und Runde – zugeklappt, bis der Trainer sie braucht (Festival)
+  const zuordnung=felder?Array.from({length:TEAM_ANZAHL},(_,i)=>i+1).map(t=>{ const i=teamFeldIndex(t); return `Adler ${t} → ${i<0?"Pause":`Feld ${i+1} (${esc(flabel(TEAM_FELDER[i]))})`}`; }):[];
+  const leih=Object.keys(TEAM_LEIH).map(n=>`${esc(n)} (Adler ${TEAM_LEIH[n]} → Adler ${TEAMS[n]})`);
+  html+=`<details id="team-felder" class="tp-tipp" style="margin:4px 0 8px"${felder?" open":""}>
+    <summary>🏟️ Felder beim Festival${felder?` · Runde ${TEAM_RUNDE}`:""}<span style="font-weight:400;color:var(--text3)"> – ${felder?"die Teams wechseln jede Runde das Feld":"nur bei mehreren Feldern mit verschiedenen Formaten"}</span></summary>
+    <div>
     ${TEAM_FELDER.map((k,i)=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
       <span style="font-size:12px;font-weight:700;width:52px">Feld ${i+1}</span>
       <div class="seg-ctrl" role="group" aria-label="Spielform Feld ${i+1}" style="flex:1">${formen.map(([key,l])=>`<button class="seg-btn${k===key?" active":""}" onclick="teamFeldSetzen(${i},'${key}')" aria-pressed="${k===key?"true":"false"}">${l}</button>`).join("")}</div>
       <button class="btn btn-sm" onclick="teamFeldWeg(${i})" aria-label="Feld ${i+1} entfernen" title="Feld entfernen" style="min-width:44px;justify-content:center">✕</button>
     </div>`).join("")}
-    ${TEAM_FELDER.length<4?`<button class="btn btn-sm" onclick="teamFeldPlus()"><i class="ti ti-plus"></i>${felder?"Weiteres Feld":"Felder anlegen (Festival)"}</button>`:""}
-  </div>`;
-  if(felder){
-    const zuordnung=Array.from({length:TEAM_ANZAHL},(_,i)=>i+1).map(t=>{ const i=teamFeldIndex(t); return `Adler ${t} → ${i<0?"Pause":`Feld ${i+1} (${esc(flabel(TEAM_FELDER[i]))})`}`; });
-    const leih=Object.keys(TEAM_LEIH).map(n=>`${esc(n)} (Adler ${TEAM_LEIH[n]} → Adler ${TEAMS[n]})`);
-    html+=`<div id="team-runde" style="background:var(--surface2);border-radius:var(--r);padding:10px 12px;margin-bottom:10px">
+    ${TEAM_FELDER.length<4?`<button class="btn btn-sm" onclick="teamFeldPlus()"><i class="ti ti-plus"></i>${felder?"Weiteres Feld":"Felder anlegen"}</button>`:""}
+    ${felder?`<div id="team-runde" style="background:var(--surface2);border-radius:var(--r);padding:10px 12px;margin-top:10px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
         <span style="font-size:13px;font-weight:800;flex:1">Runde ${TEAM_RUNDE}</span>
         <button class="btn btn-sm" onclick="teamRundeSetzen(${TEAM_RUNDE-1})"${TEAM_RUNDE<=1?" disabled":""} aria-label="Runde zurück">‹</button>
@@ -812,156 +859,27 @@ function teamsRender(){
       </div>
       <div style="font-size:12px;color:var(--text2);line-height:1.5">${zuordnung.join("<br>")}</div>
       ${leih.length?`<div style="font-size:11.5px;margin-top:6px"><b>Aushilfe diese Runde:</b> ${leih.join(" · ")} – wandert mit der nächsten Runde zurück.</div>`:""}
-    </div>`;
-  }
-  html+=`<div style="font-size:12px;font-weight:600;margin:12px 0 6px">${felder?"Trainer je Team":"Trainer und Spielform je Team"}</div>`;
-  for(let t=1;t<=TEAM_ANZAHL;t++){
-    const tr=TEAM_TRAINER[t]||[];
-    /* v479: Spielform je Team – beim Kinderfestival spielt Adler 1 auf dem 4+1-Feld und
-       Adler 2 FUNiño. Die Automatik und der Spielanteil rechnen damit. Mit Feldern (v480)
-       ergibt sie sich aus der Runde. */
-    const fk=teamFormVon(t);
-    if(!felder)html+=`<div class="seg-ctrl" role="group" aria-label="Spielform Adler ${t}" style="margin-bottom:6px">${formen.map(([k,l])=>`<button class="seg-btn${fk===k?" active":""}" onclick="teamFormSet(${t},'${k}')" aria-pressed="${fk===k?"true":"false"}">${l}</button>`).join("")}</div>`;
-    html+=`<button onclick="teamTrainerOpen(${t})" style="width:100%;min-height:48px;display:flex;align-items:center;gap:10px;text-align:left;margin-bottom:6px;padding:8px 12px;border:1px solid var(--rand-bedien);border-left:3px solid var(--fam-spieltag);border-radius:12px;background:var(--surface2);color:var(--text);font-family:inherit;cursor:pointer">
-      <span style="font-size:16px">🧢</span>
-      <span style="flex:1;min-width:0">
-        <span style="display:block;font-size:12.5px;font-weight:800">Adler ${t}</span>
-        <span style="display:block;font-size:11.5px;${tr.length?"color:var(--text2)":"color:var(--amber);font-weight:700"}">${tr.length?esc(tr.join(", ")):"noch kein Trainer zugeteilt"}</span>
-      </span>
-      <span style="font-size:15px;color:var(--text3)">✏️</span>
-    </button>`;
-  }
+    </div>`:""}
+    </div>
+  </details>`;
 
-  /* Kein frueher Ausstieg mehr, wenn noch niemand dabei ist: die Kinderliste IST seit v394
-     der Ort, an dem „dabei" gesetzt wird. Wer hier aussteigt, nimmt dem Trainer den Weg,
-     ueberhaupt jemanden zu nominieren. Nur der Hinweis unterscheidet sich. */
-  const leer=!pool.length;
-
-  /* Drei gleichrangige Knoepfe nebeneinander – der Bildschirm war falsch geschnitten
-     (Hausregel: genau EINE Hauptaktion). Jetzt in der Reihenfolge des Arbeitsschritts:
-     erst einteilen (Vorbereitung), dann uebertragen (die eine Hauptaktion, volle Breite).
-     „Rollen-Erfahrung" ist gar keine Aktion am Spieltag, sondern eine Auswertung – die
-     wohnt in der Team-Kachel unter „Ueberblick" und ist dort ueber rollenMatrixOpen
-     erreichbar. Hier war sie doppelt und hat die Hauptaktion verdeckt. */
-  html+=`<div style="font-size:11.5px;color:var(--text2);margin:12px 0 6px">${leer
-      ? "Noch niemand dabei – unten in der Liste auf „Dabei“ tippen. Die Eltern-Rückmeldungen werden automatisch übernommen, sobald sie da sind."
-      : `Wer auf „Dabei“ steht, wird direkt einem Team zugeordnet. Unten in der Liste änderst du Anwesenheit und Team von Hand. Erst „In die Nominierungen übertragen“ macht es verbindlich.`}</div>
-    <div style="margin-bottom:10px">
-      <button class="btn btn-sm" onclick="teamsAuto()" style="width:100%;margin-bottom:8px"${leer?" disabled":""}><i class="ti ti-wand"></i>Alle Kinder gleichmäßig auf ${TEAM_ANZAHL} Team${TEAM_ANZAHL>1?"s":""} verteilen</button>
+  // Aktionen: eine Hauptaktion, daneben „neu verteilen"
+  html+=`<div style="display:flex;flex-direction:column;gap:8px;margin:6px 0 10px">
       <button class="btn btn-p" onclick="teamsAnwenden()" style="width:100%"${leer?" disabled":""}><i class="ti ti-arrow-right"></i>In die Nominierungen übertragen</button>
+      <button class="btn btn-sm" onclick="teamsAuto()" style="width:100%"${leer?" disabled":""} title="Verteilt alle Kinder neu – Handänderungen gehen verloren"><i class="ti ti-wand"></i>Neu verteilen</button>
     </div>
     <div id="team-rollen-hint"></div>`;
   setTimeout(()=>{try{rollenHintFill();}catch(e){}},0); // A-lite: „noch nie im Tor"-Hinweis nachladen
-
-  // Zu wenige Torwarte? Das merkt man sonst erst beim Anpfiff.
-  const twTeams=Array.from({length:TEAM_ANZAHL},(_,i)=>i+1).filter(t=>teamKaderFuer(t).tw).length;   // v479: nur Teams mit Torwart-Spielform
-  if(twTeams&&!leer){
-    const twDa=pool.filter(istTorwart).length;
-    if(twDa<twTeams)
-      html+=`<div style="font-size:11.5px;color:#b45309;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:8px 10px;margin-bottom:10px">🥅 Nur ${twDa} Kind${twDa===1?"":"er"} mit Torwart-Haken dabei, gebraucht werden ${twTeams}. Ein Team bleibt ohne Torwart.</div>`;
-  }
-
-  // Team-Übersicht: Größe, Torwart, Ø-Stärke
-  const zeilen=[];
-  const mindest=teamMindestKader();
-  for(let t=1;t<=TEAM_ANZAHL&&!leer;t++){
-    const m=pool.filter(n=>TEAMS[n]===t);
-    const bew=m.map(teamStaerke).filter(v=>v>=0);
-    const schnitt=bew.length?Math.round(bew.reduce((a,b)=>a+b,0)/bew.length):null;
-    const tw=m.filter(istTorwart).length;
-    const kdt=teamKaderFuer(t), sp=teamSpielanteil(t);
-    const pausiert=felder&&teamFeldIndex(t)<0;
-    const spielfaehig=pausiert||m.length>=sp.auf;   // v479: spielfaehig = das Feld dieser Spielform ist voll
-    const fl=pausiert?"Pause":((typeof FORMATIONS!=="undefined"&&FORMATIONS[teamFormVon(t)])||{label:teamFormVon(t)}).label;
-    zeilen.push(`<div class="team-anteil" data-team="${t}" style="flex:1;min-width:98px;background:var(--surface2);border-radius:var(--r);padding:8px">
-      <div style="font-size:11.5px;font-weight:700">Adler ${t} <span style="font-weight:500;color:var(--text2)">${felder&&!pausiert?"Feld "+(teamFeldIndex(t)+1)+" · ":""}${esc(fl)}</span></div>
-      <div style="font-size:10.5px;color:${spielfaehig?"var(--text2)":"var(--red)"}" title="${sp.auf} auf dem Feld, Sollgröße ${kdt.gesamt}">${m.length} Kinder${pausiert?" · setzt diese Runde aus":` · ${sp.auf} auf dem Feld${spielfaehig?"":" – zu wenige"}`}</div>
-      <div style="font-size:10.5px;font-weight:700" title="Spielanteil je Kind: Feldplätze geteilt durch Teamgröße">${pausiert?"&nbsp;":`je ≈ ${Math.round(sp.anteil*100)} % Spielzeit`}</div>
-      <div style="font-size:10.5px">${kdt.tw?(tw?"🥅 ok":"<span style='color:var(--red)'>kein TW</span>"):"<span style='color:var(--text3)'>ohne TW</span>"}${schnitt!=null?" · Ø "+schnitt+"%":""}</div>
-    </div>`);
-  }
-  html+=`<div style="display:flex;gap:6px;margin-bottom:10px">${zeilen.join("")}</div>`;
-
-  /* EINE Zeile je Kind: Anwesenheit und Team-Zuordnung beieinander (PO v394: „Wäre es
-     nicht besser wenn ich die Anwesenheit direkt in Teams festlegen sehen und ändern
-     kann?"). Vorher waren das zwei getrennte 16-Zeilen-Listen übereinander.
-     Die Team-Knöpfe erscheinen nur bei „dabei" – wer nicht da ist, braucht kein Team.
-     Bei EINEM Team gibt es statt der Zahlen einen Pausiert-Schalter: die Zahl „1" wäre
-     keine Wahl, aber „passt nicht mehr rein" gibt es auch mit einem Team. */
-  const stCfg={dabei:{lbl:"Dabei",col:"var(--green)"},nicht:{lbl:"Nicht",col:"var(--text3)"},verletzt:{lbl:"Verletzt",col:"var(--red)"}};
-  const rvEmo={zugesagt:"✅",abgesagt:"❌",krank:"🤒"};
-  const btn=(inhalt,onclick,an,titel)=>`<button onclick="${onclick}" aria-pressed="${an?"true":"false"}"${titel?` title="${titel}"`:""}
-      style="flex:1;min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:var(--r);cursor:pointer;font-family:inherit;font-size:11.5px;font-weight:${an?"700":"500"};background:${an?"var(--blue)":"var(--surface)"};color:${an?"#fff":"var(--text2)"}">${inhalt}</button>`;
-
-  const zeile=(n)=>{
-    const st=(typeof nomStatus==="object"&&nomStatus[n])||"offen";
-    const dabei=(st==="dabei");
-    const cur=TEAMS[n]||0;
-    const rv=(typeof nomRsvp==="object"&&nomRsvp[n])||null;
-    const badge=rv
-      ? `<span title="Eltern-Rückmeldung: ${esc(rv.status)}${rv.kommentar?" – "+esc(rv.kommentar):""}" style="width:16px;text-align:center;font-size:13px">${rvEmo[rv.status]||""}</span>`
-      : `<span style="width:16px"></span>`;
-    const pause=(typeof istPaused==="function"&&istPaused(n))
-      ? ` <span title="Pausiert – zählt nicht mit" style="font-size:10px;font-weight:700;color:var(--amber)">⏸ bis ${pauseBisLabel(n)}</span>` : "";
-    const leihBadge=TEAM_LEIH[n]?` <span title="Hilft diese Runde aus – kehrt mit der nächsten Runde zu Adler ${TEAM_LEIH[n]} zurück" style="font-size:10px;font-weight:700;color:var(--blue-text)">🔁 Aushilfe aus Adler ${TEAM_LEIH[n]}</span>`:"";
-
-    const stKnoepfe=["dabei","nicht","verletzt"].map(s=>
-      `<button onclick="nomSet('${jsq(n)}','${s}')" aria-pressed="${st===s?"true":"false"}"
-        style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:var(--r);cursor:pointer;font-family:inherit;font-size:11.5px;font-weight:${st===s?"700":"500"};background:${st===s?stCfg[s].col:"var(--surface)"};color:${st===s?"#fff":"var(--text2)"}">${stCfg[s].lbl}</button>`).join("");
-
-    let teamZeile="";
-    if(dabei){
-      let k="";
-      if(TEAM_ANZAHL>1){
-        // Beschriftung als Wort, nicht als Zeichen: das Pause-Symbol fehlt in manchen
-        // Systemschriften und wird dann als leeres Kästchen gezeichnet.
-        for(let t=1;t<=TEAM_ANZAHL;t++)k+=btn(String(t),`teamSet('${jsq(n)}',${t})`,cur===t);
-        k+=btn("Pause",`teamSet('${jsq(n)}',0)`,!cur,"Pausiert – spielt heute nicht mit");
-      }else{
-        k =btn("Spielt mit",`teamSet('${jsq(n)}',1)`,cur===1);
-        k+=btn("Pausiert",`teamSet('${jsq(n)}',0)`,!cur,"Pausiert – spielt heute nicht mit");
-      }
-      teamZeile=`<div style="display:flex;gap:5px;margin-top:5px">${k}</div>`;
-      if(!cur)teamZeile+=`<input id="nh-${teamKaderIdx(n)}" value="${esc(TEAM_GRUND[n]||"")}" placeholder="Grund für die Eltern (optional)"
-        style="width:100%;min-height:44px;margin-top:5px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:12px;background:var(--surface);color:var(--text);box-sizing:border-box">`;
-    }
-    return `<div style="padding:8px 0;border-top:var(--border)">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
-        ${badge}
-        <span style="flex:1;min-width:0;font-size:12.5px;font-weight:600">${getKader(n)&&getKader(n).nr?getKader(n).nr+" ":""}${esc(n)}${istTorwart(n)?" 🥅":""}${pause}${leihBadge}</span>
-        ${dabei?`<span style="font-size:10px">${teamQuoteText(n)} · ${teamEinsatzText(n)}</span>`:""}
-      </div>
-      <div style="display:flex;gap:5px">${stKnoepfe}</div>
-      ${teamZeile}
-    </div>`;
-  };
-
-  /* Zwei verschiedene Dinge, getrennt gehalten: wen der Trainer pausieren laesst (eine
-     Entscheidung) und ob die Teams ueber der Sollstaerke liegen (eine Information). */
-  const grosse=[];
-  for(let t=1;t<=TEAM_ANZAHL;t++){
-    const anz=Object.keys(TEAMS).filter(x=>TEAMS[x]===t).length;
-    if(anz>teamKaderFuer(t).gesamt+1)grosse.push({t,anz});
-  }
-  if(grosse.length){
-    const vor=teamAnzahlVorschlag();
-    html+=`<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:10px;padding:8px 10px;margin-bottom:6px">
-      <div style="font-size:12px;font-weight:700;color:var(--amber)">👥 ${grosse.length===1&&TEAM_ANZAHL===1?`${grosse[0].anz} Kinder in einem Team`:grosse.map(g=>`Team ${g.t}: ${g.anz} Kinder`).join(" · ")}</div>
-      <div style="font-size:11px;color:var(--amber);margin-top:2px">Sollstärke sind ${grosse.map(g=>teamKaderFuer(g.t).gesamt).join("/")} pro Team${vor>TEAM_ANZAHL?` – mit ${vor} Teams passt es`:""}. Alle spielen mit; wen du pausieren lassen willst, stellst du unten auf „Pausiert“.</div>
-    </div>`;
-  }
-  const ohneTeam=pool.filter(n=>!TEAMS[n]);
-  if(ohneTeam.length){
-    html+=`<div style="background:var(--surface2);border:var(--border);border-radius:10px;padding:8px 10px;margin-bottom:6px">
-      <div style="font-size:12px;font-weight:700;color:var(--text2)">⏸ ${ohneTeam.length} Kind${ohneTeam.length===1?"":"er"} pausiert: ${ohneTeam.map(esc).join(", ")}</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:2px">Von dir auf Pause gestellt – tippe auf „Spielt mit“, um das zurückzunehmen.</div>
-    </div>`;
-  }
-  // Ausgetragene Kinder gehoeren nicht in die Nominierung (sie tauchten hier noch auf)
-  html+=KADER.filter(k=>k.aktiv!==false).map(k=>zeile(k.name)).join("");
   box.innerHTML=html;
 }
-
+/* v481: ein Tipp auf einen Namens-Chip schiebt das Kind ins naechste Team, nach dem
+   letzten in die Pause, aus der Pause in Team 1. Bei einem Team: Spielt mit ↔ Pause. */
+function teamChipTap(name){
+  const cur=TEAMS[name]||0;
+  const next=cur>=TEAM_ANZAHL?0:cur+1;
+  if(TEAM_LEIH[name])delete TEAM_LEIH[name];   // Handentscheidung ersetzt die Aushilfe
+  teamSet(name,next);
+}
 // Eltern-Zusagen werden automatisch übernommen (in nomLoad). Dieser Button verwirft die
 // Trainer-Overrides und koppelt die Nominierung wieder komplett an den aktuellen RSVP-Stand.
 /* „Meine Änderungen verwerfen" stellt den Zustand her, den nomLoad ohne jeden Trainer-

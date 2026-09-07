@@ -499,26 +499,42 @@ function nomRender(){
   const box=document.getElementById("nom-panel");
   if(!box)return;
   const hasRsvp=Object.keys(nomRsvp).length>0;
-  // Bewusst die GLOBALE Zahl, nicht nominierteSpieler() – das zaehlt seit v393 nur das
-  // gerade gewaehlte Team, und hier steht die Frage „wer ist heute ueberhaupt dabei".
-  const dabeiAlle=KADER.filter(k=>k.aktiv!==false&&nomStatus[k.name]==="dabei").length;
-  let sum="";
-  if(hasRsvp){
-    const c={zugesagt:0,abgesagt:0,krank:0};
-    Object.values(nomRsvp).forEach(x=>{if(c[x.status]!=null)c[x.status]++;});
-    sum=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;background:var(--surface2);border-radius:var(--r);font-size:11.5px">
-      <span style="font-weight:600">Rückmeldung der Eltern</span><span style="color:var(--text3)">(auto übernommen)</span><span>✅ ${c.zugesagt}</span><span>❌ ${c.abgesagt}</span><span>🤒 ${c.krank}</span><span style="color:var(--text3)">offen ${KADER.length-Object.keys(nomRsvp).length}</span>
-      <button class="btn btn-sm" onclick="nomApplyRsvp()" style="margin-left:auto;flex-direction:column;align-items:flex-start;gap:0;text-align:left" title="Setzt die Nominierung auf den Stand der Eltern-Rückmeldungen zurück"><span><i class="ti ti-arrow-back-up" style="margin-right:5px"></i>Meine Änderungen verwerfen</span><span style="font-size:10px;font-weight:400;color:var(--text3)">Nominierung folgt wieder den Eltern</span></button>
+  const aktiv=KADER.filter(k=>k.aktiv!==false);
+  const dabeiAlle=aktiv.filter(k=>nomStatus[k.name]==="dabei").length;
+  const offenAlle=aktiv.filter(k=>nomStatus[k.name]==="offen"||nomStatus[k.name]==null).length;
+  const c={zugesagt:0,abgesagt:0,krank:0};
+  Object.values(nomRsvp).forEach(x=>{if(c[x.status]!=null)c[x.status]++;});
+  /* v481: die Kinderliste liegt in einem zugeklappten Block, sobald jemand dabei ist –
+     die Teams darunter sind der Arbeitsplatz. Hier nur noch Dabei/Nicht/Verletzt; das Team
+     wechselt man in der Team-Karte per Chip. */
+  const stCfg={dabei:{lbl:"Dabei",col:"var(--green)"},nicht:{lbl:"Nicht",col:"var(--text3)"},verletzt:{lbl:"Verletzt",col:"var(--red)"}};
+  const rvEmo={zugesagt:"✅",abgesagt:"❌",krank:"🤒"};
+  const q=n=>(typeof teamQuoteText==="function"&&typeof teamEinsatzText==="function")?`${teamQuoteText(n)} · ${teamEinsatzText(n)}`:"";
+  const zeile=n=>{
+    const st=nomStatus[n]||"offen";
+    const rv=nomRsvp[n]||null;
+    const badge=rv?`<span title="Eltern-Rückmeldung: ${esc(rv.status)}${rv.kommentar?" – "+esc(rv.kommentar):""}" style="width:16px;text-align:center;font-size:13px">${rvEmo[rv.status]||""}</span>`:`<span style="width:16px;text-align:center;font-size:12px;color:var(--text3)" title="noch keine Eltern-Antwort">?</span>`;
+    const pause=(typeof istPaused==="function"&&istPaused(n))?` <span title="Pausiert – zählt nicht mit" style="font-size:10px;font-weight:700;color:var(--amber)">⏸ bis ${pauseBisLabel(n)}</span>`:"";
+    const k=getKader(n);
+    return `<div style="padding:6px 0;border-top:var(--border)">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">${badge}
+        <span style="flex:1;min-width:0;font-size:12.5px;font-weight:600">${k&&k.nr?k.nr+" ":""}${esc(n)}${(typeof istTorwart==="function"&&istTorwart(n))?" 🥅":""}${pause}</span>
+        <span style="font-size:10px;color:var(--text2)">${q(n)}</span></div>
+      <div style="display:flex;gap:5px">${["dabei","nicht","verletzt"].map(s=>`<button onclick="nomSet('${jsq(n)}','${s}')" aria-pressed="${st===s?"true":"false"}"
+        style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:var(--r);cursor:pointer;font-family:inherit;font-size:11.5px;font-weight:${st===s?"700":"500"};background:${st===s?stCfg[s].col:"var(--surface)"};color:${st===s?"#fff":"var(--text)"}">${stCfg[s].lbl}</button>`).join("")}</div>
     </div>`;
-  }
-  const kaderAktiv=KADER.filter(k=>k.aktiv!==false).length;   // ausgetragene Kinder zaehlen nicht mit
-  /* v477: Diese Liste IST die Anwesenheit des Spieltags (ein Ort je Termintyp, PO). Das
-     steht jetzt dran – und „offen" (Eltern haben nicht geantwortet) bekommt am Platz einen
-     Knopf, statt sechzehn einzelne Tipps. */
-  const offenAlle=KADER.filter(k=>k.aktiv!==false&&(nomStatus[k.name]==="offen"||nomStatus[k.name]==null)).length;
-  box.innerHTML=`<div style="font-size:11px;color:var(--text2);margin-bottom:4px">${dabeiAlle} von ${kaderAktiv} dabei – gilt für den ganzen Spieltag</div>
-    <div id="nom-quelle" style="font-size:10.5px;color:var(--text3);margin-bottom:8px;line-height:1.4">📣 Vorbelegt aus den Eltern-Rückmeldungen (zugesagt = Dabei, abgesagt = Nicht, ohne Antwort = offen). <b>Dabei</b> ist die Anwesenheit dieses Spieltags und zählt für die Spiele-Quote.</div>
-    ${offenAlle?`<button class="btn btn-sm" id="nom-offene-dabei" onclick="nomOffeneDabei()" style="margin-bottom:8px"><i class="ti ti-users-plus"></i>${offenAlle} Offene auf „Dabei“ setzen</button>`:""}`+sum;
+  };
+  box.innerHTML=`<details id="nom-dabei" class="tp-tipp"${dabeiAlle?"":" open"}>
+    <summary>👥 Wer ist dabei? <b>${dabeiAlle} von ${aktiv.length}</b>${offenAlle?` <span style="font-weight:400;color:var(--amber)">· ${offenAlle} offen</span>`:""}</summary>
+    <div>
+      <div id="nom-quelle" style="font-size:10.5px;color:var(--text3);margin-bottom:8px;line-height:1.4">📣 Vorbelegt aus den Eltern-Rückmeldungen (zugesagt = Dabei, abgesagt = Nicht, ohne Antwort = offen). <b>Dabei</b> ist die Anwesenheit dieses Spieltags und zählt für die Spiele-Quote.</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+        ${offenAlle?`<button class="btn btn-sm" id="nom-offene-dabei" onclick="nomOffeneDabei()"><i class="ti ti-users-plus"></i>${offenAlle} Offene auf „Dabei“ setzen</button>`:""}
+        ${hasRsvp?`<button class="btn btn-sm" onclick="nomApplyRsvp()" title="Setzt die Nominierung auf den Stand der Eltern-Rückmeldungen zurück">Eltern-Stand: ✅ ${c.zugesagt} ❌ ${c.abgesagt} 🤒 ${c.krank} – übernehmen</button>`:""}
+      </div>
+      ${aktiv.map(k=>zeile(k.name)).join("")}
+    </div>
+  </details>`;
 }
 /* v477: Wer ohne Eltern-Antwort am Platz steht, ist dabei – ein Tipp fuer alle Offenen. */
 function nomOffeneDabei(){

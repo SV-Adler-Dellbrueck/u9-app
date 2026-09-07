@@ -16,7 +16,7 @@ module.exports = async function (h) {
     KADER.forEach(k => nomStatus[k.name] = "offen");
     teamsRender(); nomRender();
     // Kinderzeilen sicher erkennen: jede traegt genau drei nomSet-Knoepfe
-    const namenInListe = () => [...new Set([...document.querySelectorAll('#team-panel button[onclick^="nomSet("]')].map(b => (b.getAttribute("onclick").match(/nomSet\('([^']*)'/) || [])[1]).filter(Boolean))];
+    const namenInListe = () => [...new Set([...document.querySelectorAll('#nom-panel button[onclick^="nomSet("], #team-panel button[onclick^="nomSet("]')].map(b => (b.getAttribute("onclick").match(/nomSet\('([^']*)'/) || [])[1]).filter(Boolean))];
     const out = { liste: namenInListe().length, raus: namenInListe().some(t => t.includes(RAUS)), nenner: document.getElementById("nom-panel").textContent };
     // alle 14 aktiven auf „dabei" – mehr als die Sollstaerke eines Teams
     KADER.filter(k => k.aktiv !== false).forEach(k => nomSet(k.name, "dabei"));
@@ -33,9 +33,9 @@ module.exports = async function (h) {
   const fehler = s.fehler(); await s.schliessen();
   if (r.liste !== 14) probleme.push(`${r.liste} Kinder in der Liste statt 14`);
   if (r.raus) probleme.push("ausgetragenes Kind steht in der Nominierung");
-  if (!/von 14 dabei/.test(r.nenner)) probleme.push("Nenner zaehlt ausgetragene mit: " + r.nenner.trim().slice(0, 60));
+  if (!/von 14( dabei|\b)/.test(r.nenner))   // v481: „Wer ist dabei? N von 14" probleme.push("Nenner zaehlt ausgetragene mit: " + r.nenner.trim().slice(0, 60));
   if (r.imTeam !== 14 || r.ohneTeam.length) probleme.push(`nach „dabei" sind ${r.imTeam} im Team, ohne Team: ${JSON.stringify(r.ohneTeam)}`);
-  if (!/Kinder in einem Team/.test(r.hinweis) || !/Sollstärke/.test(r.hinweis)) probleme.push("Hinweis zur Teamgroesse fehlt");
+  if (!/(Kinder in einem Team|Adler 1: 14 Kinder)/.test(r.hinweis) || !/Sollstärke/.test(r.hinweis))   // v481: Karten statt Wand probleme.push("Hinweis zur Teamgroesse fehlt");
   if (/pausiert:/.test(r.hinweis)) probleme.push("es steht weiter „N Kinder pausiert“ da, obwohl niemand pausiert wurde");
   if (!r.nachPause) probleme.push("haendisches Pausieren wirkt nicht");
   if (!r.zurueck) probleme.push("„Spielt mit“ nimmt die Pause nicht zurueck");

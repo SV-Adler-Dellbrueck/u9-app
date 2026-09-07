@@ -26,7 +26,8 @@ module.exports = async function (h) {
     teamFormSet(1, "4+1"); teamFormSet(2, "funino");
     const groesse = t => Object.keys(TEAMS).filter(x => TEAMS[x] === t).length;
     const neun = { t1: groesse(1), t2: groesse(2), twTeam: TEAMS[K[0]], anteil1: teamSpielanteil(1).anteil, anteil2: teamSpielanteil(2).anteil };
-    const kacheln = [...document.querySelectorAll("#team-panel .team-anteil")].map(el => el.textContent.replace(/\s+/g, " ").trim());
+    // v481: die Team-Kacheln heissen .team-karte (Pause-Karte hat data-team="0")
+    const kacheln = [...document.querySelectorAll("#team-panel .team-karte[data-team]")].filter(el => el.dataset.team !== "0").map(el => el.textContent.replace(/\s+/g, " ").trim());
     const segs = document.querySelectorAll('#team-panel [aria-label^="Spielform Adler"]').length;
     // 10 Kinder
     nomStatus[K[9]] = "dabei"; teamsAuto();
