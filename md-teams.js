@@ -22,25 +22,54 @@ let TEAMS={}, TEAM_ANZAHL=1, TEAM_STATS={}, TEAM_GRUND={}, TEAM_TRAINER={}, TEAM
    je Team. Ohne Eintrag gilt die Spielform des Termins (tbFormation). Wohnt wie _trainer
    in der „…__teams"-Zeile. */
 let TEAM_FORM={};
-function teamFormVon(t){ return TEAM_FORM[t]||(typeof tbFormation!=="undefined"&&tbFormation)||"4+1"; }
+/* v480 – PO: „Die Teams sollen aber nicht fest alle Spiele 4+1 oder nur FUNiño spielen,
+   sondern auch durchwechseln." Und: „Feste Teams, und dann die Möglichkeit, dass die
+   Teamgröße angepasst wird, wenn notwendig aufgrund der Größe des Spielfeldes." Vor dem
+   Festival stehen Felder und Formate fest. TEAM_FELDER: die Felder des Tages mit Spielform,
+   z. B. ["4+1","funino"]. Die festen Teams wandern je Runde ein Feld weiter (TEAM_RUNDE).
+   Fehlt einem Team auf seinem Feld ein Kind, hilft eines aus dem Team mit der meisten Bank
+   aus – nur fuer diese Runde (TEAM_LEIH: Kind → Heimteam). Torwart-Kinder rotieren mit. */
+let TEAM_FELDER=[], TEAM_RUNDE=1, TEAM_LEIH={};
+function teamFelderAktiv(){ return Array.isArray(TEAM_FELDER)&&TEAM_FELDER.length>0; }
+/* Feld-Index des Teams in der aktuellen Runde (0-basiert), -1 = dieses Team pausiert die Runde. */
+function teamFeldIndex(t){
+  if(!teamFelderAktiv())return -1;
+  const n=Math.max(TEAM_ANZAHL,TEAM_FELDER.length);
+  const i=((t-1)+(TEAM_RUNDE-1))%n;
+  return i<TEAM_FELDER.length?i:-1;
+}
+function teamFormVon(t){
+  if(teamFelderAktiv()){ const i=teamFeldIndex(t); if(i>=0)return TEAM_FELDER[i]; }
+  return TEAM_FORM[t]||(typeof tbFormation!=="undefined"&&tbFormation)||"4+1";
+}
+/* Fuer die Grund-Einteilung zaehlt das groesste Feld des Tages: jedes Team kommt dort hin. */
+function teamPlanForm(){
+  if(!teamFelderAktiv())return null;
+  let best=null,bestAuf=-1;
+  TEAM_FELDER.forEach(k=>{ const f=(typeof FORMATIONS!=="undefined"&&FORMATIONS[k])||{tw:true,fieldCount:4}; const auf=f.fieldCount+(f.tw?1:0); if(auf>bestAuf){bestAuf=auf;best=k;} });
+  return best;
+}
 function teamKaderFuer(t){ return teamKader(teamFormVon(t)); }
 /* Wie viele stehen bei dieser Spielform gleichzeitig auf dem Feld (Torwart mitgezaehlt)? */
-function teamAufDemFeld(t){
-  const f=(typeof FORMATIONS!=="undefined"&&FORMATIONS[teamFormVon(t)])||{tw:true,fieldCount:4};
+function teamAufDemFeld(t,plan){
+  const key=(plan&&teamPlanForm())||teamFormVon(t);
+  if(!plan&&teamFelderAktiv()&&teamFeldIndex(t)<0)return 0;   // pausiert diese Runde
+  const f=(typeof FORMATIONS!=="undefined"&&FORMATIONS[key])||{tw:true,fieldCount:4};
   return f.fieldCount+(f.tw?1:0);
 }
-/* Spielanteil je Kind in diesem Team: Feldplaetze geteilt durch Teamgroesse (1 = keiner sitzt). */
-function teamSpielanteil(t){
-  const groesse=Object.keys(TEAMS).filter(x=>TEAMS[x]===t).length, auf=teamAufDemFeld(t);
+/* Spielanteil je Kind in diesem Team: Feldplaetze geteilt durch Teamgroesse (1 = keiner sitzt).
+   plan=true rechnet mit dem groessten Feld des Tages (Grund-Einteilung, v480). */
+function teamSpielanteil(t,plan){
+  const groesse=Object.keys(TEAMS).filter(x=>TEAMS[x]===t).length, auf=teamAufDemFeld(t,plan);
   return {groesse,auf,anteil:groesse?Math.min(1,auf/groesse):1};
 }
 /* Wohin mit einem Kind ueber die Feldbesetzung hinaus? In das Team, dessen Spielanteil
    gerade am hoechsten ist – dort tut ein Wechsler am wenigsten weh. Gleichstand: das
    groessere Feld (laengeres Spiel, ein Wechsler wirkt mehr). PO-Wahl: „gleicher Spielanteil". */
-function teamZielFuerWechsler(){
+function teamZielFuerWechsler(plan){
   let ziel=1, best=-1, bestAuf=-1;
   for(let t=1;t<=TEAM_ANZAHL;t++){
-    const s=teamSpielanteil(t), a=s.auf/(s.groesse+1), auf=s.auf;
+    const s=teamSpielanteil(t,plan), a=s.auf/(s.groesse+1), auf=s.auf;
     if(a>best||(a===best&&auf>bestAuf)){ best=a; bestAuf=auf; ziel=t; }
   }
   return ziel;
@@ -224,7 +253,8 @@ function teamsAuto(){
   const wert=x=>Math.max(0,teamStaerke(x));           // unbewertet zählt als 0
   const summe=new Array(n+1).fill(0);
   const twPlatz=new Array(n+1).fill(0), feldPlatz=new Array(n+1).fill(0);
-  for(let t=1;t<=n;t++){ const f=(typeof FORMATIONS!=="undefined"&&FORMATIONS[teamFormVon(t)])||{tw:true,fieldCount:4}; twPlatz[t]=f.tw?1:0; feldPlatz[t]=f.fieldCount; }
+  const planKey=teamPlanForm();   // v480: mit Feldern zaehlt fuer jedes Team das groesste Feld – alle kommen dort hin
+  for(let t=1;t<=n;t++){ const f=(typeof FORMATIONS!=="undefined"&&FORMATIONS[planKey||teamFormVon(t)])||{tw:true,fieldCount:4}; twPlatz[t]=f.tw?1:0; feldPlatz[t]=f.fieldCount; }
   const einsetzen=(name,t,alsTw)=>{TEAMS[name]=t;summe[t]+=wert(name);if(alsTw)twPlatz[t]--;else feldPlatz[t]--;};
 
   // 1) Torwarte: je Team mit Torwart-Spielform einer, stärkster zuerst
@@ -236,15 +266,91 @@ function teamsAuto(){
   for(let t=1;t<=n;t++){ if(twPlatz[t]>0){ feldPlatz[t]+=twPlatz[t]; twPlatz[t]=0; } }
   // 2) Feldspieler: stärkstes Kind ins momentan schwächste Team mit freiem Feldplatz
   const rest=pool.filter(x=>!TEAMS[x]).sort((a,b)=>teamStaerke(b)-teamStaerke(a));
+  const groesse=t=>Object.keys(TEAMS).filter(x=>TEAMS[x]===t).length;
   rest.forEach(name=>{
     let ziel=0;
-    for(let t=1;t<=n;t++){ if(feldPlatz[t]<=0)continue; if(!ziel||summe[t]<summe[ziel])ziel=t; }
+    for(let t=1;t<=n;t++){
+      if(feldPlatz[t]<=0)continue;
+      /* v480: mit Feldern (feste Teams wandern ueber alle Felder) zaehlt zuerst die gleiche
+         Teamgroesse, dann die Staerke – sonst fuellte die Reihenfolge Team 1 zuerst (5 + 3).
+         Ohne Felder wie bisher: staerkstes Kind ins schwaechste Team. */
+      if(!ziel)ziel=t;
+      else if(planKey?(groesse(t)<groesse(ziel)||(groesse(t)===groesse(ziel)&&summe[t]<summe[ziel])):(summe[t]<summe[ziel]))ziel=t;
+    }
     // 3) Feld voll: als Wechsler dorthin, wo der Spielanteil am höchsten bleibt
-    if(!ziel){ ziel=teamZielFuerWechsler(); TEAMS[name]=ziel; summe[ziel]+=wert(name); return; }
+    if(!ziel){ ziel=teamZielFuerWechsler(!!planKey); TEAMS[name]=ziel; summe[ziel]+=wert(name); return; }
     einsetzen(name,ziel,false);
   });
+  if(teamFelderAktiv()){ TEAM_LEIH={}; teamAushilfeBerechnen(); }   // v480: Runde 1 sofort spielfaehig
   teamsRender();
 }
+/* ── v480: Felder und Runden ─────────────────────────────────────────────────── */
+function teamAushilfeRueckgabe(){
+  Object.keys(TEAM_LEIH).forEach(n=>{ if(TEAM_LEIH[n])TEAMS[n]=TEAM_LEIH[n]; });
+  TEAM_LEIH={};
+}
+function teamHatTorwart(t){ return Object.keys(TEAMS).some(n=>TEAMS[n]===t&&istTorwart(n)); }
+/* Wer hilft aus? Aus dem Team mit der meisten Bank (oder dem, das diese Runde pausiert).
+   Braucht das Zielfeld einen Torwart und das Zielteam hat keinen, kommt ein Torwart-Kind –
+   so wechseln sich die Torwart-Kinder ab (PO-Wahl). Sonst das Kind mit den wenigsten
+   Saison-Einsaetzen; der einzige Torwart eines Teams, das selbst einen braucht, bleibt. */
+function teamLeihKandidat(ziel,twGewuenscht){
+  let geber=0,best=-1;
+  for(let t=1;t<=TEAM_ANZAHL;t++){
+    if(t===ziel)continue;
+    const s=teamSpielanteil(t), pausiert=teamFeldIndex(t)<0;
+    const bank=pausiert?s.groesse:s.groesse-s.auf;
+    if(bank<=0)continue;
+    const a=pausiert?2:s.anteil;
+    if(a>best){best=a;geber=t;}
+  }
+  if(!geber)return null;
+  const m=Object.keys(TEAMS).filter(n=>TEAMS[n]===geber&&!TEAM_LEIH[n]);
+  if(!m.length)return null;
+  const tw=m.filter(istTorwart);
+  if(twGewuenscht&&tw.length)return tw[0];
+  const gi=teamFeldIndex(geber);
+  const geberBrauchtTw=gi>=0&&!!((typeof FORMATIONS!=="undefined"&&FORMATIONS[TEAM_FELDER[gi]])||{tw:true}).tw;
+  const kand=m.filter(n=>!(istTorwart(n)&&geberBrauchtTw&&tw.length===1));
+  const pool=kand.length?kand:m;
+  return teamPausenReihenfolge(pool).slice().reverse()[0];   // wenigste Einsaetze zuerst
+}
+/* Fehlende Kinder je Feld dieser Runde auffuellen. Gibt die Wechsel als Text zurueck. */
+function teamAushilfeBerechnen(){
+  const meldungen=[];
+  if(!teamFelderAktiv())return meldungen;
+  for(let t=1;t<=TEAM_ANZAHL;t++){
+    const i=teamFeldIndex(t); if(i<0)continue;
+    const f=(typeof FORMATIONS!=="undefined"&&FORMATIONS[TEAM_FELDER[i]])||{tw:true,fieldCount:4};
+    let fehlt=teamAufDemFeld(t)-Object.keys(TEAMS).filter(n=>TEAMS[n]===t).length;
+    let schutz=8;
+    while(fehlt>0&&schutz-->0){
+      const kid=teamLeihKandidat(t,f.tw&&!teamHatTorwart(t));
+      if(!kid)break;
+      TEAM_LEIH[kid]=TEAMS[kid]; TEAMS[kid]=t; fehlt--;
+      meldungen.push(`${kid}: Adler ${TEAM_LEIH[kid]} → Adler ${t}`);
+    }
+  }
+  return meldungen;
+}
+function teamRundeSetzen(r){
+  teamAushilfeRueckgabe();
+  TEAM_RUNDE=Math.max(1,parseInt(r)||1);
+  const m=teamAushilfeBerechnen();
+  teamsSpeichern(); teamsRender(); spieltagTeamKartenRender();
+  if(typeof spieltagTeam!=="undefined")teamFormAnwenden(spieltagTeam);
+  teamsSyncBald(); if(typeof nomApplyToTools==="function")nomApplyToTools();
+  toast(m.length?`Runde ${TEAM_RUNDE} · Aushilfe: ${m.join(" · ")}`:`Runde ${TEAM_RUNDE}`);
+}
+function teamFelderAendern(felder){
+  TEAM_FELDER=(felder||[]).filter(k=>typeof FORMATIONS==="undefined"||FORMATIONS[k]).slice(0,4);
+  teamAushilfeRueckgabe(); TEAM_RUNDE=1;
+  teamsAuto(); teamsSpeichern(); spieltagTeamKartenRender();
+  if(typeof spieltagTeam!=="undefined")teamFormAnwenden(spieltagTeam);
+}
+function teamFeldSetzen(i,key){ const f=TEAM_FELDER.slice(); f[i]=key; teamFelderAendern(f); }
+function teamFeldPlus(){ if(TEAM_FELDER.length>=4)return; teamFelderAendern(TEAM_FELDER.concat([TEAM_FELDER.length?"funino":"4+1"])); }
+function teamFeldWeg(i){ const f=TEAM_FELDER.slice(); f.splice(i,1); teamFelderAendern(f); }
 /* v479: Spielform eines Teams setzen – verteilt neu, wie ein Wechsel der Teamzahl. */
 function teamFormSet(t,key){
   if(typeof FORMATIONS!=="undefined"&&!FORMATIONS[key])return;
@@ -274,6 +380,7 @@ function teamSetAnzahl(n){
   // das es nicht mehr gibt – und tauchen später wieder auf, wenn man wieder hochstellt.
   Object.keys(TEAM_TRAINER).forEach(t=>{ if(Number(t)>TEAM_ANZAHL)delete TEAM_TRAINER[t]; });
   Object.keys(TEAM_FORM).forEach(t=>{ if(Number(t)>TEAM_ANZAHL)delete TEAM_FORM[t]; });
+  TEAM_RUNDE=1; TEAM_LEIH={};   // v480: neue Teamzahl, neue Runde 1 (teamsAuto rechnet die Aushilfe neu)
   const wechselNoetig=(typeof spieltagTeam!=="undefined"&&spieltagTeam>TEAM_ANZAHL);
   teamsAuto();          // PO v392: neue Teamzahl -> sofort neu verteilen, nicht leer stehen lassen
   teamsSpeichern();
@@ -450,8 +557,9 @@ function teamPlatzEinsortieren(name){
   if(istTorwart(name)){
     for(let t=1;t<=TEAM_ANZAHL&&!ziel;t++){ const f=(typeof FORMATIONS!=="undefined"&&FORMATIONS[teamFormVon(t)])||{tw:true}; if(f.tw&&!Object.keys(TEAMS).some(x=>TEAMS[x]===t&&istTorwart(x)))ziel=t; }
   }
-  if(!ziel){ for(let t=1;t<=TEAM_ANZAHL&&!ziel;t++){ const s=teamSpielanteil(t); if(s.groesse<s.auf)ziel=t; } }
-  if(!ziel)ziel=teamZielFuerWechsler();
+  const plan=teamFelderAktiv();
+  if(!ziel){ for(let t=1;t<=TEAM_ANZAHL&&!ziel;t++){ const s=teamSpielanteil(t,plan); if(s.groesse<s.auf)ziel=t; } }
+  if(!ziel)ziel=teamZielFuerWechsler(plan);
   TEAMS[name]=ziel;
   return true;
 }
@@ -464,7 +572,7 @@ function teamSet(name,nr){
 }
 
 async function teamsLoad(){
-  TEAMS={}; TEAM_ANZAHL=teamAnzahlVorschlag(); TEAM_TRAINER={}; TEAM_FORM={};
+  TEAMS={}; TEAM_ANZAHL=teamAnzahlVorschlag(); TEAM_TRAINER={}; TEAM_FORM={}; TEAM_FELDER=[]; TEAM_RUNDE=1; TEAM_LEIH={};
   await teamStabLoad();
   await Promise.all([teamStatsLoad(),teamGruendeLaden(spieltagRawDate())]);   // Kennzahlen für die Pausen-Entscheidung
   try{
@@ -476,8 +584,11 @@ async function teamsLoad(){
         if(d._anzahl)TEAM_ANZAHL=d._anzahl;
         if(d._trainer&&typeof d._trainer==="object")TEAM_TRAINER=d._trainer;
         if(d._form&&typeof d._form==="object")TEAM_FORM=d._form;   // v479: Spielform je Team
+        if(Array.isArray(d._felder))TEAM_FELDER=d._felder.slice(0,4);   // v480: Felder des Festivals
+        if(d._runde)TEAM_RUNDE=Math.max(1,parseInt(d._runde)||1);
+        if(d._leih&&typeof d._leih==="object"){ TEAM_LEIH={}; Object.keys(d._leih).forEach(id=>{ const n=(typeof kidName==="function"&&/^\d+$/.test(String(id)))?kidName(id):id; if(n)TEAM_LEIH[n]=d._leih[id]; }); }
         // ALLE Sonderschluessel raus, sonst haelt die App "_trainer" fuer ein Kind
-        delete d._anzahl; delete d._trainer; delete d._form;
+        delete d._anzahl; delete d._trainer; delete d._form; delete d._felder; delete d._runde; delete d._leih;
         TEAMS=d;
       }
     }
@@ -495,11 +606,15 @@ async function teamsLoad(){
   teamsNachziehen();   // v479: Dabei heisst spielt mit – auch fuer Kinder, die nach der Einteilung dazukamen
   teamsRender(); spieltagTeamKartenRender();
 }
+/* Aushilfen nach kader.id, wie die Kinder selbst – Namen gehoeren nicht in die Datenbank. */
+function _teamLeihIds(){
+  const o={}; Object.keys(TEAM_LEIH).forEach(n=>{ const id=(typeof kidId==="function")?kidId(n):null; o[id!=null?id:n]=TEAM_LEIH[n]; }); return o;
+}
 async function teamsSpeichern(){
   try{
     await fetch(`${SB_URL}/rest/v1/nominierungen?on_conflict=datum`,{method:"POST",
       headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},
-      body:JSON.stringify({datum:teamsKey(),data:kidMapToIds({_anzahl:TEAM_ANZAHL,_trainer:TEAM_TRAINER,_form:TEAM_FORM,...TEAMS})})});
+      body:JSON.stringify({datum:teamsKey(),data:kidMapToIds({_anzahl:TEAM_ANZAHL,_trainer:TEAM_TRAINER,_form:TEAM_FORM,_felder:TEAM_FELDER,_runde:TEAM_RUNDE,_leih:_teamLeihIds(),...TEAMS})})});
   }catch(e){}
 }
 /* Die Team-Zeilen ("<datum>", "<datum>__t2", …) sind ABGELEITET aus der globalen
@@ -672,14 +787,41 @@ function teamsRender(){
      wenn noch niemand zugesagt hat: erst legen wir fest, wie viele Teams wir stellen und
      wer sie betreut, dann verteilen wir die Kinder. Ein Team ohne Trainer wird angemahnt
      (PO: „es muss immer ein Trainer zugewiesen werden"). */
-  html+=`<div style="font-size:12px;font-weight:600;margin:12px 0 6px">Trainer und Spielform je Team</div>`;
   const formen=[["funino","FUNiño"],["4+1","4+1"],["5+1","5+1"]];
+  const flabel=k=>((typeof FORMATIONS!=="undefined"&&FORMATIONS[k])||{label:k}).label;
+  /* v480: Felder des Festivals. Stehen Felder, wandern die festen Teams je Runde ein Feld
+     weiter; die Spielform je Team folgt daraus und ist nicht mehr einzeln waehlbar. */
+  const felder=teamFelderAktiv();
+  html+=`<div id="team-felder" style="margin:12px 0 6px">
+    <div style="font-size:12px;font-weight:600;margin-bottom:4px">Felder beim Festival <span style="font-weight:400;color:var(--text3)">– die Teams wechseln jede Runde das Feld</span></div>
+    ${TEAM_FELDER.map((k,i)=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+      <span style="font-size:12px;font-weight:700;width:52px">Feld ${i+1}</span>
+      <div class="seg-ctrl" role="group" aria-label="Spielform Feld ${i+1}" style="flex:1">${formen.map(([key,l])=>`<button class="seg-btn${k===key?" active":""}" onclick="teamFeldSetzen(${i},'${key}')" aria-pressed="${k===key?"true":"false"}">${l}</button>`).join("")}</div>
+      <button class="btn btn-sm" onclick="teamFeldWeg(${i})" aria-label="Feld ${i+1} entfernen" title="Feld entfernen" style="min-width:44px;justify-content:center">✕</button>
+    </div>`).join("")}
+    ${TEAM_FELDER.length<4?`<button class="btn btn-sm" onclick="teamFeldPlus()"><i class="ti ti-plus"></i>${felder?"Weiteres Feld":"Felder anlegen (Festival)"}</button>`:""}
+  </div>`;
+  if(felder){
+    const zuordnung=Array.from({length:TEAM_ANZAHL},(_,i)=>i+1).map(t=>{ const i=teamFeldIndex(t); return `Adler ${t} → ${i<0?"Pause":`Feld ${i+1} (${esc(flabel(TEAM_FELDER[i]))})`}`; });
+    const leih=Object.keys(TEAM_LEIH).map(n=>`${esc(n)} (Adler ${TEAM_LEIH[n]} → Adler ${TEAMS[n]})`);
+    html+=`<div id="team-runde" style="background:var(--surface2);border-radius:var(--r);padding:10px 12px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="font-size:13px;font-weight:800;flex:1">Runde ${TEAM_RUNDE}</span>
+        <button class="btn btn-sm" onclick="teamRundeSetzen(${TEAM_RUNDE-1})"${TEAM_RUNDE<=1?" disabled":""} aria-label="Runde zurück">‹</button>
+        <button class="btn btn-p btn-sm" onclick="teamRundeSetzen(${TEAM_RUNDE+1})"><i class="ti ti-player-track-next"></i>Nächste Runde</button>
+      </div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.5">${zuordnung.join("<br>")}</div>
+      ${leih.length?`<div style="font-size:11.5px;margin-top:6px"><b>Aushilfe diese Runde:</b> ${leih.join(" · ")} – wandert mit der nächsten Runde zurück.</div>`:""}
+    </div>`;
+  }
+  html+=`<div style="font-size:12px;font-weight:600;margin:12px 0 6px">${felder?"Trainer je Team":"Trainer und Spielform je Team"}</div>`;
   for(let t=1;t<=TEAM_ANZAHL;t++){
     const tr=TEAM_TRAINER[t]||[];
     /* v479: Spielform je Team – beim Kinderfestival spielt Adler 1 auf dem 4+1-Feld und
-       Adler 2 FUNiño. Die Automatik und der Spielanteil rechnen damit. */
+       Adler 2 FUNiño. Die Automatik und der Spielanteil rechnen damit. Mit Feldern (v480)
+       ergibt sie sich aus der Runde. */
     const fk=teamFormVon(t);
-    html+=`<div class="seg-ctrl" role="group" aria-label="Spielform Adler ${t}" style="margin-bottom:6px">${formen.map(([k,l])=>`<button class="seg-btn${fk===k?" active":""}" onclick="teamFormSet(${t},'${k}')" aria-pressed="${fk===k?"true":"false"}">${l}</button>`).join("")}</div>`;
+    if(!felder)html+=`<div class="seg-ctrl" role="group" aria-label="Spielform Adler ${t}" style="margin-bottom:6px">${formen.map(([k,l])=>`<button class="seg-btn${fk===k?" active":""}" onclick="teamFormSet(${t},'${k}')" aria-pressed="${fk===k?"true":"false"}">${l}</button>`).join("")}</div>`;
     html+=`<button onclick="teamTrainerOpen(${t})" style="width:100%;min-height:48px;display:flex;align-items:center;gap:10px;text-align:left;margin-bottom:6px;padding:8px 12px;border:1px solid var(--rand-bedien);border-left:3px solid var(--fam-spieltag);border-radius:12px;background:var(--surface2);color:var(--text);font-family:inherit;cursor:pointer">
       <span style="font-size:16px">🧢</span>
       <span style="flex:1;min-width:0">
@@ -728,12 +870,13 @@ function teamsRender(){
     const schnitt=bew.length?Math.round(bew.reduce((a,b)=>a+b,0)/bew.length):null;
     const tw=m.filter(istTorwart).length;
     const kdt=teamKaderFuer(t), sp=teamSpielanteil(t);
-    const spielfaehig=m.length>=sp.auf;   // v479: spielfaehig = das Feld dieser Spielform ist voll
-    const fl=((typeof FORMATIONS!=="undefined"&&FORMATIONS[teamFormVon(t)])||{label:teamFormVon(t)}).label;
+    const pausiert=felder&&teamFeldIndex(t)<0;
+    const spielfaehig=pausiert||m.length>=sp.auf;   // v479: spielfaehig = das Feld dieser Spielform ist voll
+    const fl=pausiert?"Pause":((typeof FORMATIONS!=="undefined"&&FORMATIONS[teamFormVon(t)])||{label:teamFormVon(t)}).label;
     zeilen.push(`<div class="team-anteil" data-team="${t}" style="flex:1;min-width:98px;background:var(--surface2);border-radius:var(--r);padding:8px">
-      <div style="font-size:11.5px;font-weight:700">Adler ${t} <span style="font-weight:500;color:var(--text2)">${esc(fl)}</span></div>
-      <div style="font-size:10.5px;color:${spielfaehig?"var(--text2)":"var(--red)"}" title="${sp.auf} auf dem Feld, Sollgröße ${kdt.gesamt}">${m.length} Kinder · ${sp.auf} auf dem Feld${spielfaehig?"":" – zu wenige"}</div>
-      <div style="font-size:10.5px;font-weight:700" title="Spielanteil je Kind: Feldplätze geteilt durch Teamgröße">je ≈ ${Math.round(sp.anteil*100)} % Spielzeit</div>
+      <div style="font-size:11.5px;font-weight:700">Adler ${t} <span style="font-weight:500;color:var(--text2)">${felder&&!pausiert?"Feld "+(teamFeldIndex(t)+1)+" · ":""}${esc(fl)}</span></div>
+      <div style="font-size:10.5px;color:${spielfaehig?"var(--text2)":"var(--red)"}" title="${sp.auf} auf dem Feld, Sollgröße ${kdt.gesamt}">${m.length} Kinder${pausiert?" · setzt diese Runde aus":` · ${sp.auf} auf dem Feld${spielfaehig?"":" – zu wenige"}`}</div>
+      <div style="font-size:10.5px;font-weight:700" title="Spielanteil je Kind: Feldplätze geteilt durch Teamgröße">${pausiert?"&nbsp;":`je ≈ ${Math.round(sp.anteil*100)} % Spielzeit`}</div>
       <div style="font-size:10.5px">${kdt.tw?(tw?"🥅 ok":"<span style='color:var(--red)'>kein TW</span>"):"<span style='color:var(--text3)'>ohne TW</span>"}${schnitt!=null?" · Ø "+schnitt+"%":""}</div>
     </div>`);
   }
@@ -760,6 +903,7 @@ function teamsRender(){
       : `<span style="width:16px"></span>`;
     const pause=(typeof istPaused==="function"&&istPaused(n))
       ? ` <span title="Pausiert – zählt nicht mit" style="font-size:10px;font-weight:700;color:var(--amber)">⏸ bis ${pauseBisLabel(n)}</span>` : "";
+    const leihBadge=TEAM_LEIH[n]?` <span title="Hilft diese Runde aus – kehrt mit der nächsten Runde zu Adler ${TEAM_LEIH[n]} zurück" style="font-size:10px;font-weight:700;color:var(--blue-text)">🔁 Aushilfe aus Adler ${TEAM_LEIH[n]}</span>`:"";
 
     const stKnoepfe=["dabei","nicht","verletzt"].map(s=>
       `<button onclick="nomSet('${jsq(n)}','${s}')" aria-pressed="${st===s?"true":"false"}"
@@ -784,7 +928,7 @@ function teamsRender(){
     return `<div style="padding:8px 0;border-top:var(--border)">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
         ${badge}
-        <span style="flex:1;min-width:0;font-size:12.5px;font-weight:600">${getKader(n)&&getKader(n).nr?getKader(n).nr+" ":""}${esc(n)}${istTorwart(n)?" 🥅":""}${pause}</span>
+        <span style="flex:1;min-width:0;font-size:12.5px;font-weight:600">${getKader(n)&&getKader(n).nr?getKader(n).nr+" ":""}${esc(n)}${istTorwart(n)?" 🥅":""}${pause}${leihBadge}</span>
         ${dabei?`<span style="font-size:10px">${teamQuoteText(n)} · ${teamEinsatzText(n)}</span>`:""}
       </div>
       <div style="display:flex;gap:5px">${stKnoepfe}</div>
