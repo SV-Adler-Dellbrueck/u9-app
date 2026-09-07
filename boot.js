@@ -560,6 +560,19 @@ function awToggle(btn,name){
   window._awDirty=true; // Haken gesetzt, aber noch nicht gespeichert
   btn.classList.toggle("on");
 }
+/* v475: Trainer-Haken in der Anwesenheit. Ist der Tag noch nicht da, geht der Tipp in die
+   Quelle (Rueckmeldung des Trainings-Termins); am Tag selbst ist er Teil der Anwesenheit
+   und wird mit „Speichern" zur Tatsache. */
+async function awTrainerToggle(cb){
+  const datum=document.getElementById("aw-date")?.value||"";
+  if(awZaehltAlsTatsache(datum)){ window._awDirty=true; return; }
+  let tid=null;
+  try{ const r=await fetch(`${SB_URL}/rest/v1/termine?datum=eq.${encodeURIComponent(datum)}&typ=eq.training&select=id&order=uhrzeit.asc.nullslast&limit=1`,{headers:sbAuthHeaders()});
+    if(r.ok)tid=(((await r.json())||[])[0]||{}).id||null; }catch(e){}
+  if(!tid){ window._awDirty=true; return; }   // kein Trainings-Termin: wie bisher lokal
+  const st=await trainerRsvpSetzen(tid,cb.value,cb.checked?"ja":"nein",datum);
+  if(!st)cb.checked=!cb.checked;   // nicht gespeichert – Haken zuruecknehmen, sonst luegt die Anzeige
+}
 function awAlleDa(){
   document.querySelectorAll("#aw-list .aw-tile").forEach(b=>b.classList.add("on"));
   try{navigator.vibrate&&navigator.vibrate(20);}catch(e){}
@@ -568,7 +581,10 @@ function awAlleDa(){
 function awSave(){
   const datum=document.getElementById("aw-date").value;
   if(!datum){toast("Bitte Datum wählen","err");return;}
-  const trainers=Array.from(document.querySelectorAll("#aw-trainer-checks input:checked")).map(c=>c.value);
+  /* v475: Vor dem Tag sind die Trainer-Haken nur die Rueckmeldungen – die stehen schon
+     am Termin. Nicht als Tatsache abspeichern, sonst friert der Stand von heute ein und
+     ueberdeckt am Tag selbst jede spaetere Zu- oder Absage (so geschehen am 11.09.). */
+  const trainers=awZaehltAlsTatsache(datum)?Array.from(document.querySelectorAll("#aw-trainer-checks input:checked")).map(c=>c.value):[];
   const data={_trainers:trainers};
   const vorher=AW_DATA[datum]||{};
   KADER.forEach(k=>{
@@ -694,7 +710,14 @@ function awLoad(){
   const existing=AW_DATA[datum]||{};
   const savedTrainers=existing._trainers;
   const apply=list=>document.querySelectorAll("#aw-trainer-checks input").forEach(cb=>{cb.checked=(list||[]).includes(cb.value);});
-  if(savedTrainers&&savedTrainers.length){ apply(savedTrainers); }
+  /* v475: Erst wenn der Tag da ist, sind die Haken die Tatsache. Vorher zeigen sie die
+     Rueckmeldungen – und ein Tipp darauf aendert die Rueckmeldung (awTrainerToggle). */
+  const tatsache=awZaehltAlsTatsache(datum);
+  const quelle=document.getElementById("aw-trainer-quelle");
+  if(quelle)quelle.innerHTML=tatsache
+    ? '<span title="Was du hier anhakst und speicherst, ist die Anwesenheit dieses Tages – sie zählt im Trainingsplan und in der Saison-Statistik.">✅ Anwesenheit dieses Tages – Haken setzen und speichern</span>'
+    : '<span title="Der Tag ist noch nicht da. Die Haken zeigen die Rückmeldungen aus „Bist du dabei?“; antippen setzt die Rückmeldung des Trainers – für alle sichtbar.">📣 Aus den <b>Rückmeldungen</b> – antippen ändert die Rückmeldung für alle</span>';
+  if(tatsache&&savedTrainers&&savedTrainers.length){ apply(savedTrainers); }
   else{
     apply([]);
     // Vorausfüllen aus der Trainer-Verfügbarkeit des Trainings-Termins an diesem Datum
@@ -1082,17 +1105,30 @@ function tpCoachSelect(stationId,ausschluss,wegOption){
 let TP_RSVP={}, TP_TRAINER_MANUELL={}, TP_VORBELEGT="", TP_ANWESEND=null;
 const TP_RSVP_MARKE={ja:{ico:"✓",farbe:"var(--green)",titel:"hat zugesagt"},
                      unsicher:{ico:"🤔",farbe:"var(--amber)",titel:"ist unsicher"},
-                     nein:{ico:"✕",farbe:"var(--red)",titel:"hat abgesagt"}};
+                     nein:{ico:"✕",farbe:"var(--red)",titel:"hat abgesagt"},
+                     offen:{ico:"?",farbe:"var(--text3)",titel:"noch keine Rückmeldung"}};   // v475: „keine Antwort" sichtbar machen
+let TP_TERMIN_ID=null;   // v475: der Trainings-Termin des Tages – Ziel fuer Aenderungen an der Rueckmeldung
+/* v475 – PO: „Eigentlich müsste doch eine Quelle vorgegeben werden, wo ich als Trainer
+   angebe, ob ich da bin, und dann müssten sich diese Ergebnisse in die weiteren
+   Unterbereiche automatisch einpflegen … Dann muss es noch eine Möglichkeit geben, das
+   händisch zu ändern, wenn ein Kollege kurzfristig absagt."
+   Die Quelle ist die Rueckmeldung (termine.trainer_status – „Bist du dabei?" auf der
+   Startseite, Trainerplan, Termin-Detail). Die Anwesenheit ist die Tatsache – aber erst,
+   wenn der Tag da ist (heute oder vergangen). Vorher konnte eine im Voraus gespeicherte
+   Anwesenheit (11.09., gespeichert am 07.09.) die Rueckmeldungen dauerhaft ueberdecken.
+   Aendern heisst seit v475: in die Quelle schreiben, nicht daneben. */
 function tpTrainerChipsRender(){
   const box=document.getElementById("tp-trainer-checks"); if(!box)return;
   // Woher die Haken kommen – sonst ist unerklaerlich, warum jemand angehakt ist oder nicht.
   const hinweis=document.getElementById("tp-trainer-quelle");
   if(hinweis)hinweis.innerHTML=TP_ANWESEND
-    ? '<span title="Die Anwesenheitsliste dieses Tages ist bereits erfasst – sie zählt mehr als die vorherige Rückmeldung.">✅ Aus der <b>Anwesenheit</b> dieses Tages übernommen</span>'
-    : '<span title="Für diesen Tag ist noch keine Anwesenheit erfasst – es gelten die Rückmeldungen aus „Bist du dabei?“.">📣 Aus den <b>Rückmeldungen</b> – Anwesenheit für diesen Tag noch nicht erfasst</span>';
+    ? '<span title="Die Anwesenheitsliste dieses Tages ist erfasst – sie zählt mehr als die Rückmeldung.">✅ Aus der <b>Anwesenheit</b> dieses Tages – antippen ändert die Anwesenheit</span>'
+    : (TP_TERMIN_ID
+      ? '<span title="Die Rückmeldungen aus „Bist du dabei?“ bzw. dem Trainerplan. Antippen setzt die Rückmeldung des Trainers für diesen Termin – für alle sichtbar.">📣 Aus den <b>Rückmeldungen</b> – antippen ändert die Rückmeldung für alle</span>'
+      : '<span title="Für diesen Tag gibt es keinen Trainings-Termin – die Haken gelten nur für diesen Plan.">📝 Kein Trainings-Termin an diesem Tag – Haken gelten nur hier</span>');
   const liste=(typeof TRAINER!=="undefined"&&Array.isArray(TRAINER))?TRAINER:[];
   box.innerHTML=liste.map(t=>{
-    const st=TP_RSVP[t]||"", m=TP_RSVP_MARKE[st];
+    const st=TP_RSVP[t]||"", m=TP_RSVP_MARKE[st]||TP_RSVP_MARKE.offen;
     /* Tatsache schlaegt Vorhersage: liegt fuer den Tag schon Anwesenheit vor, zaehlt der
        Haken dort – sonst wie bisher die Rueckmeldung. */
     const auto=TP_ANWESEND?TP_ANWESEND.includes(t):(st==="ja");
@@ -1101,8 +1137,8 @@ function tpTrainerChipsRender(){
     // sonst sieht man nicht mehr, dass der Trainer eigentlich „unsicher" gesagt hat
     const stil=an?"" : (m?`border-color:${m.farbe};color:${m.farbe}`:"");
     const grund=TP_ANWESEND
-      ? (TP_ANWESEND.includes(t)?"steht in der Anwesenheit als anwesend":"in der Anwesenheit nicht angehakt")+(m?" · Rückmeldung: "+m.titel:"")
-      : (m?m.titel:"noch keine Rückmeldung");
+      ? (TP_ANWESEND.includes(t)?"steht in der Anwesenheit als anwesend":"in der Anwesenheit nicht angehakt")+" · Rückmeldung: "+m.titel
+      : m.titel;
     const titel=grund
       +(an!==auto?(t===TP_VORBELEGT?" – du planst gerade, deshalb vorbelegt":" – von dir eingeplant"):"");
     return `<label class="tp-check"><input type="checkbox" value="${esc(t)}"${an?" checked":""}
@@ -1110,9 +1146,65 @@ function tpTrainerChipsRender(){
       <span style="${stil}" title="${esc(titel)}">${esc(t)}${m?" "+m.ico:""}</span></label>`;
   }).join("");
 }
-function tpTrainerManuell(name,an){ TP_TRAINER_MANUELL[name]=!!an; tpTrainerChipsRender(); tpRenderTimeline(); }
+/* v475: Antippen schreibt in die Quelle. Liegt die Anwesenheit des Tages vor, in die
+   Anwesenheit; sonst in die Rueckmeldung des Trainings-Termins (ja/nein) – damit Startseite,
+   Trainerplan, Termin-Detail und Anwesenheit dasselbe zeigen. Nur ohne Termin bleibt der
+   Haken lokal (wie bisher). */
+async function tpTrainerManuell(name,an){
+  const datum=document.getElementById("tp-date")?.value||"";
+  if(TP_ANWESEND&&datum){
+    const liste=await awTrainerSetzen(datum,name,!!an);
+    if(liste)TP_ANWESEND=liste.slice();
+  }else if(TP_TERMIN_ID){
+    const st=await trainerRsvpSetzen(TP_TERMIN_ID,name,an?"ja":"nein",datum);
+    if(st)TP_RSVP=st;
+    else TP_TRAINER_MANUELL[name]=!!an;   // nicht gespeichert – wenigstens diesen Plan richtig rechnen
+  }else{
+    TP_TRAINER_MANUELL[name]=!!an;
+  }
+  tpTrainerChipsRender(); tpRenderTimeline();
+}
+/* Rueckmeldung eines Trainers fuer einen Termin setzen – frisch vom Server lesen, dann
+   nur diesen Namen aendern, damit die Antwort eines Kollegen von eben nicht ueberschrieben
+   wird. Gibt den neuen trainer_status zurueck (oder null bei Fehler). */
+async function trainerRsvpSetzen(terminId,name,status,datum){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/termine?id=eq.${terminId}&select=trainer_status`,{headers:sbAuthHeaders()});
+    if(sbCheck401(r)||!r.ok)return null;
+    const st=Object.assign({},(((await r.json())||[])[0]||{}).trainer_status||{});
+    if(status)st[name]=status; else delete st[name];
+    const p=await fetch(`${SB_URL}/rest/v1/termine?id=eq.${terminId}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify({trainer_status:st})});
+    if(sbCheck401(p)||!p.ok){toast("Rückmeldung nicht gespeichert","err");return null;}
+    const wann=datum?new Date(datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"}):"diesen Termin";
+    toast(`${name}: ${status==="ja"?"dabei":"nicht dabei"} am ${wann} – gilt überall`);
+    try{ if(typeof TM_TERMINE!=="undefined"&&Array.isArray(TM_TERMINE)){const t=TM_TERMINE.find(x=>Number(x.id)===Number(terminId)); if(t)t.trainer_status=st;} }catch(e){}
+    try{navigator.vibrate&&navigator.vibrate(15);}catch(e){}
+    return st;
+  }catch(e){toast("Netzwerkfehler","err");return null;}
+}
+/* Trainer in der erfassten Anwesenheit eines Tages an- oder abhaken – nur `_trainers`
+   aendern, die Kinder bleiben, wie sie sind. Gibt die neue Liste zurueck. */
+async function awTrainerSetzen(datum,name,an){
+  const tag=AW_DATA[datum]; if(!tag)return null;
+  const liste=(Array.isArray(tag._trainers)?tag._trainers:[]).filter(t=>t!==name);
+  if(an)liste.push(name);
+  tag._trainers=liste;
+  try{localStorage.setItem(AW_KEY,JSON.stringify(AW_DATA));}catch(e){}
+  teamTsSet(AW_TS_KEY,datum);
+  try{const tid=await terminIdForDatum(datum); teamSyncUpsertDebounced("anwesenheit",datum,tag,tid?{termin_id:tid}:null);}catch(e){}
+  toast(`${name}: ${an?"anwesend":"nicht anwesend"} – in der Anwesenheit geändert`);
+  document.querySelectorAll("#aw-trainer-checks input").forEach(cb=>{ if(cb.value===name)cb.checked=an; });
+  return liste;
+}
+/* Gilt eine erfasste Anwesenheit als Tatsache? Erst, wenn der Tag da ist. Eine im Voraus
+   gespeicherte Liste ist nur ein Abzug der Rueckmeldungen von damals. */
+function awZaehltAlsTatsache(datum){
+  if(!datum)return false;
+  const heute=new Date(); const h=`${heute.getFullYear()}-${String(heute.getMonth()+1).padStart(2,"0")}-${String(heute.getDate()).padStart(2,"0")}`;
+  return datum<=h;
+}
 async function tpTrainerRsvpLaden(datum){
-  TP_RSVP={}; TP_TRAINER_MANUELL={}; TP_VORBELEGT=""; TP_ANWESEND=null;   // neuer Termin, neue Lage
+  TP_RSVP={}; TP_TRAINER_MANUELL={}; TP_VORBELEGT=""; TP_ANWESEND=null; TP_TERMIN_ID=null;   // neuer Termin, neue Lage
   datum=datum||document.getElementById("tp-date")?.value||"";
   /* v470 – PO: „Check mal die Anwesenheiten der Trainer bezogen auf Trainingsplan und
      Anwesenheit. Die scheinen sich nicht abzugleichen."
@@ -1124,7 +1216,7 @@ async function tpTrainerRsvpLaden(datum){
      als „nichts erfasst" – sonst plante man mit null Trainern. */
   try{
     const tag=(typeof AW_DATA==="object"&&AW_DATA)?AW_DATA[datum]:null;
-    if(tag&&Array.isArray(tag._trainers)&&tag._trainers.length)TP_ANWESEND=tag._trainers.slice();
+    if(awZaehltAlsTatsache(datum)&&tag&&Array.isArray(tag._trainers)&&tag._trainers.length)TP_ANWESEND=tag._trainers.slice();
   }catch(e){}
   if(datum&&typeof sbAuthHeaders==="function"){
     try{
@@ -1133,8 +1225,9 @@ async function tpTrainerRsvpLaden(datum){
          (16:45, drei Rueckmeldungen) und Event am selben Tag - geladen wurde das Spiel,
          und weil dann niemand zugesagt hatte, belegte die Automatik still nur den
          eingeloggten Trainer vor. Das Dropdown des Plans bietet ohnehin nur Trainings an. */
-      const r=await fetch(`${SB_URL}/rest/v1/termine?select=trainer_status&datum=eq.${encodeURIComponent(datum)}&typ=eq.training&order=uhrzeit.asc.nullslast&limit=1`,{headers:sbAuthHeaders()});
+      const r=await fetch(`${SB_URL}/rest/v1/termine?select=id,trainer_status&datum=eq.${encodeURIComponent(datum)}&typ=eq.training&order=uhrzeit.asc.nullslast&limit=1`,{headers:sbAuthHeaders()});
       if(r.ok){const t=((await r.json())||[])[0];
+        if(t&&t.id!=null)TP_TERMIN_ID=t.id;
         if(t&&t.trainer_status&&typeof t.trainer_status==="object")TP_RSVP=t.trainer_status;}
     }catch(e){}
   }
@@ -1370,7 +1463,7 @@ async function tpPrognoseLoad(){
   /* Steht die Anwesenheit fuer DIESEN Termin schon fest, ist nichts mehr zu schaetzen.
      Vorher rechnete die Prognose stur mit historischen Quoten weiter und widersprach
      damit der Liste, die der Trainer eine Ansicht weiter selbst abgehakt hatte. */
-  const tag=datum?AW_DATA[datum]:null;
+  const tag=(datum&&awZaehltAlsTatsache(datum))?AW_DATA[datum]:null;   // v475: im Voraus Gespeichertes ist keine Tatsache
   if(tag&&Object.keys(tag).some(k=>k.charAt(0)!=="_")){
     const da=aktive.filter(k=>tag[k.name]&&tag[k.name].da===true).length;
     el.innerHTML=`<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;background:var(--surface2);border:var(--border);border-radius:20px;padding:4px 12px">👥 ${da} Kinder eingetragen <span style="font-weight:400;color:var(--text2)">(Anwesenheit)</span></span>`;
@@ -2099,7 +2192,9 @@ async function tpVorplanLoad(){
 }
 function tpVorplanJump(datum){
   if(typeof terminSelectEnsure==="function")terminSelectEnsure("tp-date",datum);
-  tpRenderTimeline();
+  /* v475: sel.value= loest kein change aus – Trainer-Chips, Quelle und Prognose blieben
+     vom vorherigen Tag stehen, nur der Plan wechselte. Jetzt der ganze Tag. */
+  tpTrainerRsvpLaden(datum);
   tpPlanRestore(datum);
 }
 

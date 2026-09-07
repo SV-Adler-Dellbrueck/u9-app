@@ -7,7 +7,8 @@
    Chip-Zeile bricht um statt zu wischen. */
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
-  const datum = h.tagePlus(1);
+  // v475: die Anwesenheit zaehlt erst, wenn der Tag da ist – deshalb heute, nicht morgen.
+  const datum = h.heute();
   // Genau die Lage vom 07.09.: Finn hat nie geantwortet, war aber da.
   const rsvp = { Peter: "nein", Markus: "ja", Charles: "nein", Kenneth: "ja" };
 

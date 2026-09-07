@@ -717,7 +717,9 @@ function tmJump(ziel,datum,spielform){
   if(ziel==="planung"){
     switchTrainSub("planung");
     // tp-date ist ein Termin-Dropdown; das Ziel-Datum als Option sicherstellen (nach dem async Fill).
-    const setD=()=>{ if(typeof terminSelectEnsure==="function")terminSelectEnsure("tp-date",datum); else {const d=document.getElementById("tp-date");if(d)d.value=datum;} };
+    /* v475: das Datum allein reichte nicht – Trainer-Chips, Quelle, Prognose und der
+       gespeicherte Plan blieben vom vorherigen Tag. tpVorplanJump laedt den ganzen Tag. */
+    const setD=()=>{ if(typeof tpVorplanJump==="function")tpVorplanJump(datum); else if(typeof terminSelectEnsure==="function")terminSelectEnsure("tp-date",datum); else {const d=document.getElementById("tp-date");if(d)d.value=datum;} };
     setTimeout(setD,120); setTimeout(()=>{setD();toast("Plan für "+datum);},450);
   }else if(ziel==="anwesenheit"){
     /* v473: Die haeufigste Handlung des Trainingstags lag drei Ebenen tief (Home →
