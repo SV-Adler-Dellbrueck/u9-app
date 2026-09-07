@@ -891,11 +891,11 @@ input[type="checkbox"]{width:22px;height:22px;accent-color:var(--blue);cursor:po
    Inline-Styles einzelner Labels (z. B. align-items:flex-start) gewinnen weiterhin. */
 label:has(> input[type="checkbox"]){min-height:44px;display:flex;align-items:center;gap:8px}
 
-.ftag{min-height:40px;display:inline-flex;align-items:center}      /* Kader-Filter */
+.ftag{min-height:44px;display:inline-flex;align-items:center}      /* Kader-Filter (v473: 44 statt 40) */
 .seg-btn{min-height:44px}                                          /* Umschalter */
 .print-btn{min-height:44px}
-.tp-info{min-width:40px;min-height:40px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px}
-.tp-slot .tp-remove{min-width:40px;min-height:40px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;padding:0}
+.tp-info{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px}
+.tp-slot .tp-remove{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;padding:0}
 .tp-slot .tp-remove:hover{background:var(--red-bg)}
 /* Dauer je Phase: bedienbares Feld statt Text. Nimmt das globale .tp-slot select{flex:1}
    ausdruecklich zurueck – sonst dehnt es sich und draengt Beschriftung und Papierkorb
@@ -973,3 +973,11 @@ html,body{overscroll-behavior-y:contain}
 @keyframes elLivePuls{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.78)}}
 .el-live-dot{animation:elLivePuls 1.6s ease-in-out infinite}
 @media (prefers-reduced-motion:reduce){.el-live-dot{animation:none}}
+
+/* ── Zugeklappter Tipp im Trainingsplan (v473) ─────────────────────────────────
+   Erklaerung nur auf Wunsch: <details> statt Absatz. Der Klapper ist 44 px hoch. */
+.tp-tipp{margin:2px 0 4px}
+.tp-tipp summary{list-style:none;display:inline-flex;align-items:center;min-height:44px;padding:0 10px;border-radius:10px;font-size:11.5px;font-weight:700;color:var(--text2);cursor:pointer;user-select:none}
+.tp-tipp summary::-webkit-details-marker{display:none}
+.tp-tipp[open] summary{color:var(--text)}
+.tp-tipp div{font-size:11.5px;color:var(--text2);padding:0 10px 8px;line-height:1.45}

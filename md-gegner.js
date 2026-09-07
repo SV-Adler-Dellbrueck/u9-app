@@ -719,6 +719,12 @@ function tmJump(ziel,datum,spielform){
     // tp-date ist ein Termin-Dropdown; das Ziel-Datum als Option sicherstellen (nach dem async Fill).
     const setD=()=>{ if(typeof terminSelectEnsure==="function")terminSelectEnsure("tp-date",datum); else {const d=document.getElementById("tp-date");if(d)d.value=datum;} };
     setTimeout(setD,120); setTimeout(()=>{setD();toast("Plan für "+datum);},450);
+  }else if(ziel==="anwesenheit"){
+    /* v473: Die haeufigste Handlung des Trainingstags lag drei Ebenen tief (Home →
+       Kachel → Menue → Seite) – der Plan hatte einen Sprungknopf, die Anwesenheit nicht. */
+    switchTrainSub("anwesenheit");
+    const setD=()=>{ if(typeof terminSelectEnsure==="function")terminSelectEnsure("aw-date",datum); else {const d=document.getElementById("aw-date");if(d)d.value=datum;} if(typeof awLoad==="function")awLoad(); };
+    setTimeout(setD,120); setTimeout(setD,450);
   }else if(ziel==="aufstellung"){
     sv("kombi");
     setTimeout(()=>{const d=document.getElementById("lineup-date");if(d)d.value=datum;kombiLoadLineup();},400);

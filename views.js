@@ -2230,12 +2230,12 @@ const SECS={
     const go=()=>{(typeof tpTrainerRsvpLaden==="function"?tpTrainerRsvpLaden():tpRenderTimeline());
       if(typeof tpPlanRestore==="function")tpPlanRestore();};
     if(s&&s.options.length<=1&&typeof terminSelectFill==="function")terminSelectFill("tp-date",{types:["training"],future:true,onReady:go}); else go();
-    addEvalSection(); if(typeof tpVorplanLoad==="function")tpVorplanLoad();}},
+    if(typeof tpVorplanLoad==="function")tpVorplanLoad();}},
   anwesenheit:{cid:"train-sub-anwesenheit",sub:true, init:()=>awDatesLoad()},
   quizresults:{cid:"train-sub-quizresults",sub:true, init:()=>w2("tqRenderTrainerView")},
   team:       {cid:"train-sub-team",       sub:true, init:()=>{w2("tnLoad");w2("teamStatsRender");tvInit();}},
   analyse:    {cid:"train-sub-analyse",    sub:true, init:()=>w2("anInit")},
-  spieltag:   {cid:"train-sub-spieltag",   sub:true, init:()=>{spieltagPhasenZu();w2("rotRenderControls");w2("nomInit");}},
+  spieltag:   {cid:"train-sub-spieltag",   sub:true, init:()=>{spieltagPhasenZu();spieltagPhaseVorwaehlen();w2("rotRenderControls");w2("nomInit");}},
 };
 const tabState={}; // zuletzt geöffnete Sektion je Tab (UX: Rückkehr an dieselbe Stelle)
 let curSection="bew"; // aktuell sichtbare Sektion (für Pull-to-Refresh)
@@ -2290,6 +2290,30 @@ function go(key){
    Blitz-Rating, Match-Uhr auf „Waehrend des Spiels") laufen SPAETER und oeffnen weiter. */
 function spieltagPhasenZu(){
   document.querySelectorAll("#train-sub-spieltag details.el-sect").forEach(d=>{d.open=false;});
+}
+/* v473 – Rundgang: Am Spieltag lag der Ticker drei Taps tief (Spieltag → Match → „② Während
+   des Spiels" aufklappen). Ist der gewaehlte Spieltag HEUTE, oeffnet die Seite den
+   Abschnitt, den die Uhrzeit nahelegt: vor dem Anpfiff „① Vor dem Spiel", waehrend „② Live",
+   danach „③ Nach dem Spiel". Laeuft die Match-Uhr, zaehlt das mehr als die Uhrzeit.
+   An jedem anderen Tag bleibt alles zu (v459). Welle-1-Code: Welle-2-Namen nur ueber typeof. */
+async function spieltagPhaseVorwaehlen(){
+  const heute=new Date().toISOString().slice(0,10);
+  const datum=(typeof spieltagRawDate==="function")?spieltagRawDate():(document.getElementById("spieltag-date")?.value||heute);
+  if(datum!==heute)return;
+  let t=null, uhr=null;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/termine?select=uhrzeit,uhrzeit_ende&typ=in.(spiel,turnier)&datum=eq.${heute}&order=uhrzeit.asc.nullslast&limit=1`,{headers:sbAuthHeaders()});
+    if(r.ok)t=((await r.json())||[])[0]||null;
+    const m=await fetch(`${SB_URL}/rest/v1/matchday?datum=eq.${heute}&select=clock_status`,{headers:sbAuthHeaders()});
+    if(m.ok)uhr=((await m.json())||[])[0]||null;
+  }catch(e){}
+  if(!t&&!uhr)return;
+  const jetzt=new Date().toTimeString().slice(0,5);
+  const ab=(t&&t.uhrzeit)?String(t.uhrzeit).slice(0,5):null, bis=(t&&t.uhrzeit_ende)?String(t.uhrzeit_ende).slice(0,5):null;
+  let phase="mt-phase-vor";
+  if(uhr&&uhr.clock_status&&uhr.clock_status!=="idle")phase="mt-phase-live";
+  else if(ab&&jetzt>=ab)phase=(bis&&jetzt>bis)?"mt-phase-nach":"mt-phase-live";
+  const d=document.getElementById(phase); if(d)d.open=true;
 }
 function openTab(tabId){ if(!TABS[tabId])return; go(tabState[tabId]||TABS[tabId].sections[0].key); }
 // Kompatibilitäts-Shims: bestehende sv()/switchTrainSub()-Aufrufe im Code bleiben gültig
@@ -3445,7 +3469,7 @@ async function saisonCockpitOpen(){
 const HELP=[
   {cat:"🏠 Start", items:[
     {t:"Diese Woche", d:"Alle Termine der nächsten 7 Tage auf einen Blick: wie viele Kinder zugesagt haben, ob genug Trainer da sind, ob der Trainingsplan steht und die Aufstellung fürs Spiel. Antippen öffnet den Termin.", run:"document.getElementById('home-woche')?.scrollIntoView({behavior:'smooth',block:'center'})"},
-    {t:"Startseite", d:"To-Do-Banner (nur bei offenen Aufgaben), „Bist du dabei?“ mit den Terminen der nächsten 14 Tage, für die deine Antwort noch fehlt (beantwortet = Karte weg), „Diese Woche“ mit dem Stand je Termin – die erste Zeile ist der nächste Termin mit Wetter, Packtipp und Sprungknopf –, der Knopf zu allen Terminen und sechs große Kacheln – dahinter jeweils ein Kachel-Menü.", go:"home"},
+    {t:"Startseite", d:"To-Do-Banner (nur bei offenen Aufgaben), „Bist du dabei?“ mit den Terminen der nächsten 14 Tage, für die deine Antwort noch fehlt (beantwortet = Karte weg), „Diese Woche“ mit dem Stand je Termin – die erste Zeile ist der nächste Termin mit Wetter, Packtipp und den Sprungknöpfen „Anwesenheit“ und „Plan“ –, der Knopf zu allen Terminen und sechs große Kacheln – dahinter jeweils ein Kachel-Menü.", go:"home"},
   ]},
   {cat:"👥 Team", items:[
     {t:"Saison-Cockpit", d:"Torschützen, Anwesenheit, Rückmelde-Tempo der Familien, faire Einsätze, Eltern-Puls, Rückmelde-Tempo – alles auf einen Blick.", run:"saisonCockpitOpen()"},
@@ -3458,13 +3482,13 @@ const HELP=[
   ]},
   {cat:"🏃 Training", items:[
     {t:"Anwesenheit erfassen", d:"Wer war da – Haken je Kind; Trainer werden aus dem Termin vorausgefüllt. Die Saison-Auswertung dazu liegt bei Team.", go:"anwesenheit"},
-    {t:"Trainingsplan", d:"Stationen bauen, Übungen zuweisen, Gruppen einteilen, Trainingsstart auf allen Handys. Welche Trainer angehakt sind, entscheidet die Anwesenheit dieses Tages, sobald sie erfasst ist – vorher gelten die Rückmeldungen aus „Bist du dabei?“. Über den Chips steht, welche der beiden Quellen gerade zählt; jeder Haken lässt sich von Hand ändern. Torwart- und Einzeltraining laufen parallel zum Hauptteil und genauso lang; der Trainer dort fällt für die Felder weg – aus vier Trainern werden drei Felder. Sind mehr Gruppen ausgelost als Felder frei, spielt die überzählige Gruppe in diesem Hauptteil bei einem anderen Feld mit; die Auslosung selbst bleibt. Weniger Übungen als Felder? Im Trainer-Dropdown eines Feldes „✕ Feld weglassen“ wählen – die Gruppe spielt bei den anderen mit, „↩ Feld wieder aufnehmen“ holt es zurück. Die Trainer-Reihe oben folgt den Rückmeldungen zum Termin: ✓ grün = zugesagt (automatisch angehakt), 🤔 gelb = unsicher, ✕ rot = abgesagt, ohne Zeichen = noch keine Antwort. Angehakt wird nur, wer zugesagt hat – du kannst jeden Trainer trotzdem von Hand dazunehmen oder abwählen.", go:"planung"},
+    {t:"Trainingsplan", d:"Stationen bauen, Übungen zuweisen, Gruppen einteilen, Trainingsstart auf allen Handys. Welche Trainer angehakt sind, entscheidet die Anwesenheit dieses Tages, sobald sie erfasst ist – vorher gelten die Rückmeldungen aus „Bist du dabei?“. Über den Chips steht, welche der beiden Quellen gerade zählt; jeder Haken lässt sich von Hand ändern. Die Hinweise je Phase sind zugeklappt („💡 Tipp“). Die Nachbewertung der Einheit ist nicht mehr auf dieser Seite – sie kommt nach dem Training als To-Do auf die Startseite und läuft über „Einheit bewerten“. Torwart- und Einzeltraining laufen parallel zum Hauptteil und genauso lang; der Trainer dort fällt für die Felder weg – aus vier Trainern werden drei Felder. Sind mehr Gruppen ausgelost als Felder frei, spielt die überzählige Gruppe in diesem Hauptteil bei einem anderen Feld mit; die Auslosung selbst bleibt. Weniger Übungen als Felder? Im Trainer-Dropdown eines Feldes „✕ Feld weglassen“ wählen – die Gruppe spielt bei den anderen mit, „↩ Feld wieder aufnehmen“ holt es zurück. Die Trainer-Reihe oben folgt den Rückmeldungen zum Termin: ✓ grün = zugesagt (automatisch angehakt), 🤔 gelb = unsicher, ✕ rot = abgesagt, ohne Zeichen = noch keine Antwort. Angehakt wird nur, wer zugesagt hat – du kannst jeden Trainer trotzdem von Hand dazunehmen oder abwählen.", go:"planung"},
     {t:"Einheit bewerten", d:"Schnell-Sterne: Spaß, Umsetzung, Erfolg.", run:"einheitBewertenOpen()"},
     {t:"Übungen", d:"Die Übungs-Datenbank: Gruppen-Kacheln, ⭐-Filter, Skizze je Übung, ➕ direkt in den Trainingsplan · KI-Coach · Themenplan. Bei einer eigenen Übung kannst du die Skizze selbst erzeugen: zehn Vorlagen zum Antippen (Rondo, Slalom, Torschuss …) oder mit Spielern, Hütchen, Toren, Zonen und Pfeilen selbst auf den Platz tippen.", go:"formen"},
     {t:"Trainingsturnier", d:"Turnier zum Trainingsabschluss mit Zeitbudget-Automatik – vorab planbar: es hängt am gewählten Termin und wird gespeichert, du kannst es also Tage vorher vorbereiten und findest es am Trainingstag auf jedem Gerät wieder. Gesamtzeit (z. B. 40 Min.) und 1–4 Felder vorgeben, die Automatik wählt Format und Spielzeit (5–10 Min.; bleibt Zeit übrig, gibt es eine Rückrunde statt eines Finales – beim Training soll niemand am Ende nur zuschauen) – reicht die Zeit fair nicht, sagt sie ehrlich, wie viele Minuten fehlen. Ein Platzrechner sagt vorab, wie viele Kinder die gewählte Feld-/Formatkombination gleichzeitig braucht und ob alle Teams durchgehend im Spiel sind. Zwei Modi: Kinder-Turnier (Trainer spielen auf Wunsch in den Teams mit) oder Kinder gegen Eltern (1–4 Eltern-Teams, Duelle parallel auf den Feldern, Duell-Scoreboard, nie Kind gegen Kind). Spielform wählbar (FUNiño, 4+1, 5+1) mit Team-Vorschlag aus der Kinderzahl. Ein Pfiff für alle Felder.", run:"blitzOpen()"},
   ]},
   {cat:"⚽ Spieltag", items:[
-    {t:"Match", d:"Zuerst „Teams festlegen“: wer heute dabei ist (kommt aus den Eltern-Rückmeldungen), wie viele Teams wir stellen, welcher Trainer sie betreut – die Kinder werden dabei automatisch verteilt und lassen sich von Hand umsetzen. „Dabei“ heißt automatisch „Spielt mit“ – wen du pausieren lassen willst, stellst du selbst um. Neben jedem Kind stehen die Trainingsquote und die Zahl der Einsätze; beide zählen ab einem Stichtag (zurzeit: Trainings ab dem 31.08., Spiele ab dem 05.09.2026), damit die faire Einteilung nicht an alten Zahlen hängt. Danach hat jedes Team seine eigene Kachel mit Kader, Rollen, Match-Uhr, Rotations-Timer, Live-Aktionen und Liveticker. Den Liveticker startest du selbst mit „▶️ Liveticker starten“ – er hängt nicht am Anpfiff und nicht an der Aufstellung. Sobald er läuft, erscheint bei den Eltern ganz oben eine rote LIVE-Kachel mit Teilen-Knopf – der Link geht auch an Oma und Opa, ohne Anmeldung. Stoppst du ihn wieder, kommt nur nichts Neues mehr dazu – das Bisherige bleibt für die Eltern sichtbar. Drei Tage nach dem Spieltag zeigt der Link nur noch den Endstand; die Ereignisse bleiben gespeichert. Beim Blitz-Rating nach dem Spiel zählt pro Kind, Trainer und Spieltag genau eine Bewertung – gehst du ein zweites Mal durch, korrigierst du die erste, statt sie zu verdoppeln. In der Live-Aktion stehen oben die Kinder aus der Aufstellung und unter einer gestrichelten Linie alle weiteren, die heute dabei sind – du kannst also auch tickern, wenn die Aufstellung nicht gepflegt ist. Bei „Parade“ erscheinen nur die Torhüter. Hast du selbst keine Hand frei: „🙋 Jemand anderen tickern lassen“ verschickt einen Link an einen Helfer am Spielfeldrand; der sieht nur die Kinder von heute und die Aktionsknöpfe und kann Tore, Paraden und Gegentore melden – keine Bewertungen, keine Kaderdaten. Der Link gilt nur, solange der Ticker läuft. Die Team-Quests stehen darunter und gelten für alle Teams zusammen.", go:"spieltag"},
+    {t:"Match", d:"Zuerst „Teams festlegen“: wer heute dabei ist (kommt aus den Eltern-Rückmeldungen), wie viele Teams wir stellen, welcher Trainer sie betreut – die Kinder werden dabei automatisch verteilt und lassen sich von Hand umsetzen. „Dabei“ heißt automatisch „Spielt mit“ – wen du pausieren lassen willst, stellst du selbst um. Neben jedem Kind stehen die Trainingsquote und die Zahl der Einsätze; beide zählen ab einem Stichtag (zurzeit: Trainings ab dem 31.08., Spiele ab dem 05.09.2026), damit die faire Einteilung nicht an alten Zahlen hängt. Danach hat jedes Team seine eigene Kachel mit Kader, Rollen, Match-Uhr, Rotations-Timer, Live-Aktionen und Liveticker. Den Liveticker startest du selbst mit „▶️ Liveticker starten“ – er hängt nicht am Anpfiff und nicht an der Aufstellung. Sobald er läuft, erscheint bei den Eltern ganz oben eine rote LIVE-Kachel mit Teilen-Knopf – der Link geht auch an Oma und Opa, ohne Anmeldung. Stoppst du ihn wieder, kommt nur nichts Neues mehr dazu – das Bisherige bleibt für die Eltern sichtbar. Drei Tage nach dem Spieltag zeigt der Link nur noch den Endstand; die Ereignisse bleiben gespeichert. Beim Blitz-Rating nach dem Spiel zählt pro Kind, Trainer und Spieltag genau eine Bewertung – gehst du ein zweites Mal durch, korrigierst du die erste, statt sie zu verdoppeln. In der Live-Aktion stehen oben die Kinder aus der Aufstellung und unter einer gestrichelten Linie alle weiteren, die heute dabei sind – du kannst also auch tickern, wenn die Aufstellung nicht gepflegt ist. Bei „Parade“ erscheinen nur die Torhüter. Hast du selbst keine Hand frei: „🙋 Jemand anderen tickern lassen“ verschickt einen Link an einen Helfer am Spielfeldrand; der sieht nur die Kinder von heute und die Aktionsknöpfe und kann Tore, Paraden und Gegentore melden – keine Bewertungen, keine Kaderdaten. Der Link gilt nur, solange der Ticker läuft. Die Team-Quests stehen darunter und gelten für alle Teams zusammen. Ist heute Spieltag, öffnet sich beim Betreten der Abschnitt, der zur Uhrzeit passt – vor dem Anpfiff „Vor dem Spiel“, während „Live“, danach „Nach dem Spiel“.", go:"spieltag"},
     {t:"Aufstellung", d:"Rollen-Empfehlung aus den Bewertungen: wer passt als Aufpasser, Jäger, Flitzer links/rechts. Braucht mindestens 4 bewertete Kinder – wer noch niemanden bewertet hat, nutzt im Spieltag „Feld & Bank fair besetzen“ (verteilt nach Einsatzzeiten).", go:"kombi"},
     {t:"Analyse", d:"Auswertung nach dem Spiel.", go:"analyse"},
     {t:"Heimturnier ausrichten", d:"Eigenes Turnier: Teams aus der Gegner-DB (auch 2. Mannschaften), 2–4 Gruppen nach Meldezahl, 1–4 Felder parallel, Spielform (FUNiño, 4+1, 5+1 …) mit Regelwerk, Live-Ergebnisse, „Rest +5 Min.“-Verschieber, Live-Durchsage, Fair-Play-Pokal, Team-Urkunden- und Feld-Aushang-Druck – Zuschauer-Link/QR ohne Login (mit Team-Filter und Monitor-Modus), Helfer-Link fürs Ergebnis-Eintragen am Anzeigetisch.", run:"htOpen()"},
@@ -3884,7 +3908,8 @@ async function homeWocheLoad(){
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           ${istSpiel?`<button class="btn btn-p btn-sm" onclick="tmJump('blitz','${t.datum}','${esc(t.spielform||"")}')" style="white-space:nowrap"><i class="ti ti-ball-football"></i>Matchday</button>`
             :t.typ==="event"?`<button class="btn btn-sm" onclick="mitbringTrainerOpen()" style="white-space:nowrap"><i class="ti ti-basket"></i>Mitbringliste</button>`
-            :`<button class="btn btn-sm" onclick="tmJump('planung','${t.datum}')" style="white-space:nowrap"><i class="ti ti-clipboard-list"></i>Plan</button>`}
+            :`<button class="btn btn-sm" onclick="tmJump('anwesenheit','${t.datum}')" style="white-space:nowrap"><i class="ti ti-checkbox"></i>Anwesenheit</button>
+             <button class="btn btn-sm" onclick="tmJump('planung','${t.datum}')" style="white-space:nowrap"><i class="ti ti-clipboard-list"></i>Plan</button>`}
           ${t.spielform?`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:${m.col}22;color:${m.col}">${esc(t.spielform)}</span>`:""}
           ${t.ort?`<span style="font-size:11.5px;color:var(--text2)">📍 ${mapsAnchor(t.ort)}</span>`:""}
         </div>

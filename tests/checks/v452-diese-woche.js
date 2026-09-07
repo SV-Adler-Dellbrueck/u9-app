@@ -37,7 +37,8 @@ module.exports = async function (h) {
         chips: rows.flatMap(z => [...z.querySelectorAll("span")].filter(x => /zugesagt|Trainer|Plan steht|kein Plan|Aufstellung|nominiert|offen|abgesagt|Gruppen/.test(x.textContent) && !x.closest(".woche-erweitert")).map(x => ({ t: x.textContent.trim(), k: window.__kontrastVon(x) }))),
         // v458: die erste Zeile traegt Sprungknopf, Wetterplatz und Adresse – die anderen nicht
         erweitert: rows.map(z => !!z.querySelector(".woche-erweitert")),
-        knopf: (rows[0] && rows[0].querySelector(".woche-erweitert button") || {}).textContent || "",
+        // v473: die erste Zeile traegt bei einem Training ZWEI Spruenge – Anwesenheit und Plan
+        knopf: [...(rows[0] ? rows[0].querySelectorAll(".woche-erweitert button") : [])].map(b => b.textContent.trim()).join(" · "),
         wetterPlatz: !!(rows[0] && rows[0].querySelector("#wetter-home")),
         alteKarte: (document.getElementById("home-next") || {}).textContent || ""
       };
@@ -53,7 +54,7 @@ module.exports = async function (h) {
   z(2, /0 zugesagt/); z(2, /1 Trainer/); z(2, /kein Plan/);
   r.zeilen.forEach((x, i) => { if (x.hoehe < 44) probleme.push(`Zeile ${i + 1} nur ${x.hoehe} px hoch`); if (x.rolle !== "button" || x.tab !== "0") probleme.push(`Zeile ${i + 1} nicht per Tastatur erreichbar`); });
   if (JSON.stringify(r.erweitert) !== JSON.stringify([true, false, false])) probleme.push("nur die erste Zeile darf erweitert sein: " + JSON.stringify(r.erweitert));
-  if (!/Plan/.test(r.knopf) || !r.wetterPlatz) probleme.push(`erste Zeile: Knopf „${r.knopf.trim()}“, Wetterplatz ${r.wetterPlatz}`);
+  if (!/Anwesenheit/.test(r.knopf) || !/Plan/.test(r.knopf) || !r.wetterPlatz) probleme.push(`erste Zeile: Knöpfe „${r.knopf.trim()}“ (erwartet Anwesenheit und Plan), Wetterplatz ${r.wetterPlatz}`);
   if (r.alteKarte.trim()) probleme.push("die alte Karte „Nächster Termin“ steht noch da: " + r.alteKarte.slice(0, 60));
   const min = Math.min(...r.chips.map(c => c.k));
   r.chips.filter(c => c.k < 4.5).forEach(c => probleme.push(`hell: Chip „${c.t}“ nur ${c.k}:1`));
