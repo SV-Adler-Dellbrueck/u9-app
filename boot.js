@@ -983,10 +983,21 @@ function tpOnCatChange(selId,si,p){
   if(histDiv)histDiv.innerHTML="";
 }
 
+/* v483: Kommentare der Trainer zu einer Uebung aus „Einheit bewerten" – juengster zuerst. */
+function tpUebungKommentare(formIdx){
+  const out=[];
+  if(typeof EVAL_DATA!=="object"||!EVAL_DATA)return out;
+  Object.keys(EVAL_DATA).sort().reverse().forEach(datum=>{
+    (EVAL_DATA[datum]||[]).forEach(e=>{ if(e&&e.formIdx===formIdx&&e.notiz&&String(e.notiz).trim())out.push({datum,trainer:e.trainer||"",notiz:String(e.notiz).trim()}); });
+  });
+  return out;
+}
 function tpExerciseHistoryHtml(formIdx){
   const hist=tpGetExerciseHistory(formIdx);
   if(!hist.length) return '<span style="color:var(--text3);font-size:9px">Noch nie verwendet</span>';
-  return `<span style="color:var(--text3);font-size:9px">✓ ${hist.length}× verwendet – zuletzt ${new Date(hist[0]).toLocaleDateString("de-DE")}</span>`;
+  const k=tpUebungKommentare(formIdx)[0];
+  const kurz=k?` · 💬 „${esc(k.notiz.length>70?k.notiz.slice(0,68)+"…":k.notiz)}“`:"";
+  return `<span style="color:var(--text3);font-size:9px" title="${k?esc(k.notiz+" ("+(k.trainer?k.trainer+", ":"")+new Date(k.datum).toLocaleDateString("de-DE")+")"):""}">✓ ${hist.length}× verwendet – zuletzt ${new Date(hist[0]).toLocaleDateString("de-DE")}${kurz}</span>`;
 }
 
 function tpShowExercise(formIdx){
@@ -994,7 +1005,9 @@ function tpShowExercise(formIdx){
   const f=allForms[formIdx];
   if(!f)return;
   const hist=tpGetExerciseHistory(formIdx);
-  const histHtml=hist.length?`<div style="margin-top:8px;font-size:11px;color:var(--text2)"><strong>Einsatz-Historie (${hist.length}×):</strong><br>${hist.slice(0,8).map(d=>'• '+new Date(d).toLocaleDateString("de-DE")).join('<br>')}</div>`:'<div style="margin-top:8px;font-size:11px;color:var(--text3)">Noch nie in einer Einheit verwendet.</div>';
+  const komm=tpUebungKommentare(formIdx).slice(0,3);
+  const kommHtml=komm.length?`<div style="margin-top:8px;font-size:11px;color:var(--text2)"><strong>💬 Kommentare der Trainer:</strong>${komm.map(k=>`<div style="margin-top:3px">„${esc(k.notiz)}“ <span style="color:var(--text3)">– ${k.trainer?esc(k.trainer)+", ":""}${new Date(k.datum).toLocaleDateString("de-DE")}</span></div>`).join("")}</div>`:"";
+  const histHtml=kommHtml+(hist.length?`<div style="margin-top:8px;font-size:11px;color:var(--text2)"><strong>Einsatz-Historie (${hist.length}×):</strong><br>${hist.slice(0,8).map(d=>'• '+new Date(d).toLocaleDateString("de-DE")).join('<br>')}</div>`:'<div style="margin-top:8px;font-size:11px;color:var(--text3)">Noch nie in einer Einheit verwendet.</div>');
   /* PO v412: „oben die Zeile ist abgetrennt im text und unten steht der text komplett
      nochmal." – `kurz` ist bei eigenen Übungen genau der abgeschnittene Anfang von
      `ablauf` (slice(0,80)). Als Untertitel über demselben Text ist das keine
@@ -1278,6 +1291,20 @@ async function tpTrainerRsvpLaden(datum){
   }
   tpTrainerChipsRender();
   tpRenderTimeline();
+  tpNachbereitenKnopf(datum);
+}
+/* v483 – PO-Wahl: „Im Trainingsplan nach der Einheit". Ist das gewaehlte Training vorbei,
+   steht oben im Plan der Weg in die Nachbereitung – auch fuer Trainer, die im Plan nicht
+   eingeteilt waren und deshalb kein To-do bekommen. */
+async function tpNachbereitenKnopf(datum){
+  const slot=document.getElementById("tp-nachbereiten"); if(!slot)return;
+  slot.innerHTML="";
+  if(!datum||typeof _termineSelLoad!=="function"||typeof terminVorbei!=="function")return;
+  let rows=[]; try{rows=await _termineSelLoad();}catch(e){}
+  const t=rows.find(x=>x.datum===datum&&x.typ==="training");
+  if(!t||!terminVorbei(t))return;
+  if(document.getElementById("tp-date")?.value!==datum)return;
+  slot.innerHTML=`<button class="btn btn-sm" onclick="if(typeof einheitNachbereiten==='function')einheitNachbereiten('${String(datum).replace(/'/g,"")}')" style="width:100%;min-height:44px;justify-content:center;margin:2px 0 8px"><i class="ti ti-star"></i>Einheit nachbereiten – Sterne und Kommentare zu den Übungen</button>`;
 }
 /* v473: Die Phasen-Hinweise standen als Absatz in JEDER Phase bei JEDEM Oeffnen – die
    Planseite war 2500 px hoch, und wer den Satz kannte, scrollte trotzdem daran vorbei.
