@@ -396,6 +396,12 @@ function kidListFromIds(arr){ if(!Array.isArray(arr))return arr; return arr.map(
 function kidListToIds(arr){ if(!Array.isArray(arr))return arr; return arr.map(x=>{ if(typeof x!=="string")return x; const m=x.match(/^#(\d+)$/); if(m)return Number(m[1]); const id=kidId(x); return id!=null?id:x; }); }
 async function loadKader(){
   try{
+    /* v482 – PO: „Die Anwesenheit der Kinder ist wieder weg." Nach einer Nacht ist der
+       Zugangs-Token abgelaufen; sbToken() stoesst die Erneuerung an und gibt null zurueck,
+       dieser Abruf lief dann mit dem anonymen Schluessel – die RLS gab null Zeilen, ohne
+       Fehler. Der Kader blieb leer, bis jemand die App neu lud. Jetzt: erst die laufende
+       Erneuerung abwarten, dann laden. */
+    if(typeof sbToken==="function"&&!sbToken()&&typeof sbRefreshing!=="undefined"&&sbRefreshing){ try{await sbRefreshing;}catch(e){} }
     const r=await fetch(`${SB_URL}/rest/v1/kader?select=*&order=sort_order.asc,name.asc`,{headers:sbAuthHeaders()});
     // Bewusst KEIN sbCheck401: laeuft auch im Eltern-/Delegate-Modus (Top-Level-Init).
     // Ohne Trainer-Token liefert die RLS 401 -> KADER bleibt leer.

@@ -200,11 +200,28 @@ function sbRefreshToken(){
       const expiresAt=data.expires_at||(Math.floor(Date.now()/1000)+(data.expires_in||3600));
       localStorage.setItem(zielKey,JSON.stringify({access_token:data.access_token,refresh_token:data.refresh_token||s.refresh_token,expires_at:expiresAt}));
       _sbRefreshFehlerAb=0;
+      setTimeout(()=>{ try{ nachSitzungErneuert(); }catch(e){} },0);   // v482: was ohne Token leer blieb, jetzt nachholen
       return true;
     }catch(e){ _sbRefreshFehlerAb=Date.now()+30000; return null; }   // offline: später nochmal
     finally{sbRefreshing=null;}
   })();
   return sbRefreshing;
+}
+/* v482: Nach einer stillen Token-Erneuerung das nachholen, was beim Start ohne Token leer
+   geblieben ist – und NUR das. Die stuendliche Erneuerung mitten in der Arbeit darf nichts
+   neu zeichnen (ungespeicherte Haken!). Deshalb: nur wenn der Kader leer ist. */
+async function nachSitzungErneuert(){
+  if(typeof KADER==="undefined"||KADER.length||typeof loadKader!=="function")return;
+  await loadKader();
+  if(!KADER.length)return;
+  try{ if(typeof loadDB==="function")await loadDB(); }catch(e){}
+  try{ window._topbarChecked=false; if(typeof topbarNaechsterTermin==="function")topbarNaechsterTermin(); window._topbarChecked=true; }catch(e){}
+  try{
+    const k=(typeof curSection!=="undefined")?curSection:"home";
+    if(k==="home"){ if(typeof renderHome==="function")renderHome(); }
+    else if(typeof SECS!=="undefined"&&SECS[k]&&SECS[k].init)SECS[k].init();
+  }catch(e){}
+  if(typeof toast==="function")toast("Sitzung erneuert – Kader geladen");
 }
 /* Gibt es überhaupt eine Sitzung? Ein abgelaufener Zugangs-Token mit gültigem
    refresh_token IST eine Sitzung – sie muss nur erneuert werden. Nur wenn beides fehlt,
