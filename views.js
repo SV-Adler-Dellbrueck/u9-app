@@ -2719,6 +2719,11 @@ function einheitRowsHtml(v){ v=v||{}; return einheitStarRow("spass","😄 Spaß"
 const EB_DIMS=[{key:"Durchführung",label:"Durchführung"},{key:"Spaßfaktor Kinder",label:"Spaßfaktor Kinder"},{key:"Anforderung umgesetzt",label:"Anforderung umgesetzt"}];
 let EB_TERMINE=[], EB_DATUM=null, EB_PLAN=[], EB_SPIELER=[];
 
+/* v483: aus dem Trainingsplan direkt in die Nachbereitung dieses Tages. */
+async function einheitNachbereiten(datum){
+  await einheitBewertenOpen();
+  if(datum&&document.getElementById("eb-card"))einheitDetailOpen(datum);
+}
 async function einheitBewertenOpen(){
   if(!sbToken()){toast("Bitte als Trainer anmelden","err");return;}
   document.getElementById("eb-modal")?.remove();
@@ -2794,6 +2799,8 @@ async function einheitDetailOpen(datum){
         <div id="eb-ue-stars-${i}" style="${skip?"opacity:.35;pointer-events:none":""}">
           ${EB_DIMS.map(d=>einheitStarRow(`ue-${i}-${d.key}`,d.label,alt[d.key]||0,5,19)).join("")}
         </div>
+        <input id="eb-ue-notiz-${i}" value="${esc(alt.notiz||"")}" placeholder="Kommentar zur Übung (optional) – steht beim nächsten Mal im Plan" maxlength="200"
+          style="${fld};width:100%;min-height:44px;margin-top:6px">
         <label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:11.5px;color:var(--text2);cursor:pointer">
           <input type="checkbox" id="eb-skip-${i}" ${skip?"checked":""} onchange="einheitSkipToggle(${i})">
           Übersprungen / anderer Trainer – nicht bewerten
@@ -2855,7 +2862,10 @@ async function einheitSave(){
   if(EB_PLAN.length&&typeof EVAL_DATA!=="undefined"){
     const evals=EB_PLAN.map((p,i)=>{
       const skip=document.getElementById("eb-ue-"+i)?.dataset.skip==="1";
-      const e={name:p.formName,trainer:p.trainer||"",formIdx:p.formIdx,notiz:"",skipped:skip};
+      /* v483 – PO: „Wie kann ein Trainer optional die Übungen nach einem Training bewerten und
+         kommentieren?" Das Feld gab es, es blieb immer leer. Jetzt je Übung ein Kommentar –
+         er erscheint im Trainingsplan, wenn die Übung wieder gewählt wird (tpUebungKommentare). */
+      const e={name:p.formName,trainer:p.trainer||"",formIdx:p.formIdx,notiz:(document.getElementById("eb-ue-notiz-"+i)?.value||"").trim(),skipped:skip};
       if(!skip)EB_DIMS.forEach(d=>{e[d.key]=einheitGetStar(`ue-${i}-${d.key}`);});
       return e;
     });
@@ -3499,7 +3509,7 @@ const HELP=[
   {cat:"🏃 Training", items:[
     {t:"Anwesenheit erfassen", d:"Wer war beim Training da – Haken je Kind. Hier stehen nur Trainings: die Anwesenheit an Spiel- und Turniertagen ist „Dabei“ in „Teams festlegen“ im Spieltag. Die Trainer-Haken zeigen bis zum Tag die Rückmeldungen aus „Bist du dabei?“ – ein Tap darauf ändert die Rückmeldung des Kollegen für alle. Am Tag selbst werden die Haken mit „Speichern“ zur Anwesenheit dieses Tages. Die Saison-Auswertung dazu liegt bei Team.", go:"anwesenheit"},
     {t:"Trainingsplan", d:"Stationen bauen, Übungen zuweisen, Gruppen einteilen, Trainingsstart auf allen Handys. Welche Trainer angehakt sind, kommt aus EINER Quelle: der Rückmeldung aus „Bist du dabei?“ bzw. dem Trainerplan (✓ zugesagt, ✕ abgesagt, ? keine Antwort). Am Tag selbst zählt die erfasste Anwesenheit. Über den Chips steht, was gerade gilt – und ein Tap auf einen Chip ändert genau das: die Rückmeldung des Kollegen (für alle sichtbar, auch auf der Startseite) oder am Tag die Anwesenheit. Sagt jemand kurzfristig ab, tippst du ihn hier ab, und Felder und Gruppen rechnen neu. Die Hinweise je Phase sind zugeklappt („💡 Tipp“). Die Nachbewertung der Einheit ist nicht mehr auf dieser Seite – sie kommt nach dem Training als To-Do auf die Startseite und läuft über „Einheit bewerten“. Torwart- und Einzeltraining laufen parallel zum Hauptteil und genauso lang; der Trainer dort fällt für die Felder weg – aus vier Trainern werden drei Felder. Sind mehr Gruppen ausgelost als Felder frei, spielt die überzählige Gruppe in diesem Hauptteil bei einem anderen Feld mit; die Auslosung selbst bleibt. Weniger Übungen als Felder? Im Trainer-Dropdown eines Feldes „✕ Feld weglassen“ wählen – die Gruppe spielt bei den anderen mit, „↩ Feld wieder aufnehmen“ holt es zurück. Die Trainer-Reihe oben folgt den Rückmeldungen zum Termin: ✓ grün = zugesagt (automatisch angehakt), 🤔 gelb = unsicher, ✕ rot = abgesagt, ohne Zeichen = noch keine Antwort. Angehakt wird nur, wer zugesagt hat – du kannst jeden Trainer trotzdem von Hand dazunehmen oder abwählen.", go:"planung"},
-    {t:"Einheit bewerten", d:"Schnell-Sterne: Spaß, Umsetzung, Erfolg.", run:"einheitBewertenOpen()"},
+    {t:"Einheit bewerten", d:"Nach dem Training, alles optional: Sterne für die Einheit (Spaß, Umsetzung, Erfolg) mit Notiz, je Übung drei Sterne-Reihen und ein Kommentar (steht beim nächsten Mal im Trainingsplan bei der Übung), Schnell-Sterne für die anwesenden Kinder. Erreichbar über das To-do auf der Startseite, im Trainingsplan über „Einheit nachbereiten“, sobald die Einheit vorbei ist – oder hier.", run:"einheitBewertenOpen()"},
     {t:"Übungen", d:"Die Übungs-Datenbank: Gruppen-Kacheln, ⭐-Filter, Skizze je Übung, ➕ direkt in den Trainingsplan · KI-Coach · Themenplan. Bei einer eigenen Übung kannst du die Skizze selbst erzeugen: zehn Vorlagen zum Antippen (Rondo, Slalom, Torschuss …) oder mit Spielern, Hütchen, Toren, Zonen und Pfeilen selbst auf den Platz tippen.", go:"formen"},
     {t:"Trainingsturnier", d:"Turnier zum Trainingsabschluss mit Zeitbudget-Automatik – vorab planbar: es hängt am gewählten Termin und wird gespeichert, du kannst es also Tage vorher vorbereiten und findest es am Trainingstag auf jedem Gerät wieder. Gesamtzeit (z. B. 40 Min.) und 1–4 Felder vorgeben, die Automatik wählt Format und Spielzeit (5–10 Min.; bleibt Zeit übrig, gibt es eine Rückrunde statt eines Finales – beim Training soll niemand am Ende nur zuschauen) – reicht die Zeit fair nicht, sagt sie ehrlich, wie viele Minuten fehlen. Ein Platzrechner sagt vorab, wie viele Kinder die gewählte Feld-/Formatkombination gleichzeitig braucht und ob alle Teams durchgehend im Spiel sind. Zwei Modi: Kinder-Turnier (Trainer spielen auf Wunsch in den Teams mit) oder Kinder gegen Eltern (1–4 Eltern-Teams, Duelle parallel auf den Feldern, Duell-Scoreboard, nie Kind gegen Kind). Spielform wählbar (FUNiño, 4+1, 5+1) mit Team-Vorschlag aus der Kinderzahl. Ein Pfiff für alle Felder.", run:"blitzOpen()"},
   ]},
