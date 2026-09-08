@@ -8,12 +8,21 @@ module.exports = async function (h) {
   const K = h.KINDER, probleme = [], zeilen = [];
   const heute = h.heute(), morgen = h.tagePlus(1);
   const jetzt = new Date(); const hh = n => String(n).padStart(2, "0");
-  const vor = `${hh((jetzt.getHours() + 23) % 24)}:00`, nach = `${hh((jetzt.getHours() + 1) % 24)}:59`;
+  // Nicht ueber Mitternacht wickeln: um 00:xx ergab (h+23)%24 „23:00" – und das Spiel lag in der Zukunft.
+  const vor = `${hh(Math.max(0, jetzt.getHours() - 1))}:00`, nach = `${hh(Math.min(23, jetzt.getHours() + 1))}:59`;
   const termine = [
     { id: 1, datum: morgen, typ: "training", uhrzeit: "16:45", trainer_status: {} },
     { id: 2, datum: heute, typ: "spiel", titel: "Testspiel", uhrzeit: vor, uhrzeit_ende: nach, trainer_status: {} }
   ];
-  const s = await h.starten({ supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), termine, matchday: [{ datum: heute, clock_status: "idle" }], profiles: [{ name: "Charles", rolle: "trainer" }] }), hoehe: 1800 });
+  /* Die Attrappe filtert nicht – ohne diese Funktion bekam die Phasen-Vorwahl das TRAINING von
+     morgen (16:45) statt des Spiels von heute und stand vor 16:45 Uhr immer auf „Vor dem Spiel". */
+  const termineGefiltert = u => termine.filter(t => {
+    const d = (u.searchParams.get("datum") || "").replace(/^eq\./, "");
+    const typ = (u.searchParams.get("typ") || "");
+    const typOk = !typ || (typ.startsWith("in.(") ? typ.slice(4, -1).split(",").includes(t.typ) : typ.replace(/^eq\./, "") === t.typ);
+    return (!d || t.datum === d) && typOk;
+  });
+  const s = await h.starten({ supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), termine: termineGefiltert, matchday: [{ datum: heute, clock_status: "idle" }], profiles: [{ name: "Charles", rolle: "trainer" }] }), hoehe: 1800 });
   await h.sichtbarMachen(s.page, "#home-content");
   const r = await s.page.evaluate(async ({ K, heute, morgen }) => {
     await loadKader(); window.trainerMe = async () => "Charles";

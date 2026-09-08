@@ -743,6 +743,8 @@ function awLoad(){
     }
   }).catch(()=>{});
   awRenderList();
+  // v482: Kader noch nicht da (Start ohne gueltigen Token)? Dann nach dem Laden nachzeichnen.
+  if(typeof KADER!=="undefined"&&!KADER.length&&typeof loadKader==="function")loadKader().then(()=>{ if(KADER.length&&document.getElementById("aw-date")?.value===datum)awRenderList(); }).catch(()=>{});
 }
 /* v477: Das Vorhaken der Anwesenheit aus der Nominierung ist weg – Spieltage stehen
    nicht mehr in dieser Auswahl. Die Anwesenheit eines Spieltags IST die Nominierung. */
