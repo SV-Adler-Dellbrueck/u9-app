@@ -348,27 +348,13 @@ async function kapitaenLoad(){
     });
   }catch(e){}
 }
-/* B2 – Faire Rollen: „jeder mal dran". Kapitän gibt es schon; hier zusätzlich die Rolle
-   „Anstoß" und eine Fairness-Übersicht, wer eine Rolle noch nie hatte (⭐). */
-let ANSTOSS_COUNT={}, matchAnstoss=null;
-async function anstossLoad(){
-  ANSTOSS_COUNT={}; matchAnstoss=null; const datum=spieltagKey();
-  try{const r=await fetch(`${SB_URL}/rest/v1/match_actions?aktion=eq.anstoss&select=spieler,datum&order=created_at.desc`,{headers:sbAuthHeaders()});
-    if(!sbCheck401(r)&&r.ok)(await r.json()).forEach(x=>{ANSTOSS_COUNT[x.spieler]=(ANSTOSS_COUNT[x.spieler]||0)+1; if(x.datum===datum&&!matchAnstoss)matchAnstoss=x.spieler;});}catch(e){}
-}
-async function anstossSet(name){
-  if(!name)return; const datum=spieltagKey();
-  try{ await fetch(`${SB_URL}/rest/v1/match_actions?datum=eq.${encodeURIComponent(datum)}&aktion=eq.anstoss`,{method:"DELETE",headers:sbAuthHeaders()}); }catch(e){}
-  if(ANSTOSS_COUNT[matchAnstoss])ANSTOSS_COUNT[matchAnstoss]--;
-  matchAnstoss=name; ANSTOSS_COUNT[name]=(ANSTOSS_COUNT[name]||0)+1;
-  try{navigator.vibrate&&navigator.vibrate(30);}catch(e){}
-  terminIdForDatum(datum).then(tid=>sbQueuedPost("match_actions",{datum,spieler:name,aktion:"anstoss",termin_id:tid}));
-  toast(`🏁 ${name} stößt heute an`);
-  rollenPanelRender();
-}
+/* B2 – Faire Rollen: „jeder mal dran" – mit einer Fairness-Übersicht, wer die Rolle noch nie
+   hatte (⭐). v496 PO: „Die Rolle Anstoß können wir rausnehmen." Es blieb der Kapitän; die
+   Anstoß-Rolle war eine zweite Auswahl mit denselben Namen und derselben Sternliste, und wer
+   anstößt, entscheidet sich am Feld ohnehin in zehn Sekunden. Alte match_actions-Zeilen mit
+   aktion="anstoss" bleiben unangetastet liegen – sie stören nichts und niemand liest sie mehr. */
 async function rollenPanelRender(){
   const box=document.getElementById("rollen-panel"); if(!box)return;
-  await anstossLoad(); // KAP_COUNT wird über kapitaenLoad in nomLoad gefüllt
   /* Nur die Kinder DIESES Teams. Der frühere Rückfall auf den ganzen Kader war gut
      gemeint, aber hier falsch: die Rollen wohnen in der Team-Kachel, und ein Kapitän aus
      einem anderen Team steht am Spielfeldrand. Ist das Team leer, sagt das Panel das –
@@ -391,8 +377,7 @@ async function rollenPanelRender(){
     </div>`;
   };
   box.innerHTML=`<div style="font-size:10.5px;color:var(--text3);margin-bottom:6px">Damit jedes Kind mal die besondere Rolle bekommt.</div>`+
-    row("©️","Kapitän",(typeof KAP_COUNT!=="undefined"?KAP_COUNT:{}),(typeof matchKapitaen!=="undefined"?matchKapitaen:null),"kapitaenSet")+
-    row("🏁","Anstoß",ANSTOSS_COUNT,matchAnstoss,"anstossSet");
+    row("©️","Kapitän",(typeof KAP_COUNT!=="undefined"?KAP_COUNT:{}),(typeof matchKapitaen!=="undefined"?matchKapitaen:null),"kapitaenSet");
 }
 async function kapitaenSet(name){
   if(!name)return;
@@ -2542,10 +2527,13 @@ async function fstMatchdayAnpfiff(row,runde,anker,ausser){
   if(!row||!row.datum)return;
   const drin=new Set(plan.filter(p=>p.runde===runde).flatMap(p=>[p.a,p.b]));
   const dauer=Math.max(3,cfg.spieldauer||8);
-  let n=0;
+  let n=0, angezeigtSpielt=false;
+  const gezeigt=(typeof spieltagTeam!=="undefined")?spieltagTeam:1;
   for(let i=0;i<teams.length;i++){
     if(!/adler/i.test(String(teams[i]||"")))continue;
-    n++; if(!drin.has(i))continue;
+    n++;
+    if(n===gezeigt&&drin.has(i))angezeigtSpielt=true;
+    if(!drin.has(i))continue;
     const key=n===1?row.datum:`${row.datum}__t${n}`;
     if(ausser&&key===ausser)continue;
     try{await fetch(`${SB_URL}/rest/v1/matchday?on_conflict=datum`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},
@@ -2555,6 +2543,26 @@ async function fstMatchdayAnpfiff(row,runde,anker,ausser){
   /* v493: „Teams festlegen" liest Feld, Spielform und Gegner aus dem Plan – nach dem Anpfiff
      gilt die nächste Runde, also die Ansicht mitziehen. */
   if(typeof teamPlanNachziehen==="function"){try{teamPlanNachziehen();}catch(e){}}
+  /* v496 PO: „Rotations-Timer immer mit dem Countdown gleichzeitig starten. Kann bei Bedarf
+     angehalten werden." In der App tat der Anpfiff das längst (mcStart ruft rotStart); der
+     zentrale Anpfiff im Planer ging daran vorbei. Jetzt läuft er hier mit – aber nur, wenn das
+     angezeigte Team in dieser Runde auch spielt. Das Wechsel-Intervall ist die halbe Spielzeit
+     (PO-Kachel): bei 8 Minuten also einer in der Mitte und einer am Ende. */
+  if(typeof rotStart==="function"){
+    try{
+      if(angezeigtSpielt){
+        if(typeof rotIntervalMin!=="undefined"){
+          rotIntervalMin=Math.max(1,Math.round(dauer/2));
+          const sel=document.getElementById("rot-interval"); if(sel)sel.value=String(rotIntervalMin);
+        }
+        /* Nur den Rundenzähler auf 0 – rotReset() fragt bei erfassten Zeiten nach und
+           würde beim Anpfiff einen Dialog aufmachen; die gesammelten Spielzeiten des Tages
+           bleiben ohnehin stehen, sie sind die Grundlage der fairen Einteilung. */
+        if(typeof rotElapsed!=="undefined")rotElapsed=0;
+        rotStart();
+      }
+    }catch(e){}
+  }
 }
 /* Gegenrichtung: der Anpfiff an der Match-Uhr im Spieltag startet die Festival-Runde mit
    demselben Anker – damit zeigt der Gast-Link dieselbe Restzeit. */
