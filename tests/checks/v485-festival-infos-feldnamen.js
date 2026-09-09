@@ -50,6 +50,8 @@ module.exports = async function (h) {
       adresse: /Thurner Kamp 97, 51069 Köln/.test(bHtml), karte: /google\.com\/maps/.test(bHtml),
       parken: /oft schon belegt/.test(bHtml) && /an der Straße parken/.test(bHtml),
       kaffee: /Kaffee und Brötchen/.test(bHtml),
+      wc: /Ebenerdig unter dem Vereinsheim/.test(bHtml), turnierleitung: /Turnierleitung/.test(HT_INFOS_VORLAGE),
+      linkeHaelfte: /linken Hälfte des großen Platzes/.test(bHtml) && /rechte Hälfte/.test(bHtml),
       skizzeFelder: /Skizze der Spielfelder/.test(bHtml) && /Käfig/.test(bHtml) && /Funino 2/.test(bHtml),
       skizzeParken: /Skizze der Parkmöglichkeiten/.test(bHtml) && /Thurner Kamp/.test(bHtml),
       planNamen: /Käfig · 4\+1/.test(seite) && /Funino 1 · 3:3/.test(seite) && !/>F1 ·/.test(seite),
@@ -68,6 +70,9 @@ module.exports = async function (h) {
   if (r.rolle !== "dialog/true") probleme.push(`Info-Blatt ohne Dialog-Rolle (${r.rolle})`);
   if (!r.adresse || !r.karte) probleme.push(`Adresse ${r.adresse}, Kartenlink ${r.karte}`);
   if (!r.parken) probleme.push("Parkhinweis fehlt (am Platz oft belegt, besser an der Straße)");
+  if (!r.wc) probleme.push("WC-Hinweis (ebenerdig unter dem Vereinsheim) fehlt im Blatt");
+  if (r.turnierleitung) probleme.push("„Turnierleitung“ steht noch in der Vorlage");
+  if (!r.linkeHaelfte) probleme.push("Felder-Skizze ohne linke/rechte Platzhälfte");
   if (!r.kaffee) probleme.push("„Kaffee und Brötchen“ fehlt in der Vorlage");
   if (r.svgs < 2 || !r.skizzeFelder || !r.skizzeParken) probleme.push(`Skizzen: ${r.svgs} SVGs, Felder ${r.skizzeFelder}, Parken ${r.skizzeParken}`);
   if (!r.zuIst) probleme.push("„Zurück zum Spielplan“ schließt das Blatt nicht");

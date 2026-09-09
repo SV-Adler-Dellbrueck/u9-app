@@ -1460,7 +1460,7 @@ const HT_REGELN={
   f7:"7 gegen 7 (Vorlage, bitte an eure Ausschreibung anpassen)\n• 6 Feldspieler + Torwart, fliegender Wechsel\n• Abseits je nach Kreis-Ausschreibung\n• Einwurf regulär, Freistöße nach Ausschreibung\n• Schiedsrichter oder Spielbegleiter je nach Turnierordnung",
   frei:"Eigene Spielform – Regeln hier eintragen."
 };
-const HT_INFOS_VORLAGE="⏰ Bitte 30 Minuten vor dem ersten Spiel da sein\n☕ Kaffee und Brötchen stehen bereit\n🧑‍⚖️ Schiedsrichter: die Trainer am Feld – fair und kindgerecht\n🚻 Kabinen/WC: \n📞 Turnierleitung: ";
+const HT_INFOS_VORLAGE="⏰ Bitte 30 Minuten vor dem ersten Spiel da sein\n☕ Kaffee und Brötchen stehen bereit\n🧑‍⚖️ Schiedsrichter: die Trainer am Feld – fair und kindgerecht";
 const HT_GRLABEL=["A","B","C","D"];
 // Platzhalter der Finalrunde lesbar machen ("A1" = Erster Gruppe A, "S|Halbfinale 1" = Sieger HF 1 …)
 function _htName(v,teams){
@@ -2309,9 +2309,10 @@ function fstDruck(){
     </body></html>`);
   w.document.close(); w.focus(); setTimeout(()=>w.print(),300);
 }
-/* Skizze der Felder auf dem Gelaende (schematisch, nicht massstabsgetreu): links der Käfig,
-   rechts der grosse Platz – obere Haelfte 4+1, untere Haelfte zwei FUNiño-Felder.
-   Die Namen kommen aus den angelegten Feldern; nicht belegte Plaetze sind gestrichelt. */
+/* Skizze der Felder (schematisch, nach der Luftaufnahme): links der eingezaeunte Käfig, daneben
+   der grosse Platz quer. Fuers Festival haben wir den Käfig und die LINKE Haelfte des grossen
+   Platzes: oben quer „4+1 oben", darunter nebeneinander Funino 1 und 2. Die rechte Haelfte
+   bleibt frei. Rechts vom Platz der Parkplatz, unten das Vereinsheim (WC ebenerdig). */
 function fstSkizzeFelder(felder){
   const f=(felder&&felder.length)?felder:FST_STANDARD_FELDER;
   const idxF4=[],idxFu=[]; f.forEach((x,i)=>((x.form||"funino")==="f4"?idxF4:idxFu).push(i));
@@ -2319,52 +2320,66 @@ function fstSkizzeFelder(felder){
   const kaefig=nm(idxF4[0]), oben=nm(idxF4[1]), fu1=nm(idxFu[0]), fu2=nm(idxFu[1]);
   const B=_fstF("f4").farbe, G=_fstF("funino").farbe;
   const box=(x,y,w,h,name,farbe,ort)=>name
-    ?`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="${farbe}" opacity=".92"/><text x="${x+w/2}" y="${y+h/2+5}" text-anchor="middle" font-size="14" font-weight="800" fill="#fff">${esc(name)}</text>`
+    ?`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="${farbe}" opacity=".92"/><text x="${x+w/2}" y="${y+h/2+5}" text-anchor="middle" font-size="${w<60?"10.5":"13"}" font-weight="800" fill="#fff">${esc(name)}</text>`
     :`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="none" stroke="#94a3b8" stroke-dasharray="6 4" stroke-width="2"/><text x="${x+w/2}" y="${y+h/2}" text-anchor="middle" font-size="11" fill="#64748b">${esc(ort)}</text><text x="${x+w/2}" y="${y+h/2+14}" text-anchor="middle" font-size="10" fill="#94a3b8">heute frei</text>`;
-  return `<svg viewBox="0 0 360 250" role="img" aria-label="Skizze der Spielfelder" style="width:100%;height:auto;display:block;font-family:inherit">
-    <rect x="0" y="0" width="360" height="250" rx="12" fill="#f0fdf4"/>
-    <text x="180" y="22" text-anchor="middle" font-size="12" font-weight="800" fill="#334155">Sportanlage Thurner Kamp – Skizze</text>
-    <!-- Käfig: kleines, eingezaeuntes Feld links -->
-    <rect x="16" y="70" width="104" height="150" rx="8" fill="none" stroke="#475569" stroke-width="3" stroke-dasharray="3 3"/>
-    ${box(24,78,88,134,kaefig,B,"Käfig")}
-    <!-- grosser Platz rechts -->
-    <rect x="140" y="40" width="204" height="196" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
-    <line x1="140" y1="138" x2="344" y2="138" stroke="#16a34a" stroke-width="2"/>
-    ${box(150,48,184,82,oben,B,"4+1 oben")}
-    ${box(150,146,88,82,fu1,G,"Funino 1")}
-    ${box(246,146,88,82,fu2,G,"Funino 2")}
-    <text x="242" y="248" text-anchor="middle" font-size="10" fill="#64748b">großer Platz</text>
-    <text x="68" y="238" text-anchor="middle" font-size="10" fill="#64748b">Käfig (eingezäunt)</text>
+  return `<svg viewBox="0 0 360 270" role="img" aria-label="Skizze der Spielfelder" style="width:100%;height:auto;display:block;font-family:inherit">
+    <rect x="0" y="0" width="360" height="270" rx="12" fill="#f0fdf4"/>
+    <text x="180" y="20" text-anchor="middle" font-size="12" font-weight="800" fill="#334155">Sportanlage Thurner Kamp – Skizze</text>
+    <!-- Käfig: kleines eingezaeuntes Feld links -->
+    <rect x="8" y="60" width="48" height="150" rx="6" fill="none" stroke="#475569" stroke-width="3" stroke-dasharray="3 3"/>
+    ${box(14,66,36,138,kaefig,B,"Käfig")}
+    <!-- grosser Platz quer, linke Haelfte fuers Festival -->
+    <rect x="64" y="40" width="254" height="190" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+    <line x1="191" y1="40" x2="191" y2="230" stroke="#16a34a" stroke-width="2"/>
+    ${box(72,48,112,78,oben,B,"4+1 oben")}
+    ${box(72,134,53,88,fu1,G,"Funino 1")}
+    ${box(131,134,53,88,fu2,G,"Funino 2")}
+    <rect x="198" y="48" width="112" height="174" rx="6" fill="#f1f5f9" opacity=".8"/>
+    <text x="254" y="130" text-anchor="middle" font-size="10.5" fill="#64748b">rechte Hälfte</text>
+    <text x="254" y="144" text-anchor="middle" font-size="10.5" fill="#64748b">nicht im Festival</text>
+    <!-- Parkplatz rechts vom Platz, Vereinsheim unten -->
+    <rect x="326" y="60" width="26" height="140" rx="5" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+    <text x="339" y="130" text-anchor="middle" font-size="10" font-weight="700" fill="#92400e" transform="rotate(-90 339 130)">Parkplatz</text>
+    <rect x="96" y="238" width="72" height="22" rx="5" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"/>
+    <text x="132" y="253" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">Vereinsheim</text>
+    <text x="178" y="253" font-size="10" fill="#64748b">WC/Kabinen ebenerdig darunter</text>
+    <text x="32" y="224" text-anchor="middle" font-size="10" fill="#64748b">eingezäunt</text>
   </svg>`;
 }
-/* Skizze der Parkplaetze (schematisch): der Platz an der Anlage ist oft voll – an der
-   Strasse Thurner Kamp gibt es genug Plaetze. Tennisplaetze und Strundehaus als Orientierung. */
+/* Skizze der Parkplaetze (schematisch, nach der Luftaufnahme): der Parkplatz liegt rechts
+   neben dem grossen Platz und ist oft voll; die Zufahrt kommt vom Thurner Kamp, der schraeg
+   an den Tennisplaetzen vorbeilaeuft – dort, entlang der Strasse, ist genug Platz. */
 function fstSkizzeParken(){
-  const auto=(x,y,farbe)=>`<rect x="${x}" y="${y}" width="14" height="8" rx="2" fill="${farbe}"/>`;
-  return `<svg viewBox="0 0 360 230" role="img" aria-label="Skizze der Parkmöglichkeiten" style="width:100%;height:auto;display:block;font-family:inherit">
-    <rect x="0" y="0" width="360" height="230" rx="12" fill="#f8fafc"/>
-    <text x="180" y="22" text-anchor="middle" font-size="12" font-weight="800" fill="#334155">Parken – Skizze</text>
-    <!-- Strasse Thurner Kamp unten -->
-    <rect x="0" y="176" width="360" height="34" fill="#cbd5e1"/>
-    <line x1="0" y1="193" x2="360" y2="193" stroke="#fff" stroke-width="2" stroke-dasharray="10 8"/>
-    <text x="180" y="226" text-anchor="middle" font-size="11" font-weight="800" fill="#334155">Thurner Kamp</text>
-    <!-- Parkstreifen an der Strasse: gruen, genug Platz -->
-    <rect x="12" y="160" width="336" height="14" rx="3" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
-    ${[20,44,68,92,116,140,164,188,212,236,260,284,308,332].map(x=>auto(x,163,"#16a34a")).join("")}
-    <text x="348" y="152" text-anchor="end" font-size="12" font-weight="800" fill="#15803d">an der Straße parken – genug Plätze</text>
-    <!-- Zufahrt und Parkplatz am Platz -->
-    <rect x="60" y="96" width="30" height="66" fill="#e2e8f0"/>
-    <text x="75" y="130" text-anchor="middle" font-size="9" fill="#475569" transform="rotate(-90 75 130)">Zufahrt</text>
-    <rect x="30" y="52" width="90" height="46" rx="6" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
-    ${[38,58,78,98].map(x=>auto(x,58,"#b45309")).join("")}${[38,58,78].map(x=>auto(x,72,"#b45309")).join("")}
-    <text x="75" y="93" text-anchor="middle" font-size="9.5" font-weight="700" fill="#92400e">am Platz – oft voll</text>
-    <!-- Sportplatz, Tennis, Strundehaus -->
-    <rect x="140" y="36" width="130" height="100" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="2.5"/>
-    <text x="205" y="90" text-anchor="middle" font-size="12" font-weight="800" fill="#166534">Sportplatz</text>
-    <rect x="282" y="36" width="66" height="60" rx="6" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
-    <text x="315" y="70" text-anchor="middle" font-size="10" fill="#991b1b">Tennis</text>
-    <rect x="282" y="106" width="66" height="30" rx="6" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
-    <text x="315" y="125" text-anchor="middle" font-size="9.5" fill="#3730a3">Strundehaus</text>
+  const auto=(x,y,farbe)=>`<rect x="${x}" y="${y}" width="12" height="7" rx="2" fill="${farbe}"/>`;
+  return `<svg viewBox="0 0 360 280" role="img" aria-label="Skizze der Parkmöglichkeiten" style="width:100%;height:auto;display:block;font-family:inherit">
+    <defs><clipPath id="fstParkClip"><rect x="0" y="0" width="360" height="280" rx="12"/></clipPath></defs>
+    <rect x="0" y="0" width="360" height="280" rx="12" fill="#f8fafc"/>
+    <text x="180" y="20" text-anchor="middle" font-size="12" font-weight="800" fill="#334155">Parken – Skizze</text>
+    <!-- Strasse Thurner Kamp, schraeg von links unten nach rechts oben -->
+    <g clip-path="url(#fstParkClip)"><g transform="translate(200,170) rotate(-37)">
+      <rect x="-230" y="-13" width="460" height="26" fill="#cbd5e1"/>
+      <line x1="-230" y1="0" x2="230" y2="0" stroke="#fff" stroke-width="2" stroke-dasharray="10 8"/>
+      <text x="70" y="30" text-anchor="middle" font-size="11" font-weight="800" fill="#334155">Thurner Kamp</text>
+      <!-- Parkstreifen an der Strasse, platzseitig, suedlich der Zufahrt -->
+      <rect x="-150" y="-31" width="140" height="14" rx="3" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+      ${[-146,-128,-110,-92,-74,-56,-38,-20].map(x=>auto(x,-28,"#16a34a")).join("")}
+    </g></g>
+    <!-- Zufahrt von der Strasse zum Parkplatz am Platz -->
+    <path d="M214 156 L200 124" stroke="#e2e8f0" stroke-width="12" stroke-linecap="round" fill="none"/>
+    <text x="232" y="132" font-size="9" fill="#475569">Zufahrt</text>
+    <!-- grosser Platz und Parkplatz daneben -->
+    <rect x="20" y="40" width="150" height="88" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="2.5"/>
+    <text x="95" y="88" text-anchor="middle" font-size="12" font-weight="800" fill="#166534">Sportplatz</text>
+    <rect x="176" y="42" width="30" height="84" rx="5" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+    ${[180,180,180,180,180].map((x,i)=>auto(x+2,48+i*15,"#b45309")).join("")}
+    <text x="191" y="140" text-anchor="middle" font-size="9.5" font-weight="700" fill="#92400e">am Platz</text>
+    <text x="191" y="151" text-anchor="middle" font-size="9.5" font-weight="700" fill="#92400e">oft voll</text>
+    <!-- Vereinsheim und Tennis suedlich -->
+    <rect x="60" y="138" width="60" height="22" rx="5" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"/>
+    <text x="90" y="153" text-anchor="middle" font-size="9.5" font-weight="700" fill="#334155">Vereinsheim</text>
+    <rect x="12" y="168" width="68" height="50" rx="6" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+    <text x="46" y="197" text-anchor="middle" font-size="10" fill="#991b1b">Tennis</text>
+    <text x="12" y="266" font-size="12" font-weight="800" fill="#15803d">an der Straße parken – genug Plätze</text>
   </svg>`;
 }
 /* Info-Blatt fuer die Gast-Trainer: Adresse mit Karte, Parken mit Skizze, Felder mit Skizze. */
@@ -2386,7 +2401,8 @@ function fstInfoOpen(){
     ${karte("Adresse",`<div style="font-size:15px;font-weight:800">${esc(adr)}</div>
       <a href="${mapsUrl(adr)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;margin-top:8px;border-radius:12px;background:#1e3a8a;color:#fff;font-weight:800;font-size:14px;text-decoration:none">📍 Route in Karten öffnen</a>`)}
     ${karte("Parken",`<div style="font-size:13.5px;line-height:1.55;margin-bottom:8px">Direkt am Platz gibt es Parkplätze, wenn ihr hineinfahrt – die sind aber oft schon belegt. <b>Besser gleich an der Straße parken (Thurner Kamp)</b>, dort ist genug Platz.</div>${fstSkizzeParken()}`)}
-    ${karte("Wo welches Feld liegt",`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${felder.map((f,i)=>{const F=_fstF(f.form);return `<span style="font-size:11.5px;font-weight:700;color:#fff;background:${F.farbe};border-radius:20px;padding:5px 11px">${esc(fstFeldName(felder,i))} · ${F.label} · ${F.tore}</span>`;}).join("")}</div>${fstSkizzeFelder(felder)}`)}
+    ${karte("WC &amp; Kabinen",`<div style="font-size:13.5px;line-height:1.55">🚻 Ebenerdig unter dem Vereinsheim – gleich hinter dem großen Platz.</div>`)}
+    ${karte("Wo welches Feld liegt",`<div style="font-size:13px;color:#475569;margin-bottom:8px">Wir spielen im Käfig und auf der linken Hälfte des großen Platzes.</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${felder.map((f,i)=>{const F=_fstF(f.form);return `<span style="font-size:11.5px;font-weight:700;color:#fff;background:${F.farbe};border-radius:20px;padding:5px 11px">${esc(fstFeldName(felder,i))} · ${F.label} · ${F.tore}</span>`;}).join("")}</div>${fstSkizzeFelder(felder)}`)}
     ${cfg.infos?karte("Gut zu wissen",`<div style="font-size:13px;white-space:pre-wrap;line-height:1.6">${esc(cfg.infos)}</div>`):""}
     <button onclick="document.getElementById('fst-info').remove()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:#16a34a;color:#fff;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit">Zurück zum Spielplan</button>
   </div>`;
