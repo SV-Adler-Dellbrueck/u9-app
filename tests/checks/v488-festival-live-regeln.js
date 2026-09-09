@@ -31,7 +31,7 @@ module.exports = async function (h) {
     await fstStarten("10:18"); await warte(300);
     const zeitNachher = body.textContent.match(/Runde 1\s*(\d\d:\d\d)/)?.[1];
     const runde2 = body.textContent.match(/Runde 2\s*(\d\d:\d\d)/)?.[1];
-    const startText = /Gestartet 10:18/.test(body.textContent) && /\+3 Min/.test(body.textContent);
+    const startText = /Beginn 10:18/.test(body.textContent) && /\+3 Min\. verschoben/.test(body.textContent);
     // 3) Ergebnis in der App
     fstErgebnis(0); await warte(100);
     const dlg = document.getElementById("fst-erg");
@@ -56,17 +56,17 @@ module.exports = async function (h) {
     // 5) laufende Runde: Start = jetzt → Runde 1 laeuft
     const jetzt = _fstJetztHhmm(); _HT.config.startIst = jetzt;   // geplant 10:15, gestartet jetzt → Runde 1 läuft jetzt
     _fstPublicRender(wrap, _HT);
-    const laeuft = /Runde 1 läuft/.test(wrap.textContent) && /▶ läuft/.test(wrap.textContent);
+    const laeuft = /Runde 1[\s\S]{0,120}▶ läuft/.test(wrap.textContent);   // v489: die Marke sitzt an der Runden-Karte
     return { eineZeile, zeileHoch, tops, zeitVorher, zeitNachher, runde2, startText, dlg: !!dlg, erg, ergTaste, gastMitCode, regelnKnopf: !!regelnKnopf, ergTasten, ergTastenOhne, ergLesbar,
       regelnInhalt: /eigenen Hälfte/.test(rHtml) && /3 Toren Vorsprung/.test(rHtml) && !/Wechsel/.test(rHtml) && /Schusszone/.test(rHtml) && /Rückpass in die Hand/.test(rHtml) && /hinter die Mittellinie/.test(rHtml) && /Abklatschen/.test(rHtml) && /Eltern feuern an/.test(rHtml) && /abgehängte Tor/.test(rHtml) && /Kinder zuerst selbst/.test(rHtml),
-      gastStart: /Gestartet um 10:18/.test(gHtml) && /\+3 Min/.test(gHtml), laeuft, spiele: plan.length };
+      gastStart: /um 3 Min\. nach hinten/.test(gHtml), laeuft, spiele: plan.length };
   }, { heute });
   const fehler = s.fehler(); const gesendet = s.gesendet.slice(); await s.schliessen();
   if (r.fehlt) { probleme.push(`${r.fehlt} fehlt`); return h.ergebnis("Festival live", false, probleme); }
   if (!r.eineZeile) probleme.push(`Spielzeile bricht um (Mitten ${JSON.stringify(r.tops)})`);
   if (r.zeileHoch > 56) probleme.push(`Spielzeile ${Math.round(r.zeileHoch)}px hoch – zu groß`);
   if (r.zeitVorher !== "10:15" || r.zeitNachher !== "10:18" || r.runde2 !== "10:31") probleme.push(`Start 10:18 verschiebt nicht: Runde 1 ${r.zeitVorher}→${r.zeitNachher}, Runde 2 ${r.runde2} (erwartet 10:31)`);
-  if (!r.startText) probleme.push("Startzeile „Gestartet 10:18 · Plan +3 Min.“ fehlt");
+  if (!r.startText) probleme.push("Zeile „Zeitplan +3 Min. verschoben · Beginn 10:18“ fehlt");
   if (!r.dlg || r.erg !== "2:1") probleme.push(`Ergebnis in der App: Dialog ${r.dlg}, Stand ${r.erg} statt 2:1`);
   if (!r.ergTaste) probleme.push("Ergebnis 2:1 steht nicht im Plan");
   if (!gesendet.some(g => g.methode === "PATCH" && g.body && Array.isArray(g.body.plan) && g.body.plan[0] && g.body.plan[0].ta === 2)) probleme.push("Ergebnis nicht gespeichert");
@@ -74,7 +74,7 @@ module.exports = async function (h) {
   if (!r.regelnKnopf || !r.regelnInhalt) probleme.push(`Regeln: Knopf ${r.regelnKnopf}, Inhalt vollständig ${r.regelnInhalt}`);
   if (r.ergTasten !== r.spiele) probleme.push(`mit Code ${r.ergTasten} Ergebnis-Tasten statt ${r.spiele}`);
   if (r.ergTastenOhne !== 0 || !r.ergLesbar) probleme.push(`ohne Code: ${r.ergTastenOhne} Tasten, Ergebnis lesbar ${r.ergLesbar}`);
-  if (!r.gastStart) probleme.push("Gast-Seite zeigt den Start mit Verschiebung nicht");
+  if (!r.gastStart) probleme.push("Gast-Seite nennt die verschobenen Uhrzeiten nicht");
   if (!r.laeuft) probleme.push("laufende Runde nicht markiert");
   if (fehler.length) probleme.push(...fehler.slice(0, 3));
   zeilen.push(`Zeile: eine Höhe ${r.eineZeile}, ${Math.round(r.zeileHoch)}px · Start 10:18: Runde 1 ${r.zeitVorher}→${r.zeitNachher}, Runde 2 ${r.runde2}`);

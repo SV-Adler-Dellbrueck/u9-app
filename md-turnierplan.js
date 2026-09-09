@@ -2351,7 +2351,12 @@ async function fstStarten(wert){
 async function fstStartZurueck(){ const cfg=_fstCfgLesen(); delete cfg.startIst; if(await htPatch({config:cfg}))fstRender(); }
 /* Welche Runde laeuft gerade? Nur am Festivaltag und nur nach dem Start. */
 function fstRundeJetzt(row){
-  const cfg=(row&&row.config)||{}; if(!cfg.startIst||!row.datum)return null;
+  const cfg=(row&&row.config)||{};
+  /* v489: Ist wirklich angepfiffen, gilt die Uhr – nicht die geplante Uhrzeit. */
+  const st=fstUhrStand(row);
+  if(st.phase==="laeuft")return {runde:st.runde,status:"laeuft"};
+  if(st.phase==="pause"||st.phase==="ende")return st.naechste?{runde:st.naechste,status:"naechste"}:null;
+  if(!cfg.startIst||!row.datum)return null;
   if(row.datum!==new Date().toISOString().slice(0,10))return null;
   const jetzt=_fstMin(_fstJetztHhmm()), dauer=Math.max(3,cfg.spieldauer||8);
   const runden=[...new Set((row.plan||[]).map(p=>p.runde))].sort((a,b)=>a-b);
@@ -2392,6 +2397,155 @@ async function fstErgTor(i,seite,delta){
 async function fstErgLoeschen(i){
   const plan=(_HT.plan||[]).slice(); const p={...plan[i]}; delete p.ta; delete p.tb; plan[i]=p;
   if(await htPatch({plan})){ document.getElementById("fst-erg")?.remove(); fstRender(); }
+}
+/* ═══ v489 – Gemeinsamer Anpfiff je Runde ═══════════════════════════════════
+   PO: „Jedes Spiel im Festival soll gemeinsam angepfiffen werden … dann läuft im
+   Spielplan live ein Countdown, den jeder Trainer sieht, egal ob Adler oder extern …
+   gekoppelt mit dem Liveticker und den Auswechslungen … gestartet werden kann an
+   beiden Stellen." Umgesetzt wie die Match-Uhr: EIN Anker-Zeitstempel in
+   config.uhr={runde,start,dauer}. Niemand sendet Sekunden – jedes Gerät rechnet die
+   Restzeit selbst aus dem Anker. Derselbe Anker geht in die matchday-Zeilen der
+   Adler-Teams dieser Runde, damit Ticker und Wechsel dieselbe Zeit zeigen.
+   Kacheln: nach Ablauf zählt die Trinkpause rückwärts · Ton und Vibration auf dem
+   Gerät, das angepfiffen hat · alle Adler-Teams der Runde starten mit. */
+let _fstAudio=null, _fstSignalFuer=null, _fstUhrTimer=null, _fstUhrMarke="";
+function _fstMmSs(sec){ sec=Math.max(0,Math.round(sec)); return Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0"); }
+function fstUhrStand(row){
+  const cfg=(row&&row.config)||{}, u=cfg.uhr, plan=(row&&row.plan)||[];
+  const runden=[...new Set(plan.map(p=>p.runde))].sort((a,b)=>a-b);
+  if(!u||!u.start||!runden.length)return {phase:"aus",runde:null,rest:0,naechste:runden[0]||null,runden};
+  const dauer=Math.max(1,u.dauer||cfg.spieldauer||8)*60;
+  const pause=Math.max(0,cfg.wechsel==null?FST_PAUSE:cfg.wechsel)*60;
+  const weg=(Date.now()-new Date(u.start).getTime())/1000;
+  const naechste=runden.find(r=>r>u.runde)||null;
+  if(weg<dauer)   return {phase:"laeuft",runde:u.runde,rest:dauer-weg,naechste,runden};
+  if(naechste&&weg<dauer+pause)return {phase:"pause",runde:u.runde,rest:dauer+pause-weg,naechste,runden};
+  return {phase:"ende",runde:u.runde,rest:0,naechste,runden};
+}
+/* Welche Felder spielen in dieser Runde – als Zeile unter der Uhr. */
+function _fstRundeFelder(row,r){
+  const cfg=(row&&row.config)||{}, felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
+  return [...new Set(((row&&row.plan)||[]).filter(p=>p.runde===r).map(p=>fstFeldName(felder,(p.feld||1)-1)))].join(" · ");
+}
+function fstUhrInnen(row,st,trainer){
+  const gross="font-size:44px;font-weight:900;line-height:1;letter-spacing:1px;font-variant-numeric:tabular-nums";
+  const knopf=(r,txt)=>trainer?`<button class="btn btn-p" onclick="fstAnpfiff(${r})" style="width:100%;min-height:52px;margin-top:10px"><i class="ti ti-whistle"></i>${txt}</button>`:"";
+  if(st.phase==="aus")
+    return `<div style="font-size:13px;font-weight:700;opacity:.85">${st.naechste?`Runde ${st.naechste} steht bereit`:"Noch kein Spielplan"}</div>
+      <div style="font-size:12px;opacity:.75;margin-top:2px">${st.naechste?"Alle Felder werden gemeinsam angepfiffen.":""}</div>
+      ${st.naechste?knopf(st.naechste,`Runde ${st.naechste} anpfeifen`):""}`;
+  if(st.phase==="laeuft")
+    return `<div style="font-size:13px;font-weight:800">▶ Runde ${st.runde} läuft</div>
+      <div id="fst-uhr-zeit" style="${gross};margin:6px 0 2px">${_fstMmSs(st.rest)}</div>
+      <div style="font-size:11.5px;opacity:.8">${esc(_fstRundeFelder(row,st.runde))}</div>`;
+  if(st.phase==="pause")
+    return `<div style="font-size:13px;font-weight:800">⏸ Zeit um – Runde ${st.runde} ist durch</div>
+      <div id="fst-uhr-zeit" style="${gross};margin:6px 0 2px">${_fstMmSs(st.rest)}</div>
+      <div style="font-size:11.5px;opacity:.8">bis zum Anpfiff von Runde ${st.naechste}</div>
+      ${knopf(st.naechste,`Runde ${st.naechste} anpfeifen`)}`;
+  return `<div style="font-size:13px;font-weight:800">⏹ Runde ${st.runde} ist durch</div>
+    <div style="font-size:12px;opacity:.8;margin-top:2px">${st.naechste?`Runde ${st.naechste} wartet auf den Anpfiff.`:"Das war die letzte Runde – danke euch allen!"}</div>
+    ${st.naechste?knopf(st.naechste,`Runde ${st.naechste} anpfeifen`):""}`;
+}
+function _fstUhrFarbe(st){
+  if(st.phase==="laeuft")return {bg:"linear-gradient(135deg,#15803d,#16a34a)",fg:"#fff"};
+  if(st.phase==="pause") return {bg:"linear-gradient(135deg,#b45309,#d97706)",fg:"#fff"};
+  return {bg:"linear-gradient(135deg,#1e3a8a,#2563eb)",fg:"#fff"};
+}
+/* Malt die Uhr. Laeuft nur die Zeit weiter, wird bloss die Ziffernzeile getauscht –
+   sonst wuerde der Knopf unter dem Finger des Trainers jede Sekunde neu entstehen. */
+function fstUhrMalen(){
+  const el=document.getElementById("fst-uhr"); if(!el)return;
+  const trainer=!(typeof _htPub!=="undefined"&&_htPub);
+  const row=(typeof _htPub!=="undefined"&&_htPub&&_htPub.row)||_HT; if(!row)return;
+  const st=fstUhrStand(row);
+  const marke=st.phase+"|"+st.runde+"|"+st.naechste;
+  if(marke===_fstUhrMarke){
+    const z=document.getElementById("fst-uhr-zeit");
+    if(z){ z.textContent=_fstMmSs(st.rest); return; }
+  }
+  _fstUhrMarke=marke;
+  const f=_fstUhrFarbe(st);
+  el.style.cssText=`background:${f.bg};color:${f.fg};border-radius:16px;padding:14px;margin-bottom:10px;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.18)`;
+  el.innerHTML=fstUhrInnen(row,st,trainer);
+  if(st.phase!=="laeuft"&&_fstSignalFuer!=null&&_fstSignalFuer===st.runde){ _fstSignalFuer=null; _fstSignal(); }
+}
+function fstUhrTicken(){ clearInterval(_fstUhrTimer); _fstUhrMarke=""; fstUhrMalen();
+  _fstUhrTimer=setInterval(()=>{ if(!document.getElementById("fst-uhr")){clearInterval(_fstUhrTimer);return;} fstUhrMalen(); },1000); }
+/* Ton nur auf dem Geraet, das angepfiffen hat: der Tastendruck erlaubt die Audioausgabe. */
+function _fstTonVorbereiten(){ try{ const A=window.AudioContext||window.webkitAudioContext; if(A&&!_fstAudio)_fstAudio=new A(); if(_fstAudio&&_fstAudio.state==="suspended")_fstAudio.resume(); }catch(e){} }
+function _fstSignal(){
+  try{ navigator.vibrate&&navigator.vibrate([220,120,220]); }catch(e){}
+  try{ if(!_fstAudio)return;
+    [0,0.36].forEach(t=>{ const o=_fstAudio.createOscillator(), g=_fstAudio.createGain();
+      o.type="sine"; o.frequency.value=880; o.connect(g); g.connect(_fstAudio.destination);
+      const s=_fstAudio.currentTime+t;
+      g.gain.setValueAtTime(0.0001,s); g.gain.exponentialRampToValueAtTime(0.35,s+0.02); g.gain.exponentialRampToValueAtTime(0.0001,s+0.3);
+      o.start(s); o.stop(s+0.32); });
+  }catch(e){}
+}
+/* Anpfiff aus dem Festival-Plan. Setzt den Anker, zieht die geplanten Zeiten auf die
+   Wirklichkeit nach (die angepfiffene Runde steht ab jetzt) und startet die Match-Uhren. */
+async function fstAnpfiff(runde){
+  if(!_HT)return;
+  const cfg=_fstCfgLesen(), plan=_HT.plan||[];
+  const st=fstUhrStand(_HT);
+  const r=runde||st.naechste||st.runden[0];
+  if(!r){toast("Erst den Spielplan erstellen","err");return;}
+  _fstTonVorbereiten();
+  const anker=new Date().toISOString();
+  cfg.uhr={runde:r,start:anker,dauer:Math.max(3,cfg.spieldauer||8)};
+  const geplant=_fstMin((plan.find(p=>p.runde===r)||{}).zeit), basis=_fstMin(cfg.start);
+  if(geplant!=null&&basis!=null)cfg.startIst=_fstHhmm(basis+(_fstMin(_fstJetztHhmm())-geplant));
+  if(await htPatch({config:cfg})){
+    _fstSignalFuer=r;
+    fstMatchdayAnpfiff(_HT,r,anker);
+    toast(`▶️ Runde ${r} angepfiffen`);
+    fstRender();
+  }
+}
+async function fstUhrStoppen(){
+  const cfg=_fstCfgLesen(); delete cfg.uhr; _fstSignalFuer=null;
+  if(await htPatch({config:cfg})){ toast("Uhr zurückgesetzt"); fstRender(); }
+}
+/* Derselbe Anker in die matchday-Zeilen der Adler-Teams, die in dieser Runde spielen:
+   Team 1 liegt auf dem Datum, Team n auf „datum__tn" – so liest die Match-Uhr im
+   Spieltag dieselbe Zeit, und Ticker wie Wechsel-Timer haengen daran. */
+async function fstMatchdayAnpfiff(row,runde,anker,ausser){
+  const cfg=(row&&row.config)||{}, teams=(row&&row.teams)||[], plan=(row&&row.plan)||[];
+  if(!row||!row.datum)return;
+  const drin=new Set(plan.filter(p=>p.runde===runde).flatMap(p=>[p.a,p.b]));
+  const dauer=Math.max(3,cfg.spieldauer||8);
+  let n=0;
+  for(let i=0;i<teams.length;i++){
+    if(!/adler/i.test(String(teams[i]||"")))continue;
+    n++; if(!drin.has(i))continue;
+    const key=n===1?row.datum:`${row.datum}__t${n}`;
+    if(ausser&&key===ausser)continue;
+    try{await fetch(`${SB_URL}/rest/v1/matchday?on_conflict=datum`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify({datum:key,half:1,clock_status:"running",started_at:anker,paused_ms:0,spieldauer_min:dauer,halbzeiten:1})});}catch(e){}
+  }
+  if(typeof mcLoad==="function"&&typeof spieltagRawDate==="function"&&spieltagRawDate()===row.datum){try{mcLoad();}catch(e){}}
+}
+/* Gegenrichtung: der Anpfiff an der Match-Uhr im Spieltag startet die Festival-Runde mit
+   demselben Anker – damit zeigt der Gast-Link dieselbe Restzeit. */
+async function fstAppAnpfiff(anker){
+  if(typeof spieltagRawDate!=="function")return;
+  const datum=spieltagRawDate(); let row=null;
+  try{const r=await fetch(`${SB_URL}/rest/v1/heimturnier?datum=eq.${encodeURIComponent(datum)}&select=id,datum,config,teams,plan&limit=1`,{headers:sbAuthHeaders()});
+    if(r.ok)row=((await r.json())||[])[0]||null;}catch(e){}
+  if(!row||!fstIst(row)||!((row.plan||[]).length))return;
+  const cfg=row.config||{}, st=fstUhrStand(row);
+  const r=st.phase==="aus"?st.naechste:(st.naechste||st.runde);
+  if(!r)return;
+  cfg.uhr={runde:r,start:anker,dauer:Math.max(3,cfg.spieldauer||8)};
+  const geplant=_fstMin((row.plan.find(p=>p.runde===r)||{}).zeit), basis=_fstMin(cfg.start);
+  if(geplant!=null&&basis!=null)cfg.startIst=_fstHhmm(basis+(_fstMin(_fstJetztHhmm())-geplant));
+  try{await fetch(`${SB_URL}/rest/v1/heimturnier?id=eq.${row.id}`,{method:"PATCH",headers:sbAuthHeaders(),
+    body:JSON.stringify({config:cfg,updated_at:new Date().toISOString()})});}catch(e){}
+  if(_HT&&_HT.id===row.id){_HT.config=cfg;}
+  fstMatchdayAnpfiff({...row,config:cfg},r,anker,typeof spieltagKey==="function"?spieltagKey():null);
+  if(typeof toast==="function")toast(`▶️ Runde ${r} im Festival angepfiffen`);
 }
 let _fstTauschWahl=null;
 async function fstTausch(i,seite){
@@ -2471,13 +2625,14 @@ function fstRender(){
     <button class="btn btn-p" onclick="fstPlanErstellen()" style="width:100%;min-height:52px"${teams.length<2?" disabled":""}><i class="ti ti-calendar-event"></i>${plan.length?"Spielplan neu erstellen":"Spielplan erstellen"}</button>
 
     ${plan.length?`<div style="font-size:12px;font-weight:800;margin:16px 0 6px">4 · Der Plan <span style="font-weight:400;color:var(--text3)">· ${plan.length} Spiele</span></div>
+      <div id="fst-uhr" data-rolle="trainer"></div>
       ${cfg.startIst
         ? `<div style="display:flex;align-items:center;gap:8px;background:var(--green-bg,#dcfce7);border-radius:12px;padding:8px 10px;margin-bottom:8px">
-            <span style="font-size:12.5px;font-weight:800;flex:1">▶️ Gestartet ${esc(cfg.startIst)}${fstVerzug(cfg)?` · Plan ${fstVerzug(cfg)>0?"+":""}${fstVerzug(cfg)} Min.`:" · pünktlich"}</span>
+            <span style="font-size:12.5px;font-weight:800;flex:1">🕘 Zeitplan ${fstVerzug(cfg)?`${fstVerzug(cfg)>0?"+":""}${fstVerzug(cfg)} Min. verschoben`:"pünktlich"} · Beginn ${esc(cfg.startIst)}</span>
             <input type="time" value="${esc(cfg.startIst)}" onchange="fstStarten(this.value)" aria-label="Tatsächlicher Beginn" style="${fld};width:122px;padding:6px">
-            <button class="btn btn-sm" onclick="fstStartZurueck()" aria-label="Start zurücksetzen">↺</button>
+            <button class="btn btn-sm" onclick="${cfg.uhr?"fstUhrStoppen()":"fstStartZurueck()"}" aria-label="${cfg.uhr?"Uhr zurücksetzen":"Start zurücksetzen"}">↺</button>
           </div>`
-        : `<button class="btn btn-p" onclick="fstStarten()" style="width:100%;min-height:48px;margin-bottom:8px"><i class="ti ti-player-play"></i>Festival jetzt starten – Zeiten laufen ab jetzt</button>`}
+        : ""}
       <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${_fstTauschWahl?"Tauschen: jetzt das zweite Team antippen":"Teams antippen zum Tauschen · Ergebnis rechts antippen"}</div>
       ${fstPlanHtml(plan,_HT.teams||[],felder,false,true,cfg)}
       <button class="btn" onclick="${_HT.edit_code?"htShareHelfer()":"htShare()"}" style="width:100%;min-height:48px;margin-top:8px"><i class="ti ti-share"></i>Plan an die Gast-Trainer schicken</button>
@@ -2493,6 +2648,7 @@ function fstRender(){
     </div>`;
   fstGegnerChips();
   fstEinteilungSync();
+  fstUhrTicken();
 }
 /* Schnellwahl aus der Gegner-Datenbank – tippen statt abtippen. */
 async function fstGegnerChips(){
@@ -2679,7 +2835,8 @@ function _fstPublicRender(wrap,row){
       <button onclick="fstInfoOpen()" style="flex:1;min-height:48px;border:1px solid #bfdbfe;border-radius:14px;background:#fff;color:#1e3a8a;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,.08)">ℹ️ Anfahrt &amp; Felder</button>
       <button onclick="fstRegelnOpen()" style="flex:1;min-height:48px;border:1px solid #bfdbfe;border-radius:14px;background:#fff;color:#1e3a8a;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,.08)">📖 Regeln</button>
     </div>
-    ${cfg.startIst?`<div style="display:flex;align-items:center;gap:8px;background:#dcfce7;color:#166534;border-radius:12px;padding:8px 12px;margin-bottom:12px;font-size:13px;font-weight:700">▶️ Gestartet um ${esc(cfg.startIst)}${verzug?` · alle Zeiten ${verzug>0?"+":""}${verzug} Min.`:" · pünktlich"}${jetzt?` · ${jetzt.status==="laeuft"?"Runde "+jetzt.runde+" läuft":"gleich Runde "+jetzt.runde}`:""}</div>`:""}
+    <div id="fst-uhr"></div>
+    ${cfg.startIst&&verzug?`<div style="font-size:11.5px;color:#475569;text-align:center;margin:-2px 0 10px">Die Uhrzeiten unten sind ${verzug>0?"um "+verzug+" Min. nach hinten":"um "+(-verzug)+" Min. nach vorn"} gerückt – so, wie wir wirklich spielen.</div>`:""}
     ${helfer?`<div style="font-size:11.5px;color:#475569;margin:-4px 0 10px;text-align:center">✏️ Ergebnisse antippen und eintragen – freiwillig, es gibt keine Tabelle.</div>`:""}
 
     ${teams.length?`<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
@@ -2711,8 +2868,9 @@ function _fstPublicRender(wrap,row){
       <div style="font-size:13px;white-space:pre-wrap;line-height:1.6">${esc(cfg.infos)}</div></div>`:""}
 
     <div style="text-align:center;font-size:11.5px;color:#94a3b8;margin-top:16px;line-height:1.6">
-      Wir spielen ohne Tabelle – bei uns gewinnt die Freude am Spiel.<br>SV Adler Dellbrück · U9 · Seite lädt alle 30 Sekunden neu
+      Wir spielen ohne Tabelle – bei uns gewinnt die Freude am Spiel.<br>SV Adler Dellbrück · U9 · Die Seite aktualisiert sich von selbst
     </div>`;
+  fstUhrTicken();
 }
 async function renderHeimturnierView(slug){
   document.body.style.cssText="margin:0;background:#f1f5f9;font-family:Inter,system-ui,sans-serif;color:#0f172a";
@@ -2722,7 +2880,9 @@ async function renderHeimturnierView(slug){
   document.body.appendChild(wrap);
   _htPub={slug,code:new URLSearchParams(location.search).get("code")||"",wrap,row:null};
   await _htPubLoad();
-  setInterval(()=>{if(!document.hidden&&!document.getElementById("htpub-sheet"))_htPubLoad();},30000);
+  /* v489: Der gemeinsame Anpfiff muss schnell bei den Gast-Trainern ankommen – der
+     Countdown selbst laeuft lokal aus dem Anker, nur der Start braucht die Runde. */
+  setInterval(()=>{if(!document.hidden&&!document.getElementById("htpub-sheet"))_htPubLoad();},10000);
 }
 async function _htPubLoad(){
   if(!_htPub)return;
