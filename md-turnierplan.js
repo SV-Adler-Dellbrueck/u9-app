@@ -1460,7 +1460,7 @@ const HT_REGELN={
   f7:"7 gegen 7 (Vorlage, bitte an eure Ausschreibung anpassen)\n• 6 Feldspieler + Torwart, fliegender Wechsel\n• Abseits je nach Kreis-Ausschreibung\n• Einwurf regulär, Freistöße nach Ausschreibung\n• Schiedsrichter oder Spielbegleiter je nach Turnierordnung",
   frei:"Eigene Spielform – Regeln hier eintragen."
 };
-const HT_INFOS_VORLAGE="⏰ Bitte 30 Minuten vor dem ersten Spiel da sein\n☕ Kaffee und Brötchen stehen bereit\n🧑‍⚖️ Schiedsrichter: die Trainer am Feld – fair und kindgerecht";
+const HT_INFOS_VORLAGE="⏰ Bitte 30 Minuten vor dem ersten Spiel da sein\n⚽ Bitte bringt zum Aufwärmen eure eigenen Bälle mit\n☕ Kaffee und Brötchen stehen bereit\n🧑‍⚖️ Schiedsrichter: die Trainer am Feld – fair und kindgerecht";
 const HT_GRLABEL=["A","B","C","D"];
 // Platzhalter der Finalrunde lesbar machen ("A1" = Erster Gruppe A, "S|Halbfinale 1" = Sieger HF 1 …)
 function _htName(v,teams){
@@ -1596,12 +1596,18 @@ async function htNeu(btn){
     /* v484: Neu angelegt wird immer ein FESTIVAL – der Fall, den wir wirklich ausrichten
        (2–3 Gastvereine, eine Stunde, gemischte Felder). Die alten Turniere mit Gruppen und
        Finalrunde bleiben lesbar und editierbar, es entstehen nur keine neuen mehr. */
+    /* v486: Beginn aus der Uhrzeit des Termins (sonst 10:15), unsere Kinder und Teams aus
+       „Teams festlegen" – da sind sie schon erfasst (PO). */
+    let start=FST_START;
+    if(datum){ try{const r=await fetch(`${SB_URL}/rest/v1/termine?datum=eq.${encodeURIComponent(datum)}&typ=in.(spiel,turnier)&select=uhrzeit&limit=1`,{headers:sbAuthHeaders()});if(r.ok){const t=((await r.json())||[])[0];if(t&&t.uhrzeit)start=String(t.uhrzeit).slice(0,5);}}catch(e){} }
+    const ein=datum?await fstEinteilungLaden(datum):null;
+    const adler={name:"SV Adler Dellbrück",kinder:ein&&ein.dabei?ein.dabei:14,teams:ein&&ein.dabei?(ein.teams||fstTeamsVorschlag(ein.dabei,FST_STANDARD_FELDER)):2};
     const body={slug:_htSlug(),name,datum,ort:(typeof VEREIN_ADRESSE!=="undefined"?VEREIN_ADRESSE:"Thurner Kamp 97, 51069 Köln"),
-      config:{art:"festival",format:"festival",start:"10:00",dauer:60,spieldauer:8,wechsel:2,
+      config:{art:"festival",format:"festival",start,dauer:60,spieldauer:8,wechsel:FST_PAUSE,
         felder:FST_STANDARD_FELDER.slice(),
-        vereine:[{name:"SV Adler Dellbrück",kinder:14,teams:2}],
+        vereine:[adler],
         infos:HT_INFOS_VORLAGE},
-      teams:fstTeamsBauen([{name:"SV Adler Dellbrück",kinder:14,teams:2}]).map(t=>t.name)};
+      teams:fstTeamsBauen([adler]).map(t=>t.name)};
     const r=await fetch(`${SB_URL}/rest/v1/heimturnier`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=representation'},body:JSON.stringify(body)});
     if(sbCheck401(r))return;
     if(!r.ok){toast(sbDeniedMsg(r,"Konnte nicht anlegen"),"err");return;}
@@ -2022,7 +2028,8 @@ const FST_FORMEN={
   f4:    {label:"4+1",        kurz:"4+1", lang:"4+1 mit Torwart", auf:5, tore:"2 Jugendtore", farbe:"#1d4ed8"},
   funino:{label:"FUNiño 3:3", kurz:"3:3", lang:"FUNiño 3 gegen 3",auf:3, tore:"4 Minitore",   farbe:"#15803d"}
 };
-const FST_STANDARD_FELDER=[{form:"f4"},{form:"funino"},{form:"funino"}];   // PO: „Standard waere ein 4+1 Feld und 2 x FUNiño Felder"
+const FST_STANDARD_FELDER=[{form:"f4"},{form:"funino"},{form:"funino"},{form:"f4"}];   // v486 PO: „Standard alle 4 Felder anlegen" – Käfig, Funino 1, Funino 2, 4+1 oben
+const FST_START="10:15", FST_PAUSE=5;   // PO: „Beginn ist immer 10:15" · „5 Minuten Trinkpause zwischen den Spielen"
 function fstIst(row){ return ((row||_HT||{}).config||{}).art==="festival"; }
 function _fstF(k){ return FST_FORMEN[k]||FST_FORMEN.funino; }
 /* Feldnamen, wie sie am Platz heissen (PO): das erste 4+1-Feld ist immer der „Käfig",
@@ -2056,6 +2063,28 @@ function fstTeamsVorschlag(kinder,felder){
 function fstFelderVorschlag(teamZahl){
   const n=Math.max(1,Math.round(teamZahl/2));
   return Array.from({length:n},(_,i)=>({form:i===0?"f4":"funino"}));
+}
+/* v486 PO: „Standard alle 4 Felder … wenn dann nur 3 Felder benoetigt werden, soll das
+   angepasst werden … grundsaetzlich 4+1 oben loeschen, aber pruefen, was besser auf die Teams
+   passt." Der Plan braucht Teams/2 Felder. Ueberzaehlige fallen von hinten weg – also zuerst
+   „4+1 oben". Nur bei grossen Teams (im Schnitt 6+ Kinder) bleibt das zweite 4+1 und ein
+   FUNiño-Feld geht, weil dort sonst die Haelfte auf der Bank saesse. */
+function fstFelderKuerzen(felder,teams){
+  const f=((felder&&felder.length)?felder:FST_STANDARD_FELDER).slice();
+  const n=Math.max(1,Math.round((teams||[]).length/2));
+  if(f.length<=n)return f;
+  const kinder=(teams||[]).reduce((a,t)=>a+(t.kinder||0),0);
+  const gross=teams.length>0&&kinder/teams.length>=6;
+  while(f.length>n){
+    const f4=f.map((x,i)=>(x.form||"funino")==="f4"?i:-1).filter(i=>i>=0);
+    const fu=f.map((x,i)=>(x.form||"funino")!=="f4"?i:-1).filter(i=>i>=0);
+    let weg;
+    if(gross&&f4.length>=2&&fu.length>=1)weg=fu[fu.length-1];      // grosse Teams: 4+1 oben bleibt, letztes FUNiño geht
+    else if(f4.length>=2)weg=f4[f4.length-1];                       // sonst zuerst das zweite 4+1 (oben)
+    else weg=f.length-1;
+    f.splice(weg,1);
+  }
+  return f;
 }
 /* Aus den Vereinen die Teamliste bauen: „Adler 1", „Adler 2", „Auweiler 1" …
    Die Kinder eines Vereins werden gleichmaessig auf seine Teams verteilt. */
@@ -2098,7 +2127,7 @@ function fstPlanBauen(teams,cfg){
   if(n<2)return [];
   const scheiben=[];
   _fstRunden(n).forEach(paare=>{ for(let i=0;i<paare.length;i+=F)scheiben.push(paare.slice(i,i+F)); });
-  const spiel=Math.max(3,cfg.spieldauer||8), wechsel=Math.max(0,cfg.wechsel==null?2:cfg.wechsel);
+  const spiel=Math.max(3,cfg.spieldauer||8), wechsel=Math.max(0,cfg.wechsel==null?FST_PAUSE:cfg.wechsel);
   const gesamt=Math.max(spiel,cfg.dauer||60);
   const max=Math.max(1,Math.floor((gesamt+wechsel)/(spiel+wechsel)));
   const [sh,sm]=String(cfg.start||"10:00").split(":").map(Number);
@@ -2120,17 +2149,17 @@ function fstBedarf(teams,cfg){
   const n=teams.length;
   if(n<2)return {scheiben:0,minuten:0};
   let scheiben=0; _fstRunden(n).forEach(paare=>{ scheiben+=Math.ceil(paare.length/F); });
-  const spiel=Math.max(3,cfg.spieldauer||8), wechsel=Math.max(0,cfg.wechsel==null?2:cfg.wechsel);
+  const spiel=Math.max(3,cfg.spieldauer||8), wechsel=Math.max(0,cfg.wechsel==null?FST_PAUSE:cfg.wechsel);
   return {scheiben,minuten:scheiben*spiel+(scheiben-1)*wechsel};
 }
 function _fstCfgLesen(){
   const alt=(_HT&&_HT.config)||{};
   const felder=(alt.felder&&alt.felder.length)?alt.felder:FST_STANDARD_FELDER.slice();
   return {...alt, art:"festival", format:"festival",
-    start:document.getElementById("fst-start")?.value||alt.start||"10:00",
+    start:document.getElementById("fst-start")?.value||alt.start||FST_START,
     dauer:Number(document.getElementById("fst-dauer")?.value)||alt.dauer||60,
     spieldauer:Number(document.getElementById("fst-spiel")?.value)||alt.spieldauer||8,
-    wechsel:document.getElementById("fst-wechsel")?(Number(document.getElementById("fst-wechsel").value)||0):(alt.wechsel==null?2:alt.wechsel),
+    wechsel:document.getElementById("fst-wechsel")?(Number(document.getElementById("fst-wechsel").value)||0):(alt.wechsel==null?FST_PAUSE:alt.wechsel),
     felder, vereine:alt.vereine||[],
     infos:document.getElementById("fst-infos")?document.getElementById("fst-infos").value:(alt.infos||HT_INFOS_VORLAGE)
   };
@@ -2158,8 +2187,8 @@ async function fstVereinWeg(i){
 }
 async function fstVereinSet(i,feld,wert){
   const cfg=_fstCfgLesen(); const v=(cfg.vereine||[]).slice(); if(!v[i])return;
-  if(feld==="kinder"){ v[i].kinder=Math.max(0,parseInt(wert)||0); v[i].teams=fstTeamsVorschlag(v[i].kinder,cfg.felder); }
-  else if(feld==="teams") v[i].teams=Math.max(1,Math.min(4,parseInt(wert)||1));
+  if(feld==="kinder"){ v[i].kinder=Math.max(0,parseInt(wert)||0); v[i].teams=fstTeamsVorschlag(v[i].kinder,cfg.felder); if(fstIstUnser(v[i]))v[i].manuell=true; }
+  else if(feld==="teams"){ v[i].teams=Math.max(1,Math.min(4,parseInt(wert)||1)); if(fstIstUnser(v[i]))v[i].manuell=true; }
   else v[i].name=String(wert||"").trim()||v[i].name;
   cfg.vereine=v;
   if(await htPatch({config:cfg,teams:fstTeamsBauen(v).map(t=>t.name)}))fstRender();
@@ -2179,11 +2208,70 @@ async function fstPlanErstellen(){
   const teams=fstTeamsBauen(cfg.vereine);
   if(teams.length<2){toast("Mindestens zwei Teams – bitte Vereine eintragen","err");return;}
   if((_HT.plan||[]).some(p=>p.ta!=null)&&!confirm("Es gibt schon Ergebnisse – Spielplan neu erzeugen? Die Tore gehen verloren."))return;
+  const felderVorher=cfg.felder.length;
+  cfg.felder=fstFelderKuerzen(cfg.felder,teams);   // v486: ueberzaehlige Felder fallen weg, zuerst „4+1 oben"
+  _fstTauschWahl=null;
   const plan=fstPlanBauen(teams,cfg);
   if(await htPatch({config:cfg,teams:teams.map(t=>t.name),plan,datum:document.getElementById("fst-datum")?.value||_HT.datum})){
-    toast(`📅 Spielplan steht – ${plan.length} Spiele`);
+    toast(`📅 Spielplan steht – ${plan.length} Spiele${cfg.felder.length<felderVorher?` auf ${cfg.felder.length} Feldern`:""}`);
     fstRender();
   }
+}
+/* v486 PO: „Die Anzahl der Kinder fuer unseren Verein direkt aus der Einteilung und
+   Anwesenheit Spieltag/Match uebernehmen – da haben wir alle Kinder bereits erfasst und
+   auch die Teams gebildet." Quelle: nominierungen „<datum>__nom" (dabei) und „__teams"
+   (_anzahl). Unsere Zeile folgt der Einteilung, bis der Trainer sie von Hand aendert. */
+function fstIstUnser(v){ return /adler/i.test(String((v&&v.name)||"")); }
+async function fstEinteilungLaden(datum){
+  if(!datum)return null;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/nominierungen?datum=in.(${encodeURIComponent(datum+"__nom")},${encodeURIComponent(datum+"__teams")})&select=datum,data`,{headers:sbAuthHeaders()});
+    if(!r.ok)return null;
+    const rows=(await r.json())||[];
+    const nom=rows.find(x=>x.datum===datum+"__nom"), tm=rows.find(x=>x.datum===datum+"__teams");
+    const d=(nom&&nom.data)||{};
+    const dabei=Object.keys(d).filter(k=>k.charAt(0)!=="_"&&d[k]==="dabei").length;
+    const teams=tm&&tm.data&&tm.data._anzahl?Math.max(1,Math.min(4,parseInt(tm.data._anzahl)||1)):0;
+    return {dabei,teams};
+  }catch(e){return null;}
+}
+let _fstEinteilung=null;
+async function fstEinteilungSync(){
+  if(!_HT||!_HT.datum)return;
+  const ein=await fstEinteilungLaden(_HT.datum); _fstEinteilung=ein;
+  const hinweis=document.getElementById("fst-einteilung");
+  if(!ein||!ein.dabei){ if(hinweis)hinweis.textContent="Noch keine Einteilung unter „Teams festlegen“ – Kinderzahl von Hand."; return; }
+  const cfg=_HT.config||{}, v=(cfg.vereine||[]).slice();
+  const i=v.findIndex(fstIstUnser);
+  const teams=ein.teams||fstTeamsVorschlag(ein.dabei,cfg.felder);
+  if(i>=0&&!v[i].manuell&&(v[i].kinder!==ein.dabei||v[i].teams!==teams)){
+    v[i]={...v[i],kinder:ein.dabei,teams};
+    const neu={...cfg,vereine:v};
+    if(await htPatch({config:neu,teams:fstTeamsBauen(v).map(t=>t.name)})){ fstRender(); return; }
+  }
+  if(hinweis)hinweis.innerHTML=`Aus „Teams festlegen“: <b>${ein.dabei} dabei</b>, ${teams} Team${teams===1?"":"s"}${i>=0&&v[i].manuell?` – hier von Hand geändert. <a href="#" onclick="fstEinteilungFolgen();return false" style="color:var(--blue-text);font-weight:700">Wieder übernehmen</a>`:""}`;
+}
+async function fstEinteilungFolgen(){
+  const cfg=_fstCfgLesen(); const v=(cfg.vereine||[]).slice(); const i=v.findIndex(fstIstUnser); if(i<0)return;
+  delete v[i].manuell; cfg.vereine=v;
+  if(await htPatch({config:cfg}))fstEinteilungSync();
+}
+/* v486 PO: „Der Plan soll speicherbar und veraenderbar sein von allen Trainern." Gespeichert
+   ist er in der Datenbank fuer alle; veraendern heisst: zwei Teams antippen, sie tauschen
+   die Plaetze. Zeiten und Felder bleiben. Spielt ein Team dadurch in einer Runde zweimal,
+   sagt die App es – und laesst es zu, der Trainer sieht es. */
+let _fstTauschWahl=null;
+async function fstTausch(i,seite){
+  const plan=(_HT&&_HT.plan||[]).slice(); if(!plan[i])return;
+  if(!_fstTauschWahl){ _fstTauschWahl={i,seite}; fstRender(); toast("Jetzt das Team antippen, mit dem getauscht wird"); return; }
+  const w=_fstTauschWahl; _fstTauschWahl=null;
+  if(w.i===i&&w.seite===seite){ fstRender(); return; }
+  const a={...plan[w.i]}, b={...plan[i]};
+  const t=a[w.seite]; a[w.seite]=b[seite]; b[seite]=t;
+  plan[w.i]=a; plan[i]=b;
+  if(a.a===a.b||b.a===b.b){ toast("So spielt ein Team gegen sich selbst","err"); fstRender(); return; }
+  const doppelt=[a,b].filter(p=>plan.some(q=>q!==p&&q.runde===p.runde&&[q.a,q.b].some(x=>x===p.a||x===p.b)));
+  if(await htPatch({plan})){ toast(doppelt.length?`Getauscht – Achtung: in Runde ${doppelt[0].runde} spielt ein Team zweimal`:"Getauscht ✓"); fstRender(); }
 }
 function fstRender(){
   const el=document.getElementById("ht-body"); if(!el||!_HT)return;
@@ -2204,6 +2292,7 @@ function fstRender(){
     </div>`).join("");
 
   const vorschlag=fstFelderVorschlag(teams.length);
+  const gekuerzt=fstFelderKuerzen(felder,teams);
   const passt=vorschlag.length===felder.length;
 
   el.innerHTML=`
@@ -2217,6 +2306,7 @@ function fstRender(){
     <div style="font-size:10.5px;color:var(--text3);margin-bottom:6px">Name · angereiste Kinder · Teams (Vorschlag der App, änderbar)</div>
     <div id="fst-gegner" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px"></div>
     <button class="btn btn-sm" onclick="fstVereinPlus()" style="width:100%;margin-bottom:4px"><i class="ti ti-plus"></i>Verein hinzufügen</button>
+    <div id="fst-einteilung" style="font-size:11px;color:var(--text3);margin-bottom:6px">Unsere Kinder kommen aus „Teams festlegen“ …</div>
     ${teams.length?`<div style="font-size:11.5px;color:var(--text2);margin-bottom:10px">➜ <b>${teams.length} Teams</b>, ${kinderGesamt} Kinder: ${esc(teams.map(t=>t.name+" ("+t.kinder+")").join(" · "))}</div>`:""}
 
     <div style="font-size:12px;font-weight:800;margin:14px 0 6px">2 · Felder aufbauen</div>
@@ -2228,25 +2318,28 @@ function fstRender(){
     <div style="font-size:10.5px;color:var(--text3);margin-bottom:6px">🥅 ${felder.map((f,i)=>`${esc(fstFeldName(felder,i))}: ${_fstF(f.form).tore}`).join(" · ")} – Namen wie am Platz, antippen zum Ändern</div>
     <div style="display:flex;gap:6px;margin-bottom:6px">
       <button class="btn btn-sm" onclick="fstFeldPlus()" style="flex:1"><i class="ti ti-plus"></i>Feld</button>
-      <button class="btn btn-sm" onclick="fstFelderAuto()" style="flex:1"${passt?" disabled":""}><i class="ti ti-wand"></i>${passt?"passt":`${vorschlag.length} Felder vorschlagen`}</button>
+      <button class="btn btn-sm" onclick="fstFelderAuto()" style="flex:1"${passt?" disabled":""}><i class="ti ti-wand"></i>${passt?"passt":(vorschlag.length===1?"1 Feld vorschlagen":`${vorschlag.length} Felder vorschlagen`)}</button>
     </div>
     <div style="font-size:11.5px;color:${passt?"var(--text2)":"var(--amber)"};margin-bottom:10px">${passt
       ? `Alle ${teams.length} Teams spielen gleichzeitig · ${platz} Kinder auf den Feldern`
-      : `Bei ${teams.length} Teams und ${felder.length} Feld${felder.length===1?"":"ern"} spielt nicht jeder gleichzeitig – ${vorschlag.length} Felder passen genau.`}</div>
+      : gekuerzt.length<felder.length
+        ? `${teams.length} Teams brauchen ${gekuerzt.length} Feld${gekuerzt.length===1?"":"er"} – beim Erstellen des Plans bleiben ${esc(gekuerzt.map((f,i)=>fstFeldName(gekuerzt,i)).join(", "))}.`
+        : `Bei ${teams.length} Teams und ${felder.length} Feld${felder.length===1?"":"ern"} spielt nicht jeder gleichzeitig – ${vorschlag.length} Feld${vorschlag.length===1?" passt":"er passen"} genau.`}</div>
 
     <div style="font-size:12px;font-weight:800;margin:14px 0 6px">3 · Zeitplan</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
-      <label style="font-size:11px;color:var(--text2)">Beginn<input id="fst-start" type="time" value="${esc(cfg.start||"10:00")}" onchange="fstZeitSpeichern()" style="${fld};width:100%"></label>
+      <label style="font-size:11px;color:var(--text2)">Beginn<input id="fst-start" type="time" value="${esc(cfg.start||FST_START)}" onchange="fstZeitSpeichern()" style="${fld};width:100%"></label>
       <label style="font-size:11px;color:var(--text2)">Gesamt (Min.)<input id="fst-dauer" type="number" min="20" max="180" step="5" value="${cfg.dauer||60}" onchange="fstZeitSpeichern()" style="${fld};width:100%"></label>
       <label style="font-size:11px;color:var(--text2)">Spielzeit (Min.)<input id="fst-spiel" type="number" min="3" max="20" value="${cfg.spieldauer||8}" onchange="fstZeitSpeichern()" style="${fld};width:100%"></label>
-      <label style="font-size:11px;color:var(--text2)">Wechsel (Min.)<input id="fst-wechsel" type="number" min="0" max="10" value="${cfg.wechsel==null?2:cfg.wechsel}" onchange="fstZeitSpeichern()" style="${fld};width:100%"></label>
+      <label style="font-size:11px;color:var(--text2)">Trinkpause (Min.)<input id="fst-wechsel" type="number" min="0" max="10" value="${cfg.wechsel==null?FST_PAUSE:cfg.wechsel}" onchange="fstZeitSpeichern()" title="Pause zwischen zwei Runden – trinken und Feld wechseln" style="${fld};width:100%"></label>
     </div>
-    ${teams.length>1?`<div style="font-size:11.5px;color:var(--text2);margin-bottom:10px">Jeder gegen jeden braucht <b>${bedarf.scheiben} Runden</b> ≈ ${bedarf.minuten} Min.${bedarf.minuten>(cfg.dauer||60)?` – in ${cfg.dauer||60} Min. passen ${Math.max(1,Math.floor(((cfg.dauer||60)+(cfg.wechsel==null?2:cfg.wechsel))/((cfg.spieldauer||8)+(cfg.wechsel==null?2:cfg.wechsel))))} Runden.`:" – passt."}</div>`:""}
+    ${teams.length>1?`<div style="font-size:11.5px;color:var(--text2);margin-bottom:10px">Jeder gegen jeden braucht <b>${bedarf.scheiben} Runden</b> ≈ ${bedarf.minuten} Min.${bedarf.minuten>(cfg.dauer||60)?` – in ${cfg.dauer||60} Min. passen ${Math.max(1,Math.floor(((cfg.dauer||60)+(cfg.wechsel==null?FST_PAUSE:cfg.wechsel))/((cfg.spieldauer||8)+(cfg.wechsel==null?FST_PAUSE:cfg.wechsel))))} Runden.`:" – passt."}</div>`:""}
 
     <button class="btn btn-p" onclick="fstPlanErstellen()" style="width:100%;min-height:52px"${teams.length<2?" disabled":""}><i class="ti ti-calendar-event"></i>${plan.length?"Spielplan neu erstellen":"Spielplan erstellen"}</button>
 
     ${plan.length?`<div style="font-size:12px;font-weight:800;margin:16px 0 6px">4 · Der Plan <span style="font-weight:400;color:var(--text3)">· ${plan.length} Spiele</span></div>
-      ${fstPlanHtml(plan,_HT.teams||[],felder)}
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${_fstTauschWahl?"Tauschen: jetzt das zweite Team antippen":"Zwei Teams antippen, um sie zu tauschen"}</div>
+      ${fstPlanHtml(plan,_HT.teams||[],felder,false,true)}
       <button class="btn" onclick="htShare()" style="width:100%;min-height:48px;margin-top:8px"><i class="ti ti-share"></i>Plan an die Gast-Trainer schicken</button>
       <button class="btn btn-sm" onclick="fstDruck()" style="width:100%;margin-top:6px"><i class="ti ti-printer"></i>Aushang drucken</button>`:""}
 
@@ -2258,6 +2351,7 @@ function fstRender(){
       <button class="btn btn-sm" style="margin-left:auto;color:var(--red)" onclick="htDelete()"><i class="ti ti-trash"></i>Löschen</button>
     </div>`;
   fstGegnerChips();
+  fstEinteilungSync();
 }
 /* Schnellwahl aus der Gegner-Datenbank – tippen statt abtippen. */
 async function fstGegnerChips(){
@@ -2271,9 +2365,12 @@ async function fstGegnerChips(){
   box.innerHTML=frei.map(n=>`<button class="btn btn-sm" onclick="fstVereinPlus('${jsq(n)}')" style="font-size:11.5px">+ ${esc(n)}</button>`).join("");
 }
 /* Der Plan als Runden-Karten – dieselbe Darstellung im Trainer-Fenster und im Aushang. */
-function fstPlanHtml(plan,teams,felder,gross){
+function fstPlanHtml(plan,teams,felder,gross,tausch){
   const runden=[...new Set(plan.map(p=>p.runde))].sort((a,b)=>a-b);
   const nm=i=>esc((teams&&teams[i])||("Team "+(i+1)));
+  /* v486: im Trainer-Fenster sind die Teamnamen Tasten – zwei antippen = tauschen. */
+  const tn=(p,seite)=>{ if(!tausch)return nm(p[seite]); const pi=plan.indexOf(p); const akt=_fstTauschWahl&&_fstTauschWahl.i===pi&&_fstTauschWahl.seite===seite;
+    return `<button class="fst-tausch" onclick="fstTausch(${pi},'${seite}')" aria-pressed="${akt?"true":"false"}" style="min-height:44px;padding:0 8px;border:1px solid ${akt?"var(--blue)":"var(--rand-bedien)"};border-radius:8px;background:${akt?"var(--blue)":"var(--surface2)"};color:${akt?"#fff":"var(--text)"};font:inherit;font-weight:700;cursor:pointer">${nm(p[seite])}</button>`; };
   return runden.map(r=>{
     const spiele=plan.filter(p=>p.runde===r);
     return `<div style="border:var(--border-s);border-radius:12px;padding:8px 10px;margin-bottom:6px;background:var(--surface)">
@@ -2283,7 +2380,7 @@ function fstPlanHtml(plan,teams,felder,gross){
       </div>
       ${spiele.map(p=>{const F=_fstF(p.form);return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:${gross?"14":"12.5"}px">
         <span style="flex:0 0 auto;font-size:${gross?"11":"9.5"}px;font-weight:800;color:#fff;background:${F.farbe};border-radius:6px;padding:2px 6px">${esc(fstFeldName(felder,(p.feld||1)-1))} · ${F.kurz}</span>
-        <span style="flex:1;min-width:0;font-weight:700">${nm(p.a)} <span style="color:var(--text3);font-weight:400">–</span> ${nm(p.b)}</span>
+        <span style="flex:1;min-width:0;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${tn(p,"a")} <span style="color:var(--text3);font-weight:400">–</span> ${tn(p,"b")}</span>
       </div>`;}).join("")}
     </div>`;
   }).join("");

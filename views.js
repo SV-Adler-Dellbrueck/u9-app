@@ -3494,7 +3494,7 @@ async function saisonCockpitOpen(){
 ═══════════════════════════════════ */
 const HELP=[
   {cat:"🏠 Start", items:[
-    {t:"Diese Woche", d:"Alle Termine der nächsten 7 Tage auf einen Blick: wie viele Kinder zugesagt haben (aus den Eltern-Rückmeldungen), ob genug Trainer da sind (aus dem Trainerplan), ob der Trainingsplan steht und die Aufstellung fürs Spiel. Die Quelle steht unter der Karte. Rot wird ein Chip erst drei Tage vor dem Termin – vorher ist „0 zugesagt“ normal. Antippen öffnet den Termin.", run:"document.getElementById('home-woche')?.scrollIntoView({behavior:'smooth',block:'center'})"},
+    {t:"Diese Woche", d:"Alle Termine der nächsten 7 Tage auf einen Blick: wie viele Kinder zugesagt haben (aus den Eltern-Rückmeldungen; beim Spieltag zählt „dabei“ aus „Teams festlegen“, sobald die Einteilung steht), ob genug Trainer da sind (aus dem Trainerplan), ob der Trainingsplan steht und die Aufstellung fürs Spiel. Die Quelle steht unter der Karte. Rot wird ein Chip erst drei Tage vor dem Termin – vorher ist „0 zugesagt“ normal. Antippen öffnet den Termin.", run:"document.getElementById('home-woche')?.scrollIntoView({behavior:'smooth',block:'center'})"},
     {t:"Startseite", d:"To-Do-Banner (nur bei offenen Aufgaben), „Bist du dabei?“ mit den Terminen der nächsten 14 Tage, für die deine Antwort noch fehlt (beantwortet = Karte weg), „Diese Woche“ mit dem Stand je Termin – die erste Zeile ist der nächste Termin mit Wetter, Packtipp und den Sprungknöpfen „Anwesenheit“ und „Plan“ –, der Knopf zu allen Terminen und sechs große Kacheln – dahinter jeweils ein Kachel-Menü.", go:"home"},
   ]},
   {cat:"👥 Team", items:[
@@ -3517,7 +3517,7 @@ const HELP=[
     {t:"Match", d:"Zuerst „Teams festlegen“ in zwei Blöcken: „Wer ist dabei?“ (zugeklappt, sobald jemand dabei ist – vorbelegt aus den Eltern-Rückmeldungen, ohne Antwort bleibt ein Kind offen, „N Offene auf Dabei setzen“ erledigt das am Platz auf einmal; „Dabei“ ist zugleich die Anwesenheit dieses Spieltags und zählt für die Spiele-Quote) und darunter die Teams als Karten mit den Namen: ein Tipp auf einen Namen schiebt das Kind ins nächste Team, zuletzt in die Pause. Die Team-Kacheln darunter zeigen die Namen ohne Aufklappen. Dazu, wie viele Teams wir stellen und welche Spielform jedes Team spielt (beim Kinderfestival etwa Adler 1 auf 4+1, Adler 2 FUNiño). Die Automatik setzt Torwart-Kinder zuerst auf die Teams mit Torwart, füllt dann die Felder und verteilt die übrigen Kinder so, dass die Spielzeit je Kind über alle Teams möglichst gleich ist – der Anteil steht je Team dabei. Beim Festival legst du stattdessen die Felder des Tages an (Feld 1: 4+1, Feld 2: FUNiño …): die festen Teams wandern mit „Nächste Runde“ ein Feld weiter, und fehlt einem Team auf seinem Feld ein Kind, hilft eines aus dem Team mit der meisten Bank aus – nur für diese Runde, Torwart-Kinder wechseln sich dabei ab, welcher Trainer sie betreut – die Kinder werden dabei automatisch verteilt und lassen sich von Hand umsetzen. „Dabei“ heißt automatisch „Spielt mit“ – wen du pausieren lassen willst, stellst du selbst um. Neben jedem Kind stehen die Trainingsquote und die Zahl der Einsätze; beide zählen ab einem Stichtag (zurzeit: Trainings ab dem 31.08., Spiele ab dem 05.09.2026), damit die faire Einteilung nicht an alten Zahlen hängt. Danach hat jedes Team seine eigene Kachel mit Kader, Rollen, Match-Uhr, Rotations-Timer, Live-Aktionen und Liveticker. Den Liveticker startest du selbst mit „▶️ Liveticker starten“ – er hängt nicht am Anpfiff und nicht an der Aufstellung. Sobald er läuft, erscheint bei den Eltern ganz oben eine rote LIVE-Kachel mit Teilen-Knopf – der Link geht auch an Oma und Opa, ohne Anmeldung. Stoppst du ihn wieder, kommt nur nichts Neues mehr dazu – das Bisherige bleibt für die Eltern sichtbar. Drei Tage nach dem Spieltag zeigt der Link nur noch den Endstand; die Ereignisse bleiben gespeichert. Beim Blitz-Rating nach dem Spiel zählt pro Kind, Trainer und Spieltag genau eine Bewertung – gehst du ein zweites Mal durch, korrigierst du die erste, statt sie zu verdoppeln. In der Live-Aktion stehen oben die Kinder aus der Aufstellung und unter einer gestrichelten Linie alle weiteren, die heute dabei sind – du kannst also auch tickern, wenn die Aufstellung nicht gepflegt ist. Bei „Parade“ erscheinen nur die Torhüter. Hast du selbst keine Hand frei: „🙋 Jemand anderen tickern lassen“ verschickt einen Link an einen Helfer am Spielfeldrand; der sieht nur die Kinder von heute und die Aktionsknöpfe und kann Tore, Paraden und Gegentore melden – keine Bewertungen, keine Kaderdaten. Der Link gilt nur, solange der Ticker läuft. Die Team-Quests stehen darunter und gelten für alle Teams zusammen. Ist heute Spieltag, öffnet sich beim Betreten der Abschnitt, der zur Uhrzeit passt – vor dem Anpfiff „Vor dem Spiel“, während „Live“, danach „Nach dem Spiel“.", go:"spieltag"},
     {t:"Aufstellung", d:"Rollen-Empfehlung aus den Bewertungen: wer passt als Aufpasser, Jäger, Flitzer links/rechts. Braucht mindestens 4 bewertete Kinder – wer noch niemanden bewertet hat, nutzt im Spieltag „Feld & Bank fair besetzen“ (verteilt nach Einsatzzeiten).", go:"kombi"},
     {t:"Analyse", d:"Auswertung nach dem Spiel: Entwicklungs-Meilensteine aus den Bewertungen, Einsatz-Fairness (zählt Spieltage mit Blitz-Rating je Kind) und Formtrend. Solange kein Spiel bewertet ist, steht dort nur ein Satz mit dem Weg zum Spieltag.", go:"analyse"},
-    {t:"Festival ausrichten", d:"Für das Kinderfestival bei uns: Du trägst die Gastvereine mit ihren angereisten Kindern ein, die App macht daraus Teams (10 Kinder = zwei Teams) und schlägt die Felder vor – Standard ein 4+1-Feld mit Jugendtoren und zwei FUNiño-Felder mit Minitoren, änderbar. Die Felder heißen wie am Platz – „Käfig“ für das erste 4+1-Feld, „Funino 1/2“, „4+1 oben“ für ein zweites – und jeder Name lässt sich je Feld überschreiben. Aus Beginn, Gesamtdauer und Spielzeit entsteht ein Runden-Plan: pro Runde spielen alle Felder gleichzeitig, jede Mannschaft trifft möglichst jede andere und wechselt dabei zwischen den Formaten. Keine Tabelle – bei uns gewinnt die Freude am Spiel. Den fertigen Plan schickst du als Link an die Gast-Trainer (mit Wappen, Feldern und Zeiten, ohne Login) oder druckst ihn als Aushang. Auf der Gast-Seite steht ein Info-Knopf „Anfahrt, Parken & Felder“: Adresse mit Kartenlink, der Parkhinweis (am Platz oft voll, besser an der Straße) mit Skizze, eine Skizze, wo welches Feld liegt, und deine Zeilen aus „Infos für die Gäste“ – Kaffee und Brötchen, WC, Turnierleitung. Am Spieltag führt die Turnier-Kachel im Spieltag hierher, wenn wir ausrichten; sind wir zu Gast, öffnet sie den Turnier-Modus zum Erfassen der Kurzspiele.", run:"htOpen()"},
+    {t:"Festival ausrichten", d:"Für das Kinderfestival bei uns: Unsere Kinder und Teams kommen aus „Teams festlegen“ (änderbar, „Wieder übernehmen“ holt sie zurück); die Gastvereine trägst du mit ihren angereisten Kindern ein, die App macht daraus Teams (10 Kinder = zwei Teams). Standard sind alle vier Felder – Käfig (4+1), Funino 1, Funino 2 und 4+1 oben; braucht der Plan weniger, fallen sie beim Erstellen von hinten weg, zuerst 4+1 oben. Beginn ist die Uhrzeit des Termins (sonst 10:15), zwischen den Runden 5 Minuten Trinkpause. Im fertigen Plan tauschst du zwei Teams, indem du beide antippst – der Plan liegt in der Datenbank und ist für alle Trainer änderbar. Die Felder heißen wie am Platz – „Käfig“ für das erste 4+1-Feld, „Funino 1/2“, „4+1 oben“ für ein zweites – und jeder Name lässt sich je Feld überschreiben. Aus Beginn, Gesamtdauer und Spielzeit entsteht ein Runden-Plan: pro Runde spielen alle Felder gleichzeitig, jede Mannschaft trifft möglichst jede andere und wechselt dabei zwischen den Formaten. Keine Tabelle – bei uns gewinnt die Freude am Spiel. Den fertigen Plan schickst du als Link an die Gast-Trainer (mit Wappen, Feldern und Zeiten, ohne Login) oder druckst ihn als Aushang. Auf der Gast-Seite steht ein Info-Knopf „Anfahrt, Parken & Felder“: Adresse mit Kartenlink, der Parkhinweis (am Platz oft voll, besser an der Straße) mit Skizze, eine Skizze, wo welches Feld liegt, und deine Zeilen aus „Infos für die Gäste“ – Kaffee und Brötchen, WC, Turnierleitung. Am Spieltag führt die Turnier-Kachel im Spieltag hierher, wenn wir ausrichten; sind wir zu Gast, öffnet sie den Turnier-Modus zum Erfassen der Kurzspiele.", run:"htOpen()"},
   ]},
   {cat:"🎯 Taktik", items:[
     {t:"Taktikboard", d:"Formationen stellen, Laufwege/Pässe zeichnen, als Bild teilen – auf dem Tablet im Pro-Modus.", go:"taktik"},
@@ -3867,7 +3867,7 @@ async function homeWocheLoad(){
   let fern=false;   // kein Termin in 7 Tagen → der naechste danach
   /* v474: Jede gerechnete Zahl nennt ihre Quelle (Muster v470) – sonst raet der Trainer,
      ob „3 zugesagt" aus den Eltern-Antworten oder aus seiner eigenen Anwesenheit stammt. */
-  const quelle=`<div class="woche-quelle" style="font-size:10.5px;color:var(--text3);margin-top:6px;line-height:1.4">Zusagen aus den Eltern-Rückmeldungen · Trainer aus dem Trainerplan · Plan und Aufstellung aus der App</div>`;
+  const quelle=`<div class="woche-quelle" style="font-size:10.5px;color:var(--text3);margin-top:6px;line-height:1.4">Zusagen aus den Eltern-Rückmeldungen, am Spieltag „dabei“ aus „Teams festlegen“ · Trainer aus dem Trainerplan · Plan aus der App</div>`;
   const karte=(inner,mitQuelle)=>`<div class="card" style="padding:12px 14px;margin-bottom:10px">
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px">
       <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text2)">🗓️ ${fern?"Als Nächstes":"Diese Woche"}</div>
@@ -3913,7 +3913,14 @@ async function homeWocheLoad(){
     const nah=inTagen<=WOCHE_ROT_AB;
     const zeit=t.uhrzeit?String(t.uhrzeit).slice(0,5):"";
     const chips=[];
-    if(t.typ==="training"||t.typ==="spiel"||t.typ==="turnier"){
+    /* v486 PO: „0 Zusagen beim Festival – unter Match haben wir die Kinder doch schon
+       eingeteilt." Tatsache schlaegt Vorhersage (v477): steht die Einteilung, zeigt der
+       Chip „dabei" aus „Teams festlegen" statt der Eltern-Zusagen. */
+    const nomZeile=(t.typ==="spiel"||t.typ==="turnier")?noms.find(n=>n.datum===t.datum+"__nom"):null;
+    const dabei=nomZeile&&nomZeile.data?Object.keys(nomZeile.data).filter(k=>k.charAt(0)!=="_"&&nomZeile.data[k]==="dabei").length:0;
+    if(dabei){
+      chips.push(_wocheChip(`🧩 ${dabei} dabei`,dabei>=6?"ok":"warn"));
+    }else if(t.typ==="training"||t.typ==="spiel"||t.typ==="turnier"){
       const rm=rsvp.filter(x=>x.termin_id===t.id);
       const ja=rm.filter(x=>x.status==="zugesagt").length;
       const nein=rm.filter(x=>x.status==="abgesagt"||x.status==="krank").length;
@@ -3921,6 +3928,8 @@ async function homeWocheLoad(){
       chips.push(_wocheChip(`${ja} zugesagt`,ja>=6?"ok":ja?"warn":nah?"rot":"neutral"));
       if(nein)chips.push(_wocheChip(`${nein} abgesagt`,"neutral"));
       if(offen)chips.push(_wocheChip(`${offen} offen`,"neutral"));
+    }
+    if(t.typ==="training"||t.typ==="spiel"||t.typ==="turnier"){
       const trainerJa=Object.keys(t.trainer_status||{}).filter(n=>t.trainer_status[n]==="ja").length;
       chips.push(trainerJa?_wocheChip(`🧢 ${trainerJa} Trainer`,trainerJa>=2?"ok":"warn"):_wocheChip("🧢 kein Trainer",nah?"rot":"warn"));
     }
@@ -3929,10 +3938,8 @@ async function homeWocheLoad(){
       chips.push(plan?_wocheChip("📋 Plan steht","ok"):_wocheChip("📋 kein Plan",nah?"warn":"neutral"));
       if(gruppen.some(g=>g.datum===t.datum))chips.push(_wocheChip("👥 Gruppen","neutral"));
     }
-    if(t.typ==="spiel"||t.typ==="turnier"){
-      const nom=noms.find(n=>n.datum===t.datum+"__nom");
-      const dabei=nom&&nom.data?Object.keys(nom.data).filter(k=>k.charAt(0)!=="_"&&nom.data[k]==="dabei").length:0;
-      chips.push(dabei?_wocheChip(`🧩 ${dabei} nominiert`,"ok"):_wocheChip("🧩 Aufstellung offen",nah?"warn":"neutral"));
+    if((t.typ==="spiel"||t.typ==="turnier")&&!dabei){
+      chips.push(_wocheChip("🧩 Teams offen",nah?"warn":"neutral"));
     }
     const titel=esc(t.titel||t.gegner||m.label);
     const ort=t.platz||t.ort;

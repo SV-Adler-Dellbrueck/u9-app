@@ -436,7 +436,9 @@ function tmCard(t){
   if(t.typ==="training"){
     haupt=`<button class="btn btn-p btn-sm" onclick="tmJump('planung','${t.datum}')"><i class="ti ti-clipboard-list"></i>Plan</button>`;
   }else if(istSpiel){
-    haupt=`<button class="btn btn-p btn-sm" onclick="tmJump('aufstellung','${t.datum}','${t.spielform||''}')"><i class="ti ti-users-group"></i>Aufstellung</button>`;
+    /* v486: „Aufstellung" sprang in die alte Aufstellungs-Seite („Bitte Datum waehlen",
+       Fenster blieb offen). Seit v477 gehoert der Spieltag nach „Teams festlegen". */
+    haupt=`<button class="btn btn-p btn-sm" onclick="tmJump('spieltag','${t.datum}','${t.spielform||''}')"><i class="ti ti-users-group"></i>Teams festlegen</button>`;
     mehr.push({i:"ti-bolt",l:"Auswertung",c:`tmJump('blitz','${t.datum}','${t.spielform||''}')`});
   }else{ // Event (Grillfest & Co.) – keine Trainingsplanung/Aufstellung, sondern die Mitbringliste
     haupt=`<button class="btn btn-p btn-sm" onclick="mitbringTrainerOpen()"><i class="ti ti-basket"></i>Mitbringliste</button>`;
@@ -710,6 +712,7 @@ async function tmTrainerToggle(id,name){
 // Schnell-Sprung von einem Termin zum passenden Werkzeug, Datum vorbelegt.
 // Spielform des Termins wird an Taktikboard + Rotation durchgereicht (Kopplung Schritt 5).
 function tmJump(ziel,datum,spielform){
+  document.getElementById("tmd-modal")?.remove();   // v486: das Terminfenster schliesst beim Sprung
   if(spielform&&typeof FORMATIONS!=="undefined"&&FORMATIONS[spielform]){
     if(typeof taktikSetFormation==="function")taktikSetFormation(spielform);
     else tbFormation=spielform;
