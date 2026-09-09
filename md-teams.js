@@ -40,7 +40,7 @@ let TEAM_FELDER=[], TEAM_RUNDE=1, TEAM_LEIH={};
    führen (v477: eine Zahl aus zwei Quellen wird zweimal gefragt). Geändert wird im Planer.
    Ohne Spielplan – Auswärtsturnier, freies Spiel – bleibt alles von Hand wie bisher. */
 let TEAM_PLAN=null;
-const FST_ZU_FORM={f4:"4+1",funino:"funino"};
+const FST_ZU_FORM={f4:"4+1",f3:"3+1",funino:"funino"};   // v501: 3+1 aus dem Spielplan
 async function teamPlanLaden(){
   TEAM_PLAN=null;
   if(typeof spieltagRawDate!=="function"||typeof fstIst!=="function")return;
@@ -153,12 +153,14 @@ function teamSpielerId(n){ const k=getKader(n); return k&&k._id; }
 
 /* Kadergröße je Spielform (PO-Vorgabe):
      Funino  – ohne Torwart, 4 Feldspieler
+     3+1     – 1 Torwart + 5 Feldspieler
      4+1     – 1 Torwart + 6 Feldspieler
      5+1     – 1 Torwart + 7 Feldspieler
    Torwart darf nur werden, wer im Kader den Haken "🥅 TW" hat. */
 function teamKader(key){
   key=key||(typeof tbFormation!=="undefined"&&tbFormation)||"4+1";
   if(key==="funino")return {tw:0,feld:4,gesamt:4};
+  if(key==="3+1")   return {tw:1,feld:5,gesamt:6};     // v501: 3 auf dem Feld + 2 zum Wechseln
   if(key==="5+1")   return {tw:1,feld:7,gesamt:8};
   return {tw:1,feld:6,gesamt:7};                 // 4+1
 }
@@ -857,7 +859,7 @@ function teamsRender(){
   const vorschlag=teamAnzahlVorschlag();
   const leer=!pool.length;
   const flabel=k=>((typeof FORMATIONS!=="undefined"&&FORMATIONS[k])||{label:k}).label;
-  const formen=[["funino","FUNiño"],["4+1","4+1"],["5+1","5+1"]];
+  const formen=[["funino","FUNiño"],["3+1","3+1"],["4+1","4+1"],["5+1","5+1"]];
   const felder=teamFelderAktiv();
   const segBtn=(n)=>`<button class="seg-btn${TEAM_ANZAHL===n?" active":""}" onclick="teamSetAnzahl(${n})" aria-pressed="${TEAM_ANZAHL===n?"true":"false"}">${n}</button>`;
   const chip=(n,t)=>{

@@ -751,7 +751,7 @@ function tmEdit(id){
   const PLATZ=isSpiel?PLATZ_SPIEL:PLATZ_TRAINING;
   const platzCur=t.platz||(isSpiel?tmPlatzDefault(t.typ):""); // Spiele ohne Eintrag: sinnvolle Vorbelegung
   const platzOpts=`<option value=""${!platzCur?" selected":""}>– kein Platz –</option>`+PLATZ.map(p=>`<option${p===platzCur?" selected":""}>${p}</option>`).join("");
-  const sfOpts=["funino","4+1","5+1"].map(s=>`<option${s===t.spielform?" selected":""}>${s}</option>`).join("");
+  const sfOpts=["funino","3+1","4+1","5+1"].map(s=>`<option${s===t.spielform?" selected":""}>${s}</option>`).join("");
   // Spieldauer war im Bearbeiten-Dialog gar nicht vorhanden: einmal angelegt, nie änderbar.
   const hz=Number(t.halbzeiten)||1, dauer=Number(t.spieldauer_min)||10;
   const hzOpts=[[1,"1 Spielzeit"],[2,"2 Halbzeiten"]].map(([v,l])=>`<option value="${v}"${v===hz?" selected":""}>${l}</option>`).join("");

@@ -213,6 +213,12 @@ const FORMATIONS={
     {role:'Spieler',x:26,y:42,cls:'tb-fl', rk:'feld'},
     {role:'Spieler',x:74,y:42,cls:'tb-fl', rk:'feld'},
   ]},
+  '3+1':{label:'3+1',tw:true,fieldCount:3,slots:[
+    {role:'TW',       x:50,y:92,cls:'tb-tw', rk:'tw'},
+    {role:'Aufpasser',x:50,y:68,cls:'tb-auf',rk:'aufpasser'},
+    {role:'Flitzer L',x:24,y:36,cls:'tb-fl', rk:'flitzer_l'},
+    {role:'Flitzer R',x:76,y:36,cls:'tb-fl', rk:'flitzer_r'},
+  ]},
   '4+1':{label:'4+1 Raute',tw:true,fieldCount:4,slots:[
     {role:'TW',       x:50,y:92,cls:'tb-tw', rk:'tw'},
     {role:'Aufpasser',x:50,y:72,cls:'tb-auf',rk:'aufpasser'},

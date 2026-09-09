@@ -866,7 +866,7 @@ function _blzDuellTeams(nKids){
   _blzTrainerVerteilen();
 }
 function blzElternAnzahl(m){if(!_blzPlanVerwerfen())return;BLZ.elternAnzahl=m;_blzDuellTeams(BLZ.anzahl);blzSave();blzRender();}
-const BLZ_SPIELFORM={f2:["2 gegen 2 · ohne Torwart",2],funino:["FUNiño (3 gegen 3)",3],f4:["4+1",5],f5:["5+1",6],frei:["frei",0]};
+const BLZ_SPIELFORM={f2:["2 gegen 2 · ohne Torwart",2],funino:["FUNiño (3 gegen 3)",3],f3:["3+1",4],f4:["4+1",5],f5:["5+1",6],frei:["frei",0]};
 function blzSpielform(sf){BLZ.spielform=sf;blzSave();blzRender();}
 // Team-Größen-Vorschlag aus Kinderzahl + Spielform (13 Kinder, FUNiño → 4 Teams)
 function _blzTeamVorschlag(){
@@ -1460,7 +1460,7 @@ async function _htSlugFrei(basis){
 }
 function _htUrl(slug){ return appRoot()+"?turnier="+encodeURIComponent(slug); }
 const HT_FORMATE={liga:"Liga – jeder gegen jeden",gruppen:"Gruppen + Finalrunde",festival:"Festival – alle spielen, keine Tabelle"};
-const HT_SPIELFORM={funino:"FUNiño (3 gegen 3)",f4:"4+1",f5:"5+1",f6:"6+1",f7:"7 gegen 7",frei:"eigene Spielform"};
+const HT_SPIELFORM={funino:"FUNiño (3 gegen 3)",f3:"3+1",f4:"4+1",f5:"5+1",f6:"6+1",f7:"7 gegen 7",frei:"eigene Spielform"};
 /* Regel-Vorlagen je Spielform – bewusst als VORLAGE beschriftet, der Trainer passt sie an
    die eigene Ausschreibung/Kreis-Vorgaben an (die Details sind regional unterschiedlich). */
 const HT_REGELN={
@@ -2069,10 +2069,17 @@ let _htPub=null;
    Trainer korrigiert; Runden, auf allen Feldern gleichzeitig; keine Tabelle, Tore optional;
    das Festival ersetzt das grosse Turnier-Formular als Standardweg.
    Gespeichert in derselben Tabelle heimturnier – config.art="festival" unterscheidet. */
+/* v501 PO: „In die Erstellung des Spielplans muss auch die Form 3+1 aufgenommen werden, inkl.
+   der kompletten Logik – Aufbau, Felder, Teams." Drei Feldspieler und Torwart auf zwei
+   Jugendtore (Kacheln): dieselben Tore wie 4+1, also dieselben Plätze – Käfig und obere
+   Platzhälfte. `auf` treibt die Teamgröße, `tore` den Aufbau, `farbe` die Marken. */
 const FST_FORMEN={
   f4:    {label:"4+1",        kurz:"4+1", lang:"4+1 mit Torwart", auf:5, tore:"2 Jugendtore", farbe:"#1d4ed8"},
+  f3:    {label:"3+1",        kurz:"3+1", lang:"3+1 mit Torwart", auf:4, tore:"2 Jugendtore", farbe:"#6d28d9"},
   funino:{label:"FUNiño 3:3", kurz:"3:3", lang:"FUNiño 3 gegen 3",auf:3, tore:"4 Minitore",   farbe:"#15803d"}
 };
+/* Formen auf Jugendtore (mit Torwart) teilen sich die Plätze: Käfig und „oben". */
+function _fstJugendtore(form){ return form==="f4"||form==="f3"; }
 const FST_GRUSS="Herzlich willkommen bei den Adlern! Schön, dass ihr dabei seid – wir freuen uns auf tolle Spiele mit euch.";
 const FST_STANDARD_FELDER=[{form:"f4"},{form:"funino"},{form:"funino"},{form:"f4"}];   // v486 PO: „Standard alle 4 Felder anlegen" – Käfig, Funino 1, Funino 2, 4+1 oben
 const FST_START="10:15", FST_PAUSE=5;   // PO: „Beginn ist immer 10:15" · „5 Minuten Trinkpause zwischen den Spielen"
@@ -2084,16 +2091,20 @@ function fstIst(row){ return ((row||_HT||{}).config||{}).art==="festival"; }
 function fstWort(row){ return (((row||_HT||{}).config||{}).anlass==="heimspiel")?"Heimspiel":"Festival"; }
 let _htAnlass="";
 function _fstF(k){ return FST_FORMEN[k]||FST_FORMEN.funino; }
-/* Feldnamen, wie sie am Platz heissen (PO): das erste 4+1-Feld ist immer der „Käfig",
-   das zweite „4+1 oben" (obere Haelfte des grossen Platzes), FUNiño-Felder „Funino 1, 2 …".
-   Ein eigener Name je Feld ueberschreibt den Standard. */
-const FST_NAMEN_F4=["Käfig","4+1 oben"];
+/* Feldnamen, wie sie am Platz heissen (PO): das erste Feld mit Jugendtoren ist immer der
+   „Käfig", das zweite „4+1 oben" bzw. „3+1 oben" (obere Haelfte des grossen Platzes),
+   FUNiño-Felder „Funino 1, 2 …". Ein eigener Name je Feld ueberschreibt den Standard.
+   v501: 4+1 und 3+1 zaehlen zusammen – wer den Käfig auf 3+1 stellt, spielt weiter im Käfig. */
 function fstFeldName(felder,i){
   const f=(felder&&felder.length)?felder:FST_STANDARD_FELDER;
   const x=f[i]; if(!x)return "Feld "+(i+1);
   if(x.name&&String(x.name).trim())return String(x.name).trim();
-  const gleich=f.slice(0,i+1).filter(y=>(y.form||"funino")===(x.form||"funino")).length;   // wievieltes Feld dieser Form
-  if((x.form||"funino")==="f4")return FST_NAMEN_F4[gleich-1]||("4+1 "+gleich);
+  const form=x.form||"funino";
+  if(_fstJugendtore(form)){
+    const gleich=f.slice(0,i+1).filter(y=>_fstJugendtore(y.form||"funino")).length;   // wievieltes Jugendtor-Feld
+    return gleich===1?"Käfig":gleich===2?(_fstF(form).kurz+" oben"):(_fstF(form).kurz+" "+gleich);
+  }
+  const gleich=f.slice(0,i+1).filter(y=>(y.form||"funino")===form).length;   // wievieltes Feld dieser Form
   return "Funino "+gleich;
 }
 async function fstFeldNameSet(i,wert){
@@ -2128,11 +2139,11 @@ function fstFelderKuerzen(felder,teams){
   const kinder=(teams||[]).reduce((a,t)=>a+(t.kinder||0),0);
   const gross=teams.length>0&&kinder/teams.length>=6;
   while(f.length>n){
-    const f4=f.map((x,i)=>(x.form||"funino")==="f4"?i:-1).filter(i=>i>=0);
-    const fu=f.map((x,i)=>(x.form||"funino")!=="f4"?i:-1).filter(i=>i>=0);
+    const f4=f.map((x,i)=>_fstJugendtore(x.form||"funino")?i:-1).filter(i=>i>=0);     // Jugendtor-Felder (4+1, 3+1)
+    const fu=f.map((x,i)=>!_fstJugendtore(x.form||"funino")?i:-1).filter(i=>i>=0);
     let weg;
-    if(gross&&f4.length>=2&&fu.length>=1)weg=fu[fu.length-1];      // grosse Teams: 4+1 oben bleibt, letztes FUNiño geht
-    else if(f4.length>=2)weg=f4[f4.length-1];                       // sonst zuerst das zweite 4+1 (oben)
+    if(gross&&f4.length>=2&&fu.length>=1)weg=fu[fu.length-1];      // grosse Teams: das Feld „oben" bleibt, letztes FUNiño geht
+    else if(f4.length>=2)weg=f4[f4.length-1];                       // sonst zuerst das zweite Jugendtor-Feld (oben)
     else weg=f.length-1;
     f.splice(weg,1);
   }
@@ -2325,13 +2336,20 @@ const FST_REGELN={
     "Fairer Umgang mit den anderen Teams – wir Trainer sind das Vorbild",
     "Eltern feuern an, coachen nicht – mit Abstand zum Feld",
     "Der Spaß der Kinder steht im Vordergrund – keine Tabelle, kein Ergebnisdruck"]},
-  f4:{t:"4+1 · Käfig und 4+1 oben",z:[
+  f4:{t:"4+1",z:[
     "4 Feldspieler und Torwart auf zwei Jugendtore",
     "Tore dürfen nicht direkt aus der eigenen Hälfte erzielt werden – keine Weitschüsse",
     "Nach einem Tor: Anstoß in der Mitte",
     "Torwart darf den Rückpass in die Hand nehmen",
     "Abstoß und Abwurf: der Gegner geht hinter die Mittellinie"]},
-  funino:{t:"FUNiño · Funino 1 und 2",z:[
+  /* v501 (Kachel): 3+1 spielt nach denselben Regeln wie 4+1, nur mit drei Feldspielern. */
+  f3:{t:"3+1",z:[
+    "3 Feldspieler und Torwart auf zwei Jugendtore",
+    "Tore dürfen nicht direkt aus der eigenen Hälfte erzielt werden – keine Weitschüsse",
+    "Nach einem Tor: Anstoß in der Mitte",
+    "Torwart darf den Rückpass in die Hand nehmen",
+    "Abstoß und Abwurf: der Gegner geht hinter die Mittellinie"]},
+  funino:{t:"FUNiño",z:[
     "3 gegen 3 auf vier Minitore, ohne Torwart",
     "Tore zählen nur aus der Schusszone (6 m vor den Toren)",
     "Nach einem Tor spielt das Team, das es bekommen hat, von der Grundlinie ein – der Gegner wartet außerhalb der Schusszone",
@@ -2343,7 +2361,14 @@ function fstRegelnHtml(hell,cfg){
       <div style="font-size:12px;font-weight:800;color:${hell?"#475569":"var(--text2)"};text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">${esc(k.t)}</div>
       <ul style="margin:0;padding-left:18px;font-size:13.5px;line-height:1.55">${k.z.map(z=>`<li style="margin-bottom:4px">${esc(z)}</li>`).join("")}</ul></div>`;
   const alle={t:FST_REGELN.alle.t,z:FST_REGELN.alle.z.concat(pause?[`Zwischen den Spielen liegen ${pause} Minuten Trinkpause – zum Erholen und für den Platzwechsel`]:[])};
-  return karte(FST_REGELN.f4)+karte(FST_REGELN.funino)+karte(alle)
+  /* v501: eine Regelkarte je Spielform, die auf den Feldern steht – mit den Feldnamen im Titel
+     („4+1 · Käfig und 4+1 oben"). Ein Feld auf 3+1 bringt seine Karte mit, ohne 3+1 fehlt sie. */
+  const felder=(cfg&&cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
+  const formen=Object.keys(FST_FORMEN).filter(k=>felder.some(f=>(f.form||"funino")===k));
+  const formKarte=k=>{ const namen=felder.map((f,i)=>(f.form||"funino")===k?fstFeldName(felder,i):null).filter(Boolean);
+    const liste=namen.length>1?namen.slice(0,-1).join(", ")+" und "+namen[namen.length-1]:namen.join("");
+    return karte({t:FST_REGELN[k].t+(liste?" · "+liste:""),z:FST_REGELN[k].z}); };
+  return formen.map(formKarte).join("")+karte(alle)
     +`<div style="font-size:11px;color:${hell?"#94a3b8":"var(--text3)"};margin:4px 0 10px">Nach den DFB-Spielformen im Kinderfußball, ergänzt um unsere Vereinbarungen.</div>`;
 }
 function fstRegelnOpen(){
@@ -2617,8 +2642,19 @@ async function fstTausch(i,seite){
   const doppelt=[a,b].filter(p=>plan.some(q=>q!==p&&q.runde===p.runde&&[q.a,q.b].some(x=>x===p.a||x===p.b)));
   if(await htPatch({plan})){ toast(doppelt.length?`Getauscht – Achtung: in Runde ${doppelt[0].runde} spielt ein Team zweimal`:"Getauscht ✓"); fstRender(); }
 }
+/* v500 PO: „Wenn ich in dieser Kachel etwas ändere, z. B. ein Feld hinzufüge, schließt sich das
+   Fenster sofort und die Maske darunter wird sichtbar und startet in der Mitte." Das Fenster
+   blieb – aber seit v497 steckt die Vorbereitung in einem Klappblock, und jeder Neuaufbau nach
+   dem Speichern baute ihn zugeklappt neu; die Ansicht sprang auf den Plan darunter. Was der
+   Trainer aufgeklappt hat, bleibt beim Neuaufbau offen, und die Scrollposition bleibt stehen. */
+function _fstOffenMerken(el){
+  const offen=new Set([...el.querySelectorAll("details[id][open]")].map(d=>d.id));
+  const roller=el.closest("#hturnier-modal")||el; const y=roller.scrollTop;
+  return ()=>{ offen.forEach(id=>{const d=document.getElementById(id); if(d)d.open=true;}); if(y)roller.scrollTop=y; };
+}
 function fstRender(){
   const el=document.getElementById("ht-body"); if(!el||!_HT)return;
+  const wiederher=_fstOffenMerken(el);
   const cfg=_HT.config||{}, vereine=cfg.vereine||[];
   const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
   const teams=fstTeamsBauen(vereine);
@@ -2709,6 +2745,7 @@ function fstRender(){
       <button class="btn btn-sm" onclick="htListe()"><i class="ti ti-arrow-left"></i>Übersicht</button>
       <button class="btn btn-sm" style="margin-left:auto;color:var(--red)" onclick="htDelete()"><i class="ti ti-trash"></i>Löschen</button>
     </div>`;
+  wiederher();
   fstGegnerChips();
   fstEinteilungSync();
   fstUhrTicken();
@@ -2753,7 +2790,7 @@ function fstPlanHtml(plan,teams,felder,gross,tausch,cfg){
         ${tn(p,"a")}<span style="color:var(--text3);font-weight:400;text-align:center">–</span>${tn(p,"b")}
         ${erg(p)}
       </div>`;}).join("");
-    if(!offen)return `<details style="border:var(--border-s);border-radius:12px;margin-bottom:6px;background:var(--surface)">
+    if(!offen)return `<details id="fst-runde-${r}" style="border:var(--border-s);border-radius:12px;margin-bottom:6px;background:var(--surface)">
       <summary style="cursor:pointer;min-height:44px;display:flex;align-items:baseline;gap:8px;padding:10px">${kopf}</summary>
       <div style="padding:0 10px 8px">${zeilen}</div></details>`;
     return `<div style="border:var(--border-s);border-radius:12px;padding:8px 10px;margin-bottom:6px;background:var(--surface)${aktiv===r&&!gross?";border-color:var(--blue)":""}">
@@ -2814,10 +2851,11 @@ function fstAufwaermZeile(row){
    bleibt frei. Rechts vom Platz der Parkplatz, unten das Vereinsheim (WC ebenerdig). */
 function fstSkizzeFelder(felder){
   const f=(felder&&felder.length)?felder:FST_STANDARD_FELDER;
-  const idxF4=[],idxFu=[]; f.forEach((x,i)=>((x.form||"funino")==="f4"?idxF4:idxFu).push(i));
+  const idxF4=[],idxFu=[]; f.forEach((x,i)=>(_fstJugendtore(x.form||"funino")?idxF4:idxFu).push(i));   // v501: 4+1 und 3+1 liegen auf denselben Plätzen
   const nm=i=>i==null?null:fstFeldName(f,i);
   const kaefig=nm(idxF4[0]), oben=nm(idxF4[1]), fu1=nm(idxFu[0]), fu2=nm(idxFu[1]);
-  const B=_fstF("f4").farbe, G=_fstF("funino").farbe;
+  const fb=i=>i==null?_fstF("f4").farbe:_fstF(f[i].form).farbe;
+  const B=fb(idxF4[0]), B2=fb(idxF4[1]), G=_fstF("funino").farbe;
   const box=(x,y,w,h,name,farbe,ort)=>name
     ?`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="${farbe}" opacity=".92"/><text x="${x+w/2}" y="${y+h/2+5}" text-anchor="middle" font-size="${w<60?"10.5":"13"}" font-weight="800" fill="#fff">${esc(name)}</text>`
     :`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="none" stroke="#94a3b8" stroke-dasharray="6 4" stroke-width="2"/><text x="${x+w/2}" y="${y+h/2}" text-anchor="middle" font-size="11" fill="#64748b">${esc(ort)}</text><text x="${x+w/2}" y="${y+h/2+14}" text-anchor="middle" font-size="10" fill="#94a3b8">heute frei</text>`;
@@ -2830,7 +2868,7 @@ function fstSkizzeFelder(felder){
     <!-- grosser Platz quer, linke Haelfte fuers Festival -->
     <rect x="64" y="40" width="254" height="190" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
     <line x1="191" y1="40" x2="191" y2="230" stroke="#16a34a" stroke-width="2"/>
-    ${box(72,48,112,78,oben,B,"4+1 oben")}
+    ${box(72,48,112,78,oben,B2,"4+1 oben")}
     ${box(72,134,53,88,fu1,G,"Funino 1")}
     ${box(131,134,53,88,fu2,G,"Funino 2")}
     <rect x="198" y="48" width="112" height="174" rx="6" fill="#f1f5f9" opacity=".8"/>
@@ -2916,6 +2954,7 @@ function _fstPublicRender(wrap,row){
   const nm=i=>esc(teams[i]||("Team "+(i+1)));
   const runden=[...new Set(plan.map(p=>p.runde))].sort((a,b)=>a-b);
   const helfer=!!(_htPub&&_htPub.code), jetzt=fstRundeJetzt(row), verzug=fstVerzug(cfg);
+  const wiederher=_fstOffenMerken(wrap);
   wrap.innerHTML=`
     <div style="background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border-radius:18px;padding:16px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 24px rgba(30,58,138,.25)">
       <img src="logo.png" alt="SV Adler Dellbrück" style="width:58px;height:58px;flex:0 0 auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))">
@@ -2965,7 +3004,7 @@ function _fstPublicRender(wrap,row){
           ${helfer?`<button onclick="htPubEdit(${mi})" aria-label="Ergebnis eintragen" style="min-height:44px;min-width:64px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;font-family:inherit;font-weight:900;font-size:13px;cursor:pointer;color:${p.ta!=null?"#0f172a":"#94a3b8"}">${erg}</button>`
                   :`<span style="font-size:14px;font-weight:900;color:${p.ta!=null?"#0f172a":"#cbd5e1"};min-width:44px;text-align:center">${erg}</span>`}
         </div>`;}).join("");
-      if(!aktiv)return `<details style="background:#fff;border-radius:14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+      if(!aktiv)return `<details id="fst-runde-${r}" style="background:#fff;border-radius:14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
         <summary style="cursor:pointer;min-height:48px;display:flex;align-items:center;gap:8px;padding:12px 14px">${kopf}</summary>
         <div style="padding:0 14px 12px">${zeilen}</div></details>`;
       return `<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)${jetzt?";border:2px solid #16a34a":""}">
@@ -2981,6 +3020,7 @@ function _fstPublicRender(wrap,row){
     <div style="text-align:center;font-size:11.5px;color:#94a3b8;margin-top:16px;line-height:1.6">
       Wir spielen ohne Tabelle – bei uns gewinnt die Freude am Spiel.<br>SV Adler Dellbrück · U9 · Die Seite aktualisiert sich von selbst
     </div>`;
+  wiederher();
   fstUhrTicken();
 }
 async function renderHeimturnierView(slug){
