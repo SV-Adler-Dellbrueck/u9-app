@@ -4,8 +4,13 @@
 module.exports = async function (h) {
   const K = h.KINDER, probleme = [], zeilen = [];
   const T1 = h.tagePlus(1), T3 = h.tagePlus(3), T5 = h.tagePlus(5), T9 = h.tagePlus(9), HEUTE = h.heute();
+  /* Der beendete Termin von heute muss relativ zur echten Uhr enden: mit fest „06:30" war
+     diese Pruefung nur nach 06:30 gruen (Lehre aus v482 – die Uhrzeit ist eine Testbedingung).
+     Eine Minute vor jetzt ist immer vorbei, ausser genau um Mitternacht. */
+  const _j = new Date(), _p = n => String(n).padStart(2, "0");
+  const VORBEI = _p(Math.floor(Math.max(1, _j.getHours() * 60 + _j.getMinutes() - 1) / 60)) + ":" + _p(Math.max(1, _j.getHours() * 60 + _j.getMinutes() - 1) % 60) + ":00";
   const termine = [
-    { id: 1, datum: HEUTE, uhrzeit: "06:00:00", uhrzeit_ende: "06:30:00", typ: "training", trainer_status: {} },            // heute, schon vorbei
+    { id: 1, datum: HEUTE, uhrzeit: "00:00:00", uhrzeit_ende: VORBEI, typ: "training", trainer_status: {} },                // heute, schon vorbei
     { id: 2, datum: T1, uhrzeit: "16:45:00", typ: "training", trainer_status: { A: "ja", B: "ja", C: "nein" } },
     { id: 3, datum: T3, uhrzeit: "13:30:00", typ: "turnier", titel: "Cup", ort: "Sportplatz", trainer_status: {} },
     { id: 4, datum: T5, uhrzeit: "16:45:00", typ: "training", trainer_status: { A: "ja" } },

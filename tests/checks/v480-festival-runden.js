@@ -29,7 +29,7 @@ module.exports = async function (h) {
     const r1Text = rundeText();
     const feldSegs = document.querySelectorAll('#team-felder [aria-label^="Spielform Feld"]').length;
     const teamSegs = document.querySelectorAll('#team-panel [aria-label^="Spielform Adler"]').length;
-    teamRundeSetzen(2);
+    teamRundeSetzen(2); await new Promise(r => setTimeout(r, 400));   // teamsSpeichern laeuft ohne await – sonst liest der Test vor dem Upsert
     const r2 = { t1: groesse(1), t2: groesse(2), leih: leih(), twTeam: TEAMS[K[0]], form1: teamFormVon(1), form2: teamFormVon(2), text: rundeText() };
     return { r1, r1Text, feldSegs, teamSegs, r2 };
   }, { K, heute });

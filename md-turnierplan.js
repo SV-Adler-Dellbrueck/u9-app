@@ -248,17 +248,27 @@ let nomStatus={};
    organisiert" – als Dauergast über jedem normalen Spiel war es Ballast. Dieselbe
    Kontext-Logik wie die Turnier-Gruppe im Kachel-Menü (_kachelTurnierCheck, v346).
    Der Typ kommt aus derselben Abfrage, die die Auswahlliste füllt – keine zweite Runde. */
-let _spieltagTypen={};
+let _spieltagTypen={}, _spieltagHeim={}, _spieltagNamen={};
+/* v484 – PO: „Das soll die Kachel Turnier-Modus dann ersetzen." Richten WIR aus, fuehrt der
+   Banner in den Festival-Planer (Vereine, Felder, Spielplan, Teilen). Sind wir zu Gast,
+   bleibt der Turnier-Modus: dort macht den Plan der Ausrichter, wir erfassen nur Kurzspiele. */
 function _spieltagTurnierBanner(){
   const b=document.getElementById("spieltag-turnier-banner"); if(!b)return;
   const d=document.getElementById("spieltag-date")?.value||"";
   b.hidden=(_spieltagTypen[d]!=="turnier");
+  if(b.hidden)return;
+  const heim=_spieltagHeim[d]===true;
+  b.onclick=heim?(()=>{ if(typeof htOpen==="function")htOpen(d,_spieltagNamen&&_spieltagNamen[d]); else toast("Festival-Planer lädt noch"); })
+                :(()=>turnierOpen());
+  const t=b.querySelector("span[style*='font-weight:800']"), u=b.querySelector("span[style*='opacity']");
+  if(t)t.textContent=heim?"Festival planen":"Turnier-Modus";
+  if(u)u.textContent=heim?"Vereine, Felder, Spielplan – und teilen":"Mehrere Kurzspiele erfassen – Spielplan & Ergebnisse";
 }
 // Match-Datum nur aus hinterlegten Spieltagen (termine typ spiel/turnier) wählbar – kein Freitext.
 async function spieltagDatesLoad(preferDatum){
   const sel=document.getElementById("spieltag-date"); if(!sel)return;
   let rows=[];
-  try{const r=await fetch(`${SB_URL}/rest/v1/termine?typ=in.(spiel,turnier)&select=datum,gegner,typ&order=datum.asc`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)rows=await r.json();}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/termine?typ=in.(spiel,turnier)&select=datum,gegner,typ,heim,titel&order=datum.asc`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)rows=await r.json();}catch(e){}
   const seen=new Set(), items=[];
   rows.forEach(t=>{if(t.datum&&!seen.has(t.datum)){seen.add(t.datum);items.push(t);}});
   if(!items.length){ sel.innerHTML='<option value="">— kein Spieltag angelegt (unter Orga anlegen) —</option>'; nomLoad(); return; }
@@ -267,7 +277,8 @@ async function spieltagDatesLoad(preferDatum){
   const fmt=(t)=>{const d=new Date(t.datum+"T00:00:00");const wd=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];const ds=d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"2-digit"});const g=t.typ==="turnier"?"🏆 Turnier":(t.gegner?"vs "+t.gegner:"Spiel");return `${wd} ${ds} · ${g}`;};
   sel.innerHTML=items.map(t=>`<option value="${esc(t.datum)}"${t.datum===def?" selected":""}>${esc(fmt(t))}</option>`).join("");
   // Typ je Spieltag merken – das Turnier-Banner haengt daran (siehe _spieltagTurnierBanner)
-  _spieltagTypen={}; items.forEach(t=>{ _spieltagTypen[t.datum]=t.typ; });
+  _spieltagTypen={}; _spieltagHeim={}; _spieltagNamen={};
+  items.forEach(t=>{ _spieltagTypen[t.datum]=t.typ; _spieltagHeim[t.datum]=t.heim===true; _spieltagNamen[t.datum]=t.titel||""; });
   _spieltagTurnierBanner();
   nomLoad();
 }
@@ -1554,24 +1565,24 @@ async function htOpen(datum,name){
     if(vorhanden){ htEdit(vorhanden.id); return; }
     const d=document.getElementById("ht-datum"), n=document.getElementById("ht-name");
     if(d)d.value=datum;
-    if(n&&name&&!n.value)n.value=String(name).replace(/\s*·\s*Heim\s*$/i,"").trim();
+    if(n&&!n.value)n.value=(String(name||"").replace(/\s*·\s*Heim\s*$/i,"").trim())||("Kinderfestival "+new Date(datum+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}));
   }
 }
 async function htListe(){
   _HT=null;
   const el=document.getElementById("ht-body"); if(!el)return;
   let rows=[];
-  try{const r=await fetch(`${SB_URL}/rest/v1/heimturnier?select=id,slug,name,datum,teams,aktiv&order=created_at.desc&limit=10`,{headers:sbAuthHeaders()});if(!sbCheck401(r)&&r.ok)rows=(await r.json())||[];}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/heimturnier?select=id,slug,name,datum,teams,aktiv,config&order=created_at.desc&limit=10`,{headers:sbAuthHeaders()});if(!sbCheck401(r)&&r.ok)rows=(await r.json())||[];}catch(e){}
   const fld="box-sizing:border-box;padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13.5px;background:var(--surface2);color:var(--text)";
   el.innerHTML=`
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:6px">
-      <input id="ht-name" placeholder="Turniername, z. B. Adler-Cup 2026" style="${fld}">
+      <input id="ht-name" placeholder="Name, z. B. Kinderfestival September" style="${fld}">
       <div style="display:flex;gap:8px"><input id="ht-datum" type="date" style="${fld};flex:1"><button class="btn btn-p btn-sm" onclick="htNeu(this)"><i class="ti ti-plus"></i>Anlegen</button></div>
     </div>
     <div style="font-weight:800;font-size:13px;margin:12px 0 6px">Unsere Turniere</div>
     ${rows.length?rows.map(t=>`<div style="display:flex;align-items:center;gap:8px;border:var(--border-s);border-left:4px solid #b45309;border-radius:12px;padding:10px 12px;margin-bottom:8px">
         <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:800">${esc(t.name)}</div>
-        <div style="font-size:11px;color:var(--text2)">${t.datum?new Date(t.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"})+" · ":""}${(t.teams||[]).length} Teams</div></div>
+        <div style="font-size:11px;color:var(--text2)">${t.datum?new Date(t.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"})+" · ":""}${(t.teams||[]).length} Teams${((t.config||{}).art==="festival")?" · 🏟️ Festival":""}</div></div>
         <button class="btn btn-sm btn-p" onclick="htEdit(${t.id})">Öffnen</button>
       </div>`).join(""):'<div style="font-size:12px;color:var(--text3)">Noch kein Heimturnier angelegt.</div>'}`;
   return rows;
@@ -1582,8 +1593,15 @@ async function htNeu(btn){
   if(!name){toast("Bitte einen Turniernamen eingeben","err");return;}
   if(btn)btn.disabled=true;
   try{
+    /* v484: Neu angelegt wird immer ein FESTIVAL – der Fall, den wir wirklich ausrichten
+       (2–3 Gastvereine, eine Stunde, gemischte Felder). Die alten Turniere mit Gruppen und
+       Finalrunde bleiben lesbar und editierbar, es entstehen nur keine neuen mehr. */
     const body={slug:_htSlug(),name,datum,ort:(typeof VEREIN_ADRESSE!=="undefined"?VEREIN_ADRESSE:"Thurner Kamp 97, 51069 Köln"),
-      config:{felder:1,start:"10:00",spieldauer:12,pause:3,puffer:10,format:"liga",gruppen:2,spielform:"f4",regeln:HT_REGELN.f4,infos:HT_INFOS_VORLAGE},teams:["SV Adler Dellbrück"]};
+      config:{art:"festival",format:"festival",start:"10:00",dauer:60,spieldauer:8,wechsel:2,
+        felder:FST_STANDARD_FELDER.slice(),
+        vereine:[{name:"SV Adler Dellbrück",kinder:14,teams:2}],
+        infos:HT_INFOS_VORLAGE},
+      teams:fstTeamsBauen([{name:"SV Adler Dellbrück",kinder:14,teams:2}]).map(t=>t.name)};
     const r=await fetch(`${SB_URL}/rest/v1/heimturnier`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=representation'},body:JSON.stringify(body)});
     if(sbCheck401(r))return;
     if(!r.ok){toast(sbDeniedMsg(r,"Konnte nicht anlegen"),"err");return;}
@@ -1603,7 +1621,7 @@ async function htEdit(id){
     try{const r=await fetch(`${SB_URL}/rest/v1/gegner?select=name&order=name.asc&limit=60`,{headers:sbAuthHeaders()});if(r.ok)window._htGegner=((await r.json())||[]).map(g=>g.name);}catch(e){}
     if(!window._htGegner)window._htGegner=[];
   }
-  htRender();
+  if(fstIst(_HT))fstRender(); else htRender();   // v484: Festival hat eine eigene, schlanke Oberflaeche
 }
 async function htPatch(fields){
   if(!_HT)return false;
@@ -1991,6 +2009,336 @@ async function htDelete(){
    Mit &code=<edit_code> wird sie zum Helfer-Modus: Ergebnisse antippbar (RPC-gesichert);
    anon darf die Spalte edit_code nicht lesen, deshalb hier eine explizite Spaltenliste. ── */
 let _htPub=null;
+/* ═══════════════════════════════════════════════════════════════════════════
+   FESTIVAL (v484) – PO: „Wenn wir ein Festival als Heimspiel haben, kommen 2 bis 3
+   andere Mannschaften zu uns. Dafuer muessen wir ein kleines Turnier mit 1 Stunde Dauer
+   organisieren und planen. Wir erfahren vorher, welche Mannschaften es sind und auch mit
+   wie vielen Kindern die Teams anreisen. … Standard waere ein 4+1 Feld und 2 x FUNiño
+   Felder." Entscheidungen (Kacheln): die App rechnet Teams aus den Kinderzahlen und der
+   Trainer korrigiert; Runden, auf allen Feldern gleichzeitig; keine Tabelle, Tore optional;
+   das Festival ersetzt das grosse Turnier-Formular als Standardweg.
+   Gespeichert in derselben Tabelle heimturnier – config.art="festival" unterscheidet. */
+const FST_FORMEN={
+  f4:    {label:"4+1",        lang:"4+1 mit Torwart", auf:5, tore:"2 Jugendtore", farbe:"#1d4ed8"},
+  funino:{label:"FUNiño 3:3", lang:"FUNiño 3 gegen 3",auf:3, tore:"4 Minitore",   farbe:"#15803d"}
+};
+const FST_STANDARD_FELDER=[{form:"f4"},{form:"funino"},{form:"funino"}];   // PO: „Standard waere ein 4+1 Feld und 2 x FUNiño Felder"
+function fstIst(row){ return ((row||_HT||{}).config||{}).art==="festival"; }
+function _fstF(k){ return FST_FORMEN[k]||FST_FORMEN.funino; }
+/* Wie viele Teams stellt ein Verein? So viele, dass jedes Team eine spielbare Groesse hat
+   (Feldbesetzung plus mindestens ein Wechselkind). Bei gemischten Feldern zaehlt der
+   Durchschnitt der Feldgroessen – 10 Kinder auf 4+1/FUNiño ergeben zwei Teams. */
+function fstTeamsVorschlag(kinder,felder){
+  const f=(felder&&felder.length)?felder:FST_STANDARD_FELDER;
+  const schnitt=f.reduce((a,x)=>a+_fstF(x.form).auf,0)/f.length;
+  return Math.max(1,Math.min(4,Math.round(kinder/(schnitt+1))));
+}
+/* Felder aus der Teamzahl: je Feld eine Paarung, also Teams/2 Felder. Das erste Feld ist
+   4+1 (Jugendtore), die weiteren FUNiño – genau der Aufbau, den der Verein hinstellt. */
+function fstFelderVorschlag(teamZahl){
+  const n=Math.max(1,Math.round(teamZahl/2));
+  return Array.from({length:n},(_,i)=>({form:i===0?"f4":"funino"}));
+}
+/* Aus den Vereinen die Teamliste bauen: „Adler 1", „Adler 2", „Auweiler 1" …
+   Die Kinder eines Vereins werden gleichmaessig auf seine Teams verteilt. */
+function fstTeamsBauen(vereine){
+  const teams=[];
+  (vereine||[]).forEach(v=>{
+    const anz=Math.max(1,v.teams||1);
+    /* Kurzname fuer die Spielplan-Zeile: „SV Adler Dellbrück" → „Adler Dellbrück".
+       Nur kuerzen, wenn danach wirklich ein Name steht – „VfB 05 Köln" bliebe sonst „05 Köln". */
+    const ohne=String(v.name||"Team").replace(/^(SV|SC|FC|TuS|VfL|VfB|DJK|SG|TSV|1\.\s*FC)\s+/i,"").trim();
+    const kurz=(ohne&&/^[A-Za-zÄÖÜäöüß]/.test(ohne))?ohne:String(v.name||"Team");
+    for(let i=0;i<anz;i++){
+      const rest=Math.floor((v.kinder||0)/anz)+(i<((v.kinder||0)%anz)?1:0);
+      teams.push({name:anz>1?`${kurz} ${i+1}`:kurz, verein:v.name, kinder:rest});
+    }
+  });
+  return teams;
+}
+/* Kreismethode: n-1 Runden, in jeder Runde spielt jedes Team hoechstens einmal.
+   Bei ungerader Teamzahl setzt reihum eines aus (-1 = Freilos). */
+function _fstRunden(n){
+  const idx=Array.from({length:n},(_,i)=>i);
+  if(n%2)idx.push(-1);
+  const m=idx.length, runden=[];
+  for(let r=0;r<m-1;r++){
+    const paare=[];
+    for(let i=0;i<m/2;i++){ const a=idx[i], b=idx[m-1-i]; if(a>=0&&b>=0)paare.push(r%2?[b,a]:[a,b]); }
+    runden.push(paare);
+    idx.splice(1,0,idx.pop());
+  }
+  return runden;
+}
+/* Der Spielplan: Runden nacheinander, in jeder Zeitscheibe spielen alle Felder gleichzeitig.
+   Passen mehr Paarungen in eine Runde als Felder da sind, wird die Runde geteilt – so spielt
+   nie ein Team zweimal gleichzeitig. Das Feld wandert je Zeitscheibe weiter, damit jede
+   Mannschaft beide Formate sieht (PO: „nicht fest 4+1 oder nur FUNiño, sondern durchwechseln"). */
+function fstPlanBauen(teams,cfg){
+  const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
+  const F=felder.length, n=teams.length;
+  if(n<2)return [];
+  const scheiben=[];
+  _fstRunden(n).forEach(paare=>{ for(let i=0;i<paare.length;i+=F)scheiben.push(paare.slice(i,i+F)); });
+  const spiel=Math.max(3,cfg.spieldauer||8), wechsel=Math.max(0,cfg.wechsel==null?2:cfg.wechsel);
+  const gesamt=Math.max(spiel,cfg.dauer||60);
+  const max=Math.max(1,Math.floor((gesamt+wechsel)/(spiel+wechsel)));
+  const [sh,sm]=String(cfg.start||"10:00").split(":").map(Number);
+  const plan=[];
+  scheiben.slice(0,max).forEach((paare,s)=>{
+    const min=(sh||0)*60+(sm||0)+s*(spiel+wechsel);
+    const zeit=String(Math.floor(min/60)%24).padStart(2,"0")+":"+String(min%60).padStart(2,"0");
+    paare.forEach((p,k)=>{
+      const fi=(k+s)%F;
+      plan.push({runde:s+1,feld:fi+1,form:felder[fi].form||"funino",zeit,a:p[0],b:p[1],phase:"Runde "+(s+1)});
+    });
+  });
+  return plan;
+}
+/* Wie viele Zeitscheiben braucht es fuer die volle Runde? Fuer die ehrliche Ansage
+   „passt in eine Stunde" bzw. „dafuer braucht ihr X Minuten". */
+function fstBedarf(teams,cfg){
+  const F=Math.max(1,((cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER).length);
+  const n=teams.length;
+  if(n<2)return {scheiben:0,minuten:0};
+  let scheiben=0; _fstRunden(n).forEach(paare=>{ scheiben+=Math.ceil(paare.length/F); });
+  const spiel=Math.max(3,cfg.spieldauer||8), wechsel=Math.max(0,cfg.wechsel==null?2:cfg.wechsel);
+  return {scheiben,minuten:scheiben*spiel+(scheiben-1)*wechsel};
+}
+function _fstCfgLesen(){
+  const alt=(_HT&&_HT.config)||{};
+  const felder=(alt.felder&&alt.felder.length)?alt.felder:FST_STANDARD_FELDER.slice();
+  return {...alt, art:"festival", format:"festival",
+    start:document.getElementById("fst-start")?.value||alt.start||"10:00",
+    dauer:Number(document.getElementById("fst-dauer")?.value)||alt.dauer||60,
+    spieldauer:Number(document.getElementById("fst-spiel")?.value)||alt.spieldauer||8,
+    wechsel:document.getElementById("fst-wechsel")?(Number(document.getElementById("fst-wechsel").value)||0):(alt.wechsel==null?2:alt.wechsel),
+    felder, vereine:alt.vereine||[],
+    infos:document.getElementById("fst-infos")?document.getElementById("fst-infos").value:(alt.infos||HT_INFOS_VORLAGE)
+  };
+}
+async function _fstSpeichern(felder){
+  const cfg=_fstCfgLesen();
+  if(felder)cfg.felder=felder;
+  const teams=fstTeamsBauen(cfg.vereine);
+  return htPatch({config:cfg,teams:teams.map(t=>t.name),
+    datum:document.getElementById("fst-datum")?.value||_HT.datum});
+}
+/* Vereine pflegen – Name, angereiste Kinder, Teams. Die Teamzahl schlaegt die App vor,
+   der Trainer aendert sie. */
+async function fstVereinPlus(name){
+  const cfg=_fstCfgLesen();
+  const v=(cfg.vereine||[]).slice();
+  const kinder=10;
+  v.push({name:name||"Neuer Verein",kinder,teams:fstTeamsVorschlag(kinder,cfg.felder)});
+  cfg.vereine=v;
+  if(await htPatch({config:cfg,teams:fstTeamsBauen(v).map(t=>t.name)}))fstRender();
+}
+async function fstVereinWeg(i){
+  const cfg=_fstCfgLesen(); const v=(cfg.vereine||[]).slice(); v.splice(i,1); cfg.vereine=v;
+  if(await htPatch({config:cfg,teams:fstTeamsBauen(v).map(t=>t.name)}))fstRender();
+}
+async function fstVereinSet(i,feld,wert){
+  const cfg=_fstCfgLesen(); const v=(cfg.vereine||[]).slice(); if(!v[i])return;
+  if(feld==="kinder"){ v[i].kinder=Math.max(0,parseInt(wert)||0); v[i].teams=fstTeamsVorschlag(v[i].kinder,cfg.felder); }
+  else if(feld==="teams") v[i].teams=Math.max(1,Math.min(4,parseInt(wert)||1));
+  else v[i].name=String(wert||"").trim()||v[i].name;
+  cfg.vereine=v;
+  if(await htPatch({config:cfg,teams:fstTeamsBauen(v).map(t=>t.name)}))fstRender();
+}
+async function fstFeldSet(i,form){ const cfg=_fstCfgLesen(); const f=cfg.felder.slice(); if(f[i])f[i]={form}; if(await _fstSpeichern(f))fstRender(); }
+async function fstFeldPlus(){ const cfg=_fstCfgLesen(); if(cfg.felder.length>=6)return; if(await _fstSpeichern(cfg.felder.concat([{form:"funino"}])))fstRender(); }
+async function fstFeldWeg(i){ const cfg=_fstCfgLesen(); if(cfg.felder.length<=1)return; const f=cfg.felder.slice(); f.splice(i,1); if(await _fstSpeichern(f))fstRender(); }
+async function fstFelderAuto(){
+  const cfg=_fstCfgLesen();
+  const teams=fstTeamsBauen(cfg.vereine);
+  if(!teams.length){toast("Erst Vereine eintragen","err");return;}
+  if(await _fstSpeichern(fstFelderVorschlag(teams.length)))fstRender();
+}
+async function fstZeitSpeichern(){ if(await _fstSpeichern())fstRender(); }
+async function fstPlanErstellen(){
+  const cfg=_fstCfgLesen();
+  const teams=fstTeamsBauen(cfg.vereine);
+  if(teams.length<2){toast("Mindestens zwei Teams – bitte Vereine eintragen","err");return;}
+  if((_HT.plan||[]).some(p=>p.ta!=null)&&!confirm("Es gibt schon Ergebnisse – Spielplan neu erzeugen? Die Tore gehen verloren."))return;
+  const plan=fstPlanBauen(teams,cfg);
+  if(await htPatch({config:cfg,teams:teams.map(t=>t.name),plan,datum:document.getElementById("fst-datum")?.value||_HT.datum})){
+    toast(`📅 Spielplan steht – ${plan.length} Spiele`);
+    fstRender();
+  }
+}
+function fstRender(){
+  const el=document.getElementById("ht-body"); if(!el||!_HT)return;
+  const cfg=_HT.config||{}, vereine=cfg.vereine||[];
+  const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
+  const teams=fstTeamsBauen(vereine);
+  const plan=_HT.plan||[];
+  const fld="box-sizing:border-box;padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13.5px;background:var(--surface2);color:var(--text);min-height:44px";
+  const bedarf=fstBedarf(teams,{...cfg,felder});
+  const kinderGesamt=vereine.reduce((a,v)=>a+(v.kinder||0),0);
+  const platz=felder.reduce((a,f)=>a+_fstF(f.form).auf*2,0);
+
+  const vHtml=vereine.map((v,i)=>`<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+      <input value="${esc(v.name||"")}" onchange="fstVereinSet(${i},'name',this.value)" aria-label="Vereinsname" style="${fld};flex:1;min-width:0">
+      <input type="number" min="0" max="40" value="${v.kinder||0}" onchange="fstVereinSet(${i},'kinder',this.value)" aria-label="Kinder" title="angereiste Kinder" style="${fld};width:60px;text-align:center">
+      <select onchange="fstVereinSet(${i},'teams',this.value)" aria-label="Teams" title="Teams dieses Vereins" style="${fld};width:64px">${[1,2,3,4].map(n=>`<option value="${n}"${(v.teams||1)===n?" selected":""}>${n}×</option>`).join("")}</select>
+      <button class="btn btn-sm" onclick="fstVereinWeg(${i})" aria-label="${esc(v.name||"Verein")} entfernen" style="min-width:44px;justify-content:center">✕</button>
+    </div>`).join("");
+
+  const vorschlag=fstFelderVorschlag(teams.length);
+  const passt=vorschlag.length===felder.length;
+
+  el.innerHTML=`
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <input id="fst-datum" type="date" value="${esc(_HT.datum||"")}" onchange="fstZeitSpeichern()" style="${fld};flex:1">
+      <button class="btn btn-sm" onclick="htShare()" title="Plan an die Gast-Trainer schicken"><i class="ti ti-share"></i>Teilen</button>
+    </div>
+
+    <div style="font-size:12px;font-weight:800;margin:14px 0 6px">1 · Wer kommt?</div>
+    ${vereine.length?vHtml:'<div style="font-size:12px;color:var(--text3);margin-bottom:6px">Noch kein Verein eingetragen.</div>'}
+    <div style="font-size:10.5px;color:var(--text3);margin-bottom:6px">Name · angereiste Kinder · Teams (Vorschlag der App, änderbar)</div>
+    <div id="fst-gegner" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px"></div>
+    <button class="btn btn-sm" onclick="fstVereinPlus()" style="width:100%;margin-bottom:4px"><i class="ti ti-plus"></i>Verein hinzufügen</button>
+    ${teams.length?`<div style="font-size:11.5px;color:var(--text2);margin-bottom:10px">➜ <b>${teams.length} Teams</b>, ${kinderGesamt} Kinder: ${esc(teams.map(t=>t.name+" ("+t.kinder+")").join(" · "))}</div>`:""}
+
+    <div style="font-size:12px;font-weight:800;margin:14px 0 6px">2 · Felder aufbauen</div>
+    ${felder.map((f,i)=>{const F=_fstF(f.form);return `<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+      <span style="font-size:12px;font-weight:800;width:52px;color:${F.farbe}">Feld ${i+1}</span>
+      <div class="seg-ctrl" role="group" aria-label="Spielform Feld ${i+1}" style="flex:1">${Object.entries(FST_FORMEN).map(([k,v])=>`<button class="seg-btn${f.form===k?" active":""}" onclick="fstFeldSet(${i},'${k}')" aria-pressed="${f.form===k?"true":"false"}">${v.label}</button>`).join("")}</div>
+      <span style="font-size:10px;color:var(--text3);width:66px">${F.tore}</span>
+      <button class="btn btn-sm" onclick="fstFeldWeg(${i})" aria-label="Feld ${i+1} entfernen" style="min-width:44px;justify-content:center"${felder.length<=1?" disabled":""}>✕</button>
+    </div>`;}).join("")}
+    <div style="display:flex;gap:6px;margin-bottom:6px">
+      <button class="btn btn-sm" onclick="fstFeldPlus()" style="flex:1"><i class="ti ti-plus"></i>Feld</button>
+      <button class="btn btn-sm" onclick="fstFelderAuto()" style="flex:1"${passt?" disabled":""}><i class="ti ti-wand"></i>${passt?"passt":`${vorschlag.length} Felder vorschlagen`}</button>
+    </div>
+    <div style="font-size:11.5px;color:${passt?"var(--text2)":"var(--amber)"};margin-bottom:10px">${passt
+      ? `Alle ${teams.length} Teams spielen gleichzeitig · ${platz} Kinder auf den Feldern`
+      : `Bei ${teams.length} Teams und ${felder.length} Feld${felder.length===1?"":"ern"} spielt nicht jeder gleichzeitig – ${vorschlag.length} Felder passen genau.`}</div>
+
+    <div style="font-size:12px;font-weight:800;margin:14px 0 6px">3 · Zeitplan</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+      <label style="font-size:11px;color:var(--text2)">Beginn<input id="fst-start" type="time" value="${esc(cfg.start||"10:00")}" onchange="fstZeitSpeichern()" style="${fld};width:100%"></label>
+      <label style="font-size:11px;color:var(--text2)">Gesamt (Min.)<input id="fst-dauer" type="number" min="20" max="180" step="5" value="${cfg.dauer||60}" onchange="fstZeitSpeichern()" style="${fld};width:100%"></label>
+      <label style="font-size:11px;color:var(--text2)">Spielzeit (Min.)<input id="fst-spiel" type="number" min="3" max="20" value="${cfg.spieldauer||8}" onchange="fstZeitSpeichern()" style="${fld};width:100%"></label>
+      <label style="font-size:11px;color:var(--text2)">Wechsel (Min.)<input id="fst-wechsel" type="number" min="0" max="10" value="${cfg.wechsel==null?2:cfg.wechsel}" onchange="fstZeitSpeichern()" style="${fld};width:100%"></label>
+    </div>
+    ${teams.length>1?`<div style="font-size:11.5px;color:var(--text2);margin-bottom:10px">Jeder gegen jeden braucht <b>${bedarf.scheiben} Runden</b> ≈ ${bedarf.minuten} Min.${bedarf.minuten>(cfg.dauer||60)?` – in ${cfg.dauer||60} Min. passen ${Math.max(1,Math.floor(((cfg.dauer||60)+(cfg.wechsel==null?2:cfg.wechsel))/((cfg.spieldauer||8)+(cfg.wechsel==null?2:cfg.wechsel))))} Runden.`:" – passt."}</div>`:""}
+
+    <button class="btn btn-p" onclick="fstPlanErstellen()" style="width:100%;min-height:52px"${teams.length<2?" disabled":""}><i class="ti ti-calendar-event"></i>${plan.length?"Spielplan neu erstellen":"Spielplan erstellen"}</button>
+
+    ${plan.length?`<div style="font-size:12px;font-weight:800;margin:16px 0 6px">4 · Der Plan <span style="font-weight:400;color:var(--text3)">· ${plan.length} Spiele</span></div>
+      ${fstPlanHtml(plan,_HT.teams||[],felder)}
+      <button class="btn" onclick="htShare()" style="width:100%;min-height:48px;margin-top:8px"><i class="ti ti-share"></i>Plan an die Gast-Trainer schicken</button>
+      <button class="btn btn-sm" onclick="fstDruck()" style="width:100%;margin-top:6px"><i class="ti ti-printer"></i>Aushang drucken</button>`:""}
+
+    <div style="font-size:12px;font-weight:800;margin:16px 0 6px">Infos für die Gäste</div>
+    <textarea id="fst-infos" rows="4" onchange="fstZeitSpeichern()" style="${fld};width:100%;resize:vertical">${esc(cfg.infos||HT_INFOS_VORLAGE)}</textarea>
+
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-sm" onclick="htListe()"><i class="ti ti-arrow-left"></i>Übersicht</button>
+      <button class="btn btn-sm" style="margin-left:auto;color:var(--red)" onclick="htDelete()"><i class="ti ti-trash"></i>Löschen</button>
+    </div>`;
+  fstGegnerChips();
+}
+/* Schnellwahl aus der Gegner-Datenbank – tippen statt abtippen. */
+async function fstGegnerChips(){
+  const box=document.getElementById("fst-gegner"); if(!box)return;
+  if(!window._htGegner){
+    try{const r=await fetch(`${SB_URL}/rest/v1/gegner?select=name&order=name.asc&limit=40`,{headers:sbAuthHeaders()});if(r.ok)window._htGegner=((await r.json())||[]).map(g=>g.name);}catch(e){}
+    if(!window._htGegner)window._htGegner=[];
+  }
+  const drin=new Set(((_HT&&_HT.config&&_HT.config.vereine)||[]).map(v=>v.name));
+  const frei=window._htGegner.filter(n=>!drin.has(n)).slice(0,8);
+  box.innerHTML=frei.map(n=>`<button class="btn btn-sm" onclick="fstVereinPlus('${jsq(n)}')" style="font-size:11.5px">+ ${esc(n)}</button>`).join("");
+}
+/* Der Plan als Runden-Karten – dieselbe Darstellung im Trainer-Fenster und im Aushang. */
+function fstPlanHtml(plan,teams,felder,gross){
+  const runden=[...new Set(plan.map(p=>p.runde))].sort((a,b)=>a-b);
+  const nm=i=>esc((teams&&teams[i])||("Team "+(i+1)));
+  return runden.map(r=>{
+    const spiele=plan.filter(p=>p.runde===r);
+    return `<div style="border:var(--border-s);border-radius:12px;padding:8px 10px;margin-bottom:6px;background:var(--surface)">
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">
+        <span style="font-size:${gross?"15":"12.5"}px;font-weight:900">Runde ${r}</span>
+        <span style="font-size:${gross?"13":"11"}px;color:var(--text2)">${esc(spiele[0]?spiele[0].zeit:"")} Uhr</span>
+      </div>
+      ${spiele.map(p=>{const F=_fstF(p.form);return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:${gross?"14":"12.5"}px">
+        <span style="flex:0 0 auto;font-size:${gross?"11":"9.5"}px;font-weight:800;color:#fff;background:${F.farbe};border-radius:6px;padding:2px 6px">F${p.feld} · ${F.label}</span>
+        <span style="flex:1;min-width:0;font-weight:700">${nm(p.a)} <span style="color:var(--text3);font-weight:400">–</span> ${nm(p.b)}</span>
+      </div>`;}).join("")}
+    </div>`;
+  }).join("");
+}
+/* Aushang fuer den Anzeigetisch: ein Blatt, grosse Schrift, Wappen oben. */
+function fstDruck(){
+  const teams=_HT.teams||[], cfg=_HT.config||{};
+  const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
+  const w=window.open("","_blank"); if(!w){toast("Bitte Pop-ups erlauben","err");return;}
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(_HT.name)}</title>
+    <style>body{font-family:Inter,system-ui,sans-serif;color:#0f172a;margin:18px}
+      .k{border:1px solid #e2e8f0;border-radius:12px;padding:8px 10px;margin-bottom:6px}
+      @media print{@page{margin:12mm}}</style></head><body>
+    <div style="display:flex;align-items:center;gap:12px;border-bottom:3px solid #1e3a8a;padding-bottom:10px;margin-bottom:12px">
+      <img src="logo.png" style="width:56px;height:56px" alt="">
+      <div><div style="font-size:22px;font-weight:900">${esc(_HT.name)}</div>
+      <div style="font-size:13px;color:#475569">${_HT.datum?new Date(_HT.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}):""} · ${esc(_HT.ort||"")}</div></div>
+    </div>
+    <div style="font-size:13px;margin-bottom:10px">${felder.map((f,i)=>{const F=_fstF(f.form);return `<b style="color:${F.farbe}">Feld ${i+1}</b>: ${F.lang} · ${F.tore}`;}).join(" &nbsp;·&nbsp; ")}</div>
+    ${fstPlanHtml(_HT.plan||[],teams,felder,true).replace(/var\(--border-s\)/g,"1px solid #e2e8f0").replace(/var\(--surface\)/g,"#fff").replace(/var\(--text2\)/g,"#475569").replace(/var\(--text3\)/g,"#94a3b8")}
+    <div style="margin-top:14px;font-size:12px;color:#475569;white-space:pre-wrap">${esc(cfg.infos||"")}</div>
+    </body></html>`);
+  w.document.close(); w.focus(); setTimeout(()=>w.print(),300);
+}
+/* Öffentliche Festival-Seite – das bekommen die Gast-Trainer per Link. Wappen, Felder,
+   Runden, Infos. Keine Kindernamen, keine Tabelle (PO: Fairness vor Ergebnis). */
+function _fstPublicRender(wrap,row){
+  const teams=row.teams||[], plan=row.plan||[], cfg=row.config||{};
+  const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
+  const dat=row.datum?new Date(row.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}):"";
+  const nm=i=>esc(teams[i]||("Team "+(i+1)));
+  const runden=[...new Set(plan.map(p=>p.runde))].sort((a,b)=>a-b);
+  wrap.innerHTML=`
+    <div style="background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border-radius:18px;padding:16px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 24px rgba(30,58,138,.25)">
+      <img src="logo.png" alt="SV Adler Dellbrück" style="width:58px;height:58px;flex:0 0 auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))">
+      <div style="min-width:0">
+        <div style="font-size:19px;font-weight:900;line-height:1.15">${esc(row.name||"Kinderfestival")}</div>
+        <div style="font-size:12.5px;opacity:.92;margin-top:2px">${esc(dat)}</div>
+        <div style="font-size:12px;opacity:.85">${esc(row.ort||"")}</div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 10px">
+      ${felder.map((f,i)=>{const F=_fstF(f.form);return `<span style="font-size:11.5px;font-weight:700;color:#fff;background:${F.farbe};border-radius:20px;padding:5px 11px">Feld ${i+1} · ${F.lang} · ${F.tore}</span>`;}).join("")}
+    </div>
+
+    ${teams.length?`<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+      <div style="font-size:12px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Mannschaften</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${teams.map(t=>`<span style="font-size:13px;font-weight:700;background:#f1f5f9;border-radius:16px;padding:5px 12px">${esc(t)}</span>`).join("")}</div>
+    </div>`:""}
+
+    ${runden.length?runden.map(r=>{
+      const spiele=plan.filter(p=>p.runde===r);
+      return `<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;border-bottom:1px solid #e2e8f0;padding-bottom:6px">
+          <span style="font-size:16px;font-weight:900">Runde ${r}</span>
+          <span style="font-size:13px;color:#475569;font-weight:700">${esc(spiele[0]?spiele[0].zeit:"")} Uhr</span>
+        </div>
+        ${spiele.map(p=>{const F=_fstF(p.form);return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0">
+          <span style="flex:0 0 auto;font-size:10px;font-weight:800;color:#fff;background:${F.farbe};border-radius:7px;padding:3px 7px;min-width:58px;text-align:center">F${p.feld} · ${F.label}</span>
+          <span style="flex:1;min-width:0;font-size:14px;font-weight:700">${nm(p.a)} <span style="color:#94a3b8;font-weight:400">gegen</span> ${nm(p.b)}</span>
+        </div>`;}).join("")}
+      </div>`;}).join("")
+      :'<div style="background:#fff;border-radius:14px;padding:20px;text-align:center;color:#64748b;font-size:13px">Der Spielplan wird gerade erstellt.</div>'}
+
+    ${cfg.infos?`<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-top:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+      <div style="font-size:12px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Gut zu wissen</div>
+      <div style="font-size:13px;white-space:pre-wrap;line-height:1.6">${esc(cfg.infos)}</div></div>`:""}
+
+    <div style="text-align:center;font-size:11.5px;color:#94a3b8;margin-top:16px;line-height:1.6">
+      Wir spielen ohne Tabelle – bei uns gewinnt die Freude am Spiel.<br>SV Adler Dellbrück · U9
+    </div>`;
+}
 async function renderHeimturnierView(slug){
   document.body.style.cssText="margin:0;background:#f1f5f9;font-family:Inter,system-ui,sans-serif;color:#0f172a";
   const wrap=document.createElement("div");
@@ -2047,6 +2395,7 @@ async function htPubTor(mi,seite,delta){
   const el=document.getElementById("htpub-"+seite); if(el)el.textContent=String(seite==="ta"?ta:tb);
 }
 function _htPublicRender(wrap,row){
+  if(row&&fstIst(row)){ _fstPublicRender(wrap,row); return; }   // v484: Festival-Seite mit Wappen
   if(!row){wrap.innerHTML=`<div style="text-align:center;padding:60px 20px"><div style="font-size:44px">🏆</div><div style="font-weight:800;margin-top:8px">Turnier nicht gefunden</div><div style="font-size:13px;color:#64748b;margin-top:4px">Der Link ist abgelaufen oder falsch – bitte beim Veranstalter nachfragen.</div></div>`;return;}
   const teams=row.teams||[], plan=row.plan||[], cfg=row.config||{};
   const dat=row.datum?new Date(row.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}):"";
