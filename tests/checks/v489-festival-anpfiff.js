@@ -51,7 +51,7 @@ module.exports = async function (h) {
     const gastText = gastUhr ? gastUhr.textContent.replace(/\s+/g, " ").trim() : "";
     const gastKnopf = gastUhr ? gastUhr.querySelectorAll("button").length : -1;
     const gastRest = fstUhrStand(_htPub.row).rest;
-    const gruss = /freuen uns auf euren Besuch/.test(wrap.textContent);
+    const gruss = /Herzlich willkommen bei den Adlern/.test(wrap.textContent);
     // Die Trinkpause muss auch bei den Gast-Trainern rückwärts laufen – nur anpfeifen dürfen sie nicht
     _HT.config.uhr = { ...u, start: new Date(Date.now() - (dauerMs + 60000)).toISOString() };
     _fstUhrMarke = ""; _fstPublicRender(wrap, _HT); await warte(50);

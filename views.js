@@ -4384,7 +4384,7 @@ function _trsvpKopfText(){
 function _trsvpFilterHtml(){
   const alle=_trsvpRows.length, offen=_trsvpOffen().length;
   const chip=(an,lbl,fn)=>`<button onclick="${fn}" aria-pressed="${an?"true":"false"}"
-    style="min-height:38px;padding:6px 14px;border:1px solid var(--rand-bedien);border-radius:18px;font-family:inherit;font-size:12px;font-weight:${an?"700":"500"};cursor:pointer;background:${an?"var(--blue)":"var(--surface)"};color:${an?"#fff":"var(--text2)"}">${lbl}</button>`;
+    style="min-height:44px;padding:6px 16px;border:1px solid var(--rand-bedien);border-radius:22px;font-family:inherit;font-size:12.5px;font-weight:${an?"700":"500"};cursor:pointer;background:${an?"var(--blue)":"var(--surface)"};color:${an?"#fff":"var(--text2)"}">${lbl}</button>`;
   return chip(!_trsvpNurOffen,`Alle (${alle})`,"trainerRsvpFilter(false)")+
          chip(_trsvpNurOffen,`Nur offene (${offen})`,"trainerRsvpFilter(true)");
 }
@@ -4570,7 +4570,7 @@ function _tpFilterHtml(){
   const namen=_tpNamen();
   const alle=_tpZeilen(), eng=alle.filter(t=>_tpAmpel(t.trainer_status,namen).stufe<=1);
   const chip=(an,lbl,fn)=>`<button onclick="${fn}" aria-pressed="${an?"true":"false"}"
-    style="min-height:38px;padding:6px 14px;border:1px solid var(--rand-bedien);border-radius:18px;font-family:inherit;font-size:12px;font-weight:${an?"700":"500"};cursor:pointer;background:${an?"var(--blue)":"var(--surface)"};color:${an?"#fff":"var(--text2)"}">${lbl}</button>`;
+    style="min-height:44px;padding:6px 16px;border:1px solid var(--rand-bedien);border-radius:22px;font-family:inherit;font-size:12.5px;font-weight:${an?"700":"500"};cursor:pointer;background:${an?"var(--blue)":"var(--surface)"};color:${an?"#fff":"var(--text2)"}">${lbl}</button>`;
   return chip(!_tpNurEng,`Alle (${alle.length})`,"tpFilter(false)")+
          chip(_tpNurEng,`Höchstens eine Zusage (${eng.length})`,"tpFilter(true)");
 }

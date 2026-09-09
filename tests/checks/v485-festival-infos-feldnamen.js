@@ -55,7 +55,7 @@ module.exports = async function (h) {
       skizzeFelder: /Skizze der Spielfelder/.test(bHtml) && /Käfig/.test(bHtml) && /Funino 2/.test(bHtml),
       skizzeParken: /Skizze der Parkmöglichkeiten/.test(bHtml) && /Thurner Kamp/.test(bHtml),
       planNamen: />Käfig</.test(seite) && />Funino 1</.test(seite) && !/>F1 ·/.test(seite),
-      legende: /Käfig · 4\+1 mit Torwart/.test(seite),
+      legende: /Käfig · 4\+1 · 2 Jugendtore/.test(bHtml),   // v491: die Legende steht im Info-Blatt
       eingaben
     };
   });

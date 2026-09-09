@@ -45,7 +45,7 @@ module.exports = async function (h) {
       spiele: plan.length, runden: [...new Set(plan.map(p => p.runde))].length, doppelt, feldDoppelt, nurEinFormat,
       ersteZeit: zeiten[0], letzteZeit: zeiten[zeiten.length - 1], bedarf,
       logo: /logo\.png/.test(html), tabelle: /📊|Tordifferenz|\bPkt\b|\bPunkte\b/.test(html),
-      hatFelder: /FUNiño 3 gegen 3/.test(html) && /4\+1 mit Torwart/.test(html), hatRunde: /Runde 1/.test(html)
+      hatFelder: /Käfig/.test(html) && /Funino 1/.test(html), hatRunde: /Runde 1/.test(html)
     };
   });
   const fehler = s.fehler(); await s.schliessen();
@@ -61,7 +61,7 @@ module.exports = async function (h) {
   if (r.letzteZeit > "11:00") probleme.push(`letzte Runde ${r.letzteZeit} – nach der Stunde`);
   if (!r.logo) probleme.push("kein Wappen auf der öffentlichen Seite");
   if (r.tabelle) probleme.push("die öffentliche Seite zeigt eine Tabelle");
-  if (!r.hatFelder || !r.hatRunde) probleme.push(`öffentliche Seite ohne Feld-Legende oder Runden (Felder ${r.hatFelder}, Runden ${r.hatRunde})`);
+  if (!r.hatFelder || !r.hatRunde) probleme.push(`öffentliche Seite ohne Feldnamen oder Runden (Felder ${r.hatFelder}, Runden ${r.hatRunde})`);
   if (fehler.length) probleme.push(...fehler.slice(0, 3));
   zeilen.push(`Teams: ${JSON.stringify(r.teams)} · Feld-Vorschlag ${r.vorschlag} (${r.vorschlagFormen})`);
   zeilen.push(`Plan: ${r.runden} Runden, ${r.spiele} Spiele, ${r.ersteZeit}–${r.letzteZeit} · voll wären ${r.bedarf.scheiben} Runden ≈ ${r.bedarf.minuten} Min.`);
