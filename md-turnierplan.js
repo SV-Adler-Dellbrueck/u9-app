@@ -1460,7 +1460,7 @@ const HT_REGELN={
   f7:"7 gegen 7 (Vorlage, bitte an eure Ausschreibung anpassen)\n• 6 Feldspieler + Torwart, fliegender Wechsel\n• Abseits je nach Kreis-Ausschreibung\n• Einwurf regulär, Freistöße nach Ausschreibung\n• Schiedsrichter oder Spielbegleiter je nach Turnierordnung",
   frei:"Eigene Spielform – Regeln hier eintragen."
 };
-const HT_INFOS_VORLAGE="📍 Treffpunkt: Thurner Kamp 97, 51069 Köln\n⏰ Bitte 30 Minuten vor dem ersten Spiel da sein\n🅿️ Parken: \n🚻 Kabinen/WC: \n🥤 Büdchen mit Kaffee, Kaltgetränken und Kuchen vor Ort\n📞 Turnierleitung: ";
+const HT_INFOS_VORLAGE="⏰ Bitte 30 Minuten vor dem ersten Spiel da sein\n☕ Kaffee und Brötchen stehen bereit\n🧑‍⚖️ Schiedsrichter: die Trainer am Feld – fair und kindgerecht\n🚻 Kabinen/WC: \n📞 Turnierleitung: ";
 const HT_GRLABEL=["A","B","C","D"];
 // Platzhalter der Finalrunde lesbar machen ("A1" = Erster Gruppe A, "S|Halbfinale 1" = Sieger HF 1 …)
 function _htName(v,teams){
@@ -2019,12 +2019,30 @@ let _htPub=null;
    das Festival ersetzt das grosse Turnier-Formular als Standardweg.
    Gespeichert in derselben Tabelle heimturnier – config.art="festival" unterscheidet. */
 const FST_FORMEN={
-  f4:    {label:"4+1",        lang:"4+1 mit Torwart", auf:5, tore:"2 Jugendtore", farbe:"#1d4ed8"},
-  funino:{label:"FUNiño 3:3", lang:"FUNiño 3 gegen 3",auf:3, tore:"4 Minitore",   farbe:"#15803d"}
+  f4:    {label:"4+1",        kurz:"4+1", lang:"4+1 mit Torwart", auf:5, tore:"2 Jugendtore", farbe:"#1d4ed8"},
+  funino:{label:"FUNiño 3:3", kurz:"3:3", lang:"FUNiño 3 gegen 3",auf:3, tore:"4 Minitore",   farbe:"#15803d"}
 };
 const FST_STANDARD_FELDER=[{form:"f4"},{form:"funino"},{form:"funino"}];   // PO: „Standard waere ein 4+1 Feld und 2 x FUNiño Felder"
 function fstIst(row){ return ((row||_HT||{}).config||{}).art==="festival"; }
 function _fstF(k){ return FST_FORMEN[k]||FST_FORMEN.funino; }
+/* Feldnamen, wie sie am Platz heissen (PO): das erste 4+1-Feld ist immer der „Käfig",
+   das zweite „4+1 oben" (obere Haelfte des grossen Platzes), FUNiño-Felder „Funino 1, 2 …".
+   Ein eigener Name je Feld ueberschreibt den Standard. */
+const FST_NAMEN_F4=["Käfig","4+1 oben"];
+function fstFeldName(felder,i){
+  const f=(felder&&felder.length)?felder:FST_STANDARD_FELDER;
+  const x=f[i]; if(!x)return "Feld "+(i+1);
+  if(x.name&&String(x.name).trim())return String(x.name).trim();
+  const gleich=f.slice(0,i+1).filter(y=>(y.form||"funino")===(x.form||"funino")).length;   // wievieltes Feld dieser Form
+  if((x.form||"funino")==="f4")return FST_NAMEN_F4[gleich-1]||("4+1 "+gleich);
+  return "Funino "+gleich;
+}
+async function fstFeldNameSet(i,wert){
+  const cfg=_fstCfgLesen(); const f=cfg.felder.slice(); if(!f[i])return;
+  const name=String(wert||"").trim();
+  f[i]=name?{...f[i],name}:{form:f[i].form};
+  if(await _fstSpeichern(f))fstRender();
+}
 /* Wie viele Teams stellt ein Verein? So viele, dass jedes Team eine spielbare Groesse hat
    (Feldbesetzung plus mindestens ein Wechselkind). Bei gemischten Feldern zaehlt der
    Durchschnitt der Feldgroessen – 10 Kinder auf 4+1/FUNiño ergeben zwei Teams. */
@@ -2146,7 +2164,7 @@ async function fstVereinSet(i,feld,wert){
   cfg.vereine=v;
   if(await htPatch({config:cfg,teams:fstTeamsBauen(v).map(t=>t.name)}))fstRender();
 }
-async function fstFeldSet(i,form){ const cfg=_fstCfgLesen(); const f=cfg.felder.slice(); if(f[i])f[i]={form}; if(await _fstSpeichern(f))fstRender(); }
+async function fstFeldSet(i,form){ const cfg=_fstCfgLesen(); const f=cfg.felder.slice(); if(f[i])f[i]=f[i].name?{form,name:f[i].name}:{form}; if(await _fstSpeichern(f))fstRender(); }
 async function fstFeldPlus(){ const cfg=_fstCfgLesen(); if(cfg.felder.length>=6)return; if(await _fstSpeichern(cfg.felder.concat([{form:"funino"}])))fstRender(); }
 async function fstFeldWeg(i){ const cfg=_fstCfgLesen(); if(cfg.felder.length<=1)return; const f=cfg.felder.slice(); f.splice(i,1); if(await _fstSpeichern(f))fstRender(); }
 async function fstFelderAuto(){
@@ -2202,12 +2220,12 @@ function fstRender(){
     ${teams.length?`<div style="font-size:11.5px;color:var(--text2);margin-bottom:10px">➜ <b>${teams.length} Teams</b>, ${kinderGesamt} Kinder: ${esc(teams.map(t=>t.name+" ("+t.kinder+")").join(" · "))}</div>`:""}
 
     <div style="font-size:12px;font-weight:800;margin:14px 0 6px">2 · Felder aufbauen</div>
-    ${felder.map((f,i)=>{const F=_fstF(f.form);return `<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-      <span style="font-size:12px;font-weight:800;width:52px;color:${F.farbe}">Feld ${i+1}</span>
-      <div class="seg-ctrl" role="group" aria-label="Spielform Feld ${i+1}" style="flex:1">${Object.entries(FST_FORMEN).map(([k,v])=>`<button class="seg-btn${f.form===k?" active":""}" onclick="fstFeldSet(${i},'${k}')" aria-pressed="${f.form===k?"true":"false"}">${v.label}</button>`).join("")}</div>
-      <span style="font-size:10px;color:var(--text3);width:66px">${F.tore}</span>
-      <button class="btn btn-sm" onclick="fstFeldWeg(${i})" aria-label="Feld ${i+1} entfernen" style="min-width:44px;justify-content:center"${felder.length<=1?" disabled":""}>✕</button>
+    ${felder.map((f,i)=>{const F=_fstF(f.form);const name=fstFeldName(felder,i);return `<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+      <input id="fst-feld-name-${i}" value="${esc(name)}" aria-label="Name Feld ${i+1}" onchange="fstFeldNameSet(${i},this.value)" style="${fld};width:92px;font-weight:800;color:${F.farbe}">
+      <div class="seg-ctrl" role="group" aria-label="Spielform Feld ${i+1} (${esc(name)})" style="flex:1">${Object.entries(FST_FORMEN).map(([k,v])=>`<button class="seg-btn${f.form===k?" active":""}" onclick="fstFeldSet(${i},'${k}')" aria-pressed="${f.form===k?"true":"false"}">${v.label}</button>`).join("")}</div>
+      <button class="btn btn-sm" onclick="fstFeldWeg(${i})" aria-label="Feld ${esc(name)} entfernen" style="min-width:44px;justify-content:center"${felder.length<=1?" disabled":""}>✕</button>
     </div>`;}).join("")}
+    <div style="font-size:10.5px;color:var(--text3);margin-bottom:6px">🥅 ${felder.map((f,i)=>`${esc(fstFeldName(felder,i))}: ${_fstF(f.form).tore}`).join(" · ")} – Namen wie am Platz, antippen zum Ändern</div>
     <div style="display:flex;gap:6px;margin-bottom:6px">
       <button class="btn btn-sm" onclick="fstFeldPlus()" style="flex:1"><i class="ti ti-plus"></i>Feld</button>
       <button class="btn btn-sm" onclick="fstFelderAuto()" style="flex:1"${passt?" disabled":""}><i class="ti ti-wand"></i>${passt?"passt":`${vorschlag.length} Felder vorschlagen`}</button>
@@ -2264,7 +2282,7 @@ function fstPlanHtml(plan,teams,felder,gross){
         <span style="font-size:${gross?"13":"11"}px;color:var(--text2)">${esc(spiele[0]?spiele[0].zeit:"")} Uhr</span>
       </div>
       ${spiele.map(p=>{const F=_fstF(p.form);return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:${gross?"14":"12.5"}px">
-        <span style="flex:0 0 auto;font-size:${gross?"11":"9.5"}px;font-weight:800;color:#fff;background:${F.farbe};border-radius:6px;padding:2px 6px">F${p.feld} · ${F.label}</span>
+        <span style="flex:0 0 auto;font-size:${gross?"11":"9.5"}px;font-weight:800;color:#fff;background:${F.farbe};border-radius:6px;padding:2px 6px">${esc(fstFeldName(felder,(p.feld||1)-1))} · ${F.kurz}</span>
         <span style="flex:1;min-width:0;font-weight:700">${nm(p.a)} <span style="color:var(--text3);font-weight:400">–</span> ${nm(p.b)}</span>
       </div>`;}).join("")}
     </div>`;
@@ -2284,11 +2302,95 @@ function fstDruck(){
       <div><div style="font-size:22px;font-weight:900">${esc(_HT.name)}</div>
       <div style="font-size:13px;color:#475569">${_HT.datum?new Date(_HT.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}):""} · ${esc(_HT.ort||"")}</div></div>
     </div>
-    <div style="font-size:13px;margin-bottom:10px">${felder.map((f,i)=>{const F=_fstF(f.form);return `<b style="color:${F.farbe}">Feld ${i+1}</b>: ${F.lang} · ${F.tore}`;}).join(" &nbsp;·&nbsp; ")}</div>
+    <div style="font-size:13px;margin-bottom:10px">${felder.map((f,i)=>{const F=_fstF(f.form);return `<b style="color:${F.farbe}">${esc(fstFeldName(felder,i))}</b>: ${F.lang} · ${F.tore}`;}).join(" &nbsp;·&nbsp; ")}</div>
     ${fstPlanHtml(_HT.plan||[],teams,felder,true).replace(/var\(--border-s\)/g,"1px solid #e2e8f0").replace(/var\(--surface\)/g,"#fff").replace(/var\(--text2\)/g,"#475569").replace(/var\(--text3\)/g,"#94a3b8")}
     <div style="margin-top:14px;font-size:12px;color:#475569;white-space:pre-wrap">${esc(cfg.infos||"")}</div>
+    <div style="margin-top:14px;max-width:420px">${fstSkizzeFelder(felder)}</div>
     </body></html>`);
   w.document.close(); w.focus(); setTimeout(()=>w.print(),300);
+}
+/* Skizze der Felder auf dem Gelaende (schematisch, nicht massstabsgetreu): links der Käfig,
+   rechts der grosse Platz – obere Haelfte 4+1, untere Haelfte zwei FUNiño-Felder.
+   Die Namen kommen aus den angelegten Feldern; nicht belegte Plaetze sind gestrichelt. */
+function fstSkizzeFelder(felder){
+  const f=(felder&&felder.length)?felder:FST_STANDARD_FELDER;
+  const idxF4=[],idxFu=[]; f.forEach((x,i)=>((x.form||"funino")==="f4"?idxF4:idxFu).push(i));
+  const nm=i=>i==null?null:fstFeldName(f,i);
+  const kaefig=nm(idxF4[0]), oben=nm(idxF4[1]), fu1=nm(idxFu[0]), fu2=nm(idxFu[1]);
+  const B=_fstF("f4").farbe, G=_fstF("funino").farbe;
+  const box=(x,y,w,h,name,farbe,ort)=>name
+    ?`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="${farbe}" opacity=".92"/><text x="${x+w/2}" y="${y+h/2+5}" text-anchor="middle" font-size="14" font-weight="800" fill="#fff">${esc(name)}</text>`
+    :`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="none" stroke="#94a3b8" stroke-dasharray="6 4" stroke-width="2"/><text x="${x+w/2}" y="${y+h/2}" text-anchor="middle" font-size="11" fill="#64748b">${esc(ort)}</text><text x="${x+w/2}" y="${y+h/2+14}" text-anchor="middle" font-size="10" fill="#94a3b8">heute frei</text>`;
+  return `<svg viewBox="0 0 360 250" role="img" aria-label="Skizze der Spielfelder" style="width:100%;height:auto;display:block;font-family:inherit">
+    <rect x="0" y="0" width="360" height="250" rx="12" fill="#f0fdf4"/>
+    <text x="180" y="22" text-anchor="middle" font-size="12" font-weight="800" fill="#334155">Sportanlage Thurner Kamp – Skizze</text>
+    <!-- Käfig: kleines, eingezaeuntes Feld links -->
+    <rect x="16" y="70" width="104" height="150" rx="8" fill="none" stroke="#475569" stroke-width="3" stroke-dasharray="3 3"/>
+    ${box(24,78,88,134,kaefig,B,"Käfig")}
+    <!-- grosser Platz rechts -->
+    <rect x="140" y="40" width="204" height="196" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
+    <line x1="140" y1="138" x2="344" y2="138" stroke="#16a34a" stroke-width="2"/>
+    ${box(150,48,184,82,oben,B,"4+1 oben")}
+    ${box(150,146,88,82,fu1,G,"Funino 1")}
+    ${box(246,146,88,82,fu2,G,"Funino 2")}
+    <text x="242" y="248" text-anchor="middle" font-size="10" fill="#64748b">großer Platz</text>
+    <text x="68" y="238" text-anchor="middle" font-size="10" fill="#64748b">Käfig (eingezäunt)</text>
+  </svg>`;
+}
+/* Skizze der Parkplaetze (schematisch): der Platz an der Anlage ist oft voll – an der
+   Strasse Thurner Kamp gibt es genug Plaetze. Tennisplaetze und Strundehaus als Orientierung. */
+function fstSkizzeParken(){
+  const auto=(x,y,farbe)=>`<rect x="${x}" y="${y}" width="14" height="8" rx="2" fill="${farbe}"/>`;
+  return `<svg viewBox="0 0 360 230" role="img" aria-label="Skizze der Parkmöglichkeiten" style="width:100%;height:auto;display:block;font-family:inherit">
+    <rect x="0" y="0" width="360" height="230" rx="12" fill="#f8fafc"/>
+    <text x="180" y="22" text-anchor="middle" font-size="12" font-weight="800" fill="#334155">Parken – Skizze</text>
+    <!-- Strasse Thurner Kamp unten -->
+    <rect x="0" y="176" width="360" height="34" fill="#cbd5e1"/>
+    <line x1="0" y1="193" x2="360" y2="193" stroke="#fff" stroke-width="2" stroke-dasharray="10 8"/>
+    <text x="180" y="226" text-anchor="middle" font-size="11" font-weight="800" fill="#334155">Thurner Kamp</text>
+    <!-- Parkstreifen an der Strasse: gruen, genug Platz -->
+    <rect x="12" y="160" width="336" height="14" rx="3" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+    ${[20,44,68,92,116,140,164,188,212,236,260,284,308,332].map(x=>auto(x,163,"#16a34a")).join("")}
+    <text x="348" y="152" text-anchor="end" font-size="12" font-weight="800" fill="#15803d">an der Straße parken – genug Plätze</text>
+    <!-- Zufahrt und Parkplatz am Platz -->
+    <rect x="60" y="96" width="30" height="66" fill="#e2e8f0"/>
+    <text x="75" y="130" text-anchor="middle" font-size="9" fill="#475569" transform="rotate(-90 75 130)">Zufahrt</text>
+    <rect x="30" y="52" width="90" height="46" rx="6" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+    ${[38,58,78,98].map(x=>auto(x,58,"#b45309")).join("")}${[38,58,78].map(x=>auto(x,72,"#b45309")).join("")}
+    <text x="75" y="93" text-anchor="middle" font-size="9.5" font-weight="700" fill="#92400e">am Platz – oft voll</text>
+    <!-- Sportplatz, Tennis, Strundehaus -->
+    <rect x="140" y="36" width="130" height="100" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="2.5"/>
+    <text x="205" y="90" text-anchor="middle" font-size="12" font-weight="800" fill="#166534">Sportplatz</text>
+    <rect x="282" y="36" width="66" height="60" rx="6" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+    <text x="315" y="70" text-anchor="middle" font-size="10" fill="#991b1b">Tennis</text>
+    <rect x="282" y="106" width="66" height="30" rx="6" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+    <text x="315" y="125" text-anchor="middle" font-size="9.5" fill="#3730a3">Strundehaus</text>
+  </svg>`;
+}
+/* Info-Blatt fuer die Gast-Trainer: Adresse mit Karte, Parken mit Skizze, Felder mit Skizze. */
+function fstInfoOpen(){
+  const row=(_htPub&&_htPub.row)||_HT||{}; const cfg=row.config||{};
+  const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
+  const adr=row.ort||(typeof VEREIN_ADRESSE!=="undefined"?VEREIN_ADRESSE:"Thurner Kamp 97, 51069 Köln");
+  document.getElementById("fst-info")?.remove();
+  const d=document.createElement("div"); d.id="fst-info";
+  d.setAttribute("role","dialog"); d.setAttribute("aria-modal","true"); d.setAttribute("aria-label","Anfahrt, Parken und Felder");
+  d.style.cssText="position:fixed;inset:0;background:#f1f5f9;z-index:1000;overflow:auto;-webkit-overflow-scrolling:touch;color:#0f172a;font-family:Inter,system-ui,sans-serif";
+  const karte=(t,inhalt)=>`<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+      <div style="font-size:12px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">${t}</div>${inhalt}</div>`;
+  d.innerHTML=`<div style="max-width:560px;margin:0 auto;padding:14px 14px 40px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <div style="font-size:18px;font-weight:900;flex:1">ℹ️ Anfahrt, Parken &amp; Felder</div>
+      <button onclick="document.getElementById('fst-info').remove()" aria-label="Schließen" style="min-width:44px;min-height:44px;border:1px solid #cbd5e1;border-radius:12px;background:#fff;font-size:18px;cursor:pointer">✕</button>
+    </div>
+    ${karte("Adresse",`<div style="font-size:15px;font-weight:800">${esc(adr)}</div>
+      <a href="${mapsUrl(adr)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;margin-top:8px;border-radius:12px;background:#1e3a8a;color:#fff;font-weight:800;font-size:14px;text-decoration:none">📍 Route in Karten öffnen</a>`)}
+    ${karte("Parken",`<div style="font-size:13.5px;line-height:1.55;margin-bottom:8px">Direkt am Platz gibt es Parkplätze, wenn ihr hineinfahrt – die sind aber oft schon belegt. <b>Besser gleich an der Straße parken (Thurner Kamp)</b>, dort ist genug Platz.</div>${fstSkizzeParken()}`)}
+    ${karte("Wo welches Feld liegt",`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${felder.map((f,i)=>{const F=_fstF(f.form);return `<span style="font-size:11.5px;font-weight:700;color:#fff;background:${F.farbe};border-radius:20px;padding:5px 11px">${esc(fstFeldName(felder,i))} · ${F.label} · ${F.tore}</span>`;}).join("")}</div>${fstSkizzeFelder(felder)}`)}
+    ${cfg.infos?karte("Gut zu wissen",`<div style="font-size:13px;white-space:pre-wrap;line-height:1.6">${esc(cfg.infos)}</div>`):""}
+    <button onclick="document.getElementById('fst-info').remove()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:#16a34a;color:#fff;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit">Zurück zum Spielplan</button>
+  </div>`;
+  document.body.appendChild(d);
 }
 /* Öffentliche Festival-Seite – das bekommen die Gast-Trainer per Link. Wappen, Felder,
    Runden, Infos. Keine Kindernamen, keine Tabelle (PO: Fairness vor Ergebnis). */
@@ -2309,8 +2411,9 @@ function _fstPublicRender(wrap,row){
     </div>
 
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 10px">
-      ${felder.map((f,i)=>{const F=_fstF(f.form);return `<span style="font-size:11.5px;font-weight:700;color:#fff;background:${F.farbe};border-radius:20px;padding:5px 11px">Feld ${i+1} · ${F.lang} · ${F.tore}</span>`;}).join("")}
+      ${felder.map((f,i)=>{const F=_fstF(f.form);return `<span style="font-size:11.5px;font-weight:700;color:#fff;background:${F.farbe};border-radius:20px;padding:5px 11px">${esc(fstFeldName(felder,i))} · ${F.lang} · ${F.tore}</span>`;}).join("")}
     </div>
+    <button onclick="fstInfoOpen()" style="width:100%;min-height:48px;border:1px solid #bfdbfe;border-radius:14px;background:#fff;color:#1e3a8a;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)">ℹ️ Anfahrt, Parken &amp; Felder</button>
 
     ${teams.length?`<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
       <div style="font-size:12px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Mannschaften</div>
@@ -2325,7 +2428,7 @@ function _fstPublicRender(wrap,row){
           <span style="font-size:13px;color:#475569;font-weight:700">${esc(spiele[0]?spiele[0].zeit:"")} Uhr</span>
         </div>
         ${spiele.map(p=>{const F=_fstF(p.form);return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0">
-          <span style="flex:0 0 auto;font-size:10px;font-weight:800;color:#fff;background:${F.farbe};border-radius:7px;padding:3px 7px;min-width:58px;text-align:center">F${p.feld} · ${F.label}</span>
+          <span style="flex:0 0 auto;font-size:10px;font-weight:800;color:#fff;background:${F.farbe};border-radius:7px;padding:3px 7px;min-width:58px;text-align:center">${esc(fstFeldName(felder,(p.feld||1)-1))} · ${F.kurz}</span>
           <span style="flex:1;min-width:0;font-size:14px;font-weight:700">${nm(p.a)} <span style="color:#94a3b8;font-weight:400">gegen</span> ${nm(p.b)}</span>
         </div>`;}).join("")}
       </div>`;}).join("")
