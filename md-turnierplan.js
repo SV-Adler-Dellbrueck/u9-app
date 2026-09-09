@@ -1437,7 +1437,27 @@ function blzTimerStop(){
    Formate: Liga (jeder gegen jeden), Gruppen + Finalrunde, Festival (keine Tabelle).
 ═══════════════════════════════════ */
 let _HT=null;
-function _htSlug(){ return Math.random().toString(36).slice(2,8)+Math.random().toString(36).slice(2,6); }
+/* v499 PO: „Können wir die URL für den externen Link umbenennen, so dass ein Bezug zum Turnier
+   drinsteht?" Die Kennung war eine Zufallsfolge – jetzt spricht sie: „kinderfestival-12-09".
+   Kollidiert sie mit einer bestehenden, haengt eine Zahl an. Bestehende Turniere behalten ihre
+   alte Kennung, damit schon verschickte Links weiter funktionieren. */
+function _htSlug(name,datum){
+  const roh=String(name||"").toLowerCase()
+    .replace(/ä/g,"ae").replace(/ö/g,"oe").replace(/ü/g,"ue").replace(/ß/g,"ss")
+    .replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40);
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(datum||""));
+  const tag=m?`${m[3]}-${m[2]}`:"";
+  return [roh||"turnier",tag].filter(Boolean).join("-");
+}
+/* Frei ist die Kennung, wenn sie noch niemand hat – sonst „…-2", „…-3". */
+async function _htSlugFrei(basis){
+  let vorhanden=[];
+  try{const r=await fetch(`${SB_URL}/rest/v1/heimturnier?slug=like.${encodeURIComponent(basis+"*")}&select=slug`,{headers:sbAuthHeaders()});
+    if(r.ok)vorhanden=((await r.json())||[]).map(x=>x.slug);}catch(e){}
+  if(!vorhanden.includes(basis))return basis;
+  for(let i=2;i<50;i++){ if(!vorhanden.includes(basis+"-"+i))return basis+"-"+i; }
+  return basis+"-"+Math.random().toString(36).slice(2,6);
+}
 function _htUrl(slug){ return appRoot()+"?turnier="+encodeURIComponent(slug); }
 const HT_FORMATE={liga:"Liga – jeder gegen jeden",gruppen:"Gruppen + Finalrunde",festival:"Festival – alle spielen, keine Tabelle"};
 const HT_SPIELFORM={funino:"FUNiño (3 gegen 3)",f4:"4+1",f5:"5+1",f6:"6+1",f7:"7 gegen 7",frei:"eigene Spielform"};
@@ -1600,7 +1620,7 @@ async function htNeu(btn){
     const adler={name:"SV Adler Dellbrück",kinder:ein&&ein.dabei?ein.dabei:14,teams:ein&&ein.dabei?(ein.teams||fstTeamsVorschlag(ein.dabei,FST_STANDARD_FELDER)):2};
     const vereine=[adler];
     if(termin&&termin.gegner)vereine.push({name:termin.gegner,kinder:0,teams:adler.teams});
-    const body={slug:_htSlug(),name,datum,ort:(typeof VEREIN_ADRESSE!=="undefined"?VEREIN_ADRESSE:"Thurner Kamp 97, 51069 Köln"),
+    const body={slug:await _htSlugFrei(_htSlug(name,datum)),name,datum,ort:(typeof VEREIN_ADRESSE!=="undefined"?VEREIN_ADRESSE:"Thurner Kamp 97, 51069 Köln"),
       edit_code:Math.random().toString(36).slice(2,8),   // v488: Gast-Trainer tragen Ergebnisse ueber den Link ein
       config:{art:"festival",format:"festival",anlass,start,dauer:60,spieldauer:8,wechsel:FST_PAUSE,
         felder:FST_STANDARD_FELDER.slice(),
