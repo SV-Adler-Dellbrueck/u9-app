@@ -2629,7 +2629,7 @@ function fstRender(){
       <summary style="cursor:pointer;min-height:44px;display:flex;align-items:center;padding:0 12px;font-size:12.5px;font-weight:800;color:var(--text2)">⚙️ Vereine, Felder und Zeiten ändern</summary>
       <div style="padding:2px 12px 12px">`:""}
 
-    <div style="font-size:12px;font-weight:800;margin:14px 0 6px">1 · ${cfg.anlass==="heimspiel"?"Wer spielt mit?":"Wer kommt?"}</div>
+    <div style="font-size:12px;font-weight:800;margin:14px 0 6px">${plan.length?"":"1 · "}${cfg.anlass==="heimspiel"?"Wer spielt mit?":"Wer kommt?"}</div>
     ${vereine.length?vHtml:'<div style="font-size:12px;color:var(--text3);margin-bottom:6px">Noch kein Verein eingetragen.</div>'}
     <div style="font-size:10.5px;color:var(--text3);margin-bottom:6px">Name · angereiste Kinder · Teams (Vorschlag der App, änderbar)</div>
     <div id="fst-gegner" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px"></div>
@@ -2637,7 +2637,7 @@ function fstRender(){
     <div id="fst-einteilung" style="font-size:11px;color:var(--text3);margin-bottom:6px">Unsere Kinder kommen aus „Teams festlegen“ …</div>
     ${teams.length?`<div style="font-size:11.5px;color:var(--text2);margin-bottom:10px">➜ <b>${teams.length} Teams</b>, ${kinderGesamt} Kinder: ${esc(teams.map(t=>t.name+" ("+t.kinder+")").join(" · "))}</div>`:""}
 
-    <div style="font-size:12px;font-weight:800;margin:14px 0 6px">2 · Felder aufbauen</div>
+    <div style="font-size:12px;font-weight:800;margin:14px 0 6px">${plan.length?"":"2 · "}Felder aufbauen</div>
     ${felder.map((f,i)=>{const F=_fstF(f.form);const name=fstFeldName(felder,i);return `<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
       <input id="fst-feld-name-${i}" value="${esc(name)}" aria-label="Name Feld ${i+1}" onchange="fstFeldNameSet(${i},this.value)" style="${fld};width:92px;font-weight:800;color:${F.farbe}">
       <div class="seg-ctrl" role="group" aria-label="Spielform Feld ${i+1} (${esc(name)})" style="flex:1">${Object.entries(FST_FORMEN).map(([k,v])=>`<button class="seg-btn${f.form===k?" active":""}" onclick="fstFeldSet(${i},'${k}')" aria-pressed="${f.form===k?"true":"false"}">${v.label}</button>`).join("")}</div>
@@ -2654,7 +2654,7 @@ function fstRender(){
         ? `${teams.length} Teams brauchen ${gekuerzt.length} Feld${gekuerzt.length===1?"":"er"} – beim Erstellen des Plans bleiben ${esc(gekuerzt.map((f,i)=>fstFeldName(gekuerzt,i)).join(", "))}.`
         : `Bei ${teams.length} Teams und ${felder.length} Feld${felder.length===1?"":"ern"} spielt nicht jeder gleichzeitig – ${vorschlag.length} Feld${vorschlag.length===1?" passt":"er passen"} genau.`}</div>
 
-    <div style="font-size:12px;font-weight:800;margin:14px 0 6px">3 · Zeitplan</div>
+    <div style="font-size:12px;font-weight:800;margin:14px 0 6px">${plan.length?"":"3 · "}Zeitplan</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
       <label style="font-size:11px;color:var(--text2)">Beginn<input id="fst-start" type="time" value="${esc(cfg.start||FST_START)}" onchange="fstZeitSpeichern()" style="${fld};width:100%"></label>
       <label style="font-size:11px;color:var(--text2)">Gesamt (Min.)<input id="fst-dauer" type="number" min="20" max="180" step="5" value="${cfg.dauer||60}" onchange="fstZeitSpeichern()" style="${fld};width:100%"></label>
@@ -2666,7 +2666,7 @@ function fstRender(){
     <button class="btn${plan.length?" btn-sm":" btn-p"}" onclick="fstPlanErstellen()" style="width:100%;min-height:${plan.length?"44":"52"}px"${teams.length<2?" disabled":""}><i class="ti ti-calendar-event"></i>${plan.length?"Spielplan neu erstellen":"Spielplan erstellen"}</button>
     ${plan.length?`</div></details>`:""}
 
-    ${plan.length?`<div style="font-size:12px;font-weight:800;margin:16px 0 6px">4 · Der Plan <span style="font-weight:400;color:var(--text3)">· ${plan.length} Spiele</span></div>
+    ${plan.length?`<div style="font-size:12px;font-weight:800;margin:16px 0 6px">Der Plan <span style="font-weight:400;color:var(--text3)">· ${plan.length} Spiele</span></div>
       <div id="fst-uhr" data-rolle="trainer"></div>
       ${cfg.startIst
         ? `<div style="display:flex;align-items:center;gap:8px;background:var(--green-bg,#dcfce7);border-radius:12px;padding:8px 10px;margin-bottom:8px">

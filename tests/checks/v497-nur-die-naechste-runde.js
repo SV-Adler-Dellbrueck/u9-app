@@ -41,11 +41,14 @@ module.exports = async function (h) {
     _HT = { id: 9, name: "Kinderfestival", datum: heute, edit_code: "abc", config: cfg, teams: row.teams, plan: [] };
     fstRender(); await warte(120);
     const ohnePlan = !!document.getElementById("fst-vorbereitung");
+    const nummernVorher = /1 · Wer kommt|2 · Felder|3 · Zeitplan/.test(box.textContent);
     _HT.plan = plan; fstRender(); await warte(120);
     const vor = document.getElementById("fst-vorbereitung");
     return { a, offen3, c, runden, gastZu: gastRunden.filter(Boolean), gastOffen: gastOffen.length > 0,
       ohnePlan, mitPlan: !!vor, zu: vor ? !vor.open : null,
       inhalt: vor ? /Wer kommt|Felder aufbauen|Zeitplan/.test(vor.textContent) : false,
+      // v498: Schrittnummern nur, solange die Schritte sichtbar sind
+      nummernVorher, nummernNachher: /\d · (Wer kommt|Wer spielt|Felder aufbauen|Zeitplan|Der Plan)/.test(box.textContent),
       summHoehe: vor ? vor.querySelector("summary").style.minHeight : "" };
   }, { heute });
   const fehler = s.fehler(); await s.schliessen();
@@ -61,9 +64,11 @@ module.exports = async function (h) {
   if (r.mitPlan && !r.zu) probleme.push("Die Vorbereitung ist offen statt zugeklappt");
   if (!r.inhalt) probleme.push("Vereine, Felder und Zeiten stecken nicht im Klappblock");
   if (r.summHoehe !== "44px") probleme.push(`Klappdeckel ${r.summHoehe} statt 44px`);
+  if (!r.nummernVorher) probleme.push("Ohne Spielplan fehlen die Schrittnummern 1–3");
+  if (r.nummernNachher) probleme.push("Mit Spielplan stehen noch Schrittnummern da, obwohl die Schritte zugeklappt sind");
   if (fehler.length) probleme.push(...fehler.slice(0, 3));
   zeilen.push(`Trainer: ${r.a.details} von ${r.runden} Runden zugeklappt · bei laufender Runde 3 offen: Runde ${r.offen3.join(",")}`);
   zeilen.push(`Gast-Seite zugeklappt: Runden ${r.gastZu.join(", ")} · Aushang klappt nichts zu (${r.c.details})`);
-  zeilen.push(`Vorbereitung: ohne Plan offen ${!r.ohnePlan}, mit Plan zugeklappt ${r.zu}, Inhalt drin ${r.inhalt}`);
+  zeilen.push(`Vorbereitung: ohne Plan offen ${!r.ohnePlan}, mit Plan zugeklappt ${r.zu}, Inhalt drin ${r.inhalt} · Schrittnummern vorher ${r.nummernVorher}, nachher ${r.nummernNachher}`);
   return h.ergebnis("Nur die laufende Runde ist offen, die Vorbereitung klappt nach dem Planen zu", !probleme.length, zeilen.concat(probleme));
 };
