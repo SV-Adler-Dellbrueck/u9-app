@@ -255,14 +255,20 @@ let _spieltagTypen={}, _spieltagHeim={}, _spieltagNamen={};
 function _spieltagTurnierBanner(){
   const b=document.getElementById("spieltag-turnier-banner"); if(!b)return;
   const d=document.getElementById("spieltag-date")?.value||"";
-  b.hidden=(_spieltagTypen[d]!=="turnier");
+  const typ=_spieltagTypen[d], heim=_spieltagHeim[d]===true;
+  /* v490: Auch das Heimspiel wird geplant wie ein kleines Festival – ein Gegner, evtl. mehrere
+     Teams auf beiden Seiten. Nur auswärts bleibt es beim Turnier-Modus. */
+  b.hidden=!(typ==="turnier"||(typ==="spiel"&&heim));
   if(b.hidden)return;
-  const heim=_spieltagHeim[d]===true;
-  b.onclick=heim?(()=>{ if(typeof htOpen==="function")htOpen(d,_spieltagNamen&&_spieltagNamen[d]); else toast("Festival-Planer lädt noch"); })
+  const anlass=(typ==="spiel")?"heimspiel":"festival";
+  b.onclick=heim?(()=>{ if(typeof htOpen==="function")htOpen(d,_spieltagNamen&&_spieltagNamen[d],anlass); else toast("Planer lädt noch"); })
                 :(()=>turnierOpen());
+  const em=b.querySelector("span[style*='font-size:22px']");
+  if(em)em.textContent=!heim?"🏆":(anlass==="heimspiel"?"⚽":"🏟️");
   const t=b.querySelector("span[style*='font-weight:800']"), u=b.querySelector("span[style*='opacity']");
-  if(t)t.textContent=heim?"Festival planen":"Turnier-Modus";
-  if(u)u.textContent=heim?"Vereine, Felder, Spielplan – und teilen":"Mehrere Kurzspiele erfassen – Spielplan & Ergebnisse";
+  if(t)t.textContent=!heim?"Turnier-Modus":(anlass==="heimspiel"?"Heimspiel planen":"Festival planen");
+  if(u)u.textContent=!heim?"Mehrere Kurzspiele erfassen – Spielplan & Ergebnisse"
+      :(anlass==="heimspiel"?"Gegner, Teams, Felder, Spielplan – und teilen":"Vereine, Felder, Spielplan – und teilen");
 }
 // Match-Datum nur aus hinterlegten Spieltagen (termine typ spiel/turnier) wählbar – kein Freitext.
 async function spieltagDatesLoad(preferDatum){
@@ -1548,14 +1554,15 @@ function _htTabelle(plan,idxs,teams){
 }
 /* v476: mit Datum aufgerufen (aus der Anwesenheit eines Heimturnier-Termins) oeffnet sich
    das Turnier dieses Tages direkt – oder das Anlege-Formular steht schon mit Datum und Namen. */
-async function htOpen(datum,name){
+async function htOpen(datum,name,anlass){
+  _htAnlass=anlass||"";
   document.getElementById("hturnier-modal")?.remove();
   const m=document.createElement("div");m.id="hturnier-modal";
   m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Heimturnier");
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{if(e.target===m)m.remove();};
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
-    ${mdlHead("hturnier-modal","🏆","Heimturnier","Wir richten aus – Spielplan erstellen und per Link an alle Trainer","#b45309")}
+    ${mdlHead("hturnier-modal","🏆",_htAnlass==="heimspiel"?"Heimspiel bei uns":"Heimturnier","Wir richten aus – Spielplan erstellen und per Link an alle Trainer","#b45309")}
     <div id="ht-body"><div style="font-size:12px;color:var(--text3)">Lade…</div></div>
   </div>`;
   document.body.appendChild(m);
@@ -1565,7 +1572,8 @@ async function htOpen(datum,name){
     if(vorhanden){ htEdit(vorhanden.id); return; }
     const d=document.getElementById("ht-datum"), n=document.getElementById("ht-name");
     if(d)d.value=datum;
-    if(n&&!n.value)n.value=(String(name||"").replace(/\s*·\s*Heim\s*$/i,"").trim())||("Kinderfestival "+new Date(datum+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}));
+    const tag=new Date(datum+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
+    if(n&&!n.value)n.value=(String(name||"").replace(/\s*·\s*Heim\s*$/i,"").trim())||(_htAnlass==="heimspiel"?("Heimspiel "+tag):("Kinderfestival "+tag));
   }
 }
 async function htListe(){
@@ -1582,7 +1590,7 @@ async function htListe(){
     <div style="font-weight:800;font-size:13px;margin:12px 0 6px">Unsere Turniere</div>
     ${rows.length?rows.map(t=>`<div style="display:flex;align-items:center;gap:8px;border:var(--border-s);border-left:4px solid #b45309;border-radius:12px;padding:10px 12px;margin-bottom:8px">
         <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:800">${esc(t.name)}</div>
-        <div style="font-size:11px;color:var(--text2)">${t.datum?new Date(t.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"})+" · ":""}${(t.teams||[]).length} Teams${((t.config||{}).art==="festival")?" · 🏟️ Festival":""}</div></div>
+        <div style="font-size:11px;color:var(--text2)">${t.datum?new Date(t.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"})+" · ":""}${(t.teams||[]).length} Teams${((t.config||{}).anlass==="heimspiel")?" · ⚽ Heimspiel":((t.config||{}).art==="festival")?" · 🏟️ Festival":""}</div></div>
         <button class="btn btn-sm btn-p" onclick="htEdit(${t.id})">Öffnen</button>
       </div>`).join(""):'<div style="font-size:12px;color:var(--text3)">Noch kein Heimturnier angelegt.</div>'}`;
   return rows;
@@ -1598,21 +1606,27 @@ async function htNeu(btn){
        Finalrunde bleiben lesbar und editierbar, es entstehen nur keine neuen mehr. */
     /* v486: Beginn aus der Uhrzeit des Termins (sonst 10:15), unsere Kinder und Teams aus
        „Teams festlegen" – da sind sie schon erfasst (PO). */
-    let start=FST_START;
-    if(datum){ try{const r=await fetch(`${SB_URL}/rest/v1/termine?datum=eq.${encodeURIComponent(datum)}&typ=in.(spiel,turnier)&select=uhrzeit&limit=1`,{headers:sbAuthHeaders()});if(r.ok){const t=((await r.json())||[])[0];if(t&&t.uhrzeit)start=String(t.uhrzeit).slice(0,5);}}catch(e){} }
+    let start=FST_START, termin=null;
+    if(datum){ try{const r=await fetch(`${SB_URL}/rest/v1/termine?datum=eq.${encodeURIComponent(datum)}&typ=in.(spiel,turnier)&select=uhrzeit,typ,gegner&limit=1`,{headers:sbAuthHeaders()});if(r.ok){termin=((await r.json())||[])[0]||null;if(termin&&termin.uhrzeit)start=String(termin.uhrzeit).slice(0,5);}}catch(e){} }
+    /* v490: Beim Heimspiel steht der Gegner schon im Termin – er kommt als zweiter Verein
+       gleich mit hinein, mit so vielen Teams wie wir. Kinderzahl trägt der Trainer nach. */
+    const anlass=(_htAnlass==="heimspiel"||(termin&&termin.typ==="spiel"))?"heimspiel":"festival";
     const ein=datum?await fstEinteilungLaden(datum):null;
     const adler={name:"SV Adler Dellbrück",kinder:ein&&ein.dabei?ein.dabei:14,teams:ein&&ein.dabei?(ein.teams||fstTeamsVorschlag(ein.dabei,FST_STANDARD_FELDER)):2};
+    const vereine=[adler];
+    if(termin&&termin.gegner)vereine.push({name:termin.gegner,kinder:0,teams:adler.teams});
     const body={slug:_htSlug(),name,datum,ort:(typeof VEREIN_ADRESSE!=="undefined"?VEREIN_ADRESSE:"Thurner Kamp 97, 51069 Köln"),
-      config:{art:"festival",format:"festival",start,dauer:60,spieldauer:8,wechsel:FST_PAUSE,
+      edit_code:Math.random().toString(36).slice(2,8),   // v488: Gast-Trainer tragen Ergebnisse ueber den Link ein
+      config:{art:"festival",format:"festival",anlass,start,dauer:60,spieldauer:8,wechsel:FST_PAUSE,
         felder:FST_STANDARD_FELDER.slice(),
-        vereine:[adler],
+        vereine,
         infos:HT_INFOS_VORLAGE},
-      teams:fstTeamsBauen([adler]).map(t=>t.name)};
+      teams:fstTeamsBauen(vereine).map(t=>t.name)};
     const r=await fetch(`${SB_URL}/rest/v1/heimturnier`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=representation'},body:JSON.stringify(body)});
     if(sbCheck401(r))return;
     if(!r.ok){toast(sbDeniedMsg(r,"Konnte nicht anlegen"),"err");return;}
     const row=(await r.json())[0];
-    toast("🏆 Turnier angelegt");
+    toast(anlass==="heimspiel"?"⚽ Heimspiel angelegt":"🏆 Festival angelegt");
     htEdit(row.id);
   }catch(e){toast("Netzwerkfehler","err");}
   finally{if(btn)btn.disabled=false;}
@@ -2054,9 +2068,16 @@ const FST_FORMEN={
   f4:    {label:"4+1",        kurz:"4+1", lang:"4+1 mit Torwart", auf:5, tore:"2 Jugendtore", farbe:"#1d4ed8"},
   funino:{label:"FUNiño 3:3", kurz:"3:3", lang:"FUNiño 3 gegen 3",auf:3, tore:"4 Minitore",   farbe:"#15803d"}
 };
+const FST_GRUSS="Schön, dass ihr kommt! Wir freuen uns auf euren Besuch und auf tolle Spiele mit euch.";
 const FST_STANDARD_FELDER=[{form:"f4"},{form:"funino"},{form:"funino"},{form:"f4"}];   // v486 PO: „Standard alle 4 Felder anlegen" – Käfig, Funino 1, Funino 2, 4+1 oben
 const FST_START="10:15", FST_PAUSE=5;   // PO: „Beginn ist immer 10:15" · „5 Minuten Trinkpause zwischen den Spielen"
 function fstIst(row){ return ((row||_HT||{}).config||{}).art==="festival"; }
+/* v490 PO: „Das gleiche Vorgehen brauchen wir für jedes Heimspiel, auch wenn es kein Festival
+   ist. Bei einem Heimspiel kommt nur ein Gegner, der stellt aber evtl. mehrere Teams, so wie
+   wir auch." Das ist derselbe Fall mit zwei Vereinen statt vier – also dieselbe Maschine
+   (art bleibt „festival"), nur ein anderes Wort auf den Knöpfen. */
+function fstWort(row){ return (((row||_HT||{}).config||{}).anlass==="heimspiel")?"Heimspiel":"Festival"; }
+let _htAnlass="";
 function _fstF(k){ return FST_FORMEN[k]||FST_FORMEN.funino; }
 /* Feldnamen, wie sie am Platz heissen (PO): das erste 4+1-Feld ist immer der „Käfig",
    das zweite „4+1 oben" (obere Haelfte des grossen Platzes), FUNiño-Felder „Funino 1, 2 …".
@@ -2286,6 +2307,270 @@ async function fstEinteilungFolgen(){
    ist er in der Datenbank fuer alle; veraendern heisst: zwei Teams antippen, sie tauschen
    die Plaetze. Zeiten und Felder bleiben. Spielt ein Team dadurch in einer Runde zweimal,
    sagt die App es – und laesst es zu, der Trainer sieht es. */
+/* v488 PO: „Regeln in den externen Link einbauen, 4+1 und FUNiño, aus dem DFB-Portal kurz
+   auflisten" plus seine eigenen Vereinbarungen. Kacheln: Torwart darf den Rueckpass in die
+   Hand nehmen; Abstoss/Abwurf Gegner hinter die Mittellinie; Abklatschen; Eltern feuern an. */
+const FST_REGELN={
+  alle:{t:"Für alle Spiele",z:[
+    "Seitenaus und Ecke: eindribbeln oder einpassen – vor einem Tor mindestens ein Ballkontakt eines Mitspielers",
+    "Unklare Situationen (Aus, Foul) klären die Kinder zuerst selbst auf dem Platz – erst dann helfen die Trainer",
+    "Berührt der Ball das abgehängte Tor und geht danach rein, zählt das Tor",
+    "Kein Abseits",
+    "Abklatschen nach jedem Spiel – Tore werden nicht gegen den Gegner bejubelt",
+    "Fairer Umgang mit den anderen Teams – wir Trainer sind das Vorbild",
+    "Eltern feuern an, coachen nicht – mit Abstand zum Feld",
+    "Der Spaß der Kinder steht im Vordergrund – keine Tabelle, kein Ergebnisdruck"]},
+  f4:{t:"4+1 · Käfig und 4+1 oben",z:[
+    "4 Feldspieler und Torwart auf zwei Jugendtore",
+    "Tore dürfen nicht direkt aus der eigenen Hälfte erzielt werden – keine Weitschüsse",
+    "Nach einem Tor: Anstoß in der Mitte",
+    "Torwart darf den Rückpass in die Hand nehmen",
+    "Abstoß und Abwurf: der Gegner geht hinter die Mittellinie"]},
+  funino:{t:"FUNiño · Funino 1 und 2",z:[
+    "3 gegen 3 auf vier Minitore, ohne Torwart",
+    "Tore zählen nur aus der Schusszone (6 m vor den Toren)",
+    "Nach einem Tor spielt das Team, das es bekommen hat, von der Grundlinie ein – der Gegner wartet außerhalb der Schusszone",
+    "Führt ein Team mit 3 Toren Vorsprung, darf das andere mit 4 Feldspielern spielen, wenn es möchte"]}
+};
+function fstRegelnHtml(hell){
+  const karte=(k)=>`<div style="background:${hell?"#fff":"var(--surface)"};border-radius:14px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+      <div style="font-size:12px;font-weight:800;color:${hell?"#475569":"var(--text2)"};text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">${esc(k.t)}</div>
+      <ul style="margin:0;padding-left:18px;font-size:13.5px;line-height:1.55">${k.z.map(z=>`<li style="margin-bottom:4px">${esc(z)}</li>`).join("")}</ul></div>`;
+  return karte(FST_REGELN.f4)+karte(FST_REGELN.funino)+karte(FST_REGELN.alle)
+    +`<div style="font-size:11px;color:${hell?"#94a3b8":"var(--text3)"};margin:4px 0 10px">Nach den DFB-Spielformen im Kinderfußball, ergänzt um unsere Vereinbarungen.</div>`;
+}
+function fstRegelnOpen(){
+  document.getElementById("fst-regeln")?.remove();
+  const d=document.createElement("div"); d.id="fst-regeln";
+  d.setAttribute("role","dialog"); d.setAttribute("aria-modal","true"); d.setAttribute("aria-label","Regeln");
+  d.style.cssText="position:fixed;inset:0;background:#f1f5f9;z-index:1000;overflow:auto;-webkit-overflow-scrolling:touch;color:#0f172a;font-family:Inter,system-ui,sans-serif";
+  d.innerHTML=`<div style="max-width:560px;margin:0 auto;padding:14px 14px 40px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <div style="font-size:18px;font-weight:900;flex:1">📖 So spielen wir</div>
+      <button onclick="document.getElementById('fst-regeln').remove()" aria-label="Schließen" style="min-width:44px;min-height:44px;border:1px solid #cbd5e1;border-radius:12px;background:#fff;font-size:18px;cursor:pointer">✕</button>
+    </div>
+    ${fstRegelnHtml(true)}
+    <button onclick="document.getElementById('fst-regeln').remove()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:#16a34a;color:#fff;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit">Zurück zum Spielplan</button>
+  </div>`;
+  document.body.appendChild(d);
+}
+/* v488 PO: „Wo kann der Adler-Trainer das Turnier starten? Dann soll die Uhrzeit starten und
+   der Spielplan entsprechend angepasst werden – starten wir um 10:18, alle Spiele um 3 Minuten
+   nach hinten." Der Plan bleibt, wie er ist; nur die ANZEIGE verschiebt sich um die Differenz
+   zwischen geplantem Beginn (start) und tatsaechlichem (startIst). Der oeffentliche Link
+   laedt alle 30 s neu und zieht mit. */
+function _fstMin(hhmm){ const m=/^(\d{1,2}):(\d{2})/.exec(String(hhmm||"")); return m?(+m[1])*60+(+m[2]):null; }
+function _fstHhmm(min){ min=((min%1440)+1440)%1440; return String(Math.floor(min/60)).padStart(2,"0")+":"+String(min%60).padStart(2,"0"); }
+function fstVerzug(cfg){ const a=_fstMin(cfg&&cfg.start), b=_fstMin(cfg&&cfg.startIst); return (a==null||b==null)?0:b-a; }
+function fstZeitIst(zeit,cfg){ const v=fstVerzug(cfg); const m=_fstMin(zeit); return (m==null||!v)?(zeit||""):_fstHhmm(m+v); }
+function _fstJetztHhmm(){ const d=new Date(); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
+async function fstStarten(wert){
+  const cfg=_fstCfgLesen(); cfg.startIst=wert||_fstJetztHhmm();
+  if(await htPatch({config:cfg})){ const v=fstVerzug(cfg); toast(v?`▶️ Gestartet ${cfg.startIst} – Plan ${v>0?"+":""}${v} Min.`:`▶️ Gestartet ${cfg.startIst} – pünktlich`); fstRender(); }
+}
+async function fstStartZurueck(){ const cfg=_fstCfgLesen(); delete cfg.startIst; if(await htPatch({config:cfg}))fstRender(); }
+/* Welche Runde laeuft gerade? Nur am Festivaltag und nur nach dem Start. */
+function fstRundeJetzt(row){
+  const cfg=(row&&row.config)||{};
+  /* v489: Ist wirklich angepfiffen, gilt die Uhr – nicht die geplante Uhrzeit. */
+  const st=fstUhrStand(row);
+  if(st.phase==="laeuft")return {runde:st.runde,status:"laeuft"};
+  if(st.phase==="pause"||st.phase==="ende")return st.naechste?{runde:st.naechste,status:"naechste"}:null;
+  if(!cfg.startIst||!row.datum)return null;
+  if(row.datum!==new Date().toISOString().slice(0,10))return null;
+  const jetzt=_fstMin(_fstJetztHhmm()), dauer=Math.max(3,cfg.spieldauer||8);
+  const runden=[...new Set((row.plan||[]).map(p=>p.runde))].sort((a,b)=>a-b);
+  for(const r of runden){ const p=(row.plan||[]).find(x=>x.runde===r); const t=_fstMin(fstZeitIst(p&&p.zeit,cfg)); if(t!=null&&jetzt>=t&&jetzt<t+dauer)return {runde:r,status:"laeuft"}; }
+  const naechste=runden.find(r=>{ const p=(row.plan||[]).find(x=>x.runde===r); const t=_fstMin(fstZeitIst(p&&p.zeit,cfg)); return t!=null&&t>jetzt; });
+  return naechste?{runde:naechste,status:"naechste"}:null;
+}
+/* v488 PO: „Wo koennen optional die Ergebnisse eingetragen werden? Die externen Trainer
+   ueber den Link, die Adler-Trainer in der App korrigieren und ergaenzen." Im Link laeuft das
+   ueber den Helfer-Code (RPC heimturnier_ergebnis, wie beim alten Turnier); in der App direkt. */
+function fstErgebnis(i){
+  const plan=(_HT&&_HT.plan)||[]; const p=plan[i]; if(!p)return;
+  const teams=_HT.teams||[]; const nm=k=>esc(teams[k]||("Team "+(k+1)));
+  document.getElementById("fst-erg")?.remove();
+  const d=document.createElement("div"); d.id="fst-erg";
+  d.setAttribute("role","dialog"); d.setAttribute("aria-modal","true"); d.setAttribute("aria-label","Ergebnis eintragen");
+  d.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10050;display:flex;align-items:flex-end;justify-content:center";
+  const taste=(seite,delta,lbl)=>`<button onclick="fstErgTor(${i},'${seite}',${delta})" aria-label="${lbl}" style="min-width:52px;min-height:52px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);color:var(--text);font-size:20px;cursor:pointer">${delta>0?"+":"−"}</button>`;
+  d.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px 16px 0 0;padding:16px;width:100%;max-width:560px;box-shadow:0 -6px 30px rgba(0,0,0,.3)">
+    <div style="font-weight:800;font-size:14px;text-align:center">${nm(p.a)} <span style="color:var(--text3)">vs</span> ${nm(p.b)}</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin:14px 0">
+      <span style="display:inline-flex;align-items:center;gap:4px">${taste("ta",-1,"Tor zurücknehmen")}<b id="fst-erg-ta" style="min-width:36px;text-align:center;font-size:28px">${p.ta==null?0:p.ta}</b>${taste("ta",1,"Tor")}</span>
+      <span style="font-weight:900;font-size:24px">:</span>
+      <span style="display:inline-flex;align-items:center;gap:4px">${taste("tb",-1,"Tor zurücknehmen")}<b id="fst-erg-tb" style="min-width:36px;text-align:center;font-size:28px">${p.tb==null?0:p.tb}</b>${taste("tb",1,"Tor")}</span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-sm" onclick="fstErgLoeschen(${i})" style="color:var(--red)">Ergebnis löschen</button>
+      <button class="btn btn-p" onclick="document.getElementById('fst-erg').remove();fstRender()" style="flex:1;min-height:48px">Fertig</button>
+    </div></div>`;
+  document.body.appendChild(d);
+}
+async function fstErgTor(i,seite,delta){
+  const plan=(_HT.plan||[]).slice(); const p={...plan[i]};
+  p.ta=Math.max(0,(p.ta==null?0:p.ta)+(seite==="ta"?delta:0)); p.tb=Math.max(0,(p.tb==null?0:p.tb)+(seite==="tb"?delta:0));
+  plan[i]=p;
+  if(await htPatch({plan})){ const el=document.getElementById("fst-erg-"+seite); if(el)el.textContent=String(seite==="ta"?p.ta:p.tb); }
+}
+async function fstErgLoeschen(i){
+  const plan=(_HT.plan||[]).slice(); const p={...plan[i]}; delete p.ta; delete p.tb; plan[i]=p;
+  if(await htPatch({plan})){ document.getElementById("fst-erg")?.remove(); fstRender(); }
+}
+/* ═══ v489 – Gemeinsamer Anpfiff je Runde ═══════════════════════════════════
+   PO: „Jedes Spiel im Festival soll gemeinsam angepfiffen werden … dann läuft im
+   Spielplan live ein Countdown, den jeder Trainer sieht, egal ob Adler oder extern …
+   gekoppelt mit dem Liveticker und den Auswechslungen … gestartet werden kann an
+   beiden Stellen." Umgesetzt wie die Match-Uhr: EIN Anker-Zeitstempel in
+   config.uhr={runde,start,dauer}. Niemand sendet Sekunden – jedes Gerät rechnet die
+   Restzeit selbst aus dem Anker. Derselbe Anker geht in die matchday-Zeilen der
+   Adler-Teams dieser Runde, damit Ticker und Wechsel dieselbe Zeit zeigen.
+   Kacheln: nach Ablauf zählt die Trinkpause rückwärts · Ton und Vibration auf dem
+   Gerät, das angepfiffen hat · alle Adler-Teams der Runde starten mit. */
+let _fstAudio=null, _fstSignalFuer=null, _fstUhrTimer=null, _fstUhrMarke="";
+function _fstMmSs(sec){ sec=Math.max(0,Math.round(sec)); return Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0"); }
+function fstUhrStand(row){
+  const cfg=(row&&row.config)||{}, u=cfg.uhr, plan=(row&&row.plan)||[];
+  const runden=[...new Set(plan.map(p=>p.runde))].sort((a,b)=>a-b);
+  if(!u||!u.start||!runden.length)return {phase:"aus",runde:null,rest:0,naechste:runden[0]||null,runden};
+  const dauer=Math.max(1,u.dauer||cfg.spieldauer||8)*60;
+  const pause=Math.max(0,cfg.wechsel==null?FST_PAUSE:cfg.wechsel)*60;
+  const weg=(Date.now()-new Date(u.start).getTime())/1000;
+  const naechste=runden.find(r=>r>u.runde)||null;
+  if(weg<dauer)   return {phase:"laeuft",runde:u.runde,rest:dauer-weg,naechste,runden};
+  if(naechste&&weg<dauer+pause)return {phase:"pause",runde:u.runde,rest:dauer+pause-weg,naechste,runden};
+  return {phase:"ende",runde:u.runde,rest:0,naechste,runden};
+}
+/* Welche Felder spielen in dieser Runde – als Zeile unter der Uhr. */
+function _fstRundeFelder(row,r){
+  const cfg=(row&&row.config)||{}, felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
+  return [...new Set(((row&&row.plan)||[]).filter(p=>p.runde===r).map(p=>fstFeldName(felder,(p.feld||1)-1)))].join(" · ");
+}
+function fstUhrInnen(row,st,trainer){
+  const gross="font-size:44px;font-weight:900;line-height:1;letter-spacing:1px;font-variant-numeric:tabular-nums";
+  const knopf=(r,txt)=>trainer?`<button class="btn btn-p" onclick="fstAnpfiff(${r})" style="width:100%;min-height:52px;margin-top:10px"><i class="ti ti-whistle"></i>${txt}</button>`:"";
+  if(st.phase==="aus")
+    return `<div style="font-size:13px;font-weight:700;opacity:.85">${st.naechste?`Runde ${st.naechste} steht bereit`:"Noch kein Spielplan"}</div>
+      <div style="font-size:12px;opacity:.75;margin-top:2px">${st.naechste?"Alle Felder werden gemeinsam angepfiffen.":""}</div>
+      ${st.naechste?knopf(st.naechste,`Runde ${st.naechste} anpfeifen`):""}`;
+  if(st.phase==="laeuft")
+    return `<div style="font-size:13px;font-weight:800">▶ Runde ${st.runde} läuft</div>
+      <div id="fst-uhr-zeit" style="${gross};margin:6px 0 2px">${_fstMmSs(st.rest)}</div>
+      <div style="font-size:11.5px;opacity:.8">${esc(_fstRundeFelder(row,st.runde))}</div>`;
+  if(st.phase==="pause")
+    return `<div style="font-size:13px;font-weight:800">⏸ Zeit um – Runde ${st.runde} ist durch</div>
+      <div id="fst-uhr-zeit" style="${gross};margin:6px 0 2px">${_fstMmSs(st.rest)}</div>
+      <div style="font-size:11.5px;opacity:.8">bis zum Anpfiff von Runde ${st.naechste}</div>
+      ${knopf(st.naechste,`Runde ${st.naechste} anpfeifen`)}`;
+  return `<div style="font-size:13px;font-weight:800">⏹ Runde ${st.runde} ist durch</div>
+    <div style="font-size:12px;opacity:.8;margin-top:2px">${st.naechste?`Runde ${st.naechste} wartet auf den Anpfiff.`:"Das war die letzte Runde – danke euch allen!"}</div>
+    ${st.naechste?knopf(st.naechste,`Runde ${st.naechste} anpfeifen`):""}`;
+}
+function _fstUhrFarbe(st){
+  if(st.phase==="laeuft")return {bg:"linear-gradient(135deg,#15803d,#16a34a)",fg:"#fff"};
+  if(st.phase==="pause") return {bg:"linear-gradient(135deg,#b45309,#d97706)",fg:"#fff"};
+  return {bg:"linear-gradient(135deg,#1e3a8a,#2563eb)",fg:"#fff"};
+}
+/* Malt die Uhr. Laeuft nur die Zeit weiter, wird bloss die Ziffernzeile getauscht –
+   sonst wuerde der Knopf unter dem Finger des Trainers jede Sekunde neu entstehen. */
+function fstUhrMalen(){
+  const el=document.getElementById("fst-uhr"); if(!el)return;
+  const trainer=!(typeof _htPub!=="undefined"&&_htPub);
+  const row=(typeof _htPub!=="undefined"&&_htPub&&_htPub.row)||_HT; if(!row)return;
+  const st=fstUhrStand(row);
+  const marke=st.phase+"|"+st.runde+"|"+st.naechste;
+  if(marke===_fstUhrMarke){
+    const z=document.getElementById("fst-uhr-zeit");
+    if(z){ z.textContent=_fstMmSs(st.rest); return; }
+  }
+  _fstUhrMarke=marke;
+  const f=_fstUhrFarbe(st);
+  el.style.cssText=`background:${f.bg};color:${f.fg};border-radius:16px;padding:14px;margin-bottom:10px;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.18)`;
+  el.innerHTML=fstUhrInnen(row,st,trainer);
+  if(st.phase!=="laeuft"&&_fstSignalFuer!=null&&_fstSignalFuer===st.runde){ _fstSignalFuer=null; _fstSignal(); }
+}
+function fstUhrTicken(){ clearInterval(_fstUhrTimer); _fstUhrMarke=""; fstUhrMalen();
+  _fstUhrTimer=setInterval(()=>{ if(!document.getElementById("fst-uhr")){clearInterval(_fstUhrTimer);return;} fstUhrMalen(); },1000); }
+/* Ton nur auf dem Geraet, das angepfiffen hat: der Tastendruck erlaubt die Audioausgabe. */
+function _fstTonVorbereiten(){ try{ const A=window.AudioContext||window.webkitAudioContext; if(A&&!_fstAudio)_fstAudio=new A(); if(_fstAudio&&_fstAudio.state==="suspended")_fstAudio.resume(); }catch(e){} }
+function _fstSignal(){
+  try{ navigator.vibrate&&navigator.vibrate([220,120,220]); }catch(e){}
+  try{ if(!_fstAudio)return;
+    [0,0.36].forEach(t=>{ const o=_fstAudio.createOscillator(), g=_fstAudio.createGain();
+      o.type="sine"; o.frequency.value=880; o.connect(g); g.connect(_fstAudio.destination);
+      const s=_fstAudio.currentTime+t;
+      g.gain.setValueAtTime(0.0001,s); g.gain.exponentialRampToValueAtTime(0.35,s+0.02); g.gain.exponentialRampToValueAtTime(0.0001,s+0.3);
+      o.start(s); o.stop(s+0.32); });
+  }catch(e){}
+}
+/* Anpfiff aus dem Festival-Plan. Setzt den Anker, zieht die geplanten Zeiten auf die
+   Wirklichkeit nach (die angepfiffene Runde steht ab jetzt) und startet die Match-Uhren. */
+async function fstAnpfiff(runde){
+  /* v490 PO: „Anpfiff dürfen nur die Adler-Trainer, kein externer." Drei Schlösser: der Knopf
+     wird nur im Trainer-Fenster gezeichnet, _HT gibt es nur dort, und die Datenbank lässt das
+     Schreiben von config ohnehin nur angemeldeten Trainern zu (der Gäste-Code kann per
+     RPC ausschliesslich Tore setzen). */
+  if(!_HT||(typeof _htPub!=="undefined"&&_htPub))return;
+  const cfg=_fstCfgLesen(), plan=_HT.plan||[];
+  const st=fstUhrStand(_HT);
+  const r=runde||st.naechste||st.runden[0];
+  if(!r){toast("Erst den Spielplan erstellen","err");return;}
+  _fstTonVorbereiten();
+  const anker=new Date().toISOString();
+  cfg.uhr={runde:r,start:anker,dauer:Math.max(3,cfg.spieldauer||8)};
+  const geplant=_fstMin((plan.find(p=>p.runde===r)||{}).zeit), basis=_fstMin(cfg.start);
+  if(geplant!=null&&basis!=null)cfg.startIst=_fstHhmm(basis+(_fstMin(_fstJetztHhmm())-geplant));
+  if(await htPatch({config:cfg})){
+    _fstSignalFuer=r;
+    fstMatchdayAnpfiff(_HT,r,anker);
+    toast(`▶️ Runde ${r} angepfiffen`);
+    fstRender();
+  }
+}
+async function fstUhrStoppen(){
+  const cfg=_fstCfgLesen(); delete cfg.uhr; _fstSignalFuer=null;
+  if(await htPatch({config:cfg})){ toast("Uhr zurückgesetzt"); fstRender(); }
+}
+/* Derselbe Anker in die matchday-Zeilen der Adler-Teams, die in dieser Runde spielen:
+   Team 1 liegt auf dem Datum, Team n auf „datum__tn" – so liest die Match-Uhr im
+   Spieltag dieselbe Zeit, und Ticker wie Wechsel-Timer haengen daran. */
+async function fstMatchdayAnpfiff(row,runde,anker,ausser){
+  const cfg=(row&&row.config)||{}, teams=(row&&row.teams)||[], plan=(row&&row.plan)||[];
+  if(!row||!row.datum)return;
+  const drin=new Set(plan.filter(p=>p.runde===runde).flatMap(p=>[p.a,p.b]));
+  const dauer=Math.max(3,cfg.spieldauer||8);
+  let n=0;
+  for(let i=0;i<teams.length;i++){
+    if(!/adler/i.test(String(teams[i]||"")))continue;
+    n++; if(!drin.has(i))continue;
+    const key=n===1?row.datum:`${row.datum}__t${n}`;
+    if(ausser&&key===ausser)continue;
+    try{await fetch(`${SB_URL}/rest/v1/matchday?on_conflict=datum`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify({datum:key,half:1,clock_status:"running",started_at:anker,paused_ms:0,spieldauer_min:dauer,halbzeiten:1})});}catch(e){}
+  }
+  if(typeof mcLoad==="function"&&typeof spieltagRawDate==="function"&&spieltagRawDate()===row.datum){try{mcLoad();}catch(e){}}
+}
+/* Gegenrichtung: der Anpfiff an der Match-Uhr im Spieltag startet die Festival-Runde mit
+   demselben Anker – damit zeigt der Gast-Link dieselbe Restzeit. */
+async function fstAppAnpfiff(anker){
+  if(typeof spieltagRawDate!=="function")return;
+  const datum=spieltagRawDate(); let row=null;
+  try{const r=await fetch(`${SB_URL}/rest/v1/heimturnier?datum=eq.${encodeURIComponent(datum)}&select=id,datum,config,teams,plan&limit=1`,{headers:sbAuthHeaders()});
+    if(r.ok)row=((await r.json())||[])[0]||null;}catch(e){}
+  if(!row||!fstIst(row)||!((row.plan||[]).length))return;
+  const cfg=row.config||{}, st=fstUhrStand(row);
+  const r=st.phase==="aus"?st.naechste:(st.naechste||st.runde);
+  if(!r)return;
+  cfg.uhr={runde:r,start:anker,dauer:Math.max(3,cfg.spieldauer||8)};
+  const geplant=_fstMin((row.plan.find(p=>p.runde===r)||{}).zeit), basis=_fstMin(cfg.start);
+  if(geplant!=null&&basis!=null)cfg.startIst=_fstHhmm(basis+(_fstMin(_fstJetztHhmm())-geplant));
+  try{await fetch(`${SB_URL}/rest/v1/heimturnier?id=eq.${row.id}`,{method:"PATCH",headers:sbAuthHeaders(),
+    body:JSON.stringify({config:cfg,updated_at:new Date().toISOString()})});}catch(e){}
+  if(_HT&&_HT.id===row.id){_HT.config=cfg;}
+  fstMatchdayAnpfiff({...row,config:cfg},r,anker,typeof spieltagKey==="function"?spieltagKey():null);
+  if(typeof toast==="function")toast(`▶️ Runde ${r} im Festival angepfiffen`);
+}
 let _fstTauschWahl=null;
 async function fstTausch(i,seite){
   const plan=(_HT&&_HT.plan||[]).slice(); if(!plan[i])return;
@@ -2327,7 +2612,7 @@ function fstRender(){
       <button class="btn btn-sm" onclick="htShare()" title="Plan an die Gast-Trainer schicken"><i class="ti ti-share"></i>Teilen</button>
     </div>
 
-    <div style="font-size:12px;font-weight:800;margin:14px 0 6px">1 · Wer kommt?</div>
+    <div style="font-size:12px;font-weight:800;margin:14px 0 6px">1 · ${cfg.anlass==="heimspiel"?"Wer spielt mit?":"Wer kommt?"}</div>
     ${vereine.length?vHtml:'<div style="font-size:12px;color:var(--text3);margin-bottom:6px">Noch kein Verein eingetragen.</div>'}
     <div style="font-size:10.5px;color:var(--text3);margin-bottom:6px">Name · angereiste Kinder · Teams (Vorschlag der App, änderbar)</div>
     <div id="fst-gegner" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px"></div>
@@ -2364,10 +2649,19 @@ function fstRender(){
     <button class="btn btn-p" onclick="fstPlanErstellen()" style="width:100%;min-height:52px"${teams.length<2?" disabled":""}><i class="ti ti-calendar-event"></i>${plan.length?"Spielplan neu erstellen":"Spielplan erstellen"}</button>
 
     ${plan.length?`<div style="font-size:12px;font-weight:800;margin:16px 0 6px">4 · Der Plan <span style="font-weight:400;color:var(--text3)">· ${plan.length} Spiele</span></div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${_fstTauschWahl?"Tauschen: jetzt das zweite Team antippen":"Zwei Teams antippen, um sie zu tauschen"}</div>
-      ${fstPlanHtml(plan,_HT.teams||[],felder,false,true)}
-      <button class="btn" onclick="htShare()" style="width:100%;min-height:48px;margin-top:8px"><i class="ti ti-share"></i>Plan an die Gast-Trainer schicken</button>
-      <button class="btn btn-sm" onclick="fstDruck()" style="width:100%;margin-top:6px"><i class="ti ti-printer"></i>Aushang drucken</button>`:""}
+      <div id="fst-uhr" data-rolle="trainer"></div>
+      ${cfg.startIst
+        ? `<div style="display:flex;align-items:center;gap:8px;background:var(--green-bg,#dcfce7);border-radius:12px;padding:8px 10px;margin-bottom:8px">
+            <span style="font-size:12.5px;font-weight:800;flex:1">🕘 Zeitplan ${fstVerzug(cfg)?`${fstVerzug(cfg)>0?"+":""}${fstVerzug(cfg)} Min. verschoben`:"pünktlich"} · Beginn ${esc(cfg.startIst)}</span>
+            <input type="time" value="${esc(cfg.startIst)}" onchange="fstStarten(this.value)" aria-label="Tatsächlicher Beginn" style="${fld};width:122px;padding:6px">
+            <button class="btn btn-sm" onclick="${cfg.uhr?"fstUhrStoppen()":"fstStartZurueck()"}" aria-label="${cfg.uhr?"Uhr zurücksetzen":"Start zurücksetzen"}">↺</button>
+          </div>`
+        : ""}
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${_fstTauschWahl?"Tauschen: jetzt das zweite Team antippen":"Teams antippen zum Tauschen · Ergebnis rechts antippen"}</div>
+      ${fstPlanHtml(plan,_HT.teams||[],felder,false,true,cfg)}
+      <button class="btn" onclick="${_HT.edit_code?"htShareHelfer()":"htShare()"}" style="width:100%;min-height:48px;margin-top:8px"><i class="ti ti-share"></i>Plan an die Gast-Trainer schicken</button>
+      <div style="font-size:10.5px;color:var(--text3);margin:4px 0 6px">${_HT.edit_code?"Mit diesem Link können die Gast-Trainer Ergebnisse eintragen. Nur ansehen: der Teilen-Knopf oben.":"Nur zum Ansehen – dieses Festival hat keinen Schreib-Code."}</div>
+      <button class="btn btn-sm" onclick="fstDruck()" style="width:100%;margin-top:2px"><i class="ti ti-printer"></i>Aushang drucken</button>`:""}
 
     <div style="font-size:12px;font-weight:800;margin:16px 0 6px">Infos für die Gäste</div>
     <textarea id="fst-infos" rows="4" onchange="fstZeitSpeichern()" style="${fld};width:100%;resize:vertical">${esc(cfg.infos||HT_INFOS_VORLAGE)}</textarea>
@@ -2378,6 +2672,7 @@ function fstRender(){
     </div>`;
   fstGegnerChips();
   fstEinteilungSync();
+  fstUhrTicken();
 }
 /* Schnellwahl aus der Gegner-Datenbank – tippen statt abtippen. */
 async function fstGegnerChips(){
@@ -2391,22 +2686,29 @@ async function fstGegnerChips(){
   box.innerHTML=frei.map(n=>`<button class="btn btn-sm" onclick="fstVereinPlus('${jsq(n)}')" style="font-size:11.5px">+ ${esc(n)}</button>`).join("");
 }
 /* Der Plan als Runden-Karten – dieselbe Darstellung im Trainer-Fenster und im Aushang. */
-function fstPlanHtml(plan,teams,felder,gross,tausch){
+function fstPlanHtml(plan,teams,felder,gross,tausch,cfg){
   const runden=[...new Set(plan.map(p=>p.runde))].sort((a,b)=>a-b);
   const nm=i=>esc((teams&&teams[i])||("Team "+(i+1)));
-  /* v486: im Trainer-Fenster sind die Teamnamen Tasten – zwei antippen = tauschen. */
-  const tn=(p,seite)=>{ if(!tausch)return nm(p[seite]); const pi=plan.indexOf(p); const akt=_fstTauschWahl&&_fstTauschWahl.i===pi&&_fstTauschWahl.seite===seite;
-    return `<button class="fst-tausch" onclick="fstTausch(${pi},'${seite}')" aria-pressed="${akt?"true":"false"}" style="min-height:44px;padding:0 8px;border:1px solid ${akt?"var(--blue)":"var(--rand-bedien)"};border-radius:8px;background:${akt?"var(--blue)":"var(--surface2)"};color:${akt?"#fff":"var(--text)"};font:inherit;font-weight:700;cursor:pointer">${nm(p[seite])}</button>`; };
+  /* v488 PO: „Alles verrueckt und in der Summe zu gross" – eine Zeile je Spiel: Feld-Marke,
+     Team, Team, Ergebnis. Die Teamnamen bleiben Tasten (zwei antippen = tauschen), aber
+     flach und in einem festen Raster; lange Namen werden abgeschnitten statt umzubrechen. */
+  const tn=(p,seite)=>{ if(!tausch)return `<span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nm(p[seite])}</span>`;
+    const pi=plan.indexOf(p); const akt=_fstTauschWahl&&_fstTauschWahl.i===pi&&_fstTauschWahl.seite===seite;
+    return `<button class="fst-tausch" onclick="fstTausch(${pi},'${seite}')" aria-pressed="${akt?"true":"false"}" title="${nm(p[seite])}" style="min-width:0;min-height:44px;padding:0 6px;border:1px solid ${akt?"var(--blue)":"var(--rand-bedien)"};border-radius:8px;background:${akt?"var(--blue)":"var(--surface2)"};color:${akt?"#fff":"var(--text)"};font:inherit;font-size:11.5px;line-height:1.15;font-weight:700;cursor:pointer;overflow:hidden;text-align:${seite==="a"?"right":"left"}">${nm(p[seite])}</button>`; };
+  const erg=(p)=>{ const pi=plan.indexOf(p); const txt=p.ta!=null?`${p.ta}:${p.tb}`:"–:–";
+    if(!tausch)return `<span style="font-size:${gross?"14":"12.5"}px;font-weight:900;color:${p.ta!=null?"var(--text)":"var(--text3)"};text-align:center">${txt}</span>`;
+    return `<button onclick="fstErgebnis(${pi})" aria-label="Ergebnis eintragen" style="min-height:44px;min-width:48px;padding:0 4px;border:1px solid var(--rand-bedien);border-radius:8px;background:${p.ta!=null?"var(--surface)":"transparent"};color:${p.ta!=null?"var(--text)":"var(--text3)"};font:inherit;font-size:12.5px;font-weight:900;cursor:pointer">${txt}</button>`; };
   return runden.map(r=>{
     const spiele=plan.filter(p=>p.runde===r);
     return `<div style="border:var(--border-s);border-radius:12px;padding:8px 10px;margin-bottom:6px;background:var(--surface)">
       <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">
         <span style="font-size:${gross?"15":"12.5"}px;font-weight:900">Runde ${r}</span>
-        <span style="font-size:${gross?"13":"11"}px;color:var(--text2)">${esc(spiele[0]?spiele[0].zeit:"")} Uhr</span>
+        <span style="font-size:${gross?"13":"11"}px;color:var(--text2)">${esc(fstZeitIst(spiele[0]?spiele[0].zeit:"",cfg))} Uhr</span>
       </div>
-      ${spiele.map(p=>{const F=_fstF(p.form);return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:${gross?"14":"12.5"}px">
-        <span style="flex:0 0 auto;font-size:${gross?"11":"9.5"}px;font-weight:800;color:#fff;background:${F.farbe};border-radius:6px;padding:2px 6px">${esc(fstFeldName(felder,(p.feld||1)-1))} · ${F.kurz}</span>
-        <span style="flex:1;min-width:0;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${tn(p,"a")} <span style="color:var(--text3);font-weight:400">–</span> ${tn(p,"b")}</span>
+      ${spiele.map(p=>{const F=_fstF(p.form);return `<div style="display:grid;grid-template-columns:auto minmax(0,1fr) 10px minmax(0,1fr) auto;gap:6px;align-items:center;padding:3px 0;font-size:${gross?"14":"12.5"}px;font-weight:700">
+        <span style="font-size:${gross?"11":"9.5"}px;font-weight:800;color:#fff;background:${F.farbe};border-radius:6px;padding:3px 6px;white-space:nowrap">${esc(fstFeldName(felder,(p.feld||1)-1))}</span>
+        ${tn(p,"a")}<span style="color:var(--text3);font-weight:400;text-align:center">–</span>${tn(p,"b")}
+        ${erg(p)}
       </div>`;}).join("")}
     </div>`;
   }).join("");
@@ -2426,7 +2728,7 @@ function fstDruck(){
       <div style="font-size:13px;color:#475569">${_HT.datum?new Date(_HT.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}):""} · ${esc(_HT.ort||"")}</div></div>
     </div>
     <div style="font-size:13px;margin-bottom:10px">${felder.map((f,i)=>{const F=_fstF(f.form);return `<b style="color:${F.farbe}">${esc(fstFeldName(felder,i))}</b>: ${F.lang} · ${F.tore}`;}).join(" &nbsp;·&nbsp; ")}</div>
-    ${fstPlanHtml(_HT.plan||[],teams,felder,true).replace(/var\(--border-s\)/g,"1px solid #e2e8f0").replace(/var\(--surface\)/g,"#fff").replace(/var\(--text2\)/g,"#475569").replace(/var\(--text3\)/g,"#94a3b8")}
+    ${fstPlanHtml(_HT.plan||[],teams,felder,true,false,cfg).replace(/var\(--border-s\)/g,"1px solid #e2e8f0").replace(/var\(--surface\)/g,"#fff").replace(/var\(--text2\)/g,"#475569").replace(/var\(--text3\)/g,"#94a3b8")}
     <div style="margin-top:14px;font-size:12px;color:#475569;white-space:pre-wrap">${esc(cfg.infos||"")}</div>
     <div style="margin-top:14px;max-width:420px">${fstSkizzeFelder(felder)}</div>
     </body></html>`);
@@ -2539,6 +2841,7 @@ function _fstPublicRender(wrap,row){
   const dat=row.datum?new Date(row.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}):"";
   const nm=i=>esc(teams[i]||("Team "+(i+1)));
   const runden=[...new Set(plan.map(p=>p.runde))].sort((a,b)=>a-b);
+  const helfer=!!(_htPub&&_htPub.code), jetzt=fstRundeJetzt(row), verzug=fstVerzug(cfg);
   wrap.innerHTML=`
     <div style="background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border-radius:18px;padding:16px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 24px rgba(30,58,138,.25)">
       <img src="logo.png" alt="SV Adler Dellbrück" style="width:58px;height:58px;flex:0 0 auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))">
@@ -2549,10 +2852,21 @@ function _fstPublicRender(wrap,row){
       </div>
     </div>
 
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 10px">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px">
       ${felder.map((f,i)=>{const F=_fstF(f.form);return `<span style="font-size:11.5px;font-weight:700;color:#fff;background:${F.farbe};border-radius:20px;padding:5px 11px">${esc(fstFeldName(felder,i))} · ${F.lang} · ${F.tore}</span>`;}).join("")}
     </div>
-    <button onclick="fstInfoOpen()" style="width:100%;min-height:48px;border:1px solid #bfdbfe;border-radius:14px;background:#fff;color:#1e3a8a;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)">ℹ️ Anfahrt, Parken &amp; Felder</button>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button onclick="fstInfoOpen()" style="flex:1;min-height:48px;border:1px solid #bfdbfe;border-radius:14px;background:#fff;color:#1e3a8a;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,.08)">ℹ️ Anfahrt &amp; Felder</button>
+      <button onclick="fstRegelnOpen()" style="flex:1;min-height:48px;border:1px solid #bfdbfe;border-radius:14px;background:#fff;color:#1e3a8a;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,.08)">📖 Regeln</button>
+    </div>
+    <div style="background:#fff;border-radius:14px;padding:12px 14px;margin:14px 0 10px;box-shadow:0 1px 3px rgba(0,0,0,.08);display:flex;gap:10px;align-items:flex-start">
+      <span style="font-size:20px;line-height:1.2">👋</span>
+      <div style="font-size:13.5px;line-height:1.5;font-weight:600">${esc(FST_GRUSS)}</div>
+    </div>
+
+    <div id="fst-uhr"></div>
+    ${cfg.startIst&&verzug?`<div style="font-size:11.5px;color:#475569;text-align:center;margin:-2px 0 10px">Die Uhrzeiten unten sind ${verzug>0?"um "+verzug+" Min. nach hinten":"um "+(-verzug)+" Min. nach vorn"} gerückt – so, wie wir wirklich spielen.</div>`:""}
+    ${helfer?`<div style="font-size:11.5px;color:#475569;margin:-4px 0 10px;text-align:center">✏️ Ergebnisse antippen und eintragen – freiwillig, es gibt keine Tabelle.</div>`:""}
 
     ${teams.length?`<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
       <div style="font-size:12px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Mannschaften</div>
@@ -2561,14 +2875,19 @@ function _fstPublicRender(wrap,row){
 
     ${runden.length?runden.map(r=>{
       const spiele=plan.filter(p=>p.runde===r);
-      return `<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+      const aktiv=jetzt&&jetzt.runde===r;
+      return `<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)${aktiv?";border:2px solid #16a34a":""}">
         <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;border-bottom:1px solid #e2e8f0;padding-bottom:6px">
           <span style="font-size:16px;font-weight:900">Runde ${r}</span>
-          <span style="font-size:13px;color:#475569;font-weight:700">${esc(spiele[0]?spiele[0].zeit:"")} Uhr</span>
+          <span style="font-size:13px;color:#475569;font-weight:700">${esc(fstZeitIst(spiele[0]?spiele[0].zeit:"",cfg))} Uhr</span>
+          ${aktiv?`<span style="margin-left:auto;font-size:11px;font-weight:800;color:#166534;background:#dcfce7;border-radius:10px;padding:2px 8px">${jetzt.status==="laeuft"?"▶ läuft":"als Nächstes"}</span>`:""}
         </div>
-        ${spiele.map(p=>{const F=_fstF(p.form);return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0">
-          <span style="flex:0 0 auto;font-size:10px;font-weight:800;color:#fff;background:${F.farbe};border-radius:7px;padding:3px 7px;min-width:58px;text-align:center">${esc(fstFeldName(felder,(p.feld||1)-1))} · ${F.kurz}</span>
-          <span style="flex:1;min-width:0;font-size:14px;font-weight:700">${nm(p.a)} <span style="color:#94a3b8;font-weight:400">gegen</span> ${nm(p.b)}</span>
+        ${spiele.map(p=>{const F=_fstF(p.form); const mi=plan.indexOf(p); const erg=p.ta!=null?`${p.ta} : ${p.tb}`:"– : –";
+          return `<div style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:6px 0">
+          <span style="font-size:10px;font-weight:800;color:#fff;background:${F.farbe};border-radius:7px;padding:3px 7px;min-width:52px;text-align:center;white-space:nowrap">${esc(fstFeldName(felder,(p.feld||1)-1))}</span>
+          <span style="min-width:0;font-size:14px;font-weight:700;line-height:1.3">${nm(p.a)} <span style="color:#94a3b8;font-weight:400">gegen</span> ${nm(p.b)}</span>
+          ${helfer?`<button onclick="htPubEdit(${mi})" aria-label="Ergebnis eintragen" style="min-height:44px;min-width:64px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;font-family:inherit;font-weight:900;font-size:13px;cursor:pointer;color:${p.ta!=null?"#0f172a":"#94a3b8"}">${erg}</button>`
+                  :`<span style="font-size:14px;font-weight:900;color:${p.ta!=null?"#0f172a":"#cbd5e1"};min-width:44px;text-align:center">${erg}</span>`}
         </div>`;}).join("")}
       </div>`;}).join("")
       :'<div style="background:#fff;border-radius:14px;padding:20px;text-align:center;color:#64748b;font-size:13px">Der Spielplan wird gerade erstellt.</div>'}
@@ -2578,8 +2897,9 @@ function _fstPublicRender(wrap,row){
       <div style="font-size:13px;white-space:pre-wrap;line-height:1.6">${esc(cfg.infos)}</div></div>`:""}
 
     <div style="text-align:center;font-size:11.5px;color:#94a3b8;margin-top:16px;line-height:1.6">
-      Wir spielen ohne Tabelle – bei uns gewinnt die Freude am Spiel.<br>SV Adler Dellbrück · U9
+      Wir spielen ohne Tabelle – bei uns gewinnt die Freude am Spiel.<br>SV Adler Dellbrück · U9 · Die Seite aktualisiert sich von selbst
     </div>`;
+  fstUhrTicken();
 }
 async function renderHeimturnierView(slug){
   document.body.style.cssText="margin:0;background:#f1f5f9;font-family:Inter,system-ui,sans-serif;color:#0f172a";
@@ -2589,7 +2909,9 @@ async function renderHeimturnierView(slug){
   document.body.appendChild(wrap);
   _htPub={slug,code:new URLSearchParams(location.search).get("code")||"",wrap,row:null};
   await _htPubLoad();
-  setInterval(()=>{if(!document.hidden&&!document.getElementById("htpub-sheet"))_htPubLoad();},30000);
+  /* v489: Der gemeinsame Anpfiff muss schnell bei den Gast-Trainern ankommen – der
+     Countdown selbst laeuft lokal aus dem Anker, nur der Start braucht die Runde. */
+  setInterval(()=>{if(!document.hidden&&!document.getElementById("htpub-sheet"))_htPubLoad();},10000);
 }
 async function _htPubLoad(){
   if(!_htPub)return;

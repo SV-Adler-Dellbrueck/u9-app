@@ -54,7 +54,7 @@ module.exports = async function (h) {
       linkeHaelfte: /linken Hälfte des großen Platzes/.test(bHtml) && /rechte Hälfte/.test(bHtml),
       skizzeFelder: /Skizze der Spielfelder/.test(bHtml) && /Käfig/.test(bHtml) && /Funino 2/.test(bHtml),
       skizzeParken: /Skizze der Parkmöglichkeiten/.test(bHtml) && /Thurner Kamp/.test(bHtml),
-      planNamen: /Käfig · 4\+1/.test(seite) && /Funino 1 · 3:3/.test(seite) && !/>F1 ·/.test(seite),
+      planNamen: />Käfig</.test(seite) && />Funino 1</.test(seite) && !/>F1 ·/.test(seite),
       legende: /Käfig · 4\+1 mit Torwart/.test(seite),
       eingaben
     };
