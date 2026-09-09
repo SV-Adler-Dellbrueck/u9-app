@@ -2552,6 +2552,9 @@ async function fstMatchdayAnpfiff(row,runde,anker,ausser){
       body:JSON.stringify({datum:key,half:1,clock_status:"running",started_at:anker,paused_ms:0,spieldauer_min:dauer,halbzeiten:1})});}catch(e){}
   }
   if(typeof mcLoad==="function"&&typeof spieltagRawDate==="function"&&spieltagRawDate()===row.datum){try{mcLoad();}catch(e){}}
+  /* v493: „Teams festlegen" liest Feld, Spielform und Gegner aus dem Plan – nach dem Anpfiff
+     gilt die nächste Runde, also die Ansicht mitziehen. */
+  if(typeof teamPlanNachziehen==="function"){try{teamPlanNachziehen();}catch(e){}}
 }
 /* Gegenrichtung: der Anpfiff an der Match-Uhr im Spieltag startet die Festival-Runde mit
    demselben Anker – damit zeigt der Gast-Link dieselbe Restzeit. */
