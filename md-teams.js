@@ -30,9 +30,62 @@ let TEAM_FORM={};
    Fehlt einem Team auf seinem Feld ein Kind, hilft eines aus dem Team mit der meisten Bank
    aus – nur fuer diese Runde (TEAM_LEIH: Kind → Heimteam). Torwart-Kinder rotieren mit. */
 let TEAM_FELDER=[], TEAM_RUNDE=1, TEAM_LEIH={};
+/* ═══ v493 – Der Spielplan ist die Quelle ══════════════════════════════════════
+   PO: „Wir haben bei Teams festlegen auch eine Planung der Adler-Teams eingebaut. Können
+   wir diese nicht direkt an den Turnier-Spielplan koppeln und automatisieren?"
+   Ja – und zwar in EINE Richtung. Die Feld-Rotation aus v480 (`((t-1)+(runde-1))%n`) war der
+   Nachbau von etwas, das es damals noch nicht gab: seit v484 weiss der Spielplan für jede
+   Runde, welches Team auf welchem Feld gegen wen spielt, und seit v489 weiss die Uhr, welche
+   Runde gerade läuft. Also holt „Teams festlegen" beides von dort, statt es zweimal zu
+   führen (v477: eine Zahl aus zwei Quellen wird zweimal gefragt). Geändert wird im Planer.
+   Ohne Spielplan – Auswärtsturnier, freies Spiel – bleibt alles von Hand wie bisher. */
+let TEAM_PLAN=null;
+const FST_ZU_FORM={f4:"4+1",funino:"funino"};
+async function teamPlanLaden(){
+  TEAM_PLAN=null;
+  if(typeof spieltagRawDate!=="function"||typeof fstIst!=="function")return;
+  const datum=spieltagRawDate(); if(!datum)return;
+  let row=null;
+  try{const r=await fetch(`${SB_URL}/rest/v1/heimturnier?datum=eq.${encodeURIComponent(datum)}&select=id,slug,name,datum,config,teams,plan&limit=1`,{headers:sbAuthHeaders()});
+    if(!sbCheck401(r)&&r.ok)row=((await r.json())||[])[0]||null;}catch(e){}
+  if(!row||!fstIst(row)||!((row.plan||[]).length))return;
+  const cfg=row.config||{};
+  const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:(typeof FST_STANDARD_FELDER!=="undefined"?FST_STANDARD_FELDER:[]);
+  const runden=[...new Set(row.plan.map(p=>p.runde))].sort((a,b)=>a-b);
+  const jetzt=(typeof fstRundeJetzt==="function")?fstRundeJetzt(row):null;
+  const runde=(jetzt&&jetzt.runde)||runden[0]||1;
+  const namen=felder.map((f,i)=>(typeof fstFeldName==="function")?fstFeldName(felder,i):"Feld "+(i+1));
+  /* Unsere Teams in der Reihenfolge des Plans sind Adler 1, Adler 2 … */
+  const unsere=[]; (row.teams||[]).forEach((n,i)=>{ if(/adler/i.test(String(n||"")))unsere.push(i); });
+  const von={};
+  unsere.forEach((idx,k)=>{
+    const p=row.plan.find(x=>x.runde===runde&&(x.a===idx||x.b===idx));
+    von[k+1]=p?{feldIdx:(p.feld||1)-1,feldName:namen[(p.feld||1)-1]||("Feld "+(p.feld||1)),
+                gegner:(row.teams||[])[p.a===idx?p.b:p.a]||"",zeit:p.zeit||""}
+             :{feldIdx:-1,feldName:"",gegner:"",zeit:""};
+  });
+  TEAM_PLAN={runde,letzte:runden[runden.length-1],status:(jetzt&&jetzt.status)||"",von,
+    datum:row.datum,name:row.name||"",felder:felder.map(f=>FST_ZU_FORM[f.form]||"funino"),feldNamen:namen};
+  TEAM_FELDER=TEAM_PLAN.felder.slice(0,4);
+  TEAM_RUNDE=runde;
+}
+/* Nach einem Anpfiff im Planer: Runde neu holen und die Ansicht mitziehen. */
+async function teamPlanNachziehen(){
+  if(!document.getElementById("team-panel"))return;
+  await teamPlanLaden();
+  if(typeof teamsRender==="function")teamsRender();
+  if(typeof spieltagTeamKartenRender==="function")spieltagTeamKartenRender();
+  if(typeof spieltagTeam!=="undefined"&&typeof teamFormAnwenden==="function")teamFormAnwenden(spieltagTeam);
+}
+function teamPlanOeffnen(){
+  if(!TEAM_PLAN)return;
+  if(typeof htOpen==="function")htOpen(TEAM_PLAN.datum,TEAM_PLAN.name);
+  else toast("Der Planer lädt noch – gleich nochmal","err");
+}
 function teamFelderAktiv(){ return Array.isArray(TEAM_FELDER)&&TEAM_FELDER.length>0; }
 /* Feld-Index des Teams in der aktuellen Runde (0-basiert), -1 = dieses Team pausiert die Runde. */
 function teamFeldIndex(t){
+  if(TEAM_PLAN)return TEAM_PLAN.von[t]?TEAM_PLAN.von[t].feldIdx:-1;   // v493: der Spielplan bestimmt
   if(!teamFelderAktiv())return -1;
   const n=Math.max(TEAM_ANZAHL,TEAM_FELDER.length);
   const i=((t-1)+(TEAM_RUNDE-1))%n;
@@ -605,6 +658,7 @@ async function teamsLoad(){
      übertragen" verbindlich, sonst überschriebe ein blosses Öffnen des Spieltags eine
      Einteilung, die gerade jemand anders von Hand gemacht hat.
      teamsAuto() rendert selbst – deshalb hier nur der Fallback-Pfad. */
+  await teamPlanLaden();   // v493: Felder, Runde und Gegner kommen vom Spielplan, wenn es einen gibt
   if(typeof spieltagTeam!=="undefined")teamFormAnwenden(spieltagTeam);   // v479: Werkzeuge lesen die Spielform dieses Teams
   if(!Object.keys(TEAMS).length&&teamZusagen().length){ teamsAuto(); spieltagTeamKartenRender(); return; }
   teamsNachziehen();   // v479: Dabei heisst spielt mit – auch fuer Kinder, die nach der Einteilung dazukamen
@@ -618,7 +672,9 @@ async function teamsSpeichern(){
   try{
     await fetch(`${SB_URL}/rest/v1/nominierungen?on_conflict=datum`,{method:"POST",
       headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},
-      body:JSON.stringify({datum:teamsKey(),data:kidMapToIds({_anzahl:TEAM_ANZAHL,_trainer:TEAM_TRAINER,_form:TEAM_FORM,_felder:TEAM_FELDER,_runde:TEAM_RUNDE,_leih:_teamLeihIds(),...TEAMS})})});
+      /* v493: Kommen Felder und Runde aus dem Spielplan, sind sie hier abgeleitet – nicht speichern,
+       sonst steht morgen ein alter Stand in der Datenbank und niemand weiss, welcher gilt. */
+      body:JSON.stringify({datum:teamsKey(),data:kidMapToIds({_anzahl:TEAM_ANZAHL,_trainer:TEAM_TRAINER,_form:TEAM_FORM,_felder:TEAM_PLAN?[]:TEAM_FELDER,_runde:TEAM_PLAN?1:TEAM_RUNDE,_leih:_teamLeihIds(),...TEAMS})})});
   }catch(e){}
 }
 /* Die Team-Zeilen ("<datum>", "<datum>__t2", …) sind ABGELEITET aus der globalen
@@ -812,7 +868,9 @@ function teamsRender(){
     const pausiert=felder&&teamFeldIndex(t)<0;
     const zuWenig=!pausiert&&!leer&&m.length<sp.auf;
     const twFehlt=!pausiert&&!leer&&kdt.tw&&!m.some(istTorwart);
-    const fl=pausiert?"setzt diese Runde aus":`${felder?"Feld "+(teamFeldIndex(t)+1)+" · ":""}${esc(flabel(teamFormVon(t)))} · ${sp.auf} auf dem Feld · je ≈ ${Math.round(sp.anteil*100)} %`;
+    const pv=TEAM_PLAN&&TEAM_PLAN.von[t];
+    const fl=pausiert?"setzt diese Runde aus"
+      :`${pv&&pv.feldIdx>=0?esc(pv.feldName)+" · ":(felder?"Feld "+(teamFeldIndex(t)+1)+" · ":"")}${esc(flabel(teamFormVon(t)))}${pv&&pv.gegner?` · gegen <b>${esc(pv.gegner)}</b>`:""} · ${sp.auf} auf dem Feld · je ≈ ${Math.round(sp.anteil*100)} %`;
     const fk=teamFormVon(t);
     html+=`<div class="team-karte" data-team="${t}" style="border:1px solid var(--rand-bedien);border-left:4px solid var(--fam-spieltag);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--surface)">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -842,6 +900,23 @@ function teamsRender(){
   // Felder und Runde – zugeklappt, bis der Trainer sie braucht (Festival)
   const zuordnung=felder?Array.from({length:TEAM_ANZAHL},(_,i)=>i+1).map(t=>{ const i=teamFeldIndex(t); return `Adler ${t} → ${i<0?"Pause":`Feld ${i+1} (${esc(flabel(TEAM_FELDER[i]))})`}`; }):[];
   const leih=Object.keys(TEAM_LEIH).map(n=>`${esc(n)} (Adler ${TEAM_LEIH[n]} → Adler ${TEAMS[n]})`);
+  if(TEAM_PLAN){
+    const lauf=TEAM_PLAN.status==="laeuft"?"läuft":(TEAM_PLAN.status==="naechste"?"als Nächstes":"");
+    const zeilen=Array.from({length:TEAM_ANZAHL},(_,i)=>i+1).map(t=>{
+      const v=TEAM_PLAN.von[t];
+      if(!v||v.feldIdx<0)return `<b>Adler ${t}</b> · setzt aus`;
+      return `<b>Adler ${t}</b> · ${esc(v.feldName)} · ${esc(flabel(TEAM_FELDER[v.feldIdx]||""))}${v.gegner?` · gegen ${esc(v.gegner)}`:""}`;
+    });
+    html+=`<details id="team-felder" class="tp-tipp" style="margin:4px 0 8px" open>
+      <summary>🏟️ Runde ${TEAM_PLAN.runde} von ${TEAM_PLAN.letzte}${lauf?" · "+lauf:""}<span style="font-weight:400;color:var(--text3)"> – aus dem Spielplan</span></summary>
+      <div>
+        <div style="font-size:12.5px;color:var(--text2);line-height:1.7;margin-bottom:8px">${zeilen.join("<br>")}</div>
+        ${leih.length?`<div style="font-size:11.5px;margin-bottom:8px"><b>Aushilfe diese Runde:</b> ${leih.join(" · ")} – wandert mit der nächsten Runde zurück.</div>`:""}
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Feld, Spielform und Gegner stehen im Spielplan. Die Runde wechselt mit dem Anpfiff.</div>
+        <button class="btn btn-sm" onclick="teamPlanOeffnen()" style="width:100%;min-height:44px;justify-content:center"><i class="ti ti-layout-grid"></i>Im Spielplan ändern</button>
+      </div>
+    </details>`;
+  } else {
   html+=`<details id="team-felder" class="tp-tipp" style="margin:4px 0 8px"${felder?" open":""}>
     <summary>🏟️ Felder beim Festival${felder?` · Runde ${TEAM_RUNDE}`:""}<span style="font-weight:400;color:var(--text3)"> – ${felder?"die Teams wechseln jede Runde das Feld":"nur bei mehreren Feldern mit verschiedenen Formaten"}</span></summary>
     <div>
@@ -862,6 +937,7 @@ function teamsRender(){
     </div>`:""}
     </div>
   </details>`;
+  }
 
   // Aktionen: eine Hauptaktion, daneben „neu verteilen"
   html+=`<div style="display:flex;flex-direction:column;gap:8px;margin:6px 0 10px">
