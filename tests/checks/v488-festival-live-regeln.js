@@ -58,7 +58,7 @@ module.exports = async function (h) {
     _fstPublicRender(wrap, _HT);
     const laeuft = /Runde 1 läuft/.test(wrap.textContent) && /▶ läuft/.test(wrap.textContent);
     return { eineZeile, zeileHoch, tops, zeitVorher, zeitNachher, runde2, startText, dlg: !!dlg, erg, ergTaste, gastMitCode, regelnKnopf: !!regelnKnopf, ergTasten, ergTastenOhne, ergLesbar,
-      regelnInhalt: /gegnerischen Hälfte/.test(rHtml) && /Schusszone/.test(rHtml) && /Rückpass in die Hand/.test(rHtml) && /hinter die Mittellinie/.test(rHtml) && /Abklatschen/.test(rHtml) && /Eltern feuern an/.test(rHtml) && /abgehängte Tor/.test(rHtml) && /Kinder zuerst selbst/.test(rHtml),
+      regelnInhalt: /eigenen Hälfte/.test(rHtml) && /3 Toren Vorsprung/.test(rHtml) && !/Wechsel/.test(rHtml) && /Schusszone/.test(rHtml) && /Rückpass in die Hand/.test(rHtml) && /hinter die Mittellinie/.test(rHtml) && /Abklatschen/.test(rHtml) && /Eltern feuern an/.test(rHtml) && /abgehängte Tor/.test(rHtml) && /Kinder zuerst selbst/.test(rHtml),
       gastStart: /Gestartet um 10:18/.test(gHtml) && /\+3 Min/.test(gHtml), laeuft, spiele: plan.length };
   }, { heute });
   const fehler = s.fehler(); const gesendet = s.gesendet.slice(); await s.schliessen();

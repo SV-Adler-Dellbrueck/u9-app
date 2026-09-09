@@ -2295,14 +2295,14 @@ const FST_REGELN={
     "Seitenaus und Ecke: eindribbeln oder einpassen – vor einem Tor mindestens ein Ballkontakt eines Mitspielers",
     "Unklare Situationen (Aus, Foul) klären die Kinder zuerst selbst auf dem Platz – erst dann helfen die Trainer",
     "Berührt der Ball das abgehängte Tor und geht danach rein, zählt das Tor",
-    "Kein Abseits, fliegender Wechsel – alle Kinder spielen",
+    "Kein Abseits",
     "Abklatschen nach jedem Spiel – Tore werden nicht gegen den Gegner bejubelt",
     "Fairer Umgang mit den anderen Teams – wir Trainer sind das Vorbild",
     "Eltern feuern an, coachen nicht – mit Abstand zum Feld",
     "Der Spaß der Kinder steht im Vordergrund – keine Tabelle, kein Ergebnisdruck"]},
   f4:{t:"4+1 · Käfig und 4+1 oben",z:[
     "4 Feldspieler und Torwart auf zwei Jugendtore",
-    "Tore zählen nur aus der gegnerischen Hälfte",
+    "Tore dürfen nicht direkt aus der eigenen Hälfte erzielt werden – keine Weitschüsse",
     "Nach einem Tor: Anstoß in der Mitte",
     "Torwart darf den Rückpass in die Hand nehmen",
     "Abstoß und Abwurf: der Gegner geht hinter die Mittellinie"]},
@@ -2310,7 +2310,7 @@ const FST_REGELN={
     "3 gegen 3 auf vier Minitore, ohne Torwart",
     "Tore zählen nur aus der Schusszone (6 m vor den Toren)",
     "Nach einem Tor spielt das Team, das es bekommen hat, von der Grundlinie ein – der Gegner wartet außerhalb der Schusszone",
-    "Wechsel nach jedem Tor oder in festen Abständen – alle spielen gleich viel"]}
+    "Führt ein Team mit 3 Toren Vorsprung, darf das andere mit 4 Feldspielern spielen, wenn es möchte"]}
 };
 function fstRegelnHtml(hell){
   const karte=(k)=>`<div style="background:${hell?"#fff":"var(--surface)"};border-radius:14px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
