@@ -1627,7 +1627,33 @@ async function htEdit(id){
     try{const r=await fetch(`${SB_URL}/rest/v1/gegner?select=name&order=name.asc&limit=60`,{headers:sbAuthHeaders()});if(r.ok)window._htGegner=((await r.json())||[]).map(g=>g.name);}catch(e){}
     if(!window._htGegner)window._htGegner=[];
   }
-  if(fstIst(_HT))fstRender(); else htRender();   // v484: Festival hat eine eigene, schlanke Oberflaeche
+  if(fstIst(_HT)){
+    /* v487 PO: „Die Infos sind nicht vollstaendig … Start immer 10:15 und mit allen 4 Plaetzen."
+       Die Vorgaben galten nur fuer neu angelegte Festivals; ein bestehendes trug den alten
+       Stand. Beim Oeffnen ziehen wir die Standards nach – nur dort, wo noch der alte Standard
+       steht, nie ueber eine bewusste Aenderung des Trainers hinweg. */
+    const nz=fstStandardNachziehen(_HT);
+    if(nz.geaendert&&await htPatch({config:nz.config}))toast("Standard nachgezogen: "+nz.was.join(", "));
+    fstRender();
+  } else htRender();   // v484: Festival hat eine eigene, schlanke Oberflaeche
+}
+function fstStandardNachziehen(row){
+  const cfg={...((row&&row.config)||{})}, was=[];
+  const plan=(row&&row.plan)||[];
+  const infos=String(cfg.infos||"");
+  if(!/Bälle/.test(infos)){
+    const z=infos?infos.split("\n"):[];
+    z.splice(z.length&&/^⏰/.test(z[0])?1:0,0,"⚽ Bitte bringt zum Aufwärmen eure eigenen Bälle mit");
+    cfg.infos=z.join("\n"); was.push("Bälle-Hinweis");
+  }
+  if(!plan.length){   // mit fertigem Plan haengen Zeiten und Felder am Plan – dann nichts anfassen
+    if(!cfg.start||cfg.start==="10:00"){ cfg.start=FST_START; was.push("Beginn 10:15"); }
+    if(cfg.wechsel==null||cfg.wechsel===2){ cfg.wechsel=FST_PAUSE; was.push("Trinkpause 5 Min."); }
+    const f=cfg.felder||[];
+    const alterStandard=f.length===3&&f.every((x,i)=>!x.name&&(x.form||"funino")===["f4","funino","funino"][i]);
+    if(!f.length||alterStandard){ cfg.felder=FST_STANDARD_FELDER.slice(); was.push("alle 4 Felder"); }
+  }
+  return {config:cfg,geaendert:was.length>0,was};
 }
 async function htPatch(fields){
   if(!_HT)return false;
@@ -2419,8 +2445,8 @@ function fstSkizzeFelder(felder){
   const box=(x,y,w,h,name,farbe,ort)=>name
     ?`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="${farbe}" opacity=".92"/><text x="${x+w/2}" y="${y+h/2+5}" text-anchor="middle" font-size="${w<60?"10.5":"13"}" font-weight="800" fill="#fff">${esc(name)}</text>`
     :`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="none" stroke="#94a3b8" stroke-dasharray="6 4" stroke-width="2"/><text x="${x+w/2}" y="${y+h/2}" text-anchor="middle" font-size="11" fill="#64748b">${esc(ort)}</text><text x="${x+w/2}" y="${y+h/2+14}" text-anchor="middle" font-size="10" fill="#94a3b8">heute frei</text>`;
-  return `<svg viewBox="0 0 360 270" role="img" aria-label="Skizze der Spielfelder" style="width:100%;height:auto;display:block;font-family:inherit">
-    <rect x="0" y="0" width="360" height="270" rx="12" fill="#f0fdf4"/>
+  return `<svg viewBox="0 0 360 288" role="img" aria-label="Skizze der Spielfelder" style="width:100%;height:auto;display:block;font-family:inherit">
+    <rect x="0" y="0" width="360" height="288" rx="12" fill="#f0fdf4"/>
     <text x="180" y="20" text-anchor="middle" font-size="12" font-weight="800" fill="#334155">Sportanlage Thurner Kamp – Skizze</text>
     <!-- Käfig: kleines eingezaeuntes Feld links -->
     <rect x="8" y="60" width="48" height="150" rx="6" fill="none" stroke="#475569" stroke-width="3" stroke-dasharray="3 3"/>
@@ -2437,9 +2463,9 @@ function fstSkizzeFelder(felder){
     <!-- Parkplatz rechts vom Platz, Vereinsheim unten -->
     <rect x="326" y="60" width="26" height="140" rx="5" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
     <text x="339" y="130" text-anchor="middle" font-size="10" font-weight="700" fill="#92400e" transform="rotate(-90 339 130)">Parkplatz</text>
-    <rect x="96" y="238" width="72" height="22" rx="5" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"/>
-    <text x="132" y="253" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">Vereinsheim</text>
-    <text x="178" y="253" font-size="10" fill="#64748b">WC/Kabinen ebenerdig darunter</text>
+    <rect x="155" y="238" width="72" height="22" rx="5" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"/>
+    <text x="191" y="253" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">Vereinsheim</text>
+    <text x="191" y="277" text-anchor="middle" font-size="10" fill="#64748b">WC/Kabinen ebenerdig darunter</text>
     <text x="32" y="224" text-anchor="middle" font-size="10" fill="#64748b">eingezäunt</text>
   </svg>`;
 }
@@ -2472,8 +2498,8 @@ function fstSkizzeParken(){
     <text x="191" y="140" text-anchor="middle" font-size="9.5" font-weight="700" fill="#92400e">am Platz</text>
     <text x="191" y="151" text-anchor="middle" font-size="9.5" font-weight="700" fill="#92400e">oft voll</text>
     <!-- Vereinsheim und Tennis suedlich -->
-    <rect x="60" y="138" width="60" height="22" rx="5" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"/>
-    <text x="90" y="153" text-anchor="middle" font-size="9.5" font-weight="700" fill="#334155">Vereinsheim</text>
+    <rect x="65" y="138" width="60" height="22" rx="5" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"/>
+    <text x="95" y="153" text-anchor="middle" font-size="9.5" font-weight="700" fill="#334155">Vereinsheim</text>
     <rect x="12" y="168" width="68" height="50" rx="6" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
     <text x="46" y="197" text-anchor="middle" font-size="10" fill="#991b1b">Tennis</text>
     <text x="12" y="266" font-size="12" font-weight="800" fill="#15803d">an der Straße parken – genug Plätze</text>
