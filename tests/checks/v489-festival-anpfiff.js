@@ -51,10 +51,20 @@ module.exports = async function (h) {
     const gastText = gastUhr ? gastUhr.textContent.replace(/\s+/g, " ").trim() : "";
     const gastKnopf = gastUhr ? gastUhr.querySelectorAll("button").length : -1;
     const gastRest = fstUhrStand(_htPub.row).rest;
+    const gruss = /freuen uns auf euren Besuch/.test(wrap.textContent);
+    // Die Trinkpause muss auch bei den Gast-Trainern rückwärts laufen – nur anpfeifen dürfen sie nicht
+    _HT.config.uhr = { ...u, start: new Date(Date.now() - (dauerMs + 60000)).toISOString() };
+    _fstUhrMarke = ""; _fstPublicRender(wrap, _HT); await warte(50);
+    const gastPauseEl = wrap.querySelector("#fst-uhr");
+    const gastPause = gastPauseEl ? gastPauseEl.textContent.replace(/\s+/g, " ").trim() : "";
+    const gastPauseKnopf = gastPauseEl ? gastPauseEl.querySelectorAll("button").length : -1;
+    const gastPauseRest = Math.round(fstUhrStand(_HT).rest);
+    _HT.config.uhr = { ...u };
     _htPub = null;
     return { teams: _HT.teams, plan, cfg: _HT.config, vorher, uhrRunde: u.runde, ankerOk: !!u.start, phase: st.phase, rest: Math.round(st.rest),
       zeigtJetzt, jetzt, uhrText, pause: pause.phase, pauseNaechste: pause.naechste, ende: ende.phase,
-      vibriert: rufe.length, pauseText, gastText, gastKnopf, gastRest: Math.round(gastRest), spiele: plan.length };
+      vibriert: rufe.length, pauseText, gastText, gastKnopf, gastRest: Math.round(gastRest), spiele: plan.length,
+      gruss, gastPause, gastPauseKnopf, gastPauseRest };
   }, { heute });
   // 5) Anpfiff an der Match-Uhr im Spieltag startet die Festival-Runde – mit demselben Anker
   if (!r.fehlt) {
@@ -82,6 +92,10 @@ module.exports = async function (h) {
   if (!/Runde 2 läuft/.test(r.gastText)) probleme.push(`Gast-Ansicht ohne Countdown: „${r.gastText.slice(0, 60)}“`);
   if (r.gastKnopf !== 0) probleme.push(`Gast-Ansicht hat ${r.gastKnopf} Knöpfe in der Uhr – anpfeifen dürfen nur wir`);
   if (Math.abs(r.gastRest - r.rest) > 3) probleme.push(`Rest unterschiedlich: Trainer ${r.rest}s, Gast ${r.gastRest}s`);
+  if (!/Zeit um/.test(r.gastPause) || !/Runde 3/.test(r.gastPause)) probleme.push(`Gäste sehen die Trinkpause nicht: „${r.gastPause.slice(0, 70)}“`);
+  if (r.gastPauseRest < 230 || r.gastPauseRest > 245) probleme.push(`Pausen-Rest bei den Gästen ${r.gastPauseRest}s statt ~240`);
+  if (r.gastPauseKnopf !== 0) probleme.push(`Gäste hätten ${r.gastPauseKnopf} Anpfiff-Knöpfe in der Pause`);
+  if (!r.gruss) probleme.push("Gruß an die Gäste fehlt auf der öffentlichen Seite");
   const md = gesendet.filter(g => /matchday/.test(g.pfad) && g.methode === "POST");
   const keys = [...new Set(md.map(g => g.body && g.body.datum))].sort();
   const anker = [...new Set(md.map(g => g.body && g.body.started_at))];
@@ -96,6 +110,7 @@ module.exports = async function (h) {
   if (fehler.length) probleme.push(...fehler.slice(0, 3));
   zeilen.push(`Anpfiff Runde 2: Rest ${r.rest}s · Plan zeigt ${r.zeigtJetzt} (jetzt ${r.jetzt}) · „${r.uhrText.slice(0, 40)}“`);
   zeilen.push(`Phasen: läuft → ${r.pause} (nächste ${r.pauseNaechste}) → ${r.ende} · Signal ${r.vibriert}× · Gast-Rest ${r.gastRest}s, ${r.gastKnopf} Knöpfe`);
+  zeilen.push(`Gäste in der Pause: „${r.gastPause.slice(0, 56)}“ · Rest ${r.gastPauseRest}s · ${r.gastPauseKnopf} Knöpfe · Gruß ${r.gruss}`);
   zeilen.push(`Match-Uhren: ${JSON.stringify(keys)} mit ${anker.length} Anker · Uhr-Speicherungen ${patches.length} (App startet Runde ${ausApp && ausApp.body.config.uhr.runde})`);
   return h.ergebnis("Festival-Anpfiff: gemeinsamer Countdown aus einem Anker, gekoppelt mit der Match-Uhr", !probleme.length, zeilen.concat(probleme));
 };
