@@ -232,8 +232,134 @@ function tmDetailOpen(id){
   modal.appendChild(c);document.body.appendChild(modal);
   _tmdNachlader(t);
 }
+/* ═══ v491 – Das Termin-Fenster ist die Arbeitsansicht ══════════════════════
+   PO: „Diese Kachel, wenn ich von der Startseite auf einen Termin klicke, ist total
+   unübersichtlich und nicht gut strukturell aufgebaut. Hier wäre auch ein Absprung zur
+   Festival-Planung oder ins Match sinnvoll. Optimiere diese Seite optisch, strukturell
+   und inhaltlich."
+   Die LISTE bleibt kompakt (tmCard) – dort wird gescannt. Das FENSTER bekommt eine eigene
+   Ordnung, denn dort wird gearbeitet: Kopf → Wo → Was du hier tust → Wer dabei ist → Nach
+   dem Spiel → Für die Eltern → Mehr. Die zwei Wege in die Arbeit (Planer und Match) stehen
+   groß oben, alles Seltene klappt zu. Am Termintag führt der erste Knopf ins Match, davor
+   in die Planung – die Reihenfolge folgt dem Kalender, nicht dem Zufall. */
+function tmPlanerOpen(datum,titel,anlass){
+  document.getElementById("tmd-modal")?.remove();
+  if(typeof htOpen==="function")htOpen(datum,titel,anlass);
+  else toast("Der Planer lädt noch – gleich nochmal","err");
+}
+function tmTurnierModusOpen(){
+  document.getElementById("tmd-modal")?.remove();
+  if(typeof turnierOpen==="function")turnierOpen(); else toast("Turnier-Modus lädt noch","err");
+}
+function _tmdKarte(t){
+  const m=TM_META[t.typ]||TM_META.training;
+  const heute=new Date().toISOString().slice(0,10);
+  const kommt=t.datum>=heute, istHeute=t.datum===heute, vorbei=t.datum<heute;
+  const istSpiel=t.typ==="spiel"||t.typ==="turnier";
+  const routeAddr=t.ort||(t.heim===true?VEREIN_ADRESSE:"");
+  const d=new Date(t.datum+"T00:00:00");
+  const wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
+  const datumStr=wtag+" "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
+  const zeitStr=t.uhrzeit?String(t.uhrzeit).slice(0,5):((/Uhrzeit:\s*(\d{1,2}:\d{2})/.exec(t.notiz||"")||[])[1]||"");
+  const notizClean=(t.notiz&&!/^Uhrzeit:/.test(t.notiz))?t.notiz:"";
+  const badge=(txt,bg,col)=>`<span style="font-size:10px;font-weight:800;padding:3px 8px;border-radius:10px;background:${bg};color:${col}">${txt}</span>`;
+  const hb=heimLabel(t);
+  const badges=[
+    hb?badge(esc(hb),t.heim?"#dcfce7":"#fef3c7",t.heim?"#15803d":"#b45309"):"",
+    (istSpiel&&t.spielform)?badge(esc(t.spielform),m.col+"22",m.col):"",
+    (typeof ferienBadge==="function")?ferienBadge(t.datum):""
+  ].join("");
+  const sec=x=>`<div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:14px 0 6px">${x}</div>`;
+  const zu=(sum,inner,offen)=>`<details${offen?" open":""} style="margin-top:10px;border:var(--border-s);border-radius:12px;background:var(--surface2)">
+      <summary style="cursor:pointer;min-height:44px;display:flex;align-items:center;padding:0 12px;font-size:12.5px;font-weight:800;color:var(--text2)">${sum}</summary>
+      <div style="padding:2px 12px 12px">${inner}</div></details>`;
+  const klein=o=>o.href
+    ? `<a class="btn btn-sm" href="${o.href}" target="_blank" rel="noopener noreferrer" style="min-height:44px;justify-content:flex-start;text-decoration:none"><i class="ti ${o.i}"></i>${o.l}</a>`
+    : `<button class="btn btn-sm" onclick="${o.c}" style="min-height:44px;justify-content:flex-start"><i class="ti ${o.i}"></i>${o.l}</button>`;
+  const raster=a=>`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">${a.filter(Boolean).map(klein).join("")}</div>`;
+
+  /* 1 · Was du hier tust – höchstens zwei große Wege, nach dem Kalender sortiert. */
+  const teamsBtn={i:"ti-users-group",l:"Teams festlegen",c:`tmJump('spieltag','${t.datum}','${t.spielform||""}')`};
+  const planerBtn=t.heim===true
+    ? {i:"ti-layout-grid",l:t.typ==="spiel"?"Heimspiel planen":"Festival planen",c:`tmPlanerOpen('${t.datum}','${jsq(t.titel||"")}','${t.typ==="spiel"?"heimspiel":"festival"}')`}
+    : (t.typ==="turnier"?{i:"ti-trophy",l:"Turnier-Modus",c:"tmTurnierModusOpen()"}:null);
+  let gross=[];
+  if(t.typ==="training")gross=[{...{i:"ti-clipboard-list",l:"Trainingsplan",c:`tmJump('planung','${t.datum}')`},p:true},
+                               {...{i:"ti-checkbox",l:"Anwesenheit",c:`tmJump('anwesenheit','${t.datum}')`},p:false}];
+  else if(istSpiel)gross=(istHeute||!planerBtn)
+    ? [{...teamsBtn,p:true}, planerBtn?{...planerBtn,p:false}:null]
+    : [{...planerBtn,p:true}, {...teamsBtn,p:false}];
+  else gross=[{i:"ti-basket",l:"Mitbringliste",c:"mitbringTrainerOpen()",p:true}];
+  const grossBtn=o=>`<button class="btn${o.p?" btn-p":""}" onclick="${o.c}" style="width:100%;min-height:52px;justify-content:center;font-size:14px;font-weight:800"><i class="ti ${o.i}"></i>${o.l}</button>`;
+
+  /* 2 · Für die Eltern und 3 · Mehr – getrennt, weil das eine der Verein braucht und das
+     andere nur der Trainer. Beides zugeklappt; „Fällt aus" klappt von selbst auf. */
+  const elternRest=[
+    {i:"ti-users",l:"Eltern-Info",c:`mdOpen('${t.datum}','${t.typ}')`},
+    kommt?{i:"ti-speakerphone",l:"Ansage",c:`ansageVomTermin(${Number(t.id)})`}:null,
+    kommt?(()=>{const deepLink=appRoot()+"?portal&rsvp="+t.id;
+      const waText=`🦅 SV Adler U9 – bitte kurz rückmelden fürs nächste ${m.label}:\n${t.titel||m.label} am ${datumStr}${zeitStr?" um "+zeitStr+" Uhr":""}${t.ort?" ("+t.ort+")":""}\n👉 Zu-/absagen: ${deepLink}`;
+      return {i:"ti-bell",l:"Erinnerung",href:`https://wa.me/?text=${encodeURIComponent(waText)}`};})():null
+  ];
+  const rest=[
+    {i:"ti-edit",l:"Bearbeiten",c:`tmEdit(${Number(t.id)})`},
+    {i:"ti-calendar-plus",l:"Kalender",c:`tmIcsOne(${Number(t.id)})`},
+    routeAddr?{i:"ti-navigation",l:"Route",href:mapsUrl(routeAddr)}:null,
+    kommt?{i:"ti-user-share",l:"Vertretung",c:`handoverOpen(${Number(t.id)})`}:null,
+    {i:"ti-photo",l:"Fotos",c:`galerieOpen(${Number(t.id)},'${(t.titel||m.label).replace(/'/g,"")}')`}
+  ];
+  const ampel=PLATZ_AMPEL[t.platz_status||""]||null;
+  const abgesagt=t.platz_status==="abgesagt";
+
+  return `<div style="background:var(--surface);color:var(--text);border-radius:var(--rl);overflow:hidden;box-shadow:0 8px 30px rgba(15,23,42,.18)">
+    <div style="display:flex;align-items:center;gap:12px;padding:14px;background:linear-gradient(90deg,${m.col}1f,transparent);border-left:5px solid ${m.col}">
+      <div style="width:46px;height:46px;flex:none;border-radius:14px;background:${m.col};display:flex;align-items:center;justify-content:center;font-size:23px;box-shadow:0 2px 8px ${m.col}55">${m.icon}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:16px;font-weight:900;line-height:1.2">${esc(t.titel||m.label)}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:3px">${datumStr}${zeitStr?" · "+zeitStr+" Uhr":""}</div>
+        ${badges?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">${badges}</div>`:""}
+      </div>
+    </div>
+    ${abgesagt?`<div style="background:#fee2e2;color:#991b1b;font-size:13px;font-weight:800;padding:9px 14px">🔴 Fällt aus${t.platz_status_note?" – "+esc(t.platz_status_note):""}</div>`:""}
+    <div style="padding:12px 14px 14px">
+
+      ${(t.ort||t.platz)?`<div style="font-size:12.5px;color:var(--text2);line-height:1.6">
+        ${t.ort?`<div><i class="ti ti-map-pin"></i> ${mapsAnchor(t.ort)}</div>`:""}
+        ${t.platz?`<div>🏟️ ${esc(t.platz)}</div>`:""}
+      </div>`:""}
+      <div id="wx-tm-${t.id}"></div>
+      ${notizClean?`<div style="font-size:12px;color:var(--text3);margin-top:6px">${esc(notizClean)}</div>`:""}
+
+      ${sec("Was du hier tust")}
+      <div style="display:flex;flex-direction:column;gap:6px">${gross.filter(Boolean).map(grossBtn).join("")}</div>
+
+      ${sec("Wer ist dabei")}
+      ${kommt?`<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+        <span style="font-size:11px;color:var(--text3);font-weight:800;width:100%">Trainer</span>
+        ${trainerstabNamen(t.trainer_status).map(tn=>{const stt=(t.trainer_status||{})[tn];const bg=stt==="ja"?"#16a34a":stt==="unsicher"?"#ca8a04":stt==="nein"?"#dc2626":"var(--surface2)";const col=stt?"#fff":"var(--text2)";const mk=stt==="ja"?" ✓":stt==="unsicher"?" 🤔":stt==="nein"?" ✕":"";
+          return `<button onclick="tmTrainerToggle(${Number(t.id)},'${tn.replace(/'/g,"")}')" title="Tippen wechselt: dabei → unsicher → nicht dabei → offen" style="min-height:44px;border:1px solid var(--rand-bedien);border-radius:12px;padding:0 12px;font-size:12.5px;font-weight:700;background:${bg};color:${col};cursor:pointer;font-family:inherit">${esc(tn)}${mk}</button>`;}).join("")}
+      </div>`:""}
+      ${(t.heim===true&&istSpiel&&kommt)?`<div id="bd-tm-${t.id}" style="font-size:12px;color:var(--text2);margin-top:4px">🍿 Büdchen: lädt …</div>`:""}
+      ${kommt?`<div id="helfer-tm-${t.id}" style="font-size:12px;color:var(--text2);margin-top:4px"></div>`:""}
+      ${kommt?`<button class="btn btn-sm" onclick="rsvpOverviewOpen(${Number(t.id)})" style="width:100%;min-height:44px;margin-top:8px;justify-content:center"><i class="ti ti-list-check"></i>Antworten der Eltern</button>`:""}
+
+      ${(vorbei||istHeute)&&(istSpiel||t.typ==="training")?`${sec("Nach dem Termin")}
+        ${istSpiel?`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="font-size:12px;color:var(--text2)">Ergebnis</span>
+          <input type="text" value="${esc(t.ergebnis||"")}" placeholder="z. B. 3:2" onchange="tmSetResult(${Number(t.id)},this.value)" style="width:100px;min-height:44px;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:13px;font-family:inherit;background:var(--surface2);color:var(--text)">
+        </div>
+        <button class="btn btn-sm" onclick="tmJump('blitz','${t.datum}','${t.spielform||""}')" style="width:100%;min-height:44px;justify-content:center"><i class="ti ti-bolt"></i>Auswertung &amp; Blitz-Rating</button>`:""}
+        <div id="puls-tm-${t.id}" style="font-size:12px;color:var(--text2);margin-top:6px"></div>`:""}
+
+      ${zu(`📣 Für die Eltern${ampel?" · "+ampel.emo+" "+esc(ampel.lbl):""}`,
+        `${kommt?`<div style="margin-bottom:8px">${platzAmpelTrainer(t,true)}</div>`:""}${raster(elternRest)}`, abgesagt)}
+      ${zu("⚙️ Mehr",`${raster(rest)}
+        <button class="btn btn-sm btn-d" onclick="tmDelete(${Number(t.id)})" style="width:100%;min-height:44px;justify-content:center;margin-top:6px"><i class="ti ti-trash"></i>Termin löschen</button>`)}
+    </div>
+  </div>`;
+}
 function _tmdInhalt(t){
-  return `<div style="display:flex;justify-content:flex-end;margin-bottom:6px"><button onclick="document.getElementById('tmd-modal').remove()" aria-label="Schließen" style="border:none;background:rgba(255,255,255,.92);width:40px;height:40px;border-radius:50%;font-size:22px;color:#334155;cursor:pointer;line-height:1">×</button></div>${tmCard(t)}`;
+  return `<div style="display:flex;justify-content:flex-end;margin-bottom:6px"><button onclick="document.getElementById('tmd-modal').remove()" aria-label="Schließen" style="border:none;background:rgba(255,255,255,.92);width:40px;height:40px;border-radius:50%;font-size:22px;color:#334155;cursor:pointer;line-height:1">×</button></div>${_tmdKarte(t)}`;
 }
 // Nachlader wie in der Terminliste anstoßen (Wetter + Büdchen füllen ihre Slots per id).
 function _tmdNachlader(t){
@@ -366,13 +492,15 @@ const PLATZ_AMPEL={
   ausweich:{emo:"🟡", lbl:"Ausweichplatz", col:"#d97706", hidden:true}, // aktuell ausgeblendet (hidden:false = wieder da)
   abgesagt:{emo:"🔴", lbl:"Fällt aus",     col:"#dc2626"}
 };
-function platzAmpelTrainer(t){
+function platzAmpelTrainer(t,nackt){
   const cur=t.platz_status||null;
   const btns=Object.keys(PLATZ_AMPEL).filter(k=>!PLATZ_AMPEL[k].hidden).map(k=>{
     const a=PLATZ_AMPEL[k], on=cur===k;
     return `<button onclick="platzAmpelSet(${Number(t.id)},'${k}')" style="flex:1;min-width:96px;min-height:46px;border:2px solid ${a.col};border-radius:10px;cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:800;background:${on?a.col:"var(--surface)"};color:${on?"#fff":a.col}">${a.emo} ${a.lbl}</button>`;
   }).join("");
   const zusatz=cur?`<input id="pa-note-${t.id}" value="${esc(t.platz_status_note||"")}" placeholder="${cur==="ausweich"?"Wohin? z. B. Halle 2":cur==="abgesagt"?"Grund (optional)":"Hinweis (optional)"}" onchange="platzAmpelNote(${Number(t.id)},this.value)" style="width:100%;min-height:40px;margin-top:6px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:12px;background:var(--surface2);color:var(--text);box-sizing:border-box">`:"";
+  /* v491: Im Termin-Fenster steht die Überschrift schon am Klappdeckel – dort nur die Knöpfe. */
+  if(nackt)return `<div style="display:flex;gap:6px;flex-wrap:wrap">${btns}</div>${zusatz}`;
   return `<div style="margin:8px 0;padding:8px;background:var(--surface2);border-radius:10px">
     <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:5px">📣 Platz-Status für die Eltern</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">${btns}</div>${zusatz}

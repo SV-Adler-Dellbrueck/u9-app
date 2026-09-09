@@ -2068,7 +2068,7 @@ const FST_FORMEN={
   f4:    {label:"4+1",        kurz:"4+1", lang:"4+1 mit Torwart", auf:5, tore:"2 Jugendtore", farbe:"#1d4ed8"},
   funino:{label:"FUNiño 3:3", kurz:"3:3", lang:"FUNiño 3 gegen 3",auf:3, tore:"4 Minitore",   farbe:"#15803d"}
 };
-const FST_GRUSS="Schön, dass ihr kommt! Wir freuen uns auf euren Besuch und auf tolle Spiele mit euch.";
+const FST_GRUSS="Herzlich willkommen bei den Adlern! Schön, dass ihr dabei seid – wir freuen uns auf tolle Spiele mit euch.";
 const FST_STANDARD_FELDER=[{form:"f4"},{form:"funino"},{form:"funino"},{form:"f4"}];   // v486 PO: „Standard alle 4 Felder anlegen" – Käfig, Funino 1, Funino 2, 4+1 oben
 const FST_START="10:15", FST_PAUSE=5;   // PO: „Beginn ist immer 10:15" · „5 Minuten Trinkpause zwischen den Spielen"
 function fstIst(row){ return ((row||_HT||{}).config||{}).art==="festival"; }
@@ -2332,11 +2332,13 @@ const FST_REGELN={
     "Nach einem Tor spielt das Team, das es bekommen hat, von der Grundlinie ein – der Gegner wartet außerhalb der Schusszone",
     "Führt ein Team mit 3 Toren Vorsprung, darf das andere mit 4 Feldspielern spielen, wenn es möchte"]}
 };
-function fstRegelnHtml(hell){
+function fstRegelnHtml(hell,cfg){
+  const pause=Math.max(0,(cfg&&cfg.wechsel!=null)?cfg.wechsel:FST_PAUSE);
   const karte=(k)=>`<div style="background:${hell?"#fff":"var(--surface)"};border-radius:14px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
       <div style="font-size:12px;font-weight:800;color:${hell?"#475569":"var(--text2)"};text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">${esc(k.t)}</div>
       <ul style="margin:0;padding-left:18px;font-size:13.5px;line-height:1.55">${k.z.map(z=>`<li style="margin-bottom:4px">${esc(z)}</li>`).join("")}</ul></div>`;
-  return karte(FST_REGELN.f4)+karte(FST_REGELN.funino)+karte(FST_REGELN.alle)
+  const alle={t:FST_REGELN.alle.t,z:FST_REGELN.alle.z.concat(pause?[`Zwischen den Spielen liegen ${pause} Minuten Trinkpause – zum Erholen und für den Platzwechsel`]:[])};
+  return karte(FST_REGELN.f4)+karte(FST_REGELN.funino)+karte(alle)
     +`<div style="font-size:11px;color:${hell?"#94a3b8":"var(--text3)"};margin:4px 0 10px">Nach den DFB-Spielformen im Kinderfußball, ergänzt um unsere Vereinbarungen.</div>`;
 }
 function fstRegelnOpen(){
@@ -2349,7 +2351,7 @@ function fstRegelnOpen(){
       <div style="font-size:18px;font-weight:900;flex:1">📖 So spielen wir</div>
       <button onclick="document.getElementById('fst-regeln').remove()" aria-label="Schließen" style="min-width:44px;min-height:44px;border:1px solid #cbd5e1;border-radius:12px;background:#fff;font-size:18px;cursor:pointer">✕</button>
     </div>
-    ${fstRegelnHtml(true)}
+    ${fstRegelnHtml(true,((_htPub&&_htPub.row&&_htPub.row.config)||(_HT&&_HT.config)||{}))}
     <button onclick="document.getElementById('fst-regeln').remove()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:#16a34a;color:#fff;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit">Zurück zum Spielplan</button>
   </div>`;
   document.body.appendChild(d);
@@ -2852,10 +2854,7 @@ function _fstPublicRender(wrap,row){
       </div>
     </div>
 
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px">
-      ${felder.map((f,i)=>{const F=_fstF(f.form);return `<span style="font-size:11.5px;font-weight:700;color:#fff;background:${F.farbe};border-radius:20px;padding:5px 11px">${esc(fstFeldName(felder,i))} · ${F.lang} · ${F.tore}</span>`;}).join("")}
-    </div>
-    <div style="display:flex;gap:8px;margin-bottom:12px">
+    <div style="display:flex;gap:8px;margin:14px 0 12px">
       <button onclick="fstInfoOpen()" style="flex:1;min-height:48px;border:1px solid #bfdbfe;border-radius:14px;background:#fff;color:#1e3a8a;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,.08)">ℹ️ Anfahrt &amp; Felder</button>
       <button onclick="fstRegelnOpen()" style="flex:1;min-height:48px;border:1px solid #bfdbfe;border-radius:14px;background:#fff;color:#1e3a8a;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,.08)">📖 Regeln</button>
     </div>
