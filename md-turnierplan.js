@@ -2662,6 +2662,7 @@ function fstRender(){
             <button class="btn btn-sm" onclick="${cfg.uhr?"fstUhrStoppen()":"fstStartZurueck()"}" aria-label="${cfg.uhr?"Uhr zurücksetzen":"Start zurücksetzen"}">↺</button>
           </div>`
         : ""}
+      ${fstAufwaermZeile(_HT)?`<div style="font-size:11.5px;color:var(--text2);background:var(--surface2);border-radius:10px;padding:8px 10px;margin-bottom:8px">🔥 <b>Aufwärmen vor der ersten Runde:</b> ${fstAufwaermZeile(_HT)}</div>`:""}
       <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${_fstTauschWahl?"Tauschen: jetzt das zweite Team antippen":"Teams antippen zum Tauschen · Ergebnis rechts antippen"}</div>
       ${fstPlanHtml(plan,_HT.teams||[],felder,false,true,cfg)}
       <button class="btn" onclick="${_HT.edit_code?"htShareHelfer()":"htShare()"}" style="width:100%;min-height:48px;margin-top:8px"><i class="ti ti-share"></i>Plan an die Gast-Trainer schicken</button>
@@ -2734,10 +2735,35 @@ function fstDruck(){
     </div>
     <div style="font-size:13px;margin-bottom:10px">${felder.map((f,i)=>{const F=_fstF(f.form);return `<b style="color:${F.farbe}">${esc(fstFeldName(felder,i))}</b>: ${F.lang} · ${F.tore}`;}).join(" &nbsp;·&nbsp; ")}</div>
     ${fstPlanHtml(_HT.plan||[],teams,felder,true,false,cfg).replace(/var\(--border-s\)/g,"1px solid #e2e8f0").replace(/var\(--surface\)/g,"#fff").replace(/var\(--text2\)/g,"#475569").replace(/var\(--text3\)/g,"#94a3b8")}
+    ${fstAufwaermZeile(_HT)?`<div style="margin-top:12px;font-size:12.5px;color:#0f172a">🔥 <b>Aufwärmen:</b> ${fstAufwaermZeile(_HT)}</div>`:""}
     <div style="margin-top:14px;font-size:12px;color:#475569;white-space:pre-wrap">${esc(cfg.infos||"")}</div>
     <div style="margin-top:14px;max-width:420px">${fstSkizzeFelder(felder)}</div>
     </body></html>`);
   w.document.close(); w.focus(); setTimeout(()=>w.print(),300);
+}
+/* v495 PO: „In der Festival-Planung sollte auch drinstehen, auf welchem Feld die Teams jeweils
+   warm machen dürfen. Adler immer im Käfig. Die anderen Teams aufteilen auf die Felder, die durch
+   den Plan feststehen." Vor der ersten Runde sind alle Felder frei – wir nehmen den Käfig, die
+   Gäste verteilen sich der Reihe nach auf die übrigen. Mehr Vereine als Felder: dann teilen sich
+   zwei ein Feld, das sagt die Liste dann auch. */
+function fstAufwaermen(row){
+  const cfg=(row&&row.config)||{};
+  const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
+  const vereine=(cfg.vereine||[]).map(v=>String(v.name||"").trim()).filter(Boolean);
+  if(!vereine.length||!felder.length)return [];
+  const namen=felder.map((f,i)=>fstFeldName(felder,i));
+  let kaefig=namen.findIndex(n=>/käfig/i.test(n)); if(kaefig<0)kaefig=0;
+  const rest=namen.filter((_,i)=>i!==kaefig);
+  let r=0;
+  return vereine.map(v=>{
+    if(/adler/i.test(v))return {verein:v,feld:namen[kaefig]};
+    const f=rest.length?rest[r%rest.length]:namen[kaefig]; r++;
+    return {verein:v,feld:f};
+  });
+}
+function fstAufwaermZeile(row){
+  const a=fstAufwaermen(row);
+  return a.length?a.map(x=>`<b>${esc(x.verein)}</b> → ${esc(x.feld)}`).join(" · "):"";
 }
 /* Skizze der Felder (schematisch, nach der Luftaufnahme): links der eingezaeunte Käfig, daneben
    der grosse Platz quer. Fuers Festival haben wir den Käfig und die LINKE Haelfte des grossen
@@ -2832,7 +2858,7 @@ function fstInfoOpen(){
       <a href="${mapsUrl(adr)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;margin-top:8px;border-radius:12px;background:#1e3a8a;color:#fff;font-weight:800;font-size:14px;text-decoration:none">📍 Route in Karten öffnen</a>`)}
     ${karte("Parken",`<div style="font-size:13.5px;line-height:1.55;margin-bottom:8px">Direkt am Platz gibt es Parkplätze, wenn ihr hineinfahrt – die sind aber oft schon belegt. <b>Besser gleich an der Straße parken (Thurner Kamp)</b>, dort ist genug Platz.</div>${fstSkizzeParken()}`)}
     ${karte("WC &amp; Kabinen",`<div style="font-size:13.5px;line-height:1.55">🚻 Ebenerdig unter dem Vereinsheim – gleich hinter dem großen Platz.</div>`)}
-    ${karte("Wo welches Feld liegt",`<div style="font-size:13px;color:#475569;margin-bottom:8px">Wir spielen im Käfig und auf der linken Hälfte des großen Platzes.</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${felder.map((f,i)=>{const F=_fstF(f.form);return `<span style="font-size:11.5px;font-weight:700;color:#fff;background:${F.farbe};border-radius:20px;padding:5px 11px">${esc(fstFeldName(felder,i))} · ${F.label} · ${F.tore}</span>`;}).join("")}</div>${fstSkizzeFelder(felder)}`)}
+    ${karte("Wo welches Feld liegt",`<div style="font-size:13px;color:#475569;margin-bottom:8px">Wir spielen im Käfig und auf der linken Hälfte des großen Platzes.</div>${fstAufwaermZeile(row)?`<div style="font-size:13px;color:#0f172a;margin-bottom:8px">🔥 Aufwärmen: ${fstAufwaermZeile(row)}</div>`:""}<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${felder.map((f,i)=>{const F=_fstF(f.form);return `<span style="font-size:11.5px;font-weight:700;color:#fff;background:${F.farbe};border-radius:20px;padding:5px 11px">${esc(fstFeldName(felder,i))} · ${F.label} · ${F.tore}</span>`;}).join("")}</div>${fstSkizzeFelder(felder)}`)}
     ${cfg.infos?karte("Gut zu wissen",`<div style="font-size:13px;white-space:pre-wrap;line-height:1.6">${esc(cfg.infos)}</div>`):""}
     <button onclick="document.getElementById('fst-info').remove()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:#16a34a;color:#fff;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit">Zurück zum Spielplan</button>
   </div>`;
@@ -2869,6 +2895,12 @@ function _fstPublicRender(wrap,row){
     <div id="fst-uhr"></div>
     ${cfg.startIst&&verzug?`<div style="font-size:11.5px;color:#475569;text-align:center;margin:-2px 0 10px">Die Uhrzeiten unten sind ${verzug>0?"um "+verzug+" Min. nach hinten":"um "+(-verzug)+" Min. nach vorn"} gerückt – so, wie wir wirklich spielen.</div>`:""}
     ${helfer?`<div style="font-size:11.5px;color:#475569;margin:-4px 0 10px;text-align:center">✏️ Ergebnisse antippen und eintragen – freiwillig, es gibt keine Tabelle.</div>`:""}
+
+    ${fstAufwaermen(row).length?`<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+      <div style="font-size:12px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">🔥 Aufwärmen</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:6px">Vor der ersten Runde hat jede Mannschaft ihr eigenes Feld:</div>
+      ${fstAufwaermen(row).map(x=>`<div style="display:flex;gap:8px;align-items:center;padding:3px 0;font-size:13.5px"><span style="min-width:0;flex:1;font-weight:700">${esc(x.verein)}</span><span style="font-weight:800;color:#1e3a8a">${esc(x.feld)}</span></div>`).join("")}
+    </div>`:""}
 
     ${teams.length?`<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
       <div style="font-size:12px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Mannschaften</div>

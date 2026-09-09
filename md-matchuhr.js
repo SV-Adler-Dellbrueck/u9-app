@@ -8,6 +8,11 @@
    Einzelspiele; die alten 20 Minuten mit Halbzeit waren aus der Feldgröße geraten. */
 const MC_DAUER_STD=10, MC_HALBZEITEN_STD=1;
 let mcState=null, mcTickId=null, mcSpieldauer=MC_DAUER_STD, mcHalbzeiten=MC_HALBZEITEN_STD, mcTickerOpen=false, mcDelegateToken=null;
+/* v494 PO: „Der Timer hier steht auf 10 Minuten, in der Festival-Planung sind aber 8 Minuten
+   hinterlegt." Am Festival- oder Heimspieltag ist der Spielplan die Quelle – dieselbe Regel wie
+   bei Feld, Spielform und Runde (v493). mcFestival > 0 heisst: die Spielzeit kommt von dort
+   und wird hier nur angezeigt. */
+let mcFestival=0;
 function mcElapsedSec(mc){
   const paused=mc.paused_ms||0;
   if(mc.clock_status==="running"&&mc.started_at){
@@ -32,18 +37,34 @@ async function mcLoad(){
   const datum=spieltagKey();
   const realDate=spieltagRawDate(); // Spieldauer liegt am echten Termin-Datum, nicht am Team-Key
   try{
-    const [mdRes,tmRes]=await Promise.all([
+    const [mdRes,tmRes,htRes]=await Promise.all([
       fetch(`${SB_URL}/rest/v1/matchday?datum=eq.${encodeURIComponent(datum)}&select=half,clock_status,started_at,paused_ms,ticker_open,delegate_token,spieldauer_min,halbzeiten`,{headers:sbAuthHeaders()}),
-      fetch(`${SB_URL}/rest/v1/termine?datum=eq.${encodeURIComponent(realDate)}&select=spieldauer_min,halbzeiten&order=id.desc&limit=1`,{headers:sbAuthHeaders()})
+      fetch(`${SB_URL}/rest/v1/termine?datum=eq.${encodeURIComponent(realDate)}&select=spieldauer_min,halbzeiten&order=id.desc&limit=1`,{headers:sbAuthHeaders()}),
+      fetch(`${SB_URL}/rest/v1/heimturnier?datum=eq.${encodeURIComponent(realDate)}&select=config,plan&limit=1`,{headers:sbAuthHeaders()})
     ]);
     const mdRows=mdRes.ok?await mdRes.json():[];
     const tmRows=tmRes.ok?await tmRes.json():[];
+    const ht=(htRes.ok?(((await htRes.json())||[])[0]):null)||null;
+    /* Steht fuer den Tag ein Spielplan, gilt dessen Spielzeit – und eine Spielzeit ohne
+       Halbzeit, denn im Festival sind die Runden kurz. */
+    mcFestival=(ht&&typeof fstIst==="function"&&fstIst(ht)&&((ht.plan||[]).length)&&(ht.config||{}).spieldauer)
+      ?Math.max(1,Math.min(45,parseInt(ht.config.spieldauer)||0)):0;
     /* Der Termin ist die Planung und hat Vorrang; matchday faengt die Faelle ohne
        Termin-Eintrag ab (frei getipptes Datum). Aendert der Trainer die Zeit an der Uhr,
        wird beides geschrieben – dann koennen sie gar nicht auseinanderlaufen. */
-    mcSpieldauer=(tmRows[0]&&tmRows[0].spieldauer_min)||(mdRows[0]&&mdRows[0].spieldauer_min)||MC_DAUER_STD;
-    mcHalbzeiten=(tmRows[0]&&tmRows[0].halbzeiten)||(mdRows[0]&&mdRows[0].halbzeiten)||MC_HALBZEITEN_STD;
+    mcSpieldauer=mcFestival||(tmRows[0]&&tmRows[0].spieldauer_min)||(mdRows[0]&&mdRows[0].spieldauer_min)||MC_DAUER_STD;
+    mcHalbzeiten=mcFestival?1:((tmRows[0]&&tmRows[0].halbzeiten)||(mdRows[0]&&mdRows[0].halbzeiten)||MC_HALBZEITEN_STD);
     mcState=mdRows[0]||{half:1,clock_status:"idle",started_at:null,paused_ms:0};
+    /* v495 PO: „Sobald ich auf die Teams klicke, scheint die Spieluhr schon zu laufen. Das soll
+       nicht so sein. Erst wenn der Countdown offiziell gestartet wurde." Am Festivaltag ist der
+       gemeinsame Anpfiff die Quelle: ohne ihn steht die Uhr, egal was in einer alten
+       matchday-Zeile steht (etwa aus einem früheren Spieltag oder einem Probelauf). */
+    if(mcFestival&&typeof fstUhrStand==="function"){
+      const st=fstUhrStand(ht), u=(ht.config||{}).uhr;
+      if(!u||!st||st.phase==="aus")mcState={half:1,clock_status:"idle",started_at:null,paused_ms:0};
+      else if(st.phase==="laeuft")mcState={...mcState,half:1,clock_status:"running",started_at:u.start,paused_ms:0};
+      else mcState={...mcState,half:1,clock_status:"ended",started_at:null,paused_ms:mcSpieldauer*60000};
+    }
     /* v468: Der Ticker ist AUS, bis der Trainer ihn ausdruecklich startet. Frueher war
        ticker_open ein Aus-Schalter (alles ausser false galt als an) – damit gab es keinen
        Moment „wir tickern heute", und die Eltern-Kachel musste raten. */
@@ -102,6 +123,8 @@ function mcRenderLive(){
   const eineZeit=mcHalbzeiten===1;   // U9 spielt oft 1×8 oder 1×10 – dann gibt es keine Halbzeit
   let controls="";
   if(s==="idle") controls=`<button class="btn btn-p" onclick="mcStart()"><i class="ti ti-player-play"></i>Anpfiff</button>`;
+  else if(mcFestival) controls=`<span style="font-size:11.5px;color:var(--text2);align-self:center">läuft mit dem Spielplan</span>
+    <button class="btn btn-sm" onclick="mcPlanOeffnen()"><i class="ti ti-layout-grid"></i>Spielplan</button>`;
   else if(s==="running") controls=`<button class="btn" onclick="mcPause()"><i class="ti ti-player-pause"></i>Unterbrechung</button>`+
     ((!eineZeit&&mcState.half===1)?`<button class="btn" onclick="mcHalftimeStart()"><i class="ti ti-hourglass"></i>Halbzeit</button>`:`<button class="btn btn-d" onclick="mcEnd()"><i class="ti ti-flag"></i>Abpfiff</button>`);
   else if(s==="paused") controls=`<button class="btn btn-p" onclick="mcResume()"><i class="ti ti-player-play"></i>Weiter</button>`;
@@ -119,14 +142,23 @@ function mcRenderLive(){
     <div style="font-size:28px;font-weight:800;min-width:70px">${label}</div>
     <div style="font-size:11px;color:var(--text2)">${phase}</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-left:auto">${controls}</div>
-  </div>`+(einstellbar?`
+  </div>`+((einstellbar&&mcFestival)?`
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:var(--border);font-size:11.5px;color:var(--text2)">
+    <span>Spielzeit <b>${mcSpieldauer} Min.</b> · aus dem Spielplan</span>
+    <button class="btn btn-sm" onclick="mcPlanOeffnen()" style="margin-left:auto"><i class="ti ti-layout-grid"></i>Im Spielplan ändern</button>
+  </div>`:(einstellbar?`
   <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:var(--border);font-size:11.5px;color:var(--text2)">
     <label for="mc-dauer">${mcHalbzeiten===1?"Spielzeit":"Je Halbzeit"}</label>
     <input id="mc-dauer" type="number" min="1" max="45" value="${mcSpieldauer}" onchange="mcSetDauer(this.value)"
       style="width:72px;min-height:44px;padding:8px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;font-size:14px;font-weight:700;text-align:center;background:var(--surface);color:var(--text);box-sizing:border-box">
     <span>Min.</span>
     <span style="margin-left:8px">Halbzeiten</span>${hzBtn(1)}${hzBtn(2)}
-  </div>`:"");
+  </div>`:""));
+}
+function mcPlanOeffnen(){
+  if(typeof teamPlanOeffnen==="function"&&typeof TEAM_PLAN!=="undefined"&&TEAM_PLAN){teamPlanOeffnen();return;}
+  if(typeof htOpen==="function"&&typeof spieltagRawDate==="function")htOpen(spieltagRawDate());
+  else toast("Der Planer lädt noch – gleich nochmal","err");
 }
 /* Schreibt in den Termin (dort plant der Trainer) UND in matchday (dort liest der
    oeffentliche Ticker, der den Termin nicht kennt). Gibt es fuer das Datum keinen Termin,
@@ -141,6 +173,7 @@ async function mcZeitSpeichern(){
   mcSave({spieldauer_min:mcSpieldauer,halbzeiten:mcHalbzeiten});
 }
 function mcSetDauer(v){
+  if(mcFestival){ toast("Die Spielzeit steht im Spielplan","err"); mcRenderLive(); return; }
   const n=Math.max(1,Math.min(45,parseInt(v)||MC_DAUER_STD));
   if(n===mcSpieldauer){ mcRenderLive(); return; }
   mcSpieldauer=n;
@@ -148,6 +181,7 @@ function mcSetDauer(v){
   toast(`Spielzeit: ${n} Min.${mcHalbzeiten===2?" je Halbzeit":""}`);
 }
 function mcSetHalbzeiten(n){
+  if(mcFestival){ toast("Im Festival wird eine Spielzeit ohne Halbzeit gespielt","err"); return; }
   n=(Number(n)===2)?2:1;
   if(n===mcHalbzeiten)return;
   mcHalbzeiten=n;
