@@ -255,14 +255,20 @@ let _spieltagTypen={}, _spieltagHeim={}, _spieltagNamen={};
 function _spieltagTurnierBanner(){
   const b=document.getElementById("spieltag-turnier-banner"); if(!b)return;
   const d=document.getElementById("spieltag-date")?.value||"";
-  b.hidden=(_spieltagTypen[d]!=="turnier");
+  const typ=_spieltagTypen[d], heim=_spieltagHeim[d]===true;
+  /* v490: Auch das Heimspiel wird geplant wie ein kleines Festival – ein Gegner, evtl. mehrere
+     Teams auf beiden Seiten. Nur auswärts bleibt es beim Turnier-Modus. */
+  b.hidden=!(typ==="turnier"||(typ==="spiel"&&heim));
   if(b.hidden)return;
-  const heim=_spieltagHeim[d]===true;
-  b.onclick=heim?(()=>{ if(typeof htOpen==="function")htOpen(d,_spieltagNamen&&_spieltagNamen[d]); else toast("Festival-Planer lädt noch"); })
+  const anlass=(typ==="spiel")?"heimspiel":"festival";
+  b.onclick=heim?(()=>{ if(typeof htOpen==="function")htOpen(d,_spieltagNamen&&_spieltagNamen[d],anlass); else toast("Planer lädt noch"); })
                 :(()=>turnierOpen());
+  const em=b.querySelector("span[style*='font-size:22px']");
+  if(em)em.textContent=!heim?"🏆":(anlass==="heimspiel"?"⚽":"🏟️");
   const t=b.querySelector("span[style*='font-weight:800']"), u=b.querySelector("span[style*='opacity']");
-  if(t)t.textContent=heim?"Festival planen":"Turnier-Modus";
-  if(u)u.textContent=heim?"Vereine, Felder, Spielplan – und teilen":"Mehrere Kurzspiele erfassen – Spielplan & Ergebnisse";
+  if(t)t.textContent=!heim?"Turnier-Modus":(anlass==="heimspiel"?"Heimspiel planen":"Festival planen");
+  if(u)u.textContent=!heim?"Mehrere Kurzspiele erfassen – Spielplan & Ergebnisse"
+      :(anlass==="heimspiel"?"Gegner, Teams, Felder, Spielplan – und teilen":"Vereine, Felder, Spielplan – und teilen");
 }
 // Match-Datum nur aus hinterlegten Spieltagen (termine typ spiel/turnier) wählbar – kein Freitext.
 async function spieltagDatesLoad(preferDatum){
@@ -1548,14 +1554,15 @@ function _htTabelle(plan,idxs,teams){
 }
 /* v476: mit Datum aufgerufen (aus der Anwesenheit eines Heimturnier-Termins) oeffnet sich
    das Turnier dieses Tages direkt – oder das Anlege-Formular steht schon mit Datum und Namen. */
-async function htOpen(datum,name){
+async function htOpen(datum,name,anlass){
+  _htAnlass=anlass||"";
   document.getElementById("hturnier-modal")?.remove();
   const m=document.createElement("div");m.id="hturnier-modal";
   m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Heimturnier");
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{if(e.target===m)m.remove();};
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
-    ${mdlHead("hturnier-modal","🏆","Heimturnier","Wir richten aus – Spielplan erstellen und per Link an alle Trainer","#b45309")}
+    ${mdlHead("hturnier-modal","🏆",_htAnlass==="heimspiel"?"Heimspiel bei uns":"Heimturnier","Wir richten aus – Spielplan erstellen und per Link an alle Trainer","#b45309")}
     <div id="ht-body"><div style="font-size:12px;color:var(--text3)">Lade…</div></div>
   </div>`;
   document.body.appendChild(m);
@@ -1565,7 +1572,8 @@ async function htOpen(datum,name){
     if(vorhanden){ htEdit(vorhanden.id); return; }
     const d=document.getElementById("ht-datum"), n=document.getElementById("ht-name");
     if(d)d.value=datum;
-    if(n&&!n.value)n.value=(String(name||"").replace(/\s*·\s*Heim\s*$/i,"").trim())||("Kinderfestival "+new Date(datum+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}));
+    const tag=new Date(datum+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
+    if(n&&!n.value)n.value=(String(name||"").replace(/\s*·\s*Heim\s*$/i,"").trim())||(_htAnlass==="heimspiel"?("Heimspiel "+tag):("Kinderfestival "+tag));
   }
 }
 async function htListe(){
@@ -1582,7 +1590,7 @@ async function htListe(){
     <div style="font-weight:800;font-size:13px;margin:12px 0 6px">Unsere Turniere</div>
     ${rows.length?rows.map(t=>`<div style="display:flex;align-items:center;gap:8px;border:var(--border-s);border-left:4px solid #b45309;border-radius:12px;padding:10px 12px;margin-bottom:8px">
         <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:800">${esc(t.name)}</div>
-        <div style="font-size:11px;color:var(--text2)">${t.datum?new Date(t.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"})+" · ":""}${(t.teams||[]).length} Teams${((t.config||{}).art==="festival")?" · 🏟️ Festival":""}</div></div>
+        <div style="font-size:11px;color:var(--text2)">${t.datum?new Date(t.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"})+" · ":""}${(t.teams||[]).length} Teams${((t.config||{}).anlass==="heimspiel")?" · ⚽ Heimspiel":((t.config||{}).art==="festival")?" · 🏟️ Festival":""}</div></div>
         <button class="btn btn-sm btn-p" onclick="htEdit(${t.id})">Öffnen</button>
       </div>`).join(""):'<div style="font-size:12px;color:var(--text3)">Noch kein Heimturnier angelegt.</div>'}`;
   return rows;
@@ -1598,22 +1606,27 @@ async function htNeu(btn){
        Finalrunde bleiben lesbar und editierbar, es entstehen nur keine neuen mehr. */
     /* v486: Beginn aus der Uhrzeit des Termins (sonst 10:15), unsere Kinder und Teams aus
        „Teams festlegen" – da sind sie schon erfasst (PO). */
-    let start=FST_START;
-    if(datum){ try{const r=await fetch(`${SB_URL}/rest/v1/termine?datum=eq.${encodeURIComponent(datum)}&typ=in.(spiel,turnier)&select=uhrzeit&limit=1`,{headers:sbAuthHeaders()});if(r.ok){const t=((await r.json())||[])[0];if(t&&t.uhrzeit)start=String(t.uhrzeit).slice(0,5);}}catch(e){} }
+    let start=FST_START, termin=null;
+    if(datum){ try{const r=await fetch(`${SB_URL}/rest/v1/termine?datum=eq.${encodeURIComponent(datum)}&typ=in.(spiel,turnier)&select=uhrzeit,typ,gegner&limit=1`,{headers:sbAuthHeaders()});if(r.ok){termin=((await r.json())||[])[0]||null;if(termin&&termin.uhrzeit)start=String(termin.uhrzeit).slice(0,5);}}catch(e){} }
+    /* v490: Beim Heimspiel steht der Gegner schon im Termin – er kommt als zweiter Verein
+       gleich mit hinein, mit so vielen Teams wie wir. Kinderzahl trägt der Trainer nach. */
+    const anlass=(_htAnlass==="heimspiel"||(termin&&termin.typ==="spiel"))?"heimspiel":"festival";
     const ein=datum?await fstEinteilungLaden(datum):null;
     const adler={name:"SV Adler Dellbrück",kinder:ein&&ein.dabei?ein.dabei:14,teams:ein&&ein.dabei?(ein.teams||fstTeamsVorschlag(ein.dabei,FST_STANDARD_FELDER)):2};
+    const vereine=[adler];
+    if(termin&&termin.gegner)vereine.push({name:termin.gegner,kinder:0,teams:adler.teams});
     const body={slug:_htSlug(),name,datum,ort:(typeof VEREIN_ADRESSE!=="undefined"?VEREIN_ADRESSE:"Thurner Kamp 97, 51069 Köln"),
       edit_code:Math.random().toString(36).slice(2,8),   // v488: Gast-Trainer tragen Ergebnisse ueber den Link ein
-      config:{art:"festival",format:"festival",start,dauer:60,spieldauer:8,wechsel:FST_PAUSE,
+      config:{art:"festival",format:"festival",anlass,start,dauer:60,spieldauer:8,wechsel:FST_PAUSE,
         felder:FST_STANDARD_FELDER.slice(),
-        vereine:[adler],
+        vereine,
         infos:HT_INFOS_VORLAGE},
-      teams:fstTeamsBauen([adler]).map(t=>t.name)};
+      teams:fstTeamsBauen(vereine).map(t=>t.name)};
     const r=await fetch(`${SB_URL}/rest/v1/heimturnier`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=representation'},body:JSON.stringify(body)});
     if(sbCheck401(r))return;
     if(!r.ok){toast(sbDeniedMsg(r,"Konnte nicht anlegen"),"err");return;}
     const row=(await r.json())[0];
-    toast("🏆 Turnier angelegt");
+    toast(anlass==="heimspiel"?"⚽ Heimspiel angelegt":"🏆 Festival angelegt");
     htEdit(row.id);
   }catch(e){toast("Netzwerkfehler","err");}
   finally{if(btn)btn.disabled=false;}
@@ -2059,6 +2072,12 @@ const FST_GRUSS="Schön, dass ihr kommt! Wir freuen uns auf euren Besuch und auf
 const FST_STANDARD_FELDER=[{form:"f4"},{form:"funino"},{form:"funino"},{form:"f4"}];   // v486 PO: „Standard alle 4 Felder anlegen" – Käfig, Funino 1, Funino 2, 4+1 oben
 const FST_START="10:15", FST_PAUSE=5;   // PO: „Beginn ist immer 10:15" · „5 Minuten Trinkpause zwischen den Spielen"
 function fstIst(row){ return ((row||_HT||{}).config||{}).art==="festival"; }
+/* v490 PO: „Das gleiche Vorgehen brauchen wir für jedes Heimspiel, auch wenn es kein Festival
+   ist. Bei einem Heimspiel kommt nur ein Gegner, der stellt aber evtl. mehrere Teams, so wie
+   wir auch." Das ist derselbe Fall mit zwei Vereinen statt vier – also dieselbe Maschine
+   (art bleibt „festival"), nur ein anderes Wort auf den Knöpfen. */
+function fstWort(row){ return (((row||_HT||{}).config||{}).anlass==="heimspiel")?"Heimspiel":"Festival"; }
+let _htAnlass="";
 function _fstF(k){ return FST_FORMEN[k]||FST_FORMEN.funino; }
 /* Feldnamen, wie sie am Platz heissen (PO): das erste 4+1-Feld ist immer der „Käfig",
    das zweite „4+1 oben" (obere Haelfte des grossen Platzes), FUNiño-Felder „Funino 1, 2 …".
@@ -2488,7 +2507,11 @@ function _fstSignal(){
 /* Anpfiff aus dem Festival-Plan. Setzt den Anker, zieht die geplanten Zeiten auf die
    Wirklichkeit nach (die angepfiffene Runde steht ab jetzt) und startet die Match-Uhren. */
 async function fstAnpfiff(runde){
-  if(!_HT)return;
+  /* v490 PO: „Anpfiff dürfen nur die Adler-Trainer, kein externer." Drei Schlösser: der Knopf
+     wird nur im Trainer-Fenster gezeichnet, _HT gibt es nur dort, und die Datenbank lässt das
+     Schreiben von config ohnehin nur angemeldeten Trainern zu (der Gäste-Code kann per
+     RPC ausschliesslich Tore setzen). */
+  if(!_HT||(typeof _htPub!=="undefined"&&_htPub))return;
   const cfg=_fstCfgLesen(), plan=_HT.plan||[];
   const st=fstUhrStand(_HT);
   const r=runde||st.naechste||st.runden[0];
@@ -2589,7 +2612,7 @@ function fstRender(){
       <button class="btn btn-sm" onclick="htShare()" title="Plan an die Gast-Trainer schicken"><i class="ti ti-share"></i>Teilen</button>
     </div>
 
-    <div style="font-size:12px;font-weight:800;margin:14px 0 6px">1 · Wer kommt?</div>
+    <div style="font-size:12px;font-weight:800;margin:14px 0 6px">1 · ${cfg.anlass==="heimspiel"?"Wer spielt mit?":"Wer kommt?"}</div>
     ${vereine.length?vHtml:'<div style="font-size:12px;color:var(--text3);margin-bottom:6px">Noch kein Verein eingetragen.</div>'}
     <div style="font-size:10.5px;color:var(--text3);margin-bottom:6px">Name · angereiste Kinder · Teams (Vorschlag der App, änderbar)</div>
     <div id="fst-gegner" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px"></div>
