@@ -40,7 +40,7 @@ let TEAM_FELDER=[], TEAM_RUNDE=1, TEAM_LEIH={};
    führen (v477: eine Zahl aus zwei Quellen wird zweimal gefragt). Geändert wird im Planer.
    Ohne Spielplan – Auswärtsturnier, freies Spiel – bleibt alles von Hand wie bisher. */
 let TEAM_PLAN=null;
-const FST_ZU_FORM={f4:"4+1",funino:"funino"};
+const FST_ZU_FORM={f4:"4+1",f3:"3+1",funino:"funino"};   // v501: 3+1 aus dem Spielplan
 async function teamPlanLaden(){
   TEAM_PLAN=null;
   if(typeof spieltagRawDate!=="function"||typeof fstIst!=="function")return;
@@ -58,13 +58,16 @@ async function teamPlanLaden(){
   /* Unsere Teams in der Reihenfolge des Plans sind Adler 1, Adler 2 … */
   const unsere=[]; (row.teams||[]).forEach((n,i)=>{ if(/adler/i.test(String(n||"")))unsere.push(i); });
   const von={};
+  /* v502/v504: alle Spiele je Team mit Stand aus unserer Sicht – eine Rechnung (fstAdlerSpiele)
+     für „③ Ergebnisse", den Ticker und das Nachziehen der Ergebnisse. */
+  const spiele=(typeof fstAdlerSpiele==="function")?fstAdlerSpiele(row):{};
   unsere.forEach((idx,k)=>{
     const p=row.plan.find(x=>x.runde===runde&&(x.a===idx||x.b===idx));
     von[k+1]=p?{feldIdx:(p.feld||1)-1,feldName:namen[(p.feld||1)-1]||("Feld "+(p.feld||1)),
                 gegner:(row.teams||[])[p.a===idx?p.b:p.a]||"",zeit:p.zeit||""}
              :{feldIdx:-1,feldName:"",gegner:"",zeit:""};
   });
-  TEAM_PLAN={runde,letzte:runden[runden.length-1],status:(jetzt&&jetzt.status)||"",von,
+  TEAM_PLAN={id:row.id,runde,letzte:runden[runden.length-1],status:(jetzt&&jetzt.status)||"",von,spiele,
     uhr:cfg.uhr||null,spieldauer:Math.max(1,cfg.spieldauer||8),
     datum:row.datum,name:row.name||"",felder:felder.map(f=>FST_ZU_FORM[f.form]||"funino"),feldNamen:namen};
   TEAM_FELDER=TEAM_PLAN.felder.slice(0,4);
@@ -91,6 +94,40 @@ function teamSpielLaeuft(n){
   if(typeof spieltagTeam!=="undefined"&&spieltagTeam===n&&typeof mcState!=="undefined"&&mcState)
     return mcState.clock_status==="running";
   return false;
+}
+/* v504: Die Runde aus dem Spielplan ist das Spiel. Jede Aktion, jedes Ticker-Ereignis und jeder
+   Wechsel trägt sie – ohne Spielplan (Auswärtsturnier, freies Spiel) bleibt sie leer. */
+function teamRundeJetzt(){ return (TEAM_PLAN&&TEAM_PLAN.runde)?TEAM_PLAN.runde:null; }
+/* Tore und Gegentore dieser Runde werden zum Ergebnis im Festival-Plan – gezählt aus der
+   Datenbank (Tore = match_actions, Gegentore = ticker_events), nicht aus dem Gedächtnis dieses
+   Geräts; der Plan wird frisch gelesen und nur dieses eine Spiel geändert. */
+async function teamErgebnisNachziehen(runde){
+  if(!TEAM_PLAN||!TEAM_PLAN.id)return false;
+  const t=(typeof spieltagTeam!=="undefined")?spieltagTeam:1;
+  runde=runde||TEAM_PLAN.runde;
+  const sp=((TEAM_PLAN.spiele||{})[t]||[]).find(p=>p.runde===runde); if(!sp)return false;
+  const key=spieltagKey();
+  let tore=0, gegen=0;
+  try{
+    const [a,b]=await Promise.all([
+      fetch(`${SB_URL}/rest/v1/match_actions?datum=eq.${encodeURIComponent(key)}&aktion=eq.tor&runde=eq.${runde}&select=id`,{headers:sbAuthHeaders()}),
+      fetch(`${SB_URL}/rest/v1/ticker_events?datum=eq.${encodeURIComponent(key)}&typ=eq.gegentor&runde=eq.${runde}&select=id`,{headers:sbAuthHeaders()})
+    ]);
+    if(!a.ok||!b.ok)return false;
+    tore=((await a.json())||[]).length; gegen=((await b.json())||[]).length;
+    const r=await fetch(`${SB_URL}/rest/v1/heimturnier?id=eq.${TEAM_PLAN.id}&select=plan`,{headers:sbAuthHeaders()});
+    if(!r.ok)return false;
+    const plan=((((await r.json())||[])[0]||{}).plan||[]).slice();
+    if(!plan[sp.idx])return false;
+    const p={...plan[sp.idx]};
+    if(sp.seite==="a"){p.ta=tore;p.tb=gegen;}else{p.tb=tore;p.ta=gegen;}
+    plan[sp.idx]=p;
+    const w=await fetch(`${SB_URL}/rest/v1/heimturnier?id=eq.${TEAM_PLAN.id}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify({plan,updated_at:new Date().toISOString()})});
+    if(!w.ok&&w.status!==204)return false;
+  }catch(e){return false;}
+  sp.tore=tore; sp.gegentore=gegen;
+  ergPanelRender();
+  return true;
 }
 function teamPlanOeffnen(){
   if(!TEAM_PLAN)return;
@@ -153,12 +190,14 @@ function teamSpielerId(n){ const k=getKader(n); return k&&k._id; }
 
 /* Kadergröße je Spielform (PO-Vorgabe):
      Funino  – ohne Torwart, 4 Feldspieler
+     3+1     – 1 Torwart + 5 Feldspieler
      4+1     – 1 Torwart + 6 Feldspieler
      5+1     – 1 Torwart + 7 Feldspieler
    Torwart darf nur werden, wer im Kader den Haken "🥅 TW" hat. */
 function teamKader(key){
   key=key||(typeof tbFormation!=="undefined"&&tbFormation)||"4+1";
   if(key==="funino")return {tw:0,feld:4,gesamt:4};
+  if(key==="3+1")   return {tw:1,feld:5,gesamt:6};     // v501: 3 auf dem Feld + 2 zum Wechseln
   if(key==="5+1")   return {tw:1,feld:7,gesamt:8};
   return {tw:1,feld:6,gesamt:7};                 // 4+1
 }
@@ -531,7 +570,6 @@ function spieltagTeamKartenRender(){
   // wenn er in einer der Kacheln haengt.
   const heimat=box.parentElement;
   if(heimat&&inhalt.parentElement!==heimat)heimat.insertBefore(inhalt,box.nextSibling);
-  teamKaderRender();
   if(TEAM_ANZAHL<=1){ box.innerHTML=""; inhalt.hidden=false; teamPhasenLabel(0); return; }
 
   /* Welche Kachel ist offen? TEAM_KARTE_OFFEN=0 heisst: alle zu. Das ist bewusst NICHT
@@ -592,23 +630,6 @@ function spieltagKarteOeffnen(n){
 function teamPhasenLabel(n){
   const txt=(n&&TEAM_ANZAHL>1)?"· Adler "+n:"";
   document.querySelectorAll(".mt-team-tag").forEach(el=>{el.textContent=txt;});
-}
-/* Der Kader DIESES Teams – nur zum Nachsehen. Geändert wird eine Ebene höher unter
-   „Teams festlegen"; hier stünde derselbe Editor sonst mehrfach nebeneinander. */
-function teamKaderRender(){
-  const box=document.getElementById("team-kader-panel"); if(!box)return;
-  const t=(typeof spieltagTeam!=="undefined")?spieltagTeam:1;
-  const namen=(typeof nominierteSpieler==="function")?nominierteSpieler():[];
-  const tr=(TEAM_TRAINER[t]||[]);
-  const kopf=`<div style="font-size:11.5px;color:var(--text2);margin-bottom:8px">${namen.length} Kind${namen.length===1?"":"er"}${TEAM_ANZAHL>1?" in Adler "+t:""} · ${
-    tr.length?"🧢 "+esc(tr.join(", ")):'<span style="color:var(--amber);font-weight:700">noch kein Trainer zugeteilt</span>'}</div>`;
-  if(!namen.length){
-    box.innerHTML=kopf+`<div style="font-size:11.5px;color:var(--text3)">Noch niemand eingeteilt – das passiert oben unter „Teams festlegen".</div>`;
-    return;
-  }
-  box.innerHTML=kopf+`<div style="display:flex;flex-wrap:wrap;gap:6px">${namen.map(n=>
-    `<span style="font-size:12px;background:var(--surface2);border-radius:12px;padding:4px 10px">${getKader(n)&&getKader(n).nr?getKader(n).nr+" ":""}${esc(n)}${istTorwart(n)?" 🥅":""}</span>`).join("")}</div>
-    <button class="btn btn-sm" style="margin-top:10px" onclick="document.getElementById('mt-phase-vor').open=true;document.getElementById('mt-phase-vor').scrollIntoView({behavior:'smooth',block:'start'})"><i class="ti ti-pencil"></i>Einteilung ändern</button>`;
 }
 /* Ein Kind, das gerade auf „dabei" gesetzt wurde, gehört sofort in ein Team.
    PO-Meldung v395: „alle Kinder werden wenn ich sie dabei anklicke unten drunter auf
@@ -857,7 +878,7 @@ function teamsRender(){
   const vorschlag=teamAnzahlVorschlag();
   const leer=!pool.length;
   const flabel=k=>((typeof FORMATIONS!=="undefined"&&FORMATIONS[k])||{label:k}).label;
-  const formen=[["funino","FUNiño"],["4+1","4+1"],["5+1","5+1"]];
+  const formen=[["funino","FUNiño"],["3+1","3+1"],["4+1","4+1"],["5+1","5+1"]];
   const felder=teamFelderAktiv();
   const segBtn=(n)=>`<button class="seg-btn${TEAM_ANZAHL===n?" active":""}" onclick="teamSetAnzahl(${n})" aria-pressed="${TEAM_ANZAHL===n?"true":"false"}">${n}</button>`;
   const chip=(n,t)=>{
@@ -896,6 +917,7 @@ function teamsRender(){
         <button class="btn btn-sm" onclick="teamTrainerOpen(${t})" style="margin-left:auto;${tr.length?"":"color:var(--amber);border-color:var(--amber)"}" aria-label="Trainer für Adler ${t} wählen">🧢 ${tr.length?esc(tr.join(", ")):"Trainer wählen"}</button>
       </div>
       <div style="font-size:11px;color:${zuWenig?"var(--red)":"var(--text2)"};margin:4px 0 8px">${fl}${zuWenig?` – <b>${sp.auf-m.length} zu wenig</b>`:""}${twFehlt?' · <span style="color:var(--red)">kein Torwart-Kind</span>':""}</div>
+      ${(typeof kapitaenWahlHtml==="function")?kapitaenWahlHtml(t,m):""}
       ${!felder?`<div class="seg-ctrl" role="group" aria-label="Spielform Adler ${t}" style="margin-bottom:8px">${formen.map(([k,l])=>`<button class="seg-btn${fk===k?" active":""}" onclick="teamFormSet(${t},'${k}')" aria-pressed="${fk===k?"true":"false"}">${l}</button>`).join("")}</div>`:""}
       <div class="team-chips" style="display:flex;flex-wrap:wrap;gap:6px">${m.length?m.map(n=>chip(n,t)).join(""):'<span style="font-size:12px;color:var(--text3)">noch niemand</span>'}</div>
     </div>`;
@@ -1016,16 +1038,40 @@ function teamInhaltFuellen(){
   // Kapitän und Anstoß dürfen nur Kinder DIESES Teams zur Wahl stellen – die Auswahl
   // muss also jeder Änderung an Nominierung und Einteilung folgen, nicht nur dem Laden.
   if(typeof rollenPanelRender==="function"&&document.getElementById("rollen-panel"))rollenPanelRender();
+  if(typeof aufRender==="function")aufRender();                 // v502: ① Aufstellung
+  ergPanelRender();                                              // v502: ③ Ergebnisse
+  if(typeof berichtPanelRender==="function")berichtPanelRender();   // v502: ③ Bericht und Karte
   if(typeof blitzInit==="function"&&document.getElementById("blitz-panel"))blitzInit();
   if(typeof atRender==="function"&&document.getElementById("action-panel"))atRender(); // Aktions-Chips folgen der Nominierung
   if(typeof mcLoad==="function"&&document.getElementById("mc-panel"))mcLoad();
 }
+/* v502 ③ Ergebnisse: am Festivaltag alle Spiele dieses Teams aus dem Spielplan mit Stand,
+   sonst Tore und Gegentore aus den Live-Aktionen. Eine Anzeige – eingetragen wird im Plan. */
+function ergPanelRender(){
+  const box=document.getElementById("erg-panel"); if(!box)return;
+  const t=(typeof spieltagTeam!=="undefined")?spieltagTeam:1;
+  const spiele=(TEAM_PLAN&&TEAM_PLAN.spiele&&TEAM_PLAN.spiele[t])||[];
+  if(spiele.length){
+    const zeilen=spiele.map(p=>`<div style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--surface2);font-size:12.5px">
+        <span style="font-size:10.5px;font-weight:800;color:var(--text2);white-space:nowrap">Runde ${p.runde}</span>
+        <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">gegen <b>${esc(p.gegner||"?")}</b> <span style="color:var(--text3)">· ${esc(p.feldName||"")}</span></span>
+        <b style="font-size:14px;min-width:44px;text-align:right;color:${p.tore==null?"var(--text3)":"var(--text)"}">${p.tore==null?"–:–":`${p.tore}:${p.gegentore}`}</b>
+      </div>`).join("");
+    const fertig=spiele.filter(p=>p.tore!=null);
+    const summe=fertig.length?`<div style="font-size:11.5px;color:var(--text2);margin-top:6px">${fertig.length} von ${spiele.length} Spielen eingetragen · Tore ${fertig.reduce((a,p)=>a+p.tore,0)}:${fertig.reduce((a,p)=>a+p.gegentore,0)}</div>`:"";
+    box.innerHTML=zeilen+summe+`<button class="btn btn-sm" onclick="teamPlanOeffnen()" style="width:100%;min-height:44px;justify-content:center;margin-top:8px"><i class="ti ti-layout-grid"></i>Ergebnisse im Spielplan eintragen</button>`;
+    return;
+  }
+  const tore=(typeof atTore==="function")?atTore():0, gegen=(typeof atGegentore!=="undefined")?atGegentore:0;
+  box.innerHTML=`<div style="display:flex;align-items:center;gap:10px;font-size:13px"><span style="flex:1">Adler ${t}</span><b style="font-size:22px">${tore} : ${gegen}</b></div>
+    <div style="font-size:10.5px;color:var(--text3);margin-top:4px">Tore und Gegentore aus den Live-Aktionen dieses Spieltags.</div>`;
+}
 function nomApplyToTools(){
   const squad=nominierteSpieler();
-  teamKaderRender();   // reines Zeichnen, kein Netz – läuft immer mit
   if(!rotTimerId){ // laufendes Spiel nicht zerstören – nur setzen, wenn Timer nicht läuft
     rotSeedFromSquad(squad); // Torwart separat, Feldgröße aus Spielform
     rotRenderControls();rotRenderLive();
+    if(typeof aufRender==="function")aufRender();
   }
   teamInhaltFuellen();
 }

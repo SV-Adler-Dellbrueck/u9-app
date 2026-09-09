@@ -239,6 +239,7 @@
   <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:2px 2px 5px">Spielform</div>
   <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">
     <button class="btn btn-sm tb-form-btn" data-form="funino" onclick="taktikSetFormation('funino',this)"><i class="ti ti-triangle"></i>FUNiño</button>
+    <button class="btn btn-sm tb-form-btn" data-form="3+1" onclick="taktikSetFormation('3+1',this)"><i class="ti ti-triangle-inverted"></i>3+1</button>
     <button class="btn btn-p btn-sm tb-form-btn" data-form="4+1" onclick="taktikSetFormation('4+1',this)"><i class="ti ti-diamond"></i>4+1 Raute</button>
     <button class="btn btn-sm tb-form-btn" data-form="5+1" onclick="taktikSetFormation('5+1',this)"><i class="ti ti-pentagon"></i>5+1</button>
     <button class="btn btn-sm" onclick="taktikReset('leer')"><i class="ti ti-refresh"></i>Leeres Feld</button>
@@ -646,16 +647,21 @@
          Kacheln, der Inhalt steht direkt da. -->
     <div id="spieltag-teamkarten"></div>
     <div id="spieltag-teaminhalt">
+    <!-- v502 PO: der Kader-Block mit „Einteilung ändern" war doppelt (das passiert oben unter
+         „Teams festlegen"), der Kapitän wird jetzt ebenfalls dort gewählt. ① zeigt ihn nur
+         und hält die Aufstellung: Torwart, Feld und Bank. ② ist das Spiel: Uhr, Wechsel –
+         Live-Aktionen und Ticker zugeklappt, damit die Wechsel oben stehen. ③ sammelt, was
+         nach dem Spiel kommt: Ergebnisse, Bericht, und ganz zum Schluss das Blitz-Rating. -->
     <details class="el-sect" id="mt-phase-nom">
       <summary><i class="ti ti-user-check"></i>① Vor dem Spiel<span class="mt-team-tag"></span></summary>
       <div>
         <div class="abschnitt">
-          <div class="sl nt"><i class="ti ti-users"></i>Kader dieses Teams</div>
-          <div id="team-kader-panel"></div>
+          <div class="sl nt"><i class="ti ti-copyright"></i>Kapitän</div>
+          <div id="rollen-panel"></div>
         </div>
         <div class="abschnitt">
-          <div class="sl nt"><i class="ti ti-arrows-shuffle"></i>Faire Rollen</div>
-          <div id="rollen-panel"></div>
+          <div class="sl nt"><i class="ti ti-soccer-field"></i>Aufstellung</div>
+          <div id="auf-panel"></div>
         </div>
       </div>
     </details>
@@ -667,24 +673,37 @@
           <div id="mc-panel"></div>
         </div>
         <div class="abschnitt">
-          <div class="sl nt"><i class="ti ti-clock-play"></i>Rotations-Timer (faire Einsatzzeiten)</div>
+          <div class="sl nt"><i class="ti ti-clock-play"></i>Wechseltimer (faire Einsatzzeiten)</div>
           <div id="rot-panel"></div>
         </div>
-        <div class="abschnitt">
-          <div class="sl nt"><i class="ti ti-player-track-next"></i>Live-Aktionen (während des Spiels)</div>
-          <div id="action-panel"></div>
-        </div>
-        <div class="abschnitt">
-          <div class="sl nt"><i class="ti ti-broadcast"></i>Eltern-Liveticker</div>
-          <div id="ticker-panel"></div>
-        </div>
+        <details class="el-sub" id="mt-live-mehr">
+          <summary><i class="ti ti-broadcast"></i>Live-Aktionen &amp; Eltern-Liveticker</summary>
+          <div>
+            <div class="abschnitt">
+              <div class="sl nt"><i class="ti ti-player-track-next"></i>Live-Aktionen (während des Spiels)</div>
+              <div id="action-panel"></div>
+            </div>
+            <div class="abschnitt">
+              <div class="sl nt"><i class="ti ti-broadcast"></i>Eltern-Liveticker</div>
+              <div id="ticker-panel"></div>
+            </div>
+          </div>
+        </details>
       </div>
     </details>
     <details class="el-sect" id="mt-phase-nach">
       <summary><i class="ti ti-bolt"></i>③ Nach dem Spiel<span class="mt-team-tag"></span></summary>
       <div>
         <div class="abschnitt">
-          <div class="sl nt"><i class="ti ti-bolt"></i>Blitz-Rating nach dem Spiel</div>
+          <div class="sl nt"><i class="ti ti-scoreboard"></i>Ergebnisse</div>
+          <div id="erg-panel"></div>
+        </div>
+        <div class="abschnitt">
+          <div class="sl nt"><i class="ti ti-news"></i>Spielbericht &amp; Ergebnis-Karte</div>
+          <div id="bericht-panel"></div>
+        </div>
+        <div class="abschnitt">
+          <div class="sl nt"><i class="ti ti-bolt"></i>Blitz-Rating – ganz zum Schluss</div>
           <div id="blitz-panel"></div>
         </div>
       </div>

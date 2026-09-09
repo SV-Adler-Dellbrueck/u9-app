@@ -161,6 +161,16 @@ function matchReportCopy(){
   if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(done,()=>{ta.select();try{document.execCommand("copy");done();}catch(e){}});}
   else{ta.select();try{document.execCommand("copy");done();}catch(e){}}
 }
+/* v502 PO: „Spielbericht und Ergebnis-Karte gehören eher in Nach dem Spiel." Vorher hingen die
+   beiden Knöpfe im Ticker-Block, sichtbar nur bei laufendem Ticker. */
+function berichtPanelRender(){
+  const box=document.getElementById("bericht-panel"); if(!box)return;
+  box.innerHTML=`<div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" onclick="matchReport()" style="flex:1;min-height:48px;justify-content:center"><i class="ti ti-news"></i>Spielbericht</button>
+      <button class="btn" onclick="ergebnisKarte()" style="flex:1;min-height:48px;justify-content:center"><i class="ti ti-photo"></i>Ergebnis-Karte</button>
+    </div>
+    <div style="font-size:10.5px;color:var(--text3);margin-top:6px">Tore und Gegentore kommen aus den Live-Aktionen; der Bericht fasst den Spieltag dieses Teams zusammen – zum Teilen im Eltern-Chat.</div>`;
+}
 // Teilbare Ergebnis-Karte (Bild): Ergebnis + Torschützen als Social-Card fürs Familien-/Eltern-Chat.
 async function ergebnisKarte(){
   if(!sbToken()){toast("Bitte als Trainer anmelden","err");return;}

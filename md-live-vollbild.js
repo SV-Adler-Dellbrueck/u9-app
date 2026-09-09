@@ -5,10 +5,22 @@
 ═══════════════════════════════════ */
 let atLiveAction=null, atGegentore=0;
 const AT_LIVE_ACTS=[AT_ACTIONS[0],AT_ACTIONS[1],AT_ACTIONS[2],{key:"parade",label:"Parade",col:"#0d9488",emo:"🧤"},AT_ACTIONS[3],{key:"tor",label:"Tor",col:"#7c3aed",emo:"⚽"},{key:"gegentor",label:"Gegentor",col:"#475569",emo:"🛡️",direct:true,wide:true}];
-function atTore(){ return Object.values(atCounts).reduce((s,pl)=>s+(pl.tor||0),0); }
+/* v504: Am Festivaltag zählt das Live-Ergebnis nur die laufende Runde. atTorRunden merkt sich
+   je Tor die Runde (aus der Datenbank und aus den Tipps), atCounts bleibt der Tagesstand für
+   Blitz-Rating und Bericht. Ohne Spielplan ist die Runde leer und alles zählt wie bisher. */
+let atTorRunden=[];
+function atTorMerken(runde){ atTorRunden.push(runde==null?null:Number(runde)); }
+function atTorVergessen(runde){ const i=atTorRunden.lastIndexOf(runde==null?null:Number(runde)); if(i>=0)atTorRunden.splice(i,1); }
+function atRundeJetzt(){ return (typeof teamRundeJetzt==="function")?teamRundeJetzt():null; }
+function atTore(){
+  const r=atRundeJetzt();
+  if(r)return atTorRunden.filter(x=>x===r).length;
+  return Object.values(atCounts).reduce((s,pl)=>s+(pl.tor||0),0);
+}
 async function atLoadGegentore(){
   atGegentore=0;
-  try{ const r=await fetch(`${SB_URL}/rest/v1/ticker_events?datum=eq.${encodeURIComponent(spieltagKey())}&typ=eq.gegentor&select=id`,{headers:sbAuthHeaders()}); if(r.ok)atGegentore=(await r.json()).length; }catch(e){}
+  const r0=atRundeJetzt();
+  try{ const r=await fetch(`${SB_URL}/rest/v1/ticker_events?datum=eq.${encodeURIComponent(spieltagKey())}&typ=eq.gegentor${r0?`&runde=eq.${r0}`:""}&select=id`,{headers:sbAuthHeaders()}); if(r.ok)atGegentore=(await r.json()).length; }catch(e){}
 }
 function atOnFieldPlayers(){
   const onField=[];
@@ -84,7 +96,7 @@ function atLiveRender(){
   const counts=questCountsAll();   // Quests gelten teamübergreifend
   const done=teamQuests.filter(q=>(counts[q.key]||0)>=questZiel(q)).length;
   const top=`<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:#1e293b">
-    <div style="flex:1;font-size:13px;font-weight:800">⚡ Live-Aktion${atLiveAction?"":" · Aktion wählen"}</div>
+    <div style="flex:1;min-width:0;font-size:13px;font-weight:800">⚡ Live-Aktion${atLiveAction?"":" · Aktion wählen"}${(()=>{ const r=atRundeJetzt(); if(!r)return ""; const t=(typeof spieltagTeam!=="undefined")?spieltagTeam:1; const sp=((TEAM_PLAN.spiele||{})[t]||[]).find(p=>p.runde===r); return `<div style="font-size:11px;font-weight:600;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Runde ${r}${sp?` · gegen ${esc(sp.gegner)} · ${esc(sp.feldName)}`:""}</div>`; })()}</div>
     <div title="Ergebnis (Tore:Gegentore)" style="font-size:17px;font-weight:900;padding:3px 12px;background:rgba(255,255,255,.14);border-radius:10px">${atTore()}:${atGegentore}</div>
     <div style="font-size:11px;color:#94a3b8">🏆 ${done}/${teamQuests.length}</div>
     <button onclick="atLiveClose()" aria-label="Schließen" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:22px;cursor:pointer">×</button></div>`;
@@ -175,8 +187,10 @@ async function atTap(aktion){
   const act=atActionsFor(atSel).find(a=>a.key===aktion)||{label:aktion};
   if(!atCounts[atSel])atCounts[atSel]={};
   atCounts[atSel][aktion]=(atCounts[atSel][aktion]||0)+1;
-  const entry={uid:++atUid,id:null,spieler:atSel,aktion,label:act.label};
+  const runde=atRundeJetzt();   // v504: die Runde ist das Spiel
+  const entry={uid:++atUid,id:null,spieler:atSel,aktion,label:act.label,runde};
   atLog.push(entry);
+  if(aktion==="tor")atTorMerken(runde);
   try{navigator.vibrate&&navigator.vibrate(20);}catch(e){}
   atRender();
   // Paedagogik-Filter (Phase 4): nur positive Aktionen speisen den Eltern-Ticker – Undo
@@ -186,8 +200,9 @@ async function atTap(aktion){
   questCheck(); // Team-Quest evtl. gerade geknackt → Confetti + Toast
   const datum=spieltagKey();
   const tid=await terminIdForDatum(datum); // HOTFIX 3-FE: FK-Kopplung für ON DELETE CASCADE
-  const res=await sbQueuedPost("match_actions",{datum,spieler:atSel,aktion,termin_id:tid},"return=representation"); // offline -> Queue
+  const res=await sbQueuedPost("match_actions",{datum,spieler:atSel,aktion,termin_id:tid,runde},"return=representation"); // offline -> Queue
   if(res.ok&&res.res){try{const rows=await res.res.json();if(rows&&rows[0]&&rows[0].id!=null)entry.id=rows[0].id;}catch(e){}}
+  if(aktion==="tor"&&runde&&typeof teamErgebnisNachziehen==="function")teamErgebnisNachziehen(runde);   // v504: Stand in den Plan
 }
 // Undo (Korrektur 2): letzte Aktion am Spielfeldrand zurücknehmen – In-Memory-Zähler
 // runter + die frisch angelegte Supabase-Zeile entfernen (gerade erst erstellt -> Hard-Delete ok).
@@ -200,10 +215,12 @@ async function atUndo(uid){
     if(atCounts[e.spieler][e.aktion]<=0)delete atCounts[e.spieler][e.aktion];
   }
   atLog.splice(i,1);
+  if(e.aktion==="tor")atTorVergessen(e.runde);
   try{navigator.vibrate&&navigator.vibrate(12);}catch(err){}
   atRender();
   if(e.id!=null){
     try{const r=await fetch(`${SB_URL}/rest/v1/match_actions?id=eq.${e.id}`,{method:"DELETE",headers:sbAuthHeaders()});sbCheck401(r);}catch(err){}
+    if(e.aktion==="tor"&&e.runde&&typeof teamErgebnisNachziehen==="function")teamErgebnisNachziehen(e.runde);
   }
 }
 

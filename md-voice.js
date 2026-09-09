@@ -191,13 +191,14 @@ async function vdDelete(id){
 function atCount(sp,ak){return (atCounts[sp]&&atCounts[sp][ak])||0;}
 function atSummary(sp){ if(!atCounts[sp])return ""; return Object.keys(atCounts[sp]).map(k=>atCounts[sp][k]?(AT_EMO[k]||"•")+atCounts[sp][k]:"").filter(Boolean).join(" "); }
 async function atInit(){
-  atCounts={};atSel="";atLog=[];atUid=0;
+  atCounts={};atSel="";atLog=[];atUid=0; if(typeof atTorRunden!=="undefined")atTorRunden=[];
   const datum=spieltagKey();
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/match_actions?datum=eq.${encodeURIComponent(datum)}&select=spieler,aktion`,{headers:sbAuthHeaders()});
+    const r=await fetch(`${SB_URL}/rest/v1/match_actions?datum=eq.${encodeURIComponent(datum)}&select=spieler,aktion,runde`,{headers:sbAuthHeaders()});
     if(!sbCheck401(r)&&r.ok){
       const rows=await r.json();
-      rows.forEach(a=>{if(!atCounts[a.spieler])atCounts[a.spieler]={};atCounts[a.spieler][a.aktion]=(atCounts[a.spieler][a.aktion]||0)+1;});
+      rows.forEach(a=>{if(!atCounts[a.spieler])atCounts[a.spieler]={};atCounts[a.spieler][a.aktion]=(atCounts[a.spieler][a.aktion]||0)+1;
+        if(a.aktion==="tor"&&typeof atTorMerken==="function")atTorMerken(a.runde);});   // v504: Runde je Tor
     }
   }catch(e){}
   await loadTeamConfig(); // editierbare Quests + Belohnung laden
