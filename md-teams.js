@@ -65,6 +65,7 @@ async function teamPlanLaden(){
              :{feldIdx:-1,feldName:"",gegner:"",zeit:""};
   });
   TEAM_PLAN={runde,letzte:runden[runden.length-1],status:(jetzt&&jetzt.status)||"",von,
+    uhr:cfg.uhr||null,spieldauer:Math.max(1,cfg.spieldauer||8),
     datum:row.datum,name:row.name||"",felder:felder.map(f=>FST_ZU_FORM[f.form]||"funino"),feldNamen:namen};
   TEAM_FELDER=TEAM_PLAN.felder.slice(0,4);
   TEAM_RUNDE=runde;
@@ -76,6 +77,20 @@ async function teamPlanNachziehen(){
   if(typeof teamsRender==="function")teamsRender();
   if(typeof spieltagTeamKartenRender==="function")spieltagTeamKartenRender();
   if(typeof spieltagTeam!=="undefined"&&typeof teamFormAnwenden==="function")teamFormAnwenden(spieltagTeam);
+}
+/* v495: Läuft für dieses Team gerade wirklich ein Spiel? Beim Festival sagt das der gemeinsame
+   Anpfiff (Anker + Spielzeit), sonst die Match-Uhr des gewählten Teams. Vorher trug die Kachel
+   „Spiel läuft", sobald man ein Team ANTIPPTE – das las sich wie eine laufende Uhr. */
+function teamSpielLaeuft(n){
+  if(TEAM_PLAN&&TEAM_PLAN.uhr&&TEAM_PLAN.uhr.start){
+    const weg=(Date.now()-new Date(TEAM_PLAN.uhr.start).getTime())/1000;
+    const dauer=Math.max(1,TEAM_PLAN.uhr.dauer||TEAM_PLAN.spieldauer||8)*60;
+    const dabei=TEAM_PLAN.von[n]&&TEAM_PLAN.von[n].feldIdx>=0;
+    return weg>=0&&weg<dauer&&!!dabei;
+  }
+  if(typeof spieltagTeam!=="undefined"&&spieltagTeam===n&&typeof mcState!=="undefined"&&mcState)
+    return mcState.clock_status==="running";
+  return false;
 }
 function teamPlanOeffnen(){
   if(!TEAM_PLAN)return;
@@ -542,7 +557,9 @@ function spieltagTeamKartenRender(){
         style="width:100%;min-height:56px;display:flex;align-items:center;gap:10px;text-align:left;padding:12px 14px;border:none;border-left:4px solid var(--fam-spieltag);background:${auf?"var(--surface2)":"var(--surface)"};color:var(--text);font-family:inherit;cursor:pointer">
         <span style="font-size:20px">⚽</span>
         <span style="flex:1;min-width:0">
-          <span style="display:block;font-size:14px;font-weight:900">Adler ${n}${gewaehlt&&!auf?` <span style="font-size:10px;font-weight:700;color:var(--green);background:var(--green-bg);border-radius:8px;padding:1px 7px;vertical-align:1px">Spiel läuft</span>`:""}</span>
+          <span style="display:block;font-size:14px;font-weight:900">Adler ${n}${teamSpielLaeuft(n)
+            ?` <span style="font-size:10px;font-weight:700;color:var(--green);background:var(--green-bg);border-radius:8px;padding:1px 7px;vertical-align:1px">▶ Spiel läuft</span>`
+            :(gewaehlt&&!auf?` <span style="font-size:10px;font-weight:700;color:var(--text2);background:var(--surface2);border-radius:8px;padding:1px 7px;vertical-align:1px">ausgewählt</span>`:"")}</span>
           <span style="display:block;font-size:11.5px;color:var(--text2)">${kinder} Kind${kinder===1?"":"er"} · ${
             tr.length?esc(tr.join(", ")):'<span style="color:var(--amber);font-weight:700">kein Trainer</span>'}</span>
         </span>

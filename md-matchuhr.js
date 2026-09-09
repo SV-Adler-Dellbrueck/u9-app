@@ -55,6 +55,16 @@ async function mcLoad(){
     mcSpieldauer=mcFestival||(tmRows[0]&&tmRows[0].spieldauer_min)||(mdRows[0]&&mdRows[0].spieldauer_min)||MC_DAUER_STD;
     mcHalbzeiten=mcFestival?1:((tmRows[0]&&tmRows[0].halbzeiten)||(mdRows[0]&&mdRows[0].halbzeiten)||MC_HALBZEITEN_STD);
     mcState=mdRows[0]||{half:1,clock_status:"idle",started_at:null,paused_ms:0};
+    /* v495 PO: „Sobald ich auf die Teams klicke, scheint die Spieluhr schon zu laufen. Das soll
+       nicht so sein. Erst wenn der Countdown offiziell gestartet wurde." Am Festivaltag ist der
+       gemeinsame Anpfiff die Quelle: ohne ihn steht die Uhr, egal was in einer alten
+       matchday-Zeile steht (etwa aus einem früheren Spieltag oder einem Probelauf). */
+    if(mcFestival&&typeof fstUhrStand==="function"){
+      const st=fstUhrStand(ht), u=(ht.config||{}).uhr;
+      if(!u||!st||st.phase==="aus")mcState={half:1,clock_status:"idle",started_at:null,paused_ms:0};
+      else if(st.phase==="laeuft")mcState={...mcState,half:1,clock_status:"running",started_at:u.start,paused_ms:0};
+      else mcState={...mcState,half:1,clock_status:"ended",started_at:null,paused_ms:mcSpieldauer*60000};
+    }
     /* v468: Der Ticker ist AUS, bis der Trainer ihn ausdruecklich startet. Frueher war
        ticker_open ein Aus-Schalter (alles ausser false galt als an) – damit gab es keinen
        Moment „wir tickern heute", und die Eltern-Kachel musste raten. */
@@ -113,6 +123,8 @@ function mcRenderLive(){
   const eineZeit=mcHalbzeiten===1;   // U9 spielt oft 1×8 oder 1×10 – dann gibt es keine Halbzeit
   let controls="";
   if(s==="idle") controls=`<button class="btn btn-p" onclick="mcStart()"><i class="ti ti-player-play"></i>Anpfiff</button>`;
+  else if(mcFestival) controls=`<span style="font-size:11.5px;color:var(--text2);align-self:center">läuft mit dem Spielplan</span>
+    <button class="btn btn-sm" onclick="mcPlanOeffnen()"><i class="ti ti-layout-grid"></i>Spielplan</button>`;
   else if(s==="running") controls=`<button class="btn" onclick="mcPause()"><i class="ti ti-player-pause"></i>Unterbrechung</button>`+
     ((!eineZeit&&mcState.half===1)?`<button class="btn" onclick="mcHalftimeStart()"><i class="ti ti-hourglass"></i>Halbzeit</button>`:`<button class="btn btn-d" onclick="mcEnd()"><i class="ti ti-flag"></i>Abpfiff</button>`);
   else if(s==="paused") controls=`<button class="btn btn-p" onclick="mcResume()"><i class="ti ti-player-play"></i>Weiter</button>`;
