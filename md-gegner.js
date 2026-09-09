@@ -624,7 +624,7 @@ function tmCard(t){
       ${trainerstabNamen(t.trainer_status).map(tn=>{const stt=(t.trainer_status||{})[tn];const bg=stt==="ja"?"#16a34a":stt==="unsicher"?"#ca8a04":stt==="nein"?"#dc2626":"var(--surface2)";const col=stt?"#fff":"var(--text2)";const mk=stt==="ja"?" ✓":stt==="unsicher"?" 🤔":stt==="nein"?" ✕":"";return `<button onclick="tmTrainerToggle(${Number(t.id)},'${tn.replace(/'/g,"")}')" title="Tippen wechselt: dabei → unsicher → nicht dabei → offen" style="border:1px solid var(--rand-bedien);border-radius:12px;padding:2px 8px;font-size:10.5px;font-weight:700;background:${bg};color:${col};cursor:pointer;font-family:inherit">${esc(tn)}${mk}</button>`;}).join("")}
     </div>`:""}
     ${notizClean?`<div style="font-size:11px;color:var(--text3)">${esc(notizClean)}</div>`:""}
-    ${istSpiel?`<div style="display:flex;align-items:center;gap:6px;margin:6px 0"><span style="font-size:11px;color:var(--text2)">Ergebnis:</span><input type="text" value="${esc(t.ergebnis||"")}" placeholder="z. B. 3:2" onchange="tmSetResult(${Number(t.id)},this.value)" style="width:90px;padding:5px 8px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:12px;font-family:inherit"></div>`:""}
+    ${(istSpiel&&t.datum<=new Date().toISOString().slice(0,10))?`<div style="display:flex;align-items:center;gap:6px;margin:6px 0"><span style="font-size:11px;color:var(--text2)">Ergebnis:</span><input type="text" value="${esc(t.ergebnis||"")}" placeholder="z. B. 3:2" onchange="tmSetResult(${Number(t.id)},this.value)" style="width:90px;padding:5px 8px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:12px;font-family:inherit"></div>`:""}
     ${actions}
     </div>
   </div>`;
