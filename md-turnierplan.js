@@ -2625,6 +2625,10 @@ function fstRender(){
       <button class="btn btn-sm" onclick="htShare()" title="Plan an die Gast-Trainer schicken"><i class="ti ti-share"></i>Teilen</button>
     </div>
 
+    ${plan.length?`<details id="fst-vorbereitung" style="margin:12px 0;border:var(--border-s);border-radius:12px;background:var(--surface2)">
+      <summary style="cursor:pointer;min-height:44px;display:flex;align-items:center;padding:0 12px;font-size:12.5px;font-weight:800;color:var(--text2)">⚙️ Vereine, Felder und Zeiten ändern</summary>
+      <div style="padding:2px 12px 12px">`:""}
+
     <div style="font-size:12px;font-weight:800;margin:14px 0 6px">1 · ${cfg.anlass==="heimspiel"?"Wer spielt mit?":"Wer kommt?"}</div>
     ${vereine.length?vHtml:'<div style="font-size:12px;color:var(--text3);margin-bottom:6px">Noch kein Verein eingetragen.</div>'}
     <div style="font-size:10.5px;color:var(--text3);margin-bottom:6px">Name · angereiste Kinder · Teams (Vorschlag der App, änderbar)</div>
@@ -2659,7 +2663,8 @@ function fstRender(){
     </div>
     ${teams.length>1?`<div style="font-size:11.5px;color:var(--text2);margin-bottom:10px">Jeder gegen jeden braucht <b>${bedarf.scheiben} Runden</b> ≈ ${bedarf.minuten} Min.${bedarf.minuten>(cfg.dauer||60)?` – in ${cfg.dauer||60} Min. passen ${Math.max(1,Math.floor(((cfg.dauer||60)+(cfg.wechsel==null?FST_PAUSE:cfg.wechsel))/((cfg.spieldauer||8)+(cfg.wechsel==null?FST_PAUSE:cfg.wechsel))))} Runden.`:" – passt."}</div>`:""}
 
-    <button class="btn btn-p" onclick="fstPlanErstellen()" style="width:100%;min-height:52px"${teams.length<2?" disabled":""}><i class="ti ti-calendar-event"></i>${plan.length?"Spielplan neu erstellen":"Spielplan erstellen"}</button>
+    <button class="btn${plan.length?" btn-sm":" btn-p"}" onclick="fstPlanErstellen()" style="width:100%;min-height:${plan.length?"44":"52"}px"${teams.length<2?" disabled":""}><i class="ti ti-calendar-event"></i>${plan.length?"Spielplan neu erstellen":"Spielplan erstellen"}</button>
+    ${plan.length?`</div></details>`:""}
 
     ${plan.length?`<div style="font-size:12px;font-weight:800;margin:16px 0 6px">4 · Der Plan <span style="font-weight:400;color:var(--text3)">· ${plan.length} Spiele</span></div>
       <div id="fst-uhr" data-rolle="trainer"></div>
@@ -2703,6 +2708,11 @@ async function fstGegnerChips(){
 function fstPlanHtml(plan,teams,felder,gross,tausch,cfg){
   const runden=[...new Set(plan.map(p=>p.runde))].sort((a,b)=>a-b);
   const nm=i=>esc((teams&&teams[i])||("Team "+(i+1)));
+  /* v497 PO: „Schön, wenn nur das nächste anstehende Spiel sichtbar ist und der Rest
+     eingeklappt." Fünf Runden à drei Spielen sind fünfzehn Zeilen; am Platz zählt eine.
+     Offen ist die Runde, die läuft oder als Nächstes drankommt – im Aushang natürlich alles. */
+  const stand=cfg?fstUhrStand({config:cfg,plan}):null;
+  const aktiv=gross?null:((stand&&stand.phase!=="aus")?(stand.phase==="laeuft"?stand.runde:(stand.naechste||stand.runde)):runden[0]);
   /* v488 PO: „Alles verrueckt und in der Summe zu gross" – eine Zeile je Spiel: Feld-Marke,
      Team, Team, Ergebnis. Die Teamnamen bleiben Tasten (zwei antippen = tauschen), aber
      flach und in einem festen Raster; lange Namen werden abgeschnitten statt umzubrechen. */
@@ -2714,16 +2724,21 @@ function fstPlanHtml(plan,teams,felder,gross,tausch,cfg){
     return `<button onclick="fstErgebnis(${pi})" aria-label="Ergebnis eintragen" style="min-height:44px;min-width:48px;padding:0 4px;border:1px solid var(--rand-bedien);border-radius:8px;background:${p.ta!=null?"var(--surface)":"transparent"};color:${p.ta!=null?"var(--text)":"var(--text3)"};font:inherit;font-size:12.5px;font-weight:900;cursor:pointer">${txt}</button>`; };
   return runden.map(r=>{
     const spiele=plan.filter(p=>p.runde===r);
-    return `<div style="border:var(--border-s);border-radius:12px;padding:8px 10px;margin-bottom:6px;background:var(--surface)">
-      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">
-        <span style="font-size:${gross?"15":"12.5"}px;font-weight:900">Runde ${r}</span>
+    const offen=gross||r===aktiv;
+    const kopf=`<span style="font-size:${gross?"15":"12.5"}px;font-weight:900">Runde ${r}</span>
         <span style="font-size:${gross?"13":"11"}px;color:var(--text2)">${esc(fstZeitIst(spiele[0]?spiele[0].zeit:"",cfg))} Uhr</span>
-      </div>
-      ${spiele.map(p=>{const F=_fstF(p.form);return `<div style="display:grid;grid-template-columns:auto minmax(0,1fr) 10px minmax(0,1fr) auto;gap:6px;align-items:center;padding:3px 0;font-size:${gross?"14":"12.5"}px;font-weight:700">
+        ${offen?"":`<span style="margin-left:auto;font-size:10.5px;color:var(--text3)">${spiele.length} Spiel${spiele.length===1?"":"e"}${spiele.every(p=>p.ta!=null)?" · fertig":""}</span>`}`;
+    const zeilen=spiele.map(p=>{const F=_fstF(p.form);return `<div style="display:grid;grid-template-columns:auto minmax(0,1fr) 10px minmax(0,1fr) auto;gap:6px;align-items:center;padding:3px 0;font-size:${gross?"14":"12.5"}px;font-weight:700">
         <span style="font-size:${gross?"11":"9.5"}px;font-weight:800;color:#fff;background:${F.farbe};border-radius:6px;padding:3px 6px;white-space:nowrap">${esc(fstFeldName(felder,(p.feld||1)-1))}</span>
         ${tn(p,"a")}<span style="color:var(--text3);font-weight:400;text-align:center">–</span>${tn(p,"b")}
         ${erg(p)}
-      </div>`;}).join("")}
+      </div>`;}).join("");
+    if(!offen)return `<details style="border:var(--border-s);border-radius:12px;margin-bottom:6px;background:var(--surface)">
+      <summary style="cursor:pointer;min-height:44px;display:flex;align-items:baseline;gap:8px;padding:10px">${kopf}</summary>
+      <div style="padding:0 10px 8px">${zeilen}</div></details>`;
+    return `<div style="border:var(--border-s);border-radius:12px;padding:8px 10px;margin-bottom:6px;background:var(--surface)${aktiv===r&&!gross?";border-color:var(--blue)":""}">
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">${kopf}</div>
+      ${zeilen}
     </div>`;
   }).join("");
 }
@@ -2917,20 +2932,25 @@ function _fstPublicRender(wrap,row){
 
     ${runden.length?runden.map(r=>{
       const spiele=plan.filter(p=>p.runde===r);
-      const aktiv=jetzt&&jetzt.runde===r;
-      return `<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)${aktiv?";border:2px solid #16a34a":""}">
-        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;border-bottom:1px solid #e2e8f0;padding-bottom:6px">
-          <span style="font-size:16px;font-weight:900">Runde ${r}</span>
+      /* v497: offen ist nur die Runde, die läuft oder als Nächstes kommt – der Rest klappt auf. */
+      const aktiv=jetzt?jetzt.runde===r:r===runden[0];
+      const kopf=`<span style="font-size:16px;font-weight:900">Runde ${r}</span>
           <span style="font-size:13px;color:#475569;font-weight:700">${esc(fstZeitIst(spiele[0]?spiele[0].zeit:"",cfg))} Uhr</span>
-          ${aktiv?`<span style="margin-left:auto;font-size:11px;font-weight:800;color:#166534;background:#dcfce7;border-radius:10px;padding:2px 8px">${jetzt.status==="laeuft"?"▶ läuft":"als Nächstes"}</span>`:""}
-        </div>
-        ${spiele.map(p=>{const F=_fstF(p.form); const mi=plan.indexOf(p); const erg=p.ta!=null?`${p.ta} : ${p.tb}`:"– : –";
+          ${aktiv&&jetzt?`<span style="margin-left:auto;font-size:11px;font-weight:800;color:#166534;background:#dcfce7;border-radius:10px;padding:2px 8px">${jetzt.status==="laeuft"?"▶ läuft":"als Nächstes"}</span>`
+            :(aktiv?"":`<span style="margin-left:auto;font-size:11px;color:#94a3b8">${spiele.length} Spiel${spiele.length===1?"":"e"}${spiele.every(p=>p.ta!=null)?" · fertig":""}</span>`)}`;
+      const zeilen=spiele.map(p=>{const F=_fstF(p.form); const mi=plan.indexOf(p); const erg=p.ta!=null?`${p.ta} : ${p.tb}`:"– : –";
           return `<div style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:6px 0">
           <span style="font-size:10px;font-weight:800;color:#fff;background:${F.farbe};border-radius:7px;padding:3px 7px;min-width:52px;text-align:center;white-space:nowrap">${esc(fstFeldName(felder,(p.feld||1)-1))}</span>
           <span style="min-width:0;font-size:14px;font-weight:700;line-height:1.3">${nm(p.a)} <span style="color:#94a3b8;font-weight:400">gegen</span> ${nm(p.b)}</span>
           ${helfer?`<button onclick="htPubEdit(${mi})" aria-label="Ergebnis eintragen" style="min-height:44px;min-width:64px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;font-family:inherit;font-weight:900;font-size:13px;cursor:pointer;color:${p.ta!=null?"#0f172a":"#94a3b8"}">${erg}</button>`
                   :`<span style="font-size:14px;font-weight:900;color:${p.ta!=null?"#0f172a":"#cbd5e1"};min-width:44px;text-align:center">${erg}</span>`}
-        </div>`;}).join("")}
+        </div>`;}).join("");
+      if(!aktiv)return `<details style="background:#fff;border-radius:14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+        <summary style="cursor:pointer;min-height:48px;display:flex;align-items:center;gap:8px;padding:12px 14px">${kopf}</summary>
+        <div style="padding:0 14px 12px">${zeilen}</div></details>`;
+      return `<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)${jetzt?";border:2px solid #16a34a":""}">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;border-bottom:1px solid #e2e8f0;padding-bottom:6px">${kopf}</div>
+        ${zeilen}
       </div>`;}).join("")
       :'<div style="background:#fff;border-radius:14px;padding:20px;text-align:center;color:#64748b;font-size:13px">Der Spielplan wird gerade erstellt.</div>'}
 
