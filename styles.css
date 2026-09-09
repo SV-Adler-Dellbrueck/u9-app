@@ -922,6 +922,14 @@ details.el-sect>summary{cursor:pointer;font-weight:800;font-size:12px;text-trans
 details.el-sect>summary::-webkit-details-marker{display:none}
 details.el-sect>summary::after{content:"▾ mehr";margin-left:auto;font-size:11px;color:#94a3b8;text-transform:none;letter-spacing:0;font-weight:700}
 details.el-sect[open]>summary::after{content:"▴ weniger"}
+/* v502: zugeklappter Unterblock in einer Phase (Live-Aktionen & Ticker) – gleiche Deckelzeile,
+   eine Stufe leiser, damit die Wechsel oben stehen und der Ticker nicht den Platz frisst. */
+details.el-sub{margin:4px 0 12px;border:var(--border-s);border-radius:12px;background:var(--surface2)}
+details.el-sub>summary{cursor:pointer;list-style:none;min-height:44px;display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:12px;font-weight:800;color:var(--text2)}
+details.el-sub>summary::-webkit-details-marker{display:none}
+details.el-sub>summary::after{content:"▾ mehr";margin-left:auto;font-size:11px;color:var(--text3);font-weight:700}
+details.el-sub[open]>summary::after{content:"▴ weniger"}
+details.el-sub>div{padding:0 8px 4px}
 /* „· Adler 2" hinter den Phasen-Titeln: macht sichtbar, dass Uhr, Ticker und Blitz-Rating
    zu DIESEM Team gehören. Bei einem einzigen Team bleibt der Text leer und die Regel
    greift ins Leere – deshalb kein Trennzeichen im CSS. */

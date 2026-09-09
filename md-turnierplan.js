@@ -335,80 +335,93 @@ async function recoveryLoad(){
 /* Kapitäns-Tracker (Phase 17.2): jedes Kind soll mal die Binde tragen. Die App führt
    Buch (Zählung über alle Spiele) und meldet den Kapitän live in den Eltern-Ticker.
    Kapitän = match_actions-Zeile aktion='kapitaen'; genau einer je Spiel. */
-let matchKapitaen=null, KAP_COUNT={};
+/* v502 PO: „Die Wahl des Kapitäns legen wir zukünftig unter Teams festlegen mit fest, und der
+   bleibt dann für den ganzen Spieltag Kapitän." KAP_HEUTE: {team → Name} für alle Teams des
+   Tages – gespeichert wie bisher je Team-Schlüssel („<datum>", „<datum>__t2"), gezählt über
+   alle Spiele, damit jedes Mal ein Kind dran ist, das noch nicht dran war. */
+let matchKapitaen=null, KAP_COUNT={}, KAP_HEUTE={};
+function _kapKey(t){ const d=spieltagRawDate(); return t>1?`${d}__t${t}`:d; }
 async function kapitaenLoad(){
-  matchKapitaen=null; KAP_COUNT={};
-  const datum=spieltagKey();
+  matchKapitaen=null; KAP_COUNT={}; KAP_HEUTE={};
+  const tag=spieltagRawDate();
   try{
     const r=await fetch(`${SB_URL}/rest/v1/match_actions?aktion=eq.kapitaen&select=spieler,datum&order=created_at.desc`,{headers:sbAuthHeaders()});
     if(sbCheck401(r)||!r.ok)return;
     (await r.json()).forEach(x=>{
       KAP_COUNT[x.spieler]=(KAP_COUNT[x.spieler]||0)+1;
-      if(x.datum===datum&&!matchKapitaen)matchKapitaen=x.spieler; // jüngster für dieses Spiel
+      const m=/^(\d{4}-\d{2}-\d{2})(?:__t(\d+))?$/.exec(String(x.datum||""));
+      if(m&&m[1]===tag){ const t=m[2]?parseInt(m[2]):1; if(!KAP_HEUTE[t])KAP_HEUTE[t]=x.spieler; }   // jüngster je Team
     });
   }catch(e){}
+  matchKapitaen=KAP_HEUTE[(typeof spieltagTeam!=="undefined"?spieltagTeam:1)]||null;
+}
+/* Die Kapitänswahl in der Team-Karte unter „Teams festlegen": eine Auswahl je Team, sortiert
+   nach „wer war am seltensten dran", Sterne für die, die noch nie die Binde hatten. */
+function kapitaenWahlHtml(t,namen){
+  if(!namen||!namen.length)return "";
+  const cur=KAP_HEUTE[t]||null;
+  const nie=namen.filter(n=>!(KAP_COUNT[n]>0));
+  const opts=namen.slice().sort((a,b)=>(KAP_COUNT[a]||0)-(KAP_COUNT[b]||0)).map(n=>`<option value="${esc(n)}"${n===cur?" selected":""}>${getKader(n)?.nr?getKader(n).nr+" ":""}${esc(n)} · ${(KAP_COUNT[n]||0)===0?"noch nie ⭐":(KAP_COUNT[n]+"×")}</option>`).join("");
+  return `<div style="display:flex;align-items:center;gap:8px;margin:0 0 6px">
+      <span style="font-size:12px;font-weight:700;white-space:nowrap">©️ Kapitän</span>
+      <select onchange="if(this.value)kapitaenSet(this.value,${t})" aria-label="Kapitän Adler ${t}" style="flex:1;min-width:0;min-height:44px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;font-size:12.5px;background:var(--surface2);color:var(--text)">${cur?"":'<option value="">wählen …</option>'}${opts}</select>
+    </div>
+    ${nie.length?`<div style="font-size:10.5px;color:var(--text2);margin:-2px 0 8px">Noch nie dran ⭐: ${nie.map(esc).join(", ")}</div>`:`<div style="font-size:10.5px;color:var(--green);margin:-2px 0 8px">Alle waren schon mal Kapitän – die Auswahl beginnt bei den seltensten.</div>`}`;
 }
 /* B2 – Faire Rollen: „jeder mal dran" – mit einer Fairness-Übersicht, wer die Rolle noch nie
    hatte (⭐). v496 PO: „Die Rolle Anstoß können wir rausnehmen." Es blieb der Kapitän; die
    Anstoß-Rolle war eine zweite Auswahl mit denselben Namen und derselben Sternliste, und wer
    anstößt, entscheidet sich am Feld ohnehin in zehn Sekunden. Alte match_actions-Zeilen mit
    aktion="anstoss" bleiben unangetastet liegen – sie stören nichts und niemand liest sie mehr. */
+/* v502: In der Kachel wird der Kapitän nur noch ANGEZEIGT – gewählt wird oben in der Team-Karte
+   unter „Teams festlegen" (kapitaenWahlHtml). Vorher stand hier die Auswahl, und der Kader-Block
+   daneben war ein zweiter Editor für dieselbe Einteilung (PO: „überflüssig"). */
 async function rollenPanelRender(){
   const box=document.getElementById("rollen-panel"); if(!box)return;
-  /* Nur die Kinder DIESES Teams. Der frühere Rückfall auf den ganzen Kader war gut
-     gemeint, aber hier falsch: die Rollen wohnen in der Team-Kachel, und ein Kapitän aus
-     einem anderen Team steht am Spielfeldrand. Ist das Team leer, sagt das Panel das –
-     eine Auswahl über 16 Namen wäre nur eine Falle. */
+  const t=(typeof spieltagTeam!=="undefined")?spieltagTeam:1;
   const squad=(typeof nominierteSpieler==="function")?nominierteSpieler():[];
   if(!squad.length){
     box.innerHTML=`<div style="font-size:11.5px;color:var(--text3)">Noch niemand in diesem Team – erst oben unter „Teams festlegen“ einteilen.</div>`;
     return;
   }
-  const nie=(cnt)=>squad.filter(n=>!(cnt[n]>0));
-  const opts=(cnt,cur)=>squad.slice().sort((a,b)=>(cnt[a]||0)-(cnt[b]||0)).filter(n=>n!==cur).map(n=>`<option value="${esc(n)}">${getKader(n)?.nr?getKader(n).nr+" ":""}${esc(n)} · ${(cnt[n]||0)===0?"noch nie ⭐":(cnt[n]||0)+"×"}</option>`).join("");
-  const row=(icon,label,cnt,cur,setFn)=>{
-    const offen=nie(cnt);
-    return `<div style="background:var(--surface);border:var(--border-s);border-radius:12px;padding:10px 12px;margin-bottom:8px">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="flex:1;font-size:12.5px;font-weight:700">${icon} ${label}${cur?`: <span style="color:var(--blue)">${esc(cur)}</span>`:""}</span>
-        <select onchange="if(this.value)${setFn}(this.value)" style="padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;font-size:12px;background:var(--surface2);color:var(--text)"><option value="">${cur?"wechseln…":"wählen…"}</option>${opts(cnt,cur)}</select>
-      </div>
-      ${offen.length?`<div style="font-size:10.5px;color:var(--text2);margin-top:5px">Noch nie dran ⭐: ${offen.map(esc).join(", ")}</div>`:`<div style="font-size:10.5px;color:var(--green);margin-top:5px">Alle waren schon dran – fair verteilt ✓</div>`}
-    </div>`;
-  };
-  box.innerHTML=`<div style="font-size:10.5px;color:var(--text3);margin-bottom:6px">Damit jedes Kind mal die besondere Rolle bekommt.</div>`+
-    row("©️","Kapitän",(typeof KAP_COUNT!=="undefined"?KAP_COUNT:{}),(typeof matchKapitaen!=="undefined"?matchKapitaen:null),"kapitaenSet");
+  box.innerHTML=kapitaenRow()+`<button class="btn btn-sm" onclick="kapitaenZurWahl(${t})" style="min-height:44px"><i class="ti ti-list-check"></i>${KAP_HEUTE[t]?"Kapitän ändern":"Kapitän wählen"} – unter „Teams festlegen“</button>`;
 }
-async function kapitaenSet(name){
+function kapitaenZurWahl(t){
+  const vor=document.getElementById("mt-phase-vor"); if(vor)vor.open=true;
+  const karte=document.querySelector(`.team-karte[data-team="${t}"]`)||vor;
+  if(karte)karte.scrollIntoView({behavior:"smooth",block:"start"});
+  const sel=karte&&karte.querySelector("select[aria-label^='Kapitän']"); if(sel)setTimeout(()=>sel.focus(),350);
+}
+async function kapitaenSet(name,t){
   if(!name)return;
-  const datum=spieltagKey();
-  // genau ein Kapitän je Spiel: alten Eintrag dieses Datums entfernen
+  t=t||((typeof spieltagTeam!=="undefined")?spieltagTeam:1);
+  const datum=_kapKey(t);
+  // genau ein Kapitän je Team und Spieltag: alten Eintrag dieses Schlüssels entfernen
   try{ await fetch(`${SB_URL}/rest/v1/match_actions?datum=eq.${encodeURIComponent(datum)}&aktion=eq.kapitaen`,{method:"DELETE",headers:sbAuthHeaders()}); }catch(e){}
-  if(KAP_COUNT[matchKapitaen])KAP_COUNT[matchKapitaen]--; // Zähler des alten zurück
-  matchKapitaen=name;
+  const alt=KAP_HEUTE[t]; if(alt&&KAP_COUNT[alt])KAP_COUNT[alt]--; // Zähler des alten zurück
+  KAP_HEUTE[t]=name;
+  if(t===((typeof spieltagTeam!=="undefined")?spieltagTeam:1))matchKapitaen=name;
   KAP_COUNT[name]=(KAP_COUNT[name]||0)+1;
   try{navigator.vibrate&&navigator.vibrate(30);}catch(e){}
   terminIdForDatum(datum).then(tid=>sbQueuedPost("match_actions",{datum,spieler:name,aktion:"kapitaen",termin_id:tid}));
-  tickerPush(name,"kapitaen");   // Highlight für die Eltern
-  toast(`©️ ${name} ist heute Kapitän`);
-  rotRenderLive();          // Anzeige im Rotations-Timer
-  rollenPanelRender();      // und die Zeile bei den fairen Rollen
+  if(matchKapitaen===name&&typeof tickerPush==="function")tickerPush(name,"kapitaen");   // Highlight für die Eltern (läuft nur bei offenem Ticker)
+  toast(`©️ ${name} ist heute Kapitän von Adler ${t}`);
+  if(typeof teamsRender==="function")teamsRender();   // die Auswahl in der Team-Karte
+  rollenPanelRender();                                 // und die Anzeige in der Kachel
 }
-/* Kapitäns-Zeile im Rotations-Timer: nur noch ANZEIGE.
-   PO-Meldung v396: „es gibt den Auswahl für Kapitän auch 2 x." Stimmt – einmal unter
-   „Faire Rollen" (① Vor dem Spiel) und einmal hier. Zwei Auswahlfelder für dieselbe
-   Entscheidung, mit unterschiedlichen Namenslisten obendrein: hier kam sie aus Feld und
-   Bank des Rotations-Timers, dort aus dem Team-Kader. Gewählt wird jetzt nur noch bei
-   den fairen Rollen; hier steht, wer es geworden ist, damit man es während des Spiels
-   sieht ohne hochzuscrollen. */
+/* Kapitäns-Zeile: nur ANZEIGE (PO v396: „es gibt die Auswahl für Kapitän auch 2 x" – zwei
+   Auswahlfelder für dieselbe Entscheidung waren eine Falle). Seit v502 wohnt die Wahl in der
+   Team-Karte unter „Teams festlegen"; hier steht, wer es geworden ist. */
 function kapitaenRow(){
-  if(matchKapitaen){
-    const n=KAP_COUNT[matchKapitaen]||1;
+  const t=(typeof spieltagTeam!=="undefined")?spieltagTeam:1;
+  const kap=(typeof KAP_HEUTE!=="undefined"&&KAP_HEUTE[t])||matchKapitaen;
+  if(kap){
+    const n=KAP_COUNT[kap]||1;
     return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:var(--r);font-size:12.5px;color:#3730a3;margin-bottom:10px">
-      ©️ <strong>Kapitän: ${esc(matchKapitaen)}</strong><span style="font-size:10px;color:#6366f1">${n}. Mal</span></div>`;
+      ©️ <strong>Kapitän: ${esc(kap)}</strong><span style="font-size:10px;color:#6366f1">${n}. Mal</span></div>`;
   }
   return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f5f3ff;border:1px dashed #c7d2fe;border-radius:var(--r);font-size:12.5px;color:#4338ca;margin-bottom:10px">
-    ©️ <span>Noch kein Kapitän – unter „① Vor dem Spiel“ bei den fairen Rollen wählen.</span></div>`;
+    ©️ <span>Noch kein Kapitän – oben unter „Teams festlegen“ in der Team-Karte wählen.</span></div>`;
 }
 /* Die Nominierung gehoert seit v393 dem SPIELTAG, nicht dem einzelnen Team: „wer ist heute
    ueberhaupt dabei". Sie liegt unter „<datum>__nom" – dieselbe Tabelle, dieselben Rechte,
@@ -2460,6 +2473,31 @@ async function fstErgLoeschen(i){
    Adler-Teams dieser Runde, damit Ticker und Wechsel dieselbe Zeit zeigen.
    Kacheln: nach Ablauf zählt die Trinkpause rückwärts · Ton und Vibration auf dem
    Gerät, das angepfiffen hat · alle Adler-Teams der Runde starten mit. */
+/* v504: Unsere Spiele je Adler-Team aus einer heimturnier-Zeile – für „Teams festlegen",
+   „③ Ergebnisse", den Trainer-Ticker und den Eltern-Ticker dieselbe Rechnung. Adler 1 ist das
+   erste Team im Plan, das „Adler" heisst, Adler 2 das zweite. Je Spiel: Runde, Gegner, Feld,
+   Seite (a/b) und der Stand aus unserer Sicht. */
+function fstAdlerSpiele(row){
+  const plan=(row&&row.plan)||[], teams=(row&&row.teams)||[], cfg=(row&&row.config)||{};
+  const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
+  const namen=felder.map((f,i)=>fstFeldName(felder,i));
+  const spiele={};
+  const unsere=[]; teams.forEach((n,i)=>{ if(/adler/i.test(String(n||"")))unsere.push(i); });
+  unsere.forEach((idx,k)=>{
+    spiele[k+1]=plan.map((x,i)=>({x,i})).filter(({x})=>x.a===idx||x.b===idx).map(({x,i})=>({
+      idx:i,runde:x.runde,zeit:x.zeit||"",feld:x.feld||1,feldName:namen[(x.feld||1)-1]||("Feld "+(x.feld||1)),
+      seite:x.a===idx?"a":"b",gegner:teams[x.a===idx?x.b:x.a]||"",
+      tore:x.ta==null?null:(x.a===idx?x.ta:x.tb),gegentore:x.ta==null?null:(x.a===idx?x.tb:x.ta)}));
+  });
+  return spiele;
+}
+/* Ticker-Ereignisse in Absätze je Spiel: [{runde, spiel, events}] – neueste Runde zuerst,
+   Ereignisse ohne Runde (alte Zeilen, Eltern-Helfer ohne Plan) in einem Absatz ohne Kopf. */
+function tickerAbsaetze(events,spiele){
+  const gruppen=[], je={};
+  (events||[]).forEach(e=>{ const r=e.runde==null?0:Number(e.runde); if(!je[r]){je[r]={runde:r,spiel:(spiele||[]).find(p=>p.runde===r)||null,events:[]};gruppen.push(je[r]);} je[r].events.push(e); });
+  return gruppen.sort((a,b)=>b.runde-a.runde);
+}
 let _fstAudio=null, _fstSignalFuer=null, _fstUhrTimer=null, _fstUhrMarke="";
 function _fstMmSs(sec){ sec=Math.max(0,Math.round(sec)); return Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0"); }
 function fstUhrStand(row){

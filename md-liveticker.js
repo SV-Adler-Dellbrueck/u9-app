@@ -44,7 +44,9 @@ async function tickerPush(name,typ){
   // Offline-fest: matchday-Upsert (FK-Ziel) zuerst, dann ticker_events – bei Netzausfall
   // landen beide in Reihenfolge in der Sync-Queue und werden bei Netz nachgespielt.
   await sbQueuedPost("matchday?on_conflict=datum",{datum},"resolution=merge-duplicates");
-  await sbQueuedPost("ticker_events",{datum,text,typ,minute,source:"trainer"});
+  const runde=(typeof teamRundeJetzt==="function")?teamRundeJetzt():null;   // v504: die Runde ist das Spiel
+  await sbQueuedPost("ticker_events",{datum,text,typ,minute,source:"trainer",runde});
+  if(typ==="gegentor"&&runde&&typeof teamErgebnisNachziehen==="function")teamErgebnisNachziehen(runde);
   tickerRenderFeed();
 }
 function tickerToggle(){
@@ -80,7 +82,10 @@ function tickerGoal(){
   tickerPush(atSel,"tor");
   // Torschütze zusätzlich als Aktion sichern → Datenquelle für Spielbericht (8-G) + Live-Quest (8-F).
   if(typeof atCounts==="object"){ if(!atCounts[atSel])atCounts[atSel]={}; atCounts[atSel].tor=(atCounts[atSel].tor||0)+1; }
-  {const _d=spieltagKey(),_s=atSel; terminIdForDatum(_d).then(tid=>sbQueuedPost("match_actions",{datum:_d,spieler:_s,aktion:"tor",termin_id:tid}));} // HOTFIX 3-FE
+  {const _d=spieltagKey(),_s=atSel,_r=(typeof teamRundeJetzt==="function")?teamRundeJetzt():null;
+    if(typeof atTorMerken==="function")atTorMerken(_r);
+    terminIdForDatum(_d).then(tid=>sbQueuedPost("match_actions",{datum:_d,spieler:_s,aktion:"tor",termin_id:tid,runde:_r}))
+      .then(()=>{ if(_r&&typeof teamErgebnisNachziehen==="function")teamErgebnisNachziehen(_r); });} // HOTFIX 3-FE · v504 Runde
   if(typeof atRender==="function")atRender();
   if(typeof questCheck==="function")questCheck();
 }
@@ -118,11 +123,6 @@ function tickerRenderControls(){
          Frage aufkommt: direkt nachdem der Ticker gestartet ist. -->
     <button onclick="tickerShareDelegateLink()" style="width:100%;min-height:52px;margin-bottom:10px;border:1.5px dashed var(--rand-bedien);border-radius:12px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">🙋 Jemand anderen tickern lassen</button>
     <div style="font-size:10.5px;color:var(--text3);margin:-6px 0 10px">Schickt einen Link per WhatsApp oder Mail. Wer ihn öffnet, sieht nur die Kinder von heute und die Aktionsknöpfe – keine Bewertungen, keine Kaderdaten. Er gilt nur, solange der Ticker läuft.</div>`:""}
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
-      <button class="btn btn-sm" onclick="matchReport()"><i class="ti ti-news"></i>Spielbericht</button>
-      <button class="btn btn-sm" onclick="ergebnisKarte()"><i class="ti ti-photo"></i>Ergebnis-Karte</button>
-      <span style="font-size:10px;color:var(--text3)">Tore &amp; Gegentore kommen automatisch aus der Live-Aktion.</span>
-    </div>
     <div id="ticker-feed" style="font-size:11.5px;color:var(--text2)"></div>`;
   tickerRenderFeed();
 }
@@ -131,13 +131,22 @@ async function tickerRenderFeed(){
   if(!box)return;
   const datum=spieltagKey();
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/ticker_events?datum=eq.${encodeURIComponent(datum)}&select=id,text,typ,minute,source,created_at&order=created_at.desc&limit=8`,{headers:sbAuthHeaders()});
+    const r=await fetch(`${SB_URL}/rest/v1/ticker_events?datum=eq.${encodeURIComponent(datum)}&select=id,text,typ,minute,source,runde,created_at&order=created_at.desc&limit=12`,{headers:sbAuthHeaders()});
     if(!r.ok){box.innerHTML="";return;}
     const rows=await r.json();
-    box.innerHTML=rows.length?rows.map(e=>`<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--surface2)">
+    const zeile=e=>`<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--surface2)">
       <span style="flex:1">${e.minute?`<strong>${esc(e.minute)}</strong> `:""}${esc(e.text)}${e.source==="delegate"?' <span style="opacity:.6">(Eltern-Helfer)</span>':""}</span>
-      <button onclick="tickerDelete(${Number(e.id)},'${jsq(e.text||"")}')" title="Ticker-Eintrag löschen" aria-label="Löschen" style="border:none;background:transparent;cursor:pointer;color:#dc2626;font-size:13px;line-height:1;padding:2px 4px"><i class="ti ti-trash"></i></button>
-    </div>`).join(""):'<div style="color:var(--text3)">Noch keine Ticker-Einträge.</div>';
+      <button onclick="tickerDelete(${Number(e.id)},'${jsq(e.text||"")}')" title="Ticker-Eintrag löschen" aria-label="Löschen" style="border:none;background:transparent;cursor:pointer;color:#dc2626;font-size:13px;line-height:1;min-width:44px;min-height:44px;margin:-8px 0">✕</button>
+    </div>`;
+    /* v504: am Festivaltag ein Absatz je Spiel – Runde, Gegner, Feld und Stand als Kopfzeile. */
+    const t=(typeof spieltagTeam!=="undefined")?spieltagTeam:1;
+    const spiele=(typeof TEAM_PLAN!=="undefined"&&TEAM_PLAN&&TEAM_PLAN.spiele&&TEAM_PLAN.spiele[t])||[];
+    const mitRunde=rows.some(e=>e.runde!=null)&&typeof tickerAbsaetze==="function";
+    box.innerHTML=!rows.length?'<div style="color:var(--text3)">Noch keine Ticker-Einträge.</div>'
+      :!mitRunde?rows.map(zeile).join("")
+      :tickerAbsaetze(rows,spiele).map(g=>`<div style="margin-bottom:8px">
+          <div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);padding:4px 0">${g.runde?`Runde ${g.runde}${g.spiel?` · gegen ${esc(g.spiel.gegner)} · ${esc(g.spiel.feldName)}${g.spiel.tore!=null?` · ${g.spiel.tore}:${g.spiel.gegentore}`:""}`:""}`:"Ohne Runde"}</div>
+          ${g.events.map(zeile).join("")}</div>`).join("");
   }catch(e){}
 }
 // Ticker-Eintrag korrigieren = löschen (auch von Eltern-Helfern gesendete); der Eltern-Feed
@@ -149,6 +158,7 @@ async function tickerDelete(id,text){
 
 Eltern, die gerade mitlesen, sehen ihn dann nicht mehr.`))return;
   try{const r=await fetch(`${SB_URL}/rest/v1/ticker_events?id=eq.${id}`,{method:"DELETE",headers:sbAuthHeaders()});if(sbCheck401(r))return;}catch(e){}
+  if(typeof teamErgebnisNachziehen==="function")teamErgebnisNachziehen();   // v504: ein gelöschtes Gegentor ändert den Stand
   tickerRenderFeed();
 }
 

@@ -208,10 +208,12 @@ const DIMS_TW=[
 
 /* ═══ SPIELFORMEN / FORMATIONS ═══ */
 const FORMATIONS={
+  /* v503 (Kachel): FUNiño und 3+1 spielen dasselbe Dreieck 1-2 – Aufpasser hinten, zwei
+     Flitzer vorn – mit denselben Wörtern wie in der Raute, damit die Kinder sie kennen. */
   'funino':{label:'Funino',tw:false,fieldCount:3,slots:[
-    {role:'Spieler',x:50,y:76,cls:'tb-auf',rk:'feld'},
-    {role:'Spieler',x:26,y:42,cls:'tb-fl', rk:'feld'},
-    {role:'Spieler',x:74,y:42,cls:'tb-fl', rk:'feld'},
+    {role:'Aufpasser',x:50,y:74,cls:'tb-auf',rk:'aufpasser'},
+    {role:'Flitzer L',x:26,y:40,cls:'tb-fl', rk:'flitzer_l'},
+    {role:'Flitzer R',x:74,y:40,cls:'tb-fl', rk:'flitzer_r'},
   ]},
   '3+1':{label:'3+1',tw:true,fieldCount:3,slots:[
     {role:'TW',       x:50,y:92,cls:'tb-tw', rk:'tw'},

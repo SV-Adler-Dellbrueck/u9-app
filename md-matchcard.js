@@ -196,6 +196,18 @@ async function renderTickerView(key){
   root.innerHTML=elternLoader("Liveticker wird geladen …");
   let adlerkasseHtml=""; // FEAT Z: Spenden-Button, einmal geladen (draw() laeuft alle 15s)
   let clocks={};         // key -> matchday-Zeile
+  /* v504: Am Festivaltag hat jedes Team mehrere Spiele – der Spielplan (öffentlich lesbar)
+     liefert je Runde Gegner, Feld und Stand, der Ticker bekommt einen Absatz je Spiel. */
+  let plan=null, spieleJe={};
+  async function loadPlan(){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(baseDatum)||typeof fstAdlerSpiele!=="function")return;
+    try{
+      const r=await fetch(`${SB_URL}/rest/v1/heimturnier?datum=eq.${encodeURIComponent(baseDatum)}&select=id,teams,plan,config&limit=1`,{headers:anon});
+      const row=r.ok?(((await r.json())||[])[0]||null):null;
+      plan=(row&&(row.plan||[]).length)?row:null; spieleJe=plan?fstAdlerSpiele(plan):{};
+    }catch(e){}
+  }
+  const spieleVon=k=>{ const m=/__t(\d+)$/.exec(k); return spieleJe[m?parseInt(m[1]):1]||[]; };
   const teamName=k=>{ const m=/__t(\d+)$/.exec(k); return m?`Adler ${m[1]}`:"Adler 1"; };
   // Sichtbar am Spieltag und die drei Tage danach; ab dem vierten Tag nur noch der Endstand.
   const TICKER_SICHTBAR_TAGE=3;
@@ -218,7 +230,7 @@ async function renderTickerView(key){
   async function draw(){
     let events=[];
     try{
-      const r=await fetch(`${SB_URL}/rest/v1/ticker_events?datum=in.(${keys.map(encodeURIComponent).join(",")})&select=datum,text,typ,minute,created_at&order=created_at.desc&limit=${konf?60:40}`,{headers:anon});
+      const r=await fetch(`${SB_URL}/rest/v1/ticker_events?datum=in.(${keys.map(encodeURIComponent).join(",")})&select=datum,text,typ,minute,runde,created_at&order=created_at.desc&limit=${konf?60:40}`,{headers:anon});
       events=r.ok?await r.json():[];
     }catch(e){}
     /* Bis v467 wurden hier ALLE Zeilen eines Teams ausgeblendet, sobald der Schalter
@@ -277,7 +289,7 @@ async function renderTickerView(key){
         </div>`;}).join(""):'<div style="font-size:12.5px;color:#94a3b8">Noch keine Teams aktiv.</div>';
       const feed=events.length?events.map(e=>`<div style="display:flex;gap:8px;align-items:baseline;padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:13.5px">
           <span style="font-size:16px;flex:0 0 auto">${elTickerIcon(e.typ)}</span>
-          <span><span style="font-size:10px;font-weight:800;color:#dc2626;background:#fee2e2;border-radius:8px;padding:1px 6px;margin-right:4px">${teamName(e.datum)}</span><strong style="color:#1e3a8a">${e.minute?elternEsc(e.minute):""}</strong> ${elternEsc(e.text)}</span>
+          <span><span style="font-size:10px;font-weight:800;color:#dc2626;background:#fee2e2;border-radius:8px;padding:1px 6px;margin-right:4px">${teamName(e.datum)}${e.runde?` · R${e.runde}`:""}</span><strong style="color:#1e3a8a">${e.minute?elternEsc(e.minute):""}</strong> ${elternEsc(e.text)}</span>
         </div>`).join(""):'<div style="font-size:12.5px;color:#94a3b8">Noch keine Ereignisse. Die Konferenz startet mit dem Anpfiff!</div>';
       root.innerHTML=`
         <div style="text-align:center;margin:8px 0 14px">
@@ -305,7 +317,10 @@ async function renderTickerView(key){
         ? '<div style="text-align:center;font-size:12.5px;color:#64748b;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px">🤫 Trainer fokussieren sich zu 100% auf die Kids – kein Ticker heute.</div>'
         : `${aus?'<div style="text-align:center;font-size:12px;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:9px;margin-bottom:8px">⏸️ Gerade läuft kein Spiel – der Ticker meldet sich wieder.</div>':""}
           <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px">
-            ${events.length?events.map(e=>`<div style="display:flex;gap:8px;align-items:baseline;padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:13.5px"><span style="font-size:16px;flex:0 0 auto">${elTickerIcon(e.typ)}</span><span><strong style="color:#1e3a8a">${e.minute?elternEsc(e.minute):""}</strong> ${elternEsc(e.text)}</span></div>`).join(""):'<div style="font-size:12.5px;color:#94a3b8">Noch keine Ereignisse. Der Ticker startet mit dem Anpfiff – bleib dran!</div>'}
+            ${(()=>{ const zeile=e=>`<div style="display:flex;gap:8px;align-items:baseline;padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:13.5px"><span style="font-size:16px;flex:0 0 auto">${elTickerIcon(e.typ)}</span><span><strong style="color:#1e3a8a">${e.minute?elternEsc(e.minute):""}</strong> ${elternEsc(e.text)}</span></div>`;
+              if(!events.length)return '<div style="font-size:12.5px;color:#94a3b8">Noch keine Ereignisse. Der Ticker startet mit dem Anpfiff – bleib dran!</div>';
+              if(!events.some(e=>e.runde!=null)||typeof tickerAbsaetze!=="function")return events.map(zeile).join("");
+              return tickerAbsaetze(events,spieleVon(key)).map(g=>`<div style="margin-bottom:10px"><div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#64748b;padding:6px 0 2px">${g.runde?`Runde ${g.runde}${g.spiel?` · gegen ${elternEsc(g.spiel.gegner)} · ${elternEsc(g.spiel.feldName)}${g.spiel.tore!=null?` · <span style="color:#1e3a8a">${g.spiel.tore}:${g.spiel.gegentore}</span>`:""}`:""}`:"Weitere Ereignisse"}</div>${g.events.map(zeile).join("")}</div>`).join(""); })()}
           </div>`}
       ${foot}`;
   }
@@ -315,14 +330,14 @@ async function renderTickerView(key){
     try{navigator.vibrate&&navigator.vibrate(15);}catch(e){}
     try{const r=await fetch(`${SB_URL}/rest/v1/rpc/ticker_clap`,{method:"POST",headers:{...anon,'Content-Type':'application/json'},body:JSON.stringify({p_datum:baseDatum})});if(r.ok){const n=await r.json();if(el&&typeof n==="number")el.textContent=n;}}catch(e){}
   };
-  await loadClocks();
+  await loadClocks(); await loadPlan();
   adlerkasseHtml=adlerkasseCardHtml(await adlerkasseLinkGet()); // FEAT Z
   await draw();
   // Minute jede Sekunde lokal (nur Einzelteam-Header); Ereignisse+Uhr alle 15s frisch ziehen.
   clearInterval(tickerViewMinuteTimer);
   if(!konf)tickerViewMinuteTimer=setInterval(()=>{const el=document.getElementById("tv-minute");if(el)el.textContent=minuteFor(key);},1000);
   clearInterval(tickerViewTimer);
-  tickerViewTimer=setInterval(async()=>{if(document.hidden)return;await loadClocks();await draw();},15000); // Hintergrund-Tab pollt nicht weiter
+  tickerViewTimer=setInterval(async()=>{if(document.hidden)return;await loadClocks();await loadPlan();await draw();},15000); // Hintergrund-Tab pollt nicht weiter
 }
 
 // Eltern-Interaktion (anonym, nur Training): Anwesenheit + Fahrgemeinschaften
@@ -539,12 +554,17 @@ function mdShareLink(datum){
 
 // Rotations-Timer: faire Einsatzzeiten am Spieltag. Feld/Bank, Timer mit Piepton,
 // Wechselvorschlag nach längster Bankzeit.
-let rotField=[], rotBench=[], rotBenchSec={}, rotFieldSec={}, rotTimerId=null, rotElapsed=0, rotIntervalMin=5, rotTW=null; // HOTFIX 12: rotFieldSec = Spielzeit
+let rotField=[], rotBench=[], rotBenchSec={}, rotFieldSec={}, rotTimerId=null, rotElapsed=0, rotIntervalMin=5, rotTW=null;
+/* v503 PO: „Beim Wechseltimer wäre es gut, wenn man die Positionen auch verschieben kann … damit
+   ich weiß, wer wo spielt und wen ich gegen wen wechsel." rotSel: der zuerst angetippte Spieler;
+   der zweite Tipp entscheidet – Feld↔Feld tauscht die Positionen, Feld↔Bank wechselt gezielt,
+   derselbe Spieler nochmal = auf die Bank. Ziehen mit dem Finger macht dasselbe (rotDragInit). */
+let rotSel=null; // HOTFIX 12: rotFieldSec = Spielzeit
 // Feldgröße folgt der aktuellen Spielform (FORMATIONS): Funino 3, 4+1 = 4, 5+1 = 5.
 function rotFieldSize(){ return ((typeof FORMATIONS!=="undefined"&&FORMATIONS[tbFormation])||{fieldCount:5}).fieldCount; }
 // HOTFIX 11: Torwart (Fest) bewusst setzen/entfernen – aus Feld & Bank raus, rotiert getrennt.
-function rotSetTW(name){ if(!name)return; rotField=rotField.filter(n=>n!==name); rotBench=rotBench.filter(n=>n!==name); rotTW=name; rotRenderLive(); }
-function rotClearTW(){ if(rotTW&&!rotBench.includes(rotTW)&&!rotField.includes(rotTW))rotBench.push(rotTW); rotTW=null; rotRenderLive(); }
+function rotSetTW(name){ if(!name)return; rotField=rotField.filter(n=>n!==name); rotBench=rotBench.filter(n=>n!==name); rotTW=name; rotRenderAll(); }
+function rotClearTW(){ if(rotTW&&!rotBench.includes(rotTW)&&!rotField.includes(rotTW))rotBench.push(rotTW); rotTW=null; rotRenderAll(); }
 // HOTFIX 13: räumliches Mini-Feld – Feldspieler an den echten Formations-Positionen,
 // TW im Tor, Spielzeit (grün) auf jedem Chip. Antippen = auf die Bank (rotMove).
 function rotFieldSpatialHtml(){
@@ -552,23 +572,99 @@ function rotFieldSpatialHtml(){
   const slots=form.slots||[];
   const fieldSlots=slots.filter(s=>s.rk!=="tw");
   const twSlot=slots.find(s=>s.rk==="tw");
-  const chipF=(n,x,y,tw)=>{const reco=!tw&&istRecovery(n);return `<button onclick="${tw?'rotClearTW()':`rotMove('${n.replace(/'/g,"")}')`}" title="${tw?'Torwart entfernen':(reco?'Kürzlich krank – heute Belastung dosieren':'Auf die Bank')}" style="position:absolute;left:${x}%;top:${y}%;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;border:${reco?'3px solid #f97316':'2px solid #fff'};background:${tw?'#f59e0b':'#1e3a8a'};color:#fff;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;padding:0;font-family:inherit">
+  const chipF=(n,x,y,tw,rolle)=>{const reco=!tw&&istRecovery(n); const sel=!tw&&rotSel===n;
+    return `<button data-rot-name="${esc(n)}" onclick="${tw?'rotClearTW()':`rotTap('${n.replace(/'/g,"")}')`}" aria-pressed="${sel?"true":"false"}" title="${tw?'Torwart entfernen':(reco?'Kürzlich krank – heute Belastung dosieren':(sel?'Gewählt – zweiten Spieler antippen zum Tauschen, nochmal antippen = Bank':'Antippen zum Wählen, ziehen zum Tauschen'))}" style="position:absolute;left:${x}%;top:${y}%;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;border:${sel?'3px solid #facc15':(reco?'3px solid #f97316':'2px solid #fff')};background:${tw?'#f59e0b':'#1e3a8a'};color:#fff;font-weight:700;cursor:${tw?'pointer':'grab'};box-shadow:0 2px 6px rgba(0,0,0,.35)${sel?',0 0 0 4px rgba(250,204,21,.35)':''};display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;padding:0;font-family:inherit;touch-action:none">
     <span style="font-size:11px">${reco?"🩹":(getKader(n)?.nr!=null?getKader(n).nr:(tw?"🥅":""))}</span>
     <span style="max-width:42px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:8px">${esc((n||"").split(" ").slice(-1)[0])}</span>
-    <span data-rot-sec="${esc(n)}" data-rot-on="f" style="font-size:7px;color:#bbf7d0">${fmtSec(rotFieldSec[n]||0)}</span></button>`;};
+    <span data-rot-sec="${esc(n)}" data-rot-on="f" style="font-size:7px;color:#bbf7d0">${fmtSec(rotFieldSec[n]||0)}</span></button>
+    ${rolle?`<span aria-hidden="true" style="position:absolute;left:${x}%;top:calc(${y}% + 25px);transform:translateX(-50%);font-size:8.5px;font-weight:700;color:#dcfce7;background:rgba(0,0,0,.28);border-radius:8px;padding:1px 6px;white-space:nowrap;pointer-events:none">${esc(rolle)}</span>`:""}`;};
+  /* Freie Position: gestrichelter Kreis mit dem Rollennamen – Ziel für einen Bankspieler. */
+  const leer=(x,y,rolle,i)=>`<button data-rot-leer="${i}" onclick="rotTap('')" aria-label="${esc(rolle)} frei" style="position:absolute;left:${x}%;top:${y}%;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;border:2px dashed rgba(255,255,255,.6);background:rgba(255,255,255,.08);color:#fff;font-size:8.5px;font-weight:700;cursor:pointer;font-family:inherit;line-height:1.1;padding:0 3px">${esc(rolle)}</button>`;
   let h='<div style="position:relative;width:100%;max-width:300px;margin:0 auto 4px;aspect-ratio:3/4;background:linear-gradient(#2d7d2d,#256b25);border-radius:12px;border:2px solid rgba(255,255,255,.35);overflow:hidden">';
   h+='<div style="position:absolute;left:6%;right:6%;top:50%;height:1px;background:rgba(255,255,255,.3)"></div>';
   h+='<div style="position:absolute;left:50%;top:50%;width:46px;height:46px;border:1px solid rgba(255,255,255,.25);border-radius:50%;transform:translate(-50%,-50%)"></div>';
-  rotField.forEach((n,i)=>{const s=fieldSlots[i]||{x:50,y:40+i*8};h+=chipF(n,s.x,s.y,false);});
-  if(rotTW&&twSlot)h+=chipF(rotTW,twSlot.x,twSlot.y,true);
+  fieldSlots.forEach((s,i)=>{ const n=rotField[i]; h+=n?chipF(n,s.x,s.y,false,s.role):leer(s.x,s.y,s.role||"frei",i); });
+  rotField.slice(fieldSlots.length).forEach((n,i)=>{ h+=chipF(n,50,40+i*8,false,""); });   // mehr Spieler als Positionen (Spielform ohne Slots)
+  if(rotTW&&twSlot)h+=chipF(rotTW,twSlot.x,twSlot.y,true,"");
   h+='</div>';
   return h;
+}
+/* Zwei Tipps: der erste wählt, der zweite entscheidet. */
+let _rotKlickBis=0;   // bis dahin ist ein Klick der Nachläufer eines Ziehens
+function rotTap(name){
+  if(Date.now()<_rotKlickBis)return;
+  const aufFeld=rotField.includes(name), aufBank=rotBench.includes(name);
+  if(!rotSel){
+    if(aufFeld){ rotSel=name; rotRenderAll(); return; }
+    if(aufBank){ if(rotField.length<rotFieldSize()){ rotMove(name); return; } rotSel=name; rotRenderAll(); return; }
+    return;
+  }
+  if(!name){ if(rotBench.includes(rotSel)){ const n=rotSel; rotSel=null; rotMove(n); } return; }   // freie Position angetippt
+  if(rotSel===name){ const n=rotSel; rotSel=null; if(aufFeld)rotMove(n); else rotRenderAll(); return; }
+  rotDropAuf(rotSel,name);
+}
+/* Ein Spieler (gewählt oder gezogen) landet auf einem Ziel: Name eines anderen Spielers,
+   „bank" oder „leer" (freie Position). Dieselbe Regel für Tippen und Ziehen. */
+function rotDropAuf(von,auf){
+  rotSel=null;
+  const vonFeld=rotField.indexOf(von), aufFeld=rotField.indexOf(auf);
+  const vonBank=rotBench.includes(von);
+  if(auf==="bank"){ if(vonFeld>=0)rotMove(von); else rotRenderAll(); return; }
+  if(auf==="leer"){ if(vonBank)rotMove(von); else rotRenderAll(); return; }
+  if(vonFeld>=0&&aufFeld>=0){ const t=rotField[vonFeld]; rotField[vonFeld]=rotField[aufFeld]; rotField[aufFeld]=t; rotRenderAll(); return; }   // Positionen tauschen
+  if(vonFeld>=0&&rotBench.includes(auf)){ rotWechsel(auf,von,vonFeld); return; }   // Feldspieler raus, Bankspieler auf seine Position
+  if(vonBank&&aufFeld>=0){ rotWechsel(von,auf,aufFeld); return; }
+  if(vonBank&&rotBench.includes(auf)){ rotSel=auf; rotRenderAll(); return; }
+  rotRenderAll();
+}
+function rotWechsel(rein,raus,slot){
+  rotBench=rotBench.filter(n=>n!==rein); rotField[slot]=rein; rotBench.push(raus);
+  if(rotTimerId){ rotLogSub(raus,"aus"); rotLogSub(rein,"ein"); }
+  rotRenderAll();
+}
+/* Ziehen mit dem Finger – einmal für das ganze Dokument, weil Feld und Bank in ① und ② stehen.
+   Erst ab 8 px Bewegung wird gezogen; ein Tipp bleibt ein Tipp. Nach dem Ziehen zählt der
+   nachlaufende Klick nicht (rotTap prüft _rotKlickBis), sonst holte er den gerade auf die Bank
+   gezogenen Spieler gleich wieder aufs Feld. */
+let _rotDrag=null;
+function rotDragInit(){
+  if(rotDragInit.fertig)return; rotDragInit.fertig=true;
+  document.addEventListener("pointerdown",e=>{
+    const chip=e.target.closest&&e.target.closest("[data-rot-name]"); if(!chip||e.button)return;
+    _rotDrag={name:chip.dataset.rotName,x0:e.clientX,y0:e.clientY,geist:null,id:e.pointerId,chip};
+  });
+  document.addEventListener("pointermove",e=>{
+    const d=_rotDrag; if(!d||e.pointerId!==d.id)return;
+    if(!d.geist){
+      if(Math.hypot(e.clientX-d.x0,e.clientY-d.y0)<8)return;
+      d.geist=d.chip.cloneNode(true);
+      d.geist.style.cssText+=";position:fixed;left:0;top:0;z-index:10090;pointer-events:none;opacity:.88;transform:translate(-50%,-50%);margin:0";
+      document.body.appendChild(d.geist);
+      try{d.chip.setPointerCapture(e.pointerId);}catch(x){}
+    }
+    d.geist.style.left=e.clientX+"px"; d.geist.style.top=e.clientY+"px";
+    if(e.cancelable)e.preventDefault();
+  },{passive:false});
+  const ende=e=>{
+    const d=_rotDrag; if(!d||e.pointerId!==d.id)return; _rotDrag=null;
+    if(!d.geist)return;
+    d.geist.remove();
+    _rotKlickBis=Date.now()+350;   // der Klick nach dem Loslassen landet auf einem neu gezeichneten Chip – er zählt nicht
+    const el=document.elementFromPoint(e.clientX,e.clientY);
+    const ziel=el&&el.closest&&el.closest("[data-rot-name],[data-rot-leer],[data-rot-bank]");
+    if(!ziel)return;
+    if(ziel.hasAttribute("data-rot-name")){ const n=ziel.dataset.rotName; if(n&&n!==d.name)rotDropAuf(d.name,n); return; }
+    if(ziel.hasAttribute("data-rot-leer")){ rotDropAuf(d.name,"leer"); return; }
+    rotDropAuf(d.name,"bank");
+  };
+  document.addEventListener("pointerup",ende);
+  document.addEventListener("pointercancel",()=>{ if(_rotDrag&&_rotDrag.geist)_rotDrag.geist.remove(); _rotDrag=null; });
 }
 // Korrektur 3: Der Torwart wird separat gehalten – er steht im Tor und rotiert NICHT
 // mit den Feldspielern. Nur die Feldspieler wechseln zwischen Feld und Bank.
 function rotSeedFromSquad(squad){
   const form=(typeof FORMATIONS!=="undefined"&&FORMATIONS[tbFormation])||{tw:true,fieldCount:5};
-  rotTW=null; // HOTFIX 11: Torwart-Slot startet LEER – der Trainer setzt ihn bewusst (rotSetTW)
+  rotTW=null; rotSel=null; // HOTFIX 11: Torwart-Slot startet LEER – der Trainer setzt ihn bewusst (rotSetTW)
   const outfield=squad.filter(n=>n!==rotTW);
   rotField=outfield.slice(0,form.fieldCount);
   rotBench=outfield.slice(form.fieldCount);
@@ -594,9 +690,9 @@ function rotRenderControls(){
       </select>
       <button class="btn btn-p" id="rot-startbtn" onclick="rotToggle()" style="min-height:44px">${running?'<i class="ti ti-player-pause"></i>Pause':'<i class="ti ti-player-play"></i>Start'}</button>
       <button class="btn" onclick="rotReset()" style="min-height:44px"><i class="ti ti-refresh"></i>Reset</button>
-      <button class="btn" onclick="magicLineup()" title="Verteilt den Kader dieses Teams auf Feld und Bank – wenig gespielte Kinder starten" style="min-height:44px">🪄 Feld &amp; Bank fair besetzen</button>
     </div>
     <div id="rot-live"></div>`;
+  rotDragInit();
 }
 /* Phase 7-A: Magic Button – nominierte Spieler optimal aufs Feld der aktuellen
    Spielform verteilen. 4+1 nutzt den echten Kombinator (calcBestCombos, gedeckelt),
@@ -634,13 +730,13 @@ async function magicLineup(){
       ordered=[...used,...rest];
     }
   }
-  rotTW=keeper;
+  rotTW=keeper; rotSel=null;
   rotField=ordered.slice(0,form.fieldCount);
   rotBench=ordered.slice(form.fieldCount);
   // Neue Startaufstellung = neuer Anfang: Bank- UND Feldzeiten auf 0. Vorher blieben die
   // Feldzeiten stehen und der Wechselvorschlag rechnete mit Zahlen von vorhin.
   rotBenchSec={};rotFieldSec={};squad.forEach(n=>{rotBenchSec[n]=0;rotFieldSec[n]=0;});rotElapsed=0;
-  rotRenderControls();rotRenderLive();
+  rotRenderControls();rotRenderAll();
   toast(fair?"⚖️ Feld & Bank fair besetzt ✓ – wenig-gespielte Kinder starten, frei anpassbar":"Feld & Bank besetzt ✓ – frei anpassbar");
 }
 function fmtSec(s){const m=Math.floor(s/60),ss=s%60;return m+":"+(ss<10?"0":"")+ss;}
@@ -659,39 +755,61 @@ function rotRenderLive(){
   // HOTFIX 12: jeder Chip zeigt seine Zeit – grün = Spielzeit (Feld), rot = Bankzeit.
   // data-rot-sec/-on markieren den Zeit-Span, damit rotTickLite ihn pro Sekunde
   // punktgenau aktualisieren kann, ohne das ganze Panel neu zu bauen.
-  const chip=(n,onField)=>{
-    const sek=onField?(rotFieldSec[n]||0):(rotBenchSec[n]||0);
-    const tcol=onField?"#15803d":"#dc2626";
-    const reco=istRecovery(n);
-    const rand=reco?"2px solid #f97316":"var(--border-s)"; // orangener Rand: kürzlich krank
-    return `<button onclick="rotMove('${n.replace(/'/g,"")}')" title="${reco?'Kürzlich krank – heute Belastung dosieren':''}" style="font-size:12.5px;padding:8px 10px;min-height:44px;border:${rand};border-radius:16px;background:${onField?"var(--blue-bg)":"var(--surface2)"};cursor:pointer;font-family:inherit">${reco?"🩹 ":""}${getKader(n)?.nr?getKader(n).nr+" ":""}${esc(n)} <span data-rot-sec="${esc(n)}" data-rot-on="${onField?"f":"b"}" style="color:${tcol};font-size:10px;font-weight:700">${fmtSec(sek)}</span></button>`;
-  };
-  // HOTFIX 11: "Torwart (Fest)" – nur bei Spielformen mit TW; leer = Auswahl, gesetzt = Anzeige + Entfernen.
+  const chip=rotBankChip;   // v502/v503: eine Chip-Definition für ① und ②
+  const recoNamen=[...rotField,...rotBench].filter(istRecovery);
+  const recoHinweis=recoNamen.length?`<div style="padding:8px 10px;background:#fff7ed;border:1px solid #fdba74;border-radius:var(--r);font-size:12px;color:#9a3412;margin-bottom:10px">🩹 <strong>${recoNamen.map(esc).join(", ")}</strong> ${recoNamen.length===1?"war":"waren"} kürzlich krank – heute Einsatzzeit bewusst dosieren.</div>`:"";
+  /* v502: Torwart-Zeile und Kapitän stehen in „① Aufstellung" (aufRender); hier bleibt, was
+     während des Spiels zählt – Countdown, Vorschlag, Feld und Bank. */
+  live.innerHTML=`
+    <div id="rot-cd" style="text-align:center;font-size:30px;font-weight:800;color:${rest<=10?"#dc2626":"var(--text)"};margin-bottom:8px">${fmtSec(Math.max(0,rest))}</div>
+    ${recoHinweis}
+    <div id="rot-sugg">${rotSuggHtml()}</div>
+    ${rotFeldBankHtml(chip)}`;
+}
+/* Feld und Bank – dieselbe Ansicht in ① (Aufstellung) und ② (Wechseltimer). Beide zeigen
+   denselben Zustand (rotField, rotBench); ein Tipp an einer Stelle zeichnet beide neu. */
+function rotFeldBankHtml(chip){
+  return `<div style="font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--text2);margin-bottom:4px">Feld (${rotField.length}/${rotFieldSize()})</div>
+    ${rotFieldSpatialHtml()}
+    <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--text2);margin:10px 0 6px">Bank (${rotBench.length})</div>
+    <div data-rot-bank="1" style="display:flex;flex-wrap:wrap;gap:6px;min-height:44px;padding:4px;border:1px dashed var(--rand-bedien);border-radius:12px">${rotBench.map(n=>chip(n,false)).join("")||'<span style="font-size:11px;color:var(--text3);align-self:center">Bank leer – Feldspieler hierher ziehen</span>'}</div>
+    <div style="font-size:10px;color:var(--text3);margin-top:8px">Antippen wählt, der zweite Tipp tauscht (Feld↔Feld: Position, Feld↔Bank: Wechsel) · nochmal antippen = Bank · oder einfach ziehen · 🟢 Spielzeit / 🔴 Bankzeit.</div>`;
+}
+function rotBankChip(n,onField){
+  const sek=onField?(rotFieldSec[n]||0):(rotBenchSec[n]||0);
+  const tcol=onField?"#15803d":"#dc2626";
+  const reco=istRecovery(n);
+  const rand=reco?"2px solid #f97316":"var(--border-s)";
+  const sel=rotSel===n;
+  return `<button data-rot-name="${esc(n)}" onclick="rotTap('${n.replace(/'/g,"")}')" aria-pressed="${sel?"true":"false"}" title="${reco?'Kürzlich krank – heute Belastung dosieren':'Antippen = aufs Feld, auf einen Feldspieler ziehen = gezielt wechseln'}" style="font-size:12.5px;padding:8px 10px;min-height:44px;border:${sel?"2px solid #facc15":rand};border-radius:16px;background:${sel?"#fef9c3":(onField?"#dcfce7":"var(--surface2)")};color:var(--text);font-family:inherit;cursor:grab;display:inline-flex;align-items:center;gap:6px;touch-action:none">${reco?"🩹 ":""}${getKader(n)?.nr?`<span style="font-weight:500;color:var(--text3)">${getKader(n).nr}</span>`:""}${esc(n)}<span data-rot-sec="${esc(n)}" data-rot-on="${onField?"f":"b"}" style="font-size:10.5px;font-weight:700;color:${tcol}">${fmtSec(sek)}</span></button>`;
+}
+/* v502 ① Aufstellung: Torwart fest, „Feld & Bank fair besetzen", das Mini-Feld mit Bank.
+   Der Kader dieses Teams steht im Kachelkopf; die Einteilung wird oben geändert. */
+function aufRender(){
+  const box=document.getElementById("auf-panel"); if(!box)return;
   const rotForm=(typeof FORMATIONS!=="undefined"&&FORMATIONS[tbFormation])||{tw:true};
   let twRow="";
   if(rotForm.tw){
     if(rotTW){
-      twRow=`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fef3c7;border:1px solid #fcd34d;border-radius:var(--r);font-size:12.5px;color:#854d0e;margin-bottom:10px">🥅 <strong>Torwart (Fest): ${esc(rotTW)}</strong><button onclick="rotClearTW()" title="Torwart entfernen" style="border:none;background:transparent;color:#a16207;cursor:pointer;font-size:16px;line-height:1;padding:0 2px">×</button><span style="font-size:10px;color:#a16207;margin-left:auto">rotiert nicht mit</span></div>`;
+      twRow=`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fef3c7;border:1px solid #fcd34d;border-radius:var(--r);font-size:12.5px;color:#854d0e;margin-bottom:10px">🥅 <strong>Torwart (Fest): ${esc(rotTW)}</strong><button onclick="rotClearTW()" style="margin-left:auto;min-width:44px;min-height:44px;border:1px solid #fcd34d;border-radius:8px;background:#fff;font-size:12px;cursor:pointer;color:#854d0e">entfernen</button></div>`;
     }else{
       const opts=[...rotField,...rotBench].map(n=>`<option value="${esc(n)}">${getKader(n)?.nr?getKader(n).nr+" ":""}${esc(n)}</option>`).join("");
-      twRow=`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fffbeb;border:1px dashed #fcd34d;border-radius:var(--r);font-size:12.5px;color:#854d0e;margin-bottom:10px">🥅 <strong>Torwart (Fest):</strong><select onchange="rotSetTW(this.value)" style="flex:1;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;font-size:12px;background:var(--surface)"><option value="">— Torwart wählen —</option>${opts}</select></div>`;
+      twRow=`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fffbeb;border:1px dashed #fcd34d;border-radius:var(--r);font-size:12.5px;color:#854d0e;margin-bottom:10px">🥅 <strong>Torwart (Fest):</strong><select onchange="rotSetTW(this.value)" style="flex:1;min-height:40px;padding:6px 8px;border:1px solid #fcd34d;border-radius:8px;font-family:inherit;font-size:12.5px;background:#fff"><option value="">wählen…</option>${opts}</select></div>`;
     }
   }
-  const recoNamen=[...rotField,...rotBench].filter(istRecovery);
-  const recoHinweis=recoNamen.length?`<div style="padding:8px 10px;background:#fff7ed;border:1px solid #fdba74;border-radius:var(--r);font-size:12px;color:#9a3412;margin-bottom:10px">🩹 <strong>${recoNamen.map(esc).join(", ")}</strong> ${recoNamen.length===1?"war":"waren"} kürzlich krank – heute Einsatzzeit bewusst dosieren.</div>`:"";
-  live.innerHTML=`
-    <div id="rot-cd" style="text-align:center;font-size:30px;font-weight:800;color:${rest<=10?"#dc2626":"var(--text)"};margin-bottom:8px">${fmtSec(Math.max(0,rest))}</div>
-    ${twRow}
-    ${kapitaenRow()}
-    ${recoHinweis}
-    <div id="rot-sugg">${rotSuggHtml()}</div>
-    <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--text2);margin-bottom:4px">Feld (${rotField.length}/${rotFieldSize()})</div>
-    ${rotFieldSpatialHtml()}
-    <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--text2);margin:10px 0 6px">Bank (${rotBench.length})</div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px">${rotBench.map(n=>chip(n,false)).join("")||'<span style="font-size:11px;color:var(--text3)">Bank leer</span>'}</div>
-    <div style="font-size:10px;color:var(--text3);margin-top:8px">Feld-Spieler antippen = auf die Bank · Bank-Spieler antippen = aufs Feld · 🟢 Spielzeit / 🔴 Bankzeit.</div>`;
+  const label=((typeof FORMATIONS!=="undefined"&&FORMATIONS[tbFormation])||{label:tbFormation}).label;
+  box.innerHTML=`${twRow}
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <span style="font-size:11.5px;color:var(--text2)">Spielform <b>${esc(label||"")}</b></span>
+      <button class="btn btn-sm" onclick="magicLineup()" title="Verteilt den Kader dieses Teams auf Feld und Bank – wenig gespielte Kinder starten" style="margin-left:auto;min-height:44px">🪄 Feld &amp; Bank fair besetzen</button>
+    </div>
+    ${rotFeldBankHtml(rotBankChip)}`;
+  rotDragInit();
 }
+/* Ein Tipp an einer Stelle zeichnet beide Ansichten neu (① und ②). */
+function rotRenderAll(){ rotRenderLive(); aufRender(); }
 function rotMove(name){
+  rotSel=null;
   let richtung=null;
   if(rotField.includes(name)){rotField=rotField.filter(n=>n!==name);rotBench.push(name);richtung="aus";}
   else if(rotBench.includes(name)){
@@ -699,14 +817,15 @@ function rotMove(name){
     rotBench=rotBench.filter(n=>n!==name);rotField.push(name);richtung="ein";
   }
   if(richtung&&rotTimerId)rotLogSub(name,richtung); // HOTFIX 12: nur echte Wechsel im laufenden Spiel loggen
-  rotRenderLive();
+  rotRenderAll();
 }
 // HOTFIX 12: Ein-/Auswechslung in match_substitutions loggen (Fairness-Beweis). Best-effort.
 async function rotLogSub(spieler,richtung){
   const datum=spieltagKey();
   const minute=(typeof mcState!=="undefined"&&mcState)?mcMinuteLabel(mcState,typeof mcSpieldauer!=="undefined"?mcSpieldauer:10,typeof mcHalbzeiten!=="undefined"?mcHalbzeiten:1):"";
   let tid=null; try{tid=await terminIdForDatum(datum);}catch(e){}
-  sbQueuedPost("match_substitutions",{datum,termin_id:tid,spieler,richtung,minute,feld_sek:rotFieldSec[spieler]||0,bank_sek:rotBenchSec[spieler]||0});
+  const runde=(typeof teamRundeJetzt==="function")?teamRundeJetzt():null;   // v504
+  sbQueuedPost("match_substitutions",{datum,termin_id:tid,spieler,richtung,minute,feld_sek:rotFieldSec[spieler]||0,bank_sek:rotBenchSec[spieler]||0,runde});
 }
 function rotBeep(){
   try{
@@ -727,7 +846,7 @@ function rotTickLite(){
   const restRaw=rotIntervalMin*60-rotElapsed;
   cd.textContent=fmtSec(Math.max(0,restRaw));
   cd.style.color=restRaw<=10?"#dc2626":"var(--text)";
-  live.querySelectorAll("[data-rot-sec]").forEach(el=>{
+  document.querySelectorAll("[data-rot-sec]").forEach(el=>{   // v502: auch die Kopie in „① Aufstellung"
     const n=el.getAttribute("data-rot-sec");
     const onField=el.getAttribute("data-rot-on")==="f";
     el.textContent=fmtSec((onField?rotFieldSec[n]:rotBenchSec[n])||0);
@@ -778,6 +897,6 @@ function rotReset(){
   Object.keys(rotBenchSec).forEach(n=>rotBenchSec[n]=0);
   Object.keys(rotFieldSec).forEach(n=>rotFieldSec[n]=0);
   if(gespielt)rotPersistTimes();
-  rotRenderControls();rotRenderLive();
+  rotRenderControls();rotRenderAll();
 }
 
