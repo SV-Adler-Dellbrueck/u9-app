@@ -39,7 +39,7 @@ module.exports = async function (h) {
       return {
         text: slot.textContent.replace(/\s+/g, " ").trim(),
         zeilen: rows.map(z => ({ text: z.textContent.replace(/\s+/g, " ").trim(), hoehe: Math.round(z.getBoundingClientRect().height), rolle: z.getAttribute("role"), tab: z.getAttribute("tabindex") })),
-        chips: rows.flatMap(z => [...z.querySelectorAll("span")].filter(x => /zugesagt|Trainer|Plan steht|kein Plan|Aufstellung|nominiert|offen|abgesagt|Gruppen/.test(x.textContent) && !x.closest(".woche-erweitert")).map(x => ({ t: x.textContent.trim(), k: window.__kontrastVon(x) }))),
+        chips: rows.flatMap(z => [...z.querySelectorAll("span")].filter(x => /zugesagt|Trainer|Plan steht|kein Plan|Aufstellung|nominiert|dabei|offen|abgesagt|Gruppen/.test(x.textContent) && !x.closest(".woche-erweitert")).map(x => ({ t: x.textContent.trim(), k: window.__kontrastVon(x) }))),
         // v458: die erste Zeile traegt Sprungknopf, Wetterplatz und Adresse – die anderen nicht
         erweitert: rows.map(z => !!z.querySelector(".woche-erweitert")),
         // v473: die erste Zeile traegt bei einem Training ZWEI Spruenge – Anwesenheit und Plan
@@ -55,7 +55,7 @@ module.exports = async function (h) {
   if (r.zeilen.length !== 3) probleme.push(`${r.zeilen.length} Zeilen statt 3 (heute-vorbei und Tag 9 muessen fehlen)`);
   const z = (i, re) => { if (!r.zeilen[i] || !re.test(r.zeilen[i].text)) probleme.push(`Zeile ${i + 1}: „${r.zeilen[i] && r.zeilen[i].text}“ passt nicht zu ${re}`); };
   z(0, /9 zugesagt/); z(0, /1 abgesagt/); z(0, /5 offen/); z(0, /2 Trainer/); z(0, /Plan steht/); z(0, /Gruppen/);
-  z(1, /Cup/); z(1, /Sportplatz/); z(1, /2 zugesagt/); z(1, /kein Trainer/); z(1, /Aufstellung offen/);
+  z(1, /Cup/); z(1, /Sportplatz/); z(1, /2 zugesagt/); z(1, /kein Trainer/); z(1, /Teams offen/);
   z(2, /0 zugesagt/); z(2, /1 Trainer/); z(2, /kein Plan/);
   r.zeilen.forEach((x, i) => { if (x.hoehe < 44) probleme.push(`Zeile ${i + 1} nur ${x.hoehe} px hoch`); if (x.rolle !== "button" || x.tab !== "0") probleme.push(`Zeile ${i + 1} nicht per Tastatur erreichbar`); });
   if (JSON.stringify(r.erweitert) !== JSON.stringify([true, false, false])) probleme.push("nur die erste Zeile darf erweitert sein: " + JSON.stringify(r.erweitert));

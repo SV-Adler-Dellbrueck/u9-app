@@ -61,7 +61,7 @@ module.exports = async function (h) {
   });
   const fehler = s.fehler(); await s.schliessen();
   if (r.fehlt) { probleme.push(`${r.fehlt} fehlt`); return h.ergebnis("Festival-Infos", false, probleme); }
-  if (r.std.join(",") !== "Käfig,Funino 1,Funino 2") probleme.push(`Standardnamen ${r.std.join(",")} statt Käfig,Funino 1,Funino 2`);
+  if (r.std.join(",") !== "Käfig,Funino 1,Funino 2,4+1 oben") probleme.push(`Standardnamen ${r.std.join(",")} statt Käfig,Funino 1,Funino 2,4+1 oben`);
   if (r.vierNamen.join(",") !== "Käfig,Funino 1,Funino 2,4+1 oben") probleme.push(`vier Felder heißen ${r.vierNamen.join(",")} – das zweite 4+1 muss „4+1 oben“ sein`);
   if (r.eigenNamen.join(",") !== "Kunstrasen,Funino 1") probleme.push(`eigener Name geht verloren: ${r.eigenNamen.join(",")}`);
   if (!r.knopf) probleme.push("kein Info-Knopf auf der Gast-Seite");
@@ -77,7 +77,7 @@ module.exports = async function (h) {
   if (r.svgs < 2 || !r.skizzeFelder || !r.skizzeParken) probleme.push(`Skizzen: ${r.svgs} SVGs, Felder ${r.skizzeFelder}, Parken ${r.skizzeParken}`);
   if (!r.zuIst) probleme.push("„Zurück zum Spielplan“ schließt das Blatt nicht");
   if (!r.planNamen || !r.legende) probleme.push(`Gast-Seite ohne Feldnamen (Plan ${r.planNamen}, Legende ${r.legende})`);
-  if (r.eingaben.join(",") !== "Käfig,Funino 1,Funino 2") probleme.push(`Trainer-Eingabe zeigt ${JSON.stringify(r.eingaben)} statt der Feldnamen`);
+  if (r.eingaben.join(",") !== "Käfig,Funino 1,Funino 2,4+1 oben") probleme.push(`Trainer-Eingabe zeigt ${JSON.stringify(r.eingaben)} statt der Feldnamen`);
   if (fehler.length) probleme.push(...fehler.slice(0, 3));
   zeilen.push(`Namen: Standard ${r.std.join(", ")} · vier Felder ${r.vierNamen.join(", ")} · eigener Name ${r.eigenNamen[0]}`);
   zeilen.push(`Gast-Seite: Info-Knopf ${r.knopf} (${Math.round(r.knopfHoch)}px) · Blatt mit Adresse ${r.adresse}, Karte ${r.karte}, Parken ${r.parken}, ${r.svgs} Skizzen, Dialog ${r.rolle}`);
