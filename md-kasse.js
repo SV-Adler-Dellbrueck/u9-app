@@ -40,7 +40,11 @@ const FAIRPLAY_REGELN=[
   {emo:"👋", t:"Gegner und Gasteltern freundlich behandeln", d:"Ein Gruß, ein Handschlag, ein Danke an den Gastgeber. Wir treten fair und gastfreundlich auf."},
   {emo:"🎯", t:"Einsatz loben, nicht nur Tore", d:"Mut, Teamgeist und Anstrengung verdienen genauso Applaus wie ein Treffer. Das prägt fürs Leben."},
   {emo:"😊", t:"Vorbild bei Frust am Rand", d:"Auch wenn es nicht läuft oder dein Kind auf der Bank sitzt: bleibt ruhig und positiv. Die Kinder lesen eure Körpersprache genauer als jedes Wort."},
-  {emo:"🌱", t:"Gemeinsam gewinnen, gemeinsam verlieren", d:"Kein Sündenbock nach Niederlagen. Wir gewinnen und verlieren als Team – und der Handschlag mit dem Gegner gehört immer dazu."}
+  {emo:"🌱", t:"Gemeinsam gewinnen, gemeinsam verlieren", d:"Kein Sündenbock nach Niederlagen. Wir gewinnen und verlieren als Team – und der Handschlag mit dem Gegner gehört immer dazu."},
+  /* v505 (PO): Vorgabe des Vereins fuer den Thurner Kamp – gilt bei jedem Heimspiel, nicht nur
+     beim Festival. Steht wortgleich im Codex des Gast-Links (fstZonenSatz rechnet dort die
+     Feldnamen des Tages dazu). */
+  {emo:"🙌", t:"Obere Felder – dort spielen die Kinder unter sich", d:"An den Feldern oben am Platz sind nur Spieler und Trainer, das ist eine Vorgabe unseres Vereins. Die Kinder sollen dort ihre Freiheit und die volle Konzentration aufs Spiel haben. Am Käfig und an den vorderen Feldern dürft ihr gerne anfeuern und jubeln."}
 ];
 // Ausformulierter Eltern-Leitfaden (breiter als der Fairplay-Codex). Default = Offline-Fallback,
 // im Normalfall aus der Tabelle eltern_leitfaden geladen (trainer-pflegbar). Name frei änderbar.
@@ -87,6 +91,7 @@ const ELTERN_LEITFADEN=[
   {emo:"📇", t:"Kontaktdaten aktuell & am Spieltag erreichbar", kat:"wir", d:"Haltet Telefonnummer und E-Mail in der App aktuell und sorgt dafür, dass am Spieltag mindestens ein Elternteil erreichbar ist. Falls doch einmal etwas ist, müssen wir euch schnell erreichen können."},
   {emo:"🤝", t:"Kleine Konflikte erst mal den Kindern lassen", kat:"wir", d:"Kinder streiten mal – das gehört dazu und sie lernen daran. Lasst sie kleine Reibereien zuerst selbst klären und greift nicht Eltern-gegen-Eltern ein. Größere Dinge bringt bitte zu uns Trainern, nicht direkt zum anderen Kind."},
   {emo:"🅿️", t:"Rücksichtsvoll parken & Kinder im Blick", kat:"termin", d:"Beim Kommen und Gehen bitte rücksichtsvoll parken, nicht in zweiter Reihe halten und die Kinder auf dem Parkplatz an die Hand nehmen. Rund um den Platz sind viele aufgeregte Kinder unterwegs."},
+  {emo:"🙌", t:"Welche Felder für Zuschauer offen sind", kat:"rand", d:"Am Thurner Kamp gilt bei Heimspielen und Festivals: An den Feldern oben am Platz sind aus Vereinsgründen nur Spieler und Trainer. Dort spielen die Kinder unter sich – das gibt ihnen Freiheit und volle Konzentration. Zuschauen, anfeuern und jubeln könnt ihr am Käfig und an den vorderen Feldern. Bitte gebt das auch an Großeltern und Gäste weiter. Coach, Schreihals, Bürgermeister Besserwisser sind schon besetzt – die schönste Rolle am Rand ist Fan."},
   {emo:"💊", t:"Notfallkarte & Allergien aktuell halten", kat:"gesundheit", d:"Tragt Allergien, Medikamente und einen Notfallkontakt in der Notfallkarte in der App ein und haltet sie aktuell. Im Ernstfall haben wir am Platz dann sofort das Wichtigste griffbereit."}
 ];
 /* Adler-Börse (Phase 23.1): interner Flohmarkt. Preise sind Freitext ("Zu verschenken").

@@ -1580,7 +1580,7 @@ async function htOpen(datum,name,anlass){
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{if(e.target===m)m.remove();};
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
-    ${mdlHead("hturnier-modal","🏆",_htAnlass==="heimspiel"?"Heimspiel bei uns":"Heimturnier","Wir richten aus – Spielplan erstellen und per Link an alle Trainer","#b45309")}
+    ${mdlHead("hturnier-modal","🏆",_htAnlass==="heimspiel"?"Heimspiel bei uns":"Heimturnier","Wir richten aus – Spielplan erstellen und per Link an Trainer und Eltern","#b45309")}
     <div id="ht-body"><div style="font-size:12px;color:var(--text3)">Lade…</div></div>
   </div>`;
   document.body.appendChild(m);
@@ -1783,7 +1783,7 @@ function htRender(){
       ${finalsOffen?`<button class="btn btn-sm" style="width:100%" onclick="htFinalsFill()">🏁 Finalrunde füllen (nach Gruppen bzw. Halbfinals)</button>`:""}
       ${tabellen}
       ${cfg.format==="festival"?'<div style="font-size:11.5px;color:#16a34a;margin-top:6px">🦅 Festival-Modus: alle spielen gleich viel, bewusst keine Tabelle (DFB-Kinderfußball).</div>':""}
-      <div style="font-weight:800;font-size:13.5px;margin:14px 0 6px">📤 An die Gast-Trainer</div>
+      <div style="font-weight:800;font-size:13.5px;margin:14px 0 6px">📤 Link zum Weitergeben – an Trainer und Eltern</div>
       <div style="font-size:11px;color:var(--text2);word-break:break-all;background:var(--surface2);border-radius:8px;padding:8px 10px;margin-bottom:8px">${esc(url)}</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-sm btn-p" onclick="htShare()"><i class="ti ti-share"></i>Link teilen</button>
@@ -2104,6 +2104,32 @@ function fstIst(row){ return ((row||_HT||{}).config||{}).art==="festival"; }
 function fstWort(row){ return (((row||_HT||{}).config||{}).anlass==="heimspiel")?"Heimspiel":"Festival"; }
 let _htAnlass="";
 function _fstF(k){ return FST_FORMEN[k]||FST_FORMEN.funino; }
+/* v505 PO: „Wenn wir mit 3 Feldern planen und 2 davon FUNiño, dann das Feld unten rechts nach
+   oben rechts schieben." Und: „Die Felder, die oben am Platz liegen, sind aus Vereinsgründen nur
+   für Spieler und Trainer erlaubt."  Damit ist „wo liegt ein Feld" keine Frage der Zeichnung
+   mehr, sondern eine Eigenschaft: Der Käfig ist das erste Jugendtor-Feld, OBEN liegt das zweite
+   Jugendtor-Feld – und wenn es keins gibt, rutscht das letzte FUNiño-Feld hinauf, weil vorn
+   Platz für zwei ist. Skizze, Zonen-Regel und Codex lesen dieselbe Rechnung; sonst müsste der
+   Satz „keine Eltern an den oberen Feldern" bei jedem Aufbau von Hand nachgezogen werden. */
+function fstFeldLage(felder){
+  const f=(felder&&felder.length)?felder:FST_STANDARD_FELDER;
+  const jug=[], fun=[];
+  f.forEach((x,i)=>(_fstJugendtore(x.form||"funino")?jug:fun).push(i));
+  const kaefig=jug.length?jug[0]:null;
+  const oben=jug.slice(1);            // jedes weitere Jugendtor-Feld liegt oben („4+1 oben")
+  const vorne=fun.slice();
+  while(vorne.length>2||(!oben.length&&vorne.length>1))oben.push(vorne.pop());   // hinten rechts wandert nach oben
+  return {kaefig,oben,vorne};
+}
+/* Die beiden Zonen in Worten, mit den Namen von heute – für Gast-Seite, Info-Blatt und Aushang. */
+function fstZonenSatz(felder){
+  const f=(felder&&felder.length)?felder:FST_STANDARD_FELDER;
+  const l=fstFeldLage(f), nm=i=>fstFeldName(f,i);
+  if(!l.oben.length)return "";
+  const vorn=(l.kaefig!=null?[nm(l.kaefig)]:[]).concat(l.vorne.map(nm));
+  return `An den oberen Feldern (${l.oben.map(nm).join(", ")}) sind nur Spieler und Trainer am Platz – das ist eine Vorgabe unseres Vereins, und dort spielen die Kinder unter sich. Angefeuert und gejubelt wird ${vorn.length?`am ${vorn.join(" und ")}`:"an den vorderen Feldern"}.`;
+}
+const FST_FAN_SATZ="Coach, Schreihals, Bürgermeister Besserwisser sind schon besetzt – die schönste Rolle am Rand ist Fan. 😊";
 /* Feldnamen, wie sie am Platz heissen (PO): das erste Feld mit Jugendtoren ist immer der
    „Käfig", das zweite „4+1 oben" bzw. „3+1 oben" (obere Haelfte des grossen Platzes),
    FUNiño-Felder „Funino 1, 2 …". Ein eigener Name je Feld ueberschreibt den Standard.
@@ -2396,6 +2422,72 @@ function fstRegelnOpen(){
     </div>
     ${fstRegelnHtml(true,((_htPub&&_htPub.row&&_htPub.row.config)||(_HT&&_HT.config)||{}))}
     <button onclick="document.getElementById('fst-regeln').remove()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:#16a34a;color:#fff;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit">Zurück zum Spielplan</button>
+  </div>`;
+  document.body.appendChild(d);
+}
+/* ═══ v505 – Codex fuer den Platz ══════════════════════════════════════════════
+   PO: „Wir brauchen eine Erweiterung in den Regeln: Verhalten auf dem und neben dem Platz, eine
+   Art Codex, der bei uns am Platz gilt. Schau, welche Inhalte aus der Eltern-App wichtig waeren,
+   damit unsere Gaeste davon wissen." Die Haltungs-Punkte stehen schon im Fairplay-Codex der
+   Eltern-App – sie werden hier AUSGEWAEHLT, nicht abgeschrieben: aendert der Trainer dort einen
+   Satz, aendert er sich auch fuer die Gaeste. Dazu vier Punkte, die nur am Platz gelten.
+   Der Link geht ausdruecklich auch an die Eltern der Gastvereine und an unsere – deshalb sind
+   alle Texte an Eltern gerichtet, nicht an Trainer. */
+const FST_CODEX_EIGEN={
+  platz:{emo:"🙌",t:"Oben spielen die Kinder unter sich"},   // Text rechnet fstZonenSatz aus
+  feld: {emo:"🩹",t:"Nicht selbst aufs Feld",d:"Ob behandelt oder gewechselt wird, entscheidet das Trainerteam des Kindes. Bleibt bitte auch dann hinter der Linie, wenn es einmal wehtut – wir kümmern uns sofort."},
+  hund: {emo:"🐕",t:"Geschwister und Hunde hinter der Linie",d:"Kleine Geschwister und Vierbeiner sind herzlich willkommen, aber bitte nicht auf den Spielfeldern. Bälle nachlaufen lenkt die Kinder ab und kann gefährlich werden."},
+  rauch:{emo:"🚭",t:"Kein Rauchen, kein Alkohol am Kinderfeld",d:"Rund um die Spielfelder bleibt beides weg. Die Kinder schauen sich alles ab – auch das."}
+};
+/* Reihenfolge des Blattes: erst die Platz-Regel, dann die Haltung aus dem Fairplay-Codex,
+   zuletzt die drei ortsgebundenen Punkte. Strings sind Titel aus FAIRPLAY_REGELN. */
+const FST_CODEX_REIHE=["platz",
+  "Anfeuern statt anweisen","Eine ruhige Stimme statt Stimmengewirr","Jedes Kind bejubeln",
+  "Fehler gehören dazu","Trösten geht vor Analyse","Einsatz loben, nicht nur Tore",
+  "Ergebnis ist Nebensache","Abstand zum Spielfeld halten",
+  "feld","hund","rauch"];
+function fstCodexPunkte(felder){
+  const app=(typeof FAIRPLAY_REGELN!=="undefined")?FAIRPLAY_REGELN:[];
+  const zone=fstZonenSatz(felder);
+  return FST_CODEX_REIHE.map(k=>{
+    const eig=FST_CODEX_EIGEN[k];
+    if(eig)return (k==="platz")?(zone?{...eig,d:zone+" "+FST_FAN_SATZ}:null):eig;
+    const r=app.find(x=>x.t===k);
+    return r?{emo:r.emo,t:r.t,d:r.d}:null;
+  }).filter(Boolean);
+}
+function fstCodexHtml(hell,felder){
+  const p=fstCodexPunkte(felder);
+  if(!p.length)return "";
+  const zone=p[0]&&p[0].t===FST_CODEX_EIGEN.platz.t?p[0]:null;
+  const rest=zone?p.slice(1):p;
+  const karte=(inhalt,rand)=>`<div style="background:${hell?"#fff":"var(--surface)"};border-radius:14px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.08)${rand?";border-left:5px solid "+rand:""}">${inhalt}</div>`;
+  return (zone?karte(`<div style="font-size:13.5px;font-weight:800;margin-bottom:4px">${zone.emo} ${esc(zone.t)}</div>
+      <div style="font-size:13.5px;line-height:1.55">${esc(zone.d)}</div>`,"#b91c1c"):"")
+    +karte(`<div style="font-size:12px;font-weight:800;color:${hell?"#475569":"var(--text2)"};text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Am Spielfeldrand</div>
+      ${rest.map(x=>`<div style="display:flex;gap:9px;align-items:flex-start;padding:5px 0">
+        <span style="font-size:16px;line-height:1.3;flex:0 0 auto">${x.emo}</span>
+        <div style="min-width:0"><b style="font-size:13.5px">${esc(x.t)}</b>
+        <div style="font-size:12.5px;line-height:1.5;color:${hell?"#475569":"var(--text2)"}">${esc(x.d)}</div></div>
+      </div>`).join("")}`)
+    +`<div style="font-size:11px;color:${hell?"#94a3b8":"var(--text3)"};margin:4px 0 10px">Das gilt für alle am Platz – für unsere Familien genauso wie für eure. Danke, dass ihr es mittragt. 💚</div>`;
+}
+function fstCodexOpen(){
+  const row=(typeof _htPub!=="undefined"&&_htPub&&_htPub.row)||(typeof _HT!=="undefined"?_HT:null)||{};
+  const cfg=row.config||{};
+  const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
+  document.getElementById("fst-codex")?.remove();
+  const d=document.createElement("div"); d.id="fst-codex";
+  d.setAttribute("role","dialog"); d.setAttribute("aria-modal","true"); d.setAttribute("aria-label","So gehen wir miteinander um");
+  d.style.cssText="position:fixed;inset:0;background:#f1f5f9;z-index:1000;overflow:auto;-webkit-overflow-scrolling:touch;color:#0f172a;font-family:Inter,system-ui,sans-serif";
+  d.innerHTML=`<div style="max-width:560px;margin:0 auto;padding:14px 14px 40px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <div style="font-size:18px;font-weight:900;flex:1">🤝 So gehen wir miteinander um</div>
+      <button onclick="document.getElementById('fst-codex').remove()" aria-label="Schließen" style="min-width:44px;min-height:44px;border:1px solid #cbd5e1;border-radius:12px;background:#fff;font-size:18px;cursor:pointer">✕</button>
+    </div>
+    <div style="font-size:13px;color:#475569;line-height:1.55;margin-bottom:12px">Diese Seite dürft ihr gern an alle Eltern eurer Mannschaft weiterleiten – je mehr sie kennen, desto entspannter wird der Tag für die Kinder.</div>
+    ${fstCodexHtml(true,felder)}
+    <button onclick="document.getElementById('fst-codex').remove()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:#16a34a;color:#fff;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit">Zurück zum Spielplan</button>
   </div>`;
   document.body.appendChild(d);
 }
@@ -2716,7 +2808,7 @@ function fstRender(){
   el.innerHTML=`
     <div style="display:flex;gap:8px;margin-bottom:10px">
       <input id="fst-datum" type="date" value="${esc(_HT.datum||"")}" onchange="fstZeitSpeichern()" style="${fld};flex:1">
-      <button class="btn btn-sm" onclick="htShare()" title="Plan an die Gast-Trainer schicken"><i class="ti ti-share"></i>Teilen</button>
+      <button class="btn btn-sm" onclick="htShare()" title="Plan an Trainer und Eltern schicken"><i class="ti ti-share"></i>Teilen</button>
     </div>
 
     ${plan.length?`<details id="fst-vorbereitung" style="margin:12px 0;border:var(--border-s);border-radius:12px;background:var(--surface2)">
@@ -2772,12 +2864,17 @@ function fstRender(){
       ${fstAufwaermZeile(_HT)?`<div style="font-size:11.5px;color:var(--text2);background:var(--surface2);border-radius:10px;padding:8px 10px;margin-bottom:8px">🔥 <b>Aufwärmen vor der ersten Runde:</b> ${fstAufwaermZeile(_HT)}</div>`:""}
       <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${_fstTauschWahl?"Tauschen: jetzt das zweite Team antippen":"Teams antippen zum Tauschen · Ergebnis rechts antippen"}</div>
       ${fstPlanHtml(plan,_HT.teams||[],felder,false,true,cfg)}
-      <button class="btn" onclick="${_HT.edit_code?"htShareHelfer()":"htShare()"}" style="width:100%;min-height:48px;margin-top:8px"><i class="ti ti-share"></i>Plan an die Gast-Trainer schicken</button>
-      <div style="font-size:10.5px;color:var(--text3);margin:4px 0 6px">${_HT.edit_code?"Mit diesem Link können die Gast-Trainer Ergebnisse eintragen. Nur ansehen: der Teilen-Knopf oben.":"Nur zum Ansehen – dieses Festival hat keinen Schreib-Code."}</div>
+      <button class="btn" onclick="${_HT.edit_code?"htShareHelfer()":"htShare()"}" style="width:100%;min-height:48px;margin-top:8px"><i class="ti ti-share"></i>Plan teilen – für Trainer und Eltern</button>
+      <div style="font-size:10.5px;color:var(--text3);margin:4px 0 6px">${_HT.edit_code?"Achtung: dieser Link trägt den Schreib-Code – nur an die Gast-Trainer und den Anzeigetisch, nicht in die Eltern-Gruppe. Zum Weitergeben an alle: der Teilen-Knopf oben.":"Nur zum Ansehen – dieses Festival hat keinen Schreib-Code."}</div>
       <button class="btn btn-sm" onclick="fstDruck()" style="width:100%;margin-top:2px"><i class="ti ti-printer"></i>Aushang drucken</button>`:""}
 
     <div style="font-size:12px;font-weight:800;margin:16px 0 6px">Infos für die Gäste</div>
     <textarea id="fst-infos" rows="4" onchange="fstZeitSpeichern()" style="${fld};width:100%;resize:vertical">${esc(cfg.infos||HT_INFOS_VORLAGE)}</textarea>
+    <div style="display:flex;gap:6px;margin-top:6px">
+      <button class="btn btn-sm" onclick="fstRegelnOpen()" style="flex:1;justify-content:center"><i class="ti ti-book"></i>Regeln ansehen</button>
+      <button class="btn btn-sm" onclick="fstCodexOpen()" style="flex:1;justify-content:center"><i class="ti ti-heart-handshake"></i>Codex ansehen</button>
+    </div>
+    <div style="font-size:10.5px;color:var(--text3);margin-top:4px">So sehen es die Gäste – Trainer wie Eltern.</div>
 
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-sm" onclick="htListe()"><i class="ti ti-arrow-left"></i>Übersicht</button>
@@ -2854,6 +2951,7 @@ function fstDruck(){
     <div style="font-size:13px;margin-bottom:10px">${felder.map((f,i)=>{const F=_fstF(f.form);return `<b style="color:${F.farbe}">${esc(fstFeldName(felder,i))}</b>: ${F.lang} · ${F.tore}`;}).join(" &nbsp;·&nbsp; ")}</div>
     ${fstPlanHtml(_HT.plan||[],teams,felder,true,false,cfg).replace(/var\(--border-s\)/g,"1px solid #e2e8f0").replace(/var\(--surface\)/g,"#fff").replace(/var\(--text2\)/g,"#475569").replace(/var\(--text3\)/g,"#94a3b8")}
     ${fstAufwaermZeile(_HT)?`<div style="margin-top:12px;font-size:12.5px;color:#0f172a">🔥 <b>Aufwärmen:</b> ${fstAufwaermZeile(_HT)}</div>`:""}
+    ${fstZonenSatz(felder)?`<div style="margin-top:10px;font-size:12.5px;color:#0f172a;border-left:4px solid #b91c1c;padding-left:8px">🙌 <b>Am Spielfeldrand:</b> ${esc(fstZonenSatz(felder))} ${esc(FST_FAN_SATZ)}</div>`:""}
     <div style="margin-top:14px;font-size:12px;color:#475569;white-space:pre-wrap">${esc(cfg.infos||"")}</div>
     <div style="margin-top:14px;max-width:420px">${fstSkizzeFelder(felder)}</div>
     </body></html>`);
@@ -2889,36 +2987,55 @@ function fstAufwaermZeile(row){
    bleibt frei. Rechts vom Platz der Parkplatz, unten das Vereinsheim (WC ebenerdig). */
 function fstSkizzeFelder(felder){
   const f=(felder&&felder.length)?felder:FST_STANDARD_FELDER;
-  const idxF4=[],idxFu=[]; f.forEach((x,i)=>(_fstJugendtore(x.form||"funino")?idxF4:idxFu).push(i));   // v501: 4+1 und 3+1 liegen auf denselben Plätzen
-  const nm=i=>i==null?null:fstFeldName(f,i);
-  const kaefig=nm(idxF4[0]), oben=nm(idxF4[1]), fu1=nm(idxFu[0]), fu2=nm(idxFu[1]);
-  const fb=i=>i==null?_fstF("f4").farbe:_fstF(f[i].form).farbe;
-  const B=fb(idxF4[0]), B2=fb(idxF4[1]), G=_fstF("funino").farbe;
-  const box=(x,y,w,h,name,farbe,ort)=>name
-    ?`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="${farbe}" opacity=".92"/><text x="${x+w/2}" y="${y+h/2+5}" text-anchor="middle" font-size="${w<60?"10.5":"13"}" font-weight="800" fill="#fff">${esc(name)}</text>`
-    :`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="none" stroke="#94a3b8" stroke-dasharray="6 4" stroke-width="2"/><text x="${x+w/2}" y="${y+h/2}" text-anchor="middle" font-size="11" fill="#64748b">${esc(ort)}</text><text x="${x+w/2}" y="${y+h/2+14}" text-anchor="middle" font-size="10" fill="#94a3b8">heute frei</text>`;
-  return `<svg viewBox="0 0 360 288" role="img" aria-label="Skizze der Spielfelder" style="width:100%;height:auto;display:block;font-family:inherit">
-    <rect x="0" y="0" width="360" height="288" rx="12" fill="#f0fdf4"/>
+  const l=fstFeldLage(f);
+  const nm=i=>fstFeldName(f,i);
+  const farbe=i=>_fstF(f[i].form).farbe;
+  const gross=i=>_fstJugendtore(f[i].form||"funino");
+  /* Eine Reihe Felder in einen Streifen zeichnen: ein Jugendtor-Feld allein nimmt die ganze
+     Breite, FUNiño-Felder bleiben klein. Ein einzelnes kleines Feld oben liegt rechts – so hat
+     es der PO eingezeichnet, und so steht es auch am Platz. */
+  const reihe=(idxs,x0,y,breite,hoehe,rechts)=>{
+    if(!idxs.length)return "";
+    const voll=idxs.length===1&&gross(idxs[0]);
+    const w=voll?breite:Math.min(53,Math.floor((breite-6*(idxs.length-1))/idxs.length));
+    const ganz=w*idxs.length+6*(idxs.length-1);
+    const start=(rechts&&!voll)?(x0+breite-ganz):x0;
+    return idxs.map((i,k)=>{
+      const x=start+k*(w+6), name=nm(i);
+      return `<rect x="${x}" y="${y}" width="${w}" height="${hoehe}" rx="6" fill="${farbe(i)}" opacity=".92"/>
+        <text x="${x+w/2}" y="${y+hoehe/2+4}" text-anchor="middle" font-size="${w<60?"10.5":"13"}" font-weight="800" fill="#fff">${esc(name)}</text>`;
+    }).join("");
+  };
+  const frei=(x,y,w,h,txt)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="none" stroke="#94a3b8" stroke-dasharray="6 4" stroke-width="2"/><text x="${x+w/2}" y="${y+h/2+4}" text-anchor="middle" font-size="11" fill="#64748b">${esc(txt)}</text>`;
+  const kaefigName=l.kaefig!=null?nm(l.kaefig):null;
+  const obenNamen=l.oben.map(nm);
+  return `<svg viewBox="0 0 360 322" role="img" aria-label="Skizze der Spielfelder mit Zuschauer-Zonen" style="width:100%;height:auto;display:block;font-family:inherit">
+    <rect x="0" y="0" width="360" height="322" rx="12" fill="#f0fdf4"/>
     <text x="180" y="20" text-anchor="middle" font-size="12" font-weight="800" fill="#334155">Sportanlage Thurner Kamp – Skizze</text>
     <!-- Käfig: kleines eingezaeuntes Feld links -->
     <rect x="8" y="60" width="48" height="150" rx="6" fill="none" stroke="#475569" stroke-width="3" stroke-dasharray="3 3"/>
-    ${box(14,66,36,138,kaefig,B,"Käfig")}
+    ${kaefigName?`<rect x="14" y="66" width="36" height="138" rx="6" fill="${farbe(l.kaefig)}" opacity=".92"/>
+      <text x="32" y="139" text-anchor="middle" font-size="10.5" font-weight="800" fill="#fff">${esc(kaefigName)}</text>`
+     :frei(14,66,36,138,"Käfig")}
+    <text x="32" y="224" text-anchor="middle" font-size="10" fill="#64748b">eingezäunt</text>
     <!-- grosser Platz quer, linke Haelfte fuers Festival -->
     <rect x="64" y="40" width="254" height="190" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
     <line x1="191" y1="40" x2="191" y2="230" stroke="#16a34a" stroke-width="2"/>
-    ${box(72,48,112,78,oben,B2,"4+1 oben")}
-    ${box(72,134,53,88,fu1,G,"Funino 1")}
-    ${box(131,134,53,88,fu2,G,"Funino 2")}
+    ${l.oben.length?reihe(l.oben,72,48,112,78,true):frei(72,48,112,78,"oben heute frei")}
+    ${l.vorne.length?reihe(l.vorne,72,134,112,88,false):frei(72,134,112,88,"vorn heute frei")}
+    ${l.oben.length?`<rect x="72" y="42" width="112" height="0.5" fill="none"/>
+      <text x="128" y="${48+78+11}" text-anchor="middle" font-size="9.5" font-weight="800" fill="#b91c1c">🚫👪 nur Spieler &amp; Trainer</text>`:""}
+    ${l.vorne.length||kaefigName?`<text x="128" y="${134+88+12}" text-anchor="middle" font-size="9.5" font-weight="800" fill="#15803d">👏 hier dürft ihr anfeuern</text>`:""}
     <rect x="198" y="48" width="112" height="174" rx="6" fill="#f1f5f9" opacity=".8"/>
     <text x="254" y="130" text-anchor="middle" font-size="10.5" fill="#64748b">rechte Hälfte</text>
     <text x="254" y="144" text-anchor="middle" font-size="10.5" fill="#64748b">nicht im Festival</text>
     <!-- Parkplatz rechts vom Platz, Vereinsheim unten -->
     <rect x="326" y="60" width="26" height="140" rx="5" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
     <text x="339" y="130" text-anchor="middle" font-size="10" font-weight="700" fill="#92400e" transform="rotate(-90 339 130)">Parkplatz</text>
-    <rect x="155" y="238" width="72" height="22" rx="5" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"/>
-    <text x="191" y="253" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">Vereinsheim</text>
-    <text x="191" y="277" text-anchor="middle" font-size="10" fill="#64748b">WC/Kabinen ebenerdig darunter</text>
-    <text x="32" y="224" text-anchor="middle" font-size="10" fill="#64748b">eingezäunt</text>
+    <rect x="155" y="252" width="72" height="22" rx="5" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"/>
+    <text x="191" y="267" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">Vereinsheim</text>
+    <text x="191" y="288" text-anchor="middle" font-size="10" fill="#64748b">WC/Kabinen ebenerdig darunter</text>
+    ${obenNamen.length?`<text x="180" y="308" text-anchor="middle" font-size="10" font-weight="700" fill="#b91c1c">Oben (${esc(obenNamen.join(", "))}): nur Spieler &amp; Trainer – bitte nicht am Feldrand stehen</text>`:""}
   </svg>`;
 }
 /* Skizze der Parkplaetze (schematisch, nach der Luftaufnahme): der Parkplatz liegt rechts
@@ -2977,7 +3094,7 @@ function fstInfoOpen(){
       <a href="${mapsUrl(adr)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;margin-top:8px;border-radius:12px;background:#1e3a8a;color:#fff;font-weight:800;font-size:14px;text-decoration:none">📍 Route in Karten öffnen</a>`)}
     ${karte("Parken",`<div style="font-size:13.5px;line-height:1.55;margin-bottom:8px">Direkt am Platz gibt es Parkplätze, wenn ihr hineinfahrt – die sind aber oft schon belegt. <b>Besser gleich an der Straße parken (Thurner Kamp)</b>, dort ist genug Platz.</div>${fstSkizzeParken()}`)}
     ${karte("WC &amp; Kabinen",`<div style="font-size:13.5px;line-height:1.55">🚻 Ebenerdig unter dem Vereinsheim – gleich hinter dem großen Platz.</div>`)}
-    ${karte("Wo welches Feld liegt",`<div style="font-size:13px;color:#475569;margin-bottom:8px">Wir spielen im Käfig und auf der linken Hälfte des großen Platzes.</div>${fstAufwaermZeile(row)?`<div style="font-size:13px;color:#0f172a;margin-bottom:8px">🔥 Aufwärmen: ${fstAufwaermZeile(row)}</div>`:""}<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${felder.map((f,i)=>{const F=_fstF(f.form);return `<span style="font-size:11.5px;font-weight:700;color:#fff;background:${F.farbe};border-radius:20px;padding:5px 11px">${esc(fstFeldName(felder,i))} · ${F.label} · ${F.tore}</span>`;}).join("")}</div>${fstSkizzeFelder(felder)}`)}
+    ${karte("Wo welches Feld liegt",`<div style="font-size:13px;color:#475569;margin-bottom:8px">Wir spielen im Käfig und auf der linken Hälfte des großen Platzes.</div>${fstZonenSatz(felder)?`<div style="font-size:13px;line-height:1.55;color:#0f172a;background:#fef2f2;border-left:4px solid #b91c1c;border-radius:8px;padding:8px 10px;margin-bottom:8px">🙌 ${esc(fstZonenSatz(felder))}</div>`:""}${fstAufwaermZeile(row)?`<div style="font-size:13px;color:#0f172a;margin-bottom:8px">🔥 Aufwärmen: ${fstAufwaermZeile(row)}</div>`:""}<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${felder.map((f,i)=>{const F=_fstF(f.form);return `<span style="font-size:11.5px;font-weight:700;color:#fff;background:${F.farbe};border-radius:20px;padding:5px 11px">${esc(fstFeldName(felder,i))} · ${F.label} · ${F.tore}</span>`;}).join("")}</div>${fstSkizzeFelder(felder)}`)}
     ${cfg.infos?karte("Gut zu wissen",`<div style="font-size:13px;white-space:pre-wrap;line-height:1.6">${esc(cfg.infos)}</div>`):""}
     <button onclick="document.getElementById('fst-info').remove()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:#16a34a;color:#fff;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit">Zurück zum Spielplan</button>
   </div>`;
@@ -3003,14 +3120,21 @@ function _fstPublicRender(wrap,row){
       </div>
     </div>
 
-    <div style="display:flex;gap:8px;margin:14px 0 12px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 12px">
       <button onclick="fstInfoOpen()" style="flex:1;min-height:48px;border:1px solid #bfdbfe;border-radius:14px;background:#fff;color:#1e3a8a;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,.08)">ℹ️ Anfahrt &amp; Felder</button>
       <button onclick="fstRegelnOpen()" style="flex:1;min-height:48px;border:1px solid #bfdbfe;border-radius:14px;background:#fff;color:#1e3a8a;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,.08)">📖 Regeln</button>
+      <button onclick="fstCodexOpen()" style="flex:1;min-height:48px;border:1px solid #bfdbfe;border-radius:14px;background:#fff;color:#1e3a8a;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,.08)">🤝 Am Rand</button>
     </div>
     <div style="background:#fff;border-radius:14px;padding:12px 14px;margin:14px 0 10px;box-shadow:0 1px 3px rgba(0,0,0,.08);display:flex;gap:10px;align-items:flex-start">
       <span style="font-size:20px;line-height:1.2">👋</span>
       <div style="font-size:13.5px;line-height:1.5;font-weight:600">${esc(FST_GRUSS)}</div>
     </div>
+    ${fstZonenSatz(felder)?`<div style="background:#fff;border-radius:14px;border-left:5px solid #b91c1c;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+      <div style="font-size:13.5px;font-weight:800;margin-bottom:4px">🙌 Am Spielfeldrand</div>
+      <div style="font-size:13px;line-height:1.55;color:#334155">${esc(fstZonenSatz(felder))}</div>
+      <div style="font-size:13px;line-height:1.55;color:#334155;margin-top:4px">${esc(FST_FAN_SATZ)}</div>
+      <button onclick="fstCodexOpen()" style="width:100%;min-height:44px;margin-top:8px;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc;color:#1e3a8a;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit">Alles lesen – und gern an eure Eltern weiterleiten</button>
+    </div>`:""}
 
     <div id="fst-uhr"></div>
     ${cfg.startIst&&verzug?`<div style="font-size:11.5px;color:#475569;text-align:center;margin:-2px 0 10px">Die Uhrzeiten unten sind ${verzug>0?"um "+verzug+" Min. nach hinten":"um "+(-verzug)+" Min. nach vorn"} gerückt – so, wie wir wirklich spielen.</div>`:""}
