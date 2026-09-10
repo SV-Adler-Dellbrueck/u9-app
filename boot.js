@@ -1069,7 +1069,15 @@ function tpParallelTrainer(mainIdx){
    die ueberzaehligen Gruppen spielen bei den kleinsten Feldern mit – nur fuer diesen
    Hauptteil, die Auslosung selbst bleibt unangetastet (ein anderer Hauptteil ohne Block
    hat wieder alle Gruppen). Kein Kind verschwindet, keine Gruppe wird gespeichert. */
-function tpFelderGruppen(tg,n,weg){
+/* v514 – PO: „Wenn wir zwei Gruppen haben und zwei Übungen machen, die Gruppen darauf
+   aufteilen und dann die Gruppen einfach nur switchen."
+   Bis dahin stand Gruppe 1 in JEDEM Hauptteil an Feld 1. Bei zwei Übungen nebeneinander
+   machte Gruppe 1 also nur die eine und Gruppe 2 nur die andere. Jetzt rückt die
+   Zuordnung von Hauptteil zu Hauptteil um eine Station weiter (Ringtausch): bei zwei
+   Gruppen ist das ein Tausch, bei drei oder vier ein Weiterrücken.
+   Der Versatz ist die EINZIGE Stelle, an der das passiert – wer die Gruppen anzeigt,
+   fragt hier, statt selbst zu rechnen. */
+function tpFelderGruppen(tg,n,weg,versatz){
   const alle=(tg&&tg.gruppen)||[];
   if(!alle.length)return [];
   const raus=Array.isArray(weg)?weg:[];
@@ -1082,7 +1090,33 @@ function tpFelderGruppen(tg,n,weg){
     ziel.kinder=ziel.kinder.concat(x.kinder||[]); ziel.dazu.push(x.name);
   });
   felder.forEach(f=>{ if(f.dazu.length)f.name=f.name+" + "+f.dazu.join(" + "); });
-  return felder;
+  /* Erst zusammenlegen, dann drehen: die weggelassenen Felder sind vorher verteilt, sonst
+     wanderte eine Gruppe in ein Feld, das es in diesem Block gar nicht gibt. */
+  const v=((Number(versatz)||0)%felder.length+felder.length)%felder.length;
+  return v?felder.slice(v).concat(felder.slice(0,v)):felder;
+}
+/* Der wievielte Hauptteil ist das? Daraus entsteht der Versatz von selbst – ohne dass
+   jemand etwas einstellen muss. `slot.versatz` schlägt das über (Knopf am Block) und wird
+   mit dem Plan gespeichert, weil tpSlotsMitZuordnung den ganzen Slot übernimmt. */
+function tpVersatz(si){
+  const slot=tpSlots[si]; if(!slot)return 0;
+  if(slot.versatz!=null)return Number(slot.versatz)||0;
+  let n=0; for(let i=0;i<si;i++) if(((tpSlots[i]||{}).typ||"main")==="main")n++;
+  return n;
+}
+/* „⇄ weiterrücken" am Hauptteil. Setzt den Versatz fest – ab dann gilt er, auch wenn
+   davor noch ein Block dazukommt. */
+function tpVersatzSetzen(si,delta){
+  const slot=tpSlots[si]; if(!slot)return;
+  slot.versatz=tpVersatz(si)+(Number(delta)||0);
+  tpRenderTimeline();
+  if(typeof tpPlanSave==="function")tpPlanSave();
+}
+function tpVersatzZurueck(si){
+  const slot=tpSlots[si]; if(!slot)return;
+  delete slot.versatz;
+  tpRenderTimeline();
+  if(typeof tpPlanSave==="function")tpPlanSave();
 }
 /* „✕ Feld weglassen" im Trainer-Dropdown eines Hauptteils: weniger Uebungen als Felder
    moeglich – die Gruppe dieses Feldes spielt bei den anderen mit. Position der Felder
@@ -1387,7 +1421,7 @@ function tpRenderTimeline(){
     const weg=(typ==="main"&&Array.isArray(slot.weg))?slot.weg:[];
     const basisFelder=noGroups?1:(typ==="main"&&gebunden.size)?Math.min(Math.max(1,trainers.length),5):Math.min(Math.max(1,trainerCount,tgAnz),5);
     const parallelSlots=Math.max(1,basisFelder-weg.length);   // vom Trainer weggelassene Felder
-    const felderGruppen=(typ==="main"&&typeof tgFor==="function"&&tgFor())?tpFelderGruppen(tgFor(),parallelSlots,weg):null;
+    const felderGruppen=(typ==="main"&&typeof tgFor==="function"&&tgFor())?tpFelderGruppen(tgFor(),parallelSlots,weg,tpVersatz(si)):null;
     const filtered=tpFilteredOpts(typ);
     const formOpts=filtered.map(x=>`<option value="${x.i}">${x.f.name} (${x.f.dauer})</option>`).join("");
 
@@ -1413,6 +1447,17 @@ function tpRenderTimeline(){
       const grund=gebunden.size?`🧤 ${esc([...gebunden].join(", "))} ${gebunden.size===1?"ist":"sind"} beim Torwart-/Einzeltraining`:"";
       const wegText=weg.length?`✕ ${weg.length} Feld${weg.length===1?"":"er"} weggelassen`:"";
       html+=`<div class="tp-parallel-hinweis" style="font-size:11px;color:var(--text2);padding:2px 0 6px">${[grund,wegText].filter(Boolean).join(" · ")} – ${parallelSlots} Feld${parallelSlots===1?"":"er"} statt ${Math.max(1,trainersAlle.length)}${zusammen?" · "+esc(zusammen):""}${weg.length?` <button class="tp-feld-zurueck" onclick="tpFeldZurueck(${si})" style="margin-left:6px;min-height:28px;padding:2px 10px;border:1px solid var(--rand-bedien);border-radius:8px;background:var(--surface);color:var(--text);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer">↩ Feld wieder aufnehmen</button>`:""}</div>`;
+    }
+    /* v514: Wer steht in diesem Block an welchem Feld – und der Ringtausch von Hand.
+       Sichtbar nur, wenn es überhaupt mehrere Gruppen auf mehreren Feldern gibt. */
+    if(typ==="main"&&felderGruppen&&felderGruppen.length>1){
+      const v=tpVersatz(si), eigen=tpSlots[si]&&tpSlots[si].versatz!=null;
+      const wer=felderGruppen.map((f,i)=>`${f.emo||"👥"} ${esc((f.name||"").split(" + ")[0])} → Feld ${i+1}`).join(" · ");
+      html+=`<div class="tp-ringtausch" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:4px 0 6px">
+        <span style="font-size:11px;color:var(--text2);flex:1 1 140px;min-width:0">⇄ ${wer}${v?` <b>· ${v}× weitergerückt</b>`:""}</span>
+        <button onclick="tpVersatzSetzen(${si},1)" title="Alle Gruppen rücken ein Feld weiter – bei zwei Gruppen ist das der Tausch" style="min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer">⇄ weiterrücken</button>
+        ${eigen?`<button onclick="tpVersatzZurueck(${si})" title="Wieder der Reihe nach – so wie es sich aus der Reihenfolge der Blöcke ergibt" style="min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer">↩ automatisch</button>`:""}
+      </div>`;
     }
     if(typ==="warmup"){
       html+=tpTipp("Ankommensspiel wählen: ab dem ERSTEN Kind spielbar, Nachzügler docken einfach an – kein Warten, kein Laufen ohne Ball.");
@@ -2157,7 +2202,9 @@ async function tpPlanSave(erzwungen){
   const datum=document.getElementById("tp-date")?.value; if(!datum){if(erzwungen)toast("Bitte einen Termin wählen","err");return;}
   const plan=tpPlanEntries();
   const slots=tpSlotsMitZuordnung();
-  const zuordnung=slots.some(s=>s.trainer||s.coaches||s.tw||s.kind!=null);
+  /* v514: `versatz` gehört zur Zuordnung. Ohne ihn hier hielt die Schutzregel unten einen
+     Plan, in dem NUR die Gruppen weitergerückt wurden, für leer – und speicherte ihn nie. */
+  const zuordnung=slots.some(s=>s.trainer||s.coaches||s.tw||s.kind!=null||s.versatz!=null);
   // Automatik: einen leeren Plan nie ueber einen vollen schreiben. Der Knopf darf immer.
   if(!plan.length&&!zuordnung&&!erzwungen)return;
   try{
@@ -2308,7 +2355,17 @@ function stTimerStations(){
     const forms=[...document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`)]
       .map(s=>(s.value&&s.selectedOptions[0])?s.selectedOptions[0].textContent.replace(/\s*\([^)]*\)\s*$/,"").trim():"")
       .filter(Boolean);
-    return {label:slot.label||("Station "+(si+1)),dauer:Math.max(1,slot.dauer||10),farbe:slot.farbe||"#1a56db",forms:[...new Set(forms)]};
+    /* v514: Wer in diesem Block an welchem Feld steht – am Platz die eigentliche Frage,
+       wenn die Gruppen von Block zu Block weiterrücken. Dieselbe Quelle wie die Zeitleiste
+       (tpFelderGruppen mit tpVersatz), damit Timer und Plan nie auseinanderlaufen. */
+    let gruppen=[];
+    try{
+      if(((slot.typ||"main")==="main")&&typeof tgFor==="function"&&tgFor()){
+        const n=Math.max(1,[...document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`)].length);
+        gruppen=tpFelderGruppen(tgFor(),n,(slot.weg||[]),tpVersatz(si)).map((f,i)=>`${f.emo||"👥"} ${(f.name||"").split(" + ")[0]} → Feld ${i+1}`);
+      }
+    }catch(e){}
+    return {label:slot.label||("Station "+(si+1)),dauer:Math.max(1,slot.dauer||10),farbe:slot.farbe||"#1a56db",forms:[...new Set(forms)],gruppen};
   });
 }
 function stTimerStart(){
@@ -2355,8 +2412,9 @@ function stTimerRender(done){
     <div style="font-size:13px;letter-spacing:1px;color:#94a3b8;text-transform:uppercase">Station ${_stT.ix+1}/${_stT.stations.length}${_stT.paused?" · ⏸ Pause":""}</div>
     <div style="font-size:26px;font-weight:800;margin:8px 0;color:${s.farbe||"#60a5fa"}">${esc(s.label||"")}</div>
     ${s.forms&&s.forms.length?`<div style="font-size:16px;color:#e2e8f0;margin-bottom:6px;max-width:520px">${s.forms.map(esc).join(" · ")}</div>`:""}
+    ${s.gruppen&&s.gruppen.length>1?`<div style="font-size:14px;color:#fbbf24;margin-bottom:6px;max-width:520px;font-weight:700">⇄ ${s.gruppen.map(esc).join(" · ")}</div>`:""}
     <div style="font-size:84px;font-weight:900;line-height:1;margin:10px 0;color:${warn?"#f87171":"#fff"}">${clock}</div>
-    ${next?`<div style="font-size:14px;color:#94a3b8;max-width:520px">Als Nächstes: ${esc(next.label)}${next.forms&&next.forms.length?" – "+esc(next.forms.join(", ")):""}</div>`:'<div style="font-size:14px;color:#94a3b8">Letzte Station</div>'}
+    ${next?`<div style="font-size:14px;color:#94a3b8;max-width:520px">Als Nächstes: ${esc(next.label)}${next.forms&&next.forms.length?" – "+esc(next.forms.join(", ")):""}${(next.gruppen&&next.gruppen.length>1)?`<br><span style="color:#fbbf24">⇄ dann rücken die Gruppen weiter: ${next.gruppen.map(esc).join(" · ")}</span>`:""}</div>`:'<div style="font-size:14px;color:#94a3b8">Letzte Station</div>'}
     <div style="display:flex;gap:10px;margin-top:26px;flex-wrap:wrap;justify-content:center">
       <button onclick="stTimerPause()" style="padding:14px 22px;border:none;border-radius:12px;background:#334155;color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer">${_stT.paused?"▶️ Weiter":"⏸ Pause"}</button>
       <button onclick="stTimerNext()" style="padding:14px 22px;border:none;border-radius:12px;background:#1a56db;color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer">⏭ Nächste</button>
