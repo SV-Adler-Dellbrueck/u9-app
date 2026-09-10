@@ -420,7 +420,13 @@ function teamStatsRender(){
 
 // L5: Daten-Backup – alle sechs Tabellen als eine JSON-Datei
 async function teamBackupDownload(){
-  const tabellen=["spielerprofile","quiz_progress","anwesenheit","trainings_eval","team_notizen","einheiten"];
+  /* v513: `trainingsvorlagen` kam dazu (Pflicht bei jeder neuen Tabelle). Beim Eintragen
+     fielen zwei Luecken auf, die schon laenger bestanden: `trainingsformen` (die eigenen,
+     importierten und gezeichneten Uebungen) und `trainingsplan` (alle Plaene) waren nie
+     gesichert. Aus dem Repo laesst sich davon nur wiederherstellen, was aus der Bibliothek
+     kam – alles von Hand Ergaenzte waere weg gewesen. */
+  const tabellen=["spielerprofile","quiz_progress","anwesenheit","trainings_eval","team_notizen","einheiten",
+                  "trainingsvorlagen","trainingsformen","trainingsplan"];
   const backup={erstellt:new Date().toISOString(),app:"Adler U9 Spielerprofil"};
   try{
     for(const t of tabellen){

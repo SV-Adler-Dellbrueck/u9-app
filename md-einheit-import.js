@@ -438,6 +438,390 @@ async function uebungImportUebernehmen(){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   v513 – VORLAGEN (Welle 2, nur Trainer)
+
+   `adler-einheit/1` verknüpft Zusammenstellung und Datum fest: Wer eine erprobte
+   Einheit zweimal fahren will, muss sie zweimal importieren. Eine VORLAGE ist die
+   Ebene dazwischen – eine Zusammenstellung ohne Datum und ohne Kinder. Der
+   Trainingsplan wird daraus erzeugt, nicht ersetzt.
+
+   Gebaut wie `adler-uebungen/1` aus v511: prüfen, Vorschau, anlegen, Namensdubletten
+   überspringen. Die Blöcke verweisen über den NAMEN auf `trainingsformen` – dieselbe
+   Regel wie im Einheiten-Import und aus demselben Grund (ein Index bedeutet in einer
+   fremden Datei etwas anderes als hier). Fehlt eine Übung, wird sie beim Prüfen
+   benannt und die Vorlage nicht angelegt.
+
+   Fachliche Grundlage: doku/ausbildungskonzept-u9-v3.md.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const EI_VOR_SCHEMA="adler-vorlagen/1";
+const EI_TAGS=["wenig-platz","vor-spieltag","halle","schlechtwetter"];
+/* Konzept §2: „Spielformen" sind die Blöcke, in denen wirklich gespielt wird –
+   Hauptteil und Abschluss. Das Warm-up zählt nicht mit, das Torwart- und
+   Einzeltraining läuft parallel und verlängert die Einheit nicht (TP_PARALLEL_TYPEN). */
+const EI_SPIELFORM_TYPEN=["main","abschluss"];
+/* Konzept §2: brutto rund 50 Minuten, netto 35 bis 40 – der Abzug für Erklären,
+   Bälle, Trinken und Wechseln liegt also bei rund einem Viertel. Außerhalb dieses
+   Bandes stimmt eine der beiden Zahlen nicht; gesagt wird es als HINWEIS, nicht als
+   Fehler – entscheiden soll der Trainer. */
+const EI_NETTO_BAND=[0.6,1.0];
+let _evGeprueft=null;      // {vorlagen:[{...,neu:bool,brutto,hinweis}]}
+
+function _evSpielformSumme(bloecke){
+  return (bloecke||[]).reduce((a,b)=>a+(EI_SPIELFORM_TYPEN.includes(b&&b.typ)?Number(b.dauer)||0:0),0);
+}
+/* Gibt den Hinweis-Text zurück oder "" – nie einen Fehler. */
+function _evNettoHinweis(v){
+  const netto=Number(v&&v.netto_spielform_min);
+  const brutto=_evSpielformSumme(v&&v.bloecke);
+  if(!isFinite(netto)||netto<=0||!brutto)return "";
+  const anteil=netto/brutto;
+  if(anteil>EI_NETTO_BAND[1])return `${netto} Min. netto bei ${brutto} Min. Spielform-Blöcken – netto kann nicht größer sein als brutto.`;
+  if(anteil<EI_NETTO_BAND[0])return `${netto} Min. netto bei ${brutto} Min. Spielform-Blöcken – das ist weniger als die Hälfte; laut Konzept bleiben rund drei Viertel übrig.`;
+  return "";
+}
+function _evNorm(s){ return _eiNorm(s); }
+function _evVorhanden(name){
+  const n=_evNorm(name);
+  return (typeof VORLAGEN!=="undefined"?VORLAGEN:[]).some(v=>_evNorm(v&&v.name)===n);
+}
+/* Prüfen: Liste im Klartext mit laufender Nummer. Solange sie nicht leer ist, wird
+   nichts geschrieben. Pflicht sind Name und mindestens ein Block. */
+function _evPruefung(text){
+  const fehler=[];
+  let d=null;
+  try{ d=JSON.parse(text); }
+  catch(e){ return {fehler:["Das ist kein gültiges JSON: "+e.message]}; }
+  if(!d||typeof d!=="object"||Array.isArray(d))return {fehler:["Die oberste Ebene muss ein Objekt sein."]};
+  if(d.schema!==EI_VOR_SCHEMA)fehler.push(`Feld „schema“ muss „${EI_VOR_SCHEMA}“ sein${d.schema?(" – gefunden: „"+String(d.schema)+"“"):" – es fehlt"}.`);
+  const vl=Array.isArray(d.vorlagen)?d.vorlagen:[];
+  if(!vl.length)fehler.push("Es braucht mindestens eine Vorlage in „vorlagen“.");
+  const gesehen=new Map();
+  vl.forEach((v,i)=>{
+    const nr=i+1;
+    if(!v||typeof v!=="object"||Array.isArray(v)){ fehler.push(`Vorlage ${nr}: kein Objekt.`); return; }
+    const name=String(v.name||"").trim();
+    if(!name){ fehler.push(`Vorlage ${nr}: „name“ fehlt.`); return; }
+    const n=_evNorm(name);
+    if(gesehen.has(n))fehler.push(`Vorlage ${nr} („${name}“): steht in dieser Datei schon als Vorlage ${gesehen.get(n)}.`);
+    else gesehen.set(n,nr);
+    if(!String(v.leitfrage||"").trim())fehler.push(`Vorlage ${nr} („${name}“): „leitfrage“ fehlt – ohne sie lässt sich die Vorlage nicht filtern.`);
+    (Array.isArray(v.tags)?v.tags:[]).forEach(t=>{
+      if(!EI_TAGS.includes(String(t)))fehler.push(`Vorlage ${nr} („${name}“): Tag „${t}“ gibt es nicht – erlaubt sind ${EI_TAGS.join(", ")}.`);
+    });
+    const bl=Array.isArray(v.bloecke)?v.bloecke:[];
+    if(!bl.length){ fehler.push(`Vorlage ${nr} („${name}“): keine Blöcke.`); return; }
+    bl.forEach((b,j)=>{
+      const bn=`Vorlage ${nr} („${name}“), Block ${j+1}`;
+      if(!b||typeof b!=="object"){ fehler.push(`${bn}: kein Objekt.`); return; }
+      if(!String(b.label||"").trim())fehler.push(`${bn}: „label“ fehlt.`);
+      if(!EI_TYPEN.includes(b.typ))fehler.push(`${bn}: „typ“ ist „${b.typ==null?"":String(b.typ)}“ – erlaubt sind ${EI_TYPEN.join(", ")}.`);
+      const dau=Number(b.dauer);
+      if(!isFinite(dau)||dau<=0)fehler.push(`${bn}: „dauer“ muss eine Zahl größer als 0 sein.`);
+      const un=String(b.uebung_name||"").trim();
+      if(!un)return;
+      /* Der Abschluss ist im Trainingsplan freies Spiel und hat gar kein Übungsfeld –
+         dieselbe Falle wie in v506. */
+      if(b.typ==="abschluss"){ fehler.push(`${bn}: der Abschluss ist freies Spiel und hat im Trainingsplan kein Feld für eine Übung – bitte „uebung_name“ weglassen.`); return; }
+      const idx=_eiFormIndex(un);
+      if(idx<0){ fehler.push(`${bn}: die Übung „${un}“ gibt es nicht. Erst die Übung anlegen (Übungen importieren), dann die Vorlage.`); return; }
+      const kat=(tpAllForms()[idx]||{}).kat||"technik";
+      if(b.typ&&EI_TYPEN.includes(b.typ)&&!_eiKatPasst(b.typ,kat)){
+        const soll=EI_KAT_PHASE[b.typ]?("nur Übungen der Kategorie „"+EI_KAT_PHASE[b.typ]+"“"):"keine Aufwärm-, Torwart- oder Einzeltrainings-Übungen";
+        fehler.push(`${bn}: „${un}“ hat die Kategorie „${kat}“ und passt nicht in eine Phase vom Typ „${b.typ}“ – dort stehen ${soll}.`);
+      }
+    });
+  });
+  return {fehler,daten:d};
+}
+
+function vorlagenImportClose(){ document.getElementById("ev-modal")?.remove(); _evGeprueft=null; }
+function vorlagenImportOpen(){
+  document.getElementById("ev-modal")?.remove();
+  _evGeprueft=null;
+  const m=document.createElement("div");
+  m.id="ev-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Vorlagen importieren");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.onclick=e=>{ if(e.target===m)vorlagenImportClose(); };
+  const fld="box-sizing:border-box;width:100%;padding:10px;border:var(--border-s);border-radius:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:var(--surface2);color:var(--text)";
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:520px;width:100%;margin:auto">
+    ${mdlHead("ev-modal","🗂️","Vorlagen importieren","Fertige Zusammenstellungen ohne Datum und ohne Kinder","#7c3aed")}
+    <div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:8px">
+      Format <b>${esc(EI_VOR_SCHEMA)}</b>. Eine Vorlage verweist über den <b>Namen</b> auf Übungen – fehlt eine, wird sie hier benannt und die Vorlage nicht angelegt.
+      Namen, die es schon gibt, werden <b>übersprungen</b>, nicht überschrieben.
+    </div>
+    <textarea id="ev-json" rows="10" placeholder='{ "schema": "${EI_VOR_SCHEMA}", "vorlagen": [ { "name": "…", "leitfrage": "…", "bloecke": [ … ] } ] }' style="${fld};resize:vertical"></textarea>
+    <div id="ev-melde" style="margin-top:10px"></div>
+    <div id="ev-vorschau" style="margin-top:10px"></div>
+    <button id="ev-haupt" onclick="vorlagenImportPruefen()" class="btn btn-p" style="width:100%;min-height:56px;margin-top:12px;justify-content:center;font-size:15px"><i class="ti ti-checkup-list"></i>Prüfen</button>
+    <button onclick="vorlagenImportClose()" class="btn" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Abbrechen</button>
+  </div>`;
+  document.body.appendChild(m);
+  setTimeout(()=>document.getElementById("ev-json")?.focus(),60);
+}
+function _evMelde(zeilen,art){
+  const el=document.getElementById("ev-melde"); if(el)_eiMelde(el,zeilen,art);
+}
+/* Aus geprüften Daten die Anzeige-Liste bauen – gemeinsame Stelle für Knopf und Abgleich. */
+function _evAufbereiten(daten){
+  return (daten.vorlagen||[]).map(v=>({...v,neu:!_evVorhanden(v.name),hinweis:_evNettoHinweis(v)}));
+}
+async function vorlagenImportPruefen(){
+  const box=document.getElementById("ev-melde"), vor=document.getElementById("ev-vorschau"), haupt=document.getElementById("ev-haupt");
+  if(!box||!vor)return;
+  vor.innerHTML=""; _evGeprueft=null;
+  if(haupt){ haupt.onclick=vorlagenImportPruefen; haupt.disabled=false; haupt.innerHTML='<i class="ti ti-checkup-list"></i>Prüfen'; }
+  const text=document.getElementById("ev-json")?.value||"";
+  if(!text.trim()){ _evMelde(["Bitte zuerst das JSON einfügen."],"err"); return; }
+  await vorlagenLaden();                       // frischer Stand: was steht schon da?
+  const {fehler,daten}=_evPruefung(text);
+  if(fehler.length){ _evMelde(fehler,"err"); return; }
+  const vorlagen=_evAufbereiten(daten);
+  _evGeprueft={vorlagen};
+  _evMelde([],"ok");
+  vor.innerHTML=_evVorschauHtml(vorlagen);
+  if(haupt){
+    const neu=vorlagen.filter(v=>v.neu).length;
+    haupt.onclick=vorlagenImportUebernehmen;
+    haupt.disabled=!neu;
+    haupt.innerHTML=neu?`<i class="ti ti-download"></i>${neu} Vorlage${neu===1?"":"n"} anlegen`:'<i class="ti ti-check"></i>Alles schon da';
+  }
+}
+function _evZeileHtml(v){
+  const bl=(v.bloecke||[]);
+  const summe=bl.reduce((a,b)=>a+(Number(b.dauer)||0),0);
+  const tags=(Array.isArray(v.tags)?v.tags:[]).map(t=>`<span style="font-size:9.5px;font-weight:700;background:var(--surface2);color:var(--text2);border-radius:8px;padding:2px 6px">${esc(t)}</span>`).join(" ");
+  return `<div style="padding:8px 0;border-bottom:1px solid var(--surface2)">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center">
+        <span style="min-width:0"><b style="font-size:13px">${esc(v.name)}</b>
+          <span style="display:block;font-size:11.5px;color:var(--text2)">${esc(v.leitfrage||"")}</span></span>
+        <span style="font-size:10px;font-weight:800;border-radius:8px;padding:3px 8px;white-space:nowrap;background:${v.neu?"var(--green-bg)":"var(--surface2)"};color:${v.neu?"var(--green)":"var(--text2)"}">${v.neu?"neu":"vorhanden"}</span>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:3px">${bl.length} Blöcke · ${summe} Min.${v.netto_spielform_min?` · ${Number(v.netto_spielform_min)} Min. netto`:""} ${tags}</div>
+      ${v.hinweis?`<div style="font-size:11.5px;color:var(--amber);background:var(--amber-bg);border-radius:8px;padding:6px 8px;margin-top:5px;line-height:1.45">💡 ${esc(v.hinweis)}</div>`:""}
+      <div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.5">${bl.map(b=>`${Number(b.dauer)}′ ${esc(b.label)}${b.uebung_name?" · "+esc(b.uebung_name):""}`).join("<br>")}</div>
+    </div>`;
+}
+function _evVorschauHtml(vorlagen){
+  const neu=vorlagen.filter(v=>v.neu).length, da=vorlagen.length-neu;
+  const hinweise=vorlagen.filter(v=>v.hinweis).length;
+  return `<div style="border:var(--border-s);border-radius:12px;padding:12px">
+    <div style="font-size:13.5px;font-weight:800">${vorlagen.length} Vorlage${vorlagen.length===1?"":"n"}</div>
+    <div style="font-size:11.5px;color:var(--text2);margin-bottom:6px">${neu} neu${da?` · ${da} schon vorhanden (wird übersprungen)`:""}${hinweise?` · ${hinweise} mit Hinweis`:""}</div>
+    ${vorlagen.map(_evZeileHtml).join("")}
+    ${da&&!neu?`<div style="font-size:12px;color:var(--text2);margin-top:8px">Es gibt nichts anzulegen – alle Namen stehen schon in der Datenbank.</div>`:""}
+  </div>`;
+}
+/* Eine Vorlage anlegen. Kein Upsert: die Tabelle hat per RLS gar kein UPDATE – was
+   einmal steht, bleibt stehen, bis es jemand in Supabase selbst entfernt. */
+async function _evVorlageAnlegen(v,stand){
+  const zeile={
+    name:String(v.name||"").slice(0,160),
+    leitfrage:String(v.leitfrage||""),
+    folge_nr:isFinite(Number(v.folge_nr))?Number(v.folge_nr):null,
+    tags:(Array.isArray(v.tags)?v.tags:[]).filter(t=>EI_TAGS.includes(String(t))),
+    dauer_min:isFinite(Number(v.dauer_min))?Number(v.dauer_min):null,
+    netto_spielform_min:isFinite(Number(v.netto_spielform_min))?Number(v.netto_spielform_min):null,
+    skalierung:(v.skalierung&&typeof v.skalierung==="object"&&!Array.isArray(v.skalierung))?v.skalierung:{},
+    beobachtung:String(v.beobachtung||""),
+    bloecke:(Array.isArray(v.bloecke)?v.bloecke:[]).map(b=>({typ:b.typ,label:String(b.label||"").trim(),dauer:Number(b.dauer),uebung_name:String(b.uebung_name||"").trim()||null})),
+    stand:stand||null
+  };
+  const r=await fetch(`${SB_URL}/rest/v1/trainingsvorlagen`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify(zeile)});
+  if(sbCheck401(r))return false;
+  return r.ok;
+}
+/* Anlege-Schleife – EINE Maschine für den Knopf und für den Abgleich, wie _euAnlegen. */
+async function _evAnlegen(vorlagen,stand){
+  const neu=(vorlagen||[]).filter(v=>v.neu);
+  let angelegt=0, fehler=null;
+  try{
+    for(const v of neu){
+      if(!await _evVorlageAnlegen(v,stand)){ fehler=v.name; break; }
+      angelegt++;
+    }
+  }catch(e){ fehler=fehler||"__netz"; }
+  if(angelegt)await vorlagenLaden();
+  return {angelegt, offen:neu.length-angelegt, fehler, uebersprungen:(vorlagen||[]).length-neu.length};
+}
+async function vorlagenImportUebernehmen(){
+  const g=_evGeprueft;
+  if(!g){ _evMelde(["Bitte zuerst prüfen."],"err"); return; }
+  if(typeof sbToken==="function"&&!sbToken()){ toast("Bitte zuerst als Trainer anmelden","err"); return; }
+  const haupt=document.getElementById("ev-haupt");
+  if(haupt)haupt.disabled=true;
+  const e=await _evAnlegen(g.vorlagen,"");
+  if(e.fehler){
+    _evMelde([e.fehler==="__netz"
+      ? `Kein Netz – ${e.angelegt} von ${e.angelegt+e.offen} Vorlagen angelegt.`
+      : `Die Vorlage „${e.fehler}“ konnte nicht angelegt werden.${e.angelegt?` Vorher angelegt: ${e.angelegt}.`:""} Dieselbe Datei lässt sich nochmal einlesen – das schon Angelegte wird übersprungen.`],"err");
+    if(haupt)haupt.disabled=false; return;
+  }
+  vorlagenImportClose();
+  toast(`🗂️ ${e.angelegt} Vorlage${e.angelegt===1?"":"n"} angelegt ✓${e.uebersprungen?` · ${e.uebersprungen} übersprungen`:""}`);
+}
+
+/* ── v513: Vorlage übernehmen ────────────────────────────────────────────────
+   Der Weg von der Vorlage in den Trainingsplan. Er setzt die PHASEN für ein Datum
+   und ordnet die Übungen zu – Kinder und Torhüter bleiben Sache des Trainingsplans,
+   genau wie beim Einheiten-Import. Eine bestehende Planung wird nie stillschweigend
+   überschrieben: steht für das Datum schon ein Plan, heißt die Hauptaktion
+   „Plan ersetzen" und die Vorschau sagt es deutlich.
+   ─────────────────────────────────────────────────────────────────────────── */
+let VORLAGEN=[];                       // zuletzt geladene Vorlagen (Welle 2, nur Trainer)
+let _vuAuswahl=null, _vuFilter={leitfrage:"",tag:""}, _vuPlanDa=false;
+
+async function vorlagenLaden(){
+  if(typeof sbToken==="function"&&!sbToken())return VORLAGEN;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/trainingsvorlagen?select=*&order=leitfrage.asc,folge_nr.asc`,{headers:sbAuthHeaders()});
+    if(sbCheck401(r))return VORLAGEN;
+    if(r.ok)VORLAGEN=(await r.json())||[];
+  }catch(e){}
+  return VORLAGEN;
+}
+function _vuPasst(v){
+  if(_vuFilter.leitfrage&&String(v.leitfrage||"")!==_vuFilter.leitfrage)return false;
+  if(_vuFilter.tag&&!(Array.isArray(v.tags)?v.tags:[]).includes(_vuFilter.tag))return false;
+  return true;
+}
+function vorlageUebernehmenClose(){ document.getElementById("vu-modal")?.remove(); _vuAuswahl=null; }
+async function vorlageUebernehmenOpen(){
+  if(typeof sbToken==="function"&&!sbToken()){ toast("Bitte zuerst als Trainer anmelden","err"); return; }
+  document.getElementById("vu-modal")?.remove();
+  _vuAuswahl=null; _vuFilter={leitfrage:"",tag:""};
+  const m=document.createElement("div");
+  m.id="vu-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Vorlage übernehmen");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.onclick=e=>{ if(e.target===m)vorlageUebernehmenClose(); };
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:520px;width:100%;margin:auto">
+    ${mdlHead("vu-modal","🗂️","Vorlage übernehmen","Fertige Einheit auf den gewählten Termin setzen","#7c3aed")}
+    <div id="vu-inhalt"><div style="font-size:12.5px;color:var(--text2);padding:8px 0">Lade Vorlagen …</div></div>
+  </div>`;
+  document.body.appendChild(m);
+  await vorlagenLaden();
+  _vuPlanDa=await _vuPlanVorhanden(_vuDatum());
+  vorlageUebernehmenRender();
+}
+function _vuDatum(){ return document.getElementById("tp-date")?.value||""; }
+async function _vuPlanVorhanden(datum){
+  if(!datum)return false;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?datum=eq.${encodeURIComponent(datum)}&select=datum,slots`,{headers:sbAuthHeaders()});
+    if(sbCheck401(r)||!r.ok)return false;
+    const z=(await r.json())||[];
+    return z.length>0&&Array.isArray(z[0].slots)&&z[0].slots.length>0;
+  }catch(e){ return false; }
+}
+function vuFilterSet(feld,wert){
+  _vuFilter[feld]=(_vuFilter[feld]===wert)?"":wert;
+  _vuAuswahl=null;
+  vorlageUebernehmenRender();
+}
+function vuWaehlen(id){
+  _vuAuswahl=(_vuAuswahl===id)?null:id;
+  vorlageUebernehmenRender();
+}
+function vorlageUebernehmenRender(){
+  const box=document.getElementById("vu-inhalt"); if(!box)return;
+  const datum=_vuDatum();
+  const tag=(()=>{ if(!datum)return ""; const x=new Date(datum+"T00:00:00"); return isNaN(x)?datum:x.toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}); })();
+  if(!VORLAGEN.length){
+    box.innerHTML=`<div style="font-size:12.5px;color:var(--text2);line-height:1.55;padding:6px 0">
+      Es gibt noch keine Vorlagen. Sie kommen beim Öffnen aus <b>uebungen/vorlagen.json</b> – oder von Hand über „Vorlagen importieren“.</div>
+      <button onclick="vorlageUebernehmenClose()" class="btn" style="width:100%;min-height:48px;margin-top:10px;justify-content:center">Schließen</button>`;
+    return;
+  }
+  const fragen=[...new Set(VORLAGEN.map(v=>String(v.leitfrage||"")).filter(Boolean))];
+  const tags=[...new Set(VORLAGEN.flatMap(v=>Array.isArray(v.tags)?v.tags:[]))];
+  const chip=(an,lbl,fn)=>`<button onclick="${fn}" aria-pressed="${an?"true":"false"}" style="min-height:48px;padding:6px 14px;border:1.5px solid ${an?"#7c3aed":"var(--rand-bedien)"};border-radius:24px;font-family:inherit;font-size:12.5px;font-weight:${an?"800":"600"};cursor:pointer;background:${an?"#7c3aed":"var(--surface)"};color:${an?"#fff":"var(--text2)"};text-align:left">${esc(lbl)}</button>`;
+  const treffer=VORLAGEN.filter(_vuPasst);
+  const gewaehlt=treffer.find(v=>String(v.id)===String(_vuAuswahl))||null;
+  const karte=v=>{
+    const an=String(v.id)===String(_vuAuswahl);
+    const bl=Array.isArray(v.bloecke)?v.bloecke:[];
+    const summe=bl.reduce((a,b)=>a+(Number(b.dauer)||0),0);
+    return `<button onclick="vuWaehlen('${esc(String(v.id))}')" aria-pressed="${an?"true":"false"}" style="display:block;width:100%;text-align:left;min-height:48px;padding:10px 12px;margin-bottom:6px;border:1.5px solid ${an?"#7c3aed":"var(--rand-bedien)"};border-radius:12px;background:${an?"#7c3aed14":"var(--surface)"};color:var(--text);font-family:inherit;cursor:pointer">
+      <div style="font-size:13px;font-weight:800">${esc(v.name)}</div>
+      <div style="font-size:11.5px;color:var(--text2);margin-top:2px">${esc(v.leitfrage||"")}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:3px">${bl.length} Blöcke · ${summe} Min.${v.netto_spielform_min?` · ${Number(v.netto_spielform_min)} Min. netto`:""}${(Array.isArray(v.tags)&&v.tags.length)?" · "+v.tags.map(esc).join(", "):""}</div>
+    </button>`;
+  };
+  const vorschau=v=>{
+    const bl=Array.isArray(v.bloecke)?v.bloecke:[];
+    let mainNr=0;
+    const zeile=b=>{ if(b.typ==="main")mainNr++;
+      return `<div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--surface2)">
+        <span style="font-size:10px;font-weight:800;color:#fff;background:${_eiFarbe(b.typ,mainNr)};border-radius:6px;padding:3px 7px;white-space:nowrap">${Number(b.dauer)} Min.</span>
+        <span style="min-width:0"><b style="font-size:12.5px">${esc(b.label)}</b>
+          <span style="display:block;font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.uebung_name?esc(b.uebung_name):"freies Spiel – keine Übung"}</span></span>
+      </div>`; };
+    const sk=v.skalierung&&typeof v.skalierung==="object"?v.skalierung:{};
+    const skZeilen=["8","12","16"].filter(k=>sk[k]).map(k=>`<div><b>${k} Kinder:</b> ${esc(String(sk[k]))}</div>`).join("");
+    return `<div style="border:var(--border-s);border-radius:12px;padding:12px;margin-top:10px">
+      <div style="font-size:13px;font-weight:800">${esc(v.name)}</div>
+      <div style="font-size:11.5px;color:var(--text2);margin-bottom:8px">${esc(tag||"kein Termin gewählt")}</div>
+      ${bl.map(zeile).join("")}
+      ${skZeilen?`<div style="font-size:11.5px;color:var(--text2);line-height:1.6;margin-top:8px">📐 ${skZeilen}</div>`:""}
+      ${v.beobachtung?`<div style="font-size:11.5px;color:var(--text2);line-height:1.5;margin-top:8px">👀 ${esc(v.beobachtung)}</div>`:""}
+      <div style="font-size:11px;color:var(--text3);margin-top:8px">Kinder und Torhüter werden nicht zugeteilt – das bleibt im Trainingsplan.</div>
+      ${_vuPlanDa?`<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:10px;padding:9px 11px;margin-top:10px;font-size:12.5px;color:var(--amber);line-height:1.5">
+        ⚠️ Für diesen Termin steht schon ein Plan. <b>Er wird vollständig ersetzt</b> – Phasen und Übungen.</div>`:""}
+    </div>`;
+  };
+  box.innerHTML=`
+    ${datum?"":`<div style="background:var(--red-bg);border:1px solid var(--red);border-radius:10px;padding:9px 11px;margin-bottom:8px;font-size:12.5px;color:var(--red)">Bitte oben zuerst einen Termin wählen.</div>`}
+    <div class="lbl-klein" style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:2px 2px 5px">Leitfrage</div>
+    <div style="display:flex;gap:6px;flex-direction:column;margin-bottom:9px">${fragen.map(f=>chip(_vuFilter.leitfrage===f,f,`vuFilterSet('leitfrage','${esc(f).replace(/'/g,"&#39;")}')`)).join("")}</div>
+    ${tags.length?`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:2px 2px 5px">Passt wenn …</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">${tags.map(t=>chip(_vuFilter.tag===t,t,`vuFilterSet('tag','${esc(t)}')`)).join("")}</div>`:""}
+    <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${treffer.length} von ${VORLAGEN.length} Vorlagen${(_vuFilter.leitfrage||_vuFilter.tag)?" · Filter aktiv, nochmal tippen hebt ihn auf":""}</div>
+    ${treffer.length?treffer.map(karte).join(""):`<div style="font-size:12.5px;color:var(--text2);padding:8px 0">Keine Vorlage passt zu diesem Filter.</div>`}
+    ${gewaehlt?vorschau(gewaehlt):""}
+    <button id="vu-haupt" onclick="vorlageUebernehmenSetzen()" class="btn btn-p" style="width:100%;min-height:56px;margin-top:12px;justify-content:center;font-size:15px"${(!gewaehlt||!datum)?" disabled":""}><i class="ti ti-calendar-plus"></i>${_vuPlanDa?"Plan ersetzen":"Auf den Termin setzen"}</button>
+    <button onclick="vorlageUebernehmenClose()" class="btn" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Abbrechen</button>`;
+}
+/* Setzt Phasen und Übungszuordnung für das Datum – dieselben Strukturen und
+   dieselbe Kopfzeile wie tpPlanSave() und der Einheiten-Import. `kopf` wird bewusst
+   NICHT geschrieben: eine Vorlage hat keinen Schwerpunkt für diesen einen Tag. */
+async function vorlageUebernehmenSetzen(){
+  const datum=_vuDatum();
+  const v=VORLAGEN.find(x=>String(x.id)===String(_vuAuswahl));
+  if(!v||!datum)return;
+  if(typeof sbToken==="function"&&!sbToken()){ toast("Bitte zuerst als Trainer anmelden","err"); return; }
+  const haupt=document.getElementById("vu-haupt");
+  if(haupt)haupt.disabled=true;
+  const bl=Array.isArray(v.bloecke)?v.bloecke:[];
+  let mainNr=0;
+  const slots=bl.map(b=>{
+    if(b.typ==="main")mainNr++;
+    return {label:String(b.label||"").trim(),dauer:Number(b.dauer),farbe:_eiFarbe(b.typ,mainNr),typ:b.typ};
+  });
+  const plan=[];
+  for(const b of bl){
+    const un=String(b.uebung_name||"").trim();
+    if(!un)continue;
+    const formIdx=_eiFormIndex(un);
+    if(formIdx<0){
+      toast(`Die Übung „${un}“ gibt es nicht mehr – nichts geändert`,"err");
+      if(haupt)haupt.disabled=false; return;
+    }
+    plan.push({formIdx,formName:tpAllForms()[formIdx].name,trainer:"Alle",slotLabel:String(b.label||"").trim(),key:`${formIdx}-Alle`});
+  }
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?on_conflict=datum`,{method:"POST",
+      headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify({datum,plan,slots,updated_at:new Date().toISOString()})});
+    if(sbCheck401(r)){ if(haupt)haupt.disabled=false; return; }
+    if(!r.ok){ toast(`Nicht gespeichert – Server antwortet ${r.status}`,"err"); if(haupt)haupt.disabled=false; return; }
+  }catch(e){ toast("Kein Netz – Vorlage nicht übernommen","err"); if(haupt)haupt.disabled=false; return; }
+  vorlageUebernehmenClose();
+  toast(`🗂️ „${v.name}“ übernommen ✓ ${slots.length} Phasen`);
+  if(typeof tpPlanRestore==="function")await tpPlanRestore(datum);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    v512 – BIBLIOTHEKS-ABGLEICH BEIM ÖFFNEN
 
    Neue Übungen entstehen im Gespräch und werden als Datei ins Repo gelegt. Bis
@@ -458,32 +842,62 @@ async function uebungImportUebernehmen(){
    ═══════════════════════════════════════════════════════════════════════════ */
 const BIB_DATEI="uebungen/bibliothek.json";
 const BIB_STAND_KEY="adler-bibliothek-stand";
-function _bibStandGelesen(){ try{ return localStorage.getItem(BIB_STAND_KEY)||""; }catch(e){ return ""; } }
-function _bibStandMerken(v){ try{ localStorage.setItem(BIB_STAND_KEY,String(v||"")); }catch(e){} }
+/* v513: Die Vorlagen ziehen mit – dieselbe Datei-Mechanik, eigener Stand. */
+const VOR_DATEI="uebungen/vorlagen.json";
+const VOR_STAND_KEY="adler-vorlagen-stand";
+function _bibStandGelesen(k){ try{ return localStorage.getItem(k||BIB_STAND_KEY)||""; }catch(e){ return ""; } }
+function _bibStandMerken(v,k){ try{ localStorage.setItem(k||BIB_STAND_KEY,String(v||"")); }catch(e){} }
+/* Eine Datei holen und ihren Stand prüfen. Gibt null zurück, wenn nichts zu tun ist –
+   kein Netz, keine Datei, kaputtes JSON oder derselbe Stand wie beim letzten Mal. */
+async function _bibHolen(datei,standKey){
+  const url=(typeof appRoot==="function"?appRoot():"")+datei;
+  let d=null;
+  try{
+    const r=await fetch(url,{cache:"no-store"});
+    if(!r.ok)return null;
+    d=await r.json();
+  }catch(e){ return null; }
+  const stand=String((d&&d.stand)||"");
+  if(stand&&stand===_bibStandGelesen(standKey))return null;
+  return {d,stand};
+}
 let _bibLaeuft=false;
 async function bibliothekAbgleich(){
   if(_bibLaeuft)return null;
   if(typeof sbToken==="function"&&!sbToken())return null;      // ohne Sitzung: RLS sagt ohnehin nein
   _bibLaeuft=true;
   try{
-    const url=(typeof appRoot==="function"?appRoot():"")+BIB_DATEI;
-    let d=null;
-    try{
-      const r=await fetch(url,{cache:"no-store"});
-      if(!r.ok)return null;
-      d=await r.json();
-    }catch(e){ return null; }                                   // kein Netz, keine Datei: still
-    const stand=String((d&&d.stand)||"");
-    if(stand&&stand===_bibStandGelesen())return null;           // schon verarbeitet
-    const {fehler,daten}=_euPruefung(JSON.stringify(d));
-    if(fehler.length)return null;                               // kaputte Datei: still, beim nächsten Mal wieder
-    const uebungen=daten.uebungen.map(u=>({...u,kat:u.kat==null?"technik":String(u.kat),neu:_eiFormIndex(u.name)<0}));
-    const e=await _euAnlegen(uebungen);
-    /* Den Stand erst merken, wenn wirklich alles durchgelaufen ist – sonst bliebe der
-       Rest der Datei für immer liegen. Bricht es ab, versucht es der nächste Start neu
-       und überspringt, was schon steht. */
-    if(!e.fehler&&stand)_bibStandMerken(stand);
-    if(e.angelegt&&typeof toast==="function")toast(`📚 ${e.angelegt} neue Übung${e.angelegt===1?"":"en"}`);
-    return e;
+    let erg=null;
+    // ── 1) Übungen ────────────────────────────────────────────────────────────
+    const bib=await _bibHolen(BIB_DATEI,BIB_STAND_KEY);
+    if(bib){
+      const {fehler,daten}=_euPruefung(JSON.stringify(bib.d));
+      if(!fehler.length){                                       // kaputte Datei: still, beim nächsten Mal wieder
+        const uebungen=daten.uebungen.map(u=>({...u,kat:u.kat==null?"technik":String(u.kat),neu:_eiFormIndex(u.name)<0}));
+        const e=await _euAnlegen(uebungen);
+        /* Den Stand erst merken, wenn wirklich alles durchgelaufen ist – sonst bliebe der
+           Rest der Datei für immer liegen. Bricht es ab, versucht es der nächste Start neu
+           und überspringt, was schon steht. */
+        if(!e.fehler&&bib.stand)_bibStandMerken(bib.stand,BIB_STAND_KEY);
+        if(e.angelegt&&typeof toast==="function")toast(`📚 ${e.angelegt} neue Übung${e.angelegt===1?"":"en"}`);
+        erg=e;
+      }
+    }
+    /* ── 2) Vorlagen, IMMER nach den Übungen ────────────────────────────────────
+       Eine Vorlage verweist über den Namen auf eine Übung. Liefe sie zuerst, würde
+       jede Vorlage abgewiesen, deren Übung im selben Durchgang erst entsteht – und
+       ihr Stand wäre trotzdem gemerkt. */
+    const vor=await _bibHolen(VOR_DATEI,VOR_STAND_KEY);
+    if(vor){
+      const {fehler,daten}=_evPruefung(JSON.stringify(vor.d));
+      if(!fehler.length){
+        await vorlagenLaden();
+        const v=await _evAnlegen(_evAufbereiten(daten),vor.stand);
+        if(!v.fehler&&vor.stand)_bibStandMerken(vor.stand,VOR_STAND_KEY);
+        if(v.angelegt&&typeof toast==="function")toast(`🗂️ ${v.angelegt} neue Vorlage${v.angelegt===1?"":"n"}`);
+        erg=erg?{...erg,vorlagen:v}:{angelegt:0,offen:0,fehler:null,uebersprungen:0,vorlagen:v};
+      }
+    }
+    return erg;
   }finally{ _bibLaeuft=false; }
 }
