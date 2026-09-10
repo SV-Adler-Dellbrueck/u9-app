@@ -522,6 +522,13 @@
          außerhalb des Bildes – genau dort fehlte der Haken, den der PO gesucht hat. -->
     <div style="display:flex;gap:6px;flex-wrap:wrap;padding:2px 0 8px" id="tp-trainer-checks"><!-- wird aus TRAINER befüllt (D2) --></div>
     <div id="tp-diagnose"></div>
+    <!-- v506: Kopf der Einheit (Schwerpunkt, Material, Beobachtung, Notiz) – kommt aus
+         trainingsplan.kopf und steht über der Zeitleiste, wo die Einheit beginnt. -->
+    <div id="tp-kopf"></div>
+    <!-- v506: Einstieg für „Einheit importieren". Der Knopf tritt neben die bestehenden
+         Aktionen der Seite, nicht an ihre Stelle; der Trainingsplan lebt in Welle 1,
+         deshalb der typeof-Schutz. -->
+    <button onclick="if(typeof einheitImportOpen===&quot;function&quot;)einheitImportOpen();else toast(&quot;Import lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="width:100%;min-height:48px;margin:0 0 10px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-download"></i>Einheit importieren</button>
     <div id="tp-timeline"></div>
     <!-- Aktionen in Kachel-Logik (PO): große Flächen, kein Kleinkram. „Laden" entfällt
          (der Plan lädt beim Termin-Wechsel automatisch), „Teilen" entfällt (alle Trainer
