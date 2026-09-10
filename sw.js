@@ -1,4 +1,4 @@
-const CACHE="u9i-adler-v511";
+const CACHE="u9i-adler-v512";
 const PRECACHE=[
   "./",
   "./index.html",
@@ -110,6 +110,12 @@ self.addEventListener("fetch",e=>{
   if(url.includes("openstreetmap.org"))return; // Geocoding/Adress-Suche: nie cachen (Query-Sicherheit)
   if(url.includes("openholidaysapi.org"))return; // Ferien-Radar: nie cachen (ignoreSearch würde die Datums-Query zerstören)
   if(url.includes("api.qrserver.com"))return; // QR-Aushang: nie cachen (ignoreSearch würde die Daten-Query zerstören)
+  /* v512: Die Übungs-Bibliothek im Repo ist die Quelle für den Abgleich beim Öffnen.
+     Aus dem Cache gelesen bliebe sie fuer immer auf dem Stand der Installation stehen –
+     und weil hier mit ignoreSearch gematcht wird, hilft auch kein ?cb=… an der URL.
+     Deshalb: nie cachen, immer direkt aus dem Netz (offline schlaegt der Abruf fehl,
+     der Abgleich tut dann still nichts). */
+  if(/\/uebungen\/bibliothek\.json$/.test(url))return;
   if(e.request.method!=="GET")return;
 
   /* NETWORK-FIRST fuer die Seite selbst und die Manifeste.

@@ -392,12 +392,33 @@ function _euVorschauHtml(uebungen){
       </div>
       ${(u.neu&&_eiSkizzeOk(u.skizze)&&typeof _skz==="function")?_skz(u.skizze):""}
     </div>`;
+  /* v512: Die Strich-Legende gehört dorthin, wo eine Zeichnung zu sehen ist – bisher stand
+     sie nur im Übungsdetail und im KI-Coach. */
+  const mitBild=uebungen.some(u=>u.neu&&_eiSkizzeOk(u.skizze));
   return `<div style="border:var(--border-s);border-radius:12px;padding:12px">
     <div style="font-size:13.5px;font-weight:800">${uebungen.length} Übung${uebungen.length===1?"":"en"}</div>
     <div style="font-size:11.5px;color:var(--text2);margin-bottom:8px">${neu} neu${da?` · ${da} schon vorhanden (wird übersprungen)`:""}</div>
+    ${(mitBild&&typeof skzLegende==="function")?skzLegende():""}
     ${uebungen.map(zeile).join("")}
     ${da&&!neu?`<div style="font-size:12px;color:var(--text2);margin-top:8px">Es gibt nichts anzulegen – alle Namen stehen schon in der Datenbank.</div>`:""}
   </div>`;
+}
+/* Die Anlege-Schleife – EINE Maschine für den Knopf und für den Abgleich beim Öffnen.
+   Legt nur an, was `neu` ist, und lädt danach nach; ohne Transaktion sagt sie ehrlich,
+   wie weit sie gekommen ist. Ein Abbruch ist kein Verlust: dieselbe Datei ein zweites Mal
+   überspringt, was schon steht. */
+async function _euAnlegen(uebungen){
+  const neu=(uebungen||[]).filter(u=>u.neu);
+  let angelegt=0, fehler=null;
+  try{
+    for(const u of neu){
+      if(!await _eiUebungAnlegen(u)){ fehler=u.name; break; }
+      angelegt++;
+    }
+  }catch(e){ fehler=fehler||"__netz"; }
+  // Erst danach nachladen: vorher kennt tpAllForms() die neuen Übungen nicht.
+  if(angelegt&&typeof loadCustomForms==="function"){ try{ await loadCustomForms(); }catch(e){} }
+  return {angelegt, offen:neu.length-angelegt, fehler, uebersprungen:(uebungen||[]).length-neu.length};
 }
 async function uebungImportUebernehmen(){
   const g=_euGeprueft;
@@ -405,25 +426,64 @@ async function uebungImportUebernehmen(){
   if(typeof sbToken==="function"&&!sbToken()){ toast("Bitte zuerst als Trainer anmelden","err"); return; }
   const haupt=document.getElementById("eu-haupt");
   if(haupt)haupt.disabled=true;
-  const neu=g.uebungen.filter(u=>u.neu), uebersprungen=g.uebungen.length-neu.length;
-  let angelegt=0;
-  try{
-    for(const u of neu){
-      if(!await _eiUebungAnlegen(u)){
-        /* Ohne Transaktion: ehrlich sagen, wie weit es gekommen ist. Nachladen trotzdem,
-           damit das schon Angelegte sichtbar ist und ein zweiter Lauf es überspringt. */
-        if(typeof loadCustomForms==="function")await loadCustomForms();
-        _euMelde([`Die Übung „${u.name}“ konnte nicht angelegt werden.${angelegt?` Vorher angelegt: ${angelegt}.`:""} Nach dem Beheben kannst du dieselbe Datei nochmal einlesen – das schon Angelegte wird übersprungen.`],"err");
-        if(haupt)haupt.disabled=false; return;
-      }
-      angelegt++;
-    }
-    // Erst danach nachladen: vorher kennt tpAllForms() die neuen Übungen nicht.
-    if(typeof loadCustomForms==="function")await loadCustomForms();
-  }catch(e){
-    _euMelde([`Kein Netz – ${angelegt} von ${neu.length} Übungen angelegt.`],"err");
+  const e=await _euAnlegen(g.uebungen);
+  if(e.fehler){
+    _euMelde([e.fehler==="__netz"
+      ? `Kein Netz – ${e.angelegt} von ${e.angelegt+e.offen} Übungen angelegt.`
+      : `Die Übung „${e.fehler}“ konnte nicht angelegt werden.${e.angelegt?` Vorher angelegt: ${e.angelegt}.`:""} Nach dem Beheben kannst du dieselbe Datei nochmal einlesen – das schon Angelegte wird übersprungen.`],"err");
     if(haupt)haupt.disabled=false; return;
   }
   uebungImportClose();
-  toast(`📚 ${angelegt} Übung${angelegt===1?"":"en"} angelegt ✓${uebersprungen?` · ${uebersprungen} übersprungen`:""}`);
+  toast(`📚 ${e.angelegt} Übung${e.angelegt===1?"":"en"} angelegt ✓${e.uebersprungen?` · ${e.uebersprungen} übersprungen`:""}`);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v512 – BIBLIOTHEKS-ABGLEICH BEIM ÖFFNEN
+
+   Neue Übungen entstehen im Gespräch und werden als Datei ins Repo gelegt. Bis
+   v511 musste der Trainer sie von Hand in „Übungen importieren" einfügen – ein
+   Schritt, den niemand braucht. Beim Öffnen holt die App jetzt
+   `uebungen/bibliothek.json` und legt still an, was neu ist.
+
+   Es ist KEINE zweite Importmaschine: geprüft wird mit `_euPruefung()`,
+   geschrieben mit `_euAnlegen()` – dieselben Funktionen wie hinter dem Knopf.
+
+   ── Zwei Fallen ─────────────────────────────────────────────────────────────
+   1. Der Service Worker cached mit `ignoreSearch`; ein `?cb=…` hilft dort NICHT.
+      Ohne eine Ausnahme in `sw.js` läse die App dauerhaft eine alte Fassung, ohne
+      dass etwas Rotes erschiene. Die Ausnahme steht dort oben bei den anderen.
+   2. Ohne Trainer-Sitzung lehnt die RLS den Schreibvorgang ab. Der Abgleich läuft
+      deshalb erst nach der Anmeldung – und still: kein Netz, keine Datei, kaputtes
+      JSON heißt „nichts tun und beim nächsten Öffnen wieder".
+   ═══════════════════════════════════════════════════════════════════════════ */
+const BIB_DATEI="uebungen/bibliothek.json";
+const BIB_STAND_KEY="adler-bibliothek-stand";
+function _bibStandGelesen(){ try{ return localStorage.getItem(BIB_STAND_KEY)||""; }catch(e){ return ""; } }
+function _bibStandMerken(v){ try{ localStorage.setItem(BIB_STAND_KEY,String(v||"")); }catch(e){} }
+let _bibLaeuft=false;
+async function bibliothekAbgleich(){
+  if(_bibLaeuft)return null;
+  if(typeof sbToken==="function"&&!sbToken())return null;      // ohne Sitzung: RLS sagt ohnehin nein
+  _bibLaeuft=true;
+  try{
+    const url=(typeof appRoot==="function"?appRoot():"")+BIB_DATEI;
+    let d=null;
+    try{
+      const r=await fetch(url,{cache:"no-store"});
+      if(!r.ok)return null;
+      d=await r.json();
+    }catch(e){ return null; }                                   // kein Netz, keine Datei: still
+    const stand=String((d&&d.stand)||"");
+    if(stand&&stand===_bibStandGelesen())return null;           // schon verarbeitet
+    const {fehler,daten}=_euPruefung(JSON.stringify(d));
+    if(fehler.length)return null;                               // kaputte Datei: still, beim nächsten Mal wieder
+    const uebungen=daten.uebungen.map(u=>({...u,kat:u.kat==null?"technik":String(u.kat),neu:_eiFormIndex(u.name)<0}));
+    const e=await _euAnlegen(uebungen);
+    /* Den Stand erst merken, wenn wirklich alles durchgelaufen ist – sonst bliebe der
+       Rest der Datei für immer liegen. Bricht es ab, versucht es der nächste Start neu
+       und überspringt, was schon steht. */
+    if(!e.fehler&&stand)_bibStandMerken(stand);
+    if(e.angelegt&&typeof toast==="function")toast(`📚 ${e.angelegt} neue Übung${e.angelegt===1?"":"en"}`);
+    return e;
+  }finally{ _bibLaeuft=false; }
 }

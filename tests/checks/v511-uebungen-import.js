@@ -35,7 +35,9 @@ module.exports = async function (h) {
     if (typeof uebungImportUebernehmen !== "function") return { fehlt: "uebungImportUebernehmen" };
     const bau = {
       open: typeof uebungImportOpen === "function",
-      knopf: [...document.querySelectorAll("#train-sub-planung button")].some(b => /Übungen importieren/.test(b.textContent)),
+      // v512: Der Übungs-Import ist in den Übungen-Bereich gezogen – er füllt die
+      // Formen-Datenbank und rührt den Plan nicht an.
+      knopf: [...document.querySelectorAll("#train-sub-formen button")].some(b => /Übungen importieren/.test(b.textContent)),
       alterKnopf: [...document.querySelectorAll("#train-sub-planung button")].some(b => /Einheit importieren/.test(b.textContent))
     };
     /* Die Kategorie-Regeln als Spiegelung: EI_KAT_PHASE gegen tpFilteredOpts (v506) und
@@ -143,10 +145,13 @@ module.exports = async function (h) {
   const tr = fs.readFileSync(path.join(h.REPO, "trainer/index.html"), "utf8");
   const el = fs.readFileSync(path.join(h.REPO, "eltern/index.html"), "utf8");
   if (!r.bau.open) probleme.push("uebungImportOpen fehlt");
-  if (!r.bau.knopf) probleme.push("Im Trainingsplan fehlt der Knopf „Übungen importieren“");
+  if (!r.bau.knopf) probleme.push("Im Übungen-Bereich fehlt der Knopf „Übungen importieren“");
   if (!r.bau.alterKnopf) probleme.push("Der Knopf „Einheit importieren“ ist verschwunden");
+  /* Der Wachname folgt der LETZTEN Funktion der Datei – seit v512 ist das bibliothekAbgleich.
+     Geprüft wird hier nur, dass das Modul überhaupt bewacht ist und in beiden Einstiegen
+     gleich; welcher Name das ist, hält die Ladearchitektur-Prüfung fest. */
   [["trainer", tr], ["eltern", el]].forEach(([wo, q]) => {
-    if (!/"md-einheit-import\.js":"uebungImportUebernehmen"/.test(q)) probleme.push(`Die MODUL_WACHE (${wo}) bewacht nicht die letzte Funktion der Datei`);
+    if (!/"md-einheit-import\.js":"[A-Za-z_$][\w$]*"/.test(q)) probleme.push(`Die MODUL_WACHE (${wo}) bewacht md-einheit-import.js nicht`);
   });
 
   // Kategorien

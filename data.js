@@ -3612,13 +3612,21 @@ coaching:'Konzentration ist ein Muskel – man kann sie trainieren!\nWenn du abg
    Inline-SVGs (viewBox 280×180, Feld #2d6a2d, Spieler grün/rot, Hütchen gelb).
    Legende: z=Zonen, tor=[x,y,'h'|'v',breite], h=Hütchen[x,y,farbe], leiter, wand,
    p=Pfeil[x1,y1,x2,y2,typ p(ass)|l(auf)|s(chuss)|d(ribbling)], s=Spieler[x,y,farbe,label],
-   b=Ball, tx=Text. Farben: g=grün(eigene) r=rot(Gegner/Fänger) b=blau(TW) w=weiß(Trainer). */
+   b=Ball, tx=Text. Farben: g=grün(eigene) r=rot(Gegner/Fänger) b=blau(TW) w=weiß(Trainer).
+   v512: Die vier Pfeil-Typen waren alle weiß und nur am Strichmuster zu unterscheiden – auf
+   280 Pixel Breite am Handy sind gestrichelt und gepunktet kaum zu trennen. Jeder Typ hat
+   jetzt zusätzlich seine Farbe; das Muster bleibt, Farbe ist also nie der einzige
+   Bedeutungsträger. Jede Farbe steht mindestens 3:1 gegen den Rasen #2d6a2d (Prüfung v512).
+   Der Pfeilkopf braucht je Typ einen eigenen Marker – ein gemeinsamer trüge sonst überall
+   dieselbe Farbe. */
+const SKZ_PFEIL={p:'#ffffff',l:'#fde047',s:'#fca5a5',d:'#7dd3fc'};
+const SKZ_PFEIL_NAME={p:'Pass',l:'Laufweg',s:'Schuss',d:'Dribbling'};
 function _skz(o){
   const F={g:'#4ade80',r:'#f87171',b:'#60a5fa',y:'#fbbf24',w:'#fff'};
   const E=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); // Specs können aus der DB kommen (KI-Übungen)
   const S=['<rect width="280" height="180" rx="4" fill="#2d6a2d" stroke="#1a4a1a" stroke-width="1.5"/>',
     '<rect x="4" y="4" width="272" height="172" rx="3" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>',
-    '<defs><marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,.8)"/></marker></defs>'];
+    '<defs>'+Object.keys(SKZ_PFEIL).map(t=>'<marker id="arr-'+t+'" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="'+SKZ_PFEIL[t]+'"/></marker>').join('')+'</defs>'];
   (o.z||[]).forEach(z=>S.push('<rect x="'+z[0]+'" y="'+z[1]+'" width="'+z[2]+'" height="'+z[3]+'" rx="3" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.35)" stroke-width="1.5" stroke-dasharray="6,3"/>'));
   (o.tor||[]).forEach(t=>{const w=t[3]||24;
     S.push(t[2]==='v'?'<rect x="'+t[0]+'" y="'+t[1]+'" width="7" height="'+w+'" rx="2" fill="none" stroke="#fff" stroke-width="2.5"/>'
@@ -3629,8 +3637,8 @@ function _skz(o){
       ?'<line x1="'+l[0]+'" y1="'+(l[1]+i*st)+'" x2="'+(l[0]+16)+'" y2="'+(l[1]+i*st)+'" stroke="rgba(255,255,255,.6)" stroke-width="1.5"/>'
       :'<line x1="'+(l[0]+i*st)+'" y1="'+l[1]+'" x2="'+(l[0]+i*st)+'" y2="'+(l[1]+16)+'" stroke="rgba(255,255,255,.6)" stroke-width="1.5"/>');});
   (o.wand||[]).forEach(w=>S.push('<line x1="'+w[0]+'" y1="'+w[1]+'" x2="'+w[2]+'" y2="'+w[3]+'" stroke="#d1d5db" stroke-width="5" stroke-linecap="round"/>'));
-  (o.p||[]).forEach(p=>{const typ=p[4]||'p';
-    S.push('<line x1="'+p[0]+'" y1="'+p[1]+'" x2="'+p[2]+'" y2="'+p[3]+'" stroke="rgba(255,255,255,.8)" stroke-width="'+(typ==='s'?3:1.5)+'"'+(typ==='l'?' stroke-dasharray="5,3"':typ==='d'?' stroke-dasharray="2,3"':'')+' marker-end="url(#arr)"/>');});
+  (o.p||[]).forEach(p=>{const typ=SKZ_PFEIL[p[4]]?p[4]:'p';
+    S.push('<line x1="'+p[0]+'" y1="'+p[1]+'" x2="'+p[2]+'" y2="'+p[3]+'" stroke="'+SKZ_PFEIL[typ]+'" stroke-width="'+(typ==='s'?3:1.5)+'"'+(typ==='l'?' stroke-dasharray="5,3"':typ==='d'?' stroke-dasharray="2,3"':'')+' marker-end="url(#arr-'+typ+')"/>');});
   (o.h||[]).forEach(h=>S.push('<path d="M'+h[0]+' '+(h[1]-6)+' L'+(h[0]+5)+' '+(h[1]+4)+' L'+(h[0]-5)+' '+(h[1]+4)+' Z" fill="'+(F[h[2]]||'#fbbf24')+'" stroke="rgba(0,0,0,.25)" stroke-width="1"/>'));
   (o.s||[]).forEach(sp=>{S.push('<circle cx="'+sp[0]+'" cy="'+sp[1]+'" r="8" fill="'+(F[sp[2]]||'#4ade80')+'" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/>');
     if(sp[3])S.push('<text x="'+sp[0]+'" y="'+(sp[1]+3)+'" text-anchor="middle" fill="rgba(0,0,0,.65)" font-size="8" font-family="sans-serif" font-weight="700">'+E(sp[3])+'</text>');});
@@ -3642,10 +3650,14 @@ function _skz(o){
    Muss zu den Pfeil-Typen in _skz passen: p=Pass (dünn durchgezogen), l=Laufweg
    (gestrichelt), s=Schuss (dick), d=Dribbling (gepunktet). */
 function skzLegende(){
-  const li=(dash,w)=>'<svg width="30" height="10" viewBox="0 0 30 10" style="flex:none"><line x1="1" y1="5" x2="23" y2="5" stroke="currentColor" stroke-width="'+w+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/><path d="M23,1.5 L29,5 L23,8.5 Z" fill="currentColor"/></svg>';
+  /* v512: Die Strichprobe steht auf einem Stück Rasen – sonst wäre der weiße Pass-Pfeil
+     auf hellem Grund unsichtbar, und die Farben stimmten nicht mit der Zeichnung überein. */
+  const li=(dash,w,c)=>'<svg width="32" height="12" viewBox="0 0 32 12" style="flex:none;background:#2d6a2d;border-radius:3px"><line x1="2" y1="6" x2="24" y2="6" stroke="'+c+'" stroke-width="'+w+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/><path d="M24,2.5 L30,6 L24,9.5 Z" fill="'+c+'"/></svg>';
   const it=(svg,lbl)=>'<span style="display:inline-flex;align-items:center;gap:4px">'+svg+lbl+'</span>';
-  return '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:10px;color:var(--text2);margin:2px 0 8px">'
-    +it(li('',1.5),'Pass')+it(li('5,3',1.5),'Laufweg')+it(li('',3),'Schuss')+it(li('2,3',1.5),'Dribbling')+'</div>';
+  const P=SKZ_PFEIL;
+  return '<div class="skz-legende" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:10px;color:var(--text2);margin:2px 0 8px">'
+    +it(li('',1.5,P.p),SKZ_PFEIL_NAME.p)+it(li('5,3',1.5,P.l),SKZ_PFEIL_NAME.l)
+    +it(li('',3,P.s),SKZ_PFEIL_NAME.s)+it(li('2,3',1.5,P.d),SKZ_PFEIL_NAME.d)+'</div>';
 }
 /* Symbolskizzen je Kategorie: Fallback für eigene und ältere KI-Übungen ohne eigene
    Skizze – besser eine ehrlich beschriftete Grundaufstellung als gar kein Bild. */

@@ -207,6 +207,8 @@ function skzBuehneUp(){ _skzZieh=null; }
 
 function skzEditorZeichnen(){
   const b=document.getElementById("skz-buehne"); if(!b)return;
+  const leg=document.getElementById("skz-legende");
+  if(leg&&!leg.innerHTML&&typeof skzLegende==="function")leg.innerHTML=skzLegende();
   b.innerHTML=(typeof _skz==="function")?_skz(_skzSpec):"";
   const svg=b.querySelector("svg");
   if(svg){ svg.style.margin="0"; svg.style.maxWidth="100%"; svg.style.width="100%"; svg.style.height="100%"; svg.style.pointerEvents="none"; }
@@ -270,6 +272,8 @@ function skzEditorOpen(start,cb){
     <div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:2px 0 6px">Vorlagen</div>
     <div style="display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;margin-bottom:10px">${skzVorlagenLeiste()}</div>
     <div id="skz-buehne" style="position:relative;width:100%;max-width:340px;margin:0 auto 8px;aspect-ratio:280/180;border-radius:8px;overflow:hidden;touch-action:none;cursor:crosshair"></div>
+  <!-- v512: Beim Zeichnen will man sehen, was der gewählte Stift bedeutet. -->
+  <div id="skz-legende"></div>
     <div id="skz-hinweis" style="font-size:11.5px;color:var(--text2);text-align:center;margin-bottom:8px;min-height:16px"></div>
     <div id="skz-palette" style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:8px">
       ${SKZ_WERK.map(w=>`<button data-werk="${w.id}" onclick="skzSetWerkzeug('${w.id}')" title="${w.lbl}" aria-label="${w.lbl}" style="min-height:46px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:3px"><span style="font-size:16px;line-height:1">${w.emo}</span>${esc(w.lbl)}</button>`).join("")}

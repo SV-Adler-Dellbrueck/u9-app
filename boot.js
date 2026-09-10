@@ -284,6 +284,14 @@ function bootSeiteZurueck(){
 }
 loadKader().then(()=>loadDB()).then(()=>{if(!bootSeiteZurueck()&&curSection==="home")renderHome();}).then(()=>teamSyncLoad()).then(()=>setTimeout(showMilestoneHint,1500)); // Kader (Supabase) zuerst, dann G1 + KI-Light + Home-Stats
 loadCustomForms();
+/* v512: Bibliotheks-Abgleich. Wartet auf md-einheit-import.js (Welle 2) UND auf eine
+   Sitzung – ohne Trainer-Token lehnt die RLS den Schreibvorgang ohnehin ab. Nach einer
+   frischen Anmeldung stoesst doLogin() denselben Aufruf noch einmal an. */
+(function bibWarte(n){
+  if(typeof bibliothekAbgleich==="function"&&typeof sbToken==="function"&&sbToken()){ bibliothekAbgleich(); return; }
+  if(n>40)return;                                  // ~20 s ohne Sitzung oder ohne Modul: nichts tun
+  setTimeout(()=>bibWarte(n+1),500);
+})(0);
 openTab("home"); // Start auf dem Trainer-Dashboard + Sub-Tab-Leiste initial rendern
 /* loadTeamConfig lebt in md-quests.js = Welle 2. Seit dem Zwei-Wellen-Laden ist es hier
    (Welle 1, boot.js-Top-Level) noch NICHT definiert -> ReferenceError killte den ganzen

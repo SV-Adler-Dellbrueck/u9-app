@@ -30,6 +30,11 @@ Bewusste Entscheidungen des Auftraggebers — **nicht erneut vorschlagen**:
 
 - Kein Geld in der App (keine Zahlungen, keine Kontodaten)
 - Keine LLM-generierten SQL-Abfragen, kein AR, kein Scraping fremder Seiten per Iframe
+  – **gemeint ist die Laufzeit:** die App führt keine von einem Sprachmodell erzeugten
+  Datenbankbefehle aus. Fertige Inhalte in einem geprüften Schema sind davon nicht
+  berührt: `uebungen/bibliothek.json` wird wie eine Eingabe des Trainers geprüft und über
+  dieselben Wege geschrieben. Direkter Schreibzugriff auf Supabase von außerhalb der App
+  bleibt ausgeschlossen.
 - Kein Trainings-Opt-out für Eltern („gilt als zugesagt")
 - Keine A/B-Niveau-Labels bei Kindern — fachlich widerlegt, Tagesgruppen sind der richtige Ort
 - Mehrsprachigkeit ist zurückgestellt
@@ -77,7 +82,11 @@ caches.keys().then(ks => ks.forEach(k => caches.delete(k)));
 ## Pflichten bei jeder Änderung
 
 1. **`sw.js` hochzählen** — `const CACHE="u9i-adler-vNNN"`. Ohne Bump sehen Nutzer die alte Version.
-2. **Neue Dateien** in `PRECACHE` (`sw.js`) *und* in beide Loader eintragen.
+2. **Neue Dateien** in `PRECACHE` (`sw.js`) *und* in beide Loader eintragen. Ausnahme:
+   Dateien, die immer frisch sein müssen, gehören **nicht** in den Precache, sondern in die
+   Ausnahmeliste ganz oben im `fetch`-Handler — so wie `uebungen/bibliothek.json`, die
+   Quelle für den Übungs-Abgleich beim Öffnen. Aus dem Cache gelesen stünde sie für immer
+   auf dem Stand der Installation, und `ignoreSearch` macht jedes `?cb=…` wirkungslos.
 3. **Neue Tabellen** in die Backup-Funktion aufnehmen, sonst fehlen sie in der Sicherung.
 4. **Offline-Fallbacks synchron halten.** Inhaltslisten (Vereinbarung, Fairplay-Regeln) leben in der Datenbank *und* als JS-Array. Supabase-URLs sind vom SW-Cache ausgenommen — offline greift immer der Fallback. Eine Änderung ohne die andere führt dazu, dass Eltern ohne Netz eine veraltete Liste sehen.
 5. **Hilfe und Rundgang mitziehen**, wenn Funktionen umziehen oder neu dazukommen.
