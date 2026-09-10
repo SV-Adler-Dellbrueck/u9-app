@@ -845,6 +845,7 @@ function pwaKontext(){
 }
 function pwaNudgeKey(){ return "adler_pwa_nudge_"+pwaKontext().slug; }
 function pwaInstallNudge(){
+  if(document.getElementById("umzug-hinweis"))return;           // v515: der Umzugs-Hinweis sagt dasselbe, aber mit Grund
   if(!pwaKontext().installierbar)return;                        // hier gibt es keine eigene App
   if(_pwaStandalone())return;                                   // läuft schon als App
   let dismissed=0; try{dismissed=+localStorage.getItem(pwaNudgeKey())||0;}catch(e){}
@@ -880,6 +881,76 @@ function pwaBannerShow(kind){
   }
   document.body.appendChild(el);
 }
+
+/* ═══════════════════════════════════
+   v515 – UMZUGS-HINWEIS (Welle 1, gilt in JEDER Ansicht)
+   Die App lag bis zum 10.09.2026 unter charleshuetten-dot.github.io/Adler-Dellbr-ck-U8/.
+   Das alte Repo leitet weiter, aber drei Dinge muss jeder einmal selbst tun: neu anmelden,
+   Benachrichtigungen wieder erlauben und – wer sie auf dem Startbildschirm hat – sie dort
+   neu ablegen. Wer über die Weiterleitung kommt, merkt davon sonst nichts: Er landet im
+   Browser statt in seiner Kachel und weiß nicht, warum.
+
+   Erkannt an ?umzug=1 (setzt die Weiterleitung) oder am Verweis der alten Adresse. Beides,
+   weil keins allein reicht: den Verweis unterschlagen manche Browser, das Merkmal fehlt bei
+   einem Lesezeichen auf die neue Adresse.
+
+   Das Merkmal wird sofort aus der Adresszeile genommen – sonst reicht es jemand weiter und
+   der Nächste liest einen Hinweis, der ihn nichts angeht. Gestrichen wird mit einem
+   Textmuster, nicht über URL.searchParams: das schriebe „?portal" als „?portal=" zurück und
+   fasste damit Adressen an, um die es hier gar nicht geht.
+
+   „offen" überlebt einen Neuladen – wer vor dem Wegklicken neu lädt, soll den Hinweis noch
+   einmal sehen. Nach „Verstanden" kommt er nie wieder.
+═══════════════════════════════════ */
+const UMZUG_ALT="https://charleshuetten-dot.github.io";
+const UMZUG_KEY="adler_umzug_hinweis";
+function umzugStand(){ try{ return localStorage.getItem(UMZUG_KEY)||""; }catch(e){ return ""; } }
+function umzugFaellig(){
+  const stand=umzugStand();
+  if(stand&&stand!=="offen")return false;                       // schon verstanden
+  if(stand==="offen")return true;                               // gesehen, aber noch nicht bestätigt
+  if(new URLSearchParams(location.search).get("umzug")==="1")return true;
+  return (document.referrer||"").indexOf(UMZUG_ALT)===0;
+}
+function umzugMerkmalWeg(){
+  try{
+    if(!/[?&]umzug=1(&|$)/.test(location.search))return;
+    let s=location.search.replace(/([?&])umzug=1(&|$)/,(m,vor,nach)=>nach?vor:"");
+    if(s==="?")s="";
+    history.replaceState(null,"",location.pathname+s+location.hash);
+  }catch(e){}
+}
+function umzugVerstanden(){
+  try{ localStorage.setItem(UMZUG_KEY,String(Date.now())); }catch(e){}
+  document.getElementById("umzug-hinweis")?.remove();
+}
+/* Gibt zurück, ob der Hinweis steht – pwaInstallNudge fragt das ab und hält sich zurück:
+   beide sagen „leg die App ab", aber nur dieser hier nennt den Grund. */
+function umzugHinweis(){
+  if(!umzugFaellig())return false;
+  umzugMerkmalWeg();
+  try{ localStorage.setItem(UMZUG_KEY,"offen"); }catch(e){}
+  if(document.getElementById("umzug-hinweis"))return true;
+  if(!document.body)return true;
+  const el=document.createElement("div");
+  el.id="umzug-hinweis";
+  el.setAttribute("role","status");
+  el.style.cssText="position:fixed;left:12px;right:12px;bottom:12px;z-index:10051;background:var(--fam-spieltag);color:#fff;border-radius:14px;padding:16px;box-shadow:0 8px 28px rgba(0,0,0,.35);font-family:inherit;max-width:460px;margin:0 auto";
+  el.innerHTML=`<div style="font-weight:800;font-size:15px;margin-bottom:6px">🦅 Neue Adresse</div>
+    <div style="font-size:12.5px;line-height:1.55;opacity:.96">Die App ist umgezogen. Alte Links leiten weiter – drei Dinge musst du aber einmal selbst machen:</div>
+    <ul style="margin:8px 0 12px;padding-left:18px;font-size:12.5px;line-height:1.6;opacity:.96">
+      <li>Neu anmelden – du bist einmalig abgemeldet.</li>
+      <li>Benachrichtigungen wieder erlauben.</li>
+      <li>Wer die App auf dem Startbildschirm hat: dort neu ablegen.</li>
+    </ul>
+    <button onclick="umzugVerstanden()" style="width:100%;min-height:56px;background:#fff;color:var(--fam-spieltag);border:none;border-radius:12px;font-family:inherit;font-weight:800;font-size:15px;cursor:pointer">Verstanden</button>`;
+  document.body.appendChild(el);
+  return true;
+}
+/* Läuft von selbst an – auch im Liveticker, im Stadionheft und im Kind-Link, wo es gar
+   keinen Install-Hinweis gibt. Genau dort landen die weitergereichten Links. */
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>setTimeout(umzugHinweis,1200));
+else setTimeout(umzugHinweis,1200);
 
 /* ═══════════════════════════════════
    HOTFIX 16: Haptisches Feedback (Outdoor-UX). Zentraler Wrapper +

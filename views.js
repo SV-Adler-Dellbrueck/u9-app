@@ -3550,6 +3550,7 @@ const HELP=[
     {t:"Teamkasse", d:"Kassen-Link hinterlegen (kein Geld in der App).", run:"kasseOpen()"},
     {t:"Fundbüro", d:"Liegengebliebenes verwalten.", run:"fundbueroOpen()"},
     {t:"Team-Ausrüstung", d:"Wer hat welches Material.", run:"ausruestungGrid()"},
+    {t:"Adresse der App", d:"Die App liegt seit dem 10.09.2026 unter sv-adler-dellbrueck.github.io/u9-app/ – vorher stand in jedem weitergegebenen Link ein privater Benutzername. Die alte Adresse leitet weiter, verschickte Turnier-, Ticker-, Einladungs- und Kind-Links funktionieren also unverändert. Wer über die Weiterleitung kommt, sieht einmalig einen Hinweis: neu anmelden, Benachrichtigungen wieder erlauben und – wer die App auf dem Startbildschirm hat – sie dort neu ablegen. Nach „Verstanden“ kommt er nicht wieder."},
     {t:"Backup", d:"Kader-Daten exportieren.", run:"backupExport()"},
     {t:"Dark Mode", d:"Hell/Dunkel umschalten.", run:"toggleTheme()"},
   ]},
