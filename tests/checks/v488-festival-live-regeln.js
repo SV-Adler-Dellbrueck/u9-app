@@ -39,7 +39,7 @@ module.exports = async function (h) {
     const erg = _HT.plan[0].ta + ":" + _HT.plan[0].tb;
     dlg?.remove(); fstRender(); await warte(200);
     const ergTaste = [...body.querySelectorAll("button")].some(b => b.textContent.trim() === "2:1");
-    const gastKnopf = [...body.querySelectorAll("button")].find(b => /Gast-Trainer/.test(b.textContent));
+    const gastKnopf = [...body.querySelectorAll("button")].find(b => /Plan teilen|Gast-Trainer/.test(b.textContent))   // v505: Knopf spricht jetzt Trainer und Eltern an;
     const gastMitCode = gastKnopf ? /htShareHelfer/.test(gastKnopf.getAttribute("onclick") || "") : false;
     // 4) Gast-Seite mit Code
     const wrap = document.createElement("div"); document.body.appendChild(wrap);
