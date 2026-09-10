@@ -26,9 +26,13 @@ module.exports = async function (h) {
 
   const sw = fs.readFileSync(path.join(h.REPO, "sw.js"), "utf8");
   /* Die Ausnahme muss VOR der Cache-Weiche stehen und ein `return` auslösen – sonst
-     matcht der Handler mit ignoreSearch und liefert für immer die alte Fassung. */
-  const swAusnahme = sw.split("\n").some(z => z.includes("bibliothek") && /return/.test(z));
-  if (!swAusnahme) probleme.push("sw.js nimmt uebungen/bibliothek.json nicht vom Cache aus – die App läse für immer die Fassung der Installation");
+     matcht der Handler mit ignoreSearch und liefert für immer die alte Fassung.
+     Geprüft wird nicht, WIE die Regel aussieht (v513 hat sie auf den ganzen Ordner
+     erweitert), sondern DASS sie den echten Pfad trifft: die Regeln werden aus dem
+     Quelltext gezogen und gegen die URL laufen gelassen. */
+  const swRegeln = [...sw.matchAll(/if\s*\(\s*\/(.+?)\/([gimsuy]*)\s*\.test\(url\)\s*\)\s*return/g)].map(m => new RegExp(m[1], m[2]));
+  const swTrifft = pfad => swRegeln.some(re => re.test("https://app.test/" + pfad));
+  if (!swTrifft("uebungen/bibliothek.json")) probleme.push("sw.js nimmt uebungen/bibliothek.json nicht vom Cache aus – die App läse für immer die Fassung der Installation");
   const swPrecache = sw.slice(0, sw.indexOf("addEventListener")).includes("bibliothek.json");
   if (swPrecache) probleme.push("uebungen/bibliothek.json steht im PRECACHE – genau das darf sie nicht");
 
@@ -49,6 +53,9 @@ module.exports = async function (h) {
   const eins = await s.page.evaluate(async () => {
     const warte = ms => new Promise(r => setTimeout(r, ms));
     if (typeof bibliothekAbgleich !== "function") return { fehlt: "bibliothekAbgleich" };
+    /* Der Anstoß beim Start läuft womöglich noch. Wer jetzt selbst anstößt, bekommt
+       sofort null zurück (_bibLaeuft) und misst nichts – erst warten. */
+    while (typeof _bibLaeuft !== "undefined" && _bibLaeuft) await warte(50);
     try { localStorage.removeItem("adler-bibliothek-stand"); } catch (e) {}
     const e = await bibliothekAbgleich(); await warte(150);
     let stand = null; try { stand = localStorage.getItem("adler-bibliothek-stand"); } catch (x) {}

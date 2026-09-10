@@ -310,7 +310,10 @@
   <!-- v512: Der Übungs-Import gehört hierher – er füllt die Formen-Datenbank und rührt
        den Trainingsplan nicht an. Neue Übungen aus dem Repo kommen ohnehin von selbst;
        dieser Knopf ist der Handweg für eine Datei, die gerade auf dem Tisch liegt. -->
-  <button onclick="if(typeof uebungImportOpen===&quot;function&quot;)uebungImportOpen();else toast(&quot;Import lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="width:100%;min-height:48px;margin:0 0 10px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-books"></i>Übungen importieren</button>
+  <div style="display:flex;gap:8px;margin:0 0 10px;flex-wrap:wrap">
+    <button onclick="if(typeof uebungImportOpen===&quot;function&quot;)uebungImportOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="flex:1 1 160px;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-books"></i>Übungen importieren</button>
+    <button onclick="if(typeof vorlagenImportOpen===&quot;function&quot;)vorlagenImportOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="flex:1 1 160px;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-layout-grid"></i>Vorlagen importieren</button>
+  </div>
   <div id="tf-kacheln" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"></div>
   <div id="tf-filter" style="display:flex;gap:6px;margin-bottom:10px"></div>
   <div id="training-content"><p style="padding:1rem;color:#64748b;font-size:13px">Lade...</p></div>
@@ -541,7 +544,13 @@
     <!-- v506: Einstieg für „Einheit importieren". Der Knopf tritt neben die bestehenden
          Aktionen der Seite, nicht an ihre Stelle; der Trainingsplan lebt in Welle 1,
          deshalb der typeof-Schutz. -->
-    <button onclick="if(typeof einheitImportOpen===&quot;function&quot;)einheitImportOpen();else toast(&quot;Import lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="width:100%;min-height:48px;margin:0 0 10px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-download"></i>Einheit importieren</button>
+    <!-- v513: „Vorlage übernehmen" ist der häufige Weg (fertige Einheit auf den Termin),
+         „Einheit importieren" der seltene (eine einzelne Einheit als JSON). Beide sind
+         Einstiege, keine Hauptaktion der Seite – die ist der Trainingsstart weiter unten. -->
+    <div style="display:flex;gap:8px;margin:0 0 10px;flex-wrap:wrap">
+      <button onclick="if(typeof vorlageUebernehmenOpen===&quot;function&quot;)vorlageUebernehmenOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="flex:1 1 160px;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-layout-grid"></i>Vorlage übernehmen</button>
+      <button onclick="if(typeof einheitImportOpen===&quot;function&quot;)einheitImportOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="flex:1 1 160px;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-download"></i>Einheit importieren</button>
+    </div>
     <div id="tp-timeline"></div>
     <!-- Aktionen in Kachel-Logik (PO): große Flächen, kein Kleinkram. „Laden" entfällt
          (der Plan lädt beim Termin-Wechsel automatisch), „Teilen" entfällt (alle Trainer
