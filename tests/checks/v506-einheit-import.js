@@ -40,7 +40,9 @@ module.exports = async function (h) {
   if (!bau.knopf) probleme.push("Im Trainingsplan fehlt der Knopf „Einheit importieren“");
   if (!bau.kopfBox) probleme.push("Der Platz für den Kopf der Einheit (#tp-kopf) fehlt");
   if (!/md-einheit-import\.js/.test(sw)) probleme.push("md-einheit-import.js steht nicht im PRECACHE");
-  if (!/"md-einheit-import\.js":"einheitImportUebernehmen"/.test(tr)) probleme.push("md-einheit-import.js fehlt in der MODUL_WACHE");
+  /* v511: Der Wachname folgt der letzten Funktion der Datei – seit dem Übungs-Import ist
+     das uebungImportUebernehmen. Geprüft bleibt, DASS das Modul bewacht ist. */
+  if (!/"md-einheit-import\.js":"[A-Za-z_$][\w$]*"/.test(tr)) probleme.push("md-einheit-import.js fehlt in der MODUL_WACHE");
   /* Geladen wird das Modul nur beim Trainer. In der MODUL_WACHE steht es in BEIDEN
      Einstiegen – die Wache ist eine Nachschlagetabelle und prueft nur, was auch geladen
      wurde; liefen die beiden Tabellen auseinander, schlaege die Ladearchitektur-Pruefung an. */
@@ -48,7 +50,7 @@ module.exports = async function (h) {
   const alleE = (el.match(/const ALLE=\[([\s\S]*?)\];/) || [])[1] || "";
   if (!/md-einheit-import\.js/.test(welle2)) probleme.push("md-einheit-import.js fehlt in WELLE2 des Trainer-Loaders");
   if (/md-einheit-import\.js/.test(alleE)) probleme.push("md-einheit-import.js steht im Eltern-Ladeplan – es ist ein Trainerwerkzeug");
-  if (!/"md-einheit-import\.js":"einheitImportUebernehmen"/.test(el)) probleme.push("md-einheit-import.js fehlt in der MODUL_WACHE des Eltern-Einstiegs (beide Tabellen müssen gleich sein)");
+  if (!/"md-einheit-import\.js":"[A-Za-z_$][\w$]*"/.test(el)) probleme.push("md-einheit-import.js fehlt in der MODUL_WACHE des Eltern-Einstiegs (beide Tabellen müssen gleich sein)");
 
   // ── 2) Die Prüfung schlägt an, und dabei wird nichts geschrieben ───────────
   const vorher = s.gesendet.length;

@@ -277,7 +277,7 @@ function tqRenderTrainerView(){
   const wrap=document.getElementById("tq-trainer-view");
   if(!wrap)return;
   const progress=tqGetProgress();
-  const players=KADER.map(k=>k.name);
+  const players=kaderNamen();
   if(!Object.keys(progress).length){
     wrap.innerHTML='<div style="color:var(--text2);font-size:12px;padding:8px">Noch keine Quiz-Ergebnisse vorhanden.</div>';
     return;

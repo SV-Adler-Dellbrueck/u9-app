@@ -12,7 +12,7 @@ let tbBench=[];
 let tbBall={x:50,y:50};
 
 function taktikSetup(mode){
-  const names=KADER.map(k=>k.name);
+  const names=kaderNamen();   // v510: nur Kinder, die noch dabei sind
   if(mode==="leer"){
     tbField=[];tbBench=[...names];tbBall={x:50,y:50};
     taktikRender();
@@ -20,7 +20,7 @@ function taktikSetup(mode){
   }
   const form=FORMATIONS[tbFormation]||FORMATIONS['4+1'];
   const slots=form.slots;
-  const twName=form.tw?(KADER.find(k=>k.twPrio===1)?.name||null):null;
+  const twName=form.tw?(kaderAktiv().find(k=>k.twPrio===1)?.name||null):null;
   tbField=[];tbBench=[];
   let assign=[];
   // Nur 4+1 hat den passenden Rollen-Kombinator (aufpasser/flitzer/jäger) – siehe FORMATIONS.

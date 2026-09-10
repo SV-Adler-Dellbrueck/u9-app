@@ -74,6 +74,25 @@ function _eiKatPasst(typ,kat){
   if(typ==="main")return !["aufwaermen","torwart","individual"].includes(k);
   return true;
 }
+/* v511 – Die Kategorien, die es wirklich gibt: dieselben zehn, die der Übungs-Editor
+   anbietet (<select id="tf-kat"> in shell.html). tpFilteredOpts() nennt nur die drei
+   Sonderfälle beim Namen und wirft alles Übrige in den Hauptteil – eine erfundene
+   Kategorie fiele dort also nicht auf, wäre aber in der Formen-Datenbank in keiner
+   Gruppe zu finden. Hier gespiegelt, weil der Editor beim Prüfen nicht offen sein muss;
+   die Prüfung v511 hält beide Listen gegeneinander. */
+const EI_KATS=["aufwaermen","raute","passspiel","wahrnehmung","technik","pressing","spass","torwart","individual","mindset"];
+const EI_KAT_LABEL={aufwaermen:"Aufwärmen",raute:"Raute",passspiel:"Passspiel",wahrnehmung:"Wahrnehmung",technik:"Technik",pressing:"Pressing",spass:"Spaß",torwart:"Torwart",individual:"Individual",mindset:"Mindset"};
+/* v511 – Eine mitgelieferte Zeichnung. Format ist die Beschreibung, die `_skz(spec)` in
+   data.js rendert (Zuschnitt 280×180) und die auch der Skizzen-Editor erzeugt. Bewusst
+   KEINE tiefe Prüfung: unbekannte Listen überliest der Zeichner ohnehin. Geprüft wird nur,
+   dass keine Liste etwas anderes als eine Liste ist – `(o.z||[]).forEach` wirft sonst,
+   und ein geworfener Fehler beim Zeichnen risse die ganze Übung mit. */
+const EI_SKZ_LISTEN=["z","tor","leiter","wand","p","h","s","b","tx"];
+function _eiSkizzeOk(x){
+  if(!x||typeof x!=="object"||Array.isArray(x))return false;
+  return EI_SKZ_LISTEN.every(k=>x[k]==null||Array.isArray(x[k]));
+}
+function _eiSkizze(x){ return _eiSkizzeOk(x)?x:null; }
 /* Namensvergleich wie ihn ein Mensch erwartet: getrimmt, Groß-/Kleinschreibung egal. */
 function _eiNorm(s){ return String(s||"").trim().toLowerCase(); }
 function _eiFormIndex(name){
@@ -100,6 +119,7 @@ function _eiPruefung(text){
     const dau=Number(b.dauer);
     if(!isFinite(dau)||dau<=0)fehler.push(`Block ${nr}: „dauer“ muss eine Zahl größer als 0 sein.`);
     if(b.uebung&&!String(b.uebung.name||"").trim())fehler.push(`Block ${nr}: die Übung hat keinen Namen.`);
+    if(b.uebung&&b.uebung.skizze!=null&&!_eiSkizzeOk(b.uebung.skizze))fehler.push(`Block ${nr}: „skizze“ ist keine Zeichnungs-Beschreibung – erwartet ein Objekt mit den Listen ${EI_SKZ_LISTEN.join(", ")}.`);
     /* Der Abschluss ist im Trainingsplan freies Spiel und hat gar kein Übungsfeld. Ein
        Eintrag dafür würde beim Wiederherstellen in eine FREMDE Phase rutschen, weil
        tpPlanRestore() ohne passendes Label auf das nächste freie Feld ausweicht. Lieber
@@ -181,7 +201,9 @@ async function _eiUebungAnlegen(u){
     diff:[1,2,3].includes(u.diff)?u.diff:2,
     custom:true, focus:false, tags:"Import",
     kurz:String(u.kurz||u.ablauf||"").slice(0,80),
-    skizze:null
+    /* v511: bis dahin fest `null` – eine mitgelieferte Zeichnung ging beim Import verloren
+       und die Übung zeigte danach gar kein Bild. */
+    skizze:_eiSkizze(u.skizze)
   };
   const r=await fetch(`${SB_URL}/rest/v1/trainingsformen`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify(form)});
   if(sbCheck401(r))return false;
@@ -261,4 +283,147 @@ async function einheitImportUebernehmen(){
     _eiMelde(box,["Kein Netz – Einheit nicht importiert."],"err");
     if(haupt)haupt.disabled=false;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v511 – ÜBUNGEN IMPORTIEREN (reiner Bibliotheks-Import)
+
+   Übungen kamen bisher nur als Nebenwirkung eines Einheiten-Imports in die App:
+   einheitImportUebernehmen() legte sie an und schrieb danach zwingend einen
+   Trainingsplan für ein Datum. Wer nur Trainingsformen sammeln wollte, musste
+   also eine Einheit erfinden und den Plan hinterher zurechtziehen.
+
+   Format `adler-uebungen/1`: nur `schema` und die Liste `uebungen`. Kein Datum,
+   keine Blöcke, und es wird NICHTS in `trainingsplan` geschrieben.
+
+   Vorhandene Namen werden ÜBERSPRUNGEN, nicht überschrieben: eine Übung, an der
+   jemand hier etwas geändert hat (Skizze gezeichnet, Coaching ergänzt), darf ein
+   zweiter Import derselben Datei nicht stillschweigend wieder plattmachen.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const EI_UEB_SCHEMA="adler-uebungen/1";
+let _euGeprueft=null;      // {uebungen:[{...,neu:bool}]}
+
+function uebungImportClose(){ document.getElementById("eu-modal")?.remove(); _euGeprueft=null; }
+
+function uebungImportOpen(){
+  document.getElementById("eu-modal")?.remove();
+  _euGeprueft=null;
+  const m=document.createElement("div");
+  m.id="eu-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Übungen importieren");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.onclick=e=>{ if(e.target===m)uebungImportClose(); };
+  const fld="box-sizing:border-box;width:100%;padding:10px;border:var(--border-s);border-radius:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:var(--surface2);color:var(--text)";
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:520px;width:100%;margin:auto">
+    ${mdlHead("eu-modal","📚","Übungen importieren","Nur die Übungsdatenbank füllen – ohne Einheit und ohne Plan","#1a56db")}
+    <div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:8px">
+      Format <b>${esc(EI_UEB_SCHEMA)}</b>. Die Übungen landen in der Formen-Datenbank und stehen sofort im Trainingsplan zur Auswahl – gefiltert nach ihrer Kategorie.
+      Namen, die es schon gibt, werden <b>übersprungen</b>, nicht überschrieben.
+    </div>
+    <textarea id="eu-json" rows="10" placeholder='{ "schema": "${EI_UEB_SCHEMA}", "uebungen": [ { "name": "…", "kat": "aufwaermen" } ] }' style="${fld};resize:vertical"></textarea>
+    <div id="eu-melde" style="margin-top:10px"></div>
+    <div id="eu-vorschau" style="margin-top:10px"></div>
+    <button id="eu-haupt" onclick="uebungImportPruefen()" class="btn btn-p" style="width:100%;min-height:56px;margin-top:12px;justify-content:center;font-size:15px"><i class="ti ti-checkup-list"></i>Prüfen</button>
+    <button onclick="uebungImportClose()" class="btn" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Abbrechen</button>
+  </div>`;
+  document.body.appendChild(m);
+  setTimeout(()=>document.getElementById("eu-json")?.focus(),60);
+}
+
+/* Prüfen wie beim Einheiten-Import: eine Liste im Klartext mit laufender Nummer.
+   Solange sie nicht leer ist, wird nichts geschrieben. Pflicht ist nur der Name. */
+function _euPruefung(text){
+  const fehler=[];
+  let d=null;
+  try{ d=JSON.parse(text); }
+  catch(e){ return {fehler:["Das ist kein gültiges JSON: "+e.message]}; }
+  if(!d||typeof d!=="object"||Array.isArray(d))return {fehler:["Die oberste Ebene muss ein Objekt sein."]};
+  if(d.schema!==EI_UEB_SCHEMA)fehler.push(`Feld „schema“ muss „${EI_UEB_SCHEMA}“ sein${d.schema?(" – gefunden: „"+String(d.schema)+"“"):" – es fehlt"}.`);
+  const ub=Array.isArray(d.uebungen)?d.uebungen:[];
+  if(!ub.length)fehler.push("Es braucht mindestens eine Übung in „uebungen“.");
+  const gesehen=new Map();
+  ub.forEach((u,i)=>{
+    const nr=i+1;
+    if(!u||typeof u!=="object"||Array.isArray(u)){ fehler.push(`Übung ${nr}: kein Objekt.`); return; }
+    const name=String(u.name||"").trim();
+    if(!name){ fehler.push(`Übung ${nr}: „name“ fehlt.`); return; }
+    const kat=u.kat==null?"technik":String(u.kat);
+    if(!EI_KATS.includes(kat))fehler.push(`Übung ${nr} („${name}“): Kategorie „${kat}“ gibt es nicht – erlaubt sind ${EI_KATS.join(", ")}.`);
+    if(u.skizze!=null&&!_eiSkizzeOk(u.skizze))fehler.push(`Übung ${nr} („${name}“): „skizze“ ist keine Zeichnungs-Beschreibung – erwartet ein Objekt mit den Listen ${EI_SKZ_LISTEN.join(", ")}.`);
+    /* Zwei gleiche Namen in derselben Datei: die zweite legte sonst eine Dublette an,
+       weil die erste beim Prüfen noch gar nicht in der Datenbank steht. */
+    const n=_eiNorm(name);
+    if(gesehen.has(n))fehler.push(`Übung ${nr} („${name}“): steht in dieser Datei schon als Übung ${gesehen.get(n)}.`);
+    else gesehen.set(n,nr);
+  });
+  return {fehler,daten:d};
+}
+function _euMelde(zeilen,art){
+  const el=document.getElementById("eu-melde"); if(!el)return;
+  _eiMelde(el,zeilen,art);
+}
+function uebungImportPruefen(){
+  const box=document.getElementById("eu-melde"), vor=document.getElementById("eu-vorschau"), haupt=document.getElementById("eu-haupt");
+  if(!box||!vor)return;
+  vor.innerHTML=""; _euGeprueft=null;
+  if(haupt){ haupt.onclick=uebungImportPruefen; haupt.innerHTML='<i class="ti ti-checkup-list"></i>Prüfen'; }
+  const text=document.getElementById("eu-json")?.value||"";
+  if(!text.trim()){ _euMelde(["Bitte zuerst das JSON einfügen."],"err"); return; }
+  const {fehler,daten}=_euPruefung(text);
+  if(fehler.length){ _euMelde(fehler,"err"); return; }
+  const uebungen=daten.uebungen.map(u=>({...u,kat:u.kat==null?"technik":String(u.kat),neu:_eiFormIndex(u.name)<0}));
+  _euGeprueft={uebungen};
+  _euMelde([],"ok");
+  vor.innerHTML=_euVorschauHtml(uebungen);
+  if(haupt){
+    const neu=uebungen.filter(u=>u.neu).length;
+    haupt.onclick=uebungImportUebernehmen;
+    haupt.disabled=!neu;
+    haupt.innerHTML=neu?`<i class="ti ti-download"></i>${neu} Übung${neu===1?"":"en"} anlegen`:'<i class="ti ti-check"></i>Alles schon da';
+  }
+}
+function _euVorschauHtml(uebungen){
+  const neu=uebungen.filter(u=>u.neu).length, da=uebungen.length-neu;
+  const zeile=u=>`<div style="padding:7px 0;border-bottom:1px solid var(--surface2)">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center">
+        <span style="min-width:0"><b style="font-size:13px">${esc(u.name)}</b>
+          <span style="display:block;font-size:11.5px;color:var(--text2)">${esc(EI_KAT_LABEL[u.kat]||u.kat)}${u.dauer?" · "+esc(String(u.dauer))+" Min.":""}${u.spieler?" · "+esc(String(u.spieler)):""}</span></span>
+        <span style="font-size:10px;font-weight:800;border-radius:8px;padding:3px 8px;white-space:nowrap;background:${u.neu?"var(--green-bg)":"var(--surface2)"};color:${u.neu?"var(--green)":"var(--text2)"}">${u.neu?"neu":"vorhanden"}</span>
+      </div>
+      ${(u.neu&&_eiSkizzeOk(u.skizze)&&typeof _skz==="function")?_skz(u.skizze):""}
+    </div>`;
+  return `<div style="border:var(--border-s);border-radius:12px;padding:12px">
+    <div style="font-size:13.5px;font-weight:800">${uebungen.length} Übung${uebungen.length===1?"":"en"}</div>
+    <div style="font-size:11.5px;color:var(--text2);margin-bottom:8px">${neu} neu${da?` · ${da} schon vorhanden (wird übersprungen)`:""}</div>
+    ${uebungen.map(zeile).join("")}
+    ${da&&!neu?`<div style="font-size:12px;color:var(--text2);margin-top:8px">Es gibt nichts anzulegen – alle Namen stehen schon in der Datenbank.</div>`:""}
+  </div>`;
+}
+async function uebungImportUebernehmen(){
+  const g=_euGeprueft;
+  if(!g){ _euMelde(["Bitte zuerst prüfen."],"err"); return; }
+  if(typeof sbToken==="function"&&!sbToken()){ toast("Bitte zuerst als Trainer anmelden","err"); return; }
+  const haupt=document.getElementById("eu-haupt");
+  if(haupt)haupt.disabled=true;
+  const neu=g.uebungen.filter(u=>u.neu), uebersprungen=g.uebungen.length-neu.length;
+  let angelegt=0;
+  try{
+    for(const u of neu){
+      if(!await _eiUebungAnlegen(u)){
+        /* Ohne Transaktion: ehrlich sagen, wie weit es gekommen ist. Nachladen trotzdem,
+           damit das schon Angelegte sichtbar ist und ein zweiter Lauf es überspringt. */
+        if(typeof loadCustomForms==="function")await loadCustomForms();
+        _euMelde([`Die Übung „${u.name}“ konnte nicht angelegt werden.${angelegt?` Vorher angelegt: ${angelegt}.`:""} Nach dem Beheben kannst du dieselbe Datei nochmal einlesen – das schon Angelegte wird übersprungen.`],"err");
+        if(haupt)haupt.disabled=false; return;
+      }
+      angelegt++;
+    }
+    // Erst danach nachladen: vorher kennt tpAllForms() die neuen Übungen nicht.
+    if(typeof loadCustomForms==="function")await loadCustomForms();
+  }catch(e){
+    _euMelde([`Kein Netz – ${angelegt} von ${neu.length} Übungen angelegt.`],"err");
+    if(haupt)haupt.disabled=false; return;
+  }
+  uebungImportClose();
+  toast(`📚 ${angelegt} Übung${angelegt===1?"":"en"} angelegt ✓${uebersprungen?` · ${uebersprungen} übersprungen`:""}`);
 }

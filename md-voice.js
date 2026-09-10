@@ -40,7 +40,7 @@ function voiceMatchName(word,roster){
   return bd<=0.34?{name:best,score:bd}:null;
 }
 function voiceParse(alts){
-  const roster=(typeof nominierteSpieler==="function"&&nominierteSpieler().length)?nominierteSpieler():KADER.map(k=>k.name);
+  const roster=(typeof nominierteSpieler==="function"&&nominierteSpieler().length)?nominierteSpieler():kaderNamen();
   let found=null;
   for(const raw of alts){
     const words=voiceNorm(raw).split(" ").filter(Boolean);

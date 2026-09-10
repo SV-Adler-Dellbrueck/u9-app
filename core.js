@@ -660,6 +660,26 @@ function terminVorbei(t){
   if(!t.uhrzeit_ende)return false;
   return String(t.uhrzeit_ende).slice(0,5)<new Date().toTimeString().slice(0,5);
 }
+/* v509 – PO: „Der 14.09. ist als ‚findet nicht statt' markiert. Wäre schön, wenn das in der
+   Startseite und in allen anderen Ansichten ersichtlich wäre."
+   Die Absage stand in genau einer Ansicht (Termin-Fenster) und im Eltern-Dashboard; die
+   Startseite lud die Spalte nicht einmal mit. terminVorbei() nebenan beantwortet „schon
+   gelaufen?", das hier beantwortet „findet überhaupt statt?" – beide aus derselben Zeile.
+   Jede Ansicht, die einen Termin zeigt, fragt hier, statt den Satz neu zu formulieren. */
+function terminFaelltAus(t){ return !!t && t.platz_status==="abgesagt"; }
+function terminAbsageGrund(t){ return terminFaelltAus(t)?String(t.platz_status_note||"").trim():""; }
+/* Kein opacity auf der ganzen Zeile: das Schild muss seinen Kontrast behalten, auch wenn
+   der Rest der Zeile zurücktritt. Farbe steht nie allein – „Fällt aus" steht als Wort da. */
+function terminAbsageChip(t,klein){
+  if(!terminFaelltAus(t))return "";
+  const g=terminAbsageGrund(t);
+  return `<span style="display:inline-flex;align-items:center;gap:4px;font-size:${klein?"10":"11"}px;font-weight:800;color:#991b1b;background:#fee2e2;border:1px solid #f87171;border-radius:12px;padding:2px 8px;white-space:nowrap">🔴 Fällt aus${g?" · "+esc(g):""}</span>`;
+}
+function terminAbsageBanner(t){
+  if(!terminFaelltAus(t))return "";
+  const g=terminAbsageGrund(t);
+  return `<div style="background:#fee2e2;color:#991b1b;font-size:12.5px;font-weight:800;padding:8px 13px">🔴 Fällt aus${g?" – "+esc(g):""}</div>`;
+}
 function istPaused(name){ return !!PAUSE_MAP[name]; }
 function pauseBis(name){ return PAUSE_MAP[name]?PAUSE_MAP[name].bis:null; }
 function pauseBisLabel(name){ const b=pauseBis(name); if(!b)return ""; const d=new Date(b+"T00:00:00"); return `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.`; }
