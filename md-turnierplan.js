@@ -1783,16 +1783,16 @@ function htRender(){
       ${finalsOffen?`<button class="btn btn-sm" style="width:100%" onclick="htFinalsFill()">🏁 Finalrunde füllen (nach Gruppen bzw. Halbfinals)</button>`:""}
       ${tabellen}
       ${cfg.format==="festival"?'<div style="font-size:11.5px;color:#16a34a;margin-top:6px">🦅 Festival-Modus: alle spielen gleich viel, bewusst keine Tabelle (DFB-Kinderfußball).</div>':""}
-      <div style="font-weight:800;font-size:13.5px;margin:14px 0 6px">📤 Link zum Weitergeben – an Trainer und Eltern</div>
+      <div style="font-weight:800;font-size:13.5px;margin:14px 0 6px">📤 Spielplan-Link – zum Weitergeben an alle</div>
       <div style="font-size:11px;color:var(--text2);word-break:break-all;background:var(--surface2);border-radius:8px;padding:8px 10px;margin-bottom:8px">${esc(url)}</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-sm btn-p" onclick="htShare()"><i class="ti ti-share"></i>Link teilen</button>
+        <button class="btn btn-sm btn-p" onclick="htShare()"><i class="ti ti-share"></i>Spielplan-Link teilen</button>
         <a class="btn btn-sm" href="https://wa.me/?text=${encodeURIComponent("🏆 "+_HT.name+" – Spielplan & Live-Ergebnisse: "+url)}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
         <a class="btn btn-sm" href="${esc(url)}" target="_blank" rel="noopener noreferrer"><i class="ti ti-external-link"></i>Ansicht öffnen</a>
       </div>
       <div style="text-align:center;margin-top:10px"><img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url)}" alt="QR-Code zum Turnierplan" width="180" height="180" style="border-radius:10px;background:#fff;padding:6px"></div>
-      <div style="font-size:11px;color:var(--text2);margin-top:12px">✏️ <b>Helfer-Link</b> – wie der Zuschauer-Link, aber mit Schreib-Code: wer ihn hat (z. B. der Anzeigetisch), darf Ergebnisse eintragen, sonst nichts.</div>
-      <button class="btn btn-sm" style="margin-top:4px" onclick="htShareHelfer()"><i class="ti ti-pencil"></i>Helfer-Link teilen</button>
+      <div style="font-size:11px;color:var(--text2);margin-top:12px">✏️ <b>Ergebnis-Link</b> – derselbe Spielplan, aber mit Schreib-Code: wer ihn hat (z. B. der Anzeigetisch), darf Ergebnisse eintragen, sonst nichts. Nicht in die Eltern-Gruppe geben.</div>
+      <button class="btn btn-sm" style="margin-top:4px" onclick="htShareErgebnis()"><i class="ti ti-pencil"></i>Ergebnis-Link teilen</button>
       <div style="font-weight:800;font-size:13.5px;margin:14px 0 4px">📣 Live-Durchsage</div>
       <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Erscheint groß auf der öffentlichen Seite und im Monitor-Modus – z. B. wenn sich der Plan schiebt.</div>
       ${cfg.durchsage?`<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:8px 10px;font-size:12.5px;margin-bottom:6px">📣 <b>${esc(cfg.durchsage)}</b> <span style="color:var(--text3);font-size:10.5px">(${esc(cfg.durchsage_um||"")} Uhr)</span></div>`:""}
@@ -1922,18 +1922,24 @@ async function htFinalsFill(){
     htRender();
   }
 }
+/* Spielplan-Link: dieselbe Seite fuer Gast-Trainer, Gast-Eltern und unsere Eltern.
+   Nur zum Ansehen – Ergebnisse eintragen kann nur, wer den Ergebnis-Link hat. */
 function htShare(){
   const url=_htUrl(_HT.slug);
-  if(navigator.share){navigator.share({title:_HT.name,text:"🏆 "+_HT.name+" – Spielplan & Live-Ergebnisse",url}).catch(()=>{});return;}
-  try{navigator.clipboard.writeText(url);toast("Link kopiert ✓");}catch(e){prompt("Link kopieren:",url);}
+  if(navigator.share){navigator.share({title:_HT.name,text:"🏆 "+_HT.name+" – Spielplan, Zeiten und Infos für alle",url}).catch(()=>{});return;}
+  try{navigator.clipboard.writeText(url);toast("Spielplan-Link kopiert ✓");}catch(e){prompt("Spielplan-Link kopieren:",url);}
 }
-// Helfer-Link = Zuschauer-Link + Schreib-Code (nur Ergebnisse, via RPC heimturnier_ergebnis)
-function htShareHelfer(){
+/* Ergebnis-Link = Spielplan-Link + Schreib-Code (nur Ergebnisse, via RPC heimturnier_ergebnis).
+   v508: hiess bis dahin „Helfer-Link". Der Name stand auch dort, wo der Plan an Gast-Trainer
+   UND Eltern ging – und dieser Link darf genau dort nicht hin. Zwei Namen, zwei Knoepfe:
+   „Spielplan-Link" fuer alle, „Ergebnis-Link" fuer den Anzeigetisch. */
+function htShareErgebnis(){
   if(!_HT.edit_code){toast("Kein Schreib-Code vorhanden","err");return;}
   const url=_htUrl(_HT.slug)+"&code="+encodeURIComponent(_HT.edit_code);
-  if(navigator.share){navigator.share({title:_HT.name+" (Helfer)",text:"✏️ Helfer-Link "+_HT.name+" – Ergebnisse eintragen",url}).catch(()=>{});return;}
-  try{navigator.clipboard.writeText(url);toast("Helfer-Link kopiert ✓");}catch(e){prompt("Helfer-Link kopieren:",url);}
+  if(navigator.share){navigator.share({title:_HT.name+" (Ergebnisse eintragen)",text:"✏️ Ergebnis-Link "+_HT.name+" – nur für den Anzeigetisch",url}).catch(()=>{});return;}
+  try{navigator.clipboard.writeText(url);toast("Ergebnis-Link kopiert ✓");}catch(e){prompt("Ergebnis-Link kopieren:",url);}
 }
+function htShareHelfer(){ htShareErgebnis(); }   // alter Name, falls ihn noch etwas ruft
 /* Turniertage schieben sich gern nach hinten: verschiebt alle noch offenen Begegnungen
    (ab dem ersten Spiel ohne Ergebnis) um +/- Minuten – der öffentliche Link zieht mit. */
 async function htShift(delta){
@@ -2808,7 +2814,7 @@ function fstRender(){
   el.innerHTML=`
     <div style="display:flex;gap:8px;margin-bottom:10px">
       <input id="fst-datum" type="date" value="${esc(_HT.datum||"")}" onchange="fstZeitSpeichern()" style="${fld};flex:1">
-      <button class="btn btn-sm" onclick="htShare()" title="Plan an Trainer und Eltern schicken"><i class="ti ti-share"></i>Teilen</button>
+      <button class="btn btn-sm" onclick="htShare()" title="Spielplan-Link an Gast-Trainer, Gast-Eltern und unsere Eltern schicken"><i class="ti ti-share"></i>Teilen</button>
     </div>
 
     ${plan.length?`<details id="fst-vorbereitung" style="margin:12px 0;border:var(--border-s);border-radius:12px;background:var(--surface2)">
@@ -2864,8 +2870,10 @@ function fstRender(){
       ${fstAufwaermZeile(_HT)?`<div style="font-size:11.5px;color:var(--text2);background:var(--surface2);border-radius:10px;padding:8px 10px;margin-bottom:8px">🔥 <b>Aufwärmen vor der ersten Runde:</b> ${fstAufwaermZeile(_HT)}</div>`:""}
       <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${_fstTauschWahl?"Tauschen: jetzt das zweite Team antippen":"Teams antippen zum Tauschen · Ergebnis rechts antippen"}</div>
       ${fstPlanHtml(plan,_HT.teams||[],felder,false,true,cfg)}
-      <button class="btn" onclick="${_HT.edit_code?"htShareHelfer()":"htShare()"}" style="width:100%;min-height:48px;margin-top:8px"><i class="ti ti-share"></i>Plan teilen – für Trainer und Eltern</button>
-      <div style="font-size:10.5px;color:var(--text3);margin:4px 0 6px">${_HT.edit_code?"Achtung: dieser Link trägt den Schreib-Code – nur an die Gast-Trainer und den Anzeigetisch, nicht in die Eltern-Gruppe. Zum Weitergeben an alle: der Teilen-Knopf oben.":"Nur zum Ansehen – dieses Festival hat keinen Schreib-Code."}</div>
+      <button class="btn" onclick="htShare()" style="width:100%;min-height:48px;margin-top:8px"><i class="ti ti-share"></i>Spielplan-Link teilen</button>
+      <div style="font-size:10.5px;color:var(--text3);margin:4px 0 6px">Zum Weitergeben an alle: Gast-Trainer, Gast-Eltern und unsere Eltern. Nur zum Ansehen.</div>
+      ${_HT.edit_code?`<button class="btn btn-sm" onclick="htShareErgebnis()" style="width:100%;margin-top:2px"><i class="ti ti-pencil"></i>Ergebnis-Link (Anzeigetisch)</button>
+      <div style="font-size:10.5px;color:var(--text3);margin:4px 0 6px">Trägt den Schreib-Code: wer ihn hat, darf Ergebnisse eintragen – sonst nichts. Nur an den Anzeigetisch und die Gast-Trainer, nicht in die Eltern-Gruppe.</div>`:""}
       <button class="btn btn-sm" onclick="fstDruck()" style="width:100%;margin-top:2px"><i class="ti ti-printer"></i>Aushang drucken</button>`:""}
 
     <div style="font-size:12px;font-weight:800;margin:16px 0 6px">Infos für die Gäste</div>
@@ -3006,6 +3014,11 @@ function fstSkizzeFelder(felder){
         <text x="${x+w/2}" y="${y+hoehe/2+4}" text-anchor="middle" font-size="${w<60?"10.5":"13"}" font-weight="800" fill="#fff">${esc(name)}</text>`;
     }).join("");
   };
+  /* v507: Die zwei Zonen-Hinweise standen als nackter Text zwischen den Feldern und lagen
+     halb auf dem gruenen Rand – am Handy kaum zu lesen. Jetzt sind es Schilder mit eigener
+     Flaeche, und das obere haengt am oberen Feld selbst, so wie es am Platz auch steht. */
+  const zone=(y,fuell,farbe,txt)=>`<rect x="68" y="${y}" width="122" height="19" rx="9.5" fill="${fuell}" stroke="${farbe}" stroke-width="1.5"/>
+    <text x="129" y="${y+13}" text-anchor="middle" font-size="9" font-weight="800" fill="${farbe}">${esc(txt)}</text>`;
   const frei=(x,y,w,h,txt)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="none" stroke="#94a3b8" stroke-dasharray="6 4" stroke-width="2"/><text x="${x+w/2}" y="${y+h/2+4}" text-anchor="middle" font-size="11" fill="#64748b">${esc(txt)}</text>`;
   const kaefigName=l.kaefig!=null?nm(l.kaefig):null;
   const obenNamen=l.oben.map(nm);
@@ -3021,11 +3034,10 @@ function fstSkizzeFelder(felder){
     <!-- grosser Platz quer, linke Haelfte fuers Festival -->
     <rect x="64" y="40" width="254" height="190" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="3"/>
     <line x1="191" y1="40" x2="191" y2="230" stroke="#16a34a" stroke-width="2"/>
-    ${l.oben.length?reihe(l.oben,72,48,112,78,true):frei(72,48,112,78,"oben heute frei")}
-    ${l.vorne.length?reihe(l.vorne,72,134,112,88,false):frei(72,134,112,88,"vorn heute frei")}
-    ${l.oben.length?`<rect x="72" y="42" width="112" height="0.5" fill="none"/>
-      <text x="128" y="${48+78+11}" text-anchor="middle" font-size="9.5" font-weight="800" fill="#b91c1c">🚫👪 nur Spieler &amp; Trainer</text>`:""}
-    ${l.vorne.length||kaefigName?`<text x="128" y="${134+88+12}" text-anchor="middle" font-size="9.5" font-weight="800" fill="#15803d">👏 hier dürft ihr anfeuern</text>`:""}
+    ${l.oben.length?reihe(l.oben,72,48,112,72,true):frei(72,48,112,72,"oben heute frei")}
+    ${l.vorne.length?reihe(l.vorne,72,132,112,84,false):frei(72,132,112,84,"vorn heute frei")}
+    ${l.oben.length?zone(96,"#fef2f2","#b91c1c","🚫 nur Spieler & Trainer"):""}
+    ${l.vorne.length||kaefigName?zone(190,"#f0fdf4","#15803d","👏 anfeuern & jubeln"):""}
     <rect x="198" y="48" width="112" height="174" rx="6" fill="#f1f5f9" opacity=".8"/>
     <text x="254" y="130" text-anchor="middle" font-size="10.5" fill="#64748b">rechte Hälfte</text>
     <text x="254" y="144" text-anchor="middle" font-size="10.5" fill="#64748b">nicht im Festival</text>
@@ -3035,7 +3047,8 @@ function fstSkizzeFelder(felder){
     <rect x="155" y="252" width="72" height="22" rx="5" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"/>
     <text x="191" y="267" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">Vereinsheim</text>
     <text x="191" y="288" text-anchor="middle" font-size="10" fill="#64748b">WC/Kabinen ebenerdig darunter</text>
-    ${obenNamen.length?`<text x="180" y="308" text-anchor="middle" font-size="10" font-weight="700" fill="#b91c1c">Oben (${esc(obenNamen.join(", "))}): nur Spieler &amp; Trainer – bitte nicht am Feldrand stehen</text>`:""}
+    ${obenNamen.length?`<text x="180" y="301" text-anchor="middle" font-size="10" font-weight="700" fill="#b91c1c">Oben (${esc(obenNamen.join(", "))}): nur Spieler &amp; Trainer</text>
+      <text x="180" y="314" text-anchor="middle" font-size="10" fill="#b91c1c">Dort bitte nicht am Feldrand stehen</text>`:""}
   </svg>`;
 }
 /* Skizze der Parkplaetze (schematisch, nach der Luftaufnahme): der Parkplatz liegt rechts
@@ -3204,7 +3217,7 @@ async function _htPubLoad(){
   _htPub.row=row;
   _htPublicRender(_htPub.wrap,row);
 }
-// Helfer-Modus: großes Eingabe-Blatt für EIN Spiel (Anzeigetisch-tauglich, 52px-Tasten)
+// Ergebnis-Modus (Anzeigetisch): großes Eingabe-Blatt für EIN Spiel, 52px-Tasten
 function htPubEdit(mi){
   const row=_htPub&&_htPub.row; if(!row)return;
   const p=row.plan[mi]; if(!p||typeof p.a!=="number"||typeof p.b!=="number")return;
@@ -3238,7 +3251,7 @@ async function htPubTor(mi,seite,delta){
     const r=await fetch(`${SB_URL}/rest/v1/rpc/heimturnier_ergebnis`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_slug:_htPub.slug,p_code:_htPub.code,p_idx:mi,p_ta:ta,p_tb:tb})});
     ok=r.ok&&(await r.json())===true;
   }catch(e){}
-  if(!ok){if(typeof toast==="function")toast("Eintragen nicht möglich – Helfer-Code ungültig?","err");return;}
+  if(!ok){if(typeof toast==="function")toast("Eintragen nicht möglich – Schreib-Code ungültig?","err");return;}
   p.ta=ta;p.tb=tb;
   const el=document.getElementById("htpub-"+seite); if(el)el.textContent=String(seite==="ta"?ta:tb);
 }
@@ -3286,7 +3299,7 @@ function _htPublicRender(wrap,row){
       ${sf?`<div style="display:inline-block;margin-top:8px;background:rgba(255,255,255,.18);border-radius:12px;padding:3px 12px;font-size:12px;font-weight:800">⚽ ${esc(sf)}</div>`:""}
       <div style="font-size:11px;opacity:.75;margin-top:6px">Veranstalter: SV Adler Dellbrück U9 · Ergebnisse live</div>
     </div>
-    ${helfer?'<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:12px;padding:10px 12px;margin-top:10px;font-size:13px;color:#065f46;font-weight:700">✏️ Helfer-Modus: Ergebnis antippen und eintragen – mehr geht mit diesem Link nicht.</div>':""}
+    ${helfer?'<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:12px;padding:10px 12px;margin-top:10px;font-size:13px;color:#065f46;font-weight:700">✏️ Ergebnisse eintragen: Ergebnis antippen und speichern – mehr geht mit diesem Link nicht.</div>':""}
     ${cfg.durchsage?`<div style="background:#fffbeb;border:2px solid #f59e0b;border-radius:12px;padding:12px 14px;margin-top:10px;font-size:14.5px;color:#78350f;font-weight:800">📣 ${esc(cfg.durchsage)} <span style="font-weight:400;font-size:11px;color:#b45309">(Durchsage ${esc(cfg.durchsage_um||"")} Uhr)</span></div>`:""}
     ${plan.length?`<div style="display:flex;gap:6px;overflow-x:auto;padding:12px 2px 2px;-webkit-overflow-scrolling:touch">
       <button onclick="htPubFilter(null)" style="flex:none;min-height:44px;padding:6px 14px;border-radius:20px;border:1px solid ${filter==null?"#1e3a8a":"var(--rand-bedien)"};background:${filter==null?"#1e3a8a":"#fff"};color:${filter==null?"#fff":"#334155"};font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">Alle</button>

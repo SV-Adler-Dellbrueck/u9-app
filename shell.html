@@ -236,26 +236,35 @@
 <!-- TAKTIK VIEW -->
 <div id="view-taktik" class="view">
   <div class="sl nt"><i class="ti ti-arrows-move"></i>Taktikboard</div>
-  <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:2px 2px 5px">Spielform</div>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">
-    <button class="btn btn-sm tb-form-btn" data-form="funino" onclick="taktikSetFormation('funino',this)"><i class="ti ti-triangle"></i>FUNiño</button>
-    <button class="btn btn-sm tb-form-btn" data-form="3+1" onclick="taktikSetFormation('3+1',this)"><i class="ti ti-triangle-inverted"></i>3+1</button>
-    <button class="btn btn-p btn-sm tb-form-btn" data-form="4+1" onclick="taktikSetFormation('4+1',this)"><i class="ti ti-diamond"></i>4+1 Raute</button>
-    <button class="btn btn-sm tb-form-btn" data-form="5+1" onclick="taktikSetFormation('5+1',this)"><i class="ti ti-pentagon"></i>5+1</button>
-    <button class="btn btn-sm" onclick="taktikReset('leer')"><i class="ti ti-refresh"></i>Leeres Feld</button>
-  </div>
-  <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:2px 2px 5px">Board</div>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">
-    <button class="btn btn-sm" id="dw-toggle" onclick="dwToggle()"><i class="ti ti-pencil"></i>Zeichnen</button>
-    <button class="btn btn-sm" onclick="taktikShareBild()"><i class="ti ti-share"></i>Teilen</button>
-    <button class="btn btn-sm" id="tb-pro-btn" onclick="taktikProToggle()" title="Pro-Modus: Feld maximieren + feste Auswechselbank (ideal am Tablet)"><i class="ti ti-device-tablet"></i>Pro-Modus</button>
-  </div>
-  <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:2px 2px 5px">Übungen</div>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-    <button class="btn btn-sm" onclick="ttSave()" title="Aufstellung + Zeichnung als Übung speichern"><i class="ti ti-device-floppy"></i>Speichern</button>
-    <button class="btn btn-sm" onclick="ttOpen()" title="Gespeicherte Übungen laden"><i class="ti ti-books"></i>Bibliothek</button>
-    <button class="btn btn-sm" onclick="kiCoachOpen()" title="KI schlägt altersgerechte Übungen vor"><i class="ti ti-sparkles"></i>KI-Coach</button>
-    <button class="btn btn-sm" onclick="vtbOpen()"><i class="ti ti-video"></i>Video</button>
+  <!-- v510: Drei Beschriftungen und drei umbrechende Knopfreihen ergaben oben auf der Seite
+       einen Block aus elf Knöpfen, hinter dem das Feld erst nach dem Scrollen auftauchte.
+       Jetzt EINE Karte: Spielform als gleich breite Kacheln, darunter die drei Handgriffe
+       am Board, alles Seltenere hinter „Mehr". Im Pro-Modus verschwindet die Karte ganz. -->
+  <button class="btn btn-p" id="tb-pro-exit" onclick="taktikProToggle()"><i class="ti ti-arrows-minimize"></i>Pro-Modus beenden</button>
+  <div class="card tb-kopf">
+    <div class="tb-lbl">Spielform</div>
+    <div class="tb-formen">
+      <button class="btn btn-sm tb-form-btn" data-form="funino" onclick="taktikSetFormation('funino',this)"><i class="ti ti-triangle"></i>FUNiño</button>
+      <button class="btn btn-sm tb-form-btn" data-form="3+1" onclick="taktikSetFormation('3+1',this)"><i class="ti ti-triangle-inverted"></i>3+1</button>
+      <button class="btn btn-p btn-sm tb-form-btn" data-form="4+1" onclick="taktikSetFormation('4+1',this)"><i class="ti ti-diamond"></i>4+1 Raute</button>
+      <button class="btn btn-sm tb-form-btn" data-form="5+1" onclick="taktikSetFormation('5+1',this)"><i class="ti ti-pentagon"></i>5+1</button>
+    </div>
+    <div class="tb-lbl">Board</div>
+    <div class="tb-reihe">
+      <button class="btn btn-sm" id="dw-toggle" onclick="dwToggle()"><i class="ti ti-pencil"></i>Zeichnen</button>
+      <button class="btn btn-sm" onclick="taktikShareBild()"><i class="ti ti-share"></i>Teilen</button>
+      <button class="btn btn-sm" id="tb-pro-btn" onclick="taktikProToggle()" title="Pro-Modus: großes Feld und feste Auswechselbank – am Handy und am Tablet"><i class="ti ti-maximize"></i>Pro-Modus</button>
+    </div>
+    <details class="tb-mehr">
+      <summary>Mehr · Übungen und leeres Feld</summary>
+      <div class="tb-reihe">
+        <button class="btn btn-sm" onclick="taktikReset('leer')"><i class="ti ti-refresh"></i>Leeres Feld</button>
+        <button class="btn btn-sm" onclick="ttSave()" title="Aufstellung + Zeichnung als Übung speichern"><i class="ti ti-device-floppy"></i>Speichern</button>
+        <button class="btn btn-sm" onclick="ttOpen()" title="Gespeicherte Übungen laden"><i class="ti ti-books"></i>Bibliothek</button>
+        <button class="btn btn-sm" onclick="kiCoachOpen()" title="KI schlägt altersgerechte Übungen vor"><i class="ti ti-sparkles"></i>KI-Coach</button>
+        <button class="btn btn-sm" onclick="vtbOpen()"><i class="ti ti-video"></i>Video</button>
+      </div>
+    </details>
   </div>
   <div id="dw-toolbar" style="display:none;gap:6px;margin-bottom:8px;flex-wrap:wrap">
     <button class="btn btn-sm" id="dw-pass" onclick="dwSetMode('pass',this)">╌ Pass</button>

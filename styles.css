@@ -484,26 +484,57 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
    sich weiterhin per Drag&Drop direkt aufs Feld ziehen (bench→field war schon möglich). */
 @media(min-width:768px){
   body:not(.quiz-extern):not(.taktik-pro) #view-taktik .tb-wrap{max-width:960px;display:grid;grid-template-columns:minmax(0,1fr) 240px;column-gap:18px;align-items:start}
-  body:not(.quiz-extern):not(.taktik-pro) #view-taktik .tb-field{grid-column:1;grid-row:1;height:min(72vh,640px);width:auto;justify-self:center}
+  body:not(.quiz-extern):not(.taktik-pro) #view-taktik .tb-field{grid-column:1;grid-row:1;width:min(100%,calc(72vh * 3 / 4),480px);height:auto;justify-self:center}
   body:not(.quiz-extern):not(.taktik-pro) #view-taktik .tb-hint{grid-column:1;grid-row:2}
   body:not(.quiz-extern):not(.taktik-pro) #view-taktik .tb-side{grid-column:2;grid-row:1/3;position:sticky;top:8px}
   body:not(.quiz-extern):not(.taktik-pro) #view-taktik .tb-side .tb-bench-label{margin-top:0}
   body:not(.quiz-extern):not(.taktik-pro) #view-taktik .tb-side .tb-bench-area{flex-direction:column;flex-wrap:nowrap;align-items:center;max-height:72vh;overflow-y:auto}
 }
-/* Pro-Modus = Vollbild-Layout (per Button, funktioniert auch am Handy): Feld maximiert,
-   High-Vis-Rasen, größere Tokens, feste Bank rechts. Topbar/Navigation werden ausgeblendet. */
+/* ── Taktik-Kopf (v510) ── Eine Karte statt drei Beschriftungen mit umbrechenden Reihen.
+   Die Spielformen sind gleich breite Kacheln (zwei je Zeile am Handy, vier ab Tablet),
+   damit die Reihe nicht mehr zerfranst. Geometrie hier, nicht als style= im HTML. */
+.tb-kopf{padding:10px 12px;margin-bottom:10px}
+.tb-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:0 2px 5px}
+.tb-lbl+*{margin-bottom:9px}
+.tb-formen{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tb-formen .btn{width:100%;justify-content:center}
+.tb-reihe{display:flex;gap:6px;flex-wrap:wrap}
+.tb-reihe .btn{flex:1 1 auto;justify-content:center}
+.tb-mehr>summary{list-style:none;cursor:pointer;min-height:44px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--text2)}
+.tb-mehr>summary::-webkit-details-marker{display:none}
+.tb-mehr>summary::before{content:"⌄";font-size:15px;line-height:1;transition:transform .15s}
+.tb-mehr[open]>summary::before{transform:rotate(180deg)}
+.tb-mehr>summary:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:8px}
+.tb-mehr .tb-reihe{margin-bottom:2px}
+#tb-pro-exit{display:none;width:100%;min-height:48px;justify-content:center;margin-bottom:8px}
+@media(min-width:600px){.tb-formen{grid-template-columns:repeat(4,1fr)}}
+/* Pro-Modus = Vollbild-Layout (per Button). v510: Am Handy einspaltig – Feld über die volle
+   Breite, Bank als Streifen darunter; die feste 280-px-Spalte daneben machte die Ansicht am
+   Telefon unbedienbar. Ab Tablet-Breite steht die Bank wieder rechts. Der Kopf verschwindet:
+   im Pro-Modus zählt das Feld, und der einzige Knopf ist „beenden". */
 body.taktik-pro{overflow:hidden}
-body.taktik-pro .topbar,body.taktik-pro #main-nav,body.taktik-pro #view-taktik>.sl.nt{display:none!important}
+body.taktik-pro .topbar,body.taktik-pro #main-nav,body.taktik-pro #view-taktik>.sl.nt,body.taktik-pro #view-taktik>.tb-kopf{display:none!important}
+body.taktik-pro #tb-pro-exit{display:flex}
 body.taktik-pro #view-taktik{position:fixed;inset:0;z-index:9000;background:var(--bg);overflow:auto;padding:8px 12px 16px;margin:0}
-body.taktik-pro #view-taktik .tb-wrap{max-width:none;display:grid;grid-template-columns:minmax(0,1fr) 280px;column-gap:18px;align-items:start}
-body.taktik-pro #view-taktik .tb-field{grid-column:1;grid-row:1;height:min(84vh,900px);width:auto;justify-self:center;background:#1f8a2e}
-body.taktik-pro #view-taktik .tb-hint{grid-column:1;grid-row:2}
-body.taktik-pro #view-taktik .tb-side{grid-column:2;grid-row:1/3;position:sticky;top:6px}
-body.taktik-pro #view-taktik .tb-side .tb-bench-label{margin-top:0;font-size:12px}
-body.taktik-pro #view-taktik .tb-side .tb-bench-area{flex-direction:column;flex-wrap:nowrap;align-items:center;max-height:84vh;overflow-y:auto}
+body.taktik-pro #view-taktik .tb-wrap{max-width:none;display:block}
+body.taktik-pro #view-taktik .tb-field{width:100%;height:auto;background:#1f8a2e}
+body.taktik-pro #view-taktik .tb-side .tb-bench-label{margin-top:10px;font-size:12px}
+body.taktik-pro #view-taktik .tb-side .tb-bench-area{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;gap:8px;padding-bottom:4px}
 body.taktik-pro #view-taktik .tb-token{height:52px}
 body.taktik-pro #view-taktik .tb-token .tb-name{font-size:11px}
-body.taktik-pro #view-taktik .tb-bench-area .tb-token{width:52px;height:52px}
+body.taktik-pro #view-taktik .tb-bench-area .tb-token{width:52px;height:52px;flex:none}
+@media(min-width:768px){
+  body.taktik-pro #view-taktik .tb-wrap{display:grid;grid-template-columns:minmax(0,1fr) 240px;column-gap:18px;align-items:start}
+  /* Hoehe zuerst zu setzen und die Breite dem Seitenverhaeltnis zu ueberlassen, laesst das
+     Feld aus seiner Spalte laufen (bei 820x1000 wurde es 630 px breit in einer 538-px-Spalte
+     und schob sich unter die Bank). Deshalb die BREITE begrenzen, die Hoehe folgt. */
+  body.taktik-pro #view-taktik .tb-field{grid-column:1;grid-row:1;width:min(100%,calc(84vh * 3 / 4),675px);height:auto;justify-self:center}
+  body.taktik-pro #view-taktik .tb-hint{grid-column:1;grid-row:2}
+  body.taktik-pro #view-taktik .tb-side{grid-column:2;grid-row:1/3;position:sticky;top:6px}
+  body.taktik-pro #view-taktik .tb-side .tb-bench-label{margin-top:0}
+  body.taktik-pro #view-taktik .tb-side .tb-bench-area{flex-direction:column;flex-wrap:nowrap;align-items:center;overflow-x:visible;max-height:84vh;overflow-y:auto}
+  body.taktik-pro #view-taktik .tb-bench-area .tb-token{width:56px;height:56px}
+}
 /* TAKTIK QUIZ */
 #tq-panel .btn,#tq-panel .btn-sm{min-height:44px;padding:10px 16px;font-size:13px} /* C4: Kinderfinger */
 .tq-bar{display:flex;gap:6px;align-items:center;margin-bottom:10px;flex-wrap:wrap}

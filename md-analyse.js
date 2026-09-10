@@ -60,7 +60,7 @@ async function anLoadServer(){
       else if(b.wertung)val=b.wertung==="top"?3:b.wertung==="solide"?2:1;
       if(val!=null){(formByPlayer[b.spieler]=formByPlayer[b.spieler]||[]).push({datum:b.datum,val});}
     });
-    const counts=KADER.map(k=>({name:k.name,n:gamesByPlayer[k.name]?gamesByPlayer[k.name].size:0}));
+    const counts=kaderAktiv().map(k=>({name:k.name,n:gamesByPlayer[k.name]?gamesByPlayer[k.name].size:0}));
     /* v474: Math.max(1,…) machte den Leerzustand unerreichbar – ohne ein einziges Blitz-Rating
        standen fuenfzehn Balken mit „0 Spiele" da. Jetzt: ein Satz, eine Aktion. */
     const maxN=Math.max(0,...counts.map(c=>c.n));

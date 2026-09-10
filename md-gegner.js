@@ -198,10 +198,11 @@ function tmRow(t){
   const wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
   const zeit=t.uhrzeit?String(t.uhrzeit).slice(0,5)+" Uhr":"";
   const hb=heimLabel(t);
-  return `<div onclick="tmDetailOpen(${t.id})" style="display:flex;align-items:center;gap:10px;background:var(--surface);border:var(--border-s);border-left:3px solid ${m.col};border-radius:var(--rl);padding:9px 12px;margin-bottom:6px;cursor:pointer">
+  const faelltAus=typeof terminFaelltAus==="function"&&terminFaelltAus(t);
+  return `<div onclick="tmDetailOpen(${t.id})" style="display:flex;align-items:center;gap:10px;background:var(--surface);border:var(--border-s);border-left:3px solid ${faelltAus?"var(--text3)":m.col};border-radius:var(--rl);padding:9px 12px;margin-bottom:6px;cursor:pointer">
     <span style="font-size:18px">${m.icon}</span>
     <div style="flex:1;min-width:0">
-      <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.titel||m.label)}</div>
+      <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${faelltAus?"var(--text2)":"inherit"}">${esc(t.titel||m.label)}${faelltAus?` ${terminAbsageChip(t,true)}`:""}</div>
       <div style="font-size:11px;color:var(--text2)">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"2-digit"})}${zeit?" · "+zeit:""}${hb?` · <span style="color:${t.heim?"#15803d":"#b45309"};font-weight:700">${esc(hb)}</span>`:""}</div>
     </div>
     <span style="font-size:16px;color:var(--text3)">›</span>
@@ -320,7 +321,7 @@ function _tmdKarte(t){
         ${badges?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">${badges}</div>`:""}
       </div>
     </div>
-    ${abgesagt?`<div style="background:#fee2e2;color:#991b1b;font-size:13px;font-weight:800;padding:9px 14px">🔴 Fällt aus${t.platz_status_note?" – "+esc(t.platz_status_note):""}</div>`:""}
+    ${typeof terminAbsageBanner==="function"?terminAbsageBanner(t):""}
     <div style="padding:12px 14px 14px">
 
       ${(t.ort||t.platz)?`<div style="font-size:12.5px;color:var(--text2);line-height:1.6">
@@ -330,8 +331,10 @@ function _tmdKarte(t){
       <div id="wx-tm-${t.id}"></div>
       ${notizClean?`<div style="font-size:12px;color:var(--text3);margin-top:6px">${esc(notizClean)}</div>`:""}
 
-      ${sec("Was du hier tust")}
-      <div style="display:flex;flex-direction:column;gap:6px">${gross.filter(Boolean).map(grossBtn).join("")}</div>
+      ${abgesagt
+        ? `${sec("Was du hier tust")}<div style="font-size:12.5px;color:var(--text2);line-height:1.5">Für diesen Termin ist nichts mehr zu planen. Soll er doch stattfinden, unten unter „📣 Für die Eltern“ wieder auf <b>🟢 Findet statt</b> stellen.</div>`
+        : `${sec("Was du hier tust")}
+      <div style="display:flex;flex-direction:column;gap:6px">${gross.filter(Boolean).map(grossBtn).join("")}</div>`}
 
       ${sec("Wer ist dabei")}
       ${kommt?`<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
@@ -559,9 +562,16 @@ function tmCard(t){
      wandert mit hinein – es war als einziger farbig abgesetzte Knopf am rechten Rand
      optisch die auffaelligste Aktion der Karte, obwohl es die seltenste ist. */
   const kommt=t.datum>=new Date().toISOString().slice(0,10);
+  /* v509 – PO: „Wäre schön, wenn ‚findet nicht statt' auch in allen anderen Ansichten
+     ersichtlich wäre." Auf der Karte heißt das: Schild oben, und die Hauptaktion fällt weg.
+     Für einen Termin, den es nicht gibt, wird nichts mehr geplant – Bearbeiten und Löschen
+     bleiben unter „Mehr" erreichbar, dort steht auch die Ampel zum Zurücknehmen. */
+  const faelltAus=typeof terminFaelltAus==="function"&&terminFaelltAus(t);
   const mehr=[];                       // {i:icon, l:label, c:onclick} oder {href:…}
   let haupt="";
-  if(t.typ==="training"){
+  if(faelltAus){
+    haupt="";
+  }else if(t.typ==="training"){
     haupt=`<button class="btn btn-p btn-sm" onclick="tmJump('planung','${t.datum}')"><i class="ti ti-clipboard-list"></i>Plan</button>`;
   }else if(istSpiel){
     /* v486: „Aufstellung" sprang in die alte Aufstellungs-Seite („Bitte Datum waehlen",
@@ -596,7 +606,7 @@ function tmCard(t){
      „Aufstellung" und „Mehr" auf 390 px. flex-wrap bleibt als Notnagel. */
   const actions=`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
       ${haupt}
-      ${kommt?`<button class="btn btn-sm" onclick="rsvpOverviewOpen(${Number(t.id)})" title="Wer hat schon geantwortet?"><i class="ti ti-list-check"></i>Antworten</button>`:""}
+      ${(kommt&&!faelltAus)?`<button class="btn btn-sm" onclick="rsvpOverviewOpen(${Number(t.id)})" title="Wer hat schon geantwortet?"><i class="ti ti-list-check"></i>Antworten</button>`:""}
       <button class="btn btn-sm" id="tm-mehr-btn-${t.id}" onclick="tmMehrToggle(${Number(t.id)})" aria-expanded="false" aria-controls="tm-mehr-${t.id}"><i class="ti ti-dots"></i>Mehr</button>
     </div>
     <div id="tm-mehr-${t.id}" style="display:none;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">
@@ -604,7 +614,8 @@ function tmCard(t){
       <button class="btn btn-sm btn-d" onclick="tmDelete(${Number(t.id)})" style="grid-column:1/-1;min-height:44px;justify-content:center"><i class="ti ti-trash"></i>Termin löschen</button>
     </div>`;
   return `<div id="tm-card-${t.id}" style="background:var(--surface);border:var(--border-s);border-radius:var(--rl);overflow:hidden;margin-bottom:10px;box-shadow:0 1px 3px rgba(15,23,42,.05);scroll-margin-top:60px">
-    <div style="display:flex;align-items:center;gap:11px;padding:11px 13px;background:linear-gradient(90deg,${m.col}14,transparent);border-left:4px solid ${m.col}">
+    ${faelltAus&&typeof terminAbsageBanner==="function"?terminAbsageBanner(t):""}
+    <div style="display:flex;align-items:center;gap:11px;padding:11px 13px;background:linear-gradient(90deg,${faelltAus?"var(--surface2)":m.col+"14"},transparent);border-left:4px solid ${faelltAus?"var(--text3)":m.col}">
       <div style="width:40px;height:40px;flex:none;border-radius:12px;background:${m.col};display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 2px 6px ${m.col}55">${m.icon}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:14.5px;font-weight:800;display:flex;align-items:center;gap:6px;flex-wrap:wrap;line-height:1.25">${esc(t.titel||m.label)}${hBadge}${sfBadge}${(typeof ferienBadge==="function")?ferienBadge(t.datum):""}</div>

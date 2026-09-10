@@ -39,8 +39,13 @@ module.exports = async function (h) {
     const erg = _HT.plan[0].ta + ":" + _HT.plan[0].tb;
     dlg?.remove(); fstRender(); await warte(200);
     const ergTaste = [...body.querySelectorAll("button")].some(b => b.textContent.trim() === "2:1");
-    const gastKnopf = [...body.querySelectorAll("button")].find(b => /Plan teilen|Gast-Trainer/.test(b.textContent))   // v505: Knopf spricht jetzt Trainer und Eltern an;
-    const gastMitCode = gastKnopf ? /htShareHelfer/.test(gastKnopf.getAttribute("onclick") || "") : false;
+    /* v508: Der grosse Teilen-Knopf verschickte den Link MIT Schreib-Code – unter der
+       Aufschrift „für Trainer und Eltern". Seitdem sind es zwei Knoepfe, und genau das
+       wird hier geprueft: der Spielplan-Link traegt den Code NICHT, der Ergebnis-Link schon. */
+    const gastKnopf = [...body.querySelectorAll("button")].find(b => /Spielplan-Link teilen/.test(b.textContent));
+    const gastOhneCode = gastKnopf ? /htShare\(\)/.test(gastKnopf.getAttribute("onclick") || "") : false;
+    const ergKnopf = [...body.querySelectorAll("button")].find(b => /Ergebnis-Link/.test(b.textContent));
+    const ergMitCode = ergKnopf ? /htShareErgebnis/.test(ergKnopf.getAttribute("onclick") || "") : false;
     // 4) Gast-Seite mit Code
     const wrap = document.createElement("div"); document.body.appendChild(wrap);
     _htPub = { slug: "x", code: "abc123", wrap, row: _HT }; _fstPublicRender(wrap, _HT);
@@ -57,7 +62,7 @@ module.exports = async function (h) {
     const jetzt = _fstJetztHhmm(); _HT.config.startIst = jetzt;   // geplant 10:15, gestartet jetzt → Runde 1 läuft jetzt
     _fstPublicRender(wrap, _HT);
     const laeuft = /Runde 1[\s\S]{0,120}▶ läuft/.test(wrap.textContent);   // v489: die Marke sitzt an der Runden-Karte
-    return { eineZeile, zeileHoch, tops, zeitVorher, zeitNachher, runde2, startText, dlg: !!dlg, erg, ergTaste, gastMitCode, regelnKnopf: !!regelnKnopf, ergTasten, ergTastenOhne, ergLesbar,
+    return { eineZeile, zeileHoch, tops, zeitVorher, zeitNachher, runde2, startText, dlg: !!dlg, erg, ergTaste, gastOhneCode, ergMitCode, regelnKnopf: !!regelnKnopf, ergTasten, ergTastenOhne, ergLesbar,
       regelnInhalt: /eigenen Hälfte/.test(rHtml) && /3 Toren Vorsprung/.test(rHtml) && !/Wechsel/.test(rHtml) && /Schusszone/.test(rHtml) && /Rückpass in die Hand/.test(rHtml) && /hinter die Mittellinie/.test(rHtml) && /Abklatschen/.test(rHtml) && /Eltern feuern an/.test(rHtml) && /abgehängte Tor/.test(rHtml) && /Kinder zuerst selbst/.test(rHtml),
       gastStart: /um 3 Min\. nach hinten/.test(gHtml), laeuft, spiele: plan.length };
   }, { heute });
@@ -70,7 +75,8 @@ module.exports = async function (h) {
   if (!r.dlg || r.erg !== "2:1") probleme.push(`Ergebnis in der App: Dialog ${r.dlg}, Stand ${r.erg} statt 2:1`);
   if (!r.ergTaste) probleme.push("Ergebnis 2:1 steht nicht im Plan");
   if (!gesendet.some(g => g.methode === "PATCH" && g.body && Array.isArray(g.body.plan) && g.body.plan[0] && g.body.plan[0].ta === 2)) probleme.push("Ergebnis nicht gespeichert");
-  if (!r.gastMitCode) probleme.push("Gast-Link ohne Schreib-Code");
+  if (!r.gastOhneCode) probleme.push("Der Knopf „Spielplan-Link teilen“ fehlt oder verschickt nicht den Link ohne Schreib-Code");
+  if (!r.ergMitCode) probleme.push("Der Knopf „Ergebnis-Link (Anzeigetisch)“ fehlt oder trägt den Schreib-Code nicht");
   if (!r.regelnKnopf || !r.regelnInhalt) probleme.push(`Regeln: Knopf ${r.regelnKnopf}, Inhalt vollständig ${r.regelnInhalt}`);
   if (r.ergTasten !== r.spiele) probleme.push(`mit Code ${r.ergTasten} Ergebnis-Tasten statt ${r.spiele}`);
   if (r.ergTastenOhne !== 0 || !r.ergLesbar) probleme.push(`ohne Code: ${r.ergTastenOhne} Tasten, Ergebnis lesbar ${r.ergLesbar}`);
@@ -78,6 +84,6 @@ module.exports = async function (h) {
   if (!r.laeuft) probleme.push("laufende Runde nicht markiert");
   if (fehler.length) probleme.push(...fehler.slice(0, 3));
   zeilen.push(`Zeile: eine Höhe ${r.eineZeile}, ${Math.round(r.zeileHoch)}px · Start 10:18: Runde 1 ${r.zeitVorher}→${r.zeitNachher}, Runde 2 ${r.runde2}`);
-  zeilen.push(`Ergebnis App ${r.erg} gespeichert · Gast-Link mit Code ${r.gastMitCode} · Gast: Regeln ${r.regelnKnopf}/${r.regelnInhalt}, Tasten mit Code ${r.ergTasten}, ohne ${r.ergTastenOhne}, läuft ${r.laeuft}`);
+  zeilen.push(`Ergebnis App ${r.erg} gespeichert · Spielplan-Link ohne Code ${r.gastOhneCode}, Ergebnis-Link mit Code ${r.ergMitCode} · Gast: Regeln ${r.regelnKnopf}/${r.regelnInhalt}, Tasten mit Code ${r.ergTasten}, ohne ${r.ergTastenOhne}, läuft ${r.laeuft}`);
   return h.ergebnis("Festival live: kompakter Plan, Start verschiebt Zeiten, Ergebnisse in App und Link, Regeln", !probleme.length, zeilen.concat(probleme));
 };

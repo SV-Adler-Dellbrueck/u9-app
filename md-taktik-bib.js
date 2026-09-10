@@ -80,7 +80,7 @@ async function ttLoad(id){
   }
   tbField=(d.field||[]).map(p=>({...p}));
   const used=new Set(tbField.map(f=>f.name));
-  tbBench=KADER.map(k=>k.name).filter(n=>!used.has(n));
+  tbBench=kaderNamen().filter(n=>!used.has(n));
   tbBall=d.ball?{...d.ball}:{x:50,y:50};
   taktikRender();
   // Strokes: Zeichenmodus aktivieren, Canvas dimensionieren, dann 0..1 -> Pixel

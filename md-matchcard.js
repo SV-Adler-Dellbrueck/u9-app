@@ -673,7 +673,7 @@ function rotSeedFromSquad(squad){
 }
 function rotInit(){
   if(!rotField.length&&!rotBench.length&&!rotTW){
-    rotSeedFromSquad(KADER.map(k=>k.name));
+    rotSeedFromSquad(kaderNamen());
   }
   rotRenderControls();
   rotRenderLive();

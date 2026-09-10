@@ -236,7 +236,7 @@ const BLITZ_CRIT=[
 ];
 function blitzInit(){
   // nur die nominierten (dabei) Spieler bewerten, falls eine Nominierung vorliegt
-  blitzPlayers=(typeof nominierteSpieler==="function"&&nominierteSpieler().length)?nominierteSpieler():KADER.map(k=>k.name);
+  blitzPlayers=(typeof nominierteSpieler==="function"&&nominierteSpieler().length)?nominierteSpieler():kaderNamen();
   blitzIdx=0;
   const box=document.getElementById("blitz-panel");
   if(!box)return;

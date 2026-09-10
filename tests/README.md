@@ -8,6 +8,11 @@ node tests/run.js            # oder: npm test
 node tests/run.js turnier    # nur Prüfungen, deren Dateiname „turnier" enthält
 ```
 
+Die Playwright-Fassung steht **genau** in `package.json` (nicht `^`): Jede Fassung bringt ihre
+eigene Chromium-Nummer mit, und in einer Cloud-Sitzung liegt der Browser schon fertig im Abbild.
+Ein `^` holt beim nächsten `npm install` eine neuere Fassung, die einen Browser sucht, den es
+dort nicht gibt — der Lauf bricht dann ab, bevor die erste Prüfung läuft.
+
 Der Lauf hat drei Teile: **Parsen** aller JS-Dateien (ein SyntaxError löst `script.onerror`
 nicht aus — der Loader meldet „fertig", die Datei lief nie), die **Ladearchitektur**
 (MODUL_WACHE in beiden Einstiegen identisch und vollständig, Wachname ist die letzte Funktion
