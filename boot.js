@@ -2189,8 +2189,38 @@ async function tpSlotsLoad(datum){
    wieder in die Übungs-Dropdowns laden. Damit sind Übungen FEST pro Termin vorgemerkt
    und mehrere Einheiten im Voraus planbar. Zuordnung über das Phasen-Label; bei
    Form-Index-Drift (gelöschte eigene Übungen) wird der Eintrag lieber ausgelassen. */
+/* v506: Der Kopf der Einheit – Schwerpunkt, Material, Beobachtung, Notiz für die
+   Folgeeinheit. Er kommt aus dem Import (`trainingsplan.kopf`) und steht über der
+   Zeitleiste, dort wo die Einheit anfängt. Aufklappbar: beim Planen ist er wichtig,
+   während des Trainings kostet er nur Platz. */
+async function tpKopfLaden(datum){
+  const box=document.getElementById("tp-kopf"); if(!box)return;
+  box.innerHTML="";
+  datum=datum||document.getElementById("tp-date")?.value;
+  if(!datum||!sbToken())return;
+  let k=null;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?datum=eq.${encodeURIComponent(datum)}&select=kopf`,{headers:sbAuthHeaders()});
+    if(sbCheck401(r)||!r.ok)return;
+    const rows=(await r.json())||[];
+    k=(rows[0]&&rows[0].kopf)||null;
+  }catch(e){return;}
+  tpKopfRender(k);
+}
+function tpKopfRender(k){
+  const box=document.getElementById("tp-kopf"); if(!box)return;
+  const zeilen=[["\u{1F3AF}","Schwerpunkt",k&&k.schwerpunkt],["\u{1F392}","Material",k&&k.material],
+                ["\u{1F440}","Beobachtung",k&&k.beobachtung],["\u27A1\uFE0F","F\u00fcr die Folgeeinheit",k&&k.notiz_folge]]
+                .filter(z=>String(z[2]||"").trim());
+  if(!zeilen.length){ box.innerHTML=""; return; }
+  box.innerHTML=`<details class="tp-tipp" style="margin:4px 0 8px" open>
+    <summary>\u{1F4CB} Zur Einheit<span style="font-weight:400;color:var(--text3)"> \u2013 ${zeilen.length} Notiz${zeilen.length===1?"":"en"}</span></summary>
+    <div>${zeilen.map(z=>`<div style="display:flex;gap:8px;padding:3px 0;font-size:12.5px;line-height:1.5"><span style="flex:0 0 auto">${z[0]}</span><span><b>${esc(z[1])}:</b> ${esc(z[2])}</span></div>`).join("")}</div>
+  </details>`;
+}
 async function tpPlanRestore(datum){
   datum=datum||document.getElementById("tp-date")?.value; if(!datum)return;
+  tpKopfLaden(datum);   // v506: Kopf der Einheit über der Zeitleiste – unabhängig vom Plan
   /* Reihenfolge ist entscheidend: erst die Phasen herstellen, dann die Uebungen
      einsetzen. Andersherum gaebe es die Auswahlfelder noch gar nicht, in die sie
      gehoeren - und die Zuordnung ueber das Phasen-Label ginge ins Leere. */
