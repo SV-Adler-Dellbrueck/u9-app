@@ -2248,7 +2248,74 @@ function fstPlanBauen(teams,cfg){
       plan.push({runde:s+1,feld:fi+1,form:felder[fi].form||"funino",zeit,a:p[0],b:p[1],phase:"Runde "+(s+1)});
     });
   });
-  return plan;
+  return fstFelderAusgleichen(plan,felder);
+}
+/* ═══ v516 – Jede Mannschaft einmal aufs grosse Feld ═══
+   PO nach dem Blick in den fertigen Plan: „Jedes Team soll auf jeden Fall mal 4+1 spielen."
+   fstPlanBauen verteilt die Felder mit (k+s)%F – rein nach Position in der Zeitscheibe. Bei
+   fuenf Teams auf Kaefig + 2× FUNiño kam so eine Mannschaft NIE auf das Jugendtor-Feld, auch
+   nicht in einer fuenften Runde: die haette gar kein Kaefig-Spiel.
+
+   Dieser Nachlauf tauscht die Felder ZWEIER Partien DERSELBEN Zeitscheibe. Paarungen, Runden
+   und Zeiten bleiben damit unangetastet – es aendert sich nur, WO gespielt wird. Genau der
+   Handgriff, den der Trainer sonst mit vier Tipps von Hand macht.
+
+   Getauscht wird, wenn dadurch MEHR Mannschaften erstmals aufs grosse Feld kommen. Nicht
+   „nur wenn dort schon alle dran waren": in Runde 3 stand im Kaefig eine neue Mannschaft und
+   daneben zwei – ein Tausch bringt dort eine mehr, ein starres Nur-wenn-keiner-neu-ist haette
+   ihn verpasst.
+
+   Was er BEWUSST nicht tut: zu kleine Mannschaften vom grossen Feld wegraeumen. Der PO
+   entscheidet lieber, jemanden aushelfen zu lassen, als ein Team das 4+1 nie sehen zu lassen.
+   Dafuer gibt es die Warnung (fstZuKlein) – sagen statt still umsortieren. */
+function fstFelderAusgleichen(plan,felder){
+  const f=(felder&&felder.length)?felder:FST_STANDARD_FELDER;
+  const jug=nr=>_fstJugendtore(((f[nr-1]||{}).form)||"funino");     // p.feld ist 1-basiert
+  const p=(plan||[]).map(x=>({...x}));
+  const hatte=new Set();                                            // wer war schon auf einem Jugendtor-Feld
+  [...new Set(p.map(x=>x.runde))].sort((a,b)=>a-b).forEach(r=>{
+    const sp=p.filter(x=>x.runde===r);
+    const neu=x=>[x.a,x.b].filter(t=>!hatte.has(t)).length;
+    sp.forEach(g=>{
+      if(!jug(g.feld))return;
+      const k=sp.filter(x=>x!==g&&!jug(x.feld)).sort((x,y)=>neu(y)-neu(x))[0];
+      if(!k||neu(k)<=neu(g))return;
+      const fe=g.feld, fo=g.form;
+      g.feld=k.feld; g.form=k.form; k.feld=fe; k.form=fo;
+    });
+    sp.forEach(x=>{ if(jug(x.feld)){hatte.add(x.a);hatte.add(x.b);} });
+  });
+  return p;
+}
+/* ═══ v516 – „Team zu klein fuer dieses Feld" ═══
+   Jede Mannschaft traegt ihre Kinderzahl mit sich (fstTeamsBauen setzt `kinder`) – die
+   Feldverteilung hat sie nie gelesen. Und fstTeamsVorschlag rechnet mit dem DURCHSCHNITT der
+   Feldgroessen: Kaefig + 2× FUNiño ergibt (5+3+3)/3 = 3,67 plus ein Wechselkind, also 4,67 je
+   Team. Auf FUNiño stimmt das, auf 4+1 fehlt genau einer. So standen am 12.09. zwei Teams mit
+   vier Kindern im Kaefig, und niemandem fiel es auf, bis der Trainer den Plan gelesen hat.
+   Gemeldet wird es dort, wo es sich noch aendern laesst: beim Planen. */
+function fstZuKlein(plan,teams,felder){
+  const f=(felder&&felder.length)?felder:FST_STANDARD_FELDER;
+  const out=[];
+  (plan||[]).forEach(p=>{
+    const auf=_fstF(p.form).auf;
+    [p.a,p.b].forEach(i=>{
+      const t=(teams||[])[i];
+      if(!t||t.kinder==null||t.kinder>=auf)return;
+      out.push({runde:p.runde,feld:fstFeldName(f,(p.feld||1)-1),kurz:_fstF(p.form).label,
+                auf,name:t.name,kinder:t.kinder,fehlt:auf-t.kinder});
+    });
+  });
+  return out;
+}
+function fstZuKleinHtml(plan,teams,felder){
+  const l=fstZuKlein(plan,teams,felder);
+  if(!l.length)return "";
+  const zeilen=l.map(x=>`<li><b>Runde ${x.runde}</b>, ${esc(x.feld)} (${esc(x.kurz)}, ${x.auf} auf dem Feld): ${esc(x.name)} hat ${x.kinder} – <b>${x.fehlt} zu wenig</b>.</li>`).join("");
+  return `<div style="font-size:11.5px;color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber);border-radius:10px;padding:9px 11px;margin-bottom:8px;line-height:1.5">
+    <b>⚠️ Zu wenig Kinder für das Feld</b>
+    <ul style="margin:6px 0 6px;padding-left:18px">${zeilen}</ul>
+    Aushelfen lassen (ein Kind aus einer Mannschaft, die in der Runde pausiert), das Feld auf eine kleinere Spielform stellen – oder die Partien der Runde tauschen.</div>`;
 }
 /* Wie viele Zeitscheiben braucht es fuer die volle Runde? Fuer die ehrliche Ansage
    „passt in eine Stunde" bzw. „dafuer braucht ihr X Minuten". */
@@ -2868,6 +2935,7 @@ function fstRender(){
           </div>`
         : ""}
       ${fstAufwaermZeile(_HT)?`<div style="font-size:11.5px;color:var(--text2);background:var(--surface2);border-radius:10px;padding:8px 10px;margin-bottom:8px">🔥 <b>Aufwärmen vor der ersten Runde:</b> ${fstAufwaermZeile(_HT)}</div>`:""}
+      ${fstZuKleinHtml(plan,fstTeamsBauen(cfg.vereine||[]),felder)}
       <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${_fstTauschWahl?"Tauschen: jetzt das zweite Team antippen":"Teams antippen zum Tauschen · Ergebnis rechts antippen"}</div>
       ${fstPlanHtml(plan,_HT.teams||[],felder,false,true,cfg)}
       <button class="btn" onclick="htShare()" style="width:100%;min-height:48px;margin-top:8px"><i class="ti ti-share"></i>Spielplan-Link teilen</button>
