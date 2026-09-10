@@ -1,0 +1,598 @@
+{
+  "schema": "adler-uebungen/1",
+  "stand": "2026-09-10-1",
+  "uebungen": [
+    {
+      "name": "Warm up Adler",
+      "kat": "aufwaermen",
+      "kurz": "Festes Einlaufprogramm in vier Stufen – Aufbau bleibt stehen.",
+      "spieler": "8–14",
+      "feld": "20 x 20 m, innen 5 x 5 m, dazu ein Tor",
+      "dauer": "15",
+      "ablauf": "Ein Aufbau für alles: äußeres Quadrat 20 x 20 m mit vier Hütchen, inneres Quadrat 5 x 5 m mit vier Hütchen, ein Tor an einer Seite. Vier Stufen ohne Umbau: 1 Aktivierung (2 Min, ohne Ball), 2 Dribbelstaffel (2 Min), 3 Passen mit Klatschen (3 Min), 4 Passen und Torschuss (4 Min). Danach 2 Minuten Kreis: trinken, Aufstellung, Rolle je Kind in einem Satz, Ruf. Die Torhüter arbeiten während Stufe 1 bis 3 an der Seite und kommen zu Stufe 4 in die Tore.",
+      "varianten": "Am Spieltag ohne Kreis auf 13 Minuten kürzen. Bei wenig Platz das äußere Quadrat auf 15 x 15 m verkleinern.",
+      "coaching": "Nur drei Ansagen insgesamt – eine je Stufe. Ruhiges Tempo, keine Sprintduelle, keine Wettkämpfe: danach kommen die Spiele.",
+      "spass": 4,
+      "diff": 1,
+      "skizze": {
+        "z": [
+          [
+            30,
+            25,
+            175,
+            130
+          ],
+          [
+            100,
+            75,
+            35,
+            30
+          ]
+        ],
+        "h": [
+          [
+            30,
+            25,
+            "y"
+          ],
+          [
+            205,
+            25,
+            "y"
+          ],
+          [
+            30,
+            155,
+            "y"
+          ],
+          [
+            205,
+            155,
+            "y"
+          ],
+          [
+            100,
+            75,
+            "r"
+          ],
+          [
+            135,
+            75,
+            "r"
+          ],
+          [
+            100,
+            105,
+            "r"
+          ],
+          [
+            135,
+            105,
+            "r"
+          ]
+        ],
+        "tor": [
+          [
+            250,
+            65,
+            "v",
+            50
+          ]
+        ],
+        "s": [
+          [
+            22,
+            38,
+            "g"
+          ],
+          [
+            22,
+            145,
+            "b"
+          ],
+          [
+            215,
+            90,
+            "y"
+          ]
+        ],
+        "b": [
+          [
+            30,
+            45
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            172,
+            "1 Laufen 2 Dribbeln 3 Passen 4 Abschluss"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Adler 1 – Aktivierung",
+      "kat": "aufwaermen",
+      "kurz": "Zwei Gruppen laufen quer und diagonal, Kreuzen im Reißverschluss.",
+      "spieler": "8–14",
+      "feld": "20 x 20 m, zwei Zusatzhütchen in der Mitte mit 3 m Abstand",
+      "dauer": "2",
+      "ablauf": "Die Kinder in zwei Gruppen an gegenüberliegenden Startecken aufstellen. Beide Gruppen laufen gemeinsam in gemäßigtem Tempo zum gegenüberliegenden Hütchen. Von dort geht es diagonal durch das Feld, wobei sich die Laufwege an den beiden mittleren Hütchen im Reißverschluss kreuzen.",
+      "varianten": "Statt zu laufen hüpfen oder seitwärts gehen. Bei wenig Platz die Diagonale weglassen und nur quer laufen.",
+      "coaching": "Kurze Abstände zwischen den Kindern halten. Kein Wettrennen – gemäßigtes Tempo ist die Vorgabe.",
+      "spass": 3,
+      "diff": 1,
+      "skizze": {
+        "z": [
+          [
+            40,
+            25,
+            200,
+            130
+          ]
+        ],
+        "h": [
+          [
+            40,
+            25,
+            "y"
+          ],
+          [
+            240,
+            25,
+            "y"
+          ],
+          [
+            40,
+            155,
+            "y"
+          ],
+          [
+            240,
+            155,
+            "y"
+          ],
+          [
+            128,
+            90,
+            "r"
+          ],
+          [
+            152,
+            90,
+            "r"
+          ]
+        ],
+        "s": [
+          [
+            32,
+            38,
+            "g"
+          ],
+          [
+            32,
+            142,
+            "b"
+          ]
+        ],
+        "p": [
+          [
+            45,
+            30,
+            235,
+            30,
+            "l"
+          ],
+          [
+            45,
+            150,
+            235,
+            150,
+            "l"
+          ],
+          [
+            235,
+            38,
+            48,
+            145,
+            "l"
+          ],
+          [
+            235,
+            142,
+            48,
+            38,
+            "l"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            172,
+            "gemäßigt laufen – in der Mitte kreuzen"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Adler 2 – Dribbelstaffel",
+      "kat": "aufwaermen",
+      "kurz": "Zum Innenhütchen dribbeln, drehen, zurück, Ball übergeben.",
+      "spieler": "8–14",
+      "feld": "20 x 20 m außen, 5 x 5 m innen",
+      "dauer": "2",
+      "ablauf": "Die Kinder in Gruppen an den Außenecken aufstellen, je Gruppe ein Ball. Das erste Kind dribbelt bis zum inneren Eckhütchen, macht dort einen Richtungs- und Fußwechsel, dribbelt zurück und übergibt den Ball an das nächste Kind der Gruppe.",
+      "varianten": "Richtungswechsel vorgeben (Sohle, Innenseite, Außenseite). Zwei Bälle je Gruppe, wenn die Reihe zu lang wird.",
+      "coaching": "Ball eng am Fuß, Blick beim Zurückdribbeln nach vorne. Die Wartenden stehen ruhig – das ist so gewollt.",
+      "spass": 4,
+      "diff": 1,
+      "skizze": {
+        "z": [
+          [
+            40,
+            25,
+            200,
+            130
+          ],
+          [
+            118,
+            72,
+            44,
+            36
+          ]
+        ],
+        "h": [
+          [
+            118,
+            72,
+            "r"
+          ],
+          [
+            162,
+            72,
+            "r"
+          ],
+          [
+            118,
+            108,
+            "r"
+          ],
+          [
+            162,
+            108,
+            "r"
+          ]
+        ],
+        "s": [
+          [
+            48,
+            38,
+            "g"
+          ],
+          [
+            32,
+            38,
+            "g"
+          ],
+          [
+            48,
+            142,
+            "b"
+          ],
+          [
+            32,
+            142,
+            "b"
+          ]
+        ],
+        "b": [
+          [
+            56,
+            46
+          ],
+          [
+            56,
+            150
+          ]
+        ],
+        "p": [
+          [
+            56,
+            42,
+            114,
+            70,
+            "d"
+          ],
+          [
+            114,
+            80,
+            56,
+            52,
+            "l"
+          ],
+          [
+            56,
+            146,
+            114,
+            110,
+            "d"
+          ],
+          [
+            114,
+            100,
+            56,
+            136,
+            "l"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            172,
+            "dribbeln – drehen – zurück – übergeben"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Adler 3 – Passen mit Klatschen",
+      "kat": "aufwaermen",
+      "kurz": "Pass zum Entgegenkommenden, Rücklage, dann längs zur nächsten Ecke.",
+      "spieler": "8–14",
+      "feld": "20 x 20 m außen, 5 x 5 m innen",
+      "dauer": "3",
+      "ablauf": "A steht an der Außenecke, B auf der Innenposition. A passt zu B, der entgegenkommt und den Ball direkt auf A zurücklegt. A spielt dann längs zu C an der nächsten Außenecke. C nimmt entgegen und passt zu D auf der Innenposition, der wieder klatschen lässt. So läuft der Ball im Quadrat weiter.",
+      "varianten": "Die Übung in beide Richtungen laufen lassen, damit beide Füße drankommen. Zur Vereinfachung nur zwei Stationen statt vier.",
+      "coaching": "Genauigkeit ist wichtiger als Tempo. Innenposition und Eckposition nach einer Weile tauschen.",
+      "spass": 3,
+      "diff": 2,
+      "skizze": {
+        "z": [
+          [
+            40,
+            25,
+            200,
+            130
+          ],
+          [
+            118,
+            72,
+            44,
+            36
+          ]
+        ],
+        "s": [
+          [
+            50,
+            40,
+            "g",
+            "A"
+          ],
+          [
+            112,
+            62,
+            "y",
+            "B"
+          ],
+          [
+            50,
+            140,
+            "g",
+            "C"
+          ],
+          [
+            112,
+            118,
+            "y",
+            "D"
+          ]
+        ],
+        "b": [
+          [
+            58,
+            48
+          ]
+        ],
+        "p": [
+          [
+            58,
+            44,
+            106,
+            60,
+            "p"
+          ],
+          [
+            114,
+            70,
+            58,
+            54,
+            "p"
+          ],
+          [
+            50,
+            52,
+            50,
+            130,
+            "p"
+          ],
+          [
+            58,
+            136,
+            106,
+            120,
+            "p"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            172,
+            "klatschen lassen – genau vor schnell"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Adler 4 – Passen und Torschuss",
+      "kat": "aufwaermen",
+      "kurz": "Pass zum Anspieler, Rücklage in den Lauf, mitnehmen, abschließen.",
+      "spieler": "8–14 plus Torhüter",
+      "feld": "Halbes Funino-Feld, ein Tor, Abschluss aus 6–8 m",
+      "dauer": "4",
+      "ablauf": "Die Kinder stehen in einer Reihe am Starthütchen, ein Kind steht als Anspieler seitlich versetzt, der Torhüter im Tor. A passt zum Anspieler, der den Ball direkt in den Lauf zurücklegt. A nimmt mit und schließt aus kurzer Distanz ab. Danach rückt jeder eine Position weiter, der Schütze wird neuer Anspieler.",
+      "varianten": "Vollversion mit vier Stationen und mehrfachem Klatschen. Zweites Tor auf der anderen Seite, wenn zwei Torhüter da sind.",
+      "coaching": "Sechs bis acht Abschlüsse je Kind. Zwei Kinder sammeln hinter dem Tor und rollen zurück – niemand sprintet dem Ball nach.",
+      "spass": 5,
+      "diff": 2,
+      "skizze": {
+        "tor": [
+          [
+            125,
+            12,
+            "h",
+            32
+          ]
+        ],
+        "s": [
+          [
+            140,
+            34,
+            "b",
+            "TW"
+          ],
+          [
+            70,
+            148,
+            "g",
+            "A"
+          ],
+          [
+            56,
+            158,
+            "g"
+          ],
+          [
+            42,
+            168,
+            "g"
+          ],
+          [
+            196,
+            104,
+            "y",
+            "B"
+          ]
+        ],
+        "b": [
+          [
+            78,
+            155
+          ]
+        ],
+        "p": [
+          [
+            78,
+            146,
+            190,
+            108,
+            "p"
+          ],
+          [
+            190,
+            96,
+            112,
+            104,
+            "p"
+          ],
+          [
+            112,
+            96,
+            136,
+            46,
+            "s"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            176,
+            "klatschen – mitnehmen – abschließen"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Adler TW – Einlaufen",
+      "kat": "torwart",
+      "kurz": "Handling im Stand, flache Bälle, ein Abstoß – ohne Hechten.",
+      "spieler": "2 Torhüter plus ein Trainer",
+      "feld": "Seitlich neben dem Feld, ein Tor",
+      "dauer": "6",
+      "ablauf": "Beide Torhüter arbeiten mit einem Co-Trainer an der Seite, während die Feldspieler die Stufen 1 bis 3 laufen. Zugeworfene Bälle im Stand fangen, flache Bälle aufnehmen und sicher an den Körper ziehen, einen Ball aus fünf Metern abwehren, zum Schluss ein Abstoß. Zu Stufe 4 gehen beide in die Tore und bekommen dort ihre ersten Schüsse.",
+      "varianten": "Bei nur einem Torhüter rückt ein Feldspieler mit, der gern hält. Bei nassem Boden ohne Bodenkontakt arbeiten.",
+      "coaching": "Kein Hechten, kein Fallen vor dem Spiel. Ziel ist Ballgefühl an den Händen, nicht Belastung.",
+      "spass": 4,
+      "diff": 1,
+      "skizze": {
+        "tor": [
+          [
+            118,
+            156,
+            "h",
+            44
+          ]
+        ],
+        "s": [
+          [
+            126,
+            140,
+            "b",
+            "TW"
+          ],
+          [
+            156,
+            140,
+            "b",
+            "TW"
+          ],
+          [
+            140,
+            48,
+            "y",
+            "CO"
+          ]
+        ],
+        "b": [
+          [
+            148,
+            56
+          ]
+        ],
+        "p": [
+          [
+            144,
+            60,
+            128,
+            132,
+            "s"
+          ],
+          [
+            152,
+            60,
+            158,
+            132,
+            "s"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            24,
+            "flach aufnehmen – fangen – Abstoß"
+          ]
+        ]
+      }
+    }
+  ]
+}

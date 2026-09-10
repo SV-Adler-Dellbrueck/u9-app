@@ -74,6 +74,11 @@ async function starten(opt = {}) {
       return r.fulfill({ status: a.status, contentType: "application/json", body: a.body });
     }
     if (u.hostname !== "app.test") return r.fulfill({ status: 200, contentType: "text/plain", body: "" });
+    /* v512: Die Uebungs-Bibliothek wird beim Oeffnen abgeglichen und legt an, was fehlt –
+       in JEDER Pruefung, die eine Sitzung vortaeuscht. Das faelscht jede Zaehlung von
+       Schreibzugriffen. Standardmaessig antwortet sie deshalb wie eine fehlende Datei
+       (den Fall kennt der Abgleich: still nichts tun). Wer sie braucht: starten({bibliothek:true}). */
+    if (!opt.bibliothek && /\/uebungen\/bibliothek\.json$/.test(u.pathname)) return r.fulfill({ status: 404, body: "" });
     const f = path.join(REPO, u.pathname === "/" ? start : u.pathname);
     if (!fs.existsSync(f) || fs.statSync(f).isDirectory()) return r.fulfill({ status: 404, body: "" });
     const typ = f.endsWith(".js") ? "application/javascript" : f.endsWith(".css") ? "text/css" : f.endsWith(".html") ? "text/html" : "text/plain";

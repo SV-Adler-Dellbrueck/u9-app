@@ -275,6 +275,8 @@ async function doLogin(){
     document.getElementById("login-gate")?.remove();
     toast("Angemeldet ✓");
     loadKader().then(()=>loadDB()).then(()=>{if(typeof loadTeamConfig==="function")return loadTeamConfig();}).then(()=>{if(curSection==="home")renderHome();}).then(()=>teamSyncLoad()).then(()=>setTimeout(showMilestoneHint,1500));
+    // v512: Erst jetzt gibt es eine Sitzung – die Bibliothek darf nachziehen.
+    if(typeof bibliothekAbgleich==="function")bibliothekAbgleich();
   }catch(e){if(err)err.textContent=e.message;}
 }
 // Nach dem PIN-Gate aufrufen (nicht im Quiz-Modus)
