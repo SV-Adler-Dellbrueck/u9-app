@@ -92,9 +92,9 @@ const WISSEN = [
     quelle: "Platzbelegung SV Adler Dellbrück", stand: "Saison 2026/2027",
     punkte: [
       ["Training", "Montag 16:45–18:15 · Freitag 16:30–18:00"],
+      ["Platz im Training", "Hauptplatz vorne links – an beiden Tagen, nicht der Käfig"],
       ["Spieltag", "Ungerade Kalenderwochen, Samstag 10:15–11:15"],
-      ["Platz am Montag", "Käfig hinten"],
-      ["Platz am Freitag", "Käfig hinten"],
+      ["Platz am Spieltag", "Linke Platzhälfte und Käfig"],
       ["Dauer eines Spieltags", "60 Minuten – die Zeitpläne sind einzuhalten, viele Vereine haben enge Belegungen."]
     ]
   }
