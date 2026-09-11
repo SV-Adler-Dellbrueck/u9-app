@@ -2873,16 +2873,10 @@ function fstRender(){
       <button class="btn" onclick="htShare()" style="width:100%;min-height:48px;margin-top:8px"><i class="ti ti-share"></i>Spielplan-Link teilen</button>
       <div style="font-size:10.5px;color:var(--text3);margin:4px 0 6px">Zum Weitergeben an alle: Gast-Trainer, Gast-Eltern und unsere Eltern. Nur zum Ansehen.</div>
       ${_HT.edit_code?`<button class="btn btn-sm" onclick="htShareErgebnis()" style="width:100%;margin-top:2px"><i class="ti ti-pencil"></i>Ergebnis-Link (Anzeigetisch)</button>
-      <div style="font-size:10.5px;color:var(--text3);margin:4px 0 6px">Trägt den Schreib-Code: wer ihn hat, darf Ergebnisse eintragen – sonst nichts. Nur an den Anzeigetisch und die Gast-Trainer, nicht in die Eltern-Gruppe.</div>`:""}
-      <button class="btn btn-sm" onclick="fstDruck()" style="width:100%;margin-top:2px"><i class="ti ti-printer"></i>Aushang drucken</button>`:""}
+      <div style="font-size:10.5px;color:var(--text3);margin:4px 0 6px">Trägt den Schreib-Code: wer ihn hat, darf Ergebnisse eintragen – sonst nichts. Nur an den Anzeigetisch und die Gast-Trainer, nicht in die Eltern-Gruppe.</div>`:""}`:""}
 
     <div style="font-size:12px;font-weight:800;margin:16px 0 6px">Infos für die Gäste</div>
     <textarea id="fst-infos" rows="4" onchange="fstZeitSpeichern()" style="${fld};width:100%;resize:vertical">${esc(cfg.infos||HT_INFOS_VORLAGE)}</textarea>
-    <div style="display:flex;gap:6px;margin-top:6px">
-      <button class="btn btn-sm" onclick="fstRegelnOpen()" style="flex:1;justify-content:center"><i class="ti ti-book"></i>Regeln ansehen</button>
-      <button class="btn btn-sm" onclick="fstCodexOpen()" style="flex:1;justify-content:center"><i class="ti ti-heart-handshake"></i>Codex ansehen</button>
-    </div>
-    <div style="font-size:10.5px;color:var(--text3);margin-top:4px">So sehen es die Gäste – Trainer wie Eltern.</div>
 
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-sm" onclick="htListe()"><i class="ti ti-arrow-left"></i>Übersicht</button>
