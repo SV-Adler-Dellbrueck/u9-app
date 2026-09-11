@@ -1,8 +1,8 @@
 /* v497 – PO: „Schön, wenn nur das nächste anstehende Spiel sichtbar ist und der Rest eingeklappt.
    Dann ist es übersichtlicher. Im externen Link auch. Vielleicht kann man im Trainer-Zugang dort
    sogar mehr einklappen." Geprueft: in beiden Ansichten ist genau die laufende bzw. naechste Runde
-   offen und der Rest zugeklappt (mit Zusammenfassung), der Aushang bleibt vollstaendig, und im
-   Planer klappt die Vorbereitung zu, sobald der Spielplan steht. */
+   offen und der Rest zugeklappt (mit Zusammenfassung), und im Planer klappt die Vorbereitung zu,
+   sobald der Spielplan steht. */
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
   const heute = h.heute();
@@ -20,14 +20,12 @@ module.exports = async function (h) {
     const runden = [...new Set(plan.map(p => p.runde))].length;
     const zaehl = html => { const d = document.createElement("div"); d.innerHTML = html; return { details: d.querySelectorAll("details").length, hoehe: [...d.querySelectorAll("summary")].map(x => x.style.minHeight) }; };
     // a) Trainer ohne Uhr: Runde 1 offen
-    const a = zaehl(fstPlanHtml(plan, row.teams, cfg.felder, false, false, cfg));
+    const a = zaehl(fstPlanHtml(plan, row.teams, cfg.felder, false, cfg));
     // b) Trainer mit laufender Runde 3
     const cfg3 = { ...cfg, uhr: { runde: 3, start: new Date().toISOString(), dauer: 8 } };
-    const h3 = fstPlanHtml(plan, row.teams, cfg3.felder, false, false, cfg3);
+    const h3 = fstPlanHtml(plan, row.teams, cfg3.felder, false, cfg3);
     const d3 = document.createElement("div"); d3.innerHTML = h3;
     const offen3 = [...d3.children].filter(x => x.tagName !== "DETAILS").map(x => (x.textContent.match(/Runde (\d+)/) || [])[1]);
-    // c) Aushang: alles offen
-    const c = zaehl(fstPlanHtml(plan, row.teams, cfg.felder, true, false, cfg));
     // d) Gast-Seite
     const wrap = document.createElement("div"); document.body.appendChild(wrap);
     _htPub = { slug: "x", code: "", wrap, row: { ...row, config: cfg3 } }; _fstUhrMarke = "";
@@ -44,7 +42,7 @@ module.exports = async function (h) {
     const nummernVorher = /1 · Wer kommt|2 · Felder|3 · Zeitplan/.test(box.textContent);
     _HT.plan = plan; fstRender(); await warte(120);
     const vor = document.getElementById("fst-vorbereitung");
-    return { a, offen3, c, runden, gastZu: gastRunden.filter(Boolean), gastOffen: gastOffen.length > 0,
+    return { a, offen3, runden, gastZu: gastRunden.filter(Boolean), gastOffen: gastOffen.length > 0,
       ohnePlan, mitPlan: !!vor, zu: vor ? !vor.open : null,
       inhalt: vor ? /Wer kommt|Felder aufbauen|Zeitplan/.test(vor.textContent) : false,
       // v498: Schrittnummern nur, solange die Schritte sichtbar sind
@@ -56,7 +54,6 @@ module.exports = async function (h) {
   if (r.a.details !== r.runden - 1) probleme.push(`Trainer: ${r.a.details} von ${r.runden} Runden zugeklappt – erwartet ${r.runden - 1}`);
   if (r.a.hoehe.some(x => x !== "44px")) probleme.push(`Zugeklappte Runden nur ${JSON.stringify(r.a.hoehe)} hoch`);
   if (r.offen3.join(",") !== "3") probleme.push(`Bei laufender Runde 3 ist Runde ${r.offen3.join(",") || "–"} offen`);
-  if (r.c.details !== 0) probleme.push(`Der Aushang klappt ${r.c.details} Runden zu – gedruckt gehört alles aufs Blatt`);
   if (r.gastZu.length !== r.runden - 1 || r.gastZu.includes("3")) probleme.push(`Gast-Seite: zugeklappt ${JSON.stringify(r.gastZu)} – Runde 3 muss offen sein`);
   if (!r.gastOffen) probleme.push("Gast-Seite: keine Runde als laufend markiert");
   if (r.ohnePlan) probleme.push("Ohne Spielplan ist die Vorbereitung schon eingeklappt");
@@ -68,7 +65,7 @@ module.exports = async function (h) {
   if (r.nummernNachher) probleme.push("Mit Spielplan stehen noch Schrittnummern da, obwohl die Schritte zugeklappt sind");
   if (fehler.length) probleme.push(...fehler.slice(0, 3));
   zeilen.push(`Trainer: ${r.a.details} von ${r.runden} Runden zugeklappt · bei laufender Runde 3 offen: Runde ${r.offen3.join(",")}`);
-  zeilen.push(`Gast-Seite zugeklappt: Runden ${r.gastZu.join(", ")} · Aushang klappt nichts zu (${r.c.details})`);
+  zeilen.push(`Gast-Seite zugeklappt: Runden ${r.gastZu.join(", ")}`);
   zeilen.push(`Vorbereitung: ohne Plan offen ${!r.ohnePlan}, mit Plan zugeklappt ${r.zu}, Inhalt drin ${r.inhalt} · Schrittnummern vorher ${r.nummernVorher}, nachher ${r.nummernNachher}`);
   return h.ergebnis("Nur die laufende Runde ist offen, die Vorbereitung klappt nach dem Planen zu", !probleme.length, zeilen.concat(probleme));
 };
