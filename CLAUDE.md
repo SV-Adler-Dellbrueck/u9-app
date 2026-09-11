@@ -7,7 +7,7 @@ Progressive Web App für eine Fußball-Jugendmannschaft. **Vanilla JavaScript, k
 Ergänzend gibt es ein **privates Repo mit dem Projektgedächtnis** (`adler-u9-wissen`): Vorgeschichte einzelner Entscheidungen, verworfene Ansätze, Kontaktwege. Es enthält personenbezogene Daten und bleibt deshalb getrennt. In einer Cloud-Sitzung lässt es sich dazuholen:
 
 ```bash
-git clone https://github.com/charleshuetten-dot/adler-u9-wissen.git .wissen
+git clone https://github.com/SV-Adler-Dellbrueck/adler-u9-wissen.git .wissen
 ```
 
 `.wissen/` steht in der `.gitignore` — Inhalte von dort niemals in dieses Repo übernehmen. Widersprechen sich beide, gilt diese Datei hier.
