@@ -1,0 +1,92 @@
+{
+  "schema": "adler-uebungen/1",
+  "stand": "2026-09-12-1",
+  "uebungen": [
+    {
+      "name": "Drei gegen einen im Quadrat",
+      "kat": "aufwaermen",
+      "kurz": "Drei halten den Ball im 8 x 8 m Feld, einer jagt – wer den Ball verliert, geht in die Mitte.",
+      "spieler": "12 (3 Felder à 4)",
+      "feld": "3 Felder à 8 x 8 m nebeneinander",
+      "dauer": "10",
+      "ablauf": "Je Feld vier Kinder: drei im Ballbesitz an den Seiten, ein Jäger in der Mitte. Der Ball bleibt am Boden. Erobert der Jäger den Ball oder geht er ins Aus, wechselt das Kind, das den Ball verloren hat, in die Mitte. Nach fünf Minuten Felder neu mischen. Wer zehn Pässe am Stück schafft, ruft „Adler“.",
+      "varianten": "Leichter: Feld 10 x 10 m, Rückpass erlaubt. Schwerer: Feld 6 x 6 m, zweiter Jäger, nur Innenseite.",
+      "coaching": "Wer ohne Ball ist – bist du zu sehen?\nGeh dorthin, wo der Jäger nicht hinschaut.\nPass so, dass dein Mitspieler ihn leicht annehmen kann.",
+      "spass": 4,
+      "diff": 2,
+      "skizze": {
+        "z": [[16,40,72,100],[104,40,72,100],[192,40,72,100]],
+        "h": [[16,40,"y"],[88,40,"y"],[16,140,"y"],[88,140,"y"],[104,40,"y"],[176,40,"y"],[104,140,"y"],[176,140,"y"],[192,40,"y"],[264,40,"y"],[192,140,"y"],[264,140,"y"]],
+        "s": [[52,54,"g"],[26,128,"g"],[78,128,"g"],[52,92,"r"],[140,54,"g"],[114,128,"g"],[166,128,"g"],[140,92,"r"],[228,54,"g"],[202,128,"g"],[254,128,"g"],[228,92,"r"]],
+        "b": [[34,132],[122,132],[210,132]],
+        "p": [[38,128,68,128,"p"],[126,128,156,128,"p"],[214,128,244,128,"p"]],
+        "tx": [[140,26,"3 Felder 8 x 8 m – Ballverlust: ab in die Mitte"],[140,168,"Ball bleibt am Boden, kein Rückpass"]]
+      }
+    },
+    {
+      "name": "3 gegen 3 auf vier Minitore mit Schusszone",
+      "kat": "passspiel",
+      "kurz": "Spieltagsform F-Jugend: 25 x 20 m, zwei Minitore je Grundlinie, Tor nur aus der Schusszone.",
+      "spieler": "6 je Feld (12 = 2 Felder)",
+      "feld": "25 x 20 m, je Grundlinie zwei Minitore, Schusszone 6 m",
+      "dauer": "30",
+      "ablauf": "Drei gegen drei auf vier Minitore. Treffer zählen nur aus der Schusszone, Seiten- und Toraus werden eingedribbelt oder eingepasst, Abstand drei Meter, kein Schiedsrichter. In drei Wellen ohne Umbau: 10 Minuten frei, 10 Minuten mit Regel „Tor zählt nur nach mindestens einem Zuspiel“, 10 Minuten offen mit fünf Meter breiterem Feld.",
+      "varianten": "Leichter: Feld breiter, ein Team in Überzahl, drittes Minitor an der Seitenlinie. Schwerer: Feld schmaler, zwei Zuspiele vor dem Tor, Mitnahme mit dem ersten Kontakt.",
+      "coaching": "Bevor du dribbelst – ist jemand freier als du?\nWo kann dich dein Mitspieler sehen?\nAuf welches der beiden Tore ist der Weg kürzer?",
+      "spass": 5,
+      "diff": 2,
+      "skizze": {
+        "z": [[30,20,220,140]],
+        "tor": [[22,45,"v",28],[22,107,"v",28],[251,45,"v",28],[251,107,"v",28]],
+        "li": [[83,20,83,160,"sz"],[197,20,197,160,"sz"]],
+        "h": [[30,20,"y"],[250,20,"y"],[30,160,"y"],[250,160,"y"],[83,20,"r"],[83,160,"r"],[197,20,"r"],[197,160,"r"]],
+        "s": [[100,60,"g"],[120,112,"g"],[150,86,"g"],[172,60,"r"],[186,120,"r"],[212,90,"r"]],
+        "b": [[157,90]],
+        "tx": [[140,172,"Tor nur aus der Schusszone – Wechsel an der Mittellinie"]]
+      }
+    },
+    {
+      "name": "Passtor im Quadrat",
+      "kat": "passspiel",
+      "kurz": "Übungsform: Pass mit der Innenseite durch das Hütchentor, dem Ball hinterherlaufen.",
+      "spieler": "4 je Quadrat (12 = 3 Quadrate)",
+      "feld": "12 x 12 m, Hütchentor 2 m in der Mitte",
+      "dauer": "15",
+      "ablauf": "Je Quadrat vier Kinder, auf zwei gegenüberliegenden Seiten je zwei, ein Ball. Zuspiel mit der Innenseite durch das mittlere Tor, das Gegenüber nimmt den Ball mit dem ersten Kontakt zur offenen Seite mit und spielt zurück. Nach dem Pass läuft jedes Kind dem Ball hinterher und stellt sich auf der Gegenseite an. Nach fünf Minuten ein zweiter Ball, zum Schluss 60 Sekunden Wettbewerb. Eine Minute je Durchgang mit dem schwächeren Fuß.",
+      "varianten": "Leichter: Tor 3 m breit, Kontakte frei, Quadrat 10 m. Schwerer: Quadrat 15 m, Tor 1,5 m, Pass in den Lauf.",
+      "coaching": "Standbein neben den Ball.\nKurz hinschauen, bevor du spielst.\nBall dorthin mitnehmen, wo du weiterspielen willst.",
+      "spass": 3,
+      "diff": 2,
+      "skizze": {
+        "z": [[70,20,140,140]],
+        "h": [[70,20,"y"],[210,20,"y"],[70,160,"y"],[210,160,"y"],[140,78,"r"],[140,102,"r"]],
+        "s": [[62,90,"g","A"],[44,90,"g","B"],[218,90,"r","C"],[236,90,"r","D"]],
+        "b": [[71,90]],
+        "p": [[76,90,208,90,"p"],[62,80,136,34,"l"],[144,34,218,80,"l"]],
+        "tx": [[140,172,"durch das Tor – dann Gegenseite anstellen"]]
+      }
+    },
+    {
+      "name": "2+1 gegen 2+1 auf Jugendtore",
+      "kat": "passspiel",
+      "kurz": "Spieltagsform mit Torwart: höhenreduzierte Jugendtore, Tor nur aus der gegnerischen Hälfte.",
+      "spieler": "6 je Feld",
+      "feld": "25 x 20 m, zwei Jugendtore (1,65 m), nur Mittellinie",
+      "dauer": "30",
+      "ablauf": "Zwei plus Torwart gegen zwei plus Torwart. Treffer nur aus der gegnerischen Hälfte, der Torwart eröffnet flach über die Mittellinie. Torwart wechselt nach jedem Tor, spätestens nach zwei Minuten, sodass jedes Kind einmal im Tor steht. Führt ein Team mit drei Toren, bekommt das andere einen zusätzlichen Feldspieler. Durchgänge von rund sieben Minuten, im Wechsel mit einem Minitor-Feld nebenan.",
+      "varianten": "Leichter: Feld breiter, Überzahl für das zurückliegende Team. Schwerer: Torerfolg nur nach einem Zuspiel in der gegnerischen Hälfte.",
+      "coaching": "Wer steht gerade freier als du?\nTorwart: zu wem kannst du flach herausspielen?\nWo musst du hin, damit man dich sehen kann?",
+      "spass": 5,
+      "diff": 2,
+      "skizze": {
+        "z": [[30,20,220,140]],
+        "tor": [[20,68,"v",44,"j"],[250,68,"v",44,"j"]],
+        "li": [[140,20,140,160,"m"]],
+        "h": [[30,20,"y"],[250,20,"y"],[30,160,"y"],[250,160,"y"],[140,20,"r"],[140,160,"r"]],
+        "s": [[42,90,"b","TW"],[238,90,"b","TW"],[95,60,"g"],[115,118,"g"],[178,66,"r"],[198,122,"r"]],
+        "b": [[122,112]],
+        "tx": [[140,172,"Tor nur aus der gegnerischen Hälfte – TW spielt flach"]]
+      }
+    }
+  ]
+}
