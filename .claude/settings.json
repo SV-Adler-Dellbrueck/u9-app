@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git am *)",
+      "mcp__GitHub__merge_pull_request",
+      "mcp__github__merge_pull_request"
+    ]
+  },
+  "autoMode": {
+    "allow": [
+      "$defaults",
+      "Merging a pull request of this repository (SV-Adler-Dellbrueck/u9-app) into main via the GitHub MCP merge tool is authorized once the repository owner has said 'merge' in the conversation and `node tests/run.js` is green on the PR head. Use squash merge, as all previous merges did.",
+      "Applying patch files with `git am` from the project's own knowledge repository (SV-Adler-Dellbrueck/adler-u9-wissen) or from a path the repository owner named in the conversation is authorized; the patches are the owner's own prior work."
+    ]
+  }
+}
