@@ -3619,6 +3619,15 @@ coaching:'Konzentration ist ein Muskel – man kann sie trainieren!\nWenn du abg
    Bedeutungsträger. Jede Farbe steht mindestens 3:1 gegen den Rasen #2d6a2d (Prüfung v512).
    Der Pfeilkopf braucht je Typ einen eigenen Marker – ein gemeinsamer trüge sonst überall
    dieselbe Farbe. */
+/* v518 – Übungs-Reihen: eine Dach-Übung und die Stufen, aus denen sie besteht.
+   „Warm up Adler“ ist ein Einlaufprogramm in vier Stufen ohne Umbau; die Stufen liegen als
+   eigene Übungen mit eigener Skizze in der Datenbank. Die Zuordnung steht hier im Code und
+   nicht in der Datenbank, weil der Abgleich bestehende Einträge nie überschreibt – ein
+   nachträgliches Feld in bibliothek.json käme bei niemandem an, der die Übung schon hat.
+   Verknüpft wird über den NAMEN; fehlt eine Stufe, wird sie einfach weggelassen. */
+const UEB_REIHEN={
+  "Warm up Adler":["Adler 1 – Aktivierung","Adler 2 – Dribbelstaffel","Adler 3 – Passen mit Klatschen","Adler 4 – Passen und Torschuss"]
+};
 const SKZ_PFEIL={p:'#ffffff',l:'#fde047',s:'#fca5a5',d:'#7dd3fc'};
 const SKZ_PFEIL_NAME={p:'Pass',l:'Laufweg',s:'Schuss',d:'Dribbling'};
 function _skz(o){

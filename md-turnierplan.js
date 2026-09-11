@@ -2339,12 +2339,34 @@ function _fstCfgLesen(){
     infos:document.getElementById("fst-infos")?document.getElementById("fst-infos").value:(alt.infos||HT_INFOS_VORLAGE)
   };
 }
+/* v518 – Die Teamrechnung folgt der Spielform.
+   PO: „Umstellung kann jeder Trainer in der App. Danach dann die Logik Berechnungen für die
+   Teams." Wie viele Teams ein Verein stellt, haengt an der Feldgroesse – fstTeamsVorschlag
+   rechnet mit dem Durchschnitt aller Felder. Wer den Kaefig von 4+1 auf 3+1 stellt, aendert
+   damit die Rechnung; bisher blieben die Teamzahlen stehen, die zu den ALTEN Feldern
+   gehoerten, und niemand sah es.
+   Von Hand gesetzte Teamzahlen bleiben unangetastet (teamsManuell) – wer selbst entschieden
+   hat, soll nicht ueberstimmt werden. Was sich aendert, wird gesagt statt still getan. */
+function fstTeamsNachziehen(cfg){
+  const v=(cfg.vereine||[]).slice(), geaendert=[];
+  v.forEach((x,i)=>{
+    if(!x||x.teamsManuell)return;
+    const neu=fstTeamsVorschlag(x.kinder||0,cfg.felder);
+    if(neu!==x.teams){ geaendert.push(`${x.name}: ${x.teams} → ${neu}`); v[i]={...x,teams:neu}; }
+  });
+  cfg.vereine=v;
+  return geaendert;
+}
 async function _fstSpeichern(felder){
   const cfg=_fstCfgLesen();
   if(felder)cfg.felder=felder;
+  const nachgezogen=fstTeamsNachziehen(cfg);
   const teams=fstTeamsBauen(cfg.vereine);
-  return htPatch({config:cfg,teams:teams.map(t=>t.name),
+  const ok=await htPatch({config:cfg,teams:teams.map(t=>t.name),
     datum:document.getElementById("fst-datum")?.value||_HT.datum});
+  if(ok&&nachgezogen.length&&typeof toast==="function")
+    toast("Teams nachgezogen – "+nachgezogen.join(" · "));
+  return ok;
 }
 /* Vereine pflegen – Name, angereiste Kinder, Teams. Die Teamzahl schlaegt die App vor,
    der Trainer aendert sie. */
@@ -2363,7 +2385,10 @@ async function fstVereinWeg(i){
 async function fstVereinSet(i,feld,wert){
   const cfg=_fstCfgLesen(); const v=(cfg.vereine||[]).slice(); if(!v[i])return;
   if(feld==="kinder"){ v[i].kinder=Math.max(0,parseInt(wert)||0); v[i].teams=fstTeamsVorschlag(v[i].kinder,cfg.felder); if(fstIstUnser(v[i]))v[i].manuell=true; }
-  else if(feld==="teams"){ v[i].teams=Math.max(1,Math.min(4,parseInt(wert)||1)); if(fstIstUnser(v[i]))v[i].manuell=true; }
+  /* v518: Eine von Hand gesetzte Teamzahl ist eine Entscheidung – sie ueberlebt jede
+     spaetere Feldaenderung. Eigener Merker, damit „manuell" weiter nur die Frage
+     beantwortet, ob unsere Einteilung aus „Teams festlegen" nachgezogen werden darf. */
+  else if(feld==="teams"){ v[i].teams=Math.max(1,Math.min(4,parseInt(wert)||1)); v[i].teamsManuell=true; if(fstIstUnser(v[i]))v[i].manuell=true; }
   else v[i].name=String(wert||"").trim()||v[i].name;
   cfg.vereine=v;
   if(await htPatch({config:cfg,teams:fstTeamsBauen(v).map(t=>t.name)}))fstRender();
