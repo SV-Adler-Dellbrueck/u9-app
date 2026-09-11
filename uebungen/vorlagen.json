@@ -1,12 +1,14 @@
 {
   "schema": "adler-vorlagen/1",
-  "stand": "2026-09-10-1",
+  "stand": "2026-09-12-1",
   "vorlagen": [
     {
       "name": "L1-1 Ball behalten – Duell um zwei Tore",
       "leitfrage": "Wie behalte ich den Ball, wenn einer kommt?",
       "folge_nr": 1,
-      "tags": ["wenig-platz"],
+      "tags": [
+        "wenig-platz"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -16,19 +18,50 @@
       },
       "beobachtung": "Wer hat den Ball mit dem Körper abgeschirmt statt ihn wegzuschlagen – und wer hat sich beim Verteidigen wie ein Aufpasser zwischen Ball und Tor gestellt?",
       "bloecke": [
-        { "typ": "warmup", "label": "Straßenfußball-Fenster", "dauer": 10 },
-        { "typ": "warmup", "label": "Warm up Adler, kurz", "dauer": 8, "uebung_name": "Warm up Adler" },
-        { "typ": "main", "label": "Stufe 1 – frei", "dauer": 11, "uebung_name": "1gg1 Tore-Duell" },
-        { "typ": "main", "label": "Stufe 2 – eng: erst drehen, dann zum Tor", "dauer": 11, "uebung_name": "1gg1 Tore-Duell" },
-        { "typ": "main", "label": "Stufe 3 – offen: Feld größer, Regel weg", "dauer": 11, "uebung_name": "1gg1 Tore-Duell" },
-        { "typ": "abschluss", "label": "Abschlussturnier", "dauer": 18 }
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 1 – frei",
+          "dauer": 11,
+          "uebung_name": "1gg1 Tore-Duell"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 2 – eng: erst drehen, dann zum Tor",
+          "dauer": 11,
+          "uebung_name": "1gg1 Tore-Duell"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 3 – offen: Feld größer, Regel weg",
+          "dauer": 11,
+          "uebung_name": "1gg1 Tore-Duell"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
       ]
     },
     {
       "name": "L2-1 Vorbeikommen – Mut zum ersten Schritt",
       "leitfrage": "Wie komme ich an einem vorbei?",
       "folge_nr": 1,
-      "tags": ["wenig-platz", "halle"],
+      "tags": [
+        "wenig-platz",
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 37,
       "skalierung": {
@@ -38,19 +71,49 @@
       },
       "beobachtung": "Wer hat seinen eigenen Trick im Spiel probiert – und wer ist nach dem Vorbeikommen wie ein Flitzer sofort in die Tiefe gegangen?",
       "bloecke": [
-        { "typ": "warmup", "label": "Straßenfußball-Fenster", "dauer": 10 },
-        { "typ": "warmup", "label": "Warm up Adler, kurz", "dauer": 8, "uebung_name": "Warm up Adler" },
-        { "typ": "main", "label": "Stufe 1 – frei", "dauer": 11, "uebung_name": "Mut-Leiter 1gg1" },
-        { "typ": "main", "label": "Stufe 2 – eng: Tempowechsel vor der Linie", "dauer": 11, "uebung_name": "Mut-Leiter 1gg1" },
-        { "typ": "main", "label": "Stufe 3 – offen: zwei Tore zur Auswahl", "dauer": 11, "uebung_name": "Mut-Leiter 1gg1" },
-        { "typ": "abschluss", "label": "Abschlussturnier", "dauer": 18 }
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 1 – frei",
+          "dauer": 11,
+          "uebung_name": "Mut-Leiter 1gg1"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 2 – eng: Tempowechsel vor der Linie",
+          "dauer": 11,
+          "uebung_name": "Mut-Leiter 1gg1"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 3 – offen: zwei Tore zur Auswahl",
+          "dauer": 11,
+          "uebung_name": "Mut-Leiter 1gg1"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
       ]
     },
     {
       "name": "L3-1 Tore machen – kurz und mit beiden Füßen",
       "leitfrage": "Wie mache ich ein Tor?",
       "folge_nr": 1,
-      "tags": ["vor-spieltag"],
+      "tags": [
+        "vor-spieltag"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 36,
       "skalierung": {
@@ -60,13 +123,46 @@
       },
       "beobachtung": "Wer hat mit dem schwächeren Fuß abgeschlossen, ohne dass jemand es verlangt hat – und wer ist wie ein Jäger vor dem Tor stehen geblieben statt wegzulaufen?",
       "bloecke": [
-        { "typ": "warmup", "label": "Straßenfußball-Fenster", "dauer": 10 },
-        { "typ": "warmup", "label": "Warm up Adler, voll (Spieltagswoche)", "dauer": 12, "uebung_name": "Warm up Adler" },
-        { "typ": "main", "label": "Stufe 1 – frei", "dauer": 10, "uebung_name": "Torschuss-Wettbewerb" },
-        { "typ": "main", "label": "Stufe 2 – eng: erster Kontakt zum Tor", "dauer": 10, "uebung_name": "Torschuss-Wettbewerb" },
-        { "typ": "main", "label": "Stufe 3 – offen: Abschluss aus dem Spiel", "dauer": 11, "uebung_name": "Torschuss-Wettbewerb" },
-        { "typ": "tw", "label": "Torhüter: Einlaufen und erste Bälle", "dauer": 10, "uebung_name": "Adler TW – Einlaufen" },
-        { "typ": "abschluss", "label": "Abschlussturnier", "dauer": 17 }
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, voll (Spieltagswoche)",
+          "dauer": 12,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 1 – frei",
+          "dauer": 10,
+          "uebung_name": "Torschuss-Wettbewerb"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 2 – eng: erster Kontakt zum Tor",
+          "dauer": 10,
+          "uebung_name": "Torschuss-Wettbewerb"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 3 – offen: Abschluss aus dem Spiel",
+          "dauer": 11,
+          "uebung_name": "Torschuss-Wettbewerb"
+        },
+        {
+          "typ": "tw",
+          "label": "Torhüter: Einlaufen und erste Bälle",
+          "dauer": 10,
+          "uebung_name": "Adler TW – Einlaufen"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 17
+        }
       ]
     },
     {
@@ -83,19 +179,49 @@
       },
       "beobachtung": "Wer hat vor dem Pass hingeschaut – und wer hat sich wie ein Aufpasser so gestellt, dass er immer anspielbar war?",
       "bloecke": [
-        { "typ": "warmup", "label": "Straßenfußball-Fenster", "dauer": 10 },
-        { "typ": "warmup", "label": "Warm up Adler, kurz", "dauer": 8, "uebung_name": "Warm up Adler" },
-        { "typ": "main", "label": "Stufe 1 – frei", "dauer": 11, "uebung_name": "4gg2 Ballbesitz" },
-        { "typ": "main", "label": "Stufe 2 – eng: höchstens zwei Kontakte", "dauer": 11, "uebung_name": "4gg2 Ballbesitz" },
-        { "typ": "main", "label": "Stufe 3 – offen: Kontakte frei, Feld größer", "dauer": 11, "uebung_name": "4gg2 Ballbesitz" },
-        { "typ": "abschluss", "label": "Abschlussturnier", "dauer": 18 }
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 1 – frei",
+          "dauer": 11,
+          "uebung_name": "4gg2 Ballbesitz"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 2 – eng: höchstens zwei Kontakte",
+          "dauer": 11,
+          "uebung_name": "4gg2 Ballbesitz"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 3 – offen: Kontakte frei, Feld größer",
+          "dauer": 11,
+          "uebung_name": "4gg2 Ballbesitz"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
       ]
     },
     {
       "name": "L5-1 Anbieten – wo kriege ich den Ball?",
       "leitfrage": "Wo stelle ich mich hin, damit ich den Ball kriege?",
       "folge_nr": 1,
-      "tags": ["schlechtwetter"],
+      "tags": [
+        "schlechtwetter"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 37,
       "skalierung": {
@@ -105,19 +231,49 @@
       },
       "beobachtung": "Wer hat sich vom Gegner weggelöst, bevor der Ball kam – und wer hat wie ein Flitzer die Breite besetzt, ohne dass es jemand gesagt hat?",
       "bloecke": [
-        { "typ": "warmup", "label": "Straßenfußball-Fenster", "dauer": 10 },
-        { "typ": "warmup", "label": "Warm up Adler, kurz", "dauer": 8, "uebung_name": "Warm up Adler" },
-        { "typ": "main", "label": "Stufe 1 – frei", "dauer": 11, "uebung_name": "Scanning-Funino" },
-        { "typ": "main", "label": "Stufe 2 – eng: Tor zählt nur nach Seitenwechsel", "dauer": 11, "uebung_name": "Scanning-Funino" },
-        { "typ": "main", "label": "Stufe 3 – offen: Regel weg, vier Tore", "dauer": 11, "uebung_name": "Scanning-Funino" },
-        { "typ": "abschluss", "label": "Abschlussturnier", "dauer": 18 }
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 1 – frei",
+          "dauer": 11,
+          "uebung_name": "Scanning-Funino"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 2 – eng: Tor zählt nur nach Seitenwechsel",
+          "dauer": 11,
+          "uebung_name": "Scanning-Funino"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 3 – offen: Regel weg, vier Tore",
+          "dauer": 11,
+          "uebung_name": "Scanning-Funino"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
       ]
     },
     {
       "name": "L6-1 Zurückholen – sofort nach dem Verlust",
       "leitfrage": "Wie hole ich mir den Ball zurück?",
       "folge_nr": 1,
-      "tags": ["wenig-platz"],
+      "tags": [
+        "wenig-platz"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 37,
       "skalierung": {
@@ -127,12 +283,98 @@
       },
       "beobachtung": "Wer ist nach dem Ballverlust sofort hinterher – und wer hat wie ein Jäger den Weg zum Tor zugestellt statt blind zu grätschen?",
       "bloecke": [
-        { "typ": "warmup", "label": "Straßenfußball-Fenster", "dauer": 10 },
-        { "typ": "warmup", "label": "Warm up Adler, kurz", "dauer": 8, "uebung_name": "Warm up Adler" },
-        { "typ": "main", "label": "Stufe 1 – frei", "dauer": 11, "uebung_name": "Pressing-Welle 2gg2" },
-        { "typ": "main", "label": "Stufe 2 – eng: fünf Sekunden nach Verlust", "dauer": 11, "uebung_name": "Pressing-Welle 2gg2" },
-        { "typ": "main", "label": "Stufe 3 – offen: Regel weg, freies Spiel", "dauer": 11, "uebung_name": "Pressing-Welle 2gg2" },
-        { "typ": "abschluss", "label": "Abschlussturnier", "dauer": 18 }
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 1 – frei",
+          "dauer": 11,
+          "uebung_name": "Pressing-Welle 2gg2"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 2 – eng: fünf Sekunden nach Verlust",
+          "dauer": 11,
+          "uebung_name": "Pressing-Welle 2gg2"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 3 – offen: Regel weg, freies Spiel",
+          "dauer": 11,
+          "uebung_name": "Pressing-Welle 2gg2"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
+      ]
+    },
+    {
+      "name": "L4-2 Passen – Lehrgangsform 15:30:15:30",
+      "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "folge_nr": 2,
+      "tags": [],
+      "dauer_min": 90,
+      "netto_spielform_min": 60,
+      "skalierung": {
+        "8": "Aufwärmen 2 Felder 3 gegen 1; Spielblock 1 ein Feld 4 gegen 4; Zwischenblock 2 Quadrate; Spielblock 2 ein Feld 3+1 gegen 3+1",
+        "12": "Aufwärmen 3 Felder 3 gegen 1; Spielblock 1 zwei Felder 3 gegen 3; Zwischenblock 3 Quadrate; Spielblock 2 Feld A 3 gegen 3, Feld B 2+1 gegen 2+1, Wechsel nach 14 Min",
+        "16": "Aufwärmen 4 Felder 3 gegen 1; Spielblock 1 zwei Felder 4 gegen 4; Zwischenblock 4 Quadrate; Spielblock 2 zwei Felder 3+1 gegen 3+1"
+      },
+      "beobachtung": "Wer hebt vor dem Zuspiel den Kopf – und wer bietet sich wie ein Aufpasser ohne Ball an, statt zum Ball zu laufen?",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Aufwärmen 1 – Ballführung mit Zusatzaufgaben",
+          "dauer": 5,
+          "uebung_name": "Chaos-Dribbling mit Kommando"
+        },
+        {
+          "typ": "warmup",
+          "label": "Aufwärmen 2 – Drei gegen einen",
+          "dauer": 10,
+          "uebung_name": "Drei gegen einen im Quadrat"
+        },
+        {
+          "typ": "main",
+          "label": "Spielblock 1, Welle 1 – frei",
+          "dauer": 10,
+          "uebung_name": "3 gegen 3 auf vier Minitore mit Schusszone"
+        },
+        {
+          "typ": "main",
+          "label": "Spielblock 1, Welle 2 – Tor nur nach Zuspiel",
+          "dauer": 10,
+          "uebung_name": "3 gegen 3 auf vier Minitore mit Schusszone"
+        },
+        {
+          "typ": "main",
+          "label": "Spielblock 1, Welle 3 – Regel weg, Feld breiter",
+          "dauer": 10,
+          "uebung_name": "3 gegen 3 auf vier Minitore mit Schusszone"
+        },
+        {
+          "typ": "main",
+          "label": "Zwischenblock – Übungsform",
+          "dauer": 15,
+          "uebung_name": "Passtor im Quadrat"
+        },
+        {
+          "typ": "main",
+          "label": "Spielblock 2 – Feld A Minitore / Feld B Jugendtore, Wechsel nach 14 Min",
+          "dauer": 30,
+          "uebung_name": "2+1 gegen 2+1 auf Jugendtore"
+        }
       ]
     }
   ]

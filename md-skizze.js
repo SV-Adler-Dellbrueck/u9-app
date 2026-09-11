@@ -78,7 +78,33 @@ const SKZ_VORLAGEN=[
     s:[[140,142,'b','TW'],[80,60,'w'],[200,60,'w']],
     b:[[88,67],[208,67]],
     p:[[88,72,132,136,'s'],[206,72,150,136,'s']],
-    tx:[[140,25,'Schüsse aus dem Halbfeld']]}}
+    tx:[[140,25,'Schüsse aus dem Halbfeld']]}},
+  /* v517: die Spieltagsformen der F-Jugend nach den Durchführungsbestimmungen des Kreises
+     Köln 2026/27 – wer sie am Platz aufbaut, soll sie nicht jedes Mal neu zeichnen müssen.
+     Specs deckungsgleich mit den Übungen in uebungen/bibliothek.json. */
+  {n:"Spieltag F: 3 gegen 3, vier Minitore", spec:{
+    z:[[30,20,220,140]],
+    tor:[[22,45,'v',28],[22,107,'v',28],[251,45,'v',28],[251,107,'v',28]],
+    li:[[83,20,83,160,'sz'],[197,20,197,160,'sz']],
+    h:[[30,20,'y'],[250,20,'y'],[30,160,'y'],[250,160,'y'],[83,20,'r'],[83,160,'r'],[197,20,'r'],[197,160,'r']],
+    s:[[100,60,'g'],[120,112,'g'],[150,86,'g'],[172,60,'r'],[186,120,'r'],[212,90,'r']],
+    b:[[157,90]],
+    tx:[[140,172,'Tor nur aus der Schusszone – Wechsel an der Mittellinie']]}},
+  {n:"Spieltag F: 2+1, Jugendtore", spec:{
+    z:[[30,20,220,140]],
+    tor:[[20,68,'v',44,'j'],[250,68,'v',44,'j']],
+    li:[[140,20,140,160,'m']],
+    h:[[30,20,'y'],[250,20,'y'],[30,160,'y'],[250,160,'y'],[140,20,'r'],[140,160,'r']],
+    s:[[42,90,'b','TW'],[238,90,'b','TW'],[95,60,'g'],[115,118,'g'],[178,66,'r'],[198,122,'r']],
+    b:[[122,112]],
+    tx:[[140,172,'Tor nur aus der gegnerischen Hälfte – TW spielt flach']]}},
+  {n:"Drei gegen einen", spec:{
+    z:[[16,40,72,100],[104,40,72,100],[192,40,72,100]],
+    h:[[16,40,'y'],[88,40,'y'],[16,140,'y'],[88,140,'y'],[104,40,'y'],[176,40,'y'],[104,140,'y'],[176,140,'y'],[192,40,'y'],[264,40,'y'],[192,140,'y'],[264,140,'y']],
+    s:[[52,54,'g'],[26,128,'g'],[78,128,'g'],[52,92,'r'],[140,54,'g'],[114,128,'g'],[166,128,'g'],[140,92,'r'],[228,54,'g'],[202,128,'g'],[254,128,'g'],[228,92,'r']],
+    b:[[34,132],[122,132],[210,132]],
+    p:[[38,128,68,128,'p'],[126,128,156,128,'p'],[214,128,244,128,'p']],
+    tx:[[140,26,'3 Felder 8 x 8 m – Ballverlust: ab in die Mitte'],[140,168,'Ball bleibt am Boden, kein Rückpass']]}}
 ];
 
 /* Werkzeuge. Reihenfolge = Reihenfolge in der Palette. `feld` sagt, in welche Liste
@@ -91,6 +117,9 @@ const SKZ_WERK=[
   {id:"huetchen",emo:"🔺",lbl:"Hütchen",  feld:"h"},
   {id:"ball",   emo:"⚪", lbl:"Ball",     feld:"b"},
   {id:"tor",    emo:"🥅", lbl:"Tor",      feld:"tor"},
+  {id:"jugendtor",emo:"🥅",lbl:"Jugendtor",feld:"tor", j:true},
+  {id:"mittellinie",emo:"┃",lbl:"Mittellinie",feld:"li", zwei:true, typ:"m"},
+  {id:"schusszone",emo:"┊",lbl:"Schusszone",feld:"li", zwei:true, typ:"sz"},
   {id:"zone",   emo:"⬛", lbl:"Zone",     feld:"z", zwei:true},
   {id:"leiter", emo:"🪜", lbl:"Leiter",   feld:"leiter"},
   {id:"pass",   emo:"➡️", lbl:"Pass",     feld:"p", zwei:true, typ:"p"},
@@ -103,7 +132,7 @@ const SKZ_FARBEN=[["g","Grün","#4ade80"],["r","Rot","#f87171"],["b","Blau","#60
 
 let _skzSpec=null, _skzWerk="spieler", _skzFarbe="g", _skzStart=null, _skzVerlauf=[], _skzCb=null, _skzZieh=null;
 
-function _skzLeer(){ return {z:[],tor:[],leiter:[],wand:[],p:[],h:[],s:[],b:[],tx:[]}; }
+function _skzLeer(){ return {z:[],tor:[],leiter:[],wand:[],p:[],li:[],h:[],s:[],b:[],tx:[]}; }
 function _skzKopie(o){ try{return JSON.parse(JSON.stringify(o||{}));}catch(e){return _skzLeer();} }
 function _skzMerken(){ _skzVerlauf.push(_skzKopie(_skzSpec)); if(_skzVerlauf.length>40)_skzVerlauf.shift(); }
 function _skzListe(f){ if(!Array.isArray(_skzSpec[f]))_skzSpec[f]=[]; return _skzSpec[f]; }
@@ -112,14 +141,14 @@ function _skzWerkzeug(id){ return SKZ_WERK.find(w=>w.id===(id||_skzWerk))||SKZ_W
 /* Wo liegt ein Element? Für den Treffer-Test und fürs Verschieben brauchen alle
    Elemente einen Ankerpunkt – bei Strecken (Pfeil, Zone, Leiter) der Anfang. */
 function _skzAnker(feld,e){
-  if(feld==="p")return [e[0],e[1]];
+  if(feld==="p"||feld==="li")return [e[0],e[1]];   // v517: Linien wie Pfeile am Anfangspunkt fassen
   if(feld==="z")return [e[0]+e[2]/2,e[1]+e[3]/2];
   if(feld==="tor")return [e[0]+((e[2]==="v")?3:(e[3]||24)/2),e[1]+((e[2]==="v")?(e[3]||24)/2:3)];
   if(feld==="leiter")return [e[0]+(e[3]==="v"?8:e[2]/2),e[1]+(e[3]==="v"?e[2]/2:8)];
   return [e[0],e[1]];
 }
 function _skzTreffer(x,y){
-  const felder=["s","h","b","tx","tor","leiter","p","z"];  // kleine Dinge zuerst
+  const felder=["s","h","b","tx","tor","leiter","p","li","z"];  // kleine Dinge zuerst
   let best=null, bd=18;
   felder.forEach(f=>(_skzSpec[f]||[]).forEach((e,i)=>{
     const [ax,ay]=_skzAnker(f,e), d=Math.hypot(ax-x,ay-y);
@@ -129,7 +158,7 @@ function _skzTreffer(x,y){
 }
 function _skzVerschieben(t,x,y){
   const e=_skzSpec[t.feld][t.idx];
-  if(t.feld==="p"){ const dx=x-e[0], dy=y-e[1]; e[0]=x; e[1]=y; e[2]+=dx; e[3]+=dy; }
+  if(t.feld==="p"||t.feld==="li"){ const dx=x-e[0], dy=y-e[1]; e[0]=x; e[1]=y; e[2]+=dx; e[3]+=dy; }
   else if(t.feld==="z"){ e[0]=Math.round(x-e[2]/2); e[1]=Math.round(y-e[3]/2); }
   else { e[0]=Math.round(x); e[1]=Math.round(y); }
 }
@@ -144,7 +173,11 @@ function skzVorlage(i){
   skzEditorZeichnen(); toast("Vorlage „"+v.n+"“ geladen ✓");
 }
 function skzSpeichern(){
-  const leer=["s","h","b","tor","z","p","leiter","tx"].every(f=>!(_skzSpec[f]||[]).length);
+  /* v517: „li“ gehört in diese Liste. Ohne sie hätte eine Skizze, die NUR aus Mittellinie
+     und Schusszone besteht, als leer gegolten und wäre beim Speichern verworfen worden –
+     dieselbe Falle wie der Versatz in v514: wer ein Feld hinzufügt, muss auch die Stelle
+     nachziehen, die entscheidet, ob überhaupt etwas da ist. */
+  const leer=["s","h","b","tor","z","p","li","leiter","tx"].every(f=>!(_skzSpec[f]||[]).length);
   const cb=_skzCb;
   document.getElementById("skz-modal")?.remove();
   if(typeof cb==="function")cb(leer?null:_skzKopie(_skzSpec));
@@ -179,7 +212,7 @@ function skzBuehneDown(ev){
       _skzListe("z").push([x1,y1,bw,bh]);
     }else{
       if(Math.hypot(x-sx,y-sy)<12){toast("Zu kurz – zweiten Punkt weiter weg tippen","info");skzEditorZeichnen();return;}
-      _skzListe("p").push([sx,sy,x,y,w.typ]);
+      _skzListe(w.feld).push([sx,sy,x,y,w.typ]);   // v517: „p“ und „li“ haben dieselbe Form
     }
     skzEditorZeichnen(); return;
   }
@@ -190,7 +223,17 @@ function skzBuehneDown(ev){
   }
   else if(w.feld==="h")_skzListe("h").push([x,y,_skzFarbe]);
   else if(w.feld==="b")_skzListe("b").push([x,y]);
-  else if(w.feld==="tor")_skzListe("tor").push([x,y,"h",30]);
+  else if(w.feld==="tor"){
+    /* v517: Ein Tor gehört an eine Linie. Bisher entstand JEDES Tor waagerecht – wer eins
+       an die Seitenlinie setzen wollte, konnte es am Handy nicht nachträglich drehen.
+       Jetzt entscheidet die Tipp-Position: nah am linken oder rechten Rand hochkant und
+       bündig an der Linie, sonst quer. Die zweite Koordinate bleibt, wo getippt wurde –
+       nur so weit hereingezogen, dass das Tor nicht über den Rasen hinausragt. */
+    const j=!!w.j, tief=j?10:7, breit=j?44:30;
+    if(x<50)        _skzListe("tor").push([4,        Math.min(y,176-breit),"v",breit].concat(j?["j"]:[]));
+    else if(x>230)  _skzListe("tor").push([276-tief, Math.min(y,176-breit),"v",breit].concat(j?["j"]:[]));
+    else            _skzListe("tor").push([Math.min(x,276-breit), y,        "h",breit].concat(j?["j"]:[]));
+  }
   else if(w.feld==="leiter")_skzListe("leiter").push([x,y,60,"h"]);
   else if(w.feld==="tx"){
     const t=(document.getElementById("skz-text")?.value||"").trim();
@@ -244,6 +287,8 @@ function skzEditorZeichnen(){
   const hw=document.getElementById("skz-hinweis");
   if(hw)hw.textContent=w.id==="move"?"Element antippen und ziehen."
     :w.id==="del"?"Element antippen, das weg soll."
+    :w.feld==="tor"?"Am linken oder rechten Rand tippen: das Tor steht hochkant und bündig. Sonst quer."
+    :w.feld==="li"?(_skzStart?"Jetzt den Endpunkt tippen.":"Startpunkt tippen, dann Endpunkt – die Linie läuft quer über den Platz.")
     :w.zwei?(_skzStart?"Jetzt den Endpunkt tippen.":"Startpunkt tippen, dann Endpunkt.")
     :"Auf den Platz tippen, um „"+w.lbl+"“ zu setzen.";
 }
@@ -331,6 +376,65 @@ async function uebungSkizzeNachtragen(idx){
 }
 /* Anschluss an den „Eigene Übung"-Dialog: Vorschau füllen und den Editor öffnen.
    TF_SKIZZE hält die Beschreibung, bis gespeichert wird (saveCustomTraining liest sie). */
+/* ═══ v517 – Skizze als Bild weitergeben ═══
+   Der Co-Trainer am Platz hat die App nicht offen. Bisher ließ sich eine Skizze nur
+   abfotografieren. Jetzt: SVG → Canvas → PNG, dann das Teilen-Blatt des Geräts, sonst ein
+   Download. Kein Serveraufruf, keine neue Abhängigkeit.
+
+   Zwei Stolpersteine, die das Bild sonst still zerstören:
+   1. Das SVG aus _skz trägt width="100%" und ein style-Attribut. So in ein <img> geladen,
+      rasten Browser es in unbestimmter Größe oder gar nicht. Die Kopie bekommt deshalb
+      feste Maße und kein style.
+   2. Unter der Skizze steht die Legende – die besteht selbst aus <svg>. Gesucht wird
+      deshalb gezielt das Bild mit der viewBox der Skizze, nicht einfach das erste. */
+const SKZ_PNG_B=1120, SKZ_PNG_H=720;              // Vierfaches der viewBox 280×180
+function _skzSlug(s){
+  return String(s||"Skizze").toLowerCase()
+    .replace(/ä/g,"ae").replace(/ö/g,"oe").replace(/ü/g,"ue").replace(/ß/g,"ss")
+    .replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,60)||"skizze";
+}
+function skzTeilenKnopf(name){
+  const n=String(name||"Skizze").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+  return '<button type="button" class="skz-teilen" data-name="'+n+'" onclick="skzTeilen(this)" '
+    +'style="width:100%;min-height:44px;margin:0 0 8px;border:1px solid var(--rand-bedien);border-radius:10px;'
+    +'background:var(--surface);color:var(--text);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">'
+    +'📤 Skizze teilen</button>';
+}
+async function skzTeilen(knopf){
+  const name=(knopf&&knopf.dataset&&knopf.dataset.name)||"Skizze";
+  const wrap=knopf&&knopf.parentElement;
+  const quell=wrap&&[...wrap.querySelectorAll("svg")].find(x=>x.getAttribute("viewBox")==="0 0 280 180");
+  if(!quell){ if(typeof toast==="function")toast("Keine Skizze zum Teilen gefunden","err"); return; }
+  let url=null;
+  try{
+    const kopie=quell.cloneNode(true);
+    kopie.removeAttribute("style");
+    kopie.setAttribute("width",SKZ_PNG_B); kopie.setAttribute("height",SKZ_PNG_H);
+    const text=new XMLSerializer().serializeToString(kopie);
+    url=URL.createObjectURL(new Blob([text],{type:"image/svg+xml;charset=utf-8"}));
+    const bild=new Image();
+    await new Promise((fertig,schief)=>{ bild.onload=fertig; bild.onerror=()=>schief(new Error("Bild")); bild.src=url; });
+    const c=document.createElement("canvas"); c.width=SKZ_PNG_B; c.height=SKZ_PNG_H;
+    c.getContext("2d").drawImage(bild,0,0,SKZ_PNG_B,SKZ_PNG_H);
+    const png=await new Promise(fertig=>c.toBlob(fertig,"image/png"));
+    if(!png)throw new Error("PNG");
+    const datei=new File([png],_skzSlug(name)+".png",{type:"image/png"});
+    if(navigator.canShare&&navigator.canShare({files:[datei]})){
+      try{ await navigator.share({files:[datei],title:name}); }
+      /* Wegwischen ist keine Panne – nur echte Fehler melden. */
+      catch(e){ if(!e||e.name==="AbortError")return; throw e; }
+      return;
+    }
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(png); a.download=_skzSlug(name)+".png";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    if(typeof toast==="function")toast("Skizze gespeichert ✓");
+  }catch(e){
+    if(typeof toast==="function")toast("Die Skizze ließ sich nicht als Bild erzeugen","err");
+  }finally{ if(url)URL.revokeObjectURL(url); }
+}
+
 function tfSkizzeVorschau(){
   const box=document.getElementById("tf-skizze-vorschau"); if(!box)return;
   const s=window.TF_SKIZZE;
