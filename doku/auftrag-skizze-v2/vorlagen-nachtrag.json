@@ -1,0 +1,29 @@
+{
+  "schema": "adler-vorlagen/1",
+  "stand": "2026-09-12-1",
+  "vorlagen": [
+    {
+      "name": "L4-2 Passen – Lehrgangsform 15:30:15:30",
+      "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "folge_nr": 2,
+      "tags": [],
+      "dauer_min": 90,
+      "netto_spielform_min": 60,
+      "skalierung": {
+        "8": "Aufwärmen 2 Felder 3 gegen 1; Spielblock 1 ein Feld 4 gegen 4; Zwischenblock 2 Quadrate; Spielblock 2 ein Feld 3+1 gegen 3+1",
+        "12": "Aufwärmen 3 Felder 3 gegen 1; Spielblock 1 zwei Felder 3 gegen 3; Zwischenblock 3 Quadrate; Spielblock 2 Feld A 3 gegen 3, Feld B 2+1 gegen 2+1, Wechsel nach 14 Min",
+        "16": "Aufwärmen 4 Felder 3 gegen 1; Spielblock 1 zwei Felder 4 gegen 4; Zwischenblock 4 Quadrate; Spielblock 2 zwei Felder 3+1 gegen 3+1"
+      },
+      "beobachtung": "Wer hebt vor dem Zuspiel den Kopf – und wer bietet sich wie ein Aufpasser ohne Ball an, statt zum Ball zu laufen?",
+      "bloecke": [
+        { "typ": "warmup", "label": "Aufwärmen 1 – Ballführung mit Zusatzaufgaben", "dauer": 5, "uebung_name": "Chaos-Dribbling mit Kommando" },
+        { "typ": "warmup", "label": "Aufwärmen 2 – Drei gegen einen", "dauer": 10, "uebung_name": "Drei gegen einen im Quadrat" },
+        { "typ": "main", "label": "Spielblock 1, Welle 1 – frei", "dauer": 10, "uebung_name": "3 gegen 3 auf vier Minitore mit Schusszone" },
+        { "typ": "main", "label": "Spielblock 1, Welle 2 – Tor nur nach Zuspiel", "dauer": 10, "uebung_name": "3 gegen 3 auf vier Minitore mit Schusszone" },
+        { "typ": "main", "label": "Spielblock 1, Welle 3 – Regel weg, Feld breiter", "dauer": 10, "uebung_name": "3 gegen 3 auf vier Minitore mit Schusszone" },
+        { "typ": "main", "label": "Zwischenblock – Übungsform", "dauer": 15, "uebung_name": "Passtor im Quadrat" },
+        { "typ": "main", "label": "Spielblock 2 – Feld A Minitore / Feld B Jugendtore, Wechsel nach 14 Min", "dauer": 30, "uebung_name": "2+1 gegen 2+1 auf Jugendtore" }
+      ]
+    }
+  ]
+}
