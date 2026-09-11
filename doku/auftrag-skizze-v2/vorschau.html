@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><title>Vorschau Skizze v2</title>
+<style>body{font-family:sans-serif;background:#fff;padding:16px}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;max-width:680px}h2{font-size:13px;margin:0 0 4px}p{font-size:12px;color:#555}</style>
+</head><body>
+<p>Sollbild der vier Lehrgangsübungen, gerendert mit <code>skz_neu.js</code> aus <code>bibliothek-nachtrag.json</code>. Im Ordner <code>python -m http.server</code> starten und die Seite darüber öffnen – als lokale Datei blockiert der Browser das Laden des JSON.</p>
+<main id="m"></main>
+<script src="skz_neu.js"></script>
+<script>
+fetch('bibliothek-nachtrag.json').then(r=>r.json()).then(d=>{
+  document.getElementById('m').innerHTML=d.uebungen.map(u=>'<div><h2>'+u.name+'</h2>'+_skz(u.skizze)+'</div>').join('');
+}).catch(e=>{document.getElementById('m').textContent='JSON nicht ladbar: '+e;});
+</script>
+</body></html>
