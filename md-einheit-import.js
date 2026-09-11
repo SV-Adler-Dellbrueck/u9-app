@@ -87,7 +87,7 @@ const EI_KAT_LABEL={aufwaermen:"Aufwärmen",raute:"Raute",passspiel:"Passspiel",
    KEINE tiefe Prüfung: unbekannte Listen überliest der Zeichner ohnehin. Geprüft wird nur,
    dass keine Liste etwas anderes als eine Liste ist – `(o.z||[]).forEach` wirft sonst,
    und ein geworfener Fehler beim Zeichnen risse die ganze Übung mit. */
-const EI_SKZ_LISTEN=["z","tor","leiter","wand","p","h","s","b","tx"];
+const EI_SKZ_LISTEN=["z","tor","leiter","wand","p","li","h","s","b","tx"];   // v517: „li“ = Mittellinie und Schusszone
 function _eiSkizzeOk(x){
   if(!x||typeof x!=="object"||Array.isArray(x))return false;
   return EI_SKZ_LISTEN.every(k=>x[k]==null||Array.isArray(x[k]));

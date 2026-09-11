@@ -3628,9 +3628,21 @@ function _skz(o){
     '<rect x="4" y="4" width="272" height="172" rx="3" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>',
     '<defs>'+Object.keys(SKZ_PFEIL).map(t=>'<marker id="arr-'+t+'" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="'+SKZ_PFEIL[t]+'"/></marker>').join('')+'</defs>'];
   (o.z||[]).forEach(z=>S.push('<rect x="'+z[0]+'" y="'+z[1]+'" width="'+z[2]+'" height="'+z[3]+'" rx="3" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.35)" stroke-width="1.5" stroke-dasharray="6,3"/>'));
-  (o.tor||[]).forEach(t=>{const w=t[3]||24;
-    S.push(t[2]==='v'?'<rect x="'+t[0]+'" y="'+t[1]+'" width="7" height="'+w+'" rx="2" fill="none" stroke="#fff" stroke-width="2.5"/>'
-                     :'<rect x="'+t[0]+'" y="'+t[1]+'" width="'+w+'" height="7" rx="2" fill="none" stroke="#fff" stroke-width="2.5"/>');});
+  /* v517: Linien – nach den Zonen, vor den Toren. „m“ Mittellinie durchgezogen weiß,
+     „sz“ Schusszone gestrichelt gelb: Muster UND Farbe unterscheiden sie, wie bei den
+     Pfeilen seit v512. Wer nur eins von beidem sieht, erkennt sie trotzdem. */
+  (o.li||[]).forEach(l=>{const sz=l[4]==='sz';
+    S.push('<line x1="'+l[0]+'" y1="'+l[1]+'" x2="'+l[2]+'" y2="'+l[3]+'" stroke="'+(sz?'#fbbf24':'rgba(255,255,255,.7)')+'" stroke-width="2"'+(sz?' stroke-dasharray="5,4"':'')+'/>');});
+  /* v517: Jugendtor über ein fünftes Feld „j“ – tiefer (10 statt 7), dickerer Strich,
+     hinterlegt und mit drei Netzlinien quer, damit es sich nicht allein über die Größe
+     vom Minitor unterscheidet. OHNE fünftes Feld entsteht Zeichen für Zeichen dieselbe
+     Ausgabe wie vorher; alle 61 bestehenden Skizzen sind dagegen geprüft. */
+  (o.tor||[]).forEach(t=>{const w=t[3]||24, j=t[4]==='j', d=j?10:7, sw=j?3:2.5, v=t[2]==='v';
+    S.push('<rect x="'+t[0]+'" y="'+t[1]+'" width="'+(v?d:w)+'" height="'+(v?w:d)+'" rx="2" fill="'+(j?'rgba(255,255,255,.25)':'none')+'" stroke="#fff" stroke-width="'+sw+'"/>');
+    if(j){ const n=4, st=w/n;
+      for(let i=1;i<n;i++)S.push(v?'<line x1="'+t[0]+'" y1="'+(t[1]+i*st)+'" x2="'+(t[0]+d)+'" y2="'+(t[1]+i*st)+'" stroke="#fff" stroke-width="1"/>'
+                                 :'<line x1="'+(t[0]+i*st)+'" y1="'+t[1]+'" x2="'+(t[0]+i*st)+'" y2="'+(t[1]+d)+'" stroke="#fff" stroke-width="1"/>');
+    }});
   (o.leiter||[]).forEach(l=>{const n=6,st=l[2]/n;
     S.push('<rect x="'+l[0]+'" y="'+l[1]+'" width="'+(l[3]==='v'?16:l[2])+'" height="'+(l[3]==='v'?l[2]:16)+'" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="1.5"/>');
     for(let i=1;i<n;i++)S.push(l[3]==='v'
@@ -3654,10 +3666,16 @@ function skzLegende(){
      auf hellem Grund unsichtbar, und die Farben stimmten nicht mit der Zeichnung überein. */
   const li=(dash,w,c)=>'<svg width="32" height="12" viewBox="0 0 32 12" style="flex:none;background:#2d6a2d;border-radius:3px"><line x1="2" y1="6" x2="24" y2="6" stroke="'+c+'" stroke-width="'+w+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/><path d="M24,2.5 L30,6 L24,9.5 Z" fill="'+c+'"/></svg>';
   const it=(svg,lbl)=>'<span style="display:inline-flex;align-items:center;gap:4px">'+svg+lbl+'</span>';
+  /* v517: Linien ohne Pfeilspitze – Mittellinie und Schusszone sind Markierungen, keine
+     Richtungen; eine Spitze würde sie zu Wegen machen. Kontrast auf dem Rasen (#2d6a2d)
+     gemessen: Schusszone #fbbf24 3,92:1 · Mittellinie rgba(255,255,255,.7) 4,13:1 –
+     beide über den geforderten 3:1 für Bedienelemente und Grafik. */
+  const st=(dash,c)=>'<svg width="32" height="12" viewBox="0 0 32 12" style="flex:none;background:#2d6a2d;border-radius:3px"><line x1="2" y1="6" x2="30" y2="6" stroke="'+c+'" stroke-width="2"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/></svg>';
   const P=SKZ_PFEIL;
   return '<div class="skz-legende" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:10px;color:var(--text2);margin:2px 0 8px">'
     +it(li('',1.5,P.p),SKZ_PFEIL_NAME.p)+it(li('5,3',1.5,P.l),SKZ_PFEIL_NAME.l)
-    +it(li('',3,P.s),SKZ_PFEIL_NAME.s)+it(li('2,3',1.5,P.d),SKZ_PFEIL_NAME.d)+'</div>';
+    +it(li('',3,P.s),SKZ_PFEIL_NAME.s)+it(li('2,3',1.5,P.d),SKZ_PFEIL_NAME.d)
+    +it(st('5,4','#fbbf24'),'Schusszone')+it(st('','rgba(255,255,255,.7)'),'Mittellinie')+'</div>';
 }
 /* Symbolskizzen je Kategorie: Fallback für eigene und ältere KI-Übungen ohne eigene
    Skizze – besser eine ehrlich beschriftete Grundaufstellung als gar kein Bild. */
