@@ -118,9 +118,12 @@ module.exports = async function (h) {
     [/3\+1 gegen 3\+1/, "3+1 gegen 3+1 für U8/U9 auf Jugendtoren"],
     [/4\+1 gegen 4\+1/, "4+1 gegen 4+1 als E-Jugend-Form"],
     [/3 gegen 3/, "3 gegen 3 auf Minitore"],
-    [/ca\. 25 × 20 m/, "Feldgröße F-Jugend ca. 25 × 20 m"],
-    [/ca\. 20 × 16 m/, "Feldgröße Bambini"],
-    [/ca\. 30–35 × 25 m/, "Feldgröße E-Jugend"],
+    /* v520: Die Feldgroessen stehen nach Spielform, nicht mehr nach Altersklasse – Bambini
+       ist damit raus, die beiden Masse bleiben und haengen jetzt an FUNiño/3+1 bzw. 4+1. */
+    [/ca\. 25 × 20 m/, "Feldgröße FUNiño und 3+1 ca. 25 × 20 m"],
+    [/ca\. 30–35 × 25 m/, "Feldgröße 4+1 ca. 30–35 × 25 m"],
+    [/2 m von der Seitenlinie eingerückt/, "wo die Minitore stehen"],
+    [/nach Altersklasse vor, nicht nach Spielform/, "woher die Maße kommen"],
     [/1,65 m/, "Torhöhenreduzierung 1,65 m"],
     [/2,0 × 1,2 m/, "Minitor höchstens 2,0 × 1,2 m"],
     [/6 m vor den Toren/, "Schusszone etwa 6 m"],
