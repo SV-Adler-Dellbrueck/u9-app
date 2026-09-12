@@ -374,7 +374,11 @@ function _tmdKarte(t){
           <span style="font-size:12px;color:var(--text2)">Ergebnis</span>
           <input type="text" value="${esc(t.ergebnis||"")}" placeholder="z. B. 3:2" onchange="tmSetResult(${Number(t.id)},this.value)" style="width:100px;min-height:44px;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:13px;font-family:inherit;background:var(--surface2);color:var(--text)">
         </div>
-        <button class="btn btn-sm" onclick="tmJump('blitz','${t.datum}','${t.spielform||""}')" style="width:100%;min-height:44px;justify-content:center"><i class="ti ti-bolt"></i>Auswertung &amp; Blitz-Rating</button>`:""}
+        <button class="btn btn-sm" onclick="tmJump('blitz','${t.datum}','${t.spielform||""}')" style="width:100%;min-height:44px;justify-content:center"><i class="ti ti-bolt"></i>Auswertung &amp; Blitz-Rating</button>
+        <!-- v525: Das Blitz-Rating deckt die KINDER ab. Wie die Mannschaft gespielt hat,
+             stand nirgends – und genau danach hat der PO gefragt. Der Knopf steht bewusst
+             direkt darunter: eine Ebene tiefer, derselbe Moment. -->
+        <button class="btn btn-sm" onclick="if(typeof fazitOpen==='function')fazitOpen(${Number(t.id)});else toast('Lädt noch – gleich nochmal','err')" style="width:100%;min-height:44px;justify-content:center;margin-top:6px"><i class="ti ti-clipboard-check"></i>${t.typ==="turnier"?"Festival":"Spiel"} nachbereiten · Mannschaft</button>`:""}
         <div id="puls-tm-${t.id}" style="font-size:12px;color:var(--text2);margin-top:6px"></div>`:""}
 
       ${zu(`📣 Für die Eltern${ampel?" · "+ampel.emo+" "+esc(ampel.lbl):""}`,
