@@ -27,12 +27,37 @@ const WISSEN_SPIELFORMEN = [
   { ak: "E-Junioren U10", mini: "4 gegen 4", jugend: "4+1 gegen 4+1" },
   { ak: "E-Junioren U11", mini: "4 gegen 4", jugend: "4+1 gegen 4+1" }
 ];
-/* Feldgrößen – Abschnitt 2 (1). */
+/* Feldgrößen je SPIELFORM. PO: „Wir brauchen nur die Feldgrößen für FUNiño, 3+1, 4+1. Und wo
+   bei FUNiño die Tore genau stehen."
+
+   ACHTUNG, das ist die Falle dieser Tabelle: Die Bestimmungen geben die Feldgröße nach
+   ALTERSKLASSE vor (Abschnitt 2 Absatz 1), nicht nach Spielform – U8/U9 ca. 25 x 20 m,
+   U10/U11 ca. 30-35 x 25 m –, und zwar unabhängig davon, ob auf dem Feld Minitore oder
+   Jugendtore stehen. Eine Spalte „Feldgröße je Spielform" gibt es dort nicht.
+
+   Die Zuordnung hier ist deshalb: unsere beiden Formen (FUNiño und 3+1) tragen das Maß
+   unserer Altersklasse; 4+1 ist die Form der E-Jugend und trägt deren Maß. Das steht auch
+   als Satz unter der Tabelle, sonst liest jemand „4+1 = 30-35 m" und baut das im Käfig auf.
+
+   Torgrößen: Minitore max. 2,0 x 1,2 m (Abschnitt 1), Jugendtore in der F-Jugend auf 1,65 m
+   höhenreduziert (Abschnitt 2 Absatz 2). */
 const WISSEN_FELDER = [
-  { ak: "Bambini U6/U7", mass: "ca. 20 × 16 m" },
-  { ak: "F-Jugend U8/U9", mass: "ca. 25 × 20 m", uns: true },
-  { ak: "E-Jugend U10/U11", mass: "ca. 30–35 × 25 m" }
+  { form: "FUNiño · 3 gegen 3", mass: "ca. 25 × 20 m",
+    tor: "4 Minitore, max. 2,0 × 1,2 m", uns: true },
+  { form: "3+1 · mit Torwart", mass: "ca. 25 × 20 m",
+    tor: "2 Jugendtore, auf 1,65 m höhenreduziert", uns: true },
+  { form: "4+1 · mit Torwart", mass: "ca. 30–35 × 25 m",
+    tor: "2 Jugendtore, auf 1,65 m höhenreduziert", uns: true }
 ];
+/* Woher das jeweilige Maß kommt – ohne diesen Satz wirkt die Tabelle wie eine eigene Vorgabe. */
+const WISSEN_FELDER_HERKUNFT = "Die Bestimmungen geben die Feldgröße nach Altersklasse vor, "
+  + "nicht nach Spielform: U8/U9 ca. 25 × 20 m, U10/U11 ca. 30–35 × 25 m. FUNiño und 3+1 sind "
+  + "unsere Formen und tragen unser Maß; 4+1 ist die Form der E-Jugend, dort steht deren Maß.";
+/* Die Antwort auf „wo stehen die Tore genau". Steht NICHT in den Durchführungsbestimmungen –
+   die Quelle ist der DFB-Aufbauplan, deshalb wird sie an Ort und Stelle genannt. */
+const WISSEN_TORSTAND = "Die vier Minitore stehen auf den Grundlinien, je zwei pro Seite, "
+  + "jeweils 2 m von der Seitenlinie eingerückt.";
+const WISSEN_TORSTAND_QUELLE = "DFB · Kinderfußball, Aufbauplan F-Jugend U8/U9 (2022), Seite 16";
 /* Spieleranzahl – Abschnitt 3. */
 const WISSEN_KADER = [
   { ak: "Bambini U6/U7", feld: "2 gegen 2 oder 3 gegen 3", tw: "keine", rot: "1 bis 2", ges: "min. 3 bis 4" },
@@ -92,9 +117,9 @@ const WISSEN = [
     quelle: "Platzbelegung SV Adler Dellbrück", stand: "Saison 2026/2027",
     punkte: [
       ["Training", "Montag 16:45–18:15 · Freitag 16:30–18:00"],
+      ["Platz im Training", "Hauptplatz vorne links – an beiden Tagen, nicht der Käfig"],
       ["Spieltag", "Ungerade Kalenderwochen, Samstag 10:15–11:15"],
-      ["Platz am Montag", "Käfig hinten"],
-      ["Platz am Freitag", "Käfig hinten"],
+      ["Platz am Spieltag", "Linke Platzhälfte und Käfig"],
       ["Dauer eines Spieltags", "60 Minuten – die Zeitpläne sind einzuhalten, viele Vereine haben enge Belegungen."]
     ]
   }
@@ -125,16 +150,18 @@ function _wsTab(kopf,zeilen){
 function _wsTabellen(){
   const s=_wsTab(["Altersklasse","auf Minitore","auf Jugendtoren (+TW)"],
     WISSEN_SPIELFORMEN.map(x=>({uns:x.uns,z:[x.ak,x.mini,x.jugend]})));
-  const f=_wsTab(["Altersklasse","Feldgröße"],
-    WISSEN_FELDER.map(x=>({uns:x.uns,z:[x.ak,x.mass]})));
+  const f=_wsTab(["Spielform","Feldgröße","Tore"],
+    WISSEN_FELDER.map(x=>({uns:x.uns,z:[x.form,x.mass,x.tor]})));
   const k=_wsTab(["Altersklasse","Feld","mit Torwart","Rotation","gesamt"],
     WISSEN_KADER.map(x=>({uns:x.uns,z:[x.ak,x.feld,x.tw,x.rot,x.ges]})));
   const zeile=(t,d)=>'<div style="display:flex;gap:8px;padding:5px 0;border-bottom:var(--border);font-size:12px"><div style="flex:0 0 38%;font-weight:700;color:var(--text2)">'+_wsEsc(t)+'</div><div style="flex:1">'+_wsEsc(d)+'</div></div>';
   return '<div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-top:4px">Spielform</div>'+s
-    +'<div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Feldgröße</div>'+f
+    +'<div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Feldgröße je Spielform</div>'+f
+    +'<div style="font-size:11px;color:var(--text2);line-height:1.5;margin:-4px 0 10px">'+_wsEsc(WISSEN_FELDER_HERKUNFT)+'</div>'
     +'<div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Kader je Team</div>'+k
     +'<div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">Tore, Zonen, Zeit</div>'
     +zeile("Minitore","höchstens 2,0 × 1,2 m")
+    +zeile("Wo die Minitore stehen",WISSEN_TORSTAND+" — Quelle: "+WISSEN_TORSTAND_QUELLE+", nicht die Durchführungsbestimmungen.")
     +zeile("Jugendtore","in der F-Jugend auf 1,65 m höhenreduziert")
     +zeile("Schusszone","F- und E-Jugend auf Minitor-Feldern: etwa 6 m vor den Toren. Treffer zählen nur innerhalb.")
     +zeile("Mittellinie","Auf Jugendtor-Feldern nur die Mittellinie – Treffer nur aus der gegnerischen Hälfte. Bei den Bambini ebenso, dort ohne Schusszone.")
