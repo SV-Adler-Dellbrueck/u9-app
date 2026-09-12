@@ -2962,20 +2962,14 @@ function fstRender(){
       ${fstAufwaermZeile(_HT)?`<div style="font-size:11.5px;color:var(--text2);background:var(--surface2);border-radius:10px;padding:8px 10px;margin-bottom:8px">🔥 <b>Aufwärmen vor der ersten Runde:</b> ${fstAufwaermZeile(_HT)}</div>`:""}
       ${fstZuKleinHtml(plan,fstTeamsBauen(cfg.vereine||[]),felder)}
       <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${_fstTauschWahl?"Tauschen: jetzt das zweite Team antippen":"Teams antippen zum Tauschen · Ergebnis rechts antippen"}</div>
-      ${fstPlanHtml(plan,_HT.teams||[],felder,false,true,cfg)}
+      ${fstPlanHtml(plan,_HT.teams||[],felder,true,cfg)}
       <button class="btn" onclick="htShare()" style="width:100%;min-height:48px;margin-top:8px"><i class="ti ti-share"></i>Spielplan-Link teilen</button>
       <div style="font-size:10.5px;color:var(--text3);margin:4px 0 6px">Zum Weitergeben an alle: Gast-Trainer, Gast-Eltern und unsere Eltern. Nur zum Ansehen.</div>
       ${_HT.edit_code?`<button class="btn btn-sm" onclick="htShareErgebnis()" style="width:100%;margin-top:2px"><i class="ti ti-pencil"></i>Ergebnis-Link (Anzeigetisch)</button>
-      <div style="font-size:10.5px;color:var(--text3);margin:4px 0 6px">Trägt den Schreib-Code: wer ihn hat, darf Ergebnisse eintragen – sonst nichts. Nur an den Anzeigetisch und die Gast-Trainer, nicht in die Eltern-Gruppe.</div>`:""}
-      <button class="btn btn-sm" onclick="fstDruck()" style="width:100%;margin-top:2px"><i class="ti ti-printer"></i>Aushang drucken</button>`:""}
+      <div style="font-size:10.5px;color:var(--text3);margin:4px 0 6px">Trägt den Schreib-Code: wer ihn hat, darf Ergebnisse eintragen – sonst nichts. Nur an den Anzeigetisch und die Gast-Trainer, nicht in die Eltern-Gruppe.</div>`:""}`:""}
 
     <div style="font-size:12px;font-weight:800;margin:16px 0 6px">Infos für die Gäste</div>
     <textarea id="fst-infos" rows="4" onchange="fstZeitSpeichern()" style="${fld};width:100%;resize:vertical">${esc(cfg.infos||HT_INFOS_VORLAGE)}</textarea>
-    <div style="display:flex;gap:6px;margin-top:6px">
-      <button class="btn btn-sm" onclick="fstRegelnOpen()" style="flex:1;justify-content:center"><i class="ti ti-book"></i>Regeln ansehen</button>
-      <button class="btn btn-sm" onclick="fstCodexOpen()" style="flex:1;justify-content:center"><i class="ti ti-heart-handshake"></i>Codex ansehen</button>
-    </div>
-    <div style="font-size:10.5px;color:var(--text3);margin-top:4px">So sehen es die Gäste – Trainer wie Eltern.</div>
 
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-sm" onclick="htListe()"><i class="ti ti-arrow-left"></i>Übersicht</button>
@@ -2998,14 +2992,14 @@ async function fstGegnerChips(){
   box.innerHTML=frei.map(n=>`<button class="btn btn-sm" onclick="fstVereinPlus('${jsq(n)}')" style="font-size:11.5px">+ ${esc(n)}</button>`).join("");
 }
 /* Der Plan als Runden-Karten – dieselbe Darstellung im Trainer-Fenster und im Aushang. */
-function fstPlanHtml(plan,teams,felder,gross,tausch,cfg){
+function fstPlanHtml(plan,teams,felder,tausch,cfg){
   const runden=[...new Set(plan.map(p=>p.runde))].sort((a,b)=>a-b);
   const nm=i=>esc((teams&&teams[i])||("Team "+(i+1)));
   /* v497 PO: „Schön, wenn nur das nächste anstehende Spiel sichtbar ist und der Rest
      eingeklappt." Fünf Runden à drei Spielen sind fünfzehn Zeilen; am Platz zählt eine.
-     Offen ist die Runde, die läuft oder als Nächstes drankommt – im Aushang natürlich alles. */
+     Offen ist die Runde, die läuft oder als Nächstes drankommt. */
   const stand=cfg?fstUhrStand({config:cfg,plan}):null;
-  const aktiv=gross?null:((stand&&stand.phase!=="aus")?(stand.phase==="laeuft"?stand.runde:(stand.naechste||stand.runde)):runden[0]);
+  const aktiv=(stand&&stand.phase!=="aus")?(stand.phase==="laeuft"?stand.runde:(stand.naechste||stand.runde)):runden[0];
   /* v488 PO: „Alles verrueckt und in der Summe zu gross" – eine Zeile je Spiel: Feld-Marke,
      Team, Team, Ergebnis. Die Teamnamen bleiben Tasten (zwei antippen = tauschen), aber
      flach und in einem festen Raster; lange Namen werden abgeschnitten statt umzubrechen. */
@@ -3013,50 +3007,27 @@ function fstPlanHtml(plan,teams,felder,gross,tausch,cfg){
     const pi=plan.indexOf(p); const akt=_fstTauschWahl&&_fstTauschWahl.i===pi&&_fstTauschWahl.seite===seite;
     return `<button class="fst-tausch" onclick="fstTausch(${pi},'${seite}')" aria-pressed="${akt?"true":"false"}" title="${nm(p[seite])}" style="min-width:0;min-height:44px;padding:0 6px;border:1px solid ${akt?"var(--blue)":"var(--rand-bedien)"};border-radius:8px;background:${akt?"var(--blue)":"var(--surface2)"};color:${akt?"#fff":"var(--text)"};font:inherit;font-size:11.5px;line-height:1.15;font-weight:700;cursor:pointer;overflow:hidden;text-align:${seite==="a"?"right":"left"}">${nm(p[seite])}</button>`; };
   const erg=(p)=>{ const pi=plan.indexOf(p); const txt=p.ta!=null?`${p.ta}:${p.tb}`:"–:–";
-    if(!tausch)return `<span style="font-size:${gross?"14":"12.5"}px;font-weight:900;color:${p.ta!=null?"var(--text)":"var(--text3)"};text-align:center">${txt}</span>`;
+    if(!tausch)return `<span style="font-size:12.5px;font-weight:900;color:${p.ta!=null?"var(--text)":"var(--text3)"};text-align:center">${txt}</span>`;
     return `<button onclick="fstErgebnis(${pi})" aria-label="Ergebnis eintragen" style="min-height:44px;min-width:48px;padding:0 4px;border:1px solid var(--rand-bedien);border-radius:8px;background:${p.ta!=null?"var(--surface)":"transparent"};color:${p.ta!=null?"var(--text)":"var(--text3)"};font:inherit;font-size:12.5px;font-weight:900;cursor:pointer">${txt}</button>`; };
   return runden.map(r=>{
     const spiele=plan.filter(p=>p.runde===r);
-    const offen=gross||r===aktiv;
-    const kopf=`<span style="font-size:${gross?"15":"12.5"}px;font-weight:900">Runde ${r}</span>
-        <span style="font-size:${gross?"13":"11"}px;color:var(--text2)">${esc(fstZeitIst(spiele[0]?spiele[0].zeit:"",cfg))} Uhr</span>
+    const offen=r===aktiv;
+    const kopf=`<span style="font-size:12.5px;font-weight:900">Runde ${r}</span>
+        <span style="font-size:11px;color:var(--text2)">${esc(fstZeitIst(spiele[0]?spiele[0].zeit:"",cfg))} Uhr</span>
         ${offen?"":`<span style="margin-left:auto;font-size:10.5px;color:var(--text3)">${spiele.length} Spiel${spiele.length===1?"":"e"}${spiele.every(p=>p.ta!=null)?" · fertig":""}</span>`}`;
-    const zeilen=spiele.map(p=>{const F=_fstF(p.form);return `<div style="display:grid;grid-template-columns:auto minmax(0,1fr) 10px minmax(0,1fr) auto;gap:6px;align-items:center;padding:3px 0;font-size:${gross?"14":"12.5"}px;font-weight:700">
-        <span style="font-size:${gross?"11":"9.5"}px;font-weight:800;color:#fff;background:${F.farbe};border-radius:6px;padding:3px 6px;white-space:nowrap">${esc(fstFeldName(felder,(p.feld||1)-1))}</span>
+    const zeilen=spiele.map(p=>{const F=_fstF(p.form);return `<div style="display:grid;grid-template-columns:auto minmax(0,1fr) 10px minmax(0,1fr) auto;gap:6px;align-items:center;padding:3px 0;font-size:12.5px;font-weight:700">
+        <span style="font-size:9.5px;font-weight:800;color:#fff;background:${F.farbe};border-radius:6px;padding:3px 6px;white-space:nowrap">${esc(fstFeldName(felder,(p.feld||1)-1))}</span>
         ${tn(p,"a")}<span style="color:var(--text3);font-weight:400;text-align:center">–</span>${tn(p,"b")}
         ${erg(p)}
       </div>`;}).join("");
     if(!offen)return `<details id="fst-runde-${r}" style="border:var(--border-s);border-radius:12px;margin-bottom:6px;background:var(--surface)">
       <summary style="cursor:pointer;min-height:44px;display:flex;align-items:baseline;gap:8px;padding:10px">${kopf}</summary>
       <div style="padding:0 10px 8px">${zeilen}</div></details>`;
-    return `<div style="border:var(--border-s);border-radius:12px;padding:8px 10px;margin-bottom:6px;background:var(--surface)${aktiv===r&&!gross?";border-color:var(--blue)":""}">
+    return `<div style="border:var(--border-s);border-radius:12px;padding:8px 10px;margin-bottom:6px;background:var(--surface)${aktiv===r?";border-color:var(--blue)":""}">
       <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">${kopf}</div>
       ${zeilen}
     </div>`;
   }).join("");
-}
-/* Aushang fuer den Anzeigetisch: ein Blatt, grosse Schrift, Wappen oben. */
-function fstDruck(){
-  const teams=_HT.teams||[], cfg=_HT.config||{};
-  const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
-  const w=window.open("","_blank"); if(!w){toast("Bitte Pop-ups erlauben","err");return;}
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(_HT.name)}</title>
-    <style>body{font-family:Inter,system-ui,sans-serif;color:#0f172a;margin:18px}
-      .k{border:1px solid #e2e8f0;border-radius:12px;padding:8px 10px;margin-bottom:6px}
-      @media print{@page{margin:12mm}}</style></head><body>
-    <div style="display:flex;align-items:center;gap:12px;border-bottom:3px solid #1e3a8a;padding-bottom:10px;margin-bottom:12px">
-      <img src="logo.png" style="width:56px;height:56px" alt="">
-      <div><div style="font-size:22px;font-weight:900">${esc(_HT.name)}</div>
-      <div style="font-size:13px;color:#475569">${_HT.datum?new Date(_HT.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}):""} · ${esc(_HT.ort||"")}</div></div>
-    </div>
-    <div style="font-size:13px;margin-bottom:10px">${felder.map((f,i)=>{const F=_fstF(f.form);return `<b style="color:${F.farbe}">${esc(fstFeldName(felder,i))}</b>: ${F.lang} · ${F.tore}`;}).join(" &nbsp;·&nbsp; ")}</div>
-    ${fstPlanHtml(_HT.plan||[],teams,felder,true,false,cfg).replace(/var\(--border-s\)/g,"1px solid #e2e8f0").replace(/var\(--surface\)/g,"#fff").replace(/var\(--text2\)/g,"#475569").replace(/var\(--text3\)/g,"#94a3b8")}
-    ${fstAufwaermZeile(_HT)?`<div style="margin-top:12px;font-size:12.5px;color:#0f172a">🔥 <b>Aufwärmen:</b> ${fstAufwaermZeile(_HT)}</div>`:""}
-    ${fstZonenSatz(felder)?`<div style="margin-top:10px;font-size:12.5px;color:#0f172a;border-left:4px solid #b91c1c;padding-left:8px">🙌 <b>Am Spielfeldrand:</b> ${esc(fstZonenSatz(felder))} ${esc(FST_FAN_SATZ)}</div>`:""}
-    <div style="margin-top:14px;font-size:12px;color:#475569;white-space:pre-wrap">${esc(cfg.infos||"")}</div>
-    <div style="margin-top:14px;max-width:420px">${fstSkizzeFelder(felder)}</div>
-    </body></html>`);
-  w.document.close(); w.focus(); setTimeout(()=>w.print(),300);
 }
 /* v495 PO: „In der Festival-Planung sollte auch drinstehen, auf welchem Feld die Teams jeweils
    warm machen dürfen. Adler immer im Käfig. Die anderen Teams aufteilen auf die Felder, die durch
