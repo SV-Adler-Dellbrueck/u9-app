@@ -4359,7 +4359,9 @@ async function trainerTodoLoad(){
       const offen=((await r.json())||[]).filter(t=>(typeof terminVorbei!=="function"||terminVorbei(t))&&!(t.ergebnis||"").trim()&&t.ohne_ergebnis!==true);
       offen.slice(0,2).forEach(t=>{const d=new Date(t.datum+"T00:00:00");
         todos.push({emo:"⚽",txt:`Ergebnis &amp; Bericht für ${esc(t.titel||t.gegner||"das Spiel")} (${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}) nachtragen`,
-          act:`(typeof tmDetailOpen==="function"?tmDetailOpen(${Number(t.id)}):go("termine"))`,
+          /* Einfache Anführungszeichen sind Pflicht: der Ausdruck landet in onclick="…",
+             ein doppeltes Zeichen beendet dort das Attribut und der Knopf tut nichts mehr. */
+          act:`(typeof tmDetailOpen==='function'?tmDetailOpen(${Number(t.id)}):go('termine'))`,
           hakenAct:`todoOhneErgebnis(${Number(t.id)})`});});
     }
   }catch(e){}
