@@ -217,8 +217,31 @@ function tmToggleMore(){
   if(btn)btn.innerHTML=`<i class="ti ti-chevron-${show?"up":"down"}"></i>Weitere Termine ${show?"ausblenden":"anzeigen"}`;
 }
 // Trainer-Termin-Detailfenster: zeigt die volle Terminkarte (mit allen Aktionen) als Overlay.
-function tmDetailOpen(id){
-  const t=(TM_TERMINE||[]).find(x=>Number(x.id)===Number(id));
+/* v524 - PO: „Wie bewerte ich denn das letzte Festival? Wenn ich die to do kachel anklicke
+   komme ich nur auf die orga seite. Muss dann haendisch auf die vergangenen termine gehen
+   und dort dann suchen."
+   TM_TERMINE haelt auf der Startseite nur die KOMMENDEN Termine (datum>=heute, davon nur
+   die noch nicht vorbei sind - views.js). Das To-Do „Ergebnis & Bericht nachtragen" zeigt
+   aber immer auf ein VERGANGENES Spiel oder Festival. Der Termin stand also nie in der
+   Liste, und das Fenster fiel auf go("termine") zurueck - genau die Orga-Seite, auf der
+   die Suche von vorn beginnt. Seit v521 war der Knopf klickbar; sichtbar wurde dieser
+   zweite Fehler erst dadurch.
+   Das Fenster holt einen unbekannten Termin jetzt selbst nach. Der Rueckfall auf die
+   Liste bleibt fuer den Fall, dass es ihn wirklich nicht mehr gibt. */
+async function tmTerminNachladen(id){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/termine?select=*&id=eq.${Number(id)}&limit=1`,{headers:sbAuthHeaders()});
+    if(!r.ok)return null;
+    const t=((await r.json())||[])[0]; if(!t)return null;
+    /* In TM_TERMINE ablegen, sonst findet tmDetailNeu den Termin beim Neuzeichnen nicht
+       und jedes Tippen im Fenster bliebe wirkungslos. */
+    if(typeof TM_TERMINE!=="undefined"&&Array.isArray(TM_TERMINE)&&!TM_TERMINE.some(x=>Number(x.id)===Number(t.id)))TM_TERMINE.push(t);
+    return t;
+  }catch(e){return null;}
+}
+async function tmDetailOpen(id){
+  let t=(TM_TERMINE||[]).find(x=>Number(x.id)===Number(id));
+  if(!t)t=await tmTerminNachladen(id);
   if(!t){ if(typeof go==="function")go("termine"); return; }
   document.getElementById("tmd-modal")?.remove();
   const modal=document.createElement("div");
