@@ -269,12 +269,33 @@ async function fazitSpeichern(){
     if(sbCheck401(r)) return;
     if(!r.ok && r.status!==201 && r.status!==204){ toast(sbDeniedMsg(r,"Konnte nicht speichern"),"err"); return; }
   }catch(e){ toast("Netzwerkfehler","err"); return; }
-  /* Der Satz „daran arbeiten wir" ist der Grund, aus dem sich das Ausfüllen lohnt – er
-     gehört an den Gegner-Datensatz nicht, aber ins nächste Training. Bis der Trainingsplan
-     ihn selbst liest, steht er wenigstens hier als Bestätigung. */
-  toast(w.arbeiten ? "Gespeichert ✓ – „daran arbeiten wir“ steht fürs nächste Training bereit" : "Gespeichert ✓");
+  /* v526: Statt eines weiteren Toasts der Weg ins Tagebuch. Genau hier ist der Moment,
+     in dem die Beobachtung noch frisch ist – eine Stunde spaeter wird sie abgeschrieben
+     oder gar nicht. Der Eintrag zieht sich Ausloeser und Beobachtung aus dem, was gerade
+     gespeichert wurde. */
+  const terminId = Number(_FZ.termin.id);
   fazitSchliessen();
   if(typeof trainerTodoLoad==="function") trainerTodoLoad();
+  if(typeof tagebuchAusEvent==="function") fzWeiterInsTagebuch(terminId);
+  else toast("Gespeichert ✓");
+}
+/* Kein stiller Sprung: gespeichert ist gespeichert, das Tagebuch ist ein Angebot.
+   Ein Fenster, das sich von selbst oeffnet, waere am Spielfeldrand ein Uebergriff. */
+function fzWeiterInsTagebuch(terminId){
+  document.getElementById("fz-weiter")?.remove();
+  const box = document.createElement("div");
+  box.id = "fz-weiter";
+  box.setAttribute("role","dialog"); box.setAttribute("aria-modal","true");
+  box.setAttribute("aria-label","Gespeichert");
+  box.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10055;display:flex;align-items:center;justify-content:center;padding:18px";
+  box.onclick = e => { if(e.target===box) box.remove(); };
+  box.innerHTML = `<div style="background:var(--surface);color:var(--text);max-width:380px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
+    <div style="font-size:15px;font-weight:800">Gespeichert ✓</div>
+    <div style="font-size:12.5px;color:var(--text2);margin:6px 0 14px;line-height:1.5">Willst du daraus einen Tagebucheintrag machen? Auslöser und Beobachtung stehen schon da – es fehlen nur dein Aha und die Konsequenz.</div>
+    <button class="btn btn-p" onclick="document.getElementById('fz-weiter').remove();tagebuchAusEvent(${Number(terminId)})" style="width:100%;min-height:56px;justify-content:center;font-size:15px;font-weight:800"><i class="ti ti-book"></i>Ins Tagebuch</button>
+    <button class="btn" onclick="document.getElementById('fz-weiter').remove()" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Später</button>
+  </div>`;
+  document.body.appendChild(box);
 }
 
 /* Welche vergangenen Spiele und Festivals hat DIESER Trainer noch nicht nachbereitet?
