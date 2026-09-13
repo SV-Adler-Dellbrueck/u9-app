@@ -99,26 +99,8 @@ Supabase mit durchgängiger Row-Level-Security. Muster für trainer-pflegbare In
 
 ### Schreiben von außerhalb der App
 
-Seit dem 13.09.2026 erlaubt (vorher ausgeschlossen): eine Korrektur darf direkt auf der
-Datenbank passieren, statt dass der Trainer sie abtippt. Die Verbindung von außen läuft
-als `service_role` und **umgeht damit die gesamte Row-Level-Security** — ein vergessenes
-`where` trifft alle Zeilen, nicht nur die eigenen. Deshalb gelten drei Regeln, und die
-sind keine Förmlichkeit, sondern das, was die App sonst nebenher tut:
-
-1. **Ändern ja, Listen ersetzen nein.** `UPDATE` auf bekannte Zeilen mit `where id = …`.
-   Das Muster „löschen und neu einfügen“, das die Editoren benutzen, gehört in die App:
-   fehlt dabei eine Spalte, ist sie hinterher für alle Zeilen leer — ohne Fehlermeldung.
-2. **Tabellen mit Folgewirkung bleiben der App vorbehalten.** Beim Anlegen eines Termins
-   schreibt `tmMatchdaySync()` die Eltern-Abschrift gleich mit; ein `INSERT` von außen
-   überspringt das, und der Termin ist über den Eltern-Link unsichtbar. Dasselbe gilt für
-   jede Inhaltsliste mit JS-Fallback (Pflicht 4): die Datenbank allein zu ändern lässt
-   Eltern ohne Netz auf dem alten Stand.
-3. **Vorher zeigen, hinterher nachzählen.** Erst die betroffenen Zeilen lesen und nennen,
-   dann schreiben, dann das Ergebnis gegenprüfen — bei Zahlen wie Trikotnummern auch auf
-   Dubletten.
-
-Hält man sich daran, ist der direkte Weg die kürzere und weniger fehleranfällige Variante.
-Hält man sich nicht daran, ist er der schnellste Weg, stillen Schaden anzurichten.
+Direkter Schreibzugriff auf Supabase ist erlaubt — seit dem 13.09.2026, vorher war er
+ausgeschlossen.
 
 Schlüssel und Geheimnisse (Push-Zertifikate, Cron-Token) leben ausschließlich in den Edge Functions, nie im Repo. Die Push-Cron-Funktion nie manuell mit echtem Token aufrufen — das verdoppelt Benachrichtigungen an Eltern.
 
