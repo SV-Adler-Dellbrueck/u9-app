@@ -16,7 +16,7 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 
 | Funktion | Was sie tut | Nutzen |
 |---|---|---|
-| **To-Do-Banner** | Zeigt nur dann etwas an, wenn eine Aufgabe offen ist: Einheit nachbereiten, Spiel oder Festival bewerten, Trainingsplan fehlt, Aufstellung fehlt. Ein Tipp führt direkt zum passenden Termin – auch wenn er schon vorbei ist. | Nichts geht unter. Die App erinnert an das, was nach dem Platz sonst liegen bleibt. |
+| **To-Do-Banner** | Zeigt nur dann etwas an, wenn eine Aufgabe offen ist: Einheit nachbereiten, Spiel oder Festival bewerten, Ergebnis nachtragen, Trainingsplan fehlt, Aufstellung fehlt. Ein Tipp führt direkt zum passenden Termin – auch wenn er schon vorbei ist. Ein Spiel ohne Ergebnis lässt sich bewusst abhaken, die Entscheidung gilt fürs ganze Trainerteam. | Nichts geht unter. Die App erinnert an das, was nach dem Platz sonst liegen bleibt. |
 | **„Bist du dabei?“** | Termine der nächsten 14 Tage, zu denen die eigene Trainer-Rückmeldung fehlt. Beantwortet ist die Karte weg. | Der Trainerplan füllt sich nebenbei, ohne dass jemand nachfragen muss. |
 | **Diese Woche** | Alle Termine der nächsten sieben Tage mit Stand: wie viele Kinder zugesagt haben, ob genug Trainer da sind, ob Trainingsplan und Aufstellung stehen. Die erste Zeile ist der nächste Termin mit Wetter, Packtipp und Sprungknöpfen. | Ein Blick am Sonntagabend genügt, um zu wissen, wo die Woche noch Lücken hat. |
 
@@ -25,28 +25,33 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 | Funktion | Was sie tut | Nutzen |
 |---|---|---|
 | **Anwesenheit erfassen** | Haken je Kind pro Training. Trainer-Haken kommen bis zum Tag aus den Rückmeldungen, am Tag selbst aus der Erfassung. | Saubere Grundlage für Anwesenheitsquoten, Serien und faire Einsatzverteilung. |
-| **Trainingsplan** | Stationen bauen, Übungen zuweisen, Tagesgruppen einteilen, Trainingsstart auf allen Handys des Trainerteams gleichzeitig. Schwerpunkt und Kopfdaten je Einheit. | Jeder Trainer sieht dieselbe Planung auf seinem Gerät. Kein Zettel, keine Absprache am Platz nötig. |
+| **Trainingsplan** | Stationen bauen, Übungen zuweisen, Tagesgruppen einteilen, Trainingsstart auf allen Handys des Trainerteams gleichzeitig. Schwerpunkt und Kopfdaten je Einheit. Die Gruppen rücken je Hauptteil ein Feld weiter, Zeitleiste und Stationstimer zeigen dieselbe Zuordnung. Felder folgen den anwesenden Trainern. | Jeder Trainer sieht dieselbe Planung auf seinem Gerät. Kein Zettel, keine Absprache am Platz nötig. |
 | **Übungsdatenbank** | Gruppen-Kacheln, Favoriten-Filter, Skizze je Übung, direkte Übernahme in den Plan. Neue Übungen kommen automatisch aus der Bibliothek im Repo dazu. | Die Übungssammlung wächst zentral und ist für alle sofort da. Bewährtes ist mit einem Tipp wiederverwendbar. |
-| **Skizzen-Editor** | Übungen zeichnen: Feld, Spieler, Hütchen, Laufwege. | Eine Skizze erklärt am Platz schneller als drei Sätze. |
+| **Skizzen-Editor** | Übungen zeichnen: Feld, Spieler, Hütchen, Jugendtore, Mittellinie, Schusszone, Schilder. Vier Pfeiltypen mit eigener Farbe und Legende (Laufweg, Pass, Dribbling, Schuss). Skizze als Bild teilen. | Eine Skizze erklärt am Platz schneller als drei Sätze. |
 | **KI-Coach** | Schlägt zu einem Schwerpunkt passende Übungen und Einheiten vor. Themenplan über mehrere Wochen. | Hilft beim Planen, ohne die Entscheidung abzunehmen. |
 | **Einheit bewerten** | Nach dem Training: Sterne für die Einheit (Spaß, Umsetzung, Erfolg), je Übung Bewertung und Kommentar, Schnell-Sterne für anwesende Kinder. Alles optional. | Der Kommentar steht beim nächsten Mal an der Übung. Man lernt aus jeder Einheit, ohne Protokoll schreiben zu müssen. |
 | **Trainingsturnier** | Turnier zum Trainingsabschluss mit Zeitbudget-Automatik: Gesamtzeit und Felder vorgeben, die App wählt Format und Spielzeit. Vorab planbar, am Termin gespeichert. | Der beliebteste Teil des Trainings läuft strukturiert und fair – ohne Kopfrechnen am Platz. |
-| **Einheit-Import** | Fertige Einheiten aus Text oder Datei übernehmen. | Externe Trainingspläne landen ohne Abtippen in der App. |
+| **Vorlagen** | Fertige Zusammenstellungen ohne Datum und ohne Kinder. „Vorlage übernehmen“ füllt den Trainingsplan des Tages. Neue Vorlagen kommen wie die Übungen automatisch aus dem Repo. | Bewährte Einheiten sind in einem Tipp wieder da. |
+| **Einheit- und Übungs-Import** | Fertige Einheiten, Übungen oder Vorlagen als Datei in einem Rutsch übernehmen, Skizzen inklusive. Vorhandene Namen werden übersprungen, nie überschrieben. | Externe Trainingspläne landen ohne Abtippen in der App. |
 
 ### 1.3 Kachel Spieltag
 
 | Funktion | Was sie tut | Nutzen |
 |---|---|---|
-| **Teams festlegen** | „Wer ist dabei?“ vorbelegt aus den Eltern-Rückmeldungen, dann Einteilung in Adler 1 / Adler 2. „Dabei“ zählt zugleich als Anwesenheit des Spieltags. | Eine Quelle für Kader, Anwesenheit und Einsatzquote. Keine doppelte Pflege. |
-| **Match-Uhr & Liveticker** | Spielzeit, Tore, Wechsel. Der Liveticker geht an Eltern und über einen Link ohne Anmeldung auch an Großeltern und Fans. Ein Pädagogik-Filter hält Namen maskiert und Ergebnisse kindgerecht. | Wer nicht am Platz sein kann, ist trotzdem dabei. Datenschutz bleibt gewahrt. |
+| **Teams festlegen** | „Wer ist dabei?“ vorbelegt aus den Eltern-Rückmeldungen, dann Einteilung in Adler 1 / Adler 2. „Dabei“ zählt zugleich als Anwesenheit des Spieltags. Feld, Spielform und Gegner kommen aus dem Spielplan des Tages. Kapitän je Team für den ganzen Spieltag. | Eine Quelle für Kader, Anwesenheit und Einsatzquote. Keine doppelte Pflege. |
+| **Festival-Runden am Spieltag** | Feste Teams wandern je Runde ein Feld weiter, Spielform je Feld (4+1, 3+1, FUNiño). Fehlt einem Team auf seinem Feld ein Kind, hilft eines aus dem Team mit der meisten Bank aus, nur für diese Runde. Torwart-Kinder wechseln sich ab. Tore, Ticker und Wechsel werden je Runde gezählt. | Jedes Team sieht beide Formate, niemand sitzt eine Runde komplett draußen. |
+| **Aufstellung am Mini-Feld** | Positionen mit Rollennamen (Aufpasser, Flitzer links und rechts), Tauschen per zwei Tipps oder Ziehen mit dem Finger, gezielt zwischen Feld und Bank. | Umstellen in Sekunden, auch am Spielfeldrand. |
+| **Match-Uhr & Wechsel-Timer** | Spielzeit aus dem Spielplan, die Uhr läuft erst nach dem Anpfiff. Der Wechsel-Timer startet mit dem gemeinsamen Anpfiff im Abstand einer halben Spielzeit und sammelt die Einsatzzeiten des Tages. | Faire Einsatzzeiten laufen mit, ohne dass jemand auf die Uhr schauen muss. |
+| **Liveticker** | Eigener Start-Schalter, der Verlauf bleibt nach dem Ausschalten erhalten. Tore, Paraden (nur für Torhüter), Wechsel. Geht an Eltern und über einen Link ohne Anmeldung auch an Großeltern und Fans. Ein Pädagogik-Filter hält Namen maskiert und Ergebnisse kindgerecht. | Wer nicht am Platz sein kann, ist trotzdem dabei. Datenschutz bleibt gewahrt. |
 | **Feld & Bank fair besetzen** | Verteilt Einsätze nach bisherigen Einsatzzeiten. | Jedes Kind spielt gleich viel – nachvollziehbar und ohne Diskussion. |
 | **Aufstellung** | Rollen-Empfehlung aus den Bewertungen: wer passt als Aufpasser, Jäger, Flitzer links oder rechts. | Die Rollen entstehen aus beobachteten Stärken, nicht aus Bauchgefühl. |
 | **Blitz-Rating** | Nach dem Spiel je Kind drei Antipp-Werte (schwach / ok / stark). | In zwei Minuten festgehalten, was sonst bis zum nächsten Training vergessen wäre. |
 | **Spiel & Festival nachbereiten** | Die Ebene über dem Blitz-Rating: wie die Mannschaft gespielt hat. Je Team vier Reihen – Ordnung im Raum, Passspiel, Zweikämpfe, Spaß – plus ein Tipp je Gastverein und ein Orga-Punkt. | Erfasst das, was nur die Mannschaft zeigt, nicht das einzelne Kind. Bewusst schlank, damit es auch nach einem langen Festivaltag gemacht wird. |
 | **Spielbericht** | Zusammenfassung des Spieltags aus Ticker, Toren und Bewertungen. | Grundlage für Stadionheft und Rückblick, ohne Nacharbeit. |
 | **Analyse** | Entwicklungs-Meilensteine aus den Bewertungen, Einsatz-Fairness je Kind, Formtrend. | Macht sichtbar, ob die Fairness-Regel eingehalten wird und wo sich ein Kind entwickelt. |
-| **Heimspiel & Festival planen** | Für jeden Spieltag bei uns: Gastvereine, Teams, Spielplan, Felder, Zeiten. Unsere Teams kommen aus „Teams festlegen“. Ergebnis ist eine öffentliche Turnierseite. | Der komplette Festivaltag steht auf einer Seite – für Gäste, Eltern und Helfer gleichermaßen. |
-| **Wissen & Nachschlagen** | Spielformen und Feldmaße je Altersklasse, Regeln vom Wettlauf zum Ball bis zum Strafangriff, Ordnungsgelder. | Was man am Platz wissen muss und nicht auswendig kann, ist eine Kachel entfernt. |
+| **Heimspiel & Festival planen** | Für jeden Spieltag bei uns: Gastvereine mit Kinderzahl aus der Gegner-Datenbank, daraus der Team-Vorschlag. Felder mit eigener Spielform und Namen wie am Platz (Käfig, 4+1 oben, Funino 1 und 2). Runden-Plan mit allen Feldern gleichzeitig und Feldrotation, jede Mannschaft kommt einmal aufs große Feld, keine Tabelle. Aufwärmfelder vor der ersten Runde. Beim Heimspiel mit nur einem Gegner läuft dieselbe Maschine. | Ein Festival mit drei Vereinen ist in fünf Minuten geplant, statt am Abend vorher mit Zettel und Taschenrechner. |
+| **Festival live** | „Festival jetzt starten“ verschiebt den Zeitplan bei Verspätung überall mit. Gemeinsamer Anpfiff je Runde mit Countdown, Trinkpause und Ton auf dem Gerät, das anpfeift. Ergebnisse per Antippen in der App oder über einen Code-Link am Anzeigetisch. | Alle Felder laufen im Takt, Gäste und Eltern sehen dieselbe Uhr wie das Trainerteam. |
+| **Wissen & Nachschlagen** | Feldgrößen und Torpositionen je Spielform (FUNiño, 3+1, 4+1) nach den Durchführungsbestimmungen des Kreises, Regeln vom Wettlauf zum Ball bis zum Strafangriff, Warm-up, Ordnungsgelder, welcher Platz an welchem Tag. | Was man am Platz wissen muss und nicht auswendig kann, ist eine Kachel entfernt. |
 
 ### 1.4 Kachel Team
 
@@ -63,7 +68,7 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 
 | Funktion | Was sie tut | Nutzen |
 |---|---|---|
-| **Taktikboard** | Formationen stellen, Laufwege und Pässe zeichnen, als Bild teilen. Pro-Modus für großes Feld am Handy. | Eine Spielidee ist in einer Minute gezeichnet und im Trainerteam geteilt. |
+| **Taktikboard** | Formationen für 4+1, 3+1 und FUNiño stellen, Laufwege und Pässe zeichnen, als Bild teilen. Pro-Modus für großes Feld am Handy, ab Tablet zweispaltig. | Eine Spielidee ist in einer Minute gezeichnet und im Trainerteam geteilt. |
 | **Taktik-Bibliothek & Video** | Gespeicherte Boards, kurze Video-Sequenzen aus dem Board. | Wiederverwendbar über die Saison, verständlich auch für Kinder. |
 
 ### 1.6 Kachel Eltern & Kinder
@@ -83,7 +88,8 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 
 | Funktion | Was sie tut | Nutzen |
 |---|---|---|
-| **Termine** | Training, Spiel, Turnier, Event und Trainermeeting. Das Formular zeigt nur, was zum Typ gehört. Serien für Training, Treffzeit-Vorschlag bei Spielen, Helfer-Aufgaben je Termin. Vergangene Termine bleiben erreichbar. | Ein Kalender für alles, ohne Felder, die niemand braucht. |
+| **Termine** | Training, Spiel, Turnier, Event und Trainermeeting. Das Formular zeigt nur, was zum Typ gehört. Serien für Training, Treffzeit-Vorschlag bei Spielen, Platz-Vorschlag je Typ, Helfer-Aufgaben je Termin. Vergangene Termine bleiben erreichbar. Das Termin-Fenster ist die Arbeitsansicht mit Trainer-Chips und Platz-Ampel. | Ein Kalender für alles, ohne Felder, die niemand braucht. |
+| **„Fällt aus“** | Ein Termin wird abgesagt statt gelöscht. Die Absage steht auf der Startseite, in der Terminkarte und in der Kurzzeile, alle Aktionen dazu verschwinden. | Eltern und Trainer sehen den Ausfall überall, die Historie bleibt vollständig. |
 | **Trainermeeting** | Eigene Terminart: Vorschlag 1 bis 3 statt festem Datum, Abstimmung im Trainerteam, Themensammlung vorab, Beschlüsse und Protokoll je Thema. Für Eltern unsichtbar. | Ein Meeting lässt sich vorbereiten, bevor der Termin steht. Themen gehen nicht mehr in Chats verloren. |
 | **Trainerplan** | Alle kommenden Termine als Tabelle, Trainerstab als Spalten, ein Tipp je Zelle. Balken zählt die Zusagen. | Lücken in der Trainerabdeckung fallen Wochen vorher auf. |
 | **Gegner-Datenbank** | Adresse, Ansprechpartner, Kontakt, bisherige Spiele, Kontaktweg direkt aus dem Termin. | Beim Heimspiel steht der Gegner mit einem Tipp im Festivalplan. |
@@ -107,7 +113,7 @@ Zugang per Link und Einmal-Code an die hinterlegte E-Mail-Adresse. Kein Passwort
 |---|---|---|
 | **Startseite** | Ganz oben der nächste Termin. Darunter die Termine der nächsten 14 Tage, zu denen die Antwort fehlt. Dann offene Punkte: Mitbringlisten, Büdchen-Dienst, „Wie war's?“ nach Spielen. Adler News nur bei Neuem. | Alles, was heute von den Eltern gebraucht wird, steht oben – der Rest bleibt ruhig. |
 | **Zu- und Absagen** | Ein Tipp am Termin, nochmal tippen entfernt die Antwort. Alle Termine als Kalender-Abo. Trainings gelten ohne Antwort als zugesagt. | Der Trainer weiß vorab, wer kommt. Eltern müssen nichts schreiben. |
-| **Termin-Detail** | Wetter, Adresse mit Route, Fahrgemeinschaft, Mitbringliste bei Events, Treffzeit. | Die üblichen Rückfragen („Wo ist das?“, „Wann treffen wir uns?“) beantworten sich selbst. |
+| **Termin-Detail** | Wetter, Adresse mit Route, Fahrgemeinschaft, Mitbringliste bei Events, Treffzeit. Abgesagte Termine sind deutlich markiert. | Die üblichen Rückfragen („Wo ist das?“, „Wann treffen wir uns?“) beantworten sich selbst. |
 | **„Wer hilft mit?“** | Helfer-Aufgaben je Termin mit Uhrzeit und Beschreibung: Aufbau, Fotos, Live-Ticker, Betreuung in Pausen, Tore beim Training. Am Tag selbst entscheidbar. | Hilfe verteilt sich auf viele Schultern, ohne Verpflichtung im Voraus. |
 | **Team-Ansagen** | Wichtige Nachrichten vom Trainerteam, mit „Gelesen“ bestätigen. | Wichtiges geht in keiner Chat-Gruppe unter. |
 | **Liveticker** | Rote LIVE-Kachel, sobald der Ticker läuft. Teilbar per Link ohne Anmeldung. Nach drei Tagen nur noch der Endstand. | Großeltern und Fans sind dabei – ohne Zugang zur App. |
@@ -155,7 +161,7 @@ Die Kabine ist der Kinder-Modus innerhalb der Eltern-App. Eltern geben das Handy
 | Ansicht | Was sie zeigt | Nutzen |
 |---|---|---|
 | **Liveticker** | Spielstand und Ereignisse in Echtzeit, Kindernamen maskiert. | Fans und Verwandte sind live dabei. |
-| **Turnierseite** | Spielplan, Felder, Zeiten und Ergebnisse eines Heimspiels oder Festivals. | Gastvereine bekommen einen Link statt eines PDF. |
+| **Gast-Seite zum Heimspiel oder Festival** | Sprechender Link ohne Anmeldung: Begrüßung, Wappen, Runden-Plan mit Countdown zum nächsten Anpfiff, Ergebnisse, Aufwärmfelder. Dazu drei Blätter: „Anfahrt, Parken & Felder“ mit Skizzen, „So spielen wir“ mit den Regeln je Spielform, „Am Rand“ mit dem Verhaltenscodex (an den oberen Feldern nur Spieler und Trainer, Anfeuern von der Seite). Der Ergebnis-Link mit Code geht nur an den Anzeigetisch. | Gastvereine bekommen einen Link statt eines PDF, und die Regeln stehen vorher fest. |
 | **Stadionheft (Adler Nest)** | Das digitale Heft zum Spieltag. | Vereinsleben nach außen sichtbar. |
 | **Quiz** | Das Kinder-Quiz über einen eigenen Link. | Auch ohne Eltern-Zugang spielbar. |
 | **Einladungs- und Delegationslinks** | Einstieg für neue Familien und für Abholberechtigte. | Zugang ohne Passwortverwaltung. |
