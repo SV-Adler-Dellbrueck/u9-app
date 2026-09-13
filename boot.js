@@ -2478,6 +2478,18 @@ async function tpPlanRestore(datum){
       const slot=tpSlots[parseInt(m[1])];
       return slot&&(slot.label||"")===(e.slotLabel||"");
     });
+    /* Paket B: Trägt der Eintrag eine Stationsnummer (aus einer Vorlage mit `stationen`),
+       gehört er auf GENAU dieses Feld. Gibt es das Feld nicht – weniger Feldtrainer als
+       Stationen –, fällt die Station weg. Sie darf nicht auf ein anderes Feld rutschen:
+       dann stünde eine Übung an einer Station, für die sie nie gedacht war. */
+    if(e.station!=null){
+      const ziel=passend.find(x=>new RegExp(`-${e.station}$`).test(x.id));
+      if(!ziel)return;
+      ziel.value=String(e.formIdx);
+      belegt.add(ziel.id);
+      if(typeof tpOnSelectChange==="function")tpOnSelectChange(ziel);
+      return;
+    }
     const s=passend[0]||sels.find(x=>!belegt.has(x.id)&&!x.value);
     if(!s)return;
     s.value=String(e.formIdx);
