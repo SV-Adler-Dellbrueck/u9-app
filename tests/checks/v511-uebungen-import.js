@@ -145,7 +145,12 @@ module.exports = async function (h) {
   const tr = fs.readFileSync(path.join(h.REPO, "trainer/index.html"), "utf8");
   const el = fs.readFileSync(path.join(h.REPO, "eltern/index.html"), "utf8");
   if (!r.bau.open) probleme.push("uebungImportOpen fehlt");
-  if (!r.bau.knopf) probleme.push("Im Übungen-Bereich fehlt der Knopf „Übungen importieren“");
+  /* v539: Der Knopf ist WEG – bewusst. Eingespielt wird über uebungen/bibliothek.json und
+     uebungen/vorlagen.json im Repo, die beim Öffnen automatisch abgeglichen werden; der
+     Abgleich benutzt dieselbe Prüfung, die dieser Lauf unten durchspielt. Der Dialog bleibt
+     im Modul erreichbar, er wird nur nicht mehr angeboten. Geprüft wird deshalb jetzt, dass
+     er nicht zurückkommt. */
+  if (r.bau.knopf) probleme.push("Der Knopf „Übungen importieren“ steht wieder im Übungen-Bereich (v539: entfallen)");
   if (!r.bau.alterKnopf) probleme.push("Der Knopf „Einheit importieren“ ist verschwunden");
   /* Der Wachname folgt der LETZTEN Funktion der Datei – seit v512 ist das bibliothekAbgleich.
      Geprüft wird hier nur, dass das Modul überhaupt bewacht ist und in beiden Einstiegen
