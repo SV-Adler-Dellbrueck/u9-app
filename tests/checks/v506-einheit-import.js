@@ -37,7 +37,12 @@ module.exports = async function (h) {
   const el = fs.readFileSync(path.join(h.REPO, "eltern/index.html"), "utf8");
   if (!bau.fn) probleme.push("einheitImportUebernehmen ist nach dem Laden keine Funktion");
   if (!bau.open) probleme.push("einheitImportOpen fehlt");
-  if (!bau.knopf) probleme.push("Im Trainingsplan fehlt der Knopf „Einheit importieren“");
+  /* v538: Der Knopf ist WEG – bewusst. Eine einzelne Einheit als JSON von Hand einzulesen
+     hatte nie einen Anwendungsfall; fertige Einheiten kommen über „Vorlage übernehmen",
+     neue Inhalte über den automatischen Abgleich von uebungen/*.json. Der Dialog selbst
+     bleibt im Modul und trägt weiter die Prüfung, die dieser Lauf unten durchspielt –
+     deshalb wird hier jetzt die Abwesenheit des Knopfes verlangt, nicht sein Vorhandensein. */
+  if (bau.knopf) probleme.push("Der Knopf „Einheit importieren“ steht wieder im Trainingsplan (v538: entfallen)");
   if (!bau.kopfBox) probleme.push("Der Platz für den Kopf der Einheit (#tp-kopf) fehlt");
   if (!/md-einheit-import\.js/.test(sw)) probleme.push("md-einheit-import.js steht nicht im PRECACHE");
   /* v511: Der Wachname folgt der letzten Funktion der Datei – seit dem Übungs-Import ist
