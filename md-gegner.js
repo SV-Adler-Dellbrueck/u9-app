@@ -313,11 +313,16 @@ function _tmdKarte(t){
   else if(istSpiel)gross=(istHeute||!planerBtn)
     ? [{...teamsBtn,p:true}, planerBtn?{...planerBtn,p:false}:null]
     : [{...planerBtn,p:true}, {...teamsBtn,p:false}];
+  /* v527: Beim Trainermeeting ist die eine Aufgabe, die es hier gibt, die Vorbereitung:
+     welchen Termin koennen alle, und was wollen wir besprechen. Beides haengt jetzt am
+     Termin statt an einer eigenen Kachel. */
+  else if(t.typ==="trainermeeting")gross=[{i:"ti-calendar-question",l:"Termin finden & Themen",c:`tmMeetingOeffnen(${Number(t.id)})`,p:true}];
   else gross=[{i:"ti-basket",l:"Mitbringliste",c:"mitbringTrainerOpen()",p:true}];
   const grossBtn=o=>`<button class="btn${o.p?" btn-p":""}" onclick="${o.c}" style="width:100%;min-height:52px;justify-content:center;font-size:14px;font-weight:800"><i class="ti ${o.i}"></i>${o.l}</button>`;
 
   /* 2 · Für die Eltern und 3 · Mehr – getrennt, weil das eine der Verein braucht und das
      andere nur der Trainer. Beides zugeklappt; „Fällt aus" klappt von selbst auf. */
+  const istMeeting=t.typ==="trainermeeting";
   const elternRest=[
     {i:"ti-users",l:"Eltern-Info",c:`mdOpen('${t.datum}','${t.typ}')`},
     kommt?{i:"ti-speakerphone",l:"Ansage",c:`ansageVomTermin(${Number(t.id)})`}:null,
@@ -367,7 +372,8 @@ function _tmdKarte(t){
       </div>`:""}
       ${(t.heim===true&&istSpiel&&kommt)?`<div id="bd-tm-${t.id}" style="font-size:12px;color:var(--text2);margin-top:4px">🍿 Büdchen: lädt …</div>`:""}
       ${kommt?`<div id="helfer-tm-${t.id}" style="font-size:12px;color:var(--text2);margin-top:4px"></div>`:""}
-      ${kommt?`<button class="btn btn-sm" onclick="rsvpOverviewOpen(${Number(t.id)})" style="width:100%;min-height:44px;margin-top:8px;justify-content:center"><i class="ti ti-list-check"></i>Antworten der Eltern</button>`:""}
+      ${(kommt&&!istMeeting)?`<button class="btn btn-sm" onclick="rsvpOverviewOpen(${Number(t.id)})" style="width:100%;min-height:44px;margin-top:8px;justify-content:center"><i class="ti ti-list-check"></i>Antworten der Eltern</button>`:""}
+      ${istMeeting?`<div style="font-size:11.5px;color:var(--text2);margin-top:8px;line-height:1.5">🔒 Diesen Termin sehen nur Trainer – Eltern und die öffentlichen Seiten bekommen ihn nicht zu Gesicht.</div>`:""}
 
       ${(vorbei||istHeute)&&(istSpiel||t.typ==="training")?`${sec("Nach dem Termin")}
         ${istSpiel?`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
@@ -381,7 +387,7 @@ function _tmdKarte(t){
         <button class="btn btn-sm" onclick="if(typeof fazitOpen==='function')fazitOpen(${Number(t.id)});else toast('Lädt noch – gleich nochmal','err')" style="width:100%;min-height:44px;justify-content:center;margin-top:6px"><i class="ti ti-clipboard-check"></i>${t.typ==="turnier"?"Festival":"Spiel"} nachbereiten · Mannschaft</button>`:""}
         <div id="puls-tm-${t.id}" style="font-size:12px;color:var(--text2);margin-top:6px"></div>`:""}
 
-      ${zu(`📣 Für die Eltern${ampel?" · "+ampel.emo+" "+esc(ampel.lbl):""}`,
+      ${istMeeting?"":zu(`📣 Für die Eltern${ampel?" · "+ampel.emo+" "+esc(ampel.lbl):""}`,
         `${kommt?`<div style="margin-bottom:8px">${platzAmpelTrainer(t,true)}</div>`:""}${raster(elternRest)}`, abgesagt)}
       ${zu("⚙️ Mehr",`${raster(rest)}
         <button class="btn btn-sm btn-d" onclick="tmDelete(${Number(t.id)})" style="width:100%;min-height:44px;justify-content:center;margin-top:6px"><i class="ti ti-trash"></i>Termin löschen</button>`)}

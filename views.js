@@ -2395,13 +2395,46 @@ async function elterngespraechErledigt(id){
 }
 
 /* Trainer-Meeting-Doodle: Terminvorschläge, Abstimmung (✓/?/✗) unter Trainern, festlegen.
-   Nur Trainer (RLS). Stimmen per Upsert (voter = auth.uid()). */
+   Nur Trainer (RLS). Stimmen per Upsert (voter = auth.uid()).
+
+   v527 – der Umbau: Das Meeting ist jetzt eine eigene TERMINART. Diese Ansicht bleibt als
+   Übersicht über alle Meetings; angelegt und bearbeitet wird aus dem Termin heraus
+   (tmMeetingOeffnen). Dazu vier Dinge, die vorher fehlten:
+
+   · „Hier können alle" steht ausdrücklich da, statt sich aus drei Zahlenreihen zu ergeben.
+   · Wer noch nicht abgestimmt hat, steht mit Namen da. „✓ 3" bei fünf Trainern heißt eben
+     nicht, dass zwei abgesagt haben – vielleicht haben zwei nur nicht geantwortet, und das
+     ist für die Entscheidung ein Unterschied.
+   · Themen lassen sich von Anfang an sammeln, nicht erst wenn der Termin steht. Der Moment,
+     in dem einem etwas einfällt, ist selten der, in dem der Termin feststeht.
+   · Beim Abhaken fragt die App nach dem BESCHLUSS. Ein Haken sagt „erledigt", aber nicht
+     was entschieden wurde – der häufigste Grund, warum dasselbe Thema im übernächsten
+     Meeting wieder auftaucht. */
+let _TPOLL_TERMIN=null;   // gesetzt = nur das Meeting dieses Termins zeigen
+/* Namen der Trainer zu ihren User-IDs. Nur id und anzeigename – die E-Mail aus `profiles`
+   wird hier NICHT geholt, sie hat im Browser nichts verloren. */
+let _TPOLL_NAMEN=null;
+async function tpollNamen(){
+  if(_TPOLL_NAMEN)return _TPOLL_NAMEN;
+  const map={};
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/profiles?select=id,anzeigename&role=eq.trainer`,{headers:sbAuthHeaders()});
+    if(r.ok)((await r.json())||[]).forEach(x=>{ if(x&&x.id)map[x.id]=(x.anzeigename||"").trim()||"Trainer"; });
+  }catch(e){}
+  _TPOLL_NAMEN=map; return map;
+}
+/* Aus dem Termin heraus: die Abstimmung und die Themen zu genau diesem Meeting. */
+async function tmMeetingOeffnen(terminId){
+  _TPOLL_TERMIN=Number(terminId)||null;
+  document.getElementById("tmd-modal")?.remove();
+  await trainerMeetingOpen();
+}
 async function trainerMeetingOpen(){
   if(!sbToken()){toast("Bitte als Trainer anmelden","err");return;}
   document.getElementById("tm-meet-modal")?.remove();
   const m=document.createElement("div");m.id="tm-meet-modal";
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10001;display:flex;flex-direction:column;padding:14px;overflow-y:auto";
-  m.onclick=e=>{if(e.target===m)m.remove();};
+  m.onclick=e=>{if(e.target===m){m.remove();_TPOLL_TERMIN=null;}};
   const c=document.createElement("div");c.id="tm-meet-card";
   c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">Lade …</div>';
@@ -2414,7 +2447,17 @@ async function tpollRender(){
   // damit neben dem 44er-Themenfeld sichtbar aus der Reihe.
   const FLD="padding:8px;min-height:44px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box";
   let polls=[],slots=[],votes=[],themen=[];
+  const namen=await tpollNamen();
   try{const r=await fetch(`${SB_URL}/rest/v1/trainer_poll?select=*&order=created_at.desc`,{headers:sbAuthHeaders()});if(!sbCheck401(r)&&r.ok)polls=await r.json();}catch(e){}
+  /* Aus dem Termin heraus zeigt das Fenster genau dessen Meeting – sonst muesste man in
+     einer Liste aller Meetings das eine suchen, das man gerade offen hatte. */
+  const nurTermin=_TPOLL_TERMIN;
+  if(nurTermin)polls=polls.filter(p=>Number(p.termin_id)===Number(nurTermin));
+  let terminZeile=null;
+  if(nurTermin){
+    try{const r=await fetch(`${SB_URL}/rest/v1/termine?id=eq.${Number(nurTermin)}&select=id,datum,titel,uhrzeit,ort&limit=1`,{headers:sbAuthHeaders()});
+      if(r.ok)terminZeile=((await r.json())||[])[0]||null;}catch(e){}
+  }
   const pids=polls.map(p=>p.id);
   if(pids.length){
     try{const r=await fetch(`${SB_URL}/rest/v1/trainer_poll_slot?poll_id=in.(${pids.join(",")})&select=*&order=datum.asc,uhrzeit.asc.nullslast`,{headers:sbAuthHeaders()});if(r.ok)slots=await r.json();}catch(e){}
@@ -2431,10 +2474,29 @@ async function tpollRender(){
     /* Steht der Termin, hat die Abstimmung ihre Arbeit getan: die uebrigen Vorschlaege und
        die ✓/?/✗-Knoepfe sind dann nur noch Krach. Ab hier geht es um den INHALT. */
     const ss=(slotsByPoll[p.id]||[]).filter(s=>!steht||s.id===p.decided_slot_id);
+    /* v527 – „welchen Termin können alle": kein einziges ✗ und die meisten ✓. Bei
+       Gleichstand gewinnt der frühere Vorschlag (die Liste ist nach Datum sortiert), damit
+       die Empfehlung nicht bei jedem Neuzeichnen springt. Gibt es gar keine Stimme, gibt es
+       auch keine Empfehlung – sonst empföhle die App den erstbesten Vorschlag. */
+    let bester=null;
+    if(!steht){
+      ss.forEach(s=>{
+        const vs=votesBySlot[s.id]||[];
+        if(!vs.length||vs.some(v=>v.status==="nein"))return;
+        const ja=vs.filter(v=>v.status==="ja").length;
+        if(!ja)return;
+        if(!bester||ja>bester.ja)bester={id:s.id,ja};
+      });
+    }
     const slotHtml=ss.map(s=>{
       const vs=votesBySlot[s.id]||[];
       const ja=vs.filter(v=>v.status==="ja").length, viel=vs.filter(v=>v.status==="vielleicht").length, nein=vs.filter(v=>v.status==="nein").length;
       const mine=(vs.find(v=>v.voter===myUid)||{}).status||null;
+      /* „✓ 3" bei fünf Trainern heißt nicht, dass zwei abgesagt haben – vielleicht haben
+         zwei nur nicht geantwortet. Für die Entscheidung ist das ein Unterschied. */
+      const abgestimmt=new Set(vs.map(v=>v.voter));
+      const offeneNamen=Object.keys(namen).filter(uid=>!abgestimmt.has(uid)).map(uid=>namen[uid]).sort();
+      const fehltTxt=offeneNamen.length?` · <span style="color:var(--text2)">offen: ${esc(offeneNamen.join(", "))}</span>`:"";
       const d=new Date(s.datum+"T00:00:00");
       const dstr=d.toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"});
       const zstr=s.uhrzeit?" · "+String(s.uhrzeit).slice(0,5)+" Uhr":"";
@@ -2449,12 +2511,17 @@ async function tpollRender(){
       }
       const voteBtns=["ja","vielleicht","nein"].map(st=>{const on=mine===st;const emo=st==="ja"?"✓":st==="vielleicht"?"?":"✗";const col=st==="ja"?"var(--green)":st==="vielleicht"?"var(--amber)":"var(--red)";
         return `<button onclick="tpollVote(${s.id},'${st}')" aria-label="${st}" style="min-width:44px;min-height:44px;border-radius:8px;border:${on?"1.5px solid "+col:"var(--border-s)"};background:${on?col:"var(--surface)"};color:${on?"#fff":"var(--text2)"};cursor:pointer;font-weight:800">${emo}</button>`;}).join("");
-      return `<div style="border:var(--border-s);border-radius:10px;padding:8px 10px;margin-top:6px">
+      const empfohlen=bester&&bester.id===s.id;
+      /* data-slot: der Vorschlag traegt seine Kennung selbst. Ohne sie muss jede Pruefung
+         aus verschachtelten <div> erraten, welcher Kasten gemeint ist – und greift dann
+         die Fusszeile statt des Kastens. */
+      return `<div data-slot="${s.id}"${empfohlen?' data-empfohlen="1"':""} style="border:${empfohlen?"1.5px solid var(--green)":"var(--border-s)"};background:${empfohlen?"var(--green-bg)":"transparent"};border-radius:10px;padding:8px 10px;margin-top:6px">
+        ${empfohlen?`<div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--green);margin-bottom:2px">👍 Hier können alle – niemand hat abgesagt</div>`:""}
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <div style="flex:1;min-width:110px;font-size:12.5px;font-weight:700">${dstr}${zstr}</div>
           <div style="display:flex;gap:4px">${voteBtns}</div>
         </div>
-        <div style="font-size:10.5px;color:var(--text3);margin-top:4px">✓ ${ja} · ? ${viel} · ✗ ${nein} · <button onclick="tpollDecide(${p.id},${s.id})" style="border:none;background:none;color:var(--blue-text);font-weight:700;cursor:pointer;font-size:10.5px;padding:0">diesen Termin festlegen</button></div>
+        <div style="font-size:10.5px;color:var(--text3);margin-top:4px">✓ ${ja} · ? ${viel} · ✗ ${nein}${fehltTxt} · <button onclick="tpollDecide(${p.id},${s.id})" style="border:none;background:none;color:var(--blue-text);font-weight:700;cursor:pointer;font-size:10.5px;padding:0">diesen Termin festlegen</button></div>
       </div>`;
     }).join("");
     return `<div style="border:var(--border-s);border-radius:12px;padding:12px;margin-bottom:10px">
@@ -2462,33 +2529,49 @@ async function tpollRender(){
         <button onclick="tpollDelete(${p.id},'${jsq(p.titel)}')" aria-label="Meeting löschen" style="border:none;background:none;color:var(--red);cursor:pointer;min-width:44px;min-height:44px"><i class="ti ti-trash"></i></button></div>
       ${steht?"":'<div style="font-size:11px;color:var(--text3)">Stimmt ab: ✓ passt · ? vielleicht · ✗ nicht</div>'}
       ${slotHtml||'<div style="font-size:11px;color:var(--text3)">Keine Termine.</div>'}
-      ${steht?tpollThemenHtml(p.id,themenByPoll[p.id]||[]):""}
+      ${tpollThemenHtml(p.id,themenByPoll[p.id]||[],steht)}
     </div>`;
   }).join("");
-  c.innerHTML=`${mdlHead("tm-meet-modal","🗓️","Trainer-Meetings","Nur Trainer · vorschlagen, abstimmen, festlegen","#334155")}
-    ${pollHtml||'<div style="font-size:12px;color:var(--text3);margin-bottom:10px">Noch kein Meeting geplant.</div>'}
+  /* Aus dem Termin heraus traegt der Kopf dessen Titel; ueber die Orga-Kachel bleibt es die
+     Uebersicht ueber alle Meetings. */
+  const kopfTitel=terminZeile?(terminZeile.titel||"Trainermeeting"):"Trainer-Meetings";
+  const kopfSub=terminZeile
+    ? new Date(String(terminZeile.datum)+"T00:00:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"})
+      +(terminZeile.uhrzeit?" · "+String(terminZeile.uhrzeit).slice(0,5)+" Uhr":"")+" · nur fürs Trainerteam"
+    : "Nur Trainer · vorschlagen, abstimmen, festlegen";
+  const leerSatz=nurTermin
+    ? "Für diesen Termin läuft noch keine Abstimmung. Trag unten Vorschläge ein – oder sammelt schon mal Themen."
+    : "Noch kein Meeting geplant.";
+  c.innerHTML=`${mdlHead("tm-meet-modal","🗓️",esc(kopfTitel),esc(kopfSub),"#334155")}
+    ${pollHtml||`<div style="font-size:12px;color:var(--text3);margin-bottom:10px">${esc(leerSatz)}</div>`}
     <div style="border-top:var(--border);padding-top:12px">
-      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">Neues Meeting</div>
-      <input id="tpoll-titel" placeholder="Titel (z. B. Saisonplanung)" style="width:100%;margin-bottom:6px;${FLD}">
+      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">${nurTermin&&!pollHtml?"Abstimmung anlegen":"Neues Meeting"}</div>
+      <input id="tpoll-titel" value="${terminZeile?esc(terminZeile.titel||""):""}" placeholder="Titel (z. B. Saisonplanung)" style="width:100%;margin-bottom:6px;${FLD}">
       <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Terminvorschläge (Datum + Uhrzeit):</div>
       ${[0,1,2,3].map(i=>`<div style="display:flex;gap:6px;margin-bottom:4px"><input type="date" id="tpoll-d${i}" style="flex:2;${FLD}"><input type="time" id="tpoll-t${i}" style="flex:1;${FLD}"></div>`).join("")}
       <div style="display:flex;gap:8px;margin-top:4px">
         <button class="btn btn-p btn-sm" onclick="tpollCreate(this)"><i class="ti ti-plus"></i>Meeting anlegen</button>
-        <button class="btn btn-sm" style="margin-left:auto" onclick="document.getElementById('tm-meet-modal').remove()">Schließen</button>
+        <button class="btn btn-sm" style="margin-left:auto" onclick="document.getElementById('tm-meet-modal').remove();_TPOLL_TERMIN=null;">Schließen</button>
       </div>
     </div>`;
 }
 /* Themen zum festgelegten Meeting: die Tagesordnung. Wer zwischendurch etwas einfällt,
    schreibt es hier hin, statt es bis zum Abend zu behalten. Erledigtes bleibt stehen und
    wird durchgestrichen – so sieht man am Ende, was wirklich besprochen wurde. */
-function tpollThemenHtml(pollId,liste){
+function tpollThemenHtml(pollId,liste,steht){
   const offen=liste.filter(t=>!t.erledigt).length;
-  const zeilen=liste.map(t=>`<div style="display:flex;align-items:center;gap:6px;padding:2px 0">
+  const zeilen=liste.map(t=>`<div style="padding:2px 0"><div style="display:flex;align-items:center;gap:6px">
       <button onclick="tpollThemaToggle(${t.id},${t.erledigt?"false":"true"})" aria-label="${t.erledigt?"wieder öffnen":"abhaken"}" style="border:none;background:transparent;font-size:16px;cursor:pointer;min-width:44px;min-height:44px;margin:-8px 0;flex:none">${t.erledigt?"✅":"⬜"}</button>
       <div style="flex:1;min-width:0;font-size:13px;line-height:1.4;${t.erledigt?"text-decoration:line-through;color:var(--text3)":"color:var(--text)"}">${esc(t.text)}</div>
       <button onclick="tpollThemaDelete(${t.id})" aria-label="Thema löschen" style="border:none;background:transparent;color:var(--text2);cursor:pointer;min-width:44px;min-height:44px;margin:-8px 0;flex:none"><i class="ti ti-x"></i></button>
+    </div>
+    ${t.erledigt?(String(t.beschluss||"").trim()
+      ? `<div style="font-size:12px;color:var(--text2);line-height:1.45;margin:2px 0 4px 26px;border-left:2px solid var(--green);padding-left:8px">${esc(t.beschluss)}</div>`
+      : `<div style="margin:2px 0 4px 26px"><button class="btn btn-sm" onclick="tpollBeschlussFragen(${t.id},'${jsq(t.text)}')" style="min-height:36px;font-size:11.5px"><i class="ti ti-writing"></i>Was wurde entschieden?</button></div>`):""}
     </div>`).join("");
   return `<div style="border-top:var(--border);margin-top:10px;padding-top:10px">
+    ${!steht?`<div style="font-size:10.5px;color:var(--text3);margin-bottom:4px">Sammeln geht schon jetzt – der Termin muss dafür nicht stehen.</div>`:""}
+    ${liste.some(t=>t.erledigt)?`<div style="display:flex;justify-content:flex-end;margin-bottom:4px"><button class="btn btn-sm" onclick="tpollProtokoll(${pollId})" style="min-height:36px;font-size:11.5px"><i class="ti ti-file-text"></i>Protokoll teilen</button></div>`:""}
     <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px">📝 Themen fürs Meeting${liste.length?` · ${offen} offen von ${liste.length}`:""}</div>
     ${zeilen||'<div style="font-size:11.5px;color:var(--text3);padding:2px 0 6px">Noch kein Thema. Was soll besprochen werden?</div>'}
     <div style="display:flex;gap:6px;margin-top:6px">
@@ -2508,13 +2591,60 @@ async function tpollThemaAdd(pollId){
   if(el)el.value="";
   tpollRender();
 }
+/* v527 – der Beschluss. Ein Haken sagt „erledigt", nicht WAS entschieden wurde; eine Woche
+   später weiß das niemand mehr. Gefragt wird beim Abhaken, aber das Abhaken wartet nicht
+   darauf: wer gerade keine Zeit hat, hakt ab und schreibt später – der Knopf „Was wurde
+   entschieden?" bleibt am Thema stehen. Pflicht wäre hier falsch, weil sie dazu führte,
+   dass gar nicht mehr abgehakt wird. */
+async function tpollBeschlussFragen(id,thema){
+  const text=await frageText({emoji:"📝",titel:"Was wurde entschieden?",
+    sub:thema||"",platzhalter:"Ein Satz genügt – z. B. „Trikots bestellt Kenneth bis Freitag“",
+    ja:"Festhalten"});
+  if(text===null)return;                       // abgebrochen – Haken bleibt, wie er ist
+  await tpollBeschlussSetzen(id,text.trim());
+}
+async function tpollBeschlussSetzen(id,beschluss){
+  try{const r=await fetch(`${SB_URL}/rest/v1/trainer_poll_thema?id=eq.${id}`,{method:"PATCH",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},body:JSON.stringify({beschluss:beschluss||null})});
+    if(sbCheck401(r))return;
+    if(!r.ok){toast(sbDeniedMsg(r,"Konnte nicht speichern"),"err");return;}
+  }catch(e){toast("Netzwerkfehler","err");return;}
+  tpollRender();
+}
+/* Ein Textfeld im App-Look statt prompt(). prompt() reißt den Bildschirm aus der App, kennt
+   den dunklen Modus nicht und heißt auf manchen Geräten „Diese Seite sagt:". Liefert den
+   Text oder null bei Abbruch. */
+function frageText(o){
+  return new Promise(res=>{
+    document.getElementById("frage-text-modal")?.remove();
+    const m=document.createElement("div"); m.id="frage-text-modal";
+    m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label",o.titel||"Eingabe");
+    m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10080;display:flex;align-items:center;justify-content:center;padding:18px";
+    const fertig=v=>{m.remove();res(v);};
+    m.onclick=e=>{if(e.target===m)fertig(null);};
+    m.innerHTML=`<div style="background:var(--surface);color:var(--text);max-width:400px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
+      <div style="font-size:15px;font-weight:800">${o.emoji||""} ${esc(o.titel||"")}</div>
+      ${o.sub?`<div style="font-size:12.5px;color:var(--text2);margin-top:4px;line-height:1.45">${esc(o.sub)}</div>`:""}
+      <textarea id="frage-text-feld" rows="3" maxlength="300" placeholder="${esc(o.platzhalter||"")}" style="width:100%;box-sizing:border-box;min-height:48px;margin-top:10px;padding:10px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);resize:vertical"></textarea>
+      <button class="btn btn-p" id="frage-text-ok" style="width:100%;min-height:56px;margin-top:10px;justify-content:center;font-size:15px;font-weight:800">${esc(o.ja||"Übernehmen")}</button>
+      <button class="btn" id="frage-text-ab" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Abbrechen</button>
+    </div>`;
+    document.body.appendChild(m);
+    const feld=m.querySelector("#frage-text-feld");
+    m.querySelector("#frage-text-ok").onclick=()=>fertig(feld?feld.value:"");
+    m.querySelector("#frage-text-ab").onclick=()=>fertig(null);
+    if(feld)feld.focus();
+  });
+}
 async function tpollThemaToggle(id,erledigt){
   try{const r=await fetch(`${SB_URL}/rest/v1/trainer_poll_thema?id=eq.${id}`,{method:"PATCH",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},body:JSON.stringify({erledigt})});
     if(sbCheck401(r))return;
     if(!r.ok){toast(sbDeniedMsg(r,"Konnte nicht ändern"),"err");return;}
   }catch(e){toast("Netzwerkfehler","err");return;}
   try{navigator.vibrate&&navigator.vibrate(15);}catch(e){}
-  tpollRender();
+  await tpollRender();
+  /* Nur beim Abhaken fragen, nicht beim Wiederöffnen – und erst NACH dem Neuzeichnen,
+     damit der Haken schon steht, während man den Satz tippt. */
+  if(erledigt)tpollBeschlussFragen(id,"");
 }
 async function tpollThemaDelete(id){
   if(!await frageJaNein({emoji:"📝",titel:"Thema löschen?",text:"Es verschwindet für alle Trainer aus der Liste.",ja:"Löschen",ton:"rot"}))return;
@@ -2543,15 +2673,83 @@ async function tpollCreate(btn){
   if(!slots.length){toast("Mindestens einen Terminvorschlag","err");return;}
   if(btn)btn.disabled=true;
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/trainer_poll`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=representation'},body:JSON.stringify({titel})});
+    /* v527: Die Abstimmung gehört ab jetzt zu einem Termin. Aus dem Termin heraus angelegt,
+       trägt sie dessen id; über die Orga-Kachel angelegt bleibt sie ungebunden wie bisher,
+       damit der alte Weg nicht bricht. */
+    const anTermin=_TPOLL_TERMIN?{termin_id:Number(_TPOLL_TERMIN)}:{};
+    const r=await fetch(`${SB_URL}/rest/v1/trainer_poll`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=representation'},body:JSON.stringify({titel,...anTermin})});
     if(sbCheck401(r))return;
     if(!r.ok){toast(sbDeniedMsg(r,"Konnte nicht anlegen"),"err");return;}
     const poll=(await r.json())[0];
+    await tpollOffeneUebernehmen(poll.id);
     await fetch(`${SB_URL}/rest/v1/trainer_poll_slot`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},body:JSON.stringify(slots.map(s=>({poll_id:poll.id,datum:s.datum,uhrzeit:s.uhrzeit})))});
   }catch(e){toast("Netzwerkfehler","err");return;}
   finally{if(btn)btn.disabled=false;}
   toast("Meeting angelegt ✓");
   tpollRender();
+}
+/* v527 – was offen blieb, wandert mit. Sonst tippt jemand dieselben drei Punkte beim
+   nächsten Mal neu ab, oder sie fallen still unter den Tisch. Übernommen werden nur Themen
+   aus dem zuletzt ENTSCHIEDENEN Meeting: alles andere ist noch in Arbeit und stünde dann
+   doppelt da. */
+async function tpollOffeneUebernehmen(neuePollId){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/trainer_poll?select=id,created_at&status=eq.entschieden&order=created_at.desc&limit=1`,{headers:sbAuthHeaders()});
+    if(!r.ok)return;
+    const vor=((await r.json())||[])[0]; if(!vor)return;
+    const t=await fetch(`${SB_URL}/rest/v1/trainer_poll_thema?poll_id=eq.${vor.id}&erledigt=is.false&select=text&order=created_at.asc`,{headers:sbAuthHeaders()});
+    if(!t.ok)return;
+    const offen=((await t.json())||[]).map(x=>String(x.text||"").trim()).filter(Boolean);
+    if(!offen.length)return;
+    await fetch(`${SB_URL}/rest/v1/trainer_poll_thema`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},
+      body:JSON.stringify(offen.map(text=>({poll_id:neuePollId,text})))});
+    toast(offen.length+(offen.length===1?" offenes Thema übernommen":" offene Themen übernommen"));
+  }catch(e){}
+}
+/* Das Protokoll als Markdown – derselbe Weg wie beim Tagebuch: Teilen-Menü des Geräts oder
+   Download, kein Serveraufruf und keine Zugangsdaten in der App. */
+async function tpollProtokoll(pollId){
+  let poll=null,themen=[],slot=null;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/trainer_poll?id=eq.${pollId}&select=*&limit=1`,{headers:sbAuthHeaders()});
+    if(r.ok)poll=((await r.json())||[])[0]||null;
+  }catch(e){}
+  if(!poll){toast("Meeting nicht gefunden","err");return;}
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/trainer_poll_thema?poll_id=eq.${pollId}&select=*&order=erledigt.asc,created_at.asc`,{headers:sbAuthHeaders()});
+    if(r.ok)themen=(await r.json())||[];
+  }catch(e){}
+  if(poll.decided_slot_id){
+    try{const r=await fetch(`${SB_URL}/rest/v1/trainer_poll_slot?id=eq.${poll.decided_slot_id}&select=datum,uhrzeit&limit=1`,{headers:sbAuthHeaders()});
+      if(r.ok)slot=((await r.json())||[])[0]||null;}catch(e){}
+  }
+  const dstr=slot?new Date(slot.datum+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"})
+                 +(slot.uhrzeit?", "+String(slot.uhrzeit).slice(0,5)+" Uhr":""):"ohne festen Termin";
+  const z=[`## Trainermeeting — ${poll.titel||""}`,`_${dstr}_`,""];
+  const erledigt=themen.filter(t=>t.erledigt), offen=themen.filter(t=>!t.erledigt);
+  if(erledigt.length){
+    z.push("### Besprochen","");
+    erledigt.forEach(t=>{
+      z.push(`- **${String(t.text||"").replace(/\n/g," ")}**`);
+      z.push(`  - ${String(t.beschluss||"").trim()||"kein Beschluss festgehalten"}`);
+    });
+    z.push("");
+  }
+  if(offen.length){
+    z.push("### Offen geblieben","");
+    offen.forEach(t=>z.push(`- ${String(t.text||"").replace(/\n/g," ")}`));
+    z.push("");
+  }
+  const text=z.join("\n").trim();
+  if(navigator.share){ navigator.share({title:"Trainermeeting",text}).catch(()=>{}); return; }
+  try{ await navigator.clipboard.writeText(text); toast("Protokoll kopiert ✓"); }
+  catch(e){
+    try{
+      const url=URL.createObjectURL(new Blob([text],{type:"text/markdown;charset=utf-8"}));
+      const a=document.createElement("a"); a.href=url; a.download="trainermeeting.md"; a.click();
+      setTimeout(()=>URL.revokeObjectURL(url),2000);
+    }catch(e2){ toast("Teilen ging nicht","err"); }
+  }
 }
 async function tpollVote(slotId,status){
   try{const r=await fetch(`${SB_URL}/rest/v1/trainer_poll_vote?on_conflict=slot_id,voter`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({slot_id:slotId,status})});if(sbCheck401(r))return;if(!r.ok){toast(sbDeniedMsg(r,"Konnte nicht abstimmen"),"err");return;}}catch(e){toast("Netzwerkfehler","err");return;}
@@ -3550,7 +3748,7 @@ const HELP=[
     {t:"Termine", d:"Das Formular zeigt nur, was zum Typ gehört: eine Treffzeit gibt es bei Spiel, Turnier und Event (bei Spielen −45 Min. vom Anpfiff vorgeschlagen) – beim Training kommen ohnehin alle zur Trainingszeit. „Wiederholen“ steht beim Event, weil Spiele und Turniere jedes Mal andere sind. Unter „Wer hilft“ sagst du, was die Eltern übernehmen sollen: beim Training die Anzahl Funino-Tore und Jugendtore (leer = ohne Zahl anbieten, 0 = wird nicht gebraucht), dazu bei jedem Typ ein freier Hinweis. Das steht im Eltern-Bereich als Beschreibung unter der Aufgabe – ohne sie trägt sich niemand ein. Unter „📣 Für die Eltern“ steht die Platz-Ampel: 🟢 Findet statt / 🔴 Fällt aus. Ein abgesagter Termin trägt ab sofort überall ein rotes Schild „Fällt aus“ (mit deinem Grund, wenn du einen einträgst) – auf der Terminkarte, in der Liste, in „Diese Woche“ und im Eltern-Bereich. Gleichzeitig verschwinden seine Aktionen: kein Plan, keine Teams, keine Anwesenheit, und „Bist du dabei?“ fragt nicht mehr danach; die Kachel oben springt zum nächsten Termin, den es wirklich gibt. Zurücknehmen geht mit 🟢 Findet statt. Dazu: anlegen/bearbeiten · Endzeit (danach automatisch ins Archiv) · Platz · Trainer-Verfügbarkeit · Wetter · Ferien-Warnung.", go:"termine"},
     {t:"Gegner-Datenbank", d:"Adresse, Ansprechpartner, Telefon/WhatsApp, bisherige Spiele.", run:"gegnerManageOpen()"},
     {t:"Pinnwand", d:"Team-Notizen fürs Trainerteam.", go:"team"},
-    {t:"Trainer-Meeting", d:"Zwei Phasen. Erst der Termin: Vorschläge machen, im Trainerteam abstimmen (✓ / ? / ✗), einen festlegen – solange deine Stimme fehlt, erinnert dich die Startseite. Steht der Termin, verschwinden Abstimmung und Vorschläge, und es geht um den Inhalt: eine Themenliste fürs Meeting, die alle Trainer füllen können. Abgehaktes bleibt durchgestrichen stehen, damit man am Ende sieht, was besprochen wurde. Auf der Startseite steht dann der Termin mit der Zahl offener Themen. Ein Trainer-Meeting landet bewusst NICHT bei den Terminen – die sehen die Eltern.", run:"trainerMeetingOpen()"},
+    {t:"Trainermeeting", d:"Seit v527 eine eigene Terminart: Du legst ihn wie jeden anderen Termin an („🗓️ Meeting“), und aus dem Termin heraus laufen beide Teile. <b>Wer kann wann:</b> Vorschläge eintragen, das Trainerteam stimmt ab (✓ passt · ? vielleicht · ✗ nicht), und der Vorschlag, bei dem niemand abgesagt hat und die meisten zugesagt haben, wird als „Hier können alle“ hervorgehoben. Wer noch gar nicht geantwortet hat, steht mit Namen dabei – drei Zusagen bei fünf Trainern heißen eben nicht, dass zwei abgesagt haben. Solange deine Stimme fehlt, erinnert dich die Startseite. <b>Was wir besprechen:</b> Themen können alle Trainer sammeln, und zwar von Anfang an, nicht erst wenn der Termin steht. Beim Abhaken fragt die App, was entschieden wurde; der Satz bleibt unter dem Thema stehen. Schreiben kannst du ihn auch später nachtragen – gefragt wird, aber nicht erzwungen, sonst hakt am Ende niemand mehr ab. Was offen blieb, wandert beim nächsten Meeting von selbst mit. Das Protokoll (Besprochenes mit Beschluss, dann das Offene) gibt es als Markdown über Teilen. <b>Wichtig:</b> Diesen Termin sehen nur Trainer. Das erzwingt die Leseregel der Datenbank, nicht ein Filter in der App – alle anderen Terminarten sind für jeden lesbar, auch ohne Anmeldung, weil Turnierseite und Stadionheft davon leben. Die Kachel „Trainer-Meeting“ unter Orga bleibt als Übersicht über alle Meetings.", run:"trainerMeetingOpen()"},
     {t:"Saisonstart-Check", d:"Sechs Schritte für den Übergang in die neue Saison – Wrapped, Urkunden, Kader, Trainings-Serie, Eltern-Einladung, Ansage. Er steht Juni bis September im Orga-Menü; mit „Saisonstart abschließen“ blendest du ihn bis zur nächsten Saison aus. Von hier aus geht er immer auf.", run:"saisonStartOpen()"},
     {t:"Teamkasse", d:"Kassen-Link hinterlegen (kein Geld in der App).", run:"kasseOpen()"},
     {t:"Fundbüro", d:"Liegengebliebenes verwalten.", run:"fundbueroOpen()"},
@@ -5339,7 +5537,7 @@ function _kachelInhalt(key){
     +kSec("Events & Team-Orga")
     +kTiles([
       {emo:"🎉",label:"Mitbringliste",fn:"mitbringTrainerOpen"},
-      {emo:"🗓️",label:"Trainer-Meeting",fn:"trainerMeetingOpen"},
+      {emo:"🗓️",label:"Meetings",fn:"trainerMeetingOpen"},   // v527: Übersicht; angelegt wird im Termin
       {emo:"💰",label:"Teamkasse",fn:"kasseOpen"},
       {emo:"👕",label:"Ausrüstung",fn:"ausruestungGrid"},
       {emo:"🧦",label:"Fundbüro",fn:"fundbueroOpen"},

@@ -10,7 +10,12 @@ function tmNextTrainingDate(){
   for(let i=0;i<8;i++){ const t=new Date(d.getTime()+i*86400000); const wd=t.getDay(); if(wd===1||wd===5)return t.toISOString().slice(0,10); }
   return d.toISOString().slice(0,10);
 }
-const TM_META={training:{icon:"🏃",label:"Training",col:"#1a56db"},spiel:{icon:"⚽",label:"Spiel",col:"#059669"},turnier:{icon:"🏆",label:"Turnier",col:"#c2410c"},event:{icon:"🎉",label:"Event",col:"#7c3aed"}}; // UX 7: Event mit Freitext-Titel (Saisonabschluss etc.)
+/* v527: Das Trainermeeting ist eine eigene Terminart – und die einzige, die Eltern und
+   Oeffentlichkeit NICHT sehen. Das erzwingt die Leseregel auf `termine`
+   (`typ <> 'trainermeeting' or is_trainer()`), nicht ein Filter hier; ein Filter im
+   JavaScript waere bei einer Tabelle, die jeder ohne Anmeldung lesen darf, keine Zusage,
+   sondern eine Bitte. Graphit als Farbe, weil es kein Ereignis fuer die Mannschaft ist. */
+const TM_META={training:{icon:"🏃",label:"Training",col:"#1a56db"},spiel:{icon:"⚽",label:"Spiel",col:"#059669"},turnier:{icon:"🏆",label:"Turnier",col:"#c2410c"},event:{icon:"🎉",label:"Event",col:"#7c3aed"},trainermeeting:{icon:"🗓️",label:"Trainermeeting",col:"#334155"}}; // UX 7: Event mit Freitext-Titel (Saisonabschluss etc.)
 // Saison-Zuordnung aus einem Datum (Saison läuft Jul–Jun)
 function saisonForDate(datum){
   const d=new Date((datum||new Date().toISOString().slice(0,10))+"T00:00:00");
@@ -36,7 +41,8 @@ const TM_LOOK={
   training:{emo:"🏃", sub:"Zeit und Platz genügen",                     titel:"",        platz:""},
   spiel:   {emo:"⚽", sub:"Gegner, Anpfiff, Endzeit",                   titel:"Gegner",  platz:"z. B. FC Musterstadt"},
   turnier: {emo:"🏆", sub:"Endzeit nicht vergessen – danach ins Archiv", titel:"Titel",   platz:"z. B. Hallenturnier Dellbrück"},
-  event:   {emo:"🎉", sub:"Sommerfest, Weihnachtsfeier, Ausflug",       titel:"Titel",   platz:"z. B. Saisonabschluss"}
+  event:   {emo:"🎉", sub:"Sommerfest, Weihnachtsfeier, Ausflug",       titel:"Titel",   platz:"z. B. Saisonabschluss"},
+  trainermeeting:{emo:"🗓️", sub:"Nur fürs Trainerteam – Eltern sehen ihn nicht", titel:"Thema", platz:"z. B. Saisonplanung"}
 };
 function tmSetTyp(t,btn){
   tmTyp=t;
@@ -60,6 +66,10 @@ function tmSetTyp(t,btn){
   const tin=document.getElementById("tm-titel"); if(tin)tin.placeholder=look.platz||"";
   // Platz gibt es bei Training UND Spiel/Turnier (jeweils eigene Optionen) – nur beim Event nicht.
   const platzRow=document.getElementById("tm-platz")?.closest(".mg"); if(platzRow)platzRow.style.display=(t==="training"||istSpiel)?"":"none";
+  /* v527: Beim Trainermeeting geht es um Menschen an einem Tisch, nicht um Kinder auf einem
+     Platz. Treffzeit, Ende und Ort bleiben (ein Meeting hat eine Adresse), alles Sportliche
+     faellt weg – die Zeilen dazu blenden die Regeln unten ohnehin schon aus. */
+  const istMeeting=(t==="trainermeeting");
   disp("tm-spielform-row", istSpiel);
   disp("tm-dauer-row", istSpiel);
   disp("tm-heim-row", istSpiel);                          // Heim/Auswärts nur bei Spiel/Turnier
@@ -68,8 +78,8 @@ function tmSetTyp(t,btn){
      Spiele und Turniere sind jedes Mal andere. Ausgeblendete Felder werden GELEERT, sonst
      wandert ein unsichtbarer Wert in den nächsten Termin. */
   const treffRow=document.getElementById("tm-treff")?.closest(".mg");
-  if(treffRow)treffRow.style.display=(t==="training")?"none":"";
-  if(t==="training"){const tz=document.getElementById("tm-treff"); if(tz)tz.value="";}
+  if(treffRow)treffRow.style.display=(t==="training"||istMeeting)?"none":"";
+  if(t==="training"||istMeeting){const tz=document.getElementById("tm-treff"); if(tz)tz.value="";}
   disp("tm-serie-row", t==="event");
   if(t!=="event"){
     const s=document.getElementById("tm-serie"); if(s)s.value="";
@@ -102,6 +112,9 @@ function tmSetTyp(t,btn){
     tmSetHeim(true);                                      // Standard: Heimspiel → Vereinsadresse
   } else if(t==="event"){
     if(ort&&ort.value===VEREIN_ADRESSE)ort.value="";     // Event: übernommene Vereinsadresse nicht erzwingen
+  } else if(istMeeting){
+    if(ort&&ort.value===VEREIN_ADRESSE)ort.value="";     // Meetings sind oefter im Vereinsheim oder beim Italiener
+    if(zeit&&!zeit.value)zeit.value="20:00";             // abends nach dem Training – aenderbar
   }  if(typeof tmEndeVorschlag==="function")tmEndeVorschlag(); // value= feuert kein onchange – Ende-Feld blieb sonst leer
 }
 // Heim/Auswärts umschalten. Heim → Vereinsadresse vorbelegen; Auswärts → freigeben.
