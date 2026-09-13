@@ -85,13 +85,26 @@ Gruppen entstehen beim Übernehmen **aus den zugesagten Kindern** des Termins (a
 Anwesenheit), nicht aus dem Kader. Zielgröße vier bis sechs. Die Zahl der Gruppen folgt der Zahl
 der Felder, die Zahl der Felder der Zahl der **Feldtrainer**.
 
-Feldtrainer sind Trainer mit Platzrolle. **Trainer, deren Rolle Organisation oder
-Elternkommunikation ist, bekommen standardmäßig kein Feld** — sie stehen weiterhin in der
-Trainer-Reihe, aber nicht in der Feldzuteilung. Im Ausnahmefall springt Markus auf dem Platz ein:
-Dann wird er im Plan per Tipp als Feldtrainer für diesen Termin angehakt, und die Felder rechnen
-neu. Die Standardeinstellung bleibt davon unberührt. Dafür braucht der Trainerstab ein Rollenfeld,
-falls es das nicht schon gibt; Skill Development Coach zählt als Feldtrainer für Torwart- und
-Einzelstationen.
+Feldtrainer sind Trainer mit Platzrolle. Dafür braucht der Trainerstab ein Rollenfeld, falls es
+das nicht schon gibt: Feldtrainer, Skill Development Coach (zählt als Feldtrainer für Torwart-
+und Einzelstationen), Organisation.
+
+**Trainer mit Rolle Organisation** — bei uns Markus — werden aus derselben Rückmeldung gelesen
+wie alle anderen, aber anders dargestellt. Die Trainer-Reihe kennt heute grün ✓ (zugesagt, wird
+eingeplant), gelb 🤔 (unsicher), rot ✕ (abgesagt). Für die Rolle Organisation kommt ein vierter
+Zustand dazu:
+
+| Rückmeldung | Chip | Bedeutung |
+|---|---|---|
+| dabei | **orange**, mit eigenem Zeichen und Text „dabei, ohne Feld" | anwesend, bekommt kein Feld |
+| abgesagt | rot ✕ | wie bisher |
+| dabei, per Tipp umgestellt | grün ✓ | wird für diesen Termin als Feldtrainer eingeplant, Felder rechnen neu |
+
+Ein Tipp auf den orangen Chip macht ihn grün, ein weiterer Tipp wieder orange. Die Umstellung gilt
+nur für diesen Termin; beim nächsten Termin gilt wieder orange. Weil Farbe nie der einzige
+Bedeutungsträger sein darf (`CLAUDE.md`), trägt der orange Chip ein eigenes Zeichen und den
+Kurztext — und er darf nicht mit dem gelben „unsicher" verwechselbar sein: anderes Zeichen, anderer
+Text, Kontrast geprüft.
 
 Die Gruppen bleiben danach von Hand anpassbar (Kind antippen, verschieben) — das gibt es schon
 und bleibt.
@@ -101,9 +114,9 @@ Abnahmekriterien:
 7. Elf zugesagte Kinder, zwei Feldtrainer → zwei Gruppen zu sechs und fünf.
 8. Elf zugesagte Kinder, drei Feldtrainer → drei Gruppen zu vier, vier und drei — mit Hinweis, dass
    drei unter der Zielgröße liegt.
-9. Markus (Rolle Organisation) zugesagt → erscheint in der Trainer-Reihe, bekommt kein Feld.
-   Nach einem Tipp auf seinen Chip „als Feldtrainer heute" → bekommt ein Feld, nur für diesen
-   Termin; beim nächsten Termin ist er wieder ohne Feld.
+9. Markus (Rolle Organisation) meldet „dabei" → Chip orange mit Text, kein Feld. Markus meldet ab →
+   Chip rot. Tipp auf orange → grün, ein Feld mehr, Gruppen rechnen neu. Zweiter Tipp → zurück auf
+   orange, Feld weg. Beim nächsten Termin wieder orange.
 10. Ein Kind sagt am Tag ab → Gruppen rechnen neu, Änderungen von Hand an den übrigen Gruppen
     bleiben erhalten.
 
@@ -127,7 +140,8 @@ nicht daneben eine zweite aufmachen. Der Wochenstand gegen 48 Minuten bleibt neu
 
 `node --check` über alle Dateien, `node tests/run.js` grün, danach `sw.js` hochzählen. Neue
 Prüfdatei in `tests/checks/` mit den zehn Abnahmekriterien als Fälle. Hilfe-Text zum Trainingsplan
-und zu „Vorlage übernehmen" nachziehen. Typografische Anführungszeichen, keine Kindernamen.
+und zu „Vorlage übernehmen" nachziehen, einschließlich des vierten Chip-Zustands. Typografische
+Anführungszeichen, keine Kindernamen.
 
 ## Ausdrücklich nicht in diesem Paket
 
