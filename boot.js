@@ -236,6 +236,7 @@ function _tfKarte(x){
       <span style="display:block;font-size:14px;font-weight:800">${esc(x.f.name)}${badges.length?" "+badges.join(" "):""}</span>
       <span style="display:block;font-size:11.5px;color:var(--text2);margin-top:2px">${x.f.dauer||"?"} Min. · ${esc(String(x.f.spieler||"?"))} Sp. · ${esc(x.f.feld||"?")} · ${frische}</span>
     </button>
+    <button onclick="tpArtTipp('${(x.f.name||"").replace(/'/g,"\\'")}')" title="Übungsform oder Spielform – antippen zum Einordnen" aria-label="Art der Übung: ${_tpArt(x.f)?UEBUNG_ART[_tpArt(x.f)].lang:"noch nicht eingeordnet"}" style="flex:none;min-height:44px;padding:0 4px;border:none;background:transparent;cursor:pointer">${tpArtChip(x.f,true)}</button>
     <button onclick="tpSternTipp('${(x.f.name||"").replace(/'/g,"\\'")}')" title="Schwierigkeit antippen zum Ändern" style="min-width:48px;min-height:44px;border:none;background:transparent;color:#f59e0b;font-size:12px;cursor:pointer;letter-spacing:1px">${"⭐".repeat(stern)}</button>
     <button onclick="tfInPlan(${x.i})" aria-label="In den Trainingsplan übernehmen" title="In den Trainingsplan übernehmen" style="min-width:44px;min-height:44px;border:none;border-radius:10px;background:#16a34a;color:#fff;font-size:17px;font-weight:900;cursor:pointer">➕</button>
   </div>`;
@@ -2661,10 +2662,60 @@ async function uebungMetaLoad(){
   if(window._uebungMeta)return window._uebungMeta;
   window._uebungMeta={};
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/team_config?select=id,uebung_meta&limit=1`,{headers:sbAuthHeaders()});
-    if(r.ok){const row=((await r.json())||[])[0];if(row){window._uebungMeta=row.uebung_meta||{};window._uebungMetaId=row.id;}}
+    const r=await fetch(`${SB_URL}/rest/v1/team_config?select=id,uebung_meta,uebung_art&limit=1`,{headers:sbAuthHeaders()});
+    if(r.ok){const row=((await r.json())||[])[0];if(row){window._uebungMeta=row.uebung_meta||{};window._uebungArt=row.uebung_art||{};window._uebungMetaId=row.id;}}
   }catch(e){}
+  window._uebungArt=window._uebungArt||{};
   return window._uebungMeta;
+}
+/* ═══ Übungsform gegen Spielform (Paket 3) ═════════════════════════════════════
+   Im Lehrgang ist das die zentrale Unterscheidung: bei einer SPIELFORM entscheidet
+   das Kind selbst – Gegner, Richtung, Tor, freie Wahl. Bei einer ÜBUNGSFORM ist der
+   Ablauf vorgegeben. Beides wird gebraucht; die App konnte es bisher weder anzeigen
+   noch prüfen.
+
+   Das Auftragspaket schlug einen zusätzlichen Blocktyp im Trainingsplan vor. Am
+   gerenderten Plan gemessen trägt der das nicht: ein Block mit unbekanntem Typ
+   verliert beim Speichern seine Trainerzuordnung, während der Plan die Übung schon
+   einem Trainer zurechnet. Die Unterscheidung gehört ohnehin an die ÜBUNG – sie
+   bleibt dieselbe, egal in welchem Block die Übung läuft.
+
+   Gespeichert wie die ⭐-Schwierigkeit: Overlay in team_config, Schlüssel ist der
+   Übungsname. Nur so sind auch die fest eingebauten Übungen aus data.js erfasst.
+   Der Preis ist derselbe wie beim Stern: wird eine Übung umbenannt, ist die
+   Einordnung weg. Ein bewusster Tausch gegen „gilt für alle Übungen".
+
+   DREI Zustände. „Noch nicht eingeordnet" ist ein echter Zustand und wird nie
+   geraten – eine plausibel aussehende falsche Einordnung wäre schlimmer als keine. */
+const UEBUNG_ART={spiel:{kurz:"Spielform", lang:"Spielform – das Kind entscheidet selbst"},
+                  uebung:{kurz:"Übungsform", lang:"Übungsform – der Ablauf ist vorgegeben"}};
+function _tpArt(f){
+  const a=(window._uebungArt||{})[f&&f.name];
+  return UEBUNG_ART[a]?a:"";
+}
+/* Schlichte Kennzeichnung, keine eigene Farbe (Vorgabe des Pakets): dieselbe
+   Chip-Form wie die übrigen Merkmale, in den neutralen Tönen der Oberfläche.
+   Nicht Eingeordnetes bleibt im Planer still – der Hinweis steht dort, wo er
+   etwas ändert (Übungsliste und Vorlagen-Prüfung). */
+function tpArtChip(f,auchOffen){
+  const a=_tpArt(f);
+  if(!a)return auchOffen?'<span style="border:1px dashed var(--rand-bedien);color:var(--text3);border-radius:6px;padding:1px 6px;font-size:10px;font-weight:700;white-space:nowrap">noch nicht eingeordnet</span>':"";
+  return `<span style="background:var(--surface2);color:var(--text2);border:var(--border-s);border-radius:6px;padding:1px 6px;font-size:10px;font-weight:800;white-space:nowrap">${UEBUNG_ART[a].kurz}</span>`;
+}
+/* Antippen ordnet ein – wie beim Stern. Drei Zustände im Kreis, damit sich eine
+   falsche Einordnung genauso leicht zurücknehmen lässt wie sie entstanden ist. */
+async function tpArtTipp(name){
+  const folge=["","spiel","uebung"];
+  const f=tpAllForms().find(x=>x.name===name);
+  const jetzt=_tpArt(f);
+  const neu=folge[(folge.indexOf(jetzt)+1)%folge.length];
+  window._uebungArt=window._uebungArt||{};
+  if(neu)window._uebungArt[name]=neu; else delete window._uebungArt[name];
+  if(document.getElementById("tp-pick-modal"))tpPickerRender();else renderTraining();
+  try{
+    if(window._uebungMetaId!=null)
+      await fetch(`${SB_URL}/rest/v1/team_config?id=eq.${window._uebungMetaId}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify({uebung_art:window._uebungArt})});
+  }catch(e){}
 }
 function _tpStern(f){
   if(!f)return 2;
@@ -2762,6 +2813,7 @@ function _tpPickKarte(x){
     <button onclick="tpPickerSet(${x.i})" style="flex:1;min-width:0;min-height:44px;border:none;background:transparent;color:var(--text);font-family:inherit;text-align:left;cursor:pointer;padding:0">
       <span style="display:block;font-size:14px;font-weight:800">${esc(x.f.name)}</span>
       <span style="display:block;font-size:11.5px;color:var(--text2)">${x.f.dauer||"?"} Min. · ${esc(x.f.kat||"eigene")} · ${frische}</span>
+      ${(function(){const c=tpArtChip(x.f,false);return c?`<span style="display:block;margin-top:3px">${c}</span>`:"";})()}
     </button>
     <button onclick="tpSternTipp('${x.f.name.replace(/'/g,"\\'")}')" title="Schwierigkeit antippen zum Ändern" style="min-width:52px;min-height:44px;border:none;background:transparent;color:#f59e0b;font-size:13px;cursor:pointer;letter-spacing:1px">${"⭐".repeat(stern)}</button>
     <button onclick="tpPickerInfo(${x.i})" aria-label="Übung ansehen" title="Skizze & Beschreibung ansehen" style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-size:15px;cursor:pointer">ℹ️</button>

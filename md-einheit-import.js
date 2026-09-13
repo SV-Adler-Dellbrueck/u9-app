@@ -466,8 +466,36 @@ const EI_SPIELFORM_TYPEN=["main","abschluss"];
 const EI_NETTO_BAND=[0.6,1.0];
 let _evGeprueft=null;      // {vorlagen:[{...,neu:bool,brutto,hinweis}]}
 
+/* Paket 3: Bis hierher zählte JEDER Hauptteil als Spielform-Zeit – auch einer, in dem
+   geübt und nicht gespielt wird. Damit war die Netto-Prüfung genau bei den Einheiten
+   stumpf, für die sie gedacht ist.
+
+   Jetzt entscheidet die Einordnung der ÜBUNG (team_config.uebung_art, siehe boot.js):
+   · Abschluss zählt immer – er ist freies Spiel und hat gar kein Übungsfeld.
+   · Hauptteil mit einer als Übungsform eingeordneten Übung zählt NICHT mehr mit.
+   · Hauptteil ohne Übung oder mit noch nicht eingeordneter Übung zählt weiter mit,
+     wie bisher. Stillschweigend anders zu rechnen wäre schlimmer als die alte
+     Ungenauigkeit; stattdessen nennt der Hinweis diese Blöcke beim Namen.
+   Ohne geladenes Overlay (Welle 1 noch nicht durch, kein Netz) verhält sich alles
+   wie vorher. */
+function _evBlockArt(b){
+  if(!b||!EI_SPIELFORM_TYPEN.includes(b.typ))return "aus";      // zählt gar nicht
+  if(b.typ==="abschluss")return "spiel";                         // freies Spiel
+  const un=String(b.uebung_name||"").trim();
+  if(!un)return "offen";
+  const f=(typeof tpAllForms==="function"?tpAllForms():[]).find(x=>x&&x.name===un);
+  if(!f)return "offen";
+  const a=(typeof _tpArt==="function")?_tpArt(f):"";
+  return a||"offen";
+}
 function _evSpielformSumme(bloecke){
-  return (bloecke||[]).reduce((a,b)=>a+(EI_SPIELFORM_TYPEN.includes(b&&b.typ)?Number(b.dauer)||0:0),0);
+  // „offen" zählt wie bisher mit – nur eine ausdrückliche Übungsform fällt heraus.
+  return (bloecke||[]).reduce((a,b)=>a+(_evBlockArt(b)==="uebung"?0:(EI_SPIELFORM_TYPEN.includes(b&&b.typ)?Number(b.dauer)||0:0)),0);
+}
+// Welche Blöcke sind noch nicht eingeordnet? Für den ehrlichen Zusatz im Hinweis.
+function _evOffeneBloecke(bloecke){
+  return (bloecke||[]).filter(b=>_evBlockArt(b)==="offen"&&b.typ!=="abschluss")
+                      .map(b=>String(b.uebung_name||b.label||"Block").trim());
 }
 /* Gibt den Hinweis-Text zurück oder "" – nie einen Fehler. */
 function _evNettoHinweis(v){
@@ -475,8 +503,12 @@ function _evNettoHinweis(v){
   const brutto=_evSpielformSumme(v&&v.bloecke);
   if(!isFinite(netto)||netto<=0||!brutto)return "";
   const anteil=netto/brutto;
-  if(anteil>EI_NETTO_BAND[1])return `${netto} Min. netto bei ${brutto} Min. Spielform-Blöcken – netto kann nicht größer sein als brutto.`;
-  if(anteil<EI_NETTO_BAND[0])return `${netto} Min. netto bei ${brutto} Min. Spielform-Blöcken – das ist weniger als die Hälfte; laut Konzept bleiben rund drei Viertel übrig.`;
+  /* Wo die Rechnung unsicher ist, wird sie benannt statt versteckt: eine Übung ohne
+     Einordnung zählt mit, könnte aber eine Übungsform sein und die Zahl verfälschen. */
+  const offen=_evOffeneBloecke(v&&v.bloecke);
+  const dazu=offen.length?` Noch nicht als Übungs- oder Spielform eingeordnet und deshalb mitgezählt: ${offen.join(", ")}.`:"";
+  if(anteil>EI_NETTO_BAND[1])return `${netto} Min. netto bei ${brutto} Min. Spielform-Blöcken – netto kann nicht größer sein als brutto.`+dazu;
+  if(anteil<EI_NETTO_BAND[0])return `${netto} Min. netto bei ${brutto} Min. Spielform-Blöcken – das ist weniger als die Hälfte; laut Konzept bleiben rund drei Viertel übrig.`+dazu;
   return "";
 }
 function _evNorm(s){ return _eiNorm(s); }
