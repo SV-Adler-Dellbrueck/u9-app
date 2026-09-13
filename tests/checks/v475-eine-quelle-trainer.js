@@ -8,6 +8,11 @@
    „keine Antwort" traegt ein ?, Antippen schreibt die Rueckmeldung (PATCH termine),
    die Anwesenheits-Chips eines kuenftigen Tages spiegeln die Rueckmeldung und schreiben
    sie zurueck, der Vorausplanungs-Sprung laedt Chips und Quelle des neuen Tages. */
+/* GEÄNDERT mit v536 (Paket C): Markus hat die Rolle Organisation. Er bleibt in TRAINER —
+     er steht am Platz, zählt in der Anwesenheit und bekommt eine Sammelkarte (v430) —, aber
+     er bekommt KEIN Feld und wird deshalb nicht mehr automatisch angehakt. Aus der Zahl der
+     Haken folgen Felder und Gruppen; ein Trainer ohne Station darf dort nicht mitzählen.
+     Ein Tipp auf seinen orangen Chip plant ihn für einen einzelnen Termin doch ein. */
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
   const morgen = h.tagePlus(1), uebermorgen = h.tagePlus(2);
@@ -66,13 +71,16 @@ module.exports = async function (h) {
   const patches = s.gesendet.filter(g => g.methode === "PATCH" && /termine/.test(g.pfad));
   await s.schliessen();
   if (r.fehlt) { probleme.push(`Funktion ${r.fehlt} fehlt`); return h.ergebnis("Eine Quelle für die Trainer-Anwesenheit", false, probleme); }
-  if (JSON.stringify(r.planHaken) !== JSON.stringify(["Charles", "Markus", "Peter"])) probleme.push(`Plan für morgen folgt nicht den Rückmeldungen: ${JSON.stringify(r.planHaken)} (gespeicherte Anwesenheit im Voraus darf nicht zählen)`);
+  if (JSON.stringify(r.planHaken) !== JSON.stringify(["Charles", "Peter"])) probleme.push(`Plan für morgen folgt nicht den Rückmeldungen: ${JSON.stringify(r.planHaken)} (gespeicherte Anwesenheit im Voraus darf nicht zählen)`);
   if (!/Rückmeldung/.test(r.planQuelle)) probleme.push(`Quelle im Plan: „${r.planQuelle}“`);
   if (!/\?/.test(r.finnMarke)) probleme.push(`„keine Antwort“ ohne Zeichen: „${r.finnMarke}“`);
   const p1 = patches.find(p => /id=eq\.11/.test(p.suche || "") && p.body && p.body.trainer_status && p.body.trainer_status.Kenneth === "ja");
   if (!p1) probleme.push(`Antippen im Plan schreibt keine Rückmeldung „ja“ für Kenneth an Termin 11 (${patches.length} PATCHes: ${JSON.stringify(patches.map(p => [p.suche, p.body && p.body.trainer_status]))})`);
   if (!r.nachTipp.includes("Kenneth")) probleme.push(`nach dem Tipp ist Kenneth nicht angehakt: ${JSON.stringify(r.nachTipp)}`);
   // Die Attrappe merkt sich PATCHes nicht – die Rueckmeldung bleibt Charles/Markus/Peter; entscheidend: NICHT die gespeicherte Liste mit Finn
+  /* Hier NICHT ändern: das sind die Chips der ANWESENHEITSERFASSUNG, nicht die des Plans.
+     Wer da war, war da – die Rolle Organisation ändert daran nichts. Sie entscheidet nur,
+     wer im Trainingsplan ein Feld bekommt. */
   if (JSON.stringify(r.awHaken) !== JSON.stringify(["Charles", "Markus", "Peter"])) probleme.push(`Anwesenheits-Chips für morgen zeigen ${JSON.stringify(r.awHaken)} statt der Rückmeldungen`);
   if (!/Rückmeldung/.test(r.awQuelle)) probleme.push(`Quelle in der Anwesenheit: „${r.awQuelle}“`);
   const p2 = patches.find(p => /id=eq\.11/.test(p.suche || "") && p.body && p.body.trainer_status && p.body.trainer_status.Kenneth === "nein");

@@ -42,12 +42,17 @@ module.exports = async function (h) {
   const mit = await lauf(true);
   const ohne = await lauf(false);
 
-  const erwartetMit = ["Finn", "Kenneth", "Markus"];
+  /* GEÄNDERT mit v536 (Paket C): Markus hat die Rolle Organisation. Er bleibt in TRAINER —
+     er steht am Platz, zählt in der Anwesenheit und bekommt eine Sammelkarte (v430) —, aber
+     er bekommt KEIN Feld und wird deshalb nicht mehr automatisch angehakt. Aus der Zahl der
+     Haken folgen Felder und Gruppen; ein Trainer ohne Station darf dort nicht mitzählen.
+     Ein Tipp auf seinen orangen Chip plant ihn für einen einzelnen Termin doch ein. */
+  const erwartetMit = ["Finn", "Kenneth"];
   if (JSON.stringify(mit.haken) !== JSON.stringify(erwartetMit))
     probleme.push(`mit Anwesenheit angehakt ${JSON.stringify(mit.haken)}, erwartet ${JSON.stringify(erwartetMit)} – Finn hat nie geantwortet, war aber da`);
   if (!/Anwesenheit/.test(mit.quelle)) probleme.push(`Quellenhinweis „${mit.quelle}“ nennt die Anwesenheit nicht`);
   // Ohne erfasste Anwesenheit bleibt es bei den Rueckmeldungen (nur „ja")
-  const erwartetOhne = ["Kenneth", "Markus"];
+  const erwartetOhne = ["Kenneth"];
   if (JSON.stringify(ohne.haken) !== JSON.stringify(erwartetOhne))
     probleme.push(`ohne Anwesenheit angehakt ${JSON.stringify(ohne.haken)}, erwartet ${JSON.stringify(erwartetOhne)}`);
   if (!/Rückmeldung/.test(ohne.quelle)) probleme.push(`Quellenhinweis „${ohne.quelle}“ nennt die Rückmeldungen nicht`);
