@@ -2443,7 +2443,9 @@ async function tmMeetingOeffnen(terminId){
   if(_TPOLL_TERMIN)await tpollSicherstellen(_TPOLL_TERMIN);
   await trainerMeetingOpen();
 }
-async function tpollSicherstellen(terminId){
+/* weitere: [{datum,uhrzeit}] aus dem Anlege-Formular (v529, Vorschlag 2 und 3). Der Termin
+   selbst bleibt Vorschlag 1 – sein Datum ist das vorlaeufige, bis das Team entschieden hat. */
+async function tpollSicherstellen(terminId,weitere){
   try{
     const r=await fetch(`${SB_URL}/rest/v1/trainer_poll?termin_id=eq.${Number(terminId)}&select=id&limit=1`,{headers:sbAuthHeaders()});
     if(!r.ok)return;
@@ -2455,9 +2457,16 @@ async function tpollSicherstellen(terminId){
       body:JSON.stringify({titel:(termin.titel||"Trainermeeting"),termin_id:Number(terminId)})});
     if(!neu.ok&&neu.status!==201)return;
     const poll=((await neu.json())||[])[0]; if(!poll)return;
-    if(termin.datum){
+    const slots=[];
+    if(termin.datum)slots.push({poll_id:poll.id,datum:termin.datum,uhrzeit:termin.uhrzeit||null});
+    (Array.isArray(weitere)?weitere:[]).forEach(w=>{
+      if(!w||!w.datum)return;
+      if(slots.some(x=>x.datum===w.datum&&String(x.uhrzeit||"")===String(w.uhrzeit||"")))return;   // derselbe Vorschlag zweimal hilft niemandem
+      slots.push({poll_id:poll.id,datum:w.datum,uhrzeit:w.uhrzeit||null});
+    });
+    if(slots.length){
       await fetch(`${SB_URL}/rest/v1/trainer_poll_slot`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},
-        body:JSON.stringify([{poll_id:poll.id,datum:termin.datum,uhrzeit:termin.uhrzeit||null}])});
+        body:JSON.stringify(slots)});
     }
     await tpollOffeneUebernehmen(poll.id);
   }catch(e){}
@@ -2568,25 +2577,43 @@ async function tpollRender(){
   /* Aus dem Termin heraus traegt der Kopf dessen Titel; ueber die Orga-Kachel bleibt es die
      Uebersicht ueber alle Meetings. */
   const kopfTitel=terminZeile?(terminZeile.titel||"Trainermeeting"):"Trainer-Meetings";
+  /* v529: Solange das Team nicht entschieden hat, ist das Datum im Kopf ein VORSCHLAG und
+     wird auch so genannt – sonst liest sich das Fenster wie „Termin steht, stimmt trotzdem
+     ab", und genau das hat der PO zu Recht unlogisch gefunden. */
+  const terminSteht=nurTermin&&polls.length&&polls.every(p=>p.status==="entschieden");
   const kopfSub=terminZeile
-    ? new Date(String(terminZeile.datum)+"T00:00:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"})
-      +(terminZeile.uhrzeit?" · "+String(terminZeile.uhrzeit).slice(0,5)+" Uhr":"")+" · nur fürs Trainerteam"
+    ? (terminSteht?"":"Vorschlag 1: ")
+      +new Date(String(terminZeile.datum)+"T00:00:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"})
+      +(terminZeile.uhrzeit?" · "+String(terminZeile.uhrzeit).slice(0,5)+" Uhr":"")
+      +(terminSteht?" · nur fürs Trainerteam":" · Termin steht noch nicht")
     : "Nur Trainer · vorschlagen, abstimmen, festlegen";
   const leerSatz=nurTermin
     ? "Für diesen Termin läuft noch keine Abstimmung. Trag unten Vorschläge ein – oder sammelt schon mal Themen."
     : "Noch kein Meeting geplant.";
   c.innerHTML=`${mdlHead("tm-meet-modal","🗓️",esc(kopfTitel),esc(kopfSub),"#334155")}
     ${pollHtml||`<div style="font-size:12px;color:var(--text3);margin-bottom:10px">${esc(leerSatz)}</div>`}
-    <div style="border-top:var(--border);padding-top:12px">
-      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">${nurTermin&&!pollHtml?"Abstimmung anlegen":"Neues Meeting"}</div>
-      <input id="tpoll-titel" value="${terminZeile?esc(terminZeile.titel||""):""}" placeholder="Titel (z. B. Saisonplanung)" style="width:100%;margin-bottom:6px;${FLD}">
-      <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Terminvorschläge (Datum + Uhrzeit):</div>
-      ${[0,1,2,3].map(i=>`<div style="display:flex;gap:6px;margin-bottom:4px"><input type="date" id="tpoll-d${i}" style="flex:2;${FLD}"><input type="time" id="tpoll-t${i}" style="flex:1;${FLD}"></div>`).join("")}
-      <div style="display:flex;gap:8px;margin-top:4px">
-        <button class="btn btn-p btn-sm" onclick="tpollCreate(this)"><i class="ti ti-plus"></i>Meeting anlegen</button>
-        <button class="btn btn-sm" style="margin-left:auto" onclick="document.getElementById('tm-meet-modal').remove();_TPOLL_TERMIN=null;">Schließen</button>
+    ${(nurTermin&&polls.length)
+      /* v529: Im Termin gibt es die Abstimmung schon – ein Block „Neues Meeting" darunter war
+         Unsinn und trug vier Felder ohne Beschriftung. Hier fehlt hoechstens ein weiterer
+         Vorschlag. Erst wenn der Termin steht, ist auch das vorbei. */
+      ? (polls.every(p=>p.status==="entschieden")?"":`<div style="border-top:var(--border);padding-top:12px">
+      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">Weiteren Vorschlag hinzufügen</div>
+      <div class="mgrid" style="grid-template-columns:1fr 1fr;gap:8px;align-items:end;margin-bottom:0">
+        <label style="font-size:11px;color:var(--text2)">Datum<input type="date" id="tpoll-neu-d" style="width:100%;margin-top:3px;${FLD}"></label>
+        <label style="font-size:11px;color:var(--text2)">Uhrzeit<input type="time" id="tpoll-neu-t" style="width:100%;margin-top:3px;${FLD}"></label>
       </div>
-    </div>`;
+      <button class="btn" onclick="tpollSlotHinzufuegen(${Number(polls[0].id)})" style="width:100%;min-height:48px;margin-top:8px;justify-content:center"><i class="ti ti-plus"></i>Vorschlag hinzufügen</button>
+    </div>`)
+      : `<div style="border-top:var(--border);padding-top:12px">
+      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">Neues Meeting</div>
+      <label style="font-size:11px;color:var(--text2)">Titel<input id="tpoll-titel" value="${terminZeile?esc(terminZeile.titel||""):""}" placeholder="z. B. Saisonplanung" style="width:100%;margin:3px 0 8px;${FLD}"></label>
+      ${[0,1,2,3].map(i=>`<div class="mgrid" style="grid-template-columns:1fr 1fr;gap:8px;align-items:end;margin-bottom:6px">
+        <label style="font-size:11px;color:var(--text2)">Vorschlag ${i+1} · Datum<input type="date" id="tpoll-d${i}" style="width:100%;margin-top:3px;${FLD}"></label>
+        <label style="font-size:11px;color:var(--text2)">Uhrzeit<input type="time" id="tpoll-t${i}" style="width:100%;margin-top:3px;${FLD}"></label>
+      </div>`).join("")}
+      <button class="btn btn-p" onclick="tpollCreate(this)" style="width:100%;min-height:56px;margin-top:4px;justify-content:center;font-size:15px;font-weight:800"><i class="ti ti-plus"></i>Meeting anlegen</button>
+    </div>`}
+    <button class="btn" onclick="document.getElementById('tm-meet-modal').remove();_TPOLL_TERMIN=null;" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Schließen</button>`;
 }
 /* Themen zum festgelegten Meeting: die Tagesordnung. Wer zwischendurch etwas einfällt,
    schreibt es hier hin, statt es bis zum Abend zu behalten. Erledigtes bleibt stehen und
@@ -2783,6 +2810,20 @@ async function tpollProtokoll(pollId){
       setTimeout(()=>URL.revokeObjectURL(url),2000);
     }catch(e2){ toast("Teilen ging nicht","err"); }
   }
+}
+/* v529: Ein weiterer Vorschlag zu einer laufenden Abstimmung – aus dem Termin heraus. */
+async function tpollSlotHinzufuegen(pollId){
+  const datum=document.getElementById("tpoll-neu-d")?.value||"";
+  const uhrzeit=document.getElementById("tpoll-neu-t")?.value||null;
+  if(!datum){toast("Bitte ein Datum für den Vorschlag wählen","err");return;}
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/trainer_poll_slot`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},
+      body:JSON.stringify([{poll_id:Number(pollId),datum,uhrzeit}])});
+    if(sbCheck401(r))return;
+    if(!r.ok&&r.status!==201){toast(sbDeniedMsg(r,"Konnte den Vorschlag nicht eintragen"),"err");return;}
+  }catch(e){toast("Netzwerkfehler","err");return;}
+  toast("Vorschlag eingetragen ✓");
+  tpollRender();
 }
 async function tpollVote(slotId,status){
   try{const r=await fetch(`${SB_URL}/rest/v1/trainer_poll_vote?on_conflict=slot_id,voter`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({slot_id:slotId,status})});if(sbCheck401(r))return;if(!r.ok){toast(sbDeniedMsg(r,"Konnte nicht abstimmen"),"err");return;}}catch(e){toast("Netzwerkfehler","err");return;}
@@ -3831,7 +3872,7 @@ const HELP=[
     {t:"Gegner-Datenbank", d:"Adresse, Ansprechpartner, Telefon/WhatsApp, bisherige Spiele.", run:"gegnerManageOpen()"},
     {t:"Pinnwand", d:"Team-Notizen fürs Trainerteam.", go:"team"},
     {t:"Tagebuch", d:"Das Trainertagebuch für den DFB-Basis-Coach – deine persönliche Unterlage, nicht die des Teams. Sechs Felder je Eintrag: Auslöser und Beobachtung sind vorausgefüllt, sobald der Eintrag aus einer Nachbereitung entsteht; Aha und Konsequenz tippst du selbst, und ohne die beiden wird nicht erfasst – ein Eintrag, der sich von allein schreibt, enthält keine Erkenntnis. Dazu optional ein Datum für die erste Umsetzung, ein Beleg und ein Anschluss. Jeder Eintrag gehört zu einem der vier Bausteine des DFB-Entwicklungsmodells (Ich als Trainer, Spiel & Spieler, Organisation, System Fußball); die Liste gruppiert danach und sagt ruhig Bescheid, wenn in einem Baustein seit mehr als drei Wochen nichts steht. Der Weg hinein: nach dem Speichern einer Einheits-Nachbereitung oder eines Spiel-Fazits fragt die App, ob ein Eintrag daraus werden soll – oder hier über „Neuer Eintrag“ für alles außerhalb der App, etwa einen Präsenztag. Weil die Texte später an den Verband gehen, schreibt die Leiste „Kind einfügen“ den Decknamen statt des Namens, und beim Erfassen weist die App auf einen Namen aus dem Kader hin, statt still umzuschreiben. Ausgabe als Markdown, einzeln oder als ganzer Monat, über Kopieren und Teilen – ohne Zugangsdaten und ohne Umweg über einen Server.", go:"tagebuch"},
-    {t:"Trainermeeting", d:"Seit v527 eine eigene Terminart: Du legst ihn wie jeden anderen Termin an („🗓️ Meeting“), und aus dem Termin heraus laufen beide Teile. <b>Wer kann wann:</b> Vorschläge eintragen, das Trainerteam stimmt ab (✓ passt · ? vielleicht · ✗ nicht), und der Vorschlag, bei dem niemand abgesagt hat und die meisten zugesagt haben, wird als „Hier können alle“ hervorgehoben. Wer noch gar nicht geantwortet hat, steht mit Namen dabei – drei Zusagen bei fünf Trainern heißen eben nicht, dass zwei abgesagt haben. Solange deine Stimme fehlt, erinnert dich die Startseite. <b>Was wir besprechen:</b> Themen können alle Trainer sammeln, und zwar von Anfang an, nicht erst wenn der Termin steht. Beim Abhaken fragt die App, was entschieden wurde; der Satz bleibt unter dem Thema stehen. Schreiben kannst du ihn auch später nachtragen – gefragt wird, aber nicht erzwungen, sonst hakt am Ende niemand mehr ab. Was offen blieb, wandert beim nächsten Meeting von selbst mit. Das Protokoll (Besprochenes mit Beschluss, dann das Offene) gibt es als Markdown über Teilen. <b>Wichtig:</b> Diesen Termin sehen nur Trainer. Das erzwingt die Leseregel der Datenbank, nicht ein Filter in der App – alle anderen Terminarten sind für jeden lesbar, auch ohne Anmeldung, weil Turnierseite und Stadionheft davon leben. Die Kachel „Trainer-Meeting“ unter Orga bleibt als Übersicht über alle Meetings.", run:"trainerMeetingOpen()"},
+    {t:"Trainermeeting", d:"Seit v527 eine eigene Terminart: Du legst ihn wie jeden anderen Termin an („🗓️ Meeting“). Anders als bei den anderen Terminarten fragt das Formular nicht nach einem festen Datum, sondern nach <b>Vorschlag 1 bis 3</b> – Vorschlag 1 steht bis zur Entscheidung als vorläufiges Datum im Kalender, erkennbar an „Termin steht noch nicht“. Nach dem Anlegen geht es direkt weiter, und aus dem Termin heraus laufen beide Teile. <b>Wer kann wann:</b> weitere Vorschläge eintragen, das Trainerteam stimmt ab (✓ passt · ? vielleicht · ✗ nicht), und der Vorschlag, bei dem niemand abgesagt hat und die meisten zugesagt haben, wird als „Hier können alle“ hervorgehoben. Wer noch gar nicht geantwortet hat, steht mit Namen dabei – drei Zusagen bei fünf Trainern heißen eben nicht, dass zwei abgesagt haben. Solange deine Stimme fehlt, erinnert dich die Startseite. <b>Was wir besprechen:</b> Themen können alle Trainer sammeln, und zwar von Anfang an, nicht erst wenn der Termin steht. Beim Abhaken fragt die App, was entschieden wurde; der Satz bleibt unter dem Thema stehen. Schreiben kannst du ihn auch später nachtragen – gefragt wird, aber nicht erzwungen, sonst hakt am Ende niemand mehr ab. Was offen blieb, wandert beim nächsten Meeting von selbst mit. Das Protokoll (Besprochenes mit Beschluss, dann das Offene) gibt es als Markdown über Teilen. <b>Wichtig:</b> Diesen Termin sehen nur Trainer. Das erzwingt die Leseregel der Datenbank, nicht ein Filter in der App – alle anderen Terminarten sind für jeden lesbar, auch ohne Anmeldung, weil Turnierseite und Stadionheft davon leben. Die Kachel „Trainer-Meeting“ unter Orga bleibt als Übersicht über alle Meetings.", run:"trainerMeetingOpen()"},
     {t:"Saisonstart-Check", d:"Sechs Schritte für den Übergang in die neue Saison – Wrapped, Urkunden, Kader, Trainings-Serie, Eltern-Einladung, Ansage. Er steht Juni bis September im Orga-Menü; mit „Saisonstart abschließen“ blendest du ihn bis zur nächsten Saison aus. Von hier aus geht er immer auf.", run:"saisonStartOpen()"},
     {t:"Teamkasse", d:"Kassen-Link hinterlegen (kein Geld in der App).", run:"kasseOpen()"},
     {t:"Fundbüro", d:"Liegengebliebenes verwalten.", run:"fundbueroOpen()"},
