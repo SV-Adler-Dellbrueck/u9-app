@@ -1142,6 +1142,72 @@ async function elternMatchGrussLoad(kids){
   });
   slot.innerHTML=cards.join("");
 }
+
+/* ═══ „Das kann dein Kind jetzt" (Paket 1, doku/auftrag-adler-luecken) ═══════════
+   Der Rückblick darüber erzählt, wie ein Spieltag AUSGING. Was das Kind NEU KANN,
+   stand im Eltern-Bereich nirgends – obwohl genau das die Zusage des Konzepts ist:
+   „Ihr seht, woran wir arbeiten, nicht nur, wie es ausging."
+
+   Zwei Quellen, ein Satz je Eintrag:
+   · erreichte Entwicklungsziele – der Text ist der des Trainers, also schon der,
+     den das Kind in „Meine Mission" liest; er wird hier NICHT umformuliert.
+   · neu vergebene Technik-Abzeichen – über die stabile Kennung in einen Namen
+     übersetzt (TECHNIK_ABZEICHEN in md-abzeichen.js).
+
+   Die harte Grenze: keine Zahl, keine Note, kein anderes Kind. Deshalb kommt nichts
+   davon aus einer Tabelle, sondern aus der RPC `kann_jetzt_public` – sie gibt nur
+   Text und Zeitpunkt heraus und prüft den Zugriff selbst
+   (supabase/migrations/20260913_kann_jetzt_public.sql).
+
+   Gibt es nichts Neues, bleibt die Karte WEG. Ein „noch nichts erreicht" wäre das
+   Gegenteil der Absicht – es würde eine Lücke behaupten, wo nur nichts zu melden ist. */
+const KANN_JETZT_MAX=3;
+/* Dasselbe Fenster wie beim Rückblick darüber. Die App kennt bewusst EINEN Zeitraum
+   („Bist du dabei?", offene Rückmeldungen, Rückblick) statt drei verschiedener. */
+function kannJetztAbzeichenText(kennung){
+  const liste=(typeof TECHNIK_ABZEICHEN!=="undefined")?TECHNIK_ABZEICHEN:null;
+  const a=liste?liste.find(x=>x.id===kennung):null;
+  /* Unbekannte Kennung (Abzeichen umbenannt oder Modul noch nicht da): lieber ein
+     allgemeiner Satz als eine rohe Kennung wie „ab_jonglier" im Eltern-Bereich. */
+  if(!a)return {emo:"🎖️", text:"Ein neues Technik-Abzeichen geschafft"};
+  return {emo:a.emo||"🎖️", text:esc(a.name)+" geschafft"};
+}
+async function kannJetztHolen(spielerId,tage){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/kann_jetzt_public`,{method:"POST",
+      headers:{...sbAuthHeaders(),'Content-Type':'application/json'},
+      body:JSON.stringify({p_kind_id:spielerId,p_tage:tage||GRUSS_MAX_TAGE})});
+    if(!r.ok)return [];
+    const rows=await r.json();
+    return Array.isArray(rows)?rows:[];
+  }catch(e){ return []; }   // offline: die Karte entfällt still, sie ist kein Pflichtinhalt
+}
+async function elternKannJetztLoad(kids){
+  const slot=document.getElementById("kann-jetzt-slot"); if(!slot)return;
+  slot.innerHTML="";
+  const karten=[];
+  for(const k of (kids||[])){
+    const rows=(await kannJetztHolen(k.spieler_id)).slice(0,KANN_JETZT_MAX);
+    if(!rows.length)continue;                       // ohne Neues keine Karte, kein Platzhalter
+    const zeilen=rows.map(row=>{
+      const ist=(row.art==="abzeichen")?kannJetztAbzeichenText(row.text)
+                                      :{emo:"🎯", text:esc(String(row.text||"").trim())};
+      if(!ist.text)return "";
+      return `<div style="display:flex;gap:9px;align-items:flex-start;padding:7px 0">
+        <span style="font-size:17px;line-height:1.35;flex:none">${ist.emo}</span>
+        <span style="font-size:13.5px;line-height:1.45;color:#1a1a2e;overflow-wrap:anywhere">${ist.text}</span>
+      </div>`;
+    }).filter(Boolean).join("");
+    if(!zeilen)continue;
+    const kd=k.kader||{};
+    karten.push(`<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 2px 10px rgba(0,0,0,.05);border-left:3px solid #16a34a">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#94a3b8">Neu dazugekommen</div>
+      <div style="font-weight:800;font-size:15px;margin-top:2px">🌱 Das kann ${esc(kd.name||"dein Kind")} jetzt</div>
+      <div style="margin-top:6px">${zeilen}</div>
+    </div>`);
+  }
+  slot.innerHTML=karten.join("");
+}
 // R7: DSGVO-Datenexport – sammelt die vom Elternteil lesbaren Daten des eigenen Kindes.
 async function elternDataExport(btn){
   if(btn)btn.disabled=true;
