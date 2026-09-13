@@ -22,10 +22,13 @@ const EI_SCHEMA="adler-einheit/1";
 /* Bekannte Phasen-Typen. „Ausklang“ kommt als typ „abschluss“ mit eigenem Label – ein
    eigener Typ würde die Gruppenlogik in tpPlanEntries() durchschneiden, wo nur
    warmup, abschluss und tw als gruppenlos gelten. */
-const EI_TYPEN=["warmup","main","abschluss","tw","individual"];
+/* Paket 3: „spielform" und „uebungsform" kommen dazu. „main" bleibt gültig und wird wie
+   eine Spielform gewertet – bestehende Vorlagen laden unverändert. Ein unbekannter Typ
+   wird weiterhin in _evPruefung/_eiPruefung abgewiesen, BEVOR etwas geschrieben wird. */
+const EI_TYPEN=["warmup","main","spielform","uebungsform","abschluss","tw","individual"];
 /* Farben stehen NICHT im JSON: sie gehören zur Darstellung, nicht zur Einheit.
    Der zweite und jeder weitere Hauptteil bekommt Violett wie in TP_PHASEN. */
-const EI_FARBEN={warmup:"#059669",main:"#1a56db",main_weiter:"#7c3aed",abschluss:"#c2410c",tw:"#854d0e",individual:"#0e7490"};
+const EI_FARBEN={warmup:"#059669",main:"#1a56db",spielform:"#1a56db",uebungsform:"#7c3aed",main_weiter:"#7c3aed",abschluss:"#c2410c",tw:"#854d0e",individual:"#0e7490"};
 let _eiGeprueft=null;      // {daten, bloecke:[{...,neu:bool}], planDa:bool}
 
 function einheitImportClose(){ document.getElementById("ei-modal")?.remove(); _eiGeprueft=null; }
@@ -57,7 +60,8 @@ function einheitImportOpen(){
 
 /* Farbe aus dem Typ – der wievielte Hauptteil es ist, entscheidet über Blau oder Violett. */
 function _eiFarbe(typ,mainNr){
-  if(typ==="main")return mainNr<=1?EI_FARBEN.main:EI_FARBEN.main_weiter;
+  if(typ==="uebungsform")return EI_FARBEN.uebungsform;
+  if(typ==="main"||typ==="spielform")return mainNr<=1?EI_FARBEN.main:EI_FARBEN.main_weiter;
   return EI_FARBEN[typ]||EI_FARBEN.main;
 }
 /* Die Übungs-Auswahl ist im Trainingsplan je Phase GEFILTERT (tpFilteredOpts in boot.js):
@@ -71,7 +75,7 @@ const EI_KAT_PHASE={warmup:"aufwaermen",tw:"torwart",individual:"individual"};
 function _eiKatPasst(typ,kat){
   const k=String(kat||"technik");
   if(EI_KAT_PHASE[typ])return k===EI_KAT_PHASE[typ];
-  if(typ==="main")return !["aufwaermen","torwart","individual"].includes(k);
+  if(typ==="main"||typ==="spielform"||typ==="uebungsform")return !["aufwaermen","torwart","individual"].includes(k);
   return true;
 }
 /* v511 – Die Kategorien, die es wirklich gibt: dieselben zehn, die der Übungs-Editor
@@ -244,7 +248,7 @@ async function einheitImportUebernehmen(){
     // 3) Phasen bauen
     let mainNr=0;
     const slots=bloecke.map(b=>{
-      if(b.typ==="main")mainNr++;
+      if(b.typ==="main"||b.typ==="spielform")mainNr++;
       return {label:String(b.label).trim(),dauer:Number(b.dauer),farbe:_eiFarbe(b.typ,mainNr),typ:b.typ};
     });
     // 4) Übungen zuordnen – der Index wird JETZT über den Namen aufgelöst.
@@ -458,7 +462,20 @@ const EI_TAGS=["wenig-platz","vor-spieltag","halle","schlechtwetter"];
 /* Konzept §2: „Spielformen" sind die Blöcke, in denen wirklich gespielt wird –
    Hauptteil und Abschluss. Das Warm-up zählt nicht mit, das Torwart- und
    Einzeltraining läuft parallel und verlängert die Einheit nicht (TP_PARALLEL_TYPEN). */
-const EI_SPIELFORM_TYPEN=["main","abschluss"];
+/* ACHTUNG – hier stehen ZWEI Zahlen nebeneinander, die leicht verwechselt werden:
+
+   · Die NETTOSPIELZEIT (tpNettoMinuten in boot.js, Paket 3) ist die Zusage aus der
+     Trainingsphilosophie: nur Spielform-Blöcke, Abschluss ausdrücklich NICHT
+     (Abnahme 3 des Auftragspakets). Diese Zahl steht im Trainingsplan und in der Woche.
+
+   · Die Summe HIER ist etwas anderes: die Obergrenze, gegen die der vom Autor einer
+     Vorlage EINGETRAGENE Wert `netto_spielform_min` auf Plausibilität geprüft wird.
+     Dafür zählen alle Blöcke, in denen wirklich gespielt wird – und das Abschlussspiel
+     ist freies Spiel. Nähme man es hier heraus, meldete die App bei jeder bestehenden
+     Vorlage „netto kann nicht größer sein als brutto“, obwohl an ihr nichts falsch ist.
+
+   Die Typen sind nur um „spielform“ erweitert; „uebungsform“ bleibt draußen. */
+const EI_SPIELFORM_TYPEN=["main","spielform","abschluss"];
 /* Konzept §2: brutto rund 50 Minuten, netto 35 bis 40 – der Abzug für Erklären,
    Bälle, Trinken und Wechseln liegt also bei rund einem Viertel. Außerhalb dieses
    Bandes stimmt eine der beiden Zahlen nicht; gesagt wird es als HINWEIS, nicht als
@@ -478,24 +495,27 @@ let _evGeprueft=null;      // {vorlagen:[{...,neu:bool,brutto,hinweis}]}
      Ungenauigkeit; stattdessen nennt der Hinweis diese Blöcke beim Namen.
    Ohne geladenes Overlay (Welle 1 noch nicht durch, kein Netz) verhält sich alles
    wie vorher. */
-function _evBlockArt(b){
-  if(!b||!EI_SPIELFORM_TYPEN.includes(b.typ))return "aus";      // zählt gar nicht
-  if(b.typ==="abschluss")return "spiel";                         // freies Spiel
-  const un=String(b.uebung_name||"").trim();
-  if(!un)return "offen";
-  const f=(typeof tpAllForms==="function"?tpAllForms():[]).find(x=>x&&x.name===un);
-  if(!f)return "offen";
-  const a=(typeof _tpArt==="function")?_tpArt(f):"";
-  return a||"offen";
-}
+/* Paket 3 löst den Widerspruch auf, der mit v533 entstanden wäre: dort entschied die
+   Einordnung der ÜBUNG über die Nettozeit, hier entscheidet der BLOCKTYP. Zwei
+   Wahrheiten für dieselbe Zahl wären schlimmer als jede von beiden.
+
+   Geregelt ist es jetzt so: Der Blocktyp rechnet – er ist die Erklärung des Trainers
+   über diesen Block. Die Einordnung der Übung rechnet NICHT mit, sie widerspricht nur:
+   Ein Block, der als Spielform zählt, dessen Übung der Trainer aber als Übungsform
+   eingeordnet hat, wird im Hinweis benannt. Das ist genau der Fall, in dem die Zahl zu
+   hoch steht – gesagt, statt still korrigiert. */
 function _evSpielformSumme(bloecke){
-  // „offen" zählt wie bisher mit – nur eine ausdrückliche Übungsform fällt heraus.
-  return (bloecke||[]).reduce((a,b)=>a+(_evBlockArt(b)==="uebung"?0:(EI_SPIELFORM_TYPEN.includes(b&&b.typ)?Number(b.dauer)||0:0)),0);
+  return (bloecke||[]).reduce((a,b)=>a+(EI_SPIELFORM_TYPEN.includes(b&&b.typ)?Number(b.dauer)||0:0),0);
 }
-// Welche Blöcke sind noch nicht eingeordnet? Für den ehrlichen Zusatz im Hinweis.
-function _evOffeneBloecke(bloecke){
-  return (bloecke||[]).filter(b=>_evBlockArt(b)==="offen"&&b.typ!=="abschluss")
-                      .map(b=>String(b.uebung_name||b.label||"Block").trim());
+// Zählt als Spielform, trägt aber eine als Übungsform eingeordnete Übung.
+function _evUnstimmigeBloecke(bloecke){
+  return (bloecke||[]).filter(b=>{
+    if(!b||!EI_SPIELFORM_TYPEN.includes(b.typ))return false;
+    const un=String(b.uebung_name||"").trim(); if(!un)return false;
+    const f=(typeof tpAllForms==="function"?tpAllForms():[]).find(x=>x&&x.name===un);
+    if(!f)return false;
+    return ((typeof _tpArt==="function")?_tpArt(f):"")==="uebung";
+  }).map(b=>String(b.uebung_name||b.label||"Block").trim());
 }
 /* Gibt den Hinweis-Text zurück oder "" – nie einen Fehler. */
 function _evNettoHinweis(v){
@@ -505,8 +525,8 @@ function _evNettoHinweis(v){
   const anteil=netto/brutto;
   /* Wo die Rechnung unsicher ist, wird sie benannt statt versteckt: eine Übung ohne
      Einordnung zählt mit, könnte aber eine Übungsform sein und die Zahl verfälschen. */
-  const offen=_evOffeneBloecke(v&&v.bloecke);
-  const dazu=offen.length?` Noch nicht als Übungs- oder Spielform eingeordnet und deshalb mitgezählt: ${offen.join(", ")}.`:"";
+  const unstimmig=_evUnstimmigeBloecke(v&&v.bloecke);
+  const dazu=unstimmig.length?` Zählt als Spielform, die Übung ist aber als Übungsform eingeordnet: ${unstimmig.join(", ")}.`:"";
   if(anteil>EI_NETTO_BAND[1])return `${netto} Min. netto bei ${brutto} Min. Spielform-Blöcken – netto kann nicht größer sein als brutto.`+dazu;
   if(anteil<EI_NETTO_BAND[0])return `${netto} Min. netto bei ${brutto} Min. Spielform-Blöcken – das ist weniger als die Hälfte; laut Konzept bleiben rund drei Viertel übrig.`+dazu;
   return "";
@@ -783,7 +803,7 @@ function vorlageUebernehmenRender(){
   const vorschau=v=>{
     const bl=Array.isArray(v.bloecke)?v.bloecke:[];
     let mainNr=0;
-    const zeile=b=>{ if(b.typ==="main")mainNr++;
+    const zeile=b=>{ if(b.typ==="main"||b.typ==="spielform")mainNr++;
       return `<div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--surface2)">
         <span style="font-size:10px;font-weight:800;color:#fff;background:${_eiFarbe(b.typ,mainNr)};border-radius:6px;padding:3px 7px;white-space:nowrap">${Number(b.dauer)} Min.</span>
         <span style="min-width:0"><b style="font-size:12.5px">${esc(b.label)}</b>
@@ -827,7 +847,7 @@ async function vorlageUebernehmenSetzen(){
   const bl=Array.isArray(v.bloecke)?v.bloecke:[];
   let mainNr=0;
   const slots=bl.map(b=>{
-    if(b.typ==="main")mainNr++;
+    if(b.typ==="main"||b.typ==="spielform")mainNr++;
     return {label:String(b.label||"").trim(),dauer:Number(b.dauer),farbe:_eiFarbe(b.typ,mainNr),typ:b.typ};
   });
   const plan=[];

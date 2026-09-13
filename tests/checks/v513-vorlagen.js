@@ -115,7 +115,7 @@ module.exports = async function (h) {
       nettoOk: _evNettoHinweis({ netto_spielform_min: 38, bloecke: [{ typ: "main", dauer: 33 }, { typ: "abschluss", dauer: 18 }] }),
       nettoZuHoch: _evNettoHinweis({ netto_spielform_min: 80, bloecke: [{ typ: "main", dauer: 33 }, { typ: "abschluss", dauer: 18 }] }),
       nettoZuTief: _evNettoHinweis({ netto_spielform_min: 10, bloecke: [{ typ: "main", dauer: 33 }, { typ: "abschluss", dauer: 18 }] }),
-      // Warm-up zählt nicht als Spielform
+      // Warm-up und Torwart zählen nicht als Spielform; das Abschlussspiel schon (freies Spiel)
       summeOhneWarmup: _evSpielformSumme([{ typ: "warmup", dauer: 10 }, { typ: "main", dauer: 11 }, { typ: "tw", dauer: 10 }, { typ: "abschluss", dauer: 18 }]),
       nettoFehlerfrei: _evPruefung(JSON.stringify(basis({ netto_spielform_min: 999 }))).fehler.length
     };

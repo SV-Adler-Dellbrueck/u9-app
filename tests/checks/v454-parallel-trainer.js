@@ -24,7 +24,7 @@ module.exports = async function (h) {
     // Uebung in Feld 1 des Hauptteils 1 waehlen
     const sel = document.getElementById("tp-form-1-0"); const opt = [...sel.options].find(o => o.value); sel.value = opt.value; tpOnSelectChange(sel); out.gewaehlt = opt.value;
     // Torwart-Block dazu (TP_ADD_OPTS[1]), an Hauptteil 1 haengen, Trainer 2 dorthin
-    tpDoAddSlot(1);
+    tpDoAddSlot("tw");
     const twIdx = tpSlots.findIndex(x => x.typ === "tw");
     out.twDauerBeimAnlegen = tpSlots[twIdx].dauer;          // wurde an den LETZTEN Hauptteil gehaengt (20)
     tpSlots[twIdx].parallelZu = 1; tpRenderTimeline();

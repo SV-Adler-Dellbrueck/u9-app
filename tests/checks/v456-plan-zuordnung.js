@@ -25,9 +25,9 @@ module.exports = async function (h) {
     tpSlots.length = 0;
     tpSlots.push({ label: "Ankommen & Aufwärmen", dauer: 10, farbe: "#059669", typ: "warmup" }, { label: "Hauptteil 1", dauer: 20, farbe: "#1a56db", typ: "main" }, { label: "Hauptteil 2", dauer: 20, farbe: "#7c3aed", typ: "main" });
     tpRenderTimeline();
-    tpDoAddSlot(1); const tw = tpSlots.findIndex(x => x.typ === "tw"); tpSlots[tw].parallelZu = 1; tpRenderTimeline();
+    tpDoAddSlot("tw"); const tw = tpSlots.findIndex(x => x.typ === "tw"); tpSlots[tw].parallelZu = 1; tpRenderTimeline();
     tpSetCoach(`tp-form-${tw}-0`, T[3]);                                   // Finn an den Torwart-Block
-    tpDoAddSlot(2); const ind = tpSlots.findIndex(x => x.typ === "individual"); tpSlots[ind].parallelZu = 2; tpRenderTimeline();
+    tpDoAddSlot("individual"); const ind = tpSlots.findIndex(x => x.typ === "individual"); tpSlots[ind].parallelZu = 2; tpRenderTimeline();
     document.querySelector(`.tp-tw-player[data-slot="${tw}"][value="${K[2]}"]`).checked = false;   // ein Torhueter bleibt im Feld
     const sel = document.getElementById(`tp-ind-player-${ind}`); sel.value = K[5]; tpIndPlayerChange(ind);
     tpSetCoach("tp-form-1-1", T[2]);                                       // Feld 2 von Hand an Trainer 3

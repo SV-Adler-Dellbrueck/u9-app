@@ -965,6 +965,50 @@ function tpFilteredOpts(typ,kat){
    angehängt und zählte voll auf die Gesamtzeit („85 von 75 Min. – zu lang!"), obwohl
    parallel trainiert wird. Beide Typen laufen jetzt durch dieselben Weichen. */
 const TP_PARALLEL_TYPEN=["individual","tw"];
+/* ═══ Blocktypen: Spielform und Übungsform (Paket 3) ══════════════════════════
+   Die Trainingsphilosophie Deutschland rechnet in NETTOSPIELZEIT – Minuten, in denen
+   wirklich gespielt wird. Bis hierher liefen Spielform und Übungsform beide als
+   Blocktyp „main"; die App konnte also gar nicht wissen, welcher Block welcher ist.
+
+   Zwei Fragen, die vorher eine waren, und jetzt getrennt gestellt werden:
+
+   1. tpIstHauptteil – trägt der Block die volle Planungsmechanik (Gruppen auf Felder,
+      Trainer je Station, Ringtausch, parallele Torwart-/Einzelblöcke)? Das gilt für
+      Spielform UND Übungsform: in beiden stehen Kinder an Stationen.
+      Vorher war das an die Zeichenkette „main" gebunden – ein Block mit einem anderen
+      Typ wurde zwar gezeichnet, verlor beim Speichern aber still seine Trainer und
+      bekam keine Gruppen. Gemessen am gerenderten Plan, nicht vermutet.
+
+   2. tpIstSpielform – zählt der Block auf die Nettospielzeit? Nur Spielform.
+      „main" gilt weiter als Spielform, damit bestehende Pläne und Vorlagen sich nicht
+      ändern. Warm-up, Übungsform und Abschluss zählen NICHT (Abnahme 3 des Pakets).
+
+   Der Abschluss ist damit bewusst draußen, obwohl er freies Spiel ist. Das ist die
+   Vorgabe des Auftraggebers und weicht von der alten Rechnung im Vorlagen-Import ab,
+   die main UND abschluss zusammenzählte. Es gibt jetzt EINE Definition, hier. */
+const TP_HAUPT_TYPEN=["main","spielform","uebungsform"];
+const TP_SPIEL_TYPEN=["main","spielform"];
+function tpIstHauptteil(typ){ return TP_HAUPT_TYPEN.includes(typ||"main"); }
+function tpIstSpielform(typ){ return TP_SPIEL_TYPEN.includes(typ||"main"); }
+/* Nettospielzeit einer Einheit: die Summe der Spielform-Blöcke. Parallele Blöcke
+   (Torwart, Einzeltraining) verlängern die Einheit nicht und zählen deshalb nie mit. */
+/* Kennzeichnung am Block. Wort statt Farbe – Farbe darf nie der einzige
+   Bedeutungsträger sein (CLAUDE.md), und die Blockfarbe trägt hier schon die Phase.
+   Ein Block vom alten Typ „main" bleibt unbeschriftet: er ist Bestand, keine
+   Aussage des Trainers, und eine Marke „Spielform" wäre eine Behauptung. */
+function tpTypMarke(typ){
+  const t=typ||"main";
+  if(t!=="spielform"&&t!=="uebungsform")return "";
+  const wort=t==="spielform"?"Spielform":"Übungsform";
+  return ` <span style="font-size:10px;font-weight:800;color:var(--text2);background:var(--surface2);border:var(--border-s);border-radius:6px;padding:1px 6px;white-space:nowrap">${wort}</span>`;
+}
+function tpNettoMinuten(slots){
+  return (slots||[]).reduce((a,s)=>{
+    if(!s||!tpIstSpielform(s.typ))return a;
+    if(typeof tpKannParallel==="function"&&tpKannParallel(s.typ))return a;
+    return a+(Number(s.dauer)||0);
+  },0);
+}
 function tpKannParallel(typ){return TP_PARALLEL_TYPEN.includes(typ||"main");}
 function tpIstParallel(slot){return !!(slot&&tpKannParallel(slot.typ)&&slot.parallelZu!=null&&tpSlots[slot.parallelZu]);}
 function tpParallelIcon(typ){return typ==="tw"?"🧤 ":"🎯 ";}
@@ -1124,7 +1168,7 @@ function tpFelderGruppen(tg,n,weg,versatz){
 function tpVersatz(si){
   const slot=tpSlots[si]; if(!slot)return 0;
   if(slot.versatz!=null)return Number(slot.versatz)||0;
-  let n=0; for(let i=0;i<si;i++) if(((tpSlots[i]||{}).typ||"main")==="main")n++;
+  let n=0; for(let i=0;i<si;i++) if(tpIstHauptteil((tpSlots[i]||{}).typ))n++;
   return n;
 }
 /* „⇄ weiterrücken" am Hauptteil. Setzt den Versatz fest – ab dann gilt er, auch wenn
@@ -1409,7 +1453,7 @@ function tpRenderTimeline(){
   });
   // Altbestand + neu angelegte Blöcke ohne Ziel: an den ersten Hauptteil hängen (umstellbar
   // über „Läuft parallel zu"). Gilt seit v383 auch für Torwart-Blöcke.
-  tpSlots.forEach(s=>{if(tpKannParallel(s.typ)&&s.parallelZu==null){const mi=tpSlots.findIndex(x=>(x.typ||"main")==="main");if(mi>=0)s.parallelZu=mi;}});
+  tpSlots.forEach(s=>{if(tpKannParallel(s.typ)&&s.parallelZu==null){const mi=tpSlots.findIndex(x=>tpIstHauptteil(x.typ));if(mi>=0)s.parallelZu=mi;}});
   // Parallele Bloecke dauern so lange wie ihr Hauptteil – auch im gespeicherten Plan
   tpSlots.forEach(s=>{if(tpIstParallel(s))s.dauer=tpSlots[s.parallelZu].dauer;});
   let acc=0; const startsArr=tpSlots.map(s=>{const st0=acc;if(!tpIstParallel(s))acc+=s.dauer;return st0;});
@@ -1434,38 +1478,38 @@ function tpRenderTimeline(){
        existieren. Sagt ein Trainer nach der Auslosung ab, fiel sonst eine komplette
        Gruppe aus Anzeige und Trainingsstart – die Kinder tauchten nirgends mehr auf. */
     const tgAnz=((typeof tgFor==="function"&&tgFor())||{}).gruppen?.length||0;
-    const gebunden=typ==="main"?tpParallelTrainer(si):new Set();
+    const gebunden=tpIstHauptteil(typ)?tpParallelTrainer(si):new Set();
     const trainersAlle=tpGetCheckedTrainers();
     const trainers=trainersAlle.filter(t=>!gebunden.has(t));
     /* Haengt ein Trainer am Torwart-/Einzelblock, zaehlen fuer diesen Hauptteil nur die
        freien Trainer – ohne die Untergrenze „Gruppenzahl", denn die ueberzaehligen Gruppen
        spielen hier bei den anderen Feldern mit (tpFelderGruppen). Sonst gilt weiter: nie
        weniger Felder als Gruppen, damit bei einer Absage keine Gruppe verschwindet. */
-    const weg=(typ==="main"&&Array.isArray(slot.weg))?slot.weg:[];
-    const basisFelder=noGroups?1:(typ==="main"&&gebunden.size)?Math.min(Math.max(1,trainers.length),5):Math.min(Math.max(1,trainerCount,tgAnz),5);
+    const weg=(tpIstHauptteil(typ)&&Array.isArray(slot.weg))?slot.weg:[];
+    const basisFelder=noGroups?1:(tpIstHauptteil(typ)&&gebunden.size)?Math.min(Math.max(1,trainers.length),5):Math.min(Math.max(1,trainerCount,tgAnz),5);
     const parallelSlots=Math.max(1,basisFelder-weg.length);   // vom Trainer weggelassene Felder
-    const felderGruppen=(typ==="main"&&typeof tgFor==="function"&&tgFor())?tpFelderGruppen(tgFor(),parallelSlots,weg,tpVersatz(si)):null;
+    const felderGruppen=(tpIstHauptteil(typ)&&typeof tgFor==="function"&&tgFor())?tpFelderGruppen(tgFor(),parallelSlots,weg,tpVersatz(si)):null;
     const filtered=tpFilteredOpts(typ);
     const formOpts=filtered.map(x=>`<option value="${x.i}">${x.f.name} (${x.f.dauer})</option>`).join("");
 
     html+=`<div class="tp-slot" style="border-left:3px solid ${slot.farbe};${parallel?"margin-left:14px;":""}">
       <div class="tp-slot-head">
-        <span class="tp-slot-label">${parallel?tpParallelIcon(typ):""}${slot.label}</span>
+        <span class="tp-slot-label">${parallel?tpParallelIcon(typ):""}${slot.label}${tpTypMarke(typ)}</span>
         <span class="tp-slot-time">${startMin}' – ${endMin}'${parallel?` · parallel zu ${tpSlots[slot.parallelZu].label}`:""}</span>
         ${parallel?"":tpDauerSelect(si,slot)}
         <button class="tp-remove" onclick="tpRemoveSlot(${si})"><i class="ti ti-trash"></i></button>
       </div>`;
     if(parallel){
-      const mains=tpSlots.map((s2,i2)=>({s2,i2})).filter(x=>(x.s2.typ||"main")==="main");
+      const mains=tpSlots.map((s2,i2)=>({s2,i2})).filter(x=>tpIstHauptteil(x.s2.typ));
       html+=`<div class="tp-feld"><label>Läuft parallel zu</label>
         <select onchange="tpSlots[${si}].parallelZu=Number(this.value);tpRenderTimeline()" style="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text)">
           ${mains.map(x=>`<option value="${x.i2}"${slot.parallelZu===x.i2?" selected":""}>${x.s2.label}</option>`).join("")}
         </select></div>`;
     }
-    if(typ==="main"&&(slot.dauer||0)>=15){
+    if(tpIstHauptteil(typ)&&(slot.dauer||0)>=15){
       html+=tpTipp("Nach ~10 Min. variieren oder steigern – 20 Min. dieselbe Übung überfordert die Aufmerksamkeit von 7–9-Jährigen.");
     }
-    if(typ==="main"&&(gebunden.size||weg.length)){
+    if(tpIstHauptteil(typ)&&(gebunden.size||weg.length)){
       const zusammen=(felderGruppen||[]).filter(f=>f.dazu.length).map(f=>`${f.dazu.join(" + ")} spielt bei ${f.emo} ${f.name.split(" + ")[0]} mit`).join(" · ");
       const grund=gebunden.size?`🧤 ${esc([...gebunden].join(", "))} ${gebunden.size===1?"ist":"sind"} beim Torwart-/Einzeltraining`:"";
       const wegText=weg.length?`✕ ${weg.length} Feld${weg.length===1?"":"er"} weggelassen`:"";
@@ -1473,7 +1517,7 @@ function tpRenderTimeline(){
     }
     /* v514: Wer steht in diesem Block an welchem Feld – und der Ringtausch von Hand.
        Sichtbar nur, wenn es überhaupt mehrere Gruppen auf mehreren Feldern gibt. */
-    if(typ==="main"&&felderGruppen&&felderGruppen.length>1){
+    if(tpIstHauptteil(typ)&&felderGruppen&&felderGruppen.length>1){
       const v=tpVersatz(si), eigen=tpSlots[si]&&tpSlots[si].versatz!=null;
       const wer=felderGruppen.map((f,i)=>`${f.emo||"👥"} ${esc((f.name||"").split(" + ")[0])} → Feld ${i+1}`).join(" · ");
       html+=`<div class="tp-ringtausch" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:4px 0 6px">
@@ -1536,7 +1580,7 @@ function tpRenderTimeline(){
         if(tpCoaches[selId]&&gebunden.has(tpCoaches[selId]))delete tpCoaches[selId]; // steht jetzt am Torwart-/Einzelblock
         const vorschlag=(tgg&&tgg.trainer&&!gebunden.has(tgg.trainer))?tgg.trainer:trainers[p];
         if(!tpCoaches[selId]&&!noGroups&&vorschlag)tpCoaches[selId]=vorschlag; // Station dem Gruppen-Trainer zuweisen
-        const isMain=typ==="main";
+        const isMain=tpIstHauptteil(typ);
         // Eine Karte je Station. Frueher stand hier eine einzige Zeile, die am Handy in
         // fuenf Elemente umbrach – man sah nicht mehr, welches Feld zu welcher Gruppe gehoert.
         // Der Trainername stand doppelt: einmal als Etikett, einmal im (funktionslosen) Dropdown.
@@ -1587,6 +1631,7 @@ function tpRenderTimeline(){
   if(typeof tlCheck==="function")tlCheck(); // laufender Trainingsstart? → Bereit-Fenster
   if(typeof tgSync==="function")tgSync();  // Trainingsgruppen vom Server (re-rendert bei Änderung einmal)
   if(typeof tpKgHintAll==="function")tpKgHintAll(); // Kleingruppen-Bedarf initial prüfen
+  if(typeof tpNettoRender==="function")tpNettoRender(); // Paket 3: Nettospielzeit + Wochenstand
 }
 /* G3: Anwesenheits-Prognose – erwartete Kinderzahl fürs gewählte Trainingsdatum aus den
    Zusagen (fix) plus historischer Anwesenheitsquote je Kind (für noch offene). */
@@ -1676,7 +1721,14 @@ function tpSpielformQuote(){
     const m=(sel.id||"").match(/^tp-form-(\d+)-/);
     const d=m&&tpSlots[Number(m[1])]?(tpSlots[Number(m[1])].dauer||0):10;
     gesamt+=d;
-    if(_istSpielform(f))spiel+=d;
+    /* Paket 3: Wo der Trainer den Block ausdrücklich als Spielform oder Übungsform
+       angelegt hat, gilt SEINE Angabe – nicht die Schätzung aus dem Übungstext.
+       Sonst stünde hier ein geratener Prozentsatz neben einer erklärten Minutenzahl,
+       und beide könnten sich widersprechen. Nur wo nichts erklärt ist (Typ „main",
+       Bestand), schätzt _istSpielform weiter wie bisher. */
+    const slotTyp=m&&tpSlots[Number(m[1])]?(tpSlots[Number(m[1])].typ||"main"):"main";
+    const erklaert=(slotTyp==="spielform"||slotTyp==="uebungsform");
+    if(erklaert?slotTyp==="spielform":_istSpielform(f))spiel+=d;
   });
   // Abschluss zählt immer als Spiel (freies Spiel), auch ohne gewählte Übung
   tpSlots.forEach(sl=>{if((sl.typ||"main")==="abschluss"){const belegt=document.querySelector(`[id^="tp-form-${tpSlots.indexOf(sl)}-"]`)?.value;if(!belegt){gesamt+=sl.dauer||0;spiel+=sl.dauer||0;}}});
@@ -1689,6 +1741,89 @@ function tpSfqRender(){
   if(q==null){el.innerHTML="";return;}
   const gut=q>=50;
   el.innerHTML=`⚽ Spielform-Anteil: <b style="color:${gut?"#16a34a":"#b45309"}">${q}%</b>${gut?"":" – DFB/FIFA empfehlen ≥ 50% echtes Spielen (Tore + Gegner + Entscheidungen)"}`;
+}
+/* ═══ Nettospielzeit: Einheit und Woche (Paket 3) ══════════════════════════════
+   Die Trainingsphilosophie Deutschland nennt für U8 bis U16 mindestens 48 Minuten
+   Nettospielzeit PRO WOCHE. Unsere Einheiten haben 75 Minuten brutto und netto 35 bis
+   40 – zwei Einheiten je Woche erfüllen den Richtwert mit Reserve, eine allein nicht.
+   Deshalb steht hier bewusst KEINE Sollvorgabe je Einheit: die Zahl der Einheit
+   informiert, geurteilt wird nur über die Woche.
+
+   Und auch dort nur leise: kein Rot, kein Ausrufezeichen, kein Lob, wenn es reicht.
+   Dasselbe Muster wie der Lückenhinweis im Tagebuch – eine Erinnerung, keine Warnung. */
+const TP_NETTO_STANDARD=48;
+function tpNettoRichtwert(){
+  const w=Number(window._nettoRichtwert);
+  return (isFinite(w)&&w>0)?w:TP_NETTO_STANDARD;
+}
+// Montag bis Sonntag der Woche, in der das Datum liegt (ISO-Woche, Montag zuerst).
+function tpWocheSpanne(datum){
+  const d=new Date(datum+"T00:00:00");
+  if(isNaN(d))return null;
+  const tag=(d.getDay()+6)%7;                 // Montag = 0
+  const mo=new Date(d); mo.setDate(d.getDate()-tag);
+  const so=new Date(mo); so.setDate(mo.getDate()+6);
+  const iso=x=>x.toISOString().slice(0,10);
+  return {von:iso(mo), bis:iso(so)};
+}
+/* Die Woche zählt die GESPEICHERTEN Einheiten, für den gerade offenen Tag aber den
+   Stand auf dem Bildschirm – sonst zeigte die Zeile eine Zahl, die der Trainer
+   gerade veraendert und noch nicht wiedererkennt. */
+async function tpWocheNetto(datum){
+  const sp=tpWocheSpanne(datum); if(!sp)return null;
+  let fremd=0;
+  if(sbToken()){
+    try{
+      const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?datum=gte.${sp.von}&datum=lte.${sp.bis}&select=datum,slots`,{headers:sbAuthHeaders()});
+      if(r.ok){
+        (await r.json()||[]).forEach(row=>{
+          if(!row||row.datum===datum)return;    // der offene Tag kommt vom Bildschirm
+          fremd+=tpNettoMinuten(row.slots||[]);
+        });
+      }
+    }catch(e){}                                  // ohne Netz nur die offene Einheit
+  }
+  return fremd+tpNettoMinuten(tpSlots);
+}
+async function tpNettoRender(){
+  const el=document.getElementById("tp-netto"); if(!el)return;
+  const datum=document.getElementById("tp-date")?.value||"";
+  const netto=tpNettoMinuten(tpSlots);
+  const ziel=tpNettoRichtwert();
+  const zeile=(inhalt)=>`<div style="font-size:12px;color:var(--text2);line-height:1.5">${inhalt}</div>`;
+  el.innerHTML=zeile(`⚽ Spielform: <b style="color:var(--text)">${netto} Minuten</b>`);
+  if(!datum)return;
+  const woche=await tpWocheNetto(datum);
+  if(woche==null)return;
+  // Reicht die Woche, bleibt es bei der Zahl der Einheit – kein Lob (Vorgabe des Pakets).
+  const knopf=`<button onclick="tpRichtwertAendern()" title="Richtwert ändern" style="min-height:44px;border:none;background:transparent;color:var(--text3);font-family:inherit;font-size:11.5px;text-decoration:underline;cursor:pointer;padding:0 4px">Richtwert ${ziel} ändern</button>`;
+  if(woche<ziel){
+    el.innerHTML=zeile(`⚽ Spielform: <b style="color:var(--text)">${netto} Minuten</b>`)
+      +zeile(`Diese Woche ${woche} von ${ziel} Minuten Spielform. ${knopf}`);
+  }else{
+    el.innerHTML=zeile(`⚽ Spielform: <b style="color:var(--text)">${netto} Minuten</b> · diese Woche ${woche} Minuten ${knopf}`);
+  }
+}
+/* Abnahme 6: der Richtwert ist änderbar, ohne dass jemand Code anfasst. Er wird dort
+   gepflegt, wo er wirkt – ein eigener Einstellungsbildschirm auf Vorrat wäre ein
+   Bildschirm mehr, den niemand findet. */
+async function tpRichtwertAendern(){
+  if(!sbToken()){toast("Bitte als Trainer anmelden","err");return;}
+  const jetzt=tpNettoRichtwert();
+  const ein=prompt(`Richtwert Nettospielzeit je Woche in Minuten.\n\nTrainingsphilosophie Deutschland: 48 für U8 bis U16, ab U17 sind es 32.`,String(jetzt));
+  if(ein==null)return;
+  const wert=Math.round(Number(String(ein).replace(",","."))); 
+  if(!isFinite(wert)||wert<1||wert>600){toast("Bitte eine Zahl zwischen 1 und 600","err");return;}
+  window._nettoRichtwert=wert;
+  tpNettoRender();
+  try{
+    if(window._uebungMetaId==null)await uebungMetaLoad();
+    if(window._uebungMetaId!=null){
+      const r=await fetch(`${SB_URL}/rest/v1/team_config?id=eq.${window._uebungMetaId}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify({netto_richtwert:wert})});
+      if(r.ok){toast("Richtwert gespeichert ✓");return;}
+      toast(sbDeniedMsg(r,"Konnte nicht speichern"),"err");
+    }
+  }catch(e){toast("Kein Netz – Richtwert nur auf diesem Gerät","err");}
 }
 function tpKgHintAll(){
   document.querySelectorAll("[id^='tp-kg-']").forEach(slotEl=>{
@@ -1803,7 +1938,7 @@ function tpAddSlot(){
      „Abschlussspiel · 15 Min.", eingefuegt wurden 20, und aus „Torwart-Training" wurde in
      der Leiste „Torwart-Spielen (rotierend)". Jetzt beschreibt TP_ADD_OPTS beides. */
   const opts=TP_ADD_OPTS;
-  let btns=opts.map((o,i)=>`<button onclick="tpDoAddSlot(${i});this.closest('div[style*=fixed]').remove()" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 12px;border:1px solid var(--rand-bedien);border-left:3px solid ${o.farbe};border-radius:var(--r);background:var(--surface);cursor:pointer;font-family:inherit;font-size:12px;text-align:left"><span style="font-size:18px">${o.icon}</span><div><strong>${o.label}</strong><br><span style="font-size:10px;color:var(--text2)">${tpKannParallel(o.typ)?"parallel zum Hauptteil, gleiche Dauer":o.dauer+" Min."}</span></div></button>`).join("");
+  let btns=opts.map((o,i)=>`<button onclick="tpDoAddSlot('${o.typ}');this.closest('div[style*=fixed]').remove()" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 12px;border:1px solid var(--rand-bedien);border-left:3px solid ${o.farbe};border-radius:var(--r);background:var(--surface);cursor:pointer;font-family:inherit;font-size:12px;text-align:left"><span style="font-size:18px">${o.icon}</span><div><strong>${o.label}</strong><br><span style="font-size:10px;color:var(--text2)">${tpKannParallel(o.typ)?"parallel zum Hauptteil, gleiche Dauer":o.dauer+" Min."}</span></div></button>`).join("");
   modal.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:320px;width:100%">
     <div style="font-size:13px;font-weight:700;margin-bottom:10px">Phase hinzufügen</div>
     <div style="display:flex;flex-direction:column;gap:6px">${btns}</div>
@@ -1813,7 +1948,12 @@ function tpAddSlot(){
 /* EINE Quelle fuer den Hinzufuegen-Dialog UND das tatsaechliche Einfuegen: Beschriftung,
    Dauer und Farbe muessen dasselbe sagen wie das, was hinterher in der Leiste steht. */
 const TP_ADD_OPTS=[
-  {label:"Hauptteil",dauer:20,farbe:"#1a56db",typ:"main",icon:"⚽"},
+  /* Paket 3: „Hauptteil" heißt jetzt beim Namen, was er ist. Der alte Typ „main" bleibt
+     gültig und wird wie eine Spielform gewertet – bestehende Pläne ändern sich nicht –,
+     aber neu angelegt wird ausdrücklich das eine oder das andere. Sonst stünden zwei
+     Knöpfe für dieselbe Sache im Dialog. */
+  {label:"Spielform",dauer:20,farbe:"#1a56db",typ:"spielform",icon:"⚽"},
+  {label:"Übungsform",dauer:15,farbe:"#7c3aed",typ:"uebungsform",icon:"🔁"},
   {label:"Torwart-Spielen (rotierend)",dauer:15,farbe:"#854d0e",typ:"tw",icon:"🧤"},
   {label:"Individual-Training",dauer:15,farbe:"#0e7490",typ:"individual",icon:"🎯"},
   {label:"Aufwärmen",dauer:10,farbe:"#059669",typ:"warmup",icon:"🔥"},
@@ -1837,13 +1977,18 @@ function tpSetDauer(si,wert){
   tpSlots.forEach(s=>{if(tpKannParallel(s.typ)&&s.parallelZu===si)s.dauer=tpSlots[si].dauer;}); // Torwart/Einzel laufen genauso lang
   tpRenderTimeline();
 }
+/* Angesprochen wird der Blocktyp beim NAMEN, nicht über seine Position im Dialog.
+   Die Position hat sich mit Paket 3 verschoben (Spielform und Übungsform kamen dazu) –
+   wer „Nummer 1" sagte, meinte plötzlich etwas anderes. Die Zahl bleibt gültig, damit
+   nichts bricht, aber der Dialog übergibt den Typ. */
 function tpDoAddSlot(idx){
-  const o=TP_ADD_OPTS[idx];
+  const o=(typeof idx==="string")?TP_ADD_OPTS.find(x=>x.typ===idx):TP_ADD_OPTS[idx];
+  if(!o)return;
   const {icon,...ohneIcon}=o;   // das Symbol ist Dialog-Schmuck und hat im Plan nichts zu suchen
   const neu={...ohneIcon};
   // Torwart/Individual hängen sich parallel an den letzten Hauptteil (PO: nie ans Ende der Kette)
   if(tpKannParallel(neu.typ)){
-    let mi=-1; tpSlots.forEach((s,i)=>{if((s.typ||"main")==="main")mi=i;});
+    let mi=-1; tpSlots.forEach((s,i)=>{if(tpIstHauptteil(s.typ))mi=i;});
     if(mi>=0){neu.parallelZu=mi;neu.dauer=tpSlots[mi].dauer;}   // gleiche Dauer wie der Hauptteil
   }
   tpSlots.push(neu);
@@ -2213,7 +2358,7 @@ function tpSlotsMitZuordnung(){
       const t=tpCoaches[`tp-form-${si}-0`]; if(t)o.trainer=t;
       if(typ==="tw"){const an=[...document.querySelectorAll(`.tp-tw-player[data-slot="${si}"]`)]; if(an.length)o.tw=ids(an.filter(c=>c.checked).map(c=>c.value));}
       else{const k=document.getElementById(`tp-ind-player-${si}`)?.value; if(k)o.kind=id(k);}
-    }else if(typ==="main"){
+    }else if(tpIstHauptteil(typ)){
       const c=[]; document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`).forEach((sel,p)=>{c[p]=tpCoaches[sel.id]||"";});
       if(c.some(Boolean))o.coaches=c;
     }
@@ -2383,7 +2528,7 @@ function stTimerStations(){
        (tpFelderGruppen mit tpVersatz), damit Timer und Plan nie auseinanderlaufen. */
     let gruppen=[];
     try{
-      if(((slot.typ||"main")==="main")&&typeof tgFor==="function"&&tgFor()){
+      if(tpIstHauptteil(slot.typ)&&typeof tgFor==="function"&&tgFor()){
         const n=Math.max(1,[...document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`)].length);
         gruppen=tpFelderGruppen(tgFor(),n,(slot.weg||[]),tpVersatz(si)).map((f,i)=>`${f.emo||"👥"} ${(f.name||"").split(" + ")[0]} → Feld ${i+1}`);
       }
@@ -2662,8 +2807,8 @@ async function uebungMetaLoad(){
   if(window._uebungMeta)return window._uebungMeta;
   window._uebungMeta={};
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/team_config?select=id,uebung_meta,uebung_art&limit=1`,{headers:sbAuthHeaders()});
-    if(r.ok){const row=((await r.json())||[])[0];if(row){window._uebungMeta=row.uebung_meta||{};window._uebungArt=row.uebung_art||{};window._uebungMetaId=row.id;}}
+    const r=await fetch(`${SB_URL}/rest/v1/team_config?select=id,uebung_meta,uebung_art,netto_richtwert&limit=1`,{headers:sbAuthHeaders()});
+    if(r.ok){const row=((await r.json())||[])[0];if(row){window._uebungMeta=row.uebung_meta||{};window._uebungArt=row.uebung_art||{};window._uebungMetaId=row.id;if(row.netto_richtwert!=null)window._nettoRichtwert=Number(row.netto_richtwert)||TP_NETTO_STANDARD;}}
   }catch(e){}
   window._uebungArt=window._uebungArt||{};
   return window._uebungMeta;
@@ -2870,7 +3015,7 @@ function _tlSnapshot(){
     if(tpIstParallel(slot))return; // dockt unten an
     const gruppen=[];
     const sels=document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`);
-    const felder=(tg&&tg.gruppen&&(slot.typ||"main")==="main")?tpFelderGruppen(tg,sels.length,slot.weg):null;
+    const felder=(tg&&tg.gruppen&&tpIstHauptteil(slot.typ))?tpFelderGruppen(tg,sels.length,slot.weg):null;
     sels.forEach((s,p)=>{
       const f=s.value?forms[Number(s.value)]:null;
       const tgg=felder?felder[p]:null;
