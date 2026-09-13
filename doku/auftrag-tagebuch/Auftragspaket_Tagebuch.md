@@ -2,6 +2,14 @@
 
 Repo `SV-Adler-Dellbrueck/u9-app`, Stand 13.09.2026. Gilt zusammen mit `CLAUDE.md`.
 
+> **Umgesetzt mit v526.** Geprüft am 13.09.2026 gegen den Stand v537: Tabelle
+> `tagebuch_eintrag` samt RLS und Sicherung, Modul `md-tagebuch.js` mit allen acht
+> genannten Funktionen, beide Einstiege, Ansicht mit Lückenhinweis, Deckname und
+> Namensprüfung, Einzel- und Monatsexport. Alle zehn Abnahmekriterien erfüllt; die
+> Prüffälle stehen in `tests/checks/v526-tagebuch.js`. Der Nachweis je Kriterium steht
+> unten unter „Abnahme — Stand der Umsetzung". Dieses Paket ist damit geschlossen;
+> Änderungen am Tagebuch laufen künftig über ein neues Paket.
+
 ## Wozu
 
 Charles führt für den DFB-Basis-Coach ein Trainertagebuch. Die Rohdaten dafür entstehen
@@ -149,6 +157,25 @@ Bausteinen sortiert.
 9. Ohne Anmeldung ist die Tabelle weder lesbar noch schreibbar (RLS-Gegenprobe mit dem
    anonymen Schlüssel).
 10. Alle Knöpfe im Modul mindestens 48 px, die Hauptaktion 56 px.
+
+## Abnahme — Stand der Umsetzung (geprüft 13.09.2026)
+
+| # | Zusage | Wo erfüllt |
+|---|---|---|
+| 1 | Knopf nach der Einheits-Nachbereitung, vorausgefüllt | `views.js` → `ebWeiterInsTagebuch`, `md-tagebuch.js` → `tagebuchAusEinheit` |
+| 2 | Speichern ohne `aha`/`konsequenz` abgelehnt, Text bleibt | `tagebuchSpeichern`, dazu `not null` in der Migration |
+| 3 | Derselbe Ablauf aus dem Fazit | `md-fazit.js` → `fzWeiterInsTagebuch`, `tagebuchAusEvent` |
+| 4 | Freier Eintrag ohne Termin | `tagebuchNeu` (`quelle:"frei"`) |
+| 5 | Deckname statt Name, stabil über die Kader-IDs | `tbAliasMap`, `tbAlias`, `tbKindEinfuegen` |
+| 6 | Hinweis bei einem Kader-Vornamen, keine stille Ersetzung | `tbNamensfund`, `tbNamensHinweis`, `tbNamenErsetzen` |
+| 7 | Export im festgelegten Raster | `tbMarkdown`, `tagebuchExport` |
+| 8 | Gruppierung nach Baustein, Lückenhinweis ab 21 Tagen | `tbListeRender`, `TB_LUECKE_TAGE` |
+| 9 | Ohne Anmeldung weder lesbar noch schreibbar | Regel `tagebuch_trainer_all` in der Migration, direkt auf der Datenbank gegengeprüft |
+| 10 | Hauptaktion 56 px, übrige Bedienelemente ab 48 px | am gerenderten DOM gemessen in `tests/checks/v526-tagebuch.js` |
+
+Zusätzlich erfüllt: Eintrag in `PRECACHE`, Trainer-Loader und `MODUL_WACHE`
+(`md-tagebuch.js` → `tagebuchModulDa`), kein Laden im Elternbereich, Tabelle in der
+Sicherung (`views.js`, Tabellenliste), Hilfe-Eintrag und Rundgang.
 
 ## Testfälle für `tests/`
 
