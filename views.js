@@ -910,7 +910,7 @@ async function backupExport(){
   // sammeln, steckt darin Inhalt und nicht nur eine Terminabstimmung.
   // Das Trainingsturnier haengt seit v444 am Termin und liegt in der Datenbank -
   // damit gehoert es in die Sicherung.
-  const tables=["kader","spielerprofile","termine","matchday","blitz_ratings","match_actions","ticker_events","nominierungen","anwesenheit","trainings_eval","event_bewertung",
+  const tables=["kader","spielerprofile","termine","matchday","blitz_ratings","match_actions","ticker_events","nominierungen","anwesenheit","trainings_eval","event_bewertung","tagebuch_eintrag",
                 "trainer_poll","trainer_poll_slot","trainer_poll_vote","trainer_poll_thema","trainingsturnier",
                 // Beim Saisonstart wandern die alten Spielerbewertungen hierher. Ohne diese
                 // Zeile enthielte eine Sicherung nach dem Reset nur noch leere Tabellen.
@@ -2225,6 +2225,10 @@ const TABS={
   orga:    {sections:[
     {key:"termine",  label:"Termine",  icon:"ti-calendar"},
     {key:"team",     label:"Pinnwand", icon:"ti-clipboard"},
+    /* v526: Das Tagebuch steht neben der Pinnwand, weil beides Notizen sind – nur gehoert
+       die Pinnwand dem Team und das Tagebuch Charles allein. Es ist weder Training noch
+       Spieltag: die Eintraege kommen aus beidem. */
+    {key:"tagebuch", label:"Tagebuch", icon:"ti-book"},
   ]},
 };
 /* Eine Welle-2-Funktion sicher aufrufen. Fehlt das Modul – etwa weil ein SyntaxError
@@ -2258,6 +2262,7 @@ const SECS={
   quizresults:{cid:"train-sub-quizresults",sub:true, init:()=>w2("tqRenderTrainerView")},
   team:       {cid:"train-sub-team",       sub:true, init:()=>{w2("tnLoad");w2("teamStatsRender");tvInit();}},
   analyse:    {cid:"train-sub-analyse",    sub:true, init:()=>w2("anInit")},
+  tagebuch:   {cid:"train-sub-tagebuch",   sub:true, init:()=>w2("tagebuchListe")},
   spieltag:   {cid:"train-sub-spieltag",   sub:true, init:()=>{spieltagPhasenZu();spieltagPhaseVorwaehlen();w2("rotRenderControls");w2("nomInit");
                  /* v518: Welle-1-Code ruft eine Welle-2-Funktion nie ungeprueft auf. */
                  const ws=document.getElementById("wissen-slot");
@@ -3099,8 +3104,30 @@ async function einheitSave(){
       if(typeof terminIdForDatum==="function")terminIdForDatum(datum).then(tid=>teamSyncUpsertDebounced("anwesenheit",datum,day,tid?{termin_id:tid}:null)).catch(()=>{});
     }
   }
-  toast("Einheit nachbereitet ✓");
+  /* v526: Derselbe Weg wie im Fazit-Dialog. Die Nachbereitung ist der einzige Moment,
+     in dem die Beobachtung noch frisch ist; eine Stunde spaeter wird sie abgeschrieben
+     oder gar nicht. md-tagebuch.js liegt in Welle 2 – ohne die typeof-Wache riesse ein
+     fehlendes Modul hier das Ende des Speicherns mit. */
+  if(typeof tagebuchAusEinheit==="function") ebWeiterInsTagebuch(datum);
+  else toast("Einheit nachbereitet ✓");
   einheitListRender();
+}
+/* Kein stiller Sprung: gespeichert ist gespeichert, das Tagebuch ist ein Angebot. */
+function ebWeiterInsTagebuch(datum){
+  document.getElementById("eb-weiter")?.remove();
+  const box=document.createElement("div");
+  box.id="eb-weiter";
+  box.setAttribute("role","dialog"); box.setAttribute("aria-modal","true");
+  box.setAttribute("aria-label","Nachbereitet");
+  box.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10055;display:flex;align-items:center;justify-content:center;padding:18px";
+  box.onclick=e=>{ if(e.target===box) box.remove(); };
+  box.innerHTML=`<div style="background:var(--surface);color:var(--text);max-width:380px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
+    <div style="font-size:15px;font-weight:800">Einheit nachbereitet ✓</div>
+    <div style="font-size:12.5px;color:var(--text2);margin:6px 0 14px;line-height:1.5">Willst du daraus einen Tagebucheintrag machen? Auslöser und Beobachtung stehen schon da – es fehlen nur dein Aha und die Konsequenz.</div>
+    <button class="btn btn-p" onclick="document.getElementById('eb-weiter').remove();tagebuchAusEinheit('${String(datum).replace(/'/g,"")}')" style="width:100%;min-height:56px;justify-content:center;font-size:15px;font-weight:800"><i class="ti ti-book"></i>Ins Tagebuch</button>
+    <button class="btn" onclick="document.getElementById('eb-weiter').remove()" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Später</button>
+  </div>`;
+  document.body.appendChild(box);
 }
 // Anwesenheits-Quote je Kind: Training (aus AW_DATA) + Spiele/Turniere (aus nominierungen "dabei").
 /* Die Quoten-Tabelle steckte frueher fest in ihrem eigenen Fenster. Sie wird jetzt
@@ -3748,6 +3775,7 @@ const HELP=[
     {t:"Termine", d:"Das Formular zeigt nur, was zum Typ gehört: eine Treffzeit gibt es bei Spiel, Turnier und Event (bei Spielen −45 Min. vom Anpfiff vorgeschlagen) – beim Training kommen ohnehin alle zur Trainingszeit. „Wiederholen“ steht beim Event, weil Spiele und Turniere jedes Mal andere sind. Unter „Wer hilft“ sagst du, was die Eltern übernehmen sollen: beim Training die Anzahl Funino-Tore und Jugendtore (leer = ohne Zahl anbieten, 0 = wird nicht gebraucht), dazu bei jedem Typ ein freier Hinweis. Das steht im Eltern-Bereich als Beschreibung unter der Aufgabe – ohne sie trägt sich niemand ein. Unter „📣 Für die Eltern“ steht die Platz-Ampel: 🟢 Findet statt / 🔴 Fällt aus. Ein abgesagter Termin trägt ab sofort überall ein rotes Schild „Fällt aus“ (mit deinem Grund, wenn du einen einträgst) – auf der Terminkarte, in der Liste, in „Diese Woche“ und im Eltern-Bereich. Gleichzeitig verschwinden seine Aktionen: kein Plan, keine Teams, keine Anwesenheit, und „Bist du dabei?“ fragt nicht mehr danach; die Kachel oben springt zum nächsten Termin, den es wirklich gibt. Zurücknehmen geht mit 🟢 Findet statt. Dazu: anlegen/bearbeiten · Endzeit (danach automatisch ins Archiv) · Platz · Trainer-Verfügbarkeit · Wetter · Ferien-Warnung.", go:"termine"},
     {t:"Gegner-Datenbank", d:"Adresse, Ansprechpartner, Telefon/WhatsApp, bisherige Spiele.", run:"gegnerManageOpen()"},
     {t:"Pinnwand", d:"Team-Notizen fürs Trainerteam.", go:"team"},
+    {t:"Tagebuch", d:"Das Trainertagebuch für den DFB-Basis-Coach – deine persönliche Unterlage, nicht die des Teams. Sechs Felder je Eintrag: Auslöser und Beobachtung sind vorausgefüllt, sobald der Eintrag aus einer Nachbereitung entsteht; Aha und Konsequenz tippst du selbst, und ohne die beiden wird nicht erfasst – ein Eintrag, der sich von allein schreibt, enthält keine Erkenntnis. Dazu optional ein Datum für die erste Umsetzung, ein Beleg und ein Anschluss. Jeder Eintrag gehört zu einem der vier Bausteine des DFB-Entwicklungsmodells (Ich als Trainer, Spiel & Spieler, Organisation, System Fußball); die Liste gruppiert danach und sagt ruhig Bescheid, wenn in einem Baustein seit mehr als drei Wochen nichts steht. Der Weg hinein: nach dem Speichern einer Einheits-Nachbereitung oder eines Spiel-Fazits fragt die App, ob ein Eintrag daraus werden soll – oder hier über „Neuer Eintrag“ für alles außerhalb der App, etwa einen Präsenztag. Weil die Texte später an den Verband gehen, schreibt die Leiste „Kind einfügen“ den Decknamen statt des Namens, und beim Erfassen weist die App auf einen Namen aus dem Kader hin, statt still umzuschreiben. Ausgabe als Markdown, einzeln oder als ganzer Monat, über Kopieren und Teilen – ohne Zugangsdaten und ohne Umweg über einen Server.", go:"tagebuch"},
     {t:"Trainermeeting", d:"Seit v527 eine eigene Terminart: Du legst ihn wie jeden anderen Termin an („🗓️ Meeting“), und aus dem Termin heraus laufen beide Teile. <b>Wer kann wann:</b> Vorschläge eintragen, das Trainerteam stimmt ab (✓ passt · ? vielleicht · ✗ nicht), und der Vorschlag, bei dem niemand abgesagt hat und die meisten zugesagt haben, wird als „Hier können alle“ hervorgehoben. Wer noch gar nicht geantwortet hat, steht mit Namen dabei – drei Zusagen bei fünf Trainern heißen eben nicht, dass zwei abgesagt haben. Solange deine Stimme fehlt, erinnert dich die Startseite. <b>Was wir besprechen:</b> Themen können alle Trainer sammeln, und zwar von Anfang an, nicht erst wenn der Termin steht. Beim Abhaken fragt die App, was entschieden wurde; der Satz bleibt unter dem Thema stehen. Schreiben kannst du ihn auch später nachtragen – gefragt wird, aber nicht erzwungen, sonst hakt am Ende niemand mehr ab. Was offen blieb, wandert beim nächsten Meeting von selbst mit. Das Protokoll (Besprochenes mit Beschluss, dann das Offene) gibt es als Markdown über Teilen. <b>Wichtig:</b> Diesen Termin sehen nur Trainer. Das erzwingt die Leseregel der Datenbank, nicht ein Filter in der App – alle anderen Terminarten sind für jeden lesbar, auch ohne Anmeldung, weil Turnierseite und Stadionheft davon leben. Die Kachel „Trainer-Meeting“ unter Orga bleibt als Übersicht über alle Meetings.", run:"trainerMeetingOpen()"},
     {t:"Saisonstart-Check", d:"Sechs Schritte für den Übergang in die neue Saison – Wrapped, Urkunden, Kader, Trainings-Serie, Eltern-Einladung, Ansage. Er steht Juni bis September im Orga-Menü; mit „Saisonstart abschließen“ blendest du ihn bis zur nächsten Saison aus. Von hier aus geht er immer auf.", run:"saisonStartOpen()"},
     {t:"Teamkasse", d:"Kassen-Link hinterlegen (kein Geld in der App).", run:"kasseOpen()"},
@@ -5532,7 +5560,8 @@ function _kachelInhalt(key){
       {emo:"📅",label:"Termine",fn:"go",arg:"termine"},
       // Team-Sicht auf die Verfügbarkeit – NEBEN „Bist du dabei?" (Ich-Sicht), nicht statt.
       {emo:"🧑‍🏫",label:"Trainerplan",fn:"trainerPlanOpen"},
-      {emo:"📌",label:"Pinnwand",fn:"go",arg:"team"} // war nur über die Reiterzeile erreichbar
+      {emo:"📌",label:"Pinnwand",fn:"go",arg:"team"}, // war nur über die Reiterzeile erreichbar
+      {emo:"📓",label:"Tagebuch",fn:"go",arg:"tagebuch"}
     ],col)
     +kSec("Events & Team-Orga")
     +kTiles([

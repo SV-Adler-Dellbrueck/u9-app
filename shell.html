@@ -636,6 +636,22 @@
     <div id="an-form"></div>
   </div><!-- /train-sub-analyse -->
 
+  <!-- SUB: Tagebuch (v526) - Charles' persoenliche Unterlage fuer den DFB-Basis-Coach.
+       Eine Hauptaktion je Bildschirm: "Neuer Eintrag". Der Monatsexport steht darunter,
+       weil er nicht taeglich gebraucht wird. -->
+  <div id="train-sub-tagebuch" class="train-sub">
+    <div class="sl nt"><i class="ti ti-book"></i>Trainertagebuch</div>
+    <button class="btn btn-p" onclick="if(typeof tagebuchNeu==='function')tagebuchNeu()" style="width:100%;min-height:56px;justify-content:center;font-size:15px;font-weight:800;margin-bottom:12px"><i class="ti ti-plus"></i>Neuer Eintrag</button>
+    <div id="tb-liste"></div>
+    <div class="sl nt" style="margin-top:16px"><i class="ti ti-file-export"></i>Monat ausgeben</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+      <input type="month" id="tb-monat" style="min-height:48px;padding:0 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text)">
+      <button class="btn" onclick="if(typeof tagebuchMonatKopieren==='function')tagebuchMonatKopieren()" style="min-height:48px"><i class="ti ti-copy"></i>Kopieren</button>
+      <button class="btn" onclick="if(typeof tagebuchMonatTeilen==='function')tagebuchMonatTeilen()" style="min-height:48px"><i class="ti ti-share"></i>Teilen</button>
+    </div>
+    <div style="font-size:10.5px;color:var(--text3);margin-top:6px">Alle Eintraege des Monats als Markdown, nach Bausteinen sortiert - fuer das Google Doc oder die Abgabe.</div>
+  </div><!-- /train-sub-tagebuch -->
+
   <!-- SUB: Spieltag (Nominierung + Rotations-Timer + Blitz-Rating) -->
   <div id="train-sub-spieltag" class="train-sub">
     <!-- v518: Nachschlagen am Spieltag. Der Inhalt kommt aus md-wissen.js (Welle 2);

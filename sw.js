@@ -35,6 +35,7 @@ const PRECACHE=[
   "./md-voice.js",
   "./md-wissen.js",
   "./md-fazit.js",
+  "./md-tagebuch.js",
   "./md-live-vollbild.js",
   "./md-fundbuero.js",
   "./md-taktik-bib.js",
