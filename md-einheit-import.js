@@ -932,7 +932,15 @@ async function vorlageUebernehmenSetzen(){
     if(!un)continue;
     const formIdx=_eiFormIndex(un);
     if(formIdx<0){ fehlend=un; break; }
-    plan.push({formIdx,formName:tpAllForms()[formIdx].name,trainer:"Alle",slotLabel:label,key:`${formIdx}-Alle`});
+    /* Paket A: `alleFelder` sagt dem Plan, dass diese eine Übung auf JEDES Feld des
+       Blocks gehört – nicht nur auf das erste. Eine Vorlage beschreibt den Block, nicht
+       die Station; wie viele Felder es gibt, entscheidet sich erst am Termin aus der
+       Zahl der Feldtrainer. Deshalb steht hier die Absicht und nicht das Ergebnis.
+       Ein Block mit `stationen` läuft oben durch und kommt hier nie an.
+
+       Sobald der Trainer ein Feld von Hand ändert, speichert tpPlanEntries() den Plan
+       Station für Station neu – ohne diese Marke. Ab dann gilt seine Hand (Abnahme 3). */
+    plan.push({formIdx,formName:tpAllForms()[formIdx].name,trainer:"Alle",slotLabel:label,alleFelder:true,key:`${formIdx}-Alle`});
   }
   if(fehlend){
     toast(`Die Übung „${fehlend}“ gibt es nicht mehr – nichts geändert`,"err");

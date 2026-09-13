@@ -1234,6 +1234,10 @@ function tpCoachSelect(stationId,ausschluss,wegOption){
    will, tippt einmal. Abgesagt ist rot und ebenfalls offen.
    Farbe ist nie der einzige Träger: jedes Chip trägt zusätzlich ein Zeichen (✓ 🤔 ✕). */
 let TP_RSVP={}, TP_TRAINER_MANUELL={}, TP_VORBELEGT="", TP_ANWESEND=null;
+/* Paket C: die Zusagen der KINDER für den Plantermin. Gruppen entstehen aus den
+   zugesagten Kindern, nicht aus dem Kader – der Kader enthält auch, wer abgesagt hat.
+   Gehalten wie TP_RSVP: beim Terminwechsel geleert und neu geladen. */
+let TP_KIND_RSVP=null;
 const TP_RSVP_MARKE={ja:{ico:"✓",farbe:"var(--green)",titel:"hat zugesagt"},
                      unsicher:{ico:"🤔",farbe:"var(--amber)",titel:"ist unsicher"},
                      nein:{ico:"✕",farbe:"var(--red)",titel:"hat abgesagt"},
@@ -1260,23 +1264,37 @@ function tpTrainerChipsRender(){
   const liste=(typeof TRAINER!=="undefined"&&Array.isArray(TRAINER))?TRAINER:[];
   box.innerHTML=liste.map(t=>{
     const st=TP_RSVP[t]||"", m=TP_RSVP_MARKE[st]||TP_RSVP_MARKE.offen;
+    const dabei=TP_ANWESEND?TP_ANWESEND.includes(t):(st==="ja");
+    /* Paket C – vierter Zustand: Wer die Rolle Organisation hat (bei uns Markus), ist
+       anwesend, bekommt aber kein Feld. „Dabei" heißt hier nicht „plant mit einer
+       Station". Deshalb wird er NICHT vorbelegt, obwohl er zugesagt hat.
+       Ein Tipp auf den Chip macht ihn doch zum Feldtrainer – für diesen Termin:
+       TP_TRAINER_MANUELL wird bei jedem Terminwechsel geleert (tpTrainerRsvpLaden). */
+    const orga=(typeof trainerRolle==="function")&&trainerRolle(t)==="organisation";
+    const auto=orga?false:dabei;
+    const an=(t in TP_TRAINER_MANUELL)?TP_TRAINER_MANUELL[t]:auto;
+    const ohneFeld=orga&&dabei&&!an;
+
     /* v478 – PO: „Die Haken oder Kreuze hinter den Namen stimmen irgendwie nicht." Am Tag
        mit erfasster Anwesenheit stand „Charles ✕" auf einem gruenen Chip – die Rueckmeldung
        (abgesagt) neben der Tatsache (war da). Zwei Wahrheiten in einem Chip. Am Tatsache-Tag
        zeigt der Chip nur noch die Anwesenheit; die Rueckmeldung bleibt im Tooltip. */
-    const zeichen=TP_ANWESEND?"":(m?" "+m.ico:"");
+    /* Farbe ist nie der einzige Bedeutungsträger (CLAUDE.md): der orange Chip trägt ein
+       eigenes Zeichen UND einen Kurztext, und beide unterscheiden sich klar vom gelben
+       „unsicher" (🤔). Ein Kompass steht für Organisation, kein Fragezeichen. */
+    const zeichen=ohneFeld?" 🧭 dabei, ohne Feld":(TP_ANWESEND?"":(m?" "+m.ico:""));
     /* Tatsache schlaegt Vorhersage: liegt fuer den Tag schon Anwesenheit vor, zaehlt der
        Haken dort – sonst wie bisher die Rueckmeldung. */
-    const auto=TP_ANWESEND?TP_ANWESEND.includes(t):(st==="ja");
-    const an=(t in TP_TRAINER_MANUELL)?TP_TRAINER_MANUELL[t]:auto;
     // angehakt gewinnt optisch (grün wie bisher), das Zeichen bleibt trotzdem stehen –
     // sonst sieht man nicht mehr, dass der Trainer eigentlich „unsicher" gesagt hat
-    const stil=an?"" : ((m&&!TP_ANWESEND)?`border-color:${m.farbe};color:${m.farbe}`:"");
+    const stil=an?"" : (ohneFeld?"border-color:var(--orange);color:var(--orange)"
+                                 : ((m&&!TP_ANWESEND)?`border-color:${m.farbe};color:${m.farbe}`:""));
     const grund=TP_ANWESEND
       ? (TP_ANWESEND.includes(t)?"steht in der Anwesenheit als anwesend":"in der Anwesenheit nicht angehakt")+" · Rückmeldung: "+m.titel
       : m.titel;
-    const titel=grund
-      +(an!==auto?(t===TP_VORBELEGT?" – du planst gerade, deshalb vorbelegt":" – von dir eingeplant"):"");
+    const titel=(ohneFeld?"Rolle Organisation: ist dabei, bekommt aber kein Feld – antippen, um ihn für diesen Termin als Feldtrainer einzuplanen. · ":"")
+      +grund
+      +(an!==auto?(t===TP_VORBELEGT?" – du planst gerade, deshalb vorbelegt":(orga?" – für diesen Termin als Feldtrainer eingeplant":" – von dir eingeplant")):"");
     return `<label class="tp-check"><input type="checkbox" value="${esc(t)}"${an?" checked":""}
       onchange="tpTrainerManuell('${String(t).replace(/'/g,"")}',this.checked)">
       <span style="${stil}" title="${esc(titel)}">${esc(t)}${zeichen}</span></label>`;
@@ -1288,6 +1306,16 @@ function tpTrainerChipsRender(){
    Haken lokal (wie bisher). */
 async function tpTrainerManuell(name,an){
   const datum=document.getElementById("tp-date")?.value||"";
+  /* Paket C: Bei der Rolle Organisation bedeutet der Tipp etwas anderes als bei allen
+     anderen. Markus hat bereits zugesagt – seine Rückmeldung ist richtig und darf nicht
+     überschrieben werden. Der Tipp sagt nur: „für DIESEN Termin übernimmt er doch ein
+     Feld." Das bleibt lokal und ist beim nächsten Termin wieder weg, weil
+     TP_TRAINER_MANUELL dort geleert wird. */
+  if((typeof trainerRolle==="function")&&trainerRolle(name)==="organisation"){
+    TP_TRAINER_MANUELL[name]=!!an;
+    tpTrainerChipsRender(); tpRenderTimeline();
+    return;
+  }
   if(TP_ANWESEND&&datum){
     const liste=await awTrainerSetzen(datum,name,!!an);
     if(liste)TP_ANWESEND=liste.slice();
@@ -1361,6 +1389,7 @@ function awZaehltAlsTatsache(datum){
 }
 async function tpTrainerRsvpLaden(datum){
   TP_RSVP={}; TP_TRAINER_MANUELL={}; TP_VORBELEGT=""; TP_ANWESEND=null; TP_TERMIN_ID=null;   // neuer Termin, neue Lage
+  TP_KIND_RSVP=null;
   datum=datum||document.getElementById("tp-date")?.value||"";
   /* v470 – PO: „Check mal die Anwesenheiten der Trainer bezogen auf Trainingsplan und
      Anwesenheit. Die scheinen sich nicht abzugleichen."
@@ -1398,9 +1427,30 @@ async function tpTrainerRsvpLaden(datum){
       if(me&&typeof TRAINER!=="undefined"&&TRAINER.includes(me)){ TP_TRAINER_MANUELL[me]=true; TP_VORBELEGT=me; }
     }catch(e){}
   }
+  await tpKindRsvpLaden(datum);   // Paket C: Zusagen der Kinder für die Gruppen
   tpTrainerChipsRender();
   tpRenderTimeline();
   tpNachbereitenKnopf(datum);
+}
+/* Zugesagte Kinder dieses Termins als Namensliste. `null` heißt „nicht ermittelbar"
+   (kein Termin, kein Netz) – dann bleibt es beim bisherigen Weg über den Kader. */
+async function tpKindRsvpLaden(datum){
+  TP_KIND_RSVP=null;
+  if(!datum||TP_TERMIN_ID==null||typeof sbAuthHeaders!=="function")return;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?termin_id=eq.${TP_TERMIN_ID}&select=spieler_id,status`,{headers:sbAuthHeaders()});
+    if(!r.ok)return;
+    const rows=await r.json()||[];
+    const zu=rows.filter(x=>x&&x.status==="zugesagt").map(x=>x.spieler_id);
+    if(!zu.length)return;                     // niemand hat zugesagt → nicht ermittelbar
+    /* Kind-IDs werden über kidListFromIds in Namen übersetzt (views.js). Im Speicher
+       trägt ein Kader-Eintrag `_id`, nicht `id` – direkt auf k.id zu filtern ergab eine
+       leere Liste, ohne dass irgendwo etwas rot wurde. */
+    const namen=(typeof kidListFromIds==="function")?kidListFromIds(zu):[];
+    const aktiv=new Set(KADER.filter(k=>k.aktiv!==false).map(k=>k.name));
+    const treffer=namen.filter(n=>aktiv.has(n));
+    if(treffer.length)TP_KIND_RSVP=treffer;
+  }catch(e){}
 }
 /* v483 – PO-Wahl: „Im Trainingsplan nach der Einheit". Ist das gewaehlte Training vorbei,
    steht oben im Plan der Weg in die Nachbereitung – auch fuer Trainer, die im Plan nicht
@@ -2478,6 +2528,7 @@ async function tpPlanRestore(datum){
       const slot=tpSlots[parseInt(m[1])];
       return slot&&(slot.label||"")===(e.slotLabel||"");
     });
+    const setzen=el=>{ el.value=String(e.formIdx); belegt.add(el.id); if(typeof tpOnSelectChange==="function")tpOnSelectChange(el); };
     /* Paket B: Trägt der Eintrag eine Stationsnummer (aus einer Vorlage mit `stationen`),
        gehört er auf GENAU dieses Feld. Gibt es das Feld nicht – weniger Feldtrainer als
        Stationen –, fällt die Station weg. Sie darf nicht auf ein anderes Feld rutschen:
@@ -2485,16 +2536,27 @@ async function tpPlanRestore(datum){
     if(e.station!=null){
       const ziel=passend.find(x=>new RegExp(`-${e.station}$`).test(x.id));
       if(!ziel)return;
-      ziel.value=String(e.formIdx);
-      belegt.add(ziel.id);
-      if(typeof tpOnSelectChange==="function")tpOnSelectChange(ziel);
+      setzen(ziel);
+      return;
+    }
+    /* Paket A: Trägt der Eintrag die Marke „gilt für alle Felder" (aus einer Vorlage OHNE
+       Stationen), bekommt jede Station dieses Blocks die Übung. Vorher blieb alles außer
+       dem ersten Feld leer – beim Übernehmen von L4-1 am 13.09. stand in jeder Stufe nur
+       bei der ersten Gruppe eine Übung. Die beiden Wege schließen sich aus: eine Vorlage
+       nennt entweder eine Übung für alle Felder oder Stationen, nie beides.
+
+       WICHTIG: nur die Stationen DESSELBEN Blocks. Die Zuordnung läuft über das
+       Phasen-Label, und zwei Blöcke dürfen gleich heißen („Hauptteil"). Ohne diese
+       Einschränkung liefe die Übung in den nächsten Block über. */
+    if(e.alleFelder&&passend.length){
+      const m0=passend[0].id.match(/tp-form-(\d+)-/);
+      const nur=m0?passend.filter(x=>(x.id.match(/tp-form-(\d+)-/)||[])[1]===m0[1]):[passend[0]];
+      nur.forEach(setzen);
       return;
     }
     const s=passend[0]||sels.find(x=>!belegt.has(x.id)&&!x.value);
     if(!s)return;
-    s.value=String(e.formIdx);
-    belegt.add(s.id);
-    if(typeof tpOnSelectChange==="function")tpOnSelectChange(s);
+    setzen(s);
   });
 }
 /* Vorausplanungs-Leiste: die nächsten Trainings mit Plan-Status (✅ geplant / 📝 offen) –
@@ -3415,27 +3477,63 @@ function tgSave(tg){
 }
 function tgKachelHtml(){
   const tg=tgFor();
+  const hinweis=tg?tgGroessenHinweis(tg):"";
+  const quelle=tg?({anwesenheit:"aus der Anwesenheit",zusagen:"aus den Zusagen",kader:"aus dem Kader"}[tg.quelle]||""):"";
   const sub=tg?tg.gruppen.map(g=>`${g.emo} ${g.name} (${g.kinder.length})`).join(" · ")
-    :"Alle anwesenden Kinder in so viele Gruppen wie Trainer – antippen";
+    :"Alle zugesagten Kinder in so viele Gruppen wie Feldtrainer – antippen";
   return `<button onclick="tgOpen()" style="width:100%;min-height:76px;margin:4px 0 10px;border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px 8px;box-sizing:border-box">
     <span style="font-size:15px;font-weight:900">👥 Trainingsgruppen${tg?"":" bilden"}</span>
     <span style="font-size:11.5px;color:var(--text2);text-align:center">${sub}</span>
+    ${quelle?`<span style="font-size:10.5px;color:var(--text3)">${quelle}</span>`:""}
+    ${hinweis?`<span style="font-size:11px;color:var(--amber-text,var(--text2))">ℹ️ ${hinweis}</span>`:""}
   </button>`;
 }
 /* anzahl (optional): gewuenschte Gruppenzahl. Ohne Angabe wie bisher = Zahl der
    angehakten Trainer. Die Zahl ist NICHT mehr an die Trainerzahl gebunden – je nach
    Uebung braucht man mehr oder weniger Gruppen als Trainer da sind. Obergrenze ist die
    Zahl der Gruppennamen (TG_NAMEN), damit Name und Leibchenfarbe eindeutig bleiben. */
+/* Paket C – woher die Kinder kommen, in dieser Reihenfolge:
+   1. die erfasste Anwesenheit DES PLANTERMINS (Tatsache schlägt Vorhersage),
+   2. sonst die Zusagen der Eltern für diesen Termin,
+   3. sonst der Kader (bisheriges Verhalten, wenn nichts vorliegt).
+   Vorher zählte _kgPool() die Anwesenheit von HEUTE – plant man am Montag für Freitag,
+   war das die falsche Liste, und sonst stand der ganze Kader in den Gruppen. */
+function _tgPool(){
+  const d=_tgDatum();
+  const aktive=KADER.filter(k=>k.aktiv!==false).map(k=>k.name);
+  const ohnePause=arr=>arr.filter(n=>!(typeof istPaused==="function"&&istPaused(n)));
+  const tag=(typeof AW_DATA==="object"&&AW_DATA)?AW_DATA[d]:null;
+  const tatsache=(typeof awZaehltAlsTatsache==="function")?awZaehltAlsTatsache(d):false;
+  if(tatsache&&tag){
+    const da=aktive.filter(n=>tag[n]&&tag[n].da===true);
+    if(da.length>=2)return {namen:ohnePause(da),quelle:"anwesenheit"};
+  }
+  if(Array.isArray(TP_KIND_RSVP)&&TP_KIND_RSVP.length>=2)return {namen:ohnePause(TP_KIND_RSVP),quelle:"zusagen"};
+  return {namen:ohnePause(aktive),quelle:"kader"};
+}
+/* Zielgröße vier bis sechs (Auftragspaket). Der Hinweis urteilt nicht, er sagt nur, dass
+   eine Gruppe darunter liegt – die Entscheidung bleibt beim Trainer. */
+const TG_ZIEL_MIN=4, TG_ZIEL_MAX=6;
+function tgGroessenHinweis(tg){
+  const g=(tg&&tg.gruppen)||[]; if(!g.length)return "";
+  const klein=g.filter(x=>(x.kinder||[]).length<TG_ZIEL_MIN).length;
+  const gross=g.filter(x=>(x.kinder||[]).length>TG_ZIEL_MAX).length;
+  if(klein)return `${klein===1?"Eine Gruppe liegt":klein+" Gruppen liegen"} unter der Zielgröße von ${TG_ZIEL_MIN} Kindern.`;
+  if(gross)return `${gross===1?"Eine Gruppe liegt":gross+" Gruppen liegen"} über der Zielgröße von ${TG_ZIEL_MAX} Kindern.`;
+  return "";
+}
 function tgBilden(anzahl){
+  /* Die Zahl der Felder folgt der Zahl der FELDTRAINER: wer die Rolle Organisation hat,
+     ist nicht angehakt und zählt damit von selbst nicht mit (siehe tpTrainerChipsRender). */
   const trainers=tpGetCheckedTrainers();
   const n=Math.min(TG_NAMEN.length,Math.max(1,anzahl||trainers.length||1));
-  const pool=_kgPool(); // Anwesenheit heute, sonst Kader; pausierte Kinder bleiben draußen
+  const pool=_tgPool(); // Anwesenheit des Termins, sonst Zusagen, sonst Kader
   const st=x=>(typeof teamStaerke==="function")?Math.max(0,teamStaerke(x)):0;
   const namen=pool.namen.slice().sort((a,b)=>st(b)-st(a));
   const gruppen=Array.from({length:n},(_,i)=>({...TG_NAMEN[i%TG_NAMEN.length],trainer:trainers[i]||"",kinder:[]}));
   // Schlangenlinie: ausgewogene Startaufteilung, danach frei verschiebbar
   namen.forEach((k,i)=>{const r=Math.floor(i/n),pos=r%2===0?(i%n):(n-1-(i%n));gruppen[pos].kinder.push(k);});
-  const tg={gruppen,ausAnwesenheit:pool.ausAnwesenheit};
+  const tg={gruppen,ausAnwesenheit:pool.quelle==="anwesenheit",quelle:pool.quelle};
   tgSave(tg);
   return tg;
 }

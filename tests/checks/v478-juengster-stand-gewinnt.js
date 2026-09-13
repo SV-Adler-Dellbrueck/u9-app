@@ -62,9 +62,21 @@ module.exports = async function (h) {
   const ohneTs = posts.filter(p => !(p.body && p.body.updated_at));
   if (!posts.length) probleme.push("kein Anwesenheits-Upsert gesendet");
   if (ohneTs.length) probleme.push(`${ohneTs.length} Upsert(s) ohne updated_at`);
-  const zeichen = r.chips.filter(c => /[✓✕?🤔]/.test(c));
+  /* Das `u` ist nicht kosmetisch: ohne den Schalter zerfällt 🤔 in der Zeichenklasse in
+     seine beiden Ersatzstellen, und die hohe (\uD83E) teilt es sich mit jedem Emoji aus
+     demselben Block. Der Rollen-Chip 🧭 aus v536 schlug deshalb hier an, obwohl er gar
+     kein Rückmelde-Zeichen ist. Geprüft werden soll ✓ ✕ ? 🤔 – und nur die.
+
+     Die Rolle DARF am Tatsache-Tag stehen: „ohne Feld" sagt nichts über die Rückmeldung,
+     sondern über die Station. Die Regel aus v478 gilt der Rückmeldung. */
+  const zeichen = r.chips.filter(c => /[✓✕?🤔]/u.test(c));
   if (zeichen.length) probleme.push(`am Tatsache-Tag tragen Chips Rückmelde-Zeichen: ${JSON.stringify(zeichen)}`);
-  if (JSON.stringify(r.haken) !== JSON.stringify(["Finn", "Kenneth", "Markus"])) probleme.push(`Plan-Haken ${JSON.stringify(r.haken)} statt der Anwesenheit`);
+  /* GEÄNDERT mit v536 (Paket C): Markus hat die Rolle Organisation. Er bleibt in TRAINER —
+     er steht am Platz, zählt in der Anwesenheit und bekommt eine Sammelkarte (v430) —, aber
+     er bekommt KEIN Feld und wird deshalb nicht mehr automatisch angehakt. Aus der Zahl der
+     Haken folgen Felder und Gruppen; ein Trainer ohne Station darf dort nicht mitzählen.
+     Ein Tipp auf seinen orangen Chip plant ihn für einen einzelnen Termin doch ein. */
+  if (JSON.stringify(r.haken) !== JSON.stringify(["Finn", "Kenneth"])) probleme.push(`Plan-Haken ${JSON.stringify(r.haken)} statt der Anwesenheit`);
   if (r.planDatum !== morgen) probleme.push(`Plan steht auf ${r.planDatum} statt auf morgen (heutiges Training ist vorbei)`);
   if (r.awDatum !== heute) probleme.push(`Anwesenheit steht auf ${r.awDatum} statt auf heute (Nachtragen)`);
   if (fehler.length) probleme.push(...fehler.slice(0, 3));

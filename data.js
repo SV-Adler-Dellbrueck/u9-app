@@ -31,6 +31,25 @@
    herum – vier Namenslisten, die auseinanderlaufen konnten. */
 const TRAINER=["Charles","Finn","Kenneth","Peter","Markus"];
 
+/* ═══ ROLLEN IM TRAINERSTAB (Paket C) ═══
+   Wer bekommt am Termin ein FELD, und wer nicht? Aus dieser Frage folgt alles Weitere:
+   die Zahl der Felder, die Zahl der Gruppen, die Gruppengröße.
+
+   · feldtrainer – steht an einer Station, bekommt ein Feld.
+   · skill       – Skill Development Coach. Zählt als Feldtrainer, weil er die Torwart-
+                   und Einzelstationen übernimmt; die laufen parallel zum Hauptteil.
+   · organisation– Orga und Elternkommunikation. Ist da, bekommt aber kein Feld.
+
+   Steht ein Name hier nicht, gilt „feldtrainer" – das ist das bisherige Verhalten, und
+   ein unbekannter Name soll nicht still aus der Planung fallen.
+
+   Die Rolle ist eine Eigenschaft der PERSON, nicht des Termins. Dass Markus an einem
+   einzelnen Termin doch ein Feld übernimmt, ist eine Ausnahme und wird im Trainingsplan
+   per Tipp auf seinen Chip gesetzt – nur für diesen Termin (siehe tpTrainerChipsRender). */
+const TRAINER_ROLLE={Charles:"feldtrainer",Finn:"skill",Kenneth:"feldtrainer",Peter:"feldtrainer",Markus:"organisation"};
+function trainerRolle(name){ return (typeof TRAINER_ROLLE==="object"&&TRAINER_ROLLE[name])||"feldtrainer"; }
+function trainerIstFeldtrainer(name){ return trainerRolle(name)!=="organisation"; }
+
 /* ═══ KRITERIEN FELDSPIELER (DIMS_FELD) ═══ */
 const DIMS_FELD=[
 {id:"tech",label:"Technik & Ball",icon:"ti-ball-football",col:"#1a56db",w:0.24,
