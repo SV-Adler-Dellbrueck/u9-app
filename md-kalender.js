@@ -100,6 +100,15 @@ function tmSetTyp(t,btn){
      sonst wandert eine unsichtbare 8 vom Training in den naechsten Spieltag. */
   disp("tm-tore-row", t==="training");
   disp("tm-tore-hint", t==="training");
+  /* v528 – PO: „Helfer brauchen wir keine beim Meeting." Stimmt: der ganze Block „Wer
+     hilft" ist dort sinnlos, nicht nur die Torzahlen. Das Hinweisfeld wird geleert, sonst
+     wandert ein unsichtbarer Satz aus dem letzten Termin ins Meeting (Falle aus v416). */
+  disp("tm-block-helfen", !istMeeting);
+  if(istMeeting){const hh=document.getElementById("tm-helfer-hinweis"); if(hh)hh.value="";}
+  /* Und ein Satz, der sagt, was nach dem Anlegen kommt – die Frage „wo stimme ich ab?"
+     entsteht sonst genau hier und wird erst drei Bildschirme später beantwortet. */
+  const mh=document.getElementById("tm-meeting-hinweis");
+  if(mh)mh.style.display=istMeeting?"":"none";
   if(t!=="training"){const f=document.getElementById("tm-funino"),j=document.getElementById("tm-jugendtore");if(f)f.value="";if(j)j.value="";}
   const gdb=document.getElementById("tm-gegnerdb-btn"); if(gdb)gdb.style.display=istSpiel?"inline-flex":"none"; // Gegner-DB nur bei Spiel/Turnier (nicht bei Training/Event)
   const zeit=document.getElementById("tm-zeit"), datum=document.getElementById("tm-datum"), ort=document.getElementById("tm-ort");
@@ -254,6 +263,16 @@ async function tmAdd(){
       const sSel=document.getElementById("tm-serie"); if(sSel){sSel.value="";tmSerieToggle();}
       const sBis=document.getElementById("tm-serie-bis"); if(sBis)sBis.value="";
       const rb=document.getElementById("tm-addr-results");if(rb)rb.innerHTML="";tmSetTyp(tmTyp);tmLoad();
+      /* v528: Beim Trainermeeting ist der Termin allein noch nichts – erst Abstimmung und
+         Themen machen ihn zu einem. Anders als beim Fazit (dort ist die Arbeit mit dem
+         Speichern FERTIG und ein Fenster, das aufspringt, wäre ein Übergriff) ist sie hier
+         gerade erst angefangen. Deshalb geht es direkt weiter, nicht über ein Angebot. */
+      if(tmTyp==="trainermeeting"&&daten.length===1&&typeof tmMeetingOeffnen==="function"){
+        try{
+          const neu=await fetch(`${SB_URL}/rest/v1/termine?typ=eq.trainermeeting&datum=eq.${encodeURIComponent(daten[0])}&select=id&order=id.desc&limit=1`,{headers:sbAuthHeaders()});
+          if(neu.ok){const z=((await neu.json())||[])[0]; if(z&&z.id)tmMeetingOeffnen(z.id);}
+        }catch(e){}
+      }
     }
     else toast("Fehler beim Anlegen","err");
   }catch(e){toast("Netzwerkfehler","err");}
