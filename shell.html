@@ -409,7 +409,7 @@
           <div class="tm-kopf-s" id="tm-kopf-sub">Training – Zeit und Platz genügen</div>
         </div>
       </div>
-      <div class="seg-ctrl" id="tm-typ-seg">
+      <div class="seg-ctrl seg-umbruch" id="tm-typ-seg">
         <button type="button" class="seg-btn active" data-val="training" onclick="tmSetTyp('training',this)">🏃 Training</button>
         <button type="button" class="seg-btn" data-val="spiel" onclick="tmSetTyp('spiel',this)">⚽ Spiel</button>
         <button type="button" class="seg-btn" data-val="turnier" onclick="tmSetTyp('turnier',this)">🏆 Turnier</button>
@@ -425,7 +425,7 @@
         <!-- align-items:end haelt die Eingabefelder auf einer Linie, auch wenn ein Label
              laenger ist und umbricht. Die Labels bleiben trotzdem kurz (siehe tmSetTyp). -->
         <div class="mgrid" style="grid-template-columns:1fr 1fr;gap:8px;align-items:end;margin-bottom:0">
-          <div class="mg"><label for="tm-datum">Datum</label><input type="date" id="tm-datum" onchange="ferienDatumHint(this,'tm-ferien-hint')"></div>
+          <div class="mg"><label for="tm-datum" id="tm-datum-lbl">Datum</label><input type="date" id="tm-datum" onchange="ferienDatumHint(this,'tm-ferien-hint')"></div>
           <div class="mg"><label for="tm-zeit" id="tm-zeit-lbl">Uhrzeit</label><input type="time" id="tm-zeit" onchange="tmEndeVorschlag()"></div>
           <div class="mg"><label for="tm-treff">Treffen</label><input type="time" id="tm-treff" title="Wann sollen die Kinder da sein? Bei Spielen meist 45 Min. vor Anstoß"></div>
           <div class="mg"><label for="tm-ende" id="tm-ende-lbl">Ende</label><input type="time" id="tm-ende"></div>
@@ -433,6 +433,20 @@
         <!-- Ferien-Warnung ueber die volle Breite. In der Datums-Zelle sass sie UNTER dem Feld
              und hat es bei align-items:end um ihre eigene Hoehe nach oben geschoben. -->
         <div id="tm-ferien-hint"></div>
+        <!-- v529 – PO: „Ich lege jetzt einen Termin fest, um dann eine Abstimmung ueber einen
+             neuen Termin zu machen? Ist das logisch?" Nein. Beim Meeting fragt das Formular
+             deshalb nach VORSCHLAEGEN: das Datum oben ist Vorschlag 1 (und technisch das
+             vorlaeufige Datum des Termins), hier kommen zwei weitere dazu. Das Team stimmt
+             ab, der Termin wandert auf den Sieger. -->
+        <div id="tm-vorschlaege" style="display:none;margin-top:10px">
+          <div class="mgrid" style="grid-template-columns:1fr 1fr;gap:8px;align-items:end;margin-bottom:0">
+            <div class="mg"><label for="tm-v2-datum">Vorschlag 2 · Datum</label><input type="date" id="tm-v2-datum"></div>
+            <div class="mg"><label for="tm-v2-zeit">Uhrzeit</label><input type="time" id="tm-v2-zeit"></div>
+            <div class="mg"><label for="tm-v3-datum">Vorschlag 3 · Datum</label><input type="date" id="tm-v3-datum"></div>
+            <div class="mg"><label for="tm-v3-zeit">Uhrzeit</label><input type="time" id="tm-v3-zeit"></div>
+          </div>
+          <div style="font-size:11px;color:var(--text2);margin-top:6px;line-height:1.4">Leer lassen, wenn es nur einen Vorschlag gibt. Weitere kannst du später im Termin ergänzen.</div>
+        </div>
         <!-- Wiederholen steht ueber die volle Breite: als halbe Rasterzelle sass darunter
              noch das Bis-Datum und die Ferien-Option, das riss die Zeile auseinander. -->
         <div class="mg" id="tm-serie-row" style="margin-top:10px"><label for="tm-serie">Wiederholen</label>
@@ -519,7 +533,7 @@
 
       <!-- v528: Beantwortet die Frage „wo stimme ich ab?" dort, wo sie entsteht. -->
       <div id="tm-meeting-hinweis" style="display:none;font-size:12px;color:var(--text2);line-height:1.5;background:var(--surface2);border-radius:10px;padding:10px 12px;margin-bottom:10px">
-        🗓️ Nach dem Anlegen geht es gleich weiter: Terminvorschläge zum Abstimmen und die Themenliste. Beides findest du später jederzeit im Termin selbst.
+        🗓️ Nach dem Anlegen geht es gleich weiter: das Team stimmt über die Vorschläge ab, und ihr sammelt die Themen. Beides findest du später jederzeit im Termin selbst.
       </div>
       <button class="btn btn-p tm-haupt" onclick="tmAdd()"><i class="ti ti-plus"></i>Termin anlegen</button>
       <!-- Nebenaktion: unter der Hauptaktion, volle Breite. Daneben gesetzt sah sie neben

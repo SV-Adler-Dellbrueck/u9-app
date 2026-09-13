@@ -109,6 +109,13 @@ function tmSetTyp(t,btn){
      entsteht sonst genau hier und wird erst drei Bildschirme später beantwortet. */
   const mh=document.getElementById("tm-meeting-hinweis");
   if(mh)mh.style.display=istMeeting?"":"none";
+  /* v529 – PO: „Ich lege jetzt einen Termin fest, um dann eine Abstimmung ueber einen neuen
+     Termin zu machen?" Beim Meeting heisst das Datum deshalb, was es ist: Vorschlag 1. Zwei
+     weitere Vorschlaege stehen darunter; beim Verlassen des Typs werden sie geleert, sonst
+     wandern sie unsichtbar in den naechsten Termin (Falle aus v416). */
+  disp("tm-vorschlaege", istMeeting);
+  const dLbl=document.getElementById("tm-datum-lbl"); if(dLbl)dLbl.textContent=istMeeting?"Vorschlag 1 · Datum":"Datum";
+  if(!istMeeting)["tm-v2-datum","tm-v2-zeit","tm-v3-datum","tm-v3-zeit"].forEach(id=>{const el=document.getElementById(id); if(el)el.value="";});
   if(t!=="training"){const f=document.getElementById("tm-funino"),j=document.getElementById("tm-jugendtore");if(f)f.value="";if(j)j.value="";}
   const gdb=document.getElementById("tm-gegnerdb-btn"); if(gdb)gdb.style.display=istSpiel?"inline-flex":"none"; // Gegner-DB nur bei Spiel/Turnier (nicht bei Training/Event)
   const zeit=document.getElementById("tm-zeit"), datum=document.getElementById("tm-datum"), ort=document.getElementById("tm-ort");
@@ -268,9 +275,19 @@ async function tmAdd(){
          Speichern FERTIG und ein Fenster, das aufspringt, wäre ein Übergriff) ist sie hier
          gerade erst angefangen. Deshalb geht es direkt weiter, nicht über ein Angebot. */
       if(tmTyp==="trainermeeting"&&daten.length===1&&typeof tmMeetingOeffnen==="function"){
+        /* v529: Vorschlag 2 und 3 aus dem Formular wandern in die Abstimmung, bevor das
+           Fenster aufgeht – dann steht sie beim ersten Blick schon vollstaendig da. */
+        const weitere=[["tm-v2-datum","tm-v2-zeit"],["tm-v3-datum","tm-v3-zeit"]]
+          .map(([d,z])=>({datum:document.getElementById(d)?.value||"",uhrzeit:document.getElementById(z)?.value||null}))
+          .filter(v=>v.datum);
+        ["tm-v2-datum","tm-v2-zeit","tm-v3-datum","tm-v3-zeit"].forEach(id=>{const el=document.getElementById(id); if(el)el.value="";});
         try{
           const neu=await fetch(`${SB_URL}/rest/v1/termine?typ=eq.trainermeeting&datum=eq.${encodeURIComponent(daten[0])}&select=id&order=id.desc&limit=1`,{headers:sbAuthHeaders()});
-          if(neu.ok){const z=((await neu.json())||[])[0]; if(z&&z.id)tmMeetingOeffnen(z.id);}
+          if(neu.ok){const z=((await neu.json())||[])[0];
+            if(z&&z.id){
+              if(typeof tpollSicherstellen==="function")await tpollSicherstellen(z.id,weitere);
+              tmMeetingOeffnen(z.id);
+            }}
         }catch(e){}
       }
     }

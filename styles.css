@@ -774,6 +774,11 @@ h1.print-header{display:none}
 .seg-btn.active{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;box-shadow:0 1px 4px rgba(37,99,235,.3)}
 .seg-btn:not(:last-child){border-right:var(--border)}
 @media(max-width:420px){.seg-btn{font-size:10px;padding:8px 4px}}
+/* v529: Fuenf Terminarten passen auf dem Handy nicht mehr in eine Reihe – der fuenfte
+   Knopf wurde von overflow:hidden abgeschnitten. Die Typ-Reihe darf deshalb umbrechen:
+   drei oben, zwei unten, jeder Knopf bleibt lesbar und 44 px hoch. */
+.seg-ctrl.seg-umbruch{flex-wrap:wrap;gap:2px;padding:2px;background:var(--surface2)}
+.seg-ctrl.seg-umbruch .seg-btn{flex:1 1 31%;min-width:0;border-right:none;border-radius:calc(var(--r) - 2px)}
 
 /* ══ TERMINANLAGE ══════════════════════════════════════════════════════════════
    Die Karte war eine flache Reihe gleich lauter Felder ohne Kopf – als einzige
@@ -795,6 +800,11 @@ h1.print-header{display:none}
 .tm-karte[data-typ="spiel"],
 .tm-karte[data-typ="turnier"]{--tm-akzent:#1e3a8a;--tm-akzent-bg:#1e3a8a14;--tm-akzent-text:#1e3a8a}
 .tm-karte[data-typ="event"]{--tm-akzent:#6d28d9;--tm-akzent-bg:#6d28d914;--tm-akzent-text:#6d28d9}
+/* v529: Ohne diese Zeile hatte das Meeting KEINE Akzentfarbe – der Hauptknopf „Termin
+   anlegen" malte sich mit var(--tm-akzent) = nichts und stand als weisser Kasten auf
+   weissem Grund. Unsichtbar, nicht kaputt: die haerteste Sorte Fehler. Graphit wie in
+   TM_META, weil ein Meeting kein Ereignis fuer die Mannschaft ist. */
+.tm-karte[data-typ="trainermeeting"]{--tm-akzent:#334155;--tm-akzent-bg:#33415514;--tm-akzent-text:#334155}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --tm-text-training:#4ade80;--tm-text-spiel:#60a5fa;--tm-text-event:#a78bfa;
 }}
