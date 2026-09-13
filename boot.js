@@ -2529,10 +2529,21 @@ async function tpPlanRestore(datum){
       return slot&&(slot.label||"")===(e.slotLabel||"");
     });
     const setzen=el=>{ el.value=String(e.formIdx); belegt.add(el.id); if(typeof tpOnSelectChange==="function")tpOnSelectChange(el); };
-    /* Paket A: Trägt der Eintrag die Marke „gilt für alle Felder" (aus einer Vorlage),
-       bekommt jede Station dieses Blocks die Übung. Vorher blieb alles außer dem ersten
-       Feld leer – beim Übernehmen von L4-1 am 13.09. stand in jeder Stufe nur bei der
-       ersten Gruppe eine Übung.
+    /* Paket B: Trägt der Eintrag eine Stationsnummer (aus einer Vorlage mit `stationen`),
+       gehört er auf GENAU dieses Feld. Gibt es das Feld nicht – weniger Feldtrainer als
+       Stationen –, fällt die Station weg. Sie darf nicht auf ein anderes Feld rutschen:
+       dann stünde eine Übung an einer Station, für die sie nie gedacht war. */
+    if(e.station!=null){
+      const ziel=passend.find(x=>new RegExp(`-${e.station}$`).test(x.id));
+      if(!ziel)return;
+      setzen(ziel);
+      return;
+    }
+    /* Paket A: Trägt der Eintrag die Marke „gilt für alle Felder" (aus einer Vorlage OHNE
+       Stationen), bekommt jede Station dieses Blocks die Übung. Vorher blieb alles außer
+       dem ersten Feld leer – beim Übernehmen von L4-1 am 13.09. stand in jeder Stufe nur
+       bei der ersten Gruppe eine Übung. Die beiden Wege schließen sich aus: eine Vorlage
+       nennt entweder eine Übung für alle Felder oder Stationen, nie beides.
 
        WICHTIG: nur die Stationen DESSELBEN Blocks. Die Zuordnung läuft über das
        Phasen-Label, und zwei Blöcke dürfen gleich heißen („Hauptteil"). Ohne diese

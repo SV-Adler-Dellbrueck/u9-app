@@ -532,6 +532,29 @@ function _evNettoHinweis(v){
   return "";
 }
 function _evNorm(s){ return _eiNorm(s); }
+/* Paket B: Was steht in diesem Block? Eine Übung für alle Felder, mehrere Stationen –
+   oder gar nichts (freies Spiel). Die tw-Station wird als solche benannt, weil sie im
+   Plan kein Feld wird, sondern ein paralleler Torwart-Block. */
+function _evBlockText(b){
+  const st=(b&&Array.isArray(b.stationen)&&b.stationen.length)?b.stationen:null;
+  if(st)return st.map((x,i)=>`${i+1}. ${esc(String((x||{}).uebung_name||""))}${((x||{}).rolle==="tw")?" (Torwart, parallel)":""}`).join(" · ");
+  return b&&b.uebung_name?esc(b.uebung_name):"freies Spiel – keine Übung";
+}
+// Wie viele FELDER braucht dieser Block? Die tw-Station zählt nicht mit.
+function _evFelderBedarf(b){
+  const st=(b&&Array.isArray(b.stationen)&&b.stationen.length)?b.stationen:null;
+  if(!st)return 0;
+  return st.filter(x=>(x||{}).rolle!=="tw").length;
+}
+/* Abnahme 5: „3 Stationen geplant, 2 Felder verfügbar." Gesagt wird es NUR, wenn die
+   Felder nicht reichen – reicht es, ist nichts zu melden. */
+function _evStationenHinweis(v,felder){
+  const bl=(v&&Array.isArray(v.bloecke))?v.bloecke:[];
+  const max=bl.reduce((a,b)=>Math.max(a,_evFelderBedarf(b)),0);
+  if(!max||!isFinite(felder)||felder<1||max<=felder)return "";
+  return `${max} Stationen geplant, ${felder} ${felder===1?"Feld":"Felder"} verfügbar – die ${max-felder===1?"überzählige Station entfällt":(max-felder)+" überzähligen Stationen entfallen"}.`;
+}
+
 function _evVorhanden(name){
   const n=_evNorm(name);
   return (typeof VORLAGEN!=="undefined"?VORLAGEN:[]).some(v=>_evNorm(v&&v.name)===n);
@@ -569,18 +592,32 @@ function _evPruefung(text){
       if(!EI_TYPEN.includes(b.typ))fehler.push(`${bn}: „typ“ ist „${b.typ==null?"":String(b.typ)}“ – erlaubt sind ${EI_TYPEN.join(", ")}.`);
       const dau=Number(b.dauer);
       if(!isFinite(dau)||dau<=0)fehler.push(`${bn}: „dauer“ muss eine Zahl größer als 0 sein.`);
+      /* Paket B: Ein Block trägt ENTWEDER eine Übung für alle Felder (uebung_name)
+         ODER eine Liste von Stationen. Beides zusammen wäre zweideutig – welche gilt? */
+      const hatStationen=Array.isArray(b.stationen)&&b.stationen.length;
       const un=String(b.uebung_name||"").trim();
-      if(!un)return;
+      if(un&&hatStationen){ fehler.push(`${bn}: „uebung_name“ und „stationen“ zusammen – eines von beidem, nicht beides.`); return; }
+      if(Array.isArray(b.stationen)&&!b.stationen.length){ fehler.push(`${bn}: „stationen“ ist leer – entweder Stationen nennen oder das Feld weglassen.`); return; }
+      if(!un&&!hatStationen)return;
       /* Der Abschluss ist im Trainingsplan freies Spiel und hat gar kein Übungsfeld –
          dieselbe Falle wie in v506. */
-      if(b.typ==="abschluss"){ fehler.push(`${bn}: der Abschluss ist freies Spiel und hat im Trainingsplan kein Feld für eine Übung – bitte „uebung_name“ weglassen.`); return; }
-      const idx=_eiFormIndex(un);
-      if(idx<0){ fehler.push(`${bn}: die Übung „${un}“ gibt es nicht. Erst die Übung anlegen (Übungen importieren), dann die Vorlage.`); return; }
-      const kat=(tpAllForms()[idx]||{}).kat||"technik";
-      if(b.typ&&EI_TYPEN.includes(b.typ)&&!_eiKatPasst(b.typ,kat)){
-        const soll=EI_KAT_PHASE[b.typ]?("nur Übungen der Kategorie „"+EI_KAT_PHASE[b.typ]+"“"):"keine Aufwärm-, Torwart- oder Einzeltrainings-Übungen";
-        fehler.push(`${bn}: „${un}“ hat die Kategorie „${kat}“ und passt nicht in eine Phase vom Typ „${b.typ}“ – dort stehen ${soll}.`);
-      }
+      if(b.typ==="abschluss"){ fehler.push(`${bn}: der Abschluss ist freies Spiel und hat im Trainingsplan kein Feld für eine Übung – bitte „uebung_name“ und „stationen“ weglassen.`); return; }
+      /* Eine Station mit rolle "tw" wird im Plan ein paralleler Torwart-Block. Ihre Übung
+         wird deshalb gegen den Typ „tw" geprüft, nicht gegen den Typ des Blocks. */
+      const einzeln=hatStationen
+        ? b.stationen.map((st,k)=>({name:String((st||{}).uebung_name||"").trim(),typ:((st||{}).rolle==="tw")?"tw":b.typ,wo:`${bn}, Station ${k+1}`,rolle:(st||{}).rolle}))
+        : [{name:un,typ:b.typ,wo:bn,rolle:null}];
+      einzeln.forEach(e=>{
+        if(e.rolle!=null&&e.rolle!=="tw"){ fehler.push(`${e.wo}: „rolle“ ist „${String(e.rolle)}“ – erlaubt ist nur „tw“.`); return; }
+        if(!e.name){ fehler.push(`${e.wo}: „uebung_name“ fehlt.`); return; }
+        const idx=_eiFormIndex(e.name);
+        if(idx<0){ fehler.push(`${e.wo}: die Übung „${e.name}“ gibt es nicht. Erst die Übung anlegen (Übungen importieren), dann die Vorlage.`); return; }
+        const kat=(tpAllForms()[idx]||{}).kat||"technik";
+        if(e.typ&&EI_TYPEN.includes(e.typ)&&!_eiKatPasst(e.typ,kat)){
+          const soll=EI_KAT_PHASE[e.typ]?("nur Übungen der Kategorie „"+EI_KAT_PHASE[e.typ]+"“"):"keine Aufwärm-, Torwart- oder Einzeltrainings-Übungen";
+          fehler.push(`${e.wo}: „${e.name}“ hat die Kategorie „${kat}“ und passt nicht in eine Phase vom Typ „${e.typ}“ – dort stehen ${soll}.`);
+        }
+      });
     });
   });
   return {fehler,daten:d};
@@ -676,7 +713,12 @@ async function _evVorlageAnlegen(v,stand){
     netto_spielform_min:isFinite(Number(v.netto_spielform_min))?Number(v.netto_spielform_min):null,
     skalierung:(v.skalierung&&typeof v.skalierung==="object"&&!Array.isArray(v.skalierung))?v.skalierung:{},
     beobachtung:String(v.beobachtung||""),
-    bloecke:(Array.isArray(v.bloecke)?v.bloecke:[]).map(b=>({typ:b.typ,label:String(b.label||"").trim(),dauer:Number(b.dauer),uebung_name:String(b.uebung_name||"").trim()||null})),
+    bloecke:(Array.isArray(v.bloecke)?v.bloecke:[]).map(b=>({typ:b.typ,label:String(b.label||"").trim(),dauer:Number(b.dauer),
+      uebung_name:String(b.uebung_name||"").trim()||null,
+      // Paket B: Stationen bleiben erhalten; ohne sie steht wie bisher null.
+      stationen:Array.isArray(b.stationen)&&b.stationen.length
+        ?b.stationen.map(st=>({uebung_name:String((st||{}).uebung_name||"").trim(),...(((st||{}).rolle==="tw")?{rolle:"tw"}:{})}))
+        :null})),
     stand:stand||null
   };
   const r=await fetch(`${SB_URL}/rest/v1/trainingsvorlagen`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify(zeile)});
@@ -807,7 +849,7 @@ function vorlageUebernehmenRender(){
       return `<div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--surface2)">
         <span style="font-size:10px;font-weight:800;color:#fff;background:${_eiFarbe(b.typ,mainNr)};border-radius:6px;padding:3px 7px;white-space:nowrap">${Number(b.dauer)} Min.</span>
         <span style="min-width:0"><b style="font-size:12.5px">${esc(b.label)}</b>
-          <span style="display:block;font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.uebung_name?esc(b.uebung_name):"freies Spiel – keine Übung"}</span></span>
+          <span style="display:block;font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${_evBlockText(b)}</span></span>
       </div>`; };
     const sk=v.skalierung&&typeof v.skalierung==="object"?v.skalierung:{};
     const skZeilen=["8","12","16"].filter(k=>sk[k]).map(k=>`<div><b>${k} Kinder:</b> ${esc(String(sk[k]))}</div>`).join("");
@@ -817,6 +859,14 @@ function vorlageUebernehmenRender(){
       ${bl.map(zeile).join("")}
       ${skZeilen?`<div style="font-size:11.5px;color:var(--text2);line-height:1.6;margin-top:8px">📐 ${skZeilen}</div>`:""}
       ${v.beobachtung?`<div style="font-size:11.5px;color:var(--text2);line-height:1.5;margin-top:8px">👀 ${esc(v.beobachtung)}</div>`:""}
+      ${(function(){
+        /* Paket B, Abnahme 5: Wie viele Felder es am Termin gibt, folgt der Zahl der
+           angehakten Feldtrainer. Reichen sie nicht für die geplanten Stationen, wird
+           das hier gesagt – vor dem Übernehmen, nicht hinterher. */
+        const felder=(typeof tpGetTrainerCount==="function")?tpGetTrainerCount():0;
+        const h=_evStationenHinweis(v,felder);
+        return h?`<div style="background:var(--surface2);border:var(--border-s);border-radius:10px;padding:9px 11px;margin-top:10px;font-size:12.5px;color:var(--text2);line-height:1.5">ℹ️ ${esc(h)}</div>`:"";
+      })()}
       <div style="font-size:11px;color:var(--text3);margin-top:8px">Kinder und Torhüter werden nicht zugeteilt – das bleibt im Trainingsplan.</div>
       ${_vuPlanDa?`<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:10px;padding:9px 11px;margin-top:10px;font-size:12.5px;color:var(--amber);line-height:1.5">
         ⚠️ Für diesen Termin steht schon ein Plan. <b>Er wird vollständig ersetzt</b> – Phasen und Übungen.</div>`:""}
@@ -846,27 +896,55 @@ async function vorlageUebernehmenSetzen(){
   if(haupt)haupt.disabled=true;
   const bl=Array.isArray(v.bloecke)?v.bloecke:[];
   let mainNr=0;
-  const slots=bl.map(b=>{
-    if(b.typ==="main"||b.typ==="spielform")mainNr++;
-    return {label:String(b.label||"").trim(),dauer:Number(b.dauer),farbe:_eiFarbe(b.typ,mainNr),typ:b.typ};
-  });
-  const plan=[];
+  const slots=[], plan=[];
+  let fehlend=null;
   for(const b of bl){
+    if(b.typ==="main"||b.typ==="spielform")mainNr++;
+    const label=String(b.label||"").trim();
+    const eigen=slots.length;
+    slots.push({label,dauer:Number(b.dauer),farbe:_eiFarbe(b.typ,mainNr),typ:b.typ});
+    const st=(Array.isArray(b.stationen)&&b.stationen.length)?b.stationen:null;
+    if(st){
+      /* Paket B: verschiedene Übungen je Station. Die Reihenfolge der Liste ist die
+         Reihenfolge der Felder. Gibt es am Termin weniger Felder als Stationen, fällt
+         die überzählige beim Einsetzen weg – angekündigt in der Vorschau, nicht still. */
+      let feld=0;
+      for(const x of st){
+        const un=String((x||{}).uebung_name||"").trim(); if(!un)continue;
+        const fi=_eiFormIndex(un);
+        if(fi<0){ fehlend=un; break; }
+        if((x||{}).rolle==="tw"){
+          /* Eine tw-Station ist kein Feld: sie wird ein paralleler Torwart-Block, genau
+             wie der, den der Trainer von Hand anlegt. Eigenes Label, damit die Zuordnung
+             über das Phasen-Label eindeutig bleibt. */
+          const twLabel="Torwart · "+label;
+          slots.push({label:twLabel,dauer:Number(b.dauer),farbe:EI_FARBEN.tw,typ:"tw",parallelZu:eigen});
+          plan.push({formIdx:fi,formName:tpAllForms()[fi].name,trainer:"Alle",slotLabel:twLabel,station:0,key:`${fi}-tw`});
+        }else{
+          plan.push({formIdx:fi,formName:tpAllForms()[fi].name,trainer:"Alle",slotLabel:label,station:feld,key:`${fi}-${feld}`});
+          feld++;
+        }
+      }
+      if(fehlend)break;
+      continue;
+    }
     const un=String(b.uebung_name||"").trim();
     if(!un)continue;
     const formIdx=_eiFormIndex(un);
-    if(formIdx<0){
-      toast(`Die Übung „${un}“ gibt es nicht mehr – nichts geändert`,"err");
-      if(haupt)haupt.disabled=false; return;
-    }
+    if(formIdx<0){ fehlend=un; break; }
     /* Paket A: `alleFelder` sagt dem Plan, dass diese eine Übung auf JEDES Feld des
        Blocks gehört – nicht nur auf das erste. Eine Vorlage beschreibt den Block, nicht
        die Station; wie viele Felder es gibt, entscheidet sich erst am Termin aus der
        Zahl der Feldtrainer. Deshalb steht hier die Absicht und nicht das Ergebnis.
+       Ein Block mit `stationen` läuft oben durch und kommt hier nie an.
 
        Sobald der Trainer ein Feld von Hand ändert, speichert tpPlanEntries() den Plan
        Station für Station neu – ohne diese Marke. Ab dann gilt seine Hand (Abnahme 3). */
-    plan.push({formIdx,formName:tpAllForms()[formIdx].name,trainer:"Alle",slotLabel:String(b.label||"").trim(),alleFelder:true,key:`${formIdx}-Alle`});
+    plan.push({formIdx,formName:tpAllForms()[formIdx].name,trainer:"Alle",slotLabel:label,alleFelder:true,key:`${formIdx}-Alle`});
+  }
+  if(fehlend){
+    toast(`Die Übung „${fehlend}“ gibt es nicht mehr – nichts geändert`,"err");
+    if(haupt)haupt.disabled=false; return;
   }
   try{
     const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?on_conflict=datum`,{method:"POST",
