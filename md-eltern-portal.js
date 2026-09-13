@@ -440,6 +440,7 @@ const ELTERN_WHATSNEW={key:"2026-08-14",titel:"Neu in eurer App",punkte:[
   "🗣️ Elterngespräch: Die Abstimmung bleibt stehen, bis du alle Vorschläge beantwortet hast – nicht schon nach dem ersten",
   "🃏 Der Rückblick nach einem Spiel bleibt zwei Wochen stehen, danach findet ihr alles in der Saison-Statistik",
   "🤝 Neu in der Kabine: „Unsere Regeln“ – sechs kurze Sätze, wofür diese Mannschaft steht",
+  "🌱 Neu: „Das kann dein Kind jetzt“ zeigt unter dem Rückblick, welche Ziele dein Kind erreicht und welche Technik-Abzeichen es geschafft hat",
   "🎤 Der Kabinen-Reporter hat viel mehr Fragen – und zu jeder passende Antworten, auch wenn mal nichts davon zutrifft"
 ]};
 function whatsNewOpen(){
@@ -705,6 +706,9 @@ async function elternDashLoad(){
      von einem will – hinter einem Tap versteckt würde er nie gelesen. Jetzt: erst der Termin,
      dann die Antworten, dann die Termine – und danach der schöne Blick zurück. */
   html+=`<div id="match-gruss-slot"></div>`;
+  /* Paket 1: „Das kann dein Kind jetzt" – direkt UNTER dem Rückblick. Erst wie es
+     ausging, dann was dazugekommen ist. Die Karte baut sich nur, wenn es etwas gibt. */
+  html+=`<div id="kann-jetzt-slot"></div>`;
   // ── FÜR DIE KINDER ── (gleiche Button-Optik wie die Kategorien unten: Kabine = Direktstart,
   //    je Kind ein Button, der ein Kind-Fenster im Overlay öffnet)
   html+=sec("🎮 Für die Kinder");
@@ -830,6 +834,7 @@ async function elternDashLoad(){
   if(termin)elternTickerLoad(termin);          // Liveticker: Team des Kindes automatisch erkennen
   if(typeof pushRenderInto==="function")pushRenderInto("push-slot-eltern","parent"); // Push-An/Aus
   elternMatchGrussLoad(kids);                   // A1/A2: Nach-dem-Spiel-Gruß pro Kind
+  elternKannJetztLoad(kids);                    // Paket 1: „Das kann dein Kind jetzt"
   if(typeof teamLevelLoad==="function")teamLevelLoad("eltern-level-slot"); // C1: Team-Level
   if(WAESCHE_AKTIV)elternWaescheLoad(kids);    // Trikot-Wäsche-Rotator (aktuell ausgeblendet)
   elternSkillLoad(kids);   // Skill der Woche
@@ -1806,7 +1811,7 @@ const ELTERN_TOUR=[
   {emo:"🙋", t:"Alles rund um den Termin", d:"Im Termin-Detail: Wetter, Adresse mit Route, Fahrgemeinschaft, Mitbringliste bei Events und „Wer hilft mit?“ – jede Aufgabe sagt dir vorher, ab wann du da sein solltest und was zu tun ist: beim Spiel und Turnier Aufbau, Fotos, Live-Ticker und Betreuung in den Pausen, beim Training die Funino-Tore und Jugendtore. Für den nächsten Termin stehen dieselben Aufgaben schon oben auf der Startseite, kurz und mit Uhrzeit – du musst dich also nicht vorab festlegen, sondern kannst am Tag selbst schauen, ob du es schaffst. Steht 💬 etwas darüber, ist das ein Hinweis des Trainerteams für genau diesen Termin. Im Feld darunter kannst du auch etwas eintragen, das nicht in der Liste steht. Beim Training sagst du außerdem, ob du vor Ort bleibst. Fällt einmal etwas aus oder wird der Platz getauscht, steht das direkt auf der Terminkarte – solange dort nichts steht, findet alles wie geplant statt."},
   {emo:"\ud83d\udce3", t:"Liveticker", d:"Sobald das Trainerteam den Liveticker startet, steht ganz oben eine rote LIVE-Kachel – vorher nicht, damit du nie auf eine leere Seite tippst. Über „Teilen\" schickst du den Ticker an Oma, Opa oder Freunde; der Link braucht keine Anmeldung. Brauchst du die Kachel gerade nicht, klick sie weg – morgen ist sie wieder da. Drei Tage nach dem Spieltag zeigt der Link nur noch den Endstand, die Höhepunkte stehen dann im Adler Nest."},
   {emo:"🎮", t:"Die Kabine (Kinder-Modus)", d:"Gib dein Handy bedenkenlos weiter: „Unsere Regeln“ – wofür wir Adler stehen, in sechs Sätzen –, Quiz, Missionen, Galerie – und jetzt auch das Panini-Sammelalbum mit Sticker-Tüten & Tauschbörse, Komplimente an Mitspieler, die eigene Adler-Post und das Sammelalbum. Zurück geht es nur mit Code."},
-  {emo:"🃏", t:"Für dein Kind", d:"Nach einem Spiel oder Turnier steht unter den Terminen zwei Wochen lang der Rückblick: was dein Kind an dem Tag alles gemacht hat. Danach verschwindet er – die Zahlen bleiben in der Saison-Statistik. Dort findest du außerdem Sammelkarte, Technik-Abzeichen (die hakst du zuhause ab) und Fan-Fakten. Foto- & Video-Freigaben und die Notfallkarte pflegst du unter „🔒 Datenschutz &amp; Freigaben\" – dort erklärt „🛡️ So schützen wir eure Fotos &amp; Daten\" auch, warum die App sicherer ist als jede WhatsApp-Gruppe."},
+  {emo:"🃏", t:"Für dein Kind", d:"Nach einem Spiel oder Turnier steht unter den Terminen zwei Wochen lang der Rückblick: was dein Kind an dem Tag alles gemacht hat. Direkt darunter steht „Das kann dein Kind jetzt“ – erreichte Ziele und neue Technik-Abzeichen aus den letzten zwei Wochen. Die Karte erscheint nur, wenn wirklich etwas dazugekommen ist. Danach verschwindet er – die Zahlen bleiben in der Saison-Statistik. Dort findest du außerdem Sammelkarte, Technik-Abzeichen (die hakst du zuhause ab) und Fan-Fakten. Foto- & Video-Freigaben und die Notfallkarte pflegst du unter „🔒 Datenschutz &amp; Freigaben\" – dort erklärt „🛡️ So schützen wir eure Fotos &amp; Daten\" auch, warum die App sicherer ist als jede WhatsApp-Gruppe."},
   {emo:"📰", t:"Team, Heft & Adler-Kasse", d:"Das „Adler Nest\" ist unser digitales Stadionheft – jetzt mit der Kabinen-Reporter-Rubrik der Kinder. Und über „Fan-Link teilen\" schickst du Oma, Opa und Fans den Spenden-Link. Viel Spaß! 🎉"},
 ];
 let elternTourIdx=0;
