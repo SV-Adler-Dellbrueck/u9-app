@@ -152,6 +152,26 @@ Kontaktdaten und Historie gehen verloren.`))return;
   }catch(e){toast("Netzwerkfehler","err");}
 }
 let TM_TERMINE=[]; // zuletzt geladene Termine (für .ics-Lookup + Gegner-Historie)
+/* v528 – PO: „Kann ich einen Meeting-Termin anlegen ohne festes Datum?" Nein – datum ist
+   Pflicht, im Formular und in der Datenbank. Der empfohlene Weg ist ein vorlaeufiges Datum,
+   das sich beim Festlegen von selbst verschiebt. Damit das nicht nur fuer den ehrlich ist,
+   der es angelegt hat: solange die Abstimmung laeuft, sagt der Termin das auch. Die
+   Information lag schon vor (trainer_poll.status), sie stand nur nirgends. */
+let TM_MEET_OFFEN=new Set();
+async function tmMeetingStatusLaden(){
+  TM_MEET_OFFEN=new Set();
+  if(typeof sbToken==="function"&&!sbToken())return;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/trainer_poll?select=termin_id,status&termin_id=not.is.null`,{headers:sbAuthHeaders()});
+    if(!r.ok)return;
+    ((await r.json())||[]).forEach(p=>{ if(p.termin_id&&p.status!=="entschieden")TM_MEET_OFFEN.add(Number(p.termin_id)); });
+  }catch(e){}
+}
+/* Ruhig, ohne Farbe und ohne Ausrufezeichen: es ist eine Auskunft, keine Warnung. */
+function tmMeetingOffenZeile(t){
+  if(!t||t.typ!=="trainermeeting"||!TM_MEET_OFFEN.has(Number(t.id)))return "";
+  return `<span style="color:var(--text3)"> · Termin steht noch nicht</span>`;
+}
 async function tmLoad(){
   const up=document.getElementById("tm-upcoming"),pa=document.getElementById("tm-past");
   if(!up||!pa)return;
@@ -163,6 +183,7 @@ async function tmLoad(){
     if(!r.ok){up.innerHTML='<div style="font-size:11px;color:var(--text3)">Keine Verbindung</div>';return;}
     const rows=await r.json();
     TM_TERMINE=rows;
+    if(rows.some(x=>x.typ==="trainermeeting"))await tmMeetingStatusLaden();
     const heute=new Date().toISOString().slice(0,10);
     // Mit Endzeit wandert ein Termin noch am selben Tag ins Archiv (terminVorbei, core.js)
     const vorbei=(typeof terminVorbei==="function")?terminVorbei:(t=>t.datum<heute);
@@ -203,7 +224,7 @@ function tmRow(t){
     <span style="font-size:18px">${m.icon}</span>
     <div style="flex:1;min-width:0">
       <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${faelltAus?"var(--text2)":"inherit"}">${esc(t.titel||m.label)}${faelltAus?` ${terminAbsageChip(t,true)}`:""}</div>
-      <div style="font-size:11px;color:var(--text2)">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"2-digit"})}${zeit?" · "+zeit:""}${hb?` · <span style="color:${t.heim?"#15803d":"#b45309"};font-weight:700">${esc(hb)}</span>`:""}</div>
+      <div style="font-size:11px;color:var(--text2)">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"2-digit"})}${zeit?" · "+zeit:""}${tmMeetingOffenZeile(t)}${hb?` · <span style="color:${t.heim?"#15803d":"#b45309"};font-weight:700">${esc(hb)}</span>`:""}</div>
     </div>
     <span style="font-size:16px;color:var(--text3)">›</span>
   </div>`;
@@ -373,7 +394,8 @@ function _tmdKarte(t){
       ${(t.heim===true&&istSpiel&&kommt)?`<div id="bd-tm-${t.id}" style="font-size:12px;color:var(--text2);margin-top:4px">🍿 Büdchen: lädt …</div>`:""}
       ${kommt?`<div id="helfer-tm-${t.id}" style="font-size:12px;color:var(--text2);margin-top:4px"></div>`:""}
       ${(kommt&&!istMeeting)?`<button class="btn btn-sm" onclick="rsvpOverviewOpen(${Number(t.id)})" style="width:100%;min-height:44px;margin-top:8px;justify-content:center"><i class="ti ti-list-check"></i>Antworten der Eltern</button>`:""}
-      ${istMeeting?`<div style="font-size:11.5px;color:var(--text2);margin-top:8px;line-height:1.5">🔒 Diesen Termin sehen nur Trainer – Eltern und die öffentlichen Seiten bekommen ihn nicht zu Gesicht.</div>`:""}
+      ${istMeeting?`<div id="meet-tm-${t.id}" style="font-size:11.5px;color:var(--text2);margin-top:8px;line-height:1.5"></div>
+      <div style="font-size:11.5px;color:var(--text2);margin-top:6px;line-height:1.5">🔒 Diesen Termin sehen nur Trainer – Eltern und die öffentlichen Seiten bekommen ihn nicht zu Gesicht.</div>`:""}
 
       ${(vorbei||istHeute)&&(istSpiel||t.typ==="training")?`${sec("Nach dem Termin")}
         ${istSpiel?`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
@@ -400,6 +422,7 @@ function _tmdInhalt(t){
 // Nachlader wie in der Terminliste anstoßen (Wetter + Büdchen füllen ihre Slots per id).
 function _tmdNachlader(t){
   try{ wetterInto("wx-tm-"+t.id,t.datum,t.ort,t.uhrzeit); }catch(e){}
+  if(t.typ==="trainermeeting"){ try{ meetStatusFill(t); }catch(e){} }
   if(t.heim===true&&(t.typ==="spiel"||t.typ==="turnier")){ try{ buedchenTrainerFill(t); }catch(e){} }
   if(["training","spiel","turnier"].includes(t.typ)&&t.datum<new Date().toISOString().slice(0,10)){ try{ pulsTrainerFill(t); }catch(e){} } // F4
   if(t.datum>=new Date().toISOString().slice(0,10)){ try{ helferTrainerFill(t); }catch(e){} } // G4
@@ -418,6 +441,24 @@ function tmDetailNeu(id){
   box.innerHTML=_tmdInhalt(t);
   modal.scrollTop=oben;
   _tmdNachlader(t);
+}
+/* Laeuft die Abstimmung noch? Dann ist das Datum vorlaeufig, und das gehoert an den Termin
+   und nicht nur in den Kopf dessen, der ihn angelegt hat. Vom Startbildschirm aus lief
+   tmLoad nie – deshalb hier eine eigene, kleine Abfrage statt der geladenen Menge. */
+async function meetStatusFill(t){
+  const box=document.getElementById("meet-tm-"+t.id); if(!box)return;
+  let offen=null;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/trainer_poll?termin_id=eq.${Number(t.id)}&select=status&limit=1`,{headers:sbAuthHeaders()});
+    if(r.ok){const p=((await r.json())||[])[0]; offen=p?p.status!=="entschieden":null;}
+  }catch(e){}
+  if(offen===true){
+    box.innerHTML='🗓️ <b>Termin steht noch nicht</b> – die Abstimmung läuft. Sobald ihr euch einigt, verschiebt sich dieser Termin von selbst.';
+    TM_MEET_OFFEN.add(Number(t.id));
+  }else if(offen===false){
+    box.innerHTML="";
+    TM_MEET_OFFEN.delete(Number(t.id));
+  }else box.innerHTML="";
 }
 // G4: Helferliste im Trainer-Termindetail (Lesesicht; Löschen dürfen Eltern selbst / Trainer per RLS).
 async function helferTrainerFill(t){
@@ -652,7 +693,7 @@ function tmCard(t){
       <div style="width:40px;height:40px;flex:none;border-radius:12px;background:${m.col};display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 2px 6px ${m.col}55">${m.icon}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:14.5px;font-weight:800;display:flex;align-items:center;gap:6px;flex-wrap:wrap;line-height:1.25">${esc(t.titel||m.label)}${hBadge}${sfBadge}${(typeof ferienBadge==="function")?ferienBadge(t.datum):""}</div>
-        <div style="font-size:11.5px;color:var(--text2);margin-top:2px">${datumStr}${zeitStr?" · "+zeitStr+" Uhr":""}</div>
+        <div style="font-size:11.5px;color:var(--text2);margin-top:2px">${datumStr}${zeitStr?" · "+zeitStr+" Uhr":""}${tmMeetingOffenZeile(t)}</div>
       </div>
     </div>
     <div style="padding:10px 13px 12px">

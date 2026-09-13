@@ -130,5 +130,46 @@ module.exports = async function (h) {
   zeilen.push(`Abstimmung angelegt: ${pollPosts.length} · erster Vorschlag ${slotPosts.length ? JSON.stringify([].concat(slotPosts[0].body)[0]) : "–"}`);
   zeilen.push(`Themenfeld da: ${r.themenfeldDa}`);
   zeilen.push(`Termin nachgezogen: ${terminPatch.length ? JSON.stringify(terminPatch[0].body) : "nein"}`);
-  return h.ergebnis("Meeting: kein Helfer-Block, Themen sofort, Termin wandert mit", !probleme.length, zeilen.concat(probleme));
+
+  /* e) PO: „Kann ich einen Meeting-Termin anlegen ohne festes Datum?" Nein – datum ist
+     Pflicht. Der empfohlene Weg ist ein vorläufiges Datum, das sich beim Festlegen von
+     selbst verschiebt. Damit das nicht nur für den ehrlich ist, der den Termin angelegt
+     hat, sagt der Termin es auch: solange die Abstimmung läuft, steht „Termin steht noch
+     nicht" in Liste und Fenster – und danach nicht mehr. */
+  for (const fall of [{ status: "offen", erwartet: true }, { status: "entschieden", erwartet: false }]) {
+    const s3 = await h.starten({ supabase: h.supabaseAttrappe({
+      kader: h.kaderZeilen(),
+      profiles: [{ anzeigename: "Charles" }],
+      termine: [meeting],
+      trainer_poll: [{ id: 9, titel: "Saisonplanung", status: fall.status, decided_slot_id: null, termin_id: 91 }],
+      trainer_poll_slot: [], trainer_poll_vote: [], trainer_poll_thema: []
+    }), hoehe: 1600 });
+    const r3 = await s3.page.evaluate(async () => {
+      window.trainerMe = async () => "Charles";
+      if (typeof sbToken !== "function" || !sbToken()) window.sbToken = () => "t";
+      await h_tmInit();
+      async function h_tmInit() {
+        let up = document.getElementById("tm-upcoming"), pa = document.getElementById("tm-past");
+        if (!up) { up = document.createElement("div"); up.id = "tm-upcoming"; document.body.appendChild(up); }
+        if (!pa) { pa = document.createElement("div"); pa.id = "tm-past"; document.body.appendChild(pa); }
+        await tmLoad();
+      }
+      await new Promise(r => setTimeout(r, 300));
+      const liste = (document.getElementById("tm-upcoming") || {}).textContent || "";
+      await tmDetailOpen(91);
+      for (let i = 0; i < 40 && !document.getElementById("tmd-modal"); i++) await new Promise(r => setTimeout(r, 50));
+      await new Promise(r => setTimeout(r, 400));
+      const fenster = (document.getElementById("tmd-modal") || {}).textContent || "";
+      return { liste: liste.replace(/\s+/g, " ").trim(), fenster: fenster.replace(/\s+/g, " ").trim() };
+    });
+    const fehler3 = s3.fehler(); await s3.schliessen();
+    const inListe = /Termin steht noch nicht/.test(r3.liste);
+    const imFenster = /Termin steht noch nicht/.test(r3.fenster);
+    if (inListe !== fall.erwartet) probleme.push(`Abstimmung ${fall.status}: in der Liste ${inListe ? "steht" : "fehlt"} „Termin steht noch nicht“`);
+    if (imFenster !== fall.erwartet) probleme.push(`Abstimmung ${fall.status}: im Termin-Fenster ${imFenster ? "steht" : "fehlt"} „Termin steht noch nicht“`);
+    if (fehler3.length) probleme.push(...fehler3.slice(0, 1));
+    zeilen.push(`Abstimmung ${fall.status}: Liste ${inListe} · Fenster ${imFenster} (erwartet ${fall.erwartet})`);
+  }
+
+  return h.ergebnis("Meeting: kein Helfer-Block, Themen sofort, Termin wandert mit, vorläufiges Datum erkennbar", !probleme.length, zeilen.concat(probleme));
 };
