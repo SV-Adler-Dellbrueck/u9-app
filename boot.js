@@ -2528,11 +2528,24 @@ async function tpPlanRestore(datum){
       const slot=tpSlots[parseInt(m[1])];
       return slot&&(slot.label||"")===(e.slotLabel||"");
     });
+    const setzen=el=>{ el.value=String(e.formIdx); belegt.add(el.id); if(typeof tpOnSelectChange==="function")tpOnSelectChange(el); };
+    /* Paket A: Trägt der Eintrag die Marke „gilt für alle Felder" (aus einer Vorlage),
+       bekommt jede Station dieses Blocks die Übung. Vorher blieb alles außer dem ersten
+       Feld leer – beim Übernehmen von L4-1 am 13.09. stand in jeder Stufe nur bei der
+       ersten Gruppe eine Übung.
+
+       WICHTIG: nur die Stationen DESSELBEN Blocks. Die Zuordnung läuft über das
+       Phasen-Label, und zwei Blöcke dürfen gleich heißen („Hauptteil"). Ohne diese
+       Einschränkung liefe die Übung in den nächsten Block über. */
+    if(e.alleFelder&&passend.length){
+      const m0=passend[0].id.match(/tp-form-(\d+)-/);
+      const nur=m0?passend.filter(x=>(x.id.match(/tp-form-(\d+)-/)||[])[1]===m0[1]):[passend[0]];
+      nur.forEach(setzen);
+      return;
+    }
     const s=passend[0]||sels.find(x=>!belegt.has(x.id)&&!x.value);
     if(!s)return;
-    s.value=String(e.formIdx);
-    belegt.add(s.id);
-    if(typeof tpOnSelectChange==="function")tpOnSelectChange(s);
+    setzen(s);
   });
 }
 /* Vorausplanungs-Leiste: die nächsten Trainings mit Plan-Status (✅ geplant / 📝 offen) –
