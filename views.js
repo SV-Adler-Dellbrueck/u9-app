@@ -2428,11 +2428,39 @@ async function tpollNamen(){
   }catch(e){}
   _TPOLL_NAMEN=map; return map;
 }
-/* Aus dem Termin heraus: die Abstimmung und die Themen zu genau diesem Meeting. */
+/* Aus dem Termin heraus: die Abstimmung und die Themen zu genau diesem Meeting.
+
+   v528 – PO: „Es fehlt die Möglichkeit Themen zu sammeln. Und wo finde ich die Möglichkeit
+   für einen Termin abstimmen zu lassen?" Beides hing daran, dass die Abstimmung erst
+   entstand, wenn jemand von Hand einen Vorschlag eintrug – und die Themenliste hängt an
+   der Abstimmung. Wer nur Themen sammeln wollte, stand vor einem leeren Fenster.
+   Jetzt legt das Öffnen sie an, falls es noch keine gibt: Titel vom Termin, und der Termin
+   selbst ist der erste Vorschlag. Er hat ja schon ein Datum – „Termin finden" heißt dann
+   nicht mehr „fang bei null an", sondern „oder passt ein anderer besser?". */
 async function tmMeetingOeffnen(terminId){
   _TPOLL_TERMIN=Number(terminId)||null;
   document.getElementById("tmd-modal")?.remove();
+  if(_TPOLL_TERMIN)await tpollSicherstellen(_TPOLL_TERMIN);
   await trainerMeetingOpen();
+}
+async function tpollSicherstellen(terminId){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/trainer_poll?termin_id=eq.${Number(terminId)}&select=id&limit=1`,{headers:sbAuthHeaders()});
+    if(!r.ok)return;
+    if(((await r.json())||[]).length)return;                 // gibt es schon
+    const t=await fetch(`${SB_URL}/rest/v1/termine?id=eq.${Number(terminId)}&select=titel,datum,uhrzeit&limit=1`,{headers:sbAuthHeaders()});
+    if(!t.ok)return;
+    const termin=((await t.json())||[])[0]; if(!termin)return;
+    const neu=await fetch(`${SB_URL}/rest/v1/trainer_poll`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=representation'},
+      body:JSON.stringify({titel:(termin.titel||"Trainermeeting"),termin_id:Number(terminId)})});
+    if(!neu.ok&&neu.status!==201)return;
+    const poll=((await neu.json())||[])[0]; if(!poll)return;
+    if(termin.datum){
+      await fetch(`${SB_URL}/rest/v1/trainer_poll_slot`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},
+        body:JSON.stringify([{poll_id:poll.id,datum:termin.datum,uhrzeit:termin.uhrzeit||null}])});
+    }
+    await tpollOffeneUebernehmen(poll.id);
+  }catch(e){}
 }
 async function trainerMeetingOpen(){
   if(!sbToken()){toast("Bitte als Trainer anmelden","err");return;}
@@ -2762,8 +2790,35 @@ async function tpollVote(slotId,status){
 }
 async function tpollDecide(pollId,slotId){
   try{const r=await fetch(`${SB_URL}/rest/v1/trainer_poll?id=eq.${pollId}`,{method:"PATCH",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},body:JSON.stringify({status:"entschieden",decided_slot_id:slotId})});if(sbCheck401(r))return;if(!r.ok){toast(sbDeniedMsg(r,"Konnte nicht festlegen"),"err");return;}}catch(e){toast("Netzwerkfehler","err");return;}
+  /* v528: Der Termin wandert mit. Vorher zeigte der Kalender weiter den Tag, an dem der
+     Termin angelegt wurde, während das Meeting an einem anderen stattfand – zwei Wahrheiten
+     für dieselbe Sache, und die im Kalender ist die, die alle sehen. */
+  await tpollTerminNachziehen(pollId,slotId);
   toast("Termin festgelegt ✓");
   tpollRender();
+}
+/* Schiebt den gebundenen Termin auf den entschiedenen Vorschlag. Ohne Bindung (Abstimmung
+   über die alte Orga-Kachel angelegt) gibt es nichts nachzuziehen. */
+async function tpollTerminNachziehen(pollId,slotId){
+  try{
+    const p=await fetch(`${SB_URL}/rest/v1/trainer_poll?id=eq.${pollId}&select=termin_id&limit=1`,{headers:sbAuthHeaders()});
+    if(!p.ok)return;
+    const tid=(((await p.json())||[])[0]||{}).termin_id;
+    if(!tid)return;
+    const sl=await fetch(`${SB_URL}/rest/v1/trainer_poll_slot?id=eq.${slotId}&select=datum,uhrzeit&limit=1`,{headers:sbAuthHeaders()});
+    if(!sl.ok)return;
+    const slot=((await sl.json())||[])[0]; if(!slot||!slot.datum)return;
+    const r=await fetch(`${SB_URL}/rest/v1/termine?id=eq.${Number(tid)}`,{method:"PATCH",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},
+      body:JSON.stringify({datum:slot.datum,uhrzeit:slot.uhrzeit||null})});
+    if(!r.ok&&r.status!==204)return;
+    /* Die geladene Terminliste mitziehen, sonst zeigt das Termin-Fenster daneben noch den
+       alten Tag, bis jemand neu lädt. */
+    try{ if(typeof TM_TERMINE!=="undefined"&&Array.isArray(TM_TERMINE)){
+      const t=TM_TERMINE.find(x=>Number(x.id)===Number(tid));
+      if(t){t.datum=slot.datum;t.uhrzeit=slot.uhrzeit||null;}
+    } }catch(e){}
+    if(typeof tmLoad==="function")tmLoad();
+  }catch(e){}
 }
 async function tpollDelete(id,titel){
   if(!confirm(`Meeting „${titel||""}" wirklich löschen?`))return;
