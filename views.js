@@ -3856,7 +3856,7 @@ const HELP=[
     {t:"Anwesenheit (Saison)", d:"Drei Reiter: Quote je Kind im Training, Anwesenheit der Trainer, und die Quote inklusive Spiele aus den Nominierungen. Alle drei rechnen auf denselben Zähltagen wie die Zahlen neben der Nominierung: ab dem Saisonstichtag, und nur echte Trainings – Spiel- und Turniertage zählen nicht mit, auch nicht bei der Serie 🔥.", run:"awUebersichtOpen()"},
     {t:"Probetraining", d:"Schnupperkinder verwalten – bewusst getrennt vom Kader, Auto-Löschung nach Entscheidung.", run:"probeOpen()"},
     {t:"Kader", d:"Spieler anlegen/bearbeiten, Trikotnummer, Foto, Kontakte, Foto-Freigabe.", go:"kader"},
-    {t:"Bewerten", d:"Spieler in 16 Kriterien einschätzen – mit Live-Radar. Kriterien, Live-Profil und Förderplan erscheinen, sobald oben ein Kind gewählt ist; „Bewertungsrunde starten“ geht alle Kinder nacheinander durch.", go:"bew"},
+    {t:"Bewerten", d:"Spieler in 16 Kriterien einschätzen – mit Live-Radar. Kriterien, Live-Profil und Förderplan erscheinen, sobald oben ein Kind gewählt ist; „Bewertungsrunde starten“ geht alle Kinder nacheinander durch. Hakst du im Förderplan ein Entwicklungsziel als erreicht ab, erscheint es im Eltern-Bereich zwei Wochen lang in der Karte „Das kann dein Kind jetzt“ – mit genau dem Wortlaut, den du eingetragen hast, und ohne jede Zahl. Was du dort formulierst, lesen also Kind (in „Meine Mission“) und Elternhaus.", go:"bew"},
     {t:"Profil", d:"Spielerprofil, Stärken, Adler-Karte, Entwicklungs-Report drucken.", go:"profil"},
     {t:"Entwicklung", d:"Entwicklung über die Zeit als Diagramm.", go:"verlauf"},
   ]},
