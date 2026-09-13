@@ -669,6 +669,9 @@ function kabineHome(){
       ${tile("kabineShowQuests()","🏆","Missionen","rgba(245,158,11,.52)","rgba(217,119,6,.32)")}
       ${tile("kabineSkillWoche()","🎬","Skill der Woche","rgba(251,146,60,.48)","rgba(234,88,12,.30)")}
       ${lbl("Team & Spaß")}
+      ${/* Paket 2: „Unsere Regeln" steht ganz oben in der Gruppe und über die volle Breite –
+            es ist die Identität der Mannschaft, nicht ein Spiel unter vielen. */""}
+      ${tile("kabineCodex()","🤝","Unsere Regeln","rgba(16,185,129,.56)","rgba(4,120,87,.34)",true)}
       ${tile("kabineKudos()","👏","Kompliment schenken","rgba(16,185,129,.52)","rgba(5,150,105,.32)")}
       ${tile("kabineShowGallery()","🖼️","Team-Galerie","rgba(16,185,129,.48)","rgba(5,150,105,.30)")}
       ${tile("kabineHype()","🎵","Kabinen-Hype","rgba(45,212,191,.44)","rgba(13,148,136,.30)")}
@@ -1499,6 +1502,162 @@ function elternPortalTrainerNotice(root){
     <a href="${appRoot()}trainer/" style="display:inline-block;padding:11px 18px;background:#1e3a8a;color:#fff;border-radius:10px;text-decoration:none;font-weight:700">Zur Trainer-App</a>
     <button onclick="elternPortalLogout()" style="display:block;width:100%;margin-top:12px;border:none;background:none;color:#64748b;font-size:12px;cursor:pointer">Abmelden</button>
   </div>`;
+}
+
+/* ═══ „Unsere Regeln" – der Codex in Kindersprache (Paket 2, doku/auftrag-adler-luecken) ══
+   Der Fairplay-Codex spricht die ELTERN an: elf Punkte, Erwachsenensprache, im
+   Eltern-Bereich. Für die Kinder gab es nichts Vergleichbares – in der Kabine stand
+   nirgends, wofür diese Mannschaft steht. Ein Achtjähriger, der gefragt wird, was bei
+   den Adlern gilt, hatte keine Antwort.
+
+   Kein gekürzter Elterncodex, sondern dessen Gegenstück aus Kindersicht: höchstens
+   sechs Sätze, die ein Achtjähriger aufsagen kann, positiv formuliert statt als Verbot.
+   Satz 4 ist der Zuruf aus dem Trainerkonzept – er gehört hierher, weil die Kinder ihn
+   ohnehin kennen.
+
+   Muster wie bei den übrigen trainerpflegbaren Inhalten: Tabelle + JS-Fallback +
+   Ansicht + Editor, der die komplette Liste ersetzt. Der Fallback ist kein Beiwerk –
+   Supabase-URLs sind vom SW-Cache ausgenommen, ohne Netz greift IMMER er. Er muss
+   deshalb wortgleich mit dem Startinhalt der Migration bleiben. */
+const KINDER_CODEX_MAX=6;
+const KINDER_CODEX=[
+  "Jeder spielt.",
+  "Wir jubeln für jedes Tor — auch für das vom anderen.",
+  "Wer verliert, gibt trotzdem die Hand.",
+  "Erst geht’s nicht. Dann geht’s.",
+  "Der Schiri hat recht.",
+  "Wir räumen gemeinsam auf."
+];
+/* Sätze aus der Datenbank; leer, kaputt oder offline → die fest verdrahteten.
+   Der Zuschnitt auf sechs steht auch hier: schreibt jemand an der App vorbei eine
+   siebte Zeile, zeigt die Kabine trotzdem nur sechs. */
+async function kinderCodexLaden(){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/kinder_codex?select=satz,nr,aktiv&aktiv=is.true&order=nr.asc,id.asc`,{headers:sbAuthHeaders()});
+    if(r.ok){
+      const rows=await r.json();
+      const saetze=(rows||[]).map(x=>String(x.satz||"").trim()).filter(Boolean);
+      if(saetze.length)return saetze.slice(0,KINDER_CODEX_MAX);
+    }
+  }catch(e){}
+  return KINDER_CODEX.slice(0,KINDER_CODEX_MAX);
+}
+/* Kabinen-Ansicht: ein Satz je Zeile, groß, viel Luft. Bewusst keine Nummerierung als
+   Rangfolge und kein Fließtext – gelesen wird das von Kindern, die gerade flüssig
+   lesen lernen. */
+async function kabineCodex(){
+  const b=document.getElementById("kabine-body"); if(!b)return;
+  const head=`<div style="display:flex;align-items:center;gap:10px;padding:12px 16px">
+      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer" aria-label="Zurück">←</button>
+      <div style="flex:1;font-size:16px;font-weight:800;color:#fff">🤝 Unsere Regeln</div></div>`;
+  b.innerHTML=head+`<div style="text-align:center;padding:60px 16px;opacity:.85;color:#fff">Lade …</div>`;
+  const saetze=await kinderCodexLaden();
+  b.innerHTML=head+`<div style="flex:1;overflow-y:auto;padding:4px 16px 20px">
+    <div style="color:#fff;opacity:.85;font-size:13.5px;line-height:1.5;margin-bottom:14px">Dafür stehen wir Adler. 🦅</div>
+    ${saetze.map(t=>`<div style="background:rgba(255,255,255,.14);border-radius:18px;padding:18px;margin-bottom:12px;color:#fff;font-size:21px;font-weight:800;line-height:1.35;overflow-wrap:anywhere">${esc(t)}</div>`).join("")}
+  </div>`;
+}
+
+/* Trainer-Editor, direkt neben der Kabinen-Wahl. Gespeichert wird als komplette Liste
+   (alles löschen, alles neu anlegen) wie beim Fairplay-Codex – die Datenmenge ist winzig
+   und das erspart id-Jonglieren beim Umsortieren.
+
+   ACHTUNG (CLAUDE.md): Der Editor muss ALLE Spalten zurückschreiben. Fehlte „aktiv" im
+   INSERT, wäre es nach dem Speichern für jede Zeile der Vorgabewert – ohne Fehlermeldung. */
+let KC_EDIT=[];
+async function codexKinderEditOpen(){
+  if(!sbToken()){toast("Bitte als Trainer anmelden","err");return;}
+  document.getElementById("kce-modal")?.remove();
+  KC_EDIT=[];
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/kinder_codex?select=nr,satz,aktiv&order=nr.asc,id.asc`,{headers:sbAuthHeaders()});
+    if(r.ok)KC_EDIT=(await r.json()).map(x=>({satz:String(x.satz||""),aktiv:x.aktiv!==false}));
+  }catch(e){}
+  if(!KC_EDIT.length)KC_EDIT=KINDER_CODEX.map(t=>({satz:t,aktiv:true}));
+  const modal=document.createElement("div");
+  modal.id="kce-modal";modal.setAttribute("role","dialog");modal.setAttribute("aria-modal","true");modal.setAttribute("aria-label","Unsere Regeln bearbeiten");
+  modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10001;display:flex;flex-direction:column;padding:14px;overflow-y:auto";
+  modal.onclick=e=>{if(e.target===modal)modal.remove();};
+  const c=document.createElement("div");
+  c.id="kce-card";
+  c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
+  modal.appendChild(c);document.body.appendChild(modal);
+  codexKinderEditRender();
+}
+/* Gezählt werden die ANGESCHALTETEN Zeilen, auch eine noch leere: eine frisch
+   hinzugefügte Zeile ist ein belegter Platz, sonst ließen sich beliebig viele leere
+   anlegen und die Grenze griffe nie. Beim Speichern fallen leere Sätze wieder weg. */
+function codexKinderAktive(){ return KC_EDIT.filter(r=>r.aktiv).length; }
+function codexKinderEditRender(){
+  const c=document.getElementById("kce-card"); if(!c)return;
+  const fld="padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:14px;background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const aktive=codexKinderAktive(), voll=aktive>=KINDER_CODEX_MAX;
+  c.innerHTML=`${mdlHead("kce-modal","🤝","Unsere Regeln bearbeiten","Diese Sätze lesen die Kinder in der Kabine · Reihenfolge mit den Pfeilen","#16a34a")}
+    <div id="kce-stand" style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:10px">
+      <b>${aktive} von ${KINDER_CODEX_MAX}</b> Sätzen sind an. Kurz halten – ein Achtjähriger soll sie aufsagen können.
+      Positiv formulieren statt zu verbieten.
+    </div>
+    ${KC_EDIT.map((r,i)=>`<div style="border:var(--border-s);border-radius:10px;padding:10px;margin-bottom:8px;${r.aktiv?"":"opacity:.6"}">
+      <textarea oninput="KC_EDIT[${i}].satz=this.value;codexKinderStandAuffrischen()" rows="2" placeholder="Ein kurzer Satz" aria-label="Satz ${i+1}" style="width:100%;resize:vertical;${fld}">${esc(r.satz)}</textarea>
+      <div style="display:flex;gap:6px;margin-top:6px;align-items:center">
+        <button class="btn btn-sm" onclick="codexKinderEditAn(${i})" title="${r.aktiv?"Satz ausblenden":"Satz zeigen"}">${r.aktiv?"👁️ an":"🚫 aus"}</button>
+        <button class="btn btn-sm" onclick="codexKinderEditMove(${i},-1)" ${i===0?"disabled":""} title="nach oben"><i class="ti ti-arrow-up"></i></button>
+        <button class="btn btn-sm" onclick="codexKinderEditMove(${i},1)" ${i===KC_EDIT.length-1?"disabled":""} title="nach unten"><i class="ti ti-arrow-down"></i></button>
+        <button class="btn btn-sm btn-d" style="margin-left:auto" onclick="codexKinderEditDel(${i})" title="Satz löschen"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`).join("")}
+    <button class="btn btn-sm" style="width:100%;margin-bottom:12px" onclick="codexKinderEditAdd()" ${voll?"disabled":""}><i class="ti ti-plus"></i>Satz hinzufügen</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-p btn-sm" onclick="codexKinderEditSave(this)"><i class="ti ti-device-floppy"></i>Speichern</button>
+      <button class="btn btn-sm" style="margin-left:auto" onclick="document.getElementById('kce-modal').remove()">Schließen</button>
+    </div>`;
+}
+/* Der Zähler oben soll beim Tippen mitlaufen – aber ohne den ganzen Editor neu zu
+   bauen, sonst verliert das Textfeld bei jedem Zeichen den Fokus. */
+function codexKinderStandAuffrischen(){
+  const el=document.getElementById("kce-stand"); if(!el)return;
+  const b=el.querySelector("b"); if(b)b.textContent=`${codexKinderAktive()} von ${KINDER_CODEX_MAX}`;
+}
+/* „Mehr lässt der Editor nicht zu, mit Hinweis statt Fehlermeldung." */
+function codexKinderEditAdd(){
+  if(codexKinderAktive()>=KINDER_CODEX_MAX){
+    toast("Sechs Sätze sind genug – mehr merkt sich niemand. Blende erst einen aus.");
+    return;
+  }
+  KC_EDIT.push({satz:"",aktiv:true}); codexKinderEditRender();
+}
+function codexKinderEditDel(i){ KC_EDIT.splice(i,1); codexKinderEditRender(); }
+function codexKinderEditAn(i){
+  const r=KC_EDIT[i]; if(!r)return;
+  if(!r.aktiv&&codexKinderAktive()>=KINDER_CODEX_MAX){
+    toast("Sechs Sätze sind genug – mehr merkt sich niemand. Blende erst einen aus.");
+    return;
+  }
+  r.aktiv=!r.aktiv; codexKinderEditRender();
+}
+function codexKinderEditMove(i,dir){ const j=i+dir; if(j<0||j>=KC_EDIT.length)return; const t=KC_EDIT[i];KC_EDIT[i]=KC_EDIT[j];KC_EDIT[j]=t; codexKinderEditRender(); }
+async function codexKinderEditSave(btn){
+  /* ALLE Spalten: nr, satz UND aktiv. Ohne „aktiv" im INSERT stünden nach dem Speichern
+     alle Zeilen auf dem Vorgabewert – still, ohne Fehlermeldung (CLAUDE.md). */
+  const rows=KC_EDIT.map((r,i)=>({nr:i,satz:String(r.satz||"").trim(),aktiv:r.aktiv!==false}))
+                    .filter(r=>r.satz);
+  if(rows.filter(r=>r.aktiv).length>KINDER_CODEX_MAX){
+    toast(`Höchstens ${KINDER_CODEX_MAX} Sätze dürfen an sein.`,"err"); return;
+  }
+  if(btn)btn.disabled=true;
+  try{
+    const d=await fetch(`${SB_URL}/rest/v1/kinder_codex?id=gt.0`,{method:"DELETE",headers:sbAuthHeaders()});
+    if(sbCheck401(d)){if(btn)btn.disabled=false;return;}
+    if(!d.ok){toast(sbDeniedMsg(d,"Konnte nicht speichern"),"err");if(btn)btn.disabled=false;return;}
+    if(rows.length){
+      const r=await fetch(`${SB_URL}/rest/v1/kinder_codex`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},body:JSON.stringify(rows)});
+      if(sbCheck401(r)){if(btn)btn.disabled=false;return;}
+      if(!r.ok){toast(sbDeniedMsg(r,"Konnte nicht speichern"),"err");if(btn)btn.disabled=false;return;}
+    }
+  }catch(e){toast("Netzwerkfehler","err");if(btn)btn.disabled=false;return;}
+  toast("Unsere Regeln gespeichert ✓");
+  if(btn)btn.disabled=false;
+  document.getElementById("kce-modal")?.remove();
 }
 
 /* Der Kader kommt ausschliesslich aus der Datenbank (loadKader in views.js, Welle 1).

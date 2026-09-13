@@ -933,7 +933,7 @@ async function backupExport(){
   // sammeln, steckt darin Inhalt und nicht nur eine Terminabstimmung.
   // Das Trainingsturnier haengt seit v444 am Termin und liegt in der Datenbank -
   // damit gehoert es in die Sicherung.
-  const tables=["kader","spielerprofile","termine","matchday","blitz_ratings","match_actions","ticker_events","nominierungen","anwesenheit","trainings_eval","event_bewertung","tagebuch_eintrag",
+  const tables=["kader","spielerprofile","termine","matchday","blitz_ratings","match_actions","ticker_events","nominierungen","anwesenheit","trainings_eval","event_bewertung","tagebuch_eintrag","kinder_codex",
                 "trainer_poll","trainer_poll_slot","trainer_poll_vote","trainer_poll_thema","trainingsturnier",
                 // Beim Saisonstart wandern die alten Spielerbewertungen hierher. Ohne diese
                 // Zeile enthielte eine Sicherung nach dem Reset nur noch leere Tabellen.
@@ -3884,6 +3884,7 @@ const HELP=[
     {t:"Eltern-Bereich", d:"Eltern melden sich per Link/Einmal-Code an: Zu- und Absagen, Karte, Quiz, Betreuung vor Ort."},
     {t:"Adler-Welt-Hub", d:"Federn je Kind, FUT-Karten, Technik-Abzeichen und Wochen-Challenge an einem Ort.", run:"adlerWeltOpen()"},
     {t:"Kabinen-Wahl", d:"Die Kinder stimmen ab (Song, Motto, Spielform) – du legst die Optionen fest.", run:"wahlTrainerOpen()"},
+    {t:"Unsere Regeln", d:"Der Fairplay-Codex spricht die Eltern an. Das hier ist sein Gegenstück für die Kinder: höchstens sechs kurze Sätze, die ein Achtjähriger aufsagen kann – in der Kabine unter „Team & Spaß“. Positiv formulieren statt verbieten, und lieber einen Satz ausblenden als einen siebten dazuschreiben; mehr merkt sich niemand. Änderungen gelten sofort für alle Kinder. Ohne Netz zeigt die Kabine die sechs mitgelieferten Sätze.", run:"codexKinderEditOpen()"},
     {t:"Album-Karten-Fotos", d:"Bilder für die Trainer- und Vereins-Sticker im Panini-Sammelalbum.", run:"albumFotosOpen()"},
     {t:"Urkunden-Studio", d:"Saison-Urkunden für alle Kinder in einem Druck + freie Anlass-Urkunde.", run:"urkundenOpen()"},
     {t:"Quiz (Kinder)", d:"Kinder spielen über den Kids-Link (?quiz); Ergebnisse unter Eltern & Kinder → Quiz-Ergebnisse.", go:"quizresults"},
@@ -3943,7 +3944,7 @@ const TOUR=[
   {emo:"⚽", t:"Kachel: Spieltag", d:"Ganz oben „📚 Wissen & Nachschlagen“: Spielformen und Feldmaße, die Spielregeln, was Ordnungsgeld kostet, das Warm up Adler mit allen vier Stufen und unsere Zeiten – zum Nachsehen am Platz. Darunter der Ablauf von oben nach unten: „Teams festlegen“ beantwortet einmal für den ganzen Tag, wer dabei ist und wie viele Teams wir stellen – die Kinder verteilt die App automatisch, du korrigierst nur. Darunter je Team eine Kachel mit Kader, Rollen, Uhr, Rotations-Timer und Liveticker; danach die Team-Quests für alle Teams zusammen. Beim Öffnen sind alle Abschnitte eingeklappt – du tippst auf, was du gerade brauchst. Dazu die Rollen-Empfehlung aus den Bewertungen und die Analyse. Steht ein Turnier an, erscheint ganz unten der Turnier-Bereich (Heimturnier ausrichten mit öffentlichem Link für die Gast-Trainer)."},
   {emo:"👥", t:"Kachel: Team", d:"Kader verwalten, Spieler alle 6 Wochen in 16 Kriterien bewerten (Live-Radar), Profil mit Sprachlob und Entwicklungs-Report, dazu Saison-Cockpit, Anwesenheit über die Saison und Rollen-Matrix. Auch Notfallkarten und Probetraining wohnen hier."},
   {emo:"🎯", t:"Kachel: Taktik", d:"Das Taktikboard: Formationen stellen, Laufwege und Pässe zeichnen, als Bild teilen – im Pro-Modus groß, am Handy wie am Tablet. Daneben die Übungs-Datenbank – dort zeichnest du je Übung eine Skizze mit Spielern, Hütchen, Minitoren, Jugendtoren, Zonen, Pfeilen, Mittellinie und Schusszone und gibst sie mit „Skizze teilen“ als Bild weiter."},
-  {emo:"🪶", t:"Kachel: Eltern & Kinder", d:"Team-Ansage mit Gelesen-Status, Eltern einladen, Elterngespräche – und die ganze Adler-Welt der Kinder: Federn, Karten, Abzeichen, Kabinen-Wahl, Sammelalbum-Fotos, Team-Quests, Urkunden-Studio und das Adler Nest."},
+  {emo:"🪶", t:"Kachel: Eltern & Kinder", d:"Team-Ansage mit Gelesen-Status, Eltern einladen, Elterngespräche – und die ganze Adler-Welt der Kinder: Federn, Karten, Abzeichen, Kabinen-Wahl, „Unsere Regeln“ für die Kabine, Sammelalbum-Fotos, Team-Quests, Urkunden-Studio und das Adler Nest."},
   {emo:"📅", t:"Kachel: Orga", d:"Termine mit Endzeit (danach automatisch ins Archiv), Pinnwand fürs Trainerteam, Ferien-Radar, Mitbringlisten, Trainer-Meeting (steht der Termin, erscheint er auf deiner Startseite – die Eltern sehen ihn nicht), Teamkasse, Ausrüstung und Fundbüro. Ganz unten: Push-Benachrichtigungen und dein Passwort."},
   {emo:"🧭", t:"Und unten?", d:"Die Leiste am unteren Rand führt zu denselben Bereichen – für den schnellen Daumen-Wechsel. Kacheln und Leiste sind dieselbe Logik, nur zwei Wege. Viel Spaß – auf geht's, Adler! 🎉"},
 ];
@@ -5663,6 +5664,7 @@ function _kachelInhalt(key){
       {emo:"🪶",label:"Adler-Welt",fn:"adlerWeltOpen"},
       {emo:"🧠",label:"Quiz-Ergebnisse",fn:"go",arg:"quizresults"},
       {emo:"🗳️",label:"Kabinen-Wahl",fn:"wahlTrainerOpen"},
+      {emo:"🤝",label:"Unsere Regeln",fn:"codexKinderEditOpen"},
       {emo:"🖼️",label:"Karten-Fotos",fn:"albumFotosOpen"},
       {emo:"🎯",label:"Team-Quests",fn:"questEditorOpen"},
       {emo:"🏅",label:"Urkunden-Studio",fn:"urkundenOpen"}
