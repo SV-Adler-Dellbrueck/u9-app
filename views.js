@@ -883,6 +883,21 @@ async function kaderSaveAll(btn){
     });
   });
   if(!payload.length){toast("Kein Spieler eingetragen","err");return;}
+  /* v530: Eine Trikotnummer gehoert genau einem aktiven Kind. Die Datenbank haelt das
+     seit v530 fest (kader_nr_aktiv_uniq), aber sie kann nur „geht nicht" sagen. Hier
+     steht, WELCHE Nummer und WELCHE zwei Kinder - sonst sucht man in fuenfzehn Zeilen.
+     Inaktive zaehlen nicht mit: ausgeschiedene Kinder duerfen ihre Nummer behalten. */
+  const nrBelegt=new Map(), dublette=[];
+  payload.forEach(k=>{
+    if(k.nr==null||!k.aktiv)return;
+    if(nrBelegt.has(k.nr))dublette.push({nr:k.nr,a:nrBelegt.get(k.nr),b:k.name});
+    else nrBelegt.set(k.nr,k.name);
+  });
+  if(dublette.length){
+    const d=dublette[0];
+    toast(`Nummer ${d.nr} ist doppelt: ${d.a} und ${d.b}. Jede Nummer gehört genau einem Kind.`,"err");
+    return;
+  }
   if(btn)btn.disabled=true;
   try{
     /* on_conflict=id statt name: mit dem Namen als Schluessel legte eine Umbenennung
@@ -891,7 +906,15 @@ async function kaderSaveAll(btn){
        namens-gefuehrten Texttabellen zieht ein Trigger in der Datenbank nach. */
     const r=await fetch(`${SB_URL}/rest/v1/kader?on_conflict=id`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify(payload)});
     if(sbCheck401(r)){return;}
-    if(r.status===409){toast("Name schon vergeben – jedes Kind braucht einen eigenen","err");return;}
+    if(r.status===409){
+      /* Zwei Regeln koennen 409 ausloesen. Ohne Blick in die Antwort bekaeme der Trainer
+         bei einer doppelten NUMMER die Meldung zum doppelten NAMEN – und suchte am
+         falschen Ende. */
+      let grund=""; try{ grund=await r.text(); }catch(e){}
+      if(/kader_nr_aktiv_uniq|\(nr\)/.test(grund))toast("Diese Trikotnummer hat schon ein anderes Kind","err");
+      else toast("Name schon vergeben – jedes Kind braucht einen eigenen","err");
+      return;
+    }
     if(r.ok||r.status===201){
       await loadKader();
       renderKader();

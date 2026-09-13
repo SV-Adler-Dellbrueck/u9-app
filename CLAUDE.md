@@ -33,8 +33,7 @@ Bewusste Entscheidungen des Auftraggebers — **nicht erneut vorschlagen**:
   – **gemeint ist die Laufzeit:** die App führt keine von einem Sprachmodell erzeugten
   Datenbankbefehle aus. Fertige Inhalte in einem geprüften Schema sind davon nicht
   berührt: `uebungen/bibliothek.json` wird wie eine Eingabe des Trainers geprüft und über
-  dieselben Wege geschrieben. Direkter Schreibzugriff auf Supabase von außerhalb der App
-  bleibt ausgeschlossen.
+  dieselben Wege geschrieben.
 - Kein Trainings-Opt-out für Eltern („gilt als zugesagt")
 - Keine A/B-Niveau-Labels bei Kindern — fachlich widerlegt, Tagesgruppen sind der richtige Ort
 - Mehrsprachigkeit ist zurückgestellt
@@ -97,6 +96,11 @@ caches.keys().then(ks => ks.forEach(k => caches.delete(k)));
 Supabase mit durchgängiger Row-Level-Security. Muster für trainer-pflegbare Inhalte: Tabelle + JS-Fallback + Overlay-Ansicht + Editor, der die komplette Liste ersetzt (löschen und neu einfügen).
 
 **Vorsicht bei diesem Muster:** Der Editor muss *alle* Spalten lesen und zurückschreiben. Fehlt eine im `INSERT`, ist sie nach dem Speichern für alle Zeilen leer — ohne Fehlermeldung.
+
+### Schreiben von außerhalb der App
+
+Direkter Schreibzugriff auf Supabase ist erlaubt — seit dem 13.09.2026, vorher war er
+ausgeschlossen.
 
 Schlüssel und Geheimnisse (Push-Zertifikate, Cron-Token) leben ausschließlich in den Edge Functions, nie im Repo. Die Push-Cron-Funktion nie manuell mit echtem Token aufrufen — das verdoppelt Benachrichtigungen an Eltern.
 
