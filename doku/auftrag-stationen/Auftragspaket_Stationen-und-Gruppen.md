@@ -86,9 +86,12 @@ Anwesenheit), nicht aus dem Kader. Zielgröße vier bis sechs. Die Zahl der Grup
 der Felder, die Zahl der Felder der Zahl der **Feldtrainer**.
 
 Feldtrainer sind Trainer mit Platzrolle. **Trainer, deren Rolle Organisation oder
-Elternkommunikation ist, bekommen kein Feld** — sie stehen weiterhin in der Trainer-Reihe, aber
-nicht in der Feldzuteilung. Dafür braucht der Trainerstab ein Rollenfeld, falls es das nicht schon
-gibt; Skill Development Coach zählt als Feldtrainer für Torwart- und Einzelstationen.
+Elternkommunikation ist, bekommen standardmäßig kein Feld** — sie stehen weiterhin in der
+Trainer-Reihe, aber nicht in der Feldzuteilung. Im Ausnahmefall springt Markus auf dem Platz ein:
+Dann wird er im Plan per Tipp als Feldtrainer für diesen Termin angehakt, und die Felder rechnen
+neu. Die Standardeinstellung bleibt davon unberührt. Dafür braucht der Trainerstab ein Rollenfeld,
+falls es das nicht schon gibt; Skill Development Coach zählt als Feldtrainer für Torwart- und
+Einzelstationen.
 
 Die Gruppen bleiben danach von Hand anpassbar (Kind antippen, verschieben) — das gibt es schon
 und bleibt.
@@ -99,6 +102,8 @@ Abnahmekriterien:
 8. Elf zugesagte Kinder, drei Feldtrainer → drei Gruppen zu vier, vier und drei — mit Hinweis, dass
    drei unter der Zielgröße liegt.
 9. Markus (Rolle Organisation) zugesagt → erscheint in der Trainer-Reihe, bekommt kein Feld.
+   Nach einem Tipp auf seinen Chip „als Feldtrainer heute" → bekommt ein Feld, nur für diesen
+   Termin; beim nächsten Termin ist er wieder ohne Feld.
 10. Ein Kind sagt am Tag ab → Gruppen rechnen neu, Änderungen von Hand an den übrigen Gruppen
     bleiben erhalten.
 
