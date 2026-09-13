@@ -1,0 +1,116 @@
+/* v533 – Paket 3: Übungsform gegen Spielform (doku/auftrag-adler-luecken, „Kleinigkeit").
+
+   Das Auftragspaket schlug einen zusätzlichen BLOCKTYP im Trainingsplan vor. Am
+   gerenderten Plan gemessen trägt der das nicht – diese Prüfung hält den Befund fest,
+   damit der Vorschlag nicht in einem halben Jahr erneut gebaut wird (a).
+   Umgesetzt ist die Unterscheidung deshalb an der ÜBUNG.
+
+   Geprüft:
+   a) Der Befund: ein Block mit unbekanntem Typ verliert beim Speichern seine
+      Trainerzuordnung, während der Plan die Übung trotzdem einem Trainer zurechnet.
+   b) Drei Zustände, und „noch nicht eingeordnet" wird nie geraten.
+   c) Antippen ordnet ein: offen → Spielform → Übungsform → offen, und schreibt
+      team_config.uebung_art (nicht uebung_meta – die Sterne bleiben unberührt).
+   d) Die Kennzeichnung steht an der Übung, ohne eigene Farbe.
+   e) Nutzen: die Netto-Spielzeit der Vorlagen zählt einen Hauptteil mit Übungsform
+      nicht mehr mit; ein Abschluss zählt immer; eine nicht eingeordnete Übung zählt
+      weiter mit UND wird im Hinweis benannt. */
+module.exports = async function (h) {
+  const probleme = [], zeilen = [];
+
+  const s = await h.starten({ warten: 900, supabase: h.supabaseAttrappe({
+    kader: h.kaderZeilen(),
+    team_config: [{ id: 1, uebung_meta: { "Korridor-Funino": 3 }, uebung_art: {} }]
+  }) });
+
+  const r = await s.page.evaluate(async () => {
+    const out = {};
+
+    // ── a) Der Befund, der die Bauweise begründet ────────────────────────────────
+    tpSlots.length = 0;
+    tpSlots.push({ label: "Übungsform", dauer: 20, farbe: "#1a56db", typ: "uebung" });
+    tpSlots.push({ label: "Spielform",  dauer: 20, farbe: "#1a56db", typ: "main" });
+    document.querySelectorAll("#tp-trainer-checks input").forEach((c, i) => { if (i < 2) c.checked = true; });
+    tpRenderTimeline();
+    const slots = [...document.querySelectorAll(".tp-slot")];
+    slots.forEach(sl => sl.querySelectorAll("select.tp-form-sel").forEach(sel => { tpCoaches[sel.id] = "Charles"; sel.value = "0"; }));
+    const z = tpSlotsMitZuordnung();
+    out.zuordnungUnbekannt = !!(z[0] && z[0].coaches);   // erwartet: false – geht verloren
+    out.zuordnungMain      = !!(z[1] && z[1].coaches);   // erwartet: true
+    out.planRechnetZu = tpPlanEntries().some(e => e.slotLabel === "Übungsform" && e.trainer && e.trainer !== "Alle");
+    out.imHinzufuegenDialog = TP_ADD_OPTS.some(o => o.typ === "uebung");
+    out.importKenntTyp = (typeof EI_TYPEN !== "undefined") && EI_TYPEN.includes("uebung");
+
+    // ── b/c) Drei Zustände am Namen der Übung ────────────────────────────────────
+    await uebungMetaLoad();
+    const f = tpAllForms()[0];
+    out.name = f && f.name;
+    out.artAmAnfang = _tpArt(f);                       // erwartet: "" – nichts geraten
+    out.chipOffen   = tpArtChip(f, true);
+    await tpArtTipp(out.name); out.nach1 = _tpArt(f);
+    await tpArtTipp(out.name); out.nach2 = _tpArt(f);
+    await tpArtTipp(out.name); out.nach3 = _tpArt(f);
+    // jetzt fest auf Übungsform stellen für die Netto-Rechnung unten
+    await tpArtTipp(out.name); await tpArtTipp(out.name);
+    out.artFinal = _tpArt(f);
+    out.sterneUnberuehrt = (window._uebungMeta || {})["Korridor-Funino"];
+
+    // d) Kennzeichnung an der Übung, ohne eigene Farbe
+    out.chipEingeordnet = tpArtChip(f, false);
+
+    // ── e) Netto-Spielzeit der Vorlagen ──────────────────────────────────────────
+    const zweite = tpAllForms().find(x => x.name !== out.name && !["aufwaermen", "torwart", "individual"].includes(x.kat));
+    out.zweite = zweite && zweite.name;
+    const bloecke = [
+      { label: "Aufwärmen",  typ: "warmup",    dauer: 10 },
+      { label: "Hauptteil 1", typ: "main",     dauer: 20, uebung_name: out.name },    // Übungsform
+      { label: "Hauptteil 2", typ: "main",     dauer: 20, uebung_name: out.zweite },  // nicht eingeordnet
+      { label: "Abschluss",   typ: "abschluss", dauer: 20 }                            // freies Spiel
+    ];
+    out.summe = _evSpielformSumme(bloecke);            // erwartet 40: Hauptteil 2 + Abschluss
+    out.arten = bloecke.map(b => _evBlockArt(b));
+    out.offene = _evOffeneBloecke(bloecke);
+    out.hinweis = _evNettoHinweis({ netto_spielform_min: 10, bloecke });
+    return out;
+  });
+
+  await s.page.waitForTimeout(200);
+  const geschrieben = s.gesendet.filter(g => /team_config/.test(g.pfad || ""));
+  const fehler = s.fehler();
+  await s.schliessen();
+
+  // a) Befund
+  if (r.zuordnungUnbekannt) probleme.push("ein Block mit unbekanntem Typ speichert seine Trainerzuordnung doch – der Befund stimmt nicht mehr, die Bauweise ist zu prüfen");
+  if (!r.zuordnungMain) probleme.push("ein Hauptteil speichert seine Trainerzuordnung nicht – Gegenprobe kaputt");
+  if (!r.planRechnetZu) probleme.push("der Plan rechnet dem unbekannten Blocktyp keinen Trainer zu – Gegenprobe kaputt");
+  if (r.imHinzufuegenDialog) probleme.push("„uebung“ steht im Hinzufügen-Dialog – dann wäre der Blocktyp doch gebaut worden");
+  if (r.importKenntTyp) probleme.push("der Import kennt den Blocktyp „uebung“ – nicht gewollt, die Unterscheidung hängt an der Übung");
+
+  // b/c) drei Zustände
+  if (r.artAmAnfang !== "") probleme.push(`ohne Einordnung steht „${r.artAmAnfang}“ – es darf nichts geraten werden`);
+  if (!/noch nicht eingeordnet/.test(r.chipOffen || "")) probleme.push(`nicht eingeordnet wird nicht benannt: „${r.chipOffen}“`);
+  const folge = [r.nach1, r.nach2, r.nach3].join(",");
+  if (folge !== "spiel,uebung,") probleme.push(`Antipp-Folge ist [${folge}] – erwartet spiel, uebung, wieder offen`);
+  if (r.sterneUnberuehrt !== 3) probleme.push(`die ⭐-Einstufung wurde mitverändert (${r.sterneUnberuehrt}) – Einordnung und Sterne müssen getrennt bleiben`);
+  const art = geschrieben.filter(g => g.body && g.body.uebung_art);
+  if (!art.length) probleme.push("es wird kein uebung_art nach team_config geschrieben");
+  if (geschrieben.some(g => g.body && g.body.uebung_meta)) probleme.push("beim Einordnen wird auch uebung_meta geschrieben – die Sterne dürfen nicht mitfahren");
+
+  // d) schlichte Kennzeichnung
+  if (!/Übungsform/.test(r.chipEingeordnet || "")) probleme.push(`Kennzeichnung fehlt oder heißt anders: „${r.chipEingeordnet}“`);
+  if (/background:#[0-9a-f]{3,6}/i.test(r.chipEingeordnet || "")) probleme.push("die Kennzeichnung trägt eine eigene Farbe – das Paket verlangt eine schlichte");
+
+  // e) Netto-Rechnung
+  if (String(r.arten) !== "aus,uebung,offen,spiel") probleme.push(`Blockarten [${r.arten}] – erwartet aus, uebung, offen, spiel`);
+  if (r.summe !== 40) probleme.push(`Spielform-Summe ${r.summe} Min. (erwartet 40 – der Hauptteil mit Übungsform zählt nicht mit)`);
+  if (!r.offene.includes(r.zweite)) probleme.push(`der nicht eingeordnete Block wird nicht benannt: [${r.offene}]`);
+  if (!/Noch nicht als Übungs- oder Spielform eingeordnet/.test(r.hinweis || "")) probleme.push(`der Hinweis verschweigt die offenen Blöcke: „${(r.hinweis || "").slice(0, 120)}“`);
+
+  if (fehler.length) probleme.push(...fehler.slice(0, 2));
+
+  zeilen.push(`Befund Blocktyp: Zuordnung gespeichert ${r.zuordnungUnbekannt} (Hauptteil ${r.zuordnungMain}) · Plan rechnet trotzdem zu ${r.planRechnetZu}`);
+  zeilen.push(`Einordnung „${r.name}“: offen → ${[r.nach1, r.nach2, r.nach3].map(x => x || "offen").join(" → ")} · Sterne unberührt ${r.sterneUnberuehrt === 3}`);
+  zeilen.push(`Netto: Blockarten [${r.arten}] · Summe ${r.summe} Min. · offen benannt [${r.offene}]`);
+
+  return h.ergebnis("Übungsform gegen Spielform: an der Übung, drei Zustände, Netto-Rechnung folgt", !probleme.length, zeilen.concat(probleme));
+};
