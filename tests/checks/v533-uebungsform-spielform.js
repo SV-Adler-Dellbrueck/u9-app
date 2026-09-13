@@ -1,9 +1,13 @@
 /* v533 – Paket 3: Übungsform gegen Spielform (doku/auftrag-adler-luecken, „Kleinigkeit").
 
-   Das Auftragspaket schlug einen zusätzlichen BLOCKTYP im Trainingsplan vor. Am
-   gerenderten Plan gemessen trägt der das nicht – diese Prüfung hält den Befund fest,
-   damit der Vorschlag nicht in einem halben Jahr erneut gebaut wird (a).
-   Umgesetzt ist die Unterscheidung deshalb an der ÜBUNG.
+   Die Unterscheidung liegt hier an der ÜBUNG: welche Übung ist eine Spielform, welche
+   eine Übungsform. Am BLOCK hängt sie seit v534 (Paket 3) zusätzlich.
+
+   Abschnitt a) hält fest, dass ein UNBEKANNTER Blocktyp weiterhin nicht getragen wird:
+   er wird gezeichnet, verliert beim Speichern aber still seine Trainerzuordnung,
+   während der Plan die Übung trotzdem einem Trainer zurechnet. Für „spielform" und
+   „uebungsform" ist genau das in v534 behoben – die prüft v534 selbst. Diese Prüfung
+   bewacht die Grenze: ein frei erfundener Typ bleibt gefährlich.
 
    Geprüft:
    a) Der Befund: ein Block mit unbekanntem Typ verliert beim Speichern seine
@@ -12,9 +16,9 @@
    c) Antippen ordnet ein: offen → Spielform → Übungsform → offen, und schreibt
       team_config.uebung_art (nicht uebung_meta – die Sterne bleiben unberührt).
    d) Die Kennzeichnung steht an der Übung, ohne eigene Farbe.
-   e) Nutzen: die Netto-Spielzeit der Vorlagen zählt einen Hauptteil mit Übungsform
-      nicht mehr mit; ein Abschluss zählt immer; eine nicht eingeordnete Übung zählt
-      weiter mit UND wird im Hinweis benannt. */
+   e) Zusammenspiel mit v534 (Paket 3): über die Nettozeit entscheidet der BLOCKTYP.
+      Die Einordnung der Übung rechnet NICHT mit – sie widerspricht nur, wenn ein als
+      Spielform gezählter Block eine als Übungsform eingeordnete Übung trägt. */
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
 
@@ -67,9 +71,13 @@ module.exports = async function (h) {
       { label: "Hauptteil 2", typ: "main",     dauer: 20, uebung_name: out.zweite },  // nicht eingeordnet
       { label: "Abschluss",   typ: "abschluss", dauer: 20 }                            // freies Spiel
     ];
-    out.summe = _evSpielformSumme(bloecke);            // erwartet 40: Hauptteil 2 + Abschluss
-    out.arten = bloecke.map(b => _evBlockArt(b));
-    out.offene = _evOffeneBloecke(bloecke);
+    /* v534 (Paket 3) hat die Rechnung umgestellt: über die Nettozeit entscheidet jetzt
+       der BLOCKTYP, nicht mehr die Einordnung der Übung – sonst gäbe es zwei Wahrheiten
+       für dieselbe Zahl. Die Einordnung rechnet nicht mehr mit, sie WIDERSPRICHT nur:
+       ein Block, der als Spielform zählt, dessen Übung aber als Übungsform eingeordnet
+       ist, wird benannt. Genau das wird hier geprüft. */
+    out.summe = _evSpielformSumme(bloecke);            // erwartet 60: beide main-Blöcke + Abschluss
+    out.unstimmig = _evUnstimmigeBloecke(bloecke);
     out.hinweis = _evNettoHinweis({ netto_spielform_min: 10, bloecke });
     return out;
   });
@@ -80,11 +88,11 @@ module.exports = async function (h) {
   await s.schliessen();
 
   // a) Befund
-  if (r.zuordnungUnbekannt) probleme.push("ein Block mit unbekanntem Typ speichert seine Trainerzuordnung doch – der Befund stimmt nicht mehr, die Bauweise ist zu prüfen");
+  if (r.zuordnungUnbekannt) probleme.push("ein Block mit FREI ERFUNDENEM Typ speichert seine Trainerzuordnung – dann führt auch ein Tippfehler im Import zu einem halb funktionierenden Block");
   if (!r.zuordnungMain) probleme.push("ein Hauptteil speichert seine Trainerzuordnung nicht – Gegenprobe kaputt");
   if (!r.planRechnetZu) probleme.push("der Plan rechnet dem unbekannten Blocktyp keinen Trainer zu – Gegenprobe kaputt");
-  if (r.imHinzufuegenDialog) probleme.push("„uebung“ steht im Hinzufügen-Dialog – dann wäre der Blocktyp doch gebaut worden");
-  if (r.importKenntTyp) probleme.push("der Import kennt den Blocktyp „uebung“ – nicht gewollt, die Unterscheidung hängt an der Übung");
+  if (r.imHinzufuegenDialog) probleme.push("„uebung“ steht im Hinzufügen-Dialog – der Typ heißt „uebungsform“, nicht „uebung“");
+  if (r.importKenntTyp) probleme.push("der Import kennt den Typ „uebung“ – er heißt „uebungsform“; zwei Schreibweisen für dasselbe wären eine Falle");
 
   // b/c) drei Zustände
   if (r.artAmAnfang !== "") probleme.push(`ohne Einordnung steht „${r.artAmAnfang}“ – es darf nichts geraten werden`);
@@ -101,16 +109,15 @@ module.exports = async function (h) {
   if (/background:#[0-9a-f]{3,6}/i.test(r.chipEingeordnet || "")) probleme.push("die Kennzeichnung trägt eine eigene Farbe – das Paket verlangt eine schlichte");
 
   // e) Netto-Rechnung
-  if (String(r.arten) !== "aus,uebung,offen,spiel") probleme.push(`Blockarten [${r.arten}] – erwartet aus, uebung, offen, spiel`);
-  if (r.summe !== 40) probleme.push(`Spielform-Summe ${r.summe} Min. (erwartet 40 – der Hauptteil mit Übungsform zählt nicht mit)`);
-  if (!r.offene.includes(r.zweite)) probleme.push(`der nicht eingeordnete Block wird nicht benannt: [${r.offene}]`);
-  if (!/Noch nicht als Übungs- oder Spielform eingeordnet/.test(r.hinweis || "")) probleme.push(`der Hinweis verschweigt die offenen Blöcke: „${(r.hinweis || "").slice(0, 120)}“`);
+  if (r.summe !== 60) probleme.push(`Spielform-Summe ${r.summe} Min. (erwartet 60 – beide main-Blöcke und das Abschlussspiel, nicht das Warm-up)`);
+  if (!r.unstimmig.includes(r.name)) probleme.push(`der Widerspruch wird nicht benannt: [${r.unstimmig}] – erwartet „${r.name}“`);
+  if (!/die Übung ist aber als Übungsform eingeordnet/.test(r.hinweis || "")) probleme.push(`der Hinweis verschweigt den Widerspruch: „${(r.hinweis || "").slice(0, 140)}“`);
 
   if (fehler.length) probleme.push(...fehler.slice(0, 2));
 
-  zeilen.push(`Befund Blocktyp: Zuordnung gespeichert ${r.zuordnungUnbekannt} (Hauptteil ${r.zuordnungMain}) · Plan rechnet trotzdem zu ${r.planRechnetZu}`);
+  zeilen.push(`Erfundener Blocktyp: Zuordnung gespeichert ${r.zuordnungUnbekannt} (Hauptteil ${r.zuordnungMain}) · Plan rechnet trotzdem zu ${r.planRechnetZu}`);
   zeilen.push(`Einordnung „${r.name}“: offen → ${[r.nach1, r.nach2, r.nach3].map(x => x || "offen").join(" → ")} · Sterne unberührt ${r.sterneUnberuehrt === 3}`);
-  zeilen.push(`Netto: Blockarten [${r.arten}] · Summe ${r.summe} Min. · offen benannt [${r.offene}]`);
+  zeilen.push(`Netto: Summe ${r.summe} Min. (Blocktyp entscheidet) · Widerspruch benannt [${r.unstimmig}]`);
 
   return h.ergebnis("Übungsform gegen Spielform: an der Übung, drei Zustände, Netto-Rechnung folgt", !probleme.length, zeilen.concat(probleme));
 };

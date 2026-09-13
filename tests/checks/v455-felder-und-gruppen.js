@@ -29,7 +29,7 @@ module.exports = async function (h) {
     const felder = si => [...document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`)].length;
     const titel = si => [...document.querySelectorAll(`.tp-slot`)].filter(x => x.querySelector(`.tp-form-sel[id^="tp-form-${si}-"]`))[0]?.querySelectorAll(".tp-station-titel") || [];
     const out = { vorher: felder(1) };
-    tpDoAddSlot(1); const twIdx = tpSlots.findIndex(x => x.typ === "tw"); tpSlots[twIdx].parallelZu = 1; tpRenderTimeline();
+    tpDoAddSlot("tw"); const twIdx = tpSlots.findIndex(x => x.typ === "tw"); tpSlots[twIdx].parallelZu = 1; tpRenderTimeline();
     tpSetCoach(`tp-form-${twIdx}-0`, T[2]);
     out.nachher = felder(1); out.nachher2 = felder(2);
     out.titel1 = [...titel(1)].map(x => x.textContent.trim()); out.titel2 = [...titel(2)].map(x => x.textContent.trim());
