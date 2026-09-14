@@ -427,7 +427,6 @@ async function loadKader(){
         if(x.medical)o.medical=x.medical;
         if(x.starker_fuss)o.starker_fuss=x.starker_fuss;
         if(x.lieblingsposition)o.lieblingsposition=x.lieblingsposition;
-        if(x.trikotgroesse)o.trikotgroesse=x.trikotgroesse;   // v543: Groesse am Kind, nicht auf Papier
         if(x.foto_path)o.foto_path=x.foto_path;
         o.foto_stadionheft_ok=!!x.foto_stadionheft_ok; // HOTFIX 19 digital: Foto-Freigabe fürs Eltern-Heft
         return o;
@@ -475,13 +474,10 @@ function kaderEditRow(k,i){
       </select>
       <input class="ke-pos" value="${esc(k.lieblingsposition||'')}" placeholder="Lieblingsposition" style="flex:1;min-width:90px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px">
     </div>
-    <!-- v543: Trikotgröße. Freies Feld MIT Vorschlagsliste – die Größenschlüssel der
-         Hersteller gehen auseinander (128/134/140 gegen XS/S/M), eine feste Auswahl
-         müsste bei jedem neuen Ausrüster angefasst werden. Die Liste nimmt einem das
-         Tippen ab, verbietet aber nichts. -->
-    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
-      <input class="ke-trikot" list="ke-trikot-liste" value="${esc(k.trikotgroesse||'')}" placeholder="👕 Trikotgröße" title="Trikotgröße – frei einzutragen, die Liste ist nur ein Vorschlag" style="flex:1;min-width:110px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px">
-    </div>
+    <!-- v544: Die Trikotgröße stand hier von v543 bis v543. Sie ist mit dem zweiten
+         Kleidungsstück zu einer Ausgabe geworden (Trikotsatz, Anzug, Jacke haben je
+         eigene Größen) und lebt jetzt in „Ausstattung" unter Team – eine Stelle, an
+         der auch Datum und Rückgabe stehen. Nicht wieder hier einbauen. -->
     <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
       <span style="font-size:11px;color:var(--text2)">Foto (Karte):</span>
       <input type="file" accept="image/jpeg,image/png,image/webp" onchange="kaderRowFoto(this)" style="font-size:11px;flex:1">
@@ -518,10 +514,6 @@ function kaderEditOpen(){
   modal.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:440px;width:100%;margin:auto">
     <div style="font-weight:700;margin-bottom:4px">Spieler verwalten</div>
     <div style="font-size:11px;color:var(--text2);margin-bottom:12px">Geburtstag & Medical-Hinweise sind nur für Trainer sichtbar (nicht für Eltern).</div>
-    <!-- v543: Vorschlagsliste für die Trikotgröße. EINMAL im Fenster, nicht je Zeile –
-         fünfzehn gleiche datalist-Elemente wären fünfzehnmal dieselbe Wahrheit. -->
-    <datalist id="ke-trikot-liste">${["116","122","128","134","140","146","152","XS","S","M"].map(g=>`<option value="${g}">`).join("")}</datalist>
-    <div id="kader-trikot-stand" style="font-size:11.5px;color:var(--text2);margin-bottom:10px"></div>
     <div id="kader-edit-list">${KADER.slice().sort((a,b)=>((a.aktiv===false)-(b.aktiv===false))).map((k,i)=>kaderEditRow(k,i)).join("")}</div>
     <button class="btn btn-sm" onclick="kaderEditAdd()" style="margin-bottom:12px"><i class="ti ti-plus"></i>Spieler hinzufügen</button>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -530,20 +522,6 @@ function kaderEditOpen(){
     </div>
   </div>`;
   document.body.appendChild(modal);
-  kaderTrikotStand();
-}
-/* v543: Wie viele Größen fehlen noch? Die Zeile ist der eigentliche Zweck des Feldes –
-   beim Anprobieren will man wissen, wen man noch nicht hat, nicht fünfzehn Kästchen
-   einzeln durchsehen. Zählt nur Kinder im Kader; wer nicht mehr dabei ist, braucht
-   kein Trikot. */
-function kaderTrikotStand(){
-  const el=document.getElementById("kader-trikot-stand"); if(!el)return;
-  const drin=KADER.filter(k=>k.aktiv!==false);
-  const ohne=drin.filter(k=>!String(k.trikotgroesse||"").trim());
-  if(!drin.length){ el.innerHTML=""; return; }
-  el.innerHTML=ohne.length
-    ? `👕 <b>${ohne.length}</b> von ${drin.length} Größen fehlen noch.`
-    : `👕 Alle ${drin.length} Trikotgrößen sind erfasst.`;
 }
 function kaderEditAdd(){
   const list=document.getElementById("kader-edit-list");
@@ -894,7 +872,6 @@ async function kaderSaveAll(btn){
     const medical=row.querySelector(".ke-medical").value.trim();
     const fuss=row.querySelector(".ke-fuss")?.value||"";
     const pos=row.querySelector(".ke-pos")?.value.trim()||"";
-    const trikot=row.querySelector(".ke-trikot")?.value.trim()||"";
     const id=parseInt(row.dataset.id)||null;      // bestehende Zeile: ID mitschicken
     payload.push({
       ...(id?{id}:{}),
@@ -902,7 +879,7 @@ async function kaderSaveAll(btn){
       tw:row.querySelector(".ke-tw").checked,
       tw_prio:parseInt(row.querySelector(".ke-prio").value)||0,
       geb:geb||null, medical:medical||null,
-      starker_fuss:fuss||null, lieblingsposition:pos||null, trikotgroesse:trikot||null, sort_order:i+1,
+      starker_fuss:fuss||null, lieblingsposition:pos||null, sort_order:i+1,
       // Ohne diese Zeile bliebe der Haken wirkungslos: PostgREST setzt beim Upsert nur
       // die mitgeschickten Spalten, `aktiv` waere also nie beschrieben worden.
       aktiv:row.querySelector(".ke-aktiv")?.checked!==false,
@@ -969,7 +946,10 @@ async function backupExport(){
                    Einheit (Phasen, Dauern, Uebungen) und ist damit die Vorbereitung
                    mehrerer Wochen - eine Sicherung ohne ihn sichert die Arbeit nicht,
                    um die es geht. */
-                "trainingsplan","trainingsgruppen"];
+                "trainingsplan","trainingsgruppen",
+                /* v544: Katalog und Ausgaben. Ohne sie steht nach einer Wieder-
+                   herstellung nirgends mehr, wer welches Trikot hat. */
+                "ausstattung_artikel","ausstattung_ausgabe"];
   const dump={_meta:{app:"U9 Adler Dellbrück",exported_at:new Date().toISOString(),tables}};
   try{
     for(const t of tables){
@@ -3931,7 +3911,7 @@ const HELP=[
     {t:"Saisonstart-Check", d:"Sechs Schritte für den Übergang in die neue Saison – Wrapped, Urkunden, Kader, Trainings-Serie, Eltern-Einladung, Ansage. Er steht Juni bis September im Orga-Menü; mit „Saisonstart abschließen“ blendest du ihn bis zur nächsten Saison aus. Von hier aus geht er immer auf.", run:"saisonStartOpen()"},
     {t:"Teamkasse", d:"Kassen-Link hinterlegen (kein Geld in der App).", run:"kasseOpen()"},
     {t:"Fundbüro", d:"Liegengebliebenes verwalten.", run:"fundbueroOpen()"},
-    {t:"Team-Ausrüstung", d:"Wer hat welches Material.", run:"ausruestungGrid()"},
+    {t:"Ausstattung", d:"Was hat welches Kind von uns bekommen? Oben wählst du den Gegenstand – Trikotsatz, Präsentationsanzug, Spieltagsjacke –, darunter steht der Kader. Ein Tipp auf das Kästchen setzt die Ausgabe auf heute, rechts daneben trägst du die Größe ein (128, 140, 152 als Vorschlag, frei überschreibbar); beim Trikotsatz auch die Satznummer. Über „↩︎ zurück“ wird eine Rückgabe mit heutigem Datum vermerkt – dafür ist die Liste am Ende da, wenn ein Kind den Verein wechselt. Weitere Gegenstände (Trinkflasche, Rucksack, zweiter Anzug) legst du über „＋“ selbst an; die App muss dafür nicht angefasst werden. Gespeichert wird sofort beim Antippen. Die Zeile oben zählt, wer noch nichts hat.", run:"ausstattungOpen()"},
     {t:"Adresse der App", d:"Die App liegt seit dem 10.09.2026 unter sv-adler-dellbrueck.github.io/u9-app/ – vorher stand in jedem weitergegebenen Link ein privater Benutzername. Die alte Adresse leitet weiter, verschickte Turnier-, Ticker-, Einladungs- und Kind-Links funktionieren also unverändert. Wer über die Weiterleitung kommt, sieht einmalig einen Hinweis: neu anmelden, Benachrichtigungen wieder erlauben und – wer die App auf dem Startbildschirm hat – sie dort neu ablegen. Nach „Verstanden“ kommt er nicht wieder."},
     {t:"Backup", d:"Kader-Daten exportieren.", run:"backupExport()"},
     {t:"Dark Mode", d:"Hell/Dunkel umschalten.", run:"toggleTheme()"},
@@ -3973,10 +3953,10 @@ const TOUR=[
   {emo:"🦅", t:"Willkommen in der Adler-App", d:"Die Startseite ist bewusst schlank: Ganz oben erscheinen DEINE To-Dos (nur wenn etwas offen ist) – jedes führt dorthin, wo es sich erledigen lässt, und was du nicht mehr nachtragen willst, hakst du mit dem ✓ daneben für das ganze Trainerteam ab, darunter „Bist du dabei?“ – nur die Termine der nächsten 14 Tage, für die deine Antwort noch fehlt; ein Tap auf ✅ 🤔 ❌ genügt, und ist alles beantwortet, verschwindet die Karte. Danach „Diese Woche“ – die Termine der nächsten sieben Tage mit dem Stand (Zusagen, Trainer, Plan, Aufstellung); die erste Zeile ist der nächste Termin mit Wetter, Packtipp und Sprungknopf. Dann ein festgelegtes Trainer-Meeting (falls eines ansteht, mit der Zahl offener Themen), ein Knopf zu allen Terminen der Saison – und sechs große Kacheln, die du auch unten in der Leiste findest. Hinter jeder Kachel wartet wieder ein Kachel-Menü. Diese Tour findest du jederzeit über ❓ oben rechts."},
   {emo:"🏃", t:"Kachel: Training", d:"Vier Wege: Anwesenheit (heute + kommende Termine), Trainingsplan mit Stationen und Trainingsstart (die Trainer-Reihe oben zeigt farbig, wer für den Termin zu-, ab- oder noch nicht geantwortet hat), die Übungs-Datenbank und das 🏆 Trainingsturnier, das du vorab planen kannst – auch Eltern gegen Kinder. Die Nachbewertung meldet sich nach dem Training von selbst als To-Do auf der Startseite."},
   {emo:"⚽", t:"Kachel: Spieltag", d:"Ganz oben „📚 Wissen & Nachschlagen“: Spielformen und Feldmaße, die Spielregeln, was Ordnungsgeld kostet, das Warm up Adler mit allen vier Stufen und unsere Zeiten – zum Nachsehen am Platz. Darunter der Ablauf von oben nach unten: „Teams festlegen“ beantwortet einmal für den ganzen Tag, wer dabei ist und wie viele Teams wir stellen – die Kinder verteilt die App automatisch, du korrigierst nur. Darunter je Team eine Kachel mit Kader, Rollen, Uhr, Rotations-Timer und Liveticker; danach die Team-Quests für alle Teams zusammen. Beim Öffnen sind alle Abschnitte eingeklappt – du tippst auf, was du gerade brauchst. Dazu die Rollen-Empfehlung aus den Bewertungen und die Analyse. Steht ein Turnier an, erscheint ganz unten der Turnier-Bereich (Heimturnier ausrichten mit öffentlichem Link für die Gast-Trainer)."},
-  {emo:"👥", t:"Kachel: Team", d:"Kader verwalten, Spieler alle 6 Wochen in 16 Kriterien bewerten (Live-Radar), Profil mit Sprachlob und Entwicklungs-Report, dazu Saison-Cockpit, Anwesenheit über die Saison und Rollen-Matrix. Auch Notfallkarten und Probetraining wohnen hier."},
+  {emo:"👥", t:"Kachel: Team", d:"Kader verwalten, Spieler alle 6 Wochen in 16 Kriterien bewerten (Live-Radar), Profil mit Sprachlob und Entwicklungs-Report, dazu Saison-Cockpit, Anwesenheit über die Saison und Rollen-Matrix. Unter „Ausstattung“ steht, welches Kind Trikotsatz, Anzug oder Jacke bekommen hat – mit Größe, Ausgabedatum und Rückgabe. Auch Notfallkarten und Probetraining wohnen hier."},
   {emo:"🎯", t:"Kachel: Taktik", d:"Das Taktikboard: Formationen stellen, Laufwege und Pässe zeichnen, als Bild teilen – im Pro-Modus groß, am Handy wie am Tablet. Daneben die Übungs-Datenbank – dort zeichnest du je Übung eine Skizze mit Spielern, Hütchen, Minitoren, Jugendtoren, Zonen, Pfeilen, Mittellinie und Schusszone und gibst sie mit „Skizze teilen“ als Bild weiter."},
   {emo:"🪶", t:"Kachel: Eltern & Kinder", d:"Team-Ansage mit Gelesen-Status, Eltern einladen, Elterngespräche – und die ganze Adler-Welt der Kinder: Federn, Karten, Abzeichen, Kabinen-Wahl, „Unsere Regeln“ für die Kabine, Sammelalbum-Fotos, Team-Quests, Urkunden-Studio und das Adler Nest."},
-  {emo:"📅", t:"Kachel: Orga", d:"Termine mit Endzeit (danach automatisch ins Archiv), Pinnwand fürs Trainerteam, Ferien-Radar, Mitbringlisten, Trainer-Meeting (steht der Termin, erscheint er auf deiner Startseite – die Eltern sehen ihn nicht), Teamkasse, Ausrüstung und Fundbüro. Ganz unten: Push-Benachrichtigungen und dein Passwort."},
+  {emo:"📅", t:"Kachel: Orga", d:"Termine mit Endzeit (danach automatisch ins Archiv), Pinnwand fürs Trainerteam, Ferien-Radar, Mitbringlisten, Trainer-Meeting (steht der Termin, erscheint er auf deiner Startseite – die Eltern sehen ihn nicht), Teamkasse, Ausstattung und Fundbüro. Ganz unten: Push-Benachrichtigungen und dein Passwort."},
   {emo:"🧭", t:"Und unten?", d:"Die Leiste am unteren Rand führt zu denselben Bereichen – für den schnellen Daumen-Wechsel. Kacheln und Leiste sind dieselbe Logik, nur zwei Wege. Viel Spaß – auf geht's, Adler! 🎉"},
 ];
 let tourIdx=0;
@@ -5662,7 +5642,10 @@ function _kachelInhalt(key){
         {emo:"📝",label:"Bewerten",fn:"go",arg:"bew"},
         {emo:"🌟",label:"Profil",fn:"go",arg:"profil"},
         {emo:"📈",label:"Entwicklung",fn:"go",arg:"verlauf"},
-        {emo:"⏸️",label:"Pausen-Status",fn:"pausenOpen"}
+        {emo:"⏸️",label:"Pausen-Status",fn:"pausenOpen"},
+        // v544: gehoert neben den Kader, nicht in die Orga – gefragt wird sie beim
+        // Anprobieren, und da steht man vor den Kindern.
+        {emo:"👕",label:"Ausstattung",fn:"ausstattungOpen"}
       ],col)
       +kSec("Überblick")
       +kTiles([
@@ -5720,7 +5703,7 @@ function _kachelInhalt(key){
       {emo:"🎉",label:"Mitbringliste",fn:"mitbringTrainerOpen"},
       {emo:"🗓️",label:"Meetings",fn:"trainerMeetingOpen"},   // v527: Übersicht; angelegt wird im Termin
       {emo:"💰",label:"Teamkasse",fn:"kasseOpen"},
-      {emo:"👕",label:"Ausrüstung",fn:"ausruestungGrid"},
+      {emo:"👕",label:"Ausstattung",fn:"ausstattungOpen"},
       {emo:"🧦",label:"Fundbüro",fn:"fundbueroOpen"},
       // Juni–September – und nur solange die Saison nicht abgehakt ist. Zur nächsten
       // Saison wechselt der Schlüssel, dann steht er von selbst wieder da.
