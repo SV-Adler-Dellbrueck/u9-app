@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v544 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v545 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -96,7 +96,8 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 | **Gegner-Datenbank** | Adresse, Ansprechpartner, Kontakt, bisherige Spiele, Kontaktweg direkt aus dem Termin. | Beim Heimspiel steht der Gegner mit einem Tipp im Festivalplan. |
 | **Tagebuch** | Trainertagebuch nach DFB-Basis-Coach: Auslöser, Beobachtung, Aha, Konsequenz, Frist. Entsteht direkt aus einer Nachbereitung oder frei. Monatsexport als Text. Persönliche Unterlage, nicht die des Teams. | Erfüllt die Anforderung der Trainerausbildung nebenbei – und macht die eigene Entwicklung sichtbar. |
 | **Pinnwand** | Team-Notizen fürs Trainerteam. | Kurze Absprachen, die nicht in einen Termin gehören. |
-| **Saisonstart-Check** | Sechs Schritte für den Übergang in die neue Saison: Wrapped, Urkunden, Kader, Trainings-Serie, Eltern-Einladung, Ansage. Erscheint Juni bis September. | Der Saisonwechsel wird nicht vergessen und läuft jedes Jahr gleich. |
+| **Saisonstart-Check** | Sieben Schritte für den Übergang in die neue Saison: Wrapped, Urkunden, Kader, Trainings-Serie, Eltern-Einladung, Ansage, Material zählen. Erscheint Juni bis September. | Der Saisonwechsel wird nicht vergessen und läuft jedes Jahr gleich. Die Inventur bekommt den einzigen Termin, an dem ohnehin alles ausgepackt wird. |
+| **Material** | Der Bestand des Teams: Bälle, Hütchen je Farbe, Markierungen, Leibchen, Trinkflaschen, Erste-Hilfe-Set. Je Posten ein Soll und ein Ist — beide dürfen leer bleiben, denn leer heißt „nicht gezählt“ und nicht „null Stück“. Jede Ist-Zahl setzt das Zähldatum; nach einem halben Jahr wird der Kopf gelb. Unter dem Soll steht, wie viele fehlen. Bei Trikotsätzen und Jacken steht daneben, wie viele davon gerade bei den Kindern sind. | Vor der Sammelbestellung weiß man, was fehlt — und die Kleidung wird nicht zweimal gezählt. |
 | **Fundbüro** | Liegengebliebenes verwalten. | Kleinkram, der sonst per Chat gesucht wird. |
 | **Teamkasse** | Nur ein Link zur externen Kasse hinterlegt. Kein Geld in der App. | Bewusste Trennung: die App führt keine Konten. |
 | **Nutzung** | Welche Bereiche und Aktionen in den letzten 7, 30 oder 90 Tagen benutzt wurden – ohne Kindernamen. | Grundlage fürs Ausmisten: Was niemand nutzt, fliegt raus. |

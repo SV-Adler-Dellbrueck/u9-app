@@ -949,7 +949,7 @@ async function backupExport(){
                 "trainingsplan","trainingsgruppen",
                 /* v544: Katalog und Ausgaben. Ohne sie steht nach einer Wieder-
                    herstellung nirgends mehr, wer welches Trikot hat. */
-                "ausstattung_artikel","ausstattung_ausgabe"];
+                "ausstattung_artikel","ausstattung_ausgabe","material_posten"];
   const dump={_meta:{app:"U9 Adler Dellbrück",exported_at:new Date().toISOString(),tables}};
   try{
     for(const t of tables){
@@ -3419,7 +3419,10 @@ const SAISONSTART_STEPS=[
   {k:"kader",    emo:"📋", t:"Kader aufräumen",             d:"Abgänge deaktivieren, Neuzugänge anlegen, Trikotnummern prüfen.", run:"go('kader')"},
   {k:"serie",    emo:"📅", t:"Trainings-Termine anlegen",    d:"Die Trainingstage der neuen Saison eintragen.", run:"go('termine')"},
   {k:"einladung",emo:"🔗", t:"Eltern-Einladung verschicken",d:"Neue Familien per WhatsApp-Paket in die App holen.", run:"elternInvitePaket()"},
-  {k:"ansage",   emo:"📣", t:"Saisonstart-Ansage senden",   d:"Alle Eltern begrüßen – mit Gelesen-Status.", run:"ansageTrainerOpen()"}
+  {k:"ansage",   emo:"📣", t:"Saisonstart-Ansage senden",   d:"Alle Eltern begrüßen – mit Gelesen-Status.", run:"ansageTrainerOpen()"},
+  /* v545: Der Saisonwechsel ist der einzige Zeitpunkt, an dem ohnehin alles ausgepackt
+     wird. Eine Inventur, die man „mal machen sollte", macht niemand. */
+  {k:"material", emo:"🧰", t:"Material zählen",             d:"Bälle, Hütchen, Leibchen, Erste-Hilfe-Set – einmal durchzählen, bevor die Saison läuft.", run:"materialOpen()"}
 ];
 function _saisonStartKey(){ return "adler_saisonstart_"+saisonLabel().replace(/\s/g,""); }
 /* Der Check ist eine Aufgabenliste – die darf verschwinden, wenn nichts mehr offen ist
@@ -3911,6 +3914,7 @@ const HELP=[
     {t:"Saisonstart-Check", d:"Sechs Schritte für den Übergang in die neue Saison – Wrapped, Urkunden, Kader, Trainings-Serie, Eltern-Einladung, Ansage. Er steht Juni bis September im Orga-Menü; mit „Saisonstart abschließen“ blendest du ihn bis zur nächsten Saison aus. Von hier aus geht er immer auf.", run:"saisonStartOpen()"},
     {t:"Teamkasse", d:"Kassen-Link hinterlegen (kein Geld in der App).", run:"kasseOpen()"},
     {t:"Fundbüro", d:"Liegengebliebenes verwalten.", run:"fundbueroOpen()"},
+    {t:"Material", d:"Der Bestand des Teams: Bälle, Hütchen je Farbe, Markierungen, Leibchen, Trinkflaschen, Erste-Hilfe-Set. Je Posten ein <b>Soll</b> (was da sein sollte) und ein <b>Ist</b> (was gezählt wurde). Beide dürfen leer bleiben – leer heißt <b>nicht gezählt</b>, nicht „null Stück“; nur so lässt sich eine Inventur überhaupt abschließen. Jede eingetragene Ist-Zahl setzt das Zähldatum dieses Postens auf heute; oben steht, wann zuletzt überhaupt gezählt wurde, und nach einem halben Jahr wird die Zeile gelb. Liegt ein Posten unter dem Soll, sagt die Zeile, wie viele fehlen. Kleidung wird nicht doppelt gezählt: bei „Trikotsätze“ und „Spieltagsjacken“ steht daneben, wie viele davon gerade bei den Kindern sind (aus „Ausstattung“ unter Team). Neue Posten legst du über „＋“ selbst an. Gezählt wird am besten zweimal im Jahr – der Saisonstart-Check erinnert daran.", run:"materialOpen()"},
     {t:"Ausstattung", d:"Was hat welches Kind von uns bekommen? Oben wählst du den Gegenstand – Trikotsatz, Präsentationsanzug, Spieltagsjacke –, darunter steht der Kader. Ein Tipp auf das Kästchen setzt die Ausgabe auf heute, rechts daneben trägst du die Größe ein (128, 140, 152 als Vorschlag, frei überschreibbar); beim Trikotsatz auch die Satznummer. Über „↩︎ zurück“ wird eine Rückgabe mit heutigem Datum vermerkt – dafür ist die Liste am Ende da, wenn ein Kind den Verein wechselt. Weitere Gegenstände (Trinkflasche, Rucksack, zweiter Anzug) legst du über „＋“ selbst an; die App muss dafür nicht angefasst werden. Gespeichert wird sofort beim Antippen. Die Zeile oben zählt, wer noch nichts hat.", run:"ausstattungOpen()"},
     {t:"Adresse der App", d:"Die App liegt seit dem 10.09.2026 unter sv-adler-dellbrueck.github.io/u9-app/ – vorher stand in jedem weitergegebenen Link ein privater Benutzername. Die alte Adresse leitet weiter, verschickte Turnier-, Ticker-, Einladungs- und Kind-Links funktionieren also unverändert. Wer über die Weiterleitung kommt, sieht einmalig einen Hinweis: neu anmelden, Benachrichtigungen wieder erlauben und – wer die App auf dem Startbildschirm hat – sie dort neu ablegen. Nach „Verstanden“ kommt er nicht wieder."},
     {t:"Backup", d:"Kader-Daten exportieren.", run:"backupExport()"},
@@ -3956,7 +3960,7 @@ const TOUR=[
   {emo:"👥", t:"Kachel: Team", d:"Kader verwalten, Spieler alle 6 Wochen in 16 Kriterien bewerten (Live-Radar), Profil mit Sprachlob und Entwicklungs-Report, dazu Saison-Cockpit, Anwesenheit über die Saison und Rollen-Matrix. Unter „Ausstattung“ steht, welches Kind Trikotsatz, Anzug oder Jacke bekommen hat – mit Größe, Ausgabedatum und Rückgabe. Auch Notfallkarten und Probetraining wohnen hier."},
   {emo:"🎯", t:"Kachel: Taktik", d:"Das Taktikboard: Formationen stellen, Laufwege und Pässe zeichnen, als Bild teilen – im Pro-Modus groß, am Handy wie am Tablet. Daneben die Übungs-Datenbank – dort zeichnest du je Übung eine Skizze mit Spielern, Hütchen, Minitoren, Jugendtoren, Zonen, Pfeilen, Mittellinie und Schusszone und gibst sie mit „Skizze teilen“ als Bild weiter."},
   {emo:"🪶", t:"Kachel: Eltern & Kinder", d:"Team-Ansage mit Gelesen-Status, Eltern einladen, Elterngespräche – und die ganze Adler-Welt der Kinder: Federn, Karten, Abzeichen, Kabinen-Wahl, „Unsere Regeln“ für die Kabine, Sammelalbum-Fotos, Team-Quests, Urkunden-Studio und das Adler Nest."},
-  {emo:"📅", t:"Kachel: Orga", d:"Termine mit Endzeit (danach automatisch ins Archiv), Pinnwand fürs Trainerteam, Ferien-Radar, Mitbringlisten, Trainer-Meeting (steht der Termin, erscheint er auf deiner Startseite – die Eltern sehen ihn nicht), Teamkasse, Ausstattung und Fundbüro. Ganz unten: Push-Benachrichtigungen und dein Passwort."},
+  {emo:"📅", t:"Kachel: Orga", d:"Termine mit Endzeit (danach automatisch ins Archiv), Pinnwand fürs Trainerteam, Ferien-Radar, Mitbringlisten, Trainer-Meeting (steht der Termin, erscheint er auf deiner Startseite – die Eltern sehen ihn nicht), Teamkasse, Material (Bälle, Hütchen, Erste-Hilfe-Set – mit Soll und Ist) und Fundbüro. Ganz unten: Push-Benachrichtigungen und dein Passwort."},
   {emo:"🧭", t:"Und unten?", d:"Die Leiste am unteren Rand führt zu denselben Bereichen – für den schnellen Daumen-Wechsel. Kacheln und Leiste sind dieselbe Logik, nur zwei Wege. Viel Spaß – auf geht's, Adler! 🎉"},
 ];
 let tourIdx=0;
@@ -5703,7 +5707,7 @@ function _kachelInhalt(key){
       {emo:"🎉",label:"Mitbringliste",fn:"mitbringTrainerOpen"},
       {emo:"🗓️",label:"Meetings",fn:"trainerMeetingOpen"},   // v527: Übersicht; angelegt wird im Termin
       {emo:"💰",label:"Teamkasse",fn:"kasseOpen"},
-      {emo:"👕",label:"Ausstattung",fn:"ausstattungOpen"},
+      {emo:"🧰",label:"Material",fn:"materialOpen"},
       {emo:"🧦",label:"Fundbüro",fn:"fundbueroOpen"},
       // Juni–September – und nur solange die Saison nicht abgehakt ist. Zur nächsten
       // Saison wechselt der Schlüssel, dann steht er von selbst wieder da.

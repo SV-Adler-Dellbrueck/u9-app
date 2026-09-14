@@ -229,6 +229,189 @@ async function ausArtikelNeuSpeichern(){
   }catch(e){ toast("Kein Netz – bitte noch einmal versuchen","err"); }
 }
 
+/* ═══════════════════════════════════
+   MATERIAL DES TEAMS – was haben wir, und wann haben wir zuletzt gezählt?
+
+   Die Kachel hier hieß immer schon „Bälle, Leibchen & Co. – wer hat was?" und
+   zeigte trotzdem eine Größentabelle. Gefragt war stets das andere.
+
+   „ist" und „soll" dürfen leer bleiben: „noch nicht gezählt" ist eine eigene
+   Aussage, eine 0 wäre die Behauptung, es sei keines da. Nur wer das trennt,
+   kann eine Inventur überhaupt abschließen.
+
+   Kleidung wird nicht zweimal gezählt: ein Posten kann auf einen Gegenstand aus
+   der Ausstattung zeigen, dann steht daneben, wie viele davon gerade bei den
+   Kindern sind. Ohne das läge der Schrank immer „unter Soll“.
+═══════════════════════════════════ */
+const MAT_ALT_TAGE=180;      // ab wann eine Zählung als alt gilt
+let MAT_POSTEN=[];
+let _matKat="";              // "" = alle
+const _matTimer={};
+
+async function materialOpen(){
+  if(!sbToken()){toast("Bitte als Trainer anmelden","err");return;}
+  document.getElementById("mat-modal")?.remove();
+  const m=document.createElement("div");m.id="mat-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Material des Teams");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.onclick=e=>{if(e.target===m)m.remove();};
+  m.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:500px;width:100%;margin:auto">
+    ${mdlHead("mat-modal","🧰","Material","Was haben wir – und wann zuletzt gezählt?","#1e3a8a")}
+    <div id="mat-body"><div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Lade…</div></div>
+  </div>`;
+  document.body.appendChild(m);
+  await materialLaden();
+  materialRender();
+}
+
+async function materialLaden(){
+  MAT_POSTEN=[];
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/material_posten?aktiv=is.true&select=*&order=sort.asc,name.asc`,{headers:sbAuthHeaders()});
+    if(sbCheck401(r))return;
+    if(r.ok)MAT_POSTEN=(await r.json())||[];
+  }catch(e){}
+  // Für „davon bei den Kindern" – nur nötig, wenn ein Posten darauf zeigt.
+  if(MAT_POSTEN.some(p=>p.artikel_id)&&!Object.keys(AUS_AUSGABE).length){
+    try{
+      const r=await fetch(`${SB_URL}/rest/v1/ausstattung_ausgabe?select=*`,{headers:sbAuthHeaders()});
+      if(r.ok)((await r.json())||[]).forEach(z=>{AUS_AUSGABE[ausKey(z.spieler_id,z.artikel_id)]=z;});
+    }catch(e){}
+  }
+}
+
+function _matDraussen(artikelId){
+  return Object.values(AUS_AUSGABE).filter(z=>z.artikel_id===artikelId&&z.ausgegeben_am&&!z.zurueck_am).length;
+}
+
+/* Wie alt ist die jüngste Zählung? Nicht die älteste: gefragt ist, ob überhaupt
+   in letzter Zeit jemand im Schrank war. */
+function matLetzteZaehlung(){
+  const tage=MAT_POSTEN.map(p=>p.zuletzt_gezaehlt).filter(Boolean).sort();
+  if(!tage.length)return null;
+  const letzte=tage[tage.length-1];
+  return {datum:letzte, alter:Math.floor((Date.now()-new Date(letzte+"T00:00:00").getTime())/864e5)};
+}
+
+function materialRender(){
+  const body=document.getElementById("mat-body"); if(!body)return;
+  if(!MAT_POSTEN.length){
+    body.innerHTML=`<div class="empty" style="padding:24px 8px"><i class="ti ti-box"></i>Noch kein Posten erfasst.</div>
+      <button class="btn btn-p" style="width:100%;min-height:56px;font-size:15px;font-weight:800" onclick="matPostenNeuOpen()">Posten erfassen</button>`;
+    return;
+  }
+  const kats=[...new Set(MAT_POSTEN.map(p=>p.kategorie||"Sonstiges"))];
+  const sichtbar=_matKat?MAT_POSTEN.filter(p=>(p.kategorie||"Sonstiges")===_matKat):MAT_POSTEN;
+  const z=matLetzteZaehlung();
+  const offen=MAT_POSTEN.filter(p=>p.ist==null).length;
+  const alt=!z||z.alter>MAT_ALT_TAGE;
+  body.innerHTML=`
+    <div style="border:1px solid ${alt?"var(--amber)":"var(--rand-bedien)"};border-left-width:3px;border-radius:10px;padding:8px 10px;margin-bottom:10px;font-size:12.5px;color:var(--text2)">
+      ${z?`Zuletzt gezählt am <b>${esc(_ausDatum(z.datum))}</b>${alt?` · <span style="color:var(--amber);font-weight:700">das ist ${z.alter} Tage her</span>`:""}`
+         :'<span style="color:var(--amber);font-weight:700">Noch nie gezählt.</span> Trag ein, was da ist – leer heißt „nicht gezählt", nicht „keines da".'}
+      ${offen?`<div style="margin-top:2px">${offen} von ${MAT_POSTEN.length} Posten ohne Zahl.</div>`:""}
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="ftag${_matKat?"":" active"}" aria-pressed="${!_matKat}" onclick="matKatWahl('')">Alle</button>
+      ${kats.map(k=>`<button class="ftag${_matKat===k?" active":""}" aria-pressed="${_matKat===k}" onclick="matKatWahl('${esc(k).replace(/'/g,"")}')">${esc(k)}</button>`).join("")}
+      <button class="ftag" onclick="matPostenNeuOpen()" title="Weiteren Posten anlegen">＋</button>
+    </div>
+    <div>${sichtbar.map(matZeile).join("")}</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5">Jede eingetragene Zahl setzt das Zähldatum dieses Postens auf heute. Gespeichert wird sofort.</div>`;
+}
+
+function matZeile(p){
+  const fehlt=p.soll!=null&&p.ist!=null&&p.ist<p.soll;
+  const rand=fehlt?"var(--red)":(p.ist!=null?"var(--green)":"var(--rand-bedien)");
+  const draussen=p.artikel_id?_matDraussen(p.artikel_id):0;
+  const feld="min-height:44px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface);color:var(--text);text-align:right";
+  return `<div style="border:1px solid ${rand};border-left-width:3px;border-radius:10px;padding:8px 10px;margin-bottom:6px">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <div style="flex:1;min-width:130px">
+        <div style="font-size:13.5px;font-weight:600">${esc(p.name)}${p.variante?` <span style="color:var(--text3);font-weight:400">· ${esc(p.variante)}</span>`:""}</div>
+        ${draussen?`<div style="font-size:11px;color:var(--text3)">davon ${draussen} bei den Kindern</div>`:""}
+      </div>
+      <label style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px">Soll
+        <input type="number" inputmode="numeric" min="0" value="${p.soll!=null?p.soll:""}" placeholder="–" aria-label="Sollbestand ${esc(p.name)}"
+          oninput="matFeldTippen(${p.id},'soll',this.value)" style="width:62px;${feld}"></label>
+      <label style="font-size:11px;color:var(--text2);font-weight:700;display:flex;align-items:center;gap:4px">Ist
+        <input type="number" inputmode="numeric" min="0" value="${p.ist!=null?p.ist:""}" placeholder="–" aria-label="Istbestand ${esc(p.name)}"
+          oninput="matFeldTippen(${p.id},'ist',this.value)" style="width:62px;${feld}"></label>
+    </div>
+    ${fehlt?`<div style="font-size:11.5px;color:var(--red);font-weight:700;margin-top:4px">${p.soll-p.ist} fehlen</div>`:""}
+    ${p.zuletzt_gezaehlt?`<div style="font-size:10.5px;color:var(--text3);margin-top:2px">gezählt am ${esc(_ausDatum(p.zuletzt_gezaehlt))}</div>`:""}
+  </div>`;
+}
+
+function matKatWahl(k){ _matKat=k; materialRender(); }
+
+/* Eine leere Zahl ist NULL, nicht 0 – sonst behauptet ein geleertes Feld, das Fach
+   sei leer. Nur das Feld „ist" setzt das Zähldatum: das Soll ist eine Festlegung,
+   keine Zählung. */
+function matFeldTippen(id,feld,wert){
+  const p=MAT_POSTEN.find(x=>x.id===id); if(!p)return;
+  const roh=String(wert).trim();
+  p[feld]=roh===""?null:Math.max(0,parseInt(roh,10)||0);
+  if(feld==="ist")p.zuletzt_gezaehlt=p.ist==null?p.zuletzt_gezaehlt:new Date().toISOString().slice(0,10);
+  clearTimeout(_matTimer[id+feld]);
+  _matTimer[id+feld]=setTimeout(()=>matSchreiben(p),900);
+}
+
+async function matSchreiben(p){
+  const body={soll:p.soll==null?null:p.soll, ist:p.ist==null?null:p.ist,
+    zuletzt_gezaehlt:p.zuletzt_gezaehlt||null};
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/material_posten?id=eq.${p.id}`,
+      {method:"PATCH",headers:{...sbAuthHeaders(),'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)});
+    if(sbCheck401(r))return;
+    if(!r.ok){toast("Konnte nicht speichern – bitte noch einmal eintragen","err");return;}
+  }catch(e){ toast("Kein Netz – die Zahl ist nicht gespeichert","err"); }
+}
+
+function matPostenNeuOpen(){
+  document.getElementById("mat-neu")?.remove();
+  const m=document.createElement("div");m.id="mat-neu";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Posten erfassen");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:"+(typeof zOben==="function"?zOben(10001):10001)+";display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.onclick=e=>{if(e.target===m)m.remove();};
+  const feld="width:100%;min-height:48px;padding:10px;margin:4px 0 10px;border:1px solid var(--rand-bedien);border-radius:8px;box-sizing:border-box;font-family:inherit;font-size:13px;background:var(--surface);color:var(--text)";
+  const kats=["Bälle","Hütchen","Markierung","Kleidung","Medizin","Sonstiges"];
+  m.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:400px;width:100%;margin:auto">
+    ${mdlHead("mat-neu","➕","Posten erfassen","z. B. Hütchen in einer weiteren Farbe","#1e3a8a")}
+    <label for="mn-name" style="font-size:12px;color:var(--text2)">Was ist es?</label>
+    <input id="mn-name" placeholder="Hütchen" style="${feld}">
+    <label for="mn-var" style="font-size:12px;color:var(--text2)">Farbe, Größe oder Nummernkreis (freiwillig)</label>
+    <input id="mn-var" placeholder="orange" style="${feld}">
+    <label for="mn-kat" style="font-size:12px;color:var(--text2)">Schublade</label>
+    <select id="mn-kat" style="${feld}">${kats.map(k=>`<option>${k}</option>`).join("")}</select>
+    <label for="mn-soll" style="font-size:12px;color:var(--text2)">Soll (freiwillig)</label>
+    <input id="mn-soll" type="number" inputmode="numeric" min="0" placeholder="–" style="${feld}">
+    <button class="btn btn-p" style="width:100%;min-height:56px;font-size:15px;font-weight:800" onclick="matPostenNeuSpeichern()">Posten erfassen</button>
+  </div>`;
+  document.body.appendChild(m);
+}
+
+async function matPostenNeuSpeichern(){
+  const name=(document.getElementById("mn-name")?.value||"").trim();
+  if(!name){toast("Der Posten braucht einen Namen","err");return;}
+  const soll=(document.getElementById("mn-soll")?.value||"").trim();
+  const body={name,
+    variante:(document.getElementById("mn-var")?.value||"").trim()||null,
+    kategorie:document.getElementById("mn-kat")?.value||"Sonstiges",
+    soll:soll===""?null:Math.max(0,parseInt(soll,10)||0),
+    sort:(MAT_POSTEN.length?Math.max(...MAT_POSTEN.map(p=>p.sort||0)):0)+10};
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/material_posten`,
+      {method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)});
+    if(sbCheck401(r))return;
+    if(!r.ok){toast("Konnte nicht angelegt werden","err");return;}
+    document.getElementById("mat-neu")?.remove();
+    toast("Posten erfasst ✓");
+    await materialLaden();
+    materialRender();
+  }catch(e){ toast("Kein Netz – bitte noch einmal versuchen","err"); }
+}
+
 /* Marke für die MODUL_WACHE: steht ganz unten, damit ein Abbruch mittendrin
    auffällt. Bricht die Datei vorher ab, fehlt genau dieser Name. */
 function ausstattungModulDa(){ return true; }

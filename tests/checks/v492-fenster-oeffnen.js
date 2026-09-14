@@ -6,7 +6,7 @@
    so steht es in CLAUDE.md). Neue Fenster gehoeren in diese Liste. */
 const FENSTER = ["ttOpen", "arenaEditOpen", "skillWocheOpen", "elternGespraechOpen", "rollenMatrixOpen",
   "periodOpen", "kleingruppenOpen", "awUebersichtOpen", "tgOpen", "fotoAmpelOpen", "chronikOpen",
-  "elternTermineOpen", "fundbueroOpen", "ausstattungOpen", "gegnerManageOpen", "turnierOpen",
+  "elternTermineOpen", "fundbueroOpen", "ausstattungOpen", "materialOpen", "gegnerManageOpen", "turnierOpen",
   "kasseOpen", "wochenChallengeOpen", "setupTrainerOpen", "pausenOpen", "notfallTrainerOpen",
   "urkundenOpen", "anwesenheitOpen", "saisonStartOpen", "wahlTrainerOpen", "probeOpen",
   "saisonCockpitOpen", "hilfeOpen", "adlerWeltOpen", "albumFotosOpen", "pwChangeOpen", "nutzungOpen",
