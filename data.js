@@ -3778,3 +3778,147 @@ tf107:{h:[[100,16,'r'],[124,16,'r'],[264,78,'b'],[264,102,'b'],[100,166,'y'],[12
 };
 // Fehlende Skizzen aus den Specs erzeugen – vorhandene, handgezeichnete SVGs bleiben unangetastet.
 TRAININGSFORMEN.forEach(f=>{if((!f.svg||f.svg.length<=10)&&f.id&&TF_SKIZZEN[f.id])f.svg=_skz(TF_SKIZZEN[f.id]);});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v541 – VORSCHLAG: Spielform, Übungsform oder keines von beidem
+
+   Die Einordnung selbst lebt in `team_config.uebung_art` und gehört dem Trainer
+   (seit v533). Bis hierher war sie für fast alle Übungen leer, und leer heißt
+   für die Nettospielzeit: „zählt mit, könnte aber falsch sein".
+
+   Diese Liste ist ein VORSCHLAG, keine Einordnung. Sie wird nirgends stillschweigend
+   angewendet: die Durchsicht im Übungen-Reiter zeigt sie an, und erst ein Tipp auf
+   „Einordnung übernehmen" schreibt sie in team_config. Bis dahin gilt eine Übung
+   weiter als nicht eingeordnet.
+
+   Angelegt wurde sie nach der Unterscheidung, die auch in der Hilfe steht:
+   - `spiel`  – das Kind entscheidet selbst: es gibt einen echten Gegner und einen
+                Ausgang (Tor, Ballbesitz, Duell gewonnen).
+   - `uebung` – der Ablauf ist vorgegeben: Parcours, Passfolge, Technikwiederholung.
+   - `weder`  – keines von beidem: Koordination, Laufschule, Athletik, Fallschule,
+                Rituale. Diese Übungen dürfen nicht in den Spielform-Anteil einfließen,
+                weder als Spielform noch als Übungsform gegengerechnet – ein Zwang zur
+                Wahl hätte die Prozentzahl verzerrt.
+
+   Der Schlüssel ist der NAME, wie überall bei uebung_art. Wird eine Übung umbenannt,
+   fällt sie hier heraus und steht wieder in der Durchsicht.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const UEBUNG_ART_VORSCHLAG={
+  /* Aufwärmen */
+  "Hai & Fische":"spiel",
+  "Feuer-Wasser-Sturm mit Ball":"weder",
+  "Tierbewegungen-Parcours":"weder",
+  "Nummernlauf":"weder",
+  "Ball-Dieb":"spiel",
+  "Schattenläufer":"weder",
+  "Atomspiel":"weder",
+  "Zombieball":"spiel",
+  "Lauf-ABC mit Ball":"weder",
+  "Farben-Dribbeln":"uebung",
+  "Chaos-Dribbling mit Kommando":"uebung",
+  /* Technik */
+  "Autodrom Beidfüßig":"uebung",
+  "1gg1 Tore-Duell":"spiel",
+  "Spiegeldribbling":"uebung",
+  "Torschuss-Wettbewerb":"uebung",
+  "Dribbling-Parcours":"uebung",
+  "Schwacher-Fuß-Tag":"weder",
+  "Finte-Wettkampf":"spiel",
+  "Erste Mitnahme vorwärts":"uebung",
+  /* Wahrnehmung */
+  "Scanning-Funino":"spiel",
+  "Farb-Entscheidung":"uebung",
+  "Überzahl-Erkennung":"spiel",
+  "Blinde Pässe":"uebung",
+  "Raumaufteilung-Quiz":"spiel",
+  "Kopf-hoch-Signale":"uebung",
+  "Schatten-Pressing":"uebung",
+  "Blick-vor-Ball":"uebung",
+  /* Passspiel */
+  "Pflichtpass-Funino":"spiel",
+  "Komm-Geh-Passspiel":"uebung",
+  "Dreieck-Passspiel":"uebung",
+  "4gg2 Ballbesitz":"spiel",
+  "Wandpass-Serie":"uebung",
+  "Ansage-Passspiel":"uebung",
+  "Lobpflicht nach Tor":"spiel",
+  "Quer vor Tor":"spiel",
+  "Ball-Staffel Paare":"uebung",
+  "Pass und Nachlaufen":"uebung",
+  "Zwei-Tore-Umschalten":"spiel",
+  /* Raute */
+  "Korridor-Funino":"spiel",
+  "4+1 Lebende Raute":"spiel",
+  "Rauten-Staffel":"uebung",
+  "Schattenspieler":"uebung",
+  "TW-Einwurf-Angriff":"uebung",
+  "Positions-Bingo":"uebung",
+  "Breiten-Spiel 4gg0":"uebung",
+  "Dreiecksduell 3gg3":"spiel",
+  "Aufpasser-Steilpass":"uebung",
+  "Pressing-Raute 5gg5":"spiel",
+  "Rauten-Umschalten":"uebung",
+  "Mini-Turnier Raute":"spiel",
+  "Adler vs. Igel - Formwechsel":"uebung",
+  "Igel-Pressing-Kreis":"uebung",
+  "Diamanten-Jagd":"spiel",
+  /* Pressing */
+  "Gegenpressing-Pfeife":"uebung",
+  "Pressing-Welle 2gg2":"spiel",
+  "Umschalt-Sprintpresse":"uebung",
+  "Balleroberung Bonus":"spiel",
+  "Richtungs-Pressing":"spiel",
+  "5-Sekunden-Hoch":"spiel",
+  /* Spaß */
+  "Fußball-König":"spiel",
+  "Elfmeter-Turnier":"uebung",
+  "Fangspiel mit Ball":"spiel",
+  "Runden-Turnier Funino":"spiel",
+  "Torhüter-Tag":"weder",
+  "Freies Spielen":"spiel",
+  /* Mindset */
+  "Die Kraft des NOCH":"weder",
+  "Mut-Leiter 1gg1":"spiel",
+  "Reset-Knopf":"weder",
+  "Gute-Dinge-Kreis":"weder",
+  "Kapitän des Tages":"weder",
+  "Druck-Elfer mit Jubelpflicht":"uebung",
+  "Fehler-Festival":"spiel",
+  "Ich-schaff-das-Kommentator":"weder",
+  /* Torwart */
+  "Fang-Stern":"uebung",
+  "Fallschule Rechts-Links":"uebung",
+  "Reaktions-Kasten":"uebung",
+  "1gg1 Torwart vs Stürmer":"spiel",
+  "Abschlag & Abwurf":"uebung",
+  "Torwart-Koordinations-Leiter":"weder",
+  "Torwart-Tennis":"spiel",
+  "Flugball-Fangen":"uebung",
+  "Schuss-Abwehr Stationen":"uebung",
+  "Rückpass-Mitspielen":"uebung",
+  "Torwart-Entscheidungsspiel":"spiel",
+  "Elfmeter-Positionierung":"uebung",
+  "Torwart-Staffel":"uebung",
+  "Wegkicken & Abrollen":"uebung",
+  "Chaos im Strafraum":"spiel",
+  "W-Haltung & Korbfangen":"uebung",
+  "TW-Fußarbeit-Sterne":"weder",
+  "Purzelbaum-Parade":"weder",
+  "Jeder-ist-mal-TW-Runde":"spiel",
+  /* Individual */
+  "Dribbling-Meister (1gg0)":"uebung",
+  "Passwand-Solo":"uebung",
+  "Torschuss-Intensiv":"uebung",
+  "Ballgefühl-Zirkel":"uebung",
+  "Sprint & Wendigkeit":"weder",
+  "Schwacher-Fuß-Intensiv":"uebung",
+  "Kopf-hoch-Training":"uebung",
+  "Entscheidungstraining Solo/Pass":"uebung",
+  "Pressing-Schule 1gg1":"spiel",
+  "Resilienz-Booster":"weder",
+  "Erste-Berührung-Training":"uebung",
+  "Freilauf-Training":"uebung",
+  "Umschalt-Blitz":"uebung",
+  "Kommunikations-Training":"weder",
+  "Konzentrations-Parcours":"weder"
+};

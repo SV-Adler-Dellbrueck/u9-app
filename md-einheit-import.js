@@ -514,7 +514,11 @@ function _evUnstimmigeBloecke(bloecke){
     const un=String(b.uebung_name||"").trim(); if(!un)return false;
     const f=(typeof tpAllForms==="function"?tpAllForms():[]).find(x=>x&&x.name===un);
     if(!f)return false;
-    return ((typeof _tpArt==="function")?_tpArt(f):"")==="uebung";
+    /* v541: „weder noch" ist derselbe Widerspruch wie „Übungsform" – ein Block, der als
+       Spielform zählt, dessen Übung aber weder Spielform noch Übungsform ist, verfälscht
+       die Nettozahl genauso. */
+    const a=(typeof _tpArt==="function")?_tpArt(f):"";
+    return a==="uebung"||a==="weder";
   }).map(b=>String(b.uebung_name||b.label||"Block").trim());
 }
 /* Gibt den Hinweis-Text zurück oder "" – nie einen Fehler. */

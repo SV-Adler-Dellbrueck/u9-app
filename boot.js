@@ -233,6 +233,14 @@ function renderTraining(){
     if(s.length){window._tfWeakLabel=AUTOPLAN_DIMLABEL[s[0][0]]||null;weak=AUTOPLAN_DIMKAT[s[0][0]]||[];}
   }catch(e){}
   window._tfWeak=weak;
+  /* v541: Der Einstieg in die Durchsicht steht nur da, solange es etwas durchzusehen
+     gibt. Ist alles eingeordnet, verschwindet er – ein Knopf ohne Arbeit dahinter ist
+     Rauschen, und die einzelne Übung lässt sich weiter am Chip in der Liste ändern. */
+  const aEl=document.getElementById("tf-art-einstieg");
+  if(aEl){
+    const offen=(typeof artDurchsichtOffen==="function")?artDurchsichtOffen().length:0;
+    aEl.innerHTML=offen?`<button onclick="artDurchsichtOpen()" style="width:100%;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">⚽ ${offen} Übung${offen===1?"":"en"} einordnen</button>`:"";
+  }
   const kEl=document.getElementById("tf-kacheln");
   if(kEl){
     const counts={};alle.forEach(x=>{counts[x.gr]=(counts[x.gr]||0)+1;});
@@ -2968,8 +2976,19 @@ async function uebungMetaLoad(){
 
    DREI Zustände. „Noch nicht eingeordnet" ist ein echter Zustand und wird nie
    geraten – eine plausibel aussehende falsche Einordnung wäre schlimmer als keine. */
+/* v541: dritter Wert. Torwart-Einlaufen, Koordinationsleiter, Fallschule und Rituale
+   sind fachlich WEDER Spielform noch Übungsform. Ein Zwang zur Wahl hätte sie in die
+   eine oder andere Schale gedrückt und damit den Spielform-Anteil verzerrt – genau die
+   Zahl, für die die Einordnung da ist. */
 const UEBUNG_ART={spiel:{kurz:"Spielform", lang:"Spielform – das Kind entscheidet selbst"},
-                  uebung:{kurz:"Übungsform", lang:"Übungsform – der Ablauf ist vorgegeben"}};
+                  uebung:{kurz:"Übungsform", lang:"Übungsform – der Ablauf ist vorgegeben"},
+                  weder:{kurz:"weder noch", lang:"weder Spielform noch Übungsform – zählt nicht mit"}};
+/* Der Vorschlag aus data.js. Er gilt NICHT als Einordnung: _tpArt liest weiter nur
+   team_config.uebung_art. Sichtbar wird er allein in der Durchsicht. */
+function _tpArtVorschlag(f){
+  const v=(typeof UEBUNG_ART_VORSCHLAG!=="undefined"?UEBUNG_ART_VORSCHLAG:{})[f&&f.name];
+  return UEBUNG_ART[v]?v:"";
+}
 function _tpArt(f){
   const a=(window._uebungArt||{})[f&&f.name];
   return UEBUNG_ART[a]?a:"";
@@ -2986,7 +3005,7 @@ function tpArtChip(f,auchOffen){
 /* Antippen ordnet ein – wie beim Stern. Drei Zustände im Kreis, damit sich eine
    falsche Einordnung genauso leicht zurücknehmen lässt wie sie entstanden ist. */
 async function tpArtTipp(name){
-  const folge=["","spiel","uebung"];
+  const folge=["","spiel","uebung","weder"];   // v541: „weder noch" gehört in denselben Kreis
   const f=tpAllForms().find(x=>x.name===name);
   const jetzt=_tpArt(f);
   const neu=folge[(folge.indexOf(jetzt)+1)%folge.length];
@@ -2997,6 +3016,112 @@ async function tpArtTipp(name){
     if(window._uebungMetaId!=null)
       await fetch(`${SB_URL}/rest/v1/team_config?id=eq.${window._uebungMetaId}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify({uebung_art:window._uebungArt})});
   }catch(e){}
+}
+/* ═══════════════════════════════════════════════════════════════════════════
+   v541 – DURCHSICHT: Spielform, Übungsform oder keines von beidem
+
+   Der Vorschlag aus data.js wird NIE still angewendet. Diese Liste zeigt ihn, lässt
+   ihn Übung für Übung ändern und schreibt erst auf ausdrücklichen Tipp. Bis dahin
+   steht in team_config.uebung_art nichts Neues, und die betroffenen Übungen gelten
+   weiter als „noch nicht eingeordnet".
+
+   Warum eine eigene Liste und nicht nur der Chip in der Übungsliste: einzeln
+   angetippt sind 107 Übungen eine Stunde Arbeit, und man verliert die Übersicht,
+   welche noch offen sind. Hier stehen sie nach Vorschlag gruppiert beieinander.
+   ═══════════════════════════════════════════════════════════════════════════ */
+let _adAuswahl=null;       // {name: art} – die Fassung, die der Trainer gerade sieht
+let _adNurOffene=true;     // Standard: nur, was noch nicht eingeordnet ist
+function artDurchsichtOffen(){
+  // Übungen ohne Einordnung, für die es einen Vorschlag gibt – die Arbeitsmenge.
+  return tpAllForms().filter(f=>f&&f.name&&!_tpArt(f)&&_tpArtVorschlag(f));
+}
+function artDurchsichtOpen(){
+  if(typeof sbToken==="function"&&!sbToken()){ toast("Bitte zuerst als Trainer anmelden","err"); return; }
+  document.getElementById("ad-modal")?.remove();
+  _adNurOffene=true;
+  _adAuswahl={};
+  tpAllForms().forEach(f=>{ if(f&&f.name){ const v=_tpArt(f)||_tpArtVorschlag(f); if(v)_adAuswahl[f.name]=v; } });
+  const m=document.createElement("div");
+  m.id="ad-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Übungen einordnen");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.onclick=e=>{ if(e.target===m)artDurchsichtClose(); };
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:520px;width:100%;margin:auto">
+    ${mdlHead("ad-modal","⚽","Übungen einordnen","Spielform, Übungsform oder keines von beidem – Vorschlag zum Durchsehen","#7c3aed")}
+    <div id="ad-inhalt"></div>
+  </div>`;
+  document.body.appendChild(m);
+  artDurchsichtRender();
+}
+function artDurchsichtClose(){ document.getElementById("ad-modal")?.remove(); _adAuswahl=null; }
+function artDurchsichtFilter(){ _adNurOffene=!_adNurOffene; artDurchsichtRender(); }
+/* Ein Tipp ändert nur die Auswahl im Fenster, nicht die Datenbank. Geschrieben wird
+   erst über „Einordnung übernehmen" – sonst wäre der Vorschlag durch die Hintertür
+   doch eine Einordnung. */
+function artDurchsichtTipp(name){
+  if(!_adAuswahl)return;
+  const folge=["spiel","uebung","weder"];
+  const jetzt=_adAuswahl[name]||"";
+  _adAuswahl[name]=folge[(folge.indexOf(jetzt)+1)%folge.length];
+  artDurchsichtRender();
+}
+function artDurchsichtRender(){
+  const box=document.getElementById("ad-inhalt"); if(!box)return;
+  const offen=artDurchsichtOffen();
+  const alle=tpAllForms().filter(f=>f&&f.name&&_adAuswahl[f.name]);
+  const zeigen=_adNurOffene?offen:alle;
+  if(!offen.length&&_adNurOffene){
+    box.innerHTML=`<div style="font-size:12.5px;color:var(--text2);line-height:1.6;padding:6px 0">
+      Alle Übungen mit einem Vorschlag sind eingeordnet. ${alle.length?`<button class="btn btn-sm" style="min-height:48px;margin-top:8px" onclick="artDurchsichtFilter()">Alle ${alle.length} trotzdem ansehen</button>`:""}</div>
+      <div style="display:flex;margin-top:10px"><button class="btn btn-sm" style="margin-left:auto;min-height:48px" onclick="artDurchsichtClose()">Schließen</button></div>`;
+    return;
+  }
+  const nachArt={spiel:[],uebung:[],weder:[]};
+  zeigen.forEach(f=>{ const a=_adAuswahl[f.name]; if(nachArt[a])nachArt[a].push(f); });
+  const zeile=f=>{
+    const a=_adAuswahl[f.name];
+    /* Der Knopf trägt den Text der Einordnung, nicht nur eine Farbe – und sagt im
+       aria-label, dass ein Tipp weiterschaltet. */
+    return `<div style="display:flex;align-items:center;gap:8px;border:var(--border-s);border-radius:10px;padding:8px 10px;margin-bottom:6px;background:var(--surface)">
+      <span style="flex:1;min-width:0;font-size:12.5px"><b>${esc(f.name)}</b><span style="display:block;font-size:10.5px;color:var(--text3)">${esc(f.kat||"eigene")}</span></span>
+      <button onclick="artDurchsichtTipp('${String(f.name).replace(/'/g,"\\'")}')" aria-label="${esc(f.name)}: ${UEBUNG_ART[a].lang}. Antippen schaltet weiter." style="flex:none;min-height:48px;padding:0 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap">${UEBUNG_ART[a].kurz}</button>
+    </div>`;
+  };
+  const block=(key,titel)=>nachArt[key].length
+    ? `<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:12px 2px 5px">${titel} · ${nachArt[key].length}</div>${nachArt[key].map(zeile).join("")}`
+    : "";
+  box.innerHTML=`
+    <div style="font-size:12px;color:var(--text2);line-height:1.55;margin-bottom:8px">
+      ${_adNurOffene?`<b>${offen.length}</b> Übungen sind noch nicht eingeordnet. Der Vorschlag steht schon dran – antippen ändert ihn, gespeichert wird erst unten.`
+                    :`Alle <b>${alle.length}</b> Übungen mit Einordnung. Antippen ändert, gespeichert wird erst unten.`}
+    </div>
+    <button class="btn btn-sm" style="min-height:48px;width:100%;justify-content:center" onclick="artDurchsichtFilter()">${_adNurOffene?"Auch die schon eingeordneten zeigen":"Nur die offenen zeigen"}</button>
+    ${block("spiel","Spielform")}${block("uebung","Übungsform")}${block("weder","Weder noch")}
+    <button onclick="artDurchsichtUebernehmen(this)" style="width:100%;min-height:56px;margin-top:14px;border:none;border-radius:14px;background:var(--surface);border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;color:var(--text);font-family:inherit;font-size:15px;font-weight:900;cursor:pointer">💾 Einordnung übernehmen</button>
+    <div style="display:flex;margin-top:8px"><button class="btn btn-sm" style="margin-left:auto;min-height:48px" onclick="artDurchsichtClose()">Ohne Speichern schließen</button></div>`;
+}
+/* Ein Schreibvorgang für alles – nicht 107 einzelne. team_config trägt die Einordnung
+   als eine jsonb-Spalte; jede Übung einzeln zu schicken hieße, dieselbe Spalte
+   hundertfach zu überschreiben. */
+async function artDurchsichtUebernehmen(btn){
+  if(!_adAuswahl)return;
+  if(btn)btn.disabled=true;
+  const vorher=window._uebungArt||{};
+  const neu={...vorher};
+  const zeigen=_adNurOffene?artDurchsichtOffen():tpAllForms().filter(f=>f&&f.name&&_adAuswahl[f.name]);
+  let zahl=0;
+  zeigen.forEach(f=>{ const a=_adAuswahl[f.name]; if(a&&neu[f.name]!==a){ neu[f.name]=a; zahl++; } });
+  if(!zahl){ toast("Nichts zu ändern"); if(btn)btn.disabled=false; return; }
+  try{
+    if(window._uebungMetaId!=null){
+      const r=await fetch(`${SB_URL}/rest/v1/team_config?id=eq.${window._uebungMetaId}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify({uebung_art:neu})});
+      if(!(r.ok||r.status===204)){ toast("Einordnung nicht gespeichert – Server antwortet "+r.status,"err"); if(btn)btn.disabled=false; return; }
+    }
+    window._uebungArt=neu;
+    toast(`⚽ ${zahl} Übung${zahl===1?"":"en"} eingeordnet`);
+    artDurchsichtClose();
+    if(typeof renderTraining==="function")renderTraining();
+  }catch(e){ toast("Kein Netz – Einordnung nicht gespeichert","err"); if(btn)btn.disabled=false; }
 }
 function _tpStern(f){
   if(!f)return 2;

@@ -54,8 +54,13 @@ module.exports = async function (h) {
     await tpArtTipp(out.name); out.nach1 = _tpArt(f);
     await tpArtTipp(out.name); out.nach2 = _tpArt(f);
     await tpArtTipp(out.name); out.nach3 = _tpArt(f);
-    // jetzt fest auf Übungsform stellen für die Netto-Rechnung unten
-    await tpArtTipp(out.name); await tpArtTipp(out.name);
+    /* v541: Der Kreis hat einen VIERTEN Zustand bekommen – „weder noch", für
+       Koordinationsleiter, Fallschule und Rituale, die fachlich keines von beidem sind.
+       Nach drei Tipps steht deshalb nicht mehr „offen", sondern „weder noch"; erst der
+       vierte führt zurück. Für die Netto-Rechnung unten wird jetzt gezielt auf
+       Übungsform gestellt statt blind zweimal zu tippen – sonst hängt diese Prüfung
+       an der Länge des Kreises. */
+    for (let i = 0; i < 6 && _tpArt(f) !== "uebung"; i++) await tpArtTipp(out.name);
     out.artFinal = _tpArt(f);
     out.sterneUnberuehrt = (window._uebungMeta || {})["Korridor-Funino"];
 
@@ -98,7 +103,8 @@ module.exports = async function (h) {
   if (r.artAmAnfang !== "") probleme.push(`ohne Einordnung steht „${r.artAmAnfang}“ – es darf nichts geraten werden`);
   if (!/noch nicht eingeordnet/.test(r.chipOffen || "")) probleme.push(`nicht eingeordnet wird nicht benannt: „${r.chipOffen}“`);
   const folge = [r.nach1, r.nach2, r.nach3].join(",");
-  if (folge !== "spiel,uebung,") probleme.push(`Antipp-Folge ist [${folge}] – erwartet spiel, uebung, wieder offen`);
+  // v541: vier Zustände im Kreis – offen, Spielform, Übungsform, weder noch.
+  if (folge !== "spiel,uebung,weder") probleme.push(`Antipp-Folge ist [${folge}] – erwartet spiel, uebung, weder noch`);
   if (r.sterneUnberuehrt !== 3) probleme.push(`die ⭐-Einstufung wurde mitverändert (${r.sterneUnberuehrt}) – Einordnung und Sterne müssen getrennt bleiben`);
   const art = geschrieben.filter(g => g.body && g.body.uebung_art);
   if (!art.length) probleme.push("es wird kein uebung_art nach team_config geschrieben");
