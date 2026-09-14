@@ -520,7 +520,11 @@ function _evUnstimmigeBloecke(bloecke){
     const un=String(b.uebung_name||"").trim(); if(!un)return false;
     const f=(typeof tpAllForms==="function"?tpAllForms():[]).find(x=>x&&x.name===un);
     if(!f)return false;
-    return ((typeof _tpArt==="function")?_tpArt(f):"")==="uebung";
+    /* v541: „weder noch" ist derselbe Widerspruch wie „Übungsform" – ein Block, der als
+       Spielform zählt, dessen Übung aber weder Spielform noch Übungsform ist, verfälscht
+       die Nettozahl genauso. */
+    const a=(typeof _tpArt==="function")?_tpArt(f):"";
+    return a==="uebung"||a==="weder";
   }).map(b=>String(b.uebung_name||b.label||"Block").trim());
 }
 /* Gibt den Hinweis-Text zurück oder "" – nie einen Fehler. */
@@ -968,6 +972,106 @@ async function vorlageUebernehmenSetzen(){
   vorlageUebernehmenClose();
   toast(`🗂️ „${v.name}“ übernommen ✓ ${slots.length} Phasen`);
   if(typeof tpPlanRestore==="function")await tpPlanRestore(datum);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v540 – VORLAGEN ANSEHEN
+
+   Bis hierher konnte man eine Vorlage nur SEHEN, indem man sie übernahm – die
+   Vorschau steckte im Dialog „Vorlage übernehmen", der an einem Termin hängt.
+   Wer nur nachschlagen wollte, welche Einheiten es gibt und was drinsteht,
+   musste also so tun, als wolle er planen.
+
+   Diese Ansicht liest nur. Sie schreibt nichts, braucht keinen Termin und hat
+   bewusst KEINEN Übernehmen-Knopf: eingesetzt wird eine Vorlage dort, wo der
+   Termin steht – im Trainingsplan. Zwei Wege in dieselbe Handlung wären zwei
+   Wahrheiten darüber, welcher Termin gemeint ist.
+
+   Gegliedert wird nach LEITFRAGE, nicht nach Name: so ist die Sammlung
+   gedacht („Wie behalte ich den Ball, wenn einer kommt?" → Folge 1 bis 4).
+   Die Blockdarstellung ist dieselbe wie in der Vorschau (_evBlockText), damit
+   beide Orte nicht auseinanderlaufen.
+   ═══════════════════════════════════════════════════════════════════════════ */
+let _vaOffen=null;      // aufgeklappte Vorlage (id)
+let _vaFrage="";        // Filter auf eine Leitfrage
+async function vorlagenAnsichtOpen(){
+  if(typeof sbToken==="function"&&!sbToken()){ toast("Bitte zuerst als Trainer anmelden","err"); return; }
+  document.getElementById("va-modal")?.remove();
+  _vaOffen=null; _vaFrage="";
+  const m=document.createElement("div");
+  m.id="va-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Vorlagen ansehen");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.onclick=e=>{ if(e.target===m)vorlagenAnsichtClose(); };
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:520px;width:100%;margin:auto">
+    ${mdlHead("va-modal","🗂️","Vorlagen","Fertige Einheiten zum Nachschlagen – ohne Datum und ohne Kinder","#7c3aed")}
+    <div id="va-inhalt"><div style="font-size:12.5px;color:var(--text2);padding:8px 0">Lade Vorlagen …</div></div>
+  </div>`;
+  document.body.appendChild(m);
+  await vorlagenLaden();
+  vorlagenAnsichtRender();
+}
+function vorlagenAnsichtClose(){ document.getElementById("va-modal")?.remove(); _vaOffen=null; }
+function vaFrageSet(f){ _vaFrage=(_vaFrage===f)?"":f; _vaOffen=null; vorlagenAnsichtRender(); }
+function vaToggle(id){ _vaOffen=(String(_vaOffen)===String(id))?null:id; vorlagenAnsichtRender(); }
+/* Der Steckbrief einer Vorlage: alles, was in der Datenbank steht, in Lesefassung.
+   Dieselbe Blockzeile wie die Vorschau des Übernehmen-Dialogs. */
+function _vaSteckbrief(v){
+  const bl=Array.isArray(v.bloecke)?v.bloecke:[];
+  let mainNr=0;
+  const zeile=b=>{ if(b.typ==="main"||b.typ==="spielform")mainNr++;
+    return `<div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:start;padding:5px 0;border-bottom:1px solid var(--surface2)">
+      <span style="font-size:10px;font-weight:800;color:#fff;background:${_eiFarbe(b.typ,mainNr)};border-radius:6px;padding:3px 7px;white-space:nowrap">${Number(b.dauer)} Min.</span>
+      <span style="min-width:0"><b style="font-size:12.5px">${esc(b.label)}</b>
+        <span style="display:block;font-size:11px;color:var(--text2);line-height:1.5">${_evBlockText(b)}</span></span>
+    </div>`; };
+  const sk=(v.skalierung&&typeof v.skalierung==="object")?v.skalierung:{};
+  const skZeilen=["8","12","16"].filter(k=>sk[k]).map(k=>`<div><b>${k} Kinder:</b> ${esc(String(sk[k]))}</div>`).join("");
+  return `<div style="padding:2px 0 10px">
+    ${bl.map(zeile).join("")||'<div style="font-size:12px;color:var(--text3);padding:6px 0">Diese Vorlage hat keine Blöcke.</div>'}
+    ${skZeilen?`<div style="font-size:11.5px;color:var(--text2);line-height:1.6;margin-top:8px">📐 <b>Skalierung</b><br>${skZeilen}</div>`:""}
+    ${v.beobachtung?`<div style="font-size:11.5px;color:var(--text2);line-height:1.5;margin-top:8px">👀 <b>Beobachtungsfrage:</b> ${esc(v.beobachtung)}</div>`:""}
+    <div style="font-size:11px;color:var(--text3);margin-top:8px">Einsetzen kannst du sie im Trainingsplan über „Vorlage übernehmen" – dort steht der Termin.</div>
+  </div>`;
+}
+function vorlagenAnsichtRender(){
+  const box=document.getElementById("va-inhalt"); if(!box)return;
+  const alle=(typeof VORLAGEN!=="undefined"?VORLAGEN:[]);
+  /* Leerer Zustand mit dem Weg dorthin, wo Vorlagen herkommen (cockpit-ui: ein Satz
+     plus die passende Aktion). Seit v539 ist das die Datei im Repo, kein Knopf mehr. */
+  if(!alle.length){
+    box.innerHTML=`<div style="font-size:12.5px;color:var(--text3);line-height:1.6;padding:6px 0">
+      Noch keine Vorlage hinterlegt. Vorlagen kommen aus <b>uebungen/vorlagen.json</b> im Repo und werden beim Öffnen der App abgeglichen.</div>`;
+    return;
+  }
+  const fragen=[...new Set(alle.map(v=>String(v.leitfrage||"")).filter(Boolean))].sort();
+  const liste=_vaFrage?alle.filter(v=>String(v.leitfrage||"")===_vaFrage):alle;
+  /* Nach Leitfrage gruppiert, innerhalb der Gruppe nach Folge-Nr: so ist die Sammlung
+     gedacht – eine Frage, dazu die Folge von Einheiten, die sie beantworten. */
+  const gruppen=[];
+  liste.slice().sort((a,b)=>String(a.leitfrage||"").localeCompare(String(b.leitfrage||""))||((a.folge_nr||0)-(b.folge_nr||0)))
+    .forEach(v=>{ const f=String(v.leitfrage||"ohne Leitfrage");
+      const g=gruppen.find(x=>x.f===f); if(g)g.rows.push(v); else gruppen.push({f,rows:[v]}); });
+  const chip=(an,txt,fn)=>`<button onclick="${fn}" aria-pressed="${an}" style="min-height:48px;text-align:left;border:1px solid ${an?"#7c3aed":"var(--rand-bedien)"};${an?"background:#7c3aed;color:#fff;":"background:var(--surface2);color:var(--text);"}border-radius:10px;padding:9px 11px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">${esc(txt)}</button>`;
+  const karte=v=>{
+    const bl=Array.isArray(v.bloecke)?v.bloecke:[];
+    const summe=bl.reduce((a,b)=>a+(Number(b.dauer)||0),0);
+    const auf=String(_vaOffen)===String(v.id);
+    return `<div style="border:var(--border-s);border-radius:12px;margin-bottom:8px;background:var(--surface)">
+      <button onclick="vaToggle('${String(v.id).replace(/'/g,"")}')" aria-expanded="${auf}" style="width:100%;min-height:48px;text-align:left;border:none;background:transparent;color:var(--text);font-family:inherit;cursor:pointer;padding:10px 12px">
+        <span style="display:block;font-size:13px;font-weight:800">${v.folge_nr?`${Number(v.folge_nr)}. `:""}${esc(v.name)}</span>
+        <span style="display:block;font-size:11px;color:var(--text3);margin-top:3px">${bl.length} ${bl.length===1?"Block":"Blöcke"} · ${summe} Min.${v.netto_spielform_min?` · ${Number(v.netto_spielform_min)} Min. netto`:""}${(Array.isArray(v.tags)&&v.tags.length)?" · "+v.tags.map(esc).join(", "):""}</span>
+        <span style="display:block;font-size:11px;color:var(--text2);margin-top:3px">${auf?"▾ zugeklappt anzeigen":"▸ Blöcke anzeigen"}</span>
+      </button>
+      ${auf?`<div style="padding:0 12px">${_vaSteckbrief(v)}</div>`:""}
+    </div>`;
+  };
+  box.innerHTML=`
+    <div style="font-size:11.5px;color:var(--text2);line-height:1.5;margin-bottom:9px">${alle.length} ${alle.length===1?"Vorlage":"Vorlagen"} in der Sammlung. Diese Ansicht liest nur – geändert wird hier nichts.</div>
+    ${fragen.length>1?`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:2px 2px 5px">Leitfrage</div>
+    <div style="display:flex;gap:6px;flex-direction:column;margin-bottom:10px">${fragen.map(f=>chip(_vaFrage===f,f,`vaFrageSet('${esc(f).replace(/'/g,"&#39;")}')`)).join("")}</div>`:""}
+    ${gruppen.map(g=>`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:10px 2px 5px">${esc(g.f)}</div>${g.rows.map(karte).join("")}`).join("")}
+    <div style="display:flex;margin-top:10px"><button class="btn btn-sm" style="margin-left:auto;min-height:48px" onclick="vorlagenAnsichtClose()">Schließen</button></div>`;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
