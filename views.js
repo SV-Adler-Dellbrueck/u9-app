@@ -427,6 +427,7 @@ async function loadKader(){
         if(x.medical)o.medical=x.medical;
         if(x.starker_fuss)o.starker_fuss=x.starker_fuss;
         if(x.lieblingsposition)o.lieblingsposition=x.lieblingsposition;
+        if(x.trikotgroesse)o.trikotgroesse=x.trikotgroesse;   // v543: Groesse am Kind, nicht auf Papier
         if(x.foto_path)o.foto_path=x.foto_path;
         o.foto_stadionheft_ok=!!x.foto_stadionheft_ok; // HOTFIX 19 digital: Foto-Freigabe fürs Eltern-Heft
         return o;
@@ -474,6 +475,13 @@ function kaderEditRow(k,i){
       </select>
       <input class="ke-pos" value="${esc(k.lieblingsposition||'')}" placeholder="Lieblingsposition" style="flex:1;min-width:90px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px">
     </div>
+    <!-- v543: Trikotgröße. Freies Feld MIT Vorschlagsliste – die Größenschlüssel der
+         Hersteller gehen auseinander (128/134/140 gegen XS/S/M), eine feste Auswahl
+         müsste bei jedem neuen Ausrüster angefasst werden. Die Liste nimmt einem das
+         Tippen ab, verbietet aber nichts. -->
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
+      <input class="ke-trikot" list="ke-trikot-liste" value="${esc(k.trikotgroesse||'')}" placeholder="👕 Trikotgröße" title="Trikotgröße – frei einzutragen, die Liste ist nur ein Vorschlag" style="flex:1;min-width:110px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px">
+    </div>
     <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
       <span style="font-size:11px;color:var(--text2)">Foto (Karte):</span>
       <input type="file" accept="image/jpeg,image/png,image/webp" onchange="kaderRowFoto(this)" style="font-size:11px;flex:1">
@@ -510,6 +518,10 @@ function kaderEditOpen(){
   modal.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:440px;width:100%;margin:auto">
     <div style="font-weight:700;margin-bottom:4px">Spieler verwalten</div>
     <div style="font-size:11px;color:var(--text2);margin-bottom:12px">Geburtstag & Medical-Hinweise sind nur für Trainer sichtbar (nicht für Eltern).</div>
+    <!-- v543: Vorschlagsliste für die Trikotgröße. EINMAL im Fenster, nicht je Zeile –
+         fünfzehn gleiche datalist-Elemente wären fünfzehnmal dieselbe Wahrheit. -->
+    <datalist id="ke-trikot-liste">${["116","122","128","134","140","146","152","XS","S","M"].map(g=>`<option value="${g}">`).join("")}</datalist>
+    <div id="kader-trikot-stand" style="font-size:11.5px;color:var(--text2);margin-bottom:10px"></div>
     <div id="kader-edit-list">${KADER.slice().sort((a,b)=>((a.aktiv===false)-(b.aktiv===false))).map((k,i)=>kaderEditRow(k,i)).join("")}</div>
     <button class="btn btn-sm" onclick="kaderEditAdd()" style="margin-bottom:12px"><i class="ti ti-plus"></i>Spieler hinzufügen</button>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -518,6 +530,20 @@ function kaderEditOpen(){
     </div>
   </div>`;
   document.body.appendChild(modal);
+  kaderTrikotStand();
+}
+/* v543: Wie viele Größen fehlen noch? Die Zeile ist der eigentliche Zweck des Feldes –
+   beim Anprobieren will man wissen, wen man noch nicht hat, nicht fünfzehn Kästchen
+   einzeln durchsehen. Zählt nur Kinder im Kader; wer nicht mehr dabei ist, braucht
+   kein Trikot. */
+function kaderTrikotStand(){
+  const el=document.getElementById("kader-trikot-stand"); if(!el)return;
+  const drin=KADER.filter(k=>k.aktiv!==false);
+  const ohne=drin.filter(k=>!String(k.trikotgroesse||"").trim());
+  if(!drin.length){ el.innerHTML=""; return; }
+  el.innerHTML=ohne.length
+    ? `👕 <b>${ohne.length}</b> von ${drin.length} Größen fehlen noch.`
+    : `👕 Alle ${drin.length} Trikotgrößen sind erfasst.`;
 }
 function kaderEditAdd(){
   const list=document.getElementById("kader-edit-list");
@@ -868,6 +894,7 @@ async function kaderSaveAll(btn){
     const medical=row.querySelector(".ke-medical").value.trim();
     const fuss=row.querySelector(".ke-fuss")?.value||"";
     const pos=row.querySelector(".ke-pos")?.value.trim()||"";
+    const trikot=row.querySelector(".ke-trikot")?.value.trim()||"";
     const id=parseInt(row.dataset.id)||null;      // bestehende Zeile: ID mitschicken
     payload.push({
       ...(id?{id}:{}),
@@ -875,7 +902,7 @@ async function kaderSaveAll(btn){
       tw:row.querySelector(".ke-tw").checked,
       tw_prio:parseInt(row.querySelector(".ke-prio").value)||0,
       geb:geb||null, medical:medical||null,
-      starker_fuss:fuss||null, lieblingsposition:pos||null, sort_order:i+1,
+      starker_fuss:fuss||null, lieblingsposition:pos||null, trikotgroesse:trikot||null, sort_order:i+1,
       // Ohne diese Zeile bliebe der Haken wirkungslos: PostgREST setzt beim Upsert nur
       // die mitgeschickten Spalten, `aktiv` waere also nie beschrieben worden.
       aktiv:row.querySelector(".ke-aktiv")?.checked!==false,
@@ -3855,7 +3882,7 @@ const HELP=[
     {t:"Saison-Cockpit", d:"Torschützen, Anwesenheit, Rückmelde-Tempo der Familien, faire Einsätze, Eltern-Puls, Rückmelde-Tempo – alles auf einen Blick.", run:"saisonCockpitOpen()"},
     {t:"Anwesenheit (Saison)", d:"Drei Reiter: Quote je Kind im Training, Anwesenheit der Trainer, und die Quote inklusive Spiele aus den Nominierungen. Alle drei rechnen auf denselben Zähltagen wie die Zahlen neben der Nominierung: ab dem Saisonstichtag, und nur echte Trainings – Spiel- und Turniertage zählen nicht mit, auch nicht bei der Serie 🔥.", run:"awUebersichtOpen()"},
     {t:"Probetraining", d:"Schnupperkinder verwalten – bewusst getrennt vom Kader, Auto-Löschung nach Entscheidung.", run:"probeOpen()"},
-    {t:"Kader", d:"Spieler anlegen/bearbeiten, Trikotnummer, Foto, Kontakte, Foto-Freigabe.", go:"kader"},
+    {t:"Kader", d:"Spieler anlegen/bearbeiten, Trikotnummer, Foto, Kontakte, Foto-Freigabe. <b>Die Trikotgröße</b> steht bei jedem Kind – frei einzutragen, die Vorschlagsliste (116 bis 152, XS bis M) nimmt nur das Tippen ab und verbietet nichts. Über den Zeilen steht, wie viele Größen noch fehlen; ausgeschiedene Kinder zählen nicht mit. So siehst du beim Anprobieren, wen du noch nicht hast.", go:"kader"},
     {t:"Bewerten", d:"Spieler in 16 Kriterien einschätzen – mit Live-Radar. Kriterien, Live-Profil und Förderplan erscheinen, sobald oben ein Kind gewählt ist; „Bewertungsrunde starten“ geht alle Kinder nacheinander durch. Hakst du im Förderplan ein Entwicklungsziel als erreicht ab, erscheint es im Eltern-Bereich zwei Wochen lang in der Karte „Das kann dein Kind jetzt“ – mit genau dem Wortlaut, den du eingetragen hast, und ohne jede Zahl. Was du dort formulierst, lesen also Kind (in „Meine Mission“) und Elternhaus.", go:"bew"},
     {t:"Profil", d:"Spielerprofil, Stärken, Adler-Karte, Entwicklungs-Report drucken.", go:"profil"},
     {t:"Entwicklung", d:"Entwicklung über die Zeit als Diagramm.", go:"verlauf"},
