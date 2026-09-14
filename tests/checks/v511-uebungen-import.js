@@ -151,7 +151,9 @@ module.exports = async function (h) {
      im Modul erreichbar, er wird nur nicht mehr angeboten. Geprüft wird deshalb jetzt, dass
      er nicht zurückkommt. */
   if (r.bau.knopf) probleme.push("Der Knopf „Übungen importieren“ steht wieder im Übungen-Bereich (v539: entfallen)");
-  if (!r.bau.alterKnopf) probleme.push("Der Knopf „Einheit importieren“ ist verschwunden");
+  /* v538: dasselbe eine Ebene weiter – der Einstieg „Einheit importieren“ im Trainingsplan
+     ist ebenfalls entfallen. Beide Dialoge leben weiter im Modul, nur ohne Knopf. */
+  if (r.bau.alterKnopf) probleme.push("Der Knopf „Einheit importieren“ steht wieder im Trainingsplan (v538: entfallen)");
   /* Der Wachname folgt der LETZTEN Funktion der Datei – seit v512 ist das bibliothekAbgleich.
      Geprüft wird hier nur, dass das Modul überhaupt bewacht ist und in beiden Einstiegen
      gleich; welcher Name das ist, hält die Ladearchitektur-Prüfung fest. */
