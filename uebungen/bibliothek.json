@@ -1,6 +1,6 @@
 {
   "schema": "adler-uebungen/1",
-  "stand": "2026-09-12-1",
+  "stand": "2026-09-14-1",
   "uebungen": [
     {
       "name": "Warm up Adler",
@@ -1194,6 +1194,287 @@
             140,
             172,
             "Tor nur aus der gegnerischen Hälfte – TW spielt flach"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "3 gegen 3 – Dreieck (Grundform)",
+      "kat": "raute",
+      "kurz": "Drei gegen drei auf vier Minitore – das Dreieck offen halten.",
+      "spieler": "6",
+      "feld": "25 x 20 m, vier Minitore, zwei Schusszonen",
+      "dauer": "12",
+      "ablauf": "Feld 25 x 20 m quer, breiter als tief, mit Mittellinie. Je Grundlinie stehen zwei Minitore weit außen in Richtung der Ecken – nie eines in der Mitte. Sechs Meter vor jeder Grundlinie liegt eine Schusszonenlinie.\n\nDrei gegen drei, freies Spiel auf beide Minitore. Das Team am Ball stellt sich als Dreieck auf: einer tief in der eigenen Hälfte am Ball, zwei breit auf Höhe der Mittellinie. Dadurch hat der Ballführende immer zwei Anspielstationen in verschiedene Richtungen, und das verteidigende Team kann nie beide gleichzeitig zustellen.\n\nEin Tor zählt, wenn der Ball aus der eigenen Hälfte heraus über die Schusszonenlinie gespielt und von dort ins Minitor gebracht wird. Die weit außen stehenden Tore zwingen dazu, die Seite zu wechseln, statt durch die Mitte zu laufen.\n\nSpielzeit 3 Minuten, dann Pause und neue Zusammenstellung.",
+      "varianten": "- Nur zwei Ballkontakte je Spieler\n- Ein Tor zählt doppelt, wenn vor dem Abschluss die Seite gewechselt wurde\n- Steigerung mit vier Feldspielern und Torhütern: siehe „4+1 gegen 4+1 – Raute (Steigerung)“",
+      "coaching": "Wo steht dein Mitspieler, bevor du den Ball annimmst?\nWas passiert mit dem Dreieck, wenn ihr alle drei auf einer Höhe steht?\nWelches Tor ist gerade das leichtere – und warum?",
+      "spass": 4,
+      "diff": 2,
+      "skizze": {
+        "li": [
+          [
+            10,
+            88,
+            270,
+            88
+          ],
+          [
+            26,
+            54,
+            254,
+            54,
+            "sz"
+          ],
+          [
+            26,
+            122,
+            254,
+            122,
+            "sz"
+          ]
+        ],
+        "tor": [
+          [
+            40,
+            6,
+            "h",
+            24
+          ],
+          [
+            216,
+            6,
+            "h",
+            24
+          ],
+          [
+            40,
+            160,
+            "h",
+            24
+          ],
+          [
+            216,
+            160,
+            "h",
+            24
+          ]
+        ],
+        "p": [
+          [
+            132,
+            131,
+            80,
+            96,
+            "p"
+          ],
+          [
+            80,
+            88,
+            200,
+            88,
+            "p"
+          ],
+          [
+            204,
+            96,
+            150,
+            132,
+            "p"
+          ]
+        ],
+        "s": [
+          [
+            140,
+            138,
+            "g",
+            "S"
+          ],
+          [
+            70,
+            88,
+            "g",
+            "S"
+          ],
+          [
+            210,
+            88,
+            "g",
+            "S"
+          ],
+          [
+            140,
+            72,
+            "r",
+            "O"
+          ],
+          [
+            96,
+            36,
+            "r",
+            "O"
+          ],
+          [
+            192,
+            34,
+            "r",
+            "O"
+          ]
+        ],
+        "b": [
+          [
+            148,
+            146
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            177,
+            "25 x 20 m - Dreieck im Ballbesitz"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "4+1 gegen 4+1 – Raute (Steigerung)",
+      "kat": "raute",
+      "kurz": "Aus dem Dreieck wird eine Raute – mit Torhütern und Jugendtoren.",
+      "spieler": "8+2",
+      "feld": "30 x 22 m, zwei Jugendtore mit Torhütern",
+      "dauer": "12",
+      "ablauf": "Aufbauende Stufe zu „3 gegen 3 – Dreieck (Grundform)“. Feld 30 x 22 m mit Mittellinie, je Grundlinie ein Jugendtor mit Torhüter davor.\n\nVier Feldspieler je Team, das Team am Ball ordnet sich als Raute: einer hinten am Ball, zwei breit auf Höhe der Mittellinie, einer vorne. Gegenüber dem Dreieck kommt damit die Spitze dazu – es gibt jetzt eine Anspielstation hinter der gegnerischen Kette, und der hintere Spieler hat drei statt zwei Wege.\n\nDas verteidigende Team besetzt bewusst die Räume zwischen den Rauten-Spielern, nicht die Spieler selbst. Dadurch entsteht die Frage, die diese Stufe trägt: Spiele ich den Ball an der Deckung vorbei, oder verschiebe ich zuerst die Raute?\n\nDie Torhüter spielen mit: ein Rückpass auf den Torhüter ist erlaubt und erwünscht, wenn beide breiten Spieler zugestellt sind.\n\nSpielzeit 3 Minuten, dann Pause und neue Zusammenstellung.",
+      "varianten": "- Ein Tor nach Pass über die Spitze zählt doppelt\n- Die Spitze darf die eigene Hälfte nicht betreten\n- Zurück auf die Grundform, wenn die Raute über eine Minute lang flach wird",
+      "coaching": "Wer steht gerade vorne – und sieht ihn der Spieler am Ball?\nWas ist schneller: der Ball oder ihr?\nWann ist der Torhüter die beste Anspielstation?",
+      "spass": 4,
+      "diff": 3,
+      "skizze": {
+        "li": [
+          [
+            10,
+            90,
+            270,
+            90
+          ]
+        ],
+        "tor": [
+          [
+            110,
+            4,
+            "h",
+            60,
+            "j"
+          ],
+          [
+            110,
+            158,
+            "h",
+            60,
+            "j"
+          ]
+        ],
+        "p": [
+          [
+            133,
+            113,
+            78,
+            98,
+            "p"
+          ],
+          [
+            78,
+            82,
+            132,
+            60,
+            "p"
+          ],
+          [
+            148,
+            60,
+            204,
+            82,
+            "p"
+          ],
+          [
+            204,
+            98,
+            149,
+            113,
+            "p"
+          ]
+        ],
+        "s": [
+          [
+            140,
+            28,
+            "b",
+            "TW"
+          ],
+          [
+            140,
+            146,
+            "b",
+            "TW"
+          ],
+          [
+            140,
+            52,
+            "g",
+            "S"
+          ],
+          [
+            68,
+            90,
+            "g",
+            "S"
+          ],
+          [
+            212,
+            90,
+            "g",
+            "S"
+          ],
+          [
+            140,
+            120,
+            "g",
+            "S"
+          ],
+          [
+            104,
+            122,
+            "r",
+            "O"
+          ],
+          [
+            172,
+            80,
+            "r",
+            "O"
+          ],
+          [
+            74,
+            50,
+            "r",
+            "O"
+          ],
+          [
+            206,
+            126,
+            "r",
+            "O"
+          ]
+        ],
+        "b": [
+          [
+            148,
+            128
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            177,
+            "30 x 22 m - Raute im Ballbesitz"
           ]
         ]
       }

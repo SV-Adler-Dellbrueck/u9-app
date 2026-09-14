@@ -172,8 +172,19 @@ module.exports = async function (h) {
   const neu = ["Drei gegen einen im Quadrat", "3 gegen 3 auf vier Minitore mit Schusszone", "Passtor im Quadrat", "2+1 gegen 2+1 auf Jugendtore"];
   const namen = bib.uebungen.map(u => u.name);
   neu.forEach(n => { if (!namen.includes(n)) probleme.push(`In bibliothek.json fehlt „${n}“`); });
-  if (bib.stand !== "2026-09-12-1") probleme.push(`bibliothek.json steht auf „${bib.stand}“ statt „2026-09-12-1“ – ohne neuen Stand gleicht die App nicht ab`);
-  if (vor.stand !== "2026-09-12-1") probleme.push(`vorlagen.json steht auf „${vor.stand}“ statt „2026-09-12-1“`);
+  /* v547: Hier stand bis dahin der Stand als feste Zeichenkette. Gemeint war „er wurde
+     für v517 hochgezählt, sonst gleicht die App nicht ab" – geprüft wurde aber „er ist
+     genau dieser". Damit wurde jeder spätere Nachtrag in der Bibliothek rot, obwohl er
+     richtig war. Jetzt gilt: nicht ÄLTER als der Stand, den v517 gebracht hat.
+     Verglichen wird Datum und Zähler getrennt; rein alphabetisch läge „…-10" vor „…-2". */
+  const standWert = t => { const m = String(t || "").match(/^(\d{4}-\d{2}-\d{2})(?:-(\d+))?$/); return m ? [m[1], parseInt(m[2] || "0", 10)] : null; };
+  const nichtAelter = (ist, mindestens) => {
+    const a = standWert(ist), b = standWert(mindestens);
+    if (!a) return false;
+    return a[0] > b[0] || (a[0] === b[0] && a[1] >= b[1]);
+  };
+  if (!nichtAelter(bib.stand, "2026-09-12-1")) probleme.push(`bibliothek.json steht auf „${bib.stand}“ und damit vor „2026-09-12-1“ – ohne neuen Stand gleicht die App nicht ab`);
+  if (!nichtAelter(vor.stand, "2026-09-12-1")) probleme.push(`vorlagen.json steht auf „${vor.stand}“ und damit vor „2026-09-12-1“`);
   if (new Set(namen).size !== namen.length) probleme.push("In bibliothek.json steht ein Name doppelt – der Abgleich legte eine Dublette an");
   const lehr = vor.vorlagen.find(v => /^L4-2/.test(v.name));
   if (!lehr) probleme.push("Die Vorlage „L4-2 …“ fehlt in vorlagen.json");
