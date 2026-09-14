@@ -181,6 +181,38 @@ const TF_GRUPPEN=[
   {key:"individual",label:"🧍 Individual",kats:["individual"]},
   {key:"custom",label:"🧪 Eigene & KI",kats:["custom"]}
 ];
+/* v539: Drei ruhige Zwischenüberschriften über den acht Gruppen-Kacheln. Bewusst KEINE
+   weitere Kachelebene: die zehn Kategorien aus data.js liegen bereits unter diesen acht
+   Gruppen, und eine dritte Ebene zum Durchtippen kostete einen Tipp mehr bis zur Übung,
+   statt Übersicht zu schaffen. Die Reihenfolge folgt dem Aufbau einer Einheit – so sucht
+   man beim Planen, nicht alphabetisch. Eine Gruppe, die hier fehlt, landet unter der
+   letzten Überschrift; so bleibt eine neue Gruppe sichtbar, statt stillschweigend zu
+   verschwinden. */
+const TF_OBER=[
+  {label:"Einstieg",  gruppen:["aufwaermen","kopf"]},
+  {label:"Hauptteil", gruppen:["technik","passen","zweikampf"]},
+  {label:"Speziell",  gruppen:["torwart","individual","custom"]}
+];
+/* v539: „🆕 neu" heißt ab jetzt „neu ANGELEGT", nicht mehr „noch nie eingesetzt".
+   Vorher hing das Abzeichen an tpLastUsedDays()===null – eine Übung, die nie dran war,
+   trug es für immer. Genau das war der Punkt: es verschwand nie von allein. Jetzt zählt
+   trainingsformen.created_at, und nach vier Wochen ist es weg.
+
+   Die Übungen aus data.js tragen kein Anlagedatum und sind damit nie „neu" – sie sind es
+   auch nicht. Ob eine Übung schon einmal am Platz war, bleibt sichtbar, aber als ruhiger
+   Text statt als Abzeichen: beim Planen ist das eine nützliche Angabe, keine Neuigkeit. */
+const TF_NEU_TAGE=28;
+function _tfIstNeu(f){
+  const d=f&&f.created_at; if(!d)return false;
+  const tage=(Date.now()-new Date(d).getTime())/864e5;
+  return tage>=0&&tage<TF_NEU_TAGE;
+}
+function _tfFrische(f,i){
+  const d=tpLastUsedDays(i);
+  const neu=_tfIstNeu(f)?'<span style="color:#16a34a;font-weight:800">🆕 neu</span> · ':"";
+  return neu+(d===null?'<span style="color:var(--text3)">noch nicht eingesetzt</span>'
+    :(d<14?`<span style="color:#b45309">vor ${d} T.</span>`:`vor ${d} T.`));
+}
 let _tfDb={gruppe:null,stern:0,lange:false};
 function _tfGruppeVon(f,i){
   if(f.custom||i>=(typeof TRAININGSFORMEN!=="undefined"?TRAININGSFORMEN.length:0))return "custom";
@@ -212,7 +244,16 @@ function renderTraining(){
   const kEl=document.getElementById("tf-kacheln");
   if(kEl){
     const counts={};alle.forEach(x=>{counts[x.gr]=(counts[x.gr]||0)+1;});
-    kEl.innerHTML=TF_GRUPPEN.filter(g=>counts[g.key]).map(g=>`<button onclick="_tfDb.gruppe=_tfDb.gruppe==='${g.key}'?null:'${g.key}';renderTraining()" style="min-height:64px;border:1px solid var(--rand-bedien);${_tfDb.gruppe===g.key?"background:#16a34a;color:#fff;border-color:#16a34a;":"background:var(--surface);color:var(--text);"}border-top:3px solid #16a34a;border-radius:14px;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;padding:8px 6px">${g.label}<span style="display:block;font-size:11px;font-weight:700;opacity:.7;margin-top:2px">${counts[g.key]} Übungen</span></button>`).join("");
+    const kachel=g=>`<button onclick="_tfDb.gruppe=_tfDb.gruppe==='${g.key}'?null:'${g.key}';renderTraining()" aria-pressed="${_tfDb.gruppe===g.key}" style="min-height:64px;border:1px solid var(--rand-bedien);${_tfDb.gruppe===g.key?"background:#16a34a;color:#fff;border-color:#16a34a;":"background:var(--surface);color:var(--text);"}border-top:3px solid #16a34a;border-radius:14px;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;padding:8px 6px">${g.label}<span style="display:block;font-size:11px;font-weight:700;opacity:.7;margin-top:2px">${counts[g.key]} Übungen</span></button>`;
+    const vergeben=new Set(TF_OBER.flatMap(o=>o.gruppen));
+    kEl.innerHTML=TF_OBER.map((o,oi)=>{
+      // Die letzte Überschrift sammelt auch, was in keiner Liste steht (neue Gruppe).
+      const keys=o.gruppen.concat(oi===TF_OBER.length-1?TF_GRUPPEN.filter(g=>!vergeben.has(g.key)).map(g=>g.key):[]);
+      const drin=keys.map(k=>TF_GRUPPEN.find(g=>g.key===k)).filter(g=>g&&counts[g.key]);
+      if(!drin.length)return "";
+      return `<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:${oi?"12px":"0"} 0 4px">${o.label}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${drin.map(kachel).join("")}</div>`;
+    }).join("");
   }
   const fEl=document.getElementById("tf-filter");
   if(fEl)fEl.innerHTML=[0,1,2,3].map(s=>`<button onclick="_tfDb.stern=${s};renderTraining()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);${_tfDb.stern===s?"background:#16a34a;color:#fff;border-color:#16a34a;":"background:var(--surface2);color:var(--text2);"}border-radius:10px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer">${s===0?"Alle":"⭐".repeat(s)}</button>`).join("")
@@ -232,8 +273,7 @@ function renderTraining(){
   wrap.innerHTML=`<div style="font-size:12px;font-weight:800;color:var(--text2);margin:2px 0 6px">${items.length} Übung${items.length===1?"":"en"}</div>`+items.map(_tfKarte).join("");
 }
 function _tfKarte(x){
-  const d=tpLastUsedDays(x.i);
-  const frische=d===null?'<span style="color:#16a34a">🆕 neu</span>':(d<14?`<span style="color:#b45309">vor ${d} T.</span>`:`vor ${d} T.`);
+  const frische=_tfFrische(x.f,x.i);   // v539: „neu" = angelegt vor < 4 Wochen
   const stern=_tpStern(x.f);
   const badges=[];
   if(x.f.focus)badges.push('<span style="background:#fef3c7;color:#92400e;border-radius:6px;padding:1px 6px;font-size:10px;font-weight:800;white-space:nowrap">⭐ Fokus</span>');
@@ -2567,23 +2607,44 @@ async function tpPlanRestore(datum){
     setzen(s);
   });
 }
-/* Vorausplanungs-Leiste: die nächsten Trainings mit Plan-Status (✅ geplant / 📝 offen) –
-   ein Tipp springt zum Termin und lädt den vorgemerkten Plan. */
+/* Terminwahl des Trainingsplans: die nächsten sechs Trainings als Kacheln, je mit
+   Plan-Status (✅ geplant / 📝 offen) und der Marke, welcher gerade bearbeitet wird.
+
+   v538: Das Dropdown darüber ist entfallen. Es zeigte exakt dieselbe Liste ein zweites
+   Mal – terminSelectFill füllte es mit {types:["training"],future:true}, also mit genau
+   den Terminen, die hier als Kachel stehen. `#tp-date` bleibt als UNSICHTBARER Speicher
+   im shell.html: fünfundzwanzig Stellen lesen das Datum daraus, von der Nettospielzeit
+   bis zum Stationstimer. Alle übrigen Termine – auch vergangene – stehen unter
+   Orga → Termine; geplant wird bewusst nur nach vorn. */
+const TP_VORPLAN_MAX=6;
 async function tpVorplanLoad(){
   const el=document.getElementById("tp-vorplan"); if(!el)return;
   const heute=new Date().toISOString().slice(0,10);
   const rows=(await _termineSelLoad()).filter(t=>t.typ==="training"&&t.datum>=heute)
-    .sort((a,b)=>a.datum<b.datum?-1:1).slice(0,5);
-  if(rows.length<2){el.innerHTML="";return;}
+    .sort((a,b)=>a.datum<b.datum?-1:1).slice(0,TP_VORPLAN_MAX);
+  const kopf=`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px">🗓️ Termin – antippen zum Planen</div>`;
+  /* Ohne Termin keine Terminwahl: ein Satz und der Weg dorthin, wo Termine entstehen.
+     Vorher stand hier bei weniger als zwei Terminen einfach nichts – zusammen mit dem
+     entfallenen Dropdown wäre der Trainingsplan damit unbedienbar geworden. */
+  if(!rows.length){
+    el.innerHTML=kopf+`<div style="font-size:12.5px;color:var(--text3);line-height:1.5">Kein Training in Sicht. Termine legst du unter <b>Orga → Termine</b> an.</div>`;
+    return;
+  }
   let geplant=new Set();
   try{const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?datum=in.(${rows.map(t=>t.datum).join(",")})&select=datum`,{headers:sbAuthHeaders()});
     if(r.ok)((await r.json())||[]).forEach(x=>geplant.add(String(x.datum)));}catch(e){}
-  el.innerHTML=`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px">🗓️ Vorausplanung – antippen zum Planen</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap">${rows.map(t=>{
-      const on=geplant.has(t.datum);
+  const aktiv=document.getElementById("tp-date")?.value||"";
+  el.innerHTML=kopf+`<div style="display:flex;gap:6px;flex-wrap:wrap">${rows.map(t=>{
+      const on=geplant.has(t.datum), hier=t.datum===aktiv;
       const d=new Date(t.datum+"T00:00:00");
       const lbl=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()]+" "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
-      return `<button onclick="tpVorplanJump('${t.datum}')" class="btn btn-sm" style="${on?"border-color:#16a34a;color:#15803d":""}">${on?"✅":"📝"} ${lbl}</button>`;
+      /* Der gewählte Termin trägt kräftigeren Rahmen UND den Zusatz „gewählt" – Farbe
+         darf nie der einzige Bedeutungsträger sein (CLAUDE.md). Ohne das Dropdown wäre
+         sonst nicht mehr erkennbar, welchen Termin man gerade plant.
+         48 px statt der 36 px eines Listenknopfes: das hier ist jetzt die einzige
+         Terminwahl der Seite und kein Beiwerk mehr (cockpit-ui). */
+      const rand=hier?"border-color:var(--text);border-width:2px;font-weight:900":(on?"border-color:#16a34a;color:#15803d":"");
+      return `<button onclick="tpVorplanJump('${t.datum}')" class="btn btn-sm" aria-pressed="${hier}" style="min-height:48px;font-size:13px;${rand}">${on?"✅":"📝"} ${lbl}${hier?" · gewählt":""}</button>`;
     }).join("")}</div>`;
 }
 function tpVorplanJump(datum){
@@ -2592,6 +2653,7 @@ function tpVorplanJump(datum){
      vom vorherigen Tag stehen, nur der Plan wechselte. Jetzt der ganze Tag. */
   tpTrainerRsvpLaden(datum);
   tpPlanRestore(datum);
+  tpVorplanLoad();   // v538: die Marke „gewählt" muss mitwandern
 }
 
 /* ═══════════════════════════════════
@@ -3150,8 +3212,7 @@ function tpPickerRender(){
   if(li)li.innerHTML=html;
 }
 function _tpPickKarte(x){
-  const d=tpLastUsedDays(x.i);
-  const frische=d===null?'<span style="color:#16a34a">🆕 neu</span>':(d<14?`<span style="color:#b45309">vor ${d} T.</span>`:`vor ${d} T.`);
+  const frische=_tfFrische(x.f,x.i);   // v539: „neu" = angelegt vor < 4 Wochen
   const stern=_tpStern(x.f);
   return `<div style="display:flex;align-items:center;gap:8px;border:var(--border-s);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--surface)">
     <button onclick="tpPickerSet(${x.i})" style="flex:1;min-width:0;min-height:44px;border:none;background:transparent;color:var(--text);font-family:inherit;text-align:left;cursor:pointer;padding:0">
