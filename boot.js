@@ -2415,24 +2415,119 @@ function tpSlotsMitZuordnung(){
     return o;
   });
 }
+/* ═══════════════════════════════════════════════════════════════════════════
+   v542 – WER HAT ZULETZT GESPEICHERT, UND WIRD ER ÜBERSCHRIEBEN?
+
+   Der Plan wird per Upsert auf das DATUM geschrieben, und tpPlanSaveDebounced
+   speichert 1,2 Sekunden nach jeder Änderung automatisch. Wer am Freitag den Plan
+   öffnete, den Peter am Donnerstag gebaut hatte, und eine Übung umstellte, hatte
+   Peters Fassung überschrieben, bevor er den Speichern-Knopf auch nur ansah.
+
+   Zwei Teile dagegen:
+   1. `gespeichert_von` in der Tabelle, dazu eine ruhige Zeile unter der Terminwahl.
+   2. Ein Abgleich des `updated_at`, das beim Laden galt. Weicht es ab, hat jemand
+      anderes seither geschrieben – dann wird NICHT still überschrieben.
+
+   Die Automatik schreibt in dem Fall gar nicht und sagt es einmal. Der Knopf fragt,
+   weil ein bewusster Tipp etwas anderes ist als ein Nebeneffekt des Tippens.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const TP_STAND={};                 // datum → {updated_at, von} wie zuletzt gesehen
+let _tpKonfliktGemeldet="";        // damit die Automatik nicht bei jedem Tastendruck meckert
+/* Was steht gerade auf dem Server? Gibt null zurück, wenn es keinen Plan gibt oder
+   die Frage nicht beantwortet werden kann – dann wird wie bisher geschrieben. */
+async function tpStandLesen(datum){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?datum=eq.${encodeURIComponent(datum)}&select=updated_at,gespeichert_von`,{headers:sbAuthHeaders()});
+    if(sbCheck401(r)||!r.ok)return null;
+    const z=(await r.json())||[];
+    return z.length?{updated_at:z[0].updated_at||"",von:z[0].gespeichert_von||""}:null;
+  }catch(e){ return null; }
+}
+function tpStandRender(datum){
+  const el=document.getElementById("tp-gespeichert"); if(!el)return;
+  const s=TP_STAND[datum];
+  if(!s||!s.updated_at){ el.innerHTML=""; return; }
+  const d=new Date(s.updated_at);
+  const wann=isNaN(d)?"":`${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}, ${d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})} Uhr`;
+  /* Ohne Namen (Pläne von vor v542) wird kein Name erfunden – dann steht nur das Wann. */
+  el.innerHTML=`<span style="font-size:10.5px;color:var(--text3)">💾 Zuletzt gespeichert${s.von?` von <b>${esc(s.von)}</b>`:""}${wann?` · ${wann}`:""}</span>`;
+}
+/* Der Konflikt-Hinweis. Eigenes Overlay statt confirm(): die Meldung muss sagen, WER
+   und WANN, und das passt in keinen Systemdialog. */
+function tpKonfliktFragen(datum,stand){
+  document.getElementById("tp-konflikt")?.remove();
+  const d=new Date(stand.updated_at);
+  const wann=isNaN(d)?"":`${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})} um ${d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})} Uhr`;
+  const m=document.createElement("div");
+  m.id="tp-konflikt";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Plan wurde inzwischen geändert");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10050;display:flex;align-items:center;justify-content:center;padding:16px";
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:420px;width:100%">
+    <div style="font-size:15px;font-weight:900;margin-bottom:8px">Der Plan wurde inzwischen geändert</div>
+    <div style="font-size:12.5px;color:var(--text2);line-height:1.6;margin-bottom:14px">
+      ${stand.von?`<b>${esc(stand.von)}</b> hat`:"Jemand hat"} ${wann?`am ${wann} `:""}für diesen Termin gespeichert, seit du ihn geöffnet hast.
+      Speicherst du jetzt, wird diese Fassung vollständig ersetzt.</div>
+    <button onclick="tpKonfliktTrotzdem('${String(datum).replace(/'/g,"")}')" style="width:100%;min-height:56px;border:none;border-radius:14px;background:var(--surface);border:1px solid var(--rand-bedien);border-top:3px solid #b45309;color:var(--text);font-family:inherit;font-size:15px;font-weight:900;cursor:pointer">Meine Fassung speichern</button>
+    <button onclick="tpKonfliktHolen('${String(datum).replace(/'/g,"")}')" class="btn btn-sm" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Seine Fassung laden und meine verwerfen</button>
+    <div style="display:flex;margin-top:8px"><button class="btn btn-sm" style="margin-left:auto;min-height:48px" onclick="document.getElementById('tp-konflikt').remove()">Erst mal nichts tun</button></div>
+  </div>`;
+  document.body.appendChild(m);   // Fokus-Trap greift über role="dialog" (core.js), kein eigener Aufruf nötig
+}
+async function tpKonfliktTrotzdem(datum){
+  document.getElementById("tp-konflikt")?.remove();
+  delete TP_STAND[datum];            // ohne Stand wird ohne Abgleich geschrieben
+  await tpPlanSave(true);
+}
+async function tpKonfliktHolen(datum){
+  document.getElementById("tp-konflikt")?.remove();
+  _tpKonfliktGemeldet="";
+  await tpPlanRestore(datum);
+  toast("Fassung vom Server geladen");
+}
 async function tpPlanSave(erzwungen){
   if(!sbToken()){if(erzwungen)toast("Bitte zuerst als Trainer anmelden","err");return;}
   const datum=document.getElementById("tp-date")?.value; if(!datum){if(erzwungen)toast("Bitte einen Termin wählen","err");return;}
   const plan=tpPlanEntries();
   const slots=tpSlotsMitZuordnung();
-  /* v514: `versatz` gehört zur Zuordnung. Ohne ihn hier hielt die Schutzregel unten einen
+  /* v514: `versatz` gehört zur Zuordnung. Ohne ihn hielt die Schutzregel unten einen
      Plan, in dem NUR die Gruppen weitergerückt wurden, für leer – und speicherte ihn nie. */
   const zuordnung=slots.some(s=>s.trainer||s.coaches||s.tw||s.kind!=null||s.versatz!=null);
   // Automatik: einen leeren Plan nie ueber einen vollen schreiben. Der Knopf darf immer.
   if(!plan.length&&!zuordnung&&!erzwungen)return;
+  /* v542: Hat jemand anderes seit dem Laden geschrieben? Nur prüfen, wenn wir beim Laden
+     überhaupt einen Stand gesehen haben – sonst gäbe es nichts zu vergleichen. */
+  const gesehen=TP_STAND[datum];
+  if(gesehen&&gesehen.updated_at){
+    const jetzt=await tpStandLesen(datum);
+    if(jetzt&&jetzt.updated_at&&jetzt.updated_at!==gesehen.updated_at){
+      TP_STAND[datum]=jetzt; tpStandRender(datum);
+      if(erzwungen){ tpKonfliktFragen(datum,jetzt); return; }
+      /* Die Automatik schreibt NICHT und sagt es einmal je Termin. Stiller Verzicht wäre
+         genauso falsch wie stilles Überschreiben – der Trainer tippt ja weiter. */
+      if(_tpKonfliktGemeldet!==datum){
+        _tpKonfliktGemeldet=datum;
+        toast(`${jetzt.von||"Jemand"} hat diesen Plan inzwischen gespeichert – tippe auf „Plan speichern“`,"err");
+      }
+      return;
+    }
+  }
   try{
+    const von=(typeof trainerMe==="function")?(await trainerMe()||null):null;
     const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?on_conflict=datum`,{method:"POST",
-      headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates,return=minimal'},
+      headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates,return=representation'},
       /* `slots` traegt die STRUKTUR der Einheit (welche Phasen, wie lang, was parallel)
          samt Zuordnung. Ohne sie kam beim zweiten Trainer nur die Uebungsauswahl an. */
-      body:JSON.stringify({datum,plan,slots,updated_at:new Date().toISOString()})});
+      body:JSON.stringify({datum,plan,slots,gespeichert_von:von,updated_at:new Date().toISOString()})});
+    if(r.ok||r.status===201){
+      /* Den eigenen Schreibvorgang als neuen Stand merken – sonst hielte der nächste
+         Abgleich die eigene Änderung für die eines anderen. */
+      let zeile=null; try{ zeile=((await r.json())||[])[0]; }catch(e){}
+      TP_STAND[datum]={updated_at:(zeile&&zeile.updated_at)||new Date().toISOString(),von:(zeile&&zeile.gespeichert_von)||von||""};
+      _tpKonfliktGemeldet="";
+      tpStandRender(datum);
+    }
     if(erzwungen){
-      if(r.ok)toast("Plan gespeichert ✓");
+      if(r.ok||r.status===201)toast("Plan gespeichert ✓");
       else toast("Plan nicht gespeichert – "+((r.status===401||r.status===403)?"kein Trainer-Recht":"Server antwortet "+r.status),"err");
     }
   }catch(e){ if(erzwungen)toast("Kein Netz – Plan nicht gespeichert","err"); }
@@ -2493,6 +2588,10 @@ function tpKopfRender(k){
 }
 async function tpPlanRestore(datum){
   datum=datum||document.getElementById("tp-date")?.value; if(!datum)return;
+  /* v542: Den Stand merken, der beim Öffnen galt. Nur dagegen kann tpPlanSave später
+     erkennen, ob jemand anderes zwischendurch geschrieben hat. Ohne diesen Griff wäre
+     der Abgleich wertlos: ein Plan, der nie geladen wurde, hat keinen Bezugspunkt. */
+  tpStandLesen(datum).then(s=>{ if(s)TP_STAND[datum]=s; else delete TP_STAND[datum]; tpStandRender(datum); });
   tpKopfLaden(datum);   // v506: Kopf der Einheit über der Zeitleiste – unabhängig vom Plan
   /* Reihenfolge ist entscheidend: erst die Phasen herstellen, dann die Uebungen
      einsetzen. Andersherum gaebe es die Auswahlfelder noch gar nicht, in die sie
