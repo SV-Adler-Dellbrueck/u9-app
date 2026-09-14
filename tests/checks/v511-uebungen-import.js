@@ -146,7 +146,9 @@ module.exports = async function (h) {
   const el = fs.readFileSync(path.join(h.REPO, "eltern/index.html"), "utf8");
   if (!r.bau.open) probleme.push("uebungImportOpen fehlt");
   if (!r.bau.knopf) probleme.push("Im Übungen-Bereich fehlt der Knopf „Übungen importieren“");
-  if (!r.bau.alterKnopf) probleme.push("Der Knopf „Einheit importieren“ ist verschwunden");
+  /* v538: siehe v506 – der Knopf im Trainingsplan ist bewusst entfallen. Geprüft wird
+     jetzt, dass er nicht zurückkommt; der Dialog bleibt im Modul erreichbar. */
+  if (r.bau.alterKnopf) probleme.push("Der Knopf „Einheit importieren“ steht wieder im Trainingsplan (v538: entfallen)");
   /* Der Wachname folgt der LETZTEN Funktion der Datei – seit v512 ist das bibliothekAbgleich.
      Geprüft wird hier nur, dass das Modul überhaupt bewacht ist und in beiden Einstiegen
      gleich; welcher Name das ist, hält die Ladearchitektur-Prüfung fest. */
