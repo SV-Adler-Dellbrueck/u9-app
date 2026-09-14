@@ -266,8 +266,14 @@ async function einheitImportUebernehmen(){
     // 5) Upsert – Kopfzeilen und on_conflict exakt wie in tpPlanSave()
     const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?on_conflict=datum`,{method:"POST",
       headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates,return=minimal'},
-      body:JSON.stringify({datum:daten.datum,plan,slots,kopf,updated_at:new Date().toISOString()})});
+      /* v542: Auch dieser Weg schreibt den Plan – also trägt er ein, wer es war. Ohne das
+         stünde nach einer Übernahme „zuletzt gespeichert" ohne Namen da, und schlimmer:
+         der Stand-Abgleich in tpPlanSave hielte die eigene Übernahme für die Änderung
+         eines anderen und blockierte beim nächsten Tippen. Den gemerkten Stand danach
+         verwerfen: tpPlanRestore liest ihn gleich neu. */
+      body:JSON.stringify({datum:daten.datum,plan,slots,kopf,gespeichert_von:((typeof trainerMe==="function")?(await trainerMe()||null):null),updated_at:new Date().toISOString()})});
     if(sbCheck401(r)){ if(haupt)haupt.disabled=false; return; }
+    if(r.ok&&typeof TP_STAND!=="undefined")delete TP_STAND[daten.datum];
     if(!r.ok){
       _eiMelde(box,[`Der Plan wurde nicht gespeichert – Server antwortet ${r.status}.`],"err");
       if(haupt)haupt.disabled=false; return;
@@ -953,9 +959,15 @@ async function vorlageUebernehmenSetzen(){
   try{
     const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?on_conflict=datum`,{method:"POST",
       headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates,return=minimal'},
-      body:JSON.stringify({datum,plan,slots,updated_at:new Date().toISOString()})});
+      /* v542: Auch dieser Weg schreibt den Plan – also trägt er ein, wer es war. Ohne das
+         stünde nach einer Übernahme „zuletzt gespeichert" ohne Namen da, und schlimmer:
+         der Stand-Abgleich in tpPlanSave hielte die eigene Übernahme für die Änderung
+         eines anderen und blockierte beim nächsten Tippen. Den gemerkten Stand danach
+         verwerfen: tpPlanRestore liest ihn gleich neu. */
+      body:JSON.stringify({datum,plan,slots,gespeichert_von:((typeof trainerMe==="function")?(await trainerMe()||null):null),updated_at:new Date().toISOString()})});
     if(sbCheck401(r)){ if(haupt)haupt.disabled=false; return; }
     if(!r.ok){ toast(`Nicht gespeichert – Server antwortet ${r.status}`,"err"); if(haupt)haupt.disabled=false; return; }
+    if(typeof TP_STAND!=="undefined")delete TP_STAND[datum];
   }catch(e){ toast("Kein Netz – Vorlage nicht übernommen","err"); if(haupt)haupt.disabled=false; return; }
   vorlageUebernehmenClose();
   toast(`🗂️ „${v.name}“ übernommen ✓ ${slots.length} Phasen`);

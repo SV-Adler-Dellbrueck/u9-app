@@ -193,6 +193,12 @@ module.exports = async function (h) {
   if (!wieder.klappbar) probleme.push("Der Kopf ist keine aufklappbare Karte");
 
   // ── 5) Zweiter Lauf: keine Dubletten, Kollision wird angesagt ─────────────
+  /* v542: Erst den Nachlauf abwarten. Die Übernahme oben zeichnet die Zeitleiste neu,
+     und tpPlanSaveDebounced speichert 1,2 Sekunden danach – dieser Schreibvorgang
+     gehört zum Import, nicht zum Prüfen. Seit tpPlanSave vor dem Schreiben den Stand
+     auf dem Server abfragt, kommt eine Abfrage dazu, und der Schreibvorgang rutschte
+     hinter diese Marke. Gezählt werden soll aber, was das PRÜFEN auslöst. */
+  await s.page.waitForTimeout(2000);
   const vorZweit = s.gesendet.length;
   const zweit = await s.page.evaluate(async ({ txt }) => {
     const warte = ms => new Promise(r => setTimeout(r, ms));
