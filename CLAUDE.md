@@ -89,7 +89,18 @@ caches.keys().then(ks => ks.forEach(k => caches.delete(k)));
 3. **Neue Tabellen** in die Backup-Funktion aufnehmen, sonst fehlen sie in der Sicherung.
 4. **Offline-Fallbacks synchron halten.** Inhaltslisten (Vereinbarung, Fairplay-Regeln) leben in der Datenbank *und* als JS-Array. Supabase-URLs sind vom SW-Cache ausgenommen — offline greift immer der Fallback. Eine Änderung ohne die andere führt dazu, dass Eltern ohne Netz eine veraltete Liste sehen.
 5. **Hilfe und Rundgang mitziehen**, wenn Funktionen umziehen oder neu dazukommen.
-6. **`node tests/run.js` vor dem Bump.** Ein Lauf parst alle Dateien, prüft die Ladearchitektur (MODUL_WACHE, Loader, PRECACHE, Wellen) und spielt die bekannten Fallen am echten DOM durch. Erst wenn er grün ist, wird `sw.js` hochgezählt. Ein neuer Fehler bekommt eine neue Datei in `tests/checks/` — mit der Versionsnummer, aus der er stammt.
+6. **Funktionsübersicht mitziehen.** `doku/Uebersicht_Funktionen-Adler-App_v1.md` trägt oben
+   `**Stand:** App-Version vNNN`. Die Zahl muss zu `sw.js` passen — der Prüflauf vergleicht sie
+   und wird sonst rot. Bei einer reinen Fehlerbehebung genügt ein Halbsatz; bei einer neuen
+   Funktion gehört eine Zeile in die passende Tabelle. Sie stand einmal acht Versionen zurück,
+   ohne dass es jemand merkte, und ein Dokument, dem man nicht glauben kann, ist schlechter als
+   keines. Die Fassung im Google Drive ist ein **Auszug** dieser Datei und wird nur ersetzt,
+   nie dort bearbeitet.
+7. **Zweitschrift im privaten Repo nachziehen.** Nach jedem PR `Projektgedaechtnis/stand.md`
+   in `adler-u9-wissen` aktualisieren; `entscheidungen.md` wird **nur angehängt**, nie
+   umgeschrieben. Ohne das weiß die Projektseite auf claude.ai nicht, was hier entschieden
+   wurde — und beide Seiten treffen dauerhafte Entscheidungen.
+8. **`node tests/run.js` vor dem Bump.** Ein Lauf parst alle Dateien, prüft die Ladearchitektur (MODUL_WACHE, Loader, PRECACHE, Wellen) und spielt die bekannten Fallen am echten DOM durch. Erst wenn er grün ist, wird `sw.js` hochgezählt. Ein neuer Fehler bekommt eine neue Datei in `tests/checks/` — mit der Versionsnummer, aus der er stammt.
 
 ## Datenbank
 

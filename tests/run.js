@@ -74,7 +74,23 @@ melde(`Parsen: ${jsDateien.length} App-Dateien + Pruefwerkzeug`, !parseFehler.le
   welle2.forEach(f => namen(f).forEach(n => { if (w1.has(n)) doppelt.push(`${n} (${w1.get(n)} und ${f})`); }));
   if (doppelt.length) p.push(...doppelt.map(d => "globaler Name in beiden Wellen: " + d));
   const bump = (sw.match(/const CACHE="u9i-adler-v(\d+)"/) || [])[1];
-  melde(`Ladearchitektur: ${Object.keys(wache).length} Module bewacht, ${welle1.length}+${welle2.length} Dateien im Loader, PRECACHE ${precacheDateien.size} Eintraege, sw.js v${bump}`, !p.length, p);
+  /* v543: Die Funktionsübersicht stand auf v529, während die App bei v537 lag – acht
+     Versionen, die niemandem aufgefallen sind, weil nichts sie gemeldet hat. Ein Dokument,
+     dem man nicht glauben kann, ist schlechter als keines. Deshalb hängt es ab jetzt an
+     derselben Zahl wie der Service Worker: weicht sie ab, ist dieser Lauf rot, und laut
+     CLAUDE.md wird erst nach grünem Lauf hochgezählt.
+
+     Bei einer reinen Fehlerbehebung kostet das einen Halbsatz in der Übersicht. Das ist
+     der Preis dafür, dass man ihr trauen kann. */
+  const uebDatei = "doku/Uebersicht_Funktionen-Adler-App_v1.md";
+  let stand = null;
+  try {
+    stand = (lies(uebDatei).match(/\*\*Stand:\*\*\s*App-Version v(\d+)/) || [])[1] || null;
+    if (!stand) p.push(`${uebDatei}: keine Zeile „**Stand:** App-Version vNNN" gefunden`);
+    else if (stand !== bump) p.push(`${uebDatei} steht auf v${stand}, sw.js auf v${bump} – die Übersicht ist nachzuziehen`);
+  } catch (e) { p.push(`${uebDatei} fehlt – die Funktionsübersicht gehört ins Repo`); }
+  // Die Kopfzeile nennt den GELESENEN Stand, nicht den erwarteten – sonst verschwiege sie den Befund.
+  melde(`Ladearchitektur: ${Object.keys(wache).length} Module bewacht, ${welle1.length}+${welle2.length} Dateien im Loader, PRECACHE ${precacheDateien.size} Eintraege, sw.js v${bump}, Übersicht v${stand || "?"}`, !p.length, p);
 })();
 
 /* 3 – Pruefungen am DOM */

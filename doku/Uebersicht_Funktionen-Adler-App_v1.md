@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v529 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v543 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -25,14 +25,14 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 | Funktion | Was sie tut | Nutzen |
 |---|---|---|
 | **Anwesenheit erfassen** | Haken je Kind pro Training. Trainer-Haken kommen bis zum Tag aus den Rückmeldungen, am Tag selbst aus der Erfassung. | Saubere Grundlage für Anwesenheitsquoten, Serien und faire Einsatzverteilung. |
-| **Trainingsplan** | Stationen bauen, Übungen zuweisen, Tagesgruppen einteilen, Trainingsstart auf allen Handys des Trainerteams gleichzeitig. Schwerpunkt und Kopfdaten je Einheit. Die Gruppen rücken je Hauptteil ein Feld weiter, Zeitleiste und Stationstimer zeigen dieselbe Zuordnung. Felder folgen den anwesenden Trainern. | Jeder Trainer sieht dieselbe Planung auf seinem Gerät. Kein Zettel, keine Absprache am Platz nötig. |
-| **Übungsdatenbank** | Gruppen-Kacheln, Favoriten-Filter, Skizze je Übung, direkte Übernahme in den Plan. Neue Übungen kommen automatisch aus der Bibliothek im Repo dazu. | Die Übungssammlung wächst zentral und ist für alle sofort da. Bewährtes ist mit einem Tipp wiederverwendbar. |
+| **Trainingsplan** | Stationen bauen, Übungen zuweisen, Tagesgruppen einteilen, Trainingsstart auf allen Handys des Trainerteams gleichzeitig. Schwerpunkt und Kopfdaten je Einheit. Die Gruppen rücken je Hauptteil ein Feld weiter, Zeitleiste und Stationstimer zeigen dieselbe Zuordnung. Der Termin wird über sechs Kacheln gewählt, die den Planstand zeigen. Felder folgen den **Feldtrainern**: wer im Trainerstab die Rolle Organisation hat, ist dabei, bekommt aber kein Feld – für einen einzelnen Termin lässt er sich mit einem Tipp doch einplanen. Gruppen entstehen aus den **zugesagten Kindern** des Termins, am Trainingstag aus der Anwesenheit; Zielgröße vier bis sechs. Unter der Terminwahl stehen Nettospielzeit der Einheit und Wochenstand gegen den Richtwert von 48 Minuten. | Jeder Trainer sieht dieselbe Planung auf seinem Gerät. Kein Zettel, kein Rückfragen, und die Gruppengrößen stimmen mit dem überein, was die Eltern zugesagt haben. |
+| **Übungsdatenbank** | Gruppen-Kacheln unter drei Überschriften (Einstieg, Hauptteil, Speziell), Favoriten-Filter, Skizze je Übung, direkte Übernahme in den Plan. Neue Übungen kommen automatisch aus der Bibliothek im Repo dazu. Je Übung steht, ob sie Spielform, Übungsform oder keines von beidem ist; für den ersten Durchgang gibt es eine Durchsicht mit Vorschlägen, die erst auf Tipp gespeichert werden. „Neu“ heißt: vor weniger als vier Wochen angelegt, und verschwindet danach von allein. | Die Übungssammlung wächst zentral und ist für alle sofort da. Die Einordnung trägt die Nettospielzeit – sie entsteht aus der Entscheidung des Trainers, nicht aus einer Schätzung. |
 | **Skizzen-Editor** | Übungen zeichnen: Feld, Spieler, Hütchen, Jugendtore, Mittellinie, Schusszone, Schilder. Vier Pfeiltypen mit eigener Farbe und Legende (Laufweg, Pass, Dribbling, Schuss). Skizze als Bild teilen. | Eine Skizze erklärt am Platz schneller als drei Sätze. |
 | **KI-Coach** | Schlägt zu einem Schwerpunkt passende Übungen und Einheiten vor. Themenplan über mehrere Wochen. | Hilft beim Planen, ohne die Entscheidung abzunehmen. |
 | **Einheit bewerten** | Nach dem Training: Sterne für die Einheit (Spaß, Umsetzung, Erfolg), je Übung Bewertung und Kommentar, Schnell-Sterne für anwesende Kinder. Alles optional. | Der Kommentar steht beim nächsten Mal an der Übung. Man lernt aus jeder Einheit, ohne Protokoll schreiben zu müssen. |
 | **Trainingsturnier** | Turnier zum Trainingsabschluss mit Zeitbudget-Automatik: Gesamtzeit und Felder vorgeben, die App wählt Format und Spielzeit. Vorab planbar, am Termin gespeichert. | Der beliebteste Teil des Trainings läuft strukturiert und fair – ohne Kopfrechnen am Platz. |
-| **Vorlagen** | Fertige Zusammenstellungen ohne Datum und ohne Kinder. „Vorlage übernehmen“ füllt den Trainingsplan des Tages. Neue Vorlagen kommen wie die Übungen automatisch aus dem Repo. | Bewährte Einheiten sind in einem Tipp wieder da. |
-| **Einheit- und Übungs-Import** | Fertige Einheiten, Übungen oder Vorlagen als Datei in einem Rutsch übernehmen, Skizzen inklusive. Vorhandene Namen werden übersprungen, nie überschrieben. | Externe Trainingspläne landen ohne Abtippen in der App. |
+| **Vorlagen** | Fertige Zusammenstellungen ohne Datum und ohne Kinder. „Vorlage übernehmen“ füllt den Trainingsplan des Tages – die Übung eines Blocks landet auf **jedem** Feld, und eine Vorlage kann je Block auch mehrere **Stationen** mit eigener Übung nennen, eine davon als parallelen Torwart-Block. Über „Vorlagen ansehen“ lässt sich die Sammlung nachschlagen: nach Leitfrage gruppiert, mit Blöcken, Skalierung für 8/12/16 Kinder und Beobachtungsfrage. Neue Vorlagen kommen wie die Übungen automatisch aus dem Repo. | Bewährte Einheiten sind in einem Tipp wieder da – und man kann sie ansehen, ohne sie einsetzen zu müssen. |
+| **Wer zuletzt gespeichert hat** | Unter der Terminwahl steht, wer den Plan zuletzt gespeichert hat und wann. Hat ein anderer Trainer inzwischen geschrieben, wird die eigene Fassung nicht still darübergelegt: die Automatik hält an, der Speichern-Knopf fragt. | Mehrere Trainer planen denselben Termin, ohne sich gegenseitig zu überschreiben. |
 
 ### 1.3 Kachel Spieltag
 
@@ -57,7 +57,7 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 
 | Funktion | Was sie tut | Nutzen |
 |---|---|---|
-| **Kader** | Spieler anlegen und bearbeiten, Trikotnummer (eindeutig je aktivem Kind), Foto, Kontakte, Foto-Freigabe. | Stammdaten an einem Ort, Datenschutz-Freigaben direkt am Kind. |
+| **Kader** | Spieler anlegen und bearbeiten, Trikotnummer (eindeutig je aktivem Kind), **Trikotgröße** mit Vorschlagsliste und Zählzeile „x von y fehlen noch“, Foto, Kontakte, Foto-Freigabe. | Stammdaten an einem Ort, Datenschutz-Freigaben direkt am Kind. Beim Anprobieren sieht man, wen man noch nicht hat. |
 | **Bewerten** | 16 Kriterien je Kind mit Live-Radar, Live-Profil und Förderplan. „Bewertungsrunde starten“ geht alle Kinder nacheinander durch. | Strukturierte Beobachtung statt Eindruck. Die Grundlage für Rollen, Missionen und Entwicklungsgespräche. |
 | **Profil & Entwicklung** | Spielerprofil, Stärken, Adler-Karte, Entwicklungs-Report zum Drucken; Entwicklung über die Zeit als Diagramm. | Für das Elterngespräch liegt alles vor – belegt statt behauptet. |
 | **Saison-Cockpit** | Torschützen, Anwesenheit, Rückmelde-Tempo der Familien, faire Einsätze, Eltern-Puls auf einen Blick. | Die Saison in Zahlen, ohne eine Tabelle pflegen zu müssen. |
@@ -119,6 +119,7 @@ Zugang per Link und Einmal-Code an die hinterlegte E-Mail-Adresse. Kein Passwort
 | **Liveticker** | Rote LIVE-Kachel, sobald der Ticker läuft. Teilbar per Link ohne Anmeldung. Nach drei Tagen nur noch der Endstand. | Großeltern und Fans sind dabei – ohne Zugang zur App. |
 | **Rückblick** | Zwei Wochen nach Spiel oder Turnier: was das eigene Kind an dem Tag gemacht hat (Einsätze, Rolle, Tore). Danach nur noch in der Saison-Statistik. | Gesprächsstoff am Abendbrottisch, kindgerecht und ohne Noten. |
 | **Sammelkarte, Technik-Abzeichen, Fan-Fakten** | Die Adler-Karte des Kindes mit Federn; Technik-Abzeichen werden zuhause abgehakt; kleine Fakten zum Kind. | Verbindet Zuhause und Training. Eltern üben mit, ohne Druck. |
+| **„Das kann dein Kind jetzt“** | Eine ruhige Karte auf der Eltern-Startseite: bis zu drei Dinge, die das Kind in den letzten Wochen erreicht hat – ein Entwicklungsziel geschafft oder ein neues Technik-Abzeichen. Keine Zahlen, keine Vergleiche. | Eltern sehen Fortschritt, ohne dass das Kind bewertet wird. Die Entwicklung wird sichtbar, ohne eine Rangliste zu erzeugen. |
 | **Skill der Woche** | Wöchentliche Technik-Challenge mit Video zum Nachmachen. | Zehn Minuten Ball im Garten – mit klarer Aufgabe. |
 | **Eltern-Puls & Stimmung** | Kurze Stimmungsabfrage nach Spielen und im Saisonverlauf. | Das Trainerteam merkt früh, wenn etwas nicht rund läuft. |
 | **Elterngespräch** | Termin- und Themenwunsch für ein Gespräch mit dem Trainerteam. | Niedrige Schwelle, hohe Verbindlichkeit. |
@@ -151,6 +152,7 @@ Die Kabine ist der Kinder-Modus innerhalb der Eltern-App. Eltern geben das Handy
 | **Kabinen-DJ & Team-Arena** | Die Playlist der U9, Einlauf-Song und Schlachtruf. | Identität wie bei den Großen. |
 | **Meine Karte & Abzeichen** | Eigene Sammelkarte mit Federn, Technik-Abzeichen – nur lesend. | Sichtbarer Fortschritt ohne Vergleich mit anderen. |
 | **Team-Level & Meilensteine** | Die ganze Mannschaft steigt gemeinsam auf; Team-Marken für Tore, Spiele, Federn. | Erfolg wird als Team erlebt, nicht als Rangliste. |
+| **Unsere Regeln** | Der Codex des Teams in Kindersprache – sechs kurze Sätze, vom Trainerteam pflegbar. | Die Kinder kennen die Regeln in ihren eigenen Worten, nicht in denen der Erwachsenen. |
 | **Sprachlob & Skill der Woche** | Das gesprochene Lob des Trainers anhören; das Video zur Wochen-Challenge sehen. | Persönliche Ansprache und klare Übungsaufgabe. |
 | **Galerie** | Fotos des Teams, ausschließlich mit Freigabe. | Erinnerungen, datenschutzkonform. |
 
