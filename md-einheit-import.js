@@ -465,6 +465,14 @@ async function uebungImportUebernehmen(){
    ═══════════════════════════════════════════════════════════════════════════ */
 const EI_VOR_SCHEMA="adler-vorlagen/1";
 const EI_TAGS=["wenig-platz","vor-spieltag","halle","schlechtwetter"];
+/* v550 – Die zweite Achse der Vorlagen: wie die Mannschaft im Spiel steht.
+   Die Leitfrage sagt, WORUM es geht, nicht WIE gespielt wird – „Wie kriege ich den Ball
+   zu einem, der frei ist?" laeuft als Ueberzahl 4 gegen 2 oder als Dreieck 3 gegen 3.
+   Nicht „Schwerpunkt" genannt: das waere die Leitfrage in zweiter Sprache, und das
+   Ausbildungskonzept Fassung 3 hat sich dagegen entschieden. Nicht „Spielform" genannt:
+   das Wort ist zweifach vergeben (4+1/3+1/FUNiNO am Spieltag, Spielform gegen
+   Uebungsform seit v533). Leer ist erlaubt und heisst „keine besondere". */
+const EI_ORDNUNGEN=["1 gegen 1","2 gegen 2","Dreieck (3 gegen 3)","Raute (4 gegen 4)","Überzahl","ohne Gegner"];
 /* Konzept §2: „Spielformen" sind die Blöcke, in denen wirklich gespielt wird –
    Hauptteil und Abschluss. Das Warm-up zählt nicht mit, das Torwart- und
    Einzeltraining läuft parallel und verlängert die Einheit nicht (TP_PARALLEL_TYPEN). */
@@ -593,6 +601,8 @@ function _evPruefung(text){
     (Array.isArray(v.tags)?v.tags:[]).forEach(t=>{
       if(!EI_TAGS.includes(String(t)))fehler.push(`Vorlage ${nr} („${name}“): Tag „${t}“ gibt es nicht – erlaubt sind ${EI_TAGS.join(", ")}.`);
     });
+    if(v.ordnung!=null&&String(v.ordnung).trim()&&!EI_ORDNUNGEN.includes(String(v.ordnung)))
+      fehler.push(`Vorlage ${nr} („${name}“): Ordnung „${v.ordnung}“ gibt es nicht – erlaubt sind ${EI_ORDNUNGEN.join(", ")}.`);
     const bl=Array.isArray(v.bloecke)?v.bloecke:[];
     if(!bl.length){ fehler.push(`Vorlage ${nr} („${name}“): keine Blöcke.`); return; }
     bl.forEach((b,j)=>{
@@ -719,6 +729,7 @@ async function _evVorlageAnlegen(v,stand){
     leitfrage:String(v.leitfrage||""),
     folge_nr:isFinite(Number(v.folge_nr))?Number(v.folge_nr):null,
     tags:(Array.isArray(v.tags)?v.tags:[]).filter(t=>EI_TAGS.includes(String(t))),
+    ordnung:EI_ORDNUNGEN.includes(String(v.ordnung))?String(v.ordnung):null,
     dauer_min:isFinite(Number(v.dauer_min))?Number(v.dauer_min):null,
     netto_spielform_min:isFinite(Number(v.netto_spielform_min))?Number(v.netto_spielform_min):null,
     skalierung:(v.skalierung&&typeof v.skalierung==="object"&&!Array.isArray(v.skalierung))?v.skalierung:{},
@@ -773,7 +784,7 @@ async function vorlagenImportUebernehmen(){
    „Plan ersetzen" und die Vorschau sagt es deutlich.
    ─────────────────────────────────────────────────────────────────────────── */
 let VORLAGEN=[];                       // zuletzt geladene Vorlagen (Welle 2, nur Trainer)
-let _vuAuswahl=null, _vuFilter={leitfrage:"",tag:""}, _vuPlanDa=false;
+let _vuAuswahl=null, _vuFilter={leitfrage:"",tag:"",ordnung:""}, _vuPlanDa=false;
 
 async function vorlagenLaden(){
   if(typeof sbToken==="function"&&!sbToken())return VORLAGEN;
@@ -787,13 +798,14 @@ async function vorlagenLaden(){
 function _vuPasst(v){
   if(_vuFilter.leitfrage&&String(v.leitfrage||"")!==_vuFilter.leitfrage)return false;
   if(_vuFilter.tag&&!(Array.isArray(v.tags)?v.tags:[]).includes(_vuFilter.tag))return false;
+  if(_vuFilter.ordnung&&String(v.ordnung||"")!==_vuFilter.ordnung)return false;
   return true;
 }
 function vorlageUebernehmenClose(){ document.getElementById("vu-modal")?.remove(); _vuAuswahl=null; }
 async function vorlageUebernehmenOpen(){
   if(typeof sbToken==="function"&&!sbToken()){ toast("Bitte zuerst als Trainer anmelden","err"); return; }
   document.getElementById("vu-modal")?.remove();
-  _vuAuswahl=null; _vuFilter={leitfrage:"",tag:""};
+  _vuAuswahl=null; _vuFilter={leitfrage:"",tag:"",ordnung:""};
   const m=document.createElement("div");
   m.id="vu-modal";
   m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Vorlage übernehmen");
@@ -839,6 +851,9 @@ function vorlageUebernehmenRender(){
   }
   const fragen=[...new Set(VORLAGEN.map(v=>String(v.leitfrage||"")).filter(Boolean))];
   const tags=[...new Set(VORLAGEN.flatMap(v=>Array.isArray(v.tags)?v.tags:[]))];
+  /* v550: Nur Ordnungen zeigen, die wirklich vorkommen – eine Reihe leerer Kacheln
+     verspricht eine Auswahl, hinter der nichts steht. Reihenfolge wie EI_ORDNUNGEN. */
+  const ordnungen=EI_ORDNUNGEN.filter(x=>VORLAGEN.some(v=>String(v.ordnung||"")===x));
   const chip=(an,lbl,fn)=>`<button onclick="${fn}" aria-pressed="${an?"true":"false"}" style="min-height:48px;padding:6px 14px;border:1.5px solid ${an?"#7c3aed":"var(--rand-bedien)"};border-radius:24px;font-family:inherit;font-size:12.5px;font-weight:${an?"800":"600"};cursor:pointer;background:${an?"#7c3aed":"var(--surface)"};color:${an?"#fff":"var(--text2)"};text-align:left">${esc(lbl)}</button>`;
   const treffer=VORLAGEN.filter(_vuPasst);
   const gewaehlt=treffer.find(v=>String(v.id)===String(_vuAuswahl))||null;
@@ -849,7 +864,7 @@ function vorlageUebernehmenRender(){
     return `<button onclick="vuWaehlen('${esc(String(v.id))}')" aria-pressed="${an?"true":"false"}" style="display:block;width:100%;text-align:left;min-height:48px;padding:10px 12px;margin-bottom:6px;border:1.5px solid ${an?"#7c3aed":"var(--rand-bedien)"};border-radius:12px;background:${an?"#7c3aed14":"var(--surface)"};color:var(--text);font-family:inherit;cursor:pointer">
       <div style="font-size:13px;font-weight:800">${esc(v.name)}</div>
       <div style="font-size:11.5px;color:var(--text2);margin-top:2px">${esc(v.leitfrage||"")}</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:3px">${bl.length} Blöcke · ${summe} Min.${v.netto_spielform_min?` · ${Number(v.netto_spielform_min)} Min. netto`:""}${(Array.isArray(v.tags)&&v.tags.length)?" · "+v.tags.map(esc).join(", "):""}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:3px">${bl.length} Blöcke · ${summe} Min.${v.netto_spielform_min?` · ${Number(v.netto_spielform_min)} Min. netto`:""}${v.ordnung?" · "+esc(v.ordnung):""}${(Array.isArray(v.tags)&&v.tags.length)?" · "+v.tags.map(esc).join(", "):""}</div>
     </button>`;
   };
   const vorschau=v=>{
@@ -886,9 +901,11 @@ function vorlageUebernehmenRender(){
     ${datum?"":`<div style="background:var(--red-bg);border:1px solid var(--red);border-radius:10px;padding:9px 11px;margin-bottom:8px;font-size:12.5px;color:var(--red)">Bitte oben zuerst einen Termin wählen.</div>`}
     <div class="lbl-klein" style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:2px 2px 5px">Leitfrage</div>
     <div style="display:flex;gap:6px;flex-direction:column;margin-bottom:9px">${fragen.map(f=>chip(_vuFilter.leitfrage===f,f,`vuFilterSet('leitfrage','${esc(f).replace(/'/g,"&#39;")}')`)).join("")}</div>
+    ${ordnungen.length?`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:2px 2px 5px">Wie sie stehen</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">${ordnungen.map(x=>chip(_vuFilter.ordnung===x,x,`vuFilterSet('ordnung','${esc(x).replace(/'/g,"&#39;")}')`)).join("")}</div>`:""}
     ${tags.length?`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:2px 2px 5px">Passt wenn …</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">${tags.map(t=>chip(_vuFilter.tag===t,t,`vuFilterSet('tag','${esc(t)}')`)).join("")}</div>`:""}
-    <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${treffer.length} von ${VORLAGEN.length} Vorlagen${(_vuFilter.leitfrage||_vuFilter.tag)?" · Filter aktiv, nochmal tippen hebt ihn auf":""}</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${treffer.length} von ${VORLAGEN.length} Vorlagen${(_vuFilter.leitfrage||_vuFilter.tag||_vuFilter.ordnung)?" · Filter aktiv, nochmal tippen hebt ihn auf":""}</div>
     ${treffer.length?treffer.map(karte).join(""):`<div style="font-size:12.5px;color:var(--text2);padding:8px 0">Keine Vorlage passt zu diesem Filter.</div>`}
     ${gewaehlt?vorschau(gewaehlt):""}
     <button id="vu-haupt" onclick="vorlageUebernehmenSetzen()" class="btn btn-p" style="width:100%;min-height:56px;margin-top:12px;justify-content:center;font-size:15px"${(!gewaehlt||!datum)?" disabled":""}><i class="ti ti-calendar-plus"></i>${_vuPlanDa?"Plan ersetzen":"Auf den Termin setzen"}</button>
@@ -1060,7 +1077,7 @@ function vorlagenAnsichtRender(){
     return `<div style="border:var(--border-s);border-radius:12px;margin-bottom:8px;background:var(--surface)">
       <button onclick="vaToggle('${String(v.id).replace(/'/g,"")}')" aria-expanded="${auf}" style="width:100%;min-height:48px;text-align:left;border:none;background:transparent;color:var(--text);font-family:inherit;cursor:pointer;padding:10px 12px">
         <span style="display:block;font-size:13px;font-weight:800">${v.folge_nr?`${Number(v.folge_nr)}. `:""}${esc(v.name)}</span>
-        <span style="display:block;font-size:11px;color:var(--text3);margin-top:3px">${bl.length} ${bl.length===1?"Block":"Blöcke"} · ${summe} Min.${v.netto_spielform_min?` · ${Number(v.netto_spielform_min)} Min. netto`:""}${(Array.isArray(v.tags)&&v.tags.length)?" · "+v.tags.map(esc).join(", "):""}</span>
+        <span style="display:block;font-size:11px;color:var(--text3);margin-top:3px">${bl.length} ${bl.length===1?"Block":"Blöcke"} · ${summe} Min.${v.netto_spielform_min?` · ${Number(v.netto_spielform_min)} Min. netto`:""}${v.ordnung?" · "+esc(v.ordnung):""}${(Array.isArray(v.tags)&&v.tags.length)?" · "+v.tags.map(esc).join(", "):""}</span>
         <span style="display:block;font-size:11px;color:var(--text2);margin-top:3px">${auf?"▾ zugeklappt anzeigen":"▸ Blöcke anzeigen"}</span>
       </button>
       ${auf?`<div style="padding:0 12px">${_vaSteckbrief(v)}</div>`:""}

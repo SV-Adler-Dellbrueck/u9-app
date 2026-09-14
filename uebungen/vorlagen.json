@@ -1,6 +1,6 @@
 {
   "schema": "adler-vorlagen/1",
-  "stand": "2026-09-12-1",
+  "stand": "2026-09-14-2",
   "vorlagen": [
     {
       "name": "L1-1 Ball behalten – Duell um zwei Tore",
@@ -52,7 +52,8 @@
           "label": "Abschlussturnier",
           "dauer": 18
         }
-      ]
+      ],
+      "ordnung": "1 gegen 1"
     },
     {
       "name": "L2-1 Vorbeikommen – Mut zum ersten Schritt",
@@ -105,7 +106,8 @@
           "label": "Abschlussturnier",
           "dauer": 18
         }
-      ]
+      ],
+      "ordnung": "1 gegen 1"
     },
     {
       "name": "L3-1 Tore machen – kurz und mit beiden Füßen",
@@ -163,7 +165,8 @@
           "label": "Abschlussturnier",
           "dauer": 17
         }
-      ]
+      ],
+      "ordnung": "ohne Gegner"
     },
     {
       "name": "L4-1 Passen – den freien Mitspieler finden",
@@ -213,7 +216,8 @@
           "label": "Abschlussturnier",
           "dauer": 18
         }
-      ]
+      ],
+      "ordnung": "Überzahl"
     },
     {
       "name": "L5-1 Anbieten – wo kriege ich den Ball?",
@@ -265,7 +269,8 @@
           "label": "Abschlussturnier",
           "dauer": 18
         }
-      ]
+      ],
+      "ordnung": "Dreieck (3 gegen 3)"
     },
     {
       "name": "L6-1 Zurückholen – sofort nach dem Verlust",
@@ -317,7 +322,8 @@
           "label": "Abschlussturnier",
           "dauer": 18
         }
-      ]
+      ],
+      "ordnung": "2 gegen 2"
     },
     {
       "name": "L4-2 Passen – Lehrgangsform 15:30:15:30",
@@ -375,7 +381,8 @@
           "dauer": 30,
           "uebung_name": "2+1 gegen 2+1 auf Jugendtore"
         }
-      ]
+      ],
+      "ordnung": "Dreieck (3 gegen 3)"
     }
   ]
 }
