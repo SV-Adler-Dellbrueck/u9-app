@@ -2599,23 +2599,44 @@ async function tpPlanRestore(datum){
     setzen(s);
   });
 }
-/* Vorausplanungs-Leiste: die nächsten Trainings mit Plan-Status (✅ geplant / 📝 offen) –
-   ein Tipp springt zum Termin und lädt den vorgemerkten Plan. */
+/* Terminwahl des Trainingsplans: die nächsten sechs Trainings als Kacheln, je mit
+   Plan-Status (✅ geplant / 📝 offen) und der Marke, welcher gerade bearbeitet wird.
+
+   v538: Das Dropdown darüber ist entfallen. Es zeigte exakt dieselbe Liste ein zweites
+   Mal – terminSelectFill füllte es mit {types:["training"],future:true}, also mit genau
+   den Terminen, die hier als Kachel stehen. `#tp-date` bleibt als UNSICHTBARER Speicher
+   im shell.html: fünfundzwanzig Stellen lesen das Datum daraus, von der Nettospielzeit
+   bis zum Stationstimer. Alle übrigen Termine – auch vergangene – stehen unter
+   Orga → Termine; geplant wird bewusst nur nach vorn. */
+const TP_VORPLAN_MAX=6;
 async function tpVorplanLoad(){
   const el=document.getElementById("tp-vorplan"); if(!el)return;
   const heute=new Date().toISOString().slice(0,10);
   const rows=(await _termineSelLoad()).filter(t=>t.typ==="training"&&t.datum>=heute)
-    .sort((a,b)=>a.datum<b.datum?-1:1).slice(0,5);
-  if(rows.length<2){el.innerHTML="";return;}
+    .sort((a,b)=>a.datum<b.datum?-1:1).slice(0,TP_VORPLAN_MAX);
+  const kopf=`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px">🗓️ Termin – antippen zum Planen</div>`;
+  /* Ohne Termin keine Terminwahl: ein Satz und der Weg dorthin, wo Termine entstehen.
+     Vorher stand hier bei weniger als zwei Terminen einfach nichts – zusammen mit dem
+     entfallenen Dropdown wäre der Trainingsplan damit unbedienbar geworden. */
+  if(!rows.length){
+    el.innerHTML=kopf+`<div style="font-size:12.5px;color:var(--text3);line-height:1.5">Kein Training in Sicht. Termine legst du unter <b>Orga → Termine</b> an.</div>`;
+    return;
+  }
   let geplant=new Set();
   try{const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?datum=in.(${rows.map(t=>t.datum).join(",")})&select=datum`,{headers:sbAuthHeaders()});
     if(r.ok)((await r.json())||[]).forEach(x=>geplant.add(String(x.datum)));}catch(e){}
-  el.innerHTML=`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px">🗓️ Vorausplanung – antippen zum Planen</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap">${rows.map(t=>{
-      const on=geplant.has(t.datum);
+  const aktiv=document.getElementById("tp-date")?.value||"";
+  el.innerHTML=kopf+`<div style="display:flex;gap:6px;flex-wrap:wrap">${rows.map(t=>{
+      const on=geplant.has(t.datum), hier=t.datum===aktiv;
       const d=new Date(t.datum+"T00:00:00");
       const lbl=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()]+" "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
-      return `<button onclick="tpVorplanJump('${t.datum}')" class="btn btn-sm" style="${on?"border-color:#16a34a;color:#15803d":""}">${on?"✅":"📝"} ${lbl}</button>`;
+      /* Der gewählte Termin trägt kräftigeren Rahmen UND den Zusatz „gewählt" – Farbe
+         darf nie der einzige Bedeutungsträger sein (CLAUDE.md). Ohne das Dropdown wäre
+         sonst nicht mehr erkennbar, welchen Termin man gerade plant.
+         48 px statt der 36 px eines Listenknopfes: das hier ist jetzt die einzige
+         Terminwahl der Seite und kein Beiwerk mehr (cockpit-ui). */
+      const rand=hier?"border-color:var(--text);border-width:2px;font-weight:900":(on?"border-color:#16a34a;color:#15803d":"");
+      return `<button onclick="tpVorplanJump('${t.datum}')" class="btn btn-sm" aria-pressed="${hier}" style="min-height:48px;font-size:13px;${rand}">${on?"✅":"📝"} ${lbl}${hier?" · gewählt":""}</button>`;
     }).join("")}</div>`;
 }
 function tpVorplanJump(datum){
@@ -2624,6 +2645,7 @@ function tpVorplanJump(datum){
      vom vorherigen Tag stehen, nur der Plan wechselte. Jetzt der ganze Tag. */
   tpTrainerRsvpLaden(datum);
   tpPlanRestore(datum);
+  tpVorplanLoad();   // v538: die Marke „gewählt" muss mitwandern
 }
 
 /* ═══════════════════════════════════
