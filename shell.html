@@ -307,14 +307,22 @@
   <input type="text" id="training-search" placeholder="🔍 Übung suchen (z. B. Passspiel, FUNiño) …" oninput="clearTimeout(window._tfDebounce);window._tfDebounce=setTimeout(renderTraining,200)"
     style="width:100%;box-sizing:border-box;padding:10px 14px;border:1px solid var(--rand-bedien);border-radius:12px;font-size:13.5px;background:var(--surface);font-family:inherit;outline:none;margin-bottom:8px">
   <!-- PO-Umbau: gleiche Sprache wie der Übungs-Picker – Gruppen-Kacheln + ⭐-Filter, gefüllt von renderTraining -->
-  <!-- v512: Der Übungs-Import gehört hierher – er füllt die Formen-Datenbank und rührt
-       den Trainingsplan nicht an. Neue Übungen aus dem Repo kommen ohnehin von selbst;
-       dieser Knopf ist der Handweg für eine Datei, die gerade auf dem Tisch liegt. -->
-  <div style="display:flex;gap:8px;margin:0 0 10px;flex-wrap:wrap">
-    <button onclick="if(typeof uebungImportOpen===&quot;function&quot;)uebungImportOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="flex:1 1 160px;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-books"></i>Übungen importieren</button>
-    <button onclick="if(typeof vorlagenImportOpen===&quot;function&quot;)vorlagenImportOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="flex:1 1 160px;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-layout-grid"></i>Vorlagen importieren</button>
-  </div>
-  <div id="tf-kacheln" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"></div>
+  <!-- v539: „Übungen importieren" und „Vorlagen importieren" sind entfallen. Beide waren
+       der Handweg für eine JSON-Datei; eingespielt wird aber über uebungen/bibliothek.json
+       und uebungen/vorlagen.json im Repo, die beim Öffnen automatisch abgeglichen werden –
+       über dieselbe Prüfung, die auch die Dialoge benutzten. Die Dialoge bleiben im Modul
+       (uebungImportOpen, vorlagenImportOpen), sie werden nur nicht mehr angeboten. -->
+  <!-- v540: Nachschlagen statt Einspielen. Die Vorlagen-Ansicht liest nur; eingesetzt
+       wird eine Vorlage im Trainingsplan, wo der Termin steht. Kein zweiter Weg in
+       dieselbe Handlung. Welle-2-Modul, deshalb der typeof-Schutz. -->
+  <button onclick="if(typeof vorlagenAnsichtOpen===&quot;function&quot;)vorlagenAnsichtOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="width:100%;min-height:48px;margin:0 0 10px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-layout-grid"></i>Vorlagen ansehen</button>
+  <!-- v541: Einstieg in die Durchsicht. Der Vorschlag aus data.js wird nie still
+       angewendet; hier sieht man ihn, ändert ihn und schreibt ihn bewusst. Der Knopf
+       nennt die Zahl der offenen Übungen und verschwindet, wenn keine mehr offen sind –
+       ein Knopf ohne Arbeit dahinter ist Rauschen. Welle 1, deshalb kein typeof-Schutz. -->
+  <div id="tf-art-einstieg" style="margin:0 0 10px"></div>
+  <!-- v539: kein Grid mehr am Behaelter – renderTraining setzt je Ueberschrift ein eigenes. -->
+  <div id="tf-kacheln" style="margin-bottom:8px"></div>
   <div id="tf-filter" style="display:flex;gap:6px;margin-bottom:10px"></div>
   <div id="training-content"><p style="padding:1rem;color:#64748b;font-size:13px">Lade...</p></div>
   <div style="font-size:13.5px;font-weight:800;margin:16px 0 8px">🧰 Werkzeuge</div>
@@ -551,8 +559,16 @@
     <div class="sl nt"><i class="ti ti-calendar-event"></i>Trainingsplan</div>
     <!-- Kopf schlank (PO): Termin volle Breite, Trainer als EINE wischbare Chip-Zeile,
          die Ziel-Dauer wandert in die „Gesamt“-Zeile unter dem Zeitplan. -->
-    <div class="mg"><label for="tp-date">Termin</label><select id="tp-date" onchange="tpTrainerRsvpLaden(this.value);tpPlanRestore(this.value)" style="width:100%;padding:10px 12px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:14px;background:var(--surface);font-family:inherit;color:var(--text);box-sizing:border-box"><option>Lade Termine…</option></select></div>
+    <!-- v538: Die Terminwahl sind die Kacheln darunter (#tp-vorplan). Dieses Auswahlfeld
+         zeigte dieselbe Liste ein zweites Mal und ist deshalb unsichtbar – es bleibt
+         aber stehen, weil fünfundzwanzig Stellen im Code das Datum daraus lesen.
+         NICHT entfernen, ohne tpPlanSave, tpSlotsLoad, tgFor und den Stationstimer
+         auf eine andere Quelle umzustellen. -->
+    <select id="tp-date" onchange="tpTrainerRsvpLaden(this.value);tpPlanRestore(this.value)" style="display:none"><option>Lade Termine…</option></select>
     <div id="tp-vorplan" style="margin:6px 0 8px"></div>
+    <!-- v542: Wer hat zuletzt gespeichert? Steht dort, wo man den Termin öffnet – nicht
+         erst am Speichern-Knopf, wo die Antwort zu spät käme. -->
+    <div id="tp-gespeichert" style="margin:2px 0 6px"></div>
     <!-- Paket 3: Nettospielzeit der Einheit und Wochenstand, direkt unter der Terminwahl -->
     <div id="tp-netto" style="margin:6px 0 8px"></div>
     <div id="tp-nachbereiten"></div><!-- v483: nach der Einheit der Weg in die Nachbereitung -->
@@ -564,16 +580,17 @@
     <!-- v506: Kopf der Einheit (Schwerpunkt, Material, Beobachtung, Notiz) – kommt aus
          trainingsplan.kopf und steht über der Zeitleiste, wo die Einheit beginnt. -->
     <div id="tp-kopf"></div>
-    <!-- v506: Einstieg für „Einheit importieren". Der Knopf tritt neben die bestehenden
-         Aktionen der Seite, nicht an ihre Stelle; der Trainingsplan lebt in Welle 1,
-         deshalb der typeof-Schutz. -->
-    <!-- v513: „Vorlage übernehmen" ist der häufige Weg (fertige Einheit auf den Termin),
-         „Einheit importieren" der seltene (eine einzelne Einheit als JSON). Beide sind
-         Einstiege, keine Hauptaktion der Seite – die ist der Trainingsstart weiter unten. -->
-    <div style="display:flex;gap:8px;margin:0 0 10px;flex-wrap:wrap">
-      <button onclick="if(typeof vorlageUebernehmenOpen===&quot;function&quot;)vorlageUebernehmenOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="flex:1 1 160px;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-layout-grid"></i>Vorlage übernehmen</button>
-      <button onclick="if(typeof einheitImportOpen===&quot;function&quot;)einheitImportOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="flex:1 1 160px;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-download"></i>Einheit importieren</button>
-    </div>
+    <!-- v538: „Einheit importieren" ist entfallen. Eine einzelne Einheit als JSON von
+         Hand einzulesen hatte nie einen Anwendungsfall – fertige Einheiten kommen über
+         „Vorlage übernehmen", und neue Inhalte kommen über uebungen/vorlagen.json und
+         uebungen/bibliothek.json, die beim Öffnen automatisch abgeglichen werden. Der
+         Dialog selbst (einheitImportOpen) bleibt im Modul: er trägt dieselbe Prüfung,
+         die der Abgleich benutzt, und wird nur nicht mehr angeboten.
+         „Vorlage übernehmen" steht jetzt allein und über volle Breite, weil es der
+         übliche Weg in eine Einheit ist. KEINE Hauptaktion (56 px): die Seite trägt mit
+         „Plan speichern" und „Trainingsstart" schon zwei, und cockpit-ui lässt genau
+         eine je Bildschirm – ein dritter Hauptknopf würde es weiter verschlechtern. -->
+    <button onclick="if(typeof vorlageUebernehmenOpen===&quot;function&quot;)vorlageUebernehmenOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="width:100%;min-height:48px;margin:0 0 10px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-layout-grid"></i>Vorlage übernehmen</button>
     <div id="tp-timeline"></div>
     <!-- Aktionen in Kachel-Logik (PO): große Flächen, kein Kleinkram. „Laden" entfällt
          (der Plan lädt beim Termin-Wechsel automatisch), „Teilen" entfällt (alle Trainer

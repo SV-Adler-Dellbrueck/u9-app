@@ -181,6 +181,38 @@ const TF_GRUPPEN=[
   {key:"individual",label:"🧍 Individual",kats:["individual"]},
   {key:"custom",label:"🧪 Eigene & KI",kats:["custom"]}
 ];
+/* v539: Drei ruhige Zwischenüberschriften über den acht Gruppen-Kacheln. Bewusst KEINE
+   weitere Kachelebene: die zehn Kategorien aus data.js liegen bereits unter diesen acht
+   Gruppen, und eine dritte Ebene zum Durchtippen kostete einen Tipp mehr bis zur Übung,
+   statt Übersicht zu schaffen. Die Reihenfolge folgt dem Aufbau einer Einheit – so sucht
+   man beim Planen, nicht alphabetisch. Eine Gruppe, die hier fehlt, landet unter der
+   letzten Überschrift; so bleibt eine neue Gruppe sichtbar, statt stillschweigend zu
+   verschwinden. */
+const TF_OBER=[
+  {label:"Einstieg",  gruppen:["aufwaermen","kopf"]},
+  {label:"Hauptteil", gruppen:["technik","passen","zweikampf"]},
+  {label:"Speziell",  gruppen:["torwart","individual","custom"]}
+];
+/* v539: „🆕 neu" heißt ab jetzt „neu ANGELEGT", nicht mehr „noch nie eingesetzt".
+   Vorher hing das Abzeichen an tpLastUsedDays()===null – eine Übung, die nie dran war,
+   trug es für immer. Genau das war der Punkt: es verschwand nie von allein. Jetzt zählt
+   trainingsformen.created_at, und nach vier Wochen ist es weg.
+
+   Die Übungen aus data.js tragen kein Anlagedatum und sind damit nie „neu" – sie sind es
+   auch nicht. Ob eine Übung schon einmal am Platz war, bleibt sichtbar, aber als ruhiger
+   Text statt als Abzeichen: beim Planen ist das eine nützliche Angabe, keine Neuigkeit. */
+const TF_NEU_TAGE=28;
+function _tfIstNeu(f){
+  const d=f&&f.created_at; if(!d)return false;
+  const tage=(Date.now()-new Date(d).getTime())/864e5;
+  return tage>=0&&tage<TF_NEU_TAGE;
+}
+function _tfFrische(f,i){
+  const d=tpLastUsedDays(i);
+  const neu=_tfIstNeu(f)?'<span style="color:#16a34a;font-weight:800">🆕 neu</span> · ':"";
+  return neu+(d===null?'<span style="color:var(--text3)">noch nicht eingesetzt</span>'
+    :(d<14?`<span style="color:#b45309">vor ${d} T.</span>`:`vor ${d} T.`));
+}
 let _tfDb={gruppe:null,stern:0,lange:false};
 function _tfGruppeVon(f,i){
   if(f.custom||i>=(typeof TRAININGSFORMEN!=="undefined"?TRAININGSFORMEN.length:0))return "custom";
@@ -201,10 +233,27 @@ function renderTraining(){
     if(s.length){window._tfWeakLabel=AUTOPLAN_DIMLABEL[s[0][0]]||null;weak=AUTOPLAN_DIMKAT[s[0][0]]||[];}
   }catch(e){}
   window._tfWeak=weak;
+  /* v541: Der Einstieg in die Durchsicht steht nur da, solange es etwas durchzusehen
+     gibt. Ist alles eingeordnet, verschwindet er – ein Knopf ohne Arbeit dahinter ist
+     Rauschen, und die einzelne Übung lässt sich weiter am Chip in der Liste ändern. */
+  const aEl=document.getElementById("tf-art-einstieg");
+  if(aEl){
+    const offen=(typeof artDurchsichtOffen==="function")?artDurchsichtOffen().length:0;
+    aEl.innerHTML=offen?`<button onclick="artDurchsichtOpen()" style="width:100%;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">⚽ ${offen} Übung${offen===1?"":"en"} einordnen</button>`:"";
+  }
   const kEl=document.getElementById("tf-kacheln");
   if(kEl){
     const counts={};alle.forEach(x=>{counts[x.gr]=(counts[x.gr]||0)+1;});
-    kEl.innerHTML=TF_GRUPPEN.filter(g=>counts[g.key]).map(g=>`<button onclick="_tfDb.gruppe=_tfDb.gruppe==='${g.key}'?null:'${g.key}';renderTraining()" style="min-height:64px;border:1px solid var(--rand-bedien);${_tfDb.gruppe===g.key?"background:#16a34a;color:#fff;border-color:#16a34a;":"background:var(--surface);color:var(--text);"}border-top:3px solid #16a34a;border-radius:14px;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;padding:8px 6px">${g.label}<span style="display:block;font-size:11px;font-weight:700;opacity:.7;margin-top:2px">${counts[g.key]} Übungen</span></button>`).join("");
+    const kachel=g=>`<button onclick="_tfDb.gruppe=_tfDb.gruppe==='${g.key}'?null:'${g.key}';renderTraining()" aria-pressed="${_tfDb.gruppe===g.key}" style="min-height:64px;border:1px solid var(--rand-bedien);${_tfDb.gruppe===g.key?"background:#16a34a;color:#fff;border-color:#16a34a;":"background:var(--surface);color:var(--text);"}border-top:3px solid #16a34a;border-radius:14px;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;padding:8px 6px">${g.label}<span style="display:block;font-size:11px;font-weight:700;opacity:.7;margin-top:2px">${counts[g.key]} Übungen</span></button>`;
+    const vergeben=new Set(TF_OBER.flatMap(o=>o.gruppen));
+    kEl.innerHTML=TF_OBER.map((o,oi)=>{
+      // Die letzte Überschrift sammelt auch, was in keiner Liste steht (neue Gruppe).
+      const keys=o.gruppen.concat(oi===TF_OBER.length-1?TF_GRUPPEN.filter(g=>!vergeben.has(g.key)).map(g=>g.key):[]);
+      const drin=keys.map(k=>TF_GRUPPEN.find(g=>g.key===k)).filter(g=>g&&counts[g.key]);
+      if(!drin.length)return "";
+      return `<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:${oi?"12px":"0"} 0 4px">${o.label}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${drin.map(kachel).join("")}</div>`;
+    }).join("");
   }
   const fEl=document.getElementById("tf-filter");
   if(fEl)fEl.innerHTML=[0,1,2,3].map(s=>`<button onclick="_tfDb.stern=${s};renderTraining()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);${_tfDb.stern===s?"background:#16a34a;color:#fff;border-color:#16a34a;":"background:var(--surface2);color:var(--text2);"}border-radius:10px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer">${s===0?"Alle":"⭐".repeat(s)}</button>`).join("")
@@ -224,8 +273,7 @@ function renderTraining(){
   wrap.innerHTML=`<div style="font-size:12px;font-weight:800;color:var(--text2);margin:2px 0 6px">${items.length} Übung${items.length===1?"":"en"}</div>`+items.map(_tfKarte).join("");
 }
 function _tfKarte(x){
-  const d=tpLastUsedDays(x.i);
-  const frische=d===null?'<span style="color:#16a34a">🆕 neu</span>':(d<14?`<span style="color:#b45309">vor ${d} T.</span>`:`vor ${d} T.`);
+  const frische=_tfFrische(x.f,x.i);   // v539: „neu" = angelegt vor < 4 Wochen
   const stern=_tpStern(x.f);
   const badges=[];
   if(x.f.focus)badges.push('<span style="background:#fef3c7;color:#92400e;border-radius:6px;padding:1px 6px;font-size:10px;font-weight:800;white-space:nowrap">⭐ Fokus</span>');
@@ -2415,24 +2463,119 @@ function tpSlotsMitZuordnung(){
     return o;
   });
 }
+/* ═══════════════════════════════════════════════════════════════════════════
+   v542 – WER HAT ZULETZT GESPEICHERT, UND WIRD ER ÜBERSCHRIEBEN?
+
+   Der Plan wird per Upsert auf das DATUM geschrieben, und tpPlanSaveDebounced
+   speichert 1,2 Sekunden nach jeder Änderung automatisch. Wer am Freitag den Plan
+   öffnete, den Peter am Donnerstag gebaut hatte, und eine Übung umstellte, hatte
+   Peters Fassung überschrieben, bevor er den Speichern-Knopf auch nur ansah.
+
+   Zwei Teile dagegen:
+   1. `gespeichert_von` in der Tabelle, dazu eine ruhige Zeile unter der Terminwahl.
+   2. Ein Abgleich des `updated_at`, das beim Laden galt. Weicht es ab, hat jemand
+      anderes seither geschrieben – dann wird NICHT still überschrieben.
+
+   Die Automatik schreibt in dem Fall gar nicht und sagt es einmal. Der Knopf fragt,
+   weil ein bewusster Tipp etwas anderes ist als ein Nebeneffekt des Tippens.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const TP_STAND={};                 // datum → {updated_at, von} wie zuletzt gesehen
+let _tpKonfliktGemeldet="";        // damit die Automatik nicht bei jedem Tastendruck meckert
+/* Was steht gerade auf dem Server? Gibt null zurück, wenn es keinen Plan gibt oder
+   die Frage nicht beantwortet werden kann – dann wird wie bisher geschrieben. */
+async function tpStandLesen(datum){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?datum=eq.${encodeURIComponent(datum)}&select=updated_at,gespeichert_von`,{headers:sbAuthHeaders()});
+    if(sbCheck401(r)||!r.ok)return null;
+    const z=(await r.json())||[];
+    return z.length?{updated_at:z[0].updated_at||"",von:z[0].gespeichert_von||""}:null;
+  }catch(e){ return null; }
+}
+function tpStandRender(datum){
+  const el=document.getElementById("tp-gespeichert"); if(!el)return;
+  const s=TP_STAND[datum];
+  if(!s||!s.updated_at){ el.innerHTML=""; return; }
+  const d=new Date(s.updated_at);
+  const wann=isNaN(d)?"":`${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}, ${d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})} Uhr`;
+  /* Ohne Namen (Pläne von vor v542) wird kein Name erfunden – dann steht nur das Wann. */
+  el.innerHTML=`<span style="font-size:10.5px;color:var(--text3)">💾 Zuletzt gespeichert${s.von?` von <b>${esc(s.von)}</b>`:""}${wann?` · ${wann}`:""}</span>`;
+}
+/* Der Konflikt-Hinweis. Eigenes Overlay statt confirm(): die Meldung muss sagen, WER
+   und WANN, und das passt in keinen Systemdialog. */
+function tpKonfliktFragen(datum,stand){
+  document.getElementById("tp-konflikt")?.remove();
+  const d=new Date(stand.updated_at);
+  const wann=isNaN(d)?"":`${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})} um ${d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})} Uhr`;
+  const m=document.createElement("div");
+  m.id="tp-konflikt";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Plan wurde inzwischen geändert");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10050;display:flex;align-items:center;justify-content:center;padding:16px";
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:420px;width:100%">
+    <div style="font-size:15px;font-weight:900;margin-bottom:8px">Der Plan wurde inzwischen geändert</div>
+    <div style="font-size:12.5px;color:var(--text2);line-height:1.6;margin-bottom:14px">
+      ${stand.von?`<b>${esc(stand.von)}</b> hat`:"Jemand hat"} ${wann?`am ${wann} `:""}für diesen Termin gespeichert, seit du ihn geöffnet hast.
+      Speicherst du jetzt, wird diese Fassung vollständig ersetzt.</div>
+    <button onclick="tpKonfliktTrotzdem('${String(datum).replace(/'/g,"")}')" style="width:100%;min-height:56px;border:none;border-radius:14px;background:var(--surface);border:1px solid var(--rand-bedien);border-top:3px solid #b45309;color:var(--text);font-family:inherit;font-size:15px;font-weight:900;cursor:pointer">Meine Fassung speichern</button>
+    <button onclick="tpKonfliktHolen('${String(datum).replace(/'/g,"")}')" class="btn btn-sm" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Seine Fassung laden und meine verwerfen</button>
+    <div style="display:flex;margin-top:8px"><button class="btn btn-sm" style="margin-left:auto;min-height:48px" onclick="document.getElementById('tp-konflikt').remove()">Erst mal nichts tun</button></div>
+  </div>`;
+  document.body.appendChild(m);   // Fokus-Trap greift über role="dialog" (core.js), kein eigener Aufruf nötig
+}
+async function tpKonfliktTrotzdem(datum){
+  document.getElementById("tp-konflikt")?.remove();
+  delete TP_STAND[datum];            // ohne Stand wird ohne Abgleich geschrieben
+  await tpPlanSave(true);
+}
+async function tpKonfliktHolen(datum){
+  document.getElementById("tp-konflikt")?.remove();
+  _tpKonfliktGemeldet="";
+  await tpPlanRestore(datum);
+  toast("Fassung vom Server geladen");
+}
 async function tpPlanSave(erzwungen){
   if(!sbToken()){if(erzwungen)toast("Bitte zuerst als Trainer anmelden","err");return;}
   const datum=document.getElementById("tp-date")?.value; if(!datum){if(erzwungen)toast("Bitte einen Termin wählen","err");return;}
   const plan=tpPlanEntries();
   const slots=tpSlotsMitZuordnung();
-  /* v514: `versatz` gehört zur Zuordnung. Ohne ihn hier hielt die Schutzregel unten einen
+  /* v514: `versatz` gehört zur Zuordnung. Ohne ihn hielt die Schutzregel unten einen
      Plan, in dem NUR die Gruppen weitergerückt wurden, für leer – und speicherte ihn nie. */
   const zuordnung=slots.some(s=>s.trainer||s.coaches||s.tw||s.kind!=null||s.versatz!=null);
   // Automatik: einen leeren Plan nie ueber einen vollen schreiben. Der Knopf darf immer.
   if(!plan.length&&!zuordnung&&!erzwungen)return;
+  /* v542: Hat jemand anderes seit dem Laden geschrieben? Nur prüfen, wenn wir beim Laden
+     überhaupt einen Stand gesehen haben – sonst gäbe es nichts zu vergleichen. */
+  const gesehen=TP_STAND[datum];
+  if(gesehen&&gesehen.updated_at){
+    const jetzt=await tpStandLesen(datum);
+    if(jetzt&&jetzt.updated_at&&jetzt.updated_at!==gesehen.updated_at){
+      TP_STAND[datum]=jetzt; tpStandRender(datum);
+      if(erzwungen){ tpKonfliktFragen(datum,jetzt); return; }
+      /* Die Automatik schreibt NICHT und sagt es einmal je Termin. Stiller Verzicht wäre
+         genauso falsch wie stilles Überschreiben – der Trainer tippt ja weiter. */
+      if(_tpKonfliktGemeldet!==datum){
+        _tpKonfliktGemeldet=datum;
+        toast(`${jetzt.von||"Jemand"} hat diesen Plan inzwischen gespeichert – tippe auf „Plan speichern“`,"err");
+      }
+      return;
+    }
+  }
   try{
+    const von=(typeof trainerMe==="function")?(await trainerMe()||null):null;
     const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?on_conflict=datum`,{method:"POST",
-      headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates,return=minimal'},
+      headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates,return=representation'},
       /* `slots` traegt die STRUKTUR der Einheit (welche Phasen, wie lang, was parallel)
          samt Zuordnung. Ohne sie kam beim zweiten Trainer nur die Uebungsauswahl an. */
-      body:JSON.stringify({datum,plan,slots,updated_at:new Date().toISOString()})});
+      body:JSON.stringify({datum,plan,slots,gespeichert_von:von,updated_at:new Date().toISOString()})});
+    if(r.ok||r.status===201){
+      /* Den eigenen Schreibvorgang als neuen Stand merken – sonst hielte der nächste
+         Abgleich die eigene Änderung für die eines anderen. */
+      let zeile=null; try{ zeile=((await r.json())||[])[0]; }catch(e){}
+      TP_STAND[datum]={updated_at:(zeile&&zeile.updated_at)||new Date().toISOString(),von:(zeile&&zeile.gespeichert_von)||von||""};
+      _tpKonfliktGemeldet="";
+      tpStandRender(datum);
+    }
     if(erzwungen){
-      if(r.ok)toast("Plan gespeichert ✓");
+      if(r.ok||r.status===201)toast("Plan gespeichert ✓");
       else toast("Plan nicht gespeichert – "+((r.status===401||r.status===403)?"kein Trainer-Recht":"Server antwortet "+r.status),"err");
     }
   }catch(e){ if(erzwungen)toast("Kein Netz – Plan nicht gespeichert","err"); }
@@ -2493,6 +2636,10 @@ function tpKopfRender(k){
 }
 async function tpPlanRestore(datum){
   datum=datum||document.getElementById("tp-date")?.value; if(!datum)return;
+  /* v542: Den Stand merken, der beim Öffnen galt. Nur dagegen kann tpPlanSave später
+     erkennen, ob jemand anderes zwischendurch geschrieben hat. Ohne diesen Griff wäre
+     der Abgleich wertlos: ein Plan, der nie geladen wurde, hat keinen Bezugspunkt. */
+  tpStandLesen(datum).then(s=>{ if(s)TP_STAND[datum]=s; else delete TP_STAND[datum]; tpStandRender(datum); });
   tpKopfLaden(datum);   // v506: Kopf der Einheit über der Zeitleiste – unabhängig vom Plan
   /* Reihenfolge ist entscheidend: erst die Phasen herstellen, dann die Uebungen
      einsetzen. Andersherum gaebe es die Auswahlfelder noch gar nicht, in die sie
@@ -2559,23 +2706,44 @@ async function tpPlanRestore(datum){
     setzen(s);
   });
 }
-/* Vorausplanungs-Leiste: die nächsten Trainings mit Plan-Status (✅ geplant / 📝 offen) –
-   ein Tipp springt zum Termin und lädt den vorgemerkten Plan. */
+/* Terminwahl des Trainingsplans: die nächsten sechs Trainings als Kacheln, je mit
+   Plan-Status (✅ geplant / 📝 offen) und der Marke, welcher gerade bearbeitet wird.
+
+   v538: Das Dropdown darüber ist entfallen. Es zeigte exakt dieselbe Liste ein zweites
+   Mal – terminSelectFill füllte es mit {types:["training"],future:true}, also mit genau
+   den Terminen, die hier als Kachel stehen. `#tp-date` bleibt als UNSICHTBARER Speicher
+   im shell.html: fünfundzwanzig Stellen lesen das Datum daraus, von der Nettospielzeit
+   bis zum Stationstimer. Alle übrigen Termine – auch vergangene – stehen unter
+   Orga → Termine; geplant wird bewusst nur nach vorn. */
+const TP_VORPLAN_MAX=6;
 async function tpVorplanLoad(){
   const el=document.getElementById("tp-vorplan"); if(!el)return;
   const heute=new Date().toISOString().slice(0,10);
   const rows=(await _termineSelLoad()).filter(t=>t.typ==="training"&&t.datum>=heute)
-    .sort((a,b)=>a.datum<b.datum?-1:1).slice(0,5);
-  if(rows.length<2){el.innerHTML="";return;}
+    .sort((a,b)=>a.datum<b.datum?-1:1).slice(0,TP_VORPLAN_MAX);
+  const kopf=`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px">🗓️ Termin – antippen zum Planen</div>`;
+  /* Ohne Termin keine Terminwahl: ein Satz und der Weg dorthin, wo Termine entstehen.
+     Vorher stand hier bei weniger als zwei Terminen einfach nichts – zusammen mit dem
+     entfallenen Dropdown wäre der Trainingsplan damit unbedienbar geworden. */
+  if(!rows.length){
+    el.innerHTML=kopf+`<div style="font-size:12.5px;color:var(--text3);line-height:1.5">Kein Training in Sicht. Termine legst du unter <b>Orga → Termine</b> an.</div>`;
+    return;
+  }
   let geplant=new Set();
   try{const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?datum=in.(${rows.map(t=>t.datum).join(",")})&select=datum`,{headers:sbAuthHeaders()});
     if(r.ok)((await r.json())||[]).forEach(x=>geplant.add(String(x.datum)));}catch(e){}
-  el.innerHTML=`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px">🗓️ Vorausplanung – antippen zum Planen</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap">${rows.map(t=>{
-      const on=geplant.has(t.datum);
+  const aktiv=document.getElementById("tp-date")?.value||"";
+  el.innerHTML=kopf+`<div style="display:flex;gap:6px;flex-wrap:wrap">${rows.map(t=>{
+      const on=geplant.has(t.datum), hier=t.datum===aktiv;
       const d=new Date(t.datum+"T00:00:00");
       const lbl=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()]+" "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
-      return `<button onclick="tpVorplanJump('${t.datum}')" class="btn btn-sm" style="${on?"border-color:#16a34a;color:#15803d":""}">${on?"✅":"📝"} ${lbl}</button>`;
+      /* Der gewählte Termin trägt kräftigeren Rahmen UND den Zusatz „gewählt" – Farbe
+         darf nie der einzige Bedeutungsträger sein (CLAUDE.md). Ohne das Dropdown wäre
+         sonst nicht mehr erkennbar, welchen Termin man gerade plant.
+         48 px statt der 36 px eines Listenknopfes: das hier ist jetzt die einzige
+         Terminwahl der Seite und kein Beiwerk mehr (cockpit-ui). */
+      const rand=hier?"border-color:var(--text);border-width:2px;font-weight:900":(on?"border-color:#16a34a;color:#15803d":"");
+      return `<button onclick="tpVorplanJump('${t.datum}')" class="btn btn-sm" aria-pressed="${hier}" style="min-height:48px;font-size:13px;${rand}">${on?"✅":"📝"} ${lbl}${hier?" · gewählt":""}</button>`;
     }).join("")}</div>`;
 }
 function tpVorplanJump(datum){
@@ -2584,6 +2752,7 @@ function tpVorplanJump(datum){
      vom vorherigen Tag stehen, nur der Plan wechselte. Jetzt der ganze Tag. */
   tpTrainerRsvpLaden(datum);
   tpPlanRestore(datum);
+  tpVorplanLoad();   // v538: die Marke „gewählt" muss mitwandern
 }
 
 /* ═══════════════════════════════════
@@ -2906,8 +3075,19 @@ async function uebungMetaLoad(){
 
    DREI Zustände. „Noch nicht eingeordnet" ist ein echter Zustand und wird nie
    geraten – eine plausibel aussehende falsche Einordnung wäre schlimmer als keine. */
+/* v541: dritter Wert. Torwart-Einlaufen, Koordinationsleiter, Fallschule und Rituale
+   sind fachlich WEDER Spielform noch Übungsform. Ein Zwang zur Wahl hätte sie in die
+   eine oder andere Schale gedrückt und damit den Spielform-Anteil verzerrt – genau die
+   Zahl, für die die Einordnung da ist. */
 const UEBUNG_ART={spiel:{kurz:"Spielform", lang:"Spielform – das Kind entscheidet selbst"},
-                  uebung:{kurz:"Übungsform", lang:"Übungsform – der Ablauf ist vorgegeben"}};
+                  uebung:{kurz:"Übungsform", lang:"Übungsform – der Ablauf ist vorgegeben"},
+                  weder:{kurz:"weder noch", lang:"weder Spielform noch Übungsform – zählt nicht mit"}};
+/* Der Vorschlag aus data.js. Er gilt NICHT als Einordnung: _tpArt liest weiter nur
+   team_config.uebung_art. Sichtbar wird er allein in der Durchsicht. */
+function _tpArtVorschlag(f){
+  const v=(typeof UEBUNG_ART_VORSCHLAG!=="undefined"?UEBUNG_ART_VORSCHLAG:{})[f&&f.name];
+  return UEBUNG_ART[v]?v:"";
+}
 function _tpArt(f){
   const a=(window._uebungArt||{})[f&&f.name];
   return UEBUNG_ART[a]?a:"";
@@ -2924,7 +3104,7 @@ function tpArtChip(f,auchOffen){
 /* Antippen ordnet ein – wie beim Stern. Drei Zustände im Kreis, damit sich eine
    falsche Einordnung genauso leicht zurücknehmen lässt wie sie entstanden ist. */
 async function tpArtTipp(name){
-  const folge=["","spiel","uebung"];
+  const folge=["","spiel","uebung","weder"];   // v541: „weder noch" gehört in denselben Kreis
   const f=tpAllForms().find(x=>x.name===name);
   const jetzt=_tpArt(f);
   const neu=folge[(folge.indexOf(jetzt)+1)%folge.length];
@@ -2935,6 +3115,112 @@ async function tpArtTipp(name){
     if(window._uebungMetaId!=null)
       await fetch(`${SB_URL}/rest/v1/team_config?id=eq.${window._uebungMetaId}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify({uebung_art:window._uebungArt})});
   }catch(e){}
+}
+/* ═══════════════════════════════════════════════════════════════════════════
+   v541 – DURCHSICHT: Spielform, Übungsform oder keines von beidem
+
+   Der Vorschlag aus data.js wird NIE still angewendet. Diese Liste zeigt ihn, lässt
+   ihn Übung für Übung ändern und schreibt erst auf ausdrücklichen Tipp. Bis dahin
+   steht in team_config.uebung_art nichts Neues, und die betroffenen Übungen gelten
+   weiter als „noch nicht eingeordnet".
+
+   Warum eine eigene Liste und nicht nur der Chip in der Übungsliste: einzeln
+   angetippt sind 107 Übungen eine Stunde Arbeit, und man verliert die Übersicht,
+   welche noch offen sind. Hier stehen sie nach Vorschlag gruppiert beieinander.
+   ═══════════════════════════════════════════════════════════════════════════ */
+let _adAuswahl=null;       // {name: art} – die Fassung, die der Trainer gerade sieht
+let _adNurOffene=true;     // Standard: nur, was noch nicht eingeordnet ist
+function artDurchsichtOffen(){
+  // Übungen ohne Einordnung, für die es einen Vorschlag gibt – die Arbeitsmenge.
+  return tpAllForms().filter(f=>f&&f.name&&!_tpArt(f)&&_tpArtVorschlag(f));
+}
+function artDurchsichtOpen(){
+  if(typeof sbToken==="function"&&!sbToken()){ toast("Bitte zuerst als Trainer anmelden","err"); return; }
+  document.getElementById("ad-modal")?.remove();
+  _adNurOffene=true;
+  _adAuswahl={};
+  tpAllForms().forEach(f=>{ if(f&&f.name){ const v=_tpArt(f)||_tpArtVorschlag(f); if(v)_adAuswahl[f.name]=v; } });
+  const m=document.createElement("div");
+  m.id="ad-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Übungen einordnen");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.onclick=e=>{ if(e.target===m)artDurchsichtClose(); };
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:520px;width:100%;margin:auto">
+    ${mdlHead("ad-modal","⚽","Übungen einordnen","Spielform, Übungsform oder keines von beidem – Vorschlag zum Durchsehen","#7c3aed")}
+    <div id="ad-inhalt"></div>
+  </div>`;
+  document.body.appendChild(m);
+  artDurchsichtRender();
+}
+function artDurchsichtClose(){ document.getElementById("ad-modal")?.remove(); _adAuswahl=null; }
+function artDurchsichtFilter(){ _adNurOffene=!_adNurOffene; artDurchsichtRender(); }
+/* Ein Tipp ändert nur die Auswahl im Fenster, nicht die Datenbank. Geschrieben wird
+   erst über „Einordnung übernehmen" – sonst wäre der Vorschlag durch die Hintertür
+   doch eine Einordnung. */
+function artDurchsichtTipp(name){
+  if(!_adAuswahl)return;
+  const folge=["spiel","uebung","weder"];
+  const jetzt=_adAuswahl[name]||"";
+  _adAuswahl[name]=folge[(folge.indexOf(jetzt)+1)%folge.length];
+  artDurchsichtRender();
+}
+function artDurchsichtRender(){
+  const box=document.getElementById("ad-inhalt"); if(!box)return;
+  const offen=artDurchsichtOffen();
+  const alle=tpAllForms().filter(f=>f&&f.name&&_adAuswahl[f.name]);
+  const zeigen=_adNurOffene?offen:alle;
+  if(!offen.length&&_adNurOffene){
+    box.innerHTML=`<div style="font-size:12.5px;color:var(--text2);line-height:1.6;padding:6px 0">
+      Alle Übungen mit einem Vorschlag sind eingeordnet. ${alle.length?`<button class="btn btn-sm" style="min-height:48px;margin-top:8px" onclick="artDurchsichtFilter()">Alle ${alle.length} trotzdem ansehen</button>`:""}</div>
+      <div style="display:flex;margin-top:10px"><button class="btn btn-sm" style="margin-left:auto;min-height:48px" onclick="artDurchsichtClose()">Schließen</button></div>`;
+    return;
+  }
+  const nachArt={spiel:[],uebung:[],weder:[]};
+  zeigen.forEach(f=>{ const a=_adAuswahl[f.name]; if(nachArt[a])nachArt[a].push(f); });
+  const zeile=f=>{
+    const a=_adAuswahl[f.name];
+    /* Der Knopf trägt den Text der Einordnung, nicht nur eine Farbe – und sagt im
+       aria-label, dass ein Tipp weiterschaltet. */
+    return `<div style="display:flex;align-items:center;gap:8px;border:var(--border-s);border-radius:10px;padding:8px 10px;margin-bottom:6px;background:var(--surface)">
+      <span style="flex:1;min-width:0;font-size:12.5px"><b>${esc(f.name)}</b><span style="display:block;font-size:10.5px;color:var(--text3)">${esc(f.kat||"eigene")}</span></span>
+      <button onclick="artDurchsichtTipp('${String(f.name).replace(/'/g,"\\'")}')" aria-label="${esc(f.name)}: ${UEBUNG_ART[a].lang}. Antippen schaltet weiter." style="flex:none;min-height:48px;padding:0 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap">${UEBUNG_ART[a].kurz}</button>
+    </div>`;
+  };
+  const block=(key,titel)=>nachArt[key].length
+    ? `<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:12px 2px 5px">${titel} · ${nachArt[key].length}</div>${nachArt[key].map(zeile).join("")}`
+    : "";
+  box.innerHTML=`
+    <div style="font-size:12px;color:var(--text2);line-height:1.55;margin-bottom:8px">
+      ${_adNurOffene?`<b>${offen.length}</b> Übungen sind noch nicht eingeordnet. Der Vorschlag steht schon dran – antippen ändert ihn, gespeichert wird erst unten.`
+                    :`Alle <b>${alle.length}</b> Übungen mit Einordnung. Antippen ändert, gespeichert wird erst unten.`}
+    </div>
+    <button class="btn btn-sm" style="min-height:48px;width:100%;justify-content:center" onclick="artDurchsichtFilter()">${_adNurOffene?"Auch die schon eingeordneten zeigen":"Nur die offenen zeigen"}</button>
+    ${block("spiel","Spielform")}${block("uebung","Übungsform")}${block("weder","Weder noch")}
+    <button onclick="artDurchsichtUebernehmen(this)" style="width:100%;min-height:56px;margin-top:14px;border:none;border-radius:14px;background:var(--surface);border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;color:var(--text);font-family:inherit;font-size:15px;font-weight:900;cursor:pointer">💾 Einordnung übernehmen</button>
+    <div style="display:flex;margin-top:8px"><button class="btn btn-sm" style="margin-left:auto;min-height:48px" onclick="artDurchsichtClose()">Ohne Speichern schließen</button></div>`;
+}
+/* Ein Schreibvorgang für alles – nicht 107 einzelne. team_config trägt die Einordnung
+   als eine jsonb-Spalte; jede Übung einzeln zu schicken hieße, dieselbe Spalte
+   hundertfach zu überschreiben. */
+async function artDurchsichtUebernehmen(btn){
+  if(!_adAuswahl)return;
+  if(btn)btn.disabled=true;
+  const vorher=window._uebungArt||{};
+  const neu={...vorher};
+  const zeigen=_adNurOffene?artDurchsichtOffen():tpAllForms().filter(f=>f&&f.name&&_adAuswahl[f.name]);
+  let zahl=0;
+  zeigen.forEach(f=>{ const a=_adAuswahl[f.name]; if(a&&neu[f.name]!==a){ neu[f.name]=a; zahl++; } });
+  if(!zahl){ toast("Nichts zu ändern"); if(btn)btn.disabled=false; return; }
+  try{
+    if(window._uebungMetaId!=null){
+      const r=await fetch(`${SB_URL}/rest/v1/team_config?id=eq.${window._uebungMetaId}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify({uebung_art:neu})});
+      if(!(r.ok||r.status===204)){ toast("Einordnung nicht gespeichert – Server antwortet "+r.status,"err"); if(btn)btn.disabled=false; return; }
+    }
+    window._uebungArt=neu;
+    toast(`⚽ ${zahl} Übung${zahl===1?"":"en"} eingeordnet`);
+    artDurchsichtClose();
+    if(typeof renderTraining==="function")renderTraining();
+  }catch(e){ toast("Kein Netz – Einordnung nicht gespeichert","err"); if(btn)btn.disabled=false; }
 }
 function _tpStern(f){
   if(!f)return 2;
@@ -3025,8 +3311,7 @@ function tpPickerRender(){
   if(li)li.innerHTML=html;
 }
 function _tpPickKarte(x){
-  const d=tpLastUsedDays(x.i);
-  const frische=d===null?'<span style="color:#16a34a">🆕 neu</span>':(d<14?`<span style="color:#b45309">vor ${d} T.</span>`:`vor ${d} T.`);
+  const frische=_tfFrische(x.f,x.i);   // v539: „neu" = angelegt vor < 4 Wochen
   const stern=_tpStern(x.f);
   return `<div style="display:flex;align-items:center;gap:8px;border:var(--border-s);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--surface)">
     <button onclick="tpPickerSet(${x.i})" style="flex:1;min-width:0;min-height:44px;border:none;background:transparent;color:var(--text);font-family:inherit;text-align:left;cursor:pointer;padding:0">
