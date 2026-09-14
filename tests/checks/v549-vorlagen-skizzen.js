@@ -26,9 +26,10 @@
    e) Wo Pfeile sind, tragen sie die Farben der Legende.
    f) Sperrklinke für den Rest des Bestands: die Zahl der noch betroffenen
       handgezeichneten Skizzen darf nicht wachsen. */
-/* Stand 14.09.2026: von ursprünglich 52 handgezeichneten Skizzen sind fünf gezogen,
-   siebenundvierzig tragen das Muster noch. Die Zahl darf nur sinken. */
-const REST_HOECHSTENS = 47;
+/* Stand 14.09.2026: von ursprünglich 52 handgezeichneten Skizzen sind fünfzehn gezogen –
+   fünf mit v549, zehn weitere mit v551, als die dreizehn neuen Einheiten sie in die
+   Vorlagen holten. Siebenunddreißig tragen das Muster noch. Die Zahl darf nur sinken. */
+const REST_HOECHSTENS = 37;
 
 module.exports = async function (h) {
   const probleme = [], zeilen = [];

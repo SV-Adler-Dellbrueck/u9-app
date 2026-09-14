@@ -18,8 +18,9 @@
       Ordnungen, die wirklich vorkommen – eine leere Kachel verspricht eine Auswahl,
       hinter der nichts steht.
    d) Die drei Reihen filtern gemeinsam (und), und ein zweiter Tipp hebt den Filter auf.
-   e) Die Datei `uebungen/vorlagen.json` ordnet alle sieben Vorlagen ein, und die
-      Migration zieht die bestehenden Zeilen nach – der Abgleich rührt sie nie an. */
+   e) Jede Vorlage in `uebungen/vorlagen.json` ist eingeordnet, und die Migration zieht
+      die Zeilen nach, die vor v550 schon in der Datenbank standen – der Abgleich rührt
+      bestehende Zeilen nie an. Was die Migration setzt, muss zur Datei passen. */
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
   const fs = require("fs"), path = require("path");
@@ -135,12 +136,22 @@ module.exports = async function (h) {
   else {
     const sql = fs.readFileSync(mig, "utf8");
     if (!/add column if not exists ordnung/.test(sql)) probleme.push("Die Migration legt die Spalte nicht an");
-    /* Der Abgleich legt nur NEUE Zeilen an. Ohne die update-Zeilen bliebe die Kachelreihe
-       bei allen sieben bestehenden Vorlagen leer. */
-    const updates = (sql.match(/update public\.trainingsvorlagen set ordnung/g) || []).length;
-    if (updates < (vor.vorlagen || []).length) probleme.push(`${updates} update-Zeilen für ${(vor.vorlagen || []).length} bestehende Vorlagen`);
+    /* Der Abgleich legt nur NEUE Zeilen an und rührt bestehende nie an. Die Migration muss
+       deshalb genau die Vorlagen nachziehen, die beim Einspielen SCHON in der Datenbank
+       standen – die sieben aus der Zeit vor v550. Später dazugekommene (v551: dreizehn)
+       bringen ihre Ordnung über den Abgleich mit und brauchen keine update-Zeile.
+       Geprüft wird deshalb nicht die Zahl, sondern die Übereinstimmung: was die Migration
+       setzt, muss dasselbe sein wie in der Datei. */
+    const updates = [...sql.matchAll(/update public\.trainingsvorlagen set ordnung = '([^']+)'\s+where name like '([^%']+)%'/g)]
+      .map(m => ({ ordnung: m[1], praefix: m[2] }));
+    if (updates.length < 7) probleme.push(`${updates.length} update-Zeilen – der Bestand vor v550 waren sieben Vorlagen`);
+    updates.forEach(u => {
+      const v = (vor.vorlagen || []).find(x => String(x.name).startsWith(u.praefix));
+      if (!v) probleme.push(`Die Migration setzt „${u.praefix}“, eine solche Vorlage gibt es in der Datei nicht`);
+      else if (v.ordnung !== u.ordnung) probleme.push(`„${v.name}“: Migration setzt „${u.ordnung}“, die Datei sagt „${v.ordnung}“`);
+    });
   }
-  if (!probleme.length) zeilen.push(`Datei: alle ${(vor.vorlagen || []).length} Vorlagen eingeordnet, Migration zieht die bestehenden Zeilen nach`);
+  if (!probleme.length) zeilen.push(`Datei: alle ${(vor.vorlagen || []).length} Vorlagen eingeordnet, Migration zieht den Bestand vor v550 nach`);
 
   return h.ergebnis("Vorlagen: zweite Achse „wie sie stehen“ neben der Leitfrage", !probleme.length, zeilen.concat(probleme));
 };
