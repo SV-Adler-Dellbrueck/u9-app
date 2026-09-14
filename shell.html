@@ -312,6 +312,10 @@
        und uebungen/vorlagen.json im Repo, die beim Öffnen automatisch abgeglichen werden –
        über dieselbe Prüfung, die auch die Dialoge benutzten. Die Dialoge bleiben im Modul
        (uebungImportOpen, vorlagenImportOpen), sie werden nur nicht mehr angeboten. -->
+  <!-- v540: Nachschlagen statt Einspielen. Die Vorlagen-Ansicht liest nur; eingesetzt
+       wird eine Vorlage im Trainingsplan, wo der Termin steht. Kein zweiter Weg in
+       dieselbe Handlung. Welle-2-Modul, deshalb der typeof-Schutz. -->
+  <button onclick="if(typeof vorlagenAnsichtOpen===&quot;function&quot;)vorlagenAnsichtOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="width:100%;min-height:48px;margin:0 0 10px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-layout-grid"></i>Vorlagen ansehen</button>
   <!-- v539: kein Grid mehr am Behaelter – renderTraining setzt je Ueberschrift ein eigenes. -->
   <div id="tf-kacheln" style="margin-bottom:8px"></div>
   <div id="tf-filter" style="display:flex;gap:6px;margin-bottom:10px"></div>
