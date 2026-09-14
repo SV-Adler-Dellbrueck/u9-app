@@ -1,6 +1,6 @@
 {
   "schema": "adler-vorlagen/1",
-  "stand": "2026-09-14-2",
+  "stand": "2026-09-14-3",
   "vorlagen": [
     {
       "name": "L1-1 Ball behalten – Duell um zwei Tore",
@@ -56,6 +56,165 @@
       "ordnung": "1 gegen 1"
     },
     {
+      "name": "L1-2 Ball behalten – König auf dem Feld",
+      "leitfrage": "Wie behalte ich den Ball, wenn einer kommt?",
+      "folge_nr": 2,
+      "tags": [
+        "wenig-platz",
+        "halle"
+      ],
+      "dauer_min": 75,
+      "netto_spielform_min": 38,
+      "skalierung": {
+        "8": "2 Felder 12 x 10 m, ein Duell je Feld, Aufsteiger wechselt nach oben",
+        "12": "3 Felder 12 x 10 m, ein Duell je Feld, oberstes ist das Königsfeld",
+        "16": "4 Felder 12 x 10 m, ein Duell je Feld, zwei Königsfelder nebeneinander"
+      },
+      "beobachtung": "Wer hat den Ball mit dem Körper zwischen sich und den Gegner gebracht, statt ihn wegzuschlagen – und wer ist nach einem verlorenen Duell wie ein Jäger sofort wieder hinterher?",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 1 – frei: 1 gegen 1, Aufsteiger und Absteiger",
+          "dauer": 11,
+          "uebung_name": "Fußball-König"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 2 – eng: drei Sekunden abschirmen, bevor ein Tor zählt",
+          "dauer": 11,
+          "uebung_name": "Fußball-König"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 3 – offen: Regel weg, Felder größer",
+          "dauer": 11,
+          "uebung_name": "Fußball-König"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
+      ],
+      "ordnung": "1 gegen 1"
+    },
+    {
+      "name": "L1-3 Ball behalten in Überzahl – der Diamant dreht",
+      "leitfrage": "Wie behalte ich den Ball, wenn einer kommt?",
+      "folge_nr": 3,
+      "tags": [],
+      "dauer_min": 75,
+      "netto_spielform_min": 38,
+      "skalierung": {
+        "8": "1 Viereck 12 x 12 m, vier außen gegen zwei in der Mitte, zweite Gruppe wartet nicht – zweites Viereck daneben",
+        "12": "2 Vierecke 12 x 12 m, je vier außen gegen zwei in der Mitte",
+        "16": "2 Vierecke 15 x 15 m, je fünf außen gegen drei in der Mitte"
+      },
+      "beobachtung": "Wer hat nach seinem Pass sofort einen anderen Punkt der Raute besetzt – und wer hat wie ein Aufpasser die hintere Spitze gehalten, auch wenn der Ball weit weg war?",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 1 – frei: vier halten den Ball gegen zwei Jäger",
+          "dauer": 11,
+          "uebung_name": "Diamanten-Jagd"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 2 – eng: wer passt, muss sofort einen anderen Rauten-Punkt besetzen",
+          "dauer": 11,
+          "uebung_name": "Diamanten-Jagd"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 3 – offen: Rotation frei, Viereck größer",
+          "dauer": 11,
+          "uebung_name": "Diamanten-Jagd"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
+      ],
+      "ordnung": "Überzahl"
+    },
+    {
+      "name": "L1-4 Ball behalten – die erste Berührung nach vorn",
+      "leitfrage": "Wie behalte ich den Ball, wenn einer kommt?",
+      "folge_nr": 4,
+      "tags": [
+        "halle",
+        "schlechtwetter"
+      ],
+      "dauer_min": 75,
+      "netto_spielform_min": 32,
+      "skalierung": {
+        "8": "1 Station, zwei Reihen à 4, Trainer spielt zu – keine Wartereihe über drei",
+        "12": "2 Stationen, je zwei Reihen à 3, ein Trainer je Station",
+        "16": "2 Stationen, je zwei Reihen à 4, zweiter Ball im Umlauf"
+      },
+      "beobachtung": "Wer hat den Ball mit der ersten Berührung nach vorne mitgenommen, statt ihn zu stoppen – und wer ist danach wie ein Flitzer in den freien Raum gedribbelt?",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 1 – frei: Zuspiel von hinten, erste Berührung nach vorn",
+          "dauer": 11,
+          "uebung_name": "Erste Mitnahme vorwärts"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 2 – eng: ein passiver Gegner im Rücken, der erst nach der Mitnahme angreift",
+          "dauer": 11,
+          "uebung_name": "Erste Mitnahme vorwärts"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 3 – offen: aus der Mitnahme direkt ins 2 gegen 2 auf Minitore",
+          "dauer": 11,
+          "uebung_name": "Erste Mitnahme vorwärts"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
+      ],
+      "ordnung": "ohne Gegner"
+    },
+    {
       "name": "L2-1 Vorbeikommen – Mut zum ersten Schritt",
       "leitfrage": "Wie komme ich an einem vorbei?",
       "folge_nr": 1,
@@ -108,6 +267,165 @@
         }
       ],
       "ordnung": "1 gegen 1"
+    },
+    {
+      "name": "L2-2 Vorbeikommen – drei Finten, ein Duell",
+      "leitfrage": "Wie komme ich an einem vorbei?",
+      "folge_nr": 2,
+      "tags": [
+        "wenig-platz",
+        "halle"
+      ],
+      "dauer_min": 75,
+      "netto_spielform_min": 37,
+      "skalierung": {
+        "8": "1 Feld 20 x 15 m, zwei Gruppen à 4, zwei Duelle gleichzeitig",
+        "12": "2 Felder 20 x 15 m, vier Gruppen à 3",
+        "16": "2 Felder 25 x 18 m, vier Gruppen à 4, zwei Duelle je Feld"
+      },
+      "beobachtung": "Wer hat eine der drei Finten im Duell wirklich probiert, auch wenn sie misslang – und wer hat wie ein Flitzer nach dem Vorbeikommen das Tempo mitgenommen?",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 1 – frei: drei Finten üben, dann 1 gegen 1",
+          "dauer": 11,
+          "uebung_name": "Finte-Wettkampf"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 2 – eng: ein Tor zählt nur nach einer Finte",
+          "dauer": 11,
+          "uebung_name": "Finte-Wettkampf"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 3 – offen: Regel weg, zwei Tore zur Auswahl",
+          "dauer": 11,
+          "uebung_name": "Finte-Wettkampf"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
+      ],
+      "ordnung": "1 gegen 1"
+    },
+    {
+      "name": "L2-3 Vorbeikommen – erst der Parcours, dann der Gegner",
+      "leitfrage": "Wie komme ich an einem vorbei?",
+      "folge_nr": 3,
+      "tags": [
+        "schlechtwetter",
+        "halle"
+      ],
+      "dauer_min": 75,
+      "netto_spielform_min": 32,
+      "skalierung": {
+        "8": "1 Parcours doppelt aufgebaut, zwei Reihen à 4",
+        "12": "2 Parcours, je zwei Reihen à 3",
+        "16": "2 Parcours plus ein drittes Feld für das Duell, Gruppen à 4 rotieren"
+      },
+      "beobachtung": "Wer hat im Parcours den Kopf gehoben, statt nur auf den Ball zu schauen – und wer hat wie ein Jäger am Ende des Parcours den Abschluss gesucht?",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 1 – frei: durch den Parcours, Tempo selbst wählen",
+          "dauer": 11,
+          "uebung_name": "Dribbling-Parcours"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 2 – eng: am letzten Tor wartet ein Gegner – vorbeikommen, dann abschließen",
+          "dauer": 11,
+          "uebung_name": "Dribbling-Parcours"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 3 – offen: Parcours weg, freies 1 gegen 1 auf dieselben Tore",
+          "dauer": 11,
+          "uebung_name": "Dribbling-Parcours"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
+      ],
+      "ordnung": "ohne Gegner"
+    },
+    {
+      "name": "L2-4 Vorbeikommen – und dann in die Breite",
+      "leitfrage": "Wie komme ich an einem vorbei?",
+      "folge_nr": 4,
+      "tags": [],
+      "dauer_min": 75,
+      "netto_spielform_min": 38,
+      "skalierung": {
+        "8": "1 Feld 30 x 20 m, 4 gegen 4, je zwei Minitore außen an der Grundlinie",
+        "12": "2 Felder 30 x 20 m, 4 gegen 4, dritte Gruppe wechselt nach je vier Minuten ein",
+        "16": "2 Felder 35 x 25 m, 4 gegen 4, zwei Gruppen je Feld im Wechsel"
+      },
+      "beobachtung": "Wer ist nach dem Vorbeikommen nach außen ausgewichen, statt in den Pulk zu dribbeln – und wer hat wie ein Flitzer die Breite besetzt, bevor der Ball kam?",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 1 – frei: 4 gegen 4 auf je zwei Minitore",
+          "dauer": 11,
+          "uebung_name": "Zwei-Tore-Umschalten"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 2 – eng: ein Tor zählt nur, wenn vorher einer am Gegenspieler vorbeigedribbelt ist",
+          "dauer": 11,
+          "uebung_name": "Zwei-Tore-Umschalten"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 3 – offen: Regel weg, Feld breiter",
+          "dauer": 11,
+          "uebung_name": "Zwei-Tore-Umschalten"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
+      ],
+      "ordnung": "Raute (4 gegen 4)"
     },
     {
       "name": "L3-1 Tore machen – kurz und mit beiden Füßen",
@@ -169,6 +487,110 @@
       "ordnung": "ohne Gegner"
     },
     {
+      "name": "L3-2 Tore machen – der letzte Pass geht quer",
+      "leitfrage": "Wie mache ich ein Tor?",
+      "folge_nr": 2,
+      "tags": [],
+      "dauer_min": 75,
+      "netto_spielform_min": 38,
+      "skalierung": {
+        "8": "1 Feld 25 x 20 m, 3 gegen 3 auf vier Minitore, zwei warten am Rand und wechseln nach zwei Minuten",
+        "12": "2 Felder 25 x 20 m, je 3 gegen 3 auf vier Minitore",
+        "16": "2 Felder 30 x 22 m, je 4 gegen 4 auf vier Minitore"
+      },
+      "beobachtung": "Wer hat vor dem Abschluss noch einmal quer gespielt, statt aus jeder Lage zu schießen – und wer ist wie ein Jäger vor dem Tor stehen geblieben und hat den Querpass abgewartet?",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 1 – frei: 3 gegen 3 auf vier Minitore",
+          "dauer": 11,
+          "uebung_name": "Quer vor Tor"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 2 – eng: Tor zählt nur nach einem Querpass in der letzten Zone",
+          "dauer": 11,
+          "uebung_name": "Quer vor Tor"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 3 – offen: Regel weg, Feld größer",
+          "dauer": 11,
+          "uebung_name": "Quer vor Tor"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
+      ],
+      "ordnung": "Dreieck (3 gegen 3)"
+    },
+    {
+      "name": "L3-3 Tore machen – Mut zählt doppelt",
+      "leitfrage": "Wie mache ich ein Tor?",
+      "folge_nr": 3,
+      "tags": [
+        "vor-spieltag"
+      ],
+      "dauer_min": 75,
+      "netto_spielform_min": 36,
+      "skalierung": {
+        "8": "1 Feld 25 x 20 m, 3 gegen 3 auf Minitore, zwei wechseln laufend ein",
+        "12": "2 Felder 25 x 20 m, je 3 gegen 3 auf Minitore",
+        "16": "2 Felder 30 x 22 m, je 4 gegen 4 mit derselben Wertung"
+      },
+      "beobachtung": "Wer hat mit dem schwächeren Fuß abgeschlossen, ohne dass es jemand verlangt hat – und wer hat wie ein Jäger nach einem Fehlschuss sofort den nächsten Versuch gesucht?",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, voll (Spieltagswoche)",
+          "dauer": 12,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 1 – frei: 3 gegen 3, jedes Tor zählt einen Punkt",
+          "dauer": 10,
+          "uebung_name": "Fehler-Festival"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 2 – eng: Finte und schwacher Fuß zählen zwei Punkte, auch ohne Tor",
+          "dauer": 10,
+          "uebung_name": "Fehler-Festival"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 3 – offen: Wertung bleibt, Feld größer",
+          "dauer": 11,
+          "uebung_name": "Fehler-Festival"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 17
+        }
+      ],
+      "ordnung": "Dreieck (3 gegen 3)"
+    },
+    {
       "name": "L4-1 Passen – den freien Mitspieler finden",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
       "folge_nr": 1,
@@ -220,6 +642,170 @@
       "ordnung": "Überzahl"
     },
     {
+      "name": "L4-2 Passen – Lehrgangsform 15:30:15:30",
+      "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "folge_nr": 2,
+      "tags": [],
+      "dauer_min": 90,
+      "netto_spielform_min": 60,
+      "skalierung": {
+        "8": "Aufwärmen 2 Felder 3 gegen 1; Spielblock 1 ein Feld 4 gegen 4; Zwischenblock 2 Quadrate; Spielblock 2 ein Feld 3+1 gegen 3+1",
+        "12": "Aufwärmen 3 Felder 3 gegen 1; Spielblock 1 zwei Felder 3 gegen 3; Zwischenblock 3 Quadrate; Spielblock 2 Feld A 3 gegen 3, Feld B 2+1 gegen 2+1, Wechsel nach 14 Min",
+        "16": "Aufwärmen 4 Felder 3 gegen 1; Spielblock 1 zwei Felder 4 gegen 4; Zwischenblock 4 Quadrate; Spielblock 2 zwei Felder 3+1 gegen 3+1"
+      },
+      "beobachtung": "Wer hebt vor dem Zuspiel den Kopf – und wer bietet sich wie ein Aufpasser ohne Ball an, statt zum Ball zu laufen?",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Aufwärmen 1 – Ballführung mit Zusatzaufgaben",
+          "dauer": 5,
+          "uebung_name": "Chaos-Dribbling mit Kommando"
+        },
+        {
+          "typ": "warmup",
+          "label": "Aufwärmen 2 – Drei gegen einen",
+          "dauer": 10,
+          "uebung_name": "Drei gegen einen im Quadrat"
+        },
+        {
+          "typ": "main",
+          "label": "Spielblock 1, Welle 1 – frei",
+          "dauer": 10,
+          "uebung_name": "3 gegen 3 auf vier Minitore mit Schusszone"
+        },
+        {
+          "typ": "main",
+          "label": "Spielblock 1, Welle 2 – Tor nur nach Zuspiel",
+          "dauer": 10,
+          "uebung_name": "3 gegen 3 auf vier Minitore mit Schusszone"
+        },
+        {
+          "typ": "main",
+          "label": "Spielblock 1, Welle 3 – Regel weg, Feld breiter",
+          "dauer": 10,
+          "uebung_name": "3 gegen 3 auf vier Minitore mit Schusszone"
+        },
+        {
+          "typ": "main",
+          "label": "Zwischenblock – Übungsform",
+          "dauer": 15,
+          "uebung_name": "Passtor im Quadrat"
+        },
+        {
+          "typ": "main",
+          "label": "Spielblock 2 – Feld A Minitore / Feld B Jugendtore, Wechsel nach 14 Min",
+          "dauer": 30,
+          "uebung_name": "2+1 gegen 2+1 auf Jugendtore"
+        }
+      ],
+      "ordnung": "Dreieck (3 gegen 3)"
+    },
+    {
+      "name": "L4-3 Passen – jeder muss einmal",
+      "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "folge_nr": 3,
+      "tags": [],
+      "dauer_min": 75,
+      "netto_spielform_min": 38,
+      "skalierung": {
+        "8": "1 Feld 25 x 20 m, 3 gegen 3 auf vier Minitore, zwei wechseln nach zwei Minuten",
+        "12": "2 Felder 25 x 20 m, je 3 gegen 3 auf vier Minitore",
+        "16": "2 Felder 30 x 22 m, je 4 gegen 4 auf vier Minitore"
+      },
+      "beobachtung": "Wer hat den gesucht, der noch keinen Ball hatte – und wer hat sich wie ein Aufpasser so gestellt, dass ein Pass zu ihm überhaupt möglich war?",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 1 – frei: 3 gegen 3 auf vier Minitore",
+          "dauer": 11,
+          "uebung_name": "Pflichtpass-Funino"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 2 – eng: Tor zählt erst, wenn jeder im Team einmal gepasst hat",
+          "dauer": 11,
+          "uebung_name": "Pflichtpass-Funino"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 3 – offen: Regel weg, Feld größer",
+          "dauer": 11,
+          "uebung_name": "Pflichtpass-Funino"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
+      ],
+      "ordnung": "Dreieck (3 gegen 3)"
+    },
+    {
+      "name": "L4-4 Passen – das Dreieck dreht sich",
+      "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "folge_nr": 4,
+      "tags": [
+        "halle",
+        "schlechtwetter"
+      ],
+      "dauer_min": 75,
+      "netto_spielform_min": 32,
+      "skalierung": {
+        "8": "2 Dreiecke à 3 Spieler, 8–10 m Abstand, zwei sehen zu und wechseln nach zwei Minuten",
+        "12": "4 Dreiecke à 3 Spieler, 8–10 m Abstand",
+        "16": "4 Dreiecke à 4 Spieler, 10 m Abstand, der vierte startet als Gegner in der Mitte"
+      },
+      "beobachtung": "Wer ist nach dem Pass sofort losgelaufen, statt stehen zu bleiben – und wer hat wie ein Aufpasser immer zwei Anspielstationen offen gehalten?",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 1 – frei: passen und zur Position des Empfängers laufen",
+          "dauer": 11,
+          "uebung_name": "Dreieck-Passspiel"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 2 – eng: höchstens zwei Kontakte, ein Gegner in der Mitte",
+          "dauer": 11,
+          "uebung_name": "Dreieck-Passspiel"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 3 – offen: dasselbe Prinzip im 3 gegen 3 auf Minitore",
+          "dauer": 11,
+          "uebung_name": "Dreieck-Passspiel"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
+      ],
+      "ordnung": "Dreieck (3 gegen 3)"
+    },
+    {
       "name": "L5-1 Anbieten – wo kriege ich den Ball?",
       "leitfrage": "Wo stelle ich mich hin, damit ich den Ball kriege?",
       "folge_nr": 1,
@@ -263,6 +849,110 @@
           "label": "Stufe 3 – offen: Regel weg, vier Tore",
           "dauer": 11,
           "uebung_name": "Scanning-Funino"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
+      ],
+      "ordnung": "Dreieck (3 gegen 3)"
+    },
+    {
+      "name": "L5-2 Anbieten – die Raute lebt",
+      "leitfrage": "Wo stelle ich mich hin, damit ich den Ball kriege?",
+      "folge_nr": 2,
+      "tags": [
+        "vor-spieltag"
+      ],
+      "dauer_min": 75,
+      "netto_spielform_min": 36,
+      "skalierung": {
+        "8": "1 Feld 35 x 25 m, 4+1 gegen 4+1 ohne Wechsel – Torhüter rotieren nach je vier Minuten",
+        "12": "1 Feld 35 x 25 m, 4+1 gegen 4+1, dritte Gruppe wechselt komplett ein",
+        "16": "2 Felder 35 x 25 m, je 4+1 gegen 4+1"
+      },
+      "beobachtung": "Wer hat seine Rautenposition auch dann gehalten, wenn der Ball weit weg war – und wer hat sich wie ein Flitzer außen angeboten, bevor der Aufpasser überhaupt schauen konnte?",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, voll (Spieltagswoche)",
+          "dauer": 12,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 1 – frei: 4+1 gegen 4+1, Raute als Grundordnung",
+          "dauer": 10,
+          "uebung_name": "4+1 Lebende Raute"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 2 – eng: Tor zählt nur bei besetzter Raute im Moment des Abschlusses",
+          "dauer": 10,
+          "uebung_name": "4+1 Lebende Raute"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 3 – offen: Regel weg, Spiel wie am Spieltag",
+          "dauer": 11,
+          "uebung_name": "4+1 Lebende Raute"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 17
+        }
+      ],
+      "ordnung": "Raute (4 gegen 4)"
+    },
+    {
+      "name": "L5-3 Anbieten – jeder hält seinen Korridor",
+      "leitfrage": "Wo stelle ich mich hin, damit ich den Ball kriege?",
+      "folge_nr": 3,
+      "tags": [],
+      "dauer_min": 75,
+      "netto_spielform_min": 38,
+      "skalierung": {
+        "8": "1 Feld 25 x 20 m in drei Längskorridoren, 3 gegen 3, zwei wechseln nach zwei Minuten",
+        "12": "2 Felder 25 x 20 m in drei Korridoren, je 3 gegen 3",
+        "16": "2 Felder 30 x 24 m in vier Korridoren, je 4 gegen 4"
+      },
+      "beobachtung": "Wer ist in seinem Korridor geblieben, statt zum Ball zu laufen – und wer hat wie ein Flitzer das Feld breit gemacht, obwohl es keiner gerufen hat?",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 1 – frei: 3 gegen 3 auf vier Minitore, Korridore markiert",
+          "dauer": 11,
+          "uebung_name": "Korridor-Funino"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 2 – eng: Tor zählt nur, wenn beim Abschluss alle Korridore besetzt sind",
+          "dauer": 11,
+          "uebung_name": "Korridor-Funino"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 3 – offen: Korridore weg, Feld größer",
+          "dauer": 11,
+          "uebung_name": "Korridor-Funino"
         },
         {
           "typ": "abschluss",
@@ -326,60 +1016,52 @@
       "ordnung": "2 gegen 2"
     },
     {
-      "name": "L4-2 Passen – Lehrgangsform 15:30:15:30",
-      "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "name": "L6-2 Zurückholen – Igel, und sofort wieder Adler",
+      "leitfrage": "Wie hole ich mir den Ball zurück?",
       "folge_nr": 2,
       "tags": [],
-      "dauer_min": 90,
-      "netto_spielform_min": 60,
+      "dauer_min": 75,
+      "netto_spielform_min": 38,
       "skalierung": {
-        "8": "Aufwärmen 2 Felder 3 gegen 1; Spielblock 1 ein Feld 4 gegen 4; Zwischenblock 2 Quadrate; Spielblock 2 ein Feld 3+1 gegen 3+1",
-        "12": "Aufwärmen 3 Felder 3 gegen 1; Spielblock 1 zwei Felder 3 gegen 3; Zwischenblock 3 Quadrate; Spielblock 2 Feld A 3 gegen 3, Feld B 2+1 gegen 2+1, Wechsel nach 14 Min",
-        "16": "Aufwärmen 4 Felder 3 gegen 1; Spielblock 1 zwei Felder 4 gegen 4; Zwischenblock 4 Quadrate; Spielblock 2 zwei Felder 3+1 gegen 3+1"
+        "8": "1 Feld 25 x 20 m, 3 gegen 3 auf Minitore, zwei wechseln nach zwei Minuten",
+        "12": "2 Felder 25 x 20 m, je 3 gegen 3 auf Minitore",
+        "16": "2 Felder 30 x 22 m, je 4 gegen 4 auf Minitore"
       },
-      "beobachtung": "Wer hebt vor dem Zuspiel den Kopf – und wer bietet sich wie ein Aufpasser ohne Ball an, statt zum Ball zu laufen?",
+      "beobachtung": "Wer hat sich nach dem Ballverlust sofort mit den anderen zusammengezogen, statt allein hinterherzulaufen – und wer hat nach der Eroberung wie ein Flitzer als Erster wieder Breite gegeben?",
       "bloecke": [
         {
           "typ": "warmup",
-          "label": "Aufwärmen 1 – Ballführung mit Zusatzaufgaben",
-          "dauer": 5,
-          "uebung_name": "Chaos-Dribbling mit Kommando"
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
         },
         {
           "typ": "warmup",
-          "label": "Aufwärmen 2 – Drei gegen einen",
-          "dauer": 10,
-          "uebung_name": "Drei gegen einen im Quadrat"
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
         },
         {
           "typ": "main",
-          "label": "Spielblock 1, Welle 1 – frei",
-          "dauer": 10,
-          "uebung_name": "3 gegen 3 auf vier Minitore mit Schusszone"
+          "label": "Stufe 1 – frei: 3 gegen 3 auf Minitore",
+          "dauer": 11,
+          "uebung_name": "Igel-Pressing-Kreis"
         },
         {
           "typ": "main",
-          "label": "Spielblock 1, Welle 2 – Tor nur nach Zuspiel",
-          "dauer": 10,
-          "uebung_name": "3 gegen 3 auf vier Minitore mit Schusszone"
+          "label": "Stufe 2 – eng: nach jedem Ballverlust „Igel!“ – enger Kreis um den Ball, Eroberung bringt zwei Bonuspunkte",
+          "dauer": 11,
+          "uebung_name": "Igel-Pressing-Kreis"
         },
         {
           "typ": "main",
-          "label": "Spielblock 1, Welle 3 – Regel weg, Feld breiter",
-          "dauer": 10,
-          "uebung_name": "3 gegen 3 auf vier Minitore mit Schusszone"
+          "label": "Stufe 3 – offen: kein Zuruf mehr, die Kinder rufen sich selbst „Igel!“ und „Adler!“ zu",
+          "dauer": 11,
+          "uebung_name": "Igel-Pressing-Kreis"
         },
         {
-          "typ": "main",
-          "label": "Zwischenblock – Übungsform",
-          "dauer": 15,
-          "uebung_name": "Passtor im Quadrat"
-        },
-        {
-          "typ": "main",
-          "label": "Spielblock 2 – Feld A Minitore / Feld B Jugendtore, Wechsel nach 14 Min",
-          "dauer": 30,
-          "uebung_name": "2+1 gegen 2+1 auf Jugendtore"
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
         }
       ],
       "ordnung": "Dreieck (3 gegen 3)"
