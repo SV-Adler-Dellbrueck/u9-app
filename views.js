@@ -444,58 +444,134 @@ function kaderAktivToggle(cb){
   row.style.opacity=cb.checked?"":"0.62";
   const hin=row.querySelector(".ke-raus-hinweis");
   if(hin)hin.style.display=cb.checked?"none":"";
+  if(typeof kaderKopfFrisch==="function")kaderKopfFrisch(cb);
 }
 // Kader-Verwaltung: Modal mit editierbaren Zeilen (name/nr/tw/twPrio/geb/medical/aktiv).
+/* v546 – Der Kader-Editor als ruhige Liste.
+
+   Fünfzehn Kinder mal zwölf Bedienelemente standen gleichzeitig auf einem Bildschirm:
+   rund hundertachtzig Felder, alle gleich laut, alle gleich wichtig. Gesucht wird darin
+   aber immer genau ein Kind — und zwar zum Ändern einer einzigen Kleinigkeit.
+
+   Deshalb zeigt jede Zeile nur noch Nummer, Name und Zustand; die Felder klappen erst
+   auf Tipp auf, und immer nur eine Zeile zugleich.
+
+   Gespeichert wird weiter ALLES auf einmal. Die zugeklappten Felder stehen im Dokument,
+   nur nicht im Weg. Ein Umbau auf einzelnes Speichern hätte die Reihenfolge (sort_order)
+   und die Behandlung doppelter Nummern mit angefasst — an beidem war nichts falsch. */
+function _keChips(k){
+  const chip=(txt,farbe,bg)=>`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;border:1px solid ${farbe};color:${farbe};background:${bg};white-space:nowrap">${txt}</span>`;
+  const c=[];
+  if(k.aktiv===false)c.push(chip("nicht im Kader","var(--amber)","transparent"));
+  if(k.tw)c.push(chip("🥅 TW","var(--text2)","transparent"));
+  if(k.foto_stadionheft_ok)c.push(chip("📰 Foto frei","var(--green)","transparent"));
+  if(k.medical)c.push(chip("⚕️ Hinweis","var(--red)","transparent"));
+  return c.join(" ");
+}
 function kaderEditRow(k,i){
   const drin=k.aktiv!==false;
-  return `<div class="kader-edit-row" data-id="${k._id||''}" style="border:var(--border-s);border-radius:var(--r);padding:8px;margin-bottom:8px${drin?"":";opacity:0.62"}">
+  const neu=!k._id&&!k.name;                 // frisch angelegte Zeile: gleich offen
+  const kopf=`<button type="button" class="ke-kopf" onclick="kaderZeileAuf(this)" aria-expanded="${neu}"
+      style="width:100%;min-height:56px;display:flex;align-items:center;gap:10px;padding:8px 10px;border:none;border-radius:var(--r);background:transparent;color:var(--text);font-family:inherit;text-align:left;cursor:pointer">
+      <span class="ke-kopf-nr" style="min-width:34px;font-size:13px;font-weight:800;color:var(--text3)">${k.nr!=null?"#"+k.nr:"—"}</span>
+      <span style="flex:1;min-width:0">
+        <span class="ke-kopf-name" style="display:block;font-size:14px;font-weight:700">${esc(k.name||"Neuer Spieler")}</span>
+        <span class="ke-kopf-chips" style="display:block;margin-top:2px">${_keChips(k)}</span>
+      </span>
+      <span class="ke-pfeil" aria-hidden="true" style="font-size:16px;color:var(--text3);transition:transform .15s${neu?";transform:rotate(90deg)":""}">›</span>
+    </button>`;
+  return `<div class="kader-edit-row" data-id="${k._id||''}" data-name="${esc(k.name||'')}" style="border:var(--border-s);border-radius:var(--r);margin-bottom:8px${drin?"":";opacity:0.62"}">
+    ${kopf}
+    <div class="ke-felder" style="padding:0 8px 8px${neu?"":";display:none"}">
     <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-      <input class="ke-name" value="${esc(k.name||'')}" placeholder="Name" style="flex:1;min-width:80px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit">
-      <input class="ke-nr" type="number" value="${k.nr!=null?k.nr:''}" placeholder="Nr" style="width:56px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit">
-      <button onclick="kaderEditDelete(this,'${esc(k.name||'')}','${k._id||''}')" aria-label="Spieler aus dem Kader entfernen" title="Spieler entfernen" style="flex:none;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border:1.5px solid var(--red);border-radius:10px;background:var(--red-bg);color:var(--red);cursor:pointer;font-size:16px"><i class="ti ti-trash"></i></button>
+      <input class="ke-name" value="${esc(k.name||'')}" placeholder="Name" oninput="kaderKopfFrisch(this)" style="flex:1;min-width:80px;min-height:44px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;background:var(--surface);color:var(--text)">
+      <input class="ke-nr" type="number" value="${k.nr!=null?k.nr:''}" placeholder="Nr" oninput="kaderKopfFrisch(this)" style="width:64px;min-height:44px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;background:var(--surface);color:var(--text)">
     </div>
     <div class="ke-raus-hinweis" style="font-size:11px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:5px 8px;margin-bottom:6px;line-height:1.4${drin?";display:none":""}">Nicht mehr im Kader – taucht in Anwesenheit, Nominierung, Aufstellung und Turnier nicht mehr auf. Alles Bisherige bleibt gespeichert.</div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
-      <label style="font-size:12px;display:flex;align-items:center;gap:4px" title="Häkchen weg = nicht mehr im Kader. Verschwindet aus Anwesenheit, Nominierung, Aufstellung und Turnier – die Historie bleibt erhalten."><input class="ke-aktiv" type="checkbox" ${drin?"checked":""} onchange="kaderAktivToggle(this)">👥 Im Kader</label>
-      <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input class="ke-tw" type="checkbox" ${k.tw?"checked":""}>🥅 TW</label>
-      <select class="ke-prio" style="padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px">
+      <label style="font-size:12px;display:flex;align-items:center;gap:4px;min-height:44px" title="Häkchen weg = nicht mehr im Kader. Verschwindet aus Anwesenheit, Nominierung, Aufstellung und Turnier – die Historie bleibt erhalten."><input class="ke-aktiv" type="checkbox" ${drin?"checked":""} onchange="kaderAktivToggle(this)">👥 Im Kader</label>
+      <label style="font-size:12px;display:flex;align-items:center;gap:4px;min-height:44px"><input class="ke-tw" type="checkbox" ${k.tw?"checked":""} onchange="kaderKopfFrisch(this)">🥅 TW</label>
+      <select class="ke-prio" style="min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px;background:var(--surface);color:var(--text)">
         <option value="0"${(k.twPrio||0)===0?" selected":""}>kein TW</option>
         <option value="1"${k.twPrio===1?" selected":""}>TW primär</option>
         <option value="2"${k.twPrio===2?" selected":""}>TW Option</option>
       </select>
-      <input class="ke-geb" type="date" value="${esc(k.geb||'')}" title="Geburtstag" style="padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px">
+      <input class="ke-geb" type="date" value="${esc(k.geb||'')}" title="Geburtstag" aria-label="Geburtstag" style="min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px;background:var(--surface);color:var(--text)">
     </div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
-      <select class="ke-fuss" title="Starker Fuß" style="padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px">
+      <select class="ke-fuss" title="Starker Fuß" aria-label="Starker Fuß" style="min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px;background:var(--surface);color:var(--text)">
         <option value=""${!k.starker_fuss?" selected":""}>Fuß?</option>
         <option value="R"${k.starker_fuss==="R"?" selected":""}>Rechts</option>
         <option value="L"${k.starker_fuss==="L"?" selected":""}>Links</option>
         <option value="B"${k.starker_fuss==="B"?" selected":""}>Beidfüßig</option>
       </select>
-      <input class="ke-pos" value="${esc(k.lieblingsposition||'')}" placeholder="Lieblingsposition" style="flex:1;min-width:90px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px">
+      <input class="ke-pos" value="${esc(k.lieblingsposition||'')}" placeholder="Lieblingsposition" style="flex:1;min-width:90px;min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px;background:var(--surface);color:var(--text)">
     </div>
-    <!-- v544: Die Trikotgröße stand hier von v543 bis v543. Sie ist mit dem zweiten
+    <!-- v544: Die Trikotgröße stand hier nur in v543. Sie ist mit dem zweiten
          Kleidungsstück zu einer Ausgabe geworden (Trikotsatz, Anzug, Jacke haben je
          eigene Größen) und lebt jetzt in „Ausstattung" unter Team – eine Stelle, an
          der auch Datum und Rückgabe stehen. Nicht wieder hier einbauen. -->
     <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
       <span style="font-size:11px;color:var(--text2)">Foto (Karte):</span>
-      <input type="file" accept="image/jpeg,image/png,image/webp" onchange="kaderRowFoto(this)" style="font-size:11px;flex:1">
+      <input type="file" accept="image/jpeg,image/png,image/webp" onchange="kaderRowFoto(this)" aria-label="Foto für die Karte" style="font-size:11px;flex:1">
       ${k.foto_path?'<span style="font-size:10px;color:var(--green)">✓ vorhanden</span>':''}
     </div>
     <label style="display:flex;align-items:flex-start;gap:6px;margin-bottom:6px;font-size:11px;color:var(--text2)" title="Nur mit ausdrücklicher Eltern-Zustimmung. Ohne Häkchen erscheinen überall nur die Initialen.">
-      <input class="ke-fotook" type="checkbox" ${k.foto_stadionheft_ok?"checked":""} style="margin-top:1px">
+      <input class="ke-fotook" type="checkbox" ${k.foto_stadionheft_ok?"checked":""} onchange="kaderKopfFrisch(this)" style="margin-top:1px">
       <span>📰 Foto freigegeben für <b>„Adler Nest" &amp; Team-Galerie</b> <span style="color:var(--text3)">(Eltern-Einwilligung eingeholt)</span></span>
     </label>
-    <input class="ke-medical" value="${esc(k.medical||'')}" placeholder="Medical-Hinweis (z. B. Asthma, Allergie…)" style="width:100%;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px">
-    ${k._id?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
-      <button type="button" class="btn btn-sm" onclick="kontakteEditOpen(${k._id})" title="Kontakte & Eltern-Login" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:10px;line-height:1.2"><i class="ti ti-address-book" style="font-size:17px"></i>Kontakte</button>
+    <input class="ke-medical" value="${esc(k.medical||'')}" placeholder="Medical-Hinweis (z. B. Asthma, Allergie…)" oninput="kaderKopfFrisch(this)" style="width:100%;min-height:44px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px;background:var(--surface);color:var(--text)">
+    ${k._id?`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px">
+      <button type="button" class="btn btn-sm" onclick="kontakteEditOpen(${k._id})" title="Kontakte, Eltern-Login und der persönliche Zu-/Absage-Link" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:10px;line-height:1.2"><i class="ti ti-address-book" style="font-size:17px"></i>Kontakte</button>
       <button type="button" class="btn btn-sm" onclick="zieleOpen(${k._id})" title="Entwicklungs-Ziele setzen & verfolgen" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:10px;line-height:1.2"><i class="ti ti-target" style="font-size:17px"></i>Ziele</button>
-      <button type="button" class="btn btn-sm" onclick="kindLinkShare(${k._id})" title="Persönlicher 1-Tap Zu-/Absage-Link ohne Login" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:10px;line-height:1.2"><i class="ti ti-calendar-check" style="font-size:17px"></i>Zu-/Absage</button>
       <button type="button" class="btn btn-sm" onclick="childWrappedShare(${k._id})" title="Persönliche Saison-Rückblick-Karte zum Teilen mit der Familie" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:10px;line-height:1.2"><i class="ti ti-movie" style="font-size:17px"></i>Saison</button>
       <button type="button" class="btn btn-sm" onclick="lobRecordOpen(${k._id},'${(k.name||'').replace(/'/g,'')}')" title="Kurzes Sprachlob aufnehmen – das Kind hört es in der Kabine" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:10px;line-height:1.2;grid-column:1/-1"><i class="ti ti-microphone" style="font-size:17px"></i>🎤 Sprachlob aufnehmen</button>
+      <button type="button" class="btn btn-sm btn-d" onclick="kaderEditDelete(this,'${esc(k.name||'')}','${k._id||''}')" style="grid-column:1/-1;justify-content:center;font-size:11px"><i class="ti ti-trash"></i>Endgültig löschen</button>
     </div>`:'<div style="font-size:10px;color:var(--text3);margin-top:6px">Erst speichern – dann sind Kontakte, Links & Saison-Karte verfügbar.</div>'}
+    </div>
   </div>`;
+}
+/* Eine Zeile auf, alle anderen zu. Zwei offene Kinder nebeneinander sind genau der
+   Zustand, aus dem der alte Editor bestand. */
+function kaderZeileAuf(btn){
+  const row=btn.closest(".kader-edit-row"); if(!row)return;
+  const offen=row.querySelector(".ke-felder")?.style.display!=="none";
+  document.querySelectorAll("#kader-edit-list .kader-edit-row").forEach(r=>{
+    const f=r.querySelector(".ke-felder"), k=r.querySelector(".ke-kopf"), p=r.querySelector(".ke-pfeil");
+    if(f)f.style.display="none";
+    if(k)k.setAttribute("aria-expanded","false");
+    if(p)p.style.transform="";
+  });
+  if(offen)return;                       // war offen: zu lassen
+  const f=row.querySelector(".ke-felder"), p=row.querySelector(".ke-pfeil");
+  if(f)f.style.display="";
+  btn.setAttribute("aria-expanded","true");
+  if(p)p.style.transform="rotate(90deg)";
+  row.querySelector(".ke-name")?.focus({preventScroll:true});
+}
+/* Der Kopf muss mitziehen, sonst steht dort nach einer Umbenennung noch der alte
+   Name — und beim Zuklappen sähe man die Änderung nicht mehr. */
+function kaderKopfFrisch(el){
+  const row=el.closest(".kader-edit-row"); if(!row)return;
+  const nr=row.querySelector(".ke-nr")?.value;
+  const name=row.querySelector(".ke-name")?.value.trim();
+  const kn=row.querySelector(".ke-kopf-nr"), kname=row.querySelector(".ke-kopf-name"), kc=row.querySelector(".ke-kopf-chips");
+  if(kn)kn.textContent=nr!==""&&nr!=null?"#"+nr:"—";
+  if(kname)kname.textContent=name||"Neuer Spieler";
+  if(kc)kc.innerHTML=_keChips({
+    aktiv:row.querySelector(".ke-aktiv")?.checked!==false,
+    tw:!!row.querySelector(".ke-tw")?.checked,
+    foto_stadionheft_ok:!!row.querySelector(".ke-fotook")?.checked,
+    medical:row.querySelector(".ke-medical")?.value.trim()});
+  row.dataset.name=name||"";
+}
+/* Suchen statt scrollen. Bei fünfzehn Kindern ist das schon der schnellere Weg,
+   bei einem neuen Jahrgang erst recht. */
+function kaderFilter(text){
+  const q=String(text||"").trim().toLowerCase();
+  document.querySelectorAll("#kader-edit-list .kader-edit-row").forEach(r=>{
+    r.style.display=!q||(r.dataset.name||"").toLowerCase().includes(q)?"":"none";
+  });
 }
 // Foto aus einer Kader-Zeile hochladen (nutzt den aktuellen Namen der Zeile).
 function kaderRowFoto(input){
@@ -507,25 +583,42 @@ function kaderRowFoto(input){
 }
 function kaderEditOpen(){
   if(!sbToken()){toast("Bitte zuerst als Trainer anmelden","err");return;}
+  document.getElementById("kader-edit-modal")?.remove();
   const modal=document.createElement("div");
   modal.id="kader-edit-modal";
+  modal.setAttribute("role","dialog"); modal.setAttribute("aria-modal","true"); modal.setAttribute("aria-label","Spieler verwalten");
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
-  modal.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:440px;width:100%;margin:auto">
-    <div style="font-weight:700;margin-bottom:4px">Spieler verwalten</div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:12px">Geburtstag & Medical-Hinweise sind nur für Trainer sichtbar (nicht für Eltern).</div>
+  const drin=KADER.filter(k=>k.aktiv!==false).length, raus=KADER.length-drin;
+  modal.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:460px;width:100%;margin:auto">
+    ${mdlHead("kader-edit-modal","👥","Spieler verwalten",`${drin} im Kader${raus?` · ${raus} ausgetragen`:""}`,"#1e3a8a")}
+    <input id="ke-filter" type="search" placeholder="Nach Namen suchen…" aria-label="Nach Namen suchen" oninput="kaderFilter(this.value)"
+      style="width:100%;min-height:48px;padding:10px 12px;margin-bottom:10px;border:1px solid var(--rand-bedien);border-radius:10px;box-sizing:border-box;font-family:inherit;font-size:13px;background:var(--surface);color:var(--text)">
     <div id="kader-edit-list">${KADER.slice().sort((a,b)=>((a.aktiv===false)-(b.aktiv===false))).map((k,i)=>kaderEditRow(k,i)).join("")}</div>
-    <button class="btn btn-sm" onclick="kaderEditAdd()" style="margin-bottom:12px"><i class="ti ti-plus"></i>Spieler hinzufügen</button>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-p" onclick="kaderSaveAll(this)"><i class="ti ti-device-floppy"></i>Speichern</button>
-      <button class="btn" onclick="document.getElementById('kader-edit-modal').remove()">Schließen</button>
-    </div>
+    <button type="button" class="btn btn-sm" onclick="kaderEditAdd()" style="width:100%;margin:2px 0 12px"><i class="ti ti-plus"></i>Spieler erfassen</button>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.5">Geburtstag und Medical-Hinweis sehen nur Trainer. Trikotgröße und Ausgabe stehen unter <b>Team → Ausstattung</b>.</div>
+    <button type="button" class="btn btn-p" onclick="kaderSaveAll(this)" style="width:100%;min-height:56px;font-size:15px;font-weight:800"><i class="ti ti-device-floppy"></i>Speichern</button>
   </div>`;
   document.body.appendChild(modal);
 }
 function kaderEditAdd(){
   const list=document.getElementById("kader-edit-list");
-  if(list)list.insertAdjacentHTML("beforeend",kaderEditRow({name:"",tw:false,twPrio:0},KADER.length));
+  if(!list)return;
+  list.insertAdjacentHTML("beforeend",kaderEditRow({name:"",tw:false,twPrio:0},KADER.length));
+  const neu=list.lastElementChild;
+  /* Die neue Zeile steht unten und ist als einzige offen — genau wie nach einem Tipp
+     auf eine bestehende. Ohne das Schliessen der anderen stuenden zwei offen. */
+  if(neu){
+    document.querySelectorAll("#kader-edit-list .kader-edit-row").forEach(r=>{
+      if(r===neu)return;
+      const f=r.querySelector(".ke-felder"), k=r.querySelector(".ke-kopf"), p=r.querySelector(".ke-pfeil");
+      if(f)f.style.display="none";
+      if(k)k.setAttribute("aria-expanded","false");
+      if(p)p.style.transform="";
+    });
+    neu.scrollIntoView({block:"nearest"});
+    neu.querySelector(".ke-name")?.focus({preventScroll:true});
+  }
 }
 async function kaderEditDelete(btn,name,id){
   /* Hartes Loeschen raeumt per CASCADE rund 25 Tabellen ab – darunter gesammelte
@@ -551,12 +644,23 @@ function kontakteEditOpen(spielerId){
   document.getElementById("kontakte-modal")?.remove();
   const modal=document.createElement("div");
   modal.id="kontakte-modal";
+  modal.setAttribute("role","dialog"); modal.setAttribute("aria-modal","true"); modal.setAttribute("aria-label","Kontakte und Eltern-Login");
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10000;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
   modal.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:420px;width:100%;margin:auto">
     <div style="font-weight:700;margin-bottom:2px">📇 ${esc(k?k.name:"Spieler")} – Kontakte & Eltern-Login</div>
     <div style="font-size:11px;color:var(--text2);margin-bottom:12px">Login-E-Mails: wer sich im Eltern-Bereich anmelden & zu-/absagen darf. Telefonnummern: beliebig viele (Vater, Mutter, Oma…).</div>
     <div id="kontakte-body"><div style="color:var(--text3);font-size:12px;padding:12px">Lade…</div></div>
+    <!-- v546: Der persönliche Zu-/Absage-Link stand bis hierher in der Stammdatenzeile
+         des Kader-Editors, zwischen Geburtstag und Medical-Hinweis. Er ist aber keine
+         Eigenschaft des Kindes, sondern ein Zugangsweg für seine Familie – und genau die
+         wird hier verwaltet. Als Erinnerung an einen einzelnen Termin taugt er ohnehin
+         nicht: er trägt kein Datum. Dafür gibt es das Nachfassen am Termin selbst. -->
+    <div style="border-top:var(--border-s);margin-top:14px;padding-top:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:2px">Ohne Anmeldung zu- und absagen</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5">Ein persönlicher Link für diese Familie: ein Tipp genügt, kein Login. Gilt dauerhaft für alle Termine – wer an einen einzelnen erinnern will, fasst am Termin selbst nach.</div>
+      <button type="button" class="btn" style="width:100%" onclick="kindLinkShare(${spielerId})"><i class="ti ti-calendar-check"></i>Zu-/Absage-Link teilen</button>
+    </div>
     <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn" onclick="document.getElementById('kontakte-modal').remove()">Schließen</button></div>
   </div>`;
   document.body.appendChild(modal);
@@ -3869,15 +3973,7 @@ const HELP=[
     {t:"Saison-Cockpit", d:"Torschützen, Anwesenheit, Rückmelde-Tempo der Familien, faire Einsätze, Eltern-Puls, Rückmelde-Tempo – alles auf einen Blick.", run:"saisonCockpitOpen()"},
     {t:"Anwesenheit (Saison)", d:"Drei Reiter: Quote je Kind im Training, Anwesenheit der Trainer, und die Quote inklusive Spiele aus den Nominierungen. Alle drei rechnen auf denselben Zähltagen wie die Zahlen neben der Nominierung: ab dem Saisonstichtag, und nur echte Trainings – Spiel- und Turniertage zählen nicht mit, auch nicht bei der Serie 🔥.", run:"awUebersichtOpen()"},
     {t:"Probetraining", d:"Schnupperkinder verwalten – bewusst getrennt vom Kader, Auto-Löschung nach Entscheidung.", run:"probeOpen()"},
-    {t:"Kader", d:"Spieler anlegen/bearbeiten, Trikotnummer, Foto, Kontakte, Foto-Freigabe. <b>Die Trikotgröße</b> steht bei jedem Kind – frei einzutragen, die Vorschlagsliste (116 bis 152, XS bis M) nimmt nur das Tippen ab und verbietet nichts. Über den Zeilen steht, wie viele Größen noch fehlen; ausgeschiedene Kinder zählen nicht mit. So siehst du beim Anprobieren, wen du noch nicht hast.", go:"kader"},
-    {t:"Bewerten", d:"Spieler in 16 Kriterien einschätzen – mit Live-Radar. Kriterien, Live-Profil und Förderplan erscheinen, sobald oben ein Kind gewählt ist; „Bewertungsrunde starten“ geht alle Kinder nacheinander durch. Hakst du im Förderplan ein Entwicklungsziel als erreicht ab, erscheint es im Eltern-Bereich zwei Wochen lang in der Karte „Das kann dein Kind jetzt“ – mit genau dem Wortlaut, den du eingetragen hast, und ohne jede Zahl. Was du dort formulierst, lesen also Kind (in „Meine Mission“) und Elternhaus.", go:"bew"},
-    {t:"Profil", d:"Spielerprofil, Stärken, Adler-Karte, Entwicklungs-Report drucken.", go:"profil"},
-    {t:"Entwicklung", d:"Entwicklung über die Zeit als Diagramm.", go:"verlauf"},
-  ]},
-  {cat:"🏃 Training", items:[
-    {t:"Anwesenheit erfassen", d:"Wer war beim Training da – Haken je Kind. Hier stehen nur Trainings: die Anwesenheit an Spiel- und Turniertagen ist „Dabei“ in „Teams festlegen“ im Spieltag. Die Trainer-Haken zeigen bis zum Tag die Rückmeldungen aus „Bist du dabei?“ – ein Tap darauf ändert die Rückmeldung des Kollegen für alle. Am Tag selbst werden die Haken mit „Speichern“ zur Anwesenheit dieses Tages. Die Saison-Auswertung dazu liegt bei Team.", go:"anwesenheit"},
-    {t:"Trainingsplan", d:"Stationen bauen, Übungen zuweisen, Gruppen einteilen, Trainingsstart auf allen Handys. Welche Trainer angehakt sind, kommt aus EINER Quelle: der Rückmeldung aus „Bist du dabei?“ bzw. dem Trainerplan (✓ zugesagt, ✕ abgesagt, ? keine Antwort). Am Tag selbst zählt die erfasste Anwesenheit. Über den Chips steht, was gerade gilt – und ein Tap auf einen Chip ändert genau das: die Rückmeldung des Kollegen (für alle sichtbar, auch auf der Startseite) oder am Tag die Anwesenheit. Sagt jemand kurzfristig ab, tippst du ihn hier ab, und Felder und Gruppen rechnen neu. <b>Wer zuletzt gespeichert hat</b>, steht unter der Terminwahl – mit Namen und Uhrzeit, sofern der Plan nach September 2026 entstanden ist. Ändert jemand anderes den Plan, während du ihn offen hast, wird deine Fassung <b>nicht</b> still darübergeschrieben: die Automatik hält an und sagt es, und ein Tipp auf „Plan speichern“ fragt, ob du seine Fassung ersetzen oder lieber laden willst. <b>Den Termin wählst du oben über die Kacheln:</b> die nächsten sechs Trainings, je mit ✅ (Plan steht) oder 📝 (noch offen); der Termin, den du gerade planst, trägt einen kräftigeren Rahmen und den Zusatz „gewählt“. Weiter zurück oder weiter voraus gibt es hier bewusst nicht – alle Termine, auch vergangene, stehen unter <b>Orga → Termine</b>. Über der Zeitleiste steht ein Einstieg. <b>„Vorlage übernehmen“</b> ist der übliche Weg: eine fertige Einheit ohne Datum, ausgewählt nach Leitfrage („Wie behalte ich den Ball, wenn einer kommt?“) und nach Tags wie „wenig-platz“ oder „vor-spieltag“. Die Vorschau zeigt alle Blöcke, die Skalierung für 8/12/16 Kinder und die Beobachtungsfrage; die Übernahme setzt die Phasen für den oben gewählten Termin und ordnet die Übungen zu. <b>Kinder und Torhüter werden nicht zugeteilt</b> – das bleibt hier. Steht für den Termin schon ein Plan, heißt die Hauptaktion „Plan ersetzen“, und ohne diesen Tipp wird nichts überschrieben. Vorlagen kommen beim Öffnen aus dem Repo (uebungen/vorlagen.json) – einen Knopf zum Einfügen gibt es nicht mehr und braucht es nicht. Fachliche Grundlage ist das Ausbildungskonzept in doku/ausbildungskonzept-u9-v3.md. Schwerpunkt, Material, Beobachtung und die Notiz für die Folgeeinheit erscheinen als aufklappbare Karte über der Zeitleiste. Die Hinweise je Phase sind zugeklappt („💡 Tipp“). Die Nachbewertung der Einheit ist nicht mehr auf dieser Seite – sie kommt nach dem Training als To-Do auf die Startseite und läuft über „Einheit bewerten“. Torwart- und Einzeltraining laufen parallel zum Hauptteil und genauso lang; der Trainer dort fällt für die Felder weg – aus vier Trainern werden drei Felder. Sind mehr Gruppen ausgelost als Felder frei, spielt die überzählige Gruppe in diesem Hauptteil bei einem anderen Feld mit; die Auslosung selbst bleibt. <b>Die Gruppen rücken von Hauptteil zu Hauptteil weiter</b> (Ringtausch): bei zwei Gruppen ist das der Tausch, bei drei oder vier ein Weiterrücken um ein Feld. Wer gerade wo steht, zeigt die Zeile „⇄ …“ über den Stationen; „⇄ weiterrücken“ schiebt sofort eins weiter, „↩ automatisch“ nimmt das wieder zurück. Der Stationstimer zeigt dieselbe Zuordnung groß an und sagt beim vorletzten Blick schon, wohin die Gruppen als Nächstes rücken. Weniger Übungen als Felder? Im Trainer-Dropdown eines Feldes „✕ Feld weglassen“ wählen – die Gruppe spielt bei den anderen mit, „↩ Feld wieder aufnehmen“ holt es zurück. Die Trainer-Reihe oben folgt den Rückmeldungen zum Termin: ✓ grün = zugesagt (automatisch angehakt), 🤔 gelb = unsicher, ✕ rot = abgesagt, ohne Zeichen = noch keine Antwort. Angehakt wird nur, wer zugesagt hat – du kannst jeden Trainer trotzdem von Hand dazunehmen oder abwählen. <b>Spielform und Übungsform:</b> „Phase hinzufügen“ bietet beide an. Eine Spielform ist eine, in der das Kind selbst entscheidet – Gegner, Richtung, Tor. In einer Übungsform ist der Ablauf vorgegeben. Beide tragen dieselbe Mechanik: Gruppen auf Felder, Trainer je Station, Ringtausch. Unter der Terminwahl steht die <b>Nettospielzeit</b> dieser Einheit, also die Summe der Spielform-Blöcke; Warm-up, Übungsform und Abschluss zählen nicht hinein. Darunter der Wochenstand gegen den Richtwert: die Trainingsphilosophie Deutschland nennt 48 Minuten je Woche für U8 bis U16, ab U17 sind es 32. Eine einzelne Einheit muss die 48 nicht erreichen – zwei Einheiten pro Woche erfüllen sie mit Reserve. Liegt die Woche darunter, steht dort ein ruhiger Satz; liegt sie darüber, wird nicht gelobt. Den Richtwert änderst du mit einem Tipp auf „Richtwert 48 ändern“, ohne dass jemand Code anfasst. Ältere Blöcke vom Typ „Hauptteil“ bleiben gültig und zählen als Spielform. <b>Vorlage übernehmen:</b> Die Übung eines Blocks landet auf <b>jedem</b> Feld dieses Blocks, nicht nur auf dem ersten. Wie viele Felder es gibt, entscheidet sich am Termin aus der Zahl der angehakten Trainer – die Vorlage beschreibt den Block, nicht die Station. Änderst du danach ein Feld von Hand, bleibt deine Änderung: ab dann wird der Plan Station für Station gespeichert. <b>Rollen im Trainerstab:</b> Feldtrainer stehen an einer Station, der Skill Development Coach übernimmt Torwart- und Einzelstationen und zählt mit, die Rolle <b>Organisation</b> bekommt kein Feld. Wer Organisation hat und zusagt, steht als <b>oranger Chip mit 🧭 und „dabei, ohne Feld“</b> in der Trainer-Reihe – er ist da, aber die Felder rechnen ohne ihn. Ein Tipp darauf plant ihn für <b>diesen einen Termin</b> doch als Feldtrainer ein, ein zweiter nimmt es zurück; beim nächsten Termin steht er wieder auf orange. Anders als bei den übrigen Chips ändert dieser Tipp <b>keine Rückmeldung</b> – Markus hat ja zugesagt. <b>Gruppen</b> entstehen aus den zugesagten Kindern des Termins, am Trainingstag aus der erfassten Anwesenheit, sonst aus dem Kader; woher sie kommen, steht unter der Gruppen-Kachel. Zielgröße sind vier bis sechs Kinder – liegt eine Gruppe darunter oder darüber, sagt die Kachel das, ohne zu urteilen.", go:"planung"},
-    {t:"Einheit bewerten", d:"Nach dem Training, alles optional: Sterne für die Einheit (Spaß, Umsetzung, Erfolg) mit Notiz, je Übung drei Sterne-Reihen und ein Kommentar (steht beim nächsten Mal im Trainingsplan bei der Übung), Schnell-Sterne für die anwesenden Kinder. Erreichbar über das To-do auf der Startseite, im Trainingsplan über „Einheit nachbereiten“, sobald die Einheit vorbei ist – oder hier.", run:"einheitBewertenOpen()"},
+    {t:"Kader", d:"Über „Spieler verwalten“ pflegst du die Stammdaten. Das Fenster zeigt seit v546 <b>eine ruhige Zeile je Kind</b> – Nummer, Name und der Zustand als Chip (nicht im Kader · TW · Foto frei · Hinweis). Ein Tipp klappt genau dieses Kind auf, ein Tipp auf ein anderes klappt das vorige zu; darunter stehen Name, Nummer, „Im Kader“, Torwart, Geburtstag, starker Fuß, Lieblingsposition, Foto, Foto-Freigabe und der Medical-Hinweis. Oben ein <b>Suchfeld</b>, unten <b>ein</b> Speichern-Knopf – der schreibt alle Zeilen auf einmal, auch die zugeklappten. Geburtstag und Medical-Hinweis sehen nur Trainer, nie die Eltern. <b>Trikotgröße und Ausgabe</b> stehen nicht mehr hier, sondern unter <b>Team → Ausstattung</b> – dort mit Datum und Rückgabe. Der persönliche <b>Zu-/Absage-Link</b> liegt im Kontakte-Fenster des Kindes, weil er ein Zugangsweg der Familie ist und keine Eigenschaft des Kindes; er trägt kein Datum und ersetzt deshalb kein Nachfassen zu einem einzelnen Termin. „Endgültig löschen“ steht ganz unten im aufgeklappten Kind – für einen Vereinswechsel ist fast immer der Haken „Im Kader“ die richtige Wahl, dann bleibt die Historie heil.", run:"einheitBewertenOpen()"},
     {t:"Übungen", d:"Die Übungs-Datenbank: Gruppen-Kacheln, ⭐-Filter, Skizze je Übung, ➕ direkt in den Trainingsplan · KI-Coach · Themenplan. <b>Neue Übungen kommen von selbst:</b> beim Öffnen gleicht die App die Datei „uebungen/bibliothek.json“ aus dem Repo ab und legt still an, was noch fehlt – gemeldet wird nur, wenn wirklich etwas dazugekommen ist („📚 3 neue Übungen“). Namen, die es schon gibt, werden übersprungen und nie überschrieben; eine Skizze, die du hier gezeichnet hast, bleibt also erhalten. Ohne Netz passiert nichts und beim nächsten Öffnen wieder. Dasselbe gilt für <b>Vorlagen</b> (fertige Einheiten ohne Datum): sie kommen aus „uebungen/vorlagen.json“ (Format „adler-vorlagen/1“) und werden im Trainingsplan über „Vorlage übernehmen“ eingesetzt. <b>Nachschlagen kannst du sie hier</b> über „Vorlagen ansehen“: nach Leitfrage gruppiert, je Vorlage die Blöcke mit Dauer und Übung, die Skalierung für 8, 12 und 16 Kinder und die Beobachtungsfrage. Die Ansicht liest nur – sie hat bewusst keinen Übernehmen-Knopf, weil zum Einsetzen ein Termin gehört und der im Trainingsplan steht. Eine Vorlage verweist über den <b>Namen</b> auf ihre Übungen – fehlt eine, wird sie beim Prüfen benannt und die Vorlage nicht angelegt. <b>Die Kacheln stehen unter drei Überschriften</b> – Einstieg, Hauptteil, Speziell –, die dem Aufbau einer Einheit folgen; eine zusätzliche Ebene zum Durchtippen gibt es bewusst nicht. <b>„🆕 neu“</b> heißt: vor weniger als vier Wochen angelegt. Danach verschwindet das Abzeichen von allein. Dass eine Übung noch nie am Platz war, steht weiter dabei („noch nicht eingesetzt“) – nur eben ruhig, denn das ist eine Angabe fürs Planen und keine Neuigkeit. Übungen aus der mitgelieferten Datenbank tragen kein Anlagedatum und gelten deshalb nie als neu. Bei einer eigenen Übung kannst du die Skizze selbst erzeugen: dreizehn Vorlagen zum Antippen (Rondo, Slalom, Torschuss – und die Spieltagsformen „3 gegen 3, vier Minitore“, „2+1, Jugendtore“ und „Drei gegen einen“) oder mit Spielern, Hütchen, Toren, Zonen, Pfeilen und Linien selbst auf den Platz tippen. Beim Tor entscheidet die Tipp-Position über die Lage: nah am linken oder rechten Rand steht es hochkant und bündig an der Linie, sonst quer. Neben dem Minitor gibt es das <b>Jugendtor</b> – tiefer, mit Netz gezeichnet, für 2+1 und die höhenreduzierten Tore. Dazu zwei Linien: die <b>Mittellinie</b> (durchgezogen weiß) und die <b>Schusszone</b> (gestrichelt gelb); beide setzt du mit zwei Tipps, Anfang und Ende. Was welche Linie bedeutet, steht in der Legende unter jeder Skizze. Unter der Skizze einer Übung liegt <b>„Skizze teilen“</b>: daraus wird ein Bild, das du über das Teilen-Menü deines Handys an die Co-Trainer schickst – am Rechner lädt es sich herunter. Die Empfänger brauchen die App dafür nicht. <b>Übungsform, Spielform oder keines von beidem:</b> neben jeder Übung steht, was sie ist – ein Tipp darauf ordnet sie ein, im Kreis über „Spielform“, „Übungsform“, „weder noch“ und zurück auf offen. „Weder noch“ ist für Koordinationsleiter, Laufschule, Fallschule und Rituale: die sind fachlich keines von beidem, und ein Zwang zur Wahl hätte den Spielform-Anteil verzerrt. <b>Für den ersten Durchgang</b> gibt es über der Kachelreihe den Knopf „… Übungen einordnen“: dort stehen alle noch offenen beieinander, jede mit einem Vorschlag, den du antippen und ändern kannst. Gespeichert wird erst mit „Einordnung übernehmen“ – der Vorschlag allein gilt nie als Einordnung. Der Knopf verschwindet, sobald nichts mehr offen ist. Bei einer Spielform entscheidet das Kind selbst, bei einer Übungsform ist der Ablauf vorgegeben. Geraten wird nichts: was du nicht eingeordnet hast, steht als „noch nicht eingeordnet“ da. Die Einordnung hängt am Namen der Übung – benennst du sie um, ist sie weg. Genutzt wird sie beim Vorlagen-Import: die Netto-Spielzeit zählt Hauptteile mit einer Übungsform nicht mehr als Spielzeit mit. <b>Vorlagen mit Stationen:</b> Ein Block einer Vorlage nennt entweder eine Übung für alle Felder oder eine Liste von Stationen mit je eigener Übung – beides zusammen weist der Import ab. Die Reihenfolge der Stationen ist die Reihenfolge der Felder. Gibt es am Termin weniger Feldtrainer als Stationen, entfällt die überzählige; die Vorschau sagt das vorher („3 Stationen geplant, 2 Felder verfügbar“). Eine Station mit der Rolle „tw“ wird kein Feld, sondern ein paralleler Torwart-Block. Bestehende Vorlagen ohne Stationen bleiben unverändert gültig, die Schema-Kennung bleibt adler-vorlagen/1.", go:"formen"},
     {t:"Trainingsturnier", d:"Turnier zum Trainingsabschluss mit Zeitbudget-Automatik – vorab planbar: es hängt am gewählten Termin und wird gespeichert, du kannst es also Tage vorher vorbereiten und findest es am Trainingstag auf jedem Gerät wieder. Gesamtzeit (z. B. 40 Min.) und 1–4 Felder vorgeben, die Automatik wählt Format und Spielzeit (5–10 Min.; bleibt Zeit übrig, gibt es eine Rückrunde statt eines Finales – beim Training soll niemand am Ende nur zuschauen) – reicht die Zeit fair nicht, sagt sie ehrlich, wie viele Minuten fehlen. Ein Platzrechner sagt vorab, wie viele Kinder die gewählte Feld-/Formatkombination gleichzeitig braucht und ob alle Teams durchgehend im Spiel sind. Zwei Modi: Kinder-Turnier (Trainer spielen auf Wunsch in den Teams mit) oder Kinder gegen Eltern (1–4 Eltern-Teams, Duelle parallel auf den Feldern, Duell-Scoreboard, nie Kind gegen Kind). Spielform wählbar (FUNiño, 4+1, 5+1) mit Team-Vorschlag aus der Kinderzahl. Ein Pfiff für alle Felder.", run:"blitzOpen()"},
   ]},

@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v545 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v546 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -57,7 +57,7 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 
 | Funktion | Was sie tut | Nutzen |
 |---|---|---|
-| **Kader** | Spieler anlegen und bearbeiten, Trikotnummer (eindeutig je aktivem Kind), Foto, Kontakte, Foto-Freigabe. | Stammdaten an einem Ort, Datenschutz-Freigaben direkt am Kind. |
+| **Kader** | Spieler anlegen und bearbeiten, Trikotnummer (eindeutig je aktivem Kind), Foto, Kontakte, Foto-Freigabe. „Spieler verwalten“ zeigt eine ruhige Zeile je Kind — Nummer, Name, Zustand als Chip; ein Tipp klappt genau dieses Kind auf. Oben ein Suchfeld, unten ein Speichern-Knopf für alle Zeilen. Der persönliche Zu-/Absage-Link liegt im Kontakte-Fenster des Kindes. | Stammdaten an einem Ort, Datenschutz-Freigaben direkt am Kind. Man findet ein Kind, statt hundertachtzig Felder zu überfliegen. |
 | **Ausstattung** | Was hat welches Kind von uns bekommen? Oben der Gegenstand — Trikotsatz (Trikot, kurze Hose, Stutzen), Präsentationsanzug, Spieltagsjacke —, darunter der Kader: ein Tipp setzt die Ausgabe auf heute, daneben stehen Größe und beim Trikotsatz die Satznummer. „↩︎ zurück“ vermerkt die Rückgabe. Weitere Gegenstände (Trinkflasche, Rucksack) legt das Trainerteam selbst an. Eltern sehen zum eigenen Kind, was es hat — ändern können sie es nicht. | Beim Anprobieren sieht man, wer noch fehlt; beim Vereinswechsel, was zurückkommt. Die Größe steht an genau einer Stelle. |
 | **Bewerten** | 16 Kriterien je Kind mit Live-Radar, Live-Profil und Förderplan. „Bewertungsrunde starten“ geht alle Kinder nacheinander durch. | Strukturierte Beobachtung statt Eindruck. Die Grundlage für Rollen, Missionen und Entwicklungsgespräche. |
 | **Profil & Entwicklung** | Spielerprofil, Stärken, Adler-Karte, Entwicklungs-Report zum Drucken; Entwicklung über die Zeit als Diagramm. | Für das Elterngespräch liegt alles vor – belegt statt behauptet. |
