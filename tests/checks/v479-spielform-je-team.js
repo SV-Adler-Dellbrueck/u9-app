@@ -36,6 +36,14 @@ module.exports = async function (h) {
     delete TEAMS[K[5]];
     const nachgezogen = teamsNachziehen();
     const wieder = !!TEAMS[K[5]];
+    /* v543: Auf den Nachlauf warten. teamFormSet ruft teamsSpeichern() OHNE await – der
+       Schreibvorgang ist also noch unterwegs, wenn diese Funktion zurückkehrt. Geprüft wird
+       unten aber, dass die Spielform von Team 2 gespeichert WURDE; ohne dieses Warten hing
+       das Ergebnis daran, ob der zweite Aufruf es zufällig noch rechtzeitig schaffte.
+       Aufgefallen beim Zusammenführen von v538–v543: die Dateien sind gewachsen, die
+       Anlaufzeit hat sich verschoben, und damit kippte der Zufall. Die App ist unverändert
+       richtig – die Prüfung war zu schnell. */
+    await warte(600);
     return { neun, kacheln, segs, zehn, nachgezogen, wieder };
   }, { K, heute });
   const fehler = s.fehler();
