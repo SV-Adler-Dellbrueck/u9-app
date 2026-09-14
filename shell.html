@@ -307,14 +307,13 @@
   <input type="text" id="training-search" placeholder="🔍 Übung suchen (z. B. Passspiel, FUNiño) …" oninput="clearTimeout(window._tfDebounce);window._tfDebounce=setTimeout(renderTraining,200)"
     style="width:100%;box-sizing:border-box;padding:10px 14px;border:1px solid var(--rand-bedien);border-radius:12px;font-size:13.5px;background:var(--surface);font-family:inherit;outline:none;margin-bottom:8px">
   <!-- PO-Umbau: gleiche Sprache wie der Übungs-Picker – Gruppen-Kacheln + ⭐-Filter, gefüllt von renderTraining -->
-  <!-- v512: Der Übungs-Import gehört hierher – er füllt die Formen-Datenbank und rührt
-       den Trainingsplan nicht an. Neue Übungen aus dem Repo kommen ohnehin von selbst;
-       dieser Knopf ist der Handweg für eine Datei, die gerade auf dem Tisch liegt. -->
-  <div style="display:flex;gap:8px;margin:0 0 10px;flex-wrap:wrap">
-    <button onclick="if(typeof uebungImportOpen===&quot;function&quot;)uebungImportOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="flex:1 1 160px;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-books"></i>Übungen importieren</button>
-    <button onclick="if(typeof vorlagenImportOpen===&quot;function&quot;)vorlagenImportOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="flex:1 1 160px;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-layout-grid"></i>Vorlagen importieren</button>
-  </div>
-  <div id="tf-kacheln" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"></div>
+  <!-- v539: „Übungen importieren" und „Vorlagen importieren" sind entfallen. Beide waren
+       der Handweg für eine JSON-Datei; eingespielt wird aber über uebungen/bibliothek.json
+       und uebungen/vorlagen.json im Repo, die beim Öffnen automatisch abgeglichen werden –
+       über dieselbe Prüfung, die auch die Dialoge benutzten. Die Dialoge bleiben im Modul
+       (uebungImportOpen, vorlagenImportOpen), sie werden nur nicht mehr angeboten. -->
+  <!-- v539: kein Grid mehr am Behaelter – renderTraining setzt je Ueberschrift ein eigenes. -->
+  <div id="tf-kacheln" style="margin-bottom:8px"></div>
   <div id="tf-filter" style="display:flex;gap:6px;margin-bottom:10px"></div>
   <div id="training-content"><p style="padding:1rem;color:#64748b;font-size:13px">Lade...</p></div>
   <div style="font-size:13.5px;font-weight:800;margin:16px 0 8px">🧰 Werkzeuge</div>
