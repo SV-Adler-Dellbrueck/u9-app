@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v543 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v544 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -57,7 +57,8 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 
 | Funktion | Was sie tut | Nutzen |
 |---|---|---|
-| **Kader** | Spieler anlegen und bearbeiten, Trikotnummer (eindeutig je aktivem Kind), **Trikotgröße** mit Vorschlagsliste und Zählzeile „x von y fehlen noch“, Foto, Kontakte, Foto-Freigabe. | Stammdaten an einem Ort, Datenschutz-Freigaben direkt am Kind. Beim Anprobieren sieht man, wen man noch nicht hat. |
+| **Kader** | Spieler anlegen und bearbeiten, Trikotnummer (eindeutig je aktivem Kind), Foto, Kontakte, Foto-Freigabe. | Stammdaten an einem Ort, Datenschutz-Freigaben direkt am Kind. |
+| **Ausstattung** | Was hat welches Kind von uns bekommen? Oben der Gegenstand — Trikotsatz (Trikot, kurze Hose, Stutzen), Präsentationsanzug, Spieltagsjacke —, darunter der Kader: ein Tipp setzt die Ausgabe auf heute, daneben stehen Größe und beim Trikotsatz die Satznummer. „↩︎ zurück“ vermerkt die Rückgabe. Weitere Gegenstände (Trinkflasche, Rucksack) legt das Trainerteam selbst an. Eltern sehen zum eigenen Kind, was es hat — ändern können sie es nicht. | Beim Anprobieren sieht man, wer noch fehlt; beim Vereinswechsel, was zurückkommt. Die Größe steht an genau einer Stelle. |
 | **Bewerten** | 16 Kriterien je Kind mit Live-Radar, Live-Profil und Förderplan. „Bewertungsrunde starten“ geht alle Kinder nacheinander durch. | Strukturierte Beobachtung statt Eindruck. Die Grundlage für Rollen, Missionen und Entwicklungsgespräche. |
 | **Profil & Entwicklung** | Spielerprofil, Stärken, Adler-Karte, Entwicklungs-Report zum Drucken; Entwicklung über die Zeit als Diagramm. | Für das Elterngespräch liegt alles vor – belegt statt behauptet. |
 | **Saison-Cockpit** | Torschützen, Anwesenheit, Rückmelde-Tempo der Familien, faire Einsätze, Eltern-Puls auf einen Blick. | Die Saison in Zahlen, ohne eine Tabelle pflegen zu müssen. |
@@ -96,7 +97,7 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 | **Tagebuch** | Trainertagebuch nach DFB-Basis-Coach: Auslöser, Beobachtung, Aha, Konsequenz, Frist. Entsteht direkt aus einer Nachbereitung oder frei. Monatsexport als Text. Persönliche Unterlage, nicht die des Teams. | Erfüllt die Anforderung der Trainerausbildung nebenbei – und macht die eigene Entwicklung sichtbar. |
 | **Pinnwand** | Team-Notizen fürs Trainerteam. | Kurze Absprachen, die nicht in einen Termin gehören. |
 | **Saisonstart-Check** | Sechs Schritte für den Übergang in die neue Saison: Wrapped, Urkunden, Kader, Trainings-Serie, Eltern-Einladung, Ansage. Erscheint Juni bis September. | Der Saisonwechsel wird nicht vergessen und läuft jedes Jahr gleich. |
-| **Fundbüro, Team-Ausrüstung** | Liegengebliebenes verwalten; wer welches Material hat, mit Export. | Kleinkram, der sonst per Chat gesucht wird. |
+| **Fundbüro** | Liegengebliebenes verwalten. | Kleinkram, der sonst per Chat gesucht wird. |
 | **Teamkasse** | Nur ein Link zur externen Kasse hinterlegt. Kein Geld in der App. | Bewusste Trennung: die App führt keine Konten. |
 | **Nutzung** | Welche Bereiche und Aktionen in den letzten 7, 30 oder 90 Tagen benutzt wurden – ohne Kindernamen. | Grundlage fürs Ausmisten: Was niemand nutzt, fliegt raus. |
 | **Backup** | Export aller Tabellen der App. | Datenhoheit beim Verein. |
@@ -118,7 +119,7 @@ Zugang per Link und Einmal-Code an die hinterlegte E-Mail-Adresse. Kein Passwort
 | **Team-Ansagen** | Wichtige Nachrichten vom Trainerteam, mit „Gelesen“ bestätigen. | Wichtiges geht in keiner Chat-Gruppe unter. |
 | **Liveticker** | Rote LIVE-Kachel, sobald der Ticker läuft. Teilbar per Link ohne Anmeldung. Nach drei Tagen nur noch der Endstand. | Großeltern und Fans sind dabei – ohne Zugang zur App. |
 | **Rückblick** | Zwei Wochen nach Spiel oder Turnier: was das eigene Kind an dem Tag gemacht hat (Einsätze, Rolle, Tore). Danach nur noch in der Saison-Statistik. | Gesprächsstoff am Abendbrottisch, kindgerecht und ohne Noten. |
-| **Sammelkarte, Technik-Abzeichen, Fan-Fakten** | Die Adler-Karte des Kindes mit Federn; Technik-Abzeichen werden zuhause abgehakt; kleine Fakten zum Kind. | Verbindet Zuhause und Training. Eltern üben mit, ohne Druck. |
+| **Sammelkarte, Technik-Abzeichen, Fan-Fakten** | Die Adler-Karte des Kindes mit Federn; Technik-Abzeichen werden zuhause abgehakt; kleine Fakten zum Kind (Spitzname, Lieblingsverein, Schuhgröße). Dort steht auch, was das Kind vom Verein erhalten hat — zum Nachlesen, nicht zum Ändern. | Verbindet Zuhause und Training. Eltern üben mit, ohne Druck, und wissen, was sie haben. |
 | **„Das kann dein Kind jetzt“** | Eine ruhige Karte auf der Eltern-Startseite: bis zu drei Dinge, die das Kind in den letzten Wochen erreicht hat – ein Entwicklungsziel geschafft oder ein neues Technik-Abzeichen. Keine Zahlen, keine Vergleiche. | Eltern sehen Fortschritt, ohne dass das Kind bewertet wird. Die Entwicklung wird sichtbar, ohne eine Rangliste zu erzeugen. |
 | **Skill der Woche** | Wöchentliche Technik-Challenge mit Video zum Nachmachen. | Zehn Minuten Ball im Garten – mit klarer Aufgabe. |
 | **Eltern-Puls & Stimmung** | Kurze Stimmungsabfrage nach Spielen und im Saisonverlauf. | Das Trainerteam merkt früh, wenn etwas nicht rund läuft. |
@@ -178,7 +179,7 @@ Die Kabine ist der Kinder-Modus innerhalb der Eltern-App. Eltern geben das Handy
 | **Push-Benachrichtigungen** | Erinnerungen an Termine, Ansagen und offene Rückmeldungen. | Weniger Nachfragen, höhere Rückmeldequote. |
 | **Offline-Fähigkeit** | Die App läuft ohne Netz weiter, Inhaltslisten haben einen lokalen Fallback. | Am Platz ohne Empfang bleibt alles bedienbar. |
 | **Sprach-Eingabe** | Notizen und Bewertungen lassen sich einsprechen. | Schneller als tippen mit kalten Fingern. |
-| **Backup & Export** | Vollständiger Datenexport, CSV für Ausrüstung, Markdown für das Tagebuch. | Keine Abhängigkeit, Datenhoheit beim Verein. |
+| **Backup & Export** | Vollständiger Datenexport, CSV für Material, Markdown für das Tagebuch. | Keine Abhängigkeit, Datenhoheit beim Verein. |
 | **Qualitätssicherung** | Automatisierte Prüfung jeder Version im echten Browser mit Attrappen-Daten. | Neue Funktionen brechen alte nicht – die App bleibt verlässlich. |
 
 ---
