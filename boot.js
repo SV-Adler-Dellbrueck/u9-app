@@ -2662,10 +2662,29 @@ async function tpPlanRestore(datum){
       if(s.kind!=null){const sel=document.getElementById(`tp-ind-player-${si}`); const n=(typeof kidName==="function"&&/^\d+$/.test(String(s.kind)))?kidName(s.kind):s.kind; if(sel&&n&&[...sel.options].some(o=>o.value===n)){sel.value=n; if(typeof tpIndPlayerChange==="function")tpIndPlayerChange(si);}}
     });
   }
-  const plan=await tpPlanLoad(datum); if(!plan||!plan.length)return;
+  const plan=await tpPlanLoad(datum);
   const allForms=tpAllForms();
   const sels=[...document.querySelectorAll(".tp-form-sel")];
   if(!sels.length)return;
+  /* v548: ERST LEEREN, dann einsetzen. tpRenderTimeline() merkt sich die gewählten Übungen
+     absichtlich über einen Neuzeichnen-Vorgang hinweg (Dauer ändern, Trainer wechseln) –
+     beim Wiederherstellen ist genau das falsch: der gespeicherte Plan ist die Wahrheit,
+     das Feld darf nichts zeigen, was nicht darin steht.
+
+     Was sonst passierte: ein Feld trug noch den alten Wert, der Eintrag fand in SEINER
+     Phase kein freies Feld mehr und rutschte über den Ausweg unten in eine fremde Phase.
+     Nachgestellt am 14.09.: nach dem zweiten Öffnen stand „Warm up Adler" zusätzlich im
+     Straßenfußball-Fenster, obwohl der Plan es dort nie nannte.
+
+     Bewusst ohne tpOnSelectChange: das Leeren ist kein Griff des Trainers und darf keine
+     Speicherung auslösen – sonst schriebe das Wiederherstellen den leeren Zwischenstand. */
+  sels.forEach(s=>{
+    if(!s.value)return;
+    s.value="";
+    const h=document.getElementById(s.id+"-hist"); if(h)h.innerHTML="";
+    if(typeof tpPickSync==="function")tpPickSync(s.id);
+  });
+  if(!plan||!plan.length)return;
   const belegt=new Set();
   plan.forEach(e=>{
     if(e.formIdx==null||!allForms[e.formIdx])return;
@@ -2701,9 +2720,14 @@ async function tpPlanRestore(datum){
       nur.forEach(setzen);
       return;
     }
-    const s=passend[0]||sels.find(x=>!belegt.has(x.id)&&!x.value);
-    if(!s)return;
-    setzen(s);
+    /* v548: Kein Ausweichen in eine fremde Phase mehr. Ein Eintrag nennt seine Phase über
+       `slotLabel`; ist dort kein Feld frei, gehört er nirgendwo anders hin. Der frühere
+       Ausweg auf „irgendein freies Feld" setzte die Übung in einen Block, für den sie nie
+       gedacht war – und nahm dem Eintrag, der dort hingehört, sein Feld weg. Genau so
+       blieb am 14.09. in „Stufe 1 – frei" das zweite Feld leer. Dieselbe Regel gilt seit
+       v537 schon für Stationen: kein Feld, kein Einsetzen. */
+    if(!passend.length)return;
+    setzen(passend[0]);
   });
 }
 /* Terminwahl des Trainingsplans: die nächsten sechs Trainings als Kacheln, je mit
