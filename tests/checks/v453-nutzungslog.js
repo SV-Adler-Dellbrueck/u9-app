@@ -16,7 +16,11 @@ module.exports = async function (h) {
   const posts = s.gesendet.filter(g => /\/nutzung_log$/.test(g.pfad) && g.methode === "POST");
   const rows = posts.flatMap(g => [].concat(g.body));
   const kurz = rows.map(r => `${r.ereignis}:${r.ziel}`);
-  const soll = ["bereich:anwesenheit", "kachel:training", "aktion:go:planung", "bereich:planung"];
+  /* v553: Die Kachel-Ebene ist eine Seite geworden. `kachelOpen` navigiert nur noch und
+     schreibt keinen eigenen Eintrag mehr – `go()` protokolliert denselben Tipp gleich
+     darauf als Bereich. Zwei Zeilen fuer einen Tipp haetten die Auswertung genau dort
+     verzerrt, wo am haeufigsten getippt wird. */
+  const soll = ["bereich:anwesenheit", "bereich:ue-training", "aktion:go:planung", "bereich:planung"];
   if (posts.length !== 1) probleme.push(`${posts.length} Schreibvorgaenge statt 1 (gebuendelt)`);
   if (JSON.stringify(kurz) !== JSON.stringify(soll)) probleme.push(`geschickt ${JSON.stringify(kurz)}, erwartet ${JSON.stringify(soll)}`);
   if (rows.some(r => r.rolle !== "trainer")) probleme.push("Rolle ist nicht trainer: " + JSON.stringify(rows.map(r => r.rolle)));

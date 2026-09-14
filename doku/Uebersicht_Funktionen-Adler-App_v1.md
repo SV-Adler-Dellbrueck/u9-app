@@ -10,7 +10,7 @@ Drei Leitgedanken ziehen sich durch alles: **Fairness vor Ergebnis**, **kindgere
 
 ## 1 · Trainer-App
 
-Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anmeldung. Die Oberfläche ist in sechs Kacheln gegliedert – Training, Spieltag, Team, Taktik, Eltern & Kinder, Orga. Darüber liegt die Startseite.
+Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anmeldung. Die Oberfläche ist in sechs Kacheln gegliedert – Training, Spieltag, Team, Taktik, Eltern & Kinder, Orga. Darüber liegt die Startseite. Jeder Bereich beginnt bei seinen Kacheln: die untere Leiste und der Weg über die Startseite führen auf dieselbe Seite, von dort geht es ins Detail, und die Reiterzeile oben führt zurück zur Übersicht.
 
 ### 1.1 Startseite
 
