@@ -11,7 +11,110 @@ let tbField=[];
 let tbBench=[];
 let tbBall={x:50,y:50};
 
+/* ═══ v558 – BILDER AUF DEM BOARD ═══
+   Dieselbe Idee wie bei den Übungsskizzen, nur auf dem Taktikboard: eine Spielsituation
+   hat einen Vorher- und einen Nachher-Moment. Bisher ließ sich nur einer zeigen.
+
+   Gespeichert wird das Board bereits als Positionsliste in Prozent (`ttSnapshot`) –
+   ein Bild ist also nichts anderes als eine Kopie davon. Abgespielt wird über
+   `transition` auf `left` und `top`; die Spielsteine liegen ohnehin absolut im Feld,
+   es wird nichts neu gezeichnet. */
+let tbBilder=[];          // [{field:[…], ball:{x,y}}] – Bild 1 ist immer der aktuelle Stand
+let tbBildNr=0;
+let tbLauft=false, tbUhr=null;
+function _tbStand(){ return {field:tbField.map(p=>({...p})),ball:{...tbBall}}; }
+function _tbSichern(){ if(tbBilder.length)tbBilder[tbBildNr]=_tbStand(); }
+function _tbHolen(i){
+  const b=tbBilder[i]; if(!b)return;
+  tbField=b.field.map(p=>({...p})); tbBall={...b.ball};
+}
+function taktikBildNeu(){
+  if(!tbField.length){ toast("Erst eine Aufstellung aufs Feld stellen","err"); return; }
+  const max=(typeof SKZ_SCHRITTE_MAX!=="undefined")?SKZ_SCHRITTE_MAX:6;
+  if(!tbBilder.length)tbBilder=[_tbStand()];
+  else _tbSichern();
+  if(tbBilder.length>max){ toast("Mehr als "+(max+1)+" Bilder werden unübersichtlich","info"); return; }
+  tbBilder.splice(tbBildNr+1,0,_tbStand());
+  tbBildNr++;
+  taktikRender();
+  toast("Bild "+(tbBildNr+1)+" angelegt – jetzt verschieben, was sich bewegt");
+}
+function taktikBildWahl(i){
+  if(tbLauft)taktikAbspielenStopp();
+  if(!tbBilder.length)return;
+  _tbSichern();
+  tbBildNr=Math.max(0,Math.min(tbBilder.length-1,Number(i)||0));
+  _tbHolen(tbBildNr);
+  taktikRender();
+}
+function taktikBildWeg(){
+  if(!tbBilder.length||tbBildNr<1)return;
+  tbBilder.splice(tbBildNr,1);
+  tbBildNr=Math.min(tbBildNr-1,tbBilder.length-1);
+  if(tbBilder.length<2)tbBilder=[];
+  if(tbBilder.length)_tbHolen(tbBildNr);
+  taktikRender();
+}
+function taktikAbspielenStopp(){
+  tbLauft=false;
+  if(tbUhr){ clearTimeout(tbUhr); tbUhr=null; }
+  document.querySelectorAll("#taktik-tokens .tb-token,#taktik-tokens .tb-ball").forEach(t=>{ t.style.transition=""; });
+  taktikBildLeiste();
+}
+function taktikAbspielen(){
+  if(tbLauft){ taktikAbspielenStopp(); return; }
+  if(tbBilder.length<2){ toast("Erst ein zweites Bild anlegen","info"); return; }
+  _tbSichern();
+  tbLauft=true; tbBildNr=0; _tbHolen(0); taktikRender();
+  const sanft=(typeof _skzSanft==="function")?_skzSanft():true;
+  const gleit=(typeof SKZ_GLEIT!=="undefined")?SKZ_GLEIT:800;
+  const stand=(typeof SKZ_STAND!=="undefined")?SKZ_STAND:600;
+  const weiter=()=>{
+    if(!tbLauft)return;
+    if(tbBildNr>=tbBilder.length-1){ taktikAbspielenStopp(); return; }
+    tbBildNr++;
+    if(sanft){
+      /* Die Steine liegen absolut in Prozent – ein Übergang auf left/top genügt,
+         nichts wird neu gebaut. */
+      document.querySelectorAll("#taktik-tokens .tb-token,#taktik-tokens .tb-ball").forEach(t=>{
+        t.style.transition="left "+gleit+"ms ease-in-out, top "+gleit+"ms ease-in-out";
+      });
+      _tbHolen(tbBildNr);
+      const b=tbBilder[tbBildNr];
+      [...document.querySelectorAll('#taktik-tokens .tb-token')].forEach((el,i)=>{
+        const p=b.field[i]; if(!p)return; el.style.left=p.x+"%"; el.style.top=p.y+"%";
+      });
+      const ball=document.querySelector("#taktik-tokens .tb-ball");
+      if(ball){ ball.style.left=b.ball.x+"%"; ball.style.top=b.ball.y+"%"; }
+      tbUhr=setTimeout(weiter,gleit+stand);
+    }else{
+      _tbHolen(tbBildNr); taktikRender();
+      tbUhr=setTimeout(weiter,(typeof SKZ_SCHNITT!=="undefined")?SKZ_SCHNITT:1400);
+    }
+    taktikBildLeiste();
+  };
+  taktikBildLeiste();
+  tbUhr=setTimeout(weiter,stand);
+}
+/* Die Leiste steht unter dem Board. Ohne zweites Bild zeigt sie nur „+ Bild“ – wer sie
+   nicht braucht, sieht also fast nichts davon. */
+function taktikBildLeiste(){
+  const box=document.getElementById("taktik-bilder"); if(!box)return;
+  const n=tbBilder.length;
+  let aus="";
+  for(let i=0;i<n;i++){
+    const an=tbBildNr===i;
+    aus+='<button type="button" class="btn btn-sm'+(an?" btn-p":"")+'" onclick="taktikBildWahl('+i+')" aria-pressed="'+(an?"true":"false")+'">Bild '+(i+1)+'</button>';
+  }
+  aus+='<button type="button" class="btn btn-sm" onclick="taktikBildNeu()"><i class="ti ti-plus"></i>Bild</button>';
+  if(n>1){
+    aus+='<button type="button" class="btn btn-sm" onclick="taktikAbspielen()">'+(tbLauft?"⏸ Anhalten":"▶ Abspielen")+'</button>';
+    if(tbBildNr>0)aus+='<button type="button" class="btn btn-sm" onclick="taktikBildWeg()"><i class="ti ti-trash"></i>Bild weg</button>';
+  }
+  box.innerHTML=aus;
+}
 function taktikSetup(mode){
+  tbBilder=[]; tbBildNr=0; if(tbLauft)taktikAbspielenStopp();
   const names=kaderNamen();   // v510: nur Kinder, die noch dabei sind
   if(mode==="leer"){
     tbField=[];tbBench=[...names];tbBall={x:50,y:50};
@@ -134,6 +237,7 @@ function taktikShareBild(){
 }
 
 function taktikRender(){
+  taktikBildLeiste();
   const fieldEl=document.getElementById("taktik-field");
   const benchEl=document.getElementById("taktik-bench");
   if(!fieldEl||!benchEl)return;

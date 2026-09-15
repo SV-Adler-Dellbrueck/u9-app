@@ -13,12 +13,22 @@ function ttSnapshot(){
     mode:s.mode,
     points:s.points.filter((_,i)=>i%3===0||i===s.points.length-1).map(p=>[+(p.x/w).toFixed(4),+(p.y/h).toFixed(4)])
   }));
-  return {
+  const rund=p=>({name:p.name,x:Math.round(p.x*10)/10,y:Math.round(p.y*10)/10,cls:p.cls,role:p.role});
+  const schnapp={
     formation:tbFormation,
-    field:tbField.map(p=>({name:p.name,x:Math.round(p.x*10)/10,y:Math.round(p.y*10)/10,cls:p.cls,role:p.role})),
+    field:tbField.map(rund),
     ball:{x:Math.round(tbBall.x*10)/10,y:Math.round(tbBall.y*10)/10},
     strokes
   };
+  /* v558: Hat das Board mehrere Bilder, reisen sie mit. Ein Eintrag ohne „schritte“
+     bleibt unverändert gültig und lädt wie bisher. */
+  if(typeof tbBilder!=="undefined"&&tbBilder.length>1){
+    if(typeof _tbSichern==="function")_tbSichern();
+    schnapp.field=tbBilder[0].field.map(rund);
+    schnapp.ball={x:Math.round(tbBilder[0].ball.x*10)/10,y:Math.round(tbBilder[0].ball.y*10)/10};
+    schnapp.schritte=tbBilder.slice(1).map(b=>({field:b.field.map(rund),ball:{x:Math.round(b.ball.x*10)/10,y:Math.round(b.ball.y*10)/10}}));
+  }
+  return schnapp;
 }
 async function ttSave(){
   if(!tbField||!tbField.length){toast("Erst eine Aufstellung aufs Feld stellen","err");return;}
@@ -82,6 +92,12 @@ async function ttLoad(id){
   const used=new Set(tbField.map(f=>f.name));
   tbBench=kaderNamen().filter(n=>!used.has(n));
   tbBall=d.ball?{...d.ball}:{x:50,y:50};
+  if(typeof tbBilder!=="undefined"){
+    tbBilder=(d.schritte&&d.schritte.length)
+      ? [{field:tbField.map(p=>({...p})),ball:{...tbBall}}].concat(d.schritte.map(b=>({field:(b.field||[]).map(p=>({...p})),ball:b.ball?{...b.ball}:{x:50,y:50}})))
+      : [];
+    tbBildNr=0;
+  }
   taktikRender();
   // Strokes: Zeichenmodus aktivieren, Canvas dimensionieren, dann 0..1 -> Pixel
   if(d.strokes&&d.strokes.length){

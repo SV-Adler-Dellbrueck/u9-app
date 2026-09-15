@@ -3716,6 +3716,25 @@ function _skzBild(spec,n){
   }
   return aus;
 }
+/* v558 – Zwischenbild für das Abspielen. Aus zwei fertigen Bildern entsteht der Stand
+   dazwischen: Spieler und Ball wandern, alles andere kommt aus dem ersten der beiden.
+   Die Pfeile bleiben also stehen, solange die Bewegung läuft, und wechseln erst mit dem
+   Ankommen – so sieht man, WAS gerade passiert, während es passiert.
+   Bei t = 0 entsteht Zeichen für Zeichen dasselbe wie ohne Überblendung. */
+function _skzZwischen(a,b,t){
+  if(!a)return b; if(!b)return a;
+  const f=Math.max(0,Math.min(1,Number(t)||0));
+  const rund=v=>Math.round(v*10)/10;
+  const misch=(x,y)=>(x||[]).map((e,i)=>{
+    const z=(y||[])[i];
+    if(!z||!Array.isArray(e))return e;
+    const k=e.slice();
+    k[0]=rund(e[0]+(z[0]-e[0])*f);
+    k[1]=rund(e[1]+(z[1]-e[1])*f);
+    return k;
+  });
+  return Object.assign({},a,{s:misch(a.s,b.s),b:misch(a.b,b.b)});
+}
 function _skz(o,opt){
   if(opt&&opt.bild)o=_skzBild(o,opt.bild);
   const P=skzPalette(opt&&opt.hell), F=P.F, M=P.marke;
