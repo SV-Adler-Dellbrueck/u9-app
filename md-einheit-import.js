@@ -91,7 +91,7 @@ const EI_KAT_LABEL={aufwaermen:"Aufwärmen",raute:"Raute",passspiel:"Passspiel",
    KEINE tiefe Prüfung: unbekannte Listen überliest der Zeichner ohnehin. Geprüft wird nur,
    dass keine Liste etwas anderes als eine Liste ist – `(o.z||[]).forEach` wirft sonst,
    und ein geworfener Fehler beim Zeichnen risse die ganze Übung mit. */
-const EI_SKZ_LISTEN=["z","tor","leiter","wand","p","li","h","s","b","tx","schritte"];   // v517: „li“ = Mittellinie und Schusszone · v557: „schritte“
+const EI_SKZ_LISTEN=["z","tor","leiter","wand","p","li","h","s","b","tx","schritte","ger","dtor","kr"];   // v517: „li“ = Mittellinie und Schusszone · v557: „schritte“ · v559: Geräte, Dribbeltore, Kreiszone
 /* v557: Für die Schritte reicht „ist eine Liste“ nicht mehr. Ein Schritt, der einen
    Spieler zu viel oder eine Farbe anders nennt, zeichnet zwar – aber dann läuft im
    nächsten Bild ein anderes Kind, ohne dass es jemand merkt, und das Überblenden in
@@ -122,6 +122,8 @@ function _eiSkizzeFehler(x){
         if(((sp||[])[3]||"")!==(b[3]||""))f.push(`Bild ${nr}, Spieler ${j+1}: Kürzel „${(sp||[])[3]||""}“ statt „${b[3]||""}“`);
       });
     }
+    /* v559: Geräte gehören zum Aufbau und damit in Bild 1 – das prüft bereits die
+       Schlüsselliste oben, weil „ger“, „dtor“ und „kr“ nicht beweglich sind. */
     if(Array.isArray(st.b)&&st.b.length!==basisB.length)
       f.push(`Bild ${nr}: ${st.b.length} Bälle statt ${basisB.length}`);
   });

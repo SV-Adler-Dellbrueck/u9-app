@@ -144,10 +144,14 @@ module.exports = async function (h) {
   });
   ["Pass", "Laufweg", "Schuss", "Dribbling"].forEach(w => { if (!farben.legende.includes(w)) probleme.push(`In der Legende fehlt „${w}“`); });
 
+  /* Gesucht ist, DASS beide Stellen die Legende zeichnen – nicht, mit welchen Argumenten.
+     Seit v555 nimmt sie die Rasenvariante entgegen und seit v559 die Beschreibung, damit
+     die Geräte-Symbole mitkommen; auf den leeren Klammern zu bestehen hieße, jede
+     Erweiterung als Fehler zu melden. */
   const ei = fs.readFileSync(path.join(h.REPO, "md-einheit-import.js"), "utf8");
-  if (!/skzLegende\(\)/.test(ei)) probleme.push("Die Vorschau des Übungs-Imports zeigt keine Strich-Legende");
+  if (!/skzLegende\(/.test(ei)) probleme.push("Die Vorschau des Übungs-Imports zeigt keine Strich-Legende");
   const skz = fs.readFileSync(path.join(h.REPO, "md-skizze.js"), "utf8");
-  if (!/skzLegende\(\)/.test(skz)) probleme.push("Der Skizzen-Editor zeigt keine Strich-Legende");
+  if (!/skzLegende\(/.test(skz)) probleme.push("Der Skizzen-Editor zeigt keine Strich-Legende");
   const cl = fs.readFileSync(path.join(h.REPO, "CLAUDE.md"), "utf8");
   if (!/gemeint ist die Laufzeit/i.test(cl)) probleme.push("CLAUDE.md sagt nicht, dass die SQL-Regel die Laufzeit meint");
   if (!/uebungen\/bibliothek\.json/.test(cl)) probleme.push("CLAUDE.md erwähnt die Bibliothek und ihre Cache-Ausnahme nicht");

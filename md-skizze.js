@@ -121,6 +121,15 @@ const SKZ_WERK=[
   {id:"mittellinie",emo:"┃",lbl:"Mittellinie",feld:"li", zwei:true, typ:"m"},
   {id:"schusszone",emo:"┊",lbl:"Schusszone",feld:"li", zwei:true, typ:"sz"},
   {id:"zone",   emo:"⬛", lbl:"Zone",     feld:"z", zwei:true},
+  /* v559 – Geräte aus den vierzig Vorlagen des Verbands. Das Dribbeltor braucht zwei
+     Tipps wie eine Zone: der Abstand IST das Tor. */
+  {id:"stangentor",emo:"⛳", lbl:"Stangentor",feld:"dtor", zwei:true, typ:"s"},
+  {id:"huetchentor",emo:"⛳",lbl:"Hütchentor",feld:"dtor", zwei:true, typ:"h"},
+  {id:"stange", emo:"🚩", lbl:"Stange",   feld:"ger", typ:"stange"},
+  {id:"teller", emo:"🟡", lbl:"Teller",   feld:"ger", typ:"teller"},
+  {id:"huerde", emo:"🚧", lbl:"Hürde",    feld:"ger", typ:"huerde"},
+  {id:"depot",  emo:"🧺", lbl:"Bälle",    feld:"ger", typ:"depot"},
+  {id:"kreis",  emo:"⭕", lbl:"Kreis",    feld:"kr", zwei:true},
   {id:"leiter", emo:"🪜", lbl:"Leiter",   feld:"leiter"},
   {id:"pass",   emo:"➡️", lbl:"Pass",     feld:"p", zwei:true, typ:"p"},
   {id:"lauf",   emo:"⤳",  lbl:"Laufweg",  feld:"p", zwei:true, typ:"l"},
@@ -141,7 +150,7 @@ function _skzAktuell(){ return _skzBildNr>0?(_skzSchritte()[_skzBildNr-1]||{}):_
 function _skzSicht(){ return _skzBildNr>0?_skzBild(_skzSpec,_skzBildNr):_skzSpec; }
 function _skzBeweglich(f){ return (typeof SKZ_BEWEGLICH!=="undefined"?SKZ_BEWEGLICH:["s","b","p","tx"]).includes(f); }
 
-function _skzLeer(){ return {z:[],tor:[],leiter:[],wand:[],p:[],li:[],h:[],s:[],b:[],tx:[]}; }
+function _skzLeer(){ return {z:[],kr:[],tor:[],dtor:[],leiter:[],wand:[],ger:[],p:[],li:[],h:[],s:[],b:[],tx:[]}; }
 function _skzKopie(o){ try{return JSON.parse(JSON.stringify(o||{}));}catch(e){return _skzLeer();} }
 function _skzMerken(){ _skzVerlauf.push(_skzKopie(_skzSpec)); if(_skzVerlauf.length>40)_skzVerlauf.shift(); }
 /* Die Liste, in die geschrieben wird. In einem Schritt wird sie beim ersten Zugriff aus
@@ -163,12 +172,14 @@ function _skzWerkzeug(id){ return SKZ_WERK.find(w=>w.id===(id||_skzWerk))||SKZ_W
 function _skzAnker(feld,e){
   if(feld==="p"||feld==="li")return [e[0],e[1]];   // v517: Linien wie Pfeile am Anfangspunkt fassen
   if(feld==="z")return [e[0]+e[2]/2,e[1]+e[3]/2];
+  if(feld==="kr")return [e[0],e[1]];               // v559: Mittelpunkt
+  if(feld==="dtor")return [e[0]+((e[3]==="v")?0:(e[2]||20)/2),e[1]+((e[3]==="v")?(e[2]||20)/2:0)];
   if(feld==="tor")return [e[0]+((e[2]==="v")?3:(e[3]||24)/2),e[1]+((e[2]==="v")?(e[3]||24)/2:3)];
   if(feld==="leiter")return [e[0]+(e[3]==="v"?8:e[2]/2),e[1]+(e[3]==="v"?e[2]/2:8)];
   return [e[0],e[1]];
 }
 function _skzTreffer(x,y){
-  const felder=["s","h","b","tx","tor","leiter","p","li","z"];  // kleine Dinge zuerst
+  const felder=["s","h","ger","b","tx","tor","dtor","leiter","p","li","kr","z"];  // kleine Dinge zuerst
   let best=null, bd=18;
   const sicht=_skzSicht();
   felder.forEach(f=>(sicht[f]||[]).forEach((e,i)=>{
@@ -199,7 +210,7 @@ function skzSpeichern(){
      und Schusszone besteht, als leer gegolten und wäre beim Speichern verworfen worden –
      dieselbe Falle wie der Versatz in v514: wer ein Feld hinzufügt, muss auch die Stelle
      nachziehen, die entscheidet, ob überhaupt etwas da ist. */
-  const leer=["s","h","b","tor","z","p","li","leiter","tx"].every(f=>!(_skzSpec[f]||[]).length);
+  const leer=["s","h","b","tor","z","p","li","leiter","tx","ger","dtor","kr"].every(f=>!(_skzSpec[f]||[]).length);
   /* Eine leere Schrittliste ist kein Schritt – sie würde nur als Feld mitreisen. */
   if(Array.isArray(_skzSpec.schritte)&&!_skzSpec.schritte.length)delete _skzSpec.schritte;
   const cb=_skzCb;
@@ -240,6 +251,18 @@ function skzBuehneDown(ev){
       const x1=Math.min(sx,x),y1=Math.min(sy,y),bw=Math.abs(x-sx),bh=Math.abs(y-sy);
       if(bw<12||bh<12){toast("Zone zu klein – zweiten Punkt weiter weg tippen","info");skzEditorZeichnen();return;}
       _skzListe("z").push([x1,y1,bw,bh]);
+    }else if(w.feld==="kr"){
+      const r=Math.round(Math.hypot(x-sx,y-sy));
+      if(r<10){toast("Kreis zu klein – zweiten Punkt weiter weg tippen","info");skzEditorZeichnen();return;}
+      _skzListe("kr").push([sx,sy,r]);
+    }else if(w.feld==="dtor"){
+      /* Das Tor steht waagerecht oder senkrecht – was näher liegt, gewinnt. Ein schräges
+         Dribbeltor gibt es auf dem Platz nicht, und schräg gezeichnet läse es sich als
+         Laufweg. */
+      const dx=Math.abs(x-sx), dy=Math.abs(y-sy);
+      const senkrecht=dy>dx, breite=Math.round(senkrecht?dy:dx);
+      if(breite<12){toast("Tor zu schmal – zweiten Punkt weiter weg tippen","info");skzEditorZeichnen();return;}
+      _skzListe("dtor").push([senkrecht?sx:Math.min(sx,x),senkrecht?Math.min(sy,y):sy,breite,senkrecht?"v":"h",w.typ,_skzFarbe]);
     }else{
       if(Math.hypot(x-sx,y-sy)<12){toast("Zu kurz – zweiten Punkt weiter weg tippen","info");skzEditorZeichnen();return;}
       _skzListe(w.feld).push([sx,sy,x,y,w.typ]);   // v517: „p“ und „li“ haben dieselbe Form
@@ -264,6 +287,7 @@ function skzBuehneDown(ev){
     else if(x>230)  _skzListe("tor").push([276-tief, Math.min(y,176-breit),"v",breit].concat(j?["j"]:[]));
     else            _skzListe("tor").push([Math.min(x,276-breit), y,        "h",breit].concat(j?["j"]:[]));
   }
+  else if(w.feld==="ger")_skzListe("ger").push([x,y,w.typ,_skzFarbe]);
   else if(w.feld==="leiter")_skzListe("leiter").push([x,y,60,"h"]);
   else if(w.feld==="tx"){
     const t=(document.getElementById("skz-text")?.value||"").trim();
@@ -283,7 +307,7 @@ function skzEditorZeichnen(){
   const bl=document.getElementById("skz-bildleiste");
   if(bl)bl.innerHTML=skzBildLeiste();
   const leg=document.getElementById("skz-legende");
-  if(leg&&!leg.innerHTML&&typeof skzLegende==="function")leg.innerHTML=skzLegende();
+  if(leg&&typeof skzLegende==="function")leg.innerHTML=skzLegende(false,_skzSpec);
   b.innerHTML=(typeof _skz==="function")?_skz(_skzSicht()):"";
   const svg=b.querySelector("svg");
   if(svg){ svg.style.margin="0"; svg.style.maxWidth="100%"; svg.style.width="100%"; svg.style.height="100%"; svg.style.pointerEvents="none"; }
@@ -312,7 +336,7 @@ function skzEditorZeichnen(){
   });
   const fz=document.getElementById("skz-farbzeile");
   if(fz){
-    fz.style.display=(w.feld==="s"||w.feld==="h")?"flex":"none";
+    fz.style.display=(w.feld==="s"||w.feld==="h"||w.feld==="ger"||w.feld==="dtor")?"flex":"none";
     fz.querySelectorAll("button").forEach(x=>{
       const an=x.dataset.farbe===_skzFarbe;
       x.style.outline=an?"3px solid var(--blue)":"none"; x.setAttribute("aria-pressed",an?"true":"false");
@@ -329,6 +353,8 @@ function skzEditorZeichnen(){
   else if(hw)hw.textContent=w.id==="move"?"Element antippen und ziehen."
     :w.id==="del"?"Element antippen, das weg soll."
     :w.feld==="tor"?"Am linken oder rechten Rand tippen: das Tor steht hochkant und bündig. Sonst quer."
+    :w.feld==="dtor"?(_skzStart?"Jetzt die andere Seite des Tors tippen.":"Einen Pfosten tippen, dann den anderen – der Abstand ist die Torbreite.")
+    :w.feld==="kr"?(_skzStart?"Jetzt den Rand des Kreises tippen.":"Mittelpunkt tippen, dann den Rand.")
     :w.feld==="li"?(_skzStart?"Jetzt den Endpunkt tippen.":"Startpunkt tippen, dann Endpunkt – die Linie läuft quer über den Platz.")
     :w.zwei?(_skzStart?"Jetzt den Endpunkt tippen.":"Startpunkt tippen, dann Endpunkt.")
     :"Auf den Platz tippen, um „"+w.lbl+"“ zu setzen.";
@@ -654,7 +680,7 @@ function _skzGrZeichnen(){
   if(svg){ svg.removeAttribute("style"); svg.setAttribute("width","100%"); svg.setAttribute("height","100%");
     svg.style.cssText="display:block;width:100%;height:100%;border-radius:8px"; svg.style.pointerEvents="none"; }
   const leg=document.getElementById("skz-gross-legende");
-  if(leg&&typeof skzLegende==="function")leg.innerHTML=skzLegende(_skzGr.hell);
+  if(leg&&typeof skzLegende==="function")leg.innerHTML=skzLegende(_skzGr.hell,_skzGr.spec);
   const u=document.getElementById("skz-gross-hell");
   if(u){ u.innerHTML=_skzGr.hell?"🌙 Dunkler Rasen":"☀️ Heller Rasen";
     u.setAttribute("aria-pressed",_skzGr.hell?"true":"false"); }

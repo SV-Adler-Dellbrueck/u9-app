@@ -3743,6 +3743,9 @@ function _skz(o,opt){
     '<rect x="4" y="4" width="272" height="172" rx="3" fill="none" stroke="'+P.innen+'" stroke-width="1"/>',
     '<defs>'+Object.keys(P.pfeil).map(t=>'<marker id="'+M+t+'" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="'+P.pfeil[t]+'"/></marker>').join('')+'</defs>'];
   (o.z||[]).forEach(z=>S.push('<rect x="'+z[0]+'" y="'+z[1]+'" width="'+z[2]+'" height="'+z[3]+'" rx="3" fill="'+P.zoneF+'" stroke="'+P.zoneS+'" stroke-width="1.5" stroke-dasharray="6,3"/>'));
+  /* v559: Kreis-Zone. „Den Mittelkreis als Feld nutzen" steht so in den Vorlagen des
+     Verbands; mit Rechtecken allein ließ sich das nicht zeichnen. */
+  (o.kr||[]).forEach(k=>S.push('<circle cx="'+k[0]+'" cy="'+k[1]+'" r="'+k[2]+'" fill="'+P.zoneF+'" stroke="'+P.zoneS+'" stroke-width="1.5" stroke-dasharray="6,3"/>'));
   /* v517: Linien – nach den Zonen, vor den Toren. „m“ Mittellinie durchgezogen weiß,
      „sz“ Schusszone gestrichelt gelb: Muster UND Farbe unterscheiden sie, wie bei den
      Pfeilen seit v512. Wer nur eins von beidem sieht, erkennt sie trotzdem. */
@@ -3763,6 +3766,42 @@ function _skz(o,opt){
     for(let i=1;i<n;i++)S.push(l[3]==='v'
       ?'<line x1="'+l[0]+'" y1="'+(l[1]+i*st)+'" x2="'+(l[0]+16)+'" y2="'+(l[1]+i*st)+'" stroke="'+P.leiter+'" stroke-width="1.5"/>'
       :'<line x1="'+(l[0]+i*st)+'" y1="'+l[1]+'" x2="'+(l[0]+i*st)+'" y2="'+(l[1]+16)+'" stroke="'+P.leiter+'" stroke-width="1.5"/>');});
+  /* v559 – DRIBBELTORE. In den vierzig Beispielen des Verbands ist das Tor zum
+     Durchdribbeln der häufigste Aufbau nach dem Minitor: „4 Stangentore markieren",
+     „ein 5 Meter breites Hütchentor errichten", „8 Stangentore". Zwei einzeln gesetzte
+     Hütchen sahen bisher aus wie zwei Hütchen – die gestrichelte Verbindung macht daraus
+     ein Ziel. `[x, y, breite, "h"|"v", "s"|"h", farbe]`: „s" steht auf Stangen, „h" auf
+     Hütchen. */
+  (o.dtor||[]).forEach(d=>{
+    const x=d[0], y=d[1], w=d[2]||20, v=d[3]==='v', stangen=d[4]!=='h', c=F[d[5]]||F.y;
+    const bx=v?x:x+w, by=v?y+w:y;
+    S.push('<line x1="'+x+'" y1="'+y+'" x2="'+bx+'" y2="'+by+'" stroke="'+P.zoneS+'" stroke-width="1.2" stroke-dasharray="3,3"/>');
+    [[x,y],[bx,by]].forEach(q=>{
+      if(stangen)S.push('<circle cx="'+q[0]+'" cy="'+q[1]+'" r="4" fill="none" stroke="'+c+'" stroke-width="2.5"/>');
+      else S.push('<path d="M'+q[0]+' '+(q[1]-6)+' L'+(q[0]+5)+' '+(q[1]+4)+' L'+(q[0]-5)+' '+(q[1]+4)+' Z" fill="'+c+'" stroke="'+P.huetchenRand+'" stroke-width="1"/>');
+    });
+  });
+  /* v559 – GERÄTE. Eine Liste statt vier, damit ein weiteres Gerät später eine neue Art
+     ist und kein neues Feld: `[x, y, art, farbe]`. Von oben gesehen ist eine Stange ein
+     Ring, ein Markierungsteller eine flache Scheibe, eine Minihürde ein Balken mit zwei
+     Füßen, ein Balldepot ein Häufchen Bälle. Eine unbekannte Art wird übergangen – so
+     zeichnet eine ältere Fassung der App eine neuere Beschreibung ohne Bruch. */
+  (o.ger||[]).forEach(g=>{
+    const x=g[0], y=g[1], art=String(g[2]||'stange'), c=F[g[3]]||F.y;
+    if(art==='stange'){
+      S.push('<circle cx="'+x+'" cy="'+y+'" r="4" fill="none" stroke="'+c+'" stroke-width="2.5"/>');
+      S.push('<circle cx="'+x+'" cy="'+y+'" r="1.2" fill="'+c+'"/>');
+    }else if(art==='teller'){
+      S.push('<ellipse cx="'+x+'" cy="'+y+'" rx="5.5" ry="3" fill="'+c+'" stroke="'+P.huetchenRand+'" stroke-width="1"/>');
+    }else if(art==='huerde'){
+      S.push('<rect x="'+(x-7)+'" y="'+(y-3.5)+'" width="14" height="3.5" rx="1" fill="'+c+'" stroke="'+P.huetchenRand+'" stroke-width="0.8"/>');
+      S.push('<line x1="'+(x-6)+'" y1="'+y+'" x2="'+(x-6)+'" y2="'+(y+4)+'" stroke="'+c+'" stroke-width="1.5"/>');
+      S.push('<line x1="'+(x+6)+'" y1="'+y+'" x2="'+(x+6)+'" y2="'+(y+4)+'" stroke="'+c+'" stroke-width="1.5"/>');
+    }else if(art==='depot'){
+      [[0,-3],[-3.5,2],[3.5,2]].forEach(t=>S.push('<circle cx="'+(x+t[0])+'" cy="'+(y+t[1])+'" r="2.6" fill="'+P.ball+'" stroke="'+P.ballRand+'" stroke-width="0.8"/>'));
+      S.push('<path d="M'+(x-8)+','+(y+5.5)+' Q'+x+','+(y+10)+' '+(x+8)+','+(y+5.5)+'" fill="none" stroke="'+P.text+'" stroke-width="1.2"/>');
+    }
+  });
   (o.wand||[]).forEach(w=>S.push('<line x1="'+w[0]+'" y1="'+w[1]+'" x2="'+w[2]+'" y2="'+w[3]+'" stroke="'+P.wand+'" stroke-width="5" stroke-linecap="round"/>'));
   (o.p||[]).forEach(p=>{const typ=P.pfeil[p[4]]?p[4]:'p';
     S.push('<line x1="'+p[0]+'" y1="'+p[1]+'" x2="'+p[2]+'" y2="'+p[3]+'" stroke="'+P.pfeil[typ]+'" stroke-width="'+(typ==='s'?3:1.5)+'"'+(typ==='l'?' stroke-dasharray="5,3"':typ==='d'?' stroke-dasharray="2,3"':'')+' marker-end="url(#'+M+typ+')"/>');});
@@ -3776,7 +3815,11 @@ function _skz(o,opt){
 /* Einheitliche Linien-Legende (PO): erscheint unter jeder Skizze im Detail-Fenster.
    Muss zu den Pfeil-Typen in _skz passen: p=Pass (dünn durchgezogen), l=Laufweg
    (gestrichelt), s=Schuss (dick), d=Dribbling (gepunktet). */
-function skzLegende(hell){
+/* v559: Was für Geräte in einer Zeichnung steckt, steht in der Legende – aber nur, was
+   wirklich vorkommt. Eine Legende, die immer alles zeigt, erklärt am Ende nichts mehr. */
+const SKZ_GER_NAME={stange:"Stange",teller:"Markierungsteller",huerde:"Minihürde",depot:"Balldepot"};
+function _skzGerProbe(art){ return {ger:[[16,9,art,"y"]]}; }
+function skzLegende(hell,spec){
   /* v512: Die Strichprobe steht auf einem Stück Rasen – sonst wäre der weiße Pass-Pfeil
      auf hellem Grund unsichtbar, und die Farben stimmten nicht mit der Zeichnung überein.
      v555: Der Rasen der Legende folgt der Variante, sonst zeigte sie im hellen Bild
@@ -3793,7 +3836,93 @@ function skzLegende(hell){
   return '<div class="skz-legende" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:10px;color:var(--text2);margin:2px 0 8px">'
     +it(li('',1.5,P2.p),SKZ_PFEIL_NAME.p)+it(li('5,3',1.5,P2.l),SKZ_PFEIL_NAME.l)
     +it(li('',3,P2.s),SKZ_PFEIL_NAME.s)+it(li('2,3',1.5,P2.d),SKZ_PFEIL_NAME.d)
-    +it(st('5,4',P.sz),'Schusszone')+it(st('',P.mittel),'Mittellinie')+'</div>';
+    +it(st('5,4',P.sz),'Schusszone')+it(st('',P.mittel),'Mittellinie')
+    +_skzGerLegende(spec,hell)+'</div>';
+}
+/* Die Geräte-Einträge der Legende. Gezeichnet wird jedes Symbol mit demselben Code wie
+   auf dem Platz – ein abgetipptes Legendensymbol liefe früher oder später auseinander. */
+function _skzGerLegende(spec,hell){
+  if(!spec||typeof spec!=="object")return "";
+  const arten=[];
+  (spec.ger||[]).forEach(g=>{ const a=String(g[2]||"stange"); if(SKZ_GER_NAME[a]&&!arten.includes(a))arten.push(a); });
+  const tore=[];
+  (spec.dtor||[]).forEach(d=>{ const n=(d[4]==="h")?"Hütchentor":"Stangentor"; if(!tore.includes(n))tore.push(n); });
+  if(!arten.length&&!tore.length)return "";
+  const kasten=inhalt=>'<svg width="32" height="18" viewBox="0 0 32 18" style="flex:none;background:'+skzPalette(hell).rasen+';border-radius:3px">'+inhalt+'</svg>';
+  const teil=a=>{
+    const roh=_skz(_skzGerProbe(a),{hell});
+    const inhalt=roh.slice(roh.indexOf("</defs>")+7,roh.lastIndexOf("</svg>"));
+    return '<span style="display:inline-flex;align-items:center;gap:4px">'+kasten(inhalt)+SKZ_GER_NAME[a]+'</span>';
+  };
+  let aus=arten.map(teil).join("");
+  tore.forEach(n=>{
+    const roh=_skz({dtor:[[6,9,20,"h",n==="Hütchentor"?"h":"s","y"]]},{hell});
+    const inhalt=roh.slice(roh.indexOf("</defs>")+7,roh.lastIndexOf("</svg>"));
+    aus+='<span style="display:inline-flex;align-items:center;gap:4px">'+kasten(inhalt)+n+'</span>';
+  });
+  return aus;
+}
+/* ═══ v559 – WAS DIE ÜBUNG BRAUCHT ═══
+   Die vierzig Vorlagen des Verbands beginnen alle mit einem Materialsatz: „Ein 25 x 18
+   Meter großes Feld mit 4 Minitoren und zwei 5 Meter tiefen Schusszonen markieren."
+   Diesen Satz muss bei uns niemand schreiben – er steht schon in der Zeichnung. Gezählt
+   wird, was gezeichnet ist; geraten wird nichts.
+
+   Der Rückweg ist das eigentlich Neue: die App kennt den Schrank (Material-Inventur seit
+   v545). Damit lässt sich sagen, ob das, was man zeichnet, überhaupt da ist. Kein
+   fremdes Werkzeug kann das, weil keines den Schrank kennt.
+
+   Die Namen sind bewusst die des Bestands, nicht die der Zeichnung – nur so treffen sie
+   sich beim Abgleich. */
+const SKZ_MAT_NAME={
+  minitor:"Minitore", jugendtor:"Jugendtore", huetchen:"Hütchen", stange:"Stangen",
+  teller:"Markierungsteller", huerde:"Minihürden", leiter:"Koordinationsleiter",
+  wand:"Banden", ball:"Bälle", depot:"Balldepot"
+};
+/* „1 Bälle" liest niemand zweimal, ohne zu stolpern. */
+const SKZ_MAT_EINS={
+  minitor:"Minitor", jugendtor:"Jugendtor", huetchen:"Hütchen", stange:"Stange",
+  teller:"Markierungsteller", huerde:"Minihürde", leiter:"Koordinationsleiter",
+  wand:"Bande", ball:"Ball", depot:"Balldepot"
+};
+function skzMatWort(schluessel,anzahl){
+  return (anzahl===1?SKZ_MAT_EINS:SKZ_MAT_NAME)[schluessel]||schluessel;
+}
+function skzMaterial(spec){
+  const z={};
+  const dazu=(k,n)=>{ if(n>0)z[k]=(z[k]||0)+n; };
+  if(!spec||typeof spec!=="object")return [];
+  /* Eine Skizze mit Bildern braucht das Material aus Bild 1 – der Aufbau bleibt stehen. */
+  const o=spec;
+  (o.tor||[]).forEach(t=>dazu(t[4]==="j"?"jugendtor":"minitor",1));
+  dazu("huetchen",(o.h||[]).length);
+  dazu("ball",(o.b||[]).length);
+  dazu("leiter",(o.leiter||[]).length);
+  dazu("wand",(o.wand||[]).length);
+  (o.ger||[]).forEach(g=>{
+    const a=String(g[2]||"stange");
+    if(a==="stange")dazu("stange",1);
+    else if(a==="teller")dazu("teller",1);
+    else if(a==="huerde")dazu("huerde",1);
+    else if(a==="depot")dazu("depot",1);
+  });
+  /* Ein Dribbeltor steht auf zwei Pfosten – gezählt werden die Pfosten, denn die holt
+     man aus dem Schrank, nicht das Tor. */
+  (o.dtor||[]).forEach(d=>dazu(d[4]==="h"?"huetchen":"stange",2));
+  const reihe=["minitor","jugendtor","huetchen","stange","teller","huerde","leiter","wand","ball","depot"];
+  return reihe.filter(k=>z[k]).map(k=>({schluessel:k,was:skzMatWort(k,z[k]),anzahl:z[k]}));
+}
+function skzMaterialText(spec){
+  return skzMaterial(spec).map(m=>m.anzahl+" "+m.was).join(" · ");
+}
+/* Mehrere Übungen auf EINEM Aufbau: gebraucht wird das MAXIMUM je Gegenstand, nicht die
+   Summe. Wer nacheinander zwei Übungen mit je vier Minitoren spielt, baut sie einmal auf –
+   das ist der ganze Sinn von „ein Aufbau, drei Stufen" im Ausbildungskonzept. */
+function skzMaterialSumme(specs){
+  const max={};
+  (specs||[]).forEach(sp=>skzMaterial(sp).forEach(m=>{ max[m.schluessel]=Math.max(max[m.schluessel]||0,m.anzahl); }));
+  const reihe=["minitor","jugendtor","huetchen","stange","teller","huerde","leiter","wand","ball","depot"];
+  return reihe.filter(k=>max[k]).map(k=>({schluessel:k,was:skzMatWort(k,max[k]),anzahl:max[k]}));
 }
 /* Symbolskizzen je Kategorie: Fallback für eigene und ältere KI-Übungen ohne eigene
    Skizze – besser eine ehrlich beschriftete Grundaufstellung als gar kein Bild. */
