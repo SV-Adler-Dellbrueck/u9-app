@@ -1122,6 +1122,9 @@ function tpReiheHtml(name){
     <summary style="cursor:pointer;font-size:12.5px;font-weight:800;min-height:28px;display:flex;align-items:center">🔎 Die ${treffer.length} Stufen einzeln</summary>
     ${stufen}</details>`;
 }
+/* Welle 1 darf eine Welle-2-Funktion nie ungeprüft aufrufen (CLAUDE.md). Ohne das
+   Skizzen-Modul gibt es eben keine Beschreibung – und damit keine Materialzeile. */
+function _skzSpecSicher(f){ return (typeof skzSpecVon==="function")?skzSpecVon(f):null; }
 function tpShowExercise(formIdx){
   if(typeof _skzDetailBild!=="undefined")_skzDetailBild=0;   // v557: jede Übung beginnt bei Bild 1
   const allForms=tpAllForms();
@@ -1152,7 +1155,7 @@ function tpShowExercise(formIdx){
     </div>
     ${zeigKurz?`<div style="font-size:11px;color:var(--text2);margin-bottom:6px">${esc(kurz)}</div>`:""}
     ${f.svg
-      ? `<div id="uebung-skizze" style="margin-bottom:2px">${f.svg}</div>${typeof skzLegende==="function"?skzLegende():""}${typeof skzBilderLeiste==="function"?skzBilderLeiste(formIdx):""}${typeof skzGrossKnopf==="function"?skzGrossKnopf(f.name,formIdx):""}${typeof skzTeilenKnopf==="function"?skzTeilenKnopf(f.name):""}`
+      ? `<div id="uebung-skizze" style="margin-bottom:2px">${f.svg}</div>${typeof skzLegende==="function"?skzLegende(false,_skzSpecSicher(f)):""}${typeof skzBilderLeiste==="function"?skzBilderLeiste(formIdx):""}${typeof matBedarfZeile==="function"?matBedarfZeile(_skzSpecSicher(f)):""}${typeof skzGrossKnopf==="function"?skzGrossKnopf(f.name,formIdx):""}${typeof skzTeilenKnopf==="function"?skzTeilenKnopf(f.name):""}`
       : (eigene?`<div style="border:1px dashed var(--text3);border-radius:10px;padding:12px;margin-bottom:8px;text-align:center">
           <div style="font-size:11.5px;color:var(--text3);margin-bottom:8px">Für diese Übung gibt es noch keine Skizze.</div>
           <button onclick="uebungSkizzeNachtragen(${formIdx})" style="min-height:44px;padding:8px 14px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">🎨 Skizze zeichnen</button>

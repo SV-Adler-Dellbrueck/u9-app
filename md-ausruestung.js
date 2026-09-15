@@ -245,6 +245,43 @@ async function ausArtikelNeuSpeichern(){
 ═══════════════════════════════════ */
 const MAT_ALT_TAGE=180;      // ab wann eine Zählung als alt gilt
 let MAT_POSTEN=[];
+/* ═══ v559 – Was die Übung braucht, gegen das, was im Schrank steht ═══
+   Der Bestand führt „Hütchen" in drei Farben; für den Abgleich zählt die Summe, denn
+   auf dem Platz ist ein Hütchen ein Hütchen. Gezählt wird nur, wo wirklich gezählt
+   wurde: ein leeres Feld heißt „nicht gezählt", nicht „null Stück" (v545). Und was der
+   Bestand gar nicht führt, wird als solches benannt statt stillschweigend übergangen –
+   genau daran fällt auf, dass Minitore und Stangen bisher in keiner Liste stehen. */
+function matBestandFuer(name){
+  const treffer=(MAT_POSTEN||[]).filter(p=>p.aktiv!==false&&String(p.name||"").trim().toLowerCase()===String(name||"").trim().toLowerCase());
+  if(!treffer.length)return {gefuehrt:false,ist:null};
+  const gezaehlt=treffer.filter(p=>p.ist!=null);
+  if(!gezaehlt.length)return {gefuehrt:true,ist:null};
+  return {gefuehrt:true,ist:gezaehlt.reduce((a,p)=>a+Number(p.ist||0),0)};
+}
+/* Liefert die Zeilen fertig zum Anzeigen: Menge, Gegenstand und – wo bekannt – ob es reicht. */
+function matAbgleich(liste){
+  return (liste||[]).map(m=>{
+    const b=matBestandFuer(m.was);
+    return {...m, gefuehrt:b.gefuehrt, ist:b.ist, fehlt:(b.ist!=null&&b.ist<m.anzahl)?(m.anzahl-b.ist):0};
+  });
+}
+function matBedarfZeile(spec,opt){
+  if(typeof skzMaterial!=="function")return "";
+  const liste=(opt&&opt.summe)?skzMaterialSumme(spec):skzMaterial(spec);
+  if(!liste.length)return "";
+  const zeilen=matAbgleich(liste);
+  const teile=zeilen.map(m=>{
+    const kern=esc(m.anzahl+" "+m.was);
+    if(m.fehlt)return '<span style="color:var(--red);font-weight:700">'+kern+' · es fehlen '+m.fehlt+'</span>';
+    if(!m.gefuehrt)return '<span title="steht in keiner Bestandsliste">'+kern+'</span>';
+    return kern;
+  });
+  const ungefuehrt=zeilen.filter(m=>!m.gefuehrt).map(m=>m.was);
+  return '<div style="font-size:11.5px;color:var(--text2);line-height:1.6;margin:0 0 8px">'
+    +'<b>Dafür brauchst du:</b> '+teile.join(" · ")
+    +(ungefuehrt.length?'<div style="color:var(--text3);font-size:10.5px;margin-top:2px">Nicht im Materialbestand geführt: '+esc(ungefuehrt.join(", "))+'</div>':"")
+    +'</div>';
+}
 let _matKat="";              // "" = alle
 const _matTimer={};
 
