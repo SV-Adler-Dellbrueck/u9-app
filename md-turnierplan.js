@@ -1518,7 +1518,7 @@ const HT_REGELN={
   f7:"7 gegen 7 (Vorlage, bitte an eure Ausschreibung anpassen)\n• 6 Feldspieler + Torwart, fliegender Wechsel\n• Abseits je nach Kreis-Ausschreibung\n• Einwurf regulär, Freistöße nach Ausschreibung\n• Schiedsrichter oder Spielbegleiter je nach Turnierordnung",
   frei:"Eigene Spielform – Regeln hier eintragen."
 };
-const HT_INFOS_VORLAGE="⏰ Bitte 30 Minuten vor dem ersten Spiel da sein\n⚽ Bitte bringt zum Aufwärmen eure eigenen Bälle mit\n☕ Kaffee und Brötchen stehen bereit\n🧑‍⚖️ Schiedsrichter: die Trainer am Feld – fair und kindgerecht";
+const HT_INFOS_VORLAGE="⏰ Bitte 30 Minuten vor dem ersten Spiel da sein\n⚽ Bitte bringt zum Aufwärmen eure eigenen Bälle mit\n☕ Kaffee und Brötchen stehen bereit\n🧑‍⚖️ Kein Schiedsrichter: die Kinder klären selbst, die Trainer helfen nur, wenn es hakt";
 const HT_GRLABEL=["A","B","C","D"];
 // Platzhalter der Finalrunde lesbar machen ("A1" = Erster Gruppe A, "S|Halbfinale 1" = Sieger HF 1 …)
 function _htName(v,teams){

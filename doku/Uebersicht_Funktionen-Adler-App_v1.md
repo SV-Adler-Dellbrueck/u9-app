@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v565 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v566 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -115,12 +115,12 @@ Zugang per Link und Einmal-Code an die hinterlegte E-Mail-Adresse. Kein Passwort
 |---|---|---|
 | **Startseite** | Ganz oben der nächste Termin. Darunter die Termine der nächsten 14 Tage, zu denen die Antwort fehlt. Dann offene Punkte: Mitbringlisten, Büdchen-Dienst, „Wie war's?“ nach Spielen. Adler News nur bei Neuem. | Alles, was heute von den Eltern gebraucht wird, steht oben – der Rest bleibt ruhig. |
 | **Zu- und Absagen** | Ein Tipp am Termin, nochmal tippen entfernt die Antwort. Alle Termine als Kalender-Abo. Trainings gelten ohne Antwort als zugesagt. | Der Trainer weiß vorab, wer kommt. Eltern müssen nichts schreiben. |
-| **Termin-Detail** | Wetter, Adresse mit Route, Fahrgemeinschaft, Mitbringliste bei Events, Treffzeit. Abgesagte Termine sind deutlich markiert. | Die üblichen Rückfragen („Wo ist das?“, „Wann treffen wir uns?“) beantworten sich selbst. |
+| **Termin-Detail** | Wetter, Adresse mit Route, Fahrgemeinschaft, Mitbringliste bei Events (nur wenn der Trainer sie am Termin einschaltet), Treffzeit. Abgesagte Termine sind deutlich markiert. | Die üblichen Rückfragen („Wo ist das?“, „Wann treffen wir uns?“) beantworten sich selbst. |
 | **„Wer hilft mit?“** | Helfer-Aufgaben je Termin mit Uhrzeit und Beschreibung: Aufbau, Fotos, Live-Ticker, Betreuung in Pausen, Tore beim Training. Am Tag selbst entscheidbar. | Hilfe verteilt sich auf viele Schultern, ohne Verpflichtung im Voraus. |
 | **Team-Ansagen** | Wichtige Nachrichten vom Trainerteam, mit „Gelesen“ bestätigen. | Wichtiges geht in keiner Chat-Gruppe unter. |
 | **Liveticker** | Rote LIVE-Kachel, sobald der Ticker läuft. Teilbar per Link ohne Anmeldung. Nach drei Tagen nur noch der Endstand. | Großeltern und Fans sind dabei – ohne Zugang zur App. |
 | **Rückblick** | Zwei Wochen nach Spiel oder Turnier: was das eigene Kind an dem Tag gemacht hat (Einsätze, Rolle, Tore). Danach nur noch in der Saison-Statistik. | Gesprächsstoff am Abendbrottisch, kindgerecht und ohne Noten. |
-| **Sammelkarte, Technik-Abzeichen, Fan-Fakten** | Die Adler-Karte des Kindes mit Federn; Technik-Abzeichen werden zuhause abgehakt; kleine Fakten zum Kind (Spitzname, Lieblingsverein, Schuhgröße). Dort steht auch, was das Kind vom Verein erhalten hat — zum Nachlesen, nicht zum Ändern. | Verbindet Zuhause und Training. Eltern üben mit, ohne Druck, und wissen, was sie haben. |
+| **Sammelkarte, Technik-Abzeichen, Fan-Fakten, Saison-Statistik** | Die Adler-Karte des Kindes mit Federn; die Saison-Statistik als Bild zum Ansehen und auf Wunsch Teilen; Technik-Abzeichen werden zuhause abgehakt; kleine Fakten zum Kind (Spitzname, Lieblingsverein, Schuhgröße). Dort steht auch, was das Kind vom Verein erhalten hat — zum Nachlesen, nicht zum Ändern. | Verbindet Zuhause und Training. Eltern üben mit, ohne Druck, und wissen, was sie haben. |
 | **„Das kann dein Kind jetzt“** | Eine ruhige Karte auf der Eltern-Startseite: bis zu drei Dinge, die das Kind in den letzten Wochen erreicht hat – ein Entwicklungsziel geschafft oder ein neues Technik-Abzeichen. Keine Zahlen, keine Vergleiche. | Eltern sehen Fortschritt, ohne dass das Kind bewertet wird. Die Entwicklung wird sichtbar, ohne eine Rangliste zu erzeugen. |
 | **Skill der Woche** | Wöchentliche Technik-Challenge mit Video zum Nachmachen. | Zehn Minuten Ball im Garten – mit klarer Aufgabe. |
 | **Eltern-Puls & Stimmung** | Kurze Stimmungsabfrage nach Spielen und im Saisonverlauf. | Das Trainerteam merkt früh, wenn etwas nicht rund läuft. |
@@ -148,7 +148,7 @@ Die Kabine ist der Kinder-Modus innerhalb der Eltern-App. Eltern geben das Handy
 | **Stimmungs-Check** | Am Tag eines Termins fragt die Kabine das Kind selbst, wie es ihm geht. | Ein leises Frühwarnsystem, direkt vom Kind. |
 | **Packliste** | Ab dem Vorabend packt das Kind seine Tasche virtuell. | Eigenverantwortung, weniger Vergessenes. |
 | **Countdown** | „Noch X-mal schlafen bis zum nächsten Spiel“. | Vorfreude, altersgerecht. |
-| **Quiz** | Regel- und Taktik-Quiz mit Antwort-Chips. | Regeln werden spielerisch gelernt. |
+| **Quiz** | Regel- und Taktik-Quiz mit Antwort-Chips; die 100 Taktik-Szenarien folgen den Regeln unserer Spielform (Anstoß und Abstoß in der eigenen Hälfte, Seitenaus und Ecke werden eingedribbelt, kein Schiri, keine Karten). Vorlesen-Knopf wählt die natürlichste deutsche Stimme des Geräts. | Regeln werden spielerisch gelernt – und richtig. |
 | **Kabinen-Reporter** | Interview-Fragen per Antwort-Chips; die Antworten landen im Stadionheft. | Die Kinder haben eine eigene Stimme im Adler Nest. |
 | **Kabinen-Wahl** | Abstimmen über Song, Motto oder Spielform, die der Trainer vorgegeben hat. | Mitbestimmung im sicheren Rahmen. |
 | **Kabinen-DJ & Team-Arena** | Die Playlist der U9, Einlauf-Song und Schlachtruf. | Identität wie bei den Großen. |

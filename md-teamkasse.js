@@ -24,9 +24,11 @@ async function mitbringTrainerOpen(){
 }
 async function mitbringTrainerRender(){
   const c=document.getElementById("mitbring-card"); if(!c)return;
-  let events=[]; try{events=await mitbringEventsLaden();}catch(e){}
+  let events=[]; try{events=await mitbringEventsLaden(true);}catch(e){}
   let itemsMap={}; try{itemsMap=await mitbringItems(events.map(e=>e.id));}catch(e){}
   const fmtD=d=>new Date(d+"T00:00:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"});
+  /* v566: Die Liste gibt es für Eltern nur, wenn der Termin sie einschaltet – das steht hier dran. */
+  const elternHinweis=ev=>ev.mitbringen?"":`<div style="font-size:11.5px;color:var(--text2);background:var(--surface2);border-radius:8px;padding:6px 8px;margin-bottom:6px">🔕 Für die Eltern noch aus – beim Termin unter „Bearbeiten“ einschalten, wenn jemand etwas mitbringen soll.</div>`;
   const body=events.length?events.map(ev=>{
     const items=itemsMap[ev.id]||[];
     const liste=items.length
@@ -38,6 +40,7 @@ async function mitbringTrainerRender(){
     return `<div style="border:var(--border-s);border-radius:12px;padding:12px;margin-bottom:10px">
       <div style="font-weight:800;font-size:14px">🎉 ${esc(ev.titel||"Event")}</div>
       <div style="font-size:11.5px;color:var(--text2);margin-bottom:6px">${fmtD(ev.datum)}${ev.ort?" · "+esc(ev.ort):""} · ${items.length} ${items.length===1?"Eintrag":"Einträge"}</div>
+      ${elternHinweis(ev)}
       ${liste}
     </div>`;
   }).join(""):'<div style="font-size:13px;color:var(--text3);margin-bottom:10px">Kein kommender Event-Termin. Lege im Kalender einen Termin vom Typ „🎉 Event" an – dann tragen die Eltern hier ein, was sie mitbringen.</div>';

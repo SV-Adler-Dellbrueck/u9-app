@@ -869,6 +869,7 @@ function tmEdit(id){
       </div>
       <div style="font-size:10.5px;color:var(--text2);margin-top:4px">Leer = Aufgabe ohne Zahl · <b>0</b> = wird nicht gebraucht</div>`:''}
       <label style="font-size:11px;color:var(--text2);display:block;margin-top:8px">Hinweis für Helfer<input id="te-helfer-hinweis" maxlength="140" placeholder="z. B. was heute anders ist als sonst" value="${esc(t.helfer_hinweis||'')}" style="${fld}"></label>
+      ${t.typ==="event"?`<label style="display:flex;align-items:center;gap:10px;min-height:44px;margin-top:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="te-mitbringen" ${t.mitbringen?"checked":""} style="width:22px;height:22px;margin:0">Eltern sollen etwas mitbringen (Mitbringliste an)</label>`:''}
     </div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-p btn-sm" onclick="tmEditSave(${Number(t.id)})"><i class="ti ti-device-floppy"></i>Speichern</button>
@@ -899,6 +900,7 @@ async function tmEditSave(id){
   if(g("te-funino"))body.helfer_funino=teZahl("te-funino");
   if(g("te-jugendtore"))body.helfer_jugendtore=teZahl("te-jugendtore");
   if(g("te-helfer-hinweis"))body.helfer_hinweis=(g("te-helfer-hinweis").value||"").trim()||null;
+  if(g("te-mitbringen"))body.mitbringen=!!g("te-mitbringen").checked; // v566: Mitbringliste nur auf Wunsch
   try{
     const r=await fetch(`${SB_URL}/rest/v1/termine?id=eq.${id}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify(body)});
     if(sbCheck401(r))return;

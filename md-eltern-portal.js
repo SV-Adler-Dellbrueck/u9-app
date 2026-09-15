@@ -759,7 +759,7 @@ async function elternDashLoad(){
         ${elRow("🎖️","Technik-Abzeichen","Übungen zu Hause abhaken – Federn sammeln",`abzeichenOpen(${k.spieler_id},'${nn}')`,"#6d28d9")}
         ${elRow("🎧","Sprachlob anhören","Persönliches Lob vom Trainerteam",`lobPlay(${k.spieler_id})`,"#7c3aed")}
         ${elRow("✏️","Fan-Fakten &amp; Foto","Lieblingsverein, Spitzname &amp; Kartenfoto pflegen",`elternFanfactsOpen(${k.spieler_id},'${nn}')`,"#8b5cf6")}
-        ${elRow("📊","Saison-Statistik","Spiele, Einsätze &amp; Highlights – jederzeit aktuell",`childWrappedShare(${k.spieler_id})`,"#a855f7")}
+        ${elRow("📊","Saison-Statistik","Spiele, Einsätze &amp; Highlights – ansehen, auf Wunsch teilen",`childWrappedOpen(${k.spieler_id})`,"#a855f7")}
       </div>`;}).join("")}
     <div id="cat-mehr" class="el-cat-panel" style="display:none">`;
   html+=elRow("📰","Adler Nest (Stadionheft)","Neuigkeiten, Ergebnisse und Geburtstage",`location.href='${location.pathname}?heft'`,"#1e3a8a");
@@ -1116,7 +1116,7 @@ async function terminDetailOpen(id){
   tdHelferLoad(t); // G4: Elternhelfer-Board (nur kommende Termine)
   // „Wie war's" (Puls) lebt jetzt NUR im Zu-erledigen-Fenster (PO: der Termin wandert
   // nach der Endzeit ins Archiv, dort würde die Smiley-Frage niemand mehr finden).
-  if(t.typ==="event")tdMitbringLoad(t); // Mitbringliste direkt im Termin ansehen & ändern
+  if(t.typ==="event"&&t.mitbringen)tdMitbringLoad(t); // Mitbringliste nur, wenn der Trainer sie eingeschaltet hat (v566)
 }
 /* Mitbringliste im Termin-Detail: gleiche Liste wie im Zu-erledigen-Fenster, aber IMMER
    einsehbar und änderbar – auch nachdem die Familie schon etwas eingetragen hat. */
@@ -1883,17 +1883,24 @@ async function elternCardShow(d){
   const modal=document.createElement("div");
   modal.id="adler-card-modal";
   // z-index über der Kabine (10050), damit die Karte auch aus dem Kinder-Modus sichtbar ist.
-  modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:10060;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px;overflow-y:auto";
-  modal.onclick=e=>{if(e.target===modal)modal.remove();};
+  /* v566 – PO: „Die Sammelkarte ist nicht ganz sichtbar." `justify-content:center` mit
+     `overflow:auto` schneidet oben ab, was nicht passt – der überstehende Teil liegt VOR dem
+     Anfang des Scrollbereichs und ist unerreichbar. Ein Innenkasten mit `margin:auto` zentriert,
+     solange Platz ist, und scrollt, sobald keiner mehr ist. */
+  modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:10060;display:flex;flex-direction:column;padding:16px;overflow-y:auto";
+  modal.onclick=e=>{if(e.target===modal||e.target===innen)modal.remove();};
+  const innen=document.createElement("div");
+  innen.style.cssText="margin:auto;display:flex;flex-direction:column;align-items:center;gap:14px;width:100%";
+  modal.appendChild(innen);
   canvas.style.cssText="max-width:100%;width:300px;height:auto;border-radius:20px;box-shadow:0 12px 40px rgba(0,0,0,.5)";
   const cardWrap=cardHoloWrap(canvas); // FUT 2.0: Foil-Overlay über der Karte
-  modal.appendChild(cardWrap);
+  innen.appendChild(cardWrap);
   cardApplyGlow(canvas, d.counts&&d.counts.trainings); // Meilenstein-Glanz (Zähler kommen aus der RPC)
   const bar=document.createElement("div");
   bar.style.cssText="display:flex;gap:8px;flex-wrap:wrap;justify-content:center";
   bar.innerHTML=`<button class="btn btn-p" onclick="adlerCardShare()"><i class="ti ti-share"></i>Karte teilen</button>
     <button class="btn" onclick="document.getElementById('adler-card-modal').remove()">Schließen</button>`;
-  modal.appendChild(bar);
+  innen.appendChild(bar);
   document.body.appendChild(modal);
   // Federn-Stand → Karten-Skin (in render() gebacken) + Foil-Tier + Unboxing-Feier + Skin-Galerie
   if(d.spielerId){ xpTotal(d.spielerId).then(f=>{ if(document.getElementById("adler-card-modal")){ d.federn=f; render(); cardHoloSetTier(cardWrap,cardSkinFor(f)); cardTierCelebrateMaybe(cardWrap,d.spielerId,f); modal.appendChild(cardSkinGalleryEl(f)); } }).catch(()=>{}); }

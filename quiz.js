@@ -320,24 +320,62 @@ function tqRenderTrainerView(){
 let _ttsVoices=[];
 function _loadTtsVoices(){ try{_ttsVoices=(window.speechSynthesis&&speechSynthesis.getVoices())||[];}catch(e){} }
 if("speechSynthesis" in window){ _loadTtsVoices(); try{speechSynthesis.onvoiceschanged=_loadTtsVoices;}catch(e){} }
+/* v566 – PO: „Der Vorlesemodus hört sich schrecklich an. Total monoton, wie ein schlechter
+   Roboter." Drei Ursachen, drei Griffe:
+   1. Die Stimme kam aus einer Namensliste – auf dem iPhone traf „Anna" die *kompakte*
+      Anna (die Roboter-Stimme), obwohl daneben „Anna (Erweitert)" oder eine Siri-Stimme
+      liegt. Jetzt zählt die Qualität: natürliche/neuronale/erweiterte/Online-Stimmen zuerst,
+      „kompakt" und eSpeak zuletzt. Welche Stimmen es gibt, entscheidet weiter das Gerät –
+      die App kann keine mitbringen.
+   2. Der Text war Bildschirmtext: „TW", „1gg1", „Flitzer L", Emojis. Vorgelesen wird jetzt
+      „Torwart", „eins gegen eins", „Flitzer links" – ohne Emojis.
+   3. Alles war EINE Äußerung mit hochgedrehter Tonhöhe (1.1) – das klingt gepresst und
+      ohne Pausen. Jetzt satzweise mit natürlicher Tonhöhe, das Gerät setzt die Pausen. */
+function ttsVoiceScore(v){
+  const n=String((v&&v.name)||""), lang=String((v&&v.lang)||"");
+  if(!/^de(-|_|$)/i.test(lang))return -100;
+  let s=0;
+  if(/natural|neural|enhanced|erweitert|premium|online|siri|wavenet/i.test(n))s+=6;
+  if(/google/i.test(n))s+=4;
+  if(v&&v.localService===false)s+=1;           // Netzstimmen sind meist die besseren
+  if(/compact|kompakt|espeak/i.test(n))s-=6;
+  if(/de-DE/i.test(lang))s+=1;                 // vor de-AT/de-CH, wenn sonst gleich
+  return s;
+}
 function ttsGermanVoice(){
   const vs=_ttsVoices.length?_ttsVoices:(("speechSynthesis" in window)?(speechSynthesis.getVoices()||[]):[]);
-  const de=vs.filter(v=>/^de(-|_)/i.test(v.lang||""));
-  const pref=["Google Deutsch","Anna","Petra","Helena","Markus","Yannick","Microsoft Katja","Microsoft Hedda"];
-  for(const name of pref){ const m=de.find(v=>v.name&&v.name.includes(name)); if(m)return m; }
-  return de[0]||null; // sonst irgendeine deutsche, sonst Default-Stimme
+  let best=null,bs=-99;
+  vs.forEach(v=>{const s=ttsVoiceScore(v); if(s>bs){bs=s;best=v;}});
+  return bs>-100?best:null; // sonst Default-Stimme des Geräts
+}
+/* Bildschirmtext → Sprechtext. Abkürzungen und Emojis liest keine Stimme schön vor. */
+function ttsSprechtext(text){
+  return String(text||"")
+    .replace(/\bTW\b/g,"Torwart").replace(/\bGeg\. TW\b/g,"gegnerischer Torwart")
+    .replace(/\b(\d)\s*gg\s*(\d)\b/gi,"$1 gegen $2")
+    .replace(/\bFlitzer L\b/g,"Flitzer links").replace(/\bFlitzer R\b/g,"Flitzer rechts")
+    .replace(/\b(\d+):(\d+)\b/g,"$1 zu $2")
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu,"")
+    .replace(/\s+/g," ").trim();
+}
+function ttsSaetze(text){
+  return ttsSprechtext(text).split(/(?<=[.!?…])\s+/).map(s=>s.trim()).filter(Boolean);
 }
 function tqSpeak(btn){
   if(!("speechSynthesis" in window)){toast("Vorlesen wird auf diesem Gerät nicht unterstützt");return;}
-  if(speechSynthesis.speaking){speechSynthesis.cancel();if(btn)btn.textContent="🔊";return;}
+  if(speechSynthesis.speaking||speechSynthesis.pending){speechSynthesis.cancel();if(btn)btn.textContent="🔊";return;}
   const sc=tqScenarios[tqIdx];
   if(!sc)return;
-  const u=new SpeechSynthesisUtterance(tqPersonalize(sc.desc)+". "+sc.task);
-  u.lang="de-DE";u.rate=.9;u.pitch=1.1; // freundlicher Klang für die Kids
-  const v=ttsGermanVoice(); if(v)u.voice=v;
-  u.onend=()=>{if(btn)btn.textContent="🔊";};
+  const v=ttsGermanVoice();
+  const saetze=ttsSaetze(tqPersonalize(sc.desc)+" "+sc.task);
+  saetze.forEach((satz,i)=>{
+    const u=new SpeechSynthesisUtterance(satz);
+    u.lang="de-DE";u.rate=.95;u.pitch=1;
+    if(v)u.voice=v;
+    if(i===saetze.length-1)u.onend=()=>{if(btn)btn.textContent="🔊";};
+    speechSynthesis.speak(u);
+  });
   if(btn)btn.textContent="⏹️";
-  speechSynthesis.speak(u);
 }
 
 function tqPersonalize(text){
@@ -995,14 +1033,14 @@ const WQ_QUESTIONS=[
   {id:"fp_handschlag",cat:"fairplay",q:"Was machen faire Teams vor und nach dem Spiel?",opts:["Sich die Hand geben","Sich auslachen","Weglaufen","Streiten"],correct:0,fun:"Handschlag – Respekt vor dem Gegner gehört dazu!"},
   {id:"fp_entschuldigen",cat:"fairplay",q:"Du foulst aus Versehen einen Gegner. Was ist fair?",opts:["Sich entschuldigen","Weiterlaufen","Lachen","Schimpfen"],correct:0,fun:"Ein kurzes „Sorry\" zeigt echte Größe."},
   {id:"fp_verletzt",cat:"fairplay",q:"Ein Gegner liegt verletzt am Boden. Was ist fair?",opts:["Den Ball ins Aus spielen","Schnell ein Tor schießen","Weiterspielen","Jubeln"],correct:0,fun:"Fair: Ball raus, damit geholfen werden kann."},
-  {id:"fp_schiri",cat:"fairplay",q:"Wie verhältst du dich gegenüber dem Schiedsrichter?",opts:["Respektvoll, auch bei Fehlern","Anschreien","Auslachen","Ignorieren"],correct:0,fun:"Auch Schiris machen mal Fehler – Respekt bleibt trotzdem."},
+  {id:"fp_schiri",cat:"fairplay",q:"Ihr seid euch nicht einig, ob es ein Foul war. Was machst du?",opts:["Ruhig klären – bei uns entscheiden die Kinder selbst","Anschreien","Auslachen","So tun, als wäre nichts"],correct:0,fun:"In der U9 gibt es keinen Schiri – ihr klärt es fair auf dem Platz, die Trainer helfen nur, wenn es hakt."},
   {id:"fp_verlieren",cat:"fairplay",q:"Deine Mannschaft verliert. Was macht ein guter Verlierer?",opts:["Dem Gegner gratulieren","Schimpfen und schmollen","Den Ball wegkicken","Nach Hause rennen"],correct:0,fun:"Fair verlieren ist genauso wichtig wie fair gewinnen."},
   {id:"fp_gewinnen",cat:"fairplay",q:"Ihr habt hoch gewonnen. Was ist fair gegenüber dem Gegner?",opts:["Nicht auslachen, fair bleiben","Auslachen","Angeben","Übertrieben jubeln"],correct:0,fun:"Sieger sein heißt auch, den Gegner zu achten."},
   {id:"fp_mut",cat:"fairplay",q:"Ein Mitspieler macht einen Fehler. Was hilft ihm?",opts:["Mut machen","Auslachen","Schimpfen","Ignorieren"],correct:0,fun:"„Kopf hoch, weiter geht's!\" – das macht ein Team stark."},
   {id:"fp_abspiel",cat:"fairplay",q:"Ein Mitspieler steht viel besser als du. Was tust du?",opts:["Abspielen","Alleine schießen","Den Ball halten","Meckern"],correct:0,fun:"Abspielen! Zusammen schießt man mehr Tore."},
   {id:"fp_neuling",cat:"fairplay",q:"Ein neues, schüchternes Kind kommt ins Team. Was ist fair?",opts:["Freundlich aufnehmen und helfen","Auslachen","Ignorieren","Ärgern"],correct:0,fun:"Jeder war mal neu – gemeinsam wird man besser."},
   {id:"fp_warumregeln",cat:"fairplay",q:"Warum gibt es überhaupt Regeln im Fußball?",opts:["Damit es fair und sicher ist","Damit es langweilig ist","Ohne Grund","Damit einer immer gewinnt"],correct:0,fun:"Regeln sorgen für Fairness und Sicherheit für alle."},
-  {id:"fp_meckern",cat:"fairplay",q:"Zu viel Meckern beim Schiedsrichter kann was geben?",opts:["Eine Gelbe Karte","Ein Tor","Applaus","Nichts"],correct:0,fun:"Meckern kann sogar Gelb kosten – lieber ruhig bleiben."},
+  {id:"fp_meckern",cat:"fairplay",q:"Ihr könnt euch beim Aus nicht einigen. Was hilft?",opts:["Kurz reden und weiterspielen – notfalls den Trainer fragen","Lauter werden","Den Ball wegschießen","Den Gegner schubsen"],correct:0,fun:"Bei uns klären die Kinder das selbst – ruhig und fair. Die Trainer helfen nur, wenn es hakt."},
   {id:"fp_aufraeumen",cat:"fairplay",q:"Was machen faire Teams nach dem Spiel mit ihrem Müll in der Kabine?",opts:["Aufräumen","Liegen lassen","Verstecken","Auf den Platz werfen"],correct:0,fun:"Ordnung halten – auch das gehört zu einem guten Team."},
   {id:"fp_zuhoeren",cat:"fairplay",q:"Der Trainer erklärt etwas. Was ist gut?",opts:["Zuhören","Reinreden","Weglaufen","Quatschen"],correct:0,fun:"Gut zuhören hilft dir, schnell besser zu werden."},
   {id:"fp_anfeuern",cat:"fairplay",q:"Wie unterstützt du Mitspieler, die auf der Bank sitzen?",opts:["Anfeuern","Auslachen","Schmollen","Stören"],correct:0,fun:"Lautes Anfeuern gibt dem Team Extra-Kraft!"},
@@ -1093,7 +1131,7 @@ const WQ_QUESTIONS=[
   {id:"fp_t3_ballrausspielen",cat:"fairplay",q:"Ein Gegner liegt verletzt am Boden. Was ist fair?",opts:["Den Ball ins Aus spielen","Schnell ein Tor schießen","Weiterspielen","Lachen"],correct:0,fun:"Fair ist, den Ball rauszuspielen, damit geholfen werden kann."},
   {id:"fp_t3_ballzurueck",cat:"fairplay",q:"Nach einer Verletzungs-Pause: Was macht das faire Team mit dem Ball?",opts:["Gibt ihn dem Gegner zurück","Behält ihn","Schießt aufs Tor","Versteckt ihn"],correct:0,fun:"Fair: den Ball dem Gegner zurückgeben."},
   {id:"fp_t3_gegnerloben",cat:"fairplay",q:"Der Gegner hat super gespielt. Was ist sportlich?",opts:["Ihn nach dem Spiel loben","Ihn auslachen","Wegdrehen","Beleidigen"],correct:0,fun:"Ein Lob für den Gegner zeigt echte Größe."},
-  {id:"fp_t3_ehrlichball",cat:"fairplay",q:"Du weißt: der Ball war zuletzt an dir, nicht am Gegner. Sagst du es dem Schiri?",opts:["Ja, ehrlich sein","Nein, schummeln","Weglaufen","Lügen"],correct:0,fun:"Ehrlichkeit zählt, auch wenn's ein Nachteil ist."},
+  {id:"fp_t3_ehrlichball",cat:"fairplay",q:"Du weißt: der Ball war zuletzt an dir, nicht am Gegner. Sagst du es?",opts:["Ja, ehrlich sein – Ball für den Gegner","Nein, schummeln","Weglaufen","Lügen"],correct:0,fun:"Ehrlichkeit zählt, auch wenn's ein Nachteil ist – bei uns gibt es keinen Schiri, der es sieht."},
   {id:"fp_t3_ruecksicht",cat:"fairplay",q:"Ein jüngeres, kleineres Kind spielt mit. Wie gehst du damit um?",opts:["Rücksichtsvoll und fair","Besonders hart","Auslachen","Ignorieren"],correct:0,fun:"Fair und rücksichtsvoll – so macht's allen Spaß."},
   {id:"fp_t3_eigenfehler",cat:"fairplay",q:"Du hast einen Fehler gemacht und ein Gegentor verursacht. Was ist fair?",opts:["Dazu stehen und weitermachen","Andere beschuldigen","Aufgeben","Schmollen"],correct:0,fun:"Zu Fehlern stehen macht dich stärker."},
   {id:"fp_t3_jubelfair",cat:"fairplay",q:"Du hast hoch gewonnen. Wie jubelst du fair?",opts:["Freuen, ohne den Gegner auszulachen","Den Gegner verspotten","Angeben","Auslachen"],correct:0,fun:"Freu dich – aber respektiere den Gegner."},
@@ -1112,7 +1150,7 @@ const WQ_QUESTIONS=[
   {id:"reg_t2_abstosswann",cat:"regeln",q:"Ein Angreifer schießt über die Torauslinie. Was gibt's?",opts:["Abstoß","Eckball","Einwurf","Elfmeter"],correct:0,fun:"Abstoß für den Torwart."},
   {id:"reg_t2_mauer",cat:"regeln",q:"Was stellen Spieler bei einem Freistoß vor ihr Tor?",opts:["Eine Mauer","Ein Zelt","Eine Bank","Ein Netz"],correct:0,fun:"Die Mauer schützt das Tor."},
   {id:"reg_t2_elfmeterpunkt",cat:"regeln",q:"Von wo wird ein Elfmeter geschossen?",opts:["Vom Elfmeterpunkt","Von der Eckfahne","Von der Mittellinie","Vom Tor"],correct:0,fun:"Elf Meter vor dem Tor."},
-  {id:"reg_t2_kapitaen",cat:"regeln",q:"Wer spricht bei Problemen für die Mannschaft mit dem Schiri?",opts:["Der Kapitän","Der Balljunge","Der Trainer","Immer der Torwart"],correct:0,fun:"Der Kapitän vertritt das Team."},
+  {id:"reg_t2_kapitaen",cat:"regeln",q:"Bei den Profis: Wer spricht bei Problemen für die Mannschaft mit dem Schiri?",opts:["Der Kapitän","Der Balljunge","Der Trainer","Immer der Torwart"],correct:0,fun:"Der Kapitän vertritt das Team."},
   {id:"reg_t3_vorteil",cat:"regeln",q:"Was ist die 'Vorteilsregel'?",opts:["Der Schiri lässt nach einem Foul weiterspielen, wenn's dem Team nützt","Ein Extra-Tor","Ein zweiter Ball","Eine Pause"],correct:0,fun:"Bei Vorteil pfeift der Schiri nicht sofort."},
   {id:"reg_t3_var",cat:"regeln",q:"Was hilft dem Schiri bei den Profis bei kniffligen Entscheidungen?",opts:["Der Videobeweis (VAR)","Ein Fernglas","Die Zuschauer","Ein Würfel"],correct:0,fun:"Der VAR schaut sich strittige Szenen im Video an."},
   {id:"reg_t3_nachspielzeit",cat:"regeln",q:"Warum gibt es Nachspielzeit?",opts:["Für verlorene Zeit (Verletzungen, Wechsel)","Als Belohnung","Rein zufällig","Gibt es nie"],correct:0,fun:"Die gestoppte Zeit wird hinten drangehängt."},
