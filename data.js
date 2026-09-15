@@ -3797,6 +3797,16 @@ function _skz(o,opt){
       S.push('<rect x="'+(x-7)+'" y="'+(y-3.5)+'" width="14" height="3.5" rx="1" fill="'+c+'" stroke="'+P.huetchenRand+'" stroke-width="0.8"/>');
       S.push('<line x1="'+(x-6)+'" y1="'+y+'" x2="'+(x-6)+'" y2="'+(y+4)+'" stroke="'+c+'" stroke-width="1.5"/>');
       S.push('<line x1="'+(x+6)+'" y1="'+y+'" x2="'+(x+6)+'" y2="'+(y+4)+'" stroke="'+c+'" stroke-width="1.5"/>');
+    }else if(art==='ring'){
+      /* v560: Der Koordinationsring liegt flach wie der Teller – deshalb dieselbe Ellipse,
+         aber hohl. Gefüllt wäre er von oben nicht vom Teller zu unterscheiden. */
+      S.push('<ellipse cx="'+x+'" cy="'+y+'" rx="6" ry="3.4" fill="none" stroke="'+c+'" stroke-width="2"/>');
+    }else if(art==='dummy'){
+      /* Der Freistoß-Dummy ist mannhoch und steht – als Figur gezeichnet, nicht als Punkt.
+         Vom Spielerkreis (r 8) unterscheidet ihn, dass er hoch statt rund ist. */
+      S.push('<line x1="'+(x-5)+'" y1="'+(y+6.5)+'" x2="'+(x+5)+'" y2="'+(y+6.5)+'" stroke="'+c+'" stroke-width="1.5" stroke-linecap="round"/>');
+      S.push('<rect x="'+(x-3)+'" y="'+(y-4.5)+'" width="6" height="11" rx="3" fill="'+c+'" stroke="'+P.huetchenRand+'" stroke-width="0.8"/>');
+      S.push('<circle cx="'+x+'" cy="'+(y-7.5)+'" r="2.4" fill="'+c+'" stroke="'+P.huetchenRand+'" stroke-width="0.8"/>');
     }else if(art==='depot'){
       [[0,-3],[-3.5,2],[3.5,2]].forEach(t=>S.push('<circle cx="'+(x+t[0])+'" cy="'+(y+t[1])+'" r="2.6" fill="'+P.ball+'" stroke="'+P.ballRand+'" stroke-width="0.8"/>'));
       S.push('<path d="M'+(x-8)+','+(y+5.5)+' Q'+x+','+(y+10)+' '+(x+8)+','+(y+5.5)+'" fill="none" stroke="'+P.text+'" stroke-width="1.2"/>');
@@ -3817,7 +3827,7 @@ function _skz(o,opt){
    (gestrichelt), s=Schuss (dick), d=Dribbling (gepunktet). */
 /* v559: Was für Geräte in einer Zeichnung steckt, steht in der Legende – aber nur, was
    wirklich vorkommt. Eine Legende, die immer alles zeigt, erklärt am Ende nichts mehr. */
-const SKZ_GER_NAME={stange:"Stange",teller:"Markierungsteller",huerde:"Minihürde",depot:"Balldepot"};
+const SKZ_GER_NAME={stange:"Stange",teller:"Markierungsteller",huerde:"Minihürde",depot:"Balldepot",ring:"Koordinationsring",dummy:"Freistoß-Dummy"};
 function _skzGerProbe(art){ return {ger:[[16,9,art,"y"]]}; }
 function skzLegende(hell,spec){
   /* v512: Die Strichprobe steht auf einem Stück Rasen – sonst wäre der weiße Pass-Pfeil
@@ -3877,13 +3887,15 @@ function _skzGerLegende(spec,hell){
 const SKZ_MAT_NAME={
   minitor:"Minitore", jugendtor:"Jugendtore", huetchen:"Hütchen", stange:"Stangen",
   teller:"Markierungsteller", huerde:"Minihürden", leiter:"Koordinationsleiter",
-  wand:"Banden", ball:"Bälle", depot:"Balldepot"
+  wand:"Banden", ball:"Bälle", depot:"Balldepot", ring:"Koordinationsringe",
+  dummy:"Freistoß-Dummys"
 };
 /* „1 Bälle" liest niemand zweimal, ohne zu stolpern. */
 const SKZ_MAT_EINS={
   minitor:"Minitor", jugendtor:"Jugendtor", huetchen:"Hütchen", stange:"Stange",
   teller:"Markierungsteller", huerde:"Minihürde", leiter:"Koordinationsleiter",
-  wand:"Bande", ball:"Ball", depot:"Balldepot"
+  wand:"Bande", ball:"Ball", depot:"Balldepot", ring:"Koordinationsring",
+  dummy:"Freistoß-Dummy"
 };
 function skzMatWort(schluessel,anzahl){
   return (anzahl===1?SKZ_MAT_EINS:SKZ_MAT_NAME)[schluessel]||schluessel;
@@ -3905,11 +3917,13 @@ function skzMaterial(spec){
     else if(a==="teller")dazu("teller",1);
     else if(a==="huerde")dazu("huerde",1);
     else if(a==="depot")dazu("depot",1);
+    else if(a==="ring")dazu("ring",1);
+    else if(a==="dummy")dazu("dummy",1);
   });
   /* Ein Dribbeltor steht auf zwei Pfosten – gezählt werden die Pfosten, denn die holt
      man aus dem Schrank, nicht das Tor. */
   (o.dtor||[]).forEach(d=>dazu(d[4]==="h"?"huetchen":"stange",2));
-  const reihe=["minitor","jugendtor","huetchen","stange","teller","huerde","leiter","wand","ball","depot"];
+  const reihe=["minitor","jugendtor","huetchen","stange","teller","ring","huerde","leiter","dummy","wand","ball","depot"];
   return reihe.filter(k=>z[k]).map(k=>({schluessel:k,was:skzMatWort(k,z[k]),anzahl:z[k]}));
 }
 function skzMaterialText(spec){
@@ -3921,7 +3935,7 @@ function skzMaterialText(spec){
 function skzMaterialSumme(specs){
   const max={};
   (specs||[]).forEach(sp=>skzMaterial(sp).forEach(m=>{ max[m.schluessel]=Math.max(max[m.schluessel]||0,m.anzahl); }));
-  const reihe=["minitor","jugendtor","huetchen","stange","teller","huerde","leiter","wand","ball","depot"];
+  const reihe=["minitor","jugendtor","huetchen","stange","teller","ring","huerde","leiter","dummy","wand","ball","depot"];
   return reihe.filter(k=>max[k]).map(k=>({schluessel:k,was:skzMatWort(k,max[k]),anzahl:max[k]}));
 }
 /* Symbolskizzen je Kategorie: Fallback für eigene und ältere KI-Übungen ohne eigene

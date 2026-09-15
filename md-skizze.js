@@ -129,6 +129,9 @@ const SKZ_WERK=[
   {id:"teller", emo:"🟡", lbl:"Teller",   feld:"ger", typ:"teller"},
   {id:"huerde", emo:"🚧", lbl:"Hürde",    feld:"ger", typ:"huerde"},
   {id:"depot",  emo:"🧺", lbl:"Bälle",    feld:"ger", typ:"depot"},
+  /* v560 – Geräte, die der Verein für alle Mannschaften vorhält. */
+  {id:"ring",   emo:"⭕", lbl:"Ring",     feld:"ger", typ:"ring"},
+  {id:"dummy",  emo:"🧍", lbl:"Dummy",    feld:"ger", typ:"dummy"},
   {id:"kreis",  emo:"⭕", lbl:"Kreis",    feld:"kr", zwei:true},
   {id:"leiter", emo:"🪜", lbl:"Leiter",   feld:"leiter"},
   {id:"pass",   emo:"➡️", lbl:"Pass",     feld:"p", zwei:true, typ:"p"},

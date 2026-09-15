@@ -258,17 +258,21 @@ let MAT_POSTEN=[];
 function matBestandFuer(name,auch){
   const namen=[name,auch].filter(Boolean).map(n=>String(n).trim().toLowerCase());
   const treffer=(MAT_POSTEN||[]).filter(p=>p.aktiv!==false&&namen.includes(String(p.name||"").trim().toLowerCase()));
-  if(!treffer.length)return {gefuehrt:false,ist:null};
+  if(!treffer.length)return {gefuehrt:false,ist:null,verein:false};
+  /* v560: Vereinsmaterial wird nur dann als solches ausgewiesen, wenn ALLE Posten dieses
+     Gegenstands dem Verein gehören. Steht auch eigenes im Schrank, ist die Menge gesichert –
+     dann wäre der Zusatz eine Warnung ohne Anlass. */
+  const verein=treffer.every(p=>p.verein===true);
   const gezaehlt=treffer.filter(p=>p.ist!=null);
-  if(!gezaehlt.length)return {gefuehrt:true,ist:null};
-  return {gefuehrt:true,ist:gezaehlt.reduce((a,p)=>a+Number(p.ist||0),0)};
+  if(!gezaehlt.length)return {gefuehrt:true,ist:null,verein};
+  return {gefuehrt:true,ist:gezaehlt.reduce((a,p)=>a+Number(p.ist||0),0),verein};
 }
 /* Liefert die Zeilen fertig zum Anzeigen: Menge, Gegenstand und – wo bekannt – ob es reicht. */
 function matAbgleich(liste){
   return (liste||[]).map(m=>{
     const andere=(typeof skzMatWort==="function"&&m.schluessel)?skzMatWort(m.schluessel,m.anzahl===1?2:1):null;
     const b=matBestandFuer(m.was,andere);
-    return {...m, gefuehrt:b.gefuehrt, ist:b.ist, fehlt:(b.ist!=null&&b.ist<m.anzahl)?(m.anzahl-b.ist):0};
+    return {...m, gefuehrt:b.gefuehrt, ist:b.ist, verein:b.verein, fehlt:(b.ist!=null&&b.ist<m.anzahl)?(m.anzahl-b.ist):0};
   });
 }
 function matBedarfZeile(spec,opt){
@@ -277,14 +281,19 @@ function matBedarfZeile(spec,opt){
   if(!liste.length)return "";
   const zeilen=matAbgleich(liste);
   const teile=zeilen.map(m=>{
-    const kern=esc(m.anzahl+" "+m.was);
-    if(m.fehlt)return '<span style="color:var(--red);font-weight:700">'+kern+' · es fehlen '+m.fehlt+'</span>';
+    /* v560: „(Verein)" steht am Gegenstand selbst, nicht als Farbe – Farbe gehört dem
+       Status, und „gehört dem Verein" ist keiner. Wer die Zeile ohne Farbwahrnehmung
+       liest, bekommt dieselbe Auskunft. */
+    const kern=esc(m.anzahl+" "+m.was)+(m.gefuehrt&&m.verein?' <span style="color:var(--text3)">(Verein)</span>':"");
+    if(m.fehlt)return '<span style="color:var(--red);font-weight:700">'+esc(m.anzahl+" "+m.was)+' · es fehlen '+m.fehlt+'</span>';
     if(!m.gefuehrt)return '<span title="steht in keiner Bestandsliste">'+kern+'</span>';
     return kern;
   });
   const ungefuehrt=zeilen.filter(m=>!m.gefuehrt).map(m=>m.was);
+  const verein=zeilen.filter(m=>m.gefuehrt&&m.verein).length;
   return '<div style="font-size:11.5px;color:var(--text2);line-height:1.6;margin:0 0 8px">'
     +'<b>Dafür brauchst du:</b> '+teile.join(" · ")
+    +(verein?'<div style="color:var(--text3);font-size:10.5px;margin-top:2px">Vereinsmaterial teilen sich alle Mannschaften – vor dem Training sichern.</div>':"")
     +(ungefuehrt.length?'<div style="color:var(--text3);font-size:10.5px;margin-top:2px">Nicht im Materialbestand geführt: '+esc(ungefuehrt.join(", "))+'</div>':"")
     +'</div>';
 }
@@ -373,6 +382,10 @@ function matZeile(p){
       <div style="flex:1;min-width:130px">
         <div style="font-size:13.5px;font-weight:600">${esc(p.name)}${p.variante?` <span style="color:var(--text3);font-weight:400">· ${esc(p.variante)}</span>`:""}</div>
         ${draussen?`<div style="font-size:11px;color:var(--text3)">davon ${draussen} bei den Kindern</div>`:""}
+        <label style="display:flex;align-items:center;gap:6px;min-height:44px;font-size:11.5px;color:var(--text3);cursor:pointer">
+          <input type="checkbox" ${p.verein?"checked":""} aria-label="${esc(p.name)} gehört dem Verein"
+            onchange="matVereinTippen(${p.id},this.checked)" style="width:20px;height:20px;flex:none">
+          gehört dem Verein – alle Mannschaften nutzen es</label>
       </div>
       <label style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px">Soll
         <input type="number" inputmode="numeric" min="0" value="${p.soll!=null?p.soll:""}" placeholder="–" aria-label="Sollbestand ${esc(p.name)}"
@@ -400,8 +413,17 @@ function matFeldTippen(id,feld,wert){
   _matTimer[id+feld]=setTimeout(()=>matSchreiben(p),900);
 }
 
+/* Das Kennzeichen ist eine Festlegung, keine Zählung – es rührt das Zähldatum nicht an
+   und wird sofort geschrieben, ohne die Tippbremse der Zahlenfelder. */
+function matVereinTippen(id,an){
+  const p=MAT_POSTEN.find(x=>x.id===id); if(!p)return;
+  p.verein=!!an;
+  matSchreiben(p);
+}
+
 async function matSchreiben(p){
   const body={soll:p.soll==null?null:p.soll, ist:p.ist==null?null:p.ist,
+    verein:p.verein===true,
     zuletzt_gezaehlt:p.zuletzt_gezaehlt||null};
   try{
     const r=await fetch(`${SB_URL}/rest/v1/material_posten?id=eq.${p.id}`,
@@ -418,7 +440,7 @@ function matPostenNeuOpen(){
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:"+(typeof zOben==="function"?zOben(10001):10001)+";display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{if(e.target===m)m.remove();};
   const feld="width:100%;min-height:48px;padding:10px;margin:4px 0 10px;border:1px solid var(--rand-bedien);border-radius:8px;box-sizing:border-box;font-family:inherit;font-size:13px;background:var(--surface);color:var(--text)";
-  const kats=["Bälle","Hütchen","Markierung","Kleidung","Medizin","Sonstiges"];
+  const kats=["Bälle","Hütchen","Markierung","Geräte","Kleidung","Medizin","Sonstiges"];
   m.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:400px;width:100%;margin:auto">
     ${mdlHead("mat-neu","➕","Posten erfassen","z. B. Hütchen in einer weiteren Farbe","#1e3a8a")}
     <label for="mn-name" style="font-size:12px;color:var(--text2)">Was ist es?</label>
@@ -429,6 +451,9 @@ function matPostenNeuOpen(){
     <select id="mn-kat" style="${feld}">${kats.map(k=>`<option>${k}</option>`).join("")}</select>
     <label for="mn-soll" style="font-size:12px;color:var(--text2)">Soll (freiwillig)</label>
     <input id="mn-soll" type="number" inputmode="numeric" min="0" placeholder="–" style="${feld}">
+    <label style="display:flex;align-items:center;gap:8px;min-height:48px;font-size:13px;color:var(--text2);cursor:pointer;margin-bottom:10px">
+      <input id="mn-verein" type="checkbox" style="width:22px;height:22px;flex:none">
+      gehört dem Verein – alle Mannschaften nutzen es</label>
     <button class="btn btn-p" style="width:100%;min-height:56px;font-size:15px;font-weight:800" onclick="matPostenNeuSpeichern()">Posten erfassen</button>
   </div>`;
   document.body.appendChild(m);
@@ -442,6 +467,7 @@ async function matPostenNeuSpeichern(){
     variante:(document.getElementById("mn-var")?.value||"").trim()||null,
     kategorie:document.getElementById("mn-kat")?.value||"Sonstiges",
     soll:soll===""?null:Math.max(0,parseInt(soll,10)||0),
+    verein:document.getElementById("mn-verein")?.checked===true,
     sort:(MAT_POSTEN.length?Math.max(...MAT_POSTEN.map(p=>p.sort||0)):0)+10};
   try{
     const r=await fetch(`${SB_URL}/rest/v1/material_posten`,
