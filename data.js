@@ -3649,61 +3649,102 @@ const UEB_REIHEN={
 };
 const SKZ_PFEIL={p:'#ffffff',l:'#fde047',s:'#fca5a5',d:'#7dd3fc'};
 const SKZ_PFEIL_NAME={p:'Pass',l:'Laufweg',s:'Schuss',d:'Dribbling'};
-function _skz(o){
-  const F={g:'#4ade80',r:'#f87171',b:'#60a5fa',y:'#fbbf24',w:'#fff'};
+/* v555 – Zwei Rasenvarianten. Dunkel ist die geprüfte Fassung aus v512/v517 und bleibt
+   der Standard; hell kam für die Sonne am Platz und die Besprechung am Tablet dazu.
+   Der EINZIGE Unterschied ist die Palette: gezeichnet wird Zug für Zug dasselbe, und
+   ohne zweites Argument entsteht Zeichen für Zeichen dieselbe Ausgabe wie vorher —
+   `tests/checks/v555-skizze-praesentation.js` vergleicht alle 95 Skizzen dagegen.
+
+   Gemessene Kontraste gegen den hellen Rasen #cfe8cf (Grafik mindestens 3:1):
+   Spieler grün 3,84 · rot 6,37 · blau 5,14 · gelb 6,65 · neutral 5,81; das weiße
+   Kürzel darauf 5,02 bis 8,67 (Text mindestens 4,5:1). Pass 13,60 · Laufweg 3,77 ·
+   Schuss 3,70 · Dribbling 4,55 · Schusszone 3,85 · Mittellinie 5,79 · Tor 11,25 ·
+   Beschriftung 13,60 · Rasenrand 3,68.
+
+   Laufweg und gelber Spieler liegen im hellen Satz farblich nah beieinander (1,76).
+   Unterschieden werden sie über die Form — gestrichelte Linie gegen gefüllten Kreis,
+   genau wie die Legende es zeigt. Farbe ist auch hier nicht der einzige Träger. */
+const SKZ_DUNKEL={
+  rasen:'#2d6a2d',rasenRand:'#1a4a1a',innen:'rgba(255,255,255,.25)',
+  zoneF:'rgba(255,255,255,.07)',zoneS:'rgba(255,255,255,.35)',
+  mittel:'rgba(255,255,255,.7)',sz:'#fbbf24',
+  tor:'#fff',torFuell:'rgba(255,255,255,.25)',leiter:'rgba(255,255,255,.6)',wand:'#d1d5db',
+  F:{g:'#4ade80',r:'#f87171',b:'#60a5fa',y:'#fbbf24',w:'#fff'},
+  spielerRand:'rgba(0,0,0,.3)',kuerzel:'rgba(0,0,0,.65)',huetchenRand:'rgba(0,0,0,.25)',
+  ball:'#fff',ballRand:'#333',text:'rgba(255,255,255,.85)',pfeil:SKZ_PFEIL,marke:'arr-'
+};
+const SKZ_HELL={
+  rasen:'#cfe8cf',rasenRand:'#4f7d4f',innen:'rgba(17,24,39,.3)',
+  zoneF:'rgba(17,24,39,.05)',zoneS:'rgba(17,24,39,.4)',
+  mittel:'#4b5563',sz:'#b45309',
+  tor:'#1f2937',torFuell:'rgba(31,41,55,.2)',leiter:'rgba(31,41,55,.55)',wand:'#4b5563',
+  F:{g:'#15803d',r:'#991b1b',b:'#1d4ed8',y:'#713f12',w:'#475569'},
+  spielerRand:'rgba(255,255,255,.8)',kuerzel:'rgba(255,255,255,.95)',huetchenRand:'rgba(17,24,39,.35)',
+  ball:'#fff',ballRand:'#111827',text:'rgba(17,24,39,.9)',
+  pfeil:{p:'#111827',l:'#a16207',s:'#dc2626',d:'#0369a1'},marke:'arrh-'
+};
+/* Eigene Marker-Kennungen je Variante: Marker sind im Dokument global. Lägen beide
+   Varianten unter derselben id, färbte die zuletzt gezeichnete die Pfeilspitzen der
+   anderen um – und im Präsentationsmodus liegen sie gleichzeitig auf der Seite. */
+function skzPalette(hell){ return hell?SKZ_HELL:SKZ_DUNKEL; }
+function _skz(o,opt){
+  const P=skzPalette(opt&&opt.hell), F=P.F, M=P.marke;
   const E=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); // Specs können aus der DB kommen (KI-Übungen)
-  const S=['<rect width="280" height="180" rx="4" fill="#2d6a2d" stroke="#1a4a1a" stroke-width="1.5"/>',
-    '<rect x="4" y="4" width="272" height="172" rx="3" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>',
-    '<defs>'+Object.keys(SKZ_PFEIL).map(t=>'<marker id="arr-'+t+'" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="'+SKZ_PFEIL[t]+'"/></marker>').join('')+'</defs>'];
-  (o.z||[]).forEach(z=>S.push('<rect x="'+z[0]+'" y="'+z[1]+'" width="'+z[2]+'" height="'+z[3]+'" rx="3" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.35)" stroke-width="1.5" stroke-dasharray="6,3"/>'));
+  const S=['<rect width="280" height="180" rx="4" fill="'+P.rasen+'" stroke="'+P.rasenRand+'" stroke-width="1.5"/>',
+    '<rect x="4" y="4" width="272" height="172" rx="3" fill="none" stroke="'+P.innen+'" stroke-width="1"/>',
+    '<defs>'+Object.keys(P.pfeil).map(t=>'<marker id="'+M+t+'" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="'+P.pfeil[t]+'"/></marker>').join('')+'</defs>'];
+  (o.z||[]).forEach(z=>S.push('<rect x="'+z[0]+'" y="'+z[1]+'" width="'+z[2]+'" height="'+z[3]+'" rx="3" fill="'+P.zoneF+'" stroke="'+P.zoneS+'" stroke-width="1.5" stroke-dasharray="6,3"/>'));
   /* v517: Linien – nach den Zonen, vor den Toren. „m“ Mittellinie durchgezogen weiß,
      „sz“ Schusszone gestrichelt gelb: Muster UND Farbe unterscheiden sie, wie bei den
      Pfeilen seit v512. Wer nur eins von beidem sieht, erkennt sie trotzdem. */
   (o.li||[]).forEach(l=>{const sz=l[4]==='sz';
-    S.push('<line x1="'+l[0]+'" y1="'+l[1]+'" x2="'+l[2]+'" y2="'+l[3]+'" stroke="'+(sz?'#fbbf24':'rgba(255,255,255,.7)')+'" stroke-width="2"'+(sz?' stroke-dasharray="5,4"':'')+'/>');});
+    S.push('<line x1="'+l[0]+'" y1="'+l[1]+'" x2="'+l[2]+'" y2="'+l[3]+'" stroke="'+(sz?P.sz:P.mittel)+'" stroke-width="2"'+(sz?' stroke-dasharray="5,4"':'')+'/>');});
   /* v517: Jugendtor über ein fünftes Feld „j“ – tiefer (10 statt 7), dickerer Strich,
      hinterlegt und mit drei Netzlinien quer, damit es sich nicht allein über die Größe
      vom Minitor unterscheidet. OHNE fünftes Feld entsteht Zeichen für Zeichen dieselbe
      Ausgabe wie vorher; alle 61 bestehenden Skizzen sind dagegen geprüft. */
   (o.tor||[]).forEach(t=>{const w=t[3]||24, j=t[4]==='j', d=j?10:7, sw=j?3:2.5, v=t[2]==='v';
-    S.push('<rect x="'+t[0]+'" y="'+t[1]+'" width="'+(v?d:w)+'" height="'+(v?w:d)+'" rx="2" fill="'+(j?'rgba(255,255,255,.25)':'none')+'" stroke="#fff" stroke-width="'+sw+'"/>');
+    S.push('<rect x="'+t[0]+'" y="'+t[1]+'" width="'+(v?d:w)+'" height="'+(v?w:d)+'" rx="2" fill="'+(j?P.torFuell:'none')+'" stroke="'+P.tor+'" stroke-width="'+sw+'"/>');
     if(j){ const n=4, st=w/n;
-      for(let i=1;i<n;i++)S.push(v?'<line x1="'+t[0]+'" y1="'+(t[1]+i*st)+'" x2="'+(t[0]+d)+'" y2="'+(t[1]+i*st)+'" stroke="#fff" stroke-width="1"/>'
-                                 :'<line x1="'+(t[0]+i*st)+'" y1="'+t[1]+'" x2="'+(t[0]+i*st)+'" y2="'+(t[1]+d)+'" stroke="#fff" stroke-width="1"/>');
+      for(let i=1;i<n;i++)S.push(v?'<line x1="'+t[0]+'" y1="'+(t[1]+i*st)+'" x2="'+(t[0]+d)+'" y2="'+(t[1]+i*st)+'" stroke="'+P.tor+'" stroke-width="1"/>'
+                                 :'<line x1="'+(t[0]+i*st)+'" y1="'+t[1]+'" x2="'+(t[0]+i*st)+'" y2="'+(t[1]+d)+'" stroke="'+P.tor+'" stroke-width="1"/>');
     }});
   (o.leiter||[]).forEach(l=>{const n=6,st=l[2]/n;
-    S.push('<rect x="'+l[0]+'" y="'+l[1]+'" width="'+(l[3]==='v'?16:l[2])+'" height="'+(l[3]==='v'?l[2]:16)+'" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="1.5"/>');
+    S.push('<rect x="'+l[0]+'" y="'+l[1]+'" width="'+(l[3]==='v'?16:l[2])+'" height="'+(l[3]==='v'?l[2]:16)+'" fill="none" stroke="'+P.leiter+'" stroke-width="1.5"/>');
     for(let i=1;i<n;i++)S.push(l[3]==='v'
-      ?'<line x1="'+l[0]+'" y1="'+(l[1]+i*st)+'" x2="'+(l[0]+16)+'" y2="'+(l[1]+i*st)+'" stroke="rgba(255,255,255,.6)" stroke-width="1.5"/>'
-      :'<line x1="'+(l[0]+i*st)+'" y1="'+l[1]+'" x2="'+(l[0]+i*st)+'" y2="'+(l[1]+16)+'" stroke="rgba(255,255,255,.6)" stroke-width="1.5"/>');});
-  (o.wand||[]).forEach(w=>S.push('<line x1="'+w[0]+'" y1="'+w[1]+'" x2="'+w[2]+'" y2="'+w[3]+'" stroke="#d1d5db" stroke-width="5" stroke-linecap="round"/>'));
-  (o.p||[]).forEach(p=>{const typ=SKZ_PFEIL[p[4]]?p[4]:'p';
-    S.push('<line x1="'+p[0]+'" y1="'+p[1]+'" x2="'+p[2]+'" y2="'+p[3]+'" stroke="'+SKZ_PFEIL[typ]+'" stroke-width="'+(typ==='s'?3:1.5)+'"'+(typ==='l'?' stroke-dasharray="5,3"':typ==='d'?' stroke-dasharray="2,3"':'')+' marker-end="url(#arr-'+typ+')"/>');});
-  (o.h||[]).forEach(h=>S.push('<path d="M'+h[0]+' '+(h[1]-6)+' L'+(h[0]+5)+' '+(h[1]+4)+' L'+(h[0]-5)+' '+(h[1]+4)+' Z" fill="'+(F[h[2]]||'#fbbf24')+'" stroke="rgba(0,0,0,.25)" stroke-width="1"/>'));
-  (o.s||[]).forEach(sp=>{S.push('<circle cx="'+sp[0]+'" cy="'+sp[1]+'" r="8" fill="'+(F[sp[2]]||'#4ade80')+'" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/>');
-    if(sp[3])S.push('<text x="'+sp[0]+'" y="'+(sp[1]+3)+'" text-anchor="middle" fill="rgba(0,0,0,.65)" font-size="8" font-family="sans-serif" font-weight="700">'+E(sp[3])+'</text>');});
-  (o.b||[]).forEach(b=>S.push('<circle cx="'+b[0]+'" cy="'+b[1]+'" r="4" fill="#fff" stroke="#333" stroke-width="1"/>'));
-  (o.tx||[]).forEach(t=>S.push('<text x="'+t[0]+'" y="'+t[1]+'" text-anchor="middle" fill="rgba(255,255,255,.85)" font-size="9" font-family="sans-serif" font-weight="600">'+E(t[2])+'</text>'));
+      ?'<line x1="'+l[0]+'" y1="'+(l[1]+i*st)+'" x2="'+(l[0]+16)+'" y2="'+(l[1]+i*st)+'" stroke="'+P.leiter+'" stroke-width="1.5"/>'
+      :'<line x1="'+(l[0]+i*st)+'" y1="'+l[1]+'" x2="'+(l[0]+i*st)+'" y2="'+(l[1]+16)+'" stroke="'+P.leiter+'" stroke-width="1.5"/>');});
+  (o.wand||[]).forEach(w=>S.push('<line x1="'+w[0]+'" y1="'+w[1]+'" x2="'+w[2]+'" y2="'+w[3]+'" stroke="'+P.wand+'" stroke-width="5" stroke-linecap="round"/>'));
+  (o.p||[]).forEach(p=>{const typ=P.pfeil[p[4]]?p[4]:'p';
+    S.push('<line x1="'+p[0]+'" y1="'+p[1]+'" x2="'+p[2]+'" y2="'+p[3]+'" stroke="'+P.pfeil[typ]+'" stroke-width="'+(typ==='s'?3:1.5)+'"'+(typ==='l'?' stroke-dasharray="5,3"':typ==='d'?' stroke-dasharray="2,3"':'')+' marker-end="url(#'+M+typ+')"/>');});
+  (o.h||[]).forEach(h=>S.push('<path d="M'+h[0]+' '+(h[1]-6)+' L'+(h[0]+5)+' '+(h[1]+4)+' L'+(h[0]-5)+' '+(h[1]+4)+' Z" fill="'+(F[h[2]]||F.y)+'" stroke="'+P.huetchenRand+'" stroke-width="1"/>'));
+  (o.s||[]).forEach(sp=>{S.push('<circle cx="'+sp[0]+'" cy="'+sp[1]+'" r="8" fill="'+(F[sp[2]]||F.g)+'" stroke="'+P.spielerRand+'" stroke-width="1.5"/>');
+    if(sp[3])S.push('<text x="'+sp[0]+'" y="'+(sp[1]+3)+'" text-anchor="middle" fill="'+P.kuerzel+'" font-size="8" font-family="sans-serif" font-weight="700">'+E(sp[3])+'</text>');});
+  (o.b||[]).forEach(b=>S.push('<circle cx="'+b[0]+'" cy="'+b[1]+'" r="4" fill="'+P.ball+'" stroke="'+P.ballRand+'" stroke-width="1"/>'));
+  (o.tx||[]).forEach(t=>S.push('<text x="'+t[0]+'" y="'+t[1]+'" text-anchor="middle" fill="'+P.text+'" font-size="9" font-family="sans-serif" font-weight="600">'+E(t[2])+'</text>'));
   return '<svg viewBox="0 0 280 180" width="100%" style="max-width:280px;display:block;margin:8px auto;border-radius:6px" xmlns="http://www.w3.org/2000/svg">'+S.join('')+'</svg>';
 }
 /* Einheitliche Linien-Legende (PO): erscheint unter jeder Skizze im Detail-Fenster.
    Muss zu den Pfeil-Typen in _skz passen: p=Pass (dünn durchgezogen), l=Laufweg
    (gestrichelt), s=Schuss (dick), d=Dribbling (gepunktet). */
-function skzLegende(){
+function skzLegende(hell){
   /* v512: Die Strichprobe steht auf einem Stück Rasen – sonst wäre der weiße Pass-Pfeil
-     auf hellem Grund unsichtbar, und die Farben stimmten nicht mit der Zeichnung überein. */
-  const li=(dash,w,c)=>'<svg width="32" height="12" viewBox="0 0 32 12" style="flex:none;background:#2d6a2d;border-radius:3px"><line x1="2" y1="6" x2="24" y2="6" stroke="'+c+'" stroke-width="'+w+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/><path d="M24,2.5 L30,6 L24,9.5 Z" fill="'+c+'"/></svg>';
+     auf hellem Grund unsichtbar, und die Farben stimmten nicht mit der Zeichnung überein.
+     v555: Der Rasen der Legende folgt der Variante, sonst zeigte sie im hellen Bild
+     Farben, die dort gar nicht vorkommen. */
+  const P=skzPalette(hell), R=P.rasen;
+  const li=(dash,w,c)=>'<svg width="32" height="12" viewBox="0 0 32 12" style="flex:none;background:'+R+';border-radius:3px"><line x1="2" y1="6" x2="24" y2="6" stroke="'+c+'" stroke-width="'+w+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/><path d="M24,2.5 L30,6 L24,9.5 Z" fill="'+c+'"/></svg>';
   const it=(svg,lbl)=>'<span style="display:inline-flex;align-items:center;gap:4px">'+svg+lbl+'</span>';
   /* v517: Linien ohne Pfeilspitze – Mittellinie und Schusszone sind Markierungen, keine
      Richtungen; eine Spitze würde sie zu Wegen machen. Kontrast auf dem Rasen (#2d6a2d)
      gemessen: Schusszone #fbbf24 3,92:1 · Mittellinie rgba(255,255,255,.7) 4,13:1 –
      beide über den geforderten 3:1 für Bedienelemente und Grafik. */
-  const st=(dash,c)=>'<svg width="32" height="12" viewBox="0 0 32 12" style="flex:none;background:#2d6a2d;border-radius:3px"><line x1="2" y1="6" x2="30" y2="6" stroke="'+c+'" stroke-width="2"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/></svg>';
-  const P=SKZ_PFEIL;
+  const st=(dash,c)=>'<svg width="32" height="12" viewBox="0 0 32 12" style="flex:none;background:'+R+';border-radius:3px"><line x1="2" y1="6" x2="30" y2="6" stroke="'+c+'" stroke-width="2"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/></svg>';
+  const P2=P.pfeil;
   return '<div class="skz-legende" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:10px;color:var(--text2);margin:2px 0 8px">'
-    +it(li('',1.5,P.p),SKZ_PFEIL_NAME.p)+it(li('5,3',1.5,P.l),SKZ_PFEIL_NAME.l)
-    +it(li('',3,P.s),SKZ_PFEIL_NAME.s)+it(li('2,3',1.5,P.d),SKZ_PFEIL_NAME.d)
-    +it(st('5,4','#fbbf24'),'Schusszone')+it(st('','rgba(255,255,255,.7)'),'Mittellinie')+'</div>';
+    +it(li('',1.5,P2.p),SKZ_PFEIL_NAME.p)+it(li('5,3',1.5,P2.l),SKZ_PFEIL_NAME.l)
+    +it(li('',3,P2.s),SKZ_PFEIL_NAME.s)+it(li('2,3',1.5,P2.d),SKZ_PFEIL_NAME.d)
+    +it(st('5,4',P.sz),'Schusszone')+it(st('',P.mittel),'Mittellinie')+'</div>';
 }
 /* Symbolskizzen je Kategorie: Fallback für eigene und ältere KI-Übungen ohne eigene
    Skizze – besser eine ehrlich beschriftete Grundaufstellung als gar kein Bild. */
