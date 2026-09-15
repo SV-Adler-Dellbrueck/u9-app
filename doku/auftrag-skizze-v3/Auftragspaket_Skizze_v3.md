@@ -52,6 +52,9 @@ Scheibe etwas am Platz benutzbar ist.
 | 3 | Abspielen zwischen Schritten; Taktikboard mit denselben Bildern | v5xx+2 |
 | 4 | Besetzung: Kürzel und Fotos der Kinder statt „S“ und „O“ | v5xx+3 |
 
+**Stand 15.09.2026:** Scheibe 1 ist als **v555** gebaut (PR #138), Scheibe 4 als **v556**
+(PR #139). Offen sind Scheibe 2 (Schritte) und Scheibe 3 (Abspielen und Taktikboard).
+
 Scheibe 4 hängt **nur an Scheibe 1**, nicht an den Schritten. Soll die Wirkung in der
 Besprechung zuerst da sein, wird in der Reihenfolge 1 · 4 · 2 · 3 gebaut.
 
@@ -314,7 +317,14 @@ in einen Kreis mit 8 px Radius, und der Tipp-Editor schneidet schon heute auf dr
 
 ### 4.5 Export und Teilen
 
-„Skizze teilen“ liefert im Besetzungsmodus **immer die neutrale Fassung** — keine Namen,
+**Warum nicht im Detailfenster (nachgetragen bei der Umsetzung, v556):** Das Detailfenster
+ist die Quelle für „Skizze teilen“ — der Knopf nimmt die Zeichnung, die dort steht. Läge
+die Besetzung auch dort, trüge jedes geteilte Bild Namen und Gesichter von Kindern in eine
+Nachricht hinaus, und es bräuchte eine zusätzliche Regel, die genau das wieder verhindert.
+Bleibt die Besetzung auf den Präsentationsmodus beschränkt, ist der Export neutral, weil es
+im Detailfenster nichts zu holen gibt. Eine Regel weniger, die jemand vergessen kann.
+
+„Skizze teilen“ liefert damit **immer die neutrale Fassung** — keine Namen,
 keine Gesichter —, und sagt das in einem Toast. Zwei Gründe, ein fachlicher und ein
 technischer:
 
@@ -328,7 +338,9 @@ technischer:
 
 | Ort | Besetzung |
 |---|---|
-| Trainer-App: Übungsdetail, Präsentationsmodus, Trainingsplan | ja, mit Foto ab 600 px |
+| Trainer-App: Präsentationsmodus | ja, mit Foto ab 600 px |
+| Trainer-App: Übungsdetail | **nein** — siehe unten |
+| Trainingsplan | Quelle der Besetzung, keine Anzeigefläche (dort steht keine Skizze) |
 | Kabine (Kinder) | nur lesend, nur die Besetzung des Tages; Bewertungen bleiben unsichtbar |
 | Eltern-Bereich | nein |
 | Öffentliche Ansichten (`?ticker`, `?heft`, `?turnier`, Gast-Link) | **hart aus** |
