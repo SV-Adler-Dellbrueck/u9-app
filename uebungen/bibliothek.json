@@ -1551,15 +1551,22 @@
           [
             80,
             80,
-            198,
-            84,
+            200,
+            52,
             "p"
           ],
           [
+            208,
+            86,
             210,
-            74,
-            216,
-            26,
+            60,
+            "l"
+          ],
+          [
+            215,
+            34,
+            227,
+            17,
             "s"
           ]
         ],
@@ -1577,14 +1584,14 @@
             "S"
           ],
           [
-            210,
-            88,
+            212,
+            44,
             "g",
             "S"
           ],
           [
-            140,
-            72,
+            134,
+            88,
             "r",
             "O"
           ],
@@ -1595,8 +1602,8 @@
             "O"
           ],
           [
-            192,
-            34,
+            176,
+            30,
             "r",
             "O"
           ]
@@ -1619,11 +1626,11 @@
     {
       "name": "Dreieckspassen mit Abschluss",
       "kat": "raute",
-      "kurz": "Übungsform ohne Gegner: Innenseitenpass im Dreieck, zweiter Ball, zum Schluss Abschluss aus der Schusszone.",
+      "kurz": "Übungsform ohne Gegner: Innenseitenpass im Dreieck, Abschluss von Beginn an, ab Minute 4 mit zweitem Ball.",
       "spieler": "3 je Dreieck (12 = 4 Dreiecke auf zwei Feldern)",
       "feld": "Auf dem Spielfeld, Dreieck mit ca. 8 m Seitenlänge, Positionen mit Hütchen",
       "dauer": "13",
-      "ablauf": "Zwischenblock der Einheit und der einzige Teil ohne Gegner – hier wird korrigiert statt gefragt. Start und Stopp sind erlaubt, die Ausgangssituation kehrt wieder.\n\nMinute 0 bis 5: ein Ball je Dreieck. Innenseitenpass, Ballmitnahme in die offene Seite, nach dem Pass der eigenen Abspielrichtung nachrücken.\n\nMinute 5 bis 9: ein zweiter Ball kommt dazu. Jetzt muss vor jedem Pass hingeschaut werden, weil die Zielposition besetzt sein kann.\n\nMinute 9 bis 13: der dritte Pass geht auf das Kind, das aus dem Dreieck herausdribbelt und in der Schusszone auf ein Minitor abschließt. Danach rückt es auf die freie Position nach.",
+      "ablauf": "Zwischenblock der Einheit und der einzige Teil ohne Gegner – hier wird korrigiert statt gefragt. Start und Stopp sind erlaubt, die Ausgangssituation kehrt wieder. Abgeschlossen wird von der ersten Minute an: neun Minuten nur passen wäre für diese Altersklasse zu lang, und die Kontrollfrage des Konzepts lautet, ob jedes Kind ein Erfolgserlebnis hatte.\n\nMinute 0 bis 4: ein Ball je Dreieck. Innenseitenpass, Ballmitnahme in die offene Seite, nach dem Pass der eigenen Abspielrichtung nachrücken. Nach dem dritten Pass dribbelt das Kind aus dem Dreieck heraus und schließt aus der Schusszone auf ein Minitor ab, danach rückt es auf die freie Position nach.\n\nMinute 4 bis 8: ein zweiter Ball kommt dazu. Jetzt muss vor jedem Pass hingeschaut werden, weil die Zielposition besetzt sein kann. Der Abschluss bleibt.\n\nMinute 8 bis 13: zwei Durchgänge von zwei Minuten gegen das eigene Vorher – wie viele saubere Abschlüsse schafft das Dreieck? Gezählt wird je Dreieck, nie gegen ein anderes.",
       "varianten": "Leichter: Dreieck auf 6 m verkleinern, nur ein Ball, Kontakte frei. Schwerer: Dreieck auf 10 m, Pass in den Lauf, eine Minute je Durchgang mit dem schwächeren Fuß.",
       "coaching": "Standbein neben den Ball, Innenseite.\nKurz hinschauen, bevor du spielst.\nBall dorthin mitnehmen, wo du weiterspielen willst.",
       "spass": 3,
@@ -1738,7 +1745,7 @@
           [
             140,
             174,
-            "Dreieck ca. 8 m - ab Minute 5 mit zweitem Ball"
+            "Dreieck ca. 8 m - ab Minute 4 mit zweitem Ball"
           ]
         ]
       }

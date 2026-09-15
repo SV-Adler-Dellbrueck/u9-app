@@ -48,34 +48,133 @@ Paket Lehrgangsskizzen.
   "diff": 2,
   "skizze": {
     "li": [
-      [10, 88, 270, 88],
-      [26, 54, 254, 54, "sz"],
-      [26, 122, 254, 122, "sz"]
+      [
+        10,
+        88,
+        270,
+        88
+      ],
+      [
+        26,
+        54,
+        254,
+        54,
+        "sz"
+      ],
+      [
+        26,
+        122,
+        254,
+        122,
+        "sz"
+      ]
     ],
     "tor": [
-      [40, 6, "h", 24],
-      [216, 6, "h", 24],
-      [40, 160, "h", 24],
-      [216, 160, "h", 24]
+      [
+        40,
+        6,
+        "h",
+        24
+      ],
+      [
+        216,
+        6,
+        "h",
+        24
+      ],
+      [
+        40,
+        160,
+        "h",
+        24
+      ],
+      [
+        216,
+        160,
+        "h",
+        24
+      ]
     ],
     "p": [
-      [132, 131, 80, 96, "p"],
-      [80, 80, 198, 84, "p"],
-      [210, 74, 216, 26, "s"]
+      [
+        132,
+        131,
+        80,
+        96,
+        "p"
+      ],
+      [
+        80,
+        80,
+        200,
+        52,
+        "p"
+      ],
+      [
+        208,
+        86,
+        210,
+        60,
+        "l"
+      ],
+      [
+        215,
+        34,
+        227,
+        17,
+        "s"
+      ]
     ],
     "s": [
-      [140, 138, "g", "S"],
-      [70, 88, "g", "S"],
-      [210, 88, "g", "S"],
-      [140, 72, "r", "O"],
-      [96, 36, "r", "O"],
-      [192, 34, "r", "O"]
+      [
+        140,
+        138,
+        "g",
+        "S"
+      ],
+      [
+        70,
+        88,
+        "g",
+        "S"
+      ],
+      [
+        212,
+        44,
+        "g",
+        "S"
+      ],
+      [
+        134,
+        88,
+        "r",
+        "O"
+      ],
+      [
+        96,
+        36,
+        "r",
+        "O"
+      ],
+      [
+        176,
+        30,
+        "r",
+        "O"
+      ]
     ],
     "b": [
-      [148, 146]
+      [
+        148,
+        146
+      ]
     ],
     "tx": [
-      [140, 177, "25 x 20 m - Tor nach Pass zählt doppelt"]
+      [
+        140,
+        177,
+        "25 x 20 m - Tor nach Pass zählt doppelt"
+      ]
     ]
   }
 }
@@ -87,47 +186,127 @@ Paket Lehrgangsskizzen.
 {
   "name": "Dreieckspassen mit Abschluss",
   "kat": "raute",
-  "kurz": "Übungsform ohne Gegner: Innenseitenpass im Dreieck, zweiter Ball, zum Schluss Abschluss aus der Schusszone.",
+  "kurz": "Übungsform ohne Gegner: Innenseitenpass im Dreieck, Abschluss von Beginn an, ab Minute 4 mit zweitem Ball.",
   "spieler": "3 je Dreieck (12 = 4 Dreiecke auf zwei Feldern)",
   "feld": "Auf dem Spielfeld, Dreieck mit ca. 8 m Seitenlänge, Positionen mit Hütchen",
   "dauer": "13",
-  "ablauf": "Zwischenblock der Einheit und der einzige Teil ohne Gegner – hier wird korrigiert statt gefragt. Start und Stopp sind erlaubt, die Ausgangssituation kehrt wieder.\n\nMinute 0 bis 5: ein Ball je Dreieck. Innenseitenpass, Ballmitnahme in die offene Seite, nach dem Pass der eigenen Abspielrichtung nachrücken.\n\nMinute 5 bis 9: ein zweiter Ball kommt dazu. Jetzt muss vor jedem Pass hingeschaut werden, weil die Zielposition besetzt sein kann.\n\nMinute 9 bis 13: der dritte Pass geht auf das Kind, das aus dem Dreieck herausdribbelt und in der Schusszone auf ein Minitor abschließt. Danach rückt es auf die freie Position nach.",
+  "ablauf": "Zwischenblock der Einheit und der einzige Teil ohne Gegner – hier wird korrigiert statt gefragt. Start und Stopp sind erlaubt, die Ausgangssituation kehrt wieder. Abgeschlossen wird von der ersten Minute an: neun Minuten nur passen wäre für diese Altersklasse zu lang, und die Kontrollfrage des Konzepts lautet, ob jedes Kind ein Erfolgserlebnis hatte.\n\nMinute 0 bis 4: ein Ball je Dreieck. Innenseitenpass, Ballmitnahme in die offene Seite, nach dem Pass der eigenen Abspielrichtung nachrücken. Nach dem dritten Pass dribbelt das Kind aus dem Dreieck heraus und schließt aus der Schusszone auf ein Minitor ab, danach rückt es auf die freie Position nach.\n\nMinute 4 bis 8: ein zweiter Ball kommt dazu. Jetzt muss vor jedem Pass hingeschaut werden, weil die Zielposition besetzt sein kann. Der Abschluss bleibt.\n\nMinute 8 bis 13: zwei Durchgänge von zwei Minuten gegen das eigene Vorher – wie viele saubere Abschlüsse schafft das Dreieck? Gezählt wird je Dreieck, nie gegen ein anderes.",
   "varianten": "Leichter: Dreieck auf 6 m verkleinern, nur ein Ball, Kontakte frei. Schwerer: Dreieck auf 10 m, Pass in den Lauf, eine Minute je Durchgang mit dem schwächeren Fuß.",
   "coaching": "Standbein neben den Ball, Innenseite.\nKurz hinschauen, bevor du spielst.\nBall dorthin mitnehmen, wo du weiterspielen willst.",
   "spass": 3,
   "diff": 2,
   "skizze": {
     "z": [
-      [30, 20, 220, 140]
+      [
+        30,
+        20,
+        220,
+        140
+      ]
     ],
     "h": [
-      [70, 102, "r"],
-      [140, 38, "r"],
-      [140, 142, "r"]
+      [
+        70,
+        102,
+        "r"
+      ],
+      [
+        140,
+        38,
+        "r"
+      ],
+      [
+        140,
+        142,
+        "r"
+      ]
     ],
     "s": [
-      [70, 90, "g", "A"],
-      [140, 50, "g", "B"],
-      [140, 130, "g", "C"]
+      [
+        70,
+        90,
+        "g",
+        "A"
+      ],
+      [
+        140,
+        50,
+        "g",
+        "B"
+      ],
+      [
+        140,
+        130,
+        "g",
+        "C"
+      ]
     ],
     "b": [
-      [78, 98]
+      [
+        78,
+        98
+      ]
     ],
     "p": [
-      [78, 84, 132, 56, "p"],
-      [140, 60, 140, 120, "p"],
-      [132, 124, 78, 98, "p"],
-      [150, 132, 202, 112, "d"],
-      [212, 106, 244, 92, "s"]
+      [
+        78,
+        84,
+        132,
+        56,
+        "p"
+      ],
+      [
+        140,
+        60,
+        140,
+        120,
+        "p"
+      ],
+      [
+        132,
+        124,
+        78,
+        98,
+        "p"
+      ],
+      [
+        150,
+        132,
+        202,
+        112,
+        "d"
+      ],
+      [
+        212,
+        106,
+        244,
+        92,
+        "s"
+      ]
     ],
     "li": [
-      [206, 20, 206, 160, "sz"]
+      [
+        206,
+        20,
+        206,
+        160,
+        "sz"
+      ]
     ],
     "tor": [
-      [251, 78, "v", 28]
+      [
+        251,
+        78,
+        "v",
+        28
+      ]
     ],
     "tx": [
-      [140, 174, "Dreieck ca. 8 m - ab Minute 5 mit zweitem Ball"]
+      [
+        140,
+        174,
+        "Dreieck ca. 8 m - ab Minute 4 mit zweitem Ball"
+      ]
     ]
   }
 }
@@ -180,7 +359,7 @@ Stellen „Aufbau" (Übung 1) und „Zwischenblock" (Übung 2).
 | `stand` hochgesetzt | `2026-09-14-2` in `bibliothek.json`, sonst holt `_bibHolen` die Datei nicht | Prüffall a): Stand wörtlich `2026-09-14-2`, beide Übungen als letzte zwei Einträge, keine doppelten Namen. `vorlagen.json` auf `2026-09-14-4` |
 | Nur vorhandene Elementtypen | Schlüssel jeder Spec gegen `EI_SKZ_LISTEN` (`z, tor, leiter, wand, p, li, h, s, b, tx`), Spielerfarben gegen `g, r, b, y, w`, Pfeiltypen gegen `SKZ_PFEIL` | Prüffall c): Schlüssel, Spieler- und Hütchenfarben, Pfeiltypen – alle drei Listen werden zur Laufzeit aus der App gelesen, nichts abgetippt. Keine Abweichung |
 | Skizzen rendern im Detail und im Export identisch | `viewBox` `0 0 280 180`, Export serialisiert dieselbe `_skz`-Ausgabe | Prüffall c)/f): `viewBox` stimmt; die eingecheckte SVG enthält die `_skz`-Ausgabe zeichengleich, sonst wird „Export neu laufen lassen“ gemeldet |
-| Lesbar am Handy | kein Spielerkreis näher als 24 px an einem anderen; falls eine Spec das reißt, Position melden statt den Renderer zu ändern | Gemessen: Übung 1 engster Abstand **57 px**, Übung 2 **80 px**. PNG 1120 × 864 px, im Vollbild am Handy ohne Zoomen lesbar (Sichtprüfung beider Bilder). Dieselbe Einschränkung wie im Paket Lehrgangsskizzen: Kürzel 8 px, Beschriftung 9 px im festen Maßstab von `_skz` |
+| Lesbar am Handy | kein Spielerkreis näher als 24 px an einem anderen; falls eine Spec das reißt, Position melden statt den Renderer zu ändern | Gemessen: Übung 1 engster Abstand **39 px**, Übung 2 **80 px**. PNG 1120 × 864 px, im Vollbild am Handy ohne Zoomen lesbar (Sichtprüfung beider Bilder). Dieselbe Einschränkung wie im Paket Lehrgangsskizzen: Kürzel 8 px, Beschriftung 9 px im festen Maßstab von `_skz` |
 | Vorlage übernehmbar | Vorlage erscheint im Trainingsplan und legt die fünf Blöcke mit den richtigen Übungen an, ohne dass eine Übung doppelt entsteht | Prüffall d)/e): `_evPruefung` ohne Fehler, kein Netto-Hinweis (39 von 49 Minuten brutto = 0,80, im Band 0,6–1,0). Übernahme auf den 18.09. schreibt fünf Phasen; Block 2 und 5 zeigen auf `Warm up Adler` und `3 gegen 3 auf vier Minitore mit Schusszone` aus dem Bestand, Block 3 und 4 auf die neuen. Die Übungstabelle bleibt bei 14 Zeilen, keine gleichnamige Kopie |
 | `node tests/run.js` grün, `sw.js` hochgezählt | voller Lauf vor dem Bump | Voller Lauf grün auf v553, danach Bump auf **v554**, Übersicht mitgezogen |
 | Keine neuen Programmdateien | `bibliothek.json` und `vorlagen.json` bleiben in der Ausnahmeliste im `fetch`-Handler von `sw.js`, nicht im Precache | Kein neues App-Modul, `PRECACHE` unverändert (54 Einträge), die Regel `/\/uebungen\/[^/]+\.json$/` im `fetch`-Handler greift für beide Dateien. Neu sind nur der Prüffall und das Exportskript in `doku/`, das den Baustein aus `doku/auftrag-lehrgangsskizzen/export-skizzen.js` aufruft statt ihn zu kopieren |
@@ -197,6 +376,37 @@ Alle vier in `tests/checks/v554-einheit-lf4.js`; der Export läuft mit
 `node doku/auftrag-einheit-lf4/export-skizzen.js` aus dem Projektordner.
 
 ## Was offen bleibt
+
+### Nachträglich geändert — Durchsicht Charles, 15.09.2026
+
+Zwei Befunde aus seiner Durchsicht der Exportbilder. Beide ändern den Wortlaut des
+Pakets; deshalb stehen sie hier und nicht still im Code.
+
+- **Übung 1, Abschluss stand außerhalb der Schusszone.** Der abschließende Spieler stand
+  auf der Mittellinie (`y 88`) und schoss von dort aufs Tor — die Regel der Einheit lautet
+  aber „Tore zählen nur aus der Schusszone“, und die Bildunterschrift der Abgabe nennt
+  ausdrücklich den „Abschluss aus der Schusszone“. Korrigiert: der Spieler steht jetzt bei
+  `y 44`, also zwischen Grundlinie und Zonenlinie (`y 54`), ein Laufweg zeigt, wie er
+  hineingestartet ist, und der Schuss beginnt bei `y 34`. Der zentrale Verteidiger ist auf
+  die Mittellinie gerückt (`134, 88`), damit die Verlagerung nicht durch seinen Kreis läuft.
+  Übung 2 war schon richtig: dort endet das Dribbling bei `x 202` vor der Zonenlinie
+  `x 206`, und der Schuss beginnt bei `x 212` dahinter.
+- **Übung 2, neun Minuten ohne Abschluss.** Der Aufbau ließ den Torschuss erst ab Minute 9
+  zu — davor wurde nur gepasst. Für diese Altersklasse zu lang, und §10 des
+  Ausbildungskonzepts fragt nach jeder Einheit, ob **jedes Kind ein Erfolgserlebnis** hatte.
+  Neu: abgeschlossen wird ab der ersten Minute, gesteigert wird über das Material (zweiter
+  Ball ab Minute 4) und den Wettbewerb (ab Minute 8 zwei Durchgänge gegen das eigene
+  Vorher). Die drei Steuerungsgrößen der Abgabe bleiben damit erhalten, nur ihre
+  Reihenfolge ändert sich. `kurz` und die Bildunterschrift der Skizze ziehen mit, ebenso
+  das Label des Zwischenblocks in der Vorlage.
+
+**Von Hand nachzuziehen in `Huetten_Aufgabe_2.2.docx`:** die Minutenangaben des
+Zwischenblocks (0–4 / 4–8 / 8–13 statt 0–5 / 5–9 / 9–13), die Bildunterschrift zu Skizze 2
+(„Ab Minute 9 dribbelt das Kind …“), und beide Exportbilder neu einsetzen. Zusätzlich ein
+Widerspruch, der nicht aus diesem Paket stammt: die Materialliste der Abgabe nennt
+„12 Bälle Größe 3“, der Bestand der Mannschaft führt seit v552 ausschließlich Größe 4.
+Eines von beidem stimmt nicht.
+
 
 Schema-Befunde – nichts hinzuerfunden, alles über vorhandene Felder:
 
