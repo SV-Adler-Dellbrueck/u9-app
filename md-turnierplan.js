@@ -513,6 +513,13 @@ function nominierteSpieler(){
 function nomRender(){
   const box=document.getElementById("nom-panel");
   if(!box)return;
+  /* v564: Jeder Tipp auf „Dabei" zeichnet die Liste neu – und beim Neuzeichnen entschied
+     bisher allein `dabeiAlle`, ob der Block offen ist. Sobald also das ERSTE Kind gesetzt
+     war, klappte die Liste unter der Hand zu, und man musste sie für jedes weitere Kind
+     neu aufziehen. Das Zuklappen ist als ERSTER Eindruck gedacht, nicht als Antwort auf
+     einen Tipp: Steht der Block schon auf der Seite, behält er, was der Trainer zuletzt
+     wollte. */
+  const warOffen=document.getElementById("nom-dabei")?.open;
   const hasRsvp=Object.keys(nomRsvp).length>0;
   const aktiv=KADER.filter(k=>k.aktiv!==false);
   const dabeiAlle=aktiv.filter(k=>nomStatus[k.name]==="dabei").length;
@@ -539,7 +546,7 @@ function nomRender(){
         style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:var(--r);cursor:pointer;font-family:inherit;font-size:11.5px;font-weight:${st===s?"700":"500"};background:${st===s?stCfg[s].col:"var(--surface)"};color:${st===s?"#fff":"var(--text)"}">${stCfg[s].lbl}</button>`).join("")}</div>
     </div>`;
   };
-  box.innerHTML=`<details id="nom-dabei" class="tp-tipp"${dabeiAlle?"":" open"}>
+  box.innerHTML=`<details id="nom-dabei" class="tp-tipp"${(warOffen===undefined?!dabeiAlle:warOffen)?" open":""}>
     <summary>👥 Wer ist dabei? <b>${dabeiAlle} von ${aktiv.length}</b>${offenAlle?` <span style="font-weight:400;color:var(--amber)">· ${offenAlle} offen</span>`:""}</summary>
     <div>
       <div id="nom-quelle" style="font-size:10.5px;color:var(--text3);margin-bottom:8px;line-height:1.4">📣 Vorbelegt aus den Eltern-Rückmeldungen (zugesagt = Dabei, abgesagt = Nicht, ohne Antwort = offen). <b>Dabei</b> ist die Anwesenheit dieses Spieltags und zählt für die Spiele-Quote.</div>

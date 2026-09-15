@@ -16,7 +16,11 @@
       die Liste „Wer ist dabei?".
    c) In der Liste steht je Kind Dabei / Nicht / Verletzt, antippbar mit 44 px.
    d) Die Trainings-Kachel führt weiterhin zur Trainingsliste — die beiden Anwesenheiten
-      bleiben getrennt, das ist die Entscheidung aus v477. */
+      bleiben getrennt, das ist die Entscheidung aus v477.
+   e) Mehrere Kinder nacheinander: Jeder Tipp zeichnet die Liste neu, und dabei entschied
+      bisher allein die Zahl der Dabei-Kinder über „offen". Nach dem ERSTEN Kind klappte
+      der Block also zu, und für jedes weitere musste man ihn neu aufziehen. Der Prüffall
+      setzt drei Kinder hintereinander und verlangt, dass die Liste dabei offen bleibt. */
 module.exports = async function (h) {
   const K = h.KINDER, probleme = [], zeilen = [];
   const heute = h.heute();
@@ -83,6 +87,34 @@ module.exports = async function (h) {
     if (weg.beschriftung !== "Dabei,Nicht,Verletzt") probleme.push(`Die Auswahl je Kind heißt „${weg.beschriftung}“`);
     if (weg.minHoehe < 44) probleme.push(`Ein Knopf ist ${weg.minHoehe} px hoch – gefordert 44`);
     if (!probleme.length) zeilen.push(`Spieltags-Anwesenheit: Seite offen, beide Blöcke aufgeklappt, ${weg.knoepfe} Knöpfe à ${weg.minHoehe} px`);
+  }
+
+  // ── e) Drei Kinder nacheinander, ohne die Liste neu aufzuziehen ───────────
+  const nacheinander = await s.page.evaluate(async ({ K }) => {
+    const warte = ms => new Promise(x => setTimeout(x, ms));
+    if (typeof nomSet !== "function") return { fehlt: "nomSet" };
+    const offen = [];
+    for (const name of K.slice(0, 3)) {
+      nomSet(name, "dabei");
+      await warte(60);
+      offen.push((document.getElementById("nom-dabei") || {}).open === true);
+    }
+    const dabei = K.slice(0, 3).filter(n => nomStatus[n] === "dabei").length;
+    /* Gegenprobe: von Hand zugeklappt bleibt sie auch nach dem nächsten Tipp zu –
+       die Liste folgt dem Trainer, nicht der Zahl der Dabei-Kinder. */
+    const d = document.getElementById("nom-dabei"); if (d) d.open = false;
+    nomSet(K[3], "dabei");
+    await warte(60);
+    const bleibtZu = (document.getElementById("nom-dabei") || {}).open === false;
+    return { offen, dabei, bleibtZu };
+  }, { K });
+
+  if (nacheinander.fehlt) probleme.push(nacheinander.fehlt + " fehlt");
+  else {
+    if (nacheinander.offen.some(x => !x)) probleme.push(`Die Liste klappt beim Antippen zu (offen nach je einem Tipp: ${nacheinander.offen.join(", ")}) – dann lässt sich kein zweites Kind setzen`);
+    if (nacheinander.dabei !== 3) probleme.push(`${nacheinander.dabei} von 3 Kindern stehen auf „Dabei“`);
+    if (!nacheinander.bleibtZu) probleme.push("Eine von Hand zugeklappte Liste geht beim nächsten Tipp wieder auf");
+    if (!probleme.length) zeilen.push("Mehrere Kinder nacheinander: Liste bleibt offen, von Hand zugeklappt bleibt sie zu");
   }
 
   const fehler = s.fehler();
