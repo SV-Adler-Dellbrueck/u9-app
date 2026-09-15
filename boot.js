@@ -424,7 +424,10 @@ async function teamSyncUpsert(table,datum,data,extra){
        das Zweitgeraet sah aber nichts. Einmal pro Minute ehrlich Bescheid geben. */
     if(!r.ok&&(!teamSyncUpsert._warnAt||Date.now()-teamSyncUpsert._warnAt>60000)){
       teamSyncUpsert._warnAt=Date.now();
-      toast("⚠️ Nur lokal gespeichert – Team-Sync gerade nicht möglich","err");
+      /* v563: Die Meldung nennt jetzt die Tabelle. Ohne sie ließ sich ein Bericht aus dem
+         Eltern-Bereich nicht auflösen – man wusste, DASS ein Team-Write scheiterte, aber
+         nicht welcher, und die Suche danach begann jedes Mal von vorn. */
+      toast(`⚠️ Nur lokal gespeichert – Team-Sync „${table}" gerade nicht möglich (${r.status})`,"err");
     }
   }catch(e){/* offline: Daten liegen lokal, Sync folgt beim naechsten Speichern */}
 }

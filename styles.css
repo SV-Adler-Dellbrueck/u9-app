@@ -600,7 +600,7 @@ body.quiz-extern.tq-playing .tb-wrap{display:block}
 .tq-player-btn.selected{border-color:var(--blue);background:var(--blue-bg);box-shadow:0 0 0 2px rgba(26,86,219,.2)}
 .tq-player-btn .tq-player-icon{font-size:24px;margin-bottom:4px}
 .tq-player-btn .tq-player-name{font-size:12px;font-weight:600;color:var(--text)}
-.quiz-extern .topbar,.quiz-extern #main-nav,.quiz-extern .sl.nt,.quiz-extern #view-taktik>div:nth-child(2),.quiz-extern .tb-bench-area,.quiz-extern .print-btn,.quiz-extern .tb-field+div,.quiz-extern .tb-bench-area+div,.quiz-extern .tb-wrap .tb-bench-area,.quiz-extern .tb-wrap>div:not(.tb-field){display:none!important}
+.quiz-extern .topbar,.quiz-extern #main-nav,.quiz-extern .sl.nt,.quiz-extern #view-taktik>div:nth-child(2),.quiz-extern .tb-bench-area,.quiz-extern .print-btn,.quiz-extern .tb-field+div,.quiz-extern .tb-bench-area+div,.quiz-extern .tb-wrap .tb-bench-area,.quiz-extern .tb-wrap>div:not(.tb-field):not(#tq-task-chip){display:none!important}
 .quiz-extern #view-taktik{display:block!important}
 /* Kinder-Quiz (PO-Befund): ALLE Trainer-Werkzeuge des Taktikboards verstecken – die alte
    nth-child(2)-Regel brach mit jeder neu dazugekommenen Werkzeugleiste (Formationen,
@@ -608,7 +608,12 @@ body.quiz-extern.tq-playing .tb-wrap{display:block}
    nur das Quiz-Panel, und im Spielmodus zusätzlich das Feld. */
 body.quiz-extern #view-taktik>*{display:none!important}
 body.quiz-extern #view-taktik>#tq-panel{display:block!important}
-body.quiz-extern.tq-playing #view-taktik>#tq-panel{display:none!important}
+/* v563: Hier stand einmal `#tq-panel{display:none}` für den Spielmodus. Damit war im
+   laufenden Szenario ALLES weg, was nicht das Feld ist: die Aufgabe, der Tipp, „Prüfen"
+   und „Überspringen". Die Kinder sahen einen Platz mit Figuren und keine Frage dazu.
+   Der Whitelist-Gedanke war richtig – nur das Panel gehört nicht zu den Trainer-Werkzeugen,
+   es IST das Quiz. Es bleibt im Spielmodus stehen, und der Aufgaben-Chip über dem Feld
+   (oben aus der nicht-Feld-Regel ausgenommen) hält die Aufgabe beim Scrollen sichtbar. */
 body.quiz-extern.tq-playing #view-taktik>.tb-wrap{display:block!important}
 .tb-role-labels{position:absolute;inset:0;pointer-events:none;z-index:5}
 .tb-role-lbl{position:absolute;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.45);transform:translate(-50%,-50%);pointer-events:none}
