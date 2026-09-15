@@ -1,14 +1,11 @@
-/* v560 – Vereinsmaterial: was nicht uns gehört, aber jeder benutzen darf.
+/* v560 – Zwei Geräte, die dem Zeichner fehlten.
 
-   Der Verein hält Geräte für alle Mannschaften vor: Stangen, Koordinationsleitern,
-   Minihürden in mehreren Höhen, Freistoß-Dummys, Ringe. Für den Materialabgleich unter
-   der Skizze ist das ein eigener Zustand: vorhanden, aber nicht gesichert. Wer „6 Stangen"
-   liest und am Platz feststellt, dass eine andere Mannschaft schneller war, ist schlechter
-   dran als jemand, dem die Zeile sagt, dass er sie vorher sichern muss.
+   Der Verein hält Geräte für alle Mannschaften vor. Zwei davon konnte der Zeichner nicht
+   darstellen: den Koordinationsring und den mannshohen Freistoß-Dummy. Material eintragen
+   zu können, das man nicht zeichnen kann, wäre eine halbe Sache.
 
-   Zwei Geräte fehlten dem Zeichner ganz: der Koordinationsring und der mannshohe
-   Freistoß-Dummy. Material eintragen zu können, das man nicht zeichnen kann, wäre eine
-   halbe Sache.
+   Wo das Material liegt, sagt seit v561 die Ortszeile am Posten („Materialschuppen Verein").
+   Der Prüffall dazu steht in `v561-material-kacheln.js`.
 
    Fälle:
    a) Ring und Dummy erscheinen im Bild, in beiden Rasenvarianten, mit Farben aus dem
@@ -17,11 +14,7 @@
       der App muss eine neuere Beschreibung ohne Bruch zeichnen können.
    c) Die Legende nennt beide beim Namen, aber nur wenn sie vorkommen.
    d) Die Materialzählung kennt sie, in Ein- und Mehrzahl.
-   e) Der Abgleich weist Vereinsmaterial als solches aus – und nur dann, wenn ALLE Posten
-      dieses Gegenstands dem Verein gehören. Steht auch eigenes im Schrank, ist die Menge
-      gesichert und der Zusatz wäre eine Warnung ohne Anlass.
-   f) Farbe ist nicht der einzige Träger: „(Verein)" steht als Wort in der Zeile.
-   g) Die Inventur kann das Kennzeichen setzen – in der Liste und beim Erfassen. */
+   e) Beide Werkzeuge stehen im Editor. */
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
 
@@ -92,80 +85,6 @@ module.exports = async function (h) {
     if (!probleme.length) zeilen.push("Ring und Dummy: beide Rasenvarianten, unbekannte Art übersprungen, Legende und Zählung stimmen");
   }
 
-  // ── e) + f) Vereinsmaterial im Abgleich ───────────────────────────────────
-  const verein = await s.page.evaluate(() => {
-    if (typeof matBedarfZeile !== "function") return { fehlt: "matBedarfZeile" };
-    const SPEC = { ger: [[10, 10, "stange"], [20, 10, "stange"], [30, 10, "ring"]], b: [[40, 40], [50, 40]] };
-    /* Stangen und Ringe gehören dem Verein, die Bälle uns. */
-    MAT_POSTEN = [
-      { name: "Stangen", ist: 6, verein: true, aktiv: true },
-      { name: "Koordinationsringe", ist: null, verein: true, aktiv: true },
-      { name: "Bälle", ist: 12, verein: false, aktiv: true }
-    ];
-    const rein = matBedarfZeile(SPEC);
-    /* Derselbe Gegenstand zweimal: einer dem Verein, einer uns – dann ist er gesichert. */
-    MAT_POSTEN = [
-      { name: "Stangen", ist: 6, verein: true, aktiv: true },
-      { name: "Stangen", ist: 4, verein: false, aktiv: true },
-      { name: "Bälle", ist: 12, verein: false, aktiv: true }
-    ];
-    const gemischt = matBedarfZeile(SPEC);
-    const abgleich = matAbgleich(skzMaterial(SPEC));
-    return {
-      stangeMarkiert: /2 Stangen <span[^>]*>\(Verein\)<\/span>/.test(rein),
-      ringMarkiert: /1 Koordinationsring <span[^>]*>\(Verein\)<\/span>/.test(rein),
-      ballOhneMarke: !/Bälle <span[^>]*>\(Verein\)/.test(rein),
-      hinweis: /Vereinsmaterial teilen sich alle Mannschaften/.test(rein),
-      gemischtOhneMarke: !/Stangen <span[^>]*>\(Verein\)/.test(gemischt),
-      gemischtOhneHinweis: !/Vereinsmaterial teilen sich/.test(gemischt),
-      gemischtSumme: (abgleich.find(m => m.schluessel === "stange") || {}).ist,
-      wortNichtNurFarbe: /\(Verein\)/.test(rein)
-    };
-  });
-
-  if (verein.fehlt) probleme.push(verein.fehlt + " fehlt");
-  else {
-    if (!verein.stangeMarkiert || !verein.ringMarkiert) probleme.push("Vereinsmaterial wird in der Bedarfszeile nicht ausgewiesen");
-    if (!verein.ballOhneMarke) probleme.push("Eigenes Material wird als Vereinsmaterial ausgewiesen");
-    if (!verein.hinweis) probleme.push("Der Hinweis zum Sichern fehlt, obwohl Vereinsmaterial gebraucht wird");
-    if (!verein.gemischtOhneMarke || !verein.gemischtOhneHinweis) probleme.push("Ein Gegenstand, den es auch als eigenen Posten gibt, wird als Vereinsmaterial ausgewiesen – die Menge ist gesichert");
-    if (verein.gemischtSumme !== 10) probleme.push(`Vereins- und eigener Posten werden nicht zusammengezählt (${verein.gemischtSumme} statt 10)`);
-    if (!verein.wortNichtNurFarbe) probleme.push("„(Verein)“ steht nicht als Wort in der Zeile – Farbe darf nie der einzige Bedeutungsträger sein");
-    if (!probleme.length) zeilen.push("Vereinsmaterial: als Wort ausgewiesen, gemischter Bestand gilt als gesichert, Mengen summiert");
-  }
-
-  // ── g) Die Inventur setzt das Kennzeichen ─────────────────────────────────
-  const inv = await s.page.evaluate(async () => {
-    if (typeof matVereinTippen !== "function") return { fehlt: "matVereinTippen" };
-    await materialOpen();
-    MAT_POSTEN = [{ id: 901, name: "Stangen", kategorie: "Geräte", ist: null, soll: null, verein: false, aktiv: true, sort: 10 }];
-    materialRender();
-    const kasten = document.querySelector('#mat-body input[type="checkbox"]');
-    const beschriftet = kasten ? (kasten.getAttribute("aria-label") || "") : "";
-    matVereinTippen(901, true);
-    const gesetzt = MAT_POSTEN[0].verein === true;
-    materialRender();
-    const jetztAn = !!document.querySelector('#mat-body input[type="checkbox"]')?.checked;
-    matPostenNeuOpen();
-    const imDialog = !!document.getElementById("mn-verein");
-    const hoehe = Math.round(document.getElementById("mn-verein")?.closest("label")?.getBoundingClientRect().height || 0);
-    const geraeteSchublade = [...document.querySelectorAll("#mn-kat option")].some(o => o.textContent === "Geräte");
-    document.getElementById("mat-neu")?.remove();
-    document.getElementById("mat-modal")?.remove();
-    return { kasten: !!kasten, beschriftet, gesetzt, jetztAn, imDialog, hoehe, geraeteSchublade };
-  });
-
-  if (inv.fehlt) probleme.push(inv.fehlt + " fehlt");
-  else {
-    if (!inv.kasten) probleme.push("In der Inventur lässt sich das Kennzeichen nicht setzen");
-    if (!/Verein/.test(inv.beschriftet)) probleme.push("Das Kennzeichen hat keine sprechende Beschriftung für Screenreader");
-    if (!inv.gesetzt || !inv.jetztAn) probleme.push("Das gesetzte Kennzeichen überlebt das Neuzeichnen nicht");
-    if (!inv.imDialog) probleme.push("Beim Erfassen eines Postens fehlt das Kennzeichen");
-    if (inv.hoehe < 48) probleme.push(`Die Zeile im Erfassen-Dialog ist ${inv.hoehe} px hoch – gefordert 48`);
-    if (!inv.geraeteSchublade) probleme.push("Die Schublade „Geräte“ fehlt – Stangen und Hürden sind weder Markierung noch Sonstiges");
-    if (!probleme.length) zeilen.push(`Inventur: Kennzeichen in Liste und Erfassen-Dialog, Zeile ${inv.hoehe} px, Schublade „Geräte“ da`);
-  }
-
   // ── Editor: die zwei neuen Werkzeuge ──────────────────────────────────────
   await h.sichtbarMachen(s.page, "#view-formen");
   const ed = await s.page.evaluate(async () => {
@@ -189,5 +108,5 @@ module.exports = async function (h) {
   if (fehler.length) probleme.push("Konsole: " + fehler[0]);
   await s.schliessen();
 
-  return h.ergebnis("Vereinsmaterial: Ring, Dummy und was dem Verein gehört", !probleme.length, zeilen.concat(probleme));
+  return h.ergebnis("Skizze: Koordinationsring und Freistoß-Dummy", !probleme.length, zeilen.concat(probleme));
 };
