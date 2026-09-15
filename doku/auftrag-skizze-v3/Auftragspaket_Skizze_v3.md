@@ -50,6 +50,10 @@ Scheibe etwas am Platz benutzbar ist.
 | 1 | Präsentationsmodus: Vollbild, Fingerzoom, helle Rasenvariante | v5xx |
 | 2 | Schritte in Beschreibung, Renderer, Editor, Import, Detail, Export | v5xx+1 |
 | 3 | Abspielen zwischen Schritten; Taktikboard mit denselben Bildern | v5xx+2 |
+| 4 | Besetzung: Kürzel und Fotos der Kinder statt „S“ und „O“ | v5xx+3 |
+
+Scheibe 4 hängt **nur an Scheibe 1**, nicht an den Schritten. Soll die Wirkung in der
+Besprechung zuerst da sein, wird in der Reihenfolge 1 · 4 · 2 · 3 gebaut.
 
 ---
 
@@ -240,6 +244,116 @@ heute, nur in der Trainer-App.
 
 ---
 
+---
+
+## Scheibe 4 · Besetzung — die Kinder finden sich wieder
+
+**Warum.** In der Skizze steht „S“ und „O“. Ein Achtjähriger erkennt darin nicht sich
+selbst. Steht im Kreis „Mi“ für Mika und „Ma“ für Matteo — und am Tablet das Foto —, dann
+ist es seine Aufgabe, nicht irgendeine. Am Handy ist ein Gesicht in einem 16-px-Kreis
+Matsch; deshalb ist das Foto an die tatsächliche Anzeigebreite gebunden und nicht an eine
+Einstellung.
+
+### 4.1 Die Skizze bleibt neutral
+
+Die Zuordnung Kreis → Kind ist eine **Ansicht**, keine Eigenschaft der Übung. Sie wird
+**nie** in `trainingsformen.skizze` und **nie** in `uebungen/*.json` geschrieben. Drei
+Gründe, jeder für sich ausreichend:
+
+- Das Repo ist öffentlich. `CLAUDE.md`: keine Kindernamen, auch nicht in Beispieldaten.
+- Eine Übung wird über Jahre benutzt, eine Mannschaft wechselt jedes Jahr.
+- In den öffentlichen Ansichten sind Kindernamen maskiert. Was gar nicht erst in der
+  Beschreibung steht, kann dort auch nicht durchrutschen.
+
+Gearbeitet wird mit **Kinder-IDs**, nicht mit Namen — wie seit v451 überall am
+Speicherrand. Der Name entsteht erst beim Zeichnen.
+
+### 4.2 Woher die Besetzung kommt
+
+- **Aus dem Trainingsplan des Tages.** Der Plan weiß für jede Phase bereits, welche
+  Tagesgruppe auf welchem Feld steht (`slots[].gruppen[].kinder`). Knopf „Besetzung aus dem
+  Plan“ nimmt genau diese Kinder, in der Reihenfolge der Kreise gleicher Farbe. Das ist der
+  eigentliche Gewinn: es muss nichts eingetippt werden.
+- **Von Hand.** Tipp auf einen Kreis öffnet die Liste der Kinder mit Zusage am Termin;
+  Tipp auf „—“ macht den Kreis wieder neutral. Ein Kreis ohne Kind behält sein Kürzel aus
+  der Beschreibung.
+- Gegnerkreise bleiben in der Regel neutral; besetzbar sind sie, wenn zwei Tagesgruppen
+  gegeneinander spielen.
+- Die Besetzung ist **flüchtig** — sie lebt, solange die Ansicht offen ist. Nichts wird
+  zusätzlich gespeichert; die Quelle ist der Plan, und der wird ohnehin geführt.
+
+### 4.3 Kürzel
+
+Zwei bis drei Zeichen, berechnet über den **ganzen aktiven Kader**, nicht über die eine
+Skizze — sonst hieße ein Kind mal „Mi“ und mal „Mik“, je nachdem, wer sonst noch im Bild
+steht. Ein Kind soll immer dasselbe Kürzel haben.
+
+1. Die ersten zwei Buchstaben des Vornamens: Mika → `Mi`, Matteo → `Ma`.
+2. Kollision → so viele Buchstaben, bis eindeutig, höchstens drei: Mika/Mia → `Mik`/`Mia`.
+3. Immer noch gleich → der erste Buchstabe des zweiten Namensteils als drittes Zeichen;
+   fehlt er, die Rückennummer: `Mi7`.
+
+Drei Zeichen sind die Obergrenze, und das ist kein Zufall: `_skz` zeichnet `s[3]` mit 8 px
+in einen Kreis mit 8 px Radius, und der Tipp-Editor schneidet schon heute auf drei Zeichen.
+**Für die Kürzel ändert sich am Renderer also nichts** — es wird nur ein anderes Label
+übergeben.
+
+### 4.4 Foto
+
+- Nur mit **Einwilligungsstufe 1** („App-intern“, `FOTO_STUFEN[0]`) für dieses Kind —
+  dieselbe Freigabe, auf der Galerie, Sammelkarte und Kabine stehen. Ohne Freigabe das
+  Kürzel, ohne Lücke und **ohne Hinweis auf das fehlende Foto**: in einem Bild, das die
+  ganze Gruppe sieht, soll kein Kind bemerken, dass bei ihm etwas fehlt.
+- Nur ab **600 px** gemessener Anzeigebreite der Skizze. Darunter bleibt es beim Kürzel.
+- Geladen über `fotoLoadImage(path)` — dieselbe Funktion wie in der Kabine, kein zweiter
+  Weg zum Speicher.
+- Gezeichnet als `<image>` in einem `<clipPath>`-Kreis, darüber die vorhandene Kreiskontur
+  in der Mannschaftsfarbe mit Strichstärke 2,5 statt 1,5, darunter ein Namensschild mit dem
+  Kürzel (7 px). Damit bleibt die Mannschaftszugehörigkeit erkennbar, ohne dass Farbe der
+  einzige Träger wäre.
+
+### 4.5 Export und Teilen
+
+„Skizze teilen“ liefert im Besetzungsmodus **immer die neutrale Fassung** — keine Namen,
+keine Gesichter —, und sagt das in einem Toast. Zwei Gründe, ein fachlicher und ein
+technischer:
+
+- Ein PNG verlässt die App und landet in einer Nachricht. Gesichter und Namen von Kindern
+  gehören dort nicht hin.
+- Ein Bild aus dem Speicher färbt die Zeichenfläche ein; `toBlob` bräche dann mit einem
+  Sicherheitsfehler ab. Die neutrale Fassung ist damit zugleich die einzige, die
+  zuverlässig funktioniert.
+
+### 4.6 Wo der Modus gilt
+
+| Ort | Besetzung |
+|---|---|
+| Trainer-App: Übungsdetail, Präsentationsmodus, Trainingsplan | ja, mit Foto ab 600 px |
+| Kabine (Kinder) | nur lesend, nur die Besetzung des Tages; Bewertungen bleiben unsichtbar |
+| Eltern-Bereich | nein |
+| Öffentliche Ansichten (`?ticker`, `?heft`, `?turnier`, Gast-Link) | **hart aus** |
+
+### Abnahmekriterien Scheibe 4
+
+1. `_skz` ohne Besetzung rendert zeichengleich zu heute.
+2. Kürzel sind über den ganzen Kader eindeutig; zwei Kinder mit gleichem Vornamen bekommen
+   verschiedene; ein Kürzel ändert sich nicht, wenn ein Kind ohne Kollision dazukommt.
+3. Foto erscheint nur mit Stufe 1 **und** ab 600 px; ohne Freigabe steht das Kürzel und
+   kein Platzhalter.
+4. „Skizze teilen“ liefert die neutrale Fassung: im erzeugten PNG steht kein Kindername.
+5. In `?ticker`, `?heft`, `?turnier` und auf der Gast-Seite kommt keine Besetzung an — auch
+   dann nicht, wenn sie in der Trainer-App vorher aktiv war.
+6. Nach dem Schließen ist die Beschreibung der Übung unverändert: kein Name in
+   `trainingsformen.skizze`, kein `PATCH` auf die Übung, kein Eintrag in `uebungen/*.json`.
+7. Kontrast: Kürzel auf der Kreisfüllung mindestens 4,5:1 in beiden Rasenvarianten, der
+   Ring mindestens 3:1.
+8. „Besetzung aus dem Plan“ setzt genau die Kinder der Tagesgruppe dieser Phase, in der
+   Reihenfolge der Kreise gleicher Farbe.
+
+**Testfälle:** `tests/checks/v5xx-skizze-besetzung.js`. Das Prüfwerkzeug kennt nur „Kind A“
+bis „Kind O“ — ein guter Fall für die Kollisionsregel: alle fünfzehn beginnen mit `Ki`,
+müssen also über die dritte Stufe auseinandergehen (`KiA`, `KiB`, …).
+
 ## Pflichten (aus `CLAUDE.md`)
 
 - `node --check` über alle Dateien; `node tests/run.js` grün; **dann** `sw.js` hochzählen,
@@ -263,7 +377,8 @@ heute, nur in der Trainer-App.
 ## Ausdrücklich nicht in diesem Paket
 
 3D-Ansicht, freie Zeitachse mit Keyframes, gebogene Pfeile, Video- oder GIF-Export,
-Maßstab in Metern, Nachzeichnen der 37 handgezeichneten Altskizzen (läuft über die
+Maßstab in Metern, Kindernamen oder Fotos in der gespeicherten Beschreibung, Fotos im
+Bildexport, Nachzeichnen der 37 handgezeichneten Altskizzen (läuft über die
 Sperrklinke weiter), Übernahme von Philippka-Figuren (Kreise mit Kürzel bleiben – sie sind
 am Handy lesbar und tragen keine Kindernamen).
 
@@ -275,6 +390,9 @@ am Handy lesbar und tragen keine Kindernamen).
    gespeicherte Boards tragen die Schritte mit.
 3. **Wischen plus Knöpfe** im Präsentationsmodus zum Bildwechsel; Knöpfe bleiben als
    zweiter Weg und für die Tastatur.
+4. **Besetzung mit Kürzeln und Fotos** kommt dazu (Scheibe 4, 15.09.): Kinder sollen sich
+   in der Skizze wiederfinden. Die Skizze selbst bleibt neutral, das Foto nur mit
+   Einwilligungsstufe 1 und nur ab 600 px, der Bildexport immer ohne Namen und Gesichter.
 
 ## Anhang
 
