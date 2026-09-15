@@ -251,8 +251,13 @@ let MAT_POSTEN=[];
    wurde: ein leeres Feld heißt „nicht gezählt", nicht „null Stück" (v545). Und was der
    Bestand gar nicht führt, wird als solches benannt statt stillschweigend übergangen –
    genau daran fällt auf, dass Minitore und Stangen bisher in keiner Liste stehen. */
-function matBestandFuer(name){
-  const treffer=(MAT_POSTEN||[]).filter(p=>p.aktiv!==false&&String(p.name||"").trim().toLowerCase()===String(name||"").trim().toLowerCase());
+/* Gesucht wird unter Ein- UND Mehrzahl. Die Zeichnung sagt „1 Stange", der Schrank
+   führt „Stangen" – vorher galt genau eine einzelne Stange als nicht geführt, obwohl sechs
+   im Schrank lagen. Umgekehrt genauso: wer den Posten „Stange" nennt, wird auch gefunden.
+   Der Trainer tippt den Namen selbst ein; die App darf ihm keine Form vorschreiben. */
+function matBestandFuer(name,auch){
+  const namen=[name,auch].filter(Boolean).map(n=>String(n).trim().toLowerCase());
+  const treffer=(MAT_POSTEN||[]).filter(p=>p.aktiv!==false&&namen.includes(String(p.name||"").trim().toLowerCase()));
   if(!treffer.length)return {gefuehrt:false,ist:null};
   const gezaehlt=treffer.filter(p=>p.ist!=null);
   if(!gezaehlt.length)return {gefuehrt:true,ist:null};
@@ -261,7 +266,8 @@ function matBestandFuer(name){
 /* Liefert die Zeilen fertig zum Anzeigen: Menge, Gegenstand und – wo bekannt – ob es reicht. */
 function matAbgleich(liste){
   return (liste||[]).map(m=>{
-    const b=matBestandFuer(m.was);
+    const andere=(typeof skzMatWort==="function"&&m.schluessel)?skzMatWort(m.schluessel,m.anzahl===1?2:1):null;
+    const b=matBestandFuer(m.was,andere);
     return {...m, gefuehrt:b.gefuehrt, ist:b.ist, fehlt:(b.ist!=null&&b.ist<m.anzahl)?(m.anzahl-b.ist):0};
   });
 }

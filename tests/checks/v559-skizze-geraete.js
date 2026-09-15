@@ -131,15 +131,21 @@ module.exports = async function (h) {
       { name: "Hütchen", variante: "rot", ist: 2, aktiv: true },
       { name: "Hütchen", variante: "gelb", ist: 1, aktiv: true },
       { name: "Markierungsteller", variante: null, ist: null, aktiv: true },
-      { name: "Bälle", variante: "Größe 4", ist: 12, aktiv: true }
+      { name: "Bälle", variante: "Größe 4", ist: 12, aktiv: true },
+      { name: "Stangen", variante: null, ist: 6, aktiv: true }
     ];
     const zeile = matBedarfZeile(PROBE);
+    /* Eine einzelne Stange heißt in der Zeichnung „1 Stange", im Schrank „Stangen".
+       Vorher galt sie als nicht geführt – der häufigste Fall der Verbandsvorlagen
+       (Stange als passiver Gegner) wäre damit falsch beschriftet gewesen. */
+    const einzeln = matBedarfZeile({ ger: [[50, 50, "stange", "y"]] });
     return {
+      einzelneStangeGefunden: /1 Stange/.test(einzeln) && !/Nicht im Materialbestand geführt/.test(einzeln),
       fehlmenge: /es fehlen 1/.test(zeile),
       hatHuetchen: /4 Hütchen/.test(zeile),
       tellerOhneWarnung: !/Markierungsteller · es fehlen/.test(zeile),
       ungefuehrt: /Nicht im Materialbestand geführt:/.test(zeile),
-      nenntStangen: /Nicht im Materialbestand geführt:[^<]*Stangen/.test(zeile),
+      nenntFehlende: /Nicht im Materialbestand geführt:[^<]*Balldepot/.test(zeile),
       ballOhneWarnung: !/Ball · es fehlen/.test(zeile),
       leer: matBedarfZeile({ s: [[1, 1, "g"]] })
     };
@@ -150,7 +156,8 @@ module.exports = async function (h) {
     if (!bestand.fehlmenge) probleme.push("Vier gebrauchte Hütchen gegen drei gezählte ergeben keine Fehlmenge");
     if (!bestand.tellerOhneWarnung) probleme.push("Ein Posten ohne Zählung wird als Fehlmenge gemeldet – leer heißt „nicht gezählt“");
     if (!bestand.ballOhneWarnung) probleme.push("Ein ausreichender Bestand wird als Fehlmenge gemeldet");
-    if (!bestand.ungefuehrt || !bestand.nenntStangen) probleme.push("Was der Bestand nicht führt, wird nicht benannt");
+    if (!bestand.ungefuehrt || !bestand.nenntFehlende) probleme.push("Was der Bestand nicht führt, wird nicht benannt");
+    if (!bestand.einzelneStangeGefunden) probleme.push("Eine einzelne Stange wird gegen den Posten „Stangen“ nicht gefunden – Ein- und Mehrzahl müssen beide treffen");
     if (bestand.leer) probleme.push("Eine Skizze ohne Material zeigt trotzdem eine Materialzeile");
     if (!probleme.length) zeilen.push("Bestand: Fehlmenge benannt, ungezählter Posten stillgehalten, nicht geführte Gegenstände ausgewiesen");
   }
