@@ -80,7 +80,6 @@ function ausstattungRender(){
   const st=ausStand(art.id);
   const kinder=ausKinder().slice().sort((a,b)=>(a.nr==null?999:a.nr)-(b.nr==null?999:b.nr));
   const sichtbar=_ausOffeneZuerst?kinder.filter(k=>{const z=AUS_AUSGABE[ausKey(k._id,art.id)];return !(z&&z.ausgegeben_am&&!z.zurueck_am);}):kinder;
-  const groessen=String(art.groessen||"").split(",").map(s=>s.trim()).filter(Boolean);
 
   body.innerHTML=`
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
@@ -94,9 +93,28 @@ function ausstattungRender(){
     <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);margin-bottom:10px;min-height:44px">
       <input type="checkbox" ${_ausOffeneZuerst?"checked":""} onchange="_ausOffeneZuerst=this.checked;ausstattungRender()"> nur wer noch nichts hat
     </label>
-    ${groessen.length?`<datalist id="aus-groessen">${groessen.map(g=>`<option value="${esc(g)}">`).join("")}</datalist>`:""}
     <div>${sichtbar.length?sichtbar.map(k=>ausZeile(k,art)).join(""):'<div class="card-empty">Alle versorgt 🎉</div>'}</div>
     <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5">Änderungen werden sofort gespeichert. „Zurück“ setzt das heutige Datum – das Kind taucht dann wieder als offen auf.</div>`;
+}
+
+/* v565: Die Größe stand in einem Textfeld mit Vorschlagsliste (`datalist`). Auf dem Handy
+   ist das kein Menü: Chrome filtert die Vorschläge nach dem, was schon im Feld steht, und
+   bei einem gesetzten Wert – „140" – bleibt genau ein Treffer übrig, den es gar nicht erst
+   anzeigt. Der Pfeil war da, es passierte nichts.
+
+   Wo die Größen feststehen, gehört dorthin ein echtes Auswahlmenü: ein Tipp, eine Liste,
+   auf jedem Gerät. Freitext bleibt nur für Gegenstände ohne Größenliste. Ein Wert, der
+   nicht in der Liste steht (von früher, oder eine Sondergröße), wird als eigener Eintrag
+   mitgeführt – sonst verschwände er beim ersten Öffnen des Menüs. */
+function ausGroesseWahl(spielerId,wert){
+  const art=_ausArtikel(); if(!art)return;
+  const k=ausKey(spielerId,art.id);
+  const z=AUS_AUSGABE[k]||{spieler_id:spielerId,artikel_id:art.id};
+  z.groesse=(wert||"").trim()||null;
+  AUS_AUSGABE[k]=z;
+  /* Eine Auswahl ist fertig, sobald sie getroffen ist – anders als beim Tippen gibt es
+     hier nichts abzuwarten. */
+  ausSchreiben(z);
 }
 
 function ausZeile(k,art){
@@ -110,9 +128,9 @@ function ausZeile(k,art){
         <input type="checkbox" ${hat?"checked":""} onchange="ausToggle(${k._id},this)" style="width:20px;height:20px;flex:none">
         <span style="font-size:13.5px;font-weight:600">${nr}${esc(k.name)}</span>
       </label>
-      ${art.mit_groesse?`<input class="aus-groesse" ${art.groessen?'list="aus-groessen"':""} value="${esc(z.groesse||"")}" placeholder="Größe"
+      ${art.mit_groesse?(_ausGroessen(art).length?_ausGroesseMenue(k,art,z):`<input class="aus-groesse" value="${esc(z.groesse||"")}" placeholder="Größe"
         oninput="ausFeldTippen(${k._id},'groesse',this.value)" aria-label="Größe für ${esc(k.name)}"
-        style="width:86px;min-height:44px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface);color:var(--text)">`:""}
+        style="width:86px;min-height:48px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface);color:var(--text)">`):""}
       ${art.mit_nummer?`<input value="${esc(z.nummer||"")}" placeholder="Satz-Nr."
         oninput="ausFeldTippen(${k._id},'nummer',this.value)" aria-label="Satznummer für ${esc(k.name)}"
         style="width:78px;min-height:44px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface);color:var(--text)">`:""}
@@ -121,6 +139,20 @@ function ausZeile(k,art){
     ${z.zurueck_am?`<div style="font-size:11px;color:var(--amber);margin-top:4px">zurückgegeben am ${esc(_ausDatum(z.zurueck_am))}</div>`
       :(hat&&z.ausgegeben_am?`<div style="font-size:11px;color:var(--text3);margin-top:4px">ausgegeben am ${esc(_ausDatum(z.ausgegeben_am))}</div>`:"")}
   </div>`;
+}
+
+function _ausGroessen(art){
+  return String((art&&art.groessen)||"").split(",").map(x=>x.trim()).filter(Boolean);
+}
+function _ausGroesseMenue(k,art,z){
+  const liste=_ausGroessen(art);
+  const hat=(z.groesse||"").trim();
+  if(hat&&!liste.includes(hat))liste.push(hat);
+  return `<select class="aus-groesse" onchange="ausGroesseWahl(${k._id},this.value)" aria-label="Größe für ${esc(k.name)}"
+    style="width:96px;min-height:48px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:14px;background:var(--surface);color:var(--text)">
+    <option value=""${hat?"":" selected"}>Größe</option>
+    ${liste.map(g=>`<option value="${esc(g)}"${hat===g?" selected":""}>${esc(g)}</option>`).join("")}
+  </select>`;
 }
 
 function _ausDatum(d){ try{return new Date(d+"T00:00:00").toLocaleDateString("de-DE");}catch(e){return d||"";} }
