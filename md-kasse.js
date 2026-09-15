@@ -30,9 +30,9 @@ const FAIRPLAY_REGELN=[
   {emo:"👏", t:"Anfeuern statt anweisen", d:"Coachen ist Trainer-Sache. Ihr feuert an – das gibt den Kindern Rückenwind, ohne sie zu verwirren."},
   {emo:"🎉", t:"Jedes Kind bejubeln", d:"Ein gutes Dribbling ist ein gutes Dribbling – egal, welches Trikot. Auch die Gegner sind Kinder."},
   {emo:"🙌", t:"Fehler gehören dazu", d:"Ein Fehlpass ist kein Drama. Mut machen statt meckern – so trauen sich die Kinder etwas."},
-  {emo:"⚖️", t:"Der Schiri hat immer recht", d:"Auch wenn er mal irrt. Respekt vor der Entscheidung – die Kinder schauen sich genau ab, wie wir reagieren."},
+  {emo:"⚖️", t:"Die Kinder entscheiden selbst", d:"In der U9 gibt es keinen Schiri. Aus, Foul, Tor – die Kinder klären das auf dem Platz, die Trainer helfen nur, wenn es hakt. Von außen kommt keine Entscheidung."},
   {emo:"🤝", t:"Ergebnis ist Nebensache", d:"Bei der U9 zählt Spaß, Bewegung und Dazulernen. Die Tabelle merkt sich in fünf Jahren keiner – das Gefühl schon."},
-  {emo:"🚧", t:"Abstand zum Spielfeld halten", d:"Bleibt hinter der Linie oder Bande. Die Kinder brauchen ihren Raum – und der Schiri freie Sicht."},
+  {emo:"🚧", t:"Abstand zum Spielfeld halten", d:"Bleibt hinter der Linie oder Bande. Die Kinder brauchen ihren Raum – und ihre Ruhe."},
   {emo:"🗣️", t:"Eine ruhige Stimme statt Stimmengewirr", d:"Wenige, positive Worte kommen an. Zu viele Zurufe von allen Seiten verwirren die Kinder."},
   {emo:"🤗", t:"Trösten geht vor Analyse", d:"Nach einem Patzer oder einer Niederlage hilft ein Lächeln und eine Umarmung mehr als eine Manöverkritik."},
   {emo:"⏳", t:"Geduld mit der Entwicklung", d:"Jedes Kind wächst im eigenen Tempo. Vergleiche bremsen, Zutrauen beflügelt – gebt ihnen Zeit."},
@@ -333,9 +333,12 @@ async function waescheUebernehmen(spielerId,name){
    Event-Termin (typ='event') tragen die Eltern ein, WAS sie mitbringen – Salat,
    Kuchen, Getränke, Pavillon … Reine Absprache, kein Geld. Alle sehen die Liste,
    jeder darf eintragen; löschen darf man nur den eigenen Eintrag (RLS). */
-async function mitbringEventsLaden(){
+/* v566 – PO: „Beim Elternaustausch muss niemand etwas mitbringen." Die Liste erschien bei
+   JEDEM Event. Jetzt entscheidet der Termin (`termine.mitbringen`, Standard aus): Eltern
+   sehen nur eingeschaltete Listen, der Trainer alle – bei ihm steht dran, was noch aus ist. */
+async function mitbringEventsLaden(alle){
   const heute=new Date().toISOString().slice(0,10);
-  const r=await fetch(`${SB_URL}/rest/v1/termine?typ=eq.event&datum=gte.${heute}&select=id,titel,datum,ort&order=datum.asc&limit=4`,{headers:sbAuthHeaders()});
+  const r=await fetch(`${SB_URL}/rest/v1/termine?typ=eq.event&datum=gte.${heute}${alle?"":"&mitbringen=is.true"}&select=id,titel,datum,ort,mitbringen&order=datum.asc&limit=4`,{headers:sbAuthHeaders()});
   if(!r.ok)return [];
   return await r.json();
 }
@@ -577,9 +580,9 @@ const FAIRPLAY_QUIZ=[
   {q:"Dein Kind vertändelt den Ball kurz vorm Tor. Was hilft ihm am meisten?",
    opts:["Weiter anfeuern und Mut machen","Laut schimpfen","Genervt den Kopf schütteln"],correct:0,
    fun:"Mut machen! Kinder trauen sich mehr, wenn sie sich sicher fühlen."},
-  {q:"Der Schiri pfeift ein Foul, das keins war. Wie reagierst du am Rand?",
-   opts:["Ruhig bleiben, Entscheidung akzeptieren","Lautstark protestieren","Auf den Schiri zeigen und meckern"],correct:0,
-   fun:"Die Kinder schauen sich genau ab, wie wir mit Fehlern umgehen."},
+  {q:"Die Kinder streiten, ob der Ball im Aus war. Wie reagierst du am Rand?",
+   opts:["Ruhig bleiben – die Kinder klären das selbst","Von außen reinrufen, was richtig ist","Auf das andere Kind zeigen und meckern"],correct:0,
+   fun:"In der U9 gibt es keinen Schiri: die Kinder entscheiden, die Trainer helfen nur, wenn es hakt."},
   {q:"Ein Kind der gegnerischen Mannschaft macht ein tolles Tor. Und jetzt?",
    opts:["Ruhig anerkennen – das war stark","Still bleiben, ist ja der Gegner","Buhen"],correct:0,
    fun:"Ein gutes Tor ist ein gutes Tor – egal welches Trikot."},

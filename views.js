@@ -779,18 +779,52 @@ async function kindLinkShare(spielerId){
   else{navigator.clipboard?.writeText(url).then(()=>toast("Link kopiert ✓"),()=>prompt("Link:",url));}
 }
 // Adler-Wrapped pro Kind: persönliche Saison-Karte (Bild) für die Familie. Daten aus get_child_wrapped.
+async function childWrappedDaten(spielerId){
+  let d=null;
+  try{const r=await fetch(`${SB_URL}/rest/v1/rpc/get_child_wrapped`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_spieler:spielerId})});if(sbCheck401(r))return null;if(r.ok)d=await r.json();}catch(e){}
+  return (d&&d.ok)?d:null;
+}
+function childWrappedLogo(cb){
+  const logo=new Image();
+  logo.onload=()=>cb(logo);
+  logo.onerror=()=>cb(null);
+  logo.src="logo.png";
+}
 async function childWrappedShare(spielerId){
   if(!sbToken()){toast("Bitte als Trainer anmelden","err");return;}
   toast("🎬 Saison-Karte wird erstellt…");
-  let d=null;
-  try{const r=await fetch(`${SB_URL}/rest/v1/rpc/get_child_wrapped`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_spieler:spielerId})});if(sbCheck401(r))return;if(r.ok)d=await r.json();}catch(e){}
-  if(!d||!d.ok){toast("Konnte Saison-Daten nicht laden","err");return;}
-  const logo=new Image();
-  logo.onload=()=>drawChildWrapped(logo,d);
-  logo.onerror=()=>drawChildWrapped(null,d);
-  logo.src="logo.png";
+  const d=await childWrappedDaten(spielerId);
+  if(!d){toast("Konnte Saison-Daten nicht laden","err");return;}
+  childWrappedLogo(logo=>childWrappedTeilen(childWrappedCanvas(logo,d)));
 }
-function drawChildWrapped(logoImg,d){
+/* v566 – PO: „Wenn ich in der Eltern-App auf Saison-Statistik klicke, wird direkt der
+   Teilen-Button geöffnet. Erst ansehen und wenn man will teilen." Also: dieselbe Karte im
+   eigenen Fenster, und „Teilen" ist ein Knopf darunter, keine Folge des Antippens. */
+async function childWrappedOpen(spielerId){
+  if(!sbToken()){toast("Bitte anmelden","err");return;}
+  const d=await childWrappedDaten(spielerId);
+  if(!d){toast("Konnte Saison-Daten nicht laden","err");return;}
+  childWrappedLogo(logo=>{
+    const c=childWrappedCanvas(logo,d);
+    document.getElementById("wrapped-modal")?.remove();
+    const modal=document.createElement("div");
+    modal.id="wrapped-modal";modal.setAttribute("role","dialog");modal.setAttribute("aria-modal","true");modal.setAttribute("aria-label","Saison-Statistik");
+    modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:10060;display:flex;flex-direction:column;padding:16px;overflow-y:auto";
+    const innen=document.createElement("div");
+    innen.style.cssText="margin:auto;display:flex;flex-direction:column;align-items:center;gap:14px;width:100%";
+    modal.onclick=e=>{if(e.target===modal||e.target===innen)modal.remove();};
+    c.style.cssText="max-width:100%;width:320px;height:auto;border-radius:20px;box-shadow:0 12px 40px rgba(0,0,0,.5)";
+    innen.appendChild(c);
+    const bar=document.createElement("div");
+    bar.style.cssText="display:flex;gap:8px;flex-wrap:wrap;justify-content:center";
+    bar.innerHTML=`<button class="btn btn-p" id="wrapped-teilen"><i class="ti ti-share"></i>Teilen</button>
+      <button class="btn" onclick="document.getElementById('wrapped-modal').remove()">Schließen</button>`;
+    innen.appendChild(bar);
+    bar.querySelector("#wrapped-teilen").onclick=()=>childWrappedTeilen(c);
+    modal.appendChild(innen);document.body.appendChild(modal);
+  });
+}
+function childWrappedCanvas(logoImg,d){
   const W=640,H=800,c=document.createElement("canvas");c.width=W;c.height=H;const ctx=c.getContext("2d");
   const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,"#5b21b6");g.addColorStop(1,"#1e3a8a");
   ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
@@ -808,6 +842,9 @@ function drawChildWrapped(logoImg,d){
     ctx.textAlign="center";y+=96;
   });
   ctx.fillStyle="rgba(255,255,255,.92)";ctx.font="bold 22px Arial";ctx.fillText("Stark gemacht! 🦅❤️",W/2,H-38);
+  return c;
+}
+function childWrappedTeilen(c){
   c.toBlob(async(blob)=>{
     if(!blob){toast("Bild konnte nicht erzeugt werden","err");return;}
     const file=new File([blob],"adler-wrapped.png",{type:"image/png"});
@@ -4106,7 +4143,7 @@ const TOUR=[
   {emo:"👥", t:"Kachel: Team", d:"Kader verwalten, Spieler alle 6 Wochen in 16 Kriterien bewerten (Live-Radar), Profil mit Sprachlob und Entwicklungs-Report, dazu Saison-Cockpit, Anwesenheit über die Saison und Rollen-Matrix. Unter „Ausstattung“ steht, welches Kind Trikotsatz, Anzug oder Jacke bekommen hat – mit Größe, Ausgabedatum und Rückgabe. Auch Notfallkarten und Probetraining wohnen hier."},
   {emo:"🎯", t:"Kachel: Taktik", d:"Das Taktikboard: Formationen stellen, Laufwege und Pässe zeichnen, als Bild teilen – im Pro-Modus groß, am Handy wie am Tablet. Unter dem Feld legst du über „+ Bild“ mehrere Stände an und spielst sie ab; gespeicherte Übungen nehmen die Bilder mit. Daneben die Übungs-Datenbank – dort zeichnest du je Übung eine Skizze mit Spielern, Hütchen, Minitoren, Jugendtoren, Zonen, Pfeilen, Mittellinie und Schusszone zeigst sie mit „Groß zeigen“ bildschirmfüllend mit Fingerzoom und hellem Rasen und gibst sie mit „Skizze teilen“ als Bild weiter."},
   {emo:"🪶", t:"Kachel: Eltern & Kinder", d:"Team-Ansage mit Gelesen-Status, Eltern einladen, Elterngespräche – und die ganze Adler-Welt der Kinder: Federn, Karten, Abzeichen, Kabinen-Wahl, „Unsere Regeln“ für die Kabine, Sammelalbum-Fotos, Team-Quests, Urkunden-Studio und das Adler Nest."},
-  {emo:"📅", t:"Kachel: Orga", d:"Termine mit Endzeit (danach automatisch ins Archiv), Pinnwand fürs Trainerteam, Ferien-Radar, Mitbringlisten, Trainer-Meeting (steht der Termin, erscheint er auf deiner Startseite – die Eltern sehen ihn nicht), Teamkasse, Material (Bälle, Hütchen, Erste-Hilfe-Set – mit Soll und Ist) und Fundbüro. Ganz unten: Push-Benachrichtigungen und dein Passwort."},
+  {emo:"📅", t:"Kachel: Orga", d:"Termine mit Endzeit (danach automatisch ins Archiv), Pinnwand fürs Trainerteam, Ferien-Radar, Mitbringlisten (je Event einschaltbar, Standard aus), Trainer-Meeting (steht der Termin, erscheint er auf deiner Startseite – die Eltern sehen ihn nicht), Teamkasse, Material (Bälle, Hütchen, Erste-Hilfe-Set – mit Soll und Ist) und Fundbüro. Ganz unten: Push-Benachrichtigungen und dein Passwort."},
   {emo:"🧭", t:"Und unten?", d:"Die Leiste am unteren Rand führt zu denselben Bereichen – für den schnellen Daumen-Wechsel. Kacheln und Leiste sind dieselbe Logik, nur zwei Wege. Viel Spaß – auf geht's, Adler! 🎉"},
 ];
 let tourIdx=0;

@@ -1542,7 +1542,7 @@ const KINDER_CODEX=[
   "Wir jubeln für jedes Tor — auch für das vom anderen.",
   "Wer verliert, gibt trotzdem die Hand.",
   "Erst geht’s nicht. Dann geht’s.",
-  "Der Schiri hat recht.",
+  "Wir klären es selbst – fair.",
   "Wir räumen gemeinsam auf."
 ];
 /* Sätze aus der Datenbank; leer, kaputt oder offline → die fest verdrahteten.

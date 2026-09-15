@@ -81,7 +81,10 @@ module.exports = async function (h) {
 
   // b) Fallback wortgleich mit der Migration
   const fs = require("fs"), path = require("path");
-  const sql = fs.readFileSync(path.join(h.REPO, "supabase/migrations/20260913_kinder_codex.sql"), "utf8");
+  /* v566: der Schiri-Satz wurde per Nachtrag ersetzt – gelesen wird die Erstanlage samt allen
+     späteren Nachträgen, die den Codex ändern. */
+  const sql = ["20260913_kinder_codex.sql", "20260915_mitbringen_und_ohne_schiri.sql"]
+    .map(n => { try { return fs.readFileSync(path.join(h.REPO, "supabase/migrations", n), "utf8"); } catch (e) { return ""; } }).join("\n");
   (offline.fallback || []).forEach(satz => {
     // In SQL stehen einfache Anführungszeichen verdoppelt.
     if (!sql.includes(satz.replace(/'/g, "''"))) probleme.push(`Fallback-Satz steht nicht in der Migration: „${satz}“`);

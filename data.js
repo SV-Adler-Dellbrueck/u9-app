@@ -262,27 +262,27 @@ const TQ_SCENARIOS=[
 // ══════ Block 1: Grundlagen der Raute (Szenarien 1–10) ══════
 {
   title:"Grundstellung der Raute",
-  desc:"Anstoß für den Gegner! Stellt eure Raute auf.",
+  desc:"Anstoß für den Gegner! Stellt eure Raute auf – alle in der eigenen Hälfte, das ist die Regel.",
   task:"Bringe alle Feldspieler in die richtige Raute-Grundstellung!",
-  hint:"Aufpasser zentral hinten, Flitzer auf den Seiten, Jäger in der Spitze.",
+  hint:"Aufpasser zentral hinten, Flitzer auf den Seiten, Jäger vorne an der Mittellinie – aber keiner drüben!",
   ball:{from:{x:50,y:50},to:{x:50,y:50}},
-  opps:[{x:48,y:48,label:"Gegner"},{x:52,y:52,label:"Gegner"}],
+  opps:[{x:47,y:46,label:"Gegner"},{x:53,y:46,label:"Gegner"}],
   start:[
     {name:"TW",x:50,y:92,cls:"tb-tw",role:"TW",locked:true},
     {name:"Aufpasser",x:40,y:55,cls:"tb-auf",role:"Aufpasser",locked:false},
     {name:"Flitzer L",x:50,y:65,cls:"tb-fl",role:"Flitzer L",locked:false},
-    {name:"Flitzer R",x:55,y:37,cls:"tb-fl",role:"Flitzer R",locked:false},
-    {name:"Jäger",x:30,y:45,cls:"tb-jaeg",role:"Jäger",locked:false}
+    {name:"Flitzer R",x:60,y:58,cls:"tb-fl",role:"Flitzer R",locked:false},
+    {name:"Jäger",x:30,y:60,cls:"tb-jaeg",role:"Jäger",locked:false}
   ],
   targets:{
-    "Aufpasser":{x:50,y:70,r:12},
-    "Flitzer L":{x:25,y:48,r:15},
-    "Flitzer R":{x:75,y:48,r:15},
-    "Jäger":{x:50,y:30,r:14}
+    "Aufpasser":{x:50,y:76,r:12},
+    "Flitzer L":{x:25,y:62,r:12},
+    "Flitzer R":{x:75,y:62,r:12},
+    "Jäger":{x:50,y:56,r:10}
   },
   explain:{
-    correct:"⚽ Genau! Aufpasser vor dem TW, Flitzer breit, Jäger vorne – das ist die Raute!",
-    wrong:"Tipp: Aufpasser = zentral hinter der Mittellinie. Flitzer L = links, Flitzer R = rechts auf Höhe Mittellinie. Jäger = vorne in der Spitze."
+    correct:"⚽ Genau! Aufpasser vor dem TW, Flitzer breit, Jäger vorne an der Mittellinie – die Raute steht, und keiner ist drüben!",
+    wrong:"Tipp: Beim Anstoß des Gegners muss die ganze Raute in der eigenen Hälfte stehen – auch der Jäger! Aufpasser zentral vor dem TW, Flitzer L links und Flitzer R rechts, Jäger vorne kurz vor der Mittellinie."
   }
 },
 {
@@ -384,11 +384,11 @@ const TQ_SCENARIOS=[
 },
 {
   title:"Raute kompakt nach vorne",
-  desc:"Ihr führt 1:0! Der Gegner hat den Abstoß. Jetzt wollt ihr pressen!",
+  desc:"Ihr führt 1:0! Der Gegner spielt den Ball hinten hin und her. Jetzt wollt ihr pressen!",
   task:"Schiebe die ganze Raute kompakt nach vorne – Pressing!",
   hint:"Die Abstände bleiben eng, aber alles verschiebt sich Richtung gegnerisches Tor. Auch der Aufpasser rückt weit auf.",
   ball:{from:{x:50,y:15},to:{x:50,y:15}},
-  opps:[{x:50,y:10,label:"Geg. TW"},{x:40,y:18,label:"Gegner"},{x:60,y:18,label:"Gegner"}],
+  opps:[{x:50,y:8,label:"Geg. TW"},{x:40,y:15,label:"Gegner",to:{x:36,y:17}},{x:60,y:15,label:"Gegner"}],
   start:[
     {name:"TW",x:50,y:92,cls:"tb-tw",role:"TW",locked:true},
     {name:"Aufpasser",x:50,y:70,cls:"tb-auf",role:"Aufpasser",locked:false},
@@ -466,14 +466,14 @@ const TQ_SCENARIOS=[
     {name:"Aufpasser",x:48,y:55,cls:"tb-auf",role:"Aufpasser",locked:true},
     {name:"Flitzer L",x:22,y:48,cls:"tb-fl",role:"Flitzer L",locked:true},
     {name:"Flitzer R",x:78,y:48,cls:"tb-fl",role:"Flitzer R",locked:true},
-    {name:"Jäger",x:50,y:16,cls:"tb-jaeg",role:"Jäger",locked:false}
+    {name:"Jäger",x:47,y:30,cls:"tb-jaeg",role:"Jäger",locked:false}
   ],
   targets:{
-    "Jäger":{x:50,y:38,r:14}
+    "Jäger":{x:72,y:28,r:13}
   },
   explain:{
     correct:"⚽ Super! Im freien Raum kann der Pass ankommen – gut freigelaufen!",
-    wrong:"💡 Lauf weg vom Gegner in den freien Raum – dort kann der Ball hin!"
+    wrong:"💡 Lauf weg vom Gegner in den freien Raum – rechts vorne ist Platz, dort kann der Ball hin!"
   }
 },
 {
@@ -574,7 +574,7 @@ const TQ_SCENARIOS=[
 },
 {
   title:"ADLER – Spielverlagerung",
-  desc:"Flitzer L hat den Ball, aber links ist alles zugestellt. Der Aufpasser ruft: 'Verlagern!'",
+  desc:"Flitzer L hat den Ball, aber links ist alles zugestellt. Der Aufpasser ruft: „Verlagern!“",
   task:"Flitzer L passt zurück auf den Aufpasser. Wohin bewegt sich Flitzer R?",
   hint:"Spielverlagerung = Ball schnell auf die andere Seite! Flitzer R muss anspielbar sein.",
   ball:{from:{x:15,y:38},to:{x:50,y:60}},
@@ -721,12 +721,12 @@ const TQ_SCENARIOS=[
   }
 },
 {
-  title:"IGEL – Eckstoß gegen uns",
-  desc:"Der Gegner hat einen Eckstoß! Die Flanke kommt von rechts ins Zentrum.",
-  task:"Positioniere die Raute zur Eckstoß-Verteidigung!",
-  hint:"Alle im und um den Strafraum. Jeder deckt einen Raum, keinen Gegenspieler.",
-  ball:{from:{x:95,y:5},to:{x:55,y:78}},
-  opps:[{x:45,y:78,label:"Gegner"},{x:55,y:82,label:"Gegner"},{x:40,y:85,label:"Gegner"}],
+  title:"IGEL – Ecke gegen uns",
+  desc:"Ecke für den Gegner an eurem Tor! Er dribbelt von rechts ein oder passt kurz zu einem Mitspieler.",
+  task:"Positioniere die Raute zur Ecken-Verteidigung!",
+  hint:"Alle zurück vors Tor. Flitzer R stellt den Eindribbler, jeder andere deckt einen Raum.",
+  ball:{from:{x:97,y:96},to:{x:82,y:84}},
+  opps:[{x:96,y:94,label:"Gegner",to:{x:82,y:84}},{x:62,y:80,label:"Gegner"},{x:42,y:82,label:"Gegner"}],
   start:[
     {name:"TW",x:50,y:92,cls:"tb-tw",role:"TW",locked:true},
     {name:"Aufpasser",x:51,y:66,cls:"tb-auf",role:"Aufpasser",locked:false},
@@ -735,14 +735,14 @@ const TQ_SCENARIOS=[
     {name:"Jäger",x:50,y:30,cls:"tb-jaeg",role:"Jäger",locked:false}
   ],
   targets:{
-    "Aufpasser":{x:47,y:84,r:10},
-    "Flitzer L":{x:33,y:79,r:10},
-    "Flitzer R":{x:61,y:79,r:10},
-    "Jäger":{x:49,y:70,r:10}
+    "Aufpasser":{x:50,y:84,r:10},
+    "Flitzer L":{x:34,y:80,r:10},
+    "Flitzer R":{x:72,y:80,r:10},
+    "Jäger":{x:52,y:70,r:10}
   },
   explain:{
-    correct:"🛡️ Gut verteidigt! Alle verteilt – kein Gegner steht frei!",
-    wrong:"Tipp: Bei Eckstoß ALLE in den Strafraum! Nicht draußen stehen bleiben. Verteilt euch im Strafraum – vorderer Pfosten, Mitte, hinterer Pfosten, Rückraum."
+    correct:"🛡️ Gut verteidigt! Alle zurück, jeder Raum besetzt – der Gegner findet keine Lücke!",
+    wrong:"Tipp: Bei einer Ecke gegen euch ALLE zurück vors Tor! Flitzer R geht zum Eindribbler, Aufpasser sichert die Mitte, Flitzer L den fernen Pfosten, Jäger den Rückraum."
   }
 },
 // ══════ Block 3: Umschalten & Pressing (Szenarien 21–30) ══════
@@ -899,6 +899,7 @@ const TQ_SCENARIOS=[
   task:"Wie läuft das Team-Pressing? Verschiebe alle nach vorne!",
   hint:"Jäger presst den Ballführenden. Flitzer schneiden Passwege ab. Aufpasser rückt nach.",
   ball:{from:{x:50,y:20},to:{x:50,y:20}},
+  opps:[{x:50,y:8,label:"Geg. TW"},{x:50,y:22,label:"Gegner"},{x:28,y:22,label:"Gegner"},{x:72,y:22,label:"Gegner"}],
   start:[
     {name:"TW",x:50,y:92,cls:"tb-tw",role:"TW",locked:true},
     {name:"Aufpasser",x:50,y:68,cls:"tb-auf",role:"Aufpasser",locked:false},
@@ -919,7 +920,7 @@ const TQ_SCENARIOS=[
 },
 {
   title:"Pressing: Jäger leitet ein",
-  desc:"Der gegnerische Torwart hat den Ball. Euer Jäger startet das Pressing!",
+  desc:"Der gegnerische Torwart hat den Ball am Fuß und will hinten aufbauen. Euer Jäger startet das Pressing!",
   task:"Wie unterstützen die Mitspieler den Jäger? Alle nachrücken!",
   hint:"Der Jäger lenkt den Gegner auf eine Seite. Flitzer und Aufpasser rücken nach.",
   ball:{from:{x:50,y:8},to:{x:50,y:8}},
@@ -1471,11 +1472,11 @@ const TQ_SCENARIOS=[
 },
 // ══════ Block 6: Standards & Spielsituationen (Szenarien 51–60) ══════
 {
-  title:"Standard: Einwurf eigene Hälfte",
-  desc:"Einwurf für euch in der eigenen Hälfte, links. Flitzer L wirft ein.",
-  task:"Wie bieten sich die Mitspieler zum Einwurf an?",
+  title:"Standard: Seitenaus eigene Hälfte",
+  desc:"Seitenaus für euch in der eigenen Hälfte, links. Flitzer L dribbelt ein oder passt kurz.",
+  task:"Wie bieten sich die Mitspieler beim Seitenaus an?",
   hint:"Kurze und lange Option bieten! Aufpasser kurz, Jäger oder Flitzer R als lange Option.",
-  ball:{from:{x:0,y:60},to:{x:0,y:60}},
+  ball:{from:{x:2,y:60},to:{x:2,y:60}},
   start:[
     {name:"TW",x:50,y:92,cls:"tb-tw",role:"TW",locked:true},
     {name:"Aufpasser",x:50,y:68,cls:"tb-auf",role:"Aufpasser",locked:false},
@@ -1494,11 +1495,11 @@ const TQ_SCENARIOS=[
   }
 },
 {
-  title:"Standard: Einwurf gegnerische Hälfte",
-  desc:"Einwurf in der gegnerischen Hälfte, rechts. Flitzer R wirft ein.",
-  task:"Offensiver Einwurf! Wie positioniert sich das Team?",
+  title:"Standard: Seitenaus gegnerische Hälfte",
+  desc:"Seitenaus in der gegnerischen Hälfte, rechts. Flitzer R dribbelt ein oder passt kurz.",
+  task:"Offensives Seitenaus! Wie positioniert sich das Team?",
   hint:"Nahe am gegnerischen Tor: Jäger zum nahen Pfosten, Flitzer L rückt ein, Aufpasser sichert!",
-  ball:{from:{x:100,y:25},to:{x:100,y:25}},
+  ball:{from:{x:98,y:25},to:{x:98,y:25}},
   opps:[{x:40,y:15,label:"Gegner"},{x:60,y:18,label:"Gegner"},{x:50,y:8,label:"Geg. TW"}],
   start:[
     {name:"TW",x:50,y:92,cls:"tb-tw",role:"TW",locked:true},
@@ -1514,7 +1515,7 @@ const TQ_SCENARIOS=[
   },
   explain:{
     correct:"⚽ Offensiv! Jäger zum nahen Pfosten, Flitzer L rückt ein – Aufpasser sichert!",
-    wrong:"Tipp: Offensiver Einwurf = wie eine Flanke! Jäger geht zum Strafraum. Flitzer L rückt ein für die zweite Welle. Aufpasser sichert ab."
+    wrong:"Tipp: Offensives Seitenaus = wie eine Flanke! Jäger geht zum Strafraum. Flitzer L rückt ein für die zweite Welle. Aufpasser sichert ab."
   }
 },
 {
@@ -1542,12 +1543,12 @@ const TQ_SCENARIOS=[
   }
 },
 {
-  title:"Standard: Eckstoß für uns",
-  desc:"Eckstoß für euch! Flitzer L schießt die Ecke von links.",
+  title:"Standard: Ecke für uns",
+  desc:"Ecke für euch! Flitzer L dribbelt von links ein oder passt kurz.",
   task:"Wie positioniert sich das Team im Strafraum?",
   hint:"Jäger und Flitzer R in den Strafraum! Aufpasser an der Strafraumkante für Abpraller.",
   ball:{from:{x:5,y:5},to:{x:45,y:12}},
-  opps:[{x:42,y:10,label:"Gegner"},{x:55,y:12,label:"Gegner"},{x:50,y:6,label:"Geg. TW"}],
+  opps:[{x:46,y:17,label:"Gegner"},{x:56,y:17,label:"Gegner"},{x:50,y:5,label:"Geg. TW"}],
   start:[
     {name:"TW",x:50,y:92,cls:"tb-tw",role:"TW",locked:true},
     {name:"Aufpasser",x:50,y:40,cls:"tb-auf",role:"Aufpasser",locked:false},
@@ -1557,42 +1558,42 @@ const TQ_SCENARIOS=[
   ],
   targets:{
     "Aufpasser":{x:50,y:22,r:10},
-    "Flitzer R":{x:58,y:10,r:10},
-    "Jäger":{x:42,y:8,r:12}
+    "Flitzer R":{x:62,y:10,r:10},
+    "Jäger":{x:40,y:9,r:10}
   },
   explain:{
-    correct:"⚽ Super aufgestellt! Drei Ziele für die Flanke – nah, fern, Rückraum!",
-    wrong:"Tipp: Jäger = naher Pfosten. Flitzer R = ferner Pfosten. Aufpasser = Rückraum/Strafraumkante. So habt ihr drei Optionen für die Ecke!"
+    correct:"⚽ Super aufgestellt! Drei Ziele für den Pass – nah, fern, Rückraum!",
+    wrong:"Tipp: Jäger = naher Pfosten. Flitzer R = ferner Pfosten. Aufpasser = Rückraum/Strafraumkante. So habt ihr drei Optionen für die Ecke – ein Mitspieler muss den Ball vor dem Tor berühren!"
   }
 },
 {
   title:"Standard: Abstoß gegen uns",
-  desc:"Gegnerischer Abstoß! Der TW des Gegners schießt lang!",
+  desc:"Gegnerischer Abstoß! Ihr müsst hinter die Mittellinie – und der TW des Gegners schießt lang!",
   task:"Wie stellt sich die Raute auf den langen Abstoß ein?",
-  hint:"Aufpasser sichert den Luftraum. Flitzer stehen nicht zu weit vorne – Abpraller sichern!",
-  ball:{from:{x:50,y:8},to:{x:50,y:42}},
-  opps:[{x:50,y:8,label:"Geg. TW"},{x:45,y:35,label:"Gegner"},{x:55,y:38,label:"Gegner"}],
+  hint:"Alle in der eigenen Hälfte – das ist die Regel beim Abstoß. Jäger und Flitzer an der Mittellinie für den zweiten Ball, Aufpasser sichert dahinter.",
+  ball:{from:{x:50,y:8},to:{x:50,y:56}},
+  opps:[{x:50,y:8,label:"Geg. TW"},{x:44,y:36,label:"Gegner",to:{x:46,y:50}},{x:58,y:38,label:"Gegner"}],
   start:[
     {name:"TW",x:50,y:92,cls:"tb-tw",role:"TW",locked:true},
-    {name:"Aufpasser",x:50,y:80,cls:"tb-auf",role:"Aufpasser",locked:false},
-    {name:"Flitzer L",x:13,y:48,cls:"tb-fl",role:"Flitzer L",locked:false},
-    {name:"Flitzer R",x:87,y:48,cls:"tb-fl",role:"Flitzer R",locked:false},
-    {name:"Jäger",x:50,y:16,cls:"tb-jaeg",role:"Jäger",locked:false}
+    {name:"Aufpasser",x:50,y:86,cls:"tb-auf",role:"Aufpasser",locked:false},
+    {name:"Flitzer L",x:12,y:62,cls:"tb-fl",role:"Flitzer L",locked:false},
+    {name:"Flitzer R",x:88,y:62,cls:"tb-fl",role:"Flitzer R",locked:false},
+    {name:"Jäger",x:50,y:53,cls:"tb-jaeg",role:"Jäger",locked:false}
   ],
   targets:{
-    "Aufpasser":{x:50,y:58,r:14},
-    "Flitzer L":{x:35,y:48,r:14},
-    "Flitzer R":{x:65,y:48,r:14},
-    "Jäger":{x:50,y:38,r:14}
+    "Aufpasser":{x:50,y:72,r:12},
+    "Flitzer L":{x:34,y:58,r:12},
+    "Flitzer R":{x:66,y:58,r:12},
+    "Jäger":{x:50,y:54,r:9}
   },
   explain:{
-    correct:"Gut! Raute steht kompakt im Mittelfeld. Aufpasser gewinnt den Kopfball oder sichert den zweiten Ball. Flitzer bereit für Abpraller.",
-    wrong:"Tipp: Bei langem Abstoß: IGEL in der Mitte! Aufpasser sichert den Luftraum. Nicht zu weit vorne oder hinten – Mittelfeld kontrollieren!"
+    correct:"Gut! Alle in der eigenen Hälfte, die Raute steht kompakt an der Mittellinie – bereit für den zweiten Ball!",
+    wrong:"Tipp: Beim Abstoß des Gegners darf keiner in seiner Hälfte stehen! Jäger und Flitzer an die Mittellinie, Aufpasser dahinter – kompakt für den zweiten Ball."
   }
 },
 {
   title:"Spiel: Rückstand – offensiver werden!",
-  desc:"Ihr liegt 0:1 zurück! Noch 5 Minuten. Der Trainer ruft: 'Alles nach vorne!'",
+  desc:"Ihr liegt 0:1 zurück! Noch 5 Minuten. Der Trainer ruft: „Alles nach vorne!“",
   task:"Maximaler Angriff! Wie stellt sich die Raute offensiv auf?",
   hint:"Auch der Aufpasser rückt weit auf. Risiko eingehen! TW steht höher.",
   ball:{from:{x:50,y:65},to:{x:50,y:65}},
@@ -1617,7 +1618,7 @@ const TQ_SCENARIOS=[
 },
 {
   title:"Spiel: Führung verteidigen",
-  desc:"Ihr führt 2:1! Noch 3 Minuten. Der Trainer sagt: 'Sicher spielen!'",
+  desc:"Ihr führt 2:1! Noch 3 Minuten. Der Trainer sagt: „Sicher spielen!“",
   task:"Sichert die Führung! Kompakt und tief stehen!",
   hint:"IGEL-Modus! Tief stehen, Räume eng machen, nichts riskieren.",
   ball:{from:{x:50,y:35},to:{x:50,y:35}},
@@ -1667,7 +1668,7 @@ const TQ_SCENARIOS=[
 },
 {
   title:"Spiel: Überzahl nutzen – 5 gegen 4",
-  desc:"Ein Gegenspieler hat Rot bekommen! Ihr spielt 5 gegen 4! Nutzt die Überzahl!",
+  desc:"Beim Gegner ist einer verletzt raus und der Wechsel dauert! Kurz spielt ihr 5 gegen 4 – nutzt die Überzahl!",
   task:"Wie nutzt ihr den Vorteil? Positioniert euch!",
   hint:"Überzahl = immer einen mehr! Spielt über die breite Seite, wo der Gegner fehlt.",
   ball:{from:{x:50,y:65},to:{x:50,y:65}},
@@ -1691,23 +1692,21 @@ const TQ_SCENARIOS=[
 },
 {
   title:"Spiel: Unterzahl – 4 gegen 5",
-  desc:"Einer eurer Spieler hat sich verletzt! Ihr spielt 4 gegen 5 (3 Feldspieler + TW).",
+  desc:"Euer Jäger ist verletzt raus und der Wechsel dauert! Kurz spielt ihr 4 gegen 5 – drei Feldspieler und TW.",
   task:"Wie verteidigt ihr mit einem Spieler weniger? Wer fehlt am wenigsten?",
   hint:"In Unterzahl: Igel noch enger! Mitte schließen, Seiten aufgeben wenn nötig.",
   ball:{from:{x:50,y:35},to:{x:50,y:35}},
-  opps:[{x:20,y:25,label:"Gegner"},{x:80,y:25,label:"Gegner"},{x:50,y:20,label:"Gegner"},{x:40,y:35,label:"Gegner"},{x:60,y:35,label:"Gegner"}],
+  opps:[{x:22,y:28,label:"Gegner"},{x:78,y:28,label:"Gegner"},{x:50,y:22,label:"Gegner"},{x:50,y:36,label:"Gegner"}],
   start:[
     {name:"TW",x:50,y:92,cls:"tb-tw",role:"TW",locked:true},
     {name:"Aufpasser",x:50,y:55,cls:"tb-auf",role:"Aufpasser",locked:false},
     {name:"Flitzer L",x:26,y:46,cls:"tb-fl",role:"Flitzer L",locked:false},
-    {name:"Flitzer R",x:74,y:46,cls:"tb-fl",role:"Flitzer R",locked:false},
-    {name:"Jäger",x:50,y:30,cls:"tb-jaeg",role:"Jäger",locked:false}
+    {name:"Flitzer R",x:74,y:46,cls:"tb-fl",role:"Flitzer R",locked:false}
   ],
   targets:{
     "Aufpasser":{x:50,y:75,r:12},
     "Flitzer L":{x:38,y:62,r:12},
-    "Flitzer R":{x:62,y:62,r:12},
-    "Jäger":{x:50,y:50,r:12}
+    "Flitzer R":{x:62,y:62,r:12}
   },
   explain:{
     correct:"Clever! In Unterzahl super eng stehen. Die Mitte zuziehen – das ist der gefährlichste Bereich. Lieber die Seiten frei lassen als die Mitte öffnen.",
@@ -1766,7 +1765,7 @@ const TQ_SCENARIOS=[
   ball:{from:{x:30,y:40},to:{x:40,y:75}},
   opps:[{x:35,y:72,label:"Gegner"},{x:55,y:70,label:"Gegner"}],
   start:[
-    {name:"TW",x:53,y:95,cls:"tb-tw",role:"TW",locked:false},
+    {name:"TW",x:53,y:92,cls:"tb-tw",role:"TW",locked:false},
     {name:"Aufpasser",x:48,y:78,cls:"tb-auf",role:"Aufpasser",locked:true},
     {name:"Flitzer L",x:22,y:58,cls:"tb-fl",role:"Flitzer L",locked:true},
     {name:"Flitzer R",x:78,y:58,cls:"tb-fl",role:"Flitzer R",locked:true},
@@ -1806,7 +1805,7 @@ const TQ_SCENARIOS=[
   title:"TW – Anweisungen geben",
   desc:"Der Gegner greift an! Dein TW sieht alles und muss den Aufpasser dirigieren!",
   task:"Schiebe Aufpasser in die beste Absicherungsposition!",
-  hint:"Der TW 'sieht' alles – er ruft dem Aufpasser wo er hinlaufen soll!",
+  hint:"Der TW sieht alles – er ruft dem Aufpasser wo er hinlaufen soll!",
   ball:{from:{x:30,y:30},to:{x:30,y:30}},
   opps:[{x:28,y:28,label:"Gegner"},{x:45,y:35,label:"Gegner"}],
   start:[
@@ -1821,7 +1820,7 @@ const TQ_SCENARIOS=[
   },
   explain:{
     correct:"Toll! Der TW hat gerufen und der Aufpasser ist rechtzeitig zur Ballseite gelaufen!",
-    wrong:"Tipp: Der TW ruft 'Auf links!' – Aufpasser muss schräg zur Ballseite laufen und absichern."
+    wrong:"Tipp: Der TW ruft „Auf links!“ – Aufpasser muss schräg zur Ballseite laufen und absichern."
   }
 },
 {
@@ -1832,7 +1831,7 @@ const TQ_SCENARIOS=[
   ball:{from:{x:35,y:30},to:{x:50,y:88}},
   opps:[{x:35,y:25,label:"Gegner"}],
   start:[
-    {name:"TW",x:69,y:95,cls:"tb-tw",role:"TW",locked:false},
+    {name:"TW",x:69,y:92,cls:"tb-tw",role:"TW",locked:false},
     {name:"Aufpasser",x:50,y:75,cls:"tb-auf",role:"Aufpasser",locked:true},
     {name:"Flitzer L",x:22,y:55,cls:"tb-fl",role:"Flitzer L",locked:true},
     {name:"Flitzer R",x:78,y:55,cls:"tb-fl",role:"Flitzer R",locked:true},
@@ -1876,7 +1875,7 @@ const TQ_SCENARIOS=[
   ball:{from:{x:10,y:45},to:{x:35,y:78}},
   opps:[{x:55,y:75,label:"Gegner"},{x:45,y:80,label:"Gegner"}],
   start:[
-    {name:"TW",x:54,y:95,cls:"tb-tw",role:"TW",locked:false},
+    {name:"TW",x:54,y:92,cls:"tb-tw",role:"TW",locked:false},
     {name:"Aufpasser",x:50,y:78,cls:"tb-auf",role:"Aufpasser",locked:true},
     {name:"Flitzer L",x:22,y:55,cls:"tb-fl",role:"Flitzer L",locked:true},
     {name:"Flitzer R",x:78,y:55,cls:"tb-fl",role:"Flitzer R",locked:true},
@@ -2076,24 +2075,24 @@ const TQ_SCENARIOS=[
   }
 },
 {
-  title:"Ballbesitz nach Einwurf",
-  desc:"Einwurf für euch! Wie behaltet ihr den Ball direkt danach?",
-  task:"Schiebe Flitzer L in eine gute Position zum Einwurf!",
+  title:"Ballbesitz nach Seitenaus",
+  desc:"Seitenaus für euch – der Aufpasser passt von der Linie ein. Wie behaltet ihr den Ball direkt danach?",
+  task:"Schiebe Flitzer L in eine gute Position zum Einpassen!",
   hint:"Mindestens zwei Anspielstationen! Einer kurz, einer weiter!",
-  ball:{from:{x:2,y:45},to:{x:18,y:45}},
-  opps:[{x:22,y:42,label:"Gegner"},{x:18,y:52,label:"Gegner"}],
+  ball:{from:{x:3,y:45},to:{x:16,y:46}},
+  opps:[{x:30,y:38,label:"Gegner"},{x:28,y:56,label:"Gegner"}],
   start:[
     {name:"TW",x:50,y:92,cls:"tb-tw",role:"TW",locked:true},
-    {name:"Aufpasser",x:45,y:65,cls:"tb-auf",role:"Aufpasser",locked:true},
+    {name:"Aufpasser",x:3,y:45,cls:"tb-auf",role:"Aufpasser",locked:true},
     {name:"Flitzer L",x:40,y:45,cls:"tb-fl",role:"Flitzer L",locked:false},
     {name:"Flitzer R",x:78,y:50,cls:"tb-fl",role:"Flitzer R",locked:true},
     {name:"Jäger",x:50,y:32,cls:"tb-jaeg",role:"Jäger",locked:true}
   ],
   targets:{
-    "Flitzer L":{x:18,y:45,r:14}
+    "Flitzer L":{x:16,y:46,r:12}
   },
   explain:{
-    correct:"Gut angeboten! Nah genug zum Einwurf, mit Platz dahinter. Annehmen, drehen, weiterverbinden!",
+    correct:"Gut angeboten! Nah genug zum Einpassen, mit Platz dahinter. Annehmen, drehen, weiterverbinden!",
     wrong:"Tipp: Flitzer L nah genug anbieten, aber nicht direkt beim Gegner."
   }
 },
@@ -2191,6 +2190,7 @@ const TQ_SCENARIOS=[
   task:"Wie sichert die Raute ab? Verschiebe Aufpasser, Flitzer R und Jäger!",
   hint:"Einer presst, die anderen sichern ab. Nicht alle zum Ball laufen – einer bleibt immer dahinter!",
   ball:{from:{x:20,y:45},to:{x:20,y:45}},
+  opps:[{x:18,y:41,label:"Gegner"},{x:55,y:35,label:"Gegner"}],
   start:[
     {name:"TW",x:50,y:92,cls:"tb-tw",role:"TW",locked:true},
     {name:"Aufpasser",x:53,y:74,cls:"tb-auf",role:"Aufpasser",locked:false},
@@ -2394,7 +2394,7 @@ const TQ_SCENARIOS=[
 {
   title:"Kommunizieren – laut rufen!",
   desc:"Flitzer R und Jäger wollen beide den Ball! Wer bekommt ihn?",
-  task:"Schiebe Jäger weg – Flitzer R ruft 'Mein Ball!', Jäger weicht aus!",
+  task:"Schiebe Jäger weg – Flitzer R ruft „Mein Ball!“, Jäger weicht aus!",
   hint:"Wer ruft hat Vorrang. Der andere bietet sich woanders an!",
   ball:{from:{x:70,y:40},to:{x:70,y:40}},
   start:[
@@ -2463,7 +2463,6 @@ const TQ_SCENARIOS=[
   hint:"Ballbewegung beobachten und die Raute sofort mitnehmen!",
   ball:{from:{x:22,y:35},to:{x:78,y:35}},
   opps:[{x:80,y:30,label:"Gegner"},{x:70,y:38,label:"Gegner"}],
-  anim:[{role:"Aufpasser",to:{x:62,y:68}}],
   start:[
     {name:"TW",x:50,y:92,cls:"tb-tw",role:"TW",locked:true},
     {name:"Aufpasser",x:38,y:68,cls:"tb-auf",role:"Aufpasser",locked:false},

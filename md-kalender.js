@@ -105,6 +105,10 @@ function tmSetTyp(t,btn){
      wandert ein unsichtbarer Satz aus dem letzten Termin ins Meeting (Falle aus v416). */
   disp("tm-block-helfen", !istMeeting);
   if(istMeeting){const hh=document.getElementById("tm-helfer-hinweis"); if(hh)hh.value="";}
+  /* v566: Mitbringliste nur beim Event und nur auf Wunsch. Ausgeblendet wird der Haken
+     geleert – sonst wandert er unsichtbar in den nächsten Termin (Falle aus v416). */
+  const mbRow=document.getElementById("tm-mitbringen-row"); if(mbRow)mbRow.style.display=(t==="event")?"flex":"none";
+  if(t!=="event"){const mb=document.getElementById("tm-mitbringen"); if(mb)mb.checked=false;}
   /* Und ein Satz, der sagt, was nach dem Anlegen kommt – die Frage „wo stimme ich ab?"
      entsteht sonst genau hier und wird erst drei Bildschirme später beantwortet. */
   const mh=document.getElementById("tm-meeting-hinweis");
@@ -250,7 +254,8 @@ async function tmAdd(){
     // Deshalb NICHT parseInt(...)||null: das machte aus der 0 wieder ein null.
     helfer_funino:     tmTyp==="training"?tmZahlFeld("tm-funino"):null,
     helfer_jugendtore: tmTyp==="training"?tmZahlFeld("tm-jugendtore"):null,
-    helfer_hinweis:    (document.getElementById("tm-helfer-hinweis")?.value||"").trim()||null
+    helfer_hinweis:    (document.getElementById("tm-helfer-hinweis")?.value||"").trim()||null,
+    mitbringen:        tmTyp==="event"&&!!document.getElementById("tm-mitbringen")?.checked
   };
   try{
     const payload=daten.length>1?daten.map(ds=>Object.assign({},body,{datum:ds,saison:saisonForDate(ds)})):body;
@@ -267,6 +272,7 @@ async function tmAdd(){
       /* Hinweis leeren, Torzahlen NICHT: der Hinweis gilt fuer genau diesen Termin, der
          Aufbau sieht beim naechsten Training genauso aus. */
       const hh=document.getElementById("tm-helfer-hinweis"); if(hh)hh.value="";
+      const mb=document.getElementById("tm-mitbringen"); if(mb)mb.checked=false;
       const sSel=document.getElementById("tm-serie"); if(sSel){sSel.value="";tmSerieToggle();}
       const sBis=document.getElementById("tm-serie-bis"); if(sBis)sBis.value="";
       const rb=document.getElementById("tm-addr-results");if(rb)rb.innerHTML="";tmSetTyp(tmTyp);tmLoad();
