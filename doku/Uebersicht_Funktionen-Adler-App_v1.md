@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v563 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v564 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -38,7 +38,7 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 
 | Funktion | Was sie tut | Nutzen |
 |---|---|---|
-| **Teams festlegen** | „Wer ist dabei?“ vorbelegt aus den Eltern-Rückmeldungen, dann Einteilung in Adler 1 / Adler 2. „Dabei“ zählt zugleich als Anwesenheit des Spieltags. Feld, Spielform und Gegner kommen aus dem Spielplan des Tages. Kapitän je Team für den ganzen Spieltag. | Eine Quelle für Kader, Anwesenheit und Einsatzquote. Keine doppelte Pflege. |
+| **Teams festlegen** | „Wer ist dabei?“ vorbelegt aus den Eltern-Rückmeldungen, dann Einteilung in Adler 1 / Adler 2. „Dabei“ zählt zugleich als Anwesenheit des Spieltags — die Kachel **Anwesenheit** auf der Spieltag-Seite führt genau hierher und klappt die Liste auf; die Kachel gleichen Namens im Training bleibt bei den Trainingsterminen. Feld, Spielform und Gegner kommen aus dem Spielplan des Tages. Kapitän je Team für den ganzen Spieltag. | Eine Quelle für Kader, Anwesenheit und Einsatzquote. Keine doppelte Pflege. |
 | **Festival-Runden am Spieltag** | Feste Teams wandern je Runde ein Feld weiter, Spielform je Feld (4+1, 3+1, FUNiño). Fehlt einem Team auf seinem Feld ein Kind, hilft eines aus dem Team mit der meisten Bank aus, nur für diese Runde. Torwart-Kinder wechseln sich ab. Tore, Ticker und Wechsel werden je Runde gezählt. | Jedes Team sieht beide Formate, niemand sitzt eine Runde komplett draußen. |
 | **Aufstellung am Mini-Feld** | Positionen mit Rollennamen (Aufpasser, Flitzer links und rechts), Tauschen per zwei Tipps oder Ziehen mit dem Finger, gezielt zwischen Feld und Bank. | Umstellen in Sekunden, auch am Spielfeldrand. |
 | **Match-Uhr & Wechsel-Timer** | Spielzeit aus dem Spielplan, die Uhr läuft erst nach dem Anpfiff. Der Wechsel-Timer startet mit dem gemeinsamen Anpfiff im Abstand einer halben Spielzeit und sammelt die Einsatzzeiten des Tages. | Faire Einsatzzeiten laufen mit, ohne dass jemand auf die Uhr schauen muss. |

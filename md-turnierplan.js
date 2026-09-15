@@ -564,6 +564,33 @@ function nomOffeneDabei(){
   toast(`${offen.length} Kinder auf „Dabei“ gesetzt`);
 }
 
+/* v564: Die Kachel „Anwesenheit" auf der Spieltag-Seite führte zur Anwesenheit des
+   TRAININGS. Das war kein Versehen der Kachel, sondern ihr Ziel: dort stehen seit v477
+   bewusst nur Trainingstermine („ein Ort je Termintyp"). Die Anwesenheit des Spieltags ist
+   die Nominierung — „Dabei" IST die Anwesenheit dieses Spieltags und zählt für die
+   Spiele-Quote. Sie liegt im Match unter „Teams festlegen" und klappt zu, sobald jemand
+   dabei ist; von einer Kachel aus war sie so nicht zu finden. Dieser Weg geht hin, klappt
+   beides auf und stellt die Liste vor Augen.
+
+   Gewartet wird auf die Liste, statt einen festen Zeitwert zu raten: `go` rendert die
+   Seite erst, und ein zu kurzer Timeout hätte je nach Gerät mal geklappt und mal nicht. */
+function spieltagAnwesenheitOpen(){
+  if(typeof go==="function")go("spieltag");
+  let versuche=0;
+  (function warten(){
+    const vor=document.getElementById("mt-phase-vor");
+    const liste=document.getElementById("nom-dabei");
+    if(vor)vor.open=true;
+    if(liste){
+      liste.open=true;
+      liste.scrollIntoView({behavior:"smooth",block:"start"});
+      return;
+    }
+    if(++versuche<40)setTimeout(warten,50);
+    else if(vor)vor.scrollIntoView({behavior:"smooth",block:"start"});
+  })();
+}
+
 /* ═══════════════════════════════════
    M1: BLITZTURNIER – schnelles Turnier zum Trainingsabschluss, jetzt mit Zeitbudget-
    Automatik: Budget (15/20/30/40/frei) + 1–4 Felder (FUNiño!) → die Automatik wählt
