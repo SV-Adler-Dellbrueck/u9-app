@@ -361,11 +361,40 @@ function ttsSprechtext(text){
 function ttsSaetze(text){
   return ttsSprechtext(text).split(/(?<=[.!?…])\s+/).map(s=>s.trim()).filter(Boolean);
 }
+/* v567 – PO: „Vorlesen ist immer noch genauso wie vorher." Auf seinem Android gibt es genau
+   eine deutsche Stimme, da hilft keine Auswahl. Deshalb liegen die 100 Szenarien jetzt als
+   vorproduzierte Aufnahmen unter `audio/quiz/` (ElevenLabs, Stimme „Ava", Serie vom
+   15.09.2026). Die Datei heißt nach dem Sprechtext: ändert sich der Text eines Szenarios,
+   stimmt der Name nicht mehr, die Datei fehlt, und der Knopf fällt auf die Gerätestimme
+   zurück – so liest die App nie einen alten Text vor. Der Prüflauf verlangt für jedes
+   Szenario eine Datei, damit das nicht unbemerkt passiert. Die Aufnahmen kennen keinen
+   Namen (der Sprechtext ist der neutrale); die Personalisierung bleibt dem Bildschirm. */
+function ttsHash(text){
+  let h=0x811c9dc5;
+  for(const ch of String(text||"")){ h^=ch.codePointAt(0); h=Math.imul(h,0x01000193)>>>0; }
+  return h.toString(16).padStart(8,"0");
+}
+function tqAudioUrl(sc){ return appRoot()+"audio/quiz/"+ttsHash(ttsSprechtext(sc.desc+" "+sc.task))+".mp3"; }
+let _tqAudio=null;
 function tqSpeak(btn){
-  if(!("speechSynthesis" in window)){toast("Vorlesen wird auf diesem Gerät nicht unterstützt");return;}
-  if(speechSynthesis.speaking||speechSynthesis.pending){speechSynthesis.cancel();if(btn)btn.textContent="🔊";return;}
   const sc=tqScenarios[tqIdx];
   if(!sc)return;
+  // Zweiter Tipp stoppt – egal ob Aufnahme oder Gerätestimme läuft.
+  if(_tqAudio){ try{_tqAudio.pause();}catch(e){} _tqAudio=null; if(btn)btn.textContent="🔊"; return; }
+  if(("speechSynthesis" in window)&&(speechSynthesis.speaking||speechSynthesis.pending)){speechSynthesis.cancel();if(btn)btn.textContent="🔊";return;}
+  let a=null;
+  try{ a=new Audio(tqAudioUrl(sc)); }catch(e){ a=null; }
+  if(!a){ tqSpeakGeraet(sc,btn); return; }
+  _tqAudio=a;
+  const zurueck=()=>{ if(_tqAudio!==a)return; _tqAudio=null; tqSpeakGeraet(sc,btn); };
+  a.onended=()=>{ if(_tqAudio===a)_tqAudio=null; if(btn)btn.textContent="🔊"; };
+  a.onerror=zurueck; // 404 oder kein Netz: Gerätestimme
+  if(btn)btn.textContent="⏹️";
+  try{ const p=a.play(); if(p&&p.catch)p.catch(zurueck); }catch(e){ zurueck(); }
+}
+/* Gerätestimme – die Rückfallebene, wenn keine Aufnahme da ist. */
+function tqSpeakGeraet(sc,btn){
+  if(!("speechSynthesis" in window)){toast("Vorlesen wird auf diesem Gerät nicht unterstützt");if(btn)btn.textContent="🔊";return;}
   const v=ttsGermanVoice();
   const saetze=ttsSaetze(tqPersonalize(sc.desc)+" "+sc.task);
   saetze.forEach((satz,i)=>{
