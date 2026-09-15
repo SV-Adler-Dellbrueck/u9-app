@@ -3,8 +3,8 @@
 Repo `SV-Adler-Dellbrueck/u9-app`, Stand 15.09.2026 (App v554). Gilt zusammen mit `CLAUDE.md`
 und dem Muster aus `doku/auftrag-skizze-v2/`.
 
-> **Status: Entwurf, wartet auf Freigabe.** Gebaut wird erst, wenn Charles das Paket
-> freigegeben und die drei offenen Entscheidungen am Ende beantwortet hat.
+> **Status: Entscheidungen getroffen (15.09.2026), wartet auf Freigabe zum Bau.** Die drei
+> Fragen am Ende hat Charles beantwortet; gebaut wird Scheibe für Scheibe auf sein Wort.
 
 ## Ausgangslage
 
@@ -71,8 +71,7 @@ wo `_skz`-Ausgabe mit Legende steht. Aufruf mit `typeof`-Schutz, das Modul ist W
   Pointer-Events, keine Bibliothek. Am Desktop Mausrad zoomt. Weil die Skizze Vektor ist,
   bleibt sie bei 4× scharf – nichts wird neu gezeichnet.
 - **Helle Rasenvariante:** Umschalter „Hell / Dunkel“ im Overlay (Text plus Symbol, nie nur
-  Farbe), Wahl in `localStorage` gemerkt (`adler-skizze-hell`), Standard siehe offene
-  Entscheidung 1. Die Variante wird beim Zeichnen gewählt, **nicht** in der Beschreibung
+  Farbe), Wahl in `localStorage` gemerkt (`adler-skizze-hell`), Standard dunkel (Entscheidung 1). Die Variante wird beim Zeichnen gewählt, **nicht** in der Beschreibung
   gespeichert: `_skz(spec, {hell:true})`. Rasen hell (Richtwert `#8fd18f`, wie in den
   Philippka-Grafiken), Feldlinien dunkel statt weiß, Spielerkreise mit dunklem Rand
   (`rgba(0,0,0,.55)`), Text dunkel. **Alle Kontraste messen** und in `data.js` kommentieren:
@@ -268,15 +267,14 @@ Maßstab in Metern, Nachzeichnen der 37 handgezeichneten Altskizzen (läuft übe
 Sperrklinke weiter), Übernahme von Philippka-Figuren (Kreise mit Kürzel bleiben – sie sind
 am Handy lesbar und tragen keine Kindernamen).
 
-## Offene Entscheidungen für Charles
+## Entscheidungen (Charles, 15.09.2026)
 
-1. **Helle Variante als Standard** überall (Detail, Editor, Export) oder nur als Umschalter
-   im Präsentationsmodus? Empfehlung: nur Umschalter, Standard dunkel – die dunkle Fassung
-   ist geprüft, und der Export für Lehrgangsabgaben soll gleich bleiben.
-2. **Taktikboard mitziehen** in Scheibe 3 oder später als eigenes Paket? Empfehlung: mit,
-   sonst entstehen wieder zwei Zeichenwelten.
-3. **Wischen im Präsentationsmodus** zum Bildwechsel (Scheibe 2) – ja, oder nur Knöpfe?
-   Empfehlung: ja, mit Knöpfen als zweitem Weg.
+1. **Helle Variante nur als Umschalter** im Präsentationsmodus, Standard bleibt dunkel.
+   Detail, Editor und Export bleiben wie heute; die Lehrgangsabgaben ändern sich nicht.
+2. **Taktikboard wird in Scheibe 3 mitgezogen** – dieselben Bilder, dasselbe Abspielen,
+   gespeicherte Boards tragen die Schritte mit.
+3. **Wischen plus Knöpfe** im Präsentationsmodus zum Bildwechsel; Knöpfe bleiben als
+   zweiter Weg und für die Tastatur.
 
 ## Anhang
 
