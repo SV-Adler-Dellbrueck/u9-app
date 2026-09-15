@@ -33,9 +33,13 @@ async function exportSkizzen(opt){
   });
 
   for(const u of ziel){
-    const r=await s.page.evaluate(async({spec,B})=>{
+   /* v557: Hat eine Skizze Schritte, bekommt jedes Bild eine eigene Datei. Bild 1
+      behaelt den Namen ohne Zusatz – die Abgaben verweisen darauf. */
+   const bilder=await s.page.evaluate(sp=>(typeof skzBildZahl==="function")?skzBildZahl(sp):1,u.skizze);
+   for(let nr=0;nr<bilder;nr++){
+    const r=await s.page.evaluate(async({spec,B,nr})=>{
       /* 1) Die Skizze wie im Detail */
-      const roh=_skz(spec);
+      const roh=_skz(spec,nr?{bild:nr}:undefined);
       const halter=document.createElement("div"); halter.innerHTML=roh;
       const skz=halter.querySelector("svg");
       const inhalt=skz.innerHTML;
@@ -83,12 +87,13 @@ async function exportSkizzen(opt){
       const png=c.toDataURL("image/png");
       URL.revokeObjectURL(url);
       return {svg:voll,png,breite:B,hoehe:Hpx};
-    },{spec:u.skizze,B:1120});
+    },{spec:u.skizze,B:1120,nr});
 
-    const slug=u.slug;
+    const slug=u.slug+(nr?("-bild-"+(nr+1)):"");
     fs.writeFileSync(path.join(AUS,slug+".png"),Buffer.from(r.png.split(",")[1],"base64"));
     fs.writeFileSync(path.join(AUS,slug+".svg"),r.svg);
     console.log(`${u.name}: ${slug}.png (${r.breite}x${r.hoehe}) + ${slug}.svg`);
+   }
   }
   console.log("Konsolenfehler:",s.fehler().length?s.fehler()[0]:"keine");
   await s.schliessen();
