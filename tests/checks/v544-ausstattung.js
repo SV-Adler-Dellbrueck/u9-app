@@ -77,7 +77,11 @@ module.exports = async function (h) {
        Kind B ist die zweite Zeile und hat noch nichts. */
     const felder = [...body.querySelectorAll(".aus-groesse")];
     felder[1].value = "140";
+    /* v565: Die Größe ist bei Gegenständen mit Größenliste ein Auswahlmenü, sonst ein
+       Textfeld. Ein echtes Menü meldet „change", ein Textfeld „input" – hier werden beide
+       ausgelöst, damit dieser Fall die Reihenfolge prüft und nicht das Bedienelement. */
     felder[1].dispatchEvent(new Event("input", { bubbles: true }));
+    felder[1].dispatchEvent(new Event("change", { bubbles: true }));
     await warte(50);
     kaesten()[1].checked = true;
     kaesten()[1].dispatchEvent(new Event("change", { bubbles: true }));
