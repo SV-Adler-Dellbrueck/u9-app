@@ -1,7 +1,10 @@
 # Auftragspaket: Einheit „Ball zum Freien" (Leitfrage 4) — Übungen, Vorlage, Skizzen
 
-Repo `SV-Adler-Dellbrueck/u9-app`, Stand 14.09.2026. Gilt zusammen mit `CLAUDE.md`
-und dem Muster aus `doku/auftrag-lehrgangsskizzen/`.
+Repo `SV-Adler-Dellbrueck/u9-app`, Stand 14.09.2026, umgesetzt mit **v554**. Gilt zusammen
+mit `CLAUDE.md` und dem Muster aus `doku/auftrag-lehrgangsskizzen/`.
+
+> **Status: umgesetzt.** Die Abnahmekriterien stehen unten mit dem Nachweis je Punkt,
+> die Schema-Befunde unter „Was offen bleibt“. Prüffall `tests/checks/v554-einheit-lf4.js`.
 
 ## Ausgangslage
 
@@ -171,27 +174,59 @@ Stellen „Aufbau" (Übung 1) und „Zwischenblock" (Übung 2).
 
 ## Abnahmekriterien
 
-| Kriterium | Prüfung |
-|---|---|
-| Der Abgleich legt beide Übungen neu an und ändert keinen bestehenden Eintrag | `bibliothekAbgleich` gegen eine Attrappe mit den zwölf vorhandenen Übungen: **2 angelegt, 12 übersprungen**, Skizze bei beiden dabei |
-| `stand` hochgesetzt | `2026-09-14-2` in `bibliothek.json`, sonst holt `_bibHolen` die Datei nicht |
-| Nur vorhandene Elementtypen | Schlüssel jeder Spec gegen `EI_SKZ_LISTEN` (`z, tor, leiter, wand, p, li, h, s, b, tx`), Spielerfarben gegen `g, r, b, y, w`, Pfeiltypen gegen `SKZ_PFEIL` |
-| Skizzen rendern im Detail und im Export identisch | `viewBox` `0 0 280 180`, Export serialisiert dieselbe `_skz`-Ausgabe |
-| Lesbar am Handy | kein Spielerkreis näher als 24 px an einem anderen; falls eine Spec das reißt, Position melden statt den Renderer zu ändern |
-| Vorlage übernehmbar | Vorlage erscheint im Trainingsplan und legt die fünf Blöcke mit den richtigen Übungen an, ohne dass eine Übung doppelt entsteht |
-| `node tests/run.js` grün, `sw.js` hochgezählt | voller Lauf vor dem Bump |
-| Keine neuen Programmdateien | `bibliothek.json` und `vorlagen.json` bleiben in der Ausnahmeliste im `fetch`-Handler von `sw.js`, nicht im Precache |
+| Kriterium | Prüfung | Nachweis (v554) |
+|---|---|---|
+| Der Abgleich legt beide Übungen neu an und ändert keinen bestehenden Eintrag | `bibliothekAbgleich` gegen eine Attrappe mit den zwölf vorhandenen Übungen: **2 angelegt, 12 übersprungen**, Skizze bei beiden dabei | Prüffall b): Attrappe mit den zwölf bestehenden Einträgen, der Abgleich beim Öffnen schickt genau zwei `POST` mit den neuen Namen, beide mit `skizze`; kein bestehender Name darunter. Zweiter Lauf: 0 neu, 14 übersprungen |
+| `stand` hochgesetzt | `2026-09-14-2` in `bibliothek.json`, sonst holt `_bibHolen` die Datei nicht | Prüffall a): Stand wörtlich `2026-09-14-2`, beide Übungen als letzte zwei Einträge, keine doppelten Namen. `vorlagen.json` auf `2026-09-14-4` |
+| Nur vorhandene Elementtypen | Schlüssel jeder Spec gegen `EI_SKZ_LISTEN` (`z, tor, leiter, wand, p, li, h, s, b, tx`), Spielerfarben gegen `g, r, b, y, w`, Pfeiltypen gegen `SKZ_PFEIL` | Prüffall c): Schlüssel, Spieler- und Hütchenfarben, Pfeiltypen – alle drei Listen werden zur Laufzeit aus der App gelesen, nichts abgetippt. Keine Abweichung |
+| Skizzen rendern im Detail und im Export identisch | `viewBox` `0 0 280 180`, Export serialisiert dieselbe `_skz`-Ausgabe | Prüffall c)/f): `viewBox` stimmt; die eingecheckte SVG enthält die `_skz`-Ausgabe zeichengleich, sonst wird „Export neu laufen lassen“ gemeldet |
+| Lesbar am Handy | kein Spielerkreis näher als 24 px an einem anderen; falls eine Spec das reißt, Position melden statt den Renderer zu ändern | Gemessen: Übung 1 engster Abstand **57 px**, Übung 2 **80 px**. PNG 1120 × 864 px, im Vollbild am Handy ohne Zoomen lesbar (Sichtprüfung beider Bilder). Dieselbe Einschränkung wie im Paket Lehrgangsskizzen: Kürzel 8 px, Beschriftung 9 px im festen Maßstab von `_skz` |
+| Vorlage übernehmbar | Vorlage erscheint im Trainingsplan und legt die fünf Blöcke mit den richtigen Übungen an, ohne dass eine Übung doppelt entsteht | Prüffall d)/e): `_evPruefung` ohne Fehler, kein Netto-Hinweis (39 von 49 Minuten brutto = 0,80, im Band 0,6–1,0). Übernahme auf den 18.09. schreibt fünf Phasen; Block 2 und 5 zeigen auf `Warm up Adler` und `3 gegen 3 auf vier Minitore mit Schusszone` aus dem Bestand, Block 3 und 4 auf die neuen. Die Übungstabelle bleibt bei 14 Zeilen, keine gleichnamige Kopie |
+| `node tests/run.js` grün, `sw.js` hochgezählt | voller Lauf vor dem Bump | Voller Lauf grün auf v553, danach Bump auf **v554**, Übersicht mitgezogen |
+| Keine neuen Programmdateien | `bibliothek.json` und `vorlagen.json` bleiben in der Ausnahmeliste im `fetch`-Handler von `sw.js`, nicht im Precache | Kein neues App-Modul, `PRECACHE` unverändert (54 Einträge), die Regel `/\/uebungen\/[^/]+\.json$/` im `fetch`-Handler greift für beide Dateien. Neu sind nur der Prüffall und das Exportskript in `doku/`, das den Baustein aus `doku/auftrag-lehrgangsskizzen/export-skizzen.js` aufruft statt ihn zu kopieren |
 
 ## Testfälle
 
-1. Attrappe mit den zwölf bestehenden Übungen → Abgleich meldet 2 neu, 12 übersprungen.
-2. Zweiter Lauf desselben Abgleichs → 0 neu, 14 übersprungen (keine Dubletten).
-3. Spec-Prüfung beider Skizzen gegen `EI_SKZ_LISTEN` und den Farbsatz.
+1. Attrappe mit den zwölf bestehenden Übungen → Abgleich meldet 2 neu, 12 übersprungen. **Grün.**
+2. Zweiter Lauf desselben Abgleichs → 0 neu, 14 übersprungen (keine Dubletten). **Grün.**
+3. Spec-Prüfung beider Skizzen gegen `EI_SKZ_LISTEN` und den Farbsatz. **Grün.**
 4. Vorlage übernehmen und prüfen, dass Block 2 und Block 5 auf die **bestehenden**
-   Übungen zeigen und keine gleichnamigen Kopien anlegen.
+   Übungen zeigen und keine gleichnamigen Kopien anlegen. **Grün.**
+
+Alle vier in `tests/checks/v554-einheit-lf4.js`; der Export läuft mit
+`node doku/auftrag-einheit-lf4/export-skizzen.js` aus dem Projektordner.
+
+## Was offen bleibt
+
+Schema-Befunde – nichts hinzuerfunden, alles über vorhandene Felder:
+
+- **Folge 2 (von 4) war besetzt.** Leitfrage 4 hatte mit v551 bereits die Folgen 1 bis 4
+  (`L4-1` bis `L4-4`), darunter `L4-2 Passen – Lehrgangsform 15:30:15:30` als 90-Minuten-Fassung
+  derselben Idee. Eine bestehende Einheit umzunummerieren hätte den Bestand angefasst; die
+  Einheit hängt deshalb als **`L4-5`, `folge_nr` 5** an. Der Prüffall v551 zählt die zwanzig des
+  Konzepts weiter und benennt die Zusatz-Einheit ausdrücklich, statt sie still mitzuzählen.
+  Ob sie später `L4-2` ersetzen soll, entscheidet Charles.
+- **Kein Blocktyp für „Abbauen“.** `EI_TYPEN` kennt `warmup, main, spielform, uebungsform,
+  abschluss, tw, individual`; `abschluss` ist im Trainingsplan freies Spiel und zählt in die
+  Spielform-Summe. Ein Abbau-Block als `abschluss` hätte die Netto-Rechnung verfälscht. Die
+  fünf Minuten stehen deshalb in keinem Block; `dauer_min` trägt die 90 Minuten des Termins,
+  die Blöcke summieren sich auf 85.
+- **Zwischenblock als `uebungsform`.** Der einzige Blocktyp, der die Übung ausdrücklich als
+  Übungsform führt und nicht in die Spielform-Summe zählt – so bleibt die Netto-Rechnung bei
+  39 von 49 Minuten (Spielblock 1 und 2) im Band.
+- **Teil A / Teil B von Spielblock 1** haben kein eigenes Feld; sie stehen im `label` des
+  Blocks und im `ablauf` der Übung.
+- **`ordnung`** ist mit `Dreieck (3 gegen 3)` belegt, dem Wert aus der geschlossenen Liste, der
+  der 12-Kinder-Fassung entspricht; die 8- und 16-Kinder-Fassungen (4 gegen 4) stehen in der
+  Skalierung.
+- Die Übungstexte stammen wörtlich aus dem Paket und wurden nicht fachlich verändert.
 
 ## Nachtrag ins Projektgedächtnis
 
 Nach der Umsetzung: Eintrag in `Projektgedaechtnis/entscheidungen.md` im privaten Repo
 `adler-u9-wissen` — zwei neue Übungen, eine Vorlage, Skizzen aus der App statt extern.
 **Google Drive ist danach von Hand nachzuziehen**, Claude Code hat dort keinen Zugriff.
+
+Erledigt mit v554: `stand.md` (A2, A3, B3) und `entscheidungen.md` (angehängt) im privaten
+Repo nachgezogen. Die PNG liegen im Repo unter `doku/auftrag-einheit-lf4/` und müssen von
+Hand in `Huetten_Aufgabe_2.2.docx` und in den Drive-Ordner Basis-Coach Lehrgang.

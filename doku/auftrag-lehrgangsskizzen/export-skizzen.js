@@ -7,13 +7,30 @@
    „Skizze teilen" – PNG und SVG koennen deshalb nicht auseinanderlaufen. */
 const fs=require("fs"), path=require("path");
 const h=require(path.join(process.cwd(),"tests/harness.js"));
-const AUS=__dirname;
 
-(async()=>{
+/* v554: Der Lauf ist ein Baustein geworden. Das Paket Einheit LF4 braucht denselben
+   Export fuer zwei andere Uebungen in einen anderen Ordner – eine Kopie des Skripts
+   waere die zweite Wahrheit, die beim naechsten Legendeneintrag auseinanderlaeuft.
+   Aufruf ohne Argumente: die beiden Lehrgangsskizzen wie bisher. Mit
+   {aus, auswahl: [{muster, slug}]} exportiert der Aufrufer, was er braucht. */
+const STANDARD={
+  aus:__dirname,
+  auswahl:[
+    {muster:/Dreieck \(Grundform\)/,slug:"3-gegen-3-dreieck-grundform"},
+    {muster:/Raute \(Steigerung\)/,slug:"4plus1-gegen-4plus1-raute-steigerung"}
+  ]
+};
+
+async function exportSkizzen(opt){
+  const {aus,auswahl}=Object.assign({},STANDARD,opt||{});
+  const AUS=aus;
   const s=await h.starten({hoehe:1200,supabase:h.supabaseAttrappe({kader:h.kaderZeilen()})});
   const bib=JSON.parse(fs.readFileSync(path.join(process.cwd(),"uebungen/bibliothek.json"),"utf8"));
-  const ziel=bib.uebungen.filter(u=>/Dreieck \(Grundform\)|Raute \(Steigerung\)/.test(u.name));
-  if(ziel.length!==2)throw new Error("Erwartet 2 neue Uebungen, gefunden "+ziel.length);
+  const ziel=auswahl.map(a=>{
+    const t=bib.uebungen.filter(u=>a.muster.test(u.name));
+    if(t.length!==1)throw new Error("Muster "+a.muster+" trifft "+t.length+" Uebungen, erwartet genau 1");
+    return Object.assign({},t[0],{slug:a.slug});
+  });
 
   for(const u of ziel){
     const r=await s.page.evaluate(async({spec,B})=>{
@@ -68,11 +85,14 @@ const AUS=__dirname;
       return {svg:voll,png,breite:B,hoehe:Hpx};
     },{spec:u.skizze,B:1120});
 
-    const slug=u.name.includes("Dreieck")?"3-gegen-3-dreieck-grundform":"4plus1-gegen-4plus1-raute-steigerung";
+    const slug=u.slug;
     fs.writeFileSync(path.join(AUS,slug+".png"),Buffer.from(r.png.split(",")[1],"base64"));
     fs.writeFileSync(path.join(AUS,slug+".svg"),r.svg);
     console.log(`${u.name}: ${slug}.png (${r.breite}x${r.hoehe}) + ${slug}.svg`);
   }
   console.log("Konsolenfehler:",s.fehler().length?s.fehler()[0]:"keine");
   await s.schliessen();
-})();
+}
+
+module.exports=exportSkizzen;
+if(require.main===module)exportSkizzen();

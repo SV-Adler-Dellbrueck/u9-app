@@ -1,6 +1,6 @@
 {
   "schema": "adler-vorlagen/1",
-  "stand": "2026-09-14-3",
+  "stand": "2026-09-14-4",
   "vorlagen": [
     {
       "name": "L1-1 Ball behalten – Duell um zwei Tore",
@@ -1062,6 +1062,52 @@
           "typ": "abschluss",
           "label": "Abschlussturnier",
           "dauer": 18
+        }
+      ],
+      "ordnung": "Dreieck (3 gegen 3)"
+    },
+    {
+      "name": "L4-5 Passen – Ball zum Freien, Tor nach Pass zählt doppelt",
+      "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "folge_nr": 5,
+      "tags": [],
+      "dauer_min": 90,
+      "netto_spielform_min": 39,
+      "skalierung": {
+        "8": "Ein Feld, 4 gegen 4; im Zwischenblock zwei Vierergruppen als Raute statt Dreieck",
+        "12": "Zwei Felder, 3 gegen 3; im Zwischenblock vier Dreiecke",
+        "16": "Zwei Felder, 4 gegen 4; im Zwischenblock vier Vierergruppen als Raute"
+      },
+      "beobachtung": "Welches Kind hat sich vor dem Pass umgeschaut, wer ist wie ein Flitzer in die freie Lücke gestartet, wer hat als Aufpasser den Passweg zugestellt?",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler",
+          "dauer": 13,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "main",
+          "label": "Spielblock 1 – Teil A frei (11 Min), Teil B Tor nach Pass zählt doppelt (13 Min)",
+          "dauer": 24,
+          "uebung_name": "3 gegen 3 auf vier Minitore – Pass zählt doppelt"
+        },
+        {
+          "typ": "uebungsform",
+          "label": "Zwischenblock – Dreieckspassen, ab Minute 5 mit zweitem Ball, ab Minute 9 mit Abschluss",
+          "dauer": 13,
+          "uebung_name": "Dreieckspassen mit Abschluss"
+        },
+        {
+          "typ": "main",
+          "label": "Spielblock 2 – offene Stufe auf 30 x 22 m, dann Abschlussturnier drei Runden zu 4 Min",
+          "dauer": 25,
+          "uebung_name": "3 gegen 3 auf vier Minitore mit Schusszone"
         }
       ],
       "ordnung": "Dreieck (3 gegen 3)"

@@ -32,13 +32,21 @@ const SOLL = {
 /* Die sieben, die vor v551 schon in der Datenbank standen. Der Abgleich darf sie nicht
    anfassen – er legt nur an, was er dort nicht findet. */
 const BESTAND = ["L1-1", "L2-1", "L3-1", "L4-1", "L4-2", "L5-1", "L6-1"];
+/* v554: Die Einheit der Lehrgangsabgabe 2.2 (18.09.2026) steht als L4-5 in der Datei.
+   Das Konzept plant für Leitfrage 4 vier Einheiten, und die Folgen 1 bis 4 waren schon
+   vergeben – das Paket nannte „Folge 2 (von 4)“, die Stelle war aber besetzt. Statt eine
+   bestehende Einheit umzunummerieren, hängt sie als Folge 5 an. Die Prüfung der zwanzig
+   bleibt, wie sie ist; die Zusatz-Einheit wird hier benannt statt still mitgezählt. */
+const ZUSATZ = ["L4-5"];
 
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
   const fs = require("fs"), path = require("path");
 
   const vor = JSON.parse(fs.readFileSync(path.join(h.REPO, "uebungen/vorlagen.json"), "utf8"));
-  const alle = vor.vorlagen || [];
+  const alle = (vor.vorlagen || []).filter(v => !ZUSATZ.some(p => String(v.name).startsWith(p)));
+  const zusatz = (vor.vorlagen || []).filter(v => ZUSATZ.some(p => String(v.name).startsWith(p)));
+  if (zusatz.length !== ZUSATZ.length) probleme.push("Zusatz-Einheit fehlt oder ist mehrfach da: " + ZUSATZ.join(", "));
 
   // a) Verteilung und Reihenfolge
   const je = {};
@@ -105,7 +113,7 @@ module.exports = async function (h) {
   if (r.hinweise.length) probleme.push("Netto-Hinweis: " + r.hinweise.map(x => `${x.name} – ${x.text}`).join(" | "));
 
   const neueNamen = angelegt.map(z => z.name);
-  const erwartet = alle.filter(v => !BESTAND.some(p => String(v.name).startsWith(p))).map(v => v.name);
+  const erwartet = alle.concat(zusatz).filter(v => !BESTAND.some(p => String(v.name).startsWith(p))).map(v => v.name);
   if (neueNamen.length !== erwartet.length)
     probleme.push(`Der Abgleich hat ${neueNamen.length} Einheiten angelegt, erwartet ${erwartet.length}`);
   else {
@@ -120,7 +128,7 @@ module.exports = async function (h) {
   if (ohneFeld.length) probleme.push("Beim Anlegen unvollständig (ordnung/leitfrage/beobachtung): " + ohneFeld.join(", "));
 
   if (!probleme.length) {
-    zeilen.push(`Verteilung: ${Object.keys(SOLL).map(f => je[f].length).join(" · ")} = ${alle.length} Einheiten über sechs Leitfragen`);
+    zeilen.push(`Verteilung: ${Object.keys(SOLL).map(f => je[f].length).join(" · ")} = ${alle.length} Einheiten über sechs Leitfragen, dazu ${zusatz.length} Zusatz (${ZUSATZ.join(", ")})`);
     zeilen.push(`Abgleich: ${neueNamen.length} neu angelegt, die ${BESTAND.length} bestehenden unberührt`);
     const ordn = {}; alle.forEach(v => ordn[v.ordnung] = (ordn[v.ordnung] || 0) + 1);
     zeilen.push("Ordnungen: " + Object.keys(ordn).map(k => `${k} ${ordn[k]}×`).join(" · "));
