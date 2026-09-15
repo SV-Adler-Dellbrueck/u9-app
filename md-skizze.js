@@ -489,7 +489,11 @@ function skzGrossKnopf(name,idx){
     +'background:var(--surface);color:var(--text);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">'
     +'🔍 Groß zeigen</button>';
 }
-function skzGrossClose(){ document.getElementById("skz-gross-modal")?.remove(); _skzGr=null; }
+let _skzGrPassenGebunden=null;
+function skzGrossClose(){
+  if(_skzGrPassenGebunden){ window.removeEventListener("resize",_skzGrPassenGebunden); _skzGrPassenGebunden=null; }
+  document.getElementById("skz-gross-modal")?.remove(); _skzGr=null;
+}
 function skzGrossHell(){
   if(!_skzGr||!_skzGr.spec)return;
   _skzGr.hell=!_skzGr.hell; _skzHellMerken(_skzGr.hell);
@@ -500,8 +504,25 @@ function skzGrossReset(){ if(!_skzGr)return; _skzGr.zoom=1; _skzGr.x=0; _skzGr.y
 /* Zoom und Verschiebung stecken in EINER Transformation auf dem Halter. Die Skizze
    selbst wird dabei nicht angefasst – deshalb bleibt sie scharf und deshalb kann der
    Umschalter sie jederzeit neu zeichnen, ohne dass der Zoom verlorengeht. */
+/* Die Skizze soll so groß stehen, wie der Platz hergibt – ohne dass eine Zahl im
+   Stylesheet raten muss, wie hoch Titel, Chips, Legende und Knopfzeile gerade sind.
+   Deshalb wird gemessen: alles außer der Bühne zusammenzählen, den Rest bekommt das
+   Bild, begrenzt durch das Seitenverhältnis 280:180. Eine Zeile mehr oder weniger
+   ändert damit nur die Größe, nie das Layout. */
+function _skzGrPassen(){
+  const m=document.getElementById("skz-gross-modal"), b=document.getElementById("skz-gross-buehne"),
+        h=document.getElementById("skz-gross-halter");
+  if(!m||!b||!h)return;
+  let rest=0;
+  [...m.children].forEach(c=>{ if(c!==b)rest+=c.getBoundingClientRect().height+8; });
+  const hoch=Math.max(120,m.clientHeight-rest-20);
+  const breit=Math.max(120,Math.min(b.clientWidth,hoch*280/180));
+  h.style.width=Math.floor(breit)+"px";
+  h.style.height=Math.floor(breit*180/280)+"px";
+}
 function _skzGrLegen(){
   const h=document.getElementById("skz-gross-halter"); if(!h||!_skzGr)return;
+  _skzGrPassen();
   const g=Math.max(1,_skzGr.zoom);
   const b=h.getBoundingClientRect();
   const maxX=Math.max(0,(g-1)*b.width/2), maxY=Math.max(0,(g-1)*b.height/2);
@@ -513,7 +534,7 @@ function _skzGrLegen(){
 }
 function _skzGrZeichnen(){
   const h=document.getElementById("skz-gross-halter"); if(!h||!_skzGr)return;
-  h.innerHTML=_skzGr.spec?_skz(_skzGr.spec,{hell:_skzGr.hell}):(_skzGr.svg||"");
+  h.innerHTML=_skzGr.spec?_skz(_skzBesetzungSpec(),{hell:_skzGr.hell}):(_skzGr.svg||"");
   const svg=h.querySelector("svg");
   if(svg){ svg.removeAttribute("style"); svg.setAttribute("width","100%"); svg.setAttribute("height","100%");
     svg.style.cssText="display:block;width:100%;height:100%;border-radius:8px"; svg.style.pointerEvents="none"; }
@@ -522,6 +543,12 @@ function _skzGrZeichnen(){
   const u=document.getElementById("skz-gross-hell");
   if(u){ u.innerHTML=_skzGr.hell?"🌙 Dunkler Rasen":"☀️ Heller Rasen";
     u.setAttribute("aria-pressed",_skzGr.hell?"true":"false"); }
+  const kb=document.getElementById("skz-gross-kinder");
+  if(kb){ kb.innerHTML=_skzGr.besetzung?"🙈 Namen aus":"🧒 Kinder einsetzen";
+    kb.setAttribute("aria-pressed",_skzGr.besetzung?"true":"false");
+    kb.setAttribute("onclick",_skzGr.besetzung?"skzBesetzungAus()":"skzBesetzungAn()"); }
+  _skzGrChips();
+  if(svg&&_skzGr.besetzung)_skzFotosEinsetzen(svg);
   _skzGrLegen();
 }
 function _skzGrAbstand(){
@@ -566,6 +593,197 @@ function _skzGrRad(ev){
   if(_skzGr.zoom<=1.02){ _skzGr.x=0; _skzGr.y=0; }
   _skzGrLegen();
 }
+/* ═══ v556 – BESETZUNG: die Kinder finden sich wieder ═══
+   In der Skizze steht „S" und „O". Ein Achtjähriger erkennt darin nicht sich selbst.
+   Steht im Kreis „Mi" für Mika und am Tablet sein Foto, dann ist es SEINE Aufgabe.
+
+   Drei Festlegungen, jede aus einem Grund:
+
+   1) Die Skizze bleibt neutral. Die Zuordnung Kreis → Kind wird NIE gespeichert – nicht
+      in `trainingsformen.skizze`, nicht in `uebungen/*.json`. Das Repo ist öffentlich,
+      eine Übung überlebt jeden Jahrgang, und in den öffentlichen Ansichten sind
+      Kindernamen maskiert. Was gar nicht erst in der Beschreibung steht, kann dort auch
+      nicht durchrutschen. Gearbeitet wird mit dem Kader im Speicher, nicht mit Namen in
+      der Zeichnung.
+
+   2) Nur im Präsentationsmodus, nicht im Detailfenster. Das Detailfenster ist die
+      Quelle für „Skizze teilen"; läge die Besetzung dort, trüge das geteilte Bild
+      Namen und Gesichter von Kindern in eine Nachricht hinaus. So ist der Export ohne
+      eine einzige zusätzliche Regel neutral – nicht weil wir daran denken, sondern
+      weil es dort nichts zu holen gibt. (Technisch käme dasselbe heraus: ein Foto aus
+      dem Speicher färbt die Zeichenfläche ein, `toBlob` bräche mit einem
+      Sicherheitsfehler ab.)
+
+   3) Das Foto nur mit Einwilligung und nur ab 600 px gemessener Breite. Darunter ist
+      ein Gesicht in einem 16-px-Kreis Matsch. Fehlt die Freigabe, steht das Kürzel –
+      ohne Lücke und ohne Hinweis darauf, dass etwas fehlt: in einem Bild, das die ganze
+      Gruppe sieht, soll kein Kind bemerken, dass bei ihm etwas fehlt. */
+const SKZ_FOTO_AB=600;      // Breite, ab der ein Gesicht im Kreis etwas hergibt
+
+/* Kürzel über den GANZEN aktiven Kader, nicht über die eine Skizze – sonst hieße ein
+   Kind mal „Mi" und mal „Mik", je nachdem, wer sonst noch im Bild steht. Höchstens drei
+   Zeichen: mehr passen bei Schriftgröße 8 nicht in einen Kreis mit Radius 8, und der
+   Tipp-Editor schneidet schon immer auf drei. */
+function skzKuerzelMap(kinder){
+  const teile=k=>String((k&&k.name)||"").trim().split(/\s+/);
+  const gross=t=>t.charAt(0).toUpperCase();
+  const stufe=(k,n)=>{
+    const t=teile(k), v=t[0]||"", zw=t[1]||"";
+    const a=gross(v)+(v.charAt(1)||"").toLowerCase();
+    if(n===0)return a;
+    if(n===1)return a+(v.charAt(2)||"").toLowerCase();
+    return a+(gross(zw)||String(k.nr==null?"":k.nr).charAt(0)||"");
+  };
+  const map={}, vergeben=new Set();
+  let offen=(kinder||[]).slice();
+  for(let n=0;n<3&&offen.length;n++){
+    const zaehl={};
+    offen.forEach(k=>{ const c=stufe(k,n); zaehl[c]=(zaehl[c]||0)+1; });
+    const rest=[];
+    offen.forEach(k=>{
+      const c=stufe(k,n);
+      if(zaehl[c]===1&&!vergeben.has(c)&&c.trim()){ map[k.name]=c; vergeben.add(c); }
+      else rest.push(k);
+    });
+    /* Kein Abbruch, wenn eine Stufe nichts löst: der Prüfkader „Kind A" bis „Kind O"
+       hängt genau daran – nach „Ki" und „Kin" ist erst die dritte Stufe eindeutig. */
+    offen=rest;
+  }
+  /* Was jetzt noch offen ist, wären zwei Kinder mit identischem Namen UND identischer
+     Nummer. Dann entscheidet die Reihenfolge – sichtbar, nicht heimlich. */
+  offen.forEach((k,i)=>{ map[k.name]=stufe(k,0).charAt(0)+String(i+1).slice(-2); });
+  return map;
+}
+/* Wer heute da ist. Erste Wahl ist die Anwesenheit, die der Trainingsplan für den
+   gewählten Termin ohnehin führt; sonst der aktive Kader. */
+function skzBesetzungQuelle(){
+  const alle=(typeof kaderAktiv==="function")?kaderAktiv():[];
+  let da=null;
+  try{ if(typeof TP_ANWESEND!=="undefined"&&Array.isArray(TP_ANWESEND)&&TP_ANWESEND.length)da=TP_ANWESEND; }catch(e){}
+  if(!da)return alle;
+  const namen=da.map(x=>(typeof x==="string")?x:((x&&x.name)||""));
+  const treffer=alle.filter(k=>namen.includes(k.name));
+  return treffer.length?treffer:alle;
+}
+/* Nur im Trainer-Zugang und nur mit geladenem Kader. In den öffentlichen Ansichten und
+   im Eltern-Bereich gibt es beides nicht – dort bleibt die Skizze neutral. */
+function skzBesetzungMoeglich(){
+  if(typeof sbToken!=="function"||!sbToken())return false;
+  return (typeof kaderAktiv==="function")&&kaderAktiv().length>0;
+}
+function _skzKreise(spec){ return (spec&&Array.isArray(spec.s))?spec.s:[]; }
+/* Besetzt werden alle Kreise außer den neutralen („w") – das sind Trainer, Anspieler
+   und Zielpersonen, keine Mitspieler. */
+function _skzBesetzbar(spec){
+  return _skzKreise(spec).map((sp,i)=>({i,farbe:sp[2]||"g"})).filter(x=>x.farbe!=="w").map(x=>x.i);
+}
+function skzBesetzungAn(){
+  if(!_skzGr||!_skzGr.spec)return;
+  if(!skzBesetzungMoeglich()){ if(typeof toast==="function")toast("Dafür muss der Kader geladen sein","info"); return; }
+  const kinder=skzBesetzungQuelle();
+  const kuerzel=skzKuerzelMap((typeof kaderAktiv==="function")?kaderAktiv():kinder);
+  const plaetze=_skzBesetzbar(_skzGr.spec);
+  _skzGr.besetzung={};
+  plaetze.forEach((kreis,n)=>{
+    const k=kinder[n]; if(!k)return;
+    _skzGr.besetzung[kreis]={name:k.name,kuerzel:kuerzel[k.name]||"?",
+      fotoPath:k.foto_path||null,fotoOk:!!k.foto_stadionheft_ok};
+  });
+  _skzGr.tausch=null;
+  if(!Object.keys(_skzGr.besetzung).length){ _skzGr.besetzung=null; if(typeof toast==="function")toast("Keine Kinder zum Einsetzen gefunden","info"); }
+  _skzGrZeichnen();
+}
+function skzBesetzungAus(){ if(!_skzGr)return; _skzGr.besetzung=null; _skzGr.tausch=null; _skzGrZeichnen(); }
+/* Zwei Kinder tauschen: erst das eine antippen, dann das andere – dieselbe Geste wie
+   beim Tauschen zweier Teams im Festival-Planer. */
+function skzBesetzungTausch(kreis){
+  if(!_skzGr||!_skzGr.besetzung)return;
+  if(_skzGr.tausch==null){ _skzGr.tausch=kreis; _skzGrChips(); return; }
+  if(_skzGr.tausch===kreis){ _skzGr.tausch=null; _skzGrChips(); return; }
+  const a=_skzGr.tausch, b=kreis, B=_skzGr.besetzung;
+  const hin=B[a]; B[a]=B[b]; B[b]=hin;
+  if(!B[a])delete B[a];
+  if(!B[b])delete B[b];
+  _skzGr.tausch=null;
+  _skzGrZeichnen();
+}
+/* Eine Kopie der Beschreibung, in der nur das Kürzel im Kreis ausgetauscht ist. Die
+   Beschreibung der Übung selbst wird dabei nicht angefasst. */
+function _skzBesetzungSpec(){
+  const spec=_skzGr.spec;
+  if(!_skzGr.besetzung)return spec;
+  const kopie=JSON.parse(JSON.stringify(spec));
+  (kopie.s||[]).forEach((sp,i)=>{ const k=_skzGr.besetzung[i]; if(k)sp[3]=k.kuerzel; });
+  return kopie;
+}
+/* Fotos in die Kreise. Die Kreise stehen im SVG in derselben Reihenfolge wie in der
+   Liste „s" – deshalb reicht der Index, es braucht keine Kennzeichnung im Bild.
+   Die Mannschaftsfarbe wandert dabei von der Füllung auf den Rand, damit sie neben dem
+   Gesicht sichtbar bleibt; das Kürzel rutscht als Schild unter den Kreis. Farbe ist
+   also auch hier nicht der einzige Träger. */
+async function _skzFotosEinsetzen(svg){
+  if(!svg||!_skzGr||!_skzGr.besetzung)return;
+  if(typeof fotoLoadImage!=="function")return;
+  const breite=Math.round(svg.getBoundingClientRect().width);
+  if(breite<SKZ_FOTO_AB)return;
+  const kreise=[...svg.querySelectorAll('circle[r="8"]')];
+  const texte=[...svg.querySelectorAll('text')];
+  const NS="http://www.w3.org/2000/svg";
+  const lauf=_skzGr.lauf=(_skzGr.lauf||0)+1;
+  for(const idx of Object.keys(_skzGr.besetzung)){
+    const k=_skzGr.besetzung[idx], kr=kreise[Number(idx)];
+    if(!kr||!k.fotoOk||!k.fotoPath)continue;
+    const bild=await fotoLoadImage(k.fotoPath).catch(()=>null);
+    if(!bild||!_skzGr||_skzGr.lauf!==lauf||!kr.isConnected)continue;
+    const cx=+kr.getAttribute("cx"), cy=+kr.getAttribute("cy"), farbe=kr.getAttribute("fill");
+    const id="skzf-"+lauf+"-"+idx;
+    const cp=document.createElementNS(NS,"clipPath"); cp.setAttribute("id",id);
+    const c2=document.createElementNS(NS,"circle");
+    c2.setAttribute("cx",cx); c2.setAttribute("cy",cy); c2.setAttribute("r","8");
+    cp.appendChild(c2); svg.appendChild(cp);
+    const im=document.createElementNS(NS,"image");
+    im.setAttribute("x",cx-8); im.setAttribute("y",cy-8);
+    im.setAttribute("width","16"); im.setAttribute("height","16");
+    im.setAttribute("preserveAspectRatio","xMidYMid slice");
+    im.setAttribute("clip-path","url(#"+id+")");
+    im.setAttribute("href",bild.src);
+    kr.parentNode.insertBefore(im,kr.nextSibling);
+    kr.setAttribute("stroke",farbe); kr.setAttribute("stroke-width","2.5");
+    /* Das Kürzel stand mitten im Kreis – dort liegt jetzt das Gesicht. */
+    const t=texte.find(x=>Math.abs(+x.getAttribute("x")-cx)<1&&Math.abs(+x.getAttribute("y")-(cy+3))<1);
+    if(t){
+      t.setAttribute("y",cy+17); t.setAttribute("font-size","7");
+      t.setAttribute("fill",_skzGr.hell?"rgba(17,24,39,.95)":"rgba(255,255,255,.95)");
+      const schild=document.createElementNS(NS,"rect");
+      const w=Math.max(12,String(k.kuerzel).length*5+6);
+      schild.setAttribute("x",cx-w/2); schild.setAttribute("y",cy+10.5);
+      schild.setAttribute("width",w); schild.setAttribute("height","9");
+      schild.setAttribute("rx","3"); schild.setAttribute("fill",farbe);
+      t.parentNode.insertBefore(schild,t);
+      t.parentNode.appendChild(t);
+    }
+  }
+}
+/* Die Chipreihe unter der Skizze: je besetztem Kreis ein Knopf mit Kürzel und Namen.
+   Zwei antippen tauscht sie. */
+function _skzGrChips(){
+  const box=document.getElementById("skz-gross-chips"); if(!box||!_skzGr)return;
+  if(!_skzGr.besetzung){ box.innerHTML=""; box.style.display="none"; return; }
+  const F=(typeof skzPalette==="function")?skzPalette(_skzGr.hell).F:{};
+  const kreise=_skzKreise(_skzGr.spec);
+  const teile=Object.keys(_skzGr.besetzung).map(i=>{
+    const k=_skzGr.besetzung[i], farbe=F[(kreise[i]||[])[2]]||"#4ade80";
+    const an=String(_skzGr.tausch)===String(i);
+    return '<button type="button" onclick="skzBesetzungTausch('+Number(i)+')" aria-pressed="'+(an?"true":"false")+'" '
+      +'style="min-height:44px;padding:4px 10px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;'
+      +'border:2px solid '+(an?"#fff":"transparent")+';background:'+farbe+';color:rgba(0,0,0,.75);display:inline-flex;align-items:center;gap:6px">'
+      +'<span style="font-weight:800">'+esc(k.kuerzel)+'</span>'+esc(k.name)+'</button>';
+  }).join("");
+  box.style.display="flex";
+  box.innerHTML=teile+(_skzGr.tausch!=null
+    ? '<span style="color:rgba(255,255,255,.8);font-size:11.5px;align-self:center">jetzt das zweite Kind antippen</span>'
+    : '<span style="color:rgba(255,255,255,.6);font-size:11.5px;align-self:center">zwei antippen tauscht sie</span>');
+}
 /* Einstieg. `idx` ist die Stelle in tpAllForms() – dieselbe Zahl, mit der das
    Detailfenster geöffnet wurde. */
 function skzGrossOpen(idx){
@@ -576,7 +794,7 @@ function skzGrossOpen(idx){
   if(!spec&&!(f.svg&&f.svg.length>10)){ if(typeof toast==="function")toast("Zu dieser Übung gibt es keine Skizze","info"); return; }
   document.getElementById("skz-gross-modal")?.remove();
   _skzGr={spec,svg:f.svg||"",name:f.name||"Skizze",zoom:1,x:0,y:0,hell:spec?skzHellAn():false,
-          zeiger:new Map(),d0:0,z0:1,letzterTipp:0};
+          zeiger:new Map(),d0:0,z0:1,letzterTipp:0,besetzung:null,tausch:null,lauf:0};
   const m=document.createElement("div");
   m.id="skz-gross-modal";
   m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true");
@@ -586,20 +804,24 @@ function skzGrossOpen(idx){
   m.style.zIndex=(typeof zOben==="function")?zOben(10006):10006;
   m.onclick=e=>{ if(e.target===m)skzGrossClose(); };
   m.innerHTML=`<div style="color:#fff;font-size:14px;font-weight:800;text-align:center;max-width:95vw">${esc(_skzGr.name)}</div>
-    <div id="skz-gross-buehne" style="flex:1 1 auto;width:100%;max-width:min(95vw,calc((100vh - 172px) * 280 / 180));
+    <div id="skz-gross-buehne" style="flex:1 1 auto;min-height:0;width:100%;max-width:95vw;
          display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none">
-      <div id="skz-gross-halter" style="width:100%;aspect-ratio:280/180;transform-origin:center center;will-change:transform"></div>
+      <div id="skz-gross-halter" style="transform-origin:center center;will-change:transform"></div>
     </div>
     <div id="skz-gross-zoom" style="color:rgba(255,255,255,.75);font-size:11px;text-align:center;min-height:14px"></div>
+    <div id="skz-gross-chips" style="display:none;gap:6px;flex-wrap:wrap;justify-content:center;max-width:min(95vw,720px)"></div>
     <div id="skz-gross-legende" style="background:rgba(255,255,255,.08);border-radius:10px;padding:2px 8px;max-width:95vw"></div>
     ${spec?"":`<div style="color:rgba(255,255,255,.7);font-size:11.5px;text-align:center;max-width:95vw;line-height:1.5">
           Für diese ältere Zeichnung gibt es die helle Fassung noch nicht.</div>`}
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:min(95vw,520px)">
+      ${(spec&&skzBesetzungMoeglich())?`<button id="skz-gross-kinder" type="button" onclick="skzBesetzungAn()" aria-pressed="false"
+          style="flex:1 1 130px;min-height:56px;padding:0 12px;border:1px solid rgba(255,255,255,.45);border-radius:10px;
+                 background:rgba(255,255,255,.1);color:#fff;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer">🧒 Kinder einsetzen</button>`:""}
       ${spec?`<button id="skz-gross-hell" type="button" onclick="skzGrossHell()" aria-pressed="false"
-          style="flex:1 1 150px;min-height:56px;padding:0 14px;border:1px solid rgba(255,255,255,.45);border-radius:10px;
+          style="flex:1 1 130px;min-height:56px;padding:0 12px;border:1px solid rgba(255,255,255,.45);border-radius:10px;
                  background:rgba(255,255,255,.1);color:#fff;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer"></button>`:""}
       <button type="button" onclick="skzGrossClose()" class="btn btn-p"
-        style="flex:1 1 150px;min-height:56px;justify-content:center;font-size:15px">Schließen</button>
+        style="flex:1 1 130px;min-height:56px;justify-content:center;font-size:15px">Schließen</button>
     </div>`;
   document.body.appendChild(m);
   const b=document.getElementById("skz-gross-buehne");
@@ -609,5 +831,7 @@ function skzGrossOpen(idx){
   b.addEventListener("pointercancel",_skzGrUp);
   b.addEventListener("pointerleave",_skzGrUp);
   b.addEventListener("wheel",_skzGrRad,{passive:false});
+  _skzGrPassenGebunden=()=>_skzGrLegen();
+  window.addEventListener("resize",_skzGrPassenGebunden);
   _skzGrZeichnen();
 }
