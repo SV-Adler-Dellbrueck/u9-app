@@ -27,7 +27,7 @@ module.exports = async function (h) {
     if (typeof materialOpen !== "function") return { fehlt: "materialOpen" };
     await materialOpen();
     MAT_POSTEN = [
-      { id: 901, name: "Stangen", kategorie: "Geräte", variante: null, ist: null, soll: null, ort: "Materialschuppen Verein", aktiv: true, sort: 10 },
+      { id: 901, name: "Hütchen", kategorie: "Hütchen", variante: "rot", ist: null, soll: null, ort: "Kiste im Kofferraum", aktiv: true, sort: 10 },
       { id: 902, name: "Bälle", kategorie: "Bälle", variante: "Größe 4", ist: 9, soll: 12, ort: null, aktiv: true, sort: 20 }
     ];
     materialRender();
@@ -46,8 +46,8 @@ module.exports = async function (h) {
     });
 
     const sichtbar = [...karte.querySelectorAll("label span")].map(e => e.textContent.trim());
-    const ortZeile = /Materialschuppen Verein/.test(karte.textContent);
-    const ortNurDort = !/Materialschuppen/.test(zweite.textContent);
+    const ortZeile = /Kiste im Kofferraum/.test(karte.textContent);
+    const ortNurDort = !/Kofferraum/.test(zweite.textContent);
     const fehlmenge = /3 fehlen/.test(zweite.textContent);
 
     matPostenNeuOpen();
@@ -86,7 +86,7 @@ module.exports = async function (h) {
   const bedarf = await s.page.evaluate(() => {
     if (typeof matBedarfZeile !== "function") return { fehlt: "matBedarfZeile" };
     MAT_POSTEN = [
-      { name: "Stangen", ist: 6, ort: "Materialschuppen Verein", aktiv: true },
+      { name: "Stangen", ist: 6, ort: null, aktiv: true },
       { name: "Bälle", ist: 12, ort: null, aktiv: true }
     ];
     const zeile = matBedarfZeile({ ger: [[10, 10, "stange"]], b: [[40, 40], [50, 40]] });

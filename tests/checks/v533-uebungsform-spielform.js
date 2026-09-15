@@ -101,7 +101,10 @@ module.exports = async function (h) {
 
   // b/c) drei Zustände
   if (r.artAmAnfang !== "") probleme.push(`ohne Einordnung steht „${r.artAmAnfang}“ – es darf nichts geraten werden`);
-  if (!/noch nicht eingeordnet/.test(r.chipOffen || "")) probleme.push(`nicht eingeordnet wird nicht benannt: „${r.chipOffen}“`);
+  /* v562: Der Marker ist ein Punkt, kein Satz – die Worte stehen im aria-label des Knopfes,
+     in dem er sitzt (unten geprüft). Hier zählt nur, dass überhaupt etwas dasteht und dass
+     die Bedeutung nicht allein an der Farbe hängt: das Fragezeichen trägt sie mit. */
+  if (!/\?/.test(r.chipOffen || "")) probleme.push(`nicht eingeordnet wird nicht gekennzeichnet: „${r.chipOffen}“`);
   const folge = [r.nach1, r.nach2, r.nach3].join(",");
   // v541: vier Zustände im Kreis – offen, Spielform, Übungsform, weder noch.
   if (folge !== "spiel,uebung,weder") probleme.push(`Antipp-Folge ist [${folge}] – erwartet spiel, uebung, weder noch`);

@@ -343,16 +343,21 @@ function materialRender(){
       <button class="btn btn-p" style="width:100%;min-height:56px;font-size:15px;font-weight:800" onclick="matPostenNeuOpen()">Posten erfassen</button>`;
     return;
   }
-  const kats=[...new Set(MAT_POSTEN.map(p=>p.kategorie||"Sonstiges"))];
-  const sichtbar=_matKat?MAT_POSTEN.filter(p=>(p.kategorie||"Sonstiges")===_matKat):MAT_POSTEN;
+  /* Stillgelegte Posten holt schon die Abfrage nicht – hier noch einmal, damit die Liste
+     nicht davon abhängt, wie sie befüllt wurde. */
+  const aktive=MAT_POSTEN.filter(p=>p.aktiv!==false);
+  const kats=[...new Set(aktive.map(p=>p.kategorie||"Sonstiges"))];
+  const sichtbar=_matKat?aktive.filter(p=>(p.kategorie||"Sonstiges")===_matKat):aktive;
   const z=matLetzteZaehlung();
-  const offen=MAT_POSTEN.filter(p=>p.ist==null).length;
+  /* Nur was wir selbst zählen, kann „ohne Zahl" sein – sonst wäre die Inventur nie fertig. */
+  const eigene=aktive.filter(p=>!matFremd(p));
+  const offen=eigene.filter(p=>p.ist==null).length;
   const alt=!z||z.alter>MAT_ALT_TAGE;
   body.innerHTML=`
     <div style="border:1px solid ${alt?"var(--amber)":"var(--rand-bedien)"};border-left-width:3px;border-radius:10px;padding:8px 10px;margin-bottom:10px;font-size:12.5px;color:var(--text2)">
       ${z?`Zuletzt gezählt am <b>${esc(_ausDatum(z.datum))}</b>${alt?` · <span style="color:var(--amber);font-weight:700">das ist ${z.alter} Tage her</span>`:""}`
          :'<span style="color:var(--amber);font-weight:700">Noch nie gezählt.</span> Trag ein, was da ist – leer heißt „nicht gezählt", nicht „keines da".'}
-      ${offen?`<div style="margin-top:2px">${offen} von ${MAT_POSTEN.length} Posten ohne Zahl.</div>`:""}
+      ${offen?`<div style="margin-top:2px">${offen} von ${eigene.length} Posten ohne Zahl.</div>`:""}
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
       <button class="ftag${_matKat?"":" active"}" aria-pressed="${!_matKat}" onclick="matKatWahl('')">Alle</button>
@@ -369,15 +374,27 @@ function materialRender(){
    Feld wozu gehört. Nebeneinander ist der Vergleich das, was er ist: ein Vergleich.
    Der Ort steht als Hinweiszeile am Posten – „Materialschuppen Verein" sagt alles, was man
    wissen muss, ohne dass jemand ein Kästchen setzen müsste. */
+/* v562: Was im Vereinsschuppen liegt, gehört nicht in unsere Inventur. Wir zählen es nicht –
+   wir wissen nur, dass es da ist und wo. Soll und Ist wären dort zwei Felder, die niemand
+   ausfüllen kann und die die Inventur nie fertig werden ließen.
+
+   Erkannt wird das am Ort. Ein eigenes Kennzeichen dafür gab es schon einmal und war eines
+   zu viel (v561). Trägt jemand einen anderen Wortlaut ein, erscheinen die Felder wieder –
+   das ist der harmlose Ausgang: zwei Felder zu viel, nie eine falsche Zahl. */
+const MAT_FREMD=/verein/i;
+function matFremd(p){ return MAT_FREMD.test(String((p&&p.ort)||"")); }
+
 function matZeile(p){
   const fehlt=p.soll!=null&&p.ist!=null&&p.ist<p.soll;
   const rand=fehlt?"var(--red)":(p.ist!=null?"var(--green)":"var(--rand-bedien)");
   const draussen=p.artikel_id?_matDraussen(p.artikel_id):0;
   const feld="width:100%;min-height:48px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;box-sizing:border-box;font-family:inherit;font-size:15px;background:var(--surface);color:var(--text);text-align:right";
   const kopf="display:block;font-size:11px;margin-bottom:2px";
+  const kopfzeile=`<div style="font-size:13.5px;font-weight:600">${esc(p.name)}${p.variante?` <span style="color:var(--text3);font-weight:400">· ${esc(p.variante)}</span>`:""}</div>
+    ${p.ort?`<div style="font-size:11px;color:var(--text3);margin-top:1px">${esc(p.ort)}</div>`:""}`;
+  if(matFremd(p))return `<div style="border:1px solid var(--rand-bedien);border-left-width:3px;border-radius:10px;padding:8px 10px;margin-bottom:6px">${kopfzeile}</div>`;
   return `<div style="border:1px solid ${rand};border-left-width:3px;border-radius:10px;padding:8px 10px;margin-bottom:6px">
-    <div style="font-size:13.5px;font-weight:600">${esc(p.name)}${p.variante?` <span style="color:var(--text3);font-weight:400">· ${esc(p.variante)}</span>`:""}</div>
-    ${p.ort?`<div style="font-size:11px;color:var(--text3);margin-top:1px">${esc(p.ort)}</div>`:""}
+    ${kopfzeile}
     ${draussen?`<div style="font-size:11px;color:var(--text3)">davon ${draussen} bei den Kindern</div>`:""}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px">
       <label><span style="${kopf};color:var(--text3)">Soll</span>
