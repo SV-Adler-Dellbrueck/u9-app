@@ -605,6 +605,7 @@ function skzGrossKnopf(name,idx){
 }
 let _skzGrPassenGebunden=null;
 function skzGrossClose(){
+  if(_skzGr&&_skzGr.lauft){ _skzGr.lauft=false; if(_skzGr.uhr)clearTimeout(_skzGr.uhr); if(_skzGr.raf)cancelAnimationFrame(_skzGr.raf); }
   if(_skzGrPassenGebunden){ window.removeEventListener("resize",_skzGrPassenGebunden); _skzGrPassenGebunden=null; }
   document.getElementById("skz-gross-modal")?.remove(); _skzGr=null;
 }
@@ -648,7 +649,7 @@ function _skzGrLegen(){
 }
 function _skzGrZeichnen(){
   const h=document.getElementById("skz-gross-halter"); if(!h||!_skzGr)return;
-  h.innerHTML=_skzGr.spec?_skz(_skzBesetzungSpec(),{hell:_skzGr.hell,bild:_skzGr.bild}):(_skzGr.svg||"");
+  h.innerHTML=_skzGr.spec?_skz(_skzBesetzungSpec(),{hell:_skzGr.hell}):(_skzGr.svg||"");
   const svg=h.querySelector("svg");
   if(svg){ svg.removeAttribute("style"); svg.setAttribute("width","100%"); svg.setAttribute("height","100%");
     svg.style.cssText="display:block;width:100%;height:100%;border-radius:8px"; svg.style.pointerEvents="none"; }
@@ -679,9 +680,69 @@ function _skzGrBilder(){
       +'background:'+(an?"#fff":"rgba(255,255,255,.1)")+';color:'+(an?"#111827":"#fff")+';font-family:inherit;'
       +'font-size:13px;font-weight:800;cursor:pointer">'+(i+1)+'</button>';
   }
+  aus+='<button type="button" onclick="skzGrossAbspielen()" '
+    +'style="min-height:44px;padding:0 12px;border:1px solid rgba(255,255,255,.45);border-radius:10px;'
+    +'background:'+(_skzGr.lauft?"#fff":"rgba(255,255,255,.1)")+';color:'+(_skzGr.lauft?"#111827":"#fff")+';'
+    +'font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">'+(_skzGr.lauft?"⏸ Anhalten":"▶ Abspielen")+'</button>';
   box.innerHTML=aus+'<span style="color:rgba(255,255,255,.6);font-size:11.5px;align-self:center">wischen geht auch</span>';
 }
+/* ═══ v558 – ABSPIELEN ═══
+   Blättern zeigt Momente, Abspielen zeigt den Ablauf. Der Unterschied ist für ein Kind
+   groß: es sieht, WER losläuft, nicht nur, wo jemand danach steht.
+
+   Bewusst keine Zeitachse und keine Schlüsselbilder: es gibt genau die Bilder, die der
+   Trainer gezeichnet hat, dazwischen wird gleichmäßig überblendet. Wer weniger Bewegung
+   auf dem Bildschirm möchte oder braucht, bekommt über die Systemeinstellung harte
+   Schnitte statt Bewegung – dieselbe Einstellung, die auch die Animationen der App
+   abschaltet. */
+const SKZ_STAND=600, SKZ_GLEIT=800, SKZ_SCHNITT=1400;
+function _skzSanft(){
+  try{ return !(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches); }
+  catch(e){ return true; }
+}
+function skzGrossStopp(){
+  if(!_skzGr)return;
+  _skzGr.lauft=false;
+  if(_skzGr.uhr){ clearTimeout(_skzGr.uhr); _skzGr.uhr=null; }
+  if(_skzGr.raf){ cancelAnimationFrame(_skzGr.raf); _skzGr.raf=null; }
+  _skzGrZeichnen();
+}
+function skzGrossAbspielen(){
+  if(!_skzGr||!_skzGr.spec)return;
+  if(_skzGr.lauft){ skzGrossStopp(); return; }
+  const max=((typeof skzBildZahl==="function")?skzBildZahl(_skzGr.spec):1)-1;
+  if(max<1)return;
+  if(_skzGr.bild>=max)_skzGr.bild=0;
+  _skzGr.zoom=1; _skzGr.x=0; _skzGr.y=0;
+  _skzGr.lauft=true;
+  _skzGrTakt();
+}
+function _skzGrTakt(){
+  if(!_skzGr||!_skzGr.lauft)return;
+  const max=((typeof skzBildZahl==="function")?skzBildZahl(_skzGr.spec):1)-1;
+  _skzGrZeichnen();
+  if(_skzGr.bild>=max){ _skzGr.lauft=false; _skzGrBilder(); return; }
+  const sanft=_skzSanft();
+  _skzGr.uhr=setTimeout(()=>{
+    if(!_skzGr||!_skzGr.lauft)return;
+    if(!sanft){ _skzGr.bild++; _skzGrTakt(); return; }
+    const a=_skzBesetzungSpec(_skzGr.bild), b=_skzBesetzungSpec(_skzGr.bild+1);
+    const t0=(typeof performance!=="undefined"?performance.now():Date.now());
+    const halter=document.getElementById("skz-gross-halter");
+    const tick=()=>{
+      if(!_skzGr||!_skzGr.lauft)return;
+      const jetzt=(typeof performance!=="undefined"?performance.now():Date.now());
+      const t=Math.min(1,(jetzt-t0)/SKZ_GLEIT);
+      const e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;     // weich an, weich aus
+      if(halter)halter.innerHTML=_skz(_skzZwischen(a,b,e),{hell:_skzGr.hell});
+      if(t<1){ _skzGr.raf=requestAnimationFrame(tick); return; }
+      _skzGr.raf=null; _skzGr.bild++; _skzGrTakt();
+    };
+    _skzGr.raf=requestAnimationFrame(tick);
+  },sanft?SKZ_STAND:SKZ_SCHNITT);
+}
 function skzGrossBild(n){
+  if(_skzGr&&_skzGr.lauft)skzGrossStopp();
   if(!_skzGr)return;
   const max=((_skzGr.spec&&typeof skzBildZahl==="function")?skzBildZahl(_skzGr.spec):1)-1;
   _skzGr.bild=Math.max(0,Math.min(max,Number(n)||0));
@@ -699,6 +760,7 @@ function _skzGrAbstand(){
 }
 function _skzGrDown(ev){
   if(!_skzGr)return;
+  if(_skzGr.lauft)skzGrossStopp();
   _skzGr.zeiger.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
   if(_skzGr.zeiger.size===2){ _skzGr.d0=_skzGrAbstand()||1; _skzGr.z0=_skzGr.zoom; }
   /* Doppeltipp: zwei Berührungen dicht hintereinander setzen zurück. Auf dem Handy
@@ -860,10 +922,11 @@ function skzBesetzungTausch(kreis){
 }
 /* Eine Kopie der Beschreibung, in der nur das Kürzel im Kreis ausgetauscht ist. Die
    Beschreibung der Übung selbst wird dabei nicht angefasst. */
-function _skzBesetzungSpec(){
-  const spec=_skzGr.spec;
-  if(!_skzGr.besetzung)return spec;
-  const kopie=JSON.parse(JSON.stringify(spec));
+function _skzBesetzungSpec(bild){
+  const nr=(bild===undefined)?_skzGr.bild:bild;
+  const roh=(typeof _skzBild==="function")?_skzBild(_skzGr.spec,nr):_skzGr.spec;
+  if(!_skzGr.besetzung)return roh;
+  const kopie=JSON.parse(JSON.stringify(roh));
   (kopie.s||[]).forEach((sp,i)=>{ const k=_skzGr.besetzung[i]; if(k)sp[3]=k.kuerzel; });
   return kopie;
 }
@@ -945,7 +1008,7 @@ function skzGrossOpen(idx){
   if(!spec&&!(f.svg&&f.svg.length>10)){ if(typeof toast==="function")toast("Zu dieser Übung gibt es keine Skizze","info"); return; }
   document.getElementById("skz-gross-modal")?.remove();
   _skzGr={spec,svg:f.svg||"",name:f.name||"Skizze",zoom:1,x:0,y:0,hell:spec?skzHellAn():false,
-          zeiger:new Map(),d0:0,z0:1,letzterTipp:0,besetzung:null,tausch:null,lauf:0,bild:0,wischX:null};
+          zeiger:new Map(),d0:0,z0:1,letzterTipp:0,besetzung:null,tausch:null,lauf:0,bild:0,wischX:null,lauft:false,uhr:null,raf:null};
   const m=document.createElement("div");
   m.id="skz-gross-modal";
   m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true");
