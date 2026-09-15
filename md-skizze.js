@@ -449,3 +449,165 @@ function tfSkizzeOpen(){
   if(typeof skzEditorOpen!=="function"){toast("Skizzen-Werkzeug lädt noch – gleich nochmal","info");return;}
   skzEditorOpen(window.TF_SKIZZE||null,spec=>{ window.TF_SKIZZE=spec; tfSkizzeVorschau(); });
 }
+
+/* ═══ v555 – PRÄSENTATIONSMODUS ═══
+   „Groß zeigen" öffnet die Skizze bildschirmfüllend: für die Besprechung am Tablet, für
+   den Blick aufs Handy in der Sonne, und für jeden, der eine Zeichnung mit 280 px Breite
+   nicht mehr gut erkennt.
+
+   Drei Dinge, und nur diese drei:
+   • So groß wie möglich bei erhaltenem Seitenverhältnis 280:180.
+   • Fingerzoom bis vierfach. Die Skizze ist Vektor – sie bleibt dabei scharf, es wird
+     nichts neu gezeichnet, nur die Fläche verschoben und skaliert.
+   • Umschalter hell/dunkel. Dunkel bleibt der Standard und die geprüfte Fassung; die
+     helle Variante ist für die Sonne. Die Wahl merkt sich das Gerät.
+
+   Die helle Fassung braucht die BESCHREIBUNG der Skizze, nicht das fertige Bild – sie
+   entsteht durch Neuzeichnen mit der zweiten Palette. 37 der mitgelieferten Übungen
+   tragen noch eine von Hand geschriebene SVG ohne Beschreibung; dort zeigt der
+   Präsentationsmodus die vorhandene Zeichnung und sagt, dass es die helle Fassung für
+   sie noch nicht gibt. Das ist der zweite Grund, sie nachzuziehen. */
+const SKZ_HELL_KEY="adler-skizze-hell";
+const SKZ_ZOOM_MAX=4;
+let _skzGr=null;   // {spec,svg,name,zoom,x,y,zeiger:Map,d0,z0,letzterTipp}
+
+function skzHellAn(){ try{ return localStorage.getItem(SKZ_HELL_KEY)==="1"; }catch(e){ return false; } }
+function _skzHellMerken(an){ try{ localStorage.setItem(SKZ_HELL_KEY,an?"1":"0"); }catch(e){} }
+
+/* Die Beschreibung zu einer Übung – aus der eigenen Spalte oder aus der mitgelieferten
+   Tabelle. Gibt es keine, ist die Zeichnung von Hand geschrieben (die 37 Altskizzen). */
+function skzSpecVon(f){
+  if(!f||typeof f!=="object")return null;
+  if(f.skizze&&typeof f.skizze==="object"&&!Array.isArray(f.skizze))return f.skizze;
+  if(f.id&&typeof TF_SKIZZEN==="object"&&TF_SKIZZEN[f.id])return TF_SKIZZEN[f.id];
+  return null;
+}
+function skzGrossKnopf(name,idx){
+  const n=String(name||"Skizze").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+  return '<button type="button" onclick="skzGrossOpen('+Number(idx)+')" data-name="'+n+'" '
+    +'style="width:100%;min-height:44px;margin:0 0 8px;border:1px solid var(--rand-bedien);border-radius:10px;'
+    +'background:var(--surface);color:var(--text);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">'
+    +'🔍 Groß zeigen</button>';
+}
+function skzGrossClose(){ document.getElementById("skz-gross-modal")?.remove(); _skzGr=null; }
+function skzGrossHell(){
+  if(!_skzGr||!_skzGr.spec)return;
+  _skzGr.hell=!_skzGr.hell; _skzHellMerken(_skzGr.hell);
+  _skzGrZeichnen();
+}
+function skzGrossReset(){ if(!_skzGr)return; _skzGr.zoom=1; _skzGr.x=0; _skzGr.y=0; _skzGrLegen(); }
+
+/* Zoom und Verschiebung stecken in EINER Transformation auf dem Halter. Die Skizze
+   selbst wird dabei nicht angefasst – deshalb bleibt sie scharf und deshalb kann der
+   Umschalter sie jederzeit neu zeichnen, ohne dass der Zoom verlorengeht. */
+function _skzGrLegen(){
+  const h=document.getElementById("skz-gross-halter"); if(!h||!_skzGr)return;
+  const g=Math.max(1,_skzGr.zoom);
+  const b=h.getBoundingClientRect();
+  const maxX=Math.max(0,(g-1)*b.width/2), maxY=Math.max(0,(g-1)*b.height/2);
+  _skzGr.x=Math.max(-maxX,Math.min(maxX,_skzGr.x));
+  _skzGr.y=Math.max(-maxY,Math.min(maxY,_skzGr.y));
+  h.style.transform="translate("+Math.round(_skzGr.x)+"px,"+Math.round(_skzGr.y)+"px) scale("+g.toFixed(3)+")";
+  const z=document.getElementById("skz-gross-zoom");
+  if(z)z.textContent=g>1.02?("Zoom "+g.toFixed(1)+"× · Doppeltipp setzt zurück"):"Zwei Finger zoomen, Doppeltipp setzt zurück";
+}
+function _skzGrZeichnen(){
+  const h=document.getElementById("skz-gross-halter"); if(!h||!_skzGr)return;
+  h.innerHTML=_skzGr.spec?_skz(_skzGr.spec,{hell:_skzGr.hell}):(_skzGr.svg||"");
+  const svg=h.querySelector("svg");
+  if(svg){ svg.removeAttribute("style"); svg.setAttribute("width","100%"); svg.setAttribute("height","100%");
+    svg.style.cssText="display:block;width:100%;height:100%;border-radius:8px"; svg.style.pointerEvents="none"; }
+  const leg=document.getElementById("skz-gross-legende");
+  if(leg&&typeof skzLegende==="function")leg.innerHTML=skzLegende(_skzGr.hell);
+  const u=document.getElementById("skz-gross-hell");
+  if(u){ u.innerHTML=_skzGr.hell?"🌙 Dunkler Rasen":"☀️ Heller Rasen";
+    u.setAttribute("aria-pressed",_skzGr.hell?"true":"false"); }
+  _skzGrLegen();
+}
+function _skzGrAbstand(){
+  const p=[..._skzGr.zeiger.values()];
+  return Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);
+}
+function _skzGrDown(ev){
+  if(!_skzGr)return;
+  _skzGr.zeiger.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
+  if(_skzGr.zeiger.size===2){ _skzGr.d0=_skzGrAbstand()||1; _skzGr.z0=_skzGr.zoom; }
+  /* Doppeltipp: zwei Berührungen dicht hintereinander setzen zurück. Auf dem Handy
+     gibt es kein dblclick, das kommt erst nach 300 ms Verzögerung – oder gar nicht. */
+  const jetzt=Date.now();
+  if(_skzGr.zeiger.size===1){
+    if(jetzt-(_skzGr.letzterTipp||0)<320)skzGrossReset();
+    _skzGr.letzterTipp=jetzt;
+  }
+}
+function _skzGrMove(ev){
+  if(!_skzGr||!_skzGr.zeiger.has(ev.pointerId))return;
+  const vor=_skzGr.zeiger.get(ev.pointerId);
+  _skzGr.zeiger.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
+  if(_skzGr.zeiger.size>=2){
+    const d=_skzGrAbstand();
+    if(d>0&&_skzGr.d0>0)_skzGr.zoom=Math.max(1,Math.min(SKZ_ZOOM_MAX,_skzGr.z0*d/_skzGr.d0));
+    ev.preventDefault(); _skzGrLegen(); return;
+  }
+  if(_skzGr.zoom>1.02){
+    _skzGr.x+=ev.clientX-vor.x; _skzGr.y+=ev.clientY-vor.y;
+    ev.preventDefault(); _skzGrLegen();
+  }
+}
+function _skzGrUp(ev){
+  if(!_skzGr)return;
+  _skzGr.zeiger.delete(ev.pointerId);
+  if(_skzGr.zeiger.size<2){ _skzGr.d0=0; _skzGr.z0=_skzGr.zoom; }
+}
+function _skzGrRad(ev){
+  if(!_skzGr)return;
+  ev.preventDefault();
+  _skzGr.zoom=Math.max(1,Math.min(SKZ_ZOOM_MAX,_skzGr.zoom*(ev.deltaY<0?1.12:1/1.12)));
+  if(_skzGr.zoom<=1.02){ _skzGr.x=0; _skzGr.y=0; }
+  _skzGrLegen();
+}
+/* Einstieg. `idx` ist die Stelle in tpAllForms() – dieselbe Zahl, mit der das
+   Detailfenster geöffnet wurde. */
+function skzGrossOpen(idx){
+  const alle=(typeof tpAllForms==="function")?(tpAllForms()||[]):[];
+  const f=alle[Number(idx)];
+  if(!f){ if(typeof toast==="function")toast("Übung nicht gefunden","err"); return; }
+  const spec=skzSpecVon(f);
+  if(!spec&&!(f.svg&&f.svg.length>10)){ if(typeof toast==="function")toast("Zu dieser Übung gibt es keine Skizze","info"); return; }
+  document.getElementById("skz-gross-modal")?.remove();
+  _skzGr={spec,svg:f.svg||"",name:f.name||"Skizze",zoom:1,x:0,y:0,hell:spec?skzHellAn():false,
+          zeiger:new Map(),d0:0,z0:1,letzterTipp:0};
+  const m=document.createElement("div");
+  m.id="skz-gross-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true");
+  m.setAttribute("aria-label","Skizze groß: "+_skzGr.name);
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;flex-direction:column;"
+    +"align-items:center;justify-content:center;padding:10px;gap:8px;overscroll-behavior:contain";
+  m.style.zIndex=(typeof zOben==="function")?zOben(10006):10006;
+  m.onclick=e=>{ if(e.target===m)skzGrossClose(); };
+  m.innerHTML=`<div style="color:#fff;font-size:14px;font-weight:800;text-align:center;max-width:95vw">${esc(_skzGr.name)}</div>
+    <div id="skz-gross-buehne" style="flex:1 1 auto;width:100%;max-width:min(95vw,calc((100vh - 172px) * 280 / 180));
+         display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none">
+      <div id="skz-gross-halter" style="width:100%;aspect-ratio:280/180;transform-origin:center center;will-change:transform"></div>
+    </div>
+    <div id="skz-gross-zoom" style="color:rgba(255,255,255,.75);font-size:11px;text-align:center;min-height:14px"></div>
+    <div id="skz-gross-legende" style="background:rgba(255,255,255,.08);border-radius:10px;padding:2px 8px;max-width:95vw"></div>
+    ${spec?"":`<div style="color:rgba(255,255,255,.7);font-size:11.5px;text-align:center;max-width:95vw;line-height:1.5">
+          Für diese ältere Zeichnung gibt es die helle Fassung noch nicht.</div>`}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:min(95vw,520px)">
+      ${spec?`<button id="skz-gross-hell" type="button" onclick="skzGrossHell()" aria-pressed="false"
+          style="flex:1 1 150px;min-height:56px;padding:0 14px;border:1px solid rgba(255,255,255,.45);border-radius:10px;
+                 background:rgba(255,255,255,.1);color:#fff;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer"></button>`:""}
+      <button type="button" onclick="skzGrossClose()" class="btn btn-p"
+        style="flex:1 1 150px;min-height:56px;justify-content:center;font-size:15px">Schließen</button>
+    </div>`;
+  document.body.appendChild(m);
+  const b=document.getElementById("skz-gross-buehne");
+  b.addEventListener("pointerdown",_skzGrDown);
+  b.addEventListener("pointermove",_skzGrMove);
+  b.addEventListener("pointerup",_skzGrUp);
+  b.addEventListener("pointercancel",_skzGrUp);
+  b.addEventListener("pointerleave",_skzGrUp);
+  b.addEventListener("wheel",_skzGrRad,{passive:false});
+  _skzGrZeichnen();
+}
