@@ -3126,7 +3126,12 @@ function _tpArt(f){
    etwas ändert (Übungsliste und Vorlagen-Prüfung). */
 function tpArtChip(f,auchOffen){
   const a=_tpArt(f);
-  if(!a)return auchOffen?'<span style="border:1px dashed var(--rand-bedien);color:var(--text3);border-radius:6px;padding:1px 6px;font-size:10px;font-weight:700;white-space:nowrap">noch nicht eingeordnet</span>':"";
+  /* v562: Als Wort war „noch nicht eingeordnet" in der Übungsliste breiter als alles andere
+     in der Zeile – der Name wurde auf drei Zeilen gequetscht, obwohl die Auskunft die
+     kleinste der Kachel ist. Jetzt ein Punkt mit Fragezeichen: das Zeichen trägt die
+     Bedeutung, nicht die Farbe, und wer die Zeile hört, bekommt sie im aria-label des
+     Knopfes, in dem der Punkt sitzt. */
+  if(!a)return auchOffen?'<span aria-hidden="true" title="noch nicht eingeordnet" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:1px solid var(--red);background:var(--red-bg);color:var(--red);font-size:12px;font-weight:900;line-height:1">?</span>':"";
   return `<span style="background:var(--surface2);color:var(--text2);border:var(--border-s);border-radius:6px;padding:1px 6px;font-size:10px;font-weight:800;white-space:nowrap">${UEBUNG_ART[a].kurz}</span>`;
 }
 /* Antippen ordnet ein – wie beim Stern. Drei Zustände im Kreis, damit sich eine
