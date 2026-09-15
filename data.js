@@ -3687,7 +3687,37 @@ const SKZ_HELL={
    Varianten unter derselben id, färbte die zuletzt gezeichnete die Pfeilspitzen der
    anderen um – und im Präsentationsmodus liegen sie gleichzeitig auf der Seite. */
 function skzPalette(hell){ return hell?SKZ_HELL:SKZ_DUNKEL; }
+/* v557 – Schritte: eine Skizze kann mehrere Bilder haben. Eine Übung hat fast immer
+   drei Momente – Aufbau, Pass, Abschluss –, und bisher mussten sie alle gleichzeitig in
+   ein Bild. „Dreieckspassen mit Abschluss" zeigte fünf Pfeile auf einmal; ein Kind liest
+   daraus keinen Ablauf.
+
+   Der AUFBAU (Zonen, Tore, Linien, Hütchen, Leitern, Wände) steht nur in der
+   Grundbeschreibung und gilt für alle Bilder – er wird ja auch am Platz nicht umgebaut.
+   Beweglich sind Spieler, Ball, Pfeile und Beschriftung. Was ein Schritt nicht nennt,
+   gilt aus dem Bild davor weiter; so wiederholt niemand Pfeile, die sich nicht ändern.
+
+   Ohne `schritte` und ohne `opt.bild` ändert sich an der Ausgabe nichts. */
+const SKZ_BEWEGLICH=["s","b","p","tx"];
+const SKZ_SCHRITTE_MAX=6;                 // 7 Bilder – mehr ist keine Übung mehr, sondern ein Film
+function skzBildZahl(spec){
+  const st=(spec&&Array.isArray(spec.schritte))?spec.schritte.length:0;
+  return 1+Math.min(SKZ_SCHRITTE_MAX,st);
+}
+function _skzBild(spec,n){
+  const bis=Number(n)||0;
+  if(!spec||!Array.isArray(spec.schritte)||!spec.schritte.length||bis<=0)return spec;
+  const aus={};
+  Object.keys(spec).forEach(k=>{ if(k!=="schritte")aus[k]=spec[k]; });
+  const max=Math.min(spec.schritte.length,SKZ_SCHRITTE_MAX,bis);
+  for(let i=0;i<max;i++){
+    const st=spec.schritte[i]||{};
+    SKZ_BEWEGLICH.forEach(k=>{ if(Array.isArray(st[k]))aus[k]=st[k]; });
+  }
+  return aus;
+}
 function _skz(o,opt){
+  if(opt&&opt.bild)o=_skzBild(o,opt.bild);
   const P=skzPalette(opt&&opt.hell), F=P.F, M=P.marke;
   const E=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); // Specs können aus der DB kommen (KI-Übungen)
   const S=['<rect width="280" height="180" rx="4" fill="'+P.rasen+'" stroke="'+P.rasenRand+'" stroke-width="1.5"/>',

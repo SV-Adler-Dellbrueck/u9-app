@@ -131,11 +131,31 @@ const SKZ_WERK=[
 const SKZ_FARBEN=[["g","Grün","#4ade80"],["r","Rot","#f87171"],["b","Blau","#60a5fa"],["y","Gelb","#fbbf24"],["w","Weiß","#ffffff"]];
 
 let _skzSpec=null, _skzWerk="spieler", _skzFarbe="g", _skzStart=null, _skzVerlauf=[], _skzCb=null, _skzZieh=null;
+/* v557: Welches Bild gerade bearbeitet wird. 0 ist die Grundbeschreibung (Bild 1), in
+   der auch der AUFBAU steht; 1 und höher sind die Schritte, in denen sich nur noch
+   Spieler, Ball, Pfeile und Beschriftung bewegen. */
+let _skzBildNr=0;
+function _skzSchritte(){ if(!Array.isArray(_skzSpec.schritte))_skzSpec.schritte=[]; return _skzSpec.schritte; }
+function _skzAktuell(){ return _skzBildNr>0?(_skzSchritte()[_skzBildNr-1]||{}):_skzSpec; }
+/* Was auf der Bühne zu sehen ist: Aufbau aus Bild 1, Bewegliches aus dem aktuellen Bild. */
+function _skzSicht(){ return _skzBildNr>0?_skzBild(_skzSpec,_skzBildNr):_skzSpec; }
+function _skzBeweglich(f){ return (typeof SKZ_BEWEGLICH!=="undefined"?SKZ_BEWEGLICH:["s","b","p","tx"]).includes(f); }
 
 function _skzLeer(){ return {z:[],tor:[],leiter:[],wand:[],p:[],li:[],h:[],s:[],b:[],tx:[]}; }
 function _skzKopie(o){ try{return JSON.parse(JSON.stringify(o||{}));}catch(e){return _skzLeer();} }
 function _skzMerken(){ _skzVerlauf.push(_skzKopie(_skzSpec)); if(_skzVerlauf.length>40)_skzVerlauf.shift(); }
-function _skzListe(f){ if(!Array.isArray(_skzSpec[f]))_skzSpec[f]=[]; return _skzSpec[f]; }
+/* Die Liste, in die geschrieben wird. In einem Schritt wird sie beim ersten Zugriff aus
+   dem sichtbaren Bild materialisiert – wer einen mitgeschleppten Pfeil anfasst, ändert
+   damit dieses Bild und die folgenden, nicht die davor. */
+function _skzListe(f){
+  if(_skzBildNr>0&&_skzBeweglich(f)){
+    const st=_skzAktuell();
+    if(!Array.isArray(st[f]))st[f]=JSON.parse(JSON.stringify(_skzSicht()[f]||[]));
+    return st[f];
+  }
+  if(!Array.isArray(_skzSpec[f]))_skzSpec[f]=[];
+  return _skzSpec[f];
+}
 function _skzWerkzeug(id){ return SKZ_WERK.find(w=>w.id===(id||_skzWerk))||SKZ_WERK[0]; }
 
 /* Wo liegt ein Element? Für den Treffer-Test und fürs Verschieben brauchen alle
@@ -150,14 +170,16 @@ function _skzAnker(feld,e){
 function _skzTreffer(x,y){
   const felder=["s","h","b","tx","tor","leiter","p","li","z"];  // kleine Dinge zuerst
   let best=null, bd=18;
-  felder.forEach(f=>(_skzSpec[f]||[]).forEach((e,i)=>{
+  const sicht=_skzSicht();
+  felder.forEach(f=>(sicht[f]||[]).forEach((e,i)=>{
     const [ax,ay]=_skzAnker(f,e), d=Math.hypot(ax-x,ay-y);
     if(d<bd){bd=d;best={feld:f,idx:i};}
   }));
   return best;
 }
 function _skzVerschieben(t,x,y){
-  const e=_skzSpec[t.feld][t.idx];
+  const e=_skzListe(t.feld)[t.idx];
+  if(!e)return;
   if(t.feld==="p"||t.feld==="li"){ const dx=x-e[0], dy=y-e[1]; e[0]=x; e[1]=y; e[2]+=dx; e[3]+=dy; }
   else if(t.feld==="z"){ e[0]=Math.round(x-e[2]/2); e[1]=Math.round(y-e[3]/2); }
   else { e[0]=Math.round(x); e[1]=Math.round(y); }
@@ -166,10 +188,10 @@ function _skzVerschieben(t,x,y){
 function skzSetWerkzeug(id){ _skzWerk=id; _skzStart=null; skzEditorZeichnen(); }
 function skzSetFarbe(f){ _skzFarbe=f; skzEditorZeichnen(); }
 function skzUndo(){ if(!_skzVerlauf.length){toast("Nichts mehr zurückzunehmen","info");return;} _skzSpec=_skzVerlauf.pop(); _skzStart=null; skzEditorZeichnen(); }
-function skzLeeren(){ _skzMerken(); _skzSpec=_skzLeer(); _skzStart=null; skzEditorZeichnen(); }
+function skzLeeren(){ _skzMerken(); _skzSpec=_skzLeer(); _skzBildNr=0; _skzStart=null; skzEditorZeichnen(); }
 function skzVorlage(i){
   const v=SKZ_VORLAGEN[i]; if(!v)return;
-  _skzMerken(); _skzSpec=Object.assign(_skzLeer(),_skzKopie(v.spec)); _skzStart=null;
+  _skzMerken(); _skzSpec=Object.assign(_skzLeer(),_skzKopie(v.spec)); _skzBildNr=0; _skzStart=null;
   skzEditorZeichnen(); toast("Vorlage „"+v.n+"“ geladen ✓");
 }
 function skzSpeichern(){
@@ -178,6 +200,8 @@ function skzSpeichern(){
      dieselbe Falle wie der Versatz in v514: wer ein Feld hinzufügt, muss auch die Stelle
      nachziehen, die entscheidet, ob überhaupt etwas da ist. */
   const leer=["s","h","b","tor","z","p","li","leiter","tx"].every(f=>!(_skzSpec[f]||[]).length);
+  /* Eine leere Schrittliste ist kein Schritt – sie würde nur als Feld mitreisen. */
+  if(Array.isArray(_skzSpec.schritte)&&!_skzSpec.schritte.length)delete _skzSpec.schritte;
   const cb=_skzCb;
   document.getElementById("skz-modal")?.remove();
   if(typeof cb==="function")cb(leer?null:_skzKopie(_skzSpec));
@@ -200,8 +224,14 @@ function skzBuehneDown(ev){
   if(w.id==="del"){
     const t=_skzTreffer(x,y);
     if(!t){toast("Nichts zum Entfernen getroffen","info");return;}
-    _skzMerken(); _skzSpec[t.feld].splice(t.idx,1); skzEditorZeichnen(); return;
+    /* In einem Schritt bleibt die Mannschaft, wie sie ist: gleich viele Spieler und
+       Bälle in jedem Bild – sonst liefe im nächsten Bild ein anderes Kind. */
+    if(_skzBildNr>0&&(t.feld==="s"||t.feld==="b")){ toast("Spieler und Bälle werden in Bild 1 gesetzt","info"); return; }
+    if(_skzBildNr>0&&!_skzBeweglich(t.feld)){ toast("Der Aufbau wird in Bild 1 geändert","info"); return; }
+    _skzMerken(); _skzListe(t.feld).splice(t.idx,1); skzEditorZeichnen(); return;
   }
+  if(_skzBildNr>0&&w.feld&&!_skzBeweglich(w.feld)){ toast("Der Aufbau wird in Bild 1 gesetzt","info"); return; }
+  if(_skzBildNr>0&&(w.feld==="s"||w.feld==="b")){ toast("Spieler und Bälle werden in Bild 1 gesetzt – hier nur verschoben","info"); return; }
   if(w.zwei){
     if(!_skzStart){ _skzStart=[x,y]; skzEditorZeichnen(); return; }
     _skzMerken();
@@ -250,9 +280,11 @@ function skzBuehneUp(){ _skzZieh=null; }
 
 function skzEditorZeichnen(){
   const b=document.getElementById("skz-buehne"); if(!b)return;
+  const bl=document.getElementById("skz-bildleiste");
+  if(bl)bl.innerHTML=skzBildLeiste();
   const leg=document.getElementById("skz-legende");
   if(leg&&!leg.innerHTML&&typeof skzLegende==="function")leg.innerHTML=skzLegende();
-  b.innerHTML=(typeof _skz==="function")?_skz(_skzSpec):"";
+  b.innerHTML=(typeof _skz==="function")?_skz(_skzSicht()):"";
   const svg=b.querySelector("svg");
   if(svg){ svg.style.margin="0"; svg.style.maxWidth="100%"; svg.style.width="100%"; svg.style.height="100%"; svg.style.pointerEvents="none"; }
   // Anfangspunkt eines Pfeils sichtbar machen – sonst tippt man ins Blaue
@@ -266,6 +298,12 @@ function skzEditorZeichnen(){
   const w=_skzWerkzeug();
   const pal=document.getElementById("skz-palette");
   if(pal)pal.querySelectorAll("button").forEach(x=>{
+    const wz=SKZ_WERK.find(y=>y.id===x.dataset.werk)||{};
+    const gesperrt=_skzBildNr>0&&(wz.feld==="s"||wz.feld==="b"||(wz.feld&&!_skzBeweglich(wz.feld)));
+    x.disabled=!!gesperrt;
+    x.style.opacity=gesperrt?".45":"1";
+    x.style.cursor=gesperrt?"not-allowed":"pointer";
+    x.title=gesperrt?wz.lbl+" – wird in Bild 1 gesetzt":wz.lbl;
     const an=x.dataset.werk===_skzWerk;
     x.style.background=an?"var(--blue)":"var(--surface)";
     x.style.color=an?"#fff":"var(--text2)";
@@ -285,7 +323,10 @@ function skzEditorZeichnen(){
   const tl=document.getElementById("skz-textlabel");
   if(tl)tl.textContent=(w.feld==="s")?"Nummer oder Kürzel für den nächsten Spieler (optional)":"Text, der auf den Platz geschrieben wird";
   const hw=document.getElementById("skz-hinweis");
-  if(hw)hw.textContent=w.id==="move"?"Element antippen und ziehen."
+  if(hw&&_skzBildNr>0&&(w.feld==="s"||w.feld==="b"||(w.feld&&!_skzBeweglich(w.feld)))){
+    hw.textContent="In Bild "+(_skzBildNr+1)+" bewegen sich nur Spieler, Ball, Pfeile und Text. Der Aufbau steht in Bild 1.";
+  }
+  else if(hw)hw.textContent=w.id==="move"?"Element antippen und ziehen."
     :w.id==="del"?"Element antippen, das weg soll."
     :w.feld==="tor"?"Am linken oder rechten Rand tippen: das Tor steht hochkant und bündig. Sonst quer."
     :w.feld==="li"?(_skzStart?"Jetzt den Endpunkt tippen.":"Startpunkt tippen, dann Endpunkt – die Linie läuft quer über den Platz.")
@@ -293,6 +334,49 @@ function skzEditorZeichnen(){
     :"Auf den Platz tippen, um „"+w.lbl+"“ zu setzen.";
 }
 
+/* Bildleiste des Editors. „+ Bild" übernimmt Spieler, Ball und Beschriftung aus dem
+   aktuellen Bild – die PFEILE beginnen leer. Sie zeigen in jedem Bild etwas anderes;
+   kopiert müsste man sie erst alle wegtippen, und das ist am Handy die längere Arbeit. */
+function skzBildLeiste(){
+  const n=(typeof skzBildZahl==="function")?skzBildZahl(_skzSpec):1;
+  const max=(typeof SKZ_SCHRITTE_MAX!=="undefined")?SKZ_SCHRITTE_MAX:6;
+  const knopf=(i)=>{
+    const an=_skzBildNr===i;
+    return '<button type="button" onclick="skzBildWahl('+i+')" aria-pressed="'+(an?"true":"false")+'" '
+      +'style="min-height:44px;min-width:56px;border:1px solid '+(an?"var(--blue)":"var(--rand-bedien)")+';border-radius:10px;'
+      +'background:'+(an?"var(--blue)":"var(--surface)")+';color:'+(an?"#fff":"var(--text2)")+';font-family:inherit;'
+      +'font-size:12px;font-weight:700;cursor:pointer">Bild '+(i+1)+'</button>';
+  };
+  let aus='<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px">';
+  for(let i=0;i<n;i++)aus+=knopf(i);
+  if(n-1<max)aus+='<button type="button" onclick="skzBildNeu()" style="min-height:44px;padding:0 12px;border:1px dashed var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">+ Bild</button>';
+  if(_skzBildNr>0)aus+='<button type="button" onclick="skzBildWeg()" style="min-height:44px;padding:0 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--red);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">Bild entfernen</button>';
+  return aus+'</div>';
+}
+function skzBildWahl(i){ _skzBildNr=Math.max(0,Number(i)||0); _skzStart=null; _skzZieh=null; skzEditorZeichnen(); }
+function skzBildNeu(){
+  const max=(typeof SKZ_SCHRITTE_MAX!=="undefined")?SKZ_SCHRITTE_MAX:6;
+  if(_skzSchritte().length>=max){ toast("Mehr als "+(max+1)+" Bilder werden unübersichtlich","info"); return; }
+  if(!( _skzSpec.s||[]).length){ toast("Erst in Bild 1 Spieler setzen","info"); return; }
+  _skzMerken();
+  const sicht=_skzSicht();
+  _skzSchritte().splice(_skzBildNr,0,{
+    s:JSON.parse(JSON.stringify(sicht.s||[])),
+    b:JSON.parse(JSON.stringify(sicht.b||[])),
+    tx:JSON.parse(JSON.stringify(sicht.tx||[])),
+    p:[]
+  });
+  _skzBildNr=_skzBildNr+1; _skzStart=null;
+  skzEditorZeichnen();
+  toast("Bild "+(_skzBildNr+1)+" angelegt – jetzt verschieben, was sich bewegt");
+}
+function skzBildWeg(){
+  if(_skzBildNr<1)return;
+  _skzMerken();
+  _skzSchritte().splice(_skzBildNr-1,1);
+  _skzBildNr=Math.min(_skzBildNr-1,_skzSchritte().length);
+  _skzStart=null; skzEditorZeichnen();
+}
 function skzVorlagenLeiste(){
   return SKZ_VORLAGEN.map((v,i)=>`<button onclick="skzVorlage(${i})" style="flex:none;width:132px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);padding:5px;cursor:pointer;font-family:inherit;scroll-snap-align:start">
     <div style="pointer-events:none">${(typeof _skz==="function")?_skz(v.spec):""}</div>
@@ -304,7 +388,7 @@ function skzVorlagenLeiste(){
    `cb(spec|null)` bekommt das Ergebnis – null heißt „keine Skizze". */
 function skzEditorOpen(start,cb){
   _skzSpec=Object.assign(_skzLeer(),_skzKopie(start||{}));
-  _skzCb=cb; _skzWerk="spieler"; _skzFarbe="g"; _skzStart=null; _skzVerlauf=[]; _skzZieh=null;
+  _skzCb=cb; _skzWerk="spieler"; _skzFarbe="g"; _skzStart=null; _skzVerlauf=[]; _skzZieh=null; _skzBildNr=0;
   document.getElementById("skz-modal")?.remove();
   const m=document.createElement("div"); m.id="skz-modal";
   m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Skizze zur Übung");
@@ -316,6 +400,7 @@ function skzEditorOpen(start,cb){
   c.innerHTML=`${mdlHead("skz-modal","🎨","Skizze zur Übung","Vorlage wählen oder selbst tippen","#0284c7")}
     <div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:2px 0 6px">Vorlagen</div>
     <div style="display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;margin-bottom:10px">${skzVorlagenLeiste()}</div>
+    <div id="skz-bildleiste"></div>
     <div id="skz-buehne" style="position:relative;width:100%;max-width:340px;margin:0 auto 8px;aspect-ratio:280/180;border-radius:8px;overflow:hidden;touch-action:none;cursor:crosshair"></div>
   <!-- v512: Beim Zeichnen will man sehen, was der gewählte Stift bedeutet. -->
   <div id="skz-legende"></div>
@@ -418,7 +503,8 @@ async function skzTeilen(knopf){
     c.getContext("2d").drawImage(bild,0,0,SKZ_PNG_B,SKZ_PNG_H);
     const png=await new Promise(fertig=>c.toBlob(fertig,"image/png"));
     if(!png)throw new Error("PNG");
-    const datei=new File([png],_skzSlug(name)+".png",{type:"image/png"});
+    const nr=(typeof _skzDetailBild==="number"&&_skzDetailBild>0)?("-bild-"+(_skzDetailBild+1)):"";
+  const datei=new File([png],_skzSlug(name)+nr+".png",{type:"image/png"});
     if(navigator.canShare&&navigator.canShare({files:[datei]})){
       try{ await navigator.share({files:[datei],title:name}); }
       /* Wegwischen ist keine Panne – nur echte Fehler melden. */
@@ -426,7 +512,7 @@ async function skzTeilen(knopf){
       return;
     }
     const a=document.createElement("a");
-    a.href=URL.createObjectURL(png); a.download=_skzSlug(name)+".png";
+    a.href=URL.createObjectURL(png); a.download=_skzSlug(name)+nr+".png";
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=>URL.revokeObjectURL(a.href),2000);
     if(typeof toast==="function")toast("Skizze gespeichert ✓");
@@ -482,6 +568,34 @@ function skzSpecVon(f){
   if(f.id&&typeof TF_SKIZZEN==="object"&&TF_SKIZZEN[f.id])return TF_SKIZZEN[f.id];
   return null;
 }
+/* v557 – Bildknöpfe im Detailfenster. Bild 1 ist voreingestellt, damit die Ansicht im
+   Training genauso aussieht wie vorher. Hat eine Skizze keine Schritte, gibt es die
+   Leiste gar nicht. */
+let _skzDetailBild=0;
+function skzBilderLeiste(idx){
+  const alle=(typeof tpAllForms==="function")?(tpAllForms()||[]):[];
+  const spec=skzSpecVon(alle[Number(idx)]);
+  const n=(spec&&typeof skzBildZahl==="function")?skzBildZahl(spec):1;
+  if(n<2)return "";
+  let aus='<div id="skz-detail-bilder" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:0 0 8px">';
+  for(let i=0;i<n;i++){
+    const an=_skzDetailBild===i;
+    aus+='<button type="button" onclick="skzBildSetzen('+Number(idx)+','+i+')" aria-pressed="'+(an?"true":"false")+'" '
+      +'style="min-height:44px;min-width:48px;border:1px solid '+(an?"var(--blue)":"var(--rand-bedien)")+';border-radius:10px;'
+      +'background:'+(an?"var(--blue)":"var(--surface)")+';color:'+(an?"#fff":"var(--text2)")+';font-family:inherit;'
+      +'font-size:12.5px;font-weight:700;cursor:pointer">'+(i+1)+'</button>';
+  }
+  return aus+'</div>';
+}
+function skzBildSetzen(idx,n){
+  const alle=(typeof tpAllForms==="function")?(tpAllForms()||[]):[];
+  const spec=skzSpecVon(alle[Number(idx)]); if(!spec)return;
+  _skzDetailBild=Math.max(0,Number(n)||0);
+  const box=document.getElementById("uebung-skizze");
+  if(box)box.innerHTML=_skz(spec,{bild:_skzDetailBild});
+  const leiste=document.getElementById("skz-detail-bilder");
+  if(leiste)leiste.outerHTML=skzBilderLeiste(idx);
+}
 function skzGrossKnopf(name,idx){
   const n=String(name||"Skizze").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
   return '<button type="button" onclick="skzGrossOpen('+Number(idx)+')" data-name="'+n+'" '
@@ -534,7 +648,7 @@ function _skzGrLegen(){
 }
 function _skzGrZeichnen(){
   const h=document.getElementById("skz-gross-halter"); if(!h||!_skzGr)return;
-  h.innerHTML=_skzGr.spec?_skz(_skzBesetzungSpec(),{hell:_skzGr.hell}):(_skzGr.svg||"");
+  h.innerHTML=_skzGr.spec?_skz(_skzBesetzungSpec(),{hell:_skzGr.hell,bild:_skzGr.bild}):(_skzGr.svg||"");
   const svg=h.querySelector("svg");
   if(svg){ svg.removeAttribute("style"); svg.setAttribute("width","100%"); svg.setAttribute("height","100%");
     svg.style.cssText="display:block;width:100%;height:100%;border-radius:8px"; svg.style.pointerEvents="none"; }
@@ -547,9 +661,37 @@ function _skzGrZeichnen(){
   if(kb){ kb.innerHTML=_skzGr.besetzung?"🙈 Namen aus":"🧒 Kinder einsetzen";
     kb.setAttribute("aria-pressed",_skzGr.besetzung?"true":"false");
     kb.setAttribute("onclick",_skzGr.besetzung?"skzBesetzungAus()":"skzBesetzungAn()"); }
-  _skzGrChips();
+  _skzGrChips(); _skzGrBilder();
   if(svg&&_skzGr.besetzung)_skzFotosEinsetzen(svg);
   _skzGrLegen();
+}
+/* Bildknöpfe im großen Fenster: als Zahl beschriftet, nie nur farbig markiert. */
+function _skzGrBilder(){
+  const box=document.getElementById("skz-gross-bilder"); if(!box||!_skzGr)return;
+  const n=(_skzGr.spec&&typeof skzBildZahl==="function")?skzBildZahl(_skzGr.spec):1;
+  if(n<2){ box.style.display="none"; box.innerHTML=""; return; }
+  box.style.display="flex";
+  let aus="";
+  for(let i=0;i<n;i++){
+    const an=_skzGr.bild===i;
+    aus+='<button type="button" onclick="skzGrossBild('+i+')" aria-pressed="'+(an?"true":"false")+'" '
+      +'style="min-height:44px;min-width:48px;border:1px solid rgba(255,255,255,.45);border-radius:10px;'
+      +'background:'+(an?"#fff":"rgba(255,255,255,.1)")+';color:'+(an?"#111827":"#fff")+';font-family:inherit;'
+      +'font-size:13px;font-weight:800;cursor:pointer">'+(i+1)+'</button>';
+  }
+  box.innerHTML=aus+'<span style="color:rgba(255,255,255,.6);font-size:11.5px;align-self:center">wischen geht auch</span>';
+}
+function skzGrossBild(n){
+  if(!_skzGr)return;
+  const max=((_skzGr.spec&&typeof skzBildZahl==="function")?skzBildZahl(_skzGr.spec):1)-1;
+  _skzGr.bild=Math.max(0,Math.min(max,Number(n)||0));
+  _skzGrZeichnen();
+}
+function skzGrossWeiter(richtung){
+  if(!_skzGr)return;
+  const max=((_skzGr.spec&&typeof skzBildZahl==="function")?skzBildZahl(_skzGr.spec):1)-1;
+  if(max<1)return;
+  skzGrossBild(Math.max(0,Math.min(max,_skzGr.bild+richtung)));
 }
 function _skzGrAbstand(){
   const p=[..._skzGr.zeiger.values()];
@@ -565,6 +707,7 @@ function _skzGrDown(ev){
   if(_skzGr.zeiger.size===1){
     if(jetzt-(_skzGr.letzterTipp||0)<320)skzGrossReset();
     _skzGr.letzterTipp=jetzt;
+    _skzGr.wischX=ev.clientX;
   }
 }
 function _skzGrMove(ev){
@@ -583,6 +726,14 @@ function _skzGrMove(ev){
 }
 function _skzGrUp(ev){
   if(!_skzGr)return;
+  /* Wischen wechselt das Bild – aber nur im nicht gezoomten Zustand, sonst wäre jedes
+     Verschieben ein Bildwechsel. Die Knöpfe bleiben der zweite Weg und der für die
+     Tastatur. */
+  if(_skzGr.zeiger.size===1&&_skzGr.zoom<=1.02&&_skzGr.wischX!=null){
+    const weg=ev.clientX-_skzGr.wischX;
+    if(Math.abs(weg)>50)skzGrossWeiter(weg<0?1:-1);
+  }
+  _skzGr.wischX=null;
   _skzGr.zeiger.delete(ev.pointerId);
   if(_skzGr.zeiger.size<2){ _skzGr.d0=0; _skzGr.z0=_skzGr.zoom; }
 }
@@ -794,7 +945,7 @@ function skzGrossOpen(idx){
   if(!spec&&!(f.svg&&f.svg.length>10)){ if(typeof toast==="function")toast("Zu dieser Übung gibt es keine Skizze","info"); return; }
   document.getElementById("skz-gross-modal")?.remove();
   _skzGr={spec,svg:f.svg||"",name:f.name||"Skizze",zoom:1,x:0,y:0,hell:spec?skzHellAn():false,
-          zeiger:new Map(),d0:0,z0:1,letzterTipp:0,besetzung:null,tausch:null,lauf:0};
+          zeiger:new Map(),d0:0,z0:1,letzterTipp:0,besetzung:null,tausch:null,lauf:0,bild:0,wischX:null};
   const m=document.createElement("div");
   m.id="skz-gross-modal";
   m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true");
@@ -809,6 +960,7 @@ function skzGrossOpen(idx){
       <div id="skz-gross-halter" style="transform-origin:center center;will-change:transform"></div>
     </div>
     <div id="skz-gross-zoom" style="color:rgba(255,255,255,.75);font-size:11px;text-align:center;min-height:14px"></div>
+    <div id="skz-gross-bilder" style="display:none;gap:6px;flex-wrap:wrap;justify-content:center;max-width:95vw"></div>
     <div id="skz-gross-chips" style="display:none;gap:6px;flex-wrap:wrap;justify-content:center;max-width:min(95vw,720px)"></div>
     <div id="skz-gross-legende" style="background:rgba(255,255,255,.08);border-radius:10px;padding:2px 8px;max-width:95vw"></div>
     ${spec?"":`<div style="color:rgba(255,255,255,.7);font-size:11.5px;text-align:center;max-width:95vw;line-height:1.5">

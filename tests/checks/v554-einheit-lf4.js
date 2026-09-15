@@ -39,7 +39,9 @@ module.exports = async function (h) {
   // ── a) Die Übungsdatei ──────────────────────────────────────────────────────
   const bib = JSON.parse(fs.readFileSync(path.join(h.REPO, "uebungen/bibliothek.json"), "utf8"));
   const namen = (bib.uebungen || []).map(u => u.name);
-  if (bib.stand !== "2026-09-14-2") probleme.push(`bibliothek.json: Stand „${bib.stand}“ statt „2026-09-14-2“ – ohne neuen Stand holt _bibHolen die Datei nicht`);
+  /* v557 hat den Stand weitergedreht, als die Schritte dazukamen. Geprüft wird deshalb,
+     dass er seit diesem Paket nicht zurückgefallen ist – nicht mehr die eine Zahl. */
+  if (!/^2026-09-14-[2-9]$|^2026-09-1[5-9]/.test(String(bib.stand))) probleme.push(`bibliothek.json: Stand „${bib.stand}“ liegt vor „2026-09-14-2“ – ohne neuen Stand holt _bibHolen die Datei nicht`);
   const fehlend = NEU.filter(n => !namen.includes(n));
   if (fehlend.length) probleme.push("In der Bibliothek fehlen: " + fehlend.join(", "));
   if (String(namen.slice(-2)) !== String(NEU)) probleme.push("Die beiden neuen stehen nicht am Ende des Arrays: " + namen.slice(-2).join(" | "));

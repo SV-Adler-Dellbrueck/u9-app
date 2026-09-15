@@ -91,11 +91,43 @@ const EI_KAT_LABEL={aufwaermen:"Aufwärmen",raute:"Raute",passspiel:"Passspiel",
    KEINE tiefe Prüfung: unbekannte Listen überliest der Zeichner ohnehin. Geprüft wird nur,
    dass keine Liste etwas anderes als eine Liste ist – `(o.z||[]).forEach` wirft sonst,
    und ein geworfener Fehler beim Zeichnen risse die ganze Übung mit. */
-const EI_SKZ_LISTEN=["z","tor","leiter","wand","p","li","h","s","b","tx"];   // v517: „li“ = Mittellinie und Schusszone
-function _eiSkizzeOk(x){
-  if(!x||typeof x!=="object"||Array.isArray(x))return false;
-  return EI_SKZ_LISTEN.every(k=>x[k]==null||Array.isArray(x[k]));
+const EI_SKZ_LISTEN=["z","tor","leiter","wand","p","li","h","s","b","tx","schritte"];   // v517: „li“ = Mittellinie und Schusszone · v557: „schritte“
+/* v557: Für die Schritte reicht „ist eine Liste“ nicht mehr. Ein Schritt, der einen
+   Spieler zu viel oder eine Farbe anders nennt, zeichnet zwar – aber dann läuft im
+   nächsten Bild ein anderes Kind, ohne dass es jemand merkt, und das Überblenden in
+   Scheibe 3 hätte keinen Anhaltspunkt mehr, wer wohin geht. Deshalb wird hier genau
+   geprüft und mit BILDNUMMER gemeldet. */
+function _eiSkizzeFehler(x){
+  if(!x||typeof x!=="object"||Array.isArray(x))return ["ist kein Objekt"];
+  const f=[];
+  EI_SKZ_LISTEN.forEach(k=>{ if(x[k]!=null&&!Array.isArray(x[k]))f.push(`„${k}“ ist keine Liste`); });
+  if(f.length)return f;
+  if(x.schritte==null)return f;
+  const max=(typeof SKZ_SCHRITTE_MAX!=="undefined")?SKZ_SCHRITTE_MAX:6;
+  if(x.schritte.length>max)f.push(`${x.schritte.length} Schritte – höchstens ${max} sind erlaubt (also ${max+1} Bilder)`);
+  const bewegl=(typeof SKZ_BEWEGLICH!=="undefined")?SKZ_BEWEGLICH:["s","b","p","tx"];
+  const basisS=Array.isArray(x.s)?x.s:[], basisB=Array.isArray(x.b)?x.b:[];
+  x.schritte.forEach((st,i)=>{
+    const nr=i+2;   // Bild 1 ist die Grundbeschreibung
+    if(!st||typeof st!=="object"||Array.isArray(st)){ f.push(`Bild ${nr}: kein Objekt`); return; }
+    Object.keys(st).forEach(k=>{
+      if(!bewegl.includes(k))f.push(`Bild ${nr}: „${k}“ gehört in die Grundbeschreibung – beweglich sind nur ${bewegl.join(", ")}`);
+      else if(!Array.isArray(st[k]))f.push(`Bild ${nr}: „${k}“ ist keine Liste`);
+    });
+    if(Array.isArray(st.s)){
+      if(st.s.length!==basisS.length)f.push(`Bild ${nr}: ${st.s.length} Spieler statt ${basisS.length} – in jedem Bild stehen dieselben auf dem Platz`);
+      else st.s.forEach((sp,j)=>{
+        const b=basisS[j]||[];
+        if((sp||[])[2]!==b[2])f.push(`Bild ${nr}, Spieler ${j+1}: Farbe „${(sp||[])[2]}“ statt „${b[2]}“ – sonst wechselt ein Kind die Mannschaft`);
+        if(((sp||[])[3]||"")!==(b[3]||""))f.push(`Bild ${nr}, Spieler ${j+1}: Kürzel „${(sp||[])[3]||""}“ statt „${b[3]||""}“`);
+      });
+    }
+    if(Array.isArray(st.b)&&st.b.length!==basisB.length)
+      f.push(`Bild ${nr}: ${st.b.length} Bälle statt ${basisB.length}`);
+  });
+  return f;
 }
+function _eiSkizzeOk(x){ return _eiSkizzeFehler(x).length===0; }
 function _eiSkizze(x){ return _eiSkizzeOk(x)?x:null; }
 /* Namensvergleich wie ihn ein Mensch erwartet: getrimmt, Groß-/Kleinschreibung egal. */
 function _eiNorm(s){ return String(s||"").trim().toLowerCase(); }
@@ -123,7 +155,7 @@ function _eiPruefung(text){
     const dau=Number(b.dauer);
     if(!isFinite(dau)||dau<=0)fehler.push(`Block ${nr}: „dauer“ muss eine Zahl größer als 0 sein.`);
     if(b.uebung&&!String(b.uebung.name||"").trim())fehler.push(`Block ${nr}: die Übung hat keinen Namen.`);
-    if(b.uebung&&b.uebung.skizze!=null&&!_eiSkizzeOk(b.uebung.skizze))fehler.push(`Block ${nr}: „skizze“ ist keine Zeichnungs-Beschreibung – erwartet ein Objekt mit den Listen ${EI_SKZ_LISTEN.join(", ")}.`);
+    if(b.uebung&&b.uebung.skizze!=null&&!_eiSkizzeOk(b.uebung.skizze))fehler.push(`Block ${nr}: „skizze“ stimmt nicht – ${_eiSkizzeFehler(b.uebung.skizze).join("; ")}. Erwartet ein Objekt mit den Listen ${EI_SKZ_LISTEN.join(", ")}.`);
     /* Der Abschluss ist im Trainingsplan freies Spiel und hat gar kein Übungsfeld. Ein
        Eintrag dafür würde beim Wiederherstellen in eine FREMDE Phase rutschen, weil
        tpPlanRestore() ohne passendes Label auf das nächste freie Feld ausweicht. Lieber
@@ -359,7 +391,7 @@ function _euPruefung(text){
     if(!name){ fehler.push(`Übung ${nr}: „name“ fehlt.`); return; }
     const kat=u.kat==null?"technik":String(u.kat);
     if(!EI_KATS.includes(kat))fehler.push(`Übung ${nr} („${name}“): Kategorie „${kat}“ gibt es nicht – erlaubt sind ${EI_KATS.join(", ")}.`);
-    if(u.skizze!=null&&!_eiSkizzeOk(u.skizze))fehler.push(`Übung ${nr} („${name}“): „skizze“ ist keine Zeichnungs-Beschreibung – erwartet ein Objekt mit den Listen ${EI_SKZ_LISTEN.join(", ")}.`);
+    if(u.skizze!=null&&!_eiSkizzeOk(u.skizze))fehler.push(`Übung ${nr} („${name}“): „skizze“ stimmt nicht – ${_eiSkizzeFehler(u.skizze).join("; ")}.`);
     /* Zwei gleiche Namen in derselben Datei: die zweite legte sonst eine Dublette an,
        weil die erste beim Prüfen noch gar nicht in der Datenbank steht. */
     const n=_eiNorm(name);
