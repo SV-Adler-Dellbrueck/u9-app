@@ -1834,7 +1834,11 @@ const CARD_BADGES={
 const CARD_THEMES={
   tech:{a:"#1e3a8a",b:"#3b82f6",name:"TECHNIK"}, raute:{a:"#5b21b6",b:"#8b5cf6",name:"SPIELWITZ"},
   phys:{a:"#9a3412",b:"#f97316",name:"DYNAMIK"}, mental:{a:"#065f46",b:"#10b981",name:"CHARAKTER"},
-  entw:{a:"#155e75",b:"#06b6d4",name:"TALENT"}, keeper:{a:"#854d0e",b:"#eab308",name:"TORWART"}
+  entw:{a:"#155e75",b:"#06b6d4",name:"TALENT"}, keeper:{a:"#854d0e",b:"#eab308",name:"TORWART"},
+  /* v563: Ohne Bewertung darf oben nicht „TECHNIK" stehen – das wäre eine Behauptung über
+     ein Kind, die niemand aufgestellt hat. Der Saisonstart räumt die Bewertungen ins Archiv;
+     bis zur ersten neuen Einschätzung trägt die Karte dieses Thema. */
+  neu:{a:"#0f172a",b:"#334155",name:"NEUE SAISON"}
 };
 /* Meilenstein-Karten (Phase 11-R): Design nach TEILNAHME, nicht Leistung.
    ≥10 Trainings → Gold, ≥20 → Hero. Überschreibt das Dim-Theme. Metallischer Verlauf,
@@ -2115,6 +2119,16 @@ function adlerCardDraw(ctx,W,H,d,photoImg){
   const by=ty+tbh+16, bh=118;
   ctx.save();tbRoundRect(ctx,30,by,W-60,bh,18);ctx.fillStyle="rgba(0,0,0,.24)";ctx.fill();ctx.restore();
   const bw=(W-60)/3;
+  /* v563: Ein leerer Kasten sähe aus wie ein Fehler. Steht noch keine Bewertung dahinter,
+     sagt die Karte das – die Karte selbst gibt es trotzdem, mit Name, Nummer, Foto und
+     den Zählern, denn die hängen an nichts, was erst jemand eintragen müsste. */
+  if(!(d.badges||[]).length){
+    ctx.textAlign="center";ctx.font="30px Arial";ctx.fillStyle="rgba(255,255,255,.9)";
+    ctx.fillText("✨",W/2,by+48);
+    ctx.font="700 13px Arial";ctx.fillStyle="#fff";
+    ctx.fillText("Deine Stärken kommen,",W/2,by+76);
+    ctx.fillText("sobald der Trainer sie einträgt.",W/2,by+94);
+  }
   (d.badges||[]).slice(0,3).forEach((b,i)=>{
     const bx=30+bw*i+bw/2;
     ctx.textAlign="center";ctx.font="30px Arial";ctx.fillStyle="#fff";ctx.fillText(b.icon,bx,by+50);

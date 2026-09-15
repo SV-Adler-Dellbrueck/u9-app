@@ -691,12 +691,30 @@ function kabineHome(){
   // kabineStimmungLoad();  // H2 – vom PO vorerst ausgeblendet                                         // H2: Kinder-Stimmungs-Check
   kabineMilestoneLoad();                                        // H7: frische Team-Meilensteine feiern
 }
+/* v563: Der nächste Termin, bei dem wenigstens eines der angemeldeten Kinder dabei sein
+   kann. Ein Spiel, für das abgesagt wurde, ist für dieses Kind kein Spiel: „Noch 4× schlafen"
+   wäre eine Vorfreude auf einen Tag zu Hause, und die Packliste eine Aufforderung, für ihn
+   die Tasche zu packen. Übersprungen wird nur, wo ALLE Kinder abgesagt haben – wer noch
+   nichts gesagt hat, gilt als möglich, denn eine offene Rückmeldung ist keine Absage. */
+async function _kabNaechsterTermin(){
+  const heute=new Date().toISOString().slice(0,10);
+  let liste=[];
+  try{const r=await fetch(`${SB_URL}/rest/v1/termine?select=id,datum,typ,gegner,titel&typ=in.(spiel,turnier)&datum=gte.${heute}&order=datum.asc&limit=8`,{headers:sbAuthHeaders()});if(r.ok)liste=(await r.json())||[];}catch(e){}
+  if(!liste.length)return null;
+  const kids=(window._elternKids||[]).map(k=>k.spieler_id).filter(Boolean);
+  if(!kids.length)return liste[0];
+  const abgesagt={};
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?termin_id=in.(${liste.map(t=>t.id).join(",")})&spieler_id=in.(${kids.join(",")})&select=termin_id,spieler_id,status`,{headers:sbAuthHeaders()});
+    if(r.ok)((await r.json())||[]).forEach(z=>{ (abgesagt[z.termin_id]=abgesagt[z.termin_id]||{})[z.spieler_id]=z.status; });
+  }catch(e){ return liste[0]; }
+  return liste.find(t=>kids.some(id=>((abgesagt[t.id]||{})[id]||"")!=="abgesagt"))||null;
+}
 // G6: „Noch X× schlafen bis zum nächsten Spiel!" – Motivation im Kinder-Modus.
 async function kabineCountdownLoad(){
   const el=document.getElementById("kab-countdown"); if(!el)return;
   const heute=new Date().toISOString().slice(0,10);
-  let t=null;
-  try{const r=await fetch(`${SB_URL}/rest/v1/termine?select=datum,typ,gegner,titel&typ=in.(spiel,turnier)&datum=gte.${heute}&order=datum.asc&limit=1`,{headers:sbAuthHeaders()});if(r.ok)t=(await r.json())[0]||null;}catch(e){}
+  const t=await _kabNaechsterTermin();
   if(!t){el.innerHTML="";window._kabSpieltag=false;return;}
   const d=new Date(t.datum+"T00:00:00"), today=new Date(heute+"T00:00:00");
   const days=Math.round((d-today)/864e5);
@@ -762,8 +780,7 @@ async function kabinePackLoad(){
   const el=document.getElementById("kab-pack"); if(!el)return;
   const kids=window._elternKids||[]; if(!kids.length){el.innerHTML="";return;}
   const heute=new Date().toISOString().slice(0,10);
-  let t=null;
-  try{const r=await fetch(`${SB_URL}/rest/v1/termine?select=datum,typ,gegner,titel&typ=in.(spiel,turnier)&datum=gte.${heute}&order=datum.asc&limit=1`,{headers:sbAuthHeaders()});if(r.ok)t=(await r.json())[0]||null;}catch(e){}
+  const t=await _kabNaechsterTermin();
   _kabPackTermin=t;
   if(!t){el.innerHTML="";return;}
   const days=Math.round((new Date(t.datum+"T00:00:00")-new Date(heute+"T00:00:00"))/864e5);
