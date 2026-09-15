@@ -75,6 +75,9 @@ module.exports = async function (h) {
       try {
         Object.defineProperty(window, "speechSynthesis", { configurable: true, value: { speaking: false, pending: false, cancel() {}, getVoices: () => [], speak: u => gesprochen.push(u) } });
         _ttsVoices = []; // eine Attrappen-Stimme nimmt der Browser nicht an – ohne Stimme spricht das Gerät mit der Standardstimme
+        /* v567: Seit es Aufnahmen gibt, spielt tqSpeak zuerst die Datei. Geprüft wird hier
+           die Gerätestimme – also die Datei ausschalten, damit der Rückfall greift. */
+        window.Audio = function () { throw new Error("keine Aufnahme im Prüfstand"); };
         tqScenarios = [{ desc: "Der TW hat den Ball. Jetzt Tempo!", task: "Schiebe Flitzer L nach vorne!" }]; tqIdx = 0; tqPlayer = "";
         tqSpeak(null);
       } catch (e) { out.speakFehler = String(e && e.message || e); }
