@@ -2334,8 +2334,16 @@ const TABS={
   home:    {sections:[
     {key:"home",    label:"Dashboard", icon:"ti-home"},
   ]},
+  /* v553 – Die erste Sektion jedes Bereichs ist seine KACHEL-EBENE.
+     Vorher führte die untere Leiste unmittelbar in eine Detailseite, während der Weg
+     über die Startseite erst Kacheln zeigte. Zwei Wege, zwei Bilder, und die neuen
+     Kacheln (Ausstattung, Material) gab es nur auf einem davon – gesucht wurde
+     „Ausstattung" folglich im Team-REITER, wo sie nie stand.
+     Jetzt endet jeder Weg auf derselben Seite. Die Detailreiter bleiben daneben
+     stehen, wer den Sprung kennt, spart sich den Zwischenhalt. */
   // Reiter-Beschriftung = Kachel-Beschriftung = Seitenüberschrift (PO: ein Name je Sache)
   team:    {sections:[
+    {key:"ue-team", label:"Übersicht",   icon:"ti-layout-grid"},
     {key:"kader",   label:"Kader",       icon:"ti-users"},
     {key:"profil",  label:"Profil",      icon:"ti-user"},
     {key:"bew",     label:"Bewerten",    icon:"ti-clipboard-list"},
@@ -2343,26 +2351,36 @@ const TABS={
   ]},
   training:{sections:[
     // Beschriftung muss zur Training-Kachel passen (PO) – ein Name je Sache
+    {key:"ue-training", label:"Übersicht", icon:"ti-layout-grid"},
     {key:"anwesenheit", label:"Anwesenheit",   icon:"ti-checkbox"},
     {key:"planung",     label:"Trainingsplan", icon:"ti-calendar-event"},
     {key:"formen",      label:"Übungen",       icon:"ti-ball-football"},
     {key:"quizresults", label:"Quiz-Ergebnisse", icon:"ti-brain", hidden:true}, // PO: wohnt jetzt unter Eltern & Kinder; go() braucht den Eintrag weiter
   ]},
   spieltag:{sections:[
+    {key:"ue-spieltag", label:"Übersicht", icon:"ti-layout-grid"},
     {key:"spieltag", label:"Match",       icon:"ti-ball-football"},
     {key:"kombi",    label:"Aufstellung", icon:"ti-users-group"},
     {key:"analyse",  label:"Analyse",     icon:"ti-chart-dots"},
   ]},
   taktik:  {sections:[
+    {key:"ue-taktik", label:"Übersicht", icon:"ti-layout-grid"},
     {key:"taktik",   label:"Taktikboard", icon:"ti-arrows-move"},
   ]},
   orga:    {sections:[
+    {key:"ue-orga", label:"Übersicht", icon:"ti-layout-grid"},
     {key:"termine",  label:"Termine",  icon:"ti-calendar"},
     {key:"team",     label:"Pinnwand", icon:"ti-clipboard"},
     /* v526: Das Tagebuch steht neben der Pinnwand, weil beides Notizen sind – nur gehoert
        die Pinnwand dem Team und das Tagebuch Charles allein. Es ist weder Training noch
        Spieltag: die Eintraege kommen aus beidem. */
     {key:"tagebuch", label:"Tagebuch", icon:"ti-book"},
+  ]},
+  /* Eltern & Kinder hat nur die Kachel-Ebene: alles darunter öffnet ein eigenes
+     Fenster, es gibt keine Detailseite im Router. Die Reiterzeile bleibt deshalb
+     verborgen (renderSubbar blendet sie bei einer einzigen Sektion aus). */
+  elki:    {sections:[
+    {key:"ue-elki",  label:"Übersicht", icon:"ti-layout-grid"},
   ]},
 };
 /* Eine Welle-2-Funktion sicher aufrufen. Fehlt das Modul – etwa weil ein SyntaxError
@@ -2378,6 +2396,14 @@ function w2(name,...args){
 }
 const SECS={
   home:       {cid:"view-home",            init:()=>renderHome()},
+  /* v553: die sechs Kachel-Ebenen. Eine Zeile je Bereich, der Inhalt kommt aus
+     derselben Quelle wie früher im Fenster (_kachelInhalt). */
+  "ue-team":     {cid:"view-ue-team",     init:()=>kachelSeite("team")},
+  "ue-training": {cid:"view-ue-training", init:()=>kachelSeite("training")},
+  "ue-spieltag": {cid:"view-ue-spieltag", init:()=>kachelSeite("spieltag")},
+  "ue-taktik":   {cid:"view-ue-taktik",   init:()=>kachelSeite("taktik")},
+  "ue-elki":     {cid:"view-ue-elki",     init:()=>kachelSeite("elki")},
+  "ue-orga":     {cid:"view-ue-orga",     init:()=>kachelSeite("orga")},
   bew:        {cid:"view-bew",              init:()=>{const s=document.getElementById("p-date");if(s&&s.options.length<=1&&typeof terminSelectFill==="function")terminSelectFill("p-date",{});}},
   kader:      {cid:"view-kader",           init:()=>renderKader()},
   profil:     {cid:"view-profil",          init:()=>renderProfil()},
@@ -2484,7 +2510,17 @@ async function spieltagPhaseVorwaehlen(){
   else if(ab&&jetzt>=ab)phase=(bis&&jetzt>bis)?"mt-phase-nach":"mt-phase-live";
   const d=document.getElementById(phase); if(d)d.open=true;
 }
-function openTab(tabId){ if(!TABS[tabId])return; go(tabState[tabId]||TABS[tabId].sections[0].key); }
+/* v553 – Ein Tipp auf die untere Leiste führt IMMER auf die Kachel-Ebene, nicht
+   dorthin zurück, wo man in diesem Bereich zuletzt war. Das ist bewusst ein Verzicht:
+   `tabState` merkte sich die letzte Sektion, damit man an derselben Stelle weitermacht.
+   Genau das war aber der Grund, warum die Leiste unberechenbar wurde – derselbe Knopf
+   führte je nach Vorgeschichte woanders hin. Ein Navigationsziel, das sich merkt, wo man
+   war, ist kein Ziel mehr. Bereiche ohne Kachel-Ebene (Home) verhalten sich wie bisher. */
+function openTab(tabId){
+  if(!TABS[tabId])return;
+  const erste=TABS[tabId].sections[0].key;
+  go(/^ue-/.test(erste)?erste:(tabState[tabId]||erste));
+}
 // Kompatibilitäts-Shims: bestehende sv()/switchTrainSub()-Aufrufe im Code bleiben gültig
 function sv(name){ if(name==="training"){openTab("training");return;} go(name); }
 function switchTrainSub(sub){ go(sub); }
@@ -3967,7 +4003,7 @@ async function saisonCockpitOpen(){
 const HELP=[
   {cat:"🏠 Start", items:[
     {t:"Diese Woche", d:"Alle Termine der nächsten 7 Tage auf einen Blick: wie viele Kinder zugesagt haben (aus den Eltern-Rückmeldungen; beim Spieltag zählt „dabei“ aus „Teams festlegen“, sobald die Einteilung steht), ob genug Trainer da sind (aus dem Trainerplan), ob der Trainingsplan steht und die Aufstellung fürs Spiel. Die Quelle steht unter der Karte. Rot wird ein Chip erst drei Tage vor dem Termin – vorher ist „0 zugesagt“ normal. Antippen öffnet den Termin.", run:"document.getElementById('home-woche')?.scrollIntoView({behavior:'smooth',block:'center'})"},
-    {t:"Startseite", d:"To-Do-Banner (nur bei offenen Aufgaben), „Bist du dabei?“ mit den Terminen der nächsten 14 Tage, für die deine Antwort noch fehlt (beantwortet = Karte weg), „Diese Woche“ mit dem Stand je Termin – die erste Zeile ist der nächste Termin mit Wetter, Packtipp und den Sprungknöpfen „Anwesenheit“ und „Plan“ –, der Knopf zu allen Terminen und sechs große Kacheln – dahinter jeweils ein Kachel-Menü.", go:"home"},
+    {t:"Startseite", d:"To-Do-Banner (nur bei offenen Aufgaben), „Bist du dabei?“ mit den Terminen der nächsten 14 Tage, für die deine Antwort noch fehlt (beantwortet = Karte weg), „Diese Woche“ mit dem Stand je Termin – die erste Zeile ist der nächste Termin mit Wetter, Packtipp und den Sprungknöpfen „Anwesenheit“ und „Plan“ –, der Knopf zu allen Terminen und sechs große Kacheln – dahinter jeweils wieder eine Seite mit Kacheln. Dieselbe Seite erreichst du über die untere Leiste; beide Wege enden im selben Bild.", go:"home"},
   ]},
   {cat:"👥 Team", items:[
     {t:"Saison-Cockpit", d:"Torschützen, Anwesenheit, Rückmelde-Tempo der Familien, faire Einsätze, Eltern-Puls, Rückmelde-Tempo – alles auf einen Blick.", run:"saisonCockpitOpen()"},
@@ -4011,7 +4047,7 @@ const HELP=[
     {t:"Teamkasse", d:"Kassen-Link hinterlegen (kein Geld in der App).", run:"kasseOpen()"},
     {t:"Fundbüro", d:"Liegengebliebenes verwalten.", run:"fundbueroOpen()"},
     {t:"Material", d:"Der Bestand des Teams: Bälle, Hütchen je Farbe, Markierungen, Leibchen, Trinkflaschen, Erste-Hilfe-Set. Je Posten ein <b>Soll</b> (was da sein sollte) und ein <b>Ist</b> (was gezählt wurde). Beide dürfen leer bleiben – leer heißt <b>nicht gezählt</b>, nicht „null Stück“; nur so lässt sich eine Inventur überhaupt abschließen. Jede eingetragene Ist-Zahl setzt das Zähldatum dieses Postens auf heute; oben steht, wann zuletzt überhaupt gezählt wurde, und nach einem halben Jahr wird die Zeile gelb. Liegt ein Posten unter dem Soll, sagt die Zeile, wie viele fehlen. Kleidung wird nicht doppelt gezählt: bei „Trikotsätze“ und „Spieltagsjacken“ steht daneben, wie viele davon gerade bei den Kindern sind (aus „Ausstattung“ unter Team). Neue Posten legst du über „＋“ selbst an. Gezählt wird am besten zweimal im Jahr – der Saisonstart-Check erinnert daran.", run:"materialOpen()"},
-    {t:"Ausstattung", d:"Was hat welches Kind von uns bekommen? Oben wählst du den Gegenstand – Trikotsatz, Präsentationsanzug, Spieltagsjacke –, darunter steht der Kader. Ein Tipp auf das Kästchen setzt die Ausgabe auf heute, rechts daneben trägst du die Größe ein (128, 140, 152 als Vorschlag, frei überschreibbar); beim Trikotsatz auch die Satznummer. Über „↩︎ zurück“ wird eine Rückgabe mit heutigem Datum vermerkt – dafür ist die Liste am Ende da, wenn ein Kind den Verein wechselt. Weitere Gegenstände (Trinkflasche, Rucksack, zweiter Anzug) legst du über „＋“ selbst an; die App muss dafür nicht angefasst werden. Gespeichert wird sofort beim Antippen. Die Zeile oben zählt, wer noch nichts hat.", run:"ausstattungOpen()"},
+    {t:"Ausstattung", d:"Was hat welches Kind von uns bekommen? Oben wählst du den Gegenstand – Trikotsatz FRMD PASN, Präsentationsanzug, Spieltagsjacke –, darunter steht der Kader. Ein Tipp auf das Kästchen setzt die Ausgabe auf heute, rechts daneben trägst du die Größe ein (128, 140, 152 als Vorschlag, frei überschreibbar). Eine Satznummer führen wir nicht: die Nummer am Kind ist die Trikotnummer, und die steht im Kader. Über „↩︎ zurück“ wird eine Rückgabe mit heutigem Datum vermerkt – dafür ist die Liste am Ende da, wenn ein Kind den Verein wechselt. Weitere Gegenstände (Trinkflasche, Rucksack, zweiter Anzug) legst du über „＋“ selbst an; die App muss dafür nicht angefasst werden. Gespeichert wird sofort beim Antippen. Die Zeile oben zählt, wer noch nichts hat.", run:"ausstattungOpen()"},
     {t:"Adresse der App", d:"Die App liegt seit dem 10.09.2026 unter sv-adler-dellbrueck.github.io/u9-app/ – vorher stand in jedem weitergegebenen Link ein privater Benutzername. Die alte Adresse leitet weiter, verschickte Turnier-, Ticker-, Einladungs- und Kind-Links funktionieren also unverändert. Wer über die Weiterleitung kommt, sieht einmalig einen Hinweis: neu anmelden, Benachrichtigungen wieder erlauben und – wer die App auf dem Startbildschirm hat – sie dort neu ablegen. Nach „Verstanden“ kommt er nicht wieder."},
     {t:"Backup", d:"Kader-Daten exportieren.", run:"backupExport()"},
     {t:"Dark Mode", d:"Hell/Dunkel umschalten.", run:"toggleTheme()"},
@@ -4050,7 +4086,7 @@ function hilfeRender(q){
   box.innerHTML=html||`<div style="font-size:12px;color:var(--text3);padding:10px 0">Nichts gefunden.</div>`;
 }
 const TOUR=[
-  {emo:"🦅", t:"Willkommen in der Adler-App", d:"Die Startseite ist bewusst schlank: Ganz oben erscheinen DEINE To-Dos (nur wenn etwas offen ist) – jedes führt dorthin, wo es sich erledigen lässt, und was du nicht mehr nachtragen willst, hakst du mit dem ✓ daneben für das ganze Trainerteam ab, darunter „Bist du dabei?“ – nur die Termine der nächsten 14 Tage, für die deine Antwort noch fehlt; ein Tap auf ✅ 🤔 ❌ genügt, und ist alles beantwortet, verschwindet die Karte. Danach „Diese Woche“ – die Termine der nächsten sieben Tage mit dem Stand (Zusagen, Trainer, Plan, Aufstellung); die erste Zeile ist der nächste Termin mit Wetter, Packtipp und Sprungknopf. Dann ein festgelegtes Trainer-Meeting (falls eines ansteht, mit der Zahl offener Themen), ein Knopf zu allen Terminen der Saison – und sechs große Kacheln, die du auch unten in der Leiste findest. Hinter jeder Kachel wartet wieder ein Kachel-Menü. Diese Tour findest du jederzeit über ❓ oben rechts."},
+  {emo:"🦅", t:"Willkommen in der Adler-App", d:"Die Startseite ist bewusst schlank: Ganz oben erscheinen DEINE To-Dos (nur wenn etwas offen ist) – jedes führt dorthin, wo es sich erledigen lässt, und was du nicht mehr nachtragen willst, hakst du mit dem ✓ daneben für das ganze Trainerteam ab, darunter „Bist du dabei?“ – nur die Termine der nächsten 14 Tage, für die deine Antwort noch fehlt; ein Tap auf ✅ 🤔 ❌ genügt, und ist alles beantwortet, verschwindet die Karte. Danach „Diese Woche“ – die Termine der nächsten sieben Tage mit dem Stand (Zusagen, Trainer, Plan, Aufstellung); die erste Zeile ist der nächste Termin mit Wetter, Packtipp und Sprungknopf. Dann ein festgelegtes Trainer-Meeting (falls eines ansteht, mit der Zahl offener Themen), ein Knopf zu allen Terminen der Saison – und sechs große Kacheln, die du auch unten in der Leiste findest. Hinter jeder Kachel wartet wieder eine Seite mit Kacheln – über die Leiste landest du auf genau derselben. Von dort geht es ins Detail, und die Reiterzeile oben bringt dich mit einem Tipp zurück zur Übersicht. Diese Tour findest du jederzeit über ❓ oben rechts."},
   {emo:"🏃", t:"Kachel: Training", d:"Vier Wege: Anwesenheit (heute + kommende Termine), Trainingsplan mit Stationen und Trainingsstart (die Trainer-Reihe oben zeigt farbig, wer für den Termin zu-, ab- oder noch nicht geantwortet hat), die Übungs-Datenbank und das 🏆 Trainingsturnier, das du vorab planen kannst – auch Eltern gegen Kinder. Die Nachbewertung meldet sich nach dem Training von selbst als To-Do auf der Startseite."},
   {emo:"⚽", t:"Kachel: Spieltag", d:"Ganz oben „📚 Wissen & Nachschlagen“: Spielformen und Feldmaße, die Spielregeln, was Ordnungsgeld kostet, das Warm up Adler mit allen vier Stufen und unsere Zeiten – zum Nachsehen am Platz. Darunter der Ablauf von oben nach unten: „Teams festlegen“ beantwortet einmal für den ganzen Tag, wer dabei ist und wie viele Teams wir stellen – die Kinder verteilt die App automatisch, du korrigierst nur. Darunter je Team eine Kachel mit Kader, Rollen, Uhr, Rotations-Timer und Liveticker; danach die Team-Quests für alle Teams zusammen. Beim Öffnen sind alle Abschnitte eingeklappt – du tippst auf, was du gerade brauchst. Dazu die Rollen-Empfehlung aus den Bewertungen und die Analyse. Steht ein Turnier an, erscheint ganz unten der Turnier-Bereich (Heimturnier ausrichten mit öffentlichem Link für die Gast-Trainer)."},
   {emo:"👥", t:"Kachel: Team", d:"Kader verwalten, Spieler alle 6 Wochen in 16 Kriterien bewerten (Live-Radar), Profil mit Sprachlob und Entwicklungs-Report, dazu Saison-Cockpit, Anwesenheit über die Saison und Rollen-Matrix. Unter „Ausstattung“ steht, welches Kind Trikotsatz, Anzug oder Jacke bekommen hat – mit Größe, Ausgabedatum und Rückgabe. Auch Notfallkarten und Probetraining wohnen hier."},
@@ -5647,28 +5683,17 @@ function kachelTile(key,emo,label,c1,c2){
     </span>
   </button>`;
 }
-// Aktion aus einer Kachelseite: Seite schließen, Funktion aufrufen (ehrlicher Toast, falls fehlt)
-/* PO v408: „wenn ich jetzt die kachel schliese komme ich direkt wieder auf die Startseite
-   anstatt auf die kachel vorher eltern Welt zu kommen."
-   kachelRun schloss das Menü IMMER, bevor die Aktion lief. Bei einem Tab-Wechsel (`go`) ist
-   das richtig – man verlässt das Menü ja. Bei den 12 Einträgen, die nur ein Fenster öffnen,
-   war es falsch: schließt man das Fenster, ist auch das Menü weg und man steht auf der
-   Startseite.
-
-   Jetzt bleibt das Menü stehen und das Fenster legt sich darüber. Zwei Sicherungen:
-   - navigierende Aktionen schließen es sofort (kein Menü, das über einem Tab hängen bleibt)
-   - ruft eine Aktion INTERN go() auf, merkt der Vergleich der aktiven Navi-Schaltfläche das
-     und räumt nach – dafür braucht es keine gepflegte Namensliste. */
-const KACHEL_NAVIGIERT=["go","openTab","kachelOpen","tmJump"];
-function _kachelNavId(){ return (document.querySelector("#main-nav .nb.active")||{}).id||""; }
+/* Aktion von einer Kachelseite: Funktion aufrufen, ehrlicher Toast falls sie fehlt.
+   v553: Bis hierher raeumte diese Stelle das Kachel-FENSTER weg – sofort bei einer
+   navigierenden Aktion, und sonst nachtraeglich ueber einen Vergleich der aktiven
+   Navi-Schaltflaeche (PO v408: „wenn ich jetzt die kachel schliese komme ich direkt
+   wieder auf die Startseite"). Die Kachel-Ebene ist jetzt eine Seite; es gibt kein
+   Fenster mehr, das haengen bleiben koennte, und damit auch nichts nachzuraeumen. */
 function kachelRun(fn,arg){
   const f=window[fn];
   if(typeof f!=="function"){toast("Da fehlt noch eine Verknüpfung ("+fn+") – bitte kurz melden","err");return;}
   if(typeof nutzungLog==="function")nutzungLog("aktion",fn+(arg!==undefined?":"+arg:""));
-  const navVor=_kachelNavId(), navigiert=KACHEL_NAVIGIERT.includes(fn);
-  if(navigiert)document.getElementById("kachel-modal")?.remove();
   arg===undefined?f():f(arg);
-  if(!navigiert)setTimeout(()=>{ if(_kachelNavId()!==navVor)document.getElementById("kachel-modal")?.remove(); },0);
 }
 // Untermenü-Kacheln: 2 Spalten, groß und tippfreundlich; Farbkante oben = Familienfarbe
 function kTiles(items,col){
@@ -5690,23 +5715,32 @@ const KACHELN={
   elki:{emo:"🪶",titel:"Eltern & Kinder",sub:"Kommunikation und Adler-Welt",col:"var(--fam-elki)"},
   orga:{emo:"📅",titel:"Orga",sub:"Termine, Events, Verwaltung",col:"var(--fam-orga)"}
 };
+/* v553 – Die Kachel-Ebene war ein FENSTER über der vorigen Seite. Damit lag sie
+   grundsätzlich quer zu einer Navigationsleiste: der Knopf navigierte nicht, er legte
+   etwas obenauf, und beim Schließen stand man wieder irgendwo. Jetzt ist sie eine Seite.
+   `kachelOpen` bleibt als Name bestehen – die Startseiten-Kacheln und die Hilfe rufen ihn
+   an rund einem Dutzend Stellen – und leitet nur noch weiter. */
 function kachelOpen(key){
-  const k=KACHELN[key]; if(!k)return;
-  if(typeof nutzungLog==="function")nutzungLog("kachel",key);
-  document.getElementById("kachel-modal")?.remove();
-  const m=document.createElement("div");m.id="kachel-modal";
-  m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label",k.titel);
-  /* Das Kachel-Menü ist die UNTERSTE Ebene des Fensterstapels: seit v408 bleibt es offen,
-     während eine Aktion ihr Fenster darüber legt. Auf 10002 hätte es 18 dieser Fenster
-     verdeckt (die meisten liegen auf 9999–10002). 9500 liegt über der Seite und unter
-     jedem Dialog – dadurch braucht keiner von ihnen einen Sonderwert. */
-  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9500;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
-  m.onclick=e=>{if(e.target===m)m.remove();};
-  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
-    ${mdlHead("kachel-modal",k.emo,k.titel,k.sub,k.col)}
-    <div id="kachel-body">${_kachelInhalt(key)}</div>
-  </div>`;
-  document.body.appendChild(m);
+  if(!KACHELN[key])return;
+  /* Kein eigener Log-Eintrag mehr: `go()` schreibt gleich darauf „bereich:ue-…" – das
+     ist derselbe Vorgang. Zwei Zeilen für einen Tipp haetten die Nutzungs-Auswertung
+     verzerrt, und zwar genau bei den Bereichen, die man am haeufigsten oeffnet. */
+  openTab(key);
+}
+/* Füllt die Hülle aus shell.html. Der Inhalt kommt unverändert aus _kachelInhalt – der
+   Weg über die Startseite und der über die Leiste enden deshalb im selben Bild, und
+   eine neue Kachel erscheint auf beiden Wegen, ohne dass jemand daran denken muss. */
+function kachelSeite(key){
+  const el=document.getElementById("view-ue-"+key), k=KACHELN[key];
+  if(!el||!k)return;
+  el.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <span style="font-size:26px;line-height:1">${k.emo}</span>
+      <span style="min-width:0">
+        <span style="display:block;font-size:17px;font-weight:900;color:var(--text)">${esc(k.titel)}</span>
+        <span style="display:block;font-size:12px;color:var(--text2)">${esc(k.sub)}</span>
+      </span>
+    </div>
+    <div id="kachel-body">${_kachelInhalt(key)}</div>`;
   _kachelNachladen(key);
 }
 function _kachelInhalt(key){

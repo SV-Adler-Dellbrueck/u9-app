@@ -44,16 +44,16 @@
        sechs Bereiche vertreten (PO: „Taktik brauch ich in der App", also kein Tausch) –
        daher sieben Plätze. Auf Handys sind die Beschriftungen ohnehin ausgeblendet
        (@media max-width:680px), es zählen die Icons.
-       „Eltern & Kinder" ist KEIN Reiter (kein TABS-Eintrag), sondern nur eine Kachel –
-       der Knopf ruft deshalb kachelOpen statt openTab, und die Leiste markiert ihn nicht
-       als aktiv: das Kachel-Menü liegt als Fenster über dem bisherigen Bereich.
+       v553: Alle sieben rufen openTab. „Eltern & Kinder" hat dafür einen eigenen
+       TABS-Eintrag bekommen – vorher war es der einzige Knopf, der ein Fenster öffnete
+       statt zu navigieren, und die Leiste markierte ihn nicht als aktiv.
        Wer eine Kachel ergänzt, zieht hier mit. -->
   <button class="nb active" id="nb-home" aria-label="Startseite" onclick="openTab('home')"><i class="ti ti-home"></i><span>Home</span></button>
   <button class="nb" id="nb-training" aria-label="Training" onclick="openTab('training')"><i class="ti ti-run"></i><span>Training</span></button>
   <button class="nb" id="nb-spieltag" aria-label="Spieltag" onclick="openTab('spieltag')"><i class="ti ti-ball-football"></i><span>Spieltag</span></button>
   <button class="nb" id="nb-team" aria-label="Team" onclick="openTab('team')"><i class="ti ti-users"></i><span>Team</span></button>
   <button class="nb" id="nb-taktik" aria-label="Taktik" onclick="openTab('taktik')"><i class="ti ti-target-arrow"></i><span>Taktik</span></button>
-  <button class="nb" id="nb-elki" aria-label="Eltern und Kinder" onclick="kachelOpen('elki')"><i class="ti ti-users-group"></i><span>Eltern</span></button>
+  <button class="nb" id="nb-elki" aria-label="Eltern und Kinder" onclick="openTab('elki')"><i class="ti ti-users-group"></i><span>Eltern</span></button>
   <button class="nb" id="nb-orga" aria-label="Orga" onclick="openTab('orga')"><i class="ti ti-calendar"></i><span>Orga</span></button>
 </nav>
 
@@ -64,6 +64,17 @@
 <div id="view-home" class="view">
   <div id="home-content"></div>
 </div>
+
+<!-- KACHEL-EBENE je Bereich (v553). Leere Huellen; kachelSeite() fuellt sie beim
+     Oeffnen mit genau dem Inhalt, den frueher das Kachel-FENSTER zeigte. Sie sind
+     Seiten wie jede andere: der Router schaltet sie ueber .active, die untere
+     Leiste markiert den Bereich, die Reiterzeile zeigt, wo man steht. -->
+<div id="view-ue-team" class="view"></div>
+<div id="view-ue-training" class="view"></div>
+<div id="view-ue-spieltag" class="view"></div>
+<div id="view-ue-taktik" class="view"></div>
+<div id="view-ue-elki" class="view"></div>
+<div id="view-ue-orga" class="view"></div>
 
 <!-- BEWERTUNG -->
 <div id="view-bew" class="view active">
