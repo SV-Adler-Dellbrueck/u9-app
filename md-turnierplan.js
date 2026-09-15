@@ -513,6 +513,13 @@ function nominierteSpieler(){
 function nomRender(){
   const box=document.getElementById("nom-panel");
   if(!box)return;
+  /* v564: Jeder Tipp auf „Dabei" zeichnet die Liste neu – und beim Neuzeichnen entschied
+     bisher allein `dabeiAlle`, ob der Block offen ist. Sobald also das ERSTE Kind gesetzt
+     war, klappte die Liste unter der Hand zu, und man musste sie für jedes weitere Kind
+     neu aufziehen. Das Zuklappen ist als ERSTER Eindruck gedacht, nicht als Antwort auf
+     einen Tipp: Steht der Block schon auf der Seite, behält er, was der Trainer zuletzt
+     wollte. */
+  const warOffen=document.getElementById("nom-dabei")?.open;
   const hasRsvp=Object.keys(nomRsvp).length>0;
   const aktiv=KADER.filter(k=>k.aktiv!==false);
   const dabeiAlle=aktiv.filter(k=>nomStatus[k.name]==="dabei").length;
@@ -539,7 +546,7 @@ function nomRender(){
         style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:var(--r);cursor:pointer;font-family:inherit;font-size:11.5px;font-weight:${st===s?"700":"500"};background:${st===s?stCfg[s].col:"var(--surface)"};color:${st===s?"#fff":"var(--text)"}">${stCfg[s].lbl}</button>`).join("")}</div>
     </div>`;
   };
-  box.innerHTML=`<details id="nom-dabei" class="tp-tipp"${dabeiAlle?"":" open"}>
+  box.innerHTML=`<details id="nom-dabei" class="tp-tipp"${(warOffen===undefined?!dabeiAlle:warOffen)?" open":""}>
     <summary>👥 Wer ist dabei? <b>${dabeiAlle} von ${aktiv.length}</b>${offenAlle?` <span style="font-weight:400;color:var(--amber)">· ${offenAlle} offen</span>`:""}</summary>
     <div>
       <div id="nom-quelle" style="font-size:10.5px;color:var(--text3);margin-bottom:8px;line-height:1.4">📣 Vorbelegt aus den Eltern-Rückmeldungen (zugesagt = Dabei, abgesagt = Nicht, ohne Antwort = offen). <b>Dabei</b> ist die Anwesenheit dieses Spieltags und zählt für die Spiele-Quote.</div>
@@ -562,6 +569,33 @@ function nomOffeneDabei(){
   if(typeof spieltagTeamKartenRender==="function")spieltagTeamKartenRender();
   nomApplyToTools();nomSave();
   toast(`${offen.length} Kinder auf „Dabei“ gesetzt`);
+}
+
+/* v564: Die Kachel „Anwesenheit" auf der Spieltag-Seite führte zur Anwesenheit des
+   TRAININGS. Das war kein Versehen der Kachel, sondern ihr Ziel: dort stehen seit v477
+   bewusst nur Trainingstermine („ein Ort je Termintyp"). Die Anwesenheit des Spieltags ist
+   die Nominierung — „Dabei" IST die Anwesenheit dieses Spieltags und zählt für die
+   Spiele-Quote. Sie liegt im Match unter „Teams festlegen" und klappt zu, sobald jemand
+   dabei ist; von einer Kachel aus war sie so nicht zu finden. Dieser Weg geht hin, klappt
+   beides auf und stellt die Liste vor Augen.
+
+   Gewartet wird auf die Liste, statt einen festen Zeitwert zu raten: `go` rendert die
+   Seite erst, und ein zu kurzer Timeout hätte je nach Gerät mal geklappt und mal nicht. */
+function spieltagAnwesenheitOpen(){
+  if(typeof go==="function")go("spieltag");
+  let versuche=0;
+  (function warten(){
+    const vor=document.getElementById("mt-phase-vor");
+    const liste=document.getElementById("nom-dabei");
+    if(vor)vor.open=true;
+    if(liste){
+      liste.open=true;
+      liste.scrollIntoView({behavior:"smooth",block:"start"});
+      return;
+    }
+    if(++versuche<40)setTimeout(warten,50);
+    else if(vor)vor.scrollIntoView({behavior:"smooth",block:"start"});
+  })();
 }
 
 /* ═══════════════════════════════════
