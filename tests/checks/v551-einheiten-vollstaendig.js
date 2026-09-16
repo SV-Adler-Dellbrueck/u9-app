@@ -36,8 +36,11 @@ const BESTAND = ["L1-1", "L2-1", "L3-1", "L4-1", "L4-2", "L5-1", "L6-1"];
    Das Konzept plant für Leitfrage 4 vier Einheiten, und die Folgen 1 bis 4 waren schon
    vergeben – das Paket nannte „Folge 2 (von 4)“, die Stelle war aber besetzt. Statt eine
    bestehende Einheit umzunummerieren, hängt sie als Folge 5 an. Die Prüfung der zwanzig
-   bleibt, wie sie ist; die Zusatz-Einheit wird hier benannt statt still mitgezählt. */
-const ZUSATZ = ["L4-5"];
+   bleibt, wie sie ist; die Zusatz-Einheit wird hier benannt statt still mitgezählt.
+   v568: Dazu die acht Einheiten für 3+1, FUNiño und die Kombination (L4-6, L5-4, L6-3,
+   L4-7, L5-5, L6-4, L5-6, L6-5). Die Prüfung der zwanzig bleibt; die Fälle c) und e) gelten
+   auch für die Zusatz-Einheiten. */
+const ZUSATZ = ["L4-5", "L4-6", "L5-4", "L6-3", "L4-7", "L5-5", "L6-4", "L5-6", "L6-5"];
 
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
@@ -68,10 +71,10 @@ module.exports = async function (h) {
   const nichtImKonzept = Object.keys(SOLL).filter(f => !konz.includes(f));
   if (nichtImKonzept.length) probleme.push("Nicht wörtlich im Konzept: " + nichtImKonzept.join(" · "));
 
-  // e) Skalierung und Beobachtung – aus der Datei, ohne Browser
-  const ohneSkal = alle.filter(v => !["8", "12", "16"].every(k => String((v.skalierung || {})[k] || "").trim())).map(v => v.name);
+  // e) Skalierung und Beobachtung – aus der Datei, ohne Browser; seit v568 auch für die Zusatz-Einheiten
+  const ohneSkal = alle.concat(zusatz).filter(v => !["8", "12", "16"].every(k => String((v.skalierung || {})[k] || "").trim())).map(v => v.name);
   if (ohneSkal.length) probleme.push("Ohne vollständige Skalierung 8/12/16: " + ohneSkal.join(", "));
-  const ohneRolle = alle.filter(v => !/Aufpasser|Flitzer|Jäger/.test(String(v.beobachtung || ""))).map(v => v.name);
+  const ohneRolle = alle.concat(zusatz).filter(v => !/Aufpasser|Flitzer|Jäger/.test(String(v.beobachtung || ""))).map(v => v.name);
   if (ohneRolle.length) probleme.push("Beobachtungsfrage ohne Rollenbezug: " + ohneRolle.join(", "));
 
   /* f) Der Abgleich. Die Attrappe kennt die sieben aus dem Bestand; alles, was danach
@@ -108,7 +111,7 @@ module.exports = async function (h) {
   }, { datei: vor });
 
   if (r.fehler.length) probleme.push("Die Datei kommt nicht durch die Prüfung: " + r.fehler.slice(0, 3).join(" | "));
-  else zeilen.push(`Prüfung: alle ${alle.length} Einheiten sauber – jede Übung existiert, jede Kategorie passt zur Phase`);
+  else zeilen.push(`Prüfung: alle ${alle.length + zusatz.length} Einheiten sauber – jede Übung existiert, jede Kategorie passt zur Phase`);
 
   if (r.hinweise.length) probleme.push("Netto-Hinweis: " + r.hinweise.map(x => `${x.name} – ${x.text}`).join(" | "));
 

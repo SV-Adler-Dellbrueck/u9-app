@@ -1,6 +1,6 @@
 {
   "schema": "adler-uebungen/1",
-  "stand": "2026-09-14-3",
+  "stand": "2026-09-16-1",
   "uebungen": [
     {
       "name": "Warm up Adler",
@@ -1946,6 +1946,1730 @@
               ]
             ]
           }
+        ]
+      }
+    },
+    {
+      "name": "3+1 gegen 2 – Adler aus dem Tor",
+      "kat": "raute",
+      "kurz": "Spielform in Überzahl: Torwart und drei Feldspieler eröffnen flach und werden breit, zwei Verteidiger stören und kontern aufs Jugendtor.",
+      "spieler": "6 je Station (Torwart + Jäger + 2 Flitzer gegen 2)",
+      "feld": "Halbes Kreis-Feld ca. 12 x 20 m, Jugendtor (1,65 m) an der Grundlinie, zwei Hütchentore (3 m) an der Mittellinie außen. Ist kein Jugendtor frei: zwei Minitore an der Grundlinie, der Torwart spielt dazwischen als Torwart ohne Hände und bleibt in der Schusszone (ca. 6 m); Tore auf die Minitore zählen nur aus der Schusszone.",
+      "dauer": "12",
+      "ablauf": "Das blaue Team spielt in der Aufstellung des 3+1: Torwart im Tor, Jäger vorn, zwei Flitzer außen. Der Torwart eröffnet jeden Angriff flach, ohne Abschlag. Punkt für Blau: kontrolliert durch eines der beiden Hütchentore an der Mittellinie dribbeln – die Tore stehen außen, deshalb lohnt sich die Breite. Die zwei Roten verteidigen; erobern sie den Ball, dürfen sie sofort aufs Jugendtor abschließen, und Blau schaltet in den Igel.\n\nNach jedem Angriff startet der Torwart neu. Nach drei Angriffen rücken alle eine Aufgabe weiter (Torwart → Jäger → Flitzer → Flitzer → Verteidiger → Verteidiger → Torwart), so kommt jedes Kind im Lauf der Station in mehrere Rollen.\n\nEngere Regel der Einheit steht am Hauptteil (z. B. „Torwart muss vor dem Punkt einmal angespielt worden sein“).\n\nTypische Fehlerbilder: Alle drei laufen zum Ball und stehen auf einer Linie. Der Torwart schießt weit statt flach. Die Flitzer stehen innen statt an der Seitenlinie.",
+      "varianten": "Leichter: nur ein Verteidiger (3+1 gegen 1). Schwerer: Punkt zählt nur, wenn beide Flitzer vorher am Ball waren.",
+      "coaching": "Wo ist Platz? Flitzer an die Linie.\nTorwart, wen kannst du flach anspielen?\nBall verloren – was ruft ihr?",
+      "spass": 4,
+      "diff": 2,
+      "skizze": {
+        "z": [
+          [
+            20,
+            15,
+            120,
+            150
+          ]
+        ],
+        "li": [
+          [
+            140,
+            15,
+            140,
+            165,
+            "m"
+          ]
+        ],
+        "tor": [
+          [
+            8,
+            72,
+            "v",
+            36,
+            "j"
+          ]
+        ],
+        "dtor": [
+          [
+            140,
+            22,
+            26,
+            "v",
+            "h",
+            "y"
+          ],
+          [
+            140,
+            132,
+            26,
+            "v",
+            "h",
+            "y"
+          ]
+        ],
+        "s": [
+          [
+            30,
+            90,
+            "b",
+            "T"
+          ],
+          [
+            112,
+            90,
+            "b",
+            "J"
+          ],
+          [
+            88,
+            32,
+            "b",
+            "F"
+          ],
+          [
+            88,
+            148,
+            "b",
+            "F"
+          ],
+          [
+            70,
+            80,
+            "r",
+            ""
+          ],
+          [
+            110,
+            118,
+            "r",
+            ""
+          ]
+        ],
+        "b": [
+          [
+            38,
+            90
+          ]
+        ],
+        "p": [
+          [
+            40,
+            86,
+            82,
+            40,
+            "p"
+          ],
+          [
+            96,
+            36,
+            134,
+            36,
+            "d"
+          ],
+          [
+            100,
+            96,
+            108,
+            108,
+            "l"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            176,
+            "Punkt: durchs Hütchentor dribbeln"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+      "kat": "passspiel",
+      "kurz": "Überzahl-Spielform, angelehnt an „2 gegen 1 mit Torhüter“ aus der Trainingssammlung des SBFV: zwei Angreifer gegen einen Verteidiger und den Torwart, Abschluss aufs Jugendtor.",
+      "spieler": "6 je Station (2 Angreifer, 1 Verteidiger, 1 Torwart, 2 warten)",
+      "feld": "Halbes Kreis-Feld ca. 12 x 20 m, Jugendtor (1,65 m), ein Minitor oder Hütchentor an der Mittellinie. Ist kein Jugendtor frei: zwei Minitore an der Grundlinie, der Torwart spielt dazwischen als Torwart ohne Hände und bleibt in der Schusszone (ca. 6 m); Tore auf die Minitore zählen nur aus der Schusszone.",
+      "dauer": "12",
+      "ablauf": "Zwei Angreifer starten mit Ball an der Mittellinie – einer innen, einer als Flitzer an der Seitenlinie. Ein Verteidiger kommt ihnen entgegen, der Torwart steht im Jugendtor. Die Angreifer spielen die Überzahl aus und schließen ab. Erobert der Verteidiger den Ball oder hält der Torwart, spielen beide schnell auf das Minitor an der Mittellinie.\n\nWechsel nach jeder Aktion im Kreis: Angreifer innen → Flitzer → Verteidiger → Torwart → wartet → wartet → Angreifer innen. Es warten nie mehr als zwei Kinder.\n\nTypische Fehlerbilder: Der Flitzer läuft zum Ball statt breit zu bleiben. Der Ballführende passt zu früh, bevor der Verteidiger kommt. Der Torwart bleibt auf der Linie kleben.",
+      "varianten": "Leichter: Verteidiger startet erst, wenn der erste Pass gespielt ist. Schwerer: zweiter Verteidiger startet drei Sekunden später von der Grundlinie (2 gegen 2).",
+      "coaching": "Andribbeln, bis der Verteidiger kommt – dann spielen.\nFlitzer, bleib an der Linie, dann bist du frei.\nTorwart, komm raus und mach dich groß.",
+      "spass": 4,
+      "diff": 2,
+      "skizze": {
+        "z": [
+          [
+            140,
+            15,
+            120,
+            150
+          ]
+        ],
+        "li": [
+          [
+            140,
+            15,
+            140,
+            165,
+            "m"
+          ]
+        ],
+        "tor": [
+          [
+            262,
+            72,
+            "v",
+            36,
+            "j"
+          ],
+          [
+            137,
+            78,
+            "v",
+            24
+          ]
+        ],
+        "s": [
+          [
+            150,
+            70,
+            "b",
+            "F"
+          ],
+          [
+            150,
+            130,
+            "b",
+            "J"
+          ],
+          [
+            200,
+            100,
+            "r",
+            ""
+          ],
+          [
+            250,
+            90,
+            "y",
+            "T"
+          ]
+        ],
+        "b": [
+          [
+            158,
+            130
+          ]
+        ],
+        "p": [
+          [
+            160,
+            128,
+            186,
+            112,
+            "d"
+          ],
+          [
+            186,
+            108,
+            214,
+            62,
+            "p"
+          ],
+          [
+            160,
+            66,
+            210,
+            52,
+            "l"
+          ],
+          [
+            220,
+            58,
+            256,
+            84,
+            "s"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            176,
+            "Wechsel nach jeder Aktion"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "3 gegen 2 plus Torwart – Jäger und zwei Flitzer",
+      "kat": "raute",
+      "kurz": "Spielform für die Positionen des 3+1: Jäger zentral, zwei Flitzer in ihren Seitenkorridoren gegen zwei Verteidiger und Torwart.",
+      "spieler": "6 je Station (3 Angreifer, 2 Verteidiger, 1 Torwart)",
+      "feld": "Halbes Kreis-Feld ca. 12 x 20 m, Jugendtor (1,65 m), zwei Hütchentore (3 m) an der Mittellinie, Seitenkorridore mit Hütchen ca. 4 m breit markiert. Ist kein Jugendtor frei: zwei Minitore an der Grundlinie, der Torwart spielt dazwischen als Torwart ohne Hände und bleibt in der Schusszone (ca. 6 m); Tore auf die Minitore zählen nur aus der Schusszone.",
+      "dauer": "12",
+      "ablauf": "Drei Angreifer starten an der Mittellinie: Jäger in der Mitte, die beiden Flitzer in den markierten Seitenkorridoren. Zwei Verteidiger und der Torwart verteidigen das Jugendtor. Die Angreifer dürfen die Korridore verlassen, sollen sie aber zum Abschluss wieder besetzen. Erobern die Verteidiger den Ball, dribbeln sie durch eines der Hütchentore an der Mittellinie.\n\nEngere Regel: Ein Tor zählt nur, wenn beim Abschluss beide Flitzer in ihrem Korridor stehen – wer innen steht, nimmt dem Jäger den Platz.\n\nNach jedem Angriff rücken die Aufgaben weiter: Jäger → Flitzer → Flitzer → Verteidiger → Verteidiger → Torwart → Jäger.\n\nTypische Fehlerbilder: Die Flitzer ziehen zum Ball in die Mitte. Der Jäger dreht sich weg, statt sich anzubieten. Alle warten auf den Pass, statt sich zu bewegen.",
+      "varianten": "Leichter: nur ein Verteidiger (3 gegen 1 plus Torwart). Schwerer: höchstens drei Kontakte je Kind.",
+      "coaching": "Wo stehst du, damit du frei bist?\nFlitzer außen, Jäger in der Mitte.\nSchau dich um, bevor der Ball kommt.",
+      "spass": 4,
+      "diff": 3,
+      "skizze": {
+        "z": [
+          [
+            140,
+            15,
+            120,
+            150
+          ],
+          [
+            140,
+            15,
+            120,
+            30
+          ],
+          [
+            140,
+            135,
+            120,
+            30
+          ]
+        ],
+        "li": [
+          [
+            140,
+            15,
+            140,
+            165,
+            "m"
+          ]
+        ],
+        "tor": [
+          [
+            262,
+            72,
+            "v",
+            36,
+            "j"
+          ]
+        ],
+        "dtor": [
+          [
+            140,
+            52,
+            20,
+            "v",
+            "h",
+            "y"
+          ],
+          [
+            140,
+            108,
+            20,
+            "v",
+            "h",
+            "y"
+          ]
+        ],
+        "s": [
+          [
+            160,
+            30,
+            "b",
+            "F"
+          ],
+          [
+            160,
+            150,
+            "b",
+            "F"
+          ],
+          [
+            170,
+            90,
+            "b",
+            "J"
+          ],
+          [
+            208,
+            70,
+            "r",
+            ""
+          ],
+          [
+            208,
+            112,
+            "r",
+            ""
+          ],
+          [
+            250,
+            90,
+            "y",
+            "T"
+          ]
+        ],
+        "b": [
+          [
+            178,
+            90
+          ]
+        ],
+        "p": [
+          [
+            176,
+            86,
+            166,
+            40,
+            "p"
+          ],
+          [
+            168,
+            34,
+            228,
+            34,
+            "d"
+          ],
+          [
+            232,
+            38,
+            254,
+            80,
+            "s"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            176,
+            "Flitzer beim Abschluss im Korridor"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "3+1 gegen 3+1 – Raute ohne Aufpasser",
+      "kat": "raute",
+      "kurz": "Das Spieltagsformat der U9: zwei Teams mit Torwart und drei Feldspielern, Adler mit Ball, Igel ohne Ball.",
+      "spieler": "8–12 (zwei Teams zu je 4, bis zu zwei Rotationsspieler je Team)",
+      "feld": "Kreis-Feld ca. 25 x 20 m, zwei Jugendtore (1,65 m), nur Mittellinie markiert. Ist nur ein Jugendtor frei: auf der anderen Seite zwei Minitore mit Schusszone (ca. 6 m), der Torwart dort spielt ohne Hände und bleibt in der Schusszone; Tore auf die Minitore zählen nur aus der Schusszone, aufs Jugendtor wie gewohnt aus der gegnerischen Hälfte.",
+      "dauer": "10",
+      "ablauf": "Gespielt wird wie am Spieltag nach den Durchführungsbestimmungen des Kreises Köln: Treffer nur aus der gegnerischen Hälfte, Seitenaus und Ecke werden eingedribbelt oder eingepasst, der Torwart eröffnet flach. Rotation nach jedem Tor, spätestens nach zwei Minuten; der Torwart wechselt mit.\n\nAufstellung: Jäger vorn, zwei Flitzer außen, der Torwart spielt mit. Mit Ball gehen die Flitzer an die Seitenlinie (Adler), ohne Ball rücken sie eng und tief vor das Tor (Igel). Führt ein Team mit drei Toren, darf das andere einen vierten Feldspieler bringen – der spielt Aufpasser, und die volle Raute steht.\n\nIn der offenen Stufe gibt es keine Zusatzregel. Die Trainer rufen nicht rein, sie beobachten.\n\nTypische Fehlerbilder: Alle Feldspieler kleben am Ball. Die Flitzer bleiben im Igel breit stehen und das Tor ist offen. Der Torwart bleibt bei eigenem Ball auf der Linie.",
+      "varianten": "Leichter: Feld breiter, Gegner geht bei Abstoß hinter die Mittellinie. Schwerer: Tor nach Torwart-Eröffnung über beide Flitzer zählt doppelt.",
+      "coaching": "Adler oder Igel – was ist jetzt dran?\nTorwart, spiel mit.\nFlitzer: breit mit Ball, eng ohne Ball.",
+      "spass": 5,
+      "diff": 2,
+      "skizze": {
+        "z": [
+          [
+            20,
+            15,
+            240,
+            150
+          ]
+        ],
+        "li": [
+          [
+            140,
+            15,
+            140,
+            165,
+            "m"
+          ]
+        ],
+        "tor": [
+          [
+            8,
+            72,
+            "v",
+            36,
+            "j"
+          ],
+          [
+            262,
+            72,
+            "v",
+            36,
+            "j"
+          ]
+        ],
+        "s": [
+          [
+            40,
+            90,
+            "b",
+            "T"
+          ],
+          [
+            120,
+            90,
+            "b",
+            "J"
+          ],
+          [
+            90,
+            28,
+            "b",
+            "F"
+          ],
+          [
+            90,
+            152,
+            "b",
+            "F"
+          ],
+          [
+            240,
+            90,
+            "r",
+            "T"
+          ],
+          [
+            168,
+            90,
+            "r",
+            "J"
+          ],
+          [
+            214,
+            70,
+            "r",
+            "F"
+          ],
+          [
+            214,
+            110,
+            "r",
+            "F"
+          ]
+        ],
+        "b": [
+          [
+            48,
+            90
+          ]
+        ],
+        "p": [
+          [
+            48,
+            86,
+            86,
+            34,
+            "p"
+          ],
+          [
+            94,
+            34,
+            150,
+            34,
+            "d"
+          ],
+          [
+            124,
+            94,
+            150,
+            120,
+            "l"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            176,
+            "Blau im Adler, Rot im Igel"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Igel gegen drei – Torwart und zwei Flitzer verteidigen",
+      "kat": "pressing",
+      "kurz": "Verteidigungs-Spielform für das 3+1: Die beiden Flitzer schließen im Igel die Lücke, die der fehlende Aufpasser lässt.",
+      "spieler": "6 je Station (3 Angreifer gegen 2 Flitzer + Torwart)",
+      "feld": "Halbes Kreis-Feld ca. 12 x 20 m, Jugendtor (1,65 m), Mittellinie als Konterlinie. Ist kein Jugendtor frei: zwei Minitore an der Grundlinie, der Torwart spielt dazwischen als Torwart ohne Hände und bleibt in der Schusszone (ca. 6 m); Tore auf die Minitore zählen nur aus der Schusszone.",
+      "dauer": "12",
+      "ablauf": "Drei Angreifer starten mit Ball an der Mittellinie. Die beiden Flitzer stehen zu Beginn breit – wie im Adler – und müssen beim Start sofort eng und tief vor das Tor (Igel). Der Torwart hilft mit Zurufen.\n\nErobern die Verteidiger den Ball oder hält der Torwart, spielen sie ihn zu dritt über die Mittellinie (Dribbling oder Pass) – das ist ihr Punkt, und aus Igel wird wieder Adler.\n\nEngere Regel: Eine Eroberung vor der eigenen Schusshöhe (Hütchen ca. 6 m vor dem Tor) zählt doppelt – so lernen die Flitzer, vor dem Tor zu stehen, statt hinterherzulaufen.\n\nNach drei Angriffen tauschen die Teams. Der Torwart wechselt bei jedem Tausch.\n\nTypische Fehlerbilder: Beide Flitzer laufen auf den Ballführenden. Ein Flitzer bleibt außen stehen und das Tor ist offen. Nach der Eroberung wird der Ball weggeschossen statt gespielt.",
+      "varianten": "Leichter: nur zwei Angreifer. Schwerer: ein Angreifer mehr, der nach fünf Sekunden von der Mittellinie nachkommt.",
+      "coaching": "Igel! Wer schließt die Lücke?\nZwischen Ball und Tor stehen.\nBall erobert – jetzt Adler.",
+      "spass": 4,
+      "diff": 3,
+      "skizze": {
+        "z": [
+          [
+            20,
+            15,
+            120,
+            150
+          ]
+        ],
+        "li": [
+          [
+            140,
+            15,
+            140,
+            165,
+            "m"
+          ],
+          [
+            62,
+            15,
+            62,
+            165,
+            "sz"
+          ]
+        ],
+        "tor": [
+          [
+            8,
+            72,
+            "v",
+            36,
+            "j"
+          ]
+        ],
+        "s": [
+          [
+            130,
+            60,
+            "r",
+            ""
+          ],
+          [
+            130,
+            90,
+            "r",
+            ""
+          ],
+          [
+            130,
+            120,
+            "r",
+            ""
+          ],
+          [
+            76,
+            40,
+            "b",
+            "F"
+          ],
+          [
+            76,
+            140,
+            "b",
+            "F"
+          ],
+          [
+            30,
+            90,
+            "y",
+            "T"
+          ]
+        ],
+        "b": [
+          [
+            122,
+            90
+          ]
+        ],
+        "p": [
+          [
+            76,
+            48,
+            62,
+            78,
+            "l"
+          ],
+          [
+            76,
+            132,
+            62,
+            104,
+            "l"
+          ],
+          [
+            120,
+            88,
+            96,
+            88,
+            "d"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            176,
+            "Start: Flitzer sofort in den Igel"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "2 gegen 2 plus Torwart – Jäger läuft an, Flitzer stellt zu",
+      "kat": "pressing",
+      "kurz": "Pressing-Spielform: Der Jäger läuft den Ballführenden an, der Flitzer stellt den Passweg zu, der Torwart des anderen Teams eröffnet.",
+      "spieler": "6 je Station (Torwart + 2 gegen 2, 1 wartet)",
+      "feld": "Halbes Kreis-Feld ca. 12 x 20 m, Jugendtor (1,65 m), zwei Hütchentore (3 m) an der Mittellinie. Ist kein Jugendtor frei: zwei Minitore an der Grundlinie, der Torwart spielt dazwischen als Torwart ohne Hände und bleibt in der Schusszone (ca. 6 m); Tore auf die Minitore zählen nur aus der Schusszone.",
+      "dauer": "12",
+      "ablauf": "Rot (Torwart + zwei Feldspieler) eröffnet vom Jugendtor und will durch eines der beiden Hütchentore an der Mittellinie dribbeln. Blau verteidigt mit Jäger und Flitzer: Der Jäger läuft den Ballführenden sofort an und drängt ihn zur Seite, der Flitzer stellt den anderen Roten zu. Erobert Blau den Ball, schließt es direkt aufs Jugendtor ab.\n\nEngere Regel: Blau bekommt einen Bonuspunkt, wenn der Ball innerhalb von fünf Sekunden nach der Eröffnung erobert wird.\n\nNach jeder Aktion rücken die Aufgaben weiter, das sechste Kind kommt für den Torwart rein. Nach drei Aktionen tauschen Jäger und Flitzer.\n\nTypische Fehlerbilder: Beide Blauen laufen zum Ball und der zweite Rote ist frei. Der Jäger rennt ungebremst an und wird ausgespielt. Rot spielt hoch statt flach.",
+      "varianten": "Leichter: Rot hat nur einen Feldspieler (2 gegen 1 plus Torwart). Schwerer: Rot darf auch auf ein Minitor in der Mitte der Mittellinie abschließen.",
+      "coaching": "Jäger: schnell hin, dann langsam werden.\nFlitzer: Wo ist der zweite?\nDrängen nach außen, nicht in die Mitte.",
+      "spass": 4,
+      "diff": 3,
+      "skizze": {
+        "z": [
+          [
+            140,
+            15,
+            120,
+            150
+          ]
+        ],
+        "li": [
+          [
+            140,
+            15,
+            140,
+            165,
+            "m"
+          ]
+        ],
+        "tor": [
+          [
+            262,
+            72,
+            "v",
+            36,
+            "j"
+          ]
+        ],
+        "dtor": [
+          [
+            140,
+            30,
+            26,
+            "v",
+            "h",
+            "y"
+          ],
+          [
+            140,
+            124,
+            26,
+            "v",
+            "h",
+            "y"
+          ]
+        ],
+        "s": [
+          [
+            250,
+            90,
+            "r",
+            "T"
+          ],
+          [
+            222,
+            60,
+            "r",
+            ""
+          ],
+          [
+            222,
+            124,
+            "r",
+            ""
+          ],
+          [
+            182,
+            84,
+            "b",
+            "J"
+          ],
+          [
+            176,
+            132,
+            "b",
+            "F"
+          ]
+        ],
+        "b": [
+          [
+            228,
+            56
+          ]
+        ],
+        "p": [
+          [
+            244,
+            86,
+            226,
+            64,
+            "p"
+          ],
+          [
+            190,
+            80,
+            214,
+            64,
+            "l"
+          ],
+          [
+            184,
+            128,
+            210,
+            126,
+            "l"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            176,
+            "Jäger drängt, Flitzer stellt zu"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "FUNiño 3 gegen 3 – Seitenwechsel zählt doppelt",
+      "kat": "raute",
+      "kurz": "FUNiño in der Aufstellung ohne Jäger: Ein Tor zählt doppelt, wenn der Ball vorher über den Aufpasser die Seite gewechselt hat.",
+      "spieler": "6 je Feld (3 gegen 3), Rotationsspieler bei ungerader Zahl",
+      "feld": "FUNiño-Feld ca. 25 x 20 m, vier Minitore (max. 2 x 1,2 m) oder Hütchentore, Schusszone ca. 6 m vor den Toren",
+      "dauer": "12",
+      "ablauf": "3 gegen 3 auf vier Minitore nach den Regeln des Kreises: Tore nur aus der Schusszone, Aus wird eingedribbelt oder eingepasst, nach einem Tor startet der Gegner von der eigenen Grundlinie. Aufstellung: Aufpasser in der Mitte hinter dem Ball, zwei Flitzer außen vor den gegnerischen Toren.\n\nEngere Regel: Ein Tor zählt doppelt, wenn der Ball in diesem Angriff einmal von einer Seite über den Aufpasser auf die andere Seite gespielt wurde. So entsteht der Seitenwechsel zum freien Tor – die Grundidee von FUNiño.\n\nTypische Fehlerbilder: Alle drei stehen auf einer Linie. Der Aufpasser läuft mit nach vorn und keiner ist hinter dem Ball. Es wird immer aufs Tor gespielt, vor dem der Gegner schon steht.",
+      "varianten": "Leichter: Feld schmaler, Tor zählt auch aus dem Seitenwechsel ohne Aufpasser doppelt. Schwerer: höchstens drei Kontakte je Kind.",
+      "coaching": "Welches Tor ist frei?\nAufpasser, links oder rechts?\nFlitzer, bleib an deiner Seite.",
+      "spass": 5,
+      "diff": 2,
+      "skizze": {
+        "z": [
+          [
+            20,
+            15,
+            240,
+            150
+          ]
+        ],
+        "li": [
+          [
+            140,
+            15,
+            140,
+            165,
+            "m"
+          ],
+          [
+            78,
+            15,
+            78,
+            165,
+            "sz"
+          ],
+          [
+            202,
+            15,
+            202,
+            165,
+            "sz"
+          ]
+        ],
+        "tor": [
+          [
+            13,
+            30,
+            "v",
+            22
+          ],
+          [
+            13,
+            128,
+            "v",
+            22
+          ],
+          [
+            260,
+            30,
+            "v",
+            22
+          ],
+          [
+            260,
+            128,
+            "v",
+            22
+          ]
+        ],
+        "s": [
+          [
+            120,
+            90,
+            "b",
+            "A"
+          ],
+          [
+            170,
+            36,
+            "b",
+            "F"
+          ],
+          [
+            170,
+            144,
+            "b",
+            "F"
+          ],
+          [
+            150,
+            70,
+            "r",
+            ""
+          ],
+          [
+            190,
+            90,
+            "r",
+            ""
+          ],
+          [
+            215,
+            130,
+            "r",
+            ""
+          ]
+        ],
+        "b": [
+          [
+            128,
+            90
+          ]
+        ],
+        "p": [
+          [
+            166,
+            44,
+            126,
+            84,
+            "p"
+          ],
+          [
+            126,
+            96,
+            164,
+            138,
+            "p"
+          ],
+          [
+            178,
+            144,
+            214,
+            140,
+            "d"
+          ],
+          [
+            222,
+            140,
+            256,
+            140,
+            "s"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            176,
+            "Wechsel über Aufpasser: 2 Punkte"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+      "kat": "passspiel",
+      "kurz": "Überzahl-Spielform, angelehnt an eine FUNiño-Form nach Horst Wein: Drei greifen zwei Tore an, ein Verteidiger verteidigt beide. Der mittlere Spieler entscheidet.",
+      "spieler": "6 je Station (3 Angreifer, 1 Verteidiger, 2 warten als nächste Verteidiger)",
+      "feld": "Halbes FUNiño-Feld ca. 12 x 20 m, zwei Minitore an der Grundlinie, Schusszone ca. 6 m",
+      "dauer": "12",
+      "ablauf": "Drei Angreifer starten mit Ball an der Mittellinie: links, Mitte, rechts. Ein Verteidiger startet von der Grundlinie zwischen den beiden Minitoren. Die Angreifer versuchen, in der Schusszone ein Tor zu erzielen. Erobert der Verteidiger den Ball, schießt er ihn so schnell wie möglich über die Mittellinie.\n\nFünf Angriffe, dann wechselt der Verteidiger – die beiden Wartenden kommen nacheinander dran. Danach tauschen Angreifer und Wartende die Aufgaben.\n\nNach Weins Coachingfragen soll möglichst der mittlere Spieler den Ball haben, weil nur er in beide Richtungen spielen kann – das ist der Aufpasser als Mittelmann.\n\nTypische Fehlerbilder: Der Mittlere passt, bevor der Verteidiger sich festgelegt hat. Die Außen laufen auf den Mittleren zu. Nach dem Pass bleibt der Mittlere stehen.",
+      "varianten": "Leichter: Verteidiger darf die Schusszone nicht verlassen. Schwerer: 3 gegen 2, der zweite Verteidiger startet nach drei Sekunden.",
+      "coaching": "Wer hat den Ball am besten?\nPass, wenn der Verteidiger kommt.\nNach dem Pass: hinterher.",
+      "spass": 4,
+      "diff": 2,
+      "skizze": {
+        "z": [
+          [
+            140,
+            15,
+            120,
+            150
+          ]
+        ],
+        "li": [
+          [
+            140,
+            15,
+            140,
+            165,
+            "m"
+          ],
+          [
+            202,
+            15,
+            202,
+            165,
+            "sz"
+          ]
+        ],
+        "tor": [
+          [
+            260,
+            30,
+            "v",
+            22
+          ],
+          [
+            260,
+            128,
+            "v",
+            22
+          ]
+        ],
+        "s": [
+          [
+            150,
+            36,
+            "b",
+            "F"
+          ],
+          [
+            150,
+            90,
+            "b",
+            "A"
+          ],
+          [
+            150,
+            144,
+            "b",
+            "F"
+          ],
+          [
+            232,
+            90,
+            "r",
+            ""
+          ]
+        ],
+        "b": [
+          [
+            158,
+            90
+          ]
+        ],
+        "p": [
+          [
+            158,
+            90,
+            196,
+            90,
+            "d"
+          ],
+          [
+            198,
+            86,
+            228,
+            44,
+            "p"
+          ],
+          [
+            160,
+            40,
+            214,
+            40,
+            "l"
+          ],
+          [
+            222,
+            40,
+            256,
+            40,
+            "s"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            176,
+            "Der Mittlere hat den Ball"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "FUNiño 3 gegen 3 – einer bleibt hinter dem Ball",
+      "kat": "raute",
+      "kurz": "FUNiño mit Positionsregel: Ein Tor zählt nur, wenn beim Abschluss ein Mitspieler hinter dem Ball steht.",
+      "spieler": "6 je Feld (3 gegen 3)",
+      "feld": "FUNiño-Feld ca. 25 x 20 m, vier Minitore oder Hütchentore, Schusszone ca. 6 m",
+      "dauer": "12",
+      "ablauf": "3 gegen 3 auf vier Minitore nach den Regeln des Kreises. Aufstellung ohne Jäger: Aufpasser in der Mitte, zwei Flitzer außen.\n\nEngere Regel: Ein Tor zählt nur, wenn im Moment des Abschlusses mindestens ein Mitspieler hinter dem Ball steht – in der Regel der Aufpasser. Wer mit allen dreien nach vorn rennt, trifft umsonst.\n\nDie Regel schützt vor dem Konter und zeigt den Kindern, warum der Aufpasser nicht zum Torsteher wird: Er rückt mit, bleibt aber hinter dem Ball.\n\nTypische Fehlerbilder: Der Aufpasser bleibt an der eigenen Grundlinie stehen. Alle drei laufen gleichzeitig in die Schusszone. Die Flitzer kommen in die Mitte.",
+      "varianten": "Leichter: Regel gilt nur für die Mannschaft, die gerade führt. Schwerer: Der Spieler hinter dem Ball muss in der gegnerischen Hälfte stehen.",
+      "coaching": "Wo stehst du, wenn wir angreifen?\nAufpasser: mitgehen, aber hinter dem Ball.\nLinks, Mitte, rechts – alles besetzt?",
+      "spass": 4,
+      "diff": 3,
+      "skizze": {
+        "z": [
+          [
+            20,
+            15,
+            240,
+            150
+          ]
+        ],
+        "li": [
+          [
+            140,
+            15,
+            140,
+            165,
+            "m"
+          ],
+          [
+            78,
+            15,
+            78,
+            165,
+            "sz"
+          ],
+          [
+            202,
+            15,
+            202,
+            165,
+            "sz"
+          ]
+        ],
+        "tor": [
+          [
+            13,
+            30,
+            "v",
+            22
+          ],
+          [
+            13,
+            128,
+            "v",
+            22
+          ],
+          [
+            260,
+            30,
+            "v",
+            22
+          ],
+          [
+            260,
+            128,
+            "v",
+            22
+          ]
+        ],
+        "s": [
+          [
+            150,
+            90,
+            "b",
+            "A"
+          ],
+          [
+            214,
+            40,
+            "b",
+            "F"
+          ],
+          [
+            210,
+            136,
+            "b",
+            "F"
+          ],
+          [
+            180,
+            70,
+            "r",
+            ""
+          ],
+          [
+            236,
+            60,
+            "r",
+            ""
+          ],
+          [
+            100,
+            110,
+            "r",
+            ""
+          ]
+        ],
+        "b": [
+          [
+            220,
+            44
+          ]
+        ],
+        "p": [
+          [
+            140,
+            94,
+            150,
+            94,
+            "l"
+          ],
+          [
+            222,
+            44,
+            256,
+            40,
+            "s"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            176,
+            "Tor nur mit einem hinter dem Ball"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+      "kat": "raute",
+      "kurz": "Überzahl-Spielform: Drei Angreifer besetzen links, Mitte und rechts; ein Wandspieler zwischen den gegnerischen Toren hilft beim Freispielen.",
+      "spieler": "6 je Station (3 Angreifer, 2 Verteidiger, 1 Wandspieler)",
+      "feld": "FUNiño-Feld ca. 25 x 20 m oder etwas kürzer, zwei Minitore an einer Grundlinie, Wandspieler außerhalb des Feldes zwischen diesen Toren",
+      "dauer": "12",
+      "ablauf": "Drei Angreifer starten mit Ball an der eigenen Grundlinie und greifen die zwei Minitore an. Zwei Verteidiger verteidigen. Hinter der Grundlinie, zwischen den beiden Toren, steht ein Wandspieler: Er darf angespielt werden und legt mit höchstens zwei Kontakten zurück in die Schusszone. Erobern die Verteidiger den Ball, dribbeln sie über die Grundlinie der Angreifer.\n\nEngere Regel: Ein Tor zählt nur, wenn beim Abschluss links, Mitte und rechts besetzt sind. Ein Tor nach Ablage des Wandspielers zählt doppelt.\n\nNach drei Angriffen rücken alle eine Aufgabe weiter: Angreifer → Verteidiger → Wandspieler → Angreifer.\n\nTypische Fehlerbilder: Zwei Angreifer stehen auf derselben Seite. Der Wandspieler wird angespielt, obwohl ein Angreifer frei ist. Nach der Ablage läuft niemand in die Schusszone.",
+      "varianten": "Leichter: nur ein Verteidiger. Schwerer: Wandspieler mit nur einem Kontakt.",
+      "coaching": "Links, Mitte, rechts – ist jede Seite besetzt?\nWo bist du anspielbar?\nNach dem Pass zur Wand: rein in die Zone.",
+      "spass": 4,
+      "diff": 3,
+      "skizze": {
+        "z": [
+          [
+            20,
+            15,
+            240,
+            150
+          ]
+        ],
+        "li": [
+          [
+            140,
+            15,
+            140,
+            165,
+            "m"
+          ],
+          [
+            202,
+            15,
+            202,
+            165,
+            "sz"
+          ]
+        ],
+        "tor": [
+          [
+            260,
+            30,
+            "v",
+            22
+          ],
+          [
+            260,
+            128,
+            "v",
+            22
+          ]
+        ],
+        "s": [
+          [
+            110,
+            36,
+            "b",
+            "F"
+          ],
+          [
+            100,
+            90,
+            "b",
+            "A"
+          ],
+          [
+            110,
+            144,
+            "b",
+            "F"
+          ],
+          [
+            190,
+            70,
+            "r",
+            ""
+          ],
+          [
+            190,
+            112,
+            "r",
+            ""
+          ],
+          [
+            270,
+            90,
+            "y",
+            "W"
+          ]
+        ],
+        "b": [
+          [
+            108,
+            90
+          ]
+        ],
+        "p": [
+          [
+            108,
+            90,
+            260,
+            90,
+            "p"
+          ],
+          [
+            264,
+            98,
+            222,
+            130,
+            "p"
+          ],
+          [
+            118,
+            140,
+            214,
+            136,
+            "l"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            176,
+            "W = Wandspieler hinter der Linie"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "FUNiño 3 gegen 3 – Mittellinie verteidigen",
+      "kat": "pressing",
+      "kurz": "FUNiño-Spielform, angelehnt an „Mittellinie verteidigen“ der DFB-Akademie: Punkt für das Überspielen der Mittellinie, Punkt für jedes Tor – der Igel verhindert beides.",
+      "spieler": "6 je Feld (3 gegen 3)",
+      "feld": "FUNiño-Feld ca. 25 x 20 m mit Mittellinie, vier Minitore oder Hütchentore, Schusszone ca. 6 m",
+      "dauer": "12",
+      "ablauf": "3 gegen 3 auf vier Minitore. Das angreifende Team bekommt einen Punkt, wenn es mit Pass oder Dribbling über die Mittellinie kommt (einmal je Angriff), und einen weiteren für jedes Tor.\n\nDas verteidigende Team spielt Igel: Einer drängt den Ballführenden nach außen, zwei schützen die Tore – der Aufpasser vor dem Tor auf der Ballseite, der andere Flitzer vor dem zweiten Tor. Kommt der Ball auf die andere Seite, verschieben alle.\n\nEngere Regel: Wer den Ball vor der Mittellinie erobert, bekommt selbst einen Punkt.\n\nTypische Fehlerbilder: Zwei laufen zum Ball und ein Tor ist leer. Der Drängende läuft gerade auf den Ball und wird ausgespielt. Nach dem Seitenwechsel verschiebt keiner.",
+      "varianten": "Leichter: Feld schmaler. Schwerer: Punkt für die Mittellinie nur per Pass.",
+      "coaching": "Einer drängt, zwei schützen.\nNach außen drängen, nicht in die Mitte.\nBall wechselt die Seite – alle verschieben.",
+      "spass": 4,
+      "diff": 3,
+      "skizze": {
+        "z": [
+          [
+            20,
+            15,
+            240,
+            150
+          ]
+        ],
+        "li": [
+          [
+            140,
+            15,
+            140,
+            165,
+            "m"
+          ],
+          [
+            78,
+            15,
+            78,
+            165,
+            "sz"
+          ],
+          [
+            202,
+            15,
+            202,
+            165,
+            "sz"
+          ]
+        ],
+        "tor": [
+          [
+            13,
+            30,
+            "v",
+            22
+          ],
+          [
+            13,
+            128,
+            "v",
+            22
+          ],
+          [
+            260,
+            30,
+            "v",
+            22
+          ],
+          [
+            260,
+            128,
+            "v",
+            22
+          ]
+        ],
+        "s": [
+          [
+            108,
+            50,
+            "r",
+            ""
+          ],
+          [
+            108,
+            120,
+            "r",
+            ""
+          ],
+          [
+            80,
+            90,
+            "r",
+            ""
+          ],
+          [
+            146,
+            58,
+            "b",
+            "F"
+          ],
+          [
+            196,
+            40,
+            "b",
+            "A"
+          ],
+          [
+            200,
+            136,
+            "b",
+            "F"
+          ]
+        ],
+        "b": [
+          [
+            114,
+            54
+          ]
+        ],
+        "p": [
+          [
+            140,
+            60,
+            122,
+            56,
+            "l"
+          ],
+          [
+            214,
+            38,
+            238,
+            40,
+            "l"
+          ],
+          [
+            204,
+            132,
+            238,
+            136,
+            "l"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            176,
+            "Einer drängt, zwei schützen"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "FUNiño 2 gegen 2 – einer drängt, einer schützt",
+      "kat": "pressing",
+      "kurz": "Kleine Verteidigungsform auf vier Minitore: Im 2 gegen 2 wird die Aufgabenteilung aus dem Igel eingeübt.",
+      "spieler": "6 je Station (2 gegen 2, 2 Rotationsspieler)",
+      "feld": "Kleines Feld ca. 16 x 20 m, vier Minitore oder Hütchentore, Tore nur aus der gegnerischen Hälfte",
+      "dauer": "12",
+      "ablauf": "2 gegen 2 auf vier Minitore, Tore zählen ab der Mittellinie (wie beim 2 gegen 2 im Kinderfußball). Nach jedem Tor wechselt jedes Team einen Spieler, die beiden Rotationsspieler stehen an der Mittellinie bereit.\n\nOhne Ball gilt: Einer drängt den Ballführenden nach außen, der andere stellt sich vor das Tor auf der Ballseite. Wechselt der Ball die Seite, tauschen die beiden die Aufgabe.\n\nEngere Regel: Ein erobertes Tor – Ballgewinn und Abschluss innerhalb von fünf Sekunden – zählt doppelt.\n\nTypische Fehlerbilder: Beide laufen zum Ball. Der Schützende steht in der Mitte zwischen den Toren statt vor dem Tor auf der Ballseite. Nach der Eroberung wird gezögert.",
+      "varianten": "Leichter: Feld kürzer. Schwerer: 2 gegen 2 plus ein neutraler Spieler, der immer beim Ballbesitz-Team mitspielt.",
+      "coaching": "Wer drängt, wer schützt?\nDrängen nach außen.\nBall gewonnen – schnell zum Tor.",
+      "spass": 4,
+      "diff": 2,
+      "skizze": {
+        "z": [
+          [
+            40,
+            25,
+            200,
+            130
+          ]
+        ],
+        "li": [
+          [
+            140,
+            25,
+            140,
+            155,
+            "m"
+          ]
+        ],
+        "tor": [
+          [
+            33,
+            40,
+            "v",
+            20
+          ],
+          [
+            33,
+            120,
+            "v",
+            20
+          ],
+          [
+            240,
+            40,
+            "v",
+            20
+          ],
+          [
+            240,
+            120,
+            "v",
+            20
+          ]
+        ],
+        "s": [
+          [
+            112,
+            56,
+            "r",
+            ""
+          ],
+          [
+            100,
+            120,
+            "r",
+            ""
+          ],
+          [
+            134,
+            64,
+            "b",
+            "F"
+          ],
+          [
+            180,
+            50,
+            "b",
+            "A"
+          ]
+        ],
+        "b": [
+          [
+            118,
+            60
+          ]
+        ],
+        "p": [
+          [
+            142,
+            66,
+            124,
+            62,
+            "l"
+          ],
+          [
+            188,
+            50,
+            232,
+            50,
+            "l"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            174,
+            "Einer drängt, einer schützt"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "3+1 gegen FUNiño – großes Tor gegen zwei kleine",
+      "kat": "raute",
+      "kurz": "Kombi-Spielform auf einem Feld: Ein Team spielt 3+1 und verteidigt das Jugendtor, das andere spielt FUNiño und verteidigt zwei Minitore. Nach jedem Durchgang tauschen die Teams die Seite – und damit die Aufstellung.",
+      "spieler": "7 auf dem Feld (3+1 gegen 3); bei 12 Kindern je Team 6, also 2 bzw. 3 Wechsler",
+      "feld": "Kreis-Feld ca. 25 x 20 m mit Mittellinie. Auf einer Seite ein Jugendtor (1,65 m), auf der anderen zwei Minitore (max. 2 x 1,2 m) mit Schusszone ca. 6 m",
+      "dauer": "10",
+      "ablauf": "Das Team am Jugendtor spielt 3+1 in der Raute ohne Aufpasser: Jäger vorn, zwei Flitzer außen, der Torwart spielt mit und eröffnet flach. Es greift die beiden Minitore an; dort zählen Tore nur aus der Schusszone. Das Team an den Minitoren spielt FUNiño im Dreieck ohne Jäger: Aufpasser hinter dem Ball, zwei Flitzer außen. Es greift das Jugendtor an; dort zählen Tore nur aus der gegnerischen Hälfte.\n\nOhne Ball: Das Jugendtor-Team geht in den Igel und rückt eng vor das Tor. Das FUNiño-Team spielt „einer drängt, zwei schützen die Tore“.\n\nNach jedem Tor kommt in beiden Teams ein Wechsler; im Jugendtor-Team wechselt der Torwart reihum mit. Aus wird eingedribbelt oder eingepasst, Abstand drei Meter. Liegt ein Team drei Tore zurück, darf es einen Spieler mehr bringen – das Jugendtor-Team den Aufpasser, das FUNiño-Team den Jäger.\n\nNach jedem Durchgang tauschen die Teams die Seite. In der kurzen Pause eine Frage: „Welche Tore habt ihr jetzt – wer fehlt euch?“ Bei den großen Toren fehlt der Aufpasser, bei den kleinen der Jäger.\n\nTypische Fehlerbilder: Nach dem Seitenwechsel bleibt die alte Aufstellung stehen. Im FUNiño-Team laufen alle drei nach vorn, keiner ist hinter dem Ball. Das Jugendtor-Team spielt immer auf das zugestellte Minitor statt auf das freie.",
+      "varianten": "Leichter: Feld kürzer, das FUNiño-Team darf aufs Jugendtor aus dem ganzen Feld schießen. Schwerer: Ein Tor aufs Jugendtor zählt nur nach einem Seitenwechsel über den Aufpasser; ein Tor auf ein Minitor zählt doppelt, wenn der Torwart am Angriff beteiligt war.",
+      "coaching": "Welche Tore habt ihr – wer fehlt euch?\nGroßes Tor: Flitzer breit, Torwart spielt mit.\nKleine Tore: Einer bleibt hinter dem Ball.",
+      "spass": 5,
+      "diff": 3,
+      "skizze": {
+        "z": [
+          [
+            20,
+            15,
+            240,
+            150
+          ]
+        ],
+        "li": [
+          [
+            140,
+            15,
+            140,
+            165,
+            "m"
+          ],
+          [
+            202,
+            15,
+            202,
+            165,
+            "sz"
+          ]
+        ],
+        "tor": [
+          [
+            8,
+            72,
+            "v",
+            36,
+            "j"
+          ],
+          [
+            260,
+            30,
+            "v",
+            22
+          ],
+          [
+            260,
+            128,
+            "v",
+            22
+          ]
+        ],
+        "s": [
+          [
+            30,
+            90,
+            "b",
+            "T"
+          ],
+          [
+            112,
+            90,
+            "b",
+            "J"
+          ],
+          [
+            86,
+            30,
+            "b",
+            "F"
+          ],
+          [
+            86,
+            150,
+            "b",
+            "F"
+          ],
+          [
+            238,
+            62,
+            "r",
+            "A"
+          ],
+          [
+            178,
+            52,
+            "r",
+            "F"
+          ],
+          [
+            240,
+            130,
+            "r",
+            "F"
+          ]
+        ],
+        "b": [
+          [
+            38,
+            90
+          ]
+        ],
+        "p": [
+          [
+            40,
+            86,
+            82,
+            36,
+            "p"
+          ],
+          [
+            92,
+            32,
+            160,
+            32,
+            "d"
+          ],
+          [
+            168,
+            34,
+            212,
+            34,
+            "d"
+          ],
+          [
+            216,
+            38,
+            256,
+            40,
+            "s"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            176,
+            "Großes Tor gegen zwei kleine"
+          ]
         ]
       }
     }

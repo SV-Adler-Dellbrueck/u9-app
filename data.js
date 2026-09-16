@@ -4242,5 +4242,21 @@ const UEBUNG_ART_VORSCHLAG={
   "Freilauf-Training":"uebung",
   "Umschalt-Blitz":"uebung",
   "Kommunikations-Training":"weder",
-  "Konzentrations-Parcours":"weder"
+  "Konzentrations-Parcours":"weder",
+  /* v568 – die dreizehn Übungen der Einheiten für 3+1, FUNiño und die Kombination
+     (uebungen/bibliothek.json, Stand 2026-09-16-1): alle Spielformen mit Gegner und
+     laufendem Spielfluss. Der Vorschlag wird wie bisher erst auf Tipp geschrieben. */
+  "3+1 gegen 2 – Adler aus dem Tor":"spiel",
+  "2 gegen 1 plus Torwart – der Flitzer macht es breit":"spiel",
+  "3 gegen 2 plus Torwart – Jäger und zwei Flitzer":"spiel",
+  "3+1 gegen 3+1 – Raute ohne Aufpasser":"spiel",
+  "Igel gegen drei – Torwart und zwei Flitzer verteidigen":"spiel",
+  "2 gegen 2 plus Torwart – Jäger läuft an, Flitzer stellt zu":"spiel",
+  "FUNiño 3 gegen 3 – Seitenwechsel zählt doppelt":"spiel",
+  "FUNiño 3 gegen 1 – der Mittlere hat den Ball":"spiel",
+  "FUNiño 3 gegen 3 – einer bleibt hinter dem Ball":"spiel",
+  "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts":"spiel",
+  "FUNiño 3 gegen 3 – Mittellinie verteidigen":"spiel",
+  "FUNiño 2 gegen 2 – einer drängt, einer schützt":"spiel",
+  "3+1 gegen FUNiño – großes Tor gegen zwei kleine":"spiel"
 };
