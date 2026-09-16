@@ -506,7 +506,13 @@ const EI_TAGS=["wenig-platz","vor-spieltag","halle","schlechtwetter"];
    Ausbildungskonzept Fassung 3 hat sich dagegen entschieden. Nicht „Spielform" genannt:
    das Wort ist zweifach vergeben (4+1/3+1/FUNiNO am Spieltag, Spielform gegen
    Uebungsform seit v533). Leer ist erlaubt und heisst „keine besondere". */
-const EI_ORDNUNGEN=["1 gegen 1","2 gegen 2","Dreieck (3 gegen 3)","Raute (4 gegen 4)","Überzahl","ohne Gegner"];
+/* v568: Die Spielformen des Spieltags als eigene Ordnungen – „3+1“ (Raute ohne Aufpasser,
+   der Torwart spielt mit), „FUNiño“ (Dreieck ohne Jäger, der Aufpasser als Mittelmann) und
+   die Kombination „3+1 gegen FUNiño“ (großes Tor gegen zwei kleine). Sie stehen hinter der
+   Raute, weil sie aus ihr hervorgehen; „Dreieck (3 gegen 3)“ bleibt die Ordnung ohne Tore
+   und ohne Spieltagsbezug. Die Spalte trainingsvorlagen.ordnung ist Text ohne Check –
+   nur der Kommentar zieht nach (20260916_vorlagen_ordnung_spielformen.sql). */
+const EI_ORDNUNGEN=["1 gegen 1","2 gegen 2","Dreieck (3 gegen 3)","Raute (4 gegen 4)","3+1","FUNiño","3+1 gegen FUNiño","Überzahl","ohne Gegner"];
 /* Konzept §2: „Spielformen" sind die Blöcke, in denen wirklich gespielt wird –
    Hauptteil und Abschluss. Das Warm-up zählt nicht mit, das Torwart- und
    Einzeltraining läuft parallel und verlängert die Einheit nicht (TP_PARALLEL_TYPEN). */

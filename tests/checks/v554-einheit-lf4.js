@@ -15,7 +15,8 @@
      gezeichnet – die Abgabe hätte dann ein Loch, das erst der Prüfer sieht.
 
    Fälle:
-   a) bibliothek.json: Stand 2026-09-14-2, beide Übungen am Ende, keine doppelten Namen.
+   a) bibliothek.json: Stand 2026-09-14-2, beide Übungen direkt hinter den zwölf ursprünglichen
+      (seit v568 hängen weitere dahinter – die Datei wächst nur am Ende), keine doppelten Namen.
    b) Abgleich gegen eine Attrappe mit den zwölf vorhandenen: 2 angelegt, 12 übersprungen,
       Skizze bei beiden dabei. Zweiter Lauf: 0 neu, 14 übersprungen.
    c) Spec-Schlüssel gegen EI_SKZ_LISTEN, Spielerfarben gegen den Farbsatz, Pfeiltypen
@@ -44,12 +45,17 @@ module.exports = async function (h) {
   if (!/^2026-09-14-[2-9]$|^2026-09-1[5-9]/.test(String(bib.stand))) probleme.push(`bibliothek.json: Stand „${bib.stand}“ liegt vor „2026-09-14-2“ – ohne neuen Stand holt _bibHolen die Datei nicht`);
   const fehlend = NEU.filter(n => !namen.includes(n));
   if (fehlend.length) probleme.push("In der Bibliothek fehlen: " + fehlend.join(", "));
-  if (String(namen.slice(-2)) !== String(NEU)) probleme.push("Die beiden neuen stehen nicht am Ende des Arrays: " + namen.slice(-2).join(" | "));
+  /* v568: Die Datei wächst nur am Ende – hinter den beiden stehen seither die dreizehn
+     Übungen für 3+1 und FUNiño. Geprüft wird deshalb die Stelle, nicht das Ende. */
+  const erstePos = namen.indexOf(NEU[0]);
+  if (erstePos < 0 || String(namen.slice(erstePos, erstePos + 2)) !== String(NEU)) probleme.push("Die beiden neuen stehen nicht zusammen: " + namen.slice(erstePos, erstePos + 2).join(" | "));
+  const davor = erstePos < 0 ? [] : (bib.uebungen || []).slice(0, erstePos);
+  if (davor.length !== 12) probleme.push(`${davor.length} statt 12 Übungen vor den beiden neuen in der Datei`);
   const doppelt = namen.filter((n, i) => namen.indexOf(n) !== i);
   if (doppelt.length) probleme.push("Doppelte Namen in der Datei: " + doppelt.join(", "));
   const ziel = (bib.uebungen || []).filter(u => NEU.includes(u.name));
   const vorhanden = (bib.uebungen || []).filter(u => !NEU.includes(u.name));
-  if (vorhanden.length !== 12) probleme.push(`${vorhanden.length} statt 12 bestehende Übungen in der Datei`);
+  if (vorhanden.length < 12) probleme.push(`${vorhanden.length} statt mindestens 12 bestehende Übungen in der Datei`);
 
   // ── d) Die Vorlagendatei, ohne Browser ──────────────────────────────────────
   const vor = JSON.parse(fs.readFileSync(path.join(h.REPO, "uebungen/vorlagen.json"), "utf8"));

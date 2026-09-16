@@ -50,6 +50,10 @@ module.exports = async function (h) {
   const s = await h.starten({ supabase: h.supabaseAttrappe({ kader: h.kaderZeilen() }) });
   const r = await s.page.evaluate(({ namen, ausDatei }) => {
     const farben = Object.values(SKZ_PFEIL);
+    /* v568: Ein Spielerkürzel („F“ für Flitzer) ist kein Übungsname im Bild – vorher traf
+       der Vergleich jede Übung, deren Name mit demselben Buchstaben beginnt („FUNiño …“).
+       Gezählt wird erst ab sechs Zeichen, so lang ist kein Kürzel und so kurz kein Name. */
+    const nameImBild = (name, texte) => texte.some(t => t && t.length >= 6 && (name.startsWith(t.slice(0, 12)) || t.startsWith(name.slice(0, 12))));
     const pruefe = svg => {
       const texte = [...svg.matchAll(/<text[^>]*>([^<]*)<\/text>/g)].map(m => m[1]);
       return {
@@ -73,7 +77,7 @@ module.exports = async function (h) {
     TRAININGSFORMEN.forEach(f => {
       if (!f.svg || TF_SKIZZEN[f.id]) return;
       const p = pruefe(f.svg);
-      const name = p.texte.some(t => t && (f.name.startsWith(t.slice(0, 12)) || t.startsWith(f.name.slice(0, 12))));
+      const name = nameImBild(f.name, p.texte);
       if (name || p.svgs > 1 || p.halb || (p.linien && !p.legendenfarbe)) rest++;
     });
     return { aus, rest, gesamt: TRAININGSFORMEN.length };
@@ -89,7 +93,8 @@ module.exports = async function (h) {
   const doppelt = da.filter(x => x.svgs > 1).map(x => `${x.name} (${x.svgs})`);
   if (doppelt.length) probleme.push("Mehr als ein <svg> in einer Skizze: " + doppelt.join(", "));
 
-  const mitName = da.filter(x => x.texte.some(t => t && (x.name.startsWith(t.slice(0, 12)) || t.startsWith(x.name.slice(0, 12))))).map(x => x.name);
+  const kurz = t => t && t.length >= 6;   // v568: Spielerkürzel zählen nicht als Name im Bild (siehe oben)
+  const mitName = da.filter(x => x.texte.some(t => kurz(t) && (x.name.startsWith(t.slice(0, 12)) || t.startsWith(x.name.slice(0, 12))))).map(x => x.name);
   if (mitName.length) probleme.push("Der Übungsname steht im Bild (er steht schon als Überschrift darüber): " + mitName.join(", "));
 
   const halb = da.filter(x => x.halb).map(x => x.name);

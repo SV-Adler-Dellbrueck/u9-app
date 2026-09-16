@@ -2693,6 +2693,7 @@ async function tpPlanRestore(datum){
   });
   if(!plan||!plan.length)return;
   const belegt=new Set();
+  const gesetzt=[];        // v568: Stations-Einträge, die ein Feld bekommen haben (si, station, formIdx)
   plan.forEach(e=>{
     if(e.formIdx==null||!allForms[e.formIdx])return;
     const passend=sels.filter(s=>{
@@ -2710,6 +2711,7 @@ async function tpPlanRestore(datum){
       const ziel=passend.find(x=>new RegExp(`-${e.station}$`).test(x.id));
       if(!ziel)return;
       setzen(ziel);
+      const mz=ziel.id.match(/^tp-form-(\d+)-/); if(mz)gesetzt.push({si:+mz[1],station:Number(e.station),formIdx:e.formIdx});
       return;
     }
     /* Paket A: Trägt der Eintrag die Marke „gilt für alle Felder" (aus einer Vorlage OHNE
@@ -2735,6 +2737,29 @@ async function tpPlanRestore(datum){
        v537 schon für Stationen: kein Feld, kein Einsetzen. */
     if(!passend.length)return;
     setzen(passend[0]);
+  });
+  /* v568: Paket A (Auftrag Stationen) sagte zu: „gibt es mehr Felder als Stationen,
+     wiederholt sich die Liste." Der Code tat es bis v567 nicht – bei zwei Stationen und
+     drei Feldtrainern blieb das dritte Feld leer, ohne Hinweis. Nachgesehen beim Bau der
+     Einheiten für 3+1 und FUNiño (Abnahme 4). Deshalb ein zweiter Durchgang NUR über die
+     Blöcke, in denen Stationen stehen: jedes noch leere Feld bekommt die Station, die sich
+     aus seiner Nummer ergibt (Feld 3 → Station 1, Feld 4 → Station 2 …). Weniger Felder
+     als Stationen bleibt, wie es war: die überzählige Station entfällt. Sobald der Trainer
+     ein Feld von Hand ändert, speichert tpPlanEntries() Feld für Feld – ab dann gilt seine
+     Hand, wie bei „gilt für alle Felder". */
+  const jeSlot={};
+  gesetzt.forEach(g=>{ (jeSlot[g.si]=jeSlot[g.si]||[]).push(g); });
+  Object.keys(jeSlot).forEach(si=>{
+    const liste=jeSlot[si].slice().sort((a,b)=>a.station-b.station);
+    if(!liste.length)return;
+    sels.forEach(s=>{
+      if(belegt.has(s.id)||s.value)return;
+      const m=s.id.match(/^tp-form-(\d+)-(\d+)$/); if(!m||m[1]!==String(si))return;
+      const e=liste[(+m[2])%liste.length];
+      if(e.formIdx==null||!allForms[e.formIdx])return;
+      s.value=String(e.formIdx); belegt.add(s.id);
+      if(typeof tpOnSelectChange==="function")tpOnSelectChange(s);
+    });
   });
 }
 /* Terminwahl des Trainingsplans: die nächsten sechs Trainings als Kacheln, je mit
