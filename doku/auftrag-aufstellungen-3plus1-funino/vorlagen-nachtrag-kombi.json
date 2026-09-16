@@ -66,6 +66,71 @@
      "dauer": 18
     }
    ]
+  },
+  {
+   "name": "L6-5 3+1 gegen FUNiño – zwei Arten, den Ball zurückzuholen",
+   "leitfrage": "Wie hole ich mir den Ball zurück?",
+   "folge_nr": 5,
+   "tags": [],
+   "dauer_min": 75,
+   "netto_spielform_min": 38,
+   "skalierung": {
+    "8": "Hauptteile 1 und 2: zwei Gruppen zu 4 mit den leichteren Varianten (Igel gegen zwei, FUNiño 2 gegen 2 ohne Rotation). Hauptteil 3 und Turnier: 3+1 gegen 3, ein Wechsler – im Plan Feld 2 weglassen.",
+    "12": "Hauptteile 1 und 2: zwei Gruppen zu 6, Station 1 auf der Jugendtor-Hälfte, Station 2 auf der Minitor-Hälfte desselben Feldes (zwei Minitore an der Grundlinie, zwei Hütchentore an der Mittellinie). Hauptteil 3 und Turnier: 3+1 mit 2 Wechslern gegen 3 mit 3 Wechslern – im Plan Feld 2 weglassen.",
+    "16": "Hauptteile 1 und 2: zwei Gruppen zu 8 mit den schwereren Varianten. Hauptteil 3 und Turnier: zwei Felder – eines als Kombi-Feld, das zweite als FUNiño 3 gegen 3 auf vier Minitore (oder zweites Kombi-Feld, falls ein zweites Jugendtor frei ist); nach jedem Durchgang Felder tauschen."
+   },
+   "beobachtung": "Wer hat nach dem Seitenwechsel die Art zu verteidigen gewechselt – als Flitzer eng im Igel vor dem großen Tor, als Aufpasser vor dem ballnahen kleinen Tor?",
+   "ordnung": "3+1 gegen FUNiño",
+   "bloecke": [
+    {
+     "typ": "warmup",
+     "label": "Straßenfußball-Fenster",
+     "dauer": 10
+    },
+    {
+     "typ": "warmup",
+     "label": "Warm up Adler, kurz",
+     "dauer": 8,
+     "uebung_name": "Warm up Adler"
+    },
+    {
+     "typ": "spielform",
+     "label": "Hauptteil 1 – Stationen, 3 Min frei, dann eng: Igel gegen drei (Eroberung vor der Schusshöhe zählt doppelt) | einer drängt, einer schützt (Tor innerhalb von fünf Sekunden nach Ballgewinn zählt doppelt)",
+     "dauer": 12,
+     "stationen": [
+      {
+       "uebung_name": "Igel gegen drei – Torwart und zwei Flitzer verteidigen"
+      },
+      {
+       "uebung_name": "FUNiño 2 gegen 2 – einer drängt, einer schützt"
+      }
+     ]
+    },
+    {
+     "typ": "spielform",
+     "label": "Hauptteil 2 – Gruppen wechseln die Station, 3 Min frei, dann eng: Regeln wie in Hauptteil 1",
+     "dauer": 12,
+     "stationen": [
+      {
+       "uebung_name": "Igel gegen drei – Torwart und zwei Flitzer verteidigen"
+      },
+      {
+       "uebung_name": "FUNiño 2 gegen 2 – einer drängt, einer schützt"
+      }
+     ]
+    },
+    {
+     "typ": "spielform",
+     "label": "Hauptteil 3 – offen: 3+1 gegen FUNiño auf einem Feld, nach 5 Minuten Seitenwechsel; ein Tor nach Ballgewinn in der eigenen Hälfte zählt doppelt",
+     "dauer": 10,
+     "uebung_name": "3+1 gegen FUNiño – großes Tor gegen zwei kleine"
+    },
+    {
+     "typ": "abschluss",
+     "label": "Abschlussturnier: 3+1 gegen FUNiño, drei Durchgänge mit Seitenwechsel; Tor nach Ballgewinn in der eigenen Hälfte zählt doppelt",
+     "dauer": 18
+    }
+   ]
   }
  ]
 }
