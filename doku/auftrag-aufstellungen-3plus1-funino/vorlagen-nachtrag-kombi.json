@@ -1,0 +1,71 @@
+{
+ "schema": "adler-vorlagen/1",
+ "stand": "2026-09-16-1",
+ "vorlagen": [
+  {
+   "name": "L5-6 3+1 gegen FUNiño – große und kleine Tore",
+   "leitfrage": "Wo stelle ich mich hin, damit ich den Ball kriege?",
+   "folge_nr": 6,
+   "tags": [],
+   "dauer_min": 75,
+   "netto_spielform_min": 38,
+   "skalierung": {
+    "8": "Hauptteile 1 und 2: zwei Gruppen zu 4 mit den leichteren Varianten. Hauptteil 3 und Turnier: 3+1 gegen 3, ein Wechsler – im Plan Feld 2 weglassen.",
+    "12": "Hauptteile 1 und 2: zwei Gruppen zu 6, Station 1 auf der Jugendtor-Hälfte, Station 2 auf der Minitor-Hälfte desselben Feldes. Hauptteil 3 und Turnier: 3+1 mit 2 Wechslern gegen 3 mit 3 Wechslern – im Plan Feld 2 weglassen.",
+    "16": "Hauptteile 1 und 2: zwei Gruppen zu 8 mit den schwereren Varianten. Hauptteil 3 und Turnier: zwei Felder – eines als Kombi-Feld, das zweite als FUNiño 3 gegen 3 auf vier Minitore (oder zweites Kombi-Feld, falls ein zweites Jugendtor frei ist); nach jedem Durchgang Felder tauschen."
+   },
+   "beobachtung": "Wer hat nach dem Seitenwechsel sofort die neue Aufstellung eingenommen – als Flitzer breit am großen Tor, als Aufpasser hinter dem Ball an den kleinen Toren?",
+   "ordnung": "3+1 gegen FUNiño",
+   "bloecke": [
+    {
+     "typ": "warmup",
+     "label": "Straßenfußball-Fenster",
+     "dauer": 10
+    },
+    {
+     "typ": "warmup",
+     "label": "Warm up Adler, kurz",
+     "dauer": 8,
+     "uebung_name": "Warm up Adler"
+    },
+    {
+     "typ": "spielform",
+     "label": "Hauptteil 1 – Stationen, 3 Min frei, dann eng: Adler aus dem Tor (Punkt nur, wenn der Torwart vorher angespielt wurde) | 3 gegen 1, der Mittlere hat den Ball",
+     "dauer": 12,
+     "stationen": [
+      {
+       "uebung_name": "3+1 gegen 2 – Adler aus dem Tor"
+      },
+      {
+       "uebung_name": "FUNiño 3 gegen 1 – der Mittlere hat den Ball"
+      }
+     ]
+    },
+    {
+     "typ": "spielform",
+     "label": "Hauptteil 2 – Gruppen wechseln die Station, 3 Min frei, dann eng: Regeln wie in Hauptteil 1",
+     "dauer": 12,
+     "stationen": [
+      {
+       "uebung_name": "3+1 gegen 2 – Adler aus dem Tor"
+      },
+      {
+       "uebung_name": "FUNiño 3 gegen 1 – der Mittlere hat den Ball"
+      }
+     ]
+    },
+    {
+     "typ": "spielform",
+     "label": "Hauptteil 3 – offen: 3+1 gegen FUNiño auf einem Feld, beide Gruppen, nach 5 Minuten Seitenwechsel",
+     "dauer": 10,
+     "uebung_name": "3+1 gegen FUNiño – großes Tor gegen zwei kleine"
+    },
+    {
+     "typ": "abschluss",
+     "label": "Abschlussturnier: 3+1 gegen FUNiño, drei Durchgänge, jedes Mal mit Seitenwechsel",
+     "dauer": 18
+    }
+   ]
+  }
+ ]
+}

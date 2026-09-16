@@ -1,0 +1,54 @@
+{
+ "schema": "adler-uebungen/1",
+ "stand": "2026-09-16-1",
+ "uebungen": [
+  {
+   "name": "3+1 gegen FUNiño – großes Tor gegen zwei kleine",
+   "kat": "raute",
+   "kurz": "Kombi-Spielform auf einem Feld: Ein Team spielt 3+1 und verteidigt das Jugendtor, das andere spielt FUNiño und verteidigt zwei Minitore. Nach jedem Durchgang tauschen die Teams die Seite – und damit die Aufstellung.",
+   "spieler": "7 auf dem Feld (3+1 gegen 3); bei 12 Kindern je Team 6, also 2 bzw. 3 Wechsler",
+   "feld": "Kreis-Feld ca. 25 x 20 m mit Mittellinie. Auf einer Seite ein Jugendtor (1,65 m), auf der anderen zwei Minitore (max. 2 x 1,2 m) mit Schusszone ca. 6 m",
+   "dauer": "10",
+   "ablauf": "Das Team am Jugendtor spielt 3+1 in der Raute ohne Aufpasser: Jäger vorn, zwei Flitzer außen, der Torwart spielt mit und eröffnet flach. Es greift die beiden Minitore an; dort zählen Tore nur aus der Schusszone. Das Team an den Minitoren spielt FUNiño im Dreieck ohne Jäger: Aufpasser hinter dem Ball, zwei Flitzer außen. Es greift das Jugendtor an; dort zählen Tore nur aus der gegnerischen Hälfte.\n\nOhne Ball: Das Jugendtor-Team geht in den Igel und rückt eng vor das Tor. Das FUNiño-Team spielt „iner drängt, zwei schützen die Tore“.\n\nNach jedem Tor kommt in beiden Teams ein Wechsler; im Jugendtor-Team wechselt der Torwart reihum mit. Aus wird eingedribbelt oder eingepasst, Abstand drei Meter. Liegt ein Team drei Tore zurück, darf es einen Spieler mehr bringen – das Jugendtor-Team den Aufpasser, das FUNiño-Team den Jäger.\n\nNach jedem Durchgang tauschen die Teams die Seite. In der kurzen Pause eine Frage: „Welche Tore habt ihr jetzt – wer fehlt euch?“ Bei den großen Toren fehlt der Aufpasser, bei den kleinen der Jäger.\n\nTypische Fehlerbilder: Nach dem Seitenwechsel bleibt die alte Aufstellung stehen. Im FUNiño-Team laufen alle drei nach vorn, keiner ist hinter dem Ball. Das Jugendtor-Team spielt immer auf das zugestellte Minitor statt auf das freie.",
+   "varianten": "Leichter: Feld kürzer, das FUNiño-Team darf aufs Jugendtor aus dem ganzen Feld schießen. Schwerer: Ein Tor aufs Jugendtor zählt nur nach einem Seitenwechsel über den Aufpasser; ein Tor auf ein Minitor zählt doppelt, wenn der Torwart am Angriff beteiligt war.",
+   "coaching": "Welche Tore habt ihr – wer fehlt euch?\nGroßes Tor: Flitzer breit, Torwart spielt mit.\nKleine Tore: Einer bleibt hinter dem Ball.",
+   "spass": 5,
+   "diff": 3,
+   "skizze": {
+    "z": [
+     [20, 15, 240, 150]
+    ],
+    "li": [
+     [140, 15, 140, 165, "m"],
+     [202, 15, 202, 165, "sz"]
+    ],
+    "tor": [
+     [8, 72, "v", 36, "j"],
+     [260, 30, "v", 22],
+     [260, 128, "v", 22]
+    ],
+    "s": [
+     [30, 90, "b", "T"],
+     [112, 90, "b", "J"],
+     [86, 30, "b", "F"],
+     [86, 150, "b", "F"],
+     [238, 62, "r", "A"],
+     [178, 52, "r", "F"],
+     [240, 130, "r", "F"]
+    ],
+    "b": [
+     [38, 90]
+    ],
+    "p": [
+     [40, 86, 82, 36, "p"],
+     [92, 32, 160, 32, "d"],
+     [168, 34, 212, 34, "d"],
+     [216, 38, 256, 40, "s"]
+    ],
+    "tx": [
+     [140, 176, "Großes Tor gegen zwei kleine"]
+    ]
+   }
+  }
+ ]
+}
