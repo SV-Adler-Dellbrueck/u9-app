@@ -35,6 +35,15 @@ Hauptteil zu Hauptteil eine Station weiter. Bei zwei Feldtrainern ist das der Ta
 Gruppe erlebt beide Stationen, ohne dass jemand „⇄ weiterrücken“ drückt. Das ist die Logik aus
 v514/v537, nichts Neues.
 
+## Nur ein Jugendtor frei
+
+Auf dem Platz stehen höchstens zwei Jugendtore zur Verfügung, je nach Belegung nur eines.
+Ersatz ist in den Übungen und Vorlagen bereits beschrieben (Feld „feld“ bzw. Skalierung):
+**zwei Minitore statt des Jugendtors, der Torwart spielt dazwischen ohne Hände und bleibt in der
+Schusszone; Tore auf die Minitore zählen nur aus der Schusszone.** So bleibt der Torwart als
+vierter Punkt der Raute erhalten. Kein Schema-Feld dafür – das ist ein Aufbauhinweis, keine
+eigene Übung.
+
 ## Vorab geprüft (in der Cloud-Sitzung des Projekts, gegen den Code von v567)
 
 Beide Dateien sind mit den echten Funktionen `_euPruefung` und `_evPruefung` aus
@@ -110,7 +119,8 @@ Browsers mit Attrappen für DOM und Supabase.
 - SBFV, Trainingssammlung F-Jugend: 2 gegen 1 mit Torhüter.
 - Coachingfragen nach Horst Wein (fussballtraining24.de): 3 gegen 1 auf zwei Tore, der mittlere
   Spieler soll den Ball haben.
-- 1x1SPORT zu FUNiño nach Horst Wein: Wandspieler zwischen den Toren.
+- 1x1SPORT zu FUNiño nach Horst Wein: Wandspieler zwischen den Toren; Torspieler, der beide Tore
+  nur innerhalb der Torzone verteidigt (Vorbild für den Minitor-Ersatz).
 - fussball-training.org Trainerblog: Das Kind in der Mitte entscheidet, wie das Kind im Tor beim
   4+1.
 
