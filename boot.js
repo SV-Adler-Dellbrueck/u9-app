@@ -678,6 +678,12 @@ function awSave(){
   awRenderStats();
   awRenderTrainerStats();
   try{navigator.vibrate&&navigator.vibrate(50);}catch(e){} // 1C: haptische Bestätigung
+  /* v574: Die Einteilung des Tages folgt der Anwesenheit – direkt hier, damit der Trainer
+     den Plan nicht erst öffnen muss, um zu sehen, wer jetzt wo steht. */
+  if(typeof _tgDatum==="function"&&_tgDatum()===datum&&typeof tgAnwesenheitAbgleich==="function"){
+    const erg=tgAnwesenheitAbgleich();
+    if(erg){ tgAbgleichMelden(erg); if(typeof tpRenderTimeline==="function")tpRenderTimeline(); }
+  }
   toast("Anwesenheit gespeichert ✓"); window._awDirty=false;
 }
 
@@ -1741,6 +1747,9 @@ function tpGruppeHinweisAll(){ Object.keys(_tpStationGruppe).forEach(tpGruppeHin
 
 function tpRenderTimeline(){
   _tpStationGruppe={};   // v571: Zuordnung Station → Gruppe wird beim Zeichnen neu gesetzt
+  /* v574: Erst die Einteilung an die Anwesenheit angleichen, dann zeichnen – sonst stünde
+     ein Kind am Feld, das abgesagt hat, oder eines fehlte, das gekommen ist. */
+  if(typeof tgAnwesenheitAbgleich==="function")tgAbgleichMelden(tgAnwesenheitAbgleich());
   const wrap=document.getElementById("tp-timeline");
   if(!wrap)return;
   /* Die Leiste wird komplett neu gezeichnet – bei jeder Dauer, jedem Trainerwechsel.
@@ -4175,6 +4184,70 @@ function tgVorschlagText(tg){
   const summe=v.bedarf.reduce((a,x)=>a+x,0);
   return `Mit ${v.n} Gruppen ginge die Einheit besser auf: die Stationen brauchen ${v.bedarf.join(" + ")} = ${summe} Kinder.`;
 }
+/* ═══════════════════════════════════════════════════════════════════════════
+   v574 – DIE EINTEILUNG FOLGT DER ANWESENHEIT
+
+   PO am 18.09.: „Die Aufteilung der Gruppen müssen sich immer an der tatsächlichen
+   Anwesenheit richten."
+
+   Bis v573 entstanden die Gruppen aus dem Pool des Termins (Anwesenheit, sonst Zusagen,
+   sonst Kader) – und blieben dann stehen. Der übliche Ablauf ist aber: Plan am Vorabend,
+   Anwesenheit am Trainingstag. Wer kurzfristig absagte, stand weiter in seiner Gruppe und
+   wurde am Feld mitgezählt; wer unangemeldet kam, tauchte in keiner auf und musste von Hand
+   irgendwo eingefügt werden.
+
+   Jetzt gleicht die App bei jedem Zeichnen ab, minimalinvasiv:
+   · Wer da ist, aber in keiner Gruppe steht, kommt in die kleinste.
+   · Wer in einer Gruppe steht, aber nicht da ist, fliegt raus – aber NUR, wenn die
+     Anwesenheit des Tages wirklich erfasst ist (`_tgPool().quelle==="anwesenheit"`).
+     Vor dem Trainingstag zählen Zusagen: eine Absage ist dann noch keine Tatsache, und
+     wer am Mittwoch absagt und am Freitag doch kommt, soll seine Gruppe wiederfinden.
+   Namen, Trainer und die von Hand verschobenen Kinder bleiben unangetastet; neu gemischt
+   wird nur auf ausdrücklichen Wunsch.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function tgAnwesenheitAbgleich(){
+  const tg=(typeof tgFor==="function")?tgFor():null;
+  if(!tg||!Array.isArray(tg.gruppen)||!tg.gruppen.length)return null;
+  if(typeof _tgPool!=="function")return null;
+  const pool=_tgPool();
+  if(!pool||!Array.isArray(pool.namen)||!pool.namen.length)return null;
+  const soll=new Set(pool.namen), raus=[], rein=[], drin=new Set();
+  tg.gruppen.forEach(g=>{ (g.kinder||[]).forEach(n=>drin.add(n)); });
+  pool.namen.forEach(n=>{ if(!drin.has(n))rein.push(n); });
+  if(pool.quelle==="anwesenheit"){
+    tg.gruppen.forEach(g=>{
+      const bleibt=[];
+      (g.kinder||[]).forEach(n=>{ if(soll.has(n))bleibt.push(n); else raus.push(n); });
+      g.kinder=bleibt;
+    });
+  }
+  /* Dazugekommene in die jeweils kleinste Gruppe – wie beim Abspalten (v570) geht es um
+     möglichst wenig Bewegung, nicht um eine neue Auslosung. */
+  rein.forEach(n=>{
+    let z=tg.gruppen[0];
+    tg.gruppen.forEach(g=>{ if((g.kinder||[]).length<(z.kinder||[]).length)z=g; });
+    (z.kinder=z.kinder||[]).push(n);
+  });
+  if(!raus.length&&!rein.length)return null;
+  tg.ausAnwesenheit=pool.quelle==="anwesenheit";
+  tg.quelle=pool.quelle;
+  tgSave(tg);
+  return {raus,rein,quelle:pool.quelle};
+}
+/* Einmal je Termin sagen, was sich geändert hat – stillschweigend Kinder zu verschieben
+   wäre schlimmer als gar nicht abzugleichen. */
+let _tgAbgleichGemeldet="";
+function tgAbgleichMelden(erg){
+  if(!erg)return;
+  const d=(typeof _tgDatum==="function")?_tgDatum():"";
+  const schluessel=d+"|"+erg.rein.join(",")+"|"+erg.raus.join(",");
+  if(_tgAbgleichGemeldet===schluessel)return;
+  _tgAbgleichGemeldet=schluessel;
+  const teile=[];
+  if(erg.rein.length)teile.push(`${erg.rein.join(", ")} dazu`);
+  if(erg.raus.length)teile.push(`${erg.raus.join(", ")} raus`);
+  if(typeof toast==="function")toast(`👥 Gruppen an die Anwesenheit angepasst: ${teile.join(" · ")}`);
+}
 function tgGroessenHinweis(tg){
   const g=(tg&&tg.gruppen)||[]; if(!g.length)return "";
   /* v573: Was die Einheit braucht, wiegt schwerer als die allgemeine Zielgröße. */
@@ -4301,6 +4374,7 @@ function tgBilden(anzahl){
 async function tgOpen(){
   await tgSync(); // erst den Server-Stand holen – sonst überschreibt ein Gerät die Kollegen
   let tg=tgFor()||tgBilden();
+  if(typeof tgAnwesenheitAbgleich==="function"){tgAbgleichMelden(tgAnwesenheitAbgleich()); tg=tgFor()||tg;}
   document.getElementById("tg-modal")?.remove();
   const m=document.createElement("div");m.id="tg-modal";
   m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Trainingsgruppen");
