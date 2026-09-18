@@ -1620,6 +1620,21 @@ function tpRenderTimeline(){
       const wegText=weg.length?`✕ ${weg.length} Feld${weg.length===1?"":"er"} weggelassen`:"";
       html+=`<div class="tp-parallel-hinweis" style="font-size:11px;color:var(--text2);padding:2px 0 6px">${[grund,wegText].filter(Boolean).join(" · ")} – ${parallelSlots} Feld${parallelSlots===1?"":"er"} statt ${Math.max(1,trainersAlle.length)}${zusammen?" · "+esc(zusammen):""}${weg.length?` <button class="tp-feld-zurueck" onclick="tpFeldZurueck(${si})" style="margin-left:6px;min-height:28px;padding:2px 10px;border:1px solid var(--rand-bedien);border-radius:8px;background:var(--surface);color:var(--text);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer">↩ Feld wieder aufnehmen</button>`:""}</div>`;
     }
+    /* v570: Die Einheit bringt ihren Feldbedarf mit (`slot.stationen` aus der Vorlage).
+       Passen die Stationen nicht auf die Felder, steht das jetzt AM BLOCK – bisher erfuhr
+       man es nur vor dem Übernehmen und danach nie wieder, die Station war einfach weg.
+       Trägt die Kinderzahl ein weiteres Feld, steht der Weg dorthin daneben; trägt sie es
+       nicht, steht der Grund. Ein weggelassenes Feld ist die Entscheidung des Trainers und
+       bekommt keinen Hinweis. */
+    if(tpIstHauptteil(typ)&&!weg.length&&(Number(slot.stationen)||0)>parallelSlots){
+      const soll=Number(slot.stationen), fehlt=soll-parallelSlots;
+      const kinder=(typeof _tgPool==="function")?_tgPool().namen.length:0;
+      const moeglich=(typeof tgBedarf==="function")?tgBedarf(kinder,soll):parallelSlots;
+      const weg2=moeglich>parallelSlots
+        ? ` <button onclick="tgAnzahlSetzen(${moeglich});tgFertig()" style="margin-left:6px;min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer">👥 ${moeglich} Gruppen bilden</button>`
+        : ` Für ein weiteres Feld bräuchte es ${(parallelSlots+1)*TG_ZIEL_MIN} Kinder – ${kinder} sind da, und unter ${TG_ZIEL_MIN} je Gruppe lässt sich keine Spielform spielen.`;
+      html+=`<div class="tp-stationen-hinweis" style="font-size:11px;color:var(--text2);padding:2px 0 6px;line-height:1.5">ℹ️ ${soll} Stationen geplant, ${parallelSlots} ${parallelSlots===1?"Feld":"Felder"} – ${fehlt===1?"eine Station entfällt":fehlt+" Stationen entfallen"}.${weg2}</div>`;
+    }
     /* v514: Wer steht in diesem Block an welchem Feld – und der Ringtausch von Hand.
        Sichtbar nur, wenn es überhaupt mehrere Gruppen auf mehreren Feldern gibt. */
     if(tpIstHauptteil(typ)&&felderGruppen&&felderGruppen.length>1){
@@ -3821,12 +3836,23 @@ function tgSave(tg){
     }catch(e){toast("Kein Netz – Gruppen nur auf diesem Gerät gespeichert","err");}
   },800);
 }
+/* v570: Ändert sich die Gruppenzahl, ändert sich die Zahl der Felder – und die neuen Felder
+   wären leer. Die Übungen stehen aber längst im gespeicherten Plan, jede Station mit ihrer
+   Nummer; nur beim Zeichnen fehlte ihnen bisher das Feld. Deshalb den Plan neu EINSETZEN
+   statt ihn nur neu zu zeichnen, sonst müsste der Trainer die dritte Station von Hand
+   wählen, obwohl sie in der Vorlage steht. */
+async function tgFertig(){
+  document.getElementById("tg-modal")?.remove();
+  const d=_tgDatum();
+  if(typeof tpPlanRestore==="function"&&d){ try{ await tpPlanRestore(d); return; }catch(e){} }
+  if(typeof tpRenderTimeline==="function")tpRenderTimeline();
+}
 function tgKachelHtml(){
   const tg=tgFor();
   const hinweis=tg?tgGroessenHinweis(tg):"";
   const quelle=tg?({anwesenheit:"aus der Anwesenheit",zusagen:"aus den Zusagen",kader:"aus dem Kader"}[tg.quelle]||""):"";
   const sub=tg?tg.gruppen.map(g=>`${g.emo} ${g.name} (${g.kinder.length})`).join(" · ")
-    :"Alle zugesagten Kinder in so viele Gruppen wie Feldtrainer – antippen";
+    :"Alle zugesagten Kinder in so viele Gruppen, wie die Einheit und die Kinderzahl brauchen – antippen";
   return `<button onclick="tgOpen()" style="width:100%;min-height:76px;margin:4px 0 10px;border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px 8px;box-sizing:border-box">
     <span style="font-size:15px;font-weight:900">👥 Trainingsgruppen${tg?"":" bilden"}</span>
     <span style="font-size:11.5px;color:var(--text2);text-align:center">${sub}</span>
@@ -3868,14 +3894,87 @@ function tgGroessenHinweis(tg){
   if(gross)return `${gross===1?"Eine Gruppe liegt":gross+" Gruppen liegen"} über der Zielgröße von ${TG_ZIEL_MAX} Kindern.`;
   return "";
 }
+/* ═══════════════════════════════════════════════════════════════════════════
+   v570 – WIE VIELE GRUPPEN BRAUCHT DIESES TRAINING?
+
+   PO am 18.09.: „Es sind aber 13 Kinder, aber das wurde nicht richtig übernommen in der
+   Anzahl an Stationen. Es sind nur 2 Stationen übernommen worden, obwohl es 3 Felder sein
+   sollen. Auch wenn es nicht genug Trainer für jede Station gibt, besser als wenn Kinder
+   in der Warteschlange stehen müssen."
+
+   Bis v569 war die Gruppenzahl allein die Zahl der angehakten FELDTRAINER; die Kinderzahl
+   kam nirgends vor. Bei zwei Trainern und dreizehn Kindern standen also zwei Gruppen zu
+   sieben auf zwei Feldern, und die dritte Station der Einheit fiel weg – obwohl die App im
+   selben Bildschirm meldete „2 Gruppen liegen über der Zielgröße von 6 Kindern". Sie wusste
+   es und handelte nicht danach.
+
+   Jetzt entscheidet der BEDARF, und zwar aus drei Quellen:
+   · die Stationen der Einheit (`slot.stationen`, kommt aus der Vorlage),
+   · die angehakten Feldtrainer (wie bisher, als Untergrenze),
+   · die Kinderzahl: höchstens TG_ZIEL_MAX je Gruppe.
+   Nach unten begrenzt die Kinderzahl selbst: keine Gruppe unter TG_ZIEL_MIN, sonst ist eine
+   Spielform nicht mehr spielbar. Genau diese Rechnung steht schon in den Skalierungszeilen
+   der Einheiten – L4-8 sagt bei 8 und 10 Kindern „zwei Felder statt drei", bei 12 und 14
+   „drei Gruppen". Ein Feld ohne Trainer ist ausdrücklich erlaubt (PO oben); die Feldzeile
+   zeigt dort „👤 Trainer?".
+   ═══════════════════════════════════════════════════════════════════════════ */
+function tpStationenBedarf(){
+  return (typeof tpSlots!=="undefined"?tpSlots:[]).reduce((max,s)=>
+    (typeof tpIstHauptteil==="function"&&tpIstHauptteil(s&&s.typ))?Math.max(max,Number(s&&s.stationen)||0):max,0);
+}
+/* Beide Argumente sind optional – ohne sie zählt der Pool des Termins und der Plan, wie er
+   gerade steht. Der Einheiten-Import ruft mit der Stationszahl der Vorlage, weil die Slots
+   dort noch nicht gesetzt sind. */
+function tgBedarf(kinder,stationen){
+  const k=isFinite(kinder)?Number(kinder):_tgPool().namen.length;
+  const st=isFinite(stationen)?Number(stationen):tpStationenBedarf();
+  const trainer=(typeof tpGetCheckedTrainers==="function")?tpGetCheckedTrainers().length:0;
+  /* Zwei getrennte Größen, und das ist wichtig: Der AUFSCHLAG aus Stationen und Kinderzahl
+     wird durch die Kinderzahl gedeckelt (keine Gruppe unter TG_ZIEL_MIN – sonst entstünde
+     aus dem Wunsch nach mehr Feldern eine Dreiergruppe, die keine Spielform trägt). Die
+     TRAINERZAHL bleibt davon unberührt: drei angehakte Feldtrainer haben seit je drei
+     Gruppen bekommen, auch bei elf Kindern, und die App sagt dann „eine Gruppe liegt unter
+     der Zielgröße“ statt eigenmächtig eine wegzunehmen (v536). */
+  const wunsch=Math.max(1,st,Math.ceil(k/TG_ZIEL_MAX));
+  const platz=Math.max(1,Math.floor(k/TG_ZIEL_MIN));
+  return Math.max(1,Math.min(Math.max(Math.min(wunsch,platz),trainer),TG_NAMEN.length));
+}
+/* Mehr Gruppen, ohne die bestehenden umzuwerfen (PO-Entscheidung 18.09.: „Gruppe abspalten,
+   Rest bleibt"). Die neue Gruppe holt sich Kinder von der jeweils größten, bis der Abstand
+   höchstens eins beträgt – aus 7/6 wird 5/4/4. Namen, Trainer und die von Hand verschobenen
+   Kinder der übrigen Gruppen bleiben unangetastet; neu gemischt wird nur auf ausdrücklichen
+   Wunsch („🎲 Neu mischen"). */
+function tgErweitern(n){
+  const tg=tgFor(); if(!tg||!Array.isArray(tg.gruppen)||!tg.gruppen.length)return null;
+  const g=tg.gruppen, trainers=tpGetCheckedTrainers();
+  const ziel=Math.min(Number(n)||0,TG_NAMEN.length);
+  while(g.length<ziel){
+    /* Die neue Gruppe heißt nach ihrer POSITION – zwei Gruppen, also „Grüne Krokodile“.
+       Nur wenn der Trainer diesen Namen schon vergeben hat, weicht sie auf den nächsten
+       freien aus; sonst stünde „Blaue Haie“ neben „Blau“. */
+    const genommen=new Set(g.map(y=>y.name));
+    const frei=(TG_NAMEN[g.length]&&!genommen.has(TG_NAMEN[g.length].name))?TG_NAMEN[g.length]
+      :(TG_NAMEN.find(x=>!genommen.has(x.name))||TG_NAMEN[g.length%TG_NAMEN.length]);
+    const neu={...frei,trainer:trainers[g.length]||"",kinder:[]};
+    g.push(neu);
+    for(let schutz=0;schutz<200;schutz++){
+      let gross=g[0];
+      g.forEach(x=>{ if((x.kinder||[]).length>(gross.kinder||[]).length)gross=x; });
+      if(gross===neu||gross.kinder.length-neu.kinder.length<=1)break;
+      neu.kinder.push(gross.kinder.pop());
+    }
+  }
+  tgSave(tg);
+  return tg;
+}
 function tgBilden(anzahl){
-  /* Die Zahl der Felder folgt der Zahl der FELDTRAINER: wer die Rolle Organisation hat,
-     ist nicht angehakt und zählt damit von selbst nicht mit (siehe tpTrainerChipsRender). */
+  /* v570: Ohne ausdrückliche Zahl entscheidet der Bedarf (tgBedarf) – Stationen der
+     Einheit, Feldtrainer und Kinderzahl. Vorher war es allein die Trainerzahl. */
   const trainers=tpGetCheckedTrainers();
-  const n=Math.min(TG_NAMEN.length,Math.max(1,anzahl||trainers.length||1));
   const pool=_tgPool(); // Anwesenheit des Termins, sonst Zusagen, sonst Kader
-  const st=x=>(typeof teamStaerke==="function")?Math.max(0,teamStaerke(x)):0;
-  const namen=pool.namen.slice().sort((a,b)=>st(b)-st(a));
+  const n=Math.min(TG_NAMEN.length,Math.max(1,anzahl||tgBedarf(pool.namen.length)));
+  const staerke=x=>(typeof teamStaerke==="function")?Math.max(0,teamStaerke(x)):0;
+  const namen=pool.namen.slice().sort((a,b)=>staerke(b)-staerke(a));
   const gruppen=Array.from({length:n},(_,i)=>({...TG_NAMEN[i%TG_NAMEN.length],trainer:trainers[i]||"",kinder:[]}));
   // Schlangenlinie: ausgewogene Startaufteilung, danach frei verschiebbar
   namen.forEach((k,i)=>{const r=Math.floor(i/n),pos=r%2===0?(i%n):(n-1-(i%n));gruppen[pos].kinder.push(k);});
@@ -3898,7 +3997,7 @@ async function tgOpen(){
     <div id="tg-liste"></div>
     <div style="display:flex;gap:8px;margin-top:10px">
       <button class="btn btn-sm" style="flex:1" onclick="tgNeuMischen()">🎲 Neu mischen</button>
-      <button class="btn btn-p" style="flex:1" onclick="document.getElementById('tg-modal').remove();tpRenderTimeline()">✅ Fertig</button>
+      <button class="btn btn-p" style="flex:1" onclick="tgFertig()">✅ Fertig</button>
     </div>
   </div>`;
   document.body.appendChild(m);
@@ -3955,8 +4054,15 @@ function tgRename(gi){
 // Neu mischen behaelt die eingestellte Gruppenzahl – sonst springt sie beim Wuerfeln
 // auf die Trainerzahl zurueck und die eben getroffene Wahl waere weg.
 function tgNeuMischen(){const tg=tgFor();tgBilden(tg&&tg.gruppen?tg.gruppen.length:undefined);tgRender();}
-// Gruppenzahl umstellen: bildet sofort neu (die Kinder sind danach frei verschiebbar).
-function tgAnzahlSetzen(n){tgBilden(n);tgRender();}
+/* Gruppenzahl umstellen. v570: MEHR Gruppen spalten ab – die bestehenden behalten ihre
+   Kinder, ihren Namen und ihren Trainer (PO-Entscheidung 18.09.). WENIGER Gruppen werden
+   neu gebildet: zusammenlegen ginge nur durch Raten, wer zu wem kommt. */
+function tgAnzahlSetzen(n){
+  const tg=tgFor();
+  if(tg&&Array.isArray(tg.gruppen)&&tg.gruppen.length&&n>tg.gruppen.length)tgErweitern(n);
+  else tgBilden(n);
+  tgRender();
+}
 // ℹ️ direkt aus dem Übungs-Picker: Detail über dem Picker anzeigen (dessen z-index ist höher)
 function tpPickerInfo(idx){
   tpShowExercise(idx);
