@@ -510,9 +510,11 @@ const EI_TAGS=["wenig-platz","vor-spieltag","halle","schlechtwetter"];
    der Torwart spielt mit), „FUNiño“ (Dreieck ohne Jäger, der Aufpasser als Mittelmann) und
    die Kombination „3+1 gegen FUNiño“ (großes Tor gegen zwei kleine). Sie stehen hinter der
    Raute, weil sie aus ihr hervorgehen; „Dreieck (3 gegen 3)“ bleibt die Ordnung ohne Tore
-   und ohne Spieltagsbezug. Die Spalte trainingsvorlagen.ordnung ist Text ohne Check –
-   nur der Kommentar zieht nach (20260916_vorlagen_ordnung_spielformen.sql). */
-const EI_ORDNUNGEN=["1 gegen 1","2 gegen 2","Dreieck (3 gegen 3)","Raute (4 gegen 4)","3+1","FUNiño","3+1 gegen FUNiño","Überzahl","ohne Gegner"];
+   und ohne Spieltagsbezug. v569: dazu „3+1 und FUNiño“ – beide Formen nebeneinander auf
+   getrennten Feldern (L4-8, drei Stationen), nicht gegeneinander. Die Spalte
+   trainingsvorlagen.ordnung ist Text ohne Check – nur der Kommentar zieht nach
+   (20260918_vorlagen_ordnung_und_skalierung.sql). */
+const EI_ORDNUNGEN=["1 gegen 1","2 gegen 2","Dreieck (3 gegen 3)","Raute (4 gegen 4)","3+1","FUNiño","3+1 gegen FUNiño","3+1 und FUNiño","Überzahl","ohne Gegner"];
 /* Konzept §2: „Spielformen" sind die Blöcke, in denen wirklich gespielt wird –
    Hauptteil und Abschluss. Das Warm-up zählt nicht mit, das Torwart- und
    Einzeltraining läuft parallel und verlängert die Einheit nicht (TP_PARALLEL_TYPEN). */
@@ -613,6 +615,16 @@ function _evStationenHinweis(v,felder){
   return `${max} Stationen geplant, ${felder} ${felder===1?"Feld":"Felder"} verfügbar – die ${max-felder===1?"überzählige Station entfällt":(max-felder)+" überzähligen Stationen entfallen"}.`;
 }
 
+/* v569: Die Skalierungszeile liest ihre Schlüssel aus dem Objekt selbst, numerisch sortiert.
+   Bis v568 stand hier die feste Liste ["8","12","16"] – die neun Einheiten für 3+1 und
+   FUNiño tragen 8/10/12/14 (der Kader hat höchstens 14 Kinder), und 10 und 14 wären
+   stillschweigend aus der Anzeige gefallen. Numerisch, nicht alphabetisch: sonst stünde
+   „10“ vor „8“. Nur Ziffern-Schlüssel mit Text; Bestandsvorlagen mit 8/12/16 zeigen
+   unverändert ihre drei Werte. */
+function _evSkalierungSchluessel(sk){
+  if(!sk||typeof sk!=="object"||Array.isArray(sk))return [];
+  return Object.keys(sk).filter(k=>/^\d+$/.test(k)&&String(sk[k]||"").trim()).sort((a,b)=>a-b);
+}
 function _evVorhanden(name){
   const n=_evNorm(name);
   return (typeof VORLAGEN!=="undefined"?VORLAGEN:[]).some(v=>_evNorm(v&&v.name)===n);
@@ -917,7 +929,7 @@ function vorlageUebernehmenRender(){
           <span style="display:block;font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${_evBlockText(b)}</span></span>
       </div>`; };
     const sk=v.skalierung&&typeof v.skalierung==="object"?v.skalierung:{};
-    const skZeilen=["8","12","16"].filter(k=>sk[k]).map(k=>`<div><b>${k} Kinder:</b> ${esc(String(sk[k]))}</div>`).join("");
+    const skZeilen=_evSkalierungSchluessel(sk).map(k=>`<div><b>${k} Kinder:</b> ${esc(String(sk[k]))}</div>`).join("");
     return `<div style="border:var(--border-s);border-radius:12px;padding:12px;margin-top:10px">
       <div style="font-size:13px;font-weight:800">${esc(v.name)}</div>
       <div style="font-size:11.5px;color:var(--text2);margin-bottom:8px">${esc(tag||"kein Termin gewählt")}</div>
@@ -1083,7 +1095,7 @@ function _vaSteckbrief(v){
         <span style="display:block;font-size:11px;color:var(--text2);line-height:1.5">${_evBlockText(b)}</span></span>
     </div>`; };
   const sk=(v.skalierung&&typeof v.skalierung==="object")?v.skalierung:{};
-  const skZeilen=["8","12","16"].filter(k=>sk[k]).map(k=>`<div><b>${k} Kinder:</b> ${esc(String(sk[k]))}</div>`).join("");
+  const skZeilen=_evSkalierungSchluessel(sk).map(k=>`<div><b>${k} Kinder:</b> ${esc(String(sk[k]))}</div>`).join("");
   return `<div style="padding:2px 0 10px">
     ${bl.map(zeile).join("")||'<div style="font-size:12px;color:var(--text3);padding:6px 0">Diese Vorlage hat keine Blöcke.</div>'}
     ${skZeilen?`<div style="font-size:11.5px;color:var(--text2);line-height:1.6;margin-top:8px">📐 <b>Skalierung</b><br>${skZeilen}</div>`:""}

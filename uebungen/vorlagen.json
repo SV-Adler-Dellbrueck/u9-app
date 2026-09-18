@@ -1,6 +1,6 @@
 {
   "schema": "adler-vorlagen/1",
-  "stand": "2026-09-16-1",
+  "stand": "2026-09-18-1",
   "vorlagen": [
     {
       "name": "L1-1 Ball behalten – Duell um zwei Tore",
@@ -1121,8 +1121,9 @@
       "netto_spielform_min": 38,
       "skalierung": {
         "8": "Ein Feld, zwei Teams zu je 4 (3+1), keine Rotation; in den Hauptteilen 1 und 2 zwei Gruppen zu 4 mit den leichteren Varianten (3+1 gegen 1 bzw. ohne Wartende).",
+        "10": "Hauptteile 1 und 2: zwei Gruppen zu 5, an jeder Station rotiert ein Kind nach jedem Durchgang ein. Hauptteil 3 und Turnier: 3+1 gegen 3+1 mit je einem Wechsler – im Plan Feld 2 weglassen.",
         "12": "Hauptteile 1 und 2: zwei Gruppen zu 6, je Halbfeld eine Station (ist nur ein Jugendtor frei, spielt Station 2 auf zwei Minitore mit Torwart ohne Hände). Hauptteil 3 und Turnier: ein Feld, zwei Teams zu 6 (3+1 plus 2 Rotation) – im Plan Feld 2 weglassen.",
-        "16": "Hauptteile 1 und 2: zwei Gruppen zu 8 mit der schwereren Variante oder je Station zwei Durchgänge parallel. Hauptteil 3 und Turnier: zwei Felder 3+1 gegen 3+1, keine Rotation; Feld 2 mit je zwei Minitoren statt Jugendtoren, Torwart ohne Hände in der Schusszone."
+        "14": "Hauptteile 1 und 2: zwei Gruppen zu 7, an jeder Station rotieren zwei Kinder ein. Hauptteil 3 und Turnier: zwei Felder, 3+1 gegen 3+1 mit Wechslern; fehlt für das zweite Feld das Jugendtor, ersetzen es zwei Minitore mit Torwart ohne Hände in der Schusszone."
       },
       "beobachtung": "Wer ist als Flitzer an die Seitenlinie gegangen, sobald der Torwart den Ball hatte – und wer hat als Jäger den freien Flitzer gesehen?",
       "ordnung": "3+1",
@@ -1186,8 +1187,9 @@
       "netto_spielform_min": 38,
       "skalierung": {
         "8": "Ein Feld, zwei Teams zu je 4 (3+1), keine Rotation; in den Hauptteilen 1 und 2 zwei Gruppen zu 4 mit den leichteren Varianten (3+1 gegen 1 bzw. ohne Wartende).",
+        "10": "Hauptteile 1 und 2: zwei Gruppen zu 5, an jeder Station rotiert ein Kind nach jedem Durchgang ein. Hauptteil 3 und Turnier: 3+1 gegen 3+1 mit je einem Wechsler – im Plan Feld 2 weglassen.",
         "12": "Hauptteile 1 und 2: zwei Gruppen zu 6, je Halbfeld eine Station (ist nur ein Jugendtor frei, spielt Station 2 auf zwei Minitore mit Torwart ohne Hände). Hauptteil 3 und Turnier: ein Feld, zwei Teams zu 6 (3+1 plus 2 Rotation) – im Plan Feld 2 weglassen.",
-        "16": "Hauptteile 1 und 2: zwei Gruppen zu 8 mit der schwereren Variante oder je Station zwei Durchgänge parallel. Hauptteil 3 und Turnier: zwei Felder 3+1 gegen 3+1, keine Rotation; Feld 2 mit je zwei Minitoren statt Jugendtoren, Torwart ohne Hände in der Schusszone."
+        "14": "Hauptteile 1 und 2: zwei Gruppen zu 7, an jeder Station rotieren zwei Kinder ein. Hauptteil 3 und Turnier: zwei Felder, 3+1 gegen 3+1 mit Wechslern; fehlt für das zweite Feld das Jugendtor, ersetzen es zwei Minitore mit Torwart ohne Hände in der Schusszone."
       },
       "beobachtung": "Wer hat seinen Platz als Flitzer oder Jäger gehalten, ohne zum Ball zu laufen – und wer hat sich im richtigen Moment neu angeboten?",
       "ordnung": "3+1",
@@ -1251,8 +1253,9 @@
       "netto_spielform_min": 38,
       "skalierung": {
         "8": "Ein Feld, zwei Teams zu je 4 (3+1), keine Rotation; in den Hauptteilen 1 und 2 zwei Gruppen zu 4 mit den leichteren Varianten (3+1 gegen 1 bzw. ohne Wartende).",
+        "10": "Hauptteile 1 und 2: zwei Gruppen zu 5, an jeder Station rotiert ein Kind nach jedem Durchgang ein. Hauptteil 3 und Turnier: 3+1 gegen 3+1 mit je einem Wechsler – im Plan Feld 2 weglassen.",
         "12": "Hauptteile 1 und 2: zwei Gruppen zu 6, je Halbfeld eine Station (ist nur ein Jugendtor frei, spielt Station 2 auf zwei Minitore mit Torwart ohne Hände). Hauptteil 3 und Turnier: ein Feld, zwei Teams zu 6 (3+1 plus 2 Rotation) – im Plan Feld 2 weglassen.",
-        "16": "Hauptteile 1 und 2: zwei Gruppen zu 8 mit der schwereren Variante oder je Station zwei Durchgänge parallel. Hauptteil 3 und Turnier: zwei Felder 3+1 gegen 3+1, keine Rotation; Feld 2 mit je zwei Minitoren statt Jugendtoren, Torwart ohne Hände in der Schusszone."
+        "14": "Hauptteile 1 und 2: zwei Gruppen zu 7, an jeder Station rotieren zwei Kinder ein. Hauptteil 3 und Turnier: zwei Felder, 3+1 gegen 3+1 mit Wechslern; fehlt für das zweite Feld das Jugendtor, ersetzen es zwei Minitore mit Torwart ohne Hände in der Schusszone."
       },
       "beobachtung": "Welcher Flitzer ist beim Igel-Ruf als Erster eng vor das Tor gerückt – und welcher Jäger hat den Ballführenden nach außen gedrängt?",
       "ordnung": "3+1",
@@ -1316,8 +1319,9 @@
       "netto_spielform_min": 38,
       "skalierung": {
         "8": "Hauptteile 1 und 2: zwei Gruppen zu 4, Stationen mit der leichteren Variante, höchstens 2 gegen 2. Hauptteil 3: ein FUNiño-Feld 3 gegen 3 plus 2 Rotation – Feld 2 weglassen.",
+        "10": "Hauptteile 1 und 2: zwei Gruppen zu 5, an jeder Station rotiert ein Kind ein. Hauptteil 3 und Turnier: 3 gegen 3 mit je einem Wechsler auf einem Feld – im Plan Feld 2 weglassen.",
         "12": "Zwei Gruppen zu 6, je Gruppe ein FUNiño-Feld. Hauptteil 3 auf beiden Feldern 3 gegen 3. Turnier: vier Teams zu 3 auf zwei Feldern, Gewinner rückt ein Feld auf.",
-        "16": "Zwei Gruppen zu 8: an jeder Station 3 gegen 3 plus 2 Rotation. Turnier: vier Teams zu 4 (3 plus 1 Rotation) auf zwei Feldern."
+        "14": "Hauptteile 1 und 2: zwei Gruppen zu 7, an jeder Station rotieren zwei Kinder ein. Hauptteil 3 und Turnier: zwei Felder 3 gegen 3 mit je einem Wechsler; das zweite Feld mit vier Hütchentoren, nach jedem Durchgang Felder tauschen."
       },
       "beobachtung": "Wer hat als Aufpasser den Ball angenommen und auf die freie Seite verteilt – und welcher Flitzer stand dort schon bereit?",
       "ordnung": "FUNiño",
@@ -1381,8 +1385,9 @@
       "netto_spielform_min": 38,
       "skalierung": {
         "8": "Hauptteile 1 und 2: zwei Gruppen zu 4, Stationen mit der leichteren Variante, höchstens 2 gegen 2. Hauptteil 3: ein FUNiño-Feld 3 gegen 3 plus 2 Rotation – Feld 2 weglassen.",
+        "10": "Hauptteile 1 und 2: zwei Gruppen zu 5, an jeder Station rotiert ein Kind ein. Hauptteil 3 und Turnier: 3 gegen 3 mit je einem Wechsler auf einem Feld – im Plan Feld 2 weglassen.",
         "12": "Zwei Gruppen zu 6, je Gruppe ein FUNiño-Feld. Hauptteil 3 auf beiden Feldern 3 gegen 3. Turnier: vier Teams zu 3 auf zwei Feldern, Gewinner rückt ein Feld auf.",
-        "16": "Zwei Gruppen zu 8: an jeder Station 3 gegen 3 plus 2 Rotation. Turnier: vier Teams zu 4 (3 plus 1 Rotation) auf zwei Feldern."
+        "14": "Hauptteile 1 und 2: zwei Gruppen zu 7, an jeder Station rotieren zwei Kinder ein. Hauptteil 3 und Turnier: zwei Felder 3 gegen 3 mit je einem Wechsler; das zweite Feld mit vier Hütchentoren, nach jedem Durchgang Felder tauschen."
       },
       "beobachtung": "Wer ist als Aufpasser mit nach vorn gegangen und trotzdem hinter dem Ball geblieben – und welcher Flitzer hat seine Seite gehalten?",
       "ordnung": "FUNiño",
@@ -1446,8 +1451,9 @@
       "netto_spielform_min": 38,
       "skalierung": {
         "8": "Hauptteile 1 und 2: zwei Gruppen zu 4, Stationen mit der leichteren Variante, höchstens 2 gegen 2. Hauptteil 3: ein FUNiño-Feld 3 gegen 3 plus 2 Rotation – Feld 2 weglassen.",
+        "10": "Hauptteile 1 und 2: zwei Gruppen zu 5, an jeder Station rotiert ein Kind ein. Hauptteil 3 und Turnier: 3 gegen 3 mit je einem Wechsler auf einem Feld – im Plan Feld 2 weglassen.",
         "12": "Zwei Gruppen zu 6, je Gruppe ein FUNiño-Feld. Hauptteil 3 auf beiden Feldern 3 gegen 3. Turnier: vier Teams zu 3 auf zwei Feldern, Gewinner rückt ein Feld auf.",
-        "16": "Zwei Gruppen zu 8: an jeder Station 3 gegen 3 plus 2 Rotation. Turnier: vier Teams zu 4 (3 plus 1 Rotation) auf zwei Feldern."
+        "14": "Hauptteile 1 und 2: zwei Gruppen zu 7, an jeder Station rotieren zwei Kinder ein. Hauptteil 3 und Turnier: zwei Felder 3 gegen 3 mit je einem Wechsler; das zweite Feld mit vier Hütchentoren, nach jedem Durchgang Felder tauschen."
       },
       "beobachtung": "Wer hat als Flitzer auf der Ballseite gedrängt, und wer ist als Aufpasser vor das Tor auf der Ballseite gegangen, statt mit zum Ball zu laufen?",
       "ordnung": "FUNiño",
@@ -1511,8 +1517,9 @@
       "netto_spielform_min": 38,
       "skalierung": {
         "8": "Hauptteile 1 und 2: zwei Gruppen zu 4 mit den leichteren Varianten. Hauptteil 3 und Turnier: 3+1 gegen 3, ein Wechsler – im Plan Feld 2 weglassen.",
+        "10": "Hauptteile 1 und 2: zwei Gruppen zu 5, an jeder Station rotiert ein Kind ein. Hauptteil 3 und Turnier: 3+1 gegen 3 mit je einem Wechsler – im Plan Feld 2 weglassen.",
         "12": "Hauptteile 1 und 2: zwei Gruppen zu 6, Station 1 auf der Jugendtor-Hälfte, Station 2 auf der Minitor-Hälfte desselben Feldes. Hauptteil 3 und Turnier: 3+1 mit 2 Wechslern gegen 3 mit 3 Wechslern – im Plan Feld 2 weglassen.",
-        "16": "Hauptteile 1 und 2: zwei Gruppen zu 8 mit den schwereren Varianten. Hauptteil 3 und Turnier: zwei Felder – eines als Kombi-Feld, das zweite als FUNiño 3 gegen 3 auf vier Minitore (oder zweites Kombi-Feld, falls ein zweites Jugendtor frei ist); nach jedem Durchgang Felder tauschen."
+        "14": "Hauptteile 1 und 2: zwei Gruppen zu 7, an jeder Station rotieren zwei Kinder ein. Hauptteil 3 und Turnier: zwei Felder – sieben Kinder auf dem Kombi-Feld (3+1 gegen 3), sieben auf einem zweiten Feld mit vier Hütchentoren (FUNiño 3 gegen 3 mit einem Wechsler); nach der Hälfte Felder tauschen."
       },
       "beobachtung": "Wer hat nach dem Seitenwechsel sofort die neue Aufstellung eingenommen – als Flitzer breit am großen Tor, als Aufpasser hinter dem Ball an den kleinen Toren?",
       "ordnung": "3+1 gegen FUNiño",
@@ -1576,8 +1583,9 @@
       "netto_spielform_min": 38,
       "skalierung": {
         "8": "Hauptteile 1 und 2: zwei Gruppen zu 4 mit den leichteren Varianten (Igel gegen zwei, FUNiño 2 gegen 2 ohne Rotation). Hauptteil 3 und Turnier: 3+1 gegen 3, ein Wechsler – im Plan Feld 2 weglassen.",
+        "10": "Hauptteile 1 und 2: zwei Gruppen zu 5, an jeder Station rotiert ein Kind ein. Hauptteil 3 und Turnier: 3+1 gegen 3 mit je einem Wechsler – im Plan Feld 2 weglassen.",
         "12": "Hauptteile 1 und 2: zwei Gruppen zu 6, Station 1 auf der Jugendtor-Hälfte, Station 2 auf der Minitor-Hälfte desselben Feldes (zwei Minitore an der Grundlinie, zwei Hütchentore an der Mittellinie). Hauptteil 3 und Turnier: 3+1 mit 2 Wechslern gegen 3 mit 3 Wechslern – im Plan Feld 2 weglassen.",
-        "16": "Hauptteile 1 und 2: zwei Gruppen zu 8 mit den schwereren Varianten. Hauptteil 3 und Turnier: zwei Felder – eines als Kombi-Feld, das zweite als FUNiño 3 gegen 3 auf vier Minitore (oder zweites Kombi-Feld, falls ein zweites Jugendtor frei ist); nach jedem Durchgang Felder tauschen."
+        "14": "Hauptteile 1 und 2: zwei Gruppen zu 7, an jeder Station rotieren zwei Kinder ein. Hauptteil 3 und Turnier: zwei Felder – sieben Kinder auf dem Kombi-Feld (3+1 gegen 3), sieben auf einem zweiten Feld mit vier Hütchentoren (FUNiño 3 gegen 3 mit einem Wechsler); nach der Hälfte Felder tauschen."
       },
       "beobachtung": "Wer hat nach dem Seitenwechsel die Art zu verteidigen gewechselt – als Flitzer eng im Igel vor dem großen Tor, als Aufpasser vor dem ballnahen kleinen Tor?",
       "ordnung": "3+1 gegen FUNiño",
@@ -1629,6 +1637,88 @@
           "typ": "abschluss",
           "label": "Abschlussturnier: 3+1 gegen FUNiño, drei Durchgänge mit Seitenwechsel; Tor nach Ballgewinn in der eigenen Hälfte zählt doppelt",
           "dauer": 18
+        }
+      ]
+    },
+    {
+      "name": "L4-8 Drei Felder – 3+1 und FUNiño nebeneinander",
+      "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "folge_nr": 8,
+      "tags": [],
+      "dauer_min": 75,
+      "netto_spielform_min": 38,
+      "skalierung": {
+        "8": "Zwei Felder statt drei: Feld 3 im Plan weglassen. Zwei Gruppen zu 4, Hauptteil 3 wiederholt die Station mit der schwereren Variante. Abschlussturnier: 3+1 gegen 3+1 auf dem Jugendtor-Feld.",
+        "10": "Zwei Felder: Feld 3 im Plan weglassen. Zwei Gruppen zu 5, an jeder Station wartet ein Kind und rotiert nach jedem Durchgang ein. Abschlussturnier: 3+1 gegen 3+1 mit je einem Wechsler.",
+        "12": "Drei Gruppen zu 4 auf drei Feldern, drei Durchgänge – jede Gruppe sieht jedes Feld. Abschlussturnier auf zwei Feldern: 3+1 gegen 3+1 am Jugendtor, FUNiño 3 gegen 3 an den Minitoren – im Plan Feld 3 weglassen.",
+        "14": "Drei Gruppen zu 5, 5 und 4 auf drei Feldern; an den Fünfergruppen rotiert je ein Kind ein. Abschlussturnier auf zwei Feldern: acht Kinder 3+1 gegen 3+1 am Jugendtor, sechs Kinder FUNiño 3 gegen 3 – im Plan Feld 3 weglassen, nach der Hälfte Felder tauschen."
+      },
+      "beobachtung": "Wer hat als Flitzer oder Außenspieler den Abstand zum Ballführenden gehalten, statt ihm entgegenzulaufen – auf allen drei Feldern?",
+      "ordnung": "3+1 und FUNiño",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 1 – drei Stationen, 3 Min frei, dann eng: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "2 gegen 1 plus Torwart – der Flitzer macht es breit"
+            },
+            {
+              "uebung_name": "FUNiño 3 gegen 1 – der Mittlere hat den Ball"
+            },
+            {
+              "uebung_name": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 2 – Gruppen rücken ein Feld weiter, Regeln wie in Hauptteil 1",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "2 gegen 1 plus Torwart – der Flitzer macht es breit"
+            },
+            {
+              "uebung_name": "FUNiño 3 gegen 1 – der Mittlere hat den Ball"
+            },
+            {
+              "uebung_name": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 3 – Gruppen rücken noch ein Feld weiter: jede Gruppe hat jetzt alle drei Felder gesehen, jeweils mit der schwereren Variante",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "2 gegen 1 plus Torwart – der Flitzer macht es breit"
+            },
+            {
+              "uebung_name": "FUNiño 3 gegen 1 – der Mittlere hat den Ball"
+            },
+            {
+              "uebung_name": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts"
+            }
+          ]
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier auf zwei Feldern: 3+1 gegen 3+1 am Jugendtor, FUNiño 3 gegen 3 an den Minitoren, nach der Hälfte Felder tauschen",
+          "dauer": 16
         }
       ]
     }

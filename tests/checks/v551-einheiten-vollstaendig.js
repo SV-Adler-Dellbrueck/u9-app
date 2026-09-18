@@ -40,7 +40,11 @@ const BESTAND = ["L1-1", "L2-1", "L3-1", "L4-1", "L4-2", "L5-1", "L6-1"];
    v568: Dazu die acht Einheiten für 3+1, FUNiño und die Kombination (L4-6, L5-4, L6-3,
    L4-7, L5-5, L6-4, L5-6, L6-5). Die Prüfung der zwanzig bleibt; die Fälle c) und e) gelten
    auch für die Zusatz-Einheiten. */
-const ZUSATZ = ["L4-5", "L4-6", "L5-4", "L6-3", "L4-7", "L5-5", "L6-4", "L5-6", "L6-5"];
+const ZUSATZ = ["L4-5", "L4-6", "L5-4", "L6-3", "L4-7", "L5-5", "L6-4", "L5-6", "L6-5", "L4-8"];
+/* v569: Der Kader hat höchstens 14 Kinder. Die neun Einheiten für 3+1 und FUNiño skalieren
+   deshalb über 8/10/12/14; die zwanzig des Konzepts und L4-5 bleiben bei 8/12/16 (§9). */
+const SKAL_ALT = ["8", "12", "16"], SKAL_NEU = ["8", "10", "12", "14"];
+const skalSoll = v => String(v.name).startsWith("L4-5 ") || !ZUSATZ.some(p => String(v.name).startsWith(p + " ")) ? SKAL_ALT : SKAL_NEU;
 
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
@@ -72,8 +76,8 @@ module.exports = async function (h) {
   if (nichtImKonzept.length) probleme.push("Nicht wörtlich im Konzept: " + nichtImKonzept.join(" · "));
 
   // e) Skalierung und Beobachtung – aus der Datei, ohne Browser; seit v568 auch für die Zusatz-Einheiten
-  const ohneSkal = alle.concat(zusatz).filter(v => !["8", "12", "16"].every(k => String((v.skalierung || {})[k] || "").trim())).map(v => v.name);
-  if (ohneSkal.length) probleme.push("Ohne vollständige Skalierung 8/12/16: " + ohneSkal.join(", "));
+  const ohneSkal = alle.concat(zusatz).filter(v => !skalSoll(v).every(k => String((v.skalierung || {})[k] || "").trim())).map(v => v.name);
+  if (ohneSkal.length) probleme.push("Ohne vollständige Skalierung (8/12/16 bzw. 8/10/12/14): " + ohneSkal.join(", "));
   const ohneRolle = alle.concat(zusatz).filter(v => !/Aufpasser|Flitzer|Jäger/.test(String(v.beobachtung || ""))).map(v => v.name);
   if (ohneRolle.length) probleme.push("Beobachtungsfrage ohne Rollenbezug: " + ohneRolle.join(", "));
 
