@@ -937,10 +937,15 @@ function vorlageUebernehmenRender(){
       ${skZeilen?`<div style="font-size:11.5px;color:var(--text2);line-height:1.6;margin-top:8px">📐 ${skZeilen}</div>`:""}
       ${v.beobachtung?`<div style="font-size:11.5px;color:var(--text2);line-height:1.5;margin-top:8px">👀 ${esc(v.beobachtung)}</div>`:""}
       ${(function(){
-        /* Paket B, Abnahme 5: Wie viele Felder es am Termin gibt, folgt der Zahl der
-           angehakten Feldtrainer. Reichen sie nicht für die geplanten Stationen, wird
-           das hier gesagt – vor dem Übernehmen, nicht hinterher. */
-        const felder=(typeof tpGetTrainerCount==="function")?tpGetTrainerCount():0;
+        /* Paket B, Abnahme 5: Reichen die Felder nicht für die geplanten Stationen, wird
+           das hier gesagt – vor dem Übernehmen, nicht hinterher.
+           v570: Wie viele Felder es am Termin gibt, folgt nicht mehr allein den angehakten
+           Feldtrainern, sondern dem Bedarf aus Stationen und KINDERZAHL (`tgBedarf`).
+           Sonst warnte die Vorschau vor einer entfallenden Station, die beim Übernehmen
+           längst ein Feld bekommt – 13 Kinder tragen drei Felder, auch bei zwei Trainern. */
+        const stMax=(Array.isArray(v.bloecke)?v.bloecke:[]).reduce((m,b)=>Math.max(m,_evFelderBedarf(b)),0);
+        const felder=(typeof tgBedarf==="function")?tgBedarf(undefined,stMax)
+          :((typeof tpGetTrainerCount==="function")?tpGetTrainerCount():0);
         const h=_evStationenHinweis(v,felder);
         return h?`<div style="background:var(--surface2);border:var(--border-s);border-radius:10px;padding:9px 11px;margin-top:10px;font-size:12.5px;color:var(--text2);line-height:1.5">ℹ️ ${esc(h)}</div>`:"";
       })()}
@@ -981,8 +986,14 @@ async function vorlageUebernehmenSetzen(){
     if(b.typ==="main"||b.typ==="spielform")mainNr++;
     const label=String(b.label||"").trim();
     const eigen=slots.length;
-    slots.push({label,dauer:Number(b.dauer),farbe:_eiFarbe(b.typ,mainNr),typ:b.typ});
     const st=(Array.isArray(b.stationen)&&b.stationen.length)?b.stationen:null;
+    /* v570: Der Block merkt sich, wie viele FELDER seine Stationsliste braucht (die
+       tw-Station ist keines, sie wird ein paralleler Torwart-Block). Ohne diese Zahl wüsste
+       der Trainingsplan nach dem Übernehmen nicht mehr, dass drei Felder gemeint sind – die
+       dritte Station verschwand still, sobald weniger Gruppen da waren. Erst ab zwei
+       gespeichert, damit die Slots nicht unnötig wachsen. */
+    const feldStationen=st?st.filter(x=>(x||{}).rolle!=="tw").length:0;
+    slots.push({label,dauer:Number(b.dauer),farbe:_eiFarbe(b.typ,mainNr),typ:b.typ,...(feldStationen>1?{stationen:feldStationen}:{})});
     if(st){
       /* Paket B: verschiedene Übungen je Station. Die Reihenfolge der Liste ist die
          Reihenfolge der Felder. Gibt es am Termin weniger Felder als Stationen, fällt
@@ -1039,7 +1050,27 @@ async function vorlageUebernehmenSetzen(){
     if(typeof TP_STAND!=="undefined")delete TP_STAND[datum];
   }catch(e){ toast("Kein Netz – Vorlage nicht übernommen","err"); if(haupt)haupt.disabled=false; return; }
   vorlageUebernehmenClose();
-  toast(`🗂️ „${v.name}“ übernommen ✓ ${slots.length} Phasen`);
+  /* v570 (PO 18.09.): Die Einheit bringt ihren Feldbedarf mit – die Gruppen müssen mitziehen,
+     sonst fällt eine Station weg, obwohl Kinder dafür da sind. Reicht die vorhandene Zahl
+     nicht, spaltet `tgErweitern` eine Gruppe ab: die bestehenden behalten Kinder, Namen und
+     Trainer. Steht noch gar keine Aufteilung, entsteht sie hier. Mehr Gruppen, als die
+     Kinderzahl trägt, entstehen nie – das deckelt `tgBedarf` (mindestens vier je Gruppe).
+     Weniger wird nie gemacht: eine bestehende Aufteilung schrumpft nur auf ausdrücklichen
+     Wunsch im Gruppen-Fenster. */
+  let gruppenText="";
+  try{
+    const maxSt=slots.reduce((m,s)=>Math.max(m,Number(s.stationen)||0),0);
+    if(typeof tgSync==="function")await tgSync();      // erst den Server-Stand der Gruppen
+    const bedarf=(typeof tgBedarf==="function")?tgBedarf(undefined,maxSt):0;
+    const tg=(typeof tgFor==="function")?tgFor():null;
+    const jetzt=(tg&&Array.isArray(tg.gruppen))?tg.gruppen.length:0;
+    if(bedarf>jetzt){
+      if(jetzt&&typeof tgErweitern==="function")tgErweitern(bedarf);
+      else if(typeof tgBilden==="function")tgBilden(bedarf);
+      gruppenText=` · ${bedarf} Gruppen`;
+    }
+  }catch(e){}
+  toast(`🗂️ „${v.name}“ übernommen ✓ ${slots.length} Phasen${gruppenText}`);
   if(typeof tpPlanRestore==="function")await tpPlanRestore(datum);
 }
 

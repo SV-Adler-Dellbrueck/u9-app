@@ -103,7 +103,11 @@ module.exports = async function (h) {
   const s = await h.starten({
     bibliothek: true, hoehe: 2600,
     supabase: h.supabaseAttrappe({
-      kader: h.kaderZeilen(), nominierungen: [], anwesenheit: [],
+      /* v570: Die Feldzahl folgt seither auch der KINDERZAHL. Die Zusagen dieses Pakets
+         („zwei Feldtrainer → zwei Felder“) gelten deshalb nur, solange die Kinder nicht für
+         ein drittes Feld reichen – neun aktive Kinder tragen zwei Gruppen zu vier bis fünf.
+         Dass dreizehn Kinder drei Felder ergeben, prüft v570-felder-nach-kinderzahl.js. */
+      kader: h.kaderZeilen({ inaktiv: h.KINDER.slice(9) }), nominierungen: [], anwesenheit: [],
       /* Die Attrappe filtert nicht von selbst – tpTrainerRsvpLaden fragt „datum=eq.…&limit=1“
          und nähme sonst immer den ersten Termin, also die zwei Trainer auch am Dreier-Tag. */
       termine: (u) => {
