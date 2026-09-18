@@ -20,7 +20,13 @@
    c) Auch nach dem Weiterrücken: in allen drei Hauptteilen 4/4/6.
    d) Der Trainingsstart (`_tlSnapshot`) zeigt dieselben Feldstärken wie die Zeitleiste – seit
       v573 auch mit Versatz.
-   e) Die Leihkinder stehen namentlich am Feld, aus dem sie kommen und an dem sie spielen. */
+   e) Die Leihkinder stehen namentlich am Feld, aus dem sie kommen und an dem sie spielen.
+   f) „Zusätzlich überprüfen, ob es für die dann entstehende Trainingsplanung sinnvoll ist,
+      zum Beispiel anstatt zwei Trainingsgruppen die Kinder in drei aufzuteilen“ (PO, 18.09.):
+      `tpGruppenVorschlag` rechnet jede mögliche Gruppenzahl durch. Die Probe ist die
+      Skalierungszeile, die Charles selbst für L4-8 geschrieben hat – 8 und 10 Kinder zwei
+      Felder, 12 und 14 drei. Der Vorschlag steht als Satz auf der Gruppen-Karte und als
+      Stern am Knopf im Gruppen-Fenster. */
 const L48 = "L4-8";
 const FW = "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts";
 
@@ -111,6 +117,21 @@ module.exports = async function (h) {
     // d) Trainingsstart
     const snap = _tlSnapshot();
     out.start = snap.filter(st => /Hauptteil/.test(st.label)).map(st => st.gruppen.map(g => (g.kinder || []).length));
+
+    // f) Welche Gruppenzahl passt zu dieser Einheit?
+    out.vorschlag = {};
+    [8, 10, 12, 13, 14, 15].forEach(k => { const v = tpGruppenVorschlag(k); out.vorschlag[k] = v ? v.n : null; });
+    out.vorschlagJetzt = (tpGruppenVorschlag() || {}).n;
+    out.karte = (typeof tgGroessenHinweis === "function") ? tgGroessenHinweis(tgFor()) : "?";
+    /* Zwei Gruppen von Hand: dann muss die Karte zu drei raten und das Fenster den Stern
+       an die Drei setzen. */
+    tgAnzahlSetzen(2);
+    out.karte2 = tgGroessenHinweis(tgFor());
+    await tgOpen(); await warte(150);
+    const az = document.getElementById("tg-anzahl") || {};
+    out.stern = [...(az.querySelectorAll ? az.querySelectorAll("button") : [])].map(b => b.textContent.trim()).filter(t => /★/.test(t));
+    out.sternZeile = (az.textContent || "").replace(/\s+/g, " ").trim();
+    document.getElementById("tg-modal")?.remove();
     return out;
   }, { datum, L48, FW });
 
@@ -153,6 +174,17 @@ module.exports = async function (h) {
     const plan = (r.haupt[i] || {}).felder || [];
     if (String(st) !== String(plan.map(f => f.n))) probleme.push(`Trainingsstart Block ${i + 1}: ${JSON.stringify(st)} statt ${JSON.stringify(plan.map(f => f.n))} wie in der Zeitleiste`);
   });
+  // f)
+  const sollV = { 8: 2, 10: 2, 12: 3, 13: 3, 14: 3, 15: 3 };
+  Object.keys(sollV).forEach(k => {
+    if (r.vorschlag[k] !== sollV[k]) probleme.push(`Vorschlag bei ${k} Kindern: ${r.vorschlag[k]} Gruppen statt ${sollV[k]} (die Skalierungszeile von L4-8 sagt ${sollV[k] === 2 ? "zwei Felder" : "drei Gruppen"})`);
+  });
+  if (r.vorschlagJetzt !== 3) probleme.push(`Für die vierzehn Kinder des Termins schlägt die App ${r.vorschlagJetzt} Gruppen vor statt drei`);
+  if (r.karte) probleme.push(`Bei passender Gruppenzahl steht trotzdem ein Hinweis auf der Karte: „${r.karte}“`);
+  if (!/Mit 3 Gruppen/.test(r.karte2 || "")) probleme.push(`Nach dem Umstellen auf zwei Gruppen rät die Karte nicht zu drei: „${r.karte2}“`);
+  if (!/4 \+ 4 \+ 6 = 14/.test(r.karte2 || "")) probleme.push(`Die Karte nennt die Rechnung nicht: „${r.karte2}“`);
+  if (!r.stern.length || !/^3/.test(r.stern[0])) probleme.push(`Der Stern im Gruppen-Fenster steht an „${r.stern.join(", ")}“ statt an der Drei`);
+  if (!/empfohlen/.test(r.sternZeile || "")) probleme.push(`Die Zeile im Gruppen-Fenster erklärt den Stern nicht: „${(r.sternZeile || "").slice(0, 90)}“`);
   if (fehler.length) probleme.push("Konsole: " + fehler[0]);
 
   if (!probleme.length) {
@@ -160,6 +192,7 @@ module.exports = async function (h) {
     zeilen.push(`14 Kinder, Einteilung bleibt ${r.gespeichert.join("/")} · auf den Feldern je Hauptteil ${r.haupt.map(ht => ht.felder.map(f => f.n).join("/")).join(" · ")}`);
     zeilen.push(`Wandspieler-Feld in allen drei Hauptteilen mit sechs Kindern: „alle spielen“`);
     zeilen.push(`Am Feld: „${(r.leih[0] || "").slice(0, 90)}“ · Trainingsstart deckungsgleich mit der Zeitleiste`);
+    zeilen.push(`Gruppenzahl-Vorschlag: 8→2 · 10→2 · 12→3 · 14→3 (wie die Skalierungszeile der Einheit) · bei zwei Gruppen rät die Karte: „${(r.karte2 || "").slice(0, 80)}“`);
   }
   return h.ergebnis("Feldstärken ausgleichen", !probleme.length, zeilen.concat(probleme));
 };

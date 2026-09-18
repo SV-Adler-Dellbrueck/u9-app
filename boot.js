@@ -1853,7 +1853,9 @@ function tpRenderTimeline(){
        Sichtbar nur, wenn es überhaupt mehrere Gruppen auf mehreren Feldern gibt. */
     if(tpIstHauptteil(typ)&&felderGruppen&&felderGruppen.length>1){
       const v=tpVersatz(si), eigen=tpSlots[si]&&tpSlots[si].versatz!=null;
-      const wer=felderGruppen.map((f,i)=>`${f.emo||"👥"} ${esc((f.name||"").split(" + ")[0])} → Feld ${i+1}`).join(" · ");
+      /* v573: mit der Feldstärke – sie kann sich durch den Ausgleich von der Gruppengröße
+         unterscheiden, und der Timer zeigt dieselbe Zeile. */
+      const wer=felderGruppen.map((f,i)=>`${f.emo||"👥"} ${esc((f.name||"").split(" + ")[0])} (${f.kinder.length}) → Feld ${i+1}`).join(" · ");
       html+=`<div class="tp-ringtausch" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:4px 0 6px">
         <span style="font-size:11px;color:var(--text2);flex:1 1 140px;min-width:0">⇄ ${wer}${v?` <b>· ${v}× weitergerückt</b>`:""}</span>
         <button onclick="tpVersatzSetzen(${si},1)" title="Alle Gruppen rücken ein Feld weiter – bei zwei Gruppen ist das der Tausch" style="min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer">⇄ weiterrücken</button>
@@ -4122,8 +4124,62 @@ function _tgPool(){
 /* Zielgröße vier bis sechs (Auftragspaket). Der Hinweis urteilt nicht, er sagt nur, dass
    eine Gruppe darunter liegt – die Entscheidung bleibt beim Trainer. */
 const TG_ZIEL_MIN=4, TG_ZIEL_MAX=6;
+/* v573: Und wie viele Gruppen wären für DIESE Einheit die richtigen?
+
+   PO am 18.09.: „zusätzlich überprüfen, ob es für die dann entstehende Trainingsplanung
+   sinnvoll ist, zum Beispiel anstatt zwei Trainingsgruppen die Kinder in drei
+   Trainingsgruppen aufzuteilen."
+
+   Bis v572 kannte die App nur ihre eigenen Zielgrößen (vier bis sechs je Gruppe) und die
+   Zahl der Stationen. Was die Stationen wirklich brauchen, stand in den Übungen – bei L4-8
+   vier, vier und sechs aktive Plätze. Jetzt wird jede mögliche Gruppenzahl durchgerechnet:
+   die Kinder gleichmäßig verteilt, danach zwischen den Feldern ausgeglichen (v573), und
+   gezählt, wie viele Plätze am Ende leer bleiben oder überzählig sind. Die kleinste Summe
+   gewinnt, bei Gleichstand die größere Zahl – mehr Felder heißt mehr Ballkontakte.
+
+   Die Probe: Für L4-8 kommt genau heraus, was der Autor in die Skalierungszeilen
+   geschrieben hat – 8 und 10 Kinder zwei Felder, 12 und 14 drei. */
+function tpGruppenVorschlag(kinder){
+  if(typeof tpSlots==="undefined"||!Array.isArray(tpSlots))return null;
+  const k=isFinite(kinder)?Number(kinder):((typeof _tgPool==="function")?_tgPool().namen.length:0);
+  if(!k||k<TG_ZIEL_MIN)return null;
+  /* Der Hauptteil mit den meisten Stationen gibt vor, welche Übungen nebeneinander laufen. */
+  let si=-1,max=0;
+  tpSlots.forEach((s,i)=>{
+    if(!tpIstHauptteil(s&&s.typ))return;
+    const n=Math.max(Number(s.stationen)||0,(Array.isArray(s.felder)?s.felder.length:0));
+    if(n>max){max=n;si=i;}
+  });
+  if(si<0)return null;
+  const obergrenze=Math.min(TG_NAMEN.length,Math.max(1,Math.floor(k/TG_ZIEL_MIN)));
+  let beste=null;
+  for(let n=1;n<=obergrenze;n++){
+    const bedarf=tpFeldBedarfe(si,n);
+    if(!bedarf.some(Boolean))continue;
+    const felder=Array.from({length:n},(_,i)=>({name:"F"+i,emo:"",kinder:[]}));
+    for(let j=0;j<k;j++)felder[j%n].kinder.push("K"+j);   // gleichmäßig, wie tgBilden verteilt
+    const ist=tpFelderAusgleich(felder,bedarf).map(f=>f.kinder.length);
+    const fehlt=ist.reduce((a,x,i)=>a+Math.max(0,(bedarf[i]||0)-x),0);
+    const zuviel=ist.reduce((a,x,i)=>a+Math.max(0,x-(bedarf[i]||x)),0);
+    const abw=fehlt+zuviel;
+    if(!beste||abw<beste.abw||(abw===beste.abw&&n>beste.n))beste={n,abw,fehlt,zuviel,bedarf,ist};
+  }
+  return beste;
+}
+/* Ein Satz für die Gruppen-Karte: nur, wenn eine andere Zahl wirklich besser wäre. */
+function tgVorschlagText(tg){
+  if(typeof tpGruppenVorschlag!=="function")return "";
+  const jetzt=((tg&&tg.gruppen)||[]).length;
+  const v=tpGruppenVorschlag();
+  if(!v||!jetzt||v.n===jetzt)return "";
+  const summe=v.bedarf.reduce((a,x)=>a+x,0);
+  return `Mit ${v.n} Gruppen ginge die Einheit besser auf: die Stationen brauchen ${v.bedarf.join(" + ")} = ${summe} Kinder.`;
+}
 function tgGroessenHinweis(tg){
   const g=(tg&&tg.gruppen)||[]; if(!g.length)return "";
+  /* v573: Was die Einheit braucht, wiegt schwerer als die allgemeine Zielgröße. */
+  const vor=(typeof tgVorschlagText==="function")?tgVorschlagText(tg):"";
+  if(vor)return vor;
   const klein=g.filter(x=>(x.kinder||[]).length<TG_ZIEL_MIN).length;
   const gross=g.filter(x=>(x.kinder||[]).length>TG_ZIEL_MAX).length;
   if(klein)return `${klein===1?"Eine Gruppe liegt":klein+" Gruppen liegen"} unter der Zielgröße von ${TG_ZIEL_MIN} Kindern.`;
@@ -4275,11 +4331,15 @@ function tgRender(){
   if(az){
     const jetzt=tg.gruppen.length;
     const kinder=tg.gruppen.reduce((s,g)=>s+g.kinder.length,0);
+    /* v573: Welche Zahl die Einheit braucht, steht am Knopf – als Stern, nicht als Farbe
+       allein, und als Satz darunter mit der Rechnung. */
+    const vor=(typeof tpGruppenVorschlag==="function")?tpGruppenVorschlag(kinder):null;
     az.innerHTML=`<span style="font-size:11.5px;color:var(--text2);margin-right:2px">Gruppen:</span>`
-      +TG_NAMEN.map((_,i)=>{const n=i+1;const an=n===jetzt;
-        return `<button onclick="tgAnzahlSetzen(${n})" aria-pressed="${an?"true":"false"}" style="min-width:44px;min-height:44px;padding:0 12px;border:1px solid var(--rand-bedien);${an?"border-color:transparent;background:var(--fam-training);color:#fff;":"background:var(--surface2);color:var(--text);"}border-radius:16px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer">${an?"✓ ":""}${n}</button>`;
+      +TG_NAMEN.map((_,i)=>{const n=i+1;const an=n===jetzt;const gut=!!(vor&&vor.n===n);
+        return `<button onclick="tgAnzahlSetzen(${n})" aria-pressed="${an?"true":"false"}"${gut?' title="Passt zu den Stationen dieser Einheit"':""} style="min-width:44px;min-height:44px;padding:0 12px;border:1px solid ${gut&&!an?"var(--fam-training)":"var(--rand-bedien)"};${an?"border-color:transparent;background:var(--fam-training);color:#fff;":"background:var(--surface2);color:var(--text);"}border-radius:16px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer">${an?"✓ ":""}${n}${gut?" ★":""}</button>`;
       }).join("")
-      +`<span style="font-size:11px;color:var(--text3);margin-left:2px">${kinder} Kinder</span>`;
+      +`<span style="font-size:11px;color:var(--text3);margin-left:2px">${kinder} Kinder</span>`
+      +(vor?`<div style="flex:1 0 100%;font-size:11px;color:var(--text2);padding:4px 0 0;line-height:1.5">★ ${vor.n===jetzt?"passt":"empfohlen"}: die Stationen dieser Einheit brauchen ${vor.bedarf.join(" + ")} = ${vor.bedarf.reduce((a,x)=>a+x,0)} Kinder${vor.fehlt?`, ${vor.fehlt} ${vor.fehlt===1?"Platz bleibt":"Plätze bleiben"} leer`:""}${vor.zuviel?`, ${vor.zuviel} ${vor.zuviel===1?"Kind wechselt":"Kinder wechseln"} ein`:""}.</div>`:"");
   }
   el.innerHTML=tg.gruppen.map((g,gi)=>`<div style="border:var(--border-s);border-left:4px solid ${g.farbe};border-radius:12px;padding:10px 12px;margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
