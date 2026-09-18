@@ -1526,7 +1526,135 @@ async function tpNachbereitenKnopf(datum){
 function tpTipp(text){
   return `<details class="tp-tipp"><summary>💡 Tipp</summary><div>${esc(text)}</div></details>`;
 }
+/* ═══════════════════════════════════════════════════════════════════════════
+   v571 – WAS AN DIESEM FELD FÜR DIESE GRUPPE GILT
+
+   PO am 18.09., mit Bildschirmfoto: „Die letzte Übung braucht 5 Spieler, es sind aber nur
+   4 Spieler in der Gruppe." Die Antwort stand längst in der Einheit – das Block-Label von
+   L4-8 sagt für Feld 3 „(bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen
+   Verteidiger plus Wandspieler)". Nur sah sie niemand: Das Label stand einmal oben am
+   Block, alle drei Felder in einer Zeile, und wurde am Handy abgeschnitten; unter der
+   Station stand allein der Übungsname.
+
+   Ein Label trennt seine Feldtexte mit „|" in der Reihenfolge der Felder. Hauptteil 2 und 3
+   verweisen zurück („Regeln wie in Hauptteil 1") und holen sie sich von dort – das Feld
+   behält seine Übung, nur die Gruppen rücken weiter.
+
+   Zugeordnet wird über den ÜBUNGSNAMEN, sobald die Einheit ihn mitgebracht hat
+   (`slot.felder`, seit v571 beim Übernehmen gesetzt): Tauscht der Trainer die Übung an
+   einem Feld, verschwindet der Text mit ihr, statt stehenzubleiben und etwas anderes zu
+   behaupten. Für Pläne, die vor v571 übernommen wurden, bleibt die Reihenfolge – dann aber
+   nur, solange kein Feld weggelassen ist, weil sich sonst die Positionen verschieben.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function tpLabelFeldTexte(lab){
+  const t=String(lab||"").split("|").map(x=>x.trim()).filter(Boolean);
+  if(t.length<2)return null;
+  t[0]=t[0].replace(/^[^:]*–[^:]*:\s*/,"");   // „Hauptteil 1 – …: " gehört zum Block, nicht zum Feld
+  return t;
+}
+function tpFeldTexte(si){
+  const slots=(typeof tpSlots!=="undefined")?tpSlots:[];
+  const slot=slots[si]||{};
+  const teile=tpLabelFeldTexte;
+  const eigen=teile(slot.label);
+  if(eigen)return eigen;
+  const soll=Number(slot.stationen)||0;
+  for(let i=si-1;i>=0;i--){
+    if(!tpIstHauptteil(slots[i]&&slots[i].typ))continue;
+    const t=teile(slots[i].label);
+    if(t&&(!soll||t.length===soll))return t;
+  }
+  return null;
+}
+/* Den Feldtext zur gewählten Übung suchen: erst über die Namen, die die Einheit mitgebracht
+   hat, sonst über die Position (Felder wiederholen die Stationsliste, siehe tpPlanRestore). */
+function tpFeldTextFuer(si,p,formIdx){
+  const slot=((typeof tpSlots!=="undefined")?tpSlots:[])[si]||{};
+  const name=(formIdx!=null&&typeof tpAllForms==="function")?((tpAllForms()[formIdx]||{}).name||""):"";
+  if(Array.isArray(slot.felder)&&slot.felder.length){
+    if(!name)return "";
+    const tr=slot.felder.find(f=>f&&f.u===name);
+    return tr?String(tr.t||""):"";
+  }
+  const texte=tpFeldTexte(si);
+  if(!texte)return "";
+  const weg=Array.isArray(slot.weg)?slot.weg.length:0;
+  if(weg)return "";
+  return texte[p%texte.length]||"";
+}
+/* Die Klammer hinter einer Station nennt, was bei kleinerer Gruppe gilt. Gesucht ist der
+   Eintrag zur tatsächlichen Gruppengröße; gibt es keinen, bleibt es beim Grundtext. */
+function tpFeldVariante(text,groesse){
+  const g=Number(groesse)||0; if(!g)return null;
+  const m=String(text||"").match(/\(([^()]*\bbei \d+\b[^()]*)\)/);
+  if(!m)return null;
+  const treffer=m[1].split(/,\s*(?=bei \d+\b)/)
+    .map(x=>x.match(/^bei (\d+) (.+)$/)).filter(Boolean)
+    .find(x=>Number(x[1])===g);
+  return treffer?treffer[2].trim():null;
+}
+function tpFeldGrundtext(text){
+  return String(text||"").replace(/\s*\([^()]*\bbei \d+\b[^()]*\)/g,"").trim();
+}
+/* Wie viele Kinder eine Übung an EINER Station MINDESTENS braucht. Die Bibliothek führt das
+   als Freitext („6 je Station (3 Angreifer, 2 Verteidiger, 1 Wandspieler)"), und daraus sind
+   zwei Dinge zu lesen:
+   · Die führende Zahl gilt nur dann fürs einzelne Feld, wenn der Text das auch sagt –
+     „12 (3 Felder à 4)" meint alle Kinder zusammen. Ohne „je …" gibt es keinen Hinweis;
+     im Zweifel lieber keine Zahl als eine falsche.
+   · Wartende zählen nicht zum Minimum. „6 je Station (3 Angreifer, 1 Verteidiger, 2 warten
+     als nächste)" läuft mit vier Kindern tadellos – wer das als Bedarf 6 läse, würde vor
+     jeder zweiten Station warnen und der Trainer hörte bald weg. */
+function tpUebungBedarf(formIdx){
+  const f=(typeof tpAllForms==="function")?tpAllForms()[formIdx]:null;
+  const s=String((f||{}).spieler||"");
+  if(!/\bje (Station|Feld|Quadrat|Dreieck)/i.test(s))return 0;
+  const m=s.match(/^\s*(\d+)/);
+  if(!m)return 0;
+  let warten=0;
+  String(s).replace(/(\d+)\s+(?:warten|wartet|Rotationsspieler)/gi,(_,n)=>{warten+=Number(n);return _;});
+  return Math.max(2,Number(m[1])-warten);
+}
+/* selId → {n: Kinder in der Gruppe, variante: true, wenn die Einheit diese Größe selbst regelt} */
+let _tpStationGruppe={};
+/* Der Bedarf hängt an der GEWÄHLTEN Übung, und die steht erst nach dem Neuzeichnen im
+   Select (die gemerkte Auswahl wird danach eingesetzt). Deshalb füllt sich dieser Hinweis
+   nachträglich – wie die Einsatz-Historie direkt darunter.
+   Nennt die Einheit für genau diese Größe eine Anpassung, schweigt er: dann steht die
+   Antwort schon darüber. */
+function tpGruppeHinweis(selId){
+  const el=document.getElementById(selId+"-grp"); if(!el)return;
+  el.innerHTML="";
+  const info=_tpStationGruppe[selId], sel=document.getElementById(selId);
+  if(!info||!sel||!sel.value)return;
+  const idx=parseInt(sel.value);
+  const text=tpFeldTextFuer(info.si,info.p,idx);
+  const grund=tpFeldGrundtext(text);
+  const vari=tpFeldVariante(text,info.n);
+  let html=grund?`<div style="font-size:11.5px;color:var(--text2);padding:3px 0 0;line-height:1.5">${esc(grund)}</div>`:"";
+  if(vari){
+    /* Die Einheit regelt diese Größe selbst – dann ist nichts zu melden, sondern zu zeigen. */
+    html+=`<div style="font-size:11.5px;color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: ${esc(vari)}</div>`;
+  }else if(info.n){
+    const bedarf=tpUebungBedarf(idx);
+    if(bedarf&&info.n<bedarf){
+      const kinder=(typeof _tgPool==="function")?_tgPool().namen.length:0;
+      const jetzt=(((typeof tgFor==="function"&&tgFor())||{}).gruppen||[]).length;
+      const passt=Math.max(1,Math.min(Math.floor(kinder/bedarf),TG_NAMEN.length));
+      /* Zusammenlegen hilft nur, wenn dadurch wirklich Gruppen in Übungsgröße entstehen –
+         und es kostet ein Feld. Beides steht im Knopf, damit es niemand nebenbei wegtippt. */
+      const knopf=(passt<jetzt&&Math.floor(kinder/passt)>=bedarf)
+        ? ` <button onclick="tgAnzahlSetzen(${passt});tgFertig()" style="margin-left:6px;min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer">👥 ${passt===1?"Alle Kinder an ein Feld":"Auf "+passt+" Gruppen zusammenlegen"} (${jetzt-passt===1?"ein Feld":(jetzt-passt)+" Felder"} weniger)</button>`
+        : " Die Einheit nennt für diese Größe keine Anpassung – Regel selbst anpassen oder eine andere Übung wählen.";
+      html+=`<div class="tp-gruppe-hinweis" style="font-size:11px;color:var(--text2);padding:3px 0 0;line-height:1.5">ℹ️ ${info.n} Kinder an dieser Station, die Übung ist für ${bedarf} gedacht.${knopf}</div>`;
+    }
+  }
+  el.innerHTML=html;
+}
+function tpGruppeHinweisAll(){ Object.keys(_tpStationGruppe).forEach(tpGruppeHinweis); }
+
 function tpRenderTimeline(){
+  _tpStationGruppe={};   // v571: Zuordnung Station → Gruppe wird beim Zeichnen neu gesetzt
   const wrap=document.getElementById("tp-timeline");
   if(!wrap)return;
   /* Die Leiste wird komplett neu gezeichnet – bei jeder Dauer, jedem Trainerwechsel.
@@ -1701,6 +1829,10 @@ function tpRenderTimeline(){
         const vorschlag=(tgg&&tgg.trainer&&!gebunden.has(tgg.trainer))?tgg.trainer:trainers[p];
         if(!tpCoaches[selId]&&!noGroups&&vorschlag)tpCoaches[selId]=vorschlag; // Station dem Gruppen-Trainer zuweisen
         const isMain=tpIstHauptteil(typ);
+        /* v571: Wer steht hier, und wie viele sind es? Der Feldtext samt der Anpassung für
+           genau diese Gruppengröße wird nachträglich gefüllt (tpGruppeHinweis) – die
+           gewählte Übung steht erst nach dem Neuzeichnen im Select. */
+        if(isMain)_tpStationGruppe[selId]={n:(tgg&&Array.isArray(tgg.kinder))?tgg.kinder.length:0,si,p};
         // Eine Karte je Station. Frueher stand hier eine einzige Zeile, die am Handy in
         // fuenf Elemente umbrach – man sah nicht mehr, welches Feld zu welcher Gruppe gehoert.
         // Der Trainername stand doppelt: einmal als Etikett, einmal im (funktionslosen) Dropdown.
@@ -1720,6 +1852,7 @@ function tpRenderTimeline(){
               <button class="tp-info" onclick="tpShowExFromSel('${selId}')" aria-label="Übung ansehen" title="Übung ansehen">ℹ️</button>
             </div>
           </div>
+          <div id="${selId}-grp"></div>
           <div id="${selId}-hist"></div>
         </div>`;
       }
@@ -1752,6 +1885,7 @@ function tpRenderTimeline(){
   if(typeof tgSync==="function")tgSync();  // Trainingsgruppen vom Server (re-rendert bei Änderung einmal)
   if(typeof tpKgHintAll==="function")tpKgHintAll(); // Kleingruppen-Bedarf initial prüfen
   if(typeof tpNettoRender==="function")tpNettoRender(); // Paket 3: Nettospielzeit + Wochenstand
+  tpGruppeHinweisAll();   // v571: Feldtext und Gruppengröße je Station (braucht die gesetzten Selects)
 }
 /* G3: Anwesenheits-Prognose – erwartete Kinderzahl fürs gewählte Trainingsdatum aus den
    Zusagen (fix) plus historischer Anwesenheitsquote je Kind (für noch offene). */
@@ -1795,6 +1929,7 @@ function tpOnSelectChange(sel){
   else if(histDiv) histDiv.innerHTML="";
   if(typeof tpPickSync==="function")tpPickSync(sel.id); // sichtbaren Auswahl-Button nachziehen
   if(typeof tpKgHintAll==="function")tpKgHintAll();     // Kleingruppen-Bedarf der Aufwärm-Übung
+  if(typeof tpGruppeHinweis==="function")tpGruppeHinweis(sel.id); // v571: Feldtext/Größe der neuen Übung
   tpPlanSaveDebounced(); // Plan am Datum festhalten -> "Einheit bewerten" kennt ihn spaeter
 }
 /* Braucht eine Übung Kleingruppen? Text-Analyse über Name/Kurz/Ablauf – erkennt auch
@@ -3967,6 +4102,27 @@ function tgErweitern(n){
   tgSave(tg);
   return tg;
 }
+/* Gegenstück zu tgErweitern (v571): Die kleinste Gruppe wird aufgelöst, ihre Kinder gehen
+   an die jeweils kleinste der übrigen. Namen, Trainer und von Hand verschobene Kinder der
+   übrigen bleiben – wie beim Abspalten wird nicht neu gemischt. Vorher warf jedes
+   Verkleinern die ganze Einteilung um, obwohl der Trainer sie gerade erst zurechtgeschoben
+   hatte; neu gemischt wird nur auf ausdrücklichen Wunsch („🎲 Neu mischen"). */
+function tgZusammenlegen(n){
+  const tg=tgFor(); if(!tg||!Array.isArray(tg.gruppen)||!tg.gruppen.length)return null;
+  const g=tg.gruppen, ziel=Math.max(1,Number(n)||1);
+  while(g.length>ziel){
+    let kleinst=0;
+    g.forEach((x,i)=>{ if((x.kinder||[]).length<(g[kleinst].kinder||[]).length)kleinst=i; });
+    const weg=g.splice(kleinst,1)[0];
+    (weg.kinder||[]).forEach(k=>{
+      let z=g[0];
+      g.forEach(x=>{ if((x.kinder||[]).length<(z.kinder||[]).length)z=x; });
+      z.kinder.push(k);
+    });
+  }
+  tgSave(tg);
+  return tg;
+}
 function tgBilden(anzahl){
   /* v570: Ohne ausdrückliche Zahl entscheidet der Bedarf (tgBedarf) – Stationen der
      Einheit, Feldtrainer und Kinderzahl. Vorher war es allein die Trainerzahl. */
@@ -4059,8 +4215,10 @@ function tgNeuMischen(){const tg=tgFor();tgBilden(tg&&tg.gruppen?tg.gruppen.leng
    neu gebildet: zusammenlegen ginge nur durch Raten, wer zu wem kommt. */
 function tgAnzahlSetzen(n){
   const tg=tgFor();
-  if(tg&&Array.isArray(tg.gruppen)&&tg.gruppen.length&&n>tg.gruppen.length)tgErweitern(n);
-  else tgBilden(n);
+  const da=(tg&&Array.isArray(tg.gruppen))?tg.gruppen.length:0;
+  if(da&&n>da)tgErweitern(n);
+  else if(da&&n<da)tgZusammenlegen(n);
+  else if(!da)tgBilden(n);
   tgRender();
 }
 // ℹ️ direkt aus dem Übungs-Picker: Detail über dem Picker anzeigen (dessen z-index ist höher)
