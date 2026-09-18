@@ -295,8 +295,8 @@ module.exports = async function (h) {
     if (String(hp[1].felder) !== String([s1, s2])) probleme.push(`${name} Hauptteil 2: [${hp[1].felder.join(" | ")}]`);
     if (String(hp[2].felder) !== String([s3, s3])) probleme.push(`${name} Hauptteil 3: [${hp[2].felder.join(" | ")}]`);
     if (hp[0].versatz !== 0 || hp[1].versatz !== 1) probleme.push(`${name}: Versatz ${hp[0].versatz} / ${hp[1].versatz} statt 0 / 1`);
-    if (!/Blau → Feld 1.*Grün → Feld 2/.test(hp[0].wer)) probleme.push(`${name} Hauptteil 1 zeigt „${hp[0].wer}“`);
-    if (!/Grün → Feld 1.*Blau → Feld 2/.test(hp[1].wer)) probleme.push(`${name} Hauptteil 2: die Gruppen sind nicht getauscht – „${hp[1].wer}“`);
+    if (!/Blau \(\d+\) → Feld 1.*Grün \(\d+\) → Feld 2/.test(hp[0].wer)) probleme.push(`${name} Hauptteil 1 zeigt „${hp[0].wer}“`);
+    if (!/Grün \(\d+\) → Feld 1.*Blau \(\d+\) → Feld 2/.test(hp[1].wer)) probleme.push(`${name} Hauptteil 2: die Gruppen sind nicht getauscht – „${hp[1].wer}“`);
   };
   pruefeZwei(r.l46zwei, "L4-6", A, B, C);
   pruefeZwei(r.l56zwei, "L5-6", A, F1, K);
@@ -318,7 +318,7 @@ module.exports = async function (h) {
   else {
     h8.forEach((hp, i) => { if (String(hp.felder) !== String([B, F1, FW])) probleme.push(`L4-8 Hauptteil ${i + 1}: [${hp.felder.join(" | ")}]`); });
     if (String(h8.map(x => x.versatz)) !== "0,1,2") probleme.push(`L4-8: Versatz ${h8.map(x => x.versatz).join("/")} statt 0/1/2`);
-    const kreis = [/Blau → Feld 1.*Grün → Feld 2.*Rot → Feld 3/, /Grün → Feld 1.*Rot → Feld 2.*Blau → Feld 3/, /Rot → Feld 1.*Blau → Feld 2.*Grün → Feld 3/];
+    const kreis = [/Blau \(\d+\) → Feld 1.*Grün \(\d+\) → Feld 2.*Rot \(\d+\) → Feld 3/, /Grün \(\d+\) → Feld 1.*Rot \(\d+\) → Feld 2.*Blau \(\d+\) → Feld 3/, /Rot \(\d+\) → Feld 1.*Blau \(\d+\) → Feld 2.*Grün \(\d+\) → Feld 3/];
     kreis.forEach((re, i) => { if (!re.test(h8[i].wer)) probleme.push(`L4-8 Hauptteil ${i + 1}: die Gruppen rücken nicht im Kreis – „${h8[i].wer}“`); });
   }
   if (!probleme.some(p => /L4-6|L5-6|L6-5|L4-8/.test(p))) {
