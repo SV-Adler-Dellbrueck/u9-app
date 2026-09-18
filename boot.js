@@ -1191,6 +1191,78 @@ function tpParallelTrainer(mainIdx){
    die ueberzaehligen Gruppen spielen bei den kleinsten Feldern mit – nur fuer diesen
    Hauptteil, die Auslosung selbst bleibt unangetastet (ein anderer Hauptteil ohne Block
    hat wieder alle Gruppen). Kein Kind verschwindet, keine Gruppe wird gespeichert. */
+/* ═══════════════════════════════════════════════════════════════════════════
+   v573 – AN JEDEM FELD DIE ZAHL, DIE DIE ÜBUNG BRAUCHT
+
+   PO am 18.09., dritter Anlauf am selben Bildschirmfoto: „Bei der Gruppe Grüne Krokodile
+   ist die Übung aber für sechs Kinder. Und in der Gruppeneinteilung sind nur vier
+   eingeteilt." Bei L4-8 brauchen die drei Stationen verschieden viele Kinder: „2 gegen 1
+   plus Torwart" und „FUNiño 3 gegen 1" je vier aktive Plätze (ihre Beschreibung rechnet
+   zwei Wartende dazu), „3 gegen 2 mit Wandspieler" sechs – dort wartet niemand. Vierzehn
+   Kinder ergeben also genau 4 + 4 + 6. Die App teilte gleichmäßig 5/5/4 und stellte die
+   Vierergruppe ausgerechnet ans Feld, das sechs braucht.
+
+   Die Gruppen bleiben, wie sie sind – Namen, Trainer und Einteilung ändern sich nicht. Nur
+   für den einzelnen Hauptteil wandern so viele Kinder von einem Feld zum anderen, wie die
+   Übungen es verlangen, und der Plan sagt namentlich, wer. Beim Weiterrücken rechnet sich
+   das neu: In jedem Hauptteil steht an jedem Feld die Zahl, die dort gebraucht wird.
+
+   Bewusst so herum: Die gespeicherte Einteilung anzufassen hieße, die Gruppe des Kindes zu
+   ändern – „meine Gruppe, mein Trainer" aus v514 gilt weiter. Geliehen wird immer vom Feld
+   mit dem größten Überschuss, und ein Feld gibt nie unter seinen eigenen Bedarf ab.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function tpFeldBedarfe(si,n,merk){
+  const slots=(typeof tpSlots!=="undefined")?tpSlots:[];
+  const slot=slots[si]||{};
+  const alle=(typeof tpAllForms==="function")?tpAllForms():[];
+  const out=[];
+  for(let p=0;p<n;p++){
+    const id=`tp-form-${si}-${p}`;
+    let idx=null;
+    const sel=document.getElementById(id);
+    if(sel&&sel.value)idx=parseInt(sel.value);
+    else if(merk&&merk[id])idx=parseInt(merk[id]);
+    /* Beim Neuzeichnen sind die Selects noch leer; dann sagt die Einheit selbst, welche
+       Übung an dieses Feld gehört (slot.felder, seit v571). */
+    if((idx==null||isNaN(idx))&&Array.isArray(slot.felder)&&slot.felder.length){
+      const nm=(slot.felder[p%slot.felder.length]||{}).u;
+      const i=alle.findIndex(f=>f&&f.name===nm);
+      idx=(i>=0)?i:null;
+    }
+    out.push((idx!=null&&!isNaN(idx)&&typeof tpUebungBedarf==="function")?tpUebungBedarf(idx):0);
+  }
+  return out;
+}
+/* Kinder zwischen den Feldern ausgleichen, bis jedes seinen Bedarf trägt. Die Felder sind
+   hier schon gedreht (Versatz), die Übung hängt am Feld – Index i ist also die Feldnummer. */
+function tpFelderAusgleich(felder,bedarfe){
+  if(!Array.isArray(bedarfe)||!Array.isArray(felder)||felder.length<2)return felder;
+  const b=felder.map((f,i)=>Math.max(0,Number(bedarfe[i])||0));
+  if(!b.some(Boolean))return felder;
+  for(let schutz=0;schutz<60;schutz++){
+    /* Das Feld mit der größten Unterdeckung zuerst – sonst bekäme ein Feld, dem eines
+       fehlt, das Kind, das ein anderes zweimal braucht. */
+    let fehlt=-1;
+    felder.forEach((f,i)=>{
+      const luecke=b[i]-f.kinder.length;
+      if(b[i]&&luecke>0&&(fehlt<0||luecke>b[fehlt]-felder[fehlt].kinder.length))fehlt=i;
+    });
+    if(fehlt<0)break;
+    let quelle=-1;
+    felder.forEach((f,i)=>{
+      if(i===fehlt)return;
+      const ueber=f.kinder.length-b[i];
+      if(ueber>0&&(quelle<0||ueber>felder[quelle].kinder.length-b[quelle]))quelle=i;
+    });
+    if(quelle<0)break;   // niemand hat etwas übrig – dann bleibt die Lücke und wird gemeldet
+    const kind=felder[quelle].kinder.pop();
+    if(kind==null)break;
+    felder[fehlt].kinder.push(kind);
+    (felder[fehlt].geliehen=felder[fehlt].geliehen||[]).push({kind,von:felder[quelle].name,emo:felder[quelle].emo});
+    (felder[quelle].abgegeben=felder[quelle].abgegeben||[]).push({kind,an:felder[fehlt].name,emo:felder[fehlt].emo,feld:fehlt+1});
+  }
+  return felder;
+}
 /* v514 – PO: „Wenn wir zwei Gruppen haben und zwei Übungen machen, die Gruppen darauf
    aufteilen und dann die Gruppen einfach nur switchen."
    Bis dahin stand Gruppe 1 in JEDEM Hauptteil an Feld 1. Bei zwei Übungen nebeneinander
@@ -1199,7 +1271,7 @@ function tpParallelTrainer(mainIdx){
    Gruppen ist das ein Tausch, bei drei oder vier ein Weiterrücken.
    Der Versatz ist die EINZIGE Stelle, an der das passiert – wer die Gruppen anzeigt,
    fragt hier, statt selbst zu rechnen. */
-function tpFelderGruppen(tg,n,weg,versatz){
+function tpFelderGruppen(tg,n,weg,versatz,bedarfe){
   const alle=(tg&&tg.gruppen)||[];
   if(!alle.length)return [];
   const raus=Array.isArray(weg)?weg:[];
@@ -1215,7 +1287,9 @@ function tpFelderGruppen(tg,n,weg,versatz){
   /* Erst zusammenlegen, dann drehen: die weggelassenen Felder sind vorher verteilt, sonst
      wanderte eine Gruppe in ein Feld, das es in diesem Block gar nicht gibt. */
   const v=((Number(versatz)||0)%felder.length+felder.length)%felder.length;
-  return v?felder.slice(v).concat(felder.slice(0,v)):felder;
+  const gedreht=v?felder.slice(v).concat(felder.slice(0,v)):felder;
+  /* v573: Erst drehen, dann ausgleichen – die Übung hängt am Feld, die Gruppe rückt weiter. */
+  return tpFelderAusgleich(gedreht,bedarfe);
 }
 /* Der wievielte Hauptteil ist das? Daraus entsteht der Versatz von selbst – ohne dass
    jemand etwas einstellen muss. `slot.versatz` schlägt das über (Knopf am Block) und wird
@@ -1733,7 +1807,7 @@ function tpRenderTimeline(){
     const weg=(tpIstHauptteil(typ)&&Array.isArray(slot.weg))?slot.weg:[];
     const basisFelder=noGroups?1:(tpIstHauptteil(typ)&&gebunden.size)?Math.min(Math.max(1,trainers.length),5):Math.min(Math.max(1,trainerCount,tgAnz),5);
     const parallelSlots=Math.max(1,basisFelder-weg.length);   // vom Trainer weggelassene Felder
-    const felderGruppen=(tpIstHauptteil(typ)&&typeof tgFor==="function"&&tgFor())?tpFelderGruppen(tgFor(),parallelSlots,weg,tpVersatz(si)):null;
+    const felderGruppen=(tpIstHauptteil(typ)&&typeof tgFor==="function"&&tgFor())?tpFelderGruppen(tgFor(),parallelSlots,weg,tpVersatz(si),tpFeldBedarfe(si,parallelSlots,merk.sel)):null;
     const filtered=tpFilteredOpts(typ);
     const formOpts=filtered.map(x=>`<option value="${x.i}">${x.f.name} (${x.f.dauer})</option>`).join("");
 
@@ -1779,7 +1853,9 @@ function tpRenderTimeline(){
        Sichtbar nur, wenn es überhaupt mehrere Gruppen auf mehreren Feldern gibt. */
     if(tpIstHauptteil(typ)&&felderGruppen&&felderGruppen.length>1){
       const v=tpVersatz(si), eigen=tpSlots[si]&&tpSlots[si].versatz!=null;
-      const wer=felderGruppen.map((f,i)=>`${f.emo||"👥"} ${esc((f.name||"").split(" + ")[0])} → Feld ${i+1}`).join(" · ");
+      /* v573: mit der Feldstärke – sie kann sich durch den Ausgleich von der Gruppengröße
+         unterscheiden, und der Timer zeigt dieselbe Zeile. */
+      const wer=felderGruppen.map((f,i)=>`${f.emo||"👥"} ${esc((f.name||"").split(" + ")[0])} (${f.kinder.length}) → Feld ${i+1}`).join(" · ");
       html+=`<div class="tp-ringtausch" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:4px 0 6px">
         <span style="font-size:11px;color:var(--text2);flex:1 1 140px;min-width:0">⇄ ${wer}${v?` <b>· ${v}× weitergerückt</b>`:""}</span>
         <button onclick="tpVersatzSetzen(${si},1)" title="Alle Gruppen rücken ein Feld weiter – bei zwei Gruppen ist das der Tausch" style="min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer">⇄ weiterrücken</button>
@@ -1854,6 +1930,18 @@ function tpRenderTimeline(){
             <span class="tp-station-titel">${noGroups?"Alle Kinder":(tgg?`${tgg.name} (${tgg.kinder.length})`:`Gruppe ${p+1}`)}</span>
             ${noGroups?"":tpCoachSelect(selId,gebunden,isMain&&parallelSlots>1)}
           </div>`;
+        /* v573: Wer für diesen einen Block das Feld wechselt, steht namentlich da – sonst
+           sucht der Trainer am Platz ein Kind, das zwei Felder weiter spielt. Die gespeicherte
+           Gruppe des Kindes ändert sich dabei nicht. */
+        if(isMain&&tgg){
+          const lg=Array.isArray(tgg.geliehen)?tgg.geliehen:[], ab=Array.isArray(tgg.abgegeben)?tgg.abgegeben:[];
+          const kurz=x=>String(x||"").split(" + ")[0];
+          const zeilen=[];
+          if(lg.length)zeilen.push(`↪ Dazu für diesen Block: ${lg.map(x=>`${esc(x.kind)} (${x.emo||"👥"} ${esc(kurz(x.von))})`).join(", ")}`);
+          if(ab.length)zeilen.push(`↩ ${ab.map(x=>`${esc(x.kind)} spielt an Feld ${x.feld}`).join(", ")}`);
+          if(zeilen.length)html+=`<div class="tp-leih" style="font-size:11px;color:var(--text2);padding:0 0 4px;line-height:1.5">${zeilen.join(" · ")}</div>`;
+        }
+
         // Kategorie-Dropdown entfällt – der Übungs-Picker gruppiert selbst (PO: keine Ellenlisten)
         html+=`<div class="tp-feld"><label for="${selId}">Übung</label>
             <div class="tp-feld-zeile">
@@ -2991,7 +3079,7 @@ function stTimerStations(){
     try{
       if(tpIstHauptteil(slot.typ)&&typeof tgFor==="function"&&tgFor()){
         const n=Math.max(1,[...document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`)].length);
-        gruppen=tpFelderGruppen(tgFor(),n,(slot.weg||[]),tpVersatz(si)).map((f,i)=>`${f.emo||"👥"} ${(f.name||"").split(" + ")[0]} → Feld ${i+1}`);
+        gruppen=tpFelderGruppen(tgFor(),n,(slot.weg||[]),tpVersatz(si),tpFeldBedarfe(si,n)).map((f,i)=>`${f.emo||"👥"} ${(f.name||"").split(" + ")[0]} (${f.kinder.length}) → Feld ${i+1}`);
       }
     }catch(e){}
     return {label:slot.label||("Station "+(si+1)),dauer:Math.max(1,slot.dauer||10),farbe:slot.farbe||"#1a56db",forms:[...new Set(forms)],gruppen};
@@ -3597,7 +3685,10 @@ function _tlSnapshot(){
     if(tpIstParallel(slot))return; // dockt unten an
     const gruppen=[];
     const sels=document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`);
-    const felder=(tg&&tg.gruppen&&tpIstHauptteil(slot.typ))?tpFelderGruppen(tg,sels.length,slot.weg):null;
+    /* v573: Der Trainingsstart nimmt DIESELBE Zuordnung wie der Plan – mit Versatz und mit
+       dem Ausgleich der Feldstärken. Der Versatz fehlte hier seit v514; auf den Handys am
+       Platz stand damit im zweiten Hauptteil eine andere Gruppe am Feld als in der Planung. */
+    const felder=(tg&&tg.gruppen&&tpIstHauptteil(slot.typ))?tpFelderGruppen(tg,sels.length,slot.weg,tpVersatz(si),tpFeldBedarfe(si,sels.length)):null;
     sels.forEach((s,p)=>{
       const f=s.value?forms[Number(s.value)]:null;
       const tgg=felder?felder[p]:null;
@@ -4033,8 +4124,62 @@ function _tgPool(){
 /* Zielgröße vier bis sechs (Auftragspaket). Der Hinweis urteilt nicht, er sagt nur, dass
    eine Gruppe darunter liegt – die Entscheidung bleibt beim Trainer. */
 const TG_ZIEL_MIN=4, TG_ZIEL_MAX=6;
+/* v573: Und wie viele Gruppen wären für DIESE Einheit die richtigen?
+
+   PO am 18.09.: „zusätzlich überprüfen, ob es für die dann entstehende Trainingsplanung
+   sinnvoll ist, zum Beispiel anstatt zwei Trainingsgruppen die Kinder in drei
+   Trainingsgruppen aufzuteilen."
+
+   Bis v572 kannte die App nur ihre eigenen Zielgrößen (vier bis sechs je Gruppe) und die
+   Zahl der Stationen. Was die Stationen wirklich brauchen, stand in den Übungen – bei L4-8
+   vier, vier und sechs aktive Plätze. Jetzt wird jede mögliche Gruppenzahl durchgerechnet:
+   die Kinder gleichmäßig verteilt, danach zwischen den Feldern ausgeglichen (v573), und
+   gezählt, wie viele Plätze am Ende leer bleiben oder überzählig sind. Die kleinste Summe
+   gewinnt, bei Gleichstand die größere Zahl – mehr Felder heißt mehr Ballkontakte.
+
+   Die Probe: Für L4-8 kommt genau heraus, was der Autor in die Skalierungszeilen
+   geschrieben hat – 8 und 10 Kinder zwei Felder, 12 und 14 drei. */
+function tpGruppenVorschlag(kinder){
+  if(typeof tpSlots==="undefined"||!Array.isArray(tpSlots))return null;
+  const k=isFinite(kinder)?Number(kinder):((typeof _tgPool==="function")?_tgPool().namen.length:0);
+  if(!k||k<TG_ZIEL_MIN)return null;
+  /* Der Hauptteil mit den meisten Stationen gibt vor, welche Übungen nebeneinander laufen. */
+  let si=-1,max=0;
+  tpSlots.forEach((s,i)=>{
+    if(!tpIstHauptteil(s&&s.typ))return;
+    const n=Math.max(Number(s.stationen)||0,(Array.isArray(s.felder)?s.felder.length:0));
+    if(n>max){max=n;si=i;}
+  });
+  if(si<0)return null;
+  const obergrenze=Math.min(TG_NAMEN.length,Math.max(1,Math.floor(k/TG_ZIEL_MIN)));
+  let beste=null;
+  for(let n=1;n<=obergrenze;n++){
+    const bedarf=tpFeldBedarfe(si,n);
+    if(!bedarf.some(Boolean))continue;
+    const felder=Array.from({length:n},(_,i)=>({name:"F"+i,emo:"",kinder:[]}));
+    for(let j=0;j<k;j++)felder[j%n].kinder.push("K"+j);   // gleichmäßig, wie tgBilden verteilt
+    const ist=tpFelderAusgleich(felder,bedarf).map(f=>f.kinder.length);
+    const fehlt=ist.reduce((a,x,i)=>a+Math.max(0,(bedarf[i]||0)-x),0);
+    const zuviel=ist.reduce((a,x,i)=>a+Math.max(0,x-(bedarf[i]||x)),0);
+    const abw=fehlt+zuviel;
+    if(!beste||abw<beste.abw||(abw===beste.abw&&n>beste.n))beste={n,abw,fehlt,zuviel,bedarf,ist};
+  }
+  return beste;
+}
+/* Ein Satz für die Gruppen-Karte: nur, wenn eine andere Zahl wirklich besser wäre. */
+function tgVorschlagText(tg){
+  if(typeof tpGruppenVorschlag!=="function")return "";
+  const jetzt=((tg&&tg.gruppen)||[]).length;
+  const v=tpGruppenVorschlag();
+  if(!v||!jetzt||v.n===jetzt)return "";
+  const summe=v.bedarf.reduce((a,x)=>a+x,0);
+  return `Mit ${v.n} Gruppen ginge die Einheit besser auf: die Stationen brauchen ${v.bedarf.join(" + ")} = ${summe} Kinder.`;
+}
 function tgGroessenHinweis(tg){
   const g=(tg&&tg.gruppen)||[]; if(!g.length)return "";
+  /* v573: Was die Einheit braucht, wiegt schwerer als die allgemeine Zielgröße. */
+  const vor=(typeof tgVorschlagText==="function")?tgVorschlagText(tg):"";
+  if(vor)return vor;
   const klein=g.filter(x=>(x.kinder||[]).length<TG_ZIEL_MIN).length;
   const gross=g.filter(x=>(x.kinder||[]).length>TG_ZIEL_MAX).length;
   if(klein)return `${klein===1?"Eine Gruppe liegt":klein+" Gruppen liegen"} unter der Zielgröße von ${TG_ZIEL_MIN} Kindern.`;
@@ -4123,8 +4268,11 @@ function tgZusammenlegen(n){
   const tg=tgFor(); if(!tg||!Array.isArray(tg.gruppen)||!tg.gruppen.length)return null;
   const g=tg.gruppen, ziel=Math.max(1,Number(n)||1);
   while(g.length>ziel){
+    /* Bei gleicher Größe die HINTERSTE auflösen (v573): Sie ist die zuletzt dazugekommene,
+       und die vorderen Gruppen haben ihre Namen und Trainer seit dem Auslosen. Vorher traf es
+       bei drei gleich großen Gruppen immer die erste – aus 4/4/4 wurde „Rote Füchse" zuerst. */
     let kleinst=0;
-    g.forEach((x,i)=>{ if((x.kinder||[]).length<(g[kleinst].kinder||[]).length)kleinst=i; });
+    g.forEach((x,i)=>{ if((x.kinder||[]).length<=(g[kleinst].kinder||[]).length)kleinst=i; });
     const weg=g.splice(kleinst,1)[0];
     (weg.kinder||[]).forEach(k=>{
       let z=g[0];
@@ -4183,11 +4331,15 @@ function tgRender(){
   if(az){
     const jetzt=tg.gruppen.length;
     const kinder=tg.gruppen.reduce((s,g)=>s+g.kinder.length,0);
+    /* v573: Welche Zahl die Einheit braucht, steht am Knopf – als Stern, nicht als Farbe
+       allein, und als Satz darunter mit der Rechnung. */
+    const vor=(typeof tpGruppenVorschlag==="function")?tpGruppenVorschlag(kinder):null;
     az.innerHTML=`<span style="font-size:11.5px;color:var(--text2);margin-right:2px">Gruppen:</span>`
-      +TG_NAMEN.map((_,i)=>{const n=i+1;const an=n===jetzt;
-        return `<button onclick="tgAnzahlSetzen(${n})" aria-pressed="${an?"true":"false"}" style="min-width:44px;min-height:44px;padding:0 12px;border:1px solid var(--rand-bedien);${an?"border-color:transparent;background:var(--fam-training);color:#fff;":"background:var(--surface2);color:var(--text);"}border-radius:16px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer">${an?"✓ ":""}${n}</button>`;
+      +TG_NAMEN.map((_,i)=>{const n=i+1;const an=n===jetzt;const gut=!!(vor&&vor.n===n);
+        return `<button onclick="tgAnzahlSetzen(${n})" aria-pressed="${an?"true":"false"}"${gut?' title="Passt zu den Stationen dieser Einheit"':""} style="min-width:44px;min-height:44px;padding:0 12px;border:1px solid ${gut&&!an?"var(--fam-training)":"var(--rand-bedien)"};${an?"border-color:transparent;background:var(--fam-training);color:#fff;":"background:var(--surface2);color:var(--text);"}border-radius:16px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer">${an?"✓ ":""}${n}${gut?" ★":""}</button>`;
       }).join("")
-      +`<span style="font-size:11px;color:var(--text3);margin-left:2px">${kinder} Kinder</span>`;
+      +`<span style="font-size:11px;color:var(--text3);margin-left:2px">${kinder} Kinder</span>`
+      +(vor?`<div style="flex:1 0 100%;font-size:11px;color:var(--text2);padding:4px 0 0;line-height:1.5">★ ${vor.n===jetzt?"passt":"empfohlen"}: die Stationen dieser Einheit brauchen ${vor.bedarf.join(" + ")} = ${vor.bedarf.reduce((a,x)=>a+x,0)} Kinder${vor.fehlt?`, ${vor.fehlt} ${vor.fehlt===1?"Platz bleibt":"Plätze bleiben"} leer`:""}${vor.zuviel?`, ${vor.zuviel} ${vor.zuviel===1?"Kind wechselt":"Kinder wechseln"} ein`:""}.</div>`:"");
   }
   el.innerHTML=tg.gruppen.map((g,gi)=>`<div style="border:var(--border-s);border-left:4px solid ${g.farbe};border-radius:12px;padding:10px 12px;margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">

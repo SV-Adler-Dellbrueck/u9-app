@@ -104,16 +104,16 @@ module.exports = async function (h) {
 
   // ── Die Zeile in der Zeitleiste ───────────────────────────────────────────
   if (r.zeilen0.some(z => !z)) probleme.push("Nicht jeder Hauptteil zeigt, welche Gruppe an welchem Feld steht");
-  if (!/🔵 Blau → Feld 1/.test(r.zeilen0[0])) probleme.push(`Erster Hauptteil: „${r.zeilen0[0]}“ – erwartet Blau an Feld 1`);
-  if (!/🟢 Grün → Feld 1/.test(r.zeilen0[1])) probleme.push(`Zweiter Hauptteil: „${r.zeilen0[1]}“ – die Gruppen müssen weitergerückt sein`);
-  if (!/🔴 Rot → Feld 1/.test(r.zeilen0[2])) probleme.push(`Dritter Hauptteil: „${r.zeilen0[2]}“ – erwartet Rot an Feld 1`);
+  if (!/🔵 Blau \(\d+\) → Feld 1/.test(r.zeilen0[0])) probleme.push(`Erster Hauptteil: „${r.zeilen0[0]}“ – erwartet Blau an Feld 1`);
+  if (!/🟢 Grün \(\d+\) → Feld 1/.test(r.zeilen0[1])) probleme.push(`Zweiter Hauptteil: „${r.zeilen0[1]}“ – die Gruppen müssen weitergerückt sein`);
+  if (!/🔴 Rot \(\d+\) → Feld 1/.test(r.zeilen0[2])) probleme.push(`Dritter Hauptteil: „${r.zeilen0[2]}“ – erwartet Rot an Feld 1`);
   if (!r.knoepfe.some(t => /weiterrücken/.test(t))) probleme.push("Der Knopf „⇄ weiterrücken“ fehlt");
   if (r.knopfHoehe < 44) probleme.push(`Die Knöpfe am Block sind ${r.knopfHoehe} px hoch (mindestens 44)`);
 
   // ── Knopf und Zurücknehmen ────────────────────────────────────────────────
   if (r.nachKnopf.versatz !== 2) probleme.push(`Nach einmal „weiterrücken“ steht der Versatz auf ${r.nachKnopf.versatz} statt 2`);
   if (r.nachKnopf.gespeichert !== 2) probleme.push("Der Versatz wird nicht am Slot festgehalten – er ginge beim Speichern verloren");
-  if (!/🔴 Rot → Feld 1/.test(r.nachKnopf.zeile)) probleme.push(`Nach dem Knopf steht dort „${r.nachKnopf.zeile}“`);
+  if (!/🔴 Rot \(\d+\) → Feld 1/.test(r.nachKnopf.zeile)) probleme.push(`Nach dem Knopf steht dort „${r.nachKnopf.zeile}“`);
   if (r.nachZurueck.eigen !== undefined) probleme.push("„↩ automatisch“ löscht den eigenen Versatz nicht");
   if (r.nachZurueck.versatz !== 1) probleme.push(`Nach „↩ automatisch“ steht der Versatz auf ${r.nachZurueck.versatz} statt wieder auf 1`);
   if (!Object.keys(plaene).length) probleme.push("Der Ringtausch wird nicht gespeichert");
@@ -129,7 +129,9 @@ module.exports = async function (h) {
   // ── Timer und Zeitleiste zeigen dasselbe ──────────────────────────────────
   if (!r.timerLeer) probleme.push("Der Timer zeigt Gruppen auch bei Aufwärmen oder Abschluss – dort gibt es keine");
   [1, 2, 3].forEach((si, k) => {
-    const erwartet = ["🔵 Blau", "🟢 Grün", "🔴 Rot"][k];
+    /* v573: beide Zeilen nennen jetzt auch die Feldstärke – sie kann sich durch den
+       Ausgleich der Stationsgrößen von der Gruppengröße unterscheiden. */
+    const erwartet = ["🔵 Blau (3)", "🟢 Grün (3)", "🔴 Rot (3)"][k];
     if (!r.timerGruppen[si] || r.timerGruppen[si].indexOf(erwartet + " → Feld 1") !== 0)
       probleme.push(`Der Timer zeigt für Hauptteil ${k + 1} „${r.timerGruppen[si]}“ statt „${erwartet} → Feld 1 …“ – Timer und Zeitleiste müssen dieselbe Zuordnung zeigen`);
   });
