@@ -981,6 +981,10 @@ async function vorlageUebernehmenSetzen(){
   const bl=Array.isArray(v.bloecke)?v.bloecke:[];
   let mainNr=0;
   const slots=[], plan=[];
+  /* v571: Hauptteil 2 und 3 verweisen auf Hauptteil 1 („Regeln wie in Hauptteil 1") und
+     tragen die Feldtexte nicht noch einmal. Der zuletzt gesehene Satz gilt weiter, solange
+     die Zahl der Felder dieselbe ist. */
+  let letzteTexte=null;
   let fehlend=null;
   for(const b of bl){
     if(b.typ==="main"||b.typ==="spielform")mainNr++;
@@ -993,7 +997,16 @@ async function vorlageUebernehmenSetzen(){
        dritte Station verschwand still, sobald weniger Gruppen da waren. Erst ab zwei
        gespeichert, damit die Slots nicht unnötig wachsen. */
     const feldStationen=st?st.filter(x=>(x||{}).rolle!=="tw").length:0;
-    slots.push({label,dauer:Number(b.dauer),farbe:_eiFarbe(b.typ,mainNr),typ:b.typ,...(feldStationen>1?{stationen:feldStationen}:{})});
+    /* v571: Was an welchem Feld gilt, steht im Label hinter „|" – und gehört an die
+       Station, nicht in eine Zeile über alle drei. Gespeichert wird es mit dem ÜBUNGSNAMEN
+       daneben, damit der Text mit der Übung verschwindet, wenn der Trainer sie tauscht. */
+    const feldNamen=st?st.filter(x=>(x||{}).rolle!=="tw").map(x=>String((x||{}).uebung_name||"").trim()):[];
+    let texte=(typeof tpLabelFeldTexte==="function")?tpLabelFeldTexte(label):null;
+    if(!texte&&letzteTexte&&letzteTexte.length===feldNamen.length)texte=letzteTexte;
+    if(texte&&texte.length===feldNamen.length)letzteTexte=texte;
+    const felder=(texte&&feldNamen.length>1&&texte.length===feldNamen.length&&feldNamen.every(Boolean))
+      ? feldNamen.map((u,i)=>({u,t:texte[i]})) : null;
+    slots.push({label,dauer:Number(b.dauer),farbe:_eiFarbe(b.typ,mainNr),typ:b.typ,...(feldStationen>1?{stationen:feldStationen}:{}),...(felder?{felder}:{})});
     if(st){
       /* Paket B: verschiedene Übungen je Station. Die Reihenfolge der Liste ist die
          Reihenfolge der Felder. Gibt es am Termin weniger Felder als Stationen, fällt
