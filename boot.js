@@ -1636,17 +1636,29 @@ function tpGruppeHinweis(selId){
     /* Die Einheit regelt diese Größe selbst – dann ist nichts zu melden, sondern zu zeigen. */
     html+=`<div style="font-size:11.5px;color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: ${esc(vari)}</div>`;
   }else if(info.n){
-    const bedarf=tpUebungBedarf(idx);
-    if(bedarf&&info.n<bedarf){
+    /* v572: Die Aufstellung dieser Gruppe an dieser Übung – immer, nicht nur im Notfall.
+       PO am 18.09.: „Bei Rot sind fünf Spieler und kein Hinweis, dass einer wartet, weil die
+       spielen ja nur drei plus eins." Bis v571 schwieg die Zeile, sobald die Gruppe groß
+       genug war; dass eines der fünf Kinder draußen steht, stand nirgends. Die Einheit sagt
+       es nur dort, wo jemand daran gedacht hat: L4-8 nennt es für Feld 1 („bei 5 wartet
+       eines") und für Feld 3, für Feld 2 nicht. Gerechnet ist es immer möglich – die
+       Übungsbeschreibung nennt die aktiven Plätze und die Wartenden getrennt. */
+    const aktiv=tpUebungBedarf(idx);
+    if(aktiv&&info.n>aktiv){
+      const rest=info.n-aktiv;
+      html+=`<div style="font-size:11.5px;color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: ${aktiv} spielen, ${rest===1?"eines wechselt":rest+" wechseln"} ein</div>`;
+    }else if(aktiv&&info.n===aktiv){
+      html+=`<div style="font-size:11.5px;color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: alle spielen</div>`;
+    }else if(aktiv&&info.n<aktiv){
       const kinder=(typeof _tgPool==="function")?_tgPool().namen.length:0;
       const jetzt=(((typeof tgFor==="function"&&tgFor())||{}).gruppen||[]).length;
-      const passt=Math.max(1,Math.min(Math.floor(kinder/bedarf),TG_NAMEN.length));
+      const passt=Math.max(1,Math.min(Math.floor(kinder/aktiv),TG_NAMEN.length));
       /* Zusammenlegen hilft nur, wenn dadurch wirklich Gruppen in Übungsgröße entstehen –
          und es kostet ein Feld. Beides steht im Knopf, damit es niemand nebenbei wegtippt. */
-      const knopf=(passt<jetzt&&Math.floor(kinder/passt)>=bedarf)
+      const knopf=(passt<jetzt&&Math.floor(kinder/passt)>=aktiv)
         ? ` <button onclick="tgAnzahlSetzen(${passt});tgFertig()" style="margin-left:6px;min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer">👥 ${passt===1?"Alle Kinder an ein Feld":"Auf "+passt+" Gruppen zusammenlegen"} (${jetzt-passt===1?"ein Feld":(jetzt-passt)+" Felder"} weniger)</button>`
         : " Die Einheit nennt für diese Größe keine Anpassung – Regel selbst anpassen oder eine andere Übung wählen.";
-      html+=`<div class="tp-gruppe-hinweis" style="font-size:11px;color:var(--text2);padding:3px 0 0;line-height:1.5">ℹ️ ${info.n} Kinder an dieser Station, die Übung ist für ${bedarf} gedacht.${knopf}</div>`;
+      html+=`<div class="tp-gruppe-hinweis" style="font-size:11px;color:var(--text2);padding:3px 0 0;line-height:1.5">ℹ️ ${info.n} Kinder an dieser Station, die Übung ist für ${aktiv} gedacht.${knopf}</div>`;
     }
   }
   el.innerHTML=html;
