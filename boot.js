@@ -4211,6 +4211,11 @@ function tgAnwesenheitAbgleich(){
   if(typeof _tgPool!=="function")return null;
   const pool=_tgPool();
   if(!pool||!Array.isArray(pool.namen)||!pool.namen.length)return null;
+  /* Ohne Anwesenheit UND ohne Zusagen ist die Basis der ganze Kader – und der sagt nichts
+     darüber, wer heute kommt. Eine Einteilung, die der Trainer aus neun Kindern gebaut hat,
+     stillschweigend auf fünfzehn aufzufüllen wäre schlimmer als gar kein Abgleich. Genau das
+     haben v451, v457 und v514 beim ersten Anlauf gemeldet. */
+  if(pool.quelle!=="anwesenheit"&&pool.quelle!=="zusagen")return null;
   const soll=new Set(pool.namen), raus=[], rein=[], drin=new Set();
   tg.gruppen.forEach(g=>{ (g.kinder||[]).forEach(n=>drin.add(n)); });
   pool.namen.forEach(n=>{ if(!drin.has(n))rein.push(n); });

@@ -14,7 +14,11 @@
    c) Der Abgleich läuft beim Zeichnen des Plans von selbst und meldet sich einmal.
    d) Er rechnet nicht gegen sich selbst: Ein zweiter Durchlauf ohne Änderung meldet nichts.
    e) Danach stimmen auch die Feldstärken (v573) wieder – die Summe am Feld ist die Zahl der
-      anwesenden Kinder. */
+      anwesenden Kinder.
+   f) Ist WEDER Anwesenheit NOCH eine Zusage erfasst, bleibt die Einteilung unangetastet: Die
+      Basis wäre dann der ganze Kader, und der sagt nichts darüber, wer heute kommt. Eine von
+      Hand gebaute Neuner-Einteilung auf fünfzehn aufzufüllen wäre schlimmer als gar kein
+      Abgleich – v451, v457 und v514 haben genau das beim ersten Anlauf gemeldet. */
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
   const K = h.KINDER;
@@ -80,6 +84,16 @@ module.exports = async function (h) {
     out.rausMorgen = erg2 ? erg2.raus.length : 0;
     out.summeMorgen = tgFor().gruppen.reduce((a, g) => a + g.kinder.length, 0);
 
+    /* f) Weder Anwesenheit noch Zusagen: Hände weg. */
+    if (feld && ![...feld.options].some(o => o.value === morgen)) feld.value = morgen; else if (feld) feld.value = morgen;
+    _tgCache = { datum: morgen, geladen: true, tg: bau() };
+    TP_KIND_RSVP = [];
+    window.AW_DATA = {};
+    out.quelleKader = _tgPool().quelle;
+    out.ergKader = tgAnwesenheitAbgleich();
+    out.summeKader = tgFor().gruppen.reduce((a, g) => a + g.kinder.length, 0);
+    window.AW_DATA = {}; AW_DATA[heute] = tag;
+
     // c) beim Zeichnen von selbst
     if (feld) feld.value = heute;
     _tgCache = { datum: heute, geladen: true, tg: bau() };
@@ -110,6 +124,10 @@ module.exports = async function (h) {
   if (r.quelleMorgen !== "zusagen") probleme.push(`Für den künftigen Termin kommt der Pool aus „${r.quelleMorgen}“ statt aus den Zusagen`);
   if (r.rausMorgen) probleme.push(`Vor dem Trainingstag wurden ${r.rausMorgen} Kinder entfernt – eine Absage ist dort noch keine Tatsache`);
   if (r.summeMorgen !== 12) probleme.push(`Für den künftigen Termin stehen ${r.summeMorgen} Kinder in den Gruppen statt der geplanten 12`);
+  // f)
+  if (r.quelleKader !== "kader") probleme.push(`Ohne Anwesenheit und Zusagen kommt der Pool aus „${r.quelleKader}“ statt aus dem Kader`);
+  if (r.ergKader) probleme.push(`Ohne Anwesenheit und Zusagen wird trotzdem verschoben: ${JSON.stringify(r.ergKader)}`);
+  if (r.summeKader !== 12) probleme.push(`Ohne Anwesenheit und Zusagen stehen ${r.summeKader} Kinder in den Gruppen statt der eingeteilten 12`);
   // c)
   if (r.nachRender !== 12) probleme.push(`Beim Zeichnen des Plans gleicht die App nicht ab: ${r.nachRender} Kinder`);
   if (r.nachRenderFehlende) probleme.push(`Nach dem Zeichnen stehen ${r.nachRenderFehlende} Abwesende in den Gruppen`);
@@ -119,6 +137,7 @@ module.exports = async function (h) {
     zeilen.push(`Am Trainingstag: ${r.raus.length} raus, ${r.rein.length} dazu → ${r.groessen.join("/")} (${r.summe} Kinder), Namen und Trainer unverändert`);
     zeilen.push(`Zweiter Durchlauf ohne Änderung · beim Zeichnen des Plans läuft der Abgleich von selbst`);
     zeilen.push(`Künftiger Termin (Zusagen): niemand wird entfernt, ${r.summeMorgen} Kinder bleiben eingeteilt`);
+    zeilen.push(`Ohne Anwesenheit und Zusagen (Basis Kader): kein Abgleich, ${r.summeKader} Kinder bleiben stehen`);
   }
   return h.ergebnis("Einteilung folgt der Anwesenheit", !probleme.length, zeilen.concat(probleme));
 };
