@@ -3296,11 +3296,58 @@ function einheitListRender(){
     <div style="display:flex;margin-top:10px"><button class="btn btn-sm" style="margin-left:auto" onclick="document.getElementById('eb-modal').remove()">Schließen</button></div>`;
 }
 
+/* v575 – EINE KARTE JE ÜBUNG, NICHT JE DURCHGANG
+
+   PO am 18.09., mit Bildschirmfoto der Nachbereitung: „Eine Übung wird 2× aufgeführt.
+   Wahrscheinlich 1× als Hauptteil bzw. Übersicht über alle Einheiten. Macht aber im Tagebuch
+   wenig Sinn." Keine der Karten war eine Übersicht: Die Nachbereitung listete jeden
+   PLAN-EINTRAG, und eine Einheit wie L4-8 setzt dieselben drei Übungen in allen drei
+   Hauptteilen ein – also dreimal dieselbe Karte, je einmal pro Block.
+
+   Das war nicht nur Lärm, sondern falsch:
+   · Gespeichert wurden drei Bewertungen derselben Übung. Ø-Sterne und Trainer-Statistik
+     zählten sie dreifach, und der Kommentar erschien dreimal im Trainingsplan.
+   · Beim erneuten Öffnen zog `evals.find(e => e.formIdx === p.formIdx …)` für alle drei
+     Karten denselben ersten Treffer: Wer sie unterschiedlich bewertet hatte, sah zwei
+     Bewertungen nicht wieder.
+
+   Gebündelt wird nach Übung UND Trainer: Bewertet wird die Übung, nicht der Durchgang – aber
+   zwei Trainer, die dieselbe Übung an verschiedenen Feldern betreut haben, urteilen getrennt.
+   Die Blöcke, in denen sie lief, stehen als Zeile darunter. */
+function einheitPlanBuendeln(plan){
+  const aus=[], nach=new Map();
+  (Array.isArray(plan)?plan:[]).forEach(p=>{
+    if(!p)return;
+    const key=String(p.formIdx)+"|"+String(p.trainer||"");
+    const da=nach.get(key);
+    if(da){
+      const l=String(p.slotLabel||"").trim();
+      if(l&&!da._labels.includes(l))da._labels.push(l);
+      return;
+    }
+    const kopie={...p,_labels:[String(p.slotLabel||"").trim()].filter(Boolean)};
+    nach.set(key,kopie); aus.push(kopie);
+  });
+  return aus;
+}
+/* „Hauptteil 1 – drei Stationen, 3 Min frei …“ und „Hauptteil 2 – Gruppen rücken …“ sind
+   zwei Sätze, die zusammen breiter sind als der Bildschirm. Gesucht ist, was sie
+   unterscheidet: der Anfang bis zum Gedankenstrich. */
+function einheitBlockNamen(p){
+  const kurz=(String(p&&p.slotLabel||"")).trim();
+  const alle=(p&&Array.isArray(p._labels)&&p._labels.length)?p._labels:[kurz].filter(Boolean);
+  const namen=alle.map(l=>{
+    const m=/^([^–—:]{1,40}?)\s*[–—:]/.exec(l);
+    return (m?m[1]:l).trim();
+  }).filter(Boolean);
+  return [...new Set(namen)];
+}
 async function einheitDetailOpen(datum){
   const c=document.getElementById("eb-card"); if(!c)return;
   EB_DATUM=datum;
   c.innerHTML='<div style="padding:20px;color:var(--text3);font-size:12.5px">Lade Einheit…</div>';
   EB_PLAN=(typeof tpPlanLoad==="function")?await tpPlanLoad(datum):[];
+  EB_PLAN=einheitPlanBuendeln(EB_PLAN);
   // P3 (PO): Jeder Trainer bewertet nur SEINE Übungen; „Alle"-Stationen sieht jeder.
   // Kennt der Plan keine Trainer-Zuordnung (Altbestand), bleibt alles sichtbar.
   try{
@@ -3329,7 +3376,7 @@ async function einheitDetailOpen(datum){
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
           <span style="font-size:13px;font-weight:700;color:var(--text)">${esc(p.formName)}</span>${badge}
         </div>
-        <div style="font-size:10px;color:var(--text3);margin-bottom:6px">${esc(p.slotLabel||"")}</div>
+        <div style="font-size:10px;color:var(--text3);margin-bottom:6px">${esc(einheitBlockNamen(p).join(" · "))}${(p._labels&&p._labels.length>1)?` <span style="color:var(--text2)">· ${p._labels.length}× im Plan</span>`:""}</div>
         <div id="eb-ue-stars-${i}" style="${skip?"opacity:.35;pointer-events:none":""}">
           ${EB_DIMS.map(d=>einheitStarRow(`ue-${i}-${d.key}`,d.label,alt[d.key]||0,5,19)).join("")}
         </div>
