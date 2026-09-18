@@ -14,15 +14,16 @@
       `tpFeldVariante` findet die Anpassung zur Gruppengröße (und nur die); `tpFeldGrundtext`
       lässt die Klammer weg; `tpUebungBedarf` liest die Zahl je Station – ohne „je …“ gar
       nicht, und Wartende zählen nicht zum Minimum („6 je Station, 2 warten“ → 4).
-   b) Der echte Fall am DOM: L4-8 mit dreizehn Kindern übernehmen. Unter Feld 3 steht der
+   b) Der echte Fall am DOM: L4-8 mit zwölf Kindern übernehmen. Unter Feld 3 steht der
       Feldtext und darunter fett „👥 4 Kinder: zwei Angreifer gegen einen Verteidiger plus
       Wandspieler“. Auch Hauptteil 2 und 3 tragen ihn, obwohl ihr Label nur zurückverweist.
    c) Der Text hängt an der ÜBUNG: Wird die Übung an einem Feld getauscht, verschwindet er,
       statt etwas zu behaupten, das nicht mehr stimmt.
    d) Nennt die Einheit für diese Größe nichts und ist die Gruppe zu klein, steht dort der
       Hinweis mit der Zahl und dem Weg – Zusammenlegen kostet ein Feld und sagt das.
-   e) `tgZusammenlegen`: aus 5/4/4 wird 7/6, ohne neu zu mischen – Namen, Trainer und von Hand
-      verschobene Kinder der bleibenden Gruppen bleiben. */
+   e) `tgZusammenlegen`: aus 4/4/4 wird 6/6, ohne neu zu mischen – Namen, Trainer und von Hand
+      verschobene Kinder der bleibenden Gruppen bleiben. Aufgelöst wird bei gleicher Größe die
+      hinterste Gruppe, nicht die erste. */
 const L48 = "L4-8", L46 = "L4-6";
 const FW = "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts";
 const VAR4 = "zwei Angreifer gegen einen Verteidiger plus Wandspieler";
@@ -34,9 +35,14 @@ module.exports = async function (h) {
   const bib = JSON.parse(fs.readFileSync(path.join(h.REPO, "uebungen/bibliothek.json"), "utf8"));
 
   const datum = h.tagePlus(2);
+  /* Zwölf Kinder, nicht dreizehn: Seit v573 gleicht die App die Feldstärken an die Übungen an
+     (4 + 4 + 6 = 14 Plätze bei L4-8). Mit vierzehn Kindern geht das auf, und die Vierergruppe
+     an der Wandspieler-Station – der Fall, den diese Prüfung festhält – gäbe es nicht mehr.
+     Mit zwölf reicht es nicht für den Ausgleich, die Gruppen bleiben 4/4/4, und Feld 3 steht
+     weiter mit vier Kindern da: genau dann muss die Anpassung der Einheit sichtbar sein. */
   const gruppen = [
-    { name: "Blaue Haie", emo: "🔵", kinder: h.KINDER.slice(0, 7), trainer: "Charles" },
-    { name: "Rote Füchse", emo: "🔴", kinder: h.KINDER.slice(7, 13), trainer: "Finn" }
+    { name: "Blaue Haie", emo: "🔵", kinder: h.KINDER.slice(0, 6), trainer: "Charles" },
+    { name: "Rote Füchse", emo: "🔴", kinder: h.KINDER.slice(6, 12), trainer: "Finn" }
   ];
   const custom = (bib.uebungen || []).map((u, i) => ({ ...u, id: 6000 + i, custom: true }));
   const rows = (vor.vorlagen || []).map((v, i) => ({ ...v, id: 500 + i }));
@@ -44,7 +50,7 @@ module.exports = async function (h) {
   const s = await h.starten({
     hoehe: 2600,
     supabase: h.supabaseAttrappe({
-      kader: h.kaderZeilen({ inaktiv: h.KINDER.slice(13) }), nominierungen: [], anwesenheit: [],
+      kader: h.kaderZeilen({ inaktiv: h.KINDER.slice(12) }), nominierungen: [], anwesenheit: [],
       termine: (u) => {
         const d = (u.searchParams.get("datum") || "").replace(/^eq\./, "");
         const alle = [{ id: 91, datum, typ: "training", trainer_status: { Charles: "ja", Finn: "ja" } }];
@@ -176,8 +182,8 @@ module.exports = async function (h) {
   if (r.bedarfWarmup !== 0) probleme.push(`Das Aufwärmen („8–14“) liefert einen Stationsbedarf von ${r.bedarfWarmup} statt keinen`);
 
   // b)
-  if (r.kinder !== 13) probleme.push(`${r.kinder} Kinder im Pool statt 13`);
-  if (String(r.gruppen.slice().sort()) !== "4,4,5") probleme.push(`Gruppen ${r.gruppen.join("/")} statt 5/4/4`);
+  if (r.kinder !== 12) probleme.push(`${r.kinder} Kinder im Pool statt 12`);
+  if (String(r.gruppen.slice().sort()) !== "4,4,4") probleme.push(`Gruppen ${r.gruppen.join("/")} statt 4/4/4`);
   if (String(r.felderImSlot) !== "3,3,3") probleme.push(`Feldtexte je Hauptteil im Slot: ${r.felderImSlot.join("/")} statt 3/3/3 – Hauptteil 2 und 3 holen sie von Hauptteil 1`);
   if (r.wand.length !== 3) probleme.push(`Die Wandspieler-Übung steht an ${r.wand.length} Feldern statt an dreien (einmal je Hauptteil)`);
   const vier = (r.wand || []).filter(w => w.n === 4);
@@ -188,6 +194,7 @@ module.exports = async function (h) {
   });
   const fuenf = (r.wand || []).filter(w => w.n === 5);
   fuenf.forEach(w => { if (!w.text.includes("5 Kinder: nur ein Verteidiger")) probleme.push(`Die Fünfergruppe bekommt ihre Anpassung nicht: „${w.text.slice(0, 90)}“`); });
+  if (r.wand.some(w => w.n > 5)) probleme.push(`Mit zwölf Kindern dürfte der Ausgleich aus v573 nicht greifen, an der Wandspieler-Station stehen aber ${r.wand.map(w => w.n).join("/")}`);
 
   // c)
   if (r.nachTausch && /Hütchentoren/.test(r.nachTausch)) probleme.push(`Nach dem Tausch auf „${r.nachTauschName}“ steht der alte Feldtext weiter da: „${r.nachTausch.slice(0, 70)}“`);
@@ -200,15 +207,15 @@ module.exports = async function (h) {
   }
 
   // e)
-  if (String(r.nachher.map(g => g.n)) !== "7,6") probleme.push(`Zusammenlegen ergibt ${r.nachher.map(g => g.n).join("/")} statt 7/6`);
-  if (r.summe !== 13) probleme.push(`Nach dem Zusammenlegen sind ${r.summe} Kinder verteilt statt 13`);
+  if (String(r.nachher.map(g => g.n)) !== "6,6") probleme.push(`Zusammenlegen ergibt ${r.nachher.map(g => g.n).join("/")} statt 6/6`);
+  if (r.summe !== 12) probleme.push(`Nach dem Zusammenlegen sind ${r.summe} Kinder verteilt statt 12`);
   if (!r.probandBleibt) probleme.push("Beim Zusammenlegen wurde neu gemischt – ein Kind der bleibenden Gruppe hat gewechselt");
   if (r.nachher[0] && r.vorher[0] && r.nachher[0].name !== r.vorher[0].name) probleme.push(`Die erste Gruppe heißt nach dem Zusammenlegen „${r.nachher[0].name}“ statt „${r.vorher[0].name}“`);
   if (fehler.length) probleme.push("Konsole: " + fehler[0]);
 
   if (!probleme.length) {
     zeilen.push(`Rechnung: drei Feldtexte, Variante bei 4 „${VAR4}“, bei 5 „nur ein Verteidiger“ · Bedarf 6 / 4 (Wartende zählen nicht) / keiner beim Aufwärmen`);
-    zeilen.push(`13 Kinder → ${r.gruppen.join("/")}; die Wandspieler-Station zeigt ihren Feldtext in allen drei Hauptteilen, die Vierergruppe bekommt ihre Anpassung`);
+    zeilen.push(`12 Kinder → ${r.gruppen.join("/")}; die Wandspieler-Station zeigt ihren Feldtext in allen drei Hauptteilen, die Vierergruppe bekommt ihre Anpassung`);
     zeilen.push(`Übung getauscht → Feldtext weg · zu kleine Gruppe → „${(r.zuKlein[0] || "").slice(0, 80)}“`);
     zeilen.push(`Zusammenlegen: ${r.vorher.map(g => g.n).join("/")} → ${r.nachher.map(g => g.n).join("/")}, ohne neu zu mischen`);
   }

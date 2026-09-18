@@ -1,5 +1,7 @@
 /* v572 – Unter jeder Station steht, wie diese Gruppe an dieser Übung aufgestellt ist.
 
+   (Seit v573 mit fünfzehn Kindern geprüft statt mit vierzehn – siehe Kommentar im Aufbau.)
+
    Befund des PO am 18.09., direkt nach v571: „Bei Rot sind fünf Spieler und kein Hinweis,
    dass einer wartet, weil die spielen ja nur drei plus eins.“ Genau so war es: Seit v571
    zeigt die App die Anpassung, die die Einheit für eine Gruppengröße nennt – und schwieg
@@ -17,8 +19,10 @@
    a) Mehr Kinder als Plätze: „👥 5 Kinder: 4 spielen, eines wechselt ein“ – Einzahl und
       Mehrzahl richtig.
    b) Genau passend: „👥 4 Kinder: alle spielen“.
-   c) Die Anpassung der Einheit geht vor: An Feld 1 steht weiter „👥 5 Kinder: wartet eines“
-      (aus dem Label), nicht die gerechnete Fassung.
+   c) Die Anpassung der Einheit geht vor – bei fünfzehn Kindern tritt dieser Fall an keinem
+      Feld mehr ein (der Ausgleich aus v573 trifft überall die Plätze), geprüft wird er
+      deshalb in v571 mit zwölf Kindern. Hier bleibt nur die Gegenprobe: Wo eine Anpassung
+      steht, darf die gerechnete Fassung sie nicht überschreiben.
    d) Zu wenige: der Hinweis aus v571 bleibt, samt Weg.
    e) Keine Zahl im Freitext („8–14“ beim Aufwärmen) → keine Zeile, nichts Erfundenes. */
 const L48 = "L4-8";
@@ -32,8 +36,11 @@ module.exports = async function (h) {
   const vor = JSON.parse(fs.readFileSync(path.join(h.REPO, "uebungen/vorlagen.json"), "utf8"));
   const bib = JSON.parse(fs.readFileSync(path.join(h.REPO, "uebungen/bibliothek.json"), "utf8"));
 
-  /* Vierzehn Kinder wie beim PO: die Skalierungszeile von L4-8 sieht dafür „drei Gruppen zu
-     5, 5 und 4“ vor – genau die Aufteilung, bei der die Lücke sichtbar wurde. */
+  /* Fünfzehn Kinder, nicht vierzehn wie beim PO: Seit v573 gleicht die App die Feldstärken an
+     die Übungen an, und die drei Stationen von L4-8 haben zusammen genau vierzehn aktive
+     Plätze (4 + 4 + 6). Mit vierzehn Kindern ginge alles auf, und den Fall dieser Prüfung –
+     mehr Kinder als Plätze, eines wechselt ein – gäbe es nicht mehr. Mit fünfzehn bleibt an
+     einem Feld eines übrig, und genau dort muss es stehen. */
   const datum = h.tagePlus(2);
   const custom = (bib.uebungen || []).map((u, i) => ({ ...u, id: 6000 + i, custom: true }));
   const rows = (vor.vorlagen || []).map((v, i) => ({ ...v, id: 500 + i }));
@@ -41,7 +48,7 @@ module.exports = async function (h) {
   const s = await h.starten({
     hoehe: 2600,
     supabase: h.supabaseAttrappe({
-      kader: h.kaderZeilen({ inaktiv: h.KINDER.slice(14) }), nominierungen: [], anwesenheit: [],
+      kader: h.kaderZeilen({ inaktiv: h.KINDER.slice(15) }), nominierungen: [], anwesenheit: [],
       termine: (u) => {
         const d = (u.searchParams.get("datum") || "").replace(/^eq\./, "");
         const alle = [{ id: 91, datum, typ: "training", trainer_status: { Charles: "ja", Finn: "ja" } }];
@@ -105,8 +112,8 @@ module.exports = async function (h) {
   await s.schliessen();
   if (r.fehlt.length) return h.ergebnis("Aufstellung je Station", false, [r.fehlt.join(", ") + " fehlt"]);
 
-  if (r.kinder !== 14) probleme.push(`${r.kinder} Kinder im Pool statt 14`);
-  if (String(r.gruppen.slice().sort()) !== "4,5,5") probleme.push(`Gruppen ${r.gruppen.join("/")} statt 5/5/4`);
+  if (r.kinder !== 15) probleme.push(`${r.kinder} Kinder im Pool statt 15`);
+  if (String(r.gruppen.slice().sort()) !== "5,5,5") probleme.push(`Gruppen ${r.gruppen.join("/")} statt 5/5/5`);
 
   // a) mehr Kinder als Plätze – der Fall des PO an „3 gegen 1“
   const mehr = r.stationen.filter(x => x.aktiv && x.n > x.aktiv);
@@ -124,11 +131,15 @@ module.exports = async function (h) {
     const eigen = /Kinder: (wartet|nur |zwei |startet)/.test(x.text);
     if (!eigen && !x.text.includes(`👥 ${x.n} Kinder: alle spielen`)) probleme.push(`„${x.name.slice(0, 28)}“ mit genau ${x.n} Kindern zeigt „${x.text.slice(0, 70)}“ statt „alle spielen“`);
   });
-  // c) die Anpassung der Einheit geht vor
+  /* c) Gegenprobe: Wo die Einheit eine Anpassung nennt, steht sie – und nicht die gerechnete
+     Fassung daneben. Bei fünfzehn Kindern kommt das an keinem Feld vor (v571 prüft es mit
+     zwölf); die Schleifen laufen dann leer, und das ist hier richtig so. */
   const feld1 = r.stationen.filter(x => x.name === TW && x.n === 5);
   feld1.forEach(x => { if (!/5 Kinder: wartet eines/.test(x.text)) probleme.push(`Feld 1 mit fünf Kindern zeigt nicht die Angabe der Einheit („wartet eines“), sondern „${x.text.slice(0, 70)}“`); });
   const wand4 = r.stationen.filter(x => x.name === FW && x.n === 4);
   wand4.forEach(x => { if (!/4 Kinder: zwei Angreifer/.test(x.text)) probleme.push(`Feld 3 mit vier Kindern zeigt nicht die Anpassung der Einheit, sondern „${x.text.slice(0, 70)}“`); });
+  const doppelt = r.stationen.filter(x => /Kinder: .*(wartet|nur |zwei Angreifer)/.test(x.text) && /spielen,|alle spielen/.test(x.text));
+  if (doppelt.length) probleme.push(`An ${doppelt.length} Station(en) stehen Anpassung und gerechnete Fassung nebeneinander: „${doppelt[0].text.slice(0, 90)}“`);
   // d) zu wenige – der Hinweis aus v571 bleibt
   const wenig = r.stationen.filter(x => x.aktiv && x.n < x.aktiv && !/Kinder: (wartet|nur |zwei |startet)/.test(x.text));
   wenig.forEach(x => { if (!/ist für \d+ gedacht/.test(x.text)) probleme.push(`Zu kleine Gruppe an „${x.name.slice(0, 28)}“ ohne Hinweis: „${x.text.slice(0, 70)}“`); });
@@ -138,9 +149,9 @@ module.exports = async function (h) {
 
   if (!probleme.length) {
     const f2 = r.stationen.find(x => x.name === F1 && x.n === 5);
-    zeilen.push(`14 Kinder → ${r.gruppen.join("/")} · ${r.stationen.length} besetzte Stationen in den Hauptteilen`);
+    zeilen.push(`15 Kinder → Einteilung ${r.gruppen.join("/")} · ${r.stationen.length} besetzte Stationen in den Hauptteilen`);
     if (f2) zeilen.push(`Der Fall des PO: „${f2.text.slice(0, 80)}“`);
-    zeilen.push(`Anpassung der Einheit geht vor: ${feld1.length}× „wartet eines“ an Feld 1, ${wand4.length}× die Viererfassung an Feld 3`);
+    zeilen.push(`Anpassung der Einheit: ${feld1.length}× an Feld 1, ${wand4.length}× an Feld 3 · nie doppelt mit der gerechneten Fassung`);
     zeilen.push(`Genau passend: ${genau.length} Station(en) „alle spielen“ · Aufwärmen ohne Zahl: keine Zeile`);
   }
   return h.ergebnis("Aufstellung je Station", !probleme.length, zeilen.concat(probleme));

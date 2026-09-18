@@ -41,7 +41,12 @@ module.exports = async function (h) {
   if (!r.titel.some(t => /Rote Füchse/.test(t) && /\+/.test(t))) probleme.push("Rote Fuechse spielen nicht sichtbar mit: " + JSON.stringify(r.titel));
   if (!r.titel.some(t => /^🔵|Blaue Haie \(5\)/.test(t))) probleme.push("Blaue Haie muessten unveraendert bleiben: " + JSON.stringify(r.titel));
   if (!/1 Feld weggelassen/.test(r.hinweis) || !/wieder aufnehmen/.test(r.hinweis)) probleme.push("Hinweis: „" + r.hinweis + "“");
-  if (JSON.stringify(r.start) !== JSON.stringify([5, 9])) probleme.push("Trainingsstart Hauptteil 2: " + JSON.stringify(r.start) + " (erwartet [5,9])");
+  /* v573: [9,5], nicht [5,9] – der Trainingsstart nimmt jetzt AUCH den Versatz, wie die
+     Zeitleiste ihn zeigt („Grüne Krokodile + Rote Füchse (9)" steht dort an Feld 1). Bis v572
+     rechnete _tlSnapshot ohne ihn: auf den Handys am Platz stand im zweiten Hauptteil eine
+     andere Gruppe am Feld als in der Planung. Diese Prüfung hat den Unterschied bis dahin
+     festgeschrieben, statt ihn zu melden. */
+  if (JSON.stringify(r.start) !== JSON.stringify([9, 5])) probleme.push("Trainingsstart Hauptteil 2: " + JSON.stringify(r.start) + " (erwartet [9,5] – dieselbe Zuordnung wie die Zeitleiste)");
   if (JSON.stringify(r.gespeichert) !== "[1]") probleme.push("weg wird nicht gespeichert: " + JSON.stringify(r.gespeichert));
   if (r.zurueck !== 3) probleme.push(`nach „wieder aufnehmen“ ${r.zurueck} Felder statt 3`);
   if (fehler.length) probleme.push(...fehler.slice(0, 3));
