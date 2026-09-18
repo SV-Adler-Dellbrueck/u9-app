@@ -836,7 +836,7 @@ async function vorlagenImportUebernehmen(){
    „Plan ersetzen" und die Vorschau sagt es deutlich.
    ─────────────────────────────────────────────────────────────────────────── */
 let VORLAGEN=[];                       // zuletzt geladene Vorlagen (Welle 2, nur Trainer)
-let _vuAuswahl=null, _vuFilter={leitfrage:"",tag:"",ordnung:""}, _vuPlanDa=false;
+let _vuAuswahl=null, _vuFilter={leitfrage:"",tag:"",ordnung:"",suche:""}, _vuPlanDa=false, _vuFilterOffen=false;
 
 async function vorlagenLaden(){
   if(typeof sbToken==="function"&&!sbToken())return VORLAGEN;
@@ -848,6 +848,10 @@ async function vorlagenLaden(){
   return VORLAGEN;
 }
 function _vuPasst(v){
+  /* v576: Suchfeld zuerst – bei dreißig Einheiten ist Tippen schneller als jeder Filter.
+     Gesucht wird in Name und Leitfrage; die Kürzel („L4-8") stehen im Namen. */
+  const q=String(_vuFilter.suche||"").trim().toLowerCase();
+  if(q&&!((String(v.name||"")+" "+String(v.leitfrage||"")).toLowerCase().includes(q)))return false;
   if(_vuFilter.leitfrage&&String(v.leitfrage||"")!==_vuFilter.leitfrage)return false;
   if(_vuFilter.tag&&!(Array.isArray(v.tags)?v.tags:[]).includes(_vuFilter.tag))return false;
   if(_vuFilter.ordnung&&String(v.ordnung||"")!==_vuFilter.ordnung)return false;
@@ -857,7 +861,7 @@ function vorlageUebernehmenClose(){ document.getElementById("vu-modal")?.remove(
 async function vorlageUebernehmenOpen(){
   if(typeof sbToken==="function"&&!sbToken()){ toast("Bitte zuerst als Trainer anmelden","err"); return; }
   document.getElementById("vu-modal")?.remove();
-  _vuAuswahl=null; _vuFilter={leitfrage:"",tag:"",ordnung:""};
+  _vuAuswahl=null; _vuFilter={leitfrage:"",tag:"",ordnung:"",suche:""}; _vuFilterOffen=false;
   const m=document.createElement("div");
   m.id="vu-modal";
   m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Vorlage übernehmen");
@@ -891,7 +895,50 @@ function vuWaehlen(id){
   _vuAuswahl=(_vuAuswahl===id)?null:id;
   vorlageUebernehmenRender();
 }
-function vorlageUebernehmenRender(){
+/* v576: Die Vorlagen-Schlüssel aus der Datei sind Kleinschreibung mit Bindestrich
+   („wenig-platz"). Am Bildschirm hat das nichts zu suchen: Der Trainer sucht „wenig Platz",
+   nicht einen Datenbankwert. Unbekannte Schlüssel werden trotzdem lesbar – Bindestrich zu
+   Leerzeichen, erster Buchstabe groß –, damit ein neuer Tag nicht erst Code braucht. */
+const VU_TAG_LABEL={"wenig-platz":"wenig Platz","halle":"Halle","schlechtwetter":"schlechtes Wetter",
+  "vor-spieltag":"vor dem Spieltag","nach-spieltag":"nach dem Spieltag","viele-kinder":"viele Kinder",
+  "wenig-kinder":"wenig Kinder","ein-trainer":"ein Trainer allein"};
+function vuTagLabel(t){
+  const k=String(t||"").trim();
+  if(VU_TAG_LABEL[k])return VU_TAG_LABEL[k];
+  const s=k.replace(/[-_]+/g," ").trim();
+  return s?s.charAt(0).toUpperCase()+s.slice(1):k;
+}
+/* Die Nummer steckt im Namen („L4-8 Drei Felder …"). Als Gruppenkopf steht sie vor der
+   Leitfrage, damit die Reihenfolge des Ausbildungskonzepts sichtbar bleibt. */
+function vuGruppenKopf(v){
+  const m=/^L(\d+)-/.exec(String(v&&v.name||""));
+  const frage=String(v&&v.leitfrage||"").trim();
+  return (m?`L${m[1]} · `:"")+(frage||"Ohne Leitfrage");
+}
+function vuSucheSetzen(wert){
+  _vuFilter.suche=String(wert||"");
+  _vuAuswahl=null;
+  vorlageUebernehmenRender({fokus:"vu-suche"});
+}
+function vuFilterAuf(){
+  _vuFilterOffen=!_vuFilterOffen;
+  vorlageUebernehmenRender();
+}
+/* Was gerade gefiltert wird, in einem Satz – sonst müsste der Trainer die Reihen
+   aufklappen, nur um zu sehen, warum er acht statt dreißig Einheiten sieht. */
+function vuFilterText(){
+  const t=[];
+  if(_vuFilter.leitfrage)t.push(_vuFilter.leitfrage);
+  if(_vuFilter.ordnung)t.push(_vuFilter.ordnung);
+  if(_vuFilter.tag)t.push(vuTagLabel(_vuFilter.tag));
+  return t.join(" · ");
+}
+function vuFilterLeeren(){
+  _vuFilter={leitfrage:"",tag:"",ordnung:"",suche:_vuFilter.suche||""};
+  _vuAuswahl=null;
+  vorlageUebernehmenRender();
+}
+function vorlageUebernehmenRender(opt){
   const box=document.getElementById("vu-inhalt"); if(!box)return;
   const datum=_vuDatum();
   const tag=(()=>{ if(!datum)return ""; const x=new Date(datum+"T00:00:00"); return isNaN(x)?datum:x.toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}); })();
@@ -908,17 +955,39 @@ function vorlageUebernehmenRender(){
   const ordnungen=EI_ORDNUNGEN.filter(x=>VORLAGEN.some(v=>String(v.ordnung||"")===x));
   const chip=(an,lbl,fn)=>`<button onclick="${fn}" aria-pressed="${an?"true":"false"}" style="min-height:48px;padding:6px 14px;border:1.5px solid ${an?"#7c3aed":"var(--rand-bedien)"};border-radius:24px;font-family:inherit;font-size:12.5px;font-weight:${an?"800":"600"};cursor:pointer;background:${an?"#7c3aed":"var(--surface)"};color:${an?"#fff":"var(--text2)"};text-align:left">${esc(lbl)}</button>`;
   const treffer=VORLAGEN.filter(_vuPasst);
-  const gewaehlt=treffer.find(v=>String(v.id)===String(_vuAuswahl))||null;
+  const gewaehlt=VORLAGEN.find(v=>String(v.id)===String(_vuAuswahl))||null;
+  /* v576: Die Leitfrage steht als Überschrift über ihrer Gruppe, nicht mehr in jeder Karte –
+     dreißig Karten wiederholten sechs Sätze fünfmal. Die Karte nennt dafür, was sie von den
+     anderen ihrer Gruppe unterscheidet: Dauer, Nettospielzeit, Ordnung, Rahmen. */
   const karte=v=>{
     const an=String(v.id)===String(_vuAuswahl);
     const bl=Array.isArray(v.bloecke)?v.bloecke:[];
     const summe=bl.reduce((a,b)=>a+(Number(b.dauer)||0),0);
+    const meta=[`${bl.length} Blöcke`,`${summe} Min.`];
+    if(v.netto_spielform_min)meta.push(`${Number(v.netto_spielform_min)} Min. Spielform`);
+    const marken=[];
+    if(v.ordnung)marken.push(esc(v.ordnung));
+    (Array.isArray(v.tags)?v.tags:[]).forEach(t=>marken.push(esc(vuTagLabel(t))));
     return `<button onclick="vuWaehlen('${esc(String(v.id))}')" aria-pressed="${an?"true":"false"}" style="display:block;width:100%;text-align:left;min-height:48px;padding:10px 12px;margin-bottom:6px;border:1.5px solid ${an?"#7c3aed":"var(--rand-bedien)"};border-radius:12px;background:${an?"#7c3aed14":"var(--surface)"};color:var(--text);font-family:inherit;cursor:pointer">
       <div style="font-size:13px;font-weight:800">${esc(v.name)}</div>
-      <div style="font-size:11.5px;color:var(--text2);margin-top:2px">${esc(v.leitfrage||"")}</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:3px">${bl.length} Blöcke · ${summe} Min.${v.netto_spielform_min?` · ${Number(v.netto_spielform_min)} Min. netto`:""}${v.ordnung?" · "+esc(v.ordnung):""}${(Array.isArray(v.tags)&&v.tags.length)?" · "+v.tags.map(esc).join(", "):""}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:3px">${meta.join(" · ")}</div>
+      ${marken.length?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px">${marken.map(x=>`<span style="font-size:10.5px;color:var(--text2);background:var(--surface2);border-radius:6px;padding:2px 7px">${x}</span>`).join("")}</div>`:""}
     </button>`;
   };
+  /* Nach Leitfrage gruppiert, in der Reihenfolge der Vorlagen (die kommen sortiert). */
+  const gruppen=[];
+  treffer.forEach(v=>{
+    const kopf=vuGruppenKopf(v);
+    const g=gruppen.find(x=>x.kopf===kopf);
+    if(g)g.items.push(v); else gruppen.push({kopf,items:[v]});
+  });
+  /* Keine Versalien: Die Leitfragen sind ganze Fragesätze, und in Großbuchstaben liest sie
+     niemand zu Ende. Das Kürzel trägt die Farbe, die Frage bleibt normal gesetzt. */
+  const listeHtml=gruppen.map(g=>{
+    const t=/^(L\d+) · (.*)$/.exec(g.kopf);
+    const kopf=t?`<span style="color:#7c3aed;font-weight:900">${esc(t[1])}</span> <span style="font-weight:700">${esc(t[2])}</span>`:`<span style="font-weight:700">${esc(g.kopf)}</span>`;
+    return `<div style="font-size:11.5px;color:var(--text2);margin:12px 2px 6px;line-height:1.4">${kopf}</div>${g.items.map(karte).join("")}`;
+  }).join("");
   const vorschau=v=>{
     const bl=Array.isArray(v.bloecke)?v.bloecke:[];
     let mainNr=0;
@@ -932,7 +1001,7 @@ function vorlageUebernehmenRender(){
     const skZeilen=_evSkalierungSchluessel(sk).map(k=>`<div><b>${k} Kinder:</b> ${esc(String(sk[k]))}</div>`).join("");
     return `<div style="border:var(--border-s);border-radius:12px;padding:12px;margin-top:10px">
       <div style="font-size:13px;font-weight:800">${esc(v.name)}</div>
-      <div style="font-size:11.5px;color:var(--text2);margin-bottom:8px">${esc(tag||"kein Termin gewählt")}</div>
+      <div style="font-size:11.5px;color:var(--text2);margin-bottom:8px">${esc(v.leitfrage||"")}${tag?" · "+esc(tag):" · kein Termin gewählt"}</div>
       ${bl.map(zeile).join("")}
       ${skZeilen?`<div style="font-size:11.5px;color:var(--text2);line-height:1.6;margin-top:8px">📐 ${skZeilen}</div>`:""}
       ${v.beobachtung?`<div style="font-size:11.5px;color:var(--text2);line-height:1.5;margin-top:8px">👀 ${esc(v.beobachtung)}</div>`:""}
@@ -954,20 +1023,39 @@ function vorlageUebernehmenRender(){
         ⚠️ Für diesen Termin steht schon ein Plan. <b>Er wird vollständig ersetzt</b> – Phasen und Übungen.</div>`:""}
     </div>`;
   };
+  const aktiv=!!(_vuFilter.leitfrage||_vuFilter.tag||_vuFilter.ordnung);
+  const filterText=vuFilterText();
   box.innerHTML=`
     ${datum?"":`<div style="background:var(--red-bg);border:1px solid var(--red);border-radius:10px;padding:9px 11px;margin-bottom:8px;font-size:12.5px;color:var(--red)">Bitte oben zuerst einen Termin wählen.</div>`}
-    <div class="lbl-klein" style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:2px 2px 5px">Leitfrage</div>
-    <div style="display:flex;gap:6px;flex-direction:column;margin-bottom:9px">${fragen.map(f=>chip(_vuFilter.leitfrage===f,f,`vuFilterSet('leitfrage','${esc(f).replace(/'/g,"&#39;")}')`)).join("")}</div>
-    ${ordnungen.length?`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:2px 2px 5px">Wie sie stehen</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">${ordnungen.map(x=>chip(_vuFilter.ordnung===x,x,`vuFilterSet('ordnung','${esc(x).replace(/'/g,"&#39;")}')`)).join("")}</div>`:""}
-    ${tags.length?`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:2px 2px 5px">Passt wenn …</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">${tags.map(t=>chip(_vuFilter.tag===t,t,`vuFilterSet('tag','${esc(t)}')`)).join("")}</div>`:""}
-    <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${treffer.length} von ${VORLAGEN.length} Vorlagen${(_vuFilter.leitfrage||_vuFilter.tag||_vuFilter.ordnung)?" · Filter aktiv, nochmal tippen hebt ihn auf":""}</div>
-    ${treffer.length?treffer.map(karte).join(""):`<div style="font-size:12.5px;color:var(--text2);padding:8px 0">Keine Vorlage passt zu diesem Filter.</div>`}
+    <input id="vu-suche" type="text" value="${esc(_vuFilter.suche||"")}" placeholder="Suchen – Name oder Leitfrage" aria-label="Vorlagen durchsuchen"
+      oninput="clearTimeout(window._vuDeb);window._vuDeb=setTimeout(()=>vuSucheSetzen(this.value),160)"
+      style="width:100%;box-sizing:border-box;min-height:48px;padding:10px 12px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:14px;background:var(--surface2);color:var(--text)">
+    <button onclick="vuFilterAuf()" aria-expanded="${_vuFilterOffen?"true":"false"}" style="width:100%;min-height:48px;margin-top:6px;display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid ${aktiv?"#7c3aed":"var(--rand-bedien)"};border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:12.5px;cursor:pointer;text-align:left">
+      <span>🔎</span>
+      <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${aktiv?`<b>${esc(filterText)}</b>`:"Filtern nach Leitfrage, Ordnung, Rahmen"}</span>
+      <span style="color:var(--text3)">${_vuFilterOffen?"▲":"▼"}</span>
+    </button>
+    ${_vuFilterOffen?`<div style="border:1px solid var(--rand-bedien);border-top:none;border-radius:0 0 10px 10px;padding:10px;margin-bottom:6px">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:0 2px 5px">Leitfrage</div>
+      <div style="display:flex;gap:6px;flex-direction:column;margin-bottom:9px">${fragen.map(f=>chip(_vuFilter.leitfrage===f,f,`vuFilterSet('leitfrage','${esc(f).replace(/'/g,"&#39;")}')`)).join("")}</div>
+      ${ordnungen.length?`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:2px 2px 5px">Wie sie stehen</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">${ordnungen.map(x=>chip(_vuFilter.ordnung===x,x,`vuFilterSet('ordnung','${esc(x).replace(/'/g,"&#39;")}')`)).join("")}</div>`:""}
+      ${tags.length?`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:2px 2px 5px">Passt wenn …</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${tags.map(t=>chip(_vuFilter.tag===t,vuTagLabel(t),`vuFilterSet('tag','${esc(t)}')`)).join("")}</div>`:""}
+      ${aktiv?`<button onclick="vuFilterLeeren()" class="btn btn-sm" style="width:100%;min-height:44px;margin-top:10px;justify-content:center">↩ Filter aufheben</button>`:""}
+    </div>`:""}
+    <div style="font-size:11px;color:var(--text3);margin:8px 2px 0">${treffer.length===VORLAGEN.length?`${VORLAGEN.length} Vorlagen`:`${treffer.length} von ${VORLAGEN.length} Vorlagen`}</div>
+    ${treffer.length?listeHtml:`<div style="font-size:12.5px;color:var(--text2);padding:10px 0">Keine Vorlage passt dazu.${(aktiv||_vuFilter.suche)?` <button onclick="vuFilterLeeren();vuSucheSetzen('')" class="btn btn-sm" style="min-height:44px;margin-top:8px">↩ Alle zeigen</button>`:""}</div>`}
     ${gewaehlt?vorschau(gewaehlt):""}
     <button id="vu-haupt" onclick="vorlageUebernehmenSetzen()" class="btn btn-p" style="width:100%;min-height:56px;margin-top:12px;justify-content:center;font-size:15px"${(!gewaehlt||!datum)?" disabled":""}><i class="ti ti-calendar-plus"></i>${_vuPlanDa?"Plan ersetzen":"Auf den Termin setzen"}</button>
     <button onclick="vorlageUebernehmenClose()" class="btn" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Abbrechen</button>`;
+  /* Nach dem Neuzeichnen zurück ins Suchfeld – sonst verlöre jeder Tastendruck den Fokus. */
+  if(opt&&opt.fokus==="vu-suche"){
+    const el=document.getElementById("vu-suche");
+    if(el){ const p=el.value.length; el.focus(); try{el.setSelectionRange(p,p);}catch(e){} }
+  }
 }
+
 /* Setzt Phasen und Übungszuordnung für das Datum – dieselben Strukturen und
    dieselbe Kopfzeile wie tpPlanSave() und der Einheiten-Import. `kopf` wird bewusst
    NICHT geschrieben: eine Vorlage hat keinen Schwerpunkt für diesen einen Tag. */
