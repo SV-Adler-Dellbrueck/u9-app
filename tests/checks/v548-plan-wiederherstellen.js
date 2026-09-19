@@ -39,6 +39,13 @@ module.exports = async function (h) {
   const s = await h.starten({
     hoehe: 3000, supabase: h.supabaseAttrappe({
       kader: h.kaderZeilen(),
+      /* Zehn Zusagen, damit zwei Felder entstehen und der Fall bei seinem Gegenstand bleibt.
+         Bis v576 hatte der Termin keine Rückmeldung: `tgBedarf` rechnete dann mit dem ganzen
+         Kader (fünfzehn Kinder → drei Gruppen), und dass hier trotzdem zwei Felder standen,
+         lag allein daran, dass ein zweiter `tgSync`-Lauf die dritte Gruppe wieder wegwarf.
+         Seit v577 bleibt sie stehen (siehe v577-zusagen-vor-gruppen) – also muss die
+         Kinderzahl hier gesagt werden statt geraten. */
+      rueckmeldungen: () => h.KINDER.slice(0, 10).map((n, i) => ({ spieler_id: i + 1, status: "zugesagt" })),
       termine: [{ id: 88, datum, typ: "training", uhrzeit: "16:45", uhrzeit_ende: "18:00",
                   trainer_status: { Charles: "ja", Finn: "ja" } }],
       trainingsvorlagen: [],

@@ -1161,6 +1161,10 @@ async function vorlageUebernehmenSetzen(){
   let gruppenText="";
   try{
     const maxSt=slots.reduce((m,s)=>Math.max(m,Number(s.stationen)||0),0);
+    /* v577: Erst wissen, wer zugesagt hat. Läuft das Laden der Rückmeldungen noch, rechnete
+       `tgBedarf` mit dem ganzen Kader und bildete eine Gruppe zu viel – je nachdem, wie
+       schnell das Netz war. */
+    if(typeof tpRsvpBereit==="function")await tpRsvpBereit(datum);
     if(typeof tgSync==="function")await tgSync();      // erst den Server-Stand der Gruppen
     const bedarf=(typeof tgBedarf==="function")?tgBedarf(undefined,maxSt):0;
     const tg=(typeof tgFor==="function")?tgFor():null;

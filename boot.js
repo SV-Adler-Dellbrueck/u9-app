@@ -1522,10 +1522,36 @@ function awZaehltAlsTatsache(datum){
   const heute=new Date(); const h=`${heute.getFullYear()}-${String(heute.getMonth()+1).padStart(2,"0")}-${String(heute.getDate()).padStart(2,"0")}`;
   return datum<=h;
 }
+/* ═══════════════════════════════════════════════════════════════════════════
+   v577 – ERST WISSEN, WER ZUGESAGT HAT, DANN GRUPPEN BILDEN
+
+   Beim Prüflauf zu v576 fiel eine Einheit einmal mit sechs statt vier Feldern auf; drei
+   Wiederholungen waren grün. Die Ursache ist kein Zufall, sondern ein Wettlauf seit v570:
+   `tpTrainerRsvpLaden` setzt `TP_KIND_RSVP` zuerst auf null und holt die Zusagen DANACH.
+   In dieser Lücke fällt `_tgPool()` auf den ganzen Kader zurück – fünfzehn Kinder statt der
+   zehn, die zugesagt haben –, und `tgBedarf` bildet drei Gruppen statt zwei.
+
+   Am Platz heißt das: Wer eine Vorlage gleich nach dem Terminwechsel übernimmt, bekommt eine
+   andere Feldzahl als zwei Sekunden später. Deshalb merkt sich das Laden seinen Lauf, und
+   wer Gruppen bildet, wartet darauf. Kein Zeitlimit, kein Pollen: Es ist dasselbe Promise.
+   ═══════════════════════════════════════════════════════════════════════════ */
+let _tpRsvpLauf=null, _tpRsvpDatum=null;
+function tpRsvpBereit(datum){
+  const d=datum||document.getElementById("tp-date")?.value||"";
+  /* Ein Lauf für ein anderes Datum sagt über dieses nichts – dann gibt es nichts zu warten. */
+  if(_tpRsvpDatum!==d||!_tpRsvpLauf)return Promise.resolve();
+  return _tpRsvpLauf;
+}
 async function tpTrainerRsvpLaden(datum){
+  datum=datum||document.getElementById("tp-date")?.value||"";
+  const p=_tpRsvpLadenIntern(datum);
+  _tpRsvpDatum=datum;
+  _tpRsvpLauf=p.catch(()=>{});   // ein Fehler beim Laden darf niemanden hängen lassen
+  return p;
+}
+async function _tpRsvpLadenIntern(datum){
   TP_RSVP={}; TP_TRAINER_MANUELL={}; TP_VORBELEGT=""; TP_ANWESEND=null; TP_TERMIN_ID=null;   // neuer Termin, neue Lage
   TP_KIND_RSVP=null;
-  datum=datum||document.getElementById("tp-date")?.value||"";
   /* v470 – PO: „Check mal die Anwesenheiten der Trainer bezogen auf Trainingsplan und
      Anwesenheit. Die scheinen sich nicht abzugleichen."
      Sie taten es nicht: der Plan las `termine.trainer_status` (die Vorhersage aus „Bist du
@@ -4050,9 +4076,23 @@ let _tgSaveTimer=null;
 function _tgDatum(){return document.getElementById("tp-date")?.value||new Date().toISOString().slice(0,10);}
 function _tgKey(){return "adler_tg_"+_tgDatum();}
 function tgFor(){return (_tgCache.datum===_tgDatum())?_tgCache.tg:null;}
-async function tgSync(){
+/* v577: Zwei Läufe zugleich löschten eine frisch gebildete Einteilung. Der Ablauf war:
+   Das Übernehmen einer Vorlage ruft tgSync und wartet; währenddessen zeichnet ein anderer
+   Weg den Plan und ruft tgSync ein zweites Mal; beide lesen den noch leeren Serverstand,
+   dann bildet das Übernehmen die Gruppen – und der später zurückkommende zweite Lauf
+   schreibt seine Leere darüber. Am Platz: Gruppen gebildet, Gruppen weg.
+   Zwei Riegel: Ein laufender Abruf zum selben Datum wird geteilt statt verdoppelt, und ein
+   leerer Serverstand überschreibt nie eine Einteilung, die inzwischen im Speicher steht. */
+let _tgSyncLauf=null, _tgSyncDatum=null;
+function tgSync(){
   const d=_tgDatum();
-  if(_tgCache.datum===d&&_tgCache.geladen)return;
+  if(_tgCache.datum===d&&_tgCache.geladen)return Promise.resolve();
+  if(_tgSyncLauf&&_tgSyncDatum===d)return _tgSyncLauf;
+  _tgSyncDatum=d;
+  _tgSyncLauf=_tgSyncIntern(d).finally(()=>{ if(_tgSyncDatum===d){_tgSyncLauf=null;_tgSyncDatum=null;} });
+  return _tgSyncLauf;
+}
+async function _tgSyncIntern(d){
   _tgCache={datum:d,tg:_tgCache.datum===d?_tgCache.tg:null,geladen:true};
   let tg=null, offline=false;
   try{
@@ -4062,6 +4102,9 @@ async function tgSync(){
   }catch(e){offline=true;}
   if(!tg&&offline){try{tg=JSON.parse(localStorage.getItem("adler_tg_"+d)||"null");}catch(e){}}
   if(_tgDatum()!==d)return; // Termin wurde inzwischen gewechselt
+  /* Nichts vom Server, aber inzwischen eine Einteilung im Speicher: Die ist jünger als
+     dieser Abruf – sie steht noch nicht in der Datenbank, weil tgSave gebündelt schreibt. */
+  if(!tg&&_tgCache.datum===d&&_tgCache.tg&&((_tgCache.tg.gruppen||[]).length))return;
   const vorher=JSON.stringify(_tgCache.tg);
   _tgCache={datum:d,tg,geladen:true};
   if(JSON.stringify(tg)!==vorher&&typeof tpRenderTimeline==="function")tpRenderTimeline();
@@ -4378,6 +4421,7 @@ function tgBilden(anzahl){
 }
 async function tgOpen(){
   await tgSync(); // erst den Server-Stand holen – sonst überschreibt ein Gerät die Kollegen
+  if(typeof tpRsvpBereit==="function")await tpRsvpBereit();   // v577: erst die Zusagen, dann bilden
   let tg=tgFor()||tgBilden();
   if(typeof tgAnwesenheitAbgleich==="function"){tgAbgleichMelden(tgAnwesenheitAbgleich()); tg=tgFor()||tg;}
   document.getElementById("tg-modal")?.remove();
