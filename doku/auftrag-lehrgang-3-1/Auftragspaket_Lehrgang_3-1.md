@@ -50,12 +50,16 @@ zeigen die Pfeile, nicht das Abspielen.
 2. Übung anhängen, `stand` hochsetzen. Übungsart `spielform` in `UEBUNG_ART_VORSCHLAG` eintragen
    (beschlossen, siehe unten).
 3. Bilder erzeugen über `export-skizzen.js` mit `bilder:true`: je Bild SVG und PNG mit Legende,
-   abgelegt in diesem Ordner als `raute-torwart-andere-fluegel-bild-1.png` und `-bild-2.png`.
+   `raute-torwart-andere-fluegel-bild-1` und `-bild-2`. **Ablage im privaten Repo**
+   `adler-u9-wissen` unter `Projektgedaechtnis/skizzen/aufgabe-3-1/` — der Projekt-Chat holt sie
+   dort ab und setzt sie in die Abgabe `Huetten_Aufgabe_3.1`. Im öffentlichen Repo bleibt nur die
+   Beschreibung; die Bilder sind jederzeit aus ihr neu erzeugbar.
 4. Prüffall in `tests/checks/` mit der Version, aus der er stammt: Abgleich legt die Übung an
    und überspringt den Bestand; beide Bilder rendern; Spielerabstand ≥ 24; Materialliste nennt
    2 Jugendtore, 10 Teller, 2 Dummys, 1 Ball, kein Trainer.
 5. `node tests/run.js` grün, dann `sw.js` hochzählen, Funktionsübersicht mitziehen, PR als
-   Entwurf. Danach `Projektgedaechtnis/stand.md` im privaten Repo nachziehen.
+   Entwurf. Danach `Projektgedaechtnis/stand.md` im privaten Repo nachziehen und dort vermerken,
+   dass die Bilder für 3.1 bereitliegen.
 
 ## Entscheidungen
 
