@@ -101,6 +101,9 @@ function _eiSkizzeFehler(x){
   if(!x||typeof x!=="object"||Array.isArray(x))return ["ist kein Objekt"];
   const f=[];
   EI_SKZ_LISTEN.forEach(k=>{ if(x[k]!=null&&!Array.isArray(x[k]))f.push(`„${k}“ ist keine Liste`); });
+  /* v578: Der Zuschnitt ist eine Entscheidung, kein Inhalt – erlaubt ist nur ja oder nein.
+     Eine Zeichenkette („hoch“, „ja“) wäre in JavaScript wahr und legte das Feld still um. */
+  if(x.hoch!=null&&typeof x.hoch!=="boolean")f.push("„hoch“ ist kein Ja/Nein-Wert – hochkant wird mit true gesetzt");
   if(f.length)return f;
   if(x.schritte==null)return f;
   const max=(typeof SKZ_SCHRITTE_MAX!=="undefined")?SKZ_SCHRITTE_MAX:6;

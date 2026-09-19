@@ -98,11 +98,15 @@ module.exports = async function (h) {
     const kontrast = (a, b) => { const [x, y] = [lum(hex(a)), lum(hex(b))].sort((p, q) => q - p); return +(((x + .05) / (y + .05)).toFixed(2)); };
     const svg = _skz({ p: [[10, 10, 50, 50, "p"], [10, 20, 50, 60, "l"], [10, 30, 50, 70, "s"], [10, 40, 50, 80, "d"]] });
     const d = document.createElement("div"); d.innerHTML = svg;
-    const linien = [...d.querySelectorAll("line")].map(l => ({ farbe: l.getAttribute("stroke"), dash: l.getAttribute("stroke-dasharray") || "", breite: l.getAttribute("stroke-width"), marker: l.getAttribute("marker-end") }));
+    /* v578: Das Dribbling ist ein Pfad (durchgezogene Welle), die drei anderen bleiben
+       Linien. Gemessen wird weiter dasselbe: vier Farben, vier unterscheidbare Formen. */
+    const lies = l => ({ farbe: l.getAttribute("stroke"), dash: l.getAttribute("stroke-dasharray") || "", breite: l.getAttribute("stroke-width"), marker: l.getAttribute("marker-end") });
+    const linien = [...d.querySelectorAll("line")].map(lies);
+    const wellen = [...d.querySelectorAll("path[marker-end]")].map(x => Object.assign(lies(x), { boegen: (x.getAttribute("d").match(/Q/g) || []).length }));
     const marker = [...d.querySelectorAll("marker")].map(m => ({ id: m.id, fill: m.querySelector("path").getAttribute("fill") }));
     return {
       typen: Object.keys(SKZ_PFEIL), kontraste: Object.keys(SKZ_PFEIL).map(k => [k, kontrast(SKZ_PFEIL[k], "#2d6a2d")]),
-      linien, marker, legende: typeof skzLegende === "function" ? skzLegende() : ""
+      linien, wellen, marker, legende: typeof skzLegende === "function" ? skzLegende() : ""
     };
   });
   const pFehler = p.fehler(); await p.schliessen();
@@ -135,9 +139,15 @@ module.exports = async function (h) {
   const schwach = farben.kontraste.filter(([, v]) => v < 3);
   if (schwach.length) probleme.push(`Pfeil-Farben mit zu wenig Kontrast gegen den Rasen: ${schwach.map(([k, v]) => k + " " + v).join(", ")}`);
   const muster = farben.linien.map(l => l.dash + "|" + l.breite).join(" ");
-  if (muster !== "|1.5 5,3|1.5 |3 2,3|1.5") probleme.push(`Die Strichmuster haben sich verändert: ${muster}`);
-  if (new Set(farben.linien.map(l => l.farbe)).size !== 4) probleme.push(`Die vier Pfeil-Typen haben ${new Set(farben.linien.map(l => l.farbe)).size} verschiedene Farben`);
-  farben.linien.forEach((l, i) => {
+  if (muster !== "|1.5 5,3|1.5 |3") probleme.push(`Die Strichmuster haben sich verändert: ${muster}`);
+  /* v578: Der vierte Typ ist die Dribbel-Welle – durchgezogen, geschwungen, mit Spitze. */
+  const welle = farben.wellen[0];
+  if (farben.wellen.length !== 1) probleme.push(`${farben.wellen.length} gewellte Pfeile statt genau des Dribblings`);
+  else if (welle.dash) probleme.push(`Das Dribbling trägt wieder ein Strichmuster: ${welle.dash}`);
+  else if (welle.boegen < 4) probleme.push(`Die Dribbel-Welle hat nur ${welle.boegen} Bögen`);
+  const striche = farben.linien.concat(farben.wellen);
+  if (new Set(striche.map(l => l.farbe)).size !== 4) probleme.push(`Die vier Pfeil-Typen haben ${new Set(striche.map(l => l.farbe)).size} verschiedene Farben`);
+  striche.forEach((l, i) => {
     const m = farben.marker.find(x => "url(#" + x.id + ")" === l.marker);
     if (!m) probleme.push(`Linie ${i + 1} zeigt auf einen Marker, den es nicht gibt: ${l.marker}`);
     else if (m.fill !== l.farbe) probleme.push(`Der Pfeilkopf von Linie ${i + 1} ist ${m.fill} statt ${l.farbe}`);

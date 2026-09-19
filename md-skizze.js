@@ -21,6 +21,44 @@
    Trefferpunkt ohne zweite Zeichenebene zusammen. */
 
 const SKZ_VORLAGEN=[
+  /* v579 – DIE VIER FELDER, AUF DENEN ALLES ANDERE STATTFINDET (PO 19.09.)
+
+     „Dann wäre es sehr hilfreich, dass wir bei den Vorlagen zwei, drei Basic-Vorlagen noch
+     einbauen. Zum Beispiel Spielfeld Jugendtore, sodass dort direkt die Mittellinie
+     eingezeichnet ist, sowie zwei Jugendtore am Ende des jeweiligen Spielfelds. Dann
+     FUNiño mit jeweils zwei kleinen Toren am einen Ende und zwei kleinen Toren am anderen
+     Ende, Mittellinie und Schusszone. Dann halbes Feld FUNiño. Und auch halbes Feld
+     Jugendtore. Haben wir das für Übungen relativ häufig benötigt."
+
+     Sie stehen vorne, weil sie der Anfang sind und nicht das Besondere: Feld aufrufen,
+     dann Kinder und Wege darauf setzen. Anders als die übrigen Vorlagen bringen sie
+     deshalb KEINE Spieler mit – wer sie nicht bräuchte, müsste sie erst wegwischen.
+
+     Die halben Felder stehen hochkant (seit v578): Ein halbes Feld läuft in die Länge,
+     quer gezeichnet verschenkt es die Hälfte des Platzes.
+
+     Maße nach den Durchführungsbestimmungen des Kreises Köln 2026/27, wie schon bei den
+     Spieltagsformen weiter unten. */
+  {n:"Feld: Jugendtore", zuschnitt:true, spec:{
+    z:[[30,20,220,140]],
+    tor:[[20,68,'v',44,'j'],[250,68,'v',44,'j']],
+    li:[[140,20,140,160,'m']],
+    h:[[30,20,'y'],[250,20,'y'],[30,160,'y'],[250,160,'y'],[140,20,'r'],[140,160,'r']]}},
+  {n:"Feld: FUNiño", zuschnitt:true, spec:{
+    z:[[30,20,220,140]],
+    tor:[[22,45,'v',28],[22,107,'v',28],[251,45,'v',28],[251,107,'v',28]],
+    li:[[140,20,140,160,'m'],[83,20,83,160,'sz'],[197,20,197,160,'sz']],
+    h:[[30,20,'y'],[250,20,'y'],[30,160,'y'],[250,160,'y'],[140,20,'r'],[140,160,'r']]}},
+  {n:"Halbes Feld: Jugendtor", zuschnitt:true, spec:{ hoch:true,
+    z:[[18,24,144,232]],
+    tor:[[68,14,'h',44,'j']],
+    li:[[18,256,162,256,'m']],
+    h:[[18,24,'y'],[162,24,'y'],[18,256,'r'],[162,256,'r']]}},
+  {n:"Halbes Feld: FUNiño", zuschnitt:true, spec:{ hoch:true,
+    z:[[18,24,144,232]],
+    tor:[[46,16,'h',28],[106,16,'h',28]],
+    li:[[18,256,162,256,'m'],[18,92,162,92,'sz']],
+    h:[[18,24,'y'],[162,24,'y'],[18,256,'r'],[162,256,'r']]}},
   {n:"Rondo 6:2", spec:{
     s:[[140,28,'g'],[214,58,'g'],[226,122,'g'],[140,156,'g'],[54,122,'g'],[66,58,'g'],[112,84,'r'],[168,98,'r']],
     b:[[148,35]],
@@ -110,35 +148,53 @@ const SKZ_VORLAGEN=[
 /* Werkzeuge. Reihenfolge = Reihenfolge in der Palette. `feld` sagt, in welche Liste
    der Beschreibung ein neues Element wandert; `zwei` markiert die Werkzeuge, die zwei
    Tipper brauchen (Anfang und Ende). */
+/* v579 – DIE REIHENFOLGE DER WERKZEUGE (PO 19.09.)
+
+   „Dann sollten diese Basics auch weiter oben angeordnet sein in der Kacheldarstellung, da
+   sie immer eingesetzt werden. Wir brauchen hier Pass, Schuss, Dribbling, also alles, was
+   direkt mit dem Ball zu tun hat, und dann Laufwege."
+
+   Bis v578 standen die vier Wege ganz unten, hinter neun Geräten, die seltener gebraucht
+   werden als jeder einzelne von ihnen. Jetzt stehen sie oben, und die Kacheln tragen
+   Überschriften wie an den anderen Stellen der App – vier Gruppen statt einer Wand aus
+   sechsundzwanzig Kacheln.
+
+   `gruppe` ist nur die Überschrift, unter der eine Kachel steht; die Reihenfolge der Liste
+   bleibt die Reihenfolge am Bildschirm. */
+const SKZ_GRUPPEN=["Ball und Wege","Auf dem Platz","Feld","Geräte"];
 const SKZ_WERK=[
   {id:"move",   emo:"✋", lbl:"Verschieben"},
   {id:"del",    emo:"🗑️", lbl:"Entfernen"},
-  {id:"spieler",emo:"🔵", lbl:"Spieler",  feld:"s"},
-  {id:"huetchen",emo:"🔺",lbl:"Hütchen",  feld:"h"},
-  {id:"ball",   emo:"⚪", lbl:"Ball",     feld:"b"},
-  {id:"tor",    emo:"🥅", lbl:"Tor",      feld:"tor"},
-  {id:"jugendtor",emo:"🥅",lbl:"Jugendtor",feld:"tor", j:true},
-  {id:"mittellinie",emo:"┃",lbl:"Mittellinie",feld:"li", zwei:true, typ:"m"},
-  {id:"schusszone",emo:"┊",lbl:"Schusszone",feld:"li", zwei:true, typ:"sz"},
-  {id:"zone",   emo:"⬛", lbl:"Zone",     feld:"z", zwei:true},
+  /* Was direkt mit dem Ball zu tun hat, zuerst – danach der Weg ohne Ball. */
+  {id:"pass",   emo:"➡️", lbl:"Pass",     feld:"p", zwei:true, typ:"p", gruppe:"Ball und Wege"},
+  {id:"dribbel",emo:"〰️", lbl:"Dribbling",feld:"p", zwei:true, typ:"d", gruppe:"Ball und Wege"},
+  {id:"schuss", emo:"💥", lbl:"Schuss",   feld:"p", zwei:true, typ:"s", gruppe:"Ball und Wege"},
+  {id:"lauf",   emo:"⤳",  lbl:"Laufweg",  feld:"p", zwei:true, typ:"l", gruppe:"Ball und Wege"},
+  /* v579: Der Ball trug ein weißes Emoji – auf hellem Grund war die Kachel praktisch leer.
+     Der Fußball ist schwarzweiß und damit in beiden Modi zu sehen. */
+  {id:"ball",   emo:"⚽", lbl:"Ball",     feld:"b", gruppe:"Auf dem Platz"},
+  {id:"spieler",emo:"🔵", lbl:"Spieler",  feld:"s", gruppe:"Auf dem Platz"},
+  {id:"huetchen",emo:"🔺",lbl:"Hütchen",  feld:"h", gruppe:"Auf dem Platz"},
+  {id:"trainer",emo:"🧑‍🏫",lbl:"Trainer",  feld:"ger", typ:"trainer", gruppe:"Auf dem Platz"},
+  {id:"text",   emo:"🔤", lbl:"Text",     feld:"tx", gruppe:"Auf dem Platz"},
+  {id:"tor",    emo:"🥅", lbl:"Tor",      feld:"tor", gruppe:"Feld"},
+  {id:"jugendtor",emo:"🥅",lbl:"Jugendtor",feld:"tor", j:true, gruppe:"Feld"},
+  {id:"mittellinie",emo:"┃",lbl:"Mittellinie",feld:"li", zwei:true, typ:"m", gruppe:"Feld"},
+  {id:"schusszone",emo:"┊",lbl:"Schusszone",feld:"li", zwei:true, typ:"sz", gruppe:"Feld"},
+  {id:"zone",   emo:"⬛", lbl:"Zone",     feld:"z", zwei:true, gruppe:"Feld"},
+  {id:"kreis",  emo:"⭕", lbl:"Kreis",    feld:"kr", zwei:true, gruppe:"Feld"},
   /* v559 – Geräte aus den vierzig Vorlagen des Verbands. Das Dribbeltor braucht zwei
      Tipps wie eine Zone: der Abstand IST das Tor. */
-  {id:"stangentor",emo:"⛳", lbl:"Stangentor",feld:"dtor", zwei:true, typ:"s"},
-  {id:"huetchentor",emo:"⛳",lbl:"Hütchentor",feld:"dtor", zwei:true, typ:"h"},
-  {id:"stange", emo:"🚩", lbl:"Stange",   feld:"ger", typ:"stange"},
-  {id:"teller", emo:"🟡", lbl:"Teller",   feld:"ger", typ:"teller"},
-  {id:"huerde", emo:"🚧", lbl:"Hürde",    feld:"ger", typ:"huerde"},
-  {id:"depot",  emo:"🧺", lbl:"Bälle",    feld:"ger", typ:"depot"},
+  {id:"stangentor",emo:"⛳", lbl:"Stangentor",feld:"dtor", zwei:true, typ:"s", gruppe:"Geräte"},
+  {id:"huetchentor",emo:"⛳",lbl:"Hütchentor",feld:"dtor", zwei:true, typ:"h", gruppe:"Geräte"},
+  {id:"stange", emo:"🚩", lbl:"Stange",   feld:"ger", typ:"stange", gruppe:"Geräte"},
+  {id:"teller", emo:"🟡", lbl:"Teller",   feld:"ger", typ:"teller", gruppe:"Geräte"},
+  {id:"huerde", emo:"🚧", lbl:"Hürde",    feld:"ger", typ:"huerde", gruppe:"Geräte"},
+  {id:"depot",  emo:"🧺", lbl:"Bälle",    feld:"ger", typ:"depot", gruppe:"Geräte"},
   /* v560 – Geräte, die der Verein für alle Mannschaften vorhält. */
-  {id:"ring",   emo:"⭕", lbl:"Ring",     feld:"ger", typ:"ring"},
-  {id:"dummy",  emo:"🧍", lbl:"Dummy",    feld:"ger", typ:"dummy"},
-  {id:"kreis",  emo:"⭕", lbl:"Kreis",    feld:"kr", zwei:true},
-  {id:"leiter", emo:"🪜", lbl:"Leiter",   feld:"leiter"},
-  {id:"pass",   emo:"➡️", lbl:"Pass",     feld:"p", zwei:true, typ:"p"},
-  {id:"lauf",   emo:"⤳",  lbl:"Laufweg",  feld:"p", zwei:true, typ:"l"},
-  {id:"schuss", emo:"💥", lbl:"Schuss",   feld:"p", zwei:true, typ:"s"},
-  {id:"dribbel",emo:"〰️", lbl:"Dribbling",feld:"p", zwei:true, typ:"d"},
-  {id:"text",   emo:"🔤", lbl:"Text",     feld:"tx"}
+  {id:"ring",   emo:"⭕", lbl:"Ring",     feld:"ger", typ:"ring", gruppe:"Geräte"},
+  {id:"dummy",  emo:"🧍", lbl:"Dummy",    feld:"ger", typ:"dummy", gruppe:"Geräte"},
+  {id:"leiter", emo:"🪜", lbl:"Leiter",   feld:"leiter", gruppe:"Geräte"}
 ];
 const SKZ_FARBEN=[["g","Grün","#4ade80"],["r","Rot","#f87171"],["b","Blau","#60a5fa"],["y","Gelb","#fbbf24"],["w","Weiß","#ffffff"]];
 
@@ -169,6 +225,25 @@ function _skzListe(f){
   return _skzSpec[f];
 }
 function _skzWerkzeug(id){ return SKZ_WERK.find(w=>w.id===(id||_skzWerk))||SKZ_WERK[0]; }
+
+/* v578 – HOCHKANT ODER QUER. Der Zuschnitt steht in der Beschreibung selbst (`hoch`),
+   nicht am Gerät: eine Slalomstrecke ist hochkant richtig, ein Spiel über die Breite quer.
+   Alle Stellen, die bisher mit 280 × 180 gerechnet haben, fragen hier nach. */
+function _skzHochkant(){ return !!(_skzSpec&&_skzSpec.hoch); }
+function _skzB(){ return _skzHochkant()?SKZ_HOCH_B:SKZ_QUER_B; }
+function _skzH(){ return _skzHochkant()?SKZ_HOCH_H:SKZ_QUER_H; }
+/* Umschalten dreht die ganze Zeichnung mit (PO 19.09.), damit nichts aus dem Bild fällt.
+   Zweimal umschalten führt zum Ausgangsbild zurück – deshalb ist „Zurück" hier nur die
+   Bequemlichkeit, nicht die Rettung. */
+function skzFormat(){
+  if(typeof skzDrehen!=="function")return;
+  _skzMerken();
+  const hoch=!_skzHochkant();
+  _skzSpec=skzDrehen(_skzSpec);
+  _skzStart=null; _skzZieh=null;
+  skzEditorZeichnen();
+  toast(hoch?"Feld steht jetzt hochkant – alles ist mitgedreht":"Feld liegt jetzt quer – alles ist mitgedreht");
+}
 
 /* Wo liegt ein Element? Für den Treffer-Test und fürs Verschieben brauchen alle
    Elemente einen Ankerpunkt – bei Strecken (Pfeil, Zone, Leiter) der Anfang. */
@@ -202,10 +277,28 @@ function _skzVerschieben(t,x,y){
 function skzSetWerkzeug(id){ _skzWerk=id; _skzStart=null; skzEditorZeichnen(); }
 function skzSetFarbe(f){ _skzFarbe=f; skzEditorZeichnen(); }
 function skzUndo(){ if(!_skzVerlauf.length){toast("Nichts mehr zurückzunehmen","info");return;} _skzSpec=_skzVerlauf.pop(); _skzStart=null; skzEditorZeichnen(); }
-function skzLeeren(){ _skzMerken(); _skzSpec=_skzLeer(); _skzBildNr=0; _skzStart=null; skzEditorZeichnen(); }
+function skzLeeren(){
+  _skzMerken();
+  const hoch=_skzHochkant();      // v578: Der Zuschnitt ist eine Entscheidung, kein Inhalt
+  _skzSpec=_skzLeer(); if(hoch)_skzSpec.hoch=true;
+  _skzBildNr=0; _skzStart=null; skzEditorZeichnen();
+}
 function skzVorlage(i){
   const v=SKZ_VORLAGEN[i]; if(!v)return;
-  _skzMerken(); _skzSpec=Object.assign(_skzLeer(),_skzKopie(v.spec)); _skzBildNr=0; _skzStart=null;
+  _skzMerken();
+  /* v578/v579: Zwei Fälle, und der Unterschied ist die Absicht.
+
+     Die alten Vorlagen sind quer gezeichnet, aber nicht quer GEMEINT – wer hochkant
+     arbeitet, bekommt sie gedreht, sonst kippte das Feld beim Antippen zurück.
+
+     Die Feld-Vorlagen dagegen nennen ihren Zuschnitt selbst: ein halbes Feld läuft in die
+     Länge und gehört hochkant. Dort folgt das Feld der Vorlage, nicht umgekehrt. */
+  const hoch=_skzHochkant();
+  let spec=_skzKopie(v.spec);
+  /* `zuschnitt` heißt: Diese Vorlage IST das Feld und bringt ihre Lage mit. Am Fehlen von
+     „hoch" ließe sich das nicht erkennen – quer ist der Normalfall und schreibt nichts. */
+  if(!v.zuschnitt&&hoch&&typeof skzDrehen==="function")spec=skzDrehen(spec);
+  _skzSpec=Object.assign(_skzLeer(),spec); _skzBildNr=0; _skzStart=null;
   skzEditorZeichnen(); toast("Vorlage „"+v.n+"“ geladen ✓");
 }
 function skzSpeichern(){
@@ -222,14 +315,15 @@ function skzSpeichern(){
 }
 
 /* Fingerposition → Koordinaten der Skizze. Die Bühne hat denselben Zuschnitt wie das
-   Bild (280×180), deshalb reicht ein Dreisatz – keine zweite Zeichenebene nötig. */
+   Bild (280×180 quer, seit v578 auch 180×280 hochkant), deshalb reicht ein Dreisatz –
+   keine zweite Zeichenebene nötig. */
 function _skzPunkt(ev){
   const b=document.getElementById("skz-buehne"); if(!b)return null;
-  const r=b.getBoundingClientRect();
+  const r=b.getBoundingClientRect(), B=_skzB(), H=_skzH();
   const cx=(ev.touches&&ev.touches[0]?ev.touches[0].clientX:ev.clientX);
   const cy=(ev.touches&&ev.touches[0]?ev.touches[0].clientY:ev.clientY);
-  return [Math.max(4,Math.min(276,Math.round((cx-r.left)/r.width*280))),
-          Math.max(4,Math.min(176,Math.round((cy-r.top)/r.height*180)))];
+  return [Math.max(4,Math.min(B-4,Math.round((cx-r.left)/r.width*B))),
+          Math.max(4,Math.min(H-4,Math.round((cy-r.top)/r.height*H)))];
 }
 function skzBuehneDown(ev){
   const pkt=_skzPunkt(ev); if(!pkt)return; ev.preventDefault();
@@ -268,7 +362,10 @@ function skzBuehneDown(ev){
       _skzListe("dtor").push([senkrecht?sx:Math.min(sx,x),senkrecht?Math.min(sy,y):sy,breite,senkrecht?"v":"h",w.typ,_skzFarbe]);
     }else{
       if(Math.hypot(x-sx,y-sy)<12){toast("Zu kurz – zweiten Punkt weiter weg tippen","info");skzEditorZeichnen();return;}
-      _skzListe(w.feld).push([sx,sy,x,y,w.typ]);   // v517: „p“ und „li“ haben dieselbe Form
+      /* v579: Die Nummer ist das sechste Feld – nur bei Wegen, nur wenn gezählt wird. */
+      const eintrag=[sx,sy,x,y,w.typ];            // v517: „p“ und „li“ haben dieselbe Form
+      if(_skzZaehlen&&w.feld==="p")eintrag.push(_skzNaechsteNr());
+      _skzListe(w.feld).push(eintrag);
     }
     skzEditorZeichnen(); return;
   }
@@ -285,10 +382,13 @@ function skzBuehneDown(ev){
        Jetzt entscheidet die Tipp-Position: nah am linken oder rechten Rand hochkant und
        bündig an der Linie, sonst quer. Die zweite Koordinate bleibt, wo getippt wurde –
        nur so weit hereingezogen, dass das Tor nicht über den Rasen hinausragt. */
-    const j=!!w.j, tief=j?10:7, breit=j?44:30;
-    if(x<50)        _skzListe("tor").push([4,        Math.min(y,176-breit),"v",breit].concat(j?["j"]:[]));
-    else if(x>230)  _skzListe("tor").push([276-tief, Math.min(y,176-breit),"v",breit].concat(j?["j"]:[]));
-    else            _skzListe("tor").push([Math.min(x,276-breit), y,        "h",breit].concat(j?["j"]:[]));
+    const j=!!w.j, tief=j?10:7, breit=j?44:30, B=_skzB(), H=_skzH();
+    /* v578: Die Ränder folgen dem Zuschnitt – hochkant liegen links und rechts näher
+       beieinander, und ein Tor, das quer bei x = 230 an der Linie stand, säße dort sonst
+       mitten auf dem Platz. */
+    if(x<B*0.18)         _skzListe("tor").push([4,        Math.min(y,H-4-breit),"v",breit].concat(j?["j"]:[]));
+    else if(x>B*0.82)    _skzListe("tor").push([B-4-tief, Math.min(y,H-4-breit),"v",breit].concat(j?["j"]:[]));
+    else                 _skzListe("tor").push([Math.min(x,B-4-breit), y,       "h",breit].concat(j?["j"]:[]));
   }
   else if(w.feld==="ger")_skzListe("ger").push([x,y,w.typ,_skzFarbe]);
   else if(w.feld==="leiter")_skzListe("leiter").push([x,y,60,"h"]);
@@ -307,6 +407,21 @@ function skzBuehneUp(){ _skzZieh=null; }
 
 function skzEditorZeichnen(){
   const b=document.getElementById("skz-buehne"); if(!b)return;
+  /* v578: Die Bühne trägt den Zuschnitt der Skizze. Hochkant wird sie schmaler statt
+     höher – sonst stünde der Editor auf einem Handy nicht mehr auf einem Bildschirm. */
+  const hoch=_skzHochkant();
+  b.style.aspectRatio=_skzB()+"/"+_skzH();
+  b.style.maxWidth=hoch?"210px":"340px";
+  const zb=document.getElementById("skz-zaehlen");
+  if(zb){ zb.innerHTML=_skzZaehlen?"① Zählt mit":"① Schritte zählen";
+          zb.setAttribute("aria-pressed",_skzZaehlen?"true":"false");
+          zb.title=_skzZaehlen?"Jeder neue Weg bekommt die nächste Nummer":"Wege durchnummerieren, um eine Abfolge zu zeigen";
+          zb.style.background=_skzZaehlen?"var(--blue)":"var(--surface)";
+          zb.style.color=_skzZaehlen?"#fff":"var(--text2)"; }
+  const fb=document.getElementById("skz-format");
+  if(fb){ fb.innerHTML=hoch?"🔄 Querformat":"🔄 Hochkant";
+          fb.title=hoch?"Feld quer legen – alles dreht mit":"Feld hochkant stellen – alles dreht mit";
+          fb.setAttribute("aria-label",fb.title); }
   const bl=document.getElementById("skz-bildleiste");
   if(bl)bl.innerHTML=skzBildLeiste();
   const leg=document.getElementById("skz-legende");
@@ -413,11 +528,35 @@ function skzVorlagenLeiste(){
   </button>`).join("");
 }
 
+/* v579: Die Kacheln unter ihren Überschriften. Gerendert wird einmal beim Öffnen; das
+   Hervorheben der gewählten Kachel läuft wie bisher über `#skz-palette button`. */
+function skzPaletteHtml(){
+  const kachel=w=>`<button data-werk="${w.id}" onclick="skzSetWerkzeug('${w.id}')" title="${w.lbl}" aria-label="${w.lbl}" style="min-height:46px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:3px"><span style="font-size:16px;line-height:1">${w.emo}</span>${esc(w.lbl)}</button>`;
+  const raster=inhalt=>`<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:6px">${inhalt}</div>`;
+  const kopf=t=>`<div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:4px 0 4px">${esc(t)}</div>`;
+  let aus=raster(SKZ_WERK.filter(w=>!w.gruppe).map(kachel).join(""));
+  SKZ_GRUPPEN.forEach(g=>{
+    const teil=SKZ_WERK.filter(w=>w.gruppe===g);
+    if(teil.length)aus+=kopf(g)+raster(teil.map(kachel).join(""));
+  });
+  return aus;
+}
+
+/* v579 – SCHRITTE ZÄHLEN (PO 19.09.). Ist der Schalter an, bekommt jeder neue Weg die
+   nächste Nummer: 1 nach links, 2 zurück, 3 nach rechts. Aus bleibt aus – die bestehenden
+   Skizzen tragen keine Nummern und sollen auch keine bekommen. */
+let _skzZaehlen=false;
+function skzZaehlenUm(){ _skzZaehlen=!_skzZaehlen; skzEditorZeichnen(); }
+function _skzNaechsteNr(){
+  const liste=_skzListe("p")||[];
+  return liste.reduce((m,e)=>Math.max(m,Number(e[5])||0),0)+1;
+}
+
 /* Öffnet den Editor. `start` ist eine vorhandene Beschreibung (oder null),
    `cb(spec|null)` bekommt das Ergebnis – null heißt „keine Skizze". */
 function skzEditorOpen(start,cb){
   _skzSpec=Object.assign(_skzLeer(),_skzKopie(start||{}));
-  _skzCb=cb; _skzWerk="spieler"; _skzFarbe="g"; _skzStart=null; _skzVerlauf=[]; _skzZieh=null; _skzBildNr=0;
+  _skzCb=cb; _skzWerk="spieler"; _skzFarbe="g"; _skzZaehlen=false; _skzStart=null; _skzVerlauf=[]; _skzZieh=null; _skzBildNr=0;
   document.getElementById("skz-modal")?.remove();
   const m=document.createElement("div"); m.id="skz-modal";
   m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Skizze zur Übung");
@@ -430,13 +569,16 @@ function skzEditorOpen(start,cb){
     <div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:2px 0 6px">Vorlagen</div>
     <div style="display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;margin-bottom:10px">${skzVorlagenLeiste()}</div>
     <div id="skz-bildleiste"></div>
+    <!-- v578: Der Zuschnitt gehört über die Zeichenfläche – dorthin, wo man ihn sieht,
+         bevor man anfängt zu tippen. Die Beschriftung sagt, wohin der Tipp führt. -->
+    <div style="display:flex;justify-content:center;margin-bottom:6px">
+      <button type="button" id="skz-format" onclick="skzFormat()" style="min-height:44px;padding:0 14px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer"></button>
+    </div>
     <div id="skz-buehne" style="position:relative;width:100%;max-width:340px;margin:0 auto 8px;aspect-ratio:280/180;border-radius:8px;overflow:hidden;touch-action:none;cursor:crosshair"></div>
   <!-- v512: Beim Zeichnen will man sehen, was der gewählte Stift bedeutet. -->
   <div id="skz-legende"></div>
     <div id="skz-hinweis" style="font-size:11.5px;color:var(--text2);text-align:center;margin-bottom:8px;min-height:16px"></div>
-    <div id="skz-palette" style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:8px">
-      ${SKZ_WERK.map(w=>`<button data-werk="${w.id}" onclick="skzSetWerkzeug('${w.id}')" title="${w.lbl}" aria-label="${w.lbl}" style="min-height:46px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:3px"><span style="font-size:16px;line-height:1">${w.emo}</span>${esc(w.lbl)}</button>`).join("")}
-    </div>
+    <div id="skz-palette" style="margin-bottom:8px">${skzPaletteHtml()}</div>
     <div id="skz-farbzeile" style="display:none;gap:8px;justify-content:center;margin-bottom:8px">
       ${SKZ_FARBEN.map(([k,n,c2])=>`<button data-farbe="${k}" onclick="skzSetFarbe('${k}')" title="${n}" aria-label="Farbe ${n}" style="width:44px;height:44px;border-radius:50%;border:2px solid rgba(0,0,0,.25);background:${c2};cursor:pointer"></button>`).join("")}
     </div>
@@ -445,6 +587,7 @@ function skzEditorOpen(start,cb){
       <input type="text" id="skz-text" maxlength="40" placeholder="z. B. „Startpunkt“ oder 7" style="width:100%;min-height:44px;padding:8px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box">
     </div>
     <div style="display:flex;gap:8px;margin-bottom:10px">
+      <button id="skz-zaehlen" onclick="skzZaehlenUm()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer"></button>
       <button onclick="skzUndo()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">↩︎ Zurück</button>
       <button onclick="skzLeeren()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">🧹 Leeren</button>
     </div>
@@ -501,7 +644,8 @@ async function uebungSkizzeNachtragen(idx){
       feste Maße und kein style.
    2. Unter der Skizze steht die Legende – die besteht selbst aus <svg>. Gesucht wird
       deshalb gezielt das Bild mit der viewBox der Skizze, nicht einfach das erste. */
-const SKZ_PNG_B=1120, SKZ_PNG_H=720;              // Vierfaches der viewBox 280×180
+const SKZ_PNG_FAKTOR=4;                           // Vierfaches der viewBox – 1120 × 720 quer
+const SKZ_PNG_B=1120, SKZ_PNG_H=720;              // Bestand: die Maße einer queren Skizze
 function _skzSlug(s){
   return String(s||"Skizze").toLowerCase()
     .replace(/ä/g,"ae").replace(/ö/g,"oe").replace(/ü/g,"ue").replace(/ß/g,"ss")
@@ -517,19 +661,25 @@ function skzTeilenKnopf(name){
 async function skzTeilen(knopf){
   const name=(knopf&&knopf.dataset&&knopf.dataset.name)||"Skizze";
   const wrap=knopf&&knopf.parentElement;
-  const quell=wrap&&[...wrap.querySelectorAll("svg")].find(x=>x.getAttribute("viewBox")==="0 0 280 180");
+  /* v578: Seit es hochkante Skizzen gibt, ist die viewBox nicht mehr eine feste Zahlenreihe.
+     Gesucht wird das Bild mit dem Zuschnitt einer Skizze – nicht das erste <svg>, denn die
+     Legende besteht selbst aus kleinen Bildern. */
+  const zuschnitte=["0 0 "+SKZ_QUER_B+" "+SKZ_QUER_H,"0 0 "+SKZ_HOCH_B+" "+SKZ_HOCH_H];
+  const quell=wrap&&[...wrap.querySelectorAll("svg")].find(x=>zuschnitte.includes(x.getAttribute("viewBox")));
   if(!quell){ if(typeof toast==="function")toast("Keine Skizze zum Teilen gefunden","err"); return; }
   let url=null;
   try{
     const kopie=quell.cloneNode(true);
     kopie.removeAttribute("style");
-    kopie.setAttribute("width",SKZ_PNG_B); kopie.setAttribute("height",SKZ_PNG_H);
+    const vb=String(quell.getAttribute("viewBox")||"").split(/\s+/).map(Number);
+    const pb=(vb[2]||SKZ_QUER_B)*SKZ_PNG_FAKTOR, ph=(vb[3]||SKZ_QUER_H)*SKZ_PNG_FAKTOR;
+    kopie.setAttribute("width",pb); kopie.setAttribute("height",ph);
     const text=new XMLSerializer().serializeToString(kopie);
     url=URL.createObjectURL(new Blob([text],{type:"image/svg+xml;charset=utf-8"}));
     const bild=new Image();
     await new Promise((fertig,schief)=>{ bild.onload=fertig; bild.onerror=()=>schief(new Error("Bild")); bild.src=url; });
-    const c=document.createElement("canvas"); c.width=SKZ_PNG_B; c.height=SKZ_PNG_H;
-    c.getContext("2d").drawImage(bild,0,0,SKZ_PNG_B,SKZ_PNG_H);
+    const c=document.createElement("canvas"); c.width=pb; c.height=ph;
+    c.getContext("2d").drawImage(bild,0,0,pb,ph);
     const png=await new Promise(fertig=>c.toBlob(fertig,"image/png"));
     if(!png)throw new Error("PNG");
     const nr=(typeof _skzDetailBild==="number"&&_skzDetailBild>0)?("-bild-"+(_skzDetailBild+1)):"";
@@ -659,10 +809,14 @@ function _skzGrPassen(){
   if(!m||!b||!h)return;
   let rest=0;
   [...m.children].forEach(c=>{ if(c!==b)rest+=c.getBoundingClientRect().height+8; });
+  /* v578: Das Seitenverhältnis kommt aus der Skizze. Eine hochkante Zeichnung nutzt die
+     Höhe des Bildschirms, eine quere die Breite – geraten wird nichts. */
+  const steht=!!(_skzGr&&_skzGr.spec&&_skzGr.spec.hoch);
+  const vb=steht?[SKZ_HOCH_B,SKZ_HOCH_H]:[SKZ_QUER_B,SKZ_QUER_H];
   const hoch=Math.max(120,m.clientHeight-rest-20);
-  const breit=Math.max(120,Math.min(b.clientWidth,hoch*280/180));
+  const breit=Math.max(120,Math.min(b.clientWidth,hoch*vb[0]/vb[1]));
   h.style.width=Math.floor(breit)+"px";
-  h.style.height=Math.floor(breit*180/280)+"px";
+  h.style.height=Math.floor(breit*vb[1]/vb[0])+"px";
 }
 function _skzGrLegen(){
   const h=document.getElementById("skz-gross-halter"); if(!h||!_skzGr)return;

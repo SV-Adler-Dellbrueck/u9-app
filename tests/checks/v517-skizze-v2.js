@@ -148,7 +148,9 @@ module.exports = async function (h) {
   if (r.werkzeuge.indexOf("jugendtor") !== r.werkzeuge.indexOf("tor") + 1) probleme.push("Das Jugendtor steht nicht direkt hinter dem Tor");
   ["Spieltag F: 3 gegen 3, vier Minitore", "Spieltag F: 2+1, Jugendtore", "Drei gegen einen"].forEach(n => {
     if (!r.vorlagen.includes(n)) probleme.push(`Vorlage „${n}“ fehlt`); });
-  if (r.vorlagen.length !== 13) probleme.push(`${r.vorlagen.length} Vorlagen statt 13 – die zehn bestehenden bleiben`);
+  /* v579: dazu die vier Feld-Vorlagen (Jugendtore, FUNiño, die beiden halben Felder).
+     Die Zahl steht hier als Sperrklinke – sie fällt auf, wenn eine Vorlage verlorengeht. */
+  if (r.vorlagen.length !== 17) probleme.push(`${r.vorlagen.length} Vorlagen statt 17 – die dreizehn bestehenden bleiben`);
 
   // ── Import ────────────────────────────────────────────────────────────────
   if (r.imp.objekt !== false) probleme.push("„li“ als Objekt wird nicht abgewiesen");
