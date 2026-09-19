@@ -127,7 +127,7 @@ module.exports = async function (h) {
       if (!x.text) probleme.push(`Bild ${i + 1} trägt keine Beschriftung`);
     });
     if (b[0].pfeile !== 4) probleme.push(`Bild 1 zeigt ${b[0].pfeile} Wege statt vier`);
-    if (b[1].pfeile !== 6) probleme.push(`Bild 2 zeigt ${b[1].pfeile} Wege statt sechs`);
+    if (b[1].pfeile !== 7) probleme.push(`Bild 2 zeigt ${b[1].pfeile} Wege statt sieben`);
     if (b[0].text === b[1].text) probleme.push("Beide Bilder tragen dieselbe Beschriftung");
   }
   // c)
