@@ -3734,12 +3734,116 @@ function _skzZwischen(a,b,t){
   });
   return Object.assign({},a,{s:misch(a.s,b.s),b:misch(a.b,b.b)});
 }
+/* Der Zuschnitt der Zeichenfläche. Quer ist der Bestand, hochkant seit v578 die zweite
+   Möglichkeit – gespiegelt, damit eine gedrehte Skizze denselben Platz hat wie vorher. */
+const SKZ_QUER_B=280, SKZ_QUER_H=180, SKZ_HOCH_B=180, SKZ_HOCH_H=280;
+
+/* v578 – FORMAT WECHSELN, OHNE ETWAS ZU VERLIEREN (PO 19.09.: „Mitdrehen")
+
+   Beim Umschalten dreht sich die ganze Zeichnung um eine Vierteldrehung mit: Hütchen,
+   Spieler, Pfeile, Tore, Leitern, Zonen. Nichts rutscht aus dem Bild, nichts wird
+   gestaucht. Quer → hochkant dreht im Uhrzeigersinn, hochkant → quer dagegen: zweimal
+   umschalten führt deshalb genau zum Ausgangsbild zurück.
+
+   Was eine Richtung trägt – Tor, Leiter, Dribbeltor – kippt dabei seine Ausrichtung mit;
+   ein Tor, das quer an der Seitenlinie stand, steht hochkant oben.
+
+   Elemente mit Ausdehnung (Zone, Tor, Leiter) werden über ihre Ecken gedreht und danach
+   neu vermessen; sonst läge der Ankerpunkt nach der Drehung außerhalb des Kastens. */
+function _skzDrehPunkt(x,y,imUhrzeiger){
+  return imUhrzeiger ? [SKZ_QUER_H-y, x] : [y, SKZ_QUER_H-x];
+}
+function _skzDrehKasten(x,y,w,h,imUhrzeiger){
+  const ecken=[[x,y],[x+w,y],[x,y+h],[x+w,y+h]].map(e=>_skzDrehPunkt(e[0],e[1],imUhrzeiger));
+  const xs=ecken.map(e=>e[0]), ys=ecken.map(e=>e[1]);
+  return [Math.round(Math.min(...xs)),Math.round(Math.min(...ys)),
+          Math.round(Math.max(...xs)-Math.min(...xs)),Math.round(Math.max(...ys)-Math.min(...ys))];
+}
+function _skzDrehListen(o,imUhrzeiger){
+  if(!o||typeof o!=="object")return o;
+  const P=(x,y)=>_skzDrehPunkt(x,y,imUhrzeiger).map(Math.round);
+  const punkt=e=>{ const k=e.slice(), [x,y]=P(e[0],e[1]); k[0]=x; k[1]=y; return k; };
+  const strecke=e=>{ const k=e.slice(), a=P(e[0],e[1]), b=P(e[2],e[3]);
+                     k[0]=a[0]; k[1]=a[1]; k[2]=b[0]; k[3]=b[1]; return k; };
+  const kipp=v=>(v==="v"?"h":"v");
+  const auf=(f,fn)=>{ if(Array.isArray(o[f]))o[f]=o[f].map(fn); };
+  ["s","b","h","ger","tx"].forEach(f=>auf(f,punkt));
+  ["p","li","wand"].forEach(f=>auf(f,strecke));
+  auf("kr",punkt);
+  auf("z",e=>{ const k=e.slice(), r=_skzDrehKasten(e[0],e[1],e[2],e[3],imUhrzeiger);
+               k[0]=r[0]; k[1]=r[1]; k[2]=r[2]; k[3]=r[3]; return k; });
+  /* Tor: [x, y, "v"?, breite, "j"?]. Quer liegt es waagerecht (Breite × 7), hochkant
+     senkrecht – die Ausrichtung kippt, die Breite bleibt die Breite des Tores. */
+  auf("tor",e=>{ const k=e.slice(), senk=e[2]==="v", w=e[3]||24, d=(e[4]==="j")?10:7;
+                 const r=_skzDrehKasten(e[0],e[1],senk?d:w,senk?w:d,imUhrzeiger);
+                 k[0]=r[0]; k[1]=r[1]; k[2]=senk?"h":"v"; return k; });
+  /* Leiter: [x, y, länge, "v"?] – 16 breit, Länge in Laufrichtung. */
+  auf("leiter",e=>{ const k=e.slice(), senk=e[3]==="v", l=e[2]||40;
+                    const r=_skzDrehKasten(e[0],e[1],senk?16:l,senk?l:16,imUhrzeiger);
+                    k[0]=r[0]; k[1]=r[1];
+                    /* Waagerecht ist der Normalfall und braucht kein Kennzeichen – so steht
+                       eine zweimal gedrehte Leiter wieder Zeichen für Zeichen wie vorher da. */
+                    if(senk){ if(k.length>3)k.length=3; } else k[3]="v";
+                    return k; });
+  /* Dribbeltor: [x, y, breite, "h"|"v", ...] – zwei Pfosten im Abstand der Breite. */
+  auf("dtor",e=>{ const k=e.slice(), senk=e[3]==="v", w=e[2]||20;
+                  const a=P(e[0],e[1]), b=P(senk?e[0]:e[0]+w,senk?e[1]+w:e[1]);
+                  k[0]=Math.min(a[0],b[0]); k[1]=Math.min(a[1],b[1]);
+                  k[3]=kipp(senk?"v":"h"); return k; });
+  return o;
+}
+/* Dreht eine ganze Beschreibung samt ihrer Schritte. Gibt eine neue zurück; das Original
+   bleibt unberührt, damit „Zurück" im Editor weiter den alten Stand hat. */
+function skzDrehen(spec){
+  const kopie=JSON.parse(JSON.stringify(spec||{}));
+  const imUhrzeiger=!kopie.hoch;              // quer → hochkant dreht im Uhrzeigersinn
+  _skzDrehListen(kopie,imUhrzeiger);
+  if(Array.isArray(kopie.schritte))kopie.schritte.forEach(st=>_skzDrehListen(st,imUhrzeiger));
+  if(imUhrzeiger)kopie.hoch=true; else delete kopie.hoch;
+  return kopie;
+}
+/* v578 – DRIBBLING ALS SCHLANGENLINIE (PO 19.09.)
+
+   „Dribbling zum Beispiel sollte keine gestrichelte Linie sein, sondern eine durchgezogene
+   Linie, aber geschwungen."
+
+   So steht es auch in der Zeichenlehre des Verbands: der Ball am Fuß ist eine durchgezogene
+   Wellenlinie, der Laufweg ohne Ball gestrichelt. Gepunktet war es nur, weil eine gerade
+   Linie sich leichter zeichnen ließ.
+
+   Die Form trägt die Bedeutung weiter allein: Pass dünn gerade, Laufweg gestrichelt, Schuss
+   dick, Dribbling geschwungen – auch für Augen, die die vier Farben nicht unterscheiden.
+
+   Das letzte Stück bleibt gerade, sonst säße die Pfeilspitze schief auf dem Bogen. */
+function _skzWelle(x1,y1,x2,y2){
+  const dx=x2-x1, dy=y2-y1, len=Math.hypot(dx,dy), r=v=>Math.round(v*10)/10;
+  if(len<2)return 'M'+r(x1)+' '+r(y1)+' L'+r(x2)+' '+r(y2);
+  const ux=dx/len, uy=dy/len, nx=-uy, ny=ux;        // Richtung und Senkrechte dazu
+  const kopf=Math.min(5,len/4), bahn=len-kopf;      // gerades Stück für die Spitze
+  const boegen=Math.max(2,Math.round(bahn/9));      // etwa alle neun Punkte ein Bogen
+  const schritt=bahn/boegen, amp=Math.min(3.2,schritt/2);
+  let d='M'+r(x1)+' '+r(y1);
+  for(let i=0;i<boegen;i++){
+    const seite=(i%2)?-1:1, mitte=schritt*i+schritt/2, ende=schritt*(i+1);
+    d+=' Q'+r(x1+ux*mitte+nx*amp*seite)+' '+r(y1+uy*mitte+ny*amp*seite)
+      +' '+r(x1+ux*ende)+' '+r(y1+uy*ende);
+  }
+  return d+' L'+r(x2)+' '+r(y2);
+}
 function _skz(o,opt){
   if(opt&&opt.bild)o=_skzBild(o,opt.bild);
+  /* v578 – HOCHKANT ODER QUER (PO 19.09.): „Es wäre super, wenn ich wählen könnte, dass das
+     Feld hochkant oder im Querformat als Grundlage ist."
+
+     Eine Slalomstrecke oder ein Torschuss aufs Tor am oberen Rand steht hochkant besser da
+     als quer gequetscht. Das Format gehört zur einzelnen Skizze, nicht ans Gerät: `hoch:true`
+     dreht den Zuschnitt auf 180 × 280. Fehlt das Feld, entsteht Zeichen für Zeichen dieselbe
+     Ausgabe wie vorher – alle bestehenden Skizzen bleiben, wie sie sind. */
+  const hoch=!!(o&&o.hoch), SB=hoch?SKZ_HOCH_B:SKZ_QUER_B, SH=hoch?SKZ_HOCH_H:SKZ_QUER_H;
   const P=skzPalette(opt&&opt.hell), F=P.F, M=P.marke;
   const E=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); // Specs können aus der DB kommen (KI-Übungen)
-  const S=['<rect width="280" height="180" rx="4" fill="'+P.rasen+'" stroke="'+P.rasenRand+'" stroke-width="1.5"/>',
-    '<rect x="4" y="4" width="272" height="172" rx="3" fill="none" stroke="'+P.innen+'" stroke-width="1"/>',
+  const S=['<rect width="'+SB+'" height="'+SH+'" rx="4" fill="'+P.rasen+'" stroke="'+P.rasenRand+'" stroke-width="1.5"/>',
+    '<rect x="4" y="4" width="'+(SB-8)+'" height="'+(SH-8)+'" rx="3" fill="none" stroke="'+P.innen+'" stroke-width="1"/>',
     '<defs>'+Object.keys(P.pfeil).map(t=>'<marker id="'+M+t+'" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="'+P.pfeil[t]+'"/></marker>').join('')+'</defs>'];
   (o.z||[]).forEach(z=>S.push('<rect x="'+z[0]+'" y="'+z[1]+'" width="'+z[2]+'" height="'+z[3]+'" rx="3" fill="'+P.zoneF+'" stroke="'+P.zoneS+'" stroke-width="1.5" stroke-dasharray="6,3"/>'));
   /* v559: Kreis-Zone. „Den Mittelkreis als Feld nutzen" steht so in den Vorlagen des
@@ -3813,17 +3917,20 @@ function _skz(o,opt){
   });
   (o.wand||[]).forEach(w=>S.push('<line x1="'+w[0]+'" y1="'+w[1]+'" x2="'+w[2]+'" y2="'+w[3]+'" stroke="'+P.wand+'" stroke-width="5" stroke-linecap="round"/>'));
   (o.p||[]).forEach(p=>{const typ=P.pfeil[p[4]]?p[4]:'p';
-    S.push('<line x1="'+p[0]+'" y1="'+p[1]+'" x2="'+p[2]+'" y2="'+p[3]+'" stroke="'+P.pfeil[typ]+'" stroke-width="'+(typ==='s'?3:1.5)+'"'+(typ==='l'?' stroke-dasharray="5,3"':typ==='d'?' stroke-dasharray="2,3"':'')+' marker-end="url(#'+M+typ+')"/>');});
+    /* v578: Das Dribbling ist eine durchgezogene Schlangenlinie statt einer gepunkteten
+       Geraden – der Ball bleibt am Fuß, der Weg schlängelt. */
+    if(typ==='d'){ S.push('<path d="'+_skzWelle(p[0],p[1],p[2],p[3])+'" fill="none" stroke="'+P.pfeil.d+'" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#'+M+'d)"/>'); return; }
+    S.push('<line x1="'+p[0]+'" y1="'+p[1]+'" x2="'+p[2]+'" y2="'+p[3]+'" stroke="'+P.pfeil[typ]+'" stroke-width="'+(typ==='s'?3:1.5)+'"'+(typ==='l'?' stroke-dasharray="5,3"':'')+' marker-end="url(#'+M+typ+')"/>');});
   (o.h||[]).forEach(h=>S.push('<path d="M'+h[0]+' '+(h[1]-6)+' L'+(h[0]+5)+' '+(h[1]+4)+' L'+(h[0]-5)+' '+(h[1]+4)+' Z" fill="'+(F[h[2]]||F.y)+'" stroke="'+P.huetchenRand+'" stroke-width="1"/>'));
   (o.s||[]).forEach(sp=>{S.push('<circle cx="'+sp[0]+'" cy="'+sp[1]+'" r="8" fill="'+(F[sp[2]]||F.g)+'" stroke="'+P.spielerRand+'" stroke-width="1.5"/>');
     if(sp[3])S.push('<text x="'+sp[0]+'" y="'+(sp[1]+3)+'" text-anchor="middle" fill="'+P.kuerzel+'" font-size="8" font-family="sans-serif" font-weight="700">'+E(sp[3])+'</text>');});
   (o.b||[]).forEach(b=>S.push('<circle cx="'+b[0]+'" cy="'+b[1]+'" r="4" fill="'+P.ball+'" stroke="'+P.ballRand+'" stroke-width="1"/>'));
   (o.tx||[]).forEach(t=>S.push('<text x="'+t[0]+'" y="'+t[1]+'" text-anchor="middle" fill="'+P.text+'" font-size="9" font-family="sans-serif" font-weight="600">'+E(t[2])+'</text>'));
-  return '<svg viewBox="0 0 280 180" width="100%" style="max-width:280px;display:block;margin:8px auto;border-radius:6px" xmlns="http://www.w3.org/2000/svg">'+S.join('')+'</svg>';
+  return '<svg viewBox="0 0 '+SB+' '+SH+'" width="100%" style="max-width:'+SB+'px;display:block;margin:8px auto;border-radius:6px" xmlns="http://www.w3.org/2000/svg">'+S.join('')+'</svg>';
 }
 /* Einheitliche Linien-Legende (PO): erscheint unter jeder Skizze im Detail-Fenster.
    Muss zu den Pfeil-Typen in _skz passen: p=Pass (dünn durchgezogen), l=Laufweg
-   (gestrichelt), s=Schuss (dick), d=Dribbling (gepunktet). */
+   (gestrichelt), s=Schuss (dick), d=Dribbling (durchgezogen geschwungen, seit v578). */
 /* v559: Was für Geräte in einer Zeichnung steckt, steht in der Legende – aber nur, was
    wirklich vorkommt. Eine Legende, die immer alles zeigt, erklärt am Ende nichts mehr. */
 const SKZ_GER_NAME={stange:"Stange",teller:"Markierungsteller",huerde:"Minihürde",depot:"Balldepot",ring:"Koordinationsring",dummy:"Freistoß-Dummy"};
@@ -3841,10 +3948,13 @@ function skzLegende(hell,spec){
      gemessen: Schusszone #fbbf24 3,92:1 · Mittellinie rgba(255,255,255,.7) 4,13:1 –
      beide über den geforderten 3:1 für Bedienelemente und Grafik. */
   const st=(dash,c)=>'<svg width="32" height="12" viewBox="0 0 32 12" style="flex:none;background:'+R+';border-radius:3px"><line x1="2" y1="6" x2="30" y2="6" stroke="'+c+'" stroke-width="2"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/></svg>';
+  /* v578: Die Dribbling-Probe wird mit demselben Code gezeichnet wie auf dem Platz –
+     eine abgetippte Welle liefe früher oder später auseinander. */
+  const wl=c=>'<svg width="32" height="12" viewBox="0 0 32 12" style="flex:none;background:'+R+';border-radius:3px"><path d="'+_skzWelle(2,6,24,6)+'" fill="none" stroke="'+c+'" stroke-width="1.5" stroke-linecap="round"/><path d="M24,2.5 L30,6 L24,9.5 Z" fill="'+c+'"/></svg>';
   const P2=P.pfeil;
   return '<div class="skz-legende" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:10px;color:var(--text2);margin:2px 0 8px">'
     +it(li('',1.5,P2.p),SKZ_PFEIL_NAME.p)+it(li('5,3',1.5,P2.l),SKZ_PFEIL_NAME.l)
-    +it(li('',3,P2.s),SKZ_PFEIL_NAME.s)+it(li('2,3',1.5,P2.d),SKZ_PFEIL_NAME.d)
+    +it(li('',3,P2.s),SKZ_PFEIL_NAME.s)+it(wl(P2.d),SKZ_PFEIL_NAME.d)
     +it(st('5,4',P.sz),'Schusszone')+it(st('',P.mittel),'Mittellinie')
     +_skzGerLegende(spec,hell)+'</div>';
 }

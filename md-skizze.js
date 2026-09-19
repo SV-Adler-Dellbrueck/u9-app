@@ -170,6 +170,25 @@ function _skzListe(f){
 }
 function _skzWerkzeug(id){ return SKZ_WERK.find(w=>w.id===(id||_skzWerk))||SKZ_WERK[0]; }
 
+/* v578 – HOCHKANT ODER QUER. Der Zuschnitt steht in der Beschreibung selbst (`hoch`),
+   nicht am Gerät: eine Slalomstrecke ist hochkant richtig, ein Spiel über die Breite quer.
+   Alle Stellen, die bisher mit 280 × 180 gerechnet haben, fragen hier nach. */
+function _skzHochkant(){ return !!(_skzSpec&&_skzSpec.hoch); }
+function _skzB(){ return _skzHochkant()?SKZ_HOCH_B:SKZ_QUER_B; }
+function _skzH(){ return _skzHochkant()?SKZ_HOCH_H:SKZ_QUER_H; }
+/* Umschalten dreht die ganze Zeichnung mit (PO 19.09.), damit nichts aus dem Bild fällt.
+   Zweimal umschalten führt zum Ausgangsbild zurück – deshalb ist „Zurück" hier nur die
+   Bequemlichkeit, nicht die Rettung. */
+function skzFormat(){
+  if(typeof skzDrehen!=="function")return;
+  _skzMerken();
+  const hoch=!_skzHochkant();
+  _skzSpec=skzDrehen(_skzSpec);
+  _skzStart=null; _skzZieh=null;
+  skzEditorZeichnen();
+  toast(hoch?"Feld steht jetzt hochkant – alles ist mitgedreht":"Feld liegt jetzt quer – alles ist mitgedreht");
+}
+
 /* Wo liegt ein Element? Für den Treffer-Test und fürs Verschieben brauchen alle
    Elemente einen Ankerpunkt – bei Strecken (Pfeil, Zone, Leiter) der Anfang. */
 function _skzAnker(feld,e){
@@ -202,10 +221,21 @@ function _skzVerschieben(t,x,y){
 function skzSetWerkzeug(id){ _skzWerk=id; _skzStart=null; skzEditorZeichnen(); }
 function skzSetFarbe(f){ _skzFarbe=f; skzEditorZeichnen(); }
 function skzUndo(){ if(!_skzVerlauf.length){toast("Nichts mehr zurückzunehmen","info");return;} _skzSpec=_skzVerlauf.pop(); _skzStart=null; skzEditorZeichnen(); }
-function skzLeeren(){ _skzMerken(); _skzSpec=_skzLeer(); _skzBildNr=0; _skzStart=null; skzEditorZeichnen(); }
+function skzLeeren(){
+  _skzMerken();
+  const hoch=_skzHochkant();      // v578: Der Zuschnitt ist eine Entscheidung, kein Inhalt
+  _skzSpec=_skzLeer(); if(hoch)_skzSpec.hoch=true;
+  _skzBildNr=0; _skzStart=null; skzEditorZeichnen();
+}
 function skzVorlage(i){
   const v=SKZ_VORLAGEN[i]; if(!v)return;
-  _skzMerken(); _skzSpec=Object.assign(_skzLeer(),_skzKopie(v.spec)); _skzBildNr=0; _skzStart=null;
+  _skzMerken();
+  /* v578: Die Vorlagen sind quer gezeichnet. Wer hochkant arbeitet, bekommt sie gedreht –
+     sonst kippte das Feld beim Antippen einer Vorlage stillschweigend zurück. */
+  const hoch=_skzHochkant();
+  let spec=_skzKopie(v.spec);
+  if(hoch&&typeof skzDrehen==="function")spec=skzDrehen(spec);
+  _skzSpec=Object.assign(_skzLeer(),spec); _skzBildNr=0; _skzStart=null;
   skzEditorZeichnen(); toast("Vorlage „"+v.n+"“ geladen ✓");
 }
 function skzSpeichern(){
@@ -222,14 +252,15 @@ function skzSpeichern(){
 }
 
 /* Fingerposition → Koordinaten der Skizze. Die Bühne hat denselben Zuschnitt wie das
-   Bild (280×180), deshalb reicht ein Dreisatz – keine zweite Zeichenebene nötig. */
+   Bild (280×180 quer, seit v578 auch 180×280 hochkant), deshalb reicht ein Dreisatz –
+   keine zweite Zeichenebene nötig. */
 function _skzPunkt(ev){
   const b=document.getElementById("skz-buehne"); if(!b)return null;
-  const r=b.getBoundingClientRect();
+  const r=b.getBoundingClientRect(), B=_skzB(), H=_skzH();
   const cx=(ev.touches&&ev.touches[0]?ev.touches[0].clientX:ev.clientX);
   const cy=(ev.touches&&ev.touches[0]?ev.touches[0].clientY:ev.clientY);
-  return [Math.max(4,Math.min(276,Math.round((cx-r.left)/r.width*280))),
-          Math.max(4,Math.min(176,Math.round((cy-r.top)/r.height*180)))];
+  return [Math.max(4,Math.min(B-4,Math.round((cx-r.left)/r.width*B))),
+          Math.max(4,Math.min(H-4,Math.round((cy-r.top)/r.height*H)))];
 }
 function skzBuehneDown(ev){
   const pkt=_skzPunkt(ev); if(!pkt)return; ev.preventDefault();
@@ -285,10 +316,13 @@ function skzBuehneDown(ev){
        Jetzt entscheidet die Tipp-Position: nah am linken oder rechten Rand hochkant und
        bündig an der Linie, sonst quer. Die zweite Koordinate bleibt, wo getippt wurde –
        nur so weit hereingezogen, dass das Tor nicht über den Rasen hinausragt. */
-    const j=!!w.j, tief=j?10:7, breit=j?44:30;
-    if(x<50)        _skzListe("tor").push([4,        Math.min(y,176-breit),"v",breit].concat(j?["j"]:[]));
-    else if(x>230)  _skzListe("tor").push([276-tief, Math.min(y,176-breit),"v",breit].concat(j?["j"]:[]));
-    else            _skzListe("tor").push([Math.min(x,276-breit), y,        "h",breit].concat(j?["j"]:[]));
+    const j=!!w.j, tief=j?10:7, breit=j?44:30, B=_skzB(), H=_skzH();
+    /* v578: Die Ränder folgen dem Zuschnitt – hochkant liegen links und rechts näher
+       beieinander, und ein Tor, das quer bei x = 230 an der Linie stand, säße dort sonst
+       mitten auf dem Platz. */
+    if(x<B*0.18)         _skzListe("tor").push([4,        Math.min(y,H-4-breit),"v",breit].concat(j?["j"]:[]));
+    else if(x>B*0.82)    _skzListe("tor").push([B-4-tief, Math.min(y,H-4-breit),"v",breit].concat(j?["j"]:[]));
+    else                 _skzListe("tor").push([Math.min(x,B-4-breit), y,       "h",breit].concat(j?["j"]:[]));
   }
   else if(w.feld==="ger")_skzListe("ger").push([x,y,w.typ,_skzFarbe]);
   else if(w.feld==="leiter")_skzListe("leiter").push([x,y,60,"h"]);
@@ -307,6 +341,15 @@ function skzBuehneUp(){ _skzZieh=null; }
 
 function skzEditorZeichnen(){
   const b=document.getElementById("skz-buehne"); if(!b)return;
+  /* v578: Die Bühne trägt den Zuschnitt der Skizze. Hochkant wird sie schmaler statt
+     höher – sonst stünde der Editor auf einem Handy nicht mehr auf einem Bildschirm. */
+  const hoch=_skzHochkant();
+  b.style.aspectRatio=_skzB()+"/"+_skzH();
+  b.style.maxWidth=hoch?"210px":"340px";
+  const fb=document.getElementById("skz-format");
+  if(fb){ fb.innerHTML=hoch?"🔄 Querformat":"🔄 Hochkant";
+          fb.title=hoch?"Feld quer legen – alles dreht mit":"Feld hochkant stellen – alles dreht mit";
+          fb.setAttribute("aria-label",fb.title); }
   const bl=document.getElementById("skz-bildleiste");
   if(bl)bl.innerHTML=skzBildLeiste();
   const leg=document.getElementById("skz-legende");
@@ -430,6 +473,11 @@ function skzEditorOpen(start,cb){
     <div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:2px 0 6px">Vorlagen</div>
     <div style="display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;margin-bottom:10px">${skzVorlagenLeiste()}</div>
     <div id="skz-bildleiste"></div>
+    <!-- v578: Der Zuschnitt gehört über die Zeichenfläche – dorthin, wo man ihn sieht,
+         bevor man anfängt zu tippen. Die Beschriftung sagt, wohin der Tipp führt. -->
+    <div style="display:flex;justify-content:center;margin-bottom:6px">
+      <button type="button" id="skz-format" onclick="skzFormat()" style="min-height:44px;padding:0 14px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer"></button>
+    </div>
     <div id="skz-buehne" style="position:relative;width:100%;max-width:340px;margin:0 auto 8px;aspect-ratio:280/180;border-radius:8px;overflow:hidden;touch-action:none;cursor:crosshair"></div>
   <!-- v512: Beim Zeichnen will man sehen, was der gewählte Stift bedeutet. -->
   <div id="skz-legende"></div>
@@ -501,7 +549,8 @@ async function uebungSkizzeNachtragen(idx){
       feste Maße und kein style.
    2. Unter der Skizze steht die Legende – die besteht selbst aus <svg>. Gesucht wird
       deshalb gezielt das Bild mit der viewBox der Skizze, nicht einfach das erste. */
-const SKZ_PNG_B=1120, SKZ_PNG_H=720;              // Vierfaches der viewBox 280×180
+const SKZ_PNG_FAKTOR=4;                           // Vierfaches der viewBox – 1120 × 720 quer
+const SKZ_PNG_B=1120, SKZ_PNG_H=720;              // Bestand: die Maße einer queren Skizze
 function _skzSlug(s){
   return String(s||"Skizze").toLowerCase()
     .replace(/ä/g,"ae").replace(/ö/g,"oe").replace(/ü/g,"ue").replace(/ß/g,"ss")
@@ -517,19 +566,25 @@ function skzTeilenKnopf(name){
 async function skzTeilen(knopf){
   const name=(knopf&&knopf.dataset&&knopf.dataset.name)||"Skizze";
   const wrap=knopf&&knopf.parentElement;
-  const quell=wrap&&[...wrap.querySelectorAll("svg")].find(x=>x.getAttribute("viewBox")==="0 0 280 180");
+  /* v578: Seit es hochkante Skizzen gibt, ist die viewBox nicht mehr eine feste Zahlenreihe.
+     Gesucht wird das Bild mit dem Zuschnitt einer Skizze – nicht das erste <svg>, denn die
+     Legende besteht selbst aus kleinen Bildern. */
+  const zuschnitte=["0 0 "+SKZ_QUER_B+" "+SKZ_QUER_H,"0 0 "+SKZ_HOCH_B+" "+SKZ_HOCH_H];
+  const quell=wrap&&[...wrap.querySelectorAll("svg")].find(x=>zuschnitte.includes(x.getAttribute("viewBox")));
   if(!quell){ if(typeof toast==="function")toast("Keine Skizze zum Teilen gefunden","err"); return; }
   let url=null;
   try{
     const kopie=quell.cloneNode(true);
     kopie.removeAttribute("style");
-    kopie.setAttribute("width",SKZ_PNG_B); kopie.setAttribute("height",SKZ_PNG_H);
+    const vb=String(quell.getAttribute("viewBox")||"").split(/\s+/).map(Number);
+    const pb=(vb[2]||SKZ_QUER_B)*SKZ_PNG_FAKTOR, ph=(vb[3]||SKZ_QUER_H)*SKZ_PNG_FAKTOR;
+    kopie.setAttribute("width",pb); kopie.setAttribute("height",ph);
     const text=new XMLSerializer().serializeToString(kopie);
     url=URL.createObjectURL(new Blob([text],{type:"image/svg+xml;charset=utf-8"}));
     const bild=new Image();
     await new Promise((fertig,schief)=>{ bild.onload=fertig; bild.onerror=()=>schief(new Error("Bild")); bild.src=url; });
-    const c=document.createElement("canvas"); c.width=SKZ_PNG_B; c.height=SKZ_PNG_H;
-    c.getContext("2d").drawImage(bild,0,0,SKZ_PNG_B,SKZ_PNG_H);
+    const c=document.createElement("canvas"); c.width=pb; c.height=ph;
+    c.getContext("2d").drawImage(bild,0,0,pb,ph);
     const png=await new Promise(fertig=>c.toBlob(fertig,"image/png"));
     if(!png)throw new Error("PNG");
     const nr=(typeof _skzDetailBild==="number"&&_skzDetailBild>0)?("-bild-"+(_skzDetailBild+1)):"";
@@ -659,10 +714,14 @@ function _skzGrPassen(){
   if(!m||!b||!h)return;
   let rest=0;
   [...m.children].forEach(c=>{ if(c!==b)rest+=c.getBoundingClientRect().height+8; });
+  /* v578: Das Seitenverhältnis kommt aus der Skizze. Eine hochkante Zeichnung nutzt die
+     Höhe des Bildschirms, eine quere die Breite – geraten wird nichts. */
+  const steht=!!(_skzGr&&_skzGr.spec&&_skzGr.spec.hoch);
+  const vb=steht?[SKZ_HOCH_B,SKZ_HOCH_H]:[SKZ_QUER_B,SKZ_QUER_H];
   const hoch=Math.max(120,m.clientHeight-rest-20);
-  const breit=Math.max(120,Math.min(b.clientWidth,hoch*280/180));
+  const breit=Math.max(120,Math.min(b.clientWidth,hoch*vb[0]/vb[1]));
   h.style.width=Math.floor(breit)+"px";
-  h.style.height=Math.floor(breit*180/280)+"px";
+  h.style.height=Math.floor(breit*vb[1]/vb[0])+"px";
 }
 function _skzGrLegen(){
   const h=document.getElementById("skz-gross-halter"); if(!h||!_skzGr)return;
