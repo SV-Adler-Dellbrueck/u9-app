@@ -8,17 +8,28 @@
    Fälle:
    a) Der Abgleich legt die Übung an und lässt die 27 bestehenden unberührt; ein zweiter
       Lauf tut nichts mehr.
-   b) Beide Bilder rendern — hochkant, mit allem, was die Beschreibung nennt.
-   c) Kein Spielerkreis näher als 24 Punkte an einem anderen, und kein Nummernkreis liegt
-      auf einem Spieler, einem Gerät oder dem Ball. Die Nummer sitzt sieben Punkte vor dem
-      Pfeilanfang; wer das übersieht, versteckt sie hinter einem Spielerkreis (das ist im
-      ersten Entwurf dieses Pakets viermal passiert).
+   b) Alle VIER Bilder rendern — hochkant, mit allem, was die Beschreibung nennt.
+      v584: Aus zwei Bildern wurden vier. Mit zweien liessen sich die Phasen zeigen, aber
+      nicht der Weg dorthin: zwischen beiden stand KEIN Spieler an einer anderen Stelle,
+      also hatte das Abspielen nichts zu zeigen (siehe v584-skizze-bewegung.js).
+   c) Kein Spielerkreis näher als 24 Punkte an einem anderen — in JEDEM Bild, nicht nur im
+      Grundbild —, und kein Nummernkreis liegt auf einem Spieler, einem Gerät oder dem Ball.
+      Die Nummer sitzt sieben Punkte vor dem Pfeilanfang; wer das übersieht, versteckt sie
+      hinter einem Spielerkreis (das ist im ersten Entwurf dieses Pakets viermal passiert).
+      v584: Die Grenze zum Spieler liegt jetzt bei 16 statt 13,5 Punkten. 13,5 ist Radius
+      plus Radius — also der Moment, in dem sich die Kreise genau BERÜHREN. Das war im
+      gerenderten Bild zweimal zu sehen und rechnerisch trotzdem grün.
    d) Die Materialliste nennt genau, was der Aufbau braucht: 2 Jugendtore, 10 Teller,
       2 Dummys, 1 Ball — und NICHT den Trainer. Er steht auf dem Platz, aber nicht im
       Schrank.
    e) Die Übungsart ist als Spielform vorgeschlagen (Charles' Entscheidung 19.09.2026).
       Der Schlüssel heißt im Code `spiel`; ein Eintrag `spielform` fiele still durch.
-   f) Kein Kindername in der Übung — das Repo ist öffentlich. */
+   f) Kein Kindername in der Übung — das Repo ist öffentlich.
+   g) v584: Nachtrag und Bibliothek tragen DIESELBE Übung, Zeichen für Zeichen. Gerendert
+      wird hier aus `nachtrag.json`, eingesetzt wird aus `bibliothek.json` — beim Umbau auf
+      vier Bilder war nur die Bibliothek nachgezogen, und dieser Prüffall bescheinigte
+      brav zwei Bilder, während die App vier zeigte. Zwei Wahrheiten zu derselben Übung
+      sind schlimmer als eine veraltete. */
 const fs = require("fs"), path = require("path");
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
@@ -70,21 +81,26 @@ module.exports = async function (h) {
 
     // c) Abstände und Nummernkreise
     const eng = [], kollisionen = [];
-    (spec.s || []).forEach((a, i) => (spec.s || []).forEach((b, j) => {
-      if (j > i && Math.hypot(a[0] - b[0], a[1] - b[1]) < 24) eng.push(a[3] + "↔" + b[3]);
-    }));
     for (let n = 0; n < skzBildZahl(spec); n++) {
       const b = _skzBild(spec, n);
+      /* v584: Der Abstand wird in JEDEM Bild gerechnet. Vorher stand hier nur das
+         Grundbild — ein Bild, in dem zwei Kinder aufeinanderrücken, fiel nicht auf. */
+      (b.s || []).forEach((x, i) => (b.s || []).forEach((y, j) => {
+        if (j > i && Math.hypot(x[0] - y[0], x[1] - y[1]) < 24) eng.push(`Bild ${n + 1}: ${x[3]}↔${y[3]}`);
+      }));
       (b.p || []).forEach(p => {
         const nr = Number(p[5]); if (!isFinite(nr) || nr < 1) return;
         const dx = p[2] - p[0], dy = p[3] - p[1], len = Math.hypot(dx, dy) || 1;
         const kx = p[0] - dx / len * 7, ky = p[1] - dy / len * 7;
-        (b.s || []).forEach(sp => { if (Math.hypot(kx - sp[0], ky - sp[1]) < 13.5) kollisionen.push(`Bild ${n + 1}: Nummer ${nr} auf Spieler ${sp[3]}`); });
+        (b.s || []).forEach(sp => { if (Math.hypot(kx - sp[0], ky - sp[1]) < 16) kollisionen.push(`Bild ${n + 1}: Nummer ${nr} auf Spieler ${sp[3]} (Abstand ${Math.round(Math.hypot(kx - sp[0], ky - sp[1]))}, nötig 16)`); });
         (b.ger || []).forEach(g => { if (Math.hypot(kx - g[0], ky - g[1]) < 11) kollisionen.push(`Bild ${n + 1}: Nummer ${nr} auf ${g[2]}`); });
         (b.b || []).forEach(ba => { if (Math.hypot(kx - ba[0], ky - ba[1]) < 9.5) kollisionen.push(`Bild ${n + 1}: Nummer ${nr} auf dem Ball`); });
       });
     }
     out.eng = eng; out.kollisionen = kollisionen;
+    out.nummern = [];
+    for (let n = 0; n < skzBildZahl(spec); n++)
+      (_skzBild(spec, n).p || []).forEach(p => { const nr = Number(p[5]); if (isFinite(nr) && nr > 0) out.nummern.push(nr); });
 
     // d) Material
     out.material = skzMaterial(spec).map(x => `${x.anzahl} ${x.was}`);
@@ -109,27 +125,39 @@ module.exports = async function (h) {
   if (r.fehlt.length) return h.ergebnis("Lehrgang 3.1: Raute mit Torwart", false, [r.fehlt.join(", ") + " fehlt"]);
 
   const u = bib.uebungen.find(x => x.name === NAME);
+  // g) Nachtrag und Bibliothek müssen dasselbe sagen
+  const ausNachtrag = (JSON.parse(roh).uebungen || [])[0];
+  if (!ausNachtrag) probleme.push("nachtrag.json enthält keine Übung");
+  else if (!u) probleme.push("Die Übung steht nicht in der Bibliothek");
+  else if (JSON.stringify(u) !== JSON.stringify(ausNachtrag))
+    probleme.push("bibliothek.json und nachtrag.json tragen verschiedene Fassungen der Übung – "
+      + "gerendert wird aus dem Nachtrag, eingesetzt aus der Bibliothek");
   // a)
   if (!u) probleme.push("Die Übung steht nicht in der Bibliothek");
   if (bib.uebungen.length !== 28) probleme.push(`${bib.uebungen.length} Übungen in der Bibliothek statt 28`);
-  if (bib.stand === "2026-09-16-1") probleme.push("Der Stand wurde nicht hochgesetzt – ohne neuen Stand holt der Abgleich die Datei nicht");
+  if (bib.stand !== "2026-09-19-2") probleme.push(`Stand „${bib.stand}“ statt „2026-09-19-2“ – ohne neuen Stand holt der Abgleich die Datei nicht`);
   if (r.euPruefung.length) probleme.push("_euPruefung: " + r.euPruefung.join(" · "));
   if (r.skizzePruefung.length) probleme.push("_eiSkizzeFehler: " + r.skizzePruefung.join(" · "));
   if (r.abgleich && r.abgleich.angelegt !== 28) probleme.push(`Der Abgleich hat ${r.abgleich && r.abgleich.angelegt} von 28 Übungen angelegt`);
   if (r.zweiter !== null && r.zweiter !== undefined) probleme.push("Der zweite Lauf hat trotz gleichem Stand gearbeitet");
   // b)
   const b = r.bilder || [];
-  if (b.length !== 2) probleme.push(`${b.length} Bilder statt zwei`);
+  const SOLL_WEGE = [2, 2, 3, 4];   // 1+2 · 3+4 · 5+6+7 · 8+8+8+9
+  if (b.length !== 4) probleme.push(`${b.length} Bilder statt vier`);
   else {
     b.forEach((x, i) => {
       if (x.viewBox !== "0 0 180 280") probleme.push(`Bild ${i + 1} steht auf „${x.viewBox}“ statt hochkant`);
       if (x.spieler !== 4) probleme.push(`Bild ${i + 1} zeigt ${x.spieler} Spieler statt vier`);
       if (!x.text) probleme.push(`Bild ${i + 1} trägt keine Beschriftung`);
+      if (x.pfeile !== SOLL_WEGE[i]) probleme.push(`Bild ${i + 1} zeigt ${x.pfeile} Wege statt ${SOLL_WEGE[i]}`);
     });
-    if (b[0].pfeile !== 4) probleme.push(`Bild 1 zeigt ${b[0].pfeile} Wege statt vier`);
-    if (b[1].pfeile !== 7) probleme.push(`Bild 2 zeigt ${b[1].pfeile} Wege statt sieben`);
-    if (b[0].text === b[1].text) probleme.push("Beide Bilder tragen dieselbe Beschriftung");
+    const texte = b.map(x => x.text);
+    if (new Set(texte).size !== texte.length) probleme.push("Zwei Bilder tragen dieselbe Beschriftung: " + texte.join(" · "));
   }
+  /* v584: Die Nummern laufen über alle vier Bilder lückenlos von 1 bis 9 – die 8 dreimal,
+     weil Pass und beide Laufwege gleichzeitig passieren (Charles, 19.09.). */
+  if (String(r.nummern) !== String([1, 2, 3, 4, 5, 6, 7, 8, 8, 8, 9]))
+    probleme.push(`Schrittnummern ${JSON.stringify(r.nummern)} statt 1–9 mit dreifacher 8`);
   // c)
   if (r.eng.length) probleme.push(`Spieler zu eng beieinander: ${r.eng.join(", ")}`);
   if (r.kollisionen.length) probleme.push(`Nummernkreise verdeckt: ${r.kollisionen.join(" · ")}`);
@@ -152,10 +180,11 @@ module.exports = async function (h) {
 
   if (!probleme.length) {
     zeilen.push(`Bibliothek: 28 Übungen, Stand ${bib.stand} · Abgleich legt 28 an, der zweite Lauf tut nichts`);
-    zeilen.push(`Beide Bilder hochkant (${b[0].viewBox}), vier Spieler, ${b[0].pfeile} und ${b[1].pfeile} Wege, je eigene Beschriftung`);
-    zeilen.push(`Kein Spielerabstand unter 24, kein Nummernkreis auf Spieler, Gerät oder Ball`);
+    zeilen.push(`Vier Bilder hochkant (${b[0].viewBox}), je vier Spieler, ${b.map(x => x.pfeile).join("+")} Wege, je eigene Beschriftung`);
+    zeilen.push(`Kein Spielerabstand unter 24 (in allen vier Bildern), kein Nummernkreis auf Spieler (≥16), Gerät oder Ball`);
     zeilen.push(`Material: ${r.material.join(" · ")} – der Trainer nicht mitgezählt`);
     zeilen.push(`Übungsart „${r.artVorschlag}“ → „${r.artLabel}“ · keine Kindernamen`);
+    zeilen.push("Nachtrag und Bibliothek tragen dieselbe Übung, Zeichen für Zeichen");
   }
   return h.ergebnis("Lehrgang 3.1: Raute mit Torwart", !probleme.length, zeilen.concat(probleme));
 };

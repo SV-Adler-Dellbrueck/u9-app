@@ -926,6 +926,25 @@ function _skzGrBilder(){
    Schnitte statt Bewegung – dieselbe Einstellung, die auch die Animationen der App
    abschaltet. */
 const SKZ_STAND=600, SKZ_GLEIT=800, SKZ_SCHNITT=1400;
+/* v584 – EIN ÜBERGANG, IN DEM SICH NICHTS BEWEGT, WIRD NICHT AUSGESESSEN.
+
+   PO am 19.09., nach dem Öffnen der Lehrgangsübung am Handy: „Die Animation läuft nur
+   1 Sekunde an und stoppt dann." Am Ende war das Abspielen nicht kaputt – es hatte nichts
+   zu zeigen: In der Skizze stand kein Spieler im zweiten Bild an einer anderen Stelle.
+   Standzeit und Überblendung kosteten trotzdem ihre 1,4 Sekunden Stillstand.
+
+   Das betrifft nicht nur diese eine Übung. Ein Übersichtsbild am Anfang, das alle Wege auf
+   einmal zeigt, ist ein gängiges Muster („Dreieckspassen mit Abschluss" macht es so) – und
+   dort steht der Bildschirm beim Abspielen genauso still, bevor es losgeht. Deshalb wird
+   ein Übergang ohne sichtbare Bewegung kurz durchgeschaltet statt überblendet. Die Schwelle
+   ist bewusst niedrig: Schon ein kleiner Schritt soll gleiten, nur echter Stillstand nicht. */
+const SKZ_KURZ=260, SKZ_BEWEGT_AB=6;
+function _skzBewegt(a,b){
+  if(!a||!b)return true;
+  const weit=(x,y)=>(x||[]).reduce((m,e,i)=>{ const z=(y||[])[i];
+    return (!z||!Array.isArray(e))?m:Math.max(m,Math.hypot(e[0]-z[0],e[1]-z[1])); },0);
+  return Math.max(weit(a.s,b.s),weit(a.b,b.b))>=SKZ_BEWEGT_AB;
+}
 function _skzSanft(){
   try{ return !(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches); }
   catch(e){ return true; }
@@ -953,10 +972,11 @@ function _skzGrTakt(){
   _skzGrZeichnen();
   if(_skzGr.bild>=max){ _skzGr.lauft=false; _skzGrBilder(); return; }
   const sanft=_skzSanft();
+  const a=_skzBesetzungSpec(_skzGr.bild), b=_skzBesetzungSpec(_skzGr.bild+1);
+  const bewegt=_skzBewegt(a,b);
   _skzGr.uhr=setTimeout(()=>{
     if(!_skzGr||!_skzGr.lauft)return;
-    if(!sanft){ _skzGr.bild++; _skzGrTakt(); return; }
-    const a=_skzBesetzungSpec(_skzGr.bild), b=_skzBesetzungSpec(_skzGr.bild+1);
+    if(!sanft||!bewegt){ _skzGr.bild++; _skzGrTakt(); return; }
     const t0=(typeof performance!=="undefined"?performance.now():Date.now());
     const halter=document.getElementById("skz-gross-halter");
     const tick=()=>{
@@ -969,7 +989,7 @@ function _skzGrTakt(){
       _skzGr.raf=null; _skzGr.bild++; _skzGrTakt();
     };
     _skzGr.raf=requestAnimationFrame(tick);
-  },sanft?SKZ_STAND:SKZ_SCHNITT);
+  },sanft?(bewegt?SKZ_STAND:SKZ_KURZ):SKZ_SCHNITT);
 }
 function skzGrossBild(n){
   if(_skzGr&&_skzGr.lauft)skzGrossStopp();
