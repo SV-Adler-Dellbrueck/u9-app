@@ -1297,7 +1297,15 @@ const HELFER_AUFGABEN=[
   {t:"🥅 Jugendtore",    typen:["training"], zahl:t=>t&&t.helfer_jugendtore, vor:15,
    kurz:t=>helferAnzahl(t&&t.helfer_jugendtore,"Jugendtore",true),
    d:t=>`${helferAbSatz(t,15)} da sein und ${helferAnzahl(t&&t.helfer_jugendtore,"Jugendtore")} aufstellen.`},
+  /* v580 (PO 19.09.): „Bei Auswärtsspielen ist im Eltern-Zugang der Punkt beim Aufbauen
+     helfen nicht relevant." Aufgebaut wird beim Gastgeber – wer auswärts spielt, kommt an
+     ein fertiges Feld. Die Aufgabe entfällt deshalb bei einem ausdrücklichen Auswärtsspiel.
+     Solange der Trainer Heim/Auswärts noch NICHT eingetragen hat (`heim` ist null), bleibt
+     sie stehen: Eine Aufgabe zu früh wegzulassen kostet Helfer, eine zu viel nur einen
+     Blick. Wer sich schon eingetragen hatte, findet seinen Eintrag weiter in der Liste
+     darüber und kann ihn dort entfernen. */
   {t:"🛠️ Aufbau",        typen:["spiel","turnier","event"], vor:30,
+   wenn:t=>!(t&&t.heim===false),
    kurz:()=>"Aufbau",
    d:t=>`${helferAbSatz(t,30)} da sein und mit dem Trainerteam Tore, Hütchen und Bälle aufbauen – etwa 15 Minuten.`},
   {t:"👀 Betreuung",     typen:["spiel","turnier"],
@@ -1339,6 +1347,10 @@ function helferAbSatz(t,min){
    fehlen (Notnagel in _helferReload); dann greift nur der Typ-Filter. */
 function helferTasksFuer(typ,t){
   return HELFER_AUFGABEN.filter(a=>a.typen.includes(typ||"training"))
+                        /* v580: Eine Aufgabe kann ausserdem an den Termin selbst gebunden
+                           sein – der Aufbau an das Heimrecht. Ohne Termin greift nur der
+                           Typ-Filter, wie bisher. */
+                        .filter(a=>typeof a.wenn!=="function"||a.wenn(t))
                         .filter(a=>{
                           if(!a.zahl)return true;
                           const n=a.zahl(t);
@@ -1808,7 +1820,7 @@ const ELTERN_TOUR=[
   {emo:"🦅", t:"Willkommen im Eltern-Bereich", d:"Hier läuft alles rund um dein Kind bei der U9 zusammen. Du kannst diese Tour später jederzeit über das ❓ oben neu starten."},
   {emo:"📌", t:"Was oben steht", d:"Ganz oben steht immer der nächste Termin. Gleich darunter erscheinen die Termine der nächsten 14 Tage, für die deine Antwort noch fehlt – ist alles beantwortet, ist die Karte weg. Danach deine offenen Punkte: Mitbringlisten, Büdchen-Dienst und die „Wie war's?“-Frage nach Spielen. Adler News zeigt sich nur, wenn wirklich etwas Neues drin ist – gelesen ist gelesen. Wichtige 📣 Ansagen vom Trainerteam bestätigst du kurz mit „Gelesen“."},
   {emo:"👍", t:"Zu- & Absagen", d:"Melde dein Kind am nächsten Termin oder im Termin-Karussell zu oder ab – ein Tipp genügt, nochmal tippen entfernt die Antwort. Über „Alle Termine\" lädst du alles in deinen Kalender."},
-  {emo:"🙋", t:"Alles rund um den Termin", d:"Im Termin-Detail: Wetter, Adresse mit Route, Fahrgemeinschaft, Mitbringliste bei Events und „Wer hilft mit?“ – jede Aufgabe sagt dir vorher, ab wann du da sein solltest und was zu tun ist: beim Spiel und Turnier Aufbau, Fotos, Live-Ticker und Betreuung in den Pausen, beim Training die Funino-Tore und Jugendtore. Für den nächsten Termin stehen dieselben Aufgaben schon oben auf der Startseite, kurz und mit Uhrzeit – du musst dich also nicht vorab festlegen, sondern kannst am Tag selbst schauen, ob du es schaffst. Steht 💬 etwas darüber, ist das ein Hinweis des Trainerteams für genau diesen Termin. Im Feld darunter kannst du auch etwas eintragen, das nicht in der Liste steht. Beim Training sagst du außerdem, ob du vor Ort bleibst. Fällt einmal etwas aus oder wird der Platz getauscht, steht das direkt auf der Terminkarte – solange dort nichts steht, findet alles wie geplant statt."},
+  {emo:"🙋", t:"Alles rund um den Termin", d:"Im Termin-Detail: Wetter, Adresse mit Route, Fahrgemeinschaft, Mitbringliste bei Events und „Wer hilft mit?“ – jede Aufgabe sagt dir vorher, ab wann du da sein solltest und was zu tun ist: beim Spiel und Turnier Aufbau, Fotos, Live-Ticker und Betreuung in den Pausen, beim Training die Funino-Tore und Jugendtore. Steht ein <b>Auswärtsspiel</b> an, fehlt der Aufbau – dort baut der Gastgeber auf. Für den nächsten Termin stehen dieselben Aufgaben schon oben auf der Startseite, kurz und mit Uhrzeit – du musst dich also nicht vorab festlegen, sondern kannst am Tag selbst schauen, ob du es schaffst. Steht 💬 etwas darüber, ist das ein Hinweis des Trainerteams für genau diesen Termin. Im Feld darunter kannst du auch etwas eintragen, das nicht in der Liste steht. Beim Training sagst du außerdem, ob du vor Ort bleibst. Fällt einmal etwas aus oder wird der Platz getauscht, steht das direkt auf der Terminkarte – solange dort nichts steht, findet alles wie geplant statt."},
   {emo:"\ud83d\udce3", t:"Liveticker", d:"Sobald das Trainerteam den Liveticker startet, steht ganz oben eine rote LIVE-Kachel – vorher nicht, damit du nie auf eine leere Seite tippst. Über „Teilen\" schickst du den Ticker an Oma, Opa oder Freunde; der Link braucht keine Anmeldung. Brauchst du die Kachel gerade nicht, klick sie weg – morgen ist sie wieder da. Drei Tage nach dem Spieltag zeigt der Link nur noch den Endstand, die Höhepunkte stehen dann im Adler Nest."},
   {emo:"🎮", t:"Die Kabine (Kinder-Modus)", d:"Gib dein Handy bedenkenlos weiter: „Unsere Regeln“ – wofür wir Adler stehen, in sechs Sätzen –, Quiz, Missionen, Galerie – und jetzt auch das Panini-Sammelalbum mit Sticker-Tüten & Tauschbörse, Komplimente an Mitspieler, die eigene Adler-Post und das Sammelalbum. Zurück geht es nur mit Code."},
   {emo:"🃏", t:"Für dein Kind", d:"Nach einem Spiel oder Turnier steht unter den Terminen zwei Wochen lang der Rückblick: was dein Kind an dem Tag alles gemacht hat. Direkt darunter steht „Das kann dein Kind jetzt“ – erreichte Ziele und neue Technik-Abzeichen aus den letzten zwei Wochen. Die Karte erscheint nur, wenn wirklich etwas dazugekommen ist. Danach verschwindet er – die Zahlen bleiben in der Saison-Statistik. Dort findest du außerdem Sammelkarte, Technik-Abzeichen (die hakst du zuhause ab) und Fan-Fakten. Foto- & Video-Freigaben und die Notfallkarte pflegst du unter „🔒 Datenschutz &amp; Freigaben\" – dort erklärt „🛡️ So schützen wir eure Fotos &amp; Daten\" auch, warum die App sicherer ist als jede WhatsApp-Gruppe."},

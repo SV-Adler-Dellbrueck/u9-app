@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v579 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v580 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -116,7 +116,7 @@ Zugang per Link und Einmal-Code an die hinterlegte E-Mail-Adresse. Kein Passwort
 | **Startseite** | Ganz oben der nächste Termin. Darunter die Termine der nächsten 14 Tage, zu denen die Antwort fehlt. Dann offene Punkte: Mitbringlisten, Büdchen-Dienst, „Wie war's?“ nach Spielen. Adler News nur bei Neuem. | Alles, was heute von den Eltern gebraucht wird, steht oben – der Rest bleibt ruhig. |
 | **Zu- und Absagen** | Ein Tipp am Termin, nochmal tippen entfernt die Antwort. Alle Termine als Kalender-Abo. Trainings gelten ohne Antwort als zugesagt. | Der Trainer weiß vorab, wer kommt. Eltern müssen nichts schreiben. |
 | **Termin-Detail** | Wetter, Adresse mit Route, Fahrgemeinschaft, Mitbringliste bei Events (nur wenn der Trainer sie am Termin einschaltet), Treffzeit. Abgesagte Termine sind deutlich markiert. | Die üblichen Rückfragen („Wo ist das?“, „Wann treffen wir uns?“) beantworten sich selbst. |
-| **„Wer hilft mit?“** | Helfer-Aufgaben je Termin mit Uhrzeit und Beschreibung: Aufbau, Fotos, Live-Ticker, Betreuung in Pausen, Tore beim Training. Am Tag selbst entscheidbar. | Hilfe verteilt sich auf viele Schultern, ohne Verpflichtung im Voraus. |
+| **„Wer hilft mit?“** | Helfer-Aufgaben je Termin mit Uhrzeit und Beschreibung: Aufbau, Fotos, Live-Ticker, Betreuung in Pausen, Tore beim Training. Am Tag selbst entscheidbar. Beim **Auswärtsspiel** entfällt der Aufbau (seit v580) – dort baut der Gastgeber auf; solange Heim/Auswärts noch nicht eingetragen ist, bleibt die Aufgabe stehen, und ein vorhandener Eintrag bleibt sichtbar und lässt sich entfernen. | Hilfe verteilt sich auf viele Schultern, ohne Verpflichtung im Voraus. |
 | **Team-Ansagen** | Wichtige Nachrichten vom Trainerteam, mit „Gelesen“ bestätigen. | Wichtiges geht in keiner Chat-Gruppe unter. |
 | **Liveticker** | Rote LIVE-Kachel, sobald der Ticker läuft. Teilbar per Link ohne Anmeldung. Nach drei Tagen nur noch der Endstand. | Großeltern und Fans sind dabei – ohne Zugang zur App. |
 | **Rückblick** | Zwei Wochen nach Spiel oder Turnier: was das eigene Kind an dem Tag gemacht hat (Einsätze, Rolle, Tore). Danach nur noch in der Saison-Statistik. | Gesprächsstoff am Abendbrottisch, kindgerecht und ohne Noten. |
