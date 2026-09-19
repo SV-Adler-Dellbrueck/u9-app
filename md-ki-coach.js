@@ -193,7 +193,10 @@ function kiCoachRender(uebungen,rest){
     <div style="font-weight:800;font-size:14px">${esc(u.titel||"Übung")}</div>
     ${(KI_MODUS==="text"&&fehlt(u).length)?`<div style="font-size:11px;color:#b45309;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:7px 9px;margin:6px 0;line-height:1.5">⚠️ Stand nicht im Text: <b>${fehlt(u).join(", ")}</b> – ergänze es kurz im Text und übernimm nochmal, oder trag es nach dem Speichern in der Übung nach.</div>`:""}
     <div style="font-size:11px;color:var(--text2);margin:2px 0 6px">${u.dauer?"⏱ "+esc(u.dauer):""}${u.spieler?" · 👥 "+esc(u.spieler):""}${u.feld?" · 📐 "+esc(u.feld):""}${u.material?" · 🎒 "+esc(u.material):""}</div>
-    ${u.skizze&&typeof _skz==="function"?_skz(u.skizze)+(typeof skzLegende==="function"?skzLegende():""):""}
+    ${(function(){ /* v581: Dieselbe Grenze wie im Skizzen-Editor – geprüft wird, bevor
+         gezeichnet wird, auch wenn die Antwort aus der eigenen Edge Function kommt. */
+      const sp=(typeof skzSpecSaeubern==="function")?skzSpecSaeubern(u.skizze):u.skizze;
+      return (sp&&typeof _skz==="function")?_skz(sp)+(typeof skzLegende==="function"?skzLegende(false,sp):""):""; })()}
     <div style="font-size:12.5px;line-height:1.5;white-space:pre-wrap">${esc(u.beschreibung||"")}</div>
     ${u.variante?`<div style="font-size:11.5px;color:var(--text2);margin-top:5px">➕ ${esc(u.variante)}</div>`:""}
     ${u.coaching?`<div style="font-size:11.5px;color:var(--text2);margin-top:5px">📣 ${esc(u.coaching)}</div>`:""}

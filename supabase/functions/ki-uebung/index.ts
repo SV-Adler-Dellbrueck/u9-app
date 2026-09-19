@@ -56,6 +56,13 @@ const SKIZZE_REGELN = `SKIZZE: Liefere zu jeder Uebung eine Feld-Skizze als komp
 - "leiter": Koordinationsleiter [[x,y,laenge,"h"|"v"]]
 - "p": Pfeile [[x1,y1,x2,y2,"p"|"l"|"s"|"d"]] - p=Pass, l=Laufweg, s=Schuss, d=Dribbling
 - "tx": maximal 2 kurze Beschriftungen [[x,y,"Text"]] (Text max 45 Zeichen)
+- "ger": Geraete [[x,y,art,farbe]] - art: "stange"|"teller"|"huerde"|"depot"|"ring"|"dummy"|"trainer"; "trainer" ist die Position des Trainers
+- "dtor": Tore zum Durchdribbeln [[x,y,breite,"h"|"v","s"|"h",farbe]] - "s" steht auf Stangen, "h" auf Huetchen
+- "kr": Kreiszonen [[x,y,radius]] - z. B. der Mittelkreis als Spielfeld
+- "li": Linien [[x1,y1,x2,y2,"m"|"sz"]] - m=Mittellinie, sz=Schusszone
+- "hoch": true fuer ein hochkantes Feld (dann 180 breit und 280 hoch statt 280x180) - nimm es fuer alles, was in die Laenge laeuft: Slalom, Torschuss auf ein Tor am oberen Rand, halbes Spielfeld
+- Abfolge: ein Pfeil darf eine Schrittnummer als sechstes Feld tragen, [[x1,y1,x2,y2,"p",1]] - nummeriere NUR, wenn die Reihenfolge fuer das Verstaendnis noetig ist, dann aber luechenlos ab 1
+- "schritte": statt einer Nummerierung mehrere Bilder [{"s":[...],"b":[...],"p":[...],"tx":[...]}] - hoechstens 6, der Aufbau (Huetchen, Tore, Zonen, Geraete) steht NUR im Grundbild und gilt fuer alle; in jedem Bild stehen dieselben Spieler und Baelle, nur an anderer Stelle
 Die Skizze muss zum Ablauf passen: gleiche Anzahl Spieler, Tore und Huetchen wie im Text.
 Elemente duerfen sich nicht ueberlagern, Pfeile beginnen und enden neben einem Objekt, nicht darin.`;
 
@@ -100,19 +107,50 @@ ${FORM}`;
 // (Wird clientseitig in SVG interpoliert - hier ist die Sicherheitsgrenze.)
 function sanSkizze(s: any) {
   if (!s || typeof s !== "object") return null;
+  /* v581: Das Feld kann hochkant stehen (180 x 280). Die Klemmgrenzen folgen dem Zuschnitt,
+     sonst laege ein Spieler bei y = 250 im hochkanten Feld ploetzlich am unteren Rand. */
+  const hoch = s.hoch === true, B = hoch ? 180 : 280, H = hoch ? 280 : 180;
   const num = (v: any, min: number, max: number) => { const n = Number(v); return isFinite(n) ? Math.max(min, Math.min(max, Math.round(n))) : null; };
   const arr = (v: any, fn: (e: any) => any, cap: number) => Array.isArray(v) ? v.slice(0, cap).map(fn).filter((x) => x !== null) : [];
   const out: any = {};
-  out.h = arr(s.h, (e) => { const x = num(e?.[0], 8, 272), y = num(e?.[1], 8, 174); if (x === null || y === null) return null; return (typeof e?.[2] === "string" && /^[grby]$/.test(e[2])) ? [x, y, e[2]] : [x, y]; }, 24);
-  out.s = arr(s.s, (e) => { const x = num(e?.[0], 8, 272), y = num(e?.[1], 8, 174); if (x === null || y === null) return null; const f = (typeof e?.[2] === "string" && /^[grbw]$/.test(e[2])) ? e[2] : "g"; const lbl = typeof e?.[3] === "string" ? e[3].replace(/[^0-9A-Za-zÄÖÜäöüß]/g, "").slice(0, 3) : ""; return lbl ? [x, y, f, lbl] : [x, y, f]; }, 16);
-  out.b = arr(s.b, (e) => { const x = num(e?.[0], 8, 272), y = num(e?.[1], 8, 174); return (x === null || y === null) ? null : [x, y]; }, 12);
-  out.z = arr(s.z, (e) => { const x = num(e?.[0], 4, 272), y = num(e?.[1], 4, 172), w = num(e?.[2], 8, 272), h = num(e?.[3], 8, 172); return (x === null || y === null || w === null || h === null) ? null : [x, y, w, h]; }, 6);
-  out.tor = arr(s.tor, (e) => { const x = num(e?.[0], 2, 274), y = num(e?.[1], 2, 174); if (x === null || y === null) return null; return [x, y, e?.[2] === "v" ? "v" : "h", num(e?.[3], 8, 60) ?? 24]; }, 6);
-  out.leiter = arr(s.leiter, (e) => { const x = num(e?.[0], 4, 272), y = num(e?.[1], 4, 172), l = num(e?.[2], 20, 200); if (x === null || y === null || l === null) return null; return [x, y, l, e?.[3] === "v" ? "v" : "h"]; }, 3);
-  out.p = arr(s.p, (e) => { const a = num(e?.[0], 4, 276), b2 = num(e?.[1], 4, 176), c = num(e?.[2], 4, 276), d = num(e?.[3], 4, 176); if (a === null || b2 === null || c === null || d === null) return null; return [a, b2, c, d, (typeof e?.[4] === "string" && /^[plsd]$/.test(e[4])) ? e[4] : "p"]; }, 16);
-  out.tx = arr(s.tx, (e) => { const x = num(e?.[0], 8, 272), y = num(e?.[1], 12, 176); const t = typeof e?.[2] === "string" ? e[2].replace(/[<>&"']/g, "").slice(0, 48) : ""; return (x === null || y === null || !t) ? null : [x, y, t]; }, 4);
+  out.h = arr(s.h, (e) => { const x = num(e?.[0], 8, B - 8), y = num(e?.[1], 8, H - 6); if (x === null || y === null) return null; return (typeof e?.[2] === "string" && /^[grby]$/.test(e[2])) ? [x, y, e[2]] : [x, y]; }, 24);
+  out.s = arr(s.s, (e) => { const x = num(e?.[0], 8, B - 8), y = num(e?.[1], 8, H - 6); if (x === null || y === null) return null; const f = (typeof e?.[2] === "string" && /^[grbw]$/.test(e[2])) ? e[2] : "g"; const lbl = typeof e?.[3] === "string" ? e[3].replace(/[^0-9A-Za-zÄÖÜäöüß]/g, "").slice(0, 3) : ""; return lbl ? [x, y, f, lbl] : [x, y, f]; }, 16);
+  out.b = arr(s.b, (e) => { const x = num(e?.[0], 8, B - 8), y = num(e?.[1], 8, H - 6); return (x === null || y === null) ? null : [x, y]; }, 12);
+  out.z = arr(s.z, (e) => { const x = num(e?.[0], 4, B - 8), y = num(e?.[1], 4, H - 8), w = num(e?.[2], 8, B), h = num(e?.[3], 8, H); return (x === null || y === null || w === null || h === null) ? null : [x, y, w, h]; }, 6);
+  out.tor = arr(s.tor, (e) => { const x = num(e?.[0], 2, B - 6), y = num(e?.[1], 2, H - 6); if (x === null || y === null) return null;
+    const t = [x, y, e?.[2] === "v" ? "v" : "h", num(e?.[3], 8, 60) ?? 24]; return e?.[4] === "j" ? t.concat(["j"]) : t; }, 6);
+  out.leiter = arr(s.leiter, (e) => { const x = num(e?.[0], 4, B - 8), y = num(e?.[1], 4, H - 8), l = num(e?.[2], 20, Math.max(B, H)); if (x === null || y === null || l === null) return null; return [x, y, l, e?.[3] === "v" ? "v" : "h"]; }, 3);
+  out.p = arr(s.p, (e) => { const a = num(e?.[0], 4, B - 4), b2 = num(e?.[1], 4, H - 4), c = num(e?.[2], 4, B - 4), d = num(e?.[3], 4, H - 4); if (a === null || b2 === null || c === null || d === null) return null;
+    const typ = (typeof e?.[4] === "string" && /^[plsd]$/.test(e[4])) ? e[4] : "p", nr = num(e?.[5], 1, 20);
+    return nr ? [a, b2, c, d, typ, nr] : [a, b2, c, d, typ]; }, 16);
+  out.tx = arr(s.tx, (e) => { const x = num(e?.[0], 8, B - 8), y = num(e?.[1], 12, H - 4); const t = typeof e?.[2] === "string" ? e[2].replace(/[<>&"']/g, "").slice(0, 48) : ""; return (x === null || y === null || !t) ? null : [x, y, t]; }, 4);
+  /* v581: Alles, was der Zeichner seit v559 kann. Bis hierher fiel es still weg – das Modell
+     durfte Geraete, Dribbeltore, Linien und weitere Bilder nennen, die Pruefung warf sie
+     weg, und niemand sah warum. */
+  const GER = ["stange", "teller", "huerde", "depot", "ring", "dummy", "trainer"];
+  out.ger = arr(s.ger, (e) => { const x = num(e?.[0], 6, B - 6), y = num(e?.[1], 6, H - 6); const a = String(e?.[2] || "stange");
+    return (x === null || y === null || !GER.includes(a)) ? null : [x, y, a, (typeof e?.[3] === "string" && /^[grbyw]$/.test(e[3])) ? e[3] : "y"]; }, 12);
+  out.dtor = arr(s.dtor, (e) => { const x = num(e?.[0], 4, B - 4), y = num(e?.[1], 4, H - 4); if (x === null || y === null) return null;
+    return [x, y, num(e?.[2], 10, 80) ?? 20, e?.[3] === "v" ? "v" : "h", e?.[4] === "h" ? "h" : "s", (typeof e?.[5] === "string" && /^[grbyw]$/.test(e[5])) ? e[5] : "y"]; }, 6);
+  out.kr = arr(s.kr, (e) => { const x = num(e?.[0], 6, B - 6), y = num(e?.[1], 6, H - 6), r = num(e?.[2], 6, Math.min(B, H) / 2);
+    return (x === null || y === null || r === null) ? null : [x, y, r]; }, 3);
+  out.li = arr(s.li, (e) => { const a = num(e?.[0], 2, B - 2), b2 = num(e?.[1], 2, H - 2), c = num(e?.[2], 2, B - 2), d = num(e?.[3], 2, H - 2);
+    return (a === null || b2 === null || c === null || d === null) ? null : [a, b2, c, d, e?.[4] === "sz" ? "sz" : "m"]; }, 4);
   Object.keys(out).forEach((k) => { if (!out[k].length) delete out[k]; });
-  return Object.keys(out).length ? out : null;
+  if (hoch) out.hoch = true;
+  /* Weitere Bilder: beweglich sind nur Spieler, Ball, Pfeile und Beschriftung – der Aufbau
+     steht im Grundbild (v557). Ein Schritt, der etwas anderes mitbringt, verliert es hier. */
+  if (Array.isArray(s.schritte) && s.schritte.length) {
+    const schritte = s.schritte.slice(0, 6).map((st: any) => {
+      const teil = sanSkizze({ s: st?.s, b: st?.b, p: st?.p, tx: st?.tx, hoch: s.hoch });
+      if (!teil) return null;
+      delete teil.hoch;
+      return Object.keys(teil).length ? teil : null;
+    }).filter(Boolean);
+    if (schritte.length) out.schritte = schritte;
+  }
+  const inhalt = Object.keys(out).filter((k) => k !== "hoch");
+  return inhalt.length ? out : null;
 }
 
 /* Ein Aufruf beim Anbieter. Anthropic bekommt einen Prefill: die Antwort MUSS mit "{"
