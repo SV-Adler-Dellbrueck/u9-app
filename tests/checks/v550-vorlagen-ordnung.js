@@ -67,7 +67,10 @@ module.exports = async function (h) {
     const feld = document.getElementById("tp-date");
     if (feld && ![...feld.options].some(o => o.value === datum)) feld.add(new Option(datum, datum));
     if (feld) feld.value = datum;
-    _vuAuswahl = null; _vuFilter = { leitfrage: "", tag: "", ordnung: "" };
+    _vuAuswahl = null; _vuFilter = { leitfrage: "", tag: "", ordnung: "", suche: "" };
+    /* v576: Die Filterreihen sind eingeklappt – das Fenster begann sonst mit einem Block,
+       der höher war als die Liste dahinter. Zum Prüfen aufklappen. */
+    _vuFilterOffen = true;
     _vuPlanDa = false;
     document.getElementById("vu-modal")?.remove();
     const m = document.createElement("div");
@@ -80,22 +83,22 @@ module.exports = async function (h) {
     const chips = () => [...document.querySelectorAll("#vu-inhalt button")].map(b => ({ txt: b.textContent.trim(), an: b.getAttribute("aria-pressed") === "true", fn: b.getAttribute("onclick") || "" }));
     const ordChips = () => chips().filter(c => /vuFilterSet\('ordnung'/.test(c.fn));
     out.ordChips = ordChips().map(c => c.txt);
-    out.treffer0 = (document.getElementById("vu-inhalt").textContent.match(/(\d+) von (\d+) Vorlagen/) || [])[1];
+    out.treffer0 = (document.getElementById("vu-inhalt").textContent.match(/(\d+)(?: von (\d+))? Vorlagen/) || [])[1];
 
     // d) Filtern: Ordnung „1 gegen 1“
     vuFilterSet("ordnung", "1 gegen 1");
     await warte(60);
-    out.treffer1 = (document.getElementById("vu-inhalt").textContent.match(/(\d+) von (\d+) Vorlagen/) || [])[1];
+    out.treffer1 = (document.getElementById("vu-inhalt").textContent.match(/(\d+)(?: von (\d+))? Vorlagen/) || [])[1];
     out.gemerkt = _vuFilter.ordnung;
     // und zusätzlich eine Leitfrage, die nicht dazu passt → 0
     vuFilterSet("leitfrage", "Frage 2");
     await warte(60);
-    out.treffer2 = (document.getElementById("vu-inhalt").textContent.match(/(\d+) von (\d+) Vorlagen/) || [])[1];
+    out.treffer2 = (document.getElementById("vu-inhalt").textContent.match(/(\d+)(?: von (\d+))? Vorlagen/) || [])[1];
     // zweiter Tipp hebt auf
     vuFilterSet("leitfrage", "Frage 2");
     vuFilterSet("ordnung", "1 gegen 1");
     await warte(60);
-    out.treffer3 = (document.getElementById("vu-inhalt").textContent.match(/(\d+) von (\d+) Vorlagen/) || [])[1];
+    out.treffer3 = (document.getElementById("vu-inhalt").textContent.match(/(\d+)(?: von (\d+))? Vorlagen/) || [])[1];
     document.getElementById("vu-modal")?.remove();
     return out;
   }, { datum });

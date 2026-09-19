@@ -125,6 +125,9 @@ module.exports = async function (h) {
   const uebernahme = await s.page.evaluate(async ({ datum }) => {
     const warte = ms => new Promise(r => setTimeout(r, ms));
     await vorlageUebernehmenOpen(); await warte(200);
+    /* v576: Die Filterreihen sind eingeklappt – der Trainer sieht zuerst Suchfeld und Liste.
+       Zum Prüfen des Leitfragen-Filters aufklappen. */
+    if (typeof vuFilterAuf === "function" && !_vuFilterOffen) { vuFilterAuf(); await warte(80); }
     const box = document.getElementById("vu-inhalt");
     const karten = [...box.querySelectorAll("button")].filter(b => /Blöcke/.test(b.textContent));
     const fragen = [...box.querySelectorAll("button")].filter(b => /^Wie |^Wo /.test(b.textContent.trim()));

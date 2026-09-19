@@ -177,6 +177,9 @@ module.exports = async function (h) {
     await tpTrainerRsvpLaden(zwei);   // zwei Feldtrainer angehakt – die Vorschau rechnet damit
     await vorlageUebernehmenOpen();
     await warte(120);
+    /* v576: Die Filterreihen sind eingeklappt – geprüft wird die Kachelreihe aufgeklappt,
+       so wie der Trainer sie sieht, wenn er filtern will. */
+    if (typeof vuFilterAuf === "function" && !_vuFilterOffen) { vuFilterAuf(); await warte(60); }
     const chips = () => [...document.querySelectorAll("#vu-inhalt button")].filter(b => /vuFilterSet\('ordnung'/.test(b.getAttribute("onclick") || ""));
     out.ordChips = chips().map(b => b.textContent.trim());
     out.chipHoehen = chips().map(b => Math.round(b.getBoundingClientRect().height));
@@ -184,7 +187,7 @@ module.exports = async function (h) {
     out.reiheUeberlauf = reihe ? (reihe.scrollWidth - reihe.clientWidth) : null;
     out.reiheBreite = reihe ? reihe.clientWidth : null;
     out.chipsAbgeschnitten = chips().filter(b => b.scrollWidth > b.clientWidth + 1).map(b => b.textContent.trim());
-    const treffer = () => (document.getElementById("vu-inhalt").textContent.match(/(\d+) von (\d+) Vorlagen/) || [])[1];
+    const treffer = () => (document.getElementById("vu-inhalt").textContent.match(/(\d+)(?: von (\d+))? Vorlagen/) || [])[1];
     out.trefferAlle = treffer();
     out.filter = {};
     for (const o of NEUE_ORDNUNGEN) {
