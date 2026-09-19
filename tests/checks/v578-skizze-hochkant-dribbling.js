@@ -122,10 +122,13 @@ module.exports = async function (h) {
     ed.nachUndo = !_skzSpec.hoch && JSON.stringify(_skzSpec.s) === JSON.stringify(PROBE.s);
     // Vorlage im hochkanten Feld: gedreht übernommen, Format bleibt
     skzFormat();
-    skzVorlage(0);
+    /* Seit v579 stehen vorne die Feld-Vorlagen, die ihren Zuschnitt selbst mitbringen
+       (`zuschnitt`) – geprüft wird hier die andere Sorte: eine Übungsvorlage, die sich dem
+       gewählten Feld anpasst. */
+    skzVorlage(SKZ_VORLAGEN.findIndex(v => !v.zuschnitt));
     ed.vorlageHoch = !!_skzSpec.hoch;
     ed.vorlageDrin = (_skzSpec.s || []).every(e => e[0] <= 180 && e[1] <= 280);
-    ed.vorlageAnders = JSON.stringify(_skzSpec.s) !== JSON.stringify(SKZ_VORLAGEN[0].spec.s);
+    ed.vorlageAnders = JSON.stringify(_skzSpec.s) !== JSON.stringify(SKZ_VORLAGEN[SKZ_VORLAGEN.findIndex(v => !v.zuschnitt)].spec.s);
     // Leeren behält den Zuschnitt
     skzLeeren();
     ed.leerHoch = !!_skzSpec.hoch;

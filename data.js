@@ -3670,7 +3670,8 @@ const SKZ_DUNKEL={
   tor:'#fff',torFuell:'rgba(255,255,255,.25)',leiter:'rgba(255,255,255,.6)',wand:'#d1d5db',
   F:{g:'#4ade80',r:'#f87171',b:'#60a5fa',y:'#fbbf24',w:'#fff'},
   spielerRand:'rgba(0,0,0,.3)',kuerzel:'rgba(0,0,0,.65)',huetchenRand:'rgba(0,0,0,.25)',
-  ball:'#fff',ballRand:'#333',text:'rgba(255,255,255,.85)',pfeil:SKZ_PFEIL,marke:'arr-'
+  ball:'#fff',ballRand:'#333',text:'rgba(255,255,255,.85)',pfeil:SKZ_PFEIL,marke:'arr-',
+  nrFuell:'rgba(0,0,0,.6)'
 };
 const SKZ_HELL={
   rasen:'#cfe8cf',rasenRand:'#4f7d4f',innen:'rgba(17,24,39,.3)',
@@ -3679,7 +3680,7 @@ const SKZ_HELL={
   tor:'#1f2937',torFuell:'rgba(31,41,55,.2)',leiter:'rgba(31,41,55,.55)',wand:'#4b5563',
   F:{g:'#15803d',r:'#991b1b',b:'#1d4ed8',y:'#713f12',w:'#475569'},
   spielerRand:'rgba(255,255,255,.8)',kuerzel:'rgba(255,255,255,.95)',huetchenRand:'rgba(17,24,39,.35)',
-  ball:'#fff',ballRand:'#111827',text:'rgba(17,24,39,.9)',
+  ball:'#fff',ballRand:'#111827',nrFuell:'rgba(255,255,255,.9)',text:'rgba(17,24,39,.9)',
   pfeil:{p:'#111827',l:'#a16207',s:'#dc2626',d:'#0369a1'},marke:'arrh-'
 };
 /* Eigene Marker-Kennungen je Variante: Marker sind im Dokument global. Lägen beide
@@ -3904,6 +3905,15 @@ function _skz(o,opt){
       /* v560: Der Koordinationsring liegt flach wie der Teller – deshalb dieselbe Ellipse,
          aber hohl. Gefüllt wäre er von oben nicht vom Teller zu unterscheiden. */
       S.push('<ellipse cx="'+x+'" cy="'+y+'" rx="6" ry="3.4" fill="none" stroke="'+c+'" stroke-width="2"/>');
+    }else if(art==='trainer'){
+      /* v579 (PO 19.09.): „Dann brauchen wir noch ein Icon für die Position des Trainers."
+         Er steht am Platz, ist aber kein Gerät – deshalb zählt ihn die Materialliste nicht
+         mit. Vom Dummy unterscheiden ihn die Schultern und die Pfeife am Hals; das trägt
+         auch dann, wenn jemand die Farben nicht unterscheidet. */
+      S.push('<line x1="'+(x-6)+'" y1="'+(y+7.5)+'" x2="'+(x+6)+'" y2="'+(y+7.5)+'" stroke="'+c+'" stroke-width="1.5" stroke-linecap="round"/>');
+      S.push('<path d="M'+(x-5)+' '+(y+7)+' L'+(x-4)+' '+(y-3)+' L'+(x+4)+' '+(y-3)+' L'+(x+5)+' '+(y+7)+' Z" fill="'+c+'" stroke="'+P.huetchenRand+'" stroke-width="0.8"/>');
+      S.push('<circle cx="'+x+'" cy="'+(y-6)+'" r="2.7" fill="'+c+'" stroke="'+P.huetchenRand+'" stroke-width="0.8"/>');
+      S.push('<circle cx="'+(x+5.6)+'" cy="'+(y-1)+'" r="1.7" fill="'+P.sz+'" stroke="'+P.huetchenRand+'" stroke-width="0.6"/>');
     }else if(art==='dummy'){
       /* Der Freistoß-Dummy ist mannhoch und steht – als Figur gezeichnet, nicht als Punkt.
          Vom Spielerkreis (r 8) unterscheidet ihn, dass er hoch statt rund ist. */
@@ -3916,11 +3926,28 @@ function _skz(o,opt){
     }
   });
   (o.wand||[]).forEach(w=>S.push('<line x1="'+w[0]+'" y1="'+w[1]+'" x2="'+w[2]+'" y2="'+w[3]+'" stroke="'+P.wand+'" stroke-width="5" stroke-linecap="round"/>'));
+  /* v579 – ABFOLGEN AUF EINER SKIZZE (PO 19.09.): „zuerst in die linke Richtung … dann
+     von da aus wieder zurück … dass man das auch irgendwie darstellen kann."
+
+     Zwei Wege, und beide haben ihren Platz: weitere BILDER zeigen den Ablauf in Bewegung
+     (seit v557/v558), eine NUMMER am Pfeil zeigt ihn auf einen Blick – auf Papier, im
+     Stadionheft und überall dort, wo niemand tippt. Die Nummer ist das sechste Feld eines
+     Pfeils; fehlt sie, ändert sich nichts. Sie sitzt am Anfang des Pfeils, leicht dahinter,
+     damit sie die Linie nicht verdeckt. */
+  const nrKreis=(p,typ)=>{
+    const nr=Number(p[5]);
+    if(!isFinite(nr)||nr<1)return;
+    const dx=p[2]-p[0], dy=p[3]-p[1], len=Math.hypot(dx,dy)||1, r=v=>Math.round(v*10)/10;
+    const bx=r(p[0]-dx/len*7), by=r(p[1]-dy/len*7);
+    S.push('<circle cx="'+bx+'" cy="'+by+'" r="5.5" fill="'+P.nrFuell+'" stroke="'+P.pfeil[typ]+'" stroke-width="1.2"/>');
+    S.push('<text x="'+bx+'" y="'+(by+2.7)+'" text-anchor="middle" fill="'+P.pfeil[typ]+'" font-size="7.5" font-family="sans-serif" font-weight="700">'+Math.round(nr)+'</text>');
+  };
   (o.p||[]).forEach(p=>{const typ=P.pfeil[p[4]]?p[4]:'p';
     /* v578: Das Dribbling ist eine durchgezogene Schlangenlinie statt einer gepunkteten
        Geraden – der Ball bleibt am Fuß, der Weg schlängelt. */
-    if(typ==='d'){ S.push('<path d="'+_skzWelle(p[0],p[1],p[2],p[3])+'" fill="none" stroke="'+P.pfeil.d+'" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#'+M+'d)"/>'); return; }
-    S.push('<line x1="'+p[0]+'" y1="'+p[1]+'" x2="'+p[2]+'" y2="'+p[3]+'" stroke="'+P.pfeil[typ]+'" stroke-width="'+(typ==='s'?3:1.5)+'"'+(typ==='l'?' stroke-dasharray="5,3"':'')+' marker-end="url(#'+M+typ+')"/>');});
+    if(typ==='d'){ S.push('<path d="'+_skzWelle(p[0],p[1],p[2],p[3])+'" fill="none" stroke="'+P.pfeil.d+'" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#'+M+'d)"/>'); nrKreis(p,typ); return; }
+    S.push('<line x1="'+p[0]+'" y1="'+p[1]+'" x2="'+p[2]+'" y2="'+p[3]+'" stroke="'+P.pfeil[typ]+'" stroke-width="'+(typ==='s'?3:1.5)+'"'+(typ==='l'?' stroke-dasharray="5,3"':'')+' marker-end="url(#'+M+typ+')"/>');
+    nrKreis(p,typ);});
   (o.h||[]).forEach(h=>S.push('<path d="M'+h[0]+' '+(h[1]-6)+' L'+(h[0]+5)+' '+(h[1]+4)+' L'+(h[0]-5)+' '+(h[1]+4)+' Z" fill="'+(F[h[2]]||F.y)+'" stroke="'+P.huetchenRand+'" stroke-width="1"/>'));
   (o.s||[]).forEach(sp=>{S.push('<circle cx="'+sp[0]+'" cy="'+sp[1]+'" r="8" fill="'+(F[sp[2]]||F.g)+'" stroke="'+P.spielerRand+'" stroke-width="1.5"/>');
     if(sp[3])S.push('<text x="'+sp[0]+'" y="'+(sp[1]+3)+'" text-anchor="middle" fill="'+P.kuerzel+'" font-size="8" font-family="sans-serif" font-weight="700">'+E(sp[3])+'</text>');});
@@ -3933,7 +3960,7 @@ function _skz(o,opt){
    (gestrichelt), s=Schuss (dick), d=Dribbling (durchgezogen geschwungen, seit v578). */
 /* v559: Was für Geräte in einer Zeichnung steckt, steht in der Legende – aber nur, was
    wirklich vorkommt. Eine Legende, die immer alles zeigt, erklärt am Ende nichts mehr. */
-const SKZ_GER_NAME={stange:"Stange",teller:"Markierungsteller",huerde:"Minihürde",depot:"Balldepot",ring:"Koordinationsring",dummy:"Freistoß-Dummy"};
+const SKZ_GER_NAME={stange:"Stange",teller:"Markierungsteller",huerde:"Minihürde",depot:"Balldepot",ring:"Koordinationsring",dummy:"Freistoß-Dummy",trainer:"Trainer"};
 function _skzGerProbe(art){ return {ger:[[16,9,art,"y"]]}; }
 function skzLegende(hell,spec){
   /* v512: Die Strichprobe steht auf einem Stück Rasen – sonst wäre der weiße Pass-Pfeil
