@@ -47,7 +47,8 @@ zeigen die Pfeile, nicht das Abspielen.
    melden, was beanstandet wird, bevor geschrieben wird. Koordinaten dürfen angepasst werden,
    wenn Pfeile, Nummernkreise, Teller oder Dummy im gerenderten Bild kollidieren — die Absicht
    oben bleibt.
-2. Übung anhängen, `stand` hochsetzen. Übungsart in `UEBUNG_ART_VORSCHLAG` eintragen.
+2. Übung anhängen, `stand` hochsetzen. Übungsart `spielform` in `UEBUNG_ART_VORSCHLAG` eintragen
+   (beschlossen, siehe unten).
 3. Bilder erzeugen über `export-skizzen.js` mit `bilder:true`: je Bild SVG und PNG mit Legende,
    abgelegt in diesem Ordner als `raute-torwart-andere-fluegel-bild-1.png` und `-bild-2.png`.
 4. Prüffall in `tests/checks/` mit der Version, aus der er stammt: Abgleich legt die Übung an
@@ -56,10 +57,14 @@ zeigen die Pfeile, nicht das Abspielen.
 5. `node tests/run.js` grün, dann `sw.js` hochzählen, Funktionsübersicht mitziehen, PR als
    Entwurf. Danach `Projektgedaechtnis/stand.md` im privaten Repo nachziehen.
 
-## Offene Entscheidungen
+## Entscheidungen
 
-- **Übungsart:** Empfehlung `uebungsform` — ohne Gegenspieler ist das nach der Einordnung der
-  App keine Spielform, auch wenn die Aufgabe des Lehrgangs „Spielform“ sagt. Charles entscheidet.
+- **Übungsart: `spielform`** (Charles, 19.09.2026). Empfohlen war `uebungsform`, weil die Form
+  ohne Gegenspieler auskommt und der Trainer erst in Steigerung 3 verteidigt. Charles ordnet sie
+  als Spielform ein, wie sie auch in der Abgabe heißt. Nicht erneut vorschlagen.
+
+## Offen
+
 - **Tellerzahl:** Die Skizze zeichnet 10, die Abgabe nennt „etwa 24“ für den echten Aufbau. Die
   Skizze ist schematisch; das bleibt so, außer Charles will die Zahlen gleich.
 
