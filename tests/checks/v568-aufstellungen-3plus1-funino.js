@@ -42,11 +42,14 @@
       Hauptteile rückt jede Gruppe einmal im Kreis weiter (Versatz 0, 1, 2). Bei ZWEI
       Feldtrainern sagt die Vorschau vor dem Übernehmen, dass die dritte Station entfällt.
    Dazu die Datei selbst: der Anhang ist byte-genau gleich den Nachträgen; bibliothek.json
-   steht auf 2026-09-16-1 (unverändert), vorlagen.json auf 2026-09-18-1. */
+   steht seit v583 auf 2026-09-19-1 (die Übung der Lehrgangsabgabe 3.1 kam dazu),
+   vorlagen.json unverändert auf 2026-09-18-1. Die Stände stehen hier als Sperrklinke: Wer
+   eine Datei anfasst, ohne den Stand hochzusetzen, bekommt es hier gesagt — denn ohne neuen
+   Stand holt der Abgleich die Datei gar nicht erst. */
 const ORDNER = "doku/auftrag-aufstellungen-3plus1-funino";
 const NEUE_ORDNUNGEN = ["3+1", "FUNiño", "3+1 gegen FUNiño", "3+1 und FUNiño"];
 const EINHEITEN = ["L4-6", "L5-4", "L6-3", "L4-7", "L5-5", "L6-4", "L5-6", "L6-5", "L4-8"];
-const STAND_UEB = "2026-09-16-1", STAND_VOR = "2026-09-18-1";
+const STAND_UEB = "2026-09-19-1", STAND_VOR = "2026-09-18-1";
 const SKAL = ["8", "10", "12", "14"];
 
 module.exports = async function (h) {
@@ -62,14 +65,23 @@ module.exports = async function (h) {
   if (neueU.length !== 13) probleme.push(`${neueU.length} Übungen in den Nachträgen, erwartet 13`);
   if (neueV.length !== 9) probleme.push(`${neueV.length} Vorlagen in den Nachträgen, erwartet 9`);
   const roh = o => JSON.stringify(o);
-  const anhangU = (bib.uebungen || []).slice(-neueU.length), anhangV = (vor.vorlagen || []).slice(-neueV.length);
+  /* v583: Die dreizehn Übungen waren bis dahin die LETZTEN der Datei – seit die Übung der
+     Lehrgangsabgabe 3.1 dahinter steht, stimmt das nicht mehr. Gesucht wird deshalb ab der
+     Stelle, an der die erste von ihnen steht: Geprüft bleibt, dass sie dort vollständig, in
+     ihrer Reihenfolge und byte-genau wie im Nachtrag liegen. */
+  const abU = (bib.uebungen || []).findIndex(u => u.name === neueU[0].name);
+  const abV = (vor.vorlagen || []).findIndex(v => v.name === neueV[0].name);
+  if (abU < 0) probleme.push("Die erste Übung des Nachtrags steht nicht in bibliothek.json");
+  if (abV < 0) probleme.push("Die erste Vorlage des Nachtrags steht nicht in vorlagen.json");
+  const anhangU = (bib.uebungen || []).slice(Math.max(0, abU), Math.max(0, abU) + neueU.length);
+  const anhangV = (vor.vorlagen || []).slice(Math.max(0, abV), Math.max(0, abV) + neueV.length);
   const abwU = neueU.filter((u, i) => roh(u) !== roh(anhangU[i])).map(u => u.name);
   const abwV = neueV.filter((v, i) => roh(v) !== roh(anhangV[i])).map(v => v.name);
   if (abwU.length) probleme.push("Übung in bibliothek.json weicht vom Nachtrag ab: " + abwU.join(", "));
   if (abwV.length) probleme.push("Vorlage in vorlagen.json weicht vom Nachtrag ab: " + abwV.join(", "));
   if (bib.stand !== STAND_UEB) probleme.push(`bibliothek.json: Stand „${bib.stand}“ statt „${STAND_UEB}“`);
   if (vor.stand !== STAND_VOR) probleme.push(`vorlagen.json: Stand „${vor.stand}“ statt „${STAND_VOR}“ – ohne neuen Stand holt _bibHolen die Datei nicht`);
-  const bestandU = (bib.uebungen || []).length - neueU.length, bestandV = (vor.vorlagen || []).length - neueV.length;
+  const bestandU = Math.max(0, abU), bestandV = Math.max(0, abV);
   if (bestandU !== 14) probleme.push(`${bestandU} Übungen vor dem Anhang, erwartet 14`);
   if (bestandV !== 21) probleme.push(`${bestandV} Vorlagen vor dem Anhang, erwartet 21`);
   const ohneEinheit = EINHEITEN.filter(p => !neueV.some(v => String(v.name).startsWith(p + " ")));
@@ -242,7 +254,11 @@ module.exports = async function (h) {
 
   // 2)
   const neuU = uebPosts.map(p => p.name), neuV = vorPosts.map(p => p.name);
-  if (neuU.length !== 13) probleme.push(`Der Abgleich hat ${neuU.length} Übungen angelegt statt 13: ${neuU.join(", ")}`);
+  /* v583: Gezählt wird nicht mehr die Gesamtzahl – die wächst mit jedem späteren Nachtrag
+     (hier: die Übung der Lehrgangsabgabe 3.1). Geprüft wird, was diesem Paket gehört: seine
+     dreizehn müssen dabei sein, und nichts Bekanntes darf doppelt angelegt werden. */
+  const fehlenU = neueU.map(u => u.name).filter(n => !neuU.includes(n));
+  if (fehlenU.length) probleme.push(`Der Abgleich hat diese Übungen des Pakets nicht angelegt: ${fehlenU.join(", ")}`);
   if (neuV.length !== 9) probleme.push(`Der Abgleich hat ${neuV.length} Vorlagen angelegt statt 9: ${neuV.join(", ")}`);
   const altU = neuU.filter(n => (bib.uebungen || []).slice(0, bestandU).some(u => u.name === n));
   const altV = neuV.filter(n => (vor.vorlagen || []).slice(0, bestandV).some(v => v.name === n));

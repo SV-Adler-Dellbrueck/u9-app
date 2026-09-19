@@ -12,7 +12,19 @@ const h=require(path.join(process.cwd(),"tests/harness.js"));
    Export fuer zwei andere Uebungen in einen anderen Ordner – eine Kopie des Skripts
    waere die zweite Wahrheit, die beim naechsten Legendeneintrag auseinanderlaeuft.
    Aufruf ohne Argumente: die beiden Lehrgangsskizzen wie bisher. Mit
-   {aus, auswahl: [{muster, slug}]} exportiert der Aufrufer, was er braucht. */
+   {aus, auswahl: [{muster, slug}]} exportiert der Aufrufer, was er braucht.
+
+   v583 – DREI DINGE, DIE DAS SKRIPT NOCH NICHT KONNTE:
+
+   1) HOCHFORMAT. Breite und Hoehe standen fest auf 280 x 180. Eine hochkante Skizze
+      (seit v578: 180 x 280) waere beschnitten worden, und die Legende haette mitten im
+      Bild gelegen. Beides kommt jetzt aus der viewBox der gerenderten Skizze.
+   2) DAS DRIBBLING. Die Legende zeichnete es als gepunktete Gerade – seit v578 ist es
+      eine durchgezogene Schlangenlinie. Der Streifen haette etwas anderes erklaert, als
+      im Bild darueber steht. Gezeichnet wird es jetzt mit `_skzWelle` aus der App.
+   3) BILD 1 OHNE ZUSATZ. Das war fuer Abgaben richtig, die auf den Namen verweisen.
+      Wer zwei gleichwertige Bilder braucht, setzt `bildEins:true` und bekommt
+      `-bild-1` und `-bild-2`. Ohne die Angabe bleibt alles wie bisher. */
 const STANDARD={
   aus:__dirname,
   auswahl:[
@@ -22,7 +34,7 @@ const STANDARD={
 };
 
 async function exportSkizzen(opt){
-  const {aus,auswahl}=Object.assign({},STANDARD,opt||{});
+  const {aus,auswahl,bildEins}=Object.assign({},STANDARD,opt||{});
   const AUS=aus;
   const s=await h.starten({hoehe:1200,supabase:h.supabaseAttrappe({kader:h.kaderZeilen()})});
   const bib=JSON.parse(fs.readFileSync(path.join(process.cwd(),"uebungen/bibliothek.json"),"utf8"));
@@ -44,19 +56,26 @@ async function exportSkizzen(opt){
       const skz=halter.querySelector("svg");
       const inhalt=skz.innerHTML;
 
-      /* 2) Legende als SVG, Farben und Namen aus den Konstanten der App */
-      const H_SKZ=180, H_LEG=36, GESAMT=H_SKZ+H_LEG;
+      /* 2) Legende als SVG, Farben und Namen aus den Konstanten der App.
+         v583: Die Masse kommen aus der Skizze selbst – quer 280 x 180, hochkant
+         180 x 280. Schmal ist kein Platz fuer drei Spalten, dort sind es zwei, und
+         der Streifen waechst entsprechend. */
+      const vb=String(skz.getAttribute("viewBox")||"0 0 280 180").split(/\s+/).map(Number);
+      const BREITE=vb[2]||280, H_SKZ=vb[3]||180;
+      const spalten=BREITE<220?2:3, zeilen=Math.ceil(6/spalten);
+      const H_LEG=12+zeilen*16, GESAMT=H_SKZ+H_LEG;
       const eintraege=[
         {art:"linie",c:SKZ_PFEIL.p,w:1.5,dash:"",  kopf:true, txt:SKZ_PFEIL_NAME.p},
         {art:"linie",c:SKZ_PFEIL.l,w:1.5,dash:"5,3",kopf:true, txt:SKZ_PFEIL_NAME.l},
         {art:"linie",c:SKZ_PFEIL.s,w:3,  dash:"",  kopf:true, txt:SKZ_PFEIL_NAME.s},
-        {art:"linie",c:SKZ_PFEIL.d,w:1.5,dash:"2,3",kopf:true, txt:SKZ_PFEIL_NAME.d},
+        /* v583: durchgezogen und geschwungen wie im Bild darueber (v578). */
+        {art:"welle",c:SKZ_PFEIL.d,w:1.5,dash:"",  kopf:true, txt:SKZ_PFEIL_NAME.d},
         {art:"linie",c:"#fbbf24",   w:2,  dash:"5,4",kopf:false,txt:"Schusszone"},
         {art:"linie",c:"rgba(255,255,255,.7)",w:2,dash:"",kopf:false,txt:"Mittellinie"}
       ];
       const teile=[];
-      teile.push('<rect x="0" y="'+H_SKZ+'" width="280" height="'+H_LEG+'" fill="#1f4d1f"/>');
-      const spalten=3, zellB=280/spalten;
+      teile.push('<rect x="0" y="'+H_SKZ+'" width="'+BREITE+'" height="'+H_LEG+'" fill="#1f4d1f"/>');
+      const zellB=BREITE/spalten;
       eintraege.forEach((e,i)=>{
         const sp=i%spalten, ze=Math.floor(i/spalten);
         const x0=sp*zellB+6, y=H_SKZ+12+ze*16;
@@ -64,18 +83,22 @@ async function exportSkizzen(opt){
            Strichstaerke, und der dicke Schuss-Strich haette darunter verschwunden.
            Genauso macht es die Legende der App in skzLegende(). */
         const ende=e.kopf?x0+15:x0+22;
-        teile.push('<line x1="'+x0+'" y1="'+y+'" x2="'+ende+'" y2="'+y+'" stroke="'+e.c+'" stroke-width="'+e.w+'"'
-          +(e.dash?' stroke-dasharray="'+e.dash+'"':'')+'/>');
+        if(e.art==="welle"&&typeof _skzWelle==="function"){
+          teile.push('<path d="'+_skzWelle(x0,y,ende,y)+'" fill="none" stroke="'+e.c+'" stroke-width="'+e.w+'" stroke-linecap="round"/>');
+        }else{
+          teile.push('<line x1="'+x0+'" y1="'+y+'" x2="'+ende+'" y2="'+y+'" stroke="'+e.c+'" stroke-width="'+e.w+'"'
+            +(e.dash?' stroke-dasharray="'+e.dash+'"':'')+'/>');
+        }
         if(e.kopf)teile.push('<path d="M'+ende+','+(y-3.2)+' L'+(x0+22)+','+y+' L'+ende+','+(y+3.2)+' Z" fill="'+e.c+'"/>');
         teile.push('<text x="'+(x0+28)+'" y="'+(y+3)+'" fill="rgba(255,255,255,.85)" font-size="8" font-family="sans-serif" font-weight="600">'+e.txt+'</text>');
       });
       const marker=teile.filter(t=>t.startsWith("<marker")).join("");
       const rest=teile.filter(t=>!t.startsWith("<marker")).join("");
-      const voll='<svg viewBox="0 0 280 '+GESAMT+'" width="280" height="'+GESAMT+'" xmlns="http://www.w3.org/2000/svg">'
+      const voll='<svg viewBox="0 0 '+BREITE+' '+GESAMT+'" width="'+BREITE+'" height="'+GESAMT+'" xmlns="http://www.w3.org/2000/svg">'
         +'<defs>'+marker+'</defs>'+inhalt+rest+'</svg>';
 
       /* 3) PNG aus genau diesem SVG – derselbe Weg wie skzTeilen */
-      const Hpx=Math.round(B*GESAMT/280);
+      const Hpx=Math.round(B*GESAMT/BREITE);
       const kopie=new DOMParser().parseFromString(voll,"image/svg+xml").documentElement;
       kopie.setAttribute("width",B); kopie.setAttribute("height",Hpx);
       const text=new XMLSerializer().serializeToString(kopie);
@@ -89,7 +112,7 @@ async function exportSkizzen(opt){
       return {svg:voll,png,breite:B,hoehe:Hpx};
     },{spec:u.skizze,B:1120,nr});
 
-    const slug=u.slug+(nr?("-bild-"+(nr+1)):"");
+    const slug=u.slug+((nr||bildEins)?("-bild-"+(nr+1)):"");
     fs.writeFileSync(path.join(AUS,slug+".png"),Buffer.from(r.png.split(",")[1],"base64"));
     fs.writeFileSync(path.join(AUS,slug+".svg"),r.svg);
     console.log(`${u.name}: ${slug}.png (${r.breite}x${r.hoehe}) + ${slug}.svg`);

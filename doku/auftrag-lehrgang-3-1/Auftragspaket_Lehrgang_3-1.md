@@ -34,9 +34,10 @@ Hochkant, zwei Bilder, Schrittnummern über beide Bilder fortlaufend.
   in ihren Korridoren, `J` vorn in der Mitte. Alle grün — es gibt keine Gegenspieler.
 - **Bild 1, Phase 1 (Schritte 1–4):** Pass A auf FL, A schiebt zur Ballseite, Rückpass,
   A dribbelt zurück zum Ausgangspunkt.
-- **Bild 2, Phase 2 (Schritte 5–9):** Pass A auf FR, FR dribbelt außen am Dummy vorbei zur
-  Grundlinie, Pass auf J; gleichzeitig laufen FL im Korridor und A in der Mitte nach (beide 8),
-  J schießt.
+- **Bild 2, Phase 2 (Schritte 5–8):** Pass A auf FR, FR dribbelt außen am Dummy vorbei zur
+  Grundlinie. Der Pass auf J und die beiden Laufwege — FL im Korridor, A in der Mitte —
+  passieren **gleichzeitig und tragen deshalb alle die 7** (Charles, 19.09.2026). Der Abschluss
+  des Jägers ist die 8.
 
 Die Spieler stehen in beiden Bildern gleich — Phase 2 beginnt dort, wo Phase 1 endet. Bewegung
 zeigen die Pfeile, nicht das Abspielen.
