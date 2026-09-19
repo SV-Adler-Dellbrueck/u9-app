@@ -3735,6 +3735,77 @@ function _skzZwischen(a,b,t){
   });
   return Object.assign({},a,{s:misch(a.s,b.s),b:misch(a.b,b.b)});
 }
+/* v581 – DIE GRENZE ZWISCHEN EINER FREMDEN BESCHREIBUNG UND DEM BILD
+
+   Eine Skizzen-Beschreibung kann von außen kommen: aus der Edge Function `ki-uebung`, aus
+   einer Übung der Bibliothek, künftig aus einem Diktat. `_skz` setzt ihre Zahlen ohne
+   Rückfrage in ein SVG – hier ist deshalb die Stelle, an der alles Unbekannte hängenbleibt.
+
+   Geprüft wird streng und still: bekannte Listen, Zahlen auf das Feld geklemmt, Texte
+   gekürzt und von spitzen Klammern befreit, Farben nur aus dem Farbsatz. Was nicht passt,
+   fällt weg – eine halbe Skizze ist besser als eine, die aus dem Bild ragt oder fremdes
+   Markup mitbringt.
+
+   Die Edge Function prüft dasselbe noch einmal auf ihrer Seite. Zwei Prüfungen sind hier
+   kein Aufwand, sondern der Sinn der Sache: die App darf sich nicht darauf verlassen, dass
+   die Antwort von dort kommt, die sie erwartet. */
+function skzSpecSaeubern(spec){
+  if(!spec||typeof spec!=="object"||Array.isArray(spec))return null;
+  const hoch=spec.hoch===true, B=hoch?SKZ_HOCH_B:SKZ_QUER_B, H=hoch?SKZ_HOCH_H:SKZ_QUER_H;
+  const zahl=(v,min,max)=>{ const n=Number(v); return isFinite(n)?Math.max(min,Math.min(max,Math.round(n))):null; };
+  const x=v=>zahl(v,2,B-2), y=v=>zahl(v,2,H-2);
+  const farbe=(v,erlaubt,vorgabe)=>(typeof v==="string"&&erlaubt.includes(v))?v:vorgabe;
+  const text=(v,n)=>String(v==null?"":v).replace(/[<>&"']/g,"").slice(0,n);
+  const liste=(v,fn,max)=>Array.isArray(v)?v.slice(0,max).map(fn).filter(e=>e!==null):[];
+  const punkt=(e,rest)=>{ const a=x(e&&e[0]), b=y(e&&e[1]); return (a===null||b===null)?null:[a,b].concat(rest?rest(e):[]); };
+  const strecke=(e,rest)=>{ const a=x(e&&e[0]), b=y(e&&e[1]), c=x(e&&e[2]), d=y(e&&e[3]);
+                            return (a===null||b===null||c===null||d===null)?null:[a,b,c,d].concat(rest?rest(e):[]); };
+  const F="grbyw", GER=["stange","teller","huerde","depot","ring","dummy","trainer"];
+  const aus={};
+  if(hoch)aus.hoch=true;
+  aus.h=liste(spec.h,e=>punkt(e,e=>[farbe(e[2],F,"y")]),24);
+  aus.s=liste(spec.s,e=>punkt(e,e=>{ const k=text(e[3],3).replace(/[^0-9A-Za-zÄÖÜäöüß]/g,"");
+                                     return k?[farbe(e[2],F,"g"),k]:[farbe(e[2],F,"g")]; }),16);
+  aus.b=liste(spec.b,e=>punkt(e),12);
+  aus.tx=liste(spec.tx,e=>{ const t=text(e&&e[2],45); return t?punkt(e,()=>[t]):null; },4);
+  aus.ger=liste(spec.ger,e=>{ const a=String((e&&e[2])||"stange");
+                              return GER.includes(a)?punkt(e,e=>[a,farbe(e[3],F,"y")]):null; },12);
+  aus.kr=liste(spec.kr,e=>{ const r=zahl(e&&e[2],6,Math.min(B,H)/2); return r===null?null:punkt(e,()=>[r]); },3);
+  aus.z=liste(spec.z,e=>{ const a=x(e&&e[0]), b=y(e&&e[1]);
+                          if(a===null||b===null)return null;
+                          const w=zahl(e&&e[2],8,B-a), hh=zahl(e&&e[3],8,H-b);
+                          return (w===null||hh===null)?null:[a,b,w,hh]; },6);
+  /* Pfeile: die Art bestimmt die Form, die Nummer (v579) ist erlaubt, aber keine Pflicht. */
+  aus.p=liste(spec.p,e=>{ const nr=zahl(e&&e[5],1,20);
+                          return strecke(e,e=>{ const t=farbe(e[4],"plsd","p"); return nr?[t,nr]:[t]; }); },16);
+  aus.li=liste(spec.li,e=>strecke(e,e=>[(e[4]==="sz")?"sz":"m"]),4);
+  aus.wand=liste(spec.wand,e=>strecke(e),4);
+  aus.tor=liste(spec.tor,e=>{ const a=x(e&&e[0]), b=y(e&&e[1]);
+                              if(a===null||b===null)return null;
+                              const breit=zahl(e&&e[3],8,60)||24, senk=(e&&e[2])==="v";
+                              return (e&&e[4]==="j")?[a,b,senk?"v":"h",breit,"j"]:[a,b,senk?"v":"h",breit]; },6);
+  aus.dtor=liste(spec.dtor,e=>{ const a=x(e&&e[0]), b=y(e&&e[1]);
+                                if(a===null||b===null)return null;
+                                const w=zahl(e&&e[2],10,80)||20;
+                                return [a,b,w,(e&&e[3]==="v")?"v":"h",(e&&e[4]==="h")?"h":"s",farbe(e&&e[5],F,"y")]; },6);
+  aus.leiter=liste(spec.leiter,e=>{ const a=x(e&&e[0]), b=y(e&&e[1]), l=zahl(e&&e[2],20,Math.max(B,H));
+                                    return (a===null||b===null||l===null)?null:[a,b,l,(e&&e[3]==="v")?"v":"h"]; },3);
+  /* Weitere Bilder: beweglich ist nur, was sich am Platz bewegt – der Aufbau steht in
+     Bild 1. Ein Schritt, der etwas anderes mitbringt, verliert es hier (v557). */
+  if(Array.isArray(spec.schritte)&&spec.schritte.length){
+    const bewegl=(typeof SKZ_BEWEGLICH!=="undefined")?SKZ_BEWEGLICH:["s","b","p","tx"];
+    const st=spec.schritte.slice(0,(typeof SKZ_SCHRITTE_MAX!=="undefined")?SKZ_SCHRITTE_MAX:6)
+      .map(b=>{ if(!b||typeof b!=="object"||Array.isArray(b))return null;
+                const teil={}; bewegl.forEach(k=>{ const g=skzSpecSaeubern(Object.assign({},hoch?{hoch:true}:{},{[k]:b[k]}));
+                                                   if(g&&g[k]&&g[k].length)teil[k]=g[k]; });
+                return Object.keys(teil).length?teil:null; })
+      .filter(Boolean);
+    if(st.length)aus.schritte=st;
+  }
+  Object.keys(aus).forEach(k=>{ if(Array.isArray(aus[k])&&!aus[k].length)delete aus[k]; });
+  const inhalt=Object.keys(aus).filter(k=>k!=="hoch");
+  return inhalt.length?aus:null;
+}
 /* Der Zuschnitt der Zeichenfläche. Quer ist der Bestand, hochkant seit v578 die zweite
    Möglichkeit – gespiegelt, damit eine gedrehte Skizze denselben Platz hat wie vorher. */
 const SKZ_QUER_B=280, SKZ_QUER_H=180, SKZ_HOCH_B=180, SKZ_HOCH_H=280;

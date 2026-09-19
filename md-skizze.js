@@ -571,7 +571,8 @@ function skzEditorOpen(start,cb){
     <div id="skz-bildleiste"></div>
     <!-- v578: Der Zuschnitt gehört über die Zeichenfläche – dorthin, wo man ihn sieht,
          bevor man anfängt zu tippen. Die Beschriftung sagt, wohin der Tipp führt. -->
-    <div style="display:flex;justify-content:center;margin-bottom:6px">
+    <div style="display:flex;justify-content:center;gap:8px;margin-bottom:6px">
+      <button type="button" id="skz-ki" onclick="skzKiOpen()" style="min-height:44px;padding:0 14px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">🤖 Beschreiben</button>
       <button type="button" id="skz-format" onclick="skzFormat()" style="min-height:44px;padding:0 14px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer"></button>
     </div>
     <div id="skz-buehne" style="position:relative;width:100%;max-width:340px;margin:0 auto 8px;aspect-ratio:280/180;border-radius:8px;overflow:hidden;touch-action:none;cursor:crosshair"></div>
@@ -1232,4 +1233,107 @@ function skzGrossOpen(idx){
   _skzGrPassenGebunden=()=>_skzGrLegen();
   window.addEventListener("resize",_skzGrPassenGebunden);
   _skzGrZeichnen();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v581 – ÜBUNG BESCHREIBEN, SKIZZE ZEICHNEN LASSEN
+
+   PO am 19.09.: „Es ist möglich, hier auch einen KI-Modus einzubauen, so dass ich die
+   Zeichnung beziehungsweise die Übungsform diktiere und dann die KI mit Hilfe des
+   Skizzenboards diese Übung aufzeichnet."
+
+   Das Gerüst stand schon: Die Edge Function `ki-uebung` liefert im Modus „text" zu einer
+   Übungsbeschreibung eine Skizzen-Beschreibung mit, und `_skz` zeichnet sie. Was fehlte,
+   war der Weg dorthin aus dem Editor – bisher entstand dabei immer gleich eine ganze
+   Übung, obwohl man oft nur das Bild will.
+
+   Drei Festlegungen:
+
+   1. DER TRAINER BLEIBT AM ZUG. Das Ergebnis landet im Editor, nicht in der Datenbank.
+      Verschieben, ergänzen, „Zurück" – alles wie bei einer selbst getippten Skizze. Eine
+      Zeichnung, die niemand mehr anfassen kann, wäre schlechter als gar keine.
+
+   2. GEPRÜFT WIRD ZWEIMAL. Die Edge Function klemmt ihre Ausgabe, und `skzSpecSaeubern`
+      klemmt sie hier noch einmal. Die App verlässt sich nicht darauf, dass die Antwort
+      von dort kommt, die sie erwartet (siehe data.js).
+
+   3. DIKTIEREN IST DIE ZUGABE, NICHT DER WEG. `SpeechRecognition` gibt es nicht überall
+      und auf iOS ist es wackelig; deshalb steht das Textfeld im Mittelpunkt und das
+      Mikrofon daneben – und nur dort, wo das Gerät es kann.
+   ═══════════════════════════════════════════════════════════════════════════ */
+let _skzKiLauscht=null;
+function skzKiDiktatMoeglich(){ return !!(window.SpeechRecognition||window.webkitSpeechRecognition); }
+function skzKiOpen(){
+  document.getElementById("skz-ki-modal")?.remove();
+  const m=document.createElement("div"); m.id="skz-ki-modal";
+  m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Übung beschreiben");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;padding:12px;overflow-y:auto";
+  m.style.zIndex=(typeof zOben==="function")?zOben(10015):10015;
+  m.onclick=e=>{if(e.target===m)skzKiClose();};
+  const c=document.createElement("div");
+  c.style.cssText="background:var(--surface);color:var(--text);max-width:420px;width:100%;margin:auto;border-radius:16px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
+  c.innerHTML=`${mdlHead("skz-ki-modal","🤖","Übung beschreiben","Die Zeichnung entsteht daraus – ändern kannst du sie danach","#7c3aed")}
+    <textarea id="skz-ki-text" rows="5" placeholder="Zum Beispiel: Vier Hütchen in einer Reihe, jedes Kind dribbelt im Slalom durch und schießt auf ein Minitor. Danach außen zurücklaufen." style="width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text)"></textarea>
+    ${skzKiDiktatMoeglich()?`<button type="button" id="skz-ki-mic" onclick="skzKiDiktat()" style="width:100%;min-height:44px;margin-top:8px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">🎙️ Diktieren</button>`
+      :`<div style="font-size:11px;color:var(--text3);margin-top:6px">Diktieren kann dieses Gerät nicht – tippen geht immer.</div>`}
+    <div style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.5">Je genauer der Aufbau steht – wie viele Hütchen, wie viele Kinder, wo das Tor –, desto besser trifft die Zeichnung. Sie ersetzt dein Bild nicht, sie ist der erste Wurf.</div>
+    <div id="skz-ki-stand" style="font-size:12px;color:var(--text2);margin-top:8px;min-height:18px"></div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn btn-p" style="flex:1" id="skz-ki-los" onclick="skzKiLauf()">✏️ Zeichnen lassen</button>
+      <button class="btn" onclick="skzKiClose()">Abbrechen</button>
+    </div>`;
+  m.appendChild(c); document.body.appendChild(m);
+  document.getElementById("skz-ki-text")?.focus();
+}
+function skzKiClose(){ skzKiDiktatStop(); document.getElementById("skz-ki-modal")?.remove(); }
+function skzKiDiktatStop(){ try{ _skzKiLauscht&&_skzKiLauscht.stop(); }catch(e){} _skzKiLauscht=null; }
+/* Diktat: was verstanden wurde, wird ANGEHÄNGT statt ersetzt – wer nachträgt, verliert
+   sonst den ersten Satz. Ein Fehlschlag sagt es und lässt das Textfeld unberührt. */
+function skzKiDiktat(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  const knopf=document.getElementById("skz-ki-mic"), feld=document.getElementById("skz-ki-text");
+  if(!SR||!feld)return;
+  if(_skzKiLauscht){ skzKiDiktatStop(); if(knopf)knopf.innerHTML="🎙️ Diktieren"; return; }
+  const r=new SR(); r.lang="de-DE"; r.interimResults=false; r.continuous=false;
+  r.onresult=e=>{ const t=[...e.results].map(x=>x[0]&&x[0].transcript).filter(Boolean).join(" ").trim();
+                  if(t)feld.value=(feld.value?feld.value.trim()+" ":"")+t; };
+  r.onerror=()=>{ const st=document.getElementById("skz-ki-stand"); if(st)st.textContent="Nichts verstanden – bitte tippen."; };
+  r.onend=()=>{ _skzKiLauscht=null; if(knopf)knopf.innerHTML="🎙️ Diktieren"; };
+  try{ r.start(); _skzKiLauscht=r; if(knopf)knopf.innerHTML="⏹️ Aufnahme stoppen"; }
+  catch(e){ _skzKiLauscht=null; }
+}
+async function skzKiLauf(){
+  const feld=document.getElementById("skz-ki-text"), stand=document.getElementById("skz-ki-stand"),
+        los=document.getElementById("skz-ki-los");
+  const text=String((feld&&feld.value)||"").trim();
+  if(text.length<15){ if(stand)stand.textContent="Bitte den Aufbau in ein, zwei Sätzen beschreiben."; return; }
+  skzKiDiktatStop();
+  if(stand)stand.textContent="🧠 Der Adler-Coach zeichnet …";
+  if(los)los.disabled=true;
+  const ctrl=new AbortController(), zu=setTimeout(()=>ctrl.abort(),60000);
+  try{
+    const kinder=(typeof KADER!=="undefined"&&Array.isArray(KADER))?KADER.filter(k=>k&&k.aktiv!==false).length:0;
+    const r=await fetch(`${SB_URL}/functions/v1/ki-uebung`,{method:"POST",headers:sbAuthHeaders(),
+      body:JSON.stringify({modus:"text",text,kinder}),signal:ctrl.signal});
+    clearTimeout(zu);
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){ if(stand)stand.textContent=String(d.error||("Fehler "+r.status)); return; }
+    const roh=((d.uebungen||[])[0]||{}).skizze;
+    const spec=(typeof skzSpecSaeubern==="function")?skzSpecSaeubern(roh):null;
+    if(!spec){ if(stand)stand.textContent="Aus der Beschreibung ließ sich kein Aufbau lesen – nenne Hütchen, Tore und Kinder ausdrücklich."; return; }
+    /* In den Editor, nicht in die Datenbank: erst merken, damit „Zurück" den alten Stand
+       zurückholt, dann den Zuschnitt beibehalten, den der Trainer gewählt hat. */
+    _skzMerken();
+    const hoch=_skzHochkant();
+    let fertig=spec;
+    if(!!spec.hoch!==hoch&&typeof skzDrehen==="function")fertig=skzDrehen(spec);
+    _skzSpec=Object.assign(_skzLeer(),fertig);
+    _skzBildNr=0; _skzStart=null; _skzZieh=null;
+    skzKiClose();
+    skzEditorZeichnen();
+    toast("Zeichnung übernommen – jetzt kannst du sie ändern");
+  }catch(e){
+    clearTimeout(zu);
+    if(stand)stand.textContent=(e&&e.name==="AbortError")?"Zeitüberschreitung – bitte nochmal versuchen.":"Kein Netz – bitte später nochmal.";
+  }finally{ if(los)los.disabled=false; }
 }

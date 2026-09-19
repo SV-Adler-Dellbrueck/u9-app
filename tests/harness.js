@@ -31,11 +31,21 @@ const heute = () => new Date().toISOString().slice(0, 10);
 const tagePlus = d => new Date(Date.now() + d * 864e5).toISOString().slice(0, 10);
 
 /* Attrappe: {tabelle: zeilen | (url, request) => zeilen} - alles andere antwortet []. */
-/* tabellen: { <tabelle>: Zeilen|Funktion, rpc: { <name>: Antwort|Funktion } }
+/* tabellen: { <tabelle>: Zeilen|Funktion, rpc: { <name>: Antwort|Funktion },
+              funktionen: { <name>: Antwort|Funktion } }
    RPCs liegen unter /rest/v1/rpc/<name> – der Tabellen-Regex traf sie nicht, sie kamen
-   deshalb immer als [] zurueck. Ohne Eintrag bleibt es dabei (wie bisher). */
+   deshalb immer als [] zurueck. Ohne Eintrag bleibt es dabei (wie bisher).
+   v581: Edge Functions liegen unter /functions/v1/<name> und antworten mit einem OBJEKT,
+   nicht mit einer Zeilenliste – ohne Eintrag ein leeres. */
 function supabaseAttrappe(tabellen = {}) {
   return (u, req) => {
+    const fn = u.pathname.match(/\/functions\/v1\/([a-z0-9-]+)$/);
+    if (fn) {
+      const f = (tabellen.funktionen || {})[fn[1]];
+      if (f == null) return { status: 200, body: "{}" };
+      const w = (typeof f === "function") ? f(u, req) : f;
+      return (w && w.status) ? w : { status: 200, body: JSON.stringify(w == null ? {} : w) };
+    }
     const r = u.pathname.match(/\/rest\/v1\/rpc\/([a-z_]+)$/);
     if (r) {
       const f = (tabellen.rpc || {})[r[1]];
