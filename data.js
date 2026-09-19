@@ -4466,5 +4466,10 @@ const UEBUNG_ART_VORSCHLAG={
   "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts":"spiel",
   "FUNiño 3 gegen 3 – Mittellinie verteidigen":"spiel",
   "FUNiño 2 gegen 2 – einer drängt, einer schützt":"spiel",
-  "3+1 gegen FUNiño – großes Tor gegen zwei kleine":"spiel"
+  "3+1 gegen FUNiño – großes Tor gegen zwei kleine":"spiel",
+  /* v583 – Lehrgangsabgabe 3.1. Charles ordnet die Form als SPIELFORM ein, wie sie auch in
+     der Abgabe heißt (Entscheidung 19.09.2026), obwohl sie ohne Gegenspieler auskommt und
+     der Trainer erst in Steigerung 3 verteidigt. Der Schlüssel heißt hier „spiel“ – das ist
+     die Kennung, die `UEBUNG_ART` als „Spielform“ auflöst. */
+  "Raute mit Torwart – Angriff über den anderen Flügel":"spiel"
 };

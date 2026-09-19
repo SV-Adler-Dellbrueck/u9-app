@@ -1,0 +1,48 @@
+{
+  "schema": "adler-uebungen/1",
+  "uebungen": [{
+    "name": "Raute mit Torwart – Angriff über den anderen Flügel",
+    "kat": "raute",
+    "kurz": "Der Torwart als Aufpasser spielt links und rechts an, der Angriff läuft über den anderen Flitzer bis zum flachen Abschluss.",
+    "spieler": "4 je Feld (TW + 3), bis 6 mit Wechsel; in Steigerung 3 gegen den Trainer",
+    "feld": "25 x 30 m, je Seite ein Korridor von 5 m Breite, Jugendtor liegend als Ziel",
+    "dauer": "30",
+    "ablauf": "AUFBAU: Starttor mit dem Torwart als Aufpasser, gegenüber ein flach liegendes Jugendtor (nur flache Schüsse zählen). An beiden Seitenlinien ein Korridor aus Markierungstellern, darin je ein Dummy etwa 3 m vor dem Flitzer. Jäger vorn in der Mitte. ABLAUF: Phase 1 – Aufpasser spielt einen Flitzer an und schiebt auf seiner Linie zur Ballseite, der Flitzer stoppt und spielt zurück, der Aufpasser dribbelt zurück zum Ausgangspunkt. Phase 2 schließt ohne Pause an: Pass zum anderen Flitzer, der dribbelt außen am Dummy vorbei in seinem Korridor zur Grundlinie und passt zum Jäger; der erste Flitzer läuft in seinem Korridor mit, der Aufpasser rückt nach, der Jäger schließt ab. Nach jedem Abschluss rotieren die Rollen: Aufpasser, Flitzer links, Jäger, Flitzer rechts. ZEIT: Minute 1–10 Phase 1 allein, ab Minute 5 Steigerung 1; Minute 11–20 ganzer Durchgang mit Steigerung 2; Minute 21–30 Steigerung 3. STEIGERUNGEN: 1 – vor jedem Pass den Namen rufen, der Mitspieler antwortet „Ja“. 2 – beim „Ja“ kurzer Schulterblick. 3 – der Trainer verteidigt vor dem Tor.",
+    "varianten": "Leichter: Korridore breiter, Dummys weiter weg, Tor aufrecht. Schwerer: Korridore schmaler, Dummys näher an die Flitzer, zwei Kontakte je Flitzer; Wettbewerb: Welche Raute schafft in fünf Minuten die meisten Tore?",
+    "coaching": "Woran erkennst du, dass dein Mitspieler frei ist? Was hast du beim Schulterblick gesehen? Wohin legst du dir den Ball mit dem ersten Kontakt?",
+    "diff": 2,
+    "skizze": {
+      "hoch": true,
+      "z": [[18, 24, 144, 232]],
+      "tor": [[68, 14, "h", 44, "j"], [68, 256, "h", 44, "j"]],
+      "ger": [
+        [47, 58, "teller", "y"], [47, 92, "teller", "y"], [47, 126, "teller", "y"], [47, 160, "teller", "y"], [47, 194, "teller", "y"],
+        [133, 58, "teller", "y"], [133, 92, "teller", "y"], [133, 126, "teller", "y"], [133, 160, "teller", "y"], [133, 194, "teller", "y"],
+        [32, 152, "dummy", "w"], [148, 152, "dummy", "w"],
+        [66, 46, "trainer", "w"]
+      ],
+      "s": [[90, 236, "g", "A"], [32, 176, "g", "FL"], [148, 176, "g", "FR"], [90, 90, "g", "J"]],
+      "b": [[98, 243]],
+      "p": [
+        [72, 216, 40, 184, "p", 1],
+        [70, 240, 54, 240, "l", 2],
+        [36, 200, 50, 238, "p", 3],
+        [56, 254, 84, 250, "d", 4]
+      ],
+      "tx": [[90, 276, "Phase 1: Pass und Rückpass"]],
+      "schritte": [{
+        "b": [[82, 243]],
+        "p": [
+          [108, 216, 140, 184, "p", 5],
+          [114, 240, 134, 240, "l", 6],
+          [158, 158, 154, 66, "d", 7],
+          [144, 62, 102, 84, "p", 8],
+          [20, 200, 20, 70, "l", 8],
+          [90, 210, 90, 160, "l", 8],
+          [90, 64, 90, 30, "s", 9]
+        ],
+        "tx": [[90, 276, "Phase 2: über den anderen Flügel"]]
+      }]
+    }
+  }]
+}
