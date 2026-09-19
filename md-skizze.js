@@ -784,7 +784,52 @@ function skzGrossKnopf(name,idx){
     +'🔍 Groß zeigen</button>';
 }
 let _skzGrPassenGebunden=null;
+/* v582 – ECHTES VOLLBILD (PO 19.09.)
+
+   „Groß zeigen" füllte den Bildschirm schon – aber nur den Teil, den der Browser freigibt.
+   Auf dem Tablet an der Linie stehen darüber und darunter Browser- und Systemleiste und
+   nehmen der Zeichnung die Höhe, die sie am nötigsten braucht.
+
+   Dieselbe Mechanik wie im Taktikboard (v17.4): die Fullscreen-API, und ein Zuhörer auf
+   `fullscreenchange`, damit die Systemgeste oder ESC den Zustand mitziehen – sonst stünde
+   der Knopf auf „an", während längst nichts mehr im Vollbild ist.
+
+   Der Knopf erscheint NUR, wo das Gerät es kann. Auf dem iPhone gibt es die API für
+   gewöhnliche Elemente nicht; ein Knopf, der dort nichts tut, wäre schlechter als keiner.
+   Die Skizze selbst braucht dafür nichts: `_skzGrPassen` misst die verfügbare Fläche und
+   füllt sie – mehr Platz heißt von selbst ein größeres Bild. */
+function skzVollbildMoeglich(){
+  const e=document.documentElement;
+  return !!(e&&(e.requestFullscreen||e.webkitRequestFullscreen)&&(document.fullscreenEnabled!==false));
+}
+function skzVollbildAn(){ return !!(document.fullscreenElement||document.webkitFullscreenElement); }
+function skzGrossVollbild(){
+  const e=document.documentElement;
+  /* Beide Wege geben ein Promise zurück, und beide dürfen abgelehnt werden: ohne
+     Nutzergeste, per Richtlinie, im eingebetteten Rahmen. Unabgefangen landet das als
+     Fehler in der Konsole – bei einem Wunsch, dessen Scheitern folgenlos ist. */
+  const still=p=>{ if(p&&typeof p.catch==="function")p.catch(()=>{}); };
+  try{
+    if(skzVollbildAn()){ still((document.exitFullscreen||document.webkitExitFullscreen||function(){}).call(document)); }
+    else{ const f=(e.requestFullscreen||e.webkitRequestFullscreen); if(f)still(f.call(e)); }
+  }catch(x){}
+  /* Der Zustand wird NICHT hier gesetzt: Das Ereignis sagt, was wirklich passiert ist –
+     ein abgelehnter Wunsch (fehlende Geste, Richtlinie) soll den Knopf nicht umlegen. */
+}
+function _skzVollbildKnopf(){
+  const k=document.getElementById("skz-gross-voll"); if(!k)return;
+  const an=skzVollbildAn();
+  k.innerHTML=an?"⛶ Vollbild beenden":"⛶ Vollbild";
+  k.setAttribute("aria-pressed",an?"true":"false");
+  k.title=an?"Zurück zur normalen Ansicht":"Browser- und Systemleiste ausblenden – mehr Platz für die Zeichnung";
+}
+document.addEventListener("fullscreenchange",()=>{ _skzVollbildKnopf(); if(typeof _skzGrLegen==="function"&&_skzGr)setTimeout(_skzGrLegen,80); });
+document.addEventListener("webkitfullscreenchange",()=>{ _skzVollbildKnopf(); if(typeof _skzGrLegen==="function"&&_skzGr)setTimeout(_skzGrLegen,80); });
+
 function skzGrossClose(){
+  /* Das Vollbild gehört zu dieser Ansicht – wer sie schließt, will nicht auf einem
+     leeren Vollbild zurückbleiben. */
+  try{ if(skzVollbildAn())(document.exitFullscreen||document.webkitExitFullscreen||function(){}).call(document); }catch(e){}
   if(_skzGr&&_skzGr.lauft){ _skzGr.lauft=false; if(_skzGr.uhr)clearTimeout(_skzGr.uhr); if(_skzGr.raf)cancelAnimationFrame(_skzGr.raf); }
   if(_skzGrPassenGebunden){ window.removeEventListener("resize",_skzGrPassenGebunden); _skzGrPassenGebunden=null; }
   document.getElementById("skz-gross-modal")?.remove(); _skzGr=null;
@@ -842,6 +887,7 @@ function _skzGrZeichnen(){
   const u=document.getElementById("skz-gross-hell");
   if(u){ u.innerHTML=_skzGr.hell?"🌙 Dunkler Rasen":"☀️ Heller Rasen";
     u.setAttribute("aria-pressed",_skzGr.hell?"true":"false"); }
+  _skzVollbildKnopf();
   const kb=document.getElementById("skz-gross-kinder");
   if(kb){ kb.innerHTML=_skzGr.besetzung?"🙈 Namen aus":"🧒 Kinder einsetzen";
     kb.setAttribute("aria-pressed",_skzGr.besetzung?"true":"false");
@@ -1212,11 +1258,17 @@ function skzGrossOpen(idx){
     <div id="skz-gross-legende" style="background:rgba(255,255,255,.08);border-radius:10px;padding:2px 8px;max-width:95vw"></div>
     ${spec?"":`<div style="color:rgba(255,255,255,.7);font-size:11.5px;text-align:center;max-width:95vw;line-height:1.5">
           Für diese ältere Zeichnung gibt es die helle Fassung noch nicht.</div>`}
-    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:min(95vw,520px)">
+    <!-- v582: Die Zeile darf breiter werden, seit ein vierter Knopf dazugekommen ist.
+         Bei 520 px brach sie am Tablet quer auf zwei Zeilen um – und jede Zeile, die hier
+         waechst, fehlt der Zeichnung in der Hoehe: _skzGrPassen misst den Rest. -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:min(95vw,700px)">
       ${(spec&&skzBesetzungMoeglich())?`<button id="skz-gross-kinder" type="button" onclick="skzBesetzungAn()" aria-pressed="false"
           style="flex:1 1 130px;min-height:56px;padding:0 12px;border:1px solid rgba(255,255,255,.45);border-radius:10px;
                  background:rgba(255,255,255,.1);color:#fff;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer">🧒 Kinder einsetzen</button>`:""}
       ${spec?`<button id="skz-gross-hell" type="button" onclick="skzGrossHell()" aria-pressed="false"
+          style="flex:1 1 130px;min-height:56px;padding:0 12px;border:1px solid rgba(255,255,255,.45);border-radius:10px;
+                 background:rgba(255,255,255,.1);color:#fff;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer"></button>`:""}
+      ${skzVollbildMoeglich()?`<button id="skz-gross-voll" type="button" onclick="skzGrossVollbild()" aria-pressed="false"
           style="flex:1 1 130px;min-height:56px;padding:0 12px;border:1px solid rgba(255,255,255,.45);border-radius:10px;
                  background:rgba(255,255,255,.1);color:#fff;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer"></button>`:""}
       <button type="button" onclick="skzGrossClose()" class="btn btn-p"
