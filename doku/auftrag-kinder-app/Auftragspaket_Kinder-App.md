@@ -374,3 +374,56 @@ fertig berechnet und keine Rohwerte. Das verbessert nebenbei auch die Eltern-Kab
    Kinder-App `team_gallery` nicht mehr ruft, sondern `team_gallery_kind`.
 
 Damit ist Schritt 1 abgeschlossen; Schritt 2 (Migration) kann beginnen.
+
+---
+
+## Nachtrag Schritt 2 — Datenbank steht (20.09.2026, v590)
+
+Migration `supabase/migrations/20260920_kinder_app_kind_konto.sql`, angewendet und am
+Bestand geprüft. Drei Tabellen (`kind_konto`, `kind_kopplung`, `kind_sitzung`, alle mit
+Row-Level-Security), zwei Prüffunktionen (`is_kind_selbst`, `kind_zeit_uebrig`), vier neue
+RPCs (`kind_status`, `kind_tick`, `kind_abgesagt`, `team_gallery_kind`), sieben erweiterte
+RPCs und 22 Policies auf zehn Tabellen. Die drei Tabellen stehen in der Backup-Funktion.
+
+Gemessen nach dem Anwenden: RLS auf allen drei Tabellen an, alle sechs neuen Funktionen
+`security definer` mit festem `search_path`, `is_kind_selbst` in 22 Policies und in acht
+RPCs. Eine Sitzung ohne Kindergerät bekommt `is_kind_selbst = false`,
+`kind_zeit_uebrig = false`, `kind_status = {ok:false}`. `team_gallery_kind()` liefert
+dieselben 14 Kinder wie `team_gallery()`, aber **ohne** `radios`; die Stärken-Sortierung
+wurde gegen einen Testsatz geprüft (`f_pass 4, f_abschluss 3, f_tempo 2` → genau diese
+drei, Torwart-Merkmale und Nullwerte bleiben draußen).
+
+**Nichts wurde eingeschränkt.** Jede Policy bekam ein zusätzliches ODER; Eltern und Trainer
+behalten Wort für Wort ihre bisherigen Rechte. Der Zeitriegel `kind_zeit_uebrig()` steht
+ausschließlich im Kind-Zweig, sonst hätte er Eltern und Trainer mit ausgesperrt.
+
+### Fünf Abweichungen und Befunde, die zu melden sind
+
+1. **`gekoppelt_von` und `erstellt_von` sind auth-uid, nicht E-Mail** (das Paket nannte die
+   E-Mail). Grund: Die Sicherung der App lädt diese Tabellen als JSON herunter; eine
+   Elternadresse in einer Datei, die auf einem Trainer-Rechner liegt, wäre neu und
+   unnötig. Die uid genügt als Nachweis, wer gekoppelt hat.
+2. **„Gesehen" braucht keine Appzeit.** Das Markieren gelesener Adler-Post ist die Folge
+   des Lesens, kein neuer Inhalt. Mit Zeitriegel bliebe Post nach Ablauf für immer
+   ungelesen. Alle inhaltlichen Schreibvorgänge (Post senden, Reporter, Wahl, Stimmung,
+   Selbstbild, Album, Tausch, Fanfakten, Federn) haben ihn.
+3. **`quiz_progress` bleibt unverändert — mit einem Befund.** Die Policy erlaubt jedem
+   Angemeldeten, Fortschritt unter *jedem* Kadernamen zu schreiben (`is_kader_name`). Das
+   gilt heute schon für die Eltern-Sitzung. Für die Kinder-App ist die Abhilfe der
+   Kind-Zweig in `tqEigeneKinder()` (Schritt 5); die Policy enger zu ziehen träfe auch
+   Eltern mit mehreren Kindern und gehört, wenn überhaupt, in ein eigenes Paket.
+4. **Die Sicherheitsprüfung von Supabase meldet weiterhin „SECURITY DEFINER von anon
+   aufrufbar"** — für 52 Funktionen, die es alle schon vorher gab (`is_trainer`,
+   `is_parent_of`, `kind_termine` …). Die neuen Funktionen reihen sich ein und prüfen
+   jede für sich; `team_gallery_kind` gibt ohne Anmeldung eine leere Liste zurück.
+   `is_kind_selbst` und `kind_zeit_uebrig` **müssen** für anonyme Sitzungen aufrufbar
+   bleiben: sie stehen in Policies, deren Tabellen anonym gelesen werden (Stadionheft
+   liest freigegebene Reporter-Antworten). Ein Entzug führte dort zu einem Fehler statt
+   zu einer leeren Antwort.
+5. **`team_gallery()` bleibt vorerst stehen.** Einziger Aufrufer ist die Kabine; sobald
+   Schritt 5 sie auf `team_gallery_kind()` umstellt, hat sie keinen mehr und kann weg —
+   aber erst, wenn kein Gerät mehr eine alte Fassung im Cache hält.
+
+Offen bleibt die Prüfung mit einer echten Kind-Sitzung: dafür braucht es das anonyme
+Konto aus Schritt 3. Erst dort lässt sich messen, dass ein Kind nach Ablauf der Appzeit
+wirklich nichts mehr schreiben kann.

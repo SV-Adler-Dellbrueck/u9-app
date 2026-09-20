@@ -1095,7 +1095,12 @@ async function backupExport(){
                    samt Skizze, dazu die Bibliotheks-Übungen mit dem Kennzeichen, ob der
                    Trainer sie bearbeitet hat – aus dem Repo ließe sich davon nur die
                    Bibliothek wiederherstellen. */
-                "trainingsformen"];
+                "trainingsformen",
+                /* v590: Die Kinder-App. kind_konto haelt die Kopplung eines Kindergeraets
+                   samt Tages-Appzeit, kind_sitzung die verbrauchten Minuten je Tag,
+                   kind_kopplung die kurzlebigen Code-Hashes. Ohne sie muessten nach einer
+                   Wiederherstellung alle Kindergeraete neu gekoppelt werden. */
+                "kind_konto","kind_sitzung","kind_kopplung"];
   const dump={_meta:{app:"U9 Adler Dellbrück",exported_at:new Date().toISOString(),tables}};
   try{
     for(const t of tables){
