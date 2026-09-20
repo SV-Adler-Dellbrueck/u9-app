@@ -427,3 +427,41 @@ ausschließlich im Kind-Zweig, sonst hätte er Eltern und Trainer mit ausgesperr
 Offen bleibt die Prüfung mit einer echten Kind-Sitzung: dafür braucht es das anonyme
 Konto aus Schritt 3. Erst dort lässt sich messen, dass ein Kind nach Ablauf der Appzeit
 wirklich nichts mehr schreiben kann.
+
+---
+
+## Nachtrag Schritt 3a — der Riegel vor dem Häkchen (20.09.2026)
+
+Vor dem Einschalten der anonymen Anmeldung geprüft, was sie im Bestand öffnen würde.
+Supabase gibt anonymen Sitzungen dieselbe Rolle wie jedem angemeldeten Elternteil
+(`authenticated`); der öffentliche App-Schlüssel steht im Quelltext der App. Gemessen:
+
+| Was | Vor dem Riegel |
+|---|---|
+| `team_gallery()` | für `authenticated` aufrufbar, liefert Namen, Nummern, Fotopfade **und die Bewertungswerte** aller Kinder |
+| `quiz_progress` | nimmt Einträge für **jeden** Kadernamen an (`is_kader_name`) |
+| `kabine_config` | für jeden Angemeldeten lesbar — dort steht der Hash des Kabinen-Ausgangscodes |
+| `album_fotos`, `album_tausch`, `kabinen_wahl`, `ansagen`, `ausstattung_artikel`, `team_config` | „irgendjemand ist angemeldet" genügt |
+
+Migration `20260920_kinder_app_anonym_riegel.sql`, angewendet. Sie zieht die Grenze nicht
+zwischen angemeldet und nicht angemeldet, sondern zwischen einer **echten Sitzung** (Eltern,
+Trainer) oder einem **gekoppelten Kindergerät** und einer beliebigen anonymen Sitzung:
+
+- `ist_anonym()` liest die Marke aus dem Ausweis, `sitzung_gueltig()` verlangt eine echte
+  Anmeldung **oder** ein aktives `kind_konto`.
+- Sieben Policies laufen jetzt über `sitzung_gueltig()`; die Klasse „nur angemeldet"
+  (`auth.uid() is not null`) ist danach leer.
+- `kabine_config` ist für anonyme Sitzungen zu — die Kinder-App hat keinen Ausgangscode.
+- `ist_eigener_quizname()` löst den Altbefund aus Schritt 2 zur Hälfte: Eltern und Trainer
+  dürfen weiter für jedes Kind schreiben (Geschwister, Nachtragen), ein Kindergerät nur
+  noch unter dem eigenen Namen.
+- `team_gallery()` gibt anonymen Sitzungen eine leere Liste; `team_gallery_kind()` verlangt
+  eine gültige Sitzung.
+
+Geprüft ohne Anmeldung: Marke wird erkannt, `sitzung_gueltig()` false, beide Galerien leer,
+sieben Policies mit Riegel, zwei mit der Quiz-Prüfung, null Policies mit der alten Form.
+**Noch nicht geprüft:** das Verhalten einer echten anonymen Sitzung — dafür muss das
+Häkchen gesetzt sein. Das ist der erste Messpunkt von Schritt 3.
+
+Erst jetzt darf „Allow anonymous sign-ins" unter Authentication → Sign In / Providers
+eingeschaltet werden.
