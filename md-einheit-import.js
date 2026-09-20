@@ -230,8 +230,11 @@ function _eiVorschauHtml(d,bloecke,planDa){
   </div>`;
 }
 /* Eine neue Übung anlegen – Feldbelegung wie in kiCoachSaveForm(), nur mit tags „Import“. */
-async function _eiUebungAnlegen(u){
-  const form={
+/* v585: Die Felder, die aus einer Bibliotheks-Übung eine Datenbankzeile machen – EINE
+   Stelle für das Anlegen und für den Vergleich beim Nachziehen. Wer hier eine Spalte
+   ergänzt, ergänzt sie damit an beiden Orten. */
+function _euForm(u){
+  return {
     name:String(u.name||"").slice(0,120),
     kat:u.kat||"technik",
     ablauf:u.ablauf||"",
@@ -246,6 +249,9 @@ async function _eiUebungAnlegen(u){
        und die Übung zeigte danach gar kein Bild. */
     skizze:_eiSkizze(u.skizze)
   };
+}
+async function _eiUebungAnlegen(u){
+  const form=_euForm(u);
   const r=await fetch(`${SB_URL}/rest/v1/trainingsformen`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify(form)});
   if(sbCheck401(r))return false;
   return r.ok;
@@ -466,6 +472,53 @@ async function _euAnlegen(uebungen){
   // Erst danach nachladen: vorher kennt tpAllForms() die neuen Übungen nicht.
   if(angelegt&&typeof loadCustomForms==="function"){ try{ await loadCustomForms(); }catch(e){} }
   return {angelegt, offen:neu.length-angelegt, fehler, uebersprungen:(uebungen||[]).length-neu.length};
+}
+/* ═══ v585 – BESTEHENDE BIBLIOTHEKS-ÜBUNGEN NACHZIEHEN ═══════════════════════════
+   Bis v584 legte der Abgleich nur an, was namentlich fehlte. Eine geänderte Übung der
+   Bibliothek kam auf keinem Gerät je an – die Lehrgangsübung bekam in v584 vier Bilder
+   statt zwei, und die App zeigte weiter zwei, bis jemand die Zeile von Hand schrieb.
+
+   Die Regel dazu ist die Hilfe-Zusage von v512, nur schärfer gefasst: Was der Trainer
+   angefasst hat, wird nie überschrieben. Woran erkennt man das? Am Kennzeichen `tags`:
+   Der Abgleich schreibt „Import", der Skizzen-Editor stellt beim Speichern auf
+   „Import (bearbeitet)" um (md-skizze.js). Nachgezogen wird nur, was noch „Import"
+   trägt – und dort ALLE Kopien eines Namens gemeinsam, damit die Dubletten aus dem
+   Wettlauf vor v585 nicht auseinanderlaufen (welche Kopie ein alter Plan meint, weiß
+   niemand mehr, siehe tfDublette in boot.js).
+
+   Verglichen wird kanonisch (Schlüssel sortiert): jsonb liefert die Skizze in anderer
+   Schlüsselreihenfolge zurück, als die Datei sie hat – ein naiver Vergleich sähe jede
+   Übung bei jedem neuen Stand als geändert an. */
+function _euKanon(v){
+  if(Array.isArray(v))return v.map(_euKanon);
+  if(v&&typeof v==="object")return Object.keys(v).sort().reduce((o,k)=>{ o[k]=_euKanon(v[k]); return o; },{});
+  return v;
+}
+const EU_VERGLEICH=["kat","ablauf","varianten","coaching","spieler","feld","dauer","diff","kurz","skizze"];
+function _euGleich(form,zeile){
+  return EU_VERGLEICH.every(k=>JSON.stringify(_euKanon(form[k]==null?null:form[k]))===JSON.stringify(_euKanon(zeile[k]==null?null:zeile[k])));
+}
+async function _euNachziehen(uebungen){
+  const vorhanden=(uebungen||[]).filter(u=>!u.neu);
+  const formen=(typeof CUSTOM_FORMS!=="undefined"&&Array.isArray(CUSTOM_FORMS))?CUSTOM_FORMS:[];
+  let aktualisiert=0, belassen=0, fehler=null;
+  try{
+    for(const u of vorhanden){
+      const n=_eiNorm(u.name);
+      const kopien=formen.filter(f=>f&&_eiNorm(f.name)===n&&f.tags==="Import"&&f.id!=null);
+      if(!kopien.length){ belassen++; continue; }          // eigene oder bearbeitete Übung gleichen Namens: nie anfassen
+      const form=_euForm(u);
+      const abweichend=kopien.filter(z=>!_euGleich(form,z));
+      if(!abweichend.length)continue;
+      const {name,custom,focus,tags,...felder}=form;       // Name und Kennzeichen bleiben, wie sie sind
+      const ids=kopien.map(z=>z.id).join(",");
+      const r=await fetch(`${SB_URL}/rest/v1/trainingsformen?id=in.(${ids})&tags=eq.Import`,{method:"PATCH",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify(felder)});
+      if(sbCheck401(r)||!r.ok){ fehler=u.name; break; }
+      aktualisiert+=kopien.length;
+    }
+  }catch(e){ fehler=fehler||"__netz"; }
+  if(aktualisiert&&typeof loadCustomForms==="function"){ try{ await loadCustomForms(); }catch(e){} }
+  return {aktualisiert, belassen, fehler};
 }
 async function uebungImportUebernehmen(){
   const g=_euGeprueft;
@@ -1326,8 +1379,15 @@ let _bibLaeuft=false;
 async function bibliothekAbgleich(){
   if(_bibLaeuft)return null;
   if(typeof sbToken==="function"&&!sbToken())return null;      // ohne Sitzung: RLS sagt ohnehin nein
-  _bibLaeuft=true;
+  _bibLaeuft=true;                                             // VOR dem Warten – sonst laufen Start und doLogin() beide los
   try{
+    /* v585: Erst wissen, was schon da ist. `neu` heißt „steht nicht in CUSTOM_FORMS" –
+       solange die Antwort der Datenbank aussteht, ist die Liste leer, und JEDE Übung der
+       Bibliothek sähe neu aus. Genau so entstanden am 14. und 15.09. je 24 Dubletten.
+       Ist die Antwort ausgeblieben (kein Netz, 5xx), passiert nichts; der nächste Start
+       versucht es wieder. */
+    if(typeof customFormsGeladen==="function")await customFormsGeladen();
+    if(typeof CUSTOM_FORMS_OK!=="undefined"&&!CUSTOM_FORMS_OK)return null;
     let erg=null;
     // ── 1) Übungen ────────────────────────────────────────────────────────────
     const bib=await _bibHolen(BIB_DATEI,BIB_STAND_KEY);
@@ -1336,12 +1396,18 @@ async function bibliothekAbgleich(){
       if(!fehler.length){                                       // kaputte Datei: still, beim nächsten Mal wieder
         const uebungen=daten.uebungen.map(u=>({...u,kat:u.kat==null?"technik":String(u.kat),neu:_eiFormIndex(u.name)<0}));
         const e=await _euAnlegen(uebungen);
+        const n=await _euNachziehen(uebungen);                  // v585: Geändertes nachziehen, Bearbeitetes belassen
         /* Den Stand erst merken, wenn wirklich alles durchgelaufen ist – sonst bliebe der
            Rest der Datei für immer liegen. Bricht es ab, versucht es der nächste Start neu
            und überspringt, was schon steht. */
-        if(!e.fehler&&bib.stand)_bibStandMerken(bib.stand,BIB_STAND_KEY);
-        if(e.angelegt&&typeof toast==="function")toast(`📚 ${e.angelegt} neue Übung${e.angelegt===1?"":"en"}`);
-        erg=e;
+        if(!e.fehler&&!n.fehler&&bib.stand)_bibStandMerken(bib.stand,BIB_STAND_KEY);
+        if(typeof toast==="function"){
+          const teile=[];
+          if(e.angelegt)teile.push(`${e.angelegt} neue Übung${e.angelegt===1?"":"en"}`);
+          if(n.aktualisiert)teile.push(`${n.aktualisiert} aktualisiert`);
+          if(teile.length)toast("📚 "+teile.join(" · "));
+        }
+        erg={...e,aktualisiert:n.aktualisiert,belassen:n.belassen,fehler:e.fehler||n.fehler};
       }
     }
     /* ── 2) Vorlagen, IMMER nach den Übungen ────────────────────────────────────

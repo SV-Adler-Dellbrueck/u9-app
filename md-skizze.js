@@ -618,8 +618,14 @@ async function uebungSkizzeNachtragen(idx){
     try{ f.svg=_skz(spec); }catch(e){}
     if(f.id){
       try{
+        /* v585: Eine Bibliotheks-Übung, an der hier gezeichnet wurde, gehört ab jetzt dem
+           Trainer. Das Kennzeichen wechselt von „Import" auf „Import (bearbeitet)" – nur
+           danach richtet sich der Abgleich, wenn er Änderungen aus der Bibliothek nachzieht:
+           was „Import" trägt, wird nachgezogen, alles andere nie angefasst. */
+        const patch={skizze:spec};
+        if(f.tags==="Import"){ patch.tags="Import (bearbeitet)"; f.tags=patch.tags; }
         const r=await fetch(`${SB_URL}/rest/v1/trainingsformen?id=eq.${f.id}`,{method:"PATCH",
-          headers:sbAuthHeaders(),body:JSON.stringify({skizze:spec})});
+          headers:sbAuthHeaders(),body:JSON.stringify(patch)});
         if(typeof sbCheck401==="function"&&sbCheck401(r))return;
         toast(r.ok?"Skizze gespeichert ✓":"Skizze nur lokal gespeichert","info");
       }catch(e){ toast("Offline – Skizze nur lokal gespeichert","info"); }

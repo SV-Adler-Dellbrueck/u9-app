@@ -61,7 +61,7 @@ const SKIZZE_REGELN = `SKIZZE: Liefere zu jeder Uebung eine Feld-Skizze als komp
 - "kr": Kreiszonen [[x,y,radius]] - z. B. der Mittelkreis als Spielfeld
 - "li": Linien [[x1,y1,x2,y2,"m"|"sz"]] - m=Mittellinie, sz=Schusszone
 - "hoch": true fuer ein hochkantes Feld (dann 180 breit und 280 hoch statt 280x180) - nimm es fuer alles, was in die Laenge laeuft: Slalom, Torschuss auf ein Tor am oberen Rand, halbes Spielfeld
-- Abfolge: ein Pfeil darf eine Schrittnummer als sechstes Feld tragen, [[x1,y1,x2,y2,"p",1]] - nummeriere NUR, wenn die Reihenfolge fuer das Verstaendnis noetig ist, dann aber luechenlos ab 1
+- Abfolge: ein Pfeil darf eine Schrittnummer als sechstes Feld tragen, [[x1,y1,x2,y2,"p",1]] - nummeriere NUR, wenn die Reihenfolge fuer das Verstaendnis noetig ist, dann aber lueckenlos ab 1
 - "schritte": statt einer Nummerierung mehrere Bilder [{"s":[...],"b":[...],"p":[...],"tx":[...]}] - hoechstens 6, der Aufbau (Huetchen, Tore, Zonen, Geraete) steht NUR im Grundbild und gilt fuer alle; in jedem Bild stehen dieselben Spieler und Baelle, nur an anderer Stelle
 Die Skizze muss zum Ablauf passen: gleiche Anzahl Spieler, Tore und Huetchen wie im Text.
 Elemente duerfen sich nicht ueberlagern, Pfeile beginnen und enden neben einem Objekt, nicht darin.`;
