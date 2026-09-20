@@ -2,11 +2,11 @@
 
 Repo `SV-Adler-Dellbrueck/u9-app`, Stand 20.09.2026 (App v589). Gilt zusammen mit `CLAUDE.md`.
 
-> **Entwurf, noch nicht beauftragt.** Charles hat am 20.09.2026 drei Anforderungen gesetzt:
-> die Kabine soll eine eigene App werden, sie muss auf einem anderen Endgerät installierbar
-> sein, und die Eltern stellen in ihrer App die Appzeit des Kindes ein. Dieses Paket
-> beschreibt, was dafür zu tun ist. Gebaut wird nach seiner Freigabe, in der Reihenfolge
-> unter „Schritte“.
+> **Freigegeben am 20.09.2026** (PR #172). Charles hat drei Anforderungen gesetzt: die Kabine
+> soll eine eigene App werden, sie muss auf einem anderen Endgerät installierbar sein, und
+> die Eltern stellen in ihrer App die Appzeit des Kindes ein. Gebaut wird in der Reihenfolge
+> unter „Schritte“; **Schritt 1 ist erledigt**, das Ergebnis steht unten unter „Nachtrag
+> Schritt 1 — gemessen, nicht geraten“ und ändert vier Stellen dieses Pakets.
 
 ## Wozu
 
@@ -276,3 +276,101 @@ Jeder Schritt ein eigener Entwurfs-PR, zusammengeführt auf Charles' Wort.
 - **Geschwister auf einem Gerät?** Heute zeigt die Kabine alle Kinder der Familie. Bei
   eigenem Konto je Kind ist das Gerät genau einem Kind zugeordnet; für Geschwister zwei
   Kopplungen auf demselben Gerät wären ein Kontowechsel, den es noch nicht gibt.
+
+---
+
+## Nachtrag Schritt 1 — gemessen, nicht geraten (20.09.2026)
+
+Werkzeug: `doku/auftrag-kinder-app/messung-minimal-loader.js`. Es lädt `eltern/index.html`
+im Prüfstand-Browser, liefert jede JS-Datei außerhalb einer Liste **leer** aus, öffnet die
+Kabine mit einer vorgetäuschten Eltern-Sitzung und klickt alle 13 Kacheln samt erster
+Unterebene an (ohne Quiz-Sprung und Ausgangs-Code). Jeder ReferenceError ist eine fehlende
+Datei. Zweiter Modus: die Quiz-Route `?quiz&from=kabine`.
+
+### Minimal-Loader
+
+| Liste | Ergebnis |
+|---|---|
+| `data.js core.js engine.js views.js md-kabine.js md-abzeichen.js quiz.js md-quests.js boot.js` (9 Dateien, 28 leer) | Kabine öffnet, 12 von 13 Kacheln fehlerfrei; **einzige Lücke** `elternCardOpen` („Meine Karte“, in `md-eltern-portal.js`) |
+| dieselben plus `md-eltern-portal.js` (10 Dateien) | **null Fehler** über alle Kacheln und Unterebenen |
+
+Nutzlast der Zehnerliste 1 752 477 Bytes gegenüber 2 680 281 Bytes für den vollständigen
+Eltern-Loader. Davon entfallen 493 KB auf `views.js`, 373 KB auf `data.js` und 307 KB auf
+`boot.js` — Welle-1-Dateien der Trainer-App, aus denen die Kabine nur wenige Funktionen
+braucht (`jsq`, `kidName`, `adlerCardDraw`, `cardApplyGlow`, `hashPin`). Das ist kein
+Blocker für den Start, aber ein Hinweis: Wer die Kinder-App schlank will, zieht die
+Adler-Karte (`elternCardOpen`, `adlerCardDataFromChild`, `adlerCardDraw`) in ein eigenes
+Modul, das Eltern- und Kinder-App teilen; dann entfällt `md-eltern-portal.js` (174 KB) aus
+der Liste. `md-kabine.js` selbst enthält ab Zeile 1687 auch Trainer-Oberfläche
+(`renderTrainerUI`) — sie stört nicht, gehört aber nicht in eine Kinder-App.
+
+**Folge für Abschnitt 3:** Welle 1 der Kinder-App ist die Zehnerliste; eine Welle 2 gibt
+es nicht, weil nichts weiter gebraucht wird. `MODUL_WACHE` prüft dieselben zehn Namen.
+
+### Quiz-Route mit der Zehnerliste
+
+Zwei Befunde:
+
+1. `showMilestoneHint is not defined` — die Startkette in `core.js:277` ruft die Funktion
+   aus `md-analyse.js` **ohne** `typeof`-Schutz auf. Im Eltern-Loader fällt das nicht auf,
+   weil dort alles geladen wird. Für die Kinder-App: Schutz in `core.js` nachziehen (die
+   Regel aus `CLAUDE.md`), nicht `md-analyse.js` mitladen.
+2. Ohne Eltern-Sitzung zeigt das Quiz „Wer bist du?“ mit **allen 15 Kindern** zur Auswahl.
+   `tqEigeneKinder()` erkennt „eigene Kinder“ nur an der Eltern-Sitzung
+   (`SB_TOKEN_KEY_ELTERN`) und an `eltern_kinder`. Für die Kind-Sitzung braucht die
+   Funktion einen dritten Zweig über `kind_status()`; sonst kann ein Kind im Quiz unter
+   jedem Namen spielen und Federn für andere sammeln.
+
+### Die zwölf RPCs der Kabine, dazu drei aus Quiz, Quests und Abzeichen
+
+| RPC | Prüfung heute | Liefert | Für die Kind-Sitzung |
+|---|---|---|---|
+| `kader_namen` | `auth.uid()` gesetzt | id, Name, Nummer aller aktiven Kinder | unverändert |
+| `team_gallery` | keine | je Kind Name, Nummer, Spitzname, Verein, Foto, Trainingszahl **und `radios` aus `spielerprofile`** | **Befund, siehe unten** |
+| `team_federn_total` | keine | Team-Summe | unverändert |
+| `team_meilensteine` | `auth.uid()` fürs Schreiben | Team-Zähler | unverändert |
+| `wahl_ergebnis` | `auth.uid()` | Stimmenzahlen | unverändert |
+| `kind_rolle_heute` | `is_trainer() or is_parent_of` | Rolle des Kindes heute | `or is_kind_selbst` |
+| `meine_rollen` | `is_parent_of or is_trainer` | Anzahl Spiele je Rolle (eigenes Kind) | `or is_kind_selbst` |
+| `meine_ziele` | `is_parent_of or is_trainer` | offene Entwicklungsziele (Text, eigenes Kind) | `or is_kind_selbst` |
+| `xp_award_event` | `is_trainer() or is_parent_of` | schreibt Federn | `or is_kind_selbst`, dazu `kind_zeit_uebrig()` |
+| `album_tausch_annehmen` | `is_trainer() or is_parent_of` | schreibt Sticker | `or is_kind_selbst`, dazu `kind_zeit_uebrig()` |
+| `wq_done` (Quiz) | `is_trainer() or is_parent_of` | erledigte Wissensquiz-Kennungen | `or is_kind_selbst` |
+| `xp_events_for` (Abzeichen) | `is_trainer() or is_parent_of` im `where` | Federn-Ereignisse des Kindes | `or is_kind_selbst` |
+| `xp_award_teamquest` (Quests) | nur `is_trainer()` | schreibt Team-Belohnung | unverändert — Kinder vergeben keine Team-Belohnung |
+| `kind_team`, `kind_spiel_stats`, `kind_nominierungsstatus` | `is_parent_of` | Team-Einteilung, **Aktionszahlen**, Nominierung | **nicht** für Kinder öffnen; werden nur von Eltern-Portal und Kasse gerufen, nicht von der Kabine |
+
+Keiner der zwölf Kabinen-RPCs liefert Bewertungszahlen des eigenen Kindes. `meine_rollen`
+liefert Einsatzzahlen je Position, das ist eine Statistik, keine Bewertung; sie steht heute
+schon in „Wo spiele ich?“.
+
+**Befund `team_gallery`:** Der RPC gibt ohne jede Prüfung die `radios` (Bewertungswerte)
+**aller** Kinder an jede angemeldete Sitzung, also heute schon an die Kabine in der
+Eltern-App. `galleryCardData()` in `md-kabine.js` zeichnet daraus keine Zahl, aber die drei
+Stärke-Abzeichen und das Farbthema der Karte jedes Mitspielers. Für die Kinder-App gehört
+das serverseitig aufgelöst: ein RPC `team_gallery_kind()` liefert Abzeichen und Thema
+fertig berechnet und keine Rohwerte. Das verbessert nebenbei auch die Eltern-Kabine.
+
+### Die drei Direktabfragen
+
+- `rueckmeldungen` (Zeile 708, Countdown): nur `termin_id, spieler_id, status` der eigenen
+  Kinder, um ein abgesagtes Spiel im Countdown zu überspringen. Für die Kind-Sitzung ein
+  kleiner RPC `kind_abgesagt(p_spieler)` (Liste der Termin-IDs mit Status `abgesagt`),
+  **keine** Policy auf `rueckmeldungen`.
+- `kind_pause` (Zeile 990, Genesungsgrüße): Policy `kind_pause_sel_gruesse` erlaubt schon
+  heute jedem Angemeldeten `gruesse_ok = true`. **Keine Änderung nötig** — das Paket nannte
+  oben fälschlich eine Trainer-Policy; die gilt nur fürs Schreiben.
+- `kader` (Zeile 68, Geburtstag): `id, geb` der eigenen Kinder. Die neue select-Policy
+  `is_kind_selbst(id)` deckt das ab.
+
+### Was sich am Paket ändert
+
+1. Abschnitt 3, Loader: Zehnerliste als Welle 1, keine Welle 2 (oben).
+2. Abschnitt 1, RPCs: die Tabelle oben ersetzt die Aufzählung; neu dazu `team_gallery_kind()`
+   und `kind_abgesagt()`; `kind_pause` braucht nichts.
+3. Abschnitt 4: `tqEigeneKinder()` in `quiz.js` bekommt den Kind-Zweig; `showMilestoneHint`
+   in `core.js` wird `typeof`-geschützt.
+4. Abschnitt 6, Prüffälle: Prüffall 4 (verbotene Tabellen) prüft zusätzlich, dass die
+   Kinder-App `team_gallery` nicht mehr ruft, sondern `team_gallery_kind`.
+
+Damit ist Schritt 1 abgeschlossen; Schritt 2 (Migration) kann beginnen.
