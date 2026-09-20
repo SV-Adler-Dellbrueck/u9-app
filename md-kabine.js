@@ -13,25 +13,54 @@ function kabineAktiv(){ try{return localStorage.getItem(KABINE_AKTIV_KEY)==="1";
 function kabineAktivSet(an){ try{ an?localStorage.setItem(KABINE_AKTIV_KEY,"1"):localStorage.removeItem(KABINE_AKTIV_KEY); }catch(e){} }
 const KABINE_MAX_MIN=60;               // PO: nach einer Stunde ist Kabinen-Zeit vorbei
 const KABINE_START_KEY="adler_kabine_start";
-/* Die Uhr laeuft ueber einen gespeicherten Startzeitpunkt, nicht ueber einen Timer im
-   Speicher: so wirkt das Limit auch nach einem Reload (der Kids-Modus ueberlebt den ja). */
+/* Zwei Uhren, ein Anzeigefeld.
+
+   Auf dem Eltern- oder Trainergeraet laeuft die Uhr ueber einen gespeicherten
+   Startzeitpunkt, nicht ueber einen Timer im Speicher: so wirkt das Limit auch nach
+   einem Reload (der Kids-Modus ueberlebt den ja).
+
+   Auf dem Kindergeraet waere genau das wirkungslos - localStorage laesst sich loeschen,
+   die App neu installieren. Dort zaehlt der Server: kind_tick() bucht je Minute eine
+   Minute auf kind_sitzung und gibt die Restzeit zurueck, und kind_zeit_uebrig() sperrt
+   in der RLS jedes Schreiben, sobald das Tageslimit erreicht ist. Ein Neustart dreht
+   nichts zurueck, weil die Oberflaeche hier nichts entscheidet. */
+let _kgRestMin=null;                   // letzte Restminuten vom Server (nur Kindergeraet)
+function kabineKindModus(){ return !!window._kindGeraetModus; }
 function kabineZeitRestMin(){
+  if(kabineKindModus())return _kgRestMin==null?KABINE_MAX_MIN:_kgRestMin;
   try{
     const t0=parseInt(localStorage.getItem(KABINE_START_KEY)||"0",10);
     if(!t0)return KABINE_MAX_MIN;
     return KABINE_MAX_MIN-Math.floor((Date.now()-t0)/60000);
   }catch(e){return KABINE_MAX_MIN;}
 }
+/* Eine Minute verbrauchen. Nur auf dem Kindergeraet, nur wenn die App sichtbar ist -
+   ein weggelegtes Handy soll die Appzeit des Tages nicht aufbrauchen. */
+async function kgTick(){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/kind_tick`,{method:"POST",headers:sbAuthHeaders(),body:"{}"});
+    if(!r.ok)return null;
+    const d=await r.json();
+    return (d&&d.ok)?d:null;
+  }catch(e){ return null; }
+}
 function kabineZeitEnde(){
   clearInterval(window._kabZeitTimer); window._kabZeitTimer=null;
-  isKidsMode=false; kabineAktivSet(false);
-  try{localStorage.removeItem(KABINE_START_KEY);}catch(e){}
+  isKidsMode=false;
   document.getElementById("kabexit")?.remove();
   document.getElementById("kabine")?.remove();
+  if(kabineKindModus()){ kgSchluss(); return; }   // Kindergeraet: es gibt kein Dahinter
+  kabineAktivSet(false);
+  try{localStorage.removeItem(KABINE_START_KEY);}catch(e){}
   if(typeof toast==="function")toast("⏰ Kabinen-Zeit vorbei – bis zum nächsten Mal!");
   if(typeof elternDashLoad==="function")elternDashLoad(); // zurück in den Eltern-Bereich
 }
-function kabineZeitTick(){
+async function kabineZeitTick(){
+  if(kabineKindModus()){
+    if(document.visibilityState==="hidden")return;
+    const d=await kgTick();
+    if(d&&typeof d.rest_min==="number")_kgRestMin=d.rest_min;
+  }
   const rest=kabineZeitRestMin();
   if(rest<=0){ kabineZeitEnde(); return; }
   const el=document.getElementById("kab-zeit");
@@ -43,10 +72,12 @@ async function kabineOpen(){
   window._nutzungRolle="kind";   // Nutzungslog: die Kabine ist der Kinderbereich
   isKidsMode=true;
   kabineAktivSet(true);
-  try{ if(!localStorage.getItem(KABINE_START_KEY))localStorage.setItem(KABINE_START_KEY,String(Date.now())); }catch(e){}
+  // Der Startzeitpunkt gilt nur fuer die Kabine im Eltern-Bereich; auf dem Kindergeraet
+  // fuehrt kind_sitzung das Konto, siehe kabineZeitRestMin.
+  if(!kabineKindModus()){ try{ if(!localStorage.getItem(KABINE_START_KEY))localStorage.setItem(KABINE_START_KEY,String(Date.now())); }catch(e){} }
   if(kabineZeitRestMin()<=0){ kabineZeitEnde(); return; }   // abgelaufen: gar nicht erst oeffnen
   clearInterval(window._kabZeitTimer);
-  window._kabZeitTimer=setInterval(kabineZeitTick,30000);
+  window._kabZeitTimer=setInterval(kabineZeitTick,kabineKindModus()?60000:30000);
   document.getElementById("kabine-splash")?.remove(); // Vorhang gegen Dashboard-Aufblitzen
   document.getElementById("kabine")?.remove();
   const m=document.createElement("div");m.id="kabine";
@@ -82,7 +113,11 @@ async function kabineOpen(){
     }
   }catch(e){}})();
   kabineHome();
-  try{const r=await fetch(`${SB_URL}/rest/v1/rpc/team_gallery`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"});if(r.ok)kabineGalleryData=await r.json();}catch(e){}
+  /* v593: team_gallery_kind statt team_gallery. Beide liefern dieselben Karten; die
+     Kinder-Fassung schickt aber statt der Bewertungsrohwerte jedes Kindes nur die drei
+     staerksten Merkmale als Schluessel. Gezeichnet wurde daraus ohnehin nur das
+     Staerke-Abzeichen - gesendet wurde bisher alles, auch an die Eltern-Kabine. */
+  try{const r=await fetch(`${SB_URL}/rest/v1/rpc/team_gallery_kind`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"});if(r.ok)kabineGalleryData=await r.json();}catch(e){}
   if(typeof loadTeamConfig==="function"){try{await loadTeamConfig();}catch(e){}}
 }
 /* C1 – Kollektives Adler-Level: die ganze Mannschaft steigt gemeinsam (Summe aller Federn,
@@ -704,9 +739,20 @@ async function _kabNaechsterTermin(){
   const kids=(window._elternKids||[]).map(k=>k.spieler_id).filter(Boolean);
   if(!kids.length)return liste[0];
   const abgesagt={};
+  /* Auf dem Kindergeraet fragt die Kabine nicht `rueckmeldungen` ab - dort steht neben
+     der Absage auch, wer wann was geschrieben hat. kind_abgesagt() liefert genau das,
+     was der Countdown braucht: die Termin-IDs, fuer die dieses Kind abgesagt hat. */
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?termin_id=in.(${liste.map(t=>t.id).join(",")})&spieler_id=in.(${kids.join(",")})&select=termin_id,spieler_id,status`,{headers:sbAuthHeaders()});
-    if(r.ok)((await r.json())||[]).forEach(z=>{ (abgesagt[z.termin_id]=abgesagt[z.termin_id]||{})[z.spieler_id]=z.status; });
+    if(kabineKindModus()){
+      for(const id of kids){
+        const r=await fetch(`${SB_URL}/rest/v1/rpc/kind_abgesagt`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({p_spieler:id})});
+        if(!r.ok)return liste[0];
+        ((await r.json())||[]).forEach(tid=>{ (abgesagt[tid]=abgesagt[tid]||{})[id]="abgesagt"; });
+      }
+    }else{
+      const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?termin_id=in.(${liste.map(t=>t.id).join(",")})&spieler_id=in.(${kids.join(",")})&select=termin_id,spieler_id,status`,{headers:sbAuthHeaders()});
+      if(r.ok)((await r.json())||[]).forEach(z=>{ (abgesagt[z.termin_id]=abgesagt[z.termin_id]||{})[z.spieler_id]=z.status; });
+    }
   }catch(e){ return liste[0]; }
   return liste.find(t=>kids.some(id=>((abgesagt[t.id]||{})[id]||"")!=="abgesagt"))||null;
 }
@@ -1415,15 +1461,21 @@ function kabineGalleryNav(dir){
   kabineIdx=(kabineIdx+dir+kabineGalleryData.length)%kabineGalleryData.length;
   kabineRenderGallery();
 }
+/* v593: Die Karte entsteht jetzt aus `staerken` - einer Liste von hoechstens drei
+   Merkmalsschluesseln, die der Server sortiert hat. Die Farbe leitet sich aus der
+   Dimension des staerksten Merkmals ab (feldDimVon in views.js, gespeist aus DIMS_FELD)
+   statt aus dem groessten Dimensionsmittel; die Zahlen dafuer verlassen die Datenbank
+   nicht mehr. Ohne Bewertung traegt die Karte „NEUE SAISON" - vorher stand dort
+   „TECHNIK", weil bei lauter Nullen die erste Dimension gewann. */
 function galleryCardData(g){
-  const v=typeof g.radios==="string"?safeParse(g.radios,{}):(g.radios||{});
-  const strengths=Object.keys(CARD_BADGES).map(key=>({key,val:v[key]||0})).sort((a,b)=>b.val-a.val).slice(0,3);
-  const {dims:ds}=calcScores(v,DIMS_FELD);
-  const topDim=Object.entries(ds).sort((a,b)=>b[1]-a[1])[0]||["tech",0];
-  const theme=g.tw?CARD_THEMES.keeper:(CARD_THEMES[topDim[0]]||CARD_THEMES.tech);
+  const keys=(Array.isArray(g.staerken)?g.staerken:(typeof g.staerken==="string"?safeParse(g.staerken,[]):[]))
+    .filter(k=>CARD_BADGES[k]).slice(0,3);
+  const dim=keys.length&&typeof feldDimVon==="function"?feldDimVon(keys[0]):null;
+  const theme=g.tw?CARD_THEMES.keeper
+    :(keys.length?(CARD_THEMES[dim]||CARD_THEMES.tech):CARD_THEMES.neu);
   return {name:g.name,nr:g.nr,tw:!!g.tw,fotoPath:g.foto_path,spitzname:g.spitzname||null,
     pos:g.tw?"Torwart":"",fuss:"",alter:null,
-    badges:strengths.map(x=>CARD_BADGES[x.key]),theme,
+    badges:keys.map(k=>CARD_BADGES[k]),theme,
     counts:{trainings:g.trainings||0,tore:null,paraden:null,aktionen:null,spiele:null,quizRichtig:0,quizBloecke:0}};
 }
 // Erwachsenen-Gate der Kabine: fester Code statt Rechenaufgabe (die war für U9 zu leicht).
@@ -1739,8 +1791,36 @@ function kgKabine(s){
      kommt aus kind_status(). */
   window._elternKids=[{spieler_id:s.spieler_id,label:"",kader:{id:s.spieler_id,name:s.name,nr:s.nr,tw:s.tw}}];
   window._kindGeraetModus=true;      // die Kabine blendet damit den Erwachsenen-Ausgang aus
+  _kgRestMin=(typeof s.rest_min==="number")?s.rest_min:null;
   document.getElementById("kg-kopplung")?.remove();
+  // Ist die Appzeit schon verbraucht, geht die Kabine gar nicht erst auf - sonst blitzte
+  // sie beim Neustart kurz auf, bevor der Schluss-Bildschirm sie wieder zumacht.
+  if(_kgRestMin!==null&&_kgRestMin<=0){ kgSchluss(); return; }
   if(typeof kabineOpen==="function")kabineOpen();
+}
+
+/* Die Appzeit ist auf. Ein ruhiger Bildschirm ohne Bedienelemente: Es gibt nichts zu
+   entscheiden, und ein Knopf wuerde eine Tuer versprechen, die es nicht gibt. Der Text
+   steht so im Auftragspaket. Er ersetzt die Kabine, laesst sich nicht wegtippen und
+   kommt nach einem Neustart wieder, weil der Server die Minuten fuehrt. */
+function kgSchluss(){
+  document.getElementById("kg-kopplung")?.remove();
+  document.getElementById("kabine")?.remove();
+  document.getElementById("kg-schluss")?.remove();
+  document.body.style.background="#0f172a";
+  const m=document.createElement("div"); m.id="kg-schluss"; m.tabIndex=-1;
+  m.style.cssText="position:fixed;inset:0;z-index:10060;background:linear-gradient(160deg,#0f172a,#1e3a8a);color:#fff;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center";
+  const rest=_kgStatus&&_kgStatus.limit_min===0;
+  m.innerHTML=`<div style="max-width:320px">
+    <div style="font-size:58px">🦅</div>
+    <div style="font-size:21px;font-weight:900;line-height:1.35;margin-top:10px">Für heute ist die Kabine zu — bis morgen!</div>
+    <div style="font-size:13.5px;line-height:1.65;margin-top:12px;color:#dbeafe">${rest
+      ? "Heute ist keine Appzeit eingestellt. Deine Eltern können das ändern."
+      : "Deine Appzeit für heute ist aufgebraucht. Morgen früh geht die Tür wieder auf."}</div>
+    <div style="font-size:13.5px;line-height:1.65;margin-top:14px;color:#dbeafe">Und jetzt: raus und kicken! ⚽</div>
+  </div>`;
+  document.body.appendChild(m);
+  try{ m.focus(); }catch(e){}
 }
 
 let _kgCode="";

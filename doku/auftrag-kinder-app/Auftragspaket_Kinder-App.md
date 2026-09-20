@@ -640,3 +640,94 @@ Gerät fragt keine der Tabellen ab, die den Eltern gehören.
 
 **Noch offen:** der erste echte Durchlauf auf einem Gerät. Aus dieser Sitzung heraus geht
 das nicht, der Proxy lässt keine Verbindung zu Supabase zu.
+
+---
+
+## Nachtrag Schritt 5 — die Kabine im Kind-Modus (20.09.2026, v593)
+
+Die Kabine unterscheidet jetzt an einer einzigen Stelle, auf wessen Gerät sie läuft:
+`kabineKindModus()` liest `window._kindGeraetModus`, das der Einstieg aus Schritt 4 setzt.
+Daran hängen fünf Änderungen.
+
+**Die Uhr läuft auf dem Server.** `kabineZeitRestMin()` liest auf dem Kindergerät nicht
+mehr den gespeicherten Startzeitpunkt, sondern die Restminuten aus `kind_status()`; im
+Takt von einer Minute bucht `kind_tick()` eine Minute auf `kind_sitzung` und liefert die
+neue Restzeit. Ist die App im Hintergrund, wird nicht gebucht — ein weggelegtes Tablet
+verbraucht keine Appzeit. Auf dem Eltern- und Trainergerät bleibt alles, wie es war:
+60 Minuten je Öffnung, gerechnet aus `localStorage`. Der Schlüssel `adler_kabine_start`
+entsteht auf dem Kindergerät gar nicht mehr.
+
+**Der Schluss-Bildschirm** (`kgSchluss`) tritt an die Stelle der Kabine, sobald die
+Appzeit aufgebraucht ist — beim Tick ebenso wie beim Neustart, denn `kind_status()`
+liefert dann `rest_min = 0` und die Kabine geht gar nicht erst auf. Er trägt den Text aus
+diesem Paket, kein Bedienelement und keinen Weg zurück; steht die Appzeit des Tages auf
+null, sagt er das ausdrücklich („Deine Eltern können das ändern"). Der Rückweg ins
+Eltern-Dashboard (`elternDashLoad`) läuft nur noch auf dem Eltern-Gerät — auf dem
+Kindergerät gibt es kein Dahinter.
+
+**Der Countdown** fragt `kind_abgesagt(p_spieler)` statt `rueckmeldungen`; die Auswertung
+(„übersprungen wird nur, wo ALLE Kinder abgesagt haben") bleibt Wort für Wort dieselbe.
+
+**Die Team-Galerie** kommt aus `team_gallery_kind()` — und zwar in beiden Kabinen, nicht
+nur auf dem Kindergerät. `galleryCardData()` zeichnet aus `staerken`, einer Liste von
+höchstens drei Merkmalsschlüsseln, die der Server sortiert hat. Die Farbe leitet
+`feldDimVon()` (neu in `views.js`, gespeist aus `DIMS_FELD`) aus dem stärksten Merkmal ab.
+Nebenwirkung, die eine Verbesserung ist: Ohne Bewertung trägt die Karte jetzt
+„NEUE SAISON" statt „TECHNIK" — bei lauter Nullen gewann vorher einfach die erste
+Dimension, und drei „stärkste" Merkmale wurden aus dem Nichts sortiert. Im Bestand
+betrifft das **alle 14 Kinder**: der Saisonstart hat die Bewertungen ins Archiv geräumt.
+
+**Das Quiz** erkennt auf dem Kindergerät genau ein eigenes Kind. `tqEigeneKinder()` hat
+einen dritten Zweig über `kind_status()` bekommen; vorher zeigte das Quiz dort „Wer bist
+du?" mit dem ganzen Kader, und ein Kind hätte unter jedem Namen Federn sammeln können.
+
+Dazu der `typeof`-Schutz für `showMilestoneHint` — **an zwei Stellen**, nicht an einer:
+`core.js:294` (nach der Anmeldung) und `boot.js:362` (beim Start). Der Nachtrag zu
+Schritt 1 nannte nur die erste.
+
+### Vier Befunde, die zu melden sind
+
+1. **`my_child_card()` kannte `is_kind_selbst` nicht.** Der RPC steht in
+   `md-eltern-portal.js`, nicht in `md-kabine.js`, und fehlte deshalb in der RPC-Tabelle
+   aus Schritt 1; Schritt 2 hat ihn folglich nicht erweitert. Auf dem Kindergerät hätte
+   „Meine Karte" — eine der zentralen Kacheln der Kabine — mit „Karte konnte nicht geladen
+   werden" geantwortet. Ihn einfach zu erweitern wäre der kurze Weg gewesen, hätte dem
+   Kind aber seine Bewertungsrohwerte geschickt. Stattdessen:
+   `my_child_card_kind()` (Migration `20260920_my_child_card_kind.sql`), Feld für Feld
+   dieselbe Karte, aber `staerken` statt `radios`. Die Zähler (Tore, Paraden, Aktionen,
+   Spiele, Trainings, Quiz) bleiben — das ist eine Statistik über das, was das Kind selbst
+   getan hat, und steht heute schon auf seiner Karte im Eltern-Bereich.
+   Die Sortierung der Stärken zog dabei aus `team_gallery_kind()` in eine eigene Funktion
+   `staerken_von(name)` um, damit sie nicht zweimal existiert; `team_gallery_kind()` ruft
+   sie jetzt auf und liefert nachweislich dasselbe (14 von 14 Kindern unverändert, dazu
+   eine Probe mit `f_pass 4, f_abschluss 3, f_tempo 2, tw_fang 4` in einer zurückgerollten
+   Transaktion: genau die drei Feldmerkmale, Torwart-Merkmal draußen).
+
+2. **Der Prüfsatz v592 war an einer Stelle blind.** Er prüfte „das Kindergerät fragt keine
+   fremden Tabellen ab" gegen `s.gesendet` — und das protokollierte nur Nicht-GET. Jeder
+   Lesezugriff ist ein GET und tauchte dort nie auf; die Frage konnte nie mit Nein
+   beantwortet werden. Das Prüfwerkzeug führt jetzt zusätzlich `abgefragt` mit **jedem**
+   Aufruf; v592 und v593 messen dagegen. `gesendet` bleibt unverändert, damit die anderen
+   Prüfsätze weiter zählen, was geschrieben wurde.
+
+3. **Und sofort fand die neue Messung etwas:** Die Startkette in `boot.js:362` lief auch
+   auf dem Kindergerät und begann mit `loadDB()` — einer Abfrage auf `spielerprofile`,
+   der Tabelle mit den Bewertungen aller Kinder. Die RLS gibt dort nichts heraus, aber
+   eine Anfrage, die es nie geben dürfte, überlässt man nicht der RLS. Auf dem
+   Kindergerät lädt jetzt nur noch der Kader (die RLS gibt genau das gekoppelte Kind);
+   `loadDB()` und `loadCustomForms()` — die Übungsdatenbank des Trainers — bleiben aus.
+
+4. **`kabine_config` ist für die Kind-Sitzung gesperrt** (Schritt 3a: `NOT ist_anonym()`),
+   und das ist richtig so: Dort steht der Ausgangs-Code der Eltern-Kabine, den es auf dem
+   Kindergerät nicht gibt. Gemessen und bewusst so gelassen.
+
+Geprüft im Bestand: `termine`, `quiz_progress`, `team_config`, `kabinen_wahl`,
+`album_fotos`, `kind_pause`, `kinder_codex`, `skill_woche`, `team_quests` und
+`wochen_challenge` lassen die Kind-Sitzung über `sitzung_gueltig()` oder eine offene
+Leseregel durch; `match_actions` ist trainer-only, wird aber nur von `md-voice.js`
+gelesen, und das Modul lädt die Kinder-App nicht.
+
+Prüfsatz `tests/checks/v593-kinder-kabine.js` mit fünf Messungen: Server-Uhr und die
+richtigen Quellen, Karte und Quiz kennen genau ein Kind, die Galerie zeichnet aus
+`staerken` (mit Gegenprobe ohne Bewertung und für den Torwart), Schluss-Bildschirm ohne
+Bedienelement, und ein Neustart hilft nicht. Offen bleibt Schritt 7.

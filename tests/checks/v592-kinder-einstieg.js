@@ -109,8 +109,10 @@ module.exports = async function (h) {
         text: txt.slice(0, 90)
       };
     });
-    /* Was dieses Geraet WIRKLICH abgefragt hat - die Attrappe hat jeden Aufruf gesehen. */
-    const angefasst = VERBOTEN.filter(t => s.gesendet.some(x => x.pfad.includes("/" + t)));
+    /* Was dieses Geraet WIRKLICH abgefragt hat - die Attrappe hat jeden Aufruf gesehen.
+       v593: gegen `abgefragt` statt `gesendet`. `gesendet` kennt nur Schreibvorgaenge;
+       ein Lesezugriff auf rueckmeldungen ist ein GET und tauchte dort nie auf. */
+    const angefasst = VERBOTEN.filter(t => s.abgefragt.some(x => x.pfad.includes("/" + t)));
     if (angefasst.length) probleme.push("c) das Kindergerät fragt fremde Tabellen ab: " + angefasst.join(", "));
     zeilen.push(`c) gekoppelt: Kabine ${r.kabine ? "offen" : "zu"} · Kind ${r.name} · Ausgang ${r.ausgang ? "sichtbar" : "aus"}`);
     if (!r.kabine) probleme.push("c) die Kabine öffnet nicht: " + r.text);

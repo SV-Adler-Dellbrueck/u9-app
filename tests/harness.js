@@ -84,12 +84,19 @@ async function starten(opt = {}) {
     colorScheme: opt.scheme || "light"
   });
   const antwort = opt.supabase || supabaseAttrappe({});
-  const gesendet = [];                                   // was die App an "Supabase" schickt
+  const gesendet = [];                                   // was die App an "Supabase" SCHREIBT (Nicht-GET)
+  /* v593: `gesendet` protokolliert nur Nicht-GET - fuer Schreibvorgaenge genau richtig,
+     fuer die Frage „welche Tabelle hat dieses Geraet ueberhaupt angefasst?" aber blind:
+     Lesezugriffe sind GETs. Der v592-Pruefsatz stellte die Frage gegen `gesendet` und
+     konnte sie deshalb nie mit Nein beantworten. `abgefragt` sieht jeden Aufruf. */
+  const abgefragt = [];                                  // JEDER Aufruf, auch Lesezugriffe
   await ctx.route("**/*", async r => {
     const req = r.request(), u = new URL(req.url());
     if (u.hostname.includes("supabase.co")) {
       // suche = Abfragezeichenkette: dort steht z. B. on_conflict=… (Upsert statt Anfuegen)
-      if (req.method() !== "GET") gesendet.push({ pfad: u.pathname, suche: u.search, methode: req.method(), body: (() => { try { return JSON.parse(req.postData() || "null"); } catch (e) { return req.postData(); } })() });
+      const satz = { pfad: u.pathname, suche: u.search, methode: req.method(), body: (() => { try { return JSON.parse(req.postData() || "null"); } catch (e) { return req.postData(); } })() };
+      abgefragt.push(satz);
+      if (req.method() !== "GET") gesendet.push(satz);
       const a = antwort(u, req) || { status: 200, body: "[]" };
       return r.fulfill({ status: a.status, contentType: "application/json", body: a.body });
     }
@@ -128,7 +135,7 @@ async function starten(opt = {}) {
      kein Kader vom Server, kein Icon-Font. */
   const bekannt = /favicon|manifest|404|Failed to load resource|setting .className.|unknown error occurred when fetching the script/i;
   return {
-    browser, ctx, page, gesendet,
+    browser, ctx, page, gesendet, abgefragt,
     fehler: () => fehler.filter(t => !bekannt.test(t)),
     schliessen: async () => { await ctx.close(); if (!opt.browser) await browser.close(); }
   };
