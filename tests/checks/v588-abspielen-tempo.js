@@ -38,7 +38,8 @@ module.exports = async function (h) {
     // a) sechs Bilder
     const n = skzBildZahl(spec); out.n = n;
     const weit = (a, b) => (a || []).reduce((m, e, i) => { const z = (b || [])[i]; return z ? Math.max(m, Math.hypot(e[0] - z[0], e[1] - z[1])) : m; }, 0);
-    const b4 = _skzBild(spec, 3), b5 = _skzBild(spec, 4), b6 = _skzBild(spec, 5);
+    /* v589: die letzten drei Bilder – Pass in die Mitte, Abschluss, Tor –, gleich wie viele davor liegen. */
+    const b4 = _skzBild(spec, n - 3), b5 = _skzBild(spec, n - 2), b6 = _skzBild(spec, n - 1);
     out.a = { sp45: Math.round(weit(b4.s, b5.s)), ball45: Math.round(weit(b4.b, b5.b)), sp56: Math.round(weit(b5.s, b6.s)), ball56: Math.round(weit(b5.b, b6.b)),
               ballY6: (b6.b || [[0, 0]])[0][1], wege6: (b6.p || []).length, wege5: (b5.p || []).length, text5: ((b5.tx || [])[0] || [])[2] || "", text6: ((b6.tx || [])[0] || [])[2] || "" };
     // b) Zeiten
@@ -71,7 +72,7 @@ module.exports = async function (h) {
   if (r.fehlt.length) return h.ergebnis("Abspielen: Bild 5 und 6, langsamer", false, [r.fehlt.join(", ") + " fehlt"]);
 
   // a)
-  if (r.n !== 6) probleme.push(`${r.n} Bilder statt sechs`);
+  if (r.n < 6) probleme.push(`${r.n} Bilder – Abschluss und Tor fehlen`);
   if (r.a.sp45 < 20 || r.a.ball45 < 20) probleme.push(`Bild 4→5 bewegt zu wenig: Spieler ${r.a.sp45}, Ball ${r.a.ball45}`);
   if (r.a.sp56 !== 0 || r.a.ball56 < 60) probleme.push(`Bild 5→6: Spieler ${r.a.sp56} (soll 0), Ball ${r.a.ball56} (soll ≥ 60 – der Schuss geht übers Feld)`);
   if (r.a.ballY6 > 24) probleme.push(`Bild 6: der Ball liegt bei y ${r.a.ballY6} – im Tor wäre er oberhalb von 24`);
@@ -95,7 +96,7 @@ module.exports = async function (h) {
   if (fehler.length) probleme.push("Konsole: " + fehler[0]);
 
   if (!probleme.length) {
-    zeilen.push(`Sechs Bilder: 4→5 Spieler ${r.a.sp45} · Ball ${r.a.ball45}, 5→6 nur der Ball ${r.a.ball56} bis y ${r.a.ballY6} (im Tor), Bild 6 ohne Wege – „${r.a.text5}“ · „${r.a.text6}“`);
+    zeilen.push(`${r.n} Bilder, die letzten drei: Pass→Abschluss Spieler ${r.a.sp45} · Ball ${r.a.ball45}, 5→6 nur der Ball ${r.a.ball56} bis y ${r.a.ballY6} (im Tor), Bild 6 ohne Wege – „${r.a.text5}“ · „${r.a.text6}“`);
     zeilen.push(`Gleitzeit: 16 Punkte ${r.b.kurz} ms · 84 Punkte ${r.b.mittel} ms · 200 Punkte ${r.b.lang} ms; Stand ${r.b.stand} ms, Schnitt ${r.b.schnitt} ms`);
     zeilen.push(`Am DOM: Bild 1 stand ${r.c.erstBewegt} ms, der erste Übergang lief ${r.c.dauer} ms`);
   }

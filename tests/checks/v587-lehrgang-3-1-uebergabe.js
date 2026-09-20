@@ -85,25 +85,29 @@ module.exports = async function (h) {
   if (b[0] && !innen(b[0].FR, 133)) probleme.push(`Bild 1: FR bei x ${b[0].FR[0]} – er gehört an die Innenkante (Kreisrand an x 133)`);
   if (b[2] && !innen(b[2].FL, 47)) probleme.push(`Bild 3: FL bei x ${b[2].FL[0]} – er gehört an die Innenkante (Kreisrand an x 47)`);
   if (b[1] && innen(b[1].FL, 47)) probleme.push("Bild 2: FL steht schon an der Innenkante, obwohl er den Ball hat");
-  if (b[3]) {
-    if (b[3].FR[1] > 92) probleme.push(`Bild 4: FR bei y ${b[3].FR[1]} – er gehört ans Korridorende (nicht tiefer als 92)`);
-    const pass = b[3].p.find(p => p[4] === "p");
+  /* v589: Das Bild „Pass in die Mitte" ist nicht mehr Bild 4 – zwischen Pass nach rechts und Angriff liegt
+     seit v589 das Dribbling außen am Dummy. Gesucht wird deshalb nach dem Bildtext, nicht nach der Stelle. */
+  const bm = b.find(x => /Pass in die Mitte/.test(x.tx));
+  if (!bm) probleme.push("Kein Bild trägt den Text „Pass in die Mitte“");
+  if (bm) {
+    if (bm.FR[1] > 92) probleme.push(`Bild 4: FR bei y ${bm.FR[1]} – er gehört ans Korridorende (nicht tiefer als 92)`);
+    const pass = bm.p.find(p => p[4] === "p");
     if (!pass) probleme.push("Bild 4: kein Pass");
     else {
-      const dJ = Math.hypot(pass[2] - b[3].J[0], pass[3] - b[3].J[1]);
+      const dJ = Math.hypot(pass[2] - bm.J[0], pass[3] - bm.J[1]);
       if (dJ > 20) probleme.push(`Bild 4: der Pass endet ${Math.round(dJ)} Punkte vom Jäger entfernt`);
       if (Math.abs(pass[3] - pass[1]) > 10) probleme.push(`Bild 4: der Pass fällt um ${Math.abs(pass[3] - pass[1])} Punkte – er soll flach in die Mitte kommen, nicht steil`);
     }
     /* Der Lauf von FL: jeder Laufweg links, der die Tellerlinie x 47 kreuzt, tut das oberhalb von y 86. */
-    b[3].p.filter(p => p[4] === "l" && Math.min(p[0], p[2]) < 47 && Math.max(p[0], p[2]) > 47).forEach(p => {
+    bm.p.filter(p => p[4] === "l" && Math.min(p[0], p[2]) < 47 && Math.max(p[0], p[2]) > 47).forEach(p => {
       const t = (47 - p[0]) / (p[2] - p[0]), y = p[1] + t * (p[3] - p[1]);
       if (y >= 86) probleme.push(`Bild 4: ein Laufweg kreuzt die Tellerlinie bei y ${Math.round(y)} – erlaubt ist das erst oberhalb von 86`);
     });
-    const schuss = b[3].p.find(p => p[4] === "s");
+    const schuss = bm.p.find(p => p[4] === "s");
     if (!schuss) probleme.push("Bild 4: der Jäger schließt nicht ab (kein Schuss)");
   }
   // d) Bildtext 4
-  const t4 = b[3] ? b[3].tx : "";
+  const t4 = bm ? bm.tx : "";
   if (/Flanke/i.test(t4)) probleme.push(`Bildtext 4 nennt die Flanke: „${t4}“`);
   if (t4.length > 30 || !t4) probleme.push(`Bildtext 4 hat ${t4.length} Zeichen (höchstens 30): „${t4}“`);
   // e) Legende
@@ -120,7 +124,7 @@ module.exports = async function (h) {
   if (!probleme.length) {
     zeilen.push("Texte: Leitfrage 4 vorn, Provokationen statt Steigerungen, keine Flanke, abgehängtes Tor 1,65 m, Sturzflug, Rotation mit Torwart");
     zeilen.push(`Aufbau: Teller y ${r.tellerY.join("–")} an x ${r.tellerX.join("/")}, Jäger bei y ${b[0].J[1]}`);
-    zeilen.push(`Innenkante: Bild 1 FR x ${b[0].FR[0]} · Bild 3 FL x ${b[2].FL[0]} · Bild 4 FR am Korridorende y ${b[3].FR[1]}, Pass flach zum Jäger, FL kreuzt oberhalb 86`);
+    zeilen.push(`Innenkante: Bild 1 FR x ${b[0].FR[0]} · Bild 3 FL x ${b[2].FL[0]} · „Pass in die Mitte“ FR am Korridorende y ${bm.FR[1]}, Pass flach zum Jäger, FL kreuzt oberhalb 86`);
     zeilen.push(`Bildtext 4: „${t4}“ (${t4.length} Zeichen)`);
     zeilen.push(`Legende: ${r.legRaute.replace(/([a-zß])([A-ZÄÖÜ])/g, "$1 · $2")}`);
   }

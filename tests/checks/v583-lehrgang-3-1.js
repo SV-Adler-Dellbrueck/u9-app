@@ -137,15 +137,16 @@ module.exports = async function (h) {
   if (bib.uebungen.length !== 28) probleme.push(`${bib.uebungen.length} Übungen in der Bibliothek statt 28`);
   /* v587: Stand 2026-09-20-1 – Texte und Bilder nach der Übergabe 3.1 vom 20.09. (siehe v587-lehrgang-3-1-uebergabe.js). */
   /* v588: Stand 2026-09-20-2 – Bild 5 (Abschluss) und Bild 6 (Tor) dazu, damit Phase 2 beim Abspielen zu Ende läuft. */
-  if (bib.stand !== "2026-09-20-2") probleme.push(`Stand „${bib.stand}“ statt „2026-09-20-2“ – ohne neuen Stand holt der Abgleich die Datei nicht`);
+  /* v589: Stand 2026-09-20-3 – Pass nach rechts und Dribbling außen sind zwei Bilder (Charles: „Phase 3 zeigt einen Steilpass"). */
+  if (bib.stand !== "2026-09-20-3") probleme.push(`Stand „${bib.stand}“ statt „2026-09-20-3“ – ohne neuen Stand holt der Abgleich die Datei nicht`);
   if (r.euPruefung.length) probleme.push("_euPruefung: " + r.euPruefung.join(" · "));
   if (r.skizzePruefung.length) probleme.push("_eiSkizzeFehler: " + r.skizzePruefung.join(" · "));
   if (r.abgleich && r.abgleich.angelegt !== 28) probleme.push(`Der Abgleich hat ${r.abgleich && r.abgleich.angelegt} von 28 Übungen angelegt`);
   if (r.zweiter !== null && r.zweiter !== undefined) probleme.push("Der zweite Lauf hat trotz gleichem Stand gearbeitet");
   // b)
   const b = r.bilder || [];
-  const SOLL_WEGE = [2, 2, 3, 5, 1, 0];   // 1+2 · 3+4 · 5+6+7 · 8+8+(8)+8+9 · 9 · – (v587: FL-Lauf zweiteilig, v588: Abschluss und Tor)
-  if (b.length !== 6) probleme.push(`${b.length} Bilder statt sechs`);
+  const SOLL_WEGE = [2, 2, 2, 1, 5, 1, 0];   // 1+2 · 3+4 · 5+6 · 7 · 8+8+(8)+8+9 · 9 · – (v587: FL-Lauf zweiteilig, v588: Abschluss und Tor, v589: Dribbling eigenes Bild)
+  if (b.length !== 7) probleme.push(`${b.length} Bilder statt sieben`);
   else {
     b.forEach((x, i) => {
       if (x.viewBox !== "0 0 180 280") probleme.push(`Bild ${i + 1} steht auf „${x.viewBox}“ statt hochkant`);
@@ -185,7 +186,7 @@ module.exports = async function (h) {
 
   if (!probleme.length) {
     zeilen.push(`Bibliothek: 28 Übungen, Stand ${bib.stand} · Abgleich legt 28 an, der zweite Lauf tut nichts`);
-    zeilen.push(`Sechs Bilder hochkant (${b[0].viewBox}), je vier Spieler, ${b.map(x => x.pfeile).join("+")} Wege, je eigene Beschriftung`);
+    zeilen.push(`Sieben Bilder hochkant (${b[0].viewBox}), je vier Spieler, ${b.map(x => x.pfeile).join("+")} Wege, je eigene Beschriftung`);
     zeilen.push(`Kein Spielerabstand unter 24 (in allen vier Bildern), kein Nummernkreis auf Spieler (≥16), Gerät oder Ball`);
     zeilen.push(`Material: ${r.material.join(" · ")} – der Trainer nicht mitgezählt`);
     zeilen.push(`Übungsart „${r.artVorschlag}“ → „${r.artLabel}“ · keine Kindernamen`);
