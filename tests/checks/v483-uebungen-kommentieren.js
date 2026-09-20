@@ -16,7 +16,8 @@ module.exports = async function (h) {
   ];
   const s = await h.starten({ supabase: h.supabaseAttrappe({
     kader: h.kaderZeilen(), termine,
-    trainingsplan: [{ datum: heute, plan: [{ formIdx: 0, slotLabel: "Hauptteil", formName: "Übung 0", trainer: "" }], slots: [] }],
+    /* v586: Historie und Kommentar hängen am NAMEN der Übung – der Eintrag nennt deshalb eine echte. */
+    trainingsplan: [{ datum: heute, plan: [{ formIdx: 15, slotLabel: "Hauptteil", formName: "4gg2 Ballbesitz", trainer: "" }], slots: [] }],
     einheit_bewertung: [], anwesenheit: [], profiles: [{ name: "Charles", rolle: "trainer" }]
   }), hoehe: 1800 });
   await h.sichtbarMachen(s.page, "#train-sub-planung");
@@ -42,9 +43,13 @@ module.exports = async function (h) {
     await warte(1800);
     const gespeichert = (EVAL_DATA[heute] || [])[0]?.notiz || "";
     // 3) Im Plan sichtbar
-    tpExerciseLog[heute] = [0];
-    const hist = tpExerciseHistoryHtml(0);
-    const komm = tpUebungKommentare(0);
+    /* v586: Die Einsatz-Historie kommt aus den gespeicherten Plänen, nach Namen – der Index
+       wird aus dem Namen bestimmt, nicht umgekehrt. */
+    const idx = tpAllForms().findIndex(f => f.name === "4gg2 Ballbesitz");
+    if (typeof sbToken !== "function" || !sbToken()) window.sbToken = () => "t";
+    _tpEinsatzLauf = null; _tpEinsatz = null; await tpEinsatzLaden();
+    const hist = tpExerciseHistoryHtml(idx);
+    const komm = tpUebungKommentare(idx);
     return { knopfMorgen, knopfHeute, feld: !!feld, feldH, gespeichert, hist, komm };
   }, { heute, morgen });
   const fehler = s.fehler();

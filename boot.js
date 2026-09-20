@@ -32,10 +32,17 @@ async function loadCustomForms(){
 }
 async function _loadCustomForms(){
   try{
-    const r=await fetch(SB_URL+'/rest/v1/trainingsformen?select=*',{
+    /* v586: Reihenfolge = id, ausdrücklich. Ohne `order` liefert PostgREST die Zeilen in
+       der Reihenfolge, in der sie physisch liegen – und die ändert sich, sobald eine Zeile
+       aktualisiert wird (der Abgleich tut das seit v585). Solange Pläne den Index als
+       Hinweis tragen, muss die Liste an jedem Gerät gleich sortiert sein. */
+    const r=await fetch(SB_URL+'/rest/v1/trainingsformen?select=*&order=id.asc',{
       headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
     });
-    if(r.ok){CUSTOM_FORMS=await r.json()||[]; CUSTOM_FORMS_OK=true;}
+    if(r.ok){
+      CUSTOM_FORMS=(await r.json()||[]).slice().sort((a,b)=>Number(a&&a.id||0)-Number(b&&b.id||0));
+      CUSTOM_FORMS_OK=true;
+    }
     else CUSTOM_FORMS_OK=false;
   }catch(e){CUSTOM_FORMS=[]; CUSTOM_FORMS_OK=false;}
   // PO: Eigene/KI-Übungen ohne Zeichnung – KI liefert jetzt eine skizze-Spec (Spalte
@@ -226,15 +233,24 @@ function _tfFrische(f,i){
     :(d<14?`<span style="color:#b45309">vor ${d} T.</span>`:`vor ${d} T.`));
 }
 let _tfDb={gruppe:null,stern:0,lange:false};
+/* v586 – Charles: „Wo finde ich die neue Übung? In welcher Kategorie ist die?" Die Raute
+   aus dem Lehrgang lag unter „Eigene & KI", obwohl sie die Kategorie „raute" trägt – jede
+   Zeile aus der Datenbank galt hier pauschal als eigene. Im Trainingsplan stand dieselbe
+   Übung unter „Passen & Spielaufbau". Jetzt liegen Bibliotheks-Übungen (tags „Import" und
+   „Import (bearbeitet)") in ihrer Kategorie-Kachel; „Eigene & KI" bleibt für selbst
+   angelegte und KI-Übungen. */
 function _tfGruppeVon(f,i){
-  if(f.custom||i>=(typeof TRAININGSFORMEN!=="undefined"?TRAININGSFORMEN.length:0))return "custom";
-  const g=TF_GRUPPEN.find(g2=>g2.kats.includes(f.kat));
+  const eingebaut=i<(typeof TRAININGSFORMEN!=="undefined"?TRAININGSFORMEN.length:0);
+  const bibliothek=/^Import/.test(String(f&&f.tags||""));
+  if(!eingebaut&&!bibliothek)return "custom";
+  const g=TF_GRUPPEN.find(g2=>g2.kats.includes(f&&f.kat));
   return g?g.key:"custom";
 }
 function renderTraining(){
   const wrap=document.getElementById('training-content'); if(!wrap)return;
   if(!window._periodLoaded){window._periodLoaded=true;periodLoad();}
   if(!window._uebungMeta)uebungMetaLoad().then(()=>renderTraining()); // ⭐-Overrides einmal nachladen
+  if(!_tpEinsatz)tpEinsatzLaden();                                     // v586: Einsatz-Historie aus den Plänen, einmal je Sitzung
   const search=((document.getElementById('training-search')||{}).value||"").trim().toLowerCase();
   const alle=tpAllForms().map((f,i)=>({i,f,gr:_tfGruppeVon(f,i)})).filter(x=>!tfDublette(x.i));   // v585
   // Team-Schwäche einmal je Render bestimmen (Badge „stärkt …“ auf passenden Karten)
@@ -995,15 +1011,51 @@ const TP_PHASEN=[
   {label:"Abschlussspiel",dauer:20,farbe:"#c2410c",typ:"abschluss"}
 ];
 let tpSlots=[...TP_PHASEN];
-let tpExerciseLog={};
-try{tpExerciseLog=JSON.parse(localStorage.getItem("adler_exercise_log")||"{}");}catch(e){tpExerciseLog={};}
+/* v586 – EINSATZ-HISTORIE AUS DEN GESPEICHERTEN PLÄNEN, NACH NAMEN.
 
+   Bis v585 las die Historie („3× verwendet – zuletzt …", „🕘 lange her", „Zuletzt
+   genutzt") aus `localStorage.adler_exercise_log`: je Datum eine Liste von INDIZES, nur
+   auf dem Gerät, das den Plan gespeichert hatte. Geschrieben wurde die Liste seit v474
+   nicht mehr – jede Übung stand seitdem auf „noch nicht eingesetzt", ohne dass etwas rot
+   war. Und ein Index verschiebt sich, sobald eine Zeile der Datenbank fehlt (v586 löscht
+   die 24 Dubletten des Abgleichs).
+
+   Jetzt kommt die Historie aus `trainingsplan` – dieselben Pläne, die alle Trainer
+   sehen –, nach dem NAMEN der Übung. Gezählt werden nur Termine bis heute: ein Plan für
+   nächste Woche ist kein Einsatz. Geladen wird einmal je Sitzung, sobald die
+   Übungsdatenbank gezeichnet wird; ein gespeicherter Plan trägt sich selbst nach. */
+let _tpEinsatz=null, _tpEinsatzLauf=null;          // {datum: [Übungsname (normiert), …]}
+try{localStorage.removeItem("adler_exercise_log");}catch(e){}
+function _tpHeuteISO(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function _tpEinsatzNamen(plan){ return (Array.isArray(plan)?plan:[]).map(p=>_tfNormName(p&&(p.formName||p.name))).filter(Boolean); }
+function tpEinsatzLaden(){
+  if(_tpEinsatzLauf)return _tpEinsatzLauf;
+  if(typeof sbToken!=="function"||!sbToken())return Promise.resolve();
+  _tpEinsatzLauf=(async()=>{
+    try{
+      const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?select=datum,plan&datum=lte.${_tpHeuteISO()}&order=datum.desc&limit=300`,{headers:sbAuthHeaders()});
+      if(sbCheck401(r)||!r.ok){_tpEinsatzLauf=null;return;}
+      const rows=await r.json()||[], m={}, heute=_tpHeuteISO();
+      rows.forEach(row=>{
+        const d=row&&row.datum?String(row.datum).slice(0,10):"";
+        if(d&&d<=heute)m[d]=_tpEinsatzNamen(row.plan);        // ein Plan für nächste Woche ist kein Einsatz – auch wenn die Antwort ihn enthält
+      });
+      _tpEinsatz=m;
+      renderTraining();                              // die Karten tragen jetzt „vor N T." statt „noch nicht eingesetzt"
+    }catch(e){_tpEinsatzLauf=null;}
+  })();
+  return _tpEinsatzLauf;
+}
+/* Ein gerade gespeicherter Plan zählt sofort – aber nur, wenn sein Termin nicht in der Zukunft liegt. */
+function tpEinsatzMerken(datum,plan){
+  if(!datum||String(datum).slice(0,10)>_tpHeuteISO())return;
+  if(!_tpEinsatz)_tpEinsatz={};
+  _tpEinsatz[String(datum).slice(0,10)]=_tpEinsatzNamen(plan);
+}
 function tpGetExerciseHistory(formIdx){
-  const entries=[];
-  Object.entries(tpExerciseLog).forEach(([date,forms])=>{
-    if(forms.includes(formIdx))entries.push(date);
-  });
-  return entries.sort().reverse();
+  const f=tpAllForms()[formIdx], n=f?_tfNormName(f.name):"";
+  if(!n||!_tpEinsatz)return [];
+  return Object.keys(_tpEinsatz).filter(d=>_tpEinsatz[d].includes(n)).sort().reverse();
 }
 // Tage seit letztem Einsatz einer Form (null = nie genutzt) – für Vielfalt-Hinweise.
 function tpLastUsedDays(formIdx){
@@ -1019,19 +1071,18 @@ function tpGetTrainerCount(){
   return document.querySelectorAll("#tp-trainer-checks input:checked").length;
 }
 
-/* v585 – DUBLETTEN AUS DEM ABGLEICH WERDEN NICHT GEZEIGT, ABER AUCH NICHT GELÖSCHT.
+/* v585/v586 – DUBLETTEN AUS DEM ABGLEICH WERDEN NICHT GEZEIGT.
 
    Bis v584 konnte der Abgleich beim Start loslaufen, bevor die Datenbank geantwortet
    hatte – dann sah jede Bibliotheksübung „neu" aus und wurde ein zweites Mal angelegt.
-   Vierzehn Übungen stehen deshalb zwei- oder dreimal in trainingsformen.
+   Vierzehn Übungen standen deshalb zwei- oder dreimal in trainingsformen.
 
-   Löschen geht nicht: Trainingsplan und Bewertungen merken sich eine Übung als INDEX in
-   tpAllForms() (siehe md-einheit-import.js, Kopf). Jede entfernte Zeile verschöbe alle
-   späteren Indizes, und alte Pläne zeigten still auf falsche Übungen – die Pläne vom
-   14.09. zeigen nachweislich auf die zweite Kopie. Also bleiben die Zeilen, und die
-   Oberfläche zeigt je Name nur die jüngste. Der Index der gezeigten Karte bleibt ihr
-   echter Index. Inhaltlich sind die Kopien gleich: der Abgleich zieht seit v585 alle
-   Import-Kopien eines Namens gemeinsam nach. */
+   v585 blendete sie nur aus, weil Pläne und Bewertungen Übungen als INDEX merkten und
+   jede gelöschte Zeile alte Pläne verschoben hätte. Seit v586 entscheidet der Name
+   (tfIndexVon unten); die 24 Dubletten sind am 20.09. gelöscht, ein Unique-Index auf
+   dem Namen der Import-Zeilen verhindert neue. Diese Funktion bleibt als Wache: sollte
+   je wieder eine Kopie entstehen, zeigt die Liste je Name nur die jüngste – und eine
+   vom Trainer bearbeitete gewinnt immer. */
 function _tfNormName(n){ return String(n||"").trim().toLowerCase(); }
 function tfDublette(i){
   const alle=tpAllForms(), f=alle[i];
@@ -1045,6 +1096,37 @@ function tfDublette(i){
   });
   if(bearbeitet)return true;
   return juengste!=null&&Number(f.id||0)!==juengste;
+}
+/* v586 – DER NAME IST DIE WAHRHEIT, DER INDEX NUR EIN HINWEIS.
+
+   Trainingsplan (`trainingsplan.plan`) und Nachbereitung (`trainings_eval.data`) tragen je
+   Eintrag beides: `formIdx` (Position in tpAllForms()) und `formName`. Bis v585 zählte nur
+   der Index – deshalb durfte keine Zeile aus trainingsformen verschwinden, und eine
+   veränderte Antwortreihenfolge hätte still falsche Übungen in alte Pläne gesetzt.
+
+   Regel seit v586: Der Index gilt, wenn er auf eine sichtbare Übung mit genau diesem
+   Namen zeigt. Sonst entscheidet der Name – die sichtbare Kopie zuerst (eine vom Trainer
+   bearbeitete gewinnt über tfDublette). Ohne Namen (Einträge vor v447) bleibt der Index.
+   Gibt es den Namen nirgends mehr, ist die Übung weg: -1, der Eintrag fällt aus dem Plan,
+   statt eine fremde Übung anzuzeigen. Gespeichert wird weiterhin beides – der Index als
+   Hinweis für alte Fassungen der App, der Name als das, was zählt. */
+function tfIndexVon(e){
+  const alle=tpAllForms();
+  const n=_tfNormName(e&&(e.formName||e.name));
+  const i=Number(e&&e.formIdx);
+  if(Number.isInteger(i)&&i>=0&&alle[i]&&!tfDublette(i)&&(!n||_tfNormName(alle[i].name)===n))return i;
+  if(!n)return -1;
+  let k=-1;
+  alle.forEach((f,j)=>{ if(k<0&&f&&_tfNormName(f.name)===n&&!tfDublette(j))k=j; });
+  if(k<0)k=alle.findIndex(f=>f&&_tfNormName(f.name)===n);
+  return k;
+}
+/* Zwei Einträge meinen dieselbe Übung, wenn ihre Namen gleich sind; nur wenn einer keinen
+   Namen trägt, entscheidet der Index. Einträge tragen `formName` (Plan) oder `name` (Bewertung). */
+function tfGleicheUebung(a,b){
+  const na=_tfNormName(a&&(a.formName||a.name)), nb=_tfNormName(b&&(b.formName||b.name));
+  if(na&&nb)return na===nb;
+  return !!(a&&b)&&a.formIdx!=null&&b.formIdx!=null&&Number(a.formIdx)===Number(b.formIdx);
 }
 function tpFilteredOpts(typ,kat){
   const allForms=tpAllForms().map((f,i)=>tfDublette(i)?null:f);   // v585: Dubletten raus, Indizes bleiben
@@ -1136,8 +1218,9 @@ function tpOnCatChange(selId,si,p){
 function tpUebungKommentare(formIdx){
   const out=[];
   if(typeof EVAL_DATA!=="object"||!EVAL_DATA)return out;
+  const f=tpAllForms()[formIdx], ich={formIdx,formName:f&&f.name};   // v586: der Name entscheidet, der Index nur ohne Namen
   Object.keys(EVAL_DATA).sort().reverse().forEach(datum=>{
-    (EVAL_DATA[datum]||[]).forEach(e=>{ if(e&&e.formIdx===formIdx&&e.notiz&&String(e.notiz).trim())out.push({datum,trainer:e.trainer||"",notiz:String(e.notiz).trim()}); });
+    (EVAL_DATA[datum]||[]).forEach(e=>{ if(e&&tfGleicheUebung(e,ich)&&e.notiz&&String(e.notiz).trim())out.push({datum,trainer:e.trainer||"",notiz:String(e.notiz).trim()}); });
   });
   return out;
 }
@@ -2902,6 +2985,7 @@ async function tpPlanSave(erzwungen){
          Abgleich die eigene Änderung für die eines anderen. */
       let zeile=null; try{ zeile=((await r.json())||[])[0]; }catch(e){}
       TP_STAND[datum]={updated_at:(zeile&&zeile.updated_at)||new Date().toISOString(),von:(zeile&&zeile.gespeichert_von)||von||""};
+      tpEinsatzMerken(datum,plan);                   // v586: zählt sofort als Einsatz, wenn der Termin nicht in der Zukunft liegt
       _tpKonfliktGemeldet="";
       tpStandRender(datum);
     }
@@ -2972,6 +3056,7 @@ async function tpPlanRestore(datum){
      der Abgleich wertlos: ein Plan, der nie geladen wurde, hat keinen Bezugspunkt. */
   tpStandLesen(datum).then(s=>{ if(s)TP_STAND[datum]=s; else delete TP_STAND[datum]; tpStandRender(datum); });
   tpKopfLaden(datum);   // v506: Kopf der Einheit über der Zeitleiste – unabhängig vom Plan
+  if(!_tpEinsatz)tpEinsatzLaden();   // v586: Einsatz-Historie für Auswahl und Zeilen unter den Feldern
   /* Reihenfolge ist entscheidend: erst die Phasen herstellen, dann die Uebungen
      einsetzen. Andersherum gaebe es die Auswahlfelder noch gar nicht, in die sie
      gehoeren - und die Zuordnung ueber das Phasen-Label ginge ins Leere. */
@@ -3018,8 +3103,12 @@ async function tpPlanRestore(datum){
   if(!plan||!plan.length)return;
   const belegt=new Set();
   const gesetzt=[];        // v568: Stations-Einträge, die ein Feld bekommen haben (si, station, formIdx)
-  plan.forEach(e=>{
-    if(e.formIdx==null||!allForms[e.formIdx])return;
+  plan.forEach(e0=>{
+    /* v586: Der Name entscheidet, welche Übung gemeint ist; der gespeicherte Index ist nur
+       ein Hinweis und gilt nur, solange er auf genau diesen Namen zeigt. So überlebt ein
+       Plan das Löschen der Dubletten und jede andere Verschiebung in der Liste. */
+    const fi=tfIndexVon(e0); if(fi<0)return;
+    const e=Object.assign({},e0,{formIdx:fi});
     const passend=sels.filter(s=>{
       if(belegt.has(s.id)||s.value)return false;
       const m=s.id.match(/tp-form-(\d+)-/); if(!m)return false;
