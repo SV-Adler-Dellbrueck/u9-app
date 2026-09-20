@@ -359,8 +359,20 @@ function bootSeiteZurueck(){
   window._nutzungStumm=true; try{go(k);}finally{window._nutzungStumm=false;}   // ein Neuladen ist kein Besuch
   return true;
 }
-loadKader().then(()=>loadDB()).then(()=>{if(!bootSeiteZurueck()&&curSection==="home")renderHome();}).then(()=>teamSyncLoad()).then(()=>setTimeout(showMilestoneHint,1500)); // Kader (Supabase) zuerst, dann G1 + KI-Light + Home-Stats
-loadCustomForms();
+/* v593: Auf dem Kindergeraet faehrt diese Kette nicht weiter als bis zum Kader. Sie
+   gehoert der Trainer-Oberflaeche (renderHome, SECS, Seite-zurueck) und beginnt mit
+   loadDB() - einer Abfrage auf `spielerprofile`, der Tabelle mit den Bewertungen aller
+   Kinder. Die RLS gibt dem Kind dort nichts; aber eine Anfrage, die es nie geben duerfte,
+   ueberlaesst man nicht der RLS. Gemessen wurde sie im Pruefsatz v593, nachdem das
+   Pruefwerkzeug auch Lesezugriffe protokolliert. Den Kader laedt die Kinder-App weiter -
+   die RLS gibt dort genau das eine gekoppelte Kind zurueck. loadCustomForms holt die
+   Uebungsdatenbank des Trainers und hat auf einem Kindergeraet nichts zu suchen. */
+if(typeof _kindGeraet==="function"&&_kindGeraet()){
+  loadKader().catch(()=>{});
+}else{
+  loadKader().then(()=>loadDB()).then(()=>{if(!bootSeiteZurueck()&&curSection==="home")renderHome();}).then(()=>teamSyncLoad()).then(()=>{if(typeof showMilestoneHint==="function")setTimeout(showMilestoneHint,1500);}); // Kader (Supabase) zuerst, dann G1 + KI-Light + Home-Stats
+  loadCustomForms();
+}
 /* v512: Bibliotheks-Abgleich. Wartet auf md-einheit-import.js (Welle 2) UND auf eine
    Sitzung – ohne Trainer-Token lehnt die RLS den Schreibvorgang ohnehin ab. Nach einer
    frischen Anmeldung stoesst doLogin() denselben Aufruf noch einmal an. */

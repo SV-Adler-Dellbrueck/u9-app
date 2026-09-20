@@ -1860,15 +1860,27 @@ function elternTourRender(){
 // RPC my_child_card (kein Direktzugriff auf geschützte Tabellen). Baut dieselbe d-Struktur
 // wie adlerCardData und rendert mit adlerCardDraw.
 function adlerCardDataFromChild(p){
-  const v=typeof p.radios==="string"?safeParse(p.radios,{}):(p.radios||{});
   /* v563: Ohne Bewertung werden Stärken nicht geraten. Alle Werte stünden auf 0, und die
      Sortierung würde daraus trotzdem drei „stärkste" Merkmale machen – eine Aussage über
-     ein Kind, die niemand getroffen hat. Dann lieber keine Merkmale und ein eigenes Thema. */
-  const bewertet=Object.keys(v).length>0;
-  const strengths=Object.keys(CARD_BADGES).map(key=>({key,val:v[key]||0})).sort((a,b)=>b.val-a.val).slice(0,3);
-  const {dims:ds}=calcScores(v,DIMS_FELD);
-  const topDim=Object.entries(ds).sort((a,b)=>b[1]-a[1])[0]||["tech",0];
-  const theme=p.tw?CARD_THEMES.keeper:(bewertet?(CARD_THEMES[topDim[0]]||CARD_THEMES.tech):CARD_THEMES.neu);
+     ein Kind, die niemand getroffen hat. Dann lieber keine Merkmale und ein eigenes Thema.
+
+     v593: Auf dem Kindergerät kommt die Karte aus my_child_card_kind() und bringt statt
+     der Bewertungswerte nur die drei stärksten Merkmale als Schlüssel mit – dieselbe
+     Karte, aber die Zahlen bleiben in der Datenbank. Beide Formen laufen hier zusammen. */
+  let keys, bewertet, dim=null;
+  if(p.staerken!==undefined){
+    keys=(Array.isArray(p.staerken)?p.staerken:(typeof p.staerken==="string"?safeParse(p.staerken,[]):[]))
+      .filter(k=>CARD_BADGES[k]).slice(0,3);
+    bewertet=keys.length>0;
+    dim=bewertet&&typeof feldDimVon==="function"?feldDimVon(keys[0]):null;
+  }else{
+    const v=typeof p.radios==="string"?safeParse(p.radios,{}):(p.radios||{});
+    bewertet=Object.keys(v).length>0;
+    keys=Object.keys(CARD_BADGES).map(key=>({key,val:v[key]||0})).sort((a,b)=>b.val-a.val).slice(0,3).map(x=>x.key);
+    const {dims:ds}=calcScores(v,DIMS_FELD);
+    dim=(Object.entries(ds).sort((a,b)=>b[1]-a[1])[0]||["tech",0])[0];
+  }
+  const theme=p.tw?CARD_THEMES.keeper:(bewertet?(CARD_THEMES[dim]||CARD_THEMES.tech):CARD_THEMES.neu);
   const posMap={aufpasser:"Aufpasser",jaeger:"Jäger",flitzer_l:"Flitzer",flitzer_r:"Flitzer"};
   const pos=p.lieblingsposition||(p.tw?"Torwart":(posMap[p.snap_position]||p.prim_rolle||"Allrounder"));
   const fussMap={L:"linker Fuß",R:"rechter Fuß",B:"beidfüßig"};
@@ -1876,12 +1888,16 @@ function adlerCardDataFromChild(p){
   return {name:p.name,nr:p.nr,tw:!!p.tw,geb:p.geb,fotoPath:p.foto_path,pos:cardPosLabel(pos),
     fuss:fussMap[p.starker_fuss||p.strong_foot]||"",
     alter:p.geb?homeAlter(p.geb):(p.age||null), spitzname:p.spitzname||null,
-    badges:bewertet?strengths.map(x=>CARD_BADGES[x.key]):[],theme,
+    badges:bewertet?keys.map(k=>CARD_BADGES[k]):[],theme,
     counts:{tore:s.tore||0,paraden:s.paraden||0,aktionen:s.aktionen||0,spiele:s.spiele||0,trainings:s.trainings||0,quizRichtig:s.quizRichtig||0,quizBloecke:s.quizBloecke||0}};
 }
 async function elternCardOpen(spielerId){
   let p=null;
-  try{const r=await fetch(`${SB_URL}/rest/v1/rpc/my_child_card`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_spieler:spielerId})});if(r.ok)p=await r.json();}catch(e){}
+  /* Auf dem Kindergerät die Fassung ohne Bewertungswerte. my_child_card() lässt eine
+     Kind-Sitzung ohnehin nicht durch – dort antwortete die Kachel „Meine Karte" sonst
+     mit einer Fehlermeldung. */
+  const rpc=(typeof kabineKindModus==="function"&&kabineKindModus())?"my_child_card_kind":"my_child_card";
+  try{const r=await fetch(`${SB_URL}/rest/v1/rpc/${rpc}`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_spieler:spielerId})});if(r.ok)p=await r.json();}catch(e){}
   if(!p){toast("Karte konnte nicht geladen werden","err");return;}
   /* v563: Früher sperrte hier eine rote Meldung die Karte ganz ab, wenn es noch keine
      Bewertung gab. Nach dem Saisonstart – der räumt die Bewertungen ins Archiv – traf das

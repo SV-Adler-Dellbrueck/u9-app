@@ -1878,6 +1878,17 @@ const CARD_BADGES={
   f_sozial:{icon:"💛",label:"Herz des Teams"}, f_resil:{icon:"💪",label:"Steh-auf-Typ"},
   f_coach:{icon:"🧠",label:"Blitz-Lerner"}, f_freude:{icon:"😄",label:"Fußball-Fan"}
 };
+/* Welche Dimension traegt dieses Merkmal? Die Zuordnung steht in DIMS_FELD (data.js)
+   und wird hier nur gelesen - ein zweites Verzeichnis waere eine zweite Wahrheit.
+   Gebraucht seit v593 von der Team-Galerie, die aus team_gallery_kind() nur noch die
+   Merkmalsschluessel bekommt und daraus das Farbthema ableiten muss. */
+function feldDimVon(key){
+  if(!key||typeof DIMS_FELD==="undefined")return null;
+  for(const d of DIMS_FELD){
+    if((d.tier||[]).some(t=>t.n===key)||(d.mx||[]).some(t=>t.n===key))return d.id;
+  }
+  return null;
+}
 const CARD_THEMES={
   tech:{a:"#1e3a8a",b:"#3b82f6",name:"TECHNIK"}, raute:{a:"#5b21b6",b:"#8b5cf6",name:"SPIELWITZ"},
   phys:{a:"#9a3412",b:"#f97316",name:"DYNAMIK"}, mental:{a:"#065f46",b:"#10b981",name:"CHARAKTER"},

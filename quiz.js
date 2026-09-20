@@ -425,6 +425,14 @@ let TQ_EIGENE_KINDER=null;   // null = ganzer Kader
 
 async function tqEigeneKinder(){
   if(typeof sbRead!=="function")return null;
+  /* Kindergeraet: die Sitzung gehoert genau einem Kind, und kind_status() sagt welchem.
+     Ohne diesen Zweig zeigte das Quiz auf dem Kindergeraet „Wer bist du?" mit dem
+     ganzen Kader zur Auswahl - ein Kind haette unter jedem Namen spielen und Federn
+     fuer andere sammeln koennen. */
+  if(typeof _kindGeraet==="function"&&_kindGeraet()){
+    const s=(typeof _kgStatus!=="undefined"&&_kgStatus)||(typeof kgStatus==="function"?await kgStatus():null);
+    return (s&&s.name)?[s.name]:null;
+  }
   const slot=sbRead();
   if(!slot||slot.key!==SB_TOKEN_KEY_ELTERN)return null;   // nur die Eltern-Sitzung kennt "eigene" Kinder
   // Auch hier nach der eigenen E-Mail filtern: die RLS laesst einen Trainer ALLE
