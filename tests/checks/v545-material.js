@@ -116,7 +116,11 @@ module.exports = async function (h) {
   const lies = p => fs.readFileSync(path.join(h.REPO, p), "utf8");
   const views = lies("views.js");
   if (!/label:"Material",fn:"materialOpen"/.test(views)) probleme.push("Keine Kachel führt zum Material");
-  if (!/"material_posten"\]/.test(views)) probleme.push("material_posten fehlt in der Sicherung");
+  /* v585: Geprüft wird die Mitgliedschaft in der Tabellenliste von backupExport, nicht mehr
+     die letzte Position – seit trainingsformen dahinter steht, sagte „am Ende" nichts mehr
+     über „in der Sicherung". */
+  const sicherung = (views.match(/async function backupExport\(\)[\s\S]*?const tables=\[([\s\S]*?)\];/) || [])[1] || "";
+  if (!/"material_posten"/.test(sicherung)) probleme.push("material_posten fehlt in der Sicherung");
   if (!/k:"material"/.test(views)) probleme.push("Der Saisonstart-Check erinnert nicht ans Zählen");
   if (!/run:"materialOpen\(\)"/.test(views)) probleme.push("In der Hilfe fehlt der Eintrag zum Material");
 

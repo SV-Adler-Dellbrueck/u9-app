@@ -13,6 +13,12 @@
 
 
 let CUSTOM_FORMS=[];
+/* v585: Ob die Datenbank wirklich geantwortet hat. Der Bibliotheks-Abgleich entscheidet
+   „neu oder vorhanden" anhand von CUSTOM_FORMS – eine leere Liste, weil die Antwort noch
+   unterwegs oder ausgeblieben ist, sähe sonst genauso aus wie eine leere Datenbank. Genau
+   so entstanden am 14. und 15.09. zweimal 24 Dubletten. */
+let CUSTOM_FORMS_OK=false, _customFormsLaden=null;
+function customFormsGeladen(){ return _customFormsLaden||Promise.resolve(); }
 let activeTF=null; // bewusst KEINE Vorbelegung: 100+ Übungen aufgeklappt erschlagen – erst Kategorie wählen oder suchen
 // FEAT AC-Folge: EINE gemeinsame Formenliste (Bibliothek + eigene/KI-Übungen).
 // Die Planung ist index-basiert – deshalb MUSS ueberall dieselbe Liste (gleicher
@@ -20,12 +26,18 @@ let activeTF=null; // bewusst KEINE Vorbelegung: 100+ Übungen aufgeklappt ersch
 function tpAllForms(){ return (typeof TRAININGSFORMEN!=="undefined"?TRAININGSFORMEN:[]).concat(typeof CUSTOM_FORMS!=="undefined"?CUSTOM_FORMS:[]); }
 
 async function loadCustomForms(){
+  const lauf=_loadCustomForms();
+  _customFormsLaden=lauf;
+  return lauf;
+}
+async function _loadCustomForms(){
   try{
     const r=await fetch(SB_URL+'/rest/v1/trainingsformen?select=*',{
       headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
     });
-    if(r.ok){CUSTOM_FORMS=await r.json()||[];}
-  }catch(e){CUSTOM_FORMS=[];}
+    if(r.ok){CUSTOM_FORMS=await r.json()||[]; CUSTOM_FORMS_OK=true;}
+    else CUSTOM_FORMS_OK=false;
+  }catch(e){CUSTOM_FORMS=[]; CUSTOM_FORMS_OK=false;}
   // PO: Eigene/KI-Übungen ohne Zeichnung – KI liefert jetzt eine skizze-Spec (Spalte
   // trainingsformen.skizze), ältere und handangelegte bekommen die Kategorie-Symbolskizze.
   try{
@@ -224,7 +236,7 @@ function renderTraining(){
   if(!window._periodLoaded){window._periodLoaded=true;periodLoad();}
   if(!window._uebungMeta)uebungMetaLoad().then(()=>renderTraining()); // ⭐-Overrides einmal nachladen
   const search=((document.getElementById('training-search')||{}).value||"").trim().toLowerCase();
-  const alle=tpAllForms().map((f,i)=>({i,f,gr:_tfGruppeVon(f,i)}));
+  const alle=tpAllForms().map((f,i)=>({i,f,gr:_tfGruppeVon(f,i)})).filter(x=>!tfDublette(x.i));   // v585
   // Team-Schwäche einmal je Render bestimmen (Badge „stärkt …“ auf passenden Karten)
   let weak=[];window._tfWeakLabel=null;
   try{
@@ -1007,12 +1019,39 @@ function tpGetTrainerCount(){
   return document.querySelectorAll("#tp-trainer-checks input:checked").length;
 }
 
+/* v585 – DUBLETTEN AUS DEM ABGLEICH WERDEN NICHT GEZEIGT, ABER AUCH NICHT GELÖSCHT.
+
+   Bis v584 konnte der Abgleich beim Start loslaufen, bevor die Datenbank geantwortet
+   hatte – dann sah jede Bibliotheksübung „neu" aus und wurde ein zweites Mal angelegt.
+   Vierzehn Übungen stehen deshalb zwei- oder dreimal in trainingsformen.
+
+   Löschen geht nicht: Trainingsplan und Bewertungen merken sich eine Übung als INDEX in
+   tpAllForms() (siehe md-einheit-import.js, Kopf). Jede entfernte Zeile verschöbe alle
+   späteren Indizes, und alte Pläne zeigten still auf falsche Übungen – die Pläne vom
+   14.09. zeigen nachweislich auf die zweite Kopie. Also bleiben die Zeilen, und die
+   Oberfläche zeigt je Name nur die jüngste. Der Index der gezeigten Karte bleibt ihr
+   echter Index. Inhaltlich sind die Kopien gleich: der Abgleich zieht seit v585 alle
+   Import-Kopien eines Namens gemeinsam nach. */
+function _tfNormName(n){ return String(n||"").trim().toLowerCase(); }
+function tfDublette(i){
+  const alle=tpAllForms(), f=alle[i];
+  if(!f||f.tags!=="Import")return false;          // Bearbeitetes und Eigenes wird immer gezeigt
+  const n=_tfNormName(f.name);
+  let juengste=null, bearbeitet=false;
+  alle.forEach(g=>{
+    if(!g||_tfNormName(g.name)!==n)return;
+    if(g.tags==="Import (bearbeitet)")bearbeitet=true;   // die Kopie des Trainers gewinnt, egal wie alt
+    else if(g.tags==="Import"&&Number(g.id||0)>Number(juengste==null?-1:juengste))juengste=Number(g.id||0);
+  });
+  if(bearbeitet)return true;
+  return juengste!=null&&Number(f.id||0)!==juengste;
+}
 function tpFilteredOpts(typ,kat){
-  const allForms=tpAllForms();
-  if(typ==="warmup") return allForms.map((f,i)=>({i,f})).filter(x=>x.f.kat==="aufwaermen");
-  if(typ==="tw") return allForms.map((f,i)=>({i,f})).filter(x=>x.f.kat==="torwart");
-  if(typ==="individual") return allForms.map((f,i)=>({i,f})).filter(x=>x.f.kat==="individual");
-  const mainForms=allForms.map((f,i)=>({i,f})).filter(x=>!["aufwaermen","torwart","individual"].includes(x.f.kat)); // custom/KI-Übungen jetzt im Hauptteil wählbar
+  const allForms=tpAllForms().map((f,i)=>tfDublette(i)?null:f);   // v585: Dubletten raus, Indizes bleiben
+  if(typ==="warmup") return allForms.map((f,i)=>({i,f})).filter(x=>x.f&&x.f.kat==="aufwaermen");
+  if(typ==="tw") return allForms.map((f,i)=>({i,f})).filter(x=>x.f&&x.f.kat==="torwart");
+  if(typ==="individual") return allForms.map((f,i)=>({i,f})).filter(x=>x.f&&x.f.kat==="individual");
+  const mainForms=allForms.map((f,i)=>({i,f})).filter(x=>x.f&&!["aufwaermen","torwart","individual"].includes(x.f.kat)); // custom/KI-Übungen jetzt im Hauptteil wählbar
   if(kat) return mainForms.filter(x=>x.f.kat===kat);
   return mainForms;
 }
