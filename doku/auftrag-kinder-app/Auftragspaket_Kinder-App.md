@@ -465,3 +465,47 @@ Häkchen gesetzt sein. Das ist der erste Messpunkt von Schritt 3.
 
 Erst jetzt darf „Allow anonymous sign-ins" unter Authentication → Sign In / Providers
 eingeschaltet werden.
+
+### Gemessen mit echten Sitzungen (20.09.2026, nach dem Einschalten)
+
+Charles hat „Allow anonymous sign-ins" gesetzt. Gemessen wurde in der Datenbank mit der
+Rolle `authenticated` und gesetzten Ausweisdaten, jede Messung in einer Transaktion, die
+danach zurückgerollt wurde — es blieb kein Konto und keine Kopplung zurück (nachgezählt:
+null Kindkonten, null Sitzungen, acht Auth-Konten wie zuvor).
+
+**Anonyme Sitzung ohne Kopplung** — sie liest nichts außer den Terminen, die auch die
+öffentlichen Seiten zeigen:
+
+| Kader | Kabinen-Code | Album-Fotos | Wahl | Team-Config | Ausrüstung | Quiz | Kabinen-Post | Termine |
+|---|---|---|---|---|---|---|---|---|
+| 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 44 |
+
+Dazu: `sitzung_gueltig()` false, beide Galerien leer, `kind_status()` ohne Ergebnis,
+`ist_eigener_quizname()` für jeden Namen false.
+
+**Gekoppeltes Kindergerät** — es sieht genau seinen Teil:
+
+| Darf | Wert | Darf nicht | Wert |
+|---|---|---|---|
+| eigenes Kind im Kader | 1 von 16 | Bewertungen (`spielerprofile`) | 0 |
+| Kinder-Galerie | 14 | alte Galerie mit Rohwerten | 0 |
+| eigene Kabinen-Post | 1 | Rückmeldungen | 0 |
+| Team-Einstellungen | 1 | Nominierungen | 0 |
+| eigener Name im Quiz | ja | Notfallkarten | 0 |
+| Appzeit übrig | 60 Minuten | Eltern-Zuordnungen | 0 |
+| | | Kabinen-Ausgangscode | 0 |
+| | | fremder Name im Quiz | nein |
+
+**Zwei Fehler in der Messung, nicht im Riegel**, beide gefunden und behoben:
+
+1. Der erste Versuch koppelte ein bestehendes Auth-Konto — und alle acht gehören Trainern
+   oder Eltern. Das Gerät erbte deren Rechte, die Messung war wertlos. Gültig wird sie
+   erst mit einem Konto, das weder Trainer noch Elternteil ist.
+2. Der „fremde" Quizname wurde aus der Kader-Tabelle geholt — die für das Kindergerät nur
+   die eigene Zeile zeigt. Damit prüfte der Test den eigenen Namen gegen sich selbst. Mit
+   festen Namen: eigener Name ja, fremde Namen nein.
+
+Was von hier aus **nicht** messbar war: der Weg über die HTTP-Schnittstelle. Der Proxy
+dieser Sitzung verweigert Verbindungen zu `*.supabase.co` per Richtlinie; die Anmeldung
+eines echten anonymen Kontos über `/auth/v1/signup` muss deshalb aus der App kommen.
+Das fällt mit dem ersten Kopplungsversuch in Schritt 3 ohnehin an.
