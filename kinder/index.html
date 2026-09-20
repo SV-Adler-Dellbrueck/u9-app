@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<!-- Eigener Ordner = eigener Manifest-Scope (/kinder/). Nur so erkennt das Handy die
+     Kabine als dritte, unabhaengige App neben Trainer- und Eltern-App. Ohne das teilte
+     sie sich den Scope mit dem Eltern-Bereich und liesse sich nicht getrennt
+     installieren - genau das war die Anforderung: ein EIGENES Geraet fuer das Kind. -->
+<base href="../">
+<meta name="theme-color" content="#0f172a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kabine">
+<meta name="application-name" content="Kabine">
+<link rel="manifest" id="pwa-manifest" href="manifest-kinder.json">
+<link rel="apple-touch-icon" id="apple-icon" href="icon-kinder.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Die Kabine – SV Adler Dellbrück U9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="styles.css">
+<script>
+(function(){
+  // start_url ist "./kinder/" (ohne Query). boot.js erkennt die Kabine aber an ?kinder -
+  // also ergaenzen wir es, bevor irgendein Skript location.search liest. ABSOLUTER Pfad:
+  // eine relative URL wuerde gegen <base href="../"> aufgeloest und die Seite aus ihrem
+  // eigenen Scope /kinder/ heraus in die Wurzel schieben.
+  if(!location.search){ try{ history.replaceState({},"",location.pathname+"?kinder"); }catch(e){} }
+})();
+</script>
+</head>
+<body>
+<script>
+/* Seitengeruest aus shell.html nachladen, dann die Skripte in genau der Reihenfolge wie in
+   den anderen Einstiegen. Die Skripte haengen sich an DOMContentLoaded - das ist beim
+   Nachladen laengst vorbei, deshalb loesen wir es am Ende einmal selbst aus. */
+window.addEventListener("error",function(e){try{var d=document.getElementById("pin-diag");if(d&&!d.dataset.err&&d.textContent.indexOf("Bereit")!==0){d.dataset.err="1";d.style.color="#fecaca";d.textContent="⚠️ "+(e.message||"Skript-Fehler")+" – "+String(e.filename||"").split("/").pop()+":"+(e.lineno||"?");}}catch(_){}},true);
+window.addEventListener("unhandledrejection",function(e){try{var m=String((e.reason&&e.reason.message)||e.reason||"");if(/Transition was aborted|AbortError|abort/i.test(m))return;var d=document.getElementById("pin-diag");if(d&&!d.dataset.err&&d.textContent.indexOf("Bereit")!==0){d.dataset.err="1";d.style.color="#fecaca";d.textContent="⚠️ "+(m||"Fehler").slice(0,120);}}catch(_){}});
+window.pinNext=window.pinNext||function(el,n){if(el&&el.value.length===1){var x=document.getElementById("pin"+n);if(x)x.focus();}};
+window.pinBack=window.pinBack||function(){};window.pinCheck=window.pinCheck||function(){};
+(async function(){
+  const shell=await (await fetch("shell.html")).text();
+  document.body.insertAdjacentHTML("afterbegin",shell);
+  setTimeout(function(){
+    var d=document.getElementById("pin-diag");
+    if(d&&d.textContent.indexOf("App lädt")===0&&!d.dataset.err){
+      d.innerHTML='⚠️ Die App lädt nicht fertig. <button id="pin-repair" style="margin-left:6px;padding:6px 12px;border:none;border-radius:8px;background:#fff;color:#1e3a8a;font-weight:800;cursor:pointer;font-family:inherit">🔧 App reparieren</button>';
+      document.getElementById("pin-repair").onclick=async function(){
+        this.textContent="Repariere…";
+        try{
+          if(navigator.serviceWorker){var rs=await navigator.serviceWorker.getRegistrations();for(var i=0;i<rs.length;i++)await rs[i].unregister();}
+          if(window.caches){var ks=await caches.keys();for(var j=0;j<ks.length;j++)await caches.delete(ks[j]);}
+        }catch(e){}
+        location.reload();
+      };
+    }
+  },16000);
+
+  /* GEMESSEN, nicht geraten (Auftragspaket Schritt 1): Mit genau diesen zehn Dateien
+     laeuft die Kabine ueber alle 13 Kacheln ohne einen einzigen Fehler; mit neun fehlt
+     `elternCardOpen` aus md-eltern-portal.js. Die Messung steht in
+     doku/auftrag-kinder-app/messung-minimal-loader.js und laesst sich wiederholen.
+     Eine zweite Welle gibt es hier nicht - was fehlte, fehlte sofort. */
+  const ALLE=["data.js","core.js","engine.js","views.js","md-kabine.js","md-abzeichen.js",
+    "quiz.js","md-quests.js","md-eltern-portal.js","boot.js"];
+  const MODUL_WACHE={"md-abzeichen.js":"abzeichenAward","md-analyse.js":"atActionsFor","md-aufstellung.js":"kombiShareLineup","md-ausruestung.js":"ausstattungModulDa","md-carpool.js":"elternCarpoolPatch","md-eltern-portal.js":"tdVorberichtLoad","md-fanfakten.js":"elternFotoUpload","md-fazit.js":"fazitModulDa","md-tagebuch.js":"tagebuchModulDa","md-fundbuero.js":"fundbueroDelete","md-galerie.js":"galerieDelete","md-gegner.js":"turnierRender","md-kabine.js":"renderTrainerUI","md-kalender.js":"gegnerAddrPick","md-kasse.js":"elternTickerLoad","md-einheit-import.js":"bibliothekAbgleich","md-ki-coach.js":"kiCoachSaveForm","md-live-vollbild.js":"teamBackupDownload","md-liveticker.js":"tickerDelete","md-matchcard.js":"rotReset","md-matchuhr.js":"mcSetHalbzeiten","md-print.js":"_printNow","md-quests.js":"questSave","md-skizze.js":"skzKiLauf","md-spielbericht.js":"kindRsvp","md-taktik-bib.js":"ttDelete","md-taktik-draw.js":"dwClear","md-taktik-video.js":"tbAddDrag","md-taktikboard.js":"taktikRender","md-teamkasse.js":"kasseDelUmlage","md-teams.js":"nomApplyToTools","md-turnierplan.js":"_htMonRender","md-voice.js":"atPick","md-wissen.js":"wissenAuf","quiz.js":"kidsIntroClose"};
+  function modulWache(geladen){
+    const kaputt=geladen.filter(d=>MODUL_WACHE[d]&&typeof window[MODUL_WACHE[d]]!=="function");
+    if(!kaputt.length)return;
+    console.error("Modul-Wache: geladen, aber nicht ausgefuehrt:",kaputt);
+    const w=document.createElement("div");
+    w.setAttribute("role","alert");
+    w.style.cssText="position:fixed;left:8px;right:8px;bottom:8px;z-index:99999;background:#7f1d1d;color:#fff;border-radius:12px;padding:10px 14px;font:600 12px/1.4 system-ui;box-shadow:0 4px 16px rgba(0,0,0,.35)";
+    w.innerHTML='⚠️ Teile der App sind nicht gestartet ('+kaputt.length+'). Bitte neu laden – wenn es bleibt, dem Entwickler melden: '+kaputt.join(", ")+
+      ' <button onclick="this.parentElement.remove()" style="float:right;min-height:28px;padding:2px 10px;border:none;border-radius:8px;background:#fff;color:#7f1d1d;font-weight:800">OK</button>';
+    document.body.appendChild(w);
+  }
+  const lade=(liste)=>new Promise((fertig,fehler)=>{
+    if(!liste.length){fertig();return;}
+    let offen=liste.length;
+    liste.forEach(datei=>{
+      const sc=document.createElement("script");
+      sc.src=datei; sc.async=false;              // parallel laden, in Reihenfolge ausfuehren
+      sc.onload=()=>{ if(--offen===0)fertig(); };
+      sc.onerror=()=>fehler(new Error(datei));
+      document.body.appendChild(sc);
+    });
+  });
+  await lade(ALLE);
+  modulWache(ALLE);
+  if(document.readyState!=="loading")document.dispatchEvent(new Event("DOMContentLoaded"));
+})().catch(e=>{
+  console.error(e);
+  document.body.innerHTML='<div style="font-family:system-ui;padding:32px;text-align:center;color:#334155">'
+    +'<div style="font-size:40px">🦅</div><p>Die Kabine konnte nicht geladen werden.<br>Bitte die Seite neu laden.</p></div>';
+});
+</script>
+</body>
+</html>

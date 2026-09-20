@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v591 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v592 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -138,7 +138,7 @@ Zugang per Link und Einmal-Code an die hinterlegte E-Mail-Adresse. Kein Passwort
 
 Die Kabine ist der Kinder-Modus innerhalb der Eltern-App. Eltern geben das Handy weiter; zurück geht es nur mit einem Ausgangs-Code. Nach 60 Minuten schließt die Kabine von selbst. Kinder sehen nie Bewertungen und nie Zahlen zu anderen Kindern.
 
-**In Arbeit seit v590: die Kabine als eigene App.** Damit ein Kind sie auf einem eigenen Gerät installieren kann, bekommt es ein eigenes Konto ohne Namen und ohne E-Mail, das die Eltern in ihrer App per Code an ihr Kind binden und jederzeit wieder trennen. Die Eltern stellen dort auch die tägliche Appzeit ein; gezählt wird sie auf dem Server, ein Neustart der App dreht nichts zurück. Mit v590 steht die Datenbank dafür (Konto, Kopplung, Zeitkonto, Rechte), mit v591 die Karte **Kinder-App** im Eltern-Bereich: Code erzeugen, gekoppelte Geräte sehen, Appzeit einstellen, Gerät trennen. Die eigene App für das Kindergerät folgt als Nächstes. Die Kabine in der Eltern-App bleibt bestehen.
+**In Arbeit seit v590: die Kabine als eigene App.** Damit ein Kind sie auf einem eigenen Gerät installieren kann, bekommt es ein eigenes Konto ohne Namen und ohne E-Mail, das die Eltern in ihrer App per Code an ihr Kind binden und jederzeit wieder trennen. Die Eltern stellen dort auch die tägliche Appzeit ein; gezählt wird sie auf dem Server, ein Neustart der App dreht nichts zurück. Mit v590 steht die Datenbank dafür (Konto, Kopplung, Zeitkonto, Rechte), mit v591 die Karte **Kinder-App** im Eltern-Bereich: Code erzeugen, gekoppelte Geräte sehen, Appzeit einstellen, Gerät trennen. Mit v592 gibt es den dritten Einstieg: **die Kabine als eigene App** unter `kinder/`, mit eigenem Symbol, eigenem Namen und eigener Installation. Beim ersten Start fragt sie nur nach dem Code der Eltern; danach öffnet sie direkt die Kabine, ohne Eltern-Bereich dahinter. Die Kabine in der Eltern-App bleibt bestehen.
 
 | Funktion | Was sie tut | Nutzen |
 |---|---|---|

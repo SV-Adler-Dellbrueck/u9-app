@@ -46,6 +46,16 @@ function supabaseAttrappe(tabellen = {}) {
       const w = (typeof f === "function") ? f(u, req) : f;
       return (w && w.status) ? w : { status: 200, body: JSON.stringify(w == null ? {} : w) };
     }
+    /* v592: Die Kinder-App meldet sich SELBST an (anonymes Konto ueber /auth/v1/signup).
+       Ohne Antwort hier haette sie nie einen Ausweis und jede Pruefung endete im
+       Offline-Zweig. {auth:{signup:…}} liefert ihn. */
+    const a = u.pathname.match(/\/auth\/v1\/([a-z_]+)$/);
+    if (a) {
+      const f = (tabellen.auth || {})[a[1]];
+      if (f == null) return { status: 200, body: "{}" };
+      const w = (typeof f === "function") ? f(u, req) : f;
+      return (w && w.status) ? w : { status: 200, body: JSON.stringify(w == null ? {} : w) };
+    }
     const r = u.pathname.match(/\/rest\/v1\/rpc\/([a-z_]+)$/);
     if (r) {
       const f = (tabellen.rpc || {})[r[1]];

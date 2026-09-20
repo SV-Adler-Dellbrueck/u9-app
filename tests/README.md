@@ -41,6 +41,7 @@ die aus einem echten Fehler entstanden ist — die Versionsnummer im Namen sagt,
 | `h.starten({start, supabase, breite, hoehe, scheme, warten, speicherBehalten})` | Seite laden; gibt `{page, gesendet, fehler(), schliessen()}` |
 | `h.supabaseAttrappe({tabelle: zeilen \| (url, request) => zeilen})` | Antworten je Tabelle; alles andere `[]` |
 | `h.supabaseAttrappe({rpc: {name: antwort \| (url, request) => antwort}})` | Antworten je RPC (`/rest/v1/rpc/<name>`); ohne Eintrag `[]` |
+| `h.supabaseAttrappe({auth: {signup: antwort}})` | Antworten der Anmeldung (`/auth/v1/<name>`); ohne Eintrag `{}` |
 | `s.gesendet` | Nicht-GET-Anfragen: `{pfad, suche, methode, body}` – `suche` traegt z. B. `on_conflict=…` |
 | `h.KINDER`, `h.kaderZeilen({inaktiv})` | 15 neutrale Kinder, als DB-Zeilen |
 | `h.terminSetzen(page, datum)` | Terminauswahl des Trainingsplans stellen |

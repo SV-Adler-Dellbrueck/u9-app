@@ -1,0 +1,18 @@
+{
+  "id": "adler-u9-kinder",
+  "name": "Die Kabine – SV Adler Dellbrück U9",
+  "short_name": "Kabine",
+  "description": "Die Kabine der U9 auf dem eigenen Gerät: Album, Missionen, Quiz und Adler-Post",
+  "start_url": "./kinder/",
+  "scope": "./kinder/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "./icon-kinder.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-kinder-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "categories": ["sports", "education"],
+  "lang": "de"
+}
