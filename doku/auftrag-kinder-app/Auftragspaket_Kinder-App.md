@@ -547,3 +547,45 @@ Funktion nur abweisen, nicht koppeln.
 **Empfehlung zur Reihenfolge:** die Eltern-Karte (Schritt 6) vor Einstieg und Kabine
 (Schritte 4 und 5) bauen. Erst mit ihr lässt sich ein Code erzeugen und damit die
 Kopplung überhaupt einmal von Hand durchspielen, bevor die Kinder-App darauf aufsetzt.
+
+---
+
+## Nachtrag Schritt 6 — die Karte der Eltern (20.09.2026, v591)
+
+Vorgezogen, weil ohne sie kein Code entsteht und die Kopplung aus Schritt 3 nicht einmal
+von Hand durchzuspielen wäre.
+
+**Wo:** Eltern-Dashboard, Abschnitt „Für die Kinder", direkt unter der Kabinen-Kachel.
+Der Code liegt in `md-kabine.js` (dieselben Daten wie die Kabine) vor `renderTrainerUI()`,
+damit der Wachname die letzte Funktion der Datei bleibt; der Knopf steht in
+`md-eltern-portal.js`. Kein neues Modul, also keine Änderung an Loader, `MODUL_WACHE`
+oder `PRECACHE`.
+
+**Was sie kann:** je Kind die gekoppelten Geräte mit Gerätename, Kopplungsdatum und der
+heute genutzten Zeit, darunter ein Schieber für die Appzeit (0 bis 180 Minuten in
+Viertelstunden) und „Gerät trennen". Dazu „Neues Gerät koppeln": ein sechsstelliger Code
+erscheint groß mit einer Uhr, die fünfzehn Minuten rückwärts läuft.
+
+Entscheidungen:
+
+- **Der Code verlässt die App nicht.** In `kind_kopplung` geht nur sein SHA-256, gebildet
+  mit `hashPin()` aus `boot.js` — dasselbe Verfahren wie beim Kabinen-Code und wie in der
+  Edge Function. Die Ziffern kommen aus `crypto.getRandomValues`, nicht aus `Math.random`.
+- **`sbUid()` in `core.js`** liest die eigene Konto-Kennung aus dem Ausweis, damit
+  `erstellt_von` ohne E-Mail auskommt (Schritt 2, Abweichung 1).
+- **Trennen fragt in einem eigenen Fenster**, nicht mit `confirm()`; Systemdialoge sind im
+  Eltern- und Kinderbereich ausgeschlossen.
+- **Farbe trägt nichts allein:** neben dem farbigen Rand steht immer das Wort — „noch 35
+  Min. heute", „für heute aufgebraucht", „gesperrt".
+- **Fokus** erledigt der zentrale Trap in `core.js` für jedes `role="dialog"`; die
+  Stapelhöhe kommt aus `zOben()`, damit das Trennen-Fenster über der Karte liegt.
+
+**Prüffall** `tests/checks/v591-kinder-app-karte.js`, grün: leerer Zustand, Code
+sechsstellig mit laufender Uhr, geschrieben wird ein 64-stelliger Hash und **nicht** die
+Ziffernfolge, Gültigkeit fünfzehn Minuten, Schieber 0–180 in Viertelstunden schreibt
+`tageslimit_min` für genau dieses Gerät, Trennen setzt `aktiv=false` und fragt im eigenen
+`role="dialog"`. Knöpfe und Schieber mindestens 44 Pixel. Der ganze Lauf ist grün.
+
+**Damit ist die Kopplung von Hand durchspielbar**, sobald es einen Einstieg für das
+Kindergerät gibt (Schritt 4). Bis dahin lässt sich nur die eine Hälfte sehen: dass ein
+Code entsteht und wieder abläuft.
