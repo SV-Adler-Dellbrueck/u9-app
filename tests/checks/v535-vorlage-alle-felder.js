@@ -28,7 +28,8 @@ module.exports = async function (h) {
       trainingsplan: (u) => {
         if (/select=slots/.test(u.search)) return [{ slots: bloecke.map(b => ({ label: b.label, dauer: b.dauer, farbe: "#1a56db", typ: b.typ })) }];
         if (/select=plan/.test(u.search)) return [{ plan: bloecke.map((b, i) => ({
-          formIdx: i === 0 ? 0 : 1, formName: "x", trainer: "Alle", slotLabel: b.label, alleFelder: true, key: "k" + i
+          /* v586: der Name entscheidet – ein Eintrag braucht deshalb einen echten */
+          formIdx: i === 0 ? 0 : 1, formName: i === 0 ? "Korridor-Funino" : "4+1 Lebende Raute", trainer: "Alle", slotLabel: b.label, alleFelder: true, key: "k" + i
         })) }];
         return [];
       }

@@ -17,6 +17,8 @@
    Deshalb steht im Import-JSON kein Index, sondern ein NAME, und der Index wird erst
    aufgelöst, nachdem die neuen Übungen angelegt und `loadCustomForms()` gelaufen ist.
    Die Prüfung `v506-einheit-import.js` hält genau das dauerhaft fest.
+   Seit v586 gilt der Name auch beim LESEN: tpPlanRestore() löst jeden Eintrag über
+   `formName` auf (tfIndexVon in boot.js), der gespeicherte Index ist nur noch ein Hinweis.
    ═══════════════════════════════════════════════════════════════════════════ */
 const EI_SCHEMA="adler-einheit/1";
 /* Bekannte Phasen-Typen. „Ausklang“ kommt als typ „abschluss“ mit eigenem Label – ein
@@ -138,7 +140,10 @@ function _eiSkizze(x){ return _eiSkizzeOk(x)?x:null; }
 function _eiNorm(s){ return String(s||"").trim().toLowerCase(); }
 function _eiFormIndex(name){
   const n=_eiNorm(name);
-  return (typeof tpAllForms==="function"?tpAllForms():[]).findIndex(f=>_eiNorm(f&&f.name)===n);
+  const alle=(typeof tpAllForms==="function"?tpAllForms():[]);
+  // v586: die sichtbare Kopie zuerst – eine versteckte Dublette steht in keinem Auswahlfeld
+  const k=alle.findIndex((f,i)=>_eiNorm(f&&f.name)===n&&!(typeof tfDublette==="function"&&tfDublette(i)));
+  return k>=0?k:alle.findIndex(f=>_eiNorm(f&&f.name)===n);
 }
 /* Prüfen gibt IMMER eine Liste im Klartext zurück – jeder Fehler mit Blocknummer.
    Solange sie nicht leer ist, wird nichts geschrieben. */
@@ -254,6 +259,9 @@ async function _eiUebungAnlegen(u){
   const form=_euForm(u);
   const r=await fetch(`${SB_URL}/rest/v1/trainingsformen`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify(form)});
   if(sbCheck401(r))return false;
+  /* v586: Ein Unique-Index auf dem Namen der Import-Zeilen antwortet mit 409, wenn eine
+     andere Sitzung dieselbe Übung eben angelegt hat. Das ist kein Fehler – sie steht. */
+  if(r.status===409)return "da";
   return r.ok;
 }
 /* Der Trainingsplan wählt sein Datum über ein Auswahlfeld aus den Terminen. Ein
@@ -462,16 +470,18 @@ function _euVorschauHtml(uebungen){
    überspringt, was schon steht. */
 async function _euAnlegen(uebungen){
   const neu=(uebungen||[]).filter(u=>u.neu);
-  let angelegt=0, fehler=null;
+  let angelegt=0, schonDa=0, fehler=null;
   try{
     for(const u of neu){
-      if(!await _eiUebungAnlegen(u)){ fehler=u.name; break; }
+      const erg=await _eiUebungAnlegen(u);
+      if(erg==="da"){ schonDa++; continue; }       // v586: eine andere Sitzung war schneller
+      if(!erg){ fehler=u.name; break; }
       angelegt++;
     }
   }catch(e){ fehler=fehler||"__netz"; }
   // Erst danach nachladen: vorher kennt tpAllForms() die neuen Übungen nicht.
-  if(angelegt&&typeof loadCustomForms==="function"){ try{ await loadCustomForms(); }catch(e){} }
-  return {angelegt, offen:neu.length-angelegt, fehler, uebersprungen:(uebungen||[]).length-neu.length};
+  if((angelegt||schonDa)&&typeof loadCustomForms==="function"){ try{ await loadCustomForms(); }catch(e){} }
+  return {angelegt, offen:neu.length-angelegt-schonDa, fehler, uebersprungen:(uebungen||[]).length-neu.length+schonDa};
 }
 /* ═══ v585 – BESTEHENDE BIBLIOTHEKS-ÜBUNGEN NACHZIEHEN ═══════════════════════════
    Bis v584 legte der Abgleich nur an, was namentlich fehlte. Eine geänderte Übung der
