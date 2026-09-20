@@ -427,3 +427,85 @@ ausschließlich im Kind-Zweig, sonst hätte er Eltern und Trainer mit ausgesperr
 Offen bleibt die Prüfung mit einer echten Kind-Sitzung: dafür braucht es das anonyme
 Konto aus Schritt 3. Erst dort lässt sich messen, dass ein Kind nach Ablauf der Appzeit
 wirklich nichts mehr schreiben kann.
+
+---
+
+## Nachtrag Schritt 3a — der Riegel vor dem Häkchen (20.09.2026)
+
+Vor dem Einschalten der anonymen Anmeldung geprüft, was sie im Bestand öffnen würde.
+Supabase gibt anonymen Sitzungen dieselbe Rolle wie jedem angemeldeten Elternteil
+(`authenticated`); der öffentliche App-Schlüssel steht im Quelltext der App. Gemessen:
+
+| Was | Vor dem Riegel |
+|---|---|
+| `team_gallery()` | für `authenticated` aufrufbar, liefert Namen, Nummern, Fotopfade **und die Bewertungswerte** aller Kinder |
+| `quiz_progress` | nimmt Einträge für **jeden** Kadernamen an (`is_kader_name`) |
+| `kabine_config` | für jeden Angemeldeten lesbar — dort steht der Hash des Kabinen-Ausgangscodes |
+| `album_fotos`, `album_tausch`, `kabinen_wahl`, `ansagen`, `ausstattung_artikel`, `team_config` | „irgendjemand ist angemeldet" genügt |
+
+Migration `20260920_kinder_app_anonym_riegel.sql`, angewendet. Sie zieht die Grenze nicht
+zwischen angemeldet und nicht angemeldet, sondern zwischen einer **echten Sitzung** (Eltern,
+Trainer) oder einem **gekoppelten Kindergerät** und einer beliebigen anonymen Sitzung:
+
+- `ist_anonym()` liest die Marke aus dem Ausweis, `sitzung_gueltig()` verlangt eine echte
+  Anmeldung **oder** ein aktives `kind_konto`.
+- Sieben Policies laufen jetzt über `sitzung_gueltig()`; die Klasse „nur angemeldet"
+  (`auth.uid() is not null`) ist danach leer.
+- `kabine_config` ist für anonyme Sitzungen zu — die Kinder-App hat keinen Ausgangscode.
+- `ist_eigener_quizname()` löst den Altbefund aus Schritt 2 zur Hälfte: Eltern und Trainer
+  dürfen weiter für jedes Kind schreiben (Geschwister, Nachtragen), ein Kindergerät nur
+  noch unter dem eigenen Namen.
+- `team_gallery()` gibt anonymen Sitzungen eine leere Liste; `team_gallery_kind()` verlangt
+  eine gültige Sitzung.
+
+Geprüft ohne Anmeldung: Marke wird erkannt, `sitzung_gueltig()` false, beide Galerien leer,
+sieben Policies mit Riegel, zwei mit der Quiz-Prüfung, null Policies mit der alten Form.
+**Noch nicht geprüft:** das Verhalten einer echten anonymen Sitzung — dafür muss das
+Häkchen gesetzt sein. Das ist der erste Messpunkt von Schritt 3.
+
+Erst jetzt darf „Allow anonymous sign-ins" unter Authentication → Sign In / Providers
+eingeschaltet werden.
+
+### Gemessen mit echten Sitzungen (20.09.2026, nach dem Einschalten)
+
+Charles hat „Allow anonymous sign-ins" gesetzt. Gemessen wurde in der Datenbank mit der
+Rolle `authenticated` und gesetzten Ausweisdaten, jede Messung in einer Transaktion, die
+danach zurückgerollt wurde — es blieb kein Konto und keine Kopplung zurück (nachgezählt:
+null Kindkonten, null Sitzungen, acht Auth-Konten wie zuvor).
+
+**Anonyme Sitzung ohne Kopplung** — sie liest nichts außer den Terminen, die auch die
+öffentlichen Seiten zeigen:
+
+| Kader | Kabinen-Code | Album-Fotos | Wahl | Team-Config | Ausrüstung | Quiz | Kabinen-Post | Termine |
+|---|---|---|---|---|---|---|---|---|
+| 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 44 |
+
+Dazu: `sitzung_gueltig()` false, beide Galerien leer, `kind_status()` ohne Ergebnis,
+`ist_eigener_quizname()` für jeden Namen false.
+
+**Gekoppeltes Kindergerät** — es sieht genau seinen Teil:
+
+| Darf | Wert | Darf nicht | Wert |
+|---|---|---|---|
+| eigenes Kind im Kader | 1 von 16 | Bewertungen (`spielerprofile`) | 0 |
+| Kinder-Galerie | 14 | alte Galerie mit Rohwerten | 0 |
+| eigene Kabinen-Post | 1 | Rückmeldungen | 0 |
+| Team-Einstellungen | 1 | Nominierungen | 0 |
+| eigener Name im Quiz | ja | Notfallkarten | 0 |
+| Appzeit übrig | 60 Minuten | Eltern-Zuordnungen | 0 |
+| | | Kabinen-Ausgangscode | 0 |
+| | | fremder Name im Quiz | nein |
+
+**Zwei Fehler in der Messung, nicht im Riegel**, beide gefunden und behoben:
+
+1. Der erste Versuch koppelte ein bestehendes Auth-Konto — und alle acht gehören Trainern
+   oder Eltern. Das Gerät erbte deren Rechte, die Messung war wertlos. Gültig wird sie
+   erst mit einem Konto, das weder Trainer noch Elternteil ist.
+2. Der „fremde" Quizname wurde aus der Kader-Tabelle geholt — die für das Kindergerät nur
+   die eigene Zeile zeigt. Damit prüfte der Test den eigenen Namen gegen sich selbst. Mit
+   festen Namen: eigener Name ja, fremde Namen nein.
+
+Was von hier aus **nicht** messbar war: der Weg über die HTTP-Schnittstelle. Der Proxy
+dieser Sitzung verweigert Verbindungen zu `*.supabase.co` per Richtlinie; die Anmeldung
+eines echten anonymen Kontos über `/auth/v1/signup` muss deshalb aus der App kommen.
+Das fällt mit dem ersten Kopplungsversuch in Schritt 3 ohnehin an.
