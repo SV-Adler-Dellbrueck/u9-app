@@ -679,7 +679,7 @@ function kabineHome(){
       ${tile("kabineReporter()","🎙️","Kabinen-Reporter","rgba(20,184,166,.5)","rgba(15,118,110,.32)",true)}
     </div>`;})()}
     </div>
-    <button onclick="kabineExit()" style="margin:0 16px 18px;padding:12px;border:none;border-radius:14px;background:rgba(0,0,0,.25);color:#fff;font-family:inherit;font-size:14px;cursor:pointer">🔒 Für Erwachsene: Kabine verlassen</button>`;
+    ${window._kindGeraetModus?"":`<button onclick="kabineExit()" style="margin:0 16px 18px;padding:12px;border:none;border-radius:14px;background:rgba(0,0,0,.25);color:#fff;font-family:inherit;font-size:14px;cursor:pointer">🔒 Für Erwachsene: Kabine verlassen</button>`}`;
   teamLevelLoad("kab-level");                                  // C1: Team-Level
   if(typeof arenaKabineLoad==="function")arenaKabineLoad("kab-arena"); // C3: Einlauf-Song/Schlachtruf
   kabineCountdownLoad();                                        // G6: Countdown bis zum nächsten Spiel
@@ -1675,6 +1675,132 @@ async function codexKinderEditSave(btn){
   toast("Unsere Regeln gespeichert ✓");
   if(btn)btn.disabled=false;
   document.getElementById("kce-modal")?.remove();
+}
+
+/* ═══ Die Kabine auf dem Gerät des Kindes (v592) ═══════════════════════════════
+   Auftragspaket doku/auftrag-kinder-app/, Schritt 4. Aufgerufen von der Route ?kinder.
+
+   Zwei Zustände, mehr gibt es hier nicht:
+     gekoppelt   → die Kabine öffnet sofort, ohne Eltern-Dashboard dahinter
+     ungekoppelt → der Kopplungsbildschirm mit demselben Ziffernfeld wie der
+                   Ausgangscode der Kabine; ein Kind kennt es schon
+
+   Das Gerät meldet sich ANONYM an: ein Konto ohne Namen, ohne E-Mail, ohne Passwort.
+   Es liegt in einem eigenen Fach (SB_TOKEN_KEY_KIND) und fällt nie auf die Eltern- oder
+   Trainer-Sitzung zurück – was das Kind sehen darf, entscheidet die Datenbank über
+   dieses Konto, nicht die Oberfläche.
+
+   Die Anmeldung passiert EINMAL und wird wiederverwendet: jeder Fehlversuch mit einem
+   neuen Konto würde die Benutzertabelle vollschreiben und den Fehlversuchszähler der
+   Edge Function aushebeln, der genau an diesem Konto hängt. */
+let _kgStatus = null;                 // letzter kind_status()
+
+function kgFach(){ return (typeof SB_TOKEN_KEY_KIND!=="undefined")?SB_TOKEN_KEY_KIND:"adler_sb_auth_kind"; }
+function kgToken(){ try{ const t=JSON.parse(localStorage.getItem(kgFach())||"null"); return t&&t.access_token?t:null; }catch(e){ return null; } }
+function kgHeaders(){ const t=kgToken(); return {apikey:SB_KEY,Authorization:"Bearer "+(t?t.access_token:SB_KEY),"Content-Type":"application/json"}; }
+
+/* Anonymes Konto holen oder anlegen. Gibt den Ausweis zurück oder null. */
+async function kgAnmelden(){
+  const da=kgToken(); if(da)return da;
+  try{
+    const r=await fetch(`${SB_URL}/auth/v1/signup`,{method:"POST",headers:{apikey:SB_KEY,"Content-Type":"application/json"},body:"{}"});
+    if(!r.ok)return null;
+    const d=await r.json();
+    if(!d.access_token)return null;
+    const t={access_token:d.access_token,refresh_token:d.refresh_token||null,
+             expires_at:Math.floor(Date.now()/1000)+(d.expires_in||3600)};
+    try{ localStorage.setItem(kgFach(),JSON.stringify(t)); }catch(e){}
+    return t;
+  }catch(e){ return null; }
+}
+
+async function kgStatus(){
+  if(!kgToken())return null;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/kind_status`,{method:"POST",headers:kgHeaders(),body:"{}"});
+    if(!r.ok)return null;
+    const d=await r.json();
+    return (d&&d.ok)?d:null;
+  }catch(e){ return null; }
+}
+
+/* Einstieg der Route. Ohne Kopplung der Ziffernbildschirm, mit Kopplung die Kabine. */
+async function kinderGeraetStart(){
+  document.body.style.background="#0f172a";
+  const s=await kgStatus();
+  if(s)return kgKabine(s);
+  kgKopplungsbildschirm();
+}
+
+function kgKabine(s){
+  _kgStatus=s;
+  /* Die Kabine liest ihre Kindliste aus _elternKids. Auf diesem Gerät gibt es keine
+     Eltern-Sitzung und damit kein eltern_kinder – die Liste ist genau ein Kind und
+     kommt aus kind_status(). */
+  window._elternKids=[{spieler_id:s.spieler_id,label:"",kader:{id:s.spieler_id,name:s.name,nr:s.nr,tw:s.tw}}];
+  window._kindGeraetModus=true;      // die Kabine blendet damit den Erwachsenen-Ausgang aus
+  document.getElementById("kg-kopplung")?.remove();
+  if(typeof kabineOpen==="function")kabineOpen();
+}
+
+let _kgCode="";
+function kgKopplungsbildschirm(fehler){
+  document.getElementById("kg-kopplung")?.remove();
+  _kgCode="";
+  const m=document.createElement("div"); m.id="kg-kopplung";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Code eingeben");
+  m.style.cssText="position:fixed;inset:0;z-index:10050;background:linear-gradient(160deg,#0f172a,#1e3a8a);color:#fff;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto";
+  const taste=(t)=>`<button onclick="kgTip('${t}')" style="min-height:64px;border:none;border-radius:16px;background:rgba(255,255,255,.14);color:#fff;font-family:inherit;font-size:26px;font-weight:800;cursor:pointer">${t}</button>`;
+  m.innerHTML=`<div style="width:100%;max-width:340px;text-align:center">
+    <div style="font-size:44px">🦅</div>
+    <div style="font-size:21px;font-weight:900;margin-top:4px">Die Kabine</div>
+    <div style="font-size:13.5px;opacity:.85;line-height:1.6;margin:8px 0 14px">Deine Eltern zeigen dir einen Code mit sechs Zahlen. Tippe ihn hier ein.</div>
+    <div id="kg-dots" style="display:flex;gap:10px;justify-content:center;margin-bottom:6px"></div>
+    <div id="kg-err" style="min-height:36px;font-size:12.5px;color:#fca5a5;font-weight:700;margin-bottom:8px;line-height:1.5">${fehler?esc(fehler):""}</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+      ${[1,2,3,4,5,6,7,8,9].map(taste).join("")}
+      <button onclick="kgTip('del')" aria-label="Löschen" style="min-height:64px;border:none;border-radius:16px;background:rgba(255,255,255,.08);color:#fff;font-size:22px;cursor:pointer">⌫</button>
+      ${taste(0)}
+      <span></span>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+  kgDots();
+}
+function kgDots(){
+  const d=document.getElementById("kg-dots"); if(!d)return;
+  d.innerHTML=[0,1,2,3,4,5].map(i=>`<span style="width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:${i<_kgCode.length?"#fff":"transparent"}"></span>`).join("");
+}
+async function kgTip(t){
+  const err=document.getElementById("kg-err"); if(err&&t!=="del")err.textContent="";
+  if(t==="del"){ _kgCode=_kgCode.slice(0,-1); kgDots(); return; }
+  if(_kgCode.length>=6)return;
+  _kgCode+=String(t);
+  kgDots();
+  try{ navigator.vibrate&&navigator.vibrate(12); }catch(e){}
+  if(_kgCode.length<6)return;
+  await kgEinloesen(_kgCode);
+}
+
+async function kgEinloesen(code){
+  const err=document.getElementById("kg-err");
+  if(err)err.innerHTML='<span style="color:#e2e8f0">Einen Moment …</span>';
+  const t=await kgAnmelden();
+  if(!t){ _kgCode=""; kgDots(); if(err)err.textContent="Die Kabine erreicht das Internet gerade nicht. Versuch es gleich noch einmal."; return; }
+  let antwort=null;
+  try{
+    const r=await fetch(`${SB_URL}/functions/v1/kind-kopplung`,{method:"POST",
+      headers:{apikey:SB_KEY,Authorization:"Bearer "+t.access_token,"Content-Type":"application/json"},
+      body:JSON.stringify({code})});
+    antwort=await r.json().catch(()=>null);
+  }catch(e){}
+  if(antwort&&antwort.ok){
+    _kgCode="";
+    kgKabine(antwort);
+    return;
+  }
+  _kgCode=""; kgDots();
+  if(err)err.textContent=(antwort&&antwort.fehler)?antwort.fehler:"Das hat nicht geklappt. Frag deine Eltern nach einem neuen Code.";
 }
 
 /* ═══ Kinder-App: Gerät koppeln und Appzeit einstellen (v591) ═══════════════════

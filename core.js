@@ -35,15 +35,24 @@ function appRoot(){
 }
 const SB_TOKEN_KEY="adler_sb_auth";          // Trainer (Name bleibt: bestehende Sitzungen)
 const SB_TOKEN_KEY_ELTERN="adler_sb_auth_eltern";
+/* v592: Das Geraet des Kindes hat ein eigenes Fach. Es darf NICHT auf die Eltern- oder
+   Trainer-Sitzung zurueckfallen: genau darum geht es bei der Kinder-App - was das Kind
+   sieht, entscheidet die Datenbank ueber sein eigenes Konto, nicht die Oberflaeche. */
+const SB_TOKEN_KEY_KIND="adler_sb_auth_kind";
 // Welche Faecher gelten in diesem Kontext? Erstes = das, in das geschrieben wird.
 // Das Kinder-Quiz darf auf den Trainer-Token zurueckfallen, damit Federn auch auf
 // dem Trainer-Geraet gezaehlt werden (RLS erlaubt beides).
 function sbSlots(){
   const p=new URLSearchParams(location.search);
+  if(p.has("kinder")||_kindGeraet())return [SB_TOKEN_KEY_KIND];
   if(p.has("portal"))return [SB_TOKEN_KEY_ELTERN];
   if(p.has("quiz"))return [SB_TOKEN_KEY_ELTERN,SB_TOKEN_KEY];
   return [SB_TOKEN_KEY];
 }
+/* Das Quiz startet aus der Kabine mit ?quiz - auf dem Kindergeraet liegt die Sitzung
+   aber im Kind-Fach. Am Pfad /kinder/ ist das eindeutig, ohne dass die Route es wissen
+   muss. */
+function _kindGeraet(){ try{ return /\/kinder\//.test(location.pathname); }catch(e){ return false; } }
 function sbWriteKey(){ return sbSlots()[0]; }
 function sbRead(){
   for(const k of sbSlots()){
@@ -848,6 +857,7 @@ window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();_pwaPrompt=
 function pwaKontext(){
   const p=new URLSearchParams(location.search);
   if(p.has("portal"))return {slug:"eltern",name:"Eltern-Bereich",installierbar:true};
+  if(p.has("kinder")||_kindGeraet())return {slug:"kinder",name:"Die Kabine",installierbar:true};
   if(p.has("quiz")||p.has("heft")||p.has("ticker")||p.has("kind"))return {slug:"none",name:"",installierbar:false};
   return {slug:"trainer",name:"Trainer-App",installierbar:true};
 }

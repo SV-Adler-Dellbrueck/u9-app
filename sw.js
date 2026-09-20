@@ -1,10 +1,11 @@
-const CACHE="u9i-adler-v591";
+const CACHE="u9i-adler-v592";
 const PRECACHE=[
   "./",
   "./index.html",
   "./trainer/",          // Einstiegsseite der Trainer-App (eigener Manifest-Scope)
   "./eltern/",           // Einstiegsseite des Eltern-Bereichs
-  "./shell.html",        // gemeinsames Seitengeruest beider Einstiegsseiten
+  "./kinder/",           // Einstiegsseite der Kabine auf dem Geraet des Kindes
+  "./shell.html",        // gemeinsames Seitengeruest aller drei Einstiegsseiten
   "./styles.css",
   "./data.js",
   "./core.js",
@@ -51,8 +52,11 @@ const PRECACHE=[
   "./icon-trainer-maskable.png",
   "./icon-eltern.png",
   "./icon-eltern-maskable.png",
+  "./icon-kinder.png",
+  "./icon-kinder-maskable.png",
   "./manifest-trainer.json",
   "./manifest-eltern.json",
+  "./manifest-kinder.json",
   "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
   "https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css",
   "https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
@@ -102,6 +106,7 @@ self.addEventListener("activate",e=>{
 function einstiegFuer(url){
   const pfad=new URL(url).pathname;
   if(pfad.includes("/eltern/"))return "./eltern/";
+  if(pfad.includes("/kinder/"))return "./kinder/";
   if(pfad.includes("/trainer/"))return "./trainer/";
   return "./index.html"; // die Weiche in der Wurzel
 }

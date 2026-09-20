@@ -2656,6 +2656,18 @@ async function pinCheck(){
     setTimeout(pwaInstallNudge,1800);
     return;
   }
+  // Die Kabine auf dem Geraet des Kindes (?kinder) – eigener Einstieg, eigenes Konto.
+  // Nicht zu verwechseln mit ?kind: das ist der Zu-/Absage-Link fuer die Familie.
+  if(params.has("kinder")){
+    document.title="Die Kabine – SV Adler Dellbrück U9";
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content","#0f172a");
+    document.getElementById("pin-gate")?.remove();
+    document.getElementById("main-app")?.remove();
+    if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(()=>{});
+    routeRender("kinderGeraetStart");
+    setTimeout(pwaInstallNudge,1800);
+    return;
+  }
   // Persönlicher Kind-Link (?kind=<token>): 1-Tap Zu-/Absage ohne Login (Capability-Token).
   if(params.has("kind")){
     document.title="Zu-/Absage – SV Adler Dellbrück U9";

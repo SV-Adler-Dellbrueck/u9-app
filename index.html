@@ -30,7 +30,10 @@
   var p=new URLSearchParams(suche);
   // Alles, was nicht die Trainer-Ansicht ist, laeuft im Eltern-Ordner.
   var elternRouten=["portal","quiz","heft","ticker","kind","delegate","match","eltern","rsvp","handover","turnier"];
-  var ordner=elternRouten.some(function(k){return p.has(k);})?"eltern/":"trainer/";
+  // ?kinder = die Kabine auf dem Geraet des Kindes. Eigener Ordner, eigener Manifest-Scope.
+  // Steht VOR den Eltern-Routen: "kinder" und "kind" sind verschiedene Schluessel, aber der
+  // Unterschied ist ein Buchstabe - hier soll kein Zweifel bleiben, wohin es geht.
+  var ordner=p.has("kinder")?"kinder/":(elternRouten.some(function(k){return p.has(k);})?"eltern/":"trainer/");
   location.replace(ordner+suche+location.hash);
 })();
 </script>
@@ -38,6 +41,6 @@
 <body style="font-family:system-ui;text-align:center;padding:48px;color:#334155">
   <div style="font-size:40px">🦅</div>
   <p>Einen Moment …</p>
-  <p style="font-size:13px"><a href="trainer/">Trainer-App</a> · <a href="eltern/">Eltern-Bereich</a></p>
+  <p style="font-size:13px"><a href="trainer/">Trainer-App</a> · <a href="eltern/">Eltern-Bereich</a> · <a href="kinder/">Die Kabine</a></p>
 </body>
 </html>

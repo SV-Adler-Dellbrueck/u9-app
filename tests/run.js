@@ -35,16 +35,29 @@ melde(`Parsen: ${jsDateien.length} App-Dateien + Pruefwerkzeug`, !parseFehler.le
 (function statik() {
   const liste = (quelle, re) => { const m = quelle.match(re); return m ? m[1].split(",").map(s => s.trim().replace(/^["']|["']$/g, "")).filter(Boolean) : null; };
   const trainer = lies("trainer/index.html"), eltern = lies("eltern/index.html"), sw = lies("sw.js");
+  /* v592: Seit der Kinder-App gibt es DREI Einstiege. Ein Loader, den niemand prueft, ist
+     genau die Luecke, aus der die Modul-Wache einmal entstanden ist. */
+  const kinder = lies("kinder/index.html");
   const wacheT = (trainer.match(/const MODUL_WACHE=(\{[^}]*\})/) || [])[1], wacheE = (eltern.match(/const MODUL_WACHE=(\{[^}]*\})/) || [])[1];
+  const wacheK = (kinder.match(/const MODUL_WACHE=(\{[^}]*\})/) || [])[1];
   const p = [];
   if (!wacheT || !wacheE) p.push("MODUL_WACHE in einem Einstieg nicht gefunden");
   else if (wacheT !== wacheE) p.push("MODUL_WACHE unterscheidet sich zwischen trainer/ und eltern/");
+  if (!wacheK) p.push("MODUL_WACHE in kinder/ nicht gefunden");
+  else if (wacheT && wacheK !== wacheT) p.push("MODUL_WACHE unterscheidet sich zwischen trainer/ und kinder/");
   const wache = wacheT ? JSON.parse(wacheT) : {};
   const welle1 = liste(trainer, /await lade\(\[([^\]]*)\]\)/) || [];
   const welle2 = liste(trainer, /const WELLE2=\[([^\]]*)\]/) || [];
   const alleE = liste(eltern, /const ALLE=\[([^\]]*)\]/) || [];
-  const precache = liste(sw, /const PRECACHE=\[([\s\S]*?)\n\];/) || [];
-  const precacheDateien = new Set(precache.map(s => s.replace(/\s*\/\/.*$/, "").replace(/^\.\//, "")));
+  const alleK = liste(kinder, /const ALLE=\[([^\]]*)\]/) || [];
+  if (!alleK.length) p.push("kinder/index.html: keine Dateiliste (const ALLE=[…]) gefunden");
+  /* Zeilenweise lesen statt an Kommas trennen: mehrere PRECACHE-Zeilen tragen einen
+     Kommentar hinter dem Eintrag, und der frisst beim Trennen die naechste Zeile mit
+     (gefunden v592, als die Einstiegsseiten selbst geprueft wurden). */
+  const precacheDateien = new Set(
+    ((sw.match(/const PRECACHE=\[([\s\S]*?)\n\];/) || ["", ""])[1])
+      .split("\n").map(l => (l.match(/["']([^"']+)["']/) || [])[1]).filter(Boolean)
+      .map(x => x.replace(/^\.\//, "")));
   const module = jsDateien.filter(f => f !== "sw.js" && !welle1.includes(f));
   // a) jedes Modul hat einen Wachnamen, der GANZ UNTEN in der Datei definiert ist
   for (const f of module) {
@@ -62,7 +75,7 @@ melde(`Parsen: ${jsDateien.length} App-Dateien + Pruefwerkzeug`, !parseFehler.le
   }
   Object.keys(wache).forEach(f => { if (!fs.existsSync(path.join(REPO, f))) p.push(`MODUL_WACHE nennt ${f}, Datei fehlt`); });
   // b) jede geladene Datei existiert und liegt im PRECACHE
-  for (const f of new Set(welle1.concat(welle2, alleE))) {
+  for (const f of new Set(welle1.concat(welle2, alleE, alleK))) {
     if (!fs.existsSync(path.join(REPO, f))) p.push(`Loader laedt ${f}, Datei fehlt`);
     if (!precacheDateien.has(f)) p.push(`${f} fehlt im PRECACHE (sw.js)`);
   }
@@ -90,7 +103,10 @@ melde(`Parsen: ${jsDateien.length} App-Dateien + Pruefwerkzeug`, !parseFehler.le
     else if (stand !== bump) p.push(`${uebDatei} steht auf v${stand}, sw.js auf v${bump} – die Übersicht ist nachzuziehen`);
   } catch (e) { p.push(`${uebDatei} fehlt – die Funktionsübersicht gehört ins Repo`); }
   // Die Kopfzeile nennt den GELESENEN Stand, nicht den erwarteten – sonst verschwiege sie den Befund.
-  melde(`Ladearchitektur: ${Object.keys(wache).length} Module bewacht, ${welle1.length}+${welle2.length} Dateien im Loader, PRECACHE ${precacheDateien.size} Eintraege, sw.js v${bump}, Übersicht v${stand || "?"}`, !p.length, p);
+  // Die drei Einstiegsseiten selbst muessen im PRECACHE stehen, sonst ist die App offline tot.
+  ["./", "./index.html", "./trainer/", "./eltern/", "./kinder/", "./manifest-kinder.json", "./icon-kinder.png", "./icon-kinder-maskable.png"]
+    .forEach(e => { if (!precacheDateien.has(e.replace(/^\.\//, ""))) p.push(`${e} fehlt im PRECACHE (sw.js)`); });
+  melde(`Ladearchitektur: ${Object.keys(wache).length} Module bewacht, ${welle1.length}+${welle2.length} Dateien im Trainer-Loader, ${alleK.length} in kinder/, PRECACHE ${precacheDateien.size} Eintraege, sw.js v${bump}, Übersicht v${stand || "?"}`, !p.length, p);
 })();
 
 /* 3 – Pruefungen am DOM */

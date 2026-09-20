@@ -589,3 +589,54 @@ Ziffernfolge, Gültigkeit fünfzehn Minuten, Schieber 0–180 in Viertelstunden 
 **Damit ist die Kopplung von Hand durchspielbar**, sobald es einen Einstieg für das
 Kindergerät gibt (Schritt 4). Bis dahin lässt sich nur die eine Hälfte sehen: dass ein
 Code entsteht und wieder abläuft.
+
+---
+
+## Nachtrag Schritt 4 — der Einstieg `kinder/` (20.09.2026, v592)
+
+Die Kabine ist jetzt eine eigene App. Was dazugekommen ist:
+
+- **`kinder/index.html`** mit `<base href="../">`, eigenem Manifest `manifest-kinder.json`
+  (`id: adler-u9-kinder`, Scope und Start `./kinder/`, Kurzname „Kabine", Farbe `#0f172a`)
+  und eigenen Symbolen `icon-kinder.png` / `-maskable`. Die Symbole sind im Prüfstand-Browser
+  aus SVG gezeichnet und abfotografiert — dieselbe Werkstatt wie beim Skizzen-Export.
+- **Loader mit der gemessenen Zehnerliste** aus Schritt 1, ohne zweite Welle: was fehlte,
+  fehlte dort sofort. Die `MODUL_WACHE` ist wortgleich mit den beiden anderen Einstiegen.
+- **Weiche** in `index.html`: `?kinder` geht nach `kinder/`, vor den Eltern-Routen geprüft —
+  `kinder` und `kind` unterscheiden sich um einen Buchstaben, und `?kind` ist der
+  Zu-/Absage-Link der Familie.
+- **Service Worker**: `./kinder/`, Manifest und beide Symbole im `PRECACHE`, `einstiegFuer()`
+  kennt `/kinder/`, Version v592.
+- **Eigenes Sitzungsfach** `SB_TOKEN_KEY_KIND` in `core.js`. Es fällt **nie** auf die
+  Eltern- oder Trainer-Sitzung zurück; erkannt wird das Gerät an `?kinder` oder am Pfad
+  `/kinder/` (nötig, weil das Quiz mit `?quiz` startet). `pwaKontext()` gibt der Kabine
+  einen eigenen Installationshinweis.
+- **Route `?kinder`** in `boot.js` → `kinderGeraetStart()` in `md-kabine.js`: mit gültiger
+  Kopplung öffnet die Kabine sofort, sonst der Kopplungsbildschirm mit demselben
+  Ziffernfeld wie der Ausgangscode — das kennt ein Kind schon.
+- **Anmeldung genau einmal.** Das Gerät legt beim ersten Versuch ein anonymes Konto an und
+  benutzt es weiter. Ein neues Konto je Fehlversuch würde die Benutzertabelle füllen und
+  den Fehlversuchszähler der Edge Function aushebeln, der an diesem Konto hängt.
+- **Vorgriff auf Schritt 5, bewusst:** In der Kabine ist auf dem Kindergerät der
+  Erwachsenen-Ausgang ausgeblendet (`window._kindGeraetModus`). Ohne das stünde dort ein
+  Knopf, der einen Code verlangt, den die Datenbank anonymen Sitzungen gar nicht mehr
+  zeigt (Schritt 3a). Alles Weitere — serverseitige Appzeit über `kind_tick()`, der
+  Kind-Zweig im Quiz, `team_gallery_kind` statt `team_gallery` — bleibt Schritt 5.
+
+**Prüfstand erweitert**, weil ein dritter Loader sonst ungeprüft bliebe:
+`tests/run.js` liest jetzt auch `kinder/index.html`, vergleicht dessen `MODUL_WACHE` mit
+den anderen, prüft dessen Dateiliste gegen Repo und `PRECACHE` und verlangt die drei
+Einstiegsseiten samt Manifest und Symbolen im Precache. Dabei fiel ein Altfehler auf: die
+Precache-Liste wurde an Kommas getrennt, wodurch ein Zeilenkommentar den nächsten Eintrag
+mitfraß — jetzt zeilenweise gelesen. Die Attrappe beantwortet neu `/auth/v1/<name>`, sonst
+könnte sich keine Prüfung selbst anmelden.
+
+**Prüffall** `tests/checks/v592-kinder-einstieg.js`, grün: ohne Kopplung ein
+`role="dialog"` mit sechs Punkten und zehn Tasten ab 64 Pixeln, kein Eltern-Bereich
+dahinter, richtiges Manifest und richtige Farbe; bei falschem Code genau **eine** anonyme
+Anmeldung bei zwei Versuchen, der Satz der Funktion erscheint, das Feld ist wieder leer;
+mit Kopplung öffnet die Kabine mit dem Kind aus `kind_status()`, ohne Ausgang, und das
+Gerät fragt keine der Tabellen ab, die den Eltern gehören.
+
+**Noch offen:** der erste echte Durchlauf auf einem Gerät. Aus dieser Sitzung heraus geht
+das nicht, der Proxy lässt keine Verbindung zu Supabase zu.
