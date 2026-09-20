@@ -62,17 +62,19 @@ async function exportSkizzen(opt){
          der Streifen waechst entsprechend. */
       const vb=String(skz.getAttribute("viewBox")||"0 0 280 180").split(/\s+/).map(Number);
       const BREITE=vb[2]||280, H_SKZ=vb[3]||180;
-      const spalten=BREITE<220?2:3, zeilen=Math.ceil(6/spalten);
-      const H_LEG=12+zeilen*16, GESAMT=H_SKZ+H_LEG;
+      /* v587: nur, was in der Zeichnung vorkommt – dieselbe Auswahl wie skzLegende in der App. */
+      const A=(typeof skzLegendeArten==="function")?skzLegendeArten(spec):null;
       const eintraege=[
-        {art:"linie",c:SKZ_PFEIL.p,w:1.5,dash:"",  kopf:true, txt:SKZ_PFEIL_NAME.p},
-        {art:"linie",c:SKZ_PFEIL.l,w:1.5,dash:"5,3",kopf:true, txt:SKZ_PFEIL_NAME.l},
-        {art:"linie",c:SKZ_PFEIL.s,w:3,  dash:"",  kopf:true, txt:SKZ_PFEIL_NAME.s},
+        {key:"p", art:"linie",c:SKZ_PFEIL.p,w:1.5,dash:"",  kopf:true, txt:SKZ_PFEIL_NAME.p},
+        {key:"l", art:"linie",c:SKZ_PFEIL.l,w:1.5,dash:"5,3",kopf:true, txt:SKZ_PFEIL_NAME.l},
+        {key:"s", art:"linie",c:SKZ_PFEIL.s,w:3,  dash:"",  kopf:true, txt:SKZ_PFEIL_NAME.s},
         /* v583: durchgezogen und geschwungen wie im Bild darueber (v578). */
-        {art:"welle",c:SKZ_PFEIL.d,w:1.5,dash:"",  kopf:true, txt:SKZ_PFEIL_NAME.d},
-        {art:"linie",c:"#fbbf24",   w:2,  dash:"5,4",kopf:false,txt:"Schusszone"},
-        {art:"linie",c:"rgba(255,255,255,.7)",w:2,dash:"",kopf:false,txt:"Mittellinie"}
-      ];
+        {key:"d", art:"welle",c:SKZ_PFEIL.d,w:1.5,dash:"",  kopf:true, txt:SKZ_PFEIL_NAME.d},
+        {key:"sz",art:"linie",c:"#fbbf24",   w:2,  dash:"5,4",kopf:false,txt:"Schusszone"},
+        {key:"m", art:"linie",c:"rgba(255,255,255,.7)",w:2,dash:"",kopf:false,txt:"Mittellinie"}
+      ].filter(e=>!A||A.has(e.key));
+      const spalten=BREITE<220?2:3, zeilen=Math.max(1,Math.ceil(eintraege.length/spalten));
+      const H_LEG=12+zeilen*16, GESAMT=H_SKZ+H_LEG;
       const teile=[];
       teile.push('<rect x="0" y="'+H_SKZ+'" width="'+BREITE+'" height="'+H_LEG+'" fill="#1f4d1f"/>');
       const zellB=BREITE/spalten;

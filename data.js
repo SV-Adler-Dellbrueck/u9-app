@@ -4033,7 +4033,30 @@ function _skz(o,opt){
    wirklich vorkommt. Eine Legende, die immer alles zeigt, erklärt am Ende nichts mehr. */
 const SKZ_GER_NAME={stange:"Stange",teller:"Markierungsteller",huerde:"Minihürde",depot:"Balldepot",ring:"Koordinationsring",dummy:"Freistoß-Dummy",trainer:"Trainer"};
 function _skzGerProbe(art){ return {ger:[[16,9,art,"y"]]}; }
+/* v587 – DIE LEGENDE ZEIGT NUR, WAS VORKOMMT.
+
+   Übergabe 3.1 (20.09.): Unter der Lehrgangsskizze standen „Schusszone" und „Mittellinie",
+   obwohl keines von beiden gezeichnet ist. Die Geräte-Einträge richteten sich schon seit
+   v559 nach der Zeichnung, die sechs Strich-Einträge standen fest – Beschluss vom 14.09.:
+   „Eine Legende, die eine andere Zeichnung beschreibt, ist schlimmer als keine."
+
+   Mit Beschreibung (spec) werden nur die Wegarten und Linien gezeigt, die in irgendeinem
+   Bild vorkommen. OHNE Beschreibung – die 37 Altskizzen aus handgeschriebenem SVG, die
+   Import-Vorschau, das Wissen – bleibt alles stehen, denn dort weiß niemand, was drin ist.
+   Der Export für die Abgabe (doku/auftrag-lehrgangsskizzen) liest dieselbe Auswahl. */
+function skzLegendeArten(spec){
+  if(!spec||typeof spec!=="object")return null;
+  const arten=new Set();
+  const n=(typeof skzBildZahl==="function")?skzBildZahl(spec):1;
+  for(let i=0;i<n;i++){
+    const b=(typeof _skzBild==="function")?_skzBild(spec,i):spec;
+    (b.p||[]).forEach(p=>{ const a=String((p&&p[4])||"p"); if("plsd".includes(a))arten.add(a); });
+  }
+  (spec.li||[]).forEach(l=>arten.add((l&&l[4])==="m"?"m":"sz"));
+  return arten;
+}
 function skzLegende(hell,spec){
+  const A=skzLegendeArten(spec), hat=k=>!A||A.has(k);   // v587
   /* v512: Die Strichprobe steht auf einem Stück Rasen – sonst wäre der weiße Pass-Pfeil
      auf hellem Grund unsichtbar, und die Farben stimmten nicht mit der Zeichnung überein.
      v555: Der Rasen der Legende folgt der Variante, sonst zeigte sie im hellen Bild
@@ -4051,9 +4074,9 @@ function skzLegende(hell,spec){
   const wl=c=>'<svg width="32" height="12" viewBox="0 0 32 12" style="flex:none;background:'+R+';border-radius:3px"><path d="'+_skzWelle(2,6,24,6)+'" fill="none" stroke="'+c+'" stroke-width="1.5" stroke-linecap="round"/><path d="M24,2.5 L30,6 L24,9.5 Z" fill="'+c+'"/></svg>';
   const P2=P.pfeil;
   return '<div class="skz-legende" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:10px;color:var(--text2);margin:2px 0 8px">'
-    +it(li('',1.5,P2.p),SKZ_PFEIL_NAME.p)+it(li('5,3',1.5,P2.l),SKZ_PFEIL_NAME.l)
-    +it(li('',3,P2.s),SKZ_PFEIL_NAME.s)+it(wl(P2.d),SKZ_PFEIL_NAME.d)
-    +it(st('5,4',P.sz),'Schusszone')+it(st('',P.mittel),'Mittellinie')
+    +(hat("p")?it(li('',1.5,P2.p),SKZ_PFEIL_NAME.p):"")+(hat("l")?it(li('5,3',1.5,P2.l),SKZ_PFEIL_NAME.l):"")
+    +(hat("s")?it(li('',3,P2.s),SKZ_PFEIL_NAME.s):"")+(hat("d")?it(wl(P2.d),SKZ_PFEIL_NAME.d):"")
+    +(hat("sz")?it(st('5,4',P.sz),'Schusszone'):"")+(hat("m")?it(st('',P.mittel),'Mittellinie'):"")
     +_skzGerLegende(spec,hell)+'</div>';
 }
 /* Die Geräte-Einträge der Legende. Gezeichnet wird jedes Symbol mit demselben Code wie

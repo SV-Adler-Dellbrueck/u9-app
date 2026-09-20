@@ -42,7 +42,9 @@ module.exports = async function (h) {
   const namen = (bib.uebungen || []).map(u => u.name);
   /* v557 hat den Stand weitergedreht, als die Schritte dazukamen. Geprüft wird deshalb,
      dass er seit diesem Paket nicht zurückgefallen ist – nicht mehr die eine Zahl. */
-  if (!/^2026-09-14-[2-9]$|^2026-09-1[5-9]/.test(String(bib.stand))) probleme.push(`bibliothek.json: Stand „${bib.stand}“ liegt vor „2026-09-14-2“ – ohne neuen Stand holt _bibHolen die Datei nicht`);
+  /* v587: Der Stand wird als Zeichenkette verglichen (gleiches Format JJJJ-MM-TT-N) – das
+     Muster davor endete am 19.09. und schlug beim ersten Stand vom 20.09. an. */
+  if (String(bib.stand) < "2026-09-14-2") probleme.push(`bibliothek.json: Stand „${bib.stand}“ liegt vor „2026-09-14-2“ – ohne neuen Stand holt _bibHolen die Datei nicht`);
   const fehlend = NEU.filter(n => !namen.includes(n));
   if (fehlend.length) probleme.push("In der Bibliothek fehlen: " + fehlend.join(", "));
   /* v568: Die Datei wächst nur am Ende – hinter den beiden stehen seither die dreizehn
