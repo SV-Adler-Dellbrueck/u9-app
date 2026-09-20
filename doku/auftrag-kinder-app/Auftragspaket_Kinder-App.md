@@ -509,3 +509,41 @@ Was von hier aus **nicht** messbar war: der Weg über die HTTP-Schnittstelle. De
 dieser Sitzung verweigert Verbindungen zu `*.supabase.co` per Richtlinie; die Anmeldung
 eines echten anonymen Kontos über `/auth/v1/signup` muss deshalb aus der App kommen.
 Das fällt mit dem ersten Kopplungsversuch in Schritt 3 ohnehin an.
+
+---
+
+## Nachtrag Schritt 3 — Kopplung steht (20.09.2026)
+
+**Anonyme Anmeldung ist eingeschaltet** (Charles, 20.09.), der Riegel davor war Schritt 3a.
+
+**Edge Function `kind-kopplung`** liegt als Quelltext unter
+`supabase/functions/kind-kopplung/` und ist als Version 2 aktiv (`verify_jwt` an). Sie
+nimmt `{ "code": "123456" }` mit dem Ausweis der anonymen Sitzung und antwortet in der
+Form von `kind_status()`.
+
+Was sie erzwingt, und warum dort und nicht im Client:
+
+- **Nur anonyme Sitzungen dürfen koppeln.** Tippt ein angemeldetes Elternteil den Code in
+  die eigene App, würde es sich zum Kindergerät machen und dabei Rechte verlieren, ohne
+  es zu merken. Die Funktion weist das mit einem erklärenden Satz ab.
+- **Fünf Fehlversuche je Gerät und Stunde**, gezählt in der neuen Tabelle
+  `kind_kopplung_versuch` (RLS an, bewusst ohne Policy — nur der Dienstschlüssel schreibt
+  dort). Ein sechsstelliger Code hat eine Million Möglichkeiten; ohne Deckel wäre er in
+  Stunden geraten.
+- **Verbrauchte Codes bleiben verbraucht**, abgelaufen wie eingelöst.
+- **Ein zweiter Aufruf mit bestehender Kopplung** gibt ohne Code den Stand zurück, damit
+  die App einen Neustart übersteht.
+
+Der Hash ist SHA-256 in Kleinbuchstaben, wortgleich mit `hashPin()` in `boot.js` — beide
+Seiten müssen dasselbe Verfahren benutzen, sonst passt nie ein Code. Der Berliner Tag
+kommt aus `Intl.DateTimeFormat("sv-SE", …)`, nicht aus einem festen Stundenabstand: im
+Winter ist er eine Stunde, im Sommer zwei.
+
+**Noch nicht end-to-end geprüft, und zwar aus zwei Gründen:** Der Proxy dieser Sitzung
+lässt keine Verbindung zu `*.supabase.co` zu, und es gibt bisher keinen Weg, einen Code
+zu *erzeugen* — das ist die Eltern-Karte aus Schritt 6. Solange sie fehlt, kann die
+Funktion nur abweisen, nicht koppeln.
+
+**Empfehlung zur Reihenfolge:** die Eltern-Karte (Schritt 6) vor Einstieg und Kabine
+(Schritte 4 und 5) bauen. Erst mit ihr lässt sich ein Code erzeugen und damit die
+Kopplung überhaupt einmal von Hand durchspielen, bevor die Kinder-App darauf aufsetzt.
