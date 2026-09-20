@@ -113,6 +113,14 @@ function sbEmail(){
   try{ const p=JSON.parse(atob(t.split(".")[1].replace(/-/g,"+").replace(/_/g,"/")));
        return p.email?String(p.email).toLowerCase():null; }catch(e){ return null; }
 }
+/* Die eigene Konto-Kennung aus dem Ausweis. Gebraucht wird sie dort, wo eine Zeile
+   festhalten soll, WER etwas angelegt hat, ohne eine E-Mail zu speichern (Kopplung eines
+   Kindergeraets, v591). Wie sbEmail: aus dem Token gelesen, nie nachgefragt. */
+function sbUid(){
+  const t=sbToken(); if(!t)return null;
+  try{ const p=JSON.parse(atob(t.split(".")[1].replace(/-/g,"+").replace(/_/g,"/")));
+       return p.sub?String(p.sub):null; }catch(e){ return null; }
+}
 /* 403 = die RLS hat abgelehnt (z. B. Eltern-Token in der Trainer-App). Das ist kein
    "Speicherfehler" und muss anders klingen, sonst sucht man an der falschen Stelle. */
 function sbDeniedMsg(res,fallback){

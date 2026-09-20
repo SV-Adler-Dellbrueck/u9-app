@@ -1677,6 +1677,185 @@ async function codexKinderEditSave(btn){
   document.getElementById("kce-modal")?.remove();
 }
 
+/* ═══ Kinder-App: Gerät koppeln und Appzeit einstellen (v591) ═══════════════════
+   Auftragspaket doku/auftrag-kinder-app/, Schritt 6. Die Karte gehört den ELTERN, auch
+   wenn sie hier im Kinder-Modul steht: sie ist das Gegenstück zur Kabine und teilt sich
+   deren Daten.
+
+   Die Kopplung läuft über einen sechsstelligen Code, von dem hier nur der SHA-256 in die
+   Datenbank geht (derselbe hashPin wie beim Kabinen-Code). Der Code selbst steht auf dem
+   Bildschirm der Eltern und sonst nirgends – auch nicht im Zwischenspeicher. Einlösen
+   kann ihn nur die Edge Function kind-kopplung; sie prüft Ablauf, Verbrauch und Anzahl
+   der Fehlversuche.
+
+   Die Appzeit ist ein TAGESBUDGET am Gerät, kein Zähler in der App: gezählt wird auf dem
+   Server (kind_tick), damit ein Neustart nichts zurückdreht. Deshalb wirkt eine Änderung
+   sofort, auch mitten in einer laufenden Kabinen-Stunde. */
+const KA_GUELTIG_MIN = 15;          // so lange gilt ein Kopplungscode
+const KA_LIMIT_MAX   = 180;
+let _kaDaten = null;                // {konten:[], sitzungen:{uid:minuten}}
+let _kaCodeUhr = null;
+
+function kaHeute(){ return new Date().toISOString().slice(0,10); }
+function kaKids(){ return (window._elternKids||[]).filter(k=>k&&k.spieler_id); }
+
+async function kinderAppOpen(){
+  if(typeof nutzungLog==="function")nutzungLog("kinderapp","open");
+  document.getElementById("ka-modal")?.remove();
+  const m=document.createElement("div"); m.id="ka-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Kinder-App");
+  m.style.cssText="position:fixed;inset:0;background:var(--bg,#f1f5f9);overflow-y:auto";
+  m.style.zIndex=(typeof zOben==="function")?zOben():10040;   // ueber allem, was gerade offen ist
+  m.innerHTML=`<div style="max-width:560px;margin:0 auto;padding:12px 16px 40px">
+    <div style="display:flex;align-items:center;gap:10px;position:sticky;top:0;background:var(--bg,#f1f5f9);padding:8px 0 10px;z-index:1">
+      <button onclick="kinderAppClose()" aria-label="Zurück" style="border:none;background:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;color:#334155;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08)">←</button>
+      <div style="font-size:17px;font-weight:800">📱 Kinder-App</div>
+    </div>
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:13px;font-size:13px;line-height:1.6;color:#475569;margin-bottom:12px">
+      Dein Kind kann die Kabine auf einem <b>eigenen Gerät</b> installieren. Dafür bekommt es
+      ein Konto <b>ohne Namen und ohne E-Mail</b>, das du hier an dein Kind bindest und
+      jederzeit wieder trennst. Wie lange es täglich darf, stellst du ebenfalls hier ein.
+    </div>
+    <div id="ka-body"></div>
+  </div>`;
+  /* Fokus-Trap und Fokus-Sprung erledigt core.js fuer jedes role="dialog" von selbst. */
+  document.body.appendChild(m);
+  await kinderAppLaden();
+}
+function kinderAppClose(){
+  clearInterval(_kaCodeUhr); _kaCodeUhr=null;
+  document.getElementById("ka-modal")?.remove();
+}
+
+async function kinderAppLaden(){
+  const b=document.getElementById("ka-body"); if(!b)return;
+  b.innerHTML=`<div style="text-align:center;padding:36px;color:#64748b;font-size:13px">Lädt …</div>`;
+  const kids=kaKids();
+  if(!kids.length){ b.innerHTML=kaKarte(`<div style="font-size:13px;color:#475569">Für diese Adresse ist noch kein Kind hinterlegt. Sag deinem Trainer Bescheid, dann richtet er das ein.</div>`); return; }
+  const ids=kids.map(k=>k.spieler_id).join(",");
+  let konten=[], sitzungen={};
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/kind_konto?select=uid,spieler_id,geraet,tageslimit_min,aktiv,gekoppelt_am&spieler_id=in.(${ids})&order=gekoppelt_am.asc`,{headers:sbAuthHeaders()});
+    if(r.ok)konten=await r.json();
+  }catch(e){}
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/kind_sitzung?select=uid,minuten&datum=eq.${kaHeute()}`,{headers:sbAuthHeaders()});
+    if(r.ok)(await r.json()).forEach(z=>{sitzungen[z.uid]=z.minuten;});
+  }catch(e){}
+  _kaDaten={konten,sitzungen};
+  b.innerHTML=kids.map(k=>kaKindBlock(k,konten.filter(x=>x.spieler_id===k.spieler_id&&x.aktiv),sitzungen)).join("");
+}
+
+function kaKarte(inner,extra){ return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px;margin-bottom:12px;${extra||""}">${inner}</div>`; }
+
+function kaKindBlock(k,geraete,sitzungen){
+  const kd=k.kader||{}, name=esc(kd.name||"Kind"), sid=k.spieler_id;
+  const liste=geraete.length ? geraete.map(g=>kaGeraetZeile(g,sitzungen[g.uid]||0)).join("")
+    : `<div style="font-size:13px;color:#64748b;padding:8px 0 12px">Noch kein Gerät gekoppelt.</div>`;
+  return kaKarte(`
+    <div style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:8px">${name}${kd.nr!=null?` <span style="font-weight:600;color:#94a3b8">#${kd.nr}</span>`:""}</div>
+    ${liste}
+    <div id="ka-code-${sid}"></div>
+    <button onclick="kinderAppCode(${sid})" style="width:100%;min-height:48px;margin-top:6px;border:none;border-radius:12px;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">📱 Neues Gerät koppeln</button>`);
+}
+
+function kaGeraetZeile(g,heute){
+  const limit=g.tageslimit_min||0, rest=Math.max(0,limit-heute);
+  const gesperrt=limit===0;
+  const farbe=gesperrt?"#64748b":(rest<=0?"#b45309":"#15803d");
+  const wort=gesperrt?"gesperrt":(rest<=0?"für heute aufgebraucht":`noch ${rest} Min. heute`);
+  return `<div style="border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:10px">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span style="font-size:13.5px;font-weight:700;color:#1e293b">${esc(g.geraet||"Gerät des Kindes")}</span>
+      <span style="font-size:11.5px;font-weight:700;color:${farbe};border:1px solid ${farbe};border-radius:999px;padding:2px 8px">${wort}</span>
+    </div>
+    <div style="font-size:11.5px;color:#94a3b8;margin:3px 0 10px">gekoppelt am ${kaDatum(g.gekoppelt_am)} · heute ${heute} von ${limit} Min. genutzt</div>
+    <label style="display:block;font-size:12.5px;font-weight:700;color:#475569">Appzeit pro Tag: <span id="ka-lbl-${g.uid}">${limit} Minuten</span>
+      <input type="range" min="0" max="${KA_LIMIT_MAX}" step="15" value="${limit}" aria-label="Appzeit pro Tag in Minuten"
+             oninput="document.getElementById('ka-lbl-${g.uid}').textContent=this.value+' Minuten'"
+             onchange="kinderAppLimit('${g.uid}',this.value)"
+             style="width:100%;min-height:44px;margin-top:4px;accent-color:#7c3aed"></label>
+    <div style="font-size:11.5px;color:#94a3b8;margin-bottom:10px">0 Minuten heißt: die Kabine bleibt auf diesem Gerät zu.</div>
+    <button onclick="kinderAppTrennenFragen('${g.uid}')" style="width:100%;min-height:44px;border:1.5px solid #dc2626;border-radius:10px;background:#fff;color:#dc2626;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">Gerät trennen</button>
+  </div>`;
+}
+function kaDatum(s){ if(!s)return "–"; const d=new Date(s); return isNaN(d)?"–":d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"}); }
+
+/* Sechs Ziffern aus dem Zufallsgenerator des Browsers, nicht aus Math.random: der Code
+   ist der einzige Schutz davor, dass ein fremdes Gerät sich an ein Kind hängt. */
+function kaCodeNeu(){
+  const a=new Uint32Array(1); crypto.getRandomValues(a);
+  return String(a[0]%1000000).padStart(6,"0");
+}
+async function kinderAppCode(sid){
+  const ziel=document.getElementById("ka-code-"+sid); if(!ziel)return;
+  const uid=(typeof sbUid==="function")?sbUid():null;
+  const code=kaCodeNeu();
+  let hash; try{ hash=await hashPin(code); }
+  catch(e){ toast("Der Code lässt sich gerade nicht erzeugen. Bitte die Seite neu laden.","err"); return; }
+  const bis=new Date(Date.now()+KA_GUELTIG_MIN*60000).toISOString();
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/kind_kopplung`,{method:"POST",
+      headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},
+      body:JSON.stringify({spieler_id:sid,code_hash:hash,erstellt_von:uid,gueltig_bis:bis})});
+    if(!r.ok){ toast(sbDeniedMsg(r,"Der Code konnte nicht erzeugt werden."),"err"); return; }
+  }catch(e){ toast("Ohne Netz lässt sich kein Code erzeugen.","err"); return; }
+  const ende=Date.now()+KA_GUELTIG_MIN*60000;
+  ziel.innerHTML=`<div style="border:2px dashed #7c3aed;border-radius:14px;padding:14px;text-align:center;margin:4px 0 10px;background:#faf5ff">
+    <div style="font-size:12px;font-weight:700;color:#7c3aed">Code für das Gerät des Kindes</div>
+    <div style="font-size:34px;font-weight:900;letter-spacing:6px;color:#1e293b;margin:6px 0">${code}</div>
+    <div id="ka-uhr-${sid}" style="font-size:12px;color:#64748b"></div>
+    <div style="font-size:12.5px;color:#475569;line-height:1.6;margin-top:8px">Auf dem Gerät des Kindes die Kabine öffnen und diesen Code eingeben.</div>
+  </div>`;
+  clearInterval(_kaCodeUhr);
+  const tick=()=>{
+    const el=document.getElementById("ka-uhr-"+sid); if(!el){clearInterval(_kaCodeUhr);return;}
+    const s=Math.max(0,Math.round((ende-Date.now())/1000));
+    el.textContent=s>0?`gültig noch ${Math.floor(s/60)}:${String(s%60).padStart(2,"0")} Minuten`:"abgelaufen – erzeuge einen neuen Code";
+    if(s<=0)clearInterval(_kaCodeUhr);
+  };
+  tick(); _kaCodeUhr=setInterval(tick,1000);
+}
+
+async function kinderAppLimit(uid,wert){
+  const min=Math.max(0,Math.min(KA_LIMIT_MAX,parseInt(wert,10)||0));
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/kind_konto?uid=eq.${encodeURIComponent(uid)}`,{method:"PATCH",
+      headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},body:JSON.stringify({tageslimit_min:min})});
+    if(!r.ok){ toast(sbDeniedMsg(r,"Die Appzeit konnte nicht gespeichert werden."),"err"); return; }
+  }catch(e){ toast("Ohne Netz lässt sich die Appzeit nicht ändern.","err"); return; }
+  toast(min===0?"Kabine auf diesem Gerät gesperrt ✓":`Appzeit auf ${min} Minuten gesetzt ✓`);
+  kinderAppLaden();
+}
+
+/* Eigenes Fenster statt confirm(): Systemdialoge sind im Eltern- und Kinderbereich
+   ausgeschlossen (CLAUDE.md). */
+function kinderAppTrennenFragen(uid){
+  document.getElementById("ka-frage")?.remove();
+  const m=document.createElement("div"); m.id="ka-frage";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Gerät trennen");
+  m.style.cssText="position:fixed;inset:0;background:rgba(8,15,35,.6);display:flex;align-items:center;justify-content:center;padding:16px";
+  m.style.zIndex=(typeof zOben==="function")?zOben():10060;
+  m.innerHTML=`<div style="background:#fff;border-radius:16px;padding:18px;max-width:340px;width:100%">
+    <div style="font-size:15px;font-weight:800;color:#1e293b">Gerät trennen?</div>
+    <div style="font-size:13px;color:#475569;line-height:1.6;margin:8px 0 14px">Die Kabine geht auf diesem Gerät sofort zu. Zum Wiederverbinden brauchst du einen neuen Code.</div>
+    <button onclick="kinderAppTrennen('${uid}')" style="width:100%;min-height:48px;border:none;border-radius:12px;background:#dc2626;color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">Trennen</button>
+    <button onclick="document.getElementById('ka-frage').remove()" style="width:100%;min-height:44px;margin-top:8px;border:1px solid #cbd5e1;border-radius:12px;background:#fff;color:#334155;font-family:inherit;font-size:13.5px;cursor:pointer">Abbrechen</button>
+  </div>`;
+  m.onclick=e=>{ if(e.target===m)m.remove(); };
+  document.body.appendChild(m);
+}
+async function kinderAppTrennen(uid){
+  document.getElementById("ka-frage")?.remove();
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/kind_konto?uid=eq.${encodeURIComponent(uid)}`,{method:"PATCH",
+      headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},body:JSON.stringify({aktiv:false})});
+    if(!r.ok){ toast(sbDeniedMsg(r,"Das Gerät konnte nicht getrennt werden."),"err"); return; }
+  }catch(e){ toast("Ohne Netz lässt sich das Gerät nicht trennen.","err"); return; }
+  toast("Gerät getrennt ✓");
+  kinderAppLaden();
+}
+
 /* Der Kader kommt ausschliesslich aus der Datenbank (loadKader in views.js, Welle 1).
    Bis v449 stand hier eine feste Liste mit echten Vornamen als Startwert – in einem
    oeffentlichen Repo. Die Liste wurde beim Laden ohnehin komplett ersetzt. */
