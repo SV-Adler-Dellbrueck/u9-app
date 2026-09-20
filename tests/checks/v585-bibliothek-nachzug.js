@@ -156,7 +156,9 @@ module.exports = async function (h) {
   if (!pRaute) probleme.push("Die veraltete Raute wurde nicht nachgezogen (kein PATCH auf ihre id)");
   else {
     const sk = pRaute.body.skizze || {};
-    if (!Array.isArray(sk.schritte) || sk.schritte.length !== 3) probleme.push(`Der PATCH der Raute trägt ${(sk.schritte || []).length} Schritte statt drei`);
+    /* v588: so viele Schritte, wie die Bibliothek der Raute gerade gibt (v584 drei, v588 fünf) – nicht eine feste Zahl. */
+    const sollSchritte = ((bib.uebungen.find(u => u.name === RAUTE) || {}).skizze || {}).schritte.length;
+    if (!Array.isArray(sk.schritte) || sk.schritte.length !== sollSchritte) probleme.push(`Der PATCH der Raute trägt ${(sk.schritte || []).length} Schritte statt ${sollSchritte}`);
     if ("name" in pRaute.body || "tags" in pRaute.body || "custom" in pRaute.body) probleme.push("Der PATCH schreibt Name oder Kennzeichen mit – die gehören dem Trainer");
     if (!("ablauf" in pRaute.body && "kurz" in pRaute.body && "diff" in pRaute.body)) probleme.push("Der PATCH zieht nur die Skizze nach, nicht die übrigen Felder");
   }
