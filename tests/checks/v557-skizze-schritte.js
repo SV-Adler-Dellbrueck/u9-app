@@ -279,7 +279,10 @@ module.exports = async function (h) {
   await s.schliessen();
 
   // ── h) Exportdateien ──────────────────────────────────────────────────────
-  mitSchritten.forEach(u => {
+  /* v588: Geprüft wird der Export DER Übung, die in doku/auftrag-einheit-lf4 liegt. Bis v587 lief die
+     Schleife über alle Übungen mit Schritten und erwartete für jede die Dateien des Dreieckspassens –
+     sobald eine andere Übung mehr Bilder hatte (die Raute mit sechs), fehlte eine Datei, die es nie gab. */
+  mitSchritten.filter(u => u.name === "Dreieckspassen mit Abschluss").forEach(u => {
     const n = 1 + u.skizze.schritte.length;
     for (let i = 2; i <= n; i++) {
       const datei = path.join(h.REPO, "doku/auftrag-einheit-lf4",
@@ -287,7 +290,7 @@ module.exports = async function (h) {
       if (!fs.existsSync(datei)) probleme.push("Exportdatei fehlt: " + path.basename(datei));
     }
   });
-  if (!probleme.length) zeilen.push(`Export: je Bild eine Datei für „${mitSchritten[0].name}“`);
+  if (!probleme.length) zeilen.push("Export: je Bild eine Datei für „Dreieckspassen mit Abschluss“");
 
   return h.ergebnis("Skizze in Schritten: ein Aufbau, mehrere Bilder", !probleme.length, zeilen.concat(probleme));
 };
