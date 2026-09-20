@@ -42,7 +42,7 @@
       Hauptteile rückt jede Gruppe einmal im Kreis weiter (Versatz 0, 1, 2). Bei ZWEI
       Feldtrainern sagt die Vorschau vor dem Übernehmen, dass die dritte Station entfällt.
    Dazu die Datei selbst: der Anhang ist byte-genau gleich den Nachträgen; bibliothek.json
-   steht seit v587 auf 2026-09-20-1 (die Übung der Lehrgangsabgabe 3.1 kam in v583 dazu und
+   steht seit v588 auf 2026-09-20-2 (die Übung der Lehrgangsabgabe 3.1 kam in v583 dazu und
    bekam in v584 vier Bilder statt zwei),
    vorlagen.json unverändert auf 2026-09-18-1. Die Stände stehen hier als Sperrklinke: Wer
    eine Datei anfasst, ohne den Stand hochzusetzen, bekommt es hier gesagt — denn ohne neuen
@@ -50,7 +50,7 @@
 const ORDNER = "doku/auftrag-aufstellungen-3plus1-funino";
 const NEUE_ORDNUNGEN = ["3+1", "FUNiño", "3+1 gegen FUNiño", "3+1 und FUNiño"];
 const EINHEITEN = ["L4-6", "L5-4", "L6-3", "L4-7", "L5-5", "L6-4", "L5-6", "L6-5", "L4-8"];
-const STAND_UEB = "2026-09-20-1", STAND_VOR = "2026-09-18-1";
+const STAND_UEB = "2026-09-20-2", STAND_VOR = "2026-09-18-1";
 const SKAL = ["8", "10", "12", "14"];
 
 module.exports = async function (h) {

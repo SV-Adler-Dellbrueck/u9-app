@@ -136,20 +136,21 @@ module.exports = async function (h) {
   if (!u) probleme.push("Die Übung steht nicht in der Bibliothek");
   if (bib.uebungen.length !== 28) probleme.push(`${bib.uebungen.length} Übungen in der Bibliothek statt 28`);
   /* v587: Stand 2026-09-20-1 – Texte und Bilder nach der Übergabe 3.1 vom 20.09. (siehe v587-lehrgang-3-1-uebergabe.js). */
-  if (bib.stand !== "2026-09-20-1") probleme.push(`Stand „${bib.stand}“ statt „2026-09-20-1“ – ohne neuen Stand holt der Abgleich die Datei nicht`);
+  /* v588: Stand 2026-09-20-2 – Bild 5 (Abschluss) und Bild 6 (Tor) dazu, damit Phase 2 beim Abspielen zu Ende läuft. */
+  if (bib.stand !== "2026-09-20-2") probleme.push(`Stand „${bib.stand}“ statt „2026-09-20-2“ – ohne neuen Stand holt der Abgleich die Datei nicht`);
   if (r.euPruefung.length) probleme.push("_euPruefung: " + r.euPruefung.join(" · "));
   if (r.skizzePruefung.length) probleme.push("_eiSkizzeFehler: " + r.skizzePruefung.join(" · "));
   if (r.abgleich && r.abgleich.angelegt !== 28) probleme.push(`Der Abgleich hat ${r.abgleich && r.abgleich.angelegt} von 28 Übungen angelegt`);
   if (r.zweiter !== null && r.zweiter !== undefined) probleme.push("Der zweite Lauf hat trotz gleichem Stand gearbeitet");
   // b)
   const b = r.bilder || [];
-  const SOLL_WEGE = [2, 2, 3, 5];   // 1+2 · 3+4 · 5+6+7 · 8+8+(8)+8+9 – v587: der Lauf von FL hat zwei Teile, der zweite ohne Nummer
-  if (b.length !== 4) probleme.push(`${b.length} Bilder statt vier`);
+  const SOLL_WEGE = [2, 2, 3, 5, 1, 0];   // 1+2 · 3+4 · 5+6+7 · 8+8+(8)+8+9 · 9 · – (v587: FL-Lauf zweiteilig, v588: Abschluss und Tor)
+  if (b.length !== 6) probleme.push(`${b.length} Bilder statt sechs`);
   else {
     b.forEach((x, i) => {
       if (x.viewBox !== "0 0 180 280") probleme.push(`Bild ${i + 1} steht auf „${x.viewBox}“ statt hochkant`);
       if (x.spieler !== 4) probleme.push(`Bild ${i + 1} zeigt ${x.spieler} Spieler statt vier`);
-      if (!x.text) probleme.push(`Bild ${i + 1} trägt keine Beschriftung`);
+      if (!x.text) probleme.push(`Bild ${i + 1} trägt keine Beschriftung`);   // v588: auch Bild 6 („Tor! …“)
       if (x.pfeile !== SOLL_WEGE[i]) probleme.push(`Bild ${i + 1} zeigt ${x.pfeile} Wege statt ${SOLL_WEGE[i]}`);
     });
     const texte = b.map(x => x.text);
@@ -159,8 +160,9 @@ module.exports = async function (h) {
      weil Pass und beide Laufwege gleichzeitig passieren (Charles, 19.09.). v587: Der Lauf
      von FL knickt nach dem Korridorende nach innen; der zweite Teil trägt keine Nummer, er
      ist die Fortsetzung desselben Weges. */
-  if (String(r.nummern) !== String([1, 2, 3, 4, 5, 6, 7, 8, 8, 8, 9]))
-    probleme.push(`Schrittnummern ${JSON.stringify(r.nummern)} statt 1–9 mit dreifacher 8`);
+  /* v588: Bild 5 zeigt den Schuss noch einmal – derselbe Schritt 9, jetzt mit dem Ball beim Jäger; Bild 6 hat keine Wege. */
+  if (String(r.nummern) !== String([1, 2, 3, 4, 5, 6, 7, 8, 8, 8, 9, 9]))
+    probleme.push(`Schrittnummern ${JSON.stringify(r.nummern)} statt 1–9 mit dreifacher 8 und doppelter 9`);
   // c)
   if (r.eng.length) probleme.push(`Spieler zu eng beieinander: ${r.eng.join(", ")}`);
   if (r.kollisionen.length) probleme.push(`Nummernkreise verdeckt: ${r.kollisionen.join(" · ")}`);
@@ -183,7 +185,7 @@ module.exports = async function (h) {
 
   if (!probleme.length) {
     zeilen.push(`Bibliothek: 28 Übungen, Stand ${bib.stand} · Abgleich legt 28 an, der zweite Lauf tut nichts`);
-    zeilen.push(`Vier Bilder hochkant (${b[0].viewBox}), je vier Spieler, ${b.map(x => x.pfeile).join("+")} Wege, je eigene Beschriftung`);
+    zeilen.push(`Sechs Bilder hochkant (${b[0].viewBox}), je vier Spieler, ${b.map(x => x.pfeile).join("+")} Wege, je eigene Beschriftung`);
     zeilen.push(`Kein Spielerabstand unter 24 (in allen vier Bildern), kein Nummernkreis auf Spieler (≥16), Gerät oder Ball`);
     zeilen.push(`Material: ${r.material.join(" · ")} – der Trainer nicht mitgezählt`);
     zeilen.push(`Übungsart „${r.artVorschlag}“ → „${r.artLabel}“ · keine Kindernamen`);

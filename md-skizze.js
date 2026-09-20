@@ -931,7 +931,29 @@ function _skzGrBilder(){
    auf dem Bildschirm möchte oder braucht, bekommt über die Systemeinstellung harte
    Schnitte statt Bewegung – dieselbe Einstellung, die auch die Animationen der App
    abschaltet. */
-const SKZ_STAND=600, SKZ_GLEIT=800, SKZ_SCHNITT=1400;
+/* v588 – LANGSAMER, UND DIE STRECKE BESTIMMT DAS TEMPO.
+
+   Charles am 20.09., mit der Lehrgangsübung am Handy: „Grundsätzlich sollte die Animation
+   langsamer ablaufen." Bis v587 stand jedes Bild 600 ms und glitt in 800 ms zum nächsten –
+   egal, ob ein Kind zwei Schritte machte oder der Ball übers halbe Feld flog. Am Handy war
+   die Nummer eines Pfeils kaum gelesen, da lief der nächste Übergang.
+
+   Jetzt steht jedes Bild eine Sekunde (Zeit, den Pfeil zu lesen), und die Gleitzeit hängt
+   an der weitesten Strecke des Übergangs: ein kurzer Pass gut eine Sekunde, ein Weg über
+   das halbe Feld gut zwei. Wer „weniger Bewegung" eingestellt hat, bekommt weiter harte
+   Schnitte – jetzt mit 1,8 s je Bild. Die Zahlen sind am Handy mit der Lehrgangsübung
+   ausprobiert: Pass nach links (Ball 84 Punkte) 1,6 s, Dribbling zum Korridorende
+   (90 Punkte) 1,6 s, Pass in die Mitte plus Lauf (162 Punkte) 2,2 s. */
+const SKZ_STAND=1000, SKZ_SCHNITT=1800;
+const SKZ_GLEIT_MIN=1200, SKZ_GLEIT_MAX=2200, SKZ_GLEIT_SOCKEL=900, SKZ_GLEIT_JE_PUNKT=8;
+function _skzWeiteste(a,b){
+  const weit=(x,y)=>(x||[]).reduce((m,e,i)=>{ const z=(y||[])[i];
+    return (!z||!Array.isArray(e))?m:Math.max(m,Math.hypot(e[0]-z[0],e[1]-z[1])); },0);
+  return (!a||!b)?0:Math.max(weit(a.s,b.s),weit(a.b,b.b));
+}
+function _skzGleitDauer(a,b){
+  return Math.round(Math.min(SKZ_GLEIT_MAX,Math.max(SKZ_GLEIT_MIN,SKZ_GLEIT_SOCKEL+_skzWeiteste(a,b)*SKZ_GLEIT_JE_PUNKT)));
+}
 /* v584 – EIN ÜBERGANG, IN DEM SICH NICHTS BEWEGT, WIRD NICHT AUSGESESSEN.
 
    PO am 19.09., nach dem Öffnen der Lehrgangsübung am Handy: „Die Animation läuft nur
@@ -947,9 +969,7 @@ const SKZ_STAND=600, SKZ_GLEIT=800, SKZ_SCHNITT=1400;
 const SKZ_KURZ=260, SKZ_BEWEGT_AB=6;
 function _skzBewegt(a,b){
   if(!a||!b)return true;
-  const weit=(x,y)=>(x||[]).reduce((m,e,i)=>{ const z=(y||[])[i];
-    return (!z||!Array.isArray(e))?m:Math.max(m,Math.hypot(e[0]-z[0],e[1]-z[1])); },0);
-  return Math.max(weit(a.s,b.s),weit(a.b,b.b))>=SKZ_BEWEGT_AB;
+  return _skzWeiteste(a,b)>=SKZ_BEWEGT_AB;
 }
 function _skzSanft(){
   try{ return !(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches); }
@@ -979,7 +999,7 @@ function _skzGrTakt(){
   if(_skzGr.bild>=max){ _skzGr.lauft=false; _skzGrBilder(); return; }
   const sanft=_skzSanft();
   const a=_skzBesetzungSpec(_skzGr.bild), b=_skzBesetzungSpec(_skzGr.bild+1);
-  const bewegt=_skzBewegt(a,b);
+  const bewegt=_skzBewegt(a,b), dauer=_skzGleitDauer(a,b);   // v588: die Strecke bestimmt das Tempo
   _skzGr.uhr=setTimeout(()=>{
     if(!_skzGr||!_skzGr.lauft)return;
     if(!sanft||!bewegt){ _skzGr.bild++; _skzGrTakt(); return; }
@@ -988,7 +1008,7 @@ function _skzGrTakt(){
     const tick=()=>{
       if(!_skzGr||!_skzGr.lauft)return;
       const jetzt=(typeof performance!=="undefined"?performance.now():Date.now());
-      const t=Math.min(1,(jetzt-t0)/SKZ_GLEIT);
+      const t=Math.min(1,(jetzt-t0)/dauer);
       const e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;     // weich an, weich aus
       if(halter)halter.innerHTML=_skz(_skzZwischen(a,b,e),{hell:_skzGr.hell});
       if(t<1){ _skzGr.raf=requestAnimationFrame(tick); return; }

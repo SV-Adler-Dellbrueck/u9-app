@@ -77,7 +77,7 @@ module.exports = async function (h) {
   if (r.tellerY[0] !== 86 || r.tellerY[1] !== 194) probleme.push(`Teller von y ${r.tellerY[0]} bis ${r.tellerY[1]} statt 86 bis 194`);
   if (String(r.tellerX) !== "47,133") probleme.push(`Tellerlinien bei x ${r.tellerX} statt 47 und 133`);
   const b = r.bilder;
-  if (b.length !== 4) probleme.push(`${b.length} Bilder statt vier`);
+  if (b.length < 4) probleme.push(`${b.length} Bilder – die Übergabe beschreibt vier, seit v588 folgen Abschluss und Tor als Bild 5 und 6`);
   b.forEach((x, i) => { if (x.J[1] >= 86) probleme.push(`Bild ${i + 1}: Jäger bei y ${x.J[1]} – er gehört in die freie Zone oberhalb von 86`); });
 
   // c) Verhalten ohne Ball
