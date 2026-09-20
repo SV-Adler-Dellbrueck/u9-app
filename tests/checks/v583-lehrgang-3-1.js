@@ -135,14 +135,15 @@ module.exports = async function (h) {
   // a)
   if (!u) probleme.push("Die Übung steht nicht in der Bibliothek");
   if (bib.uebungen.length !== 28) probleme.push(`${bib.uebungen.length} Übungen in der Bibliothek statt 28`);
-  if (bib.stand !== "2026-09-19-2") probleme.push(`Stand „${bib.stand}“ statt „2026-09-19-2“ – ohne neuen Stand holt der Abgleich die Datei nicht`);
+  /* v587: Stand 2026-09-20-1 – Texte und Bilder nach der Übergabe 3.1 vom 20.09. (siehe v587-lehrgang-3-1-uebergabe.js). */
+  if (bib.stand !== "2026-09-20-1") probleme.push(`Stand „${bib.stand}“ statt „2026-09-20-1“ – ohne neuen Stand holt der Abgleich die Datei nicht`);
   if (r.euPruefung.length) probleme.push("_euPruefung: " + r.euPruefung.join(" · "));
   if (r.skizzePruefung.length) probleme.push("_eiSkizzeFehler: " + r.skizzePruefung.join(" · "));
   if (r.abgleich && r.abgleich.angelegt !== 28) probleme.push(`Der Abgleich hat ${r.abgleich && r.abgleich.angelegt} von 28 Übungen angelegt`);
   if (r.zweiter !== null && r.zweiter !== undefined) probleme.push("Der zweite Lauf hat trotz gleichem Stand gearbeitet");
   // b)
   const b = r.bilder || [];
-  const SOLL_WEGE = [2, 2, 3, 4];   // 1+2 · 3+4 · 5+6+7 · 8+8+8+9
+  const SOLL_WEGE = [2, 2, 3, 5];   // 1+2 · 3+4 · 5+6+7 · 8+8+(8)+8+9 – v587: der Lauf von FL hat zwei Teile, der zweite ohne Nummer
   if (b.length !== 4) probleme.push(`${b.length} Bilder statt vier`);
   else {
     b.forEach((x, i) => {
@@ -155,7 +156,9 @@ module.exports = async function (h) {
     if (new Set(texte).size !== texte.length) probleme.push("Zwei Bilder tragen dieselbe Beschriftung: " + texte.join(" · "));
   }
   /* v584: Die Nummern laufen über alle vier Bilder lückenlos von 1 bis 9 – die 8 dreimal,
-     weil Pass und beide Laufwege gleichzeitig passieren (Charles, 19.09.). */
+     weil Pass und beide Laufwege gleichzeitig passieren (Charles, 19.09.). v587: Der Lauf
+     von FL knickt nach dem Korridorende nach innen; der zweite Teil trägt keine Nummer, er
+     ist die Fortsetzung desselben Weges. */
   if (String(r.nummern) !== String([1, 2, 3, 4, 5, 6, 7, 8, 8, 8, 9]))
     probleme.push(`Schrittnummern ${JSON.stringify(r.nummern)} statt 1–9 mit dreifacher 8`);
   // c)
