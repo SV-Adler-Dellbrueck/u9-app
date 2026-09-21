@@ -109,7 +109,8 @@ async function starten(opt = {}) {
     if (!opt.bibliothek && /\/uebungen\/[^/]+\.json$/.test(u.pathname)) return r.fulfill({ status: 404, body: "" });
     const f = path.join(REPO, u.pathname === "/" ? start : u.pathname);
     if (!fs.existsSync(f) || fs.statSync(f).isDirectory()) return r.fulfill({ status: 404, body: "" });
-    const typ = f.endsWith(".js") ? "application/javascript" : f.endsWith(".css") ? "text/css" : f.endsWith(".html") ? "text/html" : "text/plain";
+    const typ = f.endsWith(".js") ? "application/javascript" : f.endsWith(".css") ? "text/css" : f.endsWith(".html") ? "text/html"
+      : f.endsWith(".webmanifest") ? "application/manifest+json" : f.endsWith(".json") ? "application/json" : "text/plain";
     return r.fulfill({ status: 200, contentType: typ, body: fs.readFileSync(f, "utf8") });
   });
   await ctx.addInitScript(behalten => {

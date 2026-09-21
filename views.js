@@ -4153,6 +4153,7 @@ const HELP=[
     {t:"Album-Karten-Fotos", d:"Bilder für die Trainer- und Vereins-Sticker im Panini-Sammelalbum.", run:"albumFotosOpen()"},
     {t:"Urkunden-Studio", d:"Saison-Urkunden für alle Kinder in einem Druck + freie Anlass-Urkunde.", run:"urkundenOpen()"},
     {t:"Quiz (Kinder)", d:"Kinder spielen über den Kids-Link (?quiz); Ergebnisse unter Eltern & Kinder → Quiz-Ergebnisse.", go:"quizresults"},
+    {t:"Kinder-App", d:"Die Kabine gibt es seit v592 auch als eigene App auf dem Gerät des Kindes – eigenes Symbol, eigener Name, eigene Installation, unter <b>/kinder/</b>. Koppeln tun die <b>Eltern</b>, nicht du: Sie erzeugen in ihrem Bereich unter „Für die Kinder“ einen sechsstelligen Code, das Kind tippt ihn auf seinem Gerät ein, fertig. Das Gerät bekommt dabei ein Konto <b>ohne Namen und ohne E-Mail</b>; was das Kind sehen darf, entscheidet die Leseregel der Datenbank, nicht die Oberfläche. Die tägliche Appzeit stellen ebenfalls die Eltern ein (0 bis 180 Minuten); gezählt wird sie auf dem Server, ein Neustart der App dreht nichts zurück, und ist sie auf, zeigt das Gerät einen Schluss-Bildschirm ohne Bedienelement. Trennen können die Eltern jederzeit – das Gerät verliert sofort alle Rechte. Für dich: unter Orga → Nutzung steht, wie viele Geräte gekoppelt sind, als reine Zahl ohne Namen. Die Kabine im Eltern-Bereich bleibt daneben bestehen.", run:"nutzungOpen()"},
   ]},
   {cat:"📅 Orga", items:[
     {t:"Nutzung", d:"Welche Bereiche, Kacheln und Aktionen in den letzten 7, 30 oder 90 Tagen wirklich benutzt wurden – und welche Kacheln gar nicht. Grundlage fürs Ausmisten. Keine Kindernamen, nur Ereignisse.", run:"nutzungOpen()"},
@@ -4210,7 +4211,7 @@ const TOUR=[
   {emo:"⚽", t:"Kachel: Spieltag", d:"Ganz oben „📚 Wissen & Nachschlagen“: Spielformen und Feldmaße, die Spielregeln, was Ordnungsgeld kostet, das Warm up Adler mit allen vier Stufen und unsere Zeiten – zum Nachsehen am Platz. Darunter der Ablauf von oben nach unten: „Teams festlegen“ beantwortet einmal für den ganzen Tag, wer dabei ist und wie viele Teams wir stellen – die Kinder verteilt die App automatisch, du korrigierst nur. Darunter je Team eine Kachel mit Kader, Rollen, Uhr, Rotations-Timer und Liveticker; danach die Team-Quests für alle Teams zusammen. Beim Öffnen sind alle Abschnitte eingeklappt – du tippst auf, was du gerade brauchst. Dazu die Rollen-Empfehlung aus den Bewertungen und die Analyse. Steht ein Turnier an, erscheint ganz unten der Turnier-Bereich (Heimturnier ausrichten mit öffentlichem Link für die Gast-Trainer)."},
   {emo:"👥", t:"Kachel: Team", d:"Kader verwalten, Spieler alle 6 Wochen in 16 Kriterien bewerten (Live-Radar), Profil mit Sprachlob und Entwicklungs-Report, dazu Saison-Cockpit, Anwesenheit über die Saison und Rollen-Matrix. Unter „Ausstattung“ steht, welches Kind Trikotsatz, Anzug oder Jacke bekommen hat – mit Größe, Ausgabedatum und Rückgabe. Auch Notfallkarten und Probetraining wohnen hier."},
   {emo:"🎯", t:"Kachel: Taktik", d:"Das Taktikboard: Formationen stellen, Laufwege und Pässe zeichnen, als Bild teilen – im Pro-Modus groß, am Handy wie am Tablet. Unter dem Feld legst du über „+ Bild“ mehrere Stände an und spielst sie ab; gespeicherte Übungen nehmen die Bilder mit. Daneben die Übungs-Datenbank – dort zeichnest du je Übung eine Skizze mit Spielern, Hütchen, Minitoren, Jugendtoren, Zonen, Pfeilen, Mittellinie und Schusszone zeigst sie mit „Groß zeigen“ bildschirmfüllend mit Fingerzoom und hellem Rasen und gibst sie mit „Skizze teilen“ als Bild weiter."},
-  {emo:"🪶", t:"Kachel: Eltern & Kinder", d:"Team-Ansage mit Gelesen-Status, Eltern einladen, Elterngespräche – und die ganze Adler-Welt der Kinder: Federn, Karten, Abzeichen, Kabinen-Wahl, „Unsere Regeln“ für die Kabine, Sammelalbum-Fotos, Team-Quests, Urkunden-Studio und das Adler Nest."},
+  {emo:"🪶", t:"Kachel: Eltern & Kinder", d:"Team-Ansage mit Gelesen-Status, Eltern einladen, Elterngespräche – und die ganze Adler-Welt der Kinder: Federn, Karten, Abzeichen, Kabinen-Wahl, „Unsere Regeln“ für die Kabine, Sammelalbum-Fotos, Team-Quests, Urkunden-Studio und das Adler Nest. Die Kabine gibt es inzwischen auch als eigene App auf dem Gerät des Kindes – gekoppelt wird sie von den Eltern mit einem Code, die Appzeit stellen ebenfalls sie ein. Du musst dafür nichts tun; unter Orga → Nutzung siehst du nur die Zahl der gekoppelten Geräte."},
   {emo:"📅", t:"Kachel: Orga", d:"Termine mit Endzeit (danach automatisch ins Archiv), Pinnwand fürs Trainerteam, Ferien-Radar, Mitbringlisten (je Event einschaltbar, Standard aus), Trainer-Meeting (steht der Termin, erscheint er auf deiner Startseite – die Eltern sehen ihn nicht), Teamkasse, Material (Bälle, Hütchen, Erste-Hilfe-Set – mit Soll und Ist) und Fundbüro. Ganz unten: Push-Benachrichtigungen und dein Passwort."},
   {emo:"🧭", t:"Und unten?", d:"Die Leiste am unteren Rand führt zu denselben Bereichen – für den schnellen Daumen-Wechsel. Kacheln und Leiste sind dieselbe Logik, nur zwei Wege. Viel Spaß – auf geht's, Adler! 🎉"},
 ];
@@ -4621,11 +4622,40 @@ async function nutzungOpen(){
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:520px;width:100%;margin:auto">
     ${mdlHead("nutzung-modal","📊","Nutzung","Was wirklich benutzt wird – die Grundlage fürs Ausmisten","var(--fam-orga)")}
     <div id="nutzung-zeitraum" style="display:flex;gap:8px;margin-bottom:10px"></div>
+    <div id="nutzung-kinder"></div>
     <div id="nutzung-body"><div style="font-size:12px;color:var(--text2)">Lade Auswertung…</div></div>
     <button class="btn btn-sm" style="width:100%;margin-top:12px" onclick="nutzungAufraeumen()"><i class="ti ti-trash"></i>Einträge älter als 90 Tage löschen</button>
   </div>`;
   document.body.appendChild(m);
   nutzungLaden(_nutzungTage);
+  kindGeraeteLaden();
+}
+/* v594: Wie viele Kindergeraete gekoppelt sind - als Zahl, ohne Namen. Der RPC
+   kind_geraete_stat gibt ausschliesslich Summen zurueck; die Leseregel auf kind_konto
+   liesse einen Trainer zwar auch die Zeilen sehen, aber fuer eine Zahl braucht es die
+   spieler_id nicht, und was die App nicht anfragt, kann sie nicht anzeigen.
+   Der Block steht ausserhalb von nutzungLaden, damit er auch dann erscheint, wenn im
+   Zeitraum noch kein einziger Nutzungseintrag liegt. */
+async function kindGeraeteLaden(){
+  const box=document.getElementById("nutzung-kinder"); if(!box)return;
+  let d=null;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/kind_geraete_stat`,{method:"POST",headers:{...sbAuthHeaders(),"Content-Type":"application/json"},body:"{}"});
+    if(r.ok)d=await r.json();
+  }catch(e){}
+  if(!document.getElementById("nutzung-kinder"))return;
+  if(!d||!d.ok){ box.innerHTML=""; return; }
+  const limit=d.geraete?(d.limit_min===d.limit_max?`${d.limit_min} Min.`:`${d.limit_min}–${d.limit_max} Min.`):"–";
+  box.innerHTML=`<div style="border:var(--border-s);border-radius:var(--rl);padding:10px 12px;margin-bottom:12px">
+    <div style="font-size:13px;font-weight:800">📱 Kinder-App</div>
+    <div style="font-size:12.5px;color:var(--text2);margin-top:4px;line-height:1.6">
+      ${d.geraete===0
+        ? "Noch kein Gerät gekoppelt. Die Eltern erzeugen den Code in ihrem Bereich unter „Für die Kinder“."
+        : `<b>${d.geraete}</b> ${d.geraete===1?"Gerät":"Geräte"} bei <b>${d.kinder}</b> ${d.kinder===1?"Kind":"Kindern"} gekoppelt · heute ${d.heute_aktiv===0?"noch keins":`<b>${d.heute_aktiv}</b> aktiv`}${d.minuten_heute?` (${d.minuten_heute} Min.)`:""} · Appzeit ${limit} am Tag`}
+      ${d.getrennt?`<br><span style="color:var(--text3)">${d.getrennt} ${d.getrennt===1?"Gerät wurde":"Geräte wurden"} wieder getrennt.</span>`:""}
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px">Nur Summen – welches Kind welches Gerät hat, entscheiden und sehen die Eltern.</div>
+  </div>`;
 }
 function _nutzungZeitraumHtml(){
   return [7,30,90].map(t=>`<button class="btn btn-sm" aria-pressed="${t===_nutzungTage?"true":"false"}" onclick="nutzungLaden(${t})"
