@@ -731,3 +731,75 @@ Prüfsatz `tests/checks/v593-kinder-kabine.js` mit fünf Messungen: Server-Uhr u
 richtigen Quellen, Karte und Quiz kennen genau ein Kind, die Galerie zeichnet aus
 `staerken` (mit Gegenprobe ohne Bewertung und für den Torwart), Schluss-Bildschirm ohne
 Bedienelement, und ein Neustart hilft nicht. Offen bleibt Schritt 7.
+
+---
+
+## Nachtrag Schritt 7 — Abnahme (20.09.2026, v594)
+
+### Die sieben Prüfpunkte, jeder mit seiner Messung
+
+| # | Prüfpunkt | Wo gemessen |
+|---|---|---|
+| 1 | Start ohne Sitzung im Kopplungsbildschirm, kein Eltern-Element im DOM | `v592` a) |
+| 2 | Mit Kind-Sitzung öffnet die Kabine, ohne den Ausgang für Erwachsene | `v592` c) |
+| 3 | `kind_tick()` liefert 0 → Schluss-Bildschirm, nichts mehr bedienbar | `v593` d) + e) |
+| 4 | Kein Netzaufruf an fremde Tabellen, kein `team_gallery`, kein `my_child_card` | `v592` c), `v593` a) |
+| 5 | Loader vollständig, Modul-Wache grün, **Manifest-Scope `kinder/`** | `tests/run.js` + `v594` a) |
+| 6 | Code erzeugen schreibt einen Hash, nie den Code; Schieber schreibt `tageslimit_min` | `v591` |
+| 7 | **Quiz aus der Kabine bleibt im Raum `/kinder/`** | `v594` b) |
+
+Neu in diesem Schritt sind 5 (der Manifest-Teil) und 7; beide standen bisher nur im Paket.
+Dazu misst `v594` zwei Dinge, die Schritt 7 selbst gebaut hat: den Trainer-Block in der
+Nutzungs-Auswertung und den neuen Punkt im Eltern-Leitfaden.
+
+### Das SQL-Prüfskript
+
+`supabase/pruefung/kinder_app_rls.sql` legt eine synthetische anonyme Sitzung an und fragt
+in **drei Durchgängen** — ohne Kopplung, gekoppelt, wieder getrennt — jede Kabinen-Tabelle
+und jede Kinder-Funktion ab. Gelesen wird als `authenticated` mit gesetzten JWT-Claims,
+also so, wie PostgREST es für eine echte Sitzung täte; am Ende rollt alles zurück.
+Ausgeführt am 20.09.2026: **47 von 47 Prüfungen grün.** Die Kernzeilen:
+
+- ohne Kopplung null Zeilen in `kader`, `kind_selbstbild`, `kind_stimmung`, `kabine_post`,
+  `kabine_lob`, `album_kind`, `album_tausch`, `kabinen_wahl_stimmen`, `kabine_config`,
+  `rueckmeldungen`, `spielerprofile`, `eltern_kinder`, `blitz_ratings`, `nominierungen`,
+  `match_actions`; `kind_status` sagt `ok:false`, `team_gallery_kind` gibt null Karten
+- gekoppelt: genau **eine** Zeile in `kader` — das eigene Kind —, `is_kind_selbst` für das
+  eigene Kind wahr und für ein anderes falsch, die Galerie liefert Karten und enthält das
+  Wort `radios` nicht, `my_child_card_kind` liefert die eigene Karte ohne Rohwerte und für
+  ein fremdes Kind `null`. **`my_child_card` (die alte Fassung) bleibt auch für die
+  gekoppelte Sitzung zu** — genau deshalb gibt es die Kinder-Fassung
+- getrennt (`aktiv = false`): alles wieder null, auch `kind_zeit_uebrig`
+
+### Was Schritt 7 gebaut hat
+
+- **Eltern-Leitfaden**, ein Punkt unter „Miteinander & Kommunikation": das Gerätekonto
+  ohne Namen und ohne E-Mail, die Appzeit vom Server, das Trennen mit einem Tipp. Er steht
+  in der Tabelle `eltern_leitfaden` **und** im Offline-Fallback `ELTERN_LEITFADEN`
+  (41 Punkte hier wie dort) — ohne beides sähen Eltern ohne Netz eine veraltete Liste.
+- **Trainer-Hilfe** (Eltern & Kinder → „Kinder-App") und ein Satz im **Rundgang**: wer
+  koppelt, wer die Zeit einstellt, und dass der Trainer dafür nichts tun muss.
+- **Orga → Nutzung** zeigt oben, wie viele Geräte gekoppelt sind, bei wie vielen Kindern,
+  wie viele heute in der Kabine waren und welche Appzeit eingestellt ist. Der RPC
+  `kind_geraete_stat()` (Migration `20260920_kind_geraete_stat.sql`) gibt **nur Summen**
+  zurück. Die Leseregel auf `kind_konto` ließe einen Trainer zwar auch die Zeilen samt
+  `spieler_id` sehen — aber für eine Zahl braucht es die nicht, und was die App nicht
+  anfragt, kann sie nicht anzeigen. Der Prüfsatz misst zusätzlich, dass die Ansicht
+  `kind_konto` gar nicht erst zeilenweise abruft.
+
+### Zwei Befunde
+
+1. **`kind_kopplung_versuch` steht bewusst NICHT in der Sicherung.** `CLAUDE.md` verlangt,
+   neue Tabellen in die Backup-Funktion aufzunehmen. Diese hier hat absichtlich keine
+   Policy: Nur die Edge Function schreibt hinein, niemand liest. Ein Backup aus der App
+   käme deshalb immer leer zurück — und eine leere Datei, die „keine Fehlversuche"
+   suggeriert, ist schlechter als gar keine. Die drei inhaltlichen Tabellen
+   (`kind_konto`, `kind_sitzung`, `kind_kopplung`) stehen seit v590 drin.
+2. **Das Prüfwerkzeug lieferte `.json`-Dateien als `text/plain` aus.** Beim Messen des
+   Manifests fiel es auf; jetzt bekommen `.json` und `.webmanifest` ihren richtigen Typ.
+   Ohne das misst man am Ende etwas, das im echten Browser anders aussieht.
+
+Damit ist das Auftragspaket abgearbeitet. Offen bleibt der **erste echte Durchlauf auf
+einem Gerät**: eine echte Kopplung, ein echtes anonymes Konto, eine echte ablaufende
+Appzeit. Alles bisher Gemessene lief gegen Attrappen oder gegen die Datenbank — nicht
+gegen ein Tablet in Kinderhand.
