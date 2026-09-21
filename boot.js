@@ -1845,15 +1845,59 @@ function tpFeldGrundtext(text){
    · Wartende zählen nicht zum Minimum. „6 je Station (3 Angreifer, 1 Verteidiger, 2 warten
      als nächste)" läuft mit vier Kindern tadellos – wer das als Bedarf 6 läse, würde vor
      jeder zweiten Station warnen und der Trainer hörte bald weg. */
-function tpUebungBedarf(formIdx){
+/* v595: Die Spielerangabe kennt drei Formen, und alle drei sind zu lesen.
+
+   Bis v594 zaehlte nur die erste: „6 je Station (…)". Das schreiben genau die 19
+   Uebungen aus der Bibliothek. Die 107 mitgelieferten Uebungen in data.js schreiben
+   stattdessen eine Spanne – „6–10" bei Quer vor Tor, „8-13" bei Hai & Fische –, und
+   damit schwieg der Hinweis bei 107 von 140 Uebungen (PO am 21.09.: „Einige Uebungen
+   geben keinen Hinweis, wie viele aktiv sind und wie viele Auswechselspieler").
+
+   Eine Spanne IST der Stationsbedarf, ihr fehlt nur das Wort. Gefaehrlich sind allein
+   die Gesamtangaben: „12 (3 Felder à 4)" meint alle Kinder zusammen, und wer die 12 als
+   Stationsbedarf laese, zeigte Unsinn. Die bleiben deshalb ausdruecklich draussen.
+
+   Rueckgabe {min,max,alle}: `alle` fuer „beliebig"/„alle"/„Paare" – Uebungen ohne feste
+   Besetzung –, sonst die Spanne. min===max bei einer einzelnen Zahl. {min:0} heisst
+   weiterhin: keine Angabe, es wird nichts behauptet. */
+const TP_GESAMTANGABE=/\bà\b|\bFelder\b|\binsgesamt\b|\bzusammen\b/i;
+function tpUebungSpanne(formIdx){
   const f=(typeof tpAllForms==="function")?tpAllForms()[formIdx]:null;
-  const s=String((f||{}).spieler||"");
-  if(!/\bje (Station|Feld|Quadrat|Dreieck)/i.test(s))return 0;
-  const m=s.match(/^\s*(\d+)/);
-  if(!m)return 0;
+  const s=String((f||{}).spieler||"").trim();
+  if(!s)return {min:0,max:0,alle:false};
+  if(/\b(beliebig|alle)\b/i.test(s)||/^Paare$/i.test(s))return {min:0,max:0,alle:true};
   let warten=0;
-  String(s).replace(/(\d+)\s+(?:warten|wartet|Rotationsspieler)/gi,(_,n)=>{warten+=Number(n);return _;});
-  return Math.max(2,Number(m[1])-warten);
+  s.replace(/(\d+)\s+(?:warten|wartet|Rotationsspieler)/gi,(_,n)=>{warten+=Number(n);return _;});
+  // Form 1: „N je Station" – die Bibliotheksform, unveraendert.
+  if(/\bje (Station|Feld|Quadrat|Dreieck)/i.test(s)){
+    const m=s.match(/^\s*(\d+)/); if(!m)return {min:0,max:0,alle:false};
+    const n=Math.max(2,Number(m[1])-warten);
+    return {min:n,max:n,alle:false};
+  }
+  // Gesamtangabe – lieber nichts sagen als etwas Falsches.
+  if(TP_GESAMTANGABE.test(s))return {min:0,max:0,alle:false};
+  // Form 2: „N+M" (Feldspieler plus Torhueter) zaehlt zusammen.
+  const plus=s.match(/^\s*(\d+)\s*\+\s*(\d+)/);
+  if(plus){ const n=Number(plus[1])+Number(plus[2])-warten; return {min:n,max:n,alle:false}; }
+  // Form 3: Spanne „N–M" (Halbgeviert, Bindestrich oder „bis").
+  const sp=s.match(/^\s*(\d+)\s*(?:[–—-]|bis)\s*(\d+)/);
+  if(sp){
+    const a=Math.max(1,Number(sp[1])-warten), b=Math.max(a,Number(sp[2])-warten);
+    return {min:a,max:b,alle:false};
+  }
+  // Form 4: eine einzelne Zahl.
+  const eins=s.match(/^\s*(\d+)\s*(?:\(|$|[A-Za-zÄÖÜäöü])/);
+  if(eins){ const n=Math.max(1,Number(eins[1])-warten); return {min:n,max:n,alle:false}; }
+  return {min:0,max:0,alle:false};
+}
+/* Der Mindestbedarf allein – fuer alles, was nur eine Zahl braucht (Feldzahl, Warnungen). */
+function tpUebungBedarf(formIdx){ return tpUebungSpanne(formIdx).min; }
+/* v595: Bloecke, in denen frei gespielt wird und deshalb keine Uebung zu waehlen ist.
+   Steht als Liste da, damit ein weiterer Fall eine Zeile kostet und keine Suche. */
+const TP_FREIE_FENSTER=[/stra(ß|ss)enfu(ß|ss)ball/i];
+function tpFreiesFenster(slot){
+  const t=String((slot||{}).label||(slot||{}).titel||"");
+  return TP_FREIE_FENSTER.some(re=>re.test(t));
 }
 /* selId → {n: Kinder in der Gruppe, variante: true, wenn die Einheit diese Größe selbst regelt} */
 let _tpStationGruppe={};
@@ -1883,11 +1927,16 @@ function tpGruppeHinweis(selId){
        es nur dort, wo jemand daran gedacht hat: L4-8 nennt es für Feld 1 („bei 5 wartet
        eines") und für Feld 3, für Feld 2 nicht. Gerechnet ist es immer möglich – die
        Übungsbeschreibung nennt die aktiven Plätze und die Wartenden getrennt. */
-    const aktiv=tpUebungBedarf(idx);
-    if(aktiv&&info.n>aktiv){
-      const rest=info.n-aktiv;
-      html+=`<div style="font-size:11.5px;color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: ${aktiv} spielen, ${rest===1?"eines wechselt":rest+" wechseln"} ein</div>`;
-    }else if(aktiv&&info.n===aktiv){
+    /* v595: Die Uebung nennt eine Spanne oder eine feste Zahl – beides wird hier zu
+       demselben Satz. Bei einer Spanne spielen alle mit, solange die Gruppe hineinpasst;
+       erst oberhalb der Obergrenze wechselt jemand ein. */
+    const sp=tpUebungSpanne(idx), aktiv=sp.min;
+    if(sp.alle){
+      html+=`<div style="font-size:11.5px;color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: alle spielen mit</div>`;
+    }else if(aktiv&&info.n>sp.max){
+      const rest=info.n-sp.max;
+      html+=`<div style="font-size:11.5px;color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: ${sp.max} spielen, ${rest===1?"eines wechselt":rest+" wechseln"} ein</div>`;
+    }else if(aktiv&&info.n>=aktiv){
       html+=`<div style="font-size:11.5px;color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: alle spielen</div>`;
     }else if(aktiv&&info.n<aktiv){
       const kinder=(typeof _tgPool==="function")?_tgPool().namen.length:0;
@@ -1961,7 +2010,18 @@ function tpRenderTimeline(){
     const startMin=parallel?startsArr[slot.parallelZu]:time;
     const endMin=startMin+(parallel?tpSlots[slot.parallelZu].dauer:slot.dauer);
     const noGroups=typ==="warmup"||typ==="abschluss"||typ==="tw";
-    const noSelect=typ==="abschluss";
+    /* v595: Zwei Blockarten brauchen gar keine Uebung.
+
+       Das Abschlussspiel ist freies Spiel; das war schon so. Dazu kommt jetzt das
+       Strassenfussball-Fenster: Ball raus, Kinder spielen, fertig. Ein leeres Auswahlfeld
+       forderte dort zu etwas auf, das dem Sinn des Blocks widerspricht (PO am 21.09.:
+       „Das Warmup Strassenfussball-Fenster braucht keine Auswahl an Uebungen").
+
+       Erkannt wird es am Namen des Blocks, den die Vorlage mitbringt - die Vorlagen
+       tragen kein eigenes Merkmal dafuer, und eines nachzuruesten hiesse, jede Vorlage
+       in Datei UND Datenbank anzufassen, ohne dass es mehr aussagte als der Name. */
+    const frei=tpFreiesFenster(slot);
+    const noSelect=typ==="abschluss"||frei;
     /* Stationen = angehakte Trainer, MINDESTENS aber so viele, wie ausgeloste Gruppen
        existieren. Sagt ein Trainer nach der Auslosung ab, fiel sonst eine komplette
        Gruppe aus Anzeige und Trainingsstart – die Kinder tauchten nirgends mehr auf. */
@@ -2034,7 +2094,11 @@ function tpRenderTimeline(){
     if(typ==="warmup"){
       html+=tpTipp("Ankommensspiel wählen: ab dem ERSTEN Kind spielbar, Nachzügler docken einfach an – kein Warten, kein Laufen ohne Ball.");
     }
-    if(noSelect){
+    if(frei){
+      /* Kein Auswahlfeld und auch kein Turnier-Knopf: Strassenfussball heisst, dass die
+         Kinder selbst entscheiden, was gespielt wird. Der Tipp darueber steht schon. */
+      html+=`<div style="font-size:11px;color:var(--text2);padding:4px 0;line-height:1.5">Freies Spiel ohne Anleitung – die Kinder entscheiden selbst, was und mit wem sie spielen. Du stellst nur Tore und Bälle hin.</div>`;
+    }else if(noSelect){
       // PO-Wunsch: das Abschlussspiel kann direkt als Blitzturnier laufen – die Slot-Dauer
       // wird zum Zeitbudget (auch 2 gegen 2 ohne Torwart mit bis zu 6 Teams).
       html+=`<div style="font-size:11px;color:var(--text2);padding:4px 0">Freies Spiel – Standard: 3 gegen 3 auf 4 Minitore (FUNiño), ohne Torwart</div>
