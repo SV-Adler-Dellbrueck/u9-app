@@ -179,7 +179,12 @@ module.exports = async function (h) {
   if (/\(bei /.test(String(r.grund))) probleme.push(`Der Grundtext trägt die Variantenklammer noch: „${r.grund}“`);
   if (r.bedarfWand !== 6) probleme.push(`Bedarf der Wandspieler-Übung ist ${r.bedarfWand} statt 6`);
   if (r.bedarfWarten !== 4) probleme.push(`Bedarf von „3 gegen 1“ ist ${r.bedarfWarten} statt 4 – die zwei Wartenden gehören nicht zum Minimum`);
-  if (r.bedarfWarmup !== 0) probleme.push(`Das Aufwärmen („8–14“) liefert einen Stationsbedarf von ${r.bedarfWarmup} statt keinen`);
+  /* v595: Diese Erwartung ist umgedreht. Bis v594 galt „ohne das Wort ‚je Station‘ keine
+     Zahl" – und damit schwieg der Hinweis bei 107 von 140 Übungen, weil die mitgelieferte
+     Sammlung Spannen schreibt statt „je Station". Eine Spanne IST der Stationsbedarf; „8–14"
+     heißt: ab acht Kindern spielbar, ab fünfzehn wechselt jemand ein. Was stumm bleibt,
+     sind weiterhin die Gesamtangaben („12 (3 Felder à 4)") – die prüft v595. */
+  if (r.bedarfWarmup !== 8) probleme.push(`Das Aufwärmen („8–14“) liefert einen Stationsbedarf von ${r.bedarfWarmup} statt 8`);
 
   // b)
   if (r.kinder !== 12) probleme.push(`${r.kinder} Kinder im Pool statt 12`);
@@ -214,7 +219,7 @@ module.exports = async function (h) {
   if (fehler.length) probleme.push("Konsole: " + fehler[0]);
 
   if (!probleme.length) {
-    zeilen.push(`Rechnung: drei Feldtexte, Variante bei 4 „${VAR4}“, bei 5 „nur ein Verteidiger“ · Bedarf 6 / 4 (Wartende zählen nicht) / keiner beim Aufwärmen`);
+    zeilen.push(`Rechnung: drei Feldtexte, Variante bei 4 „${VAR4}“, bei 5 „nur ein Verteidiger“ · Bedarf 6 / 4 (Wartende zählen nicht) / 8 beim Aufwärmen („8–14“, seit v595 als Spanne gelesen)`);
     zeilen.push(`12 Kinder → ${r.gruppen.join("/")}; die Wandspieler-Station zeigt ihren Feldtext in allen drei Hauptteilen, die Vierergruppe bekommt ihre Anpassung`);
     zeilen.push(`Übung getauscht → Feldtext weg · zu kleine Gruppe → „${(r.zuKlein[0] || "").slice(0, 80)}“`);
     zeilen.push(`Zusammenlegen: ${r.vorher.map(g => g.n).join("/")} → ${r.nachher.map(g => g.n).join("/")}, ohne neu zu mischen`);
