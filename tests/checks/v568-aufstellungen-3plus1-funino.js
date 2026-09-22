@@ -33,7 +33,7 @@
    6) Im Fenster „Vorlage übernehmen“ erscheinen die Kacheln „3+1“, „FUNiño“, „3+1 gegen
       FUNiño“ und „3+1 und FUNiño“, sie filtern – und die Reihe trägt am Handy (390 px) alle
       Werte mit 48 px Höhe ohne waagerechten Überlauf.
-   7) Die dreizehn Skizzen rendern dunkel und hell; die Sperrklinke aus v549 bleibt bei 37.
+   7) Die dreizehn Skizzen rendern dunkel und hell; die Sperrklinke aus v549 wächst nicht.
    8) L5-6 bei zwei Feldtrainern: Hauptteil 1 und 2 mit „3+1 gegen 2 – Adler aus dem Tor“ und
       „FUNiño 3 gegen 1 – der Mittlere hat den Ball“, Hauptteil 3 „3+1 gegen FUNiño – großes
       Tor gegen zwei kleine“; L6-5 entsprechend mit „Igel gegen drei …“ und „FUNiño 2 gegen 2
@@ -96,10 +96,17 @@ module.exports = async function (h) {
   const ohneRolle = neueV.filter(v => !/Aufpasser|Flitzer|Jäger/.test(String(v.beobachtung || ""))).map(v => v.name);
   if (ohneRolle.length) probleme.push("Beobachtungsfrage ohne Rollenbezug: " + ohneRolle.join(", "));
 
-  // 7) Sperrklinke aus v549 – der Wert steht in der Prüfdatei selbst
+  /* 7) Sperrklinke aus v549 – der Wert steht in der Prüfdatei selbst.
+
+     Bis v597 stand hier `!== "37"`, also Gleichheit. Das war zu eng gefasst: Die Klinke
+     soll verhindern, dass der Altbestand WÄCHST – sinkt sie, weil wieder Skizzen gezogen
+     wurden (v597: elf Rauten-Übungen, 37 → 26), ist genau das eingetreten, was sie
+     bezweckt. Geprüft wird deshalb die Richtung, nicht die Zahl; die Zahl selbst hütet
+     v549. */
   const v549 = fs.readFileSync(path.join(__dirname, "v549-vorlagen-skizzen.js"), "utf8");
-  const klinke = (v549.match(/const REST_HOECHSTENS = (\d+);/) || [])[1];
-  if (klinke !== "37") probleme.push(`Die Sperrklinke aus v549 steht auf ${klinke} statt 37`);
+  const klinke = Number((v549.match(/const REST_HOECHSTENS = (\d+);/) || [])[1]);
+  if (!isFinite(klinke)) probleme.push("Die Sperrklinke aus v549 ist nicht lesbar");
+  else if (klinke > 37) probleme.push(`Die Sperrklinke aus v549 ist von 37 auf ${klinke} gestiegen`);
 
   // ── Der Browser: Abgleich gegen den Bestand, Prüfung, Kacheln, Skizzen, Übernehmen ──
   const zwei = h.tagePlus(2), drei = h.tagePlus(4);

@@ -26,10 +26,11 @@
    e) Wo Pfeile sind, tragen sie die Farben der Legende.
    f) Sperrklinke für den Rest des Bestands: die Zahl der noch betroffenen
       handgezeichneten Skizzen darf nicht wachsen. */
-/* Stand 14.09.2026: von ursprünglich 52 handgezeichneten Skizzen sind fünfzehn gezogen –
-   fünf mit v549, zehn weitere mit v551, als die dreizehn neuen Einheiten sie in die
-   Vorlagen holten. Siebenunddreißig tragen das Muster noch. Die Zahl darf nur sinken. */
-const REST_HOECHSTENS = 37;
+/* Stand 22.09.2026: von ursprünglich 52 handgezeichneten Skizzen sind sechsundzwanzig
+   gezogen – fünf mit v549, zehn weitere mit v551, als die dreizehn neuen Einheiten sie in
+   die Vorlagen holten, und elf mit v597 (die Rauten-Übungen tf003–tf012 und tf051).
+   Sechsundzwanzig tragen das Muster noch. Die Zahl darf nur sinken. */
+const REST_HOECHSTENS = 26;
 
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
