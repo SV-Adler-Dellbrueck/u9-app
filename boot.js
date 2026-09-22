@@ -1792,6 +1792,30 @@ function tpLabelFeldTexte(lab){
   t[0]=t[0].replace(/^[^:]*–[^:]*:\s*/,"");   // „Hauptteil 1 – …: " gehört zum Block, nicht zum Feld
   return t;
 }
+/* ═══ v598 – DER BLOCKKOPF ZEIGT NUR NOCH DEN BLOCK (PO 22.09.) ═══
+   „Oben links steht immer die Information Hauptteil 1 etc. Den Sinn verstehe ich nicht.
+   Außerdem nimmt das viel zu viel Platz weg."
+
+   Der Sinn ist echt, nur am falschen Ort sichtbar: Das Label einer übernommenen Einheit
+   trägt hinter „|" die Regeln JE FELD — und seit v571 stehen genau die unten an ihrer
+   Station, wo sie hingehören. Oben standen sie ein zweites Mal, vollständig ausgeschrieben,
+   und schoben am Handy alles nach unten: aus „Hauptteil 1" wurden sechs Zeilen.
+
+   Gekürzt wird nur die ANZEIGE. Das Label selbst bleibt Zeichen für Zeichen, wie es war —
+   `tpFeldTexte` liest weiter daraus, und ein Plan, der zurückgespielt wird, verliert
+   nichts. Der volle Text steht im `title`, also beim Daraufzeigen. */
+function tpSlotKopfText(lab){
+  const voll=String(lab||"").trim();
+  if(!voll)return "";
+  const bis=voll.indexOf("|");
+  if(bis<0)return voll;
+  /* Vor dem ersten „|" steht der Blockteil samt Einleitung („Hauptteil 1 – Stationen,
+     3 Min frei, dann eng: Adler aus dem Tor …"). Die Einleitung endet am Doppelpunkt;
+     was danach kommt, ist bereits der erste Feldtext und steht unten an Feld 1. */
+  const kopf=voll.slice(0,bis).trim();
+  const dp=kopf.search(/[^:]*–[^:]*:/)===0?kopf.indexOf(":"):-1;
+  return (dp>0?kopf.slice(0,dp):kopf).trim();
+}
 function tpFeldTexte(si){
   const slots=(typeof tpSlots!=="undefined")?tpSlots:[];
   const slot=slots[si]||{};
@@ -2042,7 +2066,7 @@ function tpRenderTimeline(){
 
     html+=`<div class="tp-slot" style="border-left:3px solid ${slot.farbe};${parallel?"margin-left:14px;":""}">
       <div class="tp-slot-head">
-        <span class="tp-slot-label">${parallel?tpParallelIcon(typ):""}${slot.label}${tpTypMarke(typ)}</span>
+        <span class="tp-slot-label"${slot.label&&tpSlotKopfText(slot.label)!==String(slot.label).trim()?` title="${esc(slot.label)}"`:""}>${parallel?tpParallelIcon(typ):""}${tpSlotKopfText(slot.label)}${tpTypMarke(typ)}</span>
         <span class="tp-slot-time">${startMin}' – ${endMin}'${parallel?` · parallel zu ${tpSlots[slot.parallelZu].label}`:""}</span>
         ${parallel?"":tpDauerSelect(si,slot)}
         <button class="tp-remove" onclick="tpRemoveSlot(${si})"><i class="ti ti-trash"></i></button>

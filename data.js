@@ -3670,7 +3670,13 @@ const SKZ_DUNKEL={
   tor:'#fff',torFuell:'rgba(255,255,255,.25)',leiter:'rgba(255,255,255,.6)',wand:'#d1d5db',
   F:{g:'#4ade80',r:'#f87171',b:'#60a5fa',y:'#fbbf24',w:'#fff'},
   spielerRand:'rgba(0,0,0,.3)',kuerzel:'rgba(0,0,0,.65)',huetchenRand:'rgba(0,0,0,.25)',
-  ball:'#fff',ballRand:'#333',text:'rgba(255,255,255,.85)',pfeil:SKZ_PFEIL,marke:'arr-',
+  /* v598 (PO 22.09.): „Der Ball sollte … grundsätzlich als schwarzer Kreis dargestellt
+     werden." Schwarz allein trägt auf dem dunklen Rasen nicht — #111827 kommt dort auf
+     2,71:1, unter den 3:1 aus CLAUDE.md. Die Erkennbarkeit trägt deshalb der weiße Rand
+     (6,54:1 gegen den Rasen, 17,74:1 gegen die Füllung), so wie der Spielerkreis seinen
+     Rand hat. Nebenbei behebt das einen echten Fehler: der bisher weiße Ball kam auf dem
+     HELLEN Rasen auf 1,30:1 und war dort nur an seiner Kontur zu erahnen. */
+  ball:'#111827',ballRand:'#ffffff',text:'rgba(255,255,255,.85)',pfeil:SKZ_PFEIL,marke:'arr-',
   nrFuell:'rgba(0,0,0,.6)'
 };
 const SKZ_HELL={
@@ -3680,7 +3686,7 @@ const SKZ_HELL={
   tor:'#1f2937',torFuell:'rgba(31,41,55,.2)',leiter:'rgba(31,41,55,.55)',wand:'#4b5563',
   F:{g:'#15803d',r:'#991b1b',b:'#1d4ed8',y:'#713f12',w:'#475569'},
   spielerRand:'rgba(255,255,255,.8)',kuerzel:'rgba(255,255,255,.95)',huetchenRand:'rgba(17,24,39,.35)',
-  ball:'#fff',ballRand:'#111827',nrFuell:'rgba(255,255,255,.9)',text:'rgba(17,24,39,.9)',
+  ball:'#111827',ballRand:'#ffffff',nrFuell:'rgba(255,255,255,.9)',text:'rgba(17,24,39,.9)',
   pfeil:{p:'#111827',l:'#a16207',s:'#dc2626',d:'#0369a1'},marke:'arrh-'
 };
 /* Eigene Marker-Kennungen je Variante: Marker sind im Dokument global. Lägen beide
@@ -4020,8 +4026,17 @@ function _skz(o,opt){
     S.push('<line x1="'+p[0]+'" y1="'+p[1]+'" x2="'+p[2]+'" y2="'+p[3]+'" stroke="'+P.pfeil[typ]+'" stroke-width="'+(typ==='s'?3:1.5)+'"'+(typ==='l'?' stroke-dasharray="5,3"':'')+' marker-end="url(#'+M+typ+')"/>');
     nrKreis(p,typ);});
   (o.h||[]).forEach(h=>S.push('<path d="M'+h[0]+' '+(h[1]-6)+' L'+(h[0]+5)+' '+(h[1]+4)+' L'+(h[0]-5)+' '+(h[1]+4)+' Z" fill="'+(F[h[2]]||F.y)+'" stroke="'+P.huetchenRand+'" stroke-width="1"/>'));
+  /* v598 – SPIELER MIT BALL (PO 22.09.): „Wir brauchen ein festes Icon ‚Spieler mit Ball‘."
+
+     Bisher setzte man zwei Elemente nebeneinander und schob den Ball von Hand an den Fuß.
+     Das sah richtig aus, war aber zweierlei: Beim Verschieben blieb der Ball liegen, und
+     ob er zu diesem Kind gehört, wusste nur, wer es gezeichnet hatte. Ein fünftes Feld am
+     Spieler macht daraus EIN Element — `[x, y, farbe, kürzel, 'b']`. Der Ball sitzt am
+     unteren rechten Rand des Kreises, dort, wo der Fuß ist. Ohne fünftes Feld entsteht
+     Zeichen für Zeichen dieselbe Ausgabe wie vorher. */
   (o.s||[]).forEach(sp=>{S.push('<circle cx="'+sp[0]+'" cy="'+sp[1]+'" r="8" fill="'+(F[sp[2]]||F.g)+'" stroke="'+P.spielerRand+'" stroke-width="1.5"/>');
-    if(sp[3])S.push('<text x="'+sp[0]+'" y="'+(sp[1]+3)+'" text-anchor="middle" fill="'+P.kuerzel+'" font-size="8" font-family="sans-serif" font-weight="700">'+E(sp[3])+'</text>');});
+    if(sp[3])S.push('<text x="'+sp[0]+'" y="'+(sp[1]+3)+'" text-anchor="middle" fill="'+P.kuerzel+'" font-size="8" font-family="sans-serif" font-weight="700">'+E(sp[3])+'</text>');
+    if(sp[4]==='b')S.push('<circle cx="'+(sp[0]+7)+'" cy="'+(sp[1]+7)+'" r="4" fill="'+P.ball+'" stroke="'+P.ballRand+'" stroke-width="1"/>');});
   (o.b||[]).forEach(b=>S.push('<circle cx="'+b[0]+'" cy="'+b[1]+'" r="4" fill="'+P.ball+'" stroke="'+P.ballRand+'" stroke-width="1"/>'));
   (o.tx||[]).forEach(t=>S.push('<text x="'+t[0]+'" y="'+t[1]+'" text-anchor="middle" fill="'+P.text+'" font-size="9" font-family="sans-serif" font-weight="600">'+E(t[2])+'</text>'));
   return '<svg viewBox="0 0 '+SB+' '+SH+'" width="100%" style="max-width:'+SB+'px;display:block;margin:8px auto;border-radius:6px" xmlns="http://www.w3.org/2000/svg">'+S.join('')+'</svg>';
@@ -4138,7 +4153,10 @@ function skzMaterial(spec){
   const o=spec;
   (o.tor||[]).forEach(t=>dazu(t[4]==="j"?"jugendtor":"minitor",1));
   dazu("huetchen",(o.h||[]).length);
-  dazu("ball",(o.b||[]).length);
+  /* v598: Ein Ball am Spieler ist ein Ball im Netz – gezählt wird er wie ein einzeln
+     gesetzter, sonst fehlte er in der Materialzeile, sobald jemand das neue Werkzeug
+     „Spieler + Ball" nimmt statt zweier Elemente. */
+  dazu("ball",(o.b||[]).length+(o.s||[]).filter(sp=>sp&&sp[4]==="b").length);
   dazu("leiter",(o.leiter||[]).length);
   dazu("wand",(o.wand||[]).length);
   (o.ger||[]).forEach(g=>{

@@ -26,7 +26,15 @@
    g) Der Umschalter merkt sich die Wahl im Gerät.
    h) Bei einer der 37 von Hand geschriebenen Altskizzen gibt es keinen Umschalter,
       sondern den Satz, dass es die helle Fassung dort noch nicht gibt. */
-const GOLD = "5d355fef430e2d86b6675859d9a1c03c4e4203699d54ec16b111628024aad10f";
+/* Die Prüfsumme der dunklen Fassung. Sie soll sich NICHT von selbst ändern — wird sie
+   rot, hat ein Umbau die dunkle Zeichnung angefasst, und das ist zu begründen, bevor die
+   Zahl nachgezogen wird.
+
+   Nachgezogen am 22.09.2026 (v598): Der Ball ist von Weiß (#fff mit Rand #333) auf Schwarz
+   (#111827 mit weißem Rand) gewechselt — auf Wunsch des PO und weil der weiße Ball auf dem
+   HELLEN Rasen nur 1,30:1 erreichte. Die Probe-Beschreibung enthält einen Ball, also ändert
+   sich ihre Zeichnung genau an dieser einen Stelle. Vorher 5d355fef430e. */
+const GOLD = "6e9177798bfcc916c44f677f923b0afcef47fe2333e3de4eab1a5f1e3930ac2c";
 /* Eine Beschreibung, die jeden Elementtyp anfasst – Zone, Jugendtor, Leiter, Wand,
    Pfeil, Linie, Hütchen, Spieler mit Kürzel, Ball, Text. */
 const PROBE = {
@@ -35,7 +43,7 @@ const PROBE = {
   b: [[7, 8]], tx: [[9, 9, "x"]]
 };
 const DUNKEL = ["#2d6a2d", "#1a4a1a", "#fbbf24", "#fff", "#d1d5db", "#4ade80", "#f87171", "#60a5fa",
-  "#ffffff", "#fde047", "#fca5a5", "#7dd3fc", "#333", "none"];
+  "#ffffff", "#fde047", "#fca5a5", "#7dd3fc", "#333", "#111827", "none"];  // #111827: Ball seit v598
 
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
