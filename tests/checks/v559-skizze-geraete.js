@@ -85,7 +85,10 @@ module.exports = async function (h) {
       fremdeFarben: (dunkel.match(/(?:fill|stroke)="(#[0-9a-f]{3,6})"/gi) || [])
         .map(x => x.slice(x.indexOf('"') + 1, -1))
         /* Rasen, Rand, Ball und die vier Pfeilfarben stehen in jeder Zeichnung. */
-        .filter(c => !farben.includes(c) && !["#2d6a2d", "#1a4a1a", "#fff", "#333", "#fde047", "#fca5a5", "#7dd3fc", "#15803d", "#991b1b", "#1d4ed8", "#713f12", "#475569"].includes(c)),
+        .filter(c => !farben.includes(c) && /* v598: #111827 ist die neue Ballfüllung (vorher #fff mit Rand #333); der Ball trägt
+             seither einen weißen Rand, weil schwarz allein auf dem dunklen Rasen nur 2,71:1
+             erreicht. #333 bleibt in der Liste, solange Altskizzen ihn tragen. */
+          !["#2d6a2d", "#1a4a1a", "#fff", "#333", "#111827", "#fde047", "#fca5a5", "#7dd3fc", "#15803d", "#991b1b", "#1d4ed8", "#713f12", "#475569"].includes(c)),
       legendeHat: ["Stange", "Markierungsteller", "Minihürde", "Balldepot", "Stangentor", "Hütchentor"].filter(x => legende.includes(x)),
       nurStangeHat: ["Stange", "Minihürde", "Balldepot"].filter(x => nurStange.includes(x)),
       mat: alsText, einsText, zweiText,

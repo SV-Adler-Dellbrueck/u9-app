@@ -174,6 +174,10 @@ const SKZ_WERK=[
      Der Fußball ist schwarzweiß und damit in beiden Modi zu sehen. */
   {id:"ball",   emo:"⚽", lbl:"Ball",     feld:"b", gruppe:"Auf dem Platz"},
   {id:"spieler",emo:"🔵", lbl:"Spieler",  feld:"s", gruppe:"Auf dem Platz"},
+  /* v598 (PO 22.09.): „Wir brauchen ein festes Icon ‚Spieler mit Ball‘." Bisher waren das
+     zwei Elemente, die man von Hand übereinanderschob – beim Verschieben blieb der Ball
+     dann liegen. Jetzt ein Spieler mit gesetztem fünften Feld: ein Element, ein Griff. */
+  {id:"spielerball",emo:"🏃", lbl:"Spieler + Ball", feld:"s", ball:true, gruppe:"Auf dem Platz"},
   {id:"huetchen",emo:"🔺",lbl:"Hütchen",  feld:"h", gruppe:"Auf dem Platz"},
   {id:"trainer",emo:"🧑‍🏫",lbl:"Trainer",  feld:"ger", typ:"trainer", gruppe:"Auf dem Platz"},
   {id:"text",   emo:"🔤", lbl:"Text",     feld:"tx", gruppe:"Auf dem Platz"},
@@ -372,7 +376,10 @@ function skzBuehneDown(ev){
   _skzMerken();
   if(w.feld==="s"){
     const nr=(document.getElementById("skz-text")?.value||"").trim().slice(0,3);
-    _skzListe("s").push(nr?[x,y,_skzFarbe,nr]:[x,y,_skzFarbe]);
+    /* v598: Das fünfte Feld „b" hängt den Ball an den Spieler. Damit es steht, braucht das
+       vierte einen Wert – ein leeres Kürzel zeichnet keinen Text, hält aber den Platz. */
+    if(w.ball)_skzListe("s").push([x,y,_skzFarbe,nr||"","b"]);
+    else _skzListe("s").push(nr?[x,y,_skzFarbe,nr]:[x,y,_skzFarbe]);
   }
   else if(w.feld==="h")_skzListe("h").push([x,y,_skzFarbe]);
   else if(w.feld==="b")_skzListe("b").push([x,y]);
@@ -720,6 +727,33 @@ function tfSkizzeWeg(){ window.TF_SKIZZE=null; tfSkizzeVorschau(); }
 function tfSkizzeOpen(){
   if(typeof skzEditorOpen!=="function"){toast("Skizzen-Werkzeug lädt noch – gleich nochmal","info");return;}
   skzEditorOpen(window.TF_SKIZZE||null,spec=>{ window.TF_SKIZZE=spec; tfSkizzeVorschau(); });
+}
+/* v598 – „Skizze aus der Beschreibung" in der Übungsmaske selbst.
+
+   Was in der Maske schon steht, wird nicht noch einmal abgefragt: Name, Ablauf, Varianten
+   und die beiden Zahlen Spieler und Feld gehen als ein Text an dieselbe Edge Function wie
+   im Editor. Die Zeichnung landet in der Vorschau, nicht in der Datenbank — gespeichert
+   wird sie erst mit der Übung, und „Skizze zeichnen" öffnet sie danach zum Ändern.
+
+   Die Sperre prüft den Ablauf, nicht den Namen: „Rondo" allein ergibt keinen Aufbau. */
+async function tfSkizzeKi(){
+  const wert=id=>String((document.getElementById(id)||{}).value||"").trim();
+  const ablauf=wert("tf-ablauf");
+  if(ablauf.length<15){ toast("Bitte erst den Ablauf beschreiben – daraus entsteht die Zeichnung","err"); return; }
+  const teile=[wert("tf-name"),ablauf,wert("tf-varianten")].filter(Boolean);
+  const rahmen=[wert("tf-spieler")&&(wert("tf-spieler")+" Kinder"),wert("tf-feld")&&("Feld "+wert("tf-feld"))].filter(Boolean);
+  if(rahmen.length)teile.push(rahmen.join(", "));
+  const knopf=document.getElementById("tf-skizze-ki");
+  const vorher=knopf?knopf.innerHTML:"";
+  if(knopf){ knopf.disabled=true; knopf.innerHTML='<i class="ti ti-loader"></i>zeichnet …'; }
+  try{
+    const spec=await skzKiSpec(teile.join(". "));
+    window.TF_SKIZZE=spec;
+    tfSkizzeVorschau();
+    toast("Zeichnung übernommen – mit „Skizze zeichnen“ kannst du sie ändern");
+  }catch(e){
+    toast(String((e&&e.message)||"Es hat nicht geklappt – bitte nochmal."),"err");
+  }finally{ if(knopf){ knopf.disabled=false; knopf.innerHTML=vorher; } }
 }
 
 /* ═══ v555 – PRÄSENTATIONSMODUS ═══
@@ -1400,6 +1434,33 @@ function skzKiDiktat(){
   try{ r.start(); _skzKiLauscht=r; if(knopf)knopf.innerHTML="⏹️ Aufnahme stoppen"; }
   catch(e){ _skzKiLauscht=null; }
 }
+/* v598 – EINE Anfrage, zwei Einstiege (PO 22.09.): „beim Anlegen einer eigenen Übung wäre
+   es super, wenn in der Hauptmaske aus den Daten direkt die Skizze von der KI auf Knopfdruck
+   gezeichnet werden kann. Aktuell muss ich erst auf Skizze gehen, dort die Übung nochmal
+   beschreiben."
+
+   Der Weg zur Edge Function steht seit v581 im Skizzen-Editor. Damit die Übungsmaske ihn
+   mitbenutzt, statt ihn ein zweites Mal zu schreiben, liegt er hier als eigene Funktion:
+   Text hinein, Spec heraus. Sie wirft, was schiefging, als Text — beide Aufrufer schreiben
+   ihn dorthin, wo er bei ihnen hingehört. */
+async function skzKiSpec(text){
+  const ctrl=new AbortController(), zu=setTimeout(()=>ctrl.abort(),60000);
+  try{
+    const kinder=(typeof KADER!=="undefined"&&Array.isArray(KADER))?KADER.filter(k=>k&&k.aktiv!==false).length:0;
+    const r=await fetch(`${SB_URL}/functions/v1/ki-uebung`,{method:"POST",headers:sbAuthHeaders(),
+      body:JSON.stringify({modus:"text",text,kinder}),signal:ctrl.signal});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(String(d.error||("Fehler "+r.status)));
+    const roh=((d.uebungen||[])[0]||{}).skizze;
+    const spec=(typeof skzSpecSaeubern==="function")?skzSpecSaeubern(roh):null;
+    if(!spec)throw new Error("Aus der Beschreibung ließ sich kein Aufbau lesen – nenne Hütchen, Tore und Kinder ausdrücklich.");
+    return spec;
+  }catch(e){
+    if(e&&e.name==="AbortError")throw new Error("Zeitüberschreitung – bitte nochmal versuchen.");
+    if(e instanceof TypeError)throw new Error("Kein Netz – bitte später nochmal.");
+    throw e;
+  }finally{ clearTimeout(zu); }
+}
 async function skzKiLauf(){
   const feld=document.getElementById("skz-ki-text"), stand=document.getElementById("skz-ki-stand"),
         los=document.getElementById("skz-ki-los");
@@ -1408,17 +1469,8 @@ async function skzKiLauf(){
   skzKiDiktatStop();
   if(stand)stand.textContent="🧠 Der Adler-Coach zeichnet …";
   if(los)los.disabled=true;
-  const ctrl=new AbortController(), zu=setTimeout(()=>ctrl.abort(),60000);
   try{
-    const kinder=(typeof KADER!=="undefined"&&Array.isArray(KADER))?KADER.filter(k=>k&&k.aktiv!==false).length:0;
-    const r=await fetch(`${SB_URL}/functions/v1/ki-uebung`,{method:"POST",headers:sbAuthHeaders(),
-      body:JSON.stringify({modus:"text",text,kinder}),signal:ctrl.signal});
-    clearTimeout(zu);
-    const d=await r.json().catch(()=>({}));
-    if(!r.ok){ if(stand)stand.textContent=String(d.error||("Fehler "+r.status)); return; }
-    const roh=((d.uebungen||[])[0]||{}).skizze;
-    const spec=(typeof skzSpecSaeubern==="function")?skzSpecSaeubern(roh):null;
-    if(!spec){ if(stand)stand.textContent="Aus der Beschreibung ließ sich kein Aufbau lesen – nenne Hütchen, Tore und Kinder ausdrücklich."; return; }
+    const spec=await skzKiSpec(text);
     /* In den Editor, nicht in die Datenbank: erst merken, damit „Zurück" den alten Stand
        zurückholt, dann den Zuschnitt beibehalten, den der Trainer gewählt hat. */
     _skzMerken();
@@ -1431,7 +1483,6 @@ async function skzKiLauf(){
     skzEditorZeichnen();
     toast("Zeichnung übernommen – jetzt kannst du sie ändern");
   }catch(e){
-    clearTimeout(zu);
-    if(stand)stand.textContent=(e&&e.name==="AbortError")?"Zeitüberschreitung – bitte nochmal versuchen.":"Kein Netz – bitte später nochmal.";
+    if(stand)stand.textContent=String((e&&e.message)||"Es hat nicht geklappt – bitte nochmal.");
   }finally{ if(los)los.disabled=false; }
 }
