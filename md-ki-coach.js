@@ -12,18 +12,18 @@ function kiCoachOpen(){
   document.getElementById("ki-modal")?.remove();
   const m=document.createElement("div");m.id="ki-modal";
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
-  m.onclick=e=>{if(e.target===m)m.remove();};
+  m.onclick=e=>{if(e.target===m){kiDiktatStop();m.remove();}};   // v596: nicht weiterlauschen
   const chip=t=>`<button onclick="document.getElementById('ki-prompt').value='${t.replace(/'/g,"")}'" style="border:1px solid var(--rand-bedien);background:var(--surface);border-radius:14px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:inherit">${t}</button>`;
   const feld="width:100%;min-height:44px;padding:6px 8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:12.5px;background:var(--surface2);color:var(--text);box-sizing:border-box";
   m.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("ki-modal","🤖","Adler-Coach (KI)","Übungen vorschlagen oder fremden Text übernehmen","#7c3aed")}
-    <div id="ki-modus" style="display:flex;gap:6px;margin-bottom:10px">
-      <button data-modus="idee" onclick="kiSetModus('idee')" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">💡 Idee beschreiben</button>
-      <button data-modus="text" onclick="kiSetModus('text')" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">📋 Text übernehmen</button>
+    <div id="ki-modus" role="tablist" aria-label="Wie der Coach arbeiten soll" style="display:flex;gap:6px;margin-bottom:10px">
+      <button data-modus="idee" role="tab" aria-controls="ki-block-idee" onclick="kiSetModus('idee')" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">💡 Idee beschreiben</button>
+      <button data-modus="text" role="tab" aria-controls="ki-block-text" onclick="kiSetModus('text')" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">📋 Text übernehmen</button>
     </div>
     <div id="ki-hinweis" style="font-size:11px;color:var(--text2);margin-bottom:10px"></div>
     <div id="ki-kontext"></div>
-    <div id="ki-block-idee">
+    <div id="ki-block-idee" role="tabpanel" aria-label="Idee beschreiben">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
         <label style="font-size:10.5px;color:var(--text2)">Schwerpunkt<select id="ki-kat" style="${feld}">${KI_KATS.map(([k,n])=>`<option value="${k}">${n}</option>`).join("")}</select></label>
         <label style="font-size:10.5px;color:var(--text2)">Dauer<select id="ki-dauer" style="${feld}">${KI_DAUER.map((d,i)=>`<option${i===1?" selected":""}>${d}</option>`).join("")}</select></label>
@@ -31,9 +31,10 @@ function kiCoachOpen(){
         <label style="font-size:10.5px;color:var(--text2)">Material<select id="ki-material" style="${feld}">${KI_MATERIAL.map(m=>`<option>${m}</option>`).join("")}</select></label>
       </div>
       <textarea id="ki-prompt" rows="2" placeholder="Optional: was dir wichtig ist – z. B. „viele Ballkontakte, die Schnellen sollen nicht dominieren“" style="width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:13px"></textarea>
+      ${kiDiktatMoeglich()?`<button type="button" id="ki-mic" onclick="kiDiktat()" style="width:100%;min-height:44px;margin-top:6px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">🎙️ Diktieren</button>`:""}
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0">${chip("Dribbling & Ballführung")}${chip("Passspiel in der Raute")}${chip("Torschuss mit Spaß")}${chip("Zweikampf & Mut")}</div>
     </div>
-    <div id="ki-block-text" style="display:none">
+    <div id="ki-block-text" role="tabpanel" aria-label="Text übernehmen" style="display:none">
       <textarea id="ki-text" rows="8" placeholder="Übungsbeschreibung hier einfügen – von einer Webseite, aus WhatsApp, aus einem Buch oder aus der Beschreibung unter einem Video." style="width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:13px"></textarea>
       <div style="font-size:10.5px;color:var(--text3);margin:4px 0 8px">Der Coach ordnet den Text in Aufbau, Ablauf, Varianten und Coaching-Punkte und zeichnet die Skizze dazu. Er erfindet nichts hinzu – was nicht dasteht, bleibt leer.</div>
     </div>
@@ -112,6 +113,33 @@ function kiWunschSatz(){
   if(mat)t.push("Material: "+mat);
   return t.join(" · ");
 }
+/* ── Diktieren (v596) ────────────────────────────────────────────────────────
+   Am Platz tippt niemand gern auf dem Handy, und „beschreibe, was du trainieren
+   willst" ist genau die Art Satz, die man schneller spricht (PO am 22.09.).
+
+   Gebaut nach dem Vorbild aus md-skizze.js, und aus denselben drei Gründen:
+   · Der Knopf erscheint NUR, wo das Gerät zuhören kann. `SpeechRecognition` gibt es
+     nicht überall und ist auf iOS wackelig; ein toter Knopf wäre schlechter als keiner.
+   · Verstandenes wird ANGEHÄNGT statt ersetzt – wer nachträgt, verlöre sonst den
+     ersten Satz.
+   · Ein Fehlschlag sagt es und lässt das Textfeld unberührt.
+   Das Textfeld bleibt der Weg, das Mikrofon ist die Zugabe. */
+let _kiLauscht=null;
+function kiDiktatMoeglich(){ return !!(window.SpeechRecognition||window.webkitSpeechRecognition); }
+function kiDiktatStop(){ try{ _kiLauscht&&_kiLauscht.stop(); }catch(e){} _kiLauscht=null; }
+function kiDiktat(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  const knopf=document.getElementById("ki-mic"), feld=document.getElementById("ki-prompt");
+  if(!SR||!feld)return;
+  if(_kiLauscht){ kiDiktatStop(); if(knopf)knopf.innerHTML="🎙️ Diktieren"; return; }
+  const r=new SR(); r.lang="de-DE"; r.interimResults=false; r.continuous=false;
+  r.onresult=e=>{ const t=[...e.results].map(x=>x[0]&&x[0].transcript).filter(Boolean).join(" ").trim();
+                  if(t)feld.value=(feld.value?feld.value.trim()+" ":"")+t; };
+  r.onerror=()=>{ if(typeof toast==="function")toast("Nichts verstanden – bitte tippen","err"); };
+  r.onend=()=>{ _kiLauscht=null; if(knopf)knopf.innerHTML="🎙️ Diktieren"; };
+  try{ r.start(); _kiLauscht=r; if(knopf)knopf.innerHTML="⏹️ Aufnahme stoppen"; }
+  catch(e){ if(typeof toast==="function")toast("Mikrofon nicht erreichbar","err"); }
+}
 /* Zwei Eingänge, ein Ergebnisweg (PO v410, Stufe 1): „Idee" erfindet, „Text" ordnet nur.
    Der Unterschied steht auch im System-Prompt der Edge Function – hier nur die Oberfläche. */
 let KI_MODUS="idee";
@@ -123,7 +151,11 @@ function kiSetModus(m){
     b.style.background=aktiv?"#7c3aed":"var(--surface)";
     b.style.color=aktiv?"#fff":"var(--text2)";
     b.style.borderColor=aktiv?"#7c3aed":"";
-    b.setAttribute("aria-pressed",aktiv?"true":"false");
+    /* v596: Die beiden sind ein Reiterpaar, keine zwei Aktionsknöpfe — „Idee
+       beschreiben" ist beim Öffnen schon gewählt, ein Klick darauf ändert deshalb
+       nichts, und genau das wirkte wie ein toter Knopf (PO am 22.09.). Mit
+       role=tab/aria-selected sagen Hilfstechnik UND Färbung dasselbe. */
+    b.setAttribute("aria-selected",aktiv?"true":"false");
   });
   const zeig=(id,ja)=>{const e=document.getElementById(id); if(e)e.style.display=ja?"block":"none";};
   zeig("ki-block-idee",an==="idee");
@@ -131,9 +163,10 @@ function kiSetModus(m){
   const h=document.getElementById("ki-hinweis");
   if(h)h.textContent=an==="text"
     ? "Text einfügen – der Coach macht daraus eine Übung im Format der App, mit Skizze."
-    : "Beschreibe, was du trainieren willst – der Coach schlägt altersgerechte U8/U9-Übungen vor. Du entscheidest, was in die Bibliothek kommt.";
+    : "Beschreibe, was du trainieren willst – der Coach schlägt altersgerechte U8/U9-Übungen vor, jede mit Skizze. Du entscheidest, was in die Bibliothek kommt. Die vier Felder genügen; der Text darunter ist die Nuance.";
   const l=document.getElementById("ki-gen-lbl"); if(l)l.textContent=an==="text"?"Text übernehmen":"Übungen vorschlagen";
   const nb=document.getElementById("ki-notiz-btn"); if(nb)nb.style.display=an==="text"?"none":"";
+  if(an==="text")kiDiktatStop();   // v596: im Text-Modus gibt es das Feld nicht, auf das diktiert würde
 }
 /* KI-Loop (18.1): der Trainer holt seine letzten Voice-Diary-Notizen als Kontext in den
    Prompt – bewusst per Klick (Trainer-in-the-Loop), nicht serverseitig-automatisch, damit
@@ -152,7 +185,12 @@ async function kiCoachGenerate(){
   const prompt=(document.getElementById("ki-prompt")?.value||"").trim();
   const text=(document.getElementById("ki-text")?.value||"").trim();
   if(KI_MODUS==="text"&&text.length<40){toast("Bitte die ganze Übungsbeschreibung einfügen","err");return;}
-  if(KI_MODUS==="idee"&&!prompt){toast("Bitte kurz beschreiben","err");return;}
+  /* v596: Hier stand `!prompt` – geprüft wurde also der FREITEXT, der im Feld
+     ausdrücklich „Optional" heißt. Wer nur Schwerpunkt, Dauer, Ort und Material
+     einstellte (wozu die vier Felder da sind) und auf „Übungen vorschlagen" drückte,
+     bekam „Bitte kurz beschreiben" – eine Abfuhr für ein optionales Feld (PO am 22.09.).
+     Gesendet wird ohnehin `promptVoll`, und das trägt den Satz aus den Auswahlfeldern.
+     Geprüft wird jetzt das, was wirklich hinausgeht; die Edge Function bleibt unberührt. */
   const out=document.getElementById("ki-result"), btn=document.getElementById("ki-gen-btn");
   if(out)out.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">🧠 ${KI_MODUS==="text"?"Adler-Coach liest den Text…":"Adler-Coach denkt nach…"}</div>`;
   if(btn)btn.disabled=true;
@@ -164,6 +202,7 @@ async function kiCoachGenerate(){
   // der Freitext ist die Nuance.
   const wunsch=KI_MODUS==="idee"?kiWunschSatz():"";
   const promptVoll=[wunsch,prompt].filter(Boolean).join(". ");
+  if(KI_MODUS==="idee"&&!promptVoll){toast("Bitte einen Schwerpunkt wählen oder kurz beschreiben","err");return;}
   try{
     const r=await fetch(`${SB_URL}/functions/v1/ki-uebung`,{method:"POST",headers:sbAuthHeaders(),
       body:JSON.stringify({modus:KI_MODUS,prompt:promptVoll,text:KI_MODUS==="text"?text:"",
