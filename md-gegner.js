@@ -10,6 +10,19 @@ let GEGNER_CACHE=null;
    Plätze selbst unterschiedlich nennen. Am Spieltag entscheidet die Platzart, welche
    Schuhe im Rucksack liegen müssen; das ist die Frage, die Eltern am Vorabend stellen. */
 const GEGNER_PLATZARTEN=["Kunstrasen","Naturrasen","Asche","Halle"];
+/* v601: Das Wappen des Gegners. Es liegt im öffentlichen Storage-Bucket `wappen`, nicht im
+   Repo — das Repo ist öffentlich, und fremde Vereinslogos gehören nicht hinein.
+
+   `alt` bleibt leer und das Bild ist `aria-hidden`: Der Vereinsname steht in derselben Zeile
+   daneben, ein zweites Mal vorgelesen zu werden hilft niemandem. Fehlt das Wappen oder lädt
+   es nicht, verschwindet das Element (`onerror`), statt ein kaputtes Bildsymbol zu zeigen —
+   die Zeile rückt dann einfach zusammen. */
+function gegnerWappenHtml(g,px){
+  if(!g||!g.wappen_url)return "";
+  const s=Math.max(20,Number(px)||28);
+  return '<img src="'+esc(g.wappen_url)+'" alt="" aria-hidden="true" loading="lazy" '
+    +'onerror="this.remove()" style="width:'+s+'px;height:'+s+'px;object-fit:contain;flex:0 0 auto">';
+}
 async function gegnerLoad(force){
   if(GEGNER_CACHE&&!force){gegnerDatalistFill();return GEGNER_CACHE;}
   try{const r=await fetch(`${SB_URL}/rest/v1/gegner?select=*&order=name.asc`,{headers:sbAuthHeaders()});if(r.ok)GEGNER_CACHE=await r.json();}catch(e){}
@@ -61,7 +74,9 @@ async function gegnerContactInto(elId,name){
     }
   }
   const platz=g.platzart?'<span style="white-space:nowrap">🥅 '+esc(g.platzart)+"</span>":"";
-  el.innerHTML='<div style="font-size:11.5px;color:var(--text2);margin-top:6px">'+[kontakt,platz].filter(Boolean).join(" · ")+"</div>";
+  const zeile=[kontakt,platz].filter(Boolean).join(" · ");
+  el.innerHTML='<div style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text2);margin-top:6px">'
+    +gegnerWappenHtml(g,22)+"<span>"+zeile+"</span></div>";
 }
 async function gegnerQuickSave(){
   const name=(document.getElementById("tm-titel")?.value||"").trim();
@@ -96,6 +111,7 @@ function gegnerRenderList(){
   const list=GEGNER_CACHE||[];
   if(!list.length){box.innerHTML=`<div style="font-size:12px;color:var(--text3)">Noch keine Gegner gespeichert.</div>`;return;}
   box.innerHTML=list.map(g=>`<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:var(--border)">
+    ${gegnerWappenHtml(g,28)}
     <div style="flex:1;min-width:0">
       <div style="font-size:13px;font-weight:700">${esc(g.name)}</div>
       ${g.adresse?`<div style="font-size:11px;color:var(--text2)">📍 ${esc(g.adresse)}${g.platzart?` · ${esc(g.platzart)}`:""}</div>`

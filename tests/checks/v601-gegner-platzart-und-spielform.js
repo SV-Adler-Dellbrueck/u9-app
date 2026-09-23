@@ -35,9 +35,10 @@ module.exports = async function (h) {
     const gesendet = [];
     const gegner = [
       { id: 1, name: "SV Beispielstadt", adresse: "Musterweg 1, 50000 Köln", ansprechpartner: "A. Person",
-        telefon: "+49 170 0000000", email: null, platzart: "Kunstrasen", website: "https://example.org", notiz: "Notiz" },
+        telefon: "+49 170 0000000", email: null, platzart: "Kunstrasen", website: "https://example.org", notiz: "Notiz",
+        wappen_url: "https://example.org/storage/v1/object/public/wappen/beispiel.png" },
       { id: 2, name: "Nur Platzart", adresse: null, ansprechpartner: null, telefon: null,
-        email: null, platzart: "Asche", website: null, notiz: null }
+        email: null, platzart: "Asche", website: null, notiz: null, wappen_url: null }
     ];
     const s = await h.starten({
       supabase: h.supabaseAttrappe({
@@ -66,6 +67,17 @@ module.exports = async function (h) {
       const dl = document.getElementById("gg-platzarten");
       out.vorschlaege = dl ? [...dl.querySelectorAll("option")].map(o => o.value) : [];
       out.websiteWert = (document.getElementById("gg-website") || {}).value;
+
+      /* e) Das Wappen: in der Liste, am Termin, und still verschwindend, wenn es fehlt. */
+      const liste = document.createElement("div"); liste.id = "gegner-list";
+      document.body.appendChild(liste);
+      gegnerRenderList();
+      const bilder = [...liste.querySelectorAll("img")];
+      out.wappenInListe = bilder.length;
+      out.wappenAlt = bilder.map(b => b.getAttribute("alt"));
+      out.wappenAria = bilder.map(b => b.getAttribute("aria-hidden"));
+      out.wappenOnerror = bilder.map(b => b.getAttribute("onerror"));
+      out.wappenQuelle = bilder.map(b => b.getAttribute("src"));
 
       // Speichern, ohne ein einziges Feld anzufassen: der Rumpf muss alles tragen
       await gegnerSave();
@@ -101,6 +113,16 @@ module.exports = async function (h) {
       if (rumpf.website !== "https://example.org") probleme.push(`a) Gesendete Vereinsseite: ${JSON.stringify(rumpf.website)}`);
     }
 
+    /* e) Genau EIN Wappen: der zweite Gegner der Attrappe hat keines, und dann darf auch
+       kein leeres Bild in der Liste stehen. */
+    if (r.wappenInListe !== 1) probleme.push(`e) ${r.wappenInListe} Wappen in der Liste, erwartet genau eines (der zweite Gegner hat keins)`);
+    else {
+      if (r.wappenAlt[0] !== "") probleme.push(`e) alt ist ${JSON.stringify(r.wappenAlt[0])} statt leer – der Vereinsname steht daneben und wuerde zweimal vorgelesen`);
+      if (r.wappenAria[0] !== "true") probleme.push("e) Das Wappen ist nicht aria-hidden");
+      if (!/remove/.test(r.wappenOnerror[0] || "")) probleme.push("e) Ohne onerror bleibt bei einem toten Link ein kaputtes Bildsymbol stehen");
+      if (!/^https:\/\//.test(r.wappenQuelle[0] || "")) probleme.push(`e) Wappen-Quelle sieht falsch aus: ${r.wappenQuelle[0]}`);
+    }
+
     if (!/Kunstrasen/.test(r.zeile1)) probleme.push(`b) Zeile am Termin ohne Platzart: „${r.zeile1}“`);
     if (!/A\. Person/.test(r.zeile1)) probleme.push(`b) Zeile am Termin ohne Ansprechpartner: „${r.zeile1}“`);
     if (!/Asche/.test(r.zeile2)) probleme.push(`b) Gegner nur mit Platzart bleibt stumm: „${r.zeile2}“`);
@@ -108,6 +130,7 @@ module.exports = async function (h) {
     if (!probleme.length) {
       zeilen.push(`a) Formular zeigt „${r.feldWert}“ mit ${r.vorschlaege.length} Vorschlägen · der Rumpf trägt alle ${Object.keys(rumpf).length} Spalten zurück`);
       zeilen.push(`b) Am Termin: „${r.zeile1}“ · ohne Kontakt: „${r.zeile2}“`);
+      zeilen.push(`e) ${r.wappenInListe} Wappen in der Liste (der Gegner ohne Wappen zeigt keines), alt leer, aria-hidden, onerror raeumt auf`);
     }
     const f = s.fehler();
     if (f.length) probleme.push("Konsole (a/b): " + f.join(" | "));
