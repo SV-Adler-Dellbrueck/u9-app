@@ -4715,5 +4715,8 @@ const UEBUNG_ART_VORSCHLAG={
      der Abgabe heißt (Entscheidung 19.09.2026), obwohl sie ohne Gegenspieler auskommt und
      der Trainer erst in Steigerung 3 verteidigt. Der Schlüssel heißt hier „spiel“ – das ist
      die Kennung, die `UEBUNG_ART` als „Spielform“ auflöst. */
-  "Raute mit Torwart – Angriff über den anderen Flügel":"spiel"
+  "Raute mit Torwart – Angriff über den anderen Flügel":"spiel",
+  /* v601 – aus einer Vorlage übernommen (PO 23.09.2026). Spielform: echter Gegner, echter
+     Ausgang, und das Kind entscheidet selbst, welches der beiden Ziele es ansteuert. */
+  "Zwei Torarten – Schuss oder Dribbling":"spiel"
 };

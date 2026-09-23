@@ -1100,7 +1100,13 @@ async function backupExport(){
                    samt Tages-Appzeit, kind_sitzung die verbrauchten Minuten je Tag,
                    kind_kopplung die kurzlebigen Code-Hashes. Ohne sie muessten nach einer
                    Wiederherstellung alle Kindergeraete neu gekoppelt werden. */
-                "kind_konto","kind_sitzung","kind_kopplung"];
+                "kind_konto","kind_sitzung","kind_kopplung",
+                /* v601: Fehlte seit der Anlage der Gegner-Datenbank. Sie hält Anschrift,
+                   Platzart und den Ansprechpartner der anderen Vereine – Daten, die
+                   mühsam zusammengetragen wurden und nirgends sonst stehen. Eine
+                   Sicherung ohne sie hätte nach einer Wiederherstellung eine leere
+                   Kontaktliste hinterlassen. */
+                "gegner"];
   const dump={_meta:{app:"U9 Adler Dellbrück",exported_at:new Date().toISOString(),tables}};
   try{
     for(const t of tables){

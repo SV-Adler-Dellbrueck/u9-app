@@ -1,6 +1,6 @@
 {
   "schema": "adler-uebungen/1",
-  "stand": "2026-09-20-3",
+  "stand": "2026-09-23-1",
   "uebungen": [
     {
       "name": "Warm up Adler",
@@ -4189,6 +4189,224 @@
                 90,
                 276,
                 "Tor! Danach rotieren alle"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Zwei Torarten – Schuss oder Dribbling",
+      "kat": "wahrnehmung",
+      "kurz": "3 gegen 3 auf dem FUNiño-Feld, aber je Grundlinie steht ein Schusstor und ein Dribbeltor – das Kind muss sich für das Ziel entscheiden, das gerade frei ist.",
+      "spieler": "6 (3 gegen 3), mit Wechselkindern bis 8",
+      "feld": "FUNiño-Feld (Vorlage „Feld: FUNiño“ in der Skizze), je Grundlinie ein Minitor und ein Dribbeltor aus zwei Stangen, diagonal versetzt",
+      "dauer": "6",
+      "ablauf": "Sechs Minuten am Stück, 3 gegen 3, keine Torhüter. Auf jeder Grundlinie stehen zwei Ziele nebeneinander: ein Minitor, in das geschossen wird, und ein Dribbeltor aus zwei Stangen, durch das der Ball gedribbelt werden muss. Beide zählen gleich viel.\n\nWeil die beiden Ziele diagonal versetzt stehen, liegt fast immer eines von ihnen offener als das andere. Wer den Kopf hebt, sieht das – wer nur nach vorn rennt, läuft in die Deckung.",
+      "varianten": "- Provokation 1: Durch das Dribbeltor zählt nur, wer selbst durchdribbelt – ein Pass hindurch gibt keinen Punkt.\n- Provokation 2: Wer trifft, nimmt ein Kind vom Feld. Kassiert dieses Team ein Tor, kommt es zurück. Hat ein Team niemanden mehr, wird von vorn gespielt.\n- Beide Provokationen zusammen: Das führende Team spielt in Unterzahl und muss den Ball laufen lassen.",
+      "coaching": "Wo ist das freie Tor? Erst schauen, dann losgehen\nBei Überzahl in den freien Raum laufen, nicht zum Ball\nAuf dem ganzen Feld verteilen – die Breite ist der Vorteil",
+      "diff": 2,
+      "skizze": {
+        "z": [
+          [
+            30,
+            20,
+            220,
+            140
+          ]
+        ],
+        "li": [
+          [
+            140,
+            20,
+            140,
+            160,
+            "m"
+          ]
+        ],
+        "tor": [
+          [
+            22,
+            45,
+            "v",
+            28
+          ],
+          [
+            251,
+            107,
+            "v",
+            28
+          ]
+        ],
+        "dtor": [
+          [
+            26,
+            107,
+            28,
+            "v",
+            "s",
+            "y"
+          ],
+          [
+            254,
+            45,
+            28,
+            "v",
+            "s",
+            "y"
+          ]
+        ],
+        "h": [
+          [
+            30,
+            20,
+            "y"
+          ],
+          [
+            250,
+            20,
+            "y"
+          ],
+          [
+            30,
+            160,
+            "y"
+          ],
+          [
+            250,
+            160,
+            "y"
+          ],
+          [
+            140,
+            20,
+            "r"
+          ],
+          [
+            140,
+            160,
+            "r"
+          ]
+        ],
+        "s": [
+          [
+            75,
+            60,
+            "g"
+          ],
+          [
+            105,
+            115,
+            "g",
+            "",
+            "b"
+          ],
+          [
+            160,
+            45,
+            "g"
+          ],
+          [
+            125,
+            72,
+            "r"
+          ],
+          [
+            172,
+            100,
+            "r"
+          ],
+          [
+            210,
+            128,
+            "r"
+          ]
+        ],
+        "p": [
+          [
+            112,
+            109,
+            152,
+            55,
+            "p",
+            1
+          ],
+          [
+            168,
+            44,
+            244,
+            42,
+            "d",
+            2
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            14,
+            "6 Minuten · 3 gegen 3"
+          ],
+          [
+            140,
+            174,
+            "jede Grundlinie: ein Schusstor und ein Dribbeltor"
+          ]
+        ],
+        "schritte": [
+          {
+            "s": [
+              [
+                40,
+                170,
+                "g"
+              ],
+              [
+                105,
+                115,
+                "g"
+              ],
+              [
+                160,
+                45,
+                "g",
+                "",
+                "b"
+              ],
+              [
+                125,
+                72,
+                "r"
+              ],
+              [
+                172,
+                100,
+                "r"
+              ],
+              [
+                210,
+                128,
+                "r"
+              ]
+            ],
+            "p": [
+              [
+                166,
+                94,
+                112,
+                52,
+                "l"
+              ]
+            ],
+            "tx": [
+              [
+                140,
+                14,
+                "Provokation 2: wer trifft, nimmt einen Spieler raus"
+              ],
+              [
+                160,
+                174,
+                "2 gegen 3, bis das Team ein Tor kassiert"
               ]
             ]
           }

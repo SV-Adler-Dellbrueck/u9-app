@@ -5,6 +5,24 @@
    Ansprechpartner erscheint (klickbar) am nächsten Spiel im Trainer-Dashboard.
 ═══════════════════════════════════ */
 let GEGNER_CACHE=null;
+/* v601 (PO 23.09.2026): „Platzart in die Datenbank mit aufnehmen." Die vier Beläge, die
+   es im Kreis Köln gibt, als Vorschlag – Freitext bleibt möglich, weil die Vereine ihre
+   Plätze selbst unterschiedlich nennen. Am Spieltag entscheidet die Platzart, welche
+   Schuhe im Rucksack liegen müssen; das ist die Frage, die Eltern am Vorabend stellen. */
+const GEGNER_PLATZARTEN=["Kunstrasen","Naturrasen","Asche","Halle"];
+/* v601: Das Wappen des Gegners. Es liegt im öffentlichen Storage-Bucket `wappen`, nicht im
+   Repo — das Repo ist öffentlich, und fremde Vereinslogos gehören nicht hinein.
+
+   `alt` bleibt leer und das Bild ist `aria-hidden`: Der Vereinsname steht in derselben Zeile
+   daneben, ein zweites Mal vorgelesen zu werden hilft niemandem. Fehlt das Wappen oder lädt
+   es nicht, verschwindet das Element (`onerror`), statt ein kaputtes Bildsymbol zu zeigen —
+   die Zeile rückt dann einfach zusammen. */
+function gegnerWappenHtml(g,px){
+  if(!g||!g.wappen_url)return "";
+  const s=Math.max(20,Number(px)||28);
+  return '<img src="'+esc(g.wappen_url)+'" alt="" aria-hidden="true" loading="lazy" '
+    +'onerror="this.remove()" style="width:'+s+'px;height:'+s+'px;object-fit:contain;flex:0 0 auto">';
+}
 async function gegnerLoad(force){
   if(GEGNER_CACHE&&!force){gegnerDatalistFill();return GEGNER_CACHE;}
   try{const r=await fetch(`${SB_URL}/rest/v1/gegner?select=*&order=name.asc`,{headers:sbAuthHeaders()});if(r.ok)GEGNER_CACHE=await r.json();}catch(e){}
@@ -42,9 +60,23 @@ function waNumber(tel){
 async function gegnerContactInto(elId,name){
   const g=await gegnerFind(name);
   const el=document.getElementById(elId);
-  if(!el||!g||!(g.ansprechpartner||g.telefon))return;
+  /* v601: Die Platzart trägt hier allein – auch ohne Ansprechpartner. Wer am Vorabend
+     wissen will, ob Stollen oder Multinocken in den Rucksack gehören, findet das sonst
+     nirgends. Deshalb reicht jetzt EINES von beidem, damit die Zeile erscheint. */
+  if(!el||!g||!(g.ansprechpartner||g.telefon||g.platzart))return;
   const tel=g.telefon?String(g.telefon).replace(/\s/g,""):"", wa=waNumber(g.telefon);
-  el.innerHTML=`<div style="font-size:11.5px;color:var(--text2);margin-top:6px">📇 ${esc(g.ansprechpartner||"Ansprechpartner")}${g.telefon?` · <a href="tel:${esc(tel)}" style="color:var(--blue);font-weight:700;text-decoration:none">☎ ${esc(g.telefon)}</a>${wa?` · <a href="https://wa.me/${wa}" target="_blank" rel="noopener" style="color:#25D366;font-weight:700;text-decoration:none">💬 WhatsApp</a>`:""}`:""}</div>`;
+  let kontakt="";
+  if(g.ansprechpartner||g.telefon){
+    kontakt="📇 "+esc(g.ansprechpartner||"Ansprechpartner");
+    if(g.telefon){
+      kontakt+=' · <a href="tel:'+esc(tel)+'" style="color:var(--blue);font-weight:700;text-decoration:none">☎ '+esc(g.telefon)+"</a>";
+      if(wa)kontakt+=' · <a href="https://wa.me/'+wa+'" target="_blank" rel="noopener" style="color:#25D366;font-weight:700;text-decoration:none">💬 WhatsApp</a>';
+    }
+  }
+  const platz=g.platzart?'<span style="white-space:nowrap">🥅 '+esc(g.platzart)+"</span>":"";
+  const zeile=[kontakt,platz].filter(Boolean).join(" · ");
+  el.innerHTML='<div style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text2);margin-top:6px">'
+    +gegnerWappenHtml(g,22)+"<span>"+zeile+"</span></div>";
 }
 async function gegnerQuickSave(){
   const name=(document.getElementById("tm-titel")?.value||"").trim();
@@ -79,9 +111,11 @@ function gegnerRenderList(){
   const list=GEGNER_CACHE||[];
   if(!list.length){box.innerHTML=`<div style="font-size:12px;color:var(--text3)">Noch keine Gegner gespeichert.</div>`;return;}
   box.innerHTML=list.map(g=>`<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:var(--border)">
+    ${gegnerWappenHtml(g,28)}
     <div style="flex:1;min-width:0">
       <div style="font-size:13px;font-weight:700">${esc(g.name)}</div>
-      ${g.adresse?`<div style="font-size:11px;color:var(--text2)">📍 ${esc(g.adresse)}</div>`:""}
+      ${g.adresse?`<div style="font-size:11px;color:var(--text2)">📍 ${esc(g.adresse)}${g.platzart?` · ${esc(g.platzart)}`:""}</div>`
+        :g.platzart?`<div style="font-size:11px;color:var(--text2)">${esc(g.platzart)}</div>`:""}
       ${(g.ansprechpartner||g.telefon)?`<div style="font-size:11px;color:var(--text2)">📇 ${esc(g.ansprechpartner||"")}${g.telefon?` · <a href="tel:${esc(String(g.telefon).replace(/\s/g,""))}" style="color:var(--blue);text-decoration:none">☎ ${esc(g.telefon)}</a> · <a href="https://wa.me/${waNumber(g.telefon)}" target="_blank" rel="noopener" style="color:#25D366;text-decoration:none">💬 WhatsApp</a>`:""}</div>`:""}
     </div>
     <button class="btn btn-sm" onclick="gegnerEdit(${g.id})"><i class="ti ti-edit"></i></button>
@@ -114,6 +148,11 @@ function gegnerFormRender(g){
       <label style="font-size:11px;color:var(--text2)">Telefon<input id="gg-tel" value="${esc(g.telefon||"")}" style="${fld}"></label>
     </div>
     <label style="font-size:11px;color:var(--text2)">E-Mail<input id="gg-email" value="${esc(g.email||"")}" style="${fld}"></label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      <label style="font-size:11px;color:var(--text2)">Platzart<input id="gg-platzart" list="gg-platzarten" value="${esc(g.platzart||"")}" placeholder="Kunstrasen" style="${fld}"></label>
+      <label style="font-size:11px;color:var(--text2)">Vereinsseite<input id="gg-website" value="${esc(g.website||"")}" placeholder="https://…" style="${fld}"></label>
+    </div>
+    <datalist id="gg-platzarten">${GEGNER_PLATZARTEN.map(p=>`<option value="${esc(p)}">`).join("")}</datalist>
     <label style="font-size:11px;color:var(--text2)">Notiz<input id="gg-notiz" value="${esc(g.notiz||"")}" style="${fld}"></label>
     <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
       <button class="btn btn-p btn-sm" onclick="gegnerSave()"><i class="ti ti-device-floppy"></i>Speichern</button>
@@ -128,7 +167,12 @@ async function gegnerSave(){
   if(!name){toast("Name fehlt","err");return;}
   const id=document.getElementById("gg-id")?.value;
   const v=i=>(document.getElementById(i)?.value||"").trim()||null;
-  const body={name, adresse:v("gg-adresse"), ansprechpartner:v("gg-ap"), telefon:v("gg-tel"), email:v("gg-email"), notiz:v("gg-notiz")};
+  /* v601: Jede Spalte, die das Formular zeigt, muss es auch zurückschreiben. Bei einem
+     PATCH ohne Feld bliebe der alte Wert zwar stehen – bei einem POST mit
+     merge-duplicates aber NICHT, dort gewinnt das gesendete Objekt und die fehlende
+     Spalte wird geleert. Genau davor warnt CLAUDE.md beim Muster „ganze Liste ersetzen". */
+  const body={name, adresse:v("gg-adresse"), ansprechpartner:v("gg-ap"), telefon:v("gg-tel"),
+    email:v("gg-email"), platzart:v("gg-platzart"), website:v("gg-website"), notiz:v("gg-notiz")};
   try{
     let r;
     if(id) r=await fetch(`${SB_URL}/rest/v1/gegner?id=eq.${id}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify(body)});

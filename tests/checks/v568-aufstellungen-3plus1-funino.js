@@ -51,6 +51,21 @@ const ORDNER = "doku/auftrag-aufstellungen-3plus1-funino";
 const NEUE_ORDNUNGEN = ["3+1", "FUNiño", "3+1 gegen FUNiño", "3+1 und FUNiño"];
 const EINHEITEN = ["L4-6", "L5-4", "L6-3", "L4-7", "L5-5", "L6-4", "L5-6", "L6-5", "L4-8"];
 const STAND_UEB = "2026-09-20-3", STAND_VOR = "2026-09-18-1";
+/* v601: Die Sperrklinke misst jetzt die RICHTUNG, nicht die Gleichheit. Gemeint war
+   immer „wer die Datei anfasst, muss den Stand hochsetzen" — geprüft wurde aber
+   „der Stand ist genau dieser". Damit wurde jede spätere, richtige Änderung rot
+   gemeldet, und zwar an einer Stelle, die mit ihr nichts zu tun hat. Dieselbe Lehre
+   wie bei der Skizzen-Sperrklinke in v598: Eine Zusicherung auf eine feste Zahl ist
+   nur dann eine Sperrklinke, wenn sie die Zahl in eine Richtung freigibt. */
+const standRang = s => String(s || "").split("-").map(t => parseInt(t, 10) || 0);
+const standMindestens = (ist, soll) => {
+  const a = standRang(ist), b = standRang(soll);
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    const x = a[i] || 0, y = b[i] || 0;
+    if (x !== y) return x > y;
+  }
+  return true;
+};
 const SKAL = ["8", "10", "12", "14"];
 
 module.exports = async function (h) {
@@ -80,8 +95,8 @@ module.exports = async function (h) {
   const abwV = neueV.filter((v, i) => roh(v) !== roh(anhangV[i])).map(v => v.name);
   if (abwU.length) probleme.push("Übung in bibliothek.json weicht vom Nachtrag ab: " + abwU.join(", "));
   if (abwV.length) probleme.push("Vorlage in vorlagen.json weicht vom Nachtrag ab: " + abwV.join(", "));
-  if (bib.stand !== STAND_UEB) probleme.push(`bibliothek.json: Stand „${bib.stand}“ statt „${STAND_UEB}“`);
-  if (vor.stand !== STAND_VOR) probleme.push(`vorlagen.json: Stand „${vor.stand}“ statt „${STAND_VOR}“ – ohne neuen Stand holt _bibHolen die Datei nicht`);
+  if (!standMindestens(bib.stand, STAND_UEB)) probleme.push(`bibliothek.json: Stand „${bib.stand}“ liegt vor „${STAND_UEB}“ – ohne neuen Stand holt _bibHolen die Datei nicht`);
+  if (!standMindestens(vor.stand, STAND_VOR)) probleme.push(`vorlagen.json: Stand „${vor.stand}“ liegt vor „${STAND_VOR}“ – ohne neuen Stand holt _bibHolen die Datei nicht`);
   const bestandU = Math.max(0, abU), bestandV = Math.max(0, abV);
   if (bestandU !== 14) probleme.push(`${bestandU} Übungen vor dem Anhang, erwartet 14`);
   if (bestandV !== 21) probleme.push(`${bestandV} Vorlagen vor dem Anhang, erwartet 21`);
