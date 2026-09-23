@@ -134,14 +134,20 @@ module.exports = async function (h) {
       + "gerendert wird aus dem Nachtrag, eingesetzt aus der Bibliothek");
   // a)
   if (!u) probleme.push("Die Übung steht nicht in der Bibliothek");
-  if (bib.uebungen.length !== 28) probleme.push(`${bib.uebungen.length} Übungen in der Bibliothek statt 28`);
+  /* v601: Richtung statt Gleichheit – die Bibliothek darf wachsen, nur schrumpfen darf
+     sie nicht. Vorher meldete jede neue Übung diesen Fall rot, obwohl mit der Abgabe 3.1,
+     um die es hier geht, nichts passiert war. */
+  if (bib.uebungen.length < 28) probleme.push(`Nur ${bib.uebungen.length} Übungen in der Bibliothek – erwartet mindestens 28`);
   /* v587: Stand 2026-09-20-1 – Texte und Bilder nach der Übergabe 3.1 vom 20.09. (siehe v587-lehrgang-3-1-uebergabe.js). */
   /* v588: Stand 2026-09-20-2 – Bild 5 (Abschluss) und Bild 6 (Tor) dazu, damit Phase 2 beim Abspielen zu Ende läuft. */
   /* v589: Stand 2026-09-20-3 – Pass nach rechts und Dribbling außen sind zwei Bilder (Charles: „Phase 3 zeigt einen Steilpass"). */
-  if (bib.stand !== "2026-09-20-3") probleme.push(`Stand „${bib.stand}“ statt „2026-09-20-3“ – ohne neuen Stand holt der Abgleich die Datei nicht`);
+  const rang = x => String(x || "").split("-").map(t => parseInt(t, 10) || 0);
+  const mindestens = (ist, soll) => { const a = rang(ist), b = rang(soll);
+    for (let i = 0; i < Math.max(a.length, b.length); i++) { const x = a[i]||0, y = b[i]||0; if (x !== y) return x > y; } return true; };
+  if (!mindestens(bib.stand, "2026-09-20-3")) probleme.push(`Stand „${bib.stand}“ liegt vor „2026-09-20-3“ – ohne neuen Stand holt der Abgleich die Datei nicht`);
   if (r.euPruefung.length) probleme.push("_euPruefung: " + r.euPruefung.join(" · "));
   if (r.skizzePruefung.length) probleme.push("_eiSkizzeFehler: " + r.skizzePruefung.join(" · "));
-  if (r.abgleich && r.abgleich.angelegt !== 28) probleme.push(`Der Abgleich hat ${r.abgleich && r.abgleich.angelegt} von 28 Übungen angelegt`);
+  if (r.abgleich && r.abgleich.angelegt !== bib.uebungen.length) probleme.push(`Der Abgleich hat ${r.abgleich && r.abgleich.angelegt} von ${bib.uebungen.length} Übungen angelegt`);
   if (r.zweiter !== null && r.zweiter !== undefined) probleme.push("Der zweite Lauf hat trotz gleichem Stand gearbeitet");
   // b)
   const b = r.bilder || [];
