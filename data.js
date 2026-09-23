@@ -2790,7 +2790,7 @@ const TRAININGSFORMEN = [
   ablauf:'Spieler A und B stehen 15m gegenüber. A hat Ball. B läuft auf A zu (Komm-Phase), dreht bei 5m Abstand scharf ab (Geh-Phase) und fordert Ball mit Hand in die Tiefe. A spielt flachen Pass in den Lauf.\n\nWechsel nach 5 Wiederholungen. Dann sofort in Spielform: gleiches Prinzip in 2gg2.',
   varianten:'- Geh-Kommen: B steht still, macht Schritt nach hinten, kommt dann explosiv\n- Mit 2 Pässen: A zu B, B zur Wand C, Rückgabe, dann Tiefenball\n- Im Laufen: beide Spieler bewegen sich, Pass-Timing erspüren',
   coaching:'Erst täusche ich Richtung – dann komme ich!\nPass NACH der Drehbewegung – nicht davor!\nTiming ist alles – lieber einmal zu früh als zu spät',
-  svg:'<svg viewBox="0 0 280 180" width="100%" style="max-width:280px;display:block;margin:8px auto;border-radius:6px" xmlns="http://www.w3.org/2000/svg">\n  <rect width="280" height="180" rx="4" fill="#2d6a2d" stroke="#1a4a1a" stroke-width="1.5"/>\n  <rect x="4" y="4" width="272" height="172" rx="3" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>\n  <defs>\n  <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">\n    <path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,.8)"/>\n  </marker>\n</defs><circle cx="50" cy="90" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="50" y="108" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif" font-weight="600">A</text><circle cx="230" cy="90" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="230" y="108" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif" font-weight="600">B</text><line x1="230" y1="90" x2="160" y2="90" stroke="rgba(255,255,255,.5)" stroke-width="1.5"  marker-end="url(#arr)"/><line x1="160" y1="90" x2="230" y2="60" stroke="rgba(255,200,0,.8)" stroke-width="1.5"  marker-end="url(#arr)"/><line x1="50" y1="90" x2="155" y2="85" stroke="rgba(255,255,255,.7)" stroke-width="1.5"  marker-end="url(#arr)"/><polygon points="160,83 155,94 165,94" fill="#ef4444" stroke="rgba(0,0,0,.3)" stroke-width="1"/><text x="160" y="110" text-anchor="middle" fill="#ef4444" font-size="8" font-family="sans-serif">Dreh!</text><text x="100" y="80" text-anchor="middle" fill="rgba(255,255,255,.6)" font-size="8" font-family="sans-serif">Pass</text>\n  <text x="140" y="174" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="9" font-family="sans-serif">Komm-Geh</text>\n</svg>',
+  svg:'',   // v600: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["passspiel"]
 },
 {
@@ -2826,7 +2826,7 @@ const TRAININGSFORMEN = [
   ablauf:'Spieler A läuft auf B zu. A spielt Pass zu B (Wand), läuft weiter in Tiefe. B gibt direkt zurück. A nimmt mit und schließt ab. Wichtig: A muss NACH dem Pass weiter laufen – nicht stehen bleiben!\n\nWechsel nach 5 Wiederholungen.',
   varianten:'- Wand spielt direkt (1 Kontakt) oder mit Mitnahme (2 Kontakte)\n- A kommt von links und rechts abwechselnd\n- Mit Gegenspieler der B unter leichten Druck setzt',
   coaching:'Pass spielen und SOFORT weiterlaufen – das ist der Wandpass!\nB: schau zuerst wo A hinläuft DANN passe zurück\nTiming: nicht zu früh, nicht zu spät',
-  svg:'<svg viewBox="0 0 280 180" width="100%" style="max-width:280px;display:block;margin:8px auto;border-radius:6px" xmlns="http://www.w3.org/2000/svg">\n  <rect width="280" height="180" rx="4" fill="#2d6a2d" stroke="#1a4a1a" stroke-width="1.5"/>\n  <rect x="4" y="4" width="272" height="172" rx="3" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>\n  <defs>\n  <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">\n    <path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,.8)"/>\n  </marker>\n</defs><rect x="253" y="78" width="7" height="24" rx="2" fill="none" stroke="#fff" stroke-width="2.5"/><circle cx="50" cy="90" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="50" y="108" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif" font-weight="600">A</text><circle cx="160" cy="90" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="160" y="108" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif" font-weight="600">B</text><line x1="50" y1="85" x2="150" y2="85" stroke="rgba(255,255,255,.7)" stroke-width="1.5"  marker-end="url(#arr)"/><line x1="160" y1="95" x2="80" y2="95" stroke="rgba(255,255,255,.7)" stroke-width="1.5"  marker-end="url(#arr)"/><line x1="80" y1="95" x2="250" y2="90" stroke="rgba(255,255,255,.7)" stroke-width="1.5"  marker-end="url(#arr)"/><text x="105" y="78" text-anchor="middle" fill="rgba(255,255,255,.6)" font-size="8" font-family="sans-serif">1. Pass</text><text x="120" y="108" text-anchor="middle" fill="rgba(255,200,0,.8)" font-size="8" font-family="sans-serif">2. Wand</text><text x="170" y="80" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif">3. Tiefe!</text>\n  <text x="140" y="174" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="9" font-family="sans-serif">Wandpass</text>\n</svg>',
+  svg:'',   // v600: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["passspiel"]
 },
 {
@@ -2838,7 +2838,7 @@ const TRAININGSFORMEN = [
   ablauf:'Regel in jede Spielform einbaubar: Bevor ein Pass gespielt wird, MUSS der Spieler laut den Namen des Empfängers rufen. Tut er das nicht, zählt der Pass nicht und Ball geht zum Gegner.\n\nZiel: Blickkontakt und Kommunikation als automatische Gewohnheit aufbauen.',
   varianten:'- Spieler muss "Hier!" rufen wenn er sich anbietet\n- Flüstervariante: nur leise ansagen (Konzentration fördern)\n- Doppel-Ansage: auch der Empfänger bestätigt mit "Ja!"\n',
   coaching:'Erst schauen, dann rufen, dann passen – nicht gleichzeitig!\nWer ruft von selbst? Wer muss jedes Mal erinnert werden?\nKommunikation ist Teamarbeit – jeder ist verantwortlich',
-  svg:'<svg viewBox="0 0 280 180" width="100%" style="max-width:280px;display:block;margin:8px auto;border-radius:6px" xmlns="http://www.w3.org/2000/svg">\n  <rect width="280" height="180" rx="4" fill="#2d6a2d" stroke="#1a4a1a" stroke-width="1.5"/>\n  <rect x="4" y="4" width="272" height="172" rx="3" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>\n  <defs>\n  <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">\n    <path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,.8)"/>\n  </marker>\n</defs><circle cx="80" cy="80" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="80" y="98" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif" font-weight="600">Max</text><circle cx="200" cy="80" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="200" y="98" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif" font-weight="600">Leo</text><circle cx="140" cy="140" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="140" y="158" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif" font-weight="600">Tim</text><rect x="115" y="55" width="50" height="16" rx="3" fill="rgba(255,255,255,.15)"/><text x="140" y="67" text-anchor="middle" fill="#fbbf24" font-size="9" font-family="sans-serif" font-weight="bold">Leo!</text><line x1="80" y1="75" x2="195" y2="75" stroke="rgba(255,255,255,.7)" stroke-width="1.5"  marker-end="url(#arr)"/><line x1="80" y1="75" x2="115" y2="63" stroke="rgba(255,200,0,.5)" stroke-width="1" stroke-dasharray="3,2"/>\n  <text x="140" y="174" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="9" font-family="sans-serif">Ansage-Passspiel</text>\n</svg>',
+  svg:'',   // v600: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["passspiel"]
 },
 {
@@ -2850,7 +2850,7 @@ const TRAININGSFORMEN = [
   ablauf:'Regel die in jede andere Spielform eingebaut wird. Nach jedem Tor: Torschütze hält inne und sagt laut: "[Name], super Pass!" oder "[Name], gutes Freilaufen!"\n\nTor wird erst gewertet wenn das Lob ausgesprochen wurde. Trainer kann eingreifen wenn Lob nicht kommt.',
   varianten:'- Team muss gemeinsam jubeln – alle Spieler klatschen ab\n- Wer gelobt wurde darf den nächsten Anstoß ausführen\n- "High Five Pflicht" – Torschütze klatscht zuerst den Vorlagengeber ab',
   coaching:'Fördert: Wertschätzung, Teamgeist, Wahrnehmung von Mitspielerbeiträgen\nIdeal für Spieler mit Einzelkämpfer-Tendenz\nNiemals erzwingen – spielerisch einfordern',
-  svg:'<svg viewBox="0 0 280 180" width="100%" style="max-width:280px;display:block;margin:8px auto;border-radius:6px" xmlns="http://www.w3.org/2000/svg">\n  <rect width="280" height="180" rx="4" fill="#2d6a2d" stroke="#1a4a1a" stroke-width="1.5"/>\n  <rect x="4" y="4" width="272" height="172" rx="3" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>\n  <defs>\n  <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">\n    <path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,.8)"/>\n  </marker>\n</defs><rect x="253" y="78" width="7" height="24" rx="2" fill="none" stroke="#fff" stroke-width="2.5"/><circle cx="200" cy="90" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="200" y="108" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif" font-weight="600">Tor!</text><circle cx="140" cy="60" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="140" y="78" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif" font-weight="600">Vorl.</text><line x1="140" y1="65" x2="195" y2="88" stroke="rgba(255,255,255,.7)" stroke-width="1.5"  marker-end="url(#arr)"/><rect x="100" y="35" width="80" height="18" rx="4" fill="rgba(74,222,128,.2)" stroke="rgba(74,222,128,.5)" stroke-width="1"/><text x="140" y="48" text-anchor="middle" fill="#4ade80" font-size="9" font-family="sans-serif" font-weight="bold">Super Pass!</text><line x1="200" y1="87" x2="180" y2="53" stroke="rgba(74,222,128,.5)" stroke-width="1" stroke-dasharray="3,2"/>\n  <text x="140" y="174" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="9" font-family="sans-serif">Lobpflicht</text>\n</svg>',
+  svg:'',   // v600: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["passspiel"]
 },
 {
@@ -2874,7 +2874,7 @@ const TRAININGSFORMEN = [
   ablauf:'Zwei Spieler laufen nebeneinander von Linie A zu Linie B (30m). Dabei passen sie sich ständig den Ball zu – kein Spieler darf mehr als 5 Schritte ohne Pass machen. Am Ende: Torabschluss.\n\nWettbewerb: Welches Paar erreicht das Tor zuerst und trifft?',
   varianten:'- Nur schwacher Fuß für Pässe\n- Max. 3 Schritte zwischen Pässen (fordernder)\n- Mit Zeitnahme: Paare treten gegeneinander an',
   coaching:'Timing: Pass spielen wenn Mitspieler läuft – nicht wenn er steht\nBlick immer auf Mitspieler UND Tor\nPassrichtig: flach, scharf, in den Lauf',
-  svg:'<svg viewBox="0 0 280 180" width="100%" style="max-width:280px;display:block;margin:8px auto;border-radius:6px" xmlns="http://www.w3.org/2000/svg">\n  <rect width="280" height="180" rx="4" fill="#2d6a2d" stroke="#1a4a1a" stroke-width="1.5"/>\n  <rect x="4" y="4" width="272" height="172" rx="3" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>\n  <defs>\n  <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">\n    <path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,.8)"/>\n  </marker>\n</defs><rect x="258" y="78" width="7" height="24" rx="2" fill="none" stroke="#fff" stroke-width="2.5"/><line x1="30" y1="20" x2="30" y2="160" stroke="rgba(255,255,255,.4)" stroke-width="1.5"/><circle cx="30" cy="70" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="30" y="88" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif" font-weight="600">A</text><circle cx="30" cy="110" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="30" y="128" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif" font-weight="600">B</text><line x1="30" y1="70" x2="80" y2="105" stroke="rgba(255,255,255,.7)" stroke-width="1.5"  marker-end="url(#arr)"/><line x1="80" y1="105" x2="130" y2="75" stroke="rgba(255,255,255,.7)" stroke-width="1.5"  marker-end="url(#arr)"/><line x1="130" y1="75" x2="180" y2="100" stroke="rgba(255,255,255,.7)" stroke-width="1.5"  marker-end="url(#arr)"/><line x1="180" y1="100" x2="240" y2="88" stroke="rgba(255,255,255,.7)" stroke-width="1.5"  marker-end="url(#arr)"/><text x="30" y="175" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="8" font-family="sans-serif">Start</text>\n  <text x="140" y="174" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="9" font-family="sans-serif">Ball-Staffel</text>\n</svg>',
+  svg:'',   // v600: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["passspiel"]
 },
 {
@@ -2886,7 +2886,7 @@ const TRAININGSFORMEN = [
   ablauf:'4 Spieler stehen an 4 Hütchen im Quadrat (10m). Spieler A passt zu B und läuft sofort zu B\'s Position. B passt zu C und läuft zu C\'s Position. Immer: Pass spielen, dann zur Position des Empfängers laufen. Bei mehr als 4 Kindern stellen sich am Start-Hütchen 2 Spieler an.\n\nKontinuierliche Bewegung – nach 3 Minuten: gleiche Übung mit Gegenspieler.',
   varianten:'- Gegen die Uhrzeiger-Richtung\n- Ball und Spieler laufen in entgegengesetzte Richtung\n- Mit Finten: vor dem Passen einmal täuschen',
   coaching:'Pass spielen = sofort loslaufen – keine Pause!\nDiese Bewegung ist die Grundlage von Passspiel in Bewegung\nBeobachte: wer läuft automatisch? Wer wartet noch?',
-  svg:'<svg viewBox="0 0 280 180" width="100%" style="max-width:280px;display:block;margin:8px auto;border-radius:6px" xmlns="http://www.w3.org/2000/svg">\n  <rect width="280" height="180" rx="4" fill="#2d6a2d" stroke="#1a4a1a" stroke-width="1.5"/>\n  <rect x="4" y="4" width="272" height="172" rx="3" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>\n  <defs>\n  <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">\n    <path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,.8)"/>\n  </marker>\n</defs><rect x="80" y="40" width="120" height="100" rx="4" fill="rgba(255,255,255,.03)" stroke="rgba(255,255,255,.2)" stroke-width="1"/><polygon points="80,33 75,44 85,44" fill="#f59e0b" stroke="rgba(0,0,0,.3)" stroke-width="1"/><polygon points="200,33 195,44 205,44" fill="#f59e0b" stroke="rgba(0,0,0,.3)" stroke-width="1"/><polygon points="80,133 75,144 85,144" fill="#f59e0b" stroke="rgba(0,0,0,.3)" stroke-width="1"/><polygon points="200,133 195,144 205,144" fill="#f59e0b" stroke="rgba(0,0,0,.3)" stroke-width="1"/><circle cx="80" cy="40" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="80" y="58" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif" font-weight="600">A</text><circle cx="200" cy="40" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="200" y="58" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif" font-weight="600">B</text><circle cx="200" cy="140" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="200" y="158" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif" font-weight="600">C</text><circle cx="80" cy="140" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="80" y="158" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif" font-weight="600">D</text><line x1="90" y1="40" x2="190" y2="40" stroke="rgba(255,255,255,.7)" stroke-width="1.5"  marker-end="url(#arr)"/><line x1="200" y1="50" x2="200" y2="130" stroke="rgba(255,255,255,.7)" stroke-width="1.5"  marker-end="url(#arr)"/><line x1="190" y1="140" x2="90" y2="140" stroke="rgba(255,255,255,.7)" stroke-width="1.5"  marker-end="url(#arr)"/><line x1="80" y1="130" x2="80" y2="50" stroke="rgba(255,255,255,.7)" stroke-width="1.5"  marker-end="url(#arr)"/>\n  <text x="140" y="174" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="9" font-family="sans-serif">Pass und Nachlaufen</text>\n</svg>',
+  svg:'',   // v600: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["passspiel"]
 },
 {
@@ -2910,7 +2910,7 @@ const TRAININGSFORMEN = [
   ablauf:'Freies Dribbling und Passspiel im Feld. In 3 Ecken steht je ein andersfarbiges Hütchentor. Trainer ruft eine Farbe – der Spieler mit Ball muss sofort durch das gerufene Hütchentor dribbeln oder passen. Trainer ruft erst WENN Spieler den Ball hat.\n\nVariante: Trainer ruft Farbe beim Vorpass – Empfänger weiß schon wohin.',
   varianten:'- Zahlen statt Farben (kognitive Last erhöhen)\n- Trainer zeigt Karte – kein Ruf, nur visuell\n- Zwei Farben gleichzeitig rufen: Spieler entscheidet welche',
   coaching:'Misst Phase 3: wie schnell wird nach Stimulus entschieden?\nKein Kommentar bei falscher Wahl – einfach nächste Situation starten\nTempo steigern sobald Spieler sicherer wird',
-  svg:'<svg viewBox="0 0 280 180" width="100%" style="max-width:280px;display:block;margin:8px auto;border-radius:6px" xmlns="http://www.w3.org/2000/svg">\n  <rect width="280" height="180" rx="4" fill="#2d6a2d" stroke="#1a4a1a" stroke-width="1.5"/>\n  <rect x="4" y="4" width="272" height="172" rx="3" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>\n  <defs>\n  <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">\n    <path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,.8)"/>\n  </marker>\n</defs><polygon points="60,33 55,44 65,44" fill="#ef4444" stroke="rgba(0,0,0,.3)" stroke-width="1"/><polygon points="220,33 215,44 225,44" fill="#3b82f6" stroke="rgba(0,0,0,.3)" stroke-width="1"/><polygon points="140,143 135,154 145,154" fill="#22c55e" stroke="rgba(0,0,0,.3)" stroke-width="1"/><text x="60" y="32" text-anchor="middle" fill="#ef4444" font-size="8" font-family="sans-serif">ROT</text><text x="220" y="32" text-anchor="middle" fill="#60a5fa" font-size="8" font-family="sans-serif">BLAU</text><text x="140" y="168" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif">GRÜN</text><circle cx="140" cy="90" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="140" y="108" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif" font-weight="600">?</text><rect x="115" y="65" width="50" height="16" rx="3" fill="rgba(255,100,100,.3)"/><text x="140" y="77" text-anchor="middle" fill="#ef4444" font-size="9" font-family="sans-serif" font-weight="bold">ROT!</text><line x1="140" y1="88" x2="65" y2="50" stroke="rgba(255,255,255,.7)" stroke-width="1.5"  marker-end="url(#arr)"/>\n  <text x="140" y="174" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="9" font-family="sans-serif">Farb-Entscheidung</text>\n</svg>',
+  svg:'',   // v600: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["wahrnehmung"]
 },
 {
@@ -2922,7 +2922,7 @@ const TRAININGSFORMEN = [
   ablauf:'4gg4 normales Spiel. Wenn ein Spieler erkennt dass sein Team lokal in Überzahl ist, ruft er laut "ÜBERZAHL!". Trainer stoppt Spiel, prüft ob es stimmt. Richtig: Team bekommt Punkt. Falsch: Gegner bekommt Ball.',
   varianten:'- Trainer zählt Spieler in einer Zone laut – Kinder lernen Prinzip zuerst\n- Ohne Punkte: einfach beobachten und in der Pause besprechen\n- Joker-Spieler: ein Spieler ohne Farbe gehört immer zum ballbesitzenden Team',
   coaching:'Nach dem Spiel: Wann hattet ihr Überzahl? – gemeinsam besprechen\nPhase 2 (Verstehen): Kinder sollen Situationen einordnen lernen\nFehler sind Lernmomente – keine Bestrafung',
-  svg:'<svg viewBox="0 0 280 180" width="100%" style="max-width:280px;display:block;margin:8px auto;border-radius:6px" xmlns="http://www.w3.org/2000/svg">\n  <rect width="280" height="180" rx="4" fill="#2d6a2d" stroke="#1a4a1a" stroke-width="1.5"/>\n  <rect x="4" y="4" width="272" height="172" rx="3" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>\n  <defs>\n  <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">\n    <path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,.8)"/>\n  </marker>\n</defs><rect x="140" y="30" width="110" height="120" rx="4" fill="rgba(74,222,128,.1)" stroke="rgba(74,222,128,.4)" stroke-width="1" stroke-dasharray="5,3"/><text x="195" y="25" text-anchor="middle" fill="rgba(74,222,128,.7)" font-size="8" font-family="sans-serif">Überzahl!</text><circle cx="160" cy="60" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="200" cy="90" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="170" cy="130" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="220" cy="75" r="9" fill="#f87171" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="70" cy="80" r="9" fill="#f87171" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="100" cy="50" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="90" cy="120" r="9" fill="#f87171" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/>\n  <text x="140" y="174" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="9" font-family="sans-serif">Überzahl-Erkennung</text>\n</svg>',
+  svg:'',   // v600: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["wahrnehmung"]
 },
 {
@@ -2934,7 +2934,7 @@ const TRAININGSFORMEN = [
   ablauf:'Spieler A steht mit Ball. B und C sind Mitspieler. A schaut 3 Sekunden, dreht sich dann um (Rücken zu Mitspielern) und muss sagen wo B und C stehen (links/rechts/vorne). Dann dreht sich A wieder um und passt sofort – ohne erneut zu schauen – an die angesagte Stelle.\n\nZiel: Spielbild im Kopf behalten – Grundlage für blitzschnelle Entscheidungen.',
   varianten:'- Alle 3 Sekunden wechseln die Mitspieler die Position\n- Mit Ball: kurze Dribbling-Phase, dann blind passen\n- Teamversion: ganzes Team muss Positionen aller Spieler nennen',
   coaching:'Nicht auf den Ball schauen – auf die Mitspieler!\nDas Bild im Kopf: wo steht wer – BEVOR du den Ball bekommst\nProfi-Spieler schalten einen Gang früher: sie entscheiden bevor der Ball ankommt',
-  svg:'<svg viewBox="0 0 280 180" width="100%" style="max-width:280px;display:block;margin:8px auto;border-radius:6px" xmlns="http://www.w3.org/2000/svg">\n  <rect width="280" height="180" rx="4" fill="#2d6a2d" stroke="#1a4a1a" stroke-width="1.5"/>\n  <rect x="4" y="4" width="272" height="172" rx="3" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>\n  <defs>\n  <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">\n    <path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,.8)"/>\n  </marker>\n</defs><circle cx="140" cy="90" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="140" y="108" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif" font-weight="600">A</text><circle cx="80" cy="50" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="80" y="68" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif" font-weight="600">B</text><circle cx="200" cy="130" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="200" y="148" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif" font-weight="600">C</text><circle cx="140" cy="90" r="35" fill="none" stroke="rgba(255,200,0,.3)" stroke-width="1" stroke-dasharray="5,3"/><text x="140" y="120" text-anchor="middle" fill="rgba(255,255,255,.4)" font-size="8" font-family="sans-serif">Augen zu!</text><line x1="140" y1="90" x2="140" y2="55" stroke="rgba(255,255,255,.2)" stroke-width="1" stroke-dasharray="3,2"/><text x="170" y="70" fill="rgba(255,200,0,.6)" font-size="8" font-family="sans-serif">Wo ist B?</text>\n  <text x="140" y="174" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="9" font-family="sans-serif">Blinde Pässe</text>\n</svg>',
+  svg:'',   // v600: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["wahrnehmung"]
 },
 {
@@ -2946,7 +2946,7 @@ const TRAININGSFORMEN = [
   ablauf:'Normales Spiel. Trainer pfeift und ruft einen Spieler mit Namen. Dieser Spieler muss sofort sagen: "Wie viele Spieler stehen gerade in der linken/rechten Hälfte?" oder "Wie viele Gegner sind hinter dir?"\n\nRichtige Antwort: Punkt für das Team. Falsch: Ball ans Gegnerteam.',
   varianten:'- Einfacher: nur "Überzahl oder Unterzahl?" fragen\n- Schwerer: genaue Positionierung beschreiben\n- Blind-Quiz: Spieler macht Augen zu, Trainer fragt',
   coaching:'Spieler sollen merken dass sie das Spielfeld kaum wahrnehmen\nKein Druck – es ist ein Quiz, kein Test\nZiel: Bewusstsein für das Feld entwickeln',
-  svg:'<svg viewBox="0 0 280 180" width="100%" style="max-width:280px;display:block;margin:8px auto;border-radius:6px" xmlns="http://www.w3.org/2000/svg">\n  <rect width="280" height="180" rx="4" fill="#2d6a2d" stroke="#1a4a1a" stroke-width="1.5"/>\n  <rect x="4" y="4" width="272" height="172" rx="3" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>\n  <defs>\n  <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">\n    <path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,.8)"/>\n  </marker>\n</defs><line x1="140" y1="20" x2="140" y2="160" stroke="rgba(255,255,255,.35)" stroke-width="1.5" stroke-dasharray="6,3"/><circle cx="80" cy="60" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="100" cy="110" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="80" cy="130" r="9" fill="#f87171" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="180" cy="50" r="9" fill="#f87171" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="200" cy="90" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="180" cy="130" r="9" fill="#f87171" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="200" cy="140" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="140" cy="90" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="140" y="108" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif" font-weight="600">?</text><rect x="105" y="63" width="70" height="18" rx="3" fill="rgba(255,200,0,.2)" stroke="rgba(255,200,0,.4)" stroke-width="1"/><text x="140" y="76" text-anchor="middle" fill="#fbbf24" font-size="8" font-family="sans-serif">Wie viele links?</text>\n  <text x="140" y="174" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="9" font-family="sans-serif">Raumaufteilung-Quiz</text>\n</svg>',
+  svg:'',   // v600: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["wahrnehmung"]
 },
 {
@@ -2958,7 +2958,7 @@ const TRAININGSFORMEN = [
   ablauf:'Trainer steht neben dem Spielfeld und hält Finger hoch. Bevor ein Spieler den Ball von Trainer empfängt, muss er die Anzahl der Finger korrekt nennen. Falsch: kein Ball. Richtig: Ball und weiterspielen.\n\nEinfache Form des kognitiven Spielens – Konzentration + Körper gleichzeitig.',
   varianten:'- Trainer zeigt zwei Hände: Summe nennen\n- Trainer wechselt Finger schnell: Reaktionstest\n- Andere Symbole: Farbe, Tier, Zahl – je nach Phantasie',
   coaching:'Hochschauen ist nicht nur für Pässe wichtig – auch generell!\nSpieler die automatisch hochschauen entwickeln bessere Spielintelligenz\nEinfache Übung mit großer Wirkung auf Wahrnehmung',
-  svg:'<svg viewBox="0 0 280 180" width="100%" style="max-width:280px;display:block;margin:8px auto;border-radius:6px" xmlns="http://www.w3.org/2000/svg">\n  <rect width="280" height="180" rx="4" fill="#2d6a2d" stroke="#1a4a1a" stroke-width="1.5"/>\n  <rect x="4" y="4" width="272" height="172" rx="3" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>\n  <defs>\n  <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">\n    <path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,.8)"/>\n  </marker>\n</defs><circle cx="200" cy="90" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="200" y="108" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif" font-weight="600">?</text><rect x="35" y="65" width="50" height="50" rx="4" fill="rgba(255,255,255,.1)" stroke="rgba(255,255,255,.3)" stroke-width="1.5"/><text x="60" y="78" text-anchor="middle" fill="#fff" font-size="10" font-family="sans-serif" font-weight="bold">Trainer</text><text x="60" y="100" text-anchor="middle" fill="#fbbf24" font-size="22" font-family="sans-serif">✌️</text><rect x="160" y="70" width="30" height="20" rx="3" fill="rgba(255,200,0,.2)"/><text x="175" y="84" text-anchor="middle" fill="#fbbf24" font-size="10" font-family="sans-serif" font-weight="bold">2!</text><line x1="90" y1="90" x2="155" y2="90" stroke="rgba(255,255,255,.7)" stroke-width="1.5"  marker-end="url(#arr)"/>\n  <text x="140" y="174" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="9" font-family="sans-serif">Finger-Signal</text>\n</svg>',
+  svg:'',   // v600: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["wahrnehmung"]
 },
 {
@@ -2970,7 +2970,7 @@ const TRAININGSFORMEN = [
   ablauf:'2 Verteidiger, 2–3 Angreifer. Die Angreifer greifen auf 1 Minitor an, die Verteidiger versuchen den Ballgewinn. Verteidiger 1 presst den Ballführenden. Verteidiger 2 steht immer halb hinter V1 (Schatten) – bereit für Rückpass oder Ausweichbewegung. Wechsel nach Ballgewinn oder 30 Sekunden.',
   varianten:'- Angreifer müssen 5 Pässe spielen bevor Tor erlaubt\n- Verteidiger können auf Signal die Rollen tauschen\n- 3 Verteidiger: wer presst, wer sichert, wer steht tief?',
   coaching:'Verteidiger 1: press, aber lass V2 nachrücken!\nV2: steh nicht neben V1 – steh hinter ihm als Absicherung\nPressing ist ein System: einer presst, einer sichert immer',
-  svg:'<svg viewBox="0 0 280 180" width="100%" style="max-width:280px;display:block;margin:8px auto;border-radius:6px" xmlns="http://www.w3.org/2000/svg">\n  <rect width="280" height="180" rx="4" fill="#2d6a2d" stroke="#1a4a1a" stroke-width="1.5"/>\n  <rect x="4" y="4" width="272" height="172" rx="3" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>\n  <defs>\n  <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">\n    <path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,.8)"/>\n  </marker>\n</defs><circle cx="180" cy="70" r="9" fill="#f87171" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="180" y="88" text-anchor="middle" fill="#f87171" font-size="8" font-family="sans-serif" font-weight="600">A</text><circle cx="200" cy="110" r="9" fill="#f87171" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="200" y="128" text-anchor="middle" fill="#f87171" font-size="8" font-family="sans-serif" font-weight="600">B</text><circle cx="130" cy="70" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="130" y="88" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif" font-weight="600">V1</text><circle cx="110" cy="90" r="9" fill="rgba(74,222,128,.5)" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="110" y="108" text-anchor="middle" fill="rgba(74,222,128,.5)" font-size="8" font-family="sans-serif" font-weight="600">V2</text><line x1="130" y1="70" x2="175" y2="73" stroke="rgba(255,255,255,.7)" stroke-width="1.5"  marker-end="url(#arr)"/><text x="120" y="60" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif">Press!</text><text x="105" y="108" text-anchor="middle" fill="rgba(74,222,128,.7)" font-size="8" font-family="sans-serif">Sicherung</text><line x1="130" y1="75" x2="115" y2="88" stroke="rgba(74,222,128,.4)" stroke-width="1" stroke-dasharray="3,2"/>\n  <text x="140" y="174" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="9" font-family="sans-serif">Schatten-Pressing</text>\n</svg>',
+  svg:'',   // v600: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["wahrnehmung"]
 },
 {
@@ -2982,7 +2982,7 @@ const TRAININGSFORMEN = [
   ablauf:'Permanente Regel in allen Spielformen: Bevor ein Spieler den Ball annimmt, muss er einmal den Kopf drehen (Scan). Trainer lobt aktiv wenn er es sieht. Wer es vergisst bekommt freundliche Erinnerung: "Schau zuerst!"\n\nNach 4–6 Wochen soll dies zum Automatismus werden.',
   varianten:'- Anfangs: nur einfordern wenn Ball direkt zugespielt wird\n- Später: auch beim Dribbling regelmäßig hochschauen\n- Elite-Variante: Spieler scannt bevor der Pass zu ihm gespielt wird',
   coaching:'Das ist keine Übung – das ist eine Trainingsphilosophie\nKonsistenz: jeden Tag einfordern bis es automatisch ist\nDie besten Spieler der Welt tun das – und das lernt man mit 7 Jahren',
-  svg:'<svg viewBox="0 0 280 180" width="100%" style="max-width:280px;display:block;margin:8px auto;border-radius:6px" xmlns="http://www.w3.org/2000/svg">\n  <rect width="280" height="180" rx="4" fill="#2d6a2d" stroke="#1a4a1a" stroke-width="1.5"/>\n  <rect x="4" y="4" width="272" height="172" rx="3" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>\n  <defs>\n  <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">\n    <path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,.8)"/>\n  </marker>\n</defs><circle cx="140" cy="100" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="140" cy="100" r="30" fill="none" stroke="rgba(255,200,0,.4)" stroke-width="1.5" stroke-dasharray="5,3"/><line x1="140" y1="70" x2="140" y2="40" stroke="rgba(255,200,0,.7)" stroke-width="2" marker-end="url(#arr)"/><text x="140" y="35" text-anchor="middle" fill="#fbbf24" font-size="9" font-family="sans-serif" font-weight="bold">SCHAUEN!</text><circle cx="80" cy="50" r="9" fill="#f87171" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="200" cy="60" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="200" cy="130" r="9" fill="#f87171" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="140" cy="100" r="6" fill="rgba(255,255,255,.5)" stroke="#fff" stroke-width="1.5"/>\n  <text x="140" y="174" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="9" font-family="sans-serif">Blick-vor-Ball</text>\n</svg>',
+  svg:'',   // v600: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["wahrnehmung"]
 },
 {
@@ -2994,7 +2994,7 @@ const TRAININGSFORMEN = [
   ablauf:'Jeder Spieler hat Ball und dribbelt frei ohne Zusammenstoß. Auf Kommando: "Rechts!" – nur rechter Fuß. "Links!" – nur linker Fuß. "Schnell!" – maximales Tempo. "Einfrieren!" – Ball stoppen, 360° umschauen.\n\nMax. 2 Kontakte mit starkem Fuß erlaubt – danach schwacher Fuß Pflicht.',
   varianten:'- König: wer 3x Ball verliert gibt Krone ab\n- Schwacher-Fuß-Duell: wer mehr Minuten nur schwachen Fuß schafft\n- Polizei & Räuber: 2 ohne Ball versuchen anderen Ball wegzuschlagen',
   coaching:'Keine Korrekturen beim Dribbeln – nur Kommandos rufen\nLoben wenn Spieler schwachen Fuß nutzt ohne Aufforderung\nBeobachte: Wer hat Angst vor dem schwachen Fuß?',
-  svg:'<svg viewBox="0 0 280 180" width="100%" style="max-width:280px;display:block;margin:8px auto;border-radius:6px" xmlns="http://www.w3.org/2000/svg">\n  <rect width="280" height="180" rx="4" fill="#2d6a2d" stroke="#1a4a1a" stroke-width="1.5"/>\n  <rect x="4" y="4" width="272" height="172" rx="3" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>\n  <defs>\n  <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">\n    <path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,.8)"/>\n  </marker>\n</defs><circle cx="60" cy="50" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="140" cy="30" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="220" cy="50" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="60" cy="130" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="140" cy="150" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="220" cy="130" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="100" cy="90" r="9" fill="#f87171" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><circle cx="180" cy="90" r="9" fill="#f87171" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="140" y="90" text-anchor="middle" fill="#fbbf24" font-size="11" font-family="sans-serif" font-weight="bold">Links!</text><circle cx="60" cy="50" r="4" fill="rgba(255,255,255,.5)"/><circle cx="140" cy="30" r="4" fill="rgba(255,255,255,.5)"/><circle cx="220" cy="50" r="4" fill="rgba(255,255,255,.5)"/>\n  <text x="140" y="174" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="9" font-family="sans-serif">Autodrom</text>\n</svg>',
+  svg:'',   // v600: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["technik"]
 },
 {
@@ -3018,7 +3018,7 @@ const TRAININGSFORMEN = [
   ablauf:'Beide Spieler haben je einen Ball. Spieler A dribbelt frei im 5×5m Feld. Spieler B spiegelt jede Bewegung mit seinem Ball (wie ein Spiegel). Nach 60 Sekunden: Rollentausch. Variante: beide nur schwacher Fuß – gegenseitiges Kopieren erzwingt langsames bewusstes Führen.',
   varianten:'- A macht Finte – B muss dieselbe Finte nachahmen\n- Zählen: wer mehr Kontakte mit schwachem Fuß schafft\n- Wettbewerb: wer kann den anderen 30 Sekunden lang perfekt spiegeln?',
   coaching:'Spielerisch und entspannt – kein Leistungsdruck\nBeobachte: welcher Spieler dominiert das Spiegeln? Zeigt Führungsqualität\nIdeal als ruhige Übung zwischen intensiven Spielformen',
-  svg:'<svg viewBox="0 0 280 180" width="100%" style="max-width:280px;display:block;margin:8px auto;border-radius:6px" xmlns="http://www.w3.org/2000/svg">\n  <rect width="280" height="180" rx="4" fill="#2d6a2d" stroke="#1a4a1a" stroke-width="1.5"/>\n  <rect x="4" y="4" width="272" height="172" rx="3" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>\n  <defs>\n  <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">\n    <path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,.8)"/>\n  </marker>\n</defs><rect x="90" y="40" width="100" height="100" rx="4" fill="rgba(255,255,255,.03)" stroke="rgba(255,255,255,.2)" stroke-width="1"/><line x1="140" y1="40" x2="140" y2="140" stroke="rgba(255,255,255,.3)" stroke-width="1" stroke-dasharray="4,3"/><text x="140" y="30" text-anchor="middle" fill="rgba(255,255,255,.4)" font-size="8" font-family="sans-serif">Spiegel</text><circle cx="115" cy="90" r="9" fill="#4ade80" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="115" y="108" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif" font-weight="600">A</text><circle cx="165" cy="90" r="9" fill="#f87171" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/><text x="165" y="108" text-anchor="middle" fill="#f87171" font-size="8" font-family="sans-serif" font-weight="600">B</text><line x1="115" y1="80" x2="115" y2="105" stroke="rgba(255,255,255,.4)" stroke-width="1.5"  marker-end="url(#arr)"/><line x1="165" y1="80" x2="165" y2="105" stroke="rgba(248,113,113,.4)" stroke-width="1.5"  marker-end="url(#arr)"/>\n  <text x="140" y="174" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="9" font-family="sans-serif">Spiegeldribbling</text>\n</svg>',
+  svg:'',   // v600: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["technik"]
 },
 {
@@ -3054,7 +3054,7 @@ const TRAININGSFORMEN = [
   ablauf:'Für eine komplette Trainingseinheit oder einzelne Spielformen gilt: Alle Pässe, Dribblings und Schüsse nur mit dem schwachen Fuß. Starker Fuß nur für Standbein erlaubt.\n\nWird erstaunlich schnell normal – und hat enormen Lerneffekt.',
   varianten:'- Nur bei Spielformen, nicht bei Übungen\n- Starker Fuß für direkte Pässe erlaubt (Doppelanforderung)\n- Wechsel-Tag: jede Spielform alterniert zwischen links und rechts',
   coaching:'Die ersten 10 Minuten sind frustrierend – danach wird es besser\nLoben für jeden Versuch – egal ob gut oder schlecht\nNach dem Training fragen: war das so schlimm? Meistens: nein!',
-  svg:'<svg viewBox="0 0 280 180" width="100%" style="max-width:280px;display:block;margin:8px auto;border-radius:6px" xmlns="http://www.w3.org/2000/svg">\n  <rect width="280" height="180" rx="4" fill="#2d6a2d" stroke="#1a4a1a" stroke-width="1.5"/>\n  <rect x="4" y="4" width="272" height="172" rx="3" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>\n  <defs>\n  <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">\n    <path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,.8)"/>\n  </marker>\n</defs><text x="140" y="70" text-anchor="middle" fill="#60a5fa" font-size="28" font-family="sans-serif">👟</text><text x="140" y="100" text-anchor="middle" fill="#60a5fa" font-size="14" font-family="sans-serif" font-weight="bold">LINKS-TAG</text><text x="140" y="120" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="10" font-family="sans-serif">Nur schwacher Fuß!</text><line x1="60" y1="140" x2="220" y2="140" stroke="rgba(96,165,250,.4)" stroke-width="2"/>\n  <text x="140" y="174" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="9" font-family="sans-serif">Schwacher-Fuß-Tag</text>\n</svg>',
+  svg:'',   // v600: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["technik"]
 },
 {
@@ -4010,12 +4010,33 @@ function _skz(o,opt){
      (seit v557/v558), eine NUMMER am Pfeil zeigt ihn auf einen Blick – auf Papier, im
      Stadionheft und überall dort, wo niemand tippt. Die Nummer ist das sechste Feld eines
      Pfeils; fehlt sie, ändert sich nichts. Sie sitzt am Anfang des Pfeils, leicht dahinter,
-     damit sie die Linie nicht verdeckt. */
+     damit sie die Linie nicht verdeckt.
+
+     v600: „Leicht dahinter" reicht nicht, wenn der Pfeil am Fuß eines Kindes beginnt — und
+     das tut er fast immer, denn ein Pass geht vom Spieler aus. Die sieben Pixel landen dann
+     INNERHALB des Kreises (Radius 8) und legen die Nummer über das Kürzel; in „Dreieck mit
+     Torwart" und „Doppelpass zum Abschluss" (beide v597) war von V1, A und TW nichts mehr zu
+     lesen. Liegt die Nummer in einem Spieler, weicht sie deshalb SENKRECHT zur Pfeilrichtung
+     aus, bis sie frei steht — sie bleibt damit am Pfeilanfang, nur eben neben dem Kind statt
+     auf ihm. Findet sie in keiner Richtung Platz, bleibt sie, wo sie war: ein verdecktes
+     Kürzel ist besser als eine Nummer, die irgendwo im Bild schwebt. */
   const nrKreis=(p,typ)=>{
     const nr=Number(p[5]);
     if(!isFinite(nr)||nr<1)return;
     const dx=p[2]-p[0], dy=p[3]-p[1], len=Math.hypot(dx,dy)||1, r=v=>Math.round(v*10)/10;
-    const bx=r(p[0]-dx/len*7), by=r(p[1]-dy/len*7);
+    let ax=p[0]-dx/len*7, ay=p[1]-dy/len*7;
+    /* Belegt ist der Kreis (8) plus der Nummernkreis (5.5) – und beim Kind mit Ball am Fuß
+       auch dessen Ball (4), sonst steht die Nummer auf dem Ball statt auf dem Kind. */
+    const frei=(x,y)=>!(o.s||[]).some(sp=>Math.hypot(x-sp[0],y-sp[1])<15
+      ||(sp[4]==='b'&&Math.hypot(x-(sp[0]+7),y-(sp[1]+7))<11.5));
+    if(!frei(ax,ay)){
+      const nx=-dy/len, ny=dx/len;
+      suche: for(let d=10;d<=26;d+=4)for(const v of [1,-1]){
+        const x=ax+nx*d*v, y=ay+ny*d*v;
+        if(frei(x,y)&&x>7&&x<SB-7&&y>7&&y<SH-7){ ax=x; ay=y; break suche; }
+      }
+    }
+    const bx=r(ax), by=r(ay);
     S.push('<circle cx="'+bx+'" cy="'+by+'" r="5.5" fill="'+P.nrFuell+'" stroke="'+P.pfeil[typ]+'" stroke-width="1.2"/>');
     S.push('<text x="'+bx+'" y="'+(by+2.7)+'" text-anchor="middle" fill="'+P.pfeil[typ]+'" font-size="7.5" font-family="sans-serif" font-weight="700">'+Math.round(nr)+'</text>');
   };
@@ -4455,7 +4476,79 @@ tf049:{tor:[[20,78,'v',24],[253,78,'v',24]],
   s:[[36,90,'y','TW'],[244,90,'y','TW'],[100,70,'g'],[100,110,'g'],[160,70,'r'],[160,110,'r']],
   tx:[[140,150,'alle rotieren ins Tor']]},
 tf050:{s:[[60,60,'g','','b'],[120,40,'g'],[200,50,'r'],[80,120,'r'],[160,130,'g'],[220,110,'r'],[140,80,'g']],
-  tx:[[140,158,'ohne Vorgaben – Trainer beobachtet nur']]}
+  tx:[[140,158,'ohne Vorgaben – Trainer beobachtet nur']]},
+/* v600 – Dritte und letzte Etappe des Altbestands: Passspiel, Wahrnehmung, Technik.
+
+   Damit ist keine handgezeichnete Skizze mehr übrig, die den Übungsnamen ins Bild
+   schreibt, halbdurchsichtigen Text auf den Rasen setzt oder Pfeile führt, die zu keiner
+   Legende passen. Beim „Ansage-Passspiel“ stand zusätzlich etwas im Bild, was dort nie
+   hingehört hat: drei Vornamen als Beispiel. An ihrer Stelle stehen jetzt A, B und C —
+   dieselben Kürzel wie überall sonst.
+
+   Sieben dieser sechzehn sind Regeln, keine Aufbauten („gilt in jeder Spielform“). Sie
+   zeigen deshalb die Situation, in der die Regel greift, und sagen im Text, was zu tun
+   ist — statt ein Feld zu zeichnen, das es nicht gibt. */
+tf014:{s:[[50,90,'g','A','b'],[230,90,'g','B']],
+  p:[[222,90,165,90,'l',1],[160,86,220,58,'l',2],[58,86,210,56,'p',3]],
+  tx:[[160,112,'hier dreht B ab'],[140,166,'der Pass kommt erst nach der Drehung']]},
+tf017:{tor:[[253,78,'v',24]],
+  s:[[50,90,'g','A','b'],[160,90,'g','B']],
+  p:[[58,84,150,84,'p',1],[152,98,90,98,'p',2],[96,106,200,96,'l',3],[210,92,248,90,'s',4]],
+  tx:[[105,70,'B ist die Wand'],[140,166,'nach dem Pass sofort weiterlaufen']]},
+tf018:{s:[[80,80,'g','A','b'],[200,80,'g','B'],[140,140,'g','C']],
+  p:[[88,76,192,76,'p']],
+  tx:[[140,48,'erst rufen: „B!“ – dann passen'],[140,166,'ohne Ansage zählt der Pass nicht']]},
+tf019:{tor:[[253,78,'v',24]],
+  s:[[200,90,'g','T'],[140,60,'g','V']],
+  p:[[148,66,192,84,'p',1],[209,88,248,88,'s',2]],
+  tx:[[140,34,'V legt auf, T trifft'],[140,140,'das Tor zählt erst, wenn T den Vorlagengeber lobt']]},
+tf021:{li:[[30,20,30,160,'m']],
+  tor:[[253,78,'v',24]],
+  s:[[40,70,'g','A','b'],[40,110,'g','B']],
+  p:[[60,84,95,104,'p',1],[102,100,150,74,'p',2],[157,78,200,104,'p',3],[208,100,248,92,'s',4]],
+  tx:[[34,170,'Start'],[140,30,'höchstens fünf Schritte ohne Pass']]},
+tf022:{z:[[80,40,120,100]],
+  h:[[80,40,'y'],[200,40,'y'],[200,140,'y'],[80,140,'y']],
+  s:[[96,52,'g','A','b'],[184,52,'g','B'],[184,128,'g','C'],[96,128,'g','D']],
+  p:[[104,52,176,52,'p',1],[184,60,184,120,'l',2],[176,128,104,128,'p',3],[96,120,96,60,'l',4]],
+  tx:[[140,26,'Pass spielen – dann zur Position des Empfängers'],[140,166,'A → B → C → D, immer hinterherlaufen']]},
+tf024:{dtor:[[40,30,26,'h','h','r'],[214,30,26,'h','h','b'],[127,152,26,'h','h','g']],
+  ger:[[250,20,'trainer','w']],
+  s:[[140,90,'g','','b']],
+  p:[[132,84,62,42,'d',1]],
+  tx:[[53,22,'rot'],[227,22,'blau'],[140,144,'grün'],[140,172,'Trainer ruft die Farbe – sofort durch dieses Tor']]},
+tf025:{z:[[140,30,110,120]],
+  s:[[160,60,'g'],[200,90,'g'],[170,130,'g'],[220,75,'r'],[100,50,'g'],[70,80,'r'],[90,120,'r']],
+  tx:[[195,22,'hier drei gegen einen'],[140,166,'wer die Überzahl erkennt, ruft sie laut aus']]},
+tf026:{kr:[[140,90,34]],
+  s:[[140,90,'g','A','b'],[80,50,'g','B'],[200,130,'g','C']],
+  p:[[140,82,88,58,'p']],
+  tx:[[140,26,'A schaut drei Sekunden und dreht sich weg'],[140,166,'dann blind passen – wo stand B?']]},
+tf027:{li:[[140,20,140,160,'m']],
+  s:[[80,60,'g'],[100,110,'g'],[80,130,'r'],[180,50,'r'],[200,90,'g','?'],[180,130,'r'],[215,140,'g'],[60,90,'g']],
+  tx:[[70,32,'linke Hälfte'],[210,32,'rechte Hälfte'],[140,172,'„Wie viele stehen links?“ – sofort antworten']]},
+tf028:{ger:[[50,90,'trainer','w']],
+  s:[[200,90,'g','?']],
+  b:[[64,98]],
+  p:[[72,92,188,90,'p']],
+  tx:[[60,122,'Trainer zeigt Finger'],[140,166,'erst die Zahl nennen, dann kommt der Ball']]},
+tf029:{tor:[[20,78,'v',24]],
+  s:[[180,70,'r','A','b'],[200,110,'r','B'],[130,70,'g','V1'],[108,92,'g','V2']],
+  p:[[138,70,172,72,'l',1],[96,104,118,80,'l',2]],
+  tx:[[140,34,'V1 presst den Ballführenden'],[140,150,'V2 steht halb hinter V1 und sichert ab']]},
+tf030:{kr:[[140,100,32]],
+  s:[[140,100,'g','','b'],[80,50,'r'],[200,60,'g'],[200,140,'r']],
+  tx:[[140,34,'einmal den Kopf drehen, bevor der Ball kommt'],[140,168,'wer geschaut hat, weiß schon, wohin er spielt']]},
+tf031:{s:[[55,50,'g','','b'],[140,34,'g','','b'],[225,50,'g','','b'],[55,130,'g','','b'],[140,150,'g','','b'],[225,130,'g','','b'],[100,105,'g','','b'],[180,105,'g','','b']],
+  tx:[[140,18,'jedes Kind dribbelt mit eigenem Ball'],[140,88,'„Links!“ · „Rechts!“ · „Schnell!“'],[140,172,'auf „Einfrieren!“ den Ball stoppen und umschauen']]},
+tf033:{z:[[90,40,100,100]],
+  li:[[140,40,140,140,'m']],
+  s:[[112,90,'g','A','b'],[168,90,'r','B','b']],
+  p:[[112,82,112,54,'d'],[168,82,168,54,'d']],
+  tx:[[140,30,'die Linie in der Mitte ist der Spiegel'],[140,166,'B macht jede Bewegung von A nach']]},
+tf036:{s:[[80,90,'g','A','b'],[200,90,'g','B']],
+  p:[[88,86,192,86,'p']],
+  tx:[[140,40,'für die ganze Einheit: nur der schwache Fuß'],[140,150,'der starke Fuß ist nur noch Standbein']]}
 };
 // Fehlende Skizzen aus den Specs erzeugen – vorhandene, handgezeichnete SVGs bleiben unangetastet.
 TRAININGSFORMEN.forEach(f=>{if((!f.svg||f.svg.length<=10)&&f.id&&TF_SKIZZEN[f.id])f.svg=_skz(TF_SKIZZEN[f.id]);});
