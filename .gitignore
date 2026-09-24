@@ -21,3 +21,9 @@ package-lock.json
 
 # Pruef-Ausgaben (Bilder, Berichte)
 tests/out/
+
+# Erzeugnisse von doku/drive-export.js. Sie entstehen aus der .md daneben und
+# wuerden hier still veralten - dieselbe Falle, die v599 fuer die exportierten
+# Zeichnungen geschlossen hat. Einmal `node doku/drive-export.js <datei.md>`
+# stellt sie wieder her.
+doku/*.html
