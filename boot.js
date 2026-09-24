@@ -1220,7 +1220,7 @@ function tpOnCatChange(selId,si,p){
   if(!catSel||!formSel)return;
   const kat=catSel.value;
   const filtered=tpFilteredOpts("main",kat||null);
-  formSel.innerHTML='<option value="">— Übung wählen —</option>'+filtered.map(x=>`<option value="${x.i}">${x.f.name} (${x.f.dauer})</option>`).join("");
+  formSel.innerHTML='<option value="">— Übung wählen —</option>'+filtered.map(x=>`<option value="${x.i}">${esc(x.f.name)} (${esc(x.f.dauer)})</option>`).join("");
   formSel.value="";
   const histDiv=document.getElementById(selId+"-hist");
   if(histDiv)histDiv.innerHTML="";
@@ -1304,7 +1304,7 @@ function tpShowExercise(formIdx){
           <button onclick="uebungSkizzeNachtragen(${formIdx})" style="min-height:44px;padding:8px 14px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">🎨 Skizze zeichnen</button>
         </div>`:"")}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-      <span style="font-size:10px;background:var(--surface);padding:2px 6px;border-radius:4px">⏱ ${f.dauer}</span>
+      <span style="font-size:10px;background:var(--surface);padding:2px 6px;border-radius:4px">⏱ ${esc(f.dauer)}</span>
       <span style="font-size:10px;background:var(--surface);padding:2px 6px;border-radius:4px">👥 ${f.spieler||"?"}</span>
       <span style="font-size:10px;background:var(--surface);padding:2px 6px;border-radius:4px">📐 ${f.feld||"?"}</span>
     </div>
@@ -2062,7 +2062,7 @@ function tpRenderTimeline(){
     const parallelSlots=Math.max(1,basisFelder-weg.length);   // vom Trainer weggelassene Felder
     const felderGruppen=(tpIstHauptteil(typ)&&typeof tgFor==="function"&&tgFor())?tpFelderGruppen(tgFor(),parallelSlots,weg,tpVersatz(si),tpFeldBedarfe(si,parallelSlots,merk.sel)):null;
     const filtered=tpFilteredOpts(typ);
-    const formOpts=filtered.map(x=>`<option value="${x.i}">${x.f.name} (${x.f.dauer})</option>`).join("");
+    const formOpts=filtered.map(x=>`<option value="${x.i}">${esc(x.f.name)} (${esc(x.f.dauer)})</option>`).join("");
 
     html+=`<div class="tp-slot" style="border-left:3px solid ${slot.farbe};${parallel?"margin-left:14px;":""}">
       <div class="tp-slot-head">
@@ -2527,12 +2527,12 @@ function tpIndPlayerChange(slotIdx){
     return;
   }
 
-  let html='<div style="font-size:10px;color:var(--text2);padding:2px 0"><strong>Empfohlen für '+name+':</strong></div>';
+  let html='<div style="font-size:10px;color:var(--text2);padding:2px 0"><strong>Empfohlen für '+esc(name)+':</strong></div>';
   if(matched.length){
     matched.forEach(m=>{
       html+=`<div style="display:flex;align-items:center;gap:4px;padding:2px 0">
         <button onclick="document.getElementById('tp-form-${slotIdx}-0').value='${m.i}';tpOnSelectChange(document.getElementById('tp-form-${slotIdx}-0'))" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;padding:2px 6px;font-size:10px;cursor:pointer;font-family:inherit">
-          ⭐ ${m.f.name}</button>
+          ⭐ ${esc(m.f.name)}</button>
         <span style="font-size:9px;color:var(--text3)">→ ${m.deficit.label} verbessern</span>
       </div>`;
     });

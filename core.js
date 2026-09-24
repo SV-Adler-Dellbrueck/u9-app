@@ -425,20 +425,23 @@ async function loadDB(){
       const data=await r.json();DB={};
       data.forEach(p=>{if(!DB[p.name])DB[p.name]=[];DB[p.name].push(p);});
       Object.keys(DB).forEach(n=>DB[n].sort((a,b)=>new Date(a.datum)-new Date(b.datum)));
-      document.getElementById("cdot").className="cdot ok";
-      document.getElementById("clbl").textContent="Live";
+      /* v603: Die Statusanzeige (#cdot/#clbl) gibt es nur in der Trainer-Oberflaeche. Im
+         Eltern-Einstieg warf der ungeschuetzte Zugriff bei jedem Start – und weil der
+         Fehlerzweig denselben Zugriff machte, warf auch der, _dbLoaded blieb ungesetzt. */
+      const dot=document.getElementById("cdot"), lbl=document.getElementById("clbl");
       lastSyncTs=new Date(); // L4
-      const lbl=document.getElementById("clbl");
-      if(lbl)lbl.title="Zuletzt synchronisiert: "+lastSyncTs.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
+      if(dot)dot.className="cdot ok";
+      if(lbl){lbl.textContent="Live";lbl.title="Zuletzt synchronisiert: "+lastSyncTs.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});}
     } else throw new Error("HTTP "+r.status);
   }catch(e){
-    document.getElementById("cdot").className="cdot err";
-    document.getElementById("clbl").textContent="Offline: "+(e.message||"Verbindung fehlgeschlagen").slice(0,30);
-    const lbl=document.getElementById("clbl");
-    if(lbl)lbl.title="Offline – Daten vom Gerät";
+    const dot=document.getElementById("cdot"), lbl=document.getElementById("clbl");
+    if(dot)dot.className="cdot err";
+    if(lbl){lbl.textContent="Offline: "+(e.message||"Verbindung fehlgeschlagen").slice(0,30);lbl.title="Offline – Daten vom Gerät";}
   }
   window._dbLoaded=true; // L2: Skeletons beenden
-  refreshSelects();renderKader();
+  /* v603: Auswahllisten und Kaderliste gehoeren der Trainer-Oberflaeche. Der Eltern-
+     Einstieg faehrt dieselbe Startkette; dort brach sie an dieser Stelle bei jedem Start. */
+  if(document.getElementById("p-name")){refreshSelects();renderKader();}
   if(document.getElementById("view-kombi")?.classList.contains("active"))renderKombi();
 }
 // L4: Antippen des Sync-Status zeigt Zeitstempel als Toast
@@ -580,7 +583,9 @@ function loadPlayerToForm(p){
 
 function refreshSelects(){
   const dbNames=Object.keys(DB).sort();
-  const bewSel=document.getElementById("p-name");const bewCur=bewSel.value;
+  /* v603: Die Auswahllisten gibt es nur in der Trainer-Oberflaeche. Der Eltern-Einstieg
+     faehrt dieselbe Startkette und brach hier bei jedem Start ab. */
+  const bewSel=document.getElementById("p-name");if(!bewSel)return;const bewCur=bewSel.value;
   bewSel.innerHTML='<option value="">— Spieler wählen —</option>';
   KADER.forEach(k=>{
     const o=document.createElement("option");o.value=k.name;

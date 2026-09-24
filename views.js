@@ -1071,6 +1071,18 @@ async function kaderSaveAll(btn){
   finally{if(btn)btn.disabled=false;}
 }
 // Saison-Backup: alle relevanten Tabellen als JSON-Download sichern.
+/* v603: Was die Sicherung bewusst NICHT enthaelt – jede Tabelle, die die App anspricht,
+   steht entweder in der Liste von backupExport oder hier, mit Grund. Der Pruefstand haelt
+   das gegen den Code: eine neue Tabelle ohne Eintrag an einer der beiden Stellen macht den
+   Lauf rot (Pflicht 3 aus CLAUDE.md, bis v603 nie geprueft). Der Grund steht auch in der
+   Sicherungsdatei selbst, damit spaeter niemand eine Luecke fuer einen Fehler haelt. */
+const SICHERUNG_AUSNAHMEN={
+  kind_notfall:"Gesundheits- und Notfallangaben (Art. 9 DSGVO). Sie gehoeren den Eltern, die sie jederzeit neu eintragen – eine Kopie auf einem Trainergeraet waere eine zweite, ungeschuetzte Ablage.",
+  push_subscriptions:"Geraetekennungen fuer Benachrichtigungen. Sie erneuern sich beim naechsten Oeffnen der App von selbst und gehoeren nicht in eine Datei.",
+  nutzung_log:"Nutzungsprotokoll fuer die Auswertung unter Orga. Nichts davon wird fuer eine Wiederherstellung gebraucht.",
+  eltern_dabei:"Gibt es in der Datenbank nicht. Nur toter Code in md-matchcard.js (edLoad/edSignup) spricht sie noch an.",
+  fahrgemeinschaft:"Gibt es in der Datenbank nicht. Nur toter Code in md-matchcard.js (fgLoad/fgOffer/fgJoin) spricht sie noch an; die lebende Fahrgemeinschaft steckt in rueckmeldungen."
+};
 async function backupExport(){
   if(!sbToken()){toast("Bitte zuerst als Trainer anmelden","err");return;}
   toast("Backup wird erstellt…");
@@ -1106,14 +1118,40 @@ async function backupExport(){
                    mühsam zusammengetragen wurden und nirgends sonst stehen. Eine
                    Sicherung ohne sie hätte nach einer Wiederherstellung eine leere
                    Kontaktliste hinterlassen. */
-                "gegner"];
-  const dump={_meta:{app:"U9 Adler Dellbrück",exported_at:new Date().toISOString(),tables}};
+                "gegner",
+                /* v603: Bis hierher sicherte die Liste 29 der rund 100 Tabellen, und jede
+                   Ergaenzung kam erst, nachdem etwas gefehlt hatte. Das Projekt laeuft im
+                   kostenlosen Supabase-Plan, der selbst KEINE Sicherungen anlegt – diese
+                   Datei ist die einzige. Seit v603 steht hier jede Tabelle, die die App
+                   anspricht; was bewusst fehlt, steht mit Grund in SICHERUNG_AUSNAHMEN, und
+                   der Pruefstand (v603) haelt beide Listen gegen den Code. Darunter die
+                   Einwilligungen (dsgvo_consent, foto_consent), die Eltern-Zuordnung, ohne
+                   die sich nach einer Wiederherstellung kein Elternteil anmelden kann, und
+                   die Rollen (profiles). */
+                "dsgvo_consent","foto_consent","eltern_kinder","profiles",
+                "rueckmeldungen","einsatzzeiten","einheit_bewertung","punkte_log","quiz_progress",
+                "trainingsvorlagen","team_config","team_notizen","team_polls","team_quests",
+                "eltern_leitfaden","fairplay_regeln","fairplay_commit","periodisierung","skill_woche",
+                "entwicklungsziele","nominierung_hinweis","probekinder","aufstellungen","taktik_templates",
+                "trainer_notes","training_live","turnier_plan","turnier_spiele","heimturnier","stadionheft",
+                "betreuung","event_helfer","event_mitbringen","event_puls","elterngespraech_wunsch",
+                "eltern_poll","eltern_poll_slot","eltern_poll_vote","ansagen","ansagen_gelesen",
+                "kabine_config","kabine_lob","kabine_post","kabine_reporter","kabinen_wahl","kabinen_wahl_stimmen",
+                "kind_fanfacts","kind_kontakte","kind_pause","kind_selbstbild","kind_stimmung",
+                "album_fotos","album_kind","album_tausch","termin_media","ticker_claps","wochen_challenge",
+                "fundbuero","waesche_log","teamkasse","kasse_umlagen","boerse_listings"];
+  const dump={_meta:{app:"U9 Adler Dellbrück",exported_at:new Date().toISOString(),tables,
+                     nicht_gesichert:SICHERUNG_AUSNAHMEN}};
   try{
-    for(const t of tables){
-      try{
-        const r=await fetch(`${SB_URL}/rest/v1/${t}?select=*`,{headers:sbAuthHeaders()});
-        dump[t]=r.ok?await r.json():{error:r.status};
-      }catch(e){dump[t]={error:"fetch"};}
+    /* Knapp hundert Abfragen nacheinander hiessen am Handy eine Viertelminute Warten. In
+       Achtergruppen gleichzeitig: schnell genug, ohne die Verbindung zu fluten. */
+    for(let i=0;i<tables.length;i+=8){
+      await Promise.all(tables.slice(i,i+8).map(async t=>{
+        try{
+          const r=await fetch(`${SB_URL}/rest/v1/${t}?select=*`,{headers:sbAuthHeaders()});
+          dump[t]=r.ok?await r.json():{error:r.status};
+        }catch(e){dump[t]={error:"fetch"};}
+      }));
     }
     const blob=new Blob([JSON.stringify(dump,null,2)],{type:"application/json"});
     const a=document.createElement("a");
