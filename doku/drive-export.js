@@ -25,7 +25,11 @@ function inline(s){
   return esc(s)
     .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
     .replace(/\*([^*]+)\*/g, "<em>$1</em>")   /* nach **fett**, sonst frisst es dessen Sternchen */
-    .replace(/`([^`]+)`/g, "<code>$1</code>");
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    /* Einziges HTML, das aus der Quelle durchdarf: der Zeilenumbruch in einer
+       Tabellenzelle. Markdown kennt dort keinen Absatz, und ohne ihn wird eine
+       lange Zelle zur Textwueste. Alles andere bleibt escaped. */
+    .replace(/&lt;br\s*\/?&gt;/gi, "<br>");
 }
 
 function wandeln(md){
