@@ -60,7 +60,12 @@ module.exports = async function (h) {
   /* v605: Erst warten, bis ein Abgleich vom Start fertig ist. Sonst trifft der Aufruf
      unten auf die Sperre `_bibLaeuft` und bekommt null – unter Last war dieser Fall rot,
      allein grün. Was der Start-Abgleich schon geschickt hat, zählt hier nicht mit. */
-  await s.page.waitForFunction(() => typeof _bibLaeuft === "undefined" || !_bibLaeuft, null, { timeout: 15000 }).catch(() => {});
+  /* v610: „undefined“ galt vorher als fertig – aber das heißt nur, dass Welle 2 noch nicht da
+     ist. Der Start fragt alle 500 ms nach dem Modul und stößt den Abgleich erst dann an; unter
+     Last lief er so mitten in den Aufruf unten. Jetzt: Modul da, eine Abfrage-Runde abwarten,
+     dann erst weiter, wenn kein Abgleich mehr läuft. */
+  const frei = () => s.page.waitForFunction(() => typeof bibliothekAbgleich === "function" && typeof _bibLaeuft !== "undefined" && !_bibLaeuft, null, { timeout: 20000 }).catch(() => {});
+  await frei(); await s.page.waitForTimeout(700); await frei();
   s.gesendet.length = 0;
   const r = await s.page.evaluate(async ({ NEU }) => {
     try { localStorage.removeItem("adler-bibliothek-stand"); } catch (e) {}

@@ -78,7 +78,8 @@ module.exports = async function (h) {
   if (r.k6g !== "Käfig,Funino 1,4+1 oben") probleme.push(`6 große Teams (7 Kinder): ${r.k6g} – 4+1 oben sollte bleiben`);
   if (r.k8 !== "Käfig,Funino 1,Funino 2,4+1 oben") probleme.push(`8 Teams: ${r.k8} – alle vier Felder nötig`);
   if (!/9 dabei/.test(r.festZeile) || /zugesagt|nominiert/.test(r.festZeile)) probleme.push(`Startseite Festival-Zeile: „${r.festZeile.slice(0, 90)}“ – erwartet „9 dabei“ ohne Zusagen-Chip`);
-  if (!/zugesagt/.test(r.trainZeile)) probleme.push(`Training zeigt keine Zusagen mehr: „${r.trainZeile.slice(0, 60)}“`);
+  // v609: das Training zählt „N dabei“ aus den Absagen (gilt als zugesagt) – nur nicht aus „Teams festlegen“
+  if (!/\d+ dabei/.test(r.trainZeile) || /🧩/.test(r.trainZeile)) probleme.push(`Training zeigt nicht „N dabei“ aus den Rückmeldungen: „${r.trainZeile.slice(0, 60)}“`);
   if (!/Teams festlegen/.test(r.quelle)) probleme.push("Quellenzeile nennt „Teams festlegen“ nicht");
   if (!r.karte) probleme.push("Terminkarte springt nicht nach „Teams festlegen“");
   if (!r.modalZu) probleme.push("Terminfenster bleibt beim Sprung offen");

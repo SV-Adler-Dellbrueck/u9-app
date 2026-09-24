@@ -80,7 +80,9 @@ async function fundbueroUpload(btn){
   finally{if(btn)btn.disabled=false;}
 }
 async function fundbueroClaim(id){
-  const label=(prompt("Wem gehört es? (z. B. Familie Müller)","")||"").trim();
+  /* v609: eigenes Fenster statt prompt() – im Eltern-Bereich sind Systemdialoge tabu (CLAUDE.md). */
+  const antwort=(typeof frageText==="function")?await frageText({emoji:"🙋",titel:"Wem gehört es?",sub:"Kurz den Familiennamen eintragen, dann weiß das Trainerteam Bescheid.",platzhalter:"z. B. Familie Müller",ja:"Als unseres markieren"}):null;
+  const label=String(antwort||"").trim();
   if(!label)return;
   try{
     const r=await fetch(`${SB_URL}/rest/v1/rpc/fundbuero_claim`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({p_id:id,p_label:label})});

@@ -2982,6 +2982,7 @@ function frageText(o){
     </div>`;
     document.body.appendChild(m);
     const feld=m.querySelector("#frage-text-feld");
+    if(feld&&o.wert)feld.value=String(o.wert);   // v609: z. B. ein Link zum Kopieren
     m.querySelector("#frage-text-ok").onclick=()=>fertig(feld?feld.value:"");
     m.querySelector("#frage-text-ab").onclick=()=>fertig(null);
     if(feld)feld.focus();
@@ -4685,7 +4686,7 @@ async function homeWocheLoad(){
   let fern=false;   // kein Termin in 7 Tagen → der naechste danach
   /* v474: Jede gerechnete Zahl nennt ihre Quelle (Muster v470) – sonst raet der Trainer,
      ob „3 zugesagt" aus den Eltern-Antworten oder aus seiner eigenen Anwesenheit stammt. */
-  const quelle=`<div class="woche-quelle" style="font-size:10.5px;color:var(--text3);margin-top:6px;line-height:1.4">Zusagen aus den Eltern-Rückmeldungen, am Spieltag „dabei“ aus „Teams festlegen“ · Trainer aus dem Trainerplan · Plan aus der App</div>`;
+  const quelle=`<div class="woche-quelle" style="font-size:10.5px;color:var(--text3);margin-top:6px;line-height:1.4">Training: alle dabei außer Absagen · Spiel: Zusagen aus den Eltern-Rückmeldungen, am Spieltag „dabei“ aus „Teams festlegen“ · Trainer aus dem Trainerplan · Plan aus der App</div>`;
   const karte=(inner,mitQuelle)=>`<div class="card" style="padding:12px 14px;margin-bottom:10px">
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px">
       <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text2)">🗓️ ${fern?"Als Nächstes":"Diese Woche"}</div>
@@ -4745,9 +4746,18 @@ async function homeWocheLoad(){
       const ja=rm.filter(x=>x.status==="zugesagt").length;
       const nein=rm.filter(x=>x.status==="abgesagt"||x.status==="krank").length;
       const offen=Math.max(0,aktive-rm.length);
-      chips.push(_wocheChip(`${ja} zugesagt`,ja>=6?"ok":ja?"warn":nah?"rot":"neutral"));
-      if(nein)chips.push(_wocheChip(`${nein} abgesagt`,"neutral"));
-      if(offen)chips.push(_wocheChip(`${offen} offen`,"neutral"));
+      /* v609: Ein Training gilt als zugesagt (CLAUDE.md: kein Opt-out) – „0 zugesagt" in Rot
+         war deshalb falsch. Beim Training zählt, wer NICHT kommt; Spiel und Turnier bleiben
+         bei den Zusagen. */
+      if(t.typ==="training"){
+        const dabei=Math.max(0,aktive-nein);
+        chips.push(_wocheChip(`${dabei} dabei`,dabei>=6?"ok":"warn"));
+        if(nein)chips.push(_wocheChip(`${nein} abgesagt`,"neutral"));
+      }else{
+        chips.push(_wocheChip(`${ja} zugesagt`,ja>=6?"ok":ja?"warn":nah?"rot":"neutral"));
+        if(nein)chips.push(_wocheChip(`${nein} abgesagt`,"neutral"));
+        if(offen)chips.push(_wocheChip(`${offen} offen`,"neutral"));
+      }
     }
     if(t.typ==="training"||t.typ==="spiel"||t.typ==="turnier"){
       const trainerJa=Object.keys(t.trainer_status||{}).filter(n=>t.trainer_status[n]==="ja").length;
@@ -4773,7 +4783,7 @@ async function homeWocheLoad(){
             :`<button class="btn btn-sm" onclick="tmJump('anwesenheit','${t.datum}')" style="white-space:nowrap"><i class="ti ti-checkbox"></i>Anwesenheit</button>
              <button class="btn btn-sm" onclick="tmJump('planung','${t.datum}')" style="white-space:nowrap"><i class="ti ti-clipboard-list"></i>Plan</button>`}
           ${t.spielform?`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:${m.col}22;color:${m.col}">${esc(t.spielform)}</span>`:""}
-          ${t.ort?`<span style="font-size:11.5px;color:var(--text2)">📍 ${mapsAnchor(t.ort)}</span>`:""}
+          ${t.ort?`<span style="font-size:11.5px;color:var(--text2)">${mapsAnchor(t.ort)}</span>`:""}
         </div>
         <div id="wetter-home"></div><div id="wetter-warn-home"></div><div id="gegner-contact-home"></div>
       </div>`;
