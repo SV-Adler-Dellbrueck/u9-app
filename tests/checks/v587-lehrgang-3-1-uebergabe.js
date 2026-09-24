@@ -44,7 +44,12 @@ module.exports = async function (h) {
   if (!/L – Sturzflug/.test(u.ablauf) || !/Sturzflug/.test(u.coaching)) probleme.push("Option L „Sturzflug“ fehlt im Ablauf oder im Coaching");
   if (!/ROTATION: .*auch Torwart/.test(u.ablauf)) probleme.push("Die Rotation nennt den Torwart nicht");
   if (!/bis 8 m vor dem Zieltor/.test(u.feld)) probleme.push("feld nennt das Korridorende 8 m vor dem Zieltor nicht");
-  if (u.kat !== "raute" || u.diff !== 2 || u.dauer !== "30") probleme.push(`kat/diff/dauer verändert: ${u.kat}/${u.diff}/${u.dauer}`);
+  /* dauer: 27 seit dem Nachtrag vom 24.09. – die Form füllt einen der beiden
+     Spielblöcke der Zeitstruktur 10/27/11/27 und muss hineinpassen. */
+  if (u.kat !== "raute" || u.diff !== 2 || u.dauer !== "27") probleme.push(`kat/diff/dauer verändert: ${u.kat}/${u.diff}/${u.dauer}`);
+  if (!/ENTSCHEIDUNGEN: /.test(u.ablauf)) probleme.push("Der Abschnitt ENTSCHEIDUNGEN fehlt im Ablauf – die Kinder sollen entscheiden, nicht abspulen");
+  if (!/ZEIT: 27 Minuten in drei Abschnitten zu je 9 Minuten/.test(u.ablauf)) probleme.push("Der ZEIT-Abschnitt nennt nicht 27 Minuten in drei Abschnitten zu je 9");
+  if (/Minute 21–30|Minute 11–20/.test(u.ablauf)) probleme.push("Im ZEIT-Abschnitt steht noch die alte 30-Minuten-Einteilung");
 
   const s = await h.starten({ supabase: h.supabaseAttrappe({ kader: h.kaderZeilen() }) });
   const r = await s.page.evaluate(({ spec }) => {
