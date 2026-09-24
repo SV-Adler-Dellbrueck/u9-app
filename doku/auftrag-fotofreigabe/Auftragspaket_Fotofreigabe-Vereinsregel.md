@@ -15,8 +15,9 @@ Am 24.09.2026 wurden deshalb zwei **Datenänderungen** gemacht, kein Code:
 - `team_config.foto_consent_text` (id 1) trägt jetzt den Einleitungstext des Freigabe-Dialogs:
   „Grundlage ist euer Mitgliedsantrag beim SV Adler Dellbrück: Dort habt ihr zugestimmt, dass Fotos
   im Rahmen der Vereinsaktivitäten gemacht und veröffentlicht werden dürfen. Wir haben die Freigaben
-  für euer Kind danach gesetzt. Wenn ihr damit ein Problem habt oder etwas ändern möchtet, sprecht
-  uns bitte an."
+  für euer Kind danach gesetzt. Die Teilnahme eures Kindes am Training und an Spielen hängt davon
+  nicht ab. Wenn ihr damit ein Problem habt oder etwas ändern möchtet, sprecht uns bitte an."
+  (Stand 24.09.2026, abends; der Satz zur Teilnahme wurde nachträglich ergänzt.)
 - `foto_consent` steht für alle aktiven Kinder auf `intern`, `video` und `public_ok` = true,
   `updated_by` = „trainer (Mitgliedsantrag, 24.09.2026)".
 
@@ -89,7 +90,8 @@ Initialen."
 1. Der Freigabe-Dialog enthält nirgends mehr „fragen wir hier extra" oder „Freiwillig & jederzeit
    widerrufbar".
 2. Die Stufe „Öffentlich" nennt den Mitgliedsantrag und „sprecht uns an".
-3. Ohne Netz zeigt der Dialog denselben Einleitungstext wie mit Netz.
+3. Ohne Netz zeigt der Dialog denselben Einleitungstext wie mit Netz, einschließlich des Satzes zur
+   Teilnahme an Training und Spielen.
 4. Die Erklärung „So schützen wir eure Fotos & Daten" trägt den neuen Titel und Text.
 5. Der Kader-Hinweis im Trainerbereich nennt den Mitgliedsantrag.
 6. Häkchen entfernen, speichern und „Alles widerrufen" funktionieren unverändert.
