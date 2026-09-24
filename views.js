@@ -3517,10 +3517,24 @@ async function einheitSave(){
       if(!skip)EB_DIMS.forEach(d=>{e[d.key]=einheitGetStar(`ue-${i}-${d.key}`);});
       return e;
     });
-    EVAL_DATA[datum]=evals;
+    /* v607: Zusammenführen statt ersetzen. Jeder Trainer sieht hier nur SEINE Übungen (P3),
+       gespeichert wurde aber die Liste des ganzen Tages – wer als Zweiter bewertete, löschte
+       Sterne und Kommentare des Ersten, lokal und auf dem Server. Jetzt gilt: Die eigenen
+       Einträge (Übung + Trainer) werden ersetzt, alle anderen bleiben. Grundlage ist der
+       Stand auf dem Server, nicht der des Geräts – der Kollege hat womöglich erst vor einer
+       Minute gespeichert. */
+    let basis=Array.isArray(EVAL_DATA[datum])?EVAL_DATA[datum]:[];
+    try{
+      const r=await fetch(`${SB_URL}/rest/v1/trainings_eval?datum=eq.${encodeURIComponent(datum)}&select=data`,{headers:sbAuthHeaders()});
+      if(r.ok){const rows=await r.json(); if(rows&&rows[0]&&Array.isArray(rows[0].data))basis=rows[0].data;}
+    }catch(e){}
+    const schluessel=x=>`${x&&x.name||""}|${x&&x.trainer||""}`;
+    const eigene=new Set(evals.map(schluessel));
+    const zusammen=basis.filter(x=>!eigene.has(schluessel(x))).concat(evals);
+    EVAL_DATA[datum]=zusammen;
     try{localStorage.setItem(EVAL_KEY,JSON.stringify(EVAL_DATA));}catch(e){}
     if(typeof teamTsSet==="function")teamTsSet(EVAL_TS_KEY,datum);
-    if(typeof teamSyncUpsertDebounced==="function")teamSyncUpsertDebounced("trainings_eval",datum,evals);
+    if(typeof teamSyncUpsertDebounced==="function")teamSyncUpsertDebounced("trainings_eval",datum,zusammen);
   }
 
   // 3) Spieler-Sterne -> AW_DATA[datum][name].qual. "da" bleibt unangetastet, damit die
