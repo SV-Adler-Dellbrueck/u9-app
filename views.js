@@ -1870,7 +1870,7 @@ async function entwicklungsReport(){
         <div style="font-size:20px;font-weight:800">Entwicklungsbericht</div></div>
         <div style="margin-left:auto;text-align:right;font-size:12px;color:#64748b">Saison ${saisonLabel()}<br>${new Date().toLocaleDateString("de-DE")}</div>
       </div>
-      <div style="font-size:22px;font-weight:800;margin-bottom:2px">${esc(name)}${isTw?" 🥅":""}${k.nr!=null?` <span style="color:#94a3b8;font-size:15px">#${k.nr}</span>`:""}</div>
+      <div style="font-size:22px;font-weight:800;margin-bottom:2px">${esc(name)}${isTw?" 🥅":""}${k.nr!=null?` <span style="color:var(--text3);font-size:15px">#${k.nr}</span>`:""}</div>
       <div style="font-size:13px;color:#475569;margin-bottom:14px">Rolle: ${esc(lat.prim_rolle||k.lieblingsposition||"Allrounder")} · ${snaps.length} Bewertung${snaps.length!==1?"en":""}</div>
 
       <div style="display:flex;gap:14px;margin-bottom:14px">
@@ -1898,7 +1898,7 @@ async function entwicklungsReport(){
       ${fazit?`<div style="font-size:13px;font-weight:800;margin:6px 0 4px">Einschätzung des Trainerteams</div>
       <div style="font-size:12.5px;white-space:pre-wrap;line-height:1.5;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px">${esc(fazit)}</div>`:""}
 
-      <div style="margin-top:18px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:8px">Vertraulich – nur für das Entwicklungsgespräch. Trainerteam SV Adler Dellbrück U9.</div>
+      <div style="margin-top:18px;font-size:11px;color:var(--text3);border-top:1px solid #e2e8f0;padding-top:8px">Vertraulich – nur für das Entwicklungsgespräch. Trainerteam SV Adler Dellbrück U9.</div>
     </div>`;
   document.body.classList.add("printing-zert");
   const cleanup=()=>{document.body.classList.remove("printing-zert");window.removeEventListener("afterprint",cleanup);};
@@ -5989,7 +5989,7 @@ async function renderStadionheftView(){
     <div><div style="font-size:10.5px;font-weight:800;color:#a16207;text-transform:uppercase;letter-spacing:.5px">⭐ Spieler im Fokus</div>
       <div style="font-size:16px;font-weight:900;color:#1e293b">${esc(fk.name)}${fk.nr!=null?" · #"+esc(fk.nr):""}</div>
       ${fk.text?`<div style="font-size:12px;color:#475569;margin-top:2px;line-height:1.4">${esc(fk.text).replace(/\n/g,"<br>")}</div>`:""}</div></div>`:"";
-  const nestLbl=t=>`<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8;margin:16px 4px 8px">${t}</div>`;
+  const nestLbl=t=>`<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin:16px 4px 8px">${t}</div>`;
   // I-C: Kabinen-Reporter-Rubrik (RPC reporter_public: nur Freigegebenes, Namen serverseitig maskiert)
   let repHtml="";
   try{
@@ -6011,7 +6011,7 @@ async function renderStadionheftView(){
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">${cards}</div>
     ${repHtml}
     ${h.kommentar?`${nestLbl("📣 Vom Trainerteam")}<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #16a34a;border-radius:12px;padding:12px 13px;font-size:12.5px;color:#334155;line-height:1.55">${esc(h.kommentar).replace(/\n/g,"<br>")}</div>`:""}
-    <div style="text-align:center;font-size:11px;color:#94a3b8;margin-top:18px">Auf geht's, Adler! 🦅 · SV Adler Dellbrück e.V.</div></div>`;
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:18px">Auf geht's, Adler! 🦅 · SV Adler Dellbrück e.V.</div></div>`;
 }
 
 /* ═══════════════════════════════════

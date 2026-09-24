@@ -28,7 +28,7 @@ async function abzeichenOpen(spielerId,name,kidsMode){
   card.style.cssText="background:#fff;color:#1a1a2e;max-width:480px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   card.innerHTML=`${mdlHead("abzeichen-modal","🎖️",`Technik-Abzeichen${name?" · "+esc(name):""}`,"","#6d28d9")}
     <div style="font-size:12px;color:#64748b;margin-bottom:12px">${kidsMode?`Das hast du schon geschafft! Neue Abzeichen trägt Mama oder Papa im Eltern-Bereich ein – dann gibt's Adler-Federn ${XP_ICON}.`:`Übt zuhause und beim Spielen. Wenn dein Kind ein Abzeichen schafft, hakst du es ab – es gibt Adler-Federn ${XP_ICON}!`}</div>
-    <div id="abzeichen-list" style="display:flex;flex-direction:column;gap:8px"><div style="color:#94a3b8;font-size:12px">Lade…</div></div>
+    <div id="abzeichen-list" style="display:flex;flex-direction:column;gap:8px"><div style="color:var(--text3);font-size:12px">Lade…</div></div>
     <button class="btn btn-sm" style="margin-top:12px;width:100%" onclick="document.getElementById('abzeichen-modal').remove()">Schließen</button>`;
   modal.appendChild(card);document.body.appendChild(modal);
   abzeichenRender(spielerId,kidsMode);
@@ -48,7 +48,7 @@ async function abzeichenRender(spielerId,kidsMode){
           <div style="font-size:11px;color:#64748b;line-height:1.3">${esc(a.desc)}</div>
         </div>
         ${on?`<span style="font-size:11px;font-weight:800;color:#16a34a">✓ geschafft</span>`
-             :(kidsMode?`<span style="font-size:11px;font-weight:700;color:#94a3b8;white-space:nowrap">noch offen</span>`
+             :(kidsMode?`<span style="font-size:11px;font-weight:700;color:var(--text3);white-space:nowrap">noch offen</span>`
              :`<button onclick="abzeichenAward(${spielerId},'${a.id}',this)" style="flex:none;padding:8px 10px;border:none;border-radius:10px;background:#f59e0b;color:#fff;font-family:inherit;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap">Als geschafft eintragen</button>`)}
       </div>`;
     }).join("");

@@ -21,7 +21,7 @@ async function renderElternView(datum){
     const d=new Date(m.datum+"T00:00:00");
     const wtag=["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"][d.getDay()];
     const datumStr=wtag+", "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"long"});
-    const row=(icon,label,val)=>val?`<div style="display:flex;gap:10px;padding:11px 0;border-bottom:1px solid #e2e8f0"><span style="font-size:18px">${icon}</span><div><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#94a3b8">${label}</div><div style="font-size:14.5px;font-weight:600;color:#1e293b">${esc(val)}</div></div></div>`:"";
+    const row=(icon,label,val)=>val?`<div style="display:flex;gap:10px;padding:11px 0;border-bottom:1px solid #e2e8f0"><span style="font-size:18px">${icon}</span><div><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">${label}</div><div style="font-size:14.5px;font-weight:600;color:#1e293b">${esc(val)}</div></div></div>`:"";
     // Route: Google-Maps-Suche nach der Gegner-Adresse (oder dem Gegnernamen)
     const routeQuery=m.gegner_adresse||m.gegner||m.ort||"";
     const routeUrl=routeQuery?"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(routeQuery):"";
@@ -44,13 +44,13 @@ async function renderElternView(datum){
         ${routeUrl?`<a href="${routeUrl}" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:14px;background:#1e3a8a;color:#fff;padding:13px;border-radius:12px;text-decoration:none;font-weight:600">🗺️ Route ${istTraining?"zum Platz":"zum Gegner"}</a>`:""}
       </div>
       ${istTraining?``:`<div id="ev-ticker" style="margin-top:14px"></div><div id="ev-einsatz" style="margin-top:14px"></div><div id="ev-fahrt" style="margin-top:14px"></div>`}
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#94a3b8;margin:16px 0 8px;text-align:center">Für Eltern</div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:16px 0 8px;text-align:center">Für Eltern</div>
       <button onclick="elternKalenderIcs()" style="width:100%;margin-bottom:10px;background:#1e3a8a;color:#fff;border:none;padding:14px;border-radius:12px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer">🗓️ Termine in meinen Kalender</button>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <a href="${appRoot()}?heft" style="text-align:center;background:#fff;border:1.5px solid #1e3a8a;color:#1e3a8a;padding:13px 8px;border-radius:12px;text-decoration:none;font-weight:700;font-size:13px">📰 Adler Nest</a>
         <a href="${appRoot()}?portal" style="text-align:center;background:#fff;border:1.5px solid #1e3a8a;color:#1e3a8a;padding:13px 8px;border-radius:12px;text-decoration:none;font-weight:700;font-size:13px">👨‍👩‍👧 Mein Kind</a>
       </div>
-      <div style="text-align:center;font-size:11px;color:#94a3b8;margin-top:16px">SV Adler Dellbrück e.V. · Angaben ohne Gewähr</div></div>`;
+      <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">SV Adler Dellbrück e.V. · Angaben ohne Gewähr</div></div>`;
     /* edLoad/fgLoad lasen aus den Tabellen eltern_dabei bzw. fahrgemeinschaft – die gibt es
        nicht (mehr). Die lebenden Funktionen sind die Betreuung (betreuung/betreuung_board im
        Eltern-Portal) und elternCarpoolOpen (md-carpool.js). Die toten Aufrufe sind raus. */
@@ -102,7 +102,7 @@ async function elTickerLoad(datum,dauer){
     }
     box.innerHTML=`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px">
       <div style="font-weight:700;margin-bottom:8px">📣 Liveticker</div>
-      ${rows.length?rows.map(e=>`<div style="display:flex;gap:8px;align-items:baseline;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:13px"><span style="font-size:15px;flex:0 0 auto">${elTickerIcon(e.typ)}</span><span><strong style="color:#1e3a8a">${e.minute?elternEsc(e.minute):""}</strong> ${elternEsc(e.text)}</span></div>`).join(""):'<div style="font-size:12px;color:#94a3b8">Noch keine Ereignisse. Bleib dran!</div>'}
+      ${rows.length?rows.map(e=>`<div style="display:flex;gap:8px;align-items:baseline;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:13px"><span style="font-size:15px;flex:0 0 auto">${elTickerIcon(e.typ)}</span><span><strong style="color:#1e3a8a">${e.minute?elternEsc(e.minute):""}</strong> ${elternEsc(e.text)}</span></div>`).join(""):'<div style="font-size:12px;color:var(--text3)">Noch keine Ereignisse. Bleib dran!</div>'}
     </div>`;
   }catch(e){}
 }
@@ -150,9 +150,9 @@ async function renderDelegateView(token){
       </div>
       <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px;margin-bottom:12px">
         ${(()=>{ const chip=n=>`<button onclick="dgPick('${n.replace(/'/g,"")}')" style="font-size:12px;padding:7px 10px;border-radius:16px;border:1px solid var(--rand-bedien);background:${selected===n?"#1e3a8a":"#f1f5f9"};color:${selected===n?"#fff":"#1e293b"};cursor:pointer;font-family:inherit">${elternEsc(n)}</button>`;
-          if(!feld.length&&!weitere.length)return '<div style="font-size:12.5px;color:#94a3b8;margin-bottom:12px">Für heute ist noch niemand eingetragen – frag kurz beim Trainer nach.</div>';
+          if(!feld.length&&!weitere.length)return '<div style="font-size:12.5px;color:var(--text3);margin-bottom:12px">Für heute ist noch niemand eingetragen – frag kurz beim Trainer nach.</div>';
           return `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:${weitere.length?"8":"12"}px">${feld.map(chip).join("")}</div>
-          ${weitere.length?`${feld.length?'<div style="display:flex;align-items:center;gap:8px;margin:2px 0 8px"><span style="flex:1;border-top:2px dashed #cbd5e1"></span><span style="font-size:10px;font-weight:800;letter-spacing:.5px;color:#94a3b8">AUCH HEUTE DABEI</span><span style="flex:1;border-top:2px dashed #cbd5e1"></span></div>':""}
+          ${weitere.length?`${feld.length?'<div style="display:flex;align-items:center;gap:8px;margin:2px 0 8px"><span style="flex:1;border-top:2px dashed #cbd5e1"></span><span style="font-size:10px;font-weight:800;letter-spacing:.5px;color:var(--text3)">AUCH HEUTE DABEI</span><span style="flex:1;border-top:2px dashed #cbd5e1"></span></div>':""}
           <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${weitere.map(chip).join("")}</div>`:""}`; })()}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
           <button onclick="dgSend('tor')" ${selected?"":"disabled"} style="min-height:52px;border:none;border-radius:12px;background:#15803d;color:#fff;font-weight:700;font-size:13px;cursor:pointer">⚽ Tor!</button>
@@ -161,8 +161,8 @@ async function renderDelegateView(token){
         </div>
         <button onclick="dgSend('gegentor')" style="width:100%;margin-top:8px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:12px;background:#f1f5f9;color:#334155;font-size:12.5px;cursor:pointer">Gegentor melden</button>
       </div>
-      <div id="dg-status" style="text-align:center;font-size:12px;color:#94a3b8;min-height:16px"></div>
-      <div style="text-align:center;font-size:11px;color:#94a3b8;margin-top:14px">Danke fürs Mithelfen! · SV Adler Dellbrück e.V.</div>`;
+      <div id="dg-status" style="text-align:center;font-size:12px;color:var(--text3);min-height:16px"></div>
+      <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:14px">Danke fürs Mithelfen! · SV Adler Dellbrück e.V.</div>`;
   }
   window.dgPick=(n)=>{selected=(selected===n)?null:n;draw();};
   window.dgSend=async(typ)=>{
@@ -259,13 +259,13 @@ async function renderTickerView(key){
         </div>
         <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:20px;text-align:center">
           ${nix?'<div style="font-size:12.5px;color:#334155;line-height:1.5">Für diesen Spieltag gab es keinen Liveticker.</div>'
-               :`<div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8">Endstand</div>
+               :`<div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text3)">Endstand</div>
           <div style="font-size:34px;font-weight:900;color:#1e3a8a;margin:4px 0">${t}:${g}</div>
           <div style="font-size:12.5px;color:#64748b">Adler U9 gegen ${geg}</div>
           <div style="font-size:12.5px;color:#334155;margin-top:14px;line-height:1.5">Der Liveticker dieses Spieltags ist beendet.<br>Die Höhepunkte stehen im Adler Nest.</div>`}
           <a href="${appRoot()}?heft" style="display:inline-block;margin-top:14px;min-height:46px;line-height:46px;padding:0 20px;border-radius:10px;background:#1e3a8a;color:#fff;text-decoration:none;font-weight:800;font-size:14px">📰 Zum Adler Nest</a>
         </div>
-        <div style="text-align:center;font-size:11px;color:#94a3b8;margin-top:14px">SV Adler Dellbrück e.V.</div>`;
+        <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:14px">SV Adler Dellbrück e.V.</div>`;
       return;
     }
     // B1: Applaus-Zähler des Spieltags (aggregiert über alle Teams via baseDatum)
@@ -274,7 +274,7 @@ async function renderTickerView(key){
       <button onclick="tvClap()" style="border:none;background:linear-gradient(135deg,#f59e0b,#ec4899);color:#fff;border-radius:16px;padding:14px 22px;font-size:16px;font-weight:800;font-family:inherit;cursor:pointer;box-shadow:0 4px 16px rgba(236,72,153,.35)">👏 Applaus fürs Team</button>
       <div style="font-size:12px;color:#64748b;margin-top:8px"><span id="tv-claps" style="font-weight:800;color:#db2777">${claps}</span> mal geklatscht</div>
     </div>`;
-    const foot=`${clapBar}${adlerkasseHtml}<div style="text-align:center;font-size:11px;color:#94a3b8;margin-top:14px">Nur-Ansehen · aktualisiert automatisch · SV Adler Dellbrück e.V.</div>`;
+    const foot=`${clapBar}${adlerkasseHtml}<div style="text-align:center;font-size:11px;color:var(--text3);margin-top:14px">Nur-Ansehen · aktualisiert automatisch · SV Adler Dellbrück e.V.</div>`;
 
     if(konf){
       const aktive=keys.filter(k=>clocks[k]||events.some(e=>e.datum===k));
@@ -285,12 +285,12 @@ async function renderTickerView(key){
           <span style="font-weight:800;color:#dc2626;min-width:62px">${teamName(k)}</span>
           <span style="font-size:18px;font-weight:900;color:#1e3a8a">${score(k)}</span>
           <span style="flex:1;font-size:11.5px;color:#64748b;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${geg}</span>
-          <span style="font-size:11px;color:#94a3b8">${elternEsc(minuteFor(k))}</span>
-        </div>`;}).join(""):'<div style="font-size:12.5px;color:#94a3b8">Noch keine Teams aktiv.</div>';
+          <span style="font-size:11px;color:var(--text3)">${elternEsc(minuteFor(k))}</span>
+        </div>`;}).join(""):'<div style="font-size:12.5px;color:var(--text3)">Noch keine Teams aktiv.</div>';
       const feed=events.length?events.map(e=>`<div style="display:flex;gap:8px;align-items:baseline;padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:13.5px">
           <span style="font-size:16px;flex:0 0 auto">${elTickerIcon(e.typ)}</span>
           <span><span style="font-size:10px;font-weight:800;color:#dc2626;background:#fee2e2;border-radius:8px;padding:1px 6px;margin-right:4px">${teamName(e.datum)}${e.runde?` · R${e.runde}`:""}</span><strong style="color:#1e3a8a">${e.minute?elternEsc(e.minute):""}</strong> ${elternEsc(e.text)}</span>
-        </div>`).join(""):'<div style="font-size:12.5px;color:#94a3b8">Noch keine Ereignisse. Die Konferenz startet mit dem Anpfiff!</div>';
+        </div>`).join(""):'<div style="font-size:12.5px;color:var(--text3)">Noch keine Ereignisse. Die Konferenz startet mit dem Anpfiff!</div>';
       root.innerHTML=`
         <div style="text-align:center;margin:8px 0 14px">
           <img src="logo.png" style="width:56px;height:56px" alt="SV Adler Dellbrück">
@@ -318,7 +318,7 @@ async function renderTickerView(key){
         : `${aus?'<div style="text-align:center;font-size:12px;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:9px;margin-bottom:8px">⏸️ Gerade läuft kein Spiel – der Ticker meldet sich wieder.</div>':""}
           <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px">
             ${(()=>{ const zeile=e=>`<div style="display:flex;gap:8px;align-items:baseline;padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:13.5px"><span style="font-size:16px;flex:0 0 auto">${elTickerIcon(e.typ)}</span><span><strong style="color:#1e3a8a">${e.minute?elternEsc(e.minute):""}</strong> ${elternEsc(e.text)}</span></div>`;
-              if(!events.length)return '<div style="font-size:12.5px;color:#94a3b8">Noch keine Ereignisse. Der Ticker startet mit dem Anpfiff – bleib dran!</div>';
+              if(!events.length)return '<div style="font-size:12.5px;color:var(--text3)">Noch keine Ereignisse. Der Ticker startet mit dem Anpfiff – bleib dran!</div>';
               if(!events.some(e=>e.runde!=null)||typeof tickerAbsaetze!=="function")return events.map(zeile).join("");
               return tickerAbsaetze(events,spieleVon(key)).map(g=>`<div style="margin-bottom:10px"><div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#64748b;padding:6px 0 2px">${g.runde?`Runde ${g.runde}${g.spiel?` · gegen ${elternEsc(g.spiel.gegner)} · ${elternEsc(g.spiel.feldName)}${g.spiel.tore!=null?` · <span style="color:#1e3a8a">${g.spiel.tore}:${g.spiel.gegentore}</span>`:""}`:""}`:"Weitere Ereignisse"}</div>${g.events.map(zeile).join("")}</div>`).join(""); })()}
           </div>`}
@@ -348,7 +348,7 @@ async function edLoad(datum){
   const box=document.getElementById("ev-dabei");if(!box)return;
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/eltern_dabei?datum=eq.${encodeURIComponent(datum)}&select=*&order=created_at.asc`,{headers:elternHeaders()});if(r.ok)rows=await r.json();}catch(e){}
-  const liste=rows.length?rows.map(x=>`<div style="display:flex;align-items:center;gap:6px;font-size:13px;padding:5px 0;border-bottom:1px solid #f1f5f9"><span style="flex:1">${elternEsc(x.kind)}</span>${x.betreuung?'<span style="font-size:10px;background:#dcfce7;color:#15803d;padding:2px 6px;border-radius:8px">Betreuung bleibt</span>':''}</div>`).join(""):'<div style="font-size:12px;color:#94a3b8">Noch niemand eingetragen.</div>';
+  const liste=rows.length?rows.map(x=>`<div style="display:flex;align-items:center;gap:6px;font-size:13px;padding:5px 0;border-bottom:1px solid #f1f5f9"><span style="flex:1">${elternEsc(x.kind)}</span>${x.betreuung?'<span style="font-size:10px;background:#dcfce7;color:#15803d;padding:2px 6px;border-radius:8px">Betreuung bleibt</span>':''}</div>`).join(""):'<div style="font-size:12px;color:var(--text3)">Noch niemand eingetragen.</div>';
   box.innerHTML=`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px">
     <div style="font-weight:700;margin-bottom:8px">🙋 Wer ist beim Training dabei? (${rows.length})</div>
     ${liste}
@@ -383,7 +383,7 @@ async function fgLoad(datum){
       ${mit.length?`<div style="font-size:11.5px;color:#64748b;margin-top:2px">Mit: ${mit.map(elternEsc).join(", ")}</div>`:''}
       ${frei>0?`<button onclick="fgJoin(${Number(x.id)},'${datum}')" style="margin-top:6px;background:#f1f5f9;border:1px solid var(--rand-bedien);padding:7px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit">Mitfahren</button>`:''}
     </div>`;
-  }).join(""):'<div style="font-size:12px;color:#94a3b8">Noch keine Fahrgemeinschaft angeboten.</div>';
+  }).join(""):'<div style="font-size:12px;color:var(--text3)">Noch keine Fahrgemeinschaft angeboten.</div>';
   box.innerHTML=`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px">
     <div style="font-weight:700;margin-bottom:8px">🚗 Fahrgemeinschaften</div>
     ${liste}
