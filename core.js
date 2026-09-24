@@ -1134,7 +1134,7 @@ function mdlHead(modalId,emoji,title,sub,col){
   return `<div style="display:flex;align-items:center;gap:11px;margin-bottom:12px;padding:10px 12px;background:linear-gradient(90deg,${col}18,${col}05);border-left:4px solid ${col};border-radius:12px">
     <div style="width:38px;height:38px;flex:none;border-radius:11px;background:${col};display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 2px 6px ${col}55">${emoji}</div>
     <div style="flex:1;min-width:0">
-      <div style="font-size:15.5px;font-weight:800;line-height:1.2;color:var(--text)">${title}</div>
+      <div class="mdl-titel" style="font-size:15.5px;font-weight:800;line-height:1.2;color:var(--text)">${title}</div>
       ${sub?`<div style="font-size:11px;color:var(--text2);margin-top:1px">${sub}</div>`:""}
     </div>
     <button onclick="document.getElementById('${modalId}')?.remove()" aria-label="Schließen" style="border:none;background:transparent;font-size:24px;color:var(--text2);cursor:pointer;line-height:1;min-width:44px;min-height:44px;margin:-8px -8px -8px 0;flex:none">×</button>
@@ -1297,12 +1297,41 @@ function zOben(mindestens){
   });
   return Math.min(max,Z_DIALOG_MAX);
 }
+/* v612: Rund 130 Overlays entstehen als <div style="position:fixed;inset:0;…"> direkt am
+   body – ohne role="dialog". Für sie griff weder der Fokus-Trap noch das Setzen des Fokus,
+   und ein Bildschirmleser hörte keinen Dialog. Statt jede Stelle einzeln anzufassen,
+   kennzeichnet der Beobachter unten ein neues Overlay selbst: direkt am body, fest
+   positioniert, im Dialog-Bereich der z-Werte (zOben), fast bildschirmfüllend und
+   anklickbar (Konfetti und Toasts fallen so heraus). Der Name kommt aus der ersten
+   Überschrift. Wer role schon setzt, bleibt unangetastet. */
+function _dialogKennzeichnen(n){
+  try{
+    if(n.parentElement!==document.body||n.hasAttribute("role")||n.id==="pin-gate")return;
+    const s=getComputedStyle(n);
+    if(s.position!=="fixed"||s.pointerEvents==="none"||s.display==="none")return;
+    const z=parseInt(s.zIndex,10); if(isNaN(z)||z<Z_DIALOG_MIN||z>Z_DIALOG_MAX)return;
+    const r=n.getBoundingClientRect();
+    if(r.width<window.innerWidth*0.9||r.height<window.innerHeight*0.9)return;
+    n.setAttribute("role","dialog"); n.setAttribute("aria-modal","true");
+    _dialogBenennen(n,0);
+  }catch(e){}
+}
+/* Viele Fenster gehen leer auf und füllen sich erst nach dem Laden – dann kommt der Name
+   eben ein paar Augenblicke später. */
+function _dialogBenennen(n,versuch){
+  if(!n.isConnected||n.hasAttribute("aria-label")||n.hasAttribute("aria-labelledby"))return;
+  const t=n.querySelector(".mdl-titel,h1,h2,h3,[class*='titel'],b,strong");
+  const txt=t?t.textContent.replace(/\s+/g," ").trim().slice(0,80):"";
+  if(txt)n.setAttribute("aria-label",txt);
+  else if(versuch<6)setTimeout(()=>_dialogBenennen(n,versuch+1),150*(versuch+1));
+}
 /* Beim Oeffnen den Fokus in den Dialog setzen - bewusst auf den Container und
    nicht aufs erste Eingabefeld, sonst springt auf dem Handy die Tastatur auf. */
 _adlerOnReady(()=>{
   new MutationObserver(muts=>{
     for(const m of muts)for(const n of m.addedNodes){
       if(n.nodeType!==1)continue;
+      _dialogKennzeichnen(n);
       const dlg=n.matches&&n.matches('[role="dialog"][aria-modal="true"]')?n:(n.querySelector&&n.querySelector('[role="dialog"][aria-modal="true"]'));
       if(dlg&&!dlg._fokusGesetzt){dlg._fokusGesetzt=true;if(!dlg.hasAttribute("tabindex"))dlg.setAttribute("tabindex","-1");try{dlg.focus({preventScroll:true});}catch(err){}}
     }
