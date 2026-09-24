@@ -52,8 +52,39 @@ function kabineZeitEnde(){
   if(kabineKindModus()){ kgSchluss(); return; }   // Kindergeraet: es gibt kein Dahinter
   kabineAktivSet(false);
   try{localStorage.removeItem(KABINE_START_KEY);}catch(e){}
-  if(typeof toast==="function")toast("⏰ Kabinen-Zeit vorbei – bis zum nächsten Mal!");
-  if(typeof elternDashLoad==="function")elternDashLoad(); // zurück in den Eltern-Bereich
+  /* v609: NICHT zurück in den Eltern-Bereich. Das Handy liegt in diesem Moment beim Kind –
+     wer dort landet, kann absagen, die Notfallkarte sehen oder die Eltern abmelden. Die
+     Sperre überlebt ein Neuladen (Schlüssel unten) und öffnet sich nur mit dem Code. */
+  try{localStorage.setItem(KABINE_SPERRE_KEY,"1");}catch(e){}
+  kabineSperre();
+}
+const KABINE_SPERRE_KEY="adler_kabine_gesperrt";
+/* v609: Ist das die Karte des eigenen Kindes? Nur dort steht der Foto-Hinweis – bei fremden
+   Karten verriete er, welche Familie keine Foto-Freigabe gegeben hat. Eigene Kinder: im
+   Eltern-Bereich aus _elternKids, auf dem Kindergerät aus kind_status. */
+function kabineEigenesKind(name){
+  const n=String(name||"").trim(); if(!n)return false;
+  const eigene=(window._elternKids||[]).map(k=>String((k&&(k.name||(k.kader&&k.kader.name)))||"").trim());
+  if(typeof _kgStatus!=="undefined"&&_kgStatus&&_kgStatus.name)eigene.push(String(_kgStatus.name).trim());
+  return eigene.includes(n);
+}
+/* v609: YouTube-Adresse → eingebettete Wiedergabe (youtube-nocookie). Andere Adressen
+   liefern "" – dann gibt es in der Kabine keinen Knopf nach draußen. */
+function kabineYoutubeEmbed(url){
+  const m=String(url||"").match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  return m?`https://www.youtube-nocookie.com/embed/${m[1]}`:"";
+}
+function kabineGesperrt(){ try{return localStorage.getItem(KABINE_SPERRE_KEY)==="1";}catch(e){return false;} }
+function kabineSperre(){
+  if(document.getElementById("kabine-sperre"))return;
+  const m=document.createElement("div"); m.id="kabine-sperre";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Kabinen-Zeit vorbei");
+  m.style.cssText="position:fixed;inset:0;z-index:10060;background:linear-gradient(160deg,#0f172a,#1e3a8a);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center;font-family:inherit";
+  m.innerHTML=`<div style="font-size:56px">⏰</div>
+    <div style="font-size:22px;font-weight:900">Kabinen-Zeit vorbei</div>
+    <div style="font-size:15px;opacity:.9;max-width:320px;line-height:1.5">Super gespielt! Gib das Handy jetzt Mama oder Papa – bis zum nächsten Mal, Adler! 🦅</div>
+    <button onclick="kabineExit()" style="margin-top:12px;min-height:48px;padding:12px 22px;border:1.5px solid rgba(255,255,255,.6);border-radius:12px;background:transparent;color:#fff;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer">🔒 Für Erwachsene: entsperren</button>`;
+  document.body.appendChild(m);
 }
 async function kabineZeitTick(){
   if(kabineKindModus()){
@@ -1334,7 +1365,8 @@ async function kabineSkillWoche(){
   b.innerHTML=head+`<div style="flex:1;padding:16px;color:#fff;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px">
     <div style="font-size:22px;font-weight:900;margin-top:10px">${esc(sk.titel)}</div>
     ${sk.beschreibung?`<div style="font-size:14px;opacity:.95;line-height:1.5;max-width:420px">${esc(sk.beschreibung)}</div>`:""}
-    ${sk.video_url?`<a href="${esc(sk.video_url)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:16px 28px;border-radius:16px;background:#fff;color:#0b2f4d;font-weight:800;font-size:16px;text-decoration:none">▶️ Video ansehen</a>`:""}
+    ${(sk.video_url&&kabineYoutubeEmbed(sk.video_url))?`<iframe title="Video: ${esc(sk.titel)}" src="${esc(kabineYoutubeEmbed(sk.video_url))}" style="width:100%;max-width:420px;aspect-ratio:16/9;border:0;border-radius:14px" allow="encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>`:""}
+    ${(sk.video_url&&!kabineYoutubeEmbed(sk.video_url)&&!isKidsMode)?`<a href="${esc(sk.video_url)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:16px 28px;border-radius:16px;background:#fff;color:#0b2f4d;font-weight:800;font-size:16px;text-decoration:none">▶️ Video ansehen</a>`:""}
     <div style="font-size:13px;opacity:.85;max-width:420px;margin-top:6px">Übe zuhause – wenn du es schaffst, geben deine Eltern die Federn frei! 🪶</div>
   </div>`;
 }
@@ -1449,7 +1481,7 @@ function kabineRenderGallery(){
       <button onclick="kabineGalleryNav(1)" style="position:absolute;right:8px;z-index:2;background:rgba(255,255,255,.15);border:none;color:#fff;width:46px;height:46px;border-radius:50%;font-size:24px;cursor:pointer">›</button>
     </div>
     <div style="text-align:center;padding:0 16px 16px;font-size:13px;opacity:.85">${esc(g.name)}${g.spitzname?` „${esc(g.spitzname)}“`:""}${g.lieblingsverein?` · Fan von ${esc(g.lieblingsverein)}`:""}</div>
-    ${g.foto_path?"":`<div style="margin:0 16px 16px;background:rgba(255,255,255,.12);border-radius:12px;padding:10px 12px;text-align:center;font-size:11.5px;line-height:1.5">📷 Hier fehlt noch ein Foto von ${esc(g.name)}.<br><span style="opacity:.75">Frag Mama oder Papa, ob sie es freigeben – im Eltern-Bereich unter „Fan-Fakten &amp; Foto“.</span></div>`}`;
+    ${(g.foto_path||!kabineEigenesKind(g.name))?"":`<div style="margin:0 16px 16px;background:rgba(255,255,255,.12);border-radius:12px;padding:10px 12px;text-align:center;font-size:11.5px;line-height:1.5">📷 Hier fehlt noch ein Foto von ${esc(g.name)}.<br><span style="opacity:.75">Frag Mama oder Papa, ob sie es freigeben – im Eltern-Bereich unter „Fan-Fakten &amp; Foto“.</span></div>`}`;
   const canvas=document.getElementById("kabine-card");if(!canvas)return;
   canvas.width=500;canvas.height=780;const ctx=canvas.getContext("2d");
   adlerCardDraw(ctx,500,780,d,null);
@@ -1550,6 +1582,11 @@ async function kabineCodeTip(t){
     try{localStorage.removeItem(KABINE_START_KEY);}catch(e){}
     document.getElementById("kabexit")?.remove();
     document.getElementById("kabine")?.remove();
+    if(document.getElementById("kabine-sperre")||kabineGesperrt()){          // v609: nach Zeitende erst jetzt zurück
+      try{localStorage.removeItem(KABINE_SPERRE_KEY);}catch(e){}
+      document.getElementById("kabine-sperre")?.remove();
+      if(typeof elternDashLoad==="function")elternDashLoad();
+    }
   }else{
     _kabCode=""; kabineCodeDots();
     if(err)err.textContent="Falscher Code - die Kabine bleibt zu.";
@@ -2089,5 +2126,3 @@ function renderTrainerUI(){
   // Jetzt steht im Untertitel der naechste Termin (topbarNaechsterTermin in views.js).
 }
 renderTrainerUI();
-
-

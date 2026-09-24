@@ -491,6 +491,23 @@ function teamTsSet(key,datum){
   localStorage.setItem(key,JSON.stringify(ts));
 }
 
+/* v609: Die Anwesenheit eines Termins frisch vom Server holen, bevor die Gruppen daran
+   abgeglichen werden. AW_DATA wurde nur beim Start der App gemischt: Trug Trainer A am Platz
+   eine Abwesenheit ein, rechnete das Handy von Trainer B mit dem alten Stand weiter – und
+   schrieb das Kind über den Gruppenabgleich wieder in die Einteilung zurück. Dieselbe Regel
+   wie beim Start: der Server gewinnt, außer das Gerät hat danach selbst gespeichert. */
+async function awFrischLaden(datum){
+  if(!datum||typeof sbTeamHeaders!=="function")return;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/anwesenheit?datum=eq.${encodeURIComponent(datum)}&select=data,updated_at`,{headers:sbTeamHeaders()});
+    if(!r.ok)return;
+    const row=((await r.json())||[])[0]; if(!row||!row.data)return;
+    const lts=(safeParse(localStorage.getItem(AW_TS_KEY),{})||{})[datum];
+    if(AW_DATA[datum]&&lts&&new Date(row.updated_at||0)<new Date(lts))return;   // das Gerät ist neuer
+    AW_DATA[datum]=(typeof kidMapFromIds==="function")?kidMapFromIds(row.data):row.data;
+    try{localStorage.setItem(AW_KEY,JSON.stringify(AW_DATA));}catch(e){}
+  }catch(e){/* offline: es bleibt beim Stand des Geräts */}
+}
 // G1: beim Start beide Tabellen laden und mit localStorage mergen
 async function teamSyncLoad(){
   const merge=async(table,localObj,storeKey,tsKey)=>{
@@ -1749,6 +1766,7 @@ async function _tpRsvpLadenIntern(datum){
       if(me&&typeof TRAINER!=="undefined"&&TRAINER.includes(me)){ TP_TRAINER_MANUELL[me]=true; TP_VORBELEGT=me; }
     }catch(e){}
   }
+  await awFrischLaden(datum);     // v609: Anwesenheit dieses Termins vom Server, nicht vom Start der App
   await tpKindRsvpLaden(datum);   // Paket C: Zusagen der Kinder für die Gruppen
   tpTrainerChipsRender();
   tpRenderTimeline();
@@ -3550,7 +3568,18 @@ let _stT={ix:0,left:0,timer:null,stations:[],paused:false};
 // Stationen aus dem aktuellen Zeitplan: Label + Dauer je Slot, plus die gewählten Übungen.
 function stTimerStations(){
   /* v605: Durchgänge werden zu eigenen Stationen – mit der weitergerückten Einteilung. */
+  /* v609: Torwart- und Einzeltraining laufen PARALLEL zu ihrem Hauptteil. Als eigene Station
+     hängte der Timer sie hinten an – die Uhr lief länger als der Plan. Jetzt stehen sie als
+     Zusatzzeile bei ihrem Hauptteil, wie im Trainingsstart (_tlSnapshot). */
+  const zusatz=si=>tpSlots.map((p,pi)=>({p,pi})).filter(x=>tpIstParallel(x.p)&&x.p.parallelZu===si).map(({p,pi})=>{
+    const sel=document.querySelector(`.tp-form-sel[id^="tp-form-${pi}-"]`);
+    const uebung=(sel&&sel.value&&sel.selectedOptions[0])?sel.selectedOptions[0].textContent.replace(/\s*\([^)]*\)\s*$/,"").trim():"Übung wählen";
+    const tw=(p.typ||"")==="tw";
+    const wer=tw?[...document.querySelectorAll(`.tp-tw-player[data-slot="${pi}"]:checked`)].map(c=>c.value).join(", "):(document.getElementById(`tp-ind-player-${pi}`)?.value||"");
+    return `${tw?"🧤 Torwart":"🎯 Einzeltraining"}${wer?" ("+wer+")":""}: ${uebung}`;
+  });
   return tpSlots.flatMap((slot,si)=>{
+    if(tpIstParallel(slot))return [];
     const nDg=tpDurchgaenge(slot), minuten=tpDurchgangMinuten(slot);
     return Array.from({length:nDg},(_,d)=>{
     const forms=[...document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`)]
@@ -3566,6 +3595,7 @@ function stTimerStations(){
         gruppen=tpFelderGruppen(tgFor(),n,(slot.weg||[]),tpVersatz(si)+d,tpFeldBedarfe(si,n)).map((f,i)=>`${f.emo||"👥"} ${(f.name||"").split(" + ")[0]} (${f.kinder.length}) → Feld ${i+1}`);
       }
     }catch(e){}
+    gruppen=gruppen.concat(zusatz(si));
     return {label:(slot.label||("Station "+(si+1)))+(nDg>1?` · Durchgang ${d+1}/${nDg}`:""),dauer:nDg>1?minuten[d]:Math.max(1,slot.dauer||10),farbe:slot.farbe||"#1a56db",forms:[...new Set(forms)],gruppen};
     });
   });

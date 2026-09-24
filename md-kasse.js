@@ -1087,7 +1087,8 @@ function akShare(){
   const url=window._akLink; if(!url)return;
   const text=`🦅 Unterstütz die U9 vom SV Adler Dellbrück!\nJeder Euro fließt direkt in die Mannschaft:\n${url}`;
   if(navigator.share){navigator.share({title:"Adler-Kasse U9",text,url}).catch(()=>{});}
-  else{navigator.clipboard?.writeText(url).then(()=>toast("Fan-Link kopiert ✓"),()=>prompt("Fan-Link:",url));}
+  /* v609: Klappt das Kopieren nicht, zeigt ein eigenes Fenster den Link zum Markieren – kein prompt(). */
+  else{navigator.clipboard?.writeText(url).then(()=>toast("Fan-Link kopiert ✓"),()=>{ if(typeof frageText==="function")frageText({emoji:"🔗",titel:"Fan-Link",sub:"Link markieren und kopieren, dann weiterschicken.",wert:url,ja:"Fertig"}); });}
 }
 
 /* Liveticker für Eltern: nur bei Spiel/Turnier. Der Ticker-Key ist das Termin-Datum,

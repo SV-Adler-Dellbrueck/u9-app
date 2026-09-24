@@ -345,6 +345,7 @@ function elternPortalDashboard(root){
   if(typeof applyTheme==="function")applyTheme(localStorage.getItem("adler_theme")); // Toggle-Icon + data-theme
   if(typeof elternThemeInit==="function"){ elternThemeInit(); elternThemeSweep(document.getElementById("eltern-portal")||document.body); } // Kopfzeile bei Dark einfärben
   dsgvoEnsureConsent(elternDashLoad); // Dashboard erst nach Datenschutz-Einwilligung laden
+  if(typeof kabineGesperrt==="function"&&kabineGesperrt()&&typeof kabineSperre==="function")kabineSperre();   // v609: Kabinen-Zeit war abgelaufen – erst der Code öffnet
 }
 // Datenschutz-Einwilligung beim (ersten) Eltern-Login. Server-Nachweis in dsgvo_consent
 // (user_id + Version + Zeitstempel). Bei neuer Version (Text-Update) → erneute Einwilligung.
@@ -631,15 +632,10 @@ async function chronikOpen(){
    Adler News (seen-Baseline). KONVENTION: Bei eltern-sichtbaren neuen Features den key
    (sortierbares Datum) hochsetzen und die Punkte austauschen – sonst entdecken
    Bestandsfamilien neue Funktionen nie (die Tour läuft nur beim ersten Login). */
-const ELTERN_WHATSNEW={key:"2026-08-14",titel:"Neu in eurer App",punkte:[
-  "🙌 „Wer hilft mit?“ steht jetzt direkt beim nächsten Termin auf der Startseite – mit Uhrzeit, damit du am Tag selbst entscheiden kannst, ob du es schaffst. Ein Tipp genügt, und im Feld darunter kannst du auch etwas eintragen, das nicht in der Liste steht",
-  "🥅 Beim Training geht es konkret um die Funino-Tore und die Jugendtore, mit Anzahl",
-  "👍 Zu- & Absagen: Die Terminübersicht springt nach deiner Antwort nicht mehr an den Anfang zurück",
-  "🗣️ Elterngespräch: Die Abstimmung bleibt stehen, bis du alle Vorschläge beantwortet hast – nicht schon nach dem ersten",
-  "🃏 Der Rückblick nach einem Spiel bleibt zwei Wochen stehen, danach findet ihr alles in der Saison-Statistik",
-  "🤝 Neu in der Kabine: „Unsere Regeln“ – sechs kurze Sätze, wofür diese Mannschaft steht",
-  "🌱 Neu: „Das kann dein Kind jetzt“ zeigt unter dem Rückblick, welche Ziele dein Kind erreicht und welche Technik-Abzeichen es geschafft hat",
-  "🎤 Der Kabinen-Reporter hat viel mehr Fragen – und zu jeder passende Antworten, auch wenn mal nichts davon zutrifft"
+const ELTERN_WHATSNEW={key:"2026-09-25",titel:"Neu in eurer App",punkte:[
+  "🔑 Anmelden mit E-Mail und Passwort – auch auf einem zweiten Gerät. Über 🔑 oben legst du ein Passwort fest oder änderst es. Der Code per E-Mail bleibt für „Passwort vergessen“.",
+  "🎟️ Das zweite Elternteil bekommt mit derselben Einladungskarte einen eigenen Zugang.",
+  "⏰ Ist die Kabinen-Zeit um, bleibt das Handy gesperrt, bis ihr den Code eingebt."
 ]};
 function whatsNewOpen(){
   document.getElementById("wn-modal")?.remove();
@@ -2024,11 +2020,11 @@ const ELTERN_TOUR=[
   {emo:"🔑", t:"Dein Zugang", d:"Du meldest dich mit E-Mail und Passwort an – auch auf einem zweiten Gerät. Über 🔑 oben legst du ein Passwort fest oder änderst es. Das zweite Elternteil nutzt dieselbe Einladungskarte mit einer eigenen E-Mail-Adresse."},
   {emo:"📌", t:"Was oben steht", d:"Ganz oben steht immer der nächste Termin. Gleich darunter erscheinen die Termine der nächsten 14 Tage, für die deine Antwort noch fehlt – ist alles beantwortet, ist die Karte weg. Danach deine offenen Punkte: Mitbringlisten, Büdchen-Dienst und die „Wie war's?“-Frage nach Spielen. Adler News zeigt sich nur, wenn wirklich etwas Neues drin ist – gelesen ist gelesen. Wichtige 📣 Ansagen vom Trainerteam bestätigst du kurz mit „Gelesen“."},
   {emo:"👍", t:"Zu- & Absagen", d:"Melde dein Kind am nächsten Termin oder im Termin-Karussell zu oder ab – ein Tipp genügt, nochmal tippen entfernt die Antwort. Über „Alle Termine\" lädst du alles in deinen Kalender."},
-  {emo:"🙋", t:"Alles rund um den Termin", d:"Im Termin-Detail: Wetter, Adresse mit Route, Fahrgemeinschaft, Mitbringliste bei Events und „Wer hilft mit?“ – jede Aufgabe sagt dir vorher, ab wann du da sein solltest und was zu tun ist: beim Spiel und Turnier Aufbau, Fotos, Live-Ticker und Betreuung in den Pausen, beim Training die Funino-Tore und Jugendtore. Steht ein <b>Auswärtsspiel</b> an, fehlt der Aufbau – dort baut der Gastgeber auf. Für den nächsten Termin stehen dieselben Aufgaben schon oben auf der Startseite, kurz und mit Uhrzeit – du musst dich also nicht vorab festlegen, sondern kannst am Tag selbst schauen, ob du es schaffst. Steht 💬 etwas darüber, ist das ein Hinweis des Trainerteams für genau diesen Termin. Im Feld darunter kannst du auch etwas eintragen, das nicht in der Liste steht. Beim Training sagst du außerdem, ob du vor Ort bleibst. Fällt einmal etwas aus oder wird der Platz getauscht, steht das direkt auf der Terminkarte – solange dort nichts steht, findet alles wie geplant statt."},
+  {emo:"🙋", t:"Alles rund um den Termin", d:"Im Termin-Detail: Wetter, Adresse mit Route, Fahrgemeinschaft, Mitbringliste bei Events und „Wer hilft mit?“ – jede Aufgabe sagt dir vorher, ab wann du da sein solltest und was zu tun ist: beim Spiel und Turnier Aufbau, Fotos, Live-Ticker und Betreuung in den Pausen, beim Training die Funino-Tore und Jugendtore. Steht ein „Auswärtsspiel“ an, fehlt der Aufbau – dort baut der Gastgeber auf. Für den nächsten Termin stehen dieselben Aufgaben schon oben auf der Startseite, kurz und mit Uhrzeit – du musst dich also nicht vorab festlegen, sondern kannst am Tag selbst schauen, ob du es schaffst. Steht 💬 etwas darüber, ist das ein Hinweis des Trainerteams für genau diesen Termin. Im Feld darunter kannst du auch etwas eintragen, das nicht in der Liste steht. Beim Training sagst du außerdem, ob du vor Ort bleibst. Fällt einmal etwas aus oder wird der Platz getauscht, steht das direkt auf der Terminkarte – solange dort nichts steht, findet alles wie geplant statt."},
   {emo:"\ud83d\udce3", t:"Liveticker", d:"Sobald das Trainerteam den Liveticker startet, steht ganz oben eine rote LIVE-Kachel – vorher nicht, damit du nie auf eine leere Seite tippst. Über „Teilen\" schickst du den Ticker an Oma, Opa oder Freunde; der Link braucht keine Anmeldung. Brauchst du die Kachel gerade nicht, klick sie weg – morgen ist sie wieder da. Drei Tage nach dem Spieltag zeigt der Link nur noch den Endstand, die Höhepunkte stehen dann im Adler Nest."},
   {emo:"🎮", t:"Die Kabine (Kinder-Modus)", d:"Gib dein Handy bedenkenlos weiter: „Unsere Regeln“ – wofür wir Adler stehen, in sechs Sätzen –, Quiz, Missionen, Galerie – und jetzt auch das Panini-Sammelalbum mit Sticker-Tüten & Tauschbörse, Komplimente an Mitspieler, die eigene Adler-Post und das Sammelalbum. Zurück geht es nur mit Code."},
   {emo:"\ud83d\udcf1", t:"Kinder-App auf einem eigenen Ger\u00e4t", d:"Die Kabine l\u00e4uft auch auf dem Tablet oder Handy deines Kindes. Unter \u201eF\u00fcr die Kinder\u201c erzeugst du einen sechsstelligen Code, gibst ihn auf dem Ger\u00e4t des Kindes ein \u2013 fertig. Das Ger\u00e4t bekommt ein Konto ohne Namen und ohne E-Mail. Dort stellst du auch ein, wie lange dein Kind t\u00e4glich darf, und trennst das Ger\u00e4t jederzeit wieder."},
-  {emo:"🃏", t:"Für dein Kind", d:"Nach einem Spiel oder Turnier steht unter den Terminen zwei Wochen lang der Rückblick: was dein Kind an dem Tag alles gemacht hat. Direkt darunter steht „Das kann dein Kind jetzt“ – erreichte Ziele und neue Technik-Abzeichen aus den letzten zwei Wochen. Die Karte erscheint nur, wenn wirklich etwas dazugekommen ist. Danach verschwindet er – die Zahlen bleiben in der Saison-Statistik. Dort findest du außerdem Sammelkarte, Technik-Abzeichen (die hakst du zuhause ab) und Fan-Fakten. Foto- & Video-Freigaben und die Notfallkarte pflegst du unter „🔒 Datenschutz &amp; Freigaben\" – dort erklärt „🛡️ So schützen wir eure Fotos &amp; Daten\" auch, warum die App sicherer ist als jede WhatsApp-Gruppe."},
+  {emo:"🃏", t:"Für dein Kind", d:"Nach einem Spiel oder Turnier steht unter den Terminen zwei Wochen lang der Rückblick: was dein Kind an dem Tag alles gemacht hat. Direkt darunter steht „Das kann dein Kind jetzt“ – erreichte Ziele und neue Technik-Abzeichen aus den letzten zwei Wochen. Die Karte erscheint nur, wenn wirklich etwas dazugekommen ist. Danach verschwindet er – die Zahlen bleiben in der Saison-Statistik. Dort findest du außerdem Sammelkarte, Technik-Abzeichen (die hakst du zuhause ab) und Fan-Fakten. Foto- & Video-Freigaben und die Notfallkarte pflegst du unter „🔒 Datenschutz & Freigaben\" – dort erklärt „🛡️ So schützen wir eure Fotos & Daten\" auch, warum die App sicherer ist als jede WhatsApp-Gruppe."},
   {emo:"📰", t:"Team, Heft & Adler-Kasse", d:"Das „Adler Nest\" ist unser digitales Stadionheft – jetzt mit der Kabinen-Reporter-Rubrik der Kinder. Und über „Fan-Link teilen\" schickst du Oma, Opa und Fans den Spenden-Link. Viel Spaß! 🎉"},
 ];
 let elternTourIdx=0;
@@ -2131,7 +2127,10 @@ async function elternCardShow(d){
   cardApplyGlow(canvas, d.counts&&d.counts.trainings); // Meilenstein-Glanz (Zähler kommen aus der RPC)
   const bar=document.createElement("div");
   bar.style.cssText="display:flex;gap:8px;flex-wrap:wrap;justify-content:center";
-  bar.innerHTML=`<button class="btn btn-p" onclick="adlerCardShare()"><i class="ti ti-share"></i>Karte teilen</button>
+  /* v609: In der Kabine kein „Teilen" – es öffnet das Teilen-Menü des Handys mit WhatsApp und
+     den Kontakten der Eltern. */
+  const inKabine=(typeof isKidsMode!=="undefined"&&isKidsMode);
+  bar.innerHTML=`${inKabine?"":`<button class="btn btn-p" onclick="adlerCardShare()"><i class="ti ti-share"></i>Karte teilen</button>`}
     <button class="btn" onclick="document.getElementById('adler-card-modal').remove()">Schließen</button>`;
   innen.appendChild(bar);
   document.body.appendChild(modal);
