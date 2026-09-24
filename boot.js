@@ -2017,8 +2017,8 @@ function tpRenderTimeline(){
   /* Die Leiste wird komplett neu gezeichnet – bei jeder Dauer, jedem Trainerwechsel.
      Gewaehlte Uebungen, Torwart-Haken und das Einzeltrainings-Kind lebten nur im DOM
      und waren danach weg. Hier merken, unten wieder einsetzen. */
-  const merk={sel:{},tw:{},ind:{}};
-  wrap.querySelectorAll(".tp-form-sel").forEach(s=>{if(s.value)merk.sel[s.id]=s.value;});
+  const merk={sel:{},tw:{},ind:{},mark:{}};
+  wrap.querySelectorAll(".tp-form-sel").forEach(s=>{if(s.value)merk.sel[s.id]=s.value; if(s.dataset.station!=null||s.dataset.alle)merk.mark[s.id]={station:s.dataset.station,alle:s.dataset.alle};});   // v608: Vorlagen-Marken überleben das Neuzeichnen
   wrap.querySelectorAll(".tp-tw-player").forEach(c=>{merk.tw[c.dataset.slot+"|"+c.value]=c.checked;});
   wrap.querySelectorAll('select[id^="tp-ind-player-"]').forEach(s=>{if(s.value)merk.ind[s.id]=s.value;});
   if(typeof renderTeamDiagnose==="function")renderTeamDiagnose(); // Phase 7-C: Team-Diagnose oben
@@ -2295,6 +2295,7 @@ function tpRenderTimeline(){
     Min.${passt?(frei>0?` · noch ${frei} Min. frei`:""):" – zu lang!"}</div>`;
   wrap.innerHTML=html;
   // Gemerkte Auswahl wieder einsetzen (siehe oben)
+  Object.keys(merk.mark).forEach(id=>{const s=document.getElementById(id); const m=merk.mark[id]; if(s&&m){ if(m.station!=null)s.dataset.station=m.station; if(m.alle)s.dataset.alle=m.alle; }});
   Object.keys(merk.sel).forEach(id=>{const s=document.getElementById(id); if(s&&[...s.options].some(o=>o.value===merk.sel[id])){s.value=merk.sel[id]; if(typeof tpPickSync==="function")tpPickSync(id); const hd=document.getElementById(id+"-hist"); if(hd&&typeof tpExerciseHistoryHtml==="function")hd.innerHTML=tpExerciseHistoryHtml(parseInt(s.value));}});
   wrap.querySelectorAll(".tp-tw-player").forEach(c=>{const k=c.dataset.slot+"|"+c.value; if(k in merk.tw)c.checked=merk.tw[k];});
   Object.keys(merk.ind).forEach(id=>{const s=document.getElementById(id); if(s){s.value=merk.ind[id]; if(typeof tpIndPlayerChange==="function"&&s.value)tpIndPlayerChange(Number(id.replace("tp-ind-player-","")));}});
@@ -2325,6 +2326,12 @@ async function tpPrognoseLoad(){
 }
 
 function tpOnSelectChange(sel){
+  /* v608: Hand schlägt Vorlage (Regel aus v535: sobald der Trainer ein Feld ändert, wird der
+     Plan Feld für Feld gespeichert). Die Marken fallen deshalb überall weg; jedes Feld steht
+     ab dann mit Block und Feld im Plan und braucht sie nicht mehr. */
+  if(!_tpRestoring&&sel){
+    document.querySelectorAll(".tp-form-sel").forEach(x=>{ delete x.dataset.station; delete x.dataset.alle; });
+  }
   const histDiv=document.getElementById(sel.id+"-hist");
   if(histDiv&&sel.value) histDiv.innerHTML=tpExerciseHistoryHtml(parseInt(sel.value));
   else if(histDiv) histDiv.innerHTML="";
@@ -3116,14 +3123,23 @@ function tpPlanEntries(){
     const trainer=noGrp?"Alle":(tpCoaches[s.id]||trainers[groupIdx]||`Trainer ${groupIdx+1}`);
     const formIdx=parseInt(s.value);
     const formName=allForms[formIdx]?.name||"?";
-    entries.push({formIdx,formName,trainer,slotLabel:slot?.label||"",key:`${formIdx}-${trainer}`});
+    const eintrag={formIdx,formName,trainer,slotLabel:slot?.label||"",key:`${formIdx}-${trainer}`,block:slotIdx,feld:groupIdx};
+    if(s.dataset.station!=null&&s.dataset.station!=="")eintrag.station=Number(s.dataset.station);   // v608: Vorlagen-Marken bleiben erhalten
+    if(s.dataset.alle==="1")eintrag.alleFelder=true;
+    entries.push(eintrag);
   });
   return entries;
 }
 /* Plan pro Datum sichern (debounced). Ohne Trainer-Token still ueberspringen –
    der Plan ist trainer-only und darf offline nicht die Queue verstopfen. */
 let _tpPlanTimer=null;
-function tpPlanSaveDebounced(){ clearTimeout(_tpPlanTimer); _tpPlanTimer=setTimeout(()=>tpPlanSave(false),1200); }
+/* v608: Solange ein Plan wiederhergestellt wird, speichert die Automatik nicht. Das
+   Einsetzen der Übungen läuft über tpOnSelectChange – und das stieß 1,2 s nach jedem
+   Öffnen eine Speicherung an, die den gerade geladenen Plan in vereinfachter Form
+   zurückschrieb (ohne Stationsmarken; bei einem schnellen Terminwechsel sogar unter
+   dem falschen Datum). Wiederherstellen ist Lesen, kein Griff des Trainers. */
+let _tpRestoring=false, _tpRestoreLauf=0;
+function tpPlanSaveDebounced(){ if(_tpRestoring)return; clearTimeout(_tpPlanTimer); _tpPlanTimer=setTimeout(()=>tpPlanSave(false),1200); }
 /* Die Zuordnung gehoert zur Struktur: welcher Trainer welches Feld hat, wer am Torwart-
    oder Einzelblock steht, welche Torhueter angehakt sind, welches Kind einzeln trainiert.
    Bis v455 lebte das alles nur im DOM und in tpCoaches – nach dem Neuladen war Finn nicht
@@ -3319,6 +3335,16 @@ function tpKopfRender(k){
 }
 async function tpPlanRestore(datum){
   datum=datum||document.getElementById("tp-date")?.value; if(!datum)return;
+  const lauf=++_tpRestoreLauf;
+  clearTimeout(_tpPlanTimer);            // eine noch ausstehende Speicherung des VORIGEN Termins gehört nicht hierher
+  _tpRestoring=true;
+  try{ await _tpPlanRestoreIntern(datum,lauf); }
+  finally{ if(lauf===_tpRestoreLauf)_tpRestoring=false; }
+}
+/* Gilt dieser Lauf noch? Wer schnell von A nach B tippt, startet zwei Läufe; der ältere
+   darf nach seinem Warten nichts mehr zeichnen – sonst stünde die Struktur von A unter B. */
+function _tpRestoreGilt(datum,lauf){ return lauf===_tpRestoreLauf&&(document.getElementById("tp-date")?.value||datum)===datum; }
+async function _tpPlanRestoreIntern(datum,lauf){
   /* v542: Den Stand merken, der beim Öffnen galt. Nur dagegen kann tpPlanSave später
      erkennen, ob jemand anderes zwischendurch geschrieben hat. Ohne diesen Griff wäre
      der Abgleich wertlos: ein Plan, der nie geladen wurde, hat keinen Bezugspunkt. */
@@ -3328,7 +3354,13 @@ async function tpPlanRestore(datum){
   /* Reihenfolge ist entscheidend: erst die Phasen herstellen, dann die Uebungen
      einsetzen. Andersherum gaebe es die Auswahlfelder noch gar nicht, in die sie
      gehoeren - und die Zuordnung ueber das Phasen-Label ginge ins Leere. */
+  /* v608: Erst die Trainer-Rückmeldungen DIESES Termins abwarten. Das Zeichnen rechnet
+     aus den angehakten Trainern die Zahl der Felder; mit den Haken des vorigen Termins
+     fehlten Felder, und Einträge ohne Feld fielen weg. */
+  if(typeof tpRsvpBereit==="function")await tpRsvpBereit(datum);
+  if(!_tpRestoreGilt(datum,lauf))return;
   const slots=await tpSlotsLoad(datum);
+  if(!_tpRestoreGilt(datum,lauf))return;
   if(slots){
     tpSlots.length=0;
     slots.forEach(s=>tpSlots.push({...s}));
@@ -3347,6 +3379,7 @@ async function tpPlanRestore(datum){
     });
   }
   const plan=await tpPlanLoad(datum);
+  if(!_tpRestoreGilt(datum,lauf))return;
   const allForms=tpAllForms();
   const sels=[...document.querySelectorAll(".tp-form-sel")];
   if(!sels.length)return;
@@ -3383,7 +3416,24 @@ async function tpPlanRestore(datum){
       const slot=tpSlots[parseInt(m[1])];
       return slot&&(slot.label||"")===(e.slotLabel||"");
     });
-    const setzen=el=>{ el.value=String(e.formIdx); belegt.add(el.id); if(typeof tpOnSelectChange==="function")tpOnSelectChange(el); };
+    const setzen=el=>{ el.value=String(e.formIdx); belegt.add(el.id); if(typeof tpOnSelectChange==="function")tpOnSelectChange(el);
+      /* v608: Die Marken der Vorlage bleiben am Feld, damit auch ein späteres Speichern sie
+         mitnimmt (tpPlanEntries). Ändert der Trainer das Feld von Hand, verschwinden sie. */
+      if(e.station!=null)el.dataset.station=String(e.station);
+      if(e.alleFelder)el.dataset.alle="1"; };
+    /* v608: Nennt der Eintrag Block und Feld, gehört er GENAU dorthin – sofern der Block an
+       dieser Stelle noch denselben Namen trägt. Die Zuordnung nur über den Namen verrutschte,
+       sobald ein Feld leer blieb (alle folgenden Übungen eine Gruppe weiter) oder zwei Blöcke
+       gleich hießen (Übungen liefen in den anderen Block über). */
+    if(e.block!=null&&e.feld!=null){
+      const el=document.getElementById(`tp-form-${e.block}-${e.feld}`);
+      const slotHier=tpSlots[e.block];
+      if(el&&!belegt.has(el.id)&&!el.value&&slotHier&&(slotHier.label||"")===(e.slotLabel||"")){
+        setzen(el);
+        if(e.station!=null)gesetzt.push({si:+e.block,station:Number(e.station),formIdx:e.formIdx});
+        return;
+      }
+    }
     /* Paket B: Trägt der Eintrag eine Stationsnummer (aus einer Vorlage mit `stationen`),
        gehört er auf GENAU dieses Feld. Gibt es das Feld nicht – weniger Feldtrainer als
        Stationen –, fällt die Station weg. Sie darf nicht auf ein anderes Feld rutschen:
