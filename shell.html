@@ -6,13 +6,13 @@
   <div class="pin-box">
     <h2>U9 I Adler</h2>
     <p>Zugang zum Trainerstab-Tool</p>
-    <div class="pin-input">
-      <input type="tel" maxlength="1" id="pin1" oninput="pinNext(this,2)" autofocus>
-      <input type="tel" maxlength="1" id="pin2" oninput="pinNext(this,3)" onkeydown="pinBack(event,1)">
-      <input type="tel" maxlength="1" id="pin3" oninput="pinNext(this,4)" onkeydown="pinBack(event,2)">
-      <input type="tel" maxlength="1" id="pin4" oninput="pinCheck()" onkeydown="pinBack(event,3)">
+    <div class="pin-input" role="group" aria-label="PIN, vier Ziffern">
+      <input type="tel" maxlength="1" id="pin1" aria-label="PIN, Ziffer 1 von 4" inputmode="numeric" autocomplete="off" oninput="pinNext(this,2)" autofocus>
+      <input type="tel" maxlength="1" id="pin2" aria-label="PIN, Ziffer 2 von 4" inputmode="numeric" autocomplete="off" oninput="pinNext(this,3)" onkeydown="pinBack(event,1)">
+      <input type="tel" maxlength="1" id="pin3" aria-label="PIN, Ziffer 3 von 4" inputmode="numeric" autocomplete="off" oninput="pinNext(this,4)" onkeydown="pinBack(event,2)">
+      <input type="tel" maxlength="1" id="pin4" aria-label="PIN, Ziffer 4 von 4" inputmode="numeric" autocomplete="off" oninput="pinCheck()" onkeydown="pinBack(event,3)">
     </div>
-    <div class="pin-err" id="pin-err"></div>
+    <div class="pin-err" id="pin-err" role="alert"></div>
     <button class="pin-btn" onclick="pinCheck()">Entsperren</button>
     <div id="pin-diag" style="margin-top:8px;font-size:10px;color:#94a3b8">App lädt…</div>
   </div>
