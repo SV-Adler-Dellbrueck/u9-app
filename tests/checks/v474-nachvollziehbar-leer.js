@@ -68,7 +68,9 @@ module.exports = async function (h) {
   }
   if (!r.neuBtn) probleme.push("„Neuer Termin“ ist kein Knopf (Klasse btn fehlt)");
   if (r.neuH < 44) probleme.push(`„Neuer Termin“ nur ${r.neuH}px`);
-  if (!/erwartet \(/.test(r.prog)) probleme.push(`„Kinder erwartet“ ohne Quelle: „${r.prog}“`);
+  /* v605: Der Chip schätzt nicht mehr („~N erwartet“), er zählt („N dabei · M fehlen“) –
+     auf Wunsch des PO. Die Regel dieser Prüfung bleibt: keine Zahl ohne Quelle in Klammern. */
+  if (!/\d+ (dabei|zugesagt|im Kader).*\(.+\)/.test(r.prog)) probleme.push(`Kinderzahl ohne Quelle: „${r.prog}“`);
   if (r.fairNull) probleme.push(`Einsatz-Fairness zeigt ${r.fairNull}× „0 Spiele“ statt eines Satzes`);
   if (!r.fairBtn) probleme.push("Einsatz-Fairness leer ohne Aktion");
   if (!r.erklaerWeg) probleme.push("Aufstellung leer, Erklärkästen trotzdem sichtbar");

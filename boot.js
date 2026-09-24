@@ -1437,8 +1437,32 @@ function tpFelderGruppen(tg,n,weg,versatz,bedarfe){
 function tpVersatz(si){
   const slot=tpSlots[si]; if(!slot)return 0;
   if(slot.versatz!=null)return Number(slot.versatz)||0;
-  let n=0; for(let i=0;i<si;i++) if(tpIstHauptteil((tpSlots[i]||{}).typ))n++;
+  let n=0; for(let i=0;i<si;i++) if(tpIstHauptteil((tpSlots[i]||{}).typ))n+=tpDurchgaenge(tpSlots[i]);   // v605: ein Block mit zwei Durchgängen rückt zweimal weiter
   return n;
+}
+/* v605 – PO: „Wir bauen 2 oder 3 Stationen auf, die Kinder wechseln in den Gruppen. Die
+   Übungen sind in allen Hauptteilen identisch, nur die Gruppen rotieren. Bei jedem Wechsel
+   wäre es aktuell ein neuer Hauptteil."
+   Statt Hauptteile zu kopieren, bekommt EIN Block Durchgänge: Die Übung hängt am Feld wie
+   bisher (v514/v573), und innerhalb des Blocks rückt die Einteilung je Durchgang um ein Feld
+   weiter – dieselbe Rechnung wie „⇄ weiterrücken", nur mehrmals hintereinander. Die Dauer
+   des Blocks ist die Gesamtzeit; sie wird auf die Durchgänge verteilt. */
+function tpDurchgaenge(slot){
+  if(!slot||!tpIstHauptteil(slot.typ))return 1;
+  return Math.max(1,Math.min(5,Number(slot.durchgaenge)||1));
+}
+function tpDurchgangMinuten(slot){
+  const n=tpDurchgaenge(slot), d=Math.max(1,Number(slot&&slot.dauer)||10);
+  const je=Math.max(1,Math.floor(d/n)), liste=Array(n).fill(je);
+  liste[n-1]=Math.max(1,d-je*(n-1));   // der Rest geht in den letzten Durchgang
+  return liste;
+}
+function tpDurchgaengeSetzen(si,wert){
+  const slot=tpSlots[si]; if(!slot)return;
+  const n=Math.max(1,Math.min(5,Number(wert)||1));
+  if(n>1)slot.durchgaenge=n; else delete slot.durchgaenge;
+  tpRenderTimeline();
+  if(typeof tpPlanSaveDebounced==="function")tpPlanSaveDebounced();
 }
 /* „⇄ weiterrücken" am Hauptteil. Setzt den Versatz fest – ab dann gilt er, auch wenn
    davor noch ein Block dazukommt. */
@@ -1507,6 +1531,9 @@ let TP_RSVP={}, TP_TRAINER_MANUELL={}, TP_VORBELEGT="", TP_ANWESEND=null;
    zugesagten Kindern, nicht aus dem Kader – der Kader enthält auch, wer abgesagt hat.
    Gehalten wie TP_RSVP: beim Terminwechsel geleert und neu geladen. */
 let TP_KIND_RSVP=null;
+/* v605: die ABSAGEN der Kinder (abgesagt/krank) für den Plantermin – ebenfalls Namen.
+   Eine Absage nach dem Speichern der Anwesenheit schlägt die vorab gespeicherte Liste. */
+let TP_KIND_ABSAGE=[];
 const TP_RSVP_MARKE={ja:{ico:"✓",farbe:"var(--green)",titel:"hat zugesagt"},
                      unsicher:{ico:"🤔",farbe:"var(--amber)",titel:"ist unsicher"},
                      nein:{ico:"✕",farbe:"var(--red)",titel:"hat abgesagt"},
@@ -1685,7 +1712,7 @@ async function tpTrainerRsvpLaden(datum){
 }
 async function _tpRsvpLadenIntern(datum){
   TP_RSVP={}; TP_TRAINER_MANUELL={}; TP_VORBELEGT=""; TP_ANWESEND=null; TP_TERMIN_ID=null;   // neuer Termin, neue Lage
-  TP_KIND_RSVP=null;
+  TP_KIND_RSVP=null; TP_KIND_ABSAGE=[];
   /* v470 – PO: „Check mal die Anwesenheiten der Trainer bezogen auf Trainingsplan und
      Anwesenheit. Die scheinen sich nicht abzugleichen."
      Sie taten es nicht: der Plan las `termine.trainer_status` (die Vorhersage aus „Bist du
@@ -1730,13 +1757,15 @@ async function _tpRsvpLadenIntern(datum){
 /* Zugesagte Kinder dieses Termins als Namensliste. `null` heißt „nicht ermittelbar"
    (kein Termin, kein Netz) – dann bleibt es beim bisherigen Weg über den Kader. */
 async function tpKindRsvpLaden(datum){
-  TP_KIND_RSVP=null;
+  TP_KIND_RSVP=null; TP_KIND_ABSAGE=[];
   if(!datum||TP_TERMIN_ID==null||typeof sbAuthHeaders!=="function")return;
   try{
     const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?termin_id=eq.${TP_TERMIN_ID}&select=spieler_id,status`,{headers:sbAuthHeaders()});
     if(!r.ok)return;
     const rows=await r.json()||[];
     const zu=rows.filter(x=>x&&x.status==="zugesagt").map(x=>x.spieler_id);
+    const ab=rows.filter(x=>x&&(x.status==="abgesagt"||x.status==="krank")).map(x=>x.spieler_id);
+    if(ab.length&&typeof kidListFromIds==="function")TP_KIND_ABSAGE=kidListFromIds(ab);
     if(!zu.length)return;                     // niemand hat zugesagt → nicht ermittelbar
     /* Kind-IDs werden über kidListFromIds in Namen übersetzt (views.js). Im Speicher
        trägt ein Kader-Eintrag `_id`, nicht `id` – direkt auf k.id zu filtern ergab eine
@@ -2058,15 +2087,23 @@ function tpRenderTimeline(){
        spielen hier bei den anderen Feldern mit (tpFelderGruppen). Sonst gilt weiter: nie
        weniger Felder als Gruppen, damit bei einer Absage keine Gruppe verschwindet. */
     const weg=(tpIstHauptteil(typ)&&Array.isArray(slot.weg))?slot.weg:[];
-    const basisFelder=noGroups?1:(tpIstHauptteil(typ)&&gebunden.size)?Math.min(Math.max(1,trainers.length),5):Math.min(Math.max(1,trainerCount,tgAnz),5);
+    /* v605: Das Aufwärmen kann mehrere Übungen hintereinander haben (PO: „über ein Plus
+       eine Übung mehr einbauen"). Alle Kinder machen jede davon – es bleibt ein Feld je
+       Übung, nur ohne Gruppen. */
+    const warmFolge=typ==="warmup"?Math.max(1,Math.min(4,Number(slot.folge)||1)):1;
+    const basisFelder=noGroups?warmFolge:(tpIstHauptteil(typ)&&gebunden.size)?Math.min(Math.max(1,trainers.length),5):Math.min(Math.max(1,trainerCount,tgAnz),5);
     const parallelSlots=Math.max(1,basisFelder-weg.length);   // vom Trainer weggelassene Felder
     const felderGruppen=(tpIstHauptteil(typ)&&typeof tgFor==="function"&&tgFor())?tpFelderGruppen(tgFor(),parallelSlots,weg,tpVersatz(si),tpFeldBedarfe(si,parallelSlots,merk.sel)):null;
     const filtered=tpFilteredOpts(typ);
     const formOpts=filtered.map(x=>`<option value="${x.i}">${esc(x.f.name)} (${esc(x.f.dauer)})</option>`).join("");
 
-    html+=`<div class="tp-slot" style="border-left:3px solid ${slot.farbe};${parallel?"margin-left:14px;":""}">
+    /* v605: Griff zum Verschieben (PO: „per Drag and Drop an die richtige Position ziehen").
+       Nur an Blöcken der Kette – ein paralleler Block hängt an seinem Hauptteil und wandert
+       mit ihm. Der Griff ist ein Knopf: Pfeiltasten verschieben auch ohne Ziehen. */
+    const griff=parallel?"":`<button class="tp-griff" aria-label="${esc(tpSlotKopfText(slot.label))} verschieben – ziehen oder Pfeiltasten" title="Ziehen zum Verschieben" onpointerdown="tpZiehStart(event,${si})" onkeydown="tpGriffTaste(event,${si})">≡</button>`;
+    html+=`<div class="tp-slot" data-si="${si}"${parallel?"":' data-kette="1"'} style="border-left:3px solid ${slot.farbe};${parallel?"margin-left:14px;":""}">
       <div class="tp-slot-head">
-        <span class="tp-slot-label"${slot.label&&tpSlotKopfText(slot.label)!==String(slot.label).trim()?` title="${esc(slot.label)}"`:""}>${parallel?tpParallelIcon(typ):""}${tpSlotKopfText(slot.label)}${tpTypMarke(typ)}</span>
+        ${griff}<span class="tp-slot-label"${slot.label&&tpSlotKopfText(slot.label)!==String(slot.label).trim()?` title="${esc(slot.label)}"`:""}>${parallel?tpParallelIcon(typ):""}${tpSlotKopfText(slot.label)}${tpTypMarke(typ)}</span>
         <span class="tp-slot-time">${startMin}' – ${endMin}'${parallel?` · parallel zu ${tpSlots[slot.parallelZu].label}`:""}</span>
         ${parallel?"":tpDauerSelect(si,slot)}
         <button class="tp-remove" onclick="tpRemoveSlot(${si})"><i class="ti ti-trash"></i></button>
@@ -2109,11 +2146,29 @@ function tpRenderTimeline(){
       /* v573: mit der Feldstärke – sie kann sich durch den Ausgleich von der Gruppengröße
          unterscheiden, und der Timer zeigt dieselbe Zeile. */
       const wer=felderGruppen.map((f,i)=>`${f.emo||"👥"} ${esc((f.name||"").split(" + ")[0])} (${f.kinder.length}) → Feld ${i+1}`).join(" · ");
+      /* v605: Durchgänge – dieselben Übungen, die Gruppen wechseln innerhalb des Blocks. */
+      const nDg=tpDurchgaenge(slot), maxDg=Math.min(5,felderGruppen.length);
+      const dgWahl=`<label style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--text)">🔁 Durchgänge
+          <select aria-label="Durchgänge in ${esc(tpSlotKopfText(slot.label))}" onchange="tpDurchgaengeSetzen(${si},this.value)" style="min-height:44px;padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:12px;background:var(--surface);color:var(--text)">
+            ${Array.from({length:maxDg},(_,i)=>i+1).map(n=>`<option value="${n}"${n===nDg?" selected":""}>${n===1?"1 (kein Wechsel)":n}</option>`).join("")}
+          </select></label>`;
+      if(nDg>1){
+        const min=tpDurchgangMinuten(slot); let ab=startMin;
+        const zeilen=Array.from({length:nDg},(_,d)=>{
+          const fg=tpFelderGruppen(tgFor(),parallelSlots,weg,v+d,tpFeldBedarfe(si,parallelSlots,merk.sel));
+          const von=ab; ab+=min[d];
+          return `<div style="padding:2px 0"><b>${d+1}. Durchgang</b> <span style="color:var(--text2)">${von}'–${ab}'</span> · ${fg.map((f,i)=>`${f.emo||"👥"} ${esc((f.name||"").split(" + ")[0])} → Station ${i+1}`).join(" · ")}</div>`;
+        }).join("");
+        html+=`<div class="tp-durchgaenge" style="font-size:11.5px;line-height:1.5;padding:4px 0 6px">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px">${dgWahl}<span style="font-size:11px;color:var(--text2)">je ${min[0]} Min. · Pfiff = Wechsel</span></div>${zeilen}</div>`;
+      }else{
       html+=`<div class="tp-ringtausch" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:4px 0 6px">
         <span style="font-size:11px;color:var(--text2);flex:1 1 140px;min-width:0">⇄ ${wer}${v?` <b>· ${v}× weitergerückt</b>`:""}</span>
         <button onclick="tpVersatzSetzen(${si},1)" title="Alle Gruppen rücken ein Feld weiter – bei zwei Gruppen ist das der Tausch" style="min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer">⇄ weiterrücken</button>
         ${eigen?`<button onclick="tpVersatzZurueck(${si})" title="Wieder der Reihe nach – so wie es sich aus der Reihenfolge der Blöcke ergibt" style="min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer">↩ automatisch</button>`:""}
+        ${dgWahl}
       </div>`;
+      }
     }
     if(typ==="warmup"){
       html+=tpTipp("Ankommensspiel wählen: ab dem ERSTEN Kind spielbar, Nachzügler docken einfach an – kein Warten, kein Laufen ohne Ball.");
@@ -2181,10 +2236,14 @@ function tpRenderTimeline(){
         // Eine Karte je Station. Frueher stand hier eine einzige Zeile, die am Handy in
         // fuenf Elemente umbrach – man sah nicht mehr, welches Feld zu welcher Gruppe gehoert.
         // Der Trainername stand doppelt: einmal als Etikett, einmal im (funktionslosen) Dropdown.
+        const dgN=isMain?tpDurchgaenge(slot):1;
+        const folgeGr=(dgN>1&&tgg)?Array.from({length:dgN},(_,d)=>{const fg=tpFelderGruppen(tgFor(),parallelSlots,weg,tpVersatz(si)+d,tpFeldBedarfe(si,parallelSlots,merk.sel))[p];return fg?`${fg.emo||"👥"} ${esc((fg.name||"").split(" + ")[0])}`:"";}).filter(Boolean).join(" → "):"";
+        const warmTitel=p===0?"Alle Kinder":`Alle Kinder · danach (${p+1}.)`;
         html+=`<div class="tp-station">
           <div class="tp-station-head">
-            <span class="tp-station-nr">${noGroups?"👥":(tgg?tgg.emo:p+1)}</span>
-            <span class="tp-station-titel">${noGroups?"Alle Kinder":(tgg?`${tgg.name} (${tgg.kinder.length})`:`Gruppe ${p+1}`)}</span>
+            <span class="tp-station-nr">${noGroups?"👥":(folgeGr?p+1:(tgg?tgg.emo:p+1))}</span>
+            <span class="tp-station-titel">${noGroups?warmTitel:(folgeGr?`Station ${p+1}<br><span style="font-weight:400;font-size:11px;color:var(--text2)">${folgeGr}</span>`:(tgg?`${tgg.name} (${tgg.kinder.length})`:`Gruppe ${p+1}`))}</span>
+            ${(typ==="warmup"&&p>0&&p===parallelSlots-1)?`<button class="tp-remove" onclick="tpWarmMinus(${si})" aria-label="Diese Aufwärm-Übung entfernen" title="Diese Aufwärm-Übung entfernen"><i class="ti ti-x"></i></button>`:""}
             ${noGroups?"":tpCoachSelect(selId,gebunden,isMain&&parallelSlots>1)}
           </div>`;
         /* v573: Wer für diesen einen Block das Feld wechselt, steht namentlich da – sonst
@@ -2215,7 +2274,10 @@ function tpRenderTimeline(){
       }
       // PO: Kleingruppen erscheinen NUR, wenn die gewählte Aufwärm-Übung sie braucht
       // (z. B. Schattenläufer = paarweise; Hai & Fische = alle zusammen → kein Button)
-      if(typ==="warmup")html+=`<div id="tp-kg-${si}"></div>`;
+      if(typ==="warmup"){
+        html+=`<div id="tp-kg-${si}"></div>`;
+        if(warmFolge<4)html+=`<button class="tp-plus" onclick="tpWarmPlus(${si})" style="width:100%;min-height:44px;margin-top:6px;border:1.5px dashed var(--rand-bedien);border-radius:10px;background:transparent;color:var(--text);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">＋ Übung im Aufwärmen</button>`;
+      }
     }
     html+='</div>';
     if(!parallel)time+=slot.dauer; // parallele Blöcke (Torwart/Individual) zählen nicht doppelt
@@ -2244,40 +2306,22 @@ function tpRenderTimeline(){
   if(typeof tpNettoRender==="function")tpNettoRender(); // Paket 3: Nettospielzeit + Wochenstand
   tpGruppeHinweisAll();   // v571: Feldtext und Gruppengröße je Station (braucht die gesetzten Selects)
 }
-/* G3: Anwesenheits-Prognose – erwartete Kinderzahl fürs gewählte Trainingsdatum aus den
-   Zusagen (fix) plus historischer Anwesenheitsquote je Kind (für noch offene). */
+/* G3 → v605: Wie viele Kinder sind dabei? – PO: „Die Angabe Kinder erwartet ist wenig
+   zielführend. Wichtiger wäre, wie viele tatsächlich zugesagt haben bzw. in der Anwesenheit
+   stehen." Die Zahl kommt jetzt aus derselben Quelle wie die Trainingsgruppen (_tgPool),
+   damit Chip und Gruppen nie verschiedene Kinder zählen. Keine Schätzung mehr: Die alte
+   Prognose fand ohnehin nie eine Zusage (sie suchte k.id, im Speicher heißt es _id). */
 async function tpPrognoseLoad(){
   const el=document.getElementById("tp-prognose"); if(!el)return;
   if(typeof pauseLoad==="function")await pauseLoad(); // C: Pausen berücksichtigen
-  const datum=document.getElementById("tp-date")?.value;
-  /* Inaktive Kinder zaehlten bisher mit: KADER wurde ungefiltert durchlaufen, ein
-     ausgetragenes Kind steuerte seine Quote (oder 0.7) zur Erwartung bei. */
-  const aktive=KADER.filter(k=>k.aktiv!==false);
-  /* Steht die Anwesenheit fuer DIESEN Termin schon fest, ist nichts mehr zu schaetzen.
-     Vorher rechnete die Prognose stur mit historischen Quoten weiter und widersprach
-     damit der Liste, die der Trainer eine Ansicht weiter selbst abgehakt hatte. */
-  const tag=(datum&&awZaehltAlsTatsache(datum))?AW_DATA[datum]:null;   // v475: im Voraus Gespeichertes ist keine Tatsache
-  if(tag&&Object.keys(tag).some(k=>k.charAt(0)!=="_")){
-    const da=aktive.filter(k=>tag[k.name]&&tag[k.name].da===true).length;
-    el.innerHTML=`<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;background:var(--surface2);border:var(--border);border-radius:20px;padding:4px 12px">👥 ${da} Kinder eingetragen <span style="font-weight:400;color:var(--text2)">(Anwesenheit)</span></span>`;
-    return;
-  }
-  const dates=Object.keys(AW_DATA); const anyHist=dates.length>0;
-  const rate={};
-  aktive.forEach(k=>{ let tot=0,da=0; dates.forEach(d=>{const day=AW_DATA[d]; if(day&&(k.name in day)){tot++; if(day[k.name].da)da++;}}); rate[k.name]=tot?da/tot:0.7; });
-  let rsvp={};
-  if(datum){ try{ const tid=await terminIdForDatum(datum); if(tid){ const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?termin_id=eq.${tid}&select=spieler_id,status`,{headers:sbAuthHeaders()}); if(!sbCheck401(r)&&r.ok)(await r.json()).forEach(x=>rsvp[x.spieler_id]=x.status); } }catch(e){} }
-  let exp=0, sure=0;
-  aktive.forEach(k=>{
-    if(typeof istPaused==="function"&&istPaused(k.name))return; // pausiert -> zählt 0
-    const st=rsvp[k.id];
-    if(st==="zugesagt"){exp+=1;sure++;}
-    else if(st==="abgesagt"||st==="krank"){/* 0 */}
-    else exp+=(anyHist?rate[k.name]:0.7);
-  });
-  /* v474: Quelle dazu (Muster v470) – „~9 erwartet" ohne Herkunft liest sich wie eine Zusage. */
-  const quelle=sure?`${sure} zugesagt, Rest nach Trainingsquote`:(anyHist?"nach Trainingsquote":"Schätzung, noch keine Anwesenheit erfasst");
-  el.innerHTML=`<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;background:var(--surface2);border:var(--border);border-radius:20px;padding:4px 12px">👥 ~${Math.round(exp)} Kinder erwartet <span style="font-weight:400;color:var(--text2)">(${quelle})</span></span>`;
+  const pool=(typeof _tgPool==="function")?_tgPool():null;
+  if(!pool){el.innerHTML="";return;}
+  const n=pool.namen.length, fehlen=Math.max(0,pool.basis-n);
+  let text, quelle;
+  if(pool.quelle==="anwesenheit"){ text=`${n} dabei · ${fehlen} fehlen`; quelle="Anwesenheit"+(pool.abgesagt?`, ${pool.abgesagt} später abgesagt`:""); }
+  else if(pool.quelle==="zusagen"){ text=`${n} zugesagt`+(pool.abgesagt?` · ${pool.abgesagt} abgesagt`:""); quelle="Rückmeldungen, Anwesenheit noch offen"; }
+  else { text=`${n} im Kader`+(pool.abgesagt?` · ${pool.abgesagt} abgesagt`:""); quelle="noch keine Anwesenheit"; }
+  el.innerHTML=`<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;background:var(--surface2);border:var(--border);border-radius:20px;padding:4px 12px">👥 ${text} <span style="font-weight:400;color:var(--text2)">(${quelle})</span></span>`;
 }
 
 function tpOnSelectChange(sel){
@@ -2608,16 +2652,128 @@ function tpDoAddSlot(idx){
 }
 
 function tpRemoveSlot(idx){
-  tpSlots.splice(idx,1);
-  /* parallelZu zeigt auf einen ARRAY-INDEX – nach dem Splice verschiebt sich alles
+  /* parallelZu zeigt auf einen ARRAY-INDEX – nach dem Löschen verschiebt sich alles
      dahinter. Ohne Nachziehen hing ein Einzeltraining plötzlich am falschen Hauptteil
-     (oder an einem gelöschten Slot, dann verschluckte _tlSnapshot es ganz). */
-  tpSlots.forEach(s=>{
-    if(s.parallelZu==null)return;
-    if(s.parallelZu===idx)s.parallelZu=null;      // Ziel wurde gelöscht → neu zuordnen
-    else if(s.parallelZu>idx)s.parallelZu--;
+     (oder an einem gelöschten Slot, dann verschluckte _tlSnapshot es ganz).
+     v605: Dasselbe galt für die gewählten Übungen – sie hängen an der Feld-Kennung
+     tp-form-<Block>-<Feld>, und die wanderte beim Löschen nicht mit. tpSlotsNeuOrdnen
+     zieht Kennungen, Trainer-Zuordnung und parallelZu gemeinsam nach. */
+  tpSlotsNeuOrdnen(tpSlots.map((_,i)=>i).filter(i=>i!==idx));
+}
+/* v605: Blöcke neu ordnen – für Ziehen, Pfeiltasten und Löschen. `reihe` nennt die alten
+   Indizes in der neuen Reihenfolge; wer fehlt, ist gelöscht.
+   Drei Dinge hängen am Index und müssen mit: die Kennungen der Auswahlfelder (daran merkt
+   sich das Neuzeichnen die gewählte Übung), tpCoaches (Trainer je Feld) und parallelZu. */
+function tpSlotsNeuOrdnen(reihe){
+  const alt=tpSlots.slice(), neuVon={};
+  reihe.forEach((oi,ni)=>{neuVon[oi]=ni;});
+  const wrap=document.getElementById("tp-timeline");
+  if(wrap){
+    // Zwei Schritte über einen Zwischennamen, damit kein Feld ein anderes überschreibt
+    const els=[...wrap.querySelectorAll(".tp-form-sel,select[id^='tp-ind-player-'],.tp-tw-player")];
+    els.forEach(el=>{
+      if(el.classList.contains("tp-tw-player")){const ni=neuVon[el.dataset.slot]; el.dataset.slot=ni==null?"weg":"~"+ni; return;}
+      const m=el.id.match(/^(tp-form-|tp-ind-player-)(\d+)(.*)$/); if(!m)return;
+      const ni=neuVon[m[2]]; el.id=ni==null?"weg-"+el.id:"~"+m[1]+ni+m[3];
+      if(ni==null)el.classList.remove("tp-form-sel");
+    });
+    els.forEach(el=>{
+      if(el.classList.contains("tp-tw-player")){if(el.dataset.slot.charAt(0)==="~")el.dataset.slot=el.dataset.slot.slice(1);return;}
+      if(el.id.charAt(0)==="~")el.id=el.id.slice(1);
+    });
+  }
+  const c={};
+  Object.keys(tpCoaches).forEach(k=>{
+    const m=k.match(/^tp-form-(\d+)-(\d+)$/);
+    if(!m){c[k]=tpCoaches[k];return;}
+    const ni=neuVon[m[1]]; if(ni!=null)c[`tp-form-${ni}-${m[2]}`]=tpCoaches[k];
   });
+  tpCoaches=c;
+  tpSlots.length=0; reihe.forEach(oi=>tpSlots.push(alt[oi]));
+  tpSlots.forEach(s=>{ if(s.parallelZu!=null)s.parallelZu=(neuVon[s.parallelZu]!=null)?neuVon[s.parallelZu]:null; });
   tpRenderTimeline();
+  if(typeof tpPlanSaveDebounced==="function")tpPlanSaveDebounced();
+}
+/* Neue Reihenfolge der KETTE (Blöcke ohne parallele) → vollständige Reihe aller Blöcke.
+   Parallele Blöcke folgen ihrem Hauptteil; ihre Position im Feld ist egal, ihr Ziel zählt. */
+function _tpReiheAusKette(kette){
+  const reihe=[];
+  kette.forEach(i=>{ reihe.push(i); tpSlots.forEach((s,j)=>{ if(j!==i&&tpIstParallel(s)&&s.parallelZu===i)reihe.push(j); }); });
+  tpSlots.forEach((_,j)=>{ if(!reihe.includes(j))reihe.push(j); });
+  return reihe;
+}
+function _tpKette(){ return tpSlots.map((s,i)=>i).filter(i=>!tpIstParallel(tpSlots[i])); }
+function tpSlotVerschieben(si,nachPos){
+  const kette=_tpKette(), von=kette.indexOf(si); if(von<0)return;
+  const ziel=Math.max(0,Math.min(kette.length-1,nachPos));
+  if(ziel===von)return;
+  kette.splice(von,1); kette.splice(ziel,0,si);
+  tpSlotsNeuOrdnen(_tpReiheAusKette(kette));
+  const neu=_tpKette()[ziel];
+  setTimeout(()=>document.querySelector(`.tp-slot[data-si="${neu}"] .tp-griff`)?.focus(),0);
+}
+function tpGriffTaste(ev,si){
+  if(ev.key!=="ArrowUp"&&ev.key!=="ArrowDown")return;
+  ev.preventDefault();
+  const pos=_tpKette().indexOf(si);
+  tpSlotVerschieben(si,pos+(ev.key==="ArrowUp"?-1:1));
+}
+/* Ziehen mit Zeiger (Finger, Maus, Stift) – nur am Griff, damit das Scrollen der Seite
+   frei bleibt. Der Block folgt dem Finger, eine Linie zeigt, wo er landet. Nahe am Rand
+   scrollt die Seite mit, denn eine Einheit ist am Handy länger als der Bildschirm. */
+let _tpZieh=null;
+function tpZiehStart(ev,si){
+  const griff=ev.currentTarget, el=griff&&griff.closest(".tp-slot"); if(!el)return;
+  if(ev.button!=null&&ev.button!==0)return;
+  ev.preventDefault();
+  try{griff.setPointerCapture(ev.pointerId);}catch(e){}
+  const kette=[...document.querySelectorAll('#tp-timeline .tp-slot[data-kette="1"]')];
+  const linie=document.createElement("div"); linie.className="tp-zieh-linie";
+  el.classList.add("tp-zieht");
+  _tpZieh={si,el,griff,y0:ev.clientY,sy0:window.scrollY,kette,linie,ziel:kette.indexOf(el),scroll:null};
+  el.parentNode.insertBefore(linie,el);
+  const bewegen=e=>{
+    if(!_tpZieh)return;
+    el.style.transform=`translateY(${e.clientY-_tpZieh.y0+window.scrollY-_tpZieh.sy0}px)`;
+    // Wohin? Vor den ersten Kettenblock, dessen Mitte unter dem Finger liegt
+    let pos=kette.length;
+    for(let i=0;i<kette.length;i++){ if(kette[i]===el)continue; const r=kette[i].getBoundingClientRect(); if(e.clientY<r.top+r.height/2){pos=i;break;} }
+    const vorEl=kette[pos]||null;
+    if(vorEl)vorEl.parentNode.insertBefore(linie,vorEl); else { const letzte=kette[kette.length-1]; let n=letzte; while(n.nextElementSibling&&n.nextElementSibling.classList.contains("tp-slot")&&!n.nextElementSibling.dataset.kette)n=n.nextElementSibling; n.after(linie); }
+    const eigen=kette.indexOf(el);
+    _tpZieh.ziel=pos>eigen?pos-1:pos;
+    const rand=60, h=window.innerHeight;
+    clearInterval(_tpZieh.scroll); _tpZieh.scroll=null;
+    if(e.clientY<rand||e.clientY>h-rand){ const dy=e.clientY<rand?-12:12; _tpZieh.scroll=setInterval(()=>window.scrollBy(0,dy),30); }
+  };
+  const ende=()=>{
+    griff.removeEventListener("pointermove",bewegen); griff.removeEventListener("pointerup",ende); griff.removeEventListener("pointercancel",ende);
+    const z=_tpZieh; _tpZieh=null; if(!z)return;
+    clearInterval(z.scroll); z.linie.remove(); el.classList.remove("tp-zieht"); el.style.transform="";
+    const von=z.kette.indexOf(el);
+    if(z.ziel!==von)tpSlotVerschieben(si,z.ziel);
+  };
+  griff.addEventListener("pointermove",bewegen);
+  griff.addEventListener("pointerup",ende);
+  griff.addEventListener("pointercancel",ende);
+}
+/* v605: Aufwärmen mit mehreren Übungen hintereinander. `folge` wird mit dem Block
+   gespeichert (tpSlotsMitZuordnung übernimmt den ganzen Slot), also stehen beim Öffnen
+   wieder so viele Felder da, wie Übungen im Plan stehen. */
+function tpWarmPlus(si){
+  const s=tpSlots[si]; if(!s)return;
+  s.folge=Math.min(4,(Number(s.folge)||1)+1);
+  tpRenderTimeline();
+  const neu=document.getElementById(`tp-form-${si}-${s.folge-1}-pick`); if(neu)neu.focus();
+  if(typeof tpPlanSaveDebounced==="function")tpPlanSaveDebounced();
+}
+function tpWarmMinus(si){
+  const s=tpSlots[si]; if(!s)return;
+  const n=Number(s.folge)||1; if(n<=1)return;
+  const letzte=document.getElementById(`tp-form-${si}-${n-1}`); if(letzte)letzte.value="";
+  if(n-1>1)s.folge=n-1; else delete s.folge;
+  tpRenderTimeline();
+  if(typeof tpPlanSaveDebounced==="function")tpPlanSaveDebounced();
 }
 
 /* ═══════════════════════════════════
@@ -3343,7 +3499,10 @@ function tpVorplanJump(datum){
 let _stT={ix:0,left:0,timer:null,stations:[],paused:false};
 // Stationen aus dem aktuellen Zeitplan: Label + Dauer je Slot, plus die gewählten Übungen.
 function stTimerStations(){
-  return tpSlots.map((slot,si)=>{
+  /* v605: Durchgänge werden zu eigenen Stationen – mit der weitergerückten Einteilung. */
+  return tpSlots.flatMap((slot,si)=>{
+    const nDg=tpDurchgaenge(slot), minuten=tpDurchgangMinuten(slot);
+    return Array.from({length:nDg},(_,d)=>{
     const forms=[...document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`)]
       .map(s=>(s.value&&s.selectedOptions[0])?s.selectedOptions[0].textContent.replace(/\s*\([^)]*\)\s*$/,"").trim():"")
       .filter(Boolean);
@@ -3354,10 +3513,11 @@ function stTimerStations(){
     try{
       if(tpIstHauptteil(slot.typ)&&typeof tgFor==="function"&&tgFor()){
         const n=Math.max(1,[...document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`)].length);
-        gruppen=tpFelderGruppen(tgFor(),n,(slot.weg||[]),tpVersatz(si),tpFeldBedarfe(si,n)).map((f,i)=>`${f.emo||"👥"} ${(f.name||"").split(" + ")[0]} (${f.kinder.length}) → Feld ${i+1}`);
+        gruppen=tpFelderGruppen(tgFor(),n,(slot.weg||[]),tpVersatz(si)+d,tpFeldBedarfe(si,n)).map((f,i)=>`${f.emo||"👥"} ${(f.name||"").split(" + ")[0]} (${f.kinder.length}) → Feld ${i+1}`);
       }
     }catch(e){}
-    return {label:slot.label||("Station "+(si+1)),dauer:Math.max(1,slot.dauer||10),farbe:slot.farbe||"#1a56db",forms:[...new Set(forms)],gruppen};
+    return {label:(slot.label||("Station "+(si+1)))+(nDg>1?` · Durchgang ${d+1}/${nDg}`:""),dauer:nDg>1?minuten[d]:Math.max(1,slot.dauer||10),farbe:slot.farbe||"#1a56db",forms:[...new Set(forms)],gruppen};
+    });
   });
 }
 function stTimerStart(){
@@ -3958,12 +4118,17 @@ function _tlSnapshot(){
   const stationen=[];
   tpSlots.forEach((slot,si)=>{
     if(tpIstParallel(slot))return; // dockt unten an
-    const gruppen=[];
     const sels=document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`);
     /* v573: Der Trainingsstart nimmt DIESELBE Zuordnung wie der Plan – mit Versatz und mit
        dem Ausgleich der Feldstärken. Der Versatz fehlte hier seit v514; auf den Handys am
        Platz stand damit im zweiten Hauptteil eine andere Gruppe am Feld als in der Planung. */
-    const felder=(tg&&tg.gruppen&&tpIstHauptteil(slot.typ))?tpFelderGruppen(tg,sels.length,slot.weg,tpVersatz(si),tpFeldBedarfe(si,sels.length)):null;
+    /* v605: Ein Block mit Durchgängen läuft am Platz als mehrere Stationen hintereinander –
+       jede mit eigener Uhr und der weitergerückten Einteilung. Der Pfiff am Ende eines
+       Durchgangs ist das Wechselsignal. */
+    const nDg=tpDurchgaenge(slot), minuten=tpDurchgangMinuten(slot);
+    for(let d=0;d<nDg;d++){
+    const gruppen=[];
+    const felder=(tg&&tg.gruppen&&tpIstHauptteil(slot.typ))?tpFelderGruppen(tg,sels.length,slot.weg,tpVersatz(si)+d,tpFeldBedarfe(si,sels.length)):null;
     sels.forEach((s,p)=>{
       const f=s.value?forms[Number(s.value)]:null;
       const tgg=felder?felder[p]:null;
@@ -3975,25 +4140,27 @@ function _tlSnapshot(){
       });
     });
     if(!gruppen.length)gruppen.push({trainer:"Alle",uebung:(slot.typ==="abschluss")?"Freies Spiel / Trainingsturnier":"(frei)",gruppe:null,kinder:null});
-    stationen.push({si,label:slot.label||("Station "+(si+1)),dauer:Math.max(1,slot.dauer||10),farbe:slot.farbe||"#16a34a",gruppen});
+    const label=(slot.label||("Station "+(si+1)))+(nDg>1?` · Durchgang ${d+1}/${nDg}`:"");
+    stationen.push({si,label,dauer:nDg>1?minuten[d]:Math.max(1,slot.dauer||10),farbe:slot.farbe||"#16a34a",gruppen});
+    }
   });
   /* Parallele Blöcke docken an ihre Ziel-Station an. Die beteiligten Kinder werden dort
      aus den Feldgruppen entfernt – sie sind ja weg. Beim Torwart-Block sind das die
      angehakten Torhüter (mehrere), beim Individual-Block das eine gewählte Kind. */
   tpSlots.forEach((slot,si)=>{
     if(!tpIstParallel(slot))return;
-    const ziel=stationen.find(st=>st.si===slot.parallelZu); if(!ziel)return;
+    const ziele=stationen.filter(st=>st.si===slot.parallelZu); if(!ziele.length)return;   // v605: bei Durchgängen an jeden
     const sel=document.querySelector(`.tp-form-sel[id^="tp-form-${si}-"]`);
     const f=(sel&&sel.value)?forms[Number(sel.value)]:null;
     const twBlock=(slot.typ||"main")==="tw";
     const kinder=twBlock
       ? Array.from(document.querySelectorAll(`.tp-tw-player[data-slot="${si}"]:checked`)).map(c=>c.value)
       : [document.getElementById(`tp-ind-player-${si}`)?.value||""].filter(Boolean);
-    ziel.gruppen.forEach(g=>{if(g.kinder&&kinder.length)g.kinder=g.kinder.filter(k=>!kinder.includes(k));});
+    ziele.forEach(ziel=>ziel.gruppen.forEach(g=>{if(g.kinder&&kinder.length)g.kinder=g.kinder.filter(k=>!kinder.includes(k));}));
     const titel=twBlock
       ? `🧤 Torwart-Training${kinder.length?" mit "+kinder.join(", "):""}: ${f?f.name:"(Übung wählen)"}`
       : `🎯 Einzeltraining${kinder.length?" mit "+kinder[0]:""}: ${f?f.name:"(Übung wählen)"}`;
-    ziel.gruppen.push({trainer:(sel&&tpCoaches[sel.id])||"?",uebung:titel,gruppe:null,kinder:kinder.length?kinder:null,einzel:true});
+    ziele.forEach(ziel=>ziel.gruppen.push({trainer:(sel&&tpCoaches[sel.id])||"?",uebung:titel,gruppe:null,kinder:kinder.length?kinder:null,einzel:true}));
   });
   return stationen.map(({si,...rest})=>rest);
 }
@@ -4395,23 +4562,31 @@ function tgKachelHtml(){
    Uebung braucht man mehr oder weniger Gruppen als Trainer da sind. Obergrenze ist die
    Zahl der Gruppennamen (TG_NAMEN), damit Name und Leibchenfarbe eindeutig bleiben. */
 /* Paket C – woher die Kinder kommen, in dieser Reihenfolge:
-   1. die erfasste Anwesenheit DES PLANTERMINS (Tatsache schlägt Vorhersage),
+   1. die gespeicherte Anwesenheit DES PLANTERMINS,
    2. sonst die Zusagen der Eltern für diesen Termin,
-   3. sonst der Kader (bisheriges Verhalten, wenn nichts vorliegt).
+   3. sonst der Kader ohne die Absagen.
    Vorher zählte _kgPool() die Anwesenheit von HEUTE – plant man am Montag für Freitag,
-   war das die falsche Liste, und sonst stand der ganze Kader in den Gruppen. */
+   war das die falsche Liste, und sonst stand der ganze Kader in den Gruppen.
+   v605 – PO: „Ein Kind ist in der Anwesenheit abgewählt, steht aber in den Gruppen." Die
+   Anwesenheit zählte erst am Tag selbst (v475). Die Regel galt einer Liste, die vorab nur
+   die Rückmeldungen abschrieb; wer heute Kinder abwählt, meint aber morgen. Jetzt gilt
+   die gespeicherte Liste auch vorab – nur eine SPÄTERE Absage der Eltern schlägt sie noch,
+   solange der Tag nicht da ist (am Tag selbst ist die Liste die Tatsache). */
 function _tgPool(){
   const d=_tgDatum();
   const aktive=KADER.filter(k=>k.aktiv!==false).map(k=>k.name);
   const ohnePause=arr=>arr.filter(n=>!(typeof istPaused==="function"&&istPaused(n)));
   const tag=(typeof AW_DATA==="object"&&AW_DATA)?AW_DATA[d]:null;
   const tatsache=(typeof awZaehltAlsTatsache==="function")?awZaehltAlsTatsache(d):false;
-  if(tatsache&&tag){
-    const da=aktive.filter(n=>tag[n]&&tag[n].da===true);
-    if(da.length>=2)return {namen:ohnePause(da),quelle:"anwesenheit"};
+  const absage=new Set(Array.isArray(TP_KIND_ABSAGE)?TP_KIND_ABSAGE:[]);
+  const basis=ohnePause(aktive);
+  if(tag&&aktive.some(n=>tag[n])){
+    let da=aktive.filter(n=>tag[n]&&tag[n].da===true);
+    if(!tatsache)da=da.filter(n=>!absage.has(n));
+    if(da.length>=2)return {namen:ohnePause(da),quelle:"anwesenheit",basis:basis.length,abgesagt:tatsache?0:basis.filter(n=>tag[n]&&tag[n].da===true&&absage.has(n)).length};
   }
-  if(Array.isArray(TP_KIND_RSVP)&&TP_KIND_RSVP.length>=2)return {namen:ohnePause(TP_KIND_RSVP),quelle:"zusagen"};
-  return {namen:ohnePause(aktive),quelle:"kader"};
+  if(Array.isArray(TP_KIND_RSVP)&&TP_KIND_RSVP.length>=2)return {namen:ohnePause(TP_KIND_RSVP),quelle:"zusagen",basis:basis.length,abgesagt:basis.filter(n=>absage.has(n)).length};
+  return {namen:basis.filter(n=>!absage.has(n)),quelle:"kader",basis:basis.length,abgesagt:basis.filter(n=>absage.has(n)).length};
 }
 /* Zielgröße vier bis sechs (Auftragspaket). Der Hinweis urteilt nicht, er sagt nur, dass
    eine Gruppe darunter liegt – die Entscheidung bleibt beim Trainer. */
