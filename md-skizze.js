@@ -1118,7 +1118,7 @@ function _skzGrRad(ev){
 }
 /* ═══ v556 – BESETZUNG: die Kinder finden sich wieder ═══
    In der Skizze steht „S" und „O". Ein Achtjähriger erkennt darin nicht sich selbst.
-   Steht im Kreis „Mi" für Mika und am Tablet sein Foto, dann ist es SEINE Aufgabe.
+   Steht im Kreis „Ni" für Nina und am Tablet sein Foto, dann ist es SEINE Aufgabe.
 
    Drei Festlegungen, jede aus einem Grund:
 

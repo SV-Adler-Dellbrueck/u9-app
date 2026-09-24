@@ -252,7 +252,7 @@ heute, nur in der Trainer-App.
 ## Scheibe 4 · Besetzung — die Kinder finden sich wieder
 
 **Warum.** In der Skizze steht „S“ und „O“. Ein Achtjähriger erkennt darin nicht sich
-selbst. Steht im Kreis „Mi“ für Mika und „Ma“ für Matteo — und am Tablet das Foto —, dann
+selbst. Steht im Kreis „Ni“ für Nina und „Os“ für Oskar — und am Tablet das Foto —, dann
 ist es seine Aufgabe, nicht irgendeine. Am Handy ist ein Gesicht in einem 16-px-Kreis
 Matsch; deshalb ist das Foto an die tatsächliche Anzeigebreite gebunden und nicht an eine
 Einstellung.
@@ -291,8 +291,8 @@ Zwei bis drei Zeichen, berechnet über den **ganzen aktiven Kader**, nicht über
 Skizze — sonst hieße ein Kind mal „Mi“ und mal „Mik“, je nachdem, wer sonst noch im Bild
 steht. Ein Kind soll immer dasselbe Kürzel haben.
 
-1. Die ersten zwei Buchstaben des Vornamens: Mika → `Mi`, Matteo → `Ma`.
-2. Kollision → so viele Buchstaben, bis eindeutig, höchstens drei: Mika/Mia → `Mik`/`Mia`.
+1. Die ersten zwei Buchstaben des Vornamens: Nina → `Ni`, Oskar → `Os`.
+2. Kollision → so viele Buchstaben, bis eindeutig, höchstens drei: Nina/Nils → `Nin`/`Nil`.
 3. Immer noch gleich → der erste Buchstabe des zweiten Namensteils als drittes Zeichen;
    fehlt er, die Rückennummer: `Mi7`.
 

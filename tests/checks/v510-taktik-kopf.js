@@ -1,4 +1,4 @@
-/* v510 – PO (mit Bildschirmfoto vom Taktikboard): „Im Taktik-Board sind Lukas und Testkind noch
+/* v510 – PO (mit Bildschirmfoto vom Taktikboard): „Im Taktik-Board sind [ein Kind] und Testkind noch
    drin, rausnehmen. Insgesamt ist die Taktik-Seite optisch bei den Kacheln nicht schön und
    nicht optimal aufgeteilt. Und der Pro-Modus ist am Handy nicht darstellbar – ist er fürs
    Tablet gedacht?"
