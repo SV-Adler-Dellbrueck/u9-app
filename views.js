@@ -668,7 +668,8 @@ function kontakteEditOpen(spielerId){
 }
 /* Eltern-Einladung: vorbereitete Nachricht, kein Server-Versand. Der Portal-Link ist
    kein Geheimnis – anmelden kann sich nur, wessen E-Mail in eltern_kinder steht
-   (is_email_whitelisted + Einmal-Code). Der Trainer sieht den Text und sendet selbst. */
+   (is_email_whitelisted + Einmal-Code). Der Trainer sieht den Text und sendet selbst.
+   v604: Der Regelweg ist die Einladungskarte (einladungskartenOpen) – ohne Mailversand. */
 /* Für Werte in onclick="fn('${jsq(x)}')": neben \ und ' muss auch " maskiert werden –
    sonst bricht ein Anführungszeichen im Namen aus dem HTML-Attribut aus. */
 function jsq(s){ return String(s==null?"":s).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,"&quot;"); }
@@ -676,7 +677,7 @@ function elternPortalUrl(){ return appRoot()+"?portal"; }
 function inviteText(email,kind){
   return `Hallo! 🦅\n\nHier ist dein Zugang zum Eltern-Bereich der U9 vom SV Adler Dellbrück`
     +`${kind?` – für ${kind}`:""}.\n\n${elternPortalUrl()}\n\n`
-    +`So geht's:\n1. Link öffnen\n2. Diese E-Mail-Adresse eingeben: ${email}\n3. Du bekommst einen Einmal-Code per Mail – fertig. Kein Passwort nötig.\n\n`
+    +`So geht's:\n1. Link öffnen\n2. Unten auf „Code per E-Mail“ tippen und diese Adresse eingeben: ${email}\n3. Du bekommst einen Einmal-Code per Mail. Im Eltern-Bereich kannst du dann über 🔑 ein Passwort festlegen.\n\n`
     +`Dort kannst du zu- und absagen, Termine in deinen Kalender laden und die Adler-Karte deines Kindes ansehen.\n\nBis bald am Platz!`;
 }
 function inviteMail(email,kind){
@@ -1081,7 +1082,8 @@ const SICHERUNG_AUSNAHMEN={
   push_subscriptions:"Geraetekennungen fuer Benachrichtigungen. Sie erneuern sich beim naechsten Oeffnen der App von selbst und gehoeren nicht in eine Datei.",
   nutzung_log:"Nutzungsprotokoll fuer die Auswertung unter Orga. Nichts davon wird fuer eine Wiederherstellung gebraucht.",
   eltern_dabei:"Gibt es in der Datenbank nicht. Nur toter Code in md-matchcard.js (edLoad/edSignup) spricht sie noch an.",
-  fahrgemeinschaft:"Gibt es in der Datenbank nicht. Nur toter Code in md-matchcard.js (fgLoad/fgOffer/fgJoin) spricht sie noch an; die lebende Fahrgemeinschaft steckt in rueckmeldungen."
+  fahrgemeinschaft:"Gibt es in der Datenbank nicht. Nur toter Code in md-matchcard.js (fgLoad/fgOffer/fgJoin) spricht sie noch an; die lebende Fahrgemeinschaft steckt in rueckmeldungen.",
+  eltern_einladung:"Pruefwerte der gedruckten Einladungskarten (v604). Nach einer Wiederherstellung druckt man neue Karten; eine gesicherte Liste wuerde nur alte Karten wieder gueltig machen. Wer sich angemeldet hat, steht in eltern_kinder – die ist gesichert."
 };
 async function backupExport(){
   if(!sbToken()){toast("Bitte zuerst als Trainer anmelden","err");return;}
@@ -4191,7 +4193,8 @@ const HELP=[
   {cat:"🪶 Eltern & Kinder", items:[
     {t:"Team-Ansage", d:"Wichtige Info an alle Eltern – mit Gelesen-Status (wer fehlt noch?).", run:"ansageTrainerOpen()"},
     {t:"Adler Nest", d:"Digitales Stadionheft erstellen & drucken.", run:"stadionheftOpen()"},
-    {t:"Eltern-Bereich", d:"Eltern melden sich per Link/Einmal-Code an: Zu- und Absagen, Karte, Quiz, Betreuung vor Ort."},
+    {t:"Eltern-Bereich", d:"Eltern melden sich mit E-Mail und Passwort an (alternativ Einmal-Code per Mail): Zu- und Absagen, Karte, Quiz, Betreuung vor Ort."},
+    {t:"Einladungskarten", d:"Je Kind eine Karte mit QR-Code, vier pro A4-Seite. Die Eltern scannen, legen E-Mail und Passwort fest und sind sofort angemeldet – kein Mailversand, kein Eintragen der Adresse vorab. Eine Karte gilt für zwei Elternteile und bis zum gewählten Datum; neu drucken macht die alte Karte des Kindes ungültig.", run:"einladungskartenOpen()"},
     {t:"Adler-Welt-Hub", d:"Federn je Kind, FUT-Karten, Technik-Abzeichen und Wochen-Challenge an einem Ort.", run:"adlerWeltOpen()"},
     {t:"Kabinen-Wahl", d:"Die Kinder stimmen ab (Song, Motto, Spielform) – du legst die Optionen fest.", run:"wahlTrainerOpen()"},
     {t:"Unsere Regeln", d:"Der Fairplay-Codex spricht die Eltern an. Das hier ist sein Gegenstück für die Kinder: höchstens sechs kurze Sätze, die ein Achtjähriger aufsagen kann – in der Kabine unter „Team & Spaß“. Positiv formulieren statt verbieten, und lieber einen Satz ausblenden als einen siebten dazuschreiben; mehr merkt sich niemand. Änderungen gelten sofort für alle Kinder. Ohne Netz zeigt die Kabine die sechs mitgelieferten Sätze.", run:"codexKinderEditOpen()"},
@@ -4335,6 +4338,7 @@ async function adlerWeltOpen(){
     <div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 4px">🔗 Eltern einladen</div>
     <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Fertige WhatsApp-Nachricht mit Eltern-Link + Kurzanleitung – an die Elternschaft schicken.</div>
     <button class="btn btn-sm btn-p" style="width:100%" onclick="document.getElementById('aw-modal').remove();elternInvitePaket()"><i class="ti ti-brand-whatsapp"></i>Einladung erstellen</button>
+    <button class="btn btn-sm btn-p" style="width:100%;margin-top:8px" onclick="document.getElementById('aw-modal').remove();einladungskartenOpen()"><i class="ti ti-id-badge-2"></i>Einladungskarten drucken (Zugang per QR)</button>
     <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="qrAushangOpen()"><i class="ti ti-qrcode"></i>🖨️ QR-Aushang fürs schwarze Brett drucken</button>
     <button class="btn btn-sm" style="margin-top:12px;width:100%" onclick="document.getElementById('aw-modal').remove()">Schließen</button>`;
   modal.appendChild(c);document.body.appendChild(modal);
@@ -4344,29 +4348,157 @@ async function adlerWeltOpen(){
   fetch(`${SB_URL}/rest/v1/team_config?id=eq.1&select=spotify_playlist`,{headers:sbAuthHeaders()}).then(r=>r.ok?r.json():[]).then(rows=>{const el=document.getElementById("aw-spotify");if(el&&rows[0]&&rows[0].spotify_playlist)el.value=rows[0].spotify_playlist;}).catch(()=>{});
 }
 /* ── K5: QR-Aushang – druckbares A4-Plakat mit QR-Code zum Eltern-Bereich (schwarzes
-   Brett am Käfig, Probetraining-Eltern). Der QR kommt als Bild von api.qrserver.com und
-   enthält NUR die öffentliche App-Adresse, keine persönlichen Daten. ── */
-function qrAushangOpen(){
-  const link=appRoot()+"?portal";
-  const qr="https://api.qrserver.com/v1/create-qr-code/?size=420x420&data="+encodeURIComponent(link);
+   Brett am Käfig, Probetraining-Eltern). Enthält NUR die öffentliche App-Adresse.
+   v604: Der QR-Code entsteht im Browser (vendor/qrcode.js) statt bei api.qrserver.com –
+   für die Einladungskarten ist das Pflicht (dort steht ein Zugangscode im QR), und
+   hier soll es nicht anders aussehen. ── */
+async function qrAushangOpen(){
+  const link=appRoot()+"eltern/";
+  let qr;
+  try{ qr=await qrSvg(link,6); }catch(e){ toast("QR-Code konnte nicht erzeugt werden – bitte neu laden","err"); return; }
   const html=`<div class="zert-page"><div class="zert-card">
     <div class="zert-crest"><img src="logo.png" alt=""></div>
     <div class="zert-club">SV Adler Dellbrück e.V. · U9</div>
     <div class="zert-title">Unsere Team-App</div>
     <div class="zert-season">für alle Adler-Eltern &amp; Schnupper-Familien</div>
     <div class="zert-text" style="text-align:left;max-width:460px">
-      <b>1.</b> QR-Code scannen und mit E-Mail anmelden – der Login-Code kommt per Mail, ganz ohne Passwort.<br>
-      <b>2.</b> Dem Trainerteam kurz die E-Mail-Adresse nennen, damit euer Kind verknüpft wird.<br>
-      <b>3.</b> Fertig: Termine zu-/absagen, Infos &amp; Fotos, Liveticker – und „Die Kabine“ für die Kinder.</div>
-    <img src="${qr}" alt="QR-Code zur Eltern-App" crossorigin="anonymous" style="width:220px;height:220px;margin:14px auto 6px;display:block">
-    <div style="font-size:11px;color:#64748b;word-break:break-all">${esc(link)}</div>
+      <b>1.</b> Den Zugang gibt es mit der persönlichen Einladungskarte eures Kindes – einfach das Trainerteam ansprechen.<br>
+      <b>2.</b> Karte scannen, E-Mail und Passwort festlegen – fertig.<br>
+      <b>3.</b> Termine zu-/absagen, Infos &amp; Fotos, Liveticker – und „Die Kabine“ für die Kinder.<br>
+      <span style="font-size:.9em">Schon angemeldet? Dieser Code führt direkt zur App.</span></div>
+    <div style="width:220px;height:220px;margin:14px auto 6px">${qr}</div>
+    <div style="font-size:11px;color:#475569;word-break:break-all">${esc(link)}</div>
     <div class="zert-sign"><div>Euer Trainerteam<br>${(typeof TRAINER!=="undefined"?TRAINER:[]).join(" · ")}</div><div>Fragen? Sprecht uns am Platz an!</div></div>
   </div></div>`;
-  toast("🖨️ QR-Aushang wird vorbereitet …");
-  const probe=new Image(); probe.crossOrigin="anonymous";
-  probe.onload=()=>_zertPrint(html);
-  probe.onerror=()=>toast("QR-Dienst gerade nicht erreichbar – bitte später nochmal","err");
-  probe.src=qr;
+  _zertPrint(html);
+}
+/* v604: QR-Code als SVG, erzeugt im Browser. Die Bibliothek (MIT, Kazuhiko Arase) liegt
+   in vendor/ und wird erst beim ersten Druck geladen – kein Trainer braucht sie beim Start.
+   Fehlerkorrektur M: hält einen Knick oder Fleck auf der gedruckten Karte aus. */
+function qrBibliothek(){
+  if(typeof qrcode==="function")return Promise.resolve();
+  if(window._qrLaden)return window._qrLaden;
+  window._qrLaden=new Promise((ok,fehler)=>{
+    const sc=document.createElement("script");sc.src="vendor/qrcode.js";
+    sc.onload=()=>typeof qrcode==="function"?ok():fehler(new Error("qrcode fehlt"));
+    sc.onerror=()=>{window._qrLaden=null;fehler(new Error("vendor/qrcode.js"));};
+    document.head.appendChild(sc);
+  });
+  return window._qrLaden;
+}
+async function qrSvg(text,zelle){
+  await qrBibliothek();
+  const q=qrcode(0,"M"); q.addData(text); q.make();
+  return q.createSvgTag({cellSize:zelle||4,margin:(zelle||4)*4,scalable:true,alt:"QR-Code"});
+}
+/* ═══ v604: Einladungskarten ═══
+   Je Kind eine Karte mit QR-Code auf eltern/?portal&einladung=CODE. Wer sie scannt, legt
+   mit E-Mail und Passwort ein Konto an und ist sofort dem Kind zugeordnet (Edge Function
+   eltern-einladung). Der Code entsteht HIER und steht danach nur auf dem Papier: in der
+   Datenbank liegt sein SHA-256. Neu drucken macht die alten Karten der gewählten Kinder
+   ungültig – eine verlorene Karte ist so mit einem Druck erledigt. */
+const EINL_ZEICHEN="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";   // ohne I, O, 0, 1: abtippbar
+function einladungCode(){
+  const b=new Uint8Array(20); crypto.getRandomValues(b);
+  return Array.from(b,x=>EINL_ZEICHEN[x%32]).join("");   // 256 ist ein Vielfaches von 32: gleichverteilt
+}
+async function einladungHash(code){
+  const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(code));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+async function einladungskartenOpen(){
+  const kinder=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k.aktiv!==false&&k.id!=null);
+  let konten={}, karten={};
+  try{const r=await fetch(`${SB_URL}/rest/v1/eltern_kinder?select=spieler_id`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)(await r.json()).forEach(x=>konten[x.spieler_id]=(konten[x.spieler_id]||0)+1);}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/eltern_einladung?select=spieler_id,nutzungen,max_nutzungen,gueltig_bis`,{headers:sbAuthHeaders()});if(r.ok)(await r.json()).forEach(x=>karten[x.spieler_id]=x);}catch(e){}
+  document.getElementById("einl-modal")?.remove();
+  const m=document.createElement("div");m.id="einl-modal";
+  m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Einladungskarten");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.onclick=e=>{if(e.target===m)m.remove();};
+  const bis=new Date(Date.now()+7*864e5).toISOString().slice(0,10);
+  const zeile=k=>{
+    const n=konten[k.id]||0, c=karten[k.id];
+    const stand=[n?`${n} Konto${n>1?"en":""} verbunden`:"noch kein Konto",
+      c?(new Date(c.gueltig_bis)>new Date()?`Karte: ${c.nutzungen} von ${c.max_nutzungen} genutzt`:"Karte abgelaufen"):""].filter(Boolean).join(" · ");
+    return `<label style="display:flex;align-items:center;gap:10px;min-height:44px;padding:4px 2px;border-bottom:1px solid var(--border);cursor:pointer">
+      <input type="checkbox" class="einl-kind" value="${k.id}" ${n?"":"checked"} style="width:20px;height:20px">
+      <span style="flex:1;min-width:0"><b>${esc(k.name)}</b><br><span style="font-size:11.5px;color:var(--text2)">${esc(stand)}</span></span></label>`;
+  };
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
+    ${mdlHead("einl-modal","🎟️","Einladungskarten","Je Kind eine Karte · QR scannen, E-Mail und Passwort festlegen, fertig","#047857")}
+    <div style="font-size:12.5px;color:var(--text2);margin-bottom:10px">Vier Karten pro A4-Seite zum Ausschneiden. Eine Karte reicht für <b>zwei</b> Elternteile. Kein Mailversand – das Konto ist sofort da.
+      <br><b>Neu drucken macht die alte Karte des Kindes ungültig.</b> Vorausgewählt sind die Kinder ohne verbundenes Konto.</div>
+    <div style="display:flex;gap:8px;margin-bottom:6px">
+      <button class="btn btn-sm" style="flex:1" onclick="document.querySelectorAll('.einl-kind').forEach(c=>c.checked=true)">Alle</button>
+      <button class="btn btn-sm" style="flex:1" onclick="document.querySelectorAll('.einl-kind').forEach(c=>c.checked=false)">Keine</button>
+    </div>
+    <div style="max-height:46vh;overflow-y:auto;margin-bottom:10px">${kinder.map(zeile).join("")||'<div style="font-size:12.5px;color:var(--text2)">Kein Kader geladen.</div>'}</div>
+    <label for="einl-bis" style="font-size:12px;color:var(--text2)">Gültig bis</label>
+    <input id="einl-bis" type="date" value="${bis}" style="width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:14px;background:var(--surface2);color:var(--text);margin:4px 0 12px">
+    <button id="einl-druck" class="btn btn-p" style="width:100%" onclick="einladungskartenDrucken(this)"><i class="ti ti-printer"></i>Karten erzeugen und drucken</button>
+    <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('einl-modal').remove()">Schließen</button>
+  </div>`;
+  document.body.appendChild(m);
+}
+async function einladungskartenDrucken(btn){
+  const ids=[...document.querySelectorAll(".einl-kind:checked")].map(c=>+c.value);
+  if(!ids.length){toast("Bitte mindestens ein Kind auswählen","err");return;}
+  const bisTag=document.getElementById("einl-bis")?.value;
+  if(!bisTag||bisTag<new Date().toISOString().slice(0,10)){toast("Das Datum „Gültig bis“ liegt in der Vergangenheit","err");return;}
+  if(!(window.crypto&&crypto.subtle)){toast("Karten lassen sich nur über https erzeugen","err");return;}
+  if(btn){btn.disabled=true;btn.textContent="Erzeuge Karten…";}
+  const zurueck=()=>{if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-printer"></i>Karten erzeugen und drucken';}};
+  try{
+    await qrBibliothek();
+    const gueltig=new Date(bisTag+"T23:59:59").toISOString();
+    const karten=[];
+    for(const id of ids){const code=einladungCode();karten.push({id,code,hash:await einladungHash(code)});}
+    const del=await fetch(`${SB_URL}/rest/v1/eltern_einladung?spieler_id=in.(${ids.join(",")})`,{method:"DELETE",headers:sbAuthHeaders()});
+    if(sbCheck401(del))return zurueck();
+    if(!del.ok){toast(sbDeniedMsg(del,"Alte Karten konnten nicht zurückgezogen werden"),"err");return zurueck();}
+    const r=await fetch(`${SB_URL}/rest/v1/eltern_einladung`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},
+      body:JSON.stringify(karten.map(k=>({spieler_id:k.id,code_hash:k.hash,max_nutzungen:2,gueltig_bis:gueltig})))});
+    if(sbCheck401(r))return zurueck();
+    if(!r.ok){toast(sbDeniedMsg(r,"Karten konnten nicht gespeichert werden"),"err");return zurueck();}
+    const html=await einladungskartenHtml(karten,bisTag);
+    document.getElementById("einl-modal")?.remove();
+    toast(`🎟️ ${karten.length} Karte${karten.length>1?"n":""} bereit – Druckdialog öffnet sich`);
+    _zertPrint(html);
+  }catch(e){toast("Karten konnten nicht erzeugt werden: "+e.message,"err");zurueck();}
+}
+async function einladungskartenHtml(karten,bisTag){
+  const kader=(typeof KADER!=="undefined"?KADER:[]);
+  const bis=bisTag.split("-").reverse().join(".");
+  const basis=appRoot()+"eltern/?portal&einladung=";
+  const einzeln=[];
+  for(const k of karten){
+    const kind=kader.find(x=>x.id===k.id);
+    const vorname=String(kind?.name||"").trim();   // wie im Kader – zwei gleiche Vornamen unterscheidet der Trainer dort
+    const qr=await qrSvg(basis+k.code,4);
+    einzeln.push(`<div class="einl-karte">
+      <div class="einl-kopf"><img src="logo.png" alt=""><div><b>SV Adler Dellbrück · U9</b><br>Einladung zur Team-App</div></div>
+      <div class="einl-fuer">für die Familie von <b>${esc(vorname)}</b></div>
+      <div class="einl-mitte"><div class="einl-qr">${qr}</div>
+        <ol><li>QR-Code mit der Handy-Kamera scannen</li><li>E-Mail-Adresse eingeben und ein Passwort festlegen</li><li>Fertig – die App auf den Startbildschirm legen</li></ol></div>
+      <div class="einl-fuss">Für zwei Elternteile · gültig bis ${esc(bis)} · Karte bitte nicht weitergeben</div>
+    </div>`);
+  }
+  const seiten=[];
+  for(let i=0;i<einzeln.length;i+=4)seiten.push(`<div class="einl-bogen">${einzeln.slice(i,i+4).join("")}</div>`);
+  return `<style>
+    @page{size:A4;margin:8mm}
+    .einl-bogen{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:136mm;gap:0;page-break-after:always;break-after:page;font-family:system-ui,sans-serif;color:#0f172a}
+    .einl-karte{border:1px dashed #94a3b8;padding:7mm 6mm;box-sizing:border-box;display:flex;flex-direction:column;gap:3mm}
+    .einl-kopf{display:flex;align-items:center;gap:3mm;font-size:10.5pt;line-height:1.3}
+    .einl-kopf img{width:13mm;height:13mm;object-fit:contain}
+    .einl-fuer{font-size:13pt;border-top:2px solid #1e3a8a;padding-top:2mm}
+    .einl-mitte{display:flex;flex-direction:column;align-items:center;gap:3mm;flex:1}
+    .einl-qr{width:52mm;height:52mm}
+    .einl-qr svg{width:100%;height:100%}
+    .einl-mitte ol{margin:0;padding-left:5mm;font-size:10pt;line-height:1.45}
+    .einl-fuss{font-size:8.5pt;color:#334155;text-align:center}
+  </style>${seiten.join("")}`;
 }
 /* ── Album-Karten-Fotos: der Trainer hinterlegt Bilder für Trainer- und Vereins-Sticker.
    (Kinder-Sticker nutzen automatisch das Eltern-Profilfoto, sofern freigegeben.)

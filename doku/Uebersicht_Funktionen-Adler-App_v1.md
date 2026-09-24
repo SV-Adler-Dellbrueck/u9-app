@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v603 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v604 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -80,7 +80,8 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 | Funktion | Was sie tut | Nutzen |
 |---|---|---|
 | **Team-Ansage** | Wichtige Info an alle Eltern mit Gelesen-Status. | Man sieht, wer die Info noch nicht hat – statt in der Gruppe nachzufragen. |
-| **Eltern-Einladung & Delegation** | Eltern per Link und Einmal-Code einladen; Abholberechtigung an Dritte delegieren. | Zugang ohne Passwort, Verantwortung nachvollziehbar übertragen. |
+| **Einladungskarten** | Je Kind eine gedruckte Karte mit QR-Code, vier pro A4-Seite. Eltern scannen, legen E-Mail und Passwort fest und sind sofort angemeldet und dem Kind zugeordnet. Eine Karte gilt für zwei Elternteile bis zum gewählten Datum; neu drucken macht die alte ungültig. | Ein Elternabend genügt: keine Adressen vorab eintragen, kein Mailversand, kein Warten auf Codes. |
+| **Eltern-Einladung & Delegation** | Eltern per Link und Einmal-Code einladen; Abholberechtigung an Dritte delegieren. | Zweiter Weg neben der Karte, Verantwortung nachvollziehbar übertragen. |
 | **Kinder-App koppeln** | Code erzeugen, gekoppelte Geräte sehen, tägliche Appzeit einstellen, Gerät trennen. | Die Kabine läuft auf dem Gerät des Kindes, die Kontrolle bleibt bei den Eltern. |
 | **Adler Nest (Stadionheft)** | Digitales Stadionheft aus Spielbericht, Reporter-Rubrik der Kinder und Sammelkarten – erstellen und drucken. | Ein greifbares Erinnerungsstück je Spieltag, mit maskierten Namen auch öffentlich zeigbar. |
 | **Adler-Welt-Hub** | Federn je Kind, Sammelkarten, Technik-Abzeichen, Wochen-Challenge (Skill der Woche) an einem Ort. | Das Motivationssystem für die Kinder wird vom Trainer an einer Stelle gesteuert. |
@@ -105,7 +106,7 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 | **Fundbüro** | Liegengebliebenes verwalten. | Kleinkram, der sonst per Chat gesucht wird. |
 | **Teamkasse** | Nur ein Link zur externen Kasse hinterlegt. Kein Geld in der App. | Bewusste Trennung: die App führt keine Konten. |
 | **Nutzung** | Welche Bereiche und Aktionen in den letzten 7, 30 oder 90 Tagen benutzt wurden – ohne Kindernamen. Oben dazu, wie viele Kindergeräte gekoppelt sind, wie viele heute in der Kabine waren und welche Appzeit eingestellt ist, als reine Summen. | Grundlage fürs Ausmisten: Was niemand nutzt, fliegt raus. Und ein Blick darauf, ob die Kinder-App ankommt. |
-| **Backup** | Export aller Tabellen der App (seit v603 wirklich aller: vorher 29 von rund 100). Bewusst nicht darin: Notfallangaben der Eltern, Gerätekennungen für Benachrichtigungen, das Nutzungsprotokoll – mit Grund in der Datei vermerkt. | Die einzige Sicherung: Der kostenlose Supabase-Plan sichert selbst nichts. |
+| **Backup** | Export aller Tabellen der App (seit v603 wirklich aller: vorher 29 von rund 100). Bewusst nicht darin: Notfallangaben der Eltern, Gerätekennungen für Benachrichtigungen, das Nutzungsprotokoll, die Prüfwerte der Einladungskarten – mit Grund in der Datei vermerkt. | Die einzige Sicherung: Der kostenlose Supabase-Plan sichert selbst nichts. |
 | **Hilfe & Rundgang** | Suchbare Hilfe je Funktion, Feature-Tour für neue Trainer. | Ein neuer Trainer findet sich ohne Einweisung zurecht. |
 | **Dark Mode, Adresse der App** | Hell/Dunkel; die App liegt unter einer vereinseigenen Adresse. | Am Flutlichtplatz lesbar; weitergegebene Links enthalten keinen privaten Namen. |
 
@@ -113,7 +114,7 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 
 ## 2 · Eltern-App
 
-Zugang per Link und Einmal-Code an die hinterlegte E-Mail-Adresse. Kein Passwort. Eltern sehen nur ihr eigenes Kind, nie Bewertungszahlen.
+Zugang mit E-Mail und Passwort, angelegt über die Einladungskarte des Kindes. Wer kein Passwort hat oder es vergessen hat, meldet sich mit einem Einmal-Code per E-Mail an und legt es über 🔑 fest. Eltern sehen nur ihr eigenes Kind, nie Bewertungszahlen.
 
 | Funktion | Was sie tut | Nutzen |
 |---|---|---|
@@ -176,7 +177,7 @@ Kinder sehen nie Bewertungen und nie Zahlen zu anderen Kindern. Was die Kabine �
 | **Gast-Seite zum Heimspiel oder Festival** | Sprechender Link ohne Anmeldung: Begrüßung, Wappen, Runden-Plan mit Countdown zum nächsten Anpfiff, Ergebnisse, Aufwärmfelder. Dazu drei Blätter: „Anfahrt, Parken & Felder“ mit Skizzen, „So spielen wir“ mit den Regeln je Spielform, „Am Rand“ mit dem Verhaltenscodex (an den oberen Feldern nur Spieler und Trainer, Anfeuern von der Seite). Der Ergebnis-Link mit Code geht nur an den Anzeigetisch. | Gastvereine bekommen einen Link statt eines PDF, und die Regeln stehen vorher fest. |
 | **Stadionheft (Adler Nest)** | Das digitale Heft zum Spieltag. | Vereinsleben nach außen sichtbar. |
 | **Quiz** | Das Kinder-Quiz über einen eigenen Link. | Auch ohne Eltern-Zugang spielbar. |
-| **Einladungs- und Delegationslinks** | Einstieg für neue Familien und für Abholberechtigte. | Zugang ohne Passwortverwaltung. |
+| **Einladungs- und Delegationslinks** | Einstieg für neue Familien (Karte mit QR-Code) und für Abholberechtigte. | Ein Scan statt Adressliste und Mailversand. |
 
 ---
 

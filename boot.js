@@ -2727,7 +2727,7 @@ async function pinCheck(){
     routeRender("renderDelegateView",params.get("delegate"));
     return;
   }
-  // Eltern-Portal (?portal): passwortloser OTP-Login → rollenbasiert (parent-Dashboard / Trainer-Hinweis)
+  // Eltern-Portal (?portal): Passwort oder Einmal-Code, v604 auch Einladungskarte (&einladung=) → rollenbasiert (parent-Dashboard / Trainer-Hinweis)
   if(params.has("portal")){
     document.title="Eltern-Bereich – SV Adler Dellbrück U9";
     // Manifest/Icon/Theme setzt der Inline-Block im <head> von index.html (Timing!).

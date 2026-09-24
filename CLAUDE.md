@@ -17,7 +17,7 @@ git clone https://github.com/SV-Adler-Dellbrueck/adler-u9-wissen.git .wissen
 | Wer | Einstieg | Anmeldung |
 |---|---|---|
 | **Trainer** | `trainer/` | PIN-Gate, danach Supabase-Passwort-Login |
-| **Eltern** | `eltern/` | Einmal-Code per E-Mail (OTP), kein Passwort |
+| **Eltern** | `eltern/` | E-Mail und Passwort; Zugang per Einladungskarte (QR je Kind, Edge Function `eltern-einladung`, kein Mailversand). Einmal-Code per E-Mail bleibt für „Passwort vergessen“ |
 | **Kinder** | „Kabine" im Eltern-Bereich | Eigener Ausgangs-Code, 60-Minuten-Limit |
 
 `index.html` im Wurzelverzeichnis ist nur eine Weiche: alles in `elternRouten` geht nach `eltern/`, der Rest nach `trainer/`. **Neue Sonderrouten dort eintragen**, sonst landen sie im Trainer-Ordner und finden ihre Render-Funktion nicht.
