@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v609 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v610 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -41,7 +41,7 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 
 | Funktion | Was sie tut | Nutzen |
 |---|---|---|
-| **Teams festlegen** | „Wer ist dabei?“ vorbelegt aus den Eltern-Rückmeldungen, dann Einteilung in Adler 1 / Adler 2. „Dabei“ zählt zugleich als Anwesenheit des Spieltags; die Kachel **Anwesenheit** auf der Spieltag-Seite führt hierher. Feld, Spielform und Gegner kommen aus dem Spielplan des Tages. Kapitän je Team für den ganzen Spieltag. | Eine Quelle für Kader, Anwesenheit und Einsatzquote. Keine doppelte Pflege. |
+| **Teams festlegen** | „Wer ist dabei?“ vorbelegt aus den Eltern-Rückmeldungen, dann Einteilung in Adler 1 / Adler 2. „Dabei“ zählt zugleich als Anwesenheit des Spieltags; die Kachel **Wer ist dabei?** auf der Spieltag-Seite führt hierher. Feld, Spielform und Gegner kommen aus dem Spielplan des Tages. Kapitän je Team für den ganzen Spieltag. | Eine Quelle für Kader, Anwesenheit und Einsatzquote. Keine doppelte Pflege. |
 | **Festival-Runden am Spieltag** | Feste Teams wandern je Runde ein Feld weiter, Spielform je Feld (4+1, 3+1, FUNiño). Fehlt einem Team auf seinem Feld ein Kind, hilft eines aus dem Team mit der meisten Bank aus, nur für diese Runde. Torwart-Kinder wechseln sich ab. Tore, Ticker und Wechsel werden je Runde gezählt. | Jedes Team sieht beide Formate, niemand sitzt eine Runde komplett draußen. |
 | **Aufstellung am Mini-Feld** | Positionen mit Rollennamen (Aufpasser, Flitzer links und rechts), Tauschen per zwei Tipps oder Ziehen mit dem Finger, gezielt zwischen Feld und Bank. | Umstellen in Sekunden, auch am Spielfeldrand. |
 | **Match-Uhr & Wechsel-Timer** | Spielzeit aus dem Spielplan, die Uhr läuft erst nach dem Anpfiff. Der Wechsel-Timer startet mit dem gemeinsamen Anpfiff im Abstand einer halben Spielzeit und sammelt die Einsatzzeiten des Tages. | Faire Einsatzzeiten laufen mit, ohne dass jemand auf die Uhr schauen muss. |
@@ -141,7 +141,7 @@ Zugang mit E-Mail und Passwort, angelegt über die Einladungskarte des Kindes. W
 
 ## 3 · Kinderzugang („Kabine“)
 
-Die Kabine gibt es zweimal: als Modus **innerhalb der Eltern-App** – Eltern geben das Handy weiter, zurück geht es nur mit einem Ausgangs-Code, und nach 60 Minuten sperrt sich das Handy mit „Kabinen-Zeit vorbei“ – auch nach einem Neuladen –, bis ein Erwachsener den Code eingibt. In der Kabine gibt es kein „Teilen“ und keine Links nach draußen; das Video der Woche läuft eingebettet. Der Hinweis „Hier fehlt noch ein Foto“ steht nur beim eigenen Kind – und als **eigene App** auf dem Gerät des Kindes, mit eigenem Symbol und eigener Installation.
+Die Kabine gibt es zweimal: als Modus **innerhalb der Eltern-App** – Eltern geben das Handy weiter, zurück geht es nur mit einem Ausgangs-Code, und nach 60 Minuten sperrt sich das Handy mit „Kabinen-Zeit vorbei“ – auch nach einem Neuladen –, bis ein Erwachsener den Code eingibt. In der Kabine gibt es kein „Teilen“ und keine Links nach draußen; das Video der Woche läuft eingebettet. Vorn stehen acht Kacheln, der Rest unter „Mehr entdecken“. Der Hinweis „Hier fehlt noch ein Foto“ steht nur beim eigenen Kind – und als **eigene App** auf dem Gerät des Kindes, mit eigenem Symbol und eigener Installation.
 
 Für die eigene App bekommt das Kind ein Konto **ohne Namen und ohne E-Mail**, das die Eltern per Code an ihr Kind binden und jederzeit wieder trennen. Sie stellen dort auch die tägliche Appzeit ein; gezählt wird auf dem Server, ein Neustart der App dreht nichts zurück. Ist die Zeit auf, tritt an die Stelle der Kabine ein Schluss-Bildschirm ohne Bedienelemente („Für heute ist die Kabine zu — bis morgen!“).
 

@@ -635,7 +635,8 @@ async function chronikOpen(){
 const ELTERN_WHATSNEW={key:"2026-09-25",titel:"Neu in eurer App",punkte:[
   "🔑 Anmelden mit E-Mail und Passwort – auch auf einem zweiten Gerät. Über 🔑 oben legst du ein Passwort fest oder änderst es. Der Code per E-Mail bleibt für „Passwort vergessen“.",
   "🎟️ Das zweite Elternteil bekommt mit derselben Einladungskarte einen eigenen Zugang.",
-  "⏰ Ist die Kabinen-Zeit um, bleibt das Handy gesperrt, bis ihr den Code eingebt."
+  "⏰ Ist die Kabinen-Zeit um, bleibt das Handy gesperrt, bis ihr den Code eingebt.",
+  "🦅 Die Kabine ist aufgeräumt: acht Kacheln vorn, alles Weitere unter „Mehr entdecken“."
 ]};
 function whatsNewOpen(){
   document.getElementById("wn-modal")?.remove();

@@ -6111,7 +6111,7 @@ function _kachelInhalt(key){
       {emo:"🧩",label:"Aufstellung",fn:"go",arg:"kombi"},
       /* v564: NICHT go:anwesenheit – das ist die Liste der Trainingstermine. Die
          Anwesenheit des Spieltags ist die Nominierung unter „Teams festlegen". */
-      {emo:"✅",label:"Anwesenheit",fn:"spieltagAnwesenheitOpen"},
+      {emo:"✅",label:"Wer ist dabei?",fn:"spieltagAnwesenheitOpen"},   // v610: Name wie im Match; „Anwesenheit" heißt beim Training die Liste der Trainingstermine
       {emo:"📊",label:"Analyse",fn:"go",arg:"analyse"}
     ],col)
     +`<div id="kachel-turnier"></div>`;
@@ -6148,15 +6148,19 @@ function _kachelInhalt(key){
         {emo:"🆕",label:"Probetraining",fn:"probeOpen"}
       ],col);
   }
+  /* v610: „Übungen" stand hier ein zweites Mal und sprang in den Bereich Training – die
+     Leiste wechselte mit, und der Rückweg führte nicht mehr nach Taktik. Übungen wohnen
+     unter Training; hier steht, was es nur hier gibt. */
   if(key==="taktik")return kSec("Am Brett")
     +kTiles([
-      {emo:"🎯",label:"Taktikboard",fn:"go",arg:"taktik"},
-      {emo:"📚",label:"Übungen",fn:"go",arg:"formen"}
+      {emo:"🎯",label:"Taktikboard",fn:"go",arg:"taktik"}
     ],col);
   if(key==="elki")return kSec("Kommunikation")
     +kTiles([
       {emo:"📣",label:"Team-Ansage",fn:"ansageTrainerOpen"},
       {emo:"🗣️",label:"Elterngespräch",fn:"epollTrainerOpen"},
+      // v610: Die Karten sind seit v604 der Regelweg – vorher nur über Einstellungen erreichbar.
+      {emo:"🪪",label:"Einladungskarten",fn:"einladungskartenOpen"},
       {emo:"🔗",label:"Eltern einladen",fn:"elternInvitePaket"},
       {emo:"🖨️",label:"QR-Aushang",fn:"qrAushangOpen"}
     ],col)
@@ -6185,7 +6189,7 @@ function _kachelInhalt(key){
       {emo:"📌",label:"Pinnwand",fn:"go",arg:"team"}, // war nur über die Reiterzeile erreichbar
       {emo:"📓",label:"Tagebuch",fn:"go",arg:"tagebuch"}
     ],col)
-    +kSec("Events & Team-Orga")
+    +kSec("Team-Orga")
     +kTiles([
       {emo:"🎉",label:"Mitbringliste",fn:"mitbringTrainerOpen"},
       {emo:"🗓️",label:"Meetings",fn:"trainerMeetingOpen"},   // v527: Übersicht; angelegt wird im Termin
@@ -6194,12 +6198,13 @@ function _kachelInhalt(key){
       {emo:"🧦",label:"Fundbüro",fn:"fundbueroOpen"},
       // Juni–September – und nur solange die Saison nicht abgehakt ist. Zur nächsten
       // Saison wechselt der Schlüssel, dann steht er von selbst wieder da.
-      (new Date().getMonth()>=5&&new Date().getMonth()<=8&&!saisonStartZu())?{emo:"🌅",label:"Saisonstart-Check",fn:"saisonStartOpen"}:null,
-      {emo:"🧰",label:"Setup-Übersicht",fn:"setupTrainerOpen"}
+      (new Date().getMonth()>=5&&new Date().getMonth()<=8&&!saisonStartZu())?{emo:"🌅",label:"Saisonstart-Check",fn:"saisonStartOpen"}:null
     ],col)
     +kSec("Einstellungen")
     +`<div id="push-slot-trainer" style="margin-bottom:10px"></div>`
     +kTiles([
+      // v610: aus „Team-Orga" hierher – dort trug sie dasselbe 🧰 wie „Material".
+      {emo:"⚙️",label:"Setup-Übersicht",fn:"setupTrainerOpen"},
       {emo:"🔑",label:"Passwort ändern",fn:"pwChangeOpen"},
       {emo:"📊",label:"Nutzung",fn:"nutzungOpen"}
     ],col);
@@ -6224,16 +6229,18 @@ function _kachelNachladen(key){
 async function _kachelTurnierCheck(){
   const slot=document.getElementById("kachel-turnier"); if(!slot)return;
   const heute=new Date().toISOString().slice(0,10);
-  let terminHeim=null, terminTurnier=null, heimAngelegt=false;
+  let terminHeim=null, heimAngelegt=false;
   try{const r=await fetch(`${SB_URL}/rest/v1/termine?typ=in.(spiel,turnier)&datum=gte.${heute}&select=id,typ,heim&order=datum.asc&limit=20`,{headers:sbAuthHeaders()});
-    if(r.ok){const rows=(await r.json())||[]; terminHeim=rows.find(t=>t.heim===true)||null; terminTurnier=rows.find(t=>t.typ==="turnier")||null;}}catch(e){}
+    if(r.ok){const rows=(await r.json())||[]; terminHeim=rows.find(t=>t.heim===true)||null;}}catch(e){}
   try{const r=await fetch(`${SB_URL}/rest/v1/heimturnier?select=id&limit=1`,{headers:sbAuthHeaders()});if(r.ok)heimAngelegt=((await r.json())||[]).length>0;}catch(e){}
-  if(!terminHeim&&!terminTurnier&&!heimAngelegt)return;
   if(!document.getElementById("kachel-turnier"))return; // Seite schon gewechselt
   const heimspiel=terminHeim&&terminHeim.typ==="spiel";
-  slot.innerHTML=kSec(terminHeim?"🏟️ Spieltag bei uns":"🏆 Turnier steht an")
+  /* v610: „Turnierplan (auswärts)" war dieselbe Seite wie die Kachel „Match" darüber.
+     Ein Auswärtsturnier plant man im Match – die Gruppe steht nur noch, wenn wir
+     selbst ausrichten. */
+  if(!terminHeim&&!heimAngelegt)return;
+  slot.innerHTML=kSec("🏟️ Spieltag bei uns")
     +kTiles([
-      (terminHeim||heimAngelegt)?{emo:"🏟️",label:heimspiel?"Heimspiel planen":"Festival ausrichten",fn:"htOpen"}:null,
-      {emo:"📋",label:"Turnierplan (auswärts)",fn:"go",arg:"spieltag"}
+      {emo:"🏟️",label:heimspiel?"Heimspiel planen":"Festival ausrichten",fn:"htOpen"}
     ],(KACHELN.spieltag||{}).col||"var(--fam-spieltag)");
 }
