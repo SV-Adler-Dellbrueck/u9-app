@@ -1,4 +1,4 @@
-const CACHE="u9i-adler-v603";
+const CACHE="u9i-adler-v604";
 const PRECACHE=[
   "./",
   "./index.html",
@@ -13,6 +13,7 @@ const PRECACHE=[
   "./views.js",
   "./quiz.js",
   "./md-eltern-portal.js",
+  "./vendor/qrcode.js",   // v604: QR-Codes fuer Einladungskarten und Aushang, erst beim Drucken geladen
   "./md-abzeichen.js",
   "./md-carpool.js",
   "./md-fanfakten.js",

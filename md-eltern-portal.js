@@ -11,7 +11,8 @@
    ═══════════════════════════════════════════════════════════ */
 
 /* ═══════════════════════════════════
-   ELTERN-PORTAL / OTP-AUTH (Phase 10-L) – passwortloser Login per 6-stelligem Code.
+   ELTERN-PORTAL / OTP-AUTH (Phase 10-L) – Login per 6-stelligem Code. Seit v604 zweiter
+   Weg neben E-Mail und Passwort (authPasswortLogin) und der Einladungskarte.
    Bewusst OTP-Code statt Magic-Link: der Code wird IN der PWA eingegeben → Session
    bleibt im selben Kontext (kein Browser-Wechsel). Session-Format = SB_TOKEN_KEY,
    damit Refresh/Header/401-Handling wiederverwendet werden.
@@ -27,8 +28,24 @@ async function authOtpVerify(email,token){
   const r=await fetch(`${SB_URL}/auth/v1/verify`,{method:"POST",headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,token,type:"email"})});
   const data=await r.json().catch(()=>({}));
   if(!r.ok||!data.access_token)throw new Error(data.error_description||data.msg||data.error||"Code ungültig oder abgelaufen");
+  elternSitzungSpeichern(data);
+  return true;
+}
+function elternSitzungSpeichern(data){
   const expiresAt=data.expires_at||(Math.floor(Date.now()/1000)+(data.expires_in||3600));
   localStorage.setItem(SB_TOKEN_KEY_ELTERN,JSON.stringify({access_token:data.access_token,refresh_token:data.refresh_token||null,expires_at:expiresAt})); // eigenes Fach – ueberschreibt den Trainer nicht mehr
+}
+/* v604: Anmelden mit E-Mail und Passwort. Konten aus der Einladungskarte haben eines;
+   aeltere Konten (nur Einmal-Code) nicht – die nehmen den Code und legen im Eltern-Bereich
+   eines fest. Kein Mailversand noetig, deshalb der Hauptweg. */
+async function authPasswortLogin(email,passwort){
+  const r=await fetch(`${SB_URL}/auth/v1/token?grant_type=password`,{method:"POST",headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password:passwort})});
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok||!data.access_token){
+    const m=String(data.error_description||data.msg||data.error||"");
+    throw new Error(/invalid/i.test(m)?"E-Mail oder Passwort stimmt nicht. Noch kein Passwort? Dann unten „Code per E-Mail“.":(m||"Anmeldung fehlgeschlagen"));
+  }
+  elternSitzungSpeichern(data);
   return true;
 }
 async function authRole(){
@@ -42,11 +59,19 @@ async function authRole(){
 }
 let epEmail="";
 async function renderElternPortal(){
+  /* v604: Einladungskarte (?portal&einladung=CODE). Den Code sofort aus der Adresse nehmen
+     und nur fuer diesen Tab puffern – ein Lesezeichen oder ein geteilter Bildschirm traegt
+     ihn dann nicht weiter. Die Einladungsseite liest ihn aus dem Puffer. */
+  try{
+    const einlUrl=new URLSearchParams(location.search).get("einladung");
+    if(einlUrl){sessionStorage.setItem("adler_einladung",einlUrl);history.replaceState({},"",location.pathname+"?portal");}
+  }catch(e){}
+  let einl=null; try{einl=sessionStorage.getItem("adler_einladung");}catch(e){}
   /* War die Kabine aktiv (Kids-Modus), legt sich sofort ein Vorhang darueber: sonst sieht
      das Kind nach einem Reload eine Sekunde lang das Eltern-Dashboard. kabineOpen entfernt
      ihn; die Sicherung raeumt ihn weg, falls doch der Login erscheint. */
   try{
-    if(localStorage.getItem("adler_kabine_aktiv")==="1"&&sbToken()&&!document.getElementById("kabine-splash")){
+    if(!einl&&localStorage.getItem("adler_kabine_aktiv")==="1"&&sbToken()&&!document.getElementById("kabine-splash")){
       const sp=document.createElement("div"); sp.id="kabine-splash";
       sp.style.cssText="position:fixed;inset:0;z-index:10052;background:linear-gradient(160deg,#0f172a,#1e3a8a);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;font-family:inherit";
       sp.innerHTML='<div style="font-size:52px">🦅</div><div style="font-size:16px;font-weight:800">Kabine wird geöffnet…</div>';
@@ -59,6 +84,7 @@ async function renderElternPortal(){
   // UX 5 (Forever-Login): access_token abgelaufen, aber refresh_token noch gültig? Still erneuern,
   // bevor wir zum OTP-Login zurückfallen – Eltern bleiben praktisch dauerhaft eingeloggt.
   if(!sbToken()){const s=sbSession();if(s&&s.refresh_token){root.innerHTML='<div style="text-align:center;padding:48px;color:#64748b">Lade…</div>';await sbRefreshToken();}}
+  if(einl)return elternEinladungView(root,einl);
   if(sbToken()){
     root.innerHTML='<div style="text-align:center;padding:48px;color:#64748b">Lade…</div>';
     const role=await authRole();
@@ -68,30 +94,69 @@ async function renderElternPortal(){
   }
   elternPortalLogin(root);
 }
-function elternPortalLogin(root){
-  root.innerHTML=`<div style="max-width:360px;margin:7vh auto 0;background:#fff;border-radius:16px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,.1)">
-    <div style="text-align:center;font-size:40px">🦅</div>
+/* v604: Zwei Wege, einer davon ohne E-Mail-Versand. Zuerst E-Mail und Passwort; der
+   Einmal-Code bleibt fuer aeltere Konten ohne Passwort und fuer „Passwort vergessen“. */
+const EP_FELD="width:100%;padding:11px;margin:6px 0 12px;border:1px solid var(--rand-bedien);border-radius:10px;font-size:15px;box-sizing:border-box";
+const EP_KNOPF="width:100%;min-height:46px;padding:13px;border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:700;cursor:pointer";
+const EP_LINK="width:100%;min-height:44px;padding:9px;margin-top:6px;border:none;background:none;color:#475569;font-size:13px;cursor:pointer;text-decoration:underline";
+function elternPortalKopf(){
+  return `<div style="text-align:center;font-size:40px">🦅</div>
     <div style="text-align:center;font-size:18px;font-weight:800;margin-top:6px">Eltern-Bereich</div>
-    <div style="text-align:center;font-size:12px;color:#64748b;margin:6px 0 18px">SV Adler Dellbrück U9</div>
-    <div id="ep-step-email">
+    <div style="text-align:center;font-size:12px;color:#475569;margin:6px 0 18px">SV Adler Dellbrück U9</div>`;
+}
+function elternPortalLogin(root,vorEmail){
+  root.innerHTML=`<div style="max-width:360px;margin:7vh auto 0;background:#fff;border-radius:16px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,.1)">
+    ${elternPortalKopf()}
+    <form id="ep-step-pw" onsubmit="event.preventDefault();elternPortalPasswort()">
       <label for="ep-email" style="font-size:12px;color:#475569">E-Mail-Adresse</label>
-      <input id="ep-email" type="email" inputmode="email" autocomplete="email" placeholder="name@mail.de" style="width:100%;padding:11px;margin:6px 0 12px;border:1px solid var(--rand-bedien);border-radius:10px;font-size:15px;box-sizing:border-box">
-      <button id="ep-send" onclick="elternPortalSend()" style="width:100%;padding:13px;border:none;border-radius:10px;background:#1e3a8a;color:#fff;font-size:15px;font-weight:700;cursor:pointer">Code anfordern</button>
-      <button onclick="elternPortalHaveCode()" style="width:100%;padding:9px;margin-top:8px;border:none;background:none;color:#64748b;font-size:12px;cursor:pointer">Code schon erhalten? → eingeben</button>
+      <input id="ep-email" type="email" inputmode="email" autocomplete="username" placeholder="name@mail.de" style="${EP_FELD}">
+      <label for="ep-pw" style="font-size:12px;color:#475569">Passwort</label>
+      <input id="ep-pw" type="password" autocomplete="current-password" style="${EP_FELD}">
+      <button id="ep-login" type="submit" style="${EP_KNOPF};background:#1e3a8a">Anmelden</button>
+      <button type="button" onclick="elternPortalCodeWeg()" style="${EP_LINK}">Noch kein Passwort oder vergessen? Code per E-Mail</button>
+    </form>
+    <div id="ep-step-email" style="display:none">
+      <div style="font-size:12.5px;color:#475569;margin-bottom:8px">Wir schicken dir einen Anmelde-Code. Im Eltern-Bereich kannst du danach ein Passwort festlegen.</div>
+      <label for="ep-email2" style="font-size:12px;color:#475569">E-Mail-Adresse</label>
+      <input id="ep-email2" type="email" inputmode="email" autocomplete="email" placeholder="name@mail.de" style="${EP_FELD}">
+      <button id="ep-send" onclick="elternPortalSend()" style="${EP_KNOPF};background:#1e3a8a">Code anfordern</button>
+      <button onclick="elternPortalHaveCode()" style="${EP_LINK}">Code schon erhalten? → eingeben</button>
+      <button onclick="elternPortalLogin(document.getElementById('eltern-portal'))" style="${EP_LINK}">← mit Passwort anmelden</button>
     </div>
     <div id="ep-step-code" style="display:none">
       <div style="font-size:12px;color:#475569;margin-bottom:6px">Code aus der E-Mail an <b id="ep-email-show"></b>:</div>
-      <input id="ep-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="Code eingeben" style="width:100%;padding:11px;margin:6px 0 12px;border:1px solid var(--rand-bedien);border-radius:10px;font-size:22px;letter-spacing:4px;text-align:center;box-sizing:border-box">
-      <button id="ep-verify" onclick="elternPortalVerify()" style="width:100%;padding:13px;border:none;border-radius:10px;background:#059669;color:#fff;font-size:15px;font-weight:700;cursor:pointer">Anmelden</button>
-      <button onclick="elternPortalLogin(document.getElementById('eltern-portal'))" style="width:100%;padding:9px;margin-top:8px;border:none;background:none;color:#64748b;font-size:12px;cursor:pointer">← andere E-Mail</button>
+      <input id="ep-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="Code eingeben" aria-label="Code aus der E-Mail" style="width:100%;padding:11px;margin:6px 0 12px;border:1px solid var(--rand-bedien);border-radius:10px;font-size:22px;letter-spacing:4px;text-align:center;box-sizing:border-box">
+      <button id="ep-verify" onclick="elternPortalVerify()" style="${EP_KNOPF};background:#047857">Anmelden</button>
+      <button onclick="elternPortalCodeWeg()" style="${EP_LINK}">← andere E-Mail</button>
     </div>
-    <div id="ep-err" style="font-size:12px;color:#dc2626;min-height:16px;margin-top:10px;text-align:center"></div>
-    <div style="font-size:10.5px;color:#94a3b8;text-align:center;margin-top:14px">Anmelden kann sich nur, wessen E-Mail-Adresse das Trainerteam hinterlegt hat – und du siehst dort ausschließlich die Daten deines eigenen Kindes.</div>
+    <div id="ep-err" role="alert" style="font-size:12.5px;color:#b91c1c;min-height:16px;margin-top:10px;text-align:center"></div>
+    <div style="font-size:11px;color:#475569;text-align:center;margin-top:14px">Den Zugang gibt es mit der Einladungskarte vom Trainerteam – du siehst dort ausschließlich die Daten deines eigenen Kindes.</div>
   </div>`;
+  if(vorEmail){const e=document.getElementById("ep-email");if(e)e.value=vorEmail;}
   if(typeof elternThemeInit==="function"){ elternThemeInit(); elternThemeSweep(root); } // Login-Screen dem Theme folgen lassen
 }
+function elternPortalCodeWeg(){
+  const mail=(document.getElementById("ep-email")?.value||document.getElementById("ep-email2")?.value||epEmail||"").trim();
+  ["ep-step-pw","ep-step-code"].forEach(id=>{const x=document.getElementById(id);if(x)x.style.display="none";});
+  const st=document.getElementById("ep-step-email");if(st)st.style.display="";
+  const e2=document.getElementById("ep-email2");if(e2){if(mail)e2.value=mail;e2.focus();}
+  const err=document.getElementById("ep-err");if(err)err.textContent="";
+}
+async function elternPortalPasswort(){
+  const email=(document.getElementById("ep-email")?.value||"").trim().toLowerCase();
+  const pw=document.getElementById("ep-pw")?.value||"";
+  const err=document.getElementById("ep-err");if(err)err.textContent="";
+  if(!/.+@.+\..+/.test(email)){if(err)err.textContent="Bitte eine gültige E-Mail eingeben";return;}
+  if(!pw){if(err)err.textContent="Bitte das Passwort eingeben";return;}
+  const btn=document.getElementById("ep-login");if(btn){btn.disabled=true;btn.textContent="Prüfe…";}
+  try{
+    await authPasswortLogin(email,pw);
+    document.getElementById("eltern-portal")?.remove();
+    renderElternPortal();
+  }catch(e){if(err)err.textContent=e.message;if(btn){btn.disabled=false;btn.textContent="Anmelden";}}
+}
 async function elternPortalSend(){
-  const email=document.getElementById("ep-email")?.value.trim().toLowerCase();
+  const email=document.getElementById("ep-email2")?.value.trim().toLowerCase();
   const err=document.getElementById("ep-err");if(err)err.textContent="";
   if(!email||!/.+@.+\..+/.test(email)){if(err)err.textContent="Bitte eine gültige E-Mail eingeben";return;}
   const btn=document.getElementById("ep-send");if(btn){btn.disabled=true;btn.textContent="Sende…";}
@@ -99,7 +164,7 @@ async function elternPortalSend(){
     // Whitelist-Gate: nur vom Trainer hinterlegte E-Mails dürfen einen Code anfordern (Anti-Spam).
     let ok=true;
     try{const r=await fetch(`${SB_URL}/rest/v1/rpc/is_email_whitelisted`,{method:"POST",headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_email:email})});if(r.ok)ok=await r.json();}catch(e){}
-    if(!ok){if(err)err.textContent="Diese E-Mail ist noch nicht freigeschaltet. Bitte gib sie deinem Trainer.";if(btn){btn.disabled=false;btn.textContent="Code anfordern";}return;}
+    if(!ok){if(err)err.textContent="Diese E-Mail ist noch nicht freigeschaltet. Mit der Einladungskarte vom Trainerteam geht es sofort.";if(btn){btn.disabled=false;btn.textContent="Code anfordern";}return;}
     await authOtpRequest(email);
     epEmail=email;
     document.getElementById("ep-step-email").style.display="none";
@@ -111,7 +176,7 @@ async function elternPortalSend(){
 }
 // Direkt zur Code-Eingabe, ohne neu anzufordern (z. B. bei Rate-Limit oder Code schon in der Inbox).
 function elternPortalHaveCode(){
-  const email=document.getElementById("ep-email")?.value.trim().toLowerCase();
+  const email=document.getElementById("ep-email2")?.value.trim().toLowerCase();
   const err=document.getElementById("ep-err");if(err)err.textContent="";
   if(!email||!/.+@.+\..+/.test(email)){if(err)err.textContent="Bitte zuerst deine E-Mail eingeben";return;}
   epEmail=email;
@@ -132,6 +197,138 @@ async function elternPortalVerify(){
   }catch(e){if(err)err.textContent=e.message;if(btn){btn.disabled=false;btn.textContent="Anmelden";}}
 }
 function elternPortalLogout(){ localStorage.removeItem(SB_TOKEN_KEY_ELTERN); document.getElementById("eltern-portal")?.remove(); renderElternPortal(); }
+/* ═══ v604: Einladungskarte ═══
+   Die Karte traegt einen QR-Code auf eltern/?portal&einladung=CODE. renderElternPortal
+   puffert den Code und ruft hierher. Die Edge Function eltern-einladung prueft ihn und
+   legt das Konto an – bestaetigt, ohne Mail. Danach meldet sich die Seite mit genau dem
+   eben gewaehlten Passwort an, und die Eltern stehen im Dashboard. */
+function elternEinladungFn(body){
+  const t=sbToken();
+  return fetch(`${SB_URL}/functions/v1/eltern-einladung`,{method:"POST",
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+(t||SB_KEY),'Content-Type':'application/json'},
+    body:JSON.stringify(body)}).then(async r=>{const d=await r.json().catch(()=>({}));return {status:r.status,...d};});
+}
+function elternEinladungVergessen(){ try{sessionStorage.removeItem("adler_einladung");}catch(e){} }
+function elternEinladungRahmen(root,inhalt){
+  root.innerHTML=`<div style="max-width:380px;margin:5vh auto 0;background:#fff;border-radius:16px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,.1)">
+    ${elternPortalKopf()}${inhalt}
+    <div id="einl-err" role="alert" style="font-size:12.5px;color:#b91c1c;min-height:16px;margin-top:10px;text-align:center"></div>
+  </div>`;
+  if(typeof elternThemeInit==="function"){ elternThemeInit(); elternThemeSweep(root); }
+}
+async function elternEinladungView(root,code){
+  elternEinladungRahmen(root,'<div style="text-align:center;color:#475569">Einladung wird geprüft…</div>');
+  let info;
+  try{info=await elternEinladungFn({aktion:"pruefen",code});}
+  catch(e){info={ok:false,fehler:"Keine Verbindung. Bitte WLAN oder mobile Daten prüfen und die Seite neu laden."};}
+  if(!info||!info.ok){
+    elternEinladungRahmen(root,`<div style="font-size:15px;font-weight:800;text-align:center;margin-bottom:8px">Das hat nicht geklappt</div>
+      <div style="font-size:13.5px;color:#334155;text-align:center">${esc((info&&info.fehler)||"Die Karte konnte nicht geprüft werden.")}</div>
+      <button onclick="elternEinladungVergessen();renderElternPortal()" style="${EP_KNOPF};background:#1e3a8a;margin-top:16px">Zur Anmeldung</button>`);
+    return;
+  }
+  window._einlCode=code; window._einlVorname=info.vorname||"";
+  const fuer=info.vorname?`Familie von <b>${esc(info.vorname)}</b>`:"eure Familie";
+  let rolle=null; if(sbToken())rolle=await authRole();
+  if(rolle==="parent"||rolle==="trainer"){
+    elternEinladungRahmen(root,`<div style="font-size:16px;font-weight:800;text-align:center">Willkommen bei der U9!</div>
+      <div style="font-size:13.5px;color:#334155;text-align:center;margin:8px 0 14px">Einladung für die ${fuer}.<br>Du bist schon angemeldet als <b>${esc(sbEmail()||"")}</b>.</div>
+      <button id="einl-ok" onclick="elternEinladungEinloesen()" style="${EP_KNOPF};background:#047857">Mit diesem Konto verbinden</button>
+      <button onclick="elternEinladungAbmelden()" style="${EP_LINK}">Anderes Konto verwenden</button>`);
+    return;
+  }
+  elternEinladungRahmen(root,`<div style="font-size:16px;font-weight:800;text-align:center">Willkommen bei der U9!</div>
+    <div style="font-size:13.5px;color:#334155;text-align:center;margin:8px 0 16px">Einladung für die ${fuer}. Leg dir hier deinen Zugang an – das dauert eine Minute.</div>
+    <form onsubmit="event.preventDefault();elternEinladungEinloesen()">
+      <label for="einl-email" style="font-size:12px;color:#475569">Deine E-Mail-Adresse</label>
+      <input id="einl-email" type="email" inputmode="email" autocomplete="username" placeholder="name@mail.de" style="${EP_FELD}">
+      <label for="einl-pw" style="font-size:12px;color:#475569">Passwort festlegen (mindestens 8 Zeichen)</label>
+      <input id="einl-pw" type="password" autocomplete="new-password" minlength="8" style="${EP_FELD}">
+      <label for="einl-pw2" style="font-size:12px;color:#475569">Passwort wiederholen</label>
+      <input id="einl-pw2" type="password" autocomplete="new-password" minlength="8" style="${EP_FELD}">
+      <button id="einl-ok" type="submit" style="${EP_KNOPF};background:#047857">Zugang anlegen</button>
+    </form>
+    <button onclick="elternEinladungMitKonto()" style="${EP_LINK}">Ich habe schon ein Konto</button>
+    <div style="font-size:11px;color:#475569;text-align:center;margin-top:8px">Mit dieser Karte können sich zwei Elternteile anmelden, jede Person mit eigener E-Mail.</div>`);
+  document.getElementById("einl-email")?.focus();
+}
+function elternEinladungAbmelden(){ localStorage.removeItem(SB_TOKEN_KEY_ELTERN); renderElternPortal(); }
+/* Wer schon ein Konto hat, meldet sich normal an; die Einladung bleibt im Puffer und
+   erscheint nach der Anmeldung als „Mit diesem Konto verbinden“. */
+function elternEinladungMitKonto(){ const root=document.getElementById("eltern-portal"); if(root)elternPortalLogin(root); }
+async function elternEinladungEinloesen(){
+  const err=document.getElementById("einl-err");if(err)err.textContent="";
+  const code=window._einlCode; if(!code)return renderElternPortal();
+  const angemeldet=!!sbToken();
+  let email="",pw="";
+  if(!angemeldet){
+    email=(document.getElementById("einl-email")?.value||"").trim().toLowerCase();
+    pw=document.getElementById("einl-pw")?.value||"";
+    const pw2=document.getElementById("einl-pw2")?.value||"";
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){if(err)err.textContent="Bitte eine gültige E-Mail-Adresse eingeben.";return;}
+    if(pw.length<8){if(err)err.textContent="Das Passwort braucht mindestens 8 Zeichen.";return;}
+    if(pw!==pw2){if(err)err.textContent="Die beiden Passwörter sind nicht gleich.";return;}
+  }
+  const btn=document.getElementById("einl-ok");if(btn){btn.disabled=true;btn.textContent="Einen Moment…";}
+  const fertig=t=>{if(btn){btn.disabled=false;btn.textContent=t;}};
+  let r;
+  try{r=await elternEinladungFn({aktion:"einloesen",code,email,passwort:pw});}
+  catch(e){r={ok:false,fehler:"Keine Verbindung. Bitte gleich noch einmal versuchen."};}
+  if(!r||!r.ok){if(err)err.textContent=(r&&r.fehler)||"Das hat nicht geklappt.";fertig(angemeldet?"Mit diesem Konto verbinden":"Zugang anlegen");return;}
+  elternEinladungVergessen();
+  const root=document.getElementById("eltern-portal");
+  if(angemeldet){ if(typeof toast==="function")toast("✅ Verbunden"); return renderElternPortal(); }
+  if(r.bestehend){
+    /* Die Adresse hatte schon ein Konto. Ein fremdes Passwort setzt die Funktion nie –
+       das Kind ist zugeordnet, anmelden geht wie bisher. */
+    if(root){elternPortalLogin(root,email);const e=document.getElementById("ep-err");if(e){e.style.color="#047857";e.textContent="Für diese E-Mail gibt es schon ein Konto – das Kind ist jetzt zugeordnet. Bitte mit deinem Passwort anmelden oder unten einen Code anfordern.";}}
+    return;
+  }
+  try{ await authPasswortLogin(email,pw); }
+  catch(e){ if(root){elternPortalLogin(root,email);} return; }
+  document.getElementById("eltern-portal")?.remove();
+  renderElternPortal();
+}
+/* v604: Passwort festlegen oder aendern – fuer Konten aus der Zeit vor den Karten (nur
+   Einmal-Code) und fuer „Passwort vergessen“: Code anfordern, anmelden, hier neu setzen.
+   Eigenes Overlay statt prompt() (CLAUDE.md: keine Systemdialoge im Eltern-Bereich). */
+function elternPasswortOpen(){
+  document.getElementById("ep-pw-modal")?.remove();
+  const m=document.createElement("div");m.id="ep-pw-modal";
+  m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Passwort festlegen");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10040;display:flex;align-items:center;justify-content:center;padding:16px";
+  m.onclick=e=>{if(e.target===m)m.remove();};
+  m.innerHTML=`<form onsubmit="event.preventDefault();elternPasswortSpeichern()" style="background:#fff;color:#1a1a2e;border-radius:16px;padding:20px;max-width:360px;width:100%">
+    <div style="font-size:16px;font-weight:800;margin-bottom:4px">🔑 Passwort festlegen</div>
+    <div style="font-size:12.5px;color:#475569;margin-bottom:10px">Danach kannst du dich mit E-Mail und Passwort anmelden – auch auf einem zweiten Gerät.</div>
+    <label for="ep-neu1" style="font-size:12px;color:#475569">Neues Passwort (mindestens 8 Zeichen)</label>
+    <input id="ep-neu1" type="password" autocomplete="new-password" minlength="8" style="${EP_FELD}">
+    <label for="ep-neu2" style="font-size:12px;color:#475569">Wiederholen</label>
+    <input id="ep-neu2" type="password" autocomplete="new-password" minlength="8" style="${EP_FELD}">
+    <div id="ep-neu-err" role="alert" style="font-size:12.5px;color:#b91c1c;min-height:16px;margin-bottom:6px"></div>
+    <button id="ep-neu-ok" type="submit" style="${EP_KNOPF};background:#1e3a8a">Speichern</button>
+    <button type="button" onclick="document.getElementById('ep-pw-modal').remove()" style="${EP_LINK}">Abbrechen</button>
+  </form>`;
+  document.body.appendChild(m);
+  document.getElementById("ep-neu1")?.focus();
+}
+async function elternPasswortSpeichern(){
+  const a=document.getElementById("ep-neu1")?.value||"", b=document.getElementById("ep-neu2")?.value||"";
+  const err=document.getElementById("ep-neu-err");if(err)err.textContent="";
+  if(a.length<8){if(err)err.textContent="Mindestens 8 Zeichen.";return;}
+  if(a!==b){if(err)err.textContent="Die beiden Passwörter sind nicht gleich.";return;}
+  const btn=document.getElementById("ep-neu-ok");if(btn){btn.disabled=true;btn.textContent="Speichere…";}
+  try{
+    const r=await fetch(`${SB_URL}/auth/v1/user`,{method:"PUT",headers:{...sbAuthHeaders(),'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({password:a})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){
+      const m=String(d.msg||d.error_description||d.error||"");
+      throw new Error(/different from the old|same_password/i.test(m)?"Das ist schon dein Passwort.":/reauth/i.test(m)?"Bitte einmal ab- und mit Code neu anmelden, dann klappt es.":(m||"Konnte nicht gespeichert werden."));
+    }
+    document.getElementById("ep-pw-modal")?.remove();
+    if(typeof toast==="function")toast("✅ Passwort gespeichert");
+  }catch(e){if(err)err.textContent=e.message;if(btn){btn.disabled=false;btn.textContent="Speichern";}}
+}
 function elternPortalDashboard(root){
   root.innerHTML=`<div class="ep-wrap">
     <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 4px 12px">
@@ -139,6 +336,7 @@ function elternPortalDashboard(root){
       <div style="display:flex;align-items:center;gap:10px">
         <button id="theme-toggle" onclick="toggleTheme()" title="Hell / Dunkel umschalten" aria-label="Theme umschalten" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:15px;line-height:1">🌙</button>
         <button onclick="elternTourStart()" title="Kurze Tour" aria-label="Hilfe/Tour" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:15px;line-height:1">❓</button>
+        <button onclick="elternPasswortOpen()" title="Passwort festlegen oder ändern" aria-label="Passwort festlegen oder ändern" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:15px;line-height:1">🔑</button>
         <button onclick="elternPortalLogout()" style="border:none;background:none;color:#64748b;font-size:12px;cursor:pointer">Abmelden</button>
       </div>
     </div>
@@ -174,7 +372,7 @@ function dsgvoRenderGate(onOk){
     <p style="margin:0 0 8px">Bevor du den Eltern-Bereich nutzt, bitten wir um deine Einwilligung. So gehen wir mit euren Daten um:</p>
     <ul style="margin:0 0 8px 18px;padding:0">
       <li><b>Wozu:</b> Organisation des Trainings- und Spielbetriebs der U9 (Termine, Rückmeldungen, Aufstellung, altersgerechte Förderung).</li>
-      <li><b>Sicherheit:</b> Zugang nur per persönlichem Login (Einmal-Code an eure E-Mail, kein Passwort). Du siehst ausschließlich die Daten deines eigenen Kindes – das stellt die App technisch sicher: Jeder Zugang ist fest mit dem eigenen Kind verknüpft.</li>
+      <li><b>Sicherheit:</b> Zugang nur per persönlichem Login (E-Mail mit eigenem Passwort oder Einmal-Code an eure E-Mail). Du siehst ausschließlich die Daten deines eigenen Kindes – das stellt die App technisch sicher: Jeder Zugang ist fest mit dem eigenen Kind verknüpft.</li>
       <li><b>Fotos:</b> Kinderfotos liegen in einem privaten, zugriffsgeschützten Speicher und werden nur mit ausdrücklicher, kindbezogener Freigabe verwendet (Standard: aus).</li>
       <li><b>Keine Weitergabe:</b> keine Nutzung zu Werbezwecken, kein Verkauf; keine Zahlungs-/Kontodaten in der App.</li>
       <li><b>Technik:</b> Hosting/Datenbank über Supabase (EU); Wetter über open-meteo, Karten über OpenStreetMap – dorthin gehen nur Orts-/Termindaten, keine personenbezogenen Daten.</li>
@@ -1823,6 +2021,7 @@ async function elternBetreuungToggle(terminId,spielerId,stay){
 // Eltern-Feature-Tour: kurzer Überblick beim ersten Login (einmalig), jederzeit neu startbar.
 const ELTERN_TOUR=[
   {emo:"🦅", t:"Willkommen im Eltern-Bereich", d:"Hier läuft alles rund um dein Kind bei der U9 zusammen. Du kannst diese Tour später jederzeit über das ❓ oben neu starten."},
+  {emo:"🔑", t:"Dein Zugang", d:"Du meldest dich mit E-Mail und Passwort an – auch auf einem zweiten Gerät. Über 🔑 oben legst du ein Passwort fest oder änderst es. Das zweite Elternteil nutzt dieselbe Einladungskarte mit einer eigenen E-Mail-Adresse."},
   {emo:"📌", t:"Was oben steht", d:"Ganz oben steht immer der nächste Termin. Gleich darunter erscheinen die Termine der nächsten 14 Tage, für die deine Antwort noch fehlt – ist alles beantwortet, ist die Karte weg. Danach deine offenen Punkte: Mitbringlisten, Büdchen-Dienst und die „Wie war's?“-Frage nach Spielen. Adler News zeigt sich nur, wenn wirklich etwas Neues drin ist – gelesen ist gelesen. Wichtige 📣 Ansagen vom Trainerteam bestätigst du kurz mit „Gelesen“."},
   {emo:"👍", t:"Zu- & Absagen", d:"Melde dein Kind am nächsten Termin oder im Termin-Karussell zu oder ab – ein Tipp genügt, nochmal tippen entfernt die Antwort. Über „Alle Termine\" lädst du alles in deinen Kalender."},
   {emo:"🙋", t:"Alles rund um den Termin", d:"Im Termin-Detail: Wetter, Adresse mit Route, Fahrgemeinschaft, Mitbringliste bei Events und „Wer hilft mit?“ – jede Aufgabe sagt dir vorher, ab wann du da sein solltest und was zu tun ist: beim Spiel und Turnier Aufbau, Fotos, Live-Ticker und Betreuung in den Pausen, beim Training die Funino-Tore und Jugendtore. Steht ein <b>Auswärtsspiel</b> an, fehlt der Aufbau – dort baut der Gastgeber auf. Für den nächsten Termin stehen dieselben Aufgaben schon oben auf der Startseite, kurz und mit Uhrzeit – du musst dich also nicht vorab festlegen, sondern kannst am Tag selbst schauen, ob du es schaffst. Steht 💬 etwas darüber, ist das ein Hinweis des Trainerteams für genau diesen Termin. Im Feld darunter kannst du auch etwas eintragen, das nicht in der Liste steht. Beim Training sagst du außerdem, ob du vor Ort bleibst. Fällt einmal etwas aus oder wird der Platz getauscht, steht das direkt auf der Terminkarte – solange dort nichts steht, findet alles wie geplant statt."},
