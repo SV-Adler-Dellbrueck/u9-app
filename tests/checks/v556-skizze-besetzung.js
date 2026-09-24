@@ -54,8 +54,8 @@ module.exports = async function (h) {
     const kader = kaderAktiv();
     const map = skzKuerzelMap(kader);
     const werte = kader.map(k => map[k.name]);
-    const echt = skzKuerzelMap([{ name: "Mika", nr: 7 }, { name: "Mia", nr: 8 }, { name: "Tom", nr: 9 }]);
-    const stabil = skzKuerzelMap(kader.concat([{ name: "Tom", nr: 99 }]));
+    const echt = skzKuerzelMap([{ name: "Nina", nr: 7 }, { name: "Nils", nr: 8 }, { name: "Udo", nr: 9 }]);
+    const stabil = skzKuerzelMap(kader.concat([{ name: "Udo", nr: 99 }]));
 
     // b) Besetzen – eine Übung mit mindestens vier Spielern und einem neutralen Kreis
     const alle = tpAllForms() || [];
@@ -114,11 +114,11 @@ module.exports = async function (h) {
   if (doppelt.length) probleme.push("Kürzel doppelt vergeben: " + [...new Set(doppelt)].join(", "));
   const zuLang = r.werte.filter(w => !w || w.length > 3);
   if (zuLang.length) probleme.push("Kürzel mit mehr als drei Zeichen: " + zuLang.join(", "));
-  if (r.echt["Mika"] === r.echt["Mia"]) probleme.push(`Mika und Mia bekommen beide „${r.echt["Mika"]}“`);
-  if (r.echt["Tom"] !== "To") probleme.push(`Tom bekommt „${r.echt["Tom"]}“ statt „To“`);
+  if (r.echt["Nina"] === r.echt["Nils"]) probleme.push(`Nina und Nils bekommen beide „${r.echt["Nina"]}“`);
+  if (r.echt["Udo"] !== "Ud") probleme.push(`Udo bekommt „${r.echt["Udo"]}“ statt „Ud“`);
   const gewandert = Object.keys(r.map).filter(n => r.stabil[n] !== r.map[n]);
   if (gewandert.length) probleme.push("Ein Kürzel ändert sich, wenn ein Kind ohne Namensgleichheit dazukommt: " + gewandert.join(", "));
-  if (!probleme.length) zeilen.push(`Kürzel: ${r.werte.slice(0, 4).join(" · ")} … eindeutig über ${r.werte.length} Kinder, Mika/Mia → ${r.echt["Mika"]}/${r.echt["Mia"]}`);
+  if (!probleme.length) zeilen.push(`Kürzel: ${r.werte.slice(0, 4).join(" · ")} … eindeutig über ${r.werte.length} Kinder, Nina/Nils → ${r.echt["Nina"]}/${r.echt["Nils"]}`);
 
   // b)
   if (!r.knopfDa) probleme.push("Der Knopf „Kinder einsetzen“ fehlt im Präsentationsmodus");
