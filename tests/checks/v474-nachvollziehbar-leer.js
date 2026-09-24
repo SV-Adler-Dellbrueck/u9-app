@@ -23,7 +23,7 @@ module.exports = async function (h) {
     go("home"); await warte(900);
     const quelle = document.querySelector("#home-woche .woche-quelle")?.textContent.trim() || "";
     const zeilenEl = [...document.querySelectorAll("#home-woche .woche-zeile")];
-    const chipRot = z => [...z.querySelectorAll("span")].filter(c => /zugesagt/.test(c.textContent)).map(c => /--red-bg/.test(c.getAttribute("style") || "") ? "rot" : "nicht rot");
+    const chipRot = z => [...z.querySelectorAll("span")].filter(c => /zugesagt| dabei/.test(c.textContent)).map(c => /--red-bg/.test(c.getAttribute("style") || "") ? "rot" : "nicht rot");
     const zusage = zeilenEl.map(z => ({ text: z.textContent.replace(/\s+/g, " ").slice(0, 40), zugesagt: chipRot(z)[0], trainerRot: /--red-bg/.test([...z.querySelectorAll("span")].find(c => /kein Trainer/.test(c.textContent))?.getAttribute("style") || "") }));
     // 2) Termine: „Neuer Termin" ist ein Knopf
     go("termine"); await warte(500);
@@ -63,8 +63,10 @@ module.exports = async function (h) {
   if (!/Rückmeldungen/.test(r.quelle)) probleme.push(`Diese Woche nennt keine Quelle: „${r.quelle}“`);
   if (r.zusage.length < 2) probleme.push(`nur ${r.zusage.length} Wochenzeilen`);
   else {
-    if (r.zusage[0].zugesagt !== "rot" || !r.zusage[0].trainerRot) probleme.push(`Termin in 2 Tagen ist nicht rot: ${JSON.stringify(r.zusage[0])}`);
-    if (r.zusage[1].zugesagt !== "nicht rot" || r.zusage[1].trainerRot) probleme.push(`Termin in 5 Tagen ist schon rot: ${JSON.stringify(r.zusage[1])}`);
+    /* v609: Beim Training zählt „N dabei“ (gilt als zugesagt) – der Kinder-Chip hat keinen
+       Grund mehr, rot zu werden. Die Drei-Tage-Regel prüft jetzt der Trainer-Chip allein. */
+    if (r.zusage[0].zugesagt === "rot" || !r.zusage[0].trainerRot) probleme.push(`Termin in 2 Tagen: Trainer nicht rot oder Kinder-Chip rot: ${JSON.stringify(r.zusage[0])}`);
+    if (r.zusage[1].zugesagt === "rot" || r.zusage[1].trainerRot) probleme.push(`Termin in 5 Tagen ist schon rot: ${JSON.stringify(r.zusage[1])}`);
   }
   if (!r.neuBtn) probleme.push("„Neuer Termin“ ist kein Knopf (Klasse btn fehlt)");
   if (r.neuH < 44) probleme.push(`„Neuer Termin“ nur ${r.neuH}px`);
