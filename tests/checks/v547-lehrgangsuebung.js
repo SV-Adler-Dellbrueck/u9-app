@@ -57,6 +57,11 @@ module.exports = async function (h) {
     })
   });
 
+  /* v605: Erst warten, bis ein Abgleich vom Start fertig ist. Sonst trifft der Aufruf
+     unten auf die Sperre `_bibLaeuft` und bekommt null – unter Last war dieser Fall rot,
+     allein grün. Was der Start-Abgleich schon geschickt hat, zählt hier nicht mit. */
+  await s.page.waitForFunction(() => typeof _bibLaeuft === "undefined" || !_bibLaeuft, null, { timeout: 15000 }).catch(() => {});
+  s.gesendet.length = 0;
   const r = await s.page.evaluate(async ({ NEU }) => {
     try { localStorage.removeItem("adler-bibliothek-stand"); } catch (e) {}
     await loadCustomForms();
