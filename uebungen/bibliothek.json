@@ -1,6 +1,6 @@
 {
   "schema": "adler-uebungen/1",
-  "stand": "2026-09-24-1",
+  "stand": "2026-09-25-1",
   "uebungen": [
     {
       "name": "Warm up Adler",
@@ -1482,13 +1482,13 @@
     {
       "name": "3 gegen 3 auf vier Minitore – Pass zählt doppelt",
       "kat": "passspiel",
-      "kurz": "Wie die Spieltagsform, aber ein Tor nach Zuspiel zählt doppelt – kein Verbot, nur ein Anreiz.",
+      "kurz": "Ein Tor zählt nur, wenn alle drei Angreifer den Ball per Pass hatten – 1 Punkt, direkt nach einem Pass 2, nach Doppelpass 3.",
       "spieler": "6 je Feld (12 = 2 Felder)",
       "feld": "25 x 20 m, je Grundlinie zwei Minitore weit außen, Schusszone 6 m",
       "dauer": "24",
-      "ablauf": "Enge Stufe zur Leitfrage „Wie kriege ich den Ball zu einem, der frei ist?“. Feld und Tore bleiben wie in „3 gegen 3 auf vier Minitore mit Schusszone“ – die Tore stehen weit außen, nie eines in der Mitte.\n\nTeil A, 11 Minuten: freies Spiel ohne Zusatzregel, drei Durchgänge von 3 Minuten mit einer Minute Pause. Der Trainer schaut zu und lobt. Am Ende eine Frage in die Runde: „Wann war ein Tor heute leicht?“\n\nTeil B, 13 Minuten: genau eine Regel kommt dazu – ein Tor zählt doppelt, wenn davor ein Pass gespielt wurde. Verboten ist nichts, wer allein durchgeht, darf das, es zählt nur einfach. Die verteidigende Seite steht damit vor der Aufgabe, Passwege zuzustellen statt dem Ball nachzulaufen.",
-      "varianten": "Leichter: Feld auf 30 x 22 m verbreitern, bevor an der Regel geändert wird. Schwerer: zwei Zuspiele vor dem Abschluss, oder Tor zählt doppelt nur nach Seitenwechsel.",
-      "coaching": "Wen hast du gesehen, bevor du gepasst hast?\nWohin nimmst du den ersten Kontakt, damit es weitergeht?\nWelchen Weg kannst du zumachen?",
+      "ablauf": "Enge Stufe zur Leitfrage „Wie kriege ich den Ball zu einem, der frei ist?“. Feld und Tore bleiben wie in „3 gegen 3 auf vier Minitore mit Schusszone“ – die Tore stehen weit außen, nie eines in der Mitte.\n\nTeil A, 11 Minuten: freies Spiel ohne Zusatzregel, drei Durchgänge von 3 Minuten mit einer Minute Pause. Der Trainer schaut zu und lobt. Am Ende eine Frage in die Runde: „Wann war ein Tor heute leicht?“\n\nTeil B, 13 Minuten: Punkte statt Tore. Ein Tor zählt nur, wenn vorher alle drei Angreifer den Ball durch einen Pass bekommen haben. Dann gilt: 1 Punkt für das Tor. 2 Punkte, wenn unmittelbar vor dem Tor ein Pass gespielt wurde – der Torschütze darf den Ball annehmen, es muss keine Direktabnahme sein. 3 Punkte, wenn das Tor nach einem Doppelpass fällt (Pass, sofort zurück, Abschluss). Die Kinder zählen ihre Punkte selbst laut mit. Die verteidigende Seite steht damit vor der Aufgabe, Passwege zuzustellen statt dem Ball nachzulaufen.",
+      "varianten": "Leichter: Feld auf 30 x 22 m verbreitern, bevor an der Regel geändert wird; oder nur zwei der drei Angreifer müssen den Ball gehabt haben. Schwerer: 3 Punkte nur für einen Doppelpass mit Direktabnahme, oder zusätzlich ein Seitenwechsel vor dem Abschluss.",
+      "coaching": "Wen hast du gesehen, bevor du gepasst hast?\nWer von euch hatte den Ball noch nicht?\nWann lohnt sich der Doppelpass – wo steht dein Gegenspieler?\nWelchen Weg kannst du zumachen?",
       "spass": 5,
       "diff": 2,
       "skizze": {
