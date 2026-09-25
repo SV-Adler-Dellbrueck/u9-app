@@ -103,7 +103,9 @@ for (const datei of SCHRIFT_DATEIEN) {
   const zeilen = fs.readFileSync(p, "utf8").split("\n");
   const gesperrt = gesperrteZeilen(zeilen);
   let n = 0;
-  const neu = zeilen.map((z, i) => gesperrt.has(i) ? z : z.replace(/font-size:\s*([0-9]+(?:\.[0-9]+)?)px/g, (all, zahl) => {
+  /* Ein CSS-Attributselektor wie span[style*='font-size:22px'] SUCHT eine Größe – den darf das
+     Werkzeug nicht umschreiben (v626: die Heimspiel-Kachel behielt sonst ihr 🏆). */
+  const neu = zeilen.map((z, i) => gesperrt.has(i) || /style\*=/.test(z) ? z : z.replace(/font-size:\s*([0-9]+(?:\.[0-9]+)?)px/g, (all, zahl) => {
     const v = stufe(Number(zahl)); if (!v) return all; n++; return `font-size:var(${v})`;
   }));
   schrift += n;

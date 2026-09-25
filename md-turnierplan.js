@@ -263,7 +263,10 @@ function _spieltagTurnierBanner(){
   const anlass=(typ==="spiel")?"heimspiel":"festival";
   b.onclick=heim?(()=>{ if(typeof htOpen==="function")htOpen(d,_spieltagNamen&&_spieltagNamen[d],anlass); else toast("Planer lädt noch"); })
                 :(()=>turnierOpen());
-  const em=b.querySelector("span[style*='font-size:var(--s-seite)']");
+  /* v626: Das Zeichen der Kachel (shell.html) steht mit fester Größe da; die Suche darf nicht an
+     einer Schreibweise hängen – die Schriftstufen hatten sie umgeschrieben, und beim Heimspiel
+     blieb 🏆 stehen. Das erste Kind der Kachel ist das Zeichen. */
+  const em=b.querySelector("span[style*='font-size:22px'],span[style*='font-size:var(--s-seite)']")||b.querySelector("span");
   if(em)em.textContent=!heim?"🏆":(anlass==="heimspiel"?"⚽":"🏟️");
   const t=b.querySelector("span[style*='font-weight:800']"), u=b.querySelector("span[style*='opacity']");
   if(t)t.textContent=!heim?"Turnier-Modus":(anlass==="heimspiel"?"Heimspiel planen":"Festival planen");
