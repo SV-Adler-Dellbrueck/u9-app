@@ -2571,6 +2571,27 @@ function _open(key){
   if(sec.sub)document.getElementById("view-training")?.classList.add("active"); // passiver Host sichtbar machen
   document.getElementById(sec.cid)?.classList.add("active");
 }
+/* v624 PO: „Der Zurück-Button auf dem Handy soll nicht zum Schließen der App führen, sondern
+   Seite zurück." – Jeder Seitenwechsel legt einen Eintrag in den Verlauf; die Zurück-Taste
+   holt die vorige Seite (Handler in core.js). Der unterste Eintrag ist immer die Startseite:
+   Wer mitten in einer Seite einsteigt, kommt mit Zurück erst nach Hause und erst von dort
+   aus der App. Kommt der Wechsel selbst aus der Zurück-Taste, entsteht kein neuer Eintrag. */
+let _seiteAusVerlauf=false;
+function _seiteVerlauf(key){
+  if(_seiteAusVerlauf)return;
+  try{
+    const st=history.state;
+    if(!st||!st.adlerSeite){
+      if(key!=="home"){ history.replaceState({adlerSeite:"home"},""); history.pushState({adlerSeite:key},""); }
+      else history.replaceState({adlerSeite:"home"},"");
+    }else if(key!==curSection)history.pushState({adlerSeite:key},"");
+  }catch(e){}
+}
+function seiteZurueck(key){
+  if(!SECS[key]||key===curSection)return;
+  _seiteAusVerlauf=true;
+  try{ go(key); }finally{ _seiteAusVerlauf=false; }
+}
 function go(key){
   const tabId=sectionTab(key); if(!tabId||!SECS[key])return;
   if(typeof nutzungLog==="function")nutzungLog("bereich",key);
@@ -2593,6 +2614,7 @@ function go(key){
   try{ if(key!=="spieltag"&&mcTickId){clearInterval(mcTickId);mcTickId=null;} }catch(e){}
   if(SECS[key].init)setTimeout(SECS[key].init,50);
   tabState[tabId]=key;
+  _seiteVerlauf(key);
   curSection=key;
   try{sessionStorage.setItem("adler_letzte_seite",key);}catch(e){}   // fuers Neuladen (sessionStorage: nur dieser Tab)
 }
