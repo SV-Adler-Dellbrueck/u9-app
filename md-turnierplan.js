@@ -3516,7 +3516,7 @@ async function htPubTor(mi,seite,delta){
 }
 function _htPublicRender(wrap,row){
   if(row&&fstIst(row)){ _fstPublicRender(wrap,row); return; }   // v484: Festival-Seite mit Wappen
-  if(!row){wrap.innerHTML=`<div style="text-align:center;padding:60px 20px"><div style="font-size:44px">🏆</div><div style="font-weight:800;margin-top:8px">Turnier nicht gefunden</div><div style="font-size:13px;color:#64748b;margin-top:4px">Der Link ist abgelaufen oder falsch – bitte beim Veranstalter nachfragen.</div></div>`;return;}
+  if(!row){wrap.innerHTML=`<div style="text-align:center;padding:60px 20px"><div style="font-size:44px">🏆</div><div style="font-weight:800;margin-top:8px">Turnier nicht gefunden</div><div style="font-size:13px;color:#5b6b81;margin-top:4px">Der Link ist abgelaufen oder falsch – bitte beim Veranstalter nachfragen.</div></div>`;return;}
   const teams=row.teams||[], plan=row.plan||[], cfg=row.config||{};
   const dat=row.datum?new Date(row.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}):"";
   const helfer=!!(_htPub&&_htPub.code);

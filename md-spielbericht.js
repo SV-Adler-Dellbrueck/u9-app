@@ -273,7 +273,7 @@ async function elternKalenderIcs(){
 // Gebrandeter Ladezustand für alle öffentlichen Eltern-Flächen (statt fadem "Lade...").
 function elternLoader(msg){ return `<div style="text-align:center;padding:56px 16px"><img src="logo.png" alt="" style="width:52px;height:52px;animation:adlerPulse 1.3s ease-in-out infinite"><div style="margin-top:14px;font-size:13px;color:#64748b">${elternEsc(msg||"Lädt …")}</div></div>`; }
 // Freundlicher, gebrandeter Leer-/Fehlerzustand (Logo + optionales Emoji + Text). msg darf <br> enthalten.
-function elternEmpty(msg,emoji){ return `<div class="elt-fade" style="text-align:center;padding:52px 20px"><img src="logo.png" alt="" style="width:54px;height:54px;opacity:.92">${emoji?`<div style="font-size:30px;margin-top:6px">${emoji}</div>`:""}<div style="margin-top:12px;font-size:14px;color:#64748b;line-height:1.55">${msg}</div></div>`; }
+function elternEmpty(msg,emoji){ return `<div class="elt-fade" style="text-align:center;padding:52px 20px"><img src="logo.png" alt="" style="width:54px;height:54px;opacity:.92">${emoji?`<div style="font-size:30px;margin-top:6px">${emoji}</div>`:""}<div style="margin-top:12px;font-size:14px;color:#5b6b81;line-height:1.55">${msg}</div></div>`; }
 /* Persönlicher Kind-Link (?kind=<token>): 1-Tap Zu-/Absage ohne Login.
    Liest/schreibt ausschließlich über die security-definer-RPCs kind_termine / rsvp_by_token. */
 let kindRoot=null, kindToken=null;
@@ -288,7 +288,7 @@ async function renderKindView(token){
 async function kindLoad(){
   let d=null;
   try{const r=await fetch(`${SB_URL}/rest/v1/rpc/kind_termine`,{method:"POST",headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_token:kindToken})});if(r.ok)d=await r.json();}catch(e){}
-  if(!d||!d.ok){ kindRoot.innerHTML='<div style="text-align:center;padding:48px;color:#64748b"><img src="logo.png" style="width:56px;height:56px" alt=""><div style="margin-top:12px">Dieser Link ist ungültig oder abgelaufen.<br>Frag den Trainer nach einem neuen. 🦅</div></div>'; return; }
+  if(!d||!d.ok){ kindRoot.innerHTML='<div style="text-align:center;padding:48px;color:#5b6b81"><img src="logo.png" style="width:56px;height:56px" alt=""><div style="margin-top:12px">Dieser Link ist ungültig oder abgelaufen.<br>Frag den Trainer nach einem neuen. 🦅</div></div>'; return; }
   const wtag=["So","Mo","Di","Mi","Do","Fr","Sa"];
   const evCard=(t)=>{
     const dt=new Date(t.datum+"T00:00:00");

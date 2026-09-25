@@ -912,7 +912,15 @@ function hapticTap(pattern){ try{ if(navigator.vibrate)navigator.vibrate(pattern
 document.addEventListener("click",e=>{ if(e.target&&e.target.closest&&e.target.closest("button,.btn,.nb,.seg-btn"))hapticTap(12); },{passive:true});
 
 /* ═══ Dark Mode: automatisch nach OS + manueller Toggle (in localStorage gemerkt). ═══ */
+/* v620 · Paket C: Die öffentlichen Seiten (Matchday, Delegate, Liveticker, Kind-Link, Übergabe,
+   Turnier/Festival, Stadionheft) haben ein festes helles Layout – weiße Karten auf #f1f5f9. Im
+   dunklen Modus des Handys schalteten die Farb-Tokens trotzdem um, und helle Schrift stand auf
+   Weiß. v615 hatte das nur für den Festival-Link gelöst. Jetzt bleibt jede dieser Seiten hell,
+   auch wenn jemand in der App „dunkel“ gewählt hat. */
+const SEITEN_FEST_HELL=["eltern","match","delegate","ticker","kind","handover","turnier","heft"];
+function _seiteFestHell(){ try{ const p=new URLSearchParams(location.search); return SEITEN_FEST_HELL.some(k=>p.has(k)); }catch(e){ return false; } }
 function applyTheme(t){
+  if(_seiteFestHell())t="light";
   const el=document.documentElement;
   if(t==="dark"||t==="light")el.setAttribute("data-theme",t); else el.removeAttribute("data-theme");
   const btn=document.getElementById("theme-toggle");

@@ -124,7 +124,7 @@ async function renderDelegateView(token){
   }catch(e){}
   // v468: Der Helfer kann nur tickern, wenn der Trainer den Ticker gestartet hat.
   if(!m||m.ticker_open!==true){
-    root.innerHTML='<div style="text-align:center;padding:48px;color:#64748b">Der Liveticker ist gerade nicht aktiv.<br>Frag den Trainer, ob der Link noch gilt.</div>';
+    root.innerHTML='<div style="text-align:center;padding:48px;color:#5b6b81">Der Liveticker ist gerade nicht aktiv.<br>Frag den Trainer, ob der Link noch gilt.</div>';
     return;
   }
   let selected=null;
@@ -272,7 +272,7 @@ async function renderTickerView(key){
     let claps=0; try{const cr=await fetch(`${SB_URL}/rest/v1/ticker_claps?datum=eq.${encodeURIComponent(baseDatum)}&select=count`,{headers:anon});if(cr.ok){const cj=await cr.json();claps=(cj[0]&&cj[0].count)||0;}}catch(e){}
     const clapBar=`<div style="text-align:center;margin-top:16px">
       <button onclick="tvClap()" style="border:none;background:linear-gradient(135deg,#f59e0b,#ec4899);color:#fff;border-radius:16px;padding:14px 22px;font-size:16px;font-weight:800;font-family:inherit;cursor:pointer;box-shadow:0 4px 16px rgba(236,72,153,.35)">👏 Applaus fürs Team</button>
-      <div style="font-size:12px;color:#64748b;margin-top:8px"><span id="tv-claps" style="font-weight:800;color:#db2777">${claps}</span> mal geklatscht</div>
+      <div style="font-size:12px;color:#5b6b81;margin-top:8px"><span id="tv-claps" style="font-weight:800;color:#db2777">${claps}</span> mal geklatscht</div>
     </div>`;
     const foot=`${clapBar}${adlerkasseHtml}<div style="text-align:center;font-size:11px;color:var(--text3);margin-top:14px">Nur-Ansehen · aktualisiert automatisch · SV Adler Dellbrück e.V.</div>`;
 
