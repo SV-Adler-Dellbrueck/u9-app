@@ -5971,7 +5971,7 @@ async function renderStadionheftView(){
     d=r.ok?await r.json():null;
   }catch(e){}
   if(!d||!d.published){
-    root.innerHTML='<div style="text-align:center;padding:48px;color:#64748b"><img src="logo.png" style="width:56px;height:56px" alt=""><div style="margin-top:12px">Aktuell ist kein <b>Adler Nest</b> veröffentlicht.<br>Schau bald wieder rein! 🦅</div></div>';
+    root.innerHTML='<div style="text-align:center;padding:48px;color:#5b6b81"><img src="logo.png" style="width:56px;height:56px" alt=""><div style="margin-top:12px">Aktuell ist kein <b>Adler Nest</b> veröffentlicht.<br>Schau bald wieder rein! 🦅</div></div>';
     return;
   }
   const h=d.heft||{};

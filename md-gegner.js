@@ -826,7 +826,7 @@ function renderHandoverView(){
   const root=document.createElement("div");
   root.style.cssText="max-width:520px;margin:0 auto;padding:16px;font-family:inherit;min-height:100vh;background:#f1f5f9;color:#1a1a2e";
   document.body.appendChild(root);
-  if(!pkt){ root.innerHTML='<div style="text-align:center;padding:48px;color:#64748b">Dieser Vertretungs-Link ist ungültig oder unvollständig.</div>'; return; }
+  if(!pkt){ root.innerHTML='<div style="text-align:center;padding:48px;color:#5b6b81">Dieser Vertretungs-Link ist ungültig oder unvollständig.</div>'; return; }
   const META={training:{i:"🏃",l:"Training"},spiel:{i:"⚽",l:"Spiel"},turnier:{i:"🏆",l:"Turnier"},event:{i:"🎉",l:"Event"}};
   const m=META[pkt.typ]||META.training;
   const d=new Date(pkt.datum+"T00:00:00"), wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
