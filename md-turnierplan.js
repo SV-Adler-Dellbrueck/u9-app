@@ -3066,7 +3066,11 @@ function fstRender(){
     <div style="font-size:12px;font-weight:800;margin:14px 0 6px">${plan.length?"":"1 · "}${cfg.anlass==="heimspiel"?"Wer spielt mit?":"Wer kommt?"}</div>
     ${vereine.length?vHtml:'<div style="font-size:12px;color:var(--text3);margin-bottom:6px">Noch kein Verein eingetragen.</div>'}
     <div style="font-size:10.5px;color:var(--text3);margin-bottom:6px">Name · angereiste Kinder · Teams (Vorschlag der App, änderbar)</div>
-    <div id="fst-gegner" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px"></div>
+    <details id="fst-gegner-db" hidden style="margin-bottom:6px">
+      <summary style="cursor:pointer;min-height:44px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--text2)">📇 Aus der Gegner-Datenbank wählen <span id="fst-gegner-zahl" style="font-weight:400;color:var(--text3)"></span></summary>
+      <div style="font-size:10.5px;color:var(--text3);margin:0 0 6px">Tippen fügt den Verein hinzu.</div>
+      <div id="fst-gegner" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px"></div>
+    </details>
     <button class="btn btn-sm" onclick="fstVereinPlus()" style="width:100%;margin-bottom:4px"><i class="ti ti-plus"></i>Verein hinzufügen</button>
     <div id="fst-einteilung" style="font-size:11px;color:var(--text3);margin-bottom:6px">Unsere Kinder kommen aus „Teams festlegen“ …</div>
     ${teams.length?`<div style="font-size:11.5px;color:var(--text2);margin-bottom:10px">➜ <b>${teams.length} Teams</b>, ${kinderGesamt} Kinder: ${esc(teams.map(t=>t.name+" ("+t.kinder+")").join(" · "))}</div>`:""}
@@ -3144,6 +3148,11 @@ async function fstGegnerChips(){
   const drin=new Set(((_HT&&_HT.config&&_HT.config.vereine)||[]).map(v=>v.name));
   const frei=window._htGegner.filter(n=>!drin.has(n)).slice(0,8);
   box.innerHTML=frei.map(n=>`<button class="btn btn-sm" onclick="fstVereinPlus('${jsq(n)}')" style="font-size:11.5px">+ ${esc(n)}</button>`).join("");
+  /* v617 PO: „Die Gegner-Datenbank in der Festival-Planung einklappen." Die Chips stehen in
+     einem zugeklappten <details>; ohne freie Vereine verschwindet es ganz. Aufgeklappt
+     bleibt es über jedes Neuzeichnen (_fstOffenMerken merkt sich details[id][open]). */
+  const wrap=document.getElementById("fst-gegner-db"); if(wrap)wrap.hidden=!frei.length;
+  const zahl=document.getElementById("fst-gegner-zahl"); if(zahl)zahl.textContent=frei.length?`· ${frei.length}`:"";
 }
 /* Der Plan als Runden-Karten – dieselbe Darstellung im Trainer-Fenster und im Aushang. */
 function fstPlanHtml(plan,teams,felder,tausch,cfg){

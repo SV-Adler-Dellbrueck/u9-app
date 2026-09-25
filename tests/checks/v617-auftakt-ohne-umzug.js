@@ -11,7 +11,10 @@
    c) Einmal je Sitzung: nach einem Neuladen kommt er nicht noch einmal.
    d) Geteilte Links (Stadionheft) öffnen ohne Auftakt.
    e) „Bewegung reduzieren": kein Flug, nach spätestens 1,2 s weg.
-   f) Ein Tipp beendet ihn sofort. */
+   f) Ein Tipp beendet ihn sofort.
+   g) PO: „Die Gegner-Datenbank in der Festival-Planung einklappen." Die Schnellwahl steht
+      zugeklappt da, trägt die Zahl der freien Vereine, bleibt nach dem Aufklappen über ein
+      Neuzeichnen offen; ein Verein, der schon dabei ist, steht nicht mehr darin. */
 "use strict";
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
@@ -83,6 +86,39 @@ module.exports = async function (h) {
 
   const fe = s.fehler();
   await s.schliessen();
+
+  // g) Festival-Planer: Gegner-Datenbank eingeklappt
+  {
+    const t = await h.starten({ warten: 1500, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), termine: [], nominierungen: [],
+      gegner: [{ name: "FC Gastverein" }, { name: "DJK Roland Köln-West" }, { name: "TuS Nachbar" }],
+      heimturnier: (u, req) => req.method() === "PATCH" ? { status: 204, body: "" } : [] }) });
+    const g = await t.page.evaluate(async () => {
+      const warte = ms => new Promise(r => setTimeout(r, ms));
+      document.getElementById("pin-gate")?.remove();
+      window._htGegner = undefined;
+      _HT = { id: 7, name: "Kinderfestival", datum: "2026-10-10", config: { art: "festival", start: "10:15", dauer: 60, wechsel: 5,
+        vereine: [{ name: "SV Adler Dellbrück", teams: 2, kinder: 10 }, { name: "FC Gastverein", teams: 1, kinder: 8 }] }, teams: [], plan: [] };
+      const body = document.createElement("div"); body.id = "ht-body"; document.body.appendChild(body);
+      fstRender(); await warte(500);
+      const d = () => document.getElementById("fst-gegner-db");
+      const vorher = { da: !!d(), offen: d() && d().open, versteckt: d() && d().hidden, zahl: document.getElementById("fst-gegner-zahl")?.textContent || "",
+        chips: [...document.querySelectorAll("#fst-gegner button")].map(b => b.textContent.trim()), sichtbar: d() ? d().querySelector("summary").getBoundingClientRect().height : 0 };
+      d().open = true; fstRender(); await warte(400);
+      return { vorher, nachher: d() && d().open };
+    });
+    const ge = t.fehler();
+    await t.schliessen();
+    if (!g.vorher.da) probleme.push("g) keine eingeklappte Gegner-Schnellwahl im Festival-Planer");
+    else {
+      if (g.vorher.offen) probleme.push("g) die Gegner-Datenbank steht aufgeklappt da");
+      if (g.vorher.versteckt || g.vorher.sichtbar < 44) probleme.push(`g) die Kopfzeile ist nicht bedienbar (${g.vorher.sichtbar} px)`);
+      if (g.vorher.chips.length !== 2 || g.vorher.chips.some(c => /Gastverein/.test(c))) probleme.push("g) Schnellwahl falsch: " + g.vorher.chips.join(", "));
+      if (!/2/.test(g.vorher.zahl)) probleme.push(`g) Zahl der freien Vereine fehlt („${g.vorher.zahl}“)`);
+      if (!g.nachher) probleme.push("g) nach dem Neuzeichnen ist die Schnellwahl wieder zu");
+    }
+    if (ge.length) probleme.push("Konsole (g): " + ge.slice(0, 2).join(" | "));
+    zeilen.push(`g) Gegner-DB: ${g.vorher.offen ? "offen" : "zu"} (${g.vorher.zahl.trim()}), Chips ${g.vorher.chips.join(", ")}, nach Neuzeichnen ${g.nachher ? "offen" : "zu"}`);
+  }
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
-  return h.ergebnis("v617 Auftakt: Wappen fliegt ein, kein Umzugs-Hinweis mehr", probleme.length === 0, probleme.length ? probleme.concat(zeilen) : zeilen);
+  return h.ergebnis("v617 Auftakt: Wappen fliegt ein, kein Umzugs-Hinweis mehr; Gegner-DB im Festival eingeklappt", probleme.length === 0, probleme.length ? probleme.concat(zeilen) : zeilen);
 };
