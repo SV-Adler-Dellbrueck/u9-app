@@ -66,6 +66,9 @@
      Rot 5,29/6,45 · Grün 8,40/10,25 · Bernstein 8,76/10,69 · Blau 5,75/7,02).
      --blue selbst bleibt unverändert: es ist Fläche unter weißer Schrift. */
   --red:#f87171;--green:#4ade80;--amber:#fbbf24;--blue-text:#60a5fa;
+  /* v619: --green ist im Dunkeln hell (Schrift). Als Fläche unter weißer Schrift (aktiver Reiter
+     „Training“) ergab das 1,74:1 – die Familienfarbe bleibt deshalb das satte Grün (5,0:1). */
+  --fam-training:#15803d;
   /* Dunkelmodus: die Ampel dreht sich um. Ein dunkles Gruen (#14532d) verschwindet auf
      #1e293b (1,7:1) – die Stufen muessen HELLER werden, nicht dunkler, und dabei ihre
      Reihenfolge behalten. Nachgerechnet auf --surface: 5,29 · 6,46 · 10,42 · 6,42. */
@@ -83,6 +86,9 @@
      Rot 5,29/6,45 · Grün 8,40/10,25 · Bernstein 8,76/10,69 · Blau 5,75/7,02).
      --blue selbst bleibt unverändert: es ist Fläche unter weißer Schrift. */
   --red:#f87171;--green:#4ade80;--amber:#fbbf24;--blue-text:#60a5fa;
+  /* v619: --green ist im Dunkeln hell (Schrift). Als Fläche unter weißer Schrift (aktiver Reiter
+     „Training“) ergab das 1,74:1 – die Familienfarbe bleibt deshalb das satte Grün (5,0:1). */
+  --fam-training:#15803d;
   /* Dunkelmodus: die Ampel dreht sich um. Ein dunkles Gruen (#14532d) verschwindet auf
      #1e293b (1,7:1) – die Stufen muessen HELLER werden, nicht dunkler, und dabei ihre
      Reihenfolge behalten. Nachgerechnet auf --surface: 5,29 · 6,46 · 10,42 · 6,42. */

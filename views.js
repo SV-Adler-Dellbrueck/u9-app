@@ -6123,7 +6123,7 @@ function _kachelInhalt(key){
     const cutoff=new Date(Date.now()-42*86400000).toISOString().slice(0,10);
     const stale=KADER.filter(x=>{const s=DB[x.name];if(!s||!s.length)return true;return (s[s.length-1].datum||"0000")<cutoff;}).length;
     const tile=(v,l,c,arg)=>`<button onclick="kachelRun('go','${arg}')" style="flex:1;min-width:90px;min-height:72px;border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface);padding:10px;text-align:center;cursor:pointer;font-family:inherit"><div style="font-size:24px;font-weight:900;color:${c}">${v}</div><div style="font-size:12px;color:var(--text2);font-weight:700">${l}</div></button>`;
-    return `<div style="display:flex;gap:10px;margin-bottom:4px">${tile(KADER.length,"Kader","var(--blue)","kader")}${tile(bewertet+"/"+KADER.length,"bewertet","var(--green)","bew")}${tile(stale,"überfällig","var(--red)","bew")}</div>
+    return `<div style="display:flex;gap:10px;margin-bottom:4px">${tile(KADER.length,"Kader","var(--blue-text)","kader")}${tile(bewertet+"/"+KADER.length,"bewertet","var(--green)","bew")}${tile(stale,"überfällig","var(--red)","bew")}</div>
       <div id="home-antifrust"></div><div id="home-birthday"></div><div id="home-radar"></div>`
       +kSec("Spieler")
       +kTiles([

@@ -446,8 +446,16 @@ function sbTeamHeaders(){
   return sbAuthHeaders();
 }
 
+/* v619: Team-Daten (Anwesenheit, Einheit-Bewertung) gehören der Trainer-Sitzung. Trainer- und
+   Eltern-Bereich teilen sich auf demselben Handy den Speicher – wer beides ist, hat lokale
+   Anwesenheits-Zeitstempel liegen. teamSyncLoad lief auch im Eltern-Bereich und reichte sie
+   mit dem Eltern-Konto nach: 403, und bei jedem Öffnen die rote Meldung „Nur lokal gespeichert
+   – Team-Sync „anwesenheit" gerade nicht möglich". Außerhalb des Trainer-Fachs wird nichts
+   gelesen und nichts geschrieben; die Daten bleiben liegen, bis der Trainer-Bereich sie abgleicht. */
+function _teamSyncHier(){ try{ return typeof sbWriteKey!=="function"||sbWriteKey()===SB_TOKEN_KEY; }catch(e){ return false; } }
 // G1: local-first Upsert (Fehler still schlucken – offline-fähig bleiben)
 async function teamSyncUpsert(table,datum,data,extra){
+  if(!_teamSyncHier())return;
   try{
     const r=await fetch(`${SB_URL}/rest/v1/${table}?on_conflict=datum`,{
       method:"POST",
@@ -510,6 +518,7 @@ async function awFrischLaden(datum){
 }
 // G1: beim Start beide Tabellen laden und mit localStorage mergen
 async function teamSyncLoad(){
+  if(!_teamSyncHier())return;   // v619: nur in der Trainer-Sitzung
   const merge=async(table,localObj,storeKey,tsKey)=>{
     try{
       const r=await fetch(`${SB_URL}/rest/v1/${table}?select=*`,{headers:sbTeamHeaders()});

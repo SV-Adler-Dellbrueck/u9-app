@@ -1117,7 +1117,7 @@ function blzRender(){
   el.innerHTML=(BLZ.phase==="setup")?_blzSetupHtml():_blzLiveHtml();
 }
 function _blzSetupHtml(){
-  const chip=(aktiv,label,onclick)=>`<button onclick="${onclick}" style="flex:1;min-width:30%;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;background:${aktiv?"#d97706":"var(--surface2)"};color:${aktiv?"#fff":"var(--text2)"}">${label}</button>`;
+  const chip=(aktiv,label,onclick)=>`<button onclick="${onclick}" style="flex:1;min-width:30%;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;background:${aktiv?"#b45309":"var(--surface2)"};color:${aktiv?"#fff":"var(--text2)"}">${label}</button>`;
   const duell=BLZ.spielmodus==="duell";
   const vorschlag=_blzTeamVorschlag();
   const mChips=chip(!duell,"⚽ Kinder-Turnier","blzModus('kinder')")+chip(duell,"👨‍👩‍👧 Kinder gegen Eltern","blzModus('duell')");
