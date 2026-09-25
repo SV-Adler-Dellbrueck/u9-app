@@ -394,7 +394,7 @@ function teamStatsRender(){
     let sum=0,cnt=0;
     entries.forEach(e=>Object.entries(e).forEach(([k,v])=>{if(typeof v==="number"&&k!=="formIdx"){sum+=v;cnt++;}}));
     const avg=cnt?(sum/cnt).toFixed(1):"–";
-    evalTile=`<div style="font-size:16px;font-weight:700;color:var(--blue)">${avg} ★</div><div style="font-size:10px;color:var(--text2)">${new Date(d).toLocaleDateString("de-DE")}</div>`;
+    evalTile=`<div style="font-size:16px;font-weight:700;color:var(--blue-text)">${avg} ★</div><div style="font-size:10px;color:var(--text2)">${new Date(d).toLocaleDateString("de-DE")}</div>`;
   }
   // Anwesenheitsquote letzte 4 Termine
   const awDates=Object.keys(AW_DATA).sort().reverse().slice(0,4);

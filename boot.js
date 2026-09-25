@@ -168,7 +168,7 @@ async function periodListRender(){
   if(!rows.length){box.innerHTML='<div style="color:var(--text3);font-size:12.5px;padding:6px 0">Noch keine Monate geplant.</div>';return;}
   const fmtM=m=>{const p=String(m).split("-");return p.length===2?new Date(p[0],p[1]-1,1).toLocaleDateString("de-DE",{month:"short",year:"2-digit"}):m;};
   box.innerHTML=rows.map(x=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--surface2)">
-    <span style="font-weight:700;font-size:11px;color:var(--blue);width:58px">${esc(fmtM(x.monat))}</span>
+    <span style="font-weight:700;font-size:11px;color:var(--blue-text);width:58px">${esc(fmtM(x.monat))}</span>
     <span style="flex:1;font-size:13px">${esc(x.thema)}${x.kategorie?` <span style="font-size:10px;color:var(--text3)">(${esc(PERIOD_CATS[x.kategorie]||x.kategorie)})</span>`:""}</span>
     <button onclick="periodDelete('${esc(x.monat)}')" title="löschen" style="border:none;background:transparent;color:#dc2626;cursor:pointer;font-size:13px;padding:2px 4px"><i class="ti ti-trash"></i></button>
   </div>`).join("");

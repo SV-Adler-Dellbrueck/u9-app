@@ -119,7 +119,7 @@ function questStripHTML(counts){
   }).join("");
   return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
       <span style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);flex:1">🏆 Team-Quests heute${questTeams()>1?` · alle ${questTeams()} Teams zusammen`:""}</span>
-      <button onclick="questEditorOpen()" style="border:none;background:transparent;color:var(--blue);font-size:11px;cursor:pointer;font-family:inherit">anpassen</button>
+      <button onclick="questEditorOpen()" style="border:none;background:transparent;color:var(--blue-text);font-size:11px;cursor:pointer;font-family:inherit">anpassen</button>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:10px">${items}</div>
     ${teamBelohnung?`<div style="margin-top:8px;font-size:11px;color:var(--text2)">🎁 Belohnung: <strong>${esc(teamBelohnung)}</strong></div>`:""}`;

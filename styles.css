@@ -47,7 +47,7 @@
   --fam-taktik:var(--orange);--fam-taktik-2:#9a3412;
   --fam-elki:var(--purple);--fam-elki-2:#7c3aed;
   --fam-orga:#1d4ed8;--fam-orga-2:#2563eb;
-  --text:#1a1a2e;--text2:#475569;--text3:#64748b;
+  --text:#1a1a2e;--text2:#475569;--text3:#5b6b81;  /* v614: #64748b hatte auf --bg nur 4,34:1 */
   --bg:#f1f5f9;--surface:#fff;--surface2:#f8fafc;
   --border:1px solid #e2e8f0;--border-s:1px solid #cbd5e1;
   --r:8px;--rl:12px;
@@ -971,7 +971,7 @@ label:has(> input[type="checkbox"]){min-height:44px;display:flex;align-items:cen
    (greift automatisch über .sl:first-child bzw. .sl.nt). */
 .abschnitt{background:var(--surface);border:var(--border);border-radius:var(--rl);padding:12px 14px;margin-bottom:12px;box-shadow:var(--shadow)}
 details.el-sect{margin-bottom:12px}
-details.el-sect>summary{cursor:pointer;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#64748b;padding:8px 4px;min-height:44px;display:flex;align-items:center;gap:6px}
+details.el-sect>summary{cursor:pointer;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);padding:8px 4px;min-height:44px;display:flex;align-items:center;gap:6px}
 details.el-sect>summary::-webkit-details-marker{display:none}
 details.el-sect>summary::after{content:"▾ mehr";margin-left:auto;font-size:11px;color:var(--text3);text-transform:none;letter-spacing:0;font-weight:700}
 details.el-sect[open]>summary::after{content:"▴ weniger"}

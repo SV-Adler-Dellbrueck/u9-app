@@ -69,7 +69,7 @@ async function gegnerContactInto(elId,name){
   if(g.ansprechpartner||g.telefon){
     kontakt="📇 "+esc(g.ansprechpartner||"Ansprechpartner");
     if(g.telefon){
-      kontakt+=' · <a href="tel:'+esc(tel)+'" style="color:var(--blue);font-weight:700;text-decoration:none">☎ '+esc(g.telefon)+"</a>";
+      kontakt+=' · <a href="tel:'+esc(tel)+'" style="color:var(--blue-text);font-weight:700;text-decoration:none">☎ '+esc(g.telefon)+"</a>";
       if(wa)kontakt+=' · <a href="https://wa.me/'+wa+'" target="_blank" rel="noopener" style="color:#25D366;font-weight:700;text-decoration:none">💬 WhatsApp</a>';
     }
   }
@@ -116,7 +116,7 @@ function gegnerRenderList(){
       <div style="font-size:13px;font-weight:700">${esc(g.name)}</div>
       ${g.adresse?`<div style="font-size:11px;color:var(--text2)">📍 ${esc(g.adresse)}${g.platzart?` · ${esc(g.platzart)}`:""}</div>`
         :g.platzart?`<div style="font-size:11px;color:var(--text2)">${esc(g.platzart)}</div>`:""}
-      ${(g.ansprechpartner||g.telefon)?`<div style="font-size:11px;color:var(--text2)">📇 ${esc(g.ansprechpartner||"")}${g.telefon?` · <a href="tel:${esc(String(g.telefon).replace(/\s/g,""))}" style="color:var(--blue);text-decoration:none">☎ ${esc(g.telefon)}</a> · <a href="https://wa.me/${waNumber(g.telefon)}" target="_blank" rel="noopener" style="color:#25D366;text-decoration:none">💬 WhatsApp</a>`:""}</div>`:""}
+      ${(g.ansprechpartner||g.telefon)?`<div style="font-size:11px;color:var(--text2)">📇 ${esc(g.ansprechpartner||"")}${g.telefon?` · <a href="tel:${esc(String(g.telefon).replace(/\s/g,""))}" style="color:var(--blue-text);text-decoration:none">☎ ${esc(g.telefon)}</a> · <a href="https://wa.me/${waNumber(g.telefon)}" target="_blank" rel="noopener" style="color:#25D366;text-decoration:none">💬 WhatsApp</a>`:""}</div>`:""}
     </div>
     <button class="btn btn-sm" onclick="gegnerEdit(${g.id})"><i class="ti ti-edit"></i></button>
   </div>`).join("");
@@ -521,7 +521,7 @@ async function pulsTrainerFill(t){
   const comments=(a.comments||[]);
   window._pulsCmt=window._pulsCmt||{}; window._pulsCmt[t.id]=comments;
   box.innerHTML=`🌡️ <b>Eltern-Puls</b> (${a.n}): 😀 ${a.up} · 😐 ${a.mid} · 😟 ${a.down} · Ø ${a.avg}`+
-    (comments.length?` <button onclick="pulsComments(${Number(t.id)})" style="border:none;background:none;color:var(--blue);cursor:pointer;font-size:11px;font-family:inherit;padding:0">💬 ${comments.length}</button>`:"");
+    (comments.length?` <button onclick="pulsComments(${Number(t.id)})" style="border:none;background:none;color:var(--blue-text);cursor:pointer;font-size:11px;font-family:inherit;padding:0">💬 ${comments.length}</button>`:"");
 }
 function pulsComments(id){
   const arr=(window._pulsCmt||{})[id]||[]; if(!arr.length)return;

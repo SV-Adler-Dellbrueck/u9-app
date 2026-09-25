@@ -49,7 +49,7 @@ async function abzeichenRender(spielerId,kidsMode){
         </div>
         ${on?`<span style="font-size:11px;font-weight:800;color:#16a34a">✓ geschafft</span>`
              :(kidsMode?`<span style="font-size:11px;font-weight:700;color:var(--text3);white-space:nowrap">noch offen</span>`
-             :`<button onclick="abzeichenAward(${spielerId},'${a.id}',this)" style="flex:none;padding:8px 10px;border:none;border-radius:10px;background:#f59e0b;color:#fff;font-family:inherit;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap">Als geschafft eintragen</button>`)}
+             :`<button onclick="abzeichenAward(${spielerId},'${a.id}',this)" data-el-fest="1" style="flex:none;padding:8px 10px;border:none;border-radius:10px;background:#f59e0b;color:#1a1a2e;font-family:inherit;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap">Als geschafft eintragen</button>`)}
       </div>`;
     }).join("");
 }
