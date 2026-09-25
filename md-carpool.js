@@ -30,7 +30,7 @@ async function elternCarpoolRender(spielerId,terminId){
     html+=card(`<div style="font-weight:700;margin-bottom:4px">🚗 Ihr fahrt selbst</div>
       <div style="font-size:12.5px;color:#475569">${frei} von ${total} Plätzen frei${mine.carpool_area?` · ${esc(mine.carpool_area)}`:""}</div>
       ${mine.carpool_note?`<div style="font-size:12px;color:#475569;margin-top:2px">📍 ${esc(mine.carpool_note)}</div>`:""}
-      ${me&&me.mitfahrer&&me.mitfahrer.length?`<div style="font-size:12px;color:#475569;margin-top:4px">Mitfahrer: <b>${me.mitfahrer.map(esc).join(", ")}</b></div>`:'<div style="font-size:12px;color:#94a3b8;margin-top:4px">Noch keine Mitfahrer.</div>'}
+      ${me&&me.mitfahrer&&me.mitfahrer.length?`<div style="font-size:12px;color:#475569;margin-top:4px">Mitfahrer: <b>${me.mitfahrer.map(esc).join(", ")}</b></div>`:'<div style="font-size:12px;color:var(--text3);margin-top:4px">Noch keine Mitfahrer.</div>'}
       <button onclick="elternCarpoolReset(${spielerId},${terminId})" style="margin-top:8px;border:none;background:none;color:#dc2626;font-size:12px;cursor:pointer">Fahrangebot zurücknehmen</button>`);
   }else if(st==="passenger"){
     const drv=board.find(d=>d.driver_spieler_id===mine.carpool_driver_spieler_id);
@@ -47,11 +47,11 @@ async function elternCarpoolRender(spielerId,terminId){
   }
   const freeDrivers=board.filter(d=>d.driver_spieler_id!==spielerId && (d.seats-d.belegt)>0);
   html+=`<div id="carpool-search" style="${st==="none"?"display:none":""}">
-    <div style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#94a3b8;margin:6px 0">Freie Plätze im Team</div>
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:6px 0">Freie Plätze im Team</div>
     ${freeDrivers.length?freeDrivers.map(d=>`<div style="display:flex;align-items:center;gap:8px;padding:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:6px">
       <div style="flex:1"><div style="font-weight:700;font-size:13px">Bei ${esc(d.fahrer)}</div><div style="font-size:11.5px;color:#64748b">${d.seats-d.belegt} frei${d.area?` · ${esc(d.area)}`:""}${d.note?` · 📍 ${esc(d.note)}`:""}</div></div>
       <button onclick="elternCarpoolPassenger(${spielerId},${terminId},${d.driver_spieler_id})" style="border:none;border-radius:8px;background:#059669;color:#fff;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer">Mitfahren</button>
-    </div>`).join(""):'<div style="font-size:12px;color:#94a3b8">Aktuell bietet niemand freie Plätze an.</div>'}
+    </div>`).join(""):'<div style="font-size:12px;color:var(--text3)">Aktuell bietet niemand freie Plätze an.</div>'}
   </div>`;
   body.innerHTML=html;
 }

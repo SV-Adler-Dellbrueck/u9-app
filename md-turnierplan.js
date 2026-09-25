@@ -3269,11 +3269,11 @@ function _fstPublicRender(wrap,row){
       const kopf=`<span style="font-size:16px;font-weight:900">Runde ${r}</span>
           <span style="font-size:13px;color:#475569;font-weight:700">${esc(fstZeitIst(spiele[0]?spiele[0].zeit:"",cfg))} Uhr</span>
           ${aktiv&&jetzt?`<span style="margin-left:auto;font-size:11px;font-weight:800;color:#166534;background:#dcfce7;border-radius:10px;padding:2px 8px">${jetzt.status==="laeuft"?"▶ läuft":"als Nächstes"}</span>`
-            :(aktiv?"":`<span style="margin-left:auto;font-size:11px;color:#94a3b8">${spiele.length} Spiel${spiele.length===1?"":"e"}${spiele.every(p=>p.ta!=null)?" · fertig":""}</span>`)}`;
+            :(aktiv?"":`<span style="margin-left:auto;font-size:11px;color:var(--text3)">${spiele.length} Spiel${spiele.length===1?"":"e"}${spiele.every(p=>p.ta!=null)?" · fertig":""}</span>`)}`;
       const zeilen=spiele.map(p=>{const F=_fstF(p.form); const mi=plan.indexOf(p); const erg=p.ta!=null?`${p.ta} : ${p.tb}`:"– : –";
           return `<div style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:6px 0">
           <span style="font-size:10px;font-weight:800;color:#fff;background:${F.farbe};border-radius:7px;padding:3px 7px;min-width:52px;text-align:center;white-space:nowrap">${esc(fstFeldName(felder,(p.feld||1)-1))}</span>
-          <span style="min-width:0;font-size:14px;font-weight:700;line-height:1.3">${nm(p.a)} <span style="color:#94a3b8;font-weight:400">gegen</span> ${nm(p.b)}</span>
+          <span style="min-width:0;font-size:14px;font-weight:700;line-height:1.3">${nm(p.a)} <span style="color:var(--text3);font-weight:400">gegen</span> ${nm(p.b)}</span>
           ${helfer?`<button onclick="htPubEdit(${mi})" aria-label="Ergebnis eintragen" style="min-height:44px;min-width:64px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;font-family:inherit;font-weight:900;font-size:13px;cursor:pointer;color:${p.ta!=null?"#0f172a":"#94a3b8"}">${erg}</button>`
                   :`<span style="font-size:14px;font-weight:900;color:${p.ta!=null?"#0f172a":"#cbd5e1"};min-width:44px;text-align:center">${erg}</span>`}
         </div>`;}).join("");
@@ -3290,7 +3290,7 @@ function _fstPublicRender(wrap,row){
       <div style="font-size:12px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Gut zu wissen</div>
       <div style="font-size:13px;white-space:pre-wrap;line-height:1.6">${esc(cfg.infos)}</div></div>`:""}
 
-    <div style="text-align:center;font-size:11.5px;color:#94a3b8;margin-top:16px;line-height:1.6">
+    <div style="text-align:center;font-size:11.5px;color:var(--text3);margin-top:16px;line-height:1.6">
       Wir spielen ohne Tabelle – bei uns gewinnt die Freude am Spiel.<br>SV Adler Dellbrück · U9 · Die Seite aktualisiert sich von selbst
     </div>`;
   wiederher();
@@ -3322,7 +3322,7 @@ function htPubEdit(mi){
   document.getElementById("htpub-sheet")?.remove();
   const sh=document.createElement("div");sh.id="htpub-sheet";
   sh.style.cssText="position:fixed;left:0;right:0;bottom:0;background:#fff;border-radius:16px 16px 0 0;box-shadow:0 -6px 30px rgba(0,0,0,.3);padding:16px;z-index:1000;max-width:560px;margin:0 auto";
-  sh.innerHTML=`<div style="font-weight:800;font-size:14px;text-align:center">${esc(_htName(p.a,row.teams))} <span style="color:#94a3b8">vs</span> ${esc(_htName(p.b,row.teams))}</div>
+  sh.innerHTML=`<div style="font-weight:800;font-size:14px;text-align:center">${esc(_htName(p.a,row.teams))} <span style="color:var(--text3)">vs</span> ${esc(_htName(p.b,row.teams))}</div>
     <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin:14px 0">
       <span style="display:inline-flex;align-items:center;gap:4px">
         <button onclick="htPubTor(${mi},'ta',-1)" aria-label="Tor zurücknehmen" style="min-width:52px;min-height:52px;border:1px solid var(--rand-bedien);border-radius:12px;background:#f8fafc;font-size:20px;cursor:pointer">−</button>
@@ -3382,7 +3382,7 @@ function _htPublicRender(wrap,row){
       <div style="font-weight:800;font-size:14px;margin-bottom:6px">📊 ${titel}</div>
       ${_htTabelle(plan,idxs,teams).map((z,pl)=>`<div style="display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0">
         <span style="width:22px;color:#64748b">${pl+1}.</span><span style="flex:1;font-weight:600">${esc(z.name)}</span>
-        <span style="font-size:11px;color:#94a3b8">${z.sp} Sp. · ${z.tore}:${z.geg}</span><b style="min-width:24px;text-align:right">${z.pkt}</b>
+        <span style="font-size:11px;color:var(--text3)">${z.sp} Sp. · ${z.tore}:${z.geg}</span><b style="min-width:24px;text-align:right">${z.pkt}</b>
       </div>`).join("")}
     </div>`).join("");
   }else if(plan.length){
@@ -3421,7 +3421,7 @@ function _htPublicRender(wrap,row){
       <button onclick="htPubMonitor()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">📺 Monitor</button>
       <button onclick="window.print()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">🖨️ Drucken</button>
     </div>
-    <div style="text-align:center;font-size:10.5px;color:#94a3b8;margin-top:10px">Aktualisiert sich automatisch · Stand ${new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})} Uhr</div>`;
+    <div style="text-align:center;font-size:10.5px;color:var(--text3);margin-top:10px">Aktualisiert sich automatisch · Stand ${new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})} Uhr</div>`;
 }
 
 /* Team-Filter auf der öffentlichen Seite: Gast-Trainer tippt sein Team an und sieht nur

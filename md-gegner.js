@@ -851,14 +851,14 @@ function renderHandoverView(){
     </div>
     <div style="background:#fff;border-radius:14px;padding:14px;margin-top:12px">
       <div style="font-weight:800;margin-bottom:2px">✅ Rückmeldungen</div>
-      ${list("Dabei",pkt.ja,"#15803d")||'<div style="color:#94a3b8;font-size:13px">Noch keine Zusagen erfasst.</div>'}
+      ${list("Dabei",pkt.ja,"#15803d")||'<div style="color:var(--text3);font-size:13px">Noch keine Zusagen erfasst.</div>'}
       ${list("Offen",pkt.offen,"#b45309")}
       ${list("Abgesagt",pkt.ab,"#dc2626")}
       ${list("Krank",pkt.krank,"#d97706")}
     </div>
     ${planHtml}
     ${pkt.notiz?`<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:14px;padding:14px;margin-top:12px"><div style="font-weight:800;color:#854d0e;margin-bottom:4px">📝 Notiz vom Trainer</div><div style="font-size:14px;white-space:pre-wrap;color:#713f12">${e2(pkt.notiz)}</div></div>`:""}
-    <div style="text-align:center;font-size:11px;color:#94a3b8;margin-top:16px">Snapshot – Stand beim Erstellen des Links · SV Adler Dellbrück e.V.</div>`;
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">Snapshot – Stand beim Erstellen des Links · SV Adler Dellbrück e.V.</div>`;
 }
 async function tmDelete(id){
   // HOTFIX 3: Löschen räumt via ON DELETE CASCADE automatisch Anwesenheit, Live-Aktionen,

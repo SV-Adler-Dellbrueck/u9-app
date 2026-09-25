@@ -513,7 +513,7 @@ async function elternNewsLoad(kids){
   const panel=document.getElementById("cat-news"); if(!panel)return;
   let data=null;
   try{const r=await fetch(`${SB_URL}/rest/v1/rpc/eltern_news`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"});if(r.ok)data=await r.json();}catch(e){}
-  if(!data){ panel.innerHTML='<div style="background:#fff;border-radius:14px;padding:20px;text-align:center;color:#94a3b8;font-size:13px">Neuigkeiten offline nicht verfügbar.</div>'; return; }
+  if(!data){ panel.innerHTML='<div style="background:#fff;border-radius:14px;padding:20px;text-align:center;color:var(--text3);font-size:13px">Neuigkeiten offline nicht verfügbar.</div>'; return; }
   // aktuelle Werte je Quelle
   const cur={ nest:data.nest_at||"", boerse:data.boerse_at||"", fund:data.fund_at||"", skill:data.skill_at||"" };
   (data.lob||[]).forEach(l=>cur["lob_"+l.sid]=l.at);
@@ -558,8 +558,8 @@ async function elternNewsLoad(kids){
   const nbtn=document.getElementById("eltern-news-btn");
   if(nbtn)nbtn.style.display=items.length?"flex":"none";
   panel.innerHTML = items.length
-    ? items.map(i=>`<button onclick="${i.act}" style="display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:#fff;border:1px solid var(--rand-bedien);border-radius:12px;padding:12px;margin-bottom:8px;font-family:inherit;cursor:pointer"><span style="font-size:20px;line-height:1">${i.emo}</span><span style="flex:1;font-size:13px;color:#334155;line-height:1.4">${i.txt}</span><span style="font-size:14px;color:#94a3b8">›</span></button>`).join("")
-    : '<div style="background:#fff;border-radius:14px;padding:24px;text-align:center;color:#94a3b8;font-size:13px">Aktuell nichts Neues 🦅</div>';
+    ? items.map(i=>`<button onclick="${i.act}" style="display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:#fff;border:1px solid var(--rand-bedien);border-radius:12px;padding:12px;margin-bottom:8px;font-family:inherit;cursor:pointer"><span style="font-size:20px;line-height:1">${i.emo}</span><span style="flex:1;font-size:13px;color:#334155;line-height:1.4">${i.txt}</span><span style="font-size:14px;color:var(--text3)">›</span></button>`).join("")
+    : '<div style="background:#fff;border-radius:14px;padding:24px;text-align:center;color:var(--text3);font-size:13px">Aktuell nichts Neues 🦅</div>';
 }
 function elternNewsMarkSeen(){
   try{ if(window._elternNewsCur)localStorage.setItem("adler_news_seen",JSON.stringify(window._elternNewsCur)); }catch(e){}
@@ -578,7 +578,7 @@ async function chronikOpen(){
   m.onclick=e=>{if(e.target===m)m.remove();};
   m.innerHTML=`<div id="chronik-card" style="background:#fff;color:#1a1a2e;border-radius:16px;padding:18px;max-width:520px;width:100%;margin:auto">
     ${mdlHead("chronik-modal","📖","Unsere Saison","Spiele, Feste und Meilensteine – die Chronik der jungen Adler","#1e3a8a")}
-    <div id="chronik-body" style="text-align:center;padding:24px;color:#94a3b8;font-size:13px">Lade die Saison …</div>
+    <div id="chronik-body" style="text-align:center;padding:24px;color:var(--text3);font-size:13px">Lade die Saison …</div>
   </div>`;
   document.body.appendChild(m);
   const heute=new Date().toISOString().slice(0,10);
@@ -597,13 +597,13 @@ async function chronikOpen(){
     ...termine.map(t=>({datum:t.datum,typ:t.typ,t})),
     ...ms.map(x=>({datum:x.erreicht_am,typ:"meilenstein",x}))
   ].sort((a,b)=>a.datum<b.datum?1:-1);
-  if(!eintraege.length){box.innerHTML='<div style="padding:10px;color:#94a3b8;font-size:13px">Die Saison geht gerade erst los – bald steht hier das erste Kapitel! 🦅</div>';return;}
+  if(!eintraege.length){box.innerHTML='<div style="padding:10px;color:var(--text3);font-size:13px">Die Saison geht gerade erst los – bald steht hier das erste Kapitel! 🦅</div>';return;}
   let html="",monat="";
   const MON=["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
   eintraege.forEach(e=>{
     const d=new Date(e.datum+"T00:00:00");
     const mLbl=MON[d.getMonth()]+" "+d.getFullYear();
-    if(mLbl!==monat){monat=mLbl;html+=`<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8;margin:16px 4px 8px;text-align:left">${mLbl}</div>`;}
+    if(mLbl!==monat){monat=mLbl;html+=`<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin:16px 4px 8px;text-align:left">${mLbl}</div>`;}
     const ds=d.toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"});
     if(e.typ==="meilenstein"){
       html+=`<div style="display:flex;gap:10px;align-items:center;background:linear-gradient(135deg,#fef9c3,#fef3c7);border:1px solid #fde047;border-radius:12px;padding:10px 13px;margin-bottom:8px;text-align:left">
@@ -616,7 +616,7 @@ async function chronikOpen(){
         <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:17px">${icon}</span>
           <span style="flex:1;min-width:0;font-size:13px;font-weight:800;color:#0f172a">${esc(t.titel||t.gegner||(istSpiel?"Spiel":"Event"))}${t.heim===true?' <span style="font-size:9.5px;font-weight:800;color:#15803d">HEIM</span>':t.heim===false?' <span style="font-size:9.5px;font-weight:800;color:#b45309">AUSW.</span>':""}</span>
-          <span style="font-size:10.5px;color:#94a3b8">${ds}</span>
+          <span style="font-size:10.5px;color:var(--text3)">${ds}</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
           ${istSpiel?`<span style="font-size:12.5px;font-weight:900;color:${erg?"#0f172a":"#94a3b8"}">${erg?esc(erg):"– Ergebnis folgt –"}</span>`:'<span style="font-size:11.5px;color:#64748b">Team-Event</span>'}
@@ -673,7 +673,7 @@ function datenschutzInfoOpen(){
       <div style="font-size:12.5px;font-weight:800;color:#166534;margin-bottom:4px">💬 Und warum nicht einfach WhatsApp?</div>
       <div style="font-size:12px;color:#166534;line-height:1.55">Bei WhatsApp wird jedes Foto sofort als Kopie auf alle Handys der Gruppe verteilt – und landet oft ungefragt in deren Cloud-Backups. Weiterleiten ist ein Fingertipp, Zurückholen unmöglich. Hier bleibt alles im geschützten Bereich, eure Freigaben gelten, und das Trainerteam kann eingreifen. <b>Deshalb: Team-Fotos bitte in die Event-Galerie statt in die Gruppe.</b></div>
     </div>
-    <div style="font-size:10.5px;color:#94a3b8;margin-top:12px;line-height:1.5">Ganz ehrlich: 100 % Sicherheit gibt es nirgends im Internet. Der Unterschied ist Kontrolle – hier behaltet ihr sie, bei Messenger-Gruppen gebt ihr sie ab. Fragen dazu? Sprecht das Trainerteam einfach an.</div>
+    <div style="font-size:10.5px;color:var(--text3);margin-top:12px;line-height:1.5">Ganz ehrlich: 100 % Sicherheit gibt es nirgends im Internet. Der Unterschied ist Kontrolle – hier behaltet ihr sie, bei Messenger-Gruppen gebt ihr sie ab. Fragen dazu? Sprecht das Trainerteam einfach an.</div>
     <button onclick="document.getElementById('dsi-modal').remove()" style="width:100%;margin-top:14px;padding:11px;border:none;border-radius:10px;background:#f1f5f9;color:#334155;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">Alles klar 👍</button>
   </div>`;
   document.body.appendChild(m);
@@ -840,7 +840,7 @@ async function elternDashLoad(){
       return `<div style="border-top:1px solid #f1f5f9;margin-top:10px;padding-top:10px">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
           <span style="font-weight:700;font-size:14px">${esc(kd.name||"Kind")}</span>
-          ${kd.nr!=null?`<span style="color:#94a3b8;font-weight:600;font-size:12px">#${kd.nr}</span>`:""}
+          ${kd.nr!=null?`<span style="color:var(--text3);font-weight:600;font-size:12px">#${kd.nr}</span>`:""}
           <span style="margin-left:auto;font-size:11.5px;font-weight:700;color:${st?EP_RSVP[st].col:"#b45309"}">${st?EP_RSVP[st].emo+" "+EP_RSVP[st].lbl:"❗ offen"}</span>
         </div>
         <div style="display:flex;gap:6px">${btns}</div>
@@ -859,7 +859,7 @@ async function elternDashLoad(){
       :(offen.length?(dringend?"border:2px solid #ef4444;box-shadow:0 4px 16px rgba(239,68,68,.22)":"border:2px solid #f59e0b;box-shadow:0 4px 16px rgba(245,158,11,.18)"):"");
     terminHtml=`<div id="termin-card" style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;${rand}">
       <div style="display:flex;align-items:center;gap:8px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#94a3b8">Nächster Termin</div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Nächster Termin</div>
         ${offen.length?(dringend?`<span style="margin-left:auto;font-size:10px;font-weight:800;color:#b91c1c;background:#fef2f2;border:1px solid #fca5a5;border-radius:20px;padding:2px 8px">⏰ Rückmeldung überfällig – bitte jetzt</span>`:`<span style="margin-left:auto;font-size:10px;font-weight:800;color:#b45309;background:#fffbeb;border:1px solid #fcd34d;border-radius:20px;padding:2px 8px">❗ Rückmeldung fehlt</span>`):""}
       </div>
       ${(typeof elternPlatzHinweisHtml==="function")?elternPlatzHinweisHtml(termin):""}
@@ -872,7 +872,7 @@ async function elternDashLoad(){
       <!-- PO: „Beim Training ist der Satz mit der endgültigen Aufstellung egal. nur bei spiel
            jemand turnier" – beim Training wird niemand aufgestellt, da wäre der Zusatz nur
            eine Einschränkung ohne Anlass. Der erste Satz gilt überall. -->
-      <div style="font-size:10.5px;color:#94a3b8;margin-top:8px">Aktiven Status nochmal tippen = Rückmeldung entfernen.${(termin.typ==="spiel"||termin.typ==="turnier")?" Deine Rückmeldung ist ein Hinweis – die endgültige Aufstellung entscheidet der Trainer.":""}</div>
+      <div style="font-size:10.5px;color:var(--text3);margin-top:8px">Aktiven Status nochmal tippen = Rückmeldung entfernen.${(termin.typ==="spiel"||termin.typ==="turnier")?" Deine Rückmeldung ist ein Hinweis – die endgültige Aufstellung entscheidet der Trainer.":""}</div>
       ${termin.typ==="training"?'<div id="betreuung-card"></div>':""}
       <div id="helfer-card"></div><!-- PO: Hilfe wird kurzfristig entschieden, nicht im Voraus -->
 
@@ -884,7 +884,7 @@ async function elternDashLoad(){
       </div>
     </div>`;
   }
-  const sec=(t)=>`<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8;margin:18px 4px 8px">${t}</div>`;
+  const sec=(t)=>`<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin:18px 4px 8px">${t}</div>`;
   // Terminkarte und die offenen Rückmeldungen wandern in ihre Slots ganz oben.
   /* Ersatz per FUNKTION, nicht per String: in $-Zeichen der Termindaten („$" im Titel,
      „$&") sieht String.replace sonst Rückverweise und frisst Teile der Karte. */
@@ -930,7 +930,7 @@ async function elternDashLoad(){
   //    Inhalte liegen (versteckt) im Overlay, damit die Async-Loader ihre Slots weiter füllen. ──
   // Einheitliche Aktions-Zeile für die Panel-Inhalte (Icon + Titel + Beschreibung + ›, farbiger
   // Akzent links in Tönen der Kategorie-Farbe). noClose=true lässt das Fenster offen (z. B. Export).
-  const elRow=(emo,label,d,onclick,col,noClose)=>`<button onclick="${noClose?"":"elternCatClose();"}${onclick}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border:1px solid var(--rand-bedien);border-left:4px solid ${col};border-radius:12px;padding:13px;margin-bottom:8px;font-family:inherit;cursor:pointer"><span style="font-size:20px;line-height:1">${emo}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:13.5px;font-weight:700;color:#0f172a">${label}</span><span style="display:block;font-size:11.5px;color:#64748b;margin-top:1px">${d}</span></span><span style="font-size:14px;color:#94a3b8">›</span></button>`;
+  const elRow=(emo,label,d,onclick,col,noClose)=>`<button onclick="${noClose?"":"elternCatClose();"}${onclick}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border:1px solid var(--rand-bedien);border-left:4px solid ${col};border-radius:12px;padding:13px;margin-bottom:8px;font-family:inherit;cursor:pointer"><span style="font-size:20px;line-height:1">${emo}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:13.5px;font-weight:700;color:#0f172a">${label}</span><span style="display:block;font-size:11.5px;color:#64748b;margin-top:1px">${d}</span></span><span style="font-size:14px;color:var(--text3)">›</span></button>`;
   const catBtn=(id,emoji,title,desc,grad)=>`<button onclick="elternCatOpen('${id}')" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:none;border-radius:14px;background:${grad};color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.08)"><span style="font-size:22px;line-height:1">${emoji}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:14px;font-weight:800">${title}</span><span style="display:block;font-size:11.5px;opacity:.92;margin-top:1px">${desc}</span></span><span style="font-size:18px;opacity:.85">›</span></button>`;
   html+=sec("Mehr");
   html+=catBtn('mehr','📰','Mehr vom Team','Adler Nest, Börse, Fundbüro, Kasse','linear-gradient(135deg,#1e3a8a,#2563eb)');
@@ -938,7 +938,7 @@ async function elternDashLoad(){
   html+=catBtn('datenschutz','🔒','Datenschutz &amp; Freigaben','Foto/Video, Notfallkarte, Datenexport','linear-gradient(135deg,#0d9488,#0f766e)');
   html+=catBtn('kontakt','⚙️','Kontakt &amp; Benachrichtigungen','Elterngespräch, Push, Einstellungen','linear-gradient(135deg,#475569,#334155)');
   // Versionszeile: hilft, wenn jemand „bei mir sieht das anders aus" meldet (v409)
-  html+=`<div id="app-version-eltern" style="text-align:center;font-size:10.5px;color:#94a3b8;margin:16px 0 4px"></div>`;
+  html+=`<div id="app-version-eltern" style="text-align:center;font-size:10.5px;color:var(--text3);margin:16px 0 4px"></div>`;
   html+=`<div id="el-cat-overlay" style="display:none;position:fixed;inset:0;z-index:10000;background:var(--bg,#f1f5f9);overflow-y:auto"><div style="max-width:560px;margin:0 auto;padding:12px 16px 40px">
     <div style="display:flex;align-items:center;gap:10px;position:sticky;top:0;background:var(--bg,#f1f5f9);padding:8px 0 10px;z-index:1">
       <button onclick="elternCatClose()" aria-label="Zurück" style="border:none;background:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;color:#334155;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.15);flex:none">←</button>
@@ -976,7 +976,7 @@ async function elternDashLoad(){
         <div style="flex:1"><div style="font-weight:700;font-size:13px">${esc(u.titel)} · ${eur(u.betrag)}</div>${u.faellig?`<div style="font-size:11px;color:#64748b">fällig bis ${u.faellig}</div>`:""}</div>
         ${u.paypal_link?`<a href="${esc(u.paypal_link)}" target="_blank" rel="noopener noreferrer" style="background:#0070ba;color:#fff;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;text-decoration:none">PayPal</a>`:""}
       </div>`).join("")}
-      <div style="font-size:10px;color:#94a3b8;margin-top:8px">Informativ. Zahlungen laufen extern über PayPal.</div>`);
+      <div style="font-size:10px;color:var(--text3);margin-top:8px">Informativ. Zahlungen laufen extern über PayPal.</div>`);
   }
   html+=`<div id="ak-slot"></div>`; // FEAT Z: Adler-Kasse (async, nur wenn Link gesetzt)
   html+=`</div>`; // /cat-mehr
@@ -986,7 +986,7 @@ async function elternDashLoad(){
   // PO: einmal gespielt = erledigt. Die Federn vergibt der Server ohnehin nur einmal
   // (xp_award_event ist idempotent) – die Kachel sagt das jetzt auch ehrlich.
   html+=fpqDone
-    ? `<div style="display:flex;align-items:center;gap:12px;width:100%;padding:14px;margin-bottom:8px;border-radius:14px;background:#f1f5f9;color:#94a3b8">
+    ? `<div style="display:flex;align-items:center;gap:12px;width:100%;padding:14px;margin-bottom:8px;border-radius:14px;background:#f1f5f9;color:var(--text3)">
         <span style="font-size:22px;line-height:1;opacity:.6">🏅</span>
         <span style="flex:1;min-width:0"><span style="display:block;font-size:14px;font-weight:800">Fairplay-Quiz</span><span style="display:block;font-size:11.5px;margin-top:1px">✓ Schon gespielt – die ${XP_LABEL} sind beim Kind angekommen</span></span>
       </div>`
@@ -1161,7 +1161,7 @@ function elternOffeneRsvpHtml(rows,kids,rsvpAll,ausserId){
         return `<button onclick="elternRsvp(${t.id},${k.spieler_id},'${s}')" aria-label="${esc(kd.name||"Kind")}: ${c.lbl}" style="flex:1;min-width:0;min-height:44px;padding:6px 3px;border-radius:10px;border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;font-family:inherit;font-size:11.5px;font-weight:700;line-height:1.15;cursor:pointer">${c.emo} ${c.lbl}</button>`;
       }).join("");
       return `<div style="margin-top:8px">
-        <div style="font-size:12.5px;font-weight:700;margin-bottom:5px">${esc(kd.name||"Kind")}${kd.nr!=null?` <span style="color:#94a3b8;font-weight:600">#${kd.nr}</span>`:""}</div>
+        <div style="font-size:12.5px;font-weight:700;margin-bottom:5px">${esc(kd.name||"Kind")}${kd.nr!=null?` <span style="color:var(--text3);font-weight:600">#${kd.nr}</span>`:""}</div>
         <div style="display:flex;gap:6px">${btns}</div></div>`;
     }).join("");
     return `<div style="border-top:1px solid #f1f5f9;margin-top:10px;padding-top:10px">
@@ -1285,7 +1285,7 @@ async function terminDetailOpen(id){
   c.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px">
       <div style="font-size:17px;font-weight:800;min-width:0">${m.icon} ${esc(t.titel||t.gegner||m.label)}</div>
-      <button onclick="document.getElementById('td-modal').remove()" style="border:none;background:none;font-size:24px;color:#94a3b8;cursor:pointer;line-height:1;flex:none">×</button>
+      <button onclick="document.getElementById('td-modal').remove()" style="border:none;background:none;font-size:24px;color:var(--text3);cursor:pointer;line-height:1;flex:none">×</button>
     </div>
     <div style="font-size:12.5px;color:#64748b;margin-bottom:10px">${wtag} ${d.toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})}${zeit?" · "+zeit:""}</div>
     <div id="td-wetter" style="margin-bottom:6px"></div>
@@ -1296,7 +1296,7 @@ async function terminDetailOpen(id){
     ${infoRow("⚽","Spielform", spielformLbl)}
     <div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
       <div style="font-weight:700;font-size:13.5px;margin-bottom:2px">✅ Rückmeldung</div>
-      ${rsvpRows||'<div style="font-size:12px;color:#94a3b8">Kein Kind zugeordnet.</div>'}
+      ${rsvpRows||'<div style="font-size:12px;color:var(--text3)">Kein Kind zugeordnet.</div>'}
     </div>
     <div id="td-vorbericht"></div>
     <div id="td-nom"></div>
@@ -1328,10 +1328,10 @@ async function tdMitbringLoad(t){
   const kidOpts=kids.map(k=>`<option value="${k.spieler_id}">${esc((k.kader&&k.kader.name)||"Kind")}</option>`).join("");
   const liste=items.length
     ? items.map(it=>`<div style="display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 0;border-top:1px solid #f1f5f9">
-        <span style="flex:1">🍽️ <b>${esc(it.was)}</b>${it.wer?` <span style="color:#94a3b8">· ${esc(it.wer)}</span>`:""}</span>
+        <span style="flex:1">🍽️ <b>${esc(it.was)}</b>${it.wer?` <span style="color:var(--text3)">· ${esc(it.wer)}</span>`:""}</span>
         ${(uid&&it.created_by===uid)?`<button onclick="mitbringDelete(${it.id})" aria-label="Eintrag löschen" style="border:none;background:transparent;color:#dc2626;cursor:pointer;min-width:32px;min-height:32px;font-size:15px">✕</button>`:""}
       </div>`).join("")
-    : '<div style="font-size:12px;color:#94a3b8;padding:4px 0">Noch nichts eingetragen – mach den Anfang! 🎉</div>';
+    : '<div style="font-size:12px;color:var(--text3);padding:4px 0">Noch nichts eingetragen – mach den Anfang! 🎉</div>';
   box.innerHTML=`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
     <div style="font-weight:700;font-size:13.5px;margin-bottom:2px">🎉 Mitbringliste</div>
     <div style="font-size:11.5px;color:#64748b;margin-bottom:6px">Wer bringt was mit? (Salat, Kuchen, Getränke, Pavillon …)</div>
@@ -1359,7 +1359,7 @@ function tdPulsRender(terminId,mine,bare){
   const cur=mine?mine.mood:null;
   box.dataset.mood=cur||"";
   box.innerHTML=`<div style="${bare?"":"border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px"}">
-    ${bare?"":`<div style="font-weight:700;font-size:13.5px;margin-bottom:2px">🌡️ Wie war's? <span style="font-weight:400;color:#94a3b8;font-size:11px">(anonym, nur fürs Trainerteam)</span></div>`}
+    ${bare?"":`<div style="font-weight:700;font-size:13.5px;margin-bottom:2px">🌡️ Wie war's? <span style="font-weight:400;color:var(--text3);font-size:11px">(anonym, nur fürs Trainerteam)</span></div>`}
     <div style="display:flex;gap:8px;margin:8px 0">
       ${moods.map(mo=>{const on=cur===mo.v;return `<button onclick="tdPulsSave(${terminId},${mo.v})" style="flex:1;padding:10px 6px;border-radius:10px;border:1.5px solid ${on?"#1e3a8a":"var(--rand-bedien)"};background:${on?"#eef2ff":"#fff"};cursor:pointer;font-family:inherit"><div style="font-size:22px">${mo.e}</div><div style="font-size:10px;color:#64748b">${mo.l}</div></button>`;}).join("")}
     </div>
@@ -1414,14 +1414,14 @@ async function elternChecklistLoad(kids){
   const total=items.length, done=total-open;
   const rows=items.map(i=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #f1f5f9">
       <span style="font-size:18px;width:24px;text-align:center">${i.done?"✅":i.icon}</span>
-      <span style="flex:1;font-size:13px;${i.done?"color:#94a3b8;text-decoration:line-through":"font-weight:600"}">${i.label}</span>
+      <span style="flex:1;font-size:13px;${i.done?"color:var(--text3);text-decoration:line-through":"font-weight:600"}">${i.label}</span>
       ${i.done?'<span style="font-size:11px;color:#16a34a;font-weight:700">erledigt</span>':`<button onclick="${i.act}" style="padding:6px 12px;border:1.5px solid #1e3a8a;border-radius:8px;background:#fff;color:#1e3a8a;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">öffnen</button>`}
     </div>`).join("");
   slot.innerHTML=`<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05);border:1.5px solid #bfdbfe">
     <div style="display:flex;align-items:center;gap:8px"><div style="font-weight:800;font-size:14px">🚀 Erste Schritte</div><span style="margin-left:auto;font-size:11px;color:#64748b">${done}/${total} erledigt</span></div>
     <div style="height:6px;background:#e2e8f0;border-radius:4px;margin:8px 0;overflow:hidden"><div style="height:100%;width:${Math.round(done/total*100)}%;background:#16a34a;transition:width .3s"></div></div>
     ${rows}
-    <button onclick="elternChecklistDismiss()" style="width:100%;margin-top:10px;padding:8px;border:none;background:none;color:#94a3b8;font-family:inherit;font-size:11.5px;cursor:pointer">Später · für heute ausblenden</button>
+    <button onclick="elternChecklistDismiss()" style="width:100%;margin-top:10px;padding:8px;border:none;background:none;color:var(--text3);font-family:inherit;font-size:11.5px;cursor:pointer">Später · für heute ausblenden</button>
   </div>`;
 }
 function elternChecklistDismiss(){ try{localStorage.setItem("adler_setup_hide",new Date().toISOString().slice(0,10));}catch(e){} const s=document.getElementById("eltern-checklist-slot"); if(s)s.innerHTML=""; }
@@ -1575,7 +1575,7 @@ async function tdHelferLoad(t){
   const list=rows.length?rows.map(x=>`<div style="display:flex;align-items:center;gap:6px;font-size:12.5px;padding:3px 0">
       <span style="flex:1">${esc(x.aufgabe)} · <b>${esc(x.name)}</b></span>
       ${x.user_id===uid?`<button onclick="tdHelferDel(${x.id},${t.id})" style="border:none;background:none;color:#dc2626;cursor:pointer;font-size:14px">✕</button>`:""}
-    </div>`).join(""):'<div style="font-size:12px;color:#94a3b8">Noch niemand eingetragen – mach den Anfang!</div>';
+    </div>`).join(""):'<div style="font-size:12px;color:var(--text3)">Noch niemand eingetragen – mach den Anfang!</div>';
   /* Zeilen statt Chips: eine Beschreibung braucht Platz, und der Knopf muss sagen, worauf
      man sich einlaesst, BEVOR man tippt. Weisse Karte, deshalb feste helle Farbwerte. */
   const buttons=helferTasksFuer(t.typ,t).map(a=>{const on=mine.has(a.t);const esct=a.t.replace(/'/g,"");
@@ -1748,14 +1748,14 @@ async function elternFotoConsentOpen(spielerId,name){
       <span style="font-weight:700;font-size:13.5px">${s.emo} ${s.t} <span style="font-size:10.5px;font-weight:700;color:${riskCol[s.risk]}">· ${riskTxt[s.risk]}</span></span>
       <span style="display:block;font-size:11.5px;color:#64748b;margin-top:2px;line-height:1.5">${s.d}</span>
     </span></label>`;
-  const upd=cur.updated_at?`<div style="font-size:10.5px;color:#94a3b8;margin-top:10px">Zuletzt aktualisiert: ${new Date(cur.updated_at).toLocaleDateString("de-DE")}${cur.updated_by?" · "+esc(cur.updated_by):""}</div>`:"";
+  const upd=cur.updated_at?`<div style="font-size:10.5px;color:var(--text3);margin-top:10px">Zuletzt aktualisiert: ${new Date(cur.updated_at).toLocaleDateString("de-DE")}${cur.updated_by?" · "+esc(cur.updated_by):""}</div>`:"";
   const c=document.createElement("div");
   c.style.cssText="background:#fff;color:#1a1a2e;max-width:500px;width:100%;margin:auto;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`
     ${mdlHead("fc-modal","📸",`Foto- &amp; Video-Freigabe · ${esc(name)}`,"","#0d9488")}
     <div style="font-size:11.5px;color:#475569;line-height:1.6;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:11px;margin:8px 0 4px">${esc(txt)}</div>
     ${FOTO_STUFEN.map(row).join("")}
-    <div style="font-size:10.5px;color:#94a3b8;margin-top:10px;line-height:1.5">ℹ️ Bei <b>Gruppenfotos</b> zeigen wir dein Kind öffentlich nur, wenn <u>alle</u> abgebildeten Familien der Stufe „Öffentlich“ zugestimmt haben. Freiwillig &amp; jederzeit widerrufbar.</div>
+    <div style="font-size:10.5px;color:var(--text3);margin-top:10px;line-height:1.5">ℹ️ Bei <b>Gruppenfotos</b> zeigen wir dein Kind öffentlich nur, wenn <u>alle</u> abgebildeten Familien der Stufe „Öffentlich“ zugestimmt haben. Freiwillig &amp; jederzeit widerrufbar.</div>
     ${upd}
     <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
       <button class="btn btn-p btn-sm" onclick="elternFotoConsentSave(${spielerId})" style="flex:1;min-height:46px">Speichern</button>
@@ -1823,7 +1823,7 @@ async function tdNomLoad(t,kids){
       zeilen.push(`<div style="font-size:12.5px;padding:3px 0">${nm}: ${html}</div>`);
     }catch(e){}
   }
-  box.innerHTML=zeilen.length?`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px"><div style="font-weight:700;font-size:13.5px;margin-bottom:2px">📋 Kader-Nominierung</div>${zeilen.join("")}<div style="font-size:10.5px;color:#94a3b8;margin-top:5px">Deine Zusage zeigt dem Trainer, wer verfügbar ist. Den endgültigen Kader stellt er daraus zusammen.</div></div>`:"";
+  box.innerHTML=zeilen.length?`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px"><div style="font-weight:700;font-size:13.5px;margin-bottom:2px">📋 Kader-Nominierung</div>${zeilen.join("")}<div style="font-size:10.5px;color:var(--text3);margin-top:5px">Deine Zusage zeigt dem Trainer, wer verfügbar ist. Den endgültigen Kader stellt er daraus zusammen.</div></div>`:"";
 }
 async function tdBetreuungLoad(t,kids){
   const box=document.getElementById("td-betreuung"); if(!box)return;
@@ -1898,7 +1898,7 @@ function elternTermineOpen(){
         <div style="font-size:11px;color:#64748b">${twtag} ${td.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${tzeit?" · "+tzeit+" Uhr":""}${heimLabel(t)?" · "+heimLabel(t):""}${t.ort?" · "+esc(t.ort):""}${t.platz?" · 🏟️ "+esc(t.platz):""}</div>
       </div>
       <span style="font-size:10px;font-weight:700;color:${tm.col};background:${tm.col}18;border-radius:6px;padding:3px 7px;white-space:nowrap">${tm.label}</span>
-    </div>`;}).join(""):'<div style="font-size:12.5px;color:#94a3b8;padding:10px 0">Aktuell sind keine Termine geplant.</div>';
+    </div>`;}).join(""):'<div style="font-size:12.5px;color:var(--text3);padding:10px 0">Aktuell sind keine Termine geplant.</div>';
   const c=document.createElement("div");
   c.style.cssText="background:#fff;color:#1a1a2e;max-width:440px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`${mdlHead("et-modal","📅","Alle Termine","Kommende Termine + Kalender-Abo","#1e3a8a")}

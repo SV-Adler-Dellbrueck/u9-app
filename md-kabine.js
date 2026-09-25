@@ -2004,7 +2004,7 @@ function kaKindBlock(k,geraete,sitzungen){
   const liste=geraete.length ? geraete.map(g=>kaGeraetZeile(g,sitzungen[g.uid]||0)).join("")
     : `<div style="font-size:13px;color:#64748b;padding:8px 0 12px">Noch kein Gerät gekoppelt.</div>`;
   return kaKarte(`
-    <div style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:8px">${name}${kd.nr!=null?` <span style="font-weight:600;color:#94a3b8">#${kd.nr}</span>`:""}</div>
+    <div style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:8px">${name}${kd.nr!=null?` <span style="font-weight:600;color:var(--text3)">#${kd.nr}</span>`:""}</div>
     ${liste}
     <div id="ka-code-${sid}"></div>
     <button onclick="kinderAppCode(${sid})" style="width:100%;min-height:48px;margin-top:6px;border:none;border-radius:12px;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">📱 Neues Gerät koppeln</button>`);
@@ -2020,13 +2020,13 @@ function kaGeraetZeile(g,heute){
       <span style="font-size:13.5px;font-weight:700;color:#1e293b">${esc(g.geraet||"Gerät des Kindes")}</span>
       <span style="font-size:11.5px;font-weight:700;color:${farbe};border:1px solid ${farbe};border-radius:999px;padding:2px 8px">${wort}</span>
     </div>
-    <div style="font-size:11.5px;color:#94a3b8;margin:3px 0 10px">gekoppelt am ${kaDatum(g.gekoppelt_am)} · heute ${heute} von ${limit} Min. genutzt</div>
+    <div style="font-size:11.5px;color:var(--text3);margin:3px 0 10px">gekoppelt am ${kaDatum(g.gekoppelt_am)} · heute ${heute} von ${limit} Min. genutzt</div>
     <label style="display:block;font-size:12.5px;font-weight:700;color:#475569">Appzeit pro Tag: <span id="ka-lbl-${g.uid}">${limit} Minuten</span>
       <input type="range" min="0" max="${KA_LIMIT_MAX}" step="15" value="${limit}" aria-label="Appzeit pro Tag in Minuten"
              oninput="document.getElementById('ka-lbl-${g.uid}').textContent=this.value+' Minuten'"
              onchange="kinderAppLimit('${g.uid}',this.value)"
              style="width:100%;min-height:44px;margin-top:4px;accent-color:#7c3aed"></label>
-    <div style="font-size:11.5px;color:#94a3b8;margin-bottom:10px">0 Minuten heißt: die Kabine bleibt auf diesem Gerät zu.</div>
+    <div style="font-size:11.5px;color:var(--text3);margin-bottom:10px">0 Minuten heißt: die Kabine bleibt auf diesem Gerät zu.</div>
     <button onclick="kinderAppTrennenFragen('${g.uid}')" style="width:100%;min-height:44px;border:1.5px solid #dc2626;border-radius:10px;background:#fff;color:#dc2626;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">Gerät trennen</button>
   </div>`;
 }

@@ -32,7 +32,7 @@ async function elternFanfactsOpen(spielerId,kindName){
          in den Fan-Fakten, also zweimal – und was ausgegeben wurde, weiß der Verein,
          nicht die Familie. Sie wird jetzt beim Anprobieren erfasst („Ausstattung" beim
          Trainer). Die Schuh-Größe bleibt: die steht nirgends sonst. -->
-    <div style="font-size:11px;font-weight:700;color:#475569;margin:6px 0 4px">👟 Schuh-Größe <span style="font-weight:400;color:#94a3b8">(hilft dem Trainer bei Sammelbestellungen)</span></div>
+    <div style="font-size:11px;font-weight:700;color:#475569;margin:6px 0 4px">👟 Schuh-Größe <span style="font-weight:400;color:var(--text3)">(hilft dem Trainer bei Sammelbestellungen)</span></div>
     <div style="display:flex;gap:8px;margin-bottom:10px">
       <div style="flex:1"><input id="ff-schuh" value="${esc(f.schuh_groesse||'')}" placeholder="z. B. 31" aria-label="Schuh-Größe" style="${half}"></div>
     </div>
@@ -65,8 +65,8 @@ async function elternAusstattungLesen(spielerId){
   const datum=d=>{try{return new Date(d+"T00:00:00").toLocaleDateString("de-DE");}catch(e){return d;}};
   return `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;margin-bottom:12px">
     <div style="font-size:11px;font-weight:700;color:#475569;margin-bottom:5px">👕 Vom Verein erhalten</div>
-    ${zeilen.map(z=>`<div style="font-size:12.5px;color:#334155;line-height:1.6">${esc((z.ausstattung_artikel&&z.ausstattung_artikel.name)||"Ausstattung")}${z.groesse?` · Größe ${esc(z.groesse)}`:""}${z.nummer?` · Nr. ${esc(z.nummer)}`:""}${z.ausgegeben_am?` <span style="color:#94a3b8">seit ${datum(z.ausgegeben_am)}</span>`:""}</div>`).join("")}
-    <div style="font-size:10.5px;color:#94a3b8;margin-top:5px">Stimmt etwas nicht? Sag dem Trainerteam Bescheid – geändert wird es dort.</div>
+    ${zeilen.map(z=>`<div style="font-size:12.5px;color:#334155;line-height:1.6">${esc((z.ausstattung_artikel&&z.ausstattung_artikel.name)||"Ausstattung")}${z.groesse?` · Größe ${esc(z.groesse)}`:""}${z.nummer?` · Nr. ${esc(z.nummer)}`:""}${z.ausgegeben_am?` <span style="color:var(--text3)">seit ${datum(z.ausgegeben_am)}</span>`:""}</div>`).join("")}
+    <div style="font-size:10.5px;color:var(--text3);margin-top:5px">Stimmt etwas nicht? Sag dem Trainerteam Bescheid – geändert wird es dort.</div>
   </div>`;
 }
 async function elternFanfactsSave(spielerId){
