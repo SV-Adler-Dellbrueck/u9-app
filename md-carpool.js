@@ -42,7 +42,7 @@ async function elternCarpoolRender(spielerId,terminId){
     html+=card(`<div style="font-weight:700;margin-bottom:8px">Wie kommt ihr hin?</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button onclick="elternCarpoolDriverForm(${spielerId},${terminId})" style="flex:1;min-width:130px;padding:11px;border:none;border-radius:10px;background:#1e3a8a;color:#fff;font-weight:700;font-size:13px;cursor:pointer">🚗 Wir fahren selbst</button>
-        <button onclick="document.getElementById('carpool-search').style.display='block';this.parentNode.parentNode.style.display='none'" style="flex:1;min-width:130px;padding:11px;border:none;border-radius:10px;background:#059669;color:#fff;font-weight:700;font-size:13px;cursor:pointer">🙋 Mitfahrt suchen</button>
+        <button onclick="document.getElementById('carpool-search').style.display='block';this.parentNode.parentNode.style.display='none'" style="flex:1;min-width:130px;padding:11px;border:none;border-radius:10px;background:#047857;color:#fff;font-weight:700;font-size:13px;cursor:pointer">🙋 Mitfahrt suchen</button>
       </div>`);
   }
   const freeDrivers=board.filter(d=>d.driver_spieler_id!==spielerId && (d.seats-d.belegt)>0);

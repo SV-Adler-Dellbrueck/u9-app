@@ -648,7 +648,7 @@ function ensureChart(){
 
 // Ort/Adresse → antippbarer Karten-Link (Google Maps, öffnet native App auf dem Handy).
 function mapsUrl(q){ return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(q||""); }
-function mapsAnchor(ort,color){ if(!ort)return ""; return `<a href="${mapsUrl(ort)}" target="_blank" rel="noopener" style="color:${color||"var(--blue)"};text-decoration:none">📍 ${esc(ort)}</a>`; }
+function mapsAnchor(ort,color){ if(!ort)return ""; return `<a href="${mapsUrl(ort)}" target="_blank" rel="noopener" style="color:${color||"var(--blue-text)"};text-decoration:none">📍 ${esc(ort)}</a>`; }
 // F3: klarer „Route"-Knopf (Maps-Deep-Link) aus einer Adresse. block=true -> volle Breite fürs
 // Eltern-Detailfenster (eigenes Design), sonst kompakter .btn fürs Trainer-Karten-Raster.
 function routeBtn(addr,opts){

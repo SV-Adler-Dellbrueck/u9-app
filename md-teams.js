@@ -828,7 +828,7 @@ async function rollenHintFill(){
   if(!games){el.innerHTML="";return;} // noch keine gespeicherten Aufstellungen
   const nie=_neverTW(byKid);
   if(!nie.length){el.innerHTML="";return;}
-  el.innerHTML=`<div style="font-size:11.5px;color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:6px 10px;margin-bottom:8px">🥅 Noch nie im Tor: <b>${nie.map(esc).join(", ")}</b> · <span role="button" tabindex="0" onclick="rollenMatrixOpen()" style="color:var(--blue);cursor:pointer;font-weight:700">Rollen-Matrix ›</span></div>`;
+  el.innerHTML=`<div style="font-size:11.5px;color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:6px 10px;margin-bottom:8px">🥅 Noch nie im Tor: <b>${nie.map(esc).join(", ")}</b> · <span role="button" tabindex="0" onclick="rollenMatrixOpen()" style="color:var(--blue-text);cursor:pointer;font-weight:700">Rollen-Matrix ›</span></div>`;
 }
 async function rollenMatrixOpen(){
   const {byKid,games}=await rollenExpFetch();

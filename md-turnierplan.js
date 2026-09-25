@@ -107,7 +107,7 @@ function turnierPlanRender(ergebnisse){
 
   box.innerHTML=quellen+plan+
     `<details style="margin-top:10px">
-      <summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--blue)">📋 Spielplan einfügen</summary>
+      <summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--blue-text)">📋 Spielplan einfügen</summary>
       <div style="font-size:11px;color:var(--text2);margin:6px 0">Begegnungen von der Turnierseite kopieren und hier einfügen. Uhrzeit, Feld und Runde werden erkannt; Pausen und Siegerehrung ignoriert.</div>
       <textarea id="tp-import" rows="4" placeholder="09:00 Feld 1 SV Adler Dellbrück - FC Musterstadt&#10;09:20 Feld 2 TuS Beispiel - SV Adler Dellbrück" style="${fld};width:100%;resize:vertical"></textarea>
       <button class="btn btn-sm" style="margin-top:6px" onclick="turnierPlanImportPreview()"><i class="ti ti-eye"></i>Vorschau</button>
@@ -1798,7 +1798,7 @@ function htRender(){
       <button class="btn btn-sm" onclick="htTeamPlus()"><i class="ti ti-plus"></i></button>
     </div>
     <details style="margin-bottom:10px"${plan.length?"":" open"}>
-      <summary style="cursor:pointer;font-size:12.5px;font-weight:700;color:var(--blue);min-height:44px;display:flex;align-items:center">📖 Regelwerk &amp; Infos für Gastvereine</summary>
+      <summary style="cursor:pointer;font-size:12.5px;font-weight:700;color:var(--blue-text);min-height:44px;display:flex;align-items:center">📖 Regelwerk &amp; Infos für Gastvereine</summary>
       <div style="font-size:11px;color:var(--text2);margin:6px 0 4px">Regelwerk (steht auf der öffentlichen Turnierseite):</div>
       <textarea id="ht-e-regeln" rows="7" style="${fld};width:100%;resize:vertical">${esc(cfg.regeln||"")}</textarea>
       <button class="btn btn-sm" style="margin-top:4px" onclick="htRegelnVorlage()">↺ Vorlage zur gewählten Spielform laden</button>

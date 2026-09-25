@@ -337,7 +337,7 @@ function elternPortalDashboard(root){
         <button id="theme-toggle" onclick="toggleTheme()" title="Hell / Dunkel umschalten" aria-label="Theme umschalten" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:15px;line-height:1">🌙</button>
         <button onclick="elternTourStart()" title="Kurze Tour" aria-label="Hilfe/Tour" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:15px;line-height:1">❓</button>
         <button onclick="elternPasswortOpen()" title="Passwort festlegen oder ändern" aria-label="Passwort festlegen oder ändern" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:15px;line-height:1">🔑</button>
-        <button onclick="elternPortalLogout()" style="border:none;background:none;color:#64748b;font-size:12px;cursor:pointer">Abmelden</button>
+        <button onclick="elternPortalLogout()" style="border:none;background:none;color:var(--text3);font-size:12px;cursor:pointer">Abmelden</button>
       </div>
     </div>
     <div id="ep-dash-body"><div style="text-align:center;padding:40px;color:#64748b">Lade…</div></div>
@@ -424,14 +424,14 @@ function _elLum(c){ return 0.2126*c[0]+0.7152*c[1]+0.0722*c[2]; }
 function _elMix(c,t,p){ return `rgb(${Math.round(c[0]+(t[0]-c[0])*p)}, ${Math.round(c[1]+(t[1]-c[1])*p)}, ${Math.round(c[2]+(t[2]-c[2])*p)})`; }
 function _elSweepOne(el){
   const s=el.style, d=el.dataset; if(!s)return;
-  if(d.elSwept)return;   // schon eingefärbt – Original in data-el-* bleibt gesichert
+  if(d.elSwept||d.elFest)return;   // schon eingefärbt – Original in data-el-* bleibt gesichert; data-el-fest: Farben stimmen in beiden Modi (v614)
   let changed=false;
   const bg=_elRgb(s.backgroundColor);
   if(bg&&_elLum(bg)>216){ d.elBg=s.backgroundColor; s.backgroundColor=_elMix(bg,[17,24,39],0.90); changed=true; }   // helle Fläche → dunkel
   const col=_elRgb(s.color);
   if(col){ const L=_elLum(col);
     if(L<60){ d.elCol=s.color; s.color=_elMix(col,[226,232,240],0.86); changed=true; }        // fast-schwarze Tinte → deutlich hell
-    else if(L<128){ d.elCol=s.color; s.color=_elMix(col,[226,232,240],0.5); changed=true; }   // dunkle Marken-/Textfarbe → aufhellen
+    else if(L<128){ d.elCol=s.color; s.color=_elMix(col,[226,232,240],0.62); changed=true; }   // dunkle Marken-/Textfarbe → aufhellen (v614: 0,5 blieb bei 4,4:1 hängen)
   }
   ["Top","Right","Bottom","Left"].forEach(side=>{ const p="border"+side+"Color";
     const b=_elRgb(s[p]); if(b&&_elLum(b)>205){ d["elB"+side]=s[p]; s[p]=_elMix(b,[51,65,85],0.72); changed=true; }
@@ -619,7 +619,7 @@ async function chronikOpen(){
           <span style="font-size:10.5px;color:var(--text3)">${ds}</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
-          ${istSpiel?`<span style="font-size:12.5px;font-weight:900;color:${erg?"#0f172a":"#94a3b8"}">${erg?esc(erg):"– Ergebnis folgt –"}</span>`:'<span style="font-size:11.5px;color:#64748b">Team-Event</span>'}
+          ${istSpiel?`<span style="font-size:12.5px;font-weight:900;color:${erg?"var(--text)":"var(--text3)"}">${erg?esc(erg):"– Ergebnis folgt –"}</span>`:'<span style="font-size:11.5px;color:#64748b">Team-Event</span>'}
           <button onclick="galerieOpen(${Number(t.id)},'${(t.titel||t.gegner||"").replace(/'/g,"")}')" style="margin-left:auto;border:1px solid #7c3aed;border-radius:9px;background:#faf5ff;color:#6d28d9;font-family:inherit;font-size:12px;font-weight:700;padding:8px 14px;cursor:pointer;min-height:44px">📸 Fotos</button>
         </div>
       </div>`;
