@@ -5,7 +5,7 @@
    Steht als ERSTES im <body> aller drei Einstiege (trainer/, eltern/, kinder/) und läuft
    synchron, also bevor shell.html und Welle 1 geladen sind – die Animation füllt genau die
    Zeit, in der sonst ein leerer Bildschirm stünde. Sie hält nichts auf: pointer-events:none,
-   nach rund 1,6 s ist sie aus dem DOM, ein Tipp beendet sie sofort.
+   nach rund 3 s (v619, vorher 1,6 s) ist sie aus dem DOM, ein Tipp beendet sie sofort.
 
    Nicht bei Sonderrouten (Ticker, Heft, Turnier, Quiz, Kind-Link …): wer einen geteilten
    Link öffnet, will sofort den Inhalt. Nur einmal je Sitzung – ein Neuladen zeigt sie nicht
@@ -24,18 +24,19 @@
     st.textContent=
       "#adler-intro{position:fixed;inset:0;z-index:100000;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;"+
         "background:radial-gradient(circle at 50% 42%,#1a56db 0%,#1e3a8a 62%,#172554 100%);font-family:Inter,system-ui,sans-serif;"+
-        "animation:adlerIntroAus .35s ease-in 1.25s forwards}"+
+        "animation:adlerIntroAus .45s ease-in 2.55s forwards}"+
       "#adler-intro .ai-ring{position:relative;width:148px;height:148px;display:flex;align-items:center;justify-content:center}"+
       "#adler-intro .ai-ring:before{content:'';position:absolute;inset:0;border-radius:50%;border:3px solid rgba(255,255,255,.55);opacity:0;"+
-        "animation:adlerIntroRing .7s ease-out .62s}"+
+        "animation:adlerIntroRing .9s ease-out 1.05s 2}"+
       "#adler-intro img{width:132px;height:132px;object-fit:cover;border-radius:50%;background:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.9);filter:drop-shadow(0 10px 24px rgba(0,0,0,.35));"+
-        "animation:adlerIntroFlug .72s cubic-bezier(.2,1.35,.45,1) both}"+
+        "animation:adlerIntroFlug 1.15s cubic-bezier(.2,1.25,.45,1) both,adlerIntroAtem 1.3s ease-in-out 1.2s}"+
       "#adler-intro .ai-name{margin-top:18px;color:#fff;font-weight:700;font-size:17px;letter-spacing:.02em;opacity:0;"+
-        "animation:adlerIntroText .4s ease-out .5s forwards}"+
+        "animation:adlerIntroText .6s ease-out .9s forwards}"+
       "#adler-intro .ai-name span{display:block;text-align:center;font-weight:600;font-size:13px;opacity:.85;margin-top:2px}"+
       "@keyframes adlerIntroFlug{0%{transform:translate(-46vw,-38vh) rotate(-28deg) scale(.35);opacity:0}"+
         "55%{opacity:1}100%{transform:none;opacity:1}}"+
       "@keyframes adlerIntroRing{0%{transform:scale(.8);opacity:.9}100%{transform:scale(1.55);opacity:0}}"+
+      "@keyframes adlerIntroAtem{50%{transform:scale(1.06)}}"+
       "@keyframes adlerIntroText{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}"+
       "@keyframes adlerIntroAus{to{opacity:0;visibility:hidden}}"+
       "@media (prefers-reduced-motion: reduce){#adler-intro{animation-delay:.6s}"+
@@ -49,7 +50,7 @@
     document.body.insertBefore(d,document.body.firstChild);
     var weg=function(){ d.remove(); st.remove(); document.removeEventListener("pointerdown",weg,true); };
     document.addEventListener("pointerdown",weg,true);          // Tipp beendet sofort
-    setTimeout(weg,ruhig?1000:1650);
+    setTimeout(weg,ruhig?1000:3100);   // v619 PO: „relativ kurz … noch ein bisschen verlängern, sodass auch eine Wirkung entsteht“ – 1,6 s → 3 s
   }catch(e){}
 })();
 /* Zeigt dem Prüflauf, dass die Datei bis zum Ende gelaufen ist. */

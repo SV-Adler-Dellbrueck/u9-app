@@ -222,7 +222,7 @@ function questEditorOpen(){
       <div style="font-size:11px;color:#047857;margin:2px 0 6px">Bekommt jedes mitspielende Kind gutgeschrieben – automatisch, einmal pro Spieltag.</div>
       <div style="display:flex;align-items:center;gap:8px">
         <input id="qe-federn" type="number" min="0" max="200" value="${teamQuestFedern}" style="width:90px;padding:8px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:14px;font-weight:700;box-sizing:border-box">
-        <span style="font-size:12px;color:var(--text2)">${XP_ICON} pro Kind</span>
+        <span style="font-size:12px;color:#047857">${XP_ICON} pro Kind</span>
       </div>
     </div>
     <label for="qe-belohnung" style="font-size:11px;color:var(--text2)">🎁 Zusätzliche Belohnung (Freitext, optional)</label>
