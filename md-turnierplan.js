@@ -1511,8 +1511,8 @@ const HT_SPIELFORM={funino:"FUNiño (3 gegen 3)",f3:"3+1",f4:"4+1",f5:"5+1",f6:"
 /* Regel-Vorlagen je Spielform – bewusst als VORLAGE beschriftet, der Trainer passt sie an
    die eigene Ausschreibung/Kreis-Vorgaben an (die Details sind regional unterschiedlich). */
 const HT_REGELN={
-  funino:"FUNiño – 3 gegen 3 (Vorlage, bitte an eure Ausschreibung anpassen)\n• 3 gegen 3 auf vier Minitore, ohne Torwart\n• Tore zählen nur aus der Schusszone vor den Toren\n• Eindribbeln statt Einwurf, Ecke und Abstoß\n• Nach jedem Tor und in festen Abständen wird gewechselt – alle spielen gleich viel\n• Ohne Schiedsrichter: die Kinder entscheiden selbst, die Trainer begleiten\n• Fair-Play-Regel: Zuschauer feuern an, coachen nicht",
-  f4:"4+1 (Vorlage, bitte an eure Ausschreibung anpassen)\n• 4 Feldspieler + Torwart, fliegender Wechsel\n• Kein Abseits\n• Eindribbeln oder Einpassen statt Einwurf\n• Abstoß und Freistoß: Gegner mindestens 3 m Abstand\n• Torwart darf den Rückpass aufnehmen\n• Fair-Play-Liga: ohne Schiedsrichter, die Trainer begleiten das Spiel\n• Zuschauerzone mit Abstand zum Spielfeld – anfeuern ja, coachen nein",
+  funino:"FUNiño – 3 gegen 3 (Vorlage, bitte an eure Ausschreibung anpassen)\n• 3 gegen 3 auf vier Minitore, ohne Torwart\n• Tore zählen nur aus der Schusszone vor den Toren\n• Eindribbeln oder einpassen statt Einwurf, Ecke und Abstoß – wer eindribbelt, darf selbst direkt aufs Tor schießen\n• Nach einem Tor: eindribbeln von der Torauslinie, kein Gegenspieler in der Schusszone\n• Gegner mindestens 3 m Abstand\n• Nach jedem Tor und in festen Abständen wird gewechselt – alle spielen gleich viel\n• Ohne Schiedsrichter: die Kinder entscheiden selbst, die Trainer begleiten\n• Fair-Play-Regel: Zuschauer feuern an, coachen nicht",
+  f4:"4+1 (Vorlage, bitte an eure Ausschreibung anpassen)\n• 4 Feldspieler + Torwart, fliegender Wechsel\n• Kein Abseits\n• Seitenaus: eindribbeln oder einpassen – wer eindribbelt, darf selbst direkt aufs Tor schießen\n• Nach einem Tor und im Toraus: von der Torauslinie eindribbeln oder einpassen\n• Tore nur aus der gegnerischen Hälfte\n• Gegner mindestens 3 m Abstand\n• Torwart spielt mit: Eröffnung flach, ohne Abschlag · Rückpass ohne Hände\n• Fair-Play-Liga: ohne Schiedsrichter, die Trainer begleiten das Spiel\n• Zuschauerzone mit Abstand zum Spielfeld – anfeuern ja, coachen nein",
   f5:"5+1 (Vorlage, bitte an eure Ausschreibung anpassen)\n• 5 Feldspieler + Torwart, fliegender Wechsel\n• Kein Abseits\n• Einwurf oder Eindribbeln (je nach Ausschreibung)\n• Freistöße indirekt, Gegner mindestens 3 m Abstand\n• Fair-Play-Liga: ohne Schiedsrichter, die Trainer begleiten das Spiel\n• Zuschauerzone mit Abstand zum Spielfeld – anfeuern ja, coachen nein",
   f6:"6+1 (Vorlage, bitte an eure Ausschreibung anpassen)\n• 6 Feldspieler + Torwart, fliegender Wechsel\n• Kein Abseits\n• Einwurf regulär\n• Freistöße indirekt, Gegner mindestens 3 m Abstand\n• Spielbegleiter statt Schiedsrichter (je nach Ausschreibung)",
   f7:"7 gegen 7 (Vorlage, bitte an eure Ausschreibung anpassen)\n• 6 Feldspieler + Torwart, fliegender Wechsel\n• Abseits je nach Kreis-Ausschreibung\n• Einwurf regulär, Freistöße nach Ausschreibung\n• Schiedsrichter oder Spielbegleiter je nach Turnierordnung",
@@ -2613,34 +2613,51 @@ async function fstEinteilungFolgen(){
 /* v488 PO: „Regeln in den externen Link einbauen, 4+1 und FUNiño, aus dem DFB-Portal kurz
    auflisten" plus seine eigenen Vereinbarungen. Kacheln: Torwart darf den Rueckpass in die
    Hand nehmen; Abstoss/Abwurf Gegner hinter die Mittellinie; Abklatschen; Eltern feuern an. */
+/* v618 PO: „Passe die Regeln im Spielplan-Link und in der App an, so dass sie den offiziellen
+   Bestimmungen entsprechen – vor allem das Eindribbeln und direkt Tor erzielen dürfen."
+   Quelle ist dieselbe wie in md-wissen.js (WISSEN_QUELLE_KIFU): Durchführungsbestimmungen
+   Kinderfußball des Fußballkreises Köln, gültig ab 01.08.2026. Geändert gegenüber v488:
+   · Wer eindribbelt, darf selbst abschließen (vorher: erst ein Kontakt eines Mitspielers).
+   · Nach einem Tor und im Toraus wird eingedribbelt (vorher: Anstoß in der Mitte).
+   · Rückpass ohne Hände (vorher: der Torwart durfte ihn aufnehmen), Eröffnung ohne Abschlag.
+   · Spieleröffnung mit Wettlauf, 3 m Abstand, Überzahl-Regel vollständig, Penalty.
+   Bleiben als unsere Vereinbarung (widersprechen den Bestimmungen nicht): keine Wechselregeln im
+   Link (Sache jedes Teams, v488), Gegner hinter die Mittellinie bei Toraus, abgehängtes Tor,
+   Abklatschen. */
 const FST_REGELN={
   alle:{t:"Für alle Spiele",z:[
-    "Seitenaus und Ecke: eindribbeln oder einpassen – vor einem Tor mindestens ein Ballkontakt eines Mitspielers",
+    "Spieleröffnung: Wettlauf zum Ball in der Mitte – alle starten von der eigenen Torauslinie",
+    "Seitenaus: eindribbeln oder einpassen. Wer eindribbelt, darf selbst direkt aufs Tor schießen – der Ball liegt ruhig auf der Linie, kein Schwung von außen",
+    "Nach einem Tor: das Team, das es bekommen hat, dribbelt von der eigenen Torauslinie ein",
+    "Der Gegner hält 3 m Abstand bei Seitenaus, Ecke und einfachen Regelverstößen",
+    "Bei 3 Toren Vorsprung darf das unterlegene Team einen Spieler mehr aufs Feld bringen, bis der Abstand nur noch ein Tor beträgt – hat es keinen, nimmt das führende Team einen vom Feld",
+    "Kein Abseits",
     "Unklare Situationen (Aus, Foul) klären die Kinder zuerst selbst auf dem Platz – erst dann helfen die Trainer",
     "Berührt der Ball das abgehängte Tor und geht danach rein, zählt das Tor",
-    "Kein Abseits",
     "Abklatschen nach jedem Spiel – Tore werden nicht gegen den Gegner bejubelt",
     "Fairer Umgang mit den anderen Teams – wir Trainer sind das Vorbild",
-    "Eltern feuern an, coachen nicht – mit Abstand zum Feld",
+    "Eltern feuern an, coachen nicht – mit etwa 15 m Abstand zum Feld",
     "Der Spaß der Kinder steht im Vordergrund – keine Tabelle, kein Ergebnisdruck"]},
   f4:{t:"4+1",z:[
     "4 Feldspieler und Torwart auf zwei Jugendtore",
-    "Tore dürfen nicht direkt aus der eigenen Hälfte erzielt werden – keine Weitschüsse",
-    "Nach einem Tor: Anstoß in der Mitte",
-    "Torwart darf den Rückpass in die Hand nehmen",
-    "Abstoß und Abwurf: der Gegner geht hinter die Mittellinie"]},
+    "Tore zählen nur aus der gegnerischen Hälfte – keine Weitschüsse aus der eigenen Hälfte",
+    "Toraus: von der Torauslinie eindribbeln oder einpassen, der Gegner geht hinter die Mittellinie",
+    "Der Torwart spielt mit: Eröffnung flach, ohne Abschlag",
+    "Rückpass zum Torwart: ohne Hände – die Trainer begleiten, bestrafen nicht"]},
   /* v501 (Kachel): 3+1 spielt nach denselben Regeln wie 4+1, nur mit drei Feldspielern. */
   f3:{t:"3+1",z:[
     "3 Feldspieler und Torwart auf zwei Jugendtore",
-    "Tore dürfen nicht direkt aus der eigenen Hälfte erzielt werden – keine Weitschüsse",
-    "Nach einem Tor: Anstoß in der Mitte",
-    "Torwart darf den Rückpass in die Hand nehmen",
-    "Abstoß und Abwurf: der Gegner geht hinter die Mittellinie"]},
+    "Tore zählen nur aus der gegnerischen Hälfte – keine Weitschüsse aus der eigenen Hälfte",
+    "Toraus: von der Torauslinie eindribbeln oder einpassen, der Gegner geht hinter die Mittellinie",
+    "Der Torwart spielt mit: Eröffnung flach, ohne Abschlag",
+    "Rückpass zum Torwart: ohne Hände – die Trainer begleiten, bestrafen nicht"]},
   funino:{t:"FUNiño",z:[
     "3 gegen 3 auf vier Minitore, ohne Torwart",
     "Tore zählen nur aus der Schusszone (6 m vor den Toren)",
-    "Nach einem Tor spielt das Team, das es bekommen hat, von der Grundlinie ein – der Gegner wartet außerhalb der Schusszone",
-    "Führt ein Team mit 3 Toren Vorsprung, darf das andere mit 4 Feldspielern spielen, wenn es möchte"]}
+    "Toraus: von der Torauslinie eindribbeln oder einpassen – kein Angreifer in der Schusszone",
+    "Nach einem Tor: eindribbeln von der Torauslinie – kein Gegenspieler in der Schusszone",
+    "Statt Eckball: vom Hütchen der Schusszone eindribbeln oder einpassen",
+    "Penalty bei grobem Foul in der eigenen Schusszone: ein Kind dribbelt von der Mittellinie aufs Tor, ein Verteidiger steht in der Schusszone, alle anderen hinter dem Angreifer"]}
 };
 function fstRegelnHtml(hell,cfg){
   const pause=Math.max(0,(cfg&&cfg.wechsel!=null)?cfg.wechsel:FST_PAUSE);
@@ -2656,7 +2673,7 @@ function fstRegelnHtml(hell,cfg){
     const liste=namen.length>1?namen.slice(0,-1).join(", ")+" und "+namen[namen.length-1]:namen.join("");
     return karte({t:FST_REGELN[k].t+(liste?" · "+liste:""),z:FST_REGELN[k].z}); };
   return formen.map(formKarte).join("")+karte(alle)
-    +`<div style="font-size:11px;color:${hell?"#94a3b8":"var(--text3)"};margin:4px 0 10px">Nach den DFB-Spielformen im Kinderfußball, ergänzt um unsere Vereinbarungen.</div>`;
+    +`<div style="font-size:11px;color:${hell?"#64748b":"var(--text3)"};margin:4px 0 10px">Nach den Durchführungsbestimmungen Kinderfußball des Fußballkreises Köln (gültig ab 01.08.2026), ergänzt um unsere Vereinbarungen.</div>`;
 }
 function fstRegelnOpen(){
   document.getElementById("fst-regeln")?.remove();

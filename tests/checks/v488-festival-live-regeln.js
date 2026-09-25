@@ -1,4 +1,5 @@
-/* v488 – PO: „Die Darstellung ist nicht optimal, alles verrückt und zu groß … Wo kann der
+/* v618: Die Regelkarte folgt jetzt den Kreis-Bestimmungen – Rückpass ohne Hände statt „in die Hand“.
+   v488 – PO: „Die Darstellung ist nicht optimal, alles verrückt und zu groß … Wo kann der
    Adler-Trainer das Turnier starten? Starten wir um 10:18, alle Spiele um 3 Minuten nach hinten
    … Wo können optional Ergebnisse eingetragen werden – die externen Trainer über den Link, die
    Adler-Trainer in der App … Regeln als Button in den externen Link, 4+1 und FUNiño."
@@ -63,7 +64,7 @@ module.exports = async function (h) {
     _fstPublicRender(wrap, _HT);
     const laeuft = /Runde 1[\s\S]{0,120}▶ läuft/.test(wrap.textContent);   // v489: die Marke sitzt an der Runden-Karte
     return { eineZeile, zeileHoch, tops, zeitVorher, zeitNachher, runde2, startText, dlg: !!dlg, erg, ergTaste, gastOhneCode, ergMitCode, regelnKnopf: !!regelnKnopf, ergTasten, ergTastenOhne, ergLesbar,
-      regelnInhalt: /eigenen Hälfte/.test(rHtml) && /3 Toren Vorsprung/.test(rHtml) && !/Wechsel/.test(rHtml) && /Schusszone/.test(rHtml) && /Rückpass in die Hand/.test(rHtml) && /hinter die Mittellinie/.test(rHtml) && /Abklatschen/.test(rHtml) && /Eltern feuern an/.test(rHtml) && /abgehängte Tor/.test(rHtml) && /Kinder zuerst selbst/.test(rHtml),
+      regelnInhalt: /eigenen Hälfte/.test(rHtml) && /3 Toren Vorsprung/.test(rHtml) && !/Wechsel/.test(rHtml) && /Schusszone/.test(rHtml) && /Rückpass zum Torwart: ohne Hände/.test(rHtml) && /hinter die Mittellinie/.test(rHtml) && /Abklatschen/.test(rHtml) && /Eltern feuern an/.test(rHtml) && /abgehängte Tor/.test(rHtml) && /Kinder zuerst selbst/.test(rHtml),
       gastStart: /um 3 Min\. nach hinten/.test(gHtml), laeuft, spiele: plan.length };
   }, { heute });
   const fehler = s.fehler(); const gesendet = s.gesendet.slice(); await s.schliessen();
