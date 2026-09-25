@@ -123,7 +123,7 @@ function mcRenderLive(){
   const eineZeit=mcHalbzeiten===1;   // U9 spielt oft 1×8 oder 1×10 – dann gibt es keine Halbzeit
   let controls="";
   if(s==="idle") controls=`<button class="btn btn-p" onclick="mcStart()"><i class="ti ti-player-play"></i>Anpfiff</button>`;
-  else if(mcFestival) controls=`<span style="font-size:11.5px;color:var(--text2);align-self:center">läuft mit dem Spielplan</span>
+  else if(mcFestival) controls=`<span style="font-size:var(--s-klein);color:var(--text2);align-self:center">läuft mit dem Spielplan</span>
     <button class="btn btn-sm" onclick="mcPlanOeffnen()"><i class="ti ti-layout-grid"></i>Spielplan</button>`;
   else if(s==="running") controls=`<button class="btn" onclick="mcPause()"><i class="ti ti-player-pause"></i>Unterbrechung</button>`+
     ((!eineZeit&&mcState.half===1)?`<button class="btn" onclick="mcHalftimeStart()"><i class="ti ti-hourglass"></i>Halbzeit</button>`:`<button class="btn btn-d" onclick="mcEnd()"><i class="ti ti-flag"></i>Abpfiff</button>`);
@@ -137,20 +137,20 @@ function mcRenderLive(){
      Eingriff ins laufende Spiel. */
   const einstellbar=(s!=="running");
   const hzBtn=n=>`<button onclick="mcSetHalbzeiten(${n})" aria-pressed="${mcHalbzeiten===n?"true":"false"}"
-      style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:var(--r);cursor:pointer;font-family:inherit;font-size:12px;font-weight:${mcHalbzeiten===n?"700":"500"};background:${mcHalbzeiten===n?"var(--blue)":"var(--surface)"};color:${mcHalbzeiten===n?"#fff":"var(--text2)"}">${n===1?"eine":"zwei"}</button>`;
+      style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:var(--r);cursor:pointer;font-family:inherit;font-size:var(--s-text);font-weight:${mcHalbzeiten===n?"700":"500"};background:${mcHalbzeiten===n?"var(--blue)":"var(--surface)"};color:${mcHalbzeiten===n?"#fff":"var(--text2)"}">${n===1?"eine":"zwei"}</button>`;
   box.innerHTML=`<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
     <div style="font-size:28px;font-weight:800;min-width:70px">${label}</div>
-    <div style="font-size:11px;color:var(--text2)">${phase}</div>
+    <div style="font-size:var(--s-klein);color:var(--text2)">${phase}</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-left:auto">${controls}</div>
   </div>`+((einstellbar&&mcFestival)?`
-  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:var(--border);font-size:11.5px;color:var(--text2)">
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:var(--border);font-size:var(--s-klein);color:var(--text2)">
     <span>Spielzeit <b>${mcSpieldauer} Min.</b> · aus dem Spielplan</span>
     <button class="btn btn-sm" onclick="mcPlanOeffnen()" style="margin-left:auto"><i class="ti ti-layout-grid"></i>Im Spielplan ändern</button>
   </div>`:(einstellbar?`
-  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:var(--border);font-size:11.5px;color:var(--text2)">
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:var(--border);font-size:var(--s-klein);color:var(--text2)">
     <label for="mc-dauer">${mcHalbzeiten===1?"Spielzeit":"Je Halbzeit"}</label>
     <input id="mc-dauer" type="number" min="1" max="45" value="${mcSpieldauer}" onchange="mcSetDauer(this.value)"
-      style="width:72px;min-height:44px;padding:8px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;font-size:14px;font-weight:700;text-align:center;background:var(--surface);color:var(--text);box-sizing:border-box">
+      style="width:72px;min-height:44px;padding:8px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;font-size:var(--s-karte);font-weight:700;text-align:center;background:var(--surface);color:var(--text);box-sizing:border-box">
     <span>Min.</span>
     <span style="margin-left:8px">Halbzeiten</span>${hzBtn(1)}${hzBtn(2)}
   </div>`:""));

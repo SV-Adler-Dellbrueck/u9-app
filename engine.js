@@ -516,12 +516,12 @@ function calcBestCombos(restrictNames){
 function renderKombi(){
   const wrap=document.getElementById("kombi-content");
   if(!window._dbLoaded&&!Object.keys(DB).length){wrap.innerHTML=skeletonRows(3);return;} // L2
-  wrap.innerHTML='<div style="text-align:center;padding:2rem;color:var(--text2)"><i class="ti ti-loader" style="font-size:24px;animation:spin 1s linear infinite;display:inline-block"></i><div style="margin-top:8px;font-size:12px">Berechne beste Aufstellung...</div></div>';
+  wrap.innerHTML='<div style="text-align:center;padding:2rem;color:var(--text2)"><i class="ti ti-loader" style="font-size:var(--s-seite);animation:spin 1s linear infinite;display:inline-block"></i><div style="margin-top:8px;font-size:var(--s-text)">Berechne beste Aufstellung...</div></div>';
   /* Der Kringel steht so lange, bis jemand ihn ersetzt – eine Ausnahme hier drin bleibt
      also als „rechnet ewig" sichtbar. Deshalb abfangen und ehrlich hinschreiben. */
   setTimeout(()=>{
     try{ _renderKombiInner(wrap); }
-    catch(e){ wrap.innerHTML='<div class="empty"><i class="ti ti-alert-triangle"></i>Die Aufstellung konnte nicht berechnet werden.<br><span style="font-size:11px">'+esc(String(e&&e.message||e))+'</span></div>'; }
+    catch(e){ wrap.innerHTML='<div class="empty"><i class="ti ti-alert-triangle"></i>Die Aufstellung konnte nicht berechnet werden.<br><span style="font-size:var(--s-klein)">'+esc(String(e&&e.message||e))+'</span></div>'; }
   },30);
 }
 function _renderKombiInner(wrap){
@@ -536,7 +536,7 @@ function _renderKombiInner(wrap){
     wrap.innerHTML=`<div class="empty"><i class="ti ti-users-group"></i>Für die Aufstellung braucht es mindestens 4 <b>bewertete</b> Kinder – bisher sind es ${bewertet}.
       <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;align-items:center">
         <button class="btn btn-sm" onclick="go('spieltag')">🪄 Feld &amp; Bank fair besetzen (Spieltag)</button>
-        <a href="#" onclick="go('bew');return false" style="font-size:12px;color:var(--blue-text);font-weight:700">oder Kinder bewerten ›</a>
+        <a href="#" onclick="go('bew');return false" style="font-size:var(--s-text);color:var(--blue-text);font-weight:700">oder Kinder bewerten ›</a>
       </div></div>`;
     return;
   }
@@ -566,8 +566,8 @@ function _renderKombiInner(wrap){
       <div class="kpos kpos-auf"><div class="kpos-lbl">Aufpasser</div><div class="kpos-name">${esc(best.aufpasser.name)}</div><div class="kpos-score">${best.aufpasser.total}%</div></div>
       <div></div>
     </div>
-    ${best.tw?`<div style="text-align:center;padding:6px;background:#fef9c3;border-radius:var(--r);font-size:12.5px;font-weight:600;color:#854d0e;margin-bottom:12px">🥅 +1 Torwart: ${esc(best.tw.name)}</div>`:'<div style="text-align:center;padding:6px;background:var(--surface2);border-radius:var(--r);font-size:12px;color:var(--text2);margin-bottom:12px">🥅 Torwart: kein TW-Spieler bewertet</div>'}
-    <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px">Analyse & Synergien</div>
+    ${best.tw?`<div style="text-align:center;padding:6px;background:#fef9c3;border-radius:var(--r);font-size:var(--s-text);font-weight:600;color:#854d0e;margin-bottom:12px">🥅 +1 Torwart: ${esc(best.tw.name)}</div>`:'<div style="text-align:center;padding:6px;background:var(--surface2);border-radius:var(--r);font-size:var(--s-text);color:var(--text2);margin-bottom:12px">🥅 Torwart: kein TW-Spieler bewertet</div>'}
+    <div style="font-size:var(--s-klein);font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px">Analyse & Synergien</div>
     <div class="kombi-insights">${insights.map(i=>`
       <div class="kombi-insight-row">
         <div class="ci-icon ${clsMap[i.type]}">${icMap[i.type]}</div>

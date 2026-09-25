@@ -33,7 +33,7 @@ async function ausstattungOpen(){
   m.onclick=e=>{if(e.target===m)m.remove();};
   m.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:500px;width:100%;margin:auto">
     ${mdlHead("aus-modal","👕","Ausstattung","Was hat welches Kind von uns bekommen?","#1e3a8a")}
-    <div id="aus-body"><div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Lade…</div></div>
+    <div id="aus-body"><div style="text-align:center;padding:20px;color:var(--text3);font-size:var(--s-text)">Lade…</div></div>
   </div>`;
   document.body.appendChild(m);
   await ausstattungLaden();
@@ -73,7 +73,7 @@ function ausstattungRender(){
   const body=document.getElementById("aus-body"); if(!body)return;
   if(!AUS_ARTIKEL.length){
     body.innerHTML=`<div class="empty" style="padding:24px 8px"><i class="ti ti-shirt"></i>Noch kein Gegenstand angelegt.</div>
-      <button class="btn btn-p" style="width:100%;min-height:56px;font-size:15px;font-weight:800" onclick="ausArtikelNeuOpen()">Gegenstand erfassen</button>`;
+      <button class="btn btn-p" style="width:100%;min-height:56px;font-size:var(--s-karte);font-weight:800" onclick="ausArtikelNeuOpen()">Gegenstand erfassen</button>`;
     return;
   }
   const art=_ausArtikel();
@@ -86,15 +86,15 @@ function ausstattungRender(){
       ${AUS_ARTIKEL.map(a=>`<button class="ftag${a.id===art.id?" active":""}" aria-pressed="${a.id===art.id}" onclick="ausArtikelWahl(${a.id})">${esc(a.name)}</button>`).join("")}
       <button class="ftag" onclick="ausArtikelNeuOpen()" title="Weiteren Gegenstand anlegen">＋</button>
     </div>
-    ${art.beschreibung?`<div style="font-size:11.5px;color:var(--text3);margin-bottom:8px">${esc(art.name)}: ${esc(art.beschreibung)}</div>`:""}
-    <div style="font-size:12.5px;color:var(--text2);margin-bottom:4px">
+    ${art.beschreibung?`<div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:8px">${esc(art.name)}: ${esc(art.beschreibung)}</div>`:""}
+    <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:4px">
       <b>${st.hat}</b> von ${st.gesamt} haben ${esc(art.name)}${st.ohneGroesse?` · <span style="color:var(--amber)">${st.ohneGroesse} ohne Größe</span>`:""}${st.zurueck?` · ${st.zurueck} zurückgegeben`:""}
     </div>
-    <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);margin-bottom:10px;min-height:44px">
+    <label style="display:inline-flex;align-items:center;gap:6px;font-size:var(--s-text);color:var(--text2);margin-bottom:10px;min-height:44px">
       <input type="checkbox" ${_ausOffeneZuerst?"checked":""} onchange="_ausOffeneZuerst=this.checked;ausstattungRender()"> nur wer noch nichts hat
     </label>
     <div>${sichtbar.length?sichtbar.map(k=>ausZeile(k,art)).join(""):'<div class="card-empty">Alle versorgt 🎉</div>'}</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5">Änderungen werden sofort gespeichert. „Zurück“ setzt das heutige Datum – das Kind taucht dann wieder als offen auf.</div>`;
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-top:10px;line-height:1.5">Änderungen werden sofort gespeichert. „Zurück“ setzt das heutige Datum – das Kind taucht dann wieder als offen auf.</div>`;
 }
 
 /* v565: Die Größe stand in einem Textfeld mit Vorschlagsliste (`datalist`). Auf dem Handy
@@ -126,18 +126,18 @@ function ausZeile(k,art){
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <label style="display:flex;align-items:center;gap:8px;flex:1;min-width:150px;min-height:44px;cursor:pointer">
         <input type="checkbox" ${hat?"checked":""} onchange="ausToggle(${k._id},this)" style="width:20px;height:20px;flex:none">
-        <span style="font-size:13.5px;font-weight:600">${nr}${esc(k.name)}</span>
+        <span style="font-size:var(--s-text);font-weight:600">${nr}${esc(k.name)}</span>
       </label>
       ${art.mit_groesse?(_ausGroessen(art).length?_ausGroesseMenue(k,art,z):`<input class="aus-groesse" value="${esc(z.groesse||"")}" placeholder="Größe"
         oninput="ausFeldTippen(${k._id},'groesse',this.value)" aria-label="Größe für ${esc(k.name)}"
-        style="width:86px;min-height:48px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface);color:var(--text)">`):""}
+        style="width:86px;min-height:48px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)">`):""}
       ${art.mit_nummer?`<input value="${esc(z.nummer||"")}" placeholder="Satz-Nr."
         oninput="ausFeldTippen(${k._id},'nummer',this.value)" aria-label="Satznummer für ${esc(k.name)}"
-        style="width:78px;min-height:44px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface);color:var(--text)">`:""}
+        style="width:78px;min-height:44px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)">`:""}
       ${hat?`<button class="btn btn-sm" style="min-height:36px" onclick="ausZurueck(${k._id})" title="Als zurückgegeben eintragen">↩︎ zurück</button>`:""}
     </div>
-    ${z.zurueck_am?`<div style="font-size:11px;color:var(--amber);margin-top:4px">zurückgegeben am ${esc(_ausDatum(z.zurueck_am))}</div>`
-      :(hat&&z.ausgegeben_am?`<div style="font-size:11px;color:var(--text3);margin-top:4px">ausgegeben am ${esc(_ausDatum(z.ausgegeben_am))}</div>`:"")}
+    ${z.zurueck_am?`<div style="font-size:var(--s-klein);color:var(--amber);margin-top:4px">zurückgegeben am ${esc(_ausDatum(z.zurueck_am))}</div>`
+      :(hat&&z.ausgegeben_am?`<div style="font-size:var(--s-klein);color:var(--text3);margin-top:4px">ausgegeben am ${esc(_ausDatum(z.ausgegeben_am))}</div>`:"")}
   </div>`;
 }
 
@@ -149,7 +149,7 @@ function _ausGroesseMenue(k,art,z){
   const hat=(z.groesse||"").trim();
   if(hat&&!liste.includes(hat))liste.push(hat);
   return `<select class="aus-groesse" onchange="ausGroesseWahl(${k._id},this.value)" aria-label="Größe für ${esc(k.name)}"
-    style="width:96px;min-height:48px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:14px;background:var(--surface);color:var(--text)">
+    style="width:96px;min-height:48px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-karte);background:var(--surface);color:var(--text)">
     <option value=""${hat?"":" selected"}>Größe</option>
     ${liste.map(g=>`<option value="${esc(g)}"${hat===g?" selected":""}>${esc(g)}</option>`).join("")}
   </select>`;
@@ -221,18 +221,18 @@ function ausArtikelNeuOpen(){
   // Zahl läge er je nach Paarung dahinter (v405).
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:"+(typeof zOben==="function"?zOben(10001):10001)+";display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{if(e.target===m)m.remove();};
-  const feld="width:100%;min-height:48px;padding:10px;margin:4px 0 10px;border:1px solid var(--rand-bedien);border-radius:8px;box-sizing:border-box;font-family:inherit;font-size:13px;background:var(--surface);color:var(--text)";
+  const feld="width:100%;min-height:48px;padding:10px;margin:4px 0 10px;border:1px solid var(--rand-bedien);border-radius:8px;box-sizing:border-box;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)";
   m.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:400px;width:100%;margin:auto">
     ${mdlHead("aus-neu","➕","Gegenstand erfassen","z. B. Trinkflasche oder Rucksack","#1e3a8a")}
-    <label for="an-name" style="font-size:12px;color:var(--text2)">Name</label>
+    <label for="an-name" style="font-size:var(--s-text);color:var(--text2)">Name</label>
     <input id="an-name" placeholder="Trinkflasche" style="${feld}">
-    <label for="an-besch" style="font-size:12px;color:var(--text2)">Was gehört dazu? (freiwillig)</label>
+    <label for="an-besch" style="font-size:var(--s-text);color:var(--text2)">Was gehört dazu? (freiwillig)</label>
     <input id="an-besch" placeholder="Flasche mit Vereinslogo" style="${feld}">
-    <label style="display:flex;align-items:center;gap:8px;font-size:13px;min-height:44px"><input id="an-groesse" type="checkbox" checked> Es gibt Größen</label>
-    <label for="an-liste" style="font-size:12px;color:var(--text2)">Größen als Vorschlag, mit Komma</label>
+    <label style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);min-height:44px"><input id="an-groesse" type="checkbox" checked> Es gibt Größen</label>
+    <label for="an-liste" style="font-size:var(--s-text);color:var(--text2)">Größen als Vorschlag, mit Komma</label>
     <input id="an-liste" value="128,140,152" style="${feld}">
-    <label style="display:flex;align-items:center;gap:8px;font-size:13px;min-height:44px;margin-bottom:10px"><input id="an-nummer" type="checkbox"> Jeder Satz hat eine Nummer</label>
-    <button class="btn btn-p" style="width:100%;min-height:56px;font-size:15px;font-weight:800" onclick="ausArtikelNeuSpeichern()">Gegenstand erfassen</button>
+    <label style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);min-height:44px;margin-bottom:10px"><input id="an-nummer" type="checkbox"> Jeder Satz hat eine Nummer</label>
+    <button class="btn btn-p" style="width:100%;min-height:56px;font-size:var(--s-karte);font-weight:800" onclick="ausArtikelNeuSpeichern()">Gegenstand erfassen</button>
   </div>`;
   document.body.appendChild(m);
 }
@@ -315,9 +315,9 @@ function matBedarfZeile(spec,opt){
     return kern;
   });
   const ungefuehrt=zeilen.filter(m=>!m.gefuehrt).map(m=>m.was);
-  return '<div style="font-size:11.5px;color:var(--text2);line-height:1.6;margin:0 0 8px">'
+  return '<div style="font-size:var(--s-klein);color:var(--text2);line-height:1.6;margin:0 0 8px">'
     +'<b>Dafür brauchst du:</b> '+teile.join(" · ")
-    +(ungefuehrt.length?'<div style="color:var(--text3);font-size:10.5px;margin-top:2px">Nicht im Materialbestand geführt: '+esc(ungefuehrt.join(", "))+'</div>':"")
+    +(ungefuehrt.length?'<div style="color:var(--text3);font-size:var(--s-klein);margin-top:2px">Nicht im Materialbestand geführt: '+esc(ungefuehrt.join(", "))+'</div>':"")
     +'</div>';
 }
 let _matKat="";              // "" = alle
@@ -332,7 +332,7 @@ async function materialOpen(){
   m.onclick=e=>{if(e.target===m)m.remove();};
   m.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:500px;width:100%;margin:auto">
     ${mdlHead("mat-modal","🧰","Material","Was haben wir – und wann zuletzt gezählt?","#1e3a8a")}
-    <div id="mat-body"><div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Lade…</div></div>
+    <div id="mat-body"><div style="text-align:center;padding:20px;color:var(--text3);font-size:var(--s-text)">Lade…</div></div>
   </div>`;
   document.body.appendChild(m);
   await materialLaden();
@@ -372,7 +372,7 @@ function materialRender(){
   const body=document.getElementById("mat-body"); if(!body)return;
   if(!MAT_POSTEN.length){
     body.innerHTML=`<div class="empty" style="padding:24px 8px"><i class="ti ti-box"></i>Noch kein Posten erfasst.</div>
-      <button class="btn btn-p" style="width:100%;min-height:56px;font-size:15px;font-weight:800" onclick="matPostenNeuOpen()">Posten erfassen</button>`;
+      <button class="btn btn-p" style="width:100%;min-height:56px;font-size:var(--s-karte);font-weight:800" onclick="matPostenNeuOpen()">Posten erfassen</button>`;
     return;
   }
   /* Stillgelegte Posten holt schon die Abfrage nicht – hier noch einmal, damit die Liste
@@ -386,7 +386,7 @@ function materialRender(){
   const offen=eigene.filter(p=>p.ist==null).length;
   const alt=!z||z.alter>MAT_ALT_TAGE;
   body.innerHTML=`
-    <div style="border:1px solid ${alt?"var(--amber)":"var(--rand-bedien)"};border-left-width:3px;border-radius:10px;padding:8px 10px;margin-bottom:10px;font-size:12.5px;color:var(--text2)">
+    <div style="border:1px solid ${alt?"var(--amber)":"var(--rand-bedien)"};border-left-width:3px;border-radius:10px;padding:8px 10px;margin-bottom:10px;font-size:var(--s-text);color:var(--text2)">
       ${z?`Zuletzt gezählt am <b>${esc(_ausDatum(z.datum))}</b>${alt?` · <span style="color:var(--amber);font-weight:700">das ist ${z.alter} Tage her</span>`:""}`
          :'<span style="color:var(--amber);font-weight:700">Noch nie gezählt.</span> Trag ein, was da ist – leer heißt „nicht gezählt", nicht „keines da".'}
       ${offen?`<div style="margin-top:2px">${offen} von ${eigene.length} Posten ohne Zahl.</div>`:""}
@@ -397,7 +397,7 @@ function materialRender(){
       <button class="ftag" onclick="matPostenNeuOpen()" title="Weiteren Posten anlegen">＋</button>
     </div>
     <div>${sichtbar.map(matZeile).join("")}</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5">Jede eingetragene Zahl setzt das Zähldatum dieses Postens auf heute. Gespeichert wird sofort.</div>`;
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-top:10px;line-height:1.5">Jede eingetragene Zahl setzt das Zähldatum dieses Postens auf heute. Gespeichert wird sofort.</div>`;
 }
 
 /* v561: Soll und Ist stehen nebeneinander, in zwei gleich breiten Spalten unter dem
@@ -420,14 +420,14 @@ function matZeile(p){
   const fehlt=p.soll!=null&&p.ist!=null&&p.ist<p.soll;
   const rand=fehlt?"var(--red)":(p.ist!=null?"var(--green)":"var(--rand-bedien)");
   const draussen=p.artikel_id?_matDraussen(p.artikel_id):0;
-  const feld="width:100%;min-height:48px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;box-sizing:border-box;font-family:inherit;font-size:15px;background:var(--surface);color:var(--text);text-align:right";
-  const kopf="display:block;font-size:11px;margin-bottom:2px";
-  const kopfzeile=`<div style="font-size:13.5px;font-weight:600">${esc(p.name)}${p.variante?` <span style="color:var(--text3);font-weight:400">· ${esc(p.variante)}</span>`:""}</div>
-    ${p.ort?`<div style="font-size:11px;color:var(--text3);margin-top:1px">${esc(p.ort)}</div>`:""}`;
+  const feld="width:100%;min-height:48px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;box-sizing:border-box;font-family:inherit;font-size:var(--s-karte);background:var(--surface);color:var(--text);text-align:right";
+  const kopf="display:block;font-size:var(--s-klein);margin-bottom:2px";
+  const kopfzeile=`<div style="font-size:var(--s-text);font-weight:600">${esc(p.name)}${p.variante?` <span style="color:var(--text3);font-weight:400">· ${esc(p.variante)}</span>`:""}</div>
+    ${p.ort?`<div style="font-size:var(--s-klein);color:var(--text3);margin-top:1px">${esc(p.ort)}</div>`:""}`;
   if(matFremd(p))return `<div style="border:1px solid var(--rand-bedien);border-left-width:3px;border-radius:10px;padding:8px 10px;margin-bottom:6px">${kopfzeile}</div>`;
   return `<div style="border:1px solid ${rand};border-left-width:3px;border-radius:10px;padding:8px 10px;margin-bottom:6px">
     ${kopfzeile}
-    ${draussen?`<div style="font-size:11px;color:var(--text3)">davon ${draussen} bei den Kindern</div>`:""}
+    ${draussen?`<div style="font-size:var(--s-klein);color:var(--text3)">davon ${draussen} bei den Kindern</div>`:""}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px">
       <label><span style="${kopf};color:var(--text3)">Soll</span>
         <input type="number" inputmode="numeric" min="0" value="${p.soll!=null?p.soll:""}" placeholder="–" aria-label="Sollbestand ${esc(p.name)}"
@@ -436,8 +436,8 @@ function matZeile(p){
         <input type="number" inputmode="numeric" min="0" value="${p.ist!=null?p.ist:""}" placeholder="–" aria-label="Istbestand ${esc(p.name)}"
           oninput="matFeldTippen(${p.id},'ist',this.value)" style="${feld}"></label>
     </div>
-    ${fehlt?`<div style="font-size:11.5px;color:var(--red);font-weight:700;margin-top:4px">${p.soll-p.ist} fehlen</div>`:""}
-    ${p.zuletzt_gezaehlt?`<div style="font-size:10.5px;color:var(--text3);margin-top:2px">gezählt am ${esc(_ausDatum(p.zuletzt_gezaehlt))}</div>`:""}
+    ${fehlt?`<div style="font-size:var(--s-klein);color:var(--red);font-weight:700;margin-top:4px">${p.soll-p.ist} fehlen</div>`:""}
+    ${p.zuletzt_gezaehlt?`<div style="font-size:var(--s-klein);color:var(--text3);margin-top:2px">gezählt am ${esc(_ausDatum(p.zuletzt_gezaehlt))}</div>`:""}
   </div>`;
 }
 
@@ -472,21 +472,21 @@ function matPostenNeuOpen(){
   m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Posten erfassen");
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:"+(typeof zOben==="function"?zOben(10001):10001)+";display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{if(e.target===m)m.remove();};
-  const feld="width:100%;min-height:48px;padding:10px;margin:4px 0 10px;border:1px solid var(--rand-bedien);border-radius:8px;box-sizing:border-box;font-family:inherit;font-size:13px;background:var(--surface);color:var(--text)";
+  const feld="width:100%;min-height:48px;padding:10px;margin:4px 0 10px;border:1px solid var(--rand-bedien);border-radius:8px;box-sizing:border-box;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)";
   const kats=["Bälle","Hütchen","Markierung","Geräte","Kleidung","Medizin","Sonstiges"];
   m.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:400px;width:100%;margin:auto">
     ${mdlHead("mat-neu","➕","Posten erfassen","z. B. Hütchen in einer weiteren Farbe","#1e3a8a")}
-    <label for="mn-name" style="font-size:12px;color:var(--text2)">Was ist es?</label>
+    <label for="mn-name" style="font-size:var(--s-text);color:var(--text2)">Was ist es?</label>
     <input id="mn-name" placeholder="Hütchen" style="${feld}">
-    <label for="mn-var" style="font-size:12px;color:var(--text2)">Farbe, Größe oder Nummernkreis (freiwillig)</label>
+    <label for="mn-var" style="font-size:var(--s-text);color:var(--text2)">Farbe, Größe oder Nummernkreis (freiwillig)</label>
     <input id="mn-var" placeholder="orange" style="${feld}">
-    <label for="mn-kat" style="font-size:12px;color:var(--text2)">Schublade</label>
+    <label for="mn-kat" style="font-size:var(--s-text);color:var(--text2)">Schublade</label>
     <select id="mn-kat" style="${feld}">${kats.map(k=>`<option>${k}</option>`).join("")}</select>
-    <label for="mn-soll" style="font-size:12px;color:var(--text2)">Soll (freiwillig)</label>
+    <label for="mn-soll" style="font-size:var(--s-text);color:var(--text2)">Soll (freiwillig)</label>
     <input id="mn-soll" type="number" inputmode="numeric" min="0" placeholder="–" style="${feld}">
-    <label for="mn-ort" style="font-size:12px;color:var(--text2)">Wo liegt es? (freiwillig)</label>
+    <label for="mn-ort" style="font-size:var(--s-text);color:var(--text2)">Wo liegt es? (freiwillig)</label>
     <input id="mn-ort" placeholder="Materialschuppen Verein" style="${feld}">
-    <button class="btn btn-p" style="width:100%;min-height:56px;font-size:15px;font-weight:800" onclick="matPostenNeuSpeichern()">Posten erfassen</button>
+    <button class="btn btn-p" style="width:100%;min-height:56px;font-size:var(--s-karte);font-weight:800" onclick="matPostenNeuSpeichern()">Posten erfassen</button>
   </div>`;
   document.body.appendChild(m);
 }

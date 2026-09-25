@@ -13,30 +13,30 @@ function kiCoachOpen(){
   const m=document.createElement("div");m.id="ki-modal";
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{if(e.target===m){kiDiktatStop();m.remove();}};   // v596: nicht weiterlauschen
-  const chip=t=>`<button onclick="document.getElementById('ki-prompt').value='${t.replace(/'/g,"")}'" style="border:1px solid var(--rand-bedien);background:var(--surface);border-radius:14px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:inherit">${t}</button>`;
-  const feld="width:100%;min-height:44px;padding:6px 8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:12.5px;background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const chip=t=>`<button onclick="document.getElementById('ki-prompt').value='${t.replace(/'/g,"")}'" style="border:1px solid var(--rand-bedien);background:var(--surface);border-radius:14px;padding:5px 10px;font-size:var(--s-klein);cursor:pointer;font-family:inherit">${t}</button>`;
+  const feld="width:100%;min-height:44px;padding:6px 8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
   m.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("ki-modal","🤖","Adler-Coach (KI)","Übungen vorschlagen oder fremden Text übernehmen","#7c3aed")}
     <div id="ki-modus" role="tablist" aria-label="Wie der Coach arbeiten soll" style="display:flex;gap:6px;margin-bottom:10px">
-      <button data-modus="idee" role="tab" aria-controls="ki-block-idee" onclick="kiSetModus('idee')" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">💡 Idee beschreiben</button>
-      <button data-modus="text" role="tab" aria-controls="ki-block-text" onclick="kiSetModus('text')" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">📋 Text übernehmen</button>
+      <button data-modus="idee" role="tab" aria-controls="ki-block-idee" onclick="kiSetModus('idee')" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">💡 Idee beschreiben</button>
+      <button data-modus="text" role="tab" aria-controls="ki-block-text" onclick="kiSetModus('text')" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📋 Text übernehmen</button>
     </div>
-    <div id="ki-hinweis" style="font-size:11px;color:var(--text2);margin-bottom:10px"></div>
+    <div id="ki-hinweis" style="font-size:var(--s-klein);color:var(--text2);margin-bottom:10px"></div>
     <div id="ki-kontext"></div>
     <div id="ki-block-idee" role="tabpanel" aria-label="Idee beschreiben">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
-        <label style="font-size:10.5px;color:var(--text2)">Schwerpunkt<select id="ki-kat" style="${feld}">${KI_KATS.map(([k,n])=>`<option value="${k}">${n}</option>`).join("")}</select></label>
-        <label style="font-size:10.5px;color:var(--text2)">Dauer<select id="ki-dauer" style="${feld}">${KI_DAUER.map((d,i)=>`<option${i===1?" selected":""}>${d}</option>`).join("")}</select></label>
-        <label style="font-size:10.5px;color:var(--text2)">Wo<select id="ki-ort" style="${feld}">${KI_ORTE.map(o=>`<option>${o}</option>`).join("")}</select></label>
-        <label style="font-size:10.5px;color:var(--text2)">Material<select id="ki-material" style="${feld}">${KI_MATERIAL.map(m=>`<option>${m}</option>`).join("")}</select></label>
+        <label style="font-size:var(--s-klein);color:var(--text2)">Schwerpunkt<select id="ki-kat" style="${feld}">${KI_KATS.map(([k,n])=>`<option value="${k}">${n}</option>`).join("")}</select></label>
+        <label style="font-size:var(--s-klein);color:var(--text2)">Dauer<select id="ki-dauer" style="${feld}">${KI_DAUER.map((d,i)=>`<option${i===1?" selected":""}>${d}</option>`).join("")}</select></label>
+        <label style="font-size:var(--s-klein);color:var(--text2)">Wo<select id="ki-ort" style="${feld}">${KI_ORTE.map(o=>`<option>${o}</option>`).join("")}</select></label>
+        <label style="font-size:var(--s-klein);color:var(--text2)">Material<select id="ki-material" style="${feld}">${KI_MATERIAL.map(m=>`<option>${m}</option>`).join("")}</select></label>
       </div>
-      <textarea id="ki-prompt" rows="2" placeholder="Optional: was dir wichtig ist – z. B. „viele Ballkontakte, die Schnellen sollen nicht dominieren“" style="width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:13px"></textarea>
-      ${kiDiktatMoeglich()?`<button type="button" id="ki-mic" onclick="kiDiktat()" style="width:100%;min-height:44px;margin-top:6px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">🎙️ Diktieren</button>`:""}
+      <textarea id="ki-prompt" rows="2" placeholder="Optional: was dir wichtig ist – z. B. „viele Ballkontakte, die Schnellen sollen nicht dominieren“" style="width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text)"></textarea>
+      ${kiDiktatMoeglich()?`<button type="button" id="ki-mic" onclick="kiDiktat()" style="width:100%;min-height:44px;margin-top:6px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">🎙️ Diktieren</button>`:""}
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0">${chip("Dribbling & Ballführung")}${chip("Passspiel in der Raute")}${chip("Torschuss mit Spaß")}${chip("Zweikampf & Mut")}</div>
     </div>
     <div id="ki-block-text" role="tabpanel" aria-label="Text übernehmen" style="display:none">
-      <textarea id="ki-text" rows="8" placeholder="Übungsbeschreibung hier einfügen – von einer Webseite, aus WhatsApp, aus einem Buch oder aus der Beschreibung unter einem Video." style="width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:13px"></textarea>
-      <div style="font-size:10.5px;color:var(--text3);margin:4px 0 8px">Der Coach ordnet den Text in Aufbau, Ablauf, Varianten und Coaching-Punkte und zeichnet die Skizze dazu. Er erfindet nichts hinzu – was nicht dasteht, bleibt leer.</div>
+      <textarea id="ki-text" rows="8" placeholder="Übungsbeschreibung hier einfügen – von einer Webseite, aus WhatsApp, aus einem Buch oder aus der Beschreibung unter einem Video." style="width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text)"></textarea>
+      <div style="font-size:var(--s-klein);color:var(--text3);margin:4px 0 8px">Der Coach ordnet den Text in Aufbau, Ablauf, Varianten und Coaching-Punkte und zeichnet die Skizze dazu. Er erfindet nichts hinzu – was nicht dasteht, bleibt leer.</div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
       <button id="ki-gen-btn" class="btn btn-p btn-sm" onclick="kiCoachGenerate()"><i class="ti ti-sparkles"></i><span id="ki-gen-lbl">Übungen vorschlagen</span></button>
@@ -85,7 +85,7 @@ async function kiKontextLaden(){
     if(k.ort)teile.push(`🏟️ ${esc(k.ort)}`);
     if(k.einheit)teile.push(`⏱ Einheit ${k.einheit} Min`);
     box.innerHTML=teile.length
-      ? `<div style="font-size:10.5px;color:var(--text3);background:var(--surface2);border-radius:8px;padding:7px 9px;margin-bottom:8px;line-height:1.5">Der Coach bekommt das automatisch mit: ${teile.join(" · ")}</div>`
+      ? `<div style="font-size:var(--s-klein);color:var(--text3);background:var(--surface2);border-radius:8px;padding:7px 9px;margin-bottom:8px;line-height:1.5">Der Coach bekommt das automatisch mit: ${teile.join(" · ")}</div>`
       : "";
   }
   // Schwerpunkt-Auswahl auf das Monatsthema vorbelegen, Ort aus dem nächsten Training
@@ -192,7 +192,7 @@ async function kiCoachGenerate(){
      Gesendet wird ohnehin `promptVoll`, und das trägt den Satz aus den Auswahlfeldern.
      Geprüft wird jetzt das, was wirklich hinausgeht; die Edge Function bleibt unberührt. */
   const out=document.getElementById("ki-result"), btn=document.getElementById("ki-gen-btn");
-  if(out)out.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">🧠 ${KI_MODUS==="text"?"Adler-Coach liest den Text…":"Adler-Coach denkt nach…"}</div>`;
+  if(out)out.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text3);font-size:var(--s-text)">🧠 ${KI_MODUS==="text"?"Adler-Coach liest den Text…":"Adler-Coach denkt nach…"}</div>`;
   if(btn)btn.disabled=true;
   // Ein größeres Modell braucht länger als das alte kleine – 30 s waren dafür zu knapp.
   const ctrl=new AbortController(), to=setTimeout(()=>ctrl.abort(),60000);
@@ -210,11 +210,11 @@ async function kiCoachGenerate(){
       signal:ctrl.signal});
     clearTimeout(to);
     const d=await r.json().catch(()=>({}));
-    if(!r.ok){ if(out)out.innerHTML=`<div style="color:#dc2626;font-size:13px;padding:10px">${esc(d.error||("Fehler "+r.status))}</div>`; return; }
+    if(!r.ok){ if(out)out.innerHTML=`<div style="color:#dc2626;font-size:var(--s-text);padding:10px">${esc(d.error||("Fehler "+r.status))}</div>`; return; }
     kiCoachRender(d.uebungen||[], d.rest);
   }catch(e){
     clearTimeout(to);
-    if(out)out.innerHTML=`<div style="color:#dc2626;font-size:13px;padding:10px">${e&&e.name==="AbortError"?"Zeitüberschreitung – bitte nochmal versuchen.":"Netzwerkfehler – bist du online?"}</div>`;
+    if(out)out.innerHTML=`<div style="color:#dc2626;font-size:var(--s-text);padding:10px">${e&&e.name==="AbortError"?"Zeitüberschreitung – bitte nochmal versuchen.":"Netzwerkfehler – bist du online?"}</div>`;
   }finally{ if(btn)btn.disabled=false; }
 }
 // Kategorien für die Bibliothek (gleiche Keys wie renderTraining/PERIOD_CATS).
@@ -222,32 +222,32 @@ const KI_KATS=[["aufwaermen","Aufwärmen"],["raute","Raute & Grundordnung"],["pa
 function kiCoachRender(uebungen,rest){
   kiLastUebungen=uebungen||[];
   const out=document.getElementById("ki-result"); if(!out)return;
-  if(!kiLastUebungen.length){out.innerHTML='<div style="padding:10px;color:var(--text3);font-size:13px">Keine Übungen erhalten – bitte anders formulieren.</div>';return;}
+  if(!kiLastUebungen.length){out.innerHTML='<div style="padding:10px;color:var(--text3);font-size:var(--s-text)">Keine Übungen erhalten – bitte anders formulieren.</div>';return;}
   /* Punkt 3: Rückmeldung statt Vorab-Anleitung. Der Text-Modus lässt Felder bewusst leer,
      wenn die Angabe im Text fehlt. Das sichtbar zu machen ist die bessere Anleitung: man
      lernt genau dann, welche Angaben zählen, wenn es einen interessiert. */
   const fehlt=u=>[["dauer","Dauer"],["spieler","Spieleranzahl"],["feld","Feldgröße"],["material","Material"]]
     .filter(([k])=>!String(u[k]||"").trim()).map(([,n])=>n);
   out.innerHTML=kiLastUebungen.map((u,i)=>`<div style="border:var(--border-s);border-radius:12px;padding:12px;margin-bottom:10px">
-    <div style="font-weight:800;font-size:14px">${esc(u.titel||"Übung")}</div>
-    ${(KI_MODUS==="text"&&fehlt(u).length)?`<div style="font-size:11px;color:#b45309;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:7px 9px;margin:6px 0;line-height:1.5">⚠️ Stand nicht im Text: <b>${fehlt(u).join(", ")}</b> – ergänze es kurz im Text und übernimm nochmal, oder trag es nach dem Speichern in der Übung nach.</div>`:""}
-    <div style="font-size:11px;color:var(--text2);margin:2px 0 6px">${u.dauer?"⏱ "+esc(u.dauer):""}${u.spieler?" · 👥 "+esc(u.spieler):""}${u.feld?" · 📐 "+esc(u.feld):""}${u.material?" · 🎒 "+esc(u.material):""}</div>
+    <div style="font-weight:800;font-size:var(--s-karte)">${esc(u.titel||"Übung")}</div>
+    ${(KI_MODUS==="text"&&fehlt(u).length)?`<div style="font-size:var(--s-klein);color:#b45309;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:7px 9px;margin:6px 0;line-height:1.5">⚠️ Stand nicht im Text: <b>${fehlt(u).join(", ")}</b> – ergänze es kurz im Text und übernimm nochmal, oder trag es nach dem Speichern in der Übung nach.</div>`:""}
+    <div style="font-size:var(--s-klein);color:var(--text2);margin:2px 0 6px">${u.dauer?"⏱ "+esc(u.dauer):""}${u.spieler?" · 👥 "+esc(u.spieler):""}${u.feld?" · 📐 "+esc(u.feld):""}${u.material?" · 🎒 "+esc(u.material):""}</div>
     ${(function(){ /* v581: Dieselbe Grenze wie im Skizzen-Editor – geprüft wird, bevor
          gezeichnet wird, auch wenn die Antwort aus der eigenen Edge Function kommt. */
       const sp=(typeof skzSpecSaeubern==="function")?skzSpecSaeubern(u.skizze):u.skizze;
       return (sp&&typeof _skz==="function")?_skz(sp)+(typeof skzLegende==="function"?skzLegende(false,sp):""):""; })()}
-    <div style="font-size:12.5px;line-height:1.5;white-space:pre-wrap">${esc(u.beschreibung||"")}</div>
-    ${u.variante?`<div style="font-size:11.5px;color:var(--text2);margin-top:5px">➕ ${esc(u.variante)}</div>`:""}
-    ${u.coaching?`<div style="font-size:11.5px;color:var(--text2);margin-top:5px">📣 ${esc(u.coaching)}</div>`:""}
+    <div style="font-size:var(--s-text);line-height:1.5;white-space:pre-wrap">${esc(u.beschreibung||"")}</div>
+    ${u.variante?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:5px">➕ ${esc(u.variante)}</div>`:""}
+    ${u.coaching?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:5px">📣 ${esc(u.coaching)}</div>`:""}
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px">
-      <label style="font-size:11px;color:var(--text2)">Kategorie:
-        <select id="ki-kat-${i}" style="padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:12px;background:var(--surface);color:var(--text)">
+      <label style="font-size:var(--s-klein);color:var(--text2)">Kategorie:
+        <select id="ki-kat-${i}" style="padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)">
           ${KI_KATS.map(([k,l])=>`<option value="${k}"${k===(u.kat||"technik")?" selected":""}>${l}</option>`).join("")}
         </select>
       </label>
       <button class="btn btn-sm btn-p" onclick="kiCoachSaveForm(${i})"><i class="ti ti-clipboard-list"></i>In Bibliothek übernehmen</button>
     </div>
-  </div>`).join("")+(rest!=null?`<div style="font-size:10px;color:var(--text3);text-align:center;margin-top:2px">Noch ${esc(rest)} KI-Anfragen heute frei</div>`:"");
+  </div>`).join("")+(rest!=null?`<div style="font-size:var(--s-klein);color:var(--text3);text-align:center;margin-top:2px">Noch ${esc(rest)} KI-Anfragen heute frei</div>`:"");
 }
 async function kiCoachSave(i){
   const u=kiLastUebungen[i]; if(!u)return;
@@ -270,9 +270,9 @@ async function ttViewKi(id){
   m.onclick=e=>{if(e.target===m)m.remove();};
   m.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:440px;width:100%;margin:auto">
     ${mdlHead("tt-modal","🤖",esc(u.titel||row.name||"Übung"),"","#7c3aed")}
-    <div style="font-size:11.5px;color:var(--text2);margin-bottom:8px">${u.dauer?"⏱ "+esc(u.dauer):""}${u.material?" · 🎒 "+esc(u.material):""}</div>
-    <div style="font-size:13.5px;line-height:1.6;white-space:pre-wrap">${esc(u.beschreibung||"")}</div>
-    ${u.variante?`<div style="font-size:12.5px;color:var(--text2);margin-top:8px">➕ <b>Variante:</b> ${esc(u.variante)}</div>`:""}
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">${u.dauer?"⏱ "+esc(u.dauer):""}${u.material?" · 🎒 "+esc(u.material):""}</div>
+    <div style="font-size:var(--s-text);line-height:1.6;white-space:pre-wrap">${esc(u.beschreibung||"")}</div>
+    ${u.variante?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:8px">➕ <b>Variante:</b> ${esc(u.variante)}</div>`:""}
   </div>`;
   document.body.appendChild(m);
 }

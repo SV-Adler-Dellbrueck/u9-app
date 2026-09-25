@@ -62,12 +62,12 @@ async function ttRender(){
     if(sbCheck401(r))return;
     if(r.ok)items=(await r.json())||[];
   }catch(e){}
-  if(!items.length){body.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Noch keine Übungen gespeichert.<br>Board einrichten → „💾 Übung" drücken.</div>';return;}
+  if(!items.length){body.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-size:var(--s-text)">Noch keine Übungen gespeichert.<br>Board einrichten → „💾 Übung" drücken.</div>';return;}
   body.innerHTML=items.map(t=>`
     <div style="display:flex;align-items:center;gap:8px;padding:10px;border:var(--border-s);border-radius:12px;margin-bottom:8px">
       <div style="flex:1;min-width:0">
-        <div style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.name)}</div>
-        <div style="font-size:11px;color:var(--text3)">${t.formation?esc(t.formation)+" · ":""}${new Date(t.created_at).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"})}</div>
+        <div style="font-weight:700;font-size:var(--s-karte);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.name)}</div>
+        <div style="font-size:var(--s-klein);color:var(--text3)">${t.formation?esc(t.formation)+" · ":""}${new Date(t.created_at).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"})}</div>
       </div>
       ${t.formation==="KI-Übung"
         ?`<button class="btn btn-sm" onclick="ttViewKi(${t.id})"><i class="ti ti-eye"></i>Ansehen</button>`

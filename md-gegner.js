@@ -46,7 +46,7 @@ async function gegnerAutofill(){
   const ort=document.getElementById("tm-ort");
   if(ort&&!ort.value.trim()&&g.adresse)ort.value=g.adresse;
   const box=document.getElementById("tm-addr-results");
-  if(box)box.innerHTML=`<div style="font-size:11px;color:#16a34a;padding:4px 2px">✓ Gegner erkannt – Adresse${(g.ansprechpartner||g.telefon)?" & Kontakt":""} aus der Datenbank.</div>`;
+  if(box)box.innerHTML=`<div style="font-size:var(--s-klein);color:#16a34a;padding:4px 2px">✓ Gegner erkannt – Adresse${(g.ansprechpartner||g.telefon)?" & Kontakt":""} aus der Datenbank.</div>`;
 }
 // Telefonnummer → wa.me-Format (nur Ziffern, deutscher Ländercode 49). 0170… → 49170…
 function waNumber(tel){
@@ -75,7 +75,7 @@ async function gegnerContactInto(elId,name){
   }
   const platz=g.platzart?'<span style="white-space:nowrap">🥅 '+esc(g.platzart)+"</span>":"";
   const zeile=[kontakt,platz].filter(Boolean).join(" · ");
-  el.innerHTML='<div style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text2);margin-top:6px">'
+  el.innerHTML='<div style="display:flex;align-items:center;gap:6px;font-size:var(--s-klein);color:var(--text2);margin-top:6px">'
     +gegnerWappenHtml(g,22)+"<span>"+zeile+"</span></div>";
 }
 async function gegnerQuickSave(){
@@ -99,7 +99,7 @@ async function gegnerManageOpen(){
   const card=document.createElement("div");
   card.style.cssText="background:var(--surface);color:var(--text);max-width:520px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   card.innerHTML=`${mdlHead("gegner-modal","🗂️","Gegner-Datenbank","Adresse & Ansprechpartner je Gegner · füllt Termine automatisch","#334155")}
-    <div id="gegner-list" style="margin-bottom:8px"><div style="color:var(--text3);font-size:12px">Lade…</div></div>
+    <div id="gegner-list" style="margin-bottom:8px"><div style="color:var(--text3);font-size:var(--s-text)">Lade…</div></div>
     <div id="gegner-form"></div>
     <button class="btn btn-sm" style="margin-top:12px;width:100%" onclick="document.getElementById('gegner-modal').remove()">Schließen</button>`;
   modal.appendChild(card);document.body.appendChild(modal);
@@ -109,14 +109,14 @@ async function gegnerManageOpen(){
 function gegnerRenderList(){
   const box=document.getElementById("gegner-list"); if(!box)return;
   const list=GEGNER_CACHE||[];
-  if(!list.length){box.innerHTML=`<div style="font-size:12px;color:var(--text3)">Noch keine Gegner gespeichert.</div>`;return;}
+  if(!list.length){box.innerHTML=`<div style="font-size:var(--s-text);color:var(--text3)">Noch keine Gegner gespeichert.</div>`;return;}
   box.innerHTML=list.map(g=>`<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:var(--border)">
     ${gegnerWappenHtml(g,28)}
     <div style="flex:1;min-width:0">
-      <div style="font-size:13px;font-weight:700">${esc(g.name)}</div>
-      ${g.adresse?`<div style="font-size:11px;color:var(--text2)">📍 ${esc(g.adresse)}${g.platzart?` · ${esc(g.platzart)}`:""}</div>`
-        :g.platzart?`<div style="font-size:11px;color:var(--text2)">${esc(g.platzart)}</div>`:""}
-      ${(g.ansprechpartner||g.telefon)?`<div style="font-size:11px;color:var(--text2)">📇 ${esc(g.ansprechpartner||"")}${g.telefon?` · <a href="tel:${esc(String(g.telefon).replace(/\s/g,""))}" style="color:var(--blue-text);text-decoration:none">☎ ${esc(g.telefon)}</a> · <a href="https://wa.me/${waNumber(g.telefon)}" target="_blank" rel="noopener" style="color:#25D366;text-decoration:none">💬 WhatsApp</a>`:""}</div>`:""}
+      <div style="font-size:var(--s-text);font-weight:700">${esc(g.name)}</div>
+      ${g.adresse?`<div style="font-size:var(--s-klein);color:var(--text2)">📍 ${esc(g.adresse)}${g.platzart?` · ${esc(g.platzart)}`:""}</div>`
+        :g.platzart?`<div style="font-size:var(--s-klein);color:var(--text2)">${esc(g.platzart)}</div>`:""}
+      ${(g.ansprechpartner||g.telefon)?`<div style="font-size:var(--s-klein);color:var(--text2)">📇 ${esc(g.ansprechpartner||"")}${g.telefon?` · <a href="tel:${esc(String(g.telefon).replace(/\s/g,""))}" style="color:var(--blue-text);text-decoration:none">☎ ${esc(g.telefon)}</a> · <a href="https://wa.me/${waNumber(g.telefon)}" target="_blank" rel="noopener" style="color:#25D366;text-decoration:none">💬 WhatsApp</a>`:""}</div>`:""}
     </div>
     <button class="btn btn-sm" onclick="gegnerEdit(${g.id})"><i class="ti ti-edit"></i></button>
   </div>`).join("");
@@ -129,31 +129,31 @@ function gegnerHistoryHtml(name){
     .sort((a,b)=>String(b.datum).localeCompare(String(a.datum))).slice(0,6);
   if(!games.length)return "";
   return `<div style="margin-top:12px;border-top:var(--border-s);padding-top:10px">
-    <div style="font-size:11px;font-weight:800;color:var(--text2);margin-bottom:4px">📊 Bisherige Spiele</div>
+    <div style="font-size:var(--s-klein);font-weight:800;color:var(--text2);margin-bottom:4px">📊 Bisherige Spiele</div>
     ${games.map(t=>{const d=new Date(t.datum+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"2-digit"});
-      return `<div style="font-size:11px;color:var(--text2);padding:2px 0">${d} · ${esc(t.titel||t.gegner||"Spiel")}${t.ergebnis?` · <b style="color:var(--text)">${esc(t.ergebnis)}</b>`:` · <span style="color:var(--text3)">kein Ergebnis</span>`}</div>`;}).join("")}
+      return `<div style="font-size:var(--s-klein);color:var(--text2);padding:2px 0">${d} · ${esc(t.titel||t.gegner||"Spiel")}${t.ergebnis?` · <b style="color:var(--text)">${esc(t.ergebnis)}</b>`:` · <span style="color:var(--text3)">kein Ergebnis</span>`}</div>`;}).join("")}
   </div>`;
 }
 function gegnerFormRender(g){
   const box=document.getElementById("gegner-form"); if(!box)return;
   g=g||{};
-  const fld="width:100%;padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const fld="width:100%;padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
   box.innerHTML=`<div style="border-top:var(--border-s);padding-top:10px">
-    <div style="font-size:11px;font-weight:800;color:var(--text2);margin-bottom:6px">${g.id?"✏️ Gegner bearbeiten":"➕ Neuer Gegner"}</div>
+    <div style="font-size:var(--s-klein);font-weight:800;color:var(--text2);margin-bottom:6px">${g.id?"✏️ Gegner bearbeiten":"➕ Neuer Gegner"}</div>
     <input type="hidden" id="gg-id" value="${g.id||""}">
-    <label style="font-size:11px;color:var(--text2)">Name*<input id="gg-name" value="${esc(g.name||"")}" style="${fld}"></label>
-    <label style="font-size:11px;color:var(--text2)">Adresse<input id="gg-adresse" value="${esc(g.adresse||"")}" placeholder="Straße, PLZ Ort" style="${fld}"></label>
+    <label style="font-size:var(--s-klein);color:var(--text2)">Name*<input id="gg-name" value="${esc(g.name||"")}" style="${fld}"></label>
+    <label style="font-size:var(--s-klein);color:var(--text2)">Adresse<input id="gg-adresse" value="${esc(g.adresse||"")}" placeholder="Straße, PLZ Ort" style="${fld}"></label>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-      <label style="font-size:11px;color:var(--text2)">Ansprechpartner<input id="gg-ap" value="${esc(g.ansprechpartner||"")}" style="${fld}"></label>
-      <label style="font-size:11px;color:var(--text2)">Telefon<input id="gg-tel" value="${esc(g.telefon||"")}" style="${fld}"></label>
+      <label style="font-size:var(--s-klein);color:var(--text2)">Ansprechpartner<input id="gg-ap" value="${esc(g.ansprechpartner||"")}" style="${fld}"></label>
+      <label style="font-size:var(--s-klein);color:var(--text2)">Telefon<input id="gg-tel" value="${esc(g.telefon||"")}" style="${fld}"></label>
     </div>
-    <label style="font-size:11px;color:var(--text2)">E-Mail<input id="gg-email" value="${esc(g.email||"")}" style="${fld}"></label>
+    <label style="font-size:var(--s-klein);color:var(--text2)">E-Mail<input id="gg-email" value="${esc(g.email||"")}" style="${fld}"></label>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-      <label style="font-size:11px;color:var(--text2)">Platzart<input id="gg-platzart" list="gg-platzarten" value="${esc(g.platzart||"")}" placeholder="Kunstrasen" style="${fld}"></label>
-      <label style="font-size:11px;color:var(--text2)">Vereinsseite<input id="gg-website" value="${esc(g.website||"")}" placeholder="https://…" style="${fld}"></label>
+      <label style="font-size:var(--s-klein);color:var(--text2)">Platzart<input id="gg-platzart" list="gg-platzarten" value="${esc(g.platzart||"")}" placeholder="Kunstrasen" style="${fld}"></label>
+      <label style="font-size:var(--s-klein);color:var(--text2)">Vereinsseite<input id="gg-website" value="${esc(g.website||"")}" placeholder="https://…" style="${fld}"></label>
     </div>
     <datalist id="gg-platzarten">${GEGNER_PLATZARTEN.map(p=>`<option value="${esc(p)}">`).join("")}</datalist>
-    <label style="font-size:11px;color:var(--text2)">Notiz<input id="gg-notiz" value="${esc(g.notiz||"")}" style="${fld}"></label>
+    <label style="font-size:var(--s-klein);color:var(--text2)">Notiz<input id="gg-notiz" value="${esc(g.notiz||"")}" style="${fld}"></label>
     <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
       <button class="btn btn-p btn-sm" onclick="gegnerSave()"><i class="ti ti-device-floppy"></i>Speichern</button>
       ${g.id?`<button class="btn btn-sm" onclick="gegnerFormRender(null)">Neu</button><button class="btn btn-sm" style="margin-left:auto;color:#dc2626" onclick="gegnerDelete(${g.id})"><i class="ti ti-trash"></i>Löschen</button>`:""}
@@ -220,11 +220,11 @@ async function tmLoad(){
   const up=document.getElementById("tm-upcoming"),pa=document.getElementById("tm-past");
   if(!up||!pa)return;
   gegnerLoad(); // Gegner-Datenbank → Datalist für Auto-Fill
-  up.innerHTML='<div style="font-size:11px;color:var(--text3)">Lade...</div>';pa.innerHTML="";
+  up.innerHTML='<div style="font-size:var(--s-klein);color:var(--text3)">Lade...</div>';pa.innerHTML="";
   try{
     const r=await fetch(`${SB_URL}/rest/v1/termine?select=*&order=datum.asc,uhrzeit.asc.nullslast`,{headers:sbAuthHeaders()});
     if(sbCheck401(r))return;
-    if(!r.ok){up.innerHTML='<div style="font-size:11px;color:var(--text3)">Keine Verbindung</div>';return;}
+    if(!r.ok){up.innerHTML='<div style="font-size:var(--s-klein);color:var(--text3)">Keine Verbindung</div>';return;}
     const rows=await r.json();
     TM_TERMINE=rows;
     if(rows.some(x=>x.typ==="trainermeeting"))await tmMeetingStatusLaden();
@@ -239,11 +239,11 @@ async function tmLoad(){
     const kFull=kommend.slice(0,FULL), kRest=kommend.slice(FULL);
     up.innerHTML=kommend.length
       ? kFull.map(tmCard).join("")+(kRest.length?`<button id="tm-more-btn" class="btn btn-sm" style="width:100%;margin:2px 0 8px" onclick="tmToggleMore()"><i class="ti ti-chevron-down"></i>Weitere ${kRest.length} Termine anzeigen</button><div id="tm-more" style="display:none">${kRest.map(tmRow).join("")}</div>`:"")
-      : '<div style="font-size:11px;color:var(--text3);padding:6px">Keine kommenden Termine.</div>';
-    pa.innerHTML=vergangen.length?vergangen.slice(0,40).map(tmRow).join(""):'<div style="font-size:11px;color:var(--text3);padding:6px">Noch keine vergangenen Termine.</div>';
+      : '<div style="font-size:var(--s-klein);color:var(--text3);padding:6px">Keine kommenden Termine.</div>';
+    pa.innerHTML=vergangen.length?vergangen.slice(0,40).map(tmRow).join(""):'<div style="font-size:var(--s-klein);color:var(--text3);padding:6px">Noch keine vergangenen Termine.</div>';
     kFull.forEach(t=>wetterInto("wx-tm-"+t.id,t.datum,t.ort,t.uhrzeit)); // Wetter nur für die vollen Karten
     kFull.filter(t=>t.heim===true&&(t.typ==="spiel"||t.typ==="turnier")).forEach(buedchenTrainerFill); // Büdchen je Heimspiel
-  }catch(e){up.innerHTML='<div style="font-size:11px;color:var(--text3)">Offline</div>';}
+  }catch(e){up.innerHTML='<div style="font-size:var(--s-klein);color:var(--text3)">Offline</div>';}
 }
 // J6: Ansage zu einem Termin – öffnet das Ansage-Modal mit vorbefülltem Termin-Text.
 function ansageVomTermin(id){
@@ -265,12 +265,12 @@ function tmRow(t){
   const hb=heimLabel(t);
   const faelltAus=typeof terminFaelltAus==="function"&&terminFaelltAus(t);
   return `<div role="button" tabindex="0" onclick="tmDetailOpen(${t.id})" style="display:flex;align-items:center;gap:10px;background:var(--surface);border:var(--border-s);border-left:3px solid ${faelltAus?"var(--text3)":m.col};border-radius:var(--rl);padding:9px 12px;margin-bottom:6px;cursor:pointer">
-    <span style="font-size:18px">${m.icon}</span>
+    <span style="font-size:var(--s-teil)">${m.icon}</span>
     <div style="flex:1;min-width:0">
-      <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${faelltAus?"var(--text2)":"inherit"}">${esc(t.titel||m.label)}${faelltAus?` ${terminAbsageChip(t,true)}`:""}</div>
-      <div style="font-size:11px;color:var(--text2)">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"2-digit"})}${zeit?" · "+zeit:""}${tmMeetingOffenZeile(t)}${hb?` · <span style="color:${t.heim?"#15803d":"#b45309"};font-weight:700">${esc(hb)}</span>`:""}</div>
+      <div style="font-size:var(--s-text);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${faelltAus?"var(--text2)":"inherit"}">${esc(t.titel||m.label)}${faelltAus?` ${terminAbsageChip(t,true)}`:""}</div>
+      <div style="font-size:var(--s-klein);color:var(--text2)">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"2-digit"})}${zeit?" · "+zeit:""}${tmMeetingOffenZeile(t)}${hb?` · <span style="color:${t.heim?"#15803d":"#b45309"};font-weight:700">${esc(hb)}</span>`:""}</div>
     </div>
-    <span style="font-size:16px;color:var(--text3)">›</span>
+    <span style="font-size:var(--s-karte);color:var(--text3)">›</span>
   </div>`;
 }
 // „Weitere Termine" (kompakter Schwanz) ein-/ausklappen.
@@ -351,16 +351,16 @@ function _tmdKarte(t){
   const datumStr=wtag+" "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
   const zeitStr=t.uhrzeit?String(t.uhrzeit).slice(0,5):((/Uhrzeit:\s*(\d{1,2}:\d{2})/.exec(t.notiz||"")||[])[1]||"");
   const notizClean=(t.notiz&&!/^Uhrzeit:/.test(t.notiz))?t.notiz:"";
-  const badge=(txt,bg,col)=>`<span style="font-size:10px;font-weight:800;padding:3px 8px;border-radius:10px;background:${bg};color:${col}">${txt}</span>`;
+  const badge=(txt,bg,col)=>`<span style="font-size:var(--s-klein);font-weight:800;padding:3px 8px;border-radius:10px;background:${bg};color:${col}">${txt}</span>`;
   const hb=heimLabel(t);
   const badges=[
     hb?badge(esc(hb),t.heim?"#dcfce7":"#fef3c7",t.heim?"#15803d":"#b45309"):"",
     (istSpiel&&t.spielform)?badge(esc(t.spielform),m.col+"22",m.col):"",
     (typeof ferienBadge==="function")?ferienBadge(t.datum):""
   ].join("");
-  const sec=x=>`<div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:14px 0 6px">${x}</div>`;
+  const sec=x=>`<div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:14px 0 6px">${x}</div>`;
   const zu=(sum,inner,offen)=>`<details${offen?" open":""} style="margin-top:10px;border:var(--border-s);border-radius:12px;background:var(--surface2)">
-      <summary style="cursor:pointer;min-height:44px;display:flex;align-items:center;padding:0 12px;font-size:12.5px;font-weight:800;color:var(--text2)">${sum}</summary>
+      <summary style="cursor:pointer;min-height:44px;display:flex;align-items:center;padding:0 12px;font-size:var(--s-text);font-weight:800;color:var(--text2)">${sum}</summary>
       <div style="padding:2px 12px 12px">${inner}</div></details>`;
   const klein=o=>o.href
     ? `<a class="btn btn-sm" href="${o.href}" target="_blank" rel="noopener noreferrer" style="min-height:44px;justify-content:flex-start;text-decoration:none"><i class="ti ${o.i}"></i>${o.l}</a>`
@@ -383,7 +383,7 @@ function _tmdKarte(t){
      Termin statt an einer eigenen Kachel. */
   else if(t.typ==="trainermeeting")gross=[{i:"ti-calendar-question",l:"Termin finden & Themen",c:`tmMeetingOeffnen(${Number(t.id)})`,p:true}];
   else gross=[{i:"ti-basket",l:"Mitbringliste",c:"mitbringTrainerOpen()",p:true}];
-  const grossBtn=o=>`<button class="btn${o.p?" btn-p":""}" onclick="${o.c}" style="width:100%;min-height:52px;justify-content:center;font-size:14px;font-weight:800"><i class="ti ${o.i}"></i>${o.l}</button>`;
+  const grossBtn=o=>`<button class="btn${o.p?" btn-p":""}" onclick="${o.c}" style="width:100%;min-height:52px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ${o.i}"></i>${o.l}</button>`;
 
   /* 2 · Für die Eltern und 3 · Mehr – getrennt, weil das eine der Verein braucht und das
      andere nur der Trainer. Beides zugeklappt; „Fällt aus" klappt von selbst auf. */
@@ -407,51 +407,51 @@ function _tmdKarte(t){
 
   return `<div style="background:var(--surface);color:var(--text);border-radius:var(--rl);overflow:hidden;box-shadow:0 8px 30px rgba(15,23,42,.18)">
     <div style="display:flex;align-items:center;gap:12px;padding:14px;background:linear-gradient(90deg,${m.col}1f,transparent);border-left:5px solid ${m.col}">
-      <div style="width:46px;height:46px;flex:none;border-radius:14px;background:${m.col};display:flex;align-items:center;justify-content:center;font-size:23px;box-shadow:0 2px 8px ${m.col}55">${m.icon}</div>
+      <div style="width:46px;height:46px;flex:none;border-radius:14px;background:${m.col};display:flex;align-items:center;justify-content:center;font-size:var(--s-seite);box-shadow:0 2px 8px ${m.col}55">${m.icon}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:16px;font-weight:900;line-height:1.2">${esc(t.titel||m.label)}</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:3px">${datumStr}${zeitStr?" · "+zeitStr+" Uhr":""}</div>
+        <div style="font-size:var(--s-karte);font-weight:900;line-height:1.2">${esc(t.titel||m.label)}</div>
+        <div style="font-size:var(--s-text);color:var(--text2);margin-top:3px">${datumStr}${zeitStr?" · "+zeitStr+" Uhr":""}</div>
         ${badges?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">${badges}</div>`:""}
       </div>
     </div>
     ${typeof terminAbsageBanner==="function"?terminAbsageBanner(t):""}
     <div style="padding:12px 14px 14px">
 
-      ${(t.ort||t.platz)?`<div style="font-size:12.5px;color:var(--text2);line-height:1.6">
+      ${(t.ort||t.platz)?`<div style="font-size:var(--s-text);color:var(--text2);line-height:1.6">
         ${t.ort?`<div><i class="ti ti-map-pin"></i> ${mapsAnchor(t.ort)}</div>`:""}
         ${t.platz?`<div>🏟️ ${esc(t.platz)}</div>`:""}
       </div>`:""}
       <div id="wx-tm-${t.id}"></div>
-      ${notizClean?`<div style="font-size:12px;color:var(--text3);margin-top:6px">${esc(notizClean)}</div>`:""}
+      ${notizClean?`<div style="font-size:var(--s-text);color:var(--text3);margin-top:6px">${esc(notizClean)}</div>`:""}
 
       ${abgesagt
-        ? `${sec("Was du hier tust")}<div style="font-size:12.5px;color:var(--text2);line-height:1.5">Für diesen Termin ist nichts mehr zu planen. Soll er doch stattfinden, unten unter „📣 Für die Eltern“ wieder auf <b>🟢 Findet statt</b> stellen.</div>`
+        ? `${sec("Was du hier tust")}<div style="font-size:var(--s-text);color:var(--text2);line-height:1.5">Für diesen Termin ist nichts mehr zu planen. Soll er doch stattfinden, unten unter „📣 Für die Eltern“ wieder auf <b>🟢 Findet statt</b> stellen.</div>`
         : `${sec("Was du hier tust")}
       <div style="display:flex;flex-direction:column;gap:6px">${gross.filter(Boolean).map(grossBtn).join("")}</div>`}
 
       ${sec("Wer ist dabei")}
       ${kommt?`<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
-        <span style="font-size:11px;color:var(--text3);font-weight:800;width:100%">Trainer</span>
+        <span style="font-size:var(--s-klein);color:var(--text3);font-weight:800;width:100%">Trainer</span>
         ${trainerstabNamen(t.trainer_status).map(tn=>{const stt=(t.trainer_status||{})[tn];const bg=stt==="ja"?"#16a34a":stt==="unsicher"?"#ca8a04":stt==="nein"?"#dc2626":"var(--surface2)";const col=stt?"#fff":"var(--text2)";const mk=stt==="ja"?" ✓":stt==="unsicher"?" 🤔":stt==="nein"?" ✕":"";
-          return `<button onclick="tmTrainerToggle(${Number(t.id)},'${tn.replace(/'/g,"")}')" title="Tippen wechselt: dabei → unsicher → nicht dabei → offen" style="min-height:44px;border:1px solid var(--rand-bedien);border-radius:12px;padding:0 12px;font-size:12.5px;font-weight:700;background:${bg};color:${col};cursor:pointer;font-family:inherit">${esc(tn)}${mk}</button>`;}).join("")}
+          return `<button onclick="tmTrainerToggle(${Number(t.id)},'${tn.replace(/'/g,"")}')" title="Tippen wechselt: dabei → unsicher → nicht dabei → offen" style="min-height:44px;border:1px solid var(--rand-bedien);border-radius:12px;padding:0 12px;font-size:var(--s-text);font-weight:700;background:${bg};color:${col};cursor:pointer;font-family:inherit">${esc(tn)}${mk}</button>`;}).join("")}
       </div>`:""}
-      ${(t.heim===true&&istSpiel&&kommt)?`<div id="bd-tm-${t.id}" style="font-size:12px;color:var(--text2);margin-top:4px">🍿 Büdchen: lädt …</div>`:""}
-      ${kommt?`<div id="helfer-tm-${t.id}" style="font-size:12px;color:var(--text2);margin-top:4px"></div>`:""}
+      ${(t.heim===true&&istSpiel&&kommt)?`<div id="bd-tm-${t.id}" style="font-size:var(--s-text);color:var(--text2);margin-top:4px">🍿 Büdchen: lädt …</div>`:""}
+      ${kommt?`<div id="helfer-tm-${t.id}" style="font-size:var(--s-text);color:var(--text2);margin-top:4px"></div>`:""}
       ${(kommt&&!istMeeting)?`<button class="btn btn-sm" onclick="rsvpOverviewOpen(${Number(t.id)})" style="width:100%;min-height:44px;margin-top:8px;justify-content:center"><i class="ti ti-list-check"></i>Antworten der Eltern</button>`:""}
-      ${istMeeting?`<div id="meet-tm-${t.id}" style="font-size:11.5px;color:var(--text2);margin-top:8px;line-height:1.5"></div>
-      <div style="font-size:11.5px;color:var(--text2);margin-top:6px;line-height:1.5">🔒 Diesen Termin sehen nur Trainer – Eltern und die öffentlichen Seiten bekommen ihn nicht zu Gesicht.</div>`:""}
+      ${istMeeting?`<div id="meet-tm-${t.id}" style="font-size:var(--s-klein);color:var(--text2);margin-top:8px;line-height:1.5"></div>
+      <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px;line-height:1.5">🔒 Diesen Termin sehen nur Trainer – Eltern und die öffentlichen Seiten bekommen ihn nicht zu Gesicht.</div>`:""}
 
       ${(vorbei||istHeute)&&(istSpiel||t.typ==="training")?`${sec("Nach dem Termin")}
         ${istSpiel?`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-          <span style="font-size:12px;color:var(--text2)">Ergebnis</span>
-          <input type="text" value="${esc(t.ergebnis||"")}" placeholder="z. B. 3:2" onchange="tmSetResult(${Number(t.id)},this.value)" style="width:100px;min-height:44px;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:13px;font-family:inherit;background:var(--surface2);color:var(--text)">
+          <span style="font-size:var(--s-text);color:var(--text2)">Ergebnis</span>
+          <input type="text" value="${esc(t.ergebnis||"")}" placeholder="z. B. 3:2" onchange="tmSetResult(${Number(t.id)},this.value)" style="width:100px;min-height:44px;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:var(--s-text);font-family:inherit;background:var(--surface2);color:var(--text)">
         </div>
         <button class="btn btn-sm" onclick="tmJump('blitz','${t.datum}','${t.spielform||""}')" style="width:100%;min-height:44px;justify-content:center"><i class="ti ti-bolt"></i>Auswertung &amp; Blitz-Rating</button>
         <!-- v525: Das Blitz-Rating deckt die KINDER ab. Wie die Mannschaft gespielt hat,
              stand nirgends – und genau danach hat der PO gefragt. Der Knopf steht bewusst
              direkt darunter: eine Ebene tiefer, derselbe Moment. -->
         <button class="btn btn-sm" onclick="if(typeof fazitOpen==='function')fazitOpen(${Number(t.id)});else toast('Lädt noch – gleich nochmal','err')" style="width:100%;min-height:44px;justify-content:center;margin-top:6px"><i class="ti ti-clipboard-check"></i>${t.typ==="turnier"?"Festival":"Spiel"} nachbereiten · Mannschaft</button>`:""}
-        <div id="puls-tm-${t.id}" style="font-size:12px;color:var(--text2);margin-top:6px"></div>`:""}
+        <div id="puls-tm-${t.id}" style="font-size:var(--s-text);color:var(--text2);margin-top:6px"></div>`:""}
 
       ${istMeeting?"":zu(`📣 Für die Eltern${ampel?" · "+ampel.emo+" "+esc(ampel.lbl):""}`,
         `${kommt?`<div style="margin-bottom:8px">${platzAmpelTrainer(t,true)}</div>`:""}${raster(elternRest)}`, abgesagt)}
@@ -461,7 +461,7 @@ function _tmdKarte(t){
   </div>`;
 }
 function _tmdInhalt(t){
-  return `<div style="display:flex;justify-content:flex-end;margin-bottom:6px"><button onclick="document.getElementById('tmd-modal').remove()" aria-label="Schließen" style="border:none;background:rgba(255,255,255,.92);width:40px;height:40px;border-radius:50%;font-size:22px;color:#334155;cursor:pointer;line-height:1">×</button></div>${_tmdKarte(t)}`;
+  return `<div style="display:flex;justify-content:flex-end;margin-bottom:6px"><button onclick="document.getElementById('tmd-modal').remove()" aria-label="Schließen" style="border:none;background:rgba(255,255,255,.92);width:40px;height:40px;border-radius:50%;font-size:var(--s-seite);color:#334155;cursor:pointer;line-height:1">×</button></div>${_tmdKarte(t)}`;
 }
 // Nachlader wie in der Terminliste anstoßen (Wetter + Büdchen füllen ihre Slots per id).
 function _tmdNachlader(t){
@@ -521,7 +521,7 @@ async function pulsTrainerFill(t){
   const comments=(a.comments||[]);
   window._pulsCmt=window._pulsCmt||{}; window._pulsCmt[t.id]=comments;
   box.innerHTML=`🌡️ <b>Eltern-Puls</b> (${a.n}): 😀 ${a.up} · 😐 ${a.mid} · 😟 ${a.down} · Ø ${a.avg}`+
-    (comments.length?` <button onclick="pulsComments(${Number(t.id)})" style="border:none;background:none;color:var(--blue-text);cursor:pointer;font-size:11px;font-family:inherit;padding:0">💬 ${comments.length}</button>`:"");
+    (comments.length?` <button onclick="pulsComments(${Number(t.id)})" style="border:none;background:none;color:var(--blue-text);cursor:pointer;font-size:var(--s-klein);font-family:inherit;padding:0">💬 ${comments.length}</button>`:"");
 }
 function pulsComments(id){
   const arr=(window._pulsCmt||{})[id]||[]; if(!arr.length)return;
@@ -532,7 +532,7 @@ function pulsComments(id){
   const c=document.createElement("div");
   c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`${mdlHead("puls-cmt-modal","💬","Eltern-Feedback","anonym gesammelt","#0ea5e9")}
-    ${arr.map(x=>`<div style="padding:8px 10px;background:var(--surface2);border-radius:8px;margin-bottom:6px;font-size:13px">${esc(x)}</div>`).join("")}
+    ${arr.map(x=>`<div style="padding:8px 10px;background:var(--surface2);border-radius:8px;margin-bottom:6px;font-size:var(--s-text)">${esc(x)}</div>`).join("")}
     <button class="btn btn-sm" style="margin-top:6px" onclick="document.getElementById('puls-cmt-modal').remove()">Schließen</button>`;
   modal.appendChild(c); document.body.appendChild(modal);
 }
@@ -584,11 +584,11 @@ async function rsvpOverviewOpen(terminId){
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;display:flex;flex-direction:column;padding:14px;overflow-y:auto";
   modal.style.zIndex=zOben(10000);  // ueber einen evtl. schon offenen Dialog legen
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
-  const sec=(title,arr,col,emo)=>arr.length?`<div style="margin-top:8px"><div style="font-size:11px;font-weight:800;color:${col}">${emo} ${title} (${arr.length})</div><div style="font-size:12px;color:var(--text2);line-height:1.5">${arr.map(esc).join(", ")}</div></div>`:"";
+  const sec=(title,arr,col,emo)=>arr.length?`<div style="margin-top:8px"><div style="font-size:var(--s-klein);font-weight:800;color:${col}">${emo} ${title} (${arr.length})</div><div style="font-size:var(--s-text);color:var(--text2);line-height:1.5">${arr.map(esc).join(", ")}</div></div>`:"";
   const card=document.createElement("div");
   card.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   card.innerHTML=`${mdlHead("rsvp-ov-modal","📋","Rückmeldungen",`${m.icon} ${esc(t.titel||m.label)} · ${datumStr}${zeitStr?" · "+zeitStr:""}`,"#d97706")}
-    <div style="font-size:13px;font-weight:800;color:${groups.offen.length?"#b45309":"#16a34a"}">${groups.offen.length?groups.offen.length+" noch offen":"Alle haben geantwortet 🎉"}</div>
+    <div style="font-size:var(--s-text);font-weight:800;color:${groups.offen.length?"#b45309":"#16a34a"}">${groups.offen.length?groups.offen.length+" noch offen":"Alle haben geantwortet 🎉"}</div>
     ${sec("Offen",groups.offen,"#b45309","❓")}
     ${sec("Zusagen",groups.zugesagt,"#059669","👍")}
     ${sec("Absagen",groups.abgesagt,"#dc2626","👎")}
@@ -617,13 +617,13 @@ function platzAmpelTrainer(t,nackt){
   const cur=t.platz_status||null;
   const btns=Object.keys(PLATZ_AMPEL).filter(k=>!PLATZ_AMPEL[k].hidden).map(k=>{
     const a=PLATZ_AMPEL[k], on=cur===k;
-    return `<button onclick="platzAmpelSet(${Number(t.id)},'${k}')" style="flex:1;min-width:96px;min-height:46px;border:2px solid ${a.col};border-radius:10px;cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:800;background:${on?a.col:"var(--surface)"};color:${on?"#fff":a.col}">${a.emo} ${a.lbl}</button>`;
+    return `<button onclick="platzAmpelSet(${Number(t.id)},'${k}')" style="flex:1;min-width:96px;min-height:46px;border:2px solid ${a.col};border-radius:10px;cursor:pointer;font-family:inherit;font-size:var(--s-text);font-weight:800;background:${on?a.col:"var(--surface)"};color:${on?"#fff":a.col}">${a.emo} ${a.lbl}</button>`;
   }).join("");
-  const zusatz=cur?`<input id="pa-note-${t.id}" value="${esc(t.platz_status_note||"")}" placeholder="${cur==="ausweich"?"Wohin? z. B. Halle 2":cur==="abgesagt"?"Grund (optional)":"Hinweis (optional)"}" onchange="platzAmpelNote(${Number(t.id)},this.value)" style="width:100%;min-height:40px;margin-top:6px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:12px;background:var(--surface2);color:var(--text);box-sizing:border-box">`:"";
+  const zusatz=cur?`<input id="pa-note-${t.id}" value="${esc(t.platz_status_note||"")}" placeholder="${cur==="ausweich"?"Wohin? z. B. Halle 2":cur==="abgesagt"?"Grund (optional)":"Hinweis (optional)"}" onchange="platzAmpelNote(${Number(t.id)},this.value)" style="width:100%;min-height:40px;margin-top:6px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box">`:"";
   /* v491: Im Termin-Fenster steht die Überschrift schon am Klappdeckel – dort nur die Knöpfe. */
   if(nackt)return `<div style="display:flex;gap:6px;flex-wrap:wrap">${btns}</div>${zusatz}`;
   return `<div style="margin:8px 0;padding:8px;background:var(--surface2);border-radius:10px">
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:5px">📣 Platz-Status für die Eltern</div>
+    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:5px">📣 Platz-Status für die Eltern</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">${btns}</div>${zusatz}
   </div>`;
 }
@@ -668,8 +668,8 @@ function tmCard(t){
   const datumStr=wtag+" "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
   const istSpiel=t.typ==="spiel"||t.typ==="turnier";
   const zeitStr=t.uhrzeit?String(t.uhrzeit).slice(0,5):((/Uhrzeit:\s*(\d{1,2}:\d{2})/.exec(t.notiz||"")||[])[1]||"");
-  const sfBadge=(istSpiel&&t.spielform)?`<span style="font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:10px;background:${m.col}22;color:${m.col}">${esc(t.spielform)}</span>`:"";
-  const hb=heimLabel(t), hBadge=hb?`<span style="font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:10px;background:${t.heim?"#dcfce7":"#fef3c7"};color:${t.heim?"#15803d":"#b45309"}">${hb}</span>`:"";
+  const sfBadge=(istSpiel&&t.spielform)?`<span style="font-size:var(--s-klein);font-weight:700;padding:2px 7px;border-radius:10px;background:${m.col}22;color:${m.col}">${esc(t.spielform)}</span>`:"";
+  const hb=heimLabel(t), hBadge=hb?`<span style="font-size:var(--s-klein);font-weight:700;padding:2px 7px;border-radius:10px;background:${t.heim?"#dcfce7":"#fef3c7"};color:${t.heim?"#15803d":"#b45309"}">${hb}</span>`:"";
   const notizClean=(t.notiz&&!/^Uhrzeit:/.test(t.notiz))?t.notiz:"";
   /* PO: „Die Kacheln sehen ungeordnet aus und sind teils bunt, teils weiss. Sind alle
      noetig?" – Es waren ELF Knoepfe in einer umbrechenden Reihe, dazu ein rot abgesetzter
@@ -734,26 +734,26 @@ function tmCard(t){
   return `<div id="tm-card-${t.id}" style="background:var(--surface);border:var(--border-s);border-radius:var(--rl);overflow:hidden;margin-bottom:10px;box-shadow:0 1px 3px rgba(15,23,42,.05);scroll-margin-top:60px">
     ${faelltAus&&typeof terminAbsageBanner==="function"?terminAbsageBanner(t):""}
     <div style="display:flex;align-items:center;gap:11px;padding:11px 13px;background:linear-gradient(90deg,${faelltAus?"var(--surface2)":m.col+"14"},transparent);border-left:4px solid ${faelltAus?"var(--text3)":m.col}">
-      <div style="width:40px;height:40px;flex:none;border-radius:12px;background:${m.col};display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 2px 6px ${m.col}55">${m.icon}</div>
+      <div style="width:40px;height:40px;flex:none;border-radius:12px;background:${m.col};display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);box-shadow:0 2px 6px ${m.col}55">${m.icon}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:14.5px;font-weight:800;display:flex;align-items:center;gap:6px;flex-wrap:wrap;line-height:1.25">${esc(t.titel||m.label)}${hBadge}${sfBadge}${(typeof ferienBadge==="function")?ferienBadge(t.datum):""}</div>
-        <div style="font-size:11.5px;color:var(--text2);margin-top:2px">${datumStr}${zeitStr?" · "+zeitStr+" Uhr":""}${tmMeetingOffenZeile(t)}</div>
+        <div style="font-size:var(--s-karte);font-weight:800;display:flex;align-items:center;gap:6px;flex-wrap:wrap;line-height:1.25">${esc(t.titel||m.label)}${hBadge}${sfBadge}${(typeof ferienBadge==="function")?ferienBadge(t.datum):""}</div>
+        <div style="font-size:var(--s-klein);color:var(--text2);margin-top:2px">${datumStr}${zeitStr?" · "+zeitStr+" Uhr":""}${tmMeetingOffenZeile(t)}</div>
       </div>
     </div>
     <div style="padding:10px 13px 12px">
-    ${t.ort?`<div style="font-size:11px;color:var(--text2)"><i class="ti ti-map-pin" style="font-size:11px"></i> ${mapsAnchor(t.ort)}</div>`:""}
-    ${t.platz?`<div style="font-size:11px;color:var(--text2)">🏟️ Platz: ${esc(t.platz)}</div>`:""}
+    ${t.ort?`<div style="font-size:var(--s-klein);color:var(--text2)"><i class="ti ti-map-pin" style="font-size:var(--s-klein)"></i> ${mapsAnchor(t.ort)}</div>`:""}
+    ${t.platz?`<div style="font-size:var(--s-klein);color:var(--text2)">🏟️ Platz: ${esc(t.platz)}</div>`:""}
     ${t.datum>=new Date().toISOString().slice(0,10)?platzAmpelTrainer(t):""}
     <div id="wx-tm-${t.id}"></div>
-    ${(t.heim===true&&(t.typ==="spiel"||t.typ==="turnier")&&t.datum>=new Date().toISOString().slice(0,10))?`<div id="bd-tm-${t.id}" style="font-size:11px;color:var(--text2);margin-top:4px">🍿 Büdchen: lädt …</div>`:""}
-    ${(["training","spiel","turnier"].includes(t.typ)&&t.datum<new Date().toISOString().slice(0,10))?`<div id="puls-tm-${t.id}" style="font-size:11.5px;color:var(--text2);margin-top:4px"></div>`:""}
-    ${t.datum>=new Date().toISOString().slice(0,10)?`<div id="helfer-tm-${t.id}" style="font-size:11.5px;color:var(--text2);margin-top:4px"></div>`:""}
+    ${(t.heim===true&&(t.typ==="spiel"||t.typ==="turnier")&&t.datum>=new Date().toISOString().slice(0,10))?`<div id="bd-tm-${t.id}" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">🍿 Büdchen: lädt …</div>`:""}
+    ${(["training","spiel","turnier"].includes(t.typ)&&t.datum<new Date().toISOString().slice(0,10))?`<div id="puls-tm-${t.id}" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px"></div>`:""}
+    ${t.datum>=new Date().toISOString().slice(0,10)?`<div id="helfer-tm-${t.id}" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px"></div>`:""}
     ${t.datum>=new Date().toISOString().slice(0,10)?`<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-top:6px">
-      <span style="font-size:10px;color:var(--text3);font-weight:700">Trainer dabei?</span>
-      ${trainerstabNamen(t.trainer_status).map(tn=>{const stt=(t.trainer_status||{})[tn];const bg=stt==="ja"?"#16a34a":stt==="unsicher"?"#ca8a04":stt==="nein"?"#dc2626":"var(--surface2)";const col=stt?"#fff":"var(--text2)";const mk=stt==="ja"?" ✓":stt==="unsicher"?" 🤔":stt==="nein"?" ✕":"";return `<button onclick="tmTrainerToggle(${Number(t.id)},'${tn.replace(/'/g,"")}')" title="Tippen wechselt: dabei → unsicher → nicht dabei → offen" style="border:1px solid var(--rand-bedien);border-radius:12px;padding:2px 8px;font-size:10.5px;font-weight:700;background:${bg};color:${col};cursor:pointer;font-family:inherit">${esc(tn)}${mk}</button>`;}).join("")}
+      <span style="font-size:var(--s-klein);color:var(--text3);font-weight:700">Trainer dabei?</span>
+      ${trainerstabNamen(t.trainer_status).map(tn=>{const stt=(t.trainer_status||{})[tn];const bg=stt==="ja"?"#16a34a":stt==="unsicher"?"#ca8a04":stt==="nein"?"#dc2626":"var(--surface2)";const col=stt?"#fff":"var(--text2)";const mk=stt==="ja"?" ✓":stt==="unsicher"?" 🤔":stt==="nein"?" ✕":"";return `<button onclick="tmTrainerToggle(${Number(t.id)},'${tn.replace(/'/g,"")}')" title="Tippen wechselt: dabei → unsicher → nicht dabei → offen" style="border:1px solid var(--rand-bedien);border-radius:12px;padding:2px 8px;font-size:var(--s-klein);font-weight:700;background:${bg};color:${col};cursor:pointer;font-family:inherit">${esc(tn)}${mk}</button>`;}).join("")}
     </div>`:""}
-    ${notizClean?`<div style="font-size:11px;color:var(--text3)">${esc(notizClean)}</div>`:""}
-    ${(istSpiel&&t.datum<=new Date().toISOString().slice(0,10))?`<div style="display:flex;align-items:center;gap:6px;margin:6px 0"><span style="font-size:11px;color:var(--text2)">Ergebnis:</span><input type="text" value="${esc(t.ergebnis||"")}" placeholder="z. B. 3:2" onchange="tmSetResult(${Number(t.id)},this.value)" style="width:90px;padding:5px 8px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:12px;font-family:inherit"></div>`:""}
+    ${notizClean?`<div style="font-size:var(--s-klein);color:var(--text3)">${esc(notizClean)}</div>`:""}
+    ${(istSpiel&&t.datum<=new Date().toISOString().slice(0,10))?`<div style="display:flex;align-items:center;gap:6px;margin:6px 0"><span style="font-size:var(--s-klein);color:var(--text2)">Ergebnis:</span><input type="text" value="${esc(t.ergebnis||"")}" placeholder="z. B. 3:2" onchange="tmSetResult(${Number(t.id)},this.value)" style="width:90px;padding:5px 8px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:var(--s-text);font-family:inherit"></div>`:""}
     ${actions}
     </div>
   </div>`;
@@ -792,10 +792,10 @@ async function handoverOpen(id){
   const datumStr=wtag+" "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"long"});
   c.innerHTML=`
     ${mdlHead("handover-modal","🧑‍🏫","Vertretungs-Paket",`${m.icon} ${esc(t.titel||m.label)} · ${datumStr}`,"#64748b")}
-    <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Erzeugt einen <b>Read-Only-Link</b> für eine Ersatz-Betreuung. Zusagen, ${t.typ==="training"?"Trainingsplan":"Spielinfos"} und deine Notiz stecken direkt im Link – kein Login, nichts wird gespeichert.</div>
-    <label for="handover-notiz" style="font-size:12px;font-weight:700">Kurz-Notiz für die Vertretung</label>
-    <textarea id="handover-notiz" rows="3" placeholder="z. B. Torwart heute Max · Ball-Beutel im Vereinsheim · Abschluss 4+1 …" style="width:100%;margin-top:4px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box"></textarea>
-    <div style="font-size:11px;color:var(--text3);margin:6px 0 12px">Zusagen: ${grp.zugesagt.length} · offen: ${grp.offen.length} · ab/krank: ${grp.abgesagt.length+grp.krank.length}${plan.length?` · Plan: ${plan.length} Stationen`:""}</div>
+    <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:8px">Erzeugt einen <b>Read-Only-Link</b> für eine Ersatz-Betreuung. Zusagen, ${t.typ==="training"?"Trainingsplan":"Spielinfos"} und deine Notiz stecken direkt im Link – kein Login, nichts wird gespeichert.</div>
+    <label for="handover-notiz" style="font-size:var(--s-text);font-weight:700">Kurz-Notiz für die Vertretung</label>
+    <textarea id="handover-notiz" rows="3" placeholder="z. B. Torwart heute Max · Ball-Beutel im Vereinsheim · Abschluss 4+1 …" style="width:100%;margin-top:4px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);resize:vertical;box-sizing:border-box"></textarea>
+    <div style="font-size:var(--s-klein);color:var(--text3);margin:6px 0 12px">Zusagen: ${grp.zugesagt.length} · offen: ${grp.offen.length} · ab/krank: ${grp.abgesagt.length+grp.krank.length}${plan.length?` · Plan: ${plan.length} Stationen`:""}</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-p btn-sm" onclick="handoverGen('open')"><i class="ti ti-external-link"></i>Vorschau</button>
       <button class="btn btn-sm" onclick="handoverGen('copy')"><i class="ti ti-copy"></i>Link kopieren</button>
@@ -833,32 +833,32 @@ function renderHandoverView(){
   const datumStr=wtag+", "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"long",year:"numeric"});
   const addr=pkt.ort||(pkt.heim===true?"Thurner Kamp 97, 51069 Köln":"");
   const e2=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-  const list=(title,arr,col)=>arr&&arr.length?`<div style="margin-top:6px;font-size:14px"><b style="color:${col}">${title} (${arr.length}):</b> ${arr.map(e2).join(", ")}</div>`:"";
+  const list=(title,arr,col)=>arr&&arr.length?`<div style="margin-top:6px;font-size:var(--s-karte)"><b style="color:${col}">${title} (${arr.length}):</b> ${arr.map(e2).join(", ")}</div>`:"";
   const planHtml=(pkt.plan&&pkt.plan.length)?`<div style="background:#fff;border-radius:14px;padding:14px;margin-top:12px">
       <div style="font-weight:800;margin-bottom:6px">📋 Trainingsplan</div>
-      ${pkt.plan.map(p=>`<div style="padding:6px 0;border-top:1px solid #f1f5f9;font-size:14px">${p.s?`<span style="color:#64748b">${e2(p.s)}: </span>`:""}<b>${e2(p.f)}</b>${p.tr&&p.tr!=="Alle"?` <span style="font-size:11px;color:#3730a3">(${e2(p.tr)})</span>`:""}</div>`).join("")}
+      ${pkt.plan.map(p=>`<div style="padding:6px 0;border-top:1px solid #f1f5f9;font-size:var(--s-karte)">${p.s?`<span style="color:#64748b">${e2(p.s)}: </span>`:""}<b>${e2(p.f)}</b>${p.tr&&p.tr!=="Alle"?` <span style="font-size:var(--s-klein);color:#3730a3">(${e2(p.tr)})</span>`:""}</div>`).join("")}
     </div>`:"";
   root.innerHTML=`
     <div style="text-align:center;margin:8px 0 14px">
       <img src="logo.png" style="width:52px;height:52px" alt="">
-      <div style="font-size:17px;font-weight:800;color:#1e3a8a;margin-top:6px">🧑‍🏫 Vertretung – ${m.i} ${e2(pkt.titel||m.l)}${pkt.gegner?" · "+e2(pkt.gegner):""}</div>
-      <div style="font-size:13px;color:#64748b">${datumStr}${pkt.zeit?" · "+e2(pkt.zeit)+" Uhr":""}</div>
+      <div style="font-size:var(--s-teil);font-weight:800;color:#1e3a8a;margin-top:6px">🧑‍🏫 Vertretung – ${m.i} ${e2(pkt.titel||m.l)}${pkt.gegner?" · "+e2(pkt.gegner):""}</div>
+      <div style="font-size:var(--s-text);color:#64748b">${datumStr}${pkt.zeit?" · "+e2(pkt.zeit)+" Uhr":""}</div>
     </div>
     <div style="background:#fff;border-radius:14px;padding:14px">
       <div style="font-weight:800;margin-bottom:4px">📍 Ort</div>
-      <div style="font-size:14px">${addr?e2(addr):(pkt.heim===false?"Auswärts – bitte beim Verein erfragen":"—")}${pkt.platz?` · Platz: ${e2(pkt.platz)}`:""}${pkt.spielform?` · ${e2(pkt.spielform)}`:""}</div>
-      ${addr?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;padding:8px 12px;background:#eef2ff;color:#1e3a8a;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px">🧭 Route</a>`:""}
+      <div style="font-size:var(--s-karte)">${addr?e2(addr):(pkt.heim===false?"Auswärts – bitte beim Verein erfragen":"—")}${pkt.platz?` · Platz: ${e2(pkt.platz)}`:""}${pkt.spielform?` · ${e2(pkt.spielform)}`:""}</div>
+      ${addr?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;padding:8px 12px;background:#eef2ff;color:#1e3a8a;border-radius:8px;text-decoration:none;font-weight:700;font-size:var(--s-text)">🧭 Route</a>`:""}
     </div>
     <div style="background:#fff;border-radius:14px;padding:14px;margin-top:12px">
       <div style="font-weight:800;margin-bottom:2px">✅ Rückmeldungen</div>
-      ${list("Dabei",pkt.ja,"#15803d")||'<div style="color:var(--text3);font-size:13px">Noch keine Zusagen erfasst.</div>'}
+      ${list("Dabei",pkt.ja,"#15803d")||'<div style="color:var(--text3);font-size:var(--s-text)">Noch keine Zusagen erfasst.</div>'}
       ${list("Offen",pkt.offen,"#b45309")}
       ${list("Abgesagt",pkt.ab,"#dc2626")}
       ${list("Krank",pkt.krank,"#d97706")}
     </div>
     ${planHtml}
-    ${pkt.notiz?`<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:14px;padding:14px;margin-top:12px"><div style="font-weight:800;color:#854d0e;margin-bottom:4px">📝 Notiz vom Trainer</div><div style="font-size:14px;white-space:pre-wrap;color:#713f12">${e2(pkt.notiz)}</div></div>`:""}
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">Snapshot – Stand beim Erstellen des Links · SV Adler Dellbrück e.V.</div>`;
+    ${pkt.notiz?`<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:14px;padding:14px;margin-top:12px"><div style="font-weight:800;color:#854d0e;margin-bottom:4px">📝 Notiz vom Trainer</div><div style="font-size:var(--s-karte);white-space:pre-wrap;color:#713f12">${e2(pkt.notiz)}</div></div>`:""}
+    <div style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin-top:16px">Snapshot – Stand beim Erstellen des Links · SV Adler Dellbrück e.V.</div>`;
 }
 async function tmDelete(id){
   // HOTFIX 3: Löschen räumt via ON DELETE CASCADE automatisch Anwesenheit, Live-Aktionen,
@@ -876,7 +876,7 @@ function tmEdit(id){
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10001;display:flex;flex-direction:column;padding:14px;overflow-y:auto";
   modal.style.zIndex=zOben(10001);  // ueber einen evtl. schon offenen Dialog legen
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
-  const fld="width:100%;padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const fld="width:100%;padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
   const PLATZ=isSpiel?PLATZ_SPIEL:PLATZ_TRAINING;
   const platzCur=t.platz||(isSpiel?tmPlatzDefault(t.typ):""); // Spiele ohne Eintrag: sinnvolle Vorbelegung
   const platzOpts=`<option value=""${!platzCur?" selected":""}>– kein Platz –</option>`+PLATZ.map(p=>`<option${p===platzCur?" selected":""}>${p}</option>`).join("");
@@ -890,30 +890,30 @@ function tmEdit(id){
   c.style.cssText="background:var(--surface);color:var(--text);max-width:440px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`${mdlHead("tm-edit-modal","✏️",`${m.icon} Termin bearbeiten`,"","#475569")}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <label style="font-size:11px;color:var(--text2)">Datum<input type="date" id="te-datum" value="${t.datum}" style="${fld}" onchange="ferienDatumHint(this,'te-ferien-hint')"></label>
-      <label style="font-size:11px;color:var(--text2)">Uhrzeit<input type="time" id="te-zeit" value="${t.uhrzeit?String(t.uhrzeit).slice(0,5):''}" style="${fld}"></label>
-      ${!isTraining?`<label style="font-size:11px;color:var(--text2)">Treffen<input type="time" id="te-treff" value="${t.treffzeit?String(t.treffzeit).slice(0,5):''}" style="${fld}"></label>`:''}
+      <label style="font-size:var(--s-klein);color:var(--text2)">Datum<input type="date" id="te-datum" value="${t.datum}" style="${fld}" onchange="ferienDatumHint(this,'te-ferien-hint')"></label>
+      <label style="font-size:var(--s-klein);color:var(--text2)">Uhrzeit<input type="time" id="te-zeit" value="${t.uhrzeit?String(t.uhrzeit).slice(0,5):''}" style="${fld}"></label>
+      ${!isTraining?`<label style="font-size:var(--s-klein);color:var(--text2)">Treffen<input type="time" id="te-treff" value="${t.treffzeit?String(t.treffzeit).slice(0,5):''}" style="${fld}"></label>`:''}
     </div>
-    <label style="font-size:11px;color:var(--text2);display:block;margin-top:8px">Ende${isSpiel?" (Pflicht – danach wandert der Termin ins Archiv)":" (optional)"}<input type="time" id="te-ende" value="${t.uhrzeit_ende?String(t.uhrzeit_ende).slice(0,5):''}" style="${fld}"></label>
+    <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Ende${isSpiel?" (Pflicht – danach wandert der Termin ins Archiv)":" (optional)"}<input type="time" id="te-ende" value="${t.uhrzeit_ende?String(t.uhrzeit_ende).slice(0,5):''}" style="${fld}"></label>
     <div id="te-ferien-hint"></div>
-    ${!isTraining?`<label style="font-size:11px;color:var(--text2);display:block;margin-top:8px">Gegner / Titel<input id="te-titel" value="${esc(t.titel||'')}" style="${fld}"></label>`:''}
-    <label style="font-size:11px;color:var(--text2);display:block;margin-top:8px">Ort / Adresse<input id="te-ort" value="${esc(t.ort||'')}" style="${fld}"></label>
-    ${(isTraining||isSpiel)?`<label style="font-size:11px;color:var(--text2);display:block;margin-top:8px">${isSpiel?"Spielfeld-Aufteilung":"Platz"}<select id="te-platz" style="${fld}">${platzOpts}</select></label>`:''}
-    ${isSpiel?`<label style="font-size:11px;color:var(--text2);display:block;margin-top:8px">Spielform<select id="te-sf" style="${fld}">${sfOpts}</select></label>`:''}
-    ${isSpiel?`<div style="margin-top:8px"><div style="font-size:11px;color:var(--text2);margin-bottom:3px">Spieldauer</div>
+    ${!isTraining?`<label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Gegner / Titel<input id="te-titel" value="${esc(t.titel||'')}" style="${fld}"></label>`:''}
+    <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Ort / Adresse<input id="te-ort" value="${esc(t.ort||'')}" style="${fld}"></label>
+    ${(isTraining||isSpiel)?`<label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">${isSpiel?"Spielfeld-Aufteilung":"Platz"}<select id="te-platz" style="${fld}">${platzOpts}</select></label>`:''}
+    ${isSpiel?`<label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Spielform<select id="te-sf" style="${fld}">${sfOpts}</select></label>`:''}
+    ${isSpiel?`<div style="margin-top:8px"><div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:3px">Spieldauer</div>
       <div style="display:flex;gap:6px">
         <select id="te-hz" style="${fld}">${hzOpts}</select>
         <select id="te-dauer" style="${fld}">${dauerOpts}</select>
       </div></div>`:''}
     <div style="border-top:var(--border-s);margin-top:12px;padding-top:10px">
-      <div style="font-size:11px;color:var(--text2);font-weight:700;margin-bottom:6px">Wer hilft</div>
+      <div style="font-size:var(--s-klein);color:var(--text2);font-weight:700;margin-bottom:6px">Wer hilft</div>
       ${isTraining?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <label style="font-size:11px;color:var(--text2)">Funino-Tore<input type="number" id="te-funino" min="0" max="40" step="1" inputmode="numeric" placeholder="Anzahl" value="${t.helfer_funino==null?"":Number(t.helfer_funino)}" style="${fld}"></label>
-        <label style="font-size:11px;color:var(--text2)">Jugendtore<input type="number" id="te-jugendtore" min="0" max="40" step="1" inputmode="numeric" placeholder="Anzahl" value="${t.helfer_jugendtore==null?"":Number(t.helfer_jugendtore)}" style="${fld}"></label>
+        <label style="font-size:var(--s-klein);color:var(--text2)">Funino-Tore<input type="number" id="te-funino" min="0" max="40" step="1" inputmode="numeric" placeholder="Anzahl" value="${t.helfer_funino==null?"":Number(t.helfer_funino)}" style="${fld}"></label>
+        <label style="font-size:var(--s-klein);color:var(--text2)">Jugendtore<input type="number" id="te-jugendtore" min="0" max="40" step="1" inputmode="numeric" placeholder="Anzahl" value="${t.helfer_jugendtore==null?"":Number(t.helfer_jugendtore)}" style="${fld}"></label>
       </div>
-      <div style="font-size:10.5px;color:var(--text2);margin-top:4px">Leer = Aufgabe ohne Zahl · <b>0</b> = wird nicht gebraucht</div>`:''}
-      <label style="font-size:11px;color:var(--text2);display:block;margin-top:8px">Hinweis für Helfer<input id="te-helfer-hinweis" maxlength="140" placeholder="z. B. was heute anders ist als sonst" value="${esc(t.helfer_hinweis||'')}" style="${fld}"></label>
-      ${t.typ==="event"?`<label style="display:flex;align-items:center;gap:10px;min-height:44px;margin-top:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="te-mitbringen" ${t.mitbringen?"checked":""} style="width:22px;height:22px;margin:0">Eltern sollen etwas mitbringen (Mitbringliste an)</label>`:''}
+      <div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Leer = Aufgabe ohne Zahl · <b>0</b> = wird nicht gebraucht</div>`:''}
+      <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Hinweis für Helfer<input id="te-helfer-hinweis" maxlength="140" placeholder="z. B. was heute anders ist als sonst" value="${esc(t.helfer_hinweis||'')}" style="${fld}"></label>
+      ${t.typ==="event"?`<label style="display:flex;align-items:center;gap:10px;min-height:44px;margin-top:8px;font-size:var(--s-text);cursor:pointer"><input type="checkbox" id="te-mitbringen" ${t.mitbringen?"checked":""} style="width:22px;height:22px;margin:0">Eltern sollen etwas mitbringen (Mitbringliste an)</label>`:''}
     </div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-p btn-sm" onclick="tmEditSave(${Number(t.id)})"><i class="ti ti-device-floppy"></i>Speichern</button>
@@ -1046,16 +1046,16 @@ async function turnierOpen(){
   card.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   card.innerHTML=`${mdlHead("turnier-modal","🏆","Turnier-Modus",`${esc(ds)}${spieltagTeam>1?" · Adler "+spieltagTeam:""} · Kurzspiele erfassen`,"#d97706")}
     <div id="turnier-tally" style="margin-bottom:10px"></div>
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:4px 0 6px">📅 Spielplan</div>
-    <div id="turnier-plan" style="margin-bottom:14px"><div style="color:var(--text3);font-size:12px">Lade…</div></div>
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:4px 0 6px">⚽ Gespielte Spiele</div>
-    <div id="turnier-list" style="margin-bottom:12px"><div style="color:var(--text3);font-size:12px">Lade…</div></div>
-    <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Spontanes Spiel ohne Plan eintragen:</div>
+    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:4px 0 6px">📅 Spielplan</div>
+    <div id="turnier-plan" style="margin-bottom:14px"><div style="color:var(--text3);font-size:var(--s-text)">Lade…</div></div>
+    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:4px 0 6px">⚽ Gespielte Spiele</div>
+    <div id="turnier-list" style="margin-bottom:12px"><div style="color:var(--text3);font-size:var(--s-text)">Lade…</div></div>
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:4px">Spontanes Spiel ohne Plan eintragen:</div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-      <input id="turnier-gegner" type="text" placeholder="Gegner" style="flex:1;min-width:110px;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text)">
-      <input id="turnier-tore" type="number" min="0" value="0" title="eigene Tore" style="width:52px;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:14px;background:var(--surface2);color:var(--text);text-align:center">
+      <input id="turnier-gegner" type="text" placeholder="Gegner" style="flex:1;min-width:110px;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
+      <input id="turnier-tore" type="number" min="0" value="0" title="eigene Tore" style="width:52px;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-karte);background:var(--surface2);color:var(--text);text-align:center">
       <span style="font-weight:800">:</span>
-      <input id="turnier-geg" type="number" min="0" value="0" title="Gegentore" style="width:52px;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:14px;background:var(--surface2);color:var(--text);text-align:center">
+      <input id="turnier-geg" type="number" min="0" value="0" title="Gegentore" style="width:52px;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-karte);background:var(--surface2);color:var(--text);text-align:center">
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
       <button class="btn btn-p" onclick="turnierAdd()"><i class="ti ti-plus"></i>Spiel eintragen</button>
@@ -1071,20 +1071,20 @@ async function turnierRender(){
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/turnier_spiele?datum=eq.${encodeURIComponent(spieltagKey())}&select=*&order=created_at.asc`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)rows=await r.json();}catch(e){}
   turnierPlanRender(rows);
-  if(!rows.length){list.innerHTML='<div style="color:var(--text3);font-size:12.5px;padding:6px 0">Noch kein Spiel gespielt. 🏆</div>';if(tally)tally.innerHTML="";return;}
+  if(!rows.length){list.innerHTML='<div style="color:var(--text3);font-size:var(--s-text);padding:6px 0">Noch kein Spiel gespielt. 🏆</div>';if(tally)tally.innerHTML="";return;}
   let s=0,u=0,n=0,tf=0,ga=0;
   rows.forEach(x=>{tf+=x.tore;ga+=x.gegentore;if(x.tore>x.gegentore)s++;else if(x.tore===x.gegentore)u++;else n++;});
   if(tally)tally.innerHTML=`<div class="card" style="padding:10px 12px;display:flex;gap:8px;justify-content:space-around;text-align:center">
-    <div><div style="font-size:18px;font-weight:800;color:#15803d">${s}</div><div style="font-size:9px;color:var(--text2)">Siege</div></div>
-    <div><div style="font-size:18px;font-weight:800;color:#a16207">${u}</div><div style="font-size:9px;color:var(--text2)">Unent.</div></div>
-    <div><div style="font-size:18px;font-weight:800;color:#dc2626">${n}</div><div style="font-size:9px;color:var(--text2)">Niederl.</div></div>
-    <div><div style="font-size:18px;font-weight:800;color:var(--text)">${tf}:${ga}</div><div style="font-size:9px;color:var(--text2)">Tore</div></div>
+    <div><div style="font-size:var(--s-teil);font-weight:800;color:#15803d">${s}</div><div style="font-size:var(--s-klein);color:var(--text2)">Siege</div></div>
+    <div><div style="font-size:var(--s-teil);font-weight:800;color:#a16207">${u}</div><div style="font-size:var(--s-klein);color:var(--text2)">Unent.</div></div>
+    <div><div style="font-size:var(--s-teil);font-weight:800;color:#dc2626">${n}</div><div style="font-size:var(--s-klein);color:var(--text2)">Niederl.</div></div>
+    <div><div style="font-size:var(--s-teil);font-weight:800;color:var(--text)">${tf}:${ga}</div><div style="font-size:var(--s-klein);color:var(--text2)">Tore</div></div>
   </div>`;
   list.innerHTML=rows.map((x,i)=>{const w=x.tore>x.gegentore?"#15803d":x.tore===x.gegentore?"#a16207":"#dc2626";
     return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--surface2)">
-      <span style="font-size:10px;color:var(--text3);width:18px">${i+1}.</span>
-      <span style="flex:1;font-size:13px">${x.gegner?esc(x.gegner):"Gegner "+(i+1)}</span>
+      <span style="font-size:var(--s-klein);color:var(--text3);width:18px">${i+1}.</span>
+      <span style="flex:1;font-size:var(--s-text)">${x.gegner?esc(x.gegner):"Gegner "+(i+1)}</span>
       <span style="font-weight:800;color:${w}">${x.tore}:${x.gegentore}</span>
-      <button onclick="turnierDelete(${x.id})" title="löschen" style="border:none;background:transparent;color:#dc2626;cursor:pointer;font-size:13px;padding:2px 4px"><i class="ti ti-trash"></i></button>
+      <button onclick="turnierDelete(${x.id})" title="löschen" style="border:none;background:transparent;color:#dc2626;cursor:pointer;font-size:var(--s-text);padding:2px 4px"><i class="ti ti-trash"></i></button>
     </div>`;}).join("");
 }

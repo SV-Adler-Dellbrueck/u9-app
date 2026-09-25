@@ -133,8 +133,8 @@ function _wsEsc(s){ return (typeof esc==="function")?esc(s):String(s==null?"":s)
 /* Eine Tabelle, die am Handy nicht ausbricht: eigene Rolle, eigener Roller. */
 function _wsTab(kopf,zeilen){
   return '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin:6px 0 10px">'
-    +'<table style="border-collapse:collapse;width:100%;font-size:12px;min-width:280px">'
-    +'<thead><tr>'+kopf.map(k=>'<th style="text-align:left;padding:6px 8px;border-bottom:2px solid var(--rand-bedien);color:var(--text2);font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap">'+_wsEsc(k)+'</th>').join("")+'</tr></thead>'
+    +'<table style="border-collapse:collapse;width:100%;font-size:var(--s-text);min-width:280px">'
+    +'<thead><tr>'+kopf.map(k=>'<th style="text-align:left;padding:6px 8px;border-bottom:2px solid var(--rand-bedien);color:var(--text2);font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap">'+_wsEsc(k)+'</th>').join("")+'</tr></thead>'
     +'<tbody>'+zeilen.map(z=>{
       /* „Uns betrifft es" wird nicht nur farbig markiert – die Zeile trägt ein Zeichen und
          den Text „uns", sonst ginge die Bedeutung ohne Farbwahrnehmung verloren. */
@@ -142,7 +142,7 @@ function _wsTab(kopf,zeilen){
       return '<tr style="'+(uns?'background:var(--blue-bg)':'')+'">'
         +z.z.map((w,i)=>'<td style="padding:6px 8px;border-bottom:var(--border);'+(i===0?'font-weight:700;white-space:nowrap':'')+'">'
             +(i===0&&uns?'<span aria-hidden="true">▸ </span>':'')+_wsEsc(w)
-            +(i===0&&uns?' <span style="font-size:9.5px;font-weight:800;color:var(--blue-text);border:1px solid var(--blue-text);border-radius:4px;padding:0 4px;vertical-align:middle">uns</span>':'')
+            +(i===0&&uns?' <span style="font-size:var(--s-klein);font-weight:800;color:var(--blue-text);border:1px solid var(--blue-text);border-radius:4px;padding:0 4px;vertical-align:middle">uns</span>':'')
           +'</td>').join("")+'</tr>';
     }).join("")+'</tbody></table></div>';
 }
@@ -154,12 +154,12 @@ function _wsTabellen(){
     WISSEN_FELDER.map(x=>({uns:x.uns,z:[x.form,x.mass,x.tor]})));
   const k=_wsTab(["Altersklasse","Feld","mit Torwart","Rotation","gesamt"],
     WISSEN_KADER.map(x=>({uns:x.uns,z:[x.ak,x.feld,x.tw,x.rot,x.ges]})));
-  const zeile=(t,d)=>'<div style="display:flex;gap:8px;padding:5px 0;border-bottom:var(--border);font-size:12px"><div style="flex:0 0 38%;font-weight:700;color:var(--text2)">'+_wsEsc(t)+'</div><div style="flex:1">'+_wsEsc(d)+'</div></div>';
-  return '<div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-top:4px">Spielform</div>'+s
-    +'<div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Feldgröße je Spielform</div>'+f
-    +'<div style="font-size:11px;color:var(--text2);line-height:1.5;margin:-4px 0 10px">'+_wsEsc(WISSEN_FELDER_HERKUNFT)+'</div>'
-    +'<div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Kader je Team</div>'+k
-    +'<div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">Tore, Zonen, Zeit</div>'
+  const zeile=(t,d)=>'<div style="display:flex;gap:8px;padding:5px 0;border-bottom:var(--border);font-size:var(--s-text)"><div style="flex:0 0 38%;font-weight:700;color:var(--text2)">'+_wsEsc(t)+'</div><div style="flex:1">'+_wsEsc(d)+'</div></div>';
+  return '<div style="font-size:var(--s-klein);font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-top:4px">Spielform</div>'+s
+    +'<div style="font-size:var(--s-klein);font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Feldgröße je Spielform</div>'+f
+    +'<div style="font-size:var(--s-klein);color:var(--text2);line-height:1.5;margin:-4px 0 10px">'+_wsEsc(WISSEN_FELDER_HERKUNFT)+'</div>'
+    +'<div style="font-size:var(--s-klein);font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Kader je Team</div>'+k
+    +'<div style="font-size:var(--s-klein);font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">Tore, Zonen, Zeit</div>'
     +zeile("Minitore","höchstens 2,0 × 1,2 m")
     +zeile("Wo die Minitore stehen",WISSEN_TORSTAND+" — Quelle: "+WISSEN_TORSTAND_QUELLE+", nicht die Durchführungsbestimmungen.")
     +zeile("Jugendtore","in der F-Jugend auf 1,65 m höhenreduziert")
@@ -174,7 +174,7 @@ function _wsTabellen(){
 /* Was bei uns anders läuft. Ohne diesen Hinweis liest ein Trainer die Tabelle und wundert
    sich, warum am Platz etwas anderes steht – oder merkt es gar nicht. */
 function _wsAbweichung(){
-  return '<div style="margin-top:10px;font-size:11.5px;color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber);border-radius:10px;padding:9px 11px;line-height:1.5">'
+  return '<div style="margin-top:10px;font-size:var(--s-klein);color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber);border-radius:10px;padding:9px 11px;line-height:1.5">'
     +'<b>Bei uns weicht der Käfig ab.</b> Er läuft zurzeit als <b>4+1</b>; die Bestimmungen sehen für U8/U9 auf Jugendtoren <b>3+1</b> vor – 4+1 ist die Form der E-Jugend. '
     +'Umstellen kann das jeder Trainer je Feld unter „Heimspiel &amp; Festival planen“; Teamgröße, Regelkarte und Skizze ziehen dann mit.</div>';
 }
@@ -184,16 +184,16 @@ function _wsAbweichung(){
 function _wsWarmup(){
   const reihe=(typeof UEB_REIHEN==="object"&&UEB_REIHEN)?UEB_REIHEN["Warm up Adler"]:null;
   if(!reihe||typeof tpAllForms!=="function")
-    return '<div style="font-size:12px;color:var(--text3)">Die Übungen des Einlaufprogramms sind noch nicht angelegt.</div>';
+    return '<div style="font-size:var(--s-text);color:var(--text3)">Die Übungen des Einlaufprogramms sind noch nicht angelegt.</div>';
   const alle=tpAllForms()||[];
   const treffer=reihe.map(n=>alle.find(f=>String(f.name||"").trim()===n)).filter(Boolean);
   if(!treffer.length)
-    return '<div style="font-size:12px;color:var(--text3)">Die vier Stufen stehen noch nicht in der Übungs-Datenbank. Sie kommen beim nächsten Öffnen von selbst dazu.</div>';
+    return '<div style="font-size:var(--s-text);color:var(--text3)">Die vier Stufen stehen noch nicht in der Übungs-Datenbank. Sie kommen beim nächsten Öffnen von selbst dazu.</div>';
   return treffer.map((f,i)=>'<div style="margin-bottom:10px;padding-bottom:8px;'+(i<treffer.length-1?'border-bottom:var(--border)':'')+'">'
-      +'<div style="font-size:12.5px;font-weight:800">'+(i+1)+' · '+_wsEsc(f.name)+'</div>'
-      +'<div style="font-size:11px;color:var(--text2);margin:2px 0 4px">⏱ '+_wsEsc(f.dauer||"?")+' Min · 📐 '+_wsEsc(f.feld||"?")+'</div>'
+      +'<div style="font-size:var(--s-text);font-weight:800">'+(i+1)+' · '+_wsEsc(f.name)+'</div>'
+      +'<div style="font-size:var(--s-klein);color:var(--text2);margin:2px 0 4px">⏱ '+_wsEsc(f.dauer||"?")+' Min · 📐 '+_wsEsc(f.feld||"?")+'</div>'
       +((f.svg&&typeof f.svg==="string")?f.svg:"")
-      +'<div style="font-size:11.5px;line-height:1.5;white-space:pre-wrap">'+_wsEsc(f.ablauf||f.kurz||"")+'</div>'
+      +'<div style="font-size:var(--s-klein);line-height:1.5;white-space:pre-wrap">'+_wsEsc(f.ablauf||f.kurz||"")+'</div>'
     +'</div>').join("")
     +((typeof skzLegende==="function")?skzLegende():"");
 }
@@ -208,10 +208,10 @@ function wissenKachel(){
     +'style="width:100%;min-height:56px;display:flex;align-items:center;gap:10px;padding:10px 14px;'
     +'border:var(--border-s);border-left:4px solid var(--fam-spieltag);border-radius:var(--rl);'
     +'background:var(--surface);color:var(--text);font-family:inherit;cursor:pointer;text-align:left;margin-bottom:10px">'
-    +'<span style="font-size:20px" aria-hidden="true">📚</span>'
+    +'<span style="font-size:var(--s-teil)" aria-hidden="true">📚</span>'
     +'<span style="flex:1;min-width:0">'
-      +'<span style="display:block;font-size:13.5px;font-weight:800">Wissen &amp; Nachschlagen</span>'
-      +'<span style="display:block;font-size:11px;color:var(--text2)">Spielformen, Feldmaße, Regeln, Warm up</span>'
+      +'<span style="display:block;font-size:var(--s-text);font-weight:800">Wissen &amp; Nachschlagen</span>'
+      +'<span style="display:block;font-size:var(--s-klein);color:var(--text2)">Spielformen, Feldmaße, Regeln, Warm up</span>'
     +'</span><span style="color:var(--text3)" aria-hidden="true">›</span></button>';
 }
 
@@ -237,21 +237,21 @@ function wissenRender(){
   const c=document.getElementById("wissen-body"); if(!c)return;
   const kopf=(typeof mdlHead==="function")
     ? mdlHead("wissen-modal","📚","Wissen &amp; Nachschlagen","Was am Spieltag gilt – mit Quelle und Stand","#475569")
-    : '<div style="font-size:15px;font-weight:800;margin-bottom:8px">📚 Wissen &amp; Nachschlagen</div>';
+    : '<div style="font-size:var(--s-karte);font-weight:800;margin-bottom:8px">📚 Wissen &amp; Nachschlagen</div>';
   c.innerHTML=kopf+WISSEN.map(d=>{
     const auf=_wsOffen===d.id;
     const inhalt=auf?('<div style="padding:2px 2px 10px">'
-        +(d.bau?d.bau():(d.punkte||[]).map(p=>'<div style="display:flex;gap:8px;padding:5px 0;border-bottom:var(--border);font-size:12px">'
+        +(d.bau?d.bau():(d.punkte||[]).map(p=>'<div style="display:flex;gap:8px;padding:5px 0;border-bottom:var(--border);font-size:var(--s-text)">'
             +'<div style="flex:0 0 38%;font-weight:700;color:var(--text2)">'+_wsEsc(p[0])+'</div><div style="flex:1;line-height:1.5">'+_wsEsc(p[1])+'</div></div>').join(""))
-        +'<div style="font-size:10.5px;color:var(--text3);margin-top:8px">Quelle: '+_wsEsc(d.quelle)+(d.stand?' · '+_wsEsc(d.stand):"")+'</div>'
+        +'<div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px">Quelle: '+_wsEsc(d.quelle)+(d.stand?' · '+_wsEsc(d.stand):"")+'</div>'
       +'</div>'):"";
     return '<div style="border:var(--border-s);border-radius:12px;margin-bottom:8px;overflow:hidden">'
       +'<button type="button" onclick="wissenAuf(\''+d.id+'\')" aria-expanded="'+(auf?"true":"false")+'" '
       +'style="width:100%;min-height:52px;display:flex;align-items:center;gap:10px;padding:10px 12px;border:none;'
       +'background:'+(auf?"var(--surface2)":"var(--surface)")+';color:var(--text);font-family:inherit;cursor:pointer;text-align:left">'
-        +'<span style="font-size:18px" aria-hidden="true">'+d.emo+'</span>'
-        +'<span style="flex:1;min-width:0"><span style="display:block;font-size:13px;font-weight:800">'+_wsEsc(d.titel)+'</span>'
-        +'<span style="display:block;font-size:11px;color:var(--text2)">'+_wsEsc(d.kurz)+'</span></span>'
+        +'<span style="font-size:var(--s-teil)" aria-hidden="true">'+d.emo+'</span>'
+        +'<span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-text);font-weight:800">'+_wsEsc(d.titel)+'</span>'
+        +'<span style="display:block;font-size:var(--s-klein);color:var(--text2)">'+_wsEsc(d.kurz)+'</span></span>'
         +'<span style="color:var(--text3)" aria-hidden="true">'+(auf?"▾":"▸")+'</span></button>'
       +inhalt+'</div>';
   }).join("")
