@@ -1688,6 +1688,9 @@ async function htEdit(id){
   el.innerHTML='<div style="font-size:12px;color:var(--text3)">Lade…</div>';
   try{const r=await fetch(`${SB_URL}/rest/v1/heimturnier?id=eq.${id}&select=*`,{headers:sbAuthHeaders()});if(r.ok)_HT=((await r.json())||[])[0]||null;}catch(e){}
   if(!_HT){el.innerHTML='<div style="font-size:12px;color:var(--text3)">Nicht gefunden.</div>';return;}
+  // v615: Turniere von vor den Wappen bekommen sie beim ersten Öffnen – still, ohne Meldung
+  if(_HT.config&&!_HT.config.wappen){ const c=await _htWappenErgaenzen(_HT.config,_HT.teams);
+    if(Object.keys(c.wappen).length)await htPatch({config:c}); }
   // Gegner-DB einmal laden – daraus werden die Schnellwahl-Chips
   if(!window._htGegner){
     try{const r=await fetch(`${SB_URL}/rest/v1/gegner?select=name&order=name.asc&limit=60`,{headers:sbAuthHeaders()});if(r.ok)window._htGegner=((await r.json())||[]).map(g=>g.name);}catch(e){}
@@ -1721,8 +1724,53 @@ function fstStandardNachziehen(row){
   }
   return {config:cfg,geaendert:was.length>0,was};
 }
+/* v615 PO: „Wenn wir das Kinderfestival planen über einen externen Link, wäre es super, wenn wir
+   dort die Vereinslogos der jeweiligen Mannschaften auch hinterlegen aus der Gegnerdatenbank."
+   Die öffentliche Seite liest ohne Anmeldung – die Tabelle `gegner` ist für sie gesperrt. Die
+   Wappen-Adressen (öffentlicher Storage-Bucket, v601) wandern deshalb beim Speichern als
+   Schnappschuss in `config.wappen` {Vereinsname: URL}; die Turnierzeile ist ohnehin öffentlich.
+   Kein Wappen in der Datenbank → kein Eintrag, die Seite zeigt dann nur den Namen. */
+async function _htWappenDB(){
+  if(window._htWappenListe)return window._htWappenListe;
+  let l=[];
+  try{const r=await fetch(`${SB_URL}/rest/v1/gegner?select=name,wappen_url&wappen_url=not.is.null`,{headers:sbAuthHeaders()});if(r.ok)l=(await r.json())||[];}catch(e){}
+  return (window._htWappenListe=l.filter(g=>g&&g.name&&/^https:\/\//.test(g.wappen_url||"")));
+}
+function _htVereinVonTeam(name){ return String(name||"").replace(/\s+\d+$/,"").trim(); }   // „Holweide 2" → „Holweide"
+/* Im Festival steht der Verein oft kürzer als in der Gegner-Datenbank: „Roland West" ist
+   „DJK Roland Köln-West", „Wahn Grengel" ist „SpVg Wahn-Grengel". Verglichen werden deshalb
+   die Namensteile ohne Vereinskürzel, Bindestriche und „Köln"; alle Teile des kürzeren Namens
+   müssen im längeren stecken. Passen zwei Vereine gleich gut („Chorweiler"), gibt es lieber
+   kein Wappen als ein falsches. */
+const HT_KUERZEL=/^(sv|sc|fc|tus|vfl|vfb|djk|sg|tsv|spvg|spvgg|rsv|ssv|bsv|fsv|cfr|1)$/;
+function _htNamensteile(n){
+  return String(n||"").toLowerCase().replace(/ä/g,"ae").replace(/ö/g,"oe").replace(/ü/g,"ue").replace(/ß/g,"ss")
+    .replace(/[^a-z0-9]+/g," ").trim().split(" ").filter(t=>t&&!HT_KUERZEL.test(t)&&t!=="koeln"&&t!=="e"&&t!=="v");
+}
+function _htWappenFinden(liste,name){
+  const n=_htNamensteile(name); if(!n.length)return null;
+  const gleich=liste.filter(x=>_htNamensteile(x.name).join(" ")===n.join(" "));
+  if(gleich.length===1)return gleich[0].wappen_url;
+  const passt=liste.filter(x=>{ const g=_htNamensteile(x.name); if(!g.length)return false;
+    const [kurz,lang]=g.length<=n.length?[g,n]:[n,g]; return kurz.every(t=>lang.includes(t)); });
+  return passt.length===1?passt[0].wappen_url:null;
+}
+async function _htWappenErgaenzen(config,teams){
+  const cfg={...(config||{})};
+  const namen=fstIst({config:cfg})
+    ?(cfg.vereine||[]).map(v=>String(v.name||"").trim())
+    :(teams||[]).map(_htVereinVonTeam);
+  const liste=await _htWappenDB(), alt=cfg.wappen||{}, neu={};
+  [...new Set(namen.filter(Boolean))].forEach(n=>{
+    if(/adler/i.test(n)&&/dellbr/i.test(n)){ neu[n]="logo.png"; return; }   // unser eigenes Wappen liegt im Repo
+    const url=_htWappenFinden(liste,n)||alt[n]; if(url)neu[n]=url;
+  });
+  cfg.wappen=neu;
+  return cfg;
+}
 async function htPatch(fields){
   if(!_HT)return false;
+  if(fields&&fields.config)fields={...fields,config:await _htWappenErgaenzen(fields.config,fields.teams||_HT.teams)};
   try{
     const r=await fetch(`${SB_URL}/rest/v1/heimturnier?id=eq.${_HT.id}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify({...fields,updated_at:new Date().toISOString()})});
     if(!r.ok&&r.status!==204){toast(sbDeniedMsg(r,"Konnte nicht speichern"),"err");return false;}
@@ -3217,7 +3265,7 @@ function _fstPublicRender(wrap,row){
   const teams=row.teams||[], plan=row.plan||[], cfg=row.config||{};
   const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
   const dat=row.datum?new Date(row.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}):"";
-  const nm=i=>esc(teams[i]||("Team "+(i+1)));
+  const nm=i=>_htWappenImg(cfg,teams[i],20)+esc(teams[i]||("Team "+(i+1)));
   const runden=[...new Set(plan.map(p=>p.runde))].sort((a,b)=>a-b);
   const helfer=!!(_htPub&&_htPub.code), jetzt=fstRundeJetzt(row), verzug=fstVerzug(cfg);
   const wiederher=_fstOffenMerken(wrap);
@@ -3254,7 +3302,7 @@ function _fstPublicRender(wrap,row){
     ${fstAufwaermen(row).length?`<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
       <div style="font-size:12px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">🔥 Aufwärmen</div>
       <div style="font-size:12px;color:#475569;margin-bottom:6px">Vor der ersten Runde hat jede Mannschaft ihr eigenes Feld:</div>
-      ${fstAufwaermen(row).map(x=>`<div style="display:flex;gap:8px;align-items:center;padding:3px 0;font-size:13.5px"><span style="min-width:0;flex:1;font-weight:700">${esc(x.verein)}</span><span style="font-weight:800;color:#1e3a8a">${esc(x.feld)}</span></div>`).join("")}
+      ${fstAufwaermen(row).map(x=>`<div style="display:flex;gap:8px;align-items:center;padding:3px 0;font-size:13.5px"><span style="min-width:0;flex:1;font-weight:700;display:flex;align-items:center">${_htWappenImg(cfg,x.verein,22)}${esc(x.verein)}</span><span style="font-weight:800;color:#1e3a8a">${esc(x.feld)}</span></div>`).join("")}
     </div>`:""}
 
     ${teams.length?`<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
@@ -3296,7 +3344,22 @@ function _fstPublicRender(wrap,row){
   wiederher();
   fstUhrTicken();
 }
+/* v615: Wappen neben dem Teamnamen. Leeres alt + aria-hidden: der Name steht daneben.
+   Lädt das Bild nicht, verschwindet es (onerror) – die Zeile bleibt lesbar. Nur https-Adressen
+   und unser eigenes logo.png. */
+function _htWappenImg(cfg,team,px){
+  const w=(cfg&&cfg.wappen)||{}; const s=px||20;
+  let verein=team;
+  if(fstIst({config:cfg})){ const t=fstTeamsBauen(cfg.vereine||[]).find(x=>x.name===team); if(t)verein=t.verein; }
+  else verein=_htVereinVonTeam(team);
+  const url=w[verein]||w[team];
+  if(!url||!(url==="logo.png"||/^https:\/\//.test(url)))return "";
+  return `<img src="${esc(url)}" alt="" aria-hidden="true" loading="lazy" onerror="this.remove()" style="width:${s}px;height:${s}px;object-fit:contain;vertical-align:middle;margin-right:5px;flex:0 0 auto">`;
+}
 async function renderHeimturnierView(slug){
+  /* v615: Die Seite hat ein festes helles Layout (weiße Karten). Im dunklen Modus des Handys
+     hätten die Farb-Tokens auf Dunkel umgeschaltet – helles Grau auf Weiß. */
+  document.documentElement.setAttribute("data-theme","light");
   document.body.style.cssText="margin:0;background:#f1f5f9;font-family:Inter,system-ui,sans-serif;color:#0f172a";
   const wrap=document.createElement("div");
   wrap.id="ht-public";
@@ -3370,7 +3433,7 @@ function _htPublicRender(wrap,row){
     return `<tr style="border-top:1px solid #e2e8f0;${p.ta!=null?"background:#f8fafc;":""}">
       <td style="padding:7px 6px;font-weight:700;white-space:nowrap">${esc(p.zeit||"")}</td>
       <td style="padding:7px 4px;color:#64748b;white-space:nowrap">F${p.feld||1}</td>
-      <td style="padding:7px 6px">${esc(_htName(p.a,teams))} – ${esc(_htName(p.b,teams))}<div style="font-size:10px;color:#b45309;font-weight:700">${esc(p.phase||"")}</div></td>
+      <td style="padding:7px 6px">${typeof p.a==="number"?_htWappenImg(cfg,teams[p.a],18):""}${esc(_htName(p.a,teams))} – ${typeof p.b==="number"?_htWappenImg(cfg,teams[p.b],18):""}${esc(_htName(p.b,teams))}<div style="font-size:10px;color:#b45309;font-weight:700">${esc(p.phase||"")}</div></td>
       <td style="padding:7px 6px;text-align:right;font-weight:900;white-space:nowrap">${ergZelle}</td>
     </tr>`;}).join("");
   let tabellen="";
