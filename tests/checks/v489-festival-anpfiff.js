@@ -26,6 +26,10 @@ module.exports = async function (h) {
     const vorher = { phase: fstUhrStand(_HT).phase, knopf: !!document.querySelector("#fst-uhr button") };
     // 1) Runde 2 anpfeifen
     const geplant2 = (plan.find(p => p.runde === 2) || {}).zeit;
+    /* v615: Zwischen Anpfiff und Nachsehen liegen ein Speichern und 400 ms – fällt ein
+       Minutenwechsel hinein, zeigte der Plan korrekt die Anpfiff-Minute, „jetzt“ aber schon
+       die nächste. Deshalb die Minute vorher UND nachher: eine von beiden muss es sein. */
+    const jetztVor = _fstJetztHhmm();
     await fstAnpfiff(2); await warte(400);
     const u = (_HT.config || {}).uhr || {};
     const st = fstUhrStand(_HT);
@@ -62,7 +66,7 @@ module.exports = async function (h) {
     _HT.config.uhr = { ...u };
     _htPub = null;
     return { teams: _HT.teams, plan, cfg: _HT.config, vorher, uhrRunde: u.runde, ankerOk: !!u.start, phase: st.phase, rest: Math.round(st.rest),
-      zeigtJetzt, jetzt, uhrText, pause: pause.phase, pauseNaechste: pause.naechste, ende: ende.phase,
+      zeigtJetzt, jetzt, jetztVor, uhrText, pause: pause.phase, pauseNaechste: pause.naechste, ende: ende.phase,
       vibriert: rufe.length, pauseText, gastText, gastKnopf, gastRest: Math.round(gastRest), spiele: plan.length,
       gruss, gastPause, gastPauseKnopf, gastPauseRest };
   }, { heute });
@@ -83,7 +87,7 @@ module.exports = async function (h) {
   if (r.vorher.phase !== "aus" || !r.vorher.knopf) probleme.push(`vor dem Anpfiff: Phase ${r.vorher.phase}, Knopf ${r.vorher.knopf}`);
   if (r.uhrRunde !== 2 || !r.ankerOk) probleme.push(`Anker nicht gesetzt: Runde ${r.uhrRunde}, Start ${r.ankerOk}`);
   if (r.phase !== "laeuft" || r.rest < 470 || r.rest > 480) probleme.push(`nach dem Anpfiff Phase ${r.phase}, Rest ${r.rest}s statt ~480`);
-  if (r.zeigtJetzt !== r.jetzt) probleme.push(`Runde 2 steht im Plan auf ${r.zeigtJetzt}, angepfiffen wurde um ${r.jetzt}`);
+  if (r.zeigtJetzt !== r.jetzt && r.zeigtJetzt !== r.jetztVor) probleme.push(`Runde 2 steht im Plan auf ${r.zeigtJetzt}, angepfiffen wurde um ${r.jetzt}`);
   if (!/Runde 2 läuft/.test(r.uhrText)) probleme.push(`Uhr zeigt „${r.uhrText.slice(0, 60)}“`);
   if (r.pause !== "pause" || r.pauseNaechste !== 3) probleme.push(`nach der Spielzeit Phase ${r.pause}, nächste Runde ${r.pauseNaechste}`);
   if (r.ende !== "ende") probleme.push(`nach der Trinkpause Phase ${r.ende} statt ende`);
