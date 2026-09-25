@@ -311,7 +311,7 @@ function _albumStickerHtml(g,n,tap){
       <span style="font-size:26px;opacity:.7">❓</span>
       ${R.lbl?`<span style="font-size:8.5px;font-weight:900;letter-spacing:.5px;opacity:.8">${R.gem?R.gem+" ":""}${R.lbl}</span>`:""}
     </div>`;
-  return `<div class="${(R.foil?"kab-st":"")+(R.leg?" kab-leg kab-pulse":"")}" ${tap?`onclick="kabineStickerZoom('${jsq(g.key)}')"`:""} style="border-radius:14px;aspect-ratio:3/4;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;background:radial-gradient(130% 80% at 50% -10%,rgba(255,255,255,.35),transparent 55%),${R.own};border:2px solid rgba(255,255,255,.6);box-shadow:${R.shadow};color:${dunkel?"#78350f":"#fff"};${tap?"cursor:pointer":""}">
+  return `<div class="${(R.foil?"kab-st":"")+(R.leg?" kab-leg kab-pulse":"")}" ${tap?`role="button" tabindex="0" onclick="kabineStickerZoom('${jsq(g.key)}')"`:""} style="border-radius:14px;aspect-ratio:3/4;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;background:radial-gradient(130% 80% at 50% -10%,rgba(255,255,255,.35),transparent 55%),${R.own};border:2px solid rgba(255,255,255,.6);box-shadow:${R.shadow};color:${dunkel?"#78350f":"#fff"};${tap?"cursor:pointer":""}">
       <div style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:5px 7px 0;font-size:8.5px;font-weight:900;letter-spacing:.4px;box-sizing:border-box">
         <span>Nr. ${g.num||"?"}</span>${n>1?`<span style="background:rgba(0,0,0,.3);color:#fff;border-radius:8px;padding:0 6px">${n}×</span>`:"<span></span>"}
       </div>

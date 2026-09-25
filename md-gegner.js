@@ -264,7 +264,7 @@ function tmRow(t){
   const zeit=t.uhrzeit?String(t.uhrzeit).slice(0,5)+" Uhr":"";
   const hb=heimLabel(t);
   const faelltAus=typeof terminFaelltAus==="function"&&terminFaelltAus(t);
-  return `<div onclick="tmDetailOpen(${t.id})" style="display:flex;align-items:center;gap:10px;background:var(--surface);border:var(--border-s);border-left:3px solid ${faelltAus?"var(--text3)":m.col};border-radius:var(--rl);padding:9px 12px;margin-bottom:6px;cursor:pointer">
+  return `<div role="button" tabindex="0" onclick="tmDetailOpen(${t.id})" style="display:flex;align-items:center;gap:10px;background:var(--surface);border:var(--border-s);border-left:3px solid ${faelltAus?"var(--text3)":m.col};border-radius:var(--rl);padding:9px 12px;margin-bottom:6px;cursor:pointer">
     <span style="font-size:18px">${m.icon}</span>
     <div style="flex:1;min-width:0">
       <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${faelltAus?"var(--text2)":"inherit"}">${esc(t.titel||m.label)}${faelltAus?` ${terminAbsageChip(t,true)}`:""}</div>

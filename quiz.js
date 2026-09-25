@@ -509,7 +509,7 @@ function tqRenderTaktikLauncher(pp){
   pp=pp||{};
   const done=TQ_BLOCKS.filter((b,i)=>pp[i]&&pp[i].score>=7).length, total=TQ_BLOCKS.length;
   const pct=Math.round(done/total*100);
-  return `<div class="card" style="padding:0;margin-top:10px;overflow:hidden;cursor:pointer" onclick="tqBlocksShow()">
+  return `<div class="card" role="button" tabindex="0" style="padding:0;margin-top:10px;overflow:hidden;cursor:pointer" onclick="tqBlocksShow()">
     <div style="background:linear-gradient(135deg,#7c3aed,#2563eb);padding:12px 14px;color:#fff">
       <div style="font-size:14px;font-weight:800;margin-bottom:2px">🎯 Taktik-Quiz</div>
       <div style="font-size:11px;opacity:.95;margin-bottom:8px">Die Raute verstehen – ${total} Blöcke Spielverständnis</div>
@@ -521,7 +521,7 @@ function tqRenderTaktikLauncher(pp){
 /* Gemeinsames Auswahl-Layout beider Quiz: Icon links, Titel, Fortschrittsbalken, ›.
    Taktik-Quiz und Fußball-Wissen sehen dadurch identisch aus. */
 function quizChoiceCard(o){
-  return `<div class="card" style="padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:12px" onclick="${o.onclick}">
+  return `<div class="card" role="button" tabindex="0" style="padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:12px" onclick="${o.onclick}">
     <div style="font-size:26px;line-height:1;width:30px;text-align:center">${o.icon}</div>
     <div style="flex:1;min-width:0">
       <div style="font-size:13px;font-weight:700;color:var(--text)">${o.titel}${o.fertig?" ✓":""}</div>
@@ -1272,7 +1272,7 @@ function wqPlayerDone(){ const p=(wqGetProgress()[tqPlayer])||{}; return WQ_QUES
 function wqRenderLauncher(){
   if(!tqPlayer)return "";
   const done=wqPlayerDone(), total=WQ_QUESTIONS.length, pct=Math.round(done/total*100);
-  return `<div class="card" style="padding:0;margin-top:10px;overflow:hidden;cursor:pointer" onclick="wqStart()">
+  return `<div class="card" role="button" tabindex="0" style="padding:0;margin-top:10px;overflow:hidden;cursor:pointer" onclick="wqStart()">
     <div style="background:linear-gradient(135deg,#0ea5e9,#6366f1);padding:12px 14px;color:#fff">
       <div style="font-size:14px;font-weight:800;margin-bottom:2px">🧠 Fußball-Wissen</div>
       <div style="font-size:11px;opacity:.95;margin-bottom:8px">${WQ_CATS.length} Kategorien · WM, Bundesliga, Legenden, Stars & mehr — sammle ${XP_ICON} Federn!</div>

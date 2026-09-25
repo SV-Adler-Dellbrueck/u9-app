@@ -212,7 +212,7 @@ function buildDims(isTw){
     const tot=d.tier.length+d.mx.length;
     const isTWDim=d.id.startsWith("tw_");
     block.innerHTML=`
-      <div class="dim-head" onclick="toggleDim(this)">
+      <div class="dim-head" role="button" tabindex="0" onclick="toggleDim(this)">
         <div class="dim-iw" style="background:${d.col}22"><i class="ti ${d.icon}" style="font-size:15px;color:${d.col}"></i></div>
         <div style="flex:1">
           <div class="dim-ht">${isTWDim?"🥅 ":""}${d.label}</div>
@@ -1702,8 +1702,8 @@ function adlerWrappedShow(d,fotos){
     <button onclick="adlerWrappedClose()" aria-label="Schließen" style="position:absolute;top:30px;right:12px;z-index:4;background:rgba(0,0,0,.25);border:none;color:#fff;font-size:22px;width:36px;height:36px;border-radius:50%;cursor:pointer">×</button>
     <div id="aw-stage" style="flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:28px;position:relative;z-index:1"></div>
     <div style="position:absolute;top:32px;bottom:0;left:0;right:0;z-index:2;display:flex">
-      <div style="flex:1" onclick="adlerWrappedPrev()"></div>
-      <div style="flex:2" onclick="adlerWrappedNext()"></div>
+      <div style="flex:1" role="button" tabindex="0" aria-label="Zurück" onclick="adlerWrappedPrev()"></div>
+      <div style="flex:2" role="button" tabindex="0" aria-label="Weiter" onclick="adlerWrappedNext()"></div>
     </div>`;
   document.body.appendChild(modal);
   modal.querySelector("#aw-bars").innerHTML=awrapSlides.map((_,i)=>`<div style="flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.28);overflow:hidden"><div class="aw-barfill" data-i="${i}" style="height:100%;width:0;background:#fff"></div></div>`).join("");
@@ -3295,7 +3295,7 @@ function onboardingDismiss(){ try{localStorage.setItem("adler_onboarded","1");}c
 // Schnelle Einheit-Bewertung: 3 Stern-Kategorien (Spaß/Umsetzung/Erfolg) + Notiz, pro Datum.
 let EINHEIT_CACHE=[];
 function einheitStarsHtml(key,val,max,size){
-  return [...Array(max).keys()].map(n=>n+1).map(i=>`<span onclick="einheitSetStar('${key}',${i},${max},${size})" style="cursor:pointer;font-size:${size}px;line-height:1;color:${i<=val?'#f59e0b':'#cbd5e1'}">${i<=val?'★':'☆'}</span>`).join("");
+  return [...Array(max).keys()].map(n=>n+1).map(i=>`<span role="button" tabindex="0" aria-label="${i} von ${max} Sternen" onclick="einheitSetStar('${key}',${i},${max},${size})" style="cursor:pointer;font-size:${size}px;line-height:1;color:${i<=val?'#f59e0b':'#cbd5e1'}">${i<=val?'★':'☆'}</span>`).join("");
 }
 function einheitStarRow(key,label,val,max,size){
   val=val||0; max=max||5; size=size||24;
@@ -3307,7 +3307,9 @@ function einheitSetStar(key,val,max,size){
   const box=document.getElementById("eb-stars-"+key); if(!box)return;
   const nv=(parseInt(box.dataset.val)||0)===val?0:val; // gleicher Stern nochmal = zurücksetzen
   box.dataset.val=nv;
+  const hatteFokus=box.contains(document.activeElement);   // v613: mit der Tastatur bleibt der Fokus auf dem Stern
   box.innerHTML=einheitStarsHtml(key,nv,max||5,size||24);
+  if(hatteFokus&&box.children[val-1])box.children[val-1].focus();
 }
 function einheitGetStar(key){ const el=document.getElementById("eb-stars-"+key); const v=el?parseInt(el.dataset.val):0; return v>0?v:0; }
 function einheitRowsHtml(v){ v=v||{}; return einheitStarRow("spass","😄 Spaß",v.spass)+einheitStarRow("umsetzung","🎯 Umsetzung",v.umsetzung)+einheitStarRow("erfolg","🏆 Erfolg",v.erfolg); }
@@ -3350,7 +3352,7 @@ function einheitListRender(){
   const rows=EB_TERMINE.map(t=>{
     const bew=EINHEIT_CACHE.find(x=>x.datum===t.datum);
     const dt=new Date(t.datum+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"});
-    return `<div onclick="einheitDetailOpen('${t.datum}')" style="display:flex;align-items:center;gap:10px;padding:11px 10px;border:var(--border-s);border-radius:10px;margin-bottom:6px;cursor:pointer;background:var(--surface2)">
+    return `<div role="button" tabindex="0" onclick="einheitDetailOpen('${t.datum}')" style="display:flex;align-items:center;gap:10px;padding:11px 10px;border:var(--border-s);border-radius:10px;margin-bottom:6px;cursor:pointer;background:var(--surface2)">
       <div style="font-size:20px">${bew?"✅":"⭐"}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:700;color:var(--text)">${wtag(t.datum)} ${dt}</div>
@@ -4943,7 +4945,7 @@ async function renderHome(){
     if(!s||!s.length)return true;
     return (s[s.length-1].datum||"0000")<cutoff;
   }).length;
-  const statTile=(val,lbl,col,jump)=>`<div onclick="${jump}" class="card" style="flex:1;min-width:90px;padding:10px;text-align:center;cursor:pointer">
+  const statTile=(val,lbl,col,jump)=>`<div role="button" tabindex="0" onclick="${jump}" class="card" style="flex:1;min-width:90px;padding:10px;text-align:center;cursor:pointer">
     <div style="font-size:22px;font-weight:800;color:${col}">${val}</div>
     <div style="font-size:10px;color:var(--text2)">${lbl}</div></div>`;
 
@@ -5649,7 +5651,7 @@ async function homeRsvpNudge(){
   if(!offen){slot.innerHTML="";return;}
   const m=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅",label:t.typ};
   const d=new Date(t.datum+"T00:00:00"), wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
-  slot.innerHTML=`<div onclick="rsvpOverviewOpen(${t.id})" class="card" style="padding:12px 14px;margin-bottom:10px;border-left:3px solid var(--amber);cursor:pointer;display:flex;align-items:center;gap:8px">
+  slot.innerHTML=`<div role="button" tabindex="0" onclick="rsvpOverviewOpen(${t.id})" class="card" style="padding:12px 14px;margin-bottom:10px;border-left:3px solid var(--amber);cursor:pointer;display:flex;align-items:center;gap:8px">
     <span style="font-size:18px">🔔</span>
     <span style="flex:1;font-size:12.5px"><strong style="color:var(--amber)">${offen} ohne Rückmeldung</strong> für ${m.icon} ${esc(t.titel||t.gegner||m.label)} · ${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}</span>
     <span style="font-size:11px;font-weight:800;color:var(--blue-text)">nachfassen ›</span>

@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v612 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v613 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -191,7 +191,7 @@ Kinder sehen nie Bewertungen und nie Zahlen zu anderen Kindern. Was die Kabine �
 | **Sprach-Eingabe** | Notizen, Bewertungen und Übungsbeschreibungen lassen sich einsprechen. | Schneller als tippen mit kalten Fingern. |
 | **Backup & Export** | Vollständiger Datenexport, CSV für Material, Markdown für das Tagebuch. | Keine Abhängigkeit, Datenhoheit beim Verein. |
 | **Lesbarkeit** | Hinweise, Leerzustände und Fußzeilen stehen in einem Grau mit mindestens 4,5:1 Kontrast – hell wie dunkel (seit v611 gemessen; vorher 2,6:1). | Auch am Handy in der Sonne am Platz lesbar. |
-| **Bedienung mit Tastatur und Bildschirmleser** | Jedes Fenster meldet sich als Dialog mit Namen, der Fokus springt beim Öffnen hinein und bleibt mit Tab darin (seit v612 zentral für alle Fenster). | Auch mit Vorlese-Funktion und externer Tastatur bedienbar. |
+| **Bedienung mit Tastatur und Bildschirmleser** | Jedes Fenster meldet sich als Dialog mit Namen, der Fokus springt beim Öffnen hinein und bleibt mit Tab darin (seit v612 zentral für alle Fenster). Seit v613 gehen auch Kriterienköpfe, Terminkarten und Sterne mit Tab und Enter. | Auch mit Vorlese-Funktion und externer Tastatur bedienbar. |
 | **Qualitätssicherung** | Automatisierte Prüfung jeder Version im echten Browser mit Attrappen-Daten. | Neue Funktionen brechen alte nicht – die App bleibt verlässlich. |
 
 ---
