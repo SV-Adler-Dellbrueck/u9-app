@@ -61,9 +61,9 @@ function voiceConfirm(aktion,name,transcript){
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px";
   m.onclick=e=>{if(e.target===m)m.remove();};
   m.innerHTML=`<div style="background:var(--surface);border-radius:16px;padding:20px;max-width:340px;width:100%;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.4)">
-    <div style="font-size:11px;color:var(--text3);margin-bottom:8px">🎤 Verstanden${transcript?` · „${esc(transcript)}"`:""}</div>
-    <div style="font-size:22px;font-weight:800;margin-bottom:2px">${emo} ${esc(lbl)}</div>
-    <div style="font-size:15px;color:var(--text2);margin-bottom:16px">durch <strong>${esc(name)}</strong>?</div>
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:8px">🎤 Verstanden${transcript?` · „${esc(transcript)}"`:""}</div>
+    <div style="font-size:var(--s-seite);font-weight:800;margin-bottom:2px">${emo} ${esc(lbl)}</div>
+    <div style="font-size:var(--s-karte);color:var(--text2);margin-bottom:16px">durch <strong>${esc(name)}</strong>?</div>
     <div style="display:flex;gap:10px">
       <button class="btn" style="flex:1" onclick="document.getElementById('voice-confirm').remove()"><i class="ti ti-x"></i>Verwerfen</button>
       <button class="btn btn-p" style="flex:1" onclick="voiceApply('${aktion}','${name.replace(/'/g,"")}');document.getElementById('voice-confirm').remove()"><i class="ti ti-check"></i>Übernehmen</button>
@@ -81,7 +81,7 @@ function voiceBtnUpdate(){
   if(!b)return;
   b.innerHTML=voiceOn
     ? '<i class="ti ti-microphone-2"></i>Hört zu… (tippen = Stopp)'
-    : '<i class="ti ti-microphone"></i>Voice<span style="font-size:9px;background:#f59e0b;color:#fff;padding:1px 5px;border-radius:8px;margin-left:5px">Beta</span>';
+    : '<i class="ti ti-microphone"></i>Voice<span style="font-size:var(--s-klein);background:#f59e0b;color:#fff;padding:1px 5px;border-radius:8px;margin-left:5px">Beta</span>';
   b.classList.toggle("btn-p",voiceOn);
 }
 function voiceStart(){
@@ -143,17 +143,17 @@ function voiceDiaryOpen(datum){
   c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   const micBtn=voiceSupported
     ?`<button id="vd-mic" class="btn btn-sm" onclick="vdMicToggle()"><i class="ti ti-microphone"></i>Aufnehmen</button>`
-    :`<span style="font-size:11px;color:var(--text3)">🎤 Spracheingabe auf diesem Gerät nicht verfügbar – bitte tippen.</span>`;
+    :`<span style="font-size:var(--s-klein);color:var(--text3)">🎤 Spracheingabe auf diesem Gerät nicht verfügbar – bitte tippen.</span>`;
   c.innerHTML=`${mdlHead("vd-modal","🎤","Trainer-Notiz","","#334155")}
-    <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Direkt nach Abpfiff festhalten, bevor Details weg sind. Der Adler-Coach (KI) kann deine Notizen später einbeziehen.</div>
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">${micBtn}<span id="vd-interim" style="font-size:12px;color:var(--text3);flex:1"></span></div>
-    <textarea id="vd-text" rows="5" placeholder="z. B. Umschaltspiel war heute mies – wir standen nach Ballverlust zu offen." style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:13px;line-height:1.5;background:var(--surface2);color:var(--text);resize:vertical"></textarea>
+    <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:10px">Direkt nach Abpfiff festhalten, bevor Details weg sind. Der Adler-Coach (KI) kann deine Notizen später einbeziehen.</div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">${micBtn}<span id="vd-interim" style="font-size:var(--s-text);color:var(--text3);flex:1"></span></div>
+    <textarea id="vd-text" rows="5" placeholder="z. B. Umschaltspiel war heute mies – wir standen nach Ballverlust zu offen." style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);line-height:1.5;background:var(--surface2);color:var(--text);resize:vertical"></textarea>
     <div style="display:flex;gap:8px;margin-top:10px">
       <button class="btn btn-p btn-sm" onclick="vdSave(${datum?`'${jsq(datum)}'`:"null"})"><i class="ti ti-device-floppy"></i>Notiz speichern</button>
       <button class="btn btn-sm" style="margin-left:auto" onclick="vdOn=false;try{vdRec&&vdRec.stop()}catch(e){};document.getElementById('vd-modal').remove()">Schließen</button>
     </div>
-    <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin:14px 0 4px">Letzte Notizen</div>
-    <div id="vd-list"><div style="font-size:12px;color:var(--text3)">Lade …</div></div>`;
+    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin:14px 0 4px">Letzte Notizen</div>
+    <div id="vd-list"><div style="font-size:var(--s-text);color:var(--text3)">Lade …</div></div>`;
   modal.appendChild(c);document.body.appendChild(modal);
   vdListLoad();
 }
@@ -161,10 +161,10 @@ async function vdListLoad(){
   const box=document.getElementById("vd-list"); if(!box)return;
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/trainer_notes?select=id,datum,text,created_at&order=created_at.desc&limit=6`,{headers:sbAuthHeaders()});if(!sbCheck401(r)&&r.ok)rows=await r.json();}catch(e){}
-  if(!rows.length){box.innerHTML='<div style="font-size:12px;color:var(--text3)">Noch keine Notizen.</div>';return;}
+  if(!rows.length){box.innerHTML='<div style="font-size:var(--s-text);color:var(--text3)">Noch keine Notizen.</div>';return;}
   const fmt=d=>{const t=new Date(d);return t.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})+" "+t.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});};
   box.innerHTML=rows.map(n=>`<div style="display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--surface2)">
-    <div style="flex:1"><div style="font-size:13px;line-height:1.45">${esc(n.text)}</div><div style="font-size:10px;color:var(--text3);margin-top:2px">${fmt(n.created_at)}${n.datum?" · Spieltag "+esc(n.datum):""}</div></div>
+    <div style="flex:1"><div style="font-size:var(--s-text);line-height:1.45">${esc(n.text)}</div><div style="font-size:var(--s-klein);color:var(--text3);margin-top:2px">${fmt(n.created_at)}${n.datum?" · Spieltag "+esc(n.datum):""}</div></div>
     <button onclick="vdDelete(${n.id})" aria-label="Notiz löschen" style="border:none;background:transparent;color:#dc2626;cursor:pointer;min-width:32px;min-height:32px"><i class="ti ti-trash"></i></button>
   </div>`).join("");
 }
@@ -214,12 +214,12 @@ function atRender(){
   if(!box)return;
   box.innerHTML=`
     <div id="quest-strip" style="position:relative;overflow:hidden;background:var(--surface);border:var(--border-s);border-radius:12px;padding:10px 12px;margin-bottom:12px">${questStripHTML(questCountsAll())}</div>
-    <button onclick="atLiveOpen()" style="width:100%;min-height:64px;margin-bottom:10px;border:none;border-radius:14px;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;font-size:17px;font-weight:800;font-family:inherit;cursor:pointer">⚡ Live-Aktion starten (Vollbild)</button>
+    <button onclick="atLiveOpen()" style="width:100%;min-height:64px;margin-bottom:10px;border:none;border-radius:14px;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;font-size:var(--s-teil);font-weight:800;font-family:inherit;cursor:pointer">⚡ Live-Aktion starten (Vollbild)</button>
     ${voiceSupported?`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-      <button id="voice-btn" class="btn btn-sm" onclick="voiceToggle()"><i class="ti ti-microphone"></i>Voice<span style="font-size:9px;background:#f59e0b;color:#fff;padding:1px 5px;border-radius:8px;margin-left:5px">Beta</span></button>
-      <span style="font-size:10px;color:var(--text3);flex:1;min-width:140px">Sag z. B. „Pass“ und den Namen – du bestätigst vor dem Senden. Braucht Netz &amp; Ruhe.</span>
+      <button id="voice-btn" class="btn btn-sm" onclick="voiceToggle()"><i class="ti ti-microphone"></i>Voice<span style="font-size:var(--s-klein);background:#f59e0b;color:#fff;padding:1px 5px;border-radius:8px;margin-left:5px">Beta</span></button>
+      <span style="font-size:var(--s-klein);color:var(--text3);flex:1;min-width:140px">Sag z. B. „Pass“ und den Namen – du bestätigst vor dem Senden. Braucht Netz &amp; Ruhe.</span>
     </div>`:''}
-    <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:2px">Alle Aktionen – Pässe, Dribblings, Ballgewinne, Paraden, Tore &amp; Gegentore – erfasst du im Vollbild. Ein Elternteil kann per <b>Helfer-Link</b> übernehmen.</div>`;
+    <div style="font-size:var(--s-klein);color:var(--text3);text-align:center;margin-top:2px">Alle Aktionen – Pässe, Dribblings, Ballgewinne, Paraden, Tore &amp; Gegentore – erfasst du im Vollbild. Ein Elternteil kann per <b>Helfer-Link</b> übernehmen.</div>`;
 }
 function atPick(n){atSel=n;atRender();}
 

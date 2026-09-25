@@ -202,18 +202,18 @@ function tbFokus(feld){ _TB_FOKUS = feld; }
 function tbRender(){
   const c = document.getElementById("tb-card"); if(!c||!_TB) return;
   const w = _TB.werte;
-  const fld = "width:100%;box-sizing:border-box;min-height:48px;padding:10px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text)";
-  const lbl = "font-size:11.5px;font-weight:700;display:block;margin-top:10px";
+  const fld = "width:100%;box-sizing:border-box;min-height:48px;padding:10px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)";
+  const lbl = "font-size:var(--s-klein);font-weight:700;display:block;margin-top:10px";
   const fehlt = k => _TB.fehlt.includes(k) ? ";border-color:var(--red)" : "";
   const kinder = (typeof KADER!=="undefined" ? (KADER||[]) : []).filter(k=>k.aktiv!==false);
 
   c.innerHTML = `${mdlHead("tb-modal","📓","Tagebucheintrag",
       _TB.quelle==="frei" ? "Freier Eintrag" : "Aus der Nachbereitung vom "+tbDatumDe(_TB.datum),"#7c3aed")}
 
-    <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:14px 0 6px">Baustein</div>
+    <div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:14px 0 6px">Baustein</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       ${TB_BAUSTEINE.map(b=>{const an=w.baustein===b.key;
-        return `<button onclick="tbBaustein('${b.key}')" aria-pressed="${an}" style="flex:1 1 46%;min-height:48px;font-size:12.5px;border:1px solid var(--rand-bedien);border-radius:var(--r);cursor:pointer;font-family:inherit;background:${an?"var(--blue)":"var(--surface2)"};color:${an?"#fff":"var(--text2)"};font-weight:${an?"800":"600"}">${an?"✓ ":""}${b.label}</button>`;}).join("")}
+        return `<button onclick="tbBaustein('${b.key}')" aria-pressed="${an}" style="flex:1 1 46%;min-height:48px;font-size:var(--s-text);border:1px solid var(--rand-bedien);border-radius:var(--r);cursor:pointer;font-family:inherit;background:${an?"var(--blue)":"var(--surface2)"};color:${an?"#fff":"var(--text2)"};font-weight:${an?"800":"600"}">${an?"✓ ":""}${b.label}</button>`;}).join("")}
     </div>
 
     <label style="${lbl}">Auslöser<span style="font-weight:500;color:var(--text3)"> · vorausgefüllt</span>
@@ -223,11 +223,11 @@ function tbRender(){
       <textarea id="tb-beobachtung" rows="3" onfocus="tbFokus('beobachtung')" style="${fld};resize:vertical;margin-top:3px">${esc(w.beobachtung)}</textarea></label>
 
     ${kinder.length?`<div style="margin-top:10px">
-      <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Kind einfügen – schreibt den Decknamen, nicht den Namen</div>
+      <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px">Kind einfügen – schreibt den Decknamen, nicht den Namen</div>
       <div style="display:flex;gap:5px;flex-wrap:wrap">
-        ${kinder.map(k=>`<button onclick="tbKindEinfuegen('${jsq(k.name)}')" title="Fügt ${esc(tbAlias(k.name))} ein" style="min-height:36px;padding:0 10px;font-size:12px;border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface2);color:var(--text2);cursor:pointer;font-family:inherit">${esc(k.name)}</button>`).join("")}
+        ${kinder.map(k=>`<button onclick="tbKindEinfuegen('${jsq(k.name)}')" title="Fügt ${esc(tbAlias(k.name))} ein" style="min-height:36px;padding:0 10px;font-size:var(--s-text);border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface2);color:var(--text2);cursor:pointer;font-family:inherit">${esc(k.name)}</button>`).join("")}
       </div>
-      <div style="font-size:10.5px;color:var(--text3);margin-top:4px">Der Deckname bleibt an dasselbe Kind gebunden, solange es im Kader steht.</div>
+      <div style="font-size:var(--s-klein);color:var(--text3);margin-top:4px">Der Deckname bleibt an dasselbe Kind gebunden, solange es im Kader steht.</div>
     </div>`:""}
 
     <label style="${lbl}">Aha<span style="color:var(--red)"> · Pflicht</span>
@@ -247,18 +247,18 @@ function tbRender(){
 
     <div id="tb-meldung" style="margin-top:10px">${_TB.namensfund?tbNamensHinweis(_TB.namensfund):""}</div>
 
-    <button class="btn btn-p" onclick="tagebuchSpeichern()" style="width:100%;min-height:56px;margin-top:12px;justify-content:center;font-size:15px;font-weight:800"><i class="ti ti-check"></i>Eintrag erfassen</button>
+    <button class="btn btn-p" onclick="tagebuchSpeichern()" style="width:100%;min-height:56px;margin-top:12px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-check"></i>Eintrag erfassen</button>
     <button class="btn" onclick="tagebuchSchliessen()" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Abbrechen</button>`;
 }
 
 function tbNamensHinweis(wort){
-  return `<div style="background:var(--surface2);border:var(--border-s);border-left:4px solid var(--amber);border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5">
+  return `<div style="background:var(--surface2);border:var(--border-s);border-left:4px solid var(--amber);border-radius:10px;padding:10px 12px;font-size:var(--s-text);line-height:1.5">
     Im Text steht „<b>${esc(wort)}</b>“ – das ist ein Name aus dem Kader. Das Tagebuch geht später an den Verband; dort sollen Kinder nicht mit Namen stehen.
     <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
       <button class="btn btn-sm" onclick="tbNamenErsetzen('${jsq(wort)}')" style="min-height:48px">Durch den Decknamen ersetzen</button>
       <button class="btn btn-sm" onclick="tbTrotzdemSpeichern()" style="min-height:48px">So lassen und erfassen</button>
     </div>
-    <div style="font-size:10.5px;color:var(--text3);margin-top:6px">Nichts wird von selbst umgeschrieben – der Name kann auch der eines Trainers oder eines Gegners sein.</div>
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px">Nichts wird von selbst umgeschrieben – der Name kann auch der eines Trainers oder eines Gegners sein.</div>
   </div>`;
 }
 /* Ersetzt NUR auf ausdrückliches Antippen, und nur das eine gefundene Wort. */
@@ -289,7 +289,7 @@ async function tagebuchSpeichern(){
     tbRender();
     const m = document.getElementById("tb-meldung");
     const was = _TB.fehlt.map(k=>({ausloeser:"Auslöser",aha:"Aha",konsequenz:"Konsequenz"})[k]).join(" und ");
-    if(m) m.innerHTML = `<div style="background:var(--surface2);border:var(--border-s);border-left:4px solid var(--red);border-radius:10px;padding:10px 12px;font-size:12.5px">Ohne <b>${esc(was)}</b> wird nicht erfasst – ein Eintrag ohne Erkenntnis und ohne Vorhaben ist keiner. Der Rest bleibt stehen.</div>`;
+    if(m) m.innerHTML = `<div style="background:var(--surface2);border:var(--border-s);border-left:4px solid var(--red);border-radius:10px;padding:10px 12px;font-size:var(--s-text)">Ohne <b>${esc(was)}</b> wird nicht erfasst – ein Eintrag ohne Erkenntnis und ohne Vorhaben ist keiner. Der Rest bleibt stehen.</div>`;
     return;
   }
   if(!_TB.uebergehen){
@@ -319,7 +319,7 @@ async function tagebuchSpeichern(){
 async function tagebuchListe(){
   const box = document.getElementById("tb-liste"); if(!box) return;
   if(typeof sbToken==="function" && !sbToken()){ box.innerHTML = tbLeer("Nicht angemeldet.","Melde dich als Trainer an, dann steht das Tagebuch hier."); return; }
-  box.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:8px">Lade …</div>';
+  box.innerHTML = '<div style="font-size:var(--s-text);color:var(--text3);padding:8px">Lade …</div>';
   try{
     const r = await fetch(`${SB_URL}/rest/v1/tagebuch_eintrag?select=*&order=datum.desc,id.desc&limit=200`,{headers:sbAuthHeaders()});
     if(sbCheck401(r)) return;
@@ -330,16 +330,16 @@ async function tagebuchListe(){
 }
 function tbLeer(satz, zweiter){
   return `<div style="background:var(--surface);border:var(--border-s);border-radius:var(--rl);padding:16px;text-align:center">
-    <div style="font-size:13px;font-weight:700">${esc(satz)}</div>
-    <div style="font-size:12px;color:var(--text2);margin-top:4px">${esc(zweiter)}</div></div>`;
+    <div style="font-size:var(--s-text);font-weight:700">${esc(satz)}</div>
+    <div style="font-size:var(--s-text);color:var(--text2);margin-top:4px">${esc(zweiter)}</div></div>`;
 }
 function tbListeRender(){
   const box = document.getElementById("tb-liste"); if(!box) return;
   if(!_TB_LISTE.length){
     box.innerHTML = `<div style="background:var(--surface);border:var(--border-s);border-radius:var(--rl);padding:16px;text-align:center">
-      <div style="font-size:13px;font-weight:700">Noch kein Eintrag.</div>
-      <div style="font-size:12px;color:var(--text2);margin:4px 0 10px">Der erste entsteht am schnellsten direkt nach einer Nachbereitung.</div>
-      <button class="btn btn-p" onclick="tagebuchNeu()" style="min-height:56px;justify-content:center;width:100%;font-size:15px;font-weight:800"><i class="ti ti-plus"></i>Neuer Eintrag</button></div>`;
+      <div style="font-size:var(--s-text);font-weight:700">Noch kein Eintrag.</div>
+      <div style="font-size:var(--s-text);color:var(--text2);margin:4px 0 10px">Der erste entsteht am schnellsten direkt nach einer Nachbereitung.</div>
+      <button class="btn btn-p" onclick="tagebuchNeu()" style="min-height:56px;justify-content:center;width:100%;font-size:var(--s-karte);font-weight:800"><i class="ti ti-plus"></i>Neuer Eintrag</button></div>`;
     return;
   }
   const heute = new Date();
@@ -349,18 +349,18 @@ function tbListeRender(){
     const tage = juengst ? Math.floor((heute - new Date(juengst+"T00:00:00"))/864e5) : null;
     const luecke = (tage===null || tage>TB_LUECKE_TAGE);
     return `<div style="margin-bottom:16px">
-      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:4px">${esc(b.label)} · ${eintraege.length}</div>
-      ${luecke?`<div style="font-size:11.5px;color:var(--text3);margin-bottom:6px">${juengst?`Seit dem ${tbDatumDe(juengst)} nichts notiert.`:"Noch nichts notiert."}</div>`:""}
+      <div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:4px">${esc(b.label)} · ${eintraege.length}</div>
+      ${luecke?`<div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:6px">${juengst?`Seit dem ${tbDatumDe(juengst)} nichts notiert.`:"Noch nichts notiert."}</div>`:""}
       ${eintraege.map(tbZeile).join("")}
     </div>`;
   }).join("");
 }
 function tbZeile(e){
   return `<div style="background:var(--surface);border:var(--border-s);border-radius:var(--rl);padding:11px 12px;margin-bottom:6px">
-    <div style="font-size:11px;color:var(--text3)">${tbDatumDe(e.datum)}${e.autor?" · "+esc(e.autor):""}</div>
-    <div style="font-size:13px;font-weight:700;margin-top:2px">${esc(e.ausloeser)}</div>
-    <div style="font-size:12.5px;color:var(--text2);margin-top:4px;line-height:1.5"><b>Aha:</b> ${esc(e.aha)}</div>
-    <div style="font-size:12.5px;color:var(--text2);margin-top:2px;line-height:1.5"><b>Konsequenz:</b> ${esc(e.konsequenz)}${e.konsequenz_bis?` (bis ${tbDatumDe(e.konsequenz_bis)})`:""}</div>
+    <div style="font-size:var(--s-klein);color:var(--text3)">${tbDatumDe(e.datum)}${e.autor?" · "+esc(e.autor):""}</div>
+    <div style="font-size:var(--s-text);font-weight:700;margin-top:2px">${esc(e.ausloeser)}</div>
+    <div style="font-size:var(--s-text);color:var(--text2);margin-top:4px;line-height:1.5"><b>Aha:</b> ${esc(e.aha)}</div>
+    <div style="font-size:var(--s-text);color:var(--text2);margin-top:2px;line-height:1.5"><b>Konsequenz:</b> ${esc(e.konsequenz)}${e.konsequenz_bis?` (bis ${tbDatumDe(e.konsequenz_bis)})`:""}</div>
     <div style="display:flex;gap:6px;margin-top:8px">
       <button class="btn btn-sm" onclick="tagebuchKopieren(${Number(e.id)})" style="min-height:36px"><i class="ti ti-copy"></i>Kopieren</button>
       <button class="btn btn-sm" onclick="tagebuchTeilen(${Number(e.id)})" style="min-height:36px"><i class="ti ti-share"></i>Teilen</button>

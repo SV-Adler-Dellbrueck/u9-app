@@ -99,7 +99,7 @@
   --tp-0:#f87171;--tp-1:#fb923c;--tp-2:#86efac;--tp-3:#22c55e;
   --shadow:0 1px 3px rgba(0,0,0,.4);--shadow-md:0 4px 14px rgba(0,0,0,.5);
 }
-body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:var(--s-karte);line-height:1.5}
 .app{max-width:920px;margin:0 auto;padding:16px 16px 100px}
 .ep-wrap{max-width:440px;margin:0 auto}
 
@@ -119,10 +119,10 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 0 15px;border-bottom:2px solid var(--club-accent);margin-bottom:18px} /* L7 */
 #club-logo{width:38px;height:38px;border-radius:var(--r);object-fit:contain;flex-shrink:0}
 .logo{display:flex;align-items:center;gap:10px}
-.logo-badge{width:38px;height:38px;background:var(--blue);border-radius:var(--r);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;flex-shrink:0;letter-spacing:.5px}
-.logo-t1{font-size:16px;font-weight:700;color:var(--text)}
-.logo-t2{font-size:11px;color:var(--text2);margin-top:1px}
-.cloud-row{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.logo-badge{width:38px;height:38px;background:var(--blue);border-radius:var(--r);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:var(--s-text);flex-shrink:0;letter-spacing:.5px}
+.logo-t1{font-size:var(--s-karte);font-weight:700;color:var(--text)}
+.logo-t2{font-size:var(--s-klein);color:var(--text2);margin-top:1px}
+.cloud-row{display:flex;align-items:center;gap:5px;font-size:var(--s-klein);color:var(--text2)}
 .cdot{width:7px;height:7px;border-radius:50%;background:#94a3b8;transition:background .4s;flex-shrink:0}
 .cdot.ok{background:#16a34a}.cdot.err{background:#dc2626}.cdot.warn{background:#f59e0b}
 
@@ -136,35 +136,35 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
    zieht sie mit (#8b98ac). Mit dem festen Wert waere die Beschriftung auf dunklem Grund
    bei 3.07:1 gelandet – zu wenig fuer Text. */
 .nb{padding:8px 2px;border:none;background:transparent;border-radius:8px;cursor:pointer;color:var(--text3);display:flex;flex-direction:column;align-items:center;gap:2px;font-family:inherit;font-size:inherit}
-.nb i{font-size:17px}
-.nb span{font-size:10px;font-weight:600;white-space:nowrap;line-height:1}
+.nb i{font-size:var(--s-teil)}
+.nb span{font-size:var(--s-klein);font-weight:600;white-space:nowrap;line-height:1}
 /* Grundfarbe = Vereinsblau (gilt fuer Home, das keine Bereichsfarbe hat). Fuer die
    sechs Bereiche setzt go() die Familienfarbe als Inline-Hintergrund darueber.
    Schatten bewusst neutral statt blau getoent, sonst beisst er sich mit Gruen/Orange. */
 .nb.active{background:var(--club-accent);color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.22)} /* L7 */
 .view{display:none}.view.active{display:block}
 
-.sl{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--text2);margin:1.4rem 0 .6rem;padding-top:.9rem;border-top:var(--border);display:flex;align-items:center;gap:6px}
+.sl{font-size:var(--s-klein);font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--text2);margin:1.4rem 0 .6rem;padding-top:.9rem;border-top:var(--border);display:flex;align-items:center;gap:6px}
 .sl:first-child,.sl.nt{border-top:none;margin-top:0;padding-top:0}
-.sl i{font-size:14px;color:var(--text3)}
+.sl i{font-size:var(--s-karte);color:var(--text3)}
 
 .mgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:.75rem}
 .mg{display:flex;flex-direction:column;gap:4px}
-.mg label{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)}
-.mg input,.mg select,.mg textarea{padding:8px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:13px;background:var(--surface);color:var(--text);outline:none;font-family:inherit;transition:border-color .15s;width:100%}
+.mg label{font-size:var(--s-klein);font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)}
+.mg input,.mg select,.mg textarea{padding:8px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:var(--s-text);background:var(--surface);color:var(--text);outline:none;font-family:inherit;transition:border-color .15s;width:100%}
 .mg input:focus,.mg select:focus,.mg textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,86,219,.1)}
 .s2{grid-column:span 2}.s3{grid-column:span 3}
 
 /* LIVE PANEL */
 .live-panel{display:grid;grid-template-columns:1fr 190px;gap:12px;margin-bottom:1rem}
 .radar-live-box{background:var(--surface);border:var(--border);border-radius:var(--rl);padding:14px;box-shadow:var(--shadow)}
-.rbox-title{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.rbox-title{font-size:var(--s-klein);font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .raute-box{background:var(--surface);border:var(--border);border-radius:var(--rl);padding:11px;box-shadow:var(--shadow)}
 .raute-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px}
 .rpos{padding:6px 4px;border-radius:6px;text-align:center;border:1.5px solid #e2e8f0;background:var(--surface2);transition:all .3s}
-.rp-l{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3)}
-.rp-r{font-size:10px;font-weight:700;color:var(--text);margin-top:1px}
-.rp-h{font-size:8px;color:var(--text2)}
+.rp-l{font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3)}
+.rp-r{font-size:var(--s-klein);font-weight:700;color:var(--text);margin-top:1px}
+.rp-h{font-size:var(--s-klein);color:var(--text2)}
 .rpos.hl-auf{border-color:#1a56db;background:#e8f0fe}.rpos.hl-auf .rp-r{color:#1a56db}
 .rpos.hl-links{border-color:#d97706;background:#fffbeb}.rpos.hl-links .rp-r{color:#b45309}
 .rpos.hl-rechts{border-color:#059669;background:#f0fdf4}.rpos.hl-rechts .rp-r{color:#15803d}
@@ -172,87 +172,87 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .rpos.hl-jaeg{border-color:#c2410c;background:#fff7ed}.rpos.hl-jaeg .rp-r{color:#c2410c}
 .rpos.hl-tw{border-color:#854d0e;background:#fef9c3}.rpos.hl-tw .rp-r{color:#854d0e}
 .rpos.sek{opacity:.45;border-style:dashed}
-.raute-hint{font-size:9.5px;color:var(--text2);text-align:center;margin-top:5px;line-height:1.4}
+.raute-hint{font-size:var(--s-klein);color:var(--text2);text-align:center;margin-top:5px;line-height:1.4}
 
 /* DIM BLOCKS */
 .dim-block{background:var(--surface);border:var(--border);border-radius:var(--rl);margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow)}
 .dim-head{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--surface2);border-bottom:var(--border);cursor:pointer;user-select:none;transition:background .1s}
 .dim-head:hover{background:#eef2f8}
 .dim-iw{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.dim-ht{font-size:12.5px;font-weight:600;color:var(--text);flex:1}
-.dim-hs{font-size:10.5px;color:var(--text2);margin-top:1px}
-.dpill{font-size:10.5px;font-weight:500;padding:2px 8px;border-radius:10px;background:var(--surface);border:var(--border);color:var(--text2);white-space:nowrap}
+.dim-ht{font-size:var(--s-text);font-weight:600;color:var(--text);flex:1}
+.dim-hs{font-size:var(--s-klein);color:var(--text2);margin-top:1px}
+.dpill{font-size:var(--s-klein);font-weight:500;padding:2px 8px;border-radius:10px;background:var(--surface);border:var(--border);color:var(--text2);white-space:nowrap}
 .dpill.done{background:#dcfce7;color:#15803d;border-color:#86efac}
-.dchev{font-size:15px;color:var(--text3);transition:transform .2s}
+.dchev{font-size:var(--s-karte);color:var(--text3);transition:transform .2s}
 .dim-body{padding:14px}
 .dim-body.coll{display:none}
 
 /* TIER TABLE */
-.tier-t{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px}
-.tier-t th{padding:6px 9px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);background:var(--surface2);border:var(--border);text-align:left}
+.tier-t{width:100%;border-collapse:collapse;font-size:var(--s-text);margin-bottom:12px}
+.tier-t th{padding:6px 9px;font-size:var(--s-klein);font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);background:var(--surface2);border:var(--border);text-align:left}
 .tier-t th:first-child{width:126px}
 .tier-t td{border:var(--border);padding:0;vertical-align:top}
-.tier-t td.cn{padding:8px 9px;font-size:12px;font-weight:500;background:var(--surface2);color:var(--text)}
-.tier-t td.cn small{display:block;font-size:10px;font-weight:400;color:var(--text3);margin-top:2px}
-.topt label{display:flex;align-items:flex-start;gap:6px;padding:7px 9px;cursor:pointer;font-size:11.5px;color:var(--text2);border-bottom:var(--border);transition:background .1s;line-height:1.4}
+.tier-t td.cn{padding:8px 9px;font-size:var(--s-text);font-weight:500;background:var(--surface2);color:var(--text)}
+.tier-t td.cn small{display:block;font-size:var(--s-klein);font-weight:400;color:var(--text3);margin-top:2px}
+.topt label{display:flex;align-items:flex-start;gap:6px;padding:7px 9px;cursor:pointer;font-size:var(--s-klein);color:var(--text2);border-bottom:var(--border);transition:background .1s;line-height:1.4}
 .topt label:last-child{border-bottom:none}
 .topt label:hover{background:var(--surface2)}
 .topt label.sel{background:linear-gradient(90deg,rgba(37,99,235,.12),rgba(37,99,235,.03))!important;border-left:4px solid #2563eb;color:#1e3a8a;font-weight:600}
 /* display:none haette die Radios auch aus Tastatur und Screenreader entfernt - stattdessen nur optisch verstecken und den Fokus am Label zeigen. */
 .topt input[type=radio]{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
 .topt input[type=radio]:focus-visible+.lb{outline:2px solid #2563eb;outline-offset:2px}
-.lb{font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:10px;white-space:nowrap;flex-shrink:0;margin-top:2px}
+.lb{font-size:var(--s-klein);font-weight:700;padding:2px 6px;border-radius:10px;white-space:nowrap;flex-shrink:0;margin-top:2px}
 .lb1{background:#fee2e2;color:#991b1b}.lb2{background:#fef3c7;color:#92400e}.lb3{background:#dcfce7;color:#166534}.lb4{background:#dbeafe;color:#1e40af}
-.ltitle{font-weight:600;display:block;font-size:11.5px;color:var(--text)}
-.ldesc{display:block;font-size:10.5px;color:var(--text2);margin-top:1px}
+.ltitle{font-weight:600;display:block;font-size:var(--s-klein);color:var(--text)}
+.ldesc{display:block;font-size:var(--s-klein);color:var(--text2);margin-top:1px}
 
 /* MATRIX TABLE */
-.mx-t{width:100%;border-collapse:collapse;font-size:12px}
-.mx-t th{padding:6px 7px;text-align:center;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);background:var(--surface2);border:var(--border)}
+.mx-t{width:100%;border-collapse:collapse;font-size:var(--s-text)}
+.mx-t th{padding:6px 7px;text-align:center;font-size:var(--s-klein);font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);background:var(--surface2);border:var(--border)}
 .mx-t th:first-child{text-align:left;width:195px}
 .mx-t td{border:var(--border);padding:5px 5px;text-align:center;vertical-align:middle}
-.mx-t td.mc{text-align:left;padding:7px 9px;font-size:11.5px;background:var(--surface2);color:var(--text)}
-.mx-t td.mc small{display:block;font-size:10px;color:var(--text3);margin-top:1px}
+.mx-t td.mc{text-align:left;padding:7px 9px;font-size:var(--s-klein);background:var(--surface2);color:var(--text)}
+.mx-t td.mc small{display:block;font-size:var(--s-klein);color:var(--text3);margin-top:1px}
 .mxr{width:17px;height:17px;accent-color:var(--blue);cursor:pointer}
 .mx-t tr:not(.cat-r):hover td.mc{background:#f1f5f9}
 .mx-t tr.mxsel td.mc{background:var(--blue-bg)}
 
 /* FAZIT */
 .fbox{background:linear-gradient(135deg,#eff6ff,#e0e7ff);border:1px solid #a5b4fc;border-radius:var(--rl);padding:16px;margin:14px 0;box-shadow:var(--shadow)}
-.fbox h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#312e81;margin-bottom:10px;display:flex;align-items:center;gap:6px}
-.fta{width:100%;min-height:300px;background:rgba(255,255,255,.65);border:1px solid var(--rand-bedien);border-radius:var(--r);resize:vertical;font-size:12px;line-height:1.85;color:#312e81;font-family:'Inter',sans-serif;outline:none;padding:10px 13px}
+.fbox h3{font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#312e81;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.fta{width:100%;min-height:300px;background:rgba(255,255,255,.65);border:1px solid var(--rand-bedien);border-radius:var(--r);resize:vertical;font-size:var(--s-text);line-height:1.85;color:#312e81;font-family:'Inter',sans-serif;outline:none;padding:10px 13px}
 .prow{display:flex;align-items:center;gap:8px;margin-top:9px}
 .pbar{flex:1;height:5px;background:rgba(255,255,255,.5);border-radius:3px;overflow:hidden}
 .pfill{height:100%;background:var(--blue);border-radius:3px;transition:width .3s}
-.plbl{font-size:11px;color:#312e81;font-weight:600;white-space:nowrap}
+.plbl{font-size:var(--s-klein);color:#312e81;font-weight:600;white-space:nowrap}
 
 /* BUTTONS */
 .brow{display:flex;gap:8px;flex-wrap:wrap;padding:12px 0}
-.btn{padding:9px 16px;font-size:12.5px;font-weight:500;border-radius:var(--r);cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text);transition:all .15s;font-family:inherit;box-shadow:var(--shadow)}
+.btn{padding:9px 16px;font-size:var(--s-text);font-weight:500;border-radius:var(--r);cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text);transition:all .15s;font-family:inherit;box-shadow:var(--shadow)}
 .btn:hover{background:var(--surface2)}
 .btn-p{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 2px 6px rgba(26,86,219,.3)}
 .btn-p:hover{background:var(--blue-dark)}
-.btn-sm{padding:8px 14px;font-size:13px;font-weight:600;box-shadow:none}
+.btn-sm{padding:8px 14px;font-size:var(--s-text);font-weight:600;box-shadow:none}
 /* Taktik-Board: die AKTIVE Spielform klar sichtbar füllen (statt nur dezentem btn-p) */
 .tb-form-btn.btn-p{background:linear-gradient(135deg,#1e3a8a,#2563eb);border-color:transparent;color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.3)}
 .btn-d{background:var(--red-bg);color:var(--red);border-color:var(--red)}.btn-d:hover{background:#fee2e2}
-.status{padding:10px 14px;border-radius:var(--r);font-size:12.5px;margin:6px 0;display:none;font-weight:500}
+.status{padding:10px 14px;border-radius:var(--r);font-size:var(--s-text);margin:6px 0;display:none;font-weight:500}
 .status.show{display:block}
 .s-ok{background:var(--green-bg);color:var(--green);border:1px solid #86efac}
 .s-err{background:var(--red-bg);color:var(--red);border:1px solid #fca5a5}
 .s-info{background:var(--blue-bg);color:#1e40af;border:1px solid #93c5fd}
 
 /* KADER */
-.psel{width:100%;padding:9px 11px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:13px;background:var(--surface);color:var(--text);margin-bottom:1rem;font-family:inherit;box-shadow:var(--shadow)}
-.kader-t{width:100%;border-collapse:collapse;font-size:12px;background:var(--surface);border-radius:var(--rl);overflow:hidden;box-shadow:var(--shadow-md)}
-.kader-t th{padding:8px 10px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);background:var(--surface2);border-bottom:var(--border-s);text-align:left}
+.psel{width:100%;padding:9px 11px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:var(--s-text);background:var(--surface);color:var(--text);margin-bottom:1rem;font-family:inherit;box-shadow:var(--shadow)}
+.kader-t{width:100%;border-collapse:collapse;font-size:var(--s-text);background:var(--surface);border-radius:var(--rl);overflow:hidden;box-shadow:var(--shadow-md)}
+.kader-t th{padding:8px 10px;font-size:var(--s-klein);font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);background:var(--surface2);border-bottom:var(--border-s);text-align:left}
 .kader-t td{padding:9px 10px;border-bottom:var(--border);vertical-align:middle}
 .kader-t tr:last-child td{border-bottom:none}
 .kader-t tr:hover td{background:var(--surface2)}
 /* Am Handy war die Tabelle 664px breit bei 343px Platz – die Aktions-Spalte
    (Bearbeiten/Löschen) lag komplett ausserhalb. Die Detail-Spalten stehen ohnehin
    ausfuehrlicher im Profil, hier bleiben Spieler, Rolle, Gesamt, Potenzial, Aktionen. */
-.kader-hint{display:none;font-size:10.5px;color:var(--text3);margin-top:6px}
+.kader-hint{display:none;font-size:var(--s-klein);color:var(--text3);margin-top:6px}
 @media(max-width:560px){
   .kader-t th:nth-child(3),.kader-t td:nth-child(3),
   .kader-t th:nth-child(4),.kader-t td:nth-child(4),
@@ -262,7 +262,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
   .kader-t th,.kader-t td{padding:9px 6px}
   .kader-hint{display:block}
 }
-.rbadge{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:10px;font-size:10.5px;font-weight:600}
+.rbadge{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:10px;font-size:var(--s-klein);font-weight:600}
 .rb-auf{background:#e8f0fe;color:#1e40af}
 .rb-links{background:#fffbeb;color:#92400e}
 .rb-rechts{background:#f0fdf4;color:#166534}
@@ -270,33 +270,33 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .rb-jaeg{background:#fff7ed;color:#c2410c}
 .rb-tw{background:#fef9c3;color:#854d0e}
 .rb-flex{background:var(--surface2);color:var(--text2)}
-.grp-a{background:#dcfce7;color:#15803d;font-size:10px;padding:2px 7px;border-radius:8px;font-weight:600}
-.grp-b{background:#fef3c7;color:#92400e;font-size:10px;padding:2px 7px;border-radius:8px;font-weight:600}
+.grp-a{background:#dcfce7;color:#15803d;font-size:var(--s-klein);padding:2px 7px;border-radius:8px;font-weight:600}
+.grp-b{background:#fef3c7;color:#92400e;font-size:var(--s-klein);padding:2px 7px;border-radius:8px;font-weight:600}
 .sm{display:flex;gap:2px;margin-top:3px}
 .sm-s{width:11px;height:4px;border-radius:1px;background:#e2e8f0}
 .sm-s.on{background:var(--blue)}
 .frow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-.ftag{padding:8px 16px;border-radius:999px;border:1px solid var(--rand-bedien);font-size:12.5px;font-weight:700;cursor:pointer;background:var(--surface);color:var(--text2);transition:all .15s;font-family:inherit}
+.ftag{padding:8px 16px;border-radius:999px;border:1px solid var(--rand-bedien);font-size:var(--s-text);font-weight:700;cursor:pointer;background:var(--surface);color:var(--text2);transition:all .15s;font-family:inherit}
 .ftag.active{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(37,99,235,.3)}
 
 /* RAUTE MAP */
 .rk-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;max-width:380px;margin:0 auto}
 .rk-pos{padding:10px;border-radius:var(--r);border:var(--border-s);min-height:58px;background:var(--surface)}
-.rk-pos-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
-.rk-player{font-size:11.5px;padding:2px 0;display:flex;align-items:center;gap:4px}
-.rk-empty{font-size:10px;color:var(--text3);font-style:italic}
+.rk-pos-lbl{font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+.rk-player{font-size:var(--s-klein);padding:2px 0;display:flex;align-items:center;gap:4px}
+.rk-empty{font-size:var(--s-klein);color:var(--text3);font-style:italic}
 
 /* PROFIL */
 .player-card{display:flex;align-items:center;gap:12px;padding:14px;border:var(--border-s);border-radius:var(--rl);margin-bottom:12px;background:var(--surface);box-shadow:var(--shadow-md)}
-.av{width:44px;height:44px;border-radius:50%;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:var(--blue);flex-shrink:0}
+.av{width:44px;height:44px;border-radius:50%;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--s-karte);color:var(--blue);flex-shrink:0}
 .av.tw{background:var(--yellow-bg);color:var(--yellow)}
 
 /* PROFIL SUMMARY BOX */
 .summary-box{background:linear-gradient(135deg,#1e3a5f,#1a56db);color:#fff;border-radius:var(--rl);padding:16px;margin-bottom:14px;box-shadow:var(--shadow-md)}
-.summary-box h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;opacity:.7;margin-bottom:8px;display:flex;align-items:center;gap:5px}
-.summary-text{font-size:13px;line-height:1.8;color:rgba(255,255,255,.92)}
+.summary-box h3{font-size:var(--s-klein);font-weight:600;text-transform:uppercase;letter-spacing:.6px;opacity:.7;margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.summary-text{font-size:var(--s-text);line-height:1.8;color:rgba(255,255,255,.92)}
 .summary-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-.stag{font-size:10.5px;padding:3px 9px;border-radius:10px;background:rgba(255,255,255,.15);color:#fff;font-weight:500}
+.stag{font-size:var(--s-klein);padding:3px 9px;border-radius:10px;background:rgba(255,255,255,.15);color:#fff;font-weight:500}
 .stag.pos{background:rgba(134,239,172,.25);color:#bbf7d0}
 .stag.neg{background:rgba(252,165,165,.2);color:#fecaca}
 
@@ -305,27 +305,27 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .rl-item:last-child{border-bottom:none}
 .rl-bw{flex:1;height:5px;background:#e2e8f0;border-radius:3px;overflow:hidden}
 .rl-bf{height:100%;border-radius:3px;transition:width .6s}
-.rl-nm{font-size:11px;color:var(--text2);width:90px;flex-shrink:0;font-weight:500}
-.rl-vl{font-size:13px;font-weight:700;color:var(--text);width:36px;text-align:right}
+.rl-nm{font-size:var(--s-klein);color:var(--text2);width:90px;flex-shrink:0;font-weight:500}
+.rl-vl{font-size:var(--s-text);font-weight:700;color:var(--text);width:36px;text-align:right}
 
 .massnahmen-box{background:var(--surface);border:var(--border-s);border-radius:var(--rl);padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
-.mb-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.mb-title{font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .mb-item{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:var(--border)}
 .mb-item:last-child{border-bottom:none}
 .mb-icon{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
-.mb-text{font-size:12px;line-height:1.6;color:var(--text)}
-.mb-text strong{display:block;font-weight:600;font-size:12.5px;color:var(--text);margin-bottom:1px}
+.mb-text{font-size:var(--s-text);line-height:1.6;color:var(--text)}
+.mb-text strong{display:block;font-weight:600;font-size:var(--s-text);color:var(--text);margin-bottom:1px}
 
 .detail-box{background:var(--surface2);border:var(--border);border-radius:var(--r);padding:14px;margin-bottom:12px}
-.detail-box-title{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text2);margin-bottom:8px}
-.fazit-display{font-size:12px;line-height:1.85;white-space:pre-wrap;color:var(--text)}
+.detail-box-title{font-size:var(--s-klein);font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text2);margin-bottom:8px}
+.fazit-display{font-size:var(--s-text);line-height:1.85;white-space:pre-wrap;color:var(--text)}
 
 .hi{padding:11px 13px;border:var(--border);border-radius:var(--r);margin-bottom:8px;background:var(--surface)}
 .hs{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
-.hp{font-size:10.5px;padding:2px 8px;border-radius:10px;background:var(--surface2);color:var(--text2);border:var(--border)}
-.dp{color:#16a34a;font-size:9.5px;font-weight:700}.dn{color:#dc2626;font-size:9.5px;font-weight:700}
+.hp{font-size:var(--s-klein);padding:2px 8px;border-radius:10px;background:var(--surface2);color:var(--text2);border:var(--border)}
+.dp{color:#16a34a;font-size:var(--s-klein);font-weight:700}.dn{color:#dc2626;font-size:var(--s-klein);font-weight:700}
 .delta-box{padding:10px 12px;border-radius:var(--r);margin-bottom:12px;background:var(--surface);border:var(--border)}
-.empty{text-align:center;padding:3rem 1rem;color:var(--text2);font-size:13px}
+.empty{text-align:center;padding:3rem 1rem;color:var(--text2);font-size:var(--s-text)}
 .empty i{font-size:42px;display:block;margin-bottom:1rem;opacity:.25}
 
 @media(max-width:680px){
@@ -350,24 +350,24 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
   .tier-t tr{margin-bottom:8px;border:var(--border);border-radius:var(--r);overflow:hidden}
   .tier-t td.cn{padding:8px 10px;border-bottom:var(--border);border-right:none}
   .tier-t td:not(.cn){border:none;padding:0}
-  .topt label{padding:8px 10px;font-size:12px}
-  .ltitle{font-size:12px}
-  .ldesc{font-size:10.5px}
+  .topt label{padding:8px 10px;font-size:var(--s-text)}
+  .ltitle{font-size:var(--s-text)}
+  .ldesc{font-size:var(--s-klein)}
 
   /* Matrix-Tabellen: horizontal scrollbar */
   .mx-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;padding:0 4px}
-  .mx-t{min-width:420px;font-size:11.5px}
-  .mx-t th:first-child{width:160px;font-size:9px}
-  .mx-t td.mc{font-size:11px;padding:6px 8px}
-  .mx-t td.mc small{font-size:9.5px}
-  .mx-t th{padding:5px 6px;font-size:9px}
+  .mx-t{min-width:420px;font-size:var(--s-klein)}
+  .mx-t th:first-child{width:160px;font-size:var(--s-klein)}
+  .mx-t td.mc{font-size:var(--s-klein);padding:6px 8px}
+  .mx-t td.mc small{font-size:var(--s-klein)}
+  .mx-t th{padding:5px 6px;font-size:var(--s-klein)}
   .mx-t td{padding:4px 5px}
   .mxr{width:20px;height:20px}
 
   /* Dim blocks kompakter */
   .dim-head{padding:10px 12px}
-  .dim-ht{font-size:12px}
-  .dim-hs{font-size:10px}
+  .dim-ht{font-size:var(--s-text)}
+  .dim-hs{font-size:var(--s-klein)}
   .dim-body{padding:10px}
 
   /* Live panel: radar full width */
@@ -384,7 +384,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
   .kader-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 
   /* Fazit textarea kleiner */
-  .fta{min-height:220px;font-size:11.5px}
+  .fta{min-height:220px;font-size:var(--s-klein)}
 
   /* Raute map */
   .rk-grid{max-width:100%}
@@ -394,31 +394,31 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
   .radar-profil-wrap{grid-template-columns:1fr}
 
   /* Summary box */
-  .summary-text{font-size:12px}
+  .summary-text{font-size:var(--s-text)}
   .summary-tags{gap:4px}
-  .stag{font-size:10px;padding:2px 7px}
+  .stag{font-size:var(--s-klein);padding:2px 7px}
 
   /* Massnahmen */
-  .mb-text{font-size:11.5px}
-  .mb-text strong{font-size:12px}
+  .mb-text{font-size:var(--s-klein)}
+  .mb-text strong{font-size:var(--s-text)}
 
   /* Nav labels kürzer */
-  .nb{font-size:11px;padding:8px 2px}
-  .nb i{font-size:14px}
+  .nb{font-size:var(--s-klein);padding:8px 2px}
+  .nb i{font-size:var(--s-karte)}
 }
 
 @media(max-width:420px){
   .mgrid{grid-template-columns:1fr}
   .s2,.s3{grid-column:span 1}
-  .tier-t td.cn{font-size:11.5px}
+  .tier-t td.cn{font-size:var(--s-klein)}
   .frow{gap:6px}
-  .ftag{padding:7px 12px;font-size:12px}
+  .ftag{padding:7px 12px;font-size:var(--s-text)}
 }
 
 /* SUB-TABS (Training) */
 /* PO: die Reiter sollen sich wie die Kacheln anfassen – größer, fetter, Familienfarbe
    (die Farbe setzt renderSubbar inline je Tab-Familie). */
-.sub-tab{flex:1 0 auto;min-height:44px;padding:8px 6px;border:none;background:transparent;border-radius:10px;cursor:pointer;font-size:13px;font-weight:800;color:var(--text2);display:flex;align-items:center;justify-content:center;gap:5px;font-family:inherit;white-space:nowrap}
+.sub-tab{flex:1 0 auto;min-height:44px;padding:8px 6px;border:none;background:transparent;border-radius:10px;cursor:pointer;font-size:var(--s-text);font-weight:800;color:var(--text2);display:flex;align-items:center;justify-content:center;gap:5px;font-family:inherit;white-space:nowrap}
 .sub-tab.active{background:var(--blue);color:#fff}
 /* v553: Mit der Übersicht ist Team auf fünf Reiter gewachsen, und „Entwicklung" wurde am
    Rand abgeschnitten. Die Beschriftungen tragen white-space:nowrap – sie können also nicht
@@ -427,13 +427,13 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
    Damit ist sie auch auf schmalen Geräten vollständig, nicht nur bei vier Reitern. */
 #tab-subbar{overflow-x:auto;scrollbar-width:none}
 #tab-subbar::-webkit-scrollbar{display:none}
-.sub-tab i{font-size:16px}
+.sub-tab i{font-size:var(--s-karte)}
 @keyframes ptrspin{to{transform:rotate(360deg)}}
 .ptr-spin{animation:ptrspin .8s linear infinite}
 .train-sub{display:none}.train-sub.active{display:block}
 
 /* ANWESENHEIT */
-.aw-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:var(--border);font-size:13px}
+.aw-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:var(--border);font-size:var(--s-text)}
 .aw-row:last-child{border-bottom:none}
 .aw-name{flex:1;font-weight:600;color:var(--text)}
 .aw-toggle{width:52px;height:28px;border-radius:14px;background:#7c8ba1;border:none;cursor:pointer;position:relative;transition:background .2s}
@@ -441,32 +441,32 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .aw-toggle::after{content:'';position:absolute;width:24px;height:24px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 .aw-toggle.on::after{left:26px}
 .aw-qual{display:flex;gap:2px}
-.aw-star{width:24px;height:24px;border:none;background:none;cursor:pointer;font-size:16px;color:#7c8ba1;transition:color .15s}
+.aw-star{width:24px;height:24px;border:none;background:none;cursor:pointer;font-size:var(--s-karte);color:#7c8ba1;transition:color .15s}
 .aw-star.on{color:#f59e0b}
 
 /* TRAININGSPLANUNG */
 /* .tp-check-Optik lebt jetzt als 🧢-Chip am Dateiende (PO-Look-&-Feel) */
 .tp-slot{background:var(--surface);border:var(--border-s);border-radius:var(--rl);padding:10px 12px;margin-bottom:8px}
-.tp-slot-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px}
+.tp-slot-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:var(--s-text)}
 .tp-slot-label{font-weight:700;color:var(--text)}
-.tp-slot-time{color:var(--text2);font-size:11px}
-.tp-slot select{padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:12px;background:var(--surface);font-family:inherit;flex:1}
+.tp-slot-time{color:var(--text2);font-size:var(--s-klein)}
+.tp-slot select{padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:var(--s-text);background:var(--surface);font-family:inherit;flex:1}
 
 /* Eine Karte je Station: wer, welche Kategorie, welche Übung – untereinander statt
    in einer Zeile, die am Handy in fünf Teile zerbricht. */
 .tp-station{background:var(--surface2);border:var(--border-s);border-radius:var(--r);padding:10px;margin-top:8px}
 .tp-station-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.tp-station-nr{width:26px;height:26px;flex:none;border-radius:50%;background:var(--blue);color:#fff;font-size:12px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
-.tp-station-titel{flex:1;font-size:12.5px;font-weight:700;color:var(--text)}
+.tp-station-nr{width:26px;height:26px;flex:none;border-radius:50%;background:var(--blue);color:#fff;font-size:var(--s-text);font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+.tp-station-titel{flex:1;font-size:var(--s-text);font-weight:700;color:var(--text)}
 .tp-station .tp-coach-sel{flex:none;max-width:46%}
 .tp-feld{margin-bottom:8px}
-.tp-feld>label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);margin-bottom:3px}
+.tp-feld>label{display:block;font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);margin-bottom:3px}
 .tp-feld select{width:100%}
 .tp-feld-zeile{display:flex;align-items:center;gap:6px}
 .tp-feld-zeile select{flex:1;min-width:0}
-.tp-info{flex:none;background:none;border:1px solid var(--rand-bedien);cursor:pointer;font-size:15px}
+.tp-info{flex:none;background:none;border:1px solid var(--rand-bedien);cursor:pointer;font-size:var(--s-karte)}
 .tp-info:hover{background:var(--surface)}
-.tp-slot .tp-remove{border:none;background:none;color:#dc2626;cursor:pointer;font-size:14px;padding:2px}
+.tp-slot .tp-remove{border:none;background:none;color:#dc2626;cursor:pointer;font-size:var(--s-karte);padding:2px}
 
 /* TAKTIK BOARD */
 .tb-wrap{position:relative;width:100%;max-width:400px;margin:0 auto}
@@ -474,9 +474,9 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .tb-field svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .tb-token{position:absolute;width:44px;height:44px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:grab;z-index:10;transform:translate(-50%,-50%);box-shadow:0 2px 8px rgba(0,0,0,.35);border:2.5px solid rgba(255,255,255,.9);transition:box-shadow .15s}
 .tb-token:active{cursor:grabbing;box-shadow:0 4px 16px rgba(0,0,0,.5);z-index:20}
-.tb-token .tb-name{font-size:9px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5);line-height:1;pointer-events:none}
-.tb-token .tb-pos{font-size:7px;color:rgba(255,255,255,.8);pointer-events:none}
-.tb-token .tb-nr{font-size:8px;color:rgba(255,255,255,.65);line-height:1;pointer-events:none} /* L1 */
+.tb-token .tb-name{font-size:var(--s-klein);font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5);line-height:1;pointer-events:none}
+.tb-token .tb-pos{font-size:var(--s-klein);color:rgba(255,255,255,.8);pointer-events:none}
+.tb-token .tb-nr{font-size:var(--s-klein);color:rgba(255,255,255,.65);line-height:1;pointer-events:none} /* L1 */
 .tb-token.tb-tw{background:#854d0e}
 .tb-token.tb-auf{background:#1a56db}
 .tb-token.tb-fl{background:#059669}
@@ -484,8 +484,8 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .tb-token.tb-frei{background:#475569}
 .tb-token.tb-bench{background:#64748b}
 .tb-token.tb-opp{background:#dc2626;border-color:rgba(255,255,255,.6);opacity:.75;cursor:default;pointer-events:none;width:auto;min-width:44px;padding:0 6px;border-radius:22px}
-.tb-token.tb-opp .tb-name{font-size:8px;white-space:nowrap}
-.tb-opp-label{font-size:7px;color:rgba(255,255,255,.8)}
+.tb-token.tb-opp .tb-name{font-size:var(--s-klein);white-space:nowrap}
+.tb-opp-label{font-size:var(--s-klein);color:rgba(255,255,255,.8)}
 @keyframes tqBallMove{from{left:var(--bfx);top:var(--bfy)}to{left:var(--btx);top:var(--bty)}}
 @keyframes tqTokenMove{from{left:var(--sfx);top:var(--sfy)}to{left:var(--stx);top:var(--sty)}}
 .tq-anim-ball{animation:tqBallMove .8s ease-out forwards}
@@ -494,7 +494,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .tb-bench-area .tb-token{position:relative;transform:none;cursor:grab}
 
 .tb-token:not(.tb-opp):not(.tb-ball):not(.tb-bench){width:auto;min-width:44px;padding:0 6px;border-radius:22px}
-.tb-token:not(.tb-opp):not(.tb-ball):not(.tb-bench) .tb-name{font-size:8px;white-space:nowrap}
+.tb-token:not(.tb-opp):not(.tb-ball):not(.tb-bench) .tb-name{font-size:var(--s-klein);white-space:nowrap}
 
 /* ── Taktikboard Pro-Mode (17.4): am Tablet Feld + feste Auswechselbank nebeneinander ──
    Nur Trainer-App (nicht im Kinder-Quiz), erst ab Tablet-Breite. Die Bank-Kacheln lassen
@@ -511,15 +511,15 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
    Die Spielformen sind gleich breite Kacheln (zwei je Zeile am Handy, vier ab Tablet),
    damit die Reihe nicht mehr zerfranst. Geometrie hier, nicht als style= im HTML. */
 .tb-kopf{padding:10px 12px;margin-bottom:10px}
-.tb-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:0 2px 5px}
+.tb-lbl{font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:0 2px 5px}
 .tb-lbl+*{margin-bottom:9px}
 .tb-formen{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .tb-formen .btn{width:100%;justify-content:center}
 .tb-reihe{display:flex;gap:6px;flex-wrap:wrap}
 .tb-reihe .btn{flex:1 1 auto;justify-content:center}
-.tb-mehr>summary{list-style:none;cursor:pointer;min-height:44px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--text2)}
+.tb-mehr>summary{list-style:none;cursor:pointer;min-height:44px;display:flex;align-items:center;gap:6px;font-size:var(--s-text);font-weight:700;color:var(--text2)}
 .tb-mehr>summary::-webkit-details-marker{display:none}
-.tb-mehr>summary::before{content:"⌄";font-size:15px;line-height:1;transition:transform .15s}
+.tb-mehr>summary::before{content:"⌄";font-size:var(--s-karte);line-height:1;transition:transform .15s}
 .tb-mehr[open]>summary::before{transform:rotate(180deg)}
 .tb-mehr>summary:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:8px}
 .tb-mehr .tb-reihe{margin-bottom:2px}
@@ -535,10 +535,10 @@ body.taktik-pro #tb-pro-exit{display:flex}
 body.taktik-pro #view-taktik{position:fixed;inset:0;z-index:9000;background:var(--bg);overflow:auto;padding:8px 12px 16px;margin:0}
 body.taktik-pro #view-taktik .tb-wrap{max-width:none;display:block}
 body.taktik-pro #view-taktik .tb-field{width:100%;height:auto;background:#1f8a2e}
-body.taktik-pro #view-taktik .tb-side .tb-bench-label{margin-top:10px;font-size:12px}
+body.taktik-pro #view-taktik .tb-side .tb-bench-label{margin-top:10px;font-size:var(--s-text)}
 body.taktik-pro #view-taktik .tb-side .tb-bench-area{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;gap:8px;padding-bottom:4px}
 body.taktik-pro #view-taktik .tb-token{height:52px}
-body.taktik-pro #view-taktik .tb-token .tb-name{font-size:11px}
+body.taktik-pro #view-taktik .tb-token .tb-name{font-size:var(--s-klein)}
 body.taktik-pro #view-taktik .tb-bench-area .tb-token{width:52px;height:52px;flex:none}
 @media(min-width:768px){
   body.taktik-pro #view-taktik .tb-wrap{display:grid;grid-template-columns:minmax(0,1fr) 240px;column-gap:18px;align-items:start}
@@ -568,7 +568,7 @@ body.taktik-pro #view-taktik .tb-bench-area .tb-token{width:52px;height:52px;fle
 .tq-tutorial .tut-text{color:#fff;font-size:14px;font-weight:600;line-height:1.6}
 /* K5: gesperrte Tokens */
 .quiz-mode .tb-token.tq-locked{filter:grayscale(.6)}
-.tb-lock-badge{position:absolute;top:-6px;right:-6px;font-size:10px;pointer-events:none}
+.tb-lock-badge{position:absolute;top:-6px;right:-6px;font-size:var(--s-klein);pointer-events:none}
 /* K6: Sticky Aufgaben-Chip */
 #tq-task-chip{position:sticky;top:0;z-index:30;background:#1e293b;color:#fff;font-size:12.5px;font-weight:600;line-height:1.4;padding:8px 12px;border-radius:var(--r);margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 /* K7: Belohnungs-Puls */
@@ -592,17 +592,17 @@ body.wq-active .tb-wrap{display:none}
 /* Kinder-Quiz-App: Taktikfeld nur zeigen, wenn ein Szenario läuft (tq-playing) – sonst aufgeräumte Auswahl */
 body.quiz-extern .tb-wrap{display:none}
 body.quiz-extern.tq-playing .tb-wrap{display:block}
-.wq-question{font-size:17px;font-weight:800;line-height:1.35;color:var(--text);margin-top:4px}
+.wq-question{font-size:var(--s-teil);font-weight:800;line-height:1.35;color:var(--text);margin-top:4px}
 .wq-opts{display:flex;flex-direction:column;gap:8px;margin-top:12px}
-.wq-opt{min-height:52px;padding:12px 14px;border:var(--border-s);border-radius:12px;background:var(--surface);font-family:inherit;font-size:14px;font-weight:600;color:var(--text);text-align:left;cursor:pointer;transition:transform .08s,background .15s,border-color .15s}
+.wq-opt{min-height:52px;padding:12px 14px;border:var(--border-s);border-radius:12px;background:var(--surface);font-family:inherit;font-size:var(--s-karte);font-weight:600;color:var(--text);text-align:left;cursor:pointer;transition:transform .08s,background .15s,border-color .15s}
 .wq-opt:active{transform:scale(.98)}
 .wq-opt.wq-correct{background:#dcfce7;border-color:#16a34a;color:#15803d}
 .wq-opt.wq-wrong{background:#fef2f2;border-color:#dc2626;color:#b91c1c}
-.wq-fb{margin-top:12px;padding:12px;border-radius:12px;font-size:13px;line-height:1.4;font-weight:700}
+.wq-fb{margin-top:12px;padding:12px;border-radius:12px;font-size:var(--s-text);line-height:1.4;font-weight:700}
 .wq-fb span{display:block;margin-top:4px;font-weight:600;opacity:.9}
 .wq-fb-ok{background:#f0fdf4;color:#166534}
 .wq-fb-no{background:#fffbeb;color:#92400e}
-.wq-federn{margin-top:2px;margin-bottom:6px;font-weight:800;color:#b45309;font-size:15px;text-align:center}
+.wq-federn{margin-top:2px;margin-bottom:6px;font-weight:800;color:#b45309;font-size:var(--s-karte);text-align:center}
 .tq-block-done .tq-block-title::after{content:" ✅";font-size:11px}
 .tq-player-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;margin:10px 0}
 .tq-player-btn{background:var(--surface);border:2px solid var(--border);border-radius:var(--rl);padding:10px 8px;text-align:center;cursor:pointer;transition:all .15s;font-family:inherit;width:100%;display:block;color:var(--text)}
@@ -626,18 +626,18 @@ body.quiz-extern #view-taktik>#tq-panel{display:block!important}
    (oben aus der nicht-Feld-Regel ausgenommen) hält die Aufgabe beim Scrollen sichtbar. */
 body.quiz-extern.tq-playing #view-taktik>.tb-wrap{display:block!important}
 .tb-role-labels{position:absolute;inset:0;pointer-events:none;z-index:5}
-.tb-role-lbl{position:absolute;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.45);transform:translate(-50%,-50%);pointer-events:none}
+.tb-role-lbl{position:absolute;font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.45);transform:translate(-50%,-50%);pointer-events:none}
 
 /* KOMBI */
 .kombi-aufstellung{background:var(--surface);border:var(--border-s);border-radius:var(--rl);padding:14px;margin-bottom:12px;box-shadow:var(--shadow-md)}
-.kombi-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:8px}
-.kombi-score{font-size:22px;font-weight:700;color:var(--blue)}
-.kombi-sub{font-size:11px;color:var(--text2);margin-bottom:12px}
+.kombi-title{font-size:var(--s-text);font-weight:700;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.kombi-score{font-size:var(--s-seite);font-weight:700;color:var(--blue)}
+.kombi-sub{font-size:var(--s-klein);color:var(--text2);margin-bottom:12px}
 .kombi-raute{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;max-width:340px;margin:0 auto 12px}
 .kpos{padding:10px 8px;border-radius:var(--r);text-align:center;border:1.5px solid #e2e8f0}
-.kpos-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
-.kpos-name{font-size:13px;font-weight:700}
-.kpos-score{font-size:10px;margin-top:2px}
+.kpos-lbl{font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.kpos-name{font-size:var(--s-text);font-weight:700}
+.kpos-score{font-size:var(--s-klein);margin-top:2px}
 .kpos-tw{border-color:#854d0e;background:#fef9c3}
 .kpos-tw .kpos-lbl{color:#854d0e}
 .kpos-auf{border-color:#1a56db;background:#e8f0fe}
@@ -648,34 +648,34 @@ body.quiz-extern.tq-playing #view-taktik>.tb-wrap{display:block!important}
 .kpos-fl-r .kpos-lbl{color:#15803d}
 .kpos-jaeg{border-color:#c2410c;background:#fff7ed}
 .kpos-jaeg .kpos-lbl{color:#c2410c}
-.kombi-insights{font-size:12px;line-height:1.7;color:var(--text)}
+.kombi-insights{font-size:var(--s-text);line-height:1.7;color:var(--text)}
 .kombi-insight-row{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:var(--border)}
 .kombi-insight-row:last-child{border-bottom:none}
-.ci-icon{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-size:11px}
+.ci-icon{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-size:var(--s-klein)}
 .ci-pos{background:#dcfce7;color:#15803d}
 .ci-warn{background:#fef3c7;color:#92400e}
 .ci-info{background:#e8f0fe;color:#1e40af}
 .alt-combos{margin-top:12px}
-.alt-title{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px}
+.alt-title{font-size:var(--s-klein);font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px}
 .alt-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border:var(--border);border-radius:var(--r);margin-bottom:6px;background:var(--surface);cursor:pointer;transition:background .1s}
 .alt-item:hover{background:var(--surface2)}
-.alt-score{font-size:13px;font-weight:700;color:var(--blue);width:40px}
-.alt-names{font-size:12px;color:var(--text);flex:1}
-.alt-tag{font-size:10px;padding:2px 7px;border-radius:8px;background:var(--surface2);color:var(--text2)}
+.alt-score{font-size:var(--s-text);font-weight:700;color:var(--blue);width:40px}
+.alt-names{font-size:var(--s-text);color:var(--text);flex:1}
+.alt-tag{font-size:var(--s-klein);padding:2px 7px;border-radius:8px;background:var(--surface2);color:var(--text2)}
 
 /* Scroll hint for matrix */
 .mx-scroll-hint{display:none}
 @media(max-width:768px){
-  .mx-scroll-hint{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text3);margin-bottom:4px;font-style:italic}
+  .mx-scroll-hint{display:flex;align-items:center;gap:4px;font-size:var(--s-klein);color:var(--text3);margin-bottom:4px;font-style:italic}
 }
 
 
 /* ════════════════════════
    PRINT / PDF STYLES
 ════════════════════════ */
-.print-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#f1f5f9;border:var(--border-s);border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;color:var(--text);font-family:inherit;transition:all .15s;margin-bottom:1rem}
+.print-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#f1f5f9;border:var(--border-s);border-radius:var(--r);font-size:var(--s-text);font-weight:500;cursor:pointer;color:var(--text);font-family:inherit;transition:all .15s;margin-bottom:1rem}
 .print-btn:hover{background:#e2e8f0}
-.print-btn i{font-size:14px;color:var(--text2)}
+.print-btn i{font-size:var(--s-karte);color:var(--text2)}
 
 @media print{
   body{background:#fff!important;font-size:11pt;color:#000}
@@ -709,22 +709,22 @@ h1.print-header{display:none}
 .zert-card{max-width:640px;margin:0 auto;border:3px solid #1a56db;border-radius:14px;padding:32px 34px;text-align:center;color:#0f172a;font-family:'Inter',system-ui,sans-serif;background:#fff;position:relative}
 .zert-card::after{content:"";position:absolute;inset:8px;border:1px solid #cbd5e1;border-radius:9px;pointer-events:none}
 .zert-crest img{height:74px;width:auto}
-.zert-club{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#1a56db;font-weight:700;margin-top:6px}
+.zert-club{font-size:var(--s-text);letter-spacing:1px;text-transform:uppercase;color:#1a56db;font-weight:700;margin-top:6px}
 .zert-title{font-size:30px;font-weight:800;margin-top:14px;letter-spacing:.5px}
-.zert-season{font-size:13px;color:#64748b;margin-top:2px}
-.zert-for{margin-top:20px;font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:2px}
+.zert-season{font-size:var(--s-text);color:#64748b;margin-top:2px}
+.zert-for{margin-top:20px;font-size:var(--s-text);color:#64748b;text-transform:uppercase;letter-spacing:2px}
 .zert-name{font-size:34px;font-weight:800;color:#1a56db;margin:4px 0 2px}
-.zert-role{font-size:13px;color:#334155;font-weight:600}
-.zert-text{font-size:13.5px;line-height:1.6;color:#334155;margin:16px auto 4px;max-width:480px}
+.zert-role{font-size:var(--s-text);color:#334155;font-weight:600}
+.zert-text{font-size:var(--s-text);line-height:1.6;color:#334155;margin:16px auto 4px;max-width:480px}
 .zert-staerken{margin:18px auto 6px;max-width:440px;text-align:left}
-.zert-staerken .zt-h{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#1a56db;font-weight:700;margin-bottom:6px;text-align:center}
-.zert-staerken .zt-i{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#0f172a;margin:5px 0;line-height:1.4}
-.zert-staerken .zt-i b{color:#15803d;font-size:15px;line-height:1}
+.zert-staerken .zt-h{font-size:var(--s-klein);text-transform:uppercase;letter-spacing:1px;color:#1a56db;font-weight:700;margin-bottom:6px;text-align:center}
+.zert-staerken .zt-i{display:flex;align-items:flex-start;gap:8px;font-size:var(--s-text);color:#0f172a;margin:5px 0;line-height:1.4}
+.zert-staerken .zt-i b{color:#15803d;font-size:var(--s-karte);line-height:1}
 .zert-badges{margin-top:14px;display:flex;justify-content:center;gap:22px}
-.zert-badges .zb{font-size:12px;color:#64748b}
-.zert-badges .zb b{display:block;font-size:20px;color:#1a56db;font-weight:800}
+.zert-badges .zb{font-size:var(--s-text);color:#64748b}
+.zert-badges .zb b{display:block;font-size:var(--s-teil);color:#1a56db;font-weight:800}
 .zert-sign{display:flex;justify-content:space-between;margin-top:28px;padding-top:6px;gap:20px}
-.zert-sign>div{flex:1;border-top:1px solid #334155;padding-top:5px;font-size:11px;color:#64748b}
+.zert-sign>div{flex:1;border-top:1px solid #334155;padding-top:5px;font-size:var(--s-klein);color:#64748b}
 /* ── Sammelalbum: Raritäten-Sticker mit Foil-Schimmer (Optik an FUT-2.0-Holo angelehnt) ── */
 @keyframes kabFoil{0%{background-position:130% 0}100%{background-position:-40% 0}}
 .kab-st{position:relative;overflow:hidden}
@@ -756,7 +756,7 @@ h1.print-header{display:none}
 
 .tf-card{background:var(--surface);border:var(--border);border-radius:var(--rl);margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow)}
 .tf-head{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;user-select:none}
-.tf-cat-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;white-space:nowrap}
+.tf-cat-badge{font-size:var(--s-klein);font-weight:700;padding:3px 9px;border-radius:10px;white-space:nowrap}
 .tf-cat-raute{background:#e8f0fe;color:#1e40af}.tf-cat-passspiel{background:#f0fdf4;color:#15803d}
 .tf-cat-wahrnehmung{background:#f5f3ff;color:#6d28d9}.tf-cat-technik{background:#fff7ed;color:#c2410c}
 .tf-cat-pressing{background:#fef2f2;color:#991b1b}.tf-cat-spass{background:#fef9c3;color:#854d0e}
@@ -777,25 +777,25 @@ h1.print-header{display:none}
 #dims-wrap.wiz-active .dim-block.wiz-current{display:block}
 /* H6: neue Team-/Plan-Bedienelemente mindestens 44px hoch */
 #train-sub-team .btn,#train-sub-team select,#train-sub-team input[type="text"]{min-height:44px}
-#train-sub-team select{padding:10px 12px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:13px;font-family:inherit;background:var(--surface);outline:none}
+#train-sub-team select{padding:10px 12px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:var(--s-text);font-family:inherit;background:var(--surface);outline:none}
 #train-sub-planung button[onclick="tpPlanSave()"],#train-sub-planung button[onclick="tpPlanLoad()"],#train-sub-planung button[onclick="tpShareEinheit()"]{min-height:44px}
-.tf-title{font-size:13px;font-weight:600;color:var(--text);flex:1}
+.tf-title{font-size:var(--s-text);font-weight:600;color:var(--text);flex:1}
 .tf-meta{display:flex;gap:8px;margin-top:3px;flex-wrap:wrap}
-.tf-meta-item{font-size:10.5px;color:var(--text2)}
+.tf-meta-item{font-size:var(--s-klein);color:var(--text2)}
 .tf-body{padding:14px;border-top:var(--border);background:var(--surface2);display:none}
 .tf-body.open{display:block}
 .tf-section{margin-bottom:10px}
-.tf-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px}
-.tf-section-text{font-size:12.5px;line-height:1.7;color:var(--text)}
-.tf-focus-badge{font-size:10.5px;padding:3px 9px;border-radius:8px;background:var(--orange-bg);color:var(--orange);font-weight:600}
-.tf-diff-badge{font-size:10px;padding:2px 7px;border-radius:8px;font-weight:500}
+.tf-section-title{font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px}
+.tf-section-text{font-size:var(--s-text);line-height:1.7;color:var(--text)}
+.tf-focus-badge{font-size:var(--s-klein);padding:3px 9px;border-radius:8px;background:var(--orange-bg);color:var(--orange);font-weight:600}
+.tf-diff-badge{font-size:var(--s-klein);padding:2px 7px;border-radius:8px;font-weight:500}
 .tf-diff-1{background:#dcfce7;color:#15803d}.tf-diff-2{background:#fef3c7;color:#92400e}.tf-diff-3{background:#fee2e2;color:#991b1b}
 /* SEGMENTED CONTROLS */
 .seg-ctrl{display:flex;gap:0;border:var(--border-s);border-radius:var(--r);overflow:hidden;background:var(--surface2)}
-.seg-btn{flex:1;padding:10px 6px;border:none;background:transparent;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--text2);transition:all .15s;line-height:1.3;text-align:center}
+.seg-btn{flex:1;padding:10px 6px;border:none;background:transparent;font-size:var(--s-text);font-weight:700;cursor:pointer;font-family:inherit;color:var(--text2);transition:all .15s;line-height:1.3;text-align:center}
 .seg-btn.active{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;box-shadow:0 1px 4px rgba(37,99,235,.3)}
 .seg-btn:not(:last-child){border-right:var(--border)}
-@media(max-width:420px){.seg-btn{font-size:10px;padding:8px 4px}}
+@media(max-width:420px){.seg-btn{font-size:var(--s-klein);padding:8px 4px}}
 /* v529: Fuenf Terminarten passen auf dem Handy nicht mehr in eine Reihe – der fuenfte
    Knopf wurde von overflow:hidden abgeschnitten. Die Typ-Reihe darf deshalb umbrechen:
    drei oben, zwei unten, jeder Knopf bleibt lesbar und 44 px hoch. */
@@ -838,13 +838,13 @@ h1.print-header{display:none}
 .tm-kopf{display:flex;align-items:center;gap:11px;margin-bottom:12px;padding:10px 12px;
   background:var(--tm-akzent-bg);border-left:4px solid var(--tm-akzent);border-radius:12px}
 .tm-kopf-icon{width:38px;height:38px;flex:none;border-radius:11px;background:var(--tm-akzent);
-  display:flex;align-items:center;justify-content:center;font-size:19px}
-.tm-kopf-t{font-size:15.5px;font-weight:800;line-height:1.2;color:var(--text)}
-.tm-kopf-s{font-size:11.5px;color:var(--text2);margin-top:1px}
+  display:flex;align-items:center;justify-content:center;font-size:var(--s-teil)}
+.tm-kopf-t{font-size:var(--s-karte);font-weight:800;line-height:1.2;color:var(--text)}
+.tm-kopf-s{font-size:var(--s-klein);color:var(--text2);margin-top:1px}
 /* Gliederung: drei Bloecke statt einer langen Reihe. Die Trennlinie sitzt oben,
    damit der erste Block direkt unter dem Umschalter beginnt. */
 .tm-block{margin-top:14px;padding-top:12px;border-top:var(--border)}
-.tm-block-t{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;
+.tm-block-t{font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.7px;
   color:var(--tm-akzent-text);margin-bottom:8px}
 /* Einheitlicher Radius und 44 px auch fuer Text-Felder und Auswahlen – die globale
    Regel weiter unten deckt nur date/time ab. */
@@ -853,7 +853,7 @@ h1.print-header{display:none}
 .tm-finden{min-height:44px;flex:none;white-space:nowrap}
 /* Hauptaktion: volle Breite, mittig, in der Farbe des gewaehlten Typs */
 .tm-karte .btn-p.tm-haupt{width:100%;justify-content:center;min-height:52px;margin-top:16px;
-  font-size:14.5px;font-weight:800;background:var(--tm-akzent);border-color:var(--tm-akzent);
+  font-size:var(--s-karte);font-weight:800;background:var(--tm-akzent);border-color:var(--tm-akzent);
   box-shadow:0 2px 8px rgba(0,0,0,.18)}
 .tm-karte .btn-p.tm-haupt:hover{filter:brightness(1.08);background:var(--tm-akzent)}
 
@@ -861,25 +861,25 @@ h1.print-header{display:none}
 .pin-gate{position:fixed;inset:0;background:linear-gradient(135deg,#1a56db 0%,#1447b8 100%);z-index:10000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;color:#fff;font-family:'Inter',sans-serif}
 .pin-gate.hidden{display:none}
 .pin-box{background:rgba(255,255,255,.12);border-radius:16px;padding:28px 24px;text-align:center;width:280px;backdrop-filter:blur(8px)}
-.pin-box h2{font-size:18px;font-weight:700;margin-bottom:4px}
-.pin-box p{font-size:12px;opacity:.8;margin-bottom:16px}
+.pin-box h2{font-size:var(--s-teil);font-weight:700;margin-bottom:4px}
+.pin-box p{font-size:var(--s-text);opacity:.8;margin-bottom:16px}
 .pin-input{display:flex;gap:8px;justify-content:center;margin-bottom:16px}
-.pin-input input{width:44px;height:52px;text-align:center;font-size:22px;font-weight:700;border:2px solid rgba(255,255,255,.66);border-radius:10px;background:rgba(255,255,255,.1);color:#fff;outline:none;font-family:inherit;-webkit-text-security:disc}
+.pin-input input{width:44px;height:52px;text-align:center;font-size:var(--s-seite);font-weight:700;border:2px solid rgba(255,255,255,.66);border-radius:10px;background:rgba(255,255,255,.1);color:#fff;outline:none;font-family:inherit;-webkit-text-security:disc}
 .pin-input input:focus{border-color:#fff;background:rgba(255,255,255,.2)}
-.pin-err{font-size:11px;color:#fca5a5;min-height:16px;margin-bottom:8px}
-.pin-btn{width:100%;padding:12px;border:none;border-radius:10px;background:#fff;color:#1a56db;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.pin-err{font-size:var(--s-klein);color:#fca5a5;min-height:16px;margin-bottom:8px}
+.pin-btn{width:100%;padding:12px;border:none;border-radius:10px;background:#fff;color:#1a56db;font-size:var(--s-karte);font-weight:700;cursor:pointer;font-family:inherit}
 
 /* TRAINING BEWERTUNG */
 .tb-eval{background:var(--surface);border:var(--border-s);border-radius:var(--rl);padding:12px;margin-bottom:8px}
-.tb-eval-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;font-weight:600}
-.tb-eval-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px}
+.tb-eval-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:var(--s-text);font-weight:600}
+.tb-eval-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:var(--s-text)}
 .tb-eval-label{flex:1;color:var(--text2)}
 .tb-eval-stars{display:flex;gap:2px}
-.tb-eval-star{width:22px;height:22px;border:none;background:none;cursor:pointer;font-size:15px;color:#cbd5e1}
+.tb-eval-star{width:22px;height:22px;border:none;background:none;cursor:pointer;font-size:var(--s-karte);color:#cbd5e1}
 .tb-eval-star.on{color:#f59e0b}
 
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:10px;font-size:13px;font-weight:500;color:#fff;z-index:10075;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.2);font-family:inherit}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:10px;font-size:var(--s-text);font-weight:500;color:#fff;z-index:10075;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.2);font-family:inherit}
 .toast.show{opacity:1}.toast-ok{background:#15803d}.toast-err{background:#b91c1c}.toast-info{background:#1a56db}
 
 
@@ -893,20 +893,20 @@ h1.print-header{display:none}
 .heft-wrap{max-width:190mm;margin:0 auto;color:#0f172a}
 .heft-head{text-align:center;border-bottom:3px solid #1a56db;padding-bottom:10px;margin-bottom:12px}
 .heft-head img{width:54px;height:54px}
-.heft-club{font-size:12px;color:#64748b;font-weight:600;letter-spacing:.5px}
+.heft-club{font-size:var(--s-text);color:#64748b;font-weight:600;letter-spacing:.5px}
 .heft-title{font-size:26px;font-weight:900;color:#1a56db;margin:2px 0}
-.heft-match{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:600;color:#1e3a8a;text-align:center;margin-bottom:14px}
+.heft-match{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:9px 12px;font-size:var(--s-text);font-weight:600;color:#1e3a8a;text-align:center;margin-bottom:14px}
 .heft-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .heft-card{border:1px solid #e2e8f0;border-radius:12px;padding:10px;text-align:center;break-inside:avoid}
 .heft-foto{position:relative;width:74px;height:74px;margin:0 auto 6px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#1a56db,#3b82f6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px;font-weight:800}
 .heft-foto img{width:100%;height:100%;object-fit:cover}
-.heft-nr{position:absolute;bottom:-2px;right:-2px;min-width:22px;height:22px;background:#facc15;color:#1e293b;border-radius:11px;border:2px solid #fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px}
-.heft-name{font-size:15px;font-weight:800}
-.heft-spitz{font-size:11px;color:#64748b;font-style:italic}
-.heft-pos{font-size:11px;color:#1a56db;font-weight:700;margin-top:2px}
-.heft-foot{text-align:center;font-size:11px;color:#64748b;margin-top:16px;border-top:1px solid #e2e8f0;padding-top:8px}
+.heft-nr{position:absolute;bottom:-2px;right:-2px;min-width:22px;height:22px;background:#facc15;color:#1e293b;border-radius:11px;border:2px solid #fff;font-size:var(--s-text);font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px}
+.heft-name{font-size:var(--s-karte);font-weight:800}
+.heft-spitz{font-size:var(--s-klein);color:#64748b;font-style:italic}
+.heft-pos{font-size:var(--s-klein);color:#1a56db;font-weight:700;margin-top:2px}
+.heft-foot{text-align:center;font-size:var(--s-klein);color:#64748b;margin-top:16px;border-top:1px solid #e2e8f0;padding-top:8px}
 /* HOTFIX 19: Stadionheft-Editor-Blöcke (Einleitung, Spieler im Fokus, Trainer-Kommentar) */
-.heft-intro{font-size:12.5px;line-height:1.5;color:#334155;background:#f8fafc;border-left:3px solid #1a56db;border-radius:6px;padding:8px 12px;margin-bottom:14px}
+.heft-intro{font-size:var(--s-text);line-height:1.5;color:#334155;background:#f8fafc;border-left:3px solid #1a56db;border-radius:6px;padding:8px 12px;margin-bottom:14px}
 .heft-fokus{display:flex;gap:12px;align-items:center;background:linear-gradient(135deg,#fef9c3,#fef3c7);border:1px solid #fde047;border-radius:12px;padding:12px;margin-bottom:14px;break-inside:avoid}
 .heft-fokus-foto{width:72px;height:72px;flex:0 0 72px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#1a56db,#3b82f6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px;font-weight:800}
 .heft-fokus-foto img{width:100%;height:100%;object-fit:cover}
@@ -914,13 +914,13 @@ h1.print-header{display:none}
    Ohne flex:1 nimmt er als Flex-Kind nur seine Inhaltsbreite ein, ohne min-width:0
    bricht ein langer Name nicht um, sondern schiebt die Karte auf. */
 .heft-fokus-body{flex:1;min-width:0}
-.heft-fokus-badge{font-size:11px;font-weight:800;color:#a16207;text-transform:uppercase;letter-spacing:.5px}
-.heft-fokus-name{font-size:17px;font-weight:900;color:#1e293b;margin:1px 0 3px}
-.heft-fokus-text{font-size:12px;color:#475569;line-height:1.45}
-.heft-komm{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 12px;margin-top:14px;font-size:12.5px;color:#1e3a8a;line-height:1.5;break-inside:avoid}
+.heft-fokus-badge{font-size:var(--s-klein);font-weight:800;color:#a16207;text-transform:uppercase;letter-spacing:.5px}
+.heft-fokus-name{font-size:var(--s-teil);font-weight:900;color:#1e293b;margin:1px 0 3px}
+.heft-fokus-text{font-size:var(--s-text);color:#475569;line-height:1.45}
+.heft-komm{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 12px;margin-top:14px;font-size:var(--s-text);color:#1e3a8a;line-height:1.5;break-inside:avoid}
 .heft-komm-h{font-weight:800;margin-bottom:3px}
 /* Adler Horst: Rubriken-Überschrift (Magazin-Gefühl) */
-.heft-rubrik{font-size:14px;font-weight:900;color:#1a56db;text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid #1a56db;break-after:avoid}
+.heft-rubrik{font-size:var(--s-karte);font-weight:900;color:#1a56db;text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid #1a56db;break-after:avoid}
 .heft-intro{column-gap:18px}
 /* Gebrandeter Ladezustand für die Eltern-Flächen (Logo pulsiert) */
 @keyframes adlerPulse{0%,100%{transform:scale(1);opacity:.82}50%{transform:scale(1.08);opacity:1}}
@@ -931,8 +931,8 @@ h1.print-header{display:none}
 /* Karten-System: exakt die konsistenten Eigenschaften der Trainer-Karten (Hintergrund/Rand/Radius).
    Padding/Schatten bleiben bewusst inline -> Ersetzen ist ein optischer No-op, nur Wiederholung raus. */
 .card{background:var(--surface);border:var(--border-s);border-radius:var(--rl)}
-.card-h{font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px}
-.card-empty{text-align:center;color:var(--text3);font-size:12.5px;padding:14px 8px}
+.card-h{font-size:var(--s-text);font-weight:700;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.card-empty{text-align:center;color:var(--text3);font-size:var(--s-text);padding:14px 8px}
 
 /* ── HOTFIX 16: Fat-Finger / Outdoor-UX (Klick-Targets, Kontrast) ── */
 .btn{min-height:48px}                 /* Haupt-Aktionen dick genug für den Platz */
@@ -963,7 +963,7 @@ label:has(> input[type="checkbox"]){min-height:44px;display:flex;align-items:cen
 /* Dauer je Phase: bedienbares Feld statt Text. Nimmt das globale .tp-slot select{flex:1}
    ausdruecklich zurueck – sonst dehnt es sich und draengt Beschriftung und Papierkorb
    aus der Kopfzeile. margin-left:auto stellt Dauer und Papierkorb ans rechte Ende. */
-.tp-slot-head .tp-dauer-sel{flex:0 0 auto;margin-left:auto;min-height:44px;padding:4px 8px;font-size:11.5px;color:var(--text2);background:var(--surface);border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit}
+.tp-slot-head .tp-dauer-sel{flex:0 0 auto;margin-left:auto;min-height:44px;padding:4px 8px;font-size:var(--s-klein);color:var(--text2);background:var(--surface);border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit}
 
 /* Der Schalter bleibt optisch klein, die Trefferfläche wächst unsichtbar auf 44 px */
 .aw-toggle::before{content:'';position:absolute;top:-11px;bottom:-11px;left:-4px;right:-4px}
@@ -981,16 +981,16 @@ label:has(> input[type="checkbox"]){min-height:44px;display:flex;align-items:cen
    (greift automatisch über .sl:first-child bzw. .sl.nt). */
 .abschnitt{background:var(--surface);border:var(--border);border-radius:var(--rl);padding:12px 14px;margin-bottom:12px;box-shadow:var(--shadow)}
 details.el-sect{margin-bottom:12px}
-details.el-sect>summary{cursor:pointer;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);padding:8px 4px;min-height:44px;display:flex;align-items:center;gap:6px}
+details.el-sect>summary{cursor:pointer;font-weight:800;font-size:var(--s-text);text-transform:uppercase;letter-spacing:.5px;color:var(--text3);padding:8px 4px;min-height:44px;display:flex;align-items:center;gap:6px}
 details.el-sect>summary::-webkit-details-marker{display:none}
-details.el-sect>summary::after{content:"▾ mehr";margin-left:auto;font-size:11px;color:var(--text3);text-transform:none;letter-spacing:0;font-weight:700}
+details.el-sect>summary::after{content:"▾ mehr";margin-left:auto;font-size:var(--s-klein);color:var(--text3);text-transform:none;letter-spacing:0;font-weight:700}
 details.el-sect[open]>summary::after{content:"▴ weniger"}
 /* v502: zugeklappter Unterblock in einer Phase (Live-Aktionen & Ticker) – gleiche Deckelzeile,
    eine Stufe leiser, damit die Wechsel oben stehen und der Ticker nicht den Platz frisst. */
 details.el-sub{margin:4px 0 12px;border:var(--border-s);border-radius:12px;background:var(--surface2)}
-details.el-sub>summary{cursor:pointer;list-style:none;min-height:44px;display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:12px;font-weight:800;color:var(--text2)}
+details.el-sub>summary{cursor:pointer;list-style:none;min-height:44px;display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:var(--s-text);font-weight:800;color:var(--text2)}
 details.el-sub>summary::-webkit-details-marker{display:none}
-details.el-sub>summary::after{content:"▾ mehr";margin-left:auto;font-size:11px;color:var(--text3);font-weight:700}
+details.el-sub>summary::after{content:"▾ mehr";margin-left:auto;font-size:var(--s-klein);color:var(--text3);font-weight:700}
 details.el-sub[open]>summary::after{content:"▴ weniger"}
 details.el-sub>div{padding:0 8px 4px}
 /* „· Adler 2" hinter den Phasen-Titeln: macht sichtbar, dass Uhr, Ticker und Blitz-Rating
@@ -1013,7 +1013,7 @@ button:not([class])[style*="background:none"]{min-height:0}
 
 /* Anwesenheit als Kachel-Raster (PO: keine langen Listen) – Zustand über .on */
 .aw-tile{min-height:68px;border:var(--border-s);border-radius:12px;background:var(--surface);color:var(--text2);font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 4px;position:relative}
-.aw-tile .aw-ok{position:absolute;top:4px;right:7px;font-size:13px;font-weight:900;color:#16a34a;visibility:hidden}
+.aw-tile .aw-ok{position:absolute;top:4px;right:7px;font-size:var(--s-text);font-weight:900;color:#16a34a;visibility:hidden}
 .aw-tile.on{background:#dcfce7;border-color:#4ade80;color:#166534}
 .aw-tile.on .aw-ok{visibility:visible}
 html[data-theme="dark"] .aw-tile.on,body.dark .aw-tile.on{background:#14532d;border-color:#22c55e;color:#dcfce7}
@@ -1021,12 +1021,12 @@ html[data-theme="dark"] .aw-tile.on,body.dark .aw-tile.on{background:#14532d;bor
 /* Trainer-Auswahl als 🧢-Chips (Planung + Anwesenheit) – ersetzt die Checkbox-Optik */
 .tp-check{position:relative;display:inline-flex}
 .tp-check input{position:absolute;opacity:0;pointer-events:none}
-.tp-check span{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:6px 14px;border:var(--border-s);border-radius:18px;background:var(--surface2);color:var(--text2);font-size:12.5px;font-weight:700;cursor:pointer;user-select:none}
+.tp-check span{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:6px 14px;border:var(--border-s);border-radius:18px;background:var(--surface2);color:var(--text2);font-size:var(--s-text);font-weight:700;cursor:pointer;user-select:none}
 .tp-check span::before{content:"🧢"}
 .tp-check input:checked+span{background:#16a34a;border-color:#16a34a;color:#fff}
 
 /* Übungs-Picker-Button in der Planung (ersetzt das sichtbare Dropdown) */
-.tp-pick{flex:1;min-width:0;min-height:48px;text-align:left;border:var(--border-s);border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:8px 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tp-pick{flex:1;min-width:0;min-height:48px;text-align:left;border:var(--border-s);border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:600;cursor:pointer;padding:8px 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* Trainer-Chips in der Planung: Chips schrumpfen nicht (die Zeile bricht seit v470 um) */
 #tp-trainer-checks .tp-check{flex:none}
@@ -1048,12 +1048,12 @@ html,body{overscroll-behavior-y:contain}
 /* ── Zugeklappter Tipp im Trainingsplan (v473) ─────────────────────────────────
    Erklaerung nur auf Wunsch: <details> statt Absatz. Der Klapper ist 44 px hoch. */
 .tp-tipp{margin:2px 0 4px}
-.tp-tipp summary{list-style:none;display:inline-flex;align-items:center;min-height:44px;padding:0 10px;border-radius:10px;font-size:11.5px;font-weight:700;color:var(--text2);cursor:pointer;user-select:none}
+.tp-tipp summary{list-style:none;display:inline-flex;align-items:center;min-height:44px;padding:0 10px;border-radius:10px;font-size:var(--s-klein);font-weight:700;color:var(--text2);cursor:pointer;user-select:none}
 .tp-tipp summary::-webkit-details-marker{display:none}
 .tp-tipp[open] summary{color:var(--text)}
-.tp-tipp div{font-size:11.5px;color:var(--text2);padding:0 10px 8px;line-height:1.45}
+.tp-tipp div{font-size:var(--s-klein);color:var(--text2);padding:0 10px 8px;line-height:1.45}
 /* v605: Griff zum Verschieben der Blöcke im Trainingsplan */
-.tp-griff{flex:0 0 auto;min-width:44px;min-height:44px;margin:-6px 0 -6px -6px;border:none;background:transparent;color:var(--text2);font-size:20px;line-height:1;cursor:grab;touch-action:none;border-radius:8px}
+.tp-griff{flex:0 0 auto;min-width:44px;min-height:44px;margin:-6px 0 -6px -6px;border:none;background:transparent;color:var(--text2);font-size:var(--s-teil);line-height:1;cursor:grab;touch-action:none;border-radius:8px}
 .tp-griff:focus-visible{outline:2px solid var(--blue,#1a56db);outline-offset:1px}
 .tp-slot.tp-zieht{position:relative;z-index:5;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:.95}
 .tp-zieh-linie{height:4px;margin:0 0 8px;border-radius:2px;background:var(--blue,#1a56db)}

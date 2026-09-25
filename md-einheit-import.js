@@ -43,17 +43,17 @@ function einheitImportOpen(){
   m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Einheit importieren");
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{ if(e.target===m)einheitImportClose(); };
-  const fld="box-sizing:border-box;width:100%;padding:10px;border:var(--border-s);border-radius:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:var(--surface2);color:var(--text)";
+  const fld="box-sizing:border-box;width:100%;padding:10px;border:var(--border-s);border-radius:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--s-text);background:var(--surface2);color:var(--text)";
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:520px;width:100%;margin:auto">
     ${mdlHead("ei-modal","📥","Einheit importieren","Fertige Einheit als JSON – Übungen, Phasen und Plan in einem Schritt","#16a34a")}
-    <div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:8px">
+    <div style="font-size:var(--s-text);color:var(--text2);line-height:1.5;margin-bottom:8px">
       Format <b>${esc(EI_SCHEMA)}</b>. Der Import legt fehlende Übungen an, setzt die Phasen und speichert den Plan für das Datum.
       Kinder und Torhüter werden <b>nicht</b> zugeteilt – das bleibt im Trainingsplan.
     </div>
     <textarea id="ei-json" rows="10" placeholder='{ "schema": "${EI_SCHEMA}", "datum": "2026-09-15", … }' style="${fld};resize:vertical"></textarea>
     <div id="ei-melde" style="margin-top:10px"></div>
     <div id="ei-vorschau" style="margin-top:10px"></div>
-    <button id="ei-haupt" onclick="einheitImportPruefen()" class="btn btn-p" style="width:100%;min-height:56px;margin-top:12px;justify-content:center;font-size:15px"><i class="ti ti-checkup-list"></i>Prüfen</button>
+    <button id="ei-haupt" onclick="einheitImportPruefen()" class="btn btn-p" style="width:100%;min-height:56px;margin-top:12px;justify-content:center;font-size:var(--s-karte)"><i class="ti ti-checkup-list"></i>Prüfen</button>
     <button onclick="einheitImportClose()" class="btn" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Abbrechen</button>
   </div>`;
   document.body.appendChild(m);
@@ -184,7 +184,7 @@ function _eiPruefung(text){
 }
 function _eiMelde(el,zeilen,art){
   const rot=art==="err";
-  el.innerHTML=`<div style="background:${rot?"var(--red-bg)":"var(--green-bg)"};border:1px solid ${rot?"var(--red)":"var(--green)"};border-radius:12px;padding:10px 12px;font-size:12.5px;line-height:1.55;color:${rot?"var(--red)":"var(--green)"}">
+  el.innerHTML=`<div style="background:${rot?"var(--red-bg)":"var(--green-bg)"};border:1px solid ${rot?"var(--red)":"var(--green)"};border-radius:12px;padding:10px 12px;font-size:var(--s-text);line-height:1.55;color:${rot?"var(--red)":"var(--green)"}">
     <b>${rot?"Bitte noch korrigieren:":"Alles in Ordnung"}</b>
     ${zeilen.length?`<ul style="margin:6px 0 0;padding-left:18px">${zeilen.map(z=>`<li style="margin-bottom:3px">${esc(z)}</li>`).join("")}</ul>`:""}
   </div>`;
@@ -220,17 +220,17 @@ function _eiVorschauHtml(d,bloecke,planDa){
   const tag=(()=>{ const x=new Date(d.datum+"T00:00:00"); return isNaN(x)?d.datum:x.toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}); })();
   const neu=bloecke.filter(b=>b.neu).length;
   const zeile=(b,i)=>`<div style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--surface2)">
-      <span style="font-size:10px;font-weight:800;color:#fff;background:${_eiFarbe(b.typ,bloecke.slice(0,i+1).filter(x=>x.typ==="main").length)};border-radius:6px;padding:3px 7px;white-space:nowrap">${Number(b.dauer)} Min.</span>
-      <span style="min-width:0"><b style="font-size:13px">${esc(b.label)}</b>
-        <span style="display:block;font-size:11.5px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.uebung?esc(b.uebung.name):"noch keine Übung – im Trainingsplan wählen"}</span></span>
-      ${b.uebung?`<span style="font-size:10px;font-weight:800;border-radius:8px;padding:3px 8px;white-space:nowrap;background:${b.neu?"var(--green-bg)":"var(--surface2)"};color:${b.neu?"var(--green)":"var(--text2)"}">${b.neu?"neu":"vorhanden"}</span>`:'<span></span>'}
+      <span style="font-size:var(--s-klein);font-weight:800;color:#fff;background:${_eiFarbe(b.typ,bloecke.slice(0,i+1).filter(x=>x.typ==="main").length)};border-radius:6px;padding:3px 7px;white-space:nowrap">${Number(b.dauer)} Min.</span>
+      <span style="min-width:0"><b style="font-size:var(--s-text)">${esc(b.label)}</b>
+        <span style="display:block;font-size:var(--s-klein);color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.uebung?esc(b.uebung.name):"noch keine Übung – im Trainingsplan wählen"}</span></span>
+      ${b.uebung?`<span style="font-size:var(--s-klein);font-weight:800;border-radius:8px;padding:3px 8px;white-space:nowrap;background:${b.neu?"var(--green-bg)":"var(--surface2)"};color:${b.neu?"var(--green)":"var(--text2)"}">${b.neu?"neu":"vorhanden"}</span>`:'<span></span>'}
     </div>`;
   return `<div style="border:var(--border-s);border-radius:12px;padding:12px">
-    <div style="font-size:13.5px;font-weight:800">${esc(tag)}</div>
-    <div style="font-size:11.5px;color:var(--text2);margin-bottom:8px">${bloecke.length} Blöcke · ${summe} Min.${ziel?(summe===ziel?` (wie geplant)`:` – geplant waren ${ziel}`):""}${neu?` · ${neu} neue Übung${neu===1?"":"en"}`:""}</div>
+    <div style="font-size:var(--s-text);font-weight:800">${esc(tag)}</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">${bloecke.length} Blöcke · ${summe} Min.${ziel?(summe===ziel?` (wie geplant)`:` – geplant waren ${ziel}`):""}${neu?` · ${neu} neue Übung${neu===1?"":"en"}`:""}</div>
     ${bloecke.map(zeile).join("")}
-    ${d.schwerpunkt?`<div style="font-size:12px;color:var(--text2);margin-top:8px">🎯 ${esc(d.schwerpunkt)}</div>`:""}
-    ${planDa?`<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:10px;padding:9px 11px;margin-top:10px;font-size:12.5px;color:var(--amber);line-height:1.5">
+    ${d.schwerpunkt?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:8px">🎯 ${esc(d.schwerpunkt)}</div>`:""}
+    ${planDa?`<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:10px;padding:9px 11px;margin-top:10px;font-size:var(--s-text);color:var(--amber);line-height:1.5">
       ⚠️ Für dieses Datum steht schon ein Plan. <b>Er wird vollständig überschrieben</b> – Phasen, Übungen und Zuordnung.</div>`:""}
   </div>`;
 }
@@ -374,17 +374,17 @@ function uebungImportOpen(){
   m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Übungen importieren");
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{ if(e.target===m)uebungImportClose(); };
-  const fld="box-sizing:border-box;width:100%;padding:10px;border:var(--border-s);border-radius:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:var(--surface2);color:var(--text)";
+  const fld="box-sizing:border-box;width:100%;padding:10px;border:var(--border-s);border-radius:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--s-text);background:var(--surface2);color:var(--text)";
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:520px;width:100%;margin:auto">
     ${mdlHead("eu-modal","📚","Übungen importieren","Nur die Übungsdatenbank füllen – ohne Einheit und ohne Plan","#1a56db")}
-    <div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:8px">
+    <div style="font-size:var(--s-text);color:var(--text2);line-height:1.5;margin-bottom:8px">
       Format <b>${esc(EI_UEB_SCHEMA)}</b>. Die Übungen landen in der Formen-Datenbank und stehen sofort im Trainingsplan zur Auswahl – gefiltert nach ihrer Kategorie.
       Namen, die es schon gibt, werden <b>übersprungen</b>, nicht überschrieben.
     </div>
     <textarea id="eu-json" rows="10" placeholder='{ "schema": "${EI_UEB_SCHEMA}", "uebungen": [ { "name": "…", "kat": "aufwaermen" } ] }' style="${fld};resize:vertical"></textarea>
     <div id="eu-melde" style="margin-top:10px"></div>
     <div id="eu-vorschau" style="margin-top:10px"></div>
-    <button id="eu-haupt" onclick="uebungImportPruefen()" class="btn btn-p" style="width:100%;min-height:56px;margin-top:12px;justify-content:center;font-size:15px"><i class="ti ti-checkup-list"></i>Prüfen</button>
+    <button id="eu-haupt" onclick="uebungImportPruefen()" class="btn btn-p" style="width:100%;min-height:56px;margin-top:12px;justify-content:center;font-size:var(--s-karte)"><i class="ti ti-checkup-list"></i>Prüfen</button>
     <button onclick="uebungImportClose()" class="btn" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Abbrechen</button>
   </div>`;
   document.body.appendChild(m);
@@ -447,9 +447,9 @@ function _euVorschauHtml(uebungen){
   const neu=uebungen.filter(u=>u.neu).length, da=uebungen.length-neu;
   const zeile=u=>`<div style="padding:7px 0;border-bottom:1px solid var(--surface2)">
       <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center">
-        <span style="min-width:0"><b style="font-size:13px">${esc(u.name)}</b>
-          <span style="display:block;font-size:11.5px;color:var(--text2)">${esc(EI_KAT_LABEL[u.kat]||u.kat)}${u.dauer?" · "+esc(String(u.dauer))+" Min.":""}${u.spieler?" · "+esc(String(u.spieler)):""}</span></span>
-        <span style="font-size:10px;font-weight:800;border-radius:8px;padding:3px 8px;white-space:nowrap;background:${u.neu?"var(--green-bg)":"var(--surface2)"};color:${u.neu?"var(--green)":"var(--text2)"}">${u.neu?"neu":"vorhanden"}</span>
+        <span style="min-width:0"><b style="font-size:var(--s-text)">${esc(u.name)}</b>
+          <span style="display:block;font-size:var(--s-klein);color:var(--text2)">${esc(EI_KAT_LABEL[u.kat]||u.kat)}${u.dauer?" · "+esc(String(u.dauer))+" Min.":""}${u.spieler?" · "+esc(String(u.spieler)):""}</span></span>
+        <span style="font-size:var(--s-klein);font-weight:800;border-radius:8px;padding:3px 8px;white-space:nowrap;background:${u.neu?"var(--green-bg)":"var(--surface2)"};color:${u.neu?"var(--green)":"var(--text2)"}">${u.neu?"neu":"vorhanden"}</span>
       </div>
       ${(u.neu&&_eiSkizzeOk(u.skizze)&&typeof _skz==="function")?_skz(u.skizze):""}
     </div>`;
@@ -457,11 +457,11 @@ function _euVorschauHtml(uebungen){
      sie nur im Übungsdetail und im KI-Coach. */
   const mitBild=uebungen.some(u=>u.neu&&_eiSkizzeOk(u.skizze));
   return `<div style="border:var(--border-s);border-radius:12px;padding:12px">
-    <div style="font-size:13.5px;font-weight:800">${uebungen.length} Übung${uebungen.length===1?"":"en"}</div>
-    <div style="font-size:11.5px;color:var(--text2);margin-bottom:8px">${neu} neu${da?` · ${da} schon vorhanden (wird übersprungen)`:""}</div>
+    <div style="font-size:var(--s-text);font-weight:800">${uebungen.length} Übung${uebungen.length===1?"":"en"}</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">${neu} neu${da?` · ${da} schon vorhanden (wird übersprungen)`:""}</div>
     ${(mitBild&&typeof skzLegende==="function")?skzLegende():""}
     ${uebungen.map(zeile).join("")}
-    ${da&&!neu?`<div style="font-size:12px;color:var(--text2);margin-top:8px">Es gibt nichts anzulegen – alle Namen stehen schon in der Datenbank.</div>`:""}
+    ${da&&!neu?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:8px">Es gibt nichts anzulegen – alle Namen stehen schon in der Datenbank.</div>`:""}
   </div>`;
 }
 /* Die Anlege-Schleife – EINE Maschine für den Knopf und für den Abgleich beim Öffnen.
@@ -770,17 +770,17 @@ function vorlagenImportOpen(){
   m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Vorlagen importieren");
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{ if(e.target===m)vorlagenImportClose(); };
-  const fld="box-sizing:border-box;width:100%;padding:10px;border:var(--border-s);border-radius:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:var(--surface2);color:var(--text)";
+  const fld="box-sizing:border-box;width:100%;padding:10px;border:var(--border-s);border-radius:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--s-text);background:var(--surface2);color:var(--text)";
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:520px;width:100%;margin:auto">
     ${mdlHead("ev-modal","🗂️","Vorlagen importieren","Fertige Zusammenstellungen ohne Datum und ohne Kinder","#7c3aed")}
-    <div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:8px">
+    <div style="font-size:var(--s-text);color:var(--text2);line-height:1.5;margin-bottom:8px">
       Format <b>${esc(EI_VOR_SCHEMA)}</b>. Eine Vorlage verweist über den <b>Namen</b> auf Übungen – fehlt eine, wird sie hier benannt und die Vorlage nicht angelegt.
       Namen, die es schon gibt, werden <b>übersprungen</b>, nicht überschrieben.
     </div>
     <textarea id="ev-json" rows="10" placeholder='{ "schema": "${EI_VOR_SCHEMA}", "vorlagen": [ { "name": "…", "leitfrage": "…", "bloecke": [ … ] } ] }' style="${fld};resize:vertical"></textarea>
     <div id="ev-melde" style="margin-top:10px"></div>
     <div id="ev-vorschau" style="margin-top:10px"></div>
-    <button id="ev-haupt" onclick="vorlagenImportPruefen()" class="btn btn-p" style="width:100%;min-height:56px;margin-top:12px;justify-content:center;font-size:15px"><i class="ti ti-checkup-list"></i>Prüfen</button>
+    <button id="ev-haupt" onclick="vorlagenImportPruefen()" class="btn btn-p" style="width:100%;min-height:56px;margin-top:12px;justify-content:center;font-size:var(--s-karte)"><i class="ti ti-checkup-list"></i>Prüfen</button>
     <button onclick="vorlagenImportClose()" class="btn" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Abbrechen</button>
   </div>`;
   document.body.appendChild(m);
@@ -817,26 +817,26 @@ async function vorlagenImportPruefen(){
 function _evZeileHtml(v){
   const bl=(v.bloecke||[]);
   const summe=bl.reduce((a,b)=>a+(Number(b.dauer)||0),0);
-  const tags=(Array.isArray(v.tags)?v.tags:[]).map(t=>`<span style="font-size:9.5px;font-weight:700;background:var(--surface2);color:var(--text2);border-radius:8px;padding:2px 6px">${esc(t)}</span>`).join(" ");
+  const tags=(Array.isArray(v.tags)?v.tags:[]).map(t=>`<span style="font-size:var(--s-klein);font-weight:700;background:var(--surface2);color:var(--text2);border-radius:8px;padding:2px 6px">${esc(t)}</span>`).join(" ");
   return `<div style="padding:8px 0;border-bottom:1px solid var(--surface2)">
       <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center">
-        <span style="min-width:0"><b style="font-size:13px">${esc(v.name)}</b>
-          <span style="display:block;font-size:11.5px;color:var(--text2)">${esc(v.leitfrage||"")}</span></span>
-        <span style="font-size:10px;font-weight:800;border-radius:8px;padding:3px 8px;white-space:nowrap;background:${v.neu?"var(--green-bg)":"var(--surface2)"};color:${v.neu?"var(--green)":"var(--text2)"}">${v.neu?"neu":"vorhanden"}</span>
+        <span style="min-width:0"><b style="font-size:var(--s-text)">${esc(v.name)}</b>
+          <span style="display:block;font-size:var(--s-klein);color:var(--text2)">${esc(v.leitfrage||"")}</span></span>
+        <span style="font-size:var(--s-klein);font-weight:800;border-radius:8px;padding:3px 8px;white-space:nowrap;background:${v.neu?"var(--green-bg)":"var(--surface2)"};color:${v.neu?"var(--green)":"var(--text2)"}">${v.neu?"neu":"vorhanden"}</span>
       </div>
-      <div style="font-size:11px;color:var(--text3);margin-top:3px">${bl.length} Blöcke · ${summe} Min.${v.netto_spielform_min?` · ${Number(v.netto_spielform_min)} Min. netto`:""} ${tags}</div>
-      ${v.hinweis?`<div style="font-size:11.5px;color:var(--amber);background:var(--amber-bg);border-radius:8px;padding:6px 8px;margin-top:5px;line-height:1.45">💡 ${esc(v.hinweis)}</div>`:""}
-      <div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.5">${bl.map(b=>`${Number(b.dauer)}′ ${esc(b.label)}${b.uebung_name?" · "+esc(b.uebung_name):""}`).join("<br>")}</div>
+      <div style="font-size:var(--s-klein);color:var(--text3);margin-top:3px">${bl.length} Blöcke · ${summe} Min.${v.netto_spielform_min?` · ${Number(v.netto_spielform_min)} Min. netto`:""} ${tags}</div>
+      ${v.hinweis?`<div style="font-size:var(--s-klein);color:var(--amber);background:var(--amber-bg);border-radius:8px;padding:6px 8px;margin-top:5px;line-height:1.45">💡 ${esc(v.hinweis)}</div>`:""}
+      <div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px;line-height:1.5">${bl.map(b=>`${Number(b.dauer)}′ ${esc(b.label)}${b.uebung_name?" · "+esc(b.uebung_name):""}`).join("<br>")}</div>
     </div>`;
 }
 function _evVorschauHtml(vorlagen){
   const neu=vorlagen.filter(v=>v.neu).length, da=vorlagen.length-neu;
   const hinweise=vorlagen.filter(v=>v.hinweis).length;
   return `<div style="border:var(--border-s);border-radius:12px;padding:12px">
-    <div style="font-size:13.5px;font-weight:800">${vorlagen.length} Vorlage${vorlagen.length===1?"":"n"}</div>
-    <div style="font-size:11.5px;color:var(--text2);margin-bottom:6px">${neu} neu${da?` · ${da} schon vorhanden (wird übersprungen)`:""}${hinweise?` · ${hinweise} mit Hinweis`:""}</div>
+    <div style="font-size:var(--s-text);font-weight:800">${vorlagen.length} Vorlage${vorlagen.length===1?"":"n"}</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px">${neu} neu${da?` · ${da} schon vorhanden (wird übersprungen)`:""}${hinweise?` · ${hinweise} mit Hinweis`:""}</div>
     ${vorlagen.map(_evZeileHtml).join("")}
-    ${da&&!neu?`<div style="font-size:12px;color:var(--text2);margin-top:8px">Es gibt nichts anzulegen – alle Namen stehen schon in der Datenbank.</div>`:""}
+    ${da&&!neu?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:8px">Es gibt nichts anzulegen – alle Namen stehen schon in der Datenbank.</div>`:""}
   </div>`;
 }
 /* Eine Vorlage anlegen. Kein Upsert: die Tabelle hat per RLS gar kein UPDATE – was
@@ -935,7 +935,7 @@ async function vorlageUebernehmenOpen(){
   m.onclick=e=>{ if(e.target===m)vorlageUebernehmenClose(); };
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:520px;width:100%;margin:auto">
     ${mdlHead("vu-modal","🗂️","Vorlage übernehmen","Fertige Einheit auf den gewählten Termin setzen","#7c3aed")}
-    <div id="vu-inhalt"><div style="font-size:12.5px;color:var(--text2);padding:8px 0">Lade Vorlagen …</div></div>
+    <div id="vu-inhalt"><div style="font-size:var(--s-text);color:var(--text2);padding:8px 0">Lade Vorlagen …</div></div>
   </div>`;
   document.body.appendChild(m);
   await vorlagenLaden();
@@ -1009,7 +1009,7 @@ function vorlageUebernehmenRender(opt){
   const datum=_vuDatum();
   const tag=(()=>{ if(!datum)return ""; const x=new Date(datum+"T00:00:00"); return isNaN(x)?datum:x.toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}); })();
   if(!VORLAGEN.length){
-    box.innerHTML=`<div style="font-size:12.5px;color:var(--text2);line-height:1.55;padding:6px 0">
+    box.innerHTML=`<div style="font-size:var(--s-text);color:var(--text2);line-height:1.55;padding:6px 0">
       Es gibt noch keine Vorlagen. Sie kommen beim Öffnen aus <b>uebungen/vorlagen.json</b> – oder von Hand über „Vorlagen importieren“.</div>
       <button onclick="vorlageUebernehmenClose()" class="btn" style="width:100%;min-height:48px;margin-top:10px;justify-content:center">Schließen</button>`;
     return;
@@ -1019,7 +1019,7 @@ function vorlageUebernehmenRender(opt){
   /* v550: Nur Ordnungen zeigen, die wirklich vorkommen – eine Reihe leerer Kacheln
      verspricht eine Auswahl, hinter der nichts steht. Reihenfolge wie EI_ORDNUNGEN. */
   const ordnungen=EI_ORDNUNGEN.filter(x=>VORLAGEN.some(v=>String(v.ordnung||"")===x));
-  const chip=(an,lbl,fn)=>`<button onclick="${fn}" aria-pressed="${an?"true":"false"}" style="min-height:48px;padding:6px 14px;border:1.5px solid ${an?"#7c3aed":"var(--rand-bedien)"};border-radius:24px;font-family:inherit;font-size:12.5px;font-weight:${an?"800":"600"};cursor:pointer;background:${an?"#7c3aed":"var(--surface)"};color:${an?"#fff":"var(--text2)"};text-align:left">${esc(lbl)}</button>`;
+  const chip=(an,lbl,fn)=>`<button onclick="${fn}" aria-pressed="${an?"true":"false"}" style="min-height:48px;padding:6px 14px;border:1.5px solid ${an?"#7c3aed":"var(--rand-bedien)"};border-radius:24px;font-family:inherit;font-size:var(--s-text);font-weight:${an?"800":"600"};cursor:pointer;background:${an?"#7c3aed":"var(--surface)"};color:${an?"#fff":"var(--text2)"};text-align:left">${esc(lbl)}</button>`;
   const treffer=VORLAGEN.filter(_vuPasst);
   const gewaehlt=VORLAGEN.find(v=>String(v.id)===String(_vuAuswahl))||null;
   /* v576: Die Leitfrage steht als Überschrift über ihrer Gruppe, nicht mehr in jeder Karte –
@@ -1035,9 +1035,9 @@ function vorlageUebernehmenRender(opt){
     if(v.ordnung)marken.push(esc(v.ordnung));
     (Array.isArray(v.tags)?v.tags:[]).forEach(t=>marken.push(esc(vuTagLabel(t))));
     return `<button onclick="vuWaehlen('${esc(String(v.id))}')" aria-pressed="${an?"true":"false"}" style="display:block;width:100%;text-align:left;min-height:48px;padding:10px 12px;margin-bottom:6px;border:1.5px solid ${an?"#7c3aed":"var(--rand-bedien)"};border-radius:12px;background:${an?"#7c3aed14":"var(--surface)"};color:var(--text);font-family:inherit;cursor:pointer">
-      <div style="font-size:13px;font-weight:800">${esc(v.name)}</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:3px">${meta.join(" · ")}</div>
-      ${marken.length?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px">${marken.map(x=>`<span style="font-size:10.5px;color:var(--text2);background:var(--surface2);border-radius:6px;padding:2px 7px">${x}</span>`).join("")}</div>`:""}
+      <div style="font-size:var(--s-text);font-weight:800">${esc(v.name)}</div>
+      <div style="font-size:var(--s-klein);color:var(--text3);margin-top:3px">${meta.join(" · ")}</div>
+      ${marken.length?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px">${marken.map(x=>`<span style="font-size:var(--s-klein);color:var(--text2);background:var(--surface2);border-radius:6px;padding:2px 7px">${x}</span>`).join("")}</div>`:""}
     </button>`;
   };
   /* Nach Leitfrage gruppiert, in der Reihenfolge der Vorlagen (die kommen sortiert). */
@@ -1052,25 +1052,25 @@ function vorlageUebernehmenRender(opt){
   const listeHtml=gruppen.map(g=>{
     const t=/^(L\d+) · (.*)$/.exec(g.kopf);
     const kopf=t?`<span style="color:#7c3aed;font-weight:900">${esc(t[1])}</span> <span style="font-weight:700">${esc(t[2])}</span>`:`<span style="font-weight:700">${esc(g.kopf)}</span>`;
-    return `<div style="font-size:11.5px;color:var(--text2);margin:12px 2px 6px;line-height:1.4">${kopf}</div>${g.items.map(karte).join("")}`;
+    return `<div style="font-size:var(--s-klein);color:var(--text2);margin:12px 2px 6px;line-height:1.4">${kopf}</div>${g.items.map(karte).join("")}`;
   }).join("");
   const vorschau=v=>{
     const bl=Array.isArray(v.bloecke)?v.bloecke:[];
     let mainNr=0;
     const zeile=b=>{ if(b.typ==="main"||b.typ==="spielform")mainNr++;
       return `<div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--surface2)">
-        <span style="font-size:10px;font-weight:800;color:#fff;background:${_eiFarbe(b.typ,mainNr)};border-radius:6px;padding:3px 7px;white-space:nowrap">${Number(b.dauer)} Min.</span>
-        <span style="min-width:0"><b style="font-size:12.5px">${esc(b.label)}</b>
-          <span style="display:block;font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${_evBlockText(b)}</span></span>
+        <span style="font-size:var(--s-klein);font-weight:800;color:#fff;background:${_eiFarbe(b.typ,mainNr)};border-radius:6px;padding:3px 7px;white-space:nowrap">${Number(b.dauer)} Min.</span>
+        <span style="min-width:0"><b style="font-size:var(--s-text)">${esc(b.label)}</b>
+          <span style="display:block;font-size:var(--s-klein);color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${_evBlockText(b)}</span></span>
       </div>`; };
     const sk=v.skalierung&&typeof v.skalierung==="object"?v.skalierung:{};
     const skZeilen=_evSkalierungSchluessel(sk).map(k=>`<div><b>${k} Kinder:</b> ${esc(String(sk[k]))}</div>`).join("");
     return `<div style="border:var(--border-s);border-radius:12px;padding:12px;margin-top:10px">
-      <div style="font-size:13px;font-weight:800">${esc(v.name)}</div>
-      <div style="font-size:11.5px;color:var(--text2);margin-bottom:8px">${esc(v.leitfrage||"")}${tag?" · "+esc(tag):" · kein Termin gewählt"}</div>
+      <div style="font-size:var(--s-text);font-weight:800">${esc(v.name)}</div>
+      <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">${esc(v.leitfrage||"")}${tag?" · "+esc(tag):" · kein Termin gewählt"}</div>
       ${bl.map(zeile).join("")}
-      ${skZeilen?`<div style="font-size:11.5px;color:var(--text2);line-height:1.6;margin-top:8px">📐 ${skZeilen}</div>`:""}
-      ${v.beobachtung?`<div style="font-size:11.5px;color:var(--text2);line-height:1.5;margin-top:8px">👀 ${esc(v.beobachtung)}</div>`:""}
+      ${skZeilen?`<div style="font-size:var(--s-klein);color:var(--text2);line-height:1.6;margin-top:8px">📐 ${skZeilen}</div>`:""}
+      ${v.beobachtung?`<div style="font-size:var(--s-klein);color:var(--text2);line-height:1.5;margin-top:8px">👀 ${esc(v.beobachtung)}</div>`:""}
       ${(function(){
         /* Paket B, Abnahme 5: Reichen die Felder nicht für die geplanten Stationen, wird
            das hier gesagt – vor dem Übernehmen, nicht hinterher.
@@ -1082,38 +1082,38 @@ function vorlageUebernehmenRender(opt){
         const felder=(typeof tgBedarf==="function")?tgBedarf(undefined,stMax)
           :((typeof tpGetTrainerCount==="function")?tpGetTrainerCount():0);
         const h=_evStationenHinweis(v,felder);
-        return h?`<div style="background:var(--surface2);border:var(--border-s);border-radius:10px;padding:9px 11px;margin-top:10px;font-size:12.5px;color:var(--text2);line-height:1.5">ℹ️ ${esc(h)}</div>`:"";
+        return h?`<div style="background:var(--surface2);border:var(--border-s);border-radius:10px;padding:9px 11px;margin-top:10px;font-size:var(--s-text);color:var(--text2);line-height:1.5">ℹ️ ${esc(h)}</div>`:"";
       })()}
-      <div style="font-size:11px;color:var(--text3);margin-top:8px">Kinder und Torhüter werden nicht zugeteilt – das bleibt im Trainingsplan.</div>
-      ${_vuPlanDa?`<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:10px;padding:9px 11px;margin-top:10px;font-size:12.5px;color:var(--amber);line-height:1.5">
+      <div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px">Kinder und Torhüter werden nicht zugeteilt – das bleibt im Trainingsplan.</div>
+      ${_vuPlanDa?`<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:10px;padding:9px 11px;margin-top:10px;font-size:var(--s-text);color:var(--amber);line-height:1.5">
         ⚠️ Für diesen Termin steht schon ein Plan. <b>Er wird vollständig ersetzt</b> – Phasen und Übungen.</div>`:""}
     </div>`;
   };
   const aktiv=!!(_vuFilter.leitfrage||_vuFilter.tag||_vuFilter.ordnung);
   const filterText=vuFilterText();
   box.innerHTML=`
-    ${datum?"":`<div style="background:var(--red-bg);border:1px solid var(--red);border-radius:10px;padding:9px 11px;margin-bottom:8px;font-size:12.5px;color:var(--red)">Bitte oben zuerst einen Termin wählen.</div>`}
+    ${datum?"":`<div style="background:var(--red-bg);border:1px solid var(--red);border-radius:10px;padding:9px 11px;margin-bottom:8px;font-size:var(--s-text);color:var(--red)">Bitte oben zuerst einen Termin wählen.</div>`}
     <input id="vu-suche" type="text" value="${esc(_vuFilter.suche||"")}" placeholder="Suchen – Name oder Leitfrage" aria-label="Vorlagen durchsuchen"
       oninput="clearTimeout(window._vuDeb);window._vuDeb=setTimeout(()=>vuSucheSetzen(this.value),160)"
-      style="width:100%;box-sizing:border-box;min-height:48px;padding:10px 12px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:14px;background:var(--surface2);color:var(--text)">
-    <button onclick="vuFilterAuf()" aria-expanded="${_vuFilterOffen?"true":"false"}" style="width:100%;min-height:48px;margin-top:6px;display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid ${aktiv?"#7c3aed":"var(--rand-bedien)"};border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:12.5px;cursor:pointer;text-align:left">
+      style="width:100%;box-sizing:border-box;min-height:48px;padding:10px 12px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-karte);background:var(--surface2);color:var(--text)">
+    <button onclick="vuFilterAuf()" aria-expanded="${_vuFilterOffen?"true":"false"}" style="width:100%;min-height:48px;margin-top:6px;display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid ${aktiv?"#7c3aed":"var(--rand-bedien)"};border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);cursor:pointer;text-align:left">
       <span>🔎</span>
       <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${aktiv?`<b>${esc(filterText)}</b>`:"Filtern nach Leitfrage, Ordnung, Rahmen"}</span>
       <span style="color:var(--text3)">${_vuFilterOffen?"▲":"▼"}</span>
     </button>
     ${_vuFilterOffen?`<div style="border:1px solid var(--rand-bedien);border-top:none;border-radius:0 0 10px 10px;padding:10px;margin-bottom:6px">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:0 2px 5px">Leitfrage</div>
+      <div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:0 2px 5px">Leitfrage</div>
       <div style="display:flex;gap:6px;flex-direction:column;margin-bottom:9px">${fragen.map(f=>chip(_vuFilter.leitfrage===f,f,`vuFilterSet('leitfrage','${esc(f).replace(/'/g,"&#39;")}')`)).join("")}</div>
-      ${ordnungen.length?`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:2px 2px 5px">Wie sie stehen</div>
+      ${ordnungen.length?`<div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:2px 2px 5px">Wie sie stehen</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">${ordnungen.map(x=>chip(_vuFilter.ordnung===x,x,`vuFilterSet('ordnung','${esc(x).replace(/'/g,"&#39;")}')`)).join("")}</div>`:""}
-      ${tags.length?`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:2px 2px 5px">Passt wenn …</div>
+      ${tags.length?`<div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:2px 2px 5px">Passt wenn …</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">${tags.map(t=>chip(_vuFilter.tag===t,vuTagLabel(t),`vuFilterSet('tag','${esc(t)}')`)).join("")}</div>`:""}
       ${aktiv?`<button onclick="vuFilterLeeren()" class="btn btn-sm" style="width:100%;min-height:44px;margin-top:10px;justify-content:center">↩ Filter aufheben</button>`:""}
     </div>`:""}
-    <div style="font-size:11px;color:var(--text3);margin:8px 2px 0">${treffer.length===VORLAGEN.length?`${VORLAGEN.length} Vorlagen`:`${treffer.length} von ${VORLAGEN.length} Vorlagen`}</div>
-    ${treffer.length?listeHtml:`<div style="font-size:12.5px;color:var(--text2);padding:10px 0">Keine Vorlage passt dazu.${(aktiv||_vuFilter.suche)?` <button onclick="vuFilterLeeren();vuSucheSetzen('')" class="btn btn-sm" style="min-height:44px;margin-top:8px">↩ Alle zeigen</button>`:""}</div>`}
+    <div style="font-size:var(--s-klein);color:var(--text3);margin:8px 2px 0">${treffer.length===VORLAGEN.length?`${VORLAGEN.length} Vorlagen`:`${treffer.length} von ${VORLAGEN.length} Vorlagen`}</div>
+    ${treffer.length?listeHtml:`<div style="font-size:var(--s-text);color:var(--text2);padding:10px 0">Keine Vorlage passt dazu.${(aktiv||_vuFilter.suche)?` <button onclick="vuFilterLeeren();vuSucheSetzen('')" class="btn btn-sm" style="min-height:44px;margin-top:8px">↩ Alle zeigen</button>`:""}</div>`}
     ${gewaehlt?vorschau(gewaehlt):""}
-    <button id="vu-haupt" onclick="vorlageUebernehmenSetzen()" class="btn btn-p" style="width:100%;min-height:56px;margin-top:12px;justify-content:center;font-size:15px"${(!gewaehlt||!datum)?" disabled":""}><i class="ti ti-calendar-plus"></i>${_vuPlanDa?"Plan ersetzen":"Auf den Termin setzen"}</button>
+    <button id="vu-haupt" onclick="vorlageUebernehmenSetzen()" class="btn btn-p" style="width:100%;min-height:56px;margin-top:12px;justify-content:center;font-size:var(--s-karte)"${(!gewaehlt||!datum)?" disabled":""}><i class="ti ti-calendar-plus"></i>${_vuPlanDa?"Plan ersetzen":"Auf den Termin setzen"}</button>
     <button onclick="vorlageUebernehmenClose()" class="btn" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Abbrechen</button>`;
   /* Nach dem Neuzeichnen zurück ins Suchfeld – sonst verlöre jeder Tastendruck den Fokus. */
   if(opt&&opt.fokus==="vu-suche"){
@@ -1276,7 +1276,7 @@ async function vorlagenAnsichtOpen(){
   m.onclick=e=>{ if(e.target===m)vorlagenAnsichtClose(); };
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:520px;width:100%;margin:auto">
     ${mdlHead("va-modal","🗂️","Vorlagen","Fertige Einheiten zum Nachschlagen – ohne Datum und ohne Kinder","#7c3aed")}
-    <div id="va-inhalt"><div style="font-size:12.5px;color:var(--text2);padding:8px 0">Lade Vorlagen …</div></div>
+    <div id="va-inhalt"><div style="font-size:var(--s-text);color:var(--text2);padding:8px 0">Lade Vorlagen …</div></div>
   </div>`;
   document.body.appendChild(m);
   await vorlagenLaden();
@@ -1292,17 +1292,17 @@ function _vaSteckbrief(v){
   let mainNr=0;
   const zeile=b=>{ if(b.typ==="main"||b.typ==="spielform")mainNr++;
     return `<div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:start;padding:5px 0;border-bottom:1px solid var(--surface2)">
-      <span style="font-size:10px;font-weight:800;color:#fff;background:${_eiFarbe(b.typ,mainNr)};border-radius:6px;padding:3px 7px;white-space:nowrap">${Number(b.dauer)} Min.</span>
-      <span style="min-width:0"><b style="font-size:12.5px">${esc(b.label)}</b>
-        <span style="display:block;font-size:11px;color:var(--text2);line-height:1.5">${_evBlockText(b)}</span></span>
+      <span style="font-size:var(--s-klein);font-weight:800;color:#fff;background:${_eiFarbe(b.typ,mainNr)};border-radius:6px;padding:3px 7px;white-space:nowrap">${Number(b.dauer)} Min.</span>
+      <span style="min-width:0"><b style="font-size:var(--s-text)">${esc(b.label)}</b>
+        <span style="display:block;font-size:var(--s-klein);color:var(--text2);line-height:1.5">${_evBlockText(b)}</span></span>
     </div>`; };
   const sk=(v.skalierung&&typeof v.skalierung==="object")?v.skalierung:{};
   const skZeilen=_evSkalierungSchluessel(sk).map(k=>`<div><b>${k} Kinder:</b> ${esc(String(sk[k]))}</div>`).join("");
   return `<div style="padding:2px 0 10px">
-    ${bl.map(zeile).join("")||'<div style="font-size:12px;color:var(--text3);padding:6px 0">Diese Vorlage hat keine Blöcke.</div>'}
-    ${skZeilen?`<div style="font-size:11.5px;color:var(--text2);line-height:1.6;margin-top:8px">📐 <b>Skalierung</b><br>${skZeilen}</div>`:""}
-    ${v.beobachtung?`<div style="font-size:11.5px;color:var(--text2);line-height:1.5;margin-top:8px">👀 <b>Beobachtungsfrage:</b> ${esc(v.beobachtung)}</div>`:""}
-    <div style="font-size:11px;color:var(--text3);margin-top:8px">Einsetzen kannst du sie im Trainingsplan über „Vorlage übernehmen" – dort steht der Termin.</div>
+    ${bl.map(zeile).join("")||'<div style="font-size:var(--s-text);color:var(--text3);padding:6px 0">Diese Vorlage hat keine Blöcke.</div>'}
+    ${skZeilen?`<div style="font-size:var(--s-klein);color:var(--text2);line-height:1.6;margin-top:8px">📐 <b>Skalierung</b><br>${skZeilen}</div>`:""}
+    ${v.beobachtung?`<div style="font-size:var(--s-klein);color:var(--text2);line-height:1.5;margin-top:8px">👀 <b>Beobachtungsfrage:</b> ${esc(v.beobachtung)}</div>`:""}
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px">Einsetzen kannst du sie im Trainingsplan über „Vorlage übernehmen" – dort steht der Termin.</div>
   </div>`;
 }
 function vorlagenAnsichtRender(){
@@ -1311,7 +1311,7 @@ function vorlagenAnsichtRender(){
   /* Leerer Zustand mit dem Weg dorthin, wo Vorlagen herkommen (cockpit-ui: ein Satz
      plus die passende Aktion). Seit v539 ist das die Datei im Repo, kein Knopf mehr. */
   if(!alle.length){
-    box.innerHTML=`<div style="font-size:12.5px;color:var(--text3);line-height:1.6;padding:6px 0">
+    box.innerHTML=`<div style="font-size:var(--s-text);color:var(--text3);line-height:1.6;padding:6px 0">
       Noch keine Vorlage hinterlegt. Vorlagen kommen aus <b>uebungen/vorlagen.json</b> im Repo und werden beim Öffnen der App abgeglichen.</div>`;
     return;
   }
@@ -1323,25 +1323,25 @@ function vorlagenAnsichtRender(){
   liste.slice().sort((a,b)=>String(a.leitfrage||"").localeCompare(String(b.leitfrage||""))||((a.folge_nr||0)-(b.folge_nr||0)))
     .forEach(v=>{ const f=String(v.leitfrage||"ohne Leitfrage");
       const g=gruppen.find(x=>x.f===f); if(g)g.rows.push(v); else gruppen.push({f,rows:[v]}); });
-  const chip=(an,txt,fn)=>`<button onclick="${fn}" aria-pressed="${an}" style="min-height:48px;text-align:left;border:1px solid ${an?"#7c3aed":"var(--rand-bedien)"};${an?"background:#7c3aed;color:#fff;":"background:var(--surface2);color:var(--text);"}border-radius:10px;padding:9px 11px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">${esc(txt)}</button>`;
+  const chip=(an,txt,fn)=>`<button onclick="${fn}" aria-pressed="${an}" style="min-height:48px;text-align:left;border:1px solid ${an?"#7c3aed":"var(--rand-bedien)"};${an?"background:#7c3aed;color:#fff;":"background:var(--surface2);color:var(--text);"}border-radius:10px;padding:9px 11px;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">${esc(txt)}</button>`;
   const karte=v=>{
     const bl=Array.isArray(v.bloecke)?v.bloecke:[];
     const summe=bl.reduce((a,b)=>a+(Number(b.dauer)||0),0);
     const auf=String(_vaOffen)===String(v.id);
     return `<div style="border:var(--border-s);border-radius:12px;margin-bottom:8px;background:var(--surface)">
       <button onclick="vaToggle('${String(v.id).replace(/'/g,"")}')" aria-expanded="${auf}" style="width:100%;min-height:48px;text-align:left;border:none;background:transparent;color:var(--text);font-family:inherit;cursor:pointer;padding:10px 12px">
-        <span style="display:block;font-size:13px;font-weight:800">${v.folge_nr?`${Number(v.folge_nr)}. `:""}${esc(v.name)}</span>
-        <span style="display:block;font-size:11px;color:var(--text3);margin-top:3px">${bl.length} ${bl.length===1?"Block":"Blöcke"} · ${summe} Min.${v.netto_spielform_min?` · ${Number(v.netto_spielform_min)} Min. netto`:""}${v.ordnung?" · "+esc(v.ordnung):""}${(Array.isArray(v.tags)&&v.tags.length)?" · "+v.tags.map(esc).join(", "):""}</span>
-        <span style="display:block;font-size:11px;color:var(--text2);margin-top:3px">${auf?"▾ zugeklappt anzeigen":"▸ Blöcke anzeigen"}</span>
+        <span style="display:block;font-size:var(--s-text);font-weight:800">${v.folge_nr?`${Number(v.folge_nr)}. `:""}${esc(v.name)}</span>
+        <span style="display:block;font-size:var(--s-klein);color:var(--text3);margin-top:3px">${bl.length} ${bl.length===1?"Block":"Blöcke"} · ${summe} Min.${v.netto_spielform_min?` · ${Number(v.netto_spielform_min)} Min. netto`:""}${v.ordnung?" · "+esc(v.ordnung):""}${(Array.isArray(v.tags)&&v.tags.length)?" · "+v.tags.map(esc).join(", "):""}</span>
+        <span style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:3px">${auf?"▾ zugeklappt anzeigen":"▸ Blöcke anzeigen"}</span>
       </button>
       ${auf?`<div style="padding:0 12px">${_vaSteckbrief(v)}</div>`:""}
     </div>`;
   };
   box.innerHTML=`
-    <div style="font-size:11.5px;color:var(--text2);line-height:1.5;margin-bottom:9px">${alle.length} ${alle.length===1?"Vorlage":"Vorlagen"} in der Sammlung. Diese Ansicht liest nur – geändert wird hier nichts.</div>
-    ${fragen.length>1?`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:2px 2px 5px">Leitfrage</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);line-height:1.5;margin-bottom:9px">${alle.length} ${alle.length===1?"Vorlage":"Vorlagen"} in der Sammlung. Diese Ansicht liest nur – geändert wird hier nichts.</div>
+    ${fragen.length>1?`<div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:2px 2px 5px">Leitfrage</div>
     <div style="display:flex;gap:6px;flex-direction:column;margin-bottom:10px">${fragen.map(f=>chip(_vaFrage===f,f,`vaFrageSet('${esc(f).replace(/'/g,"&#39;")}')`)).join("")}</div>`:""}
-    ${gruppen.map(g=>`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:10px 2px 5px">${esc(g.f)}</div>${g.rows.map(karte).join("")}`).join("")}
+    ${gruppen.map(g=>`<div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:10px 2px 5px">${esc(g.f)}</div>${g.rows.map(karte).join("")}`).join("")}
     <div style="display:flex;margin-top:10px"><button class="btn btn-sm" style="margin-left:auto;min-height:48px" onclick="vorlagenAnsichtClose()">Schließen</button></div>`;
 }
 

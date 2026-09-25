@@ -136,7 +136,7 @@ async function fazitOpen(terminId){
   const c = document.createElement("div");
   c.id = "fz-card";
   c.style.cssText = "background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
-  c.innerHTML = '<div style="padding:20px;color:var(--text3);font-size:12.5px">Lade …</div>';
+  c.innerHTML = '<div style="padding:20px;color:var(--text3);font-size:var(--s-text)">Lade …</div>';
   modal.appendChild(c); document.body.appendChild(modal);
 
   const autor = (typeof trainerMe==="function" ? (await trainerMe()) : "") || "";
@@ -164,7 +164,7 @@ function fazitSchliessen(){ document.getElementById("fz-modal")?.remove(); _FZ=n
 function fzStufenHtml(gruppe, id, stufen, aktuell){
   return `<div style="display:flex;gap:5px">${stufen.map(st=>{
     const an = String(aktuell)===String(st.v);
-    return `<button onclick="fazitSet('${gruppe}','${id}','${st.v}')" aria-pressed="${an}" style="flex:1;min-height:44px;font-size:12px;border:1px solid var(--rand-bedien);border-radius:var(--r);cursor:pointer;font-family:inherit;background:${an?st.c:"var(--surface2)"};color:${an?"#fff":"var(--text2)"};font-weight:${an?"800":"600"}">${an?"✓ ":""}${st.l}</button>`;
+    return `<button onclick="fazitSet('${gruppe}','${id}','${st.v}')" aria-pressed="${an}" style="flex:1;min-height:44px;font-size:var(--s-text);border:1px solid var(--rand-bedien);border-radius:var(--r);cursor:pointer;font-family:inherit;background:${an?st.c:"var(--surface2)"};color:${an?"#fff":"var(--text2)"};font-weight:${an?"800":"600"}">${an?"✓ ":""}${st.l}</button>`;
   }).join("")}</div>`;
 }
 
@@ -173,38 +173,38 @@ function fazitRender(){
   const t = _FZ.termin, w = _FZ.wert;
   const d = new Date(t.datum+"T00:00:00");
   const datumStr = ["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()]+" "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"});
-  const sec = x => `<div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:16px 0 6px">${x}</div>`;
-  const fld = "width:100%;box-sizing:border-box;padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text)";
+  const sec = x => `<div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:16px 0 6px">${x}</div>`;
+  const fld = "width:100%;box-sizing:border-box;padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)";
 
   const teamsHtml = _FZ.teams.map(tm=>{
     const v = w.teams[String(tm.nr)] || {};
     return `<div style="border:var(--border-s);border-radius:12px;padding:10px 11px;margin-bottom:8px;background:var(--surface2)">
-      <div style="font-size:13px;font-weight:800;margin-bottom:8px">${esc(tm.name)}${tm.form?`<span style="font-size:11px;font-weight:600;color:var(--text3)"> · ${esc(tm.form)}</span>`:""}</div>
+      <div style="font-size:var(--s-text);font-weight:800;margin-bottom:8px">${esc(tm.name)}${tm.form?`<span style="font-size:var(--s-klein);font-weight:600;color:var(--text3)"> · ${esc(tm.form)}</span>`:""}</div>
       ${FZ_REIHEN.map(re=>`<div style="margin-bottom:7px">
-        <div style="font-size:11.5px;font-weight:700;margin-bottom:3px">${re.emo} ${re.label}<span style="font-weight:500;color:var(--text3)"> · ${re.hint}</span></div>
+        <div style="font-size:var(--s-klein);font-weight:700;margin-bottom:3px">${re.emo} ${re.label}<span style="font-weight:500;color:var(--text3)"> · ${re.hint}</span></div>
         ${fzStufenHtml("teams", tm.nr+":"+re.key, FZ_STUFEN, v[re.key])}
       </div>`).join("")}
     </div>`;
   }).join("");
 
   const gaesteHtml = _FZ.gaeste.length ? _FZ.gaeste.map(g=>`<div style="margin-bottom:7px">
-      <div style="font-size:11.5px;font-weight:700;margin-bottom:3px">${esc(g)}</div>
+      <div style="font-size:var(--s-klein);font-weight:700;margin-bottom:3px">${esc(g)}</div>
       ${fzStufenHtml("gaeste", g, FZ_GAST, w.gaeste[g])}
     </div>`).join("")
-    + `<div style="font-size:10.5px;color:var(--text3);margin-top:2px">Landet beim Gegner in der Gegner-Datenbank – für die Einladungsliste des nächsten Festivals.</div>`
+    + `<div style="font-size:var(--s-klein);color:var(--text3);margin-top:2px">Landet beim Gegner in der Gegner-Datenbank – für die Einladungsliste des nächsten Festivals.</div>`
     : "";
 
   const orgaHtml = FZ_ORGA.map(o=>`<div style="margin-bottom:7px">
-      <div style="font-size:11.5px;font-weight:700;margin-bottom:3px">${o.emo} ${o.label}</div>
+      <div style="font-size:var(--s-klein);font-weight:700;margin-bottom:3px">${o.emo} ${o.label}</div>
       ${fzStufenHtml("orga", o.key, o.stufen.map((l,i)=>({v:i+1,l,c:i===1?"#15803d":"#64748b"})), w.orga[o.key])}
     </div>`).join("");
 
   c.innerHTML = `${mdlHead("fz-modal","📋",fzLabel(t)+" nachbereiten",esc(t.titel||fzLabel(t))+" · "+datumStr,"#0891b2")}
 
-    <div style="font-size:11.5px;color:var(--text2);background:var(--surface2);border-radius:10px;padding:9px 11px;line-height:1.5">
+    <div style="font-size:var(--s-klein);color:var(--text2);background:var(--surface2);border-radius:10px;padding:9px 11px;line-height:1.5">
       Hier geht es um die <b>Mannschaft</b>. Die einzelnen Kinder stehen im Blitz-Rating – was hier gefragt ist, sieht man am einzelnen Kind gar nicht.
     </div>
-    ${_FZ.fremde?`<div style="font-size:11.5px;color:var(--text2);margin-top:6px">👥 ${_FZ.fremde} weitere Einschätzung${_FZ.fremde>1?"en":""} aus dem Trainerteam liegt bereits vor – deine kommt daneben, sie ersetzt nichts.</div>`:""}
+    ${_FZ.fremde?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">👥 ${_FZ.fremde} weitere Einschätzung${_FZ.fremde>1?"en":""} aus dem Trainerteam liegt bereits vor – deine kommt daneben, sie ersetzt nichts.</div>`:""}
 
     ${sec("Wie hat die Mannschaft gespielt")}
     ${teamsHtml}
@@ -212,21 +212,21 @@ function fazitRender(){
     ${_FZ.gaeste.length?sec("Wie stark waren die Gäste")+gaesteHtml:""}
 
     ${sec("Zwei Sätze")}
-    <label style="font-size:11.5px;font-weight:700">Das hat getragen
+    <label style="font-size:var(--s-klein);font-weight:700">Das hat getragen
       <textarea id="fz-getragen" rows="2" maxlength="300" style="${fld};margin-top:3px;resize:vertical" placeholder="Was heute gut lief – auch fürs Lob in der Kabine">${esc(w.getragen)}</textarea></label>
-    <label style="font-size:11.5px;font-weight:700;display:block;margin-top:8px">Daran arbeiten wir
+    <label style="font-size:var(--s-klein);font-weight:700;display:block;margin-top:8px">Daran arbeiten wir
       <textarea id="fz-arbeiten" rows="2" maxlength="300" style="${fld};margin-top:3px;resize:vertical" placeholder="Steht beim nächsten Trainingsplan wieder da">${esc(w.arbeiten)}</textarea></label>
 
     <details style="margin-top:12px;border:var(--border-s);border-radius:12px;background:var(--surface2)">
-      <summary style="cursor:pointer;min-height:44px;display:flex;align-items:center;padding:0 12px;font-size:12.5px;font-weight:800;color:var(--text2)">⚙️ Organisation – wenn etwas hakte</summary>
+      <summary style="cursor:pointer;min-height:44px;display:flex;align-items:center;padding:0 12px;font-size:var(--s-text);font-weight:800;color:var(--text2)">⚙️ Organisation – wenn etwas hakte</summary>
       <div style="padding:2px 12px 12px">${orgaHtml}</div>
     </details>
 
     <div style="display:flex;gap:8px;margin-top:14px">
-      <button class="btn btn-p" style="flex:1;min-height:48px;justify-content:center;font-size:14px;font-weight:800" onclick="fazitSpeichern()"><i class="ti ti-check"></i>Speichern</button>
+      <button class="btn btn-p" style="flex:1;min-height:48px;justify-content:center;font-size:var(--s-karte);font-weight:800" onclick="fazitSpeichern()"><i class="ti ti-check"></i>Speichern</button>
       <button class="btn btn-sm" style="min-height:48px" onclick="fazitSchliessen()">Schließen</button>
     </div>
-    <div style="font-size:10.5px;color:var(--text3);margin-top:6px;text-align:center">Alles freiwillig – auch halb ausgefüllt ist besser als gar nicht.</div>`;
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px;text-align:center">Alles freiwillig – auch halb ausgefüllt ist besser als gar nicht.</div>`;
 }
 
 /* Derselbe Knopf nochmal = Antwort zurücknehmen. Ohne das bleibt ein Fehlgriff für immer
@@ -290,9 +290,9 @@ function fzWeiterInsTagebuch(terminId){
   box.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10055;display:flex;align-items:center;justify-content:center;padding:18px";
   box.onclick = e => { if(e.target===box) box.remove(); };
   box.innerHTML = `<div style="background:var(--surface);color:var(--text);max-width:380px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
-    <div style="font-size:15px;font-weight:800">Gespeichert ✓</div>
-    <div style="font-size:12.5px;color:var(--text2);margin:6px 0 14px;line-height:1.5">Willst du daraus einen Tagebucheintrag machen? Auslöser und Beobachtung stehen schon da – es fehlen nur dein Aha und die Konsequenz.</div>
-    <button class="btn btn-p" onclick="document.getElementById('fz-weiter').remove();tagebuchAusEvent(${Number(terminId)})" style="width:100%;min-height:56px;justify-content:center;font-size:15px;font-weight:800"><i class="ti ti-book"></i>Ins Tagebuch</button>
+    <div style="font-size:var(--s-karte);font-weight:800">Gespeichert ✓</div>
+    <div style="font-size:var(--s-text);color:var(--text2);margin:6px 0 14px;line-height:1.5">Willst du daraus einen Tagebucheintrag machen? Auslöser und Beobachtung stehen schon da – es fehlen nur dein Aha und die Konsequenz.</div>
+    <button class="btn btn-p" onclick="document.getElementById('fz-weiter').remove();tagebuchAusEvent(${Number(terminId)})" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-book"></i>Ins Tagebuch</button>
     <button class="btn" onclick="document.getElementById('fz-weiter').remove()" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Später</button>
   </div>`;
   document.body.appendChild(box);

@@ -17,10 +17,10 @@ async function adlerkasseLinkGet(){
 function adlerkasseCardHtml(link){
   if(!link||!/^https?:\/\//i.test(link))return ""; // nur echte http(s)-Links (kein javascript: o.ä.)
   return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px;margin-top:12px;text-align:center">
-    <div style="font-size:15px;font-weight:800;color:#1e3a8a">🦅 Adler-Kasse</div>
-    <div style="font-size:12px;color:#64748b;margin:4px 0 10px">Danke, dass du unsere Jungs anfeuerst! Jeder Euro fließt direkt in die Mannschaft – fürs Eis nach dem Sieg 🍦, den Ausflug, die nächste Belohnung.</div>
-    <a href="${esc(link)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:#0070ba;color:#fff;border-radius:10px;padding:11px 22px;font-weight:800;font-size:14px;text-decoration:none">☕ Kleinigkeit spenden</a>
-    <div style="font-size:9.5px;color:#cbd5e1;margin-top:8px">Zahlung läuft extern über PayPal. Die App fasst kein Geld an.</div>
+    <div style="font-size:var(--s-karte);font-weight:800;color:#1e3a8a">🦅 Adler-Kasse</div>
+    <div style="font-size:var(--s-text);color:#64748b;margin:4px 0 10px">Danke, dass du unsere Jungs anfeuerst! Jeder Euro fließt direkt in die Mannschaft – fürs Eis nach dem Sieg 🍦, den Ausflug, die nächste Belohnung.</div>
+    <a href="${esc(link)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:#0070ba;color:#fff;border-radius:10px;padding:11px 22px;font-weight:800;font-size:var(--s-karte);text-decoration:none">☕ Kleinigkeit spenden</a>
+    <div style="font-size:var(--s-klein);color:#cbd5e1;margin-top:8px">Zahlung läuft extern über PayPal. Die App fasst kein Geld an.</div>
   </div>`;
 }
 
@@ -114,38 +114,38 @@ async function boerseRender(){
   const meineId=(typeof sbUserId==="function")?sbUserId():null;
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/boerse_listings?select=*&order=created_at.desc`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)rows=await r.json();}catch(e){}
-  const fld="padding:8px;border:1px solid #cbd5e1;border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box;background:#fff;color:#0f172a";
+  const fld="padding:8px;border:1px solid #cbd5e1;border-radius:8px;font-family:inherit;font-size:var(--s-text);box-sizing:border-box;background:#fff;color:#0f172a";
   const liste=rows.map(x=>{
     const meins=x.created_by===meineId;
     const reserviert=!!x.reserviert_von;
     const vonMir=x.reserviert_von===meineId;
     let aktion;
-    if(meins)aktion=`<button onclick="boerseDelete(${x.id})" style="min-height:40px;padding:6px 12px;border:1.5px solid var(--red);border-radius:10px;background:#fef2f2;color:#dc2626;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">Entfernen</button>`;
-    else if(vonMir)aktion=`<button onclick="boerseFreigeben(${x.id})" style="min-height:40px;padding:6px 12px;border:1.5px solid #94a3b8;border-radius:10px;background:#f8fafc;color:#475569;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">✓ von dir – freigeben</button>`;
-    else if(reserviert)aktion=`<span style="font-size:12px;color:#b45309;font-weight:700">reserviert</span>`;
-    else aktion=`<button onclick="boerseReservieren(${x.id})" style="min-height:40px;padding:6px 14px;border:none;border-radius:10px;background:#059669;color:#fff;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer">Nehme ich</button>`;
+    if(meins)aktion=`<button onclick="boerseDelete(${x.id})" style="min-height:40px;padding:6px 12px;border:1.5px solid var(--red);border-radius:10px;background:#fef2f2;color:#dc2626;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Entfernen</button>`;
+    else if(vonMir)aktion=`<button onclick="boerseFreigeben(${x.id})" style="min-height:40px;padding:6px 12px;border:1.5px solid #94a3b8;border-radius:10px;background:#f8fafc;color:#475569;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">✓ von dir – freigeben</button>`;
+    else if(reserviert)aktion=`<span style="font-size:var(--s-text);color:#b45309;font-weight:700">reserviert</span>`;
+    else aktion=`<button onclick="boerseReservieren(${x.id})" style="min-height:40px;padding:6px 14px;border:none;border-radius:10px;background:#059669;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">Nehme ich</button>`;
     return `<div style="display:flex;gap:10px;padding:10px 0;border-top:1px solid #f1f5f9">
-      ${x.foto_path?`<img id="bo-img-${x.id}" alt="" style="width:56px;height:56px;flex:none;border-radius:10px;object-fit:cover;background:#f1f5f9">`:`<div style="width:56px;height:56px;flex:none;border-radius:10px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:24px">🛍️</div>`}
+      ${x.foto_path?`<img id="bo-img-${x.id}" alt="" style="width:56px;height:56px;flex:none;border-radius:10px;object-fit:cover;background:#f1f5f9">`:`<div style="width:56px;height:56px;flex:none;border-radius:10px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:var(--s-seite)">🛍️</div>`}
       <div style="flex:1;min-width:0">
-        <div style="font-size:13.5px;font-weight:700">${esc(x.titel)}</div>
-        <div style="font-size:11.5px;color:#64748b">${x.groesse?"Gr. "+esc(x.groesse)+" · ":""}${esc(x.preis||"")}</div>
+        <div style="font-size:var(--s-text);font-weight:700">${esc(x.titel)}</div>
+        <div style="font-size:var(--s-klein);color:#64748b">${x.groesse?"Gr. "+esc(x.groesse)+" · ":""}${esc(x.preis||"")}</div>
         <div style="margin-top:6px">${aktion}</div>
       </div>
     </div>`;
   }).join("");
   c.innerHTML=`${mdlHead("boerse-modal","🛍️","Adler-Börse","Zu klein geworden? Hier findet es ein neues Adler-Kind","#2563eb")}
-    ${liste||'<div style="font-size:12px;color:var(--text3);padding:6px 0">Noch nichts drin. Stell das Erste ein!</div>'}
+    ${liste||'<div style="font-size:var(--s-text);color:var(--text3);padding:6px 0">Noch nichts drin. Stell das Erste ein!</div>'}
     <div style="border-top:1px solid #e2e8f0;margin-top:12px;padding-top:12px">
-      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:6px">Etwas anbieten</div>
+      <div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:6px">Etwas anbieten</div>
       <input id="bo-titel" placeholder="Was? z. B. Fußballschuhe blau" style="width:100%;margin-bottom:6px;${fld}">
       <div style="display:flex;gap:6px;margin-bottom:6px">
         <input id="bo-groesse" placeholder="Größe" style="flex:1;${fld}">
         <input id="bo-preis" placeholder="Preis / „Zu verschenken“" style="flex:2;${fld}">
       </div>
-      <input id="bo-foto" type="file" accept="image/jpeg,image/png,image/webp" style="width:100%;margin-bottom:8px;font-size:11px">
+      <input id="bo-foto" type="file" accept="image/jpeg,image/png,image/webp" style="width:100%;margin-bottom:8px;font-size:var(--s-klein)">
       <div style="display:flex;gap:8px">
-        <button onclick="boerseAdd(this)" style="min-height:44px;padding:0 14px;border:none;border-radius:10px;background:#2563eb;color:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">Einstellen</button>
-        <button onclick="document.getElementById('boerse-modal').remove()" style="margin-left:auto;min-height:44px;padding:0 14px;border:1px solid var(--rand-bedien);border-radius:10px;background:#fff;color:#475569;font-family:inherit;font-size:13px;cursor:pointer">Schließen</button>
+        <button onclick="boerseAdd(this)" style="min-height:44px;padding:0 14px;border:none;border-radius:10px;background:#2563eb;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Einstellen</button>
+        <button onclick="document.getElementById('boerse-modal').remove()" style="margin-left:auto;min-height:44px;padding:0 14px;border:1px solid var(--rand-bedien);border-radius:10px;background:#fff;color:#475569;font-family:inherit;font-size:var(--s-text);cursor:pointer">Schließen</button>
       </div>
     </div>`;
   rows.forEach(x=>{ if(x.foto_path)boerseFoto(x.id,x.foto_path); });
@@ -216,14 +216,14 @@ async function skillWocheOpen(){
   const modal=document.createElement("div");
   modal.id="skw-modal";modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10001;display:flex;flex-direction:column;padding:14px;overflow-y:auto";
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
-  const fld="width:100%;padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const fld="width:100%;padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
   const c=document.createElement("div");
   c.style.cssText="background:var(--surface);color:var(--text);max-width:440px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`${mdlHead("skw-modal","🎬","Skill der Woche","Heim-Challenge mit Video · Eltern geben 50 Federn frei","#ea580c")}
-    ${cur?`<div style="font-size:11px;color:var(--text2);background:var(--surface2);border-radius:8px;padding:8px 10px;margin-bottom:10px">Aktuell: <b>${esc(cur.titel)}</b></div>`:""}
-    <label style="font-size:11px;color:var(--text2)">Titel<input id="skw-titel" value="${esc(cur?.titel||"")}" placeholder="z. B. 10× Ball hochhalten" style="${fld}"></label>
-    <label style="font-size:11px;color:var(--text2);display:block;margin-top:8px">Video-Link (YouTube o. ä.)<input id="skw-url" value="${esc(cur?.video_url||"")}" placeholder="https://…" style="${fld}"></label>
-    <label style="font-size:11px;color:var(--text2);display:block;margin-top:8px">Beschreibung (optional)<textarea id="skw-besch" rows="2" style="${fld};resize:vertical">${esc(cur?.beschreibung||"")}</textarea></label>
+    ${cur?`<div style="font-size:var(--s-klein);color:var(--text2);background:var(--surface2);border-radius:8px;padding:8px 10px;margin-bottom:10px">Aktuell: <b>${esc(cur.titel)}</b></div>`:""}
+    <label style="font-size:var(--s-klein);color:var(--text2)">Titel<input id="skw-titel" value="${esc(cur?.titel||"")}" placeholder="z. B. 10× Ball hochhalten" style="${fld}"></label>
+    <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Video-Link (YouTube o. ä.)<input id="skw-url" value="${esc(cur?.video_url||"")}" placeholder="https://…" style="${fld}"></label>
+    <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Beschreibung (optional)<textarea id="skw-besch" rows="2" style="${fld};resize:vertical">${esc(cur?.beschreibung||"")}</textarea></label>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-p btn-sm" onclick="skillWocheSave(this)"><i class="ti ti-device-floppy"></i>Als aktuelle Challenge setzen</button>
       <button class="btn btn-sm" style="margin-left:auto" onclick="document.getElementById('skw-modal').remove()">Schließen</button>
@@ -255,13 +255,13 @@ async function elternSkillLoad(kids){
   let sk=null;
   try{const r=await fetch(`${SB_URL}/rest/v1/skill_woche?aktiv=eq.true&select=*&order=created_at.desc&limit=1`,{headers:sbAuthHeaders()});if(r.ok)sk=(await r.json())[0]||null;}catch(e){}
   if(!sk){ slot.innerHTML=""; return; }
-  const kidBtns=(kids||[]).map(k=>`<button onclick="skillGeschafft(${sk.id},${k.spieler_id},'${jsq((k.kader&&k.kader.name)||"")}')" style="flex:1;min-width:130px;min-height:44px;padding:9px;border:1.5px solid #7c3aed;border-radius:10px;background:#fff;color:#6d28d9;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">🎉 ${esc((k.kader&&k.kader.name)||"Kind")} hat's geschafft</button>`).join("");
+  const kidBtns=(kids||[]).map(k=>`<button onclick="skillGeschafft(${sk.id},${k.spieler_id},'${jsq((k.kader&&k.kader.name)||"")}')" style="flex:1;min-width:130px;min-height:44px;padding:9px;border:1.5px solid #7c3aed;border-radius:10px;background:#fff;color:#6d28d9;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">🎉 ${esc((k.kader&&k.kader.name)||"Kind")} hat's geschafft</button>`).join("");
   slot.innerHTML=`<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
     <div style="font-weight:700;margin-bottom:2px">🎬 Skill der Woche</div>
-    <div style="font-size:14px;font-weight:700;color:#6d28d9;margin:2px 0">${esc(sk.titel)}</div>
-    ${sk.beschreibung?`<div style="font-size:12.5px;color:#475569;margin-bottom:8px">${esc(sk.beschreibung)}</div>`:""}
-    ${sk.video_url?`<a href="${esc(sk.video_url)}" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;padding:11px;border:1.5px solid #7c3aed;border-radius:10px;background:#faf5ff;color:#6d28d9;font-weight:700;font-size:13px;text-decoration:none;margin-bottom:8px">▶️ Video ansehen</a>`:""}
-    <div style="font-size:11px;color:#64748b;margin-bottom:8px">Zuhause geübt und geschafft? Dann Federn freigeben:</div>
+    <div style="font-size:var(--s-karte);font-weight:700;color:#6d28d9;margin:2px 0">${esc(sk.titel)}</div>
+    ${sk.beschreibung?`<div style="font-size:var(--s-text);color:#475569;margin-bottom:8px">${esc(sk.beschreibung)}</div>`:""}
+    ${sk.video_url?`<a href="${esc(sk.video_url)}" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;padding:11px;border:1.5px solid #7c3aed;border-radius:10px;background:#faf5ff;color:#6d28d9;font-weight:700;font-size:var(--s-text);text-decoration:none;margin-bottom:8px">▶️ Video ansehen</a>`:""}
+    <div style="font-size:var(--s-klein);color:#64748b;margin-bottom:8px">Zuhause geübt und geschafft? Dann Federn freigeben:</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">${kidBtns}</div>
   </div>`;
 }
@@ -298,15 +298,15 @@ async function elternWaescheLoad(kids){
   const langeNichtDran=tageHer===null||tageHer>49; // ~7 Wochen oder noch nie
   const fmt=d=>new Date(d+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
   const verlauf=log.length
-    ? log.slice(0,5).map(x=>`<div style="display:flex;gap:6px;font-size:12px;padding:3px 0;border-top:1px solid #f1f5f9"><span style="color:var(--text3);width:44px">${fmt(x.datum)}</span><span>${esc((x.kader&&x.kader.name)||"—")}s Familie</span></div>`).join("")
-    : `<div style="font-size:12px;color:var(--text3);padding:4px 0">Noch niemand eingetragen.</div>`;
-  const kidBtns=(kids||[]).map(k=>`<button onclick="waescheUebernehmen(${k.spieler_id},'${jsq((k.kader&&k.kader.name)||"")}')" style="flex:1;min-width:130px;min-height:44px;padding:9px;border:1.5px solid #2563eb;border-radius:10px;background:#fff;color:#1d4ed8;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">🧺 ${esc((k.kader&&k.kader.name)||"Kind")} übernimmt</button>`).join("");
+    ? log.slice(0,5).map(x=>`<div style="display:flex;gap:6px;font-size:var(--s-text);padding:3px 0;border-top:1px solid #f1f5f9"><span style="color:var(--text3);width:44px">${fmt(x.datum)}</span><span>${esc((x.kader&&x.kader.name)||"—")}s Familie</span></div>`).join("")
+    : `<div style="font-size:var(--s-text);color:var(--text3);padding:4px 0">Noch niemand eingetragen.</div>`;
+  const kidBtns=(kids||[]).map(k=>`<button onclick="waescheUebernehmen(${k.spieler_id},'${jsq((k.kader&&k.kader.name)||"")}')" style="flex:1;min-width:130px;min-height:44px;padding:9px;border:1.5px solid #2563eb;border-radius:10px;background:#fff;color:#1d4ed8;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">🧺 ${esc((k.kader&&k.kader.name)||"Kind")} übernimmt</button>`).join("");
   slot.innerHTML=`<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
     <div style="font-weight:700;margin-bottom:2px">🧺 Trikot-Wäsche</div>
-    <div style="font-size:12px;color:#64748b;margin-bottom:8px">Wer nimmt die Trikots mit? Übernimmt deine Familie, gibt's ${XP_ICON} <b>100 Federn</b> fürs Kind.</div>
-    ${langeNichtDran?`<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:8px 10px;font-size:12px;color:#1e40af;margin-bottom:8px">👋 ${tageHer===null?"Ihr wart noch nicht dran":"Ihr wart lange nicht dran"} – mögt ihr diesmal?</div>`:""}
+    <div style="font-size:var(--s-text);color:#64748b;margin-bottom:8px">Wer nimmt die Trikots mit? Übernimmt deine Familie, gibt's ${XP_ICON} <b>100 Federn</b> fürs Kind.</div>
+    ${langeNichtDran?`<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:8px 10px;font-size:var(--s-text);color:#1e40af;margin-bottom:8px">👋 ${tageHer===null?"Ihr wart noch nicht dran":"Ihr wart lange nicht dran"} – mögt ihr diesmal?</div>`:""}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">${kidBtns}</div>
-    <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:2px">Zuletzt gewaschen</div>
+    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:2px">Zuletzt gewaschen</div>
     ${verlauf}
   </div>`;
 }
@@ -366,20 +366,20 @@ async function elternMitbringLoad(kids){
   slot.innerHTML=events.map(ev=>{
     const items=itemsMap[ev.id]||[];
     const liste=items.length
-      ? items.map(it=>`<div style="display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 0;border-top:1px solid #f1f5f9">
+      ? items.map(it=>`<div style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);padding:5px 0;border-top:1px solid #f1f5f9">
           <span style="flex:1">🍽️ <b>${esc(it.was)}</b>${it.wer?` <span style="color:var(--text3)">· ${esc(it.wer)}</span>`:""}</span>
-          ${(uid&&it.created_by===uid)?`<button onclick="mitbringDelete(${it.id})" aria-label="Eintrag löschen" style="border:none;background:transparent;color:#dc2626;cursor:pointer;min-width:32px;min-height:32px;font-size:15px">✕</button>`:""}
+          ${(uid&&it.created_by===uid)?`<button onclick="mitbringDelete(${it.id})" aria-label="Eintrag löschen" style="border:none;background:transparent;color:#dc2626;cursor:pointer;min-width:32px;min-height:32px;font-size:var(--s-karte)">✕</button>`:""}
         </div>`).join("")
-      : `<div style="font-size:12px;color:var(--text3);padding:4px 0">Noch nichts eingetragen – mach den Anfang! 🎉</div>`;
-    const kidSel=(kids&&kids.length>1)?`<select id="mb-kid-${ev.id}" style="min-height:44px;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:13px;background:#fff">${kidOpts}</select>`:"";
+      : `<div style="font-size:var(--s-text);color:var(--text3);padding:4px 0">Noch nichts eingetragen – mach den Anfang! 🎉</div>`;
+    const kidSel=(kids&&kids.length>1)?`<select id="mb-kid-${ev.id}" style="min-height:44px;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:#fff">${kidOpts}</select>`:"";
     return `<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
       <div style="font-weight:700;margin-bottom:2px">🎉 ${esc(ev.titel||"Event")} · Mitbringliste</div>
-      <div style="font-size:12px;color:#64748b;margin-bottom:8px">${fmtD(ev.datum)}${ev.ort?" · "+esc(ev.ort):""} — wer bringt was mit? (Salat, Kuchen, Getränke, Pavillon …)</div>
+      <div style="font-size:var(--s-text);color:#64748b;margin-bottom:8px">${fmtD(ev.datum)}${ev.ort?" · "+esc(ev.ort):""} — wer bringt was mit? (Salat, Kuchen, Getränke, Pavillon …)</div>
       ${liste}
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
-        <input id="mb-was-${ev.id}" placeholder="Was bringst du mit?" style="flex:1;min-width:150px;min-height:44px;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:13px" onkeydown="if(event.key==='Enter')mitbringAdd(${ev.id})">
+        <input id="mb-was-${ev.id}" placeholder="Was bringst du mit?" style="flex:1;min-width:150px;min-height:44px;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text)" onkeydown="if(event.key==='Enter')mitbringAdd(${ev.id})">
         ${kidSel}
-        <button onclick="mitbringAdd(${ev.id})" style="min-height:44px;padding:9px 16px;border:none;border-radius:10px;background:#16a34a;color:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">Eintragen</button>
+        <button onclick="mitbringAdd(${ev.id})" style="min-height:44px;padding:9px 16px;border:none;border-radius:10px;background:#16a34a;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Eintragen</button>
       </div>
     </div>`;
   }).join("");
@@ -439,10 +439,10 @@ async function elternBuedchenLoad(termine,kids){
     const namen=(fam&&fam.length)?fam.map(f=>esc(f.name)+"s Familie").join(" & "):"– wird eingeteilt –";
     cards.push(`<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05);${meine?"border:2px solid #16a34a":""}">
       <div style="font-weight:700;margin-bottom:2px">🍿 Büdchen · Heimspiel${(t.gegner||t.titel)?" gegen "+esc(t.gegner||t.titel):""}</div>
-      <div style="font-size:12px;color:#64748b;margin-bottom:8px">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${zeit?" · "+zeit:""} · 2 Familien betreuen das Büdchen</div>
-      <div style="font-size:13px">Eingeteilt: <b>${namen}</b></div>
-      ${meine?`<div style="margin-top:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:8px 10px;font-size:12.5px;color:#15803d">Ihr seid diesmal dran – danke fürs Büdchen! 🙌</div>
-        <button onclick="buedchenOptout(${t.id},${meine.spieler_id})" style="width:100%;margin-top:8px;min-height:44px;border:1.5px solid #dc2626;border-radius:10px;background:#fff;color:#dc2626;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">Wir können leider nicht – nächste Familie</button>`:""}
+      <div style="font-size:var(--s-text);color:#64748b;margin-bottom:8px">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${zeit?" · "+zeit:""} · 2 Familien betreuen das Büdchen</div>
+      <div style="font-size:var(--s-text)">Eingeteilt: <b>${namen}</b></div>
+      ${meine?`<div style="margin-top:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:8px 10px;font-size:var(--s-text);color:#15803d">Ihr seid diesmal dran – danke fürs Büdchen! 🙌</div>
+        <button onclick="buedchenOptout(${t.id},${meine.spieler_id})" style="width:100%;margin-top:8px;min-height:44px;border:1.5px solid #dc2626;border-radius:10px;background:#fff;color:#dc2626;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Wir können leider nicht – nächste Familie</button>`:""}
     </div>`);
   }
   slot.innerHTML=cards.join("");
@@ -466,7 +466,7 @@ async function elternGespraechStatus(){
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/elterngespraech_wunsch?status=eq.offen&select=id,thema,created_at&order=created_at.desc`,{headers:sbAuthHeaders()});if(r.ok)rows=await r.json();}catch(e){}
   if(!rows.length){slot.innerHTML="";return;}
-  slot.innerHTML=rows.map(w=>`<div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:10px;padding:8px 10px;margin-bottom:8px;font-size:12.5px;color:#6b21a8">✓ Anfrage gesendet – der Trainer meldet sich.${w.thema?`<div style="font-size:11px;color:#7c3aed;margin-top:2px">Thema: ${esc(w.thema)}</div>`:""}</div>`).join("");
+  slot.innerHTML=rows.map(w=>`<div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:10px;padding:8px 10px;margin-bottom:8px;font-size:var(--s-text);color:#6b21a8">✓ Anfrage gesendet – der Trainer meldet sich.${w.thema?`<div style="font-size:var(--s-klein);color:#7c3aed;margin-top:2px">Thema: ${esc(w.thema)}</div>`:""}</div>`).join("");
 }
 function elternGespraechOpen(){
   const kids=window._elternKids||[];
@@ -474,15 +474,15 @@ function elternGespraechOpen(){
   const m=document.createElement("div");m.id="eg-modal";
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10041;display:flex;align-items:center;justify-content:center;padding:16px";
   m.onclick=e=>{if(e.target===m)m.remove();};
-  const kidSel=(kids.length>1)?`<label style="font-size:11px;color:#64748b;display:block;margin-bottom:8px">Um welches Kind geht es?<select id="eg-kid" style="width:100%;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:14px;margin-top:2px">${kids.map(k=>`<option value="${k.spieler_id}">${esc((k.kader&&k.kader.name)||"Kind")}</option>`).join("")}</select></label>`:"";
+  const kidSel=(kids.length>1)?`<label style="font-size:var(--s-klein);color:#64748b;display:block;margin-bottom:8px">Um welches Kind geht es?<select id="eg-kid" style="width:100%;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-karte);margin-top:2px">${kids.map(k=>`<option value="${k.spieler_id}">${esc((k.kader&&k.kader.name)||"Kind")}</option>`).join("")}</select></label>`:"";
   m.innerHTML=`<div style="background:#fff;color:#1a1a2e;max-width:380px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
     ${mdlHead("eg-modal","🗣️","Elterngespräch anfragen","","#475569")}
-    <div style="font-size:12px;color:#64748b;margin-bottom:12px">Der Trainer bekommt deinen Wunsch und meldet sich zur Terminabstimmung.</div>
+    <div style="font-size:var(--s-text);color:#64748b;margin-bottom:12px">Der Trainer bekommt deinen Wunsch und meldet sich zur Terminabstimmung.</div>
     ${kidSel}
-    <label style="font-size:11px;color:#64748b">Worum geht es? (optional)<textarea id="eg-thema" rows="3" placeholder="z. B. Entwicklung, Position, eine Frage …" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:14px;margin-top:2px;resize:vertical"></textarea></label>
+    <label style="font-size:var(--s-klein);color:#64748b">Worum geht es? (optional)<textarea id="eg-thema" rows="3" placeholder="z. B. Entwicklung, Position, eine Frage …" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-karte);margin-top:2px;resize:vertical"></textarea></label>
     <div style="display:flex;gap:8px;margin-top:12px">
-      <button onclick="elternGespraechSave(this)" style="flex:1;min-height:44px;border:none;border-radius:10px;background:#7c3aed;color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">Anfrage senden</button>
-      <button onclick="document.getElementById('eg-modal').remove()" style="min-height:44px;padding:0 16px;border:1.5px solid var(--rand-bedien);border-radius:10px;background:#fff;color:#334155;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer">Abbrechen</button>
+      <button onclick="elternGespraechSave(this)" style="flex:1;min-height:44px;border:none;border-radius:10px;background:#7c3aed;color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">Anfrage senden</button>
+      <button onclick="document.getElementById('eg-modal').remove()" style="min-height:44px;padding:0 16px;border:1.5px solid var(--rand-bedien);border-radius:10px;background:#fff;color:#334155;font-family:inherit;font-size:var(--s-karte);font-weight:700;cursor:pointer">Abbrechen</button>
     </div>
   </div>`;
   document.body.appendChild(m);
@@ -531,11 +531,11 @@ async function elternPollLoad(){
       const dstr=new Date(s.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"});
       const zstr=s.uhrzeit?" · "+String(s.uhrzeit).slice(0,5)+" Uhr":"";
       const decided=p.decided_slot_id===s.id;
-      if(p.status==="entschieden")return decided?`<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;margin-top:6px;font-size:13px;font-weight:700;color:#15803d">✅ Termin: ${dstr}${zstr}</div>`:"";
+      if(p.status==="entschieden")return decided?`<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;margin-top:6px;font-size:var(--s-text);font-weight:700;color:#15803d">✅ Termin: ${dstr}${zstr}</div>`:"";
       const mine=((bySlot[s.id]||[]).find(v=>v.voter===uid)||{}).status||null;
       const btns=["ja","vielleicht","nein"].map(st=>{const on=mine===st;const c=st==="ja"?{e:"👍",col:"#16a34a",l:"Passt"}:st==="vielleicht"?{e:"🤔",col:"#ca8a04",l:"Evtl."}:{e:"👎",col:"#dc2626",l:"Nein"};
-        return `<button onclick="epollVote(${s.id},'${st}')" style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;border:1.5px solid ${on?c.col:"var(--rand-bedien)"};background:${on?c.col:"#fff"};color:${on?"#fff":"#334155"};font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer">${c.e} ${c.l}</button>`;}).join("");
-      return `<div style="margin-top:8px"><div style="font-size:12.5px;font-weight:700;margin-bottom:4px">${dstr}${zstr}</div><div style="display:flex;gap:5px">${btns}</div></div>`;
+        return `<button onclick="epollVote(${s.id},'${st}')" style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;border:1.5px solid ${on?c.col:"var(--rand-bedien)"};background:${on?c.col:"#fff"};color:${on?"#fff":"#334155"};font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">${c.e} ${c.l}</button>`;}).join("");
+      return `<div style="margin-top:8px"><div style="font-size:var(--s-text);font-weight:700;margin-bottom:4px">${dstr}${zstr}</div><div style="display:flex;gap:5px">${btns}</div></div>`;
     }).join("");
     /* PO/Markus: „wenn ich beim ersten Termin eventuell auswähle, wird die Kachel sofort
        ausgeblendet. Das heißt ich kann keinen zweiten Termin ebenfalls mit eventuell
@@ -550,7 +550,7 @@ async function elternPollLoad(){
     const fortschritt=(!alleDa&&offen<ss.length)?` · noch ${offen} von ${ss.length} offen`:"";
     const card=`<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05);border:2px solid #7c3aed">
       <div style="font-weight:700;margin-bottom:2px">🗓️ ${esc(p.titel||"Elterngespräch")}</div>
-      <div style="font-size:12px;color:#64748b;margin-bottom:6px">${p.status==="entschieden"?"Der Termin steht:":`Sag zu jedem Vorschlag kurz Bescheid${fortschritt}`}</div>
+      <div style="font-size:var(--s-text);color:#64748b;margin-bottom:6px">${p.status==="entschieden"?"Der Termin steht:":`Sag zu jedem Vorschlag kurz Bescheid${fortschritt}`}</div>
       ${rows}
     </div>`;
     if(p.status!=="entschieden"&&!alleDa){todoHtml+=card;nochOffen+=offen;} else infoHtml+=card;
@@ -629,14 +629,14 @@ function fairplayQuizRender(){
   const order=q.opts.map((t,i)=>({t,i})).sort(()=>Math.random()-0.5);
   ov.innerHTML=`<div style="max-width:520px;margin:0 auto;padding:24px 18px 40px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <div style="font-size:13px;font-weight:800;opacity:.9">🤝 Fairplay-Quiz</div>
-      <button onclick="document.getElementById('fq-ov').remove()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer">✕</button>
+      <div style="font-size:var(--s-text);font-weight:800;opacity:.9">🤝 Fairplay-Quiz</div>
+      <button onclick="document.getElementById('fq-ov').remove()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:var(--s-teil);cursor:pointer">✕</button>
     </div>
     <div style="height:6px;background:rgba(255,255,255,.2);border-radius:3px;overflow:hidden;margin-bottom:16px"><div style="height:100%;width:${Math.round(FQ_IDX/FAIRPLAY_QUIZ.length*100)}%;background:#38bdf8;border-radius:3px;transition:width .3s"></div></div>
-    <div style="font-size:11px;opacity:.8;margin-bottom:6px">Frage ${FQ_IDX+1} von ${FAIRPLAY_QUIZ.length}</div>
-    <div style="font-size:18px;font-weight:800;line-height:1.4;margin-bottom:18px">${esc(q.q)}</div>
+    <div style="font-size:var(--s-klein);opacity:.8;margin-bottom:6px">Frage ${FQ_IDX+1} von ${FAIRPLAY_QUIZ.length}</div>
+    <div style="font-size:var(--s-teil);font-weight:800;line-height:1.4;margin-bottom:18px">${esc(q.q)}</div>
     <div id="fq-opts" style="display:flex;flex-direction:column;gap:10px">
-      ${order.map(o=>`<button onclick="fairplayQuizAnswer(${o.i},this)" style="text-align:left;padding:15px 16px;min-height:56px;border:2px solid rgba(255,255,255,.25);border-radius:14px;background:rgba(255,255,255,.08);color:#fff;font-family:inherit;font-size:14.5px;font-weight:600;cursor:pointer">${esc(o.t)}</button>`).join("")}
+      ${order.map(o=>`<button onclick="fairplayQuizAnswer(${o.i},this)" style="text-align:left;padding:15px 16px;min-height:56px;border:2px solid rgba(255,255,255,.25);border-radius:14px;background:rgba(255,255,255,.08);color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:600;cursor:pointer">${esc(o.t)}</button>`).join("")}
     </div>
     <div id="fq-feedback" style="margin-top:16px"></div>
   </div>`;
@@ -650,9 +650,9 @@ function fairplayQuizAnswer(i,btn){
   btn.style.background=richtig?"rgba(34,197,94,.25)":"rgba(239,68,68,.25)";
   try{navigator.vibrate&&navigator.vibrate(richtig?20:[40,40,40]);}catch(e){}
   document.getElementById("fq-feedback").innerHTML=`<div style="background:rgba(255,255,255,.1);border-radius:12px;padding:12px 14px">
-    <div style="font-size:14px;font-weight:800">${richtig?"👍 Genau!":"💡 Fast – so geht's fairer:"}</div>
-    <div style="font-size:13px;opacity:.95;margin-top:3px">${esc(q.fun)}</div>
-    <button onclick="fairplayQuizNext()" style="width:100%;min-height:48px;margin-top:12px;border:none;border-radius:12px;background:#fff;color:#0b2f4d;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer">${FQ_IDX<FAIRPLAY_QUIZ.length-1?"Weiter":"Fertig 🎉"}</button>
+    <div style="font-size:var(--s-karte);font-weight:800">${richtig?"👍 Genau!":"💡 Fast – so geht's fairer:"}</div>
+    <div style="font-size:var(--s-text);opacity:.95;margin-top:3px">${esc(q.fun)}</div>
+    <button onclick="fairplayQuizNext()" style="width:100%;min-height:48px;margin-top:12px;border:none;border-radius:12px;background:#fff;color:#0b2f4d;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">${FQ_IDX<FAIRPLAY_QUIZ.length-1?"Weiter":"Fertig 🎉"}</button>
   </div>`;
 }
 function fairplayQuizNext(){
@@ -677,15 +677,15 @@ async function fairplayQuizResult(){
   if(!document.getElementById("fq-ov"))return;
   try{navigator.vibrate&&navigator.vibrate([100,50,100,50,200]);}catch(e){}
   const federnZeile=neu>0
-    ? `<div style="font-size:17px;font-weight:900;color:#fde047">🪶 +${neu} Federn fürs Kind!</div>`
-    : (schonGehabt?`<div style="font-size:14px;opacity:.92">Die Federn hattet ihr schon – aber Üben schadet nie. 💚</div>`
-                  :`<div style="font-size:13px;opacity:.85">Melde dich an, damit die Federn beim Kind landen.</div>`);
+    ? `<div style="font-size:var(--s-teil);font-weight:900;color:#fde047">🪶 +${neu} Federn fürs Kind!</div>`
+    : (schonGehabt?`<div style="font-size:var(--s-karte);opacity:.92">Die Federn hattet ihr schon – aber Üben schadet nie. 💚</div>`
+                  :`<div style="font-size:var(--s-text);opacity:.85">Melde dich an, damit die Federn beim Kind landen.</div>`);
   ov.innerHTML=`<div style="max-width:520px;margin:0 auto;padding:40px 18px;text-align:center">
     <div style="font-size:56px">🏅</div>
-    <div style="font-size:24px;font-weight:900;margin-top:8px">${FQ_RICHTIG} von ${FAIRPLAY_QUIZ.length} richtig</div>
-    <div style="font-size:14px;opacity:.9;margin:8px 0 16px">Danke, dass ihr Fairplay vorlebt – die Kinder schauen es sich ab.</div>
+    <div style="font-size:var(--s-seite);font-weight:900;margin-top:8px">${FQ_RICHTIG} von ${FAIRPLAY_QUIZ.length} richtig</div>
+    <div style="font-size:var(--s-karte);opacity:.9;margin:8px 0 16px">Danke, dass ihr Fairplay vorlebt – die Kinder schauen es sich ab.</div>
     ${federnZeile}
-    <button onclick="document.getElementById('fq-ov').remove()" style="width:100%;min-height:52px;margin-top:22px;border:none;border-radius:14px;background:#fff;color:#0b2f4d;font-family:inherit;font-size:16px;font-weight:800;cursor:pointer">Schließen</button>
+    <button onclick="document.getElementById('fq-ov').remove()" style="width:100%;min-height:52px;margin-top:22px;border:none;border-radius:14px;background:#fff;color:#0b2f4d;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">Schließen</button>
   </div>`;
 }
 
@@ -717,13 +717,13 @@ async function fairplayCommitLoad(){
   if(committed){
     const d=new Date(committed);
     slot.innerHTML=`<div style="display:flex;align-items:center;gap:10px;padding:12px;border:1.5px solid #16a34a;border-radius:10px;background:#f0fdf4">
-      <span style="font-size:20px">✅</span>
-      <div style="font-size:12.5px;color:#15803d;font-weight:700">Verstanden und dabei${isNaN(d)?"":` · seit ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"})}`}<div style="font-weight:500;color:#166534;font-size:11.5px;margin-top:1px">Danke, dass du unseren Codex mitträgst! 💚</div></div>
+      <span style="font-size:var(--s-teil)">✅</span>
+      <div style="font-size:var(--s-text);color:#15803d;font-weight:700">Verstanden und dabei${isNaN(d)?"":` · seit ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"})}`}<div style="font-weight:500;color:#166534;font-size:var(--s-klein);margin-top:1px">Danke, dass du unseren Codex mitträgst! 💚</div></div>
     </div>`;
   }else{
     slot.innerHTML=`<label style="display:flex;align-items:flex-start;gap:10px;padding:12px;border:1.5px dashed #16a34a;border-radius:10px;background:#f0fdf4;cursor:pointer">
       <input type="checkbox" id="fp-commit-cb" onchange="fairplayCommitDo(this)" style="margin-top:2px;flex:none">
-      <span style="font-size:12.5px;color:#15803d">Ich habe den Codex gelesen – <b>verstanden und ich bin dabei.</b></span>
+      <span style="font-size:var(--s-text);color:#15803d">Ich habe den Codex gelesen – <b>verstanden und ich bin dabei.</b></span>
     </label>`;
   }
 }
@@ -766,11 +766,11 @@ async function fairplayEditOpen(){
 }
 function fairplayEditRender(){
   const c=document.getElementById("fpe-card"); if(!c)return;
-  const fld="padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const fld="padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
   c.innerHTML=`${mdlHead("fpe-modal","🤝","Fairplay-Codex bearbeiten","Diese Regeln sehen die Eltern · Reihenfolge mit den Pfeilen","#16a34a")}
     ${FP_EDIT.map((r,i)=>`<div style="border:var(--border-s);border-radius:10px;padding:10px;margin-bottom:8px">
       <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-        <input value="${esc(r.emo)}" oninput="FP_EDIT[${i}].emo=this.value" maxlength="4" style="width:52px;text-align:center;font-size:18px;${fld}">
+        <input value="${esc(r.emo)}" oninput="FP_EDIT[${i}].emo=this.value" maxlength="4" style="width:52px;text-align:center;font-size:var(--s-teil);${fld}">
         <input value="${esc(r.titel)}" oninput="FP_EDIT[${i}].titel=this.value" placeholder="Titel der Regel" style="flex:1;font-weight:700;${fld}">
       </div>
       <textarea oninput="FP_EDIT[${i}].text=this.value" rows="2" placeholder="Kurze Erklärung (optional)" style="width:100%;resize:vertical;${fld}">${esc(r.text)}</textarea>
@@ -842,8 +842,8 @@ async function vereinbarungOpen(){
   const karte=(emo,titel,text,nr)=>`<div style="display:flex;gap:13px;align-items:flex-start;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:15px;margin-bottom:10px">
       <div style="font-size:27px;line-height:1">${esc(emo)}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:15.5px;font-weight:800">${nr?nr+". ":""}${esc(titel)}</div>
-        ${text?`<div style="font-size:13.5px;opacity:.95;line-height:1.6;margin-top:4px">${esc(text)}</div>`:""}
+        <div style="font-size:var(--s-karte);font-weight:800">${nr?nr+". ":""}${esc(titel)}</div>
+        ${text?`<div style="font-size:var(--s-text);opacity:.95;line-height:1.6;margin-top:4px">${esc(text)}</div>`:""}
       </div>
     </div>`;
   /* Auffang: Der Offline-Fallback ELTERN_LEITFADEN kennt keine Kategorien, und ein
@@ -854,31 +854,31 @@ async function vereinbarungOpen(){
   const rubrikHtml=(r)=>{
     const items=teile.filter(x=>x.kat===r.k);
     if(!items.length&&r.k!=="rand")return "";
-    const verweis=r.k==="rand"?`<div style="font-size:12.5px;opacity:.9;line-height:1.6;background:rgba(255,255,255,.07);border-radius:12px;padding:12px;margin-bottom:10px">👆 Wie wir uns am Spielfeldrand verhalten, steht oben im <b>Fairplay-Codex</b>. Hier nur die praktischen Ergänzungen.</div>`:"";
+    const verweis=r.k==="rand"?`<div style="font-size:var(--s-text);opacity:.9;line-height:1.6;background:rgba(255,255,255,.07);border-radius:12px;padding:12px;margin-bottom:10px">👆 Wie wir uns am Spielfeldrand verhalten, steht oben im <b>Fairplay-Codex</b>. Hier nur die praktischen Ergänzungen.</div>`:"";
     return `<details style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:4px 14px;margin-bottom:10px">
-      <summary style="cursor:pointer;padding:12px 0;font-size:15.5px;font-weight:800;list-style:none">${r.emo} ${esc(r.t)} <span style="font-weight:600;opacity:.7;font-size:12.5px">· ${items.length}</span></summary>
+      <summary style="cursor:pointer;padding:12px 0;font-size:var(--s-karte);font-weight:800;list-style:none">${r.emo} ${esc(r.t)} <span style="font-weight:600;opacity:.7;font-size:var(--s-text)">· ${items.length}</span></summary>
       <div style="padding-bottom:10px">${verweis}${items.map(x=>karte(x.emo,x.t,x.d,0)).join("")}</div>
     </details>`;
   };
   ov.innerHTML=`<div style="max-width:560px;margin:0 auto;padding:24px 18px 40px">
     <div style="text-align:center;font-size:40px">🦅</div>
-    <div style="text-align:center;font-size:22px;font-weight:900;letter-spacing:.3px">Unsere Vereinbarung</div>
-    <div style="text-align:center;font-size:13px;opacity:.9;margin:6px 0 20px">SV Adler Dellbrück · U9 – wofür wir als Team stehen</div>
+    <div style="text-align:center;font-size:var(--s-seite);font-weight:900;letter-spacing:.3px">Unsere Vereinbarung</div>
+    <div style="text-align:center;font-size:var(--s-text);opacity:.9;margin:6px 0 20px">SV Adler Dellbrück · U9 – wofür wir als Team stehen</div>
 
-    <div style="font-size:12.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;opacity:.85;margin:6px 2px 10px">🤝 Unser Fairplay-Codex</div>
-    <div style="font-size:12.5px;opacity:.9;line-height:1.6;margin-bottom:12px">Die Haltung, auf die wir uns alle verlassen – kurz und klar.</div>
+    <div style="font-size:var(--s-text);font-weight:800;letter-spacing:.4px;text-transform:uppercase;opacity:.85;margin:6px 2px 10px">🤝 Unser Fairplay-Codex</div>
+    <div style="font-size:var(--s-text);opacity:.9;line-height:1.6;margin-bottom:12px">Die Haltung, auf die wir uns alle verlassen – kurz und klar.</div>
     ${regeln.map((r,i)=>karte(r.emo,r.t,r.d,i+1)).join("")}
     <div id="fp-commit-slot" style="margin:14px 0 6px"></div>
 
-    <div style="font-size:12.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;opacity:.85;margin:26px 2px 10px;border-top:1px solid rgba(255,255,255,.18);padding-top:20px">📖 ${esc(typeof LEITFADEN_NAME!=="undefined"?LEITFADEN_NAME:"Eltern-Leitfaden")}</div>
-    <div style="font-size:12.5px;opacity:.9;line-height:1.6;margin-bottom:12px">Das Praktische zum Nachschlagen – tippe auf eine Rubrik.</div>
+    <div style="font-size:var(--s-text);font-weight:800;letter-spacing:.4px;text-transform:uppercase;opacity:.85;margin:26px 2px 10px;border-top:1px solid rgba(255,255,255,.18);padding-top:20px">📖 ${esc(typeof LEITFADEN_NAME!=="undefined"?LEITFADEN_NAME:"Eltern-Leitfaden")}</div>
+    <div style="font-size:var(--s-text);opacity:.9;line-height:1.6;margin-bottom:12px">Das Praktische zum Nachschlagen – tippe auf eine Rubrik.</div>
     ${VB_RUBRIKEN.map(rubrikHtml).join("")}
     ${rest.length?`<details style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:4px 14px;margin-bottom:10px">
-      <summary style="cursor:pointer;padding:12px 0;font-size:15.5px;font-weight:800;list-style:none">📌 Weitere Punkte <span style="font-weight:600;opacity:.7;font-size:12.5px">· ${rest.length}</span></summary>
+      <summary style="cursor:pointer;padding:12px 0;font-size:var(--s-karte);font-weight:800;list-style:none">📌 Weitere Punkte <span style="font-weight:600;opacity:.7;font-size:var(--s-text)">· ${rest.length}</span></summary>
       <div style="padding-bottom:10px">${rest.map(x=>karte(x.emo,x.t,x.d,0)).join("")}</div>
     </details>`:""}
 
-    <button onclick="document.getElementById('vb-ov').remove()" style="width:100%;min-height:52px;margin-top:18px;border:none;border-radius:14px;background:#fff;color:#065f46;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer">Schließen</button>
+    <button onclick="document.getElementById('vb-ov').remove()" style="width:100%;min-height:52px;margin-top:18px;border:none;border-radius:14px;background:#fff;color:#065f46;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">Schließen</button>
   </div>`;
   if(typeof fairplayCommitLoad==="function")fairplayCommitLoad(); // Häkchen-Zusage nachladen
 }
@@ -905,15 +905,15 @@ async function leitfadenEditOpen(){
 }
 function leitfadenEditRender(){
   const c=document.getElementById("lfe-card"); if(!c)return;
-  const fld="padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const fld="padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
   c.innerHTML=`${mdlHead("lfe-modal","📖",esc(LEITFADEN_NAME)+" bearbeiten","Diese Punkte sehen die Eltern · Reihenfolge mit den Pfeilen","#059669")}
     ${LF_EDIT.map((r,i)=>`<div style="border:var(--border-s);border-radius:10px;padding:10px;margin-bottom:8px">
       <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-        <input value="${esc(r.emo)}" oninput="LF_EDIT[${i}].emo=this.value" maxlength="4" style="width:52px;text-align:center;font-size:18px;${fld}">
+        <input value="${esc(r.emo)}" oninput="LF_EDIT[${i}].emo=this.value" maxlength="4" style="width:52px;text-align:center;font-size:var(--s-teil);${fld}">
         <input value="${esc(r.titel)}" oninput="LF_EDIT[${i}].titel=this.value" placeholder="Überschrift" style="flex:1;font-weight:700;${fld}">
       </div>
       <textarea oninput="LF_EDIT[${i}].text=this.value" rows="3" placeholder="Ausformulierter Text" style="width:100%;resize:vertical;${fld}">${esc(r.text)}</textarea>
-      <label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:var(--text2)">Rubrik
+      <label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:var(--s-text);color:var(--text2)">Rubrik
         <select onchange="LF_EDIT[${i}].kat=this.value" style="flex:1;${fld}">
           ${VB_RUBRIKEN.concat([{k:"codex",emo:"🤝",t:"Steht schon im Fairplay-Codex (oben)"}]).map(g=>`<option value="${g.k}" ${(r.kat||"wir")===g.k?"selected":""}>${g.emo} ${esc(g.t)}</option>`).join("")}
         </select>
@@ -967,9 +967,9 @@ function elternPlatzAmpelBanner(termin){
             :s==="ausweich"?"Heute auf den Ausweichplatz."
             :"Der Termin findet statt.";
   return `<div style="background:${bg};color:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 4px 16px ${bg}55">
-    <div style="font-size:18px;font-weight:900;display:flex;align-items:center;gap:8px">${a.emo} ${esc(a.lbl)}</div>
-    <div style="font-size:13.5px;opacity:.97;margin-top:4px">${text}${termin.platz_status_note?` <b>${esc(termin.platz_status_note)}</b>`:""}</div>
-    ${wann?`<div style="font-size:10.5px;opacity:.8;margin-top:6px">Aktualisiert ${wann} Uhr vom Trainer</div>`:""}
+    <div style="font-size:var(--s-teil);font-weight:900;display:flex;align-items:center;gap:8px">${a.emo} ${esc(a.lbl)}</div>
+    <div style="font-size:var(--s-text);opacity:.97;margin-top:4px">${text}${termin.platz_status_note?` <b>${esc(termin.platz_status_note)}</b>`:""}</div>
+    ${wann?`<div style="font-size:var(--s-klein);opacity:.8;margin-top:6px">Aktualisiert ${wann} Uhr vom Trainer</div>`:""}
   </div>`;
 }
 /* Kompakter Hinweis IN der Terminkarte – eine Zeile, kein zweiter Block. Leer im
@@ -981,9 +981,9 @@ function elternPlatzHinweisHtml(termin){
   const text=s==="abgesagt"?"Der Termin fällt aus.":"Heute auf den Ausweichplatz.";
   const wann=termin.platz_status_at?new Date(termin.platz_status_at).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
   return `<div style="background:${bg};color:#fff;border-radius:10px;padding:10px 12px;margin:8px 0 2px">
-    <div style="font-size:14px;font-weight:900">${a.emo} ${esc(a.lbl)}</div>
-    <div style="font-size:12.5px;opacity:.97;margin-top:2px">${text}${termin.platz_status_note?` <b>${esc(termin.platz_status_note)}</b>`:""}</div>
-    ${wann?`<div style="font-size:10px;opacity:.85;margin-top:4px">Aktualisiert ${wann} Uhr vom Trainer</div>`:""}
+    <div style="font-size:var(--s-karte);font-weight:900">${a.emo} ${esc(a.lbl)}</div>
+    <div style="font-size:var(--s-text);opacity:.97;margin-top:2px">${text}${termin.platz_status_note?` <b>${esc(termin.platz_status_note)}</b>`:""}</div>
+    ${wann?`<div style="font-size:var(--s-klein);opacity:.85;margin-top:4px">Aktualisiert ${wann} Uhr vom Trainer</div>`:""}
   </div>`;
 }
 function elternPlatzRandFarbe(termin){
@@ -1013,12 +1013,12 @@ async function elternPauseLoad(termin,kids){
   if(!treffer.length){ box.innerHTML=""; return; }
   const m=(typeof TM_META!=="undefined"&&TM_META[termin.typ])||{label:termin.typ};
   box.innerHTML=treffer.map(t=>`<div style="background:#fffbeb;border:1.5px solid #fcd34d;border-radius:14px;padding:16px;margin-bottom:12px">
-    <div style="font-size:15px;font-weight:800;color:#92400e">😌 Diesmal pausiert ${esc(t.name)}</div>
-    <div style="font-size:12.5px;color:#92400e;line-height:1.55;margin-top:6px">
+    <div style="font-size:var(--s-karte);font-weight:800;color:#92400e">😌 Diesmal pausiert ${esc(t.name)}</div>
+    <div style="font-size:var(--s-text);color:#92400e;line-height:1.55;margin-top:6px">
       Beim ${esc(m.label)} am ${new Date(termin.datum+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})} ist der Kader voll –
       ${esc(t.name)} ist diesmal nicht dabei. Beim nächsten Mal ist er wieder eingeplant.
     </div>
-    ${t.grund?`<div style="margin-top:8px;background:#fff;border-radius:8px;padding:8px 10px;font-size:12.5px;color:#334155">${esc(t.grund)}<div style="font-size:10px;color:var(--text3);margin-top:3px">Nachricht vom Trainer</div></div>`:""}
+    ${t.grund?`<div style="margin-top:8px;background:#fff;border-radius:8px;padding:8px 10px;font-size:var(--s-text);color:#334155">${esc(t.grund)}<div style="font-size:var(--s-klein);color:var(--text3);margin-top:3px">Nachricht vom Trainer</div></div>`:""}
   </div>`).join("");
 }
 
@@ -1040,8 +1040,8 @@ async function elternTurnierplanLoad(termin){
   const erg={}; ergebnisse.forEach(x=>{ if(x.plan_id)erg[x.plan_id]=x; });
 
   const knoepfe=[];
-  if(termin.turnierplan_url)knoepfe.push(`<a href="${esc(termin.turnierplan_url)}" target="_blank" rel="noopener noreferrer" style="flex:1;min-width:130px;text-align:center;padding:9px;border:1.5px solid #1e3a8a;border-radius:10px;background:#fff;color:#1e3a8a;font-size:13px;font-weight:700;text-decoration:none">🔗 Turnierbaum</a>`);
-  if(termin.turnierplan_datei)knoepfe.push(`<button onclick="elternAushangOeffnen('${jsq(termin.turnierplan_datei)}')" style="flex:1;min-width:130px;padding:9px;border:1.5px solid #1e3a8a;border-radius:10px;background:#fff;color:#1e3a8a;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">📄 Aushang ansehen</button>`);
+  if(termin.turnierplan_url)knoepfe.push(`<a href="${esc(termin.turnierplan_url)}" target="_blank" rel="noopener noreferrer" style="flex:1;min-width:130px;text-align:center;padding:9px;border:1.5px solid #1e3a8a;border-radius:10px;background:#fff;color:#1e3a8a;font-size:var(--s-text);font-weight:700;text-decoration:none">🔗 Turnierbaum</a>`);
+  if(termin.turnierplan_datei)knoepfe.push(`<button onclick="elternAushangOeffnen('${jsq(termin.turnierplan_datei)}')" style="flex:1;min-width:130px;padding:9px;border:1.5px solid #1e3a8a;border-radius:10px;background:#fff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📄 Aushang ansehen</button>`);
 
   if(!plan.length&&!knoepfe.length){ box.innerHTML=""; return; }
 
@@ -1051,20 +1051,20 @@ async function elternTurnierplanLoad(termin){
     plan.forEach(p=>{ const t=teamLabelFromKey(p.datum)||" · Adler 1"; (gruppen[t]=gruppen[t]||[]).push(p); });
     const mehrere=Object.keys(gruppen).length>1;
     liste=Object.entries(gruppen).map(([label,zeilen])=>
-      (mehrere?`<div style="font-size:11px;font-weight:700;color:#64748b;margin:8px 0 2px">${esc(label.replace(/^ · /,""))}</div>`:"")
+      (mehrere?`<div style="font-size:var(--s-klein);font-weight:700;color:#64748b;margin:8px 0 2px">${esc(label.replace(/^ · /,""))}</div>`:"")
       +zeilen.map(p=>{
         const e=erg[p.id];
         const farbe=e?(e.tore>e.gegentore?"#059669":e.tore===e.gegentore?"#b45309":"#dc2626"):"#94a3b8";
         return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid #f1f5f9">
-          <span style="font-size:11.5px;color:#64748b;width:44px">${p.uhrzeit?esc(p.uhrzeit):"--:--"}</span>
-          <span style="flex:1;font-size:12.5px">${esc(p.gegner||"?")}${p.feld?`<span style="color:var(--text3);font-size:10.5px"> · ${esc(p.feld)}</span>`:""}</span>
-          <span style="font-weight:800;font-size:13px;color:${farbe}">${e?`${e.tore}:${e.gegentore}`:"–"}</span>
+          <span style="font-size:var(--s-klein);color:#64748b;width:44px">${p.uhrzeit?esc(p.uhrzeit):"--:--"}</span>
+          <span style="flex:1;font-size:var(--s-text)">${esc(p.gegner||"?")}${p.feld?`<span style="color:var(--text3);font-size:var(--s-klein)"> · ${esc(p.feld)}</span>`:""}</span>
+          <span style="font-weight:800;font-size:var(--s-text);color:${farbe}">${e?`${e.tore}:${e.gegentore}`:"–"}</span>
         </div>`;
       }).join("")).join("");
   }
   box.innerHTML=`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
-    <div style="font-size:12.5px;font-weight:700;color:#1e3a8a;margin-bottom:2px">🏆 Turnierplan</div>
-    ${plan.length?`<div style="font-size:11px;color:var(--text3);margin-bottom:2px">Ergebnisse erscheinen, sobald der Trainer sie einträgt.</div>`:""}
+    <div style="font-size:var(--s-text);font-weight:700;color:#1e3a8a;margin-bottom:2px">🏆 Turnierplan</div>
+    ${plan.length?`<div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:2px">Ergebnisse erscheinen, sobald der Trainer sie einträgt.</div>`:""}
     ${liste}
     ${knoepfe.length?`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">${knoepfe.join("")}</div>`:""}
   </div>`;
@@ -1081,7 +1081,7 @@ async function elternAushangOeffnen(pfad){
 /* Fan-Link: Eltern geben den Spenden-Link an Oma, Opa & Fans weiter.
    Nur Weitergabe eines Links – die App fasst weiterhin kein Geld an. */
 function akShareBtnHtml(){
-  return `<button onclick="akShare()" style="width:100%;margin-top:8px;padding:10px;border:1.5px solid #0070ba;border-radius:10px;background:#fff;color:#0070ba;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">📤 Fan-Link teilen (Oma, Opa &amp; Fans)</button>`;
+  return `<button onclick="akShare()" style="width:100%;margin-top:8px;padding:10px;border:1.5px solid #0070ba;border-radius:10px;background:#fff;color:#0070ba;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📤 Fan-Link teilen (Oma, Opa &amp; Fans)</button>`;
 }
 function akShare(){
   const url=window._akLink; if(!url)return;
@@ -1137,12 +1137,12 @@ async function elternMatchGrussLoad(kids){
   (rows||[]).forEach(row=>{
     const st=row.stats||{}, total=Object.values(st).reduce((a,b)=>a+(+b||0),0);
     if(!total)return;
-    const chips=Object.keys(GRUSS_AKT).filter(a=>st[a]).map(a=>`<span style="display:inline-block;background:#f5f3ff;color:#5b21b6;border-radius:12px;padding:3px 9px;font-size:12px;font-weight:700;margin:2px 3px 2px 0">${GRUSS_AKT[a].e} ${st[a]}× ${GRUSS_AKT[a].l}</span>`).join("");
+    const chips=Object.keys(GRUSS_AKT).filter(a=>st[a]).map(a=>`<span style="display:inline-block;background:#f5f3ff;color:#5b21b6;border-radius:12px;padding:3px 9px;font-size:var(--s-text);font-weight:700;margin:2px 3px 2px 0">${GRUSS_AKT[a].e} ${st[a]}× ${GRUSS_AKT[a].l}</span>`).join("");
     cards.push(`<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 2px 10px rgba(0,0,0,.05);border-left:3px solid #7c3aed">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Rückblick · ${d}</div>
-      <div style="font-weight:800;font-size:15px;margin-top:2px">🦅 ${esc(row.name||"Kind")}${game.gegner?` gegen ${esc(game.gegner)}`:""}</div>
+      <div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Rückblick · ${d}</div>
+      <div style="font-weight:800;font-size:var(--s-karte);margin-top:2px">🦅 ${esc(row.name||"Kind")}${game.gegner?` gegen ${esc(game.gegner)}`:""}</div>
       <div style="margin-top:8px">${chips}</div>
-      <div style="font-size:12.5px;color:#15803d;font-weight:700;margin-top:8px">${grussLine(st)}</div>
+      <div style="font-size:var(--s-text);color:#15803d;font-weight:700;margin-top:8px">${grussLine(st)}</div>
     </div>`);
   });
   slot.innerHTML=cards.join("");
@@ -1199,15 +1199,15 @@ async function elternKannJetztLoad(kids){
                                       :{emo:"🎯", text:esc(String(row.text||"").trim())};
       if(!ist.text)return "";
       return `<div style="display:flex;gap:9px;align-items:flex-start;padding:7px 0">
-        <span style="font-size:17px;line-height:1.35;flex:none">${ist.emo}</span>
-        <span style="font-size:13.5px;line-height:1.45;color:#1a1a2e;overflow-wrap:anywhere">${ist.text}</span>
+        <span style="font-size:var(--s-teil);line-height:1.35;flex:none">${ist.emo}</span>
+        <span style="font-size:var(--s-text);line-height:1.45;color:#1a1a2e;overflow-wrap:anywhere">${ist.text}</span>
       </div>`;
     }).filter(Boolean).join("");
     if(!zeilen)continue;
     const kd=k.kader||{};
     karten.push(`<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 2px 10px rgba(0,0,0,.05);border-left:3px solid #16a34a">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Neu dazugekommen</div>
-      <div style="font-weight:800;font-size:15px;margin-top:2px">🌱 Das kann ${esc(kd.name||"dein Kind")} jetzt</div>
+      <div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Neu dazugekommen</div>
+      <div style="font-weight:800;font-size:var(--s-karte);margin-top:2px">🌱 Das kann ${esc(kd.name||"dein Kind")} jetzt</div>
       <div style="margin-top:6px">${zeilen}</div>
     </div>`);
   }
@@ -1291,15 +1291,15 @@ async function elternLiveKachelLoad(termin,eigenesTeam){
   slot.innerHTML=`<div class="el-live" style="background:linear-gradient(135deg,#dc2626,#b91c1c);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 4px 18px rgba(220,38,38,.28);color:#fff">
     <div style="display:flex;align-items:center;gap:8px">
       <span class="el-live-dot" aria-hidden="true" style="width:11px;height:11px;border-radius:50%;background:#fff;flex:none"></span>
-      <span style="font-size:11px;font-weight:900;letter-spacing:1.2px">LIVE</span>
-      <span style="font-size:12px;font-weight:700;opacity:.92">${esc(teamTxt)} · Liveticker läuft</span>
-      <button onclick="elternLiveWeg('${esc(datum)}')" aria-label="Hinweis für heute ausblenden" style="margin-left:auto;border:none;background:rgba(255,255,255,.18);color:#fff;width:32px;height:32px;border-radius:50%;font-size:17px;line-height:1;cursor:pointer;font-family:inherit;flex:none">×</button>
+      <span style="font-size:var(--s-klein);font-weight:900;letter-spacing:1.2px">LIVE</span>
+      <span style="font-size:var(--s-text);font-weight:700;opacity:.92">${esc(teamTxt)} · Liveticker läuft</span>
+      <button onclick="elternLiveWeg('${esc(datum)}')" aria-label="Hinweis für heute ausblenden" style="margin-left:auto;border:none;background:rgba(255,255,255,.18);color:#fff;width:32px;height:32px;border-radius:50%;font-size:var(--s-teil);line-height:1;cursor:pointer;font-family:inherit;flex:none">×</button>
     </div>
     <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-      <button onclick="location.href=location.pathname+'?ticker=${encodeURIComponent(key)}'" style="flex:1;min-width:150px;min-height:46px;border:none;border-radius:10px;background:#fff;color:#b91c1c;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">📣 Liveticker öffnen</button>
-      <button onclick="elternLiveTeilen('${esc(key)}')" style="min-height:46px;padding:0 16px;border:1.5px solid rgba(255,255,255,.85);border-radius:10px;background:transparent;color:#fff;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer">🔗 Teilen</button>
+      <button onclick="location.href=location.pathname+'?ticker=${encodeURIComponent(key)}'" style="flex:1;min-width:150px;min-height:46px;border:none;border-radius:10px;background:#fff;color:#b91c1c;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">📣 Liveticker öffnen</button>
+      <button onclick="elternLiveTeilen('${esc(key)}')" style="min-height:46px;padding:0 16px;border:1.5px solid rgba(255,255,255,.85);border-radius:10px;background:transparent;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">🔗 Teilen</button>
     </div>
-    <div style="font-size:10.5px;opacity:.85;margin-top:7px">Der Link funktioniert ohne Anmeldung – auch für Oma und Opa. Nach dem Spieltag zeigt er nur noch das Ergebnis.</div>
+    <div style="font-size:var(--s-klein);opacity:.85;margin-top:7px">Der Link funktioniert ohne Anmeldung – auch für Oma und Opa. Nach dem Spieltag zeigt er nur noch das Ergebnis.</div>
   </div>`;
 }
 // Container – die eigentliche Auswahl macht elternTickerLoad async (Team-Auto-Erkennung).
@@ -1329,10 +1329,10 @@ async function elternTickerLoad(termin){
   }
   // „Wer betreut mein Kind heute?" – die häufigste Elternfrage am Spieltag.
   const trainerZeile=(t)=>{ const tr=trainerJeTeam[t]||[];
-    return tr.length?`<div style="font-size:11.5px;color:#334155;margin-bottom:4px">🧢 Trainer: <b>${tr.map(elternEsc).join(", ")}</b></div>`:""; };
+    return tr.length?`<div style="font-size:var(--s-klein);color:#334155;margin-bottom:4px">🧢 Trainer: <b>${tr.map(elternEsc).join(", ")}</b></div>`:""; };
   const wrap=(inner)=>`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
-    <div style="font-size:12.5px;font-weight:700;color:#dc2626;margin-bottom:2px">📣 Liveticker</div>${inner}</div>`;
-  const bigBtn=(label,onclick,filled)=>`<button onclick="${onclick}" style="width:100%;min-height:48px;margin-top:6px;padding:12px;border:1.5px solid #dc2626;border-radius:10px;background:${filled?"#dc2626":"#fff"};color:${filled?"#fff":"#dc2626"};font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">${label}</button>`;
+    <div style="font-size:var(--s-text);font-weight:700;color:#dc2626;margin-bottom:2px">📣 Liveticker</div>${inner}</div>`;
+  const bigBtn=(label,onclick,filled)=>`<button onclick="${onclick}" style="width:100%;min-height:48px;margin-top:6px;padding:12px;border:1.5px solid #dc2626;border-radius:10px;background:${filled?"#dc2626":"#fff"};color:${filled?"#fff":"#dc2626"};font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">${label}</button>`;
   const konfBtn = anzahl>1 ? bigBtn("👥 Konferenz · alle Teams live",`elternTickerKonf('${datum}')`,false) : "";
   /* Die Live-Kachel ganz oben braucht dasselbe Ergebnis der Team-Erkennung – hier ist es
      schon da, ein zweiter Durchlauf waere nur zusaetzliche Last auf dem Elterntelefon. */
@@ -1341,17 +1341,17 @@ async function elternTickerLoad(termin){
 
   if(myTeams.size===1){
     const t=[...myTeams][0];
-    slot.innerHTML=wrap(`<div style="font-size:11px;color:#64748b;margin-bottom:2px">Automatisch erkannt: dein Kind spielt heute in <b style="color:#dc2626">Adler ${t}</b>.</div>${trainerZeile(t)}
+    slot.innerHTML=wrap(`<div style="font-size:var(--s-klein);color:#64748b;margin-bottom:2px">Automatisch erkannt: dein Kind spielt heute in <b style="color:#dc2626">Adler ${t}</b>.</div>${trainerZeile(t)}
       ${bigBtn(`📣 Liveticker öffnen · Adler ${t}`,`elternTicker('${datum}',${t})`,true)}${konfBtn}`);
   }else if(myTeams.size>1){
     const btns=[...myTeams].sort().map(t=>trainerZeile(t)+bigBtn(`📣 Adler ${t} (dein Kind)`,`elternTicker('${datum}',${t})`,true)).join("");
-    slot.innerHTML=wrap(`<div style="font-size:11px;color:#64748b;margin-bottom:2px">Deine Kinder spielen in mehreren Teams:</div>${btns}${konfBtn}`);
+    slot.innerHTML=wrap(`<div style="font-size:var(--s-klein);color:#64748b;margin-bottom:2px">Deine Kinder spielen in mehreren Teams:</div>${btns}${konfBtn}`);
   }else if(anzahl>1){
     // Teams stehen (mehrere), aber das eigene Kind ist (noch) keinem zugeordnet.
-    slot.innerHTML=wrap(`<div style="font-size:11px;color:var(--text3);margin-bottom:2px">Die Team-Einteilung deines Kindes steht noch nicht fest. Sieh einfach alle Teams gemeinsam:</div>${bigBtn("👥 Konferenz · alle Teams live",`elternTickerKonf('${datum}')`,true)}`);
+    slot.innerHTML=wrap(`<div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:2px">Die Team-Einteilung deines Kindes steht noch nicht fest. Sieh einfach alle Teams gemeinsam:</div>${bigBtn("👥 Konferenz · alle Teams live",`elternTickerKonf('${datum}')`,true)}`);
   }else{
     // Nur ein Team an diesem Spieltag – kein Auswahl-/Konferenzbedarf.
-    slot.innerHTML=wrap(`${trainerZeile(1)}<div style="font-size:11px;color:var(--text3);margin-bottom:2px">Nicht dabei? Hier gibt's Tore und Spielstand live.</div>${bigBtn("📣 Liveticker öffnen",`elternTicker('${datum}',1)`,true)}`);
+    slot.innerHTML=wrap(`${trainerZeile(1)}<div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:2px">Nicht dabei? Hier gibt's Tore und Spielstand live.</div>${bigBtn("📣 Liveticker öffnen",`elternTicker('${datum}',1)`,true)}`);
   }
 }
 

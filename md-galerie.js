@@ -26,12 +26,12 @@ function fotoConsentBannerHtml(){
   const c=kids.map(fotoConsentFor);
   const nIn=c.filter(x=>x.intern).length, nVid=c.filter(x=>x.video).length, nPub=c.filter(x=>x.public_ok).length;
   const noPub=kids.filter((k,i)=>!c[i].public_ok).map(k=>esc(k.name)).join(", ");
-  const chip=(emo,lbl,n)=>`<span style="display:inline-block;background:#fff;border:1px solid #cbd5e1;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700;color:#334155;margin:2px 4px 2px 0">${emo} ${lbl}: ${n}/${kids.length}</span>`;
+  const chip=(emo,lbl,n)=>`<span style="display:inline-block;background:#fff;border:1px solid #cbd5e1;border-radius:999px;padding:2px 8px;font-size:var(--s-klein);font-weight:700;color:#334155;margin:2px 4px 2px 0">${emo} ${lbl}: ${n}/${kids.length}</span>`;
   return `<div style="padding:10px;border-radius:10px;margin-bottom:12px;background:#f8fafc;border:1px solid #cbd5e1">
-    <div style="font-size:11.5px;font-weight:800;color:#334155;margin-bottom:4px">📸 Foto-/Video-Freigaben</div>
+    <div style="font-size:var(--s-klein);font-weight:800;color:#334155;margin-bottom:4px">📸 Foto-/Video-Freigaben</div>
     <div>${chip("🖼️","intern",nIn)}${chip("🎥","Video",nVid)}${chip("🌍","öffentlich",nPub)}</div>
-    ${noPub?`<div style="font-size:11px;color:#9a3412;margin-top:4px">🌍 <b>Nicht öffentlich</b> zeigen: ${noPub}</div>`:'<div style="font-size:11px;color:#15803d;margin-top:4px">Alle Kinder öffentlich freigegeben. 👍</div>'}
-    <button onclick="fotoAmpelOpen()" style="margin-top:8px;width:100%;min-height:40px;padding:8px;border:1.5px solid #7c3aed;border-radius:8px;background:#faf5ff;color:#6d28d9;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">🚦 Ampel je Kind &amp; Einwilligungstext</button>
+    ${noPub?`<div style="font-size:var(--s-klein);color:#9a3412;margin-top:4px">🌍 <b>Nicht öffentlich</b> zeigen: ${noPub}</div>`:'<div style="font-size:var(--s-klein);color:#15803d;margin-top:4px">Alle Kinder öffentlich freigegeben. 👍</div>'}
+    <button onclick="fotoAmpelOpen()" style="margin-top:8px;width:100%;min-height:40px;padding:8px;border:1.5px solid #7c3aed;border-radius:8px;background:#faf5ff;color:#6d28d9;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">🚦 Ampel je Kind &amp; Einwilligungstext</button>
   </div>`;
 }
 /* Trainer-Ampel: Kind × 3 Stufen (read-only – Eltern setzen die Freigaben selbst) + editierbarer
@@ -41,7 +41,7 @@ async function fotoAmpelOpen(){
   let txt="";
   try{const r=await fetch(`${SB_URL}/rest/v1/team_config?select=foto_consent_text&limit=1`,{headers:sbAuthHeaders()});if(r.ok)txt=((await r.json())[0]||{}).foto_consent_text||"";}catch(e){}
   const kids=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k.aktiv!==false).slice().sort((a,b)=>String(a.name).localeCompare(String(b.name)));
-  const cell=v=>`<span style="font-size:14px">${v?"✅":"⛔"}</span>`;
+  const cell=v=>`<span style="font-size:var(--s-karte)">${v?"✅":"⛔"}</span>`;
   document.getElementById("fa-modal")?.remove();
   const modal=document.createElement("div"); modal.id="fa-modal";
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10060;display:flex;padding:14px;overflow-y:auto";
@@ -50,10 +50,10 @@ async function fotoAmpelOpen(){
   c.style.cssText="background:var(--surface);color:var(--text);max-width:520px;width:100%;margin:auto;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`
     ${mdlHead("fa-modal","🚦","Foto-/Video-Ampel","Eltern setzen die Freigaben selbst · vor dem Posten prüfen","#0d9488")}
-    <div style="display:grid;grid-template-columns:1fr 40px 40px 40px;gap:2px;font-size:10px;font-weight:700;color:var(--text2);padding:0 4px 4px"><div>Kind</div><div style="text-align:center" title="app-intern">🖼️</div><div style="text-align:center" title="Trainingsvideo">🎥</div><div style="text-align:center" title="öffentlich">🌍</div></div>
-    ${kids.map(k=>{const x=fotoConsentFor(k);return `<div style="display:grid;grid-template-columns:1fr 40px 40px 40px;gap:2px;align-items:center;padding:5px 4px;border-top:var(--border);font-size:13px"><div>${esc(k.name)}</div><div style="text-align:center">${cell(x.intern)}</div><div style="text-align:center">${cell(x.video)}</div><div style="text-align:center">${cell(x.public_ok)}</div></div>`;}).join("")}
-    <div style="font-weight:700;font-size:12px;margin:16px 0 4px">✏️ Einwilligungstext (sehen die Eltern)</div>
-    <textarea id="fa-text" rows="5" placeholder="Leer = Standardtext der App. Hier eure DFB-/LSB-Formulierung einsetzen." style="width:100%;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:12px;box-sizing:border-box;resize:vertical;background:var(--surface);color:var(--text)">${esc(txt)}</textarea>
+    <div style="display:grid;grid-template-columns:1fr 40px 40px 40px;gap:2px;font-size:var(--s-klein);font-weight:700;color:var(--text2);padding:0 4px 4px"><div>Kind</div><div style="text-align:center" title="app-intern">🖼️</div><div style="text-align:center" title="Trainingsvideo">🎥</div><div style="text-align:center" title="öffentlich">🌍</div></div>
+    ${kids.map(k=>{const x=fotoConsentFor(k);return `<div style="display:grid;grid-template-columns:1fr 40px 40px 40px;gap:2px;align-items:center;padding:5px 4px;border-top:var(--border);font-size:var(--s-text)"><div>${esc(k.name)}</div><div style="text-align:center">${cell(x.intern)}</div><div style="text-align:center">${cell(x.video)}</div><div style="text-align:center">${cell(x.public_ok)}</div></div>`;}).join("")}
+    <div style="font-weight:700;font-size:var(--s-text);margin:16px 0 4px">✏️ Einwilligungstext (sehen die Eltern)</div>
+    <textarea id="fa-text" rows="5" placeholder="Leer = Standardtext der App. Hier eure DFB-/LSB-Formulierung einsetzen." style="width:100%;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);box-sizing:border-box;resize:vertical;background:var(--surface);color:var(--text)">${esc(txt)}</textarea>
     <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
       <button class="btn btn-p btn-sm" onclick="fotoConsentTextSave()" style="flex:1;min-height:44px">Text speichern</button>
       <button class="btn btn-sm" onclick="document.getElementById('fa-modal').remove()" style="min-height:44px">Schließen</button>
@@ -75,7 +75,7 @@ async function galerieOpen(terminId,titel){
   // Eltern bekommen stattdessen einen kurzen Hinweis in ihrer Sprache (PO-Feedback).
   const istTrainerKtx=(typeof authRole==="function")?((await authRole())==="trainer"):false;
   const consentBlock=istTrainerKtx?fotoConsentBannerHtml()
-    :`<div style="padding:10px;border-radius:10px;margin-bottom:12px;background:#f0fdf4;border:1px solid #bbf7d0;font-size:11.5px;color:#166534;line-height:1.5">🔒 <b>Sicherer als die WhatsApp-Gruppe:</b> Diese Fotos sehen nur eingeloggte Team-Eltern, die Freigaben der Familien werden respektiert, das Trainerteam kann moderieren – und Löschen ist hier wirklich Löschen (bei WhatsApp bleibt jedes Bild als Kopie auf allen Handys). Deine eigene Freigabe stellst du unter <b>Datenschutz &amp; Freigaben</b> ein – sie gilt für die ganze App.</div>`;
+    :`<div style="padding:10px;border-radius:10px;margin-bottom:12px;background:#f0fdf4;border:1px solid #bbf7d0;font-size:var(--s-klein);color:#166534;line-height:1.5">🔒 <b>Sicherer als die WhatsApp-Gruppe:</b> Diese Fotos sehen nur eingeloggte Team-Eltern, die Freigaben der Familien werden respektiert, das Trainerteam kann moderieren – und Löschen ist hier wirklich Löschen (bei WhatsApp bleibt jedes Bild als Kopie auf allen Handys). Deine eigene Freigabe stellst du unter <b>Datenschutz &amp; Freigaben</b> ein – sie gilt für die ganze App.</div>`;
   document.getElementById("gal-modal")?.remove();
   const m=document.createElement("div");m.id="gal-modal";m.dataset.termin=terminId;
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
@@ -85,10 +85,10 @@ async function galerieOpen(terminId,titel){
     ${mdlHead("gal-modal","📸",`Fotos${titel?" · "+esc(titel):""}`,"Team-Galerie zum Termin – für alle Team-Eltern","#7c3aed")}
     ${consentBlock}
     <div style="padding:10px;border:1.5px dashed var(--text3);border-radius:10px;margin-bottom:12px">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">Foto hinzufügen</div>
-      <input id="gal-foto" type="file" accept="image/jpeg, image/png, image/webp" multiple style="width:100%;font-size:12px;margin-bottom:8px">
+      <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">Foto hinzufügen</div>
+      <input id="gal-foto" type="file" accept="image/jpeg, image/png, image/webp" multiple style="width:100%;font-size:var(--s-text);margin-bottom:8px">
       <button class="btn btn-p btn-sm" onclick="galerieUpload(this,${terminId})">📸 Hochladen</button>
-      <div style="font-size:10px;color:var(--text3);margin-top:6px">Mehrere Fotos auf einmal möglich – sie werden automatisch verkleinert. Für alle Team-Eltern sichtbar.</div>
+      <div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px">Mehrere Fotos auf einmal möglich – sie werden automatisch verkleinert. Für alle Team-Eltern sichtbar.</div>
     </div>
     <div id="gal-body"><div style="text-align:center;padding:20px;color:var(--text3)">Lade…</div></div>
   </div>`;
@@ -100,7 +100,7 @@ async function galerieRender(terminId){
   let items=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/rpc/termin_gallery`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({p_termin:terminId})});if(r.ok)items=(await r.json())||[];}catch(e){}
   const istTrainer=(await authRole())==="trainer";
-  if(!items.length){body.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Noch keine Fotos – mach das erste! 📷</div>';return;}
+  if(!items.length){body.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-size:var(--s-text)">Noch keine Fotos – mach das erste! 📷</div>';return;}
   body.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px">
     ${items.map(f=>`<div style="position:relative">
       <img id="gal-img-${f.id}" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;background:#f1f5f9">

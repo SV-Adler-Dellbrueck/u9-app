@@ -91,9 +91,14 @@ function stufe(px) {
   if (px < 26) return "--s-seite";
   return null;
 }
+/* v626 PO-Kachel „Alles außer Kinder & Anzeigen“: auch die Module. Ausgenommen bleiben die
+   Kabine und das Quiz (für Kinder groß gesetzt), das Live-Vollbild (Anzeige auf Distanz) und der
+   Skizzen-Editor (Größen gehören zur Zeichnung). */
+const AUSGENOMMEN = new Set(["md-kabine.js", "md-live-vollbild.js", "md-skizze.js", "quiz.js"]);
+const SCHRIFT_DATEIEN = [...DATEIEN, ...fs.readdirSync(ROOT).filter(f => /^(md-.*|engine|data)\.js$/.test(f) && !AUSGENOMMEN.has(f)).sort()];
 let schrift = 0;
 const bericht2 = [];
-for (const datei of DATEIEN) {
+for (const datei of SCHRIFT_DATEIEN) {
   const p = path.join(ROOT, datei);
   const zeilen = fs.readFileSync(p, "utf8").split("\n");
   const gesperrt = gesperrteZeilen(zeilen);
@@ -102,7 +107,21 @@ for (const datei of DATEIEN) {
     const v = stufe(Number(zahl)); if (!v) return all; n++; return `font-size:var(${v})`;
   }));
   schrift += n;
-  bericht2.push(`${datei}: ${n} Schriftgrößen auf Stufen`);
+  if (n) bericht2.push(`${datei}: ${n} Schriftgrößen auf Stufen`);
   if (process.argv.includes("--schreiben")) fs.writeFileSync(p, neu.join("\n"));
+}
+/* styles.css: je Regel, außer denen des Taktik-Quiz (Kinder). Die Stufen selbst stehen in
+   :root und werden nicht angefasst (dort gibt es kein „font-size:“). */
+{
+  const p = path.join(ROOT, "styles.css");
+  let n = 0;
+  const neu = fs.readFileSync(p, "utf8").replace(/([^{}]+)\{([^{}]*)\}/g, (all, sel, body) => {
+    if (/tq-|tut-|kab|quiz/i.test(sel)) return all;
+    const b2 = body.replace(/font-size:\s*([0-9]+(?:\.[0-9]+)?)px/g, (x, zahl) => { const v = stufe(Number(zahl)); if (!v) return x; n++; return `font-size:var(${v})`; });
+    return sel + "{" + b2 + "}";
+  });
+  schrift += n;
+  if (n) bericht2.push(`styles.css: ${n} Schriftgrößen auf Stufen`);
+  if (process.argv.includes("--schreiben")) fs.writeFileSync(p, neu);
 }
 console.log(bericht2.join("\n") + `\nSchriftgrößen gesamt: ${schrift}`);

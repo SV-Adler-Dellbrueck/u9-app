@@ -115,15 +115,15 @@ function tickerRenderControls(){
       <button class="btn ${open?"btn-p":""}" onclick="tickerToggle()">${open?"🔴 Ticker läuft – stoppen":"▶️ Liveticker starten"}</button>
       <button class="btn btn-sm" onclick="tickerShareViewLink()"><i class="ti ti-eye"></i>Ansehen-Link</button>
       <button class="btn btn-sm" onclick="tickerShareKonfLink()" title="Ein Link für alle Teams (Konferenz)"><i class="ti ti-users-group"></i>Konferenz-Link</button>
-      <span style="font-size:10.5px;color:var(--text2)">${open?"Eltern sehen positive Highlights live.":"Eltern sehen: „Trainer fokussieren sich zu 100% auf die Kids – kein Ticker heute.“"}</span>
+      <span style="font-size:var(--s-klein);color:var(--text2)">${open?"Eltern sehen positive Highlights live.":"Eltern sehen: „Trainer fokussieren sich zu 100% auf die Kids – kein Ticker heute.“"}</span>
     </div>
     ${open?`<!-- v469 – PO: „dass der Trainer waehrend des Spiels keine Zeit hat, den Liveticker
          zu bedienen." Den Helfer-Link gab es schon, aber als kleinen Knopf zwischen zwei
          anderen – er wurde nie gefunden. Jetzt gross und genau in dem Moment, in dem die
          Frage aufkommt: direkt nachdem der Ticker gestartet ist. -->
-    <button onclick="tickerShareDelegateLink()" style="width:100%;min-height:52px;margin-bottom:10px;border:1.5px dashed var(--rand-bedien);border-radius:12px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">🙋 Jemand anderen tickern lassen</button>
-    <div style="font-size:10.5px;color:var(--text3);margin:-6px 0 10px">Schickt einen Link per WhatsApp oder Mail. Wer ihn öffnet, sieht nur die Kinder von heute und die Aktionsknöpfe – keine Bewertungen, keine Kaderdaten. Er gilt nur, solange der Ticker läuft.</div>`:""}
-    <div id="ticker-feed" style="font-size:11.5px;color:var(--text2)"></div>`;
+    <button onclick="tickerShareDelegateLink()" style="width:100%;min-height:52px;margin-bottom:10px;border:1.5px dashed var(--rand-bedien);border-radius:12px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">🙋 Jemand anderen tickern lassen</button>
+    <div style="font-size:var(--s-klein);color:var(--text3);margin:-6px 0 10px">Schickt einen Link per WhatsApp oder Mail. Wer ihn öffnet, sieht nur die Kinder von heute und die Aktionsknöpfe – keine Bewertungen, keine Kaderdaten. Er gilt nur, solange der Ticker läuft.</div>`:""}
+    <div id="ticker-feed" style="font-size:var(--s-klein);color:var(--text2)"></div>`;
   tickerRenderFeed();
 }
 async function tickerRenderFeed(){
@@ -136,7 +136,7 @@ async function tickerRenderFeed(){
     const rows=await r.json();
     const zeile=e=>`<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--surface2)">
       <span style="flex:1">${e.minute?`<strong>${esc(e.minute)}</strong> `:""}${esc(e.text)}${e.source==="delegate"?' <span style="opacity:.6">(Eltern-Helfer)</span>':""}</span>
-      <button onclick="tickerDelete(${Number(e.id)},'${jsq(e.text||"")}')" title="Ticker-Eintrag löschen" aria-label="Löschen" style="border:none;background:transparent;cursor:pointer;color:#dc2626;font-size:13px;line-height:1;min-width:44px;min-height:44px;margin:-8px 0">✕</button>
+      <button onclick="tickerDelete(${Number(e.id)},'${jsq(e.text||"")}')" title="Ticker-Eintrag löschen" aria-label="Löschen" style="border:none;background:transparent;cursor:pointer;color:#dc2626;font-size:var(--s-text);line-height:1;min-width:44px;min-height:44px;margin:-8px 0">✕</button>
     </div>`;
     /* v504: am Festivaltag ein Absatz je Spiel – Runde, Gegner, Feld und Stand als Kopfzeile. */
     const t=(typeof spieltagTeam!=="undefined")?spieltagTeam:1;
@@ -145,7 +145,7 @@ async function tickerRenderFeed(){
     box.innerHTML=!rows.length?'<div style="color:var(--text3)">Noch keine Ticker-Einträge.</div>'
       :!mitRunde?rows.map(zeile).join("")
       :tickerAbsaetze(rows,spiele).map(g=>`<div style="margin-bottom:8px">
-          <div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);padding:4px 0">${g.runde?`Runde ${g.runde}${g.spiel?` · gegen ${esc(g.spiel.gegner)} · ${esc(g.spiel.feldName)}${g.spiel.tore!=null?` · ${g.spiel.tore}:${g.spiel.gegentore}`:""}`:""}`:"Ohne Runde"}</div>
+          <div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);padding:4px 0">${g.runde?`Runde ${g.runde}${g.spiel?` · gegen ${esc(g.spiel.gegner)} · ${esc(g.spiel.feldName)}${g.spiel.tore!=null?` · ${g.spiel.tore}:${g.spiel.gegentore}`:""}`:""}`:"Ohne Runde"}</div>
           ${g.events.map(zeile).join("")}</div>`).join("");
   }catch(e){}
 }

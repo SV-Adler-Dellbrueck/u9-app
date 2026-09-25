@@ -14,9 +14,9 @@ async function fundbueroOpen(){
   m.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("fb-modal","🧦","Fundbüro","Verlorenes & Gefundenes – hier sammelt das Team","#3b82f6")}
     <div style="padding:10px;border:1.5px dashed var(--text3);border-radius:10px;margin-bottom:12px">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">Etwas gefunden?</div>
-      <input id="fb-titel" placeholder="Was? (z. B. blaue Trinkflasche)" maxlength="80" style="width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:13px;margin-bottom:6px">
-      <input id="fb-foto" type="file" accept="image/jpeg, image/png, image/webp" capture="environment" style="width:100%;font-size:12px;margin-bottom:8px">
+      <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">Etwas gefunden?</div>
+      <input id="fb-titel" placeholder="Was? (z. B. blaue Trinkflasche)" maxlength="80" style="width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);margin-bottom:6px">
+      <input id="fb-foto" type="file" accept="image/jpeg, image/png, image/webp" capture="environment" style="width:100%;font-size:var(--s-text);margin-bottom:8px">
       <button class="btn btn-p btn-sm" onclick="fundbueroUpload(this)">📸 Einstellen</button>
     </div>
     <div id="fb-body"><div style="text-align:center;padding:20px;color:var(--text3)">Lade…</div></div>
@@ -29,19 +29,19 @@ async function fundbueroRender(){
   let items=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/rpc/fundbuero_board`,{method:"POST",headers:sbAuthHeaders(),body:"{}"});if(r.ok)items=(await r.json())||[];}catch(e){}
   const istTrainer=(await authRole())==="trainer";
-  if(!items.length){body.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Aktuell keine Fundstücke – super! 🎉</div>';return;}
+  if(!items.length){body.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-size:var(--s-text)">Aktuell keine Fundstücke – super! 🎉</div>';return;}
   body.innerHTML=items.map(f=>`
     <div style="padding:12px;border:var(--border-s);border-radius:12px;margin-bottom:10px${f.status==="geklaert"?";opacity:.55":""}">
       ${f.foto_path?`<img id="fb-img-${f.id}" alt="" style="width:100%;max-height:180px;object-fit:cover;border-radius:10px;background:#f1f5f9;margin-bottom:8px">`:""}
       <div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline">
-        <div style="font-weight:700;font-size:14px">${esc(f.titel)}</div>
-        <div style="font-size:10.5px;color:var(--text3);white-space:nowrap">${f.gefunden_am?new Date(f.gefunden_am+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}):""}</div>
+        <div style="font-weight:700;font-size:var(--s-karte)">${esc(f.titel)}</div>
+        <div style="font-size:var(--s-klein);color:var(--text3);white-space:nowrap">${f.gefunden_am?new Date(f.gefunden_am+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}):""}</div>
       </div>
-      ${f.beschreibung?`<div style="font-size:12px;color:var(--text2);margin-top:2px">${esc(f.beschreibung)}</div>`:""}
+      ${f.beschreibung?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:2px">${esc(f.beschreibung)}</div>`:""}
       <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
         ${f.status==="offen"
-          ?`<button onclick="fundbueroClaim(${f.id})" style="flex:1;min-height:44px;border:none;border-radius:10px;background:#059669;color:#fff;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer">🙋 Gehört uns!</button>`
-          :`<div style="flex:1;font-size:12.5px;font-weight:700;color:#059669">✅ Geklärt${f.claimed_label?` – ${esc(f.claimed_label)}`:""}</div>`}
+          ?`<button onclick="fundbueroClaim(${f.id})" style="flex:1;min-height:44px;border:none;border-radius:10px;background:#059669;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">🙋 Gehört uns!</button>`
+          :`<div style="flex:1;font-size:var(--s-text);font-weight:700;color:#059669">✅ Geklärt${f.claimed_label?` – ${esc(f.claimed_label)}`:""}</div>`}
         ${istTrainer?`<button onclick="fundbueroDelete(${f.id})" title="Löschen" style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);cursor:pointer">🗑</button>`:""}
       </div>
     </div>`).join("");

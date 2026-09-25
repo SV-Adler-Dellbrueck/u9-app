@@ -540,17 +540,17 @@ function teamTrainerOpen(t){
 }
 function teamTrainerModalFill(t){
   const el=document.getElementById("teamtr-liste"); if(!el)return;
-  if(!TEAM_STAB.length){ el.innerHTML='<div style="font-size:12px;color:var(--text3)">Kein Trainerstab geladen.</div>'; return; }
+  if(!TEAM_STAB.length){ el.innerHTML='<div style="font-size:var(--s-text);color:var(--text3)">Kein Trainerstab geladen.</div>'; return; }
   el.innerHTML=TEAM_STAB.map(s=>{
     const meins=((TEAM_TRAINER[t]||[]).indexOf(s.name)>=0);
     let anderes=""; Object.keys(TEAM_TRAINER).forEach(k=>{ if(Number(k)!==t&&(TEAM_TRAINER[k]||[]).indexOf(s.name)>=0)anderes="Adler "+k; });
     const zus=s.zusage==="ja"?"✅ dabei":s.zusage==="unsicher"?"🤔 unsicher":s.zusage==="nein"?"❌ nicht dabei":"– keine Rückmeldung";
     return `<button onclick="teamTrainerToggle(${t},'${jsq(s.name)}')" aria-pressed="${meins?"true":"false"}"
       style="width:100%;min-height:52px;display:flex;align-items:center;gap:10px;text-align:left;margin-bottom:6px;padding:8px 12px;border:1px solid var(--rand-bedien);${meins?"border-color:transparent;background:var(--fam-spieltag);color:#fff;":"background:var(--surface2);color:var(--text);"}border-radius:12px;font-family:inherit;cursor:pointer">
-      <span style="font-size:17px">${meins?"✓":"🧢"}</span>
+      <span style="font-size:var(--s-teil)">${meins?"✓":"🧢"}</span>
       <span style="flex:1;min-width:0">
-        <span style="display:block;font-size:13.5px;font-weight:800">${esc(s.name)}</span>
-        <span style="display:block;font-size:11px;${meins?"opacity:.9":"color:var(--text3)"}">${zus}${anderes?" · steht bei "+anderes:""}</span>
+        <span style="display:block;font-size:var(--s-text);font-weight:800">${esc(s.name)}</span>
+        <span style="display:block;font-size:var(--s-klein);${meins?"opacity:.9":"color:var(--text3)"}">${zus}${anderes?" · steht bei "+anderes:""}</span>
       </span></button>`;
   }).join("");
 }
@@ -593,20 +593,20 @@ function spieltagTeamKartenRender(){
     return `<div class="abschnitt" style="padding:0;overflow:hidden;${auf?"border-color:var(--fam-spieltag);":""}">
       <button onclick="spieltagKarteOeffnen(${n})" aria-expanded="${auf?"true":"false"}"
         style="width:100%;min-height:56px;display:flex;align-items:center;gap:10px;text-align:left;padding:12px 14px;border:none;border-left:4px solid var(--fam-spieltag);background:${auf?"var(--surface2)":"var(--surface)"};color:var(--text);font-family:inherit;cursor:pointer">
-        <span style="font-size:20px">⚽</span>
+        <span style="font-size:var(--s-teil)">⚽</span>
         <span style="flex:1;min-width:0">
-          <span style="display:block;font-size:14px;font-weight:900">Adler ${n}${teamSpielLaeuft(n)
-            ?` <span style="font-size:10px;font-weight:700;color:var(--green);background:var(--green-bg);border-radius:8px;padding:1px 7px;vertical-align:1px">▶ Spiel läuft</span>`
-            :(gewaehlt&&!auf?` <span style="font-size:10px;font-weight:700;color:var(--text2);background:var(--surface2);border-radius:8px;padding:1px 7px;vertical-align:1px">ausgewählt</span>`:"")}</span>
-          <span style="display:block;font-size:11.5px;color:var(--text2)">${kinder} Kind${kinder===1?"":"er"} · ${
+          <span style="display:block;font-size:var(--s-karte);font-weight:900">Adler ${n}${teamSpielLaeuft(n)
+            ?` <span style="font-size:var(--s-klein);font-weight:700;color:var(--green);background:var(--green-bg);border-radius:8px;padding:1px 7px;vertical-align:1px">▶ Spiel läuft</span>`
+            :(gewaehlt&&!auf?` <span style="font-size:var(--s-klein);font-weight:700;color:var(--text2);background:var(--surface2);border-radius:8px;padding:1px 7px;vertical-align:1px">ausgewählt</span>`:"")}</span>
+          <span style="display:block;font-size:var(--s-klein);color:var(--text2)">${kinder} Kind${kinder===1?"":"er"} · ${
             tr.length?esc(tr.join(", ")):'<span style="color:var(--amber);font-weight:700">kein Trainer</span>'}</span>
         </span>
-        <span style="font-size:15px;color:var(--text3)">${auf?"▴":"▾"}</span>
+        <span style="font-size:var(--s-karte);color:var(--text3)">${auf?"▴":"▾"}</span>
       </button>
       <div class="karte-kader" style="display:flex;flex-wrap:wrap;gap:5px;padding:0 14px 10px">${
         /* v481: die Namen stehen in der Kachel – nicht erst nach dem Aufklappen und nicht
            nur in der Anwesenheitsliste zum Zusammenzaehlen. */
-        Object.keys(TEAMS).filter(k=>TEAMS[k]===n).map(k=>`<span style="font-size:12px;font-weight:700;background:${TEAM_LEIH[k]?"var(--blue-bg)":"var(--surface2)"};border-radius:12px;padding:5px 10px">${getKader(k)&&getKader(k).nr?`<span style="font-weight:500;color:var(--text3)">${getKader(k).nr} </span>`:""}${esc(k)}${istTorwart(k)?" 🥅":""}${TEAM_LEIH[k]?" 🔁":""}</span>`).join("")||'<span style="font-size:12px;color:var(--text3)">noch niemand eingeteilt</span>'}</div>
+        Object.keys(TEAMS).filter(k=>TEAMS[k]===n).map(k=>`<span style="font-size:var(--s-text);font-weight:700;background:${TEAM_LEIH[k]?"var(--blue-bg)":"var(--surface2)"};border-radius:12px;padding:5px 10px">${getKader(k)&&getKader(k).nr?`<span style="font-weight:500;color:var(--text3)">${getKader(k).nr} </span>`:""}${esc(k)}${istTorwart(k)?" 🥅":""}${TEAM_LEIH[k]?" 🔁":""}</span>`).join("")||'<span style="font-size:var(--s-text);color:var(--text3)">noch niemand eingeteilt</span>'}</div>
       <div id="spieltag-karte-inhalt-${n}" style="padding:0 12px 12px"></div>
     </div>`;
   }).join("");
@@ -828,14 +828,14 @@ async function rollenHintFill(){
   if(!games){el.innerHTML="";return;} // noch keine gespeicherten Aufstellungen
   const nie=_neverTW(byKid);
   if(!nie.length){el.innerHTML="";return;}
-  el.innerHTML=`<div style="font-size:11.5px;color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:6px 10px;margin-bottom:8px">🥅 Noch nie im Tor: <b>${nie.map(esc).join(", ")}</b> · <span role="button" tabindex="0" onclick="rollenMatrixOpen()" style="color:var(--blue-text);cursor:pointer;font-weight:700">Rollen-Matrix ›</span></div>`;
+  el.innerHTML=`<div style="font-size:var(--s-klein);color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:6px 10px;margin-bottom:8px">🥅 Noch nie im Tor: <b>${nie.map(esc).join(", ")}</b> · <span role="button" tabindex="0" onclick="rollenMatrixOpen()" style="color:var(--blue-text);cursor:pointer;font-weight:700">Rollen-Matrix ›</span></div>`;
 }
 async function rollenMatrixOpen(){
   const {byKid,games}=await rollenExpFetch();
   const kids=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k.aktiv!==false);
-  const cell=v=>`<div style="text-align:center;background:${v===0?"#fef2f2":v<=1?"#fffbeb":"#f0fdf4"};color:${v===0?"#b91c1c":"var(--text)"};border-radius:6px;padding:5px 0;font-weight:${v===0?"800":"700"};font-size:12px">${v}</div>`;
-  const head=`<div style="display:grid;grid-template-columns:1fr repeat(5,42px);gap:3px;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;padding:0 0 4px"><div>Kind</div>${ROLLEN_EXP.map(r=>`<div style="text-align:center">${r.l}</div>`).join("")}</div>`;
-  const rows=kids.map(k=>{const b=byKid[k.name]||{}; return `<div style="display:grid;grid-template-columns:1fr repeat(5,42px);gap:3px;align-items:center;padding:2px 0;border-top:var(--border)"><div style="font-size:12.5px;font-weight:600">${esc(k.name)}</div>${ROLLEN_EXP.map(r=>cell(b[r.k]||0)).join("")}</div>`;}).join("");
+  const cell=v=>`<div style="text-align:center;background:${v===0?"#fef2f2":v<=1?"#fffbeb":"#f0fdf4"};color:${v===0?"#b91c1c":"var(--text)"};border-radius:6px;padding:5px 0;font-weight:${v===0?"800":"700"};font-size:var(--s-text)">${v}</div>`;
+  const head=`<div style="display:grid;grid-template-columns:1fr repeat(5,42px);gap:3px;font-size:var(--s-klein);font-weight:700;color:var(--text2);text-transform:uppercase;padding:0 0 4px"><div>Kind</div>${ROLLEN_EXP.map(r=>`<div style="text-align:center">${r.l}</div>`).join("")}</div>`;
+  const rows=kids.map(k=>{const b=byKid[k.name]||{}; return `<div style="display:grid;grid-template-columns:1fr repeat(5,42px);gap:3px;align-items:center;padding:2px 0;border-top:var(--border)"><div style="font-size:var(--s-text);font-weight:600">${esc(k.name)}</div>${ROLLEN_EXP.map(r=>cell(b[r.k]||0)).join("")}</div>`;}).join("");
   const nie=_neverTW(byKid);
   document.getElementById("rollen-modal")?.remove();
   const modal=document.createElement("div"); modal.id="rollen-modal";
@@ -845,8 +845,8 @@ async function rollenMatrixOpen(){
   c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`
     ${mdlHead("rollen-modal","🎽","Rollen-Erfahrung",`aus ${games} gespeicherten Aufstellungen (4+1) · Rot = noch nie`,"#2563eb")}
-    ${games?head+rows:'<div style="font-size:13px;color:var(--text3);padding:16px;text-align:center">Noch keine Aufstellungen gespeichert.<br>Speichere im Spieltag unter „Aufstellung" eine Startelf – dann füllt sich die Matrix.</div>'}
-    ${games&&nie.length?`<div style="font-size:12px;color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:8px 10px;margin-top:12px">🥅 <b>Noch nie im Tor:</b> ${nie.map(esc).join(", ")} – vor dem E-Jugend-Wechsel (fester TW) mal ranlassen.</div>`:""}
+    ${games?head+rows:'<div style="font-size:var(--s-text);color:var(--text3);padding:16px;text-align:center">Noch keine Aufstellungen gespeichert.<br>Speichere im Spieltag unter „Aufstellung" eine Startelf – dann füllt sich die Matrix.</div>'}
+    ${games&&nie.length?`<div style="font-size:var(--s-text);color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:8px 10px;margin-top:12px">🥅 <b>Noch nie im Tor:</b> ${nie.map(esc).join(", ")} – vor dem E-Jugend-Wechsel (fester TW) mal ranlassen.</div>`:""}
     <button class="btn btn-sm" style="width:100%;margin-top:12px" onclick="document.getElementById('rollen-modal').remove()">Schließen</button>`;
   modal.appendChild(c); document.body.appendChild(modal);
 }
@@ -885,12 +885,12 @@ function teamsRender(){
     const tw=istTorwart(n), leih=TEAM_LEIH[n];
     const titel=`${teamQuoteText(n)} · ${teamEinsatzText(n)}${leih?" · Aushilfe aus Adler "+leih:""} – antippen: ins nächste Team`.replace(/<[^>]+>/g,"");
     return `<button class="team-chip" onclick="teamChipTap('${jsq(n)}')" title="${esc(titel)}" aria-label="${esc(n)}${t?" in Adler "+t:" pausiert"}, antippen für das nächste Team"
-      style="min-height:44px;display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid var(--rand-bedien);border-radius:22px;background:${leih?"var(--blue-bg)":"var(--surface)"};color:var(--text);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">${getKader(n)&&getKader(n).nr?`<span style="font-weight:500;color:var(--text3)">${getKader(n).nr}</span>`:""}${esc(n)}${tw?" 🥅":""}${leih?" 🔁":""}</button>`;
+      style="min-height:44px;display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid var(--rand-bedien);border-radius:22px;background:${leih?"var(--blue-bg)":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">${getKader(n)&&getKader(n).nr?`<span style="font-weight:500;color:var(--text3)">${getKader(n).nr}</span>`:""}${esc(n)}${tw?" 🥅":""}${leih?" 🔁":""}</button>`;
   };
 
   let html=`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-      <span style="font-size:12px;font-weight:700">Anzahl Teams</span>
-      <span style="font-size:11px;color:var(--text3);margin-left:auto">Vorschlag: ${vorschlag}</span>
+      <span style="font-size:var(--s-text);font-weight:700">Anzahl Teams</span>
+      <span style="font-size:var(--s-klein);color:var(--text3);margin-left:auto">Vorschlag: ${vorschlag}</span>
     </div>
     <div class="seg-ctrl" style="margin-bottom:10px">${Array.from({length:TEAM_MAX},(_,i)=>segBtn(i+1)).join("")}</div>`;
 
@@ -912,29 +912,29 @@ function teamsRender(){
     const fk=teamFormVon(t);
     html+=`<div class="team-karte" data-team="${t}" style="border:1px solid var(--rand-bedien);border-left:4px solid var(--fam-spieltag);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--surface)">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        <span style="font-size:14px;font-weight:900">Adler ${t}</span>
-        <span style="font-size:11.5px;color:var(--text2)">${m.length} Kind${m.length===1?"":"er"}</span>
+        <span style="font-size:var(--s-karte);font-weight:900">Adler ${t}</span>
+        <span style="font-size:var(--s-klein);color:var(--text2)">${m.length} Kind${m.length===1?"":"er"}</span>
         <button class="btn btn-sm" onclick="teamTrainerOpen(${t})" style="margin-left:auto;${tr.length?"":"color:var(--amber);border-color:var(--amber)"}" aria-label="Trainer für Adler ${t} wählen">🧢 ${tr.length?esc(tr.join(", ")):"Trainer wählen"}</button>
       </div>
-      <div style="font-size:11px;color:${zuWenig?"var(--red)":"var(--text2)"};margin:4px 0 8px">${fl}${zuWenig?` – <b>${sp.auf-m.length} zu wenig</b>`:""}${twFehlt?' · <span style="color:var(--red)">kein Torwart-Kind</span>':""}</div>
+      <div style="font-size:var(--s-klein);color:${zuWenig?"var(--red)":"var(--text2)"};margin:4px 0 8px">${fl}${zuWenig?` – <b>${sp.auf-m.length} zu wenig</b>`:""}${twFehlt?' · <span style="color:var(--red)">kein Torwart-Kind</span>':""}</div>
       ${(typeof kapitaenWahlHtml==="function")?kapitaenWahlHtml(t,m):""}
       ${!felder?`<div class="seg-ctrl" role="group" aria-label="Spielform Adler ${t}" style="margin-bottom:8px">${formen.map(([k,l])=>`<button class="seg-btn${fk===k?" active":""}" onclick="teamFormSet(${t},'${k}')" aria-pressed="${fk===k?"true":"false"}">${l}</button>`).join("")}</div>`:""}
-      <div class="team-chips" style="display:flex;flex-wrap:wrap;gap:6px">${m.length?m.map(n=>chip(n,t)).join(""):'<span style="font-size:12px;color:var(--text3)">noch niemand</span>'}</div>
+      <div class="team-chips" style="display:flex;flex-wrap:wrap;gap:6px">${m.length?m.map(n=>chip(n,t)).join(""):'<span style="font-size:var(--s-text);color:var(--text3)">noch niemand</span>'}</div>
     </div>`;
   }
   // Pause: dabei, aber in keinem Team – eine Entscheidung des Trainers, mit Grund fuer die Eltern
   const ohneTeam=pool.filter(n=>!TEAMS[n]);
   if(ohneTeam.length){
     html+=`<div class="team-karte" data-team="0" style="border:1px dashed var(--rand-bedien);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--surface2)">
-      <div style="font-size:12.5px;font-weight:800;margin-bottom:6px">⏸ Pause <span style="font-weight:500;color:var(--text2)">${ohneTeam.length} Kind${ohneTeam.length===1?"":"er"} – antippen holt ins Team</span></div>
+      <div style="font-size:var(--s-text);font-weight:800;margin-bottom:6px">⏸ Pause <span style="font-weight:500;color:var(--text2)">${ohneTeam.length} Kind${ohneTeam.length===1?"":"er"} – antippen holt ins Team</span></div>
       <div class="team-chips" style="display:flex;flex-wrap:wrap;gap:6px">${ohneTeam.map(n=>chip(n,0)).join("")}</div>
-      ${ohneTeam.map(n=>`<input id="nh-${teamKaderIdx(n)}" value="${esc(TEAM_GRUND[n]||"")}" placeholder="${esc(n)}: Grund für die Eltern (optional)" style="width:100%;min-height:44px;margin-top:6px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:12px;background:var(--surface);color:var(--text);box-sizing:border-box">`).join("")}
+      ${ohneTeam.map(n=>`<input id="nh-${teamKaderIdx(n)}" value="${esc(TEAM_GRUND[n]||"")}" placeholder="${esc(n)}: Grund für die Eltern (optional)" style="width:100%;min-height:44px;margin-top:6px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text);box-sizing:border-box">`).join("")}
     </div>`;
   }
   // Zu grosse Teams – eine Information, keine Entscheidung
   const grosse=[];
   for(let t=1;t<=TEAM_ANZAHL;t++){ const anz=pool.filter(n=>TEAMS[n]===t).length; if(anz>teamKaderFuer(t).gesamt+1)grosse.push({t,anz}); }
-  if(grosse.length)html+=`<div style="font-size:11.5px;color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber);border-radius:10px;padding:8px 10px;margin-bottom:8px">👥 ${grosse.map(g=>`Adler ${g.t}: ${g.anz} Kinder`).join(" · ")} – Sollstärke ${grosse.map(g=>teamKaderFuer(g.t).gesamt).join("/")}${vorschlag>TEAM_ANZAHL?`, mit ${vorschlag} Teams passt es`:""}.</div>`;
+  if(grosse.length)html+=`<div style="font-size:var(--s-klein);color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber);border-radius:10px;padding:8px 10px;margin-bottom:8px">👥 ${grosse.map(g=>`Adler ${g.t}: ${g.anz} Kinder`).join(" · ")} – Sollstärke ${grosse.map(g=>teamKaderFuer(g.t).gesamt).join("/")}${vorschlag>TEAM_ANZAHL?`, mit ${vorschlag} Teams passt es`:""}.</div>`;
 
   // Felder und Runde – zugeklappt, bis der Trainer sie braucht (Festival)
   const zuordnung=felder?Array.from({length:TEAM_ANZAHL},(_,i)=>i+1).map(t=>{ const i=teamFeldIndex(t); return `Adler ${t} → ${i<0?"Pause":`Feld ${i+1} (${esc(flabel(TEAM_FELDER[i]))})`}`; }):[];
@@ -949,9 +949,9 @@ function teamsRender(){
     html+=`<details id="team-felder" class="tp-tipp" style="margin:4px 0 8px" open>
       <summary>🏟️ Runde ${TEAM_PLAN.runde} von ${TEAM_PLAN.letzte}${lauf?" · "+lauf:""}<span style="font-weight:400;color:var(--text3)"> – aus dem Spielplan</span></summary>
       <div>
-        <div style="font-size:12.5px;color:var(--text2);line-height:1.7;margin-bottom:8px">${zeilen.join("<br>")}</div>
-        ${leih.length?`<div style="font-size:11.5px;margin-bottom:8px"><b>Aushilfe diese Runde:</b> ${leih.join(" · ")} – wandert mit der nächsten Runde zurück.</div>`:""}
-        <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Feld, Spielform und Gegner stehen im Spielplan. Die Runde wechselt mit dem Anpfiff.</div>
+        <div style="font-size:var(--s-text);color:var(--text2);line-height:1.7;margin-bottom:8px">${zeilen.join("<br>")}</div>
+        ${leih.length?`<div style="font-size:var(--s-klein);margin-bottom:8px"><b>Aushilfe diese Runde:</b> ${leih.join(" · ")} – wandert mit der nächsten Runde zurück.</div>`:""}
+        <div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:8px">Feld, Spielform und Gegner stehen im Spielplan. Die Runde wechselt mit dem Anpfiff.</div>
         <button class="btn btn-sm" onclick="teamPlanOeffnen()" style="width:100%;min-height:44px;justify-content:center"><i class="ti ti-layout-grid"></i>Im Spielplan ändern</button>
       </div>
     </details>`;
@@ -960,19 +960,19 @@ function teamsRender(){
     <summary>🏟️ Felder beim Festival${felder?` · Runde ${TEAM_RUNDE}`:""}<span style="font-weight:400;color:var(--text3)"> – ${felder?"die Teams wechseln jede Runde das Feld":"nur bei mehreren Feldern mit verschiedenen Formaten"}</span></summary>
     <div>
     ${TEAM_FELDER.map((k,i)=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-      <span style="font-size:12px;font-weight:700;width:52px">Feld ${i+1}</span>
+      <span style="font-size:var(--s-text);font-weight:700;width:52px">Feld ${i+1}</span>
       <div class="seg-ctrl" role="group" aria-label="Spielform Feld ${i+1}" style="flex:1">${formen.map(([key,l])=>`<button class="seg-btn${k===key?" active":""}" onclick="teamFeldSetzen(${i},'${key}')" aria-pressed="${k===key?"true":"false"}">${l}</button>`).join("")}</div>
       <button class="btn btn-sm" onclick="teamFeldWeg(${i})" aria-label="Feld ${i+1} entfernen" title="Feld entfernen" style="min-width:44px;justify-content:center">✕</button>
     </div>`).join("")}
     ${TEAM_FELDER.length<4?`<button class="btn btn-sm" onclick="teamFeldPlus()"><i class="ti ti-plus"></i>${felder?"Weiteres Feld":"Felder anlegen"}</button>`:""}
     ${felder?`<div id="team-runde" style="background:var(--surface2);border-radius:var(--r);padding:10px 12px;margin-top:10px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-        <span style="font-size:13px;font-weight:800;flex:1">Runde ${TEAM_RUNDE}</span>
+        <span style="font-size:var(--s-text);font-weight:800;flex:1">Runde ${TEAM_RUNDE}</span>
         <button class="btn btn-sm" onclick="teamRundeSetzen(${TEAM_RUNDE-1})"${TEAM_RUNDE<=1?" disabled":""} aria-label="Runde zurück">‹</button>
         <button class="btn btn-p btn-sm" onclick="teamRundeSetzen(${TEAM_RUNDE+1})"><i class="ti ti-player-track-next"></i>Nächste Runde</button>
       </div>
-      <div style="font-size:12px;color:var(--text2);line-height:1.5">${zuordnung.join("<br>")}</div>
-      ${leih.length?`<div style="font-size:11.5px;margin-top:6px"><b>Aushilfe diese Runde:</b> ${leih.join(" · ")} – wandert mit der nächsten Runde zurück.</div>`:""}
+      <div style="font-size:var(--s-text);color:var(--text2);line-height:1.5">${zuordnung.join("<br>")}</div>
+      ${leih.length?`<div style="font-size:var(--s-klein);margin-top:6px"><b>Aushilfe diese Runde:</b> ${leih.join(" · ")} – wandert mit der nächsten Runde zurück.</div>`:""}
     </div>`:""}
     </div>
   </details>`;
@@ -1052,19 +1052,19 @@ function ergPanelRender(){
   const t=(typeof spieltagTeam!=="undefined")?spieltagTeam:1;
   const spiele=(TEAM_PLAN&&TEAM_PLAN.spiele&&TEAM_PLAN.spiele[t])||[];
   if(spiele.length){
-    const zeilen=spiele.map(p=>`<div style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--surface2);font-size:12.5px">
-        <span style="font-size:10.5px;font-weight:800;color:var(--text2);white-space:nowrap">Runde ${p.runde}</span>
+    const zeilen=spiele.map(p=>`<div style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--surface2);font-size:var(--s-text)">
+        <span style="font-size:var(--s-klein);font-weight:800;color:var(--text2);white-space:nowrap">Runde ${p.runde}</span>
         <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">gegen <b>${esc(p.gegner||"?")}</b> <span style="color:var(--text3)">· ${esc(p.feldName||"")}</span></span>
-        <b style="font-size:14px;min-width:44px;text-align:right;color:${p.tore==null?"var(--text3)":"var(--text)"}">${p.tore==null?"–:–":`${p.tore}:${p.gegentore}`}</b>
+        <b style="font-size:var(--s-karte);min-width:44px;text-align:right;color:${p.tore==null?"var(--text3)":"var(--text)"}">${p.tore==null?"–:–":`${p.tore}:${p.gegentore}`}</b>
       </div>`).join("");
     const fertig=spiele.filter(p=>p.tore!=null);
-    const summe=fertig.length?`<div style="font-size:11.5px;color:var(--text2);margin-top:6px">${fertig.length} von ${spiele.length} Spielen eingetragen · Tore ${fertig.reduce((a,p)=>a+p.tore,0)}:${fertig.reduce((a,p)=>a+p.gegentore,0)}</div>`:"";
+    const summe=fertig.length?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">${fertig.length} von ${spiele.length} Spielen eingetragen · Tore ${fertig.reduce((a,p)=>a+p.tore,0)}:${fertig.reduce((a,p)=>a+p.gegentore,0)}</div>`:"";
     box.innerHTML=zeilen+summe+`<button class="btn btn-sm" onclick="teamPlanOeffnen()" style="width:100%;min-height:44px;justify-content:center;margin-top:8px"><i class="ti ti-layout-grid"></i>Ergebnisse im Spielplan eintragen</button>`;
     return;
   }
   const tore=(typeof atTore==="function")?atTore():0, gegen=(typeof atGegentore!=="undefined")?atGegentore:0;
-  box.innerHTML=`<div style="display:flex;align-items:center;gap:10px;font-size:13px"><span style="flex:1">Adler ${t}</span><b style="font-size:22px">${tore} : ${gegen}</b></div>
-    <div style="font-size:10.5px;color:var(--text3);margin-top:4px">Tore und Gegentore aus den Live-Aktionen dieses Spieltags.</div>`;
+  box.innerHTML=`<div style="display:flex;align-items:center;gap:10px;font-size:var(--s-text)"><span style="flex:1">Adler ${t}</span><b style="font-size:var(--s-seite)">${tore} : ${gegen}</b></div>
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-top:4px">Tore und Gegentore aus den Live-Aktionen dieses Spieltags.</div>`;
 }
 function nomApplyToTools(){
   const squad=nominierteSpieler();

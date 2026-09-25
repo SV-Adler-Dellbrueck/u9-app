@@ -309,18 +309,18 @@ async function gegnerAddrSearch(){
   const ort=(document.getElementById("tm-ort")?.value||"").trim();
   const q=ort||gegner;
   if(!q){toast("Erst Gegner/Ort eintippen","err");return;}
-  box.innerHTML=`<div style="font-size:11px;color:var(--text3);padding:6px 2px">🔍 Suche „${esc(q)}"…</div>`;
+  box.innerHTML=`<div style="font-size:var(--s-klein);color:var(--text3);padding:6px 2px">🔍 Suche „${esc(q)}"…</div>`;
   const res=await osmSearch(q);
-  if(!res.length){ box.innerHTML=`<div style="font-size:11px;color:var(--text3);padding:6px 2px">Keine Adresse gefunden – bitte manuell eintragen.</div>`; return; }
-  box.innerHTML=`<div style="font-size:10px;color:var(--text3);margin:6px 2px 2px">Tippe die passende Adresse an:</div>`+
-    res.map(r=>`<button type="button" onclick="gegnerAddrPick(this)" data-addr="${esc(r.label).replace(/"/g,"&quot;")}" style="display:block;width:100%;text-align:left;margin-top:4px;padding:8px 10px;border:1px solid var(--rand-bedien);border-radius:8px;background:var(--surface);font-family:inherit;font-size:11.5px;color:var(--text);cursor:pointer;white-space:normal;line-height:1.3">📍 ${esc(r.label)}</button>`).join("");
+  if(!res.length){ box.innerHTML=`<div style="font-size:var(--s-klein);color:var(--text3);padding:6px 2px">Keine Adresse gefunden – bitte manuell eintragen.</div>`; return; }
+  box.innerHTML=`<div style="font-size:var(--s-klein);color:var(--text3);margin:6px 2px 2px">Tippe die passende Adresse an:</div>`+
+    res.map(r=>`<button type="button" onclick="gegnerAddrPick(this)" data-addr="${esc(r.label).replace(/"/g,"&quot;")}" style="display:block;width:100%;text-align:left;margin-top:4px;padding:8px 10px;border:1px solid var(--rand-bedien);border-radius:8px;background:var(--surface);font-family:inherit;font-size:var(--s-klein);color:var(--text);cursor:pointer;white-space:normal;line-height:1.3">📍 ${esc(r.label)}</button>`).join("");
 }
 function gegnerAddrPick(btn){
   const addr=btn.getAttribute("data-addr")||"";
   const inp=document.getElementById("tm-ort"); if(inp)inp.value=addr;
   const name=(document.getElementById("tm-titel")?.value||"").trim();
   const box=document.getElementById("tm-addr-results");
-  if(box)box.innerHTML=`<div style="font-size:11px;color:#16a34a;padding:4px 2px">✓ Adresse übernommen – Wetter nutzt jetzt diesen Ort.</div>`+
+  if(box)box.innerHTML=`<div style="font-size:var(--s-klein);color:#16a34a;padding:4px 2px">✓ Adresse übernommen – Wetter nutzt jetzt diesen Ort.</div>`+
     (name?`<button type="button" class="btn btn-sm" style="margin-top:4px" onclick="gegnerQuickSave()"><i class="ti ti-address-book"></i>„${esc(name)}" als Gegner merken</button>`:"");
 }
 

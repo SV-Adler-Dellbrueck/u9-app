@@ -21,21 +21,21 @@ async function renderElternView(datum){
     const d=new Date(m.datum+"T00:00:00");
     const wtag=["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"][d.getDay()];
     const datumStr=wtag+", "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"long"});
-    const row=(icon,label,val)=>val?`<div style="display:flex;gap:10px;padding:11px 0;border-bottom:1px solid #e2e8f0"><span style="font-size:18px">${icon}</span><div><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">${label}</div><div style="font-size:14.5px;font-weight:600;color:#1e293b">${esc(val)}</div></div></div>`:"";
+    const row=(icon,label,val)=>val?`<div style="display:flex;gap:10px;padding:11px 0;border-bottom:1px solid #e2e8f0"><span style="font-size:var(--s-teil)">${icon}</span><div><div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">${label}</div><div style="font-size:var(--s-karte);font-weight:600;color:#1e293b">${esc(val)}</div></div></div>`:"";
     // Route: Google-Maps-Suche nach der Gegner-Adresse (oder dem Gegnernamen)
     const routeQuery=m.gegner_adresse||m.gegner||m.ort||"";
     const routeUrl=routeQuery?"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(routeQuery):"";
     // Hub: prominenter Live-Hinweis, wenn die Match-Uhr gerade läuft – der Grund, JETZT reinzuschauen.
-    const liveBanner=(!istTraining&&m.clock_status==="running")?`<a href="#ev-ticker" style="display:block;text-decoration:none;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border-radius:14px;padding:14px 16px;margin-bottom:14px;text-align:center;box-shadow:0 4px 16px rgba(220,38,38,.35)"><div style="font-size:15px;font-weight:800">🔴 Wir spielen gerade LIVE!</div><div style="font-size:12px;opacity:.9;margin-top:2px">Zum Liveticker ↓</div></a>`:"";
+    const liveBanner=(!istTraining&&m.clock_status==="running")?`<a href="#ev-ticker" style="display:block;text-decoration:none;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border-radius:14px;padding:14px 16px;margin-bottom:14px;text-align:center;box-shadow:0 4px 16px rgba(220,38,38,.35)"><div style="font-size:var(--s-karte);font-weight:800">🔴 Wir spielen gerade LIVE!</div><div style="font-size:var(--s-text);opacity:.9;margin-top:2px">Zum Liveticker ↓</div></a>`:"";
     root.innerHTML=`<div class="elt-fade">
       <div style="text-align:center;margin:8px 0 16px">
         <img src="logo.png" style="width:64px;height:64px" alt="SV Adler Dellbrück">
-        <div style="font-size:18px;font-weight:800;color:#1e3a8a;margin-top:6px">${istTraining?"Training":"Spieltag"} U9</div>
-        <div style="font-size:13px;color:#64748b">${datumStr}</div>
+        <div style="font-size:var(--s-teil);font-weight:800;color:#1e3a8a;margin-top:6px">${istTraining?"Training":"Spieltag"} U9</div>
+        <div style="font-size:var(--s-text);color:#64748b">${datumStr}</div>
       </div>
       ${liveBanner}
       <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.06)">
-        ${!istTraining&&m.gegner?`<div style="text-align:center;font-size:19px;font-weight:800;color:#1e293b;margin-bottom:10px">⚽ gegen ${esc(m.gegner)}</div>`:""}
+        ${!istTraining&&m.gegner?`<div style="text-align:center;font-size:var(--s-teil);font-weight:800;color:#1e293b;margin-bottom:10px">⚽ gegen ${esc(m.gegner)}</div>`:""}
         ${!istTraining&&m.gegner_adresse?row("🏟️","Adresse Gegner",m.gegner_adresse):""}
         ${row("📍","Ort",m.ort)}
         ${row("⏰","Treffpunkt",m.treffpunkt)}
@@ -44,13 +44,13 @@ async function renderElternView(datum){
         ${routeUrl?`<a href="${routeUrl}" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:14px;background:#1e3a8a;color:#fff;padding:13px;border-radius:12px;text-decoration:none;font-weight:600">🗺️ Route ${istTraining?"zum Platz":"zum Gegner"}</a>`:""}
       </div>
       ${istTraining?``:`<div id="ev-ticker" style="margin-top:14px"></div><div id="ev-einsatz" style="margin-top:14px"></div><div id="ev-fahrt" style="margin-top:14px"></div>`}
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:16px 0 8px;text-align:center">Für Eltern</div>
-      <button onclick="elternKalenderIcs()" style="width:100%;margin-bottom:10px;background:#1e3a8a;color:#fff;border:none;padding:14px;border-radius:12px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer">🗓️ Termine in meinen Kalender</button>
+      <div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:16px 0 8px;text-align:center">Für Eltern</div>
+      <button onclick="elternKalenderIcs()" style="width:100%;margin-bottom:10px;background:#1e3a8a;color:#fff;border:none;padding:14px;border-radius:12px;font-family:inherit;font-weight:700;font-size:var(--s-karte);cursor:pointer">🗓️ Termine in meinen Kalender</button>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <a href="${appRoot()}?heft" style="text-align:center;background:#fff;border:1.5px solid #1e3a8a;color:#1e3a8a;padding:13px 8px;border-radius:12px;text-decoration:none;font-weight:700;font-size:13px">📰 Adler Nest</a>
-        <a href="${appRoot()}?portal" style="text-align:center;background:#fff;border:1.5px solid #1e3a8a;color:#1e3a8a;padding:13px 8px;border-radius:12px;text-decoration:none;font-weight:700;font-size:13px">👨‍👩‍👧 Mein Kind</a>
+        <a href="${appRoot()}?heft" style="text-align:center;background:#fff;border:1.5px solid #1e3a8a;color:#1e3a8a;padding:13px 8px;border-radius:12px;text-decoration:none;font-weight:700;font-size:var(--s-text)">📰 Adler Nest</a>
+        <a href="${appRoot()}?portal" style="text-align:center;background:#fff;border:1.5px solid #1e3a8a;color:#1e3a8a;padding:13px 8px;border-radius:12px;text-decoration:none;font-weight:700;font-size:var(--s-text)">👨‍👩‍👧 Mein Kind</a>
       </div>
-      <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:16px">SV Adler Dellbrück e.V. · Angaben ohne Gewähr</div></div>`;
+      <div style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin-top:16px">SV Adler Dellbrück e.V. · Angaben ohne Gewähr</div></div>`;
     /* edLoad/fgLoad lasen aus den Tabellen eltern_dabei bzw. fahrgemeinschaft – die gibt es
        nicht (mehr). Die lebenden Funktionen sind die Betreuung (betreuung/betreuung_board im
        Eltern-Portal) und elternCarpoolOpen (md-carpool.js). Die toten Aufrufe sind raus. */
@@ -74,10 +74,10 @@ async function elternEinsatzLoad(datum){
   if(!Array.isArray(rows)||!rows.length){box.innerHTML="";return;}
   const max=Math.max(...rows.map(x=>x.feld_sek||0),1);
   const bar=(x)=>{const min=Math.round((x.feld_sek||0)/60);const pct=Math.round((x.feld_sek||0)/max*100);
-    return `<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:2px"><span style="font-weight:600;color:#1e293b">${elternEsc(x.spieler)}</span><span style="color:#64748b">${min} Min</span></div><div style="height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#1a56db,#3b82f6)"></div></div></div>`;};
+    return `<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:var(--s-text);margin-bottom:2px"><span style="font-weight:600;color:#1e293b">${elternEsc(x.spieler)}</span><span style="color:#64748b">${min} Min</span></div><div style="height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#1a56db,#3b82f6)"></div></div></div>`;};
   box.innerHTML=`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.06)">
     <div style="font-weight:700;margin-bottom:3px">⚖️ Faire Einsatzzeiten</div>
-    <div style="font-size:11px;color:#64748b;margin-bottom:12px">Jedes Kind soll fair Spielzeit bekommen – hier ganz transparent.</div>
+    <div style="font-size:var(--s-klein);color:#64748b;margin-bottom:12px">Jedes Kind soll fair Spielzeit bekommen – hier ganz transparent.</div>
     ${rows.map(bar).join("")}</div>`;
 }
 // Eltern-Liveticker: pollt alle 20s (kein Realtime-Client nötig, passt zur REST-Architektur).
@@ -86,7 +86,7 @@ let elTickerTimer=null;
 async function elTickerLoad(datum,dauer){
   const box=document.getElementById("ev-ticker");
   if(!box)return;
-  const wolffFussMsg='<div style="text-align:center;font-size:12.5px;color:#64748b;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px">🤫 Trainer fokussieren sich zu 100% auf die Kids – kein Ticker heute.</div>';
+  const wolffFussMsg='<div style="text-align:center;font-size:var(--s-text);color:#64748b;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px">🤫 Trainer fokussieren sich zu 100% auf die Kids – kein Ticker heute.</div>';
   try{
     const [evRes,mdRes]=await Promise.all([
       fetch(`${SB_URL}/rest/v1/ticker_events?datum=eq.${encodeURIComponent(datum)}&select=text,typ,minute,created_at&order=created_at.desc&limit=20`,{headers:elternHeaders()}),
@@ -102,7 +102,7 @@ async function elTickerLoad(datum,dauer){
     }
     box.innerHTML=`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px">
       <div style="font-weight:700;margin-bottom:8px">📣 Liveticker</div>
-      ${rows.length?rows.map(e=>`<div style="display:flex;gap:8px;align-items:baseline;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:13px"><span style="font-size:15px;flex:0 0 auto">${elTickerIcon(e.typ)}</span><span><strong style="color:#1e3a8a">${e.minute?elternEsc(e.minute):""}</strong> ${elternEsc(e.text)}</span></div>`).join(""):'<div style="font-size:12px;color:var(--text3)">Noch keine Ereignisse. Bleib dran!</div>'}
+      ${rows.length?rows.map(e=>`<div style="display:flex;gap:8px;align-items:baseline;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:var(--s-text)"><span style="font-size:var(--s-karte);flex:0 0 auto">${elTickerIcon(e.typ)}</span><span><strong style="color:#1e3a8a">${e.minute?elternEsc(e.minute):""}</strong> ${elternEsc(e.text)}</span></div>`).join(""):'<div style="font-size:var(--s-text);color:var(--text3)">Noch keine Ereignisse. Bleib dran!</div>'}
     </div>`;
   }catch(e){}
 }
@@ -145,24 +145,24 @@ async function renderDelegateView(token){
     root.innerHTML=`
       <div style="text-align:center;margin:8px 0 16px">
         <img src="logo.png" style="width:56px;height:56px" alt="SV Adler Dellbrück">
-        <div style="font-size:16px;font-weight:800;color:#1e3a8a;margin-top:6px">Ticker-Helfer${teamLabelFromKey(m.datum)}${m.gegner?` · gegen ${elternEsc(m.gegner)}`:""}</div>
-        <div style="font-size:12px;color:#64748b">Spielminute: ${elternEsc(minuteNow)} · Erst Kind, dann Aktion antippen.</div>
+        <div style="font-size:var(--s-karte);font-weight:800;color:#1e3a8a;margin-top:6px">Ticker-Helfer${teamLabelFromKey(m.datum)}${m.gegner?` · gegen ${elternEsc(m.gegner)}`:""}</div>
+        <div style="font-size:var(--s-text);color:#64748b">Spielminute: ${elternEsc(minuteNow)} · Erst Kind, dann Aktion antippen.</div>
       </div>
       <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px;margin-bottom:12px">
-        ${(()=>{ const chip=n=>`<button onclick="dgPick('${n.replace(/'/g,"")}')" style="font-size:12px;padding:7px 10px;border-radius:16px;border:1px solid var(--rand-bedien);background:${selected===n?"#1e3a8a":"#f1f5f9"};color:${selected===n?"#fff":"#1e293b"};cursor:pointer;font-family:inherit">${elternEsc(n)}</button>`;
-          if(!feld.length&&!weitere.length)return '<div style="font-size:12.5px;color:var(--text3);margin-bottom:12px">Für heute ist noch niemand eingetragen – frag kurz beim Trainer nach.</div>';
+        ${(()=>{ const chip=n=>`<button onclick="dgPick('${n.replace(/'/g,"")}')" style="font-size:var(--s-text);padding:7px 10px;border-radius:16px;border:1px solid var(--rand-bedien);background:${selected===n?"#1e3a8a":"#f1f5f9"};color:${selected===n?"#fff":"#1e293b"};cursor:pointer;font-family:inherit">${elternEsc(n)}</button>`;
+          if(!feld.length&&!weitere.length)return '<div style="font-size:var(--s-text);color:var(--text3);margin-bottom:12px">Für heute ist noch niemand eingetragen – frag kurz beim Trainer nach.</div>';
           return `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:${weitere.length?"8":"12"}px">${feld.map(chip).join("")}</div>
-          ${weitere.length?`${feld.length?'<div style="display:flex;align-items:center;gap:8px;margin:2px 0 8px"><span style="flex:1;border-top:2px dashed #cbd5e1"></span><span style="font-size:10px;font-weight:800;letter-spacing:.5px;color:var(--text3)">AUCH HEUTE DABEI</span><span style="flex:1;border-top:2px dashed #cbd5e1"></span></div>':""}
+          ${weitere.length?`${feld.length?'<div style="display:flex;align-items:center;gap:8px;margin:2px 0 8px"><span style="flex:1;border-top:2px dashed #cbd5e1"></span><span style="font-size:var(--s-klein);font-weight:800;letter-spacing:.5px;color:var(--text3)">AUCH HEUTE DABEI</span><span style="flex:1;border-top:2px dashed #cbd5e1"></span></div>':""}
           <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${weitere.map(chip).join("")}</div>`:""}`; })()}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <button onclick="dgSend('tor')" ${selected?"":"disabled"} style="min-height:52px;border:none;border-radius:12px;background:#15803d;color:#fff;font-weight:700;font-size:13px;cursor:pointer">⚽ Tor!</button>
-          <button onclick="dgSend('aktion')" ${selected?"":"disabled"} style="min-height:52px;border:none;border-radius:12px;background:#1a56db;color:#fff;font-weight:700;font-size:13px;cursor:pointer">👏 Starke Aktion</button>
-          ${(selected&&istTW(selected))?`<button onclick="dgSend('parade')" style="min-height:52px;border:none;border-radius:12px;background:#854d0e;color:#fff;font-weight:700;font-size:13px;cursor:pointer;grid-column:span 2">🧤 Parade</button>`:""}
+          <button onclick="dgSend('tor')" ${selected?"":"disabled"} style="min-height:52px;border:none;border-radius:12px;background:#15803d;color:#fff;font-weight:700;font-size:var(--s-text);cursor:pointer">⚽ Tor!</button>
+          <button onclick="dgSend('aktion')" ${selected?"":"disabled"} style="min-height:52px;border:none;border-radius:12px;background:#1a56db;color:#fff;font-weight:700;font-size:var(--s-text);cursor:pointer">👏 Starke Aktion</button>
+          ${(selected&&istTW(selected))?`<button onclick="dgSend('parade')" style="min-height:52px;border:none;border-radius:12px;background:#854d0e;color:#fff;font-weight:700;font-size:var(--s-text);cursor:pointer;grid-column:span 2">🧤 Parade</button>`:""}
         </div>
-        <button onclick="dgSend('gegentor')" style="width:100%;margin-top:8px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:12px;background:#f1f5f9;color:#334155;font-size:12.5px;cursor:pointer">Gegentor melden</button>
+        <button onclick="dgSend('gegentor')" style="width:100%;margin-top:8px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:12px;background:#f1f5f9;color:#334155;font-size:var(--s-text);cursor:pointer">Gegentor melden</button>
       </div>
-      <div id="dg-status" style="text-align:center;font-size:12px;color:var(--text3);min-height:16px"></div>
-      <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:14px">Danke fürs Mithelfen! · SV Adler Dellbrück e.V.</div>`;
+      <div id="dg-status" style="text-align:center;font-size:var(--s-text);color:var(--text3);min-height:16px"></div>
+      <div style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin-top:14px">Danke fürs Mithelfen! · SV Adler Dellbrück e.V.</div>`;
   }
   window.dgPick=(n)=>{selected=(selected===n)?null:n;draw();};
   window.dgSend=async(typ)=>{
@@ -254,27 +254,27 @@ async function renderTickerView(key){
       root.innerHTML=`
         <div style="text-align:center;margin:8px 0 14px">
           <img src="logo.png" style="width:56px;height:56px" alt="SV Adler Dellbrück">
-          <div style="font-size:16px;font-weight:800;color:#1e3a8a;margin-top:6px">📣 Liveticker U9${konf?" · Konferenz":teamLabelFromKey(key)}</div>
-          <div style="font-size:12px;color:#64748b">${dStr}</div>
+          <div style="font-size:var(--s-karte);font-weight:800;color:#1e3a8a;margin-top:6px">📣 Liveticker U9${konf?" · Konferenz":teamLabelFromKey(key)}</div>
+          <div style="font-size:var(--s-text);color:#64748b">${dStr}</div>
         </div>
         <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:20px;text-align:center">
-          ${nix?'<div style="font-size:12.5px;color:#334155;line-height:1.5">Für diesen Spieltag gab es keinen Liveticker.</div>'
-               :`<div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text3)">Endstand</div>
+          ${nix?'<div style="font-size:var(--s-text);color:#334155;line-height:1.5">Für diesen Spieltag gab es keinen Liveticker.</div>'
+               :`<div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text3)">Endstand</div>
           <div style="font-size:34px;font-weight:900;color:#1e3a8a;margin:4px 0">${t}:${g}</div>
-          <div style="font-size:12.5px;color:#64748b">Adler U9 gegen ${geg}</div>
-          <div style="font-size:12.5px;color:#334155;margin-top:14px;line-height:1.5">Der Liveticker dieses Spieltags ist beendet.<br>Die Höhepunkte stehen im Adler Nest.</div>`}
-          <a href="${appRoot()}?heft" style="display:inline-block;margin-top:14px;min-height:46px;line-height:46px;padding:0 20px;border-radius:10px;background:#1e3a8a;color:#fff;text-decoration:none;font-weight:800;font-size:14px">📰 Zum Adler Nest</a>
+          <div style="font-size:var(--s-text);color:#64748b">Adler U9 gegen ${geg}</div>
+          <div style="font-size:var(--s-text);color:#334155;margin-top:14px;line-height:1.5">Der Liveticker dieses Spieltags ist beendet.<br>Die Höhepunkte stehen im Adler Nest.</div>`}
+          <a href="${appRoot()}?heft" style="display:inline-block;margin-top:14px;min-height:46px;line-height:46px;padding:0 20px;border-radius:10px;background:#1e3a8a;color:#fff;text-decoration:none;font-weight:800;font-size:var(--s-karte)">📰 Zum Adler Nest</a>
         </div>
-        <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:14px">SV Adler Dellbrück e.V.</div>`;
+        <div style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin-top:14px">SV Adler Dellbrück e.V.</div>`;
       return;
     }
     // B1: Applaus-Zähler des Spieltags (aggregiert über alle Teams via baseDatum)
     let claps=0; try{const cr=await fetch(`${SB_URL}/rest/v1/ticker_claps?datum=eq.${encodeURIComponent(baseDatum)}&select=count`,{headers:anon});if(cr.ok){const cj=await cr.json();claps=(cj[0]&&cj[0].count)||0;}}catch(e){}
     const clapBar=`<div style="text-align:center;margin-top:16px">
-      <button onclick="tvClap()" style="border:none;background:linear-gradient(135deg,#f59e0b,#ec4899);color:#fff;border-radius:16px;padding:14px 22px;font-size:16px;font-weight:800;font-family:inherit;cursor:pointer;box-shadow:0 4px 16px rgba(236,72,153,.35)">👏 Applaus fürs Team</button>
-      <div style="font-size:12px;color:#5b6b81;margin-top:8px"><span id="tv-claps" style="font-weight:800;color:#db2777">${claps}</span> mal geklatscht</div>
+      <button onclick="tvClap()" style="border:none;background:linear-gradient(135deg,#f59e0b,#ec4899);color:#fff;border-radius:16px;padding:14px 22px;font-size:var(--s-karte);font-weight:800;font-family:inherit;cursor:pointer;box-shadow:0 4px 16px rgba(236,72,153,.35)">👏 Applaus fürs Team</button>
+      <div style="font-size:var(--s-text);color:#5b6b81;margin-top:8px"><span id="tv-claps" style="font-weight:800;color:#db2777">${claps}</span> mal geklatscht</div>
     </div>`;
-    const foot=`${clapBar}${adlerkasseHtml}<div style="text-align:center;font-size:11px;color:var(--text3);margin-top:14px">Nur-Ansehen · aktualisiert automatisch · SV Adler Dellbrück e.V.</div>`;
+    const foot=`${clapBar}${adlerkasseHtml}<div style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin-top:14px">Nur-Ansehen · aktualisiert automatisch · SV Adler Dellbrück e.V.</div>`;
 
     if(konf){
       const aktive=keys.filter(k=>clocks[k]||events.some(e=>e.datum===k));
@@ -283,19 +283,19 @@ async function renderTickerView(key){
         const c=clocks[k], geg=c&&c.gegner?`gegen ${elternEsc(c.gegner)}`:"";
         return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f1f5f9">
           <span style="font-weight:800;color:#dc2626;min-width:62px">${teamName(k)}</span>
-          <span style="font-size:18px;font-weight:900;color:#1e3a8a">${score(k)}</span>
-          <span style="flex:1;font-size:11.5px;color:#64748b;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${geg}</span>
-          <span style="font-size:11px;color:var(--text3)">${elternEsc(minuteFor(k))}</span>
-        </div>`;}).join(""):'<div style="font-size:12.5px;color:var(--text3)">Noch keine Teams aktiv.</div>';
-      const feed=events.length?events.map(e=>`<div style="display:flex;gap:8px;align-items:baseline;padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:13.5px">
-          <span style="font-size:16px;flex:0 0 auto">${elTickerIcon(e.typ)}</span>
-          <span><span style="font-size:10px;font-weight:800;color:#dc2626;background:#fee2e2;border-radius:8px;padding:1px 6px;margin-right:4px">${teamName(e.datum)}${e.runde?` · R${e.runde}`:""}</span><strong style="color:#1e3a8a">${e.minute?elternEsc(e.minute):""}</strong> ${elternEsc(e.text)}</span>
-        </div>`).join(""):'<div style="font-size:12.5px;color:var(--text3)">Noch keine Ereignisse. Die Konferenz startet mit dem Anpfiff!</div>';
+          <span style="font-size:var(--s-teil);font-weight:900;color:#1e3a8a">${score(k)}</span>
+          <span style="flex:1;font-size:var(--s-klein);color:#64748b;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${geg}</span>
+          <span style="font-size:var(--s-klein);color:var(--text3)">${elternEsc(minuteFor(k))}</span>
+        </div>`;}).join(""):'<div style="font-size:var(--s-text);color:var(--text3)">Noch keine Teams aktiv.</div>';
+      const feed=events.length?events.map(e=>`<div style="display:flex;gap:8px;align-items:baseline;padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:var(--s-text)">
+          <span style="font-size:var(--s-karte);flex:0 0 auto">${elTickerIcon(e.typ)}</span>
+          <span><span style="font-size:var(--s-klein);font-weight:800;color:#dc2626;background:#fee2e2;border-radius:8px;padding:1px 6px;margin-right:4px">${teamName(e.datum)}${e.runde?` · R${e.runde}`:""}</span><strong style="color:#1e3a8a">${e.minute?elternEsc(e.minute):""}</strong> ${elternEsc(e.text)}</span>
+        </div>`).join(""):'<div style="font-size:var(--s-text);color:var(--text3)">Noch keine Ereignisse. Die Konferenz startet mit dem Anpfiff!</div>';
       root.innerHTML=`
         <div style="text-align:center;margin:8px 0 14px">
           <img src="logo.png" style="width:56px;height:56px" alt="SV Adler Dellbrück">
-          <div style="font-size:16px;font-weight:800;color:#1e3a8a;margin-top:6px">📣 Liveticker U9 · Konferenz</div>
-          <div style="font-size:12px;color:#64748b">alle Teams in einem Ticker</div>
+          <div style="font-size:var(--s-karte);font-weight:800;color:#1e3a8a;margin-top:6px">📣 Liveticker U9 · Konferenz</div>
+          <div style="font-size:var(--s-text);color:#64748b">alle Teams in einem Ticker</div>
         </div>
         <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:6px 14px;margin-bottom:10px">${board}</div>
         <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px">${feed}</div>
@@ -310,17 +310,17 @@ async function renderTickerView(key){
     root.innerHTML=`
       <div style="text-align:center;margin:8px 0 14px">
         <img src="logo.png" style="width:56px;height:56px" alt="SV Adler Dellbrück">
-        <div style="font-size:16px;font-weight:800;color:#1e3a8a;margin-top:6px">📣 Liveticker U9${teamLabelFromKey(key)}${gegner}</div>
-        <div style="font-size:13px;color:#64748b"><span id="tv-minute">${elternEsc(minuteFor(key))}</span></div>
+        <div style="font-size:var(--s-karte);font-weight:800;color:#1e3a8a;margin-top:6px">📣 Liveticker U9${teamLabelFromKey(key)}${gegner}</div>
+        <div style="font-size:var(--s-text);color:#64748b"><span id="tv-minute">${elternEsc(minuteFor(key))}</span></div>
       </div>
       ${wolffFuss
-        ? '<div style="text-align:center;font-size:12.5px;color:#64748b;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px">🤫 Trainer fokussieren sich zu 100% auf die Kids – kein Ticker heute.</div>'
-        : `${aus?'<div style="text-align:center;font-size:12px;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:9px;margin-bottom:8px">⏸️ Gerade läuft kein Spiel – der Ticker meldet sich wieder.</div>':""}
+        ? '<div style="text-align:center;font-size:var(--s-text);color:#64748b;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px">🤫 Trainer fokussieren sich zu 100% auf die Kids – kein Ticker heute.</div>'
+        : `${aus?'<div style="text-align:center;font-size:var(--s-text);color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:9px;margin-bottom:8px">⏸️ Gerade läuft kein Spiel – der Ticker meldet sich wieder.</div>':""}
           <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px">
-            ${(()=>{ const zeile=e=>`<div style="display:flex;gap:8px;align-items:baseline;padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:13.5px"><span style="font-size:16px;flex:0 0 auto">${elTickerIcon(e.typ)}</span><span><strong style="color:#1e3a8a">${e.minute?elternEsc(e.minute):""}</strong> ${elternEsc(e.text)}</span></div>`;
-              if(!events.length)return '<div style="font-size:12.5px;color:var(--text3)">Noch keine Ereignisse. Der Ticker startet mit dem Anpfiff – bleib dran!</div>';
+            ${(()=>{ const zeile=e=>`<div style="display:flex;gap:8px;align-items:baseline;padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:var(--s-text)"><span style="font-size:var(--s-karte);flex:0 0 auto">${elTickerIcon(e.typ)}</span><span><strong style="color:#1e3a8a">${e.minute?elternEsc(e.minute):""}</strong> ${elternEsc(e.text)}</span></div>`;
+              if(!events.length)return '<div style="font-size:var(--s-text);color:var(--text3)">Noch keine Ereignisse. Der Ticker startet mit dem Anpfiff – bleib dran!</div>';
               if(!events.some(e=>e.runde!=null)||typeof tickerAbsaetze!=="function")return events.map(zeile).join("");
-              return tickerAbsaetze(events,spieleVon(key)).map(g=>`<div style="margin-bottom:10px"><div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#64748b;padding:6px 0 2px">${g.runde?`Runde ${g.runde}${g.spiel?` · gegen ${elternEsc(g.spiel.gegner)} · ${elternEsc(g.spiel.feldName)}${g.spiel.tore!=null?` · <span style="color:#1e3a8a">${g.spiel.tore}:${g.spiel.gegentore}</span>`:""}`:""}`:"Weitere Ereignisse"}</div>${g.events.map(zeile).join("")}</div>`).join(""); })()}
+              return tickerAbsaetze(events,spieleVon(key)).map(g=>`<div style="margin-bottom:10px"><div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#64748b;padding:6px 0 2px">${g.runde?`Runde ${g.runde}${g.spiel?` · gegen ${elternEsc(g.spiel.gegner)} · ${elternEsc(g.spiel.feldName)}${g.spiel.tore!=null?` · <span style="color:#1e3a8a">${g.spiel.tore}:${g.spiel.gegentore}</span>`:""}`:""}`:"Weitere Ereignisse"}</div>${g.events.map(zeile).join("")}</div>`).join(""); })()}
           </div>`}
       ${foot}`;
   }
@@ -348,13 +348,13 @@ async function edLoad(datum){
   const box=document.getElementById("ev-dabei");if(!box)return;
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/eltern_dabei?datum=eq.${encodeURIComponent(datum)}&select=*&order=created_at.asc`,{headers:elternHeaders()});if(r.ok)rows=await r.json();}catch(e){}
-  const liste=rows.length?rows.map(x=>`<div style="display:flex;align-items:center;gap:6px;font-size:13px;padding:5px 0;border-bottom:1px solid #f1f5f9"><span style="flex:1">${elternEsc(x.kind)}</span>${x.betreuung?'<span style="font-size:10px;background:#dcfce7;color:#15803d;padding:2px 6px;border-radius:8px">Betreuung bleibt</span>':''}</div>`).join(""):'<div style="font-size:12px;color:var(--text3)">Noch niemand eingetragen.</div>';
+  const liste=rows.length?rows.map(x=>`<div style="display:flex;align-items:center;gap:6px;font-size:var(--s-text);padding:5px 0;border-bottom:1px solid #f1f5f9"><span style="flex:1">${elternEsc(x.kind)}</span>${x.betreuung?'<span style="font-size:var(--s-klein);background:#dcfce7;color:#15803d;padding:2px 6px;border-radius:8px">Betreuung bleibt</span>':''}</div>`).join(""):'<div style="font-size:var(--s-text);color:var(--text3)">Noch niemand eingetragen.</div>';
   box.innerHTML=`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px">
     <div style="font-weight:700;margin-bottom:8px">🙋 Wer ist beim Training dabei? (${rows.length})</div>
     ${liste}
     <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">
-      <input type="text" id="ed-kind" placeholder="Name des Kindes" style="padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-size:14px;font-family:inherit">
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#334155"><input type="checkbox" id="ed-betreuung"> Ein Elternteil bleibt während des Trainings vor Ort</label>
+      <input type="text" id="ed-kind" placeholder="Name des Kindes" style="padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-size:var(--s-karte);font-family:inherit">
+      <label style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);color:#334155"><input type="checkbox" id="ed-betreuung"> Ein Elternteil bleibt während des Trainings vor Ort</label>
       <button onclick="edSignup('${datum}')" style="background:#1e3a8a;color:#fff;border:none;padding:12px;border-radius:10px;font-weight:600;cursor:pointer;font-family:inherit">Eintragen</button>
     </div>
   </div>`;
@@ -377,22 +377,22 @@ async function fgLoad(datum){
     const frei=Math.max(0,(x.plaetze||0)-mit.length);
     return `<div style="padding:8px 0;border-bottom:1px solid #f1f5f9">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
-        <div style="font-size:13.5px;font-weight:600">🚗 ${elternEsc(x.fahrer)}${x.abfahrt?` <span style="font-weight:400;color:#64748b">· ab ${elternEsc(x.abfahrt)}</span>`:''}</div>
-        <span style="font-size:11px;color:${frei>0?'#15803d':'#dc2626'}">${frei} frei</span>
+        <div style="font-size:var(--s-text);font-weight:600">🚗 ${elternEsc(x.fahrer)}${x.abfahrt?` <span style="font-weight:400;color:#64748b">· ab ${elternEsc(x.abfahrt)}</span>`:''}</div>
+        <span style="font-size:var(--s-klein);color:${frei>0?'#15803d':'#dc2626'}">${frei} frei</span>
       </div>
-      ${mit.length?`<div style="font-size:11.5px;color:#64748b;margin-top:2px">Mit: ${mit.map(elternEsc).join(", ")}</div>`:''}
-      ${frei>0?`<button onclick="fgJoin(${Number(x.id)},'${datum}')" style="margin-top:6px;background:#f1f5f9;border:1px solid var(--rand-bedien);padding:7px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit">Mitfahren</button>`:''}
+      ${mit.length?`<div style="font-size:var(--s-klein);color:#64748b;margin-top:2px">Mit: ${mit.map(elternEsc).join(", ")}</div>`:''}
+      ${frei>0?`<button onclick="fgJoin(${Number(x.id)},'${datum}')" style="margin-top:6px;background:#f1f5f9;border:1px solid var(--rand-bedien);padding:7px 12px;border-radius:8px;font-size:var(--s-text);cursor:pointer;font-family:inherit">Mitfahren</button>`:''}
     </div>`;
-  }).join(""):'<div style="font-size:12px;color:var(--text3)">Noch keine Fahrgemeinschaft angeboten.</div>';
+  }).join(""):'<div style="font-size:var(--s-text);color:var(--text3)">Noch keine Fahrgemeinschaft angeboten.</div>';
   box.innerHTML=`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px">
     <div style="font-weight:700;margin-bottom:8px">🚗 Fahrgemeinschaften</div>
     ${liste}
     <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">
-      <div style="font-size:12px;color:#64748b">Ich biete eine Mitfahrgelegenheit an:</div>
-      <input type="text" id="fg-fahrer" placeholder="Dein Name" style="padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-size:14px;font-family:inherit">
+      <div style="font-size:var(--s-text);color:#64748b">Ich biete eine Mitfahrgelegenheit an:</div>
+      <input type="text" id="fg-fahrer" placeholder="Dein Name" style="padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-size:var(--s-karte);font-family:inherit">
       <div style="display:flex;gap:6px">
-        <input type="number" id="fg-plaetze" min="1" max="6" placeholder="freie Plätze" style="width:110px;padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-size:14px;font-family:inherit">
-        <input type="text" id="fg-abfahrt" placeholder="Abfahrt (z. B. 9:00 Netto)" style="flex:1;padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-size:14px;font-family:inherit">
+        <input type="number" id="fg-plaetze" min="1" max="6" placeholder="freie Plätze" style="width:110px;padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-size:var(--s-karte);font-family:inherit">
+        <input type="text" id="fg-abfahrt" placeholder="Abfahrt (z. B. 9:00 Netto)" style="flex:1;padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-size:var(--s-karte);font-family:inherit">
       </div>
       <button onclick="fgOffer('${datum}')" style="background:#15803d;color:#fff;border:none;padding:12px;border-radius:10px;font-weight:600;cursor:pointer;font-family:inherit">Fahrt anbieten</button>
     </div>
@@ -495,26 +495,26 @@ async function mdOpen(datum,typ){
   // dieselbe Angabe laufen sonst auseinander, und dann gilt die falsche.
   const zeile=(ico,lbl,val)=>`<div style="display:flex;gap:8px;padding:6px 0;border-bottom:var(--border)">
     <span style="width:18px">${ico}</span>
-    <div style="min-width:0"><div style="font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">${lbl}</div>
-    <div style="font-size:13px;font-weight:600${val?"":";color:var(--text3);font-weight:400"}">${val?esc(val):"– nicht im Termin hinterlegt –"}</div></div></div>`;
+    <div style="min-width:0"><div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">${lbl}</div>
+    <div style="font-size:var(--s-text);font-weight:600${val?"":";color:var(--text3);font-weight:400"}">${val?esc(val):"– nicht im Termin hinterlegt –"}</div></div></div>`;
   const ausDemTermin=`<div style="background:var(--surface2);border-radius:10px;padding:10px 12px;margin-bottom:12px">
-    <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:4px">Aus dem Termin</div>
+    <div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:4px">Aus dem Termin</div>
     ${istSpiel?zeile("⚽","Gegner",p.gegner):""}
     ${zeile("📍","Ort / Adresse",p.ort)}
     ${zeile("⏰","Treffpunkt",p.treffpunkt)}
     ${zeile(typ==="training"?"🕐":"🔔",typ==="training"?"Trainingszeit":"Anpfiff",p.anpfiff)}
-    <div style="font-size:10.5px;color:var(--text3);margin-top:8px;line-height:1.45">Diese Angaben pflegst du am Termin selbst („✏️ Bearbeiten"). Beim Speichern hier werden sie für die Eltern veröffentlicht.</div>
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px;line-height:1.45">Diese Angaben pflegst du am Termin selbst („✏️ Bearbeiten"). Beim Speichern hier werden sie für die Eltern veröffentlicht.</div>
   </div>`;
   const gegnerAdresse=`<div class="mg" style="margin-bottom:8px"><label for="md-gegner_adresse">Adresse des Gegners <span style="font-weight:400;color:var(--text3)">– nur falls abweichend vom Ort oben</span></label>
       <div style="display:flex;gap:6px">
         <input type="text" id="md-gegner_adresse" value="${esc(cur.gegner_adresse||"")}" placeholder="Straße, Ort..." style="flex:1;min-width:0">
         <button class="btn btn-sm" onclick="mdMapsSearch()" title="Auf Karte suchen"><i class="ti ti-map-search"></i></button>
       </div>
-      <div style="font-size:10px;color:var(--text3);margin-top:2px">Leer lassen ist der Normalfall – die Route führt dann zum Ort aus dem Termin.</div>
+      <div style="font-size:var(--s-klein);color:var(--text3);margin-top:2px">Leer lassen ist der Normalfall – die Route führt dann zum Ort aus dem Termin.</div>
     </div>`;
   modal.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:400px;width:100%;max-height:90vh;overflow-y:auto">
     <div style="font-weight:700;margin-bottom:4px">Eltern-Info · ${typ==="training"?"🏃 Training":"⚽ Spiel"} · ${datum}</div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:12px">Nur Logistik – für die Eltern sichtbar. Keine Bewertungen.</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:12px">Nur Logistik – für die Eltern sichtbar. Keine Bewertungen.</div>
     ${ausDemTermin}
     ${istSpiel?gegnerAdresse:""}
     <div class="mg" style="margin-bottom:10px"><label for="md-infos">Infos (frei)</label><textarea id="md-infos" rows="2" style="resize:none" placeholder="z. B. Trikot mitbringen, Kuchen für den Kiosk">${esc(cur.infos||"")}</textarea></div>
@@ -574,12 +574,12 @@ function rotFieldSpatialHtml(){
   const twSlot=slots.find(s=>s.rk==="tw");
   const chipF=(n,x,y,tw,rolle)=>{const reco=!tw&&istRecovery(n); const sel=!tw&&rotSel===n;
     return `<button data-rot-name="${esc(n)}" onclick="${tw?'rotClearTW()':`rotTap('${n.replace(/'/g,"")}')`}" aria-pressed="${sel?"true":"false"}" title="${tw?'Torwart entfernen':(reco?'Kürzlich krank – heute Belastung dosieren':(sel?'Gewählt – zweiten Spieler antippen zum Tauschen, nochmal antippen = Bank':'Antippen zum Wählen, ziehen zum Tauschen'))}" style="position:absolute;left:${x}%;top:${y}%;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;border:${sel?'3px solid #facc15':(reco?'3px solid #f97316':'2px solid #fff')};background:${tw?'#f59e0b':'#1e3a8a'};color:#fff;font-weight:700;cursor:${tw?'pointer':'grab'};box-shadow:0 2px 6px rgba(0,0,0,.35)${sel?',0 0 0 4px rgba(250,204,21,.35)':''};display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;padding:0;font-family:inherit;touch-action:none">
-    <span style="font-size:11px">${reco?"🩹":(getKader(n)?.nr!=null?getKader(n).nr:(tw?"🥅":""))}</span>
-    <span style="max-width:42px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:8px">${esc((n||"").split(" ").slice(-1)[0])}</span>
-    <span data-rot-sec="${esc(n)}" data-rot-on="f" style="font-size:7px;color:#bbf7d0">${fmtSec(rotFieldSec[n]||0)}</span></button>
-    ${rolle?`<span aria-hidden="true" style="position:absolute;left:${x}%;top:calc(${y}% + 25px);transform:translateX(-50%);font-size:8.5px;font-weight:700;color:#dcfce7;background:rgba(0,0,0,.28);border-radius:8px;padding:1px 6px;white-space:nowrap;pointer-events:none">${esc(rolle)}</span>`:""}`;};
+    <span style="font-size:var(--s-klein)">${reco?"🩹":(getKader(n)?.nr!=null?getKader(n).nr:(tw?"🥅":""))}</span>
+    <span style="max-width:42px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--s-klein)">${esc((n||"").split(" ").slice(-1)[0])}</span>
+    <span data-rot-sec="${esc(n)}" data-rot-on="f" style="font-size:var(--s-klein);color:#bbf7d0">${fmtSec(rotFieldSec[n]||0)}</span></button>
+    ${rolle?`<span aria-hidden="true" style="position:absolute;left:${x}%;top:calc(${y}% + 25px);transform:translateX(-50%);font-size:var(--s-klein);font-weight:700;color:#dcfce7;background:rgba(0,0,0,.28);border-radius:8px;padding:1px 6px;white-space:nowrap;pointer-events:none">${esc(rolle)}</span>`:""}`;};
   /* Freie Position: gestrichelter Kreis mit dem Rollennamen – Ziel für einen Bankspieler. */
-  const leer=(x,y,rolle,i)=>`<button data-rot-leer="${i}" onclick="rotTap('')" aria-label="${esc(rolle)} frei" style="position:absolute;left:${x}%;top:${y}%;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;border:2px dashed rgba(255,255,255,.6);background:rgba(255,255,255,.08);color:#fff;font-size:8.5px;font-weight:700;cursor:pointer;font-family:inherit;line-height:1.1;padding:0 3px">${esc(rolle)}</button>`;
+  const leer=(x,y,rolle,i)=>`<button data-rot-leer="${i}" onclick="rotTap('')" aria-label="${esc(rolle)} frei" style="position:absolute;left:${x}%;top:${y}%;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;border:2px dashed rgba(255,255,255,.6);background:rgba(255,255,255,.08);color:#fff;font-size:var(--s-klein);font-weight:700;cursor:pointer;font-family:inherit;line-height:1.1;padding:0 3px">${esc(rolle)}</button>`;
   let h='<div style="position:relative;width:100%;max-width:300px;margin:0 auto 4px;aspect-ratio:3/4;background:linear-gradient(#2d7d2d,#256b25);border-radius:12px;border:2px solid rgba(255,255,255,.35);overflow:hidden">';
   h+='<div style="position:absolute;left:6%;right:6%;top:50%;height:1px;background:rgba(255,255,255,.3)"></div>';
   h+='<div style="position:absolute;left:50%;top:50%;width:46px;height:46px;border:1px solid rgba(255,255,255,.25);border-radius:50%;transform:translate(-50%,-50%)"></div>';
@@ -684,7 +684,7 @@ function rotRenderControls(){
   const running=!!rotTimerId;
   box.innerHTML=`
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-      <span style="font-size:11px;color:var(--text2)">Wechsel alle</span>
+      <span style="font-size:var(--s-klein);color:var(--text2)">Wechsel alle</span>
       <select id="rot-interval" onchange="rotIntervalMin=parseInt(this.value)" style="min-height:40px;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit">
         ${[3,4,5,6,7].map(m=>`<option value="${m}"${m===rotIntervalMin?" selected":""}>${m} Min.</option>`).join("")}
       </select>
@@ -746,7 +746,7 @@ function rotSuggHtml(){
   if(!(rotBench.length&&rotField.length))return "";
   const benchTop=[...rotBench].sort((a,b)=>rotBenchSec[b]-rotBenchSec[a])[0];
   const fieldTired=[...rotField].sort((a,b)=>rotBenchSec[a]-rotBenchSec[b])[0];
-  return `<div style="padding:8px 10px;background:#fef9c3;border:1px solid #fde047;border-radius:var(--r);font-size:12.5px;color:#854d0e;margin-bottom:10px">🔁 Vorschlag: <strong>${esc(benchTop)}</strong> (Bank ${fmtSec(rotBenchSec[benchTop])}) rein für <strong>${esc(fieldTired)}</strong></div>`;
+  return `<div style="padding:8px 10px;background:#fef9c3;border:1px solid #fde047;border-radius:var(--r);font-size:var(--s-text);color:#854d0e;margin-bottom:10px">🔁 Vorschlag: <strong>${esc(benchTop)}</strong> (Bank ${fmtSec(rotBenchSec[benchTop])}) rein für <strong>${esc(fieldTired)}</strong></div>`;
 }
 function rotRenderLive(){
   const live=document.getElementById("rot-live");
@@ -757,7 +757,7 @@ function rotRenderLive(){
   // punktgenau aktualisieren kann, ohne das ganze Panel neu zu bauen.
   const chip=rotBankChip;   // v502/v503: eine Chip-Definition für ① und ②
   const recoNamen=[...rotField,...rotBench].filter(istRecovery);
-  const recoHinweis=recoNamen.length?`<div style="padding:8px 10px;background:#fff7ed;border:1px solid #fdba74;border-radius:var(--r);font-size:12px;color:#9a3412;margin-bottom:10px">🩹 <strong>${recoNamen.map(esc).join(", ")}</strong> ${recoNamen.length===1?"war":"waren"} kürzlich krank – heute Einsatzzeit bewusst dosieren.</div>`:"";
+  const recoHinweis=recoNamen.length?`<div style="padding:8px 10px;background:#fff7ed;border:1px solid #fdba74;border-radius:var(--r);font-size:var(--s-text);color:#9a3412;margin-bottom:10px">🩹 <strong>${recoNamen.map(esc).join(", ")}</strong> ${recoNamen.length===1?"war":"waren"} kürzlich krank – heute Einsatzzeit bewusst dosieren.</div>`:"";
   /* v502: Torwart-Zeile und Kapitän stehen in „① Aufstellung" (aufRender); hier bleibt, was
      während des Spiels zählt – Countdown, Vorschlag, Feld und Bank. */
   live.innerHTML=`
@@ -769,11 +769,11 @@ function rotRenderLive(){
 /* Feld und Bank – dieselbe Ansicht in ① (Aufstellung) und ② (Wechseltimer). Beide zeigen
    denselben Zustand (rotField, rotBench); ein Tipp an einer Stelle zeichnet beide neu. */
 function rotFeldBankHtml(chip){
-  return `<div style="font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--text2);margin-bottom:4px">Feld (${rotField.length}/${rotFieldSize()})</div>
+  return `<div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;color:var(--text2);margin-bottom:4px">Feld (${rotField.length}/${rotFieldSize()})</div>
     ${rotFieldSpatialHtml()}
-    <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--text2);margin:10px 0 6px">Bank (${rotBench.length})</div>
-    <div data-rot-bank="1" style="display:flex;flex-wrap:wrap;gap:6px;min-height:44px;padding:4px;border:1px dashed var(--rand-bedien);border-radius:12px">${rotBench.map(n=>chip(n,false)).join("")||'<span style="font-size:11px;color:var(--text3);align-self:center">Bank leer – Feldspieler hierher ziehen</span>'}</div>
-    <div style="font-size:10px;color:var(--text3);margin-top:8px">Antippen wählt, der zweite Tipp tauscht (Feld↔Feld: Position, Feld↔Bank: Wechsel) · nochmal antippen = Bank · oder einfach ziehen · 🟢 Spielzeit / 🔴 Bankzeit.</div>`;
+    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;color:var(--text2);margin:10px 0 6px">Bank (${rotBench.length})</div>
+    <div data-rot-bank="1" style="display:flex;flex-wrap:wrap;gap:6px;min-height:44px;padding:4px;border:1px dashed var(--rand-bedien);border-radius:12px">${rotBench.map(n=>chip(n,false)).join("")||'<span style="font-size:var(--s-klein);color:var(--text3);align-self:center">Bank leer – Feldspieler hierher ziehen</span>'}</div>
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px">Antippen wählt, der zweite Tipp tauscht (Feld↔Feld: Position, Feld↔Bank: Wechsel) · nochmal antippen = Bank · oder einfach ziehen · 🟢 Spielzeit / 🔴 Bankzeit.</div>`;
 }
 function rotBankChip(n,onField){
   const sek=onField?(rotFieldSec[n]||0):(rotBenchSec[n]||0);
@@ -781,7 +781,7 @@ function rotBankChip(n,onField){
   const reco=istRecovery(n);
   const rand=reco?"2px solid #f97316":"var(--border-s)";
   const sel=rotSel===n;
-  return `<button data-rot-name="${esc(n)}" onclick="rotTap('${n.replace(/'/g,"")}')" aria-pressed="${sel?"true":"false"}" title="${reco?'Kürzlich krank – heute Belastung dosieren':'Antippen = aufs Feld, auf einen Feldspieler ziehen = gezielt wechseln'}" style="font-size:12.5px;padding:8px 10px;min-height:44px;border:${sel?"2px solid #facc15":rand};border-radius:16px;background:${sel?"#fef9c3":(onField?"#dcfce7":"var(--surface2)")};color:var(--text);font-family:inherit;cursor:grab;display:inline-flex;align-items:center;gap:6px;touch-action:none">${reco?"🩹 ":""}${getKader(n)?.nr?`<span style="font-weight:500;color:var(--text3)">${getKader(n).nr}</span>`:""}${esc(n)}<span data-rot-sec="${esc(n)}" data-rot-on="${onField?"f":"b"}" style="font-size:10.5px;font-weight:700;color:${tcol}">${fmtSec(sek)}</span></button>`;
+  return `<button data-rot-name="${esc(n)}" onclick="rotTap('${n.replace(/'/g,"")}')" aria-pressed="${sel?"true":"false"}" title="${reco?'Kürzlich krank – heute Belastung dosieren':'Antippen = aufs Feld, auf einen Feldspieler ziehen = gezielt wechseln'}" style="font-size:var(--s-text);padding:8px 10px;min-height:44px;border:${sel?"2px solid #facc15":rand};border-radius:16px;background:${sel?"#fef9c3":(onField?"#dcfce7":"var(--surface2)")};color:var(--text);font-family:inherit;cursor:grab;display:inline-flex;align-items:center;gap:6px;touch-action:none">${reco?"🩹 ":""}${getKader(n)?.nr?`<span style="font-weight:500;color:var(--text3)">${getKader(n).nr}</span>`:""}${esc(n)}<span data-rot-sec="${esc(n)}" data-rot-on="${onField?"f":"b"}" style="font-size:var(--s-klein);font-weight:700;color:${tcol}">${fmtSec(sek)}</span></button>`;
 }
 /* v502 ① Aufstellung: Torwart fest, „Feld & Bank fair besetzen", das Mini-Feld mit Bank.
    Der Kader dieses Teams steht im Kachelkopf; die Einteilung wird oben geändert. */
@@ -791,16 +791,16 @@ function aufRender(){
   let twRow="";
   if(rotForm.tw){
     if(rotTW){
-      twRow=`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fef3c7;border:1px solid #fcd34d;border-radius:var(--r);font-size:12.5px;color:#854d0e;margin-bottom:10px">🥅 <strong>Torwart (Fest): ${esc(rotTW)}</strong><button onclick="rotClearTW()" style="margin-left:auto;min-width:44px;min-height:44px;border:1px solid #fcd34d;border-radius:8px;background:#fff;font-size:12px;cursor:pointer;color:#854d0e">entfernen</button></div>`;
+      twRow=`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fef3c7;border:1px solid #fcd34d;border-radius:var(--r);font-size:var(--s-text);color:#854d0e;margin-bottom:10px">🥅 <strong>Torwart (Fest): ${esc(rotTW)}</strong><button onclick="rotClearTW()" style="margin-left:auto;min-width:44px;min-height:44px;border:1px solid #fcd34d;border-radius:8px;background:#fff;font-size:var(--s-text);cursor:pointer;color:#854d0e">entfernen</button></div>`;
     }else{
       const opts=[...rotField,...rotBench].map(n=>`<option value="${esc(n)}">${getKader(n)?.nr?getKader(n).nr+" ":""}${esc(n)}</option>`).join("");
-      twRow=`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fffbeb;border:1px dashed #fcd34d;border-radius:var(--r);font-size:12.5px;color:#854d0e;margin-bottom:10px">🥅 <strong>Torwart (Fest):</strong><select onchange="rotSetTW(this.value)" style="flex:1;min-height:40px;padding:6px 8px;border:1px solid #fcd34d;border-radius:8px;font-family:inherit;font-size:12.5px;background:#fff"><option value="">wählen…</option>${opts}</select></div>`;
+      twRow=`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fffbeb;border:1px dashed #fcd34d;border-radius:var(--r);font-size:var(--s-text);color:#854d0e;margin-bottom:10px">🥅 <strong>Torwart (Fest):</strong><select onchange="rotSetTW(this.value)" style="flex:1;min-height:40px;padding:6px 8px;border:1px solid #fcd34d;border-radius:8px;font-family:inherit;font-size:var(--s-text);background:#fff"><option value="">wählen…</option>${opts}</select></div>`;
     }
   }
   const label=((typeof FORMATIONS!=="undefined"&&FORMATIONS[tbFormation])||{label:tbFormation}).label;
   box.innerHTML=`${twRow}
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-      <span style="font-size:11.5px;color:var(--text2)">Spielform <b>${esc(label||"")}</b></span>
+      <span style="font-size:var(--s-klein);color:var(--text2)">Spielform <b>${esc(label||"")}</b></span>
       <button class="btn btn-sm" onclick="magicLineup()" title="Verteilt den Kader dieses Teams auf Feld und Bank – wenig gespielte Kinder starten" style="margin-left:auto;min-height:44px">🪄 Feld &amp; Bank fair besetzen</button>
     </div>
     ${rotFeldBankHtml(rotBankChip)}`;

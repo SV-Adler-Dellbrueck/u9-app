@@ -109,7 +109,7 @@ function questStripHTML(counts){
     const ziel=questZiel(q);
     const n=counts[q.key]||0,done=n>=ziel,pct=Math.min(100,Math.round(n/ziel*100));
     return `<div style="flex:1;min-width:86px">
-      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text2);margin-bottom:2px">
+      <div style="display:flex;justify-content:space-between;font-size:var(--s-klein);color:var(--text2);margin-bottom:2px">
         <span>${q.icon} ${esc(q.label)}</span><span style="font-weight:700;color:${done?"#059669":"var(--text)"}">${n}/${ziel}${done?" ✓":""}</span>
       </div>
       <div style="height:6px;background:var(--surface2);border-radius:4px;overflow:hidden">
@@ -118,11 +118,11 @@ function questStripHTML(counts){
     </div>`;
   }).join("");
   return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-      <span style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);flex:1">🏆 Team-Quests heute${questTeams()>1?` · alle ${questTeams()} Teams zusammen`:""}</span>
-      <button onclick="questEditorOpen()" style="border:none;background:transparent;color:var(--blue-text);font-size:11px;cursor:pointer;font-family:inherit">anpassen</button>
+      <span style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text3);flex:1">🏆 Team-Quests heute${questTeams()>1?` · alle ${questTeams()} Teams zusammen`:""}</span>
+      <button onclick="questEditorOpen()" style="border:none;background:transparent;color:var(--blue-text);font-size:var(--s-klein);cursor:pointer;font-family:inherit">anpassen</button>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:10px">${items}</div>
-    ${teamBelohnung?`<div style="margin-top:8px;font-size:11px;color:var(--text2)">🎁 Belohnung: <strong>${esc(teamBelohnung)}</strong></div>`:""}`;
+    ${teamBelohnung?`<div style="margin-top:8px;font-size:var(--s-klein);color:var(--text2)">🎁 Belohnung: <strong>${esc(teamBelohnung)}</strong></div>`:""}`;
 }
 // Spieltag-Sektion „Team-Quests": Ziele + Feder-Belohnung im Überblick, mit Editor-Zugang.
 // Steht ausserhalb der Team-Kacheln – die Ziele gelten fuer alle Teams des Tages gemeinsam.
@@ -132,18 +132,18 @@ function questPanelRender(){
   const counts=questCountsAll();
   const chips=teamQuests.map(q=>{
     const ziel=questZiel(q), n=counts[q.key]||0, done=n>=ziel;
-    return `<span style="font-size:11.5px;background:${done?"#ecfdf5":"var(--surface2)"};color:${done?"#065f46":"var(--text)"};border-radius:12px;padding:3px 9px">${q.icon} ${esc(q.label)} · ${n}/${ziel}${done?" ✓":""}</span>`;
+    return `<span style="font-size:var(--s-klein);background:${done?"#ecfdf5":"var(--surface2)"};color:${done?"#065f46":"var(--text)"};border-radius:12px;padding:3px 9px">${q.icon} ${esc(q.label)} · ${n}/${ziel}${done?" ✓":""}</span>`;
   }).join("");
   box.innerHTML=`<div style="background:var(--surface);border:var(--border-s);border-left:3px solid #7c3aed;border-radius:12px;padding:12px 14px">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-      <span style="flex:1;font-size:12px;font-weight:700">🏆 Diese Ziele holen sich ${teams>1?"alle Teams gemeinsam":"die Kinder im Spiel"}</span>
+      <span style="flex:1;font-size:var(--s-text);font-weight:700">🏆 Diese Ziele holen sich ${teams>1?"alle Teams gemeinsam":"die Kinder im Spiel"}</span>
       <button class="btn btn-sm" onclick="questEditorOpen()"><i class="ti ti-pencil"></i>Anpassen</button>
     </div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:8px">${teams>1
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">${teams>1
       ?`Ein Ziel für den ganzen Spieltag: gezählt werden die Aktionen <b>aller ${teams} Teams zusammen</b>, dafür ist das Ziel ${teams}× so hoch.`
       :`Gezählt werden die Aktionen aus dem Live-Tracker.`}</div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px">${chips||'<span style="font-size:11.5px;color:var(--text3)">Noch keine Quests – „Anpassen" antippen.</span>'}</div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;font-size:11.5px;color:var(--text2)">
+    <div style="display:flex;flex-wrap:wrap;gap:6px">${chips||'<span style="font-size:var(--s-klein);color:var(--text3)">Noch keine Quests – „Anpassen" antippen.</span>'}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;font-size:var(--s-klein);color:var(--text2)">
       ${teamQuestFedern>0?`<span style="background:#ecfdf5;color:#065f46;border-radius:12px;padding:3px 9px;font-weight:700">${XP_ICON} ${teamQuestFedern} Federn pro Kind, wenn ALLE Ziele fallen</span>`:`<span style="color:var(--text3)">Feder-Belohnung aus</span>`}
       ${teamBelohnung?`<span>🎁 <strong>${esc(teamBelohnung)}</strong></span>`:""}
     </div>
@@ -214,22 +214,22 @@ function questEditorOpen(){
   m.onclick=e=>{if(e.target===m)m.remove();};
   m.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:440px;width:100%;margin:auto">
     <div style="font-weight:700;margin-bottom:2px">🏆 Team-Quests verwalten</div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:12px">Quests anlegen, bearbeiten oder löschen. Jede Quest zählt eine Aktion bis zum Ziel.</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:12px">Quests anlegen, bearbeiten oder löschen. Jede Quest zählt eine Aktion bis zum Ziel.</div>
     <div id="qe-list"></div>
     <button class="btn btn-sm" style="margin-bottom:12px" onclick="qeAddQuest()"><i class="ti ti-plus"></i>Quest hinzufügen</button>
     <div style="margin:0 0 12px;padding:10px;border:1.5px dashed #10b981;border-radius:10px;background:#ecfdf5">
-      <label style="font-weight:700;font-size:12.5px;color:#065f46">${XP_ICON} Federn, wenn das Team ALLE Quests schafft</label>
-      <div style="font-size:11px;color:#047857;margin:2px 0 6px">Bekommt jedes mitspielende Kind gutgeschrieben – automatisch, einmal pro Spieltag.</div>
+      <label style="font-weight:700;font-size:var(--s-text);color:#065f46">${XP_ICON} Federn, wenn das Team ALLE Quests schafft</label>
+      <div style="font-size:var(--s-klein);color:#047857;margin:2px 0 6px">Bekommt jedes mitspielende Kind gutgeschrieben – automatisch, einmal pro Spieltag.</div>
       <div style="display:flex;align-items:center;gap:8px">
-        <input id="qe-federn" type="number" min="0" max="200" value="${teamQuestFedern}" style="width:90px;padding:8px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:14px;font-weight:700;box-sizing:border-box">
-        <span style="font-size:12px;color:#047857">${XP_ICON} pro Kind</span>
+        <input id="qe-federn" type="number" min="0" max="200" value="${teamQuestFedern}" style="width:90px;padding:8px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-karte);font-weight:700;box-sizing:border-box">
+        <span style="font-size:var(--s-text);color:#047857">${XP_ICON} pro Kind</span>
       </div>
     </div>
-    <label for="qe-belohnung" style="font-size:11px;color:var(--text2)">🎁 Zusätzliche Belohnung (Freitext, optional)</label>
-    <textarea id="qe-belohnung" rows="2" placeholder="z. B. Eis für alle beim nächsten Training!" style="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px;margin:4px 0 12px;box-sizing:border-box">${esc(teamBelohnung)}</textarea>
+    <label for="qe-belohnung" style="font-size:var(--s-klein);color:var(--text2)">🎁 Zusätzliche Belohnung (Freitext, optional)</label>
+    <textarea id="qe-belohnung" rows="2" placeholder="z. B. Eis für alle beim nächsten Training!" style="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text);margin:4px 0 12px;box-sizing:border-box">${esc(teamBelohnung)}</textarea>
     <div style="margin:0 0 12px;padding:10px;border:1.5px dashed #f59e0b;border-radius:10px;background:#fffbeb">
-      <div style="font-weight:700;font-size:12.5px;color:#92400e;margin-bottom:2px">⚡ Doppel-${XP_LABEL}-Booster</div>
-      <div style="font-size:11px;color:#78716c;margin-bottom:8px">${xpBoostActive()?`Aktiv bis ${new Date(teamDoubleXpUntil).toLocaleString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})} Uhr – alle ${XP_LABEL} zählen doppelt!`:"72-Stunden-Fenster (z. B. übers Wochenende). Den 2x-Multiplikator rechnet der Server."}</div>
+      <div style="font-weight:700;font-size:var(--s-text);color:#92400e;margin-bottom:2px">⚡ Doppel-${XP_LABEL}-Booster</div>
+      <div style="font-size:var(--s-klein);color:#78716c;margin-bottom:8px">${xpBoostActive()?`Aktiv bis ${new Date(teamDoubleXpUntil).toLocaleString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})} Uhr – alle ${XP_LABEL} zählen doppelt!`:"72-Stunden-Fenster (z. B. übers Wochenende). Den 2x-Multiplikator rechnet der Server."}</div>
       <button class="btn btn-sm ${xpBoostActive()?"":"btn-p"}" onclick="xpBoosterToggle(this)">${xpBoostActive()?"Booster beenden":"⚡ 72h aktivieren"}</button>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
@@ -251,12 +251,12 @@ function qeSyncFromInputs(){
 function qeRenderList(){
   const wrap=document.getElementById("qe-list"); if(!wrap)return;
   wrap.innerHTML=qeDraft.map((q,i)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:8px">
-    <input data-i="${i}" data-f="icon" value="${esc(q.icon||"🏆")}" maxlength="2" style="width:34px;text-align:center;padding:7px 2px;border:1px solid var(--rand-bedien);border-radius:6px;font-size:15px">
-    <input data-i="${i}" data-f="label" value="${esc(q.label||"")}" placeholder="Name" style="flex:1;min-width:70px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px">
-    <select data-i="${i}" data-f="key" style="padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px">${QUEST_KEYS.map(k=>`<option value="${k.key}"${k.key===q.key?" selected":""}>${k.label}</option>`).join("")}</select>
-    <input data-i="${i}" data-f="target" type="number" min="1" value="${q.target||10}" title="Ziel" style="width:52px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px">
-    <button onclick="qeDelQuest(${i})" title="Löschen" style="border:none;background:transparent;color:#dc2626;cursor:pointer;font-size:16px">🗑</button>
-  </div>`).join("")||'<div style="font-size:12px;color:var(--text3);padding:6px">Noch keine Quests – füge eine hinzu.</div>';
+    <input data-i="${i}" data-f="icon" value="${esc(q.icon||"🏆")}" maxlength="2" style="width:34px;text-align:center;padding:7px 2px;border:1px solid var(--rand-bedien);border-radius:6px;font-size:var(--s-karte)">
+    <input data-i="${i}" data-f="label" value="${esc(q.label||"")}" placeholder="Name" style="flex:1;min-width:70px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text)">
+    <select data-i="${i}" data-f="key" style="padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text)">${QUEST_KEYS.map(k=>`<option value="${k.key}"${k.key===q.key?" selected":""}>${k.label}</option>`).join("")}</select>
+    <input data-i="${i}" data-f="target" type="number" min="1" value="${q.target||10}" title="Ziel" style="width:52px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text)">
+    <button onclick="qeDelQuest(${i})" title="Löschen" style="border:none;background:transparent;color:#dc2626;cursor:pointer;font-size:var(--s-karte)">🗑</button>
+  </div>`).join("")||'<div style="font-size:var(--s-text);color:var(--text3);padding:6px">Noch keine Quests – füge eine hinzu.</div>';
 }
 function qeAddQuest(){ qeSyncFromInputs(); qeDraft.push({key:"pass",icon:"🏆",label:"Neue Quest",target:10}); qeRenderList(); }
 function qeDelQuest(i){ qeSyncFromInputs(); qeDraft.splice(i,1); qeRenderList(); }
