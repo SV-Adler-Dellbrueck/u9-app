@@ -401,6 +401,11 @@ function kidMapFromIds(obj){ if(!obj||typeof obj!=="object"||Array.isArray(obj))
 function kidMapToIds(obj){ if(!obj||typeof obj!=="object"||Array.isArray(obj))return obj; const out={}; Object.keys(obj).forEach(k=>{out[kidNameToKey(k)]=obj[k];}); return out; }
 function kidListFromIds(arr){ if(!Array.isArray(arr))return arr; return arr.map(x=>(typeof x==="number"||/^\d+$/.test(String(x)))?(kidName(x)||("#"+x)):x); }
 function kidListToIds(arr){ if(!Array.isArray(arr))return arr; return arr.map(x=>{ if(typeof x!=="string")return x; const m=x.match(/^#(\d+)$/); if(m)return Number(m[1]); const id=kidId(x); return id!=null?id:x; }); }
+/* v625 PO (Bildschirmfoto Einladungskarten: „Alle oder keine lässt sich nicht anklicken“):
+   loadKader legt die Datenbank-Kennung als `_id` ab, nicht als `id`. Drei Fenster fragten `k.id`
+   und sahen deshalb kein Kind – Einladungskarten („Kein Kader geladen.“), Notfall-Karten (ohne
+   Namen) und Adler-Welt (Federn, Abzeichen). Eine Stelle für beide Schreibweisen. */
+function kaderId(k){ return k?(k._id!=null?k._id:(k.id!=null?k.id:null)):null; }
 async function loadKader(){
   try{
     /* v482 – PO: „Die Anwesenheit der Kinder ist wieder weg." Nach einer Nacht ist der
@@ -1173,7 +1178,7 @@ async function setupTrainerOpen(){
   try{const r=await fetch(`${SB_URL}/rest/v1/kind_notfall?select=spieler_id`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)(await r.json()).forEach(x=>notfall.add(x.spieler_id));}catch(e){}
   if(typeof fotoConsentLoad==="function")await fotoConsentLoad(true);
   const fc=k=>(typeof fotoConsentFor==="function")?fotoConsentFor(k):{intern:!!k.foto_stadionheft_ok,video:false,public_ok:false};
-  const rows=kids.map(k=>{const x=fc(k);return {name:k.name,intern:x.intern,video:x.video,pub:x.public_ok,nf:notfall.has(k.id)};}).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+  const rows=kids.map(k=>{const x=fc(k);return {name:k.name,intern:x.intern,video:x.video,pub:x.public_ok,nf:notfall.has(kaderId(k))};}).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
   const missIntern=rows.filter(r=>!r.intern).length, missNf=rows.filter(r=>!r.nf).length;
   const cell=ok=>`<span style="font-size:var(--s-karte)">${ok?"✅":"⛔"}</span>`;
   document.getElementById("setup-modal")?.remove();
@@ -1261,7 +1266,7 @@ async function notfallTrainerOpen(){
     else if(c)localStorage.removeItem("adler_nf_cache");
   }catch(e){} }
   rows=rows||[];
-  const nameById={}; (typeof KADER!=="undefined"?KADER:[]).forEach(k=>{nameById[k.id]=k.name;});
+  const nameById={}; (typeof KADER!=="undefined"?KADER:[]).forEach(k=>{nameById[kaderId(k)]=k.name;});
   const flds=[["notfall_tel","☎️ Notfall"],["notfallkontakt","👤 Kontakt"],["allergien","⚠️ Allergien"],["medikamente","💊 Medikamente"],["krankenversicherung","🏥 Versicherung"],["blutgruppe","🩸 Blutgruppe"],["arzt","🩺 Arzt"],["hinweise","📝 Hinweise"]];
   const cards=rows.filter(x=>flds.some(f=>x[f[0]])).sort((a,b)=>String(nameById[a.spieler_id]||"").localeCompare(String(nameById[b.spieler_id]||"")));
   document.getElementById("nf-tr-modal")?.remove();
@@ -4344,10 +4349,10 @@ async function adlerWeltOpen(){
   const rows=active.slice().sort((a,b)=>((a.nr==null?99:a.nr)-(b.nr==null?99:b.nr))||a.name.localeCompare(b.name)).map(k=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:var(--border)">
     <div style="flex:1;min-width:0">
       <div style="font-size:var(--s-text);font-weight:700">${k.nr!=null?`<span style="color:var(--text3);font-weight:600">#${k.nr}</span> `:""}${esc(k.name)}</div>
-      <div id="aw-fed-${k.id}" style="font-size:var(--s-klein);color:#7c3aed;font-weight:700">…</div>
+      <div id="aw-fed-${kaderId(k)}" style="font-size:var(--s-klein);color:#7c3aed;font-weight:700">…</div>
     </div>
     <button class="btn btn-sm" onclick="adlerCardOpen('${(k.name||'').replace(/'/g,'')}')" title="FUT-Karte ansehen">🃏</button>
-    <button class="btn btn-sm" onclick="abzeichenOpen(${k.id},'${(k.name||'').replace(/'/g,'')}')" title="Technik-Abzeichen">🎖️</button>
+    <button class="btn btn-sm" onclick="abzeichenOpen(${kaderId(k)},'${(k.name||'').replace(/'/g,'')}')" title="Technik-Abzeichen">🎖️</button>
   </div>`).join("");
   c.innerHTML=`${mdlHead("aw-modal","🪶","Adler-Welt","Federn, Karten, Abzeichen & Challenge – ansehen und verwalten","#7c3aed")}
     <div id="aw-team-level" style="margin-bottom:12px"></div>
@@ -4384,7 +4389,7 @@ async function adlerWeltOpen(){
     <button class="btn btn-sm" style="margin-top:12px;width:100%" onclick="document.getElementById('aw-modal').remove()">Schließen</button>`;
   modal.appendChild(c);document.body.appendChild(modal);
   if(typeof teamLevelLoad==="function")teamLevelLoad("aw-team-level"); // Küken-Schwarm (Team-Level) jetzt hier
-  active.forEach(k=>{xpTotal(k.id).then(t=>{const el=document.getElementById("aw-fed-"+k.id);if(el){const b=xpBadge(t);el.textContent=`${XP_ICON} ${t} · ${b.emo} ${b.t}`;}}).catch(()=>{});});
+  active.forEach(k=>{xpTotal(kaderId(k)).then(t=>{const el=document.getElementById("aw-fed-"+kaderId(k));if(el){const b=xpBadge(t);el.textContent=`${XP_ICON} ${t} · ${b.emo} ${b.t}`;}}).catch(()=>{});});
   // aktuelle Spotify-Playlist vorbefüllen
   fetch(`${SB_URL}/rest/v1/team_config?id=eq.1&select=spotify_playlist`,{headers:sbAuthHeaders()}).then(r=>r.ok?r.json():[]).then(rows=>{const el=document.getElementById("aw-spotify");if(el&&rows[0]&&rows[0].spotify_playlist)el.value=rows[0].spotify_playlist;}).catch(()=>{});
 }
@@ -4448,7 +4453,7 @@ async function einladungHash(code){
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
 }
 async function einladungskartenOpen(){
-  const kinder=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k.aktiv!==false&&k.id!=null);
+  const kinder=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k.aktiv!==false&&kaderId(k)!=null);
   let konten={}, karten={};
   try{const r=await fetch(`${SB_URL}/rest/v1/eltern_kinder?select=spieler_id`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)(await r.json()).forEach(x=>konten[x.spieler_id]=(konten[x.spieler_id]||0)+1);}catch(e){}
   try{const r=await fetch(`${SB_URL}/rest/v1/eltern_einladung?select=spieler_id,nutzungen,max_nutzungen,gueltig_bis`,{headers:sbAuthHeaders()});if(r.ok)(await r.json()).forEach(x=>karten[x.spieler_id]=x);}catch(e){}
@@ -4459,11 +4464,11 @@ async function einladungskartenOpen(){
   m.onclick=e=>{if(e.target===m)m.remove();};
   const bis=new Date(Date.now()+7*864e5).toISOString().slice(0,10);
   const zeile=k=>{
-    const n=konten[k.id]||0, c=karten[k.id];
+    const n=konten[kaderId(k)]||0, c=karten[kaderId(k)];
     const stand=[n?`${n} Konto${n>1?"en":""} verbunden`:"noch kein Konto",
       c?(new Date(c.gueltig_bis)>new Date()?`Karte: ${c.nutzungen} von ${c.max_nutzungen} genutzt`:"Karte abgelaufen"):""].filter(Boolean).join(" · ");
     return `<label style="display:flex;align-items:center;gap:10px;min-height:44px;padding:4px 2px;border-bottom:1px solid var(--border);cursor:pointer">
-      <input type="checkbox" class="einl-kind" value="${k.id}" ${n?"":"checked"} style="width:20px;height:20px">
+      <input type="checkbox" class="einl-kind" value="${kaderId(k)}" ${n?"":"checked"} style="width:20px;height:20px">
       <span style="flex:1;min-width:0"><b>${esc(k.name)}</b><br><span style="font-size:var(--s-klein);color:var(--text2)">${esc(stand)}</span></span></label>`;
   };
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
@@ -4514,7 +4519,7 @@ async function einladungskartenHtml(karten,bisTag){
   const basis=appRoot()+"eltern/?portal&einladung=";
   const einzeln=[];
   for(const k of karten){
-    const kind=kader.find(x=>x.id===k.id);
+    const kind=kader.find(x=>kaderId(x)===k.id);
     const vorname=String(kind?.name||"").trim();   // wie im Kader – zwei gleiche Vornamen unterscheidet der Trainer dort
     const qr=await qrSvg(basis+k.code,4);
     einzeln.push(`<div class="einl-karte">

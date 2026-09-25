@@ -572,7 +572,7 @@ async function rsvpOverviewOpen(terminId){
   const byId={}; rm.forEach(x=>byId[x.spieler_id]=x.status);
   const kids=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k.aktiv!==false);
   const groups={offen:[],zugesagt:[],abgesagt:[],krank:[]};
-  kids.forEach(k=>{const s=byId[k.id]||"offen"; (groups[s]||groups.offen).push(k.name);});
+  kids.forEach(k=>{const s=byId[kaderId(k)]||"offen"; (groups[s]||groups.offen).push(k.name);});   // v625: KADER führt _id
   const d=new Date(t.datum+"T00:00:00"), wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
   const datumStr=wtag+" "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
   const zeitStr=t.uhrzeit?String(t.uhrzeit).slice(0,5):"";
@@ -779,7 +779,7 @@ async function handoverOpen(id){
   try{const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?termin_id=eq.${t.id}&select=spieler_id,status`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)(await r.json()).forEach(x=>byId[x.spieler_id]=x.status);}catch(e){}
   const kids=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k.aktiv!==false);
   const grp={zugesagt:[],offen:[],abgesagt:[],krank:[]};
-  kids.forEach(k=>{const s=byId[k.id]||"offen";(grp[s]||grp.offen).push(k.name);});
+  kids.forEach(k=>{const s=byId[kaderId(k)]||"offen";(grp[s]||grp.offen).push(k.name);});   // v625: KADER führt _id
   let plan=[]; if(t.typ==="training"){ try{ plan=await tpPlanLoad(t.datum); }catch(e){} }
   window._handoverData={t,grp,plan};
   document.getElementById("handover-modal")?.remove();
