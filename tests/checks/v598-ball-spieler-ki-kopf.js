@@ -239,7 +239,8 @@ module.exports = async function (h) {
 
     if (!r.hatFunktion) probleme.push("d) tpSlotKopfText fehlt");
     else {
-      const erwartet = ["Hauptteil 1 – Stationen, 3 Min frei, dann eng", "Hauptteil 2 – Regeln wie in Hauptteil 1",
+      /* v623: „3 Min frei, dann eng“ fällt im Kopf weg (PO: der Hinweis ergab keinen Sinn). */
+      const erwartet = ["Hauptteil 1 – Stationen", "Hauptteil 2 – Regeln wie in Hauptteil 1",
                         "Warm-up", "Hauptteil 1 – Stationen: eine einzige, ohne Strich"];
       r.trocken.forEach((t, i) => { if (t !== erwartet[i]) probleme.push(`d) Kurzfassung ${i + 1}: „${t}“ statt „${erwartet[i]}“`); });
       if (!r.gefunden) probleme.push("d) Kein Block mit Feldtexten im übernommenen Plan");

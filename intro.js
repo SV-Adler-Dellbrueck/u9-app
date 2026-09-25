@@ -50,7 +50,10 @@
     document.body.insertBefore(d,document.body.firstChild);
     var weg=function(){ d.remove(); st.remove(); document.removeEventListener("pointerdown",weg,true); };
     document.addEventListener("pointerdown",weg,true);          // Tipp beendet sofort
-    setTimeout(weg,ruhig?1000:3100);   // v619 PO: „relativ kurz … noch ein bisschen verlängern, sodass auch eine Wirkung entsteht“ – 1,6 s → 3 s
+    /* v624: Die Zeit läuft ab dem ersten gemalten Bild, nicht ab dem Skriptstart – auf einem
+       langsamen Handy stand sonst ein Teil der drei Sekunden noch vor dem ersten Bild. */
+    var los=function(){ setTimeout(weg,ruhig?1000:3100); };   // v619 PO: „relativ kurz … noch ein bisschen verlängern, sodass auch eine Wirkung entsteht“ – 1,6 s → 3 s
+    if(window.requestAnimationFrame)requestAnimationFrame(los); else los();
   }catch(e){}
 })();
 /* Zeigt dem Prüflauf, dass die Datei bis zum Ende gelaufen ist. */

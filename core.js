@@ -1134,7 +1134,17 @@ window._mdlSuppress=0;
 (function(){
   const RX=/(-modal|-ov|-overlay)$/;
   const stack=[];
-  const isM=n=>n&&n.nodeType===1&&RX.test(n.id||"")&&n.id!=="el-cat-overlay";
+  /* v624: Auch Vollbild-Fenster ohne passende Endung (Festival-Regeln, „Am Rand", Anfahrt,
+     Ergebnis, Übungskonflikt) schlossen mit Zurück die ganze App. Jetzt zählt auch ein
+     sichtbares role="dialog" aria-modal="true" direkt am body. Die Kabine bleibt draußen
+     (Zurück darf den Ausgangs-Code nicht umgehen), ebenso der schmückende Auftakt. */
+  const KAB=/^(kab|ka-|kg-)/;
+  const isM=n=>{
+    if(!n||n.nodeType!==1||n.id==="el-cat-overlay"||n.id==="adler-intro"||KAB.test(n.id||""))return false;
+    if(RX.test(n.id||""))return true;
+    if(!n.id||n.getAttribute("role")!=="dialog"||n.getAttribute("aria-modal")!=="true")return false;
+    try{ return getComputedStyle(n).display!=="none"; }catch(e){ return false; }
+  };
   function start(){
     new MutationObserver(ms=>{
       for(const m of ms){
@@ -1144,7 +1154,7 @@ window._mdlSuppress=0;
     }).observe(document.body,{childList:true});
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
-  window.addEventListener("popstate",()=>{
+  window.addEventListener("popstate",e=>{
     if(window._mdlSuppress>0){window._mdlSuppress--;return;}
     // Kabinen-Unterseite offen? Zurück-Taste führt zur Kabinen-Startseite statt aus der App
     // (#kabine selbst bleibt untracked, damit Zurück den Kabinen-Code nicht umgeht).
@@ -1152,7 +1162,10 @@ window._mdlSuppress=0;
     // Eltern-Kategorie-Fenster (wird nur versteckt, nicht entfernt) zuerst schließen
     try{ const ov=document.getElementById("el-cat-overlay"); if(ov&&ov.style.display==="block"&&typeof elternCatClose==="function"){ elternCatClose(true); return; } }catch(e){}
     const id=stack.pop();
-    if(id){ const el=document.getElementById(id); if(el)el.remove(); }
+    if(id){ const el=document.getElementById(id); if(el)el.remove(); return; }
+    // v624: kein Fenster offen → eine Seite zurück (Trainer-Bereich, go() in views.js)
+    const ziel=e&&e.state&&e.state.adlerSeite;
+    if(ziel&&typeof seiteZurueck==="function")seiteZurueck(ziel);
   });
 })();
 

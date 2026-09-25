@@ -3359,6 +3359,21 @@ function fstInfoOpen(){
 }
 /* Öffentliche Festival-Seite – das bekommen die Gast-Trainer per Link. Wappen, Felder,
    Runden, Infos. Keine Kindernamen, keine Tabelle (PO: Fairness vor Ergebnis). */
+/* v623 PO: „In den Festival-Link noch aufnehmen, wie lange die Spielzeiten sind und dass wir
+   zwischen jedem Spiel 5 Minuten Trinkpause und Wechselfenster einplanen." – Aus dem Plan
+   errechnet, nicht als fester Text: ändert der Trainer die Spielzeit, stimmt die Zeile trotzdem. */
+function fstTaktZeile(row){
+  const cfg=(row&&row.config)||{}, plan=(row&&row.plan)||[];
+  const runden=[...new Set(plan.map(p=>p.runde))].length;
+  if(!runden)return "";
+  const spiel=Math.max(3,Number(cfg.spieldauer)||8), pause=Math.max(0,cfg.wechsel==null?FST_PAUSE:Number(cfg.wechsel)||0);
+  const starts=plan.map(p=>_fstMin(fstZeitIst(p.zeit,cfg))).filter(m=>m!=null);
+  const von=starts.length?_fstHhmm(Math.min(...starts)):"", bis=starts.length?_fstHhmm(Math.max(...starts)+spiel):"";
+  return `<div id="fst-takt" style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);display:flex;gap:10px;align-items:flex-start">
+      <span style="font-size:20px;line-height:1.2" aria-hidden="true">⏱️</span>
+      <div style="font-size:13.5px;line-height:1.55"><b>${runden} Runde${runden===1?"":"n"} à ${spiel} Minuten</b>${von?`, von ${von} bis ${bis} Uhr`:""}.${runden>1&&pause?` Zwischen den Runden liegen jeweils <b>${pause} Minuten Trinkpause und Wechselfenster</b> – zum Trinken, Durchatmen und für den Weg zum nächsten Feld.`:""}</div>
+    </div>`;
+}
 function _fstPublicRender(wrap,row){
   const teams=row.teams||[], plan=row.plan||[], cfg=row.config||{};
   const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
@@ -3408,6 +3423,7 @@ function _fstPublicRender(wrap,row){
       <div style="display:flex;gap:6px;flex-wrap:wrap">${teams.map(t=>`<span style="font-size:13px;font-weight:700;background:#f1f5f9;border-radius:16px;padding:5px 12px">${esc(t)}</span>`).join("")}</div>
     </div>`:""}
 
+    ${fstTaktZeile(row)}
     ${runden.length?runden.map(r=>{
       const spiele=plan.filter(p=>p.runde===r);
       /* v497: offen ist nur die Runde, die läuft oder als Nächstes kommt – der Rest klappt auf. */

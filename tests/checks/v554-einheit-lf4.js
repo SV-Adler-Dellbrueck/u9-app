@@ -63,7 +63,8 @@ module.exports = async function (h) {
   const vor = JSON.parse(fs.readFileSync(path.join(h.REPO, "uebungen/vorlagen.json"), "utf8"));
   const v = (vor.vorlagen || []).find(x => x.name === VORLAGE);
   if (!v) probleme.push(`Vorlage „${VORLAGE}“ fehlt in vorlagen.json`);
-  if (!/^2026-09-14-[4-9]$|^2026-09-1[5-9]/.test(String(vor.stand))) probleme.push(`vorlagen.json: Stand „${vor.stand}“ nicht hochgesetzt`);
+  /* v623: „mindestens“ statt eines Musters – das Muster ließ keinen Stand ab dem 20.09. zu. */
+  if (String(vor.stand) < "2026-09-14-4") probleme.push(`vorlagen.json: Stand „${vor.stand}“ nicht hochgesetzt`);
   if (v) {
     const un = v.bloecke.map(b => b.uebung_name).filter(Boolean);
     if (String(un) !== String([BESTEHEND[0], NEU[0], NEU[1], BESTEHEND[1]])) probleme.push("Blockfolge der Vorlage: " + un.join(" | "));
