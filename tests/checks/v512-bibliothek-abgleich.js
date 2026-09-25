@@ -50,12 +50,18 @@ module.exports = async function (h) {
     }
   };
   const s = await h.starten({ supabase: h.supabaseAttrappe(tabellen), bibliothek: true, hoehe: 1200 });
+  /* v616: Der Anstoß beim Start (boot.js, bibWarte) wartet auf Welle 2 und fragt alle 500 ms.
+     Unter Last lief er mal vor, mal nach dem eigenen Aufruf – lief er vorher, stand alles
+     schon da und der Test maß „0 von 29 angelegt“. Deshalb: erst warten, bis das Modul da
+     ist und der Startlauf durch ist, dann Attrappe und Formenliste leeren. */
+  const frei = () => s.page.waitForFunction(() => typeof bibliothekAbgleich === "function" && typeof _bibLaeuft !== "undefined" && !_bibLaeuft, null, { timeout: 20000 }).catch(() => {});
+  await frei(); await s.page.waitForTimeout(1200); await frei();
+  custom.length = 0; for (const k of Object.keys(plaene)) delete plaene[k];
   const eins = await s.page.evaluate(async () => {
     const warte = ms => new Promise(r => setTimeout(r, ms));
     if (typeof bibliothekAbgleich !== "function") return { fehlt: "bibliothekAbgleich" };
-    /* Der Anstoß beim Start läuft womöglich noch. Wer jetzt selbst anstößt, bekommt
-       sofort null zurück (_bibLaeuft) und misst nichts – erst warten. */
     while (typeof _bibLaeuft !== "undefined" && _bibLaeuft) await warte(50);
+    await loadCustomForms();                                   // CUSTOM_FORMS wieder leer, wie beim ersten Start
     try { localStorage.removeItem("adler-bibliothek-stand"); } catch (e) {}
     const e = await bibliothekAbgleich(); await warte(150);
     let stand = null; try { stand = localStorage.getItem("adler-bibliothek-stand"); } catch (x) {}

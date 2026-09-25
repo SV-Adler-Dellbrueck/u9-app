@@ -2307,6 +2307,41 @@ function _fstRunden(n){
   }
   return runden;
 }
+/* v616 PO: „Beim Festival sollten interne Duelle vermieden werden. Eher nochmal gegen eine andere
+   Mannschaft mehrfach spielen." Die Kreismethode paarte jedes Team mit jedem – auch Adler 1
+   gegen Adler 2. Jetzt wird je Zeitscheibe gesucht, welche Paarungen am besten passen:
+     1. nie zwei Teams desselben Vereins (nur wenn es gar nicht anders geht, z. B. ein Verein allein),
+     2. wer bisher am wenigsten gespielt hat, kommt zuerst dran (Aussetzen reihum),
+     3. lieber ein Gegner, gegen den man noch nicht oder seltener gespielt hat.
+   Gesucht wird vollständig über alle Paarungen einer Zeitscheibe – bei höchstens zwölf Teams
+   und vier Feldern sind das wenige tausend Möglichkeiten. Heim/Gast (a/b) wechselt fair. */
+function _fstPaarungen(teams,scheibenZahl,k){
+  const n=teams.length, verein=i=>String((teams[i]&&teams[i].verein)||(teams[i]&&teams[i].name)||teams[i]||i);
+  const gespielt=Array(n).fill(0), links=Array(n).fill(0), treffen={}, key=(a,b)=>a<b?a+"|"+b:b+"|"+a;
+  const alle=[]; for(let a=0;a<n;a++)for(let b=a+1;b<n;b++)alle.push([a,b]);
+  const intern=([a,b])=>verein(a)===verein(b);
+  const out=[];
+  for(let s=0;s<scheibenZahl&&k>0;s++){
+    const kosten=([a,b])=>(intern([a,b])?100000:0)+(treffen[key(a,b)]||0)*1000+(gespielt[a]+gespielt[b])*10;
+    const kand=alle.slice().sort((x,y)=>kosten(x)-kosten(y));
+    let best=null,bestK=Infinity;
+    const such=(start,wahl,benutzt,summe)=>{
+      if(summe>=bestK)return;
+      if(wahl.length===k){ best=wahl.slice(); bestK=summe; return; }
+      for(let i=start;i<kand.length;i++){ const [a,b]=kand[i]; if(benutzt.has(a)||benutzt.has(b))continue;
+        if(kand.length-i<k-wahl.length)break;
+        benutzt.add(a);benutzt.add(b); wahl.push(kand[i]); such(i+1,wahl,benutzt,summe+kosten(kand[i]));
+        wahl.pop(); benutzt.delete(a);benutzt.delete(b); }
+    };
+    such(0,[],new Set(),0);
+    if(!best)break;
+    out.push(best.map(([a,b])=>{
+      gespielt[a]++;gespielt[b]++; treffen[key(a,b)]=(treffen[key(a,b)]||0)+1;
+      const p=links[a]<=links[b]?[a,b]:[b,a]; links[p[0]]++; return p;
+    }));
+  }
+  return out;
+}
 /* Der Spielplan: Runden nacheinander, in jeder Zeitscheibe spielen alle Felder gleichzeitig.
    Passen mehr Paarungen in eine Runde als Felder da sind, wird die Runde geteilt – so spielt
    nie ein Team zweimal gleichzeitig. Das Feld wandert je Zeitscheibe weiter, damit jede
@@ -2315,11 +2350,13 @@ function fstPlanBauen(teams,cfg){
   const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
   const F=felder.length, n=teams.length;
   if(n<2)return [];
-  const scheiben=[];
-  _fstRunden(n).forEach(paare=>{ for(let i=0;i<paare.length;i+=F)scheiben.push(paare.slice(i,i+F)); });
   const spiel=Math.max(3,cfg.spieldauer||8), wechsel=Math.max(0,cfg.wechsel==null?FST_PAUSE:cfg.wechsel);
   const gesamt=Math.max(spiel,cfg.dauer||60);
   const max=Math.max(1,Math.floor((gesamt+wechsel)/(spiel+wechsel)));
+  /* Die Runden füllen die Gesamtzeit. Früher endete das Festival nach „jeder gegen jeden"
+     auch dann, wenn noch Zeit war; jetzt spielt man lieber noch einmal gegen einen anderen
+     Verein (PO v616). */
+  const scheiben=_fstPaarungen(teams,max,Math.min(F,Math.floor(n/2)));
   const [sh,sm]=String(cfg.start||"10:00").split(":").map(Number);
   const plan=[];
   scheiben.slice(0,max).forEach((paare,s)=>{
@@ -2409,6 +2446,30 @@ function fstBedarf(teams,cfg){
   const spiel=Math.max(3,cfg.spieldauer||8), wechsel=Math.max(0,cfg.wechsel==null?FST_PAUSE:cfg.wechsel);
   return {scheiben,minuten:scheiben*spiel+(scheiben-1)*wechsel};
 }
+/* v616 PO: „Wenn ich alle Teams angegeben habe, wäre es super, wenn die App die optimale Spielzeit
+   pro Begegnung berechnen würde. Alles zwischen 7 und 10 Minuten ist erlaubt."
+   Optimal heißt, in dieser Reihenfolge:
+     1. die Gesamtzeit möglichst voll nutzen (am Ende bleibt am wenigsten Leerlauf),
+     2. alle Teams spielen gleich oft (wenn es aufgeht),
+     3. bei Gleichstand die längere Spielzeit – mehr Fußball je Begegnung.
+   Wer die Spielzeit von Hand einträgt, wird nicht überstimmt (spieldauerManuell). */
+const FST_SPIEL_MIN=7, FST_SPIEL_MAX=10;
+function fstSpielzeitOptimal(teamZahl,cfg){
+  const n=teamZahl, F=Math.max(1,((cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER).length);
+  const gesamt=Math.max(1,Number(cfg.dauer)||60), w=Math.max(0,cfg.wechsel==null?FST_PAUSE:Number(cfg.wechsel)||0);
+  const k=Math.min(F,Math.floor(n/2));
+  let best=null;
+  for(let m=FST_SPIEL_MIN;m<=FST_SPIEL_MAX;m++){
+    const runden=Math.max(1,Math.floor((gesamt+w)/(m+w)));
+    const belegt=runden*m+(runden-1)*w, rest=gesamt-belegt;
+    const gleich=n>1&&k>0&&(runden*k*2)%n===0;
+    const c={min:m,runden,rest,gleich,spieleJeTeam:n?Math.floor(runden*k*2/n):0};
+    if(!best||c.rest<best.rest||(c.rest===best.rest&&(c.gleich&&!best.gleich||(c.gleich===best.gleich&&c.min>best.min))))best=c;
+  }
+  return best;
+}
+function fstSpielzeitHand(){ if(_HT&&_HT.config)_HT.config.spieldauerManuell=true; fstZeitSpeichern(); }
+function fstSpielzeitAuto(){ if(_HT&&_HT.config)_HT.config.spieldauerManuell=false; const i=document.getElementById("fst-spiel"); if(i)i.value=""; fstZeitSpeichern(); }
 function _fstCfgLesen(){
   const alt=(_HT&&_HT.config)||{};
   const felder=(alt.felder&&alt.felder.length)?alt.felder:FST_STANDARD_FELDER.slice();
@@ -2420,6 +2481,13 @@ function _fstCfgLesen(){
     felder, vereine:alt.vereine||[],
     infos:document.getElementById("fst-infos")?document.getElementById("fst-infos").value:(alt.infos||HT_INFOS_VORLAGE)
   };
+}
+/* Solange niemand von Hand eingegriffen hat, gilt die errechnete Spielzeit. */
+function _fstSpielzeitAnwenden(cfg){
+  if(cfg.spieldauerManuell)return cfg;
+  const n=fstTeamsBauen(cfg.vereine||[]).length; if(n<2)return cfg;
+  const o=fstSpielzeitOptimal(n,{...cfg,felder:fstFelderKuerzen(cfg.felder,fstTeamsBauen(cfg.vereine||[]))});
+  return {...cfg,spieldauer:o.min};
 }
 /* v518 – Die Teamrechnung folgt der Spielform.
    PO: „Umstellung kann jeder Trainer in der App. Danach dann die Logik Berechnungen für die
@@ -2486,7 +2554,7 @@ async function fstFelderAuto(){
 }
 async function fstZeitSpeichern(){ if(await _fstSpeichern())fstRender(); }
 async function fstPlanErstellen(){
-  const cfg=_fstCfgLesen();
+  const cfg=_fstSpielzeitAnwenden(_fstCfgLesen());
   const teams=fstTeamsBauen(cfg.vereine);
   if(teams.length<2){toast("Mindestens zwei Teams – bitte Vereine eintragen","err");return;}
   if((_HT.plan||[]).some(p=>p.ta!=null)&&!confirm("Es gibt schon Ergebnisse – Spielplan neu erzeugen? Die Tore gehen verloren."))return;
@@ -3024,10 +3092,14 @@ function fstRender(){
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
       <label style="font-size:11px;color:var(--text2)">Beginn<input id="fst-start" type="time" value="${esc(cfg.start||FST_START)}" onchange="fstZeitSpeichern()" style="${fld};width:100%"></label>
       <label style="font-size:11px;color:var(--text2)">Gesamt (Min.)<input id="fst-dauer" type="number" min="20" max="180" step="5" value="${cfg.dauer||60}" onchange="fstZeitSpeichern()" style="${fld};width:100%"></label>
-      <label style="font-size:11px;color:var(--text2)">Spielzeit (Min.)<input id="fst-spiel" type="number" min="3" max="20" value="${cfg.spieldauer||8}" onchange="fstZeitSpeichern()" style="${fld};width:100%"></label>
+      <label style="font-size:11px;color:var(--text2)">Spielzeit (Min.)${cfg.spieldauerManuell?"":" · errechnet"}<input id="fst-spiel" type="number" min="3" max="20" value="${_fstSpielzeitAnwenden(cfg).spieldauer||8}" onchange="fstSpielzeitHand()" style="${fld};width:100%"></label>
       <label style="font-size:11px;color:var(--text2)">Trinkpause (Min.)<input id="fst-wechsel" type="number" min="0" max="10" value="${cfg.wechsel==null?FST_PAUSE:cfg.wechsel}" onchange="fstZeitSpeichern()" title="Pause zwischen zwei Runden – trinken und Feld wechseln" style="${fld};width:100%"></label>
     </div>
-    ${teams.length>1?`<div style="font-size:11.5px;color:var(--text2);margin-bottom:10px">Jeder gegen jeden braucht <b>${bedarf.scheiben} Runden</b> ≈ ${bedarf.minuten} Min.${bedarf.minuten>(cfg.dauer||60)?` – in ${cfg.dauer||60} Min. passen ${Math.max(1,Math.floor(((cfg.dauer||60)+(cfg.wechsel==null?FST_PAUSE:cfg.wechsel))/((cfg.spieldauer||8)+(cfg.wechsel==null?FST_PAUSE:cfg.wechsel))))} Runden.`:" – passt."}</div>`:""}
+    ${teams.length>1?(()=>{ const o=fstSpielzeitOptimal(teams.length,{...cfg,felder:fstFelderKuerzen(cfg.felder||FST_STANDARD_FELDER,teams)});
+        const k=Math.min(((cfg.felder&&cfg.felder.length)?fstFelderKuerzen(cfg.felder,teams):FST_STANDARD_FELDER).length,Math.floor(teams.length/2));
+        const hi=Math.ceil(o.runden*k*2/teams.length), lo=o.spieleJeTeam;
+        return `<div style="font-size:11.5px;color:var(--text2);margin-bottom:10px;line-height:1.5">⏱️ Empfohlen: <b>${o.min} Min. je Spiel</b> · ${o.runden} Runden · jedes Team ${lo===hi?lo:lo+"–"+hi} Spiele · ${o.rest?`${o.rest} Min. bleiben frei`:`füllt die ${cfg.dauer||60} Min. genau`}. Keine Spiele zwischen Teams desselben Vereins.
+          ${cfg.spieldauerManuell&&Number(cfg.spieldauer)!==o.min?`<button class="btn btn-sm" onclick="fstSpielzeitAuto()" style="margin-top:6px;width:100%">Empfehlung übernehmen (${o.min} Min.)</button>`:""}</div>`; })():""}
 
     <button class="btn${plan.length?" btn-sm":" btn-p"}" onclick="fstPlanErstellen()" style="width:100%;min-height:${plan.length?"44":"52"}px"${teams.length<2?" disabled":""}><i class="ti ti-calendar-event"></i>${plan.length?"Spielplan neu erstellen":"Spielplan erstellen"}</button>
     ${plan.length?`</div></details>`:""}

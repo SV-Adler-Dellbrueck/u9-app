@@ -81,7 +81,9 @@ module.exports = async function (h) {
   const tz = r.vereine.map(v => v.split(":").pop());
   if (tz[0] !== tz[1]) probleme.push(`Gegner startet mit ${tz[1]} Teams, wir mit ${tz[0]} – sollte gespiegelt sein`);
   if (!/Wer spielt mit\?/.test(r.body)) probleme.push("Abschnitt 1 heißt beim Heimspiel nicht „Wer spielt mit?“");
-  if (r.teams !== 4 || r.spiele !== r.felder * 3) probleme.push(`Plan: ${r.teams} Teams, ${r.spiele} Spiele auf ${r.felder} Feldern – erwartet 3 Runden`);
+  /* v616: Früher genau „jeder gegen jeden“ (3 Runden – darunter Adler 1 gegen Adler 2). Jetzt
+     keine internen Duelle, die Runden füllen die Zeit: mindestens 3 volle Runden. */
+  if (r.teams !== 4 || r.spiele % r.felder !== 0 || r.spiele < r.felder * 3) probleme.push(`Plan: ${r.teams} Teams, ${r.spiele} Spiele auf ${r.felder} Feldern – erwartet mindestens 3 volle Runden`);
   if (r.felder !== 2) probleme.push(`${r.felder} Felder bei vier Teams – erwartet 2`);
   const mitKnopf = r.knoepfe.filter(k => k.n > 0);
   if (mitKnopf.length) probleme.push(`Gast-Seite zeigt Anpfiff-Knöpfe in Phase ${mitKnopf.map(k => k.phase).join(", ")}`);
