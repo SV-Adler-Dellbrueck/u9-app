@@ -1240,6 +1240,16 @@ document.addEventListener("keydown",e=>{
   if(e.shiftKey&&(document.activeElement===erste||!dlg.contains(document.activeElement))){e.preventDefault();letzte.focus();}
   else if(!e.shiftKey&&(document.activeElement===letzte||!dlg.contains(document.activeElement))){e.preventDefault();erste.focus();}
 },true);
+/* v613: Klickflächen, die kein <button> sind (Kriterienköpfe in „Bewerten", Terminkarten,
+   Sterne …), tragen role="button" tabindex="0" – erreichbar mit Tab. Hier bekommen sie, was
+   ein echter Knopf von selbst kann: Enter und Leertaste lösen den Klick aus. Wer schon einen
+   eigenen onkeydown hat (woche-zeile), ruft preventDefault – dann bleibt es bei einem Klick. */
+document.addEventListener("keydown",e=>{
+  if(e.defaultPrevented||(e.key!=="Enter"&&e.key!==" "))return;
+  const el=e.target;
+  if(!el||!el.matches||!el.matches('[role="button"]')||/^(BUTTON|A|INPUT|SELECT|TEXTAREA|SUMMARY)$/.test(el.tagName))return;
+  e.preventDefault(); el.click();
+});
 /* ── Welcher z-index legt ein neues Overlay wirklich nach oben? ──────────────
    Die Zahlen sind historisch gewachsen: 9999, 10000, 10001, 10002, 10040, 10050,
    10060. Solange jeder Dialog einzeln aufgeht, faellt das nicht auf. Oeffnet aber

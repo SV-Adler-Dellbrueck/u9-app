@@ -1165,7 +1165,7 @@ function elternOffeneRsvpHtml(rows,kids,rsvpAll,ausserId){
         <div style="display:flex;gap:6px">${btns}</div></div>`;
     }).join("");
     return `<div style="border-top:1px solid #f1f5f9;margin-top:10px;padding-top:10px">
-      <div onclick="terminDetailOpen(${t.id})" style="cursor:pointer;font-size:13px;font-weight:800">${m.icon} ${esc(t.titel||t.gegner||m.label)}</div>
+      <div role="button" tabindex="0" onclick="terminDetailOpen(${t.id})" style="cursor:pointer;font-size:13px;font-weight:800">${m.icon} ${esc(t.titel||t.gegner||m.label)}</div>
       <div style="font-size:11.5px;color:#64748b">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${zeit?" · "+zeit:""}${t.platz?" · 🏟️ "+esc(t.platz):""}</div>
       ${kidRows}</div>`;
   }).join("");
@@ -1224,12 +1224,12 @@ function elternTermineCarouselHtml(rows,kids,rsvpAll){
         <span style="flex:1;min-width:0;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(kd.name||"Kind")}</span>${btns}</div>`;
     }).join("");
     return `<div style="min-width:236px;max-width:250px;flex:none;scroll-snap-align:start;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:12px">
-      <div onclick="terminDetailOpen(${t.id})" style="cursor:pointer">
+      <div role="button" tabindex="0" onclick="terminDetailOpen(${t.id})" style="cursor:pointer">
         <div style="font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.icon} ${esc(t.titel||t.gegner||m.label)}</div>
         <div style="font-size:11px;color:#64748b">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${zeit?" · "+zeit:""}${heimLabel(t)?" · "+heimLabel(t):""}${t.ort?" · "+esc(t.ort):""}</div>
       </div>
       ${kidRows}
-      <div onclick="terminDetailOpen(${t.id})" style="cursor:pointer;text-align:right;font-size:11px;font-weight:800;color:#2563eb;margin-top:8px">Alle Infos ›</div>
+      <div role="button" tabindex="0" onclick="terminDetailOpen(${t.id})" style="cursor:pointer;text-align:right;font-size:11px;font-weight:800;color:#2563eb;margin-top:8px">Alle Infos ›</div>
     </div>`;
   }).join("");
   return `<div style="background:#fff;border-radius:14px;padding:14px 14px 8px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
