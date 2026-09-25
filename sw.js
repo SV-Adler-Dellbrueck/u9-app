@@ -1,10 +1,11 @@
-const CACHE="u9i-adler-v616";
+const CACHE="u9i-adler-v617";
 const PRECACHE=[
   "./",
   "./index.html",
   "./trainer/",          // Einstiegsseite der Trainer-App (eigener Manifest-Scope)
   "./eltern/",           // Einstiegsseite des Eltern-Bereichs
   "./kinder/",           // Einstiegsseite der Kabine auf dem Geraet des Kindes
+  "./intro.js",          // Auftakt beim Öffnen (v617), steht vor allem anderen im <body>
   "./shell.html",        // gemeinsames Seitengeruest aller drei Einstiegsseiten
   "./styles.css",
   "./data.js",

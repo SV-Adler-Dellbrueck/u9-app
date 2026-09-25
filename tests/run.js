@@ -58,7 +58,16 @@ melde(`Parsen: ${jsDateien.length} App-Dateien + Pruefwerkzeug`, !parseFehler.le
     ((sw.match(/const PRECACHE=\[([\s\S]*?)\n\];/) || ["", ""])[1])
       .split("\n").map(l => (l.match(/["']([^"']+)["']/) || [])[1]).filter(Boolean)
       .map(x => x.replace(/^\.\//, "")));
-  const module = jsDateien.filter(f => f !== "sw.js" && !welle1.includes(f));
+  /* v617: Vorlauf – Dateien, die als festes <script src> vor dem Loader im <body> stehen
+     (intro.js). Sie laufen, bevor irgendeine Welle startet, gehören in ALLE drei Einstiege
+     und in den PRECACHE. Keine Modul-Wache: ein Fehler dort kostet nur die Animation. */
+  const vorlauf = [...trainer.matchAll(/<script src="([^"]+\.js)"><\/script>/g)].map(m => m[1]);
+  for (const f of vorlauf) {
+    if (!eltern.includes(`<script src="${f}">`)) p.push(`Vorlauf ${f} fehlt in eltern/index.html`);
+    if (!kinder.includes(`<script src="${f}">`)) p.push(`Vorlauf ${f} fehlt in kinder/index.html`);
+    if (!precacheDateien.has(f)) p.push(`${f} fehlt im PRECACHE (sw.js)`);
+  }
+  const module = jsDateien.filter(f => f !== "sw.js" && !welle1.includes(f) && !vorlauf.includes(f));
   // a) jedes Modul hat einen Wachnamen, der GANZ UNTEN in der Datei definiert ist
   for (const f of module) {
     const name = wache[f];
@@ -79,7 +88,7 @@ melde(`Parsen: ${jsDateien.length} App-Dateien + Pruefwerkzeug`, !parseFehler.le
     if (!fs.existsSync(path.join(REPO, f))) p.push(`Loader laedt ${f}, Datei fehlt`);
     if (!precacheDateien.has(f)) p.push(`${f} fehlt im PRECACHE (sw.js)`);
   }
-  for (const f of jsDateien) if (f !== "sw.js" && !welle1.includes(f) && !welle2.includes(f)) p.push(`${f} liegt im Repo, wird aber im Trainer-Loader nicht geladen`);
+  for (const f of jsDateien) if (f !== "sw.js" && !welle1.includes(f) && !welle2.includes(f) && !vorlauf.includes(f)) p.push(`${f} liegt im Repo, wird aber im Trainer-Loader nicht geladen`);
   // c) kein globaler Name in Welle 1 UND Welle 2
   const namen = f => { const s = new Set(); (lies(f).match(/(^|\n)(async\s+)?function\s+([A-Za-z_$][\w$]*)|(^|\n)(const|let|var)\s+([A-Za-z_$][\w$]*)/g) || []).forEach(x => { const m = x.match(/function\s+([\w$]+)|(?:const|let|var)\s+([\w$]+)/); s.add(m[1] || m[2]); }); return s; };
   const w1 = new Map(); welle1.forEach(f => namen(f).forEach(n => w1.set(n, f)));
@@ -106,7 +115,7 @@ melde(`Parsen: ${jsDateien.length} App-Dateien + Pruefwerkzeug`, !parseFehler.le
   // Die drei Einstiegsseiten selbst muessen im PRECACHE stehen, sonst ist die App offline tot.
   ["./", "./index.html", "./trainer/", "./eltern/", "./kinder/", "./manifest-kinder.json", "./icon-kinder.png", "./icon-kinder-maskable.png"]
     .forEach(e => { if (!precacheDateien.has(e.replace(/^\.\//, ""))) p.push(`${e} fehlt im PRECACHE (sw.js)`); });
-  melde(`Ladearchitektur: ${Object.keys(wache).length} Module bewacht, ${welle1.length}+${welle2.length} Dateien im Trainer-Loader, ${alleK.length} in kinder/, PRECACHE ${precacheDateien.size} Eintraege, sw.js v${bump}, Übersicht v${stand || "?"}`, !p.length, p);
+  melde(`Ladearchitektur: ${Object.keys(wache).length} Module bewacht, ${welle1.length}+${welle2.length} Dateien im Trainer-Loader, ${alleK.length} in kinder/, Vorlauf ${vorlauf.join("+") || "–"}, PRECACHE ${precacheDateien.size} Eintraege, sw.js v${bump}, Übersicht v${stand || "?"}`, !p.length, p);
 })();
 
 /* 3 – Pruefungen am DOM */

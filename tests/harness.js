@@ -113,6 +113,10 @@ async function starten(opt = {}) {
       : f.endsWith(".webmanifest") ? "application/manifest+json" : f.endsWith(".json") ? "application/json" : "text/plain";
     return r.fulfill({ status: 200, contentType: typ, body: fs.readFileSync(f, "utf8") });
   });
+  /* v617: Der Auftakt (intro.js, fliegendes Wappen) liegt 1,6 s über allem. Er ist
+     durchklickbar, aber Messungen am Bildschirm sähen ihn – deshalb standardmäßig aus, wie
+     nach dem ersten Öffnen einer Sitzung. Wer ihn prüft: starten({intro:true}). */
+  if (!opt.intro) await ctx.addInitScript(() => { try { sessionStorage.setItem("adler-intro", "1"); } catch (e) {} });
   await ctx.addInitScript(behalten => {
     try {
       ["adler_tour", "adler_trainer_tour", "adler_eltern_tour"].forEach(k => localStorage.setItem(k, "1"));
