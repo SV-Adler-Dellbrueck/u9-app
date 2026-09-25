@@ -132,7 +132,7 @@ async function periodLoad(){
   const monName=new Date().toLocaleDateString("de-DE",{month:"long",year:"numeric"});
   window._periodKat=cur&&cur.kategorie?cur.kategorie:null; // fürs Schwerpunkt-Badge auf den Übungskarten
   if(cur){
-    box.innerHTML=`<div style="display:flex;align-items:flex-start;gap:8px"><div style="flex:1"><strong>🎯 Schwerpunkt ${esc(monName)}: ${esc(cur.thema)}</strong>${cur.kategorie?`<div style="font-size:11px;margin-top:2px">Passende Übungen: <b>${esc(PERIOD_CATS[cur.kategorie]||cur.kategorie)}</b> – über die Kategorien unten filtern.</div>`:""}</div><button onclick="periodOpen()" class="btn btn-sm" style="flex:none">📅 Plan</button></div>`;
+    box.innerHTML=`<div style="display:flex;align-items:flex-start;gap:8px"><div style="flex:1"><strong>🎯 Schwerpunkt ${esc(monName)}: ${esc(cur.thema)}</strong>${cur.kategorie?`<div style="font-size:var(--s-klein);margin-top:2px">Passende Übungen: <b>${esc(PERIOD_CATS[cur.kategorie]||cur.kategorie)}</b> – über die Kategorien unten filtern.</div>`:""}</div><button onclick="periodOpen()" class="btn btn-sm" style="flex:none">📅 Plan</button></div>`;
   }else{
     box.innerHTML=`<div style="display:flex;align-items:center;gap:8px"><span style="flex:1">Plane die Saison in <b>Themenblöcken</b> (ein Schwerpunkt je Monat).</span><button onclick="periodOpen()" class="btn btn-sm" style="flex:none">📅 Themenplan</button></div>`;
   }
@@ -143,17 +143,17 @@ async function periodOpen(){
   const modal=document.createElement("div");modal.id="period-modal";modal.setAttribute("role","dialog");modal.setAttribute("aria-modal","true");modal.setAttribute("aria-label","Saison-Themenplan");
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;display:flex;flex-direction:column;padding:14px;overflow-y:auto";
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
-  const fld="width:100%;padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const fld="width:100%;padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
   const opts=Object.entries(PERIOD_CATS).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
   const card=document.createElement("div");
   card.style.cssText="background:var(--surface);color:var(--text);max-width:480px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   card.innerHTML=`${mdlHead("period-modal","📅","Saison-Themenplan","Ein Schwerpunkt je Monat · erscheint oben im Trainings-Tab","#2563eb")}
-    <div id="period-list" style="margin-bottom:12px"><div style="color:var(--text3);font-size:12px">Lade…</div></div>
+    <div id="period-list" style="margin-bottom:12px"><div style="color:var(--text3);font-size:var(--s-text)">Lade…</div></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-      <label style="font-size:11px;color:var(--text2)">Monat<input type="month" id="period-monat" value="${new Date().toISOString().slice(0,7)}" style="${fld}"></label>
-      <label style="font-size:11px;color:var(--text2)">Kategorie<select id="period-kat" style="${fld}"><option value="">—</option>${opts}</select></label>
+      <label style="font-size:var(--s-klein);color:var(--text2)">Monat<input type="month" id="period-monat" value="${new Date().toISOString().slice(0,7)}" style="${fld}"></label>
+      <label style="font-size:var(--s-klein);color:var(--text2)">Kategorie<select id="period-kat" style="${fld}"><option value="">—</option>${opts}</select></label>
     </div>
-    <label style="font-size:11px;color:var(--text2)">Thema<input id="period-thema" placeholder="z. B. Dribbling & 1-gegen-1" style="${fld}"></label>
+    <label style="font-size:var(--s-klein);color:var(--text2)">Thema<input id="period-thema" placeholder="z. B. Dribbling & 1-gegen-1" style="${fld}"></label>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
       <button class="btn btn-p" onclick="periodSave()"><i class="ti ti-plus"></i>Speichern</button>
       <button class="btn btn-sm" onclick="document.getElementById('period-modal').remove()">Schließen</button>
@@ -165,12 +165,12 @@ async function periodListRender(){
   const box=document.getElementById("period-list"); if(!box)return;
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/periodisierung?select=*&order=monat.asc`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)rows=await r.json();}catch(e){}
-  if(!rows.length){box.innerHTML='<div style="color:var(--text3);font-size:12.5px;padding:6px 0">Noch keine Monate geplant.</div>';return;}
+  if(!rows.length){box.innerHTML='<div style="color:var(--text3);font-size:var(--s-text);padding:6px 0">Noch keine Monate geplant.</div>';return;}
   const fmtM=m=>{const p=String(m).split("-");return p.length===2?new Date(p[0],p[1]-1,1).toLocaleDateString("de-DE",{month:"short",year:"2-digit"}):m;};
   box.innerHTML=rows.map(x=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--surface2)">
-    <span style="font-weight:700;font-size:11px;color:var(--blue-text);width:58px">${esc(fmtM(x.monat))}</span>
-    <span style="flex:1;font-size:13px">${esc(x.thema)}${x.kategorie?` <span style="font-size:10px;color:var(--text3)">(${esc(PERIOD_CATS[x.kategorie]||x.kategorie)})</span>`:""}</span>
-    <button onclick="periodDelete('${esc(x.monat)}')" title="löschen" style="border:none;background:transparent;color:#dc2626;cursor:pointer;font-size:13px;padding:2px 4px"><i class="ti ti-trash"></i></button>
+    <span style="font-weight:700;font-size:var(--s-klein);color:var(--blue-text);width:58px">${esc(fmtM(x.monat))}</span>
+    <span style="flex:1;font-size:var(--s-text)">${esc(x.thema)}${x.kategorie?` <span style="font-size:var(--s-klein);color:var(--text3)">(${esc(PERIOD_CATS[x.kategorie]||x.kategorie)})</span>`:""}</span>
+    <button onclick="periodDelete('${esc(x.monat)}')" title="löschen" style="border:none;background:transparent;color:#dc2626;cursor:pointer;font-size:var(--s-text);padding:2px 4px"><i class="ti ti-trash"></i></button>
   </div>`).join("");
 }
 async function periodSave(){
@@ -230,7 +230,7 @@ function _tfFrische(f,i){
   const d=tpLastUsedDays(i);
   const neu=_tfIstNeu(f)?'<span style="color:#16a34a;font-weight:800">🆕 neu</span> · ':"";
   return neu+(d===null?'<span style="color:var(--text3)">noch nicht eingesetzt</span>'
-    :(d<14?`<span style="color:#b45309">vor ${d} T.</span>`:`vor ${d} T.`));
+    :(d<14?`<span style="color:var(--amber)">vor ${d} T.</span>`:`vor ${d} T.`));
 }
 let _tfDb={gruppe:null,stern:0,lange:false};
 /* v586 – Charles: „Wo finde ich die neue Übung? In welcher Kategorie ist die?" Die Raute
@@ -267,28 +267,28 @@ function renderTraining(){
   const aEl=document.getElementById("tf-art-einstieg");
   if(aEl){
     const offen=(typeof artDurchsichtOffen==="function")?artDurchsichtOffen().length:0;
-    aEl.innerHTML=offen?`<button onclick="artDurchsichtOpen()" style="width:100%;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">⚽ ${offen} Übung${offen===1?"":"en"} einordnen</button>`:"";
+    aEl.innerHTML=offen?`<button onclick="artDurchsichtOpen()" style="width:100%;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">⚽ ${offen} Übung${offen===1?"":"en"} einordnen</button>`:"";
   }
   const kEl=document.getElementById("tf-kacheln");
   if(kEl){
     const counts={};alle.forEach(x=>{counts[x.gr]=(counts[x.gr]||0)+1;});
-    const kachel=g=>`<button onclick="_tfDb.gruppe=_tfDb.gruppe==='${g.key}'?null:'${g.key}';renderTraining()" aria-pressed="${_tfDb.gruppe===g.key}" style="min-height:64px;border:1px solid var(--rand-bedien);${_tfDb.gruppe===g.key?"background:#16a34a;color:#fff;border-color:#16a34a;":"background:var(--surface);color:var(--text);"}border-top:3px solid #16a34a;border-radius:14px;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;padding:8px 6px">${g.label}<span style="display:block;font-size:11px;font-weight:700;opacity:.7;margin-top:2px">${counts[g.key]} Übungen</span></button>`;
+    const kachel=g=>`<button onclick="_tfDb.gruppe=_tfDb.gruppe==='${g.key}'?null:'${g.key}';renderTraining()" aria-pressed="${_tfDb.gruppe===g.key}" style="min-height:64px;border:1px solid var(--rand-bedien);${_tfDb.gruppe===g.key?"background:#16a34a;color:#fff;border-color:#16a34a;":"background:var(--surface);color:var(--text);"}border-top:3px solid #16a34a;border-radius:14px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer;padding:8px 6px">${g.label}<span style="display:block;font-size:var(--s-klein);font-weight:700;opacity:.7;margin-top:2px">${counts[g.key]} Übungen</span></button>`;
     const vergeben=new Set(TF_OBER.flatMap(o=>o.gruppen));
     kEl.innerHTML=TF_OBER.map((o,oi)=>{
       // Die letzte Überschrift sammelt auch, was in keiner Liste steht (neue Gruppe).
       const keys=o.gruppen.concat(oi===TF_OBER.length-1?TF_GRUPPEN.filter(g=>!vergeben.has(g.key)).map(g=>g.key):[]);
       const drin=keys.map(k=>TF_GRUPPEN.find(g=>g.key===k)).filter(g=>g&&counts[g.key]);
       if(!drin.length)return "";
-      return `<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:${oi?"12px":"0"} 0 4px">${o.label}</div>
+      return `<div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:${oi?"12px":"0"} 0 4px">${o.label}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${drin.map(kachel).join("")}</div>`;
     }).join("");
   }
   const fEl=document.getElementById("tf-filter");
-  if(fEl)fEl.innerHTML=[0,1,2,3].map(s=>`<button onclick="_tfDb.stern=${s};renderTraining()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);${_tfDb.stern===s?"background:#16a34a;color:#fff;border-color:#16a34a;":"background:var(--surface2);color:var(--text2);"}border-radius:10px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer">${s===0?"Alle":"⭐".repeat(s)}</button>`).join("")
-    +`<button onclick="_tfDb.lange=!_tfDb.lange;renderTraining()" title="Übungen, die 4+ Wochen nicht dran waren" style="flex:1.4;min-height:44px;border:1px solid var(--rand-bedien);${_tfDb.lange?"background:#16a34a;color:#fff;border-color:#16a34a;":"background:var(--surface2);color:var(--text2);"}border-radius:10px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer">🕘 lange her</button>`;
+  if(fEl)fEl.innerHTML=[0,1,2,3].map(s=>`<button onclick="_tfDb.stern=${s};renderTraining()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);${_tfDb.stern===s?"background:#16a34a;color:#fff;border-color:#16a34a;":"background:var(--surface2);color:var(--text2);"}border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${s===0?"Alle":"⭐".repeat(s)}</button>`).join("")
+    +`<button onclick="_tfDb.lange=!_tfDb.lange;renderTraining()" title="Übungen, die 4+ Wochen nicht dran waren" style="flex:1.4;min-height:44px;border:1px solid var(--rand-bedien);${_tfDb.lange?"background:#16a34a;color:#fff;border-color:#16a34a;":"background:var(--surface2);color:var(--text2);"}border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">🕘 lange her</button>`;
   // Ohne Auswahl nur die Kacheln zeigen – keine 100-Übungen-Liste
   if(!search&&!_tfDb.gruppe&&!_tfDb.stern&&!_tfDb.lange){
-    wrap.innerHTML='<div style="text-align:center;padding:1.6rem 1rem;color:var(--text2)"><div style="font-size:30px;margin-bottom:6px">📚</div><div style="font-size:13.5px;font-weight:700;color:var(--text)">Gruppe antippen oder suchen</div></div>';
+    wrap.innerHTML='<div style="text-align:center;padding:1.6rem 1rem;color:var(--text2)"><div style="font-size:30px;margin-bottom:6px">📚</div><div style="font-size:var(--s-text);font-weight:700;color:var(--text)">Gruppe antippen oder suchen</div></div>';
     return;
   }
   let items=alle;
@@ -296,25 +296,25 @@ function renderTraining(){
   else if(_tfDb.gruppe)items=items.filter(x=>x.gr===_tfDb.gruppe);
   if(_tfDb.stern)items=items.filter(x=>_tpStern(x.f)===_tfDb.stern);
   if(_tfDb.lange)items=items.filter(x=>{const d=tpLastUsedDays(x.i);return d===null||d>=28;});
-  if(!items.length){wrap.innerHTML='<div style="text-align:center;padding:2rem;color:var(--text3);font-size:13px">Keine Übung gefunden.</div>';return;}
+  if(!items.length){wrap.innerHTML='<div style="text-align:center;padding:2rem;color:var(--text3);font-size:var(--s-text)">Keine Übung gefunden.</div>';return;}
   items=items.filter(x=>x.f.focus).concat(items.filter(x=>!x.f.focus)); // Fokus-Übungen zuerst
-  wrap.innerHTML=`<div style="font-size:12px;font-weight:800;color:var(--text2);margin:2px 0 6px">${items.length} Übung${items.length===1?"":"en"}</div>`+items.map(_tfKarte).join("");
+  wrap.innerHTML=`<div style="font-size:var(--s-text);font-weight:800;color:var(--text2);margin:2px 0 6px">${items.length} Übung${items.length===1?"":"en"}</div>`+items.map(_tfKarte).join("");
 }
 function _tfKarte(x){
   const frische=_tfFrische(x.f,x.i);   // v539: „neu" = angelegt vor < 4 Wochen
   const stern=_tpStern(x.f);
   const badges=[];
-  if(x.f.focus)badges.push('<span style="background:#fef3c7;color:#92400e;border-radius:6px;padding:1px 6px;font-size:10px;font-weight:800;white-space:nowrap">⭐ Fokus</span>');
-  if(window._periodKat&&x.f.kat===window._periodKat)badges.push('<span style="background:#dbeafe;color:#1e40af;border-radius:6px;padding:1px 6px;font-size:10px;font-weight:800;white-space:nowrap">🎯 Monats-Schwerpunkt</span>');
-  if((window._tfWeak||[]).includes(x.f.kat))badges.push(`<span style="background:#fee2e2;color:#991b1b;border-radius:6px;padding:1px 6px;font-size:10px;font-weight:800;white-space:nowrap">📊 stärkt ${esc(window._tfWeakLabel||"Team-Schwäche")}</span>`);
+  if(x.f.focus)badges.push('<span style="background:#fef3c7;color:#92400e;border-radius:6px;padding:1px 6px;font-size:var(--s-klein);font-weight:800;white-space:nowrap">⭐ Fokus</span>');
+  if(window._periodKat&&x.f.kat===window._periodKat)badges.push('<span style="background:#dbeafe;color:#1e40af;border-radius:6px;padding:1px 6px;font-size:var(--s-klein);font-weight:800;white-space:nowrap">🎯 Monats-Schwerpunkt</span>');
+  if((window._tfWeak||[]).includes(x.f.kat))badges.push(`<span style="background:#fee2e2;color:#991b1b;border-radius:6px;padding:1px 6px;font-size:var(--s-klein);font-weight:800;white-space:nowrap">📊 stärkt ${esc(window._tfWeakLabel||"Team-Schwäche")}</span>`);
   return `<div style="display:flex;align-items:center;gap:8px;border:var(--border-s);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--surface)">
     <button onclick="tpShowExercise(${x.i})" style="flex:1;min-width:0;min-height:44px;border:none;background:transparent;color:var(--text);font-family:inherit;text-align:left;cursor:pointer;padding:0">
-      <span style="display:block;font-size:14px;font-weight:800">${esc(x.f.name)}${badges.length?" "+badges.join(" "):""}</span>
-      <span style="display:block;font-size:11.5px;color:var(--text2);margin-top:2px">${x.f.dauer||"?"} Min. · ${esc(String(x.f.spieler||"?"))} Sp. · ${esc(x.f.feld||"?")} · ${frische}</span>
+      <span style="display:block;font-size:var(--s-karte);font-weight:800">${esc(x.f.name)}${badges.length?" "+badges.join(" "):""}</span>
+      <span style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:2px">${x.f.dauer||"?"} Min. · ${esc(String(x.f.spieler||"?"))} Sp. · ${esc(x.f.feld||"?")} · ${frische}</span>
     </button>
     <button onclick="tpArtTipp('${(x.f.name||"").replace(/'/g,"\\'")}')" title="Übungsform oder Spielform – antippen zum Einordnen" aria-label="Art der Übung: ${_tpArt(x.f)?UEBUNG_ART[_tpArt(x.f)].lang:"noch nicht eingeordnet"}" style="flex:none;min-height:44px;padding:0 4px;border:none;background:transparent;cursor:pointer">${tpArtChip(x.f,true)}</button>
-    <button onclick="tpSternTipp('${(x.f.name||"").replace(/'/g,"\\'")}')" title="Schwierigkeit antippen zum Ändern" style="min-width:48px;min-height:44px;border:none;background:transparent;color:#f59e0b;font-size:12px;cursor:pointer;letter-spacing:1px">${"⭐".repeat(stern)}</button>
-    <button onclick="tfInPlan(${x.i})" aria-label="In den Trainingsplan übernehmen" title="In den Trainingsplan übernehmen" style="min-width:44px;min-height:44px;border:none;border-radius:10px;background:#16a34a;color:#fff;font-size:17px;font-weight:900;cursor:pointer">➕</button>
+    <button onclick="tpSternTipp('${(x.f.name||"").replace(/'/g,"\\'")}')" title="Schwierigkeit antippen zum Ändern" style="min-width:48px;min-height:44px;border:none;background:transparent;color:#f59e0b;font-size:var(--s-text);cursor:pointer;letter-spacing:1px">${"⭐".repeat(stern)}</button>
+    <button onclick="tfInPlan(${x.i})" aria-label="In den Trainingsplan übernehmen" title="In den Trainingsplan übernehmen" style="min-width:44px;min-height:44px;border:none;border-radius:10px;background:#16a34a;color:#fff;font-size:var(--s-teil);font-weight:900;cursor:pointer">➕</button>
   </div>`;
 }
 // Übung aus der Datenbank in den nächsten freien, passenden Slot des Trainingsplans legen.
@@ -404,7 +404,7 @@ async function appRefresh(){
     if(ind)return ind;
     ind=document.createElement("div");
     ind.id="ptr-ind";
-    ind.style.cssText="position:fixed;top:0;left:50%;z-index:60;background:var(--club-accent,#1a56db);color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.25);transition:transform .18s;transform:translate(-50%,-56px);font-size:18px";
+    ind.style.cssText="position:fixed;top:0;left:50%;z-index:60;background:var(--club-accent,#1a56db);color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.25);transition:transform .18s;transform:translate(-50%,-56px);font-size:var(--s-teil)";
     ind.innerHTML='<i class="ti ti-refresh"></i>';
     document.body.appendChild(ind);
     return ind;
@@ -588,11 +588,11 @@ async function tvLoad(){
     const counts={};TV_OPTIONS.forEach(o=>counts[o]=0);
     rows.forEach(v=>{if(counts[v.wahl]!=null)counts[v.wahl]++;});
     const total=rows.length;
-    if(!total){wrap.innerHTML='<div style="font-size:11px;color:var(--text3)">Noch keine Stimme heute.</div>';return;}
-    wrap.innerHTML=`<div style="font-size:10px;color:var(--text3);margin-bottom:6px">${total} Stimme${total!==1?"n":""} heute</div>`+TV_OPTIONS.map(o=>{
+    if(!total){wrap.innerHTML='<div style="font-size:var(--s-klein);color:var(--text3)">Noch keine Stimme heute.</div>';return;}
+    wrap.innerHTML=`<div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:6px">${total} Stimme${total!==1?"n":""} heute</div>`+TV_OPTIONS.map(o=>{
       const c=counts[o], pct=total?Math.round(c/total*100):0;
       return `<div style="margin-bottom:6px">
-        <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:2px"><span>${o}</span><span style="color:var(--text2)">${c}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:var(--s-klein);margin-bottom:2px"><span>${o}</span><span style="color:var(--text2)">${c}</span></div>
         <div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--blue);border-radius:4px;transition:width .3s"></div></div>
       </div>`;
     }).join("");
@@ -671,7 +671,7 @@ async function awDatesLoad(){
 }
 async function awNachtragen(){
   const hint=document.getElementById("aw-nachtragen");
-  if(hint)hint.innerHTML=`<div style="font-size:11.5px;color:var(--text2);margin-top:6px">🕘 Auch vergangene Termine (3 Wochen) in der Liste</div>`;
+  if(hint)hint.innerHTML=`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">🕘 Auch vergangene Termine (3 Wochen) in der Liste</div>`;
   return terminSelectFill("aw-date",{types:["training"],vonTagen:21,onReady:awLoad});
 }
 function awRenderList(){
@@ -687,8 +687,8 @@ function awRenderList(){
     const p=existing[k.name]||{da:false,qual:0};
     html+=`<button class="aw-tile${p.da?" on":""}" onclick="awToggle(this,'${jsq(k.name)}')" data-player="${esc(k.name)}">
       <span class="aw-ok">✓</span>
-      <span style="font-size:13px;font-weight:800;line-height:1.2">${esc(k.name)}</span>
-      ${p.qual?`<span title="Bewertung aus „Einheit bewerten“" style="font-size:9px;color:#f59e0b;letter-spacing:1px">${"★".repeat(p.qual)}</span>`:""}
+      <span style="font-size:var(--s-text);font-weight:800;line-height:1.2">${esc(k.name)}</span>
+      ${p.qual?`<span title="Bewertung aus „Einheit bewerten“" style="font-size:var(--s-klein);color:#f59e0b;letter-spacing:1px">${"★".repeat(p.qual)}</span>`:""}
     </button>`;
   });
   html+='</div>';
@@ -786,7 +786,7 @@ function kleingruppenOpen(){
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("kg-modal","👥","Kleingruppen","Buddy-Auslosung für Übungen – 2er, 3er oder 4er","#16a34a")}
     <div id="kg-chips" style="display:flex;gap:8px;margin-bottom:10px"></div>
-    <div id="kg-quelle" style="font-size:12px;margin-bottom:10px"></div>
+    <div id="kg-quelle" style="font-size:var(--s-text);margin-bottom:10px"></div>
     <div style="display:flex;gap:8px;margin-bottom:6px">
       <button class="btn btn-p" style="flex:1;min-height:52px" onclick="kgLos('zufall')">🎲 Zufällig losen</button>
       <button class="btn" style="flex:1;min-height:52px" onclick="kgLos('ausgewogen')">⚖️ Ausgewogen</button>
@@ -803,7 +803,7 @@ function kleingruppenOpen(){
 }
 function _kgChipsRender(){
   const el=document.getElementById("kg-chips"); if(!el)return;
-  el.innerHTML=[2,3,4].map(n=>`<button onclick="kgGroesse(${n})" style="flex:1;min-height:48px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;background:${_kgGroesse===n?"#16a34a":"var(--surface2)"};color:${_kgGroesse===n?"#fff":"var(--text2)"}">${n}er-Gruppen</button>`).join("");
+  el.innerHTML=[2,3,4].map(n=>`<button onclick="kgGroesse(${n})" style="flex:1;min-height:48px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer;background:${_kgGroesse===n?"#16a34a":"var(--surface2)"};color:${_kgGroesse===n?"#fff":"var(--text2)"}">${n}er-Gruppen</button>`).join("");
 }
 function kgGroesse(n){_kgGroesse=n;_kgChipsRender();}
 async function kgLos(modus){
@@ -830,7 +830,7 @@ async function kgLos(modus){
   const farben=["#eff6ff","#f0fdf4","#fef3c7","#fdf2f8","#f0f9ff","#f5f3ff","#fff7ed","#f0fdfa"];
   const el=document.getElementById("kg-result");
   if(el)el.innerHTML=`<div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
-    ${gruppen.map((p,i)=>`<div style="padding:14px;border-radius:12px;background:${farben[i%farben.length]};color:#1e293b;font-size:16px;font-weight:800;text-align:center">${p.map(esc).join(" 🤝 ")}</div>`).join("")}
+    ${gruppen.map((p,i)=>`<div style="padding:14px;border-radius:12px;background:${farben[i%farben.length]};color:#1e293b;font-size:var(--s-karte);font-weight:800;text-align:center">${p.map(esc).join(" 🤝 ")}</div>`).join("")}
   </div>`;
   _kgPersist(gruppen);
   try{navigator.vibrate&&navigator.vibrate([30,40,30]);}catch(e){}
@@ -904,7 +904,7 @@ function awUebersichtZeig(art){
   // jetzt eine Tuer, drei Reiter.
   if(tabs)tabs.innerHTML=[["spieler","🧒","Spieler"],["trainer","🧑‍🏫","Trainer"],["spiele","⚽","Spiele"]].map(([k,emo,l])=>
     `<button onclick="awUebersichtZeig('${k}')" style="min-height:72px;border:1px solid var(--rand-bedien);${art===k?"border-top:3px solid #16a34a;background:var(--surface2);":"border-top:3px solid transparent;background:var(--surface);"}border-radius:14px;color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px 6px">
-      <span style="font-size:26px">${emo}</span><span style="font-size:13px;font-weight:800">${l}</span>
+      <span style="font-size:26px">${emo}</span><span style="font-size:var(--s-text);font-weight:800">${l}</span>
     </button>`).join("");
   const wrap=document.getElementById("awueb-inhalt"); if(!wrap)return;
   if(art==="spiele"){
@@ -912,7 +912,7 @@ function awUebersichtZeig(art){
     // Welle-1-Funktion, aber der Schutz kostet nichts und haelt den Reiter am Leben,
     // falls die Quote spaeter in ein Modul wandert.
     if(typeof anwesenheitQuoteInto==="function")anwesenheitQuoteInto(document.getElementById("awueb-quote"));
-    else wrap.innerHTML='<div style="color:var(--text2);font-size:12px;padding:8px">Die Quote ist gerade nicht verfügbar.</div>';
+    else wrap.innerHTML='<div style="color:var(--text2);font-size:var(--s-text);padding:8px">Die Quote ist gerade nicht verfügbar.</div>';
     return;
   }
   wrap.innerHTML=art==="spieler"?'<div id="aw-stats"></div>':'<div id="aw-trainer-stats"></div>';
@@ -944,7 +944,7 @@ function awRenderTrainerStats(){
   if(!wrap)return;
   const dates=awZaehltage();
   const allTrainers=((typeof TRAINER!=="undefined"&&TRAINER)||[]); // Single Source: TRAINER aus data.js (Welle 1), keine Notfall-Kopie mehr
-  if(!dates.length){wrap.innerHTML='<div style="color:var(--text2);font-size:12px;padding:8px">Noch kein Training in dieser Saison erfasst.</div>';return;}
+  if(!dates.length){wrap.innerHTML='<div style="color:var(--text2);font-size:var(--s-text);padding:8px">Noch kein Training in dieser Saison erfasst.</div>';return;}
   const stats={};
   allTrainers.forEach(t=>{stats[t]={da:0,total:dates.length};});
   dates.forEach(d=>{
@@ -954,8 +954,8 @@ function awRenderTrainerStats(){
   /* Hier stand bis v465 eine Auswertung der durchgefuehrten Uebungen je Trainer aus
      EVAL_DATA. Sie wurde bei jedem Zeichnen berechnet und nie ausgegeben – PO hat sich
      gegen das Feature entschieden. Die Spalte „Einheiten" zeigt die Anwesenheit. */
-  let html='<div class="card" style="overflow:hidden;font-size:12px">';
-  html+='<div style="display:grid;grid-template-columns:1fr 60px 70px;padding:6px 10px;background:var(--surface2);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)">';
+  let html='<div class="card" style="overflow:hidden;font-size:var(--s-text)">';
+  html+='<div style="display:grid;grid-template-columns:1fr 60px 70px;padding:6px 10px;background:var(--surface2);font-weight:600;font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text2)">';
   html+='<div>Trainer</div><div>Quote</div><div>Einheiten</div></div>';
   allTrainers.forEach(t=>{
     const s=stats[t];
@@ -968,7 +968,7 @@ function awRenderTrainerStats(){
     </div>`;
   });
   html+='</div>';
-  html+=`<div style="font-size:10px;color:var(--text3);margin-top:6px">Grundlage: ${dates.length} Training${dates.length===1?"":"s"} dieser Saison – Spiel- und Turniertage zählen nicht mit.</div>`;
+  html+=`<div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px">Grundlage: ${dates.length} Training${dates.length===1?"":"s"} dieser Saison – Spiel- und Turniertage zählen nicht mit.</div>`;
   wrap.innerHTML=html;
 }
 
@@ -1000,7 +1000,7 @@ function awRenderStats(){
   const wrap=document.getElementById("aw-stats");
   if(!wrap)return;
   const dates=awZaehltage();
-  if(!dates.length){wrap.innerHTML='<div style="color:var(--text2);font-size:12px;padding:8px">Noch kein Training in dieser Saison erfasst.</div>';return;}
+  if(!dates.length){wrap.innerHTML='<div style="color:var(--text2);font-size:var(--s-text);padding:8px">Noch kein Training in dieser Saison erfasst.</div>';return;}
   const stats={};
   KADER.forEach(k=>{stats[k.name]={total:0,da:0,qualSum:0,qualCount:0};});
   dates.forEach(d=>{
@@ -1013,8 +1013,8 @@ function awRenderStats(){
       }
     });
   });
-  let html='<div class="card" style="overflow:hidden;font-size:12px">';
-  html+='<div style="display:grid;grid-template-columns:1fr 60px 60px 70px;padding:6px 10px;background:var(--surface2);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)">';
+  let html='<div class="card" style="overflow:hidden;font-size:var(--s-text)">';
+  html+='<div style="display:grid;grid-template-columns:1fr 60px 60px 70px;padding:6px 10px;background:var(--surface2);font-weight:600;font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text2)">';
   html+='<div>Spieler</div><div>Quote</div><div title="Durchschnitt der Sterne-Bewertung aus „Einheit bewerten" (nur Tage, an denen das Kind da war)">Ø ★</div><div>Einheiten</div></div>';
   KADER.forEach(k=>{
     const s=stats[k.name];
@@ -1022,7 +1022,7 @@ function awRenderStats(){
     const avgQ=s.qualCount?Math.round(s.qualSum/s.qualCount*10)/10:"-";
     const col=pct>=80?"#16a34a":pct>=50?"#b45309":"#dc2626";
     const st=awStreak(k.name);
-    const flame=st>=2?` <span title="${st}× in Folge dabei" style="font-size:11px;font-weight:700;color:#ea580c">🔥${st}</span>`:"";
+    const flame=st>=2?` <span title="${st}× in Folge dabei" style="font-size:var(--s-klein);font-weight:700;color:#ea580c">🔥${st}</span>`:"";
     html+=`<div style="display:grid;grid-template-columns:1fr 60px 60px 70px;padding:6px 10px;border-top:var(--border);align-items:center">
       <div style="font-weight:600">${k.name}${flame}</div>
       <div style="color:${col};font-weight:700">${pct}%</div>
@@ -1031,7 +1031,7 @@ function awRenderStats(){
     </div>`;
   });
   html+='</div>';
-  html+='<div style="font-size:10px;color:var(--text3);margin-top:6px">Ø ★ = durchschnittliche Trainings-Bewertung des Kindes aus „Einheit bewerten" (an Anwesenheits-Tagen).</div>';
+  html+='<div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px">Ø ★ = durchschnittliche Trainings-Bewertung des Kindes aus „Einheit bewerten" (an Anwesenheits-Tagen).</div>';
   wrap.innerHTML=html;
 }
 
@@ -1216,7 +1216,7 @@ function tpTypMarke(typ){
   const t=typ||"main";
   if(t!=="spielform"&&t!=="uebungsform")return "";
   const wort=t==="spielform"?"Spielform":"Übungsform";
-  return ` <span style="font-size:10px;font-weight:800;color:var(--text2);background:var(--surface2);border:var(--border-s);border-radius:6px;padding:1px 6px;white-space:nowrap">${wort}</span>`;
+  return ` <span style="font-size:var(--s-klein);font-weight:800;color:var(--text2);background:var(--surface2);border:var(--border-s);border-radius:6px;padding:1px 6px;white-space:nowrap">${wort}</span>`;
 }
 function tpNettoMinuten(slots){
   return (slots||[]).reduce((a,s)=>{
@@ -1264,10 +1264,10 @@ function tpUebungKommentare(formIdx){
 }
 function tpExerciseHistoryHtml(formIdx){
   const hist=tpGetExerciseHistory(formIdx);
-  if(!hist.length) return '<span style="color:var(--text3);font-size:9px">Noch nie verwendet</span>';
+  if(!hist.length) return '<span style="color:var(--text3);font-size:var(--s-klein)">Noch nie verwendet</span>';
   const k=tpUebungKommentare(formIdx)[0];
   const kurz=k?` · 💬 „${esc(k.notiz.length>70?k.notiz.slice(0,68)+"…":k.notiz)}“`:"";
-  return `<span style="color:var(--text3);font-size:9px" title="${k?esc(k.notiz+" ("+(k.trainer?k.trainer+", ":"")+new Date(k.datum).toLocaleDateString("de-DE")+")"):""}">✓ ${hist.length}× verwendet – zuletzt ${new Date(hist[0]).toLocaleDateString("de-DE")}${kurz}</span>`;
+  return `<span style="color:var(--text3);font-size:var(--s-klein)" title="${k?esc(k.notiz+" ("+(k.trainer?k.trainer+", ":"")+new Date(k.datum).toLocaleDateString("de-DE")+")"):""}">✓ ${hist.length}× verwendet – zuletzt ${new Date(hist[0]).toLocaleDateString("de-DE")}${kurz}</span>`;
 }
 
 /* v518 – PO: „Beim Warm up Adler ist nur eine der vier Übungen zu sehen. Alle vier wären
@@ -1282,13 +1282,13 @@ function tpReiheHtml(name){
   const treffer=reihe.map(n=>alle.find(f=>String(f.name||"").trim()===n)).filter(Boolean);
   if(!treffer.length)return "";
   const stufen=treffer.map((f,i)=>`<div style="margin-top:8px;padding-top:8px;border-top:var(--border)">
-      <div style="font-size:12.5px;font-weight:800">${i+1} · ${esc(f.name)}</div>
-      <div style="font-size:10.5px;color:var(--text2);margin:2px 0 3px">⏱ ${esc(f.dauer||"?")} Min · 📐 ${esc(f.feld||"?")}</div>
+      <div style="font-size:var(--s-text);font-weight:800">${i+1} · ${esc(f.name)}</div>
+      <div style="font-size:var(--s-klein);color:var(--text2);margin:2px 0 3px">⏱ ${esc(f.dauer||"?")} Min · 📐 ${esc(f.feld||"?")}</div>
       ${f.svg||""}
-      <div style="font-size:11px;line-height:1.5;white-space:pre-wrap">${esc(f.ablauf||f.kurz||"")}</div>
+      <div style="font-size:var(--s-klein);line-height:1.5;white-space:pre-wrap">${esc(f.ablauf||f.kurz||"")}</div>
     </div>`).join("");
   return `<details style="border:var(--border-s);border-radius:10px;padding:8px 10px;margin-bottom:8px">
-    <summary style="cursor:pointer;font-size:12.5px;font-weight:800;min-height:28px;display:flex;align-items:center">🔎 Die ${treffer.length} Stufen einzeln</summary>
+    <summary style="cursor:pointer;font-size:var(--s-text);font-weight:800;min-height:28px;display:flex;align-items:center">🔎 Die ${treffer.length} Stufen einzeln</summary>
     ${stufen}</details>`;
 }
 /* Welle 1 darf eine Welle-2-Funktion nie ungeprüft aufrufen (CLAUDE.md). Ohne das
@@ -1301,8 +1301,8 @@ function tpShowExercise(formIdx,planMin){
   if(!f)return;
   const hist=tpGetExerciseHistory(formIdx);
   const komm=tpUebungKommentare(formIdx).slice(0,3);
-  const kommHtml=komm.length?`<div style="margin-top:8px;font-size:11px;color:var(--text2)"><strong>💬 Kommentare der Trainer:</strong>${komm.map(k=>`<div style="margin-top:3px">„${esc(k.notiz)}“ <span style="color:var(--text3)">– ${k.trainer?esc(k.trainer)+", ":""}${new Date(k.datum).toLocaleDateString("de-DE")}</span></div>`).join("")}</div>`:"";
-  const histHtml=kommHtml+(hist.length?`<div style="margin-top:8px;font-size:11px;color:var(--text2)"><strong>Einsatz-Historie (${hist.length}×):</strong><br>${hist.slice(0,8).map(d=>'• '+new Date(d).toLocaleDateString("de-DE")).join('<br>')}</div>`:'<div style="margin-top:8px;font-size:11px;color:var(--text3)">Noch nie in einer Einheit verwendet.</div>');
+  const kommHtml=komm.length?`<div style="margin-top:8px;font-size:var(--s-klein);color:var(--text2)"><strong>💬 Kommentare der Trainer:</strong>${komm.map(k=>`<div style="margin-top:3px">„${esc(k.notiz)}“ <span style="color:var(--text3)">– ${k.trainer?esc(k.trainer)+", ":""}${new Date(k.datum).toLocaleDateString("de-DE")}</span></div>`).join("")}</div>`:"";
+  const histHtml=kommHtml+(hist.length?`<div style="margin-top:8px;font-size:var(--s-klein);color:var(--text2)"><strong>Einsatz-Historie (${hist.length}×):</strong><br>${hist.slice(0,8).map(d=>'• '+new Date(d).toLocaleDateString("de-DE")).join('<br>')}</div>`:'<div style="margin-top:8px;font-size:var(--s-klein);color:var(--text3)">Noch nie in einer Einheit verwendet.</div>');
   /* PO v412: „oben die Zeile ist abgetrennt im text und unten steht der text komplett
      nochmal." – `kurz` ist bei eigenen Übungen genau der abgeschnittene Anfang von
      `ablauf` (slice(0,80)). Als Untertitel über demselben Text ist das keine
@@ -1319,26 +1319,26 @@ function tpShowExercise(formIdx,planMin){
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
   modal.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:380px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.25)">
     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
-      <div style="font-size:14px;font-weight:700;color:var(--text)">${esc(f.name)}</div>
-      <button onclick="this.closest('div[style*=fixed]').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text2)">×</button>
+      <div style="font-size:var(--s-karte);font-weight:700;color:var(--text)">${esc(f.name)}</div>
+      <button onclick="this.closest('div[style*=fixed]').remove()" style="background:none;border:none;font-size:var(--s-teil);cursor:pointer;color:var(--text2)">×</button>
     </div>
-    ${zeigKurz?`<div style="font-size:11px;color:var(--text2);margin-bottom:6px">${esc(kurz)}</div>`:""}
+    ${zeigKurz?`<div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px">${esc(kurz)}</div>`:""}
     ${f.svg
       ? `<div id="uebung-skizze" style="margin-bottom:2px">${f.svg}</div>${typeof skzLegende==="function"?skzLegende(false,_skzSpecSicher(f)):""}${typeof skzBilderLeiste==="function"?skzBilderLeiste(formIdx):""}${typeof matBedarfZeile==="function"?matBedarfZeile(_skzSpecSicher(f)):""}${typeof skzGrossKnopf==="function"?skzGrossKnopf(f.name,formIdx):""}${typeof skzTeilenKnopf==="function"?skzTeilenKnopf(f.name):""}`
       : (eigene?`<div style="border:1px dashed var(--text3);border-radius:10px;padding:12px;margin-bottom:8px;text-align:center">
-          <div style="font-size:11.5px;color:var(--text3);margin-bottom:8px">Für diese Übung gibt es noch keine Skizze.</div>
-          <button onclick="uebungSkizzeNachtragen(${formIdx})" style="min-height:44px;padding:8px 14px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">🎨 Skizze zeichnen</button>
+          <div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:8px">Für diese Übung gibt es noch keine Skizze.</div>
+          <button onclick="uebungSkizzeNachtragen(${formIdx})" style="min-height:44px;padding:8px 14px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">🎨 Skizze zeichnen</button>
         </div>`:"")}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
       ${planMin
-        ?`<span class="tp-ex-planzeit" style="font-size:11px;font-weight:700;background:var(--surface2);border:1px solid var(--rand-bedien);padding:2px 6px;border-radius:4px">⏱ Im Plan: ${planMin} Min.</span>${f.dauer&&String(f.dauer).trim()!==String(planMin)?`<span style="font-size:10px;background:var(--surface);padding:2px 6px;border-radius:4px">Richtwert ${esc(f.dauer)}${/min/i.test(String(f.dauer))?"":" Min."}</span>`:""}`
-        :`<span style="font-size:10px;background:var(--surface);padding:2px 6px;border-radius:4px">⏱ ${esc(f.dauer)}</span>`}
-      <span style="font-size:10px;background:var(--surface);padding:2px 6px;border-radius:4px">👥 ${f.spieler||"?"}</span>
-      <span style="font-size:10px;background:var(--surface);padding:2px 6px;border-radius:4px">📐 ${f.feld||"?"}</span>
+        ?`<span class="tp-ex-planzeit" style="font-size:var(--s-klein);font-weight:700;background:var(--surface2);border:1px solid var(--rand-bedien);padding:2px 6px;border-radius:4px">⏱ Im Plan: ${planMin} Min.</span>${f.dauer&&String(f.dauer).trim()!==String(planMin)?`<span style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">Richtwert ${esc(f.dauer)}${/min/i.test(String(f.dauer))?"":" Min."}</span>`:""}`
+        :`<span style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">⏱ ${esc(f.dauer)}</span>`}
+      <span style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">👥 ${f.spieler||"?"}</span>
+      <span style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">📐 ${f.feld||"?"}</span>
     </div>
-    <div style="font-size:11px;color:var(--text);white-space:pre-wrap;line-height:1.5;margin-bottom:8px">${esc(f.ablauf||"")}</div>
+    <div style="font-size:var(--s-klein);color:var(--text);white-space:pre-wrap;line-height:1.5;margin-bottom:8px">${esc(f.ablauf||"")}</div>
     ${tpReiheHtml(f.name)}
-    ${f.coaching?`<div style="font-size:10px;color:var(--text2);background:var(--surface);padding:8px;border-radius:6px;white-space:pre-wrap"><strong>🎯 Coaching-Tipps:</strong>\n${esc(f.coaching)}</div>`:""}
+    ${f.coaching?`<div style="font-size:var(--s-klein);color:var(--text2);background:var(--surface);padding:8px;border-radius:6px;white-space:pre-wrap"><strong>🎯 Coaching-Tipps:</strong>\n${esc(f.coaching)}</div>`:""}
     ${histHtml}
   </div>`;
   document.body.appendChild(modal);
@@ -2083,10 +2083,10 @@ function tpGruppeHinweis(selId){
   const text=tpFeldTextFuer(info.si,info.p,idx);
   const grund=tpFeldGrundtext(text);
   const vari=tpFeldVariante(text,info.n);
-  let html=grund?`<div style="font-size:11.5px;color:var(--text2);padding:3px 0 0;line-height:1.5">${esc(grund)}</div>`:"";
+  let html=grund?`<div style="font-size:var(--s-klein);color:var(--text2);padding:3px 0 0;line-height:1.5">${esc(grund)}</div>`:"";
   if(vari){
     /* Die Einheit regelt diese Größe selbst – dann ist nichts zu melden, sondern zu zeigen. */
-    html+=`<div style="font-size:11.5px;color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: ${esc(vari)}</div>`;
+    html+=`<div style="font-size:var(--s-klein);color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: ${esc(vari)}</div>`;
   }else if(info.n){
     /* v572: Die Aufstellung dieser Gruppe an dieser Übung – immer, nicht nur im Notfall.
        PO am 18.09.: „Bei Rot sind fünf Spieler und kein Hinweis, dass einer wartet, weil die
@@ -2100,12 +2100,12 @@ function tpGruppeHinweis(selId){
        erst oberhalb der Obergrenze wechselt jemand ein. */
     const sp=tpUebungSpanne(idx), aktiv=sp.min;
     if(sp.alle){
-      html+=`<div style="font-size:11.5px;color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: alle spielen mit</div>`;
+      html+=`<div style="font-size:var(--s-klein);color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: alle spielen mit</div>`;
     }else if(aktiv&&info.n>sp.max){
       const rest=info.n-sp.max;
-      html+=`<div style="font-size:11.5px;color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: ${sp.max} spielen, ${rest===1?"eines wechselt":rest+" wechseln"} ein</div>`;
+      html+=`<div style="font-size:var(--s-klein);color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: ${sp.max} spielen, ${rest===1?"eines wechselt":rest+" wechseln"} ein</div>`;
     }else if(aktiv&&info.n>=aktiv){
-      html+=`<div style="font-size:11.5px;color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: alle spielen</div>`;
+      html+=`<div style="font-size:var(--s-klein);color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: alle spielen</div>`;
     }else if(aktiv&&info.n<aktiv){
       const kinder=(typeof _tgPool==="function")?_tgPool().namen.length:0;
       const jetzt=(((typeof tgFor==="function"&&tgFor())||{}).gruppen||[]).length;
@@ -2113,9 +2113,9 @@ function tpGruppeHinweis(selId){
       /* Zusammenlegen hilft nur, wenn dadurch wirklich Gruppen in Übungsgröße entstehen –
          und es kostet ein Feld. Beides steht im Knopf, damit es niemand nebenbei wegtippt. */
       const knopf=(passt<jetzt&&Math.floor(kinder/passt)>=aktiv)
-        ? ` <button onclick="tgAnzahlSetzen(${passt});tgFertig()" style="margin-left:6px;min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer">👥 ${passt===1?"Alle Kinder an ein Feld":"Auf "+passt+" Gruppen zusammenlegen"} (${jetzt-passt===1?"ein Feld":(jetzt-passt)+" Felder"} weniger)</button>`
+        ? ` <button onclick="tgAnzahlSetzen(${passt});tgFertig()" style="margin-left:6px;min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">👥 ${passt===1?"Alle Kinder an ein Feld":"Auf "+passt+" Gruppen zusammenlegen"} (${jetzt-passt===1?"ein Feld":(jetzt-passt)+" Felder"} weniger)</button>`
         : " Die Einheit nennt für diese Größe keine Anpassung – Regel selbst anpassen oder eine andere Übung wählen.";
-      html+=`<div class="tp-gruppe-hinweis" style="font-size:11px;color:var(--text2);padding:3px 0 0;line-height:1.5">ℹ️ ${info.n} Kinder an dieser Station, die Übung ist für ${aktiv} gedacht.${knopf}</div>`;
+      html+=`<div class="tp-gruppe-hinweis" style="font-size:var(--s-klein);color:var(--text2);padding:3px 0 0;line-height:1.5">ℹ️ ${info.n} Kinder an dieser Station, die Übung ist für ${aktiv} gedacht.${knopf}</div>`;
     }
   }
   el.innerHTML=html;
@@ -2231,7 +2231,7 @@ function tpRenderTimeline(){
     if(parallel){
       const mains=tpSlots.map((s2,i2)=>({s2,i2})).filter(x=>tpIstHauptteil(x.s2.typ));
       html+=`<div class="tp-feld"><label>Läuft parallel zu</label>
-        <select onchange="tpSlots[${si}].parallelZu=Number(this.value);tpRenderTimeline()" style="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text)">
+        <select onchange="tpSlots[${si}].parallelZu=Number(this.value);tpRenderTimeline()" style="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
           ${mains.map(x=>`<option value="${x.i2}"${slot.parallelZu===x.i2?" selected":""}>${x.s2.label}</option>`).join("")}
         </select></div>`;
     }
@@ -2242,7 +2242,7 @@ function tpRenderTimeline(){
       const zusammen=(felderGruppen||[]).filter(f=>f.dazu.length).map(f=>`${f.dazu.join(" + ")} spielt bei ${f.emo} ${f.name.split(" + ")[0]} mit`).join(" · ");
       const grund=gebunden.size?`🧤 ${esc([...gebunden].join(", "))} ${gebunden.size===1?"ist":"sind"} beim Torwart-/Einzeltraining`:"";
       const wegText=weg.length?`✕ ${weg.length} Feld${weg.length===1?"":"er"} weggelassen`:"";
-      html+=`<div class="tp-parallel-hinweis" style="font-size:11px;color:var(--text2);padding:2px 0 6px">${[grund,wegText].filter(Boolean).join(" · ")} – ${parallelSlots} Feld${parallelSlots===1?"":"er"} statt ${Math.max(1,trainersAlle.length)}${zusammen?" · "+esc(zusammen):""}${weg.length?` <button class="tp-feld-zurueck" onclick="tpFeldZurueck(${si})" style="margin-left:6px;min-height:28px;padding:2px 10px;border:1px solid var(--rand-bedien);border-radius:8px;background:var(--surface);color:var(--text);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer">↩ Feld wieder aufnehmen</button>`:""}</div>`;
+      html+=`<div class="tp-parallel-hinweis" style="font-size:var(--s-klein);color:var(--text2);padding:2px 0 6px">${[grund,wegText].filter(Boolean).join(" · ")} – ${parallelSlots} Feld${parallelSlots===1?"":"er"} statt ${Math.max(1,trainersAlle.length)}${zusammen?" · "+esc(zusammen):""}${weg.length?` <button class="tp-feld-zurueck" onclick="tpFeldZurueck(${si})" style="margin-left:6px;min-height:28px;padding:2px 10px;border:1px solid var(--rand-bedien);border-radius:8px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">↩ Feld wieder aufnehmen</button>`:""}</div>`;
     }
     /* v570: Die Einheit bringt ihren Feldbedarf mit (`slot.stationen` aus der Vorlage).
        Passen die Stationen nicht auf die Felder, steht das jetzt AM BLOCK – bisher erfuhr
@@ -2255,9 +2255,9 @@ function tpRenderTimeline(){
       const kinder=(typeof _tgPool==="function")?_tgPool().namen.length:0;
       const moeglich=(typeof tgBedarf==="function")?tgBedarf(kinder,soll):parallelSlots;
       const weg2=moeglich>parallelSlots
-        ? ` <button onclick="tgAnzahlSetzen(${moeglich});tgFertig()" style="margin-left:6px;min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer">👥 ${moeglich} Gruppen bilden</button>`
+        ? ` <button onclick="tgAnzahlSetzen(${moeglich});tgFertig()" style="margin-left:6px;min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">👥 ${moeglich} Gruppen bilden</button>`
         : ` Für ein weiteres Feld bräuchte es ${(parallelSlots+1)*TG_ZIEL_MIN} Kinder – ${kinder} sind da, und unter ${TG_ZIEL_MIN} je Gruppe lässt sich keine Spielform spielen.`;
-      html+=`<div class="tp-stationen-hinweis" style="font-size:11px;color:var(--text2);padding:2px 0 6px;line-height:1.5">ℹ️ ${soll} Stationen geplant, ${parallelSlots} ${parallelSlots===1?"Feld":"Felder"} – ${fehlt===1?"eine Station entfällt":fehlt+" Stationen entfallen"}.${weg2}</div>`;
+      html+=`<div class="tp-stationen-hinweis" style="font-size:var(--s-klein);color:var(--text2);padding:2px 0 6px;line-height:1.5">ℹ️ ${soll} Stationen geplant, ${parallelSlots} ${parallelSlots===1?"Feld":"Felder"} – ${fehlt===1?"eine Station entfällt":fehlt+" Stationen entfallen"}.${weg2}</div>`;
     }
     /* v514: Wer steht in diesem Block an welchem Feld – und der Ringtausch von Hand.
        Sichtbar nur, wenn es überhaupt mehrere Gruppen auf mehreren Feldern gibt. */
@@ -2271,19 +2271,19 @@ function tpRenderTimeline(){
          Wahl, wessen Übungen er spielt. */
       const _kt=_tpKetteVon(si), _istFolge=_kt.length>1&&_kt[0]!==si;
       const nDg=_kt.length, maxDg=Math.min(5,Math.max(2,felderGruppen.length));
-      const dgWahl=`<label style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--text)">🔁 Durchgänge
-          <select aria-label="Durchgänge in ${esc(tpSlotKopfText(slot.label))}" onchange="tpDurchgaengeSetzen(${si},this.value)" style="min-height:44px;padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:12px;background:var(--surface);color:var(--text)">
+      const dgWahl=`<label style="display:inline-flex;align-items:center;gap:6px;font-size:var(--s-klein);font-weight:700;color:var(--text)">🔁 Durchgänge
+          <select aria-label="Durchgänge in ${esc(tpSlotKopfText(slot.label))}" onchange="tpDurchgaengeSetzen(${si},this.value)" style="min-height:44px;padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)">
             ${Array.from({length:maxDg},(_,i)=>i+1).map(n=>`<option value="${n}"${n===nDg?" selected":""}>${n===1?"1 (kein Wechsel)":n}</option>`).join("")}
           </select></label>`;
       if(_istFolge){
-        html+=`<div class="tp-durchgang-von" style="font-size:11.5px;line-height:1.5;padding:4px 8px;margin:2px 0 6px;border-left:3px solid var(--fam-training);background:var(--surface2);border-radius:6px">
+        html+=`<div class="tp-durchgang-von" style="font-size:var(--s-klein);line-height:1.5;padding:4px 8px;margin:2px 0 6px;border-left:3px solid var(--fam-training);background:var(--surface2);border-radius:6px">
           🔁 <b>Durchgang ${_kt.indexOf(si)+1} von ${nDg}</b> · Übungen und Trainer wie in „${esc(tpSlotKopfText((tpSlots[_kt[0]]||{}).label||"Hauptteil"))}“, die Gruppen wechseln die Station. Eine eigene Übung hier ersetzt die übernommene.</div>`;
       }
       {
       html+=`<div class="tp-ringtausch" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:4px 0 6px">
-        <span style="font-size:11px;color:var(--text2);flex:1 1 140px;min-width:0">⇄ ${wer}${v?` <b>· ${v}× weitergerückt</b>`:""}</span>
-        <button onclick="tpVersatzSetzen(${si},1)" title="Alle Gruppen rücken ein Feld weiter – bei zwei Gruppen ist das der Tausch" style="min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer">⇄ weiterrücken</button>
-        ${eigen?`<button onclick="tpVersatzZurueck(${si})" title="Wieder der Reihe nach – so wie es sich aus der Reihenfolge der Blöcke ergibt" style="min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer">↩ automatisch</button>`:""}
+        <span style="font-size:var(--s-klein);color:var(--text2);flex:1 1 140px;min-width:0">⇄ ${wer}${v?` <b>· ${v}× weitergerückt</b>`:""}</span>
+        <button onclick="tpVersatzSetzen(${si},1)" title="Alle Gruppen rücken ein Feld weiter – bei zwei Gruppen ist das der Tausch" style="min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">⇄ weiterrücken</button>
+        ${eigen?`<button onclick="tpVersatzZurueck(${si})" title="Wieder der Reihe nach – so wie es sich aus der Reihenfolge der Blöcke ergibt" style="min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">↩ automatisch</button>`:""}
         ${_istFolge?"":dgWahl}
       </div>`;
       }
@@ -2294,16 +2294,16 @@ function tpRenderTimeline(){
     if(frei){
       /* Kein Auswahlfeld und auch kein Turnier-Knopf: Strassenfussball heisst, dass die
          Kinder selbst entscheiden, was gespielt wird. Der Tipp darueber steht schon. */
-      html+=`<div style="font-size:11px;color:var(--text2);padding:4px 0;line-height:1.5">Freies Spiel ohne Anleitung – die Kinder entscheiden selbst, was und mit wem sie spielen. Du stellst nur Tore und Bälle hin.</div>`;
+      html+=`<div style="font-size:var(--s-klein);color:var(--text2);padding:4px 0;line-height:1.5">Freies Spiel ohne Anleitung – die Kinder entscheiden selbst, was und mit wem sie spielen. Du stellst nur Tore und Bälle hin.</div>`;
     }else if(noSelect){
       // PO-Wunsch: das Abschlussspiel kann direkt als Blitzturnier laufen – die Slot-Dauer
       // wird zum Zeitbudget (auch 2 gegen 2 ohne Torwart mit bis zu 6 Teams).
-      html+=`<div style="font-size:11px;color:var(--text2);padding:4px 0">Freies Spiel – Standard: 3 gegen 3 auf 4 Minitore (FUNiño), ohne Torwart</div>
+      html+=`<div style="font-size:var(--s-klein);color:var(--text2);padding:4px 0">Freies Spiel – Standard: 3 gegen 3 auf 4 Minitore (FUNiño), ohne Torwart</div>
         <button class="btn btn-sm" style="margin-top:4px" onclick="blitzOpen(${Number(slot.dauer)||15})" title="Trainingsturnier mit dieser Slot-Dauer als Zeitbudget – vorab planbar, wird zum Termin gespeichert">🏆 Als Trainingsturnier spielen (${slot.dauer} Min.)</button>`;
     } else if(typ==="tw"){
       const twPlayers=KADER.filter(k=>k.tw&&k.aktiv!==false);   // ausgetragene Torhueter nicht mehr anbieten
       html+=`<div style="margin-top:6px">
-        <div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:4px">Torwart-Spieler</div>
+        <div style="font-size:var(--s-klein);color:var(--text2);font-weight:600;margin-bottom:4px">Torwart-Spieler</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
           ${twPlayers.map(k=>`<label class="tp-check"><input type="checkbox" value="${esc(k.name)}" class="tp-tw-player" data-slot="${si}" checked><span>${k.name}${k.twPrio===1?" ⭐":""}</span></label>`).join("")}
         </div>
@@ -2361,7 +2361,7 @@ function tpRenderTimeline(){
         html+=`<div class="tp-station">
           <div class="tp-station-head">
             <span class="tp-station-nr">${noGroups?"👥":(folgeGr?p+1:(tgg?tgg.emo:p+1))}</span>
-            <span class="tp-station-titel">${noGroups?warmTitel:(folgeGr?`Station ${p+1}<br><span style="font-weight:400;font-size:11px;color:var(--text2)">${folgeGr}</span>`:(tgg?`${tgg.name} (${tgg.kinder.length})`:`Gruppe ${p+1}`))}</span>
+            <span class="tp-station-titel">${noGroups?warmTitel:(folgeGr?`Station ${p+1}<br><span style="font-weight:400;font-size:var(--s-klein);color:var(--text2)">${folgeGr}</span>`:(tgg?`${tgg.name} (${tgg.kinder.length})`:`Gruppe ${p+1}`))}</span>
             ${(typ==="warmup"&&p>0&&p===parallelSlots-1)?`<button class="tp-remove" onclick="tpWarmMinus(${si})" aria-label="Diese Aufwärm-Übung entfernen" title="Diese Aufwärm-Übung entfernen"><i class="ti ti-x"></i></button>`:""}
             ${noGroups?"":tpCoachSelect(selId,gebunden,isMain&&parallelSlots>1)}
           </div>`;
@@ -2374,7 +2374,7 @@ function tpRenderTimeline(){
           const zeilen=[];
           if(lg.length)zeilen.push(`↪ Dazu für diesen Block: ${lg.map(x=>`${esc(x.kind)} (${x.emo||"👥"} ${esc(kurz(x.von))})`).join(", ")}`);
           if(ab.length)zeilen.push(`↩ ${ab.map(x=>`${esc(x.kind)} spielt an Feld ${x.feld}`).join(", ")}`);
-          if(zeilen.length)html+=`<div class="tp-leih" style="font-size:11px;color:var(--text2);padding:0 0 4px;line-height:1.5">${zeilen.join(" · ")}</div>`;
+          if(zeilen.length)html+=`<div class="tp-leih" style="font-size:var(--s-klein);color:var(--text2);padding:0 0 4px;line-height:1.5">${zeilen.join(" · ")}</div>`;
         }
 
         // Kategorie-Dropdown entfällt – der Übungs-Picker gruppiert selbst (PO: keine Ellenlisten)
@@ -2395,7 +2395,7 @@ function tpRenderTimeline(){
       // (z. B. Schattenläufer = paarweise; Hai & Fische = alle zusammen → kein Button)
       if(typ==="warmup"){
         html+=`<div id="tp-kg-${si}"></div>`;
-        if(warmFolge<4)html+=`<button class="tp-plus" onclick="tpWarmPlus(${si})" style="width:100%;min-height:44px;margin-top:6px;border:1.5px dashed var(--rand-bedien);border-radius:10px;background:transparent;color:var(--text);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">＋ Übung im Aufwärmen</button>`;
+        if(warmFolge<4)html+=`<button class="tp-plus" onclick="tpWarmPlus(${si})" style="width:100%;min-height:44px;margin-top:6px;border:1.5px dashed var(--rand-bedien);border-radius:10px;background:transparent;color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">＋ Übung im Aufwärmen</button>`;
       }
     }
     html+='</div>';
@@ -2408,9 +2408,9 @@ function tpRenderTimeline(){
   const frei=zielDauer-time;
   // Ziel-Dauer wohnt jetzt HIER statt als eigene „Zeitplan"-Zeile im Kopf (PO: schlanker)
   const sfq=(typeof tpSpielformQuote==="function")?null:null; // Quote wird nach dem DOM-Aufbau gefüllt (braucht die Selects)
-  html+=`<div id="tp-sfq" style="text-align:right;font-size:11px;color:var(--text2);margin-top:8px"></div>`;
-  html+=`<div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;font-size:12px;font-weight:${passt?"600":"800"};color:${passt?"var(--text2)":"#dc2626"};margin-top:6px">Gesamt: ${time} von
-    <select id="tp-dauer" onchange="tpRenderTimeline()" style="font-size:13px;min-height:44px;padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;background:var(--surface);color:var(--text)">${[60,75,90].map(d=>`<option value="${d}"${zielDauer===d?" selected":""}>${d}</option>`).join("")}</select>
+  html+=`<div id="tp-sfq" style="text-align:right;font-size:var(--s-klein);color:var(--text2);margin-top:8px"></div>`;
+  html+=`<div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;font-size:var(--s-text);font-weight:${passt?"600":"800"};color:${passt?"var(--text2)":"#dc2626"};margin-top:6px">Gesamt: ${time} von
+    <select id="tp-dauer" onchange="tpRenderTimeline()" style="font-size:var(--s-text);min-height:44px;padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;background:var(--surface);color:var(--text)">${[60,75,90].map(d=>`<option value="${d}"${zielDauer===d?" selected":""}>${d}</option>`).join("")}</select>
     Min.${passt?(frei>0?` · noch ${frei} Min. frei`:""):" – zu lang!"}</div>`;
   wrap.innerHTML=html;
   // Gemerkte Auswahl wieder einsetzen (siehe oben)
@@ -2442,7 +2442,7 @@ async function tpPrognoseLoad(){
   if(pool.quelle==="anwesenheit"){ text=`${n} dabei · ${fehlen} fehlen`; quelle="Anwesenheit"+(pool.abgesagt?`, ${pool.abgesagt} später abgesagt`:""); }
   else if(pool.quelle==="zusagen"){ text=`${n} zugesagt`+(pool.abgesagt?` · ${pool.abgesagt} abgesagt`:""); quelle="Rückmeldungen, Anwesenheit noch offen"; }
   else { text=`${n} im Kader`+(pool.abgesagt?` · ${pool.abgesagt} abgesagt`:""); quelle="noch keine Anwesenheit"; }
-  el.innerHTML=`<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;background:var(--surface2);border:var(--border);border-radius:20px;padding:4px 12px">👥 ${text} <span style="font-weight:400;color:var(--text2)">(${quelle})</span></span>`;
+  el.innerHTML=`<span style="display:inline-flex;align-items:center;gap:6px;font-size:var(--s-text);font-weight:700;background:var(--surface2);border:var(--border);border-radius:20px;padding:4px 12px">👥 ${text} <span style="font-weight:400;color:var(--text2)">(${quelle})</span></span>`;
 }
 
 function tpOnSelectChange(sel){
@@ -2575,13 +2575,13 @@ async function tpNettoRender(){
   const datum=document.getElementById("tp-date")?.value||"";
   const netto=tpNettoMinuten(tpSlots);
   const ziel=tpNettoRichtwert();
-  const zeile=(inhalt)=>`<div style="font-size:12px;color:var(--text2);line-height:1.5">${inhalt}</div>`;
+  const zeile=(inhalt)=>`<div style="font-size:var(--s-text);color:var(--text2);line-height:1.5">${inhalt}</div>`;
   el.innerHTML=zeile(`⚽ Spielform: <b style="color:var(--text)">${netto} Minuten</b>`);
   if(!datum)return;
   const woche=await tpWocheNetto(datum);
   if(woche==null)return;
   // Reicht die Woche, bleibt es bei der Zahl der Einheit – kein Lob (Vorgabe des Pakets).
-  const knopf=`<button onclick="tpRichtwertAendern()" title="Richtwert ändern" style="min-height:44px;border:none;background:transparent;color:var(--text3);font-family:inherit;font-size:11.5px;text-decoration:underline;cursor:pointer;padding:0 4px">Richtwert ${ziel} ändern</button>`;
+  const knopf=`<button onclick="tpRichtwertAendern()" title="Richtwert ändern" style="min-height:44px;border:none;background:transparent;color:var(--text3);font-family:inherit;font-size:var(--s-klein);text-decoration:underline;cursor:pointer;padding:0 4px">Richtwert ${ziel} ändern</button>`;
   if(woche<ziel){
     el.innerHTML=zeile(`⚽ Spielform: <b style="color:var(--text)">${netto} Minuten</b>`)
       +zeile(`Diese Woche ${woche} von ${ziel} Minuten Spielform. ${knopf}`);
@@ -2643,7 +2643,7 @@ function rolleLosOpen(lbl,emo){
 }
 function _rolleChips(lbl,emo){
   const el=document.getElementById("rolle-chips"); if(!el)return;
-  el.innerHTML=[1,2].map(n=>`<button onclick="_rolleAnzahl=${n};_rolleChips('${lbl}','${emo}')" style="flex:1;min-height:48px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;background:${_rolleAnzahl===n?"#16a34a":"var(--surface2)"};color:${_rolleAnzahl===n?"#fff":"var(--text2)"}">${n} ${n===1?lbl.replace(/e$/,""):lbl}</button>`).join("");
+  el.innerHTML=[1,2].map(n=>`<button onclick="_rolleAnzahl=${n};_rolleChips('${lbl}','${emo}')" style="flex:1;min-height:48px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer;background:${_rolleAnzahl===n?"#16a34a":"var(--surface2)"};color:${_rolleAnzahl===n?"#fff":"var(--text2)"}">${n} ${n===1?lbl.replace(/e$/,""):lbl}</button>`).join("");
 }
 async function rolleLos(lbl,emo){
   if(typeof pauseLoad==="function")await pauseLoad();
@@ -2655,8 +2655,8 @@ async function rolleLos(lbl,emo){
   const el=document.getElementById("rolle-result");
   if(el)el.innerHTML=`<div style="background:#f0fdf4;color:#14532d;border:2px solid #4ade80;border-radius:14px;padding:16px;text-align:center">
       <div style="font-size:40px">${emo}</div>
-      <div style="font-size:20px;font-weight:900;margin-top:6px">${gezogen.map(esc).join(" & ")}</div>
-      <div style="font-size:12px;color:#166534;margin-top:4px">${gezogen.length===1?"startet":"starten"} als ${lbl}!</div>
+      <div style="font-size:var(--s-teil);font-weight:900;margin-top:6px">${gezogen.map(esc).join(" & ")}</div>
+      <div style="font-size:var(--s-text);color:#166534;margin-top:4px">${gezogen.length===1?"startet":"starten"} als ${lbl}!</div>
     </div>
     <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="rolleLos('${lbl}','${emo}')">🎲 Neu losen</button>`;
   try{navigator.vibrate&&navigator.vibrate([30,40,30]);}catch(e){}
@@ -2683,7 +2683,7 @@ function tpIndPlayerChange(slotIdx){
   let vals={};
   try{vals=JSON.parse(localStorage.getItem(playerKey)||"{}");}catch(e){vals={};}
   if(!Object.keys(vals).length){
-    reco.innerHTML='<div style="font-size:10px;color:var(--text3);padding:2px 0">Kein Spielerprofil vorhanden – alle Übungen verfügbar.</div>';
+    reco.innerHTML='<div style="font-size:var(--s-klein);color:var(--text3);padding:2px 0">Kein Spielerprofil vorhanden – alle Übungen verfügbar.</div>';
     return;
   }
   // v2: Defizite über die 16 f_-Kriterien (Skala 1–4; <=2 = Entwicklungsfeld)
@@ -2700,21 +2700,21 @@ function tpIndPlayerChange(slotIdx){
   });
 
   if(!deficits.length){
-    reco.innerHTML='<div style="font-size:10px;color:#059669;padding:2px 0">✅ Keine auffälligen Defizite – freie Übungswahl!</div>';
+    reco.innerHTML='<div style="font-size:var(--s-klein);color:#059669;padding:2px 0">✅ Keine auffälligen Defizite – freie Übungswahl!</div>';
     return;
   }
 
-  let html='<div style="font-size:10px;color:var(--text2);padding:2px 0"><strong>Empfohlen für '+esc(name)+':</strong></div>';
+  let html='<div style="font-size:var(--s-klein);color:var(--text2);padding:2px 0"><strong>Empfohlen für '+esc(name)+':</strong></div>';
   if(matched.length){
     matched.forEach(m=>{
       html+=`<div style="display:flex;align-items:center;gap:4px;padding:2px 0">
-        <button onclick="document.getElementById('tp-form-${slotIdx}-0').value='${m.i}';tpOnSelectChange(document.getElementById('tp-form-${slotIdx}-0'))" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;padding:2px 6px;font-size:10px;cursor:pointer;font-family:inherit">
+        <button onclick="document.getElementById('tp-form-${slotIdx}-0').value='${m.i}';tpOnSelectChange(document.getElementById('tp-form-${slotIdx}-0'))" style="background:var(--green-bg);border:1px solid #bbf7d0;border-radius:4px;padding:2px 6px;font-size:var(--s-klein);cursor:pointer;font-family:inherit">
           ⭐ ${esc(m.f.name)}</button>
-        <span style="font-size:9px;color:var(--text3)">→ ${m.deficit.label} verbessern</span>
+        <span style="font-size:var(--s-klein);color:var(--text3)">→ ${m.deficit.label} verbessern</span>
       </div>`;
     });
   } else {
-    html+='<div style="font-size:10px;color:var(--text3)">Defizite: '+deficits.map(d=>d.label).join(", ")+'</div>';
+    html+='<div style="font-size:var(--s-klein);color:var(--text3)">Defizite: '+deficits.map(d=>d.label).join(", ")+'</div>';
   }
   reco.innerHTML=html;
 }
@@ -2727,9 +2727,9 @@ function tpAddSlot(){
      „Abschlussspiel · 15 Min.", eingefuegt wurden 20, und aus „Torwart-Training" wurde in
      der Leiste „Torwart-Spielen (rotierend)". Jetzt beschreibt TP_ADD_OPTS beides. */
   const opts=TP_ADD_OPTS;
-  let btns=opts.map((o,i)=>`<button onclick="tpDoAddSlot('${o.typ}');this.closest('div[style*=fixed]').remove()" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 12px;border:1px solid var(--rand-bedien);border-left:3px solid ${o.farbe};border-radius:var(--r);background:var(--surface);cursor:pointer;font-family:inherit;font-size:12px;text-align:left"><span style="font-size:18px">${o.icon}</span><div><strong>${o.label}</strong><br><span style="font-size:10px;color:var(--text2)">${tpKannParallel(o.typ)?"parallel zum Hauptteil, gleiche Dauer":o.dauer+" Min."}</span></div></button>`).join("");
+  let btns=opts.map((o,i)=>`<button onclick="tpDoAddSlot('${o.typ}');this.closest('div[style*=fixed]').remove()" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 12px;border:1px solid var(--rand-bedien);border-left:3px solid ${o.farbe};border-radius:var(--r);background:var(--surface);cursor:pointer;font-family:inherit;font-size:var(--s-text);text-align:left"><span style="font-size:var(--s-teil)">${o.icon}</span><div><strong>${o.label}</strong><br><span style="font-size:var(--s-klein);color:var(--text2)">${tpKannParallel(o.typ)?"parallel zum Hauptteil, gleiche Dauer":o.dauer+" Min."}</span></div></button>`).join("");
   modal.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:320px;width:100%">
-    <div style="font-size:13px;font-weight:700;margin-bottom:10px">Phase hinzufügen</div>
+    <div style="font-size:var(--s-text);font-weight:700;margin-bottom:10px">Phase hinzufügen</div>
     <div style="display:flex;flex-direction:column;gap:6px">${btns}</div>
   </div>`;
   document.body.appendChild(modal);
@@ -3128,7 +3128,7 @@ async function pinCheck(){
           location.href=location.pathname+"?portal";
         }
       },30000);
-      back.style.cssText="position:fixed;bottom:12px;left:12px;z-index:9990;padding:10px 14px;border:none;border-radius:12px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35)";
+      back.style.cssText="position:fixed;bottom:12px;left:12px;z-index:9990;padding:10px 14px;border:none;border-radius:12px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35)";
       document.body.appendChild(back);
     }
     // Erst klaeren, WER spielt (eigenes Kind aus der Eltern-Sitzung / gemerkter Name).
@@ -3203,15 +3203,15 @@ function renderTeamDiagnose(){
   const top=weakest[0];
   const reco=allForms.map((f,i)=>({i,f})).filter(x=>x.f.deficit===top.key);
   const chip=(m)=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;background:var(--surface);border:var(--border-s);border-radius:var(--r);margin-top:6px">
-    <div style="font-size:12px"><strong>${esc(m.f.name)}</strong> <span style="font-size:10px;color:var(--text3)">${m.f.dauer||""}</span></div>
+    <div style="font-size:var(--s-text)"><strong>${esc(m.f.name)}</strong> <span style="font-size:var(--s-klein);color:var(--text3)">${m.f.dauer||""}</span></div>
     <button class="btn btn-sm" onclick="tpAddRecoExercise(${m.i})"><i class="ti ti-plus"></i>In Plan</button>
   </div>`;
   box.innerHTML=`<div style="background:linear-gradient(135deg,#eff6ff,#f0fdfa);border:1px solid #bfdbfe;border-radius:var(--rl);padding:12px 14px;margin-bottom:12px">
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1e40af"><i class="ti ti-target-arrow" style="font-size:13px"></i> Team-Diagnose <span style="font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0">· ${players} bewertete Spieler</span></div>
-    <div style="font-size:14px;font-weight:700;margin:6px 0 2px">Schwerpunkt heute: ${esc(top.label)} <span style="font-size:12px;color:#dc2626">Ø ${top.mean}%</span></div>
-    <div style="font-size:11px;color:var(--text2)">Danach: ${weakest.slice(1,3).map(w=>`${esc(w.label)} (${w.mean}%)`).join(" · ")||"–"}</div>
-    ${reco.length?`<div style="margin-top:8px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:2px">Passende Übungen</div>${reco.slice(0,4).map(chip).join("")}</div>`
-      :`<div style="font-size:11px;color:var(--text3);margin-top:8px">Keine getaggte Übung für „${esc(top.label)}" – im Reiter „Übungen“ eine auswählen.</div>`}
+    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1e40af"><i class="ti ti-target-arrow" style="font-size:var(--s-text)"></i> Team-Diagnose <span style="font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0">· ${players} bewertete Spieler</span></div>
+    <div style="font-size:var(--s-karte);font-weight:700;margin:6px 0 2px">Schwerpunkt heute: ${esc(top.label)} <span style="font-size:var(--s-text);color:#dc2626">Ø ${top.mean}%</span></div>
+    <div style="font-size:var(--s-klein);color:var(--text2)">Danach: ${weakest.slice(1,3).map(w=>`${esc(w.label)} (${w.mean}%)`).join(" · ")||"–"}</div>
+    ${reco.length?`<div style="margin-top:8px"><div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:2px">Passende Übungen</div>${reco.slice(0,4).map(chip).join("")}</div>`
+      :`<div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px">Keine getaggte Übung für „${esc(top.label)}" – im Reiter „Übungen“ eine auswählen.</div>`}
   </div>`;
 }
 // Empfohlene Uebung in eine kompatible Planer-Station uebernehmen (nur wo sie als Option existiert).
@@ -3322,7 +3322,7 @@ function tpStandRender(datum){
   const d=new Date(s.updated_at);
   const wann=isNaN(d)?"":`${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}, ${d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})} Uhr`;
   /* Ohne Namen (Pläne von vor v542) wird kein Name erfunden – dann steht nur das Wann. */
-  el.innerHTML=`<span style="font-size:10.5px;color:var(--text3)">💾 Zuletzt gespeichert${s.von?` von <b>${esc(s.von)}</b>`:""}${wann?` · ${wann}`:""}</span>`;
+  el.innerHTML=`<span style="font-size:var(--s-klein);color:var(--text3)">💾 Zuletzt gespeichert${s.von?` von <b>${esc(s.von)}</b>`:""}${wann?` · ${wann}`:""}</span>`;
 }
 /* Der Konflikt-Hinweis. Eigenes Overlay statt confirm(): die Meldung muss sagen, WER
    und WANN, und das passt in keinen Systemdialog. */
@@ -3335,11 +3335,11 @@ function tpKonfliktFragen(datum,stand){
   m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Plan wurde inzwischen geändert");
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10050;display:flex;align-items:center;justify-content:center;padding:16px";
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:420px;width:100%">
-    <div style="font-size:15px;font-weight:900;margin-bottom:8px">Der Plan wurde inzwischen geändert</div>
-    <div style="font-size:12.5px;color:var(--text2);line-height:1.6;margin-bottom:14px">
+    <div style="font-size:var(--s-karte);font-weight:900;margin-bottom:8px">Der Plan wurde inzwischen geändert</div>
+    <div style="font-size:var(--s-text);color:var(--text2);line-height:1.6;margin-bottom:14px">
       ${stand.von?`<b>${esc(stand.von)}</b> hat`:"Jemand hat"} ${wann?`am ${wann} `:""}für diesen Termin gespeichert, seit du ihn geöffnet hast.
       Speicherst du jetzt, wird diese Fassung vollständig ersetzt.</div>
-    <button onclick="tpKonfliktTrotzdem('${String(datum).replace(/'/g,"")}')" style="width:100%;min-height:56px;border:none;border-radius:14px;background:var(--surface);border:1px solid var(--rand-bedien);border-top:3px solid #b45309;color:var(--text);font-family:inherit;font-size:15px;font-weight:900;cursor:pointer">Meine Fassung speichern</button>
+    <button onclick="tpKonfliktTrotzdem('${String(datum).replace(/'/g,"")}')" style="width:100%;min-height:56px;border:none;border-radius:14px;background:var(--surface);border:1px solid var(--rand-bedien);border-top:3px solid #b45309;color:var(--text);font-family:inherit;font-size:var(--s-karte);font-weight:900;cursor:pointer">Meine Fassung speichern</button>
     <button onclick="tpKonfliktHolen('${String(datum).replace(/'/g,"")}')" class="btn btn-sm" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Seine Fassung laden und meine verwerfen</button>
     <div style="display:flex;margin-top:8px"><button class="btn btn-sm" style="margin-left:auto;min-height:48px" onclick="document.getElementById('tp-konflikt').remove()">Erst mal nichts tun</button></div>
   </div>`;
@@ -3456,7 +3456,7 @@ function tpKopfRender(k){
   if(!zeilen.length){ box.innerHTML=""; return; }
   box.innerHTML=`<details class="tp-tipp" style="margin:4px 0 8px" open>
     <summary>\u{1F4CB} Zur Einheit<span style="font-weight:400;color:var(--text3)"> \u2013 ${zeilen.length} Notiz${zeilen.length===1?"":"en"}</span></summary>
-    <div>${zeilen.map(z=>`<div style="display:flex;gap:8px;padding:3px 0;font-size:12.5px;line-height:1.5"><span style="flex:0 0 auto">${z[0]}</span><span><b>${esc(z[1])}:</b> ${esc(z[2])}</span></div>`).join("")}</div>
+    <div>${zeilen.map(z=>`<div style="display:flex;gap:8px;padding:3px 0;font-size:var(--s-text);line-height:1.5"><span style="flex:0 0 auto">${z[0]}</span><span><b>${esc(z[1])}:</b> ${esc(z[2])}</span></div>`).join("")}</div>
   </details>`;
 }
 async function tpPlanRestore(datum){
@@ -3634,12 +3634,12 @@ async function tpVorplanLoad(){
   const heute=new Date().toISOString().slice(0,10);
   const rows=(await _termineSelLoad()).filter(t=>t.typ==="training"&&t.datum>=heute)
     .sort((a,b)=>a.datum<b.datum?-1:1).slice(0,TP_VORPLAN_MAX);
-  const kopf=`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px">🗓️ Termin – antippen zum Planen</div>`;
+  const kopf=`<div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px">🗓️ Termin – antippen zum Planen</div>`;
   /* Ohne Termin keine Terminwahl: ein Satz und der Weg dorthin, wo Termine entstehen.
      Vorher stand hier bei weniger als zwei Terminen einfach nichts – zusammen mit dem
      entfallenen Dropdown wäre der Trainingsplan damit unbedienbar geworden. */
   if(!rows.length){
-    el.innerHTML=kopf+`<div style="font-size:12.5px;color:var(--text3);line-height:1.5">Kein Training in Sicht. Termine legst du unter <b>Orga → Termine</b> an.</div>`;
+    el.innerHTML=kopf+`<div style="font-size:var(--s-text);color:var(--text3);line-height:1.5">Kein Training in Sicht. Termine legst du unter <b>Orga → Termine</b> an.</div>`;
     return;
   }
   let geplant=new Set();
@@ -3656,7 +3656,7 @@ async function tpVorplanLoad(){
          48 px statt der 36 px eines Listenknopfes: das hier ist jetzt die einzige
          Terminwahl der Seite und kein Beiwerk mehr (cockpit-ui). */
       const rand=hier?"border-color:var(--text);border-width:2px;font-weight:900":(on?"border-color:#16a34a;color:#15803d":"");
-      return `<button onclick="tpVorplanJump('${t.datum}')" class="btn btn-sm" aria-pressed="${hier}" style="min-height:48px;font-size:13px;${rand}">${on?"✅":"📝"} ${lbl}${hier?" · gewählt":""}</button>`;
+      return `<button onclick="tpVorplanJump('${t.datum}')" class="btn btn-sm" aria-pressed="${hier}" style="min-height:48px;font-size:var(--s-text);${rand}">${on?"✅":"📝"} ${lbl}${hier?" · gewählt":""}</button>`;
     }).join("")}</div>`;
 }
 function tpVorplanJump(datum){
@@ -3742,23 +3742,23 @@ function stTimerRender(done){
   const ov=document.getElementById("st-timer"); if(!ov)return;
   if(done){
     ov.innerHTML=`<div style="font-size:60px">🎉</div><div style="font-size:26px;font-weight:800;margin:12px 0">Training geschafft!</div>
-      <button onclick="stTimerStop()" style="margin-top:20px;padding:14px 28px;border:none;border-radius:12px;background:#16a34a;color:#fff;font-size:16px;font-weight:800;font-family:inherit;cursor:pointer">Fertig</button>`;
+      <button onclick="stTimerStop()" style="margin-top:20px;padding:14px 28px;border:none;border-radius:12px;background:#16a34a;color:#fff;font-size:var(--s-karte);font-weight:800;font-family:inherit;cursor:pointer">Fertig</button>`;
     return;
   }
   const s=_stT.stations[_stT.ix]||{}, next=_stT.stations[_stT.ix+1];
   const mm=Math.floor(Math.max(0,_stT.left)/60), ss=Math.max(0,_stT.left)%60, clock=mm+":"+(ss<10?"0":"")+ss;
   const warn=_stT.left<=10;
   ov.innerHTML=`
-    <div style="font-size:13px;letter-spacing:1px;color:#94a3b8;text-transform:uppercase">Station ${_stT.ix+1}/${_stT.stations.length}${_stT.paused?" · ⏸ Pause":""}</div>
+    <div style="font-size:var(--s-text);letter-spacing:1px;color:#94a3b8;text-transform:uppercase">Station ${_stT.ix+1}/${_stT.stations.length}${_stT.paused?" · ⏸ Pause":""}</div>
     <div style="font-size:26px;font-weight:800;margin:8px 0;color:${s.farbe||"#60a5fa"}">${esc(s.label||"")}</div>
-    ${s.forms&&s.forms.length?`<div style="font-size:16px;color:#e2e8f0;margin-bottom:6px;max-width:520px">${s.forms.map(esc).join(" · ")}</div>`:""}
-    ${s.gruppen&&s.gruppen.length>1?`<div style="font-size:14px;color:#fbbf24;margin-bottom:6px;max-width:520px;font-weight:700">⇄ ${s.gruppen.map(esc).join(" · ")}</div>`:""}
+    ${s.forms&&s.forms.length?`<div style="font-size:var(--s-karte);color:#e2e8f0;margin-bottom:6px;max-width:520px">${s.forms.map(esc).join(" · ")}</div>`:""}
+    ${s.gruppen&&s.gruppen.length>1?`<div style="font-size:var(--s-karte);color:#fbbf24;margin-bottom:6px;max-width:520px;font-weight:700">⇄ ${s.gruppen.map(esc).join(" · ")}</div>`:""}
     <div style="font-size:84px;font-weight:900;line-height:1;margin:10px 0;color:${warn?"#f87171":"#fff"}">${clock}</div>
-    ${next?`<div style="font-size:14px;color:#94a3b8;max-width:520px">Als Nächstes: ${esc(next.label)}${next.forms&&next.forms.length?" – "+esc(next.forms.join(", ")):""}${(next.gruppen&&next.gruppen.length>1)?`<br><span style="color:#fbbf24">⇄ dann rücken die Gruppen weiter: ${next.gruppen.map(esc).join(" · ")}</span>`:""}</div>`:'<div style="font-size:14px;color:#94a3b8">Letzte Station</div>'}
+    ${next?`<div style="font-size:var(--s-karte);color:#94a3b8;max-width:520px">Als Nächstes: ${esc(next.label)}${next.forms&&next.forms.length?" – "+esc(next.forms.join(", ")):""}${(next.gruppen&&next.gruppen.length>1)?`<br><span style="color:#fbbf24">⇄ dann rücken die Gruppen weiter: ${next.gruppen.map(esc).join(" · ")}</span>`:""}</div>`:'<div style="font-size:var(--s-karte);color:#94a3b8">Letzte Station</div>'}
     <div style="display:flex;gap:10px;margin-top:26px;flex-wrap:wrap;justify-content:center">
-      <button onclick="stTimerPause()" style="padding:14px 22px;border:none;border-radius:12px;background:#334155;color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer">${_stT.paused?"▶️ Weiter":"⏸ Pause"}</button>
-      <button onclick="stTimerNext()" style="padding:14px 22px;border:none;border-radius:12px;background:#1a56db;color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer">⏭ Nächste</button>
-      <button onclick="stTimerStop()" style="padding:14px 22px;border:1px solid #475569;border-radius:12px;background:transparent;color:#cbd5e1;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer">✕ Beenden</button>
+      <button onclick="stTimerPause()" style="padding:14px 22px;border:none;border-radius:12px;background:#334155;color:#fff;font-size:var(--s-karte);font-weight:700;font-family:inherit;cursor:pointer">${_stT.paused?"▶️ Weiter":"⏸ Pause"}</button>
+      <button onclick="stTimerNext()" style="padding:14px 22px;border:none;border-radius:12px;background:#1a56db;color:#fff;font-size:var(--s-karte);font-weight:700;font-family:inherit;cursor:pointer">⏭ Nächste</button>
+      <button onclick="stTimerStop()" style="padding:14px 22px;border:1px solid #475569;border-radius:12px;background:transparent;color:#cbd5e1;font-size:var(--s-karte);font-weight:700;font-family:inherit;cursor:pointer">✕ Beenden</button>
     </div>`;
 }
 
@@ -3871,9 +3871,9 @@ function tpRenderTeamFokus(){
   const passende=allForms.map((f,i)=>({i,f})).filter(x=>kats.includes(x.f.kat));
   const gewaehlt=passende.filter(x=>x.f.focus).concat(passende.filter(x=>!x.f.focus)).slice(0,3);
   box.innerHTML=`<div style="margin-top:10px;padding:10px 12px;background:var(--blue-bg);border:1px solid #93c5fd;border-radius:var(--rl)">
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1e40af;margin-bottom:4px">📊 Team-Schwerpunkt (aus ${spielerzahl} Bewertungen)</div>
-    <div style="font-size:12.5px;color:var(--text);margin-bottom:6px">Schwächster Mannschaftswert: <strong>${dimLabel[schwach]}</strong> (Ø ${schwachVal}%). Passende Übungen:</div>
-    ${gewaehlt.length?gewaehlt.map(x=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><button class="btn btn-sm" onclick="tpShowExercise(${x.i})"><i class="ti ti-eye"></i></button><span style="font-size:12px;color:var(--text)">${esc(x.f.name)}</span></div>`).join(""):'<div style="font-size:11px;color:var(--text3)">Keine passende Form gefunden.</div>'}
+    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1e40af;margin-bottom:4px">📊 Team-Schwerpunkt (aus ${spielerzahl} Bewertungen)</div>
+    <div style="font-size:var(--s-text);color:var(--text);margin-bottom:6px">Schwächster Mannschaftswert: <strong>${dimLabel[schwach]}</strong> (Ø ${schwachVal}%). Passende Übungen:</div>
+    ${gewaehlt.length?gewaehlt.map(x=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><button class="btn btn-sm" onclick="tpShowExercise(${x.i})"><i class="ti ti-eye"></i></button><span style="font-size:var(--s-text);color:var(--text)">${esc(x.f.name)}</span></div>`).join(""):'<div style="font-size:var(--s-klein);color:var(--text3)">Keine passende Form gefunden.</div>'}
   </div>`;
 }
 
@@ -3901,9 +3901,9 @@ function tpRenderMindsetTip(){
     timeline.insertAdjacentElement("afterend",box);
   }
   box.innerHTML=`<div style="margin-top:10px;padding:10px 12px;background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7;border-radius:var(--rl)">
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#047857;margin-bottom:4px">🧠 Mindset-Baustein des Tages</div>
-    <div style="font-size:12.5px;font-weight:600;color:var(--text)">${esc(wahl.f.name)}</div>
-    <div style="font-size:11px;color:var(--text2);margin:2px 0 6px">${esc(wahl.f.kurz||"")}</div>
+    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#047857;margin-bottom:4px">🧠 Mindset-Baustein des Tages</div>
+    <div style="font-size:var(--s-text);font-weight:600;color:var(--text)">${esc(wahl.f.name)}</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin:2px 0 6px">${esc(wahl.f.kurz||"")}</div>
     <button class="btn btn-sm" onclick="tpShowExercise(${wahl.i})"><i class="ti ti-eye"></i>Form ansehen</button>
   </div>`;
 }
@@ -4032,8 +4032,8 @@ function tpArtChip(f,auchOffen){
      kleinste der Kachel ist. Jetzt ein Punkt mit Fragezeichen: das Zeichen trägt die
      Bedeutung, nicht die Farbe, und wer die Zeile hört, bekommt sie im aria-label des
      Knopfes, in dem der Punkt sitzt. */
-  if(!a)return auchOffen?'<span aria-hidden="true" title="noch nicht eingeordnet" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:1px solid var(--red);background:var(--red-bg);color:var(--red);font-size:12px;font-weight:900;line-height:1">?</span>':"";
-  return `<span style="background:var(--surface2);color:var(--text2);border:var(--border-s);border-radius:6px;padding:1px 6px;font-size:10px;font-weight:800;white-space:nowrap">${UEBUNG_ART[a].kurz}</span>`;
+  if(!a)return auchOffen?'<span aria-hidden="true" title="noch nicht eingeordnet" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:1px solid var(--red);background:var(--red-bg);color:var(--red);font-size:var(--s-text);font-weight:900;line-height:1">?</span>':"";
+  return `<span style="background:var(--surface2);color:var(--text2);border:var(--border-s);border-radius:6px;padding:1px 6px;font-size:var(--s-klein);font-weight:800;white-space:nowrap">${UEBUNG_ART[a].kurz}</span>`;
 }
 /* Antippen ordnet ein – wie beim Stern. Drei Zustände im Kreis, damit sich eine
    falsche Einordnung genauso leicht zurücknehmen lässt wie sie entstanden ist. */
@@ -4104,7 +4104,7 @@ function artDurchsichtRender(){
   const alle=tpAllForms().filter(f=>f&&f.name&&_adAuswahl[f.name]);
   const zeigen=_adNurOffene?offen:alle;
   if(!offen.length&&_adNurOffene){
-    box.innerHTML=`<div style="font-size:12.5px;color:var(--text2);line-height:1.6;padding:6px 0">
+    box.innerHTML=`<div style="font-size:var(--s-text);color:var(--text2);line-height:1.6;padding:6px 0">
       Alle Übungen mit einem Vorschlag sind eingeordnet. ${alle.length?`<button class="btn btn-sm" style="min-height:48px;margin-top:8px" onclick="artDurchsichtFilter()">Alle ${alle.length} trotzdem ansehen</button>`:""}</div>
       <div style="display:flex;margin-top:10px"><button class="btn btn-sm" style="margin-left:auto;min-height:48px" onclick="artDurchsichtClose()">Schließen</button></div>`;
     return;
@@ -4116,21 +4116,21 @@ function artDurchsichtRender(){
     /* Der Knopf trägt den Text der Einordnung, nicht nur eine Farbe – und sagt im
        aria-label, dass ein Tipp weiterschaltet. */
     return `<div style="display:flex;align-items:center;gap:8px;border:var(--border-s);border-radius:10px;padding:8px 10px;margin-bottom:6px;background:var(--surface)">
-      <span style="flex:1;min-width:0;font-size:12.5px"><b>${esc(f.name)}</b><span style="display:block;font-size:10.5px;color:var(--text3)">${esc(f.kat||"eigene")}</span></span>
-      <button onclick="artDurchsichtTipp('${String(f.name).replace(/'/g,"\\'")}')" aria-label="${esc(f.name)}: ${UEBUNG_ART[a].lang}. Antippen schaltet weiter." style="flex:none;min-height:48px;padding:0 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap">${UEBUNG_ART[a].kurz}</button>
+      <span style="flex:1;min-width:0;font-size:var(--s-text)"><b>${esc(f.name)}</b><span style="display:block;font-size:var(--s-klein);color:var(--text3)">${esc(f.kat||"eigene")}</span></span>
+      <button onclick="artDurchsichtTipp('${String(f.name).replace(/'/g,"\\'")}')" aria-label="${esc(f.name)}: ${UEBUNG_ART[a].lang}. Antippen schaltet weiter." style="flex:none;min-height:48px;padding:0 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:800;cursor:pointer;white-space:nowrap">${UEBUNG_ART[a].kurz}</button>
     </div>`;
   };
   const block=(key,titel)=>nachArt[key].length
-    ? `<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:12px 2px 5px">${titel} · ${nachArt[key].length}</div>${nachArt[key].map(zeile).join("")}`
+    ? `<div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:12px 2px 5px">${titel} · ${nachArt[key].length}</div>${nachArt[key].map(zeile).join("")}`
     : "";
   box.innerHTML=`
-    <div style="font-size:12px;color:var(--text2);line-height:1.55;margin-bottom:8px">
+    <div style="font-size:var(--s-text);color:var(--text2);line-height:1.55;margin-bottom:8px">
       ${_adNurOffene?`<b>${offen.length}</b> Übungen sind noch nicht eingeordnet. Der Vorschlag steht schon dran – antippen ändert ihn, gespeichert wird erst unten.`
                     :`Alle <b>${alle.length}</b> Übungen mit Einordnung. Antippen ändert, gespeichert wird erst unten.`}
     </div>
     <button class="btn btn-sm" style="min-height:48px;width:100%;justify-content:center" onclick="artDurchsichtFilter()">${_adNurOffene?"Auch die schon eingeordneten zeigen":"Nur die offenen zeigen"}</button>
     ${block("spiel","Spielform")}${block("uebung","Übungsform")}${block("weder","Weder noch")}
-    <button onclick="artDurchsichtUebernehmen(this)" style="width:100%;min-height:56px;margin-top:14px;border:none;border-radius:14px;background:var(--surface);border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;color:var(--text);font-family:inherit;font-size:15px;font-weight:900;cursor:pointer">💾 Einordnung übernehmen</button>
+    <button onclick="artDurchsichtUebernehmen(this)" style="width:100%;min-height:56px;margin-top:14px;border:none;border-radius:14px;background:var(--surface);border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;color:var(--text);font-family:inherit;font-size:var(--s-karte);font-weight:900;cursor:pointer">💾 Einordnung übernehmen</button>
     <div style="display:flex;margin-top:8px"><button class="btn btn-sm" style="margin-left:auto;min-height:48px" onclick="artDurchsichtClose()">Ohne Speichern schließen</button></div>`;
 }
 /* Ein Schreibvorgang für alles – nicht 107 einzelne. team_config trägt die Einordnung
@@ -4179,7 +4179,7 @@ function tpPickerOpen(selId){
   m.onclick=e=>{if(e.target===m)m.remove();};
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("tp-pick-modal","📚","Übung wählen","Suchen, Gruppe antippen oder aus „Zuletzt genutzt“","#16a34a")}
-    <input id="tp-pick-suche" type="text" placeholder="Suchen… (z. B. Dribbling)" oninput="_tpPick.suche=this.value;clearTimeout(window._tpPickDeb);window._tpPickDeb=setTimeout(tpPickerRender,160)" style="width:100%;box-sizing:border-box;min-height:46px;padding:10px 12px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:14px;background:var(--surface2);color:var(--text)">
+    <input id="tp-pick-suche" type="text" placeholder="Suchen… (z. B. Dribbling)" oninput="_tpPick.suche=this.value;clearTimeout(window._tpPickDeb);window._tpPickDeb=setTimeout(tpPickerRender,160)" style="width:100%;box-sizing:border-box;min-height:46px;padding:10px 12px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-karte);background:var(--surface2);color:var(--text)">
     <div id="tp-pick-gruppen" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px"></div>
     <div id="tp-pick-sterne" style="display:flex;gap:6px;margin-top:8px"></div>
     <div id="tp-pick-liste" style="margin-top:10px"></div>
@@ -4218,10 +4218,10 @@ function tpPickerRender(){
     const kacheln=KAT_GRUPPEN.filter(g=>gruppenIm.has(g.key));
     if(gruppenIm.has("eigene"))kacheln.push({key:"eigene",label:"🧪 Eigene & KI"});
     gr.style.display=kacheln.length>1?"grid":"none";
-    gr.innerHTML=kacheln.map(g=>`<button onclick="_tpPick.gruppe=_tpPick.gruppe==='${g.key}'?null:'${g.key}';tpPickerRender()" style="min-height:56px;border:1px solid var(--rand-bedien);${_tpPick.gruppe===g.key?"background:#16a34a;color:#fff;border-color:#16a34a;":"background:var(--surface2);color:var(--text2);"}border-radius:12px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;padding:8px">${g.label}</button>`).join("");
+    gr.innerHTML=kacheln.map(g=>`<button onclick="_tpPick.gruppe=_tpPick.gruppe==='${g.key}'?null:'${g.key}';tpPickerRender()" style="min-height:56px;border:1px solid var(--rand-bedien);${_tpPick.gruppe===g.key?"background:#16a34a;color:#fff;border-color:#16a34a;":"background:var(--surface2);color:var(--text2);"}border-radius:12px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer;padding:8px">${g.label}</button>`).join("");
   }
   const st=document.getElementById("tp-pick-sterne");
-  if(st)st.innerHTML=[0,1,2,3].map(s=>`<button onclick="_tpPick.stern=${s};tpPickerRender()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);${_tpPick.stern===s?"background:#16a34a;color:#fff;border-color:#16a34a;":"background:var(--surface2);color:var(--text2);"}border-radius:10px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer">${s===0?"Alle":"⭐".repeat(s)}</button>`).join("");
+  if(st)st.innerHTML=[0,1,2,3].map(s=>`<button onclick="_tpPick.stern=${s};tpPickerRender()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);${_tpPick.stern===s?"background:#16a34a;color:#fff;border-color:#16a34a;":"background:var(--surface2);color:var(--text2);"}border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${s===0?"Alle":"⭐".repeat(s)}</button>`).join("");
   const q=(_tpPick.suche||"").trim().toLowerCase();
   let items=alle;
   if(q)items=items.filter(x=>(x.f.name+" "+(x.f.kat||"")).toLowerCase().includes(q));
@@ -4231,16 +4231,16 @@ function tpPickerRender(){
   let html="";
   if(!q&&!_tpPick.gruppe&&!_tpPick.stern){
     const zuletzt=alle.map(x=>({...x,d:tpLastUsedDays(x.i)})).filter(x=>x.d!==null&&x.d<28).sort((a,b)=>a.d-b.d).slice(0,4);
-    if(zuletzt.length)html+=`<div style="font-size:12px;font-weight:800;color:var(--text2);margin:2px 0 6px">🕘 Zuletzt genutzt</div>`+zuletzt.map(_tpPickKarte).join("");
+    if(zuletzt.length)html+=`<div style="font-size:var(--s-text);font-weight:800;color:var(--text2);margin:2px 0 6px">🕘 Zuletzt genutzt</div>`+zuletzt.map(_tpPickKarte).join("");
     const typ=_tpPickTyp();
     const versteckt=Math.max(0,((typeof tpAllForms==="function"?tpAllForms():[]).length)-alle.length);
-    html+=`<div style="font-size:12px;font-weight:800;color:var(--text2);margin:10px 0 6px">${TP_PICK_TITEL[typ]||"Übungen"} (${items.length})</div>`;
+    html+=`<div style="font-size:var(--s-text);font-weight:800;color:var(--text2);margin:10px 0 6px">${TP_PICK_TITEL[typ]||"Übungen"} (${items.length})</div>`;
     if(versteckt&&TP_PICK_ANDERE[typ])
-      html+=`<div style="font-size:11.5px;color:var(--text3);line-height:1.5;margin:-2px 0 8px">Nur Übungen für diesen Block – die übrigen ${versteckt} liegen in anderen Blöcken (${TP_PICK_ANDERE[typ]}), anzulegen über „➕ Phase hinzufügen".</div>`;
+      html+=`<div style="font-size:var(--s-klein);color:var(--text3);line-height:1.5;margin:-2px 0 8px">Nur Übungen für diesen Block – die übrigen ${versteckt} liegen in anderen Blöcken (${TP_PICK_ANDERE[typ]}), anzulegen über „➕ Phase hinzufügen".</div>`;
   }else{
-    html+=`<div style="font-size:12px;font-weight:800;color:var(--text2);margin:2px 0 6px">${items.length} Übung${items.length===1?"":"en"}</div>`;
+    html+=`<div style="font-size:var(--s-text);font-weight:800;color:var(--text2);margin:2px 0 6px">${items.length} Übung${items.length===1?"":"en"}</div>`;
   }
-  html+=items.map(_tpPickKarte).join("")||'<div style="font-size:12.5px;color:var(--text3);padding:10px 0">Nichts gefunden.</div>';
+  html+=items.map(_tpPickKarte).join("")||'<div style="font-size:var(--s-text);color:var(--text3);padding:10px 0">Nichts gefunden.</div>';
   const li=document.getElementById("tp-pick-liste");
   if(li)li.innerHTML=html;
 }
@@ -4249,12 +4249,12 @@ function _tpPickKarte(x){
   const stern=_tpStern(x.f);
   return `<div style="display:flex;align-items:center;gap:8px;border:var(--border-s);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--surface)">
     <button onclick="tpPickerSet(${x.i})" style="flex:1;min-width:0;min-height:44px;border:none;background:transparent;color:var(--text);font-family:inherit;text-align:left;cursor:pointer;padding:0">
-      <span style="display:block;font-size:14px;font-weight:800">${esc(x.f.name)}</span>
-      <span style="display:block;font-size:11.5px;color:var(--text2)">${x.f.dauer||"?"} Min. · ${esc(x.f.kat||"eigene")} · ${frische}</span>
+      <span style="display:block;font-size:var(--s-karte);font-weight:800">${esc(x.f.name)}</span>
+      <span style="display:block;font-size:var(--s-klein);color:var(--text2)">${x.f.dauer||"?"} Min. · ${esc(x.f.kat||"eigene")} · ${frische}</span>
       ${(function(){const c=tpArtChip(x.f,false);return c?`<span style="display:block;margin-top:3px">${c}</span>`:"";})()}
     </button>
-    <button onclick="tpSternTipp('${x.f.name.replace(/'/g,"\\'")}')" title="Schwierigkeit antippen zum Ändern" style="min-width:52px;min-height:44px;border:none;background:transparent;color:#f59e0b;font-size:13px;cursor:pointer;letter-spacing:1px">${"⭐".repeat(stern)}</button>
-    <button onclick="tpPickerInfo(${x.i})" aria-label="Übung ansehen" title="Skizze & Beschreibung ansehen" style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-size:15px;cursor:pointer">ℹ️</button>
+    <button onclick="tpSternTipp('${x.f.name.replace(/'/g,"\\'")}')" title="Schwierigkeit antippen zum Ändern" style="min-width:52px;min-height:44px;border:none;background:transparent;color:#f59e0b;font-size:var(--s-text);cursor:pointer;letter-spacing:1px">${"⭐".repeat(stern)}</button>
+    <button onclick="tpPickerInfo(${x.i})" aria-label="Übung ansehen" title="Skizze & Beschreibung ansehen" style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-size:var(--s-karte);cursor:pointer">ℹ️</button>
   </div>`;
 }
 function tpPickerSet(idx){
@@ -4569,16 +4569,16 @@ function _tlRender(){
   const slots=(row.plan&&row.plan.slots)||[];
   const me=(typeof _meTrainer==="string")?_meTrainer:"";
   const kopf=`<div style="display:flex;align-items:center;gap:8px;max-width:520px;margin:0 auto">
-      <span style="font-size:20px">🏃</span>
-      <span style="font-size:14px;font-weight:800;flex:1;text-align:left">Trainingsstart · Station ${row.slot+1}/${slots.length||"?"}</span>
-      <button onclick="tlSchliessen()" aria-label="Schließen" style="min-width:44px;min-height:44px;border:none;background:rgba(255,255,255,.12);color:#fff;border-radius:10px;font-size:17px;cursor:pointer">✕</button>
+      <span style="font-size:var(--s-teil)">🏃</span>
+      <span style="font-size:var(--s-karte);font-weight:800;flex:1;text-align:left">Trainingsstart · Station ${row.slot+1}/${slots.length||"?"}</span>
+      <button onclick="tlSchliessen()" aria-label="Schließen" style="min-width:44px;min-height:44px;border:none;background:rgba(255,255,255,.12);color:#fff;border-radius:10px;font-size:var(--s-teil);cursor:pointer">✕</button>
     </div>`;
   if(row.status==="fertig"){
     ov.innerHTML=kopf+`<div style="max-width:520px;margin:8vh auto 0">
       <div style="font-size:64px">🎉</div>
-      <div style="font-size:24px;font-weight:900;margin:10px 0">Training geschafft!</div>
-      <div style="font-size:13px;opacity:.8">Denkt an die Nachbewertung – jeder bewertet seine eigenen Übungen.</div>
-      <button onclick="tlSchliessen()" style="margin-top:24px;padding:14px 28px;border:none;border-radius:12px;background:#16a34a;color:#fff;font-size:16px;font-weight:800;font-family:inherit;cursor:pointer">Fertig</button>
+      <div style="font-size:var(--s-seite);font-weight:900;margin:10px 0">Training geschafft!</div>
+      <div style="font-size:var(--s-text);opacity:.8">Denkt an die Nachbewertung – jeder bewertet seine eigenen Übungen.</div>
+      <button onclick="tlSchliessen()" style="margin-top:24px;padding:14px 28px;border:none;border-radius:12px;background:#16a34a;color:#fff;font-size:var(--s-karte);font-weight:800;font-family:inherit;cursor:pointer">Fertig</button>
     </div>`;
     return;
   }
@@ -4588,19 +4588,19 @@ function _tlRender(){
     const binBereit=me&&row.bereit&&row.bereit[me];
     ov.innerHTML=kopf+`<div style="max-width:520px;margin:6vh auto 0">
       <div style="font-size:52px">🟢</div>
-      <div style="font-size:22px;font-weight:900;margin:8px 0">${row.slot===0?"Training startet":"Nächste Station"} – bereit?</div>
-      <div style="font-size:14px;opacity:.85;margin-bottom:16px">${esc(st.label)} · ${st.dauer} Min.</div>
+      <div style="font-size:var(--s-seite);font-weight:900;margin:8px 0">${row.slot===0?"Training startet":"Nächste Station"} – bereit?</div>
+      <div style="font-size:var(--s-karte);opacity:.85;margin-bottom:16px">${esc(st.label)} · ${st.dauer} Min.</div>
       <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:20px">
         ${noetig.map(t=>{
           const da=row.bereit&&row.bereit[t];
           // Wer nicht kommt (Handy weg, kurzfristig abgesagt), darf herausgenommen werden –
           // sonst blockiert ein einziger fehlender Trainer die gesamte Runde.
-          return `<span style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:18px;font-size:13px;font-weight:800;background:${da?"#16a34a":"rgba(255,255,255,.12)"}">${da?"✅":"⏳"} ${esc(t)}${da?"":`<button onclick="tlOhne('${t.replace(/'/g,"\\'")}')" title="ohne ${esc(t)} weitermachen" aria-label="ohne ${esc(t)} weitermachen" style="min-width:24px;min-height:24px;border:none;border-radius:50%;background:rgba(255,255,255,.2);color:#fff;font-size:12px;font-weight:900;cursor:pointer;line-height:1">✕</button>`}</span>`;
+          return `<span style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:18px;font-size:var(--s-text);font-weight:800;background:${da?"#16a34a":"rgba(255,255,255,.12)"}">${da?"✅":"⏳"} ${esc(t)}${da?"":`<button onclick="tlOhne('${t.replace(/'/g,"\\'")}')" title="ohne ${esc(t)} weitermachen" aria-label="ohne ${esc(t)} weitermachen" style="min-width:24px;min-height:24px;border:none;border-radius:50%;background:rgba(255,255,255,.2);color:#fff;font-size:var(--s-text);font-weight:900;cursor:pointer;line-height:1">✕</button>`}</span>`;
         }).join("")}
       </div>
-      ${binBereit?'<div style="font-size:14px;opacity:.8">Warten auf die anderen…</div>'
-        :`<button onclick="tlBereit()" style="width:100%;max-width:340px;min-height:64px;border:none;border-radius:16px;background:#16a34a;color:#fff;font-size:20px;font-weight:900;font-family:inherit;cursor:pointer">✅ Bereit!</button>`}
-      <button onclick="tlAbbrechen()" style="display:block;margin:18px auto 0;min-height:44px;border:none;background:transparent;color:#94a3b8;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline">🔁 Abbrechen & neu starten</button>
+      ${binBereit?'<div style="font-size:var(--s-karte);opacity:.8">Warten auf die anderen…</div>'
+        :`<button onclick="tlBereit()" style="width:100%;max-width:340px;min-height:64px;border:none;border-radius:16px;background:#16a34a;color:#fff;font-size:var(--s-teil);font-weight:900;font-family:inherit;cursor:pointer">✅ Bereit!</button>`}
+      <button onclick="tlAbbrechen()" style="display:block;margin:18px auto 0;min-height:44px;border:none;background:transparent;color:#94a3b8;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer;text-decoration:underline">🔁 Abbrechen & neu starten</button>
     </div>`;
     return;
   }
@@ -4614,7 +4614,7 @@ function _tlRender(){
   if(jetzt<startMs){
     const sek=Math.ceil((startMs-jetzt)/1000);
     ov.innerHTML=kopf+`<div style="max-width:520px;margin:8vh auto 0">
-      <div style="font-size:16px;opacity:.8">${esc(st.label)} – gleich geht's los!</div>
+      <div style="font-size:var(--s-karte);opacity:.8">${esc(st.label)} – gleich geht's los!</div>
       <div style="font-size:110px;font-weight:900;font-variant-numeric:tabular-nums">${sek}</div>
     </div>`;
     return;
@@ -4624,25 +4624,25 @@ function _tlRender(){
   const ich=me&&((row.fertig||{})[me]||[]).includes(row.slot);
   ov.innerHTML=kopf+`<div style="max-width:520px;margin:2vh auto 0">
     <div style="font-size:56px;font-weight:900;font-variant-numeric:tabular-nums;color:${rest===0?"#f87171":"#fff"}">${rest===0?"Abpfiff!":_tlFmt(rest*1000)}</div>
-    <div style="font-size:12px;opacity:.7;margin-bottom:14px">${esc(st.label)} · läuft auf allen Handys parallel</div>
+    <div style="font-size:var(--s-text);opacity:.7;margin-bottom:14px">${esc(st.label)} · läuft auf allen Handys parallel</div>
     ${zeigen.map(g=>`<div style="background:#111c33;border-radius:16px;padding:16px;margin-bottom:10px;text-align:left">
-      <div style="font-size:11px;font-weight:800;opacity:.7">🧢 ${esc(g.trainer)}${g.gruppe?" · "+esc(g.gruppe):""}${meine.length?"":" (nicht deine Gruppe)"}</div>
-      <div style="font-size:20px;font-weight:900;margin-top:4px">${esc(g.uebung)}</div>
-      ${g.kinder&&g.kinder.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${g.kinder.map(k=>`<span style="padding:5px 10px;border-radius:14px;background:rgba(255,255,255,.12);font-size:12.5px;font-weight:700">${esc(k)}</span>`).join("")}</div>`:""}
+      <div style="font-size:var(--s-klein);font-weight:800;opacity:.7">🧢 ${esc(g.trainer)}${g.gruppe?" · "+esc(g.gruppe):""}${meine.length?"":" (nicht deine Gruppe)"}</div>
+      <div style="font-size:var(--s-teil);font-weight:900;margin-top:4px">${esc(g.uebung)}</div>
+      ${g.kinder&&g.kinder.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${g.kinder.map(k=>`<span style="padding:5px 10px;border-radius:14px;background:rgba(255,255,255,.12);font-size:var(--s-text);font-weight:700">${esc(k)}</span>`).join("")}</div>`:""}
     </div>`).join("")}
     <div style="background:#111c33;border-radius:16px;padding:14px;margin:14px 0">
-      <div style="font-size:11px;font-weight:800;opacity:.7;text-align:left">⏱ Meine Stoppuhr</div>
+      <div style="font-size:var(--s-klein);font-weight:800;opacity:.7;text-align:left">⏱ Meine Stoppuhr</div>
       <div style="font-size:34px;font-weight:900;font-variant-numeric:tabular-nums;margin:4px 0">${_tlFmt(_tlUhrMs())}</div>
       <div style="display:flex;gap:8px;justify-content:center">
         <button onclick="tlUhrToggle()" style="flex:1;min-height:48px;border:none;border-radius:12px;background:#334155;color:#fff;font-weight:800;font-family:inherit;cursor:pointer">${_tl.uhr.run?"⏸ Stopp":"▶ Start"}</button>
         <button onclick="tlUhrRunde()" style="flex:1;min-height:48px;border:none;border-radius:12px;background:#334155;color:#fff;font-weight:800;font-family:inherit;cursor:pointer">🔁 Runde</button>
         <button onclick="tlUhrReset()" style="min-width:64px;min-height:48px;border:none;border-radius:12px;background:#1e293b;color:#94a3b8;font-weight:800;font-family:inherit;cursor:pointer">↺</button>
       </div>
-      ${_tl.uhr.laps.length?`<div style="font-size:12px;opacity:.75;margin-top:8px">${_tl.uhr.laps.map((l,i)=>`R${_tl.uhr.laps.length-i}: ${_tlFmt(l)}`).join(" · ")}</div>`:""}
+      ${_tl.uhr.laps.length?`<div style="font-size:var(--s-text);opacity:.75;margin-top:8px">${_tl.uhr.laps.map((l,i)=>`R${_tl.uhr.laps.length-i}: ${_tlFmt(l)}`).join(" · ")}</div>`:""}
     </div>
-    ${ich?'<div style="font-size:14px;font-weight:800;color:#4ade80">✅ Gemeldet – warten auf die anderen…</div>'
-      :`<button onclick="tlAbgeschlossen()" style="width:100%;max-width:340px;min-height:60px;border:none;border-radius:16px;background:#16a34a;color:#fff;font-size:17px;font-weight:900;font-family:inherit;cursor:pointer">✅ Übung abgeschlossen</button>`}
-    <button onclick="tlAbbrechen()" style="display:block;margin:14px auto 0;min-height:44px;border:none;background:transparent;color:#94a3b8;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline">🔁 Abbrechen & neu starten</button>
+    ${ich?'<div style="font-size:var(--s-karte);font-weight:800;color:#4ade80">✅ Gemeldet – warten auf die anderen…</div>'
+      :`<button onclick="tlAbgeschlossen()" style="width:100%;max-width:340px;min-height:60px;border:none;border-radius:16px;background:#16a34a;color:#fff;font-size:var(--s-teil);font-weight:900;font-family:inherit;cursor:pointer">✅ Übung abgeschlossen</button>`}
+    <button onclick="tlAbbrechen()" style="display:block;margin:14px auto 0;min-height:44px;border:none;background:transparent;color:#94a3b8;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer;text-decoration:underline">🔁 Abbrechen & neu starten</button>
   </div>`;
 }
 
@@ -4739,10 +4739,10 @@ function tgKachelHtml(){
   const sub=tg?tg.gruppen.map(g=>`${g.emo} ${g.name} (${g.kinder.length})`).join(" · ")
     :"Alle zugesagten Kinder in so viele Gruppen, wie die Einheit und die Kinderzahl brauchen – antippen";
   return `<button onclick="tgOpen()" style="width:100%;min-height:76px;margin:4px 0 10px;border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px 8px;box-sizing:border-box">
-    <span style="font-size:15px;font-weight:900">👥 Trainingsgruppen${tg?"":" bilden"}</span>
-    <span style="font-size:11.5px;color:var(--text2);text-align:center">${sub}</span>
-    ${quelle?`<span style="font-size:10.5px;color:var(--text3)">${quelle}</span>`:""}
-    ${hinweis?`<span style="font-size:11px;color:var(--amber-text,var(--text2))">ℹ️ ${hinweis}</span>`:""}
+    <span style="font-size:var(--s-karte);font-weight:900">👥 Trainingsgruppen${tg?"":" bilden"}</span>
+    <span style="font-size:var(--s-klein);color:var(--text2);text-align:center">${sub}</span>
+    ${quelle?`<span style="font-size:var(--s-klein);color:var(--text3)">${quelle}</span>`:""}
+    ${hinweis?`<span style="font-size:var(--s-klein);color:var(--amber-text,var(--text2))">ℹ️ ${hinweis}</span>`:""}
   </button>`;
 }
 /* anzahl (optional): gewuenschte Gruppenzahl. Ohne Angabe wie bisher = Zahl der
@@ -5034,7 +5034,7 @@ async function tgOpen(){
   m.onclick=e=>{if(e.target===m)m.remove();};
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("tg-modal","👥","Trainingsgruppen","Kind antippen = nächste Gruppe · Größen dürfen ungleich sein","#16a34a")}
-    <div id="tg-quelle" style="font-size:11.5px;color:var(--text2);margin-bottom:8px"></div>
+    <div id="tg-quelle" style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px"></div>
     <div id="tg-anzahl" role="group" aria-label="Anzahl der Gruppen" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px"></div>
     <div id="tg-liste"></div>
     <div style="display:flex;gap:8px;margin-top:10px">
@@ -5060,21 +5060,21 @@ function tgRender(){
     /* v573: Welche Zahl die Einheit braucht, steht am Knopf – als Stern, nicht als Farbe
        allein, und als Satz darunter mit der Rechnung. */
     const vor=(typeof tpGruppenVorschlag==="function")?tpGruppenVorschlag(kinder):null;
-    az.innerHTML=`<span style="font-size:11.5px;color:var(--text2);margin-right:2px">Gruppen:</span>`
+    az.innerHTML=`<span style="font-size:var(--s-klein);color:var(--text2);margin-right:2px">Gruppen:</span>`
       +TG_NAMEN.map((_,i)=>{const n=i+1;const an=n===jetzt;const gut=!!(vor&&vor.n===n);
-        return `<button onclick="tgAnzahlSetzen(${n})" aria-pressed="${an?"true":"false"}"${gut?' title="Passt zu den Stationen dieser Einheit"':""} style="min-width:44px;min-height:44px;padding:0 12px;border:1px solid ${gut&&!an?"var(--fam-training)":"var(--rand-bedien)"};${an?"border-color:transparent;background:var(--fam-training);color:#fff;":"background:var(--surface2);color:var(--text);"}border-radius:16px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer">${an?"✓ ":""}${n}${gut?" ★":""}</button>`;
+        return `<button onclick="tgAnzahlSetzen(${n})" aria-pressed="${an?"true":"false"}"${gut?' title="Passt zu den Stationen dieser Einheit"':""} style="min-width:44px;min-height:44px;padding:0 12px;border:1px solid ${gut&&!an?"var(--fam-training)":"var(--rand-bedien)"};${an?"border-color:transparent;background:var(--fam-training);color:#fff;":"background:var(--surface2);color:var(--text);"}border-radius:16px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${an?"✓ ":""}${n}${gut?" ★":""}</button>`;
       }).join("")
-      +`<span style="font-size:11px;color:var(--text3);margin-left:2px">${kinder} Kinder</span>`
-      +(vor?`<div style="flex:1 0 100%;font-size:11px;color:var(--text2);padding:4px 0 0;line-height:1.5">★ ${vor.n===jetzt?"passt":"empfohlen"}: die Stationen dieser Einheit brauchen ${vor.bedarf.join(" + ")} = ${vor.bedarf.reduce((a,x)=>a+x,0)} Kinder${vor.fehlt?`, ${vor.fehlt} ${vor.fehlt===1?"Platz bleibt":"Plätze bleiben"} leer`:""}${vor.zuviel?`, ${vor.zuviel} ${vor.zuviel===1?"Kind wechselt":"Kinder wechseln"} ein`:""}.</div>`:"");
+      +`<span style="font-size:var(--s-klein);color:var(--text3);margin-left:2px">${kinder} Kinder</span>`
+      +(vor?`<div style="flex:1 0 100%;font-size:var(--s-klein);color:var(--text2);padding:4px 0 0;line-height:1.5">★ ${vor.n===jetzt?"passt":"empfohlen"}: die Stationen dieser Einheit brauchen ${vor.bedarf.join(" + ")} = ${vor.bedarf.reduce((a,x)=>a+x,0)} Kinder${vor.fehlt?`, ${vor.fehlt} ${vor.fehlt===1?"Platz bleibt":"Plätze bleiben"} leer`:""}${vor.zuviel?`, ${vor.zuviel} ${vor.zuviel===1?"Kind wechselt":"Kinder wechseln"} ein`:""}.</div>`:"");
   }
   el.innerHTML=tg.gruppen.map((g,gi)=>`<div style="border:var(--border-s);border-left:4px solid ${g.farbe};border-radius:12px;padding:10px 12px;margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-        <button onclick="tgRename(${gi})" title="Gruppe umbenennen" style="border:none;background:transparent;font-family:inherit;font-size:14px;font-weight:900;color:${g.farbe};cursor:pointer;min-height:44px;padding:0;margin:-8px 0">${g.emo} ${esc(g.name)} ✏️</button>
-        <span style="font-size:11px;color:var(--text3)">${g.kinder.length} Kinder</span>
-        <button onclick="tgTrainerTipp(${gi})" title="Trainer wechseln" style="margin-left:auto;min-height:44px;padding:4px 12px;border:1px solid var(--rand-bedien);border-radius:16px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:12px;font-weight:800;cursor:pointer">🧢 ${esc(g.trainer||"– Trainer –")}</button>
+        <button onclick="tgRename(${gi})" title="Gruppe umbenennen" style="border:none;background:transparent;font-family:inherit;font-size:var(--s-karte);font-weight:900;color:${g.farbe};cursor:pointer;min-height:44px;padding:0;margin:-8px 0">${g.emo} ${esc(g.name)} ✏️</button>
+        <span style="font-size:var(--s-klein);color:var(--text3)">${g.kinder.length} Kinder</span>
+        <button onclick="tgTrainerTipp(${gi})" title="Trainer wechseln" style="margin-left:auto;min-height:44px;padding:4px 12px;border:1px solid var(--rand-bedien);border-radius:16px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">🧢 ${esc(g.trainer||"– Trainer –")}</button>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
-        ${g.kinder.map(k=>`<button onclick="tgKindTipp(${gi},'${k.replace(/'/g,"\\'")}')" title="Antippen = nächste Gruppe" style="min-height:44px;padding:6px 12px;border:1px solid var(--rand-bedien);border-radius:18px;font-family:inherit;font-size:12.5px;cursor:pointer;background:var(--surface2);color:var(--text)">${esc(k)}</button>`).join("")||'<span style="font-size:11px;color:var(--text3)">leer</span>'}
+        ${g.kinder.map(k=>`<button onclick="tgKindTipp(${gi},'${k.replace(/'/g,"\\'")}')" title="Antippen = nächste Gruppe" style="min-height:44px;padding:6px 12px;border:1px solid var(--rand-bedien);border-radius:18px;font-family:inherit;font-size:var(--s-text);cursor:pointer;background:var(--surface2);color:var(--text)">${esc(k)}</button>`).join("")||'<span style="font-size:var(--s-klein);color:var(--text3)">leer</span>'}
       </div>
     </div>`).join("");
 }
@@ -5133,8 +5133,8 @@ function routeRender(name,arg){
       document.body.innerHTML='<div style="font-family:system-ui;text-align:center;padding:48px;color:#334155">'+
         '<div style="font-size:34px;margin-bottom:10px">📡</div>'+
         '<div style="font-weight:700;margin-bottom:6px">Diese Ansicht konnte nicht geladen werden</div>'+
-        '<div style="font-size:13px;color:#64748b;margin-bottom:16px">Die Verbindung war zu langsam oder ist abgebrochen.</div>'+
-        '<button onclick="location.reload()" style="min-height:44px;padding:10px 20px;border:0;border-radius:10px;background:#1e3a8a;color:#fff;font-size:15px;font-weight:600">Neu laden</button></div>';
+        '<div style="font-size:var(--s-text);color:#64748b;margin-bottom:16px">Die Verbindung war zu langsam oder ist abgebrochen.</div>'+
+        '<button onclick="location.reload()" style="min-height:44px;padding:10px 20px;border:0;border-radius:10px;background:#1e3a8a;color:#fff;font-size:var(--s-karte);font-weight:600">Neu laden</button></div>';
     }
   },100);
 }

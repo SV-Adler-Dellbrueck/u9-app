@@ -272,11 +272,11 @@ function showLoginGate(){
   gate.id="login-gate";
   gate.style.cssText="position:fixed;inset:0;z-index:9000;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px";
   gate.innerHTML=`<div class="card" style="padding:24px;max-width:340px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.15)">
-    <div style="font-size:16px;font-weight:700;margin-bottom:4px">🔐 Trainer-Anmeldung</div>
-    <div style="font-size:11.5px;color:var(--text2);margin-bottom:14px">Spielerdaten sind geschützt – bitte mit deinem Trainer-Account anmelden.</div>
+    <div style="font-size:var(--s-karte);font-weight:700;margin-bottom:4px">🔐 Trainer-Anmeldung</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:14px">Spielerdaten sind geschützt – bitte mit deinem Trainer-Account anmelden.</div>
     <div class="mg" style="margin-bottom:8px"><label for="login-email">E-Mail</label><input type="email" id="login-email" autocomplete="username" style="width:100%"></div>
     <div class="mg" style="margin-bottom:12px"><label for="login-pw">Passwort</label><input type="password" id="login-pw" autocomplete="current-password" style="width:100%"></div>
-    <div id="login-err" style="font-size:11px;color:#dc2626;margin-bottom:8px;min-height:14px"></div>
+    <div id="login-err" style="font-size:var(--s-klein);color:#dc2626;margin-bottom:8px;min-height:14px"></div>
     <button class="btn btn-p" style="width:100%;min-height:44px" onclick="doLogin()"><i class="ti ti-login"></i>Anmelden</button>
   </div>`;
   document.body.appendChild(gate);
@@ -517,7 +517,7 @@ function toastUndo(msg,undoFn,ms){
   document.getElementById("undo-toast")?.remove();
   const el=document.createElement("div");el.id="undo-toast";
   el.setAttribute("role","status");el.setAttribute("aria-live","polite");
-  el.style.cssText="position:fixed;left:12px;right:12px;bottom:78px;z-index:10060;max-width:460px;margin:0 auto;background:#1e293b;color:#fff;border-radius:12px;padding:11px 12px;box-shadow:0 8px 28px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px;font-size:13px;font-family:inherit";
+  el.style.cssText="position:fixed;left:12px;right:12px;bottom:78px;z-index:10060;max-width:460px;margin:0 auto;background:#1e293b;color:#fff;border-radius:12px;padding:11px 12px;box-shadow:0 8px 28px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px;font-size:var(--s-text);font-family:inherit";
   const span=document.createElement("span");span.style.flex="1";span.textContent=msg;
   const btn=document.createElement("button");btn.textContent="↶ Rückgängig";
   btn.style.cssText="background:#fbbf24;color:#1e293b;border:none;border-radius:8px;padding:7px 12px;font-weight:800;font-family:inherit;cursor:pointer;flex:none";
@@ -653,7 +653,7 @@ function mapsAnchor(ort,color){ if(!ort)return ""; return `<a href="${mapsUrl(or
 // Eltern-Detailfenster (eigenes Design), sonst kompakter .btn fürs Trainer-Karten-Raster.
 function routeBtn(addr,opts){
   if(!addr)return ""; opts=opts||{};
-  if(opts.block)return `<a href="${mapsUrl(addr)}" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:46px;margin-top:8px;border:1.5px solid #1e3a8a;border-radius:10px;background:#eef2ff;color:#1e3a8a;font-family:inherit;font-size:14px;font-weight:800;text-decoration:none">🧭 Route öffnen</a>`;
+  if(opts.block)return `<a href="${mapsUrl(addr)}" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:46px;margin-top:8px;border:1.5px solid #1e3a8a;border-radius:10px;background:#eef2ff;color:#1e3a8a;font-family:inherit;font-size:var(--s-karte);font-weight:800;text-decoration:none">🧭 Route öffnen</a>`;
   return `<a class="btn btn-sm" href="${mapsUrl(addr)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none"><i class="ti ti-navigation"></i>🧭 Route</a>`;
 }
 
@@ -702,7 +702,7 @@ function terminAbsageChip(t,klein){
 function terminAbsageBanner(t){
   if(!terminFaelltAus(t))return "";
   const g=terminAbsageGrund(t);
-  return `<div style="background:#fee2e2;color:#991b1b;font-size:12.5px;font-weight:800;padding:8px 13px">🔴 Fällt aus${g?" – "+esc(g):""}</div>`;
+  return `<div style="background:#fee2e2;color:#991b1b;font-size:var(--s-text);font-weight:800;padding:8px 13px">🔴 Fällt aus${g?" – "+esc(g):""}</div>`;
 }
 function istPaused(name){ return !!PAUSE_MAP[name]; }
 function pauseBis(name){ return PAUSE_MAP[name]?PAUSE_MAP[name].bis:null; }
@@ -813,8 +813,8 @@ async function wetterInto(elId,dateStr,place,timeStr){
   const rain=(w.rain!=null)?` · 💧 ${w.rain}%`:"";
   const temp=w.hour?`${w.temp} °C`:`${w.tmin}–${w.tmax} °C`;
   const tip=wetterKitTip(w);
-  el.innerHTML=`<span style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text2);background:var(--surface2);border:var(--border);border-radius:20px;padding:3px 10px;margin-top:6px">${w.emoji} ${w.text} · ${temp}${rain}</span>`
-    +(tip?`<div style="font-size:11px;color:var(--text2);margin-top:4px">🎒 ${tip}</div>`:"");
+  el.innerHTML=`<span style="display:inline-flex;align-items:center;gap:5px;font-size:var(--s-klein);color:var(--text2);background:var(--surface2);border:var(--border);border-radius:20px;padding:3px 10px;margin-top:6px">${w.emoji} ${w.text} · ${temp}${rain}</span>`
+    +(tip?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">🎒 ${tip}</div>`:"");
 }
 
 async function xpAward(spielerId,quelle,quelleId){
@@ -891,15 +891,15 @@ function pwaBannerShow(kind){
   const el=document.createElement("div");
   el.id="pwa-nudge";
   el.style.cssText="position:fixed;left:12px;right:12px;bottom:12px;z-index:10050;background:#1e3a8a;color:#fff;border-radius:14px;padding:14px 34px 14px 16px;box-shadow:0 8px 28px rgba(0,0,0,.35);font-family:inherit;max-width:460px;margin:0 auto";
-  const close=`<button onclick="pwaBannerDismiss()" aria-label="Schließen" style="position:absolute;top:8px;right:10px;background:none;border:none;color:rgba(255,255,255,.7);font-size:22px;line-height:1;cursor:pointer">×</button>`;
+  const close=`<button onclick="pwaBannerDismiss()" aria-label="Schließen" style="position:absolute;top:8px;right:10px;background:none;border:none;color:rgba(255,255,255,.7);font-size:var(--s-seite);line-height:1;cursor:pointer">×</button>`;
   const app=pwaKontext().name;
   if(kind==="ios"){
-    el.innerHTML=`${close}<div style="font-weight:800;font-size:15px;margin-bottom:4px">📱 ${app} aufs Handy</div>
-      <div style="font-size:12.5px;line-height:1.55;opacity:.96">Tippe unten in Safari auf <b>Teilen</b> <span style="display:inline-block;border:1px solid rgba(255,255,255,.6);border-radius:5px;padding:0 5px">↑</span> und dann auf <b>„Zum Home-Bildschirm"</b> – danach startet der ${app} wie eine echte App, mit eigenem Symbol.</div>`;
+    el.innerHTML=`${close}<div style="font-weight:800;font-size:var(--s-karte);margin-bottom:4px">📱 ${app} aufs Handy</div>
+      <div style="font-size:var(--s-text);line-height:1.55;opacity:.96">Tippe unten in Safari auf <b>Teilen</b> <span style="display:inline-block;border:1px solid rgba(255,255,255,.6);border-radius:5px;padding:0 5px">↑</span> und dann auf <b>„Zum Home-Bildschirm"</b> – danach startet der ${app} wie eine echte App, mit eigenem Symbol.</div>`;
   }else{
-    el.innerHTML=`${close}<div style="font-weight:800;font-size:15px;margin-bottom:8px">📱 ${app} installieren</div>
-      <div style="font-size:12.5px;opacity:.96;margin-bottom:10px">Als eigene App auf den Startbildschirm – schneller Zugriff, funktioniert auch offline.</div>
-      <button onclick="pwaBannerInstall()" style="background:#fff;color:#1e3a8a;border:none;border-radius:10px;padding:9px 16px;font-family:inherit;font-weight:800;font-size:13.5px;cursor:pointer">Installieren</button>`;
+    el.innerHTML=`${close}<div style="font-weight:800;font-size:var(--s-karte);margin-bottom:8px">📱 ${app} installieren</div>
+      <div style="font-size:var(--s-text);opacity:.96;margin-bottom:10px">Als eigene App auf den Startbildschirm – schneller Zugriff, funktioniert auch offline.</div>
+      <button onclick="pwaBannerInstall()" style="background:#fff;color:#1e3a8a;border:none;border-radius:10px;padding:9px 16px;font-family:inherit;font-weight:800;font-size:var(--s-text);cursor:pointer">Installieren</button>`;
   }
   document.body.appendChild(el);
 }
@@ -986,9 +986,9 @@ async function pushRenderInto(elId, rolle){
   if(!pushSupported()){ el.innerHTML=""; return; }
   const sub=await pushCurrentSub();
   const on=!!sub && (typeof Notification!=="undefined"&&Notification.permission==="granted");
-  const base="width:100%;min-height:48px;padding:12px;border-radius:10px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer";
+  const base="width:100%;min-height:48px;padding:12px;border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer";
   el.innerHTML=on
-    ? `<button onclick="pushUnsubscribe().then(()=>pushRenderInto('${elId}','${rolle}'))" style="${base};border:1.5px solid #16a34a;background:#f0fdf4;color:#15803d">🔔 Benachrichtigungen an ✓ · zum Ausschalten tippen</button>`
+    ? `<button onclick="pushUnsubscribe().then(()=>pushRenderInto('${elId}','${rolle}'))" style="${base};border:1.5px solid #16a34a;background:var(--green-bg);color:var(--green)">🔔 Benachrichtigungen an ✓ · zum Ausschalten tippen</button>`
     : `<button onclick="pushSubscribe('${rolle}').then(ok=>{if(ok)pushRenderInto('${elId}','${rolle}');})" style="${base};border:none;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff">🔔 Benachrichtigungen aktivieren</button>`;
 }
 // Trainer: Push an alle (subscribed) Eltern senden – via Edge Function push-send.
@@ -1069,12 +1069,12 @@ document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==
 function mdlHead(modalId,emoji,title,sub,col){
   col=col||"#1e3a8a";
   return `<div style="display:flex;align-items:center;gap:11px;margin-bottom:12px;padding:10px 12px;background:linear-gradient(90deg,${col}18,${col}05);border-left:4px solid ${col};border-radius:12px">
-    <div style="width:38px;height:38px;flex:none;border-radius:11px;background:${col};display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 2px 6px ${col}55">${emoji}</div>
+    <div style="width:38px;height:38px;flex:none;border-radius:11px;background:${col};display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);box-shadow:0 2px 6px ${col}55">${emoji}</div>
     <div style="flex:1;min-width:0">
-      <div class="mdl-titel" style="font-size:15.5px;font-weight:800;line-height:1.2;color:var(--text)">${title}</div>
-      ${sub?`<div style="font-size:11px;color:var(--text2);margin-top:1px">${sub}</div>`:""}
+      <div class="mdl-titel" style="font-size:var(--s-karte);font-weight:800;line-height:1.2;color:var(--text)">${title}</div>
+      ${sub?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:1px">${sub}</div>`:""}
     </div>
-    <button onclick="document.getElementById('${modalId}')?.remove()" aria-label="Schließen" style="border:none;background:transparent;font-size:24px;color:var(--text2);cursor:pointer;line-height:1;min-width:44px;min-height:44px;margin:-8px -8px -8px 0;flex:none">×</button>
+    <button onclick="document.getElementById('${modalId}')?.remove()" aria-label="Schließen" style="border:none;background:transparent;font-size:var(--s-seite);color:var(--text2);cursor:pointer;line-height:1;min-width:44px;min-height:44px;margin:-8px -8px -8px 0;flex:none">×</button>
   </div>`;
 }
 
@@ -1110,10 +1110,10 @@ function frageJaNein(o){
     const c=document.createElement("div");
     c.style.cssText="background:var(--surface);color:var(--text);max-width:400px;width:100%;margin:auto;border-radius:16px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
     c.innerHTML=`${mdlHead("frage-modal",o.emoji||"❓",esc(o.titel||"Kurze Frage"),o.unter?esc(o.unter):"",akzent)}
-      <div style="font-size:13.5px;line-height:1.55;color:var(--text);white-space:pre-line;margin:2px 2px 14px">${esc(o.text||"")}</div>
+      <div style="font-size:var(--s-text);line-height:1.55;color:var(--text);white-space:pre-line;margin:2px 2px 14px">${esc(o.text||"")}</div>
       <div style="display:flex;gap:8px">
-        <button type="button" id="frage-nein" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);color:var(--text2);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">${esc(o.nein||"Abbrechen")}</button>
-        <button type="button" id="frage-ja" style="flex:1;min-height:44px;border:none;border-radius:12px;background:${akzent};color:#fff;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer">${esc(o.ja||"Ja, weiter")}</button>
+        <button type="button" id="frage-nein" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);color:var(--text2);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">${esc(o.nein||"Abbrechen")}</button>
+        <button type="button" id="frage-ja" style="flex:1;min-height:44px;border:none;border-radius:12px;background:${akzent};color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${esc(o.ja||"Ja, weiter")}</button>
       </div>`;
     m.appendChild(c); document.body.appendChild(m);
     c.querySelector("#frage-nein").onclick=()=>antwort(false);

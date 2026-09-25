@@ -188,11 +188,11 @@ function bewRundeStop(){ if(confirm("Bewertungsrunde beenden?")){ BEW_RUNDE={act
 function bewRundeBarRender(){
   const bar=document.getElementById("bew-runde-bar"); if(!bar)return;
   if(!BEW_RUNDE.active){
-    bar.innerHTML=`<button onclick="bewRundeStart()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.28)"><i class="ti ti-clipboard-list"></i> Bewertungsrunde starten (alle nacheinander)</button>`;
+    bar.innerHTML=`<button onclick="bewRundeStart()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.28)"><i class="ti ti-clipboard-list"></i> Bewertungsrunde starten (alle nacheinander)</button>`;
     return;
   }
   const pos=BEW_RUNDE.idx+1, tot=BEW_RUNDE.queue.length, name=BEW_RUNDE.queue[BEW_RUNDE.idx];
-  bar.innerHTML=`<div style="flex:1;min-width:150px;font-size:12.5px;font-weight:800;color:var(--club-accent)">📋 Runde · Spieler ${pos}/${tot}: ${esc(name)}</div>
+  bar.innerHTML=`<div style="flex:1;min-width:150px;font-size:var(--s-text);font-weight:800;color:var(--club-accent)">📋 Runde · Spieler ${pos}/${tot}: ${esc(name)}</div>
     <button class="btn btn-sm" onclick="bewRundeSkip()">Überspringen ›</button>
     <button class="btn btn-sm" onclick="bewRundeStop()" style="color:var(--red)">Beenden</button>`;
 }
@@ -213,7 +213,7 @@ function buildDims(isTw){
     const isTWDim=d.id.startsWith("tw_");
     block.innerHTML=`
       <div class="dim-head" role="button" tabindex="0" onclick="toggleDim(this)">
-        <div class="dim-iw" style="background:${d.col}22"><i class="ti ${d.icon}" style="font-size:15px;color:${d.col}"></i></div>
+        <div class="dim-iw" style="background:${d.col}22"><i class="ti ${d.icon}" style="font-size:var(--s-karte);color:${d.col}"></i></div>
         <div style="flex:1">
           <div class="dim-ht">${isTWDim?"🥅 ":""}${d.label}</div>
           <div class="dim-hs">${d.tier.length} Beobachtungen · ${d.mx.length} Detailwerte · ${Math.round(d.w*100)}% Gewichtung</div>
@@ -239,11 +239,11 @@ function buildDims(isTw){
     tt.appendChild(tb);body.appendChild(tt);
     if(d.mx.length){ // Detail-Matrix nur rendern, wenn die Dimension welche hat (v2: leer)
     const sep=document.createElement("div");
-    sep.style.cssText="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text2);padding:6px 0 4px;margin-top:4px";
+    sep.style.cssText="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text2);padding:6px 0 4px;margin-top:4px";
     sep.textContent="Detail-Bewertung (1–5)";
     body.appendChild(sep);
     const mx=document.createElement("table");mx.className="mx-t";
-    mx.innerHTML=`<thead><tr><th>Kriterium</th><th>1<br><span style="font-weight:400;font-size:9px">Noch nicht</span></th><th>2<br><span style="font-weight:400;font-size:9px">Ansatz</span></th><th>3<br><span style="font-weight:400;font-size:9px">Solide</span></th><th>4<br><span style="font-weight:400;font-size:9px">Gut</span></th><th>5<br><span style="font-weight:400;font-size:9px">Stark</span></th></tr></thead>`;
+    mx.innerHTML=`<thead><tr><th>Kriterium</th><th>1<br><span style="font-weight:400;font-size:var(--s-klein)">Noch nicht</span></th><th>2<br><span style="font-weight:400;font-size:var(--s-klein)">Ansatz</span></th><th>3<br><span style="font-weight:400;font-size:var(--s-klein)">Solide</span></th><th>4<br><span style="font-weight:400;font-size:var(--s-klein)">Gut</span></th><th>5<br><span style="font-weight:400;font-size:var(--s-klein)">Stark</span></th></tr></thead>`;
     const mb=document.createElement("tbody");
     d.mx.forEach(m=>{
       const tr=document.createElement("tr");tr.id=`mxr-${m.n}`;
@@ -257,7 +257,7 @@ function buildDims(isTw){
     mxWrap.className="mx-wrap";
     const mxHint=document.createElement("div");
     mxHint.className="mx-scroll-hint";
-    mxHint.innerHTML='<i class="ti ti-arrows-left-right" style="font-size:12px"></i>Seitwärts scrollen für alle Spalten';
+    mxHint.innerHTML='<i class="ti ti-arrows-left-right" style="font-size:var(--s-text)"></i>Seitwärts scrollen für alle Spalten';
     body.appendChild(mxHint);
     mxWrap.appendChild(mx);
     body.appendChild(mxWrap);
@@ -323,7 +323,7 @@ function wizRender(){
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:var(--surface);border:var(--border-s);border-radius:var(--r);margin-bottom:8px;position:sticky;top:0;z-index:15">
       <button class="btn btn-sm" style="min-width:44px;min-height:44px${wizIdx===0?';opacity:.4':''}" onclick="wizGo(-1)"><i class="ti ti-chevron-left"></i></button>
       <div style="text-align:center;flex:1">
-        <div style="font-size:13px;font-weight:700;color:var(--text)">${label} · ${wizIdx+1}/${blocks.length}</div>
+        <div style="font-size:var(--s-text);font-weight:700;color:var(--text)">${label} · ${wizIdx+1}/${blocks.length}</div>
         <div style="margin-top:4px;display:flex;gap:5px;justify-content:center">${dots}</div>
       </div>
       <button class="btn ${letzte?'btn-p':''} btn-sm" style="min-width:44px;min-height:44px" onclick="${letzte?"document.querySelector('button[onclick=\\\"savePlayer()\\\"]').scrollIntoView({behavior:'smooth'})":"wizGo(1)"}">${letzte?'<i class="ti ti-check"></i>':'<i class="ti ti-chevron-right"></i>'}</button>
@@ -401,6 +401,11 @@ function kidMapFromIds(obj){ if(!obj||typeof obj!=="object"||Array.isArray(obj))
 function kidMapToIds(obj){ if(!obj||typeof obj!=="object"||Array.isArray(obj))return obj; const out={}; Object.keys(obj).forEach(k=>{out[kidNameToKey(k)]=obj[k];}); return out; }
 function kidListFromIds(arr){ if(!Array.isArray(arr))return arr; return arr.map(x=>(typeof x==="number"||/^\d+$/.test(String(x)))?(kidName(x)||("#"+x)):x); }
 function kidListToIds(arr){ if(!Array.isArray(arr))return arr; return arr.map(x=>{ if(typeof x!=="string")return x; const m=x.match(/^#(\d+)$/); if(m)return Number(m[1]); const id=kidId(x); return id!=null?id:x; }); }
+/* v625 PO (Bildschirmfoto Einladungskarten: „Alle oder keine lässt sich nicht anklicken“):
+   loadKader legt die Datenbank-Kennung als `_id` ab, nicht als `id`. Drei Fenster fragten `k.id`
+   und sahen deshalb kein Kind – Einladungskarten („Kein Kader geladen.“), Notfall-Karten (ohne
+   Namen) und Adler-Welt (Federn, Abzeichen). Eine Stelle für beide Schreibweisen. */
+function kaderId(k){ return k?(k._id!=null?k._id:(k.id!=null?k.id:null)):null; }
 async function loadKader(){
   try{
     /* v482 – PO: „Die Anwesenheit der Kinder ist wieder weg." Nach einer Nacht ist der
@@ -460,7 +465,7 @@ function kaderAktivToggle(cb){
    nur nicht im Weg. Ein Umbau auf einzelnes Speichern hätte die Reihenfolge (sort_order)
    und die Behandlung doppelter Nummern mit angefasst — an beidem war nichts falsch. */
 function _keChips(k){
-  const chip=(txt,farbe,bg)=>`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;border:1px solid ${farbe};color:${farbe};background:${bg};white-space:nowrap">${txt}</span>`;
+  const chip=(txt,farbe,bg)=>`<span style="font-size:var(--s-klein);font-weight:700;padding:2px 7px;border-radius:999px;border:1px solid ${farbe};color:${farbe};background:${bg};white-space:nowrap">${txt}</span>`;
   const c=[];
   if(k.aktiv===false)c.push(chip("nicht im Kader","var(--amber)","transparent"));
   if(k.tw)c.push(chip("🥅 TW","var(--text2)","transparent"));
@@ -473,12 +478,12 @@ function kaderEditRow(k,i){
   const neu=!k._id&&!k.name;                 // frisch angelegte Zeile: gleich offen
   const kopf=`<button type="button" class="ke-kopf" onclick="kaderZeileAuf(this)" aria-expanded="${neu}"
       style="width:100%;min-height:56px;display:flex;align-items:center;gap:10px;padding:8px 10px;border:none;border-radius:var(--r);background:transparent;color:var(--text);font-family:inherit;text-align:left;cursor:pointer">
-      <span class="ke-kopf-nr" style="min-width:34px;font-size:13px;font-weight:800;color:var(--text3)">${k.nr!=null?"#"+k.nr:"—"}</span>
+      <span class="ke-kopf-nr" style="min-width:34px;font-size:var(--s-text);font-weight:800;color:var(--text3)">${k.nr!=null?"#"+k.nr:"—"}</span>
       <span style="flex:1;min-width:0">
-        <span class="ke-kopf-name" style="display:block;font-size:14px;font-weight:700">${esc(k.name||"Neuer Spieler")}</span>
+        <span class="ke-kopf-name" style="display:block;font-size:var(--s-karte);font-weight:700">${esc(k.name||"Neuer Spieler")}</span>
         <span class="ke-kopf-chips" style="display:block;margin-top:2px">${_keChips(k)}</span>
       </span>
-      <span class="ke-pfeil" aria-hidden="true" style="font-size:16px;color:var(--text3);transition:transform .15s${neu?";transform:rotate(90deg)":""}">›</span>
+      <span class="ke-pfeil" aria-hidden="true" style="font-size:var(--s-karte);color:var(--text3);transition:transform .15s${neu?";transform:rotate(90deg)":""}">›</span>
     </button>`;
   return `<div class="kader-edit-row" data-id="${k._id||''}" data-name="${esc(k.name||'')}" style="border:var(--border-s);border-radius:var(--r);margin-bottom:8px${drin?"":";opacity:0.62"}">
     ${kopf}
@@ -487,47 +492,47 @@ function kaderEditRow(k,i){
       <input class="ke-name" value="${esc(k.name||'')}" placeholder="Name" oninput="kaderKopfFrisch(this)" style="flex:1;min-width:80px;min-height:44px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;background:var(--surface);color:var(--text)">
       <input class="ke-nr" type="number" value="${k.nr!=null?k.nr:''}" placeholder="Nr" oninput="kaderKopfFrisch(this)" style="width:64px;min-height:44px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;background:var(--surface);color:var(--text)">
     </div>
-    <div class="ke-raus-hinweis" style="font-size:11px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:5px 8px;margin-bottom:6px;line-height:1.4${drin?";display:none":""}">Nicht mehr im Kader – taucht in Anwesenheit, Nominierung, Aufstellung und Turnier nicht mehr auf. Alles Bisherige bleibt gespeichert.</div>
+    <div class="ke-raus-hinweis" style="font-size:var(--s-klein);color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:5px 8px;margin-bottom:6px;line-height:1.4${drin?";display:none":""}">Nicht mehr im Kader – taucht in Anwesenheit, Nominierung, Aufstellung und Turnier nicht mehr auf. Alles Bisherige bleibt gespeichert.</div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
-      <label style="font-size:12px;display:flex;align-items:center;gap:4px;min-height:44px" title="Häkchen weg = nicht mehr im Kader. Verschwindet aus Anwesenheit, Nominierung, Aufstellung und Turnier – die Historie bleibt erhalten."><input class="ke-aktiv" type="checkbox" ${drin?"checked":""} onchange="kaderAktivToggle(this)">👥 Im Kader</label>
-      <label style="font-size:12px;display:flex;align-items:center;gap:4px;min-height:44px"><input class="ke-tw" type="checkbox" ${k.tw?"checked":""} onchange="kaderKopfFrisch(this)">🥅 TW</label>
-      <select class="ke-prio" style="min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px;background:var(--surface);color:var(--text)">
+      <label style="font-size:var(--s-text);display:flex;align-items:center;gap:4px;min-height:44px" title="Häkchen weg = nicht mehr im Kader. Verschwindet aus Anwesenheit, Nominierung, Aufstellung und Turnier – die Historie bleibt erhalten."><input class="ke-aktiv" type="checkbox" ${drin?"checked":""} onchange="kaderAktivToggle(this)">👥 Im Kader</label>
+      <label style="font-size:var(--s-text);display:flex;align-items:center;gap:4px;min-height:44px"><input class="ke-tw" type="checkbox" ${k.tw?"checked":""} onchange="kaderKopfFrisch(this)">🥅 TW</label>
+      <select class="ke-prio" style="min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)">
         <option value="0"${(k.twPrio||0)===0?" selected":""}>kein TW</option>
         <option value="1"${k.twPrio===1?" selected":""}>TW primär</option>
         <option value="2"${k.twPrio===2?" selected":""}>TW Option</option>
       </select>
-      <input class="ke-geb" type="date" value="${esc(k.geb||'')}" title="Geburtstag" aria-label="Geburtstag" style="min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px;background:var(--surface);color:var(--text)">
+      <input class="ke-geb" type="date" value="${esc(k.geb||'')}" title="Geburtstag" aria-label="Geburtstag" style="min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)">
     </div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
-      <select class="ke-fuss" title="Starker Fuß" aria-label="Starker Fuß" style="min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px;background:var(--surface);color:var(--text)">
+      <select class="ke-fuss" title="Starker Fuß" aria-label="Starker Fuß" style="min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)">
         <option value=""${!k.starker_fuss?" selected":""}>Fuß?</option>
         <option value="R"${k.starker_fuss==="R"?" selected":""}>Rechts</option>
         <option value="L"${k.starker_fuss==="L"?" selected":""}>Links</option>
         <option value="B"${k.starker_fuss==="B"?" selected":""}>Beidfüßig</option>
       </select>
-      <input class="ke-pos" value="${esc(k.lieblingsposition||'')}" placeholder="Lieblingsposition" style="flex:1;min-width:90px;min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px;background:var(--surface);color:var(--text)">
+      <input class="ke-pos" value="${esc(k.lieblingsposition||'')}" placeholder="Lieblingsposition" style="flex:1;min-width:90px;min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)">
     </div>
     <!-- v544: Die Trikotgröße stand hier nur in v543. Sie ist mit dem zweiten
          Kleidungsstück zu einer Ausgabe geworden (Trikotsatz, Anzug, Jacke haben je
          eigene Größen) und lebt jetzt in „Ausstattung" unter Team – eine Stelle, an
          der auch Datum und Rückgabe stehen. Nicht wieder hier einbauen. -->
     <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-      <span style="font-size:11px;color:var(--text2)">Foto (Karte):</span>
-      <input type="file" accept="image/jpeg,image/png,image/webp" onchange="kaderRowFoto(this)" aria-label="Foto für die Karte" style="font-size:11px;flex:1">
-      ${k.foto_path?'<span style="font-size:10px;color:var(--green)">✓ vorhanden</span>':''}
+      <span style="font-size:var(--s-klein);color:var(--text2)">Foto (Karte):</span>
+      <input type="file" accept="image/jpeg,image/png,image/webp" onchange="kaderRowFoto(this)" aria-label="Foto für die Karte" style="font-size:var(--s-klein);flex:1">
+      ${k.foto_path?'<span style="font-size:var(--s-klein);color:var(--green)">✓ vorhanden</span>':''}
     </div>
-    <label style="display:flex;align-items:flex-start;gap:6px;margin-bottom:6px;font-size:11px;color:var(--text2)" title="Nur mit ausdrücklicher Eltern-Zustimmung. Ohne Häkchen erscheinen überall nur die Initialen.">
+    <label style="display:flex;align-items:flex-start;gap:6px;margin-bottom:6px;font-size:var(--s-klein);color:var(--text2)" title="Nur mit ausdrücklicher Eltern-Zustimmung. Ohne Häkchen erscheinen überall nur die Initialen.">
       <input class="ke-fotook" type="checkbox" ${k.foto_stadionheft_ok?"checked":""} onchange="kaderKopfFrisch(this)" style="margin-top:1px">
       <span>📰 Foto freigegeben für <b>„Adler Nest" &amp; Team-Galerie</b> <span style="color:var(--text3)">(Eltern-Einwilligung eingeholt)</span></span>
     </label>
-    <input class="ke-medical" value="${esc(k.medical||'')}" placeholder="Medical-Hinweis (z. B. Asthma, Allergie…)" oninput="kaderKopfFrisch(this)" style="width:100%;min-height:44px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px;background:var(--surface);color:var(--text)">
+    <input class="ke-medical" value="${esc(k.medical||'')}" placeholder="Medical-Hinweis (z. B. Asthma, Allergie…)" oninput="kaderKopfFrisch(this)" style="width:100%;min-height:44px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)">
     ${k._id?`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px">
-      <button type="button" class="btn btn-sm" onclick="kontakteEditOpen(${k._id})" title="Kontakte, Eltern-Login und der persönliche Zu-/Absage-Link" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:10px;line-height:1.2"><i class="ti ti-address-book" style="font-size:17px"></i>Kontakte</button>
-      <button type="button" class="btn btn-sm" onclick="zieleOpen(${k._id})" title="Entwicklungs-Ziele setzen & verfolgen" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:10px;line-height:1.2"><i class="ti ti-target" style="font-size:17px"></i>Ziele</button>
-      <button type="button" class="btn btn-sm" onclick="childWrappedShare(${k._id})" title="Persönliche Saison-Rückblick-Karte zum Teilen mit der Familie" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:10px;line-height:1.2"><i class="ti ti-movie" style="font-size:17px"></i>Saison</button>
-      <button type="button" class="btn btn-sm" onclick="lobRecordOpen(${k._id},'${(k.name||'').replace(/'/g,'')}')" title="Kurzes Sprachlob aufnehmen – das Kind hört es in der Kabine" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:10px;line-height:1.2;grid-column:1/-1"><i class="ti ti-microphone" style="font-size:17px"></i>🎤 Sprachlob aufnehmen</button>
-      <button type="button" class="btn btn-sm btn-d" onclick="kaderEditDelete(this,'${esc(k.name||'')}','${k._id||''}')" style="grid-column:1/-1;justify-content:center;font-size:11px"><i class="ti ti-trash"></i>Endgültig löschen</button>
-    </div>`:'<div style="font-size:10px;color:var(--text3);margin-top:6px">Erst speichern – dann sind Kontakte, Links & Saison-Karte verfügbar.</div>'}
+      <button type="button" class="btn btn-sm" onclick="kontakteEditOpen(${k._id})" title="Kontakte, Eltern-Login und der persönliche Zu-/Absage-Link" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:var(--s-klein);line-height:1.2"><i class="ti ti-address-book" style="font-size:var(--s-teil)"></i>Kontakte</button>
+      <button type="button" class="btn btn-sm" onclick="zieleOpen(${k._id})" title="Entwicklungs-Ziele setzen & verfolgen" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:var(--s-klein);line-height:1.2"><i class="ti ti-target" style="font-size:var(--s-teil)"></i>Ziele</button>
+      <button type="button" class="btn btn-sm" onclick="childWrappedShare(${k._id})" title="Persönliche Saison-Rückblick-Karte zum Teilen mit der Familie" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:var(--s-klein);line-height:1.2"><i class="ti ti-movie" style="font-size:var(--s-teil)"></i>Saison</button>
+      <button type="button" class="btn btn-sm" onclick="lobRecordOpen(${k._id},'${(k.name||'').replace(/'/g,'')}')" title="Kurzes Sprachlob aufnehmen – das Kind hört es in der Kabine" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:var(--s-klein);line-height:1.2;grid-column:1/-1"><i class="ti ti-microphone" style="font-size:var(--s-teil)"></i>🎤 Sprachlob aufnehmen</button>
+      <button type="button" class="btn btn-sm btn-d" onclick="kaderEditDelete(this,'${esc(k.name||'')}','${k._id||''}')" style="grid-column:1/-1;justify-content:center;font-size:var(--s-klein)"><i class="ti ti-trash"></i>Endgültig löschen</button>
+    </div>`:'<div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px">Erst speichern – dann sind Kontakte, Links & Saison-Karte verfügbar.</div>'}
     </div>
   </div>`;
 }
@@ -593,11 +598,11 @@ function kaderEditOpen(){
   modal.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("kader-edit-modal","👥","Spieler verwalten",`${drin} im Kader${raus?` · ${raus} ausgetragen`:""}`,"#1e3a8a")}
     <input id="ke-filter" type="search" placeholder="Nach Namen suchen…" aria-label="Nach Namen suchen" oninput="kaderFilter(this.value)"
-      style="width:100%;min-height:48px;padding:10px 12px;margin-bottom:10px;border:1px solid var(--rand-bedien);border-radius:10px;box-sizing:border-box;font-family:inherit;font-size:13px;background:var(--surface);color:var(--text)">
+      style="width:100%;min-height:48px;padding:10px 12px;margin-bottom:10px;border:1px solid var(--rand-bedien);border-radius:10px;box-sizing:border-box;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)">
     <div id="kader-edit-list">${KADER.slice().sort((a,b)=>((a.aktiv===false)-(b.aktiv===false))).map((k,i)=>kaderEditRow(k,i)).join("")}</div>
     <button type="button" class="btn btn-sm" onclick="kaderEditAdd()" style="width:100%;margin:2px 0 12px"><i class="ti ti-plus"></i>Spieler erfassen</button>
-    <div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.5">Geburtstag und Medical-Hinweis sehen nur Trainer. Trikotgröße und Ausgabe stehen unter <b>Team → Ausstattung</b>.</div>
-    <button type="button" class="btn btn-p" onclick="kaderSaveAll(this)" style="width:100%;min-height:56px;font-size:15px;font-weight:800"><i class="ti ti-device-floppy"></i>Speichern</button>
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:10px;line-height:1.5">Geburtstag und Medical-Hinweis sehen nur Trainer. Trikotgröße und Ausgabe stehen unter <b>Team → Ausstattung</b>.</div>
+    <button type="button" class="btn btn-p" onclick="kaderSaveAll(this)" style="width:100%;min-height:56px;font-size:var(--s-karte);font-weight:800"><i class="ti ti-device-floppy"></i>Speichern</button>
   </div>`;
   document.body.appendChild(modal);
 }
@@ -649,16 +654,16 @@ function kontakteEditOpen(spielerId){
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
   modal.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:420px;width:100%;margin:auto">
     <div style="font-weight:700;margin-bottom:2px">📇 ${esc(k?k.name:"Spieler")} – Kontakte & Eltern-Login</div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:12px">Login-E-Mails: wer sich im Eltern-Bereich anmelden & zu-/absagen darf. Telefonnummern: beliebig viele (Vater, Mutter, Oma…).</div>
-    <div id="kontakte-body"><div style="color:var(--text3);font-size:12px;padding:12px">Lade…</div></div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:12px">Login-E-Mails: wer sich im Eltern-Bereich anmelden & zu-/absagen darf. Telefonnummern: beliebig viele (Vater, Mutter, Oma…).</div>
+    <div id="kontakte-body"><div style="color:var(--text3);font-size:var(--s-text);padding:12px">Lade…</div></div>
     <!-- v546: Der persönliche Zu-/Absage-Link stand bis hierher in der Stammdatenzeile
          des Kader-Editors, zwischen Geburtstag und Medical-Hinweis. Er ist aber keine
          Eigenschaft des Kindes, sondern ein Zugangsweg für seine Familie – und genau die
          wird hier verwaltet. Als Erinnerung an einen einzelnen Termin taugt er ohnehin
          nicht: er trägt kein Datum. Dafür gibt es das Nachfassen am Termin selbst. -->
     <div style="border-top:var(--border-s);margin-top:14px;padding-top:12px">
-      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:2px">Ohne Anmeldung zu- und absagen</div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5">Ein persönlicher Link für diese Familie: ein Tipp genügt, kein Login. Gilt dauerhaft für alle Termine – wer an einen einzelnen erinnern will, fasst am Termin selbst nach.</div>
+      <div style="font-size:var(--s-text);font-weight:700;color:var(--text2);margin-bottom:2px">Ohne Anmeldung zu- und absagen</div>
+      <div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:8px;line-height:1.5">Ein persönlicher Link für diese Familie: ein Tipp genügt, kein Login. Gilt dauerhaft für alle Termine – wer an einen einzelnen erinnern will, fasst am Termin selbst nach.</div>
       <button type="button" class="btn" style="width:100%" onclick="kindLinkShare(${spielerId})"><i class="ti ti-calendar-check"></i>Zu-/Absage-Link teilen</button>
     </div>
     <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn" onclick="document.getElementById('kontakte-modal').remove()">Schließen</button></div>
@@ -696,44 +701,44 @@ async function kontakteRender(sid){
   let emails=[],phones=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/eltern_kinder?spieler_id=eq.${sid}&select=id,email,label&order=id`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)emails=await r.json();}catch(e){}
   try{const r=await fetch(`${SB_URL}/rest/v1/kind_kontakte?spieler_id=eq.${sid}&select=id,name,rolle,telefon,geburtstag&order=id`,{headers:sbAuthHeaders()});if(r.ok)phones=await r.json();}catch(e){}
-  const inp="padding:7px;border:var(--border-s);border-radius:6px;font-family:inherit;font-size:12px";
+  const inp="padding:7px;border:var(--border-s);border-radius:6px;font-family:inherit;font-size:var(--s-text)";
   // Am Platz wird mit dem Daumen getippt: Aktionen sind beschriftet und 44px hoch,
   // "Loeschen" steht raeumlich abgesetzt und fragt nach (es nimmt einem Elternteil den Zugang).
   const kkZeile="padding:10px 0;border-bottom:1px solid var(--surface2)";
   const kkAktion="flex:1;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px;"
     +"padding:0 12px;border:1.5px solid;border-radius:10px;background:var(--surface);"
-    +"font-family:inherit;font-size:13px;font-weight:700;cursor:pointer";
+    +"font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer";
   const kkLoeschen="min-width:44px;min-height:44px;margin-left:12px;display:inline-flex;align-items:center;justify-content:center;"
-    +"border:1.5px solid var(--red);border-radius:10px;background:var(--red-bg);color:var(--red);font-size:16px;cursor:pointer";
+    +"border:1.5px solid var(--red);border-radius:10px;background:var(--red-bg);color:var(--red);font-size:var(--s-karte);cursor:pointer";
   body.innerHTML=`
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">🔑 Login-E-Mails</div>
+    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">🔑 Login-E-Mails</div>
     ${emails.length?emails.map(e=>`<div style="${kkZeile}">
-      <div style="font-size:13px;word-break:break-all;margin-bottom:8px">${esc(e.email)}${e.label?` <span style="color:var(--text3);font-size:11px">(${esc(e.label)})</span>`:""}</div>
+      <div style="font-size:var(--s-text);word-break:break-all;margin-bottom:8px">${esc(e.email)}${e.label?` <span style="color:var(--text3);font-size:var(--s-klein)">(${esc(e.label)})</span>`:""}</div>
       <div style="display:flex;gap:8px;align-items:center">
         <button onclick="inviteMail('${jsq(e.email)}','${jsq(kName)}')" style="${kkAktion};border-color:#c4b5fd;color:var(--purple)"><i class="ti ti-mail-forward"></i>Einladen</button>
         <button onclick="kontakteDelEmail(${e.id},${sid},'${jsq(e.email)}')" aria-label="Login-E-Mail entfernen" style="${kkLoeschen}"><i class="ti ti-trash"></i></button>
       </div>
-    </div>`).join(""):'<div style="font-size:12px;color:var(--text3)">Noch keine Login-E-Mail.</div>'}
-    ${emails.length?'<div style="font-size:10.5px;color:var(--text3);margin-top:6px">„Einladen" öffnet dein Mail-Programm mit fertigem Text – du tippst nur noch auf Senden.</div>':""}
+    </div>`).join(""):'<div style="font-size:var(--s-text);color:var(--text3)">Noch keine Login-E-Mail.</div>'}
+    ${emails.length?'<div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px">„Einladen" öffnet dein Mail-Programm mit fertigem Text – du tippst nur noch auf Senden.</div>':""}
     <div style="display:flex;gap:6px;margin:8px 0 16px;flex-wrap:wrap">
       <input id="kk-new-email" type="email" placeholder="eltern@mail.de" style="flex:2;min-width:130px;${inp}">
       <input id="kk-new-email-label" placeholder="Rolle (optional)" style="flex:1;min-width:80px;${inp}">
       <button class="btn" style="min-height:44px" onclick="kontakteAddEmail(${sid})"><i class="ti ti-plus"></i>Hinzufügen</button>
     </div>
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">📞 Telefonnummern</div>
+    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">📞 Telefonnummern</div>
     ${phones.length?phones.map(p=>`<div style="${kkZeile}">
-      <div style="font-size:13px;margin-bottom:8px">${esc(p.telefon)}${(p.name||p.rolle)?` <span style="color:var(--text3);font-size:11px">(${esc([p.rolle,p.name].filter(Boolean).join(" · "))})</span>`:""}${p.geburtstag?` <span style="color:var(--text3);font-size:11px">🎂 ${new Date(p.geburtstag+"T00:00:00").toLocaleDateString("de-DE")}</span>`:""}</div>
+      <div style="font-size:var(--s-text);margin-bottom:8px">${esc(p.telefon)}${(p.name||p.rolle)?` <span style="color:var(--text3);font-size:var(--s-klein)">(${esc([p.rolle,p.name].filter(Boolean).join(" · "))})</span>`:""}${p.geburtstag?` <span style="color:var(--text3);font-size:var(--s-klein)">🎂 ${new Date(p.geburtstag+"T00:00:00").toLocaleDateString("de-DE")}</span>`:""}</div>
       <div style="display:flex;gap:8px;align-items:center">
-        ${(typeof waNumber==="function"&&waNumber(p.telefon))&&emails.length?`<button onclick="inviteWa('${jsq(p.telefon)}','${jsq(kName)}','${jsq(emails[0].email)}')" style="${kkAktion};border-color:#86efac;color:#15803d"><i class="ti ti-brand-whatsapp"></i>WhatsApp</button>`:`<span style="flex:1;font-size:10.5px;color:var(--text3)">${(typeof waNumber==="function"&&waNumber(p.telefon))?"Erst eine Login-E-Mail hinterlegen":"Keine Handynummer"}</span>`}
+        ${(typeof waNumber==="function"&&waNumber(p.telefon))&&emails.length?`<button onclick="inviteWa('${jsq(p.telefon)}','${jsq(kName)}','${jsq(emails[0].email)}')" style="${kkAktion};border-color:#86efac;color:var(--green)"><i class="ti ti-brand-whatsapp"></i>WhatsApp</button>`:`<span style="flex:1;font-size:var(--s-klein);color:var(--text3)">${(typeof waNumber==="function"&&waNumber(p.telefon))?"Erst eine Login-E-Mail hinterlegen":"Keine Handynummer"}</span>`}
         <button onclick="kontakteDelPhone(${p.id},${sid},'${jsq(p.telefon)}')" aria-label="Telefonnummer entfernen" style="${kkLoeschen}"><i class="ti ti-trash"></i></button>
       </div>
-    </div>`).join(""):'<div style="font-size:12px;color:var(--text3)">Noch keine Nummer.</div>'}
-    ${phones.length?'<div style="font-size:10.5px;color:var(--text3);margin-top:6px">„WhatsApp" öffnet den Chat mit der Einladung. Anmelden kann sich nur, wessen E-Mail oben hinterlegt ist.</div>':""}
+    </div>`).join(""):'<div style="font-size:var(--s-text);color:var(--text3)">Noch keine Nummer.</div>'}
+    ${phones.length?'<div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px">„WhatsApp" öffnet den Chat mit der Einladung. Anmelden kann sich nur, wessen E-Mail oben hinterlegt ist.</div>':""}
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
       <input id="kk-new-tel" type="tel" placeholder="Telefon" style="flex:2;min-width:110px;${inp}">
       <input id="kk-new-rolle" placeholder="Rolle (z. B. Mutter)" style="flex:1;min-width:90px;${inp}">
       <input id="kk-new-name" placeholder="Name (optional)" style="flex:1;min-width:90px;${inp}">
-      <label style="flex:1;min-width:130px;font-size:10px;color:var(--text3)">🎂 Geburtstag (optional)<input id="kk-new-geb" type="date" style="width:100%;${inp}"></label>
+      <label style="flex:1;min-width:130px;font-size:var(--s-klein);color:var(--text3)">🎂 Geburtstag (optional)<input id="kk-new-geb" type="date" style="width:100%;${inp}"></label>
       <button class="btn" style="min-height:44px" onclick="kontakteAddPhone(${sid})"><i class="ti ti-plus"></i>Hinzufügen</button>
     </div>`;
 }
@@ -865,7 +870,7 @@ async function wochenChallengeOpen(){
   const card=document.createElement("div");
   card.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   card.innerHTML=`${mdlHead("wc-modal","🏆","Wochen-Challenge","Heim-Aufgabe der Woche · geschafft = 🪶 20 Federn","var(--amber)")}
-    <textarea id="wc-input" rows="3" placeholder="z. B. „Diese Woche: 50 Ballkontakte im Garten – jeden Tag ein bisschen!&quot;" style="width:100%;padding:9px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box;resize:vertical">${esc(cur)}</textarea>
+    <textarea id="wc-input" rows="3" placeholder="z. B. „Diese Woche: 50 Ballkontakte im Garten – jeden Tag ein bisschen!&quot;" style="width:100%;padding:9px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box;resize:vertical">${esc(cur)}</textarea>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
       <button class="btn btn-p" onclick="wochenChallengeSave()"><i class="ti ti-trophy"></i>Challenge aktiv setzen</button>
       <button class="btn btn-sm" onclick="document.getElementById('wc-modal').remove()">Schließen</button>
@@ -918,7 +923,7 @@ async function zielUebungenHint(){
   const tags=[]; rows.forEach(z=>{(z.meta&&z.meta.tags||[]).forEach(t=>{if(!tags.includes(t))tags.push(t);});});
   const ex=_zielUebungen(tags,6);
   if(!ex.length){el.innerHTML="";return;}
-  el.innerHTML=`<div style="font-size:11.5px;color:#3730a3;background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:7px 10px;margin-bottom:8px">🎯 <b>Passt zu offenen Entwicklungszielen:</b> ${ex.map(esc).join(" · ")}</div>`;
+  el.innerHTML=`<div style="font-size:var(--s-klein);color:#3730a3;background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:7px 10px;margin-bottom:8px">🎯 <b>Passt zu offenen Entwicklungszielen:</b> ${ex.map(esc).join(" · ")}</div>`;
 }
 async function zieleOpen(spielerId){
   if(!sbToken()){toast("Bitte als Trainer anmelden","err");return;}
@@ -930,10 +935,10 @@ async function zieleOpen(spielerId){
   const card=document.createElement("div");
   card.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   card.innerHTML=`${mdlHead("ziele-modal","🎯","Entwicklungs-Ziele",`${esc(k?.name||"Spieler")} · 1–2 Förderziele für die Saison`,"var(--amber)")}
-    <div id="ziele-list" style="margin-bottom:12px"><div style="color:var(--text3);font-size:12px">Lade…</div></div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Vorlage antippen (verknüpft passende Übungen) – oder unten frei formulieren:</div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${ZIEL_VORLAGEN.map((v,i)=>`<button onclick="zieleAddVorlage(${spielerId},${i})" style="padding:6px 10px;border:1.5px solid #c7d2fe;border-radius:16px;background:#eef2ff;color:#3730a3;font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer">🎯 ${esc(v.ziel)}</button>`).join("")}</div>
-    <textarea id="ziele-input" rows="2" placeholder="Eigenes Ziel frei formulieren, z. B. „Ruhiger im Aufbau&quot;" style="width:100%;padding:9px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box;resize:vertical"></textarea>
+    <div id="ziele-list" style="margin-bottom:12px"><div style="color:var(--text3);font-size:var(--s-text)">Lade…</div></div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px">Vorlage antippen (verknüpft passende Übungen) – oder unten frei formulieren:</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${ZIEL_VORLAGEN.map((v,i)=>`<button onclick="zieleAddVorlage(${spielerId},${i})" style="padding:6px 10px;border:1.5px solid #c7d2fe;border-radius:16px;background:#eef2ff;color:#3730a3;font-family:inherit;font-size:var(--s-klein);font-weight:600;cursor:pointer">🎯 ${esc(v.ziel)}</button>`).join("")}</div>
+    <textarea id="ziele-input" rows="2" placeholder="Eigenes Ziel frei formulieren, z. B. „Ruhiger im Aufbau&quot;" style="width:100%;padding:9px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box;resize:vertical"></textarea>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
       <button class="btn btn-p" onclick="zieleAdd(${spielerId})"><i class="ti ti-plus"></i>Ziel hinzufügen</button>
       <button class="btn btn-sm" onclick="document.getElementById('ziele-modal').remove()">Schließen</button>
@@ -945,7 +950,7 @@ async function zieleRender(spielerId){
   const box=document.getElementById("ziele-list");if(!box)return;
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/entwicklungsziele?spieler_id=eq.${spielerId}&select=*&order=status.asc,created_at.desc`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)rows=await r.json();}catch(e){}
-  if(!rows.length){box.innerHTML='<div style="color:var(--text3);font-size:12.5px;padding:6px 0">Noch keine Ziele – setz das erste unten. 🎯</div>';return;}
+  if(!rows.length){box.innerHTML='<div style="color:var(--text3);font-size:var(--s-text);padding:6px 0">Noch keine Ziele – setz das erste unten. 🎯</div>';return;}
   const nm=(KADER.find(x=>x._id===spielerId)||{}).name;
   const snaps=(nm&&typeof DB!=="undefined"&&DB[nm])?DB[nm]:[];
   box.innerHTML=rows.map(z=>{const done=z.status==="erreicht";
@@ -963,12 +968,12 @@ async function zieleRender(spielerId){
     }
     return `<div style="padding:8px 0;border-bottom:1px solid var(--surface2)">
       <div style="display:flex;align-items:flex-start;gap:8px">
-        <button onclick="zieleToggle(${z.id},'${done?'offen':'erreicht'}',${spielerId})" title="${done?'wieder offen':'als erreicht markieren'}" style="border:none;background:transparent;cursor:pointer;font-size:18px;line-height:1;padding:0">${done?'✅':'⬜'}</button>
-        <span style="flex:1;font-size:13px;${done?'text-decoration:line-through;color:var(--text3)':''}">${esc(z.ziel)}</span>
-        <button onclick="zieleDelete(${z.id},${spielerId})" title="löschen" style="border:none;background:transparent;color:var(--red);cursor:pointer;font-size:13px;padding:2px 4px"><i class="ti ti-trash"></i></button>
+        <button onclick="zieleToggle(${z.id},'${done?'offen':'erreicht'}',${spielerId})" title="${done?'wieder offen':'als erreicht markieren'}" style="border:none;background:transparent;cursor:pointer;font-size:var(--s-teil);line-height:1;padding:0">${done?'✅':'⬜'}</button>
+        <span style="flex:1;font-size:var(--s-text);${done?'text-decoration:line-through;color:var(--text3)':''}">${esc(z.ziel)}</span>
+        <button onclick="zieleDelete(${z.id},${spielerId})" title="löschen" style="border:none;background:transparent;color:var(--red);cursor:pointer;font-size:var(--s-text);padding:2px 4px"><i class="ti ti-trash"></i></button>
       </div>
-      ${(!done&&ex.length)?`<div style="font-size:11px;color:var(--text2);margin:2px 0 0 26px">🏃 Passende Übungen: ${ex.map(esc).join(" · ")}</div>`:""}
-      ${trend?`<div style="font-size:11px;margin:3px 0 0 26px">📈 ${trend} <span style="color:var(--text3)">seit Zielsetzung</span></div>`:""}
+      ${(!done&&ex.length)?`<div style="font-size:var(--s-klein);color:var(--text2);margin:2px 0 0 26px">🏃 Passende Übungen: ${ex.map(esc).join(" · ")}</div>`:""}
+      ${trend?`<div style="font-size:var(--s-klein);margin:3px 0 0 26px">📈 ${trend} <span style="color:var(--text3)">seit Zielsetzung</span></div>`:""}
     </div>`;}).join("");
 }
 async function zieleAdd(spielerId){
@@ -1173,9 +1178,9 @@ async function setupTrainerOpen(){
   try{const r=await fetch(`${SB_URL}/rest/v1/kind_notfall?select=spieler_id`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)(await r.json()).forEach(x=>notfall.add(x.spieler_id));}catch(e){}
   if(typeof fotoConsentLoad==="function")await fotoConsentLoad(true);
   const fc=k=>(typeof fotoConsentFor==="function")?fotoConsentFor(k):{intern:!!k.foto_stadionheft_ok,video:false,public_ok:false};
-  const rows=kids.map(k=>{const x=fc(k);return {name:k.name,intern:x.intern,video:x.video,pub:x.public_ok,nf:notfall.has(k.id)};}).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+  const rows=kids.map(k=>{const x=fc(k);return {name:k.name,intern:x.intern,video:x.video,pub:x.public_ok,nf:notfall.has(kaderId(k))};}).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
   const missIntern=rows.filter(r=>!r.intern).length, missNf=rows.filter(r=>!r.nf).length;
-  const cell=ok=>`<span style="font-size:14px">${ok?"✅":"⛔"}</span>`;
+  const cell=ok=>`<span style="font-size:var(--s-karte)">${ok?"✅":"⛔"}</span>`;
   document.getElementById("setup-modal")?.remove();
   const modal=document.createElement("div"); modal.id="setup-modal";
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10050;display:flex;padding:14px;overflow-y:auto";
@@ -1184,10 +1189,10 @@ async function setupTrainerOpen(){
   c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`
     ${mdlHead("setup-modal","🚀","Eltern-Setup","Foto-Freigaben & Notfallkarten je Kind","#0d9488")}
-    <div style="font-size:11.5px;color:var(--text2);margin-bottom:10px">Offen: 📸 ${missIntern} ohne interne Foto-Freigabe · 🚑 ${missNf} ohne Notfallkarte. Foto-Spalten: 🖼️ intern · 🎥 Video · 🌍 öffentlich.</div>
-    <div style="display:grid;grid-template-columns:1fr 34px 34px 34px 34px;gap:2px;font-size:10px;font-weight:700;color:var(--text2);padding:0 4px 4px"><div>Kind</div><div style="text-align:center" title="app-intern">🖼️</div><div style="text-align:center" title="Trainingsvideo">🎥</div><div style="text-align:center" title="öffentlich">🌍</div><div style="text-align:center" title="Notfallkarte">🚑</div></div>
-    ${rows.map(r=>`<div style="display:grid;grid-template-columns:1fr 34px 34px 34px 34px;gap:2px;align-items:center;padding:5px 4px;border-top:var(--border);font-size:13px"><div>${esc(r.name)}</div><div style="text-align:center">${cell(r.intern)}</div><div style="text-align:center">${cell(r.video)}</div><div style="text-align:center">${cell(r.pub)}</div><div style="text-align:center">${cell(r.nf)}</div></div>`).join("")}
-    ${(missIntern||missNf)?`<button class="btn btn-sm btn-p" style="width:100%;margin-top:12px" onclick="setupRemindPush()"><i class="ti ti-bell"></i>Eltern per Push erinnern</button>`:'<div style="text-align:center;color:var(--green);font-size:13px;font-weight:700;margin-top:12px">Alles eingerichtet 🎉</div>'}
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:10px">Offen: 📸 ${missIntern} ohne interne Foto-Freigabe · 🚑 ${missNf} ohne Notfallkarte. Foto-Spalten: 🖼️ intern · 🎥 Video · 🌍 öffentlich.</div>
+    <div style="display:grid;grid-template-columns:1fr 34px 34px 34px 34px;gap:2px;font-size:var(--s-klein);font-weight:700;color:var(--text2);padding:0 4px 4px"><div>Kind</div><div style="text-align:center" title="app-intern">🖼️</div><div style="text-align:center" title="Trainingsvideo">🎥</div><div style="text-align:center" title="öffentlich">🌍</div><div style="text-align:center" title="Notfallkarte">🚑</div></div>
+    ${rows.map(r=>`<div style="display:grid;grid-template-columns:1fr 34px 34px 34px 34px;gap:2px;align-items:center;padding:5px 4px;border-top:var(--border);font-size:var(--s-text)"><div>${esc(r.name)}</div><div style="text-align:center">${cell(r.intern)}</div><div style="text-align:center">${cell(r.video)}</div><div style="text-align:center">${cell(r.pub)}</div><div style="text-align:center">${cell(r.nf)}</div></div>`).join("")}
+    ${(missIntern||missNf)?`<button class="btn btn-sm btn-p" style="width:100%;margin-top:12px" onclick="setupRemindPush()"><i class="ti ti-bell"></i>Eltern per Push erinnern</button>`:'<div style="text-align:center;color:var(--green);font-size:var(--s-text);font-weight:700;margin-top:12px">Alles eingerichtet 🎉</div>'}
     ${typeof fotoAmpelOpen==="function"?`<button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="fotoAmpelOpen()">🚦 Foto-Ampel &amp; Einwilligungstext</button>`:""}
     <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('setup-modal').remove()">Schließen</button>`;
   modal.appendChild(c); document.body.appendChild(modal);
@@ -1213,17 +1218,17 @@ async function pausenOpen(){
   c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`
     ${mdlHead("pause-modal","⏸","Pausen & Wiedereinstieg","","var(--amber)")}
-    <div style="font-size:11.5px;color:var(--text2);margin-bottom:10px">Pausierte Kinder sind bei Prognose, Nominierung und Buddy-Auslosung automatisch raus – bis zum Datum. Grund optional, keine Diagnosen.</div>
-    ${paused.length?`<div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text2);margin:4px 0 2px">Aktuell pausiert</div>${paused.map(k=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:var(--border)"><span style="flex:1;font-size:13px">${esc(k.name)} <span style="color:var(--amber);font-weight:700">· bis ${pauseBisLabel(k.name)}</span>${PAUSE_MAP[k.name].grund?`<span style="color:var(--text3);font-size:11px"> · ${esc(PAUSE_MAP[k.name].grund)}</span>`:""}</span><button class="btn btn-sm" title="Genesungsgrüße vom Team erlauben/stoppen (Familie vorher fragen)" onclick="pauseGruesse(${k._id},${PAUSE_MAP[k.name].gruesse_ok?"false":"true"})">${PAUSE_MAP[k.name].gruesse_ok?"💌 an":"💌 aus"}</button><button class="btn btn-sm" onclick="pauseEnd(${k._id})">Beenden</button></div>`).join("")}`:'<div style="font-size:12.5px;color:var(--text3);padding:4px 0">Aktuell pausiert niemand.</div>'}
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text2);margin:14px 0 4px">Kind pausieren</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:10px">Pausierte Kinder sind bei Prognose, Nominierung und Buddy-Auslosung automatisch raus – bis zum Datum. Grund optional, keine Diagnosen.</div>
+    ${paused.length?`<div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;color:var(--text2);margin:4px 0 2px">Aktuell pausiert</div>${paused.map(k=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:var(--border)"><span style="flex:1;font-size:var(--s-text)">${esc(k.name)} <span style="color:var(--amber);font-weight:700">· bis ${pauseBisLabel(k.name)}</span>${PAUSE_MAP[k.name].grund?`<span style="color:var(--text3);font-size:var(--s-klein)"> · ${esc(PAUSE_MAP[k.name].grund)}</span>`:""}</span><button class="btn btn-sm" title="Genesungsgrüße vom Team erlauben/stoppen (Familie vorher fragen)" onclick="pauseGruesse(${k._id},${PAUSE_MAP[k.name].gruesse_ok?"false":"true"})">${PAUSE_MAP[k.name].gruesse_ok?"💌 an":"💌 aus"}</button><button class="btn btn-sm" onclick="pauseEnd(${k._id})">Beenden</button></div>`).join("")}`:'<div style="font-size:var(--s-text);color:var(--text3);padding:4px 0">Aktuell pausiert niemand.</div>'}
+    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;color:var(--text2);margin:14px 0 4px">Kind pausieren</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
       <select id="pause-kid" style="flex:1;min-width:120px;min-height:40px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;background:var(--surface);color:var(--text)">${frei.map(k=>`<option value="${k._id}">${esc(k.name)}</option>`).join("")}</select>
       <input type="date" id="pause-bis" value="${defBis}" style="min-height:40px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;background:var(--surface);color:var(--text)">
     </div>
-    <input type="text" id="pause-grund" maxlength="80" placeholder="Grund (optional, keine Diagnosen)" style="width:100%;margin-top:6px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:12.5px;background:var(--surface);color:var(--text);box-sizing:border-box">
-    <label style="display:flex;align-items:flex-start;gap:8px;font-size:11.5px;color:var(--text2);margin-top:8px;cursor:pointer"><input type="checkbox" id="pause-gruesse" style="margin-top:2px">💌 Team darf Genesungsgrüße schicken <span style="color:var(--text3)">(bitte vorher die Familie fragen – sichtbar wird nur „fehlt gerade", nie der Grund)</span></label>
+    <input type="text" id="pause-grund" maxlength="80" placeholder="Grund (optional, keine Diagnosen)" style="width:100%;margin-top:6px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text);box-sizing:border-box">
+    <label style="display:flex;align-items:flex-start;gap:8px;font-size:var(--s-klein);color:var(--text2);margin-top:8px;cursor:pointer"><input type="checkbox" id="pause-gruesse" style="margin-top:2px">💌 Team darf Genesungsgrüße schicken <span style="color:var(--text3)">(bitte vorher die Familie fragen – sichtbar wird nur „fehlt gerade", nie der Grund)</span></label>
     <button class="btn btn-p btn-sm" style="width:100%;margin-top:8px" onclick="pauseSetFromPicker()">⏸ Pausieren</button>
-    ${reco.length?`<div style="font-size:11.5px;color:#9a3412;background:#fff7ed;border:1px solid #fdba74;border-radius:8px;padding:7px 10px;margin-top:12px">🩹 Zuletzt krank gemeldet (letzte 14 T.): <b>${reco.map(esc).join(", ")}</b> – bei Bedarf hier als Pause setzen.</div>`:""}
+    ${reco.length?`<div style="font-size:var(--s-klein);color:#9a3412;background:#fff7ed;border:1px solid #fdba74;border-radius:8px;padding:7px 10px;margin-top:12px">🩹 Zuletzt krank gemeldet (letzte 14 T.): <b>${reco.map(esc).join(", ")}</b> – bei Bedarf hier als Pause setzen.</div>`:""}
     <button class="btn btn-sm" style="width:100%;margin-top:10px" onclick="document.getElementById('pause-modal').remove()">Schließen</button>`;
   modal.appendChild(c); document.body.appendChild(modal);
 }
@@ -1261,7 +1266,7 @@ async function notfallTrainerOpen(){
     else if(c)localStorage.removeItem("adler_nf_cache");
   }catch(e){} }
   rows=rows||[];
-  const nameById={}; (typeof KADER!=="undefined"?KADER:[]).forEach(k=>{nameById[k.id]=k.name;});
+  const nameById={}; (typeof KADER!=="undefined"?KADER:[]).forEach(k=>{nameById[kaderId(k)]=k.name;});
   const flds=[["notfall_tel","☎️ Notfall"],["notfallkontakt","👤 Kontakt"],["allergien","⚠️ Allergien"],["medikamente","💊 Medikamente"],["krankenversicherung","🏥 Versicherung"],["blutgruppe","🩸 Blutgruppe"],["arzt","🩺 Arzt"],["hinweise","📝 Hinweise"]];
   const cards=rows.filter(x=>flds.some(f=>x[f[0]])).sort((a,b)=>String(nameById[a.spieler_id]||"").localeCompare(String(nameById[b.spieler_id]||"")));
   document.getElementById("nf-tr-modal")?.remove();
@@ -1274,9 +1279,9 @@ async function notfallTrainerOpen(){
   c.innerHTML=`
     ${mdlHead("nf-tr-modal","🚑","Notfallkarten",`Von den Eltern gepflegt · schreibgeschützt${offline?' · <b style="color:var(--amber)">📴 Offline-Stand</b>':""} · vertraulich`,"var(--red)")}
     ${cards.length?cards.map(x=>`<div style="border:var(--border-s);border-left:3px solid var(--red);border-radius:10px;padding:10px 12px;margin-bottom:8px">
-        <div style="font-weight:800;font-size:14px;margin-bottom:4px">${esc(nameById[x.spieler_id]||("Kind #"+x.spieler_id))}</div>
-        ${flds.filter(f=>x[f[0]]).map(f=>`<div style="font-size:12.5px;padding:2px 0"><span style="color:var(--text2)">${f[1]}:</span> ${f[0]==="notfall_tel"?tel(x[f[0]]):esc(x[f[0]])}</div>`).join("")}
-      </div>`).join(""):'<div style="text-align:center;color:var(--text3);font-size:13px;padding:24px">Noch keine Notfallkarten hinterlegt.<br>Die Eltern füllen sie im Eltern-Bereich (🚑 Notfallkarte).</div>'}
+        <div style="font-weight:800;font-size:var(--s-karte);margin-bottom:4px">${esc(nameById[x.spieler_id]||("Kind #"+x.spieler_id))}</div>
+        ${flds.filter(f=>x[f[0]]).map(f=>`<div style="font-size:var(--s-text);padding:2px 0"><span style="color:var(--text2)">${f[1]}:</span> ${f[0]==="notfall_tel"?tel(x[f[0]]):esc(x[f[0]])}</div>`).join("")}
+      </div>`).join(""):'<div style="text-align:center;color:var(--text3);font-size:var(--s-text);padding:24px">Noch keine Notfallkarten hinterlegt.<br>Die Eltern füllen sie im Eltern-Bereich (🚑 Notfallkarte).</div>'}
     <button class="btn btn-sm" style="margin-top:6px" onclick="document.getElementById('nf-tr-modal').remove()">Schließen</button>`;
   modal.appendChild(c); document.body.appendChild(modal);
 }
@@ -1307,7 +1312,7 @@ function renderKader(){
   if(!filtered.length){wrap.innerHTML='<div class="empty"><i class="ti ti-filter"></i>Kein Spieler für diesen Filter</div>';renderRauteMap(bewertet);return;}
   const dimCols=["var(--blue)","#7c3aed","var(--amber)","var(--green)","#0e7490"];
   // Kader-Werkzeuge als einheitliche Kachel-Reihe (Design-Sprache), nicht mehr rechtsbündig verstreut.
-  const kTool=(label,fn,title)=>`<button onclick="${fn}" title="${title}" style="flex:1 1 calc(33.3% - 6px);min-width:120px;min-height:46px;border:1px solid var(--rand-bedien);border-radius:var(--rl);cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--text);background:var(--surface);padding:0 10px">${label}</button>`;
+  const kTool=(label,fn,title)=>`<button onclick="${fn}" title="${title}" style="flex:1 1 calc(33.3% - 6px);min-width:120px;min-height:46px;border:1px solid var(--rand-bedien);border-radius:var(--rl);cursor:pointer;font-family:inherit;font-size:var(--s-text);font-weight:700;color:var(--text);background:var(--surface);padding:0 10px">${label}</button>`;
   let html=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
       ${kTool("⏸ Pausen","pausenOpen()","Kinder pausieren (fließt in Prognose/Nominierung/Buddy)")}
       ${kTool("🚀 Eltern-Setup","setupTrainerOpen()","Wer hat Foto-Freigabe & Notfallkarte schon eingerichtet?")}
@@ -1316,13 +1321,13 @@ function renderKader(){
   filtered.forEach(name=>{
     const lat=letzter(name);
     const kd=getKader(name);
-    const nrBadge=kd&&kd.nr?`<span style="font-size:9px;font-weight:700;color:var(--text3);background:var(--surface2);border:var(--border);border-radius:8px;padding:1px 5px;margin-right:4px">${kd.nr}</span>`:"";
+    const nrBadge=kd&&kd.nr?`<span style="font-size:var(--s-klein);font-weight:700;color:var(--text3);background:var(--surface2);border:var(--border);border-radius:8px;padding:1px 5px;margin-right:4px">${kd.nr}</span>`:"";
     if(!lat){
       /* Noch nicht bewertet: das Kind steht trotzdem im Kader – mit dem Weg zur ersten
          Bewertung statt einer Zeile voller Nullen, die Koennen vortaeuschen wuerden. */
       html+=`<tr>
-        <td><div style="font-weight:600;font-size:12.5px">${nrBadge}${esc(name)}${kd&&kd.tw?' <span style="font-size:9px;color:var(--teal);font-weight:700">🥅</span>':""}</div></td>
-        <td colspan="7" style="font-size:11.5px;color:var(--text2)">noch nicht bewertet</td>
+        <td><div style="font-weight:600;font-size:var(--s-text)">${nrBadge}${esc(name)}${kd&&kd.tw?' <span style="font-size:var(--s-klein);color:var(--teal);font-weight:700">🥅</span>':""}</div></td>
+        <td colspan="7" style="font-size:var(--s-klein);color:var(--text2)">noch nicht bewertet</td>
         <td style="white-space:nowrap"><button class="btn btn-sm" onclick="kaderBewerten('${jsq(name)}')" title="Erste Bewertung anlegen"><i class="ti ti-clipboard-plus"></i></button></td>
       </tr>`;
       return;
@@ -1335,19 +1340,19 @@ function renderKader(){
     const tot=lat.total_score||0,pot=lat.pot_score||0;
     const grpB=""; // A/B-Label abgeschafft (Evidenz: keine Niveau-Etiketten bei 8-Jaehrigen)
     const mini=val=>{let s='<div class="sm">';for(let i=0;i<5;i++)s+=`<div class="sm-s${val>=(i+1)*20?" on":""}"></div>`;return s+'</div>';};
-    const snBadge=DB[name].length>1?`<span title="${DB[name].length} Bewertungen – mehr = verlässlicher" style="font-size:9px;color:var(--teal);font-weight:600;margin-left:4px">×${DB[name].length}</span>`:"";
+    const snBadge=DB[name].length>1?`<span title="${DB[name].length} Bewertungen – mehr = verlässlicher" style="font-size:var(--s-klein);color:var(--teal);font-weight:600;margin-left:4px">×${DB[name].length}</span>`:"";
     const _tr=(typeof playerTrend==="function")?playerTrend(name):{delta:0,conf:0};
-    const trArrow=_tr.delta>2?`<span title="verbessert (+${_tr.delta}%)" style="color:var(--green);font-size:12px;font-weight:800"> ↗</span>`:_tr.delta<-2?`<span title="gefallen (${_tr.delta}%)" style="color:var(--red);font-size:12px;font-weight:800"> ↘</span>`:_tr.conf>=2?`<span title="stabil" style="color:var(--text3);font-size:12px"> →</span>`:"";
+    const trArrow=_tr.delta>2?`<span title="verbessert (+${_tr.delta}%)" style="color:var(--green);font-size:var(--s-text);font-weight:800"> ↗</span>`:_tr.delta<-2?`<span title="gefallen (${_tr.delta}%)" style="color:var(--red);font-size:var(--s-text);font-weight:800"> ↘</span>`:_tr.conf>=2?`<span title="stabil" style="color:var(--text3);font-size:var(--s-text)"> →</span>`:"";
     const _hist=(DB[name]||[]).map(s=>s.total_score||0);
     const _spark=(typeof sparklineSVG==="function")?sparklineSVG(_hist):"";
     html+=`<tr>
-      <td><div style="font-weight:600;font-size:12.5px">${getKader(name)?.nr?`<span style="font-size:9px;font-weight:700;color:var(--text3);background:var(--surface2);border:var(--border);border-radius:8px;padding:1px 5px;margin-right:4px">${getKader(name).nr}</span>`:""}${esc(name)}${isTw?" 🥅":""}</div><div style="font-size:10px;color:var(--text2)">${esc(lat.datum||'')}${snBadge}</div></td>
-      <td><span class="rbadge ${bMap[prim]||'rb-flex'}">${isTw?`TW / ${esc(lMap[prim]||prim)}`:esc(lMap[prim]||prim)}</span>${lat.sek_rolle&&!isTw?`<br><span style="font-size:10px;color:var(--text2)">${esc(lat.sek_rolle)}</span>`:""}</td>
+      <td><div style="font-weight:600;font-size:var(--s-text)">${getKader(name)?.nr?`<span style="font-size:var(--s-klein);font-weight:700;color:var(--text3);background:var(--surface2);border:var(--border);border-radius:8px;padding:1px 5px;margin-right:4px">${getKader(name).nr}</span>`:""}${esc(name)}${isTw?" 🥅":""}</div><div style="font-size:var(--s-klein);color:var(--text2)">${esc(lat.datum||'')}${snBadge}</div></td>
+      <td><span class="rbadge ${bMap[prim]||'rb-flex'}">${isTw?`TW / ${esc(lMap[prim]||prim)}`:esc(lMap[prim]||prim)}</span>${lat.sek_rolle&&!isTw?`<br><span style="font-size:var(--s-klein);color:var(--text2)">${esc(lat.sek_rolle)}</span>`:""}</td>
       <td>${grpB}</td>
-      ${[0,1,2].map(i=>`<td><span style="font-size:11px;font-weight:600;color:${dimCols[i]}">${sc[i]||0}%</span>${mini(sc[i]||0)}</td>`).join("")}
-      <td><span style="font-weight:700;font-size:13px">${tot}%</span>${trArrow}${_spark}</td>
-      <td><span style="font-size:11px;color:var(--teal);font-weight:600">${pot}%</span></td>
-      <td style="font-size:11px;color:var(--text2)">${esc(lat.trainer||'–')}</td>
+      ${[0,1,2].map(i=>`<td><span style="font-size:var(--s-klein);font-weight:600;color:${dimCols[i]}">${sc[i]||0}%</span>${mini(sc[i]||0)}</td>`).join("")}
+      <td><span style="font-weight:700;font-size:var(--s-text)">${tot}%</span>${trArrow}${_spark}</td>
+      <td><span style="font-size:var(--s-klein);color:var(--teal);font-weight:600">${pot}%</span></td>
+      <td style="font-size:var(--s-klein);color:var(--text2)">${esc(lat.trainer||'–')}</td>
       <td style="white-space:nowrap">
         <button class="btn btn-sm" data-edit-player data-name="${esc(name)}" data-snap-idx="${DB[name].length-1}" title="Laden"><i class="ti ti-edit"></i></button>
         <button class="btn btn-sm btn-d" data-del-player data-name="${esc(name)}"><i class="ti ti-trash"></i></button>
@@ -1378,7 +1383,7 @@ function kaderBewerten(name){
 
 function renderRauteMap(names){
   const wrap=document.getElementById("raute-map");
-  if(!names.length){wrap.innerHTML='<div class="empty" style="padding:1rem;font-size:12px">Noch keine Spieler bewertet</div>';return;}
+  if(!names.length){wrap.innerHTML='<div class="empty" style="padding:1rem;font-size:var(--s-text)">Noch keine Spieler bewertet</div>';return;}
   const posMap={aufpasser:[],flitzer_l:[],flitzer_r:[],jaeger:[],flex:[]};
   const twList=[];
   names.forEach(n=>{
@@ -1393,24 +1398,24 @@ function renderRauteMap(names){
   // TW row - show priority
   const tw1=twList.filter(n=>{const k=getKader(n);return k&&k.twPrio===1;});
   const tw2=twList.filter(n=>{const k=getKader(n);return k&&k.twPrio===2;});
-  html+='<div style="padding:8px 10px;background:#fef9c3;border:1px solid #fcd34d;border-radius:var(--r);margin-bottom:8px;font-size:12px;color:#854d0e">';
+  html+='<div style="padding:8px 10px;background:var(--yellow-bg);border:1px solid #fcd34d;border-radius:var(--r);margin-bottom:8px;font-size:var(--s-text);color:var(--yellow)">';
   html+='<span style="font-weight:700">🥅 Torwart (+1):</span> ';
-  if(tw1.length>0) html+='<span style="font-weight:600">'+tw1.map(esc).join(', ')+'</span> <span style="font-size:10px;opacity:.7">(primär)</span>';
-  if(tw2.length>0) html+=(tw1.length>0?' · ':'')+tw2.map(esc).join(', ')+' <span style="font-size:10px;opacity:.7">(Option)</span>';
+  if(tw1.length>0) html+='<span style="font-weight:600">'+tw1.map(esc).join(', ')+'</span> <span style="font-size:var(--s-klein);opacity:.7">(primär)</span>';
+  if(tw2.length>0) html+=(tw1.length>0?' · ':'')+tw2.map(esc).join(', ')+' <span style="font-size:var(--s-klein);opacity:.7">(Option)</span>';
   if(twList.length===0) html+='<span style="font-style:italic;opacity:.6">Noch nicht bewertet</span>';
   html+='</div>';
   html+=`<div class="rk-grid">
     <div></div>
-    <div class="rk-pos" style="border-color:${cfg.jaeger.col};background:${cfg.jaeger.bg}"><div class="rk-pos-lbl" style="color:${cfg.jaeger.col}">${cfg.jaeger.label}</div>${posMap.jaeger.map(n=>`<div class="rk-player"><i class="ti ti-user" style="font-size:11px;color:${cfg.jaeger.col}"></i>${esc(n)}</div>`).join("")||'<div class="rk-empty">Offen</div>'}</div>
+    <div class="rk-pos" style="border-color:${cfg.jaeger.col};background:${cfg.jaeger.bg}"><div class="rk-pos-lbl" style="color:${cfg.jaeger.col}">${cfg.jaeger.label}</div>${posMap.jaeger.map(n=>`<div class="rk-player"><i class="ti ti-user" style="font-size:var(--s-klein);color:${cfg.jaeger.col}"></i>${esc(n)}</div>`).join("")||'<div class="rk-empty">Offen</div>'}</div>
     <div></div>
-    <div class="rk-pos" style="border-color:${cfg.flitzer_l.col};background:${cfg.flitzer_l.bg}"><div class="rk-pos-lbl" style="color:${cfg.flitzer_l.col}">${cfg.flitzer_l.label}</div>${posMap.flitzer_l.map(n=>`<div class="rk-player"><i class="ti ti-user" style="font-size:11px;color:${cfg.flitzer_l.col}"></i>${esc(n)}</div>`).join("")||'<div class="rk-empty">Offen</div>'}</div>
+    <div class="rk-pos" style="border-color:${cfg.flitzer_l.col};background:${cfg.flitzer_l.bg}"><div class="rk-pos-lbl" style="color:${cfg.flitzer_l.col}">${cfg.flitzer_l.label}</div>${posMap.flitzer_l.map(n=>`<div class="rk-player"><i class="ti ti-user" style="font-size:var(--s-klein);color:${cfg.flitzer_l.col}"></i>${esc(n)}</div>`).join("")||'<div class="rk-empty">Offen</div>'}</div>
     <div></div>
-    <div class="rk-pos" style="border-color:${cfg.flitzer_r.col};background:${cfg.flitzer_r.bg}"><div class="rk-pos-lbl" style="color:${cfg.flitzer_r.col}">${cfg.flitzer_r.label}</div>${posMap.flitzer_r.map(n=>`<div class="rk-player"><i class="ti ti-user" style="font-size:11px;color:${cfg.flitzer_r.col}"></i>${esc(n)}</div>`).join("")||'<div class="rk-empty">Offen</div>'}</div>
+    <div class="rk-pos" style="border-color:${cfg.flitzer_r.col};background:${cfg.flitzer_r.bg}"><div class="rk-pos-lbl" style="color:${cfg.flitzer_r.col}">${cfg.flitzer_r.label}</div>${posMap.flitzer_r.map(n=>`<div class="rk-player"><i class="ti ti-user" style="font-size:var(--s-klein);color:${cfg.flitzer_r.col}"></i>${esc(n)}</div>`).join("")||'<div class="rk-empty">Offen</div>'}</div>
     <div></div>
-    <div class="rk-pos" style="border-color:${cfg.aufpasser.col};background:${cfg.aufpasser.bg}"><div class="rk-pos-lbl" style="color:${cfg.aufpasser.col}">${cfg.aufpasser.label}</div>${posMap.aufpasser.map(n=>`<div class="rk-player"><i class="ti ti-user" style="font-size:11px;color:${cfg.aufpasser.col}"></i>${esc(n)}</div>`).join("")||'<div class="rk-empty">Offen</div>'}</div>
+    <div class="rk-pos" style="border-color:${cfg.aufpasser.col};background:${cfg.aufpasser.bg}"><div class="rk-pos-lbl" style="color:${cfg.aufpasser.col}">${cfg.aufpasser.label}</div>${posMap.aufpasser.map(n=>`<div class="rk-player"><i class="ti ti-user" style="font-size:var(--s-klein);color:${cfg.aufpasser.col}"></i>${esc(n)}</div>`).join("")||'<div class="rk-empty">Offen</div>'}</div>
     <div></div>
   </div>`;
-  if(posMap.flex.length>0)html+=`<div style="margin-top:.75rem;font-size:11.5px;color:var(--text2)"><i class="ti ti-adjustments" style="font-size:13px"></i> Noch ohne feste Rolle: ${posMap.flex.map(n=>esc(n)).join(", ")}</div>`;
+  if(posMap.flex.length>0)html+=`<div style="margin-top:.75rem;font-size:var(--s-klein);color:var(--text2)"><i class="ti ti-adjustments" style="font-size:var(--s-text)"></i> Noch ohne feste Rolle: ${posMap.flex.map(n=>esc(n)).join(", ")}</div>`;
   wrap.innerHTML=html;
 }
 
@@ -1495,24 +1500,24 @@ function renderProfil(){
     <div class="player-card">
       <div class="av ${isTw?"tw":""}">${esc(name.slice(0,2).toUpperCase())}</div>
       <div style="flex:1">
-        <div style="font-weight:700;font-size:15px">${esc(name)}${isTw?" 🥅":""}</div>
+        <div style="font-weight:700;font-size:var(--s-karte)">${esc(name)}${isTw?" 🥅":""}</div>
         <div style="display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:4px">
           <span class="rbadge ${bMap[lat.position]||'rb-flex'}">${esc(prim)}</span>
-          ${!isTw?`<span style="font-size:10.5px;color:var(--text2)">Sek: ${esc(sek)}</span>`:""}
+          ${!isTw?`<span style="font-size:var(--s-klein);color:var(--text2)">Sek: ${esc(sek)}</span>`:""}
           ${grpB}
-          <span style="font-size:10.5px;color:var(--text2)">${esc(lat.trainer||"")} · ${esc(lat.datum||"")}</span>
+          <span style="font-size:var(--s-klein);color:var(--text2)">${esc(lat.trainer||"")} · ${esc(lat.datum||"")}</span>
         </div>
       </div>
       <div style="text-align:right">
-        <div style="font-size:10px;color:var(--text2)">Entwicklungsstand</div>
+        <div style="font-size:var(--s-klein);color:var(--text2)">Entwicklungsstand</div>
         <div style="font-size:26px;font-weight:700;color:var(--blue-text)">${tot}%</div>
-        <div style="font-size:10.5px;color:var(--teal);font-weight:500">Entwicklungstempo ~${pot}%</div>
-        ${typeof raeInfo==="function"&&raeInfo(getKader(name)?.geb)?`<div style="font-size:9.5px;color:var(--text3);max-width:150px;margin-top:2px">${raeInfo(getKader(name)?.geb)}</div>`:""}
+        <div style="font-size:var(--s-klein);color:var(--teal);font-weight:500">Entwicklungstempo ~${pot}%</div>
+        ${typeof raeInfo==="function"&&raeInfo(getKader(name)?.geb)?`<div style="font-size:var(--s-klein);color:var(--text3);max-width:150px;margin-top:2px">${raeInfo(getKader(name)?.geb)}</div>`:""}
       </div>
     </div>
 
     ${summary?`<div class="summary-box">
-      <h3><i class="ti ti-sparkles" style="font-size:13px"></i>Zusammenfassung</h3>
+      <h3><i class="ti ti-sparkles" style="font-size:var(--s-text)"></i>Zusammenfassung</h3>
       <div class="summary-text">${esc(summary)}</div>
       <div class="summary-tags">
         ${st.slice(0,3).map(s=>`<span class="stag pos">+ ${esc(s.split("–")[0].trim())}</span>`).join("")}
@@ -1526,9 +1531,9 @@ function renderProfil(){
     </div>
 
     ${st.length>0||ef.length>0?`<div class="massnahmen-box">
-      <div class="mb-title"><i class="ti ti-list-check" style="font-size:14px"></i>Konkrete Maßnahmen & Erkenntnisse</div>
-      ${st.slice(0,5).map(s=>`<div class="mb-item"><div class="mb-icon" style="background:#dcfce7"><i class="ti ti-plus" style="font-size:11px;color:#15803d"></i></div><div class="mb-text">${esc(s)}</div></div>`).join("")}
-      ${ef.slice(0,5).map(e=>`<div class="mb-item"><div class="mb-icon" style="background:#fee2e2"><i class="ti ti-arrow-right" style="font-size:11px;color:var(--red)"></i></div><div class="mb-text">${esc(e)}</div></div>`).join("")}
+      <div class="mb-title"><i class="ti ti-list-check" style="font-size:var(--s-karte)"></i>Konkrete Maßnahmen & Erkenntnisse</div>
+      ${st.slice(0,5).map(s=>`<div class="mb-item"><div class="mb-icon" style="background:#dcfce7"><i class="ti ti-plus" style="font-size:var(--s-klein);color:var(--green)"></i></div><div class="mb-text">${esc(s)}</div></div>`).join("")}
+      ${ef.slice(0,5).map(e=>`<div class="mb-item"><div class="mb-icon" style="background:#fee2e2"><i class="ti ti-arrow-right" style="font-size:var(--s-klein);color:var(--red)"></i></div><div class="mb-text">${esc(e)}</div></div>`).join("")}
     </div>`:""}
 
     <div id="profil-selbstbild"></div>
@@ -1571,11 +1576,11 @@ async function profilSelbstbildLoad(name){
   const a=row.antworten||{};
   const ueben=KAB_SELBST_FRAGEN.filter(f=>a[f.k]===1);
   slot.innerHTML=`<div class="card" style="padding:12px 14px;margin:10px 0;border-left:3px solid #7c3aed">
-    <div style="font-weight:800;font-size:13.5px;margin-bottom:6px">💪 So sieht ${esc(name)} sich selbst <span style="font-weight:400;color:var(--text2);font-size:11px">(aus der Kabine · ${esc(row.datum)})</span></div>
+    <div style="font-weight:800;font-size:var(--s-text);margin-bottom:6px">💪 So sieht ${esc(name)} sich selbst <span style="font-weight:400;color:var(--text2);font-size:var(--s-klein)">(aus der Kabine · ${esc(row.datum)})</span></div>
     <div style="display:flex;flex-wrap:wrap;gap:6px">
-      ${KAB_SELBST_FRAGEN.map(f=>{const s=KAB_SELBST_STUFEN[a[f.k]];return s?`<span style="font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:12px;background:var(--surface2)">${f.emo} ${esc(f.t)}: ${s[0]}</span>`:"";}).join("")}
+      ${KAB_SELBST_FRAGEN.map(f=>{const s=KAB_SELBST_STUFEN[a[f.k]];return s?`<span style="font-size:var(--s-klein);font-weight:700;padding:4px 9px;border-radius:12px;background:var(--surface2)">${f.emo} ${esc(f.t)}: ${s[0]}</span>`:"";}).join("")}
     </div>
-    ${ueben.length?`<div style="font-size:12px;color:#7c3aed;font-weight:700;margin-top:8px">🌱 Will üben: ${ueben.map(f=>esc(f.t)).join(", ")} – guter Aufhänger fürs nächste Lob oder Entwicklungsziel.</div>`:""}
+    ${ueben.length?`<div style="font-size:var(--s-text);color:#7c3aed;font-weight:700;margin-top:8px">🌱 Will üben: ${ueben.map(f=>esc(f.t)).join(", ")} – guter Aufhänger fürs nächste Lob oder Entwicklungsziel.</div>`:""}
   </div>`;
 }
 /* ═══════════════════════════════════
@@ -1638,49 +1643,49 @@ function adlerWrappedSlides(d,fotos){
   S.push({bg:g("#0f172a","#1e3a8a"),html:`<div>
     <div class="aw-pop" style="font-size:64px">🦅</div>
     <div class="aw-pop d1" style="font-size:30px;font-weight:900;letter-spacing:1px;margin-top:8px">ADLER WRAPPED</div>
-    <div class="aw-pop d2" style="font-size:16px;opacity:.85;margin-top:6px">Saison ${esc(String(d.saison||""))}</div>
-    <div class="aw-pop d3" style="font-size:12px;opacity:.6;margin-top:24px">Tippe rechts → weiter · links ← zurück</div></div>`});
+    <div class="aw-pop d2" style="font-size:var(--s-karte);opacity:.85;margin-top:6px">Saison ${esc(String(d.saison||""))}</div>
+    <div class="aw-pop d3" style="font-size:var(--s-text);opacity:.6;margin-top:24px">Tippe rechts → weiter · links ← zurück</div></div>`});
   S.push({bg:g("#155e75","#06b6d4"),html:`<div>
-    <div class="aw-pop" style="font-size:14px;opacity:.85;text-transform:uppercase;letter-spacing:2px">Ihr wart fleißig</div>
+    <div class="aw-pop" style="font-size:var(--s-karte);opacity:.85;text-transform:uppercase;letter-spacing:2px">Ihr wart fleißig</div>
     <div class="aw-big aw-pop d1">${d.spiele||0}</div>
-    <div class="aw-pop d1" style="font-size:19px;font-weight:800">Spiele & Turniere</div>
-    <div class="aw-pop d2" style="font-size:15px;opacity:.85;margin-top:18px">und <b>${d.trainings||0}</b> Trainingseinheiten 💪</div></div>`});
+    <div class="aw-pop d1" style="font-size:var(--s-teil);font-weight:800">Spiele & Turniere</div>
+    <div class="aw-pop d2" style="font-size:var(--s-karte);opacity:.85;margin-top:18px">und <b>${d.trainings||0}</b> Trainingseinheiten 💪</div></div>`});
   S.push({bg:g("#9a3412","#f97316"),html:`<div>
-    <div class="aw-pop" style="font-size:14px;opacity:.85;text-transform:uppercase;letter-spacing:2px">Gemeinsam erzielt</div>
+    <div class="aw-pop" style="font-size:var(--s-karte);opacity:.85;text-transform:uppercase;letter-spacing:2px">Gemeinsam erzielt</div>
     <div class="aw-big aw-pop d1">${d.tore||0}</div>
-    <div class="aw-pop d1" style="font-size:22px;font-weight:800">Tore ⚽</div></div>`});
+    <div class="aw-pop d1" style="font-size:var(--s-seite);font-weight:800">Tore ⚽</div></div>`});
   S.push({bg:g("#5b21b6","#8b5cf6"),html:`<div>
     <div class="aw-big aw-pop">${d.aktionen||0}</div>
-    <div class="aw-pop d1" style="font-size:20px;font-weight:800">Ballaktionen 🔥</div>
-    <div class="aw-pop d2" style="font-size:15px;opacity:.85;margin-top:16px">darunter <b>${d.paesse||0}</b> Pässe und <b>${d.paraden||0}</b> Paraden 🧤</div></div>`});
+    <div class="aw-pop d1" style="font-size:var(--s-teil);font-weight:800">Ballaktionen 🔥</div>
+    <div class="aw-pop d2" style="font-size:var(--s-karte);opacity:.85;margin-top:16px">darunter <b>${d.paesse||0}</b> Pässe und <b>${d.paraden||0}</b> Paraden 🧤</div></div>`});
   S.push({bg:g("#065f46","#10b981"),html:`<div>
-    <div class="aw-pop" style="font-size:14px;opacity:.85;text-transform:uppercase;letter-spacing:2px">Team-Missionen</div>
+    <div class="aw-pop" style="font-size:var(--s-karte);opacity:.85;text-transform:uppercase;letter-spacing:2px">Team-Missionen</div>
     <div class="aw-big aw-pop d1">${d.quests_geschafft||0}</div>
-    <div class="aw-pop d1" style="font-size:20px;font-weight:800">Quests geknackt 🏆</div></div>`});
+    <div class="aw-pop d1" style="font-size:var(--s-teil);font-weight:800">Quests geknackt 🏆</div></div>`});
   const awards=[];
   if(d.top_torschuetze&&d.top_torschuetze.name)awards.push(["⚽","Torschützenkönig",d.top_torschuetze]);
   if(d.fleissigste&&d.fleissigste.name)awards.push(["🏃","Fleißbiene (Training)",d.fleissigste]);
   if(d.top_aktiv&&d.top_aktiv.name)awards.push(["🔥","Aktivposten",d.top_aktiv]);
   const awardsHtml=awards.length?awards.map((a,i)=>`<div class="aw-pop d${i+1}" style="background:rgba(255,255,255,.14);border-radius:14px;padding:11px 16px;margin:8px auto;max-width:280px">
     <div style="font-size:26px">${a[0]}</div>
-    <div style="font-size:19px;font-weight:800">${esc(a[2].name)}</div>
-    <div style="font-size:12px;opacity:.85">${a[1]} · ${a[2].wert}</div></div>`).join("")
-    :`<div class="aw-pop" style="opacity:.85;font-size:15px">Sammelt Aktionen am Spieltag – dann gibt's hier eure Helden! 🦅</div>`;
+    <div style="font-size:var(--s-teil);font-weight:800">${esc(a[2].name)}</div>
+    <div style="font-size:var(--s-text);opacity:.85">${a[1]} · ${a[2].wert}</div></div>`).join("")
+    :`<div class="aw-pop" style="opacity:.85;font-size:var(--s-karte)">Sammelt Aktionen am Spieltag – dann gibt's hier eure Helden! 🦅</div>`;
   S.push({bg:g("#1e3a8a","#3b82f6"),confetti:true,html:`<div>
-    <div class="aw-pop" style="font-size:22px;font-weight:900;margin-bottom:14px">🏅 Eure Saison-Helden</div>${awardsHtml}</div>`});
+    <div class="aw-pop" style="font-size:var(--s-seite);font-weight:900;margin-bottom:14px">🏅 Eure Saison-Helden</div>${awardsHtml}</div>`});
   S.push({bg:g("#7c2d12","#dc2626"),confetti:true,html:`<div>
     <div class="aw-pop" style="font-size:58px">🦅❤️</div>
     <div class="aw-pop d1" style="font-size:26px;font-weight:900;margin-top:10px">Was für eine Saison, Adler!</div>
-    <div class="aw-pop d2" style="font-size:15px;opacity:.85;margin-top:10px">${d.spieler_anzahl||0} Kinder · ein Team</div></div>`});
+    <div class="aw-pop d2" style="font-size:var(--s-karte);opacity:.85;margin-top:10px">${d.spieler_anzahl||0} Kinder · ein Team</div></div>`});
   // FEAT X: Galerie-Fotos als Hintergrund einstreuen (Gradient-Overlay -> Text bleibt lesbar).
   // Rein DOM (background-image), daher kein Canvas-Taint. Fotos sind lokale Blob-URLs.
   if(fotos&&fotos.length){
     const overlay=(slide,foto)=>{slide.bg=slide.bg.replace(/linear-gradient\(160deg,\s*([^,]+),\s*([^)]+)\)/,(m,a,b)=>`linear-gradient(160deg,${a.trim()}cc,${b.trim()}cc), url("${foto}") center/cover`);};
     [1,2,3,4,5].forEach((si,k)=>{ if(S[si]&&fotos[k])overlay(S[si],fotos[k]); }); // Intro & Finale bleiben clean
     S.splice(S.length-1,0,{bg:`linear-gradient(160deg,#0f172acc,#1e293bcc), url("${fotos[0]}") center/cover`,html:`<div>
-      <div class="aw-pop" style="font-size:14px;opacity:.9;text-transform:uppercase;letter-spacing:2px">Unsere Momente</div>
+      <div class="aw-pop" style="font-size:var(--s-karte);opacity:.9;text-transform:uppercase;letter-spacing:2px">Unsere Momente</div>
       <div class="aw-pop d1" style="font-size:26px;font-weight:900;margin-top:8px">📸 ${fotos.length} Erinnerungen</div>
-      <div class="aw-pop d2" style="font-size:14px;opacity:.85;margin-top:10px">Eine Saison zum Nie-Vergessen 🦅</div></div>`});
+      <div class="aw-pop d2" style="font-size:var(--s-karte);opacity:.85;margin-top:10px">Eine Saison zum Nie-Vergessen 🦅</div></div>`});
   }
   return S;
 }
@@ -1699,7 +1704,7 @@ function adlerWrappedShow(d,fotos){
   modal.style.cssText="position:fixed;inset:0;z-index:10000;overflow:hidden;color:#fff;font-family:inherit;display:flex;flex-direction:column";
   modal.innerHTML=`
     <div id="aw-bars" style="display:flex;gap:4px;padding:12px 12px 4px;position:relative;z-index:3"></div>
-    <button onclick="adlerWrappedClose()" aria-label="Schließen" style="position:absolute;top:30px;right:12px;z-index:4;background:rgba(0,0,0,.25);border:none;color:#fff;font-size:22px;width:36px;height:36px;border-radius:50%;cursor:pointer">×</button>
+    <button onclick="adlerWrappedClose()" aria-label="Schließen" style="position:absolute;top:30px;right:12px;z-index:4;background:rgba(0,0,0,.25);border:none;color:#fff;font-size:var(--s-seite);width:36px;height:36px;border-radius:50%;cursor:pointer">×</button>
     <div id="aw-stage" style="flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:28px;position:relative;z-index:1"></div>
     <div style="position:absolute;top:32px;bottom:0;left:0;right:0;z-index:2;display:flex">
       <div style="flex:1" role="button" tabindex="0" aria-label="Zurück" onclick="adlerWrappedPrev()"></div>
@@ -1788,20 +1793,20 @@ async function urkundenOpen(){
   m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Urkunden-Studio");
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{if(e.target===m)m.remove();};
-  const fld="width:100%;box-sizing:border-box;padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13.5px;background:var(--surface2);color:var(--text);margin-top:6px";
+  const fld="width:100%;box-sizing:border-box;padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);margin-top:6px";
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("urk-modal","🏅","Urkunden-Studio","Saison-Urkunden für alle – oder eine Urkunde zum Anlass","var(--amber)")}
-    <div style="font-weight:800;font-size:13px;margin-bottom:4px">Saison-Urkunden (alle Kinder)</div>
-    <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Je Kind eine A4-Seite: Stärken aus der Bewertung, Rolle, Federn und Unterschriften-Zeile – fertig fürs Saisonabschluss-Fest.</div>
+    <div style="font-weight:800;font-size:var(--s-text);margin-bottom:4px">Saison-Urkunden (alle Kinder)</div>
+    <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:8px">Je Kind eine A4-Seite: Stärken aus der Bewertung, Rolle, Federn und Unterschriften-Zeile – fertig fürs Saisonabschluss-Fest.</div>
     <button class="btn btn-p" style="width:100%" onclick="urkundenAlle(this)"><i class="ti ti-printer"></i>Alle ${active.length} Urkunden drucken</button>
-    <div style="font-weight:800;font-size:13px;margin:18px 0 4px">Urkunde zum Anlass</div>
-    <div style="font-size:12px;color:var(--text2)">Turnier, Team-Meilenstein, besondere Leistung – Titel und Text frei.</div>
+    <div style="font-weight:800;font-size:var(--s-text);margin:18px 0 4px">Urkunde zum Anlass</div>
+    <div style="font-size:var(--s-text);color:var(--text2)">Turnier, Team-Meilenstein, besondere Leistung – Titel und Text frei.</div>
     <select id="urk-kind" style="${fld}"><option value="*">Alle Kinder</option>${active.map(k=>`<option value="${esc(k.name)}">${esc(k.name)}</option>`).join("")}</select>
     <input id="urk-titel" placeholder="Titel, z. B. Turnier-Urkunde" value="Turnier-Urkunde" style="${fld}">
     <input id="urk-anlass" placeholder="Anlass/Untertitel, z. B. Sommer-Cup 2026" style="${fld}">
     <textarea id="urk-text" rows="3" style="${fld}" placeholder="Text auf der Urkunde">Für großartigen Einsatz, Teamgeist und Fairplay. Das ganze Adler-Team ist stolz auf dich!</textarea>
     <button class="btn btn-p" style="width:100%;margin-top:10px" onclick="urkundeFrei(this)"><i class="ti ti-printer"></i>Anlass-Urkunde drucken</button>
-    <div style="font-size:10.5px;color:var(--text3);margin-top:10px">Tipp: Im Druckdialog „Als PDF speichern" wählen, um die Urkunden digital zu verschicken.</div>
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-top:10px">Tipp: Im Druckdialog „Als PDF speichern" wählen, um die Urkunden digital zu verschicken.</div>
   </div>`;
   document.body.appendChild(m);
 }
@@ -1975,17 +1980,17 @@ function cardSkinGalleryEl(federn){
   const unlocked=shown.filter(s=>f>=s.min).length;
   const wrap=document.createElement("div");
   wrap.style.cssText="width:300px;max-width:100%;background:var(--surface);border:var(--border-s);border-radius:14px;padding:10px 12px";
-  wrap.innerHTML=`<div style="font-size:11px;font-weight:800;color:var(--text);margin-bottom:8px">🃏 Karten-Designs <span style="color:var(--text3);font-weight:600">(${unlocked}/${shown.length} frei · ${f} 🪶)</span></div>
+  wrap.innerHTML=`<div style="font-size:var(--s-klein);font-weight:800;color:var(--text);margin-bottom:8px">🃏 Karten-Designs <span style="color:var(--text3);font-weight:600">(${unlocked}/${shown.length} frei · ${f} 🪶)</span></div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">`+
     shown.map(s=>{
       const on=f>=s.min, isActive=active&&active.name===s.name;
       return `<div style="text-align:center;padding:6px 2px;border-radius:10px;${isActive?"background:rgba(250,204,21,.14);outline:2px solid "+(s.border||"#facc15"):""}">
-        <div style="font-size:24px;line-height:1;${on?"":"filter:grayscale(1);opacity:.4"}">${s.emo}</div>
-        <div style="font-size:9px;font-weight:700;color:${on?"var(--text)":"var(--text3)"};margin-top:3px;line-height:1.1">${s.name.replace("-Adler","")}</div>
-        <div style="font-size:8px;color:var(--text3);margin-top:1px">${on?(isActive?"aktiv":"frei ✓"):"🔒 "+s.min+" 🪶"}</div>
+        <div style="font-size:var(--s-seite);line-height:1;${on?"":"filter:grayscale(1);opacity:.4"}">${s.emo}</div>
+        <div style="font-size:var(--s-klein);font-weight:700;color:${on?"var(--text)":"var(--text3)"};margin-top:3px;line-height:1.1">${s.name.replace("-Adler","")}</div>
+        <div style="font-size:var(--s-klein);color:var(--text3);margin-top:1px">${on?(isActive?"aktiv":"frei ✓"):"🔒 "+s.min+" 🪶"}</div>
       </div>`;
     }).join("")+`</div>
-    <div style="font-size:9px;color:var(--text3);margin-top:8px;text-align:center">Sammle Adler-Federn 🪶 – z. B. im Fußball-Wissensquiz – und schalte neue Designs frei!</div>`;
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px;text-align:center">Sammle Adler-Federn 🪶 – z. B. im Fußball-Wissensquiz – und schalte neue Designs frei!</div>`;
   return wrap;
 }
 // On-Screen-Glanz (nur im Modal, nicht im Export): sanftes Gold-/Hero-Pulsieren um die Karte.
@@ -2065,7 +2070,7 @@ function cardCelebrate(wrap,sk,label){
   const modal=document.getElementById("adler-card-modal");
   if(modal){
     const b=document.createElement("div");
-    b.style.cssText="position:fixed;top:12%;left:50%;z-index:10073;background:"+((sk&&sk.border)||"#facc15")+";color:#1a1205;font-weight:900;font-size:16px;padding:10px 18px;border-radius:30px;box-shadow:0 8px 30px rgba(0,0,0,.45);animation:cardBanner 2.8s ease-out forwards";
+    b.style.cssText="position:fixed;top:12%;left:50%;z-index:10073;background:"+((sk&&sk.border)||"#facc15")+";color:#1a1205;font-weight:900;font-size:var(--s-karte);padding:10px 18px;border-radius:30px;box-shadow:0 8px 30px rgba(0,0,0,.45);animation:cardBanner 2.8s ease-out forwards";
     b.textContent=(sk&&sk.emo?sk.emo+" ":"🎉 ")+"Level-Up: "+label+"!";
     modal.appendChild(b);setTimeout(()=>b.remove(),2900);
   }
@@ -2400,18 +2405,18 @@ function renderVerlauf(){
     const prev=snaps[snaps.length-2],curr=snaps[snaps.length-1];
     const scP=safeParse(prev.scores,[]);const scC=safeParse(curr.scores,[]);
     const totD=(curr.total_score||0)-(prev.total_score||0);
-    deltaHtml=`<div class="delta-box"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px"><i class="ti ti-trending-up" style="font-size:13px"></i> Delta ${esc(prev.datum||'–')} → ${esc(curr.datum||'–')}</div>
+    deltaHtml=`<div class="delta-box"><div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px"><i class="ti ti-trending-up" style="font-size:var(--s-text)"></i> Delta ${esc(prev.datum||'–')} → ${esc(curr.datum||'–')}</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px">${dl.map((l,i)=>{const d=(scC[i]||0)-(scP[i]||0);return`<span class="hp">${l}: <span class="${d>0?'dp':d<0?'dn':''}">${d>0?'+':''}${d}%</span></span>`;}).join("")}</div>
-    <div style="font-size:12.5px;font-weight:600">Gesamt: <span class="${totD>0?'dp':totD<0?'dn':''}">${totD>0?'+':''}${totD}%</span></div></div>`;
+    <div style="font-size:var(--s-text);font-weight:600">Gesamt: <span class="${totD>0?'dp':totD<0?'dn':''}">${totD>0?'+':''}${totD}%</span></div></div>`;
   }
   let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-    <div style="font-weight:700;font-size:14px">${esc(name)}${isTw?" 🥅":""}</div>
-    <span style="font-size:11px;color:var(--text2)">${snaps.length} Bewertung${snaps.length!==1?"en":""}</span>
+    <div style="font-weight:700;font-size:var(--s-karte)">${esc(name)}${isTw?" 🥅":""}</div>
+    <span style="font-size:var(--s-klein);color:var(--text2)">${snaps.length} Bewertung${snaps.length!==1?"en":""}</span>
   </div>
   ${snaps.length>=2?deltaHtml:""}
   ${snaps.length<2?'<div class="status s-info show" style="margin-bottom:.75rem">Mind. 2 Bewertungen für Verlaufsdiagramm nötig.</div>':""}
   <div style="position:relative;height:240px;margin-bottom:1rem"><canvas id="vc" role="img" aria-label="Verlauf ${esc(name)}">Entwicklung</canvas></div>
-  <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:1rem">${dl.map((l,i)=>`<span style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:var(--text2)"><span style="width:14px;height:3px;background:${cols[i]};display:inline-block;border-radius:2px"></span>${l}</span>`).join("")}</div>
+  <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:1rem">${dl.map((l,i)=>`<span style="display:flex;align-items:center;gap:5px;font-size:var(--s-klein);font-weight:500;color:var(--text2)"><span style="width:14px;height:3px;background:${cols[i]};display:inline-block;border-radius:2px"></span>${l}</span>`).join("")}</div>
   <div class="sl"><i class="ti ti-history"></i>Alle Snapshots</div>`;
   snaps.forEach((s,idx)=>{
     const sc=safeParse(s.scores,[]);
@@ -2419,11 +2424,11 @@ function renderVerlauf(){
     const bMap={aufpasser:"rb-auf",jaeger:"rb-jaeg",flitzer_l:"rb-links",flitzer_r:"rb-rechts"};
     html+=`<div class="hi">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px">
-        <span style="font-weight:600;font-size:13px">${esc(s.datum||'–')}</span>
+        <span style="font-weight:600;font-size:var(--s-text)">${esc(s.datum||'–')}</span>
         <span class="rbadge ${bMap[s.position]||'rb-flex'}">${esc(s.prim_rolle||s.position||'–')}</span>
-        <span style="font-size:10.5px;color:var(--text2)">${esc(s.trainer||'')}</span>
-        <span style="font-size:14px;font-weight:700;color:var(--blue-text)">${s.total_score||0}%</span>
-        <button data-del-snap data-name="${esc(name)}" data-datum="${esc(s.datum||'')}" data-id="${esc(s.id||'')}" style="padding:3px 8px;font-size:10px;background:#fef2f2;color:var(--red);border:1px solid #fca5a5;border-radius:6px;cursor:pointer;font-family:inherit">Löschen</button>
+        <span style="font-size:var(--s-klein);color:var(--text2)">${esc(s.trainer||'')}</span>
+        <span style="font-size:var(--s-karte);font-weight:700;color:var(--blue-text)">${s.total_score||0}%</span>
+        <button data-del-snap data-name="${esc(name)}" data-datum="${esc(s.datum||'')}" data-id="${esc(s.id||'')}" style="padding:3px 8px;font-size:var(--s-klein);background:var(--red-bg);color:var(--red);border:1px solid #fca5a5;border-radius:6px;cursor:pointer;font-family:inherit">Löschen</button>
       </div>
       <div class="hs">${dl.map((l,i)=>{const d=prev?(sc[i]||0)-(prev[i]||0):0;const ds=d>0?`<span class="dp"> +${d}</span>`:d<0?`<span class="dn"> ${d}</span>`:"";return`<span class="hp">${l}: ${sc[i]||0}%${ds}</span>`;}).join("")}</div>
     </div>`;
@@ -2692,13 +2697,13 @@ async function elterngespraecheTrainerLoad(){
   try{const r=await fetch(`${SB_URL}/rest/v1/elterngespraech_wunsch?status=eq.offen&select=id,thema,created_at,spieler_id,kader(name)&order=created_at.asc`,{headers:sbAuthHeaders()});if(!sbCheck401(r)&&r.ok)rows=await r.json();}catch(e){}
   if(!rows.length){box.innerHTML="";return;}
   box.innerHTML=`<div class="card" style="border-left:3px solid #7c3aed;padding:12px 14px;margin-top:10px">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="flex:1;font-weight:800;font-size:13.5px">🗣️ Elterngespräch-Wünsche (${rows.length})</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="flex:1;font-weight:800;font-size:var(--s-text)">🗣️ Elterngespräch-Wünsche (${rows.length})</div>
       <button onclick="epollTrainerOpen()" class="btn btn-sm">🗓️ Terminfindungen</button></div>
     ${rows.map(w=>`<div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-top:var(--border-s)">
       <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:700">${esc((w.kader&&w.kader.name)||"Ein Elternteil")}</div>
-        ${w.thema?`<div style="font-size:11.5px;color:var(--text2);line-height:1.4">${esc(w.thema)}</div>`:`<div style="font-size:11.5px;color:var(--text3)">Kein Thema angegeben</div>`}
-        <div style="font-size:10px;color:var(--text3);margin-top:2px">${new Date(w.created_at).toLocaleDateString("de-DE")}</div>
+        <div style="font-size:var(--s-text);font-weight:700">${esc((w.kader&&w.kader.name)||"Ein Elternteil")}</div>
+        ${w.thema?`<div style="font-size:var(--s-klein);color:var(--text2);line-height:1.4">${esc(w.thema)}</div>`:`<div style="font-size:var(--s-klein);color:var(--text3)">Kein Thema angegeben</div>`}
+        <div style="font-size:var(--s-klein);color:var(--text3);margin-top:2px">${new Date(w.created_at).toLocaleDateString("de-DE")}</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;flex:none">
         ${w.spieler_id?`<button onclick="epollTrainerOpen(${w.spieler_id})" class="btn btn-sm">🗓️ Termine</button>`:""}
@@ -2801,7 +2806,7 @@ async function tpollRender(){
   const c=document.getElementById("tm-meet-card"); if(!c)return;
   // min-height:44px – die Felder im „Neues Meeting"-Block waren 33 px hoch und standen
   // damit neben dem 44er-Themenfeld sichtbar aus der Reihe.
-  const FLD="padding:8px;min-height:44px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const FLD="padding:8px;min-height:44px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
   let polls=[],slots=[],votes=[],themen=[];
   const namen=await tpollNamen();
   try{const r=await fetch(`${SB_URL}/rest/v1/trainer_poll?select=*&order=created_at.desc`,{headers:sbAuthHeaders()});if(!sbCheck401(r)&&r.ok)polls=await r.json();}catch(e){}
@@ -2860,9 +2865,9 @@ async function tpollRender(){
         const tage=Math.round((d-new Date(new Date().toISOString().slice(0,10)+"T00:00:00"))/864e5);
         const bald=tage<0?"war am":tage===0?"heute":tage===1?"morgen":"in "+tage+" Tagen";
         return `<div style="border:1.5px solid var(--green);background:var(--green-bg);border-radius:10px;padding:10px 12px;margin-top:6px">
-          <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--green)">✅ Termin steht · ${esc(bald)}</div>
-          <div style="font-size:15px;font-weight:800;color:var(--text);margin-top:2px">${dstr}${zstr}</div>
-          <div style="font-size:10.5px;color:var(--text3);margin-top:3px">✓ ${ja} · ? ${viel} · ✗ ${nein} · <button onclick="tpollOeffnen(${p.id})" style="border:none;background:none;color:var(--blue-text);font-weight:700;cursor:pointer;font-size:10.5px;padding:0">Termin doch ändern</button></div>
+          <div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--green)">✅ Termin steht · ${esc(bald)}</div>
+          <div style="font-size:var(--s-karte);font-weight:800;color:var(--text);margin-top:2px">${dstr}${zstr}</div>
+          <div style="font-size:var(--s-klein);color:var(--text3);margin-top:3px">✓ ${ja} · ? ${viel} · ✗ ${nein} · <button onclick="tpollOeffnen(${p.id})" style="border:none;background:none;color:var(--blue-text);font-weight:700;cursor:pointer;font-size:var(--s-klein);padding:0">Termin doch ändern</button></div>
         </div>`;
       }
       const voteBtns=["ja","vielleicht","nein"].map(st=>{const on=mine===st;const emo=st==="ja"?"✓":st==="vielleicht"?"?":"✗";const col=st==="ja"?"var(--green)":st==="vielleicht"?"var(--amber)":"var(--red)";
@@ -2872,19 +2877,19 @@ async function tpollRender(){
          aus verschachtelten <div> erraten, welcher Kasten gemeint ist – und greift dann
          die Fusszeile statt des Kastens. */
       return `<div data-slot="${s.id}"${empfohlen?' data-empfohlen="1"':""} style="border:${empfohlen?"1.5px solid var(--green)":"var(--border-s)"};background:${empfohlen?"var(--green-bg)":"transparent"};border-radius:10px;padding:8px 10px;margin-top:6px">
-        ${empfohlen?`<div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--green);margin-bottom:2px">👍 Hier können alle – niemand hat abgesagt</div>`:""}
+        ${empfohlen?`<div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--green);margin-bottom:2px">👍 Hier können alle – niemand hat abgesagt</div>`:""}
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <div style="flex:1;min-width:110px;font-size:12.5px;font-weight:700">${dstr}${zstr}</div>
+          <div style="flex:1;min-width:110px;font-size:var(--s-text);font-weight:700">${dstr}${zstr}</div>
           <div style="display:flex;gap:4px">${voteBtns}</div>
         </div>
-        <div style="font-size:10.5px;color:var(--text3);margin-top:4px">✓ ${ja} · ? ${viel} · ✗ ${nein}${fehltTxt} · <button onclick="tpollDecide(${p.id},${s.id})" style="border:none;background:none;color:var(--blue-text);font-weight:700;cursor:pointer;font-size:10.5px;padding:0">diesen Termin festlegen</button></div>
+        <div style="font-size:var(--s-klein);color:var(--text3);margin-top:4px">✓ ${ja} · ? ${viel} · ✗ ${nein}${fehltTxt} · <button onclick="tpollDecide(${p.id},${s.id})" style="border:none;background:none;color:var(--blue-text);font-weight:700;cursor:pointer;font-size:var(--s-klein);padding:0">diesen Termin festlegen</button></div>
       </div>`;
     }).join("");
     return `<div style="border:var(--border-s);border-radius:12px;padding:12px;margin-bottom:10px">
-      <div style="display:flex;align-items:center;gap:8px"><div style="flex:1;font-weight:800;font-size:14px">🗓️ ${esc(p.titel)}</div>
+      <div style="display:flex;align-items:center;gap:8px"><div style="flex:1;font-weight:800;font-size:var(--s-karte)">🗓️ ${esc(p.titel)}</div>
         <button onclick="tpollDelete(${p.id},'${jsq(p.titel)}')" aria-label="Meeting löschen" style="border:none;background:none;color:var(--red);cursor:pointer;min-width:44px;min-height:44px"><i class="ti ti-trash"></i></button></div>
-      ${steht?"":'<div style="font-size:11px;color:var(--text3)">Stimmt ab: ✓ passt · ? vielleicht · ✗ nicht</div>'}
-      ${slotHtml||'<div style="font-size:11px;color:var(--text3)">Keine Termine.</div>'}
+      ${steht?"":'<div style="font-size:var(--s-klein);color:var(--text3)">Stimmt ab: ✓ passt · ? vielleicht · ✗ nicht</div>'}
+      ${slotHtml||'<div style="font-size:var(--s-klein);color:var(--text3)">Keine Termine.</div>'}
       ${tpollThemenHtml(p.id,themenByPoll[p.id]||[],steht)}
     </div>`;
   }).join("");
@@ -2905,27 +2910,27 @@ async function tpollRender(){
     ? "Für diesen Termin läuft noch keine Abstimmung. Trag unten Vorschläge ein – oder sammelt schon mal Themen."
     : "Noch kein Meeting geplant.";
   c.innerHTML=`${mdlHead("tm-meet-modal","🗓️",esc(kopfTitel),esc(kopfSub),"#334155")}
-    ${pollHtml||`<div style="font-size:12px;color:var(--text3);margin-bottom:10px">${esc(leerSatz)}</div>`}
+    ${pollHtml||`<div style="font-size:var(--s-text);color:var(--text3);margin-bottom:10px">${esc(leerSatz)}</div>`}
     ${(nurTermin&&polls.length)
       /* v529: Im Termin gibt es die Abstimmung schon – ein Block „Neues Meeting" darunter war
          Unsinn und trug vier Felder ohne Beschriftung. Hier fehlt hoechstens ein weiterer
          Vorschlag. Erst wenn der Termin steht, ist auch das vorbei. */
       ? (polls.every(p=>p.status==="entschieden")?"":`<div style="border-top:var(--border);padding-top:12px">
-      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">Weiteren Vorschlag hinzufügen</div>
+      <div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">Weiteren Vorschlag hinzufügen</div>
       <div class="mgrid" style="grid-template-columns:1fr 1fr;gap:8px;align-items:end;margin-bottom:0">
-        <label style="font-size:11px;color:var(--text2)">Datum<input type="date" id="tpoll-neu-d" style="width:100%;margin-top:3px;${FLD}"></label>
-        <label style="font-size:11px;color:var(--text2)">Uhrzeit<input type="time" id="tpoll-neu-t" style="width:100%;margin-top:3px;${FLD}"></label>
+        <label style="font-size:var(--s-klein);color:var(--text2)">Datum<input type="date" id="tpoll-neu-d" style="width:100%;margin-top:3px;${FLD}"></label>
+        <label style="font-size:var(--s-klein);color:var(--text2)">Uhrzeit<input type="time" id="tpoll-neu-t" style="width:100%;margin-top:3px;${FLD}"></label>
       </div>
       <button class="btn" onclick="tpollSlotHinzufuegen(${Number(polls[0].id)})" style="width:100%;min-height:48px;margin-top:8px;justify-content:center"><i class="ti ti-plus"></i>Vorschlag hinzufügen</button>
     </div>`)
       : `<div style="border-top:var(--border);padding-top:12px">
-      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">Neues Meeting</div>
-      <label style="font-size:11px;color:var(--text2)">Titel<input id="tpoll-titel" value="${terminZeile?esc(terminZeile.titel||""):""}" placeholder="z. B. Saisonplanung" style="width:100%;margin:3px 0 8px;${FLD}"></label>
+      <div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">Neues Meeting</div>
+      <label style="font-size:var(--s-klein);color:var(--text2)">Titel<input id="tpoll-titel" value="${terminZeile?esc(terminZeile.titel||""):""}" placeholder="z. B. Saisonplanung" style="width:100%;margin:3px 0 8px;${FLD}"></label>
       ${[0,1,2,3].map(i=>`<div class="mgrid" style="grid-template-columns:1fr 1fr;gap:8px;align-items:end;margin-bottom:6px">
-        <label style="font-size:11px;color:var(--text2)">Vorschlag ${i+1} · Datum<input type="date" id="tpoll-d${i}" style="width:100%;margin-top:3px;${FLD}"></label>
-        <label style="font-size:11px;color:var(--text2)">Uhrzeit<input type="time" id="tpoll-t${i}" style="width:100%;margin-top:3px;${FLD}"></label>
+        <label style="font-size:var(--s-klein);color:var(--text2)">Vorschlag ${i+1} · Datum<input type="date" id="tpoll-d${i}" style="width:100%;margin-top:3px;${FLD}"></label>
+        <label style="font-size:var(--s-klein);color:var(--text2)">Uhrzeit<input type="time" id="tpoll-t${i}" style="width:100%;margin-top:3px;${FLD}"></label>
       </div>`).join("")}
-      <button class="btn btn-p" onclick="tpollCreate(this)" style="width:100%;min-height:56px;margin-top:4px;justify-content:center;font-size:15px;font-weight:800"><i class="ti ti-plus"></i>Meeting anlegen</button>
+      <button class="btn btn-p" onclick="tpollCreate(this)" style="width:100%;min-height:56px;margin-top:4px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-plus"></i>Meeting anlegen</button>
     </div>`}
     <button class="btn" onclick="document.getElementById('tm-meet-modal').remove();_TPOLL_TERMIN=null;" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Schließen</button>`;
 }
@@ -2935,21 +2940,21 @@ async function tpollRender(){
 function tpollThemenHtml(pollId,liste,steht){
   const offen=liste.filter(t=>!t.erledigt).length;
   const zeilen=liste.map(t=>`<div style="padding:2px 0"><div style="display:flex;align-items:center;gap:6px">
-      <button onclick="tpollThemaToggle(${t.id},${t.erledigt?"false":"true"})" aria-label="${t.erledigt?"wieder öffnen":"abhaken"}" style="border:none;background:transparent;font-size:16px;cursor:pointer;min-width:44px;min-height:44px;margin:-8px 0;flex:none">${t.erledigt?"✅":"⬜"}</button>
-      <div style="flex:1;min-width:0;font-size:13px;line-height:1.4;${t.erledigt?"text-decoration:line-through;color:var(--text3)":"color:var(--text)"}">${esc(t.text)}</div>
+      <button onclick="tpollThemaToggle(${t.id},${t.erledigt?"false":"true"})" aria-label="${t.erledigt?"wieder öffnen":"abhaken"}" style="border:none;background:transparent;font-size:var(--s-karte);cursor:pointer;min-width:44px;min-height:44px;margin:-8px 0;flex:none">${t.erledigt?"✅":"⬜"}</button>
+      <div style="flex:1;min-width:0;font-size:var(--s-text);line-height:1.4;${t.erledigt?"text-decoration:line-through;color:var(--text3)":"color:var(--text)"}">${esc(t.text)}</div>
       <button onclick="tpollThemaDelete(${t.id})" aria-label="Thema löschen" style="border:none;background:transparent;color:var(--text2);cursor:pointer;min-width:44px;min-height:44px;margin:-8px 0;flex:none"><i class="ti ti-x"></i></button>
     </div>
     ${t.erledigt?(String(t.beschluss||"").trim()
-      ? `<div style="font-size:12px;color:var(--text2);line-height:1.45;margin:2px 0 4px 26px;border-left:2px solid var(--green);padding-left:8px">${esc(t.beschluss)}</div>`
-      : `<div style="margin:2px 0 4px 26px"><button class="btn btn-sm" onclick="tpollBeschlussFragen(${t.id},'${jsq(t.text)}')" style="min-height:36px;font-size:11.5px"><i class="ti ti-writing"></i>Was wurde entschieden?</button></div>`):""}
+      ? `<div style="font-size:var(--s-text);color:var(--text2);line-height:1.45;margin:2px 0 4px 26px;border-left:2px solid var(--green);padding-left:8px">${esc(t.beschluss)}</div>`
+      : `<div style="margin:2px 0 4px 26px"><button class="btn btn-sm" onclick="tpollBeschlussFragen(${t.id},'${jsq(t.text)}')" style="min-height:36px;font-size:var(--s-klein)"><i class="ti ti-writing"></i>Was wurde entschieden?</button></div>`):""}
     </div>`).join("");
   return `<div style="border-top:var(--border);margin-top:10px;padding-top:10px">
-    ${!steht?`<div style="font-size:10.5px;color:var(--text3);margin-bottom:4px">Sammeln geht schon jetzt – der Termin muss dafür nicht stehen.</div>`:""}
-    ${liste.some(t=>t.erledigt)?`<div style="display:flex;justify-content:flex-end;margin-bottom:4px"><button class="btn btn-sm" onclick="tpollProtokoll(${pollId})" style="min-height:36px;font-size:11.5px"><i class="ti ti-file-text"></i>Protokoll teilen</button></div>`:""}
-    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px">📝 Themen fürs Meeting${liste.length?` · ${offen} offen von ${liste.length}`:""}</div>
-    ${zeilen||'<div style="font-size:11.5px;color:var(--text3);padding:2px 0 6px">Noch kein Thema. Was soll besprochen werden?</div>'}
+    ${!steht?`<div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:4px">Sammeln geht schon jetzt – der Termin muss dafür nicht stehen.</div>`:""}
+    ${liste.some(t=>t.erledigt)?`<div style="display:flex;justify-content:flex-end;margin-bottom:4px"><button class="btn btn-sm" onclick="tpollProtokoll(${pollId})" style="min-height:36px;font-size:var(--s-klein)"><i class="ti ti-file-text"></i>Protokoll teilen</button></div>`:""}
+    <div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px">📝 Themen fürs Meeting${liste.length?` · ${offen} offen von ${liste.length}`:""}</div>
+    ${zeilen||'<div style="font-size:var(--s-klein);color:var(--text3);padding:2px 0 6px">Noch kein Thema. Was soll besprochen werden?</div>'}
     <div style="display:flex;gap:6px;margin-top:6px">
-      <input id="tpoll-thema-${pollId}" placeholder="z. B. Trikots nachbestellen" onkeydown="if(event.key==='Enter')tpollThemaAdd(${pollId})" style="flex:1;min-height:44px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box">
+      <input id="tpoll-thema-${pollId}" placeholder="z. B. Trikots nachbestellen" onkeydown="if(event.key==='Enter')tpollThemaAdd(${pollId})" style="flex:1;min-height:44px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box">
       <button class="btn btn-sm" onclick="tpollThemaAdd(${pollId})" aria-label="Thema hinzufügen"><i class="ti ti-plus"></i>Thema</button>
     </div>
   </div>`;
@@ -2996,10 +3001,10 @@ function frageText(o){
     const fertig=v=>{m.remove();res(v);};
     m.onclick=e=>{if(e.target===m)fertig(null);};
     m.innerHTML=`<div style="background:var(--surface);color:var(--text);max-width:400px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
-      <div style="font-size:15px;font-weight:800">${o.emoji||""} ${esc(o.titel||"")}</div>
-      ${o.sub?`<div style="font-size:12.5px;color:var(--text2);margin-top:4px;line-height:1.45">${esc(o.sub)}</div>`:""}
-      <textarea id="frage-text-feld" rows="3" maxlength="300" placeholder="${esc(o.platzhalter||"")}" style="width:100%;box-sizing:border-box;min-height:48px;margin-top:10px;padding:10px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);resize:vertical"></textarea>
-      <button class="btn btn-p" id="frage-text-ok" style="width:100%;min-height:56px;margin-top:10px;justify-content:center;font-size:15px;font-weight:800">${esc(o.ja||"Übernehmen")}</button>
+      <div style="font-size:var(--s-karte);font-weight:800">${o.emoji||""} ${esc(o.titel||"")}</div>
+      ${o.sub?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:4px;line-height:1.45">${esc(o.sub)}</div>`:""}
+      <textarea id="frage-text-feld" rows="3" maxlength="300" placeholder="${esc(o.platzhalter||"")}" style="width:100%;box-sizing:border-box;min-height:48px;margin-top:10px;padding:10px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);resize:vertical"></textarea>
+      <button class="btn btn-p" id="frage-text-ok" style="width:100%;min-height:56px;margin-top:10px;justify-content:center;font-size:var(--s-karte);font-weight:800">${esc(o.ja||"Übernehmen")}</button>
       <button class="btn" id="frage-text-ab" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Abbrechen</button>
     </div>`;
     document.body.appendChild(m);
@@ -3198,7 +3203,7 @@ async function epollTrainerOpen(prefillSpieler){
 }
 async function epollTrainerRender(prefillSpieler){
   const c=document.getElementById("ep-poll-card"); if(!c)return;
-  const FLD="padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const FLD="padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
   let polls=[],slots=[],votes=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/eltern_poll?select=*,kader(name)&order=created_at.desc`,{headers:sbAuthHeaders()});if(!sbCheck401(r)&&r.ok)polls=await r.json();}catch(e){}
   const pids=polls.map(p=>p.id);
@@ -3219,27 +3224,27 @@ async function epollTrainerRender(prefillSpieler){
       const decided=p.decided_slot_id===s.id;
       const antwort=vs.length?`👍 ${ja} · 🤔 ${viel} · 👎 ${nein}`:'<span style="color:var(--text3)">noch keine Antwort</span>';
       return `<div style="border:var(--border-s);${decided?"border-color:var(--green);background:#f0fdf4;color:#14532d;":""}border-radius:10px;padding:8px 10px;margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        <div style="flex:1;min-width:110px;font-size:12.5px;font-weight:700">${dstr}${zstr}${decided?' <span style="color:var(--green)">✅</span>':""}</div>
-        <div style="font-size:11px;color:var(--text2)">${antwort}</div>
+        <div style="flex:1;min-width:110px;font-size:var(--s-text);font-weight:700">${dstr}${zstr}${decided?' <span style="color:var(--green)">✅</span>':""}</div>
+        <div style="font-size:var(--s-klein);color:var(--text2)">${antwort}</div>
         ${p.status!=="entschieden"?`<button onclick="epollDecide(${p.id},${s.id})" class="btn btn-sm">festlegen</button>`:""}
       </div>`;
     }).join("");
     return `<div style="border:var(--border-s);border-radius:12px;padding:12px;margin-bottom:10px">
-      <div style="display:flex;align-items:center;gap:8px"><div style="flex:1;font-weight:800;font-size:14px">🗓️ ${esc((p.kader&&p.kader.name)||"Familie")}${p.titel&&p.titel!=="Elterngespräch"?" · "+esc(p.titel):""}</div>
+      <div style="display:flex;align-items:center;gap:8px"><div style="flex:1;font-weight:800;font-size:var(--s-karte)">🗓️ ${esc((p.kader&&p.kader.name)||"Familie")}${p.titel&&p.titel!=="Elterngespräch"?" · "+esc(p.titel):""}</div>
         <button onclick="epollDelete(${p.id})" aria-label="löschen" style="border:none;background:none;color:var(--red);cursor:pointer;min-width:32px;min-height:32px"><i class="ti ti-trash"></i></button></div>
-      ${p.status==="entschieden"?'<div style="font-size:11px;color:var(--green);font-weight:700">Termin steht ✓</div>':'<div style="font-size:11px;color:var(--text3)">Warte auf die Rückmeldung der Eltern.</div>'}
-      ${slotHtml||'<div style="font-size:11px;color:var(--text3)">Keine Termine.</div>'}
+      ${p.status==="entschieden"?'<div style="font-size:var(--s-klein);color:var(--green);font-weight:700">Termin steht ✓</div>':'<div style="font-size:var(--s-klein);color:var(--text3)">Warte auf die Rückmeldung der Eltern.</div>'}
+      ${slotHtml||'<div style="font-size:var(--s-klein);color:var(--text3)">Keine Termine.</div>'}
     </div>`;
   }).join("");
   const kinder=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k.aktiv!==false);
   const kidOpts=kinder.map(k=>`<option value="${k._id!=null?k._id:k.id}"${(prefillSpieler&&(k._id===prefillSpieler||k.id===prefillSpieler))?" selected":""}>${esc(k.name)}</option>`).join("");
   c.innerHTML=`${mdlHead("ep-poll-modal","🗣️","Elterngespräch-Termine","Einer Familie Termine vorschlagen · Eltern antworten, du legst fest","#475569")}
-    ${pollHtml||'<div style="font-size:12px;color:var(--text3);margin-bottom:10px">Noch keine Terminfindung.</div>'}
+    ${pollHtml||'<div style="font-size:var(--s-text);color:var(--text3);margin-bottom:10px">Noch keine Terminfindung.</div>'}
     <div style="border-top:var(--border);padding-top:12px">
-      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">Neuer Terminvorschlag</div>
-      <label style="font-size:10px;color:var(--text3)">Familie / Kind<select id="epoll-kid" style="width:100%;margin-bottom:6px;${FLD}">${kidOpts}</select></label>
+      <div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">Neuer Terminvorschlag</div>
+      <label style="font-size:var(--s-klein);color:var(--text3)">Familie / Kind<select id="epoll-kid" style="width:100%;margin-bottom:6px;${FLD}">${kidOpts}</select></label>
       <input id="epoll-titel" placeholder="Thema (optional, z. B. Entwicklung)" style="width:100%;margin-bottom:6px;${FLD}">
-      <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Terminvorschläge (Datum + Uhrzeit):</div>
+      <div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:4px">Terminvorschläge (Datum + Uhrzeit):</div>
       ${[0,1,2,3].map(i=>`<div style="display:flex;gap:6px;margin-bottom:4px"><input type="date" id="epoll-d${i}" style="flex:2;${FLD}"><input type="time" id="epoll-t${i}" style="flex:1;${FLD}"></div>`).join("")}
       <div style="display:flex;gap:8px;margin-top:4px">
         <button class="btn btn-p btn-sm" onclick="epollCreate(this)"><i class="ti ti-plus"></i>Vorschlagen</button>
@@ -3305,9 +3310,9 @@ async function homeRadarLoad(){
   if(!top.length&&!absent.length){box.innerHTML="";return;}
   const line=(nr,name,right,col)=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--surface2)">
     <span style="flex:1;font-weight:600">${nr!=null?esc(nr)+" ":""}${esc(name)}</span>
-    <span style="font-size:11px;color:${col||'var(--text2)'};font-weight:${col?700:400}">${right}</span></div>`;
+    <span style="font-size:var(--s-klein);color:${col||'var(--text2)'};font-weight:${col?700:400}">${right}</span></div>`;
   const playHtml=top.length?`<div style="font-weight:700;margin-bottom:2px">🎯 Kein Kind übersehen</div>
-    <div style="font-size:10.5px;color:var(--text2);margin-bottom:8px">Zuletzt am wenigsten Spielzeit &amp; Aktionen – gib ihnen bewusst mehr Bühne.</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">Zuletzt am wenigsten Spielzeit &amp; Aktionen – gib ihnen bewusst mehr Bühne.</div>
     ${top.map(s=>line(s.nr,s.name,`${s.min} Min · ${s.act} Aktionen`)).join("")}`:"";
   const absHtml=absent.length?`<div style="font-weight:700;margin:${top.length?"14px":"0"} 0 6px">📅 Zuletzt öfter gefehlt</div>
     ${absent.slice(0,3).map(a=>line(a.nr,a.name,`${a.streak}× nicht da`,"var(--red)")).join("")}`:"";
@@ -3322,7 +3327,7 @@ function einheitStarsHtml(key,val,max,size){
 function einheitStarRow(key,label,val,max,size){
   val=val||0; max=max||5; size=size||24;
   return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0">
-    <span style="font-size:13.5px;font-weight:600;color:var(--text);min-width:0">${label}</span>
+    <span style="font-size:var(--s-text);font-weight:600;color:var(--text);min-width:0">${label}</span>
     <span id="eb-stars-${key}" data-val="${val}" style="white-space:nowrap">${einheitStarsHtml(key,val,max,size)}</span></div>`;
 }
 function einheitSetStar(key,val,max,size){
@@ -3375,16 +3380,16 @@ function einheitListRender(){
     const bew=EINHEIT_CACHE.find(x=>x.datum===t.datum);
     const dt=new Date(t.datum+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"});
     return `<div role="button" tabindex="0" onclick="einheitDetailOpen('${t.datum}')" style="display:flex;align-items:center;gap:10px;padding:11px 10px;border:var(--border-s);border-radius:10px;margin-bottom:6px;cursor:pointer;background:var(--surface2)">
-      <div style="font-size:20px">${bew?"✅":"⭐"}</div>
+      <div style="font-size:var(--s-teil)">${bew?"✅":"⭐"}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:700;color:var(--text)">${wtag(t.datum)} ${dt}</div>
-        <div style="font-size:10.5px;color:var(--text3)">${t.uhrzeit?String(t.uhrzeit).slice(0,5)+" Uhr":""}${t.platz?" · 🏟️ "+esc(t.platz):""}${bew?" · bewertet":" · noch offen"}</div>
+        <div style="font-size:var(--s-text);font-weight:700;color:var(--text)">${wtag(t.datum)} ${dt}</div>
+        <div style="font-size:var(--s-klein);color:var(--text3)">${t.uhrzeit?String(t.uhrzeit).slice(0,5)+" Uhr":""}${t.platz?" · 🏟️ "+esc(t.platz):""}${bew?" · bewertet":" · noch offen"}</div>
       </div>
-      <div style="font-size:18px;color:var(--text3)">›</div>
+      <div style="font-size:var(--s-teil);color:var(--text3)">›</div>
     </div>`;
   }).join("");
   c.innerHTML=`${mdlHead("eb-modal","⭐","Einheit bewerten","Wähle die Trainingseinheit, die du nachbereiten willst","#2563eb")}
-    ${EB_TERMINE.length?rows:'<div style="font-size:12.5px;color:var(--text3);padding:10px 0">Es sind noch keine Trainings-Termine vergangen. Lege sie unter „Termine“ an.</div>'}
+    ${EB_TERMINE.length?rows:'<div style="font-size:var(--s-text);color:var(--text3);padding:10px 0">Es sind noch keine Trainings-Termine vergangen. Lege sie unter „Termine“ an.</div>'}
     <div style="display:flex;margin-top:10px"><button class="btn btn-sm" style="margin-left:auto" onclick="document.getElementById('eb-modal').remove()">Schließen</button></div>`;
 }
 
@@ -3437,7 +3442,7 @@ function einheitBlockNamen(p){
 async function einheitDetailOpen(datum){
   const c=document.getElementById("eb-card"); if(!c)return;
   EB_DATUM=datum;
-  c.innerHTML='<div style="padding:20px;color:var(--text3);font-size:12.5px">Lade Einheit…</div>';
+  c.innerHTML='<div style="padding:20px;color:var(--text3);font-size:var(--s-text)">Lade Einheit…</div>';
   EB_PLAN=(typeof tpPlanLoad==="function")?await tpPlanLoad(datum):[];
   EB_PLAN=einheitPlanBuendeln(EB_PLAN);
   // P3 (PO): Jeder Trainer bewertet nur SEINE Übungen; „Alle"-Stationen sieht jeder.
@@ -3452,29 +3457,29 @@ async function einheitDetailOpen(datum){
   const ex=EINHEIT_CACHE.find(x=>x.datum===datum)||{};
   const evals=(typeof EVAL_DATA!=="undefined"&&EVAL_DATA[datum])||[];
   const aw=(typeof AW_DATA!=="undefined"&&AW_DATA[datum])||null;
-  const fld="padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box";
-  const kopf=`<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:16px 0 4px">`;
+  const fld="padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const kopf=`<div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:16px 0 4px">`;
 
   // ── Übungen aus dem gespeicherten Plan des Tages ──
   let ueHtml;
   if(!EB_PLAN.length){
-    ueHtml=`<div style="font-size:12px;color:var(--text3);background:var(--surface2);border-radius:8px;padding:10px">Für diesen Tag ist kein Trainingsplan gespeichert. Pläne werden ab jetzt automatisch am Datum festgehalten, sobald du im Reiter „Training“ Übungen zuweist.</div>`;
+    ueHtml=`<div style="font-size:var(--s-text);color:var(--text3);background:var(--surface2);border-radius:8px;padding:10px">Für diesen Tag ist kein Trainingsplan gespeichert. Pläne werden ab jetzt automatisch am Datum festgehalten, sobald du im Reiter „Training“ Übungen zuweist.</div>`;
   }else{
     ueHtml=EB_PLAN.map((p,i)=>{
       const alt=evals.find(e=>e&&e.trainer===p.trainer&&(typeof tfGleicheUebung==="function"?tfGleicheUebung(e,p):e.formIdx===p.formIdx))||{};   // v586: nach Namen
       const skip=!!alt.skipped;
-      const badge=p.trainer&&p.trainer!=="Alle"?`<span style="background:#e0e7ff;color:#3730a3;font-size:9px;padding:1px 6px;border-radius:4px;margin-left:6px">${esc(p.trainer)}</span>`:"";
+      const badge=p.trainer&&p.trainer!=="Alle"?`<span style="background:#e0e7ff;color:#3730a3;font-size:var(--s-klein);padding:1px 6px;border-radius:4px;margin-left:6px">${esc(p.trainer)}</span>`:"";
       return `<div id="eb-ue-${i}" data-skip="${skip?1:0}" style="border:var(--border-s);border-radius:10px;padding:10px;margin-bottom:8px">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
-          <span style="font-size:13px;font-weight:700;color:var(--text)">${esc(p.formName)}</span>${badge}
+          <span style="font-size:var(--s-text);font-weight:700;color:var(--text)">${esc(p.formName)}</span>${badge}
         </div>
-        <div style="font-size:10px;color:var(--text3);margin-bottom:6px">${esc(einheitBlockNamen(p).join(" · "))}${(p._labels&&p._labels.length>1)?` <span style="color:var(--text2)">· ${p._labels.length}× im Plan</span>`:""}</div>
+        <div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:6px">${esc(einheitBlockNamen(p).join(" · "))}${(p._labels&&p._labels.length>1)?` <span style="color:var(--text2)">· ${p._labels.length}× im Plan</span>`:""}</div>
         <div id="eb-ue-stars-${i}" style="${skip?"opacity:.35;pointer-events:none":""}">
           ${EB_DIMS.map(d=>einheitStarRow(`ue-${i}-${d.key}`,d.label,alt[d.key]||0,5,19)).join("")}
         </div>
         <input id="eb-ue-notiz-${i}" value="${esc(alt.notiz||"")}" placeholder="Kommentar zur Übung (optional) – steht beim nächsten Mal im Plan" maxlength="200"
           style="${fld};width:100%;min-height:44px;margin-top:6px">
-        <label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:11.5px;color:var(--text2);cursor:pointer">
+        <label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:var(--s-klein);color:var(--text2);cursor:pointer">
           <input type="checkbox" id="eb-skip-${i}" ${skip?"checked":""} onchange="einheitSkipToggle(${i})">
           Übersprungen / anderer Trainer – nicht bewerten
         </label>
@@ -3485,18 +3490,18 @@ async function einheitDetailOpen(datum){
   // ── Spieler-Sterne: nur für Kinder, die an dem Tag als anwesend erfasst sind ──
   let spHtml;
   if(!aw){
-    spHtml=`<div style="font-size:12px;color:var(--text3);background:var(--surface2);border-radius:8px;padding:10px">Für diesen Tag ist keine Anwesenheit erfasst. Trage sie unter „Anwesenheit“ ein – danach kannst du die Kinder hier bewerten.</div>`;
+    spHtml=`<div style="font-size:var(--s-text);color:var(--text3);background:var(--surface2);border-radius:8px;padding:10px">Für diesen Tag ist keine Anwesenheit erfasst. Trage sie unter „Anwesenheit“ ein – danach kannst du die Kinder hier bewerten.</div>`;
   }else{
     EB_SPIELER=KADER.filter(k=>aw[k.name]&&aw[k.name].da).map(k=>k.name); // Index statt Name im Key: Namen mit ' wuerden den onclick sprengen
     spHtml=EB_SPIELER.length
       ? EB_SPIELER.map((n,i)=>einheitStarRow(`sp-${i}`,esc(n),(aw[n].qual)||0,3,21)).join("")
-      : `<div style="font-size:12px;color:var(--text3)">An diesem Tag war kein Kind als anwesend eingetragen.</div>`;
+      : `<div style="font-size:var(--s-text);color:var(--text3)">An diesem Tag war kein Kind als anwesend eingetragen.</div>`;
   }
 
   const dt=new Date(datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"});
   c.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
       <button class="btn btn-sm" onclick="einheitListRender()"><i class="ti ti-arrow-left"></i></button>
-      <div style="font-weight:800;font-size:16px">⭐ ${dt}</div>
+      <div style="font-weight:800;font-size:var(--s-karte)">⭐ ${dt}</div>
     </div>
     ${kopf}Die Einheit insgesamt</div>
     <div id="eb-rows">${einheitRowsHtml(ex)}</div>
@@ -3505,7 +3510,7 @@ async function einheitDetailOpen(datum){
     ${ueHtml}
     ${kopf}Die Kinder <span style="font-weight:600;text-transform:none;color:var(--text3)">· 1–3 Sterne</span></div>
     ${spHtml}
-    <button onclick="einheitSave()" style="width:100%;min-height:56px;margin-top:14px;border:none;border-radius:14px;background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;font-family:inherit;font-size:15px;font-weight:900;cursor:pointer;box-shadow:0 2px 10px rgba(37,99,235,.3)">💾 Nachbewertung speichern</button>
+    <button onclick="einheitSave()" style="width:100%;min-height:56px;margin-top:14px;border:none;border-radius:14px;background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:900;cursor:pointer;box-shadow:0 2px 10px rgba(37,99,235,.3)">💾 Nachbewertung speichern</button>
     <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('eb-modal').remove()">Schließen</button>`;
 }
 
@@ -3596,9 +3601,9 @@ function ebWeiterInsTagebuch(datum){
   box.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10055;display:flex;align-items:center;justify-content:center;padding:18px";
   box.onclick=e=>{ if(e.target===box) box.remove(); };
   box.innerHTML=`<div style="background:var(--surface);color:var(--text);max-width:380px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
-    <div style="font-size:15px;font-weight:800">Einheit nachbereitet ✓</div>
-    <div style="font-size:12.5px;color:var(--text2);margin:6px 0 14px;line-height:1.5">Willst du daraus einen Tagebucheintrag machen? Auslöser und Beobachtung stehen schon da – es fehlen nur dein Aha und die Konsequenz.</div>
-    <button class="btn btn-p" onclick="document.getElementById('eb-weiter').remove();tagebuchAusEinheit('${String(datum).replace(/'/g,"")}')" style="width:100%;min-height:56px;justify-content:center;font-size:15px;font-weight:800"><i class="ti ti-book"></i>Ins Tagebuch</button>
+    <div style="font-size:var(--s-karte);font-weight:800">Einheit nachbereitet ✓</div>
+    <div style="font-size:var(--s-text);color:var(--text2);margin:6px 0 14px;line-height:1.5">Willst du daraus einen Tagebucheintrag machen? Auslöser und Beobachtung stehen schon da – es fehlen nur dein Aha und die Konsequenz.</div>
+    <button class="btn btn-p" onclick="document.getElementById('eb-weiter').remove();tagebuchAusEinheit('${String(datum).replace(/'/g,"")}')" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-book"></i>Ins Tagebuch</button>
     <button class="btn" onclick="document.getElementById('eb-weiter').remove()" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Später</button>
   </div>`;
   document.body.appendChild(box);
@@ -3627,16 +3632,16 @@ async function anwesenheitQuoteInto(el){
   try{const r=await fetch(`${SB_URL}/rest/v1/nominierungen?select=data&datum=gte.${ab}`,{headers:sbAuthHeaders()});if(r.ok){(await r.json()).forEach(row=>{const data=kidMapFromIds(row.data||{});active.forEach(k=>{const s=data[k.name];if(s&&(s==="dabei"||s==="nicht"||s==="verletzt")){gm[k.name].t++;if(s==="dabei")gm[k.name].p++;}});});}}catch(e){}
   const pct=(o)=>o.t?Math.round(o.p/o.t*100):null;
   const col=(p)=>p==null?"var(--text3)":p>=75?"var(--green)":p>=50?"var(--amber)":"var(--red)";
-  const cell=(o)=>{const p=pct(o);return `<span style="font-weight:700;color:${col(p)}">${p==null?"–":p+"%"}</span> <span style="color:var(--text3);font-size:10px">${o.t?`(${o.p}/${o.t})`:""}</span>`;};
+  const cell=(o)=>{const p=pct(o);return `<span style="font-weight:700;color:${col(p)}">${p==null?"–":p+"%"}</span> <span style="color:var(--text3);font-size:var(--s-klein)">${o.t?`(${o.p}/${o.t})`:""}</span>`;};
   const rows=active.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(k=>`<tr style="border-top:var(--border)">
     <td style="padding:6px 8px;font-weight:600">${esc(k.name)}</td>
     <td style="padding:6px 8px;text-align:right">${cell(tr[k.name])}</td>
     <td style="padding:6px 8px;text-align:right">${cell(gm[k.name])}</td></tr>`).join("");
-  el.innerHTML=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px">
-      <tr style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)"><td style="padding:4px 8px">Spieler</td><td style="padding:4px 8px;text-align:right">🏃 Training</td><td style="padding:4px 8px;text-align:right">⚽ Spiele</td></tr>
+  el.innerHTML=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:var(--s-text)">
+      <tr style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text2)"><td style="padding:4px 8px">Spieler</td><td style="padding:4px 8px;text-align:right">🏃 Training</td><td style="padding:4px 8px;text-align:right">⚽ Spiele</td></tr>
       ${rows||'<tr><td style="padding:8px;color:var(--text3)">Noch keine Daten.</td></tr>'}
     </table></div>
-    <div style="font-size:11px;color:var(--text3);margin-top:8px">Training aus der Anwesenheitsliste, Spiele aus den Nominierungen · gezählt ab Saisonbeginn ${esc(abTr)} bzw. ${esc(ab)} · nur Info</div>`;
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px">Training aus der Anwesenheitsliste, Spiele aus den Nominierungen · gezählt ab Saisonbeginn ${esc(abTr)} bzw. ${esc(ab)} · nur Info</div>`;
 }
 async function anwesenheitOpen(){
   document.getElementById("aq-modal")?.remove();
@@ -3696,8 +3701,8 @@ function elternInviteTextZeigen(msg){
   const c=document.createElement("div");
   c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`${mdlHead("invite-modal","🔗","Einladungstext","Teilen ging nicht – hier zum Kopieren","#1e3a8a")}
-    <textarea id="invite-text" readonly style="width:100%;height:220px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:12.5px;line-height:1.5;padding:10px;resize:vertical">${esc(msg)}</textarea>
-    <button type="button" id="invite-copy" style="width:100%;min-height:44px;margin-top:10px;border:none;border-radius:12px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer">Text markieren</button>`;
+    <textarea id="invite-text" readonly style="width:100%;height:220px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-text);line-height:1.5;padding:10px;resize:vertical">${esc(msg)}</textarea>
+    <button type="button" id="invite-copy" style="width:100%;min-height:44px;margin-top:10px;border:none;border-radius:12px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">Text markieren</button>`;
   m.appendChild(c); document.body.appendChild(m);
   c.querySelector("#invite-copy").onclick=()=>{
     const t=c.querySelector("#invite-text");
@@ -3728,14 +3733,14 @@ async function ferienLoad(){
 function ferienFuer(datum){ return (window._ferien||[]).find(f=>datum>=f.von&&datum<=f.bis)||null; }
 function ferienBadge(datum){
   const f=ferienFuer(datum);
-  return f?`<span title="Schulferien NRW" style="font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:10px;background:#e0f2fe;color:#0369a1;white-space:nowrap">🏖️ ${esc(f.name)}</span>`:"";
+  return f?`<span title="Schulferien NRW" style="font-size:var(--s-klein);font-weight:700;padding:2px 7px;border-radius:10px;background:#e0f2fe;color:#0369a1;white-space:nowrap">🏖️ ${esc(f.name)}</span>`:"";
 }
 // Warnzeile unter einem Datumsfeld (Termin anlegen/bearbeiten)
 async function ferienDatumHint(input,slotId){
   const slot=document.getElementById(slotId); if(!slot||!input||!input.value)return;
   await ferienLoad();
   const f=ferienFuer(input.value);
-  slot.innerHTML=f?`<div style="font-size:11.5px;color:#0369a1;background:#e0f2fe;border-radius:8px;padding:6px 10px;margin-top:4px">🏖️ Achtung: Das Datum liegt in den <b>${esc(f.name)}</b> (${new Date(f.von+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}–${new Date(f.bis+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}) – mit dünner Beteiligung rechnen.</div>`:"";
+  slot.innerHTML=f?`<div style="font-size:var(--s-klein);color:#0369a1;background:#e0f2fe;border-radius:8px;padding:6px 10px;margin-top:4px">🏖️ Achtung: Das Datum liegt in den <b>${esc(f.name)}</b> (${new Date(f.von+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}–${new Date(f.bis+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}) – mit dünner Beteiligung rechnen.</div>`:"";
 }
 // Dashboard: Hinweis nur, wenn Ferien laufen oder in <21 Tagen beginnen
 async function homeFerien(){
@@ -3751,8 +3756,8 @@ async function homeFerien(){
   const dLabel=d=>new Date(d+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
   const tage=Math.round((new Date(f.von+"T00:00:00")-new Date(heute+"T00:00:00"))/864e5);
   slot.innerHTML=`<div class="card" style="padding:10px 14px;margin-bottom:8px;border-left:3px solid #0ea5e9;display:flex;align-items:center;gap:10px">
-    <span style="font-size:20px">🏖️</span>
-    <div style="font-size:12.5px;color:var(--text2)"><b style="color:var(--text)">${esc(f.name)} NRW</b> ${jetzt?`laufen gerade (bis ${dLabel(f.bis)})`:`starten in ${tage} Tag${tage===1?"":"en"} (${dLabel(f.von)}–${dLabel(f.bis)})`} – Termine ggf. anpassen, Rückmeldungen früh einholen.</div>
+    <span style="font-size:var(--s-teil)">🏖️</span>
+    <div style="font-size:var(--s-text);color:var(--text2)"><b style="color:var(--text)">${esc(f.name)} NRW</b> ${jetzt?`laufen gerade (bis ${dLabel(f.bis)})`:`starten in ${tage} Tag${tage===1?"":"en"} (${dLabel(f.von)}–${dLabel(f.bis)})`} – Termine ggf. anpassen, Rückmeldungen früh einholen.</div>
   </div>`;
 }
 /* ── J2: Saisonstart-Assistent – geführter Übergang in die neue Saison. Sechs Schritte
@@ -3798,15 +3803,15 @@ function saisonStartOpen(){
     ${mdlHead("sstart-modal","🌅","Saisonstart-Check",`Saison ${saisonLabel()} · ${n}/${SAISONSTART_STEPS.length} erledigt`,"#ea580c")}
     <div style="height:6px;background:var(--surface2);border-radius:4px;overflow:hidden;margin-bottom:12px"><div style="height:100%;width:${Math.round(n/SAISONSTART_STEPS.length*100)}%;background:linear-gradient(90deg,#ea580c,#f59e0b);transition:width .3s"></div></div>
     ${SAISONSTART_STEPS.map(s=>`<div style="display:flex;align-items:center;gap:10px;border:var(--border-s);border-left:4px solid ${done[s.k]?"var(--green)":"#ea580c"};border-radius:12px;padding:10px 12px;margin-bottom:8px;${done[s.k]?"opacity:.65":""}">
-      <button onclick="saisonStartToggle('${s.k}')" aria-label="abhaken" style="border:none;background:transparent;font-size:20px;cursor:pointer;min-width:44px;min-height:44px;margin:-6px 0 -6px -8px;flex:none">${done[s.k]?"✅":"⬜"}</button>
+      <button onclick="saisonStartToggle('${s.k}')" aria-label="abhaken" style="border:none;background:transparent;font-size:var(--s-teil);cursor:pointer;min-width:44px;min-height:44px;margin:-6px 0 -6px -8px;flex:none">${done[s.k]?"✅":"⬜"}</button>
       <div style="flex:1;min-width:0">
-        <div style="font-size:13.5px;font-weight:800;${done[s.k]?"text-decoration:line-through":""}">${s.emo} ${s.t}</div>
-        <div style="font-size:11.5px;color:var(--text2)">${s.d}</div>
+        <div style="font-size:var(--s-text);font-weight:800;${done[s.k]?"text-decoration:line-through":""}">${s.emo} ${s.t}</div>
+        <div style="font-size:var(--s-klein);color:var(--text2)">${s.d}</div>
       </div>
       <button class="btn btn-sm" onclick="document.getElementById('sstart-modal').remove();${s.run}">Los</button>
     </div>`).join("")}
-    ${n===SAISONSTART_STEPS.length?'<div style="text-align:center;font-size:13.5px;font-weight:800;color:var(--green);padding:6px">Alles erledigt – auf in die neue Saison! 🦅</div>':""}
-    <button type="button" onclick="saisonStartFertig()" style="width:100%;min-height:44px;margin-top:4px;border:${n===SAISONSTART_STEPS.length?"none":"var(--border-s)"};border-radius:12px;background:${n===SAISONSTART_STEPS.length?"var(--green)":"var(--surface2)"};color:${n===SAISONSTART_STEPS.length?"#fff":"var(--text2)"};font-family:inherit;font-size:13px;font-weight:800;cursor:pointer">Saisonstart abschließen – bis zur nächsten Saison ausblenden</button>
+    ${n===SAISONSTART_STEPS.length?'<div style="text-align:center;font-size:var(--s-text);font-weight:800;color:var(--green);padding:6px">Alles erledigt – auf in die neue Saison! 🦅</div>':""}
+    <button type="button" onclick="saisonStartFertig()" style="width:100%;min-height:44px;margin-top:4px;border:${n===SAISONSTART_STEPS.length?"none":"var(--border-s)"};border-radius:12px;background:${n===SAISONSTART_STEPS.length?"var(--green)":"var(--surface2)"};color:${n===SAISONSTART_STEPS.length?"#fff":"var(--text2)"};font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">Saisonstart abschließen – bis zur nächsten Saison ausblenden</button>
   </div>`;
   document.body.appendChild(m);
 }
@@ -3825,7 +3830,7 @@ async function wahlTrainerOpen(){
   m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Kabinen-Wahl");
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{if(e.target===m)m.remove();};
-  const fld="width:100%;box-sizing:border-box;padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13.5px;background:var(--surface2);color:var(--text);margin-top:6px";
+  const fld="width:100%;box-sizing:border-box;padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);margin-top:6px";
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("wahl-modal","🗳️","Kabinen-Wahl","Die Kinder stimmen in der Kabine ab – Song, Motto, Wunsch-Spielform","#0284c7")}
     <input id="wahl-frage" placeholder="Frage, z. B. Welcher Einlauf-Song im August?" style="${fld}">
@@ -3834,8 +3839,8 @@ async function wahlTrainerOpen(){
     <input id="wahl-opt3" placeholder="Option 3 (optional)" style="${fld}">
     <input id="wahl-opt4" placeholder="Option 4 (optional)" style="${fld}">
     <button class="btn btn-p" style="width:100%;margin-top:10px" onclick="wahlAnlegen(this)"><i class="ti ti-plus"></i>Wahl starten</button>
-    <div style="font-weight:800;font-size:13px;margin:16px 0 6px">Bisherige Wahlen</div>
-    <div id="wahl-liste"><div style="font-size:12px;color:var(--text3)">Lade…</div></div>
+    <div style="font-weight:800;font-size:var(--s-text);margin:16px 0 6px">Bisherige Wahlen</div>
+    <div id="wahl-liste"><div style="font-size:var(--s-text);color:var(--text3)">Lade…</div></div>
   </div>`;
   document.body.appendChild(m);
   wahlListeLoad();
@@ -3844,7 +3849,7 @@ async function wahlListeLoad(){
   const el=document.getElementById("wahl-liste"); if(!el)return;
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/kabinen_wahl?select=*&order=created_at.desc&limit=6`,{headers:sbAuthHeaders()});if(!sbCheck401(r)&&r.ok)rows=(await r.json())||[];}catch(e){}
-  if(!rows.length){el.innerHTML='<div style="font-size:12px;color:var(--text3)">Noch keine Wahl gestartet.</div>';return;}
+  if(!rows.length){el.innerHTML='<div style="font-size:var(--s-text);color:var(--text3)">Noch keine Wahl gestartet.</div>';return;}
   const ergAlle={};
   await Promise.all(rows.map(async w=>{
     try{const r=await fetch(`${SB_URL}/rest/v1/rpc/wahl_ergebnis`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_wahl:w.id})});if(r.ok)ergAlle[w.id]=(await r.json())||[];}catch(e){}
@@ -3854,9 +3859,9 @@ async function wahlListeLoad(){
     const counts=(w.optionen||[]).map((_,i)=>{const e2=erg.find(x=>x.wahl===i);return e2?e2.n:0;});
     const total=counts.reduce((s,n)=>s+n,0);
     return `<div style="border:var(--border-s);border-left:4px solid ${w.aktiv?"#0284c7":"#cbd5e1"};border-radius:12px;padding:10px 12px;margin-bottom:8px;${w.aktiv?"":"opacity:.65"}">
-      <div style="font-size:13px;font-weight:800">${esc(w.frage)} <span style="font-weight:400;color:var(--text3);font-size:11px">· ${total} Stimme${total===1?"":"n"}</span></div>
+      <div style="font-size:var(--s-text);font-weight:800">${esc(w.frage)} <span style="font-weight:400;color:var(--text3);font-size:var(--s-klein)">· ${total} Stimme${total===1?"":"n"}</span></div>
       ${(w.optionen||[]).map((o,i)=>{const pct=total?Math.round(counts[i]/total*100):0;
-        return `<div style="display:flex;align-items:center;gap:8px;margin-top:5px;font-size:12px"><span style="flex:1;min-width:0">${esc(String(o))}</span><span style="color:var(--text2)">${counts[i]}</span><span style="width:70px;height:6px;background:var(--surface2);border-radius:4px;overflow:hidden"><span style="display:block;height:100%;width:${pct}%;background:#0284c7"></span></span></div>`;}).join("")}
+        return `<div style="display:flex;align-items:center;gap:8px;margin-top:5px;font-size:var(--s-text)"><span style="flex:1;min-width:0">${esc(String(o))}</span><span style="color:var(--text2)">${counts[i]}</span><span style="width:70px;height:6px;background:var(--surface2);border-radius:4px;overflow:hidden"><span style="display:block;height:100%;width:${pct}%;background:#0284c7"></span></span></div>`;}).join("")}
       <div style="display:flex;gap:8px;margin-top:8px">
         <button class="btn btn-sm" onclick="wahlToggle(${w.id},${w.aktiv?"false":"true"})">${w.aktiv?"Beenden":"Reaktivieren"}</button>
         <button class="btn btn-sm" style="margin-left:auto;color:var(--red)" onclick="wahlDelete(${w.id})"><i class="ti ti-trash"></i></button>
@@ -3898,9 +3903,9 @@ async function homeMilestone(){
   const slot=document.getElementById("home-milestone"); if(!slot)return;
   if(!frisch.length){slot.innerHTML="";return;}
   slot.innerHTML=frisch.map(m=>`<div class="card" style="padding:10px 14px;margin-bottom:8px;border-left:3px solid #f59e0b;display:flex;align-items:center;gap:10px">
-    <span style="font-size:20px">🎉</span>
-    <div><div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Team-Meilenstein</div>
-    <div style="font-size:13.5px;font-weight:800">${esc(m.label)}</div></div>
+    <span style="font-size:var(--s-teil)">🎉</span>
+    <div><div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Team-Meilenstein</div>
+    <div style="font-size:var(--s-text);font-weight:800">${esc(m.label)}</div></div>
   </div>`).join("");
 }
 /* ── H1: Team-Ansagen (Trainer) – senden, Gelesen-Quote je Familie sehen, beenden.
@@ -3914,11 +3919,11 @@ async function ansageTrainerOpen(prefill){
   m.onclick=e=>{if(e.target===m)m.remove();};
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("ansage-modal","📣","Team-Ansage","Wichtige Info an alle Eltern – mit Gelesen-Status","#1e3a8a")}
-    <textarea id="ansage-text" rows="3" placeholder="z. B. Sonntag Treffpunkt schon 9:15 am Käfig – bitte pünktlich!" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:14px;background:var(--surface2);color:var(--text);resize:vertical"></textarea>
-    <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);margin-top:8px;cursor:pointer"><input type="checkbox" id="ansage-push" checked>Eltern per Push benachrichtigen</label>
+    <textarea id="ansage-text" rows="3" placeholder="z. B. Sonntag Treffpunkt schon 9:15 am Käfig – bitte pünktlich!" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-karte);background:var(--surface2);color:var(--text);resize:vertical"></textarea>
+    <label style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);color:var(--text2);margin-top:8px;cursor:pointer"><input type="checkbox" id="ansage-push" checked>Eltern per Push benachrichtigen</label>
     <button class="btn btn-p" style="width:100%;margin-top:10px" onclick="ansageSend(this)"><i class="ti ti-send"></i>Ansage senden</button>
-    <div style="font-weight:800;font-size:13px;margin:16px 0 6px">Bisherige Ansagen</div>
-    <div id="ansage-liste"><div style="font-size:12px;color:var(--text3)">Lade…</div></div>
+    <div style="font-weight:800;font-size:var(--s-text);margin:16px 0 6px">Bisherige Ansagen</div>
+    <div id="ansage-liste"><div style="font-size:var(--s-text);color:var(--text3)">Lade…</div></div>
   </div>`;
   document.body.appendChild(m);
   if(prefill&&typeof prefill==="string"){const t=document.getElementById("ansage-text");if(t){t.value=prefill;t.focus();try{t.setSelectionRange(t.value.length,t.value.length);}catch(e){}}}
@@ -3928,17 +3933,17 @@ async function ansageListeLoad(){
   const el=document.getElementById("ansage-liste"); if(!el)return;
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/rpc/ansagen_status`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"});if(!sbCheck401(r)&&r.ok)rows=(await r.json())||[];}catch(e){}
-  if(!rows.length){el.innerHTML='<div style="font-size:12px;color:var(--text3)">Noch keine Ansagen.</div>';return;}
+  if(!rows.length){el.innerHTML='<div style="font-size:var(--s-text);color:var(--text3)">Noch keine Ansagen.</div>';return;}
   el.innerHTML=rows.map(a=>{const d=new Date(a.created_at);const pct=a.familien?Math.round(a.gelesen/a.familien*100):0;
     return `<div style="border:var(--border-s);border-left:4px solid ${a.aktiv?"#1e3a8a":"#cbd5e1"};border-radius:12px;padding:10px 12px;margin-bottom:8px;${a.aktiv?"":"opacity:.6"}">
-      <div style="font-size:13px;line-height:1.45;white-space:pre-wrap">${esc(a.text)}</div>
-      <div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:11.5px;color:var(--text2)">
+      <div style="font-size:var(--s-text);line-height:1.45;white-space:pre-wrap">${esc(a.text)}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:var(--s-klein);color:var(--text2)">
         <span>${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}</span>
         <span style="font-weight:800;color:${a.gelesen>=a.familien?"var(--green)":"var(--amber)"}">👁 Gelesen: ${a.gelesen}/${a.familien} Familien</span>
-        <button onclick="ansageToggle(${a.id},${a.aktiv?"false":"true"})" style="margin-left:auto;min-height:32px;border:none;background:transparent;color:var(--text2);font-family:inherit;font-size:11px;cursor:pointer;text-decoration:underline">${a.aktiv?"Beenden":"Reaktivieren"}</button>
+        <button onclick="ansageToggle(${a.id},${a.aktiv?"false":"true"})" style="margin-left:auto;min-height:32px;border:none;background:transparent;color:var(--text2);font-family:inherit;font-size:var(--s-klein);cursor:pointer;text-decoration:underline">${a.aktiv?"Beenden":"Reaktivieren"}</button>
       </div>
       <div style="height:6px;background:var(--surface2);border-radius:4px;overflow:hidden;margin-top:6px"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#1e3a8a,#2563eb)"></div></div>
-      ${a.aktiv&&Array.isArray(a.fehlt)&&a.fehlt.length&&a.gelesen<a.familien?`<details style="margin-top:6px"><summary style="font-size:11px;color:var(--text3);cursor:pointer">Wer fehlt noch?</summary><div style="font-size:11.5px;color:var(--text2);margin-top:4px">Familien von: ${a.fehlt.map(esc).join(", ")}</div></details>`:""}
+      ${a.aktiv&&Array.isArray(a.fehlt)&&a.fehlt.length&&a.gelesen<a.familien?`<details style="margin-top:6px"><summary style="font-size:var(--s-klein);color:var(--text3);cursor:pointer">Wer fehlt noch?</summary><div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Familien von: ${a.fehlt.map(esc).join(", ")}</div></details>`:""}
     </div>`;}).join("");
 }
 async function ansageSend(btn){
@@ -3980,7 +3985,7 @@ async function probeOpen(){
   m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Probetraining");
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{if(e.target===m)m.remove();};
-  const fld="box-sizing:border-box;padding:10px;border:var(--border-s);border-radius:10px;font-family:inherit;font-size:14px;background:var(--surface2);color:var(--text)";
+  const fld="box-sizing:border-box;padding:10px;border:var(--border-s);border-radius:10px;font-family:inherit;font-size:var(--s-karte);background:var(--surface2);color:var(--text)";
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("probe-modal","🆕","Probetraining","Schnupperkinder – getrennt vom Kader, Auto-Löschung nach Entscheidung","#0891b2")}
     <div style="display:flex;flex-direction:column;gap:8px">
@@ -3990,8 +3995,8 @@ async function probeOpen(){
         <button class="btn btn-p btn-sm" onclick="probeAdd(this)"><i class="ti ti-plus"></i>Anlegen</button>
       </div>
     </div>
-    <div id="probe-liste" style="margin-top:14px"><div style="font-size:12px;color:var(--text3)">Lade…</div></div>
-    <div style="font-size:10.5px;color:var(--text3);margin-top:10px">Datenschutz: Probekinder stehen bewusst NICHT im Kader. Nach „Aufnehmen“/„Absagen“ wird der Eintrag 30 Tage später automatisch gelöscht – Aufgenommene vorher unter Kader → „Spieler verwalten“ anlegen.</div>
+    <div id="probe-liste" style="margin-top:14px"><div style="font-size:var(--s-text);color:var(--text3)">Lade…</div></div>
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-top:10px">Datenschutz: Probekinder stehen bewusst NICHT im Kader. Nach „Aufnehmen“/„Absagen“ wird der Eintrag 30 Tage später automatisch gelöscht – Aufgenommene vorher unter Kader → „Spieler verwalten“ anlegen.</div>
   </div>`;
   document.body.appendChild(m);
   probeListeLoad();
@@ -4001,18 +4006,18 @@ async function probeListeLoad(){
   const el=document.getElementById("probe-liste"); if(!el)return;
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/probekinder?select=*&order=created_at.desc`,{headers:sbAuthHeaders()});if(!sbCheck401(r)&&r.ok)rows=(await r.json())||[];}catch(e){}
-  if(!rows.length){el.innerHTML='<div style="font-size:12px;color:var(--text3)">Aktuell keine Probekinder.</div>';return;}
+  if(!rows.length){el.innerHTML='<div style="font-size:var(--s-text);color:var(--text3)">Aktuell keine Probekinder.</div>';return;}
   el.innerHTML=rows.map(p=>{
     const st=PROBE_STATUS[p.status]||PROBE_STATUS.schnuppert;
     const tel=/^[+\d][\d\s\/-]{5,}$/.test((p.kontakt||"").trim());
     return `<div style="border:var(--border-s);border-left:4px solid ${st[2]};border-radius:12px;padding:10px 12px;margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-weight:800;font-size:14px;flex:1;min-width:0">${esc(p.name)}</span>
-        <span style="font-size:11px;font-weight:800;color:${st[2]}">${st[0]} ${st[1]}${p.entschieden_am?" · "+new Date(p.entschieden_am+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}):""}</span>
+        <span style="font-weight:800;font-size:var(--s-karte);flex:1;min-width:0">${esc(p.name)}</span>
+        <span style="font-size:var(--s-klein);font-weight:800;color:${st[2]}">${st[0]} ${st[1]}${p.entschieden_am?" · "+new Date(p.entschieden_am+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}):""}</span>
       </div>
-      ${p.kontakt?`<div style="font-size:12px;color:var(--text2);margin-top:2px">📞 ${tel?`<a href="tel:${esc(p.kontakt.replace(/[\s\/-]/g,""))}" style="color:var(--blue-text)">${esc(p.kontakt)}</a>`:esc(p.kontakt)}</div>`:""}
+      ${p.kontakt?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:2px">📞 ${tel?`<a href="tel:${esc(p.kontakt.replace(/[\s\/-]/g,""))}" style="color:var(--blue-text)">${esc(p.kontakt)}</a>`:esc(p.kontakt)}</div>`:""}
       <div style="display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap">
-        <span style="font-size:11.5px;color:var(--text2)">🏃 ${p.trainings} Training${p.trainings===1?"":"s"}</span>
+        <span style="font-size:var(--s-klein);color:var(--text2)">🏃 ${p.trainings} Training${p.trainings===1?"":"s"}</span>
         ${p.status==="schnuppert"?`
           <button class="btn btn-sm" onclick="probeTraining(${p.id},${p.trainings})">+1 heute</button>
           <button class="btn btn-sm" style="margin-left:auto;color:var(--green)" onclick="probeStatus(${p.id},'aufnehmen')">✅ Aufnehmen</button>
@@ -4084,9 +4089,9 @@ async function saisonCockpitOpen(){
   let pulsHtml="";
   if(puls&&puls.overall_n){
     const weeks=(puls.weeks||[]).slice(-8);
-    const bars=weeks.map(w=>{const h=Math.round((w.avg/3)*42)+6;const col=w.avg>=2.6?"var(--green)":w.avg>=1.8?"var(--amber)":"var(--red)";return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="font-size:9px;color:var(--text3)">${w.avg}</div><div style="width:68%;height:${h}px;background:${col};border-radius:4px 4px 0 0" title="${w.n} Rückmeldungen"></div><div style="font-size:8.5px;color:var(--text3);white-space:nowrap">${esc(w.wlabel)}</div></div>`;}).join("");
-    pulsHtml=`<div style="font-weight:800;font-size:13.5px;margin:14px 0 4px">🌡️ Eltern-Puls <span style="font-weight:400;color:var(--text2);font-size:11px">(anonym · ${puls.overall_n} Rückmeldungen · Ø ${puls.overall_avg} ${moodEmo(puls.overall_avg)})</span></div>`
-      +(weeks.length?`<div style="display:flex;align-items:flex-end;gap:4px;height:74px;padding:4px 0">${bars}</div>`:'<div style="font-size:12px;color:var(--text3)">Sammelt sich, sobald Eltern nach Events abstimmen.</div>');
+    const bars=weeks.map(w=>{const h=Math.round((w.avg/3)*42)+6;const col=w.avg>=2.6?"var(--green)":w.avg>=1.8?"var(--amber)":"var(--red)";return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="font-size:var(--s-klein);color:var(--text3)">${w.avg}</div><div style="width:68%;height:${h}px;background:${col};border-radius:4px 4px 0 0" title="${w.n} Rückmeldungen"></div><div style="font-size:var(--s-klein);color:var(--text3);white-space:nowrap">${esc(w.wlabel)}</div></div>`;}).join("");
+    pulsHtml=`<div style="font-weight:800;font-size:var(--s-text);margin:14px 0 4px">🌡️ Eltern-Puls <span style="font-weight:400;color:var(--text2);font-size:var(--s-klein)">(anonym · ${puls.overall_n} Rückmeldungen · Ø ${puls.overall_avg} ${moodEmo(puls.overall_avg)})</span></div>`
+      +(weeks.length?`<div style="display:flex;align-items:flex-end;gap:4px;height:74px;padding:4px 0">${bars}</div>`:'<div style="font-size:var(--s-text);color:var(--text3)">Sammelt sich, sobald Eltern nach Events abstimmen.</div>');
   }
   // H2: Kinder-Stimmung (aus der Kabine, letzte 30 Tage) – Ø-Lage + Frühwarnung bei 😞
   let stimmungHtml="";
@@ -4102,9 +4107,9 @@ async function saisonCockpitOpen(){
         const ab14=new Date(Date.now()-14*864e5).toISOString().slice(0,10);
         const traurig={}; rows.filter(x=>x.mood===1&&x.datum>=ab14).forEach(x=>{const n=nameById[x.spieler_id];if(n)traurig[n]=(traurig[n]||0)+1;});
         const tArr=Object.entries(traurig).sort((a,b)=>b[1]-a[1]);
-        stimmungHtml=`<div style="font-weight:800;font-size:13.5px;margin:14px 0 4px">🧒 Kinder-Stimmung <span style="font-weight:400;color:var(--text2);font-size:11px">(Kabine · ${rows.length} Antworten · Ø ${avg} ${moodEmo(Number(avg))})</span></div>`
-          +(tArr.length?`<div style="font-size:12.5px;color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:8px 10px">😞 Zuletzt unzufrieden: <b>${tArr.map(([n,c])=>esc(n)+(c>1?` (${c}×)`:"")).join(", ")}</b> – vielleicht kurz das Gespräch suchen.</div>`
-                     :'<div style="font-size:12.5px;color:var(--green)">Kein Kind hat zuletzt 😞 gedrückt 👍</div>');
+        stimmungHtml=`<div style="font-weight:800;font-size:var(--s-text);margin:14px 0 4px">🧒 Kinder-Stimmung <span style="font-weight:400;color:var(--text2);font-size:var(--s-klein)">(Kabine · ${rows.length} Antworten · Ø ${avg} ${moodEmo(Number(avg))})</span></div>`
+          +(tArr.length?`<div style="font-size:var(--s-text);color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:8px 10px">😞 Zuletzt unzufrieden: <b>${tArr.map(([n,c])=>esc(n)+(c>1?` (${c}×)`:"")).join(", ")}</b> – vielleicht kurz das Gespräch suchen.</div>`
+                     :'<div style="font-size:var(--s-text);color:var(--green)">Kein Kind hat zuletzt 😞 gedrückt 👍</div>');
       }
     }
   }catch(e){}
@@ -4118,9 +4123,9 @@ async function saisonCockpitOpen(){
       if(rows.length){
         const per={}; rows.forEach(x=>per[x.an_spieler]=(per[x.an_spieler]||0)+1);
         const ohne=active.filter(k=>!per[k.id]).map(k=>k.name);
-        postHtml=`<div style="font-weight:800;font-size:13.5px;margin:14px 0 4px">📬 Adler-Post <span style="font-weight:400;color:var(--text2);font-size:11px">(${rows.length} Nachrichten · 60 Tage)</span></div>`
-          +(ohne.length?`<div style="font-size:12.5px;color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:8px 10px">Noch ohne Post: <b>${ohne.map(esc).join(", ")}</b> – vielleicht mal ein Kompliment anstoßen (oder Sprachlob!).</div>`
-                       :'<div style="font-size:12.5px;color:var(--green)">Jedes Kind hat schon Post bekommen 👍</div>');
+        postHtml=`<div style="font-weight:800;font-size:var(--s-text);margin:14px 0 4px">📬 Adler-Post <span style="font-weight:400;color:var(--text2);font-size:var(--s-klein)">(${rows.length} Nachrichten · 60 Tage)</span></div>`
+          +(ohne.length?`<div style="font-size:var(--s-text);color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:8px 10px">Noch ohne Post: <b>${ohne.map(esc).join(", ")}</b> – vielleicht mal ein Kompliment anstoßen (oder Sprachlob!).</div>`
+                       :'<div style="font-size:var(--s-text);color:var(--green)">Jedes Kind hat schon Post bekommen 👍</div>');
       }
     }
   }catch(e){}
@@ -4150,17 +4155,17 @@ async function saisonCockpitOpen(){
       if(arr.length){
         const teamAvg=(arr.reduce((s,x)=>s+x.avg*x.n,0)/arr.reduce((s,x)=>s+x.n,0)).toFixed(1).replace(".",",");
         const col=a=>a>=4?"var(--green)":a>=2?"var(--amber)":"var(--red)";
-        tempoHtml=`<div style="font-weight:800;font-size:13.5px;margin:14px 0 4px">⏱️ Rückmelde-Tempo <span style="font-weight:400;color:var(--text2);font-size:11px">(Zu-/Absagen · Team-Ø ${teamAvg} Tage vor dem Termin)</span></div>`
-          +arr.map(x=>`<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;padding:3px 0"><span style="flex:1">${esc(x.name)}</span>${x.kurz?`<span title="davon kurzfristig (≤1 Tag vorher)" style="font-size:10px;color:var(--text3)">⚡ ${x.kurz}× kurzfristig</span>`:""}<span style="font-weight:700;color:${col(x.avg)}">Ø ${x.avg.toFixed(1).replace(".",",")} Tage</span><span style="font-size:10px;color:var(--text3)">(${x.n})</span></div>`).join("")
-          +`<div style="font-size:10px;color:var(--text3);margin-top:4px">Ø Tage zwischen erster Antwort und Termin – je höher, desto früher meldet die Familie zurück. Exakt gemessen ab Juli 2026; ältere Antworten zählen mit dem Zeitpunkt der letzten Änderung.</div>`;
+        tempoHtml=`<div style="font-weight:800;font-size:var(--s-text);margin:14px 0 4px">⏱️ Rückmelde-Tempo <span style="font-weight:400;color:var(--text2);font-size:var(--s-klein)">(Zu-/Absagen · Team-Ø ${teamAvg} Tage vor dem Termin)</span></div>`
+          +arr.map(x=>`<div style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);padding:3px 0"><span style="flex:1">${esc(x.name)}</span>${x.kurz?`<span title="davon kurzfristig (≤1 Tag vorher)" style="font-size:var(--s-klein);color:var(--text3)">⚡ ${x.kurz}× kurzfristig</span>`:""}<span style="font-weight:700;color:${col(x.avg)}">Ø ${x.avg.toFixed(1).replace(".",",")} Tage</span><span style="font-size:var(--s-klein);color:var(--text3)">(${x.n})</span></div>`).join("")
+          +`<div style="font-size:var(--s-klein);color:var(--text3);margin-top:4px">Ø Tage zwischen erster Antwort und Termin – je höher, desto früher meldet die Familie zurück. Exakt gemessen ab Juli 2026; ältere Antworten zählen mit dem Zeitpunkt der letzten Änderung.</div>`;
       }
     }
   }catch(e){}
   // A-Etappe 2: Rollen-Erfahrung auch im Cockpit (Kurzform + Button zur vollen Matrix)
   let rollenHtml="";
   try{ if(typeof rollenExpFetch==="function"){ const re=await rollenExpFetch(); if(re&&re.games){ const nie=(typeof _neverTW==="function")?_neverTW(re.byKid):[];
-    rollenHtml=`<div style="font-weight:800;font-size:13.5px;margin:14px 0 4px">🎽 Rollen-Erfahrung <span style="font-weight:400;color:var(--text2);font-size:11px">(${re.games} Aufstellungen)</span></div>`
-      +(nie.length?`<div style="font-size:12.5px;color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:8px 10px">🥅 Noch nie im Tor: <b>${nie.map(esc).join(", ")}</b></div>`:'<div style="font-size:12.5px;color:var(--green)">Jedes aktive Kind stand schon mal im Tor 👍</div>')
+    rollenHtml=`<div style="font-weight:800;font-size:var(--s-text);margin:14px 0 4px">🎽 Rollen-Erfahrung <span style="font-weight:400;color:var(--text2);font-size:var(--s-klein)">(${re.games} Aufstellungen)</span></div>`
+      +(nie.length?`<div style="font-size:var(--s-text);color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:8px 10px">🥅 Noch nie im Tor: <b>${nie.map(esc).join(", ")}</b></div>`:'<div style="font-size:var(--s-text);color:var(--green)">Jedes aktive Kind stand schon mal im Tor 👍</div>')
       +`<button class="btn btn-sm" style="margin-top:8px" onclick="document.getElementById('sc-modal').remove();w2('rollenMatrixOpen')"><i class="ti ti-layout-grid"></i>Volle Rollen-Matrix</button>`;
   } } }catch(e){}
   // R6: faire Einsätze – die mit den wenigsten Spiel-Einsätzen (nur wenn überhaupt gespielt wurde)
@@ -4170,9 +4175,9 @@ async function saisonCockpitOpen(){
   const attArr=active.map(k=>({name:k.name,pct:att[k.name].t?Math.round(att[k.name].p/att[k.name].t*100):null,t:att[k.name].t})).filter(x=>x.pct!=null).sort((a,b)=>b.pct-a.pct);
   const topAtt=attArr.slice(0,5);
   const lowAtt=attArr.filter(x=>x.pct<60).slice(-3);
-  const kpi=(v,l,c)=>`<div style="flex:1;min-width:80px;text-align:center;background:var(--surface2);border-radius:12px;padding:10px"><div style="font-size:22px;font-weight:900;color:${c}">${v}</div><div style="font-size:10px;color:var(--text2)">${l}</div></div>`;
+  const kpi=(v,l,c)=>`<div style="flex:1;min-width:80px;text-align:center;background:var(--surface2);border-radius:12px;padding:10px"><div style="font-size:var(--s-seite);font-weight:900;color:${c}">${v}</div><div style="font-size:var(--s-klein);color:var(--text2)">${l}</div></div>`;
   const medal=i=>["🥇","🥈","🥉"][i]||`${i+1}.`;
-  const attRow=x=>`<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;padding:3px 0"><span style="flex:1">${esc(x.name)}</span><span style="font-weight:700;color:${x.pct>=75?"var(--green)":x.pct>=50?"var(--amber)":"var(--red)"}">${x.pct}%</span><span style="font-size:10px;color:var(--text3)">(${x.t})</span></div>`;
+  const attRow=x=>`<div style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);padding:3px 0"><span style="flex:1">${esc(x.name)}</span><span style="font-weight:700;color:${x.pct>=75?"var(--green)":x.pct>=50?"var(--amber)":"var(--red)"}">${x.pct}%</span><span style="font-size:var(--s-klein);color:var(--text3)">(${x.t})</span></div>`;
   document.getElementById("sc-modal")?.remove();
   const modal=document.createElement("div");
   modal.id="sc-modal";modal.setAttribute("role","dialog");modal.setAttribute("aria-modal","true");modal.setAttribute("aria-label","Saison-Cockpit");
@@ -4182,14 +4187,14 @@ async function saisonCockpitOpen(){
   c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`${mdlHead("sc-modal","📈","Saison-Cockpit",`Saison seit ${new Date(ab+"T00:00:00").toLocaleDateString("de-DE",{month:"long",year:"numeric"})} · alles auf einen Blick`,"#1e3a8a")}
     <div style="display:flex;gap:8px;margin-bottom:14px">${kpi(spiele,"Spiele","var(--blue)")}${kpi("⚽ "+toreGesamt,"Tore","var(--green)")}${kpi(trainings,"Trainings","#7c3aed")}</div>
-    <div style="font-weight:800;font-size:13.5px;margin-bottom:4px">🥇 Top-Torschützen</div>
-    ${scorers.length?scorers.map(([n,c],i)=>`<div style="display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0"><span style="width:22px">${medal(i)}</span><span style="flex:1">${esc(n)}</span><span style="font-weight:800;color:var(--green)">${c}</span></div>`).join(""):'<div style="font-size:12px;color:var(--text3)">Noch keine Tore erfasst.</div>'}
-    <div style="font-weight:800;font-size:13.5px;margin:14px 0 4px">📊 Anwesenheit – am zuverlässigsten</div>
-    ${topAtt.length?topAtt.map(attRow).join(""):'<div style="font-size:12px;color:var(--text3)">Noch keine Daten.</div>'}
-    ${lowAtt.length?`<div style="font-weight:800;font-size:12.5px;margin:12px 0 2px;color:var(--amber)">Zuletzt oft gefehlt – dranbleiben</div>${lowAtt.map(attRow).join("")}`:""}
+    <div style="font-weight:800;font-size:var(--s-text);margin-bottom:4px">🥇 Top-Torschützen</div>
+    ${scorers.length?scorers.map(([n,c],i)=>`<div style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);padding:3px 0"><span style="width:22px">${medal(i)}</span><span style="flex:1">${esc(n)}</span><span style="font-weight:800;color:var(--green)">${c}</span></div>`).join(""):'<div style="font-size:var(--s-text);color:var(--text3)">Noch keine Tore erfasst.</div>'}
+    <div style="font-weight:800;font-size:var(--s-text);margin:14px 0 4px">📊 Anwesenheit – am zuverlässigsten</div>
+    ${topAtt.length?topAtt.map(attRow).join(""):'<div style="font-size:var(--s-text);color:var(--text3)">Noch keine Daten.</div>'}
+    ${lowAtt.length?`<div style="font-weight:800;font-size:var(--s-text);margin:12px 0 2px;color:var(--amber)">Zuletzt oft gefehlt – dranbleiben</div>${lowAtt.map(attRow).join("")}`:""}
     ${tempoHtml}
-    ${wenig.length?`<div style="font-weight:800;font-size:13.5px;margin:14px 0 4px">⚖️ Faire Einsätze – wer war seltener dabei</div>${wenig.map(x=>`<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;padding:3px 0"><span style="flex:1">${esc(x.name)}</span><span style="font-size:11px;color:var(--text3)">${x.e} Einsätze</span></div>`).join("")}`:""}
-    ${(toreTeam[2]||toreTeam[3])?`<div style="font-weight:800;font-size:13.5px;margin:14px 0 4px">🏆 Tore je Team</div><div style="display:flex;gap:8px;flex-wrap:wrap">${[1,2,3].filter(t=>toreTeam[t]>0||t===1).map(t=>`<div style="flex:1;min-width:70px;text-align:center;background:var(--surface2);border-radius:10px;padding:8px"><div style="font-size:11px;color:var(--text2)">Adler ${t}</div><div style="font-size:18px;font-weight:900;color:var(--green)">⚽ ${toreTeam[t]||0}</div></div>`).join("")}</div>`:""}
+    ${wenig.length?`<div style="font-weight:800;font-size:var(--s-text);margin:14px 0 4px">⚖️ Faire Einsätze – wer war seltener dabei</div>${wenig.map(x=>`<div style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);padding:3px 0"><span style="flex:1">${esc(x.name)}</span><span style="font-size:var(--s-klein);color:var(--text3)">${x.e} Einsätze</span></div>`).join("")}`:""}
+    ${(toreTeam[2]||toreTeam[3])?`<div style="font-weight:800;font-size:var(--s-text);margin:14px 0 4px">🏆 Tore je Team</div><div style="display:flex;gap:8px;flex-wrap:wrap">${[1,2,3].filter(t=>toreTeam[t]>0||t===1).map(t=>`<div style="flex:1;min-width:70px;text-align:center;background:var(--surface2);border-radius:10px;padding:8px"><div style="font-size:var(--s-klein);color:var(--text2)">Adler ${t}</div><div style="font-size:var(--s-teil);font-weight:900;color:var(--green)">⚽ ${toreTeam[t]||0}</div></div>`).join("")}</div>`:""}
     ${stimmungHtml}
     ${postHtml}
     ${rollenHtml}
@@ -4272,7 +4277,7 @@ function hilfeOpen(){
   c.style.cssText="background:var(--surface);color:var(--text);max-width:480px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`${mdlHead("hilfe-modal","❓","Hilfe & Funktionen","Alles, was die App kann – tippe auf → zum Hinspringen","#475569")}
     <button class="btn btn-p btn-sm" style="width:100%" onclick="hilfeClose();tourStart()"><i class="ti ti-player-play"></i>Kurze Feature-Tour starten</button>
-    <input type="text" placeholder="Suchen… (z. B. Wetter, Aufstellung)" oninput="hilfeRender(this.value)" style="width:100%;margin-top:10px;padding:8px 12px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box">
+    <input type="text" placeholder="Suchen… (z. B. Wetter, Aufstellung)" oninput="hilfeRender(this.value)" style="width:100%;margin-top:10px;padding:8px 12px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box">
     <div id="hilfe-list"></div>
     <button class="btn btn-sm" style="margin-top:12px;width:100%" onclick="hilfeClose()">Schließen</button>`;
   modal.appendChild(c);document.body.appendChild(modal);
@@ -4285,14 +4290,14 @@ function hilfeRender(q){
   const html=HELP.map(g=>{
     const items=g.items.filter(it=>!q||(it.t+" "+it.d).toLowerCase().includes(q));
     if(!items.length)return "";
-    return `<div style="margin-top:10px"><div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">${g.cat}</div>`+
+    return `<div style="margin-top:10px"><div style="font-size:var(--s-klein);font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">${g.cat}</div>`+
       items.map(it=>{const act=it.go?`hilfeClose();go('${it.go}')`:it.run?`hilfeClose();${it.run}`:"";
         return `<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-top:var(--border)">
-          <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">${esc(it.t)}</div><div style="font-size:11.5px;color:var(--text2);line-height:1.35">${esc(it.d)}</div></div>
+          <div style="flex:1;min-width:0"><div style="font-size:var(--s-text);font-weight:700">${esc(it.t)}</div><div style="font-size:var(--s-klein);color:var(--text2);line-height:1.35">${esc(it.d)}</div></div>
           ${act?`<button class="btn btn-sm" onclick="${act}" title="Öffnen"><i class="ti ti-arrow-right"></i></button>`:""}
         </div>`;}).join("")+`</div>`;
   }).join("");
-  box.innerHTML=html||`<div style="font-size:12px;color:var(--text3);padding:10px 0">Nichts gefunden.</div>`;
+  box.innerHTML=html||`<div style="font-size:var(--s-text);color:var(--text3);padding:10px 0">Nichts gefunden.</div>`;
 }
 const TOUR=[
   {emo:"🦅", t:"Willkommen in der Adler-App", d:"Die Startseite ist bewusst schlank: Ganz oben erscheinen DEINE To-Dos (nur wenn etwas offen ist) – jedes führt dorthin, wo es sich erledigen lässt, und was du nicht mehr nachtragen willst, hakst du mit dem ✓ daneben für das ganze Trainerteam ab, darunter „Bist du dabei?“ – nur die Termine der nächsten 14 Tage, für die deine Antwort noch fehlt; ein Tap auf ✅ 🤔 ❌ genügt, und ist alles beantwortet, verschwindet die Karte. Danach „Diese Woche“ – die Termine der nächsten sieben Tage mit dem Stand (Zusagen, Trainer, Plan, Aufstellung); die erste Zeile ist der nächste Termin mit Wetter, Packtipp und Sprungknopf. Dann ein festgelegtes Trainer-Meeting (falls eines ansteht, mit der Zahl offener Themen), ein Knopf zu allen Terminen der Saison – und sechs große Kacheln, die du auch unten in der Leiste findest. Hinter jeder Kachel wartet wieder eine Seite mit Kacheln – über die Leiste landest du auf genau derselben. Von dort geht es ins Detail, und die Reiterzeile oben bringt dich mit einem Tipp zurück zur Übersicht. Diese Tour findest du jederzeit über ❓ oben rechts."},
@@ -4320,8 +4325,8 @@ function tourRender(){
   ov.style.cssText="position:fixed;inset:0;z-index:10050;background:rgba(15,23,42,.75);display:flex;align-items:center;justify-content:center;padding:20px";
   ov.innerHTML=`<div style="background:var(--surface);color:var(--text);max-width:360px;width:100%;border-radius:18px;padding:22px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.5)">
     <div style="font-size:42px;line-height:1">${s.emo}</div>
-    <div style="font-size:18px;font-weight:800;margin:8px 0 8px">${esc(s.t)}</div>
-    <div style="font-size:13.5px;color:var(--text2);line-height:1.5;text-align:left">${esc(s.d)}</div>
+    <div style="font-size:var(--s-teil);font-weight:800;margin:8px 0 8px">${esc(s.t)}</div>
+    <div style="font-size:var(--s-text);color:var(--text2);line-height:1.5;text-align:left">${esc(s.d)}</div>
     <div style="display:flex;gap:6px;justify-content:center;margin:16px 0 4px">${TOUR.map((_,i)=>`<span style="width:7px;height:7px;border-radius:50%;background:${i===tourIdx?'var(--blue)':'var(--border)'}"></span>`).join("")}</div>
     <div style="display:flex;gap:8px;margin-top:8px">
       ${tourIdx>0?`<button class="btn btn-sm" onclick="tourPrev()">Zurück</button>`:`<button class="btn btn-sm" onclick="tourClose()">Überspringen</button>`}
@@ -4343,11 +4348,11 @@ async function adlerWeltOpen(){
   c.style.cssText="background:var(--surface);color:var(--text);max-width:480px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   const rows=active.slice().sort((a,b)=>((a.nr==null?99:a.nr)-(b.nr==null?99:b.nr))||a.name.localeCompare(b.name)).map(k=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:var(--border)">
     <div style="flex:1;min-width:0">
-      <div style="font-size:13px;font-weight:700">${k.nr!=null?`<span style="color:var(--text3);font-weight:600">#${k.nr}</span> `:""}${esc(k.name)}</div>
-      <div id="aw-fed-${k.id}" style="font-size:11px;color:#7c3aed;font-weight:700">…</div>
+      <div style="font-size:var(--s-text);font-weight:700">${k.nr!=null?`<span style="color:var(--text3);font-weight:600">#${k.nr}</span> `:""}${esc(k.name)}</div>
+      <div id="aw-fed-${kaderId(k)}" style="font-size:var(--s-klein);color:#7c3aed;font-weight:700">…</div>
     </div>
     <button class="btn btn-sm" onclick="adlerCardOpen('${(k.name||'').replace(/'/g,'')}')" title="FUT-Karte ansehen">🃏</button>
-    <button class="btn btn-sm" onclick="abzeichenOpen(${k.id},'${(k.name||'').replace(/'/g,'')}')" title="Technik-Abzeichen">🎖️</button>
+    <button class="btn btn-sm" onclick="abzeichenOpen(${kaderId(k)},'${(k.name||'').replace(/'/g,'')}')" title="Technik-Abzeichen">🎖️</button>
   </div>`).join("");
   c.innerHTML=`${mdlHead("aw-modal","🪶","Adler-Welt","Federn, Karten, Abzeichen & Challenge – ansehen und verwalten","#7c3aed")}
     <div id="aw-team-level" style="margin-bottom:12px"></div>
@@ -4355,36 +4360,36 @@ async function adlerWeltOpen(){
     <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('aw-modal').remove();w2('skillWocheOpen')"><i class="ti ti-video"></i>🎬 Skill der Woche setzen</button>
     <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('aw-modal').remove();wahlTrainerOpen()"><i class="ti ti-chart-bar"></i>🗳️ Kabinen-Wahl (Kinder stimmen ab)</button>
     <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('aw-modal').remove();albumFotosOpen()"><i class="ti ti-photo"></i>🃏 Album-Karten-Fotos (Trainer &amp; Verein)</button>
-    <div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 4px">🎵 Kabinen-Playlist</div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Spotify-Link zur U9-Playlist. Die Kinder hören sie in der Kabine.</div>
+    <div style="font-size:var(--s-klein);font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 4px">🎵 Kabinen-Playlist</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px">Spotify-Link zur U9-Playlist. Die Kinder hören sie in der Kabine.</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
-      <input id="aw-spotify" type="url" placeholder="https://open.spotify.com/playlist/…" style="flex:1;min-width:150px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text)">
+      <input id="aw-spotify" type="url" placeholder="https://open.spotify.com/playlist/…" style="flex:1;min-width:150px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
       <button class="btn btn-sm" onclick="spotifySave(this)"><i class="ti ti-device-floppy"></i>Speichern</button>
     </div>
-    <div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 0">Spieler · ${XP_ICON} Federn</div>
-    ${rows||'<div style="font-size:12px;color:var(--text3);padding:8px 0">Kein Kader geladen.</div>'}
-    <div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 4px">🔒 Kabinen-Code</div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Mit diesem Code verlassen die Eltern den Kinder-Modus. Er bremst ein Kind – ein Schutz ist er nicht.</div>
+    <div style="font-size:var(--s-klein);font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 0">Spieler · ${XP_ICON} Federn</div>
+    ${rows||'<div style="font-size:var(--s-text);color:var(--text3);padding:8px 0">Kein Kader geladen.</div>'}
+    <div style="font-size:var(--s-klein);font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 4px">🔒 Kabinen-Code</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px">Mit diesem Code verlassen die Eltern den Kinder-Modus. Er bremst ein Kind – ein Schutz ist er nicht.</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
-      <input id="aw-kabinencode" type="text" inputmode="numeric" autocomplete="off" placeholder="Neuer Code (min. 4 Zeichen)" style="flex:1;min-width:150px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text)">
+      <input id="aw-kabinencode" type="text" inputmode="numeric" autocomplete="off" placeholder="Neuer Code (min. 4 Zeichen)" style="flex:1;min-width:150px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
       <button class="btn btn-sm" onclick="kabineCodeSave(this)"><i class="ti ti-device-floppy"></i>Code ändern</button>
     </div>
-    <div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 4px">🤝 Unsere Vereinbarung</div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Die Eltern sehen beides in EINEM Dokument: oben die kurzen Fairplay-Regeln, darunter die ausformulierten Punkte nach Rubriken.</div>
+    <div style="font-size:var(--s-klein);font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 4px">🤝 Unsere Vereinbarung</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px">Die Eltern sehen beides in EINEM Dokument: oben die kurzen Fairplay-Regeln, darunter die ausformulierten Punkte nach Rubriken.</div>
     <button class="btn btn-sm" style="width:100%;margin-bottom:6px" onclick="document.getElementById('aw-modal').remove();w2('fairplayEditOpen')"><i class="ti ti-edit"></i>Fairplay-Regeln bearbeiten (oberer Teil)</button>
     <button class="btn btn-sm" style="width:100%" onclick="document.getElementById('aw-modal').remove();w2('leitfadenEditOpen')"><i class="ti ti-edit"></i>Praktische Punkte bearbeiten (Rubriken)</button>
-    <div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 4px">🏟️ Team-Arena</div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Schlachtruf & Einlauf-Song, die die Kinder in der Kabine sehen.</div>
+    <div style="font-size:var(--s-klein);font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 4px">🏟️ Team-Arena</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px">Schlachtruf & Einlauf-Song, die die Kinder in der Kabine sehen.</div>
     <button class="btn btn-sm" style="width:100%" onclick="document.getElementById('aw-modal').remove();w2('arenaEditOpen')"><i class="ti ti-flag"></i>Arena bearbeiten</button>
-    <div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 4px">🔗 Eltern einladen</div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Fertige WhatsApp-Nachricht mit Eltern-Link + Kurzanleitung – an die Elternschaft schicken.</div>
+    <div style="font-size:var(--s-klein);font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 4px">🔗 Eltern einladen</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px">Fertige WhatsApp-Nachricht mit Eltern-Link + Kurzanleitung – an die Elternschaft schicken.</div>
     <button class="btn btn-sm btn-p" style="width:100%" onclick="document.getElementById('aw-modal').remove();elternInvitePaket()"><i class="ti ti-brand-whatsapp"></i>Einladung erstellen</button>
     <button class="btn btn-sm btn-p" style="width:100%;margin-top:8px" onclick="document.getElementById('aw-modal').remove();einladungskartenOpen()"><i class="ti ti-id-badge-2"></i>Einladungskarten drucken (Zugang per QR)</button>
     <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="qrAushangOpen()"><i class="ti ti-qrcode"></i>🖨️ QR-Aushang fürs schwarze Brett drucken</button>
     <button class="btn btn-sm" style="margin-top:12px;width:100%" onclick="document.getElementById('aw-modal').remove()">Schließen</button>`;
   modal.appendChild(c);document.body.appendChild(modal);
   if(typeof teamLevelLoad==="function")teamLevelLoad("aw-team-level"); // Küken-Schwarm (Team-Level) jetzt hier
-  active.forEach(k=>{xpTotal(k.id).then(t=>{const el=document.getElementById("aw-fed-"+k.id);if(el){const b=xpBadge(t);el.textContent=`${XP_ICON} ${t} · ${b.emo} ${b.t}`;}}).catch(()=>{});});
+  active.forEach(k=>{xpTotal(kaderId(k)).then(t=>{const el=document.getElementById("aw-fed-"+kaderId(k));if(el){const b=xpBadge(t);el.textContent=`${XP_ICON} ${t} · ${b.emo} ${b.t}`;}}).catch(()=>{});});
   // aktuelle Spotify-Playlist vorbefüllen
   fetch(`${SB_URL}/rest/v1/team_config?id=eq.1&select=spotify_playlist`,{headers:sbAuthHeaders()}).then(r=>r.ok?r.json():[]).then(rows=>{const el=document.getElementById("aw-spotify");if(el&&rows[0]&&rows[0].spotify_playlist)el.value=rows[0].spotify_playlist;}).catch(()=>{});
 }
@@ -4408,7 +4413,7 @@ async function qrAushangOpen(){
       <b>3.</b> Termine zu-/absagen, Infos &amp; Fotos, Liveticker – und „Die Kabine“ für die Kinder.<br>
       <span style="font-size:.9em">Schon angemeldet? Dieser Code führt direkt zur App.</span></div>
     <div style="width:220px;height:220px;margin:14px auto 6px">${qr}</div>
-    <div style="font-size:11px;color:#475569;word-break:break-all">${esc(link)}</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);word-break:break-all">${esc(link)}</div>
     <div class="zert-sign"><div>Euer Trainerteam<br>${(typeof TRAINER!=="undefined"?TRAINER:[]).join(" · ")}</div><div>Fragen? Sprecht uns am Platz an!</div></div>
   </div></div>`;
   _zertPrint(html);
@@ -4448,7 +4453,7 @@ async function einladungHash(code){
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
 }
 async function einladungskartenOpen(){
-  const kinder=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k.aktiv!==false&&k.id!=null);
+  const kinder=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k.aktiv!==false&&kaderId(k)!=null);
   let konten={}, karten={};
   try{const r=await fetch(`${SB_URL}/rest/v1/eltern_kinder?select=spieler_id`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)(await r.json()).forEach(x=>konten[x.spieler_id]=(konten[x.spieler_id]||0)+1);}catch(e){}
   try{const r=await fetch(`${SB_URL}/rest/v1/eltern_einladung?select=spieler_id,nutzungen,max_nutzungen,gueltig_bis`,{headers:sbAuthHeaders()});if(r.ok)(await r.json()).forEach(x=>karten[x.spieler_id]=x);}catch(e){}
@@ -4459,24 +4464,24 @@ async function einladungskartenOpen(){
   m.onclick=e=>{if(e.target===m)m.remove();};
   const bis=new Date(Date.now()+7*864e5).toISOString().slice(0,10);
   const zeile=k=>{
-    const n=konten[k.id]||0, c=karten[k.id];
+    const n=konten[kaderId(k)]||0, c=karten[kaderId(k)];
     const stand=[n?`${n} Konto${n>1?"en":""} verbunden`:"noch kein Konto",
       c?(new Date(c.gueltig_bis)>new Date()?`Karte: ${c.nutzungen} von ${c.max_nutzungen} genutzt`:"Karte abgelaufen"):""].filter(Boolean).join(" · ");
     return `<label style="display:flex;align-items:center;gap:10px;min-height:44px;padding:4px 2px;border-bottom:1px solid var(--border);cursor:pointer">
-      <input type="checkbox" class="einl-kind" value="${k.id}" ${n?"":"checked"} style="width:20px;height:20px">
-      <span style="flex:1;min-width:0"><b>${esc(k.name)}</b><br><span style="font-size:11.5px;color:var(--text2)">${esc(stand)}</span></span></label>`;
+      <input type="checkbox" class="einl-kind" value="${kaderId(k)}" ${n?"":"checked"} style="width:20px;height:20px">
+      <span style="flex:1;min-width:0"><b>${esc(k.name)}</b><br><span style="font-size:var(--s-klein);color:var(--text2)">${esc(stand)}</span></span></label>`;
   };
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("einl-modal","🎟️","Einladungskarten","Je Kind eine Karte · QR scannen, E-Mail und Passwort festlegen, fertig","#047857")}
-    <div style="font-size:12.5px;color:var(--text2);margin-bottom:10px">Vier Karten pro A4-Seite zum Ausschneiden. Eine Karte reicht für <b>zwei</b> Elternteile. Kein Mailversand – das Konto ist sofort da.
+    <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:10px">Vier Karten pro A4-Seite zum Ausschneiden. Eine Karte reicht für <b>zwei</b> Elternteile. Kein Mailversand – das Konto ist sofort da.
       <br><b>Neu drucken macht die alte Karte des Kindes ungültig.</b> Vorausgewählt sind die Kinder ohne verbundenes Konto.</div>
     <div style="display:flex;gap:8px;margin-bottom:6px">
       <button class="btn btn-sm" style="flex:1" onclick="document.querySelectorAll('.einl-kind').forEach(c=>c.checked=true)">Alle</button>
       <button class="btn btn-sm" style="flex:1" onclick="document.querySelectorAll('.einl-kind').forEach(c=>c.checked=false)">Keine</button>
     </div>
-    <div style="max-height:46vh;overflow-y:auto;margin-bottom:10px">${kinder.map(zeile).join("")||'<div style="font-size:12.5px;color:var(--text2)">Kein Kader geladen.</div>'}</div>
-    <label for="einl-bis" style="font-size:12px;color:var(--text2)">Gültig bis</label>
-    <input id="einl-bis" type="date" value="${bis}" style="width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:14px;background:var(--surface2);color:var(--text);margin:4px 0 12px">
+    <div style="max-height:46vh;overflow-y:auto;margin-bottom:10px">${kinder.map(zeile).join("")||'<div style="font-size:var(--s-text);color:var(--text2)">Kein Kader geladen.</div>'}</div>
+    <label for="einl-bis" style="font-size:var(--s-text);color:var(--text2)">Gültig bis</label>
+    <input id="einl-bis" type="date" value="${bis}" style="width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-karte);background:var(--surface2);color:var(--text);margin:4px 0 12px">
     <button id="einl-druck" class="btn btn-p" style="width:100%" onclick="einladungskartenDrucken(this)"><i class="ti ti-printer"></i>Karten erzeugen und drucken</button>
     <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('einl-modal').remove()">Schließen</button>
   </div>`;
@@ -4514,7 +4519,7 @@ async function einladungskartenHtml(karten,bisTag){
   const basis=appRoot()+"eltern/?portal&einladung=";
   const einzeln=[];
   for(const k of karten){
-    const kind=kader.find(x=>x.id===k.id);
+    const kind=kader.find(x=>kaderId(x)===k.id);
     const vorname=String(kind?.name||"").trim();   // wie im Kader – zwei gleiche Vornamen unterscheidet der Trainer dort
     const qr=await qrSvg(basis+k.code,4);
     einzeln.push(`<div class="einl-karte">
@@ -4559,10 +4564,10 @@ async function albumFotosOpen(){
   m.onclick=e=>{if(e.target===m)m.remove();};
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("albfoto-modal","🃏","Album-Karten-Fotos","Bilder für Trainer- und Vereins-Sticker – die Kinder sehen sie im Sammelalbum","var(--amber)")}
-    <div style="font-size:11.5px;color:var(--text2);margin-bottom:10px">Kinder-Sticker nutzen automatisch das Profilfoto (mit Eltern-Freigabe). Hier pflegst du die restlichen Karten – Querformat wird rund zugeschnitten, max. 3 MB.</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:10px">Kinder-Sticker nutzen automatisch das Profilfoto (mit Eltern-Freigabe). Hier pflegst du die restlichen Karten – Querformat wird rund zugeschnitten, max. 3 MB.</div>
     ${_albumFotoSlots().map(s=>`<div style="display:flex;align-items:center;gap:8px;border:var(--border-s);border-radius:12px;padding:8px 12px;margin-bottom:6px">
-      <span style="flex:1;min-width:0;font-size:13px;font-weight:700">${s.label}</span>
-      <span style="font-size:11px;color:${map[s.key]?"var(--green)":"var(--text3)"}">${map[s.key]?"✅ Foto da":"– kein Foto"}</span>
+      <span style="flex:1;min-width:0;font-size:var(--s-text);font-weight:700">${s.label}</span>
+      <span style="font-size:var(--s-klein);color:${map[s.key]?"var(--green)":"var(--text3)"}">${map[s.key]?"✅ Foto da":"– kein Foto"}</span>
       <label class="btn btn-sm" style="cursor:pointer;margin:0">📷<input type="file" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="albumFotoUpload('${s.key}',this)"></label>
       ${map[s.key]?`<button class="btn btn-sm" style="color:var(--red)" onclick="albumFotoDelete('${s.key}')" title="Foto entfernen"><i class="ti ti-trash"></i></button>`:""}
     </div>`).join("")}
@@ -4636,12 +4641,12 @@ function pwChangeOpen(){
   const m=document.createElement("div");m.id="pw-modal";
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10001;display:flex;align-items:center;justify-content:center;padding:16px";
   m.onclick=e=>{if(e.target===m)m.remove();};
-  const fld="width:100%;padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:14px;background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const fld="width:100%;padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-karte);background:var(--surface2);color:var(--text);box-sizing:border-box";
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);max-width:360px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
     ${mdlHead("pw-modal","🔑","Passwort ändern","Eigenes, sicheres Passwort (mind. 8 Zeichen)","#334155")}
-    <label style="font-size:11px;color:var(--text2)">Neues Passwort<input type="password" id="pw-new" autocomplete="new-password" style="${fld}"></label>
-    <label style="font-size:11px;color:var(--text2);display:block;margin-top:8px">Nochmal eingeben<input type="password" id="pw-new2" autocomplete="new-password" onkeydown="if(event.key==='Enter')pwChangeSave()" style="${fld}"></label>
-    <div id="pw-err" style="color:var(--red);font-size:12px;min-height:16px;margin-top:6px"></div>
+    <label style="font-size:var(--s-klein);color:var(--text2)">Neues Passwort<input type="password" id="pw-new" autocomplete="new-password" style="${fld}"></label>
+    <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Nochmal eingeben<input type="password" id="pw-new2" autocomplete="new-password" onkeydown="if(event.key==='Enter')pwChangeSave()" style="${fld}"></label>
+    <div id="pw-err" style="color:var(--red);font-size:var(--s-text);min-height:16px;margin-top:6px"></div>
     <div style="display:flex;gap:8px;margin-top:2px">
       <button class="btn btn-p btn-sm" onclick="pwChangeSave(this)"><i class="ti ti-device-floppy"></i>Speichern</button>
       <button class="btn btn-sm" style="margin-left:auto" onclick="document.getElementById('pw-modal').remove()">Abbrechen</button>
@@ -4697,7 +4702,7 @@ const WOCHE_TAGE=7;
 const WOCHE_ROT_AB=3;   // ab so vielen Tagen vor dem Termin darf ein Chip rot werden
 function _wocheChip(text,art){
   const f={ok:["var(--green-bg)","var(--green)"],warn:["var(--amber-bg)","var(--amber)"],rot:["var(--red-bg)","var(--red)"],neutral:["var(--surface2)","var(--text2)"]}[art||"neutral"];
-  return `<span style="display:inline-block;font-size:11px;font-weight:700;line-height:1.3;padding:3px 8px;border-radius:10px;background:${f[0]};color:${f[1]};border:1px solid ${f[1]}33">${text}</span>`;
+  return `<span style="display:inline-block;font-size:var(--s-klein);font-weight:700;line-height:1.3;padding:3px 8px;border-radius:10px;background:${f[0]};color:${f[1]};border:1px solid ${f[1]}33">${text}</span>`;
 }
 function wocheOpen(id,datum,typ){
   if(typeof nutzungLog==="function")nutzungLog("aktion","woche:"+typ);
@@ -4711,11 +4716,11 @@ async function homeWocheLoad(){
   let fern=false;   // kein Termin in 7 Tagen → der naechste danach
   /* v474: Jede gerechnete Zahl nennt ihre Quelle (Muster v470) – sonst raet der Trainer,
      ob „3 zugesagt" aus den Eltern-Antworten oder aus seiner eigenen Anwesenheit stammt. */
-  const quelle=`<div class="woche-quelle" style="font-size:10.5px;color:var(--text3);margin-top:6px;line-height:1.4">Training: alle dabei außer Absagen · Spiel: Zusagen aus den Eltern-Rückmeldungen, am Spieltag „dabei“ aus „Teams festlegen“ · Trainer aus dem Trainerplan · Plan aus der App</div>`;
+  const quelle=`<div class="woche-quelle" style="font-size:var(--s-klein);color:var(--text3);margin-top:6px;line-height:1.4">Training: alle dabei außer Absagen · Spiel: Zusagen aus den Eltern-Rückmeldungen, am Spieltag „dabei“ aus „Teams festlegen“ · Trainer aus dem Trainerplan · Plan aus der App</div>`;
   const karte=(inner,mitQuelle)=>`<div class="card" style="padding:12px 14px;margin-bottom:10px">
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px">
-      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text2)">🗓️ ${fern?"Als Nächstes":"Diese Woche"}</div>
-      <div style="font-size:11px;color:var(--text3)">${fern?"kein Termin in den nächsten "+WOCHE_TAGE+" Tagen":"nächste "+WOCHE_TAGE+" Tage"}</div>
+      <div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text2)">🗓️ ${fern?"Als Nächstes":"Diese Woche"}</div>
+      <div style="font-size:var(--s-klein);color:var(--text3)">${fern?"kein Termin in den nächsten "+WOCHE_TAGE+" Tagen":"nächste "+WOCHE_TAGE+" Tage"}</div>
     </div>${inner}${mitQuelle?quelle:""}</div>`;
   let termine=[];
   try{
@@ -4732,7 +4737,7 @@ async function homeWocheLoad(){
   }catch(e){slot.innerHTML="";return;}
   if(!document.getElementById("home-woche"))return;   // Tab schon verlassen
   if(!termine.length){
-    slot.innerHTML=karte(`<div style="font-size:12.5px;color:var(--text2)">Kein Termin geplant. <a href="#" onclick="go('termine');return false" style="color:var(--blue-text);font-weight:700">Termin erfassen ›</a></div>`);
+    slot.innerHTML=karte(`<div style="font-size:var(--s-text);color:var(--text2)">Kein Termin geplant. <a href="#" onclick="go('termine');return false" style="color:var(--blue-text);font-weight:700">Termin erfassen ›</a></div>`);
     return;
   }
   const inList=a=>`in.(${a.map(x=>encodeURIComponent(x)).join(",")})`;
@@ -4807,25 +4812,25 @@ async function homeWocheLoad(){
             :t.typ==="event"?`<button class="btn btn-sm" onclick="mitbringTrainerOpen()" style="white-space:nowrap"><i class="ti ti-basket"></i>Mitbringliste</button>`
             :`<button class="btn btn-sm" onclick="tmJump('anwesenheit','${t.datum}')" style="white-space:nowrap"><i class="ti ti-checkbox"></i>Anwesenheit</button>
              <button class="btn btn-sm" onclick="tmJump('planung','${t.datum}')" style="white-space:nowrap"><i class="ti ti-clipboard-list"></i>Plan</button>`}
-          ${t.spielform?`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:${m.col}22;color:${m.col}">${esc(t.spielform)}</span>`:""}
-          ${t.ort?`<span style="font-size:11.5px;color:var(--text2)">${mapsAnchor(t.ort)}</span>`:""}
+          ${t.spielform?`<span style="font-size:var(--s-klein);font-weight:700;padding:2px 7px;border-radius:10px;background:${m.col}22;color:${m.col}">${esc(t.spielform)}</span>`:""}
+          ${t.ort?`<span style="font-size:var(--s-klein);color:var(--text2)">${mapsAnchor(t.ort)}</span>`:""}
         </div>
         <div id="wetter-home"></div><div id="wetter-warn-home"></div><div id="gegner-contact-home"></div>
       </div>`;
     return `<div class="woche-zeile" role="button" tabindex="0" onclick="wocheOpen(${t.id},'${t.datum}','${esc(t.typ)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"
         style="display:flex;gap:10px;align-items:flex-start;min-height:44px;padding:8px 4px;border-top:1px solid var(--rand-bedien);cursor:pointer">
       <div style="flex:0 0 52px;text-align:center">
-        <div style="font-size:11px;font-weight:800;color:${inTagen===0?"var(--red)":"var(--text2)"}">${inTagen===0?"HEUTE":inTagen===1?"morgen":wtag}</div>
-        <div style="font-size:14px;font-weight:800;line-height:1.2">${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}</div>
-        <div style="font-size:11px;color:var(--text2)">${zeit||"&nbsp;"}</div>
+        <div style="font-size:var(--s-klein);font-weight:800;color:${inTagen===0?"var(--red)":"var(--text2)"}">${inTagen===0?"HEUTE":inTagen===1?"morgen":wtag}</div>
+        <div style="font-size:var(--s-karte);font-weight:800;line-height:1.2">${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}</div>
+        <div style="font-size:var(--s-klein);color:var(--text2)">${zeit||"&nbsp;"}</div>
       </div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:13.5px;font-weight:800;line-height:1.25;color:${faelltAus?"var(--text2)":"inherit"}">${m.icon} ${titel}${ort?` <span style="font-weight:500;color:var(--text2);font-size:11.5px">· ${esc(ort)}</span>`:""}</div>
+        <div style="font-size:var(--s-text);font-weight:800;line-height:1.25;color:${faelltAus?"var(--text2)":"inherit"}">${m.icon} ${titel}${ort?` <span style="font-weight:500;color:var(--text2);font-size:var(--s-klein)">· ${esc(ort)}</span>`:""}</div>
         <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">${chips.join("")}</div>
-        ${faelltAus?`<div style="font-size:11px;color:var(--text3);margin-top:5px">Abgesagt – die Eltern sehen den Hinweis in ihrer App. Zum Zurücknehmen den Termin antippen.</div>`:""}
+        ${faelltAus?`<div style="font-size:var(--s-klein);color:var(--text3);margin-top:5px">Abgesagt – die Eltern sehen den Hinweis in ihrer App. Zum Zurücknehmen den Termin antippen.</div>`:""}
         ${erweitert}
       </div>
-      <div aria-hidden="true" style="align-self:center;color:var(--text3);font-size:16px">›</div>
+      <div aria-hidden="true" style="align-self:center;color:var(--text3);font-size:var(--s-karte)">›</div>
     </div>`;
   });
   slot.innerHTML=karte(`<div style="margin:0 -4px">${zeilen.join("")}</div>`,true);
@@ -4850,7 +4855,7 @@ async function nutzungOpen(){
     ${mdlHead("nutzung-modal","📊","Nutzung","Was wirklich benutzt wird – die Grundlage fürs Ausmisten","var(--fam-orga)")}
     <div id="nutzung-zeitraum" style="display:flex;gap:8px;margin-bottom:10px"></div>
     <div id="nutzung-kinder"></div>
-    <div id="nutzung-body"><div style="font-size:12px;color:var(--text2)">Lade Auswertung…</div></div>
+    <div id="nutzung-body"><div style="font-size:var(--s-text);color:var(--text2)">Lade Auswertung…</div></div>
     <button class="btn btn-sm" style="width:100%;margin-top:12px" onclick="nutzungAufraeumen()"><i class="ti ti-trash"></i>Einträge älter als 90 Tage löschen</button>
   </div>`;
   document.body.appendChild(m);
@@ -4874,14 +4879,14 @@ async function kindGeraeteLaden(){
   if(!d||!d.ok){ box.innerHTML=""; return; }
   const limit=d.geraete?(d.limit_min===d.limit_max?`${d.limit_min} Min.`:`${d.limit_min}–${d.limit_max} Min.`):"–";
   box.innerHTML=`<div style="border:var(--border-s);border-radius:var(--rl);padding:10px 12px;margin-bottom:12px">
-    <div style="font-size:13px;font-weight:800">📱 Kinder-App</div>
-    <div style="font-size:12.5px;color:var(--text2);margin-top:4px;line-height:1.6">
+    <div style="font-size:var(--s-text);font-weight:800">📱 Kinder-App</div>
+    <div style="font-size:var(--s-text);color:var(--text2);margin-top:4px;line-height:1.6">
       ${d.geraete===0
         ? "Noch kein Gerät gekoppelt. Die Eltern erzeugen den Code in ihrem Bereich unter „Für die Kinder“."
         : `<b>${d.geraete}</b> ${d.geraete===1?"Gerät":"Geräte"} bei <b>${d.kinder}</b> ${d.kinder===1?"Kind":"Kindern"} gekoppelt · heute ${d.heute_aktiv===0?"noch keins":`<b>${d.heute_aktiv}</b> aktiv`}${d.minuten_heute?` (${d.minuten_heute} Min.)`:""} · Appzeit ${limit} am Tag`}
       ${d.getrennt?`<br><span style="color:var(--text3)">${d.getrennt} ${d.getrennt===1?"Gerät wurde":"Geräte wurden"} wieder getrennt.</span>`:""}
     </div>
-    <div style="font-size:11px;color:var(--text3);margin-top:6px">Nur Summen – welches Kind welches Gerät hat, entscheiden und sehen die Eltern.</div>
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px">Nur Summen – welches Kind welches Gerät hat, entscheiden und sehen die Eltern.</div>
   </div>`;
 }
 function _nutzungZeitraumHtml(){
@@ -4909,22 +4914,22 @@ async function nutzungLaden(tage){
   try{
     const r=await fetch(`${SB_URL}/rest/v1/rpc/nutzung_auswertung`,{method:"POST",headers:{...sbAuthHeaders(),"Content-Type":"application/json"},body:JSON.stringify({p_tage:tage})});
     if(sbCheck401(r))return;
-    if(!r.ok){box.innerHTML=`<div style="font-size:12.5px;color:var(--text2)">Auswertung gerade nicht erreichbar – später noch einmal öffnen.</div>`;return;}
+    if(!r.ok){box.innerHTML=`<div style="font-size:var(--s-text);color:var(--text2)">Auswertung gerade nicht erreichbar – später noch einmal öffnen.</div>`;return;}
     rows=(await r.json())||[];
-  }catch(e){box.innerHTML=`<div style="font-size:12.5px;color:var(--text2)">Kein Netz – die Auswertung braucht den Server.</div>`;return;}
+  }catch(e){box.innerHTML=`<div style="font-size:var(--s-text);color:var(--text2)">Kein Netz – die Auswertung braucht den Server.</div>`;return;}
   if(!document.getElementById("nutzung-body"))return;
-  if(!rows.length){box.innerHTML=`<div style="font-size:12.5px;color:var(--text2)">Noch keine Einträge in den letzten ${tage} Tagen. Das Log läuft seit v453 – einfach benutzen, die Zahlen kommen von selbst.</div>`;return;}
+  if(!rows.length){box.innerHTML=`<div style="font-size:var(--s-text);color:var(--text2)">Noch keine Einträge in den letzten ${tage} Tagen. Das Log läuft seit v453 – einfach benutzen, die Zahlen kommen von selbst.</div>`;return;}
   const tageHer=ts=>{const d=Math.round((Date.now()-new Date(ts))/864e5);return d<=0?"heute":d===1?"gestern":`vor ${d} Tagen`;};
   const gruppe=(titel,ereignis,rolle)=>{
     const l=rows.filter(x=>x.ereignis===ereignis&&(!rolle||x.rolle===rolle)).sort((a,b)=>b.anzahl-a.anzahl);
     if(!l.length)return "";
     const max=Math.max(...l.map(x=>+x.anzahl));
-    return `<div style="font-size:13px;font-weight:800;margin:14px 0 6px">${titel}</div>`+l.map(x=>`
-      <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;font-size:12.5px;padding:5px 0;border-top:1px solid var(--rand-bedien)">
+    return `<div style="font-size:var(--s-text);font-weight:800;margin:14px 0 6px">${titel}</div>`+l.map(x=>`
+      <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;font-size:var(--s-text);padding:5px 0;border-top:1px solid var(--rand-bedien)">
         <div style="min-width:0"><div style="font-weight:700;overflow:hidden;text-overflow:ellipsis">${esc(x.ziel||"–")}</div>
           <div style="height:4px;border-radius:2px;background:var(--surface2);margin-top:4px"><div style="height:4px;border-radius:2px;background:var(--blue);width:${Math.max(4,Math.round(100*x.anzahl/max))}%"></div></div></div>
-        <div style="text-align:right;font-variant-numeric:tabular-nums"><b>${x.anzahl}</b>×<div style="font-size:10.5px;color:var(--text2)">${x.nutzer} Nutzer</div></div>
-        <div style="font-size:10.5px;color:var(--text2);text-align:right;min-width:60px">${tageHer(x.zuletzt)}</div>
+        <div style="text-align:right;font-variant-numeric:tabular-nums"><b>${x.anzahl}</b>×<div style="font-size:var(--s-klein);color:var(--text2)">${x.nutzer} Nutzer</div></div>
+        <div style="font-size:var(--s-klein);color:var(--text2);text-align:right;min-width:60px">${tageHer(x.zuletzt)}</div>
       </div>`).join("");
   };
   const benutzt=new Set(rows.filter(x=>x.ereignis==="aktion").map(x=>x.ziel));
@@ -4935,9 +4940,9 @@ async function nutzungLaden(tage){
     gruppe("Aktionen in den Kacheln","aktion","trainer")+
     gruppe("Eltern-Bereich","eltern-bereich")+
     gruppe("Sonderseiten","route")+
-    (nie.length?`<div style="font-size:13px;font-weight:800;margin:14px 0 6px">Nie benutzt in ${tage} Tagen (${nie.length})</div>
-      <div style="display:flex;flex-wrap:wrap;gap:4px">${nie.map(a=>`<span style="font-size:11px;padding:3px 8px;border-radius:10px;background:var(--surface2);color:var(--text2);border:1px solid var(--rand-bedien)">${esc(a)}</span>`).join("")}</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:6px">Kandidaten fürs Ausmisten – erst nach 4–6 Wochen Daten entscheiden.</div>`:"");
+    (nie.length?`<div style="font-size:var(--s-text);font-weight:800;margin:14px 0 6px">Nie benutzt in ${tage} Tagen (${nie.length})</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">${nie.map(a=>`<span style="font-size:var(--s-klein);padding:3px 8px;border-radius:10px;background:var(--surface2);color:var(--text2);border:1px solid var(--rand-bedien)">${esc(a)}</span>`).join("")}</div>
+      <div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px">Kandidaten fürs Ausmisten – erst nach 4–6 Wochen Daten entscheiden.</div>`:"");
 }
 async function nutzungAufraeumen(){
   if(!confirm("Alle Log-Einträge löschen, die älter als 90 Tage sind?"))return;
@@ -4957,7 +4962,7 @@ async function renderHome(){
   if(!window._tourChecked){window._tourChecked=true;setTimeout(tourMaybe,700);} // Feature-Tour beim ersten Start
   const heute=new Date().toISOString().slice(0,10);
   const card=(inner,accent)=>`<div style="background:var(--surface);border:var(--border-s);${accent?`border-left:3px solid ${accent};`:""}border-radius:var(--rl);padding:12px 14px;margin-bottom:10px">${inner}</div>`;
-  const homeTool=(label,fn)=>`<button onclick="${fn}" style="flex:1 1 calc(50% - 4px);min-width:140px;min-height:46px;border:1px solid var(--rand-bedien);border-radius:var(--rl);cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--text);background:var(--surface);text-align:left;padding:0 12px">${label}</button>`;
+  const homeTool=(label,fn)=>`<button onclick="${fn}" style="flex:1 1 calc(50% - 4px);min-width:140px;min-height:46px;border:1px solid var(--rand-bedien);border-radius:var(--rl);cursor:pointer;font-family:inherit;font-size:var(--s-text);font-weight:700;color:var(--text);background:var(--surface);text-align:left;padding:0 12px">${label}</button>`;
 
   // ── Quick-Stats (sofort, aus lokalen Daten) ──
   const names=Object.keys(DB||{});
@@ -4969,21 +4974,21 @@ async function renderHome(){
     return (s[s.length-1].datum||"0000")<cutoff;
   }).length;
   const statTile=(val,lbl,col,jump)=>`<div role="button" tabindex="0" onclick="${jump}" class="card" style="flex:1;min-width:90px;padding:10px;text-align:center;cursor:pointer">
-    <div style="font-size:22px;font-weight:800;color:${col}">${val}</div>
-    <div style="font-size:10px;color:var(--text2)">${lbl}</div></div>`;
+    <div style="font-size:var(--s-seite);font-weight:800;color:${col}">${val}</div>
+    <div style="font-size:var(--s-klein);color:var(--text2)">${lbl}</div></div>`;
 
   // ── Geburtstage (nur wenn geb im KADER gepflegt) ──
   const mitGeb=KADER.filter(k=>k.geb);
   let gebHtml="";
   if(!mitGeb.length){
-    gebHtml=card(`<div style="font-size:12px;color:var(--text2)">🎂 Geburtstage: noch keine Daten im Kader gepflegt (Feld <code>geb:"JJJJ-MM-TT"</code> je Spieler ergänzen).</div>`);
+    gebHtml=card(`<div style="font-size:var(--s-text);color:var(--text2)">🎂 Geburtstage: noch keine Daten im Kader gepflegt (Feld <code>geb:"JJJJ-MM-TT"</code> je Spieler ergänzen).</div>`);
   }else{
     const soon=mitGeb.map(k=>({k,d:homeGebTage(k.geb)})).filter(x=>x.d<=14).sort((a,b)=>a.d-b.d);
     if(soon.length){
-      gebHtml=card(soon.map(x=>`<div style="display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0">
-        <span style="font-size:16px">${x.d===0?"🎉":"🎂"}</span>
+      gebHtml=card(soon.map(x=>`<div style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);padding:3px 0">
+        <span style="font-size:var(--s-karte)">${x.d===0?"🎉":"🎂"}</span>
         <strong>${esc(x.k.name)}</strong>
-        <span style="color:var(--text2);font-size:11.5px">${x.d===0?`wird HEUTE ${homeAlter(x.k.geb)+1}!`:`wird in ${x.d} Tag${x.d===1?"":"en"} ${homeAlter(x.k.geb)+1}`}</span>
+        <span style="color:var(--text2);font-size:var(--s-klein)">${x.d===0?`wird HEUTE ${homeAlter(x.k.geb)+1}!`:`wird in ${x.d} Tag${x.d===1?"":"en"} ${homeAlter(x.k.geb)+1}`}</span>
       </div>`).join(""),"var(--amber)");
     }
   }
@@ -4991,14 +4996,14 @@ async function renderHome(){
   // Team-Quests leben jetzt im Spieltag (dort werden sie gezählt & geschafft) – nicht mehr auf der Startseite.
   let onboardHtml="";
   try{ if(!localStorage.getItem("adler_onboarded")) onboardHtml=`<div id="onboard-card" class="card" style="padding:16px;margin-bottom:12px;border-left:3px solid var(--blue)">
-    <div style="font-weight:800;font-size:15px;margin-bottom:2px">👋 Willkommen im Adler-Trainer!</div>
-    <div style="font-size:12px;color:var(--text2);margin-bottom:12px">In 3 Schritten startklar:</div>
+    <div style="font-weight:800;font-size:var(--s-karte);margin-bottom:2px">👋 Willkommen im Adler-Trainer!</div>
+    <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:12px">In 3 Schritten startklar:</div>
     <div style="display:flex;flex-direction:column;gap:8px">
       <button class="btn" style="justify-content:flex-start" onclick="go('kader')"><i class="ti ti-users"></i>1️⃣ Kader anlegen / prüfen</button>
       <button class="btn" style="justify-content:flex-start" onclick="go('termine')"><i class="ti ti-calendar-plus"></i>2️⃣ Ersten Termin eintragen</button>
       <button class="btn" style="justify-content:flex-start" onclick="openTab('spieltag')"><i class="ti ti-ball-football"></i>3️⃣ Am Spieltag loslegen</button>
     </div>
-    <button onclick="onboardingDismiss()" style="margin-top:10px;background:transparent;border:none;color:var(--text3);font-family:inherit;font-size:11.5px;cursor:pointer;text-decoration:underline">Alles klar, ausblenden</button>
+    <button onclick="onboardingDismiss()" style="margin-top:10px;background:transparent;border:none;color:var(--text3);font-family:inherit;font-size:var(--s-klein);cursor:pointer;text-decoration:underline">Alles klar, ausblenden</button>
   </div>`; }catch(e){}
   /* N1-Umbau (PO + Trainerkollegen: „zu überladen"): Die Startseite ist nur noch
      To-Do-Banner → Diese Woche → 6 Kacheln (2×3). ALLE Werkzeuge leben
@@ -5020,7 +5025,7 @@ async function renderHome(){
       ${kachelTile("elki","🪶","Eltern & Kinder","var(--fam-elki)","var(--fam-elki-2)")}
       ${kachelTile("orga","📅","Orga","var(--fam-orga)","var(--fam-orga-2)")}
     </div>
-    <div id="app-version" style="text-align:center;font-size:10.5px;color:var(--text3);margin:14px 0 4px"></div>`;
+    <div id="app-version" style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin:14px 0 4px"></div>`;
   appVersionInto("app-version");   // liest die Version aus dem geladenen Cache
   elterngespraecheTrainerLoad(); // offene Elterngespräch-Wünsche (handeln nötig → bleibt oben)
   trainerTodoLoad();             // To-Do-Banner (leer = unsichtbar)
@@ -5034,7 +5039,7 @@ async function renderHome(){
     const r=await fetch(`${SB_URL}/rest/v1/termine?select=*&datum=gte.${heute}&order=datum.asc,uhrzeit.asc.nullslast&limit=10`,{headers:sbAuthHeaders()});
     const slot=document.getElementById("home-next");
     if(!slot)return; // Nutzer hat den Tab schon verlassen
-    if(!r.ok){slot.innerHTML=card('<div style="font-size:12px;color:var(--text3)">Termine offline nicht verfügbar.</div>');return;}
+    if(!r.ok){slot.innerHTML=card('<div style="font-size:var(--s-text);color:var(--text3)">Termine offline nicht verfügbar.</div>');return;}
     const rows=(await r.json()).filter(t=>!(typeof terminVorbei==="function"&&terminVorbei(t)));
     if(typeof TM_TERMINE!=="undefined")TM_TERMINE=rows; // Detail-/Karussell-Klick auf der Startseite findet den Termin (sonst Fallback auf go('termine'))
     /* v472: Das Termin-Karussell ist weg. Es zeigte dieselben Termine, die „Diese Woche"
@@ -5078,11 +5083,11 @@ async function wetterWarnHome(t){
   const warn=(typeof wetterWarn==="function")?wetterWarn(w):null; if(!warn)return;
   const abgesagt=t.platz_status==="abgesagt";
   const tt=(t.titel||t.gegner||"Termin").replace(/'/g,"");
-  el.innerHTML=`<div style="margin-top:8px;padding:10px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px">
-    <div style="font-size:12.5px;font-weight:800;color:var(--red)">⚠️ Wetter kritisch: ${esc(warn.lvl)}</div>
-    <div style="font-size:11.5px;color:#7f1d1d;margin:2px 0 8px">${esc(warn.msg)} Absagen und die Eltern informieren?</div>
+  el.innerHTML=`<div style="margin-top:8px;padding:10px 12px;background:var(--red-bg);border:1px solid #fecaca;border-radius:10px">
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--red)">⚠️ Wetter kritisch: ${esc(warn.lvl)}</div>
+    <div style="font-size:var(--s-klein);color:#7f1d1d;margin:2px 0 8px">${esc(warn.msg)} Absagen und die Eltern informieren?</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
-      ${abgesagt?'<span style="font-size:11.5px;color:var(--red);font-weight:700">🔴 Bereits als „fällt aus" markiert</span>':`<button class="btn btn-sm btn-d" onclick="wetterAbsagen(${Number(t.id)})"><i class="ti ti-x"></i>Platz absagen</button>`}
+      ${abgesagt?'<span style="font-size:var(--s-klein);color:var(--red);font-weight:700">🔴 Bereits als „fällt aus" markiert</span>':`<button class="btn btn-sm btn-d" onclick="wetterAbsagen(${Number(t.id)})"><i class="ti ti-x"></i>Platz absagen</button>`}
       <button class="btn btn-sm" onclick="wetterInfoPush(${Number(t.id)},'${tt}','${t.datum}')"><i class="ti ti-bell"></i>Eltern informieren</button>
     </div>
   </div>`;
@@ -5090,7 +5095,7 @@ async function wetterWarnHome(t){
 async function wetterAbsagen(id){
   if(typeof platzAmpelSet==="function")await platzAmpelSet(id,"abgesagt");
   const el=document.getElementById("wetter-warn-home");
-  if(el)el.querySelector("div>div:last-child").innerHTML='<span style="font-size:11.5px;color:var(--red);font-weight:700">🔴 Als „fällt aus" markiert – jetzt noch die Eltern informieren.</span>';
+  if(el)el.querySelector("div>div:last-child").innerHTML='<span style="font-size:var(--s-klein);color:var(--red);font-weight:700">🔴 Als „fällt aus" markiert – jetzt noch die Eltern informieren.</span>';
 }
 async function wetterInfoPush(id,titel,datum){
   const d=new Date(datum+"T00:00:00"), ds=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()]+" "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
@@ -5253,10 +5258,10 @@ async function trainerTodoLoad(){
   }catch(e){}
   if(!todos.length){slot.innerHTML="";return;}
   slot.innerHTML=`<div class="card" style="border-left:4px solid var(--amber);padding:12px 14px;margin-bottom:10px">
-    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--amber);margin-bottom:8px">📌 Deine To-Dos, ${esc(me)}</div>
+    <div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--amber);margin-bottom:8px">📌 Deine To-Dos, ${esc(me)}</div>
     ${todos.map(t=>`<div style="display:flex;gap:6px;align-items:stretch;margin-bottom:6px">
-      <button onclick="${t.act}" style="display:flex;gap:10px;align-items:center;flex:1;min-width:0;text-align:left;background:var(--surface);border:1px solid var(--rand-bedien);border-radius:10px;padding:10px 12px;font-family:inherit;cursor:pointer;color:var(--text)"><span style="font-size:17px;line-height:1">${t.emo}</span><span style="flex:1;font-size:12.5px;font-weight:600;line-height:1.4">${t.txt}</span><span style="color:var(--text3)">›</span></button>
-      ${t.hakenAct?`<button onclick="${t.hakenAct}" title="Erledigt – ohne Ergebnis abhaken. Gilt für das ganze Trainerteam." aria-label="To-Do abhaken" style="flex:none;min-width:48px;min-height:44px;background:var(--surface);border:1px solid var(--rand-bedien);border-radius:10px;font-size:17px;cursor:pointer;color:var(--green);font-family:inherit">✓</button>`:""}
+      <button onclick="${t.act}" style="display:flex;gap:10px;align-items:center;flex:1;min-width:0;text-align:left;background:var(--surface);border:1px solid var(--rand-bedien);border-radius:10px;padding:10px 12px;font-family:inherit;cursor:pointer;color:var(--text)"><span style="font-size:var(--s-teil);line-height:1">${t.emo}</span><span style="flex:1;font-size:var(--s-text);font-weight:600;line-height:1.4">${t.txt}</span><span style="color:var(--text3)">›</span></button>
+      ${t.hakenAct?`<button onclick="${t.hakenAct}" title="Erledigt – ohne Ergebnis abhaken. Gilt für das ganze Trainerteam." aria-label="To-Do abhaken" style="flex:none;min-width:48px;min-height:44px;background:var(--surface);border:1px solid var(--rand-bedien);border-radius:10px;font-size:var(--s-teil);cursor:pointer;color:var(--green);font-family:inherit">✓</button>`:""}
     </div>`).join("")}
   </div>`;
 }
@@ -5292,20 +5297,20 @@ function _trsvpKopfText(){
 function _trsvpFilterHtml(){
   const alle=_trsvpRows.length, offen=_trsvpOffen().length;
   const chip=(an,lbl,fn)=>`<button onclick="${fn}" aria-pressed="${an?"true":"false"}"
-    style="min-height:44px;padding:6px 16px;border:1px solid var(--rand-bedien);border-radius:22px;font-family:inherit;font-size:12.5px;font-weight:${an?"700":"500"};cursor:pointer;background:${an?"var(--blue)":"var(--surface)"};color:${an?"#fff":"var(--text2)"}">${lbl}</button>`;
+    style="min-height:44px;padding:6px 16px;border:1px solid var(--rand-bedien);border-radius:22px;font-family:inherit;font-size:var(--s-text);font-weight:${an?"700":"500"};cursor:pointer;background:${an?"var(--blue)":"var(--surface)"};color:${an?"#fff":"var(--text2)"}">${lbl}</button>`;
   return chip(!_trsvpNurOffen,`Alle (${alle})`,"trainerRsvpFilter(false)")+
          chip(_trsvpNurOffen,`Nur offene (${offen})`,"trainerRsvpFilter(true)");
 }
 function _trsvpListHtml(){
   const rows=_trsvpNurOffen?_trsvpOffen():_trsvpRows;
-  if(!rows.length)return `<div style="font-size:12.5px;color:var(--text3);padding:14px;text-align:center">${
+  if(!rows.length)return `<div style="font-size:var(--s-text);color:var(--text3);padding:14px;text-align:center">${
     _trsvpNurOffen?"Alle Termine beantwortet ✓":"Keine kommenden Termine eingetragen."}</div>`;
   let html="", monat="";
   rows.forEach(t=>{
     const m=new Date(t.datum+"T00:00:00").toLocaleDateString("de-DE",{month:"long",year:"numeric"});
     if(m!==monat){
       monat=m;
-      html+=`<div style="position:sticky;top:0;z-index:2;background:var(--surface);font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);padding:8px 2px 4px">${esc(m)}</div>`;
+      html+=`<div style="position:sticky;top:0;z-index:2;background:var(--surface);font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);padding:8px 2px 4px">${esc(m)}</div>`;
     }
     html+=_trsvpRowHtml(t,_trsvpMe,"trsvp");
   });
@@ -5322,14 +5327,14 @@ function _trsvpRowHtml(t,me,pre){
   const st=(t.trainer_status||{})[me];
   const d=new Date(t.datum+"T00:00:00"), wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
   const zeit=t.uhrzeit?String(t.uhrzeit).slice(0,5)+" Uhr":"";
-  const btn=(val,emo,lbl,col)=>`<button onclick="trainerRsvpSet(${Number(t.id)},'${val}')" aria-pressed="${st===val?"true":"false"}" style="flex:1;min-height:44px;border-radius:10px;border:1.5px solid ${st===val?col:"var(--rand-bedien)"};background:${st===val?col:"var(--surface)"};color:${st===val?"#fff":"var(--text2)"};font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">${emo} ${lbl}</button>`;
+  const btn=(val,emo,lbl,col)=>`<button onclick="trainerRsvpSet(${Number(t.id)},'${val}')" aria-pressed="${st===val?"true":"false"}" style="flex:1;min-height:44px;border-radius:10px;border:1.5px solid ${st===val?col:"var(--rand-bedien)"};background:${st===val?col:"var(--surface)"};color:${st===val?"#fff":"var(--text2)"};font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">${emo} ${lbl}</button>`;
   /* v509: Bei einem abgesagten Termin steht das Schild da, wo sonst die drei Knöpfe sind –
      zu- oder abzusagen gibt es nichts mehr. */
   const faelltAus=typeof terminFaelltAus==="function"&&terminFaelltAus(t);
   return `<div id="${pre}-${t.id}" style="border:var(--border-s);border-left:3px solid ${faelltAus?"var(--text3)":m.col};border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--surface)">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-      <div style="font-size:13px;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${faelltAus?"var(--text2)":"inherit"}">${m.icon} ${esc(t.titel||t.gegner||m.label)}</div>
-      <div style="font-size:11px;color:var(--text2);white-space:nowrap">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${zeit?" · "+zeit:""}</div>
+      <div style="font-size:var(--s-text);font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${faelltAus?"var(--text2)":"inherit"}">${m.icon} ${esc(t.titel||t.gegner||m.label)}</div>
+      <div style="font-size:var(--s-klein);color:var(--text2);white-space:nowrap">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${zeit?" · "+zeit:""}</div>
     </div>
     ${faelltAus?`<div style="margin-top:8px">${terminAbsageChip(t)}</div>`
       :`<div style="display:flex;gap:6px;margin-top:8px">${btn("ja","✅","Dabei","var(--green)")}${btn("unsicher","🤔","Unsicher","#ca8a04")}${btn("nein","❌","Nicht","var(--red)")}</div>`}
@@ -5349,7 +5354,7 @@ async function trainerRsvpQuickOpen(){
   const c=document.createElement("div");
   c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4);display:flex;flex-direction:column;max-height:100%";
   c.innerHTML=`${mdlHead("trsvp-modal","🗓️","Bist du dabei?",`Ein Tap je Termin, ${esc(me)} – nochmal tippen nimmt zurück`,"var(--amber)")}
-    <div id="trsvp-kopf" style="font-size:11.5px;color:var(--text2);margin-bottom:8px">${_trsvpKopfText()}</div>
+    <div id="trsvp-kopf" style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">${_trsvpKopfText()}</div>
     <div id="trsvp-filter" style="display:flex;gap:6px;margin-bottom:10px">${_trsvpFilterHtml()}</div>
     <div id="trsvp-list" style="flex:1;min-height:0;overflow-y:auto">${_trsvpListHtml()}</div>`;
   modal.appendChild(c); document.body.appendChild(modal);
@@ -5433,8 +5438,8 @@ function _tpNamen(){
 function _tpKopfHtml(namen,kurz){
   const sp=`92px repeat(${namen.length},minmax(36px,1fr))`;
   return `<div style="display:grid;grid-template-columns:${sp};gap:3px;position:sticky;top:0;z-index:2;background:var(--surface);padding:0 0 5px">
-    <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);align-self:end">Termin</div>
-    ${namen.map(n=>`<div title="${esc(n)}" style="text-align:center;font-size:10.5px;font-weight:800;color:var(--text2)">${esc(kurz[n])}</div>`).join("")}
+    <div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);align-self:end">Termin</div>
+    ${namen.map(n=>`<div title="${esc(n)}" style="text-align:center;font-size:var(--s-klein);font-weight:800;color:var(--text2)">${esc(kurz[n])}</div>`).join("")}
   </div>`;
 }
 function _tpZelleHtml(t,name){
@@ -5447,7 +5452,7 @@ function _tpZelleHtml(t,name){
   return `<button onclick="tpZelleTippen(${Number(t.id)},'${String(name).replace(/'/g,"")}')"
     title="${esc(name)}: ${lbl} – tippen wechselt"
     aria-label="${esc(name)} am ${esc(t.datum)}: ${lbl}"
-    style="min-height:44px;border:none;border-radius:8px;background:${look.bg};color:${look.fg};font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">${look.z}</button>`;
+    style="min-height:44px;border:none;border-radius:8px;background:${look.bg};color:${look.fg};font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">${look.z}</button>`;
 }
 function _tpZeileHtml(t,namen){
   const a=_tpAmpel(t.trainer_status,namen);
@@ -5457,8 +5462,8 @@ function _tpZeileHtml(t,namen){
   const sp=`92px repeat(${namen.length},minmax(36px,1fr))`;
   return `<div id="tp-row-${t.id}" style="display:grid;grid-template-columns:${sp};gap:3px;align-items:center;padding:3px 0;border-top:var(--border)">
     <div style="border-left:4px solid ${a.farbe};padding-left:6px;min-width:0;overflow:hidden">
-      <div style="font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.icon} ${wtag} ${d.getDate()}.${d.getMonth()+1}.</div>
-      <div style="font-size:9.5px;color:${a.stufe<=1?a.farbe:"var(--text3)"};font-weight:${a.stufe<=1?"700":"400"};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.ja===0?"niemand":a.ja+" dabei"}</div>
+      <div style="font-size:var(--s-klein);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.icon} ${wtag} ${d.getDate()}.${d.getMonth()+1}.</div>
+      <div style="font-size:var(--s-klein);color:${a.stufe<=1?a.farbe:"var(--text3)"};font-weight:${a.stufe<=1?"700":"400"};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.ja===0?"niemand":a.ja+" dabei"}</div>
     </div>
     ${namen.map(n=>_tpZelleHtml(t,n)).join("")}
   </div>`;
@@ -5467,13 +5472,13 @@ function _tpListeHtml(){
   const namen=_tpNamen(), kurz=_tpKuerzel(namen);
   let rows=_tpZeilen();
   if(_tpNurEng)rows=rows.filter(t=>_tpAmpel(t.trainer_status,namen).stufe<=1); // 0 oder 1 Zusage
-  if(!rows.length)return `<div style="font-size:12.5px;color:var(--text3);padding:16px;text-align:center">${
+  if(!rows.length)return `<div style="font-size:var(--s-text);color:var(--text3);padding:16px;text-align:center">${
     _tpNurEng?"Überall mindestens zwei Zusagen ✓":"Keine kommenden Trainings, Spiele oder Turniere."}</div>`;
   let html=_tpKopfHtml(namen,kurz), monat="";
   rows.forEach(t=>{
     const mn=new Date(t.datum+"T00:00:00").toLocaleDateString("de-DE",{month:"long",year:"numeric"});
     if(mn!==monat){ monat=mn;
-      html+=`<div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);padding:10px 2px 2px">${esc(mn)}</div>`; }
+      html+=`<div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);padding:10px 2px 2px">${esc(mn)}</div>`; }
     html+=_tpZeileHtml(t,namen);
   });
   return html;
@@ -5482,7 +5487,7 @@ function _tpFilterHtml(){
   const namen=_tpNamen();
   const alle=_tpZeilen(), eng=alle.filter(t=>_tpAmpel(t.trainer_status,namen).stufe<=1);
   const chip=(an,lbl,fn)=>`<button onclick="${fn}" aria-pressed="${an?"true":"false"}"
-    style="min-height:44px;padding:6px 16px;border:1px solid var(--rand-bedien);border-radius:22px;font-family:inherit;font-size:12.5px;font-weight:${an?"700":"500"};cursor:pointer;background:${an?"var(--blue)":"var(--surface)"};color:${an?"#fff":"var(--text2)"}">${lbl}</button>`;
+    style="min-height:44px;padding:6px 16px;border:1px solid var(--rand-bedien);border-radius:22px;font-family:inherit;font-size:var(--s-text);font-weight:${an?"700":"500"};cursor:pointer;background:${an?"var(--blue)":"var(--surface)"};color:${an?"#fff":"var(--text2)"}">${lbl}</button>`;
   return chip(!_tpNurEng,`Alle (${alle.length})`,"tpFilter(false)")+
          chip(_tpNurEng,`Höchstens eine Zusage (${eng.length})`,"tpFilter(true)");
 }
@@ -5531,10 +5536,10 @@ async function trainerPlanOpen(){
   c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4);display:flex;flex-direction:column;max-height:100%";
   const namen=_tpNamen(), kurz=_tpKuerzel(namen);
   c.innerHTML=`${mdlHead("tp-modal","🧑‍🏫","Trainerplan","Alle Zusagen auf einen Blick","var(--blue)")}
-    <div id="tp-kopf" style="font-size:11.5px;color:var(--text2);margin-bottom:8px">${_tpKopfText()}</div>
+    <div id="tp-kopf" style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">${_tpKopfText()}</div>
     <div id="tp-filter" style="display:flex;gap:6px;margin-bottom:10px">${_tpFilterHtml()}</div>
     <div id="tp-liste" style="flex:1;min-height:0;overflow:auto">${_tpListeHtml()}</div>
-    <div style="font-size:10.5px;color:var(--text3);line-height:1.5;margin-top:10px;padding-top:8px;border-top:var(--border)">
+    <div style="font-size:var(--s-klein);color:var(--text3);line-height:1.5;margin-top:10px;padding-top:8px;border-top:var(--border)">
       ${namen.map(n=>`<b>${esc(kurz[n])}</b> ${esc(n)}`).join(" · ")}<br>
       Tippen wechselt: ✓ dabei → ? unsicher → ✕ nicht dabei → · keine Antwort.<br>
       Balken links nach Zusagen: ${[[0,"keine"],[1,"eine"],[2,"zwei"],[3,"drei und mehr"]].map(([i,w])=>
@@ -5583,7 +5588,7 @@ function _trhomeOrgaBadge(){
 }
 function _trhomeAlleKnopfHtml(){
   const offen=_trsvpAlleOffen();
-  return `<button onclick="trainerRsvpQuickOpen()" style="display:flex;gap:6px;align-items:center;justify-content:center;width:100%;min-height:44px;margin-bottom:12px;background:var(--surface);border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--text2);cursor:pointer">🗓️ Alle ${_trsvpRows.length} Termine<span style="color:var(--text3)">›</span></button>`;
+  return `<button onclick="trainerRsvpQuickOpen()" style="display:flex;gap:6px;align-items:center;justify-content:center;width:100%;min-height:44px;margin-bottom:12px;background:var(--surface);border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:700;color:var(--text2);cursor:pointer">🗓️ Alle ${_trsvpRows.length} Termine<span style="color:var(--text3)">›</span></button>`;
 }
 async function trainerTermineHomeLoad(){
   const slot=document.getElementById("trainer-termine-slot"); if(!slot)return;
@@ -5605,11 +5610,11 @@ async function trainerTermineHomeLoad(){
   const zeigen=offen.slice(0,TRHOME_MAX);
   let inhalt=zeigen.map(t=>_trsvpRowHtml(t,me,"trhome")).join("");
   if(offen.length>zeigen.length)
-    inhalt+=`<div style="font-size:11.5px;color:var(--text3);text-align:center;padding:2px 0 6px">und ${offen.length-zeigen.length} weitere ohne deine Antwort</div>`;
+    inhalt+=`<div style="font-size:var(--s-klein);color:var(--text3);text-align:center;padding:2px 0 6px">und ${offen.length-zeigen.length} weitere ohne deine Antwort</div>`;
   slot.innerHTML=`<div class="card" style="border-left:4px solid var(--amber);padding:12px 14px;margin-bottom:10px">
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px">
-      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--amber)">🗓️ Bist du dabei?</div>
-      <div id="trhome-kopf" style="font-size:11px;color:var(--text2);text-align:right">${_trhomeKopfText()}</div>
+      <div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--amber)">🗓️ Bist du dabei?</div>
+      <div id="trhome-kopf" style="font-size:var(--s-klein);color:var(--text2);text-align:right">${_trhomeKopfText()}</div>
     </div>
     ${inhalt}
   </div>`;
@@ -5647,11 +5652,11 @@ async function trainerMeetingHomeLoad(){
       const tage=Math.round((d-new Date(heute+"T00:00:00"))/864e5);
       const bald=tage===0?"heute":tage===1?"morgen":"in "+tage+" Tagen";
       return `<button type="button" onclick="trainerMeetingOpen()" class="card" style="width:100%;text-align:left;border-left:4px solid #334155;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;cursor:pointer;font-family:inherit;min-height:44px">
-        <span style="font-size:20px;flex:none">🗓️</span>
+        <span style="font-size:var(--s-teil);flex:none">🗓️</span>
         <span style="flex:1;min-width:0">
-          <span style="display:block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text2)">Trainer-Meeting · ${esc(bald)}</span>
-          <span style="display:block;font-size:13.5px;font-weight:800;color:var(--text)">${esc(p.titel)}</span>
-          <span style="display:block;font-size:12px;color:var(--text2)">${esc(wann)} · ${offen[p.id]?`📝 ${offen[p.id]} ${offen[p.id]===1?"Thema":"Themen"}`:"noch keine Themen"}</span>
+          <span style="display:block;font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text2)">Trainer-Meeting · ${esc(bald)}</span>
+          <span style="display:block;font-size:var(--s-text);font-weight:800;color:var(--text)">${esc(p.titel)}</span>
+          <span style="display:block;font-size:var(--s-text);color:var(--text2)">${esc(wann)} · ${offen[p.id]?`📝 ${offen[p.id]} ${offen[p.id]===1?"Thema":"Themen"}`:"noch keine Themen"}</span>
         </span>
         <span style="color:var(--text3);flex:none">›</span>
       </button>`;
@@ -5675,9 +5680,9 @@ async function homeRsvpNudge(){
   const m=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅",label:t.typ};
   const d=new Date(t.datum+"T00:00:00"), wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
   slot.innerHTML=`<div role="button" tabindex="0" onclick="rsvpOverviewOpen(${t.id})" class="card" style="padding:12px 14px;margin-bottom:10px;border-left:3px solid var(--amber);cursor:pointer;display:flex;align-items:center;gap:8px">
-    <span style="font-size:18px">🔔</span>
-    <span style="flex:1;font-size:12.5px"><strong style="color:var(--amber)">${offen} ohne Rückmeldung</strong> für ${m.icon} ${esc(t.titel||t.gegner||m.label)} · ${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}</span>
-    <span style="font-size:11px;font-weight:800;color:var(--blue-text)">nachfassen ›</span>
+    <span style="font-size:var(--s-teil)">🔔</span>
+    <span style="flex:1;font-size:var(--s-text)"><strong style="color:var(--amber)">${offen} ohne Rückmeldung</strong> für ${m.icon} ${esc(t.titel||t.gegner||m.label)} · ${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}</span>
+    <span style="font-size:var(--s-klein);font-weight:800;color:var(--blue-text)">nachfassen ›</span>
   </div>`;
 }
 
@@ -5695,8 +5700,8 @@ async function homeAntiFrust(){
   if(mitTor>=2 && ohne.length){
     const pick=ohne[new Date().getDate()%ohne.length]; // rotiert täglich, damit alle mal drankommen
     slot.innerHTML=`<div class="card" style="padding:12px 14px;margin-bottom:10px;border-left:3px solid var(--amber);display:flex;align-items:center;gap:8px">
-      <span style="font-size:18px">🌟</span>
-      <span style="flex:1;font-size:12.5px"><strong>${esc(pick)}</strong> hatte diese Saison noch kein Torerlebnis – gib ihm/ihr heute bewusst eine Bühne. 💛</span>
+      <span style="font-size:var(--s-teil)">🌟</span>
+      <span style="flex:1;font-size:var(--s-text)"><strong>${esc(pick)}</strong> hatte diese Saison noch kein Torerlebnis – gib ihm/ihr heute bewusst eine Bühne. 💛</span>
     </div>`;
   } else slot.innerHTML="";
 }
@@ -5711,8 +5716,8 @@ async function homeBirthday(){
     const key="adler_bday_"+new Date().toISOString().slice(0,10)+"_"+k.name;
     let sent=false; try{sent=!!localStorage.getItem(key);}catch(e){}
     return `<div class="card" style="padding:12px 14px;margin-bottom:10px;border-left:3px solid #ec4899">
-      <div style="font-size:13.5px;font-weight:800">🎂 ${esc(k.name)} hat heute Geburtstag – wird ${homeAlter(k.geb)+1}!</div>
-      <button onclick="birthdayPush('${(k.name).replace(/'/g,'')}','${key}')" style="width:100%;min-height:44px;margin-top:8px;border:none;border-radius:10px;background:#ec4899;color:#fff;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer">${sent?"✓ Gruß gesendet – nochmal senden":"🎉 Geburtstags-Gruß als Push senden"}</button>
+      <div style="font-size:var(--s-text);font-weight:800">🎂 ${esc(k.name)} hat heute Geburtstag – wird ${homeAlter(k.geb)+1}!</div>
+      <button onclick="birthdayPush('${(k.name).replace(/'/g,'')}','${key}')" style="width:100%;min-height:44px;margin-top:8px;border:none;border-radius:10px;background:#ec4899;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${sent?"✓ Gruß gesendet – nochmal senden":"🎉 Geburtstags-Gruß als Push senden"}</button>
     </div>`;
   }).join("");
 }
@@ -5803,7 +5808,7 @@ function heftBuildHtml(cfg,opts){
   if(reps.length){
     const nameById={}; heftKader.forEach(k=>nameById[k.id]=k.name);
     repHtml=`<div class="heft-komm"><div class="heft-komm-h">🎙️ Kabinen-Reporter – die Kinder haben das Wort</div>
-      ${reps.map(x=>`<div style="margin-top:6px;font-size:12.5px"><b>${esc(x.frage)}</b><br>„${esc(x.antwort)}" – <i>${esc(nm(nameById[x.spieler_id]||"ein Adler"))}</i></div>`).join("")}
+      ${reps.map(x=>`<div style="margin-top:6px;font-size:var(--s-text)"><b>${esc(x.frage)}</b><br>„${esc(x.antwort)}" – <i>${esc(nm(nameById[x.spieler_id]||"ein Adler"))}</i></div>`).join("")}
     </div>`;
   }
   return `<div class="heft-wrap">
@@ -5811,7 +5816,7 @@ function heftBuildHtml(cfg,opts){
       <img src="logo.png" alt="SV Adler Dellbrück">
       <div class="heft-club">SV ADLER DELLBRÜCK e.V.</div>
       <div class="heft-title">${esc(cfg.titel||"Adler Nest")}</div>
-      <div style="font-size:11px;color:#64748b;font-weight:600;letter-spacing:.5px">Das Vereinsheft der jungen Adler 🪺</div>
+      <div style="font-size:var(--s-klein);color:#64748b;font-weight:600;letter-spacing:.5px">Das Vereinsheft der jungen Adler 🪺</div>
       <div class="heft-club">Saison ${typeof saisonLabel==="function"?saisonLabel():""} · unsere Mannschaft</div>
     </div>
     ${spielHtml}
@@ -5881,39 +5886,39 @@ function heftRenderEditor(){
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;flex-direction:column;padding:12px;overflow-y:auto";
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
   const kaderOpts=`<option value="">— keiner —</option>`+heftKader.map(k=>`<option value="${esc(k.id)}"${String(heftCfg.fokusId)===String(k.id)?" selected":""}>${esc(k.name)}${k.nr!=null?" (#"+esc(k.nr)+")":""}</option>`).join("");
-  const fld="width:100%;padding:8px 10px;border:var(--border-s);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box;resize:vertical";
+  const fld="width:100%;padding:8px 10px;border:var(--border-s);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box;resize:vertical";
   const card=document.createElement("div");
   card.style.cssText="background:var(--surface);color:var(--text);max-width:900px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   card.innerHTML=`
     ${mdlHead("heft-modal","📰","Adler-Nest-Editor","frei bearbeiten · Vorschau live · Texte werden gemerkt","#1e3a8a")}
     <button id="heft-ai-btn" onclick="heftAutoContent()" class="btn" style="width:100%;margin-bottom:4px;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;border:none;min-height:44px;font-weight:800"><i class="ti ti-sparkles"></i> Auto-Entwurf aus den letzten Wochen (KI)</button>
-    <div style="font-size:10.5px;color:var(--text2);margin:0 0 12px;text-align:center">Zieht Trainings, Ergebnisse & Geburtstage – kindgerecht formuliert, danach frei änderbar.</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin:0 0 12px;text-align:center">Zieht Trainings, Ergebnisse & Geburtstage – kindgerecht formuliert, danach frei änderbar.</div>
     <div style="display:grid;grid-template-columns:1fr;gap:16px">
       <div style="display:flex;flex-direction:column;gap:10px">
-        <label style="font-size:11px;font-weight:700;color:var(--text2)">Titel
-          <input id="heft-f-titel" type="text" value="${esc(heftCfg.titel||"")}" style="${fld};min-height:40px;font-size:14px"></label>
-        <label style="font-size:11px;font-weight:700;color:var(--text2)">Einleitung / Grußwort
+        <label style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">Titel
+          <input id="heft-f-titel" type="text" value="${esc(heftCfg.titel||"")}" style="${fld};min-height:40px;font-size:var(--s-karte)"></label>
+        <label style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">Einleitung / Grußwort
           <textarea id="heft-f-einl" rows="3" style="${fld}">${esc(heftCfg.einleitung||"")}</textarea></label>
-        <label style="font-size:11px;font-weight:700;color:var(--text2)">⭐ Spieler im Fokus
-          <select id="heft-f-fokus" style="${fld};min-height:40px;font-size:14px">${kaderOpts}</select></label>
-        <label style="font-size:11px;font-weight:700;color:var(--text2)">Text zum Spieler im Fokus
+        <label style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">⭐ Spieler im Fokus
+          <select id="heft-f-fokus" style="${fld};min-height:40px;font-size:var(--s-karte)">${kaderOpts}</select></label>
+        <label style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">Text zum Spieler im Fokus
           <textarea id="heft-f-fokustext" rows="2" style="${fld}">${esc(heftCfg.fokusText||"")}</textarea></label>
-        <label style="font-size:11px;font-weight:700;color:var(--text2)">📣 Trainer-Kommentar
+        <label style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">📣 Trainer-Kommentar
           <textarea id="heft-f-komm" rows="3" style="${fld}">${esc(heftCfg.kommentar||"")}</textarea></label>
         <div id="heft-reporter-queue"></div>
       </div>
       <div>
-        <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px">Vorschau</div>
+        <div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-bottom:6px">Vorschau</div>
         <div id="heft-preview" style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px;max-height:60vh;overflow:auto"></div>
       </div>
     </div>
     <label style="display:flex;align-items:flex-start;gap:8px;margin-top:12px;padding:9px 11px;background:var(--surface2);border:var(--border-s);border-radius:10px;cursor:pointer">
       <input type="checkbox" id="heft-f-mask" ${heftCfg.mask?"checked":""} style="margin-top:2px;width:18px;height:18px;flex:0 0 auto">
-      <span style="font-size:12px;color:var(--text)"><strong>🔒 Eltern-Version (Nachnamen maskiert)</strong><br><span style="font-size:11px;color:var(--text2)">DSGVO: Fürs Verteilen/Aushängen werden Nachnamen zu „Max M." gekürzt. Für die interne Trainer-Version aus lassen.</span></span>
+      <span style="font-size:var(--s-text);color:var(--text)"><strong>🔒 Eltern-Version (Nachnamen maskiert)</strong><br><span style="font-size:var(--s-klein);color:var(--text2)">DSGVO: Fürs Verteilen/Aushängen werden Nachnamen zu „Max M." gekürzt. Für die interne Trainer-Version aus lassen.</span></span>
     </label>
     <label style="display:flex;align-items:flex-start;gap:8px;margin-top:8px;padding:9px 11px;background:${heftCfg.published?"#dcfce7":"var(--surface2)"};border:var(--border-s);border-radius:10px;cursor:pointer">
       <input type="checkbox" id="heft-f-pub" ${heftCfg.published?"checked":""} style="margin-top:2px;width:18px;height:18px;flex:0 0 auto">
-      <span style="font-size:12px;color:var(--text)"><strong>👨‍👩‍👧 Für Eltern veröffentlichen (digital)</strong><br><span style="font-size:11px;color:var(--text2)">Sichtbar im Eltern-Bereich. Namen erscheinen dort <b>immer maskiert</b>; Fotos nur bei Einwilligung.${heftCfg.published&&heftCfg._pubAt?" · zuletzt "+new Date(heftCfg._pubAt).toLocaleString("de-DE"):""}</span></span>
+      <span style="font-size:var(--s-text);color:var(--text)"><strong>👨‍👩‍👧 Für Eltern veröffentlichen (digital)</strong><br><span style="font-size:var(--s-klein);color:var(--text2)">Sichtbar im Eltern-Bereich. Namen erscheinen dort <b>immer maskiert</b>; Fotos nur bei Einwilligung.${heftCfg.published&&heftCfg._pubAt?" · zuletzt "+new Date(heftCfg._pubAt).toLocaleString("de-DE"):""}</span></span>
     </label>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:12px">
       <button class="btn btn-p" onclick="heftSaveDb()"><i class="ti ti-device-floppy"></i>Speichern</button>
@@ -5937,9 +5942,9 @@ function heftReporterQueueRender(){
   const nameById={}; heftKader.forEach(k=>nameById[k.id]=k.name);
   const offen=(window._heftReporter||[]).filter(x=>!x.freigegeben);
   if(!offen.length){el.innerHTML="";return;}
-  el.innerHTML=`<div style="font-size:11px;font-weight:700;color:var(--text2)">🎙️ Kabinen-Reporter – ${offen.length} Antwort${offen.length===1?"":"en"} warten auf Freigabe</div>
+  el.innerHTML=`<div style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">🎙️ Kabinen-Reporter – ${offen.length} Antwort${offen.length===1?"":"en"} warten auf Freigabe</div>
     ${offen.map(x=>`<div style="display:flex;align-items:center;gap:8px;border:var(--border-s);border-left:3px solid #14b8a6;border-radius:10px;padding:8px 10px;margin-top:6px">
-      <div style="flex:1;min-width:0;font-size:12px"><b>${esc(nameById[x.spieler_id]||"?")}</b> · ${esc(x.frage)}<br><span style="color:var(--text2)">„${esc(x.antwort)}"</span></div>
+      <div style="flex:1;min-width:0;font-size:var(--s-text)"><b>${esc(nameById[x.spieler_id]||"?")}</b> · ${esc(x.frage)}<br><span style="color:var(--text2)">„${esc(x.antwort)}"</span></div>
       <button class="btn btn-sm" style="color:var(--green)" onclick="heftReporterApprove(${x.id})">✓ Ins Heft</button>
       <button class="btn btn-sm" style="color:var(--red)" onclick="heftReporterDelete(${x.id})"><i class="ti ti-trash"></i></button>
     </div>`).join("")}`;
@@ -5985,7 +5990,7 @@ function heftPrintNow(){
    Einwilligung (sonst Initialen). Kein Login, keine Trainer-Daten. */
 async function renderStadionheftView(){
   const root=document.createElement("div");
-  root.style.cssText="max-width:460px;margin:0 auto;padding:16px;font-family:inherit;min-height:100vh;background:#f1f5f9";
+  root.style.cssText="max-width:460px;margin:0 auto;padding:16px;font-family:inherit;min-height:100vh;background:var(--bg)";
   document.body.appendChild(root);
   root.innerHTML=(typeof elternLoader==="function")?elternLoader("Adler Nest wird geladen …"):'<div style="text-align:center;padding:48px;color:#64748b">Lade Adler Nest…</div>';
   let d=null;
@@ -5994,7 +5999,7 @@ async function renderStadionheftView(){
     d=r.ok?await r.json():null;
   }catch(e){}
   if(!d||!d.published){
-    root.innerHTML='<div style="text-align:center;padding:48px;color:#5b6b81"><img src="logo.png" style="width:56px;height:56px" alt=""><div style="margin-top:12px">Aktuell ist kein <b>Adler Nest</b> veröffentlicht.<br>Schau bald wieder rein! 🦅</div></div>';
+    root.innerHTML='<div style="text-align:center;padding:48px;color:var(--text3)"><img src="logo.png" style="width:56px;height:56px" alt=""><div style="margin-top:12px">Aktuell ist kein <b>Adler Nest</b> veröffentlicht.<br>Schau bald wieder rein! 🦅</div></div>';
     return;
   }
   const h=d.heft||{};
@@ -6002,41 +6007,41 @@ async function renderStadionheftView(){
   const cards=(d.spieler||[]).map(sp=>{
     const pos=sp.lieblingsposition?(typeof cardPosLabel==="function"?cardPosLabel(sp.lieblingsposition):sp.lieblingsposition):(sp.tw?"Torwart":"");
     return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:10px;text-align:center">
-      <div style="width:64px;margin:0 auto 6px;position:relative">${avatar(sp,64)}${sp.nr!=null?`<div style="position:absolute;bottom:-2px;right:-2px;min-width:20px;height:20px;background:#facc15;color:#1e293b;border-radius:10px;border:2px solid #fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 3px">${esc(sp.nr)}</div>`:""}</div>
-      <div style="font-size:14px;font-weight:800;color:#1e293b">${esc(sp.name)}${sp.tw?" 🥅":""}</div>
-      ${sp.spitzname?`<div style="font-size:10.5px;color:#64748b;font-style:italic">„${esc(sp.spitzname)}"</div>`:""}
-      ${pos?`<div style="font-size:10.5px;color:#1a56db;font-weight:700">${esc(pos)}</div>`:""}
+      <div style="width:64px;margin:0 auto 6px;position:relative">${avatar(sp,64)}${sp.nr!=null?`<div style="position:absolute;bottom:-2px;right:-2px;min-width:20px;height:20px;background:#facc15;color:#1e293b;border-radius:10px;border:2px solid #fff;font-size:var(--s-klein);font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 3px">${esc(sp.nr)}</div>`:""}</div>
+      <div style="font-size:var(--s-karte);font-weight:800;color:#1e293b">${esc(sp.name)}${sp.tw?" 🥅":""}</div>
+      ${sp.spitzname?`<div style="font-size:var(--s-klein);color:#64748b;font-style:italic">„${esc(sp.spitzname)}"</div>`:""}
+      ${pos?`<div style="font-size:var(--s-klein);color:var(--blue-text);font-weight:700">${esc(pos)}</div>`:""}
     </div>`;
   }).join("");
   const fk=h.fokus;
   const fokusHtml=fk?`<div style="display:flex;gap:12px;align-items:center;background:linear-gradient(135deg,#fef9c3,#fef3c7);border:1px solid #fde047;border-radius:14px;padding:12px;margin-bottom:12px">
     <div style="flex:0 0 auto">${avatar(fk,66)}</div>
-    <div><div style="font-size:10.5px;font-weight:800;color:#a16207;text-transform:uppercase;letter-spacing:.5px">⭐ Spieler im Fokus</div>
-      <div style="font-size:16px;font-weight:900;color:#1e293b">${esc(fk.name)}${fk.nr!=null?" · #"+esc(fk.nr):""}</div>
-      ${fk.text?`<div style="font-size:12px;color:#475569;margin-top:2px;line-height:1.4">${esc(fk.text).replace(/\n/g,"<br>")}</div>`:""}</div></div>`:"";
-  const nestLbl=t=>`<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin:16px 4px 8px">${t}</div>`;
+    <div><div style="font-size:var(--s-klein);font-weight:800;color:#a16207;text-transform:uppercase;letter-spacing:.5px">⭐ Spieler im Fokus</div>
+      <div style="font-size:var(--s-karte);font-weight:900;color:#1e293b">${esc(fk.name)}${fk.nr!=null?" · #"+esc(fk.nr):""}</div>
+      ${fk.text?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:2px;line-height:1.4">${esc(fk.text).replace(/\n/g,"<br>")}</div>`:""}</div></div>`:"";
+  const nestLbl=t=>`<div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin:16px 4px 8px">${t}</div>`;
   // I-C: Kabinen-Reporter-Rubrik (RPC reporter_public: nur Freigegebenes, Namen serverseitig maskiert)
   let repHtml="";
   try{
     const r=await fetch(`${SB_URL}/rest/v1/rpc/reporter_public`,{method:"POST",headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:"{}"});
     if(r.ok){const reps=((await r.json())||[]).slice(0,6);
       if(reps.length)repHtml=nestLbl("🎙️ Kabinen-Reporter – die Kinder haben das Wort")
-        +reps.map(x=>`<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #14b8a6;border-radius:12px;padding:10px 13px;margin-bottom:8px;font-size:12.5px;color:#334155"><b>${esc(x.frage)}</b><br>„${esc(x.antwort)}" – <i>${esc(x.name)}</i></div>`).join("");}
+        +reps.map(x=>`<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #14b8a6;border-radius:12px;padding:10px 13px;margin-bottom:8px;font-size:var(--s-text);color:#334155"><b>${esc(x.frage)}</b><br>„${esc(x.antwort)}" – <i>${esc(x.name)}</i></div>`).join("");}
   }catch(e){}
   root.innerHTML=`<div class="elt-fade">
     <div style="background:linear-gradient(135deg,#1e3a8a,#2563eb);border-radius:16px;padding:18px 16px;text-align:center;color:#fff;margin:4px 0 14px;box-shadow:0 2px 12px rgba(30,58,138,.28)">
       <img src="logo.png" style="width:56px;height:56px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))" alt="SV Adler Dellbrück">
-      <div style="font-size:11px;font-weight:700;letter-spacing:.8px;opacity:.85;margin-top:4px">SV ADLER DELLBRÜCK e.V.</div>
-      <div style="font-size:23px;font-weight:900;margin:2px 0">${esc(h.titel||"Adler Nest")}</div>
-      <div style="font-size:11.5px;opacity:.85">Das Vereinsheft der jungen Adler 🪺</div>
+      <div style="font-size:var(--s-klein);font-weight:700;letter-spacing:.8px;opacity:.85;margin-top:4px">SV ADLER DELLBRÜCK e.V.</div>
+      <div style="font-size:var(--s-seite);font-weight:900;margin:2px 0">${esc(h.titel||"Adler Nest")}</div>
+      <div style="font-size:var(--s-klein);opacity:.85">Das Vereinsheft der jungen Adler 🪺</div>
     </div>
-    ${h.einleitung?`<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #2563eb;border-radius:12px;padding:12px 13px;font-size:13px;color:#334155;line-height:1.55;margin-bottom:12px">${esc(h.einleitung).replace(/\n/g,"<br>")}</div>`:""}
+    ${h.einleitung?`<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #2563eb;border-radius:12px;padding:12px 13px;font-size:var(--s-text);color:#334155;line-height:1.55;margin-bottom:12px">${esc(h.einleitung).replace(/\n/g,"<br>")}</div>`:""}
     ${fokusHtml}
     ${nestLbl("🦅 Unser Kader")}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">${cards}</div>
     ${repHtml}
-    ${h.kommentar?`${nestLbl("📣 Vom Trainerteam")}<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #16a34a;border-radius:12px;padding:12px 13px;font-size:12.5px;color:#334155;line-height:1.55">${esc(h.kommentar).replace(/\n/g,"<br>")}</div>`:""}
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:18px">Auf geht's, Adler! 🦅 · SV Adler Dellbrück e.V.</div></div>`;
+    ${h.kommentar?`${nestLbl("📣 Vom Trainerteam")}<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #16a34a;border-radius:12px;padding:12px 13px;font-size:var(--s-text);color:#334155;line-height:1.55">${esc(h.kommentar).replace(/\n/g,"<br>")}</div>`:""}
+    <div style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin-top:18px">Auf geht's, Adler! 🦅 · SV Adler Dellbrück e.V.</div></div>`;
 }
 
 /* ═══════════════════════════════════
@@ -6054,8 +6059,8 @@ function kachelTile(key,emo,label,c1,c2){
   return `<button onclick="kachelOpen('${key}')" style="min-height:104px;border:none;border-radius:16px;cursor:pointer;font-family:inherit;background:linear-gradient(135deg,${c1},${c2});color:#fff;padding:14px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-shadow:var(--shadow-md);text-align:left">
     <span style="font-size:30px">${emo}</span>
     <span style="min-width:0">
-      <span style="display:block;font-size:15.5px;font-weight:900">${label}</span>
-      <span id="kb-${key}" style="display:block;font-size:12px;min-height:15px"></span>
+      <span style="display:block;font-size:var(--s-karte);font-weight:900">${label}</span>
+      <span id="kb-${key}" style="display:block;font-size:var(--s-text);min-height:15px"></span>
     </span>
   </button>`;
 }
@@ -6078,11 +6083,11 @@ function kTiles(items,col){
     const voll=(t.length%2===1&&i===t.length-1);
     return `<button onclick="kachelRun('${x.fn}'${x.arg!==undefined?`,'${x.arg}'`:""})" style="${voll?"grid-column:1/-1;":""}min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid ${col};border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:12px 8px;text-align:center">
       <span style="font-size:30px">${x.emo}</span>
-      <span style="font-size:14px;font-weight:800;line-height:1.25">${x.label}</span>
+      <span style="font-size:var(--s-karte);font-weight:800;line-height:1.25">${x.label}</span>
     </button>`;
   }).join("")+`</div>`;
 }
-function kSec(t){return `<div style="font-size:13.5px;font-weight:800;color:var(--text);margin:16px 0 8px">${t}</div>`;}
+function kSec(t){return `<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:16px 0 8px">${t}</div>`;}
 const KACHELN={
   training:{emo:"🏃",titel:"Training",sub:"Vom Plan bis zum Abpfiff",col:"var(--fam-training)"},
   spieltag:{emo:"⚽",titel:"Spieltag",sub:"Vorher, während, danach",col:"var(--fam-spieltag)"},
@@ -6112,8 +6117,8 @@ function kachelSeite(key){
   el.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
       <span style="font-size:26px;line-height:1">${k.emo}</span>
       <span style="min-width:0">
-        <span style="display:block;font-size:17px;font-weight:900;color:var(--text)">${esc(k.titel)}</span>
-        <span style="display:block;font-size:12px;color:var(--text2)">${esc(k.sub)}</span>
+        <span style="display:block;font-size:var(--s-teil);font-weight:900;color:var(--text)">${esc(k.titel)}</span>
+        <span style="display:block;font-size:var(--s-text);color:var(--text2)">${esc(k.sub)}</span>
       </span>
     </div>
     <div id="kachel-body">${_kachelInhalt(key)}</div>`;
@@ -6145,7 +6150,7 @@ function _kachelInhalt(key){
     const bewertet=names.filter(n=>DB[n]&&DB[n].length).length;
     const cutoff=new Date(Date.now()-42*86400000).toISOString().slice(0,10);
     const stale=KADER.filter(x=>{const s=DB[x.name];if(!s||!s.length)return true;return (s[s.length-1].datum||"0000")<cutoff;}).length;
-    const tile=(v,l,c,arg)=>`<button onclick="kachelRun('go','${arg}')" style="flex:1;min-width:90px;min-height:72px;border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface);padding:10px;text-align:center;cursor:pointer;font-family:inherit"><div style="font-size:24px;font-weight:900;color:${c}">${v}</div><div style="font-size:12px;color:var(--text2);font-weight:700">${l}</div></button>`;
+    const tile=(v,l,c,arg)=>`<button onclick="kachelRun('go','${arg}')" style="flex:1;min-width:90px;min-height:72px;border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface);padding:10px;text-align:center;cursor:pointer;font-family:inherit"><div style="font-size:var(--s-seite);font-weight:900;color:${c}">${v}</div><div style="font-size:var(--s-text);color:var(--text2);font-weight:700">${l}</div></button>`;
     return `<div style="display:flex;gap:10px;margin-bottom:4px">${tile(KADER.length,"Kader","var(--blue-text)","kader")}${tile(bewertet+"/"+KADER.length,"bewertet","var(--green)","bew")}${tile(stale,"überfällig","var(--red)","bew")}</div>
       <div id="home-antifrust"></div><div id="home-birthday"></div><div id="home-radar"></div>`
       +kSec("Spieler")
