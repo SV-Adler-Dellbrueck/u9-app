@@ -14,9 +14,10 @@
    d) Verschieben (Pfeiltaste und Ziehen am Griff): die gewählten Übungen, die Trainer je
       Feld und ein paralleler Block wandern mit ihrem Block.
    e) Löschen eines Blocks lässt die Übungen der Blöcke dahinter, wo sie waren.
-   f) Durchgänge: EIN Block, die Gruppen wechseln innerhalb; der Trainingsstart bekommt je
-      Durchgang eine Station mit der weitergerückten Einteilung; der nächste Hauptteil rückt
-      um die Zahl der Durchgänge weiter. */
+   f) Durchgänge – seit v621 (PO: „dann den zweiten Durchgang im zweiten Hauptteil habe …
+      zeitlich entsprechend anpassen“): nicht mehr EIN Block mit geteilter Zeit, sondern der
+      folgende Hauptteil wird Durchgang 2 – eigene volle Dauer, dieselbe Übung an Station 1,
+      die Gruppe gewechselt, Gesamtzeit unverändert. Einzelheiten in v621. */
 "use strict";
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
@@ -171,12 +172,10 @@ module.exports = async function (h) {
     const s0 = document.getElementById("tp-form-0-0"), s1 = document.getElementById("tp-form-0-1");
     s0.value = s0.options[3].value; s1.value = s1.options[4].value;
     tpDurchgaengeSetzen(0, 2);
-    const box = document.querySelector("#tp-timeline .tp-durchgaenge");
-    out.tabelle = box ? box.textContent.replace(/\s+/g, " ").trim() : "";
-    out.zeilen = box ? box.querySelectorAll("b").length : 0;
+    out.hinweis = (document.querySelector('.tp-slot[data-si="1"] .tp-durchgang-von') || {}).textContent || "";
     out.station = document.querySelector('.tp-slot[data-si="0"] .tp-station-titel')?.textContent.replace(/\s+/g, " ").trim();
     const snap = _tlSnapshot();
-    out.snap = snap.map(st => ({ label: st.label, dauer: st.dauer, feld1: st.gruppen[0] && st.gruppen[0].gruppe, uebung1: st.gruppen[0] && st.gruppen[0].uebung }));
+    out.snap = snap.map(st => ({ label: st.label, dauer: st.dauer, feld1: st.gruppen[0] && st.gruppen[0].gruppe, uebung1: st.gruppen[0] && st.gruppen[0].uebung, uebungen: (st.gruppen || []).map(g => g.uebung) }));
     out.versatzDanach = tpVersatz(1);
     out.gesamt = document.querySelector("#tp-timeline").textContent.match(/Gesamt: (\d+)/)?.[1];
     return out;
@@ -184,16 +183,16 @@ module.exports = async function (h) {
   if (r2.nachher !== r2.vorher) probleme.push(`e) nach dem Löschen von Hauptteil 1 trägt Hauptteil 3 nicht mehr seine Übung (${r2.nachher} statt ${r2.vorher})`);
   zeilen.push(`e) Löschen: ${r2.labels.join(" → ")} · Hauptteil 3 behält seine Übung`);
   if (!alt) {
-  if (r2.zeilen !== 2) probleme.push(`f) ${r2.zeilen} Durchgänge in der Tabelle statt 2: „${r2.tabelle}“`);
   const [d1, d2] = r2.snap;
-  if (!d1 || !d2 || !/Durchgang 1\/2/.test(d1.label) || !/Durchgang 2\/2/.test(d2.label)) probleme.push("f) der Trainingsstart kennt die Durchgänge nicht: " + JSON.stringify(r2.snap.map(x => x.label)));
+  if (!/Durchgang 2 von 2/.test(r2.hinweis || "")) probleme.push(`f) der Hauptteil danach ist nicht Durchgang 2: „${r2.hinweis}“`);
+  if (!d1 || !d2 || d1.dauer !== 30 || d2.dauer !== 20) probleme.push("f) die Blöcke behalten ihre volle Dauer nicht: " + JSON.stringify(r2.snap.map(x => x.label + " " + x.dauer)));
   else {
-    if (d1.dauer + d2.dauer !== 30) probleme.push(`f) Durchgänge dauern ${d1.dauer}+${d2.dauer} statt zusammen 30`);
     if (d1.feld1 === d2.feld1) probleme.push(`f) an Station 1 steht in beiden Durchgängen dieselbe Gruppe (${d1.feld1})`);
-    if (d1.uebung1 !== d2.uebung1) probleme.push("f) die Übung an Station 1 wechselt – sie soll am Feld bleiben");
+    // Der Schnappschuss ist nach Stationen geordnet: die Gruppe an Station 1 wechselt, die Übungen bleiben.
+    if (JSON.stringify(r2.snap[0].uebungen) !== JSON.stringify(r2.snap[1].uebungen)) probleme.push("f) die Übungen bleiben nicht an ihren Stationen: " + JSON.stringify(r2.snap.slice(0, 2).map(x => x.uebungen)));
   }
-  if (r2.versatzDanach !== 2) probleme.push(`f) der Hauptteil danach rückt um ${r2.versatzDanach} statt um 2 weiter`);
-  if (r2.gesamt !== "50") probleme.push(`f) Gesamtzeit ${r2.gesamt} statt 50 – Durchgänge dürfen die Zeit nicht vervielfachen`);
+  if (r2.versatzDanach !== 1) probleme.push(`f) Durchgang 2 rückt um ${r2.versatzDanach} statt um 1 weiter`);
+  if (r2.gesamt !== "50") probleme.push(`f) Gesamtzeit ${r2.gesamt} statt 50`);
   if (!/→/.test(r2.station || "")) probleme.push(`f) die Station nennt die Reihenfolge der Gruppen nicht: „${r2.station}“`);
   }
   if (!alt) zeilen.push(`f) Durchgänge: ${r2.snap.slice(0, 2).map(x => `${x.label} ${x.dauer}′ ${x.feld1}`).join(" | ")} · Station: „${r2.station}“ · danach Versatz ${r2.versatzDanach}`);

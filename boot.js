@@ -1474,21 +1474,96 @@ function tpVersatz(si){
    weiter – dieselbe Rechnung wie „⇄ weiterrücken", nur mehrmals hintereinander. Die Dauer
    des Blocks ist die Gesamtzeit; sie wird auf die Durchgänge verteilt. */
 function tpDurchgaenge(slot){
-  if(!slot||!tpIstHauptteil(slot.typ))return 1;
-  return Math.max(1,Math.min(5,Number(slot.durchgaenge)||1));
+  /* v621: Ein Block teilt seine Zeit nicht mehr auf. Durchgänge laufen als eigene Hauptteile
+     (Kette, siehe unten) – jeder mit voller Dauer. Rückgabe 1 hält Versatz, Timer und
+     „Einheit bewerten“ auf dem einfachen Weg: jeder Hauptteil ist ein Durchgang. */
+  return 1;
+}
+/* v621 – PO: „Wenn ich den Hauptteil 1 durchplane, zum Beispiel mit zwei Übungen, dann den
+   zweiten Durchgang im zweiten Hauptteil habe, sodass ich am Ende auch in der Bewertung zwei
+   Hauptteile habe, die sich dann zeitlich entsprechend anpassen.“ Vorher teilte v605 die 12
+   Minuten von Hauptteil 1 auf 2 × 6 auf, und Hauptteil 2 („Gruppen wechseln die Station“)
+   blieb leer daneben stehen – der Wechsel stand doppelt im Plan.
+   Jetzt: „Durchgänge“ am Hauptteil bindet die folgenden Hauptteile als Durchgang 2, 3 … an
+   (gleiche `kette` am Slot). Sie erben die Übungen je Station und die Trainer, die Gruppen
+   rücken über den Versatz von selbst weiter, jeder behält seine volle Dauer. Fehlt ein
+   folgender Hauptteil, wird er angelegt (Entscheidung PO: „Neuen Hauptteil anlegen“) – die
+   Gesamtzeit wächst, und die App sagt es. Eine eigene Übung im Durchgang ersetzt die geerbte. */
+function _tpKetteIdx(id){ return id?_tpKette().filter(i=>tpSlots[i]&&tpSlots[i].kette===id):[]; }
+function _tpKetteVon(si){ const s=tpSlots[si]; if(!s||!s.kette)return [si]; const k=_tpKetteIdx(s.kette); return k.length?k:[si]; }
+function _tpGesamtMin(){ return tpSlots.reduce((a,s)=>a+(tpIstParallel(s)?0:(Number(s.dauer)||0)),0); }
+/* Station p des Kopfes → Station p des Durchgangs: der Trainer (die Übung erbt
+   _tpKetteNachziehen beim Zeichnen, nur wo dort keine eigene steht). */
+function _tpKetteErben(kopf,folge){
+  const a=tpSlots[kopf], b=tpSlots[folge]; if(!a||!b)return;
+  if(Array.isArray(a.weg)&&!b.weg)b.weg=a.weg.slice();
+  // Der Trainer bleibt an seiner Station, die Gruppen wandern (wie am Platz) – beim Anbinden gilt der Kopf.
+  for(let p=0;p<8;p++){ const t=tpCoaches[`tp-form-${kopf}-${p}`]; if(t)tpCoaches[`tp-form-${folge}-${p}`]=t; }
+}
+function tpDurchgaengeSetzen(si,wert){
+  const s0=tpSlots[si]; if(!s0)return;
+  const kopf=_tpKetteVon(si)[0], kopfSlot=tpSlots[kopf];
+  const n=Math.max(1,Math.min(5,Number(wert)||1));
+  const id=kopfSlot.kette||("k"+Date.now().toString(36)+Math.random().toString(36).slice(2,5));
+  kopfSlot.kette=id; delete kopfSlot.durchgaenge;
+  const vorher=_tpGesamtMin(); let neu=0, weg=0;
+  // mehr Durchgänge: erst folgende Hauptteile ohne Kette übernehmen, sonst anlegen
+  let guard=0;
+  while(_tpKetteIdx(id).length<n&&guard++<10){
+    const k=_tpKetteIdx(id), letzter=k[k.length-1], reihe=_tpKette(), naechst=reihe[reihe.indexOf(letzter)+1];
+    if(naechst!=null&&tpIstHauptteil((tpSlots[naechst]||{}).typ)&&!tpSlots[naechst].kette){
+      /* Wer „2 Durchgänge“ wählt, will dieselben Stationen – die Übungen des angebundenen
+         Hauptteils werden deshalb durch die des Kopfes ersetzt (danach wieder frei wählbar). */
+      tpSlots[naechst].kette=id; _tpKetteErben(kopf,naechst);
+      document.querySelectorAll(`.tp-form-sel[id^="tp-form-${naechst}-"]`).forEach(x=>{ x.dataset.erbt="1"; });
+      continue;
+    }
+    const nr=k.length+1;
+    tpSlots.push({typ:kopfSlot.typ||"main",label:`${tpSlotKopfText(kopfSlot.label||"Hauptteil")} – Durchgang ${nr}`,dauer:kopfSlot.dauer,kette:id,auto:true});
+    const ni=tpSlots.length-1, kk=_tpKette(); kk.splice(kk.indexOf(ni),1); kk.splice(kk.indexOf(letzter)+1,0,ni);
+    const reiheNeu=_tpReiheAusKette(kk);
+    const pos=reiheNeu.indexOf(ni);
+    tpSlotsNeuOrdnen(reiheNeu);
+    _tpKetteErben(_tpKetteIdx(id)[0],pos); neu++;
+  }
+  // weniger Durchgänge: hintere Glieder lösen; selbst angelegte ohne eigene Übung verschwinden
+  while(_tpKetteIdx(id).length>n){
+    const k=_tpKetteIdx(id), letzter=k[k.length-1], sl=tpSlots[letzter];
+    const eigene=[...document.querySelectorAll(`.tp-form-sel[id^="tp-form-${letzter}-"]`)].some(x=>x.value&&x.dataset.erbt!=="1");
+    if(sl.auto&&!eigene){ tpSlotsNeuOrdnen(tpSlots.map((_,i)=>i).filter(i=>i!==letzter)); weg++; }
+    else { delete sl.kette; delete sl.auto; }
+  }
+  if(_tpKetteIdx(id).length<=1)delete tpSlots[_tpKetteIdx(id)[0]||kopf].kette;
+  tpRenderTimeline();
+  if(typeof tpPlanSaveDebounced==="function")tpPlanSaveDebounced();
+  const nachher=_tpGesamtMin();
+  if(neu&&typeof toast==="function")toast(`${neu===1?"Ein Hauptteil":neu+" Hauptteile"} als Durchgang angelegt – die Einheit dauert jetzt ${nachher} statt ${vorher} Min.`);
+  else if(weg&&typeof toast==="function")toast(`Durchgang entfernt – die Einheit dauert jetzt ${nachher} Min.`);
+}
+/* Geerbte Übungen nachziehen: leere Station im Durchgang → Übung des Kopfes an derselben
+   Station. Gleiche Übung wie der Kopf gilt ebenfalls als geerbt (so bleibt das nach dem
+   Neuladen erhalten, ohne ein eigenes Merkmal im Plan). */
+function _tpKetteNachziehen(){
+  const koepfe={};
+  tpSlots.forEach((s,i)=>{ if(s&&s.kette){ const k=_tpKetteIdx(s.kette); if(k.length>1&&k[0]!==i)koepfe[i]=k[0]; } });
+  Object.keys(koepfe).forEach(fi=>{
+    const hi=koepfe[fi];
+    document.querySelectorAll(`.tp-form-sel[id^="tp-form-${fi}-"]`).forEach(sel=>{
+      const p=sel.id.split("-").pop(), kopfSel=document.getElementById(`tp-form-${hi}-${p}`);
+      const kv=kopfSel?kopfSel.value:"";
+      if(!sel.value||sel.dataset.erbt==="1"||(kv&&sel.value===kv)){
+        if(kv&&[...sel.options].some(o=>o.value===kv)){ sel.value=kv; sel.dataset.erbt="1"; }
+        else if(sel.dataset.erbt==="1"){ sel.value=""; }
+        if(typeof tpPickSync==="function")tpPickSync(sel.id);
+      }
+    });
+  });
 }
 function tpDurchgangMinuten(slot){
   const n=tpDurchgaenge(slot), d=Math.max(1,Number(slot&&slot.dauer)||10);
   const je=Math.max(1,Math.floor(d/n)), liste=Array(n).fill(je);
   liste[n-1]=Math.max(1,d-je*(n-1));   // der Rest geht in den letzten Durchgang
   return liste;
-}
-function tpDurchgaengeSetzen(si,wert){
-  const slot=tpSlots[si]; if(!slot)return;
-  const n=Math.max(1,Math.min(5,Number(wert)||1));
-  if(n>1)slot.durchgaenge=n; else delete slot.durchgaenge;
-  tpRenderTimeline();
-  if(typeof tpPlanSaveDebounced==="function")tpPlanSaveDebounced();
 }
 /* „⇄ weiterrücken" am Hauptteil. Setzt den Versatz fest – ab dann gilt er, auch wenn
    davor noch ein Block dazukommt. */
@@ -1524,7 +1599,12 @@ function tpFeldWeglassen(si,p){
 function tpFeldZurueck(si){ if(tpSlots[si]){delete tpSlots[si].weg; tpRenderTimeline(); tpPlanSaveDebounced();} }
 function tpSetCoach(stationId,name){
   if(name==="__weg"){const m=String(stationId).match(/^tp-form-(\d+)-(\d+)$/); if(m)tpFeldWeglassen(+m[1],+m[2]); return;}
+  const _alt=tpCoaches[stationId]||"";
   tpCoaches[stationId]=name;
+  /* v621: Trainer am Kopf einer Kette gewechselt → die Durchgänge ziehen an derselben Station
+     mit, solange dort niemand oder noch der bisherige Trainer steht. */
+  const mk=String(stationId).match(/^tp-form-(\d+)-(\d+)$/);
+  if(mk&&typeof _tpKetteVon==="function"){ const k=_tpKetteVon(+mk[1]); if(k.length>1&&k[0]===+mk[1]){ k.slice(1).forEach(fi=>{ const id=`tp-form-${fi}-${mk[2]}`; if(!tpCoaches[id]||tpCoaches[id]===_alt){ tpCoaches[id]=name; const cs=document.querySelector(`.tp-coach-sel[data-station="${id}"]`); if(cs)cs.value=name; } }); } }
   tpPlanSaveDebounced();                        // Zuordnung am Datum festhalten
   // Trainer eines parallelen Blocks gewechselt → die Felder des Hauptteils rechnen neu
   const m=String(stationId).match(/^tp-form-(\d+)-0$/);
@@ -2035,6 +2115,10 @@ function tpGruppeHinweis(selId){
 function tpGruppeHinweisAll(){ Object.keys(_tpStationGruppe).forEach(tpGruppeHinweis); }
 
 function tpRenderTimeline(){
+  /* v621: Pläne mit Durchgängen alter Art (v605–v620: ein Block, Zeit geteilt) werden zur
+     Kette – der folgende Hauptteil wird Durchgang 2, sonst wird er angelegt. */
+  const _alt=tpSlots.findIndex(s=>s&&!s.kette&&Number(s.durchgaenge)>1);
+  if(_alt>=0){ const n=Number(tpSlots[_alt].durchgaenge); delete tpSlots[_alt].durchgaenge; setTimeout(()=>tpDurchgaengeSetzen(_alt,n),0); }
   _tpStationGruppe={};   // v571: Zuordnung Station → Gruppe wird beim Zeichnen neu gesetzt
   /* v574: Erst die Einteilung an die Anwesenheit angleichen, dann zeichnen – sonst stünde
      ein Kind am Feld, das abgesagt hat, oder eines fehlte, das gekommen ist. */
@@ -2045,7 +2129,7 @@ function tpRenderTimeline(){
      Gewaehlte Uebungen, Torwart-Haken und das Einzeltrainings-Kind lebten nur im DOM
      und waren danach weg. Hier merken, unten wieder einsetzen. */
   const merk={sel:{},tw:{},ind:{},mark:{}};
-  wrap.querySelectorAll(".tp-form-sel").forEach(s=>{if(s.value)merk.sel[s.id]=s.value; if(s.dataset.station!=null||s.dataset.alle)merk.mark[s.id]={station:s.dataset.station,alle:s.dataset.alle};});   // v608: Vorlagen-Marken überleben das Neuzeichnen
+  wrap.querySelectorAll(".tp-form-sel").forEach(s=>{if(s.value&&s.dataset.erbt!=="1")merk.sel[s.id]=s.value; if(s.dataset.station!=null||s.dataset.alle)merk.mark[s.id]={station:s.dataset.station,alle:s.dataset.alle};});   // v608: Vorlagen-Marken überleben das Neuzeichnen
   wrap.querySelectorAll(".tp-tw-player").forEach(c=>{merk.tw[c.dataset.slot+"|"+c.value]=c.checked;});
   wrap.querySelectorAll('select[id^="tp-ind-player-"]').forEach(s=>{if(s.value)merk.ind[s.id]=s.value;});
   if(typeof renderTeamDiagnose==="function")renderTeamDiagnose(); // Phase 7-C: Team-Diagnose oben
@@ -2174,26 +2258,24 @@ function tpRenderTimeline(){
          unterscheiden, und der Timer zeigt dieselbe Zeile. */
       const wer=felderGruppen.map((f,i)=>`${f.emo||"👥"} ${esc((f.name||"").split(" + ")[0])} (${f.kinder.length}) → Feld ${i+1}`).join(" · ");
       /* v605: Durchgänge – dieselben Übungen, die Gruppen wechseln innerhalb des Blocks. */
-      const nDg=tpDurchgaenge(slot), maxDg=Math.min(5,felderGruppen.length);
+      /* v621: Die Zahl ist die Länge der Kette. Ein Durchgang (nicht der Kopf) zeigt statt der
+         Wahl, wessen Übungen er spielt. */
+      const _kt=_tpKetteVon(si), _istFolge=_kt.length>1&&_kt[0]!==si;
+      const nDg=_kt.length, maxDg=Math.min(5,Math.max(2,felderGruppen.length));
       const dgWahl=`<label style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--text)">🔁 Durchgänge
           <select aria-label="Durchgänge in ${esc(tpSlotKopfText(slot.label))}" onchange="tpDurchgaengeSetzen(${si},this.value)" style="min-height:44px;padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:12px;background:var(--surface);color:var(--text)">
             ${Array.from({length:maxDg},(_,i)=>i+1).map(n=>`<option value="${n}"${n===nDg?" selected":""}>${n===1?"1 (kein Wechsel)":n}</option>`).join("")}
           </select></label>`;
-      if(nDg>1){
-        const min=tpDurchgangMinuten(slot); let ab=startMin;
-        const zeilen=Array.from({length:nDg},(_,d)=>{
-          const fg=tpFelderGruppen(tgFor(),parallelSlots,weg,v+d,tpFeldBedarfe(si,parallelSlots,merk.sel));
-          const von=ab; ab+=min[d];
-          return `<div style="padding:2px 0"><b>${d+1}. Durchgang</b> <span style="color:var(--text2)">${von}'–${ab}'</span> · ${fg.map((f,i)=>`${f.emo||"👥"} ${esc((f.name||"").split(" + ")[0])} → Station ${i+1}`).join(" · ")}</div>`;
-        }).join("");
-        html+=`<div class="tp-durchgaenge" style="font-size:11.5px;line-height:1.5;padding:4px 0 6px">
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px">${dgWahl}<span style="font-size:11px;color:var(--text2)">je ${min[0]} Min. · Pfiff = Wechsel</span></div>${zeilen}</div>`;
-      }else{
+      if(_istFolge){
+        html+=`<div class="tp-durchgang-von" style="font-size:11.5px;line-height:1.5;padding:4px 8px;margin:2px 0 6px;border-left:3px solid var(--fam-training);background:var(--surface2);border-radius:6px">
+          🔁 <b>Durchgang ${_kt.indexOf(si)+1} von ${nDg}</b> · Übungen und Trainer wie in „${esc(tpSlotKopfText((tpSlots[_kt[0]]||{}).label||"Hauptteil"))}“, die Gruppen wechseln die Station. Eine eigene Übung hier ersetzt die übernommene.</div>`;
+      }
+      {
       html+=`<div class="tp-ringtausch" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:4px 0 6px">
         <span style="font-size:11px;color:var(--text2);flex:1 1 140px;min-width:0">⇄ ${wer}${v?` <b>· ${v}× weitergerückt</b>`:""}</span>
         <button onclick="tpVersatzSetzen(${si},1)" title="Alle Gruppen rücken ein Feld weiter – bei zwei Gruppen ist das der Tausch" style="min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer">⇄ weiterrücken</button>
         ${eigen?`<button onclick="tpVersatzZurueck(${si})" title="Wieder der Reihe nach – so wie es sich aus der Reihenfolge der Blöcke ergibt" style="min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer">↩ automatisch</button>`:""}
-        ${dgWahl}
+        ${_istFolge?"":dgWahl}
       </div>`;
       }
     }
@@ -2263,8 +2345,9 @@ function tpRenderTimeline(){
         // Eine Karte je Station. Frueher stand hier eine einzige Zeile, die am Handy in
         // fuenf Elemente umbrach – man sah nicht mehr, welches Feld zu welcher Gruppe gehoert.
         // Der Trainername stand doppelt: einmal als Etikett, einmal im (funktionslosen) Dropdown.
-        const dgN=isMain?tpDurchgaenge(slot):1;
-        const folgeGr=(dgN>1&&tgg)?Array.from({length:dgN},(_,d)=>{const fg=tpFelderGruppen(tgFor(),parallelSlots,weg,tpVersatz(si)+d,tpFeldBedarfe(si,parallelSlots,merk.sel))[p];return fg?`${fg.emo||"👥"} ${esc((fg.name||"").split(" + ")[0])}`:"";}).filter(Boolean).join(" → "):"";
+        /* v621: Stationen einer Kette zeigen die Reihenfolge der Gruppen über alle Durchgänge. */
+        const _kSt=isMain?_tpKetteVon(si):[si], dgN=_kSt.length, _v0=tpVersatz(_kSt[0]);
+        const folgeGr=(dgN>1&&tgg)?Array.from({length:dgN},(_,d)=>{const fg=tpFelderGruppen(tgFor(),parallelSlots,weg,_v0+d,tpFeldBedarfe(si,parallelSlots,merk.sel))[p];return fg?`${fg.emo||"👥"} ${esc((fg.name||"").split(" + ")[0])}`:"";}).filter(Boolean).join(" → "):"";
         const warmTitel=p===0?"Alle Kinder":`Alle Kinder · danach (${p+1}.)`;
         html+=`<div class="tp-station">
           <div class="tp-station-head">
@@ -2324,6 +2407,7 @@ function tpRenderTimeline(){
   // Gemerkte Auswahl wieder einsetzen (siehe oben)
   Object.keys(merk.mark).forEach(id=>{const s=document.getElementById(id); const m=merk.mark[id]; if(s&&m){ if(m.station!=null)s.dataset.station=m.station; if(m.alle)s.dataset.alle=m.alle; }});
   Object.keys(merk.sel).forEach(id=>{const s=document.getElementById(id); if(s&&[...s.options].some(o=>o.value===merk.sel[id])){s.value=merk.sel[id]; if(typeof tpPickSync==="function")tpPickSync(id); const hd=document.getElementById(id+"-hist"); if(hd&&typeof tpExerciseHistoryHtml==="function")hd.innerHTML=tpExerciseHistoryHtml(parseInt(s.value));}});
+  _tpKetteNachziehen();   // v621: Durchgänge erben die Übungen ihres Kopfes
   wrap.querySelectorAll(".tp-tw-player").forEach(c=>{const k=c.dataset.slot+"|"+c.value; if(k in merk.tw)c.checked=merk.tw[k];});
   Object.keys(merk.ind).forEach(id=>{const s=document.getElementById(id); if(s){s.value=merk.ind[id]; if(typeof tpIndPlayerChange==="function"&&s.value)tpIndPlayerChange(Number(id.replace("tp-ind-player-","")));}});
   tpPrognoseLoad(); // G3: erwartete Kinderzahl fürs gewählte Datum
@@ -2359,6 +2443,8 @@ function tpOnSelectChange(sel){
   if(!_tpRestoring&&sel){
     document.querySelectorAll(".tp-form-sel").forEach(x=>{ delete x.dataset.station; delete x.dataset.alle; });
   }
+  if(sel&&!_tpRestoring)delete sel.dataset.erbt;   // v621: eigene Wahl im Durchgang ersetzt die geerbte
+  if(typeof _tpKetteNachziehen==="function")_tpKetteNachziehen();
   const histDiv=document.getElementById(sel.id+"-hist");
   if(histDiv&&sel.value) histDiv.innerHTML=tpExerciseHistoryHtml(parseInt(sel.value));
   else if(histDiv) histDiv.innerHTML="";
