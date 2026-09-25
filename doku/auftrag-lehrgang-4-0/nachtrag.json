@@ -1,0 +1,89 @@
+{
+  "schema": "adler-uebungen/1",
+  "uebungen": [
+    {
+      "name": "Lehrgang Ü32 – 4 gegen 4 + TW: Umschalten nach Ballgewinn",
+      "kat": "pressing",
+      "kurz": "Trainingsform aus dem DFB-Basis-Coach (Aufgabe 4.0, Erwachsenenfußball): 4 gegen 4 plus Torhüter auf zwei Großfeldtore, ein schnelles Tor nach Ballgewinn zählt dreifach. Nicht für die U9 gedacht – die pausierende Mannschaft wäre dort eine Wartereihe.",
+      "spieler": "14 (3 Teams à 4 + 2 TW), bei 15–16 wird durchgewechselt",
+      "feld": "35 x 25 m, zwei Großfeldtore, Mittellinie mit Hütchen, Balldepot neben jedem Tor",
+      "dauer": "21",
+      "ablauf": "ZIEL: Umschalten nach Ballgewinn – nach vorn spielen, bevor der Gegner sich geordnet hat. AUFBAU: Feld 35 x 25 m, an beiden Grundlinien ein Großfeldtor mit Torhüter, Mittellinie mit zwei Hütchen markiert, neben jedem Tor ein Balldepot. Drei Mannschaften zu je vier Spielern (A, B, C). ABLAUF: Zwei Mannschaften spielen 4 gegen 4 plus Torhüter, die dritte pausiert an der Seitenlinie und füllt die Balldepots. REGELN: Tor = 1 Punkt. Tor innerhalb von 8 Sekunden nach Ballgewinn in der eigenen Hälfte = 3 Punkte. Keine Grätschen. START: Der Trainer spielt an der Mittellinie ein; nach Tor oder Aus eröffnet der Torhüter sofort mit neuem Ball aus dem Depot. DURCHGÄNGE: 6 x 3 Minuten in der Folge A–B, B–C, C–A, zweimal; 30 Sekunden Wechselzeit. Jede Mannschaft spielt 12 Minuten und pausiert 6 – bei Ü32 gewollt, Belastung und Pause stehen 1 : 1. SKIZZE: A1 gewinnt den Ball in der eigenen Hälfte und spielt sofort in die Tiefe (1), A4 startet gleichzeitig (1), A2 rückt als zweiter Angreifer nach (2); A4 schließt ab (3). TRAINER UND CO-TRAINER: Der Trainer steht an der Außenlinie auf Höhe der Mittellinie und sieht beide Tore. Der Co-Trainer stoppt das 8-Sekunden-Fenster, zählt die Punkte und ruft den Wechsel aus.",
+      "varianten": "Leichter: Zeitfenster 10 Sekunden. Schwerer: Zeitfenster 6 Sekunden; zusätzlich 1 Punkt, wenn die Mannschaft den Ball innerhalb von 5 Sekunden nach Ballverlust zurückerobert – so wird auch das Umschalten gegen den Ball trainiert.",
+      "coaching": "Als Frage. Wohin geht dein erster Blick nach dem Ballgewinn? Wer startet sofort in die Tiefe? Wann schießt du selbst, wann passt du?",
+      "diff": 2,
+      "skizze": {
+        "z": [
+          [49, 18, 182, 130]
+        ],
+        "tor": [
+          [39, 61, "v", 44, "j"],
+          [231, 61, "v", 44, "j"]
+        ],
+        "li": [
+          [140, 18, 140, 148, "m"]
+        ],
+        "h": [
+          [140, 14, "y"],
+          [140, 152, "y"]
+        ],
+        "ger": [
+          [30, 40, "depot", "y"],
+          [250, 126, "depot", "y"],
+          [150, 164, "trainer", "w"],
+          [206, 164, "trainer", "w"]
+        ],
+        "s": [
+          [57, 83, "b", "TW"],
+          [223, 83, "b", "TW"],
+          [106, 65, "g", "A1"],
+          [96, 117, "g", "A2"],
+          [74, 40, "g", "A3"],
+          [150, 100, "g", "A4"],
+          [98, 40, "r", "B1"],
+          [125, 98, "r", "B2"],
+          [132, 39, "r", "B3"],
+          [158, 47, "r", "B4"],
+          [22, 164, "w", "C1"],
+          [46, 164, "w", "C2"],
+          [70, 164, "w", "C3"],
+          [94, 164, "w", "C4"]
+        ],
+        "b": [
+          [99, 72]
+        ],
+        "p": [
+          [130, 73, 186, 88, "p", 1],
+          [170, 101, 192, 96, "l", 1],
+          [116, 119, 176, 121, "l", 2]
+        ],
+        "schritte": [
+          {
+            "s": [
+              [57, 83, "b", "TW"],
+              [222, 72, "b", "TW"],
+              [120, 70, "g", "A1"],
+              [178, 121, "g", "A2"],
+              [78, 36, "g", "A3"],
+              [192, 92, "g", "A4"],
+              [100, 52, "r", "B1"],
+              [150, 108, "r", "B2"],
+              [150, 45, "r", "B3"],
+              [170, 70, "r", "B4"],
+              [22, 164, "w", "C1"],
+              [46, 164, "w", "C2"],
+              [70, 164, "w", "C3"],
+              [94, 164, "w", "C4"]
+            ],
+            "b": [
+              [199, 98]
+            ],
+            "p": [
+              [208, 106, 230, 97, "s", 3]
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
