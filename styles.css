@@ -51,6 +51,10 @@
   --bg:#f1f5f9;--surface:#fff;--surface2:#f8fafc;
   --border:1px solid #e2e8f0;--border-s:1px solid #cbd5e1;
   --r:8px;--rl:12px;
+  /* v625 Paket C: fünf Schriftgrößen (PO-Kachel 11/13/15/18/22). Im Trainer-Bereich stehen die
+     Inline-Größen seit v625 auf diesen Stufen; neue Oberfläche nimmt nur sie. Anzeigen ab 26 px
+     (Uhrziffern, Emoji) sind keine Schriftstufe und bleiben frei. */
+  --s-klein:11px;--s-text:13px;--s-karte:15px;--s-teil:18px;--s-seite:22px;
   --shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
   --shadow-md:0 4px 12px rgba(0,0,0,.08)
 }
