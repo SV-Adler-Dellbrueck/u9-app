@@ -13,7 +13,10 @@
       „Anstoß in der Mitte“, „Rückpass in die Hand“.
    c) Die Regelvorlagen der Turnierverwaltung (FUNiño, 4+1) sagen dasselbe zum Eindribbeln.
    d) Wissenskachel und Regelkarte widersprechen sich nicht: beide erlauben den Abschluss nach
-      dem Eindribbeln. */
+      dem Eindribbeln.
+   e) PO: „ja, umschreiben“ – das Taktik-Quiz der Kinder (TQ_SCENARIOS) erklärt keine Regel mehr,
+      die es im Kinderfußball nicht gibt: kein Anstoß, kein Abstoß mit langem Ball, kein „ein
+      Mitspieler muss den Ball vor dem Tor berühren“. */
 "use strict";
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
@@ -25,7 +28,8 @@ module.exports = async function (h) {
     const t = d.textContent.replace(/\s+/g, " ");
     const wissen = (typeof WISSEN !== "undefined" ? WISSEN : []).find(w => w.id === "kifu-regeln");
     const seitenaus = wissen ? (wissen.punkte.find(p => p[0] === "Seitenaus") || [])[1] || "" : null;
-    return { t, f4: HT_REGELN.f4, fu: HT_REGELN.funino, seitenaus };
+    const tq = (typeof TQ_SCENARIOS !== "undefined" ? TQ_SCENARIOS : []).map(x => [x.title, x.desc, x.task, x.hint, x.explain && x.explain.correct, x.explain && x.explain.wrong].join(" ")).join(" | ");
+    return { t, f4: HT_REGELN.f4, fu: HT_REGELN.funino, seitenaus, tq, tqZahl: (typeof TQ_SCENARIOS !== "undefined" ? TQ_SCENARIOS.length : 0) };
   });
   const f = s.fehler();
   await s.schliessen();
@@ -50,8 +54,14 @@ module.exports = async function (h) {
   if (!/darf selbst direkt aufs Tor schießen/.test(r.fu)) probleme.push("c) Vorlage FUNiño erlaubt den Abschluss nach dem Eindribbeln nicht");
   if (r.seitenaus === null) probleme.push("d) Wissenskachel „Spielregeln am Spieltag“ nicht gefunden");
   else if (!/darf selbst abschließen/.test(r.seitenaus)) probleme.push(`d) Wissenskachel sagt zum Seitenaus: „${r.seitenaus}“`);
+  if (!r.tqZahl) probleme.push("e) Taktik-Quiz nicht gefunden");
+  for (const [re, was] of [[/Anstoß für den Gegner|Anstoß des Gegners/, "Anstoß des Gegners"], [/Abstoß gegen uns|Abstoß des Gegners|schießt lang/, "langer Abstoß"],
+                           [/muss den Ball vor dem Tor berühren/, "ein Mitspieler muss vor dem Tor berühren"]])
+    if (re.test(r.tq)) probleme.push(`e) Taktik-Quiz erklärt noch „${was}“`);
+  if (!/wer eindribbelt, darf auch selbst aufs Tor schießen/.test(r.tq)) probleme.push("e) Taktik-Quiz: Ecke ohne Hinweis auf den eigenen Abschluss");
   if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
   zeilen.push(`a/b) Regelkarte: ${muss.filter(([re]) => re.test(r.t)).length} von ${muss.length} Punkten, nichts Widersprüchliches übrig`);
   zeilen.push(`c/d) Vorlagen 4+1 und FUNiño: Eindribbeln mit Abschluss · Wissen: „${(r.seitenaus || "").slice(0, 60)}…“`);
+  zeilen.push(`e) Taktik-Quiz: ${r.tqZahl} Szenen, keine Regel außerhalb der Bestimmungen`);
   return h.ergebnis("v618 Regeln nach den Kreis-Bestimmungen: eindribbeln und selbst abschließen", probleme.length === 0, probleme.length ? probleme.concat(zeilen) : zeilen);
 };

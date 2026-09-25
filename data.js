@@ -262,11 +262,11 @@ const TQ_SCENARIOS=[
 // ══════ Block 1: Grundlagen der Raute (Szenarien 1–10) ══════
 {
   title:"Grundstellung der Raute",
-  desc:"Anstoß für den Gegner! Stellt eure Raute auf – alle in der eigenen Hälfte, das ist die Regel.",
+  desc:"Toraus – der Gegner dribbelt von seiner Torauslinie ein. Stellt eure Raute auf: bei uns geht ihr dafür hinter die Mittellinie.",
   task:"Bringe alle Feldspieler in die richtige Raute-Grundstellung!",
   hint:"Aufpasser zentral hinten, Flitzer auf den Seiten, Jäger vorne an der Mittellinie – aber keiner drüben!",
-  ball:{from:{x:50,y:50},to:{x:50,y:50}},
-  opps:[{x:47,y:46,label:"Gegner"},{x:53,y:46,label:"Gegner"}],
+  ball:{from:{x:50,y:8},to:{x:50,y:8}},
+  opps:[{x:50,y:8,label:"Gegner"},{x:35,y:22,label:"Gegner"}],
   start:[
     {name:"TW",x:50,y:92,cls:"tb-tw",role:"TW",locked:true},
     {name:"Aufpasser",x:40,y:55,cls:"tb-auf",role:"Aufpasser",locked:false},
@@ -282,7 +282,7 @@ const TQ_SCENARIOS=[
   },
   explain:{
     correct:"⚽ Genau! Aufpasser vor dem TW, Flitzer breit, Jäger vorne an der Mittellinie – die Raute steht, und keiner ist drüben!",
-    wrong:"Tipp: Beim Anstoß des Gegners muss die ganze Raute in der eigenen Hälfte stehen – auch der Jäger! Aufpasser zentral vor dem TW, Flitzer L links und Flitzer R rechts, Jäger vorne kurz vor der Mittellinie."
+    wrong:"Tipp: Dribbelt der Gegner von seiner Torauslinie ein, steht die ganze Raute in der eigenen Hälfte – auch der Jäger! Aufpasser zentral vor dem TW, Flitzer L links und Flitzer R rechts, Jäger vorne kurz vor der Mittellinie."
   }
 },
 {
@@ -995,7 +995,7 @@ const TQ_SCENARIOS=[
 },
 // ══════ Block 4: Spielaufbau (Szenarien 31–40) ══════
 {
-  title:"Abstoß vom Torwart",
+  title:"Spieleröffnung vom Torwart",
   desc:"Euer Torwart hat den Ball nach einer Parade. Er will schnell das Spiel eröffnen!",
   task:"Biete Anspielstationen! Wohin bewegen sich alle Feldspieler?",
   hint:"ADLER-Form! Aufpasser bietet sich kurz an – rechts oder links vom TW. Flitzer breit, Jäger tief!",
@@ -1563,15 +1563,15 @@ const TQ_SCENARIOS=[
   },
   explain:{
     correct:"⚽ Super aufgestellt! Drei Ziele für den Pass – nah, fern, Rückraum!",
-    wrong:"Tipp: Jäger = naher Pfosten. Flitzer R = ferner Pfosten. Aufpasser = Rückraum/Strafraumkante. So habt ihr drei Optionen für die Ecke – ein Mitspieler muss den Ball vor dem Tor berühren!"
+    wrong:"Tipp: Jäger = naher Pfosten. Flitzer R = ferner Pfosten. Aufpasser = Rückraum/Strafraumkante. So habt ihr drei Optionen für die Ecke – und wer eindribbelt, darf auch selbst aufs Tor schießen!"
   }
 },
 {
-  title:"Standard: Abstoß gegen uns",
-  desc:"Gegnerischer Abstoß! Ihr müsst hinter die Mittellinie – und der TW des Gegners schießt lang!",
-  task:"Wie stellt sich die Raute auf den langen Abstoß ein?",
-  hint:"Alle in der eigenen Hälfte – das ist die Regel beim Abstoß. Jäger und Flitzer an der Mittellinie für den zweiten Ball, Aufpasser sichert dahinter.",
-  ball:{from:{x:50,y:8},to:{x:50,y:56}},
+  title:"Standard: Toraus gegen uns",
+  desc:"Toraus beim Gegner! Sein Torwart eröffnet flach – ein Abschlag ist nicht erlaubt. Ihr geht hinter die Mittellinie.",
+  task:"Wie stellt sich die Raute auf die Eröffnung des Gegners ein?",
+  hint:"Alle in der eigenen Hälfte – so ist es bei uns beim Toraus. Jäger und Flitzer an der Mittellinie, um den Pass abzufangen, Aufpasser sichert dahinter.",
+  ball:{from:{x:50,y:8},to:{x:46,y:50}},
   opps:[{x:50,y:8,label:"Geg. TW"},{x:44,y:36,label:"Gegner",to:{x:46,y:50}},{x:58,y:38,label:"Gegner"}],
   start:[
     {name:"TW",x:50,y:92,cls:"tb-tw",role:"TW",locked:true},
@@ -1587,8 +1587,8 @@ const TQ_SCENARIOS=[
     "Jäger":{x:50,y:54,r:9}
   },
   explain:{
-    correct:"Gut! Alle in der eigenen Hälfte, die Raute steht kompakt an der Mittellinie – bereit für den zweiten Ball!",
-    wrong:"Tipp: Beim Abstoß des Gegners darf keiner in seiner Hälfte stehen! Jäger und Flitzer an die Mittellinie, Aufpasser dahinter – kompakt für den zweiten Ball."
+    correct:"Gut! Alle in der eigenen Hälfte, die Raute steht kompakt an der Mittellinie – bereit, den Pass abzufangen!",
+    wrong:"Tipp: Beim Toraus des Gegners steht keiner in seiner Hälfte! Jäger und Flitzer an die Mittellinie, Aufpasser dahinter – kompakt, um den Pass abzufangen."
   }
 },
 {
