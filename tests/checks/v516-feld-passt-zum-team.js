@@ -99,7 +99,9 @@ module.exports = async function (h) {
 
   // ── Die Warnung ───────────────────────────────────────────────────────────
   if (r.warn.length !== 2) probleme.push(`Die Warnung nennt ${r.warn.length} Fälle statt 2: ${r.warn.join(" · ")}`);
-  if (!r.warn.every(x => /^R1 Käfig/.test(x))) probleme.push(`Gewarnt wird für ${r.warn.join(" · ")} – erwartet beide Vierer-Teams in Runde 1 im Käfig`);
+  /* v616: Seit interne Duelle vermieden werden, stehen die Paarungen anders – in welcher Runde
+     die Vierer-Teams im Käfig spielen, ist nicht mehr Runde 1. Geprüft wird, dass es der Käfig ist. */
+  if (!r.warn.every(x => /^R\d+ Käfig/.test(x))) probleme.push(`Gewarnt wird für ${r.warn.join(" · ")} – erwartet beide Vierer-Teams im Käfig`);
   if (!r.warn.some(x => /Adler Dellbrück 2 4\/5/.test(x))) probleme.push("Adler Dellbrück 2 (4 Kinder auf 4+1) wird nicht gemeldet");
   if (!r.warn.some(x => /Wahn Grengel 2 4\/5/.test(x))) probleme.push("Wahn Grengel 2 (4 Kinder auf 4+1) wird nicht gemeldet – es ist nicht nur die eigene Mannschaft");
   if (r.ohneWarn !== 0) probleme.push(`Bei ausreichend grossen Teams meldet die App ${r.ohneWarn} Fälle`);
