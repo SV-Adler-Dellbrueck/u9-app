@@ -48,7 +48,11 @@ module.exports = async function (h) {
      Spielblöcke der Zeitstruktur 10/27/11/27 und muss hineinpassen. */
   if (u.kat !== "raute" || u.diff !== 2 || u.dauer !== "27") probleme.push(`kat/diff/dauer verändert: ${u.kat}/${u.diff}/${u.dauer}`);
   if (!/ENTSCHEIDUNGEN: /.test(u.ablauf)) probleme.push("Der Abschnitt ENTSCHEIDUNGEN fehlt im Ablauf – die Kinder sollen entscheiden, nicht abspulen");
-  if (!/ZEIT: 27 Minuten in drei Abschnitten zu je 9 Minuten/.test(u.ablauf)) probleme.push("Der ZEIT-Abschnitt nennt nicht 27 Minuten in drei Abschnitten zu je 9");
+  /* v623 PO: „Durch die Anpassungen der Zeiten in den Hauptteilen stimmen die Zeitangaben in
+     den Beschreibungen nicht mehr.“ – Die Einteilung bleibt drei gleiche Abschnitte, aber als
+     Anteil der geplanten Zeit statt „Minute 1–9“. Die 27 bleibt als Richtwert in `dauer`. */
+  if (!/ZEIT: die geplante Zeit in drei gleich langen Abschnitten/.test(u.ablauf)) probleme.push("Der ZEIT-Abschnitt teilt die geplante Zeit nicht in drei gleich lange Abschnitte");
+  if (/Minute \d+–\d+/.test(u.ablauf)) probleme.push("Im ZEIT-Abschnitt stehen noch feste Minuten");
   if (/Minute 21–30|Minute 11–20/.test(u.ablauf)) probleme.push("Im ZEIT-Abschnitt steht noch die alte 30-Minuten-Einteilung");
 
   const s = await h.starten({ supabase: h.supabaseAttrappe({ kader: h.kaderZeilen() }) });

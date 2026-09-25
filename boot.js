@@ -1294,7 +1294,7 @@ function tpReiheHtml(name){
 /* Welle 1 darf eine Welle-2-Funktion nie ungeprüft aufrufen (CLAUDE.md). Ohne das
    Skizzen-Modul gibt es eben keine Beschreibung – und damit keine Materialzeile. */
 function _skzSpecSicher(f){ return (typeof skzSpecVon==="function")?skzSpecVon(f):null; }
-function tpShowExercise(formIdx){
+function tpShowExercise(formIdx,planMin){
   if(typeof _skzDetailBild!=="undefined")_skzDetailBild=0;   // v557: jede Übung beginnt bei Bild 1
   const allForms=tpAllForms();
   const f=allForms[formIdx];
@@ -1330,7 +1330,9 @@ function tpShowExercise(formIdx){
           <button onclick="uebungSkizzeNachtragen(${formIdx})" style="min-height:44px;padding:8px 14px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">🎨 Skizze zeichnen</button>
         </div>`:"")}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-      <span style="font-size:10px;background:var(--surface);padding:2px 6px;border-radius:4px">⏱ ${esc(f.dauer)}</span>
+      ${planMin
+        ?`<span class="tp-ex-planzeit" style="font-size:11px;font-weight:700;background:var(--surface2);border:1px solid var(--rand-bedien);padding:2px 6px;border-radius:4px">⏱ Im Plan: ${planMin} Min.</span>${f.dauer&&String(f.dauer).trim()!==String(planMin)?`<span style="font-size:10px;background:var(--surface);padding:2px 6px;border-radius:4px">Richtwert ${esc(f.dauer)}${/min/i.test(String(f.dauer))?"":" Min."}</span>`:""}`
+        :`<span style="font-size:10px;background:var(--surface);padding:2px 6px;border-radius:4px">⏱ ${esc(f.dauer)}</span>`}
       <span style="font-size:10px;background:var(--surface);padding:2px 6px;border-radius:4px">👥 ${f.spieler||"?"}</span>
       <span style="font-size:10px;background:var(--surface);padding:2px 6px;border-radius:4px">📐 ${f.feld||"?"}</span>
     </div>
@@ -1940,8 +1942,14 @@ function tpLabelFeldTexte(lab){
    Gekürzt wird nur die ANZEIGE. Das Label selbst bleibt Zeichen für Zeichen, wie es war —
    `tpFeldTexte` liest weiter daraus, und ein Plan, der zurückgespielt wird, verliert
    nichts. Der volle Text steht im `title`, also beim Daraufzeigen. */
+/* v623 PO: „Der Hinweis 3 Minuten frei, dann eng – macht der Sinn?" – Er fiel weg: Die feste
+   Minutenzahl passte zu keiner Slotlänge, und „eng" las sich wie ein kleineres Feld. Die
+   Vorlagen tragen ihn nicht mehr; gespeicherte Pläne verlieren ihn hier beim Zeichnen. */
+function tpOhneFreiEng(lab){
+  return String(lab==null?"":lab).replace(/,\s*3 Min\.? frei,? dann eng(?=\s*(?:[:|–]|$))/g,"");
+}
 function tpSlotKopfText(lab){
-  const voll=String(lab||"").trim();
+  const voll=tpOhneFreiEng(lab).trim();
   if(!voll)return "";
   const bis=voll.indexOf("|");
   if(bis<0)return voll;
@@ -2119,6 +2127,7 @@ function tpRenderTimeline(){
      Kette – der folgende Hauptteil wird Durchgang 2, sonst wird er angelegt. */
   const _alt=tpSlots.findIndex(s=>s&&!s.kette&&Number(s.durchgaenge)>1);
   if(_alt>=0){ const n=Number(tpSlots[_alt].durchgaenge); delete tpSlots[_alt].durchgaenge; setTimeout(()=>tpDurchgaengeSetzen(_alt,n),0); }
+  tpSlots.forEach(s=>{ if(s&&s.label){ const l=tpOhneFreiEng(s.label); if(l!==s.label)s.label=l; } });   // v623
   _tpStationGruppe={};   // v571: Zuordnung Station → Gruppe wird beim Zeichnen neu gesetzt
   /* v574: Erst die Einteilung an die Anwesenheit angleichen, dann zeichnen – sonst stünde
      ein Kind am Feld, das abgesagt hat, oder eines fehlte, das gekommen ist. */
@@ -2655,7 +2664,11 @@ async function rolleLos(lbl,emo){
 
 function tpShowExFromSel(selId){
   const sel=document.getElementById(selId);
-  if(sel&&sel.value) tpShowExercise(parseInt(sel.value));
+  if(!sel||!sel.value)return;
+  /* v623: Die Minuten im Übungstext sind Richtwerte – im Plan zählt die Länge des Blocks. */
+  const m=/^tp-form-(\d+)-/.exec(String(selId)), slot=m&&typeof tpSlots!=="undefined"?tpSlots[+m[1]]:null;
+  const quelle=slot&&typeof tpIstParallel==="function"&&tpIstParallel(slot)&&tpSlots[slot.parallelZu]?tpSlots[slot.parallelZu]:slot;
+  tpShowExercise(parseInt(sel.value),quelle?Number(quelle.dauer)||null:null);
 }
 
 function tpIndPlayerChange(slotIdx){
