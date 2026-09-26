@@ -1062,3 +1062,16 @@ html,body{overscroll-behavior-y:contain}
    „Alles auf einen Blick“ zurück. */
 .nb-weg-an > :not(#nb-weg):not(:first-child){display:none!important}
 
+/* v630 Diktat: Punkt zeigt „hört zu“, pulsiert, sobald Sprache erkannt ist. Die Bedeutung
+   steht zusätzlich als Wort daneben – Farbe und Bewegung tragen sie nie allein. */
+.dk-anzeige{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:var(--s-klein);color:var(--text2);margin-top:6px;line-height:1.45}
+.dk-anzeige b{color:var(--text)}
+.dk-live{color:var(--text2);font-style:italic}
+.dk-punkt{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--red);flex:0 0 auto}
+.dk-punkt.dk-aus{background:var(--text2)}
+.dk-punkt.dk-spricht{animation:elLivePuls 1.1s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.dk-punkt.dk-spricht{animation:none;box-shadow:0 0 0 3px var(--red-bg)}}
+.dk-hinweis{flex-basis:100%;color:var(--text2)}
+/* v630 Stempel: wer hat bewertet, wann */
+.stempel{display:inline-flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:var(--s-klein);font-weight:700;color:var(--text2);border:1px dashed var(--rand-bedien);border-radius:8px;padding:3px 8px;margin:4px 0}
+.stempel-zusatz{font-weight:600;color:var(--text2)}

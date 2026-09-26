@@ -21,7 +21,7 @@ const CORS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 const LIMIT = 20;          // gemeinsam mit ki-uebung, je Trainer und Tag
-const MAX_TEXT = 4000;     // etwa fünf Minuten gesprochener Text
+const MAX_TEXT = 12000;    // etwa fünfzehn Minuten gesprochener Text (v630, vorher 4000)
 
 function j(o: unknown, status = 200) {
   return new Response(JSON.stringify(o), { status, headers: { ...CORS, "Content-Type": "application/json" } });
@@ -39,8 +39,12 @@ REGELN
   „schlecht/hat nicht geklappt/Chaos“ = unten.
 - Übungen und Mannschaften ordnest du über ihre Nummer zu. Nennt er eine Übung ungefähr
   („das Dribbeln“, „das Spiel am Ende“), nimm die passendste – bei echtem Zweifel keine.
-- Notizen und Sätze: kurz, sachlich, in der Sprache des Trainers, als Stichpunkt-Satz ohne
-  Füllwörter, höchstens 200 Zeichen. Nichts hinzudichten, keine Ratschläge ergänzen.
+- Notizen und Sätze: vollständig und gegliedert, in ganzen Sätzen und in der Sprache des Trainers.
+  Alles, was er zu einem Feld gesagt hat, gehört hinein – auch Begründungen, Beispiele und
+  Beobachtungen zu einzelnen Kindern. Längere Notizen darfst du in Absätze teilen (\\n). Füllwörter
+  und Versprecher weglassen, nichts hinzudichten, keine eigenen Ratschläge ergänzen.
+  (v630 PO: „Die Bewertung der Einheiten können durchaus einen größeren Umfang haben … das ist
+  auch gewünscht so, weil wir das nachher alles in einem Trainer-Tagebuch festhalten wollen.“)
 - Kinder heißen im Text „Kind 1“, „Kind 2“ … Übernimm genau diese Bezeichnung.
 - Antworte AUSSCHLIESSLICH mit einem JSON-Objekt in der verlangten Form.`;
 
@@ -67,7 +71,7 @@ const FORM_SPIEL = `{
 }
 Bedeutung: ordnung = verteilt geblieben (3) oder Traube um den Ball (1); pass = kamen Pässe an;
 zweikampf = angenommen (3) oder zurückgewichen (1); spass = wie es den Kindern ging.
-getragen = was gut lief (1–2 Sätze); arbeiten = woran wir arbeiten (1–2 Sätze).
+getragen = was gut lief; arbeiten = woran wir arbeiten – je so ausführlich, wie er es gesagt hat.
 orga.zeitplan: 1 zu eng, 2 passte, 3 zu viel Luft; orga.felder: 1 zu klein, 2 passten,
 3 zu groß; orga.helfer: 1 zu wenige, 2 knapp, 3 genug. Sagt er „nur eine Mannschaft“ oder
 nennt keine, gilt das Gesagte für Mannschaft 1.`;
@@ -80,10 +84,11 @@ const FORM_TAGEBUCH = `"tagebuch": {"baustein": "ich"|"spiel_spieler"|"organisat
 Tagebuch (Trainertagebuch nach DFB-Basis-Coach): baustein = worum es im Kern geht – ich (der
 Trainer selbst: Ansprache, Rolle, Haltung), spiel_spieler (Spiel, Kinder, Technik, Taktik),
 organisation (Ablauf, Zeit, Material, Felder, Helfer), system_fussball (Verein, Verband, Regeln,
-Eltern). beobachtung = was passiert ist, geordnet, sachlich, 2–4 Sätze, ohne Wertung.
-aha = die Erkenntnis in Ich-Form aus Sicht des Trainers (1–2 Sätze) – nur wenn die Notiz sie
-trägt, sonst null. konsequenz = ein konkreter nächster Schritt fürs nächste Training (1 Satz) –
-nur wenn die Notiz ihn trägt, sonst null. schlagworte = 3 bis 5 kurze Themen-Substantive
+Eltern). beobachtung = was passiert ist, vollständig, geordnet und sachlich, ohne Wertung – bei
+einer langen Notiz gern in mehreren Absätzen (\\n).
+aha = die Erkenntnis in Ich-Form aus Sicht des Trainers – nur wenn die Notiz sie trägt, sonst
+null. konsequenz = die konkreten nächsten Schritte fürs nächste Training – nur wenn die Notiz sie
+trägt, sonst null. schlagworte = 3 bis 5 kurze Themen-Substantive
 (z. B. „Passspiel“, „Raumaufteilung“, „Motivation“, „Organisation Stationen“), keine Namen.`;
 
 async function llmRuf(provider: string, key: string, model: string, sys: string, user: string) {
@@ -91,7 +96,7 @@ async function llmRuf(provider: string, key: string, model: string, sys: string,
     const r = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model, max_tokens: 3000, temperature: 0.1, response_format: { type: "json_object" }, messages: [{ role: "system", content: sys }, { role: "user", content: user }] }),
+      body: JSON.stringify({ model, max_tokens: 8000, temperature: 0.1, response_format: { type: "json_object" }, messages: [{ role: "system", content: sys }, { role: "user", content: user }] }),
     });
     if (!r.ok) return { ok: false, status: r.status, text: "" };
     const d = await r.json();
@@ -100,7 +105,7 @@ async function llmRuf(provider: string, key: string, model: string, sys: string,
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
-    body: JSON.stringify({ model, max_tokens: 3000, temperature: 0.1, system: sys,
+    body: JSON.stringify({ model, max_tokens: 8000, temperature: 0.1, system: sys,
       messages: [{ role: "user", content: user }, { role: "assistant", content: "{" }] }),
   });
   if (!r.ok) return { ok: false, status: r.status, text: "" };
@@ -114,7 +119,7 @@ function sanTagebuch(t: any) {
   const worte = (Array.isArray(t.schlagworte) ? t.schlagworte : []).map((w: unknown) => String(w || "").trim().slice(0, 40))
     .filter((w: string) => w && !/^kind \d+$/i.test(w)).slice(0, 5);
   const out = { baustein: BAUSTEINE.includes(String(t.baustein)) ? String(t.baustein) : "spiel_spieler",
-    beobachtung: satz(t.beobachtung, 800), aha: satz(t.aha, 400), konsequenz: satz(t.konsequenz, 300), schlagworte: worte };
+    beobachtung: satz(t.beobachtung, 4000), aha: satz(t.aha, 1500), konsequenz: satz(t.konsequenz, 1000), schlagworte: worte };
   return (out.beobachtung || out.aha || out.konsequenz || worte.length) ? out : null;
 }
 
@@ -124,13 +129,13 @@ const satz = (v: unknown, max = 200) => { const s = String(v ?? "").trim(); retu
 function sanTraining(p: any, nrs: Set<number>, kinder: Set<string>) {
   const e = p?.einheit || {};
   const out: any = {
-    einheit: { spass: zahl(e.spass, 5), umsetzung: zahl(e.umsetzung, 5), erfolg: zahl(e.erfolg, 5), notiz: satz(e.notiz, 300) },
+    einheit: { spass: zahl(e.spass, 5), umsetzung: zahl(e.umsetzung, 5), erfolg: zahl(e.erfolg, 5), notiz: satz(e.notiz, 3000) },
     uebungen: [], kinder: [],
   };
   for (const u of Array.isArray(p?.uebungen) ? p.uebungen : []) {
     const nr = Number(u?.nr); if (!nrs.has(nr)) continue;
     out.uebungen.push({ nr, durchfuehrung: zahl(u.durchfuehrung, 5), spass: zahl(u.spass, 5), anforderung: zahl(u.anforderung, 5),
-      notiz: satz(u.notiz, 200), uebersprungen: u.uebersprungen === true });
+      notiz: satz(u.notiz, 800), uebersprungen: u.uebersprungen === true });
   }
   for (const k of Array.isArray(p?.kinder) ? p.kinder : []) {
     const name = String(k?.kind || ""); const s = zahl(k?.sterne, 3);
@@ -141,7 +146,7 @@ function sanTraining(p: any, nrs: Set<number>, kinder: Set<string>) {
 function sanSpiel(p: any, nrs: Set<number>, gaeste: Set<string>) {
   const GAST = ["zu_schwach", "passend", "zu_stark"];
   const o = p?.orga || {};
-  const out: any = { teams: [], gaeste: [], getragen: satz(p?.getragen, 300), arbeiten: satz(p?.arbeiten, 300),
+  const out: any = { teams: [], gaeste: [], getragen: satz(p?.getragen, 1500), arbeiten: satz(p?.arbeiten, 1500),
     orga: { zeitplan: zahl(o.zeitplan, 3), felder: zahl(o.felder, 3), helfer: zahl(o.helfer, 3) } };
   for (const t of Array.isArray(p?.teams) ? p.teams : []) {
     const nr = Number(t?.nr); if (!nrs.has(nr)) continue;
