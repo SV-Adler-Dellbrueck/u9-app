@@ -345,6 +345,7 @@ function elternPortalDashboard(root){
   </div>`;
   if(typeof applyTheme==="function")applyTheme(localStorage.getItem("adler_theme")); // Toggle-Icon + data-theme
   if(typeof applySchrift==="function"){ try{ applySchrift(localStorage.getItem("adler_schrift")); }catch(e){} }   // v632: Knopf beschriften
+  if(typeof schriftHinweisZeigen==="function"){ const hdr=root.querySelector(".ep-wrap"); if(hdr&&!document.getElementById("schrift-hinweis-eltern")){ const d=document.createElement("div"); d.id="schrift-hinweis-eltern"; const kopf=hdr.firstElementChild; kopf?kopf.after(d):hdr.prepend(d); schriftHinweisZeigen(d); } }   // v632: einmaliger Hinweis
   if(typeof elternThemeInit==="function"){ elternThemeInit(); elternThemeSweep(document.getElementById("eltern-portal")||document.body); } // Kopfzeile bei Dark einfärben
   dsgvoEnsureConsent(elternDashLoad); // Dashboard erst nach Datenschutz-Einwilligung laden
   if(typeof kabineGesperrt==="function"&&kabineGesperrt()&&typeof kabineSperre==="function")kabineSperre();   // v609: Kabinen-Zeit war abgelaufen – erst der Code öffnet

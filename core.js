@@ -967,6 +967,27 @@ function schriftWechseln(){
 }
 (function(){ try{ applySchrift(localStorage.getItem("adler_schrift")); }catch(e){} })();   // sofort, damit nichts springt
 _adlerOnReady(()=>{ try{ applySchrift(localStorage.getItem("adler_schrift")); }catch(e){} }); // Knopf beschriften
+/* Einmaliger Hinweis für die anderen (PO: „Es geht … um die anderen Trainer und Eltern, nicht um
+   mich“ – Kachel „Ja, Trainer und Eltern“). Wer den Knopf nicht kennt, findet ihn so: eine Karte,
+   einmal je Gerät, mit „Größer stellen“ und „Nein danke“. Hat jemand schon eine Stufe gewählt,
+   erscheint sie gar nicht. */
+function schriftHinweisZeigen(ziel){
+  const el=typeof ziel==="string"?document.getElementById(ziel):ziel; if(!el)return;
+  let weg=false; try{ weg=!!(localStorage.getItem("adler_schrift_hinweis")||localStorage.getItem("adler_schrift")); }catch(e){ weg=true; }
+  if(weg||_seiteFestHell()||/\/kinder\//.test(location.pathname)){ el.innerHTML=""; return; }
+  el.innerHTML=`<div class="schrift-hinweis" role="note" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:var(--surface);color:var(--text);border:1px solid var(--rand-bedien);border-left:4px solid var(--blue,#2563eb);border-radius:12px;padding:10px 12px;margin:0 0 12px">
+    <div style="flex:1 1 200px;font-size:var(--s-text);line-height:1.45"><b>🔎 Schrift zu klein?</b> Oben auf „A“ tippen macht sie größer – nur auf diesem Handy.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" style="min-height:44px" onclick="schriftHinweisAntwort(true)">Größer stellen</button>
+      <button class="btn" style="min-height:44px" onclick="schriftHinweisAntwort(false)">Nein danke</button>
+    </div></div>`;
+}
+function schriftHinweisAntwort(ja){
+  try{ localStorage.setItem("adler_schrift_hinweis","1"); }catch(e){}
+  document.querySelectorAll(".schrift-hinweis").forEach(k=>k.remove());
+  if(ja){ try{ localStorage.setItem("adler_schrift","gross"); }catch(e){} applySchrift("gross"); if(typeof toast==="function")toast("🔎 Schrift: Groß – oben auf „A“ geht es weiter oder zurück"); }
+}
+_adlerOnReady(()=>{ try{ schriftHinweisZeigen("schrift-hinweis-trainer"); }catch(e){} });
 
 /* ═══ Web-Push-Benachrichtigungen ═══
    Öffentlicher VAPID-Schlüssel (der private liegt nur in der Edge Function push-send).
