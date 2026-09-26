@@ -95,7 +95,8 @@ async function tagebuchAusEinheit(datum){
   let bew = null, kopf = null;
   try{
     const r = await fetch(`${SB_URL}/rest/v1/einheit_bewertung?datum=eq.${encodeURIComponent(datum)}&select=*`,{headers:sbAuthHeaders()});
-    if(r.ok) bew = ((await r.json())||[])[0]||null;
+    /* v630: je Trainer eine Bewertung – die eigene zählt, sonst die erste vorhandene. */
+    if(r.ok){ const rows = (await r.json())||[]; const ich = await tbAutor(); bew = rows.find(x=>x.autor===ich) || rows[0] || null; }
   }catch(e){}
   try{
     const r = await fetch(`${SB_URL}/rest/v1/trainingsplan?datum=eq.${encodeURIComponent(datum)}&select=kopf`,{headers:sbAuthHeaders()});
@@ -172,6 +173,10 @@ function tbOeffnen(vor){
   c.style.cssText = "background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   modal.appendChild(c); document.body.appendChild(modal);
   tbRender();
+  /* v630: Stempel – wer schreibt. Der Name kommt asynchron; nur der Stempel wird nachgezogen,
+     damit schon Getipptes nicht durch ein Neuzeichnen verloren geht. */
+  if(!_TB.autor) tbAutor().then(a => { if(!_TB || !a) return; _TB.autor = a;
+    const st = document.getElementById("tb-stempel"); if(st && typeof stempelHtml==="function") st.innerHTML = stempelHtml(a, null, "· schreibt diesen Eintrag"); });
 }
 function tagebuchSchliessen(){ document.getElementById("tb-modal")?.remove(); _TB=null; }
 
@@ -217,6 +222,7 @@ function tbRender(){
 
   c.innerHTML = `${mdlHead("tb-modal","📓","Tagebucheintrag",
       _TB.quelle==="frei" ? "Freier Eintrag" : "Aus der Nachbereitung vom "+tbDatumDe(_TB.datum),"#7c3aed")}
+    <div id="tb-stempel">${typeof stempelHtml==="function"?stempelHtml(_TB.autor||(typeof _meTrainer!=="undefined"&&_meTrainer)||"Trainer",null,"· schreibt diesen Eintrag"):""}</div>
 
     ${_TB.ki?`<div role="status" style="background:var(--surface2);border:var(--border-s);border-left:4px solid var(--purple);border-radius:10px;padding:10px 12px;font-size:var(--s-text);line-height:1.5;margin-top:10px">✨ <b>Vorschlag der KI aus deiner Sprachnotiz.</b> Baustein, Beobachtung, Aha, Konsequenz und Schlagworte sind vorausgefüllt – prüfe sie und schreib sie in deinen Worten, bevor du erfasst.</div>`:""}
     ${(!_TB.ki && _TB.kiGespeichert)?`<button class="btn" id="tb-ki-los" onclick="tbKiAusGespeichert()" style="width:100%;min-height:48px;margin-top:10px;justify-content:center"><i class="ti ti-sparkles"></i>Vorschlag aus der Sprachnotiz</button>`:""}
@@ -227,10 +233,10 @@ function tbRender(){
     </div>
 
     <label style="${lbl}">Auslöser<span style="font-weight:500;color:var(--text3)"> · vorausgefüllt</span>
-      <textarea id="tb-ausloeser" rows="2" onfocus="tbFokus('ausloeser')" style="${fld}${fehlt("ausloeser")};resize:vertical;margin-top:3px">${esc(w.ausloeser)}</textarea></label>
+      <textarea id="tb-ausloeser" class="wachsen" rows="2" onfocus="tbFokus('ausloeser')" style="${fld}${fehlt("ausloeser")};resize:vertical;margin-top:3px">${esc(w.ausloeser)}</textarea></label>
 
     <label style="${lbl}">Beobachtung<span style="font-weight:500;color:var(--text3)"> · vorausgefüllt</span>
-      <textarea id="tb-beobachtung" rows="3" onfocus="tbFokus('beobachtung')" style="${fld};resize:vertical;margin-top:3px">${esc(w.beobachtung)}</textarea></label>
+      <textarea id="tb-beobachtung" class="wachsen" rows="3" onfocus="tbFokus('beobachtung')" style="${fld};resize:vertical;margin-top:3px">${esc(w.beobachtung)}</textarea></label>
 
     ${kinder.length?`<div style="margin-top:10px">
       <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px">Kind einfügen – schreibt den Decknamen, nicht den Namen</div>
@@ -241,10 +247,10 @@ function tbRender(){
     </div>`:""}
 
     <label style="${lbl}">Aha<span style="color:var(--red)"> · Pflicht</span>
-      <textarea id="tb-aha" rows="3" onfocus="tbFokus('aha')" placeholder="Was hast du verstanden, das du vorher nicht wusstest?" style="${fld}${fehlt("aha")};resize:vertical;margin-top:3px">${esc(w.aha)}</textarea></label>
+      <textarea id="tb-aha" class="wachsen" rows="3" onfocus="tbFokus('aha')" placeholder="Was hast du verstanden, das du vorher nicht wusstest?" style="${fld}${fehlt("aha")};resize:vertical;margin-top:3px">${esc(w.aha)}</textarea></label>
 
     <label style="${lbl}">Konsequenz<span style="color:var(--red)"> · Pflicht</span>
-      <textarea id="tb-konsequenz" rows="2" onfocus="tbFokus('konsequenz')" placeholder="Was machst du beim nächsten Mal anders?" style="${fld}${fehlt("konsequenz")};resize:vertical;margin-top:3px">${esc(w.konsequenz)}</textarea></label>
+      <textarea id="tb-konsequenz" class="wachsen" rows="2" onfocus="tbFokus('konsequenz')" placeholder="Was machst du beim nächsten Mal anders?" style="${fld}${fehlt("konsequenz")};resize:vertical;margin-top:3px">${esc(w.konsequenz)}</textarea></label>
 
     <label style="${lbl}">Schlagworte<span style="font-weight:500;color:var(--text3)"> · zum Wiederfinden, mit Komma getrennt</span>
       <input type="text" id="tb-schlagworte" value="${esc(w.schlagworte)}" placeholder="z. B. Passspiel, Raumaufteilung, Motivation" style="${fld};margin-top:3px"></label>
@@ -262,6 +268,7 @@ function tbRender(){
 
     <button class="btn btn-p" onclick="tagebuchSpeichern()" style="width:100%;min-height:56px;margin-top:12px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-check"></i>Eintrag erfassen</button>
     <button class="btn" onclick="tagebuchSchliessen()" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Abbrechen</button>`;
+  if(typeof felderWachsen==="function") felderWachsen(c);
 }
 
 function tbNamensHinweis(wort){
@@ -380,7 +387,7 @@ function tbListeRender(){
 function tbZeile(e){
   const worte = Array.isArray(e.schlagworte) ? e.schlagworte : [];
   return `<div style="background:var(--surface);border:var(--border-s);border-radius:var(--rl);padding:11px 12px;margin-bottom:6px">
-    <div style="font-size:var(--s-klein);color:var(--text3)">${tbDatumDe(e.datum)}${e.autor?" · "+esc(e.autor):""}${e.ki_vorschlag?" · ✨ aus Sprachnotiz":""}</div>
+    <div style="font-size:var(--s-klein);color:var(--text3)">${tbDatumDe(e.datum)} · ${esc(stempelText(e.autor, e.updated_at||e.created_at))}${e.ki_vorschlag?" · ✨ aus Sprachnotiz":""}</div>
     ${worte.length?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">${worte.map(x=>`<button type="button" onclick="tbFilter('${jsq(x)}')" aria-pressed="${_TB_FILTER===x}" style="min-height:32px;padding:0 10px;border:1px solid var(--rand-bedien);border-radius:16px;background:${_TB_FILTER===x?"var(--purple-bg)":"var(--surface2)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">#${esc(x)}</button>`).join("")}</div>`:""}
     <div style="font-size:var(--s-text);font-weight:700;margin-top:2px">${esc(e.ausloeser)}</div>
     <div style="font-size:var(--s-text);color:var(--text2);margin-top:4px;line-height:1.5"><b>Aha:</b> ${esc(e.aha)}</div>

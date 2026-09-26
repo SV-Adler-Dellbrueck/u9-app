@@ -1493,3 +1493,29 @@ document.addEventListener("visibilitychange", () => {
     _dkWach(false);
   }
 });
+
+/* v630 · Mitwachsende Textfelder. PO: „Die Bewertung der Einheiten können durchaus einen
+   größeren Umfang haben … das ist auch gewünscht so, weil wir das nachher alles in einem
+   Trainer-Tagebuch festhalten wollen.“ Ein Feld mit der Klasse `wachsen` wird so hoch wie sein
+   Text, höchstens bis zur halben Bildschirmhöhe; darüber scrollt es. Gilt beim Tippen und – über
+   feldWachsen – auch, wenn die KI oder ein Vorschlag den Text setzt. */
+function feldWachsen(el){
+  if(!el || el.tagName!=="TEXTAREA") return;
+  el.style.height = "auto";
+  el.style.height = Math.min(el.scrollHeight + 2, Math.round(window.innerHeight*0.5)) + "px";
+}
+function felderWachsen(wurzel){ try{ (wurzel||document).querySelectorAll("textarea.wachsen").forEach(feldWachsen); }catch(e){} }
+document.addEventListener("input", e => { const t = e.target; if(t && t.classList && t.classList.contains("wachsen")) feldWachsen(t); });
+
+/* v630 · Stempel: wer hat bewertet oder geschrieben, und wann. PO: „… dass immer auch mit einer
+   Art Stempel ersichtlich ist, wer hat die Bewertung vorgenommen aus dem Trainerteam.“
+   „Trainerteam“ steht bei Einträgen von vor v630 – damals wurde der Name nicht erfasst. */
+function stempelText(autor, zeit){
+  const a = String(autor||"").trim() || "Trainerteam";
+  let z = "";
+  if(zeit){ const d = new Date(zeit); if(!isNaN(d)) z = d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"}) + ", " + d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}) + " Uhr"; }
+  return "✍️ " + (a==="Trainerteam" ? "Trainerteam (vor v630 ohne Namen erfasst)" : a) + (z ? " · " + z : "");
+}
+function stempelHtml(autor, zeit, zusatz){
+  return '<div class="stempel">'+esc(stempelText(autor, zeit))+(zusatz?' <span class="stempel-zusatz">'+zusatz+'</span>':'')+'</div>';
+}

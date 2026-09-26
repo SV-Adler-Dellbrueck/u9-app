@@ -141,17 +141,18 @@ async function fazitOpen(terminId){
 
   const autor = (typeof trainerMe==="function" ? (await trainerMe()) : "") || "";
   const [teams, gaeste] = await Promise.all([fzTeamsLesen(t.datum), fzGaesteLesen(t)]);
-  let meine = null, fremde = 0;
+  let meine = null, fremde = 0, fremdeRows = [];
   try{
     const r = await fetch(`${SB_URL}/rest/v1/event_bewertung?termin_id=eq.${Number(t.id)}&select=*`,{headers:sbAuthHeaders()});
     if(r.ok){
       const rows = (await r.json())||[];
       meine = rows.find(x=>x.autor===autor) || null;
       fremde = rows.filter(x=>x.autor!==autor).length;
+      fremdeRows = rows.filter(x=>x.autor!==autor);
     }
   }catch(e){}
 
-  _FZ = { termin:t, autor, teams, gaeste, fremde,
+  _FZ = { termin:t, autor, teams, gaeste, fremde, fremdeRows, stand:(meine&&meine.updated_at)||null,
           wert:{ teams:(meine&&meine.teams)||{}, gaeste:(meine&&meine.gaeste)||{},
                  orga:(meine&&meine.orga)||{}, getragen:(meine&&meine.getragen)||"",
                  arbeiten:(meine&&meine.arbeiten)||"" },
@@ -206,7 +207,8 @@ function fazitRender(){
       Hier geht es um die <b>Mannschaft</b>. Die einzelnen Kinder stehen im Blitz-Rating – was hier gefragt ist, sieht man am einzelnen Kind gar nicht.
     </div>
     ${nbSprachHtml("spiel", "t"+t.id)}
-    ${_FZ.fremde?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">👥 ${_FZ.fremde} weitere Einschätzung${_FZ.fremde>1?"en":""} aus dem Trainerteam liegt bereits vor – deine kommt daneben, sie ersetzt nichts.</div>`:""}
+    ${typeof stempelHtml==="function"?stempelHtml(_FZ.autor||"Trainer",_FZ.stand,_FZ.schon?"· deine Nachbereitung":"· du bewertest"):""}
+    ${_FZ.fremde?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">👥 Auch bewertet von ${esc((_FZ.fremdeRows||[]).map(x=>x.autor).join(", "))} – deine Einschätzung kommt daneben, sie ersetzt nichts.</div>`:""}
 
     ${sec("Wie hat die Mannschaft gespielt")}
     ${teamsHtml}
@@ -215,9 +217,9 @@ function fazitRender(){
 
     ${sec("Zwei Sätze")}
     <label style="font-size:var(--s-klein);font-weight:700">Das hat getragen
-      <textarea id="fz-getragen" rows="2" maxlength="300" style="${fld};margin-top:3px;resize:vertical" placeholder="Was heute gut lief – auch fürs Lob in der Kabine">${esc(w.getragen)}</textarea></label>
+      <textarea id="fz-getragen" class="wachsen" rows="2" maxlength="1500" style="${fld};margin-top:3px;resize:vertical" placeholder="Was heute gut lief – auch fürs Lob in der Kabine">${esc(w.getragen)}</textarea></label>
     <label style="font-size:var(--s-klein);font-weight:700;display:block;margin-top:8px">Daran arbeiten wir
-      <textarea id="fz-arbeiten" rows="2" maxlength="300" style="${fld};margin-top:3px;resize:vertical" placeholder="Steht beim nächsten Trainingsplan wieder da">${esc(w.arbeiten)}</textarea></label>
+      <textarea id="fz-arbeiten" class="wachsen" rows="2" maxlength="1500" style="${fld};margin-top:3px;resize:vertical" placeholder="Steht beim nächsten Trainingsplan wieder da">${esc(w.arbeiten)}</textarea></label>
 
     <details style="margin-top:12px;border:var(--border-s);border-radius:12px;background:var(--surface2)">
       <summary style="cursor:pointer;min-height:44px;display:flex;align-items:center;padding:0 12px;font-size:var(--s-text);font-weight:800;color:var(--text2)">⚙️ Organisation – wenn etwas hakte</summary>
@@ -229,6 +231,7 @@ function fazitRender(){
       <button class="btn btn-sm" style="min-height:48px" onclick="fazitSchliessen()">Schließen</button>
     </div>
     <div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px;text-align:center">Alles freiwillig – auch halb ausgefüllt ist besser als gar nicht.</div>`;
+  if(typeof felderWachsen==="function") felderWachsen(c);
   if(_nbWeg && _nbWeg.art==="spiel") nbWegZeichnen();   // v627: der Ablauf überlebt das Neuzeichnen des Bogens
 }
 
@@ -357,7 +360,7 @@ function nbSprachHtml(art, fuer){
   return `<div id="nb-box" style="border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);padding:10px 11px;margin:10px 0 4px">
     <div style="font-size:var(--s-text);font-weight:800">🎙️ Per Sprachnotiz ausfüllen</div>
     <div style="font-size:var(--s-klein);color:var(--text2);margin:2px 0 8px;line-height:1.45">Erzähl frei, wie es lief – ${art==="training"?"Einheit, einzelne Übungen, einzelne Kinder":"Mannschaften, Gäste, was getragen hat, woran ihr arbeitet"}. Die KI trägt ein, was du sagst; gespeichert wird erst mit dem Knopf unten.</div>
-    <textarea id="nb-text" rows="3" maxlength="4000" style="${fld};max-height:50vh" placeholder="${kannHoeren?"Mikrofon antippen und sprechen – oder hier tippen bzw. das Mikrofon der Tastatur nutzen":"Hier tippen oder das Mikrofon der Tastatur nutzen"}" oninput="_nbText=this.value;nbFeldHoehe(this)">${esc(_nbText)}</textarea>
+    <textarea id="nb-text" rows="3" maxlength="12000" style="${fld};max-height:50vh" placeholder="${kannHoeren?"Mikrofon antippen und sprechen – oder hier tippen bzw. das Mikrofon der Tastatur nutzen":"Hier tippen oder das Mikrofon der Tastatur nutzen"}" oninput="_nbText=this.value;nbFeldHoehe(this)">${esc(_nbText)}</textarea>
     <div style="display:flex;gap:8px;margin-top:8px">
       ${kannHoeren?`<button id="nb-mic" class="btn" style="flex:0 0 auto;min-height:48px" onclick="nbDiktat('${art}')"><i class="ti ti-microphone"></i>${_nbText?"Weiter einsprechen":"Einsprechen"}</button>`:""}
       <button id="nb-gross" class="btn" style="flex:0 0 auto;min-height:48px;min-width:48px;justify-content:center" onclick="nbGross('${art}',false)" aria-label="Text groß anzeigen und bearbeiten"><i class="ti ti-arrows-maximize"></i></button>
@@ -395,7 +398,7 @@ function nbGross(art, mikro){
       <button class="btn" style="min-height:44px" onclick="nbGrossZu()" aria-label="Fertig – zurück zum Bogen, der Text bleibt stehen">Fertig</button>
     </div>
     <div id="nb-gross-hoer" class="dk-anzeige" style="margin-top:0" hidden></div>
-    <textarea id="nb-gross-text" maxlength="4000" aria-label="Text der Sprachnotiz" oninput="nbGrossTipp(this)"
+    <textarea id="nb-gross-text" maxlength="12000" aria-label="Text der Sprachnotiz" oninput="nbGrossTipp(this)"
       style="flex:1;min-height:0;width:100%;box-sizing:border-box;padding:12px;border:1px solid var(--rand-bedien);border-radius:12px;font-family:inherit;font-size:var(--s-karte);line-height:1.6;background:var(--surface2);color:var(--text);resize:none"
       placeholder="${kann?"Tippe unten auf „Einsprechen“ und erzähl, wie es lief – oder tippe hier.":"Hier tippen oder das Mikrofon der Tastatur nutzen."}">${esc(_nbText)}</textarea>
     <div id="nb-gross-vorschau" hidden style="max-height:45vh;overflow-y:auto;border:1px solid var(--rand-bedien);border-radius:12px;padding:10px 12px;background:var(--surface2)"></div>
@@ -430,7 +433,7 @@ function nbGrossSync(v){
 function nbGrossTipp(el){ nbGrossSync(el.value); if(_nbGrossErg) nbGrossVorschauWeg(); }
 function nbGrossMikro(){
   if(typeof diktatUmschalten!=="function") return;
-  diktatUmschalten({ feldId:"nb-gross-text", knopfId:"nb-gross-mic", anzeigeId:"nb-gross-hoer", max:4000, onText:nbGrossSync });
+  diktatUmschalten({ feldId:"nb-gross-text", knopfId:"nb-gross-mic", anzeigeId:"nb-gross-hoer", max:12000, onText:nbGrossSync });
 }
 function nbGrossZu(){
   if(typeof _dk!=="undefined" && _dk && _dk.feldId==="nb-gross-text") diktatStop();
@@ -602,7 +605,8 @@ function _nbTextDazu(el, satz){
   if(!el || !satz) return false;
   const alt = (el.value||"").trim();
   if(alt.includes(satz)) return false;
-  el.value = (alt ? alt+" · "+satz : satz).slice(0, Number(el.getAttribute("maxlength"))||300);
+  el.value = (alt ? alt+"\n"+satz : satz).slice(0, Number(el.getAttribute("maxlength"))||3000);
+  if(typeof feldWachsen==="function") feldWachsen(el);
   return true;
 }
 function nbInsTraining(e, m){
