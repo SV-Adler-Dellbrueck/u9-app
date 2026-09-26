@@ -267,7 +267,9 @@ function renderTraining(){
   const aEl=document.getElementById("tf-art-einstieg");
   if(aEl){
     const offen=(typeof artDurchsichtOffen==="function")?artDurchsichtOffen().length:0;
-    aEl.innerHTML=offen?`<button onclick="artDurchsichtOpen()" style="width:100%;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">⚽ ${offen} Übung${offen===1?"":"en"} einordnen</button>`:"";
+    aEl.innerHTML=(offen?`<button onclick="artDurchsichtOpen()" style="width:100%;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">⚽ ${offen} Übung${offen===1?"":"en"} einordnen</button>`:"")
+      /* v631: zweiter Einstieg – läuft die Übung ohne Trainer? Verschwindet, wenn alles bestätigt ist. */
+      +((typeof betrDurchsichtOffen==="function"&&betrDurchsichtOffen().length)?`<button onclick="betrDurchsichtOpen()" style="width:100%;min-height:48px;margin-top:${offen?8:0}px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">👤 ${betrDurchsichtOffen().length} Übungen: läuft sie ohne Trainer?</button>`:"");
   }
   const kEl=document.getElementById("tf-kacheln");
   if(kEl){
@@ -1335,6 +1337,7 @@ function tpShowExercise(formIdx,planMin){
         :`<span style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">⏱ ${esc(f.dauer)}</span>`}
       <span style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">👥 ${f.spieler||"?"}</span>
       <span style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">📐 ${f.feld||"?"}</span>
+      ${(function(){const b=typeof tpBetreuungWert==="function"?tpBetreuungWert(f):null;return b?`<span class="tp-ex-betr" style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">👤 ${UEBUNG_BETREUUNG[b.wert].kurz}${b.bestaetigt?"":" (Vorschlag)"}</span>`:"";})()}
     </div>
     <div style="font-size:var(--s-klein);color:var(--text);white-space:pre-wrap;line-height:1.5;margin-bottom:8px">${esc(f.ablauf||"")}</div>
     ${tpReiheHtml(f.name)}
@@ -1608,6 +1611,7 @@ function tpSetCoach(stationId,name){
   const mk=String(stationId).match(/^tp-form-(\d+)-(\d+)$/);
   if(mk&&typeof _tpKetteVon==="function"){ const k=_tpKetteVon(+mk[1]); if(k.length>1&&k[0]===+mk[1]){ k.slice(1).forEach(fi=>{ const id=`tp-form-${fi}-${mk[2]}`; if(!tpCoaches[id]||tpCoaches[id]===_alt){ tpCoaches[id]=name; const cs=document.querySelector(`.tp-coach-sel[data-station="${id}"]`); if(cs)cs.value=name; } }); } }
   tpPlanSaveDebounced();                        // Zuordnung am Datum festhalten
+  if(typeof tpBetreuungHinweis==="function")tpBetreuungHinweis(stationId);   // v631
   // Trainer eines parallelen Blocks gewechselt → die Felder des Hauptteils rechnen neu
   const m=String(stationId).match(/^tp-form-(\d+)-0$/);
   if(m&&tpIstParallel(tpSlots[+m[1]]))tpRenderTimeline();
@@ -2121,6 +2125,37 @@ function tpGruppeHinweis(selId){
   el.innerHTML=html;
 }
 function tpGruppeHinweisAll(){ Object.keys(_tpStationGruppe).forEach(tpGruppeHinweis); }
+/* ═══ v631 · Ein Trainer, mehrere Felder ═══════════════════════════════════════════
+   PO: „… Trainingsformen, die auch mit einem einzigen Trainer durchführbar sind“. Seit v570
+   richtet sich die Feldzahl nach den Kindern, nicht nach den Trainern – ein Feld ohne Trainer
+   ist erlaubt. Steht dort eine Übung, die einen Trainer braucht, sagt die Station es jetzt und
+   bietet drei Übungen an, die allein laufen. Geraten wird nicht: ohne Einordnung und ohne
+   Vorschlag schweigt der Hinweis; ein bloßer Vorschlag wird als solcher benannt. */
+function tpBetreuungHinweis(selId){
+  const el=document.getElementById(selId+"-betr"); if(!el)return;
+  el.innerHTML="";
+  const info=_tpStationGruppe[selId], sel=document.getElementById(selId);
+  if(!info||!sel||!sel.value)return;
+  const felder=document.querySelectorAll(`select.tp-form-sel[id^="tp-form-${info.si}-"]`).length;
+  if(felder<2||tpCoaches[selId])return;
+  const alle=tpAllForms(), idx=parseInt(sel.value), f=alle[idx];
+  const b=tpBetreuungWert(f); if(!b||b.wert==="allein")return;
+  const kat=f.kat, belegt=new Set([...document.querySelectorAll(`select.tp-form-sel[id^="tp-form-${info.si}-"]`)].map(x=>x.value));
+  const allein=alle.map((x,i)=>({x,i})).filter(o=>o.x&&o.x.name&&o.i!==idx&&!belegt.has(String(o.i))&&(tpBetreuungWert(o.x)||{}).wert==="allein"&&["raute","passspiel","pressing","wahrnehmung","spass","technik"].includes(o.x.kat));
+  allein.sort((a,c)=>(a.x.kat===kat?0:1)-(c.x.kat===kat?0:1)||(_tpStern(c.x)===_tpStern(f)?1:0)-(_tpStern(a.x)===_tpStern(f)?1:0));
+  const vor=allein.slice(0,3);
+  el.innerHTML=`<div class="tp-betr-warn" role="note" style="font-size:var(--s-klein);color:var(--text);background:var(--surface2);border:1px solid var(--rand-bedien);border-left:4px solid var(--red);border-radius:8px;padding:6px 8px;margin-top:4px;line-height:1.5">
+    ⚠️ <b>Hier ist kein Trainer eingeteilt</b> – „${esc(f.name)}“: ${esc(UEBUNG_BETREUUNG[b.wert].lang)}${b.bestaetigt?"":" (Vorschlag, noch nicht bestätigt)"}.
+    ${vor.length?`<div style="margin-top:4px">Läuft allein:</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">${vor.map(o=>`<button class="btn btn-sm" style="min-height:44px" onclick="tpBetreuungTausch('${selId}',${o.i})">${esc(o.x.name)}</button>`).join("")}</div>`:""}
+  </div>`;
+}
+function tpBetreuungTausch(selId,idx){
+  const sel=document.getElementById(selId); if(!sel)return;
+  if(![...sel.options].some(o=>o.value===String(idx))){ const f=tpAllForms()[idx]; if(!f)return; sel.add(new Option(f.name,String(idx))); }
+  sel.value=String(idx);
+  tpOnSelectChange(sel);
+  if(typeof toast==="function")toast("👤 Getauscht – „"+(tpAllForms()[idx]||{}).name+"“ läuft allein");
+}
 
 function tpRenderTimeline(){
   /* v621: Pläne mit Durchgängen alter Art (v605–v620: ein Block, Zeit geteilt) werden zur
@@ -2388,6 +2423,7 @@ function tpRenderTimeline(){
             </div>
           </div>
           <div id="${selId}-grp"></div>
+          <div id="${selId}-betr"></div>
           <div id="${selId}-hist"></div>
         </div>`;
       }
@@ -2426,6 +2462,7 @@ function tpRenderTimeline(){
   if(typeof tpKgHintAll==="function")tpKgHintAll(); // Kleingruppen-Bedarf initial prüfen
   if(typeof tpNettoRender==="function")tpNettoRender(); // Paket 3: Nettospielzeit + Wochenstand
   tpGruppeHinweisAll();   // v571: Feldtext und Gruppengröße je Station (braucht die gesetzten Selects)
+  Object.keys(_tpStationGruppe).forEach(id=>tpBetreuungHinweis(id));   // v631: Feld ohne Trainer braucht eine Übung, die allein läuft
 }
 /* G3 → v605: Wie viele Kinder sind dabei? – PO: „Die Angabe Kinder erwartet ist wenig
    zielführend. Wichtiger wäre, wie viele tatsächlich zugesagt haben bzw. in der Anwesenheit
@@ -2460,6 +2497,7 @@ function tpOnSelectChange(sel){
   if(typeof tpPickSync==="function")tpPickSync(sel.id); // sichtbaren Auswahl-Button nachziehen
   if(typeof tpKgHintAll==="function")tpKgHintAll();     // Kleingruppen-Bedarf der Aufwärm-Übung
   if(typeof tpGruppeHinweis==="function")tpGruppeHinweis(sel.id); // v571: Feldtext/Größe der neuen Übung
+  if(typeof tpBetreuungHinweis==="function")tpBetreuungHinweis(sel.id); // v631: Feld ohne Trainer?
   tpPlanSaveDebounced(); // Plan am Datum festhalten -> "Einheit bewerten" kennt ihn spaeter
 }
 /* Braucht eine Übung Kleingruppen? Text-Analyse über Name/Kurz/Ablauf – erkennt auch
@@ -3979,10 +4017,11 @@ async function uebungMetaLoad(){
   if(window._uebungMeta)return window._uebungMeta;
   window._uebungMeta={};
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/team_config?select=id,uebung_meta,uebung_art,netto_richtwert&limit=1`,{headers:sbAuthHeaders()});
-    if(r.ok){const row=((await r.json())||[])[0];if(row){window._uebungMeta=row.uebung_meta||{};window._uebungArt=row.uebung_art||{};window._uebungMetaId=row.id;if(row.netto_richtwert!=null)window._nettoRichtwert=Number(row.netto_richtwert)||TP_NETTO_STANDARD;}}
+    const r=await fetch(`${SB_URL}/rest/v1/team_config?select=id,uebung_meta,uebung_art,uebung_betreuung,netto_richtwert&limit=1`,{headers:sbAuthHeaders()});
+    if(r.ok){const row=((await r.json())||[])[0];if(row){window._uebungMeta=row.uebung_meta||{};window._uebungArt=row.uebung_art||{};window._uebungBetreuung=row.uebung_betreuung||{};window._uebungMetaId=row.id;if(row.netto_richtwert!=null)window._nettoRichtwert=Number(row.netto_richtwert)||TP_NETTO_STANDARD;}}
   }catch(e){}
   window._uebungArt=window._uebungArt||{};
+  window._uebungBetreuung=window._uebungBetreuung||{};
   return window._uebungMeta;
 }
 /* ═══ Übungsform gegen Spielform (Paket 3) ═════════════════════════════════════
@@ -4011,6 +4050,14 @@ async function uebungMetaLoad(){
 const UEBUNG_ART={spiel:{kurz:"Spielform", lang:"Spielform – das Kind entscheidet selbst"},
                   uebung:{kurz:"Übungsform", lang:"Übungsform – der Ablauf ist vorgegeben"},
                   weder:{kurz:"weder noch", lang:"weder Spielform noch Übungsform – zählt nicht mit"}};
+/* v631: Läuft die Übung ohne Trainer? Drei Stufen, Wort und Bedeutung. */
+const UEBUNG_BETREUUNG={allein:{kurz:"läuft allein", lang:"läuft allein – feste Regeln, die Kinder spielen und zählen selbst"},
+                        fuehrt:{kurz:"Trainer führt", lang:"Trainer führt – er ruft Kommandos, zählt oder korrigiert; einer reicht für alle, aber er muss dabei sein"},
+                        feld:{kurz:"Trainer am Feld", lang:"Trainer am Feld – er ist Teil der Übung (wirft, schießt, spielt ein)"}};
+function _tpBetreuung(f){ const a=(window._uebungBetreuung||{})[f&&f.name]; return UEBUNG_BETREUUNG[a]?a:""; }
+function _tpBetreuungVorschlag(f){ const v=(typeof UEBUNG_BETREUUNG_VORSCHLAG!=="undefined"?UEBUNG_BETREUUNG_VORSCHLAG:{})[f&&f.name]; return UEBUNG_BETREUUNG[v]?v:""; }
+/* Für Anzeige und Hinweis: bestätigt, sonst der Vorschlag – ausdrücklich als solcher markiert. */
+function tpBetreuungWert(f){ const b=_tpBetreuung(f); if(b)return {wert:b,bestaetigt:true}; const v=_tpBetreuungVorschlag(f); return v?{wert:v,bestaetigt:false}:null; }
 /* Der Vorschlag aus data.js. Er gilt NICHT als Einordnung: _tpArt liest weiter nur
    team_config.uebung_art. Sichtbar wird er allein in der Durchsicht. */
 function _tpArtVorschlag(f){
@@ -4156,6 +4203,78 @@ async function artDurchsichtUebernehmen(btn){
     if(typeof renderTraining==="function")renderTraining();
   }catch(e){ toast("Kein Netz – Einordnung nicht gespeichert","err"); if(btn)btn.disabled=false; }
 }
+/* ═══ v631 · DURCHSICHT: Läuft die Übung ohne Trainer? ═══════════════════════════
+   Gleiches Muster wie die Durchsicht aus v541: der Vorschlag steht dran, ein Tipp schaltet
+   weiter, gespeichert wird erst mit „Einordnung übernehmen“ – in EINEM Schreibvorgang. */
+let _bdAuswahl=null, _bdNurOffene=true;
+function betrDurchsichtOffen(){ return tpAllForms().filter(f=>f&&f.name&&!_tpBetreuung(f)&&_tpBetreuungVorschlag(f)); }
+function betrDurchsichtOpen(){
+  if(typeof sbToken==="function"&&!sbToken()){ toast("Bitte zuerst als Trainer anmelden","err"); return; }
+  document.getElementById("bd-modal")?.remove();
+  _bdNurOffene=true; _bdAuswahl={};
+  tpAllForms().forEach(f=>{ if(f&&f.name){ const v=_tpBetreuung(f)||_tpBetreuungVorschlag(f); if(v)_bdAuswahl[f.name]=v; } });
+  const m=document.createElement("div");
+  m.id="bd-modal"; m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Läuft die Übung ohne Trainer?");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.onclick=e=>{ if(e.target===m)betrDurchsichtClose(); };
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:520px;width:100%;margin:auto">
+    ${mdlHead("bd-modal","👤","Läuft die Übung ohne Trainer?","Für Tage mit einem Trainer und mehreren Feldern – Vorschlag zum Durchsehen","#7c3aed")}
+    <div id="bd-inhalt"></div></div>`;
+  document.body.appendChild(m);
+  betrDurchsichtRender();
+}
+function betrDurchsichtClose(){ document.getElementById("bd-modal")?.remove(); _bdAuswahl=null; }
+function betrDurchsichtFilter(){ _bdNurOffene=!_bdNurOffene; betrDurchsichtRender(); }
+function betrDurchsichtTipp(name){
+  if(!_bdAuswahl)return;
+  const folge=["allein","fuehrt","feld"];
+  _bdAuswahl[name]=folge[(folge.indexOf(_bdAuswahl[name]||"")+1)%folge.length];
+  betrDurchsichtRender();
+}
+function betrDurchsichtRender(){
+  const box=document.getElementById("bd-inhalt"); if(!box)return;
+  const offen=betrDurchsichtOffen(), alle=tpAllForms().filter(f=>f&&f.name&&_bdAuswahl[f.name]);
+  const zeigen=_bdNurOffene?offen:alle;
+  if(!offen.length&&_bdNurOffene){
+    box.innerHTML=`<div style="font-size:var(--s-text);color:var(--text2);line-height:1.6;padding:6px 0">Alle Übungen mit einem Vorschlag sind eingeordnet. ${alle.length?`<button class="btn btn-sm" style="min-height:48px;margin-top:8px" onclick="betrDurchsichtFilter()">Alle ${alle.length} trotzdem ansehen</button>`:""}</div>
+      <div style="display:flex;margin-top:10px"><button class="btn btn-sm" style="margin-left:auto;min-height:48px" onclick="betrDurchsichtClose()">Schließen</button></div>`;
+    return;
+  }
+  const nach={allein:[],fuehrt:[],feld:[]};
+  zeigen.forEach(f=>{ const a=_bdAuswahl[f.name]; if(nach[a])nach[a].push(f); });
+  const zeile=f=>{ const a=_bdAuswahl[f.name];
+    return `<div style="display:flex;align-items:center;gap:8px;border:var(--border-s);border-radius:10px;padding:8px 10px;margin-bottom:6px;background:var(--surface)">
+      <span style="flex:1;min-width:0;font-size:var(--s-text)"><b>${esc(f.name)}</b><span style="display:block;font-size:var(--s-klein);color:var(--text3)">${esc(f.kat||"eigene")}</span></span>
+      <button onclick="betrDurchsichtTipp('${String(f.name).replace(/'/g,"\\'")}')" aria-label="${esc(f.name)}: ${esc(UEBUNG_BETREUUNG[a].lang)}. Antippen schaltet weiter." style="flex:none;min-height:48px;padding:0 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:800;cursor:pointer;white-space:nowrap">${UEBUNG_BETREUUNG[a].kurz}</button>
+    </div>`; };
+  const block=(k,t,erkl)=>nach[k].length?`<div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:12px 2px 2px">${t} · ${nach[k].length}</div><div style="font-size:var(--s-klein);color:var(--text2);margin:0 2px 5px">${erkl}</div>${nach[k].map(zeile).join("")}`:"";
+  box.innerHTML=`<div style="font-size:var(--s-text);color:var(--text2);line-height:1.55;margin-bottom:8px">
+      ${_bdNurOffene?`<b>${offen.length}</b> Übungen sind noch nicht eingeordnet. Der Vorschlag steht dran – antippen ändert ihn, gespeichert wird erst unten.`:`Alle <b>${alle.length}</b> Übungen mit Einordnung. Antippen ändert, gespeichert wird erst unten.`}
+      Gebraucht wird das, wenn ein Trainer allein mehrere Felder hat: Felder ohne Trainer bekommen dann nur Übungen, die allein laufen.</div>
+    <button class="btn btn-sm" style="min-height:48px;width:100%;justify-content:center" onclick="betrDurchsichtFilter()">${_bdNurOffene?"Auch die schon eingeordneten zeigen":"Nur die offenen zeigen"}</button>
+    ${block("allein","Läuft allein","Feste Regeln – die Kinder spielen, zählen und wechseln selbst.")}${block("fuehrt","Trainer führt","Er ruft, zählt oder korrigiert – einer reicht für alle, aber er muss dabei sein.")}${block("feld","Trainer am Feld","Er ist Teil der Übung: wirft, schießt, spielt ein.")}
+    <button onclick="betrDurchsichtUebernehmen(this)" style="width:100%;min-height:56px;margin-top:14px;border-radius:14px;background:var(--surface);border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;color:var(--text);font-family:inherit;font-size:var(--s-karte);font-weight:900;cursor:pointer">💾 Einordnung übernehmen</button>
+    <div style="display:flex;margin-top:8px"><button class="btn btn-sm" style="margin-left:auto;min-height:48px" onclick="betrDurchsichtClose()">Ohne Speichern schließen</button></div>`;
+}
+async function betrDurchsichtUebernehmen(btn){
+  if(!_bdAuswahl)return;
+  if(btn)btn.disabled=true;
+  const neu={...(window._uebungBetreuung||{})};
+  const zeigen=_bdNurOffene?betrDurchsichtOffen():tpAllForms().filter(f=>f&&f.name&&_bdAuswahl[f.name]);
+  let zahl=0;
+  zeigen.forEach(f=>{ const a=_bdAuswahl[f.name]; if(a&&neu[f.name]!==a){ neu[f.name]=a; zahl++; } });
+  if(!zahl){ toast("Nichts zu ändern"); if(btn)btn.disabled=false; return; }
+  try{
+    if(window._uebungMetaId!=null){
+      const r=await fetch(`${SB_URL}/rest/v1/team_config?id=eq.${window._uebungMetaId}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify({uebung_betreuung:neu})});
+      if(!(r.ok||r.status===204)){ toast("Einordnung nicht gespeichert – Server antwortet "+r.status,"err"); if(btn)btn.disabled=false; return; }
+    }
+    window._uebungBetreuung=neu;
+    toast(`👤 ${zahl} Übung${zahl===1?"":"en"} eingeordnet`);
+    betrDurchsichtClose();
+    if(typeof renderTraining==="function")renderTraining();
+  }catch(e){ toast("Kein Netz – Einordnung nicht gespeichert","err"); if(btn)btn.disabled=false; }
+}
 function _tpStern(f){
   if(!f)return 2;
   const ov=(window._uebungMeta||{})[f.name];
@@ -4251,7 +4370,7 @@ function _tpPickKarte(x){
     <button onclick="tpPickerSet(${x.i})" style="flex:1;min-width:0;min-height:44px;border:none;background:transparent;color:var(--text);font-family:inherit;text-align:left;cursor:pointer;padding:0">
       <span style="display:block;font-size:var(--s-karte);font-weight:800">${esc(x.f.name)}</span>
       <span style="display:block;font-size:var(--s-klein);color:var(--text2)">${x.f.dauer||"?"} Min. · ${esc(x.f.kat||"eigene")} · ${frische}</span>
-      ${(function(){const c=tpArtChip(x.f,false);return c?`<span style="display:block;margin-top:3px">${c}</span>`:"";})()}
+      ${(function(){const c=tpArtChip(x.f,false);const b=typeof tpBetreuungWert==="function"?tpBetreuungWert(x.f):null;const a=(b&&b.wert==="allein")?'<span style="background:var(--surface2);color:var(--text2);border:var(--border-s);border-radius:6px;padding:1px 6px;font-size:var(--s-klein);font-weight:800;white-space:nowrap">👤 läuft allein</span>':"";return (c||a)?`<span style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">${c}${a}</span>`:"";})()}
     </button>
     <button onclick="tpSternTipp('${x.f.name.replace(/'/g,"\\'")}')" title="Schwierigkeit antippen zum Ändern" style="min-width:52px;min-height:44px;border:none;background:transparent;color:#f59e0b;font-size:var(--s-text);cursor:pointer;letter-spacing:1px">${"⭐".repeat(stern)}</button>
     <button onclick="tpPickerInfo(${x.i})" aria-label="Übung ansehen" title="Skizze & Beschreibung ansehen" style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-size:var(--s-karte);cursor:pointer">ℹ️</button>
