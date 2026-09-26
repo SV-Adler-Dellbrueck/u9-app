@@ -33,6 +33,7 @@
   <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
     <div style="display:flex;gap:6px">
       <button id="help-btn" onclick="hilfeOpen()" title="Hilfe & Funktionen" aria-label="Hilfe" style="border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:16px;line-height:1;flex-shrink:0">❓</button>
+      <button class="schrift-toggle" onclick="schriftWechseln()" aria-label="Schriftgröße umschalten">A</button>
       <button id="theme-toggle" onclick="toggleTheme()" title="Hell / Dunkel umschalten" aria-label="Theme umschalten" style="border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:16px;line-height:1;flex-shrink:0">🌙</button>
     </div>
     <div class="cloud-row"><span class="cdot" id="cdot"></span><span id="clbl">Verbinde...</span></div>
@@ -62,6 +63,7 @@
 
 <!-- HOME: Trainer-Dashboard -->
 <div id="view-home" class="view">
+  <div id="schrift-hinweis-trainer"></div>
   <div id="home-content"></div>
 </div>
 

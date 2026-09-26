@@ -939,6 +939,56 @@ function toggleTheme(){
 _adlerOnReady(()=>{ try{ applyTheme(localStorage.getItem("adler_theme")); }catch(e){} }); // Button-Icon setzen
 if(window.matchMedia){ try{ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{ if(!localStorage.getItem("adler_theme"))applyTheme(null); }); }catch(e){} }
 
+/* ═══ v632 · Schriftgröße je Gerät ═══════════════════════════════════════════════════
+   PO: „… eine Funktion, um die Schriftgröße zu erhöhen für die älteren Kollegen unter uns, die
+   ihre Lesebrille vergessen haben.“ Kacheln: „Trainer und Eltern“, „als v632“.
+   Seit v625/v626 hängen fast alle Schriften an fünf Stufen (--s-klein … --s-seite). Ein
+   Attribut am <html> setzt sie zentral höher (styles.css) – der Text bricht dann um, statt wie
+   beim Zoomen mit zwei Fingern seitlich aus dem Bildschirm zu laufen. Gemerkt je Gerät, gilt
+   nur dort. Nicht auf den festen öffentlichen Seiten (Ticker, Heft, Turnier …) und nicht in der
+   Kinder-App – dort ist die Schrift Gestaltung und ohnehin groß. */
+const SCHRIFT_STUFEN=[{key:"",name:"Normal",zeichen:"A"},{key:"gross",name:"Groß",zeichen:"A+"},{key:"sehrgross",name:"Sehr groß",zeichen:"A++"}];
+function _schriftStufe(k){ return SCHRIFT_STUFEN.find(x=>x.key===(k||""))||SCHRIFT_STUFEN[0]; }
+function applySchrift(k){
+  if(_seiteFestHell()||/\/kinder\//.test(location.pathname))k="";
+  const st=_schriftStufe(k), el=document.documentElement;
+  if(st.key)el.setAttribute("data-schrift",st.key); else el.removeAttribute("data-schrift");
+  const nxt=SCHRIFT_STUFEN[(SCHRIFT_STUFEN.indexOf(st)+1)%SCHRIFT_STUFEN.length];
+  document.querySelectorAll(".schrift-toggle").forEach(b=>{ b.textContent=st.zeichen;
+    b.setAttribute("aria-label",`Schriftgröße: ${st.name} – antippen für ${nxt.name}`); b.title=`Schriftgröße: ${st.name} (antippen für ${nxt.name})`; });
+}
+function schriftWechseln(){
+  let jetzt=""; try{ jetzt=localStorage.getItem("adler_schrift")||""; }catch(e){}
+  const i=SCHRIFT_STUFEN.indexOf(_schriftStufe(jetzt)), nxt=SCHRIFT_STUFEN[(i+1)%SCHRIFT_STUFEN.length];
+  try{ if(nxt.key)localStorage.setItem("adler_schrift",nxt.key); else localStorage.removeItem("adler_schrift"); }catch(e){}
+  applySchrift(nxt.key);
+  if(typeof toast==="function")toast(`🔎 Schrift: ${nxt.name}`);
+  if(typeof hapticTap==="function")hapticTap(12);
+}
+(function(){ try{ applySchrift(localStorage.getItem("adler_schrift")); }catch(e){} })();   // sofort, damit nichts springt
+_adlerOnReady(()=>{ try{ applySchrift(localStorage.getItem("adler_schrift")); }catch(e){} }); // Knopf beschriften
+/* Einmaliger Hinweis für die anderen (PO: „Es geht … um die anderen Trainer und Eltern, nicht um
+   mich“ – Kachel „Ja, Trainer und Eltern“). Wer den Knopf nicht kennt, findet ihn so: eine Karte,
+   einmal je Gerät, mit „Größer stellen“ und „Nein danke“. Hat jemand schon eine Stufe gewählt,
+   erscheint sie gar nicht. */
+function schriftHinweisZeigen(ziel){
+  const el=typeof ziel==="string"?document.getElementById(ziel):ziel; if(!el)return;
+  let weg=false; try{ weg=!!(localStorage.getItem("adler_schrift_hinweis")||localStorage.getItem("adler_schrift")); }catch(e){ weg=true; }
+  if(weg||_seiteFestHell()||/\/kinder\//.test(location.pathname)){ el.innerHTML=""; return; }
+  el.innerHTML=`<div class="schrift-hinweis" role="note" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:var(--surface);color:var(--text);border:1px solid var(--rand-bedien);border-left:4px solid var(--blue,#2563eb);border-radius:12px;padding:10px 12px;margin:0 0 12px">
+    <div style="flex:1 1 200px;font-size:var(--s-text);line-height:1.45"><b>🔎 Schrift zu klein?</b> Oben auf „A“ tippen macht sie größer – nur auf diesem Handy.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" style="min-height:44px" onclick="schriftHinweisAntwort(true)">Größer stellen</button>
+      <button class="btn" style="min-height:44px" onclick="schriftHinweisAntwort(false)">Nein danke</button>
+    </div></div>`;
+}
+function schriftHinweisAntwort(ja){
+  try{ localStorage.setItem("adler_schrift_hinweis","1"); }catch(e){}
+  document.querySelectorAll(".schrift-hinweis").forEach(k=>k.remove());
+  if(ja){ try{ localStorage.setItem("adler_schrift","gross"); }catch(e){} applySchrift("gross"); if(typeof toast==="function")toast("🔎 Schrift: Groß – oben auf „A“ geht es weiter oder zurück"); }
+}
+_adlerOnReady(()=>{ try{ schriftHinweisZeigen("schrift-hinweis-trainer"); }catch(e){} });
+
 /* ═══ Web-Push-Benachrichtigungen ═══
    Öffentlicher VAPID-Schlüssel (der private liegt nur in der Edge Function push-send).
    Subscriptions in push_subscriptions (RLS: eigene). Senden macht der Trainer -> Edge Function. */
