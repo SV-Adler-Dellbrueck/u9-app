@@ -2116,8 +2116,10 @@ async function kinderAppTrennen(uid){
 // ein globaler Name darf nicht in beiden Wellen leben.
 function renderTrainerUI(){
   const sel=document.getElementById("p-trainer");
-  if(typeof trainerMe==="function")trainerMe().then(me=>{if(me&&sel&&[...sel.options].some(o=>o.value===me))sel.value=me;}).catch(()=>{}); // eingeloggter Trainer als Default (war: immer der erste)
-  if(sel)sel.innerHTML=TRAINER.map(t=>`<option value="${t}">${t}</option>`).join("");
+  /* v635 PO: „Wir bewerten gemeinsam als Trainer, nicht jeder einzeln“ (Entscheidung v607).
+     „Trainerteam“ steht deshalb vorn und ist vorgewählt; einzelne Namen bleiben für den Fall,
+     dass doch jemand allein nachträgt. */
+  if(sel)sel.innerHTML=["Trainerteam",...TRAINER].map(t=>`<option value="${t}">${t}</option>`).join("");
   const tp=document.getElementById("tp-trainer-checks");
   /* v413: die Chip-Zeile der Planung gehoert jetzt tpTrainerChipsRender (boot.js) –
      angehakt wird, wer ZUGESAGT hat, nicht mehr zwei fest verdrahtete Namen. */

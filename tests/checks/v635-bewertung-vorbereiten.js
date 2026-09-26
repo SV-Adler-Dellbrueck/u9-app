@@ -10,7 +10,9 @@
       Leistungsorientierung“, dazu die Zeile „Gruppe:“ aus der A/B-Zeit.
    d) Die Urkunde (an das Kind adressiert) druckte Entwicklungsstand und Tempo in Prozent.
    e) Der Entwicklungsbericht fürs Elterngespräch druckte Prozente, „Schwächster Messwert“,
-      den ELTERN-HINWEIS und „Gruppe:“. */
+      den ELTERN-HINWEIS und „Gruppe:“.
+   f) PO: „Wir bewerten gemeinsam als Trainer, nicht jeder einzeln“ – „Bewertet von“ bietet
+      „Trainerteam“ an erster Stelle und hat es vorgewählt. */
 "use strict";
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
@@ -27,6 +29,10 @@ module.exports = async function (h) {
     opt(K[0]); opt(K[1]);
     const alleStufe = st => { document.querySelectorAll('#dims-wrap input[type="radio"]').forEach(x => { if (x.value === String(st)) x.checked = true; }); };
     const angehakt = () => document.querySelectorAll('#dims-wrap input[type="radio"]:checked').length;
+    // f) gemeinsame Bewertung: „Trainerteam“ vorn und vorgewählt
+    if (typeof renderTrainerUI === "function") renderTrainerUI();
+    const pt = document.getElementById("p-trainer");
+    out.team = { erste: pt?.options[0]?.value, wert: pt?.value };
     // a) Leeren
     sel.value = K[0]; onPlayerSelect(); await warte(100); alleStufe(3);
     try { clearForm(); out.leeren = angehakt() === 0 ? "ok" : "noch " + angehakt() + " angehakt"; } catch (e) { out.leeren = "Fehler: " + e.message; }
@@ -67,6 +73,7 @@ module.exports = async function (h) {
   if (/\d+\s*%/.test(berichtOhneAnwesenheit)) probleme.push("e) Bericht zeigt Bewertungsprozente: " + (berichtOhneAnwesenheit.match(/.{0,30}\d+\s*%/) || [""])[0]);
   if (/ELTERN-HINWEIS|Externes Coaching|Gruppe:|Messwert|Entwicklungstempo/.test(r.bericht)) probleme.push("e) Bericht enthält Trainer-Interna: " + (r.bericht.match(/ELTERN-HINWEIS|Externes Coaching|Gruppe:|Messwert|Entwicklungstempo/) || [""])[0]);
   if (!/STÄRKEN/.test(r.bericht) || !/Solide/.test(r.bericht)) probleme.push("e) Bericht ohne Stärken oder ohne Stufenwort");
+  if (r.team.erste !== "Trainerteam" || r.team.wert !== "Trainerteam") probleme.push(`f) „Bewertet von“ steht nicht auf Trainerteam: ${JSON.stringify(r.team)}`);
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
   zeilen.push(`Leeren ${r.leeren} · Laden ${r.laden} · Kaderliste: ${r.kader.angehakt} alte Werte`,
     `Stufe 2 überall: ${r.fazit.total} % → „${(r.fazit.text.match(/entwickelt sich[^.]*|ist im Aufbau[^.]*/) || [""])[0]}“`,
