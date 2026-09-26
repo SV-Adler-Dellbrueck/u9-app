@@ -357,21 +357,162 @@ function nbSprachHtml(art, fuer){
   return `<div id="nb-box" style="border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);padding:10px 11px;margin:10px 0 4px">
     <div style="font-size:var(--s-text);font-weight:800">🎙️ Per Sprachnotiz ausfüllen</div>
     <div style="font-size:var(--s-klein);color:var(--text2);margin:2px 0 8px;line-height:1.45">Erzähl frei, wie es lief – ${art==="training"?"Einheit, einzelne Übungen, einzelne Kinder":"Mannschaften, Gäste, was getragen hat, woran ihr arbeitet"}. Die KI trägt ein, was du sagst; gespeichert wird erst mit dem Knopf unten.</div>
-    <textarea id="nb-text" rows="3" maxlength="4000" style="${fld}" placeholder="${kannHoeren?"Mikrofon antippen und sprechen – oder hier tippen bzw. das Mikrofon der Tastatur nutzen":"Hier tippen oder das Mikrofon der Tastatur nutzen"}" oninput="_nbText=this.value">${esc(_nbText)}</textarea>
+    <textarea id="nb-text" rows="3" maxlength="4000" style="${fld};max-height:50vh" placeholder="${kannHoeren?"Mikrofon antippen und sprechen – oder hier tippen bzw. das Mikrofon der Tastatur nutzen":"Hier tippen oder das Mikrofon der Tastatur nutzen"}" oninput="_nbText=this.value;nbFeldHoehe(this)">${esc(_nbText)}</textarea>
     <div style="display:flex;gap:8px;margin-top:8px">
-      ${kannHoeren?`<button id="nb-mic" class="btn" style="flex:0 0 auto;min-height:48px" onclick="nbDiktat('${art}')" aria-pressed="${diktatAktiv("nb-text")?"true":"false"}"><i class="ti ti-${diktatAktiv("nb-text")?"player-pause":"microphone"}"></i>${diktatAktiv("nb-text")?"Pause":(_nbText?"Weiter einsprechen":"Einsprechen")}</button>`:""}
-      <button id="nb-los" class="btn btn-p" style="flex:1;min-height:48px;justify-content:center" onclick="nbAuswerten('${art}')"><i class="ti ti-sparkles"></i>In den Bogen übernehmen</button>
+      ${kannHoeren?`<button id="nb-mic" class="btn" style="flex:0 0 auto;min-height:48px" onclick="nbDiktat('${art}')"><i class="ti ti-microphone"></i>${_nbText?"Weiter einsprechen":"Einsprechen"}</button>`:""}
+      <button id="nb-gross" class="btn" style="flex:0 0 auto;min-height:48px;min-width:48px;justify-content:center" onclick="nbGross('${art}',false)" aria-label="Text groß anzeigen und bearbeiten"><i class="ti ti-arrows-maximize"></i></button>
+      <button id="nb-los" class="btn btn-p" style="flex:1;min-height:48px;justify-content:center" onclick="nbAuswerten('${art}')"><i class="ti ti-sparkles"></i>KI auswerten</button>
     </div>
-    <div id="nb-hoer" class="dk-anzeige" hidden></div>
     <div id="nb-status" role="status" aria-live="polite" style="font-size:var(--s-klein);color:var(--text2);margin-top:6px;line-height:1.45"></div>
   </div>`;
 }
 /* v630: Das Einsprechen läuft über den gemeinsamen Diktat-Weg in core.js (diktatStart) –
    Bildschirm bleibt an, keine doppelten Wörter, Anzeige was ankommt, Pause und Weiter. */
-function nbDiktatStop(){ if(typeof _dk!=="undefined" && _dk && _dk.feldId==="nb-text") diktatStop(); }
-function nbDiktat(art){
+function nbDiktatStop(){ if(typeof _dk!=="undefined" && _dk && /^nb-/.test(_dk.feldId)) diktatStop(); }
+function nbDiktat(art){ nbGross(art, true); }
+function nbFeldHoehe(el){ if(!el) return; el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight + 2, Math.round(window.innerHeight*0.5)) + "px"; }
+
+/* v630 · Vollansicht der Sprachnotiz. PO: „Wenn ich eine längere Sprachnachricht eingebe, wird es
+   schwer, diese im Textfeld überhaupt lesen zu können … vielleicht erscheint ein größeres
+   Textfenster. Und dann nochmal einen Button KI-Zusammenfassung.“ Kachel: „So bauen, mit in v630“.
+
+   Einsprechen öffnet sie bildschirmfüllend: oben „Hört zu“ mit dem gerade Verstandenen, darunter
+   der Text groß und bearbeitbar, unten am Daumen Pause/Weiter, daneben „KI auswerten“. Die KI
+   trägt dann NICHT sofort ein, sondern zeigt zuerst, was sie eintragen würde – erst „In den Bogen
+   übernehmen“ setzt die Felder. Es gibt kein zweites Textfeld im Speicher: die Vollansicht
+   schreibt in dasselbe wie das kleine Feld, und der KI-Weg ist derselbe (nbKiHolen, nbKiAnwenden). */
+let _nbGrossErg = null;
+function nbGross(art, mikro){
+  document.getElementById("nb-gross-ov")?.remove();
+  _nbGrossErg = null;
+  const kann = typeof diktatMoeglich==="function" && diktatMoeglich();
+  const ov = document.createElement("div");
+  ov.id = "nb-gross-ov"; ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-label","Sprachnotiz");
+  ov.dataset.art = art;
+  ov.style.cssText = "position:fixed;inset:0;z-index:10068;background:var(--surface);color:var(--text);display:flex;flex-direction:column;gap:8px;padding:12px 14px calc(12px + env(safe-area-inset-bottom))";
+  ov.innerHTML = `<div style="display:flex;align-items:center;gap:8px">
+      <div style="flex:1;font-size:var(--s-teil);font-weight:800">🎙️ Sprachnotiz</div>
+      <button class="btn" style="min-height:44px" onclick="nbGrossZu()" aria-label="Fertig – zurück zum Bogen, der Text bleibt stehen">Fertig</button>
+    </div>
+    <div id="nb-gross-hoer" class="dk-anzeige" style="margin-top:0" hidden></div>
+    <textarea id="nb-gross-text" maxlength="4000" aria-label="Text der Sprachnotiz" oninput="nbGrossTipp(this)"
+      style="flex:1;min-height:0;width:100%;box-sizing:border-box;padding:12px;border:1px solid var(--rand-bedien);border-radius:12px;font-family:inherit;font-size:var(--s-karte);line-height:1.6;background:var(--surface2);color:var(--text);resize:none"
+      placeholder="${kann?"Tippe unten auf „Einsprechen“ und erzähl, wie es lief – oder tippe hier.":"Hier tippen oder das Mikrofon der Tastatur nutzen."}">${esc(_nbText)}</textarea>
+    <div id="nb-gross-vorschau" hidden style="max-height:45vh;overflow-y:auto;border:1px solid var(--rand-bedien);border-radius:12px;padding:10px 12px;background:var(--surface2)"></div>
+    <div id="nb-gross-status" role="status" aria-live="polite" style="font-size:var(--s-klein);color:var(--text2);line-height:1.45"></div>
+    <div id="nb-gross-fuss" style="display:flex;flex-direction:column;gap:8px"></div>`;
+  document.body.appendChild(ov);
+  nbGrossFuss();
+  const ta = document.getElementById("nb-gross-text");
+  ta.scrollTop = ta.scrollHeight;
+  if(mikro && kann) nbGrossMikro();
+  else { try{ ta.focus({preventScroll:true}); ta.setSelectionRange(ta.value.length, ta.value.length); }catch(e){} }
+}
+function nbGrossFuss(){
+  const f = document.getElementById("nb-gross-fuss"), ov = document.getElementById("nb-gross-ov"); if(!f || !ov) return;
+  const art = ov.dataset.art;
+  const kann = typeof diktatMoeglich==="function" && diktatMoeglich();
+  if(_nbGrossErg){
+    f.innerHTML = `<div style="display:flex;gap:8px">
+      <button class="btn" style="flex:0 0 auto;min-height:56px" onclick="nbGrossVorschauWeg()"><i class="ti ti-pencil"></i>Text ändern</button>
+      <button id="nb-gross-ueber" class="btn btn-p" style="flex:1;min-height:56px;justify-content:center" onclick="nbGrossUebernehmen()" ${_nbGrossErg.zeilen.length?"":"disabled"}><i class="ti ti-check"></i>In den Bogen übernehmen</button></div>`;
+    return;
+  }
+  const an = typeof diktatAktiv==="function" && diktatAktiv("nb-gross-text");
+  f.innerHTML = `${kann?`<button id="nb-gross-mic" class="btn" style="min-height:56px;justify-content:center;font-size:var(--s-karte)" onclick="nbGrossMikro()" aria-pressed="${an?"true":"false"}"><i class="ti ti-${an?"player-pause":"microphone"}"></i>${an?"Pause":(_nbText?"Weiter einsprechen":"Einsprechen")}</button>`:""}
+    <button id="nb-gross-los" class="btn btn-p" style="min-height:56px;justify-content:center" onclick="nbGrossAuswerten('${art}')"><i class="ti ti-sparkles"></i>KI auswerten</button>`;
+}
+function nbGrossSync(v){
+  _nbText = v;
+  const t = document.getElementById("nb-text"); if(t){ t.value = v; nbFeldHoehe(t); }
+  const b = document.getElementById("nb-mic"); if(b) b.innerHTML = '<i class="ti ti-microphone"></i>'+(v?"Weiter einsprechen":"Einsprechen");
+}
+function nbGrossTipp(el){ nbGrossSync(el.value); if(_nbGrossErg) nbGrossVorschauWeg(); }
+function nbGrossMikro(){
   if(typeof diktatUmschalten!=="function") return;
-  diktatUmschalten({ feldId:"nb-text", knopfId:"nb-mic", anzeigeId:"nb-hoer", max:4000, onText:v=>{ _nbText = v; } });
+  diktatUmschalten({ feldId:"nb-gross-text", knopfId:"nb-gross-mic", anzeigeId:"nb-gross-hoer", max:4000, onText:nbGrossSync });
+}
+function nbGrossZu(){
+  if(typeof _dk!=="undefined" && _dk && _dk.feldId==="nb-gross-text") diktatStop();
+  const ta = document.getElementById("nb-gross-text"); if(ta) nbGrossSync(ta.value);
+  _nbGrossErg = null;
+  document.getElementById("nb-gross-ov")?.remove();
+}
+function nbGrossVorschauWeg(){
+  _nbGrossErg = null;
+  const v = document.getElementById("nb-gross-vorschau"); if(v){ v.hidden = true; v.innerHTML = ""; }
+  const st = document.getElementById("nb-gross-status"); if(st) st.textContent = "";
+  nbGrossFuss();
+}
+async function nbGrossAuswerten(art){
+  const ta = document.getElementById("nb-gross-text"), st = document.getElementById("nb-gross-status");
+  const text = (ta&&ta.value||"").trim();
+  nbGrossSync(ta ? ta.value : _nbText);
+  if(text.length<15){ if(st) st.textContent = "Erzähl ein paar Sätze – dann kann die KI etwas eintragen."; return; }
+  if(typeof diktatAktiv==="function" && diktatAktiv("nb-gross-text")) diktatPause();
+  const los = document.getElementById("nb-gross-los");
+  if(los){ los.disabled = true; los.innerHTML = '<i class="ti ti-loader-2"></i>KI ordnet zu …'; }
+  if(st) st.textContent = "";
+  let x = null;
+  try{ x = await nbKiHolen(art, text); }
+  catch(e){
+    if(st) st.textContent = "Nicht ausgewertet: "+(e&&e.message||"keine Verbindung")+". Der Text bleibt stehen.";
+    nbGrossFuss(); return;
+  }
+  if(!x || !document.getElementById("nb-gross-ov")){ nbGrossFuss(); return; }
+  const zeilen = nbVorschau(art, x.d.ergebnis, x.m);
+  _nbGrossErg = { art, d:x.d, m:x.m, zeilen };
+  const v = document.getElementById("nb-gross-vorschau");
+  if(v){
+    v.hidden = false;
+    v.innerHTML = zeilen.length
+      ? `<div style="font-size:var(--s-text);font-weight:800;margin-bottom:4px">Das trägt die KI ein</div><ul style="margin:0;padding-left:18px;font-size:var(--s-text);line-height:1.5">${zeilen.map(z=>"<li>"+esc(z)+"</li>").join("")}</ul>
+         <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">Gespeichert wird erst im Bogen mit dem Knopf unten.</div>`
+      : `<div style="font-size:var(--s-text)">Die KI hat in der Notiz nichts gefunden, das zu einem Feld passt – ergänze ein paar Worte zu Übungen oder Kindern.</div>`;
+  }
+  nbGrossFuss();
+}
+function nbGrossUebernehmen(){
+  const e = _nbGrossErg; if(!e) return;
+  nbKiAnwenden(e.art, e.d, e.m);
+  nbGrossZu();
+}
+/* Lesbare Zusammenfassung dessen, was nbKiAnwenden setzen würde – ohne etwas zu setzen. Im
+   Trainer-Bereich stehen die echten Namen (wie im Bogen). */
+function nbVorschau(art, e, m){
+  e = e || {};
+  const S = n => "★".repeat(n), z = [];
+  const zur = t => String(t||"").replace(/Kind (\d+)/g,(x,n)=>(m&&m.zurueck&&m.zurueck["Kind "+n])||x);
+  if(art==="training"){
+    const ei = e.einheit || {}, t = [];
+    if(ei.spass) t.push("Spaß "+S(ei.spass)); if(ei.umsetzung) t.push("Umsetzung "+S(ei.umsetzung)); if(ei.erfolg) t.push("Ziel erreicht "+S(ei.erfolg));
+    if(t.length) z.push("Einheit: "+t.join(", "));
+    if(ei.notiz) z.push("Notiz zur Einheit: "+zur(ei.notiz));
+    const plan = (typeof EB_PLAN!=="undefined"?EB_PLAN:[]);
+    for(const u of e.uebungen||[]){
+      const n = (plan[u.nr-1]||{}).formName || ("Übung "+u.nr);
+      if(u.uebersprungen){ z.push("„"+n+"“: fand nicht statt"); continue; }
+      const w = []; if(u.durchfuehrung) w.push("Ablauf "+S(u.durchfuehrung)); if(u.spass) w.push("Spaß "+S(u.spass)); if(u.anforderung) w.push("Anforderung "+S(u.anforderung));
+      if(w.length || u.notiz) z.push("„"+n+"“: "+[w.join(", "), u.notiz?zur(u.notiz):""].filter(Boolean).join(" – "));
+    }
+    if((e.kinder||[]).length) z.push("Kinder: "+e.kinder.map(k=>zur(k.kind)+" "+S(k.sterne)).join(", "));
+  }else{
+    const W = ["","schwach","ok","stark"], teams = (typeof _FZ!=="undefined"&&_FZ&&_FZ.teams)||[];
+    for(const t of e.teams||[]){
+      const n = (teams.find(x=>x.nr===t.nr)||{}).name || ("Mannschaft "+t.nr), w = [];
+      if(t.ordnung) w.push("Ordnung "+W[t.ordnung]); if(t.pass) w.push("Passspiel "+W[t.pass]); if(t.zweikampf) w.push("Zweikämpfe "+W[t.zweikampf]); if(t.spass) w.push("Spaß "+W[t.spass]);
+      if(w.length) z.push(n+": "+w.join(", "));
+    }
+    const G = { zu_schwach:"zu schwach", passend:"passend", zu_stark:"zu stark" };
+    for(const g of e.gaeste||[]) z.push(g.name+": "+(G[g.einschaetzung]||g.einschaetzung));
+    if(e.getragen) z.push("Das hat getragen: "+e.getragen);
+    if(e.arbeiten) z.push("Daran arbeiten wir: "+e.arbeiten);
+    const o = e.orga || {}, OZ = {1:"zu eng",2:"passte",3:"zu viel Luft"}, OF = {1:"zu klein",2:"passten",3:"zu groß"}, OH = {1:"zu wenige",2:"knapp",3:"genug"}, ow = [];
+    if(o.zeitplan) ow.push("Zeitplan "+OZ[o.zeitplan]); if(o.felder) ow.push("Felder "+OF[o.felder]); if(o.helfer) ow.push("Helfer "+OH[o.helfer]);
+    if(ow.length) z.push("Organisation: "+ow.join(", "));
+  }
+  if(e.tagebuch) z.push("Tagebuch-Vorschlag"+((e.tagebuch.schlagworte||[]).length?": #"+e.tagebuch.schlagworte.join(" #"):""));
+  return z;
 }
 /* Kindernamen → „Kind n“. Die anwesenden Kinder bekommen ihre Nummer in der Reihenfolge des
    Fensters, alle übrigen Kinder des Kaders danach – auch ein Name, der gar nicht bewertet wird,
@@ -393,11 +534,8 @@ function nbMaske(anwesend){
   const weg = t => re ? String(t).replace(re, (all, vor, name)=>vor+(ziel[name.toLowerCase()]||name)) : String(t);
   return { weg, zurueck, kinder: (anwesend||[]).map(n=>hin[n]) };
 }
-async function nbAuswerten(art){
-  const ta = document.getElementById("nb-text"), st = document.getElementById("nb-status"), los = document.getElementById("nb-los");
-  const text = (ta&&ta.value||"").trim();
-  if(text.length<15){ if(st) st.textContent = "Erzähl ein paar Sätze – dann kann die KI etwas eintragen."; return; }
-  nbDiktatStop();
+/* Holt die KI-Antwort, ohne etwas einzutragen. Wirft bei Fehlern; null, wenn kein Fenster offen ist. */
+async function nbKiHolen(art, text){
   let body;
   if(art==="training"){
     const plan = (typeof EB_PLAN!=="undefined"?EB_PLAN:[]), kids = (typeof EB_SPIELER!=="undefined"?EB_SPIELER:[]);
@@ -406,7 +544,7 @@ async function nbAuswerten(art){
       uebungen: plan.map((p,i)=>({ nr:i+1, name:p.formName, bloecke:(typeof einheitBlockNamen==="function"?einheitBlockNamen(p).join(", "):"") })) };
     body._m = m;
   }else{
-    if(!_FZ) return;
+    if(!_FZ) return null;
     fazitTexteMerken();
     const m = nbMaske([]);
     body = { art:"spiel", festival:_FZ.termin&&_FZ.termin.typ==="turnier", text:m.weg(text),
@@ -414,27 +552,40 @@ async function nbAuswerten(art){
     body._m = m;
   }
   const m = body._m; delete body._m;
-  if(los){ los.disabled = true; los.innerHTML = '<i class="ti ti-loader-2"></i>KI ordnet zu …'; }
-  if(st) st.textContent = "";
-  let d = null;
-  try{
-    const r = await fetch(`${SB_URL}/functions/v1/ki-nachbereitung`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify(body)});
-    d = await r.json().catch(()=>null);
-    if(!r.ok || !d || !d.ergebnis) throw new Error((d&&d.error)||("Fehler "+r.status));
-  }catch(e){
-    if(los){ los.disabled = false; los.innerHTML = '<i class="ti ti-sparkles"></i>In den Bogen übernehmen'; }
-    if(st) st.textContent = "Nicht übernommen: "+(e&&e.message||"keine Verbindung")+". Die Notiz bleibt stehen.";
-    return;
-  }
+  const r = await fetch(`${SB_URL}/functions/v1/ki-nachbereitung`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const d = await r.json().catch(()=>null);
+  if(!r.ok || !d || !d.ergebnis) throw new Error((d&&d.error)||("Fehler "+r.status));
+  return { d, m };
+}
+/* Trägt die KI-Antwort in den Bogen ein und meldet es unter dem kleinen Feld. */
+function nbKiAnwenden(art, d, m){
   _nbTb = d.ergebnis.tagebuch ? { fuer:_nbFuer, v:nbTbDecknamen(d.ergebnis.tagebuch, m) } : null;
   _nbMaskeAktiv = m;
   const bericht = art==="training" ? nbInsTraining(d.ergebnis, m) : nbInsSpiel(d.ergebnis);
   if(_nbTb) bericht.push("Tagebuch-Vorschlag");
-  const los2 = document.getElementById("nb-los"), st2 = document.getElementById("nb-status");
-  if(los2){ los2.disabled = false; los2.innerHTML = '<i class="ti ti-sparkles"></i>In den Bogen übernehmen'; }
+  const st2 = document.getElementById("nb-status");
   if(st2) st2.innerHTML = bericht.length
     ? "✨ Eingetragen: "+esc(bericht.join(" · "))+". <b>Bitte prüfen und speichern.</b>"
     : "Die KI hat in der Notiz nichts gefunden, das zu einem Feld passt – ergänze ein paar Worte zu Übungen oder Kindern.";
+  return bericht;
+}
+async function nbAuswerten(art){
+  const ta = document.getElementById("nb-text"), st = document.getElementById("nb-status"), los = document.getElementById("nb-los");
+  const text = (ta&&ta.value||"").trim();
+  if(text.length<15){ if(st) st.textContent = "Erzähl ein paar Sätze – dann kann die KI etwas eintragen."; return; }
+  nbDiktatStop();
+  if(los){ los.disabled = true; los.innerHTML = '<i class="ti ti-loader-2"></i>KI ordnet zu …'; }
+  if(st) st.textContent = "";
+  const fertig = () => { const l = document.getElementById("nb-los"); if(l){ l.disabled = false; l.innerHTML = '<i class="ti ti-sparkles"></i>KI auswerten'; } };
+  let x = null;
+  try{ x = await nbKiHolen(art, text); }
+  catch(e){
+    fertig();
+    if(st) st.textContent = "Nicht übernommen: "+(e&&e.message||"keine Verbindung")+". Die Notiz bleibt stehen.";
+    return;
+  }
+  fertig();
+  if(x) nbKiAnwenden(art, x.d, x.m);
 }
 /* Sterne setzen wie ein Tipp – über einheitSetStar, damit Anzeige und Wert übereinstimmen. */
 function _nbStern(key, wert, max, groesse){

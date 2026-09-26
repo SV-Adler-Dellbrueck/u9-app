@@ -1420,7 +1420,7 @@ function _dkSitzung(){
     const f = document.getElementById(d.feldId); if(!f) return;
     const fest = _dkZusammen(d.fertig);
     const neu = _dkAnhaengen(d.basis, fest);
-    f.value = (zwischen ? neu.replace(/\s*$/," ") + zwischen : neu).slice(0, d.max);
+    f.value = (zwischen ? (neu ? neu.replace(/\s*$/," ") : "") + zwischen : neu).slice(0, d.max);
     f.scrollTop = f.scrollHeight;
     d.onText && d.onText(f.value);
   };
