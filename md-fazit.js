@@ -159,7 +159,7 @@ async function fazitOpen(terminId){
   fazitRender();
 }
 
-function fazitSchliessen(){ document.getElementById("fz-modal")?.remove(); _FZ=null; }
+function fazitSchliessen(){ nbDiktatStop(); _nbText=""; document.getElementById("fz-modal")?.remove(); _FZ=null; }
 
 function fzStufenHtml(gruppe, id, stufen, aktuell){
   return `<div style="display:flex;gap:5px">${stufen.map(st=>{
@@ -204,6 +204,7 @@ function fazitRender(){
     <div style="font-size:var(--s-klein);color:var(--text2);background:var(--surface2);border-radius:10px;padding:9px 11px;line-height:1.5">
       Hier geht es um die <b>Mannschaft</b>. Die einzelnen Kinder stehen im Blitz-Rating – was hier gefragt ist, sieht man am einzelnen Kind gar nicht.
     </div>
+    ${nbSprachHtml("spiel", "t"+t.id)}
     ${_FZ.fremde?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">👥 ${_FZ.fremde} weitere Einschätzung${_FZ.fremde>1?"en":""} aus dem Trainerteam liegt bereits vor – deine kommt daneben, sie ersetzt nichts.</div>`:""}
 
     ${sec("Wie hat die Mannschaft gespielt")}
@@ -315,6 +316,182 @@ async function fazitOffene(tage){
     const fertig = new Set(b.ok ? ((await b.json())||[]).filter(x=>x.autor===autor).map(x=>Number(x.termin_id)) : []);
     return rows.filter(t=>!fertig.has(Number(t.id)));
   }catch(e){ return []; }
+}
+
+/* ═══ v627 · Sprachnotiz → Nachbereitung ═══════════════════════════════════════
+   PO (Bildschirmfoto „Einheit bewerten“): „Wenn ich Einheiten nachbewerte, sei es Training,
+   Spiele oder Festivals, wäre es gut, dass ich diese auch per Sprachnotiz eingeben kann und die
+   KI dann diese Notizen übernimmt und strukturiert.“
+
+   Oben im Fenster ein Kasten: frei erzählen (Mikrofon-Knopf oder das Mikrofon der Tastatur),
+   dann „In den Bogen übernehmen“. Die Edge Function ki-nachbereitung ordnet das Gesagte den
+   Feldern zu; hier wird es eingetragen – sichtbar, änderbar, NICHT gespeichert. Gespeichert
+   wird wie immer mit dem Knopf unten. Was nicht gesagt wurde, bleibt, wie es war.
+
+   Datenschutz: Vor dem Senden werden alle Kindernamen aus dem Kader durch „Kind 1“, „Kind 2“ …
+   ersetzt; die Antwort wird zurückübersetzt. Beim Sprachmodell kommt kein Name an. */
+let _nbHoert = null, _nbText = "", _nbFuer = "";
+function nbSprachHtml(art, fuer){
+  /* Der Text gehört zu genau einem Termin – wer zum nächsten Tag wechselt, fängt leer an. */
+  if(String(fuer||"") !== _nbFuer){ _nbFuer = String(fuer||""); _nbText = ""; nbDiktatStop(); }
+  const kannHoeren = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  const fld = "width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text);resize:vertical";
+  return `<div id="nb-box" style="border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);padding:10px 11px;margin:10px 0 4px">
+    <div style="font-size:var(--s-text);font-weight:800">🎙️ Per Sprachnotiz ausfüllen</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin:2px 0 8px;line-height:1.45">Erzähl frei, wie es lief – ${art==="training"?"Einheit, einzelne Übungen, einzelne Kinder":"Mannschaften, Gäste, was getragen hat, woran ihr arbeitet"}. Die KI trägt ein, was du sagst; gespeichert wird erst mit dem Knopf unten.</div>
+    <textarea id="nb-text" rows="3" maxlength="4000" style="${fld}" placeholder="${kannHoeren?"Mikrofon antippen und sprechen – oder hier tippen bzw. das Mikrofon der Tastatur nutzen":"Hier tippen oder das Mikrofon der Tastatur nutzen"}" oninput="_nbText=this.value">${esc(_nbText)}</textarea>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      ${kannHoeren?`<button id="nb-mic" class="btn" style="flex:0 0 auto;min-height:48px" onclick="nbDiktat('${art}')" aria-pressed="false"><i class="ti ti-microphone"></i>Einsprechen</button>`:""}
+      <button id="nb-los" class="btn btn-p" style="flex:1;min-height:48px;justify-content:center" onclick="nbAuswerten('${art}')"><i class="ti ti-sparkles"></i>In den Bogen übernehmen</button>
+    </div>
+    <div id="nb-status" role="status" aria-live="polite" style="font-size:var(--s-klein);color:var(--text2);margin-top:6px;line-height:1.45"></div>
+  </div>`;
+}
+function nbDiktatStop(){
+  try{ _nbHoert && _nbHoert.stop(); }catch(e){}
+  _nbHoert = null;
+  const b = document.getElementById("nb-mic");
+  if(b){ b.innerHTML = '<i class="ti ti-microphone"></i>Einsprechen'; b.setAttribute("aria-pressed","false"); }
+}
+function nbDiktat(art){
+  if(_nbHoert){ nbDiktatStop(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const ta = document.getElementById("nb-text"); if(!SR || !ta) return;
+  const rec = new SR(); rec.lang = "de-DE"; rec.continuous = true; rec.interimResults = true;
+  const basis = ta.value ? ta.value.replace(/\s*$/," ") : "";
+  let fest = "";
+  rec.onresult = ev => {
+    let zwischen = "";
+    for(let i=ev.resultIndex;i<ev.results.length;i++){
+      const r = ev.results[i];
+      if(r.isFinal) fest += r[0].transcript.trim()+". "; else zwischen += r[0].transcript;
+    }
+    ta.value = (basis + fest + zwischen).slice(0,4000); _nbText = ta.value;
+  };
+  rec.onerror = ev => { const st=document.getElementById("nb-status"); if(st&&ev&&ev.error==="not-allowed") st.textContent="Das Mikrofon ist für die App gesperrt – in den Browser-Einstellungen freigeben oder das Mikrofon der Tastatur nutzen."; nbDiktatStop(); };
+  rec.onend = () => { if(_nbHoert===rec) nbDiktatStop(); };
+  try{ rec.start(); }catch(e){ return; }
+  _nbHoert = rec;
+  const b = document.getElementById("nb-mic");
+  if(b){ b.innerHTML = '<i class="ti ti-player-stop"></i>Stopp'; b.setAttribute("aria-pressed","true"); }
+}
+/* Kindernamen → „Kind n“. Die anwesenden Kinder bekommen ihre Nummer in der Reihenfolge des
+   Fensters, alle übrigen Kinder des Kaders danach – auch ein Name, der gar nicht bewertet wird,
+   soll nicht beim Sprachmodell landen. Längere Namen zuerst, damit „Ben“ nicht „Benedikt“ zerlegt. */
+function nbMaske(anwesend){
+  const alle = (typeof KADER!=="undefined"?KADER:[]).map(k=>k.name).filter(Boolean);
+  const reihe = [...(anwesend||[]), ...alle.filter(n=>!(anwesend||[]).includes(n))];
+  const hin = {}, zurueck = {};
+  reihe.forEach((n,i)=>{ hin[n] = "Kind "+(i+1); zurueck["Kind "+(i+1)] = n; });
+  /* Ein Durchlauf mit EINEM Muster: nacheinander ersetzt, fasste ein späterer Name die schon
+     gesetzten Platzhalter wieder an. Vornamen allein nur, wenn genau ein Kind so heißt. */
+  const ziel = {};
+  reihe.forEach(n=>{ ziel[String(n).toLowerCase()] = hin[n]; });
+  const vorn = {};
+  reihe.forEach(n=>{ const v = String(n).split(/\s+/)[0]; if(v && v!==n && v.length>2) (vorn[v.toLowerCase()] = vorn[v.toLowerCase()]||[]).push(hin[n]); });
+  Object.keys(vorn).forEach(v=>{ if(vorn[v].length===1 && !ziel[v]) ziel[v] = vorn[v][0]; });
+  const schluessel = Object.keys(ziel).sort((a,b)=>b.length-a.length);
+  const re = schluessel.length ? new RegExp("(^|[^\\p{L}])("+schluessel.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|")+")(?![\\p{L}])","giu") : null;
+  const weg = t => re ? String(t).replace(re, (all, vor, name)=>vor+(ziel[name.toLowerCase()]||name)) : String(t);
+  return { weg, zurueck, kinder: (anwesend||[]).map(n=>hin[n]) };
+}
+async function nbAuswerten(art){
+  const ta = document.getElementById("nb-text"), st = document.getElementById("nb-status"), los = document.getElementById("nb-los");
+  const text = (ta&&ta.value||"").trim();
+  if(text.length<15){ if(st) st.textContent = "Erzähl ein paar Sätze – dann kann die KI etwas eintragen."; return; }
+  nbDiktatStop();
+  let body;
+  if(art==="training"){
+    const plan = (typeof EB_PLAN!=="undefined"?EB_PLAN:[]), kids = (typeof EB_SPIELER!=="undefined"?EB_SPIELER:[]);
+    const m = nbMaske(kids);
+    body = { art, text:m.weg(text), kinder:m.kinder,
+      uebungen: plan.map((p,i)=>({ nr:i+1, name:p.formName, bloecke:(typeof einheitBlockNamen==="function"?einheitBlockNamen(p).join(", "):"") })) };
+    body._m = m;
+  }else{
+    if(!_FZ) return;
+    fazitTexteMerken();
+    const m = nbMaske([]);
+    body = { art:"spiel", festival:_FZ.termin&&_FZ.termin.typ==="turnier", text:m.weg(text),
+      teams:_FZ.teams.map(t=>({nr:t.nr,name:t.name})), gaeste:_FZ.gaeste };
+  }
+  const m = body._m; delete body._m;
+  if(los){ los.disabled = true; los.innerHTML = '<i class="ti ti-loader-2"></i>KI ordnet zu …'; }
+  if(st) st.textContent = "";
+  let d = null;
+  try{
+    const r = await fetch(`${SB_URL}/functions/v1/ki-nachbereitung`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify(body)});
+    d = await r.json().catch(()=>null);
+    if(!r.ok || !d || !d.ergebnis) throw new Error((d&&d.error)||("Fehler "+r.status));
+  }catch(e){
+    if(los){ los.disabled = false; los.innerHTML = '<i class="ti ti-sparkles"></i>In den Bogen übernehmen'; }
+    if(st) st.textContent = "Nicht übernommen: "+(e&&e.message||"keine Verbindung")+". Die Notiz bleibt stehen.";
+    return;
+  }
+  const bericht = art==="training" ? nbInsTraining(d.ergebnis, m) : nbInsSpiel(d.ergebnis);
+  const los2 = document.getElementById("nb-los"), st2 = document.getElementById("nb-status");
+  if(los2){ los2.disabled = false; los2.innerHTML = '<i class="ti ti-sparkles"></i>In den Bogen übernehmen'; }
+  if(st2) st2.innerHTML = bericht.length
+    ? "✨ Eingetragen: "+esc(bericht.join(" · "))+". <b>Bitte prüfen und speichern.</b>"
+    : "Die KI hat in der Notiz nichts gefunden, das zu einem Feld passt – ergänze ein paar Worte zu Übungen oder Kindern.";
+}
+/* Sterne setzen wie ein Tipp – über einheitSetStar, damit Anzeige und Wert übereinstimmen. */
+function _nbStern(key, wert, max, groesse){
+  const box = document.getElementById("eb-stars-"+key); if(!box || !wert) return false;
+  box.dataset.val = "0";
+  if(typeof einheitSetStar==="function") einheitSetStar(key, wert, max, groesse);
+  return true;
+}
+function _nbTextDazu(el, satz){
+  if(!el || !satz) return false;
+  const alt = (el.value||"").trim();
+  if(alt.includes(satz)) return false;
+  el.value = (alt ? alt+" · "+satz : satz).slice(0, Number(el.getAttribute("maxlength"))||300);
+  return true;
+}
+function nbInsTraining(e, m){
+  const b = [];
+  const ei = e.einheit || {};
+  const n = ["spass","umsetzung","erfolg"].filter(k=>_nbStern(k, ei[k], 5, 24)).length;
+  if(n) b.push(`Einheit ${n}×★`);
+  if(_nbTextDazu(document.getElementById("eb-notiz"), ei.notiz)) b.push("Notiz");
+  const DIM = { durchfuehrung:"Durchführung", spass:"Spaßfaktor Kinder", anforderung:"Anforderung umgesetzt" };
+  let ue = 0;
+  (e.uebungen||[]).forEach(u=>{
+    const i = Number(u.nr)-1; if(!document.getElementById("eb-ue-"+i)) return;
+    let hier = false;
+    if(u.uebersprungen){ const cb=document.getElementById("eb-skip-"+i); if(cb&&!cb.checked){ cb.checked=true; if(typeof einheitSkipToggle==="function")einheitSkipToggle(i); } hier = true; }
+    else Object.keys(DIM).forEach(k=>{ if(_nbStern(`ue-${i}-${DIM[k]}`, u[k], 5, 19)) hier = true; });
+    if(_nbTextDazu(document.getElementById("eb-ue-notiz-"+i), u.notiz)) hier = true;
+    if(hier) ue++;
+  });
+  if(ue) b.push(`${ue} Übung${ue>1?"en":""}`);
+  const kids = (typeof EB_SPIELER!=="undefined"?EB_SPIELER:[]);
+  let ki = 0;
+  (e.kinder||[]).forEach(k=>{ const name = m && m.zurueck[k.kind]; const i = kids.indexOf(name); if(i>=0 && _nbStern(`sp-${i}`, k.sterne, 3, 21)) ki++; });
+  if(ki) b.push(`${ki} Kind${ki>1?"er":""}`);
+  return b;
+}
+function nbInsSpiel(e){
+  if(!_FZ) return [];
+  fazitTexteMerken();
+  const w = _FZ.wert, b = [];
+  let tm = 0;
+  (e.teams||[]).forEach(t=>{
+    const nr = String(t.nr); if(!_FZ.teams.some(x=>String(x.nr)===nr)) return;
+    const v = w.teams[nr] = w.teams[nr] || {}; let hier = false;
+    ["ordnung","pass","zweikampf","spass"].forEach(k=>{ if(t[k]){ v[k] = t[k]; hier = true; } });
+    if(hier) tm++;
+  });
+  if(tm) b.push(`${tm} Mannschaft${tm>1?"en":""}`);
+  let g = 0; (e.gaeste||[]).forEach(x=>{ if(_FZ.gaeste.includes(x.name)){ w.gaeste[x.name] = x.einschaetzung; g++; } });
+  if(g) b.push(`${g} Gast${g>1?"einschätzungen":"einschätzung"}`);
+  const dazu = (alt, neu) => { if(!neu) return alt; alt=(alt||"").trim(); return alt.includes(neu) ? alt : (alt ? alt+" · "+neu : neu).slice(0,300); };
+  if(e.getragen){ w.getragen = dazu(w.getragen, e.getragen); b.push("Das hat getragen"); }
+  if(e.arbeiten){ w.arbeiten = dazu(w.arbeiten, e.arbeiten); b.push("Daran arbeiten wir"); }
+  const o = e.orga||{}; let og = 0; ["zeitplan","felder","helfer"].forEach(k=>{ if(o[k]){ w.orga[k] = o[k]; og++; } });
+  if(og) b.push("Organisation");
+  fazitRender();
+  return b;
 }
 
 /* MODUL_WACHE: letzter Name der Datei. Stirbt sie vorher, fehlt genau dieser. */
