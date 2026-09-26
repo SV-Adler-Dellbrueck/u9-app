@@ -56,8 +56,9 @@ module.exports = async function (h) {
     out.offenVorher = offenNamen.length;
 
     // Einstiegsknopf da und beschriftet?
-    const ein = document.getElementById("tf-art-einstieg");
-    out.einstieg = (ein.textContent || "").trim();
+    // Seit v631 steht im selben Behälter auch der Betreuungs-Einstieg – gemessen wird nur der Art-Knopf.
+    const ein = document.querySelector('#tf-art-einstieg button[onclick^="artDurchsichtOpen"]');
+    out.einstieg = ein ? (ein.textContent || "").trim() : "";
 
     // c) Öffnen schreibt nichts
     artDurchsichtOpen();
@@ -123,7 +124,7 @@ module.exports = async function (h) {
     renderTraining(); await warte(150);
     return {
       offenNachher: artDurchsichtOffen().length,
-      einstieg: (document.getElementById("tf-art-einstieg").textContent || "").trim(),
+      einstieg: ((document.querySelector('#tf-art-einstieg button[onclick^="artDurchsichtOpen"]') || {}).textContent || "").trim(),
       handUnberuehrt: _tpArt(tpAllForms().find(f => f.name === "Korridor-Funino")),
       beispiel: _tpArt(tpAllForms().find(f => f.name === "Hai & Fische")),
       fensterZu: !document.getElementById("ad-modal")
