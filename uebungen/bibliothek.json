@@ -1,6 +1,6 @@
 {
   "schema": "adler-uebungen/1",
-  "stand": "2026-09-25-2",
+  "stand": "2026-09-26-1",
   "uebungen": [
     {
       "name": "Warm up Adler",
@@ -1205,7 +1205,7 @@
       "spieler": "6",
       "feld": "25 x 20 m, vier Minitore, zwei Schusszonen",
       "dauer": "12",
-      "ablauf": "Feld 25 x 20 m quer, breiter als tief, mit Mittellinie. Je Grundlinie stehen zwei Minitore weit außen in Richtung der Ecken – nie eines in der Mitte. Sechs Meter vor jeder Grundlinie liegt eine Schusszonenlinie.\n\nDrei gegen drei, freies Spiel auf beide Minitore. Das Team am Ball stellt sich als Dreieck auf: einer tief in der eigenen Hälfte am Ball, zwei breit auf Höhe der Mittellinie. Dadurch hat der Ballführende immer zwei Anspielstationen in verschiedene Richtungen, und das verteidigende Team kann nie beide gleichzeitig zustellen.\n\nEin Tor zählt, wenn der Ball aus der eigenen Hälfte heraus über die Schusszonenlinie gespielt und von dort ins Minitor gebracht wird. Die weit außen stehenden Tore zwingen dazu, die Seite zu wechseln, statt durch die Mitte zu laufen.\n\nSpielzeit 3 Minuten, dann Pause und neue Zusammenstellung.",
+      "ablauf": "Feld 25 x 20 m: 25 m von Tor zu Tor, 20 m breit, mit Mittellinie. Je Grundlinie stehen zwei Minitore weit außen in Richtung der Ecken – nie eines in der Mitte. Sechs Meter vor jeder Grundlinie liegt eine Schusszonenlinie.\n\nDrei gegen drei, freies Spiel auf beide Minitore. Das Team am Ball stellt sich als Dreieck auf: einer tief in der eigenen Hälfte am Ball, zwei breit auf Höhe der Mittellinie. Dadurch hat der Ballführende immer zwei Anspielstationen in verschiedene Richtungen, und das verteidigende Team kann nie beide gleichzeitig zustellen.\n\nEin Tor zählt, wenn der Ball aus der eigenen Hälfte heraus über die Schusszonenlinie gespielt und von dort ins Minitor gebracht wird. Die weit außen stehenden Tore zwingen dazu, die Seite zu wechseln, statt durch die Mitte zu laufen.\n\nSpielzeit 3 Minuten, dann Pause und neue Zusammenstellung.",
       "varianten": "- Nur zwei Ballkontakte je Spieler\n- Ein Tor zählt doppelt, wenn vor dem Abschluss die Seite gewechselt wurde\n- Steigerung mit vier Feldspielern und Torhütern: siehe „4+1 gegen 4+1 – Raute (Steigerung)“",
       "coaching": "Wo steht dein Mitspieler, bevor du den Ball annimmst?\nWas passiert mit dem Dreieck, wenn ihr alle drei auf einer Höhe steht?\nWelches Tor ist gerade das leichtere – und warum?",
       "spass": 4,
@@ -1213,117 +1213,117 @@
       "skizze": {
         "li": [
           [
+            142,
             10,
-            88,
-            270,
-            88
+            142,
+            170
           ],
           [
-            26,
-            54,
-            254,
-            54,
+            88,
+            16,
+            88,
+            164,
             "sz"
           ],
           [
-            26,
-            122,
-            254,
-            122,
+            197,
+            16,
+            197,
+            164,
             "sz"
           ]
         ],
         "tor": [
           [
-            40,
-            6,
-            "h",
-            24
+            10,
+            28,
+            "v",
+            18
           ],
           [
-            216,
-            6,
-            "h",
-            24
+            10,
+            114,
+            "v",
+            18
           ],
           [
-            40,
-            160,
-            "h",
-            24
+            263,
+            28,
+            "v",
+            18
           ],
           [
-            216,
-            160,
-            "h",
-            24
+            263,
+            114,
+            "v",
+            18
           ]
         ],
         "p": [
           [
-            132,
-            131,
-            80,
-            96,
+            212,
+            85,
+            155,
+            53,
             "p"
           ],
           [
-            80,
-            88,
-            200,
-            88,
+            142,
+            53,
+            142,
+            127,
             "p"
           ],
           [
-            204,
+            155,
+            129,
+            213,
             96,
-            150,
-            132,
             "p"
           ]
         ],
         "s": [
           [
-            140,
-            138,
+            223,
+            90,
             "g",
             "S"
           ],
           [
-            70,
-            88,
+            142,
+            47,
             "g",
             "S"
           ],
           [
-            210,
-            88,
+            142,
+            133,
             "g",
             "S"
           ],
           [
-            140,
-            72,
+            117,
+            90,
             "r",
             "O"
           ],
           [
-            96,
-            36,
+            58,
+            63,
             "r",
             "O"
           ],
           [
-            192,
-            34,
+            55,
+            122,
             "r",
             "O"
           ]
         ],
         "b": [
           [
-            148,
-            146
+            236,
+            95
           ]
         ],
         "tx": [

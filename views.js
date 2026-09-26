@@ -2611,7 +2611,8 @@ function go(key){
   }
   renderSubbar(tabId,key);
   const reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if(document.startViewTransition&&!reduce)document.startViewTransition(()=>_open(key));else _open(key);
+  // v629: Solange der Auftakt läuft, keine Überblendung – sie friert für ihren Schnappschuss ein Bild ein, und das Wappen hakt mitten im Flug.
+  if(document.startViewTransition&&!reduce&&!document.getElementById("adler-intro"))document.startViewTransition(()=>_open(key));else _open(key);
   // Nebenwirkungen (aus altem _svApply/switchTrainSub übernommen)
   if(key==="taktik")requestWakeLock();else releaseWakeLock();
   // Rotations-Timer/Match-Uhr-Tick stoppen beim Verlassen des Spieltags (try/catch: ggf. noch in TDZ beim Start)

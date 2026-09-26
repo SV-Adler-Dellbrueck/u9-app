@@ -52,7 +52,9 @@ const WISSEN_FELDER = [
 /* Woher das jeweilige Maß kommt – ohne diesen Satz wirkt die Tabelle wie eine eigene Vorgabe. */
 const WISSEN_FELDER_HERKUNFT = "Die Bestimmungen geben die Feldgröße nach Altersklasse vor, "
   + "nicht nach Spielform: U8/U9 ca. 25 × 20 m, U10/U11 ca. 30–35 × 25 m. FUNiño und 3+1 sind "
-  + "unsere Formen und tragen unser Maß; 4+1 ist die Form der E-Jugend, dort steht deren Maß.";
+  + "unsere Formen und tragen unser Maß; 4+1 ist die Form der E-Jugend, dort steht deren Maß. "
+  /* v629 PO: „Feldgröße 25x20m. Was ist Länge und was ist Breite?“ – Kachel „25 m Tor zu Tor“. */
+  + "Die erste Zahl ist die Länge von Tor zu Tor, die zweite die Breite entlang der Torlinie.";
 /* Die Antwort auf „wo stehen die Tore genau". Steht NICHT in den Durchführungsbestimmungen –
    die Quelle ist der DFB-Aufbauplan, deshalb wird sie an Ort und Stelle genannt. */
 const WISSEN_TORSTAND = "Die vier Minitore stehen auf den Grundlinien, je zwei pro Seite, "
@@ -150,7 +152,7 @@ function _wsTab(kopf,zeilen){
 function _wsTabellen(){
   const s=_wsTab(["Altersklasse","auf Minitore","auf Jugendtoren (+TW)"],
     WISSEN_SPIELFORMEN.map(x=>({uns:x.uns,z:[x.ak,x.mini,x.jugend]})));
-  const f=_wsTab(["Spielform","Feldgröße","Tore"],
+  const f=_wsTab(["Spielform","Feldgröße (Länge × Breite)","Tore"],
     WISSEN_FELDER.map(x=>({uns:x.uns,z:[x.form,x.mass,x.tor]})));
   const k=_wsTab(["Altersklasse","Feld","mit Torwart","Rotation","gesamt"],
     WISSEN_KADER.map(x=>({uns:x.uns,z:[x.ak,x.feld,x.tw,x.rot,x.ges]})));
