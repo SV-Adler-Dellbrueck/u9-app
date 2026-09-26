@@ -157,9 +157,10 @@ async function fazitOpen(terminId){
                  arbeiten:(meine&&meine.arbeiten)||"" },
           schon: !!meine };
   fazitRender();
+  nbWegStart("spiel");   // v627: geführte Nachbereitung als Standard
 }
 
-function fazitSchliessen(){ nbDiktatStop(); _nbText=""; document.getElementById("fz-modal")?.remove(); _FZ=null; }
+function fazitSchliessen(){ nbDiktatStop(); _nbText=""; _nbWeg=null; document.getElementById("fz-modal")?.remove(); _FZ=null; }
 
 function fzStufenHtml(gruppe, id, stufen, aktuell){
   return `<div style="display:flex;gap:5px">${stufen.map(st=>{
@@ -228,6 +229,7 @@ function fazitRender(){
       <button class="btn btn-sm" style="min-height:48px" onclick="fazitSchliessen()">Schließen</button>
     </div>
     <div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px;text-align:center">Alles freiwillig – auch halb ausgefüllt ist besser als gar nicht.</div>`;
+  if(_nbWeg && _nbWeg.art==="spiel") nbWegZeichnen();   // v627: der Ablauf überlebt das Neuzeichnen des Bogens
 }
 
 /* Derselbe Knopf nochmal = Antwort zurücknehmen. Ohne das bleibt ein Fehlgriff für immer
@@ -492,6 +494,209 @@ function nbInsSpiel(e){
   if(og) b.push("Organisation");
   fazitRender();
   return b;
+}
+
+/* ═══ v627 · Geführte Nachbereitung – Frage für Frage, Antwort-Kacheln ════════════
+   PO: „Zusätzlich wäre es super, wenn ich auf Nachbewertung gehe, ich durch einen
+   Bewertungsprozess durchlaufe. So wie die Multiple-Choice-Kacheln.“ Kacheln: als Standard,
+   Bogen bleibt („Alles auf einen Blick“); Training, Spiel und Festival; Worte mit Sternen.
+
+   Der Ablauf ist eine SCHICHT über dem Bogen, kein zweiter Bogen: jede Kachel setzt genau das
+   Feld, das man sonst von Hand setzen würde (Sterne im DOM beim Training, _FZ.wert bei Spiel
+   und Festival). Gespeichert wird am Ende über einheitSave()/fazitSpeichern() – derselbe Weg,
+   dieselben Tabellen. Schritt 1 bietet die Sprachnotiz an; wer erzählt, findet die Kacheln
+   danach schon vorausgewählt. Ein Tipp auf eine Kachel geht weiter; „überspringen“ lässt das
+   Feld, wie es war. */
+let _nbWeg = null;   // { art, schritte:[…], i }
+const NB_STERNE = n => "★".repeat(n);
+const NB_W = {
+  spass:["kaum","wenig","okay","viel","riesig"],
+  umsetzung:["gar nicht","holprig","okay","gut","genau wie geplant"],
+  erfolg:["nein","kaum","teilweise","größtenteils","voll"],
+  durch:["lief nicht","holprig","okay","gut","top"],
+  anf:["gar nicht","selten","teilweise","meistens","durchgehend"]
+};
+const NB_TEAM = {
+  ordnung:["Traube um den Ball","mal so, mal so","gut verteilt"],
+  pass:["kaum Pässe","einige kamen an","Ketten gespielt"],
+  zweikampf:["zurückgewichen","mal so, mal so","angenommen"],
+  spass:["gedrückt","okay","riesig"]
+};
+function nbWegStart(art){
+  const card = document.getElementById(art==="training" ? "eb-card" : "fz-card"); if(!card) return;
+  const s = [];
+  s.push({ typ:"start", titel:"Nachbewerten" });
+  if(art==="training"){
+    const plan = (typeof EB_PLAN!=="undefined"?EB_PLAN:[]), kids = (typeof EB_SPIELER!=="undefined"?EB_SPIELER:[]);
+    const stern = (key, titel, frage, worte, max, groesse) => ({ typ:"kacheln", titel, frage,
+      kacheln: worte.map((w,i)=>({ wert:i+1, label:(max===3?NB_STERNE(i+1)+" ":NB_STERNE(i+1)+" ")+w })),
+      lesen:()=>(typeof einheitGetStar==="function"?einheitGetStar(key):0), setzen:v=>_nbStern(key, v, max, groesse) });
+    s.push(stern("spass","Die Einheit","Wie viel Spaß hatten die Kinder?",NB_W.spass,5,24));
+    s.push(stern("umsetzung","Die Einheit","Wie gut ließ sich der Plan umsetzen?",NB_W.umsetzung,5,24));
+    s.push(stern("erfolg","Die Einheit","Wurde das Ziel der Einheit erreicht?",NB_W.erfolg,5,24));
+    plan.forEach((p,i)=>{
+      const t = `Übung ${i+1} von ${plan.length}: ${p.formName}`;
+      const skip = () => !!document.getElementById("eb-skip-"+i)?.checked;
+      const d = stern(`ue-${i}-Durchführung`, t, "Wie lief die Durchführung?", NB_W.durch, 5, 19);
+      d.extra = { label:"⏭ fand nicht statt", an:skip, tun:()=>{ const cb=document.getElementById("eb-skip-"+i); if(cb&&!cb.checked){ cb.checked=true; if(typeof einheitSkipToggle==="function")einheitSkipToggle(i); } } };
+      const setzD = d.setzen; d.setzen = v => { const cb=document.getElementById("eb-skip-"+i); if(cb&&cb.checked){ cb.checked=false; if(typeof einheitSkipToggle==="function")einheitSkipToggle(i); } setzD(v); };
+      s.push(d);
+      const sp = stern(`ue-${i}-Spaßfaktor Kinder`, t, "Wie viel Spaß hatten die Kinder dabei?", NB_W.spass, 5, 19); sp.weg = skip; s.push(sp);
+      const an = stern(`ue-${i}-Anforderung umgesetzt`, t, "Wurde die Anforderung umgesetzt?", NB_W.anf, 5, 19); an.weg = skip;
+      an.feld = { id:"eb-ue-notiz-"+i, label:"Kommentar zur Übung (optional) – steht beim nächsten Mal im Plan" };
+      s.push(an);
+    });
+    if(kids.length) s.push({ typ:"kinder", titel:"Die Kinder", frage:"Wie waren die Kinder heute dabei?", kinder:kids });
+    s.push({ typ:"text", titel:"Zum Schluss", frage:"Noch eine Notiz zur Einheit?", felder:[{ id:"eb-notiz", label:"Notiz zur Einheit (optional)" }] });
+  }else{
+    if(!_FZ) return;
+    _FZ.teams.forEach(tm=>{
+      FZ_REIHEN.forEach(re=>{
+        const nr = String(tm.nr);
+        s.push({ typ:"kacheln", titel:tm.name+(tm.form?" · "+tm.form:""), frage:`${re.emo} ${re.label} – ${re.hint}?`,
+          kacheln: NB_TEAM[re.key].map((w,i)=>({ wert:i+1, label:w })),
+          lesen:()=>((_FZ.wert.teams[nr]||{})[re.key]||0),
+          setzen:v=>{ const o=_FZ.wert.teams[nr]=_FZ.wert.teams[nr]||{}; o[re.key]=v; return true; } });
+      });
+    });
+    _FZ.gaeste.forEach(g=>s.push({ typ:"kacheln", titel:"Die Gäste", frage:`Wie stark war ${g}?`,
+      kacheln: FZ_GAST.map(x=>({ wert:x.v, label:x.l })), lesen:()=>_FZ.wert.gaeste[g]||0, setzen:v=>{ _FZ.wert.gaeste[g]=v; return true; } }));
+    s.push({ typ:"text", titel:"Zwei Sätze", frage:"Was hat getragen – und woran arbeitet ihr?", spiel:true,
+      felder:[{ key:"getragen", label:"Das hat getragen" }, { key:"arbeiten", label:"Daran arbeiten wir" }] });
+    s.push({ typ:"orga", titel:"Organisation", frage:"Hat bei der Organisation etwas gehakt? (freiwillig)" });
+  }
+  s.push({ typ:"ende", titel:"Fertig" });
+  _nbWeg = { art, schritte:s, i:0 };
+  nbWegZeichnen();
+}
+function nbWegAus(){
+  const box = document.getElementById("nb-weg");
+  const card = box && box.parentElement;
+  const nb = document.getElementById("nb-box");
+  const platz = card && card.querySelector("[data-nb-platz]");
+  if(platz){ if(nb) platz.replaceWith(nb); else platz.remove(); }
+  if(card) card.classList.remove("nb-weg-an");
+  box && box.remove();
+  _nbWeg = null;
+  if(card) card.scrollIntoView({block:"start"});
+}
+function nbWegGehe(d){
+  if(!_nbWeg) return;
+  let i = _nbWeg.i + d;
+  while(i>0 && i<_nbWeg.schritte.length-1 && _nbWeg.schritte[i].weg && _nbWeg.schritte[i].weg()) i += d>0?1:-1;
+  _nbWeg.i = Math.max(0, Math.min(_nbWeg.schritte.length-1, i));
+  nbWegZeichnen();
+}
+function nbWegWahl(wert){
+  const st = _nbWeg && _nbWeg.schritte[_nbWeg.i]; if(!st) return;
+  if(wert==="extra"){ st.extra && st.extra.tun(); }
+  else if(st.lesen() !== wert) st.setzen(wert);
+  nbWegFelderMerken();
+  nbWegZeichnen();
+  setTimeout(()=>nbWegGehe(1), 180);   // die Wahl kurz sehen, dann weiter
+}
+function nbWegKind(i, wert){
+  const key = "sp-"+i;
+  if((typeof einheitGetStar==="function"?einheitGetStar(key):0) !== wert) _nbStern(key, wert, 3, 21);
+  nbWegZeichnen();
+}
+function nbWegOrga(key, wert){ if(!_FZ) return; _FZ.wert.orga[key] = (_FZ.wert.orga[key]===wert) ? undefined : wert; if(_FZ.wert.orga[key]===undefined) delete _FZ.wert.orga[key]; nbWegZeichnen(); }
+/* Textfelder des Ablaufs schreiben in die Felder des Bogens bzw. in _FZ – beim Weiterblättern. */
+function nbWegFelderMerken(){
+  document.querySelectorAll("#nb-weg [data-nb-ziel]").forEach(el=>{
+    const z = el.dataset.nbZiel;
+    if(z.startsWith("#")){ const f = document.getElementById(z.slice(1)); if(f) f.value = el.value; }
+    else if(_FZ) _FZ.wert[z] = el.value.slice(0,300);
+  });
+}
+function nbWegSpeichern(){
+  nbWegFelderMerken();
+  const art = _nbWeg && _nbWeg.art;
+  nbWegAus();
+  if(art==="training"){ if(typeof einheitSave==="function") einheitSave(); }
+  else fazitSpeichern();
+}
+function nbWegZeichnen(){
+  if(!_nbWeg) return;
+  const card = document.getElementById(_nbWeg.art==="training" ? "eb-card" : "fz-card"); if(!card) return;
+  let box = document.getElementById("nb-weg");
+  if(!box || box.parentElement!==card){
+    box && box.remove();
+    box = document.createElement("div"); box.id = "nb-weg";
+    card.insertBefore(box, card.children[1]||null);
+  }
+  card.classList.add("nb-weg-an");
+  const st = _nbWeg.schritte[_nbWeg.i], n = _nbWeg.schritte.length, i = _nbWeg.i;
+  const kachel = (an, label, onclick, extra) => `<button type="button" class="nb-kachel" aria-pressed="${an}" onclick="${onclick}" style="display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:10px 14px;margin-bottom:8px;border:${an?"2px solid var(--blue)":"1px solid var(--rand-bedien)"};border-radius:12px;background:${an?"var(--blue-bg)":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-karte);font-weight:${an?800:600};text-align:left;cursor:pointer;${extra||""}"><span style="flex:1;min-width:0">${label}</span>${an?'<span aria-hidden="true" style="color:var(--blue-text);font-weight:900">✓</span>':""}</button>`;
+  const fortschritt = `<div style="display:flex;align-items:center;gap:8px;margin:2px 0 10px"><div style="flex:1;height:6px;border-radius:3px;background:var(--surface2);overflow:hidden"><div style="height:100%;width:${Math.round(i/(n-1)*100)}%;background:var(--blue);transition:width .2s"></div></div><span style="font-size:var(--s-klein);color:var(--text2);white-space:nowrap">Schritt ${i+1} von ${n}</span></div>`;
+  const fuss = (weiter) => `<div style="display:flex;gap:8px;margin-top:6px">
+      ${i>0?`<button type="button" class="btn" style="min-height:48px" onclick="nbWegFelderMerken();nbWegGehe(-1)"><i class="ti ti-arrow-left"></i>Zurück</button>`:""}
+      <button type="button" class="btn${weiter?" btn-p":""}" style="flex:1;min-height:48px;justify-content:center" onclick="nbWegFelderMerken();nbWegGehe(1)">${weiter||"überspringen"}</button>
+    </div>
+    <button type="button" onclick="nbWegFelderMerken();nbWegAus()" style="display:block;margin:10px auto 0;min-height:44px;background:none;border:none;color:var(--text2);font-family:inherit;font-size:var(--s-text);text-decoration:underline;cursor:pointer">Alles auf einen Blick</button>`;
+  const kopf = `${fortschritt}<div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)">${esc(st.titel)}</div>${st.frage?`<div style="font-size:var(--s-teil);font-weight:800;margin:4px 0 12px;line-height:1.3">${esc(st.frage)}</div>`:""}`;
+  const fld = "width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text);resize:vertical";
+  let html = "";
+  if(st.typ==="start"){
+    html = `${fortschritt}<div style="font-size:var(--s-teil);font-weight:800;margin:4px 0 6px">Wie möchtest du anfangen?</div>
+      <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:12px;line-height:1.45">Frage für Frage mit Antwort-Kacheln – oder erst frei erzählen, dann sind die Kacheln schon vorausgewählt.</div>
+      <div data-nb-start></div>
+      ${kachel(false,"➡️ Los geht’s – Frage für Frage","nbWegGehe(1)")}
+      <button type="button" onclick="nbWegAus()" style="display:block;margin:6px auto 0;min-height:44px;background:none;border:none;color:var(--text2);font-family:inherit;font-size:var(--s-text);text-decoration:underline;cursor:pointer">Alles auf einen Blick</button>`;
+  }else if(st.typ==="kacheln"){
+    const akt = st.lesen();
+    html = kopf + st.kacheln.map(k=>kachel(String(akt)===String(k.wert), esc(k.label), `nbWegWahl(${typeof k.wert==="number"?k.wert:"'"+k.wert+"'"})`)).join("")
+      + (st.extra?kachel(st.extra.an(), esc(st.extra.label), "nbWegWahl('extra')", "border-style:dashed"):"")
+      + (st.feld?`<label style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2);margin:4px 0 8px">${esc(st.feld.label)}<input data-nb-ziel="#${st.feld.id}" value="${esc(document.getElementById(st.feld.id)?.value||"")}" maxlength="200" style="${fld};min-height:44px;margin-top:3px"></label>`:"")
+      + fuss(akt?"Weiter":"");
+  }else if(st.typ==="kinder"){
+    html = kopf + st.kinder.map((name,k)=>{
+      const v = (typeof einheitGetStar==="function"?einheitGetStar("sp-"+k):0);
+      return `<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:var(--border)"><span style="flex:1;min-width:0;font-size:var(--s-text);font-weight:700">${esc(name)}</span>
+        ${[["★","ruhig"],["★★","gut"],["★★★","stark"]].map(([s,l],j)=>`<button type="button" aria-pressed="${v===j+1}" aria-label="${esc(name)}: ${l}" onclick="nbWegKind(${k},${j+1})" style="min-width:58px;min-height:44px;border:${v===j+1?"2px solid var(--blue)":"1px solid var(--rand-bedien)"};border-radius:10px;background:${v===j+1?"var(--blue-bg)":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;line-height:1.1;cursor:pointer">${s}<br>${l}</button>`).join("")}</div>`;
+    }).join("") + fuss("Weiter");
+  }else if(st.typ==="text"){
+    html = kopf + st.felder.map(f=>{
+      const wert = st.spiel ? (_FZ&&_FZ.wert[f.key]||"") : (document.getElementById(f.id)?.value||"");
+      return `<label style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-bottom:8px">${esc(f.label)}<textarea data-nb-ziel="${st.spiel?f.key:"#"+f.id}" rows="3" maxlength="300" style="${fld};margin-top:3px">${esc(wert)}</textarea></label>`;
+    }).join("") + fuss("Weiter");
+  }else if(st.typ==="orga"){
+    html = kopf + FZ_ORGA.map(o=>`<div style="margin-bottom:10px"><div style="font-size:var(--s-text);font-weight:700;margin-bottom:4px">${o.emo} ${o.label}</div>
+      <div style="display:flex;gap:6px">${o.stufen.map((l,j)=>{ const an=_FZ&&_FZ.wert.orga[o.key]===j+1; return `<button type="button" aria-pressed="${an}" onclick="nbWegOrga('${o.key}',${j+1})" style="flex:1;min-height:48px;border:${an?"2px solid var(--blue)":"1px solid var(--rand-bedien)"};border-radius:10px;background:${an?"var(--blue-bg)":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">${esc(l)}</button>`; }).join("")}</div></div>`).join("") + fuss("Weiter");
+  }else if(st.typ==="ende"){
+    const zusammen = [];
+    if(_nbWeg.art==="training"){
+      const ist = ["spass","umsetzung","erfolg"].filter(k=>einheitGetStar(k)).length;
+      zusammen.push(`Einheit: ${ist} von 3 Fragen beantwortet`);
+      const plan = (typeof EB_PLAN!=="undefined"?EB_PLAN:[]);
+      const ue = plan.filter((p,k)=>document.getElementById("eb-skip-"+k)?.checked || EB_DIMS.some(d=>einheitGetStar(`ue-${k}-${d.key}`))).length;
+      if(plan.length) zusammen.push(`Übungen: ${ue} von ${plan.length}`);
+      const kids = (typeof EB_SPIELER!=="undefined"?EB_SPIELER:[]);
+      if(kids.length) zusammen.push(`Kinder: ${kids.filter((x,k)=>einheitGetStar("sp-"+k)).length} von ${kids.length}`);
+    }else if(_FZ){
+      _FZ.teams.forEach(t=>zusammen.push(`${t.name}: ${Object.keys(_FZ.wert.teams[String(t.nr)]||{}).length} von 4`));
+      if(_FZ.gaeste.length) zusammen.push(`Gäste: ${Object.keys(_FZ.wert.gaeste).length} von ${_FZ.gaeste.length}`);
+    }
+    html = `${fortschritt}<div style="font-size:var(--s-teil);font-weight:800;margin:4px 0 8px">Fertig – so steht es</div>
+      <div style="font-size:var(--s-text);color:var(--text2);line-height:1.6;margin-bottom:12px">${zusammen.map(esc).join("<br>")}<br>Offene Fragen bleiben leer – auch halb ausgefüllt ist besser als gar nicht.</div>
+      <button type="button" class="btn btn-p" onclick="nbWegSpeichern()" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-check"></i>Speichern</button>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button type="button" class="btn" style="min-height:48px" onclick="nbWegGehe(-1)"><i class="ti ti-arrow-left"></i>Zurück</button>
+        <button type="button" class="btn" style="flex:1;min-height:48px;justify-content:center" onclick="nbWegAus()">Alles auf einen Blick</button>
+      </div>`;
+  }
+  /* Der Sprachnotiz-Kasten gibt es nur einmal (Kennungen nb-text, nb-mic …). In Schritt 1 steht
+     er im Ablauf, sonst an seinem Platz im Bogen. Vor dem Neuzeichnen wird er herausgelöst,
+     damit innerHTML ihn nicht mitnimmt. */
+  let nb = document.getElementById("nb-box");
+  if(nb && box.contains(nb)) nb.remove();
+  if(nb && !card.querySelector("[data-nb-platz]") && card.contains(nb)){ const platz=document.createElement("div"); platz.setAttribute("data-nb-platz",""); platz.hidden=true; nb.replaceWith(platz); }
+  box.innerHTML = html;
+  if(nb){
+    if(st.typ==="start"){ const ziel = box.querySelector("[data-nb-start]"); if(ziel) ziel.replaceWith(nb); }
+    else{ const platz = card.querySelector("[data-nb-platz]"); if(platz){ platz.after(nb); } }
+  }
+  try{ box.scrollIntoView({block:"nearest"}); }catch(e){}
 }
 
 /* MODUL_WACHE: letzter Name der Datei. Stirbt sie vorher, fehlt genau dieser. */

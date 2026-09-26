@@ -1057,3 +1057,8 @@ html,body{overscroll-behavior-y:contain}
 .tp-griff:focus-visible{outline:2px solid var(--blue,#1a56db);outline-offset:1px}
 .tp-slot.tp-zieht{position:relative;z-index:5;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:.95}
 .tp-zieh-linie{height:4px;margin:0 0 8px;border-radius:2px;background:var(--blue,#1a56db)}
+/* v627: Geführte Nachbereitung – solange der Ablauf läuft, zeigt die Karte nur Kopf und Ablauf.
+   Der Bogen bleibt im DOM (die Kacheln schreiben in seine Felder) und kommt mit
+   „Alles auf einen Blick“ zurück. */
+.nb-weg-an > :not(#nb-weg):not(:first-child){display:none!important}
+
