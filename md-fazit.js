@@ -160,7 +160,7 @@ async function fazitOpen(terminId){
   nbWegStart("spiel");   // v627: geführte Nachbereitung als Standard
 }
 
-function fazitSchliessen(){ nbDiktatStop(); _nbText=""; _nbWeg=null; document.getElementById("fz-modal")?.remove(); _FZ=null; }
+function fazitSchliessen(){ nbDiktatStop(); _nbWeg=null; document.getElementById("fz-modal")?.remove(); _FZ=null; }   // v628: Notiz und Tagebuch-Vorschlag bleiben bis zum nächsten Termin (nbSprachHtml)
 
 function fzStufenHtml(gruppe, id, stufen, aktuell){
   return `<div style="display:flex;gap:5px">${stufen.map(st=>{
@@ -266,6 +266,7 @@ async function fazitSpeichern(){
   const body = { termin_id:Number(_FZ.termin.id), autor:_FZ.autor, teams:w.teams, gaeste:w.gaeste,
                  orga:w.orga, getragen:w.getragen||null, arbeiten:w.arbeiten||null,
                  updated_at:new Date().toISOString() };
+  const notiz = nbSprachnotizFuer("t"+_FZ.termin.id); if(notiz) body.sprachnotiz = notiz;   // v628
   try{
     const r = await fetch(`${SB_URL}/rest/v1/event_bewertung?on_conflict=termin_id,autor`,
       { method:"POST", headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'}, body:JSON.stringify(body) });
@@ -332,10 +333,25 @@ async function fazitOffene(tage){
 
    Datenschutz: Vor dem Senden werden alle Kindernamen aus dem Kader durch „Kind 1“, „Kind 2“ …
    ersetzt; die Antwort wird zurückübersetzt. Beim Sprachmodell kommt kein Name an. */
-let _nbHoert = null, _nbText = "", _nbFuer = "";
+let _nbHoert = null, _nbText = "", _nbFuer = "", _nbTb = null;
+/* v628: Der gesprochene Text wird mit der Nachbereitung gespeichert (Spalte sprachnotiz) –
+   vorher ging er beim Schließen verloren. Nur für den Termin, zu dem er gehört. */
+function nbSprachnotizFuer(fuer){ const t = String(_nbText||"").trim(); return (fuer===_nbFuer && t) ? t.slice(0,4000) : undefined; }
+function nbTagebuchVorschlag(fuer){ return (_nbTb && _nbTb.fuer===fuer) ? _nbTb.v : null; }
+/* „Kind n“ aus der KI-Antwort → Deckname des Tagebuchs („Kind C“). Nie der echte Name: das
+   Tagebuch geht an den Verband. Ohne Tagebuch-Modul bleibt es neutral „ein Kind“. */
+function nbTbDecknamen(tb, m){
+  if(!tb) return null;
+  const um = t => String(t||"").replace(/Kind (\d+)/g, (x,n)=>{
+    const name = m && m.zurueck ? m.zurueck["Kind "+n] : null;
+    return name && typeof tbAlias==="function" ? tbAlias(name) : "ein Kind";
+  });
+  return { baustein:tb.baustein, beobachtung:um(tb.beobachtung), aha:um(tb.aha), konsequenz:um(tb.konsequenz),
+           schlagworte:(tb.schlagworte||[]).map(um) };
+}
 function nbSprachHtml(art, fuer){
   /* Der Text gehört zu genau einem Termin – wer zum nächsten Tag wechselt, fängt leer an. */
-  if(String(fuer||"") !== _nbFuer){ _nbFuer = String(fuer||""); _nbText = ""; nbDiktatStop(); }
+  if(String(fuer||"") !== _nbFuer){ _nbFuer = String(fuer||""); _nbText = ""; _nbTb = null; nbDiktatStop(); }
   const kannHoeren = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
   const fld = "width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text);resize:vertical";
   return `<div id="nb-box" style="border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);padding:10px 11px;margin:10px 0 4px">
@@ -415,6 +431,7 @@ async function nbAuswerten(art){
     const m = nbMaske([]);
     body = { art:"spiel", festival:_FZ.termin&&_FZ.termin.typ==="turnier", text:m.weg(text),
       teams:_FZ.teams.map(t=>({nr:t.nr,name:t.name})), gaeste:_FZ.gaeste };
+    body._m = m;
   }
   const m = body._m; delete body._m;
   if(los){ los.disabled = true; los.innerHTML = '<i class="ti ti-loader-2"></i>KI ordnet zu …'; }
@@ -429,7 +446,10 @@ async function nbAuswerten(art){
     if(st) st.textContent = "Nicht übernommen: "+(e&&e.message||"keine Verbindung")+". Die Notiz bleibt stehen.";
     return;
   }
+  _nbTb = d.ergebnis.tagebuch ? { fuer:_nbFuer, v:nbTbDecknamen(d.ergebnis.tagebuch, m) } : null;
+  _nbMaskeAktiv = m;
   const bericht = art==="training" ? nbInsTraining(d.ergebnis, m) : nbInsSpiel(d.ergebnis);
+  if(_nbTb) bericht.push("Tagebuch-Vorschlag");
   const los2 = document.getElementById("nb-los"), st2 = document.getElementById("nb-status");
   if(los2){ los2.disabled = false; los2.innerHTML = '<i class="ti ti-sparkles"></i>In den Bogen übernehmen'; }
   if(st2) st2.innerHTML = bericht.length
@@ -443,7 +463,11 @@ function _nbStern(key, wert, max, groesse){
   if(typeof einheitSetStar==="function") einheitSetStar(key, wert, max, groesse);
   return true;
 }
+/* Im Bogen (nur Trainer) stehen die echten Namen – „Kind 2“ aus der KI-Antwort wird zurückübersetzt. */
+let _nbMaskeAktiv = null;
+function nbZurueck(t){ const m=_nbMaskeAktiv; return String(t||"").replace(/Kind (\d+)/g,(x,n)=>(m&&m.zurueck&&m.zurueck["Kind "+n])||x); }
 function _nbTextDazu(el, satz){
+  satz = nbZurueck(satz);
   if(!el || !satz) return false;
   const alt = (el.value||"").trim();
   if(alt.includes(satz)) return false;
@@ -487,7 +511,7 @@ function nbInsSpiel(e){
   if(tm) b.push(`${tm} Mannschaft${tm>1?"en":""}`);
   let g = 0; (e.gaeste||[]).forEach(x=>{ if(_FZ.gaeste.includes(x.name)){ w.gaeste[x.name] = x.einschaetzung; g++; } });
   if(g) b.push(`${g} Gast${g>1?"einschätzungen":"einschätzung"}`);
-  const dazu = (alt, neu) => { if(!neu) return alt; alt=(alt||"").trim(); return alt.includes(neu) ? alt : (alt ? alt+" · "+neu : neu).slice(0,300); };
+  const dazu = (alt, neu) => { if(!neu) return alt; neu = nbZurueck(neu); alt=(alt||"").trim(); return alt.includes(neu) ? alt : (alt ? alt+" · "+neu : neu).slice(0,300); };
   if(e.getragen){ w.getragen = dazu(w.getragen, e.getragen); b.push("Das hat getragen"); }
   if(e.arbeiten){ w.arbeiten = dazu(w.arbeiten, e.arbeiten); b.push("Daran arbeiten wir"); }
   const o = e.orga||{}; let og = 0; ["zeitplan","felder","helfer"].forEach(k=>{ if(o[k]){ w.orga[k] = o[k]; og++; } });
