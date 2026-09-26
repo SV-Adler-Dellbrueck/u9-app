@@ -538,7 +538,7 @@ function clearForm(){
   const attSeg=document.getElementById("p-att-seg");
   if(attSeg){attSeg.querySelectorAll(".seg-btn").forEach(b=>{b.classList.toggle("active",b.dataset.val==="2");});}
   document.getElementById("p-age").value="8";
-  document.getElementById("p-grp").value="flex";
+  // v635: #p-grp gibt es seit dem Ende der A/B-Labels nicht mehr – ungeschützt brach „Leeren“ hier ab.
   document.querySelectorAll('input[type="radio"]').forEach(r=>r.checked=false);
   document.getElementById("fazit-out").value="";
   document.getElementById("pfill").style.width="0%";
@@ -566,7 +566,7 @@ function loadPlayerToForm(p){
   const elSeg=document.getElementById("p-eltern-seg");
   if(elSeg){elSeg.querySelectorAll(".seg-btn").forEach(b=>{b.classList.toggle("active",b.dataset.val===(p.eltern||"2"));});}
   document.getElementById("p-age").value=p.age||"8";
-  document.getElementById("p-grp").value=p.grp||"flex";
+  // v635: #p-grp entfernt (A/B-Labels abgeschafft) – ungeschützt brach „Laden“ hier ab, nach dem Namen.
   document.getElementById("p-trainer").value=p.trainer||(typeof _meTrainer==="string"&&_meTrainer)||((typeof TRAINER!=="undefined"&&TRAINER[0])||"");
   document.getElementById("p-notes").value=p.notes||"";
   const tw=getKader(p.name)?.tw||false;
