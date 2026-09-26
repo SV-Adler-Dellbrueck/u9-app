@@ -25,7 +25,11 @@ module.exports = async function (h) {
     if (!r.trainer.length) probleme.push(`${bereich}: TRAINER fehlt oder ist leer`);
     if (r.stab && r.stab.length !== r.trainer.length) probleme.push(`${bereich}: Stab hat ${r.stab.length} Namen, TRAINER ${r.trainer.length}`);
     if (fremd(r.stab).length) probleme.push(`${bereich}: Stab kennt Namen ausserhalb von TRAINER: ${fremd(r.stab).join(", ")}`);
-    if (fremd(r.profil).length) probleme.push(`${bereich}: Profil-Auswahl bietet an: ${fremd(r.profil).join(", ")}`);
+    /* v635 PO: „Wir bewerten gemeinsam als Trainer, nicht jeder einzeln“ – „Trainerteam“ ist
+       bewusst der erste Eintrag der Bewertungs-Auswahl. Jeder andere Name ausserhalb von
+       TRAINER bleibt ein Befund. */
+    const profilFremd = fremd(r.profil).filter(n => n !== "Trainerteam");
+    if (profilFremd.length) probleme.push(`${bereich}: Profil-Auswahl bietet an: ${profilFremd.join(", ")}`);
     if (r.profilFehler) probleme.push(`${bereich}: renderTrainerUI wirft ${r.profilFehler}`);
     if (fehler.length) probleme.push(`${bereich}: ${fehler.slice(0, 3).join(" | ")}`);
     zeilen.push(`${bereich}: TRAINER=${r.trainer.length} · Stab=${r.stab ? r.stab.length : "–"} · Profil-Optionen=${r.profil ? r.profil.length : "–"} · Konsolenfehler=${fehler.length}`);
