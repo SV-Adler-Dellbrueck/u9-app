@@ -4294,6 +4294,7 @@ const HELP=[
     {t:"Zurück-Taste am Handy", d:"Seit v624 geht die Zurück-Taste eine Seite zurück, statt die App zu schließen: Ist ein Fenster offen, schließt sie zuerst das Fenster; sonst führt sie zur Seite davor und zuletzt zur Startseite. Erst von der Startseite aus schließt sie die App. Das gilt im Trainer-Bereich, im Eltern-Bereich und auf den geteilten Seiten wie dem Festival-Link (Anfahrt, Regeln, „Am Rand“). In der Kabine führt sie zur Kabinen-Startseite – verlassen lässt sich die Kabine weiter nur mit dem Ausgangs-Code."},
     {t:"Backup", d:"Kader-Daten exportieren.", run:"backupExport()"},
     {t:"Dark Mode", d:"Hell/Dunkel umschalten.", run:"toggleTheme()"},
+    {t:"Schriftgröße", d:"Oben neben 🌙 steht „A“: ein Tipp macht die Schrift größer – Normal, Groß (A+), Sehr groß (A++), dann wieder Normal. Die Wahl gilt nur auf diesem Gerät und bleibt, bis du sie änderst; die anderen im Trainerteam sehen die App weiter wie gewohnt. Die Zeilen brechen dabei um, statt wie beim Zoomen mit zwei Fingern seitlich aus dem Bildschirm zu laufen. Die untere Leiste behält ihre Größe. Dasselbe gibt es in der Eltern-App. Die Kabine der Kinder und die öffentlichen Seiten (Ticker, Stadionheft, Turnier) bleiben, wie sie sind. (Seit v632)", run:"schriftWechseln()"},
   ]},
 ];
 function hilfeOpen(){

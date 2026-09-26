@@ -1075,3 +1075,15 @@ html,body{overscroll-behavior-y:contain}
 /* v630 Stempel: wer hat bewertet, wann */
 .stempel{display:inline-flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:var(--s-klein);font-weight:700;color:var(--text2);border:1px dashed var(--rand-bedien);border-radius:8px;padding:3px 8px;margin:4px 0}
 .stempel-zusatz{font-weight:600;color:var(--text2)}
+
+/* v632 Schriftgröße je Gerät (core.js applySchrift): die fünf Stufen zentral höher. Groß ≈ +15 %,
+   Sehr groß ≈ +30 %. Feste px-Werte (Kabine, Druck, Skizzen-Editor, Live-Vollbild) bleiben. */
+html[data-schrift="gross"]{--s-klein:13px;--s-text:15px;--s-karte:17px;--s-teil:21px;--s-seite:25px}
+html[data-schrift="sehrgross"]{--s-klein:14px;--s-text:17px;--s-karte:20px;--s-teil:23px;--s-seite:28px}
+.schrift-toggle{border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text);border-radius:8px;min-width:34px;height:34px;padding:0 4px;cursor:pointer;font-size:14px;font-weight:900;line-height:1;flex-shrink:0;font-family:inherit}
+/* v632: Bei größerer Schrift bleibt die untere Navigation, wie sie ist (sieben Knöpfe auf 360 px –
+   die Symbole tragen die Bedeutung, die Wörter sind kurz). Knöpfe dürfen in Raster und Reihen
+   schrumpfen und lange Wörter trennen („Trainings-turnier“), statt die Spalte aus dem Bild zu schieben. */
+html[data-schrift] #main-nav .nb span{font-size:11px}
+html[data-schrift] button{min-width:0;overflow-wrap:break-word;hyphens:auto}
+html[data-schrift] .logo-badge{font-size:13px;white-space:nowrap}

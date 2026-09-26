@@ -331,9 +331,10 @@ async function elternPasswortSpeichern(){
 }
 function elternPortalDashboard(root){
   root.innerHTML=`<div class="ep-wrap">
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 4px 12px">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px;padding:8px 4px 12px">
       <div style="font-size:var(--s-teil);font-weight:800">🦅 Eltern-Bereich</div>
-      <div style="display:flex;align-items:center;gap:10px">
+      <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
+        <button class="schrift-toggle" onclick="schriftWechseln()" aria-label="Schriftgröße umschalten" style="min-width:30px;height:30px;background:#fff;color:#334155;border:1.5px solid var(--rand-bedien)">A</button>
         <button id="theme-toggle" onclick="toggleTheme()" title="Hell / Dunkel umschalten" aria-label="Theme umschalten" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:var(--s-karte);line-height:1">🌙</button>
         <button onclick="elternTourStart()" title="Kurze Tour" aria-label="Hilfe/Tour" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:var(--s-karte);line-height:1">❓</button>
         <button onclick="elternPasswortOpen()" title="Passwort festlegen oder ändern" aria-label="Passwort festlegen oder ändern" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:var(--s-karte);line-height:1">🔑</button>
@@ -343,6 +344,7 @@ function elternPortalDashboard(root){
     <div id="ep-dash-body"><div style="text-align:center;padding:40px;color:#64748b">Lade…</div></div>
   </div>`;
   if(typeof applyTheme==="function")applyTheme(localStorage.getItem("adler_theme")); // Toggle-Icon + data-theme
+  if(typeof applySchrift==="function"){ try{ applySchrift(localStorage.getItem("adler_schrift")); }catch(e){} }   // v632: Knopf beschriften
   if(typeof elternThemeInit==="function"){ elternThemeInit(); elternThemeSweep(document.getElementById("eltern-portal")||document.body); } // Kopfzeile bei Dark einfärben
   dsgvoEnsureConsent(elternDashLoad); // Dashboard erst nach Datenschutz-Einwilligung laden
   if(typeof kabineGesperrt==="function"&&kabineGesperrt()&&typeof kabineSperre==="function")kabineSperre();   // v609: Kabinen-Zeit war abgelaufen – erst der Code öffnet
