@@ -48,7 +48,8 @@ const FORM_TRAINING = `{
   "einheit": {"spass": 1-5|null, "umsetzung": 1-5|null, "erfolg": 1-5|null, "notiz": "…"|null},
   "uebungen": [{"nr": <Nummer>, "durchfuehrung": 1-5|null, "spass": 1-5|null, "anforderung": 1-5|null,
                 "notiz": "…"|null, "uebersprungen": true|false}],
-  "kinder": [{"kind": "Kind 3", "sterne": 1-3}]
+  "kinder": [{"kind": "Kind 3", "sterne": 1-3}],
+  <TAGEBUCH>
 }
 Bedeutung: einheit.spass = Spaß der Kinder insgesamt; umsetzung = wurde der Plan umgesetzt;
 erfolg = wurde das Ziel der Einheit erreicht. Je Übung: durchfuehrung = lief die Übung
@@ -61,7 +62,8 @@ const FORM_SPIEL = `{
   "gaeste": [{"name": "<genau wie vorgegeben>", "einschaetzung": "zu_schwach"|"passend"|"zu_stark"}],
   "getragen": "…"|null,
   "arbeiten": "…"|null,
-  "orga": {"zeitplan": 1-3|null, "felder": 1-3|null, "helfer": 1-3|null}
+  "orga": {"zeitplan": 1-3|null, "felder": 1-3|null, "helfer": 1-3|null},
+  <TAGEBUCH>
 }
 Bedeutung: ordnung = verteilt geblieben (3) oder Traube um den Ball (1); pass = kamen Pässe an;
 zweikampf = angenommen (3) oder zurückgewichen (1); spass = wie es den Kindern ging.
@@ -70,12 +72,26 @@ orga.zeitplan: 1 zu eng, 2 passte, 3 zu viel Luft; orga.felder: 1 zu klein, 2 pa
 3 zu groß; orga.helfer: 1 zu wenige, 2 knapp, 3 genug. Sagt er „nur eine Mannschaft“ oder
 nennt keine, gilt das Gesagte für Mannschaft 1.`;
 
+/* v628 PO: „… um nachher die Einträge ins Tagebuch gut aufgearbeitet wiederzufinden und auswerten
+   zu können.“ Kachel: „Ja, und auch Aha/Konsequenz vorschlagen“. Der Vorschlag landet im
+   Tagebuch-Fenster und wird dort vom Trainer geprüft – gespeichert wird nichts von selbst. */
+const FORM_TAGEBUCH = `"tagebuch": {"baustein": "ich"|"spiel_spieler"|"organisation"|"system_fussball",
+  "beobachtung": "…", "aha": "…"|null, "konsequenz": "…"|null, "schlagworte": ["…", "…"]}
+Tagebuch (Trainertagebuch nach DFB-Basis-Coach): baustein = worum es im Kern geht – ich (der
+Trainer selbst: Ansprache, Rolle, Haltung), spiel_spieler (Spiel, Kinder, Technik, Taktik),
+organisation (Ablauf, Zeit, Material, Felder, Helfer), system_fussball (Verein, Verband, Regeln,
+Eltern). beobachtung = was passiert ist, geordnet, sachlich, 2–4 Sätze, ohne Wertung.
+aha = die Erkenntnis in Ich-Form aus Sicht des Trainers (1–2 Sätze) – nur wenn die Notiz sie
+trägt, sonst null. konsequenz = ein konkreter nächster Schritt fürs nächste Training (1 Satz) –
+nur wenn die Notiz ihn trägt, sonst null. schlagworte = 3 bis 5 kurze Themen-Substantive
+(z. B. „Passspiel“, „Raumaufteilung“, „Motivation“, „Organisation Stationen“), keine Namen.`;
+
 async function llmRuf(provider: string, key: string, model: string, sys: string, user: string) {
   if (provider === "openai") {
     const r = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model, max_tokens: 2000, temperature: 0.1, response_format: { type: "json_object" }, messages: [{ role: "system", content: sys }, { role: "user", content: user }] }),
+      body: JSON.stringify({ model, max_tokens: 3000, temperature: 0.1, response_format: { type: "json_object" }, messages: [{ role: "system", content: sys }, { role: "user", content: user }] }),
     });
     if (!r.ok) return { ok: false, status: r.status, text: "" };
     const d = await r.json();
@@ -84,12 +100,22 @@ async function llmRuf(provider: string, key: string, model: string, sys: string,
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
-    body: JSON.stringify({ model, max_tokens: 2000, temperature: 0.1, system: sys,
+    body: JSON.stringify({ model, max_tokens: 3000, temperature: 0.1, system: sys,
       messages: [{ role: "user", content: user }, { role: "assistant", content: "{" }] }),
   });
   if (!r.ok) return { ok: false, status: r.status, text: "" };
   const d = await r.json();
   return { ok: true, status: 200, text: "{" + (d?.content?.[0]?.text || "") };
+}
+
+const BAUSTEINE = ["ich", "spiel_spieler", "organisation", "system_fussball"];
+function sanTagebuch(t: any) {
+  if (!t || typeof t !== "object") return null;
+  const worte = (Array.isArray(t.schlagworte) ? t.schlagworte : []).map((w: unknown) => String(w || "").trim().slice(0, 40))
+    .filter((w: string) => w && !/^kind \d+$/i.test(w)).slice(0, 5);
+  const out = { baustein: BAUSTEINE.includes(String(t.baustein)) ? String(t.baustein) : "spiel_spieler",
+    beobachtung: satz(t.beobachtung, 800), aha: satz(t.aha, 400), konsequenz: satz(t.konsequenz, 300), schlagworte: worte };
+  return (out.beobachtung || out.aha || out.konsequenz || worte.length) ? out : null;
 }
 
 const zahl = (v: unknown, max: number) => { const n = Math.round(Number(v)); return (isFinite(n) && n >= 1 && n <= max) ? n : null; };
@@ -152,26 +178,30 @@ Deno.serve(async (req) => {
     if (used >= LIMIT) return j({ error: `Tageslimit erreicht (${LIMIT} KI-Anfragen/Tag). Morgen wieder!` }, 429);
 
     const body = await req.json().catch(() => ({}));
-    const art = body?.art === "spiel" ? "spiel" : "training";
+    const art = body?.art === "spiel" ? "spiel" : body?.art === "tagebuch" ? "tagebuch" : "training";
     const text = String(body?.text ?? "").trim().slice(0, MAX_TEXT);
     if (text.length < 15) return j({ error: "Die Notiz ist zu kurz – sprich ein paar Sätze zur Einheit." }, 400);
 
     let user = "", nrs = new Set<number>(), namen = new Set<string>();
-    if (art === "training") {
+    if (art === "tagebuch") {
+      /* Nur der Tagebuch-Teil – aus einer gespeicherten Sprachnotiz, wenn der Eintrag später entsteht. */
+      const anlass = String(body?.anlass ?? "").slice(0, 160);
+      user = `ANLASS: ${anlass || "Nachbereitung"}\n\nANTWORTFORM:\n{\n  ${FORM_TAGEBUCH}\n}\n\nSPRACHNOTIZ:\n\"\"\"\n${text}\n\"\"\"`;
+    } else if (art === "training") {
       const ue = (Array.isArray(body?.uebungen) ? body.uebungen : []).slice(0, 30)
         .map((u: any) => ({ nr: Number(u?.nr), name: String(u?.name || "").slice(0, 120), bloecke: String(u?.bloecke || "").slice(0, 160) }))
         .filter((u: any) => isFinite(u.nr));
       const kinder = (Array.isArray(body?.kinder) ? body.kinder : []).slice(0, 30).map((k: unknown) => String(k)).filter((k: string) => /^Kind \d+$/.test(k));
       nrs = new Set(ue.map((u: any) => u.nr)); namen = new Set(kinder);
       user = `ÜBUNGEN DIESER EINHEIT:\n${ue.map((u: any) => `${u.nr}. ${u.name}${u.bloecke ? " (" + u.bloecke + ")" : ""}`).join("\n") || "(keine geplant)"}\n\n`
-        + `ANWESENDE KINDER: ${kinder.join(", ") || "(keine erfasst)"}\n\nANTWORTFORM:\n${FORM_TRAINING}\n\nSPRACHNOTIZ:\n"""\n${text}\n"""`;
+        + `ANWESENDE KINDER: ${kinder.join(", ") || "(keine erfasst)"}\n\nANTWORTFORM:\n${FORM_TRAINING.replace("<TAGEBUCH>", FORM_TAGEBUCH)}\n\nSPRACHNOTIZ:\n"""\n${text}\n"""`;
     } else {
       const teams = (Array.isArray(body?.teams) ? body.teams : []).slice(0, 8)
         .map((t: any) => ({ nr: Number(t?.nr), name: String(t?.name || "").slice(0, 60) })).filter((t: any) => isFinite(t.nr));
       const gaeste = (Array.isArray(body?.gaeste) ? body.gaeste : []).slice(0, 12).map((g: unknown) => String(g).slice(0, 80));
       nrs = new Set(teams.map((t: any) => t.nr)); namen = new Set(gaeste);
       user = `ART: ${body?.festival ? "Festival" : "Spiel"}\nUNSERE MANNSCHAFTEN:\n${teams.map((t: any) => `${t.nr}. ${t.name}`).join("\n")}\n`
-        + `GÄSTE / GEGNER: ${gaeste.join(" · ") || "(keine)"}\n\nANTWORTFORM:\n${FORM_SPIEL}\n\nSPRACHNOTIZ:\n"""\n${text}\n"""`;
+        + `GÄSTE / GEGNER: ${gaeste.join(" · ") || "(keine)"}\n\nANTWORTFORM:\n${FORM_SPIEL.replace("<TAGEBUCH>", FORM_TAGEBUCH)}\n\nSPRACHNOTIZ:\n"""\n${text}\n"""`;
     }
 
     const provider = (Deno.env.get("LLM_PROVIDER") || "anthropic").toLowerCase();
@@ -189,7 +219,8 @@ Deno.serve(async (req) => {
       const m = res.text.match(/\{[\s\S]*\}/); if (m) { try { parsed = JSON.parse(m[0]); } catch { /* unlesbar */ } }
     }
     if (!parsed || typeof parsed !== "object") return j({ error: "Die KI-Antwort war unlesbar. Bitte noch einmal versuchen." }, 502);
-    const ergebnis = art === "training" ? sanTraining(parsed, nrs, namen) : sanSpiel(parsed, nrs, namen);
+    const ergebnis: any = art === "training" ? sanTraining(parsed, nrs, namen) : art === "spiel" ? sanSpiel(parsed, nrs, namen) : {};
+    ergebnis.tagebuch = sanTagebuch(parsed?.tagebuch);
 
     await svc.from("ki_usage").upsert({ uid, tag: today, count: used + 1 }, { onConflict: "uid,tag" });
     return j({ art, ergebnis, rest: LIMIT - (used + 1), modell }, 200);

@@ -10,6 +10,9 @@
    KEINE Vollautomatik. Ein Eintrag, der sich vollständig selbst schreibt, enthält keine
    Erkenntnis — „Aha" und „Konsequenz" bleiben Handarbeit, und ohne beide wird nicht
    gespeichert. Das ist in der Tabelle als NOT NULL verankert, nicht nur hier.
+   v628 (PO-Kachel „Ja, und auch Aha/Konsequenz vorschlagen“): Aus einer Sprachnotiz schlägt
+   die KI alle vier Felder vor. Pflicht bleiben sie, und erfasst wird nur, was der Trainer im
+   Fenster stehen lässt – der Hinweis „Vorschlag der KI“ steht darüber, ki_vorschlag merkt es.
 
    Zwei Abweichungen vom Paket, beide bewusst und mit dem PO besprochen:
 
@@ -49,8 +52,11 @@ function tbAliasBuchstabe(rang){
 }
 /* Rang über ALLE Kader-Zeilen, nach id sortiert – siehe Kopf der Datei. */
 function tbAliasMap(){
+  /* v628: KADER führt die Kennung als _id (loadKader) – über k.id sortierte die Liste nach
+     gar nichts, und der Deckname hing an der Kader-Reihenfolge statt am Kind. */
+  const kid = k => Number((typeof kaderId==="function" ? kaderId(k) : (k&&(k._id!=null?k._id:k.id))) || 0);
   const alle = (typeof KADER!=="undefined" ? (KADER||[]) : []).slice()
-    .sort((a,b)=>Number(a.id||0)-Number(b.id||0));
+    .sort((a,b)=>kid(a)-kid(b));
   const map = new Map();
   alle.forEach((k,i)=>{ if(k&&k.name) map.set(k.name, "Kind "+tbAliasBuchstabe(i)); });
   return map;
@@ -105,6 +111,7 @@ async function tagebuchAusEinheit(datum){
 
   tbOeffnen({ quelle:"einheit", terminId:null, datum, baustein:"spiel_spieler",
               ausloeser, beobachtung });
+  tbKiVorschlag("d"+datum, bew&&bew.sprachnotiz, ausloeser);
 }
 
 async function tagebuchAusEvent(terminId){
@@ -130,6 +137,7 @@ async function tagebuchAusEvent(terminId){
 
   tbOeffnen({ quelle:"event", terminId:Number(terminId), datum:t.datum,
               baustein:"organisation", ausloeser, beobachtung });
+  tbKiVorschlag("t"+t.id, bew&&bew.sprachnotiz, ausloeser);
 }
 
 function tagebuchNeu(){
@@ -152,7 +160,7 @@ function tbOeffnen(vor){
   document.getElementById("tb-modal")?.remove();
   _TB = { ...vor, werte:{ baustein:vor.baustein, ausloeser:vor.ausloeser||"",
           beobachtung:vor.beobachtung||"", aha:"", konsequenz:"", konsequenz_bis:"",
-          beleg:"", anschluss:"" }, namensfund:null, fehlt:[] };
+          beleg:"", anschluss:"", schlagworte:"" }, namensfund:null, fehlt:[], ki:false, kiGespeichert:null };
   const modal = document.createElement("div");
   modal.id = "tb-modal";
   modal.setAttribute("role","dialog"); modal.setAttribute("aria-modal","true");
@@ -171,7 +179,7 @@ function tagebuchSchliessen(){ document.getElementById("tb-modal")?.remove(); _T
    ohne dieses Einsammeln wäre es beim nächsten Antippen eines Bausteins weg. */
 function tbFelderLesen(){
   if(!_TB) return;
-  ["ausloeser","beobachtung","aha","konsequenz","konsequenz_bis","beleg","anschluss"].forEach(k=>{
+  ["ausloeser","beobachtung","aha","konsequenz","konsequenz_bis","beleg","anschluss","schlagworte"].forEach(k=>{
     const el = document.getElementById("tb-"+k);
     if(el) _TB.werte[k] = el.value;
   });
@@ -210,6 +218,8 @@ function tbRender(){
   c.innerHTML = `${mdlHead("tb-modal","📓","Tagebucheintrag",
       _TB.quelle==="frei" ? "Freier Eintrag" : "Aus der Nachbereitung vom "+tbDatumDe(_TB.datum),"#7c3aed")}
 
+    ${_TB.ki?`<div role="status" style="background:var(--surface2);border:var(--border-s);border-left:4px solid var(--purple);border-radius:10px;padding:10px 12px;font-size:var(--s-text);line-height:1.5;margin-top:10px">✨ <b>Vorschlag der KI aus deiner Sprachnotiz.</b> Baustein, Beobachtung, Aha, Konsequenz und Schlagworte sind vorausgefüllt – prüfe sie und schreib sie in deinen Worten, bevor du erfasst.</div>`:""}
+    ${(!_TB.ki && _TB.kiGespeichert)?`<button class="btn" id="tb-ki-los" onclick="tbKiAusGespeichert()" style="width:100%;min-height:48px;margin-top:10px;justify-content:center"><i class="ti ti-sparkles"></i>Vorschlag aus der Sprachnotiz</button>`:""}
     <div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:14px 0 6px">Baustein</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       ${TB_BAUSTEINE.map(b=>{const an=w.baustein===b.key;
@@ -235,6 +245,9 @@ function tbRender(){
 
     <label style="${lbl}">Konsequenz<span style="color:var(--red)"> · Pflicht</span>
       <textarea id="tb-konsequenz" rows="2" onfocus="tbFokus('konsequenz')" placeholder="Was machst du beim nächsten Mal anders?" style="${fld}${fehlt("konsequenz")};resize:vertical;margin-top:3px">${esc(w.konsequenz)}</textarea></label>
+
+    <label style="${lbl}">Schlagworte<span style="font-weight:500;color:var(--text3)"> · zum Wiederfinden, mit Komma getrennt</span>
+      <input type="text" id="tb-schlagworte" value="${esc(w.schlagworte)}" placeholder="z. B. Passspiel, Raumaufteilung, Motivation" style="${fld};margin-top:3px"></label>
 
     <label style="${lbl}">Bis wann<span style="font-weight:500;color:var(--text3)"> · optional</span>
       <input type="date" id="tb-konsequenz_bis" value="${esc(w.konsequenz_bis)}" style="${fld};margin-top:3px"></label>
@@ -293,7 +306,7 @@ async function tagebuchSpeichern(){
     return;
   }
   if(!_TB.uebergehen){
-    const fund = tbNamensfund([w.ausloeser,w.beobachtung,w.aha,w.konsequenz,w.beleg,w.anschluss].join("\n"));
+    const fund = tbNamensfund([w.ausloeser,w.beobachtung,w.aha,w.konsequenz,w.beleg,w.anschluss,w.schlagworte].join("\n"));
     if(fund){ _TB.namensfund = fund; tbRender(); return; }
   }
 
@@ -303,6 +316,7 @@ async function tagebuchSpeichern(){
                  aha:w.aha.trim(), konsequenz:w.konsequenz.trim(),
                  konsequenz_bis:w.konsequenz_bis||null,
                  beleg:w.beleg.trim()||null, anschluss:w.anschluss.trim()||null,
+                 schlagworte:tbSchlagworte(w.schlagworte), ki_vorschlag:!!_TB.ki,
                  updated_at:new Date().toISOString() };
   try{
     const r = await fetch(`${SB_URL}/rest/v1/tagebuch_eintrag`,
@@ -343,8 +357,16 @@ function tbListeRender(){
     return;
   }
   const heute = new Date();
-  box.innerHTML = TB_BAUSTEINE.map(b=>{
-    const eintraege = _TB_LISTE.filter(e=>e.baustein===b.key);
+  /* v628: Schlagworte zum Wiederfinden – oben die häufigsten, ein Tipp filtert. */
+  const zaehl = {};
+  _TB_LISTE.forEach(e=>(Array.isArray(e.schlagworte)?e.schlagworte:[]).forEach(x=>{ zaehl[x]=(zaehl[x]||0)+1; }));
+  const top = Object.keys(zaehl).sort((a,b)=>zaehl[b]-zaehl[a]||a.localeCompare(b)).slice(0,12);
+  const liste = _TB_FILTER ? _TB_LISTE.filter(e=>(e.schlagworte||[]).includes(_TB_FILTER)) : _TB_LISTE;
+  const themen = top.length ? `<div style="margin-bottom:12px"><div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:5px">Themen</div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap">${top.map(x=>`<button type="button" onclick="tbFilter('${jsq(x)}')" aria-pressed="${_TB_FILTER===x}" style="min-height:36px;padding:0 11px;border:1px solid var(--rand-bedien);border-radius:18px;background:${_TB_FILTER===x?"var(--purple-bg)":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">#${esc(x)} · ${zaehl[x]}</button>`).join("")}</div>
+    ${_TB_FILTER?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:5px">${liste.length} Eintr${liste.length===1?"ag":"äge"} zu „${esc(_TB_FILTER)}“ – noch einmal tippen hebt den Filter auf.</div>`:""}</div>` : "";
+  box.innerHTML = themen + TB_BAUSTEINE.map(b=>{
+    const eintraege = liste.filter(e=>e.baustein===b.key);
     const juengst = eintraege[0] ? eintraege[0].datum : null;
     const tage = juengst ? Math.floor((heute - new Date(juengst+"T00:00:00"))/864e5) : null;
     const luecke = (tage===null || tage>TB_LUECKE_TAGE);
@@ -356,8 +378,10 @@ function tbListeRender(){
   }).join("");
 }
 function tbZeile(e){
+  const worte = Array.isArray(e.schlagworte) ? e.schlagworte : [];
   return `<div style="background:var(--surface);border:var(--border-s);border-radius:var(--rl);padding:11px 12px;margin-bottom:6px">
-    <div style="font-size:var(--s-klein);color:var(--text3)">${tbDatumDe(e.datum)}${e.autor?" · "+esc(e.autor):""}</div>
+    <div style="font-size:var(--s-klein);color:var(--text3)">${tbDatumDe(e.datum)}${e.autor?" · "+esc(e.autor):""}${e.ki_vorschlag?" · ✨ aus Sprachnotiz":""}</div>
+    ${worte.length?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">${worte.map(x=>`<button type="button" onclick="tbFilter('${jsq(x)}')" aria-pressed="${_TB_FILTER===x}" style="min-height:32px;padding:0 10px;border:1px solid var(--rand-bedien);border-radius:16px;background:${_TB_FILTER===x?"var(--purple-bg)":"var(--surface2)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">#${esc(x)}</button>`).join("")}</div>`:""}
     <div style="font-size:var(--s-text);font-weight:700;margin-top:2px">${esc(e.ausloeser)}</div>
     <div style="font-size:var(--s-text);color:var(--text2);margin-top:4px;line-height:1.5"><b>Aha:</b> ${esc(e.aha)}</div>
     <div style="font-size:var(--s-text);color:var(--text2);margin-top:2px;line-height:1.5"><b>Konsequenz:</b> ${esc(e.konsequenz)}${e.konsequenz_bis?` (bis ${tbDatumDe(e.konsequenz_bis)})`:""}</div>
@@ -385,6 +409,7 @@ function tbMarkdown(e){
   z.push(`- **Konsequenz:** ${String(e.konsequenz||"").replace(/\n/g," ")}${e.konsequenz_bis?` (bis ${tbDatumDe(e.konsequenz_bis)})`:""}`);
   z.push(`- **Beleg:** ${String(e.beleg||"").replace(/\n/g," ")}`);
   z.push(`- **Anschluss:** ${String(e.anschluss||"").replace(/\n/g," ")}`);
+  if(Array.isArray(e.schlagworte) && e.schlagworte.length) z.push(`- **Schlagworte:** ${e.schlagworte.join(", ")}`);
   return z.join("\n");
 }
 /* Der Monatsexport sortiert nach Bausteinen, nicht nach Datum: so liest die Abgabe sich
@@ -435,6 +460,55 @@ function tbTeilen(text, datei){
     const a = document.createElement("a"); a.href=url; a.download=datei; a.click();
     setTimeout(()=>URL.revokeObjectURL(url),2000);
   }catch(e){ tbInDieZwischenablage(text); }
+}
+
+/* ═══ v628 · KI-Vorschlag aus der Sprachnotiz ═══════════════════════════════════
+   PO-Kachel: „Ja, und auch Aha/Konsequenz vorschlagen“ – das hebt die v526-Regel „Aha und
+   Konsequenz bleiben Handarbeit“ bewusst auf. Pflicht bleiben sie trotzdem: gespeichert wird
+   nur, was im Fenster steht, und das Fenster sagt deutlich, dass es ein Vorschlag ist.
+   Quelle 1: der Vorschlag, den die Nachbereitung eben mitgebracht hat (md-fazit.js, _nbTb).
+   Quelle 2: die gespeicherte Sprachnotiz – dann auf Knopfdruck, weil es ein KI-Aufruf ist. */
+let _TB_FILTER = null;
+function tbFilter(wort){ _TB_FILTER = (_TB_FILTER===wort) ? null : wort; tbListeRender(); }
+function tbSchlagworte(t){
+  return [...new Set(String(t||"").split(/[,;#\n]+/).map(x=>x.trim()).filter(Boolean).map(x=>x.slice(0,40)))].slice(0,8);
+}
+function tbKiAnwenden(v){
+  if(!_TB || !v) return false;
+  tbFelderLesen();
+  const w = _TB.werte;
+  if(v.baustein) w.baustein = v.baustein;
+  if(v.beobachtung) w.beobachtung = w.beobachtung ? v.beobachtung+"\n"+w.beobachtung : v.beobachtung;
+  if(v.aha && !String(w.aha||"").trim()) w.aha = v.aha;
+  if(v.konsequenz && !String(w.konsequenz||"").trim()) w.konsequenz = v.konsequenz;
+  if(Array.isArray(v.schlagworte) && v.schlagworte.length) w.schlagworte = v.schlagworte.join(", ");
+  _TB.ki = true;
+  tbRender();
+  return true;
+}
+function tbKiVorschlag(fuer, gespeichert, anlass){
+  if(!_TB) return;
+  const v = (typeof nbTagebuchVorschlag==="function") ? nbTagebuchVorschlag(fuer) : null;
+  if(v){ tbKiAnwenden(v); return; }
+  if(String(gespeichert||"").trim().length>=15){ _TB.kiGespeichert = { text:String(gespeichert), anlass:anlass||"" }; tbRender(); }
+}
+async function tbKiAusGespeichert(){
+  if(!_TB || !_TB.kiGespeichert) return;
+  const b = document.getElementById("tb-ki-los");
+  if(b){ b.disabled = true; b.innerHTML = '<i class="ti ti-loader-2"></i>KI liest die Notiz …'; }
+  const m = (typeof nbMaske==="function") ? nbMaske([]) : null;
+  const text = m ? m.weg(_TB.kiGespeichert.text) : _TB.kiGespeichert.text;
+  try{
+    const r = await fetch(`${SB_URL}/functions/v1/ki-nachbereitung`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},
+      body:JSON.stringify({ art:"tagebuch", text, anlass:_TB.kiGespeichert.anlass })});
+    const d = await r.json().catch(()=>null);
+    if(!r.ok || !d || !d.ergebnis || !d.ergebnis.tagebuch) throw new Error((d&&d.error)||"kein Vorschlag");
+    const v = (typeof nbTbDecknamen==="function") ? nbTbDecknamen(d.ergebnis.tagebuch, m) : d.ergebnis.tagebuch;
+    tbKiAnwenden(v);
+  }catch(e){
+    if(b){ b.disabled = false; b.innerHTML = '<i class="ti ti-sparkles"></i>Vorschlag aus der Sprachnotiz'; }
+    toast("Kein Vorschlag: "+(e&&e.message||"keine Verbindung"),"err");
+  }
 }
 
 /* MODUL_WACHE: letzte Funktion der Datei. Stirbt sie vorher, fehlt genau dieser Name. */
