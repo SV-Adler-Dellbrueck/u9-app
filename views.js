@@ -3356,7 +3356,7 @@ async function einheitNachbereiten(datum){
   await einheitBewertenOpen();
   if(datum&&document.getElementById("eb-card"))einheitDetailOpen(datum);
 }
-async function einheitBewertenOpen(){
+async function einheitBewertenOpen(datum){
   if(!sbToken()){toast("Bitte als Trainer anmelden","err");return;}
   document.getElementById("eb-modal")?.remove();
   const heute=new Date().toISOString().slice(0,10);
@@ -3373,6 +3373,7 @@ async function einheitBewertenOpen(){
   c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   modal.appendChild(c);document.body.appendChild(modal);
   einheitListRender();
+  if(datum&&typeof einheitDetailOpen==="function")einheitDetailOpen(datum);   // v633: das To-do öffnet genau seine Einheit
 }
 
 function einheitListRender(){
@@ -5201,13 +5202,15 @@ async function trainerTodoLoad(){
      Bildschirm, die dasselbe sagen, kosten nur Platz; deshalb hier gestrichen. */
   // b) Einheit nachbereiten, wenn du laut Trainingsplan eingeteilt warst
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?select=datum,plan&datum=gte.${vor14}&datum=lt.${heute}`,{headers:sbAuthHeaders()});
-    const r2=await fetch(`${SB_URL}/rest/v1/einheit_bewertung?select=datum&datum=gte.${vor14}&autor=eq.${encodeURIComponent(me||"")}`,{headers:sbAuthHeaders()});   // v630: je Trainer
+    /* v633: neueste zuerst – sonst verdrängten zwei alte Einheiten die von gestern. Bewertungen
+       von vor v630 tragen den Autor „Trainerteam“ und gelten für alle als erledigt. */
+    const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?select=datum,plan&datum=gte.${vor14}&datum=lt.${heute}&order=datum.desc`,{headers:sbAuthHeaders()});
+    const r2=await fetch(`${SB_URL}/rest/v1/einheit_bewertung?select=datum&datum=gte.${vor14}&autor=in.(${encodeURIComponent('"'+(me||"")+'"')},Trainerteam)`,{headers:sbAuthHeaders()});   // v630: je Trainer
     if(r.ok){
       const done=new Set(r2.ok?((await r2.json())||[]).map(x=>x.datum):[]);
       const meine=((await r.json())||[]).filter(row=>!done.has(row.datum)&&JSON.stringify(row.plan||"").includes(`"${me}"`));
       meine.slice(0,2).forEach(row=>{const d=new Date(row.datum+"T00:00:00");
-        todos.push({emo:"⭐",txt:`Einheit vom ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})} nachbereiten – du warst eingeteilt`,act:"einheitBewertenOpen()"});});
+        todos.push({emo:"⭐",txt:`Einheit vom ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})} nachbereiten – du warst eingeteilt`,act:`einheitBewertenOpen('${row.datum}')`});});
     }
   }catch(e){}
   // c) Sprachlob rollierend nach dem letzten Spiel/Turnier
