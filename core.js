@@ -1384,7 +1384,9 @@ function _dkAnzeige(zustand, text){
   if(zustand==="hoert"){
     a.hidden = false;
     a.innerHTML = '<span class="dk-punkt'+(_dk.spricht?' dk-spricht':'')+'" aria-hidden="true"></span><b>'+(_dk.spricht?"Ich höre dich":"Hört zu – sprich einfach")+'</b>'
-      + (text ? '<span class="dk-live"> … '+esc(text)+'</span>' : '');
+      + (text ? '<span class="dk-live"> … '+esc(text)+'</span>' : '')
+      + (_dk.ohneSperre ? '<span class="dk-hinweis">Dein Handy hält den Bildschirm nicht von selbst an – tippe zwischendurch kurz aufs Display.</span>' : '');
+    _dk.zuletzt = text;
   } else if(zustand==="pause"){
     a.hidden = false;
     a.innerHTML = '<span class="dk-punkt dk-aus" aria-hidden="true"></span><b>Pause</b> – '+esc(text || "alles Gesagte steht im Feld. Tippe „"+L.weiter+"“, um fortzufahren.");
@@ -1392,12 +1394,20 @@ function _dkAnzeige(zustand, text){
     a.hidden = false; a.innerHTML = '<b>Mikrofon</b> – '+esc(text||"");
   } else { a.hidden = true; a.innerHTML = ""; }
 }
+/* Kann das Gerät den Bildschirm nicht wach halten (kein Wake Lock, oder abgelehnt – etwa bis
+   iOS 18.3 in der installierten App), sagt die Anzeige es, statt still auszugehen. */
 async function _dkWach(an){
-  if(!_dk) return;
+  const d = _dk; if(!d) return;
   try{
-    if(an && !_dk.sperre && navigator.wakeLock){ _dk.sperre = await navigator.wakeLock.request("screen"); if(!_dk || !_dk.wollen){ _dk && _dk.sperre && _dk.sperre.release(); } }
-    else if(!an && _dk.sperre){ const s=_dk.sperre; _dk.sperre=null; await s.release(); }
-  }catch(e){ if(_dk) _dk.sperre = null; }
+    if(an && !d.sperre){
+      if(!navigator.wakeLock) throw new Error("kein Wake Lock");
+      const s = await navigator.wakeLock.request("screen");
+      if(_dk!==d || !d.wollen){ s.release(); return; }
+      d.sperre = s; d.ohneSperre = false;
+      s.addEventListener && s.addEventListener("release", () => { if(d.sperre===s) d.sperre = null; });
+    }
+    else if(!an && d.sperre){ const s=d.sperre; d.sperre=null; await s.release(); }
+  }catch(e){ d.sperre = null; if(an){ d.ohneSperre = true; if(_dk===d && d.wollen) _dkAnzeige("hoert", d.zuletzt); } }
 }
 function _dkSitzung(){
   const d = _dk; if(!d || !d.wollen) return;

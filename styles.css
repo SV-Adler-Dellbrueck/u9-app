@@ -1071,3 +1071,4 @@ html,body{overscroll-behavior-y:contain}
 .dk-punkt.dk-aus{background:var(--text2)}
 .dk-punkt.dk-spricht{animation:elLivePuls 1.1s ease-in-out infinite}
 @media (prefers-reduced-motion:reduce){.dk-punkt.dk-spricht{animation:none;box-shadow:0 0 0 3px var(--red-bg)}}
+.dk-hinweis{flex-basis:100%;color:var(--text2)}

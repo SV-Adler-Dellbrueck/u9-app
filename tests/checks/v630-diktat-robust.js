@@ -15,7 +15,9 @@
       Weiter hängt an.
    f) Bildschirm aus (Seite verborgen): pausiert, beim Zurückkommen geht es weiter.
    g) Mikrofon gesperrt: Hinweis, kein Neustart.
-   h) Die Trainer-Notiz nutzt denselben Weg. */
+   h) Die Trainer-Notiz nutzt denselben Weg.
+   i) Kann das Gerät den Bildschirm nicht wach halten, sagt die Anzeige es; mit Sperre steht der
+      Satz nicht da (PO: „Kann die App dafür sorgen, dass … der Bildschirm nicht ausgeht?“). */
 "use strict";
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
@@ -79,6 +81,15 @@ module.exports = async function (h) {
     letzte().onerror({ error: "not-allowed" }); letzte().onend && letzte().onend(); await warte(250);
     out.g = { neu: sr.length - vorFehler, anz: anz(), knopf: knopf() };
     document.getElementById("eb-modal")?.remove();
+    // i) ohne Bildschirmsperre
+    out.i = { mitSperre: /nicht von selbst an/.test(out.a.anz + out.b.liveAnz) };
+    if (typeof _dk !== "undefined" && _dk) diktatStop();
+    Object.defineProperty(navigator, "wakeLock", { configurable: true, value: undefined });
+    await einheitBewertenOpen(); await einheitDetailOpen(gestern);
+    for (let i = 0; i < 40 && !document.getElementById("nb-mic"); i++) await warte(50);
+    document.getElementById("nb-mic").click(); await warte(50);
+    out.i.ohne = anz();
+    diktatStop(); document.getElementById("eb-modal")?.remove();
     // h) Trainer-Notiz
     out.h = { weg: typeof vdMicToggle === "function" && /diktatUmschalten/.test(String(vdMicToggle)) };
     return out;
@@ -98,6 +109,7 @@ module.exports = async function (h) {
   if (e.weiter !== d + " Kind C war müde." || e.knopf2 !== "Pause" || !e.nbText) probleme.push(`e) Weiter: „${e.weiter}“ ${e.knopf2} ${e.nbText}`);
   if (f.neuWaehrendAus !== 0 || f.neuDanach !== 1 || !f.an || f.knopf !== "Pause") probleme.push(`f) Bildschirm aus: ${JSON.stringify(f)}`);
   if (g.neu !== 0 || !/gesperrt/.test(g.anz) || g.knopf !== "Einsprechen") probleme.push(`g) gesperrt: ${JSON.stringify(g)}`);
+  if (r.i.mitSperre || !/Dein Handy hält den Bildschirm nicht von selbst an/.test(r.i.ohne)) probleme.push(`i) Hinweis ohne Sperre: ${JSON.stringify(r.i)}`);
   if (!r.h.weg) probleme.push("h) Trainer-Notiz nutzt den gemeinsamen Weg nicht");
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
   zeilen.push(`Feld: „${e.weiter}“ · Sitzungen neu gestartet, Sperre ${a.wl}× an / ${f.relAus}× frei`);
