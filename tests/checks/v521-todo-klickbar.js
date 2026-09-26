@@ -15,7 +15,10 @@
 
    Lehre: ein Attributwert, der aus einem Ausdruck kommt, darf das Zeichen nicht enthalten,
    das ihn umschliesst – und eine Pruefung, die nur den Attributtext liest, merkt davon
-   nichts. */
+   nichts.
+
+   v634: Das Ergebnis-To-Do ist gestrichen; die Lehre gilt fuer das Nachbereiten-To-Do, das
+   an seine Stelle tritt – es ruft fazitOpen(id) mit demselben Muster. */
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
   const gestern = h.tagePlus(-1);
@@ -36,7 +39,7 @@ module.exports = async function (h) {
     await trainerTodoLoad();
 
     const knoepfe = [...slot.querySelectorAll("button")];
-    const haupt = knoepfe.find(b => /nachtragen/.test(b.textContent || ""));
+    const haupt = knoepfe.find(b => /nachbereiten/.test(b.textContent || "") && /Sommer Cup/.test(b.textContent || ""));
     if (!haupt) return { fehlt: true };
 
     /* Der verraeterische Rest: bei abgeschnittenem Attribut haengen am Knopf zusaetzliche
@@ -46,7 +49,7 @@ module.exports = async function (h) {
 
     /* Der eigentliche Beweis: klicken und sehen, ob der Aufruf ankommt. */
     window.__todoRuf = [];
-    window.tmDetailOpen = id => window.__todoRuf.push(id);
+    window.fazitOpen = id => window.__todoRuf.push(id);
     haupt.click();
 
     return { fehlt: false, attribute, onclick, gerufen: window.__todoRuf.slice() };
@@ -54,9 +57,9 @@ module.exports = async function (h) {
 
   const fehler = s.fehler(); await s.schliessen();
 
-  if (r.fehlt) { probleme.push("Das To-Do „nachtragen“ steht gar nicht in der Kachel"); return h.ergebnis("To-Do lässt sich antippen", false, probleme); }
+  if (r.fehlt) { probleme.push("Das To-Do „nachbereiten“ steht gar nicht in der Kachel"); return h.ergebnis("To-Do lässt sich antippen", false, probleme); }
 
-  if (r.gerufen.length !== 1) probleme.push(`Antippen ruft tmDetailOpen ${r.gerufen.length}× auf statt einmal – der Knopf ist tot`);
+  if (r.gerufen.length !== 1) probleme.push(`Antippen ruft fazitOpen ${r.gerufen.length}× auf statt einmal – der Knopf ist tot`);
   else if (r.gerufen[0] !== 77) probleme.push(`Antippen öffnet Termin ${r.gerufen[0]} statt 77`);
 
   /* Gegen die Ursache, nicht nur gegen das Symptom. */
@@ -66,8 +69,8 @@ module.exports = async function (h) {
   if (fremd.length) probleme.push(`Am Knopf hängen Bruchstücke als Attribute: ${fremd.join(", ")}`);
   if (fehler.length) probleme.push(...fehler.slice(0, 2));
 
-  zeilen.push(`Klick ruft tmDetailOpen(${r.gerufen.join(",") || "–"})`);
+  zeilen.push(`Klick ruft fazitOpen(${r.gerufen.join(",") || "–"})`);
   zeilen.push(`onclick: ${r.onclick}`);
   zeilen.push(`Attribute am Knopf: ${r.attribute.join(", ")}`);
-  return h.ergebnis("To-Do lässt sich antippen und öffnet den Termin", !probleme.length, zeilen.concat(probleme));
+  return h.ergebnis("To-Do lässt sich antippen und öffnet die Nachbereitung", !probleme.length, zeilen.concat(probleme));
 };
