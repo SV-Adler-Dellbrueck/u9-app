@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v632 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v633 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -18,7 +18,7 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 
 | Funktion | Was sie tut | Nutzen |
 |---|---|---|
-| **To-Do-Banner** | Zeigt nur dann etwas an, wenn eine Aufgabe offen ist: Einheit nachbereiten, Spiel oder Festival bewerten, Ergebnis nachtragen, Trainingsplan fehlt, Aufstellung fehlt. Ein Tipp führt direkt zum passenden Termin – auch wenn er schon vorbei ist. Ein Spiel ohne Ergebnis lässt sich bewusst abhaken, die Entscheidung gilt fürs ganze Trainerteam. | Nichts geht unter. Die App erinnert an das, was nach dem Platz sonst liegen bleibt. |
+| **To-Do-Banner** | Zeigt nur dann etwas an, wenn eine Aufgabe offen ist: Einheit nachbereiten, Spiel oder Festival bewerten, Ergebnis nachtragen, Trainingsplan fehlt, Aufstellung fehlt. Ein Tipp führt direkt zum passenden Termin – auch wenn er schon vorbei ist. Ein Spiel ohne Ergebnis lässt sich bewusst abhaken, die Entscheidung gilt fürs ganze Trainerteam. Seit v633 steht die neueste offene Einheit vorn und öffnet sich direkt; Bewertungen von vor v630 („Trainerteam“) gelten als erledigt. | Nichts geht unter. Die App erinnert an das, was nach dem Platz sonst liegen bleibt. |
 | **„Bist du dabei?“** | Termine der nächsten 14 Tage, zu denen die eigene Trainer-Rückmeldung fehlt. Beantwortet ist die Karte weg. | Der Trainerplan füllt sich nebenbei, ohne dass jemand nachfragen muss. |
 | **Diese Woche** | Alle Termine der nächsten sieben Tage mit Stand: wie viele Kinder zugesagt haben, ob genug Trainer da sind, ob Trainingsplan und Aufstellung stehen. Die erste Zeile ist der nächste Termin mit Wetter, Packtipp und Sprungknöpfen. | Ein Blick am Sonntagabend genügt, um zu wissen, wo die Woche noch Lücken hat. |
 
