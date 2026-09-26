@@ -147,8 +147,11 @@ function generateFazitFeld(v,meta){
   const rolle=calcRolle(v,meta.foot);
   const pot=calcPotenzial(v,total,meta.att,false);
   const name=meta.name;
-  const age=parseInt(meta.age);
-  const bench=age<=7?36:44;
+  /* v635: Die Schwellen folgen der Skala (1 Ansatz = 0 %, 2 Solide = 33 %, 3 Gut = 67 %, 4 Stark = 100 %).
+     Vorher lagen sie bei 36/44/48 – ein durchgehend „solide/altersgerecht“ bewertetes Kind las
+     dann „noch im Aufbau … keine Leistungsorientierung“. Stufe 2 heißt altersgerecht, also
+     beginnt „altersgerecht“ bei 33 %. */
+  const STUFE_SOLIDE=33, STUFE_GUT=67;
   const sc=n=>{const val=v[n];return val?((val-1)/3)*100:0;};
 
   // Spielertyp aus stärkster Feld-Dimension
@@ -162,8 +165,8 @@ function generateFazitFeld(v,meta){
 
   // ── ZUSAMMENFASSUNG ──
   let summary="";
-  if(ds.tech>=bench+20)summary+=`${name} zeigt technisch bereits ein Niveau klar über dem Altersschnitt der U9 I. `;
-  else if(ds.tech>=bench)summary+=`${name} befindet sich technisch auf altersgerechtem Niveau mit solidem Fundament. `;
+  if(ds.tech>=STUFE_GUT)summary+=`${name} zeigt technisch bereits ein Niveau über dem Altersschnitt der U9 I. `;
+  else if(ds.tech>=STUFE_SOLIDE)summary+=`${name} befindet sich technisch auf altersgerechtem Niveau mit solidem Fundament. `;
   else summary+=`${name} ist technisch noch im Aufbau – Grundlagen mit Geduld und vielen Ballkontakten festigen. `;
   if((v["f_raum"]||0)>=3)summary+=`Das Raumgefühl in der Raute ist ausgeprägt – ${name} öffnet das Feld selbstständig. `;
   else if((v["f_raum"]||0)===1)summary+=`Die Tendenz zur Klumpenbildung ist aktuell das größte taktische Entwicklungsfeld. `;
@@ -178,7 +181,6 @@ function generateFazitFeld(v,meta){
   r+="┌─ ROLLE 4+1 RAUTE ─────────────────────────────┐\n";
   r+=`  Primär:    ${rolle.primLabel}\n`;
   r+=`  Sekundär:  ${rolle.sekLabel}\n`;
-  r+=`  Gruppe:    ${meta.grp==="A"?"A-Gruppe":meta.grp==="B"?"B-Gruppe":"Noch offen"}\n`;
   r+=`  Bewertet:  ${meta.trainer} · ${meta.date||"–"}\n`;
   r+="└──────────────────────────────────────────────┘\n";
 
@@ -202,9 +204,9 @@ function generateFazitFeld(v,meta){
   const aufDescSchwach=`${name} bringt Zweikampf und Robustheit für den Aufpasser mit, aber Passspiel und Spieleröffnung sind noch der limitierende Faktor – der nächste Entwicklungsschritt.`;
   const rDesc={
     aufpasser:passQ<40?aufDescSchwach:passQ<60?aufDescMittel:aufDescStark,
-    jaeger:`${name}s Torhunger und Entschlossenheit machen ihn zur natürlichen Spitze. Direkten Weg zum Tor suchen, nach Ballverlust sofort pressen.`,
-    flitzer_l:`${name}s Tempo und Wendigkeit prädestinieren ihn für die linke Außenbahn. Breite halten, Räume für den Jäger öffnen.`,
-    flitzer_r:`${name}s Tempo und Wendigkeit machen ihn rechts gefährlich. Breite halten, Tiefenläufe für den Jäger einleiten.`
+    jaeger:`Torhunger und Entschlossenheit machen ${name} zur natürlichen Spitze. Direkten Weg zum Tor suchen, nach Ballverlust sofort pressen.`,
+    flitzer_l:`Tempo und Wendigkeit passen bei ${name} gut zur linken Außenbahn. Breite halten, Räume für den Jäger öffnen.`,
+    flitzer_r:`Tempo und Wendigkeit machen ${name} rechts gefährlich. Breite halten, Tiefenläufe für den Jäger einleiten.`
   };
   r+=rDesc[rolle.prim]+"\n";
   if(rolle.clarity==="unklar") r+=`Die Rollenfindung ist noch nicht eindeutig – ${name} liegt zwischen ${rolle.primLabel} und ${rolle.sekLabel} fast gleichauf. Beide Positionen im Training ausprobieren.\n`;
@@ -233,10 +235,10 @@ function generateFazitFeld(v,meta){
     r+="⚠ Externes Coaching belastet die intrinsische Motivation.\nEmpfehlung: Fehler sind Lernmomente, Spielfreude vor Leistung, kein Coaching von der Seitenlinie.";
   }
 
-  r+="\n\n━━ ENTWICKLUNGSPROGNOSE ━━━━━━━━━━━━━━━━━━━━━━━\n";
+  r+="\n\n━━ EINORDNUNG (STAND HEUTE, KEINE PROGNOSE) ━━━━\n";
   r+=`Aktuell: ${total}% · Entwicklungstempo: ~${pot}%\n`;
-  if(total>=70) r+=`${name} ist überdurchschnittlich für U9 I. Mit erhöhtem Anforderungsgrad fördern – Unterforderung vermeiden.`;
-  else if(total>=48) r+=`${name} entwickelt sich altersgerecht auf gutem Kurs. Struktur und positive Wiederholung bringen den nächsten Sprung.`;
+  if(total>=STUFE_GUT) r+=`${name} ist im Moment weit für U9 I. Mit erhöhtem Anforderungsgrad fördern – Unterforderung vermeiden.`;
+  else if(total>=STUFE_SOLIDE) r+=`${name} entwickelt sich altersgerecht auf gutem Kurs. Struktur und positive Wiederholung bringen den nächsten Sprung.`;
   else r+=`${name} ist im Aufbau. Spaßbetonte Grundlagen, Erfolge feiern – keine Leistungsorientierung in diesem Stand.`;
 
   return{text:r,summary,rolle,dims:ds,total,pot,tw:false,sozKrit,fokusSchwach,fokusStark};
