@@ -49,7 +49,7 @@ module.exports = async function (h) {
   await s.page.waitForTimeout(150);
   const zug = await s.page.evaluate(() => ({ feld: rotField.slice(), sel: rotSel, geist: document.querySelectorAll("body > button[data-rot-name]").length }));
   // 6) Ziehen auf die Bank
-  const b2 = await s.page.evaluate(() => { const auf = document.getElementById("auf-panel"); const el = auf.querySelector(`[data-rot-name="${rotField[0]}"]`); const r = el.getBoundingClientRect(); const bk = auf.querySelector("[data-rot-bank]").getBoundingClientRect(); return { n: rotField[0], x: r.left + r.width / 2, y: r.top + r.height / 2, bx: bk.right - 14, by: bk.top + bk.height / 2, feld: rotField.length }; });
+  const b2 = await s.page.evaluate(() => { const auf = document.getElementById("auf-panel"); auf.scrollIntoView({ block: "center" });   /* v632: Inhalt darüber (Hinweiskarte) darf die Bank nicht aus dem Bild schieben */ const el = auf.querySelector(`[data-rot-name="${rotField[0]}"]`); const r = el.getBoundingClientRect(); const bk = auf.querySelector("[data-rot-bank]").getBoundingClientRect(); return { n: rotField[0], x: r.left + r.width / 2, y: r.top + r.height / 2, bx: bk.right - 14, by: bk.top + bk.height / 2, feld: rotField.length }; });
   await s.page.mouse.move(b2.x, b2.y); await s.page.mouse.down(); await s.page.mouse.move(b2.x + 15, b2.y + 15, { steps: 3 }); await s.page.mouse.move(b2.bx, b2.by, { steps: 8 }); await s.page.mouse.up();
   await s.page.waitForTimeout(150);
   const zugBank = await s.page.evaluate(({ n }) => ({ aufBank: rotBench.includes(n), feld: rotField.length, sel: rotSel }), { n: b2.n });
