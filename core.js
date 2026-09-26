@@ -1297,3 +1297,189 @@ _adlerOnReady(()=>{
     }
   }).observe(document.body,{childList:true,subtree:true});
 });
+
+/* ═══════════════════════════════════
+   DIKTAT (v630) – ein Weg für freies Einsprechen in ein Textfeld.
+   PO: „Zum einen stoppt irgendwann die Eingabe … weil der Bildschirm des Handys ausgeht.
+   Dann werden manche Worte mehrfach nacheinander geschrieben, obwohl sie nur einmal gesagt
+   wurden … eine Anzeige, dass wenn gesprochen wird, da auch was ankommt, dass ich auch
+   zwischendurch unterbrechen kann und dann wieder weiter einsprechen kann per Druck.“
+
+   Die drei Ursachen und was hier dagegen steht:
+   1) DOPPELTE WÖRTER. Chrome auf Android liefert im Dauer-Modus (continuous) jedes Zwischen-
+      ergebnis noch einmal als eigenes „fertiges“ Ergebnis – „Heute“, „Heute war“, „Heute war
+      gut“ –, und wer die aneinanderhängt, schreibt alles doppelt. Deshalb kein Dauer-Modus:
+      Jede Äußerung ist eine kurze Sitzung, danach startet die nächste von selbst. Innerhalb
+      einer Sitzung ersetzt ein Ergebnis, das das vorige fortsetzt, dieses (statt es anzuhängen);
+      eine direkt wiederholte Wortgruppe (ab zwei Wörtern) wird einmal geschrieben.
+   2) ABBRUCH. Das Handy beendet die Erkennung nach einer Sprechpause und sowieso, wenn der
+      Bildschirm ausgeht. Der Neustart nach jeder Sitzung fängt die Pause ab, eine Wake-Lock-
+      Sperre hält den Bildschirm an, solange eingesprochen wird. Geht die Seite trotzdem in den
+      Hintergrund, pausiert das Diktat und läuft beim Zurückkommen weiter.
+   3) KEINE RÜCKMELDUNG. Die Anzeige sagt, ob zugehört wird, zeigt das gerade Verstandene
+      live und pulsiert, sobald Sprache erkannt ist. Der Knopf wechselt zwischen Einsprechen,
+      Pause und Weiter einsprechen; nichts Gesagtes geht beim Pausieren verloren.
+
+   Nach 90 Sekunden ohne ein einziges Wort pausiert es von selbst – ein vergessenes Mikrofon
+   soll nicht den Akku leeren. Ein zweites Diktat beendet das erste (ein Mikrofon, ein Feld). */
+let _dk = null;
+function diktatMoeglich(){ return !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
+function diktatAktiv(feldId){ return !!(_dk && _dk.wollen && (!feldId || _dk.feldId===feldId)); }
+function _dkWorte(t){ return String(t||"").toLowerCase().replace(/[.,!?;:„“"«»()…–-]/g," ").split(/\s+/).filter(Boolean); }
+/* Direkt wiederholte Wortgruppen von zwei bis sechs Wörtern einmal schreiben („war gut war gut“).
+   Ein einzelnes doppeltes Wort bleibt – „sehr sehr gut“ ist gesprochen so gemeint. */
+function _dkEntdoppeln(t){
+  let w = String(t||"").trim().split(/\s+/).filter(Boolean);
+  const n = x => x.toLowerCase().replace(/[.,!?;:]/g,"");
+  for(let lauf=0; lauf<4; lauf++){
+    let geaendert = false;
+    for(let len=6; len>=2; len--){
+      for(let i=0; i+2*len<=w.length; i++){
+        let gleich = true;
+        for(let k=0;k<len;k++) if(n(w[i+k])!==n(w[i+len+k])){ gleich=false; break; }
+        if(gleich){ w.splice(i+len,len); geaendert=true; i--; }
+      }
+    }
+    if(!geaendert) break;
+  }
+  return w.join(" ");
+}
+/* Fertige Ergebnisse einer Sitzung zusammenführen: setzt eines das vorige fort, ersetzt es dieses. */
+function _dkZusammen(liste){
+  const out = [];
+  for(const roh of liste){
+    const t = String(roh||"").trim(); if(!t) continue;
+    const a = _dkWorte(t).join(" "), v = out.length ? _dkWorte(out[out.length-1]).join(" ") : "";
+    if(v && a.startsWith(v)) out[out.length-1] = t;
+    else if(v && v.endsWith(a)) continue;
+    else out.push(t);
+  }
+  return _dkEntdoppeln(out.join(" "));
+}
+/* Neuen Satz ans Feld hängen. Beginnt er mit denselben Wörtern (ab zwei), mit denen das Feld
+   endet – das Handy hat den Schluss der letzten Äußerung noch einmal geliefert –, fallen sie weg. */
+function _dkAnhaengen(basis, neu){
+  let t = String(neu||"").trim(); if(!t) return basis;
+  const bw = _dkWorte(basis), nw = t.split(/\s+/);
+  const nwn = nw.map(x=>_dkWorte(x).join(""));
+  for(let k=Math.min(8, bw.length, nw.length); k>=2; k--){
+    if(bw.slice(-k).join(" ")===nwn.slice(0,k).join(" ")){ t = nw.slice(k).join(" "); break; }
+  }
+  if(!t) return basis;
+  t = t.charAt(0).toUpperCase() + t.slice(1);
+  if(!/[.!?…]$/.test(t)) t += ".";
+  const b = String(basis||"");
+  return b ? b.replace(/\s*$/," ") + t : t;
+}
+function _dkAnzeige(zustand, text){
+  if(!_dk) return;
+  const a = document.getElementById(_dk.anzeigeId), k = document.getElementById(_dk.knopfId);
+  const L = _dk.labels;
+  if(k){
+    const an = zustand==="hoert";
+    k.innerHTML = an ? '<i class="ti ti-player-pause"></i>'+L.an : (zustand==="pause" ? '<i class="ti ti-microphone"></i>'+L.weiter : '<i class="ti ti-microphone"></i>'+L.aus);
+    k.setAttribute("aria-pressed", an ? "true" : "false");
+  }
+  if(!a) return;
+  if(zustand==="hoert"){
+    a.hidden = false;
+    a.innerHTML = '<span class="dk-punkt'+(_dk.spricht?' dk-spricht':'')+'" aria-hidden="true"></span><b>'+(_dk.spricht?"Ich höre dich":"Hört zu – sprich einfach")+'</b>'
+      + (text ? '<span class="dk-live"> … '+esc(text)+'</span>' : '');
+  } else if(zustand==="pause"){
+    a.hidden = false;
+    a.innerHTML = '<span class="dk-punkt dk-aus" aria-hidden="true"></span><b>Pause</b> – '+esc(text || "alles Gesagte steht im Feld. Tippe „"+L.weiter+"“, um fortzufahren.");
+  } else if(zustand==="fehler"){
+    a.hidden = false; a.innerHTML = '<b>Mikrofon</b> – '+esc(text||"");
+  } else { a.hidden = true; a.innerHTML = ""; }
+}
+async function _dkWach(an){
+  if(!_dk) return;
+  try{
+    if(an && !_dk.sperre && navigator.wakeLock){ _dk.sperre = await navigator.wakeLock.request("screen"); if(!_dk || !_dk.wollen){ _dk && _dk.sperre && _dk.sperre.release(); } }
+    else if(!an && _dk.sperre){ const s=_dk.sperre; _dk.sperre=null; await s.release(); }
+  }catch(e){ if(_dk) _dk.sperre = null; }
+}
+function _dkSitzung(){
+  const d = _dk; if(!d || !d.wollen) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const feld = document.getElementById(d.feldId);
+  if(!SR || !feld){ diktatPause(); return; }
+  const rec = new SR(); rec.lang = "de-DE"; rec.continuous = false; rec.interimResults = true; rec.maxAlternatives = 1;
+  d.rec = rec; d.basis = feld.value; d.fertig = []; d.spricht = false;
+  const schreiben = zwischen => {
+    const f = document.getElementById(d.feldId); if(!f) return;
+    const fest = _dkZusammen(d.fertig);
+    const neu = _dkAnhaengen(d.basis, fest);
+    f.value = (zwischen ? neu.replace(/\s*$/," ") + zwischen : neu).slice(0, d.max);
+    f.scrollTop = f.scrollHeight;
+    d.onText && d.onText(f.value);
+  };
+  rec.onspeechstart = () => { if(_dk===d){ d.spricht = true; d.letzte = Date.now(); _dkAnzeige("hoert"); } };
+  rec.onresult = ev => {
+    if(_dk!==d || d.rec!==rec) return;
+    const fertig = [], zw = [];
+    for(let i=0;i<ev.results.length;i++){ const r=ev.results[i]; const t=r[0]&&r[0].transcript||""; (r.isFinal?fertig:zw).push(t); }
+    d.fertig = fertig; d.letzte = Date.now(); d.spricht = true;
+    const zwischen = _dkEntdoppeln(zw.join(" "));
+    schreiben(zwischen);
+    _dkAnzeige("hoert", zwischen || _dkZusammen(fertig));
+  };
+  rec.onerror = ev => {
+    if(_dk!==d) return;
+    const e = ev && ev.error;
+    if(e==="not-allowed" || e==="service-not-allowed" || e==="audio-capture"){
+      d.wollen = false; _dkWach(false);
+      _dkAnzeige("fehler", e==="audio-capture" ? "kein Mikrofon gefunden." : "für die App gesperrt – in den Browser-Einstellungen freigeben oder das Mikrofon der Tastatur nutzen.");
+      const k=document.getElementById(d.knopfId); if(k){ k.innerHTML='<i class="ti ti-microphone"></i>'+d.labels.aus; k.setAttribute("aria-pressed","false"); }
+    }
+    /* no-speech, aborted, network: onend folgt und startet neu */
+  };
+  rec.onend = () => {
+    if(_dk!==d || d.rec!==rec) return;
+    schreiben("");                              // Zwischenstand verwerfen, Fertiges bleibt
+    d.rec = null;
+    if(!d.wollen) return;
+    if(document.hidden){ d.wollen = false; d.hintergrund = true; _dkWach(false); _dkAnzeige("pause", "der Bildschirm war aus. Beim Zurückkommen geht es weiter."); return; }
+    if(Date.now() - d.letzte > 90000){ diktatPause("90 Sekunden nichts gehört. Tippe „"+d.labels.weiter+"“, um fortzufahren."); return; }
+    d.neustart = setTimeout(_dkSitzung, 150);
+  };
+  try{ rec.start(); }catch(e){ d.neustart = setTimeout(_dkSitzung, 400); return; }
+  _dkAnzeige("hoert");
+}
+/* opt: { feldId, knopfId, anzeigeId, max, onText, labels:{aus,an,weiter} } */
+function diktatStart(opt){
+  if(!diktatMoeglich()) return false;
+  if(_dk && _dk.feldId!==opt.feldId) diktatStop();
+  if(!_dk) _dk = { feldId:opt.feldId, knopfId:opt.knopfId, anzeigeId:opt.anzeigeId, max:opt.max||4000, onText:opt.onText,
+                   labels:Object.assign({ aus:"Einsprechen", an:"Pause", weiter:"Weiter einsprechen" }, opt.labels||{}) };
+  _dk.wollen = true; _dk.hintergrund = false; _dk.letzte = Date.now();
+  _dkWach(true);
+  _dkSitzung();
+  return true;
+}
+function diktatPause(hinweis){
+  const d = _dk; if(!d) return;
+  d.wollen = false; clearTimeout(d.neustart);
+  try{ d.rec && d.rec.stop(); }catch(e){}
+  _dkWach(false);
+  _dkAnzeige("pause", hinweis);
+}
+function diktatUmschalten(opt){ if(diktatAktiv(opt.feldId)) diktatPause(); else diktatStart(opt); }
+function diktatStop(){
+  const d = _dk; if(!d) return;
+  d.wollen = false; clearTimeout(d.neustart);
+  try{ d.rec && d.rec.abort(); }catch(e){}
+  d.rec = null;
+  _dkWach(false);
+  _dkAnzeige("aus");
+  _dk = null;
+}
+document.addEventListener("visibilitychange", () => {
+  if(document.visibilityState==="visible" && _dk && _dk.hintergrund && document.getElementById(_dk.feldId)){
+    _dk.hintergrund = false; _dk.wollen = true; _dk.letzte = Date.now(); _dkWach(true); _dkSitzung();
+  } else if(document.hidden && _dk && _dk.wollen){
+    _dk.hintergrund = true; _dk.wollen = false; clearTimeout(_dk.neustart);
+    try{ _dk.rec && _dk.rec.stop(); }catch(e){}
+    _dkWach(false);
+  }
+});

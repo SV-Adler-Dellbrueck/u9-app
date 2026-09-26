@@ -333,7 +333,7 @@ async function fazitOffene(tage){
 
    Datenschutz: Vor dem Senden werden alle Kindernamen aus dem Kader durch „Kind 1“, „Kind 2“ …
    ersetzt; die Antwort wird zurückübersetzt. Beim Sprachmodell kommt kein Name an. */
-let _nbHoert = null, _nbText = "", _nbFuer = "", _nbTb = null;
+let _nbText = "", _nbFuer = "", _nbTb = null;
 /* v628: Der gesprochene Text wird mit der Nachbereitung gespeichert (Spalte sprachnotiz) –
    vorher ging er beim Schließen verloren. Nur für den Termin, zu dem er gehört. */
 function nbSprachnotizFuer(fuer){ const t = String(_nbText||"").trim(); return (fuer===_nbFuer && t) ? t.slice(0,4000) : undefined; }
@@ -352,46 +352,26 @@ function nbTbDecknamen(tb, m){
 function nbSprachHtml(art, fuer){
   /* Der Text gehört zu genau einem Termin – wer zum nächsten Tag wechselt, fängt leer an. */
   if(String(fuer||"") !== _nbFuer){ _nbFuer = String(fuer||""); _nbText = ""; _nbTb = null; nbDiktatStop(); }
-  const kannHoeren = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  const kannHoeren = typeof diktatMoeglich==="function" && diktatMoeglich();
   const fld = "width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text);resize:vertical";
   return `<div id="nb-box" style="border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);padding:10px 11px;margin:10px 0 4px">
     <div style="font-size:var(--s-text);font-weight:800">🎙️ Per Sprachnotiz ausfüllen</div>
     <div style="font-size:var(--s-klein);color:var(--text2);margin:2px 0 8px;line-height:1.45">Erzähl frei, wie es lief – ${art==="training"?"Einheit, einzelne Übungen, einzelne Kinder":"Mannschaften, Gäste, was getragen hat, woran ihr arbeitet"}. Die KI trägt ein, was du sagst; gespeichert wird erst mit dem Knopf unten.</div>
     <textarea id="nb-text" rows="3" maxlength="4000" style="${fld}" placeholder="${kannHoeren?"Mikrofon antippen und sprechen – oder hier tippen bzw. das Mikrofon der Tastatur nutzen":"Hier tippen oder das Mikrofon der Tastatur nutzen"}" oninput="_nbText=this.value">${esc(_nbText)}</textarea>
     <div style="display:flex;gap:8px;margin-top:8px">
-      ${kannHoeren?`<button id="nb-mic" class="btn" style="flex:0 0 auto;min-height:48px" onclick="nbDiktat('${art}')" aria-pressed="false"><i class="ti ti-microphone"></i>Einsprechen</button>`:""}
+      ${kannHoeren?`<button id="nb-mic" class="btn" style="flex:0 0 auto;min-height:48px" onclick="nbDiktat('${art}')" aria-pressed="${diktatAktiv("nb-text")?"true":"false"}"><i class="ti ti-${diktatAktiv("nb-text")?"player-pause":"microphone"}"></i>${diktatAktiv("nb-text")?"Pause":(_nbText?"Weiter einsprechen":"Einsprechen")}</button>`:""}
       <button id="nb-los" class="btn btn-p" style="flex:1;min-height:48px;justify-content:center" onclick="nbAuswerten('${art}')"><i class="ti ti-sparkles"></i>In den Bogen übernehmen</button>
     </div>
+    <div id="nb-hoer" class="dk-anzeige" hidden></div>
     <div id="nb-status" role="status" aria-live="polite" style="font-size:var(--s-klein);color:var(--text2);margin-top:6px;line-height:1.45"></div>
   </div>`;
 }
-function nbDiktatStop(){
-  try{ _nbHoert && _nbHoert.stop(); }catch(e){}
-  _nbHoert = null;
-  const b = document.getElementById("nb-mic");
-  if(b){ b.innerHTML = '<i class="ti ti-microphone"></i>Einsprechen'; b.setAttribute("aria-pressed","false"); }
-}
+/* v630: Das Einsprechen läuft über den gemeinsamen Diktat-Weg in core.js (diktatStart) –
+   Bildschirm bleibt an, keine doppelten Wörter, Anzeige was ankommt, Pause und Weiter. */
+function nbDiktatStop(){ if(typeof _dk!=="undefined" && _dk && _dk.feldId==="nb-text") diktatStop(); }
 function nbDiktat(art){
-  if(_nbHoert){ nbDiktatStop(); return; }
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const ta = document.getElementById("nb-text"); if(!SR || !ta) return;
-  const rec = new SR(); rec.lang = "de-DE"; rec.continuous = true; rec.interimResults = true;
-  const basis = ta.value ? ta.value.replace(/\s*$/," ") : "";
-  let fest = "";
-  rec.onresult = ev => {
-    let zwischen = "";
-    for(let i=ev.resultIndex;i<ev.results.length;i++){
-      const r = ev.results[i];
-      if(r.isFinal) fest += r[0].transcript.trim()+". "; else zwischen += r[0].transcript;
-    }
-    ta.value = (basis + fest + zwischen).slice(0,4000); _nbText = ta.value;
-  };
-  rec.onerror = ev => { const st=document.getElementById("nb-status"); if(st&&ev&&ev.error==="not-allowed") st.textContent="Das Mikrofon ist für die App gesperrt – in den Browser-Einstellungen freigeben oder das Mikrofon der Tastatur nutzen."; nbDiktatStop(); };
-  rec.onend = () => { if(_nbHoert===rec) nbDiktatStop(); };
-  try{ rec.start(); }catch(e){ return; }
-  _nbHoert = rec;
-  const b = document.getElementById("nb-mic");
-  if(b){ b.innerHTML = '<i class="ti ti-player-stop"></i>Stopp'; b.setAttribute("aria-pressed","true"); }
+  if(typeof diktatUmschalten!=="function") return;
+  diktatUmschalten({ feldId:"nb-text", knopfId:"nb-mic", anzeigeId:"nb-hoer", max:4000, onText:v=>{ _nbText = v; } });
 }
 /* Kindernamen → „Kind n“. Die anwesenden Kinder bekommen ihre Nummer in der Reihenfolge des
    Fensters, alle übrigen Kinder des Kaders danach – auch ein Name, der gar nicht bewertet wird,

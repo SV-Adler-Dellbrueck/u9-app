@@ -103,34 +103,16 @@ function voiceToggle(){ voiceOn?voiceStop():voiceStart(); }
 /* ═══════════════════════════════════
    VOICE DIARY (Phase 18.1) – der Trainer diktiert/tippt nach Abpfiff seine Gedanken.
    Landet in trainer_notes (nur Trainer); der Adler-Coach (KI) kann sie auf Wunsch
-   einbeziehen. Freies Diktat (continuous), im Gegensatz zum Voice-to-Action-Tracker.
+   einbeziehen. Freies Diktat, im Gegensatz zum Voice-to-Action-Tracker.
    Spracheingabe ist Bonus: ohne SpeechRecognition bleibt das Textfeld voll nutzbar. */
-let vdRec=null, vdOn=false, vdBase="";
-function vdMicUpdate(){
-  const b=document.getElementById("vd-mic"); if(!b)return;
-  b.innerHTML=vdOn?'<i class="ti ti-microphone-2"></i>Hört zu … (tippen = Stopp)':'<i class="ti ti-microphone"></i>Aufnehmen';
-  b.classList.toggle("btn-p",vdOn);
-  const iv=document.getElementById("vd-interim"); if(iv&&!vdOn)iv.textContent="";
-}
+/* v630: Freies Diktat über den gemeinsamen Weg in core.js – im Dauer-Modus schrieb Chrome auf
+   Android hier Wörter doppelt, und bei dunklem Bildschirm brach es ab (siehe diktatStart). */
 function vdMicToggle(){
-  if(vdOn){ vdOn=false; try{vdRec&&vdRec.stop();}catch(e){} vdMicUpdate(); return; }
-  if(!voiceSupported){toast("Spracheingabe wird auf diesem Gerät nicht unterstützt – bitte tippen.","err");return;}
-  try{
-    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-    vdRec=new SR(); vdRec.lang="de-DE"; vdRec.interimResults=true; vdRec.continuous=true; vdRec.maxAlternatives=1;
-    const ta=document.getElementById("vd-text"); vdBase=ta?ta.value:"";
-    vdRec.onresult=e=>{
-      let interim="",fin="";
-      for(let i=e.resultIndex;i<e.results.length;i++){ const r=e.results[i]; if(r.isFinal)fin+=r[0].transcript; else interim+=r[0].transcript; }
-      if(fin)vdBase=(vdBase?vdBase.trim()+" ":"")+fin.trim();
-      if(ta)ta.value=vdBase+(interim?(vdBase?" ":"")+interim:"");
-      const iv=document.getElementById("vd-interim"); if(iv)iv.textContent=interim?"… "+interim:"";
-    };
-    vdRec.onerror=ev=>{ vdOn=false; vdMicUpdate(); if(ev.error==="not-allowed"||ev.error==="service-not-allowed")toast("Mikrofon-Zugriff nötig – bitte erlauben.","err"); else if(ev.error!=="no-speech"&&ev.error!=="aborted")toast("Sprachfehler – bitte tippen.","err"); };
-    vdRec.onend=()=>{ if(vdOn){ try{vdRec.start();}catch(e){ vdOn=false; vdMicUpdate(); } } else { const ta2=document.getElementById("vd-text"); if(ta2)ta2.value=vdBase; vdMicUpdate(); } };
-    vdOn=true; vdMicUpdate(); vdRec.start();
-  }catch(err){ vdOn=false; vdMicUpdate(); toast("Sprachstart fehlgeschlagen – bitte tippen.","err"); }
+  if(!voiceSupported||typeof diktatUmschalten!=="function"){toast("Spracheingabe wird auf diesem Gerät nicht unterstützt – bitte tippen.","err");return;}
+  diktatUmschalten({ feldId:"vd-text", knopfId:"vd-mic", anzeigeId:"vd-interim", max:8000,
+    labels:{ aus:"Aufnehmen", an:"Pause", weiter:"Weiter aufnehmen" } });
 }
+function vdDiktatAus(){ if(typeof _dk!=="undefined" && _dk && _dk.feldId==="vd-text") diktatStop(); }
 function voiceDiaryOpen(datum){
   if(!sbToken()){toast("Bitte als Trainer anmelden","err");return;}
   datum=datum||null;
@@ -138,7 +120,7 @@ function voiceDiaryOpen(datum){
   const modal=document.createElement("div");
   modal.id="vd-modal";modal.setAttribute("role","dialog");modal.setAttribute("aria-modal","true");modal.setAttribute("aria-label","Trainer-Notiz");
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10001;display:flex;flex-direction:column;padding:14px;overflow-y:auto";
-  modal.onclick=e=>{if(e.target===modal){vdOn=false;try{vdRec&&vdRec.stop();}catch(e){}modal.remove();}};
+  modal.onclick=e=>{if(e.target===modal){vdDiktatAus();modal.remove();}};
   const c=document.createElement("div");
   c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   const micBtn=voiceSupported
@@ -146,11 +128,11 @@ function voiceDiaryOpen(datum){
     :`<span style="font-size:var(--s-klein);color:var(--text3)">🎤 Spracheingabe auf diesem Gerät nicht verfügbar – bitte tippen.</span>`;
   c.innerHTML=`${mdlHead("vd-modal","🎤","Trainer-Notiz","","#334155")}
     <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:10px">Direkt nach Abpfiff festhalten, bevor Details weg sind. Der Adler-Coach (KI) kann deine Notizen später einbeziehen.</div>
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">${micBtn}<span id="vd-interim" style="font-size:var(--s-text);color:var(--text3);flex:1"></span></div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">${micBtn}<span id="vd-interim" class="dk-anzeige" style="flex:1;margin-top:0" hidden></span></div>
     <textarea id="vd-text" rows="5" placeholder="z. B. Umschaltspiel war heute mies – wir standen nach Ballverlust zu offen." style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);line-height:1.5;background:var(--surface2);color:var(--text);resize:vertical"></textarea>
     <div style="display:flex;gap:8px;margin-top:10px">
       <button class="btn btn-p btn-sm" onclick="vdSave(${datum?`'${jsq(datum)}'`:"null"})"><i class="ti ti-device-floppy"></i>Notiz speichern</button>
-      <button class="btn btn-sm" style="margin-left:auto" onclick="vdOn=false;try{vdRec&&vdRec.stop()}catch(e){};document.getElementById('vd-modal').remove()">Schließen</button>
+      <button class="btn btn-sm" style="margin-left:auto" onclick="vdDiktatAus();document.getElementById('vd-modal').remove()">Schließen</button>
     </div>
     <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin:14px 0 4px">Letzte Notizen</div>
     <div id="vd-list"><div style="font-size:var(--s-text);color:var(--text3)">Lade …</div></div>`;
@@ -173,14 +155,14 @@ async function vdSave(datum){
   const ta=document.getElementById("vd-text");
   const text=(ta&&ta.value||"").trim();
   if(!text){toast("Bitte erst etwas notieren","err");return;}
-  if(vdOn){vdOn=false;try{vdRec&&vdRec.stop();}catch(e){}vdMicUpdate();}
+  vdDiktatAus();
   try{
     const r=await fetch(`${SB_URL}/rest/v1/trainer_notes`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},body:JSON.stringify({datum:datum||null,text})});
     if(sbCheck401(r))return;
     if(!r.ok){toast(sbDeniedMsg(r,"Konnte nicht speichern"),"err");return;}
   }catch(e){toast("Netzwerkfehler","err");return;}
   toast("Notiz gespeichert ✓");
-  if(ta)ta.value=""; vdBase="";
+  if(ta)ta.value="";
   vdListLoad();
 }
 async function vdDelete(id){
