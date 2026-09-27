@@ -1,4 +1,4 @@
-const CACHE="u9i-adler-v641";
+const CACHE="u9i-adler-v642";
 const PRECACHE=[
   "./",
   "./index.html",
@@ -57,30 +57,22 @@ const PRECACHE=[
   "./manifest-trainer.json",
   "./manifest-eltern.json",
   "./manifest-kinder.json",
-  "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
-  "https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css",
-  "https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
+  /* v642: Schrift, Icons und Chart.js liegen im Repo. Vorher kamen sie von Google Fonts und
+     jsDelivr – jeder Start der App hat dort die IP-Adresse von Eltern und Kindern hinterlassen.
+     Die Schriftdateien stehen einzeln hier, damit auch der erste Start ohne Netz Schrift hat. */
+  "./vendor/inter.css",
+  "./vendor/tabler-icons.min.css",
+  "./vendor/fonts/tabler-icons.woff2",
+  "./vendor/fonts/inter-latin-400-normal.woff2",
+  "./vendor/fonts/inter-latin-ext-400-normal.woff2",
+  "./vendor/fonts/inter-latin-500-normal.woff2",
+  "./vendor/fonts/inter-latin-ext-500-normal.woff2",
+  "./vendor/fonts/inter-latin-600-normal.woff2",
+  "./vendor/fonts/inter-latin-ext-600-normal.woff2",
+  "./vendor/fonts/inter-latin-700-normal.woff2",
+  "./vendor/fonts/inter-latin-ext-700-normal.woff2",
+  "./vendor/chart.umd.js"
 ];
-
-// Font-Dateien aus den precachten CSS-Dateien extrahieren und mitcachen,
-// damit Schrift + Icons auch beim allerersten Offline-Start funktionieren.
-async function precacheFonts(cache){
-  const cssUrls=PRECACHE.filter(u=>u.endsWith(".css")||u.includes("fonts.googleapis"));
-  for(const cssUrl of cssUrls){
-    try{
-      const res=await fetch(cssUrl);
-      if(!res.ok)continue;
-      const css=await res.text();
-      const urls=[...css.matchAll(/url\((['"]?)(https?:\/\/[^)'"]+)\1\)/g)].map(m=>m[2]);
-      await Promise.all([...new Set(urls)].map(async u=>{
-        try{
-          const fr=await fetch(u,{mode:"cors"});
-          if(fr.ok)await cache.put(u,fr);
-        }catch(e){/* einzelne Fontdatei optional */}
-      }));
-    }catch(e){/* CSS optional */}
-  }
-}
 
 self.addEventListener("install",e=>{
   // cache:"reload" umgeht den HTTP-Cache des Browsers. Ohne das kann der Precache eine
@@ -89,7 +81,7 @@ self.addEventListener("install",e=>{
   const frisch=PRECACHE.map(u=>new Request(u,{cache:"reload"}));
   e.waitUntil(
     caches.open(CACHE)
-      .then(c=>c.addAll(frisch).then(()=>precacheFonts(c)))
+      .then(c=>c.addAll(frisch))
       .then(()=>self.skipWaiting())
   );
 });
@@ -117,7 +109,6 @@ self.addEventListener("fetch",e=>{
   if(url.includes("open-meteo.com"))return; // Wetter: nie cachen (ignoreSearch würde die Datums-Query zerstören)
   if(url.includes("openstreetmap.org"))return; // Geocoding/Adress-Suche: nie cachen (Query-Sicherheit)
   if(url.includes("openholidaysapi.org"))return; // Ferien-Radar: nie cachen (ignoreSearch würde die Datums-Query zerstören)
-  if(url.includes("api.qrserver.com"))return; // QR-Aushang: nie cachen (ignoreSearch würde die Daten-Query zerstören)
   /* v512/v513: Alles unter uebungen/ ist Quelle fuer den Abgleich beim Oeffnen –
      bibliothek.json (Uebungen) und vorlagen.json (Vorlagen). Aus dem Cache gelesen
      bliebe eine solche Datei fuer immer auf dem Stand der Installation stehen, und weil
