@@ -435,7 +435,7 @@ function _tmdKarte(t){
         ${trainerstabNamen(t.trainer_status).map(tn=>{const stt=(t.trainer_status||{})[tn];const bg=stt==="ja"?"#16a34a":stt==="unsicher"?"#ca8a04":stt==="nein"?"#dc2626":"var(--surface2)";const col=stt?"#fff":"var(--text2)";const mk=stt==="ja"?" ✓":stt==="unsicher"?" 🤔":stt==="nein"?" ✕":"";
           return `<button onclick="tmTrainerToggle(${Number(t.id)},'${tn.replace(/'/g,"")}')" title="Tippen wechselt: dabei → unsicher → nicht dabei → offen" style="min-height:44px;border:1px solid var(--rand-bedien);border-radius:12px;padding:0 12px;font-size:var(--s-text);font-weight:700;background:${bg};color:${col};cursor:pointer;font-family:inherit">${esc(tn)}${mk}</button>`;}).join("")}
       </div>`:""}
-      ${(t.heim===true&&istSpiel&&kommt)?`<div id="bd-tm-${t.id}" style="font-size:var(--s-text);color:var(--text2);margin-top:4px">🍿 Büdchen: lädt …</div>`:""}
+      ${(t.heim===true&&istSpiel&&kommt)?`<div id="bd-tm-${t.id}" style="font-size:var(--s-text);color:var(--text2);margin-top:4px">🔥 Grillhütte: lädt …</div>`:""}
       ${kommt?`<div id="helfer-tm-${t.id}" style="font-size:var(--s-text);color:var(--text2);margin-top:4px"></div>`:""}
       ${(kommt&&!istMeeting)?`<button class="btn btn-sm" onclick="rsvpOverviewOpen(${Number(t.id)})" style="width:100%;min-height:44px;margin-top:8px;justify-content:center"><i class="ti ti-list-check"></i>Antworten der Eltern</button>`:""}
       ${istMeeting?`<div id="meet-tm-${t.id}" style="font-size:var(--s-klein);color:var(--text2);margin-top:8px;line-height:1.5"></div>
@@ -745,7 +745,7 @@ function tmCard(t){
     ${t.platz?`<div style="font-size:var(--s-klein);color:var(--text2)">🏟️ Platz: ${esc(t.platz)}</div>`:""}
     ${t.datum>=new Date().toISOString().slice(0,10)?platzAmpelTrainer(t):""}
     <div id="wx-tm-${t.id}"></div>
-    ${(t.heim===true&&(t.typ==="spiel"||t.typ==="turnier")&&t.datum>=new Date().toISOString().slice(0,10))?`<div id="bd-tm-${t.id}" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">🍿 Büdchen: lädt …</div>`:""}
+    ${(t.heim===true&&(t.typ==="spiel"||t.typ==="turnier")&&t.datum>=new Date().toISOString().slice(0,10))?`<div id="bd-tm-${t.id}" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">🔥 Grillhütte: lädt …</div>`:""}
     ${(["training","spiel","turnier"].includes(t.typ)&&t.datum<new Date().toISOString().slice(0,10))?`<div id="puls-tm-${t.id}" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px"></div>`:""}
     ${t.datum>=new Date().toISOString().slice(0,10)?`<div id="helfer-tm-${t.id}" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px"></div>`:""}
     ${t.datum>=new Date().toISOString().slice(0,10)?`<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-top:6px">

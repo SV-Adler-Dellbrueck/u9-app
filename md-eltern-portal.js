@@ -838,7 +838,7 @@ async function elternDashLoad(){
   //    Overlay-Panel #cat-todo. Sichtbar nur, wenn offene Punkte da sind (elternTodoSync nach den Loadern).
   html+=`<button id="eltern-todo-btn" onclick="elternCatOpen('todo')" style="display:none;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:10px;border:none;border-radius:14px;background:linear-gradient(135deg,#b45309,#92400e);color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 2px 10px rgba(217,119,6,.25)">
     <span style="font-size:var(--s-seite);line-height:1">📌</span>
-    <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Zu erledigen</span><span style="display:block;font-size:var(--s-klein);opacity:.92;margin-top:1px">Rückmeldungen, Mitbringen, Büdchen, „Wie war's"</span></span>
+    <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Zu erledigen</span><span style="display:block;font-size:var(--s-klein);opacity:.92;margin-top:1px">Rückmeldungen, Mitbringen, Grillhütte, „Wie war's"</span></span>
     <span id="eltern-todo-badge" style="background:#fff;color:#d97706;font-weight:800;font-size:var(--s-text);border-radius:12px;padding:2px 9px"></span>
     <span style="font-size:var(--s-teil);opacity:.85">›</span>
   </button>`;
@@ -1062,7 +1062,7 @@ async function elternDashLoad(){
   elternGenesungLoad(kids);                    // I-A: Genesungsgrüße für pausierte Teamkinder
   elternHelferTodoLoad();                      // J3: heute als Helfer eingetragen? Erinnerung mit Direktlink
   elternMitbringLoad(kids);                    // Event-Mitbringliste: wer bringt was mit
-  elternBuedchenLoad(termineListe,kids);       // Büdchen-Einteilung bei Heimspielen
+  elternBuedchenLoad();                        // v646: Grillhütte – eigener Dienst und offene zum Übernehmen
   elternGespraechStatus();                     // laufende Elterngespräch-Anfrage anzeigen
   elternPollLoad();                            // Terminvorschläge des Trainers (Elterngespräch-Doodle)
   if(termin)elternTickerLoad(termin);          // Liveticker: Team des Kindes automatisch erkennen
@@ -1347,7 +1347,7 @@ async function terminDetailOpen(id){
   if(t.datum)wetterInto("td-wetter",t.datum,t.ort,t.uhrzeit);
   tdNomLoad(t,kids);
   if(t.typ==="training")tdBetreuungLoad(t,kids);
-  if(istSpiel&&t.heim===true)tdBuedchenLoad(t,kids);
+  if(istSpiel&&t.heim===true)tdBuedchenLoad(t);
   tdHelferLoad(t); // G4: Elternhelfer-Board (nur kommende Termine)
   // „Wie war's" (Puls) lebt jetzt NUR im Zu-erledigen-Fenster (PO: der Termin wandert
   // nach der Endzeit ins Archiv, dort würde die Smiley-Frage niemand mehr finden).
@@ -1898,18 +1898,14 @@ async function tdBetreuungToggle(terminId,spielerId,stay){
   try{const r=await fetch(`${SB_URL}/rest/v1/betreuung?on_conflict=termin_id,spieler_id`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({termin_id:terminId,spieler_id:spielerId,will_stay:stay,updated_at:new Date().toISOString()})});if(!r.ok){toast("Konnte nicht speichern","err");return;}}catch(e){toast("Netzwerkfehler","err");return;}
   terminDetailOpen(terminId);
 }
-async function tdBuedchenLoad(t,kids){
-  const box=document.getElementById("td-buedchen"); if(!box)return;
-  let fam=[];
-  try{const r=await fetch(`${SB_URL}/rest/v1/rpc/buedchen_plan`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_termin:t.id})});if(r.ok)fam=await r.json();}catch(e){}
-  const meineIds=(kids||[]).map(k=>k.spieler_id);
-  const meine=(fam||[]).find(f=>meineIds.includes(f.spieler_id));
-  const namen=(fam&&fam.length)?fam.map(f=>esc(f.name)+"s Familie").join(" & "):"– wird eingeteilt –";
-  box.innerHTML=`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px${meine?";background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:10px 12px":""}">
-    <div style="font-weight:700;font-size:var(--s-text);margin-bottom:2px">🍿 Büdchen (2 Familien)</div>
-    <div style="font-size:var(--s-text)">Eingeteilt: <b>${namen}</b></div>
-    ${meine?`<div style="margin-top:6px;font-size:var(--s-text);color:#15803d;font-weight:700">Ihr seid diesmal dran – danke fürs Büdchen! 🙌</div>
-      <button onclick="tdBuedchenOptout(${t.id},${meine.spieler_id})" style="width:100%;margin-top:8px;min-height:44px;border:1.5px solid #dc2626;border-radius:10px;background:#fff;color:#dc2626;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Wir können nicht – nächste Familie</button>`:""}</div>`;
+/* v646: Grillhütte im Termin (md-kasse.js: ghDienste/ghDienstHtml) – ersetzt das Büdchen. */
+async function tdBuedchenLoad(t){
+  const box=document.getElementById("td-buedchen"); if(!box||typeof ghDienste!=="function")return;
+  const d=(await ghDienste(366)).find(x=>Number(x.termin_id)===Number(t.id));
+  if(!d){ box.innerHTML=""; return; }
+  box.innerHTML=`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px"><b style="font-size:var(--s-text)">🔥 Grillhütte${d.eigene?": Ihr seid dran":""}</b>${ghChip(d.status)}</div>
+    ${ghDienstHtml(d)}</div>`;
 }
 // Vom Event-Termin-Detail zur Mitbringliste auf dem Dashboard (liegt jetzt weit oben).
 function tdMitbringGoto(){
@@ -1917,14 +1913,6 @@ function tdMitbringGoto(){
   const el=document.getElementById("mitbring-slot");
   if(el){ el.scrollIntoView({behavior:"smooth",block:"start"}); try{el.animate([{opacity:.35},{opacity:1}],{duration:500,iterations:2});}catch(e){} }
   else toast("Die Mitbringliste erscheint, sobald das Event näher rückt.");
-}
-async function tdBuedchenOptout(terminId,spielerId){
-  if(!await frageJaNein({emoji:"🍿",titel:"Beim Büdchen absagen?",
-    text:"Dann rückt die nächste Familie nach.",
-    ja:"Absagen",nein:"Doch, wir machen"}))return;
-  try{const r=await fetch(`${SB_URL}/rest/v1/rpc/buedchen_optout`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_termin:terminId,p_spieler:spielerId})});if(sbCheck401(r))return;if(!r.ok){toast(sbDeniedMsg(r,"Konnte nicht ändern"),"err");return;}}catch(e){toast("Netzwerkfehler","err");return;}
-  toast("Danke – die nächste Familie rückt nach.");
-  terminDetailOpen(terminId);
 }
 // Alle kommenden Termine als Dialog + Kalender-Export (.ics) – gleiche Quelle wie die Liste.
 let ELTERN_TERMINE=[];
