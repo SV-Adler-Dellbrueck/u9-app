@@ -877,6 +877,32 @@ async function _evAnlegen(vorlagen,stand){
   if(angelegt)await vorlagenLaden();
   return {angelegt, offen:neu.length-angelegt, fehler, uebersprungen:(vorlagen||[]).length-neu.length};
 }
+/* v646 – Aufbauten je Kinderzahl nachziehen. Bisher legte der Abgleich nur NEUE Vorlagen an;
+   eine bestehende behielt ihre Skalierung für immer, und ein Nachtrag für 10 und 14 Kinder
+   wäre nie angekommen. Jetzt darf genau diese eine Spalte nachgezogen werden (Migration
+   20260927_v646_trainingsblock.sql: UPDATE nur auf skalierung). Die Datei gewinnt; alles
+   andere an einer Vorlage bleibt, wie es beim Anlegen stand. */
+function _evSkalierungGleich(a,b){
+  const ka=_evSkalierungSchluessel(a), kb=_evSkalierungSchluessel(b);
+  return ka.join()===kb.join()&&ka.every(k=>String(a[k]).trim()===String(b[k]).trim());
+}
+async function _evSkalierungNachziehen(vorlagen){
+  let aktualisiert=0, fehler=null;
+  for(const v of (vorlagen||[])){
+    if(v.neu)continue;
+    const sk=(v.skalierung&&typeof v.skalierung==="object"&&!Array.isArray(v.skalierung))?v.skalierung:null;
+    if(!sk||!_evSkalierungSchluessel(sk).length)continue;
+    const db=(typeof VORLAGEN!=="undefined"?VORLAGEN:[]).find(x=>_evNorm(x.name)===_evNorm(v.name));
+    if(!db||_evSkalierungGleich(sk,db.skalierung||{}))continue;
+    try{
+      const r=await fetch(`${SB_URL}/rest/v1/trainingsvorlagen?id=eq.${encodeURIComponent(db.id)}`,{method:"PATCH",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify({skalierung:sk})});
+      if(sbCheck401(r)||!r.ok){ fehler=v.name; break; }
+      aktualisiert++;
+    }catch(e){ fehler="__netz"; break; }
+  }
+  if(aktualisiert)await vorlagenLaden();
+  return {aktualisiert, fehler};
+}
 async function vorlagenImportUebernehmen(){
   const g=_evGeprueft;
   if(!g){ _evMelde(["Bitte zuerst prüfen."],"err"); return; }
@@ -1429,9 +1455,16 @@ async function bibliothekAbgleich(){
       const {fehler,daten}=_evPruefung(JSON.stringify(vor.d));
       if(!fehler.length){
         await vorlagenLaden();
-        const v=await _evAnlegen(_evAufbereiten(daten),vor.stand);
-        if(!v.fehler&&vor.stand)_bibStandMerken(vor.stand,VOR_STAND_KEY);
-        if(v.angelegt&&typeof toast==="function")toast(`🗂️ ${v.angelegt} neue Vorlage${v.angelegt===1?"":"n"}`);
+        const liste=_evAufbereiten(daten);
+        const v=await _evAnlegen(liste,vor.stand);
+        const s=v.fehler?{aktualisiert:0,fehler:null}:await _evSkalierungNachziehen(liste);   // v646
+        if(!v.fehler&&!s.fehler&&vor.stand)_bibStandMerken(vor.stand,VOR_STAND_KEY);
+        if(typeof toast==="function"){
+          const teile=[];
+          if(v.angelegt)teile.push(`${v.angelegt} neue Vorlage${v.angelegt===1?"":"n"}`);
+          if(s.aktualisiert)teile.push(`${s.aktualisiert} mit neuen Aufbauten`);
+          if(teile.length)toast("🗂️ "+teile.join(" · "));
+        }
         erg=erg?{...erg,vorlagen:v}:{angelegt:0,offen:0,fehler:null,uebersprungen:0,vorlagen:v};
       }
     }

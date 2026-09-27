@@ -284,6 +284,7 @@
   <!-- SUB: Formen -->
   <div id="train-sub-formen" class="train-sub">
   <div class="sl nt"><i class="ti ti-ball-football"></i>Übungen</div>
+  <div id="block-banner"></div><!-- v646: laufender Trainingsblock (md-block.js) -->
   <div id="period-banner" style="background:var(--blue-bg);border:1px solid #93c5fd;border-radius:var(--rl);padding:12px;margin-bottom:1rem;font-size:12px;color:#1e40af;line-height:1.6"><strong>Schwerpunkt jetzt: Grundordnung &amp; Raute aufbauen.</strong> 107 Übungen auf Basis des 4-Phasen-Modells.</div>
   <input type="text" id="training-search" placeholder="🔍 Übung suchen (z. B. Passspiel, FUNiño) …" oninput="clearTimeout(window._tfDebounce);window._tfDebounce=setTimeout(renderTraining,200)"
     style="width:100%;box-sizing:border-box;padding:10px 14px;border:1px solid var(--rand-bedien);border-radius:12px;font-size:13.5px;background:var(--surface);font-family:inherit;outline:none;margin-bottom:8px">
@@ -593,6 +594,7 @@
     <div id="tp-diagnose"></div>
     <!-- v506: Kopf der Einheit (Schwerpunkt, Material, Beobachtung, Notiz) – kommt aus
          trainingsplan.kopf und steht über der Zeitleiste, wo die Einheit beginnt. -->
+    <div id="tp-block"></div><!-- v646: Einheit des Trainingsblocks für diesen Termin, Aufbau nach Kinderzahl -->
     <div id="tp-kopf"></div>
     <!-- v538: „Einheit importieren" ist entfallen. Eine einzelne Einheit als JSON von
          Hand einzulesen hatte nie einen Anwendungsfall – fertige Einheiten kommen über
