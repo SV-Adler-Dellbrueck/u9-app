@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v640 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v641 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -73,8 +73,8 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 
 | Funktion | Was sie tut | Nutzen |
 |---|---|---|
-| **Taktikboard** | **Spielsituationen** auf derselben Zeichenfläche wie die Skizzen der Übungen: beschreiben oder einsprechen, die KI zeichnet sie aufs ganze Feld; oder mit FUNiño, 3+1, 4+1 oder 5+1 samt Rollen starten. Gespeicherte Situationen groß zeigen, mehrere Bilder abspielen, als Bild teilen, bearbeiten. Das bisherige Brett mit Kader-Namen, Bank und Pro-Modus liegt unter „Freies Brett“; das Taktik-Quiz der Kinder nutzt es weiter. | Eine Spielidee ist in einer Minute gezeichnet und im Trainerteam geteilt. |
-| **Taktik-Bibliothek & Video** | Gespeicherte Boards, kurze Video-Sequenzen aus dem Board. | Wiederverwendbar über die Saison, verständlich auch für Kinder. |
+| **Taktikboard** | **Spielsituationen** auf derselben Zeichenfläche wie die Skizzen der Übungen: beschreiben oder einsprechen, die KI zeichnet sie aufs ganze Feld; oder mit FUNiño, 3+1, 4+1 oder 5+1 samt Rollen starten. Gespeicherte Situationen groß zeigen, mehrere Bilder abspielen, als Bild teilen, bearbeiten. Zum Besprechen die Großansicht mit Vollbild und „Kinder einsetzen“ (Namen aus dem Kader, nur zum Zeigen). Seit v641 gibt es kein zweites Brett mehr; das Taktik-Quiz der Kinder hat sein eigenes. | Eine Spielidee ist in einer Minute gezeichnet und im Trainerteam geteilt. |
+| **Video-Brett** | Einen kurzen Clip vom Handy laden, anhalten, Laufwege und Pässe darüber zeichnen, als Bild teilen (der Clip bleibt auf dem Gerät). Gespeicherte Situationen stehen seit v641 in der Liste der Spielsituationen. | Eine echte Szene aus dem Spiel wird zur Besprechung. |
 
 ### 1.6 Kachel Eltern & Kinder
 

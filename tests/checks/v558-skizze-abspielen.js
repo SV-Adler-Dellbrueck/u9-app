@@ -117,38 +117,9 @@ module.exports = async function (h) {
   const f1 = s.fehler();
   if (f1.length) probleme.push("Konsole: " + f1[0]);
 
-  // ── e) Taktikboard ────────────────────────────────────────────────────────
-  await h.sichtbarMachen(s.page, "#view-taktik");
-  const tb = await s.page.evaluate(async () => {
-    const warte = ms => new Promise(x => setTimeout(x, ms));
-    if (typeof taktikBildNeu !== "function") return { fehlt: "taktikBildNeu" };
-    document.body.classList.add("tb-alt-an");   // v640: altes Brett hinter „Freies Brett“
-    taktikSetup("auto"); await warte(120);
-    if (!tbField.length) return { fehlt: "Aufstellung auf dem Feld" };
-    const vorher = tbField[0].x;
-    taktikBildNeu(); await warte(80);
-    const nachNeu = { nr: tbBildNr, zahl: tbBilder.length };
-    tbField[0].x = vorher + 20; taktikRender(); await warte(60);
-    const knoepfe = document.querySelectorAll("#taktik-bilder button").length;
-    // Speichern und wieder laden
-    const schnapp = ttSnapshot();
-    const hatSchritte = Array.isArray(schnapp.schritte) && schnapp.schritte.length === 1;
-    const bild1 = schnapp.field[0].x, bild2 = hatSchritte ? schnapp.schritte[0].field[0].x : null;
-    // Ein Eintrag ohne Bilder lädt wie bisher
-    tbBilder = []; tbBildNr = 0; taktikRender(); await warte(60);
-    const ohneBilder = document.querySelectorAll("#taktik-bilder button").length;
-    return { nachNeu, knoepfe, hatSchritte, bild1, bild2, vorher, ohneBilder };
-  });
-  if (tb.fehlt) probleme.push(tb.fehlt + " fehlt");
-  else {
-    if (tb.nachNeu.zahl !== 2 || tb.nachNeu.nr !== 1) probleme.push(`Nach „+ Bild“ gibt es ${tb.nachNeu.zahl} Bilder, gewählt ist Bild ${tb.nachNeu.nr + 1}`);
-    if (tb.knoepfe < 4) probleme.push(`Die Bilderzeile hat nur ${tb.knoepfe} Knöpfe`);
-    if (!tb.hatSchritte) probleme.push("Der gespeicherte Stand trägt die Bilder nicht mit");
-    else if (!(tb.bild1 === tb.vorher && tb.bild2 === tb.vorher + 20))
-      probleme.push(`Bild 1 steht auf ${tb.bild1}, Bild 2 auf ${tb.bild2} – erwartet ${tb.vorher} und ${tb.vorher + 20}`);
-    if (tb.ohneBilder !== 1) probleme.push(`Ohne Bilder zeigt die Zeile ${tb.ohneBilder} Knöpfe statt nur „+ Bild“`);
-    if (!probleme.length) zeilen.push("Taktikboard: „+ Bild“ trennt die Stände, Speichern nimmt sie mit, ohne Bilder bleibt alles wie bisher");
-  }
+  /* e) Das Taktikboard hatte eigene Bilder (v558). Seit v641 zeichnet es auf derselben Fläche
+     wie die Skizzen – die Bilder und das Abspielen oben gelten dort unverändert
+     (v640-spielsituationen.js prüft die Situationen mit mehreren Bildern). */
   const f2 = s.fehler();
   if (f2.length && !probleme.some(p => /Konsole/.test(p))) probleme.push("Konsole: " + f2[0]);
   await s.schliessen();
@@ -189,5 +160,5 @@ module.exports = async function (h) {
   if (f3.length && !probleme.some(p => /Konsole/.test(p))) probleme.push("Konsole (weniger Bewegung): " + f3[0]);
   await rm.schliessen();
 
-  return h.ergebnis("Skizze abspielen: Überblenden, Anhalten, Taktikboard mit Bildern", !probleme.length, zeilen.concat(probleme));
+  return h.ergebnis("Skizze abspielen: Überblenden, Anhalten", !probleme.length, zeilen.concat(probleme));
 };

@@ -3,7 +3,7 @@
    zum Erklären von Situationen und fürs Taktik-Quiz der Kinder, sonst kaum.
 
    a) Die Taktik-Seite zeigt oben die Spielsituationen (KI, Spielformen, Liste); das alte Brett
-      ist zu und öffnet über „Freies Brett“, der Knopf schließt es wieder.
+      ist im Trainerbereich nicht erreichbar (seit v641 kein „Freies Brett“), Video und KI-Coach bleiben.
    b) Vorlagen: ganzes Feld hochkant, Tore oben und unten, Rollen statt Namen, alles im Feld.
    c) „Neue Situation“ öffnet den Skizzen-Editor als „Spielsituation“; Übernehmen erfasst in
       taktik_templates mit formation „Spielsituation“ und data {typ:"skizze", spec} – ohne Namen.
@@ -38,11 +38,10 @@ module.exports = async function (h) {
     // a) Hub oben, altes Brett zu
     out.a = { hub: !zu(document.getElementById("sit-ki-text")), altZu: zu(wrap), kopfZu: zu(document.querySelector("#view-taktik>.tb-kopf")),
       formen: [...document.querySelectorAll(".sit-form")].map(b => b.textContent.trim()) };
-    sitAltUmschalten(); await warte(80);
-    out.a.altAuf = !zu(wrap) && !zu(document.getElementById("taktik-field")); out.a.kiWeg = zu(document.getElementById("sit-ki-text"));
-    out.a.knopf = document.getElementById("sit-alt-knopf").textContent.trim();
-    sitAltUmschalten(); await warte(80);
-    out.a.wiederZu = zu(wrap) && !zu(document.getElementById("sit-ki-text"));
+    // v641: kein „Freies Brett“ mehr – das alte Brett gehört nur dem Quiz
+    out.a.altKnopf = !!document.getElementById("sit-alt-knopf"); out.a.altFunktion = typeof sitAltUmschalten;
+    out.a.feldZu = zu(document.getElementById("taktik-field"));
+    out.a.weitere = [...document.querySelectorAll(".sit-weitere button")].map(b => b.textContent.trim());
     // b) Vorlagen
     const drin = sp => (sp.s || []).every(p => p[0] >= 0 && p[0] <= 180 && p[1] >= 0 && p[1] <= 280);
     const v4 = sitVorlage("4+1"), vf = sitVorlage("funino"), v5 = sitVorlage("5+1");
@@ -90,7 +89,8 @@ module.exports = async function (h) {
   const a = r.a;
   if (!a.hub || !a.altZu || !a.kopfZu) probleme.push("a) Seite öffnet nicht mit den Spielsituationen: " + JSON.stringify(a));
   if (a.formen.length !== 4) probleme.push("a) Spielformen: " + a.formen.join(" / "));
-  if (!a.altAuf || !a.kiWeg || !/schließen/.test(a.knopf) || !a.wiederZu) probleme.push("a) Freies Brett öffnet/schließt nicht: " + JSON.stringify(a));
+  if (a.altKnopf || a.altFunktion !== "undefined" || !a.feldZu) probleme.push("a) v641: altes Brett im Trainerbereich noch erreichbar: " + JSON.stringify(a));
+  if (!a.weitere.some(t => /Video/.test(t)) || !a.weitere.some(t => /KI-Coach/.test(t))) probleme.push("a) Video/KI-Coach fehlen: " + a.weitere.join(" / "));
   const b = r.b;
   if (!b.v4.hoch || b.v4.s !== 5 || b.v4.tw !== "b" || b.v4.tore !== 2 || !b.v4.jugend || !b.v4.mitte || !b.v4.drin) probleme.push("b) 4+1-Vorlage: " + JSON.stringify(b.v4));
   if (b.v4.labels.some(l => K.some(k => k.startsWith(l) && l.length > 2))) probleme.push("b) Vorlage trägt Namen: " + b.v4.labels.join(","));
