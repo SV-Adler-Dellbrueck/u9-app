@@ -46,6 +46,10 @@ REGELN
   (v630 PO: „Die Bewertung der Einheiten können durchaus einen größeren Umfang haben … das ist
   auch gewünscht so, weil wir das nachher alles in einem Trainer-Tagebuch festhalten wollen.“)
 - Kinder heißen im Text „Kind 1“, „Kind 2“ … Übernimm genau diese Bezeichnung.
+- Satzzeichen der Spracherkennung sind unzuverlässig: ein Punkt steht oft nur an einer Denkpause
+  mitten im Satz. Lies über solche Punkte hinweg und setze eigene, richtige Sätze. (v638)
+- Widerspricht sich der Trainer, gilt das zuletzt Gesagte. Eine Zeile „Korrektur: …“ ist eine
+  Nachbesserung zu deiner vorigen Auswertung und hat Vorrang vor allem davor. (v638)
 - Antworte AUSSCHLIESSLICH mit einem JSON-Objekt in der verlangten Form.`;
 
 const FORM_TRAINING = `{

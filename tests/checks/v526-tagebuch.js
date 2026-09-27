@@ -82,7 +82,7 @@ module.exports = async function (h) {
     if (chip) chip.click();
     out.nachChip = (document.getElementById("tb-aha") || {}).value || "";
     out.chipName = chip ? chip.textContent.trim() : "";
-    out.chipAlias = chip ? tbAlias(out.chipName) : "";
+    out.chipAlias = chip ? tbVorname(out.chipName) : "";   // v638: in der App der Vorname
 
     /* Die Attrappe nennt ihre Kinder „Kind A" bis „Kind O" (CLAUDE.md: keine echten Namen
        im Repo) – dort fallen Name und Deckname zusammen, der Beweis „schreibt NICHT den
@@ -96,6 +96,7 @@ module.exports = async function (h) {
     tbKindEinfuegen(ERFUNDEN);
     out.nachErfunden = (document.getElementById("tb-aha") || {}).value || "";
     out.fundErfunden = tbNamensfund("Heute war Zacharias auffaellig");
+    out.nachAussen = tbPseudonym("Heute war Zacharias auffaellig");   // v638: Buchstabe erst beim Export
     KADER.pop();
 
     // c) Pflichtfelder: erst Aha leeren, dann speichern
@@ -139,10 +140,12 @@ module.exports = async function (h) {
   // d) Alias
   if (r.alias1.join(",") !== r.alias2.join(",")) probleme.push(`Alias ändert sich zwischen zwei Aufrufen: ${r.alias1} / ${r.alias2}`);
   if (r.aliasVonId.join(",") !== "Kind A,Kind B") probleme.push(`Die zwei kleinsten Kader-IDs ergeben ${r.aliasVonId} statt Kind A, Kind B`);
-  if (r.nachChip.trim() !== r.chipAlias) probleme.push(`Antippen schreibt ${JSON.stringify(r.nachChip)} statt des Decknamens ${JSON.stringify(r.chipAlias)}`);
+  /* v638 · PO: „… für mein eigenes Tagebuch innerhalb der App die Klarnamen, also die Vornamen“ –
+     Antippen schreibt den Vornamen; der Buchstabe entsteht erst beim Teilen und Exportieren. */
+  if (r.nachChip.trim() !== r.chipAlias) probleme.push(`Antippen schreibt ${JSON.stringify(r.nachChip)} statt des Vornamens ${JSON.stringify(r.chipAlias)}`);
   if (!/^Kind [A-Z]+$/.test(r.aliasErfunden || "")) probleme.push(`Ein alias-fremder Name bekommt ${JSON.stringify(r.aliasErfunden)} statt eines Decknamens`);
-  if (r.nachErfunden.includes("Zacharias")) probleme.push(`Der echte Name steht im Textfeld: ${JSON.stringify(r.nachErfunden)}`);
-  if (r.nachErfunden.trim() !== r.aliasErfunden) probleme.push(`Antippen schreibt ${JSON.stringify(r.nachErfunden)} statt ${JSON.stringify(r.aliasErfunden)}`);
+  if (r.nachErfunden.trim() !== "Zacharias") probleme.push(`Antippen schreibt ${JSON.stringify(r.nachErfunden)} statt des Vornamens „Zacharias“`);
+  if (r.nachAussen !== "Heute war " + r.aliasErfunden + " auffaellig") probleme.push(`Nach außen steht nicht der Buchstabe: ${JSON.stringify(r.nachAussen)}`);
   if (r.fundErfunden !== "Zacharias") probleme.push(`Der Vorname „Zacharias" wird beim Erfassen nicht erkannt (${JSON.stringify(r.fundErfunden)})`);
 
   // e) Namensprüfung
@@ -167,6 +170,7 @@ module.exports = async function (h) {
   if (!/Wie kriege ich den Ball zu einem, der frei ist\?“/.test(md)) probleme.push("Typografische Anführungszeichen im Export verfälscht");
   if (!/heißt/.test(md) || !/Fuß/.test(md)) probleme.push("Umlaute oder ß im Export verfälscht");
   if (!/\(bis 25\.09\.2026\)/.test(md)) probleme.push("Das Datum der Konsequenz fehlt im Export");
+  if (!/^> Hinweis: Aus Datenschutzgründen sind die Namen der Kinder durch Buchstaben ersetzt/.test(md)) probleme.push("Export ohne Datenschutz-Hinweis oben (v638)");
 
   // g) Höhen
   if (r.haupt[0] !== 56) probleme.push(`Hauptaktion ist ${r.haupt[0]} px hoch statt 56`);

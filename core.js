@@ -1413,8 +1413,15 @@ function _dkZusammen(liste){
   return _dkEntdoppeln(out.join(" "));
 }
 /* Neuen Satz ans Feld hängen. Beginnt er mit denselben Wörtern (ab zwei), mit denen das Feld
-   endet – das Handy hat den Schluss der letzten Äußerung noch einmal geliefert –, fallen sie weg. */
-function _dkAnhaengen(basis, neu){
+   endet – das Handy hat den Schluss der letzten Äußerung noch einmal geliefert –, fallen sie weg.
+   v638 · PO: „… beim Einsprechen immer wieder eine Punktsetzung, die automatisch gemacht wird,
+   obwohl ich gar nicht mit dem Satz zu Ende bin … ein paar kurze Pausen, um nachzudenken.“
+   Die Spracherkennung beendet ihre Sitzung an jeder Denkpause; vorher setzte jedes Ende einen Punkt
+   und einen Großbuchstaben. Jetzt schließt ein Satz nur nach einer langen Pause (DK_SATZPAUSE_MS),
+   sonst geht er mit einem Leerzeichen weiter. Die KI-Auswertung setzt ohnehin eigene Sätze. */
+const DK_SATZPAUSE_MS = 3500;
+function _dkAnhaengen(basis, neu, neuerSatz){
+  if(neuerSatz===undefined) neuerSatz = true;
   let t = String(neu||"").trim(); if(!t) return basis;
   const bw = _dkWorte(basis), nw = t.split(/\s+/);
   const nwn = nw.map(x=>_dkWorte(x).join(""));
@@ -1422,10 +1429,10 @@ function _dkAnhaengen(basis, neu){
     if(bw.slice(-k).join(" ")===nwn.slice(0,k).join(" ")){ t = nw.slice(k).join(" "); break; }
   }
   if(!t) return basis;
-  t = t.charAt(0).toUpperCase() + t.slice(1);
-  if(!/[.!?…]$/.test(t)) t += ".";
-  const b = String(basis||"");
-  return b ? b.replace(/\s*$/," ") + t : t;
+  const b = String(basis||"").replace(/\s+$/,"");
+  if(!b || neuerSatz || /[.!?…]$/.test(b)) t = t.charAt(0).toUpperCase() + t.slice(1);
+  if(!b) return t;
+  return (neuerSatz && !/[.!?…:;,]$/.test(b) ? b+"." : b) + " " + t;
 }
 function _dkAnzeige(zustand, text){
   if(!_dk) return;
@@ -1472,10 +1479,12 @@ function _dkSitzung(){
   if(!SR || !feld){ diktatPause(); return; }
   const rec = new SR(); rec.lang = "de-DE"; rec.continuous = false; rec.interimResults = true; rec.maxAlternatives = 1;
   d.rec = rec; d.basis = feld.value; d.fertig = []; d.spricht = false;
+  /* Satzende nur nach einer langen Pause seit dem letzten erkannten Wort (oder nach „Weiter“). */
+  d.neuerSatz = !d.zuletztGehoert || (Date.now() - d.zuletztGehoert) >= DK_SATZPAUSE_MS;
   const schreiben = zwischen => {
     const f = document.getElementById(d.feldId); if(!f) return;
     const fest = _dkZusammen(d.fertig);
-    const neu = _dkAnhaengen(d.basis, fest);
+    const neu = _dkAnhaengen(d.basis, fest, d.neuerSatz);
     f.value = (zwischen ? (neu ? neu.replace(/\s*$/," ") : "") + zwischen : neu).slice(0, d.max);
     f.scrollTop = f.scrollHeight;
     d.onText && d.onText(f.value);
@@ -1486,6 +1495,7 @@ function _dkSitzung(){
     const fertig = [], zw = [];
     for(let i=0;i<ev.results.length;i++){ const r=ev.results[i]; const t=r[0]&&r[0].transcript||""; (r.isFinal?fertig:zw).push(t); }
     d.fertig = fertig; d.letzte = Date.now(); d.spricht = true;
+    if(fertig.length || zw.length) d.zuletztGehoert = Date.now();
     const zwischen = _dkEntdoppeln(zw.join(" "));
     schreiben(zwischen);
     _dkAnzeige("hoert", zwischen || _dkZusammen(fertig));
@@ -1518,7 +1528,7 @@ function diktatStart(opt){
   if(_dk && _dk.feldId!==opt.feldId) diktatStop();
   if(!_dk) _dk = { feldId:opt.feldId, knopfId:opt.knopfId, anzeigeId:opt.anzeigeId, max:opt.max||4000, onText:opt.onText,
                    labels:Object.assign({ aus:"Einsprechen", an:"Pause", weiter:"Weiter einsprechen" }, opt.labels||{}) };
-  _dk.wollen = true; _dk.hintergrund = false; _dk.letzte = Date.now();
+  _dk.wollen = true; _dk.hintergrund = false; _dk.letzte = Date.now(); _dk.zuletztGehoert = 0;   // „Weiter“ beginnt einen neuen Satz
   _dkWach(true);
   _dkSitzung();
   return true;

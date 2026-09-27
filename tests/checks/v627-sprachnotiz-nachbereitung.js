@@ -105,7 +105,7 @@ module.exports = async function (h) {
   if (!c.skip) probleme.push("c) „übersprungen“ nicht gesetzt");
   const k2 = c.kindSterne[1];
   if (!k2 || k2[1] !== 3 || c.kindSterne.filter(x => x[1] > 0).length !== 1) probleme.push("c) Kinder-Sterne: " + JSON.stringify(c.kindSterne));
-  if (!/Bitte prüfen und speichern/.test(c.status)) probleme.push("c) Rückmeldung: " + c.status);
+  if (!/Im Bogen prüfen, ändern und speichern/.test(c.status))   /* v638: neuer Wortlaut, Korrektur-Knopf dahinter */ probleme.push("c) Rückmeldung: " + c.status);
   const d = r.d, t1 = (d.wert.teams || {})["1"] || {};
   if (t1.ordnung !== 1 || t1.pass !== 3 || t1.spass !== 3 || "zweikampf" in t1) probleme.push("d) Mannschaft: " + JSON.stringify(t1));
   if ((d.wert.gaeste || {})["FC Gastverein"] !== "zu_stark") probleme.push("d) Gast: " + JSON.stringify(d.wert.gaeste));
