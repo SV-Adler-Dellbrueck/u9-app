@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v643 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v644 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -133,7 +133,7 @@ Zugang mit E-Mail und Passwort, angelegt über die Einladungskarte des Kindes. W
 | **Elterngespräch** | Termin- und Themenwunsch für ein Gespräch mit dem Trainerteam. Seit v637 steht der Weg als „Trainerteam kontaktieren“ an erster Stelle unter „Mehr“. | Niedrige Schwelle, hohe Verbindlichkeit. |
 | **Genesungswünsche** | Ist ein Kind länger krank, können Eltern die Freigabe erteilen, dass Mitspieler Genesungsgrüße schicken. | Das Kind bleibt Teil des Teams, auch wenn es fehlt. |
 | **Fahrgemeinschaft, Wäsche, Büdchen** | Mitfahrgelegenheit anbieten oder suchen; Trikotwäsche-Dienst; Büdchen-Dienst am Heimspieltag. | Die Orga-Last verteilt sich sichtbar und fair. |
-| **Datenschutz & Freigaben** | Foto- und Video-Freigaben je Kind, Notfallkarte, Erklärung „So schützen wir eure Fotos & Daten“. | Eltern behalten die Kontrolle. Die App ist damit sicherer als jede Messenger-Gruppe. |
+| **Datenschutz & Freigaben** | Foto- und Video-Freigaben je Kind, Notfallkarte, Erklärung „So schützen wir eure Fotos & Daten“. Seit v644: **Meine Daten herunterladen** (alles zu Konto und Kindern, ohne Einschätzungen des Trainerteams), **Konto löschen** sofort selbst, **Daten des Kindes löschen lassen** per Antrag – der Trainer sieht ihn oben auf der Startseite und erledigt ihn mit „Jetzt löschen“ (Kaderplatz, Einschätzungen, Foto, Kindergeräte; in Plänen und Spielberichten bleibt „Ehemaliges Kind“). Datenbankfunktionen, die nur Angemeldete brauchen, sind ohne Anmeldung nicht mehr aufrufbar. | Eltern behalten die Kontrolle. Die App ist damit sicherer als jede Messenger-Gruppe. |
 | **Adler Nest & Fan-Link** | Das digitale Stadionheft lesen; den Spenden-Link an Fans weitergeben. | Der Verein wird sichtbar, ohne dass die App Geld anfasst. |
 | **Quiz** | Regel- und Taktik-Quiz, auch für Eltern. | Eltern verstehen, was die Kinder lernen – und rufen weniger von der Seitenlinie. |
 | **Rundgang** | Fünf kurze Schritte beim ersten Öffnen (seit v637, vorher zehn), jederzeit über das Fragezeichen wiederholbar. | Neue Familien finden sich ohne Erklärung zurecht. |

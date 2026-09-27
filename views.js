@@ -1154,6 +1154,8 @@ async function backupExport(){
                 "entwicklungsziele","nominierung_hinweis","probekinder","aufstellungen","taktik_templates",
                 "trainer_notes","training_live","turnier_plan","turnier_spiele","heimturnier","stadionheft",
                 "betreuung","event_helfer","event_mitbringen","event_puls","elterngespraech_wunsch",
+                /* v644: Löschanträge – der Nachweis, dass und wann ein Antrag erledigt wurde. */
+                "loeschantrag",
                 "eltern_poll","eltern_poll_slot","eltern_poll_vote","ansagen","ansagen_gelesen",
                 "kabine_config","kabine_lob","kabine_post","kabine_reporter","kabinen_wahl","kabinen_wahl_stimmen",
                 "kind_fanfacts","kind_kontakte","kind_pause","kind_selbstbild","kind_stimmung",
@@ -2763,6 +2765,44 @@ async function elterngespraechErledigt(id){
   try{const r=await fetch(`${SB_URL}/rest/v1/elterngespraech_wunsch?id=eq.${id}`,{method:"PATCH",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},body:JSON.stringify({status:"erledigt"})});if(sbCheck401(r))return;if(!r.ok){toast(sbDeniedMsg(r,"Konnte nicht ändern"),"err");return;}}catch(e){toast("Netzwerkfehler","err");return;}
   toast("Als erledigt markiert ✓");
   elterngespraecheTrainerLoad();
+}
+
+/* v644: Löschanträge der Eltern. Oben auf der Startseite, solange einer offen ist – DSGVO
+   gibt einen Monat. „Jetzt löschen“ ruft die Edge Function kind-loeschen: Kaderplatz und alles
+   daran, Einschätzungen, Foto, Sprach-Lobe und Kindergeräte; Pläne und Spielberichte behalten
+   „Ehemaliges Kind“ statt des Namens. confirm() ist im Trainerbereich erlaubt (CLAUDE.md). */
+async function loeschantraegeTrainerLoad(){
+  const box=document.getElementById("la-trainer"); if(!box)return;
+  let rows=[];
+  try{const r=await fetch(`${SB_URL}/rest/v1/loeschantrag?erledigt_am=is.null&select=id,spieler_id,erstellt_am,antrag_email&order=erstellt_am.asc`,{headers:sbAuthHeaders()});if(!sbCheck401(r)&&r.ok)rows=await r.json();}catch(e){}
+  if(!rows.length){box.innerHTML="";return;}
+  const name=id=>((typeof KADER!=="undefined"?KADER:[]).find(k=>Number(kaderId(k))===Number(id))||{}).name||"Kind (nicht im Kader)";
+  box.innerHTML=`<div class="card" style="border-left:3px solid var(--red);padding:12px 14px;margin-top:10px">
+    <div style="font-weight:800;font-size:var(--s-text);margin-bottom:6px">🗑️ Löschanträge (${rows.length})</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px">Eltern bitten, alle Daten ihres Kindes zu löschen. Frist: ein Monat ab Antrag.</div>
+    ${rows.map(a=>{ const tage=Math.floor((Date.now()-new Date(a.erstellt_am))/864e5);
+      return `<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-top:var(--border-s)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:var(--s-text);font-weight:700">${esc(name(a.spieler_id))}</div>
+        <div style="font-size:var(--s-klein);color:var(--text2)">seit ${new Date(a.erstellt_am).toLocaleDateString("de-DE")} (${tage} ${tage===1?"Tag":"Tage"})${a.antrag_email?" · "+esc(a.antrag_email):""}</div>
+      </div>
+      <button onclick="kindVollstaendigLoeschen(${Number(a.spieler_id)},this)" class="btn btn-sm" style="color:var(--red);border-color:var(--red);min-height:44px">Jetzt löschen</button>
+    </div>`;}).join("")}
+  </div>`;
+}
+async function kindVollstaendigLoeschen(spielerId,btn){
+  const k=(typeof KADER!=="undefined"?KADER:[]).find(x=>Number(kaderId(x))===Number(spielerId));
+  const nm=(k&&k.name)||"dieses Kind";
+  if(!confirm(`Alle Daten von ${nm} endgültig löschen?\n\nKaderplatz, Rückmeldungen, Freigaben, Notfallkarte, Kabine, Einschätzungen, Foto und Kindergeräte. In Plänen und Spielberichten steht danach „Ehemaliges Kind“. Das lässt sich nicht rückgängig machen.`))return;
+  if(btn)btn.disabled=true;
+  try{
+    const r=await fetch(`${SB_URL}/functions/v1/kind-loeschen`,{method:"POST",headers:{...sbAuthHeaders(),"Content-Type":"application/json"},body:JSON.stringify({spieler_id:spielerId})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){toast("Nicht gelöscht: "+(d.error||("Fehler "+r.status)),"err");if(btn)btn.disabled=false;return;}
+    toast(`${nm} ist gelöscht ✓`);
+  }catch(e){toast("Kein Netz – nichts gelöscht","err");if(btn)btn.disabled=false;return;}
+  try{ await loadKader(); if(typeof renderKader==="function")renderKader(); }catch(e){}
+  loeschantraegeTrainerLoad();
 }
 
 /* Trainer-Meeting-Doodle: Terminvorschläge, Abstimmung (✓/?/✗) unter Trainern, festlegen.
@@ -4414,7 +4454,7 @@ const TOUR=[
   {emo:"⚽", t:"Kachel: Spieltag", d:"Ganz oben „📚 Wissen & Nachschlagen“: Spielformen und Feldmaße, die Spielregeln, was Ordnungsgeld kostet, das Warm up Adler mit allen vier Stufen und unsere Zeiten – zum Nachsehen am Platz. Darunter der Ablauf von oben nach unten: „Teams festlegen“ beantwortet einmal für den ganzen Tag, wer dabei ist und wie viele Teams wir stellen – die Kinder verteilt die App automatisch, du korrigierst nur. Darunter je Team eine Kachel mit Kader, Rollen, Uhr, Rotations-Timer und Liveticker; danach die Team-Quests für alle Teams zusammen. Beim Öffnen sind alle Abschnitte eingeklappt – du tippst auf, was du gerade brauchst. Dazu die Rollen-Empfehlung aus den Bewertungen und die Analyse. Steht ein Turnier an, erscheint ganz unten der Turnier-Bereich (Heimturnier ausrichten mit öffentlichem Link für die Gast-Trainer)."},
   {emo:"👥", t:"Kachel: Team", d:"Kader verwalten, Spieler alle 6 Wochen in 16 Kriterien bewerten (Live-Radar), Profil mit Sprachlob und Entwicklungs-Report, dazu Saison-Cockpit, Anwesenheit über die Saison und Rollen-Matrix. Unter „Ausstattung“ steht, welches Kind Trikotsatz, Anzug oder Jacke bekommen hat – mit Größe, Ausgabedatum und Rückgabe. Auch Notfallkarten und Probetraining wohnen hier."},
   {emo:"🎯", t:"Kachel: Taktik", d:"Das Taktikboard: Spielsituationen beschreiben und von der KI zeichnen lassen oder mit einer Spielform starten, mit mehreren Bildern abspielen, groß zeigen und als Bild teilen – auf derselben Zeichenfläche wie die Skizzen der Übungen. Zum Besprechen „Groß zeigen“ mit „Kinder einsetzen“. Daneben die Übungs-Datenbank – dort zeichnest du je Übung eine Skizze mit Spielern, Hütchen, Minitoren, Jugendtoren, Zonen, Pfeilen, Mittellinie und Schusszone, zeigst sie mit „Groß zeigen“ bildschirmfüllend mit Fingerzoom und hellem Rasen und gibst sie mit „Skizze teilen“ als Bild weiter."},
-  {emo:"🪶", t:"Kachel: Eltern & Kinder", d:"Team-Ansage mit Gelesen-Status, Eltern einladen, Elterngespräche – und die ganze Adler-Welt der Kinder: Federn, Karten, Abzeichen, Kabinen-Wahl, „Unsere Regeln“ für die Kabine, Sammelalbum-Fotos, Team-Quests, Urkunden-Studio und das Adler Nest. Die Kabine gibt es inzwischen auch als eigene App auf dem Gerät des Kindes – gekoppelt wird sie von den Eltern mit einem Code, die Appzeit stellen ebenfalls sie ein. Du musst dafür nichts tun; unter Orga → Nutzung siehst du nur die Zahl der gekoppelten Geräte."},
+  {emo:"🪶", t:"Kachel: Eltern & Kinder", d:"Team-Ansage mit Gelesen-Status, Eltern einladen, Elterngespräche – und die ganze Adler-Welt der Kinder: Federn, Karten, Abzeichen, Kabinen-Wahl, „Unsere Regeln“ für die Kabine, Sammelalbum-Fotos, Team-Quests, Urkunden-Studio und das Adler Nest. Die Kabine gibt es inzwischen auch als eigene App auf dem Gerät des Kindes – gekoppelt wird sie von den Eltern mit einem Code, die Appzeit stellen ebenfalls sie ein. Du musst dafür nichts tun; unter Orga → Nutzung siehst du nur die Zahl der gekoppelten Geräte. Stellen Eltern einen Löschantrag, steht er oben auf der Startseite: „Jetzt löschen“ entfernt alle Daten des Kindes, in Plänen und Spielberichten steht danach „Ehemaliges Kind“."},
   {emo:"📅", t:"Kachel: Orga", d:"Termine mit Endzeit (danach automatisch ins Archiv), Pinnwand fürs Trainerteam, Ferien-Radar, Mitbringlisten (je Event einschaltbar, Standard aus), Trainer-Meeting (steht der Termin, erscheint er auf deiner Startseite – die Eltern sehen ihn nicht), Teamkasse, Material (Bälle, Hütchen, Erste-Hilfe-Set – mit Soll und Ist) und Fundbüro. Ganz unten: Push-Benachrichtigungen und dein Passwort."},
   {emo:"🧭", t:"Und unten?", d:"Die Leiste am unteren Rand führt zu denselben Bereichen – für den schnellen Daumen-Wechsel. Kacheln und Leiste sind dieselbe Logik, nur zwei Wege. Viel Spaß – auf geht's, Adler! 🎉"},
 ];
@@ -5124,6 +5164,7 @@ async function renderHome(){
     ${onboardHtml}
     <div id="trainer-todo-slot"></div>
     <div id="trainer-termine-slot"></div>
+    <div id="la-trainer"></div>
     <div id="eg-trainer"></div>
     <div id="home-woche"></div>
     <div id="home-next"></div>
@@ -5140,6 +5181,7 @@ async function renderHome(){
     <div id="app-version" style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin:14px 0 4px"></div>`;
   appVersionInto("app-version");   // liest die Version aus dem geladenen Cache
   elterngespraecheTrainerLoad(); // offene Elterngespräch-Wünsche (handeln nötig → bleibt oben)
+  loeschantraegeTrainerLoad();   // v644: offene Löschanträge (Frist ein Monat → ganz oben)
   trainerTodoLoad();             // To-Do-Banner (leer = unsichtbar)
   homeWocheLoad();               // Diese Woche: Termine mit Zusagen, Trainern, Plan-Stand
   trainerTermineHomeLoad();      // Termine der nächsten 14 Tage zum Antippen
