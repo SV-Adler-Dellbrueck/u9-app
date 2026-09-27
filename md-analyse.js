@@ -29,7 +29,7 @@ function computeMilestones(){
     if(!earlier)return;
     const vL=safeParse(latest.radios,{}),vE=safeParse(earlier.radios,{});
     Object.keys(vL).forEach(k=>{
-      if(vE[k]!=null&&vL[k]!=null&&(vL[k]-vE[k])>=2)out.push({name,label:map[k]||k,from:vE[k],to:vL[k],diff:vL[k]-vE[k]});
+      if(vE[k]>0&&vL[k]>0&&(vL[k]-vE[k])>=2)   /* v637: „nicht gesehen“ (0) ist kein Messwert */out.push({name,label:map[k]||k,from:vE[k],to:vL[k],diff:vL[k]-vE[k]});
     });
     const tD=(latest.total_score||0)-(earlier.total_score||0);
     if(tD>=8)out.push({name,label:"Gesamt-Niveau",from:earlier.total_score,to:latest.total_score,diff:tD,isTotal:true});
