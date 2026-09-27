@@ -37,7 +37,10 @@ module.exports = async function (h) {
     const form = typeof FORMATIONS !== "undefined" ? FORMATIONS["3+1"] : null;
     let tb = null;
     if (typeof taktikSetFormation === "function" && form) { try { taktikSetFormation("3+1"); tb = { form: tbFormation, feld: tbField.length }; } catch (e) { tb = { fehler: String(e) }; } }
-    const tbKnopf = !!document.querySelector('.tb-form-btn[data-form="3+1"]');
+    /* v641: Die Spielform wählt man auf der Taktik-Seite als Kachel „3+1“ unter „Neue Situation“
+       (sitNeu) – die Vorlage stellt TW + drei Feldspieler auf das Feld. */
+    if (typeof sitHubRender === "function") { const hub = document.getElementById("sit-hub") || document.body.appendChild(Object.assign(document.createElement("div"), { id: "sit-hub" })); sitHubRender(); }
+    const tbKnopf = !!document.querySelector('.sit-form[onclick*="3+1"]') && typeof sitVorlage === "function" && sitVorlage("3+1").s.length === 4;
     return { F, a, b, c, gek: namen(gek), gekN: gek.length, vorschlag, planF3: plan.filter(p => p.form === "f3").length, planN: plan.length,
       skizzeFarbe: skizze.includes('fill="' + F.farbe + '"'), skizzeKaefig: /Käfig/.test(skizze),
       regelnMit: /3\+1 · Käfig/.test(regelnMit) && /3 Feldspieler und Torwart/.test(regelnMit),

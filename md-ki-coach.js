@@ -3,8 +3,8 @@
    Ruft die Edge Function ki-uebung (Auth-Zwang: nur Trainer; Rate-Limit
    20/Tag; LLM-Key nur serverseitig; erzwungenes JSON-Schema). Client:
    AbortController-Timeout (die UI haengt nie), robuste Fehleranzeige,
-   Trainer-in-the-Loop – Uebungen werden nur auf Klick in der Taktik-
-   Bibliothek gespeichert (taktik_templates mit data.typ="ki").
+   Trainer-in-the-Loop – Uebungen werden nur auf Klick als Trainingsform
+   gespeichert (kiCoachSaveForm); der alte Weg in die Taktik-Bibliothek ist mit v641 entfallen.
 ═══════════════════════════════════ */
 let kiLastUebungen=[];
 function kiCoachOpen(){
@@ -249,34 +249,6 @@ function kiCoachRender(uebungen,rest){
     </div>
   </div>`).join("")+(rest!=null?`<div style="font-size:var(--s-klein);color:var(--text3);text-align:center;margin-top:2px">Noch ${esc(rest)} KI-Anfragen heute frei</div>`:"");
 }
-async function kiCoachSave(i){
-  const u=kiLastUebungen[i]; if(!u)return;
-  try{
-    const r=await fetch(`${SB_URL}/rest/v1/taktik_templates`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({name:(u.titel||"KI-Übung").slice(0,120),formation:"KI-Übung",data:{typ:"ki",titel:u.titel,dauer:u.dauer,material:u.material,beschreibung:u.beschreibung,variante:u.variante}})});
-    if(sbCheck401(r))return;
-    if(!r.ok){toast("Speichern fehlgeschlagen","err");return;}
-    toast("💾 In Bibliothek gespeichert ✓");
-  }catch(e){toast("Netzwerkfehler","err");}
-}
-// KI-Übung aus der Bibliothek als Text-Modal ansehen (nicht aufs Board laden)
-async function ttViewKi(id){
-  let row=null;
-  try{const r=await fetch(`${SB_URL}/rest/v1/taktik_templates?id=eq.${id}&select=name,data`,{headers:sbAuthHeaders()});if(r.ok)row=((await r.json())||[])[0];}catch(e){}
-  if(!row||!row.data){toast("Übung nicht gefunden","err");return;}
-  const u=row.data;
-  document.getElementById("tt-modal")?.remove();
-  const m=document.createElement("div");m.id="tt-modal";
-  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
-  m.onclick=e=>{if(e.target===m)m.remove();};
-  m.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:440px;width:100%;margin:auto">
-    ${mdlHead("tt-modal","🤖",esc(u.titel||row.name||"Übung"),"","#7c3aed")}
-    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">${u.dauer?"⏱ "+esc(u.dauer):""}${u.material?" · 🎒 "+esc(u.material):""}</div>
-    <div style="font-size:var(--s-text);line-height:1.6;white-space:pre-wrap">${esc(u.beschreibung||"")}</div>
-    ${u.variante?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:8px">➕ <b>Variante:</b> ${esc(u.variante)}</div>`:""}
-  </div>`;
-  document.body.appendChild(m);
-}
-
 // FEAT AC-Folge: KI-Übung als echte Trainingsform speichern (Tabelle trainingsformen,
 // gleicher Weg wie saveCustomTraining). Danach ist sie via tpAllForms() in ALLEN
 // Planungs-Dropdowns waehlbar (jede Phase, jedes Datum) -> Trainer setzt sie an die
