@@ -341,13 +341,15 @@ let _nbText = "", _nbFuer = "", _nbTb = null;
    vorher ging er beim Schließen verloren. Nur für den Termin, zu dem er gehört. */
 function nbSprachnotizFuer(fuer){ const t = String(_nbText||"").trim(); return (fuer===_nbFuer && t) ? t.slice(0,4000) : undefined; }
 function nbTagebuchVorschlag(fuer){ return (_nbTb && _nbTb.fuer===fuer) ? _nbTb.v : null; }
-/* „Kind n“ aus der KI-Antwort → Deckname des Tagebuchs („Kind C“). Nie der echte Name: das
-   Tagebuch geht an den Verband. Ohne Tagebuch-Modul bleibt es neutral „ein Kind“. */
+/* „Kind n“ aus der KI-Antwort → Vorname im Tagebuch der App (v638, PO: „… dass für mein eigenes
+   Tagebuch innerhalb der App die Klarnamen, also die Vornamen der Spieler … erfasst werden“).
+   Nach außen – Teilen, Export, Lehrgang – ersetzt md-tagebuch.js (tbPseudonym) sie durch Buchstaben.
+   Der Name des Schlüssels bleibt, damit ältere Aufrufer nicht brechen. */
 function nbTbDecknamen(tb, m){
   if(!tb) return null;
   const um = t => String(t||"").replace(/Kind (\d+)/g, (x,n)=>{
     const name = m && m.zurueck ? m.zurueck["Kind "+n] : null;
-    return name && typeof tbAlias==="function" ? tbAlias(name) : "ein Kind";
+    return name ? (typeof tbVorname==="function" ? tbVorname(name) : String(name).split(/\s+/)[0]) : "ein Kind";
   });
   return { baustein:tb.baustein, beobachtung:um(tb.beobachtung), aha:um(tb.aha), konsequenz:um(tb.konsequenz),
            schlagworte:(tb.schlagworte||[]).map(um) };
@@ -361,10 +363,11 @@ function nbSprachHtml(art, fuer){
     <div style="font-size:var(--s-text);font-weight:800">🎙️ Per Sprachnotiz ausfüllen</div>
     <div style="font-size:var(--s-klein);color:var(--text2);margin:2px 0 8px;line-height:1.45">Erzähl frei, wie es lief – ${art==="training"?"Einheit, einzelne Übungen, einzelne Kinder":"Mannschaften, Gäste, was getragen hat, woran ihr arbeitet"}. Die KI trägt ein, was du sagst; gespeichert wird erst mit dem Knopf unten.</div>
     <textarea id="nb-text" rows="3" maxlength="12000" style="${fld};max-height:50vh" placeholder="${kannHoeren?"Mikrofon antippen und sprechen – oder hier tippen bzw. das Mikrofon der Tastatur nutzen":"Hier tippen oder das Mikrofon der Tastatur nutzen"}" oninput="_nbText=this.value;nbFeldHoehe(this)">${esc(_nbText)}</textarea>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      ${kannHoeren?`<button id="nb-mic" class="btn" style="flex:0 0 auto;min-height:48px" onclick="nbDiktat('${art}')"><i class="ti ti-microphone"></i>${_nbText?"Weiter einsprechen":"Einsprechen"}</button>`:""}
-      <button id="nb-gross" class="btn" style="flex:0 0 auto;min-height:48px;min-width:48px;justify-content:center" onclick="nbGross('${art}',false)" aria-label="Text groß anzeigen und bearbeiten"><i class="ti ti-arrows-maximize"></i></button>
-      <button id="nb-los" class="btn btn-p" style="flex:1;min-height:48px;justify-content:center" onclick="nbAuswerten('${art}')"><i class="ti ti-sparkles"></i>KI auswerten</button>
+    <!-- v638: Die Reihe bricht um, statt über den Kasten hinauszuragen (PO-Screenshot: „KI ordnet zu“ ragte rechts heraus). -->
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
+      ${kannHoeren?`<button id="nb-mic" class="btn" style="flex:1 1 150px;min-height:48px;justify-content:center" onclick="nbDiktat('${art}')"><i class="ti ti-microphone"></i>${_nbText?"Weiter einsprechen":"Einsprechen"}</button>`:""}
+      <button id="nb-gross" class="btn" style="flex:0 0 48px;min-height:48px;justify-content:center" onclick="nbGross('${art}',false)" aria-label="Text groß anzeigen und bearbeiten"><i class="ti ti-arrows-maximize"></i></button>
+      <button id="nb-los" class="btn btn-p" style="flex:1 1 150px;min-height:48px;justify-content:center;white-space:nowrap" onclick="nbAuswerten('${art}')"><i class="ti ti-sparkles"></i>KI-Auswertung</button>
     </div>
     <div id="nb-status" role="status" aria-live="polite" style="font-size:var(--s-klein);color:var(--text2);margin-top:6px;line-height:1.45"></div>
   </div>`;
@@ -423,7 +426,7 @@ function nbGrossFuss(){
   }
   const an = typeof diktatAktiv==="function" && diktatAktiv("nb-gross-text");
   f.innerHTML = `${kann?`<button id="nb-gross-mic" class="btn" style="min-height:56px;justify-content:center;font-size:var(--s-karte)" onclick="nbGrossMikro()" aria-pressed="${an?"true":"false"}"><i class="ti ti-${an?"player-pause":"microphone"}"></i>${an?"Pause":(_nbText?"Weiter einsprechen":"Einsprechen")}</button>`:""}
-    <button id="nb-gross-los" class="btn btn-p" style="min-height:56px;justify-content:center" onclick="nbGrossAuswerten('${art}')"><i class="ti ti-sparkles"></i>KI auswerten</button>`;
+    <button id="nb-gross-los" class="btn btn-p" style="min-height:56px;justify-content:center" onclick="nbGrossAuswerten('${art}')"><i class="ti ti-sparkles"></i>KI-Auswertung</button>`;
 }
 function nbGrossSync(v){
   _nbText = v;
@@ -454,7 +457,7 @@ async function nbGrossAuswerten(art){
   if(text.length<15){ if(st) st.textContent = "Erzähl ein paar Sätze – dann kann die KI etwas eintragen."; return; }
   if(typeof diktatAktiv==="function" && diktatAktiv("nb-gross-text")) diktatPause();
   const los = document.getElementById("nb-gross-los");
-  if(los){ los.disabled = true; los.innerHTML = '<i class="ti ti-loader-2"></i>KI ordnet zu …'; }
+  if(los){ los.disabled = true; los.innerHTML = '<i class="ti ti-loader-2"></i>Wertet aus …'; }
   if(st) st.textContent = "";
   let x = null;
   try{ x = await nbKiHolen(art, text); }
@@ -463,17 +466,13 @@ async function nbGrossAuswerten(art){
     nbGrossFuss(); return;
   }
   if(!x || !document.getElementById("nb-gross-ov")){ nbGrossFuss(); return; }
-  const zeilen = nbVorschau(art, x.d.ergebnis, x.m);
-  _nbGrossErg = { art, d:x.d, m:x.m, zeilen };
-  const v = document.getElementById("nb-gross-vorschau");
-  if(v){
-    v.hidden = false;
-    v.innerHTML = zeilen.length
-      ? `<div style="font-size:var(--s-text);font-weight:800;margin-bottom:4px">Das trägt die KI ein</div><ul style="margin:0;padding-left:18px;font-size:var(--s-text);line-height:1.5">${zeilen.map(z=>"<li>"+esc(z)+"</li>").join("")}</ul>
-         <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">Gespeichert wird erst im Bogen mit dem Knopf unten.</div>`
-      : `<div style="font-size:var(--s-text)">Die KI hat in der Notiz nichts gefunden, das zu einem Feld passt – ergänze ein paar Worte zu Übungen oder Kindern.</div>`;
-  }
-  nbGrossFuss();
+  /* v638 · PO: „Es wäre schöner, wenn mir die Zusammenfassung angezeigt wird und ich dann direkt
+     in diesem Text Anpassungen vornehmen kann.“ Kein Zwischenschritt „In den Bogen übernehmen“
+     mehr: die KI trägt ein, die Vollansicht schließt, und der Bogen – Sterne und Notizen, alles
+     änderbar – ist die Zusammenfassung. Gespeichert wird weiter erst mit dem Knopf unten. */
+  nbKiAnwenden(art, x.d, x.m);
+  nbGrossZu();
+  document.getElementById("nb-box")?.scrollIntoView({block:"start", behavior:"smooth"});
 }
 function nbGrossUebernehmen(){
   const e = _nbGrossErg; if(!e) return;
@@ -567,19 +566,31 @@ function nbKiAnwenden(art, d, m){
   const bericht = art==="training" ? nbInsTraining(d.ergebnis, m) : nbInsSpiel(d.ergebnis);
   if(_nbTb) bericht.push("Tagebuch-Vorschlag");
   const st2 = document.getElementById("nb-status");
+  /* v638 · PO: „… oder vielleicht noch mal ein direktes Feedback über das Einsprechen an die KI
+     geben kann, Dinge noch mal zu verändern.“ „Korrektur einsprechen“ hängt an die Notiz an; die
+     nächste Auswertung ersetzt, was die KI vorher eingetragen hat – das Spätere gilt. */
+  const art2 = String(art).replace(/[^a-z]/g,"");
   if(st2) st2.innerHTML = bericht.length
-    ? "✨ Eingetragen: "+esc(bericht.join(" · "))+". <b>Bitte prüfen und speichern.</b>"
+    ? "✨ Eingetragen: "+esc(bericht.join(" · "))+". <b>Im Bogen prüfen, ändern und speichern.</b>"
+      + `<div style="margin-top:6px"><button class="btn" style="min-height:44px" onclick="nbKorrektur('${art2}')"><i class="ti ti-microphone"></i>Korrektur einsprechen</button></div>`
     : "Die KI hat in der Notiz nichts gefunden, das zu einem Feld passt – ergänze ein paar Worte zu Übungen oder Kindern.";
   return bericht;
+}
+/* Korrektur: Vollansicht mit Mikrofon, die Notiz bekommt eine neue Zeile „Korrektur: “. Die KI
+   liest den ganzen Text; was später gesagt wird, hat Vorrang (Regel im Prompt von ki-nachbereitung). */
+function nbKorrektur(art){
+  const v = String(_nbText||"").replace(/\s+$/,"");
+  if(!/Korrektur:\s*$/.test(v)) nbGrossSync((v ? v+"\n" : "")+"Korrektur: ");
+  nbGross(art, true);
 }
 async function nbAuswerten(art){
   const ta = document.getElementById("nb-text"), st = document.getElementById("nb-status"), los = document.getElementById("nb-los");
   const text = (ta&&ta.value||"").trim();
   if(text.length<15){ if(st) st.textContent = "Erzähl ein paar Sätze – dann kann die KI etwas eintragen."; return; }
   nbDiktatStop();
-  if(los){ los.disabled = true; los.innerHTML = '<i class="ti ti-loader-2"></i>KI ordnet zu …'; }
+  if(los){ los.disabled = true; los.innerHTML = '<i class="ti ti-loader-2"></i>Wertet aus …'; }
   if(st) st.textContent = "";
-  const fertig = () => { const l = document.getElementById("nb-los"); if(l){ l.disabled = false; l.innerHTML = '<i class="ti ti-sparkles"></i>KI auswerten'; } };
+  const fertig = () => { const l = document.getElementById("nb-los"); if(l){ l.disabled = false; l.innerHTML = '<i class="ti ti-sparkles"></i>KI-Auswertung'; } };
   let x = null;
   try{ x = await nbKiHolen(art, text); }
   catch(e){
@@ -600,11 +611,18 @@ function _nbStern(key, wert, max, groesse){
 /* Im Bogen (nur Trainer) stehen die echten Namen – „Kind 2“ aus der KI-Antwort wird zurückübersetzt. */
 let _nbMaskeAktiv = null;
 function nbZurueck(t){ const m=_nbMaskeAktiv; return String(t||"").replace(/Kind (\d+)/g,(x,n)=>(m&&m.zurueck&&m.zurueck["Kind "+n])||x); }
+/* v638 · PO: „… wenn ich dann wieder KI-Auswertung anklicke, dann setzt er einfach den gleichen Text
+   oder einen weiteren Auswertungstext in das große Textfeld hinein, obwohl schon dort was drin steht.“
+   Das Feld merkt sich, was die KI zuletzt hineingeschrieben hat (data-ki). Eine neue Auswertung
+   ersetzt genau diesen Teil; was der Trainer selbst getippt hat, bleibt stehen. */
 function _nbTextDazu(el, satz){
   satz = nbZurueck(satz);
   if(!el || !satz) return false;
-  const alt = (el.value||"").trim();
-  if(alt.includes(satz)) return false;
+  let alt = (el.value||"").trim();
+  const vorher = el.dataset.ki || "";
+  if(vorher && alt.includes(vorher)) alt = alt.replace(vorher, "").replace(/\n{2,}/g,"\n").trim();
+  if(alt.includes(satz)){ el.dataset.ki = satz; return false; }
+  el.dataset.ki = satz;
   el.value = (alt ? alt+"\n"+satz : satz).slice(0, Number(el.getAttribute("maxlength"))||3000);
   if(typeof feldWachsen==="function") feldWachsen(el);
   return true;
@@ -646,9 +664,17 @@ function nbInsSpiel(e){
   if(tm) b.push(`${tm} Mannschaft${tm>1?"en":""}`);
   let g = 0; (e.gaeste||[]).forEach(x=>{ if(_FZ.gaeste.includes(x.name)){ w.gaeste[x.name] = x.einschaetzung; g++; } });
   if(g) b.push(`${g} Gast${g>1?"einschätzungen":"einschätzung"}`);
-  const dazu = (alt, neu) => { if(!neu) return alt; neu = nbZurueck(neu); alt=(alt||"").trim(); return alt.includes(neu) ? alt : (alt ? alt+" · "+neu : neu).slice(0,300); };
-  if(e.getragen){ w.getragen = dazu(w.getragen, e.getragen); b.push("Das hat getragen"); }
-  if(e.arbeiten){ w.arbeiten = dazu(w.arbeiten, e.arbeiten); b.push("Daran arbeiten wir"); }
+  /* v638: wie _nbTextDazu – der zuletzt von der KI geschriebene Teil wird ersetzt, nicht verdoppelt. */
+  _FZ.kiText = _FZ.kiText || {};
+  const dazu = (feld, alt, neu) => {
+    if(!neu) return alt; neu = nbZurueck(neu); alt=(alt||"").trim();
+    const vorher = _FZ.kiText[feld];
+    if(vorher && alt.includes(vorher)) alt = alt.replace(vorher,"").replace(/^\s*·\s*|\s*·\s*$/g,"").replace(/\s*·\s*·\s*/g," · ").trim();
+    _FZ.kiText[feld] = neu;
+    return alt.includes(neu) ? alt : (alt ? alt+" · "+neu : neu).slice(0,300);
+  };
+  if(e.getragen){ w.getragen = dazu("getragen", w.getragen, e.getragen); b.push("Das hat getragen"); }
+  if(e.arbeiten){ w.arbeiten = dazu("arbeiten", w.arbeiten, e.arbeiten); b.push("Daran arbeiten wir"); }
   const o = e.orga||{}; let og = 0; ["zeitplan","felder","helfer"].forEach(k=>{ if(o[k]){ w.orga[k] = o[k]; og++; } });
   if(og) b.push("Organisation");
   fazitRender();

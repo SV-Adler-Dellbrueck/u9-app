@@ -21,8 +21,12 @@
    j) Einsprechen öffnet eine Vollansicht (PO: „… wird es schwer, diese im Textfeld überhaupt lesen
       zu können … ein größeres Textfenster. Und dann nochmal einen Button KI-Zusammenfassung“); das
       kleine Feld bekommt denselben Text und wächst mit.
-   k) „KI auswerten“ zeigt zuerst, was eingetragen würde, und setzt noch nichts; erst „In den Bogen
-      übernehmen“ setzt die Felder und schließt die Vollansicht.
+   k) v638: „KI-Auswertung“ trägt direkt in den Bogen ein und schließt die Vollansicht (PO: „Es wäre
+      schöner, wenn mir die Zusammenfassung angezeigt wird und ich dann direkt … Anpassungen vornehmen
+      kann“) – vorher erst eine Vorschau und „In den Bogen übernehmen“.
+   v638: Kurze Denkpausen setzen keinen Punkt mehr (PO: „… eine Punktsetzung, die automatisch gemacht
+      wird, obwohl ich gar nicht mit dem Satz zu Ende bin“). Die Attrappe startet die Sitzungen ohne
+      Pause hintereinander – also geht der Satz weiter; nach „Weiter einsprechen“ beginnt ein neuer.
    l) ⤢ öffnet die Vollansicht ohne Mikrofon. */
 "use strict";
 module.exports = async function (h) {
@@ -93,14 +97,10 @@ module.exports = async function (h) {
     const vorFehler = sr.length;
     letzte().onerror({ error: "not-allowed" }); letzte().onend && letzte().onend(); await warte(250);
     out.g = { neu: sr.length - vorFehler, anz: anz(), knopf: knopf() };
-    // k) KI auswerten mit Vorschau
-    const spassVor = Number(document.getElementById("eb-stars-spass").dataset.val);
+    // k) KI-Auswertung trägt direkt ein (v638)
+    out.k = { knopf: (document.getElementById("nb-gross-los") || {}).textContent.trim() };
     document.getElementById("nb-gross-los").click();
-    for (let i = 0; i < 40 && document.getElementById("nb-gross-vorschau").hidden; i++) await warte(50);
-    const vs = document.getElementById("nb-gross-vorschau");
-    out.k = { vorschau: vs.hidden ? "" : vs.textContent.replace(/\s+/g, " "), spassVorher: spassVor, spassWaehrend: Number(document.getElementById("eb-stars-spass").dataset.val),
-      skipWaehrend: document.getElementById("eb-skip-0").checked };
-    document.getElementById("nb-gross-ueber").click(); await warte(50);
+    for (let i = 0; i < 40 && document.getElementById("nb-gross-ov"); i++) await warte(50);
     out.k.spassDanach = Number(document.getElementById("eb-stars-spass").dataset.val); out.k.skipDanach = document.getElementById("eb-skip-0").checked;
     out.k.zu = !document.getElementById("nb-gross-ov"); out.k.status = document.getElementById("nb-status").textContent;
     // l) ⤢ ohne Mikrofon
@@ -130,20 +130,19 @@ module.exports = async function (h) {
   if (a.wl < 1) probleme.push("a) keine Bildschirmsperre angefordert");
   if (!/Hört zu/.test(a.anz) || !a.sichtbar || a.knopf !== "Pause") probleme.push(`a) Anzeige/Knopf: „${a.anz}“ / „${a.knopf}“`);
   if (!/heute war/.test(b.liveAnz) || !/heute war/.test(b.liveFeld) || !b.puls) probleme.push(`b) live: ${JSON.stringify(b)}`);
-  if (b.kumulativ !== "Heute war es richtig gut.") probleme.push(`b) kumulativ: „${b.kumulativ}“`);
-  if (c.n !== 2 || !c.an || c.feld !== "Heute war es richtig gut.") probleme.push(`c) Neustart: ${JSON.stringify(c)}`);
-  if (d !== "Heute war es richtig gut. Die Kinder hatten Spaß. Das Passen war sehr sehr gut.") probleme.push(`d) „${d}“`);
+  if (b.kumulativ !== "Heute war es richtig gut") probleme.push(`b) kumulativ: „${b.kumulativ}“`);
+  if (c.n !== 2 || !c.an || c.feld !== "Heute war es richtig gut") probleme.push(`c) Neustart: ${JSON.stringify(c)}`);
+  if (d !== "Heute war es richtig gut die Kinder hatten Spaß das Passen war sehr sehr gut") probleme.push(`d) „${d}“ – kurze Pausen dürfen keinen Punkt setzen (v638)`);
   if (e.knopf !== "Weiter einsprechen" || !/Pause/.test(e.anz) || e.n !== 0 || e.rel < 1 || e.feld !== d) probleme.push(`e) Pause: ${JSON.stringify(e)}`);
-  if (e.weiter !== d + " Kind C war müde." || e.knopf2 !== "Pause" || !e.nbText) probleme.push(`e) Weiter: „${e.weiter}“ ${e.knopf2} ${e.nbText}`);
+  if (e.weiter !== d + ". Kind C war müde" || e.knopf2 !== "Pause" || !e.nbText) probleme.push(`e) Weiter: „${e.weiter}“ ${e.knopf2} ${e.nbText}`);
   if (f.neuWaehrendAus !== 0 || f.neuDanach !== 1 || !f.an || f.knopf !== "Pause") probleme.push(`f) Bildschirm aus: ${JSON.stringify(f)}`);
   if (g.neu !== 0 || !/gesperrt/.test(g.anz) || g.knopf !== "Einsprechen") probleme.push(`g) gesperrt: ${JSON.stringify(g)}`);
   if (r.i.mitSperre || !/Dein Handy hält den Bildschirm nicht von selbst an/.test(r.i.ohne)) probleme.push(`i) Hinweis ohne Sperre: ${JSON.stringify(r.i)}`);
   if (!r.j.ov || !r.j.dialog || r.j.hoch < r.j.vh - 2) probleme.push(`j) Vollansicht: ${JSON.stringify(r.j)}`);
   if (!r.j.kleinZeilen || r.j.kleinHoch < 60) probleme.push(`j) kleines Feld wächst nicht mit: ${JSON.stringify(r.j)}`);
   const k = r.k;
-  if (!/Das trägt die KI ein/.test(k.vorschau) || !/Spaß ★★★★/.test(k.vorschau) || !/Dribbel Quadrat“: fand nicht statt/.test(k.vorschau) || !/#Ruhe #Coaching/.test(k.vorschau)) probleme.push(`k) Vorschau: „${k.vorschau}“`);
-  if (k.spassWaehrend !== k.spassVorher || k.skipWaehrend) probleme.push("k) Vorschau hat schon eingetragen");
-  if (k.spassDanach !== 4 || !k.skipDanach || !k.zu || !/Bitte prüfen und speichern/.test(k.status)) probleme.push(`k) Übernehmen: ${JSON.stringify(k)}`);
+  if (k.knopf !== "KI-Auswertung") probleme.push(`k) Knopf heißt „${k.knopf}“ statt „KI-Auswertung“`);
+  if (k.spassDanach !== 4 || !k.skipDanach || !k.zu || !/Im Bogen prüfen, ändern und speichern/.test(k.status) || !/Korrektur einsprechen/.test(k.status)) probleme.push(`k) direkt eingetragen: ${JSON.stringify(k)}`);
   if (!r.l.ov || r.l.neu !== 0 || !r.l.text) probleme.push(`l) ⤢: ${JSON.stringify(r.l)}`);
   if (!r.h.weg) probleme.push("h) Trainer-Notiz nutzt den gemeinsamen Weg nicht");
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));

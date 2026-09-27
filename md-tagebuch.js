@@ -63,6 +63,40 @@ function tbAliasMap(){
 }
 function tbAlias(name){ return tbAliasMap().get(name) || "Kind ?"; }
 
+/* ── v638 · Klarnamen in der App, Buchstaben nach außen ──────────────────────────
+   PO: „… dass für mein eigenes Tagebuch innerhalb der App die Klarnamen, also die Vornamen der
+   Spieler, die ich dort nenne, auch erfasst werden und dass es eine Version gibt, die ich zum
+   Beispiel dann für die Trainerlehrgänge nutzen kann. Dort soll dann auch der Hinweis gegeben
+   werden, dass die tatsächlichen Namen durch Buchstaben ersetzt werden.“
+   Das Tagebuch liegt nur beim Trainerteam (RLS is_trainer) und darf Vornamen tragen. Alles, was die
+   App verlässt – Kopieren, Teilen, Monatsexport –, geht durch tbPseudonym und trägt TB_HINWEIS.
+   Die Decknamen (tbAlias) bleiben stabil an der Kader-Kennung; derselbe Buchstabe meint überall
+   dasselbe Kind. */
+const TB_HINWEIS = "Hinweis: Aus Datenschutzgründen sind die Namen der Kinder durch Buchstaben ersetzt (z. B. „Kind C“). Derselbe Buchstabe steht im ganzen Tagebuch für dasselbe Kind.";
+/* Vorname eines Kindes; teilen sich zwei Kinder den Vornamen, der volle Name. */
+function tbVorname(name){
+  const n = String(name||"").trim(), v = n.split(/\s+/)[0];
+  if(!v || v===n) return n;
+  const gleich = (typeof KADER!=="undefined" ? (KADER||[]) : []).filter(k=>String(k&&k.name||"").split(/\s+/)[0]===v).length;
+  return gleich>1 ? n : v;
+}
+/* Ersetzt volle Namen und eindeutige Vornamen aus dem Kader durch den Decknamen. Ein Vorname, den
+   zwei Kinder tragen, wird zu „ein Kind“ – lieber unscharf als einem falschen Kind zugeordnet. */
+function tbPseudonym(text){
+  const t = String(text||""); if(!t) return t;
+  const map = tbAliasMap(), ziel = {}, vorn = {};
+  map.forEach((alias, name)=>{
+    ziel[String(name).toLowerCase()] = alias;
+    const v = String(name).split(/\s+/)[0];
+    if(v && v.length>=2 && v!==name) (vorn[v.toLowerCase()] = vorn[v.toLowerCase()] || []).push(alias);
+  });
+  Object.keys(vorn).forEach(v=>{ if(!ziel[v]) ziel[v] = vorn[v].length===1 ? vorn[v][0] : "ein Kind"; });
+  const keys = Object.keys(ziel).sort((a,b)=>b.length-a.length);
+  if(!keys.length) return t;
+  const re = new RegExp("(^|[^\\p{L}])("+keys.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|")+")(?![\\p{L}])","giu");
+  return t.replace(re, (all, vor, name)=>vor+(ziel[name.toLowerCase()]||name));
+}
+
 /* ── Namensprüfung ─────────────────────────────────────────────────────────────
    Gesucht wird jeder Namensteil ab drei Zeichen, Vorname wie Nachname: ein Nachname im
    Tagebuch wäre schlimmer als ein Vorname, und das Paket meint erkennbar beides.
@@ -191,15 +225,15 @@ function tbFelderLesen(){
 }
 function tbBaustein(key){ if(!_TB) return; tbFelderLesen(); _TB.werte.baustein=key; tbRender(); }
 
-/* Antippen schreibt den Alias an die Cursorposition des zuletzt benutzten Textfeldes –
-   nie den Namen. Das ist der ganze Zweck der Leiste. */
+/* Antippen schreibt den Vornamen an die Cursorposition des zuletzt benutzten Textfeldes
+   (v638, vorher den Decknamen – die Buchstaben entstehen jetzt erst beim Teilen und Exportieren). */
 let _TB_FOKUS = "aha";
 function tbKindEinfuegen(name){
   if(!_TB) return;
   tbFelderLesen();
   const el = document.getElementById("tb-"+_TB_FOKUS) || document.getElementById("tb-aha");
   if(!el) return;
-  const alias = tbAlias(name);
+  const alias = tbVorname(name);
   const a = el.selectionStart==null ? el.value.length : el.selectionStart;
   const b = el.selectionEnd==null ? el.value.length : el.selectionEnd;
   const davor = el.value.slice(0,a), danach = el.value.slice(b);
@@ -239,11 +273,11 @@ function tbRender(){
       <textarea id="tb-beobachtung" class="wachsen" rows="3" onfocus="tbFokus('beobachtung')" style="${fld};resize:vertical;margin-top:3px">${esc(w.beobachtung)}</textarea></label>
 
     ${kinder.length?`<div style="margin-top:10px">
-      <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px">Kind einfügen – schreibt den Decknamen, nicht den Namen</div>
+      <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px">Kind einfügen – hier steht der Vorname; beim Teilen und Exportieren wird daraus ein Buchstabe</div>
       <div style="display:flex;gap:5px;flex-wrap:wrap">
-        ${kinder.map(k=>`<button onclick="tbKindEinfuegen('${jsq(k.name)}')" title="Fügt ${esc(tbAlias(k.name))} ein" style="min-height:36px;padding:0 10px;font-size:var(--s-text);border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface2);color:var(--text2);cursor:pointer;font-family:inherit">${esc(k.name)}</button>`).join("")}
+        ${kinder.map(k=>`<button onclick="tbKindEinfuegen('${jsq(k.name)}')" title="Fügt ${esc(tbVorname(k.name))} ein – nach außen ${esc(tbAlias(k.name))}" style="min-height:36px;padding:0 10px;font-size:var(--s-text);border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface2);color:var(--text2);cursor:pointer;font-family:inherit">${esc(k.name)}</button>`).join("")}
       </div>
-      <div style="font-size:var(--s-klein);color:var(--text3);margin-top:4px">Der Deckname bleibt an dasselbe Kind gebunden, solange es im Kader steht.</div>
+      <div style="font-size:var(--s-klein);color:var(--text3);margin-top:4px">Der Buchstabe bleibt an dasselbe Kind gebunden, solange es im Kader steht.</div>
     </div>`:""}
 
     <label style="${lbl}">Aha<span style="color:var(--red)"> · Pflicht</span>
@@ -312,10 +346,8 @@ async function tagebuchSpeichern(){
     if(m) m.innerHTML = `<div style="background:var(--surface2);border:var(--border-s);border-left:4px solid var(--red);border-radius:10px;padding:10px 12px;font-size:var(--s-text)">Ohne <b>${esc(was)}</b> wird nicht erfasst – ein Eintrag ohne Erkenntnis und ohne Vorhaben ist keiner. Der Rest bleibt stehen.</div>`;
     return;
   }
-  if(!_TB.uebergehen){
-    const fund = tbNamensfund([w.ausloeser,w.beobachtung,w.aha,w.konsequenz,w.beleg,w.anschluss,w.schlagworte].join("\n"));
-    if(fund){ _TB.namensfund = fund; tbRender(); return; }
-  }
+  /* v638: keine Namensabfrage mehr – Vornamen dürfen im Tagebuch der App stehen (PO: „… können uns
+     diese Abfrage, diesen Hinweis hier in der App sparen“). Nach außen ersetzt tbPseudonym. */
 
   const body = { autor: await tbAutor(), datum:_TB.datum, quelle:_TB.quelle,
                  termin_id:_TB.terminId, baustein:w.baustein,
@@ -403,7 +435,7 @@ function tbZeile(e){
 function tagebuchExport(id){
   const e = _TB_LISTE.find(x=>Number(x.id)===Number(id));
   if(!e) return "";
-  return tbMarkdown(e);
+  return "> "+TB_HINWEIS+"\n\n"+tbPseudonym(tbMarkdown(e));
 }
 function tbMarkdown(e){
   const b = TB_BAUSTEINE.find(x=>x.key===e.baustein);
@@ -426,12 +458,12 @@ function tagebuchMonatMarkdown(monat){
   const drin = _TB_LISTE.filter(e=>String(e.datum||"").slice(0,7)===m);
   if(!drin.length) return "";
   const kopf = new Date(m+"-01T00:00:00").toLocaleDateString("de-DE",{month:"long",year:"numeric"});
-  const teile = [`## Trainertagebuch — ${kopf}`,""];
+  const teile = [`## Trainertagebuch — ${kopf}`,"","> "+TB_HINWEIS,""];
   TB_BAUSTEINE.forEach(b=>{
     const e = drin.filter(x=>x.baustein===b.key)
       .sort((a,c)=>String(a.datum).localeCompare(String(c.datum)));
     if(!e.length) return;
-    teile.push(...e.map(tbMarkdown), "");
+    teile.push(...e.map(x=>tbPseudonym(tbMarkdown(x))), "");
   });
   return teile.join("\n").trim();
 }
@@ -485,7 +517,13 @@ function tbKiAnwenden(v){
   tbFelderLesen();
   const w = _TB.werte;
   if(v.baustein) w.baustein = v.baustein;
-  if(v.beobachtung) w.beobachtung = w.beobachtung ? v.beobachtung+"\n"+w.beobachtung : v.beobachtung;
+  /* v638: eine zweite Auswertung ersetzt den KI-Teil der Beobachtung, statt ihn davorzusetzen. */
+  if(v.beobachtung){
+    let rest = String(w.beobachtung||"");
+    if(_TB.kiBeob && rest.includes(_TB.kiBeob)) rest = rest.replace(_TB.kiBeob,"").replace(/^\n+/,"");
+    w.beobachtung = rest ? v.beobachtung+"\n"+rest : v.beobachtung;
+    _TB.kiBeob = v.beobachtung;
+  }
   if(v.aha && !String(w.aha||"").trim()) w.aha = v.aha;
   if(v.konsequenz && !String(w.konsequenz||"").trim()) w.konsequenz = v.konsequenz;
   if(Array.isArray(v.schlagworte) && v.schlagworte.length) w.schlagworte = v.schlagworte.join(", ");
