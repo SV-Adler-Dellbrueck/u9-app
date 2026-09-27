@@ -5843,21 +5843,28 @@ async function heftFotoDataUrl(path){
    heftBuildHtml(cfg,{mask}) baut das Heft rein – die Nachnamen-Maskierung ist
    bereits eingebaut (Aktivierung folgt in der DSGVO-Etappe). ═══ */
 let heftKader=[], heftFanfacts={}, heftTermin=null, heftFotos=[];
-let heftCfg={titel:"Adler Nest · U9", einleitung:"", fokusId:"", fokusText:"", kommentar:""};
+let heftCfg={titel:"Adler Nest · U9", einleitung:"", fokusId:"", fokusText:"", kommentar:"", mask:true};   // v636: Eltern-Version ist Standard
 function heftCfgLoad(){ try{const s=JSON.parse(localStorage.getItem("adler_heft_cfg")||"null"); if(s&&typeof s==="object")heftCfg=Object.assign(heftCfg,s);}catch(e){} }
 function heftCfgSave(){ try{localStorage.setItem("adler_heft_cfg",JSON.stringify(heftCfg));}catch(e){} }
 // DSGVO: Nachname zu Initiale kürzen ("Max Mustermann" -> "Max M."); Einzelnamen bleiben.
 function heftMaskName(name){ const p=String(name||"").trim().split(/\s+/); if(p.length<2)return p[0]||""; return p[0]+" "+p[p.length-1].charAt(0).toUpperCase()+"."; }
+/* v636: Die Eltern-Version (maskiert) ist die, die ausgehängt und verteilt wird. Dort gelten
+   dieselben Regeln wie im digitalen Heft: Foto und Jahrgang nur mit der Freigabe „öffentlich“. */
+function heftOeffentlichOk(k){ return !!(k&&k.foto_stadionheft_ok); }
+function heftJahrgang(k){ const j=String((k&&k.geb)||"").slice(0,4); return /^\d{4}$/.test(j)?j:""; }
 function heftBuildHtml(cfg,opts){
   opts=opts||{}; const mask=!!opts.mask; const nm=n=>mask?heftMaskName(n):n;
+  const fotoVon=i=>(!mask||heftOeffentlichOk(heftKader[i]))?heftFotos[i]:null;
+  const jgVon=k=>(!mask||heftOeffentlichOk(k))?heftJahrgang(k):"";
   const cards=heftKader.map((k,i)=>{
-    const foto=heftFotos[i];
+    const foto=fotoVon(i), jg=jgVon(k);
     const initialen=(k.name||"?").trim().slice(0,1).toUpperCase();
     const spitz=heftFanfacts[k.id];
     const pos=k.lieblingsposition?cardPosLabel(k.lieblingsposition):(k.tw?"Torwart":"");
     return `<div class="heft-card">
       <div class="heft-foto">${foto?`<img src="${foto}" alt="">`:`<span>${esc(initialen)}</span>`}${k.nr!=null?`<div class="heft-nr">${esc(k.nr)}</div>`:""}</div>
       <div class="heft-name">${esc(nm(k.name))}${k.tw?" 🥅":""}</div>
+      ${jg?`<div class="heft-spitz">Jahrgang ${esc(jg)}</div>`:""}
       ${spitz?`<div class="heft-spitz">„${esc(spitz)}"</div>`:""}
       ${pos?`<div class="heft-pos">${esc(pos)}</div>`:""}
     </div>`;
@@ -5873,13 +5880,13 @@ function heftBuildHtml(cfg,opts){
   if(cfg.fokusId){
     const idx=heftKader.findIndex(k=>String(k.id)===String(cfg.fokusId));
     if(idx>=0){
-      const k=heftKader[idx], foto=heftFotos[idx];
+      const k=heftKader[idx], foto=fotoVon(idx), jg=jgVon(k);
       const initialen=(k.name||"?").trim().slice(0,1).toUpperCase();
       fokusHtml=`<div class="heft-fokus">
         <div class="heft-fokus-foto">${foto?`<img src="${foto}" alt="">`:`<span>${esc(initialen)}</span>`}</div>
         <div class="heft-fokus-body">
           <div class="heft-fokus-badge">⭐ Spieler im Fokus</div>
-          <div class="heft-fokus-name">${esc(nm(k.name))}${k.nr!=null?` · #${esc(k.nr)}`:""}</div>
+          <div class="heft-fokus-name">${esc(nm(k.name))}${k.nr!=null?` · #${esc(k.nr)}`:""}${jg?` · Jahrgang ${esc(jg)}`:""}</div>
           ${cfg.fokusText&&cfg.fokusText.trim()?`<div class="heft-fokus-text">${esc(cfg.fokusText).replace(/\n/g,"<br>")}</div>`:""}
         </div></div>`;
     }
@@ -5920,7 +5927,7 @@ async function stadionheftOpen(){
   try{const ab=new Date(Date.now()-60*864e5).toISOString();
     const r=await fetch(`${SB_URL}/rest/v1/kabine_reporter?select=id,spieler_id,frage,antwort,freigegeben,created_at&created_at=gte.${ab}&order=created_at.desc`,{headers:sbAuthHeaders()});
     if(r.ok)window._heftReporter=(await r.json())||[];}catch(e){}
-  try{const r=await fetch(`${SB_URL}/rest/v1/kader?select=id,name,nr,foto_path,lieblingsposition,tw,aktiv&order=nr.asc.nullslast`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)heftKader=(await r.json()).filter(k=>k.aktiv!==false);}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/kader?select=id,name,nr,geb,foto_path,foto_stadionheft_ok,lieblingsposition,tw,aktiv&order=nr.asc.nullslast`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)heftKader=(await r.json()).filter(k=>k.aktiv!==false);}catch(e){}
   if(!heftKader.length){toast("Kein Kader gefunden","err");return;}
   try{const r=await fetch(`${SB_URL}/rest/v1/kind_fanfacts?select=spieler_id,spitzname`,{headers:sbAuthHeaders()});if(r.ok)(await r.json()).forEach(f=>{if(f.spitzname)heftFanfacts[f.spieler_id]=f.spitzname;});}catch(e){}
   const heute=new Date().toISOString().slice(0,10);
@@ -5997,7 +6004,7 @@ function heftRenderEditor(){
     </div>
     <label style="display:flex;align-items:flex-start;gap:8px;margin-top:12px;padding:9px 11px;background:var(--surface2);border:var(--border-s);border-radius:10px;cursor:pointer">
       <input type="checkbox" id="heft-f-mask" ${heftCfg.mask?"checked":""} style="margin-top:2px;width:18px;height:18px;flex:0 0 auto">
-      <span style="font-size:var(--s-text);color:var(--text)"><strong>🔒 Eltern-Version (Nachnamen maskiert)</strong><br><span style="font-size:var(--s-klein);color:var(--text2)">DSGVO: Fürs Verteilen/Aushängen werden Nachnamen zu „Max M." gekürzt. Für die interne Trainer-Version aus lassen.</span></span>
+      <span style="font-size:var(--s-text);color:var(--text)"><strong>🔒 Eltern-Version (Nachnamen maskiert)</strong><br><span style="font-size:var(--s-klein);color:var(--text2)">Fürs Verteilen und Aushängen: Nachnamen werden zu „Max M.“ gekürzt, Foto und Jahrgang erscheinen nur mit der Freigabe „öffentlich“. Nur für die interne Trainer-Version ausschalten.</span></span>
     </label>
     <label style="display:flex;align-items:flex-start;gap:8px;margin-top:8px;padding:9px 11px;background:${heftCfg.published?"#dcfce7":"var(--surface2)"};border:var(--border-s);border-radius:10px;cursor:pointer">
       <input type="checkbox" id="heft-f-pub" ${heftCfg.published?"checked":""} style="margin-top:2px;width:18px;height:18px;flex:0 0 auto">
@@ -6092,6 +6099,7 @@ async function renderStadionheftView(){
     return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:10px;text-align:center">
       <div style="width:64px;margin:0 auto 6px;position:relative">${avatar(sp,64)}${sp.nr!=null?`<div style="position:absolute;bottom:-2px;right:-2px;min-width:20px;height:20px;background:#facc15;color:#1e293b;border-radius:10px;border:2px solid #fff;font-size:var(--s-klein);font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 3px">${esc(sp.nr)}</div>`:""}</div>
       <div style="font-size:var(--s-karte);font-weight:800;color:#1e293b">${esc(sp.name)}${sp.tw?" 🥅":""}</div>
+      ${sp.jahrgang?`<div style="font-size:var(--s-klein);color:#64748b">Jahrgang ${esc(sp.jahrgang)}</div>`:""}
       ${sp.spitzname?`<div style="font-size:var(--s-klein);color:#64748b;font-style:italic">„${esc(sp.spitzname)}"</div>`:""}
       ${pos?`<div style="font-size:var(--s-klein);color:var(--blue-text);font-weight:700">${esc(pos)}</div>`:""}
     </div>`;
@@ -6100,7 +6108,7 @@ async function renderStadionheftView(){
   const fokusHtml=fk?`<div style="display:flex;gap:12px;align-items:center;background:linear-gradient(135deg,#fef9c3,#fef3c7);border:1px solid #fde047;border-radius:14px;padding:12px;margin-bottom:12px">
     <div style="flex:0 0 auto">${avatar(fk,66)}</div>
     <div><div style="font-size:var(--s-klein);font-weight:800;color:#a16207;text-transform:uppercase;letter-spacing:.5px">⭐ Spieler im Fokus</div>
-      <div style="font-size:var(--s-karte);font-weight:900;color:#1e293b">${esc(fk.name)}${fk.nr!=null?" · #"+esc(fk.nr):""}</div>
+      <div style="font-size:var(--s-karte);font-weight:900;color:#1e293b">${esc(fk.name)}${fk.nr!=null?" · #"+esc(fk.nr):""}${fk.jahrgang?" · Jahrgang "+esc(fk.jahrgang):""}</div>
       ${fk.text?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:2px;line-height:1.4">${esc(fk.text).replace(/\n/g,"<br>")}</div>`:""}</div></div>`:"";
   const nestLbl=t=>`<div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin:16px 4px 8px">${t}</div>`;
   // I-C: Kabinen-Reporter-Rubrik (RPC reporter_public: nur Freigegebenes, Namen serverseitig maskiert)

@@ -384,14 +384,14 @@ async function dsgvoEnsureConsent(onOk){
   if(has){onOk();return;}
   dsgvoRenderGate(onOk);
 }
-/* Pflichtangaben fuers Einwilligungs-Gate. Mail und Link sind bewusst leer:
-   sie werden nur angezeigt, wenn der Verein sie hier eintraegt - lieber ein
-   Satz weniger als ein sichtbarer Platzhalter im Einwilligungstext. */
+/* Pflichtangaben fuers Einwilligungs-Gate. v636: Name und Mail wie auf der Vereinsseite
+   (allgemeine Vereinsadresse, keine private). Der Link bleibt leer: die Datenschutzerklaerung
+   der Vereins-Website beschreibt die Website, nicht diese App – ein Verweis darauf waere falsch. */
 const VEREIN_DS={
-  name:"SV Adler Dellbrück e. V.",
+  name:"SV Adler Dellbrück 1922 e. V.",
   anschrift:"Thurner Kamp 97, 51069 Köln",
-  mail:"",   // z. B. "datenschutz@adler-dellbrueck.de"
-  link:""    // z. B. "https://…/datenschutz"
+  mail:"info@adlerdellbrueck.de",
+  link:""
 };
 function dsgvoRenderGate(onOk){
   const body=document.getElementById("ep-dash-body"); if(!body){onOk();return;}
@@ -404,7 +404,7 @@ function dsgvoRenderGate(onOk){
       <li><b>Zugang:</b> nur per persönlichem Login (E-Mail mit eigenem Passwort oder Einmal-Code). Die Datenbank prüft bei jeder Anfrage, wer fragt – nicht die App.</li>
       <li><b>Nur für euch und das Trainerteam:</b> Notfallkarte, Rückmeldungen, Foto-Freigaben und die Karte eures Kindes. Einschätzungen des Trainerteams bekommt ihr in Worten, nie als Zahl oder Rangliste – auch Kinder sehen keine Zahlen.</li>
       <li><b>Im Team sichtbar</b> (für angemeldete Eltern und die Kabine): Vornamen und Trikotnummern, Helfer- und Fahrgemeinschaftslisten, Fotos nur mit eurer Freigabe.</li>
-      <li><b>Fotos:</b> in einem privaten Speicher, nur mit ausdrücklicher Freigabe je Kind in drei Stufen (App-intern, Video, öffentlich; Standard: aus). Auf öffentlichen Seiten nur mit der Stufe „öffentlich“.</li>
+      <li><b>Fotos:</b> in einem privaten Speicher, nur mit ausdrücklicher Freigabe je Kind in drei Stufen (App-intern, Video, öffentlich; Standard: aus). Auf öffentlichen Seiten und im Adler Nest nur mit der Stufe „öffentlich“ – dort zusammen mit Vorname, Anfangsbuchstabe des Nachnamens und Jahrgang, nie mit dem Geburtsdatum.</li>
       <li><b>Keine Weitergabe:</b> keine Werbung, kein Verkauf; keine Zahlungs-/Kontodaten in der App.</li>
       <li><b>Technik und Dienste:</b> Datenbank bei Supabase in Frankfurt (EU); die App-Dateien kommen von GitHub Pages; Schrift und Symbole von Google Fonts und jsDelivr (dabei wird eure IP-Adresse übertragen); Wetter über open-meteo, Karten über OpenStreetMap (nur Orts- und Termindaten); Push-Mitteilungen über den Dienst eures Browsers (ohne Kindernamen).</li>
       <li><b>KI:</b> Das Trainerteam nutzt einen KI-Dienst (Anbieter in den USA) als Schreibhilfe für Nachbereitung und Berichte. Kindernamen werden vorher durch „Kind 1“, „Kind 2“ ersetzt und erst auf dem Gerät des Trainers zurückübersetzt.</li>
@@ -1757,7 +1757,7 @@ async function notfallClear(spielerId){
 const FOTO_STUFEN=[
   {k:"intern",   emo:"🖼️", t:"App-intern (geschlossene Gruppe)", d:"Team-Galerie, Sammelkarte, „Die Kabine“ und das „Adler Nest“. Sichtbar nur für eingeloggte Eltern und das Trainerteam dieses Teams.", risk:"gering"},
   {k:"video",    emo:"🎥", t:"Trainingsvideos zur Analyse",       d:"Kurze Videoclips zur Technik-/Taktik-Analyse. Ausschließlich für das Trainerteam, nicht öffentlich, nach der Saison gelöscht.", risk:"mittel"},
-  {k:"public_ok",emo:"🌍", t:"Öffentlich",                        d:"Vereins-Website, Social Media (z. B. Instagram) und Aushänge. Diese Bilder sind auch außerhalb der App sichtbar und im Netz auffindbar – deshalb fragen wir hier extra nach. Du kannst die Freigabe jederzeit wieder zurücknehmen.", risk:"hoch"}
+  {k:"public_ok",emo:"🌍", t:"Öffentlich",                        d:"Vereins-Website, Social Media (z. B. Instagram), Aushänge und das Adler Nest (Vereinsheft) – dort mit Vorname, Anfangsbuchstabe des Nachnamens und Jahrgang. Diese Bilder sind auch außerhalb der App sichtbar und im Netz auffindbar – deshalb fragen wir hier extra nach. Du kannst die Freigabe jederzeit wieder zurücknehmen.", risk:"hoch"}
 ];
 const FOTO_CONSENT_DEFAULT="Wir bitten um deine Einwilligung, Foto- und Videoaufnahmen deines Kindes im Rahmen des Vereinssports zu verwenden. Du entscheidest für jede der drei Stufen getrennt und kannst jede Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen. Die Teilnahme deines Kindes am Training und an Spielen ist unabhängig von dieser Einwilligung – ein „Nein“ hat keinerlei Nachteile. Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO sowie §§ 22, 23 KunstUrhG.";
 async function elternFotoConsentTextLoad(){
