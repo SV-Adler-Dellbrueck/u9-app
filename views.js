@@ -4510,7 +4510,7 @@ async function adlerWeltOpen(){
     <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('aw-modal').remove();wahlTrainerOpen()"><i class="ti ti-chart-bar"></i>🗳️ Kabinen-Wahl (Kinder stimmen ab)</button>
     <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('aw-modal').remove();albumFotosOpen()"><i class="ti ti-photo"></i>🃏 Album-Karten-Fotos (Trainer &amp; Verein)</button>
     <div style="font-size:var(--s-klein);font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 4px">🎵 Kabinen-Playlist</div>
-    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px">Spotify-Link zur U9-Playlist. Die Kinder hören sie in der Kabine.</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px">Spotify-Link zur U9-Playlist. Die Kinder hören sie in der Kabine; sie lädt dort erst, wenn jemand auf „Playlist laden“ tippt.</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <input id="aw-spotify" type="url" placeholder="https://open.spotify.com/playlist/…" style="flex:1;min-width:150px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
       <button class="btn btn-sm" onclick="spotifySave(this)"><i class="ti ti-device-floppy"></i>Speichern</button>
