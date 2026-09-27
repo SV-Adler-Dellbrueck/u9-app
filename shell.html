@@ -249,6 +249,11 @@
 <!-- TAKTIK VIEW -->
 <div id="view-taktik" class="view">
   <div class="sl nt"><i class="ti ti-arrows-move"></i>Taktikboard</div>
+  <!-- v640: Spielsituationen auf der Zeichenfläche der Übungen (md-taktikboard.js, sitHubRender).
+       Alles darunter ist das alte Brett: im Trainerbereich nur nach „Freies Brett“ (body.tb-alt-an),
+       im Kinder-Quiz (?quiz) allein. Es bleibt Geschwister-Element – die Quiz-Regeln in styles.css
+       zählen auf direkte Kinder von #view-taktik. -->
+  <div id="sit-hub"></div>
   <!-- v510: Drei Beschriftungen und drei umbrechende Knopfreihen ergaben oben auf der Seite
        einen Block aus elf Knöpfen, hinter dem das Feld erst nach dem Scrollen auftauchte.
        Jetzt EINE Karte: Spielform als gleich breite Kacheln, darunter die drei Handgriffe
@@ -381,7 +386,7 @@
 
       <div class="tf-abschnitt">Grunddaten</div>
       <div class="mgrid" style="grid-template-columns:1fr 1fr">
-        <div class="mg" style="grid-column:1/-1"><label for="tf-name">Name</label><input type="text" id="tf-name" placeholder="Name der Übung"></div>
+        <div class="mg" style="grid-column:1/-1"><label for="tf-name">Name</label><input type="text" id="tf-name" placeholder="Name der Übung"><div id="tf-name-hinweis" class="tf-ki-stand" hidden>Der Name bleibt: Die Übung steht schon in Trainingsplänen, und die finden sie über ihren Namen.</div></div>
         <div class="mg" style="grid-column:1/-1"><label for="tf-kat">Kategorie</label>
           <select id="tf-kat">
             <option value="aufwaermen">Aufwärmen</option>
@@ -432,7 +437,7 @@
       </div>
 
       <div class="tf-fuss">
-        <button class="btn btn-p tf-haupt" onclick="saveCustomTraining()"><i class="ti ti-check"></i>Übung erfassen</button>
+        <button class="btn btn-p tf-haupt" id="tf-haupt" onclick="saveCustomTraining()"><i class="ti ti-check"></i>Übung erfassen</button>
         <button class="btn" onclick="closeAddTraining()">Abbrechen</button>
       </div>
     </div>

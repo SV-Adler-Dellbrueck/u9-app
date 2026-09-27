@@ -19,6 +19,7 @@ module.exports = async function (h) {
   const r = await s.page.evaluate(async ({ raus }) => {
     const warte = ms => new Promise(r => setTimeout(r, ms));
     if (typeof kaderNamen !== "function") return { fehlt: "kaderNamen" };
+    document.body.classList.add("tb-alt-an");   // v640: das alte Brett öffnet „Freies Brett“
     await loadKader();
     const kader = { gesamt: KADER.length, aktiv: kaderNamen().length, drin: kaderNamen().filter(n => raus.includes(n)) };
     // 1) Aufstellung und Bank kennen nur noch die aktiven Kinder
@@ -72,7 +73,7 @@ module.exports = async function (h) {
   await h.sichtbarMachen(t.page, "#view-taktik");
   const tab = await t.page.evaluate(async () => {
     const warte = ms => new Promise(r => setTimeout(r, ms));
-    await loadKader(); taktikSetFormation("4+1");
+    await loadKader(); document.body.classList.add("tb-alt-an"); taktikSetFormation("4+1");
     document.documentElement.requestFullscreen = () => Promise.resolve();
     taktikProToggle(); await warte(150);
     const feld = document.querySelector("#view-taktik .tb-field").getBoundingClientRect();
