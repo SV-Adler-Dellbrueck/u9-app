@@ -2,6 +2,7 @@
 -- Wer einen Helfer-Code las, konnte über ticker_post in den öffentlichen Ticker schreiben und über
 -- ticker_kader die Namen der dabei-Kinder abrufen. Der Helfer-Link findet seinen Spieltag jetzt über
 -- matchday_by_token(); die Spalte selbst ist für anon nicht mehr lesbar.
+-- Die Funktion ist am 27.09. vorab eingespielt (rein additiv). Den Spaltenentzug unten
 -- ERST MIT DEM MERGE VON v636 EINSPIELEN: ältere Clients lesen noch select=*.
 create or replace function public.matchday_by_token(p_token uuid)
  returns setof public.matchday language sql stable security definer set search_path to 'public' as $$

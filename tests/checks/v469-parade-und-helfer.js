@@ -50,7 +50,9 @@ module.exports = async function (h) {
   const d = await h.starten({ start: "/eltern/index.html?delegate=tok-1", warten: 1400,
     supabase: h.supabaseAttrappe({
       matchday: [{ datum: heute, ticker_open: true, delegate_token: "tok-1", gegner: "FC Beispiel", spieldauer_min: 10, halbzeiten: 2 }],
-      rpc: { ticker_kader: { feld: [K[0], K[1]], weitere: [K[2], K[3], K[4]], tw: [K[0]] } }
+      rpc: { ticker_kader: { feld: [K[0], K[1]], weitere: [K[2], K[3], K[4]], tw: [K[0]] },
+        // v636: der Helfer-Link findet seinen Spieltag über die Funktion, nicht mehr über die Tabelle
+        matchday_by_token: [{ datum: heute, ticker_open: true, delegate_token: "tok-1", gegner: "FC Beispiel", spieldauer_min: 10, halbzeiten: 2 }] }
     }) });
   const dv = await d.page.evaluate(() => {
     const txt = document.body.textContent.replace(/\s+/g, " ").trim();
