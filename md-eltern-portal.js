@@ -514,7 +514,7 @@ function elternThemeOnToggle(){
 function elternCatOpen(id){
   const ov=document.getElementById("el-cat-overlay"); if(!ov)return;
   if(typeof nutzungLog==="function")nutzungLog("eltern-bereich",id);
-  const T={todo:"📌 Zu erledigen",news:"📣 Adler News",mehr:"📰 Mehr vom Team",regeln:"📋 Regeln & Vereinbarungen",datenschutz:"🔒 Datenschutz & Freigaben",kontakt:"⚙️ Kontakt & Benachrichtigungen"};
+  const T={todo:"📌 Zu erledigen",news:"📣 Adler News",mehr:"📰 Mehr vom Team",regeln:"📋 Regeln & Vereinbarungen",datenschutz:"🔒 Datenschutz & Freigaben",kontakt:"🗣️ Trainerteam kontaktieren"};
   ov.querySelectorAll(".el-cat-panel").forEach(p=>p.style.display="none");
   const panel=document.getElementById("cat-"+id); if(panel)panel.style.display="block";
   const ttl=document.getElementById("el-cat-title"); if(ttl)ttl.textContent=T[id]||(panel&&panel.dataset&&panel.dataset.catTitle)||""; // Kind-Panels tragen ihren Titel selbst
@@ -965,10 +965,11 @@ async function elternDashLoad(){
   const elRow=(emo,label,d,onclick,col,noClose)=>`<button onclick="${noClose?"":"elternCatClose();"}${onclick}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border:1px solid var(--rand-bedien);border-left:4px solid ${col};border-radius:12px;padding:13px;margin-bottom:8px;font-family:inherit;cursor:pointer"><span style="font-size:var(--s-teil);line-height:1">${emo}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-text);font-weight:700;color:#0f172a">${label}</span><span style="display:block;font-size:var(--s-klein);color:#64748b;margin-top:1px">${d}</span></span><span style="font-size:var(--s-karte);color:var(--text3)">›</span></button>`;
   const catBtn=(id,emoji,title,desc,grad)=>`<button onclick="elternCatOpen('${id}')" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:none;border-radius:14px;background:${grad};color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.08)"><span style="font-size:var(--s-seite);line-height:1">${emoji}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">${title}</span><span style="display:block;font-size:var(--s-klein);opacity:.92;margin-top:1px">${desc}</span></span><span style="font-size:var(--s-teil);opacity:.85">›</span></button>`;
   html+=sec("Mehr");
+  // v637: Der Weg zum Trainerteam steht zuerst und heißt so, wie Eltern danach suchen.
+  html+=catBtn('kontakt','🗣️','Trainerteam kontaktieren','Frage oder Elterngespräch, Benachrichtigungen','linear-gradient(135deg,#475569,#334155)');
   html+=catBtn('mehr','📰','Mehr vom Team','Adler Nest, Börse, Fundbüro, Kasse','linear-gradient(135deg,#1e3a8a,#2563eb)');
   html+=catBtn('regeln','📋','Regeln &amp; Vereinbarungen','Unsere Vereinbarung &amp; das Fairplay-Quiz','linear-gradient(135deg,#15803d,#047857)');
   html+=catBtn('datenschutz','🔒','Datenschutz &amp; Freigaben','Foto/Video, Notfallkarte, Datenexport','linear-gradient(135deg,#0f766e,#115e59)');
-  html+=catBtn('kontakt','⚙️','Kontakt &amp; Benachrichtigungen','Elterngespräch, Push, Einstellungen','linear-gradient(135deg,#475569,#334155)');
   // Versionszeile: hilft, wenn jemand „bei mir sieht das anders aus" meldet (v409)
   html+=`<div id="app-version-eltern" style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin:16px 0 4px"></div>`;
   html+=`<div id="el-cat-overlay" style="display:none;position:fixed;inset:0;z-index:10000;background:var(--bg,#f1f5f9);overflow-y:auto"><div style="max-width:560px;margin:0 auto;padding:12px 16px 40px">
@@ -1330,6 +1331,7 @@ async function terminDetailOpen(id){
       <div style="font-weight:700;font-size:var(--s-text);margin-bottom:2px">✅ Rückmeldung</div>
       ${rsvpRows||'<div style="font-size:var(--s-text);color:var(--text3)">Kein Kind zugeordnet.</div>'}
     </div>
+    ${tdWasMussMit(t)}
     <div id="td-vorbericht"></div>
     <div id="td-nom"></div>
     <div id="td-betreuung"></div>
@@ -1750,6 +1752,23 @@ async function notfallClear(spielerId){
   }catch(e){toast("Netzwerkfehler","err");}
 }
 
+/* v637: „Was muss mit?“ – feste Grundausstattung je Termin-Art. Die Schuhe richten sich nach dem
+   Platz, wenn der Trainer ihn eingetragen hat (Halle / Kunstrasen / Rasen). */
+function tdWasMussMit(t){
+  if(!t||!["training","spiel","turnier"].includes(t.typ))return "";
+  const pl=String(t.platz||"").toLowerCase();
+  const schuhe=/halle/.test(pl)?"Hallenschuhe mit heller Sohle"
+    :/kunst/.test(pl)?"Fußballschuhe für Kunstrasen (Multinocken)"
+    :/rasen/.test(pl)?"Fußballschuhe mit Nocken"
+    :"Fußballschuhe (passend zum Platz)";
+  const liste=["Schienbeinschoner",schuhe,"Trinkflasche mit Wasser (mit Namen)","Wetterfeste Kleidung – bei Kälte lange Sachen drunter"];
+  if(t.typ==="turnier")liste.push("Etwas Kleines zu essen für die Pausen");
+  return `<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
+    <div style="font-weight:700;font-size:var(--s-text);margin-bottom:4px">🎒 Was muss mit?</div>
+    <ul style="margin:0;padding-left:20px;font-size:var(--s-text);color:#334155;line-height:1.6">${liste.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+    <button onclick="document.getElementById('td-modal').remove();if(typeof elternGespraechOpen==='function')elternGespraechOpen()" style="margin-top:8px;min-height:44px;padding:0 4px;border:none;background:none;color:#1d4ed8;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer;text-decoration:underline">Frage zum Termin? Trainerteam kontaktieren</button>
+  </div>`;
+}
 /* ── Foto- & Video-Einwilligung (3 Stufen, DSGVO) ──
    Eltern entscheiden pro Kind getrennt: app-intern / Trainingsvideos / öffentlich.
    Zweckgebunden, dokumentiert (updated_at/by serverseitig), jederzeit widerrufbar.
@@ -2052,17 +2071,14 @@ async function elternBetreuungToggle(terminId,spielerId,stay){
   }catch(e){toast("Netzwerkfehler","err");}
 }
 // Eltern-Feature-Tour: kurzer Überblick beim ersten Login (einmalig), jederzeit neu startbar.
+/* v637: Der Rundgang war zehn Seiten lang – beim ersten Öffnen liest das niemand. Jetzt fünf
+   kurze Schritte mit dem, was man in der ersten Woche braucht; alles Weitere steht in der Hilfe. */
 const ELTERN_TOUR=[
-  {emo:"🦅", t:"Willkommen im Eltern-Bereich", d:"Hier läuft alles rund um dein Kind bei der U9 zusammen. Du kannst diese Tour später jederzeit über das ❓ oben neu starten."},
-  {emo:"🔑", t:"Dein Zugang", d:"Du meldest dich mit E-Mail und Passwort an – auch auf einem zweiten Gerät. Über 🔑 oben legst du ein Passwort fest oder änderst es. Das zweite Elternteil nutzt dieselbe Einladungskarte mit einer eigenen E-Mail-Adresse."},
-  {emo:"📌", t:"Was oben steht", d:"Ganz oben steht immer der nächste Termin. Gleich darunter erscheinen die Termine der nächsten 14 Tage, für die deine Antwort noch fehlt – ist alles beantwortet, ist die Karte weg. Danach deine offenen Punkte: Mitbringlisten, Büdchen-Dienst und die „Wie war's?“-Frage nach Spielen. Adler News zeigt sich nur, wenn wirklich etwas Neues drin ist – gelesen ist gelesen. Wichtige 📣 Ansagen vom Trainerteam bestätigst du kurz mit „Gelesen“."},
-  {emo:"👍", t:"Zu- & Absagen", d:"Melde dein Kind am nächsten Termin oder im Termin-Karussell zu oder ab – ein Tipp genügt, nochmal tippen entfernt die Antwort. Über „Alle Termine\" lädst du alles in deinen Kalender."},
-  {emo:"🙋", t:"Alles rund um den Termin", d:"Im Termin-Detail: Wetter, Adresse mit Route, Fahrgemeinschaft, Mitbringliste bei Events und „Wer hilft mit?“ – jede Aufgabe sagt dir vorher, ab wann du da sein solltest und was zu tun ist: beim Spiel und Turnier Aufbau, Fotos, Live-Ticker und Betreuung in den Pausen, beim Training die Funino-Tore und Jugendtore. Steht ein „Auswärtsspiel“ an, fehlt der Aufbau – dort baut der Gastgeber auf. Für den nächsten Termin stehen dieselben Aufgaben schon oben auf der Startseite, kurz und mit Uhrzeit – du musst dich also nicht vorab festlegen, sondern kannst am Tag selbst schauen, ob du es schaffst. Steht 💬 etwas darüber, ist das ein Hinweis des Trainerteams für genau diesen Termin. Im Feld darunter kannst du auch etwas eintragen, das nicht in der Liste steht. Beim Training sagst du außerdem, ob du vor Ort bleibst. Fällt einmal etwas aus oder wird der Platz getauscht, steht das direkt auf der Terminkarte – solange dort nichts steht, findet alles wie geplant statt."},
-  {emo:"\ud83d\udce3", t:"Liveticker", d:"Sobald das Trainerteam den Liveticker startet, steht ganz oben eine rote LIVE-Kachel – vorher nicht, damit du nie auf eine leere Seite tippst. Über „Teilen\" schickst du den Ticker an Oma, Opa oder Freunde; der Link braucht keine Anmeldung. Brauchst du die Kachel gerade nicht, klick sie weg – morgen ist sie wieder da. Drei Tage nach dem Spieltag zeigt der Link nur noch den Endstand, die Höhepunkte stehen dann im Adler Nest."},
-  {emo:"🎮", t:"Die Kabine (Kinder-Modus)", d:"Gib dein Handy bedenkenlos weiter: „Unsere Regeln“ – wofür wir Adler stehen, in sechs Sätzen –, Quiz, Missionen, Galerie – und jetzt auch das Panini-Sammelalbum mit Sticker-Tüten & Tauschbörse, Komplimente an Mitspieler, die eigene Adler-Post und das Sammelalbum. Zurück geht es nur mit Code."},
-  {emo:"\ud83d\udcf1", t:"Kinder-App auf einem eigenen Ger\u00e4t", d:"Die Kabine l\u00e4uft auch auf dem Tablet oder Handy deines Kindes. Unter \u201eF\u00fcr die Kinder\u201c erzeugst du einen sechsstelligen Code, gibst ihn auf dem Ger\u00e4t des Kindes ein \u2013 fertig. Das Ger\u00e4t bekommt ein Konto ohne Namen und ohne E-Mail. Dort stellst du auch ein, wie lange dein Kind t\u00e4glich darf, und trennst das Ger\u00e4t jederzeit wieder."},
-  {emo:"🃏", t:"Für dein Kind", d:"Nach einem Spiel oder Turnier steht unter den Terminen zwei Wochen lang der Rückblick: was dein Kind an dem Tag alles gemacht hat. Direkt darunter steht „Das kann dein Kind jetzt“ – erreichte Ziele und neue Technik-Abzeichen aus den letzten zwei Wochen. Die Karte erscheint nur, wenn wirklich etwas dazugekommen ist. Danach verschwindet er – die Zahlen bleiben in der Saison-Statistik. Dort findest du außerdem Sammelkarte, Technik-Abzeichen (die hakst du zuhause ab) und Fan-Fakten. Foto- & Video-Freigaben und die Notfallkarte pflegst du unter „🔒 Datenschutz & Freigaben\" – dort erklärt „🛡️ So schützen wir eure Fotos & Daten\" auch, warum die App sicherer ist als jede WhatsApp-Gruppe."},
-  {emo:"📰", t:"Team, Heft & Adler-Kasse", d:"Das „Adler Nest\" ist unser digitales Stadionheft – jetzt mit der Kabinen-Reporter-Rubrik der Kinder. Und über „Fan-Link teilen\" schickst du Oma, Opa und Fans den Spenden-Link. Viel Spaß! 🎉"},
+  {emo:"🦅", t:"Willkommen bei den Adlern", d:"Hier läuft alles rund um dein Kind bei der U9 zusammen. Diesen Rundgang startest du jederzeit über das ❓ oben neu."},
+  {emo:"👍", t:"Zu- und absagen", d:"Ganz oben steht der nächste Termin. Ein Tipp sagt zu oder ab, nochmal tippen nimmt die Antwort zurück. Offene Rückmeldungen der nächsten 14 Tage stehen direkt darunter."},
+  {emo:"🎒", t:"Alles zum Termin", d:"Tippe auf einen Termin: Wetter, Adresse mit Route, „Was muss mit?“, Fahrgemeinschaft und „Wer hilft mit?“."},
+  {emo:"🎮", t:"Die Kabine für dein Kind", d:"Unter „Für die Kinder“ darf dein Kind spielen: Quiz, Missionen, Sammelalbum. Zurück geht es nur mit deinem Code, und du legst fest, wie lange am Tag."},
+  {emo:"🗣️", t:"Fragen, Fotos, Datenschutz", d:"Unter „Trainerteam kontaktieren“ erreichst du uns. Foto-Freigaben und die Notfallkarte pflegst du unter „Datenschutz & Freigaben“ – ohne dein Häkchen erscheint kein Foto."},
 ];
 let elternTourIdx=0;
 function elternTourMaybe(){ try{if(localStorage.getItem("adler_eltern_tour"))return;}catch(e){} elternTourStart(); }

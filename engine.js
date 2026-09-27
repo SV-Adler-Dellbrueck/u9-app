@@ -65,9 +65,10 @@ function calcScores(v,dims){
      sind die unzuverlaessigste Kriteriengruppe (Coach-Eye-Forschung) und messen eher
      Temperament/Reife als Fussball. Die Dimension bleibt im Radar und in den Beobachtungen
      sichtbar, zaehlt aber nicht in die Zahl. Gewichte renormieren sich ueber wsum. */
-  const feldDims=dims.filter(d=>!d.id.startsWith("tw_")&&d.id!=="mental");
+  // v637: Nur beobachtete Dimensionen zählen („nicht gesehen“ = null), die Gewichte renormieren sich.
+  const feldDims=dims.filter(d=>!d.id.startsWith("tw_")&&d.id!=="mental"&&ds[d.id]!=null);
   const wsum=feldDims.reduce((a,b)=>a+b.w,0);
-  const total=wsum?Math.round(feldDims.reduce((s,d)=>s+(ds[d.id]||0)*d.w/wsum,0)):0;
+  const total=wsum?Math.round(feldDims.reduce((s,d)=>s+ds[d.id]*d.w/wsum,0)):0;
   return{dims:ds,total};
 }
 
@@ -101,22 +102,23 @@ function raeInfo(geb){
 function calcRolle(v,foot,neutralMissing=false){
   // v2: einheitliche 1–4-Skala. neutralMissing=true (Live-Vorschau) wertet fehlende
   // Kriterien als 50 statt 0 – die Vorschau springt dann nicht.
-  const S=n=>{const val=v[n];return val?((val-1)/3)*100:(neutralMissing?50:0);};
+  // v637: „nicht gesehen“ (0) ist neutral wie in der Vorschau – kein Malus für Nicht-Beobachtetes.
+  const S=n=>{const val=v[n];return val?((val-1)/3)*100:((neutralMissing||val===0)?50:0);};
   // ── AUFPASSER ── Pass, Raum, Zweikampf, Umschalten (Gewichte summieren auf 1.0)
   const aufRaw=S("f_pass")*.30+S("f_raum")*.24+S("f_defense")*.28+S("f_umschalt")*.18;
   const passQuality=S("f_pass");
-  const aufMalus=neutralMissing?1.0:(passQuality<33?0.68:passQuality<55?0.86:1.0);
+  const aufMalus=(neutralMissing||v["f_pass"]===0)?1.0:(passQuality<33?0.68:passQuality<55?0.86:1.0);
   const auf=aufRaw*aufMalus;
 
   // ── JÄGER ── Abschluss, Laufweg, Selbstvertrauen, Ballkontrolle
   const jaegRaw=S("f_abschluss")*.34+S("f_laufweg")*.24+S("f_selbst")*.16+S("f_ballkontrolle")*.26;
   const torInstinkt=S("f_abschluss");
-  const jaegMalus=neutralMissing?1.0:(torInstinkt<33?0.70:torInstinkt<55?0.86:1.0);
+  const jaegMalus=(neutralMissing||v["f_abschluss"]===0)?1.0:(torInstinkt<33?0.70:torInstinkt<55?0.86:1.0);
   const jaeg=jaegRaw*jaegMalus;
 
   // ── FLITZER ── Tempo, Koordination, Ballkontrolle, Einsatz
   const fbRaw=S("f_tempo")*.34+S("f_koord")*.22+S("f_ballkontrolle")*.24+S("f_einsatz")*.20;
-  const tempoMalus=neutralMissing?1.0:(S("f_tempo")<33?0.76:S("f_tempo")<55?0.90:1.0);
+  const tempoMalus=(neutralMissing||v["f_tempo"]===0)?1.0:(S("f_tempo")<33?0.76:S("f_tempo")<55?0.90:1.0);
   const fb=fbRaw*tempoMalus;
 
   const fl_l=foot==="L"?fb*1.03:foot==="B"?fb:fb*.94;
@@ -152,10 +154,10 @@ function generateFazitFeld(v,meta){
      dann „noch im Aufbau … keine Leistungsorientierung“. Stufe 2 heißt altersgerecht, also
      beginnt „altersgerecht“ bei 33 %. */
   const STUFE_SOLIDE=33, STUFE_GUT=67;
-  const sc=n=>{const val=v[n];return val?((val-1)/3)*100:0;};
+  const sc=n=>{const val=v[n];return val?((val-1)/3)*100:(val===0?50:0);};   // v637: nicht gesehen = neutral
 
   // Spielertyp aus stärkster Feld-Dimension
-  const dsF=Object.entries(ds).filter(([k])=>!k.startsWith("tw_"));
+  const dsF=Object.entries(ds).filter(([k,x])=>!k.startsWith("tw_")&&x!=null);   // v637: nicht beobachtete Dimensionen fallen raus
   const stMax=[...dsF].sort((a,b)=>b[1]-a[1])[0]||["tech",0];
   const typMap={tech:"technischer Spieler",raute:"spielintelligenter Spieler",phys:"dynamischer Spieler",mental:"charakterstarker Spieler",entw:"lernbegieriger Spieler"};
   const typ=typMap[stMax[0]]||"Allrounder";
@@ -165,7 +167,8 @@ function generateFazitFeld(v,meta){
 
   // ── ZUSAMMENFASSUNG ──
   let summary="";
-  if(ds.tech>=STUFE_GUT)summary+=`${name} zeigt technisch bereits ein Niveau über dem Altersschnitt der U9 I. `;
+  if(ds.tech==null)summary+=`Technik wurde in dieser Runde nicht beobachtet. `;
+  else if(ds.tech>=STUFE_GUT)summary+=`${name} zeigt technisch bereits ein Niveau über dem Altersschnitt der U9 I. `;
   else if(ds.tech>=STUFE_SOLIDE)summary+=`${name} befindet sich technisch auf altersgerechtem Niveau mit solidem Fundament. `;
   else summary+=`${name} ist technisch noch im Aufbau – Grundlagen mit Geduld und vielen Ballkontakten festigen. `;
   if((v["f_raum"]||0)>=3)summary+=`Das Raumgefühl in der Raute ist ausgeprägt – ${name} öffnet das Feld selbstständig. `;
@@ -195,6 +198,8 @@ function generateFazitFeld(v,meta){
   r+="\n━━ ENTWICKLUNGSFELDER ━━━━━━━━━━━━━━━━━━━━━━━━━\n";
   if(ef.length===0) r+="  → Auf gutem Niveau – Handlungsschnelligkeit unter Druck weiter schärfen\n";
   else ef.slice(0,8).forEach(e=>r+=`  → ${e}\n`);
+  const ng=allCrit.filter(c=>v[c.n]===0).map(c=>c.l);
+  if(ng.length) r+=`\n  Nicht gesehen (zählt nicht mit): ${ng.join(", ")}\n`;
 
   // ── RAUTEN-ANALYSE ──
   r+="\n━━ RAUTEN-ANALYSE (4+1) ━━━━━━━━━━━━━━━━━━━━━━━\n";
@@ -226,8 +231,8 @@ function generateFazitFeld(v,meta){
     mental:"ÜBUNG 1 – 'Lobpflicht':\nNach jedem Tor lobt der Schütze einen Helfer.\n\nÜBUNG 2 – 'Fokus-Pause':\nVor jeder Erklärung 3 Sekunden Stille, Augenkontakt.",
     entw:"ÜBUNG 1 – 'Freies Spiel mit Aufgabe':\nEine selbst gewählte Finte pro Angriff ausprobieren.\n\nÜBUNG 2 – 'Frag-den-Trainer':\nKind erklärt die Übung mit eigenen Worten."
   };
-  const wd=sortedDims[0][0];
-  r+=`Schwächster Messwert: ${wn[wd]} (${sortedDims[0][1]}%)\n\n`;
+  const wd=sortedDims.length?sortedDims[0][0]:"tech";
+  r+=sortedDims.length?`Schwächster Messwert: ${wn[wd]} (${sortedDims[0][1]}%)\n\n`:`Zu wenig beobachtet für einen Schwerpunkt – allgemeine Grundlagen:\n\n`;
   r+=uebBank[wd]||uebBank.tech;
 
   if(parseInt(meta.eltern)===1){
@@ -279,11 +284,11 @@ function generateFazitTW(v,meta){
   twSt.forEach(s=>r+=`  + ${s}\n`);
 
   const twEf=[];
-  if((v["tw_fangen"]||0)<=2)   twEf.push("Fangen & Sichern: Bälle mit beiden Händen festhalten");
-  if((v["tw_heraus"]||0)<=2)   twEf.push("Herausgehen: klare Situationen erkennen und handeln");
-  if((v["tw_komm"]||0)<=2)     twEf.push("Kommunikation: 'Mein Ball!', 'Komm!' als Pflicht-Ansagen");
-  if((v["tw_stellung"]||0)<=2) twEf.push("Stellungsspiel: dem Schützen entgegengehen, Winkel verkürzen");
-  if((v["tw_aufbau"]||0)<=2)   twEf.push("Spielaufbau: ersten Pass gezielt zum Aufpasser");
+  if(v["tw_fangen"]>0&&v["tw_fangen"]<=2)   twEf.push("Fangen & Sichern: Bälle mit beiden Händen festhalten");
+  if(v["tw_heraus"]>0&&v["tw_heraus"]<=2)   twEf.push("Herausgehen: klare Situationen erkennen und handeln");
+  if(v["tw_komm"]>0&&v["tw_komm"]<=2)     twEf.push("Kommunikation: 'Mein Ball!', 'Komm!' als Pflicht-Ansagen");
+  if(v["tw_stellung"]>0&&v["tw_stellung"]<=2) twEf.push("Stellungsspiel: dem Schützen entgegengehen, Winkel verkürzen");
+  if(v["tw_aufbau"]>0&&v["tw_aufbau"]<=2)   twEf.push("Spielaufbau: ersten Pass gezielt zum Aufpasser");
   if(twEf.length===0) twEf.push("Entscheidungsschnelligkeit beim Herausgehen weiter schärfen");
   r+="\n";
   twEf.forEach(e=>r+=`  → ${e}\n`);
@@ -325,6 +330,46 @@ function playerTrend(name){
   const snaps=DB[name]; if(!snaps||snaps.length<2)return {delta:0,conf:snaps?snaps.length:0};
   const cur=snaps[snaps.length-1].total_score||0, prev=snaps[snaps.length-2].total_score||0;
   return {delta:Math.round(cur-prev), conf:snaps.length};
+}
+/* v637: Bewertungsrunden. Bewertet wird alle sechs Wochen gemeinsam im Trainermeeting; ab 35 Tagen
+   gilt die nächste Runde als fällig. Verglichen wird Runde gegen Runde, nicht Einzelwert gegen
+   Einzelwert: Bewertungen innerhalb von 21 Tagen gehören zur selben Runde (die jüngste zählt).
+   „Gewachsen“ heißt: ein Kriterium ist um zwei Stufen gestiegen – oder zweimal hintereinander
+   um eine. Eine einzelne Stufe ist bei Achtjährigen oft Tagesform, keine Entwicklung. */
+const BEW_FAELLIG_TAGE=35, BEW_RUNDE_FENSTER_TAGE=21;
+function bewRunden(name){
+  const snaps=((DB&&DB[name])||[]).filter(s=>s&&s.datum).slice().sort((a,b)=>String(a.datum).localeCompare(String(b.datum)));
+  const out=[];
+  snaps.forEach(s=>{
+    const last=out[out.length-1];
+    if(last&&(new Date(s.datum)-new Date(last.datum))/864e5<BEW_RUNDE_FENSTER_TAGE) out[out.length-1]=s;
+    else out.push(s);
+  });
+  return out;
+}
+function bewVergleich(name){
+  const r=bewRunden(name), rv=s=>s?(typeof s.radios==="string"?safeParse(s.radios,{}):(s.radios||{})):{};
+  const res={runden:r.length,hoch:[],runter:[]};
+  if(r.length<2)return res;
+  const L=rv(r[r.length-1]), P=rv(r[r.length-2]), PP=r.length>=3?rv(r[r.length-3]):{};
+  const lbl={}; [...DIMS_FELD,...DIMS_TW].forEach(d=>d.tier.forEach(t=>lbl[t.n]=t.l));
+  Object.keys(L).forEach(k=>{
+    const a=+L[k], b=+P[k], c=+PP[k];
+    if(!(a>0&&b>0))return;
+    const d1=a-b, d0=c>0?b-c:0;
+    if(d1>=2||(d1>=1&&d0>=1))res.hoch.push(lbl[k]||k);
+    else if(d1<=-2||(d1<=-1&&d0<=-1))res.runter.push(lbl[k]||k);
+  });
+  return res;
+}
+function bewRundenStand(){
+  const names=typeof kaderNamen==="function"?kaderNamen():Object.keys(DB||{});
+  let letzte="";
+  names.forEach(n=>{const s=DB&&DB[n];if(s&&s.length){const d=String(s[s.length-1].datum||"");if(d>letzte)letzte=d;}});
+  if(!letzte)return {letzte:null,tage:null,faellig:true,faelligAb:null};
+  const tage=Math.floor((Date.now()-new Date(letzte+"T00:00:00"))/864e5);
+  const ab=new Date(new Date(letzte+"T00:00:00").getTime()+BEW_FAELLIG_TAGE*864e5).toISOString().slice(0,10);
+  return {letzte,tage,faellig:tage>=BEW_FAELLIG_TAGE,faelligAb:ab};
 }
 function roleScore(player,role){
   // player.rolle wurde in getPlayerData() bereits mit demselben foot berechnet – nicht doppelt tun
