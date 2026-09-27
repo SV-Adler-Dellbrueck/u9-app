@@ -1875,7 +1875,7 @@ function htRender(){
         <a class="btn btn-sm" href="https://wa.me/?text=${encodeURIComponent("🏆 "+_HT.name+" – Spielplan & Live-Ergebnisse: "+url)}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
         <a class="btn btn-sm" href="${esc(url)}" target="_blank" rel="noopener noreferrer"><i class="ti ti-external-link"></i>Ansicht öffnen</a>
       </div>
-      <div style="text-align:center;margin-top:10px"><img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url)}" alt="QR-Code zum Turnierplan" width="180" height="180" style="border-radius:10px;background:#fff;padding:6px"></div>
+      <div id="ht-qr" style="width:180px;height:180px;margin:10px auto 0;border-radius:10px;background:#fff;padding:6px;box-sizing:border-box" data-url="${esc(url)}"></div>
       <div style="font-size:var(--s-klein);color:var(--text2);margin-top:12px">✏️ <b>Ergebnis-Link</b> – derselbe Spielplan, aber mit Schreib-Code: wer ihn hat (z. B. der Anzeigetisch), darf Ergebnisse eintragen, sonst nichts. Nicht in die Eltern-Gruppe geben.</div>
       <button class="btn btn-sm" style="margin-top:4px" onclick="htShareErgebnis()"><i class="ti ti-pencil"></i>Ergebnis-Link teilen</button>
       <div style="font-weight:800;font-size:var(--s-text);margin:14px 0 4px">📣 Live-Durchsage</div>
@@ -1896,6 +1896,10 @@ function htRender(){
       </div>
     `:""}
     <button class="btn btn-sm" style="width:100%;margin-top:14px;color:#dc2626" onclick="htDelete()"><i class="ti ti-trash"></i>Turnier löschen</button>`;
+  /* v642: Der QR-Code entsteht im Browser (vendor/qrcode.js, wie seit v604 bei den Einladungskarten)
+     statt bei api.qrserver.com – der Dienst hätte bei jedem Öffnen die Turnier-Adresse bekommen. */
+  const qr=document.getElementById("ht-qr");
+  if(qr&&typeof qrSvg==="function")qrSvg(qr.dataset.url,4).then(svg=>{ if(qr.isConnected)qr.innerHTML=svg; }).catch(()=>{ qr.textContent="QR-Code nicht verfügbar"; });
 }
 // Formatwechsel: Gruppen-Auswahl ein-/ausblenden, ohne Eingaben zu verlieren
 function htRenderCfg(){ Object.assign(_HT.config,_htCfgLesen()); htRender(); }

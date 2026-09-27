@@ -110,8 +110,11 @@ async function starten(opt = {}) {
     const f = path.join(REPO, u.pathname === "/" ? start : u.pathname);
     if (!fs.existsSync(f) || fs.statSync(f).isDirectory()) return r.fulfill({ status: 404, body: "" });
     const typ = f.endsWith(".js") ? "application/javascript" : f.endsWith(".css") ? "text/css" : f.endsWith(".html") ? "text/html"
-      : f.endsWith(".webmanifest") ? "application/manifest+json" : f.endsWith(".json") ? "application/json" : "text/plain";
-    return r.fulfill({ status: 200, contentType: typ, body: fs.readFileSync(f, "utf8") });
+      : f.endsWith(".webmanifest") ? "application/manifest+json" : f.endsWith(".json") ? "application/json"
+      : f.endsWith(".woff2") ? "font/woff2" : f.endsWith(".png") ? "image/png" : "text/plain";
+    /* v642: Schriften liegen seit v642 in vendor/ – als utf8 gelesen wären woff2 und png zerstört. */
+    const binaer = /\.(woff2|png)$/.test(f);
+    return r.fulfill({ status: 200, contentType: typ, body: binaer ? fs.readFileSync(f) : fs.readFileSync(f, "utf8") });
   });
   /* v617: Der Auftakt (intro.js, fliegendes Wappen) liegt 1,6 s über allem. Er ist
      durchklickbar, aber Messungen am Bildschirm sähen ihn – deshalb standardmäßig aus, wie

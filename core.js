@@ -644,7 +644,7 @@ function ensureChart(){
   if(_chartJsPromise)return _chartJsPromise;
   _chartJsPromise=new Promise((res,rej)=>{
     const s=document.createElement("script");
-    s.src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js";
+    s.src="vendor/chart.umd.js";   // v642: selbst ausgeliefert (MIT), vorher cdn.jsdelivr.net
     s.onload=()=>res();
     s.onerror=()=>{_chartJsPromise=null;rej(new Error("Chart.js konnte nicht geladen werden"));};
     document.head.appendChild(s);
