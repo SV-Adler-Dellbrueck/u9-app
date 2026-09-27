@@ -1114,3 +1114,23 @@ html[data-schrift] .logo-badge{font-size:calc(13px);white-space:nowrap}
 /* Die KI-Auswertung ist die Aktion des Kastens, nicht der Maske: Rahmen in Lila statt Vollfläche –
    die eine Hauptaktion bleibt „Übung erfassen“ unten. */
 .tf-ki-knoepfe .tf-ki-los{border-color:var(--purple);color:var(--purple);font-weight:800}
+
+/* v640 – Spielsituationen (md-taktikboard.js). Das alte Brett ist im Trainerbereich zu, bis
+   „Freies Brett“ es öffnet; dann bleibt vom Hub nur der Knopf zum Schließen. Im Quiz ist der
+   Hub durch „body.quiz-extern #view-taktik>*“ ohnehin weg. */
+body:not(.quiz-extern):not(.tb-alt-an) #view-taktik>*:not(.sl):not(#sit-hub){display:none!important}
+body.tb-alt-an #sit-hub>*:not(.sit-weitere),body.tb-alt-an #sit-hub .sit-weitere>*:not(#sit-alt-knopf),body.taktik-pro #sit-hub{display:none!important}
+#sit-hub{max-width:720px;margin-bottom:10px}
+.sit-formen{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.sit-form{min-height:48px;justify-content:center;flex-direction:column;gap:2px;font-size:var(--s-klein);padding:6px 4px}
+#sit-liste{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.sit-eintrag{background:var(--surface);border:var(--border);border-radius:12px;padding:10px}
+.sit-bild{display:block;width:100%;max-width:200px;margin:0 auto 6px;padding:0;border:none;border-radius:8px;background:none;cursor:pointer;overflow:hidden}
+.sit-bild svg{display:block;width:100%;height:auto}
+.sit-name{font-size:var(--s-karte);font-weight:700;color:var(--text);overflow-wrap:anywhere}
+.sit-meta{font-size:var(--s-klein);color:var(--text2);margin-bottom:8px}
+.sit-knoepfe{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}
+.sit-knoepfe .btn{min-height:44px;justify-content:center}
+.sit-leer{font-size:var(--s-text);color:var(--text2);padding:8px 0;grid-column:1/-1}
+.sit-weitere{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;padding-top:12px;border-top:var(--border)}
+.sit-weitere .btn{flex:1 1 150px;min-height:48px;justify-content:center}

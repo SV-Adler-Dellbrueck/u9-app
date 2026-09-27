@@ -122,6 +122,7 @@ module.exports = async function (h) {
   const tb = await s.page.evaluate(async () => {
     const warte = ms => new Promise(x => setTimeout(x, ms));
     if (typeof taktikBildNeu !== "function") return { fehlt: "taktikBildNeu" };
+    document.body.classList.add("tb-alt-an");   // v640: altes Brett hinter „Freies Brett“
     taktikSetup("auto"); await warte(120);
     if (!tbField.length) return { fehlt: "Aufstellung auf dem Feld" };
     const vorher = tbField[0].x;

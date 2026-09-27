@@ -63,6 +63,79 @@ async function _loadCustomForms(){
   renderTraining();
 }
 
+/* v640 – PO 27.09.: „Angelegte Übungen müssen auch einen Bearbeiten-Button bekommen."
+   Dieselbe Maske wie beim Erfassen, gefüllt mit der Übung. TF_EDIT_IDX sagt saveCustomTraining,
+   dass es ändern statt anfügen soll. Der NAME bleibt gesperrt, sobald die Übung in einem Plan
+   oder in einer Bewertung steht: seit v586 finden Pläne ihre Übungen über den Namen – eine
+   Umbenennung risse sie los, und der eindeutige Name in der Datenbank würde eine Dublette
+   ohnehin ablehnen. */
+window.TF_EDIT_IDX=null;
+/* Bearbeitbar ist, was in der Tabelle trainingsformen steht (Zahl als id) oder hier erfasst
+   wurde. Die mitgelieferten Übungen aus data.js tragen Kennungen wie „tf001“ – sie haben keine
+   Zeile, die ein PATCH treffen könnte. */
+function uebungEditierbar(f){ return !!f&&(f.custom===true||/^\d+$/.test(String(f.id==null?"":f.id))); }
+function uebungBearbeiten(formIdx){
+  var f=tpAllForms()[formIdx];
+  if(!uebungEditierbar(f)){toast("Diese Übung gehört zur mitgelieferten Bibliothek und lässt sich nicht bearbeiten","info");return;}
+  document.getElementById("uebung-modal")?.remove();
+  openAddTraining();
+  window.TF_EDIT_IDX=formIdx;
+  _tfFuellen(f);
+  var genutzt=tpGetExerciseHistory(formIdx).length>0||(typeof tpUebungKommentare==="function"&&tpUebungKommentare(formIdx).length>0);
+  var nf=document.getElementById("tf-name"); if(nf)nf.readOnly=genutzt;
+  var nh=document.getElementById("tf-name-hinweis"); if(nh)nh.hidden=!genutzt;
+  var t=document.getElementById("tf-titel"); if(t)t.textContent="✏️ Übung bearbeiten";
+  var k=document.getElementById("tf-haupt"); if(k)k.innerHTML='<i class="ti ti-check"></i>Änderungen speichern';
+}
+/* v640 – PO: „Auch Übung kopieren macht Sinn. Dann wird eine neue Übung angelegt als
+   Alternative, die man dann bearbeiten kann." Geht bei JEDER Übung, auch den mitgelieferten:
+   die Maske öffnet gefüllt, aber als neue Übung mit freiem Namen „… (Variante)“; erst
+   „Übung erfassen“ legt sie an. Das Original bleibt unberührt. */
+function _tfFreierName(basis){
+  var namen=new Set(tpAllForms().map(function(f){return _tfNormName(f.name);}));
+  var n=basis+" (Variante)", i=2;
+  while(namen.has(_tfNormName(n))){ n=basis+" (Variante "+i+")"; i++; }
+  return n;
+}
+function uebungKopieren(formIdx){
+  var f=tpAllForms()[formIdx]; if(!f)return;
+  document.getElementById("uebung-modal")?.remove();
+  openAddTraining();
+  _tfFuellen(f);
+  var nf=document.getElementById("tf-name"); if(nf){ nf.value=_tfFreierName(f.name); nf.focus(); nf.select&&nf.select(); }
+  var t=document.getElementById("tf-titel"); if(t)t.textContent="📋 Übung kopieren";
+  var k=document.getElementById("tf-haupt"); if(k)k.innerHTML='<i class="ti ti-check"></i>Übung erfassen';
+}
+function _tfFuellen(f){
+  var setz=function(id,v){var el=document.getElementById(id); if(el){el.value=(v==null?"":String(v)); if(typeof feldWachsen==="function"&&el.tagName==="TEXTAREA")feldWachsen(el);}};
+  setz("tf-name",f.name); setz("tf-ablauf",f.ablauf); setz("tf-varianten",f.varianten); setz("tf-coaching",f.coaching);
+  setz("tf-spieler",f.spieler); setz("tf-feld",f.feld); setz("tf-dauer",f.dauer);
+  var kat=document.getElementById("tf-kat"); if(kat&&[...kat.options].some(function(o){return o.value===f.kat;}))kat.value=f.kat;
+  if(f.spass)setz("tf-spass",f.spass); if(f.diff)setz("tf-diff",f.diff);
+  /* Mitgelieferte Übungen tragen oft nur eine fertige Zeichnung (svg) ohne Beschreibung –
+     die lässt sich nicht bearbeiten, die Kopie startet dann ohne Skizze. */
+  var spec=(f.skizze&&typeof f.skizze==="object")?f.skizze:(typeof skzSpecVon==="function"?skzSpecVon(f):null);
+  window.TF_SKIZZE=spec?JSON.parse(JSON.stringify(spec)):null;
+  if(typeof tfSkizzeVorschau==="function")tfSkizzeVorschau();
+}
+async function uebungAendern(formIdx,form){
+  var f=tpAllForms()[formIdx]; if(!f)return;
+  var patch={name:form.name,kat:form.kat,ablauf:form.ablauf,varianten:form.varianten,coaching:form.coaching,
+    spieler:form.spieler,feld:form.feld,dauer:form.dauer,spass:form.spass,diff:form.diff,kurz:form.kurz,skizze:form.skizze};
+  if(f.tags==="Import")patch.tags="Import (bearbeitet)";   // v585: der Abgleich zieht sie dann nicht mehr nach
+  if(f.id){
+    try{
+      var r=await fetch(SB_URL+'/rest/v1/trainingsformen?id=eq.'+encodeURIComponent(f.id),{method:'PATCH',headers:sbAuthHeaders(),body:JSON.stringify(patch)});
+      if(typeof sbCheck401==="function"&&sbCheck401(r))return;
+      if(!r.ok){toast(r.status===409?"Diesen Namen trägt schon eine andere Übung":"Nicht gespeichert – bitte nochmal","err");return;}
+    }catch(e){toast("Offline – Änderung nicht gespeichert","err");return;}
+  }
+  Object.assign(f,patch);
+  try{ f.svg=f.skizze?_skz(f.skizze):""; }catch(e){}
+  closeAddTraining();
+  renderTraining();
+  toast("Übung geändert ✓");
+}
 async function saveCustomTraining(){
   var name=document.getElementById('tf-name').value.trim();
   if(!name){toast('Bitte Name eingeben','err');return;}
@@ -82,6 +155,10 @@ async function saveCustomTraining(){
        `skizze` (jsonb) gab es schon – gefüllt hat sie nur nie jemand. */
     skizze:(window.TF_SKIZZE&&typeof window.TF_SKIZZE==="object")?window.TF_SKIZZE:null
   };
+  if(window.TF_EDIT_IDX!=null){ await uebungAendern(window.TF_EDIT_IDX,form); return; }
+  /* v640: Eine Kopie mit unverändertem Namen scheiterte sonst am eindeutigen Namen in der
+     Datenbank und landete still „nur lokal“. */
+  if(tpAllForms().some(function(f){return _tfNormName(f.name)===_tfNormName(name);})){toast("Diesen Namen trägt schon eine Übung – bitte einen anderen wählen","err");return;}
   try{
     // Trainer-Token statt anon (RLS: trainingsformen schreibbar nur fuer is_trainer). Kein svg-Feld (Spalte existiert nicht).
     // return=representation: die id kommt zurueck und die Uebung ist sofort nachtraeglich
@@ -113,6 +190,11 @@ function closeAddTraining(){
   if(typeof tfKiStopp==="function")tfKiStopp();   // v639: ein laufendes Diktat endet mit der Maske
   document.getElementById('training-modal').style.display='none';
   window.TF_SKIZZE=null;
+  window.TF_EDIT_IDX=null;   // v640: die nächste Maske erfasst wieder neu
+  var t=document.getElementById('tf-titel'); if(t)t.textContent='➕ Eigene Übung';
+  var k=document.getElementById('tf-haupt'); if(k)k.innerHTML='<i class="ti ti-check"></i>Übung erfassen';
+  var nf=document.getElementById('tf-name'); if(nf)nf.readOnly=false;
+  var nh=document.getElementById('tf-name-hinweis'); if(nh)nh.hidden=true;
   if(typeof tfSkizzeVorschau==="function")tfSkizzeVorschau();
   ['tf-ki-text','tf-name','tf-ablauf','tf-varianten','tf-coaching','tf-spieler','tf-feld','tf-dauer'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.value='';
@@ -318,6 +400,7 @@ function _tfKarte(x){
     </button>
     <button onclick="tpArtTipp('${(x.f.name||"").replace(/'/g,"\\'")}')" title="Übungsform oder Spielform – antippen zum Einordnen" aria-label="Art der Übung: ${_tpArt(x.f)?UEBUNG_ART[_tpArt(x.f)].lang:"noch nicht eingeordnet"}" style="flex:none;min-height:44px;padding:0 4px;border:none;background:transparent;cursor:pointer">${tpArtChip(x.f,true)}</button>
     <button onclick="tpSternTipp('${(x.f.name||"").replace(/'/g,"\\'")}')" title="Schwierigkeit antippen zum Ändern" style="min-width:48px;min-height:44px;border:none;background:transparent;color:#f59e0b;font-size:var(--s-text);cursor:pointer;letter-spacing:1px">${"⭐".repeat(stern)}</button>
+    ${uebungEditierbar(x.f)?`<button onclick="uebungBearbeiten(${x.i})" class="tf-bearbeiten" aria-label="${esc(x.f.name)} bearbeiten" title="Übung bearbeiten" style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-size:var(--s-text);cursor:pointer">✏️</button>`:""}
     <button onclick="tfInPlan(${x.i})" aria-label="In den Trainingsplan übernehmen" title="In den Trainingsplan übernehmen" style="min-width:44px;min-height:44px;border:none;border-radius:10px;background:#16a34a;color:#fff;font-size:var(--s-teil);font-weight:900;cursor:pointer">➕</button>
   </div>`;
 }
@@ -1347,6 +1430,10 @@ function tpShowExercise(formIdx,planMin){
       ${(function(){const b=typeof tpBetreuungWert==="function"?tpBetreuungWert(f):null;return b?`<span class="tp-ex-betr" style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">👤 ${UEBUNG_BETREUUNG[b.wert].kurz}${b.bestaetigt?"":" (Vorschlag)"}</span>`:"";})()}
     </div>
     <div style="font-size:var(--s-klein);color:var(--text);white-space:pre-wrap;line-height:1.5;margin-bottom:8px">${esc(f.ablauf||"")}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      ${uebungEditierbar(f)?`<button type="button" class="btn" onclick="uebungBearbeiten(${formIdx})" style="flex:1 1 140px;min-height:44px;justify-content:center"><i class="ti ti-pencil"></i>Übung bearbeiten</button>`:""}
+      <button type="button" class="btn" onclick="uebungKopieren(${formIdx})" style="flex:1 1 140px;min-height:44px;justify-content:center"><i class="ti ti-copy"></i>Übung kopieren</button>
+    </div>
     ${tpReiheHtml(f.name)}
     ${f.coaching?`<div style="font-size:var(--s-klein);color:var(--text2);background:var(--surface);padding:8px;border-radius:6px;white-space:pre-wrap"><strong>🎯 Coaching-Tipps:</strong>\n${esc(f.coaching)}</div>`:""}
     ${histHtml}

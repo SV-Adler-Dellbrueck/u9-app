@@ -561,18 +561,20 @@ function _skzNaechsteNr(){
 
 /* Öffnet den Editor. `start` ist eine vorhandene Beschreibung (oder null),
    `cb(spec|null)` bekommt das Ergebnis – null heißt „keine Skizze". */
-function skzEditorOpen(start,cb){
+/* v640: `opt.titel` – dieselbe Zeichenfläche dient auch dem Taktikboard („Spielsituation“). */
+function skzEditorOpen(start,cb,opt){
+  const titel=(opt&&opt.titel)||"Skizze zur Übung";
   _skzSpec=Object.assign(_skzLeer(),_skzKopie(start||{}));
   _skzCb=cb; _skzWerk="spieler"; _skzFarbe="g"; _skzZaehlen=false; _skzStart=null; _skzVerlauf=[]; _skzZieh=null; _skzBildNr=0;
   document.getElementById("skz-modal")?.remove();
   const m=document.createElement("div"); m.id="skz-modal";
-  m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Skizze zur Übung");
+  m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label",titel);
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;padding:12px;overflow-y:auto";
   m.style.zIndex=(typeof zOben==="function")?zOben(10005):10005;
   m.onclick=e=>{if(e.target===m)m.remove();};
   const c=document.createElement("div");
   c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
-  c.innerHTML=`${mdlHead("skz-modal","🎨","Skizze zur Übung","Vorlage wählen oder selbst tippen","#0284c7")}
+  c.innerHTML=`${mdlHead("skz-modal","🎨",esc(titel),"Vorlage wählen oder selbst tippen","#0284c7")}
     <div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:2px 0 6px">Vorlagen</div>
     <div style="display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;margin-bottom:10px">${skzVorlagenLeiste()}</div>
     <div id="skz-bildleiste"></div>
@@ -1382,8 +1384,14 @@ function skzGrossOpen(idx){
   if(!f){ if(typeof toast==="function")toast("Übung nicht gefunden","err"); return; }
   const spec=skzSpecVon(f);
   if(!spec&&!(f.svg&&f.svg.length>10)){ if(typeof toast==="function")toast("Zu dieser Übung gibt es keine Skizze","info"); return; }
+  skzGrossZeigen(spec,f.svg||"",f.name||"Skizze");
+}
+/* v640: Dieselbe Großansicht für eine Zeichnung, die keine Übung ist – die Spielsituationen
+   im Taktikboard. Wer eine Spec hat, braucht keinen Index in tpAllForms(). */
+function skzGrossZeigen(spec,svg,name){
+  if(!spec&&!(svg&&svg.length>10))return;
   document.getElementById("skz-gross-modal")?.remove();
-  _skzGr={spec,svg:f.svg||"",name:f.name||"Skizze",zoom:1,x:0,y:0,hell:spec?skzHellAn():false,
+  _skzGr={spec,svg:svg||"",name:name||"Skizze",zoom:1,x:0,y:0,hell:spec?skzHellAn():false,
           zeiger:new Map(),d0:0,z0:1,letzterTipp:0,besetzung:null,tausch:null,lauf:0,bild:0,wischX:null,lauft:false,uhr:null,raf:null};
   const m=document.createElement("div");
   m.id="skz-gross-modal";
