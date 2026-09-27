@@ -74,6 +74,23 @@ function kabineYoutubeEmbed(url){
   const m=String(url||"").match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
   return m?`https://www.youtube-nocookie.com/embed/${m[1]}`:"";
 }
+/* v645: Fremde Inhalte (YouTube, Spotify) laden erst nach einem Tipp. Vorher ging beim bloßen
+   Öffnen der Ansicht die IP-Adresse des Geräts – oft das eines Kindes – an den Anbieter. Der Knopf
+   sagt, woher der Inhalt kommt; erst der Tipp setzt den iframe ein. */
+function kabineEinbettung(id,src,titel,knopf,herkunft,stil,erlaubt){
+  if(!src)return "";
+  return `<div id="${esc(id)}" data-src="${esc(src)}" data-titel="${esc(titel)}" data-stil="${esc(stil)}" data-erlaubt="${esc(erlaubt||"")}" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:8px">
+    <button type="button" onclick="kabineEinbettungLaden('${esc(id)}')" style="min-height:52px;padding:14px 28px;border-radius:16px;border:none;background:#fff;color:#0b2f4d;font-weight:800;font-size:16px;cursor:pointer">${esc(knopf)}</button>
+    <div style="font-size:12px;color:#fff;opacity:.85">${esc(herkunft)}</div></div>`;
+}
+function kabineEinbettungLaden(id){
+  const h=document.getElementById(id); if(!h||!h.dataset.src)return;
+  const f=document.createElement("iframe");
+  f.title=h.dataset.titel||""; f.src=h.dataset.src; f.setAttribute("style",h.dataset.stil||"");
+  if(h.dataset.erlaubt)f.setAttribute("allow",h.dataset.erlaubt);
+  f.setAttribute("allowfullscreen","");
+  h.replaceChildren(f);
+}
 function kabineGesperrt(){ try{return localStorage.getItem(KABINE_SPERRE_KEY)==="1";}catch(e){return false;} }
 function kabineSperre(){
   if(document.getElementById("kabine-sperre"))return;
@@ -1362,7 +1379,7 @@ async function kabineHype(){
       <div style="flex:1;font-size:16px;font-weight:800;color:#fff">🎵 Kabinen-Hype</div></div>`;
   if(!embed){ b.innerHTML=head+'<div style="flex:1;display:flex;align-items:center;justify-content:center;color:#fff;opacity:.85;padding:20px;text-align:center">Noch keine Playlist hinterlegt.<br>Der Trainer kann sie in der Adler-Welt setzen. 🎧</div>'; return; }
   b.innerHTML=head+`<div style="flex:1;padding:12px 16px">
-    <iframe title="Kabinen-Playlist" style="border-radius:14px;width:100%;height:420px;border:0" src="${esc(embed)}" allow="encrypted-media; clipboard-write" loading="lazy"></iframe>
+    ${kabineEinbettung("kh-playlist",embed,"Kabinen-Playlist","🎵 Playlist laden","Kommt von Spotify.","border-radius:14px;width:100%;height:420px;border:0","encrypted-media; clipboard-write")}
     <div style="text-align:center;color:#fff;opacity:.8;font-size:12px;margin-top:10px">Vor dem Spiel schön laut – auf geht's, Adler! 🦅</div>
   </div>`;
 }
@@ -1379,7 +1396,7 @@ async function kabineSkillWoche(){
   b.innerHTML=head+`<div style="flex:1;padding:16px;color:#fff;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px">
     <div style="font-size:22px;font-weight:900;margin-top:10px">${esc(sk.titel)}</div>
     ${sk.beschreibung?`<div style="font-size:14px;opacity:.95;line-height:1.5;max-width:420px">${esc(sk.beschreibung)}</div>`:""}
-    ${(sk.video_url&&kabineYoutubeEmbed(sk.video_url))?`<iframe title="Video: ${esc(sk.titel)}" src="${esc(kabineYoutubeEmbed(sk.video_url))}" style="width:100%;max-width:420px;aspect-ratio:16/9;border:0;border-radius:14px" allow="encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>`:""}
+    ${(sk.video_url&&kabineYoutubeEmbed(sk.video_url))?kabineEinbettung("ks-video",kabineYoutubeEmbed(sk.video_url),"Video: "+sk.titel,"▶️ Video laden","Kommt von YouTube.","width:100%;max-width:420px;aspect-ratio:16/9;border:0;border-radius:14px","encrypted-media; picture-in-picture"):""}
     ${(sk.video_url&&!kabineYoutubeEmbed(sk.video_url)&&!isKidsMode)?`<a href="${esc(sk.video_url)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:16px 28px;border-radius:16px;background:#fff;color:#0b2f4d;font-weight:800;font-size:16px;text-decoration:none">▶️ Video ansehen</a>`:""}
     <div style="font-size:13px;opacity:.85;max-width:420px;margin-top:6px">Übe zuhause – wenn du es schaffst, geben deine Eltern die Federn frei! 🪶</div>
   </div>`;
