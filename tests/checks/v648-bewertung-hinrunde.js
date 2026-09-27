@@ -18,14 +18,20 @@
 const fs = require("fs"), path = require("path");
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
-  const K = h.KINDER, gestern = h.tagePlus(-1), morgen = h.tagePlus(1);
+  const K = h.KINDER, gestern = h.tagePlus(-1);
+  /* v649: Die App rechnet das Startdatum in Europe/Berlin. „Morgen“ und „gestern“ fürs Startdatum
+     deshalb ebenso – zwischen 22 und 24 Uhr UTC ist in Berlin schon der nächste Tag, und ein
+     UTC-„morgen“ wäre dort heute (am 27.09. um 22:40 UTC genau so rot geworden). */
+  const berlin = n => { const [y, m, d] = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" }).split("-").map(Number);
+    return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };
+  const morgen = berlin(1), abGestern = berlin(-1);
   const plan = [{ formIdx: 1, formName: "Dribbel Quadrat", trainer: "Alle", slotLabel: "Hauptteil" }];
   const s = await h.starten({ hoehe: 1600, supabase: h.supabaseAttrappe({
     kader: h.kaderZeilen(), spielerprofile: [], team_einstellungen: [], profiles: [{ name: "Charles", rolle: "trainer" }],
     anwesenheit: [], einheit_bewertung: [], trainingsplan: [{ datum: gestern, plan, kopf: {} }], trainings_eval: [],
     termine: [{ id: 7, datum: gestern, typ: "training" }], nominierungen: []
   }) });
-  const r = await s.page.evaluate(async ({ K, gestern, morgen }) => {
+  const r = await s.page.evaluate(async ({ K, gestern, morgen, abGestern }) => {
     const w = ms => new Promise(x => setTimeout(x, ms));
     document.getElementById("pin-gate")?.remove(); const m = document.getElementById("main-app"); if (m) m.style.display = "block";
     window.Chart = class { constructor() { this.data = { datasets: [{}] }; } destroy() {} update() {} };
@@ -71,7 +77,7 @@ module.exports = async function (h) {
     await bewAbSpeichern(document.querySelector("#bew-runde-bar .btn-p")); await w(50);
     out.gespeichert = BEW_AB;
     // 6) gestern
-    BEW_AB = gestern; out.gestern = await zustand();
+    BEW_AB = abGestern; out.gestern = await zustand();
     out.gestern.runde = /Bewertungsrunde starten/.test(out.gestern.bar);
     blitzInit(); out.blitzFrei = document.getElementById("blitz-abschnitt").style.display;
     // 48 / 49 Tage
@@ -90,7 +96,7 @@ module.exports = async function (h) {
     bewSperreAnwenden(); sel.value = K[1]; onPlayerSelect(); await w(50);
     out.trainerZeile = text("bew-runde-trainer");
     return out;
-  }, { K, gestern, morgen });
+  }, { K, gestern, morgen, abGestern });
   const post = s.gesendet.filter(x => /team_einstellungen/.test(x.pfad) && x.methode === "POST").map(x => x.body);
   const fe = s.fehler();
   await s.schliessen();
@@ -102,7 +108,7 @@ module.exports = async function (h) {
     if (/Bewertungsrunde starten/.test(z.bar) || /Runde fällig/.test(z.kacheln) || z.faellig) probleme.push(`2) ${n}: Runde sichtbar oder fällig`);
     if (z.feldH < 48 || z.knopfH < 48 || z.hauptknoepfe !== 1) probleme.push(`9) ${n}: Feld ${z.feldH} px, Knopf ${z.knopfH} px, Hauptknöpfe ${z.hauptknoepfe}`);
   }
-  const morgenDe = new Date(h.tagePlus(1) + "T00:00:00").toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const morgenDe = new Date(morgen + "T00:00:00").toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
   if (!r.morgen.bar.includes(morgenDe)) probleme.push(`1) Datum ${morgenDe} fehlt im Satz`);
   if (r.kiStern !== "0") probleme.push(`5) KI-Antwort trägt Sterne je Kind ein (${r.kiStern})`);
   if (r.blitz !== "none") probleme.push(`4) Blitz-Rating erreichbar (${r.blitz})`);

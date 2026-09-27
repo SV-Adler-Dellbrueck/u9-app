@@ -1773,11 +1773,13 @@ function tdWasMussMit(t){
 /* ── Foto- & Video-Einwilligung (3 Stufen, DSGVO) ──
    Eltern entscheiden pro Kind getrennt: app-intern / Trainingsvideos / öffentlich.
    Zweckgebunden, dokumentiert (updated_at/by serverseitig), jederzeit widerrufbar.
-   Stufe 1 spiegelt via DB-Trigger auf kader.foto_stadionheft_ok (Heft/Galerie/Edge-Function). */
+   Stufe 1 spiegelt via DB-Trigger auf kader.foto_stadionheft_ok (Heft/Galerie/Edge-Function).
+   v649 (Charles, 27.09.): „Öffentlich“ nennt Vereinsheft, Vereins-Website und Aushänge – soziale
+   Netzwerke bleiben draußen. */
 const FOTO_STUFEN=[
   {k:"intern",   emo:"🖼️", t:"App-intern (geschlossene Gruppe)", d:"Team-Galerie, Sammelkarte, „Die Kabine“ und das „Adler Nest“. Sichtbar nur für eingeloggte Eltern und das Trainerteam dieses Teams.", risk:"gering"},
   {k:"video",    emo:"🎥", t:"Trainingsvideos zur Analyse",       d:"Kurze Videoclips zur Technik-/Taktik-Analyse. Ausschließlich für das Trainerteam, nicht öffentlich, nach der Saison gelöscht.", risk:"mittel"},
-  {k:"public_ok",emo:"🌍", t:"Öffentlich",                        d:"Vereins-Website, Social Media (z. B. Instagram), Aushänge und das Adler Nest (Vereinsheft) – dort mit Vorname, Anfangsbuchstabe des Nachnamens und Jahrgang. Diese Bilder sind auch außerhalb der App sichtbar und im Netz auffindbar – deshalb fragen wir hier extra nach. Du kannst die Freigabe jederzeit wieder zurücknehmen.", risk:"hoch"}
+  {k:"public_ok",emo:"🌍", t:"Öffentlich",                        d:"Das Adler Nest (Vereinsheft), die Vereins-Website und Aushänge im Verein – dort mit Vorname, Anfangsbuchstabe des Nachnamens und Jahrgang. Diese Bilder sind auch außerhalb der App sichtbar und im Netz auffindbar – deshalb fragen wir hier extra nach. Du kannst die Freigabe jederzeit wieder zurücknehmen.", risk:"hoch"}
 ];
 const FOTO_CONSENT_DEFAULT="Wir bitten um deine Einwilligung, Foto- und Videoaufnahmen deines Kindes im Rahmen des Vereinssports zu verwenden. Du entscheidest für jede der drei Stufen getrennt und kannst jede Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen. Die Teilnahme deines Kindes am Training und an Spielen ist unabhängig von dieser Einwilligung – ein „Nein“ hat keinerlei Nachteile. Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO sowie §§ 22, 23 KunstUrhG.";
 async function elternFotoConsentTextLoad(){
