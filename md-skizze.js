@@ -756,6 +756,72 @@ async function tfSkizzeKi(){
   }finally{ if(knopf){ knopf.disabled=false; knopf.innerHTML=vorher; } }
 }
 
+/* ═══ v639 – KI ZUERST IN DER ÜBUNGSMASKE ═══
+   PO: „Bei eigene Übung anlegen sollte schon auf der ersten Kachel ein KI-Modus zur Beschreibung
+   der Übung geben. Aktuell liegt der KI-Modus nur auf der Skizzen-Ebene.“
+   Oben erzählt der Trainer (tippen oder einsprechen, derselbe Diktat-Weg wie in der
+   Nachbereitung). „KI-Auswertung“ schickt den Text an ki-uebung (modus „text“: nichts dazuerfinden)
+   und füllt ALLE Felder der Maske samt Skizze. Gespeichert wird erst mit „Übung erfassen“.
+   Kindernamen gehen nicht hinaus – falls jemand welche nennt, maskiert nbMaske (Welle 2, geschützt). */
+const TF_KATS=["aufwaermen","raute","passspiel","wahrnehmung","technik","pressing","spass","torwart","individual","mindset"];
+function tfKiDiktat(){
+  if(typeof diktatUmschalten!=="function"){ toast("Einsprechen geht hier nicht – das Mikrofon der Tastatur funktioniert immer","info"); return; }
+  if(typeof diktatMoeglich==="function"&&!diktatMoeglich()){ toast("Dieses Gerät kann nicht zuhören – nutze das Mikrofon der Tastatur","info"); return; }
+  diktatUmschalten({ feldId:"tf-ki-text", knopfId:"tf-ki-mic", anzeigeId:"tf-ki-hoer", max:4000,
+    onText:()=>{ const f=document.getElementById("tf-ki-text"); if(f&&typeof feldWachsen==="function")feldWachsen(f); } });
+}
+function tfKiStopp(){ if(typeof _dk!=="undefined"&&_dk&&_dk.feldId==="tf-ki-text"&&typeof diktatStop==="function")diktatStop(); }
+/* Eine Antwort von ki-uebung in die Maske schreiben. Nur, was die KI geliefert hat, ersetzt ein
+   Feld – eine leere Angabe lässt stehen, was schon drinsteht. */
+function tfKiEintragen(u, zurueck){
+  const z=t=>zurueck?zurueck(String(t||"")):String(t||"");
+  const setz=(id,v)=>{ const el=document.getElementById(id); v=z(v).trim(); if(!el||!v)return false; el.value=v; if(typeof feldWachsen==="function")feldWachsen(el); return true; };
+  const zahl=t=>String(t||"").replace(/\s*(min(uten)?|minute[n]?)\.?\s*$/i,"").trim();
+  const n=[];
+  if(setz("tf-name",u.titel))n.push("Name");
+  if(TF_KATS.includes(u.kat)){ const k=document.getElementById("tf-kat"); if(k){ k.value=u.kat; n.push("Kategorie"); } }
+  if(setz("tf-spieler",u.spieler))n.push("Kinder");
+  if(setz("tf-feld",u.feld))n.push("Feld");
+  if(setz("tf-dauer",zahl(u.dauer)))n.push("Minuten");
+  const ablauf=[u.beschreibung, u.material?("Material: "+u.material):""].filter(Boolean).join("\n\n");
+  if(setz("tf-ablauf",ablauf))n.push("Ablauf");
+  if(setz("tf-varianten",u.variante))n.push("Varianten");
+  if(setz("tf-coaching",u.coaching))n.push("Coaching");
+  const d=Number(u.diff); if(d>=1&&d<=3){ const el=document.getElementById("tf-diff"); if(el){ el.value=String(d); n.push("Schwierigkeit"); } }
+  const spec=(u.skizze&&typeof skzSpecSaeubern==="function")?skzSpecSaeubern(u.skizze):null;
+  if(spec){ window.TF_SKIZZE=spec; tfSkizzeVorschau(); n.push("Skizze"); }
+  return n;
+}
+async function tfKiAuswerten(){
+  const feld=document.getElementById("tf-ki-text"), st=document.getElementById("tf-ki-stand"), los=document.getElementById("tf-ki-los");
+  const roh=String((feld&&feld.value)||"").trim();
+  if(roh.length<40){ if(st)st.textContent="Erzähl etwas mehr – Aufbau, Ablauf, wie viele Kinder (mindestens zwei, drei Sätze)."; return; }
+  tfKiStopp();
+  const m=(typeof nbMaske==="function")?nbMaske([]):null;
+  const text=m?m.weg(roh):roh;
+  const zurueck=m?(t=>t.replace(/Kind (\d+)/g,(x,k)=>(m.zurueck&&m.zurueck["Kind "+k])||x)):null;
+  if(los){ los.disabled=true; los.innerHTML='<i class="ti ti-loader-2"></i>Wertet aus …'; }
+  if(st)st.textContent="🧠 Die KI liest deine Beschreibung und zeichnet die Skizze …";
+  const ctrl=new AbortController(), zu=setTimeout(()=>ctrl.abort(),60000);
+  try{
+    const kinder=(typeof KADER!=="undefined"&&Array.isArray(KADER))?KADER.filter(k=>k&&k.aktiv!==false).length:0;
+    const r=await fetch(`${SB_URL}/functions/v1/ki-uebung`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({modus:"text",text,kinder}),signal:ctrl.signal});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(String(d.error||("Fehler "+r.status)));
+    const u=(d.uebungen||[])[0];
+    if(!u)throw new Error("Die KI hat keine Übung erkannt – beschreib Aufbau und Ablauf etwas genauer.");
+    const n=tfKiEintragen(u, zurueck);
+    if(st)st.innerHTML=n.length?`✨ Eingetragen: ${esc(n.join(" · "))}. <b>Prüfen, anpassen, dann „Übung erfassen“.</b>`:"Die KI hat nichts gefunden, das zu einem Feld passt – beschreib die Übung genauer.";
+    document.getElementById("tf-name")?.scrollIntoView({block:"center",behavior:"smooth"});
+  }catch(e){
+    const msg=(e&&e.name==="AbortError")?"Zeitüberschreitung – bitte nochmal versuchen.":(e instanceof TypeError)?"Kein Netz – bitte später nochmal.":String((e&&e.message)||"Es hat nicht geklappt.");
+    if(st)st.textContent="Nicht ausgewertet: "+msg+" Dein Text bleibt stehen.";
+  }finally{
+    clearTimeout(zu);
+    if(los){ los.disabled=false; los.innerHTML='<i class="ti ti-sparkles"></i>KI-Auswertung'; }
+  }
+}
+
 /* ═══ v555 – PRÄSENTATIONSMODUS ═══
    „Groß zeigen" öffnet die Skizze bildschirmfüllend: für die Besprechung am Tablet, für
    den Blick aufs Handy in der Sonne, und für jeden, der eine Zeichnung mit 280 px Breite

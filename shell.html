@@ -355,15 +355,34 @@
     <a href="https://training-service.fussball.de/trainer/f-juniorin/" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:10px;border:var(--border-s);border-left:4px solid #2563eb;border-radius:12px;padding:11px 13px;margin-bottom:8px;text-decoration:none;color:var(--text)"><span style="font-size:18px">🧒</span><span style="flex:1;min-width:0"><span style="display:block;font-size:13px;font-weight:700">F-Jugend-Portal (Praxis &amp; Wissen)</span><span style="display:block;font-size:11px;color:var(--text2)">Artikel zu Kindertraining, Spieltag &amp; Elternarbeit</span></span><span style="color:var(--text3)">↗</span></a>
     <a href="https://training-service.fussball.de/trainer/e-juniorin/training-online/" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:10px;border:var(--border-s);border-left:4px solid #3b82f6;border-radius:12px;padding:11px 13px;text-decoration:none;color:var(--text)"><span style="font-size:18px">📈</span><span style="flex:1;min-width:0"><span style="display:block;font-size:13px;font-weight:700">E-Jugend-Einheiten (Ausblick)</span><span style="display:block;font-size:11px;color:var(--text2)">Für den nächsten Schritt – wenn die Adler rauswachsen</span></span><span style="color:var(--text3)">↗</span></a>
   </details>
-  <div id="training-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;overflow-y:auto;padding:16px">
-    <div style="background:var(--surface);border-radius:var(--rl);max-width:600px;margin:0 auto;padding:20px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
-        <div style="font-size:15px;font-weight:700">Eigene Übung</div>
-        <button onclick="closeAddTraining()" aria-label="Schließen" style="background:none;border:none;font-size:20px;line-height:1;min-width:44px;min-height:44px;cursor:pointer;color:var(--text2);font-family:inherit">×</button>
+  <!-- v639 · PO: „Bei eigene Übung anlegen sollte schon auf der ersten Kachel ein KI-Modus zur
+       Beschreibung der Übung geben … Zusätzlich finde ich die Struktur und Optik nicht optimal.“
+       Oben erzählen (tippen oder einsprechen), die KI füllt ALLE Felder samt Skizze; darunter die
+       Felder in drei ruhigen Abschnitten; unten fest die eine Hauptaktion. Die Feld-IDs bleiben,
+       damit saveCustomTraining und die Skizzen-Anbindung unverändert weiterarbeiten. -->
+  <div id="training-modal" role="dialog" aria-modal="true" aria-labelledby="tf-titel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;overflow-y:auto;padding:16px">
+    <div class="tf-karte">
+      <div class="tf-kopf">
+        <div id="tf-titel" class="tf-titel">➕ Eigene Übung</div>
+        <button onclick="closeAddTraining()" aria-label="Schließen" class="tf-zu">×</button>
       </div>
+
+      <section class="tf-ki" aria-labelledby="tf-ki-t">
+        <div id="tf-ki-t" class="tf-ki-t">✨ Beschreib die Übung – die KI füllt alles aus</div>
+        <div class="tf-ki-s">Aufbau, Ablauf, wie viele Kinder, was du coachst. Name, Felder und Skizze entstehen daraus; danach änderst du, was nicht passt.</div>
+        <textarea id="tf-ki-text" class="wachsen" rows="3" maxlength="4000" placeholder="Zum Beispiel: Vier Hütchen in einer Reihe, jedes Kind dribbelt im Slalom durch und schießt aufs Minitor. Danach außen zurück. Acht Kinder, Feld 20 mal 15."></textarea>
+        <div id="tf-ki-hoer" class="dk-anzeige" hidden></div>
+        <div class="tf-ki-knoepfe">
+          <button type="button" class="btn" id="tf-ki-mic" onclick="tfKiDiktat()"><i class="ti ti-microphone"></i>Einsprechen</button>
+          <button type="button" class="btn tf-ki-los" id="tf-ki-los" onclick="tfKiAuswerten()"><i class="ti ti-sparkles"></i>KI-Auswertung</button>
+        </div>
+        <div id="tf-ki-stand" role="status" aria-live="polite" class="tf-ki-stand"></div>
+      </section>
+
+      <div class="tf-abschnitt">Grunddaten</div>
       <div class="mgrid" style="grid-template-columns:1fr 1fr">
-        <div class="mg s2"><label for="tf-name">Name</label><input type="text" id="tf-name" placeholder="Name der Form"></div>
-        <div class="mg"><label for="tf-kat">Kategorie</label>
+        <div class="mg" style="grid-column:1/-1"><label for="tf-name">Name</label><input type="text" id="tf-name" placeholder="Name der Übung"></div>
+        <div class="mg" style="grid-column:1/-1"><label for="tf-kat">Kategorie</label>
           <select id="tf-kat">
             <option value="aufwaermen">Aufwärmen</option>
             <option value="raute">Raute</option><option value="passspiel">Passspiel</option>
@@ -373,36 +392,47 @@
             <option value="mindset">Mindset & Selbstvertrauen</option>
           </select>
         </div>
-        <div class="mg"><label for="tf-spieler">Spieleranzahl</label><input type="text" id="tf-spieler" placeholder="z.B. 6-10"></div>
-        <div class="mg"><label for="tf-feld">Feldgröße</label><input type="text" id="tf-feld" placeholder="z.B. 20x15m"></div>
-        <div class="mg"><label for="tf-dauer">Dauer (Min)</label><input type="text" id="tf-dauer" placeholder="z.B. 10-15"></div>
-        <div class="mg"><label>Spaßfaktor</label>
-          <select id="tf-spass"><option value="3">Mittel</option><option value="4">Hoch</option><option value="5" selected>Sehr hoch</option></select>
+      </div>
+      <div class="mgrid tf-drei">
+        <div class="mg"><label for="tf-spieler">Kinder</label><input type="text" id="tf-spieler" placeholder="6-10"></div>
+        <div class="mg"><label for="tf-feld">Feld</label><input type="text" id="tf-feld" placeholder="20x15 m"></div>
+        <div class="mg"><label for="tf-dauer">Minuten</label><input type="text" id="tf-dauer" placeholder="10-15"></div>
+      </div>
+
+      <div class="tf-abschnitt">So läuft sie</div>
+      <div class="mgrid" style="grid-template-columns:1fr">
+        <div class="mg"><label for="tf-ablauf">Ablauf</label>
+          <textarea id="tf-ablauf" class="wachsen" rows="3" placeholder="Aufbau und Ablauf – was passiert nacheinander?"></textarea>
         </div>
-        <div class="mg"><label>Schwierigkeit</label>
-          <select id="tf-diff"><option value="1">Einfach</option><option value="2" selected>Mittel</option><option value="3">Anspruchsvoll</option></select>
+        <div class="mg"><label for="tf-varianten">Varianten</label>
+          <textarea id="tf-varianten" class="wachsen" rows="2" placeholder="Leichter / schwerer"></textarea>
         </div>
-        <div class="mg" style="grid-column:span 2"><label>Ablauf</label>
-          <textarea id="tf-ablauf" rows="3" style="resize:none" placeholder="Wie läuft die Übung ab?"></textarea>
-        </div>
-        <div class="mg" style="grid-column:span 2"><label>Varianten</label>
-          <textarea id="tf-varianten" rows="2" style="resize:none" placeholder="Varianten"></textarea>
-        </div>
-        <div class="mg" style="grid-column:span 2"><label for="tf-coaching">Coaching-Punkte</label>
-          <textarea id="tf-coaching" rows="2" style="resize:none" placeholder="Was soll der Trainer beobachten?"></textarea>
-        </div>
-        <!-- Skizze: Vorlage wählen oder selbst tippen (md-skizze.js, Welle 2) -->
-        <div class="mg" style="grid-column:span 2"><label>Skizze</label>
-          <div id="tf-skizze-vorschau"></div>
-          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-            <button type="button" class="btn btn-sm" id="tf-skizze-ki" onclick="tfSkizzeKi()"><i class="ti ti-robot"></i>Skizze aus der Beschreibung</button>
-            <button type="button" class="btn btn-sm" onclick="tfSkizzeOpen()"><i class="ti ti-pencil"></i>Skizze zeichnen</button>
-            <button type="button" class="btn btn-sm" id="tf-skizze-weg" style="display:none" onclick="tfSkizzeWeg()"><i class="ti ti-trash"></i>Entfernen</button>
-          </div>
+        <div class="mg"><label for="tf-coaching">Coaching-Punkte</label>
+          <textarea id="tf-coaching" class="wachsen" rows="2" placeholder="Was rufst du rein, worauf achtest du?"></textarea>
         </div>
       </div>
-      <div class="brow">
-        <button class="btn btn-p" onclick="saveCustomTraining()"><i class="ti ti-device-floppy"></i>Speichern</button>
+
+      <!-- Skizze: Vorlage wählen oder selbst tippen (md-skizze.js, Welle 2) -->
+      <div class="tf-abschnitt">Skizze</div>
+      <div id="tf-skizze-vorschau"></div>
+      <div class="tf-skizze-knoepfe">
+        <button type="button" class="btn" id="tf-skizze-ki" onclick="tfSkizzeKi()"><i class="ti ti-sparkles"></i>Aus dem Ablauf zeichnen</button>
+        <button type="button" class="btn" onclick="tfSkizzeOpen()"><i class="ti ti-pencil"></i>Zeichnen</button>
+        <button type="button" class="btn" id="tf-skizze-weg" style="display:none" onclick="tfSkizzeWeg()"><i class="ti ti-trash"></i>Entfernen</button>
+      </div>
+
+      <div class="tf-abschnitt">Einordnung</div>
+      <div class="mgrid" style="grid-template-columns:1fr 1fr">
+        <div class="mg"><label for="tf-spass">Spaßfaktor</label>
+          <select id="tf-spass"><option value="3">Mittel</option><option value="4">Hoch</option><option value="5" selected>Sehr hoch</option></select>
+        </div>
+        <div class="mg"><label for="tf-diff">Schwierigkeit</label>
+          <select id="tf-diff"><option value="1">Einfach</option><option value="2" selected>Mittel</option><option value="3">Anspruchsvoll</option></select>
+        </div>
+      </div>
+
+      <div class="tf-fuss">
+        <button class="btn btn-p tf-haupt" onclick="saveCustomTraining()"><i class="ti ti-check"></i>Übung erfassen</button>
         <button class="btn" onclick="closeAddTraining()">Abbrechen</button>
       </div>
     </div>

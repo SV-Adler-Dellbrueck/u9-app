@@ -100,19 +100,21 @@ async function saveCustomTraining(){
   CUSTOM_FORMS.push(form);
   closeAddTraining();
   renderTraining();
-  toast("Übung gespeichert ✓");
+  toast("Übung erfasst ✓");
 }
 
 function openAddTraining(){
   document.getElementById('training-modal').style.display='block';
+  var ki=document.getElementById('tf-ki-stand'); if(ki)ki.textContent='';   // v639: KI-Kasten oben startet leer
   window.TF_SKIZZE=null;                                   // jede Übung startet ohne Skizze
   if(typeof tfSkizzeVorschau==="function")tfSkizzeVorschau(); // Welle 2 – ungeschützt reißt es den Dialog mit
 }
 function closeAddTraining(){
+  if(typeof tfKiStopp==="function")tfKiStopp();   // v639: ein laufendes Diktat endet mit der Maske
   document.getElementById('training-modal').style.display='none';
   window.TF_SKIZZE=null;
   if(typeof tfSkizzeVorschau==="function")tfSkizzeVorschau();
-  ['tf-name','tf-ablauf','tf-varianten','tf-coaching','tf-spieler','tf-feld','tf-dauer'].forEach(function(id){
+  ['tf-ki-text','tf-name','tf-ablauf','tf-varianten','tf-coaching','tf-spieler','tf-feld','tf-dauer'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.value='';
   });
   document.getElementById('tf-spass').value='5';
