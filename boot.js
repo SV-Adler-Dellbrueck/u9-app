@@ -220,6 +220,8 @@ async function periodLoad(){
   }else{
     box.innerHTML=`<div style="display:flex;align-items:center;gap:8px"><span style="flex:1">Plane die Saison in <b>Themenblöcken</b> (ein Schwerpunkt je Monat).</span><button onclick="periodOpen()" class="btn btn-sm" style="flex:none">📅 Themenplan</button></div>`;
   }
+  // v650: läuft ein Trainingsblock, steht er an dieser Stelle (md-block.js, Welle 2)
+  if(typeof blockBannerRender==="function")blockBannerRender();
 }
 async function periodOpen(){
   if(!sbToken()){toast("Bitte als Trainer anmelden","err");return;}
@@ -3643,6 +3645,8 @@ async function _tpPlanRestoreIntern(datum,lauf){
      fehlten Felder, und Einträge ohne Feld fielen weg. */
   if(typeof tpRsvpBereit==="function")await tpRsvpBereit(datum);
   if(!_tpRestoreGilt(datum,lauf))return;
+  // v650: Einheit des Trainingsblocks für diesen Termin – nach den Zusagen, denn der Aufbau richtet sich nach der Kinderzahl
+  if(typeof blockPlanKarte==="function")blockPlanKarte(datum);
   const slots=await tpSlotsLoad(datum);
   if(!_tpRestoreGilt(datum,lauf))return;
   if(slots){
