@@ -1149,7 +1149,7 @@ async function backupExport(){
                    die Rollen (profiles). */
                 "dsgvo_consent","foto_consent","eltern_kinder","profiles",
                 "rueckmeldungen","einsatzzeiten","einheit_bewertung","punkte_log","quiz_progress",
-                "trainingsvorlagen","team_config","team_notizen","team_polls","team_quests",
+                "trainingsvorlagen","team_config","team_einstellungen","team_notizen","team_polls","team_quests",
                 "eltern_leitfaden","fairplay_regeln","fairplay_commit","periodisierung","skill_woche",
                 "entwicklungsziele","nominierung_hinweis","probekinder","aufstellungen","taktik_templates",
                 "trainer_notes","training_live","turnier_plan","turnier_spiele","heimturnier","stadionheft",
@@ -4392,6 +4392,7 @@ const HELP=[
     {t:"Eltern-Bereich", d:"Eltern melden sich mit E-Mail und Passwort an (alternativ Einmal-Code per Mail): Zu- und Absagen, Karte, Quiz, Betreuung vor Ort."},
     {t:"Einladungskarten", d:"Je Kind eine Karte mit QR-Code, vier pro A4-Seite. Die Eltern scannen, legen E-Mail und Passwort fest und sind sofort angemeldet – kein Mailversand, kein Eintragen der Adresse vorab. Eine Karte gilt für zwei Elternteile und bis zum gewählten Datum; neu drucken macht die alte Karte des Kindes ungültig.", run:"einladungskartenOpen()"},
     {t:"Adler-Welt-Hub", d:"Federn je Kind, FUT-Karten, Technik-Abzeichen und Wochen-Challenge an einem Ort.", run:"adlerWeltOpen()"},
+    {t:"Federn-Stichtag", d:"In „Team-Quests verwalten“ steht „Federn zählen ab“. Quiz-Federn zählen immer. Training, Serien, Zusagen, Missionen, Album und Abzeichen zählen erst ab diesem Tag – auf der Karte, in der Übersicht und im Team-Level, das ab dem Stichtag ganz neu zählt. Gelöscht wird nichts; ein Anlass von vorher bringt auch nachträglich keine Federn. Feld leeren heißt: alles zählt wieder."},
     {t:"Kabinen-Wahl", d:"Die Kinder stimmen ab (Song, Motto, Spielform) – du legst die Optionen fest.", run:"wahlTrainerOpen()"},
     {t:"Unsere Regeln", d:"Der Fairplay-Codex spricht die Eltern an. Das hier ist sein Gegenstück für die Kinder: höchstens sechs kurze Sätze, die ein Achtjähriger aufsagen kann – in der Kabine unter „Team & Spaß“. Positiv formulieren statt verbieten, und lieber einen Satz ausblenden als einen siebten dazuschreiben; mehr merkt sich niemand. Änderungen gelten sofort für alle Kinder. Ohne Netz zeigt die Kabine die sechs mitgelieferten Sätze.", run:"codexKinderEditOpen()"},
     {t:"Album-Karten-Fotos", d:"Bilder für die Trainer- und Vereins-Sticker im Panini-Sammelalbum.", run:"albumFotosOpen()"},

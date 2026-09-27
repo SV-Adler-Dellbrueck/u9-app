@@ -831,8 +831,10 @@ function awSave(){
   terminIdForDatum(datum).then(tid=>teamSyncUpsertDebounced("anwesenheit",datum,data,tid?{termin_id:tid}:null));
   // FEAT S: Trainings-XP für anwesende Kinder – idempotent pro Datum (quelle_id),
   // Mehrfach-Speichern vergibt also nie doppelt. Un-Toggle nimmt bewusst nichts weg.
-  KADER.forEach(k=>{if(data[k.name]&&data[k.name].da)xpAwardByName(k.name,"training",datum).catch(()=>{});});
-  awStreakAward(data); // F7: Serien-Meilensteine + Feier-Toast
+  // v647: Serien erst nach den Trainings-Federn – der Server zählt für eine Serie nur
+  // Trainings seit dem Stichtag (team_einstellungen.federn_ab) und muss die heutige schon sehen.
+  Promise.all(KADER.filter(k=>data[k.name]&&data[k.name].da).map(k=>xpAwardByName(k.name,"training",datum).catch(()=>0)))
+    .then(()=>awStreakAward(data)); // F7: Serien-Meilensteine + Feier-Toast
   awRenderStats();
   awRenderTrainerStats();
   try{navigator.vibrate&&navigator.vibrate(50);}catch(e){} // 1C: haptische Bestätigung
