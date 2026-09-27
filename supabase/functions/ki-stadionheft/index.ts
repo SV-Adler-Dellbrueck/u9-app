@@ -12,9 +12,9 @@ function j(o: unknown, status = 200) {
 function dOnly(s: string) { return String(s || "").slice(0, 10); }
 
 const SYS = `Du bist der gute-Laune-Redakteur des Vereinshefts "Adler Horst" einer U9-Kinderfussballmannschaft (SV Adler Dellbrueck). Schreibe einen kurzen, warmherzigen, LUSTIGEN und kindgerechten Entwurf aus den gelieferten Fakten der letzten Wochen.
-REGELN: Positiv, humorvoll, kindgerecht (keine Leistungsvergleiche, keine Kritik, kein Leistungsdruck; U9 = Spass & Miteinander). Emojis sparsam. Erwaehne Geburtstagskinder namentlich und herzlich. Ergebnisse nur beilaeufig, Fokus auf Einsatz, Spass, Zusammenhalt. Wenn wenig Daten da sind, schreibe trotzdem eine nette, allgemeine Begruessung.
+REGELN: Positiv, humorvoll, kindgerecht (keine Leistungsvergleiche, keine Kritik, kein Leistungsdruck; U9 = Spass & Miteinander). Emojis sparsam. Erwaehne Geburtstage nur allgemein und herzlich, OHNE Namen (die Namen setzt das Trainerteam selbst ein). Nenne keine Kinder beim Namen. Ergebnisse nur beilaeufig, Fokus auf Einsatz, Spass, Zusammenhalt. Wenn wenig Daten da sind, schreibe trotzdem eine nette, allgemeine Begruessung.
 Antworte AUSSCHLIESSLICH mit gueltigem JSON, ohne Text davor/danach:
-{"einleitung":"2-4 Saetze Grusswort/Rueckblick, mit \\n fuer Absaetze","kommentar":"2-4 Saetze 'Wort vom Trainerteam' inkl. Geburtstagsgruessen, mit \\n fuer Absaetze"}`;
+{"einleitung":"2-4 Saetze Grusswort/Rueckblick, mit \\n fuer Absaetze","kommentar":"2-4 Saetze 'Wort vom Trainerteam' inkl. allgemeiner Geburtstagsgruesse ohne Namen, mit \\n fuer Absaetze"}`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -59,14 +59,15 @@ Deno.serve(async (req) => {
 
     const tore: Record<string, number> = {}; let aktTotal = 0;
     (ma || []).forEach((a: any) => { aktTotal++; if (a.aktion === "tor" && a.spieler) tore[a.spieler] = (tore[a.spieler] || 0) + 1; });
-    const topScorer = Object.entries(tore).sort((x, y) => y[1] - x[1]).slice(0, 5).map(([n, c]) => `${n} (${c})`);
+    // v636: keine Kindernamen an den KI-Anbieter und keine Torschützen-Rangliste ins (öffentliche) Heft.
+    const toreGesamt = Object.values(tore).reduce((a, b) => a + b, 0);
 
     const bdays: string[] = [];
     (kader || []).forEach((k: any) => {
       if (!k.geb) return; const g = new Date(k.geb + "T00:00:00"); if (isNaN(+g)) return;
       const thisYear = new Date(today.getFullYear(), g.getMonth(), g.getDate());
       const diff = (thisYear.getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()) / 864e5;
-      if (diff >= 0 && diff <= 21) { const alter = today.getFullYear() - g.getFullYear(); bdays.push(`${k.name} wird am ${g.getDate()}.${g.getMonth() + 1}. ${alter} Jahre`); }
+      if (diff >= 0 && diff <= 21) { const alter = today.getFullYear() - g.getFullYear(); bdays.push("x"); void alter; }   // v636: nur zählen – kein Name, kein Datum an den KI-Anbieter
     });
 
     const briefing = [
@@ -74,8 +75,8 @@ Deno.serve(async (req) => {
       `Trainingseinheiten: ${(trainings || []).length}.`,
       `Spiele/Turniere:`, (spielLines.length ? spielLines.join("\n") : "- keine"),
       `Erfasste Ballaktionen gesamt: ${aktTotal}.`,
-      `Top-Torschuetzen: ${topScorer.length ? topScorer.join(", ") : "noch keine erfasst"}.`,
-      `Geburtstage bald: ${bdays.length ? bdays.join("; ") : "keine"}.`,
+      `Tore gesamt (vom ganzen Team): ${toreGesamt}.`,
+      `Geburtstage in den naechsten drei Wochen: ${bdays.length ? bdays.length + " Kinder" : "keine"}.`,
     ].join("\n");
 
     const provider = (Deno.env.get("LLM_PROVIDER") || "anthropic").toLowerCase();

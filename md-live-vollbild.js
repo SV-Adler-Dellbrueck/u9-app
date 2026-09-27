@@ -247,6 +247,9 @@ function blitzInit(){
     </div>
     <div id="blitz-card"></div>
     <div id="blitz-saved" style="margin-top:12px"></div>`;
+  /* v636: der angemeldete Trainer ist vorgewählt. Vorher stand hier immer der erste Name –
+     wer nicht umschaltete, überschrieb per Upsert (datum,spieler,autor) die Wertung des Kollegen. */
+  if(typeof trainerMe==="function")trainerMe().then(me=>{const s=document.getElementById("blitz-autor");if(me&&s&&[...s.options].some(o=>o.value===me))s.value=me;}).catch(()=>{});
   blitzRenderCard();
   blitzLoadSaved();
 }
@@ -327,6 +330,7 @@ async function blitzRate(){
   const res=await sbQueuedPost("blitz_ratings?on_conflict=datum,spieler,autor",
     {datum,spieler:name,wertung,autor,kriterien},"resolution=merge-duplicates"); // offline -> Queue
   if(res.ok)blitzLoadSaved(); // bei Online: gespeicherte Liste aktualisieren
+  else if(!res.queued&&typeof toast==="function")toast(`Blitz-Rating für ${name} nicht gespeichert – bitte neu anmelden und nochmal`,"err");   // v636: vorher still verworfen
 }
 function blitzSkip(){blitzIdx++;blitzCritPlayer=null;blitzRenderCard();}
 

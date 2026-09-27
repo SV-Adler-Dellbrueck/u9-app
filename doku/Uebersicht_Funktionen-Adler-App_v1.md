@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v635 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v636 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -185,7 +185,7 @@ Kinder sehen nie Bewertungen und nie Zahlen zu anderen Kindern. Was die Kabine �
 
 | Thema | Umsetzung | Nutzen |
 |---|---|---|
-| **Datenschutz** | Row-Level-Security in der Datenbank: Eltern sehen nur eigene Kinder, Kinder nie Bewertungen, Trainermeetings nur für Trainer. Foto-Freigaben werden überall respektiert. Das öffentliche Repo enthält keine personenbezogenen Daten. | DSGVO-konform ohne Papierkram. Vertrauen der Eltern. |
+| **Datenschutz** | Row-Level-Security in der Datenbank: Eltern sehen nur eigene Kinder, Kinder nie Bewertungen, Trainermeetings nur für Trainer. Foto-Freigaben werden überall respektiert. Das öffentliche Repo enthält keine personenbezogenen Daten. Seit v636 (Datenschutz-Audit): Zugriff nur für Mitglieder (Trainer, Eltern mit hinterlegtem Kind, gekoppeltes Kindergerät) – eine angemeldete Sitzung allein reicht nicht mehr; keine Bewertungsrohwerte an Eltern; Galerie ohne Stärken und Trainingszahlen fremder Kinder; öffentliche Fotos nur mit Freigabe „öffentlich“; KI-Dienste bekommen keine Kindernamen und keine Geburtsdaten; Helfer-Codes des Tickers nicht mehr öffentlich lesbar; Einwilligungstext nennt alle Dienste. | DSGVO-konform ohne Papierkram. Vertrauen der Eltern. |
 | **Push-Benachrichtigungen** | Erinnerungen an Termine, Ansagen und offene Rückmeldungen. | Weniger Nachfragen, höhere Rückmeldequote. |
 | **Offline-Fähigkeit** | Die App läuft ohne Netz weiter, Inhaltslisten haben einen lokalen Fallback. | Am Platz ohne Empfang bleibt alles bedienbar. |
 | **Sprach-Eingabe** | Notizen, Bewertungen und Übungsbeschreibungen lassen sich einsprechen. | Schneller als tippen mit kalten Fingern. |

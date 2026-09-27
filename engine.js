@@ -58,7 +58,7 @@ function calcScores(v,dims){
   const ds={};
   dims.forEach(d=>{
     const vals=[...d.tier.map(t=>sc(v[t.n])),...d.mx.map(m=>sc(v[m.n]))].filter(x=>x!==null);
-    ds[d.id]=vals.length?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length):0;
+    ds[d.id]=vals.length?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length):null;   // v636: „nicht bewertet“ ist null, nicht 0 (= alles Ansatz)
   });
   /* Gesamtscore nur aus Feldspieler-Dimensionen (fair fuer TW-Spieler) und bewusst OHNE
      "Persoenlichkeit & Charakter": Charakter-Ratings ueber 8-Jaehrige durch Laientrainer

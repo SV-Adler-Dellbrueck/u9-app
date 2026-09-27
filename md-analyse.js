@@ -18,12 +18,15 @@ function computeMilestones(){
     if(!snaps||snaps.length<2)return;
     const latest=snaps[snaps.length-1];
     const latestDate=new Date(latest.datum);
-    let earlier=snaps[0];
+    /* v636: Nur gegen einen Stand, der mindestens 60 Tage älter ist – wie der Leerzustand
+       verspricht. Vorher fiel es auf den ersten Stand zurück: eine Korrektur am Folgetag
+       ergab „heute loben! +67 %“. */
+    let earlier=null;
     for(let i=snaps.length-2;i>=0;i--){
       const dd=(latestDate-new Date(snaps[i].datum))/(864e5);
       if(dd>=60){earlier=snaps[i];break;}
     }
-    if(earlier===latest)return;
+    if(!earlier)return;
     const vL=safeParse(latest.radios,{}),vE=safeParse(earlier.radios,{});
     Object.keys(vL).forEach(k=>{
       if(vE[k]!=null&&vL[k]!=null&&(vL[k]-vE[k])>=2)out.push({name,label:map[k]||k,from:vE[k],to:vL[k],diff:vL[k]-vE[k]});

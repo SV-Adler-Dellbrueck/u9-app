@@ -18,16 +18,28 @@
    damit Refresh/Header/401-Handling wiederverwendet werden.
    Merksatz: Rollen-Routing = UX, die Sicherheit macht ausschließlich die RLS.
 ═══════════════════════════════════ */
+/* v636: Supabase antwortet englisch („For security purposes, you can only request this after
+   60 seconds.“). Eltern sehen nur deutsche Sätze; unbekannte Meldungen bekommen einen Ersatztext. */
+function authFehlerDeutsch(m,ersatz){
+  m=String(m||"");
+  if(/seconds|rate limit|too many/i.test(m))return "Bitte eine Minute warten und dann nochmal – aus Sicherheitsgründen geht das nicht öfter.";
+  if(/expired|invalid.*(otp|token)|token.*(expired|invalid)/i.test(m))return "Der Code ist abgelaufen oder falsch. Bitte einen neuen anfordern.";
+  if(/invalid login|invalid.*credentials/i.test(m))return "E-Mail oder Passwort stimmt nicht. Noch kein Passwort? Dann unten „Code per E-Mail“.";
+  if(/email.*(invalid|valid)|unable to validate email/i.test(m))return "Diese E-Mail-Adresse sieht nicht richtig aus.";
+  if(/weak|at least|characters/i.test(m))return "Das Passwort ist zu kurz – bitte mindestens 8 Zeichen.";
+  if(/network|failed to fetch/i.test(m))return "Gerade kein Internet – bitte gleich nochmal.";
+  return ersatz;
+}
 async function authOtpRequest(email){
   const r=await fetch(`${SB_URL}/auth/v1/otp`,{method:"POST",headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,create_user:true})});
   const data=await r.json().catch(()=>({}));
-  if(!r.ok)throw new Error(data.error_description||data.msg||data.error||"Code konnte nicht gesendet werden");
+  if(!r.ok)throw new Error(authFehlerDeutsch(data.error_description||data.msg||data.error,"Code konnte nicht gesendet werden."));
   return true;
 }
 async function authOtpVerify(email,token){
   const r=await fetch(`${SB_URL}/auth/v1/verify`,{method:"POST",headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,token,type:"email"})});
   const data=await r.json().catch(()=>({}));
-  if(!r.ok||!data.access_token)throw new Error(data.error_description||data.msg||data.error||"Code ungültig oder abgelaufen");
+  if(!r.ok||!data.access_token)throw new Error(authFehlerDeutsch(data.error_description||data.msg||data.error,"Code ungültig oder abgelaufen."));
   elternSitzungSpeichern(data);
   return true;
 }
@@ -43,19 +55,26 @@ async function authPasswortLogin(email,passwort){
   const data=await r.json().catch(()=>({}));
   if(!r.ok||!data.access_token){
     const m=String(data.error_description||data.msg||data.error||"");
-    throw new Error(/invalid/i.test(m)?"E-Mail oder Passwort stimmt nicht. Noch kein Passwort? Dann unten „Code per E-Mail“.":(m||"Anmeldung fehlgeschlagen"));
+    throw new Error(/invalid/i.test(m)?"E-Mail oder Passwort stimmt nicht. Noch kein Passwort? Dann unten „Code per E-Mail“.":authFehlerDeutsch(m,"Anmeldung hat nicht geklappt – bitte nochmal."));
   }
   elternSitzungSpeichern(data);
   return true;
 }
+/* v636: authRole unterscheidet „kein Profil“ von „kein Netz“. Vorher warf ein Öffnen ohne
+   Empfang am Platz die Anmeldung weg (Token samt refresh_token gelöscht). Jetzt gilt bei Netz-
+   oder Serverfehler die zuletzt bestätigte Rolle weiter; abgemeldet wird nur bei echter Antwort. */
+let _authOffline=false;
 async function authRole(){
+  _authOffline=false;
   if(!sbToken())return null;
   try{
     const r=await fetch(`${SB_URL}/rest/v1/profiles?select=role&limit=1`,{headers:sbAuthHeaders()});
-    if(!r.ok)return null;
+    if(!r.ok){ if(r.status>=500){_authOffline=true; try{return localStorage.getItem("adler_rolle")||null;}catch(e){return null;}} return null; }
     const rows=await r.json();
-    return (rows[0]&&rows[0].role)||null;
-  }catch(e){return null;}
+    const rolle=(rows[0]&&rows[0].role)||null;
+    try{ if(rolle)localStorage.setItem("adler_rolle",rolle); else localStorage.removeItem("adler_rolle"); }catch(e){}
+    return rolle;
+  }catch(e){ _authOffline=true; try{return localStorage.getItem("adler_rolle")||null;}catch(e2){return null;} }
 }
 let epEmail="";
 async function renderElternPortal(){
@@ -90,6 +109,7 @@ async function renderElternPortal(){
     const role=await authRole();
     if(role==="parent")return elternPortalDashboard(root);
     if(role==="trainer")return elternPortalTrainerNotice(root);
+    if(_authOffline){ root.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--text2);font-size:var(--s-karte)">📶 Gerade kein Internet.<br><br><button class="btn" style="min-height:48px" onclick="renderElternPortal()">Nochmal versuchen</button></div>'; return; }   // v636: nicht abmelden, nur weil das Netz fehlt
     localStorage.removeItem(SB_TOKEN_KEY_ELTERN); // Session ohne Profil/Rolle → verwerfen
   }
   elternPortalLogin(root);
@@ -130,7 +150,7 @@ function elternPortalLogin(root,vorEmail){
       <button onclick="elternPortalCodeWeg()" style="${EP_LINK}">← andere E-Mail</button>
     </div>
     <div id="ep-err" role="alert" style="font-size:var(--s-text);color:#b91c1c;min-height:16px;margin-top:10px;text-align:center"></div>
-    <div style="font-size:var(--s-klein);color:#475569;text-align:center;margin-top:14px">Den Zugang gibt es mit der Einladungskarte vom Trainerteam – du siehst dort ausschließlich die Daten deines eigenen Kindes.</div>
+    <div style="font-size:var(--s-klein);color:#475569;text-align:center;margin-top:14px">Den Zugang gibt es mit der Einladungskarte vom Trainerteam – persönliche Angaben siehst du nur zu deinem eigenen Kind.</div>
   </div>`;
   if(vorEmail){const e=document.getElementById("ep-email");if(e)e.value=vorEmail;}
   if(typeof elternThemeInit==="function"){ elternThemeInit(); elternThemeSweep(root); } // Login-Screen dem Theme folgen lassen
@@ -196,7 +216,7 @@ async function elternPortalVerify(){
     renderElternPortal();
   }catch(e){if(err)err.textContent=e.message;if(btn){btn.disabled=false;btn.textContent="Anmelden";}}
 }
-function elternPortalLogout(){ localStorage.removeItem(SB_TOKEN_KEY_ELTERN); document.getElementById("eltern-portal")?.remove(); renderElternPortal(); }
+function elternPortalLogout(){ localStorage.removeItem(SB_TOKEN_KEY_ELTERN); try{localStorage.removeItem("adler_rolle");localStorage.removeItem("adler_dsgvo_v");}catch(e){} document.getElementById("eltern-portal")?.remove(); renderElternPortal(); }
 /* ═══ v604: Einladungskarte ═══
    Die Karte traegt einen QR-Code auf eltern/?portal&einladung=CODE. renderElternPortal
    puffert den Code und ruft hierher. Die Edge Function eltern-einladung prueft ihn und
@@ -323,7 +343,7 @@ async function elternPasswortSpeichern(){
     const d=await r.json().catch(()=>({}));
     if(!r.ok){
       const m=String(d.msg||d.error_description||d.error||"");
-      throw new Error(/different from the old|same_password/i.test(m)?"Das ist schon dein Passwort.":/reauth/i.test(m)?"Bitte einmal ab- und mit Code neu anmelden, dann klappt es.":(m||"Konnte nicht gespeichert werden."));
+      throw new Error(/different from the old|same_password/i.test(m)?"Das ist schon dein Passwort.":/reauth/i.test(m)?"Bitte einmal ab- und mit Code neu anmelden, dann klappt es.":authFehlerDeutsch(m,"Konnte nicht gespeichert werden."));
     }
     document.getElementById("ep-pw-modal")?.remove();
     if(typeof toast==="function")toast("✅ Passwort gespeichert");
@@ -333,12 +353,12 @@ function elternPortalDashboard(root){
   root.innerHTML=`<div class="ep-wrap">
     <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px;padding:8px 4px 12px">
       <div style="font-size:var(--s-teil);font-weight:800">🦅 Eltern-Bereich</div>
-      <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
-        <button class="schrift-toggle" onclick="schriftWechseln()" aria-label="Schriftgröße umschalten" style="min-width:30px;height:30px;background:#fff;color:#334155;border:1.5px solid var(--rand-bedien)">A</button>
-        <button id="theme-toggle" onclick="toggleTheme()" title="Hell / Dunkel umschalten" aria-label="Theme umschalten" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:var(--s-karte);line-height:1">🌙</button>
-        <button onclick="elternTourStart()" title="Kurze Tour" aria-label="Hilfe/Tour" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:var(--s-karte);line-height:1">❓</button>
-        <button onclick="elternPasswortOpen()" title="Passwort festlegen oder ändern" aria-label="Passwort festlegen oder ändern" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:var(--s-karte);line-height:1">🔑</button>
-        <button onclick="elternPortalLogout()" style="border:none;background:none;color:var(--text3);font-size:var(--s-text);cursor:pointer">Abmelden</button>
+      <div style="display:flex;align-items:center;gap:6px;margin-left:auto;flex-wrap:wrap">
+        <button class="schrift-toggle" onclick="schriftWechseln()" aria-label="Schriftgröße umschalten" style="min-width:44px;height:44px;background:#fff;color:#334155;border:1.5px solid var(--rand-bedien)">A</button>
+        <button id="theme-toggle" onclick="toggleTheme()" title="Hell / Dunkel umschalten" aria-label="Theme umschalten" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:var(--s-karte);line-height:1">🌙</button>
+        <button onclick="elternTourStart()" title="Kurze Tour" aria-label="Hilfe/Tour" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:var(--s-karte);line-height:1">❓</button>
+        <button onclick="elternPasswortOpen()" title="Passwort festlegen oder ändern" aria-label="Passwort festlegen oder ändern" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:var(--s-karte);line-height:1">🔑</button>
+        <button onclick="elternPortalLogout()" style="border:none;background:none;color:var(--text2);font-size:var(--s-text);cursor:pointer;min-height:44px;padding:0 6px">Abmelden</button>
       </div>
     </div>
     <div id="ep-dash-body"><div style="text-align:center;padding:40px;color:#64748b">Lade…</div></div>
@@ -352,10 +372,15 @@ function elternPortalDashboard(root){
 }
 // Datenschutz-Einwilligung beim (ersten) Eltern-Login. Server-Nachweis in dsgvo_consent
 // (user_id + Version + Zeitstempel). Bei neuer Version (Text-Update) → erneute Einwilligung.
-const DSGVO_VERSION="1.0";
+const DSGVO_VERSION="1.1";   // v636: Text an die Technik angeglichen – alle stimmen einmal neu zu
 async function dsgvoEnsureConsent(onOk){
-  let has=false;
-  try{const r=await fetch(`${SB_URL}/rest/v1/dsgvo_consent?select=version&version=eq.${encodeURIComponent(DSGVO_VERSION)}`,{headers:sbAuthHeaders()});if(r.ok)has=((await r.json())||[]).length>0;}catch(e){}
+  let has=false, netzFehler=false;
+  try{const r=await fetch(`${SB_URL}/rest/v1/dsgvo_consent?select=version&version=eq.${encodeURIComponent(DSGVO_VERSION)}`,{headers:sbAuthHeaders()});if(r.ok)has=((await r.json())||[]).length>0;else if(r.status>=500)netzFehler=true;}catch(e){netzFehler=true;}
+  /* v636: Ohne Netz gilt die auf diesem Gerät schon gegebene Einwilligung (Nachweis bleibt in
+     dsgvo_consent). Vorher erschien offline jedes Mal das Einwilligungsfenster, und „Zustimmen“
+     scheiterte mit „Netzwerkfehler“ – das Dashboard war unerreichbar. */
+  if(!has&&netzFehler){ try{ has=localStorage.getItem("adler_dsgvo_v")===DSGVO_VERSION; }catch(e){} }
+  if(has){ try{localStorage.setItem("adler_dsgvo_v",DSGVO_VERSION);}catch(e){} }
   if(has){onOk();return;}
   dsgvoRenderGate(onOk);
 }
@@ -376,15 +401,18 @@ function dsgvoRenderGate(onOk){
     <p style="margin:0 0 8px">Bevor du den Eltern-Bereich nutzt, bitten wir um deine Einwilligung. So gehen wir mit euren Daten um:</p>
     <ul style="margin:0 0 8px 18px;padding:0">
       <li><b>Wozu:</b> Organisation des Trainings- und Spielbetriebs der U9 (Termine, Rückmeldungen, Aufstellung, altersgerechte Förderung).</li>
-      <li><b>Sicherheit:</b> Zugang nur per persönlichem Login (E-Mail mit eigenem Passwort oder Einmal-Code an eure E-Mail). Du siehst ausschließlich die Daten deines eigenen Kindes – das stellt die App technisch sicher: Jeder Zugang ist fest mit dem eigenen Kind verknüpft.</li>
-      <li><b>Fotos:</b> Kinderfotos liegen in einem privaten, zugriffsgeschützten Speicher und werden nur mit ausdrücklicher, kindbezogener Freigabe verwendet (Standard: aus).</li>
-      <li><b>Keine Weitergabe:</b> keine Nutzung zu Werbezwecken, kein Verkauf; keine Zahlungs-/Kontodaten in der App.</li>
-      <li><b>Technik:</b> Hosting/Datenbank über Supabase (EU); Wetter über open-meteo, Karten über OpenStreetMap – dorthin gehen nur Orts-/Termindaten, keine personenbezogenen Daten.</li>
+      <li><b>Zugang:</b> nur per persönlichem Login (E-Mail mit eigenem Passwort oder Einmal-Code). Die Datenbank prüft bei jeder Anfrage, wer fragt – nicht die App.</li>
+      <li><b>Nur für euch und das Trainerteam:</b> Notfallkarte, Rückmeldungen, Foto-Freigaben und die Karte eures Kindes. Einschätzungen des Trainerteams bekommt ihr in Worten, nie als Zahl oder Rangliste – auch Kinder sehen keine Zahlen.</li>
+      <li><b>Im Team sichtbar</b> (für angemeldete Eltern und die Kabine): Vornamen und Trikotnummern, Helfer- und Fahrgemeinschaftslisten, Fotos nur mit eurer Freigabe.</li>
+      <li><b>Fotos:</b> in einem privaten Speicher, nur mit ausdrücklicher Freigabe je Kind in drei Stufen (App-intern, Video, öffentlich; Standard: aus). Auf öffentlichen Seiten nur mit der Stufe „öffentlich“.</li>
+      <li><b>Keine Weitergabe:</b> keine Werbung, kein Verkauf; keine Zahlungs-/Kontodaten in der App.</li>
+      <li><b>Technik und Dienste:</b> Datenbank bei Supabase in Frankfurt (EU); die App-Dateien kommen von GitHub Pages; Schrift und Symbole von Google Fonts und jsDelivr (dabei wird eure IP-Adresse übertragen); Wetter über open-meteo, Karten über OpenStreetMap (nur Orts- und Termindaten); Push-Mitteilungen über den Dienst eures Browsers (ohne Kindernamen).</li>
+      <li><b>KI:</b> Das Trainerteam nutzt einen KI-Dienst (Anbieter in den USA) als Schreibhilfe für Nachbereitung und Berichte. Kindernamen werden vorher durch „Kind 1“, „Kind 2“ ersetzt und erst auf dem Gerät des Trainers zurückübersetzt.</li>
     </ul>
     <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:var(--s-klein);color:#475569;margin:8px 0">
       <b>Verantwortlich:</b> ${esc(VEREIN_DS.name)}, ${esc(VEREIN_DS.anschrift)}.
-      <b>Rechtsgrundlage:</b> deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO, bei Fotos zusätzlich Art. 9).
-      <b>Speicherdauer:</b> bis zum Saisonende bzw. bis dein Kind das Team verlässt.
+      <b>Rechtsgrundlage:</b> deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO; für Gesundheitsangaben der Notfallkarte Art. 9 Abs. 2 lit. a DSGVO).
+      <b>Speicherdauer:</b> bis zum Saisonende bzw. bis dein Kind das Team verlässt; Einschätzungen des Trainerteams werden zum Saisonwechsel archiviert (nur Trainerteam), Sicherungskopien bis zu zehn Wochen.
       Auskunft, Löschung und Widerruf sind jederzeit möglich – sprich das Trainerteam an${VEREIN_DS.mail?` oder schreib an <a href="mailto:${esc(VEREIN_DS.mail)}" style="color:#1d4ed8">${esc(VEREIN_DS.mail)}</a>`:""}.
       ${VEREIN_DS.link?`<a href="${esc(VEREIN_DS.link)}" target="_blank" rel="noopener" style="color:#1d4ed8">Vollständige Datenschutzerklärung</a>.`:""}
     </div>
@@ -403,6 +431,7 @@ async function dsgvoAccept(){
     if(sbCheck401(r))return;
     if(!r.ok){toast("Konnte nicht speichern","err");if(btn)btn.disabled=false;return;}
   }catch(e){toast("Netzwerkfehler","err");if(btn)btn.disabled=false;return;}
+  try{localStorage.setItem("adler_dsgvo_v",DSGVO_VERSION);}catch(e){}
   toast("Danke – Einwilligung gespeichert ✓");
   const ok=window._dsgvoOnOk; window._dsgvoOnOk=null; if(typeof ok==="function")ok();
 }
@@ -667,10 +696,10 @@ function datenschutzInfoOpen(){
     <span style="display:block;font-size:var(--s-text);color:#475569;line-height:1.55;margin-top:2px">${d}</span></span></div>`;
   m.innerHTML=`<div style="background:#fff;color:#1a1a2e;border-radius:16px;padding:18px;max-width:520px;width:100%;margin:auto">
     ${mdlHead("dsi-modal","🛡️","So schützen wir eure Fotos &amp; Daten","Kurz &amp; ehrlich erklärt – für alle, die bei WhatsApp ein mulmiges Gefühl haben","#0f766e")}
-    ${punkt("🔐","Geschlossener Team-Bereich","Alles hier ist nur mit Login sichtbar – ausschließlich für die Familien und das Trainerteam unserer U9. Nichts ist über Google auffindbar, nichts ist öffentlich.")}
+    ${punkt("🔐","Geschlossener Team-Bereich","Alles hier ist nur mit Login sichtbar – ausschließlich für die Familien und das Trainerteam unserer U9. Öffentlich (Liveticker, Turnierseite, Stadionheft) erscheinen nur gekürzte Namen, und Fotos nur mit der Freigabe „öffentlich“.")}
     ${punkt("📸","Ihr entscheidet über jedes Bild","Für jedes Kind gibt es drei getrennte Freigaben (App-intern / Trainingsvideos / öffentlich) – jederzeit widerrufbar. Ohne euer Häkchen zeigt die App nur Initialen statt Foto. Beim Aushängen und Verteilen werden Nachnamen automatisch gekürzt („Max M.“).")}
-    ${punkt("🇪🇺","Daten in Europa","Die Daten liegen auf Servern in Frankfurt (EU) und unterliegen der DSGVO. Keine Werbung, kein Tracking, kein Verkauf von Daten – die App gehört dem Team, niemandem sonst.")}
-    ${punkt("🧽","Löschen ist wirklich Löschen","Ein gelöschtes Foto ist weg – auf allen Geräten, sofort. Vieles räumt sich sogar selbst auf: Stimmungen, Grüße und ähnliche Einträge verfallen automatisch nach festen Fristen. Und ihr könnt jederzeit alle Daten eures Kindes als Datei herunterladen.")}
+    ${punkt("🇪🇺","Daten in Europa","Die Daten liegen auf Servern in Frankfurt (EU) und unterliegen der DSGVO. Keine Werbung, kein Werbe-Tracking, kein Verkauf von Daten – die App gehört dem Team, niemandem sonst. Schrift und Symbole kommen von Google Fonts und jsDelivr; dabei wird eure IP-Adresse übertragen.")}
+    ${punkt("🧽","Löschen ist wirklich Löschen","Ein gelöschtes Foto verschwindet sofort aus der App; in den Sicherungskopien liegt es höchstens noch zehn Wochen. Vieles räumt sich selbst auf: Stimmungen, Grüße und ähnliche Einträge verfallen automatisch nach festen Fristen. Einen Auszug eurer Daten könnt ihr jederzeit herunterladen – eine vollständige Auskunft gibt das Trainerteam.")}
     ${punkt("🚑","Sensibles bleibt beim Trainerteam","Notfallkarte und Gesundheits-Hinweise sehen ausschließlich die Trainer – keine anderen Eltern. Ihr pflegt sie selbst und könnt sie jederzeit leeren.")}
     <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:12px;margin-top:14px">
       <div style="font-size:var(--s-text);font-weight:800;color:#166534;margin-bottom:4px">💬 Und warum nicht einfach WhatsApp?</div>
@@ -807,7 +836,7 @@ async function elternDashLoad(){
   //    ist alles leer, blendet elternTodoSync() die ganze Sektion aus. ──
   // 📌 To-Do's als Kategorie-Button (optisch wie die Kategorien unten); Inhalt öffnet sich im
   //    Overlay-Panel #cat-todo. Sichtbar nur, wenn offene Punkte da sind (elternTodoSync nach den Loadern).
-  html+=`<button id="eltern-todo-btn" onclick="elternCatOpen('todo')" style="display:none;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:10px;border:none;border-radius:14px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 2px 10px rgba(217,119,6,.25)">
+  html+=`<button id="eltern-todo-btn" onclick="elternCatOpen('todo')" style="display:none;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:10px;border:none;border-radius:14px;background:linear-gradient(135deg,#b45309,#92400e);color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 2px 10px rgba(217,119,6,.25)">
     <span style="font-size:var(--s-seite);line-height:1">📌</span>
     <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Zu erledigen</span><span style="display:block;font-size:var(--s-klein);opacity:.92;margin-top:1px">Rückmeldungen, Mitbringen, Büdchen, „Wie war's"</span></span>
     <span id="eltern-todo-badge" style="background:#fff;color:#d97706;font-weight:800;font-size:var(--s-text);border-radius:12px;padding:2px 9px"></span>
@@ -816,7 +845,7 @@ async function elternDashLoad(){
   // 📣 Adler News: eigener Button (News ≠ To-Do); Panel #cat-news; roter Badge bei Ungelesenem.
   /* PO v407: „adlernews auch nur wenn etwas drin ist." – wie beim To-Do-Knopf: unsichtbar
      starten, elternNewsLoad blendet ihn nur bei ungelesenen Punkten ein. */
-  html+=`<button id="eltern-news-btn" onclick="elternCatOpen('news')" style="display:none;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:10px;border:none;border-radius:14px;background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 2px 10px rgba(2,132,199,.22)">
+  html+=`<button id="eltern-news-btn" onclick="elternCatOpen('news')" style="display:none;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:10px;border:none;border-radius:14px;background:linear-gradient(135deg,#0369a1,#075985);color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 2px 10px rgba(2,132,199,.22)">
     <span style="font-size:var(--s-seite);line-height:1">📣</span>
     <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Adler News</span><span style="display:block;font-size:var(--s-klein);opacity:.92;margin-top:1px">Neues aus dem Team &amp; von deinem Kind</span></span>
     <span id="eltern-news-badge" style="display:none;background:#ef4444;color:#fff;font-weight:800;font-size:var(--s-text);border-radius:12px;padding:2px 9px">0</span>
@@ -910,7 +939,7 @@ async function elternDashLoad(){
   // ── FÜR DIE KINDER ── (gleiche Button-Optik wie die Kategorien unten: Kabine = Direktstart,
   //    je Kind ein Button, der ein Kind-Fenster im Overlay öffnet)
   html+=sec("🎮 Für die Kinder");
-  html+=`<button onclick="kabineOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:none;border-radius:14px;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 2px 10px rgba(168,85,247,.25)">
+  html+=`<button onclick="kabineOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:none;border-radius:14px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 2px 10px rgba(168,85,247,.25)">
     <span style="font-size:var(--s-seite);line-height:1">🎮</span>
     <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Die Kabine</span><span style="display:block;font-size:var(--s-klein);opacity:.92;margin-top:1px">Kinder-Modus: Galerie, Missionen &amp; Quiz (${XP_ICON} Federn)</span></span>
     <span style="font-size:var(--s-teil);opacity:.85">›</span>
@@ -937,8 +966,8 @@ async function elternDashLoad(){
   const catBtn=(id,emoji,title,desc,grad)=>`<button onclick="elternCatOpen('${id}')" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:none;border-radius:14px;background:${grad};color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.08)"><span style="font-size:var(--s-seite);line-height:1">${emoji}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">${title}</span><span style="display:block;font-size:var(--s-klein);opacity:.92;margin-top:1px">${desc}</span></span><span style="font-size:var(--s-teil);opacity:.85">›</span></button>`;
   html+=sec("Mehr");
   html+=catBtn('mehr','📰','Mehr vom Team','Adler Nest, Börse, Fundbüro, Kasse','linear-gradient(135deg,#1e3a8a,#2563eb)');
-  html+=catBtn('regeln','📋','Regeln &amp; Vereinbarungen','Unsere Vereinbarung &amp; das Fairplay-Quiz','linear-gradient(135deg,#16a34a,#059669)');
-  html+=catBtn('datenschutz','🔒','Datenschutz &amp; Freigaben','Foto/Video, Notfallkarte, Datenexport','linear-gradient(135deg,#0d9488,#0f766e)');
+  html+=catBtn('regeln','📋','Regeln &amp; Vereinbarungen','Unsere Vereinbarung &amp; das Fairplay-Quiz','linear-gradient(135deg,#15803d,#047857)');
+  html+=catBtn('datenschutz','🔒','Datenschutz &amp; Freigaben','Foto/Video, Notfallkarte, Datenexport','linear-gradient(135deg,#0f766e,#115e59)');
   html+=catBtn('kontakt','⚙️','Kontakt &amp; Benachrichtigungen','Elterngespräch, Push, Einstellungen','linear-gradient(135deg,#475569,#334155)');
   // Versionszeile: hilft, wenn jemand „bei mir sieht das anders aus" meldet (v409)
   html+=`<div id="app-version-eltern" style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin:16px 0 4px"></div>`;
@@ -1402,8 +1431,12 @@ async function elternChecklistLoad(kids){
   let committed=false; const notfallIds=new Set();
   try{const r=await fetch(`${SB_URL}/rest/v1/fairplay_commit?select=committed_at&limit=1`,{headers:sbAuthHeaders()});if(r.ok)committed=((await r.json())||[]).length>0;}catch(e){}
   try{const ids=kids.map(k=>k.spieler_id).join(",");if(ids){const r=await fetch(`${SB_URL}/rest/v1/kind_notfall?spieler_id=in.(${ids})&select=spieler_id`,{headers:sbAuthHeaders()});if(r.ok)(await r.json()).forEach(x=>notfallIds.add(x.spieler_id));}}catch(e){}
+  /* v636: „geklärt“ heißt: die Familie hat entschieden – Ja ODER Nein. Vorher zählte nur ein Ja,
+     wer „Nein“ sagte, wurde dauerhaft gemahnt („ein Nein hat keinerlei Nachteile“). */
+  const fotoIds=new Set();
+  try{const ids=kids.map(k=>k.spieler_id).join(",");if(ids){const r=await fetch(`${SB_URL}/rest/v1/foto_consent?spieler_id=in.(${ids})&select=spieler_id`,{headers:sbAuthHeaders()});if(r.ok)(await r.json()).forEach(x=>fotoIds.add(x.spieler_id));}}catch(e){}
   const pushOn=(typeof Notification!=="undefined"&&Notification.permission==="granted");
-  const fotoAll=kids.length>0&&kids.every(k=>k.kader&&k.kader.foto_stadionheft_ok);
+  const fotoAll=kids.length>0&&kids.every(k=>fotoIds.has(k.spieler_id)||(k.kader&&k.kader.foto_stadionheft_ok));
   const notfallAll=kids.length>0&&kids.every(k=>notfallIds.has(k.spieler_id));
   const k0=kids[0]||{}, n0=((k0.kader&&k0.kader.name)||"").replace(/'/g,"");
   const items=[
@@ -2075,9 +2108,8 @@ function adlerCardDataFromChild(p){
   }else{
     const v=typeof p.radios==="string"?safeParse(p.radios,{}):(p.radios||{});
     bewertet=Object.keys(v).length>0;
-    keys=Object.keys(CARD_BADGES).map(key=>({key,val:v[key]||0})).sort((a,b)=>b.val-a.val).slice(0,3).map(x=>x.key);
-    const {dims:ds}=calcScores(v,DIMS_FELD);
-    dim=(Object.entries(ds).sort((a,b)=>b[1]-a[1])[0]||["tech",0])[0];
+    keys=typeof staerkenAus==="function"?staerkenAus(v):[];   // v636: eine Regel für alle Geräte
+    dim=keys.length&&typeof feldDimVon==="function"?feldDimVon(keys[0]):null;
   }
   const theme=p.tw?CARD_THEMES.keeper:(bewertet?(CARD_THEMES[dim]||CARD_THEMES.tech):CARD_THEMES.neu);
   const posMap={aufpasser:"Aufpasser",jaeger:"Jäger",flitzer_l:"Flitzer",flitzer_r:"Flitzer"};
@@ -2095,7 +2127,10 @@ async function elternCardOpen(spielerId){
   /* Auf dem Kindergerät die Fassung ohne Bewertungswerte. my_child_card() lässt eine
      Kind-Sitzung ohnehin nicht durch – dort antwortete die Kachel „Meine Karte" sonst
      mit einer Fehlermeldung. */
-  const rpc=(typeof kabineKindModus==="function"&&kabineKindModus())?"my_child_card_kind":"my_child_card";
+  /* v636: Auch Eltern bekommen die Fassung ohne Bewertungswerte. my_child_card() schickte die
+     16 Einzelwerte über die Leitung – nicht gezeichnet, aber in den Entwicklerwerkzeugen lesbar.
+     Was ein Elternteil nicht sehen soll, gehört nicht in die Antwort (Regel aus v593). */
+  const rpc="my_child_card_kind";
   try{const r=await fetch(`${SB_URL}/rest/v1/rpc/${rpc}`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_spieler:spielerId})});if(r.ok)p=await r.json();}catch(e){}
   if(!p){toast("Karte konnte nicht geladen werden","err");return;}
   /* v563: Früher sperrte hier eine rote Meldung die Karte ganz ab, wenn es noch keine
