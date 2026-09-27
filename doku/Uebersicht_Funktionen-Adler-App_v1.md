@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v646 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v647 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -85,7 +85,7 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 | **Eltern-Einladung & Delegation** | Eltern per Link und Einmal-Code einladen; Abholberechtigung an Dritte delegieren. | Zweiter Weg neben der Karte, Verantwortung nachvollziehbar übertragen. |
 | **Kinder-App koppeln** | Code erzeugen, gekoppelte Geräte sehen, tägliche Appzeit einstellen, Gerät trennen. | Die Kabine läuft auf dem Gerät des Kindes, die Kontrolle bleibt bei den Eltern. |
 | **Adler Nest (Stadionheft)** | Digitales Stadionheft aus Spielbericht, Reporter-Rubrik der Kinder und Sammelkarten – erstellen und drucken. | Ein greifbares Erinnerungsstück je Spieltag, mit maskierten Namen auch öffentlich zeigbar. Seit v636 zeigt jede Spielerkarte Vorname, Nachnamen-Initiale und – mit der Foto-Freigabe „öffentlich“ – Foto und Jahrgang (nie das Geburtsdatum); das gilt digital und für die gedruckte Eltern-Version, die jetzt Standard ist. |
-| **Adler-Welt-Hub** | Federn je Kind, Sammelkarten, Technik-Abzeichen, Wochen-Challenge (Skill der Woche) an einem Ort. | Das Motivationssystem für die Kinder wird vom Trainer an einer Stelle gesteuert. |
+| **Adler-Welt-Hub** | Federn je Kind, Sammelkarten, Technik-Abzeichen, Wochen-Challenge (Skill der Woche) an einem Ort. Seit v647 gibt es einen Stichtag für die Federn (Team-Quests verwalten → „Federn zählen ab“, Beschluss vom 27.09.2026: 28.09.2026). Quiz-Federn zählen immer, alle anderen Quellen erst ab dem Stichtag. Das Team-Level und die Federn-Meilensteine zählen ab dem Stichtag alles neu. Gelöscht wird nichts, und alte Anlässe bringen keine Federn mehr. | Das Motivationssystem für die Kinder wird vom Trainer an einer Stelle gesteuert. |
 | **Kabinen-Wahl** | Trainer legt Optionen fest (Song, Motto, Spielform), die Kinder stimmen ab. | Mitbestimmung, die Kinder ernst nimmt – mit einem klaren Rahmen. |
 | **Urkunden-Studio** | Saison-Urkunden für alle Kinder in einem Druck, freie Anlass-Urkunde. | Wertschätzung ohne Bastelabend. |
 | **Sprachlob** | Kurzes gesprochenes Lob an ein Kind aufnehmen, das es in der Kabine hört. | Persönlicher als jeder Sticker. |
@@ -163,7 +163,7 @@ Kinder sehen nie Bewertungen und nie Zahlen zu anderen Kindern. Was die Kabine �
 | **Kabinen-Wahl** | Abstimmen über Song, Motto oder Spielform, die der Trainer vorgegeben hat. | Mitbestimmung im sicheren Rahmen. |
 | **Kabinen-DJ & Team-Arena** | Die Playlist der U9, Einlauf-Song und Schlachtruf. | Identität wie bei den Großen. |
 | **Meine Karte & Abzeichen** | Eigene Sammelkarte mit Federn, Technik-Abzeichen – nur lesend. | Sichtbarer Fortschritt ohne Vergleich mit anderen. |
-| **Team-Level & Meilensteine** | Die ganze Mannschaft steigt gemeinsam auf; Team-Marken für Tore, Spiele, Federn. | Erfolg wird als Team erlebt, nicht als Rangliste. |
+| **Team-Level & Meilensteine** | Die ganze Mannschaft steigt gemeinsam auf; Team-Marken für Tore, Spiele, Federn. Das Team-Level zählt ab dem Federn-Stichtag (seit v647). | Erfolg wird als Team erlebt, nicht als Rangliste. |
 | **Unsere Regeln** | Der Codex des Teams in Kindersprache – sechs kurze Sätze, vom Trainerteam pflegbar. | Die Kinder kennen die Regeln in ihren eigenen Worten, nicht in denen der Erwachsenen. |
 | **Sprachlob & Skill der Woche** | Das gesprochene Lob des Trainers anhören; das Video zur Wochen-Challenge sehen. | Persönliche Ansprache und klare Übungsaufgabe. |
 | **Galerie** | Fotos des Teams, ausschließlich mit Freigabe. | Erinnerungen, datenschutzkonform. |

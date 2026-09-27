@@ -27,6 +27,11 @@ async function loadTeamConfig(){
     const r=await fetch(`${SB_URL}/rest/v1/team_config?id=eq.1&select=belohnung,double_xp_until,teamquest_federn`,{headers:sbAuthHeaders()});
     if(r.ok){const c=(await r.json())[0]; if(c){teamBelohnung=c.belohnung||""; teamDoubleXpUntil=c.double_xp_until||null; teamQuestFedern=(c.teamquest_federn==null?20:Number(c.teamquest_federn));}}
   }catch(e){}
+  // v647: Stichtag liegt in team_einstellungen (lesen und schreiben nur Trainer)
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/team_einstellungen?id=eq.1&select=federn_ab`,{headers:sbAuthHeaders()});
+    if(r.ok){const c=(await r.json())[0]; teamFedernAb=(c&&c.federn_ab)||null;}
+  }catch(e){}
   await loadTeamQuests();
 }
 async function loadTeamQuests(){
@@ -44,6 +49,18 @@ async function loadTeamQuests(){
     teamQuests=rows.filter(r=>r.aktiv!==false).sort((a,b)=>(a.sort||0)-(b.sort||0))
       .map(r=>({key:r.qkey||"pass",icon:r.icon||"🏆",label:r.label||"Quest",target:Number(r.target)||10,_id:r.id}));
   }catch(e){}
+}
+/* v647: Stichtag der Federn (team_einstellungen.federn_ab, Beschluss 27.09.2026). Ab hier zählen
+   alle Quellen außer Quiz – Karten, Team-Level, Meilensteine; alte Anlässe bringen nichts.
+   Gezählt und gesperrt wird ausschließlich in der Datenbank; hier nur Anzeige und Eingabe.
+   Das Datum gilt ab 00:00 Uhr Europe/Berlin, unabhängig von der Zeitzone des Geräts. */
+let teamFedernAb=null;
+function federnAbTag(ts){ try{return ts?new Date(ts).toLocaleDateString("sv-SE",{timeZone:"Europe/Berlin"}):"";}catch(e){return "";} }
+function federnAbMitternacht(tag){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(tag||""))return null;
+  const [y,m,d]=tag.split("-").map(Number), utc=Date.UTC(y,m-1,d);
+  let off=1; try{const g=new Date(utc).toLocaleString("en-US",{timeZone:"Europe/Berlin",timeZoneName:"shortOffset"}).match(/GMT([+-]\d+)/); if(g)off=Number(g[1]);}catch(e){}
+  return new Date(utc-off*3600000).toISOString();
 }
 /* FEAT T: Double-XP-Booster – der Trainer schaltet nur das Zeitfenster in team_config.
    Den Multiplikator wendet ausschließlich die Server-RPC xp_award_event an. */
@@ -225,6 +242,11 @@ function questEditorOpen(){
         <span style="font-size:var(--s-text);color:#047857">${XP_ICON} pro Kind</span>
       </div>
     </div>
+    <div style="margin:0 0 12px;padding:10px;border:1.5px solid var(--rand-bedien);border-radius:10px">
+      <label for="qe-federn-ab" style="font-weight:700;font-size:var(--s-text)">🗓️ ${XP_LABEL} zählen ab</label>
+      <div style="font-size:var(--s-klein);color:var(--text2);margin:2px 0 6px">Quiz-${XP_LABEL} zählen immer. Alles andere – Training, Serien, Zusagen, Missionen, Album – zählt erst ab diesem Tag, auch fürs Team-Level. Gelöscht wird nichts; leer lassen heißt: alles zählt.</div>
+      <input id="qe-federn-ab" type="date" value="${federnAbTag(teamFedernAb)}" data-alt="${federnAbTag(teamFedernAb)}" style="min-height:48px;padding:8px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text);box-sizing:border-box">
+    </div>
     <label for="qe-belohnung" style="font-size:var(--s-klein);color:var(--text2)">🎁 Zusätzliche Belohnung (Freitext, optional)</label>
     <textarea id="qe-belohnung" rows="2" placeholder="z. B. Eis für alle beim nächsten Training!" style="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text);margin:4px 0 12px;box-sizing:border-box">${esc(teamBelohnung)}</textarea>
     <div style="margin:0 0 12px;padding:10px;border:1.5px dashed #f59e0b;border-radius:10px;background:#fffbeb">
@@ -265,6 +287,8 @@ async function questSave(btn){
   const clean=qeDraft.filter(q=>(q.label||"").trim()).map(q=>({key:q.key||"pass",icon:(q.icon||"🏆").trim()||"🏆",label:q.label.trim(),target:Math.max(1,parseInt(q.target)||1)}));
   teamBelohnung=(document.getElementById("qe-belohnung")?.value||"").trim();
   teamQuestFedern=Math.max(0,Math.min(200,parseInt(document.getElementById("qe-federn")?.value)||0));
+  // Stichtag nur schreiben, wenn er hier geändert wurde – ein nicht geladener Wert darf ihn nie leeren.
+  const abFeld=(e=>e&&e.value!==e.dataset.alt?e:null)(document.getElementById("qe-federn-ab"));
   if(btn)btn.disabled=true;
   try{
     // HOTFIX 4: Quests -> team_quests (replace-all), Belohnung bleibt in team_config
@@ -275,6 +299,12 @@ async function questSave(btn){
       if(!ins.ok){toast("Speichern fehlgeschlagen","err");return;}
     }
     await fetch(`${SB_URL}/rest/v1/team_config?on_conflict=id`,{method:"POST",headers:sbAuthHeaders({'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({id:1,belohnung:teamBelohnung,teamquest_federn:teamQuestFedern,updated_at:new Date().toISOString()})});
+    if(abFeld){
+      const ab=federnAbMitternacht(abFeld.value);
+      const ra=await fetch(`${SB_URL}/rest/v1/team_einstellungen?on_conflict=id`,{method:"POST",headers:sbAuthHeaders({'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({id:1,federn_ab:ab})});
+      if(!ra.ok){toast("Stichtag nicht gespeichert","err");return;}
+      teamFedernAb=ab;
+    }
   }catch(e){toast("Netzwerkfehler","err");return;}
   finally{if(btn)btn.disabled=false;}
   teamQuests=clean.map(q=>({...q}));
