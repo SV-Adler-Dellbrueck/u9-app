@@ -1088,3 +1088,29 @@ html[data-schrift="sehrgross"]{--s-klein:14px;--s-text:17px;--s-karte:20px;--s-t
 html[data-schrift] #main-nav .nb span{font-size:calc(11px)}
 html[data-schrift] button{min-width:0;overflow-wrap:break-word;hyphens:auto}
 html[data-schrift] .logo-badge{font-size:calc(13px);white-space:nowrap}
+
+/* ═══ v639 · Eigene Übung: KI zuerst, drei ruhige Abschnitte, eine Hauptaktion unten ═══ */
+.tf-karte{background:var(--surface);border-radius:var(--rl);max-width:600px;margin:0 auto;padding:16px 16px 0;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.tf-kopf{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.tf-titel{font-size:var(--s-teil);font-weight:800;color:var(--text)}
+.tf-zu{background:none;border:none;font-size:var(--s-seite);line-height:1;min-width:44px;min-height:44px;cursor:pointer;color:var(--text2);font-family:inherit}
+.tf-ki{border:1px solid var(--rand-bedien);border-left:4px solid var(--purple);border-radius:12px;background:var(--surface2);padding:12px;margin-bottom:6px}
+.tf-ki-t{font-size:var(--s-karte);font-weight:800;color:var(--text)}
+.tf-ki-s{font-size:var(--s-klein);color:var(--text2);line-height:1.45;margin:3px 0 8px}
+.tf-ki textarea{width:100%;box-sizing:border-box;min-height:88px;padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);line-height:1.5;background:var(--surface);color:var(--text);resize:vertical}
+.tf-ki-knoepfe{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.tf-ki-knoepfe .btn{flex:1 1 140px;min-height:48px;justify-content:center;white-space:nowrap}
+.tf-ki-stand{font-size:var(--s-klein);color:var(--text2);line-height:1.45;margin-top:6px;min-height:1em}
+.tf-abschnitt{font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text2);margin:16px 0 6px;padding-top:12px;border-top:var(--border)}
+.tf-drei{grid-template-columns:repeat(3,1fr)}
+.tf-karte .mg input,.tf-karte .mg select{min-height:48px}
+.tf-karte .mg textarea{min-height:48px;resize:vertical}
+.tf-skizze-knoepfe{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.tf-skizze-knoepfe .btn{flex:1 1 130px;min-height:48px;justify-content:center}
+.tf-fuss{position:sticky;bottom:0;display:flex;gap:8px;flex-wrap:wrap;background:var(--surface);padding:12px 0 calc(12px + env(safe-area-inset-bottom));margin-top:16px;border-top:var(--border)}
+.tf-fuss .btn{min-height:48px;justify-content:center}
+.tf-fuss .tf-haupt{flex:1 1 220px;min-height:56px;font-size:var(--s-karte);font-weight:800}
+@media (max-width:340px){ .tf-drei{grid-template-columns:1fr 1fr} .tf-drei .mg:last-child{grid-column:span 2} }
+/* Die KI-Auswertung ist die Aktion des Kastens, nicht der Maske: Rahmen in Lila statt Vollfläche –
+   die eine Hauptaktion bleibt „Übung erfassen“ unten. */
+.tf-ki-knoepfe .tf-ki-los{border-color:var(--purple);color:var(--purple);font-weight:800}
