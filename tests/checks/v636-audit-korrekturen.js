@@ -14,7 +14,7 @@
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
   const K = h.KINDER;
-  const s = await h.starten({ hoehe: 1400, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen({ inaktiv: [K[2]] }), spielerprofile: [], match_actions: [{ spieler: K[0], aktion: "tor" }], ticker_events: [] }) });
+  const s = await h.starten({ hoehe: 1400, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen({ inaktiv: [K[2]] }), team_einstellungen: [{ id: 1, bewertung_ab: "2026-01-01" }], spielerprofile: [], match_actions: [{ spieler: K[0], aktion: "tor" }], ticker_events: [] }) });
   const r = await s.page.evaluate(async K => {
     const warte = ms => new Promise(x => setTimeout(x, ms));
     const out = {};
@@ -24,6 +24,7 @@ module.exports = async function (h) {
     // a) Upsert-Adresse abfangen
     const echtFetch = window.fetch; const gesehen = [];
     window.fetch = (u, o) => { gesehen.push({ u: String(u), m: o && o.method, h: o && o.headers, b: o && o.body }); return echtFetch(u, o); };
+    BEW_AB = "2026-01-01"; if (typeof bewSperreAnwenden === "function") bewSperreAnwenden();   // v648: Bewertungen offen
     go("bew"); await warte(300);
     const sel = document.getElementById("p-name");
     const opt = n => { if (![...sel.options].some(o => o.value === n)) { const o = document.createElement("option"); o.value = o.textContent = n; sel.appendChild(o); } };

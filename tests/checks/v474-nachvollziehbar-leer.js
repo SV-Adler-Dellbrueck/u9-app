@@ -11,7 +11,7 @@ module.exports = async function (h) {
     { id: 1, datum: nah, typ: "training", uhrzeit: "16:45", trainer_status: {} },
     { id: 2, datum: fern, typ: "training", uhrzeit: "16:45", trainer_status: {} }
   ];
-  const s = await h.starten({ supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), termine, blitz_ratings: [], profiles: [{ name: "Charles", rolle: "trainer" }] }), hoehe: 1800 });
+  const s = await h.starten({ supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), termine, blitz_ratings: [], profiles: [{ name: "Charles", rolle: "trainer" }], team_einstellungen: [{ id: 1, bewertung_ab: "2026-01-01" }] }), hoehe: 1800 });
   await h.sichtbarMachen(s.page, "#home-content");
   const r = await s.page.evaluate(async ({ K, nah, fern }) => {
     await loadKader(); window.trainerMe = async () => "Charles";
@@ -46,7 +46,8 @@ module.exports = async function (h) {
     const kombiBtn = !!document.querySelector("#kombi-content button");
     const kombiText = document.getElementById("kombi-content")?.textContent.replace(/\s+/g, " ").trim().slice(0, 90) || "";
     // 6) Bewerten: Kaesten erst mit gewaehltem Kind
-    go("bew"); await warte(400);
+    // v648: Bewerten ist erst ab dem Startdatum offen – hier liegt es in der Vergangenheit
+    BEW_AB = "2026-01-01"; go("bew"); if (typeof bewSperreAnwenden === "function") bewSperreAnwenden(); await warte(400);
     const leerVor = sichtbar(document.getElementById("bew-leer")), panelVor = sichtbar(document.getElementById("bew-live-panel")), fboxVor = sichtbar(document.getElementById("bew-fbox"));
     /* Das Live-Radar (Chart.js) laesst den kopflosen Browser nach dem Zeichnen stehen –
        kein Timer, kein Frame mehr (auch vor v474 so, nur nie in einer Pruefung beruehrt).

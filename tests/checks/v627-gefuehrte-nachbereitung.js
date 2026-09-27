@@ -22,7 +22,7 @@ module.exports = async function (h) {
   const posts = [];
   const merk = name => (u, req) => { if (req.method() !== "GET") posts.push(name); return []; };
   const s = await h.starten({ hoehe: 1400, supabase: h.supabaseAttrappe({
-    kader: h.kaderZeilen(), profiles: [{ name: "Charles", rolle: "trainer" }], anwesenheit: [],
+    kader: h.kaderZeilen(), profiles: [{ name: "Charles", rolle: "trainer" }], anwesenheit: [], team_einstellungen: [{ id: 1, bewertung_ab: "2026-01-01" }],
     einheit_bewertung: merk("einheit_bewertung"), trainings_eval: merk("trainings_eval"), event_bewertung: merk("event_bewertung"),
     trainingsplan: [{ datum: gestern, plan, kopf: {} }], nominierungen: [], heimturnier: [{ teams: ["Adler 1", "TuS Gast"] }],
     termine: [{ id: 8, datum: gestern, typ: "turnier", titel: "Festival" }] }) });
@@ -37,6 +37,7 @@ module.exports = async function (h) {
     if (typeof nbWegStart !== "function") return { fehlt: true };
     await loadKader();
     AW_DATA[gestern] = { "Kind A": { da: true }, "Kind B": { da: true } };
+    BEW_AB = "2026-01-01"; if (typeof bewSperreAnwenden === "function") bewSperreAnwenden();   // v648: Bewertungen offen
     await einheitBewertenOpen(); await einheitDetailOpen(gestern);
     for (let i = 0; i < 40 && !document.getElementById("nb-weg"); i++) await warte(50);
     const out = {};
