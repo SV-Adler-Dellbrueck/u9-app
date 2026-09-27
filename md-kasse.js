@@ -889,8 +889,8 @@ async function leitfadenEditOpen(){
   document.getElementById("lfe-modal")?.remove();
   LF_EDIT=[];
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/eltern_leitfaden?select=emoji,titel,text,kategorie&order=sort.asc,id.asc`,{headers:sbAuthHeaders()});
-    if(r.ok)LF_EDIT=(await r.json()).map(x=>({emo:x.emoji||"",titel:x.titel||"",text:x.text||"",kat:x.kategorie||"wir"}));
+    const r=await fetch(`${SB_URL}/rest/v1/eltern_leitfaden?select=emoji,titel,text,kategorie,aktiv&order=sort.asc,id.asc`,{headers:sbAuthHeaders()});
+    if(r.ok)LF_EDIT=(await r.json()).map(x=>({emo:x.emoji||"",titel:x.titel||"",text:x.text||"",kat:x.kategorie||"wir",aktiv:x.aktiv!==false}));   // v636: aktiv mitlesen
   }catch(e){}
   if(!LF_EDIT.length)LF_EDIT=ELTERN_LEITFADEN.map(r=>({emo:r.emo,titel:r.t,text:r.d,kat:r.kat||"wir"}));
   const modal=document.createElement("div");
@@ -934,7 +934,7 @@ function leitfadenEditAdd(){ LF_EDIT.push({emo:"⭐",titel:"",text:"",kat:"wir"}
 function leitfadenEditDel(i){ LF_EDIT.splice(i,1); leitfadenEditRender(); }
 function leitfadenEditMove(i,dir){ const j=i+dir; if(j<0||j>=LF_EDIT.length)return; const t=LF_EDIT[i];LF_EDIT[i]=LF_EDIT[j];LF_EDIT[j]=t; leitfadenEditRender(); }
 async function leitfadenEditSave(btn){
-  const rows=LF_EDIT.map((r,i)=>({sort:i,emoji:(r.emo||"").trim()||null,titel:(r.titel||"").trim(),text:(r.text||"").trim()||null,kategorie:r.kat||"wir",aktiv:true}))
+  const rows=LF_EDIT.map((r,i)=>({sort:i,emoji:(r.emo||"").trim()||null,titel:(r.titel||"").trim(),text:(r.text||"").trim()||null,kategorie:r.kat||"wir",aktiv:r.aktiv!==false}))   // v636: ausgeblendete Punkte bleiben ausgeblendet (CLAUDE.md: alle Spalten zurückschreiben)
                     .filter(r=>r.titel);
   if(!rows.length){toast("Mindestens ein Punkt mit Überschrift","err");return;}
   if(btn)btn.disabled=true;
@@ -1048,7 +1048,7 @@ async function elternTurnierplanLoad(termin){
   let liste="";
   if(plan.length){
     const gruppen={};
-    plan.forEach(p=>{ const t=teamLabelFromKey(p.datum)||" · Adler 1"; (gruppen[t]=gruppen[t]||[]).push(p); });
+    plan.forEach(p=>{ const t=(typeof teamLabelFromKey==="function"?teamLabelFromKey(p.datum):"")||" · Adler 1"; (gruppen[t]=gruppen[t]||[]).push(p); });   // v636: Welle-2-Funktion nur geprüft
     const mehrere=Object.keys(gruppen).length>1;
     liste=Object.entries(gruppen).map(([label,zeilen])=>
       (mehrere?`<div style="font-size:var(--s-klein);font-weight:700;color:#64748b;margin:8px 0 2px">${esc(label.replace(/^ · /,""))}</div>`:"")
@@ -1329,7 +1329,7 @@ async function elternTickerLoad(termin){
   }
   // „Wer betreut mein Kind heute?" – die häufigste Elternfrage am Spieltag.
   const trainerZeile=(t)=>{ const tr=trainerJeTeam[t]||[];
-    return tr.length?`<div style="font-size:var(--s-klein);color:#334155;margin-bottom:4px">🧢 Trainer: <b>${tr.map(elternEsc).join(", ")}</b></div>`:""; };
+    return tr.length?`<div style="font-size:var(--s-klein);color:#334155;margin-bottom:4px">🧢 Trainer: <b>${tr.map(x=>esc(x)).join(", ")}</b></div>`:""; };   // v636: esc (Welle 1) statt elternEsc (Welle 2)
   const wrap=(inner)=>`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
     <div style="font-size:var(--s-text);font-weight:700;color:#dc2626;margin-bottom:2px">📣 Liveticker</div>${inner}</div>`;
   const bigBtn=(label,onclick,filled)=>`<button onclick="${onclick}" style="width:100%;min-height:48px;margin-top:6px;padding:12px;border:1.5px solid #dc2626;border-radius:10px;background:${filled?"#dc2626":"#fff"};color:${filled?"#fff":"#dc2626"};font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">${label}</button>`;

@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
 
     // 2) Aktiver Kader (service_role, RLS-bypass) – nur Minimaldaten.
     const { data: kader } = await svc.from("kader")
-      .select("id,name,nr,lieblingsposition,tw,foto_path,foto_stadionheft_ok,aktiv")
+      .select("id,name,nr,geb,lieblingsposition,tw,foto_path,foto_stadionheft_ok,aktiv")
       .order("nr", { ascending: true, nullsFirst: false });
     const active = (kader || []).filter((k: any) => k.aktiv !== false);
 
@@ -55,6 +55,13 @@ Deno.serve(async (req) => {
       } catch { return null; }
     }
 
+    // v636: Jahrgang (nie das Geburtsdatum) nur mit derselben Freigabe „öffentlich“ wie das Foto.
+    function jahrgang(k: any): string | null {
+      if (!k.foto_stadionheft_ok) return null;
+      const j = String(k.geb || "").slice(0, 4);
+      return /^\d{4}$/.test(j) ? j : null;
+    }
+
     const spieler = await Promise.all(active.map(async (k: any) => ({
       name: maskName(k.name),
       nr: k.nr ?? null,
@@ -62,13 +69,14 @@ Deno.serve(async (req) => {
       tw: !!k.tw,
       spitzname: spitz[String(k.id)] || "",
       foto_url: await signed(k),
+      jahrgang: jahrgang(k),
     })));
 
     // 5) Fokus-Spieler auflösen (ebenfalls maskiert + consent-gated Foto).
     let fokus: any = null;
     if (heftRow.fokus_spieler_id != null) {
       const fk = active.find((k: any) => String(k.id) === String(heftRow.fokus_spieler_id));
-      if (fk) fokus = { name: maskName(fk.name), nr: fk.nr ?? null, foto_url: await signed(fk), text: heftRow.fokus_text || "" };
+      if (fk) fokus = { name: maskName(fk.name), nr: fk.nr ?? null, foto_url: await signed(fk), jahrgang: jahrgang(fk), text: heftRow.fokus_text || "" };
     }
 
     return j({

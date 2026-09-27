@@ -128,9 +128,9 @@ function onPlayerSelect(){
     const lm=last&&(last.meta||last)||{};
     const setV=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val;};
     setV("p-age",lm.age||"8");
-    setV("p-foot",lm.foot||"R");
+    setV("p-foot",lm.strong_foot||lm.foot||"R");   // v636: gespeichert wird strong_foot, nicht foot
     const seg=(hid,val)=>{const v=String(val||"2");setV(hid,v);document.querySelectorAll(`#${hid}-seg .seg-btn`).forEach(b=>b.classList.toggle("active",b.dataset.val===v));};
-    seg("p-eltern",lm.eltern);seg("p-att",lm.att);
+    seg("p-eltern",lm.eltern);seg("p-att",lm.attendance||lm.att);   // v636: gespeichert wird attendance
     setV("p-notes","");
   }catch(e){}
   showBewSticky(name);
@@ -531,7 +531,7 @@ function kaderEditRow(k,i){
       <button type="button" class="btn btn-sm" onclick="zieleOpen(${k._id})" title="Entwicklungs-Ziele setzen & verfolgen" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:var(--s-klein);line-height:1.2"><i class="ti ti-target" style="font-size:var(--s-teil)"></i>Ziele</button>
       <button type="button" class="btn btn-sm" onclick="childWrappedShare(${k._id})" title="Persönliche Saison-Rückblick-Karte zum Teilen mit der Familie" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:var(--s-klein);line-height:1.2"><i class="ti ti-movie" style="font-size:var(--s-teil)"></i>Saison</button>
       <button type="button" class="btn btn-sm" onclick="lobRecordOpen(${k._id},'${(k.name||'').replace(/'/g,'')}')" title="Kurzes Sprachlob aufnehmen – das Kind hört es in der Kabine" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:var(--s-klein);line-height:1.2;grid-column:1/-1"><i class="ti ti-microphone" style="font-size:var(--s-teil)"></i>🎤 Sprachlob aufnehmen</button>
-      <button type="button" class="btn btn-sm btn-d" onclick="kaderEditDelete(this,'${esc(k.name||'')}','${k._id||''}')" style="grid-column:1/-1;justify-content:center;font-size:var(--s-klein)"><i class="ti ti-trash"></i>Endgültig löschen</button>
+      <button type="button" class="btn btn-sm btn-d" onclick="kaderEditDelete(this,'${jsq(k.name||'')}','${k._id||''}')" style="grid-column:1/-1;justify-content:center;font-size:var(--s-klein)"><i class="ti ti-trash"></i>Endgültig löschen</button>
     </div>`:'<div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px">Erst speichern – dann sind Kontakte, Links & Saison-Karte verfügbar.</div>'}
     </div>
   </div>`;
@@ -1146,7 +1146,8 @@ async function backupExport(){
                 "kabine_config","kabine_lob","kabine_post","kabine_reporter","kabinen_wahl","kabinen_wahl_stimmen",
                 "kind_fanfacts","kind_kontakte","kind_pause","kind_selbstbild","kind_stimmung",
                 "album_fotos","album_kind","album_tausch","termin_media","ticker_claps","wochen_challenge",
-                "fundbuero","waesche_log","teamkasse","kasse_umlagen","boerse_listings"];
+                "fundbuero","waesche_log","teamkasse","kasse_umlagen","boerse_listings",
+                "match_substitutions"];   // v636: fehlte (geschrieben über sbQueuedPost, die v603-Prüfung sah es nicht)
   const dump={_meta:{app:"U9 Adler Dellbrück",exported_at:new Date().toISOString(),tables,
                      nicht_gesichert:SICHERUNG_AUSNAHMEN}};
   try{
@@ -1154,19 +1155,30 @@ async function backupExport(){
        Achtergruppen gleichzeitig: schnell genug, ohne die Verbindung zu fluten. */
     for(let i=0;i<tables.length;i+=8){
       await Promise.all(tables.slice(i,i+8).map(async t=>{
+        /* v636: seitenweise (PostgREST liefert höchstens 1000 Zeilen je Abfrage) und Fehler
+           zählen. Vorher hieß es „✓“, auch wenn Tabellen leer (401/403) oder abgeschnitten waren. */
         try{
-          const r=await fetch(`${SB_URL}/rest/v1/${t}?select=*`,{headers:sbAuthHeaders()});
-          dump[t]=r.ok?await r.json():{error:r.status};
+          let alle=[], ab=0;
+          for(;;){
+            const r=await fetch(`${SB_URL}/rest/v1/${t}?select=*`,{headers:{...sbAuthHeaders(),'Range-Unit':'items','Range':`${ab}-${ab+999}`}});
+            if(!r.ok&&r.status!==206){ dump[t]={error:r.status}; return; }
+            const teil=await r.json(); alle=alle.concat(teil||[]);
+            if(!teil||teil.length<1000)break; ab+=1000;
+          }
+          dump[t]=alle;
         }catch(e){dump[t]={error:"fetch"};}
       }));
     }
+    const fehler=tables.filter(t=>dump[t]&&!Array.isArray(dump[t]));
+    dump._meta.fehler=fehler;
     const blob=new Blob([JSON.stringify(dump,null,2)],{type:"application/json"});
     const a=document.createElement("a");
     a.href=URL.createObjectURL(blob);
     a.download=`adler-u9-backup-${new Date().toISOString().slice(0,10)}.json`;
     document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(a.href),5000);
-    toast("Backup heruntergeladen ✓");
+    if(fehler.length)toast(`Backup heruntergeladen – aber ${fehler.length} Tabelle(n) fehlen: ${fehler.slice(0,4).join(", ")}${fehler.length>4?" …":""}. Bitte neu anmelden und wiederholen.`,"err");
+    else toast("Backup heruntergeladen ✓ – alle Tabellen vollständig");
   }catch(e){toast("Backup fehlgeschlagen","err");}
 }
 
@@ -1876,7 +1888,7 @@ async function entwicklungsReport(){
   let gmP=0,gmT=0; try{const r=await fetch(`${SB_URL}/rest/v1/nominierungen?select=data`,{headers:sbAuthHeaders()});if(r.ok)(await r.json()).forEach(row=>{const s=kidMapFromIds(row.data||{})[name];if(s==="dabei"||s==="nicht"||s==="verletzt"){gmT++;if(s==="dabei")gmP++;}});}catch(e){}
   const q=(p,t)=>t?Math.round(p/t*100)+"% ("+p+"/"+t+")":"—";
   // Aktuelle Ziele
-  let goals=[]; if(k.id){try{const r=await fetch(`${SB_URL}/rest/v1/entwicklungsziele?spieler_id=eq.${k.id}&status=eq.offen&select=ziel&order=created_at.desc`,{headers:sbAuthHeaders()});if(r.ok)goals=(await r.json()).map(z=>z.ziel).filter(Boolean);}catch(e){}}
+  let goals=[]; const kid=kaderId(k); if(kid!=null){try{const r=await fetch(`${SB_URL}/rest/v1/entwicklungsziele?spieler_id=eq.${kid}&status=eq.offen&select=ziel&order=created_at.desc`,{headers:sbAuthHeaders()});if(r.ok)goals=(await r.json()).map(z=>z.ziel).filter(Boolean);}catch(e){}}
   const goalsHtml=goals.length?goals.map(g=>`<li style="font-size:12.5px;margin:2px 0">${esc(g)}</li>`).join(""):'<li style="font-size:12.5px;color:#64748b">Noch kein Ziel gesetzt</li>';
   const fazit=berichtFazitFuerEltern(lat.fazit);
   document.getElementById("zert-print").innerHTML=`
@@ -1945,6 +1957,14 @@ const CARD_BADGES={
    und wird hier nur gelesen - ein zweites Verzeichnis waere eine zweite Wahrheit.
    Gebraucht seit v593 von der Team-Galerie, die aus team_gallery_kind() nur noch die
    Merkmalsschluessel bekommt und daraus das Farbthema ableiten muss. */
+/* v636: EINE Regel für die drei Stärken – dieselbe wie staerken_von() in der Datenbank
+   (Wert absteigend, bei Gleichstand Schlüssel alphabetisch, nur Werte > 0). Vorher löste der
+   Browser Gleichstände über die Reihenfolge in CARD_BADGES, die Datenbank alphabetisch: Eltern,
+   Trainer und Kind sahen auf einer 4er-Skala oft verschiedene Abzeichen und Farben. */
+function staerkenAus(v){
+  return Object.keys(CARD_BADGES).map(key=>({key,val:Number(v&&v[key])||0})).filter(x=>x.val>0)
+    .sort((a,b)=>b.val-a.val||(a.key<b.key?-1:a.key>b.key?1:0)).slice(0,3).map(x=>x.key);
+}
 function feldDimVon(key){
   if(!key||typeof DIMS_FELD==="undefined")return null;
   for(const d of DIMS_FELD){
@@ -2113,16 +2133,15 @@ function adlerCardData(name){
   const v=typeof lat.radios==="string"?safeParse(lat.radios,{}):(lat.radios||{});
   const k=getKader(name)||{};
   // Top-3 Staerken (nach Wert; bei Gleichstand egal) – jedes Kind bekommt 3 Badges
-  const strengths=Object.keys(CARD_BADGES).map(key=>({key,val:v[key]||0})).sort((a,b)=>b.val-a.val).slice(0,3);
-  // Design-Farbe: staerkste Dimension (TW -> Gold)
-  const{dims:ds}=calcScores(v,DIMS_FELD);
-  const topDim=Object.entries(ds).sort((a,b)=>b[1]-a[1])[0]||["tech",0];
-  const theme=k.tw?CARD_THEMES.keeper:(CARD_THEMES[topDim[0]]||CARD_THEMES.tech);
+  const strengths=staerkenAus(v).map(key=>({key}));   // v636: gleiche Regel wie Datenbank und Elternkarte
+  // Design-Farbe: Dimension der ersten Stärke (TW -> Gold) – wie auf Eltern- und Kindergerät
+  const dim0=strengths.length&&typeof feldDimVon==="function"?feldDimVon(strengths[0].key):null;
+  const theme=k.tw?CARD_THEMES.keeper:(CARD_THEMES[dim0]||CARD_THEMES.tech);
   const posMap={aufpasser:"Aufpasser",jaeger:"Jäger",flitzer_l:"Flitzer",flitzer_r:"Flitzer"};
   const pos=k.lieblingsposition||(k.tw?"Torwart":(posMap[lat.position]||lat.prim_rolle||"Allrounder"));
   const fussMap={L:"linker Fuß",R:"rechter Fuß",B:"beidfüßig"};
   return {name,nr:k.nr,tw:!!k.tw,geb:k.geb,fotoPath:k.foto_path,pos:cardPosLabel(pos),fuss:fussMap[k.starker_fuss||lat.strong_foot]||"",
-          alter:k.geb?homeAlter(k.geb):(lat.age||null), badges:strengths.map(s=>CARD_BADGES[s.key]), theme, spielerId:k.id};
+          alter:k.geb?homeAlter(k.geb):(lat.age||null), badges:strengths.map(s=>CARD_BADGES[s.key]), theme, spielerId:kaderId(k)};
 }
 function adlerCardDraw(ctx,W,H,d,photoImg){
   // Meilenstein-Theme (Teilnahme, nicht Leistung) überschreibt das Dim-Theme.
@@ -2247,8 +2266,8 @@ function adlerCardDraw(ctx,W,H,d,photoImg){
     ctx.textAlign="center";ctx.font="30px Arial";ctx.fillStyle="rgba(255,255,255,.9)";
     ctx.fillText("✨",W/2,by+48);
     ctx.font="700 13px Arial";ctx.fillStyle="#fff";
-    ctx.fillText("Deine Stärken kommen,",W/2,by+76);
-    ctx.fillText("sobald der Trainer sie einträgt.",W/2,by+94);
+    if(d.fremd){ ctx.fillText("Teil der",W/2,by+76); ctx.fillText("Adler-Familie 🦅",W/2,by+94); }   // v636: kein Hinweis, wer (noch) nicht bewertet ist
+    else{ ctx.fillText("Deine Stärken kommen,",W/2,by+76); ctx.fillText("sobald der Trainer sie einträgt.",W/2,by+94); }
   }
   (d.badges||[]).slice(0,3).forEach((b,i)=>{
     const bx=30+bw*i+bw/2;
@@ -4368,7 +4387,7 @@ function hilfeRender(q){
     return `<div style="margin-top:10px"><div style="font-size:var(--s-klein);font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">${g.cat}</div>`+
       items.map(it=>{const act=it.go?`hilfeClose();go('${it.go}')`:it.run?`hilfeClose();${it.run}`:"";
         return `<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-top:var(--border)">
-          <div style="flex:1;min-width:0"><div style="font-size:var(--s-text);font-weight:700">${esc(it.t)}</div><div style="font-size:var(--s-klein);color:var(--text2);line-height:1.35">${esc(it.d)}</div></div>
+          <div style="flex:1;min-width:0"><div style="font-size:var(--s-text);font-weight:700">${esc(it.t)}</div><div style="font-size:var(--s-klein);color:var(--text2);line-height:1.35">${it.d}</div></div>
           ${act?`<button class="btn btn-sm" onclick="${act}" title="Öffnen"><i class="ti ti-arrow-right"></i></button>`:""}
         </div>`;}).join("")+`</div>`;
   }).join("");
@@ -4691,7 +4710,7 @@ async function kabineCodeSave(btn){
   const code=(el?.value||"").trim();
   if(code.length<4){toast("Mindestens 4 Zeichen","err");return;}
   const hash=await hashPin(code);
-  // Trainer-PIN und Kabinen-Code sind ab Werk beide "1922". Wer den einen kennt, kennt den anderen.
+  // Trainer-PIN und Kabinen-Code sind ab Werk derselbe Wert. Wer den einen kennt, kennt den anderen.
   if(typeof PIN_HASH!=="undefined"&&hash===PIN_HASH){
     if(!confirm("Das ist derselbe Code wie der Trainer-PIN.\n\nWer ihn kennt, kommt damit auch in die Trainer-App.\nTrotzdem verwenden?"))return;
   }
@@ -5040,12 +5059,15 @@ async function renderHome(){
   const homeTool=(label,fn)=>`<button onclick="${fn}" style="flex:1 1 calc(50% - 4px);min-width:140px;min-height:46px;border:1px solid var(--rand-bedien);border-radius:var(--rl);cursor:pointer;font-family:inherit;font-size:var(--s-text);font-weight:700;color:var(--text);background:var(--surface);text-align:left;padding:0 12px">${label}</button>`;
 
   // ── Quick-Stats (sofort, aus lokalen Daten) ──
-  const names=Object.keys(DB||{});
+  /* v636: nur aktive Kinder zählen, und „überfällig“ heißt „bewertet, aber älter als 6 Wochen“.
+     Vorher zählte der Nenner inaktive Kinder und jedes nie bewertete Kind als überfällig –
+     nach dem Saisonstart stand der ganze Kader in Rot. */
+  const names=typeof kaderNamen==="function"?kaderNamen():Object.keys(DB||{});
   const bewertet=names.filter(n=>DB[n]&&DB[n].length).length;
   const cutoff=new Date(Date.now()-42*86400000).toISOString().slice(0,10); // 6 Wochen (Bewertung alle 6 Wochen im Trainermeeting)
-  const stale=KADER.filter(k=>{
-    const s=DB[k.name];
-    if(!s||!s.length)return true;
+  const stale=names.filter(n=>{
+    const s=DB[n];
+    if(!s||!s.length)return false;
     return (s[s.length-1].datum||"0000")<cutoff;
   }).length;
   const statTile=(val,lbl,col,jump)=>`<div role="button" tabindex="0" onclick="${jump}" class="card" style="flex:1;min-width:90px;padding:10px;text-align:center;cursor:pointer">
@@ -5821,21 +5843,28 @@ async function heftFotoDataUrl(path){
    heftBuildHtml(cfg,{mask}) baut das Heft rein – die Nachnamen-Maskierung ist
    bereits eingebaut (Aktivierung folgt in der DSGVO-Etappe). ═══ */
 let heftKader=[], heftFanfacts={}, heftTermin=null, heftFotos=[];
-let heftCfg={titel:"Adler Nest · U9", einleitung:"", fokusId:"", fokusText:"", kommentar:""};
+let heftCfg={titel:"Adler Nest · U9", einleitung:"", fokusId:"", fokusText:"", kommentar:"", mask:true};   // v636: Eltern-Version ist Standard
 function heftCfgLoad(){ try{const s=JSON.parse(localStorage.getItem("adler_heft_cfg")||"null"); if(s&&typeof s==="object")heftCfg=Object.assign(heftCfg,s);}catch(e){} }
 function heftCfgSave(){ try{localStorage.setItem("adler_heft_cfg",JSON.stringify(heftCfg));}catch(e){} }
 // DSGVO: Nachname zu Initiale kürzen ("Max Mustermann" -> "Max M."); Einzelnamen bleiben.
 function heftMaskName(name){ const p=String(name||"").trim().split(/\s+/); if(p.length<2)return p[0]||""; return p[0]+" "+p[p.length-1].charAt(0).toUpperCase()+"."; }
+/* v636: Die Eltern-Version (maskiert) ist die, die ausgehängt und verteilt wird. Dort gelten
+   dieselben Regeln wie im digitalen Heft: Foto und Jahrgang nur mit der Freigabe „öffentlich“. */
+function heftOeffentlichOk(k){ return !!(k&&k.foto_stadionheft_ok); }
+function heftJahrgang(k){ const j=String((k&&k.geb)||"").slice(0,4); return /^\d{4}$/.test(j)?j:""; }
 function heftBuildHtml(cfg,opts){
   opts=opts||{}; const mask=!!opts.mask; const nm=n=>mask?heftMaskName(n):n;
+  const fotoVon=i=>(!mask||heftOeffentlichOk(heftKader[i]))?heftFotos[i]:null;
+  const jgVon=k=>(!mask||heftOeffentlichOk(k))?heftJahrgang(k):"";
   const cards=heftKader.map((k,i)=>{
-    const foto=heftFotos[i];
+    const foto=fotoVon(i), jg=jgVon(k);
     const initialen=(k.name||"?").trim().slice(0,1).toUpperCase();
     const spitz=heftFanfacts[k.id];
     const pos=k.lieblingsposition?cardPosLabel(k.lieblingsposition):(k.tw?"Torwart":"");
     return `<div class="heft-card">
       <div class="heft-foto">${foto?`<img src="${foto}" alt="">`:`<span>${esc(initialen)}</span>`}${k.nr!=null?`<div class="heft-nr">${esc(k.nr)}</div>`:""}</div>
       <div class="heft-name">${esc(nm(k.name))}${k.tw?" 🥅":""}</div>
+      ${jg?`<div class="heft-spitz">Jahrgang ${esc(jg)}</div>`:""}
       ${spitz?`<div class="heft-spitz">„${esc(spitz)}"</div>`:""}
       ${pos?`<div class="heft-pos">${esc(pos)}</div>`:""}
     </div>`;
@@ -5851,13 +5880,13 @@ function heftBuildHtml(cfg,opts){
   if(cfg.fokusId){
     const idx=heftKader.findIndex(k=>String(k.id)===String(cfg.fokusId));
     if(idx>=0){
-      const k=heftKader[idx], foto=heftFotos[idx];
+      const k=heftKader[idx], foto=fotoVon(idx), jg=jgVon(k);
       const initialen=(k.name||"?").trim().slice(0,1).toUpperCase();
       fokusHtml=`<div class="heft-fokus">
         <div class="heft-fokus-foto">${foto?`<img src="${foto}" alt="">`:`<span>${esc(initialen)}</span>`}</div>
         <div class="heft-fokus-body">
           <div class="heft-fokus-badge">⭐ Spieler im Fokus</div>
-          <div class="heft-fokus-name">${esc(nm(k.name))}${k.nr!=null?` · #${esc(k.nr)}`:""}</div>
+          <div class="heft-fokus-name">${esc(nm(k.name))}${k.nr!=null?` · #${esc(k.nr)}`:""}${jg?` · Jahrgang ${esc(jg)}`:""}</div>
           ${cfg.fokusText&&cfg.fokusText.trim()?`<div class="heft-fokus-text">${esc(cfg.fokusText).replace(/\n/g,"<br>")}</div>`:""}
         </div></div>`;
     }
@@ -5898,7 +5927,7 @@ async function stadionheftOpen(){
   try{const ab=new Date(Date.now()-60*864e5).toISOString();
     const r=await fetch(`${SB_URL}/rest/v1/kabine_reporter?select=id,spieler_id,frage,antwort,freigegeben,created_at&created_at=gte.${ab}&order=created_at.desc`,{headers:sbAuthHeaders()});
     if(r.ok)window._heftReporter=(await r.json())||[];}catch(e){}
-  try{const r=await fetch(`${SB_URL}/rest/v1/kader?select=id,name,nr,foto_path,lieblingsposition,tw,aktiv&order=nr.asc.nullslast`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)heftKader=(await r.json()).filter(k=>k.aktiv!==false);}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/kader?select=id,name,nr,geb,foto_path,foto_stadionheft_ok,lieblingsposition,tw,aktiv&order=nr.asc.nullslast`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)heftKader=(await r.json()).filter(k=>k.aktiv!==false);}catch(e){}
   if(!heftKader.length){toast("Kein Kader gefunden","err");return;}
   try{const r=await fetch(`${SB_URL}/rest/v1/kind_fanfacts?select=spieler_id,spitzname`,{headers:sbAuthHeaders()});if(r.ok)(await r.json()).forEach(f=>{if(f.spitzname)heftFanfacts[f.spieler_id]=f.spitzname;});}catch(e){}
   const heute=new Date().toISOString().slice(0,10);
@@ -5975,7 +6004,7 @@ function heftRenderEditor(){
     </div>
     <label style="display:flex;align-items:flex-start;gap:8px;margin-top:12px;padding:9px 11px;background:var(--surface2);border:var(--border-s);border-radius:10px;cursor:pointer">
       <input type="checkbox" id="heft-f-mask" ${heftCfg.mask?"checked":""} style="margin-top:2px;width:18px;height:18px;flex:0 0 auto">
-      <span style="font-size:var(--s-text);color:var(--text)"><strong>🔒 Eltern-Version (Nachnamen maskiert)</strong><br><span style="font-size:var(--s-klein);color:var(--text2)">DSGVO: Fürs Verteilen/Aushängen werden Nachnamen zu „Max M." gekürzt. Für die interne Trainer-Version aus lassen.</span></span>
+      <span style="font-size:var(--s-text);color:var(--text)"><strong>🔒 Eltern-Version (Nachnamen maskiert)</strong><br><span style="font-size:var(--s-klein);color:var(--text2)">Fürs Verteilen und Aushängen: Nachnamen werden zu „Max M.“ gekürzt, Foto und Jahrgang erscheinen nur mit der Freigabe „öffentlich“. Nur für die interne Trainer-Version ausschalten.</span></span>
     </label>
     <label style="display:flex;align-items:flex-start;gap:8px;margin-top:8px;padding:9px 11px;background:${heftCfg.published?"#dcfce7":"var(--surface2)"};border:var(--border-s);border-radius:10px;cursor:pointer">
       <input type="checkbox" id="heft-f-pub" ${heftCfg.published?"checked":""} style="margin-top:2px;width:18px;height:18px;flex:0 0 auto">
@@ -6070,6 +6099,7 @@ async function renderStadionheftView(){
     return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:10px;text-align:center">
       <div style="width:64px;margin:0 auto 6px;position:relative">${avatar(sp,64)}${sp.nr!=null?`<div style="position:absolute;bottom:-2px;right:-2px;min-width:20px;height:20px;background:#facc15;color:#1e293b;border-radius:10px;border:2px solid #fff;font-size:var(--s-klein);font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 3px">${esc(sp.nr)}</div>`:""}</div>
       <div style="font-size:var(--s-karte);font-weight:800;color:#1e293b">${esc(sp.name)}${sp.tw?" 🥅":""}</div>
+      ${sp.jahrgang?`<div style="font-size:var(--s-klein);color:#64748b">Jahrgang ${esc(sp.jahrgang)}</div>`:""}
       ${sp.spitzname?`<div style="font-size:var(--s-klein);color:#64748b;font-style:italic">„${esc(sp.spitzname)}"</div>`:""}
       ${pos?`<div style="font-size:var(--s-klein);color:var(--blue-text);font-weight:700">${esc(pos)}</div>`:""}
     </div>`;
@@ -6078,7 +6108,7 @@ async function renderStadionheftView(){
   const fokusHtml=fk?`<div style="display:flex;gap:12px;align-items:center;background:linear-gradient(135deg,#fef9c3,#fef3c7);border:1px solid #fde047;border-radius:14px;padding:12px;margin-bottom:12px">
     <div style="flex:0 0 auto">${avatar(fk,66)}</div>
     <div><div style="font-size:var(--s-klein);font-weight:800;color:#a16207;text-transform:uppercase;letter-spacing:.5px">⭐ Spieler im Fokus</div>
-      <div style="font-size:var(--s-karte);font-weight:900;color:#1e293b">${esc(fk.name)}${fk.nr!=null?" · #"+esc(fk.nr):""}</div>
+      <div style="font-size:var(--s-karte);font-weight:900;color:#1e293b">${esc(fk.name)}${fk.nr!=null?" · #"+esc(fk.nr):""}${fk.jahrgang?" · Jahrgang "+esc(fk.jahrgang):""}</div>
       ${fk.text?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:2px;line-height:1.4">${esc(fk.text).replace(/\n/g,"<br>")}</div>`:""}</div></div>`:"";
   const nestLbl=t=>`<div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin:16px 4px 8px">${t}</div>`;
   // I-C: Kabinen-Reporter-Rubrik (RPC reporter_public: nur Freigegebenes, Namen serverseitig maskiert)
@@ -6207,12 +6237,12 @@ function _kachelInhalt(key){
     ],col)
     +`<div id="kachel-turnier"></div>`;
   if(key==="team"){
-    const names=Object.keys(DB||{});
+    const names=typeof kaderNamen==="function"?kaderNamen():Object.keys(DB||{});   // v636: nur aktive Kinder
     const bewertet=names.filter(n=>DB[n]&&DB[n].length).length;
     const cutoff=new Date(Date.now()-42*86400000).toISOString().slice(0,10);
-    const stale=KADER.filter(x=>{const s=DB[x.name];if(!s||!s.length)return true;return (s[s.length-1].datum||"0000")<cutoff;}).length;
+    const stale=names.filter(n=>{const s=DB[n];if(!s||!s.length)return false;return (s[s.length-1].datum||"0000")<cutoff;}).length;
     const tile=(v,l,c,arg)=>`<button onclick="kachelRun('go','${arg}')" style="flex:1;min-width:90px;min-height:72px;border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface);padding:10px;text-align:center;cursor:pointer;font-family:inherit"><div style="font-size:var(--s-seite);font-weight:900;color:${c}">${v}</div><div style="font-size:var(--s-text);color:var(--text2);font-weight:700">${l}</div></button>`;
-    return `<div style="display:flex;gap:10px;margin-bottom:4px">${tile(KADER.length,"Kader","var(--blue-text)","kader")}${tile(bewertet+"/"+KADER.length,"bewertet","var(--green)","bew")}${tile(stale,"überfällig","var(--red)","bew")}</div>
+    return `<div style="display:flex;gap:10px;margin-bottom:4px">${tile(names.length,"Kader","var(--blue-text)","kader")}${tile(bewertet+"/"+names.length,"bewertet","var(--green)","bew")}${tile(stale,"älter als 6 Wo.","var(--red)","bew")}</div>
       <div id="home-antifrust"></div><div id="home-birthday"></div><div id="home-radar"></div>`
       +kSec("Spieler")
       +kTiles([

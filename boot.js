@@ -371,6 +371,11 @@ function bootSeiteZurueck(){
    Uebungsdatenbank des Trainers und hat auf einem Kindergeraet nichts zu suchen. */
 if(typeof _kindGeraet==="function"&&_kindGeraet()){
   loadKader().catch(()=>{});
+}else if(/\/eltern\//.test(location.pathname)){
+  /* v636: Dasselbe für den Eltern-Einstieg. loadDB() fragte auch dort `spielerprofile?select=*`
+     ab – die RLS gibt Eltern nichts, aber die Anfrage gehört nicht in eine Eltern-Sitzung. */
+  loadKader().catch(()=>{});
+  loadCustomForms();
 }else{
   loadKader().then(()=>loadDB()).then(()=>{if(!bootSeiteZurueck()&&curSection==="home")renderHome();}).then(()=>teamSyncLoad()).then(()=>{if(typeof showMilestoneHint==="function")setTimeout(showMilestoneHint,1500);}); // Kader (Supabase) zuerst, dann G1 + KI-Light + Home-Stats
   loadCustomForms();
@@ -2950,7 +2955,7 @@ function tpWarmMinus(si){
 /* ═══════════════════════════════════
    PIN GATE
 ═══════════════════════════════════ */
-const PIN_HASH="2c1f3f5f6523af84fde4af934caa1126ae6bcebacd36e397fbddcb8a620c1d73"; // SHA-256("1922") – PIN ist nur UI-Sichtschutz, echte Zugriffskontrolle: Supabase RLS (Block I)
+const PIN_HASH="2c1f3f5f6523af84fde4af934caa1126ae6bcebacd36e397fbddcb8a620c1d73"; // SHA-256 der Vorgabe-PIN (v636: Klartext entfernt) – PIN ist nur UI-Sichtschutz, echte Zugriffskontrolle: Supabase RLS (Block I)
 const PIN_SESSION_KEY="adler_pin_ok";
 try{const d=document.getElementById("pin-diag");if(d){d.textContent="Bereit ✓";
   if(window.caches)caches.keys().then(ks=>{const v=ks.find(k=>k.indexOf("u9i-adler")===0);if(v)d.textContent="Bereit ✓ · "+v.replace("u9i-adler-","");}).catch(()=>{});
@@ -3154,18 +3159,42 @@ async function pinCheck(){
       back.id="quiz-back"; back.type="button"; back.textContent="← Zurück zur Kabine";
       // Zurueck in den KINDER-Modus, nicht ins Eltern-Dashboard: das Flag ueberlebt das
       // replaceState der ?portal-Route, elternDashLoad oeffnet danach direkt die Kabine.
-      back.onclick=()=>{try{sessionStorage.setItem("adler_open_kabine","1");}catch(e){} location.href=location.pathname+"?portal";};
-      // Das 60-Minuten-Limit der Kabine muss auch hier greifen - sonst haette ein Kind
-      // ueber den Quiz-Umweg unbegrenzt Zeit.
-      const kabLimit=setInterval(()=>{
-        if(typeof kabineZeitRestMin!=="function")return;
-        if(kabineZeitRestMin()<=0){
-          clearInterval(kabLimit);
-          if(typeof kabineAktivSet==="function")kabineAktivSet(false);
-          try{localStorage.removeItem("adler_kabine_start");}catch(e){}
-          location.href=location.pathname+"?portal";
-        }
-      },30000);
+      /* v636: Auf dem Kindergerät führt der Rückweg in die Kabine des Kindes (?kinder), nicht in
+         den Eltern-Login (?portal) – das war eine Sackgasse mit E-Mail-Feld. */
+      const kindGeraet=typeof _kindGeraet==="function"&&_kindGeraet();
+      back.onclick=()=>{
+        if(kindGeraet){ location.href=location.pathname+"?kinder"; return; }
+        try{sessionStorage.setItem("adler_open_kabine","1");}catch(e){} location.href=location.pathname+"?portal";
+      };
+      if(kindGeraet){
+        /* v636: Auch im Quiz zählt die Appzeit des Kindergeräts – beim Server, wie in der Kabine.
+           Vorher lief hier gar keine Uhr: über ?quiz&from=kabine war unbegrenzt Zeit. */
+        (async()=>{
+          const s=(typeof kgStatus==="function")?await kgStatus():null;
+          if(s&&typeof s.rest_min==="number"&&s.rest_min<=0){ location.href=location.pathname+"?kinder"; return; }
+          window._kindGeraetModus=true;
+          setInterval(async()=>{
+            if(document.visibilityState==="hidden"||typeof kgTick!=="function")return;
+            const d=await kgTick();
+            if(d&&typeof d.rest_min==="number"&&d.rest_min<=0)location.href=location.pathname+"?kinder";
+          },60000);
+        })();
+      }else{
+        // Das 60-Minuten-Limit der Kabine muss auch hier greifen - sonst haette ein Kind
+        // ueber den Quiz-Umweg unbegrenzt Zeit.
+        const kabLimit=setInterval(()=>{
+          if(typeof kabineZeitRestMin!=="function")return;
+          if(kabineZeitRestMin()<=0){
+            clearInterval(kabLimit);
+            if(typeof kabineAktivSet==="function")kabineAktivSet(false);
+            try{localStorage.removeItem("adler_kabine_start");}catch(e){}
+            /* v636: gesperrt zurück – wie kabineZeitEnde (v609). Vorher landete das Kind ohne
+               Code im Eltern-Dashboard (absagen, Notfallkarte, abmelden). */
+            try{localStorage.setItem("adler_kabine_gesperrt","1");}catch(e){}
+            location.href=location.pathname+"?portal";
+          }
+        },30000);
+      }
       back.style.cssText="position:fixed;bottom:12px;left:12px;z-index:9990;padding:10px 14px;border:none;border-radius:12px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35)";
       document.body.appendChild(back);
     }
@@ -3186,7 +3215,7 @@ async function pinCheck(){
   }
   /* Der ELTERN-Einstieg darf NIE das Trainer-PIN-Gate zeigen: unbekannte Routen
      (z. B. ein verunglückter ?kabine-Link) landen sonst vor "Zugang zum Trainerstab-
-     Tool" - und der Kabinen-Code 1922 wirkt dort "kaputt". Immer ins Portal umleiten. */
+     Tool" - und der Kabinen-Code wirkt dort "kaputt". Immer ins Portal umleiten. */
   if(location.pathname.includes("/eltern")){
     const q=location.search&&location.search.length>1?location.search+"&portal":"?portal";
     location.replace(location.pathname+q); return; // Query bleibt erhalten (Deep-Links)
@@ -3878,7 +3907,9 @@ function teamAggregate(){
        z. B. bei Alt-Datensätzen mit inzwischen umbenannten Kriterien. Ohne diesen Filter
        zog jeder solche Spieler den Team-Schnitt als „0 %"-Bewertung nach unten und
        verfälschte damit die Schwerpunkt-Empfehlung. */
-    dimKeys.forEach(k=>{if(pd.ds[k]!=null&&pd.ds[k]>0){sums[k]+=pd.ds[k];counts[k]++;}});
+    /* v636: calcScores liefert für „nicht bewertet“ jetzt null. 0 heißt „überall Ansatz“ und
+       gehört in den Schnitt – vorher fielen genau die Kinder mit dem größten Bedarf heraus. */
+    dimKeys.forEach(k=>{if(pd.ds[k]!=null){sums[k]+=pd.ds[k];counts[k]++;}});
   });
   const avg={},n=Object.keys(DB).length;
   dimKeys.forEach(k=>{avg[k]=counts[k]?Math.round(sums[k]/counts[k]):null;});

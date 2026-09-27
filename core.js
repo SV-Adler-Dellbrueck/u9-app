@@ -343,7 +343,7 @@ let lastSyncTs=null; // L4
 // Platz ohne Netz speichert – wird beim nächsten Online-Kontakt automatisch nachgereicht.
 const PENDING_SAVES_KEY="adler_pending_saves";
 function queuePendingSave(row){
-  const q=safeParse(localStorage.getItem(PENDING_SAVES_KEY),[])||[];
+  const q=(safeParse(localStorage.getItem(PENDING_SAVES_KEY),[])||[]).filter(r=>!(r&&r.name===row.name&&r.datum===row.datum));   // v636: gleicher Stichtag ersetzt
   q.push(row);
   localStorage.setItem(PENDING_SAVES_KEY,JSON.stringify(q));
 }
@@ -353,7 +353,7 @@ async function flushPendingSaves(){
   const remaining=[];
   for(const row of q){
     try{
-      const res=await fetch(`${SB_URL}/rest/v1/spielerprofile`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=representation'}),body:JSON.stringify(row)});
+      const res=await fetch(`${SB_URL}/rest/v1/spielerprofile?on_conflict=name,datum`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=representation,resolution=merge-duplicates'}),body:JSON.stringify(row)});   // v636: Upsert wie savePlayer
       if(!res.ok)remaining.push(row);
     }catch(e){remaining.push(row);}
   }
@@ -468,14 +468,19 @@ async function savePlayer(){
     attendance:meta.att,strong_foot:meta.foot,notes:meta.notes,
     eltern:meta.eltern,age:meta.age,grp:meta.grp,trainer:meta.trainer,
     fazit:result.text,summary:result.summary,tw:meta.tw,
-    scores:JSON.stringify(Object.values(result.dims)),
+    /* v636: Torwart-Kinder bekommen ihre zwei TW-Dimensionen mit – Profil und Verlauf zeichnen
+       sieben Achsen, gespeichert waren nur fünf (TW-Achsen standen immer auf 0 %). */
+    scores:JSON.stringify(meta.tw?[...Object.values(result.dims),...Object.values(calcScores(v,DIMS_TW).dims)]:Object.values(result.dims)),
     total_score:result.total,pot_score:result.pot,
     radios:JSON.stringify(v)
   };
   const saveBtn=document.querySelector('button[onclick="savePlayer()"]'); // C9: Doppelklick-Schutz
   if(saveBtn)saveBtn.disabled=true;
   try{
-    const res=await fetch(`${SB_URL}/rest/v1/spielerprofile`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=representation','X-Client-Info':'supabase-js/2.0.0'}),body:JSON.stringify(row)});
+    /* v636: Der Primärschlüssel ist (name, datum). Ein zweites Speichern am selben Stichtag –
+       Korrektur im Meeting, „Profil bearbeiten“ – scheiterte vorher mit 409. Jetzt ersetzt es
+       den Stand dieses Tages: ein Kind, ein Stichtag, ein Stand. */
+    const res=await fetch(`${SB_URL}/rest/v1/spielerprofile?on_conflict=name,datum`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=representation,resolution=merge-duplicates','X-Client-Info':'supabase-js/2.0.0'}),body:JSON.stringify(row)});
     if(sbCheck401(res)){showSt("save-status","Anmeldung abgelaufen – bitte neu anmelden und erneut speichern.","err");return;}
     if(res.ok||res.status===201||res.status===204){
       showSt("save-status",`${meta.name} gespeichert – ${result.tw?"TW+":""}${result.rolle?.primLabel} (${result.total}%) – ${meta.trainer}`,"ok");
@@ -491,6 +496,7 @@ async function savePlayer(){
     // Offline auf dem Platz: Bewertung nicht verwerfen, sondern lokal für später vormerken
     queuePendingSave(row);
     showSt("save-status",`${meta.name}: Offline gespeichert – wird automatisch hochgeladen, sobald wieder Netz da ist.`,"info");
+    if(typeof bewRundeAdvance==="function")bewRundeAdvance();   // v636: auch offline zum nächsten Kind
   }
   finally{if(saveBtn)saveBtn.disabled=false;}
 }

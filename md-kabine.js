@@ -92,6 +92,12 @@ async function kabineZeitTick(){
     const d=await kgTick();
     if(d&&typeof d.rest_min==="number")_kgRestMin=d.rest_min;
   }
+  kabineZeitAnzeige();
+}
+/* v636: Nur anzeigen, nichts buchen. kabineHome() rief vorher kabineZeitTick() – auf dem
+   Kindergerät kostete damit jeder Rücksprung zur Startseite eine Minute Appzeit (10× zurück
+   in einer Sekunde = 10 Minuten). Gebucht wird ausschließlich im Minutentakt. */
+function kabineZeitAnzeige(){
   const rest=kabineZeitRestMin();
   if(rest<=0){ kabineZeitEnde(); return; }
   const el=document.getElementById("kab-zeit");
@@ -761,7 +767,7 @@ function kabineHome(){
   kabinePackLoad();                                             // H3: Spieltag-Packliste
   kabinePostLoad();                                             // I-A: 📬 Adler-Post (Kudos + Genesungsgrüße)
   kabineWahlLoad();                                             // I-A: 🗳️ Kabinen-Wahl
-  kabineZeitTick();                                             // Restzeit-Hinweis
+  kabineZeitAnzeige();                                          // Restzeit-Hinweis (v636: ohne Buchung)
   // kabineStimmungLoad();  // H2 – vom PO vorerst ausgeblendet                                         // H2: Kinder-Stimmungs-Check
   kabineMilestoneLoad();                                        // H7: frische Team-Meilensteine feiern
 }
@@ -1516,6 +1522,7 @@ function galleryCardData(g){
   return {name:g.name,nr:g.nr,tw:!!g.tw,fotoPath:g.foto_path,spitzname:g.spitzname||null,
     pos:g.tw?"Torwart":"",fuss:"",alter:null,
     badges:keys.map(k=>CARD_BADGES[k]),theme,
+    fremd:g.staerken==null,   // v636: fremde Karten tragen keine Stärken mehr (team_gallery_kind liefert null)
     counts:{trainings:g.trainings||0,tore:null,paraden:null,aktionen:null,spiele:null,quizRichtig:0,quizBloecke:0}};
 }
 // Erwachsenen-Gate der Kabine: fester Code statt Rechenaufgabe (die war für U9 zu leicht).
@@ -1525,7 +1532,7 @@ function galleryCardData(g){
    sich in Millisekunden durchprobieren. Die echte Zugriffskontrolle macht die RLS.
    Der Hash wird zwischengespeichert, damit die Kabine auch ohne Netz aufgeht. */
 const KABINE_HASH_KEY="adler_kabine_hash";
-const KABINE_HASH_FALLBACK="2c1f3f5f6523af84fde4af934caa1126ae6bcebacd36e397fbddcb8a620c1d73"; // "1922", nur bis zum ersten Laden
+const KABINE_HASH_FALLBACK="2c1f3f5f6523af84fde4af934caa1126ae6bcebacd36e397fbddcb8a620c1d73"; // Vorgabe, nur bis zum ersten Laden (v636: Klartext aus dem Kommentar entfernt)
 async function kabineCodeHash(){
   if(sbToken()){
     try{
@@ -1571,8 +1578,16 @@ function kabineCodeDots(){
   const d=document.getElementById("kabexit-dots"); if(!d)return;
   d.innerHTML=[0,1,2,3].map(i=>`<span style="width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:${i<_kabCode.length?"#fff":"transparent"}"></span>`).join("");
 }
+/* v636: Bremse gegen Durchprobieren. Nach drei falschen Codes eine Minute Pause, danach jeder
+   weitere Fehler wieder eine Minute. Überlebt ein Neuladen (localStorage). Kein echter Schutz –
+   den macht die RLS –, aber ein Kind probiert 10 000 Codes nicht mehr in ein paar Minuten durch. */
+const KABCODE_FEHL_KEY="adler_kabcode_fehl";
+function kabineCodePause(){ try{ const f=JSON.parse(localStorage.getItem(KABCODE_FEHL_KEY)||"{}"); return (f.bis||0)>Date.now()?Math.ceil((f.bis-Date.now())/1000):0; }catch(e){ return 0; } }
+function kabineCodeFehler(){ try{ const f=JSON.parse(localStorage.getItem(KABCODE_FEHL_KEY)||"{}"); f.n=(f.n||0)+1; if(f.n>=3)f.bis=Date.now()+60000; localStorage.setItem(KABCODE_FEHL_KEY,JSON.stringify(f)); }catch(e){} }
 async function kabineCodeTip(t){
   const err=document.getElementById("kabexit-err"); if(err)err.textContent="";
+  const pause=kabineCodePause();
+  if(pause){ _kabCode=""; kabineCodeDots(); if(err)err.textContent=`Zu viele Versuche – bitte ${pause} Sekunden warten.`; return; }
   if(t==="del"){ _kabCode=_kabCode.slice(0,-1); kabineCodeDots(); return; }
   if(_kabCode.length>=4)return;
   _kabCode+=String(t);
@@ -1585,6 +1600,7 @@ async function kabineCodeTip(t){
   try{ [eingabe,soll]=await Promise.all([hashPin(_kabCode),kabineCodeHash()]); }
   catch(e){ _kabCode=""; kabineCodeDots(); if(err)err.textContent="Der Code lässt sich gerade nicht prüfen. Bitte die Seite neu laden."; return; }
   if(eingabe===soll){
+    try{localStorage.removeItem(KABCODE_FEHL_KEY);}catch(e){}
     isKidsMode=false; kabineAktivSet(false); kabSubConsume();
     clearInterval(window._kabZeitTimer); window._kabZeitTimer=null;
     try{localStorage.removeItem(KABINE_START_KEY);}catch(e){}
@@ -1597,7 +1613,8 @@ async function kabineCodeTip(t){
     }
   }else{
     _kabCode=""; kabineCodeDots();
-    if(err)err.textContent="Falscher Code - die Kabine bleibt zu.";
+    kabineCodeFehler();
+    if(err)err.textContent=kabineCodePause()?"Falscher Code – jetzt eine Minute Pause.":"Falscher Code - die Kabine bleibt zu.";
     try{navigator.vibrate&&navigator.vibrate([40,60,40]);}catch(e){}
   }
 }
@@ -1811,14 +1828,16 @@ async function kgAnmelden(){
   }catch(e){ return null; }
 }
 
+let _kgNetzFehler=false;              // v636: kein Netz ≠ nicht gekoppelt
 async function kgStatus(){
+  _kgNetzFehler=false;
   if(!kgToken())return null;
   try{
     const r=await fetch(`${SB_URL}/rest/v1/rpc/kind_status`,{method:"POST",headers:kgHeaders(),body:"{}"});
-    if(!r.ok)return null;
+    if(!r.ok){ if(r.status>=500)_kgNetzFehler=true; return null; }
     const d=await r.json();
     return (d&&d.ok)?d:null;
-  }catch(e){ return null; }
+  }catch(e){ _kgNetzFehler=true; return null; }
 }
 
 /* Einstieg der Route. Ohne Kopplung der Ziffernbildschirm, mit Kopplung die Kabine. */
@@ -1826,6 +1845,19 @@ async function kinderGeraetStart(){
   document.body.style.background="#0f172a";
   const s=await kgStatus();
   if(s)return kgKabine(s);
+  /* v636: Ohne Netz zeigte ein gekoppeltes Gerät den Kopplungsbildschirm („Deine Eltern zeigen dir
+     einen Code …“) – als wäre die Kopplung weg. Jetzt: ein eigener Bildschirm mit „Nochmal“. */
+  if(_kgNetzFehler&&kgToken()){
+    document.getElementById("kg-kopplung")?.remove();
+    const m=document.createElement("div"); m.id="kg-kopplung";
+    m.style.cssText="position:fixed;inset:0;z-index:10060;background:linear-gradient(160deg,#0f172a,#1e3a8a);color:#fff;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center";
+    m.innerHTML=`<div style="max-width:320px"><div style="font-size:58px">📶</div>
+      <div style="font-size:21px;font-weight:900;margin-top:10px">Gerade kein Internet</div>
+      <div style="font-size:15px;line-height:1.6;margin-top:10px;color:#dbeafe">Die Kabine braucht kurz Netz. Gleich nochmal probieren!</div>
+      <button onclick="kinderGeraetStart()" style="margin-top:18px;min-height:56px;padding:12px 26px;border:none;border-radius:14px;background:#fbbf24;color:#1e293b;font-family:inherit;font-size:17px;font-weight:900;cursor:pointer">Nochmal</button></div>`;
+    document.body.appendChild(m);
+    return;
+  }
   kgKopplungsbildschirm();
 }
 

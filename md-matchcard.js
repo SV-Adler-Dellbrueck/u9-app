@@ -10,8 +10,9 @@ async function renderElternView(datum){
   try{
     const heute=new Date().toISOString().slice(0,10);
     const url=datum
-      ? `${SB_URL}/rest/v1/matchday?datum=eq.${encodeURIComponent(datum)}&published=eq.true&select=*`
-      : `${SB_URL}/rest/v1/matchday?datum=gte.${heute}&published=eq.true&select=*&order=datum.asc&limit=1`;
+      /* v636: ausdrückliche Spalten statt * – delegate_token ist für Anonyme nicht mehr lesbar. */
+      ? `${SB_URL}/rest/v1/matchday?datum=eq.${encodeURIComponent(datum)}&published=eq.true&select=datum,gegner,treffpunkt,anpfiff,ort,maps_link,trikot,obst,infos,published,updated_at,typ,gegner_adresse,half,clock_status,started_at,paused_ms,ticker_open,spieldauer_min,halbzeiten`
+      : `${SB_URL}/rest/v1/matchday?datum=gte.${heute}&published=eq.true&select=datum,gegner,treffpunkt,anpfiff,ort,maps_link,trikot,obst,infos,published,updated_at,typ,gegner_adresse,half,clock_status,started_at,paused_ms,ticker_open,spieldauer_min,halbzeiten&order=datum.asc&limit=1`;
     const r=await fetch(url,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
     const rows=r.ok?await r.json():[];
     if(!rows.length){root.innerHTML=elternEmpty("Aktuell ist kein Spieltag hinterlegt.<br>Schau bald wieder rein!","📅");return;}
@@ -118,9 +119,11 @@ async function renderDelegateView(token){
   root.innerHTML='<div style="text-align:center;padding:48px;color:#64748b">Lade...</div>';
   let m=null;
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/matchday?delegate_token=eq.${encodeURIComponent(token)}&select=*`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    /* v636: Der Helfer-Link sucht seinen Spieltag über eine Funktion. Vorher war die ganze Tabelle
+       samt aller Helfer-Codes für jeden lesbar – wer einen Code las, konnte in den Ticker schreiben. */
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/matchday_by_token`,{method:"POST",headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_token:token})});
     const rows=r.ok?await r.json():[];
-    m=rows[0]||null;
+    m=(Array.isArray(rows)?rows[0]:rows)||null;
   }catch(e){}
   // v468: Der Helfer kann nur tickern, wenn der Trainer den Ticker gestartet hat.
   if(!m||m.ticker_open!==true){

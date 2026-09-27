@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v635 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v636 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -83,7 +83,7 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 | **Einladungskarten** | Je Kind eine gedruckte Karte mit QR-Code, vier pro A4-Seite. Eltern scannen, legen E-Mail und Passwort fest und sind sofort angemeldet und dem Kind zugeordnet. Eine Karte gilt für zwei Elternteile bis zum gewählten Datum; neu drucken macht die alte ungültig. | Ein Elternabend genügt: keine Adressen vorab eintragen, kein Mailversand, kein Warten auf Codes. |
 | **Eltern-Einladung & Delegation** | Eltern per Link und Einmal-Code einladen; Abholberechtigung an Dritte delegieren. | Zweiter Weg neben der Karte, Verantwortung nachvollziehbar übertragen. |
 | **Kinder-App koppeln** | Code erzeugen, gekoppelte Geräte sehen, tägliche Appzeit einstellen, Gerät trennen. | Die Kabine läuft auf dem Gerät des Kindes, die Kontrolle bleibt bei den Eltern. |
-| **Adler Nest (Stadionheft)** | Digitales Stadionheft aus Spielbericht, Reporter-Rubrik der Kinder und Sammelkarten – erstellen und drucken. | Ein greifbares Erinnerungsstück je Spieltag, mit maskierten Namen auch öffentlich zeigbar. |
+| **Adler Nest (Stadionheft)** | Digitales Stadionheft aus Spielbericht, Reporter-Rubrik der Kinder und Sammelkarten – erstellen und drucken. | Ein greifbares Erinnerungsstück je Spieltag, mit maskierten Namen auch öffentlich zeigbar. Seit v636 zeigt jede Spielerkarte Vorname, Nachnamen-Initiale und – mit der Foto-Freigabe „öffentlich“ – Foto und Jahrgang (nie das Geburtsdatum); das gilt digital und für die gedruckte Eltern-Version, die jetzt Standard ist. |
 | **Adler-Welt-Hub** | Federn je Kind, Sammelkarten, Technik-Abzeichen, Wochen-Challenge (Skill der Woche) an einem Ort. | Das Motivationssystem für die Kinder wird vom Trainer an einer Stelle gesteuert. |
 | **Kabinen-Wahl** | Trainer legt Optionen fest (Song, Motto, Spielform), die Kinder stimmen ab. | Mitbestimmung, die Kinder ernst nimmt – mit einem klaren Rahmen. |
 | **Urkunden-Studio** | Saison-Urkunden für alle Kinder in einem Druck, freie Anlass-Urkunde. | Wertschätzung ohne Bastelabend. |
@@ -185,7 +185,7 @@ Kinder sehen nie Bewertungen und nie Zahlen zu anderen Kindern. Was die Kabine �
 
 | Thema | Umsetzung | Nutzen |
 |---|---|---|
-| **Datenschutz** | Row-Level-Security in der Datenbank: Eltern sehen nur eigene Kinder, Kinder nie Bewertungen, Trainermeetings nur für Trainer. Foto-Freigaben werden überall respektiert. Das öffentliche Repo enthält keine personenbezogenen Daten. | DSGVO-konform ohne Papierkram. Vertrauen der Eltern. |
+| **Datenschutz** | Row-Level-Security in der Datenbank: Eltern sehen nur eigene Kinder, Kinder nie Bewertungen, Trainermeetings nur für Trainer. Foto-Freigaben werden überall respektiert. Das öffentliche Repo enthält keine personenbezogenen Daten. Seit v636 (Datenschutz-Audit): Zugriff nur für Mitglieder (Trainer, Eltern mit hinterlegtem Kind, gekoppeltes Kindergerät) – eine angemeldete Sitzung allein reicht nicht mehr; keine Bewertungsrohwerte an Eltern; Galerie ohne Stärken und Trainingszahlen fremder Kinder; öffentliche Fotos nur mit Freigabe „öffentlich“; KI-Dienste bekommen keine Kindernamen und keine Geburtsdaten; Helfer-Codes des Tickers nicht mehr öffentlich lesbar; Einwilligungstext nennt alle Dienste. | DSGVO-konform ohne Papierkram. Vertrauen der Eltern. |
 | **Push-Benachrichtigungen** | Erinnerungen an Termine, Ansagen und offene Rückmeldungen. | Weniger Nachfragen, höhere Rückmeldequote. |
 | **Offline-Fähigkeit** | Die App läuft ohne Netz weiter, Inhaltslisten haben einen lokalen Fallback. | Am Platz ohne Empfang bleibt alles bedienbar. |
 | **Sprach-Eingabe** | Notizen, Bewertungen und Übungsbeschreibungen lassen sich einsprechen. | Schneller als tippen mit kalten Fingern. |

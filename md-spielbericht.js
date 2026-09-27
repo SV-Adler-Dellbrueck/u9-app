@@ -75,7 +75,12 @@ async function reportGenerate(isReroll){
   if(!reportData){matchReport();return;}
   const {per,roster,tore,gegentore,team,datum}=reportData;
   reportShowLoading(isReroll);
-  const spieler=roster.map(name=>({name,highlights:per[name]||{}}));
+  /* v636: Kindernamen verlassen das Gerät nicht. Der KI-Anbieter bekommt „Kind 1“, „Kind 2“ …
+     und die Antwort wird hier zurückübersetzt – wie bei der Nachbereitung (nbMaske, v627). */
+  const kiName={}, echt={};
+  roster.forEach((name,i)=>{ kiName[name]="Kind "+(i+1); echt["Kind "+(i+1)]=name; });
+  const zurueck=t=>String(t||"").replace(/Kind (\d+)/g,(x)=>echt[x]||x);
+  const spieler=roster.map(name=>({name:kiName[name],highlights:per[name]||{}}));
   const seed=Math.random().toString(36).slice(2,8);
   const ctrl=new AbortController(), to=setTimeout(()=>ctrl.abort(),30000);
   try{
@@ -86,7 +91,7 @@ async function reportGenerate(isReroll){
     if(!r.ok||!d.bericht){ matchReportShow(matchReportBuild(per,roster,tore,gegentore),{fallback:true,reason:d.error}); return; }
     const p=(datum||"").split("-"); const ds=p.length===3?`${p[2]}.${p[1]}.${p[0]}`:datum;
     const head=`🦅 Spielbericht${team>1?" – Adler "+team:""} – ${ds}\n\n`;
-    matchReportShow(head+d.bericht,{ai:true,rest:d.rest});
+    matchReportShow(head+zurueck(d.bericht),{ai:true,rest:d.rest});
   }catch(e){
     clearTimeout(to);
     matchReportShow(matchReportBuild(per,roster,tore,gegentore),{fallback:true,reason:e&&e.name==="AbortError"?"timeout":"offline"});
@@ -182,8 +187,10 @@ async function ergebnisKarte(){
   try{const r=await fetch(`${SB_URL}/rest/v1/matchday?datum=eq.${encodeURIComponent(realDate)}&select=gegner&order=datum.desc&limit=1`,{headers:sbAuthHeaders()});if(r.ok){const m=(await r.json())[0];gegner=(m&&m.gegner)||"";}}catch(e){}
   const tore=trows.filter(t=>t.typ==="tor").length||acts.filter(a=>a.aktion==="tor").length;
   const gegentore=trows.filter(t=>t.typ==="gegentor").length;
-  const sc={}; acts.filter(a=>a.aktion==="tor").forEach(a=>{ if(a.spieler)sc[a.spieler]=(sc[a.spieler]||0)+1; });
-  const scorers=Object.entries(sc).sort((a,b)=>b[1]-a[1]).map(([n,c])=>c>1?`${n} (${c})`:n);
+  /* v636: Die Karte ist zum Weiterleiten in den Eltern-Chat gedacht – also eine weitergegebene
+     Ansicht. Keine Kindernamen und keine Torschützen-Rangliste (Fairness vor Ergebnis); das Team
+     hat die Tore gemeinsam geschossen. */
+  const scorers=[];
   const logo=new Image();
   logo.onload=()=>drawErgebnisKarte(logo,{tore,gegentore,gegner,scorers,realDate});
   logo.onerror=()=>drawErgebnisKarte(null,{tore,gegentore,gegner,scorers,realDate});
