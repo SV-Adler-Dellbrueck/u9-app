@@ -58,7 +58,7 @@ const ELTERN_LEITFADEN=[
   {emo:"🚗", t:"Bringen & Abholen", kat:"termin", d:"Bitte bringt euer Kind nicht deutlich vor Beginn und fahrt dann wieder weg – vor dem offiziellen Start gibt es keine Aufsicht. Holt es ebenso pünktlich nach dem Ende wieder ab. Ein Kind, das allein wartet, ist kein schöner Abschluss einer Einheit. Wenn ausnahmsweise jemand anderes abholt, sagt uns bitte kurz Bescheid."},
   {emo:"🙋", t:"Verhalten beim Training – etwas Abstand", kat:"rand", d:"Setzt euch beim Training bitte etwas abseits und lasst die Kinder mit den Trainern arbeiten. Kinder, die ständig zu Mama oder Papa schauen, sind abgelenkt. Kein Reinrufen, kein Mitcoachen vom Rand – das ist Aufgabe der Trainer."},
   {emo:"📣", t:"Verhalten am Spielfeldrand", kat:"codex", d:"Bei Spielen bleibt bitte hinter der Linie oder Bande und feuert an, statt anzuweisen. Wie wir uns am Spielfeldrand verhalten, steht oben in unseren goldenen Regeln – dem Fairplay-Codex. Bitte lest ihn einmal in Ruhe und tragt ihn mit; ihr findet ihn in der App direkt neben diesem Leitfaden."},
-  {emo:"🧃", t:"Büdchen- & Helferdienste", kat:"helfen", d:"Bei Heimspielen versorgen zwei Familien im Wechsel das Büdchen (Kuchen, Getränke, Kasse). Die Einteilung seht ihr in der App und könnt sie bei Verhinderung weitergeben. Und generell gilt: mit anpacken – Auf- und Abbau, Fahrten, Aufräumen. Das Team lebt davon, dass viele helfen, nicht immer dieselben."},
+  {emo:"🧃", t:"Grillhütte & Helferdienste", kat:"helfen", d:"Bei jedem Heimspiel ist eine Familie für die Grillhütte eingeteilt – reihum, jede kommt dran. Ihr seht euren Dienst im Termin und rechtzeitig vorher auf der Startseite. Wer nicht kann, tippt auf „Ersatz suchen“; eine andere Familie übernimmt mit einem Tipp, bis dahin bleibt der Dienst bei euch. Und generell gilt: mit anpacken – Auf- und Abbau, Fahrten, Aufräumen. Das Team lebt davon, dass viele helfen, nicht immer dieselben."},
   {emo:"👀", t:"Betreuung bei Spielen & Turnieren", kat:"helfen", d:"Bei Spielen und Turnieren suchen wir immer Eltern, die unsere Jungs in den Pausen betreuen und auf sie aufpassen – damit das Trainerteam das nächste Spiel in Ruhe vorbereiten und besprechen kann. Trag dich dafür gern direkt beim Termin unter „Wer hilft mit?“ ein. Schon eine Halbzeit hilft enorm."},
   {emo:"📱", t:"Die Adler-App nutzen – zu- & absagen", kat:"termin", d:"Bitte meldet euer Kind für JEDEN Termin rechtzeitig zu oder ab, am besten bis zum Vortag. Nur so können die Trainer planen und Teams einteilen. Die App ist unser zentraler Draht: Termine, Infos, Aufstellung, Liveticker und Mitbringlisten laufen darüber."},
   {emo:"🤒", t:"Krank oder verletzt?", kat:"gesundheit", d:"Meldet euer Kind bei Krankheit oder Verletzung ab und schickt es erst wieder, wenn es wirklich fit ist. Fieber, Magen-Darm & Co. bleiben zu Hause – auch dem Team zuliebe. Bei längeren Verletzungen sprecht kurz mit den Trainern."},
@@ -418,46 +418,175 @@ async function mitbringDelete(id){
   if(document.getElementById("td-mitbring")&&window._tdTermin&&typeof tdMitbringLoad==="function")tdMitbringLoad(window._tdTermin);
 }
 
-/* Büdchen bei Heimspielen: 2 Familien pro Heimspiel, faire Rotation server-seitig
-   (RPC buedchen_plan – weist beim Anschauen automatisch auf, wenn noch nicht voll).
-   Die eigene Familie kann per Opt-out absagen, dann rückt die nächste nach. */
-async function elternBuedchenLoad(termine,kids){
-  const slot=document.getElementById("buedchen-slot"); if(!slot)return;
-  window._elternKids=kids||window._elternKids||[];
-  const heim=(termine||[]).filter(t=>(t.typ==="spiel"||t.typ==="turnier")&&t.heim===true).slice(0,3);
-  if(!heim.length){ slot.innerHTML=""; return; }
-  const meineIds=(kids||[]).map(k=>k.spieler_id);
-  const cards=[];
-  for(const t of heim){
-    let fam=[];
-    try{const r=await fetch(`${SB_URL}/rest/v1/rpc/buedchen_plan`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_termin:t.id})});if(r.ok)fam=await r.json();}catch(e){}
-    const d=new Date(t.datum+"T00:00:00");
-    const wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
-    const zeit=t.uhrzeit?String(t.uhrzeit).slice(0,5)+" Uhr":"";
-    const meine=(fam||[]).find(f=>meineIds.includes(f.spieler_id));
-    if(!meine)continue; // Büdchen ist ein To-Do NUR für die eingeteilten Familien – andere sehen es hier nicht
-    const namen=(fam&&fam.length)?fam.map(f=>esc(f.name)+"s Familie").join(" & "):"– wird eingeteilt –";
-    cards.push(`<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05);${meine?"border:2px solid #16a34a":""}">
-      <div style="font-weight:700;margin-bottom:2px">🍿 Büdchen · Heimspiel${(t.gegner||t.titel)?" gegen "+esc(t.gegner||t.titel):""}</div>
-      <div style="font-size:var(--s-text);color:#64748b;margin-bottom:8px">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${zeit?" · "+zeit:""} · 2 Familien betreuen das Büdchen</div>
-      <div style="font-size:var(--s-text)">Eingeteilt: <b>${namen}</b></div>
-      ${meine?`<div style="margin-top:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:8px 10px;font-size:var(--s-text);color:#15803d">Ihr seid diesmal dran – danke fürs Büdchen! 🙌</div>
-        <button onclick="buedchenOptout(${t.id},${meine.spieler_id})" style="width:100%;margin-top:8px;min-height:44px;border:1.5px solid #dc2626;border-radius:10px;background:#fff;color:#dc2626;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Wir können leider nicht – nächste Familie</button>`:""}
-    </div>`);
-  }
-  slot.innerHTML=cards.join("");
+/* ═══ v646 – GRILLHÜTTE: EINTEILUNG REIHUM, „ERSATZ SUCHEN“, „ÜBERNEHMEN“ ═══════════════
+   Auftrag doku/auftrag-grillhuette/ (Paket 22.09. + Nachtrag 27.09., der Vorrang hat).
+   Der frühere Büdchen-Dienst (Tabelle buedchen, zwei Familien, Einteilung beim Anschauen,
+   „Wir können leider nicht – nächste Familie“) meinte dasselbe und ist hiermit abgelöst.
+
+   Datenweg: Tabelle dienst_einteilung (RLS nur Trainer). Eltern lesen und schreiben nur über
+   dienste_public / dienst_freigeben / dienst_uebernehmen – dort gibt es weder kind_id noch
+   Kindernamen, und die Rechte prüft die Datenbank. Bis jemand übernimmt, bleibt die
+   Verantwortung bei der eingeteilten Familie; ein Rückfall durch das Trainerteam ist per
+   Beschluss vom 27.09. ausgeschlossen. */
+const GH_FENSTER_START=14;      // eigener Dienst auf der Startseite, wenn er so nah ist
+const GH_FENSTER_OFFEN=60;      // offene (freigegebene) Dienste anderer Familien
+const GH_STATUS={
+  eingeteilt:{t:"eingeteilt",   f:"var(--green)", bg:"var(--green-bg)"},
+  freigegeben:{t:"Ersatz gesucht",f:"var(--amber)", bg:"var(--amber-bg)"},
+  uebernommen:{t:"übernommen",  f:"var(--green)", bg:"var(--green-bg)"},
+  offen:{t:"noch nicht eingeteilt",f:"var(--text2)",bg:"var(--surface2)"}
+};
+function ghChip(status){ const s=GH_STATUS[status]||GH_STATUS.offen;
+  return `<span class="gh-chip" style="display:inline-block;font-size:var(--s-klein);font-weight:700;color:${s.f};background:${s.bg};border:1px solid ${s.f};border-radius:999px;padding:1px 9px">${s.t}</span>`; }
+function ghTag(datum,uhrzeit){
+  const d=new Date(String(datum).slice(0,10)+"T00:00:00");
+  const wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
+  return `${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${uhrzeit?" · "+String(uhrzeit).slice(0,5)+" Uhr":""}`;
 }
-async function buedchenOptout(terminId,spielerId){
-  if(!await frageJaNein({emoji:"🍿",titel:"Beim Büdchen absagen?",
-    text:"Dann rückt automatisch die nächste Familie nach.",
-    ja:"Absagen",nein:"Doch, wir machen"}))return;
+async function ghDienste(tage){
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/rpc/buedchen_optout`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_termin:terminId,p_spieler:spielerId})});
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/dienste_public`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_tage:tage})});
+    return r.ok?((await r.json())||[]):[];
+  }catch(e){ return []; }
+}
+const GH_KNOPF="width:100%;min-height:48px;margin-top:8px;border-radius:12px;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer";
+/* Ein Dienst aus Sicht der Eltern – dieselbe Zeile auf der Startseite und im Termin. */
+function ghDienstHtml(d){
+  if(d.eigene&&d.status==="eingeteilt")return `<div style="font-size:var(--s-text);line-height:1.5">Ihr seid dran. Könnt ihr nicht, sucht Ersatz – bis eine andere Familie übernimmt, bleibt der Dienst bei euch.</div>
+      <button class="gh-ersatz" onclick="ghErsatzSuchen(${Number(d.dienst_id)})" style="${GH_KNOPF};border:1.5px solid var(--rand-bedien);background:var(--surface);color:var(--text)">Ersatz suchen</button>`;
+  if(d.eigene&&d.status==="freigegeben")return `<div style="font-size:var(--s-text);line-height:1.5">Ersatz wird gesucht. Bis eine andere Familie übernimmt, bleibt der Dienst bei euch.</div>`;
+  if(d.eigene&&d.status==="uebernommen")return `<div style="font-size:var(--s-text);line-height:1.5">Ihr habt diesen Dienst übernommen – danke!</div>`;
+  if(d.kann_uebernehmen)return `<div style="font-size:var(--s-text);line-height:1.5">Die eingeteilte Familie sucht Ersatz. Könnt ihr?</div>
+      <button class="gh-uebernehmen" onclick="ghUebernehmen(${Number(d.dienst_id)})" style="${GH_KNOPF};border:none;background:var(--green);color:#fff">Übernehmen</button>`;
+  if(d.status==="uebernommen")return `<div style="font-size:var(--s-text)">Übernommen von ${esc(d.name||"einer anderen Familie")}.</div>`;
+  if(d.status==="eingeteilt")return `<div style="font-size:var(--s-text)">Eine Familie ist eingeteilt.</div>`;
+  return `<div style="font-size:var(--s-text);color:var(--text2)">Das Trainerteam teilt noch ein.</div>`;
+}
+/* Startseite: der eigene Dienst in den nächsten 14 Tagen und offene Dienste zum Übernehmen.
+   Lehre aus v429 umgekehrt: einen Pflichtdienst muss man Wochen vorher sehen – nicht nur in
+   der Kachel des nächsten Termins. Andere Familien sehen hier nur, was sie übernehmen können. */
+async function elternBuedchenLoad(){
+  const slot=document.getElementById("buedchen-slot"); if(!slot)return;
+  const alle=await ghDienste(GH_FENSTER_OFFEN);
+  const grenze=new Date(Date.now()+GH_FENSTER_START*864e5).toISOString().slice(0,10);
+  const zeigen=alle.filter(d=>(d.eigene&&String(d.datum)<=grenze)||d.kann_uebernehmen);
+  slot.innerHTML=zeigen.map(d=>`<div class="gh-karte" style="background:var(--surface);border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05);border:2px solid ${d.eigene?"var(--green)":"var(--amber)"}">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px"><b>🔥 Grillhütte${d.eigene?": Ihr seid dran":""}</b>${ghChip(d.status)}</div>
+      <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:8px">Heimspiel am ${esc(ghTag(d.datum,d.uhrzeit))}${d.gegner?" · "+esc(d.gegner):""}</div>
+      ${ghDienstHtml(d)}
+    </div>`).join("");
+  if(typeof elternTodoSync==="function")elternTodoSync();
+}
+async function ghErsatzSuchen(id){
+  if(!await frageJaNein({emoji:"🔥",titel:"Ersatz suchen?",
+    text:"Alle anderen Familien sehen den Dienst dann als offen und können ihn mit einem Tipp übernehmen. Bis dahin bleibt er bei euch.",
+    ja:"Ersatz suchen",nein:"Abbrechen"}))return;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/dienst_freigeben`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_id:id})});
     if(sbCheck401(r))return;
-    if(!r.ok){toast(sbDeniedMsg(r,"Konnte nicht ändern"),"err");return;}
-  }catch(e){toast("Netzwerkfehler","err");return;}
-  toast("Danke – die nächste Familie rückt nach.");
-  if(typeof elternDashLoad==="function")elternDashLoad();
+    if(!r.ok){ toast("Das ging nicht – ist der Dienst noch eurer?","err"); return; }
+  }catch(e){ toast("Ohne Netz geht das nicht","err"); return; }
+  toast("Ersatz wird gesucht");
+  ghNeuLaden();
+}
+async function ghUebernehmen(id){
+  if(!await frageJaNein({emoji:"🔥",titel:"Grillhütte übernehmen?",text:"Dann seid ihr an diesem Tag für die Grillhütte eingeteilt.",ja:"Übernehmen",nein:"Abbrechen"}))return;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/dienst_uebernehmen`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_id:id})});
+    if(sbCheck401(r))return;
+    if(!r.ok){ toast("Schon vergeben – eine andere Familie war schneller","err"); ghNeuLaden(); return; }
+  }catch(e){ toast("Ohne Netz geht das nicht","err"); return; }
+  toast("Übernommen");
+  ghNeuLaden();
+}
+function ghNeuLaden(){
+  elternBuedchenLoad();
+  const t=window._tdTermin;
+  if(t&&document.getElementById("td-buedchen")&&typeof tdBuedchenLoad==="function")tdBuedchenLoad(t);
+}
+
+/* ── Trainerbereich: einteilen und umbuchen ──────────────────────────────────── */
+let _ghTr=null;
+async function ghTrainerDaten(){
+  const heute=new Date().toISOString().slice(0,10);
+  let termine=[], dienste=[], profile=[];
+  try{const r=await fetch(`${SB_URL}/rest/v1/termine?heim=is.true&typ=in.(spiel,turnier)&datum=gte.${heute}&select=id,datum,uhrzeit,gegner,titel,typ&order=datum.asc`,{headers:sbAuthHeaders()});if(r.ok)termine=await r.json();}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/dienst_einteilung?dienst=eq.grillhuette&select=id,termin_id,kind_id,status,uebernommen_von`,{headers:sbAuthHeaders()});if(r.ok)dienste=await r.json();}catch(e){}
+  const uids=[...new Set(dienste.map(d=>d.uebernommen_von).filter(Boolean))];
+  if(uids.length){try{const r=await fetch(`${SB_URL}/rest/v1/profiles?id=in.(${uids.join(",")})&select=id,anzeigename`,{headers:sbAuthHeaders()});if(r.ok)profile=await r.json();}catch(e){}}
+  _ghTr={termine,dienste,profile};
+  return _ghTr;
+}
+function _ghKindName(id){ const k=(typeof KADER!=="undefined"?KADER:[]).find(x=>String((typeof kaderId==="function")?kaderId(x):x.id)===String(id)); return k?k.name:""; }
+function _ghTrZeile(d){
+  if(!d)return "– noch nicht eingeteilt –";
+  const fam=d.kind_id!=null?`${esc(_ghKindName(d.kind_id)||"Kind")}s Familie`:"ohne Familie";
+  if(d.status==="uebernommen"){ const p=(_ghTr.profile||[]).find(x=>x.id===d.uebernommen_von); return `${fam} → übernommen von ${esc((p&&p.anzeigename)||"einer anderen Familie")}`; }
+  return fam;
+}
+/* Die Zeile in der Trainer-Terminliste (ersetzt „🍿 Büdchen“). */
+async function buedchenTrainerFill(t){
+  const slot=document.getElementById("bd-tm-"+t.id); if(!slot)return;
+  if(!_ghTr)await ghTrainerDaten();
+  const d=(_ghTr.dienste||[]).find(x=>x.termin_id===t.id);
+  slot.innerHTML=`🔥 Grillhütte: <b style="color:var(--text)">${_ghTrZeile(d)}</b> ${ghChip(d?d.status:"offen")}`;
+}
+async function grillTrainerOpen(){
+  document.getElementById("gh-tr-modal")?.remove();
+  const m=document.createElement("div"); m.id="gh-tr-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Grillhütte");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.onclick=e=>{ if(e.target===m)m.remove(); };
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:560px;width:100%;margin:auto">
+    ${mdlHead("gh-tr-modal","🔥","Grillhütte","Einteilen reihum · umbuchen, wenn Familien außerhalb der App tauschen","#b45309")}
+    <div id="gh-tr-inhalt" style="font-size:var(--s-text);color:var(--text2)">Lädt …</div></div>`;
+  document.body.appendChild(m);
+  if(typeof loadKader==="function"&&(typeof KADER==="undefined"||!KADER.length))await loadKader();
+  await ghTrainerDaten();
+  grillTrainerRender();
+}
+function grillTrainerRender(){
+  const box=document.getElementById("gh-tr-inhalt"); if(!box||!_ghTr)return;
+  const kids=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k.aktiv!==false);
+  const ohne=_ghTr.termine.filter(t=>!_ghTr.dienste.some(d=>d.termin_id===t.id)).length;
+  box.innerHTML=`<button class="btn" id="gh-einteilen" style="width:100%" onclick="grillEinteilen()" ${ohne?"":"disabled"}>Grillhütte einteilen${ohne?` (${ohne} Heimtermin${ohne===1?"":"e"} offen)`:""}</button>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin:6px 0 12px">Verteilt alle künftigen Heimtermine ohne Einteilung reihum auf die aktiven Kinder. Bestehendes bleibt stehen.</div>
+    ${_ghTr.termine.length?_ghTr.termine.map(t=>{ const d=_ghTr.dienste.find(x=>x.termin_id===t.id);
+      return `<div style="border-top:1px solid var(--surface2);padding:8px 0">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>${esc(ghTag(t.datum,t.uhrzeit))}</b><span style="color:var(--text2)">${esc(t.gegner||t.titel||"")}</span>${ghChip(d?d.status:"offen")}</div>
+        <div style="margin:2px 0 4px">${_ghTrZeile(d)}</div>
+        <label style="font-size:var(--s-klein);color:var(--text2)">Umbuchen auf
+          <select onchange="grillUmbuchen(${Number(t.id)},this.value)" style="width:100%;min-height:44px;margin-top:2px;border:1px solid var(--rand-bedien);border-radius:8px;font:inherit;background:var(--surface2);color:var(--text)">
+            <option value="">– Familie wählen –</option>
+            ${kids.map(k=>{ const id=(typeof kaderId==="function")?kaderId(k):k.id; return `<option value="${esc(String(id))}">${esc(k.name)}s Familie</option>`; }).join("")}
+          </select></label></div>`; }).join(""):'<div style="color:var(--text2)">Keine künftigen Heimtermine im Kalender.</div>'}`;
+}
+async function grillEinteilen(){
+  const k=document.getElementById("gh-einteilen"); if(k)k.disabled=true;
+  let n=0;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/dienst_einteilen`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"});
+    if(sbCheck401(r))return;
+    if(!r.ok){ toast(`Nicht eingeteilt – Server antwortet ${r.status}`,"err"); if(k)k.disabled=false; return; }
+    n=Number(await r.json())||0;
+  }catch(e){ toast("Kein Netz – nicht eingeteilt","err"); if(k)k.disabled=false; return; }
+  toast(n?`${n} Heimtermin${n===1?"":"e"} eingeteilt`:"Alles ist schon eingeteilt");
+  await ghTrainerDaten(); grillTrainerRender();
+}
+/* Kriterium 7: Tausch außerhalb der App nachtragen – die gewählte Familie ist eingeteilt. */
+async function grillUmbuchen(terminId,kindId){
+  if(!kindId)return;
+  const d=_ghTr.dienste.find(x=>x.termin_id===terminId);
+  const zeile={kind_id:Number(kindId),status:"eingeteilt",uebernommen_von:null};
+  try{
+    const r=d
+      ?await fetch(`${SB_URL}/rest/v1/dienst_einteilung?id=eq.${Number(d.id)}`,{method:"PATCH",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify(zeile)})
+      :await fetch(`${SB_URL}/rest/v1/dienst_einteilung`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify({termin_id:terminId,dienst:"grillhuette",...zeile})});
+    if(sbCheck401(r))return;
+    if(!r.ok){ toast(`Nicht umgebucht – Server antwortet ${r.status}`,"err"); return; }
+  }catch(e){ toast("Kein Netz – nicht umgebucht","err"); return; }
+  toast("Umgebucht");
+  await ghTrainerDaten(); grillTrainerRender();
 }
 /* Elterngespräch: die Eltern signalisieren Bedarf, der Trainer sieht die Wünsche und
    meldet sich zur Terminabstimmung. Anfrage = eine Zeile in elterngespraech_wunsch. */
@@ -564,14 +693,6 @@ async function epollVote(slotId,status){
   // Die Rückmeldung sagt, ob man fertig ist – sonst sucht man nach der Karte, die noch dasteht.
   const offen=await elternPollLoad();
   toast(offen>0?`Gespeichert – noch ${offen} Vorschlag${offen===1?"":"e"} offen`:"Danke – alle Vorschläge beantwortet ✓");
-}
-// Trainer-Terminliste: die eingeteilten Büdchen-Familien je Heimspiel nachladen (plant bei Bedarf).
-async function buedchenTrainerFill(t){
-  const slot=document.getElementById("bd-tm-"+t.id); if(!slot)return;
-  let fam=[];
-  try{const r=await fetch(`${SB_URL}/rest/v1/rpc/buedchen_plan`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_termin:t.id})});if(r.ok)fam=await r.json();}catch(e){}
-  const namen=(fam&&fam.length)?fam.map(f=>esc(f.name)).join(" & "):"– noch offen –";
-  slot.innerHTML=`🍿 Büdchen: <b style="color:var(--text)">${namen}</b>`;
 }
 
 /* Fairplay-Quiz für die Eltern (Phase 18.3): fester Fragensatz rund um den Codex.
