@@ -996,9 +996,12 @@ function schriftHinweisAntwort(ja){
 _adlerOnReady(()=>{ try{ schriftHinweisZeigen("schrift-hinweis-trainer"); }catch(e){} });
 
 /* ═══ Web-Push-Benachrichtigungen ═══
-   Öffentlicher VAPID-Schlüssel (der private liegt nur in der Edge Function push-send).
-   Subscriptions in push_subscriptions (RLS: eigene). Senden macht der Trainer -> Edge Function. */
-const VAPID_PUBLIC="BEC5hAYJQ3IBA0HHrPttPTH_OeH-pdTRx5Q88W1thcJ1e23Ia7MWGB1Y4BUPg_uqt3sdiVcDa6TwPy8odLuD4J0";
+   Öffentlicher VAPID-Schlüssel. Der private liegt seit v643 im Supabase Vault und wird nur von
+   den Edge Functions push-send und push-cron gelesen (RPC adler_geheimnis, nur service_role).
+   Subscriptions in push_subscriptions (RLS: eigene). Senden macht der Trainer -> Edge Function.
+   v643: Schlüssel am 27.09.2026 erneuert – pushSchluesselAbgleich meldet Geräte mit einem Abo
+   zum alten Schlüssel beim nächsten Öffnen still neu an. */
+const VAPID_PUBLIC="BGONplskzpO-FnCZQRWWwLDKggQCjTRfOf8rMu3qae_8jTyLaoXzJ2lHFK9zUqCMOdrVApBbyjVymoTz7nFfg_Y";
 function pushSupported(){ return ("serviceWorker" in navigator)&&("PushManager" in window)&&("Notification" in window); }
 function _urlB64ToU8(b64){
   const pad="=".repeat((4-b64.length%4)%4);
@@ -1036,6 +1039,42 @@ async function pushUnsubscribe(){
     toast("Benachrichtigungen ausgeschaltet");
   }catch(e){}
 }
+/* v643: Ein Abo, das mit einem früheren VAPID-Schlüssel entstand, stellt nie wieder zu (der
+   Push-Dienst antwortet mit 403). Wer Mitteilungen erlaubt hat, soll davon nichts merken: beim
+   Öffnen wird der Schlüssel des vorhandenen Abos verglichen und bei Abweichung still neu
+   angemeldet – mit derselben Rolle, die der Einstieg vorgibt. Ohne Erlaubnis, ohne Anmeldung
+   oder ohne Abo passiert nichts; ohne auslesbaren Schlüssel (sehr alte Browser) auch nicht. */
+function _pushGleicherSchluessel(abo){
+  const k=abo&&abo.options&&abo.options.applicationServerKey;
+  if(!k)return null;
+  const ist=new Uint8Array(k), soll=_urlB64ToU8(VAPID_PUBLIC);
+  return ist.length===soll.length&&ist.every((b,i)=>b===soll[i]);
+}
+async function pushSchluesselAbgleich(){
+  if(!pushSupported()||Notification.permission!=="granted")return "aus";
+  if(typeof sbToken!=="function"||!sbToken())return "ohne-anmeldung";
+  if(/\/kinder\//.test(location.pathname))return "kinder";
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    const alt=await reg.pushManager.getSubscription();
+    if(!alt)return "ohne-abo";
+    const gleich=_pushGleicherSchluessel(alt);
+    if(gleich!==false)return gleich?"aktuell":"unbekannt";
+    try{ await fetch(`${SB_URL}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(alt.endpoint)}`,{method:"DELETE",headers:sbAuthHeaders()}); }catch(e){}
+    try{ await alt.unsubscribe(); }catch(e){}
+    const neu=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:_urlB64ToU8(VAPID_PUBLIC)});
+    const j=neu.toJSON();
+    const rolle=/\/trainer\//.test(location.pathname)?"trainer":"parent";
+    await fetch(`${SB_URL}/rest/v1/push_subscriptions?on_conflict=endpoint`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({endpoint:neu.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,rolle})});
+    return "erneuert";
+  }catch(e){ return "fehler"; }
+}
+// Einmal je Start, sobald jemand angemeldet ist (die Anmeldung kommt oft erst nach dem Laden).
+_adlerOnReady(()=>{
+  let n=0;
+  const versuch=()=>{ if(typeof sbToken==="function"&&sbToken()){ pushSchluesselAbgleich(); return; } if(++n<20)setTimeout(versuch,3000); };
+  setTimeout(versuch,2000);
+});
 // Status-abhängigen An/Aus-Button in einen Slot rendern (rolle: 'parent' | 'trainer').
 async function pushRenderInto(elId, rolle){
   const el=document.getElementById(elId); if(!el)return;
