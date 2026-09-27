@@ -38,7 +38,8 @@ module.exports = async function (h) {
 
   // ── b–d) Tastatur am echten DOM ─────────────────────────────────────────────
   {
-    const s = await h.starten({ warten: 1500, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen() }) });
+    const s = await h.starten({ warten: 1500, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), team_einstellungen: [{ id: 1, bewertung_ab: "2026-01-01" }] }) });
+    await s.page.evaluate(() => { BEW_AB = "2026-01-01"; if (typeof bewSperreAnwenden === "function") bewSperreAnwenden(); });   // v648: Bewertungen offen
     await h.sichtbarMachen(s.page, "#dims-wrap");
     // b) Kriterienkopf
     const b0 = await s.page.evaluate(async () => {

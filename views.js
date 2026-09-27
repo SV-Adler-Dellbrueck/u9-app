@@ -109,6 +109,7 @@ function bewLeerSetzen(hatKind){
 }
 function onPlayerSelect(){
   const name=document.getElementById("p-name").value;
+  bewRundeTrainerZeile();
   if(!name){bewLeerSetzen(false);return;}
   bewLeerSetzen(true);
   const k=getKader(name);
@@ -185,25 +186,89 @@ function bewRundeFinish(){
   try{navigator.vibrate&&navigator.vibrate([40,60,40,60,120]);}catch(e){}
 }
 function bewRundeStop(){ if(confirm("Bewertungsrunde beenden?")){ BEW_RUNDE={active:false,queue:[],idx:0}; bewRundeBarRender(); } }
-// v637: Wann war die letzte Runde, wann ist die nächste fällig? (Takt: alle 6 Wochen, fällig ab 35 Tagen)
+// v637/v648: Wann war die letzte Runde, wann ist die nächste fällig? (Takt acht Wochen, fällig ab 49 Tagen)
 function bewRundenZeile(){
   if(typeof bewRundenStand!=="function")return "";
   const st=bewRundenStand(), dd=d=>new Date(d+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
-  const txt=!st.letzte?"Noch keine Runde – die erste legt den Takt fest (alle 6 Wochen im Trainermeeting)."
-    :st.faellig?`⏰ Nächste Runde fällig – die letzte war am ${dd(st.letzte)} (vor ${st.tage} Tagen).`
-    :`Letzte Runde am ${dd(st.letzte)} · nächste fällig ab ${dd(st.faelligAb)}.`;
+  const txt=st.faellig?(st.letzte&&st.letzte>=BEW_AB?`⏰ Nächste Runde fällig – die letzte war am ${dd(st.letzte)} (vor ${st.tage} Tagen).`:`⏰ Runde fällig – Bewertungen laufen seit ${dd(BEW_AB)}.`)
+    :st.letzte&&st.letzte>=BEW_AB?`Letzte Runde am ${dd(st.letzte)} · nächste fällig ab ${dd(st.faelligAb)}.`
+    :`Bewertungen ab ${dd(BEW_AB)} · alle acht Wochen gemeinsam im Trainerteam.`;
   return `<div id="bew-runden-stand" style="width:100%;margin-top:6px;font-size:var(--s-klein);color:var(--text2);text-align:center">${txt}</div>`;
+}
+/* v648: Einzelbewertung erst ab dem Datum, das das Trainerteam setzt (engine.js BEW_AB).
+   Gesperrt: Formular weg, ein Satz mit Grund und Datum, das Datumsfeld mit genau einer
+   Hauptaktion. Bisherige Bewertungen bleiben unter Profil und Entwicklung lesbar. */
+function bewSperreAnwenden(){
+  const v=document.getElementById("view-bew"); if(!v)return;
+  if(!document.getElementById("bew-sperre-css")){
+    const st=document.createElement("style"); st.id="bew-sperre-css";
+    st.textContent="#view-bew.bew-gesperrt>:not(#bew-runde-bar){display:none!important}";
+    document.head.appendChild(st);
+  }
+  const zu=!(typeof bewFreigegeben==="function"&&bewFreigegeben());
+  v.classList.toggle("bew-gesperrt",zu);
+  if(zu&&BEW_RUNDE.active)BEW_RUNDE={active:false,queue:[],idx:0};
+  bewRundeBarRender();
+}
+function bewAbFeldHtml(){
+  return `<label for="bew-ab" style="display:block;font-size:var(--s-klein);font-weight:700;margin:10px 0 4px">Erste Bewertungsrunde ab</label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <input id="bew-ab" type="date" value="${BEW_AB||""}" style="min-height:48px;flex:1;min-width:160px;padding:8px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)">
+      <button class="btn btn-p" style="min-height:48px" onclick="bewAbSpeichern(this)">Datum speichern</button>
+    </div>`;
+}
+async function bewAbSpeichern(btn){
+  const el=document.getElementById("bew-ab"), wert=el&&/^\d{4}-\d{2}-\d{2}$/.test(el.value)?el.value:null;
+  if(btn)btn.disabled=true;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/team_einstellungen?on_conflict=id`,{method:"POST",headers:sbAuthHeaders({'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({id:1,bewertung_ab:wert})});
+    if(sbCheck401(r))return;
+    if(!r.ok){toast("Datum nicht gespeichert – nur Trainer dürfen es setzen","err");return;}
+    BEW_AB=wert; bewSperreAnwenden();
+    toast(wert?`Datum gespeichert – Bewertungen ab ${bewAbText()}`:"Datum gespeichert – Bewertungen bleiben gesperrt");
+  }catch(e){toast("Netzwerkfehler – Datum nicht gespeichert","err");}
+  finally{if(btn)btn.disabled=false;}
 }
 function bewRundeBarRender(){
   const bar=document.getElementById("bew-runde-bar"); if(!bar)return;
+  if(typeof bewFreigegeben==="function"&&!bewFreigegeben()){
+    const satz=BEW_AB?`Einzelne Spieler werden bis zum Ende der Hinrunde nicht bewertet. Ab ${bewAbText()} bewertet das ganze Trainerteam jeden Spieler, danach alle acht Wochen.`
+      :"Einzelne Spieler werden bis zum Ende der Hinrunde nicht bewertet. Sobald das Trainerteam das Datum festlegt, bewertet es ab dann jeden Spieler, danach alle acht Wochen.";
+    bar.innerHTML=`<div id="bew-sperre" style="width:100%;padding:14px;border:1.5px solid var(--rand-bedien);border-radius:12px;background:var(--surface)">
+      <div style="font-size:var(--s-karte);font-weight:800;margin-bottom:4px">🔒 Bewerten ist noch gesperrt</div>
+      <div style="font-size:var(--s-text);color:var(--text2)">${satz} Bisherige Bewertungen stehen weiter unter Profil und Entwicklung.</div>
+      ${bewAbFeldHtml()}</div>`;
+    return;
+  }
   if(!BEW_RUNDE.active){
-    bar.innerHTML=`<button onclick="bewRundeStart()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.28)"><i class="ti ti-clipboard-list"></i> Bewertungsrunde starten (alle nacheinander)</button>${bewRundenZeile()}`;
+    bar.innerHTML=`<button onclick="bewRundeStart()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.28)"><i class="ti ti-clipboard-list"></i> Bewertungsrunde starten (alle nacheinander)</button>${bewRundenZeile()}
+      <details style="width:100%;margin-top:4px;font-size:var(--s-klein)"><summary style="cursor:pointer;color:var(--text2)">Startdatum der Bewertungsrunden ändern</summary>${bewAbFeldHtml()}</details>
+      <div id="bew-runde-trainer" style="width:100%;font-size:var(--s-klein);color:var(--text2);text-align:center"></div>`;
+    bewRundeTrainerZeile();
     return;
   }
   const pos=BEW_RUNDE.idx+1, tot=BEW_RUNDE.queue.length, name=BEW_RUNDE.queue[BEW_RUNDE.idx];
   bar.innerHTML=`<div style="flex:1;min-width:150px;font-size:var(--s-text);font-weight:800;color:var(--club-accent)">📋 Runde · Spieler ${pos}/${tot}: ${esc(name)}</div>
     <button class="btn btn-sm" onclick="bewRundeSkip()">Überspringen ›</button>
-    <button class="btn btn-sm" onclick="bewRundeStop()" style="color:var(--red)">Beenden</button>`;
+    <button class="btn btn-sm" onclick="bewRundeStop()" style="color:var(--red)">Beenden</button>
+    <div id="bew-runde-trainer" style="width:100%;font-size:var(--s-klein);color:var(--text2)"></div>`;
+  bewRundeTrainerZeile();
+}
+/* v648: Die Runde gehört dem ganzen Trainerteam. Über dem Formular steht, wer das gewählte
+   Kind in dieser Runde (letzte 21 Tage, frühestens ab dem Startdatum) schon bewertet hat. */
+function bewRundeTrainerVon(name){
+  if(!name||!BEW_AB||typeof DB==="undefined"||!DB[name])return [];
+  const grenze=new Date(Date.now()-BEW_RUNDE_FENSTER_TAGE*864e5).toISOString().slice(0,10);
+  const ab=grenze>BEW_AB?grenze:BEW_AB, t=new Set();
+  DB[name].forEach(s=>{if(s&&String(s.datum||"").slice(0,10)>=ab&&s.trainer)t.add(String(s.trainer));});
+  return [...t];
+}
+function bewRundeTrainerZeile(){
+  const el=document.getElementById("bew-runde-trainer"); if(!el)return;
+  const name=(document.getElementById("p-name")||{}).value||"";
+  if(!name){el.textContent="";return;}
+  const t=bewRundeTrainerVon(name);
+  el.textContent=t.length?`In dieser Runde schon bewertet von: ${t.join(", ")}`:"In dieser Runde noch von niemandem bewertet.";
 }
 
 /* ═══════════════════════════════════
@@ -3626,6 +3691,8 @@ async function einheitDetailOpen(datum){
 
   // ── Spieler-Sterne: nur für Kinder, die an dem Tag als anwesend erfasst sind ──
   let spHtml;
+  // v648: Vor dem Startdatum der Bewertungen keine Sterne je Kind – Einheit und Übungen bleiben.
+  const ebKinderFrei=typeof bewFreigegeben==="function"&&bewFreigegeben();
   if(!aw){
     spHtml=`<div style="font-size:var(--s-text);color:var(--text3);background:var(--surface2);border-radius:8px;padding:10px">Für diesen Tag ist keine Anwesenheit erfasst. Trage sie unter „Anwesenheit“ ein – danach kannst du die Kinder hier bewerten.</div>`;
   }else{
@@ -3651,8 +3718,8 @@ async function einheitDetailOpen(datum){
     <textarea id="eb-notiz" class="wachsen" rows="2" maxlength="3000" placeholder="Notiz zur Einheit (optional)" style="${fld};width:100%;resize:vertical;margin-top:6px">${esc(ex.notiz||"")}</textarea>
     ${kopf}Die Übungen</div>
     ${ueHtml}
-    ${kopf}Die Kinder <span style="font-weight:600;text-transform:none;color:var(--text3)">· 1–3 Sterne</span></div>
-    ${spHtml}
+    ${ebKinderFrei?`${kopf}Die Kinder <span style="font-weight:600;text-transform:none;color:var(--text3)">· 1–3 Sterne</span></div>
+    ${spHtml}`:`<div id="eb-kinder-hinweis" style="font-size:var(--s-klein);color:var(--text2);margin-top:10px">Einzelne Kinder werden bis zum Ende der Hinrunde nicht bewertet. Gab es ein besonderes Ereignis, gehört es als Satz in die Notiz zur Einheit.</div>`}
     <button onclick="einheitSave()" style="width:100%;min-height:56px;margin-top:14px;border:none;border-radius:14px;background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:900;cursor:pointer;box-shadow:0 2px 10px rgba(37,99,235,.3)">💾 Nachbewertung speichern</button>
     <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('eb-modal').remove()">Schließen</button>`;
   /* v627 PO: geführte Nachbereitung als Standard – Frage für Frage mit Antwort-Kacheln (md-fazit.js). */
@@ -4375,7 +4442,7 @@ const HELP=[
   ]},
   {cat:"⚽ Spieltag", items:[
     {t:"Match", d:"Zuerst „Teams festlegen“ in zwei Blöcken: „Wer ist dabei?“ (zugeklappt, sobald jemand dabei ist – vorbelegt aus den Eltern-Rückmeldungen, ohne Antwort bleibt ein Kind offen, „N Offene auf Dabei setzen“ erledigt das am Platz auf einmal; „Dabei“ ist zugleich die Anwesenheit dieses Spieltags und zählt für die Spiele-Quote – die Kachel „Anwesenheit“ auf der Spieltag-Seite führt direkt hierher und klappt die Liste auf, während die Kachel gleichen Namens im Training bei den Trainingsterminen bleibt) und darunter die Teams als Karten mit den Namen: ein Tipp auf einen Namen schiebt das Kind ins nächste Team, zuletzt in die Pause. Die Team-Kacheln darunter zeigen die Namen ohne Aufklappen. Dazu, wie viele Teams wir stellen und welche Spielform jedes Team spielt (beim Kinderfestival etwa Adler 1 auf 4+1, Adler 2 FUNiño, dazu 3+1 und 5+1). Die Automatik setzt Torwart-Kinder zuerst auf die Teams mit Torwart, füllt dann die Felder und verteilt die übrigen Kinder so, dass die Spielzeit je Kind über alle Teams möglichst gleich ist – der Anteil steht je Team dabei. Steht ein Spielplan für den Tag (Festival oder Heimspiel), kommt alles Weitere von dort: „Teams festlegen“ zeigt je Runde, auf welchem Feld ein Team spielt, in welcher Spielform und gegen wen, und die Runde wechselt mit dem Anpfiff im Planer – geändert wird im Spielplan, „Im Spielplan ändern“ führt hin. Auch die Match-Uhr nimmt an so einem Tag ihre Spielzeit von dort (8 Minuten statt der üblichen 10), spielt sie ohne Halbzeit durch und läuft erst, wenn die Runde angepfiffen ist – „Spiel läuft“ steht dann auf den Team-Kacheln, die gerade auf dem Feld sind, und der Wechsel-Timer startet mit – mit der halben Spielzeit als Intervall (bei 8 Minuten also einer in der Mitte, einer am Ende); anhalten kannst du ihn jederzeit. Vor der ersten Runde teilt der Plan die Aufwärmfelder zu: wir immer im Käfig, die Gastvereine der Reihe nach auf die übrigen Felder; auf der Gast-Seite steht das ganz oben. Ohne Spielplan (Auswärtsturnier) legst du die Felder des Tages selbst an (Feld 1: 4+1, Feld 2: FUNiño …): die festen Teams wandern dann mit „Nächste Runde“ ein Feld weiter, und fehlt einem Team auf seinem Feld ein Kind, hilft eines aus dem Team mit der meisten Bank aus – nur für diese Runde, Torwart-Kinder wechseln sich dabei ab, welcher Trainer sie betreut – die Kinder werden dabei automatisch verteilt und lassen sich von Hand umsetzen. „Dabei“ heißt automatisch „Spielt mit“ – wen du pausieren lassen willst, stellst du selbst um. Neben jedem Kind stehen die Trainingsquote und die Zahl der Einsätze; beide zählen ab einem Stichtag (zurzeit: Trainings ab dem 31.08., Spiele ab dem 05.09.2026), damit die faire Einteilung nicht an alten Zahlen hängt. Den Kapitän wählst du in derselben Team-Karte – er bleibt es für den ganzen Spieltag, die App zählt über alle Spiele mit und sortiert die Auswahl nach „am seltensten dran“ (⭐ = noch nie). Danach hat jedes Team seine eigene Kachel in drei Schritten: „① Vor dem Spiel“ zeigt den Kapitän und die Aufstellung (Torwart fest, „Feld & Bank fair besetzen“, das Mini-Feld mit Bank); „② Während des Spiels“ hält Match-Uhr und Wechseltimer, Live-Aktionen und Liveticker sind darunter zugeklappt; „③ Nach dem Spiel“ sammelt die Ergebnisse (am Festivaltag alle Spiele dieses Teams aus dem Spielplan), Spielbericht und Ergebnis-Karte – und ganz zum Schluss das Blitz-Rating. Am Festivaltag ist die Runde aus dem Spielplan das Spiel: jede Live-Aktion, jeder Ticker-Eintrag und jeder Wechsel trägt sie, der Anpfiff im Planer schaltet um. Tore und Gegentore einer Runde werden von selbst zum Ergebnis im Festival-Plan, der Ticker bekommt bei dir und bei den Eltern einen Absatz je Spiel („Runde 3 · gegen Rath-Heumar 2 · Käfig · 2:1“), das Live-Ergebnis im Vollbild zählt nur die laufende Runde – Blitz-Rating und Spielbericht bleiben einmal je Tag. Den Liveticker startest du selbst mit „▶️ Liveticker starten“ – er hängt nicht am Anpfiff und nicht an der Aufstellung. Sobald er läuft, erscheint bei den Eltern ganz oben eine rote LIVE-Kachel mit Teilen-Knopf – der Link geht auch an Oma und Opa, ohne Anmeldung. Stoppst du ihn wieder, kommt nur nichts Neues mehr dazu – das Bisherige bleibt für die Eltern sichtbar. Drei Tage nach dem Spieltag zeigt der Link nur noch den Endstand; die Ereignisse bleiben gespeichert. Beim Blitz-Rating nach dem Spiel zählt pro Kind, Trainer und Spieltag genau eine Bewertung – gehst du ein zweites Mal durch, korrigierst du die erste, statt sie zu verdoppeln. In der Live-Aktion stehen oben die Kinder aus der Aufstellung und unter einer gestrichelten Linie alle weiteren, die heute dabei sind – du kannst also auch tickern, wenn die Aufstellung nicht gepflegt ist. Bei „Parade“ erscheinen nur die Torhüter. Hast du selbst keine Hand frei: „🙋 Jemand anderen tickern lassen“ verschickt einen Link an einen Helfer am Spielfeldrand; der sieht nur die Kinder von heute und die Aktionsknöpfe und kann Tore, Paraden und Gegentore melden – keine Bewertungen, keine Kaderdaten. Der Link gilt nur, solange der Ticker läuft. Die Team-Quests stehen darunter und gelten für alle Teams zusammen. Ist heute Spieltag, öffnet sich beim Betreten der Abschnitt, der zur Uhrzeit passt – vor dem Anpfiff „Vor dem Spiel“, während „Live“, danach „Nach dem Spiel“.", go:"spieltag"},
-    {t:"Spieler bewerten", d:"Team → Bewerten: je Kind 16 Kriterien (Torwart 22) in vier Stufen – Ansatz, Solide (= altersgerecht), Gut, Stark; unter jeder Stufe steht, woran man sie im Spiel erkennt. „Bewertungsrunde starten“ geht alle Kinder nacheinander durch. <b>So wird es verlässlich:</b> vorher im Trainerteam die Stufen-Beschreibungen gemeinsam lesen und an einer gedachten Szene klären, was „Solide“ und was „Gut“ heißt; dann Kriterium für Kriterium über alle Kinder nachdenken statt Kind für Kind (sonst färbt der Gesamteindruck alle Einzelwerte); nur bewerten, was ihr gesehen habt. Ihr bewertet gemeinsam („Bewertet von: Trainerteam“ ist vorgewählt): Damit nicht die erste oder lauteste Stimme den Wert setzt, zeigt jeder seine Stufe gleichzeitig mit den Fingern (1–4); liegt ihr zwei Stufen auseinander, erzählt jeder kurz die Szene, die er gesehen hat – dann entscheidet ihr. Am Ende kurz prüfen, ob oben vor allem früh im Jahr geborene Kinder stehen (Geburtsquartal im Profil). Die Werte sind eine Momentaufnahme aus dem Training, keine Prognose. <b>Seit v635:</b> Kinder sehen nie Zahlen – auch nicht auf der Urkunde. Der Entwicklungsbericht fürs Elterngespräch nennt Stufen in Worten, Stärken, Ziele und Trainingsschwerpunkt, aber keine Prozente und keine Trainer-Interna. <b>Seit v637:</b> Was ihr nicht beobachtet habt, bekommt „Nicht gesehen“ – es zählt nicht mit, statt geraten zu werden. Bewertet wird alle sechs Wochen im Trainermeeting; über dem Formular steht, ab wann die nächste Runde fällig ist (ab 35 Tagen). „Gewachsen“ zeigt die App erst, wenn ein Kriterium zwei Stufen gestiegen ist oder zwei Runden hintereinander je eine.", run:"go('bew')"},
+    {t:"Spieler bewerten", d:"Team → Bewerten: je Kind 16 Kriterien (Torwart 22) in vier Stufen – Ansatz, Solide (= altersgerecht), Gut, Stark; unter jeder Stufe steht, woran man sie im Spiel erkennt. „Bewertungsrunde starten“ geht alle Kinder nacheinander durch. <b>So wird es verlässlich:</b> vorher im Trainerteam die Stufen-Beschreibungen gemeinsam lesen und an einer gedachten Szene klären, was „Solide“ und was „Gut“ heißt; dann Kriterium für Kriterium über alle Kinder nachdenken statt Kind für Kind (sonst färbt der Gesamteindruck alle Einzelwerte); nur bewerten, was ihr gesehen habt. Ihr bewertet gemeinsam („Bewertet von: Trainerteam“ ist vorgewählt): Damit nicht die erste oder lauteste Stimme den Wert setzt, zeigt jeder seine Stufe gleichzeitig mit den Fingern (1–4); liegt ihr zwei Stufen auseinander, erzählt jeder kurz die Szene, die er gesehen hat – dann entscheidet ihr. Am Ende kurz prüfen, ob oben vor allem früh im Jahr geborene Kinder stehen (Geburtsquartal im Profil). Die Werte sind eine Momentaufnahme aus dem Training, keine Prognose. <b>Seit v635:</b> Kinder sehen nie Zahlen – auch nicht auf der Urkunde. Der Entwicklungsbericht fürs Elterngespräch nennt Stufen in Worten, Stärken, Ziele und Trainingsschwerpunkt, aber keine Prozente und keine Trainer-Interna. <b>Seit v637:</b> Was ihr nicht beobachtet habt, bekommt „Nicht gesehen“ – es zählt nicht mit, statt geraten zu werden. „Gewachsen“ zeigt die App erst, wenn ein Kriterium zwei Stufen gestiegen ist oder zwei Runden hintereinander je eine. <b>Seit v648 (Trainermeeting 27.09.2026):</b> Einzelne Spieler werden erst ab dem Ende der Hinrunde bewertet. Das Datum setzt ihr oben in Bewerten („Erste Bewertungsrunde ab“, sehen und ändern können es nur Trainer). Bis dahin ist das Formular gesperrt, „Runde fällig“ erscheint nirgends, „Einheit bewerten“ zeigt keine Sterne je Kind, das Blitz-Rating ist ausgeblendet, und die KI-Auswertung der Sprachnotiz trägt keine Werte je Kind ein – ein besonderes Ereignis landet als Satz in der Notiz. Ab dem Datum bewertet das ganze Trainerteam jeden Spieler, danach alle acht Wochen; fällig ist eine Runde 49 Tage nach der letzten. Über dem Formular steht, wer das Kind in dieser Runde schon bewertet hat.", run:"go('bew')"},
     {t:"Aufstellung", d:"Rollen-Empfehlung aus den Bewertungen: wer passt als Aufpasser, Jäger, Flitzer links/rechts. Braucht mindestens 4 bewertete Kinder – wer noch niemanden bewertet hat, nutzt im Spieltag „Feld & Bank fair besetzen“ (verteilt nach Einsatzzeiten).", go:"kombi"},
     {t:"Spiel & Festival nachbereiten", d:"Die Ebene über dem Blitz-Rating: wie die MANNSCHAFT gespielt hat. Je Team vier Antippreihen in derselben Skala wie beim Blitz-Rating (schwach / ok / stark) – Ordnung im Raum (verteilt geblieben oder Traube um den Ball), Passspiel, Zweikämpfe, Spaß. Warum je Team und nicht einmal für den Tag: Adler 1 und Adler 2 spielen oft in verschiedenen Formen und gegen verschiedene Gäste, ein gemeinsamer Wert mittelt genau das weg. Darunter die Gäste, sportlich eingeschätzt (zu schwach / passend / zu stark) – die Antwort auf die Frage, wen du beim nächsten Festival einlädst, damit die Kinder Spiele bekommen und keine Vorführungen. Dann zwei Sätze, „Das hat getragen“ und „Daran arbeiten wir“, und zugeklappt drei Orga-Fragen (Zeitplan, Felder, Helfer). Alles freiwillig. Jeder Trainer gibt seine eigene Einschätzung ab, sie ersetzt keine andere. Die einzelnen Kinder bleiben im Blitz-Rating – was hier gefragt ist, sieht man am einzelnen Kind gar nicht: ob ein Achtjähriger seine Position hält, hängt an Spielform und Feldgröße, also an deiner Entscheidung. Erreichbar über das To-do auf der Startseite und im Termin-Fenster unter „Nach dem Termin“. <b>Seit v634 ein Einstieg für alles:</b> Auf der Startseite steht immer „📝 Nachbereiten – Training, Spiel, Festival“. Er zeigt die vergangenen Termine aller drei Arten in einer Liste, je mit ⭐ (von dir noch offen) oder ✅ und wer schon nachbereitet hat. Überall derselbe Ablauf: erzählen, die KI ordnet, daraus wird ein Tagebucheintrag. Das To-do „Ergebnis nachtragen“ gibt es nicht mehr – Ergebnisse zählen in der U9 nicht; wer eines festhalten will, trägt es im Termin-Fenster ein. <b>Seit v627 per Sprachnotiz:</b> Oben im Fenster (auch bei „Einheit bewerten“ nach dem Training) steht „🎙️ Per Sprachnotiz ausfüllen“. Erzähl frei, wie es lief – per Mikrofon-Knopf oder mit dem Mikrofon der Tastatur –, dann „KI auswerten“. Die KI trägt ein, was du gesagt hast: Sterne, Stufen, Kommentare, „übersprungen“, Kinder-Sterne. Was du nicht erwähnst, bleibt, wie es war; gespeichert wird erst mit dem Knopf unten. Kindernamen gehen dabei nicht an die KI – sie werden vorher durch „Kind 1“, „Kind 2“ … ersetzt. <b>Seit v627 führt dich die Nachbereitung Frage für Frage:</b> Beim Öffnen fragt sie zuerst, ob du erzählen (Sprachnotiz) oder gleich losgehen willst, dann je Frage fünf Antwort-Kacheln mit Wort und Sternen („★★★★ viel“) – ein Tipp setzt die Antwort und geht weiter, „überspringen“ lässt die Frage leer. Beim Training: Einheit, jede Übung (mit „fand nicht statt“), die Kinder, eine Notiz; bei Spiel und Festival: je Mannschaft die vier Fragen, die Gäste, zwei Sätze, Organisation. Am Ende steht, was beantwortet ist, und „Speichern“. „Alles auf einen Blick“ zeigt jederzeit den gewohnten Bogen mit denselben Werten. <b>Seit v628 bleibt deine Sprachnotiz erhalten</b> – sie wird mit der Nachbereitung gespeichert. Die KI macht daraus zusätzlich einen Tagebuch-Vorschlag: Baustein, Beobachtung, Aha, Konsequenz und drei bis fünf Schlagworte. Der Eintrag danach ist damit vorausgefüllt und als „Vorschlag der KI“ gekennzeichnet – prüfe ihn und schreib ihn in deinen Worten. Kinder stehen im Tagebuch mit Vornamen; nach außen (Kopieren, Teilen, Export) ersetzt die App sie durch Buchstaben. Entsteht der Eintrag später, holt „Vorschlag aus der Sprachnotiz“ ihn aus der gespeicherten Notiz. Im Tagebuch stehen oben die Themen mit Anzahl – ein Tipp zeigt nur die Einträge zu diesem Thema. <b>Seit v630 hält das Einsprechen durch:</b> Der Bildschirm bleibt an, solange du sprichst, nach einer Sprechpause hört die App von selbst weiter zu, und doppelt gelieferte Wörter stehen nur einmal im Feld. Unter dem Feld siehst du „Hört zu“ und live, was gerade ankommt; der Punkt pulsiert, sobald du sprichst. „Pause“ unterbricht, „Weiter einsprechen“ hängt an – nichts Gesagtes geht verloren. Nach 90 Sekunden Stille pausiert es von selbst. Kann dein Handy den Bildschirm nicht wach halten (etwa ein iPhone vor iOS 18.4 in der installierten App), steht das unter dem Feld – dann zwischendurch kurz aufs Display tippen. Dasselbe gilt für die Trainer-Notiz. <b>Seit v630 öffnet „Einsprechen“ eine Vollansicht:</b> der Text groß und bearbeitbar, unten Pause/Weiter und „KI-Auswertung“. <b>Seit v638</b> trägt die KI direkt in den Bogen ein – der Bogen mit Sternen und Notizen ist die Zusammenfassung, dort änderst du, was nicht passt, und speicherst. Soll die KI etwas ändern, tippe „Korrektur einsprechen“ und sag es („Die Umsetzung war eher drei Sterne“); die nächste Auswertung ersetzt, was die KI vorher eingetragen hat, und verdoppelt nichts. Kurze Denkpausen setzen keinen Punkt mehr – erst nach einer längeren Pause beginnt ein neuer Satz; die Satzzeichen setzt ohnehin die KI. Wer die beste Erkennung will, tippt ins Feld und nutzt das Mikrofon der Handy-Tastatur. „Fertig“ schließt ohne KI, der Text bleibt stehen. Das kleine Feld wächst beim Tippen mit; ⤢ daneben öffnet dieselbe Vollansicht ohne Mikrofon. <b>Seit v630 bewertet jeder Trainer selbst, mit Stempel:</b> Oben im Fenster steht „✍️ Name · Datum, Uhrzeit“. Haben Kollegen denselben Tag schon bewertet, stehen ihre Einschätzungen unter „Auch bewertet von …“ zum Lesen – deine kommt daneben und ersetzt keine. In der Liste steht bei jedem Training, wer es bewertet hat; Bewertungen von vor v630 tragen „Trainerteam“, weil der Name damals nicht erfasst wurde. Auch jede Übungsbewertung und jeder Tagebuch-Eintrag trägt den Stempel. Texte dürfen lang sein: die KI schreibt vollständig statt knapp, Notizen bis 3000 Zeichen, die Sprachnotiz bis etwa 15 Minuten, und die Felder wachsen mit."},
     {t:"Analyse", d:"Auswertung nach dem Spiel: Entwicklungs-Meilensteine aus den Bewertungen, Einsatz-Fairness (zählt Spieltage mit Blitz-Rating je Kind) und Formtrend. Solange kein Spiel bewertet ist, steht dort nur ein Satz mit dem Weg zum Spieltag.", go:"analyse"},
@@ -4456,7 +4523,7 @@ const TOUR=[
   {emo:"🦅", t:"Willkommen in der Adler-App", d:"Die Startseite ist bewusst schlank: Ganz oben erscheinen DEINE To-Dos (nur wenn etwas offen ist) – jedes führt dorthin, wo es sich erledigen lässt, und was du nicht mehr nachtragen willst, hakst du mit dem ✓ daneben für das ganze Trainerteam ab, darunter „Bist du dabei?“ – nur die Termine der nächsten 14 Tage, für die deine Antwort noch fehlt; ein Tap auf ✅ 🤔 ❌ genügt, und ist alles beantwortet, verschwindet die Karte. Danach „Diese Woche“ – die Termine der nächsten sieben Tage mit dem Stand (Zusagen, Trainer, Plan, Aufstellung); die erste Zeile ist der nächste Termin mit Wetter, Packtipp und Sprungknopf. Dann ein festgelegtes Trainer-Meeting (falls eines ansteht, mit der Zahl offener Themen), ein Knopf zu allen Terminen der Saison – und sechs große Kacheln, die du auch unten in der Leiste findest. Hinter jeder Kachel wartet wieder eine Seite mit Kacheln – über die Leiste landest du auf genau derselben. Von dort geht es ins Detail, und die Reiterzeile oben bringt dich mit einem Tipp zurück zur Übersicht. Diese Tour findest du jederzeit über ❓ oben rechts."},
   {emo:"🏃", t:"Kachel: Training", d:"Vier Wege: Anwesenheit (heute + kommende Termine), Trainingsplan mit Stationen und Trainingsstart (die Trainer-Reihe oben zeigt farbig, wer für den Termin zu-, ab- oder noch nicht geantwortet hat), die Übungs-Datenbank und das 🏆 Trainingsturnier, das du vorab planen kannst – auch Eltern gegen Kinder. Die Nachbewertung meldet sich nach dem Training von selbst als To-Do auf der Startseite."},
   {emo:"⚽", t:"Kachel: Spieltag", d:"Ganz oben „📚 Wissen & Nachschlagen“: Spielformen und Feldmaße, die Spielregeln, was Ordnungsgeld kostet, das Warm up Adler mit allen vier Stufen und unsere Zeiten – zum Nachsehen am Platz. Darunter der Ablauf von oben nach unten: „Teams festlegen“ beantwortet einmal für den ganzen Tag, wer dabei ist und wie viele Teams wir stellen – die Kinder verteilt die App automatisch, du korrigierst nur. Darunter je Team eine Kachel mit Kader, Rollen, Uhr, Rotations-Timer und Liveticker; danach die Team-Quests für alle Teams zusammen. Beim Öffnen sind alle Abschnitte eingeklappt – du tippst auf, was du gerade brauchst. Dazu die Rollen-Empfehlung aus den Bewertungen und die Analyse. Steht ein Turnier an, erscheint ganz unten der Turnier-Bereich (Heimturnier ausrichten mit öffentlichem Link für die Gast-Trainer)."},
-  {emo:"👥", t:"Kachel: Team", d:"Kader verwalten, Spieler alle 6 Wochen in 16 Kriterien bewerten (Live-Radar), Profil mit Sprachlob und Entwicklungs-Report, dazu Saison-Cockpit, Anwesenheit über die Saison und Rollen-Matrix. Unter „Ausstattung“ steht, welches Kind Trikotsatz, Anzug oder Jacke bekommen hat – mit Größe, Ausgabedatum und Rückgabe. Auch Notfallkarten und Probetraining wohnen hier."},
+  {emo:"👥", t:"Kachel: Team", d:"Kader verwalten, Spieler ab Ende Hinrunde alle 8 Wochen in 16 Kriterien bewerten (Live-Radar), Profil mit Sprachlob und Entwicklungs-Report, dazu Saison-Cockpit, Anwesenheit über die Saison und Rollen-Matrix. Unter „Ausstattung“ steht, welches Kind Trikotsatz, Anzug oder Jacke bekommen hat – mit Größe, Ausgabedatum und Rückgabe. Auch Notfallkarten und Probetraining wohnen hier."},
   {emo:"🎯", t:"Kachel: Taktik", d:"Das Taktikboard: Spielsituationen beschreiben und von der KI zeichnen lassen oder mit einer Spielform starten, mit mehreren Bildern abspielen, groß zeigen und als Bild teilen – auf derselben Zeichenfläche wie die Skizzen der Übungen. Zum Besprechen „Groß zeigen“ mit „Kinder einsetzen“. Daneben die Übungs-Datenbank – dort zeichnest du je Übung eine Skizze mit Spielern, Hütchen, Minitoren, Jugendtoren, Zonen, Pfeilen, Mittellinie und Schusszone, zeigst sie mit „Groß zeigen“ bildschirmfüllend mit Fingerzoom und hellem Rasen und gibst sie mit „Skizze teilen“ als Bild weiter."},
   {emo:"🪶", t:"Kachel: Eltern & Kinder", d:"Team-Ansage mit Gelesen-Status, Eltern einladen, Elterngespräche – und die ganze Adler-Welt der Kinder: Federn, Karten, Abzeichen, Kabinen-Wahl, „Unsere Regeln“ für die Kabine, Sammelalbum-Fotos, Team-Quests, Urkunden-Studio und das Adler Nest. Die Kabine gibt es inzwischen auch als eigene App auf dem Gerät des Kindes – gekoppelt wird sie von den Eltern mit einem Code, die Appzeit stellen ebenfalls sie ein. Du musst dafür nichts tun; unter Orga → Nutzung siehst du nur die Zahl der gekoppelten Geräte. Stellen Eltern einen Löschantrag, steht er oben auf der Startseite: „Jetzt löschen“ entfernt alle Daten des Kindes, in Plänen und Spielberichten steht danach „Ehemaliges Kind“."},
   {emo:"📅", t:"Kachel: Orga", d:"Termine mit Endzeit (danach automatisch ins Archiv), Pinnwand fürs Trainerteam, Ferien-Radar, Mitbringlisten (je Event einschaltbar, Standard aus), Trainer-Meeting (steht der Termin, erscheint er auf deiner Startseite – die Eltern sehen ihn nicht), Teamkasse, Material (Bälle, Hütchen, Erste-Hilfe-Set – mit Soll und Ist) und Fundbüro. Ganz unten: Push-Benachrichtigungen und dein Passwort."},
@@ -5123,12 +5190,8 @@ async function renderHome(){
      nach dem Saisonstart stand der ganze Kader in Rot. */
   const names=typeof kaderNamen==="function"?kaderNamen():Object.keys(DB||{});
   const bewertet=names.filter(n=>DB[n]&&DB[n].length).length;
-  const cutoff=new Date(Date.now()-35*86400000).toISOString().slice(0,10); // v637: fällig ab 5 Wochen (Runde alle 6 Wochen im Trainermeeting)
-  const stale=names.filter(n=>{
-    const s=DB[n];
-    if(!s||!s.length)return false;
-    return (s[s.length-1].datum||"0000")<cutoff;
-  }).length;
+  // v648: fällig nach 49 Tagen, vor dem Startdatum der Bewertungen nie
+  const stale=typeof bewKindFaellig==="function"?names.filter(bewKindFaellig).length:0;
   const statTile=(val,lbl,col,jump)=>`<div role="button" tabindex="0" onclick="${jump}" class="card" style="flex:1;min-width:90px;padding:10px;text-align:center;cursor:pointer">
     <div style="font-size:var(--s-seite);font-weight:800;color:${col}">${val}</div>
     <div style="font-size:var(--s-klein);color:var(--text2)">${lbl}</div></div>`;
@@ -6300,10 +6363,11 @@ function _kachelInhalt(key){
   if(key==="team"){
     const names=typeof kaderNamen==="function"?kaderNamen():Object.keys(DB||{});   // v636: nur aktive Kinder
     const bewertet=names.filter(n=>DB[n]&&DB[n].length).length;
-    const cutoff=new Date(Date.now()-35*86400000).toISOString().slice(0,10);   // v637: fällig ab 5 Wochen
-    const stale=names.filter(n=>{const s=DB[n];if(!s||!s.length)return false;return (s[s.length-1].datum||"0000")<cutoff;}).length;
+    // v648: „Runde fällig“ erst ab dem Startdatum der Bewertungen, dann nach 49 Tagen
+    const frei=typeof bewFreigegeben==="function"&&bewFreigegeben();
+    const stale=frei?names.filter(bewKindFaellig).length:0;
     const tile=(v,l,c,arg)=>`<button onclick="kachelRun('go','${arg}')" style="flex:1;min-width:90px;min-height:72px;border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface);padding:10px;text-align:center;cursor:pointer;font-family:inherit"><div style="font-size:var(--s-seite);font-weight:900;color:${c}">${v}</div><div style="font-size:var(--s-text);color:var(--text2);font-weight:700">${l}</div></button>`;
-    return `<div style="display:flex;gap:10px;margin-bottom:4px">${tile(names.length,"Kader","var(--blue-text)","kader")}${tile(bewertet+"/"+names.length,"bewertet","var(--green)","bew")}${tile(stale,"Runde fällig","var(--red)","bew")}</div>
+    return `<div style="display:flex;gap:10px;margin-bottom:4px">${tile(names.length,"Kader","var(--blue-text)","kader")}${tile(bewertet+"/"+names.length,"bewertet","var(--green)","bew")}${frei?tile(stale,"Runde fällig","var(--red)","bew"):""}</div>
       <div id="home-antifrust"></div><div id="home-birthday"></div><div id="home-radar"></div>`
       +kSec("Spieler")
       +kTiles([

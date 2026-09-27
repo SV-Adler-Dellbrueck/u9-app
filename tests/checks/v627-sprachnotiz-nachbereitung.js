@@ -35,6 +35,7 @@ module.exports = async function (h) {
     getragen: "Die Kinder haben nie aufgegeben.", arbeiten: null, orga: { zeitplan: 1, felder: null, helfer: null } } };
   const s = await h.starten({ hoehe: 2400, supabase: h.supabaseAttrappe({
     kader: h.kaderZeilen(), profiles: [{ name: "Charles", rolle: "trainer" }], anwesenheit: [], einheit_bewertung: [],
+    team_einstellungen: [{ id: 1, bewertung_ab: "2026-01-01" }],   // v648: Kinder-Sterne gibt es erst ab dem Startdatum der Bewertungen
     trainingsplan: [{ datum: gestern, plan, kopf: {} }], trainings_eval: [], nominierungen: [], heimturnier: [{ teams: ["Adler 1", "FC Gastverein"] }],
     termine: [{ id: 7, datum: gestern, typ: "training" }, { id: 8, datum: gestern, typ: "turnier", titel: "Festival" }],
     event_bewertung: (u, req) => { if (req.method() !== "GET") schreibend++; return []; },
@@ -46,7 +47,7 @@ module.exports = async function (h) {
     window.trainerMe = async () => "Charles";
     if (typeof sbToken !== "function" || !sbToken()) window.sbToken = () => "t";
     if (typeof nbSprachHtml !== "function") return { fehlt: true };
-    await loadKader();
+    await loadKader(); BEW_AB = "2026-01-01";
     AW_DATA[gestern] = { "Kind A": { da: true }, "Kind C": { da: true }, "Kind E": { da: true } };
     await einheitBewertenOpen(); await einheitDetailOpen(gestern);
     for (let i = 0; i < 40 && !document.getElementById("eb-ue-0"); i++) await warte(50);

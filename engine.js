@@ -331,12 +331,29 @@ function playerTrend(name){
   const cur=snaps[snaps.length-1].total_score||0, prev=snaps[snaps.length-2].total_score||0;
   return {delta:Math.round(cur-prev), conf:snaps.length};
 }
-/* v637: Bewertungsrunden. Bewertet wird alle sechs Wochen gemeinsam im Trainermeeting; ab 35 Tagen
-   gilt die nächste Runde als fällig. Verglichen wird Runde gegen Runde, nicht Einzelwert gegen
-   Einzelwert: Bewertungen innerhalb von 21 Tagen gehören zur selben Runde (die jüngste zählt).
+/* v637: Bewertungsrunden. Vergleich Runde gegen Runde, nicht Einzelwert gegen Einzelwert:
+   Bewertungen innerhalb von 21 Tagen gehören zur selben Runde (die jüngste zählt).
    „Gewachsen“ heißt: ein Kriterium ist um zwei Stufen gestiegen – oder zweimal hintereinander
-   um eine. Eine einzelne Stufe ist bei Achtjährigen oft Tagesform, keine Entwicklung. */
-const BEW_FAELLIG_TAGE=35, BEW_RUNDE_FENSTER_TAGE=21;
+   um eine. Eine einzelne Stufe ist bei Achtjährigen oft Tagesform, keine Entwicklung.
+   v648 (Trainermeeting 27.09.2026): Einzelbewertung erst ab einem Datum, das das Trainerteam
+   setzt (Ende Hinrunde, team_einstellungen.bewertung_ab – nur Trainer lesen und schreiben).
+   Davor gibt es keine Bewertungsrunde, keine Schnell-Sterne je Kind, kein Blitz-Rating und
+   keine Werte je Kind aus der KI-Auswertung. Danach Takt acht Wochen, fällig ab 49 Tagen
+   (dieselbe Woche Vorlauf wie vorher 35 bei sechs), gezählt ab der letzten Runde, frühestens
+   ab dem Startdatum. Das Datum steht nie im Code. */
+const BEW_FAELLIG_TAGE=49, BEW_RUNDE_FENSTER_TAGE=21;
+let BEW_AB=null; // "JJJJ-MM-TT" oder null (= gesperrt)
+function bewHeute(){ try{return new Date().toLocaleDateString("sv-SE",{timeZone:"Europe/Berlin"});}catch(e){return new Date().toISOString().slice(0,10);} }
+function bewFreigegeben(){ return !!BEW_AB&&BEW_AB<=bewHeute(); }
+function bewAbText(){ return BEW_AB?new Date(BEW_AB+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"}):""; }
+async function bewAbLaden(){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/team_einstellungen?id=eq.1&select=bewertung_ab`,{headers:sbAuthHeaders()});
+    if(r.ok){const c=(await r.json())[0]; BEW_AB=(c&&c.bewertung_ab)||null;}
+  }catch(e){}
+  if(typeof bewSperreAnwenden==="function")bewSperreAnwenden();
+  return BEW_AB;
+}
 function bewRunden(name){
   const snaps=((DB&&DB[name])||[]).filter(s=>s&&s.datum).slice().sort((a,b)=>String(a.datum).localeCompare(String(b.datum)));
   const out=[];
@@ -362,14 +379,23 @@ function bewVergleich(name){
   });
   return res;
 }
+// v648: Ist für dieses Kind eine Runde fällig? Gesperrt nie; sonst 49 Tage nach seiner letzten
+// Bewertung, frühestens nach dem Startdatum.
+function bewKindFaellig(name){
+  if(!bewFreigegeben())return false;
+  const s=DB&&DB[name], letzte=s&&s.length?String(s[s.length-1].datum||"").slice(0,10):"";
+  const bezug=letzte>BEW_AB?letzte:BEW_AB;
+  return (Date.now()-new Date(bezug+"T00:00:00"))/864e5>=BEW_FAELLIG_TAGE;
+}
 function bewRundenStand(){
   const names=typeof kaderNamen==="function"?kaderNamen():Object.keys(DB||{});
   let letzte="";
   names.forEach(n=>{const s=DB&&DB[n];if(s&&s.length){const d=String(s[s.length-1].datum||"");if(d>letzte)letzte=d;}});
-  if(!letzte)return {letzte:null,tage:null,faellig:true,faelligAb:null};
-  const tage=Math.floor((Date.now()-new Date(letzte+"T00:00:00"))/864e5);
-  const ab=new Date(new Date(letzte+"T00:00:00").getTime()+BEW_FAELLIG_TAGE*864e5).toISOString().slice(0,10);
-  return {letzte,tage,faellig:tage>=BEW_FAELLIG_TAGE,faelligAb:ab};
+  if(!bewFreigegeben())return {letzte:letzte||null,tage:null,faellig:false,faelligAb:null,gesperrt:true};
+  const bezug=letzte&&letzte>BEW_AB?letzte:BEW_AB;  // frühestens ab dem Startdatum
+  const tage=Math.floor((Date.now()-new Date(bezug+"T00:00:00"))/864e5);
+  const ab=new Date(new Date(bezug+"T00:00:00").getTime()+BEW_FAELLIG_TAGE*864e5).toISOString().slice(0,10);
+  return {letzte:letzte||null,tage,faellig:tage>=BEW_FAELLIG_TAGE,faelligAb:ab};
 }
 function roleScore(player,role){
   // player.rolle wurde in getPlayerData() bereits mit demselben foot berechnet – nicht doppelt tun
