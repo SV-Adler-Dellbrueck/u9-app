@@ -446,7 +446,7 @@ function _tmdKarte(t){
           <span style="font-size:var(--s-text);color:var(--text2)">Ergebnis</span>
           <input type="text" value="${esc(t.ergebnis||"")}" placeholder="z. B. 3:2" onchange="tmSetResult(${Number(t.id)},this.value)" style="width:100px;min-height:44px;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:var(--s-text);font-family:inherit;background:var(--surface2);color:var(--text)">
         </div>
-        <button class="btn btn-sm" onclick="tmJump('blitz','${t.datum}','${t.spielform||""}')" style="width:100%;min-height:44px;justify-content:center"><i class="ti ti-bolt"></i>Auswertung &amp; Blitz-Rating</button>
+        <button class="btn btn-sm" onclick="tmJump('blitz','${t.datum}','${t.spielform||""}')" style="width:100%;min-height:44px;justify-content:center"><i class="ti ti-bolt"></i>${typeof bewFreigegeben==="function"&&bewFreigegeben()?"Auswertung &amp; Blitz-Rating":"Auswertung"}</button>
         <!-- v525: Das Blitz-Rating deckt die KINDER ab. Wie die Mannschaft gespielt hat,
              stand nirgends – und genau danach hat der PO gefragt. Der Knopf steht bewusst
              direkt darunter: eine Ebene tiefer, derselbe Moment. -->
@@ -1005,7 +1005,9 @@ function tmJump(ziel,datum,spielform){
       if(typeof TEAM_KARTE_OFFEN!=="undefined")TEAM_KARTE_OFFEN=1;
       spieltagDatesLoad(datum);toast("Spieltag "+datum);
       const ph=document.getElementById("mt-phase-nach"); if(ph)ph.open=true; // Phase „Nach dem Spiel" aufklappen
-      setTimeout(()=>document.getElementById("blitz-panel")?.scrollIntoView({behavior:"smooth",block:"start"}),200);
+      // v648: ohne Blitz-Rating (gesperrt bis Ende Hinrunde) zum Spielbericht
+      const zielId=typeof bewFreigegeben==="function"&&bewFreigegeben()?"blitz-panel":"bericht-panel";
+      setTimeout(()=>document.getElementById(zielId)?.scrollIntoView({behavior:"smooth",block:"start"}),200);
     },120);
   }
 }

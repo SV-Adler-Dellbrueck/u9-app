@@ -646,7 +646,8 @@ function nbInsTraining(e, m){
   if(ue) b.push(`${ue} Übung${ue>1?"en":""}`);
   const kids = (typeof EB_SPIELER!=="undefined"?EB_SPIELER:[]);
   let ki = 0;
-  (e.kinder||[]).forEach(k=>{ const name = m && m.zurueck[k.kind]; const i = kids.indexOf(name); if(i>=0 && _nbStern(`sp-${i}`, k.sterne, 3, 21)) ki++; });
+  // v648: vor dem Startdatum der Bewertungen keine Sterne je Kind (der Server liefert dann auch keine)
+  if(typeof bewFreigegeben==="function"&&bewFreigegeben())(e.kinder||[]).forEach(k=>{ const name = m && m.zurueck[k.kind]; const i = kids.indexOf(name); if(i>=0 && _nbStern(`sp-${i}`, k.sterne, 3, 21)) ki++; });
   if(ki) b.push(`${ki} Kind${ki>1?"er":""}`);
   return b;
 }

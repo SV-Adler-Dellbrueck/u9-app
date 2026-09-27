@@ -65,6 +65,25 @@ organisatorisch; spass = Spaßfaktor Kinder; anforderung = wurde die Anforderung
 uebersprungen = die Übung fand nicht statt. Nur Übungen und Kinder aufführen, zu denen etwas
 gesagt wurde.`;
 
+/* v648 (Trainermeeting 27.09.2026): Bis zum Startdatum der Bewertungen (team_einstellungen.
+   bewertung_ab, gelesen mit dem Service-Schlüssel – der Client kann es nicht vorgeben) gibt die
+   Auswertung KEINE Werte je Kind aus. Ein besonderes Ereignis zu einem Kind landet als Satz in
+   der Notiz zur Einheit. */
+const FORM_TRAINING_OHNE_KINDER = `{
+  "einheit": {"spass": 1-5|null, "umsetzung": 1-5|null, "erfolg": 1-5|null, "notiz": "…"|null},
+  "uebungen": [{"nr": <Nummer>, "durchfuehrung": 1-5|null, "spass": 1-5|null, "anforderung": 1-5|null,
+                "notiz": "…"|null, "uebersprungen": true|false}],
+  <TAGEBUCH>
+}
+Bedeutung: einheit.spass = Spaß der Kinder insgesamt; umsetzung = wurde der Plan umgesetzt;
+erfolg = wurde das Ziel der Einheit erreicht. Je Übung: durchfuehrung = lief die Übung
+organisatorisch; spass = Spaßfaktor Kinder; anforderung = wurde die Anforderung umgesetzt;
+uebersprungen = die Übung fand nicht statt. Nur Übungen aufführen, zu denen etwas gesagt wurde.
+EINZELBEWERTUNG AUSGESETZT: Einzelne Kinder werden derzeit nicht bewertet. Gib keine Sterne,
+Noten oder Werte je Kind aus, auch nicht in Übungsfeldern. Hat der Trainer ein besonderes
+Ereignis zu einem Kind erzählt, schreibe es als ganzen Satz in einheit.notiz – mit genau der
+Bezeichnung „Kind n“ und ohne Wertung in Zahlen.`;
+
 const FORM_SPIEL = `{
   "teams": [{"nr": <Nummer>, "ordnung": 1-3|null, "pass": 1-3|null, "zweikampf": 1-3|null, "spass": 1-3|null}],
   "gaeste": [{"name": "<genau wie vorgegeben>", "einschaetzung": "zu_schwach"|"passend"|"zu_stark"}],
@@ -130,7 +149,7 @@ function sanTagebuch(t: any) {
 const zahl = (v: unknown, max: number) => { const n = Math.round(Number(v)); return (isFinite(n) && n >= 1 && n <= max) ? n : null; };
 const satz = (v: unknown, max = 200) => { const s = String(v ?? "").trim(); return (s && s.toLowerCase() !== "null") ? s.slice(0, max) : null; };
 
-function sanTraining(p: any, nrs: Set<number>, kinder: Set<string>) {
+function sanTraining(p: any, nrs: Set<number>, kinder: Set<string>, einzelwerte = true) {
   const e = p?.einheit || {};
   const out: any = {
     einheit: { spass: zahl(e.spass, 5), umsetzung: zahl(e.umsetzung, 5), erfolg: zahl(e.erfolg, 5), notiz: satz(e.notiz, 3000) },
@@ -141,7 +160,7 @@ function sanTraining(p: any, nrs: Set<number>, kinder: Set<string>) {
     out.uebungen.push({ nr, durchfuehrung: zahl(u.durchfuehrung, 5), spass: zahl(u.spass, 5), anforderung: zahl(u.anforderung, 5),
       notiz: satz(u.notiz, 800), uebersprungen: u.uebersprungen === true });
   }
-  for (const k of Array.isArray(p?.kinder) ? p.kinder : []) {
+  if (einzelwerte) for (const k of Array.isArray(p?.kinder) ? p.kinder : []) {
     const name = String(k?.kind || ""); const s = zahl(k?.sterne, 3);
     if (kinder.has(name) && s) out.kinder.push({ kind: name, sterne: s });
   }
@@ -192,6 +211,10 @@ Deno.serve(async (req) => {
     if (text.length < 15) return j({ error: "Die Notiz ist zu kurz – sprich ein paar Sätze zur Einheit." }, 400);
 
     let user = "", nrs = new Set<number>(), namen = new Set<string>();
+    // v648: Werte je Kind erst ab dem Startdatum, das das Trainerteam gesetzt hat (Europe/Berlin)
+    const { data: te } = await svc.from("team_einstellungen").select("bewertung_ab").eq("id", 1).maybeSingle();
+    const heuteBerlin = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" });
+    const einzelwerte = !!te?.bewertung_ab && String(te.bewertung_ab) <= heuteBerlin;
     if (art === "tagebuch") {
       /* Nur der Tagebuch-Teil – aus einer gespeicherten Sprachnotiz, wenn der Eintrag später entsteht. */
       const anlass = String(body?.anlass ?? "").slice(0, 160);
@@ -203,7 +226,7 @@ Deno.serve(async (req) => {
       const kinder = (Array.isArray(body?.kinder) ? body.kinder : []).slice(0, 30).map((k: unknown) => String(k)).filter((k: string) => /^Kind \d+$/.test(k));
       nrs = new Set(ue.map((u: any) => u.nr)); namen = new Set(kinder);
       user = `ÜBUNGEN DIESER EINHEIT:\n${ue.map((u: any) => `${u.nr}. ${u.name}${u.bloecke ? " (" + u.bloecke + ")" : ""}`).join("\n") || "(keine geplant)"}\n\n`
-        + `ANWESENDE KINDER: ${kinder.join(", ") || "(keine erfasst)"}\n\nANTWORTFORM:\n${FORM_TRAINING.replace("<TAGEBUCH>", FORM_TAGEBUCH)}\n\nSPRACHNOTIZ:\n"""\n${text}\n"""`;
+        + `ANWESENDE KINDER: ${kinder.join(", ") || "(keine erfasst)"}\n\nANTWORTFORM:\n${(einzelwerte ? FORM_TRAINING : FORM_TRAINING_OHNE_KINDER).replace("<TAGEBUCH>", FORM_TAGEBUCH)}\n\nSPRACHNOTIZ:\n"""\n${text}\n"""`;
     } else {
       const teams = (Array.isArray(body?.teams) ? body.teams : []).slice(0, 8)
         .map((t: any) => ({ nr: Number(t?.nr), name: String(t?.name || "").slice(0, 60) })).filter((t: any) => isFinite(t.nr));
@@ -228,7 +251,7 @@ Deno.serve(async (req) => {
       const m = res.text.match(/\{[\s\S]*\}/); if (m) { try { parsed = JSON.parse(m[0]); } catch { /* unlesbar */ } }
     }
     if (!parsed || typeof parsed !== "object") return j({ error: "Die KI-Antwort war unlesbar. Bitte noch einmal versuchen." }, 502);
-    const ergebnis: any = art === "training" ? sanTraining(parsed, nrs, namen) : art === "spiel" ? sanSpiel(parsed, nrs, namen) : {};
+    const ergebnis: any = art === "training" ? sanTraining(parsed, nrs, namen, einzelwerte) : art === "spiel" ? sanSpiel(parsed, nrs, namen) : {};
     ergebnis.tagebuch = sanTagebuch(parsed?.tagebuch);
 
     await svc.from("ki_usage").upsert({ uid, tag: today, count: used + 1 }, { onConflict: "uid,tag" });

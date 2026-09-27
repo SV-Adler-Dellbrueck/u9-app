@@ -4,7 +4,8 @@
    b) „Nicht gesehen“ zählt nicht: eine nicht beobachtete Dimension ist null, der Gesamtwert fällt nicht,
       der Förderplan nennt die Kriterien als „nicht gesehen“ statt als Entwicklungsfeld.
    c) Runde gegen Runde: Bewertungen binnen 21 Tagen sind eine Runde; „gewachsen“ erst ab zwei Stufen.
-   d) Rundenstand: 50 Tage nach der letzten Runde ist die nächste fällig, und das steht über dem Formular.
+   d) Rundenstand: 50 Tage nach der letzten Runde ist die nächste fällig (seit v648 ab 49 Tagen und
+      erst ab dem Startdatum der Bewertungen – hier liegt es in der Vergangenheit), und das steht über dem Formular.
    e) Meilensteine werten „nicht gesehen“ nicht als Sprung.
    f) Saisonrückblick ohne Torschützenkönig, mit Teamzahl.
    g) Eltern: „Was muss mit?“ je Platz, Rundgang mit fünf Schritten. */
@@ -12,7 +13,7 @@
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
   const K = h.KINDER;
-  const s = await h.starten({ hoehe: 1400, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen({}), spielerprofile: [] }) });
+  const s = await h.starten({ hoehe: 1400, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen({}), spielerprofile: [], team_einstellungen: [{ id: 1, bewertung_ab: "2026-01-01" }] }) });
   const r = await s.page.evaluate(async K => {
     const warte = ms => new Promise(x => setTimeout(x, ms));
     const out = {};
@@ -55,7 +56,8 @@ module.exports = async function (h) {
     const lbl = n => DIMS_FELD.flatMap(d => d.tier).find(t => t.n === n).l;
     out.hochPass = vg.hoch.includes(lbl("f_pass")); out.hochTempo = vg.hoch.includes(lbl("f_tempo"));
     out.raumBewegt = vg.hoch.concat(vg.runter).includes(lbl("f_raum"));
-    // d) Rundenstand
+    // d) Rundenstand (v648: Startdatum der Bewertungen liegt zurück)
+    BEW_AB = "2026-01-01";
     Object.keys(DB).forEach(n => { if (n !== K[1]) delete DB[n]; });
     const alt = new Date(Date.now() - 50 * 864e5).toISOString().slice(0, 10);
     DB[K[0]] = [{ name: K[0], datum: alt, radios: alle2 }];

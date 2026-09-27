@@ -441,7 +441,7 @@ async function loadDB(){
   window._dbLoaded=true; // L2: Skeletons beenden
   /* v603: Auswahllisten und Kaderliste gehoeren der Trainer-Oberflaeche. Der Eltern-
      Einstieg faehrt dieselbe Startkette; dort brach sie an dieser Stelle bei jedem Start. */
-  if(document.getElementById("p-name")){refreshSelects();renderKader();}
+  if(document.getElementById("p-name")){refreshSelects();renderKader();if(typeof bewAbLaden==="function")bewAbLaden();} // v648: Startdatum der Bewertungen (nur Trainer)
   if(document.getElementById("view-kombi")?.classList.contains("active"))renderKombi();
 }
 // L4: Antippen des Sync-Status zeigt Zeitstempel als Toast
@@ -455,6 +455,8 @@ _adlerOnReady(()=>{
 const skeletonRows=(n=3)=>Array.from({length:n},()=>'<div class="skeleton"></div>').join("");
 
 async function savePlayer(){
+  // v648: vor dem Startdatum keine Einzelbewertung – auch nicht über einen alten Knopf
+  if(typeof bewFreigegeben==="function"&&!bewFreigegeben()){showSt("save-status","Bewerten ist bis zum Ende der Hinrunde gesperrt.","err");return;}
   const meta=getMeta();
   if(!meta.name){showSt("save-status","Spieler auswählen.","err");return;}
   if(countFilled()<totalCrit()){showSt("save-status",`Noch ${totalCrit()-countFilled()} Kriterien offen.`,"err");return;}
@@ -610,7 +612,7 @@ function refreshSelects(){
     });
     if(cur&&dbNames.includes(cur))sel.value=cur;
   });
-  if(typeof bewRundeBarRender==="function")bewRundeBarRender(); // Bewertungsrunde-Leiste (Trainermeeting)
+  if(typeof bewSperreAnwenden==="function")bewSperreAnwenden(); // Bewertungsrunde-Leiste bzw. Sperre bis Hinrundenende (v648)
 }
 
 /* ═══════════════════════════════════

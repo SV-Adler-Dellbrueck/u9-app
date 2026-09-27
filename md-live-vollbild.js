@@ -235,6 +235,12 @@ const BLITZ_CRIT=[
   {key:"form",label:"Tagesform"}
 ];
 function blitzInit(){
+  /* v648: Bis zum Startdatum der Bewertungen (Ende Hinrunde) ist das Blitz-Rating nicht
+     erreichbar – die Nachbereitung auf Mannschaftsebene bleibt. */
+  const abschnitt=document.getElementById("blitz-abschnitt");
+  const frei=typeof bewFreigegeben==="function"&&bewFreigegeben();
+  if(abschnitt)abschnitt.style.display=frei?"":"none";
+  if(!frei){const b=document.getElementById("blitz-panel");if(b)b.innerHTML="";return;}
   // nur die nominierten (dabei) Spieler bewerten, falls eine Nominierung vorliegt
   blitzPlayers=(typeof nominierteSpieler==="function"&&nominierteSpieler().length)?nominierteSpieler():kaderNamen();
   blitzIdx=0;
