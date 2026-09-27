@@ -413,7 +413,7 @@ function dsgvoRenderGate(onOk){
       <b>Verantwortlich:</b> ${esc(VEREIN_DS.name)}, ${esc(VEREIN_DS.anschrift)}.
       <b>Rechtsgrundlage:</b> deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO; für Gesundheitsangaben der Notfallkarte Art. 9 Abs. 2 lit. a DSGVO).
       <b>Speicherdauer:</b> bis zum Saisonende bzw. bis dein Kind das Team verlässt; Einschätzungen des Trainerteams werden zum Saisonwechsel archiviert (nur Trainerteam), Sicherungskopien bis zu zehn Wochen.
-      Auskunft, Löschung und Widerruf sind jederzeit möglich – sprich das Trainerteam an${VEREIN_DS.mail?` oder schreib an <a href="mailto:${esc(VEREIN_DS.mail)}" style="color:#1d4ed8">${esc(VEREIN_DS.mail)}</a>`:""}.
+      Auskunft, Löschung und Widerruf sind jederzeit möglich – unter „Datenschutz &amp; Freigaben“ mit einem Knopf oder beim Trainerteam${VEREIN_DS.mail?` oder schreib an <a href="mailto:${esc(VEREIN_DS.mail)}" style="color:#1d4ed8">${esc(VEREIN_DS.mail)}</a>`:""}.
       ${VEREIN_DS.link?`<a href="${esc(VEREIN_DS.link)}" target="_blank" rel="noopener" style="color:#1d4ed8">Vollständige Datenschutzerklärung</a>.`:""}
     </div>
     <label style="display:flex;align-items:flex-start;gap:8px;margin:10px 0;font-size:var(--s-text);cursor:pointer">
@@ -1032,7 +1032,8 @@ async function elternDashLoad(){
     return elRow("📸",`Foto- &amp; Video-Freigabe: ${kn}`,"App-intern / Trainingsvideos / öffentlich – jederzeit widerrufbar",`elternFotoConsentOpen(${k.spieler_id},'${nn}')`,"#0f766e")
          + elRow("🚑",`Notfallkarte: ${kn}`,"Allergien, Medikamente &amp; Notfallkontakt – nur fürs Trainerteam",`notfallOpen(${k.spieler_id},'${nn}')`,"#0d9488");
   }).join("");
-  html+=elRow("💾","Meine Daten herunterladen","Alle gespeicherten Daten deines Kindes als Datei (JSON)","elternDataExport(this)","#14b8a6",true);
+  html+=elRow("💾","Meine Daten herunterladen","Alles zu deinem Konto und deinen Kindern als Datei (JSON) – ohne Einschätzungen des Trainerteams","elternDataExport(this)","#14b8a6",true);
+  html+=elRow("🗑️","Daten löschen","Eigenes Konto sofort löschen · Löschung der Daten deines Kindes beantragen","elternLoeschenOpen()","#b91c1c",true);   // v644
   html+=`</div>`; // /cat-datenschutz
   html+=`<div id="cat-kontakt" class="el-cat-panel" style="display:none">`;
   html+=`<div id="eg-slot"></div>`; // Status einer laufenden Elterngespräch-Anfrage
@@ -2078,7 +2079,7 @@ const ELTERN_TOUR=[
   {emo:"👍", t:"Zu- und absagen", d:"Ganz oben steht der nächste Termin. Ein Tipp sagt zu oder ab, nochmal tippen nimmt die Antwort zurück. Offene Rückmeldungen der nächsten 14 Tage stehen direkt darunter."},
   {emo:"🎒", t:"Alles zum Termin", d:"Tippe auf einen Termin: Wetter, Adresse mit Route, „Was muss mit?“, Fahrgemeinschaft und „Wer hilft mit?“."},
   {emo:"🎮", t:"Die Kabine für dein Kind", d:"Unter „Für die Kinder“ darf dein Kind spielen: Quiz, Missionen, Sammelalbum. Zurück geht es nur mit deinem Code, und du legst fest, wie lange am Tag."},
-  {emo:"🗣️", t:"Fragen, Fotos, Datenschutz", d:"Unter „Trainerteam kontaktieren“ erreichst du uns. Foto-Freigaben und die Notfallkarte pflegst du unter „Datenschutz & Freigaben“ – ohne dein Häkchen erscheint kein Foto."},
+  {emo:"🗣️", t:"Fragen, Fotos, Datenschutz", d:"Unter „Trainerteam kontaktieren“ erreichst du uns. Foto-Freigaben und die Notfallkarte pflegst du unter „Datenschutz & Freigaben“ – ohne dein Häkchen erscheint kein Foto. Dort lädst du auch alle Daten zu deinem Konto und deinen Kindern herunter, löschst dein Konto oder beantragst, dass wir die Daten deines Kindes löschen."},
 ];
 let elternTourIdx=0;
 function elternTourMaybe(){ try{if(localStorage.getItem("adler_eltern_tour"))return;}catch(e){} elternTourStart(); }

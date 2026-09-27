@@ -1213,25 +1213,94 @@ async function elternKannJetztLoad(kids){
   }
   slot.innerHTML=karten.join("");
 }
-// R7: DSGVO-Datenexport – sammelt die vom Elternteil lesbaren Daten des eigenen Kindes.
+/* v644 – AUSKUNFT UND LÖSCHEN PER KNOPF (Datenschutz-Paket, Entscheidung Charles 27.09.)
+   „Download der Daten, außer die Einschätzungen der Trainer“ und „Konto selbst, Kind per Antrag“.
+
+   Der Download kommt aus der RPC eltern_datenauszug: sie sammelt serverseitig alles zu Konto und
+   Kindern (Stammdaten, Rückmeldungen, Freigaben, Notfallkarte, Kontakte, Kabine, Federn,
+   Anwesenheit, Spielgeschehen …) – ohne Bewertungen, Entwicklungsziele und Trainernotizen. Vorher
+   waren es drei Tabellen aus dem Browser. Die Datei nennt, was fehlt und wo man es anfragt. */
 async function elternDataExport(btn){
   if(btn)btn.disabled=true;
-  const kids=window._elternKids||[];
-  const out={ exportiert_am:new Date().toISOString(), verein:"SV Adler Dellbrück · U9", kinder:[] };
-  for(const k of kids){
-    const kid={ name:(k.kader&&k.kader.name)||"", nr:(k.kader&&k.kader.nr)??null, spieler_id:k.spieler_id, rueckmeldungen:[], federn:[], sprachlob_anzahl:0 };
-    try{const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?spieler_id=eq.${k.spieler_id}&select=termin_id,status,kommentar,updated_at`,{headers:sbAuthHeaders()});if(r.ok)kid.rueckmeldungen=await r.json();}catch(e){}
-    try{const r=await fetch(`${SB_URL}/rest/v1/punkte_log?spieler_id=eq.${k.spieler_id}&select=delta,grund,quelle,created_at&order=created_at.asc`,{headers:sbAuthHeaders()});if(r.ok)kid.federn=await r.json();}catch(e){}
-    try{const r=await fetch(`${SB_URL}/rest/v1/kabine_lob?spieler_id=eq.${k.spieler_id}&select=created_at`,{headers:sbAuthHeaders()});if(r.ok)kid.sprachlob_anzahl=((await r.json())||[]).length;}catch(e){}
-    out.kinder.push(kid);
-  }
   try{
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/eltern_datenauszug`,{method:"POST",headers:{...sbAuthHeaders(),"Content-Type":"application/json"},body:"{}"});
+    if(sbCheck401(r))return;
+    if(!r.ok){toast("Download gerade nicht möglich – bitte später nochmal","err");return;}
+    const out=await r.json();
     const blob=new Blob([JSON.stringify(out,null,2)],{type:"application/json"});
     const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="adler-daten-"+new Date().toISOString().slice(0,10)+".json";
     document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
     toast("Daten heruntergeladen ✓");
-  }catch(e){toast("Download nicht möglich","err");}
-  if(btn)btn.disabled=false;
+  }catch(e){toast("Kein Netz – bitte später nochmal","err");}
+  finally{if(btn)btn.disabled=false;}
+}
+/* Löschen: ein Fenster, zwei Wege. Das eigene Konto löscht man sofort selbst (Edge Function
+   konto-loeschen). Die Daten des Kindes löscht das Trainerteam auf Antrag – der Antrag ist eine
+   Zeile in loeschantrag, der Trainer erledigt ihn mit einem Klick. Kein confirm(): im Eltern-
+   bereich eigene Fenster (CLAUDE.md); das Konto erst nach dem Häkchen. */
+async function elternLoeschenOpen(){
+  const kids=window._elternKids||[];
+  let antraege=[];
+  try{const r=await fetch(`${SB_URL}/rest/v1/loeschantrag?select=spieler_id,erstellt_am,erledigt_am&order=erstellt_am.desc`,{headers:sbAuthHeaders()});if(r.ok)antraege=await r.json();}catch(e){}
+  /* Nach einem Antrag wird das offene Fenster an Ort und Stelle neu gezeichnet – nicht entfernt
+     und neu angelegt: jedes Schließen geht über die Zurück-Taste (core.js), und Schließen plus
+     sofortiges Öffnen brachte deren Verlauf durcheinander. */
+  let m=document.getElementById("el-loeschen-modal");
+  const neu=!m;
+  if(neu){
+    m=document.createElement("div");m.id="el-loeschen-modal";
+    m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Daten löschen");
+    m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10041;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto";
+    m.onclick=e=>{if(e.target===m)m.remove();};
+  }
+  const knopf="width:100%;min-height:48px;border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer";
+  const kinderHtml=kids.map(k=>{
+    const name=esc((k.kader&&k.kader.name)||"Kind");
+    const offen=antraege.find(a=>Number(a.spieler_id)===Number(k.spieler_id)&&!a.erledigt_am);
+    return `<div style="border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;margin-bottom:8px">
+      <div style="font-weight:700;font-size:var(--s-text)">${name}</div>
+      ${offen?`<div role="status" style="font-size:var(--s-klein);color:#475569;margin-top:4px">✓ Löschantrag gestellt am ${new Date(offen.erstellt_am).toLocaleDateString("de-DE")} – das Trainerteam erledigt ihn.</div>`
+        :`<button onclick="elternLoeschantrag(${Number(k.spieler_id)},this)" style="${knopf};margin-top:8px;border:1.5px solid #b91c1c;background:#fff;color:#b91c1c">Daten von ${name} löschen lassen</button>`}
+    </div>`;}).join("");
+  m.innerHTML=`<div style="background:#fff;color:#1a1a2e;max-width:420px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4);margin:auto">
+    ${mdlHead("el-loeschen-modal","🗑️","Daten löschen","","#b91c1c")}
+    <div style="font-weight:800;font-size:var(--s-karte);margin:4px 0 4px">Daten eures Kindes</div>
+    <div style="font-size:var(--s-klein);color:#475569;line-height:1.5;margin-bottom:8px">Das Trainerteam löscht auf euren Antrag alles zu eurem Kind: Kaderplatz, Rückmeldungen, Freigaben, Notfallkarte, Kabine, Fotos, Einschätzungen. In Spielberichten und Plänen steht danach „Ehemaliges Kind“. Sicherungskopien überschreiben sich binnen zehn Wochen.</div>
+    ${kinderHtml||'<div style="font-size:var(--s-klein);color:#475569">Mit diesem Konto ist kein Kind verknüpft.</div>'}
+    <div style="font-weight:800;font-size:var(--s-karte);margin:14px 0 4px">Mein Konto</div>
+    <div style="font-size:var(--s-klein);color:#475569;line-height:1.5;margin-bottom:8px">Sofort und endgültig: Anmeldung, Benachrichtigungen, Einwilligungen, Helferdienste, Stimmungsbilder und die Verknüpfung zu euren Kindern. Die Daten der Kinder bleiben – dafür ist der Antrag oben da.</div>
+    <label style="display:flex;gap:10px;align-items:flex-start;font-size:var(--s-text);min-height:44px;cursor:pointer"><input type="checkbox" id="el-konto-ok" style="width:22px;height:22px;flex:none;margin-top:1px" onchange="document.getElementById('el-konto-los').disabled=!this.checked">Ich habe verstanden, dass mein Konto nicht wiederhergestellt werden kann.</label>
+    <button id="el-konto-los" disabled onclick="elternKontoLoeschen(this)" style="${knopf};margin-top:8px;border:none;background:#b91c1c;color:#fff">Mein Konto endgültig löschen</button>
+    <div id="el-loeschen-stand" role="status" aria-live="polite" style="font-size:var(--s-klein);color:#475569;margin-top:8px;min-height:1em"></div>
+    <button onclick="document.getElementById('el-loeschen-modal').remove()" style="${knopf};margin-top:6px;border:1.5px solid #cbd5e1;background:#fff;color:#334155">Schließen</button>
+  </div>`;
+  if(neu)document.body.appendChild(m);
+}
+async function elternLoeschantrag(spielerId,btn){
+  if(btn)btn.disabled=true;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/loeschantrag`,{method:"POST",headers:{...sbAuthHeaders(),"Prefer":"return=minimal"},
+      body:JSON.stringify({spieler_id:spielerId,antrag_email:sbEmail()})});   // antrag_von setzt die Datenbank (auth.uid())
+    if(sbCheck401(r))return;
+    if(!r.ok&&r.status!==409){toast(sbDeniedMsg(r,"Antrag nicht gesendet"),"err");return;}
+    toast("Löschantrag gesendet – das Trainerteam erledigt ihn ✓");
+  }catch(e){toast("Kein Netz – bitte später nochmal","err");return;}
+  finally{if(btn)btn.disabled=false;}
+  elternLoeschenOpen();
+}
+async function elternKontoLoeschen(btn){
+  if(!document.getElementById("el-konto-ok")?.checked)return;
+  const st=document.getElementById("el-loeschen-stand");
+  if(btn)btn.disabled=true;
+  if(st)st.textContent="Konto wird gelöscht …";
+  try{
+    const r=await fetch(`${SB_URL}/functions/v1/konto-loeschen`,{method:"POST",headers:{...sbAuthHeaders(),"Content-Type":"application/json"},body:JSON.stringify({bestaetigt:true})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){ if(st)st.textContent="Nicht gelöscht: "+(d.error||("Fehler "+r.status))+". Bitte später nochmal oder das Trainerteam ansprechen."; if(btn)btn.disabled=false; return; }
+  }catch(e){ if(st)st.textContent="Kein Netz – das Konto ist noch da. Bitte später nochmal."; if(btn)btn.disabled=false; return; }
+  document.getElementById("el-loeschen-modal")?.remove();
+  toast("Dein Konto ist gelöscht");
+  if(typeof elternPortalLogout==="function")elternPortalLogout();
 }
 // Konferenz: alle Teams eines Spieltags in EINEM Ticker (Key <datum>__konf).
 function elternTickerKonf(datum){
