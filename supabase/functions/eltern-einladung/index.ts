@@ -85,7 +85,6 @@ Deno.serve(async (req) => {
 
     if (body.aktion === "pruefen") return j({ ok: true, vorname, frei });
     if (body.aktion !== "einloesen") return j({ ok: false, fehler: "unbekannte Aktion" }, 400);
-    if (frei <= 0) return j({ ok: false, fehler: "Mit dieser Karte haben sich schon beide Elternteile angemeldet. Für weitere Konten bitte beim Trainerteam melden." }, 409);
 
     /* Schon angemeldet? Dann gilt das Konto der Sitzung. Der Ausweis wird mit dem
        Anon-Schluessel geprueft, nicht mit dem Dienstschluessel; ein anonymes Konto
@@ -112,6 +111,15 @@ Deno.serve(async (req) => {
     if (!angemeldet && !vorhanden && !PASSWORT_ZEICHEN(passwort)) {
       return j({ ok: false, fehler: "Das Passwort braucht Buchstaben und mindestens eine Ziffer." }, 400);
     }
+
+    /* v663: Ist diese Adresse schon mit dem Kind verknuepft, zaehlt die Karte nicht noch einmal.
+       Vorher belegte ein zweites Einloesen derselben Adresse (erneut gescannt, doppelt getippt)
+       den zweiten Platz, und das andere Elternteil las „schon beide Elternteile angemeldet“. */
+    const { data: schonVerknuepft } = await svc.from("eltern_kinder")
+      .select("spieler_id").eq("spieler_id", karte.spieler_id).eq("email", email).maybeSingle();
+    if (schonVerknuepft) return j({ ok: true, neu: false, bestehend: !angemeldet, angemeldet, vorname });
+
+    if (frei <= 0) return j({ ok: false, fehler: "Mit dieser Karte haben sich schon beide Elternteile angemeldet. Für weitere Konten bitte beim Trainerteam melden." }, 409);
 
     // Nutzung belegen - atomar, erst danach anlegen. Scheitert das Anlegen, gibt es sie zurueck.
     const { data: spielerId, error: nErr } = await svc.rpc("eltern_einladung_nutzen", { p_hash: hash });
