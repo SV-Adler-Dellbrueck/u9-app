@@ -21,6 +21,7 @@ module.exports = async function (h) {
         return [...d.querySelectorAll("button")].map(b => b.textContent.replace(/\s+/g, " ").trim()); };
       const out = {};
       ["taktik", "spieltag", "orga", "elki"].forEach(k => out[k] = labels(k));
+      out.spieltagKarte = /id="st-dabei-karte"/.test(_kachelInhalt("spieltag"));
       const d = document.createElement("div"); d.innerHTML = _kachelInhalt("orga");
       out.orgaEinst = (d.innerHTML.split(/Einstellungen/)[1] || "");
       // e) Turnier-Gruppe bei einem Auswärtsturnier
@@ -33,7 +34,8 @@ module.exports = async function (h) {
     await s.schliessen();
     const emo = t => (t.match(/^\S+/) || [""])[0];
     if (r.taktik.some(t => /Übungen/.test(t))) probleme.push("a) Taktik führt weiter eine Kachel „Übungen“: " + r.taktik.join(" | "));
-    if (!r.spieltag.some(t => /Wer ist dabei\?/.test(t))) probleme.push("b) Spieltag: keine Kachel „Wer ist dabei?“: " + r.spieltag.join(" | "));
+    // v665 PO: „Auf der Startkachel ‚Wer ist dabei‘ müssen direkt die Rückmeldungen der Eltern angezeigt werden“ – seither eine Karte (st-dabei-karte), keine Kachel.
+    if (!r.spieltagKarte) probleme.push("b) Spieltag: keine Karte „Wer ist dabei?“");
     if (r.spieltag.some(t => /^\S+ Anwesenheit$/.test(t))) probleme.push("b) Spieltag heißt weiter „Anwesenheit“");
     const e = r.orga.map(emo), doppelt = e.filter((x, i) => x && e.indexOf(x) !== i);
     if (doppelt.length) probleme.push("c) Orga: Emoji doppelt: " + doppelt.join(" "));

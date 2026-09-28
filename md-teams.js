@@ -477,6 +477,11 @@ function teamFormAnwenden(t){
 function teamsNachziehen(){
   if(typeof nomStatus!=="object"||!nomStatus)return 0;
   let n=0;
+  /* v665 PO: „Unter Match müssen daraus [der Anwesenheit] die Teams gebaut werden." Eine früher
+     gespeicherte Einteilung hielt Kinder fest, die inzwischen abgesagt oder nie zugesagt hatten –
+     4 Kinder dabei, aber 10 in den Team-Kacheln. Wer nicht auf „Dabei" steht, fliegt raus. */
+  if(Object.keys(nomStatus).length)
+    Object.keys(TEAMS).forEach(name=>{ if(nomStatus[name]!=="dabei"){ delete TEAMS[name]; delete TEAM_LEIH[name]; n++; } });
   KADER.filter(k=>k.aktiv!==false&&nomStatus[k.name]==="dabei"&&!TEAMS[k.name]).forEach(k=>{ if(teamPlatzEinsortieren(k.name))n++; });
   return n;
 }
@@ -699,7 +704,10 @@ async function teamsLoad(){
   await teamPlanLaden();   // v493: Felder, Runde und Gegner kommen vom Spielplan, wenn es einen gibt
   if(typeof spieltagTeam!=="undefined")teamFormAnwenden(spieltagTeam);   // v479: Werkzeuge lesen die Spielform dieses Teams
   if(!Object.keys(TEAMS).length&&teamZusagen().length){ teamsAuto(); spieltagTeamKartenRender(); return; }
-  teamsNachziehen();   // v479: Dabei heisst spielt mit – auch fuer Kinder, die nach der Einteilung dazukamen
+  // v479: Dabei heisst spielt mit – auch fuer Kinder, die nach der Einteilung dazukamen.
+  // v665: … und wer nicht mehr dabei ist, geht raus. Geändert wird die Anwesenheit, nicht ein
+  // Vorschlag – deshalb gespeichert, sonst zeigten Eltern-Ansicht und Ticker den alten Stand.
+  if(teamsNachziehen()){ teamsSpeichern(); if(typeof teamsSyncBald==="function")teamsSyncBald(); }
   teamsRender(); spieltagTeamKartenRender();
 }
 /* Aushilfen nach kader.id, wie die Kinder selbst – Namen gehoeren nicht in die Datenbank. */
