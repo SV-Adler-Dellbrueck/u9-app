@@ -932,7 +932,7 @@ const WQ_QUESTIONS=[
   {id:"ad_tier",cat:"adler",q:"Welches Tier ist unser Wappentier?",opts:["Der Adler 🦅","Der Löwe 🦁","Der Bär 🐻","Der Tiger 🐯"],correct:0,fun:"Der Adler – stark, schnell und fliegt hoch hinaus!"},
   {id:"ad_stadtteil",cat:"adler",q:"In welchem Kölner Stadtteil spielen wir?",opts:["Dellbrück","Ehrenfeld","Nippes","Chorweiler"],correct:0,fun:"Dellbrück – das steckt sogar in unserem Namen!"},
   {id:"ad_federn",cat:"adler",q:"Was sammelt ihr in der App für gute Sachen?",opts:["Adler-Federn 🪶","Sterne","Münzen","Diamanten"],correct:0,fun:"Adler-Federn! Je mehr du sammelst, desto cooler deine Karte."},
-  {id:"ad_gewinnen",cat:"adler",q:"Wie viele Tore braucht man, um ein Spiel zu gewinnen?",opts:["Mehr als der Gegner","Immer genau 10","Genau 3","Gar keine"],correct:0,fun:"Ein Tor mehr als der Gegner reicht zum Sieg – und Spaß gehört immer dazu!"},
+  {id:"ad_nachspiel",cat:"adler",q:"Was machen wir nach jedem Spiel mit der anderen Mannschaft?",opts:["Abklatschen und „Danke“ sagen","Schnell weglaufen","Gar nichts","Meckern"],correct:0,fun:"Egal wie es ausgeht: Wir klatschen ab und sagen „Danke für das Spiel“. So sind Adler! 🦅"},   // v651: ersetzt Dublette ad_gewinnen
   {id:"ad_team",cat:"adler",q:"Was ist beim Fußball am allerwichtigsten?",opts:["Als Team zusammenspielen","Alleine dribbeln","Am lautesten schreien","Der teuerste Schuh"],correct:0,fun:"Teamwork! Zusammen sind wir Adler am stärksten. 🦅"},
   // ── WM & EM (Auffüllung auf 20; opts[0]=richtig, wird beim Rendern gemischt) ──
   {id:"wm_gastgeber2006",cat:"wm",q:"In welchem Land war die WM 2006, das „Sommermärchen\"?",opts:["Deutschland","Italien","Brasilien","Spanien"],correct:0,fun:"2006 in Deutschland – alle nannten es das „Sommermärchen\"."},
@@ -1025,10 +1025,10 @@ const WQ_QUESTIONS=[
   {id:"kur_rasen",cat:"kurios",q:"Worauf spielen Profis meistens?",opts:["Auf echtem Rasen","Auf Sand","Auf Eis","Auf Beton"],correct:0,fun:"Profi-Rasen wird gepflegt wie ein Garten – sattgrün und kurz."},
   {id:"kur_nummer1",cat:"kurios",q:"Welche Rückennummer trägt traditionell der Torwart?",opts:["Die 1","Die 10","Die 7","Die 99"],correct:0,fun:"Die Nummer 1 gehört klassisch dem Torhüter."},
   // ── Wappen & Farben (dauerhaft) ──
-  {id:"wap_bayernfarbe",cat:"wappen",q:"In welcher Farbe spielt der FC Bayern zuhause?",opts:["Rot","Blau","Grün","Gelb"],correct:0,fun:"Der FC Bayern – „die Roten\"."},
+  {id:"wap_1860loewe",cat:"wappen",q:"Welches Tier ist im Wappen des TSV 1860 München?",opts:["Ein Löwe 🦁","Ein Adler","Ein Bär","Ein Pferd"],correct:0,fun:"Die „Löwen“ aus München tragen seit über 140 Jahren einen Löwen auf der Brust."},   // v651: ersetzt Dublette wap_bayernfarbe
   {id:"wap_dortmundspitz",cat:"wappen",q:"Wie lautet der Spitzname von Borussia Dortmund?",opts:["Die Schwarzgelben","Die Roten","Die Blauen","Die Grünen"],correct:0,fun:"„Die Schwarzgelben\" – wegen Schwarz-Gelb."},
   {id:"wap_schalkefarbe",cat:"wappen",q:"Welche Vereinsfarbe hat Schalke 04?",opts:["Königsblau","Rot","Grün","Orange"],correct:0,fun:"Schalke spielt in Königsblau."},
-  {id:"wap_koeln",cat:"wappen",q:"Welches Tier ziert das Wappen des 1. FC Köln?",opts:["Ein Geißbock 🐐","Ein Löwe","Ein Adler","Ein Pferd"],correct:0,fun:"Der Geißbock „Hennes\" – Wappentier und Maskottchen."},
+  {id:"wap_koelnfarben",cat:"wappen",q:"Welche Vereinsfarben hat der 1. FC Köln?",opts:["Rot-Weiß","Blau-Weiß","Schwarz-Gelb","Grün-Weiß"],correct:0,fun:"Rot und Weiß – das sind auch die Farben der Stadt Köln."},   // v651: ersetzt Dublette wap_koeln
   {id:"wap_wolfsburg",cat:"wappen",q:"Welches Tier steckt schon im Namen des VfL Wolfsburg?",opts:["Der Wolf 🐺","Der Bär","Der Fuchs","Der Hund"],correct:0,fun:"Wolfsburg – „die Wölfe\"."},
   {id:"wap_frankfurt",cat:"wappen",q:"Welches Tier ist das Wappentier von Eintracht Frankfurt?",opts:["Der Adler 🦅","Der Löwe","Der Stier","Der Hahn"],correct:0,fun:"Ein Adler – wie bei uns Adler Dellbrück!"},
   {id:"wap_leverkusen",cat:"wappen",q:"Welches Tier steckt im Wappen von Bayer 04 Leverkusen?",opts:["Ein Löwe 🦁","Ein Bär","Ein Adler","Ein Wolf"],correct:0,fun:"Ein Löwe schmückt das Leverkusener Wappen."},
@@ -1053,9 +1053,9 @@ const WQ_QUESTIONS=[
   {id:"wo_konter",cat:"woerter",q:"Schnell nach Ballgewinn nach vorne stürmen nennt man …?",opts:["Konter","Rückzug","Auszeit","Foul"],correct:0,fun:"Ein Konter überrascht den Gegner blitzschnell."},
   {id:"wo_elfmeter",cat:"woerter",q:"Ein Strafstoß von 11 Metern heißt auch …?",opts:["Elfmeter","Freistoß","Einwurf","Eckball"],correct:0,fun:"Elfmeter – 11 Meter, nur du gegen den Torwart."},
   {id:"wo_freistoss",cat:"woerter",q:"Nach einem Foul außerhalb des Strafraums gibt es einen …?",opts:["Freistoß","Elfmeter","Einwurf","Abstoß"],correct:0,fun:"Ein Freistoß – der Gegner muss Abstand halten."},
-  {id:"wo_eckball",cat:"woerter",q:"Bei den Profis: Ein Verteidiger spielt den Ball neben dem eigenen Tor über die Torlinie – es gibt einen …?",opts:["Eckball","Einwurf","Elfmeter","Abstoß"],correct:0,fun:"Eckball – von der Fahne wird geflankt. Geht der Ball zwischen den Pfosten rein, ist es ein Eigentor."},
-  {id:"wo_einwurf",cat:"woerter",q:"Bei den Profis: Der Ball geht über die Seitenlinie – zurück kommt er per …?",opts:["Einwurf","Eckball","Freistoß","Abschlag"],correct:0,fun:"Einwurf – mit beiden Händen über dem Kopf. Bei euren Spielen wird eingedribbelt."},
-  {id:"wo_abstoss",cat:"woerter",q:"Bei den Profis: Ein Angreifer schießt am Tor vorbei über die Torlinie – es gibt einen …?",opts:["Abstoß","Eckball","Elfmeter","Einwurf"],correct:0,fun:"Der Abstoß bringt den Ball vom Tor aus wieder ins Spiel."},
+  {id:"wo_ballannahme",cat:"woerter",q:"Den Ball mit dem Fuß stoppen und unter Kontrolle bringen nennt man …?",opts:["Ballannahme","Abseits","Einwurf","Elfmeter"],correct:0,fun:"Eine gute Ballannahme ist der erste Schritt zu jedem guten Pass."},   // v651: ersetzt Dublette wo_eckball
+  {id:"wo_anstoss",cat:"woerter",q:"Womit beginnt jede Halbzeit – der Ball liegt dabei auf dem Mittelpunkt?",opts:["Anstoß","Einwurf","Eckball","Abstoß"],correct:0,fun:"Mit dem Anstoß geht es los – und nach jedem Tor gibt es wieder einen."},   // v651: ersetzt Dublette wo_einwurf
+  {id:"wo_jonglieren",cat:"woerter",q:"Den Ball immer wieder mit Fuß, Knie oder Kopf hochhalten, ohne dass er den Boden berührt, nennt man …?",opts:["Jonglieren","Dribbeln","Grätschen","Flanken"],correct:0,fun:"Jonglieren trainiert das Ballgefühl – wie oft schaffst du es?"},   // v651: ersetzt Dublette wo_abstoss (gleich reg_t2_abstosswann)
   {id:"wo_dribbling",cat:"woerter",q:"Den Ball eng am Fuß am Gegner vorbeiführen heißt …?",opts:["Dribbling","Passen","Grätschen","Köpfen"],correct:0,fun:"Dribbling – tänzeln mit dem Ball!"},
   {id:"wo_graetsche",cat:"woerter",q:"Auf dem Boden hineinrutschen und den Ball wegspitzeln nennt man …?",opts:["Grätsche","Flanke","Kopfball","Fallrückzieher"],correct:0,fun:"Eine Grätsche – vorsichtig, sonst gibt’s ein Foul!"},
   {id:"wo_volley",cat:"woerter",q:"Einen Ball direkt aus der Luft schießen heißt …?",opts:["Volleyschuss","Rückpass","Kopfball","Einwurf"],correct:0,fun:"Ein Volley – direkt aus der Luft getroffen."},
@@ -1112,14 +1112,14 @@ const WQ_QUESTIONS=[
   // ── Legenden · Runde 3 (schwer) ──
   {id:"leg_t3_kaiser",cat:"legenden",q:"Wie wurde die deutsche Legende Franz Beckenbauer genannt?",opts:["Der Kaiser","Der Bomber","Die Katze","Der General"],correct:0,fun:"Franz Beckenbauer war 'der Kaiser'."},
   {id:"leg_t3_titan",cat:"legenden",q:"Welchen Spitznamen hatte Torwart Oliver Kahn?",opts:["Der Titan","Die Biene","Der Panther","Der Blitz"],correct:0,fun:"Oliver Kahn war 'der Titan'."},
-  {id:"leg_t3_pele_land",cat:"legenden",q:"Aus welchem Land kommt die Legende Pelé?",opts:["Brasilien","Argentinien","Portugal","Italien"],correct:0,fun:"Pelé ist Brasiliens größte Fußball-Legende."},
-  {id:"leg_t3_maradona_land",cat:"legenden",q:"Aus welchem Land kommt Diego Maradona?",opts:["Argentinien","Brasilien","Spanien","Uruguay"],correct:0,fun:"Maradona ist Argentiniens Legende."},
-  {id:"leg_t3_cruyff_land",cat:"legenden",q:"Aus welchem Land kommt Johan Cruyff?",opts:["Niederlande","Deutschland","Belgien","England"],correct:0,fun:"Cruyff war der berühmteste Niederländer."},
+  {id:"leg_t3_pele_name",cat:"legenden",q:"Pelé ist ein Spitzname. Wie lautet sein richtiger Vorname?",opts:["Edson","Carlos","Diego","Ronaldo"],correct:0,fun:"Pelé hieß eigentlich Edson Arantes do Nascimento."},   // v651: ersetzt Dublette leg_t3_pele_land
+  {id:"leg_t3_maradona_neapel",cat:"legenden",q:"Bei welchem italienischen Verein ist Diego Maradona bis heute ein Held – das Stadion trägt sogar seinen Namen?",opts:["SSC Neapel","Juventus Turin","AC Mailand","AS Rom"],correct:0,fun:"Mit Maradona wurde Neapel 1987 und 1990 italienischer Meister. Seit 2020 heißt das Stadion „Stadio Diego Armando Maradona“."},   // v651: ersetzt Dublette leg_t3_maradona_land
+  {id:"leg_t3_cruyff_14",cat:"legenden",q:"Welche Rückennummer machte Johan Cruyff berühmt?",opts:["Die 14","Die 10","Die 9","Die 7"],correct:0,fun:"Cruyff trug fast immer die 14 – Ajax Amsterdam vergibt sie deshalb nicht mehr."},   // v651: ersetzt Dublette leg_t3_cruyff_land
   {id:"leg_t3_beckenbauer_doppel",cat:"legenden",q:"Franz Beckenbauer wurde Weltmeister als Spieler UND als …?",opts:["Trainer","Schiedsrichter","Torwart","Stadionsprecher"],correct:0,fun:"1974 als Spieler, 1990 als Trainer Weltmeister."},
   {id:"leg_t3_bomber_grund",cat:"legenden",q:"Warum nannte man Gerd Müller den 'Bomber'?",opts:["Er schoss extrem viele Tore","Er war Torwart","Er war Trainer","Er pfiff Spiele"],correct:0,fun:"Der 'Bomber der Nation' traf fast immer."},
   {id:"leg_t3_zidane_land",cat:"legenden",q:"Aus welchem Land kommt Zinédine Zidane?",opts:["Frankreich","Italien","Spanien","Portugal"],correct:0,fun:"Zidane wurde 1998 mit Frankreich Weltmeister."},
   {id:"leg_t3_matthaeus_rekord",cat:"legenden",q:"Lothar Matthäus hält bei den DFB-Männern den Rekord für die meisten …?",opts:["Länderspiele","Elfmeter","roten Karten","Eigentore"],correct:0,fun:"Matthäus spielte 150 Länderspiele."},
-  {id:"leg_t3_beckham_freistoss",cat:"legenden",q:"Wofür war David Beckham besonders berühmt?",opts:["Seine Freistöße","Seine Paraden","Seine Grätschen","Seine Einwürfe"],correct:0,fun:"Beckham zirkelte den Ball perfekt in den Winkel."},
+  {id:"leg_t3_beckham_united",cat:"legenden",q:"Bei welchem Verein wurde David Beckham als junger Spieler berühmt?",opts:["Manchester United","FC Liverpool","FC Arsenal","FC Chelsea"],correct:0,fun:"Beckham kam schon als Jugendlicher zu Manchester United und debütierte dort mit 17."},   // v651: ersetzt Dublette leg_t3_beckham_freistoss
   // ── Aktuelle Stars · Runde 3 (schwer, nur dauerhafte Fakten) ──
   {id:"star_t3_modric_land",cat:"stars",q:"Aus welchem Land kommt Luka Modrić?",opts:["Kroatien","Serbien","Italien","Spanien"],correct:0,fun:"Modrić führte Kroatien 2018 ins WM-Finale."},
   {id:"star_t3_debruyne_land",cat:"stars",q:"Aus welchem Land kommt Kevin De Bruyne?",opts:["Belgien","Niederlande","England","Frankreich"],correct:0,fun:"De Bruyne ist einer der besten Belgier."},
@@ -1217,7 +1217,7 @@ const WQ_TIER={
   // Legenden
   leg_beckenbauer:1, leg_bomber:1, leg_pele:1, leg_maradona:1, leg_cruyff:1, leg_kahn:1, leg_matthaeus:1, leg_ronaldo_br:1, leg_zidane:1, leg_beckham:1,
   leg_seeler:2, leg_lahm:2, leg_podolski:2, leg_schweinsteiger:2, leg_maier:2, leg_goldenerball:2, leg_ronaldinho:2, leg_gerdbayern:2, leg_ballack:2, leg_walter:2,
-  leg_t3_kaiser:3, leg_t3_titan:3, leg_t3_pele_land:3, leg_t3_maradona_land:3, leg_t3_cruyff_land:3, leg_t3_beckenbauer_doppel:3, leg_t3_bomber_grund:3, leg_t3_zidane_land:3, leg_t3_matthaeus_rekord:3, leg_t3_beckham_freistoss:3,
+  leg_t3_kaiser:3, leg_t3_titan:3, leg_t3_pele_name:3, leg_t3_maradona_neapel:3, leg_t3_cruyff_14:3, leg_t3_beckenbauer_doppel:3, leg_t3_bomber_grund:3, leg_t3_zidane_land:3, leg_t3_matthaeus_rekord:3, leg_t3_beckham_united:3,
   // Aktuelle Stars
   star_messi_land:1, star_ronaldo_land:1, star_mbappe_land:1, star_haaland_land:1, star_haaland_pos:1, star_neuer_pos:1, star_neuer_land:1, star_musiala_land:1, star_wirtz_land:1, star_kane_land:1,
   star_kane_pos:2, star_bellingham_land:2, star_vinicius_land:2, star_messi_trait:2, star_ronaldo_trait:2, star_mbappe_trait:2, star_sane_land:2, star_pedri_land:2, star_yamal_land:2, star_griezmann_land:2,
@@ -1227,11 +1227,11 @@ const WQ_TIER={
   kur_bananenflanke:2, kur_blitztor:2, kur_twtor:2, kur_goldenerschuh:2, kur_maskottchen:2, kur_laola:2, kur_konfetti:2, kur_dusche:2, kur_rasen:2, kur_nummer1:2,
   kur_t3_handgottes_wer:3, kur_t3_jahrhunderttor:3, kur_t3_zidane_kopfstoss:3, kur_t3_kapitaenbinde:3, kur_t3_ehrenrunde:3, kur_t3_flutlicht:3, kur_t3_doppelpack:3, kur_t3_bratwurst:3, kur_t3_fangesang:3, kur_t3_trainerwechsel:3,
   // Wappen & Farben
-  wap_bayernfarbe:1, wap_dortmundspitz:1, wap_schalkefarbe:1, wap_koeln:1, wap_wolfsburg:1, wap_frankfurt:1, wap_leverkusen:1, wap_stuttgart:1, wap_gladbach:1, wap_werder:1,
+  wap_1860loewe:1, wap_dortmundspitz:1, wap_schalkefarbe:1, wap_koelnfarben:1, wap_wolfsburg:1, wap_frankfurt:1, wap_leverkusen:1, wap_stuttgart:1, wap_gladbach:1, wap_werder:1,
   wap_hsv:2, wap_leipzig:2, wap_barca:2, wap_real:2, wap_juve:2, wap_liverpool:2, wap_city:2, wap_united:2, wap_ajax:2, wap_psg:2,
   wap_t3_dfbadler:3, wap_t3_frankreichhahn:3, wap_t3_englanddrei:3, wap_t3_bayernraute:3, wap_t3_italienblau:3, wap_t3_niederlandeoranje:3, wap_t3_brasiliengelb:3, wap_t3_argentinienstreifen:3, wap_t3_milanrot:3, wap_t3_interblau:3,
   // Fußball-Wörter
-  wo_hattrick:1, wo_derby:1, wo_flanke:1, wo_abseits:1, wo_konter:1, wo_elfmeter:1, wo_freistoss:1, wo_eckball:1, wo_einwurf:1, wo_abstoss:1,
+  wo_hattrick:1, wo_derby:1, wo_flanke:1, wo_abseits:1, wo_konter:1, wo_elfmeter:1, wo_freistoss:1, wo_ballannahme:1, wo_anstoss:1, wo_jonglieren:1,
   wo_dribbling:2, wo_graetsche:2, wo_volley:2, wo_kopfball:2, wo_assist:2, wo_pressing:2, wo_doppelpass:2, wo_manndeckung:2, wo_nachspielzeit:2, wo_verlaengerung:2,
   wo_t3_libero:3, wo_t3_sechser:3, wo_t3_neuner:3, wo_t3_tunnel:3, wo_t3_flachpass:3, wo_t3_notbremse:3, wo_t3_schwalbe:3, wo_t3_gegenpressing:3, wo_t3_torlinie:3, wo_t3_viererkette:3,
   // Fair Play
