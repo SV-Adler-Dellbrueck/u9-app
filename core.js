@@ -1690,7 +1690,7 @@ async function _fgZeigen(){
           <div style="font-size:${kind?"var(--s-karte)":"var(--s-text)"};color:#334155;line-height:1.5;margin-top:4px">${esc(s.d||"")}</div>
         </div>
       </div>
-      <div style="font-size:var(--s-klein);color:#475569;margin-top:10px;text-align:right">${f.i+1} von ${n}</div>
+      <div style="font-size:var(--s-klein);color:#334155;margin-top:10px;text-align:right">${f.i+1} von ${n}</div>
       <div style="display:flex;gap:8px;margin-top:6px">
         <button type="button" onclick="${f.i>0?"fuehrungZurueck()":"fuehrungEnde()"}" style="${knopf};border:1.5px solid #94a3b8;border-radius:12px;background:#fff;color:#0f172a;font-family:inherit;font-weight:700;cursor:pointer">${f.i>0?"Zurück":(kind?"Später":"Überspringen")}</button>
         <button type="button" id="fg-weiter" onclick="fuehrungWeiter()" style="${knopf};margin-left:auto;border:none;border-radius:12px;background:#1e3a8a;color:#fff;font-family:inherit;font-weight:800;cursor:pointer">${letzte?(kind?"Los geht's! ⚽":"Fertig"):"Weiter"}</button>

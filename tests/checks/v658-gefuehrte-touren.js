@@ -58,10 +58,14 @@ module.exports = async function (h) {
   const st = await h.starten({ breite: 390, hoehe: 800, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(),
     termine: [{ id: 5, datum, typ: "training", uhrzeit: "16:45", trainer_status: { Charles: "ja" } }] }) });
   await st.page.waitForTimeout(3500);   // der Einstieg lädt beim Anmelden des Service Workers einmal neu (s. v557)
+  /* Unter Last kommt dieser Neustart später – erst weiter, wenn Welle 1 wieder steht. */
+  await st.page.waitForLoadState("load");
+  await st.page.waitForFunction(() => typeof tourStart === "function" && typeof fuehrungStart === "function", null, { timeout: 20000 });
   /* Ohne Anmeldung liegt die Oberfläche hinter dem PIN-Tor – so, wie nach der Anmeldung. */
   await h.sichtbarMachen(st.page, "#main-app");
   await st.page.evaluate(() => { const g = document.getElementById("pin-gate"); if (g) g.style.display = "none"; if (typeof renderHome === "function") try { renderHome(); } catch (e) {} });
   await st.page.waitForTimeout(800);
+  await st.page.waitForFunction(() => typeof tourStart === "function", null, { timeout: 20000 });
   const rt = await st.page.evaluate(eval(DURCHLAUF), { start: "localStorage.removeItem('adler_trainer_tour'); tourStart();", key: "adler_trainer_tour" });
   const planSchritt = await st.page.evaluate(() => (TOUR.findIndex(s => /Trainingsplan/.test(s.t))));
   const ft = st.fehler(); await st.schliessen();
