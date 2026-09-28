@@ -1889,11 +1889,28 @@ async function kgAnmelden(){
 }
 
 let _kgNetzFehler=false;              // v636: kein Netz ≠ nicht gekoppelt
+/* v659 PO 28.09.: „die Kinderapp lädt beim Start immer noch mal den Code ab". Der Zugangs-Token
+   lebt eine Stunde. Nach längerer Pause fragte kgStatus mit dem abgelaufenen Token, bekam 401
+   und zeigte den Kopplungsbildschirm – während die Erneuerung aus core.js noch lief. Jetzt wird
+   erst erneuert und dann gefragt; ein 401 bekommt einen zweiten Anlauf mit neuem Token.
+   Nur wenn der refresh_token abgelehnt wird, ist das Gerät wirklich nicht mehr gekoppelt. */
+async function kgFrisch(){
+  const t=kgToken();
+  if(!t||!t.refresh_token||typeof sbRefreshToken!=="function")return;
+  if((t.expires_at||0)*1000-Date.now()>60000)return;
+  try{ await sbRefreshToken(); }catch(e){}
+}
 async function kgStatus(){
   _kgNetzFehler=false;
   if(!kgToken())return null;
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/rpc/kind_status`,{method:"POST",headers:kgHeaders(),body:"{}"});
+    await kgFrisch();
+    let r=await fetch(`${SB_URL}/rest/v1/rpc/kind_status`,{method:"POST",headers:kgHeaders(),body:"{}"});
+    if(r.status===401&&kgToken()?.refresh_token&&typeof sbRefreshToken==="function"){
+      const ok=await sbRefreshToken();
+      if(ok===null){ _kgNetzFehler=true; return null; }     // offline: nicht als „entkoppelt" deuten
+      if(ok)r=await fetch(`${SB_URL}/rest/v1/rpc/kind_status`,{method:"POST",headers:kgHeaders(),body:"{}"});
+    }
     if(!r.ok){ if(r.status>=500)_kgNetzFehler=true; return null; }
     const d=await r.json();
     return (d&&d.ok)?d:null;

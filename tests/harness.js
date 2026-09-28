@@ -54,6 +54,9 @@ function supabaseAttrappe(tabellen = {}) {
       const f = (tabellen.auth || {})[a[1]];
       if (f == null) return { status: 200, body: "{}" };
       const w = (typeof f === "function") ? f(u, req) : f;
+      /* v659: Eine Antwort darf ein Promise sein – so lässt sich eine langsame Erneuerung
+         nachstellen (im Netz kommt sie nie im selben Augenblick zurück). */
+      if (w && typeof w.then === "function") return w.then(x => (x && x.status) ? x : { status: 200, body: JSON.stringify(x == null ? {} : x) });
       return (w && w.status) ? w : { status: 200, body: JSON.stringify(w == null ? {} : w) };
     }
     const r = u.pathname.match(/\/rest\/v1\/rpc\/([a-z_]+)$/);
@@ -97,7 +100,7 @@ async function starten(opt = {}) {
       const satz = { pfad: u.pathname, suche: u.search, methode: req.method(), body: (() => { try { return JSON.parse(req.postData() || "null"); } catch (e) { return req.postData(); } })() };
       abgefragt.push(satz);
       if (req.method() !== "GET") gesendet.push(satz);
-      const a = antwort(u, req) || { status: 200, body: "[]" };
+      const a = (await antwort(u, req)) || { status: 200, body: "[]" };
       return r.fulfill({ status: a.status, contentType: "application/json", body: a.body });
     }
     if (u.hostname !== "app.test") return r.fulfill({ status: 200, contentType: "text/plain", body: "" });
