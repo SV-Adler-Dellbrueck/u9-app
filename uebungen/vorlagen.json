@@ -1,6 +1,6 @@
 {
   "schema": "adler-vorlagen/1",
-  "stand": "2026-09-28-1",
+  "stand": "2026-09-28-2",
   "vorlagen": [
     {
       "name": "L1-1 Ball behalten – Duell um zwei Tore",
@@ -1672,7 +1672,7 @@
     {
       "name": "L4-8 Drei Felder – 3+1 und FUNiño nebeneinander",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
-      "ziel_kinder": "Heute spielst du auf drei Feldern und bleibst weit genug weg vom Ball, damit du angespielt werden kannst.",
+      "ziel_kinder": "Heute spielst du 3+1 und Funino nebeneinander und bleibst weit genug weg vom Ball, damit du angespielt werden kannst.",
       "folge_nr": 8,
       "tags": [],
       "dauer_min": 75,
