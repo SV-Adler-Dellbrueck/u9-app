@@ -907,11 +907,12 @@ function tmEdit(id){
       </div></div>`:''}
     <div style="border-top:var(--border-s);margin-top:12px;padding-top:10px">
       <div style="font-size:var(--s-klein);color:var(--text2);font-weight:700;margin-bottom:6px">Wer hilft</div>
+      ${tmHelferFreigabeHtml(t)}
       ${isTraining?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <label style="font-size:var(--s-klein);color:var(--text2)">Funino-Tore<input type="number" id="te-funino" min="0" max="40" step="1" inputmode="numeric" placeholder="Anzahl" value="${t.helfer_funino==null?"":Number(t.helfer_funino)}" style="${fld}"></label>
         <label style="font-size:var(--s-klein);color:var(--text2)">Jugendtore<input type="number" id="te-jugendtore" min="0" max="40" step="1" inputmode="numeric" placeholder="Anzahl" value="${t.helfer_jugendtore==null?"":Number(t.helfer_jugendtore)}" style="${fld}"></label>
       </div>
-      <div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Leer = Aufgabe ohne Zahl · <b>0</b> = wird nicht gebraucht</div>`:''}
+      <div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Anzahl Tore – steht im Text der Aufgabe, wenn du sie oben freigibst.</div>`:''}
       <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Hinweis für Helfer<input id="te-helfer-hinweis" maxlength="140" placeholder="z. B. was heute anders ist als sonst" value="${esc(t.helfer_hinweis||'')}" style="${fld}"></label>
       ${t.typ==="event"?`<label style="display:flex;align-items:center;gap:10px;min-height:44px;margin-top:8px;font-size:var(--s-text);cursor:pointer"><input type="checkbox" id="te-mitbringen" ${t.mitbringen?"checked":""} style="width:22px;height:22px;margin:0">Eltern sollen etwas mitbringen (Mitbringliste an)</label>`:''}
     </div>
@@ -922,6 +923,49 @@ function tmEdit(id){
   modal.appendChild(c);document.body.appendChild(modal);
   // I-B: liegt der Termin schon jetzt in den Ferien? Hinweis direkt beim Öffnen zeigen
   if(typeof ferienDatumHint==="function")ferienDatumHint(document.getElementById("te-datum"),"te-ferien-hint");
+}
+/* v662 PO 28.09.: „hier sollte es nur eine Auswahl geben, wenn wir das in der Trainer-App
+   freigeben bzw. die Hilfe brauchen. Kann Aufbau und Abbau betreffen. Ebenso bei Spieltagen und
+   Festivals. Und auch andere Dinge könnten wir dort als Trainer eintragen.“
+   Je Vorlage ein Haken plus „so viele brauchen wir“, dazu zwei freie Zeilen. Gespeichert wird
+   termine.helfer_aufgaben = [{t, n, d?}]. Nichts angehakt = Eltern sehen keine Aufgabe. */
+/* v580 lebt hier weiter: beim ausdrücklichen Auswärtsspiel wird der Aufbau gar nicht erst
+   angeboten – aufgebaut wird beim Gastgeber. */
+function _tmHelferVorlagen(typ,t){
+  const alle=(typeof HELFER_AUFGABEN!=="undefined")?HELFER_AUFGABEN:[];
+  return alle.filter(a=>a.typen.includes(typ||"training")).filter(a=>typeof a.wenn!=="function"||a.wenn(t));
+}
+function tmHelferFreigabeHtml(t){
+  const frei=Array.isArray(t.helfer_aufgaben)?t.helfer_aufgaben:[];
+  const hat=k=>frei.find(x=>x&&x.t===k);
+  const zeile=(i,a)=>{const f=hat(a.t);
+    return `<div style="display:flex;align-items:center;gap:8px;min-height:44px">
+      <label style="flex:1;display:flex;align-items:center;gap:10px;font-size:var(--s-text);cursor:pointer"><input type="checkbox" class="te-hf-an" data-t="${esc(a.t)}" ${f?"checked":""} style="width:22px;height:22px;margin:0">${esc(a.t)}</label>
+      <input type="number" class="te-hf-n" data-t="${esc(a.t)}" min="1" max="20" step="1" inputmode="numeric" value="${f?Number(f.n)||1:2}" aria-label="So viele Helfer für ${esc(a.t)}" style="width:64px;min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
+    </div>`;};
+  const eigene=frei.filter(x=>x&&x.t&&!_tmHelferVorlagen(t.typ,t).some(a=>a.t===x.t)&&/^📌 /.test(x.t));
+  const eigen=i=>{const f=eigene[i]||{};
+    return `<div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+      <input class="te-hf-eigen" maxlength="40" placeholder="Eigene Aufgabe, z. B. Kuchen fürs Fest" value="${esc((f.t||"").replace(/^📌 /,""))}" aria-label="Eigene Aufgabe ${i+1}" style="flex:1;min-width:0;min-height:44px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
+      <input type="number" class="te-hf-eigen-n" min="1" max="20" step="1" inputmode="numeric" value="${Number(f.n)||1}" aria-label="So viele Helfer für eigene Aufgabe ${i+1}" style="width:64px;min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
+    </div>`;};
+  return `<div id="te-helfer-frei">
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px">Eltern sehen nur, was du hier anhakst. Zahl = so viele Helfer brauchst du.</div>
+    ${_tmHelferVorlagen(t.typ,t).map((a,i)=>zeile(i,a)).join("")}
+    ${eigen(0)}${eigen(1)}
+  </div>`;
+}
+function tmHelferFreigabeLesen(){
+  const n=v=>Math.max(1,Math.min(20,parseInt(v,10)||1));
+  const out=[];
+  document.querySelectorAll("#te-helfer-frei .te-hf-an").forEach(c=>{
+    if(!c.checked)return;
+    const z=document.querySelector(`#te-helfer-frei .te-hf-n[data-t="${CSS.escape(c.dataset.t)}"]`);
+    out.push({t:c.dataset.t,n:n(z&&z.value)});
+  });
+  const texte=[...document.querySelectorAll("#te-helfer-frei .te-hf-eigen")], zahlen=[...document.querySelectorAll("#te-helfer-frei .te-hf-eigen-n")];
+  texte.forEach((e,i)=>{const v=(e.value||"").trim().slice(0,40); if(v)out.push({t:"📌 "+v,n:n(zahlen[i]&&zahlen[i].value)});});
+  return out.length?out:null;
 }
 async function tmEditSave(id){
   const t=(TM_TERMINE||[]).find(x=>Number(x.id)===Number(id))||{};
@@ -944,6 +988,7 @@ async function tmEditSave(id){
   if(g("te-funino"))body.helfer_funino=teZahl("te-funino");
   if(g("te-jugendtore"))body.helfer_jugendtore=teZahl("te-jugendtore");
   if(g("te-helfer-hinweis"))body.helfer_hinweis=(g("te-helfer-hinweis").value||"").trim()||null;
+  if(document.getElementById("te-helfer-frei"))body.helfer_aufgaben=tmHelferFreigabeLesen();   // v662
   if(g("te-mitbringen"))body.mitbringen=!!g("te-mitbringen").checked; // v566: Mitbringliste nur auf Wunsch
   try{
     const r=await fetch(`${SB_URL}/rest/v1/termine?id=eq.${id}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify(body)});

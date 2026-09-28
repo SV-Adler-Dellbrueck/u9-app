@@ -1556,10 +1556,14 @@ const HELFER_AUFGABEN=[
      sie stehen: Eine Aufgabe zu früh wegzulassen kostet Helfer, eine zu viel nur einen
      Blick. Wer sich schon eingetragen hatte, findet seinen Eintrag weiter in der Liste
      darüber und kann ihn dort entfernen. */
-  {t:"🛠️ Aufbau",        typen:["spiel","turnier","event"], vor:30,
+  {t:"🛠️ Aufbau",        typen:["spiel","turnier","event","training"], vor:30,
    wenn:t=>!(t&&t.heim===false),
    kurz:()=>"Aufbau",
    d:t=>`${helferAbSatz(t,30)} da sein und mit dem Trainerteam Tore, Hütchen und Bälle aufbauen – etwa 15 Minuten.`},
+  /* v662: Abbau – PO „kann Aufbau und Abbau betreffen“. */
+  {t:"🧹 Abbau",         typen:["spiel","turnier","event","training"],
+   kurz:()=>"Abbau",
+   d:()=>"Nach dem Ende mit dem Trainerteam Tore, Hütchen und Bälle wegräumen – etwa 15 Minuten."},
   {t:"👀 Betreuung",     typen:["spiel","turnier"],
    kurz:()=>"Betreuung in den Pausen",
    d:()=>"In den Pausen bei den Kindern bleiben, damit das Trainerteam das nächste Spiel vorbereiten kann. Auch eine Halbzeit hilft."},
@@ -1597,24 +1601,24 @@ function helferAbSatz(t,min){
 }
 /* Aufgaben je Termintyp – und eine mit ausdruecklicher 0 faellt raus. Der Termin (t) darf
    fehlen (Notnagel in _helferReload); dann greift nur der Typ-Filter. */
+/* v662 PO 28.09.: „hier sollte es nur eine Auswahl geben, wenn wir das in der Trainer-App
+   freigeben bzw. die Hilfe brauchen … auch andere Dinge könnten wir dort als Trainer eintragen.“
+   Bis v661 standen je Termintyp feste Aufgaben da. Jetzt gilt nur, was der Trainer am Termin
+   freigibt (termine.helfer_aufgaben: [{t, n, d?}]) – n = so viele Helfer werden gebraucht.
+   Ohne Freigabe: keine Aufgabe. Texte der Vorlagen (HELFER_AUFGABEN) bleiben die Beschreibung;
+   eigene Aufgaben des Trainers tragen ihren Hinweis selbst. `t` bleibt der Schlüssel in
+   event_helfer.aufgabe. */
 function helferTasksFuer(typ,t){
-  return HELFER_AUFGABEN.filter(a=>a.typen.includes(typ||"training"))
-                        /* v580: Eine Aufgabe kann ausserdem an den Termin selbst gebunden
-                           sein – der Aufbau an das Heimrecht. Ohne Termin greift nur der
-                           Typ-Filter, wie bisher. */
-                        .filter(a=>typeof a.wenn!=="function"||a.wenn(t))
-                        .filter(a=>{
-                          if(!a.zahl)return true;
-                          const n=a.zahl(t);
-                          /* Nur eine AUSDRUECKLICHE 0 laesst die Aufgabe entfallen (Halle,
-                             Techniktraining). Fehlt die Angabe, steht sie ohne Zahl da.
-                             Ein reiner Zahlenvergleich reicht dafuer nicht: Number(null)
-                             ist 0, damit galt „nichts gesagt" wie „null Tore" – und die
-                             beiden einzigen Trainings-Aufgaben verschwanden aus der
-                             Eltern-Kachel, solange der Trainer nichts eingetragen hatte. */
-                          return !(n!=null&&n!==""&&Number(n)===0);
-                        });
+  const frei=(t&&Array.isArray(t.helfer_aufgaben))?t.helfer_aufgaben:[];
+  return frei.filter(x=>x&&x.t).map(x=>{
+    const v=HELFER_AUFGABEN.find(a=>a.t===x.t);
+    const n=Math.max(1,Math.min(20,parseInt(x.n,10)||1));
+    if(v)return Object.assign({},v,{n,extra:x.d||""});
+    const text=String(x.t).replace(/^\S+\s+/,"");
+    return {t:x.t,n,vor:0,kurz:()=>text,d:()=>x.d||"Das Trainerteam freut sich über Unterstützung."};
+  });
 }
+function helferBeschreibung(a,t){ return a.d(t)+(a.extra?" "+a.extra:""); }
 function _sbUid(){ try{const t=sbToken();return t?JSON.parse(atob(t.split(".")[1])).sub:null;}catch(e){return null;} }
 function _helferName(){ const kids=window._elternKids||[]; const n=(kids[0]&&kids[0].kader&&kids[0].kader.name)?kids[0].kader.name:"Unsere"; return n+" Familie"; }
 async function tdHelferLoad(t){
@@ -1630,10 +1634,19 @@ async function tdHelferLoad(t){
     </div>`).join(""):'<div style="font-size:var(--s-text);color:var(--text3)">Noch niemand eingetragen – mach den Anfang!</div>';
   /* Zeilen statt Chips: eine Beschreibung braucht Platz, und der Knopf muss sagen, worauf
      man sich einlaesst, BEVOR man tippt. Weisse Karte, deshalb feste helle Farbwerte. */
-  const buttons=helferTasksFuer(t.typ,t).map(a=>{const on=mine.has(a.t);const esct=a.t.replace(/'/g,"");
+  const aufgaben=helferTasksFuer(t.typ,t);
+  /* v662: Ohne Freigabe kein Bereich – ausser jemand hat sich schon eingetragen, dann bleibt
+     die Liste, damit er sich wieder austragen kann. */
+  if(!aufgaben.length&&!rows.length){box.innerHTML="";return;}
+  const zahl={}; rows.forEach(x=>{zahl[x.aufgabe]=(zahl[x.aufgabe]||0)+1;});
+  const buttons=aufgaben.map(a=>{const on=mine.has(a.t);const esct=a.t.replace(/'/g,"");
+    const voll=!on&&(zahl[a.t]||0)>=a.n;
+    if(voll)return `<div style="display:block;width:100%;margin-top:6px;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:10px;background:#f8fafc;box-sizing:border-box">
+      <span style="font-size:var(--s-text);font-weight:700;color:#475569">${esc(a.t)} · voll (${a.n} von ${a.n})</span>
+      <span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:2px">Danke – hier ist schon genug Hilfe da.</span></div>`;
     return `<button onclick="${on?`tdHelferDelTask(${t.id},'${esct}')`:`tdHelferAdd(${t.id},'${esct}')`}" aria-pressed="${on?"true":"false"}" style="display:block;width:100%;text-align:left;margin-top:6px;padding:9px 11px;border-radius:10px;border:1.5px solid ${on?"#16a34a":"var(--rand-bedien)"};background:${on?"#f0fdf4":"#fff"};font-family:inherit;cursor:pointer">
-      <span style="font-size:var(--s-text);font-weight:700;color:${on?"#15803d":"#334155"}">${on?"✓ ":""}${esc(a.t)}</span>
-      <span style="display:block;font-size:var(--s-klein);font-weight:400;color:#64748b;margin-top:2px;line-height:1.35">${esc(a.d(t))}</span>
+      <span style="font-size:var(--s-text);font-weight:700;color:${on?"#15803d":"#334155"}">${on?"✓ ":""}${esc(a.t)} <span style="font-weight:600;color:#475569">· ${zahl[a.t]||0} von ${a.n}</span></span>
+      <span style="display:block;font-size:var(--s-klein);font-weight:400;color:#475569;margin-top:2px;line-height:1.35">${esc(helferBeschreibung(a,t))}</span>
     </button>`;}).join("");
   box.innerHTML=`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
     <div style="font-weight:700;font-size:var(--s-text);margin-bottom:2px">🙌 Wer hilft mit?</div>
@@ -1644,13 +1657,13 @@ async function tdHelferLoad(t){
     <!-- Freifeld: was die Liste nicht kennt. Der Text wird zur Aufgabe – deshalb das feste
          ✏️ davor, damit ein getipptes „Aufbau" nie zufaellig auf einen festen Aufgaben-
          schluessel faellt und dessen Knopf als angehakt erscheinen laesst. -->
-    <div style="display:flex;gap:6px;margin-top:8px">
+    ${aufgaben.length?`<div style="display:flex;gap:6px;margin-top:8px">
       <!-- Rahmen dunkler als bei den Aufgaben-Zeilen darueber (#e2e8f0): einen Knopf erkennt
            man an seiner Beschriftung, ein LEERES Eingabefeld nur an seinem Rand – deshalb
            gilt hier die 3:1-Regel fuer Bedienelemente. #7d8b99 = 3,49:1 auf Weiss. -->
       <input id="helfer-eigen-td" maxlength="60" placeholder="Etwas anderes – was übernimmst du?" aria-label="Eigene Aufgabe eintragen" style="flex:1;min-width:0;min-height:44px;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);box-sizing:border-box" onkeydown="if(event.key==='Enter')tdHelferAddEigen(${Number(t.id)},this)">
       <button onclick="tdHelferAddEigen(${Number(t.id)},this)" aria-label="Eigene Aufgabe eintragen" style="min-height:44px;min-width:52px;border:none;border-radius:10px;background:#15803d;color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">✓</button>
-    </div>
+    </div>`:""}
   </div>`;
 }
 /* Der Ersatz-Termin braucht seit v420 auch den TYP: ohne ihn fiele die Liste nach dem
@@ -2026,12 +2039,16 @@ async function elternHelferKachelLoad(t){
   const zeilen=aufgaben.map(a=>{
     const wer=je[a.t]||[];
     const on=wer.some(x=>x.user_id===uid);
+    const voll=!on&&wer.length>=a.n;   // v662: genug Helfer – kein weiterer Eintrag
     const esct=a.t.replace(/'/g,"");
     const zeit=a.vor?helferZeit(t,a.vor):"";
     /* Rechts steht das, was gerade zaehlt: solange niemand da ist die Uhrzeit (die
        entscheidet, ob ich es schaffe), danach der Name (der beantwortet die Frage schon). */
-    const rechts=wer.length?`<span style="color:#15803d;font-weight:700">✓ ${namen(wer)}</span>`
-                 :zeit?`<span style="color:#64748b">ab ${zeit} Uhr</span>`:"";
+    const rechts=`<span style="color:${voll?"#475569":"#334155"};font-weight:700">${wer.length} von ${a.n}${voll?" · voll":""}</span>`
+                 +(wer.length?` <span style="color:#15803d;font-weight:700">✓ ${namen(wer)}</span>`:zeit?` <span style="color:#475569">ab ${zeit} Uhr</span>`:"");
+    if(voll)return `<div style="display:flex;align-items:center;gap:8px;width:100%;margin-top:6px;padding:10px 12px;min-height:44px;border:1.5px solid #e2e8f0;border-radius:12px;background:#f8fafc;box-sizing:border-box">
+      <span style="flex:1;min-width:0;font-size:var(--s-text);font-weight:700;color:#475569">${esc(a.t.split(" ")[0])} ${esc(a.kurz(t))}</span>
+      <span style="font-size:var(--s-klein);flex:none">${rechts}</span></div>`;
     return `<button onclick="${on?`tdHelferDelTask(${t.id},'${esct}')`:`tdHelferAdd(${t.id},'${esct}')`}" aria-pressed="${on?"true":"false"}" style="display:flex;align-items:center;gap:8px;width:100%;text-align:left;min-height:44px;margin-top:6px;padding:8px 11px;border-radius:10px;border:1.5px solid ${on?"#16a34a":"var(--rand-bedien)"};background:${on?"#f0fdf4":"#fff"};font-family:inherit;cursor:pointer">
       <span style="flex:1;min-width:0;font-size:var(--s-text);font-weight:700;color:${on?"#15803d":"#334155"}">${on?"✓ ":""}${esc(a.t.split(" ")[0])} ${esc(a.kurz(t))}</span>
       <span style="font-size:var(--s-klein);flex:none">${rechts}</span>

@@ -3,101 +3,46 @@
    PO am 19.09., mit Bildschirmfoto aus dem Eltern-Bereich: „Bei Auswärtsspielen ist im
    Eltern-Zugang der Punkt beim Aufbauen helfen nicht relevant."
 
-   Stimmt: Aufgebaut wird beim Gastgeber. Wer auswärts spielt, kommt an ein fertiges Feld –
-   die Zeile „🛠️ Aufbau ab 12:30 Uhr" fragte dort nach Hilfe für etwas, das es nicht gibt.
-
-   Fälle:
-   a) Auswärts (`heim === false`): keine Aufbau-Zeile – beim Spiel wie beim Turnier. Alles
-      andere bleibt: Betreuung, Live-Ticker, Fotos sind auswärts genauso nötig.
-   b) Daheim (`heim === true`): unverändert mit Aufbau.
-   c) Noch nicht eingetragen (`heim` fehlt): die Zeile bleibt stehen. Eine Aufgabe zu früh
-      wegzulassen kostet Helfer, eine zu viel kostet einen Blick.
-   d) Beim Event bleibt der Aufbau: `heim` wird dort nicht gesetzt (der Kalender schreibt
-      es nur bei Spielen), und ein Sommerfest baut man selbst auf. Trägt jemand dort
-      ausdrücklich „auswärts" ein, entfällt der Aufbau – dann ist es auch ein fremder Platz.
-   e) Ohne Termin (der Notnagel nach dem Eintragen) greift nur der Typ-Filter, wie bisher.
-   f) Wer sich vorher eingetragen hatte, sieht seinen Eintrag weiter und kann ihn entfernen –
-      sonst hinge eine Zusage fest, die niemand mehr sieht. */
+   v662 (PO 28.09.): Eltern sehen nur noch Aufgaben, die der Trainer am Termin freigibt. Die
+   Regel von v580 wandert deshalb in den Freigabe-Block des Trainers:
+   a) Auswärts (`heim === false`): der Aufbau wird gar nicht erst angeboten – beim Spiel wie
+      beim Turnier. Betreuung, Live-Ticker, Fotos und Abbau bleiben wählbar.
+   b) Daheim und solange Heim/Auswärts offen ist: Aufbau wählbar.
+   c) Wer sich vorher eingetragen hatte, sieht seinen Eintrag im Termin-Detail weiter und kann
+      ihn entfernen – auch ohne Freigabe. */
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
   const datum = h.tagePlus(3);
-
-  const s = await h.starten({
-    start: "/eltern/index.html",
-    warten: 1200,
-    hoehe: 1600,
-    supabase: h.supabaseAttrappe({
-      kader: h.kaderZeilen(),
-      event_helfer: [{ id: 7, name: "Kind A Familie", aufgabe: "🛠️ Aufbau", user_id: "wer-anders" }]
-    })
-  });
-
+  const s = await h.starten({ supabase: h.supabaseAttrappe({ kader: h.kaderZeilen() }) });
+  await s.page.waitForTimeout(3500);
   const r = await s.page.evaluate(({ datum }) => {
-    if (typeof helferTasksFuer !== "function") return { fehlt: "helferTasksFuer" };
-    const namen = t => t.map(a => a.t);
-    const termin = (typ, heim) => Object.assign({ id: 88, typ, datum, uhrzeit: "13:00", treffzeit: "12:30" },
-      heim === undefined ? {} : { heim });
-    const out = {};
-    out.auswaertsSpiel = namen(helferTasksFuer("spiel", termin("spiel", false)));
-    out.auswaertsTurnier = namen(helferTasksFuer("turnier", termin("turnier", false)));
-    out.heimSpiel = namen(helferTasksFuer("spiel", termin("spiel", true)));
-    out.offen = namen(helferTasksFuer("spiel", termin("spiel", undefined)));
-    out.event = namen(helferTasksFuer("event", termin("event", undefined)));
-    out.eventAuswaerts = namen(helferTasksFuer("event", termin("event", false)));
-    out.ohneTermin = namen(helferTasksFuer("spiel", null));
-    out.training = namen(helferTasksFuer("training", termin("training", undefined)));
-    return out;
+    if (typeof tmHelferFreigabeHtml !== "function") return { fehlt: "tmHelferFreigabeHtml" };
+    const angebot = t => { const d = document.createElement("div"); d.innerHTML = tmHelferFreigabeHtml(t); return [...d.querySelectorAll(".te-hf-an")].map(c => c.dataset.t); };
+    const termin = (typ, heim) => Object.assign({ id: 88, typ, datum, uhrzeit: "13:00" }, heim === undefined ? {} : { heim });
+    return { ausSpiel: angebot(termin("spiel", false)), ausTurnier: angebot(termin("turnier", false)),
+      heim: angebot(termin("spiel", true)), offen: angebot(termin("spiel", undefined)) };
   }, { datum });
-
-  if (r.fehlt) { await s.schliessen(); return h.ergebnis("Aufbau nur daheim", false, [r.fehlt + " fehlt"]); }
-
-  /* f) Die Liste der Eingetragenen wird aus der Datenbank gezeichnet, nicht aus der
-     Aufgabenliste – ein alter Aufbau-Eintrag bleibt deshalb sichtbar. Geprüft am echten
-     Termin-Detail. */
-  const sichtbar = await s.page.evaluate(async ({ datum }) => {
-    const box = document.createElement("div"); box.id = "td-helfer"; document.body.appendChild(box);
-    if (typeof tdHelferLoad !== "function") return null;
-    await tdHelferLoad({ id: 88, typ: "spiel", datum, heim: false, uhrzeit: "13:00", treffzeit: "12:30" });
-    await new Promise(x => setTimeout(x, 150));
-    const text = box.textContent || "";
-    return {
-      eintragSichtbar: /Kind A Familie/.test(text),
-      knopfWeg: ![...box.querySelectorAll("button")].some(b => /Aufbau/.test(b.textContent || "")),
-      andere: [...box.querySelectorAll("button")].filter(b => /Betreuung|Live-Ticker|Fotos/.test(b.textContent || "")).length
-    };
-  }, { datum });
-
-  const fehler = s.fehler();
   await s.schliessen();
+  if (r.fehlt) return h.ergebnis("Aufbau nur daheim", false, [r.fehlt + " fehlt"]);
+  const aufbau = l => l.some(x => /Aufbau/.test(x));
+  if (aufbau(r.ausSpiel)) probleme.push("a) Auswärtsspiel bietet den Aufbau an");
+  if (aufbau(r.ausTurnier)) probleme.push("a) Auswärtsturnier bietet den Aufbau an");
+  ["Betreuung", "Live-Ticker", "Fotografieren", "Abbau"].forEach(w => { if (!r.ausSpiel.some(x => x.includes(w))) probleme.push(`a) Auswärts fehlt „${w}“`); });
+  if (!aufbau(r.heim)) probleme.push("b) Heimspiel bietet keinen Aufbau an");
+  if (!aufbau(r.offen)) probleme.push("b) Offenes Heimrecht bietet keinen Aufbau an");
+  zeilen.push(`a/b) auswärts: ${r.ausSpiel.join(" · ")} · daheim: ${r.heim.join(" · ")}`);
 
-  const hatAufbau = liste => liste.some(x => /Aufbau/.test(x));
-  // a)
-  if (hatAufbau(r.auswaertsSpiel)) probleme.push(`Auswärtsspiel bietet weiterhin den Aufbau an: ${r.auswaertsSpiel.join(" · ")}`);
-  if (hatAufbau(r.auswaertsTurnier)) probleme.push(`Auswärtsturnier bietet weiterhin den Aufbau an: ${r.auswaertsTurnier.join(" · ")}`);
-  ["Betreuung", "Live-Ticker", "Fotografieren"].forEach(w => {
-    if (!r.auswaertsSpiel.some(x => x.includes(w))) probleme.push(`Auswärts fehlt außerdem „${w}“ – nur der Aufbau entfällt`);
-  });
-  // b) + c) + d) + e)
-  if (!hatAufbau(r.heimSpiel)) probleme.push("Beim Heimspiel fehlt der Aufbau");
-  if (r.heimSpiel.length !== 4) probleme.push(`Heimspiel zeigt ${r.heimSpiel.length} Aufgaben statt vier`);
-  if (!hatAufbau(r.offen)) probleme.push("Solange Heim/Auswärts nicht eingetragen ist, darf der Aufbau nicht verschwinden");
-  if (!hatAufbau(r.event)) probleme.push("Beim Event entfällt der Aufbau – ein Sommerfest baut man selbst auf");
-  if (hatAufbau(r.eventAuswaerts)) probleme.push("Ein ausdrücklich auswärtiges Event fragt trotzdem nach Aufbau-Hilfe");
-  if (!hatAufbau(r.ohneTermin)) probleme.push("Ohne Termin verschwindet der Aufbau – der Notnagel kennt das Heimrecht nicht");
-  if (r.training.some(x => /Aufbau/.test(x))) probleme.push("Beim Training steht plötzlich ein Aufbau");
-  // f)
-  if (!sichtbar) probleme.push("tdHelferLoad fehlt");
-  else {
-    if (!sichtbar.eintragSichtbar) probleme.push("Ein vorhandener Aufbau-Eintrag ist auswärts nicht mehr zu sehen – niemand könnte ihn entfernen");
-    if (!sichtbar.knopfWeg) probleme.push("Im Termin-Detail steht auswärts weiterhin ein Aufbau-Knopf");
-    if (sichtbar.andere !== 3) probleme.push(`Im Termin-Detail stehen ${sichtbar.andere} der drei übrigen Aufgaben`);
-  }
-  if (fehler.length) probleme.push("Konsole: " + fehler[0]);
-
-  if (!probleme.length) {
-    zeilen.push(`Auswärts: ${r.auswaertsSpiel.join(" · ")} – der Aufbau entfällt, der Rest bleibt`);
-    zeilen.push(`Daheim: ${r.heimSpiel.join(" · ")} · noch offen: ${r.offen.length} Aufgaben (Aufbau bleibt) · Event ohne Heimrecht: Aufbau bleibt, ausdrücklich auswärts: entfällt`);
-    zeilen.push("Termin-Detail auswärts: kein Aufbau-Knopf, die drei übrigen da, ein alter Eintrag bleibt sichtbar");
-  }
-  return h.ergebnis("Aufbau nur daheim", !probleme.length, zeilen.concat(probleme));
+  const s2 = await h.starten({ start: "/eltern/index.html", warten: 1200,
+    supabase: h.supabaseAttrappe({ event_helfer: [{ id: 7, name: "Kind A Familie", aufgabe: "🛠️ Aufbau", user_id: "wer-anders" }] }) });
+  const c = await s2.page.evaluate(async ({ datum }) => {
+    const box = document.createElement("div"); box.id = "td-helfer"; document.body.appendChild(box);
+    await tdHelferLoad({ id: 88, typ: "spiel", datum, heim: false, uhrzeit: "13:00" });
+    await new Promise(x => setTimeout(x, 150));
+    return /Kind A Familie/.test(box.textContent || "");
+  }, { datum });
+  const f = s2.fehler(); await s2.schliessen();
+  if (!c) probleme.push("c) Alter Eintrag ohne Freigabe nicht mehr sichtbar");
+  if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
+  zeilen.push(`c) alter Eintrag sichtbar: ${c}`);
+  return h.ergebnis("Aufbau nur daheim", !probleme.length, probleme.length ? probleme.concat(zeilen) : zeilen);
 };
