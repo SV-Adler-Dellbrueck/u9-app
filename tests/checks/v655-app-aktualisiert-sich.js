@@ -48,7 +48,7 @@ module.exports = async function (h) {
     try {
       sessionStorage.setItem("adler-intro", "1");
       sessionStorage.setItem("ladungen", String(Number(sessionStorage.getItem("ladungen") || 0) + 1));
-      ["adler_tour", "adler_trainer_tour", "adler_eltern_tour"].forEach(k => localStorage.setItem(k, "1"));
+      ["adler_tour", "adler_trainer_tour", "adler_eltern_tour", "adler_kinder_tour"].forEach(k => localStorage.setItem(k, "1"));
     } catch (e) {}
   });
   const page = await ctx.newPage();

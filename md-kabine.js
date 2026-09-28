@@ -734,6 +734,7 @@ function kabineHome(){
     <div style="text-align:center;padding:18px 16px 6px">
       <div style="font-size:22px;font-weight:900">🦅 Die Kabine</div>
       <div style="font-size:12px;opacity:.8">Adler U9 · Kinder-Modus</div>
+      <button id="kab-hilfe" onclick="kabineTourStart()" aria-label="Zeig mir die Kabine" style="margin-top:8px;min-height:44px;padding:6px 16px;border:1px solid rgba(255,255,255,.45);border-radius:22px;background:rgba(255,255,255,.12);color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">❓ Zeig mir alles</button>
     </div>
     <div id="kab-level" style="padding:2px 16px 6px"></div>
     <div id="kab-countdown"></div>
@@ -794,7 +795,42 @@ function kabineHome(){
   kabineZeitAnzeige();                                          // Restzeit-Hinweis (v636: ohne Buchung)
   // kabineStimmungLoad();  // H2 – vom PO vorerst ausgeblendet                                         // H2: Kinder-Stimmungs-Check
   kabineMilestoneLoad();                                        // H7: frische Team-Meilensteine feiern
+  if(!window._kabTourGeprueft){ window._kabTourGeprueft=true; setTimeout(kabineTourMaybe,900); }   // v658
 }
+/* v658 · Tour für Kinder (PO 28.09.: „… für die Kids-App … in kinderverständlicher Sprache für
+   7- bis 9- oder 10-Jährige“). Kurze Sätze, Du-Form, ein Ding pro Schritt, keine Fachwörter
+   wie „Modul“ oder „App-Zeit“. Große Schrift und Knöpfe (opt.kind). Kein Textfeld, kein Netz.
+   Das Quiz lädt eine eigene Seite – deshalb zeigt die Tour auf die Kachel, öffnet sie aber nicht. */
+const KABINE_TOUR=[
+  {emo:"🦅", t:"Hallo, Adler!", sel:["#kab-hilfe"],
+   d:"Das hier ist deine Kabine. Ich zeige dir kurz, was du hier alles machen kannst."},
+  {emo:"⏰", t:"Wann ist das nächste Spiel?", sel:["#kab-countdown"],
+   d:"Hier siehst du, wie oft du noch schlafen musst bis zum nächsten Spiel."},
+  {emo:"🎯", t:"Taktik-Quiz", sel:['#kabine-body button[onclick="kabineQuiz(\'taktik\')"]'],
+   d:"Hier sagst du, wo du hinlaufen würdest. Für richtige Antworten gibt es Federn 🪶."},
+  {emo:"🧠", t:"Fußball-Wissen", sel:['#kabine-body button[onclick="kabineQuiz(\'wissen\')"]'],
+   d:"Fragen rund um Fußball. Wie viele weißt du schon?"},
+  {emo:"🃏", t:"Deine Karte", sel:['#kabine-body button[onclick="kabineMyCard()"]'],
+   d:"Deine eigene Spielerkarte mit Foto und deiner Rolle im Team."},
+  {emo:"⭐", t:"Deine Mission", sel:['#kabine-body button[onclick="kabineMission()"]'],
+   d:"Eine kleine Aufgabe nur für dich. Schaffst du sie?"},
+  {emo:"🏆", t:"Team-Missionen", sel:['#kabine-body button[onclick="kabineShowQuests()"]'],
+   d:"Aufgaben für das ganze Team. Zusammen schafft ihr mehr!"},
+  {emo:"🤝", t:"Unsere Regeln", sel:['#kabine-body button[onclick="kabineCodex()"]'],
+   d:"So spielen wir Adler: fair, mutig und zusammen."},
+  {emo:"👏", t:"Kompliment schenken", sel:['#kabine-body button[onclick="kabineKudos()"]'],
+   d:"Sag einem Mitspieler, was er toll gemacht hat. Das freut jeden!"},
+  {emo:"✨", t:"Mehr entdecken", sel:["#kab-mehr"], vor:()=>{ const d=document.getElementById("kab-mehr"); if(d){ d.open=true; window._kabMehrOffen=true; } },
+   d:"Hier gibt es noch mehr: dein Taktikbrett zum Malen, das Sammelalbum, Abzeichen und die Team-Galerie."},
+  {emo:"⚽", t:"Viel Spaß!", sel:["#kab-hilfe"],
+   d:"Wenn du etwas vergessen hast: Tipp auf „❓ Zeig mir alles“. Und jetzt: Los geht's!"},
+];
+function kabineTourMaybe(){
+  if(!document.getElementById("kab-hilfe"))return;          // nur auf der Startseite der Kabine
+  try{ if(localStorage.getItem("adler_kinder_tour"))return; }catch(e){}
+  kabineTourStart();
+}
+function kabineTourStart(){ if(typeof fuehrungStart==="function")fuehrungStart(KABINE_TOUR,{kind:true,schluessel:"adler_kinder_tour"}); }
 /* v563: Der nächste Termin, bei dem wenigstens eines der angemeldeten Kinder dabei sein
    kann. Ein Spiel, für das abgesagt wurde, ist für dieses Kind kein Spiel: „Noch 4× schlafen"
    wäre eine Vorfreude auf einen Tag zu Hause, und die Packliste eine Aufforderung, für ihn

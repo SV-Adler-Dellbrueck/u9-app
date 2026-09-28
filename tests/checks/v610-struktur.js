@@ -53,7 +53,8 @@ module.exports = async function (h) {
       let k = document.getElementById("kabine"); if (!k) { k = document.createElement("div"); k.id = "kabine"; k.innerHTML = '<div id="kabine-body"></div>'; document.body.appendChild(k); }
       kabineHome();
       const body = document.getElementById("kabine-body");
-      const alle = [...body.querySelectorAll("button[onclick^='kabine']")].filter(b => !/kabineExit/.test(b.getAttribute("onclick")));
+      /* v658: „❓ Zeig mir alles“ startet die Tour und ist keine Kachel. */
+      const alle = [...body.querySelectorAll("button[onclick^='kabine']")].filter(b => !/kabineExit|kabineTourStart/.test(b.getAttribute("onclick")));
       const mehr = body.querySelector("#kab-mehr");
       const vorn = alle.filter(b => !mehr || !mehr.contains(b));
       return { alle: alle.length, vorn: vorn.map(b => b.textContent.replace(/\s+/g, " ").trim()),

@@ -2061,40 +2061,48 @@ async function elternBetreuungToggle(terminId,spielerId,stay){
     elternDashLoad();
   }catch(e){toast("Netzwerkfehler","err");}
 }
-// Eltern-Feature-Tour: kurzer Überblick beim ersten Login (einmalig), jederzeit neu startbar.
-/* v637: Der Rundgang war zehn Seiten lang – beim ersten Öffnen liest das niemand. Jetzt fünf
-   kurze Schritte mit dem, was man in der ersten Woche braucht; alles Weitere steht in der Hilfe. */
+// Eltern-Feature-Tour: beim ersten Login einmal, jederzeit über ❓ neu.
+/* v637: Der Rundgang war zehn Seiten lang – beim ersten Öffnen liest das niemand; fünf Karten.
+   v658 (PO 28.09.: „… vor allen Dingen in der Eltern-App … eine geführte Tour durch die
+   verschiedenen Bereiche“, Kachel „Geführt mit Zeiger“): Jeder Schritt zeigt jetzt auf die
+   Stelle im Dashboard, statt sie zu beschreiben. Kurze Sätze, eine Sache je Schritt; fehlt ein
+   Element (kein Termin, kein Ticker), steht der Schritt als Karte in der Mitte. Motor: core.js. */
+/* Nur schließen, was offen ist: elternCatClose geht einen Verlaufsschritt zurück – bei
+   geschlossenem Fenster hätte das die Seite verlassen. */
+const _elZu=()=>{
+  const ov=document.getElementById("el-cat-overlay");
+  if(ov&&ov.style.display==="block"&&typeof elternCatClose==="function"){ try{ elternCatClose(); }catch(e){} }
+  document.getElementById("td-modal")?.remove();
+};
 const ELTERN_TOUR=[
-  {emo:"🦅", t:"Willkommen bei den Adlern", d:"Hier läuft alles rund um dein Kind bei der U9 zusammen. Diesen Rundgang startest du jederzeit über das ❓ oben neu."},
-  {emo:"👍", t:"Zu- und absagen", d:"Ganz oben steht der nächste Termin. Ein Tipp sagt zu oder ab, nochmal tippen nimmt die Antwort zurück. Offene Rückmeldungen der nächsten 14 Tage stehen direkt darunter."},
-  {emo:"🎒", t:"Alles zum Termin", d:"Tippe auf einen Termin: Wetter, Adresse mit Route, „Was muss mit?“, Fahrgemeinschaft und „Wer hilft mit?“."},
-  {emo:"🎮", t:"Die Kabine für dein Kind", d:"Unter „Für die Kinder“ darf dein Kind spielen: Quiz, Missionen, Sammelalbum. Zurück geht es nur mit deinem Code, und du legst fest, wie lange am Tag."},
-  {emo:"🗣️", t:"Fragen, Fotos, Datenschutz", d:"Unter „Trainerteam kontaktieren“ erreichst du uns. Foto-Freigaben und die Notfallkarte pflegst du unter „Datenschutz & Freigaben“ – ohne dein Häkchen erscheint kein Foto. Dort lädst du auch alle Daten zu deinem Konto und deinen Kindern herunter, löschst dein Konto oder beantragst, dass wir die Daten deines Kindes löschen."},
+  {emo:"🦅", t:"Willkommen bei den Adlern", vor:_elZu,
+   d:"Hier läuft alles rund um dein Kind bei der U9 zusammen. Diese Tour zeigt dir, wo was ist – du startest sie jederzeit über ❓ oben neu."},
+  {emo:"👍", t:"Der nächste Termin", sel:["#termin-card"], vor:_elZu,
+   d:"Ganz oben steht der nächste Termin. Training gilt als zugesagt – sag nur ab, wenn dein Kind nicht kommt. Bei Spielen und Festivals tippst du auf Zu- oder Absage."},
+  {emo:"📬", t:"Offene Rückmeldungen", sel:["#eltern-offen-card"],
+   d:"Stehen in den nächsten 14 Tagen Antworten aus, siehst du sie hier gesammelt."},
+  {emo:"🎒", t:"Alles zum Termin", sel:['[onclick^="terminDetailOpen"]'],
+   d:"Tippe auf einen Termin: Wetter, Adresse mit Route, „Was muss mit?“, Fahrgemeinschaft und „Wer hilft mit?“."},
+  {emo:"✅", t:"Zu erledigen", sel:["#eltern-todo-btn"],
+   d:"Aufgaben für euch als Familie, zum Beispiel der Grillhütten-Dienst. Könnt ihr nicht, tippt ihr „Ersatz suchen“ – eine andere Familie kann übernehmen."},
+  {emo:"📡", t:"Liveticker", sel:["#eltern-live-slot","#eltern-ticker-slot"],
+   d:"Am Spieltag läuft hier der Ticker mit – auch wenn ihr nicht am Platz seid."},
+  {emo:"🎮", t:"Die Kabine für dein Kind", sel:['button[onclick="kabineOpen()"]'],
+   d:"Hier darf dein Kind spielen: Quiz, Missionen, Sammelalbum. Zurück geht es nur mit deinem Code."},
+  {emo:"📱", t:"Kinder-App auf eigenem Gerät", sel:['button[onclick="kinderAppOpen()"]'],
+   d:"Die Kabine gibt es auch als eigene App fürs Tablet oder Handy deines Kindes. Du koppelst sie mit einem Code und legst die Zeit pro Tag fest."},
+  {emo:"🪪", t:"Die Karte deines Kindes", sel:['button[onclick^="elternCatOpen(\'kind-"]'],
+   d:"Foto, Rolle und schöne Momente – ohne Bewertungszahlen. Hier findest du auch, was dein Kind gerade lernt."},
+  {emo:"🗣️", t:"Trainerteam erreichen", sel:['button[onclick="elternCatOpen(\'kontakt\')"]'],
+   d:"Fragen, Hinweise, Absprachen: So erreichst du uns direkt."},
+  {emo:"🔒", t:"Datenschutz & Freigaben", sel:['button[onclick="elternCatOpen(\'datenschutz\')"]'],
+   d:"Foto-Freigaben, Notfallkarte und deine Daten zum Herunterladen. Ohne dein Häkchen erscheint kein Foto deines Kindes."},
+  {emo:"❓", t:"Hilfe und Schrift", sel:['button[onclick="elternTourStart()"]'],
+   d:"❓ startet diese Tour neu. Daneben „A“ für größere Schrift und 🌙 für den dunklen Modus. Viel Spaß bei den Adlern!"},
 ];
-let elternTourIdx=0;
 function elternTourMaybe(){ try{if(localStorage.getItem("adler_eltern_tour"))return;}catch(e){} elternTourStart(); }
-function elternTourStart(){ elternTourIdx=0; elternTourRender(); }
-function elternTourNext(){ if(elternTourIdx<ELTERN_TOUR.length-1){elternTourIdx++;elternTourRender();}else elternTourClose(); }
-function elternTourPrev(){ if(elternTourIdx>0){elternTourIdx--;elternTourRender();} }
-function elternTourClose(){ try{localStorage.setItem("adler_eltern_tour","1");}catch(e){} document.getElementById("eltern-tour-ov")?.remove(); }
-function elternTourRender(){
-  document.getElementById("eltern-tour-ov")?.remove();
-  const s=ELTERN_TOUR[elternTourIdx]; if(!s){elternTourClose();return;}
-  const last=elternTourIdx===ELTERN_TOUR.length-1;
-  const ov=document.createElement("div"); ov.id="eltern-tour-ov";
-  ov.style.cssText="position:fixed;inset:0;z-index:10060;background:rgba(15,23,42,.78);display:flex;align-items:center;justify-content:center;padding:20px";
-  ov.innerHTML=`<div style="background:#fff;color:#1a1a2e;max-width:360px;width:100%;border-radius:18px;padding:22px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.5)">
-    <div style="font-size:42px;line-height:1">${s.emo}</div>
-    <div style="font-size:var(--s-teil);font-weight:800;margin:8px 0 8px">${esc(s.t)}</div>
-    <div style="font-size:var(--s-text);color:#475569;line-height:1.5;text-align:left">${esc(s.d)}</div>
-    <div style="display:flex;gap:6px;justify-content:center;margin:16px 0 4px">${ELTERN_TOUR.map((_,i)=>`<span style="width:7px;height:7px;border-radius:50%;background:${i===elternTourIdx?'#1e3a8a':'#cbd5e1'}"></span>`).join("")}</div>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      ${elternTourIdx>0?`<button onclick="elternTourPrev()" style="padding:9px 14px;border:1.5px solid var(--rand-bedien);border-radius:10px;background:#fff;color:#334155;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Zurück</button>`:`<button onclick="elternTourClose()" style="padding:9px 14px;border:none;background:none;color:#64748b;font-family:inherit;font-size:var(--s-text);cursor:pointer">Überspringen</button>`}
-      <button onclick="elternTourNext()" style="margin-left:auto;padding:9px 16px;border:none;border-radius:10px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${last?"Fertig 🚀":"Weiter"}</button>
-    </div>
-  </div>`;
-  document.body.appendChild(ov);
-}
+function elternTourStart(){ fuehrungStart(ELTERN_TOUR,{schluessel:"adler_eltern_tour",ende:_elZu}); }
+function elternTourClose(){ if(typeof fuehrungLaeuft==="function"&&fuehrungLaeuft())fuehrungEnde(); else { try{localStorage.setItem("adler_eltern_tour","1");}catch(e){} } }
 // Adler-Karte des eigenen Kindes (Eltern-Sicht): Daten kommen aus der security-definer
 // RPC my_child_card (kein Direktzugriff auf geschützte Tabellen). Baut dieselbe d-Struktur
 // wie adlerCardData und rendert mit adlerCardDraw.

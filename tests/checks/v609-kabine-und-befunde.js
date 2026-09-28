@@ -53,9 +53,10 @@ module.exports = async function (h) {
       out.fremd = yt("https://example.org/video.mp4");
       // f) Tour
       out.tour = ELTERN_TOUR.map(t => t.d).join(" ");
-      elternTourIdx = 0; elternTourRender();
-      const ov = document.getElementById("eltern-tour-ov"); out.tourText = ov ? ov.textContent : "";
-      ov?.remove(); isKidsMode = false;
+      /* v658: Die Tour läuft über den gemeinsamen Motor (fuehrungStart, Overlay #fg-ov). */
+      elternTourStart(); await new Promise(r => setTimeout(r, 600));
+      const ov = document.getElementById("fg-ov"); out.tourText = ov ? ov.textContent : "";
+      if (typeof fuehrungEnde === "function") fuehrungEnde(); isKidsMode = false;
       return out;
     });
     // nach Neuladen: Sperre bleibt, wenn das Flag gesetzt ist

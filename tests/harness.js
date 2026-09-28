@@ -122,7 +122,7 @@ async function starten(opt = {}) {
   if (!opt.intro) await ctx.addInitScript(() => { try { sessionStorage.setItem("adler-intro", "1"); } catch (e) {} });
   await ctx.addInitScript(behalten => {
     try {
-      ["adler_tour", "adler_trainer_tour", "adler_eltern_tour"].forEach(k => localStorage.setItem(k, "1"));
+      ["adler_tour", "adler_trainer_tour", "adler_eltern_tour", "adler_kinder_tour"].forEach(k => localStorage.setItem(k, "1"));
       if (!behalten) localStorage.removeItem("adler_blitz");   // bei jedem Aufruf, auch nach reload()
     } catch (e) {}
   }, !!opt.speicherBehalten);
