@@ -4495,6 +4495,7 @@ const HELP=[
     {t:"Eltern-Bereich", d:"Eltern melden sich mit E-Mail und Passwort an (alternativ Einmal-Code per Mail): Zu- und Absagen, Karte, Quiz, Betreuung vor Ort. Neue Passwörter – bei Eltern und Trainern – brauchen mindestens 10 Zeichen mit Buchstaben und Ziffern; ältere, kürzere gelten zum Anmelden weiter."},
     {t:"Wer hilft mit? freigeben", d:"Seit v662 sehen Eltern bei einem Termin nur die Helfer-Aufgaben, die du freigibst: im Termin bearbeiten unter „Wer hilft“ anhaken und daneben eintragen, wie viele Helfer du brauchst. Zur Auswahl stehen Funino-Tore, Jugendtore, Aufbau (bei Auswärtsspielen nicht), Abbau, Betreuung, Live-Ticker und Fotos, dazu zwei eigene Aufgaben mit freiem Text. Eltern sehen „x von n“; ist eine Aufgabe voll, kann sich niemand mehr eintragen. Ohne Freigabe erscheint bei den Eltern gar nichts."},
     {t:"Geburtstage und Elternangaben", d:"Seit v660 steht auf der Startseite eine Karte mit allen, die in den nächsten 14 Tagen Geburtstag haben – Kinder aus dem Kader und Eltern, die ihren Geburtstag unter „Meine Angaben“ eingetragen haben (bei Eltern ohne Alter). Eltern tragen dort auch Vor- und Nachname, Handynummer und den Geburtstag ihres Kindes ein; „Erste Schritte“ erinnert sie daran, bis alles ausgefüllt ist. Die Angaben sehen nur das Elternteil selbst und das Trainerteam, und sie stehen in der Sicherung."},
+    {t:"Wer ist dabei? (Spieltag)", d:"Oben auf der Spieltag-Seite: die Rückmeldungen der Eltern zum nächsten Spieltag – wer zugesagt, abgesagt oder krank gemeldet hat und wer noch nicht geantwortet hat. Zusagen stehen im Match automatisch auf „Dabei“ und werden auf die Teams verteilt; wer nicht dabei ist, steht in keinem Team. Mit „Anwesenheit anpassen und Teams ansehen“ änderst du jedes Kind von Hand (Dabei, Nicht, Verletzt) – deine Entscheidung gilt vor der Eltern-Rückmeldung.", run:"go('spieltag')"},
     {t:"Elternbeirat & Kasse", d:"Unter „Eltern & Kinder → Elternbeirat & Kasse“ trägst du ein, wer aus der Elternschaft eine Aufgabe übernommen hat (z. B. Elternbeirat, Kassenwart) und wie hoch der Beitrag zur Mannschaftskasse ist. Die Eltern sehen das im Eltern-Bereich unter „Mehr vom Team“ als Karte „Ansprechpartner im Team“. Nur eintragen, wer einverstanden ist – alle Eltern der Mannschaft sehen es. Gezahlt wird weiter außerhalb der App.", run:"elternTeamEditOpen()"},
     {t:"Einladungskarten", d:"Je Kind eine Karte mit QR-Code, vier pro A4-Seite. Die Eltern scannen, legen E-Mail und Passwort fest und sind sofort angemeldet – kein Mailversand, kein Eintragen der Adresse vorab. Eine Karte gilt für zwei Elternteile und bis zum gewählten Datum; neu drucken macht die alte Karte des Kindes ungültig. <b>Seit v658 geht es auch ohne Papier:</b> Nach „Karten erzeugen“ steht je Kind „Link kopieren“ – den Link schickst du im persönlichen Chat (nie in die Gruppe), er wirkt genau wie die Karte. Die Links gibt es nur in diesem Fenster; gedruckt wird erst mit „Karten drucken“.", run:"einladungskartenOpen()"},
     {t:"Adler-Welt-Hub", d:"Federn je Kind, FUT-Karten, Technik-Abzeichen und Wochen-Challenge an einem Ort.", run:"adlerWeltOpen()"},
@@ -6441,13 +6442,15 @@ function _kachelInhalt(key){
       {emo:"📚",label:"Übungen",fn:"go",arg:"formen"},
       {emo:"🏆",label:"Trainingsturnier",fn:"blitzOpen"}
     ],col);
-  if(key==="spieltag")return kSec("Rund ums Spiel")
+  /* v665 PO (Bildschirmfotos 28.09.): „Die Meldung der Anwesenheit an Spieltagen ist zu
+     versteckt. Auf der Startkachel ‚Wer ist dabei' müssen direkt die Rückmeldungen der Eltern
+     angezeigt werden." Statt einer Kachel, die in den Match springt, steht hier die Karte
+     mit dem Stand zum nächsten Spieltag (spieltagDabeiKarteLoad). */
+  if(key==="spieltag")return `<div id="st-dabei-karte"></div>`
+    +kSec("Rund ums Spiel")
     +kTiles([
       {emo:"🎽",label:"Match",fn:"go",arg:"spieltag"},
       {emo:"🧩",label:"Aufstellung",fn:"go",arg:"kombi"},
-      /* v564: NICHT go:anwesenheit – das ist die Liste der Trainingstermine. Die
-         Anwesenheit des Spieltags ist die Nominierung unter „Teams festlegen". */
-      {emo:"✅",label:"Wer ist dabei?",fn:"spieltagAnwesenheitOpen"},   // v610: Name wie im Match; „Anwesenheit" heißt beim Training die Liste der Trainingstermine
       {emo:"📊",label:"Analyse",fn:"go",arg:"analyse"}
     ],col)
     +`<div id="kachel-turnier"></div>`;
@@ -6558,8 +6561,47 @@ function _kachelNachladen(key){
       if(typeof homeFerien==="function")homeFerien();
       if(typeof pushRenderInto==="function")pushRenderInto("push-slot-trainer","trainer");
     }
-    if(key==="spieltag")_kachelTurnierCheck();
+    if(key==="spieltag"){_kachelTurnierCheck();spieltagDabeiKarteLoad();}
   }catch(e){}
+}
+/* v665: Karte „Wer ist dabei?" auf der Spieltag-Seite – Eltern-Rückmeldungen zum nächsten
+   Spieltag direkt sichtbar, je Gruppe mit Namen (Trainer-App, Kinder mit Vornamen wie im
+   Kader). Maßgeblich für die Teams bleibt die Anwesenheit im Match (nomStatus): dorthin
+   führt der Knopf, und dort kann der Trainer jede Rückmeldung überstimmen. Stand der
+   Anwesenheit (Trainer-Entscheid) wird mitgezeigt, sobald es sie gibt. */
+async function spieltagDabeiKarteLoad(){
+  const slot=document.getElementById("st-dabei-karte"); if(!slot)return;
+  const heute=new Date().toISOString().slice(0,10);
+  let t=null, rm=[], nom=null;
+  try{const r=await fetch(`${SB_URL}/rest/v1/termine?typ=in.(spiel,turnier)&datum=gte.${heute}&select=id,datum,typ,gegner,titel,uhrzeit&order=datum.asc&limit=1`,{headers:sbAuthHeaders()});if(r.ok)t=((await r.json())||[])[0]||null;}catch(e){}
+  if(!document.getElementById("st-dabei-karte"))return;
+  if(!t){slot.innerHTML=`<div class="abschnitt" style="margin-bottom:10px"><div style="font-weight:800;font-size:var(--s-karte)">✅ Wer ist dabei?</div><div style="font-size:var(--s-text);color:var(--text2);margin-top:4px">Kein Spieltag in Sicht – unter Orga einen Termin „Spiel“ oder „Turnier“ anlegen.</div></div>`;return;}
+  try{const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?termin_id=eq.${t.id}&select=spieler_id,status,kommentar`,{headers:sbAuthHeaders()});if(r.ok)rm=await r.json();}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/nominierungen?datum=eq.${encodeURIComponent(t.datum+"__nom")}&select=data`,{headers:sbAuthHeaders()});if(r.ok){const x=((await r.json())||[])[0];nom=x&&x.data||null;}}catch(e){}
+  if(!document.getElementById("st-dabei-karte"))return;
+  const kader=(typeof kaderAktiv==="function"?kaderAktiv():[]);
+  const perId={}; rm.forEach(x=>perId[x.spieler_id]=x);
+  const gr={zugesagt:[],abgesagt:[],krank:[],offen:[]};
+  kader.forEach(k=>{const x=perId[k._id];const st=x&&gr[x.status]?x.status:"offen";gr[st].push(k);});
+  let dabei=null;
+  if(nom){dabei=kader.filter(k=>nom[k._id]==="dabei"||nom[String(k._id)]==="dabei").length;}
+  const d=new Date(t.datum+"T00:00:00");
+  const wann=d.toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"})+(t.uhrzeit?" · "+String(t.uhrzeit).slice(0,5)+" Uhr":"");
+  const was=t.typ==="turnier"?"Turnier":(t.gegner?"gegen "+t.gegner:"Spiel");
+  const chips=(liste,bg,fg)=>liste.map(k=>`<span style="font-size:var(--s-text);font-weight:700;background:${bg};color:${fg};border-radius:12px;padding:4px 10px">${k.nr?k.nr+" ":""}${esc(k.name)}</span>`).join("");
+  const gruppe=(emo,titel,liste,bg,fg)=>liste.length?`<div style="margin-top:10px"><div style="font-size:var(--s-text);font-weight:800;margin-bottom:5px">${emo} ${titel} · ${liste.length}</div><div style="display:flex;flex-wrap:wrap;gap:5px">${chips(liste,bg,fg)}</div></div>`:"";
+  slot.innerHTML=`<div class="abschnitt" id="st-dabei" style="margin-bottom:10px;border-top:3px solid var(--fam-spieltag)">
+    <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+      <span style="font-weight:900;font-size:var(--s-karte)">✅ Wer ist dabei?</span>
+      <span style="font-size:var(--s-text);color:var(--text2)">${esc(wann)} · ${esc(was)}</span></div>
+    <div style="font-size:var(--s-text);margin-top:6px;line-height:1.5">Eltern: <b>✅ ${gr.zugesagt.length} zugesagt</b> · ❌ ${gr.abgesagt.length} abgesagt · 🤒 ${gr.krank.length} krank · ❓ ${gr.offen.length} ohne Antwort${dabei!=null?`<br>Im Match eingeplant: <b>${dabei} von ${kader.length}</b>`:""}</div>
+    ${gruppe("✅","Zugesagt",gr.zugesagt,"var(--green-bg)","var(--text)")}
+    ${gruppe("❌","Abgesagt",gr.abgesagt,"var(--surface2)","var(--text)")}
+    ${gruppe("🤒","Krank",gr.krank,"var(--surface2)","var(--text)")}
+    ${gruppe("❓","Noch keine Antwort",gr.offen,"var(--surface2)","var(--text2)")}
+    <button type="button" class="btn btn-p" id="st-dabei-anpassen" style="width:100%;min-height:56px;margin-top:12px" onclick="if(typeof spieltagAnwesenheitOpen==='function')spieltagAnwesenheitOpen();else go('spieltag')">Anwesenheit anpassen und Teams ansehen</button>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">Zusagen stehen im Match automatisch auf „Dabei“ und kommen in die Teams. Ändern kannst du jedes Kind dort von Hand.</div>
+  </div>`;
 }
 /* PO-Entscheid: Die Turnier-Gruppe erscheint unter Spieltag NUR, wenn etwas ansteht – sonst
    bleibt die Seite schlank. v490: „ansteht" heisst jetzt auch ein Heimspiel; geplant wird es

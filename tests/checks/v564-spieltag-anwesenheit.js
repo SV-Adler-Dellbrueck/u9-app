@@ -36,11 +36,12 @@ module.exports = async function (h) {
   // ── a) + d) Wohin die beiden Kacheln zeigen ───────────────────────────────
   const kacheln = await s.page.evaluate(() => {
     if (typeof _kachelInhalt !== "function") return { fehlt: "_kachelInhalt" };
-    return { spieltag: _kachelInhalt("spieltag"), training: _kachelInhalt("training") };
+    return { spieltag: _kachelInhalt("spieltag"), training: _kachelInhalt("training"), karte: typeof spieltagDabeiKarteLoad === "function" ? String(spieltagDabeiKarteLoad) : "" };
   });
   if (kacheln.fehlt) probleme.push(kacheln.fehlt + " fehlt");
   else {
-    if (!/spieltagAnwesenheitOpen/.test(kacheln.spieltag)) probleme.push("Die Spieltag-Kachel ruft nicht den Weg zur Spieltags-Anwesenheit");
+    // v665: Statt der Kachel steht dort die Karte „Wer ist dabei?“ (st-dabei-karte); ihr Knopf nimmt denselben Weg.
+    if (!/st-dabei-karte/.test(kacheln.spieltag) || !/spieltagAnwesenheitOpen/.test(kacheln.karte || "")) probleme.push("Die Spieltag-Seite führt nicht zur Spieltags-Anwesenheit");
     if (/kachelRun\('go','anwesenheit'\)/.test(kacheln.spieltag)) probleme.push("Die Spieltag-Kachel führt weiterhin zur Anwesenheit des Trainings");
     if (!/kachelRun\('go','anwesenheit'\)/.test(kacheln.training)) probleme.push("Die Trainings-Kachel führt nicht mehr zur Trainingsliste – die beiden Anwesenheiten müssen getrennt bleiben");
   }

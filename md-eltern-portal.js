@@ -1926,7 +1926,8 @@ async function tdBetreuungLoad(t,kids){
   const list=board.length?`<b style="color:#059669">${board.map(esc).join(", ")}</b>`:`<span style="color:#b45309;font-weight:700">noch niemand – bitte helft mit ⚠️</span>`;
   box.innerHTML=`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
     <div style="font-weight:700;font-size:var(--s-text);margin-bottom:2px">🙋 Betreuung beim Training</div>
-    <div style="font-size:var(--s-text);margin-bottom:4px">Vor Ort: ${list}</div>${toggles}</div>`;
+    <div style="font-size:var(--s-text);margin-bottom:4px">Vor Ort: ${list}</div>${toggles}
+    <div style="font-size:var(--s-klein);color:#64748b;margin-top:6px">Hier steht dein Vorname aus „Meine Angaben“.</div></div>`;
 }
 async function tdBetreuungToggle(terminId,spielerId,stay){
   try{const r=await fetch(`${SB_URL}/rest/v1/betreuung?on_conflict=termin_id,spieler_id`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({termin_id:terminId,spieler_id:spielerId,will_stay:stay,updated_at:new Date().toISOString()})});if(!r.ok){toast("Konnte nicht speichern","err");return;}}catch(e){toast("Netzwerkfehler","err");return;}
@@ -2023,6 +2024,7 @@ async function elternBetreuungLoad(terminId,kids){
     <div style="font-size:var(--s-klein);color:#64748b;margin-bottom:6px">Mindestens ein Elternteil sollte während des Trainings vor Ort bleiben.</div>
     <div style="font-size:var(--s-text);margin-bottom:4px">Vor Ort: ${list}</div>
     ${toggles}
+    <div style="font-size:var(--s-klein);color:#64748b;margin-top:6px">Hier steht dein Vorname aus „Meine Angaben“.</div>
   </div>`;
 }
 /* Helfer-Aufgaben KOMPAKT in der grossen Termin-Kachel.
@@ -2309,12 +2311,13 @@ async function elternTeamAnsprechLoad(){
   const rollen=(et&&Array.isArray(et.rollen)?et.rollen:[]).filter(x=>x&&x.rolle&&x.name);
   const beitrag=et&&et.kasse_beitrag?String(et.kasse_beitrag):"";
   if(!rollen.length&&!beitrag){slot.innerHTML="";return;}
-  slot.innerHTML=`<div style="background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:10px;border:1.5px solid #bfdbfe">
-    <div style="font-weight:800;font-size:var(--s-karte);color:#0f172a;margin-bottom:6px">👥 Ansprechpartner im Team</div>
-    ${rollen.map(x=>`<div style="display:flex;gap:10px;align-items:baseline;padding:5px 0;border-top:1px solid #f1f5f9;font-size:var(--s-text)">
-      <span style="flex:0 0 42%;color:#475569;font-weight:600">${esc(x.rolle)}</span><span style="flex:1;color:#0f172a;font-weight:700">${esc(x.name)}</span></div>`).join("")}
-    ${beitrag?`<div style="display:flex;gap:10px;align-items:baseline;padding:5px 0;border-top:1px solid #f1f5f9;font-size:var(--s-text)">
-      <span style="flex:0 0 42%;color:#475569;font-weight:600">Mannschaftskasse</span><span style="flex:1;color:#0f172a;font-weight:700">${esc(beitrag)}</span></div>`:""}
+  /* v665 PO: „Pass die neue Kachel optisch den anderen an.“ – derselbe Aufbau wie die Zeilen
+     darunter (elRow): weiß, Rand links in Teamfarbe, Zeichen links, Titel fett, Text klein. */
+  const zeile=(k,v)=>`<span style="display:block;font-size:var(--s-klein);color:#64748b;margin-top:2px">${esc(k)}: <b style="color:#0f172a;font-weight:700">${esc(v)}</b></span>`;
+  slot.innerHTML=`<div id="team-ansprech" style="display:flex;align-items:flex-start;gap:12px;width:100%;box-sizing:border-box;background:#fff;border:1px solid var(--rand-bedien);border-left:4px solid #1e40af;border-radius:12px;padding:13px;margin-bottom:8px">
+    <span style="font-size:var(--s-teil);line-height:1">👥</span>
+    <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-text);font-weight:700;color:#0f172a">Ansprechpartner im Team</span>
+      ${rollen.map(x=>zeile(x.rolle,x.name)).join("")}${beitrag?zeile("Mannschaftskasse",beitrag):""}</span>
   </div>`;
 }
 /* Pflege durch das Trainerteam (Trainer-App → Eltern & Kinder). */
