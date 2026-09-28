@@ -96,7 +96,9 @@ module.exports = async function (h) {
   if (r.meilenstein !== 0) probleme.push("e) „nicht gesehen“ → 4 wird als Meilenstein gezählt: " + r.meilenstein);
   if (r.koenig) probleme.push("f) Saisonrückblick nennt noch einen Torschützenkönig");
   if (!r.teamzahl) probleme.push("f) Teamzahl der Torschützen fehlt");
-  if (r.tour !== 5) probleme.push("g) Rundgang hat " + r.tour + " Schritte statt 5");
+  /* v658: Aus fünf Karten wurde eine geführte Tour mit Zeiger – eine Sache je Schritt, kurze
+     Sätze. Die Grenze gegen den alten Zehn-Seiten-Rundgang bleibt: höchstens zwölf Schritte. */
+  if (typeof r.tour !== "number" || r.tour > 12) probleme.push("g) Rundgang hat " + r.tour + " Schritte (höchstens 12)");
   if (!/Kunstrasen/.test(r.packKunst) || !/Schienbeinschoner/.test(r.packKunst)) probleme.push("g) „Was muss mit?“ ohne Kunstrasenschuhe/Schienbeinschoner");
   if (!/Hallenschuhe/.test(r.packHalle) || !/essen/.test(r.packHalle)) probleme.push("g) Turnier in der Halle ohne Hallenschuhe/Verpflegung");
   if (r.packEvent !== "") probleme.push("g) „Was muss mit?“ erscheint auch bei Events");

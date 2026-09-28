@@ -1237,7 +1237,10 @@ window._mdlSuppress=0;
      (Zurück darf den Ausgangs-Code nicht umgehen), ebenso der schmückende Auftakt. */
   const KAB=/^(kab|ka-|kg-)/;
   const isM=n=>{
-    if(!n||n.nodeType!==1||n.id==="el-cat-overlay"||n.id==="adler-intro"||KAB.test(n.id||""))return false;
+    /* v658: Die geführte Tour (#fg-ov) auch nicht: sie wechselt selbst die Seiten; ein
+       Verlaufseintrag je Schritt holte beim Weiterblättern per history.back() die vorige
+       Seite zurück – im Prüfstand bis vor den Start der App. */
+    if(!n||n.nodeType!==1||n.id==="el-cat-overlay"||n.id==="adler-intro"||n.id==="fg-ov"||KAB.test(n.id||""))return false;
     if(RX.test(n.id||""))return true;
     if(!n.id||n.getAttribute("role")!=="dialog"||n.getAttribute("aria-modal")!=="true")return false;
     try{ return getComputedStyle(n).display!=="none"; }catch(e){ return false; }

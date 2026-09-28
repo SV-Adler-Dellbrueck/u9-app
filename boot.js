@@ -2062,6 +2062,21 @@ function tpSlotKopfText(lab){
   const dp=kopf.search(/[^:]*–[^:]*:/)===0?kopf.indexOf(":"):-1;
   return (dp>0?kopf.slice(0,dp):kopf).trim();
 }
+/* v658 (PO 28.09., mit Bildschirmfoto): „Die Überschriften bei den Spielblöcken, sei es
+   Spielblock 1 oder Zwischenblock, können wir bitte streichen. Wenn ich in diesen Blöcken
+   noch händisch was ändere und eine andere Übung einfüge, dann bleiben diese trotzdem
+   stehen.“ Der Kopf zeigt deshalb nur noch den Namen des Blocks – alles hinter dem ersten
+   „ – “ beschreibt die Übung der Vorlage und steht, wenn sie noch gilt, ohnehin an der
+   Station. Wieder nur die Anzeige: das Label bleibt, Pläne ordnen ihre Übungen darüber zu.
+   „– Durchgang n“ gehört zum Namen und bleibt. */
+function tpSlotName(lab){
+  const kopf=tpSlotKopfText(lab);
+  const dg=kopf.match(/\s+–\s+Durchgang\s+(\d+)\s*$/);
+  const ohneDg=dg?kopf.slice(0,dg.index):kopf;
+  const i=ohneDg.search(/\s+–\s+/);
+  const name=(i>0?ohneDg.slice(0,i):ohneDg).trim();
+  return dg?`${name} · Durchgang ${dg[1]}`:name;
+}
 function tpFeldTexte(si){
   const slots=(typeof tpSlots!=="undefined")?tpSlots:[];
   const slot=slots[si]||{};
@@ -2410,10 +2425,10 @@ function tpRenderTimeline(){
     /* v605: Griff zum Verschieben (PO: „per Drag and Drop an die richtige Position ziehen").
        Nur an Blöcken der Kette – ein paralleler Block hängt an seinem Hauptteil und wandert
        mit ihm. Der Griff ist ein Knopf: Pfeiltasten verschieben auch ohne Ziehen. */
-    const griff=parallel?"":`<button class="tp-griff" aria-label="${esc(tpSlotKopfText(slot.label))} verschieben – ziehen oder Pfeiltasten" title="Ziehen zum Verschieben" onpointerdown="tpZiehStart(event,${si})" onkeydown="tpGriffTaste(event,${si})">≡</button>`;
+    const griff=parallel?"":`<button class="tp-griff" aria-label="${esc(tpSlotName(slot.label))} verschieben – ziehen oder Pfeiltasten" title="Ziehen zum Verschieben" onpointerdown="tpZiehStart(event,${si})" onkeydown="tpGriffTaste(event,${si})">≡</button>`;
     html+=`<div class="tp-slot" data-si="${si}"${parallel?"":' data-kette="1"'} style="border-left:3px solid ${slot.farbe};${parallel?"margin-left:14px;":""}">
       <div class="tp-slot-head">
-        ${griff}<span class="tp-slot-label"${slot.label&&tpSlotKopfText(slot.label)!==String(slot.label).trim()?` title="${esc(slot.label)}"`:""}>${parallel?tpParallelIcon(typ):""}${tpSlotKopfText(slot.label)}${tpTypMarke(typ)}</span>
+        ${griff}<span class="tp-slot-label">${parallel?tpParallelIcon(typ):""}${esc(tpSlotName(slot.label))}${tpTypMarke(typ)}</span>
         <span class="tp-slot-time">${startMin}' – ${endMin}'${parallel?` · parallel zu ${tpSlots[slot.parallelZu].label}`:""}</span>
         ${parallel?"":tpDauerSelect(si,slot)}
         <button class="tp-remove" onclick="tpRemoveSlot(${si})"><i class="ti ti-trash"></i></button>
@@ -2466,12 +2481,12 @@ function tpRenderTimeline(){
       const _kt=_tpKetteVon(si), _istFolge=_kt.length>1&&_kt[0]!==si;
       const nDg=_kt.length, maxDg=Math.min(5,Math.max(2,felderGruppen.length));
       const dgWahl=`<label style="display:inline-flex;align-items:center;gap:6px;font-size:var(--s-klein);font-weight:700;color:var(--text)">🔁 Durchgänge
-          <select aria-label="Durchgänge in ${esc(tpSlotKopfText(slot.label))}" onchange="tpDurchgaengeSetzen(${si},this.value)" style="min-height:44px;padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)">
+          <select aria-label="Durchgänge in ${esc(tpSlotName(slot.label))}" onchange="tpDurchgaengeSetzen(${si},this.value)" style="min-height:44px;padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)">
             ${Array.from({length:maxDg},(_,i)=>i+1).map(n=>`<option value="${n}"${n===nDg?" selected":""}>${n===1?"1 (kein Wechsel)":n}</option>`).join("")}
           </select></label>`;
       if(_istFolge){
         html+=`<div class="tp-durchgang-von" style="font-size:var(--s-klein);line-height:1.5;padding:4px 8px;margin:2px 0 6px;border-left:3px solid var(--fam-training);background:var(--surface2);border-radius:6px">
-          🔁 <b>Durchgang ${_kt.indexOf(si)+1} von ${nDg}</b> · Übungen und Trainer wie in „${esc(tpSlotKopfText((tpSlots[_kt[0]]||{}).label||"Hauptteil"))}“, die Gruppen wechseln die Station. Eine eigene Übung hier ersetzt die übernommene.</div>`;
+          🔁 <b>Durchgang ${_kt.indexOf(si)+1} von ${nDg}</b> · Übungen und Trainer wie in „${esc(tpSlotName((tpSlots[_kt[0]]||{}).label||"Hauptteil"))}“, die Gruppen wechseln die Station. Eine eigene Übung hier ersetzt die übernommene.</div>`;
       }
       {
       html+=`<div class="tp-ringtausch" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:4px 0 6px">
