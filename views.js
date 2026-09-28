@@ -4466,7 +4466,7 @@ const HELP=[
     {t:"Team-Ansage", d:"Wichtige Info an alle Eltern – mit Gelesen-Status (wer fehlt noch?).", run:"ansageTrainerOpen()"},
     {t:"Adler Nest", d:"Digitales Stadionheft erstellen & drucken.", run:"stadionheftOpen()"},
     {t:"Eltern-Bereich", d:"Eltern melden sich mit E-Mail und Passwort an (alternativ Einmal-Code per Mail): Zu- und Absagen, Karte, Quiz, Betreuung vor Ort. Neue Passwörter – bei Eltern und Trainern – brauchen mindestens 10 Zeichen mit Buchstaben und Ziffern; ältere, kürzere gelten zum Anmelden weiter."},
-    {t:"Einladungskarten", d:"Je Kind eine Karte mit QR-Code, vier pro A4-Seite. Die Eltern scannen, legen E-Mail und Passwort fest und sind sofort angemeldet – kein Mailversand, kein Eintragen der Adresse vorab. Eine Karte gilt für zwei Elternteile und bis zum gewählten Datum; neu drucken macht die alte Karte des Kindes ungültig.", run:"einladungskartenOpen()"},
+    {t:"Einladungskarten", d:"Je Kind eine Karte mit QR-Code, vier pro A4-Seite. Die Eltern scannen, legen E-Mail und Passwort fest und sind sofort angemeldet – kein Mailversand, kein Eintragen der Adresse vorab. Eine Karte gilt für zwei Elternteile und bis zum gewählten Datum; neu drucken macht die alte Karte des Kindes ungültig. <b>Seit v658 geht es auch ohne Papier:</b> Nach „Karten erzeugen“ steht je Kind „Link kopieren“ – den Link schickst du im persönlichen Chat (nie in die Gruppe), er wirkt genau wie die Karte. Die Links gibt es nur in diesem Fenster; gedruckt wird erst mit „Karten drucken“.", run:"einladungskartenOpen()"},
     {t:"Adler-Welt-Hub", d:"Federn je Kind, FUT-Karten, Technik-Abzeichen und Wochen-Challenge an einem Ort.", run:"adlerWeltOpen()"},
     {t:"Federn-Stichtag", d:"In „Team-Quests verwalten“ steht „Federn zählen ab“. Quiz-Federn zählen immer. Training, Serien, Zusagen, Missionen, Album und Abzeichen zählen erst ab diesem Tag – auf der Karte, in der Übersicht und im Team-Level, das ab dem Stichtag ganz neu zählt. Gelöscht wird nichts; ein Anlass von vorher bringt auch nachträglich keine Federn. Feld leeren heißt: alles zählt wieder."},
     {t:"Kabinen-Wahl", d:"Die Kinder stimmen ab (Song, Motto, Spielform) – du legst die Optionen fest.", run:"wahlTrainerOpen()"},
@@ -4723,7 +4723,7 @@ async function einladungskartenOpen(){
     <div style="max-height:46vh;overflow-y:auto;margin-bottom:10px">${kinder.map(zeile).join("")||'<div style="font-size:var(--s-text);color:var(--text2)">Kein Kader geladen.</div>'}</div>
     <label for="einl-bis" style="font-size:var(--s-text);color:var(--text2)">Gültig bis</label>
     <input id="einl-bis" type="date" value="${bis}" style="width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-karte);background:var(--surface2);color:var(--text);margin:4px 0 12px">
-    <button id="einl-druck" class="btn btn-p" style="width:100%" onclick="einladungskartenDrucken(this)"><i class="ti ti-printer"></i>Karten erzeugen und drucken</button>
+    <button id="einl-druck" class="btn btn-p" style="width:100%" onclick="einladungskartenDrucken(this)"><i class="ti ti-id-badge-2"></i>Karten erzeugen</button>
     <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('einl-modal').remove()">Schließen</button>
   </div>`;
   document.body.appendChild(m);
@@ -4735,7 +4735,7 @@ async function einladungskartenDrucken(btn){
   if(!bisTag||bisTag<new Date().toISOString().slice(0,10)){toast("Das Datum „Gültig bis“ liegt in der Vergangenheit","err");return;}
   if(!(window.crypto&&crypto.subtle)){toast("Karten lassen sich nur über https erzeugen","err");return;}
   if(btn){btn.disabled=true;btn.textContent="Erzeuge Karten…";}
-  const zurueck=()=>{if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-printer"></i>Karten erzeugen und drucken';}};
+  const zurueck=()=>{if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-id-badge-2"></i>Karten erzeugen';}};
   try{
     await qrBibliothek();
     const gueltig=new Date(bisTag+"T23:59:59").toISOString();
@@ -4750,9 +4750,47 @@ async function einladungskartenDrucken(btn){
     if(!r.ok){toast(sbDeniedMsg(r,"Karten konnten nicht gespeichert werden"),"err");return zurueck();}
     const html=await einladungskartenHtml(karten,bisTag);
     document.getElementById("einl-modal")?.remove();
-    toast(`🎟️ ${karten.length} Karte${karten.length>1?"n":""} bereit – Druckdialog öffnet sich`);
-    _zertPrint(html);
+    const ziel=document.getElementById("zert-print"); if(ziel)ziel.innerHTML=html;
+    einladungFertigZeigen(karten,html,bisTag);
   }catch(e){toast("Karten konnten nicht erzeugt werden: "+e.message,"err");zurueck();}
+}
+/* v658 PO 28.09.: „Link kopieren“ je Karte – für Eltern, die beim Elternabend fehlen. Der Code
+   lebt nur in diesem Fenster (in der Datenbank steht sein SHA-256); wer es schließt, erzeugt neu.
+   Gedruckt wird erst auf Knopfdruck, damit der Druckdialog nicht vor die Links springt. */
+let _einlFertig=null;
+function einladungFertigZeigen(karten,html,bisTag){
+  const kader=(typeof KADER!=="undefined"?KADER:[]);
+  const basis=appRoot()+"eltern/?portal&einladung=";
+  const bis=bisTag.split("-").reverse().join(".");
+  _einlFertig={html,links:karten.map(k=>{const kind=kader.find(x=>kaderId(x)===k.id);
+    return {name:String(kind?.name||"").trim(),url:basis+k.code};})};
+  document.getElementById("einl-fertig")?.remove();
+  const m=document.createElement("div");m.id="einl-fertig";
+  m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Einladungskarten erzeugt");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  const zeilen=_einlFertig.links.map((l,i)=>`<div style="display:flex;align-items:center;gap:10px;min-height:48px;border-bottom:1px solid var(--border)">
+      <b style="flex:1;min-width:0">${esc(l.name)}</b>
+      <button class="btn btn-sm einl-link" style="min-height:44px" onclick="einladungLinkTeilen(${i},this)"><i class="ti ti-link"></i>Link kopieren</button></div>`).join("");
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
+    ${mdlHead("einl-fertig","🎟️",`${karten.length} Karte${karten.length>1?"n":""} erzeugt`,`gültig bis ${esc(bis)}`,"#047857")}
+    <button id="einl-drucken" class="btn btn-p" style="width:100%;min-height:56px" onclick="einladungKartenDruckenJetzt()"><i class="ti ti-printer"></i>Karten drucken</button>
+    <div style="font-size:var(--s-text);color:var(--text2);margin:14px 0 6px">Oder den Link einzeln per WhatsApp schicken – im <b>persönlichen</b> Chat, nie in der Gruppe: wer ihn hat, kommt an die Daten dieses Kindes. Der Link wirkt wie die Karte (zwei Elternteile).</div>
+    ${zeilen}
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:10px">Die Links gibt es nur in diesem Fenster. Danach geht es nur mit neuen Karten – die alten werden dann ungültig.</div>
+    <button class="btn btn-sm" style="width:100%;margin-top:10px" onclick="document.getElementById('einl-fertig').remove()">Schließen</button>
+  </div>`;
+  document.body.appendChild(m);
+  toast(`🎟️ ${karten.length} Karte${karten.length>1?"n":""} bereit`);
+}
+function einladungKartenDruckenJetzt(){ if(_einlFertig)_zertPrint(_einlFertig.html); }
+async function einladungLinkTeilen(i,btn){
+  const l=_einlFertig&&_einlFertig.links[i]; if(!l)return;
+  let ok=false;
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(l.url);ok=true;} }catch(e){}
+  if(!ok){ try{ const t=document.createElement("textarea");t.value=l.url;t.setAttribute("readonly","");t.style.cssText="position:fixed;left:-9999px";
+    document.body.appendChild(t);t.select();ok=document.execCommand("copy");t.remove(); }catch(e){} }
+  if(ok){ if(btn){btn.innerHTML='<i class="ti ti-check"></i>Kopiert';} toast(`🔗 Link für ${l.name} kopiert – jetzt im Chat einfügen`); }
+  else toast("Kopieren ging nicht – bitte die Karte drucken oder als PDF speichern","err");
 }
 async function einladungskartenHtml(karten,bisTag){
   const kader=(typeof KADER!=="undefined"?KADER:[]);
