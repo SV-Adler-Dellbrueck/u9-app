@@ -1016,12 +1016,24 @@ async function pushCurrentSub(){
   if(!pushSupported())return null;
   try{ const reg=await navigator.serviceWorker.ready; return await reg.pushManager.getSubscription(); }catch(e){ return null; }
 }
+/* v664: PO 28.09. (Bildschirmfoto): „Wo kann ich die Benachrichtigungen aktivieren?“ –
+   nach einmal „Blockieren“ fragt der Browser nie wieder, die App kann es nicht selbst
+   ändern. Statt nur „nicht erlaubt“ steht hier, wo man es am Gerät wieder einschaltet. */
+function pushGesperrtHilfe(perm){
+  if(perm!=="denied"){toast("Benachrichtigungen wurden nicht erlaubt","err");return;}
+  const ua=navigator.userAgent||"", ios=/iPhone|iPad|iPod/.test(ua);
+  const text=ios
+    ?"Auf diesem Gerät sind Mitteilungen für die Adler-App ausgeschaltet.\n\nSo schaltest du sie ein:\nEinstellungen → Mitteilungen → Adler-App (bzw. der Name des Home-Bildschirm-Symbols) → „Mitteilungen erlauben“.\n\nDanach hier noch einmal auf „Benachrichtigungen aktivieren“ tippen."
+    :"Dein Handy hat Benachrichtigungen für diese Seite einmal blockiert – deshalb fragt es nicht mehr nach.\n\nSo schaltest du sie ein:\n• App vom Startbildschirm: Symbol lange drücken → App-Info → Benachrichtigungen → einschalten.\n• Im Browser: oben links neben der Adresse auf das Schloss bzw. die Einstellungen tippen → Berechtigungen → Benachrichtigungen → Zulassen.\n\nDanach hier noch einmal auf „Benachrichtigungen aktivieren“ tippen.";
+  if(typeof frageJaNein==="function")frageJaNein({titel:"Benachrichtigungen sind blockiert",emoji:"🔔",text,ja:"Verstanden",nein:"Schließen"});
+  else toast("Benachrichtigungen sind in den Einstellungen des Handys blockiert","err");
+}
 async function pushSubscribe(rolle){
   if(!pushSupported()){toast("Benachrichtigungen werden hier nicht unterstützt","err");return false;}
   if(!sbToken()){toast("Bitte zuerst anmelden","err");return false;}
   let perm=Notification.permission;
   if(perm==="default")perm=await Notification.requestPermission();
-  if(perm!=="granted"){toast("Benachrichtigungen wurden nicht erlaubt","err");return false;}
+  if(perm!=="granted"){pushGesperrtHilfe(perm);return false;}
   try{
     const reg=await navigator.serviceWorker.ready;
     let sub=await reg.pushManager.getSubscription();

@@ -49,7 +49,7 @@ async function mitbringTrainerRender(){
     <div style="display:flex;margin-top:8px"><button class="btn btn-sm" style="margin-left:auto" onclick="document.getElementById('mitbring-modal').remove()">Schließen</button></div>`;
 }
 async function mitbringDeleteTrainer(id){
-  if(!confirm("Diesen Eintrag löschen?"))return;
+  if(!await frageJaNein({titel:"Eintrag löschen?",ja:"Löschen",ton:"rot",emoji:"🗑️"}))return;
   try{
     const r=await fetch(`${SB_URL}/rest/v1/event_mitbringen?id=eq.${id}`,{method:"DELETE",headers:sbAuthHeaders()});
     if(sbCheck401(r))return;
@@ -65,7 +65,7 @@ async function kasseOpen(){
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{if(e.target===m)m.remove();};
   m.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:460px;width:100%;margin:auto">
-    ${mdlHead("kasse-modal","💰","Teamkasse","Kassenstand & Umlagen · Zahlungen extern über PayPal","#1e3a8a")}
+    ${mdlHead("kasse-modal","💰","Teamkasse","Kassenstand, Umlagen und wer bezahlt hat · gezahlt wird außerhalb der App","#1e3a8a")}
     <div id="kasse-body"><div style="text-align:center;padding:24px;color:var(--text3)">Lade…</div></div>
   </div>`;
   document.body.appendChild(m);
@@ -111,6 +111,8 @@ async function kasseRender(){
       <input id="u-paypal" placeholder="PayPal.Me-Link (optional)" style="flex:1;min-width:130px;${inp}">
       <button class="btn btn-sm" onclick="kasseAddUmlage()"><i class="ti ti-plus"></i>Umlage</button>
     </div>
+    <div id="kasse-bezahlt-slot"></div>
+    <div id="kasse-rolle-slot"></div>
     <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;color:var(--text2);margin:16px 0 6px">🦅 Adler-Kasse (Fan-Spenden-Link)</div>
     <div style="display:flex;gap:6px">
       <input id="ak-link" value="${esc(spendenLink)}" placeholder="https://paypal.me/deinLink" style="flex:1;min-width:130px;${inp}">
@@ -118,6 +120,9 @@ async function kasseRender(){
     </div>
     <div style="font-size:var(--s-klein);color:var(--text3);margin-top:4px">Dauerhafter Spenden-Button für Fans (Liveticker) &amp; Eltern-Portal. Leer lassen = kein Button.</div>
     <div style="font-size:var(--s-klein);color:var(--text3);margin-top:12px">Rein informativ – die App verwaltet kein Geld. Zahlungen laufen extern über PayPal.</div>`;
+  window._kasseDaten={ledger,umlagen};
+  kasseBezahltRender(umlagen);
+  kasseRolleRender();
 }
 async function adlerkasseSave(){
   const link=(document.getElementById("ak-link")?.value||"").trim()||null;
@@ -137,9 +142,7 @@ async function kasseAddEntry(){
   try{const r=await fetch(`${SB_URL}/rest/v1/teamkasse`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({betrag:sign*val,zweck})});if(sbCheck401(r))return;if(!r.ok){toast("Fehler","err");return;}}catch(e){return;}
   kasseRender();
 }
-async function kasseDelEntry(id,zweck){ if(!confirm(`Kassen-Eintrag wirklich löschen?
-
-${zweck||""}`))return; try{const r=await fetch(`${SB_URL}/rest/v1/teamkasse?id=eq.${id}`,{method:"DELETE",headers:sbAuthHeaders()});if(sbCheck401(r))return;}catch(e){} kasseRender(); }
+async function kasseDelEntry(id,zweck){ if(!await frageJaNein({titel:"Buchung löschen?",text:zweck||"",ja:"Löschen",ton:"rot",emoji:"🗑️"}))return; try{const r=await fetch(`${SB_URL}/rest/v1/teamkasse?id=eq.${id}`,{method:"DELETE",headers:sbAuthHeaders()});if(sbCheck401(r))return;}catch(e){} kasseRender(); }
 async function kasseAddUmlage(){
   const titel=(document.getElementById("u-titel")?.value||"").trim();
   const betrag=parseFloat(document.getElementById("u-betrag")?.value)||0;
@@ -150,5 +153,117 @@ async function kasseAddUmlage(){
   kasseRender();
 }
 async function kasseToggleUmlage(id,aktiv){ try{const r=await fetch(`${SB_URL}/rest/v1/kasse_umlagen?id=eq.${id}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify({aktiv})});if(sbCheck401(r))return;}catch(e){} kasseRender(); }
-async function kasseDelUmlage(id){ if(!confirm("Umlage wirklich löschen?"))return; try{const r=await fetch(`${SB_URL}/rest/v1/kasse_umlagen?id=eq.${id}`,{method:"DELETE",headers:sbAuthHeaders()});if(sbCheck401(r))return;}catch(e){} kasseRender(); }
+async function kasseDelUmlage(id){ if(!await frageJaNein({titel:"Umlage löschen?",text:"Die Häkchen „bezahlt“ dieser Umlage verschwinden mit.",ja:"Löschen",ton:"rot",emoji:"🗑️"}))return; try{const r=await fetch(`${SB_URL}/rest/v1/kasse_umlagen?id=eq.${id}`,{method:"DELETE",headers:sbAuthHeaders()});if(sbCheck401(r))return;}catch(e){} kasseRender(); }
 
+/* ═══ v664: Kassenwart-Kasse ═══
+   PO 28.09.: „Die Mutter von Samu ist neue Kassenwärtin … wie können wir da mit der App
+   unterstützen?“ Kachel: Rolle „Kasse“ für ein Elternteil, bezahlt/offen je Familie,
+   Erinnerung, Export – ohne Zahlungsabwicklung. Die Kasse (Trainer oder ein Konto aus
+   kasse_team) hakt ab, was angekommen ist; jede Familie sieht nur ihre eigenen Kinder. */
+async function kasseUebersichtLaden(){
+  try{const r=await fetch(`${SB_URL}/rest/v1/rpc/kasse_uebersicht`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"});if(r.ok)return await r.json();}catch(e){}
+  return null;
+}
+async function kasseBezahltRender(umlagen){
+  const slot=document.getElementById("kasse-bezahlt-slot"); if(!slot)return;
+  const aktiv=(umlagen||[]).filter(u=>u.aktiv);
+  if(!aktiv.length){slot.innerHTML="";return;}
+  const ue=await kasseUebersichtLaden();
+  if(!ue){slot.innerHTML=`<div style="font-size:var(--s-text);color:var(--text3);margin-top:12px">„Wer hat bezahlt“ lädt gerade nicht – bitte später noch einmal öffnen.</div>`;return;}
+  const kinder=ue.kinder||[], hat={};
+  (ue.zahlungen||[]).forEach(z=>{hat[z.u+"_"+z.s]=z.am;});
+  window._kasseUebersicht={kinder,hat,umlagen:aktiv};
+  slot.innerHTML=`<div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;color:var(--text2);margin:16px 0 6px">Wer hat bezahlt</div>
+    ${aktiv.map(u=>{
+      const n=kinder.filter(k=>hat[u.id+"_"+k.id]).length;
+      return `<div style="border:1px solid var(--rand-bedien);border-radius:12px;padding:10px;margin-bottom:8px">
+        <div style="font-weight:700;font-size:var(--s-text);margin-bottom:6px">${esc(u.titel)} · ${kEur(u.betrag)} <span style="font-weight:600;color:var(--text2)">– ${n} von ${kinder.length} bezahlt</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">${kinder.map(k=>{const b=!!hat[u.id+"_"+k.id];
+          return `<button type="button" class="kz-kind" data-u="${u.id}" data-s="${k.id}" aria-pressed="${b}" onclick="kasseBezahltToggle(${u.id},${k.id},${!b})"
+            style="min-height:44px;padding:6px 12px;border-radius:22px;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer;border:1.5px solid ${b?'#15803d':'var(--rand-bedien)'};background:${b?'#dcfce7':'var(--surface2)'};color:${b?'#14532d':'var(--text)'}">${b?'✓ ':''}${esc(k.name)}${b?'':' · offen'}</button>`;}).join("")}</div>
+      </div>`;}).join("")}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+      <button type="button" class="btn btn-sm" style="flex:1;min-height:44px" onclick="kasseErinnern(this)">🔔 Offene erinnern</button>
+      <button type="button" class="btn btn-sm" style="flex:1;min-height:44px" onclick="kasseExport()">⬇️ Export (CSV)</button>
+    </div>
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-top:4px">Die Erinnerung geht als Mitteilung nur an Familien mit offenem Betrag – höchstens einmal am Tag.</div>`;
+}
+async function kasseBezahltToggle(umlageId,spielerId,bezahlt){
+  try{
+    const r=bezahlt
+      ?await fetch(`${SB_URL}/rest/v1/kasse_zahlung`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify({umlage_id:umlageId,spieler_id:spielerId})})
+      :await fetch(`${SB_URL}/rest/v1/kasse_zahlung?umlage_id=eq.${umlageId}&spieler_id=eq.${spielerId}`,{method:"DELETE",headers:sbAuthHeaders()});
+    if(typeof sbCheck401==="function"&&sbCheck401(r))return;
+    if(!r.ok){toast("Das Häkchen wurde nicht gespeichert","err");return;}
+  }catch(e){toast("Keine Verbindung – Häkchen nicht gespeichert","err");return;}
+  kasseBezahltRender((window._kasseDaten||{}).umlagen);
+}
+async function kasseErinnern(btn){
+  if(btn)btn.disabled=true;
+  let d=null;
+  try{const r=await fetch(`${SB_URL}/functions/v1/push-send`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({art:"kasse_erinnerung"})});d=await r.json().catch(()=>null);}catch(e){}
+  if(btn)btn.disabled=false;
+  if(!d){toast("Keine Verbindung – Erinnerung nicht verschickt","err");return;}
+  if(d.error){toast(d.error,"err");return;}
+  toast(d.familien?`🔔 Erinnerung an ${d.familien} ${d.familien===1?"Familie":"Familien"} verschickt`:"Niemand hat mehr etwas offen 🎉");
+}
+function kasseCsvZelle(v){const t=String(v==null?"":v);return /[";\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t;}
+function kasseExport(){
+  const d=window._kasseDaten||{}, ue=window._kasseUebersicht||{kinder:[],hat:{},umlagen:[]};
+  const z=[["Art","Datum","Zweck / Umlage","Betrag","Kind","Status"]];
+  (d.ledger||[]).slice().reverse().forEach(x=>z.push(["Buchung",x.datum||"",x.zweck||"",String(Number(x.betrag).toFixed(2)).replace(".",","),"",""]));
+  (ue.umlagen||[]).forEach(u=>ue.kinder.forEach(k=>{const am=ue.hat[u.id+"_"+k.id];z.push(["Umlage",am||"",u.titel,String(Number(u.betrag).toFixed(2)).replace(".",","),k.name,am?"bezahlt":"offen"]);}));
+  const csv="﻿"+z.map(r=>r.map(kasseCsvZelle).join(";")).join("\r\n");
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  a.download=`Mannschaftskasse_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);a.click();a.remove();
+  toast("Export erstellt ✓");
+}
+/* Nur Trainer: wer die Kasse führt. Auswahl aus den verknüpften Elternkonten. */
+async function kasseRolleRender(){
+  const slot=document.getElementById("kasse-rolle-slot"); if(!slot)return;
+  // Übergeben kann nur das Trainerteam (Trainer-App); die Kasse selbst sieht den Abschnitt nicht.
+  if(!/\/trainer\//.test(location.pathname)){slot.innerHTML="";return;}
+  let team=[],ek=[],kader=[];
+  try{const r=await fetch(`${SB_URL}/rest/v1/kasse_team?select=email`,{headers:sbAuthHeaders()});if(r.ok)team=await r.json();}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/eltern_kinder?select=email,spieler_id`,{headers:sbAuthHeaders()});if(r.ok)ek=await r.json();}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/kader?select=id,name`,{headers:sbAuthHeaders()});if(r.ok)kader=await r.json();}catch(e){}
+  const kname={};kader.forEach(k=>kname[k.id]=k.name);
+  const wer=email=>{const ks=ek.filter(x=>(x.email||"").toLowerCase()===email).map(x=>kname[x.spieler_id]).filter(Boolean);return ks.length?"Elternteil von "+ks.join(", "):"";};
+  const emails=[...new Set(ek.map(x=>(x.email||"").toLowerCase()).filter(Boolean))].filter(e=>!team.some(t=>t.email===e)).sort((a,b)=>wer(a).localeCompare(wer(b),"de"));
+  slot.innerHTML=`<div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;color:var(--text2);margin:16px 0 6px">Wer führt die Kasse</div>
+    ${team.length?team.map(t=>`<div style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);padding:5px 0;border-bottom:1px solid var(--surface2)">
+      <span style="flex:1">${esc(wer(t.email)||t.email)} <span style="color:var(--text3);font-size:var(--s-klein)">${esc(t.email)}</span></span>
+      <button type="button" class="btn btn-sm" onclick="kasseRolleEntfernen('${jsq(t.email)}')">Entfernen</button></div>`).join("")
+      :'<div style="font-size:var(--s-text);color:var(--text3)">Nur das Trainerteam. Ein Elternteil kann die Kasse übernehmen – es sieht sie dann im Eltern-Bereich unter „Mehr vom Team“.</div>'}
+    ${emails.length?`<div style="display:flex;gap:6px;margin-top:8px">
+      <select id="kasse-rolle-neu" aria-label="Elternteil für die Kasse" style="flex:1;min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
+        ${emails.map(e=>`<option value="${esc(e)}">${esc(wer(e))} · ${esc(e)}</option>`).join("")}</select>
+      <button type="button" class="btn btn-sm" style="min-height:44px" onclick="kasseRolleSetzen()">Kasse übergeben</button></div>`:""}`;
+}
+async function kasseRolleSetzen(){
+  const email=(document.getElementById("kasse-rolle-neu")?.value||"").toLowerCase(); if(!email)return;
+  try{const r=await fetch(`${SB_URL}/rest/v1/kasse_team`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify({email})});if(sbCheck401(r))return;if(!r.ok){toast("Nicht gespeichert","err");return;}}catch(e){toast("Keine Verbindung","err");return;}
+  toast("Kasse übergeben ✓");kasseRolleRender();
+}
+async function kasseRolleEntfernen(email){
+  if(!await frageJaNein({titel:"Kasse abgeben?",text:email+" kann die Kasse danach nicht mehr pflegen.",ja:"Entfernen",ton:"rot",emoji:"💰"}))return;
+  try{const r=await fetch(`${SB_URL}/rest/v1/kasse_team?email=eq.${encodeURIComponent(email)}`,{method:"DELETE",headers:sbAuthHeaders()});if(sbCheck401(r))return;}catch(e){}
+  kasseRolleRender();
+}
+/* Eltern-Bereich: „Kasse verwalten“ nur für die Kasse; Stand je eigenes Kind in der Teamkasse-Karte. */
+async function elternKasseRolleLoad(){
+  const slot=document.getElementById("kasse-verwalten-slot"); if(!slot)return;
+  let ist=false;
+  try{const r=await fetch(`${SB_URL}/rest/v1/rpc/is_kasse`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"});if(r.ok)ist=(await r.json())===true;}catch(e){}
+  slot.innerHTML=ist?`<button type="button" onclick="kasseOpen()" style="width:100%;min-height:56px;margin-bottom:10px;border:none;border-radius:14px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">💰 Kasse verwalten</button>`:"";
+}
+async function elternKasseStandLoad(kids){
+  const els=[...document.querySelectorAll(".kz-stand[data-u]")]; if(!els.length||!kids||!kids.length)return;
+  let z=[]; try{const r=await fetch(`${SB_URL}/rest/v1/kasse_zahlung?select=umlage_id,spieler_id,bezahlt_am`,{headers:sbAuthHeaders()});if(r.ok)z=await r.json();}catch(e){return;}
+  const viele=kids.length>1;
+  els.forEach(el=>{const u=Number(el.dataset.u);
+    el.innerHTML=kids.map(k=>{const b=z.find(x=>x.umlage_id===u&&x.spieler_id===k.spieler_id);
+      return `<div style="font-size:var(--s-klein);font-weight:700;color:${b?'#14532d':'#92400e'}">${viele?esc((k.kader&&k.kader.name)||k.name||"")+": ":""}${b?"✓ bezahlt":"offen"}</div>`;}).join("");});
+}
