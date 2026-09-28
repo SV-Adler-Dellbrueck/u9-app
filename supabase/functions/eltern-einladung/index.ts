@@ -42,7 +42,8 @@ function j(o: unknown, status = 200) {
   return new Response(JSON.stringify(o), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 }
 
-const PASSWORT_MIN = 8;
+const PASSWORT_MIN = 10;   // v652: dieselbe Regel wie pwRegelFehler() in core.js und die Auth-Einstellung
+const PASSWORT_ZEICHEN = (p: string) => /[A-Za-z]/.test(p) && /[0-9]/.test(p);
 const CODE_ZEICHEN = /^[A-Z2-9]{20}$/;   // dieselbe Form wie einladungCode() in views.js
 
 /* Derselbe Hash wie im Browser des Trainers: SHA-256, hex, klein. */
@@ -108,6 +109,9 @@ Deno.serve(async (req) => {
     if (!angemeldet && !vorhanden && passwort.length < PASSWORT_MIN) {
       return j({ ok: false, fehler: `Das Passwort braucht mindestens ${PASSWORT_MIN} Zeichen.` }, 400);
     }
+    if (!angemeldet && !vorhanden && !PASSWORT_ZEICHEN(passwort)) {
+      return j({ ok: false, fehler: "Das Passwort braucht Buchstaben und mindestens eine Ziffer." }, 400);
+    }
 
     // Nutzung belegen - atomar, erst danach anlegen. Scheitert das Anlegen, gibt es sie zurueck.
     const { data: spielerId, error: nErr } = await svc.rpc("eltern_einladung_nutzen", { p_hash: hash });
@@ -121,7 +125,7 @@ Deno.serve(async (req) => {
         if (!schonDa) {
           await svc.rpc("eltern_einladung_zurueck", { p_hash: hash });
           const schwach = /password/i.test(cErr.message || "");
-          return j({ ok: false, fehler: schwach ? "Dieses Passwort wird nicht angenommen. Bitte ein längeres wählen." : "Das Konto konnte nicht angelegt werden. Bitte gleich noch einmal versuchen." }, 400);
+          return j({ ok: false, fehler: schwach ? "Dieses Passwort wird nicht angenommen. Bitte mindestens 10 Zeichen mit Buchstaben und Ziffern wählen." : "Das Konto konnte nicht angelegt werden. Bitte gleich noch einmal versuchen." }, 400);
         }
       } else {
         neu = true;
