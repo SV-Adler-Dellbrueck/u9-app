@@ -996,6 +996,7 @@ async function elternDashLoad(){
       </div>`;}).join("")}
     <div id="cat-mehr" class="el-cat-panel" style="display:none">`;
   html+=elRow("👤","Meine Angaben","Name, Handy, Geburtstag – und der Geburtstag deines Kindes","elternAngabenOpen()","#1e3a8a");   // v660
+  html+=`<div id="team-ansprech-slot"></div>`;   // v663: Elternbeirat, Kasse, Beitrag
   html+=elRow("📰","Adler Nest (Stadionheft)","Neuigkeiten, Ergebnisse und Geburtstage",`location.href='${location.pathname}?heft&von=app'`,"#1e3a8a");
   html+=elRow("📖","Unsere Saison (Chronik)","Alle Spiele, Feste &amp; Meilensteine als Zeitstrahl – wächst jede Woche","chronikOpen()","#1d4ed8",true);
   html+=elRow("🛍️","Adler-Börse","Zu kleine Schuhe &amp; Trikots an Adler-Kinder weitergeben","boerseOpen()","#2563eb");
@@ -1060,6 +1061,7 @@ async function elternDashLoad(){
   kabineCodeHash().catch(()=>{});   // Hash vorladen, damit die Kabine auch offline wieder aufgeht
   adlerkasseLinkGet().then(l=>{const el=document.getElementById("ak-slot");if(!el)return;el.innerHTML=adlerkasseCardHtml(l)+(l?akShareBtnHtml():"");if(l)window._akLink=l;}).catch(()=>{});
   elternAnsagenLoad();                         // H1: Trainer-Ansagen mit Gelesen-Status
+  elternTeamAnsprechLoad();                    // v663: Elternbeirat, Kasse, Beitrag
   elternGenesungLoad(kids);                    // I-A: Genesungsgrüße für pausierte Teamkinder
   elternHelferTodoLoad();                      // J3: heute als Helfer eingetragen? Erinnerung mit Direktlink
   elternMitbringLoad(kids);                    // Event-Mitbringliste: wer bringt was mit
@@ -2290,6 +2292,68 @@ async function elternAngabenSave(btn){
   document.getElementById("angaben-modal")?.remove();
   if(typeof toast==="function")toast("Angaben gespeichert ✓");
   if(typeof elternChecklistLoad==="function")elternChecklistLoad(window._elternKids||[]);
+}
+/* ═══ v663: Ansprechpartner im Team ═══
+   PO 28.09.: „… unter ‚Mehr vom Team' der gewählte Elternbeirat stehen und Kassenwart …
+   Mannschaftskasse: 40 €/Saison.“ Die Namen pflegt das Trainerteam (Eltern & Kinder →
+   „Elternbeirat & Kasse“); sie stehen in team_config.eltern_team, nie im Repo. Kein Geld in
+   der App: der Beitrag ist ein Hinweis, gezahlt wird wie bisher außerhalb. */
+async function elternTeamAnsprechLoad(){
+  const slot=document.getElementById("team-ansprech-slot"); if(!slot)return;
+  let et=null;
+  try{const r=await fetch(`${SB_URL}/rest/v1/team_config?id=eq.1&select=eltern_team`,{headers:sbAuthHeaders()});if(r.ok)et=(((await r.json())||[])[0]||{}).eltern_team||null;}catch(e){}
+  const rollen=(et&&Array.isArray(et.rollen)?et.rollen:[]).filter(x=>x&&x.rolle&&x.name);
+  const beitrag=et&&et.kasse_beitrag?String(et.kasse_beitrag):"";
+  if(!rollen.length&&!beitrag){slot.innerHTML="";return;}
+  slot.innerHTML=`<div style="background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:10px;border:1.5px solid #bfdbfe">
+    <div style="font-weight:800;font-size:var(--s-karte);color:#0f172a;margin-bottom:6px">👥 Ansprechpartner im Team</div>
+    ${rollen.map(x=>`<div style="display:flex;gap:10px;align-items:baseline;padding:5px 0;border-top:1px solid #f1f5f9;font-size:var(--s-text)">
+      <span style="flex:0 0 42%;color:#475569;font-weight:600">${esc(x.rolle)}</span><span style="flex:1;color:#0f172a;font-weight:700">${esc(x.name)}</span></div>`).join("")}
+    ${beitrag?`<div style="display:flex;gap:10px;align-items:baseline;padding:5px 0;border-top:1px solid #f1f5f9;font-size:var(--s-text)">
+      <span style="flex:0 0 42%;color:#475569;font-weight:600">Mannschaftskasse</span><span style="flex:1;color:#0f172a;font-weight:700">${esc(beitrag)}</span></div>`:""}
+  </div>`;
+}
+/* Pflege durch das Trainerteam (Trainer-App → Eltern & Kinder). */
+async function elternTeamEditOpen(){
+  document.getElementById("et-modal")?.remove();
+  let et={};
+  try{const r=await fetch(`${SB_URL}/rest/v1/team_config?id=eq.1&select=eltern_team`,{headers:sbAuthHeaders()});if(r.ok)et=(((await r.json())||[])[0]||{}).eltern_team||{};}catch(e){}
+  const rollen=Array.isArray(et.rollen)?et.rollen:[];
+  const feld="width:100%;min-height:48px;padding:10px 12px;border:1px solid var(--rand-bedien);border-radius:10px;box-sizing:border-box;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)";
+  const zeile=i=>{const x=rollen[i]||{};return `<div style="display:flex;gap:8px;margin-bottom:8px">
+      <input class="et-rolle" maxlength="30" placeholder="Rolle, z. B. Elternbeirat" aria-label="Rolle ${i+1}" value="${esc(x.rolle||"")}" style="${feld};flex:1">
+      <input class="et-name" maxlength="60" placeholder="Name" aria-label="Name ${i+1}" value="${esc(x.name||"")}" style="${feld};flex:1.3"></div>`;};
+  const m=document.createElement("div");m.id="et-modal";
+  m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Elternbeirat & Kasse");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.onclick=e=>{if(e.target===m)m.remove();};
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
+    ${mdlHead("et-modal","👥","Elternbeirat & Kasse","Steht bei den Eltern unter „Mehr vom Team“","#1e3a8a")}
+    <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:10px">Nur eintragen, wer damit einverstanden ist – alle Eltern der Mannschaft sehen es.</div>
+    ${[0,1,2,3].map(zeile).join("")}
+    <label for="et-beitrag" style="font-size:var(--s-text);color:var(--text2)">Beitrag Mannschaftskasse</label>
+    <input id="et-beitrag" maxlength="40" placeholder="z. B. 40 € pro Saison" value="${esc(et.kasse_beitrag||"")}" style="${feld};margin:4px 0 12px">
+    <button id="et-save" class="btn btn-p" style="width:100%;min-height:56px" onclick="elternTeamEditSave(this)">Speichern</button>
+    <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('et-modal').remove()">Schließen</button>
+  </div>`;
+  document.body.appendChild(m);
+}
+function elternTeamEditLesen(){
+  const r=[...document.querySelectorAll("#et-modal .et-rolle")], n=[...document.querySelectorAll("#et-modal .et-name")];
+  const rollen=r.map((e,i)=>({rolle:(e.value||"").trim().slice(0,30),name:((n[i]&&n[i].value)||"").trim().slice(0,60)})).filter(x=>x.rolle&&x.name);
+  const beitrag=(document.getElementById("et-beitrag")?.value||"").trim().slice(0,40);
+  return (rollen.length||beitrag)?{rollen,kasse_beitrag:beitrag||null}:null;
+}
+async function elternTeamEditSave(btn){
+  const et=elternTeamEditLesen();
+  if(btn)btn.disabled=true;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/team_config?on_conflict=id`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({id:1,eltern_team:et,updated_at:new Date().toISOString()})});
+    if(typeof sbCheck401==="function"&&sbCheck401(r)){if(btn)btn.disabled=false;return;}
+    if(!r.ok){toast("Speichern hat nicht geklappt","err");if(btn)btn.disabled=false;return;}
+  }catch(e){toast("Keine Verbindung","err");if(btn)btn.disabled=false;return;}
+  document.getElementById("et-modal")?.remove();
+  toast("Elternbeirat & Kasse gespeichert ✓");
 }
 async function tdVorberichtLoad(t){
   const box=document.getElementById("td-vorbericht"); if(!box)return;
