@@ -570,7 +570,7 @@ async function elternNewsLoad(kids){
   if(!seen){ try{localStorage.setItem("adler_news_seen",JSON.stringify(cur));}catch(e){} seen=cur; } // Erstbesuch = Baseline
   const kidName=sid=>{const k=(kids||[]).find(x=>x.spieler_id===sid);return (k&&k.kader&&k.kader.name)||"Dein Kind";};
   const items=[];
-  if(cur.nest&&cur.nest>(seen.nest||"")) items.push({emo:"📰",txt:"Das Adler Nest ist frisch erschienen.",act:`location.href='${location.pathname}?heft'`});
+  if(cur.nest&&cur.nest>(seen.nest||"")) items.push({emo:"📰",txt:"Das Adler Nest ist frisch erschienen.",act:`location.href='${location.pathname}?heft&von=app'`});
   if(cur.boerse&&cur.boerse>(seen.boerse||"")) items.push({emo:"🛍️",txt:"Neues in der Adler-Börse.",act:"elternCatClose();boerseOpen()"});
   if(cur.fund&&cur.fund>(seen.fund||"")) items.push({emo:"🧦",txt:"Neues im Fundbüro.",act:"elternCatClose();fundbueroOpen()"});
   if(cur.skill&&cur.skill.slice(0,4)!=="1970"&&cur.skill>(seen.skill||"")) items.push({emo:"🏅",txt:"Neuer Skill der Woche / neue Challenge.",act:"elternCatOpen('mehr')"});
@@ -996,7 +996,7 @@ async function elternDashLoad(){
       </div>`;}).join("")}
     <div id="cat-mehr" class="el-cat-panel" style="display:none">`;
   html+=elRow("👤","Meine Angaben","Name, Handy, Geburtstag – und der Geburtstag deines Kindes","elternAngabenOpen()","#1e3a8a");   // v660
-  html+=elRow("📰","Adler Nest (Stadionheft)","Neuigkeiten, Ergebnisse und Geburtstage",`location.href='${location.pathname}?heft'`,"#1e3a8a");
+  html+=elRow("📰","Adler Nest (Stadionheft)","Neuigkeiten, Ergebnisse und Geburtstage",`location.href='${location.pathname}?heft&von=app'`,"#1e3a8a");
   html+=elRow("📖","Unsere Saison (Chronik)","Alle Spiele, Feste &amp; Meilensteine als Zeitstrahl – wächst jede Woche","chronikOpen()","#1d4ed8",true);
   html+=elRow("🛍️","Adler-Börse","Zu kleine Schuhe &amp; Trikots an Adler-Kinder weitergeben","boerseOpen()","#2563eb");
   html+=elRow("🧦","Fundbüro","Verlorenes &amp; Gefundenes – hier sammelt das Team","fundbueroOpen()","#3b82f6");
@@ -1792,7 +1792,7 @@ function tdWasMussMit(t){
 const FOTO_STUFEN=[
   {k:"intern",   emo:"🖼️", t:"App-intern (geschlossene Gruppe)", d:"Team-Galerie, Sammelkarte, „Die Kabine“ und das „Adler Nest“. Sichtbar nur für eingeloggte Eltern und das Trainerteam dieses Teams.", risk:"gering"},
   {k:"video",    emo:"🎥", t:"Trainingsvideos zur Analyse",       d:"Kurze Videoclips zur Technik-/Taktik-Analyse. Ausschließlich für das Trainerteam, nicht öffentlich, nach der Saison gelöscht.", risk:"mittel"},
-  {k:"public_ok",emo:"🌍", t:"Öffentlich",                        d:"Das Adler Nest (Vereinsheft), die Vereins-Website und Aushänge im Verein – dort mit Vorname, Anfangsbuchstabe des Nachnamens und Jahrgang. Diese Bilder sind auch außerhalb der App sichtbar und im Netz auffindbar – deshalb fragen wir hier extra nach. Du kannst die Freigabe jederzeit wieder zurücknehmen.", risk:"hoch"}
+  {k:"public_ok",emo:"🌍", t:"Öffentlich",                        d:"Für das Adler Nest, unser Vereinsheft, und die Vereins-Website. Dort erscheint dein Kind mit Vorname, Anfangsbuchstabe des Nachnamens und Jahrgang. Weil die Website für alle sichtbar ist, fragen wir dafür gesondert. Du kannst die Freigabe jederzeit zurücknehmen.", risk:"hoch"}
 ];
 const FOTO_CONSENT_DEFAULT="Wir bitten um deine Einwilligung, Foto- und Videoaufnahmen deines Kindes im Rahmen des Vereinssports zu verwenden. Du entscheidest für jede der drei Stufen getrennt und kannst jede Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen. Die Teilnahme deines Kindes am Training und an Spielen ist unabhängig von dieser Einwilligung – ein „Nein“ hat keinerlei Nachteile. Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO sowie §§ 22, 23 KunstUrhG.";
 async function elternFotoConsentTextLoad(){

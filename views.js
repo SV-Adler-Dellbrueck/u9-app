@@ -6275,6 +6275,20 @@ function heftPrintNow(){
 /* HOTFIX 19 digital: öffentliche Eltern-Ansicht des Stadionhefts (?heft). Ruft die
    Edge Function stadionheft-view – Namen kommen bereits maskiert, Fotos nur bei
    Einwilligung (sonst Initialen). Kein Login, keine Trainer-Daten. */
+/* v661 PO 28.09. (Bildschirmfoto Adler Nest in der installierten Eltern-App): „wie komme ich aus
+   der Ansicht vom Adler Nest wieder zurück in der Eltern-App?" Die Seite ist öffentlich und hatte
+   deshalb keine App-Leiste – in einem App-Fenster ohne Browser-Knöpfe gab es keinen Weg zurück.
+   Kommt man aus der App (&von=app), steht oben „← Zurück zur App“; Gäste mit geteiltem Link sehen
+   ihn nicht. */
+function heftZurueckLeiste(){
+  if(new URLSearchParams(location.search).get("von")!=="app")return "";
+  return `<button id="heft-zurueck" onclick="heftZurueck()" style="display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:8px 14px;margin:0 0 10px;border:1.5px solid #1e3a8a;border-radius:10px;background:#fff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">← Zurück zur App</button>`;
+}
+function heftZurueck(){
+  let intern=false; try{ intern=!!document.referrer&&new URL(document.referrer).origin===location.origin; }catch(e){}
+  if(intern&&history.length>1){ history.back(); return; }
+  location.href=location.pathname+"?portal";
+}
 async function renderStadionheftView(){
   const root=document.createElement("div");
   root.style.cssText="max-width:460px;margin:0 auto;padding:16px;font-family:inherit;min-height:100vh;background:var(--bg)";
@@ -6286,7 +6300,7 @@ async function renderStadionheftView(){
     d=r.ok?await r.json():null;
   }catch(e){}
   if(!d||!d.published){
-    root.innerHTML='<div style="text-align:center;padding:48px;color:var(--text3)"><img src="logo.png" style="width:56px;height:56px" alt=""><div style="margin-top:12px">Aktuell ist kein <b>Adler Nest</b> veröffentlicht.<br>Schau bald wieder rein! 🦅</div></div>';
+    root.innerHTML=heftZurueckLeiste()+'<div style="text-align:center;padding:48px;color:var(--text3)"><img src="logo.png" style="width:56px;height:56px" alt=""><div style="margin-top:12px">Aktuell ist kein <b>Adler Nest</b> veröffentlicht.<br>Schau bald wieder rein! 🦅</div></div>';
     return;
   }
   const h=d.heft||{};
@@ -6316,7 +6330,7 @@ async function renderStadionheftView(){
       if(reps.length)repHtml=nestLbl("🎙️ Kabinen-Reporter – die Kinder haben das Wort")
         +reps.map(x=>`<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #14b8a6;border-radius:12px;padding:10px 13px;margin-bottom:8px;font-size:var(--s-text);color:#334155"><b>${esc(x.frage)}</b><br>„${esc(x.antwort)}" – <i>${esc(x.name)}</i></div>`).join("");}
   }catch(e){}
-  root.innerHTML=`<div class="elt-fade">
+  root.innerHTML=`${heftZurueckLeiste()}<div class="elt-fade">
     <div style="background:linear-gradient(135deg,#1e3a8a,#2563eb);border-radius:16px;padding:18px 16px;text-align:center;color:#fff;margin:4px 0 14px;box-shadow:0 2px 12px rgba(30,58,138,.28)">
       <img src="logo.png" style="width:56px;height:56px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))" alt="SV Adler Dellbrück">
       <div style="font-size:var(--s-klein);font-weight:700;letter-spacing:.8px;opacity:.85;margin-top:4px">SV ADLER DELLBRÜCK e.V.</div>
