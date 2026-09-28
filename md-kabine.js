@@ -2106,7 +2106,9 @@ async function kinderAppCode(sid){
     <div style="font-size:34px;font-weight:900;letter-spacing:6px;color:#1e293b;margin:6px 0">${code}</div>
     <div id="ka-uhr-${sid}" style="font-size:12px;color:#64748b"></div>
     <div style="font-size:12.5px;color:#475569;line-height:1.6;margin-top:8px">Auf dem Gerät des Kindes die Kabine öffnen und diesen Code eingeben.</div>
-  </div>`;
+  </div>
+  ${kaLinkBlock(sid)}`;
+  kaLinkQr(sid);
   clearInterval(_kaCodeUhr);
   const tick=()=>{
     const el=document.getElementById("ka-uhr-"+sid); if(!el){clearInterval(_kaCodeUhr);return;}
@@ -2117,6 +2119,45 @@ async function kinderAppCode(sid){
   tick(); _kaCodeUhr=setInterval(tick,1000);
 }
 
+/* v650 – PO: „Ich bekomme einen Code angezeigt, aber die URL ist nicht dabei … über einen
+   WhatsApp-Link direkt schicken oder kopieren.“ Kachel: NUR der Link. Der Code bleibt auf dem
+   Bildschirm der Eltern (siehe oben: er ist der einzige Schutz gegen ein fremdes Gerät) –
+   in der Nachricht stünde er im Chatverlauf, weitergeleitet oder auf dem Familien-Tablet.
+   Der QR-Code ist der schnellste Weg, wenn das Gerät des Kindes daneben liegt: Kamera drauf,
+   Kabine öffnet sich, Code eintippen. Kein Kindername in der Nachricht. */
+function kaKinderUrl(){ return ((typeof appRoot==="function")?appRoot():location.origin+"/")+"kinder/"; }
+function kaNachricht(){
+  return "🦅 Die Kabine der U9 für dein Gerät: "+kaKinderUrl()
+    +"\nIm Browser öffnen (Safari oder Chrome), „Zum Home-Bildschirm“ wählen – den Code mit sechs Zahlen zeige ich dir dann.";
+}
+function kaLinkBlock(sid){
+  const url=kaKinderUrl();
+  return `<div style="border:1px solid #e2e8f0;border-radius:14px;padding:12px;margin:0 0 10px;text-align:center">
+    <div style="font-size:12px;font-weight:700;color:#475569">Kabine auf das Gerät des Kindes holen</div>
+    <div id="ka-qr-${sid}" data-url="${esc(url)}" style="width:168px;max-width:100%;margin:8px auto" aria-label="QR-Code zur Kinder-App"></div>
+    <div style="font-size:12px;color:#64748b;line-height:1.5;margin-bottom:8px">Mit der Kamera des Kindergeräts scannen – oder den Link schicken. Der Code oben steht nicht darin.</div>
+    <div id="ka-link-${sid}" style="font-size:12.5px;color:#1e293b;word-break:break-all;user-select:all;margin-bottom:8px">${esc(url)}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <a href="https://wa.me/?text=${encodeURIComponent(kaNachricht())}" target="_blank" rel="noopener noreferrer"
+         style="display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:12px;background:#15803d;color:#fff;font-weight:800;font-size:14px;text-decoration:none">💬 WhatsApp</a>
+      <button onclick="kaLinkKopieren(${sid})" style="min-height:48px;border:1.5px solid #7c3aed;border-radius:12px;background:#fff;color:#6d28d9;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">🔗 Link kopieren</button>
+    </div>
+  </div>`;
+}
+function kaLinkQr(sid){
+  const el=document.getElementById("ka-qr-"+sid); if(!el||typeof qrSvg!=="function")return;
+  qrSvg(el.dataset.url,4).then(svg=>{ if(el.isConnected)el.innerHTML=svg; }).catch(()=>{ el.remove(); });
+}
+async function kaLinkKopieren(sid){
+  const text=kaNachricht();
+  try{ await navigator.clipboard.writeText(text); toast("Link kopiert ✓"); return; }
+  catch(e){}
+  /* Ohne Zwischenablage-Recht (ältere Browser, eingebettete Ansichten): den Link markieren,
+     dann reicht ein langer Druck auf „Kopieren“. */
+  const el=document.getElementById("ka-link-"+sid);
+  if(el){ const r=document.createRange(); r.selectNodeContents(el); const s=getSelection(); s.removeAllRanges(); s.addRange(r); }
+  toast("Link markiert – jetzt „Kopieren“ wählen");
+}
 async function kinderAppLimit(uid,wert){
   const min=Math.max(0,Math.min(KA_LIMIT_MAX,parseInt(wert,10)||0));
   try{
