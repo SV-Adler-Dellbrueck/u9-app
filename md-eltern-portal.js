@@ -26,7 +26,7 @@ function authFehlerDeutsch(m,ersatz){
   if(/expired|invalid.*(otp|token)|token.*(expired|invalid)/i.test(m))return "Der Code ist abgelaufen oder falsch. Bitte einen neuen anfordern.";
   if(/invalid login|invalid.*credentials/i.test(m))return "E-Mail oder Passwort stimmt nicht. Noch kein Passwort? Dann unten „Code per E-Mail“.";
   if(/email.*(invalid|valid)|unable to validate email/i.test(m))return "Diese E-Mail-Adresse sieht nicht richtig aus.";
-  if(/weak|at least|characters/i.test(m))return "Das Passwort ist zu kurz – bitte mindestens 8 Zeichen.";
+  if(/weak|at least|characters/i.test(m))return "Das Passwort ist zu schwach – bitte "+pwRegelText()+".";
   if(/network|failed to fetch/i.test(m))return "Gerade kein Internet – bitte gleich nochmal.";
   return ersatz;
 }
@@ -262,10 +262,10 @@ async function elternEinladungView(root,code){
     <form onsubmit="event.preventDefault();elternEinladungEinloesen()">
       <label for="einl-email" style="font-size:var(--s-text);color:#475569">Deine E-Mail-Adresse</label>
       <input id="einl-email" type="email" inputmode="email" autocomplete="username" placeholder="name@mail.de" style="${EP_FELD}">
-      <label for="einl-pw" style="font-size:var(--s-text);color:#475569">Passwort festlegen (mindestens 8 Zeichen)</label>
-      <input id="einl-pw" type="password" autocomplete="new-password" minlength="8" style="${EP_FELD}">
+      <label for="einl-pw" style="font-size:var(--s-text);color:#475569">Passwort festlegen (${pwRegelText()})</label>
+      <input id="einl-pw" type="password" autocomplete="new-password" minlength="10" style="${EP_FELD}">
       <label for="einl-pw2" style="font-size:var(--s-text);color:#475569">Passwort wiederholen</label>
-      <input id="einl-pw2" type="password" autocomplete="new-password" minlength="8" style="${EP_FELD}">
+      <input id="einl-pw2" type="password" autocomplete="new-password" minlength="10" style="${EP_FELD}">
       <button id="einl-ok" type="submit" style="${EP_KNOPF};background:#047857">Zugang anlegen</button>
     </form>
     <button onclick="elternEinladungMitKonto()" style="${EP_LINK}">Ich habe schon ein Konto</button>
@@ -286,7 +286,7 @@ async function elternEinladungEinloesen(){
     pw=document.getElementById("einl-pw")?.value||"";
     const pw2=document.getElementById("einl-pw2")?.value||"";
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){if(err)err.textContent="Bitte eine gültige E-Mail-Adresse eingeben.";return;}
-    if(pw.length<8){if(err)err.textContent="Das Passwort braucht mindestens 8 Zeichen.";return;}
+    {const f=pwRegelFehler(pw);if(f){if(err)err.textContent=f;return;}}
     if(pw!==pw2){if(err)err.textContent="Die beiden Passwörter sind nicht gleich.";return;}
   }
   const btn=document.getElementById("einl-ok");if(btn){btn.disabled=true;btn.textContent="Einen Moment…";}
@@ -321,10 +321,10 @@ function elternPasswortOpen(){
   m.innerHTML=`<form onsubmit="event.preventDefault();elternPasswortSpeichern()" style="background:#fff;color:#1a1a2e;border-radius:16px;padding:20px;max-width:360px;width:100%">
     <div style="font-size:var(--s-karte);font-weight:800;margin-bottom:4px">🔑 Passwort festlegen</div>
     <div style="font-size:var(--s-text);color:#475569;margin-bottom:10px">Danach kannst du dich mit E-Mail und Passwort anmelden – auch auf einem zweiten Gerät.</div>
-    <label for="ep-neu1" style="font-size:var(--s-text);color:#475569">Neues Passwort (mindestens 8 Zeichen)</label>
-    <input id="ep-neu1" type="password" autocomplete="new-password" minlength="8" style="${EP_FELD}">
+    <label for="ep-neu1" style="font-size:var(--s-text);color:#475569">Neues Passwort (${pwRegelText()})</label>
+    <input id="ep-neu1" type="password" autocomplete="new-password" minlength="10" style="${EP_FELD}">
     <label for="ep-neu2" style="font-size:var(--s-text);color:#475569">Wiederholen</label>
-    <input id="ep-neu2" type="password" autocomplete="new-password" minlength="8" style="${EP_FELD}">
+    <input id="ep-neu2" type="password" autocomplete="new-password" minlength="10" style="${EP_FELD}">
     <div id="ep-neu-err" role="alert" style="font-size:var(--s-text);color:#b91c1c;min-height:16px;margin-bottom:6px"></div>
     <button id="ep-neu-ok" type="submit" style="${EP_KNOPF};background:#1e3a8a">Speichern</button>
     <button type="button" onclick="document.getElementById('ep-pw-modal').remove()" style="${EP_LINK}">Abbrechen</button>
@@ -335,7 +335,7 @@ function elternPasswortOpen(){
 async function elternPasswortSpeichern(){
   const a=document.getElementById("ep-neu1")?.value||"", b=document.getElementById("ep-neu2")?.value||"";
   const err=document.getElementById("ep-neu-err");if(err)err.textContent="";
-  if(a.length<8){if(err)err.textContent="Mindestens 8 Zeichen.";return;}
+  {const f=pwRegelFehler(a);if(f){if(err)err.textContent=f;return;}}
   if(a!==b){if(err)err.textContent="Die beiden Passwörter sind nicht gleich.";return;}
   const btn=document.getElementById("ep-neu-ok");if(btn){btn.disabled=true;btn.textContent="Speichere…";}
   try{

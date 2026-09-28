@@ -4459,7 +4459,7 @@ const HELP=[
   {cat:"🪶 Eltern & Kinder", items:[
     {t:"Team-Ansage", d:"Wichtige Info an alle Eltern – mit Gelesen-Status (wer fehlt noch?).", run:"ansageTrainerOpen()"},
     {t:"Adler Nest", d:"Digitales Stadionheft erstellen & drucken.", run:"stadionheftOpen()"},
-    {t:"Eltern-Bereich", d:"Eltern melden sich mit E-Mail und Passwort an (alternativ Einmal-Code per Mail): Zu- und Absagen, Karte, Quiz, Betreuung vor Ort."},
+    {t:"Eltern-Bereich", d:"Eltern melden sich mit E-Mail und Passwort an (alternativ Einmal-Code per Mail): Zu- und Absagen, Karte, Quiz, Betreuung vor Ort. Neue Passwörter – bei Eltern und Trainern – brauchen mindestens 10 Zeichen mit Buchstaben und Ziffern; ältere, kürzere gelten zum Anmelden weiter."},
     {t:"Einladungskarten", d:"Je Kind eine Karte mit QR-Code, vier pro A4-Seite. Die Eltern scannen, legen E-Mail und Passwort fest und sind sofort angemeldet – kein Mailversand, kein Eintragen der Adresse vorab. Eine Karte gilt für zwei Elternteile und bis zum gewählten Datum; neu drucken macht die alte Karte des Kindes ungültig.", run:"einladungskartenOpen()"},
     {t:"Adler-Welt-Hub", d:"Federn je Kind, FUT-Karten, Technik-Abzeichen und Wochen-Challenge an einem Ort.", run:"adlerWeltOpen()"},
     {t:"Federn-Stichtag", d:"In „Team-Quests verwalten“ steht „Federn zählen ab“. Quiz-Federn zählen immer. Training, Serien, Zusagen, Missionen, Album und Abzeichen zählen erst ab diesem Tag – auf der Karte, in der Übersicht und im Team-Level, das ab dem Stichtag ganz neu zählt. Gelöscht wird nichts; ein Anlass von vorher bringt auch nachträglich keine Federn. Feld leeren heißt: alles zählt wieder."},
@@ -4866,9 +4866,9 @@ function pwChangeOpen(){
   m.onclick=e=>{if(e.target===m)m.remove();};
   const fld="width:100%;padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-karte);background:var(--surface2);color:var(--text);box-sizing:border-box";
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);max-width:360px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
-    ${mdlHead("pw-modal","🔑","Passwort ändern","Eigenes, sicheres Passwort (mind. 8 Zeichen)","#334155")}
-    <label style="font-size:var(--s-klein);color:var(--text2)">Neues Passwort<input type="password" id="pw-new" autocomplete="new-password" style="${fld}"></label>
-    <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Nochmal eingeben<input type="password" id="pw-new2" autocomplete="new-password" onkeydown="if(event.key==='Enter')pwChangeSave()" style="${fld}"></label>
+    ${mdlHead("pw-modal","🔑","Passwort ändern","Eigenes Passwort: "+pwRegelText(),"#334155")}
+    <label style="font-size:var(--s-klein);color:var(--text2)">Neues Passwort<input type="password" id="pw-new" autocomplete="new-password" minlength="10" style="${fld}"></label>
+    <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Nochmal eingeben<input type="password" id="pw-new2" autocomplete="new-password" minlength="10" onkeydown="if(event.key==='Enter')pwChangeSave()" style="${fld}"></label>
     <div id="pw-err" style="color:var(--red);font-size:var(--s-text);min-height:16px;margin-top:6px"></div>
     <div style="display:flex;gap:8px;margin-top:2px">
       <button class="btn btn-p btn-sm" onclick="pwChangeSave(this)"><i class="ti ti-device-floppy"></i>Speichern</button>
@@ -4881,7 +4881,7 @@ function pwChangeOpen(){
 async function pwChangeSave(btn){
   const p1=document.getElementById("pw-new")?.value||"", p2=document.getElementById("pw-new2")?.value||"";
   const err=document.getElementById("pw-err"); const fail=(msg)=>{ if(err)err.textContent=msg; };
-  if(p1.length<8){fail("Mindestens 8 Zeichen.");return;}
+  {const f=pwRegelFehler(p1);if(f){fail(f);return;}}
   if(p1!==p2){fail("Die Passwörter stimmen nicht überein.");return;}
   if(btn)btn.disabled=true;
   try{

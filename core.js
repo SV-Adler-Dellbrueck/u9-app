@@ -1612,6 +1612,18 @@ function feldWachsen(el){
   el.style.height = Math.min(el.scrollHeight + 2, Math.round(window.innerHeight*0.5)) + "px";
 }
 function felderWachsen(wurzel){ try{ (wurzel||document).querySelectorAll("textarea.wachsen").forEach(feldWachsen); }catch(e){} }
+/* v652: Eine Passwortregel für Trainer und Eltern – mindestens 10 Zeichen, Buchstaben und
+   Ziffern. Dieselbe Regel steht in den Auth-Einstellungen von Supabase („Letters and digits“,
+   Mindestlänge 10) und in der Edge Function eltern-einladung; der Browser sagt es nur früher.
+   Buchstaben heißt A–Z: Umlaute zählen bei Supabase nicht als Buchstabe. Liefert "" oder
+   den Satz, der unter dem Feld steht. */
+function pwRegelFehler(pw){
+  pw=String(pw||"");
+  if(pw.length<10) return "Das Passwort braucht mindestens 10 Zeichen.";
+  if(!/[A-Za-z]/.test(pw)||!/[0-9]/.test(pw)) return "Das Passwort braucht Buchstaben und mindestens eine Ziffer.";
+  return "";
+}
+function pwRegelText(){ return "mindestens 10 Zeichen, mit Buchstaben und Ziffern"; }
 document.addEventListener("input", e => { const t = e.target; if(t && t.classList && t.classList.contains("wachsen")) feldWachsen(t); });
 
 /* v630 · Stempel: wer hat bewertet oder geschrieben, und wann. PO: „… dass immer auch mit einer
