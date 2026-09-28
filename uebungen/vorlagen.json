@@ -1,10 +1,11 @@
 {
   "schema": "adler-vorlagen/1",
-  "stand": "2026-09-25-1",
+  "stand": "2026-09-28-2",
   "vorlagen": [
     {
       "name": "L1-1 Ball behalten – Duell um zwei Tore",
       "leitfrage": "Wie behalte ich den Ball, wenn einer kommt?",
+      "ziel_kinder": "Heute lernst du, den Ball mit deinem Körper zu beschützen.",
       "folge_nr": 1,
       "tags": [
         "wenig-platz"
@@ -58,6 +59,7 @@
     {
       "name": "L1-2 Ball behalten – König auf dem Feld",
       "leitfrage": "Wie behalte ich den Ball, wenn einer kommt?",
+      "ziel_kinder": "Heute bleibt der Ball bei dir – stell deinen Körper zwischen Ball und Gegner.",
       "folge_nr": 2,
       "tags": [
         "wenig-platz",
@@ -112,6 +114,7 @@
     {
       "name": "L1-3 Ball behalten in Überzahl – der Diamant dreht",
       "leitfrage": "Wie behalte ich den Ball, wenn einer kommt?",
+      "ziel_kinder": "Heute halten wir den Ball zu viert: Pass spielen und schnell einen neuen Platz suchen.",
       "folge_nr": 3,
       "tags": [],
       "dauer_min": 75,
@@ -163,6 +166,7 @@
     {
       "name": "L1-4 Ball behalten – die erste Berührung nach vorn",
       "leitfrage": "Wie behalte ich den Ball, wenn einer kommt?",
+      "ziel_kinder": "Heute nimmst du den Ball mit der ersten Berührung nach vorne mit.",
       "folge_nr": 4,
       "tags": [
         "halle",
@@ -217,6 +221,7 @@
     {
       "name": "L2-1 Vorbeikommen – Mut zum ersten Schritt",
       "leitfrage": "Wie komme ich an einem vorbei?",
+      "ziel_kinder": "Heute traust du dich ins Duell und probierst deinen eigenen Trick.",
       "folge_nr": 1,
       "tags": [
         "wenig-platz",
@@ -271,6 +276,7 @@
     {
       "name": "L2-2 Vorbeikommen – drei Finten, ein Duell",
       "leitfrage": "Wie komme ich an einem vorbei?",
+      "ziel_kinder": "Heute lernst du drei Tricks und probierst sie im Duell aus.",
       "folge_nr": 2,
       "tags": [
         "wenig-platz",
@@ -325,6 +331,7 @@
     {
       "name": "L2-3 Vorbeikommen – erst der Parcours, dann der Gegner",
       "leitfrage": "Wie komme ich an einem vorbei?",
+      "ziel_kinder": "Heute dribbelst du mit Blick nach oben – erst durch den Parcours, dann am Gegner vorbei.",
       "folge_nr": 3,
       "tags": [
         "schlechtwetter",
@@ -379,6 +386,7 @@
     {
       "name": "L2-4 Vorbeikommen – und dann in die Breite",
       "leitfrage": "Wie komme ich an einem vorbei?",
+      "ziel_kinder": "Heute gehst du nach dem Trick nach außen, wo Platz ist.",
       "folge_nr": 4,
       "tags": [],
       "dauer_min": 75,
@@ -430,6 +438,7 @@
     {
       "name": "L3-1 Tore machen – kurz und mit beiden Füßen",
       "leitfrage": "Wie mache ich ein Tor?",
+      "ziel_kinder": "Heute schießt du mit beiden Füßen aufs Tor.",
       "folge_nr": 1,
       "tags": [
         "vor-spieltag"
@@ -489,6 +498,7 @@
     {
       "name": "L3-2 Tore machen – der letzte Pass geht quer",
       "leitfrage": "Wie mache ich ein Tor?",
+      "ziel_kinder": "Heute spielst du vor dem Tor noch einmal quer – dann trifft dein Mitspieler leichter.",
       "folge_nr": 2,
       "tags": [],
       "dauer_min": 75,
@@ -540,6 +550,7 @@
     {
       "name": "L3-3 Tore machen – Mut zählt doppelt",
       "leitfrage": "Wie mache ich ein Tor?",
+      "ziel_kinder": "Heute zählt jeder Schuss – auch der, der danebengeht.",
       "folge_nr": 3,
       "tags": [
         "vor-spieltag"
@@ -593,6 +604,7 @@
     {
       "name": "L4-1 Passen – den freien Mitspieler finden",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "ziel_kinder": "Heute schaust du vor dem Pass, wer frei ist.",
       "folge_nr": 1,
       "tags": [],
       "dauer_min": 75,
@@ -644,6 +656,7 @@
     {
       "name": "L4-2 Passen – Lehrgangsform 15:30:15:30",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "ziel_kinder": "Heute heben wir vor dem Pass den Kopf und suchen den freien Mitspieler.",
       "folge_nr": 2,
       "tags": [],
       "dauer_min": 90,
@@ -703,6 +716,7 @@
     {
       "name": "L4-3 Passen – jeder muss einmal",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "ziel_kinder": "Heute bekommt jeder den Ball – wir suchen den, der ihn noch nicht hatte.",
       "folge_nr": 3,
       "tags": [],
       "dauer_min": 75,
@@ -754,6 +768,7 @@
     {
       "name": "L4-4 Passen – das Dreieck dreht sich",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "ziel_kinder": "Heute läufst du nach deinem Pass sofort weiter.",
       "folge_nr": 4,
       "tags": [
         "halle",
@@ -808,6 +823,7 @@
     {
       "name": "L5-1 Anbieten – wo kriege ich den Ball?",
       "leitfrage": "Wo stelle ich mich hin, damit ich den Ball kriege?",
+      "ziel_kinder": "Heute läufst du dich frei, bevor der Ball kommt.",
       "folge_nr": 1,
       "tags": [
         "schlechtwetter"
@@ -861,6 +877,7 @@
     {
       "name": "L5-2 Anbieten – die Raute lebt",
       "leitfrage": "Wo stelle ich mich hin, damit ich den Ball kriege?",
+      "ziel_kinder": "Heute bleibt jeder auf seinem Platz in der Raute – auch wenn der Ball weit weg ist.",
       "folge_nr": 2,
       "tags": [
         "vor-spieltag"
@@ -914,6 +931,7 @@
     {
       "name": "L5-3 Anbieten – jeder hält seinen Korridor",
       "leitfrage": "Wo stelle ich mich hin, damit ich den Ball kriege?",
+      "ziel_kinder": "Heute bleibst du in deiner Bahn und rennst nicht alle zum Ball.",
       "folge_nr": 3,
       "tags": [],
       "dauer_min": 75,
@@ -965,6 +983,7 @@
     {
       "name": "L6-1 Zurückholen – sofort nach dem Verlust",
       "leitfrage": "Wie hole ich mir den Ball zurück?",
+      "ziel_kinder": "Heute holst du dir den Ball sofort zurück, wenn du ihn verloren hast.",
       "folge_nr": 1,
       "tags": [
         "wenig-platz"
@@ -1018,6 +1037,7 @@
     {
       "name": "L6-2 Zurückholen – Igel, und sofort wieder Adler",
       "leitfrage": "Wie hole ich mir den Ball zurück?",
+      "ziel_kinder": "Heute machen wir uns klein wie ein Igel – und sind danach sofort wieder Adler.",
       "folge_nr": 2,
       "tags": [],
       "dauer_min": 75,
@@ -1069,6 +1089,7 @@
     {
       "name": "L4-5 Passen – Ball zum Freien, Tor nach Pass zählt doppelt",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "ziel_kinder": "Heute passen wir zum Freien – ein Tor nach einem Pass zählt doppelt.",
       "folge_nr": 5,
       "tags": [],
       "dauer_min": 90,
@@ -1115,6 +1136,7 @@
     {
       "name": "L4-6 3+1 – Adler: breit werden, der Torwart spielt mit",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "ziel_kinder": "Heute werden wir breit wie ein Adler, und der Torwart spielt mit.",
       "folge_nr": 6,
       "tags": [],
       "dauer_min": 75,
@@ -1181,6 +1203,7 @@
     {
       "name": "L5-4 3+1 – Raute ohne Aufpasser: wo stehe ich?",
       "leitfrage": "Wo stelle ich mich hin, damit ich den Ball kriege?",
+      "ziel_kinder": "Heute weißt du im 3+1, wo dein Platz ist: Flitzer außen, Jäger vorn.",
       "folge_nr": 4,
       "tags": [],
       "dauer_min": 75,
@@ -1247,6 +1270,7 @@
     {
       "name": "L6-3 3+1 – Igel: die Flitzer schließen die Lücke",
       "leitfrage": "Wie hole ich mir den Ball zurück?",
+      "ziel_kinder": "Heute rücken die Flitzer eng vors Tor, wenn der Gegner den Ball hat.",
       "folge_nr": 3,
       "tags": [],
       "dauer_min": 75,
@@ -1313,6 +1337,7 @@
     {
       "name": "L4-7 FUNiño – der Aufpasser verteilt",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "ziel_kinder": "Heute verteilt der Aufpasser den Ball zur freien Seite.",
       "folge_nr": 7,
       "tags": [],
       "dauer_min": 75,
@@ -1379,6 +1404,7 @@
     {
       "name": "L5-5 FUNiño – links, Mitte, rechts",
       "leitfrage": "Wo stelle ich mich hin, damit ich den Ball kriege?",
+      "ziel_kinder": "Heute steht jeder auf seiner Seite: links, Mitte oder rechts.",
       "folge_nr": 5,
       "tags": [],
       "dauer_min": 75,
@@ -1445,6 +1471,7 @@
     {
       "name": "L6-4 FUNiño – einer drängt, zwei schützen",
       "leitfrage": "Wie hole ich mir den Ball zurück?",
+      "ziel_kinder": "Heute drängt einer den Gegner ab, und zwei schützen die Tore.",
       "folge_nr": 4,
       "tags": [],
       "dauer_min": 75,
@@ -1511,6 +1538,7 @@
     {
       "name": "L5-6 3+1 gegen FUNiño – große und kleine Tore",
       "leitfrage": "Wo stelle ich mich hin, damit ich den Ball kriege?",
+      "ziel_kinder": "Heute spielen wir auf große und kleine Tore und wechseln schnell die Aufstellung.",
       "folge_nr": 6,
       "tags": [],
       "dauer_min": 75,
@@ -1577,6 +1605,7 @@
     {
       "name": "L6-5 3+1 gegen FUNiño – zwei Arten, den Ball zurückzuholen",
       "leitfrage": "Wie hole ich mir den Ball zurück?",
+      "ziel_kinder": "Heute lernst du zwei Arten, dir den Ball zurückzuholen.",
       "folge_nr": 5,
       "tags": [],
       "dauer_min": 75,
@@ -1643,6 +1672,7 @@
     {
       "name": "L4-8 Drei Felder – 3+1 und FUNiño nebeneinander",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "ziel_kinder": "Heute spielst du 3+1 und Funino nebeneinander und bleibst weit genug weg vom Ball, damit du angespielt werden kannst.",
       "folge_nr": 8,
       "tags": [],
       "dauer_min": 75,

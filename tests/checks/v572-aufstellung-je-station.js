@@ -51,7 +51,8 @@ module.exports = async function (h) {
       kader: h.kaderZeilen({ inaktiv: h.KINDER.slice(15) }), nominierungen: [], anwesenheit: [],
       termine: (u) => {
         const d = (u.searchParams.get("datum") || "").replace(/^eq\./, "");
-        const alle = [{ id: 91, datum, typ: "training", trainer_status: { Charles: "ja", Finn: "ja" } }];
+        /* v656: Drei Felder brauchen seit der PO-Entscheidung vom 28.09. drei angehakte Trainer. */
+        const alle = [{ id: 91, datum, typ: "training", trainer_status: { Charles: "ja", Finn: "ja", Kenneth: "ja" } }];
         return alle.filter(t => !d || t.datum === d);
       },
       trainingsformen: custom,
