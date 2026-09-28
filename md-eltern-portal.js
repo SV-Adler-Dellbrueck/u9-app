@@ -795,7 +795,7 @@ async function elternDashLoad(){
      RLS verlaesst. Wer „meins" meint, muss „meins" hinschreiben.) */
   const meineMail=(typeof sbEmail==="function")?sbEmail():null;
   if(meineMail){
-    try{const r=await fetch(`${SB_URL}/rest/v1/eltern_kinder?email=eq.${encodeURIComponent(meineMail)}&select=spieler_id,label,kader(id,name,nr,foto_stadionheft_ok)&order=spieler_id.asc`,{headers:sbAuthHeaders()});if(r.ok)kids=await r.json();}catch(e){}
+    try{const r=await fetch(`${SB_URL}/rest/v1/eltern_kinder?email=eq.${encodeURIComponent(meineMail)}&select=spieler_id,label,kader(id,name,nr,foto_stadionheft_ok,geb)&order=spieler_id.asc`,{headers:sbAuthHeaders()});if(r.ok)kids=await r.json();}catch(e){}
   }
   if(!kids.length){ body.innerHTML=card('<div style="color:#475569;font-size:var(--s-text);line-height:1.6">Dein Trainer hat diese E-Mail noch <b>keinem Kind</b> zugeordnet.<br>Bitte gib ihm die E-Mail-Adresse, mit der du dich hier angemeldet hast.</div>'); return; }
   window._elternKids=kids;   // fürs Fairplay-Quiz (Federn fürs eigene Kind)
@@ -995,6 +995,7 @@ async function elternDashLoad(){
         ${elRow("📊","Saison-Statistik","Spiele, Einsätze &amp; Highlights – ansehen, auf Wunsch teilen",`childWrappedOpen(${k.spieler_id})`,"#a855f7")}
       </div>`;}).join("")}
     <div id="cat-mehr" class="el-cat-panel" style="display:none">`;
+  html+=elRow("👤","Meine Angaben","Name, Handy, Geburtstag – und der Geburtstag deines Kindes","elternAngabenOpen()","#1e3a8a");   // v660
   html+=elRow("📰","Adler Nest (Stadionheft)","Neuigkeiten, Ergebnisse und Geburtstage",`location.href='${location.pathname}?heft'`,"#1e3a8a");
   html+=elRow("📖","Unsere Saison (Chronik)","Alle Spiele, Feste &amp; Meilensteine als Zeitstrahl – wächst jede Woche","chronikOpen()","#1d4ed8",true);
   html+=elRow("🛍️","Adler-Börse","Zu kleine Schuhe &amp; Trikots an Adler-Kinder weitergeben","boerseOpen()","#2563eb");
@@ -1438,6 +1439,15 @@ async function elternChecklistLoad(kids){
      wer „Nein“ sagte, wurde dauerhaft gemahnt („ein Nein hat keinerlei Nachteile“). */
   const fotoIds=new Set();
   try{const ids=kids.map(k=>k.spieler_id).join(",");if(ids){const r=await fetch(`${SB_URL}/rest/v1/foto_consent?spieler_id=in.(${ids})&select=spieler_id`,{headers:sbAuthHeaders()});if(r.ok)(await r.json()).forEach(x=>fotoIds.add(x.spieler_id));}}catch(e){}
+  /* v660 PO 28.09.: Eltern tragen ihre eigenen Angaben ein, den Geburtstag ihres Kindes und
+     dessen Fan-Fakten. Erledigt heißt: alles ausgefüllt. */
+  let angaben=null; const fanIds=new Set();
+  try{const r=await fetch(`${SB_URL}/rest/v1/eltern_angaben?select=vorname,nachname,handy,geburtstag`,{headers:sbAuthHeaders()});if(r.ok)angaben=((await r.json())||[])[0]||null;}catch(e){}
+  try{const ids=kids.map(k=>k.spieler_id).join(",");if(ids){const r=await fetch(`${SB_URL}/rest/v1/kind_fanfacts?spieler_id=in.(${ids})&select=spieler_id`,{headers:sbAuthHeaders()});if(r.ok)(await r.json()).forEach(x=>fanIds.add(x.spieler_id));}}catch(e){}
+  const angabenOk=!!(angaben&&angaben.vorname&&angaben.nachname&&angaben.handy&&angaben.geburtstag);
+  const gebAll=kids.length>0&&kids.every(k=>k.kader&&k.kader.geb);
+  const fanAll=kids.length>0&&kids.every(k=>fanIds.has(k.spieler_id));
+  const kFan=kids.find(k=>!fanIds.has(k.spieler_id))||kids[0]||{}, nFan=((kFan.kader&&kFan.kader.name)||"").replace(/'/g,"");
   const pushOn=(typeof Notification!=="undefined"&&Notification.permission==="granted");
   const fotoAll=kids.length>0&&kids.every(k=>fotoIds.has(k.spieler_id)||(k.kader&&k.kader.foto_stadionheft_ok));
   const notfallAll=kids.length>0&&kids.every(k=>notfallIds.has(k.spieler_id));
@@ -1446,7 +1456,10 @@ async function elternChecklistLoad(kids){
     {done:pushOn,     icon:"🔔", label:"Benachrichtigungen aktivieren", act:`pushSubscribe('parent').then(ok=>{if(ok)elternChecklistLoad(window._elternKids||[]);})`},
     {done:notfallAll, icon:"🚑", label:"Notfallkarte hinterlegen",       act:`notfallOpen(${k0.spieler_id},'${n0}')`},
     {done:fotoAll,    icon:"📸", label:"Foto-Freigabe klären",           act:`elternFotoConsentOpen(${k0.spieler_id},'${n0}')`},
-    {done:committed,  icon:"🤝", label:"Unsere Vereinbarung bestätigen",  act:`vereinbarungOpen()`}
+    {done:committed,  icon:"🤝", label:"Unsere Vereinbarung bestätigen",  act:`vereinbarungOpen()`},
+    {done:angabenOk,  icon:"👤", label:"Deine Angaben eintragen",         act:`elternAngabenOpen()`},
+    {done:gebAll,     icon:"🎂", label:kids.length===1?`Geburtstag von ${esc((k0.kader&&k0.kader.name)||"deinem Kind")}`:"Geburtstage deiner Kinder", act:`elternAngabenOpen()`},
+    {done:fanAll,     icon:"✏️", label:`Fan-Fakten von ${esc((kFan.kader&&kFan.kader.name)||"deinem Kind")}`, act:`elternFanfactsOpen(${kFan.spieler_id},'${nFan}')`}
   ];
   const open=items.filter(i=>!i.done).length;
   if(open===0){ slot.innerHTML=""; return; }
@@ -2195,6 +2208,72 @@ async function elternCardShow(d){
 
 /* Gegner-Vorbericht (Prematch-Muster): letzte Duelle + Bilanz aus der eigenen Termin-
    Historie – nur Ergebnisse, keine Kindernamen. Ergebnis-Format "a:b" aus Adler-Sicht. */
+/* ═══ v660: Meine Angaben ═══
+   PO 28.09.: „… Name, Handy, E-Mail, Geburtsdatum, damit wir auch den Eltern als Teil der
+   Mannschaft gratulieren können. Vom Kind brauchen wir das auch.“
+   Die E-Mail steht im Konto und wird nur angezeigt. Die Angaben sehen das Elternteil selbst
+   und das Trainerteam (RLS eltern_angaben). Den Geburtstag des Kindes schreibt die Funktion
+   eltern_kind_geburtstag – der Kader bleibt für Eltern sonst nur lesbar. */
+async function elternAngabenOpen(){
+  document.getElementById("angaben-modal")?.remove();
+  let a={};
+  try{const r=await fetch(`${SB_URL}/rest/v1/eltern_angaben?select=vorname,nachname,handy,geburtstag`,{headers:sbAuthHeaders()});if(r.ok)a=((await r.json())||[])[0]||{};}catch(e){}
+  const kids=window._elternKids||[];
+  let mail="";
+  try{const s=(typeof sbSession==="function")?sbSession():null;const pl=s&&s.access_token?JSON.parse(atob(s.access_token.split(".")[1].replace(/-/g,"+").replace(/_/g,"/"))):null;mail=(pl&&pl.email)||"";}catch(e){}
+  const feld="width:100%;min-height:48px;padding:10px 12px;margin:4px 0 12px;border:1px solid #94a3b8;border-radius:10px;box-sizing:border-box;font-family:inherit;font-size:var(--s-karte);background:#fff;color:#0f172a";
+  const lbl="font-size:var(--s-text);color:#334155;font-weight:600";
+  const m=document.createElement("div");m.id="angaben-modal";
+  m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Meine Angaben");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10001;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.onclick=e=>{if(e.target===m)m.remove();};
+  const kindFelder=kids.map(k=>{const kd=k.kader||{};
+    return `<label for="ang-kgeb-${k.spieler_id}" style="${lbl}">Geburtstag von ${esc(kd.name||"deinem Kind")}</label>
+      <input id="ang-kgeb-${k.spieler_id}" type="date" data-alt="${esc(kd.geb||"")}" value="${esc(kd.geb||"")}" style="${feld}">`;}).join("");
+  m.innerHTML=`<div style="background:#fff;color:#0f172a;border-radius:16px;padding:18px;max-width:420px;width:100%;margin:auto">
+    ${mdlHead("angaben-modal","👤","Meine Angaben","Für Rückfragen des Trainerteams und zum Gratulieren","#1e3a8a")}
+    <div style="font-size:var(--s-text);color:#334155;line-height:1.5;margin-bottom:12px">Das sieht nur das Trainerteam – keine anderen Eltern, nicht die Kinder, nichts davon wird veröffentlicht. Jedes Elternteil trägt seine eigenen Angaben ein.</div>
+    <div style="display:flex;gap:10px">
+      <div style="flex:1;min-width:0"><label for="ang-vor" style="${lbl}">Vorname</label><input id="ang-vor" autocomplete="given-name" maxlength="60" value="${esc(a.vorname||"")}" style="${feld}"></div>
+      <div style="flex:1;min-width:0"><label for="ang-nach" style="${lbl}">Nachname</label><input id="ang-nach" autocomplete="family-name" maxlength="60" value="${esc(a.nachname||"")}" style="${feld}"></div>
+    </div>
+    <label for="ang-handy" style="${lbl}">Handynummer</label>
+    <input id="ang-handy" type="tel" inputmode="tel" autocomplete="tel" maxlength="25" placeholder="z. B. 0171 1234567" value="${esc(a.handy||"")}" style="${feld}">
+    <label for="ang-mail" style="${lbl}">E-Mail</label>
+    <input id="ang-mail" type="email" value="${esc(mail)}" readonly aria-readonly="true" style="${feld};background:#f1f5f9;color:#334155">
+    <label for="ang-geb" style="${lbl}">Dein Geburtstag</label>
+    <input id="ang-geb" type="date" value="${esc(a.geburtstag||"")}" style="${feld}">
+    ${kindFelder}
+    <div id="ang-fehler" role="alert" style="font-size:var(--s-text);color:#b91c1c;min-height:18px;margin-bottom:6px"></div>
+    <button id="ang-save" onclick="elternAngabenSave(this)" style="width:100%;min-height:56px;border:none;border-radius:12px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">Angaben speichern</button>
+    <button onclick="document.getElementById('angaben-modal').remove()" style="width:100%;min-height:44px;margin-top:8px;border:none;background:none;color:#334155;font-family:inherit;font-size:var(--s-text);cursor:pointer">Schließen</button>
+  </div>`;
+  document.body.appendChild(m);
+}
+function _angHandyOk(h){ return !h||/^[0-9 +()\/-]{6,25}$/.test(h); }
+async function elternAngabenSave(btn){
+  const w=id=>(document.getElementById(id)?.value||"").trim();
+  const f=document.getElementById("ang-fehler");
+  const body={vorname:w("ang-vor")||null,nachname:w("ang-nach")||null,handy:w("ang-handy")||null,geburtstag:w("ang-geb")||null,updated_at:new Date().toISOString()};
+  if(!_angHandyOk(body.handy)){ if(f)f.textContent="Die Handynummer bitte nur mit Ziffern, Leerzeichen, + oder /."; return; }
+  if(body.geburtstag&&body.geburtstag>new Date().toISOString().slice(0,10)){ if(f)f.textContent="Der Geburtstag liegt in der Zukunft."; return; }
+  if(btn){btn.disabled=true;btn.textContent="Speichere …";}
+  const zurueck=()=>{if(btn){btn.disabled=false;btn.textContent="Angaben speichern";}};
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/eltern_angaben?on_conflict=user_id`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(body)});
+    if(!r.ok){ if(f)f.textContent="Speichern hat nicht geklappt. Bitte gleich noch einmal versuchen."; return zurueck(); }
+    for(const k of (window._elternKids||[])){
+      const el=document.getElementById("ang-kgeb-"+k.spieler_id); if(!el)continue;
+      const v=el.value; if(!v||v===el.dataset.alt)continue;
+      const rr=await fetch(`${SB_URL}/rest/v1/rpc/eltern_kind_geburtstag`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({p_spieler_id:k.spieler_id,p_geb:v})});
+      if(!rr.ok){ if(f)f.textContent=`Der Geburtstag von ${(k.kader&&k.kader.name)||"deinem Kind"} passt nicht zur U9 – bitte prüfen.`; return zurueck(); }
+      if(k.kader)k.kader.geb=v;
+    }
+  }catch(e){ if(f)f.textContent="Keine Verbindung. Bitte gleich noch einmal versuchen."; return zurueck(); }
+  document.getElementById("angaben-modal")?.remove();
+  if(typeof toast==="function")toast("Angaben gespeichert ✓");
+  if(typeof elternChecklistLoad==="function")elternChecklistLoad(window._elternKids||[]);
+}
 async function tdVorberichtLoad(t){
   const box=document.getElementById("td-vorbericht"); if(!box)return;
   const gegner=(t.gegner||t.titel||"").trim(); if(!gegner)return;

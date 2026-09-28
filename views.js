@@ -1227,6 +1227,8 @@ async function backupExport(){
                 "trainingsblock",
                 "eltern_poll","eltern_poll_slot","eltern_poll_vote","ansagen","ansagen_gelesen",
                 "kabine_config","kabine_lob","kabine_post","kabine_reporter","kabinen_wahl","kabinen_wahl_stimmen",
+                /* v660: Angaben der Eltern (Name, Handy, Geburtstag). */
+                "eltern_angaben",
                 "kind_fanfacts","kind_kontakte","kind_pause","kind_selbstbild","kind_stimmung",
                 "album_fotos","album_kind","album_tausch","termin_media","ticker_claps","wochen_challenge",
                 "fundbuero","waesche_log","teamkasse","kasse_umlagen","boerse_listings",
@@ -2798,6 +2800,29 @@ function homeAlter(geb){ // Alter in Jahren aus YYYY-MM-DD
   let a=h.getFullYear()-g.getFullYear();
   if(h.getMonth()<g.getMonth()||(h.getMonth()===g.getMonth()&&h.getDate()<g.getDate()))a--;
   return a;
+}
+/* v660 PO 28.09.: „… damit wir auch den Eltern als Teil der Mannschaft gratulieren können.“
+   Die Karte stand bis v659 als toter Code in renderHome (gebaut, nie eingesetzt). Jetzt: Kinder
+   aus dem Kader und Eltern aus eltern_angaben, die in den nächsten 14 Tagen Geburtstag haben.
+   Eltern tragen ihren Geburtstag selbst ein; das Alter der Eltern steht bewusst nicht dabei. */
+async function homeGeburtstage(){
+  const slot=document.getElementById("home-geb"); if(!slot)return;
+  const liste=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k.geb&&k.aktiv!==false)
+    .map(k=>({name:k.name,d:homeGebTage(k.geb),alter:homeAlter(k.geb)+1,kind:true}));
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/eltern_angaben?select=vorname,nachname,geburtstag&geburtstag=not.is.null`,{headers:sbAuthHeaders()});
+    if(r.ok)(await r.json()).forEach(e=>{const n=[e.vorname,e.nachname].filter(Boolean).join(" ");if(n)liste.push({name:n,d:homeGebTage(e.geburtstag),kind:false});});
+  }catch(e){}
+  const bald=liste.filter(x=>x.d<=14).sort((a,b)=>a.d-b.d);
+  if(!document.getElementById("home-geb"))return;
+  if(!bald.length){slot.innerHTML="";return;}
+  slot.innerHTML=`<div class="card" style="padding:12px 14px;margin-top:10px;border-left:3px solid var(--amber)">
+    <div style="font-weight:800;font-size:var(--s-text);margin-bottom:4px">🎂 Geburtstage in den nächsten 14 Tagen</div>
+    ${bald.map(x=>`<div style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);padding:3px 0">
+      <span aria-hidden="true">${x.d===0?"🎉":"🎂"}</span><strong>${esc(x.name)}</strong>
+      <span style="color:var(--text2);font-size:var(--s-klein)">${x.kind?"":"Elternteil · "}${x.d===0?(x.kind?`wird HEUTE ${x.alter}!`:"hat HEUTE Geburtstag!"):`in ${x.d} Tag${x.d===1?"":"en"}${x.kind?` · wird ${x.alter}`:""}`}</span>
+    </div>`).join("")}
+  </div>`;
 }
 function homeGebTage(geb){ // Tage bis zum nächsten Geburtstag (0 = heute)
   const h=new Date();h.setHours(0,0,0,0);
@@ -4466,6 +4491,7 @@ const HELP=[
     {t:"Team-Ansage", d:"Wichtige Info an alle Eltern – mit Gelesen-Status (wer fehlt noch?).", run:"ansageTrainerOpen()"},
     {t:"Adler Nest", d:"Digitales Stadionheft erstellen & drucken.", run:"stadionheftOpen()"},
     {t:"Eltern-Bereich", d:"Eltern melden sich mit E-Mail und Passwort an (alternativ Einmal-Code per Mail): Zu- und Absagen, Karte, Quiz, Betreuung vor Ort. Neue Passwörter – bei Eltern und Trainern – brauchen mindestens 10 Zeichen mit Buchstaben und Ziffern; ältere, kürzere gelten zum Anmelden weiter."},
+    {t:"Geburtstage und Elternangaben", d:"Seit v660 steht auf der Startseite eine Karte mit allen, die in den nächsten 14 Tagen Geburtstag haben – Kinder aus dem Kader und Eltern, die ihren Geburtstag unter „Meine Angaben“ eingetragen haben (bei Eltern ohne Alter). Eltern tragen dort auch Vor- und Nachname, Handynummer und den Geburtstag ihres Kindes ein; „Erste Schritte“ erinnert sie daran, bis alles ausgefüllt ist. Die Angaben sehen nur das Elternteil selbst und das Trainerteam, und sie stehen in der Sicherung."},
     {t:"Einladungskarten", d:"Je Kind eine Karte mit QR-Code, vier pro A4-Seite. Die Eltern scannen, legen E-Mail und Passwort fest und sind sofort angemeldet – kein Mailversand, kein Eintragen der Adresse vorab. Eine Karte gilt für zwei Elternteile und bis zum gewählten Datum; neu drucken macht die alte Karte des Kindes ungültig. <b>Seit v658 geht es auch ohne Papier:</b> Nach „Karten erzeugen“ steht je Kind „Link kopieren“ – den Link schickst du im persönlichen Chat (nie in die Gruppe), er wirkt genau wie die Karte. Die Links gibt es nur in diesem Fenster; gedruckt wird erst mit „Karten drucken“.", run:"einladungskartenOpen()"},
     {t:"Adler-Welt-Hub", d:"Federn je Kind, FUT-Karten, Technik-Abzeichen und Wochen-Challenge an einem Ort.", run:"adlerWeltOpen()"},
     {t:"Federn-Stichtag", d:"In „Team-Quests verwalten“ steht „Federn zählen ab“. Quiz-Federn zählen immer. Training, Serien, Zusagen, Missionen, Album und Abzeichen zählen erst ab diesem Tag – auf der Karte, in der Übersicht und im Team-Level, das ab dem Stichtag ganz neu zählt. Gelöscht wird nichts; ein Anlass von vorher bringt auch nachträglich keine Federn. Feld leeren heißt: alles zählt wieder."},
@@ -5255,21 +5281,7 @@ async function renderHome(){
     <div style="font-size:var(--s-seite);font-weight:800;color:${col}">${val}</div>
     <div style="font-size:var(--s-klein);color:var(--text2)">${lbl}</div></div>`;
 
-  // ── Geburtstage (nur wenn geb im KADER gepflegt) ──
-  const mitGeb=KADER.filter(k=>k.geb);
-  let gebHtml="";
-  if(!mitGeb.length){
-    gebHtml=card(`<div style="font-size:var(--s-text);color:var(--text2)">🎂 Geburtstage: noch keine Daten im Kader gepflegt (Feld <code>geb:"JJJJ-MM-TT"</code> je Spieler ergänzen).</div>`);
-  }else{
-    const soon=mitGeb.map(k=>({k,d:homeGebTage(k.geb)})).filter(x=>x.d<=14).sort((a,b)=>a.d-b.d);
-    if(soon.length){
-      gebHtml=card(soon.map(x=>`<div style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);padding:3px 0">
-        <span style="font-size:var(--s-karte)">${x.d===0?"🎉":"🎂"}</span>
-        <strong>${esc(x.k.name)}</strong>
-        <span style="color:var(--text2);font-size:var(--s-klein)">${x.d===0?`wird HEUTE ${homeAlter(x.k.geb)+1}!`:`wird in ${x.d} Tag${x.d===1?"":"en"} ${homeAlter(x.k.geb)+1}`}</span>
-      </div>`).join(""),"var(--amber)");
-    }
-  }
+  // Geburtstage: seit v660 ein eigener Slot (#home-geb), gefüllt von homeGeburtstage().
 
   // Team-Quests leben jetzt im Spieltag (dort werden sie gezählt & geschafft) – nicht mehr auf der Startseite.
   let onboardHtml="";
@@ -5295,6 +5307,7 @@ async function renderHome(){
     <div id="home-woche"></div>
     <div id="home-next"></div>
     <div id="home-meeting"></div>
+    <div id="home-geb"></div>
     <div id="trainer-alle-termine-slot"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
       ${kachelTile("training","🏃","Training","var(--fam-training)","var(--fam-training-2)")}
@@ -5305,6 +5318,7 @@ async function renderHome(){
       ${kachelTile("orga","📅","Orga","var(--fam-orga)","var(--fam-orga-2)")}
     </div>
     <div id="app-version" style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin:14px 0 4px"></div>`;
+  homeGeburtstage();   // v660: Kinder und Eltern, nächste 14 Tage
   appVersionInto("app-version");   // liest die Version aus dem geladenen Cache
   elterngespraecheTrainerLoad(); // offene Elterngespräch-Wünsche (handeln nötig → bleibt oben)
   loeschantraegeTrainerLoad();   // v644: offene Löschanträge (Frist ein Monat → ganz oben)
