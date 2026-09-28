@@ -2206,6 +2206,10 @@ function tpGruppeHinweis(selId){
     }else if(aktiv&&info.n>sp.max){
       const rest=info.n-sp.max;
       html+=`<div style="font-size:var(--s-klein);color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: ${sp.max} spielen, ${rest===1?"eines wechselt":rest+" wechseln"} ein</div>`;
+      /* v656 (PO 28.09.): Ein Wechsler je Station ist machbar, mehr nicht – dann keine neue
+         Gruppe, sondern eine Übung, die mit so vielen Kindern läuft, oder die bestehende per
+         KI angepasst. */
+      if(rest>1)html+=tpGroesserHinweis(selId,idx,info.n);
     }else if(aktiv&&info.n>=aktiv){
       html+=`<div style="font-size:var(--s-klein);color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: alle spielen</div>`;
     }else if(aktiv&&info.n<aktiv){
@@ -2223,6 +2227,51 @@ function tpGruppeHinweis(selId){
   el.innerHTML=html;
 }
 function tpGruppeHinweisAll(){ Object.keys(_tpStationGruppe).forEach(tpGruppeHinweis); }
+/* v656 · Mehr Kinder an der Station, als die Übung trägt. PO am 28.09.: „… dann keine neue
+   Gruppe aufmachen, sondern eine Übung suchen, die mit mehr Spielern funktioniert oder die
+   bestehende Übung entsprechend über KI automatisch anpassen und vorschlagen.“ Ein Wechsler
+   ist in Ordnung (der Aufrufer meldet sich erst ab zwei). Vorgeschlagen werden höchstens drei
+   Übungen, in die die Gruppe passt – gleiche Kategorie zuerst, nichts, was in diesem Block
+   schon an einer anderen Station steht. */
+function tpGroesserVorschlaege(selId,idx,n){
+  const info=_tpStationGruppe[selId]||{};
+  const alle=tpAllForms(), f=alle[idx]||{};
+  const belegt=new Set([...document.querySelectorAll(`select.tp-form-sel[id^="tp-form-${info.si}-"]`)].map(x=>x.value));
+  const passt=alle.map((x,i)=>({x,i})).filter(o=>{
+    if(!o.x||!o.x.name||o.i===idx||belegt.has(String(o.i)))return false;
+    const sp=tpUebungSpanne(o.i);
+    return !sp.alle&&sp.min>0&&sp.min<=n&&n<=sp.max+1;
+  });
+  passt.sort((a,c)=>(a.x.kat===f.kat?0:1)-(c.x.kat===f.kat?0:1)||(n-tpUebungSpanne(a.i).max)-(n-tpUebungSpanne(c.i).max));
+  return passt.slice(0,3);
+}
+function tpGroesserHinweis(selId,idx,n){
+  const vor=tpGroesserVorschlaege(selId,idx,n);
+  const f=tpAllForms()[idx]||{};
+  return `<div class="tp-groesser" role="note" style="font-size:var(--s-klein);color:var(--text);background:var(--surface2);border:1px solid var(--rand-bedien);border-left:4px solid var(--amber);border-radius:8px;padding:6px 8px;margin-top:4px;line-height:1.5">
+    ⚠️ <b>Zu viele Wechsler</b> – „${esc(f.name||"")}“ trägt weniger Kinder, als hier stehen.
+    ${vor.length?`<div style="margin-top:4px">Passt für ${n} Kinder:</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">${vor.map(o=>`<button class="btn btn-sm" style="min-height:44px" onclick="tpUebungTausch('${selId}',${o.i})">${esc(o.x.name)}</button>`).join("")}</div>`:""}
+    <div style="margin-top:6px"><button class="btn btn-sm" style="min-height:44px" onclick="tpUebungKiAnpassen(${idx},${n})">🤖 Per KI für ${n} Kinder anpassen</button></div>
+  </div>`;
+}
+function tpUebungTausch(selId,idx){
+  const sel=document.getElementById(selId); if(!sel)return;
+  if(![...sel.options].some(o=>o.value===String(idx))){ const f=tpAllForms()[idx]; if(!f)return; sel.add(new Option(f.name,String(idx))); }
+  sel.value=String(idx);
+  tpOnSelectChange(sel);
+  if(typeof toast==="function")toast("🔁 Getauscht – „"+(tpAllForms()[idx]||{}).name+"“");
+}
+/* Öffnet die Übung als Kopie und schreibt den Auftrag ins KI-Feld. Namen von Kindern stehen
+   darin nicht – nur Übung und Zahl. Die Auswertung selbst liegt in Welle 2 (md-skizze.js). */
+function tpUebungKiAnpassen(idx,n){
+  const f=tpAllForms()[idx]; if(!f)return;
+  uebungKopieren(idx);
+  const t=document.getElementById("tf-ki-text"); if(!t)return;
+  t.value=`Passe diese Übung für ${n} Kinder an einer Station an. Alle sollen spielen, höchstens ein Kind wechselt ein. Gleiches Ziel, gleiche Idee – nur Feld, Teams oder Regeln anpassen.\n\nÜbung: ${f.name}\nBisher: ${f.spieler||"–"} Kinder, Feld ${f.feld||"–"}\nAblauf: ${f.ablauf||""}${f.coaching?"\nCoaching: "+f.coaching:""}`;
+  if(typeof feldWachsen==="function")feldWachsen(t);
+  if(typeof tfKiAuswerten==="function")tfKiAuswerten();
+  else { const st=document.getElementById("tf-ki-stand"); if(st)st.textContent="Die KI lädt noch – gleich „KI-Auswertung“ tippen."; }
+}
 /* ═══ v631 · Ein Trainer, mehrere Felder ═══════════════════════════════════════════
    PO: „… Trainingsformen, die auch mit einem einzigen Trainer durchführbar sind“. Seit v570
    richtet sich die Feldzahl nach den Kindern, nicht nach den Trainern – ein Feld ohne Trainer
@@ -5111,7 +5160,12 @@ function tpGruppenVorschlag(kinder){
     if(n>max){max=n;si=i;}
   });
   if(si<0)return null;
-  const obergrenze=Math.min(TG_NAMEN.length,Math.max(1,Math.floor(k/TG_ZIEL_MIN)));
+  /* v656: Mit angehakten Trainern nie mehr Gruppen als Trainer (oder Stationen) vorschlagen –
+     eine weitere Gruppe hätte niemanden. Ein Kind über der Übungsgröße je Feld gilt als
+     passend: es wechselt ein und aus (PO 28.09.). */
+  const trainer=(typeof tpGetCheckedTrainers==="function")?tpGetCheckedTrainers().length:0;
+  const deckel=trainer>0?Math.max(trainer,max):TG_NAMEN.length;
+  const obergrenze=Math.min(TG_NAMEN.length,deckel,Math.max(1,Math.floor(k/TG_ZIEL_MIN)));
   let beste=null;
   for(let n=1;n<=obergrenze;n++){
     const bedarf=tpFeldBedarfe(si,n);
@@ -5120,7 +5174,7 @@ function tpGruppenVorschlag(kinder){
     for(let j=0;j<k;j++)felder[j%n].kinder.push("K"+j);   // gleichmäßig, wie tgBilden verteilt
     const ist=tpFelderAusgleich(felder,bedarf).map(f=>f.kinder.length);
     const fehlt=ist.reduce((a,x,i)=>a+Math.max(0,(bedarf[i]||0)-x),0);
-    const zuviel=ist.reduce((a,x,i)=>a+Math.max(0,x-(bedarf[i]||x)),0);
+    const zuviel=ist.reduce((a,x,i)=>a+Math.max(0,x-(bedarf[i]||x)-1),0);
     const abw=fehlt+zuviel;
     if(!beste||abw<beste.abw||(abw===beste.abw&&n>beste.n))beste={n,abw,fehlt,zuviel,bedarf,ist};
   }
@@ -5256,7 +5310,16 @@ function tgBedarf(kinder,stationen){
      TRAINERZAHL bleibt davon unberührt: drei angehakte Feldtrainer haben seit je drei
      Gruppen bekommen, auch bei elf Kindern, und die App sagt dann „eine Gruppe liegt unter
      der Zielgröße“ statt eigenmächtig eine wegzunehmen (v536). */
-  const wunsch=Math.max(1,st,Math.ceil(k/TG_ZIEL_MAX));
+  /* v656 (PO 28.09.): „Lieber eine Übung mit einem Spieler mehr, den man ein- und
+     auswechselt, als eine nicht betreute Gruppe.“ Und: „Wenn es mehr werden, keine neue
+     Gruppe aufmachen, sondern eine Übung suchen, die mit mehr Spielern funktioniert.“
+     Sind Feldtrainer angehakt, gibt es deshalb so viele Gruppen wie Trainer – die
+     Kinderzahl macht keine zusätzliche mehr auf (vorher: höchstens 6 je Gruppe, 14 Kinder
+     bei zwei Trainern gaben drei Gruppen, eine davon ohne Trainer). Wird eine Gruppe größer
+     als die Übung, sagt es die Station und bietet eine größere Übung oder die KI-Anpassung
+     an. Stationen bleiben: Eine Einheit mit drei verschiedenen Stationen (L4-8) ist so
+     gebaut, dass die Gruppen rotieren. Ohne angehakte Trainer gilt die alte Rechnung. */
+  const wunsch=trainer>0?Math.max(1,st,trainer):Math.max(1,st,Math.ceil(k/TG_ZIEL_MAX));
   const platz=Math.max(1,Math.floor(k/TG_ZIEL_MIN));
   return Math.max(1,Math.min(Math.max(Math.min(wunsch,platz),trainer),TG_NAMEN.length));
 }

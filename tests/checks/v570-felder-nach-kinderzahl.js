@@ -138,7 +138,10 @@ module.exports = async function (h) {
   /* „3/3" ist der Gegenprobe-Fall: drei Kinder tragen rechnerisch keine zweite Gruppe, die
      zwei angehakten Feldtrainer bekommen sie trotzdem – die Trainerzahl bleibt unangetastet
      (v536), gedeckelt wird nur der Aufschlag aus Stationen und Kinderzahl. */
-  const soll = { "8/3": 2, "10/3": 2, "12/3": 3, "13/3": 3, "14/3": 3, "13/2": 3, "8/1": 2, "3/3": 2 };
+  /* v656 (PO 28.09.): Sind Trainer angehakt, gibt es ohne dritte Station keine dritte Gruppe
+     mehr – „lieber eine Übung mit einem Spieler mehr … als eine nicht betreute Gruppe“.
+     13 Kinder, zwei Stationen, zwei Trainer: zwei Gruppen (vorher drei aus der Kinderzahl). */
+  const soll = { "8/3": 2, "10/3": 2, "12/3": 3, "13/3": 3, "14/3": 3, "13/2": 2, "8/1": 2, "3/3": 2 };
   const abw = Object.keys(soll).filter(k => r.rechnung[k] !== soll[k]).map(k => `${k} → ${r.rechnung[k]} statt ${soll[k]}`);
   if (abw.length) probleme.push("Gruppenzahl falsch gerechnet: " + abw.join(" · "));
   if (r.kinder !== 13) probleme.push(`${r.kinder} Kinder im Pool, erwartet 13`);
@@ -167,11 +170,13 @@ module.exports = async function (h) {
 
   // d)
   const g46 = (r.l46.gruppen || []).slice().sort((a, b) => b - a);
-  if (String(g46) !== "5,4,4") probleme.push(`L4-6 bei 13 Kindern: Gruppen ${g46.join("/")} statt 5/4/4`);
+  /* v656: Zwei Stationen, zwei Trainer → zwei Felder, keine wiederholte dritte Station ohne
+     Trainer. Das siebte Kind wechselt ein. */
+  if (String(g46) !== "7,6") probleme.push(`L4-6 bei 13 Kindern und zwei Trainern: Gruppen ${g46.join("/")} statt 7/6`);
   const h46 = r.l46.haupt || [];
   if (!h46.length) probleme.push("L4-6: keine Hauptteile");
-  else if (String(h46[0].felder) !== String([ADLER, "2 gegen 1 plus Torwart – der Flitzer macht es breit", ADLER]))
-    probleme.push(`L4-6 Hauptteil 1 bei drei Feldern: [${h46[0].felder.join(" | ")}] – Feld 3 sollte Station 1 wiederholen`);
+  else if (String(h46[0].felder) !== String([ADLER, "2 gegen 1 plus Torwart – der Flitzer macht es breit"]))
+    probleme.push(`L4-6 Hauptteil 1 bei zwei Trainern: [${h46[0].felder.join(" | ")}] statt der zwei Stationen`);
 
   // f)
   if (!/3 Stationen geplant, 2 Felder/.test(r.knopfText || "")) probleme.push("Bei zwei Gruppen und drei Stationen sagt der Block nicht, dass eine Station entfällt");
@@ -232,7 +237,7 @@ module.exports = async function (h) {
     zeilen.push(`Rechnung: ${Object.keys(soll).map(k => k + "→" + r.rechnung[k]).join(" · ")} (Zielgröße ${r.zielMin}–${r.zielMax} je Gruppe)`);
     zeilen.push(`Abspalten: 7/6 → ${r.nachher.map(x => x.n).join("/")} · Namen, Trainer und die Kinder der bestehenden Gruppen bleiben`);
     zeilen.push(`L4-8 mit 13 Kindern und zwei Trainern: drei Gruppen ${g48.join("/")}, drei Felder mit drei Übungen, kein Hinweis`);
-    zeilen.push(`L4-6 (zwei Stationen) mit 13 Kindern: drei Felder, Feld 3 wiederholt Station 1`);
+    zeilen.push(`L4-6 (zwei Stationen) mit 13 Kindern und zwei Trainern: zwei Felder 7/6, eines wechselt ein (v656)`);
     zeilen.push(`Von Hand auf zwei Gruppen: Block sagt „3 Stationen geplant, 2 Felder“ und bietet „3 Gruppen bilden“`);
     zeilen.push(`Mit acht Kindern: zwei Gruppen ${gk.join("/")}, kein Knopf – stattdessen die nötige Kinderzahl`);
   }

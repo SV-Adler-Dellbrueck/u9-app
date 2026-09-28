@@ -1030,6 +1030,43 @@ function vuFilterLeeren(){
   _vuAuswahl=null;
   vorlageUebernehmenRender();
 }
+/* v656 · Themen als Kacheln (PO 28.09.: „… dass die Kacheln der einzelnen Themenschwerpunkte
+   gut strukturiert sind, ich sie mir dort anschauen kann und über einfache Wege erkenne,
+   worum es geht“). Eine Kachel je Leitfrage: Kürzel, Frage, wie viele Einheiten und ihre
+   Kurztitel. Dieselbe Kachel steht im Vorlagen-Fenster und im Trainingsblock – ein Thema
+   sieht an beiden Orten gleich aus. `wahl` ist der Klick-Aufruf mit dem Index der Frage. */
+function vuThemen(){
+  const m=new Map();
+  (typeof VORLAGEN!=="undefined"?VORLAGEN:[]).forEach(v=>{
+    const f=String(v.leitfrage||"").trim(); if(!f)return;
+    if(!m.has(f))m.set(f,[]);
+    m.get(f).push(v);
+  });
+  const nr=f=>{ const x=/^L(\d+)-/.exec(String((m.get(f)[0]||{}).name||"")); return x?Number(x[1]):99; };
+  return [...m.keys()].sort((a,b)=>nr(a)-nr(b)).map(f=>({frage:f,kuerzel:nr(f)<99?"L"+nr(f):"",
+    einheiten:m.get(f).slice().sort((a,b)=>(Number(a.folge_nr)||0)-(Number(b.folge_nr)||0)||String(a.name).localeCompare(String(b.name)))}));
+}
+/* „L4-1 Passen – den freien Mitspieler finden“ → „den freien Mitspieler finden“ */
+function vuKurztitel(name){
+  const s=String(name||"").replace(/^L\d+-\d+\s*/,"");
+  const t=s.split(/\s+–\s+/);
+  return (t.length>1?t.slice(1).join(" – "):s).trim();
+}
+function vuThemenKacheln(wahl,aktiv){
+  return `<div class="vu-themen" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">${vuThemen().map((t,i)=>{
+    const an=aktiv===t.frage;
+    return `<button type="button" class="vu-thema" onclick="${wahl}(${i})" aria-pressed="${an?"true":"false"}" style="display:block;width:100%;text-align:left;min-height:48px;padding:12px;border:1.5px solid ${an?"#7c3aed":"var(--rand-bedien)"};border-radius:12px;background:${an?"#7c3aed14":"var(--surface)"};color:var(--text);font-family:inherit;cursor:pointer">
+      <div style="display:flex;gap:8px;align-items:baseline">${t.kuerzel?`<span style="font-size:var(--s-klein);font-weight:900;color:#fff;background:#7c3aed;border-radius:6px;padding:2px 7px">${esc(t.kuerzel)}</span>`:""}
+        <span style="font-size:var(--s-klein);color:var(--text2)">${t.einheiten.length} Einheit${t.einheiten.length===1?"":"en"}</span></div>
+      <div style="font-size:var(--s-text);font-weight:800;margin-top:6px;line-height:1.35">${esc(t.frage)}</div>
+      <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px;line-height:1.45">${t.einheiten.map(v=>esc(vuKurztitel(v.name))).join(" · ")}</div>
+    </button>`; }).join("")}</div>`;
+}
+function vuThemaWaehlen(i){
+  const t=vuThemen()[i]; if(!t)return;
+  _vuFilter.leitfrage=t.frage; _vuAuswahl=null;
+  vorlageUebernehmenRender();
+}
 function vorlageUebernehmenRender(opt){
   const box=document.getElementById("vu-inhalt"); if(!box)return;
   const datum=_vuDatum();
@@ -1062,6 +1099,7 @@ function vorlageUebernehmenRender(opt){
     (Array.isArray(v.tags)?v.tags:[]).forEach(t=>marken.push(esc(vuTagLabel(t))));
     return `<button onclick="vuWaehlen('${esc(String(v.id))}')" aria-pressed="${an?"true":"false"}" style="display:block;width:100%;text-align:left;min-height:48px;padding:10px 12px;margin-bottom:6px;border:1.5px solid ${an?"#7c3aed":"var(--rand-bedien)"};border-radius:12px;background:${an?"#7c3aed14":"var(--surface)"};color:var(--text);font-family:inherit;cursor:pointer">
       <div style="font-size:var(--s-text);font-weight:800">${esc(v.name)}</div>
+      ${v.ziel_kinder?`<div style="font-size:var(--s-klein);color:var(--text);margin-top:4px;line-height:1.45">⚽ ${esc(v.ziel_kinder)}</div>`:""}
       <div style="font-size:var(--s-klein);color:var(--text3);margin-top:3px">${meta.join(" · ")}</div>
       ${marken.length?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px">${marken.map(x=>`<span style="font-size:var(--s-klein);color:var(--text2);background:var(--surface2);border-radius:6px;padding:2px 7px">${x}</span>`).join("")}</div>`:""}
     </button>`;
@@ -1094,7 +1132,9 @@ function vorlageUebernehmenRender(opt){
     return `<div style="border:var(--border-s);border-radius:12px;padding:12px;margin-top:10px">
       <div style="font-size:var(--s-text);font-weight:800">${esc(v.name)}</div>
       <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">${esc(v.leitfrage||"")}${tag?" · "+esc(tag):" · kein Termin gewählt"}</div>
+      ${v.ziel_kinder?`<div style="font-size:var(--s-text);background:var(--surface2);border-radius:10px;padding:8px 10px;margin-bottom:8px;line-height:1.45"><b>⚽ Für die Kinder:</b> ${esc(v.ziel_kinder)}</div>`:""}
       ${bl.map(zeile).join("")}
+      ${bl.some(b=>b.typ==="abschluss")?"":`<div style="font-size:var(--s-klein);color:var(--text2);padding:5px 0;border-bottom:1px solid var(--surface2)">🏆 <b>+ Abschlussturnier ${VU_TURNIER_MIN} Min.</b> – der letzte Spielblock gibt die Zeit ab</div>`}
       ${skZeilen?`<div style="font-size:var(--s-klein);color:var(--text2);line-height:1.6;margin-top:8px">📐 ${skZeilen}</div>`:""}
       ${v.beobachtung?`<div style="font-size:var(--s-klein);color:var(--text2);line-height:1.5;margin-top:8px">👀 ${esc(v.beobachtung)}</div>`:""}
       ${(function(){
@@ -1116,6 +1156,7 @@ function vorlageUebernehmenRender(opt){
     </div>`;
   };
   const aktiv=!!(_vuFilter.leitfrage||_vuFilter.tag||_vuFilter.ordnung);
+  const themenStart=!aktiv&&!String(_vuFilter.suche||"").trim()&&vuThemen().length>1;
   const filterText=vuFilterText();
   box.innerHTML=`
     ${datum?"":`<div style="background:var(--red-bg);border:1px solid var(--red);border-radius:10px;padding:9px 11px;margin-bottom:8px;font-size:var(--s-text);color:var(--red)">Bitte oben zuerst einen Termin wählen.</div>`}
@@ -1137,7 +1178,9 @@ function vorlageUebernehmenRender(opt){
       ${aktiv?`<button onclick="vuFilterLeeren()" class="btn btn-sm" style="width:100%;min-height:44px;margin-top:10px;justify-content:center">↩ Filter aufheben</button>`:""}
     </div>`:""}
     <div style="font-size:var(--s-klein);color:var(--text3);margin:8px 2px 0">${treffer.length===VORLAGEN.length?`${VORLAGEN.length} Vorlagen`:`${treffer.length} von ${VORLAGEN.length} Vorlagen`}</div>
-    ${treffer.length?listeHtml:`<div style="font-size:var(--s-text);color:var(--text2);padding:10px 0">Keine Vorlage passt dazu.${(aktiv||_vuFilter.suche)?` <button onclick="vuFilterLeeren();vuSucheSetzen('')" class="btn btn-sm" style="min-height:44px;margin-top:8px">↩ Alle zeigen</button>`:""}</div>`}
+    ${themenStart?`<div style="font-size:var(--s-klein);color:var(--text2);margin:10px 2px 6px">Thema wählen – oder oben suchen</div>${vuThemenKacheln("vuThemaWaehlen","")}`
+      :_vuFilter.leitfrage&&!_vuFilter.tag&&!_vuFilter.ordnung&&!_vuFilter.suche?`<button type="button" onclick="vuFilterSet('leitfrage',_vuFilter.leitfrage)" class="btn btn-sm" style="min-height:44px;margin-top:10px">← Alle Themen</button>`:""}
+    ${themenStart?"":treffer.length?listeHtml:`<div style="font-size:var(--s-text);color:var(--text2);padding:10px 0">Keine Vorlage passt dazu.${(aktiv||_vuFilter.suche)?` <button onclick="vuFilterLeeren();vuSucheSetzen('')" class="btn btn-sm" style="min-height:44px;margin-top:8px">↩ Alle zeigen</button>`:""}</div>`}
     ${gewaehlt?vorschau(gewaehlt):""}
     <button id="vu-haupt" onclick="vorlageUebernehmenSetzen()" class="btn btn-p" style="width:100%;min-height:56px;margin-top:12px;justify-content:center;font-size:var(--s-karte)"${(!gewaehlt||!datum)?" disabled":""}><i class="ti ti-calendar-plus"></i>${_vuPlanDa?"Plan ersetzen":"Auf den Termin setzen"}</button>
     <button onclick="vorlageUebernehmenClose()" class="btn" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Abbrechen</button>`;
@@ -1146,6 +1189,24 @@ function vorlageUebernehmenRender(opt){
     const el=document.getElementById("vu-suche");
     if(el){ const p=el.value.length; el.focus(); try{el.setSelectionRange(p,p);}catch(e){} }
   }
+}
+
+/* v656 (PO 28.09.): Jede Einheit endet mit einem kleinen Turnier, rund zehn Minuten. Bringt
+   die Vorlage keinen Abschluss mit, gibt der letzte Spielblock zehn Minuten ab – die Einheit
+   wird dadurch nicht länger. Der Block behält mindestens zehn Minuten; reicht das nicht,
+   wird das Turnier kürzer statt der Block zu klein. */
+const VU_TURNIER_MIN=10;
+function vuAbschlussturnierSichern(slots){
+  if(!Array.isArray(slots)||slots.some(s=>s&&s.typ==="abschluss"))return false;
+  let k=-1;
+  slots.forEach((s,i)=>{ if(s&&(s.typ==="main"||s.typ==="spielform")&&s.parallelZu==null)k=i; });
+  if(k<0)return false;
+  const vorher=Number(slots[k].dauer)||0;
+  const ab=Math.max(0,Math.min(VU_TURNIER_MIN,vorher-10));
+  if(ab<5)return false;
+  slots[k].dauer=vorher-ab;
+  slots.push({label:"Abschlussturnier",dauer:ab,farbe:EI_FARBEN.abschluss,typ:"abschluss"});
+  return true;
 }
 
 /* Setzt Phasen und Übungszuordnung für das Datum – dieselben Strukturen und
@@ -1229,6 +1290,7 @@ async function vorlageUebernehmenSetzen(){
     toast(`Die Übung „${fehlend}“ gibt es nicht mehr – nichts geändert`,"err");
     if(haupt)haupt.disabled=false; return;
   }
+  vuAbschlussturnierSichern(slots);
   try{
     const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?on_conflict=datum`,{method:"POST",
       headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates,return=minimal'},

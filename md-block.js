@@ -226,6 +226,38 @@ function blockVorlageUmschalten(i){
   else w.push(v.name);
   blockEditorRender();
 }
+/* v656 · Die Einheit als Karte: Kurztitel, was die Kinder lernen, Dauer und Kinderzahlen –
+   und aufklappbar der Ablauf, damit man vor dem Wählen sieht, worum es geht. Der Knopf
+   „Wählen“ ist die eine Handlung; der Aufklapper nur zum Nachsehen. */
+function blockThemaSetzen(i){
+  const t=(typeof vuThemen==="function")?vuThemen()[i]:null; if(!t)return;
+  if(_tbEdit.leitfrage!==t.frage){ _tbEdit.leitfrage=t.frage; _tbEdit.wahl=[]; }
+  blockEditorRender();
+}
+function blockEinheitKarte(v,i,p){
+  const bl=Array.isArray(v.bloecke)?v.bloecke:[];
+  const summe=bl.reduce((a,b)=>a+(Number(b.dauer)||0),0);
+  const sk=(typeof _evSkalierungSchluessel==="function")?_evSkalierungSchluessel(v.skalierung):[];
+  const an=p>=0;
+  const kurz=(typeof vuKurztitel==="function")?vuKurztitel(v.name):v.name;
+  const kz=(/^(L\d+-\d+)/.exec(String(v.name||""))||[])[1]||"";
+  const zeile=b=>`<div style="display:flex;gap:8px;padding:3px 0;border-top:1px solid var(--surface2)"><b style="min-width:3.2em">${Number(b.dauer)} Min.</b><span style="min-width:0">${esc(b.label||"")}${(typeof _evBlockText==="function")?`<span style="display:block;color:var(--text2)">${_evBlockText(b)}</span>`:""}</span></div>`;
+  return `<div class="tb-einheit" style="border:1.5px solid ${an?"var(--text)":"var(--rand-bedien)"};border-radius:12px;padding:10px 12px;background:var(--surface)">
+    <div style="display:flex;gap:8px;align-items:flex-start">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:var(--s-klein);color:var(--text2)">${an?`<b style="color:var(--text)">Einheit ${TB_BUCHSTABEN[p]}</b> · `:""}${esc(kz)}</div>
+        <div style="font-size:var(--s-text);font-weight:800;line-height:1.35">${esc(kurz)}</div>
+        ${v.ziel_kinder?`<div style="font-size:var(--s-klein);margin-top:3px;line-height:1.45">⚽ ${esc(v.ziel_kinder)}</div>`:""}
+        <div style="font-size:var(--s-klein);color:var(--text2);margin-top:3px">${summe} Min.${v.netto_spielform_min?` · ${Number(v.netto_spielform_min)} Min. Spielform`:""}${sk.length?` · für ${sk.join("/")} Kinder`:""}${v.ordnung?` · ${esc(v.ordnung)}`:""}</div>
+      </div>
+      <button type="button" class="btn btn-sm" aria-pressed="${an}" onclick="blockVorlageUmschalten(${i})" style="${an?"background:var(--text);color:var(--surface);":""}min-width:88px">${an?"✓ Gewählt":"Wählen"}</button>
+    </div>
+    <details style="margin-top:6px"><summary style="font-size:var(--s-klein);color:var(--text2);cursor:pointer;min-height:32px;display:flex;align-items:center">Ablauf ansehen</summary>
+      <div style="font-size:var(--s-klein);line-height:1.45;margin-top:4px">${bl.map(zeile).join("")}
+        ${v.beobachtung?`<div style="color:var(--text2);margin-top:6px">👀 ${esc(v.beobachtung)}</div>`:""}</div>
+    </details>
+  </div>`;
+}
 function _tbBis(){ return _tbPlusTage(_tbEdit.von,_tbEdit.wochen*7-1); }
 async function blockEditorRender(){
   const box=document.getElementById("tb-inhalt"); if(!box||!_tbEdit)return;
@@ -238,7 +270,8 @@ async function blockEditorRender(){
   const ueber=(TB_BLOECKE||[]).filter(b=>String(b.von)<=bis&&_tbEdit.von<=String(b.bis));
   box.innerHTML=`
     <div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin:4px 0">1 · Ziel: welche Leitfrage?</div>
-    <div style="display:grid;gap:6px">${fragen.map((f,i)=>chip(_tbEdit.leitfrage===f,esc(f),`blockLeitfrageSetzen(${i})`)).join("")}</div>
+    ${(typeof vuThemenKacheln==="function")?vuThemenKacheln("blockThemaSetzen",_tbEdit.leitfrage)
+      :`<div style="display:grid;gap:6px">${fragen.map((f,i)=>chip(_tbEdit.leitfrage===f,esc(f),`blockLeitfrageSetzen(${i})`)).join("")}</div>`}
     <label for="tb-ziel" style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:10px">Eigener Zielsatz (optional)</label>
     <input id="tb-ziel" type="text" maxlength="140" value="${esc(_tbEdit.ziel)}" oninput="blockZielSetzen(this.value)" placeholder="z. B. Jedes Kind traut sich ins 1 gegen 1"
       style="width:100%;box-sizing:border-box;min-height:44px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font:inherit;background:var(--surface2);color:var(--text)">
@@ -250,8 +283,7 @@ async function blockEditorRender(){
     </div>
     <div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">bis ${esc(_tbDatumKurz(bis))}${ueber.length?` · überschneidet sich mit „${esc(ueber[0].leitfrage)}“ – im Zeitraum gilt der später begonnene Block`:""}</div>
     <div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin:14px 0 4px">3 · Genau drei Einheiten (${geordnet.length}/3)</div>
-    ${_tbEdit.leitfrage?`<div style="display:grid;gap:6px">${folge.map((v,i)=>{ const p=geordnet.indexOf(v.name);
-        return chip(p>=0,`${p>=0?`<b>${TB_BUCHSTABEN[p]}</b> · `:""}${esc(v.name)}${(typeof _evSkalierungSchluessel==="function"&&_evSkalierungSchluessel(v.skalierung).length)?` <span style="color:inherit;opacity:.75">(${_evSkalierungSchluessel(v.skalierung).join("/")} Kinder)</span>`:""}`,`blockVorlageUmschalten(${i})`); }).join("")}</div>`
+    ${_tbEdit.leitfrage?`<div style="display:grid;gap:8px">${folge.map((v,i)=>blockEinheitKarte(v,i,geordnet.indexOf(v.name))).join("")}</div>`
       :`<div style="font-size:var(--s-text);color:var(--text3)">Erst oben eine Leitfrage wählen.</div>`}
     <div id="tb-vorschau" style="margin-top:12px"></div>
     <button class="btn" id="tb-speichern" style="width:100%;margin-top:12px" ${(_tbEdit.leitfrage&&geordnet.length===3)?"":"disabled"} onclick="blockSpeichern()">Block erfassen</button>

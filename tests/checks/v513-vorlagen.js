@@ -129,14 +129,17 @@ module.exports = async function (h) {
        Zum Prüfen des Leitfragen-Filters aufklappen. */
     if (typeof vuFilterAuf === "function" && !_vuFilterOffen) { vuFilterAuf(); await warte(80); }
     const box = document.getElementById("vu-inhalt");
+    /* v656: Ohne Filter stehen Themen-Kacheln statt Karten – für den Vorher-Wert die ganze
+       Liste über die Suche holen („L“ trifft jede Vorlage), dann die Suche wieder leeren. */
+    if (typeof vuSucheSetzen === "function") { vuSucheSetzen("L"); await warte(80); }
     const karten = [...box.querySelectorAll("button")].filter(b => /Blöcke/.test(b.textContent));
+    if (typeof vuSucheSetzen === "function") { vuSucheSetzen(""); await warte(80); }
     const fragen = [...box.querySelectorAll("button")].filter(b => /^Wie |^Wo /.test(b.textContent.trim()));
     // Filter: erste Leitfrage anklicken
     const vorFilter = karten.length;
     fragen[0]?.click(); await warte(80);
     const nachFilter = [...document.querySelectorAll("#vu-inhalt button")].filter(b => /Blöcke/.test(b.textContent)).length;
-    fragen[0]?.click(); await warte(80);   // Filter wieder aufheben
-    // Auswahl + Übernahme
+    // Auswahl + Übernahme – aus dem gefilterten Thema (v656: ohne Filter stehen Themen-Kacheln)
     const karte = [...document.querySelectorAll("#vu-inhalt button")].find(b => /Blöcke/.test(b.textContent));
     const nameGewaehlt = karte ? karte.textContent.trim().split("\n")[0] : "";
     const hauptVorher = document.getElementById("vu-haupt");
@@ -160,6 +163,7 @@ module.exports = async function (h) {
   const zweite = await s.page.evaluate(async () => {
     const warte = ms => new Promise(r => setTimeout(r, ms));
     await vorlageUebernehmenOpen(); await warte(250);
+    [...document.querySelectorAll("#vu-inhalt .vu-thema")][0]?.click(); await warte(80);
     const karte = [...document.querySelectorAll("#vu-inhalt button")].find(b => /Blöcke/.test(b.textContent));
     karte?.click(); await warte(120);
     const txt = (document.getElementById("vu-inhalt")?.textContent || "").replace(/\s+/g, " ");
@@ -209,7 +213,9 @@ module.exports = async function (h) {
   if (!p) probleme.push(`Für ${datum} wurde kein Plan geschrieben`);
   else {
     const quelle = (vor.vorlagen.find(x => uebernahme.nameGewaehlt.includes(x.name)) || vor.vorlagen[0]);
-    if ((p.slots || []).length !== quelle.bloecke.length) probleme.push(`${(p.slots || []).length} Phasen geschrieben statt ${quelle.bloecke.length}`);
+    /* v656: Ohne eigenen Abschluss hängt die Übernahme ein Abschlussturnier an. */
+    const sollPhasen = quelle.bloecke.length + (quelle.bloecke.some(b => b.typ === "abschluss") ? 0 : 1);
+    if ((p.slots || []).length !== sollPhasen) probleme.push(`${(p.slots || []).length} Phasen geschrieben statt ${sollPhasen}`);
     const mitUebung = quelle.bloecke.filter(b => b.uebung_name).length;
     if ((p.plan || []).length !== mitUebung) probleme.push(`${(p.plan || []).length} Übungszuordnungen statt ${mitUebung}`);
     (p.plan || []).forEach(e => { if (e.formIdx == null || e.formIdx < 0) probleme.push(`Plan-Eintrag ohne Übungs-Index: ${JSON.stringify(e)}`); });
