@@ -141,7 +141,9 @@ module.exports = async function (h) {
   /* v656 (PO 28.09.): Sind Trainer angehakt, gibt es ohne dritte Station keine dritte Gruppe
      mehr – „lieber eine Übung mit einem Spieler mehr … als eine nicht betreute Gruppe“.
      13 Kinder, zwei Stationen, zwei Trainer: zwei Gruppen (vorher drei aus der Kinderzahl). */
-  const soll = { "8/3": 2, "10/3": 2, "12/3": 3, "13/3": 3, "14/3": 3, "13/2": 2, "8/1": 2, "3/3": 2 };
+  /* v656, zweite PO-Antwort am 28.09. („L4-8 mit zwei Trainern: zwei Gruppen“): auch drei
+     Stationen machen keine dritte Gruppe mehr auf, solange Trainer angehakt sind. */
+  const soll = { "8/3": 2, "10/3": 2, "12/3": 2, "13/3": 2, "14/3": 2, "13/2": 2, "8/1": 2, "3/3": 2 };
   const abw = Object.keys(soll).filter(k => r.rechnung[k] !== soll[k]).map(k => `${k} → ${r.rechnung[k]} statt ${soll[k]}`);
   if (abw.length) probleme.push("Gruppenzahl falsch gerechnet: " + abw.join(" · "));
   if (r.kinder !== 13) probleme.push(`${r.kinder} Kinder im Pool, erwartet 13`);
@@ -159,14 +161,17 @@ module.exports = async function (h) {
 
   // c)
   const g48 = (r.l48.gruppen || []).slice().sort((a, b) => b - a);
-  if (String(g48) !== "5,4,4") probleme.push(`L4-8 bei 13 Kindern: Gruppen ${g48.join("/")} statt 5/4/4`);
+  /* v656: Zwei Trainer → zwei Gruppen, die dritte Station entfällt – und der Block sagt es
+     und bietet die dritte Gruppe als Wahl an, mit dem Preis („eine ohne Trainer“). */
+  if (String(g48) !== "7,6") probleme.push(`L4-8 bei 13 Kindern und zwei Trainern: Gruppen ${g48.join("/")} statt 7/6`);
   const h48 = r.l48.haupt || [];
   if (h48.length !== 3) probleme.push(`L4-8: ${h48.length} Hauptteile statt 3`);
   else {
     if (h48.some(x => x.stationen !== 3)) probleme.push(`L4-8: Feldbedarf am Block ${h48.map(x => x.stationen).join("/")} statt 3/3/3 – der Slot merkt sich die Stationszahl nicht`);
-    h48.forEach((x, i) => { if (String(x.felder) !== String([A, F1, FW])) probleme.push(`L4-8 Hauptteil ${i + 1}: [${x.felder.join(" | ")}] statt drei verschiedener Übungen`); });
+    h48.forEach((x, i) => { if (String(x.felder) !== String([A, F1])) probleme.push(`L4-8 Hauptteil ${i + 1}: [${x.felder.join(" | ")}] statt der ersten zwei Stationen`); });
   }
-  if (/Stationen geplant/.test(r.hinweis48 || "")) probleme.push("Bei 13 Kindern erscheint trotzdem der Hinweis auf entfallende Stationen");
+  if (!/3 Stationen geplant, 2 Felder/.test(r.hinweis48 || "")) probleme.push("Bei zwei Gruppen sagt der Block nicht, dass die dritte Station entfällt");
+  if (!/3 Gruppen bilden \(eine ohne Trainer\)/.test(r.hinweis48 || "")) probleme.push("Der Knopf für die dritte Gruppe nennt nicht, dass sie ohne Trainer wäre");
 
   // d)
   const g46 = (r.l46.gruppen || []).slice().sort((a, b) => b - a);
@@ -236,7 +241,7 @@ module.exports = async function (h) {
   if (!probleme.length) {
     zeilen.push(`Rechnung: ${Object.keys(soll).map(k => k + "→" + r.rechnung[k]).join(" · ")} (Zielgröße ${r.zielMin}–${r.zielMax} je Gruppe)`);
     zeilen.push(`Abspalten: 7/6 → ${r.nachher.map(x => x.n).join("/")} · Namen, Trainer und die Kinder der bestehenden Gruppen bleiben`);
-    zeilen.push(`L4-8 mit 13 Kindern und zwei Trainern: drei Gruppen ${g48.join("/")}, drei Felder mit drei Übungen, kein Hinweis`);
+    zeilen.push(`L4-8 mit 13 Kindern und zwei Trainern: zwei Gruppen ${g48.join("/")}, dritte Station entfällt mit Hinweis und Knopf „3 Gruppen bilden (eine ohne Trainer)“ (v656)`);
     zeilen.push(`L4-6 (zwei Stationen) mit 13 Kindern und zwei Trainern: zwei Felder 7/6, eines wechselt ein (v656)`);
     zeilen.push(`Von Hand auf zwei Gruppen: Block sagt „3 Stationen geplant, 2 Felder“ und bietet „3 Gruppen bilden“`);
     zeilen.push(`Mit acht Kindern: zwei Gruppen ${gk.join("/")}, kein Knopf – stattdessen die nötige Kinderzahl`);

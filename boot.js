@@ -2435,9 +2435,13 @@ function tpRenderTimeline(){
     if(tpIstHauptteil(typ)&&!weg.length&&(Number(slot.stationen)||0)>parallelSlots){
       const soll=Number(slot.stationen), fehlt=soll-parallelSlots;
       const kinder=(typeof _tgPool==="function")?_tgPool().namen.length:0;
-      const moeglich=(typeof tgBedarf==="function")?tgBedarf(kinder,soll):parallelSlots;
+      /* v656: Die Gruppenzahl folgt den Trainern – mehr Felder sind Wahl des Trainers. Der
+         Knopf rechnet deshalb nur mit der Kinderzahl und sagt, was er kostet. */
+      const moeglich=Math.min(soll,Math.max(1,Math.floor(kinder/TG_ZIEL_MIN)));
+      const trainerDa=(typeof tpGetCheckedTrainers==="function")?tpGetCheckedTrainers().length:0;
+      const ohne=trainerDa>0?moeglich-trainerDa:0;
       const weg2=moeglich>parallelSlots
-        ? ` <button onclick="tgAnzahlSetzen(${moeglich});tgFertig()" style="margin-left:6px;min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">👥 ${moeglich} Gruppen bilden</button>`
+        ? ` <button onclick="tgAnzahlSetzen(${moeglich});tgFertig()" style="margin-left:6px;min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">👥 ${moeglich} Gruppen bilden${ohne>0?` (${ohne===1?"eine":ohne} ohne Trainer)`:""}</button>`
         : ` Für ein weiteres Feld bräuchte es ${(parallelSlots+1)*TG_ZIEL_MIN} Kinder – ${kinder} sind da, und unter ${TG_ZIEL_MIN} je Gruppe lässt sich keine Spielform spielen.`;
       html+=`<div class="tp-stationen-hinweis" style="font-size:var(--s-klein);color:var(--text2);padding:2px 0 6px;line-height:1.5">ℹ️ ${soll} Stationen geplant, ${parallelSlots} ${parallelSlots===1?"Feld":"Felder"} – ${fehlt===1?"eine Station entfällt":fehlt+" Stationen entfallen"}.${weg2}</div>`;
     }
@@ -5160,11 +5164,11 @@ function tpGruppenVorschlag(kinder){
     if(n>max){max=n;si=i;}
   });
   if(si<0)return null;
-  /* v656: Mit angehakten Trainern nie mehr Gruppen als Trainer (oder Stationen) vorschlagen –
+  /* v656: Mit angehakten Trainern nie mehr Gruppen als Trainer vorschlagen –
      eine weitere Gruppe hätte niemanden. Ein Kind über der Übungsgröße je Feld gilt als
      passend: es wechselt ein und aus (PO 28.09.). */
   const trainer=(typeof tpGetCheckedTrainers==="function")?tpGetCheckedTrainers().length:0;
-  const deckel=trainer>0?Math.max(trainer,max):TG_NAMEN.length;
+  const deckel=trainer>0?trainer:TG_NAMEN.length;
   const obergrenze=Math.min(TG_NAMEN.length,deckel,Math.max(1,Math.floor(k/TG_ZIEL_MIN)));
   let beste=null;
   for(let n=1;n<=obergrenze;n++){
@@ -5317,9 +5321,10 @@ function tgBedarf(kinder,stationen){
      Kinderzahl macht keine zusätzliche mehr auf (vorher: höchstens 6 je Gruppe, 14 Kinder
      bei zwei Trainern gaben drei Gruppen, eine davon ohne Trainer). Wird eine Gruppe größer
      als die Übung, sagt es die Station und bietet eine größere Übung oder die KI-Anpassung
-     an. Stationen bleiben: Eine Einheit mit drei verschiedenen Stationen (L4-8) ist so
-     gebaut, dass die Gruppen rotieren. Ohne angehakte Trainer gilt die alte Rechnung. */
-  const wunsch=trainer>0?Math.max(1,st,trainer):Math.max(1,st,Math.ceil(k/TG_ZIEL_MAX));
+     an. Das gilt auch für Einheiten mit drei Stationen (L4-8): PO am 28.09. „Zwei Gruppen“ –
+     die dritte Station entfällt, die Leiste sagt es und bietet „3 Gruppen bilden“ für den,
+     der es trotzdem will. Ohne angehakte Trainer gilt die alte Rechnung. */
+  const wunsch=trainer>0?trainer:Math.max(1,st,Math.ceil(k/TG_ZIEL_MAX));
   const platz=Math.max(1,Math.floor(k/TG_ZIEL_MIN));
   return Math.max(1,Math.min(Math.max(Math.min(wunsch,platz),trainer),TG_NAMEN.length));
 }

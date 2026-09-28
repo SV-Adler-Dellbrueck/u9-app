@@ -121,10 +121,20 @@ module.exports = async function (h) {
     out.speichernFrei = !document.getElementById("tb-speichern")?.disabled;
     out.kartenText = (tb().querySelector(".tb-einheit") || {}).textContent?.replace(/\s+/g, " ") || "";
     blockEditorClose();
+
+    // f) Kinderziel nachziehen: nur geänderte Spalten, bestehende Vorlagen erreicht
+    const merk = VORLAGEN.slice();
+    VORLAGEN.length = 0;
+    VORLAGEN.push({ id: 1, name: "Ohne Ziel", skalierung: { "8": "a" } }, { id: 2, name: "Gleich", skalierung: { "8": "a" }, ziel_kinder: "Heute x." });
+    out.f = await _evSkalierungNachziehen([
+      { name: "Ohne Ziel", neu: false, skalierung: { "8": "a" }, ziel_kinder: "Heute schaust du, wer frei ist." },
+      { name: "Gleich", neu: false, skalierung: { "8": "a" }, ziel_kinder: "Heute x." }]);
+    VORLAGEN.length = 0; merk.forEach(v => VORLAGEN.push(v));
     return out;
   }, { datum, kinderNamen: h.KINDER });
 
   const fehler = s.fehler();
+  const patches = s.gesendet.filter(x => x.methode === "PATCH" && /trainingsvorlagen$/.test(x.pfad));
   await s.schliessen();
   const titel = "v656 Block: Gruppen nach Trainern, Abschlussturnier, Themen-Kacheln";
   if (r.fehlt.length) return h.ergebnis(titel, false, [r.fehlt.join(", ") + " fehlt"]);
@@ -135,7 +145,7 @@ module.exports = async function (h) {
   if (r.kinder !== 14) probleme.push(`${r.kinder} Kinder im Pool statt 14`);
   if (r.rechnung["14/0"] !== 2) probleme.push(`14 Kinder, zwei Trainer, keine Stationen → ${r.rechnung["14/0"]} Gruppen statt 2`);
   if (r.rechnung["14/1"] !== 2) probleme.push(`14 Kinder, zwei Trainer, eine Station → ${r.rechnung["14/1"]} Gruppen statt 2`);
-  if (r.rechnung["13/3"] !== 3) probleme.push(`Drei Stationen tragen weiter drei Felder: ${r.rechnung["13/3"]}`);
+  if (r.rechnung["13/3"] !== 2) probleme.push(`Drei Stationen machen bei zwei Trainern ${r.rechnung["13/3"]} statt 2 Gruppen auf`);
   // b)
   if (String(r.gruppen.slice().sort()) !== "7,7") probleme.push(`L4-5 bei 14 Kindern und zwei Trainern: Gruppen ${r.gruppen.join("/")} statt 7/7`);
   // c)
@@ -169,12 +179,18 @@ module.exports = async function (h) {
   if (r.ablauf !== r.karten) probleme.push("Nicht jede Einheit lässt sich aufklappen („Ablauf ansehen“)");
   if (r.gewaehlt !== 3 || !r.speichernFrei) probleme.push(`Über „Wählen“ ${r.gewaehlt} von 3 gewählt, Erfassen ${r.speichernFrei ? "frei" : "gesperrt"}`);
   if (!/Min\./.test(r.kartenText)) probleme.push("Die Einheiten-Karte nennt keine Dauer");
+  // f)
+  if (patches.length !== 1 || JSON.stringify(Object.keys(patches[0].body || {})) !== '["ziel_kinder"]' || !/id=eq\.1$/.test(patches[0].suche))
+    probleme.push("f) Kinderziel nachziehen: " + JSON.stringify(patches.map(p => ({ s: p.suche, b: p.body }))));
+  const ohneZiel = (vor.vorlagen || []).filter(v => !/^Heute /.test(String(v.ziel_kinder || "")) || String(v.ziel_kinder).length > 160).map(v => v.name);
+  if (ohneZiel.length) probleme.push("Vorlagen ohne gültiges Kinderziel: " + ohneZiel.join(", "));
   if (fehler.length) probleme.push("Konsole: " + fehler[0]);
 
   if (!probleme.length) {
-    zeilen.push(`Rechnung: 14 Kinder/2 Trainer → ${r.rechnung["14/0"]} Gruppen, drei Stationen weiter ${r.rechnung["13/3"]} · L4-5 übernommen → ${r.gruppen.join("/")}`);
+    zeilen.push(`Rechnung: 14 Kinder/2 Trainer → ${r.rechnung["14/0"]} Gruppen, drei Stationen ebenfalls ${r.rechnung["13/3"]} · L4-5 übernommen → ${r.gruppen.join("/")}`);
     zeilen.push(`Abschlussturnier: ${r.slots.map(x => x.dauer).join("+")} = ${summe(r.slots)} Min., letzter Spielblock ${quelleLetzte.dauer}→${vorletzte.dauer} · mit eigenem Abschluss unverändert · kurzer Block ${r.kurz.join("/")}`);
     zeilen.push(`Zu viele Wechsler bei „${r.uebung}“ und 9 Kindern: ${r.tausch.map(t => `${t.name} (${t.min}–${t.max})`).join(" · ")} + KI-Knopf, alle ≥44 px, Auftrag ohne Namen`);
+    zeilen.push(`Kinderziel: ${vor.vorlagen.length} Vorlagen mit Satz, Nachziehen schreibt nur ziel_kinder und nur, wo es fehlt`);
     zeilen.push(`Block: ${r.themen} Themen-Kacheln → ${r.karten} Einheiten-Karten mit Ablauf, 3 über „Wählen“`);
   }
   return h.ergebnis(titel, !probleme.length, zeilen.concat(probleme));

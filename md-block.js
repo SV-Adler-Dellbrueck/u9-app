@@ -154,6 +154,7 @@ async function blockPlanKarte(datum){
     <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)">🧱 Block: ${esc(b.leitfrage)}</div>
     <div style="font-size:var(--s-karte);font-weight:800;margin-top:2px">Einheit ${z.buchstabe} · ${esc(z.vorlage)}</div>
     <div style="font-size:var(--s-klein);color:var(--text2)">${z.nr}. von ${zu.length} Trainings im Block${b.ziel?` · ${esc(b.ziel)}`:""}</div>
+    ${v&&v.ziel_kinder?`<div id="tp-block-kinderziel" style="font-size:var(--s-text);background:var(--surface2);border-radius:10px;padding:8px 10px;margin-top:8px;line-height:1.45"><b>⚽ Für die Kinder:</b> ${esc(v.ziel_kinder)}</div>`:""}
     ${!v?`<div style="margin-top:8px;font-size:var(--s-text);color:var(--red)">Diese Vorlage gibt es in der App nicht mehr. Im Block eine andere wählen.</div>`
     :`<div style="margin-top:8px;font-size:var(--s-text)">👥 <b>${n} Kinder</b>${quelle?` <span style="color:var(--text2)">(${quelle})</span>`:""}${a?` → <b>Aufbau für ${a.key}</b>`:""}</div>
       ${a?`<div id="tp-block-aufbau" style="font-size:var(--s-text);margin-top:2px">${esc(a.text)}</div>`:`<div style="font-size:var(--s-text);color:var(--text2);margin-top:2px">Für diese Einheit ist kein Aufbau nach Kinderzahl hinterlegt.</div>`}

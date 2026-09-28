@@ -716,6 +716,8 @@ function _evPruefung(text){
     if(gesehen.has(n))fehler.push(`Vorlage ${nr} („${name}“): steht in dieser Datei schon als Vorlage ${gesehen.get(n)}.`);
     else gesehen.set(n,nr);
     if(!String(v.leitfrage||"").trim())fehler.push(`Vorlage ${nr} („${name}“): „leitfrage“ fehlt – ohne sie lässt sich die Vorlage nicht filtern.`);
+    /* v656: Das Ziel für die Kinder ist ein Satz, den ein Achtjähriger liest – kein Absatz. */
+    if(v.ziel_kinder!=null&&(typeof v.ziel_kinder!=="string"||v.ziel_kinder.length>160))fehler.push(`Vorlage ${nr} („${name}“): „ziel_kinder“ muss ein Satz mit höchstens 160 Zeichen sein.`);
     (Array.isArray(v.tags)?v.tags:[]).forEach(t=>{
       if(!EI_TAGS.includes(String(t)))fehler.push(`Vorlage ${nr} („${name}“): Tag „${t}“ gibt es nicht – erlaubt sind ${EI_TAGS.join(", ")}.`);
     });
@@ -852,6 +854,7 @@ async function _evVorlageAnlegen(v,stand){
     netto_spielform_min:isFinite(Number(v.netto_spielform_min))?Number(v.netto_spielform_min):null,
     skalierung:(v.skalierung&&typeof v.skalierung==="object"&&!Array.isArray(v.skalierung))?v.skalierung:{},
     beobachtung:String(v.beobachtung||""),
+    ziel_kinder:String(v.ziel_kinder||"").trim().slice(0,160)||null,   // v656
     bloecke:(Array.isArray(v.bloecke)?v.bloecke:[]).map(b=>({typ:b.typ,label:String(b.label||"").trim(),dauer:Number(b.dauer),
       uebung_name:String(b.uebung_name||"").trim()||null,
       // Paket B: Stationen bleiben erhalten; ohne sie steht wie bisher null.
@@ -886,16 +889,22 @@ function _evSkalierungGleich(a,b){
   const ka=_evSkalierungSchluessel(a), kb=_evSkalierungSchluessel(b);
   return ka.join()===kb.join()&&ka.every(k=>String(a[k]).trim()===String(b[k]).trim());
 }
+/* v656: Dasselbe für das Ziel der Kinder (Migration 20260928_v656_ziel_kinder.sql: UPDATE
+   auch auf ziel_kinder). Beide Spalten gehen in EINEM Patch, nur die, die sich unterscheiden. */
 async function _evSkalierungNachziehen(vorlagen){
   let aktualisiert=0, fehler=null;
   for(const v of (vorlagen||[])){
     if(v.neu)continue;
-    const sk=(v.skalierung&&typeof v.skalierung==="object"&&!Array.isArray(v.skalierung))?v.skalierung:null;
-    if(!sk||!_evSkalierungSchluessel(sk).length)continue;
     const db=(typeof VORLAGEN!=="undefined"?VORLAGEN:[]).find(x=>_evNorm(x.name)===_evNorm(v.name));
-    if(!db||_evSkalierungGleich(sk,db.skalierung||{}))continue;
+    if(!db)continue;
+    const patch={};
+    const sk=(v.skalierung&&typeof v.skalierung==="object"&&!Array.isArray(v.skalierung))?v.skalierung:null;
+    if(sk&&_evSkalierungSchluessel(sk).length&&!_evSkalierungGleich(sk,db.skalierung||{}))patch.skalierung=sk;
+    const ziel=String(v.ziel_kinder||"").trim().slice(0,160);
+    if(ziel&&ziel!==String(db.ziel_kinder||"").trim())patch.ziel_kinder=ziel;
+    if(!Object.keys(patch).length)continue;
     try{
-      const r=await fetch(`${SB_URL}/rest/v1/trainingsvorlagen?id=eq.${encodeURIComponent(db.id)}`,{method:"PATCH",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify({skalierung:sk})});
+      const r=await fetch(`${SB_URL}/rest/v1/trainingsvorlagen?id=eq.${encodeURIComponent(db.id)}`,{method:"PATCH",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify(patch)});
       if(sbCheck401(r)||!r.ok){ fehler=v.name; break; }
       aktualisiert++;
     }catch(e){ fehler="__netz"; break; }
@@ -1524,7 +1533,7 @@ async function bibliothekAbgleich(){
         if(typeof toast==="function"){
           const teile=[];
           if(v.angelegt)teile.push(`${v.angelegt} neue Vorlage${v.angelegt===1?"":"n"}`);
-          if(s.aktualisiert)teile.push(`${s.aktualisiert} mit neuen Aufbauten`);
+          if(s.aktualisiert)teile.push(`${s.aktualisiert} nachgezogen`);
           if(teile.length)toast("🗂️ "+teile.join(" · "));
         }
         erg=erg?{...erg,vorlagen:v}:{angelegt:0,offen:0,fehler:null,uebersprungen:0,vorlagen:v};
