@@ -1638,3 +1638,92 @@ function stempelText(autor, zeit){
 function stempelHtml(autor, zeit, zusatz){
   return '<div class="stempel">'+esc(stempelText(autor, zeit))+(zusatz?' <span class="stempel-zusatz">'+zusatz+'</span>':'')+'</div>';
 }
+
+/* ═══ v658 · GEFÜHRTE TOUR MIT ZEIGER ════════════════════════════════════════════════
+   PO am 28.09.: „… den Hilfebutton in der Trainer- und vor allen Dingen in der Eltern-App
+   überarbeiten, sodass eine geführte Tour durch die verschiedenen Bereiche der App abläuft“ –
+   und für die Kinder „in kinderverständlicher Sprache“. Kachel: „Geführt mit Zeiger“.
+
+   Ein Motor für alle drei Apps (darum hier in core.js, Welle 1). Ein Schritt ist
+   {sel, vor, emo, t, d}: `vor` öffnet den Bereich (Reiter, Fenster), `sel` ist das Element,
+   das hervorgehoben wird – ein Selektor oder eine Liste, der erste sichtbare gewinnt. Findet
+   sich keins (Bereich leer, Modul noch nicht geladen), steht der Schritt als Karte in der
+   Mitte: die Tour bricht nie ab, nur weil ein Knopf gerade fehlt.
+   Bedienung nur mit Knöpfen (44 px, bei Kindern 56 px), Esc beendet. Die Fläche ringsum
+   fängt jeden Tipp ab – in einer Tour soll nichts aus Versehen gespeichert werden. */
+let _fg=null;
+function fuehrungStart(schritte,opt){
+  _fg={schritte:(schritte||[]).filter(Boolean),i:0,opt:opt||{}};
+  if(!_fg.schritte.length){ _fg=null; return; }
+  _fgZeigen();
+}
+function _fgZiel(sel){
+  const liste=[].concat(sel||[]);
+  for(const q of liste){
+    let el=null; try{ el=document.querySelector(q); }catch(e){}
+    if(el&&el.getClientRects().length){ const r=el.getBoundingClientRect(); if(r.width>0&&r.height>0)return el; }
+  }
+  return null;
+}
+async function _fgZeigen(){
+  const f=_fg; if(!f)return;
+  const s=f.schritte[f.i]; if(!s){ fuehrungEnde(); return; }
+  document.getElementById("fg-ov")?.remove();
+  if(typeof s.vor==="function"){ try{ await s.vor(); }catch(e){} await new Promise(r=>setTimeout(r,s.warte||300)); }
+  if(_fg!==f)return;
+  const ziel=s.sel?_fgZiel(s.sel):null;
+  if(ziel){ try{ ziel.scrollIntoView({block:"center",inline:"nearest"}); }catch(e){} }
+  const kind=!!f.opt.kind, n=f.schritte.length, letzte=f.i===n-1;
+  const ov=document.createElement("div"); ov.id="fg-ov";
+  ov.style.cssText="position:fixed;inset:0;z-index:10080";
+  ov.addEventListener("click",e=>{ if(e.target===ov||e.target.classList.contains("fg-loch"))e.stopPropagation(); });
+  const knopf=kind?"min-height:56px;font-size:var(--s-karte);padding:10px 18px":"min-height:44px;font-size:var(--s-text);padding:9px 16px";
+  ov.innerHTML=`${ziel?'<div class="fg-loch" aria-hidden="true"></div>':'<div class="fg-dunkel" aria-hidden="true" style="position:absolute;inset:0;background:rgba(15,23,42,.72)"></div>'}
+    <div class="fg-blase" role="dialog" aria-modal="true" aria-labelledby="fg-t" style="position:absolute;background:#fff;color:#0f172a;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.45);max-width:360px;width:calc(100% - 32px);box-sizing:border-box">
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <div aria-hidden="true" style="font-size:${kind?"44px":"30px"};line-height:1">${s.emo||"👉"}</div>
+        <div style="flex:1;min-width:0">
+          <div id="fg-t" style="font-size:${kind?"var(--s-teil)":"var(--s-karte)"};font-weight:800;line-height:1.3">${esc(s.t||"")}</div>
+          <div style="font-size:${kind?"var(--s-karte)":"var(--s-text)"};color:#334155;line-height:1.5;margin-top:4px">${esc(s.d||"")}</div>
+        </div>
+      </div>
+      <div style="font-size:var(--s-klein);color:#475569;margin-top:10px;text-align:right">${f.i+1} von ${n}</div>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <button type="button" onclick="${f.i>0?"fuehrungZurueck()":"fuehrungEnde()"}" style="${knopf};border:1.5px solid #94a3b8;border-radius:12px;background:#fff;color:#0f172a;font-family:inherit;font-weight:700;cursor:pointer">${f.i>0?"Zurück":(kind?"Später":"Überspringen")}</button>
+        <button type="button" id="fg-weiter" onclick="fuehrungWeiter()" style="${knopf};margin-left:auto;border:none;border-radius:12px;background:#1e3a8a;color:#fff;font-family:inherit;font-weight:800;cursor:pointer">${letzte?(kind?"Los geht's! ⚽":"Fertig"):"Weiter"}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  _fgPlatz();
+  setTimeout(()=>document.getElementById("fg-weiter")?.focus(),30);
+}
+/* Loch und Blase neu setzen – auch nach Drehen oder Tastatur. Die Blase steht unter dem Ziel,
+   wenn dort Platz ist, sonst darüber, sonst unten am Rand. */
+function _fgPlatz(){
+  const f=_fg, ov=document.getElementById("fg-ov"); if(!f||!ov)return;
+  const s=f.schritte[f.i], ziel=s&&s.sel?_fgZiel(s.sel):null;
+  const loch=ov.querySelector(".fg-loch"), blase=ov.querySelector(".fg-blase");
+  const W=window.innerWidth, H=window.innerHeight;
+  if(!ziel||!loch){
+    blase.style.left="50%"; blase.style.top="50%"; blase.style.transform="translate(-50%,-50%)"; return;
+  }
+  const r=ziel.getBoundingClientRect(), p=6;
+  Object.assign(loch.style,{position:"absolute",left:(r.left-p)+"px",top:(r.top-p)+"px",width:(r.width+2*p)+"px",height:(r.height+2*p)+"px",
+    borderRadius:"14px",boxShadow:"0 0 0 9999px rgba(15,23,42,.72)",outline:"3px solid #facc15",outlineOffset:"0",pointerEvents:"auto"});
+  const bh=blase.offsetHeight, bw=Math.min(360,W-32);
+  let top=r.bottom+p+12;
+  if(top+bh>H-8){ top=r.top-p-12-bh; if(top<8)top=Math.max(8,H-bh-8); }
+  const left=Math.max(16,Math.min(W-bw-16,r.left+r.width/2-bw/2));
+  Object.assign(blase.style,{left:left+"px",top:top+"px",transform:"none"});
+}
+function fuehrungWeiter(){ if(!_fg)return; if(_fg.i<_fg.schritte.length-1){ _fg.i++; _fgZeigen(); } else fuehrungEnde(); }
+function fuehrungZurueck(){ if(!_fg||_fg.i<=0)return; _fg.i--; _fgZeigen(); }
+function fuehrungEnde(){
+  const f=_fg; _fg=null;
+  document.getElementById("fg-ov")?.remove();
+  if(f&&f.opt.schluessel){ try{ localStorage.setItem(f.opt.schluessel,"1"); }catch(e){} }
+  if(f&&typeof f.opt.ende==="function"){ try{ f.opt.ende(); }catch(e){} }
+}
+function fuehrungLaeuft(){ return !!_fg; }
+window.addEventListener("resize",()=>{ if(_fg)_fgPlatz(); });
+document.addEventListener("keydown",e=>{ if(_fg&&e.key==="Escape"){ e.preventDefault(); fuehrungEnde(); } });
