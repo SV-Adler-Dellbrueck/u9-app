@@ -69,6 +69,9 @@ module.exports = async function (h) {
     await vorlagenLaden(); await tgSync(); await warte(120);
     _vuAuswahl = String((VORLAGEN.find(v => String(v.name).startsWith(L48 + " ")) || {}).id);
     await vorlageUebernehmenSetzen(); await warte(500);
+    /* v656: Mit zwei Trainern entstehen seit dem 28.09. zwei Gruppen. Ein Feld ohne Trainer
+       gibt es nur noch, wenn der Trainer es will – „👥 3 Gruppen bilden (eine ohne Trainer)“. */
+    tgBilden(3); tpRenderTimeline(); await warte(200);
     // d) Feld ohne Trainer finden
     let ziel = null, einzeln = null;
     tpSlots.forEach((sl, si) => {

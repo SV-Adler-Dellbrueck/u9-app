@@ -183,7 +183,8 @@ module.exports = async function (h) {
   if (eins.stand !== String(vor.stand)) probleme.push(`Der Vorlagen-Stand wurde als „${eins.stand}“ gemerkt statt als „${vor.stand}“`);
   if ((eins.geladen || []).length !== vNamen.length) probleme.push(`Nach dem Öffnen stehen ${(eins.geladen || []).length} Vorlagen zur Auswahl`);
   if (plaeneNachAbgleich) probleme.push(`Der Abgleich hat einen Trainingsplan geschrieben: ${Object.keys(plaene).join(", ")}`);
-  const kinderInDb = vorlagen.some(z => JSON.stringify(z).includes("kind") || (z.bloecke || []).some(b => b.kinder || b.tw));
+  /* v656: „ziel_kinder“ ist ein Satz an die Kinder, keine Zuteilung – vor der Suche heraus. */
+  const kinderInDb = vorlagen.some(z => JSON.stringify({ ...z, ziel_kinder: undefined }).includes("kind") || (z.bloecke || []).some(b => b.kinder || b.tw));
   if (kinderInDb) probleme.push("In der Vorlagen-Tabelle steht eine Kinderzuteilung");
 
   if (nachZweitem !== vorZweitem) probleme.push(`Der zweite Lauf hat ${nachZweitem - vorZweitem} Vorlagen doppelt angelegt`);

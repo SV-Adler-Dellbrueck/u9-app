@@ -92,7 +92,9 @@ module.exports = async function (h) {
   const anhangU = (bib.uebungen || []).slice(Math.max(0, abU), Math.max(0, abU) + neueU.length);
   const anhangV = (vor.vorlagen || []).slice(Math.max(0, abV), Math.max(0, abV) + neueV.length);
   const abwU = neueU.filter((u, i) => roh(u) !== roh(anhangU[i])).map(u => u.name);
-  const abwV = neueV.filter((v, i) => roh(v) !== roh(anhangV[i])).map(v => v.name);
+  /* v656: ziel_kinder kam später dazu (PO-Abnahme 28.09.) – der Nachtrag selbst bleibt der Maßstab. */
+  const ohneZiel = v => { if (!v) return v; const { ziel_kinder, ...rest } = v; return rest; };
+  const abwV = neueV.filter((v, i) => roh(ohneZiel(v)) !== roh(ohneZiel(anhangV[i]))).map(v => v.name);
   if (abwU.length) probleme.push("Übung in bibliothek.json weicht vom Nachtrag ab: " + abwU.join(", "));
   if (abwV.length) probleme.push("Vorlage in vorlagen.json weicht vom Nachtrag ab: " + abwV.join(", "));
   if (!standMindestens(bib.stand, STAND_UEB)) probleme.push(`bibliothek.json: Stand „${bib.stand}“ liegt vor „${STAND_UEB}“ – ohne neuen Stand holt _bibHolen die Datei nicht`);
