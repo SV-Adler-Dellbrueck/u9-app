@@ -119,7 +119,8 @@ module.exports = async function (h) {
   if (!/Einheit A · L1-1 Probe 1/.test(r.e) || !/4\. von 6 Trainings/.test(r.e)) probleme.push(`e) Karte: ${r.e.slice(0, 200)}`);
   if (!new RegExp(`${r.eN} Kinder`).test(r.e) || !new RegExp(`Aufbau für ${r.eKey}`).test(r.e)) probleme.push(`e) Aufbau passt nicht zu ${r.eN} Kindern: ${r.e.slice(0, 240)}`);
   if (r.eAufbau !== SK4[String(r.eKey)]) probleme.push(`e) Aufbautext „${r.eAufbau}“`);
-  if (!/Einheit A in den Plan übernehmen/.test(r.eKnopf)) probleme.push(`e) Knopf „${r.eKnopf}“`);
+  /* v657: Hauptaktion ist jetzt „Aktualisieren nach Anwesenheit“; der alte Weg heißt „neu einsetzen“. */
+  if (!/Einheit A neu einsetzen/.test(r.eKnopf)) probleme.push(`e) Knopf „${r.eKnopf}“`);
   if (!plan || !Array.isArray(plan.slots) || plan.slots.length < 2) probleme.push(`e) Übernehmen schrieb keinen Plan (${plan ? JSON.stringify(plan.slots) : "nichts"})`);
   const patches = gesendet.filter(x => x.methode === "PATCH" && /trainingsvorlagen$/.test(x.pfad));
   if (!r.f || r.f.aktualisiert !== 1 || patches.length !== 1 || !/id=eq\.1$/.test(patches[0].suche) || (patches[0].body && patches[0].body.skalierung || {})["10"] !== "Aufbau zehn") probleme.push(`f) Nachziehen: ${JSON.stringify(r.f)} · ${JSON.stringify(patches)}`);

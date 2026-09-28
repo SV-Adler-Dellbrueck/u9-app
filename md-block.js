@@ -161,24 +161,171 @@ async function blockPlanKarte(datum){
       ${a&&a.rest?`<div id="tp-block-rest" style="font-size:var(--s-klein);color:var(--text2);margin-top:2px">${esc(blockRestText(a))}</div>`:""}
       ${andere.length?`<details style="margin-top:6px"><summary style="font-size:var(--s-klein);color:var(--text2);cursor:pointer;min-height:32px">Andere Kinderzahlen (${andere.join(" / ")})</summary>
         ${andere.map(k=>`<div style="font-size:var(--s-klein);margin-top:4px"><b>${k} Kinder:</b> ${esc(String(sk[String(k)]))}</div>`).join("")}</details>`:""}
-      <button class="btn" id="tp-block-los" style="width:100%;margin-top:10px" onclick="blockEinheitUebernehmen('${esc(datum)}')">Einheit ${z.buchstabe} in den Plan übernehmen</button>`}
+      <button class="btn btn-p" id="tp-block-akt" style="width:100%;min-height:56px;margin-top:10px;justify-content:center" onclick="blockAktualisieren('${esc(datum)}')">🔄 Aktualisieren nach Anwesenheit</button>
+      <div id="tp-block-ergebnis" aria-live="polite"></div>
+      <button class="btn btn-sm" id="tp-block-los" style="width:100%;min-height:44px;margin-top:8px" onclick="blockEinheitUebernehmen('${esc(datum)}')">Einheit ${z.buchstabe} neu einsetzen</button>`}
   </div>`;
 }
-async function blockEinheitUebernehmen(datum){
+async function blockEinheitUebernehmen(datum,opt){
   const b=blockFuerDatum(datum); if(!b)return;
   const z=blockZuordnung(await _tbTrainings(String(b.von),String(b.bis)),b).find(x=>x.datum===datum); if(!z)return;
   await _tbVorlagenSicher();
   const v=_tbVorlage(z.vorlage);
   if(!v){ toast(`Die Vorlage „${z.vorlage}“ gibt es nicht mehr`,"err"); return; }
   if(typeof vorlageUebernehmenSetzen!=="function"){ toast("Die Vorlagen sind noch nicht geladen – gleich nochmal","err"); return; }
-  if(typeof _vuPlanVorhanden==="function"&&await _vuPlanVorhanden(datum)
+  if(!(opt&&opt.still)&&typeof _vuPlanVorhanden==="function"&&await _vuPlanVorhanden(datum)
      &&!confirm(`Für ${_tbDatumKurz(datum)} steht schon ein Plan. Durch Einheit ${z.buchstabe} ersetzen?`))return;
   const knopf=document.getElementById("tp-block-los"); if(knopf)knopf.disabled=true;
   _vuAuswahl=v.id;
   try{ await vorlageUebernehmenSetzen(); }
   finally{ _vuAuswahl=null; if(knopf)knopf.disabled=false; }
-  blockPlanKarte(datum);
+  if(!(opt&&opt.still))blockPlanKarte(datum);
 }
+
+/* ── v657 · Aktualisieren nach Anwesenheit ─────────────────────────────────────
+   PO 28.09.: „… am Tag des Trainings noch mal über einen Button, sodass die KI dann im
+   gleichen Schwerpunkt die Übungen noch mal anpasst und prüft, ob der Plan auch so aufgeht.“
+   Zwei Schritte, auf Charles' Wahl beide:
+   1. Regeln, sofort und ohne Netz: Gruppen so viele wie Trainer (tgBedarf), Kinder aus
+      Anwesenheit bzw. Zusagen, und jede Station, an der die Gruppe nicht zur Übung passt
+      (mehr als ein Wechsler oder zu wenige Kinder), bekommt eine passende Übung derselben Art.
+      Regelt die Einheit die Größe selbst (Feldtext „bei 5 …“), bleibt die Übung.
+   2. Danach prüft die KI im selben Thema (Edge Function ki-plan-pruefen) und schlägt Tausche
+      vor – nur Übungen aus der Bibliothek, jeder Vorschlag mit einem Tipp übernehmbar.
+      Die KI ändert nie selbst; fällt sie aus, steht der Plan aus Schritt 1. */
+function _tbStationPasst(selId){
+  const info=_tpStationGruppe[selId], sel=document.getElementById(selId);
+  if(!info||!sel||!sel.value||!info.n)return true;
+  const idx=parseInt(sel.value);
+  const sp=tpUebungSpanne(idx);
+  if(sp.alle||!sp.min)return true;
+  if(typeof tpFeldVariante==="function"&&typeof tpFeldTextFuer==="function"&&tpFeldVariante(tpFeldTextFuer(info.si,info.p,idx),info.n))return true;
+  return info.n>=sp.min&&info.n<=sp.max+1;
+}
+function blockUebungenPruefen(){
+  const getauscht=[];
+  Object.keys(_tpStationGruppe||{}).forEach(selId=>{
+    if(_tbStationPasst(selId))return;
+    const info=_tpStationGruppe[selId], sel=document.getElementById(selId);
+    const idx=parseInt(sel.value), alt=(tpAllForms()[idx]||{}).name;
+    const vor=(typeof tpGroesserVorschlaege==="function")?tpGroesserVorschlaege(selId,idx,info.n):[];
+    if(!vor.length){ getauscht.push({selId,von:alt,zu:null,n:info.n}); return; }
+    const neu=vor[0];
+    if(![...sel.options].some(o=>o.value===String(neu.i)))sel.add(new Option(neu.x.name,String(neu.i)));
+    sel.value=String(neu.i);
+    tpOnSelectChange(sel);
+    getauscht.push({selId,von:alt,zu:neu.x.name,n:info.n});
+  });
+  return getauscht;
+}
+async function blockAktualisieren(datum){
+  const knopf=document.getElementById("tp-block-akt"); if(knopf)knopf.disabled=true;
+  const box=()=>document.getElementById("tp-block-ergebnis");
+  const zeilen=[];
+  try{
+    if(typeof _vuPlanVorhanden==="function"&&!(await _vuPlanVorhanden(datum))){
+      await blockEinheitUebernehmen(datum,{still:true});
+      zeilen.push("Einheit eingesetzt");
+    }
+    if(typeof tpRsvpBereit==="function")await tpRsvpBereit(datum);
+    if(typeof tgSync==="function")await tgSync();
+    const kinder=(typeof _tgPool==="function")?_tgPool().namen.length:0;
+    const bedarf=tgBedarf(kinder);
+    const tg=tgFor(), jetzt=(tg&&Array.isArray(tg.gruppen))?tg.gruppen.length:0;
+    if(!jetzt)tgBilden(bedarf);
+    else if(bedarf>jetzt)tgErweitern(bedarf);
+    else if(bedarf<jetzt)tgZusammenlegen(bedarf);
+    else if(typeof tgAnwesenheitAbgleich==="function")tgAnwesenheitAbgleich();
+    const tg2=tgFor();
+    zeilen.push(`${kinder} Kinder · ${(tg2&&tg2.gruppen||[]).length} Gruppen (${(tg2&&tg2.gruppen||[]).map(g=>g.kinder.length).join("/")})`);
+    if(typeof tpPlanRestore==="function")await tpPlanRestore(datum); else tpRenderTimeline();
+    const getauscht=blockUebungenPruefen();
+    getauscht.filter(x=>x.zu).forEach(x=>zeilen.push(`🔁 ${x.n} Kinder: „${x.von}“ → „${x.zu}“`));
+    getauscht.filter(x=>!x.zu).forEach(x=>zeilen.push(`⚠️ ${x.n} Kinder bei „${x.von}“ – keine passende Übung gefunden`));
+    if(!getauscht.length)zeilen.push("✓ Alle Übungen passen zur Gruppengröße");
+    _tbErgebnis(zeilen,"🤖 KI prüft den Plan im selben Thema …");
+    await blockKiPruefen(datum,zeilen);
+  }catch(e){
+    _tbErgebnis(zeilen.concat(["Nicht vollständig aktualisiert – bitte nochmal."]),"");
+  }finally{
+    const k=document.getElementById("tp-block-akt"); if(k)k.disabled=false;
+  }
+}
+function _tbErgebnis(zeilen,kiHtml){
+  const el=document.getElementById("tp-block-ergebnis"); if(!el)return;
+  el.innerHTML=`<div style="border:1px solid var(--rand-bedien);border-radius:10px;padding:8px 10px;margin-top:8px;font-size:var(--s-klein);line-height:1.5">
+    <div style="font-weight:800;margin-bottom:2px">Nach Anwesenheit aktualisiert</div>
+    ${zeilen.map(z=>`<div>${esc(z)}</div>`).join("")}
+    <div id="tp-block-ki" style="margin-top:6px;color:var(--text2)">${kiHtml}</div>
+  </div>`;
+}
+/* Was an die KI geht: Thema, Ziel, Zahlen, die Übungen je Station mit Kinderzahl und eine
+   Kandidatenliste aus der Bibliothek. Keine Kindernamen, keine Gruppennamen. */
+function blockKiNutzlast(datum){
+  const b=blockFuerDatum(datum)||{};
+  const alle=tpAllForms();
+  const bloecke=[];
+  (tpSlots||[]).forEach((sl,si)=>{
+    if(!(typeof tpIstHauptteil==="function"&&tpIstHauptteil(sl&&sl.typ)))return;
+    const st=[...document.querySelectorAll(`select.tp-form-sel[id^="tp-form-${si}-"]`)].map(x=>{
+      const f=alle[parseInt(x.value)]||{}; const p=Number(x.id.split("-").pop());
+      return {station:p,uebung:f.name||"",spieler:String(f.spieler||"").slice(0,80),kinder:(_tpStationGruppe[x.id]||{}).n||0};
+    }).filter(x=>x.uebung);
+    if(st.length)bloecke.push({block:si,label:String(sl.label||"").split("|")[0].trim().slice(0,80),dauer:Number(sl.dauer)||0,stationen:st});
+  });
+  const kandidaten=alle.filter(f=>f&&f.name&&!(typeof tfDublette==="function"&&tfDublette(f)))
+    .map(f=>({name:f.name,kat:f.kat||"",spieler:String(f.spieler||"").slice(0,60)})).slice(0,220);
+  const v=_tbVorlage((blockZuordnungFuer(datum)||{}).vorlage);
+  return {leitfrage:String(b.leitfrage||""),ziel:String(b.ziel||""),ziel_kinder:String((v||{}).ziel_kinder||""),
+    kinder:(typeof _tgPool==="function")?_tgPool().namen.length:0,
+    trainer:(typeof tpGetCheckedTrainers==="function")?tpGetCheckedTrainers().length:0,
+    format:"FUNiño 3 gegen 3 und 3+1 (Raute mit Torwart)",bloecke,kandidaten};
+}
+let _tbZuCache={};
+function blockZuordnungFuer(datum){ return _tbZuCache[datum]||null; }
+async function blockKiPruefen(datum){
+  const el=()=>document.getElementById("tp-block-ki");
+  const b=blockFuerDatum(datum);
+  if(b){ const zu=blockZuordnung(await _tbTrainings(String(b.von),String(b.bis)),b); zu.forEach(z=>{_tbZuCache[z.datum]=z;}); }
+  const last=blockKiNutzlast(datum);
+  if(!last.bloecke.length){ if(el())el().textContent=""; return; }
+  const ctrl=new AbortController(), t=setTimeout(()=>ctrl.abort(),60000);
+  try{
+    const r=await fetch(`${SB_URL}/functions/v1/ki-plan-pruefen`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify(last),signal:ctrl.signal});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(String(d.error||("Fehler "+r.status)));
+    _tbKiZeigen(d);
+  }catch(e){
+    const msg=(e&&e.name==="AbortError")?"Zeitüberschreitung":(e instanceof TypeError)?"kein Netz":String((e&&e.message)||"nicht erreichbar");
+    if(el())el().textContent=`KI-Prüfung nicht möglich (${msg}). Der Plan oben steht und gilt.`;
+  }finally{ clearTimeout(t); }
+}
+/* Nur Vorschläge, deren Übung es gibt und deren Station es gibt – die Antwort ist Eingabe,
+   nicht Befehl (wie die Bibliothek). */
+function _tbKiZeigen(d){
+  const el=document.getElementById("tp-block-ki"); if(!el)return;
+  const alle=tpAllForms();
+  const tausch=(Array.isArray(d.tausch)?d.tausch:[]).map(t=>{
+    const selId=`tp-form-${Number(t.block)}-${Number(t.station)}`;
+    const sel=document.getElementById(selId);
+    const i=alle.findIndex(f=>f&&f.name===t.zu);
+    return (sel&&i>=0&&sel.value!==String(i))?{selId,i,zu:t.zu,grund:String(t.grund||"")}:null;
+  }).filter(Boolean).slice(0,5);
+  window._tbKiTausch=tausch;
+  const hinw=(Array.isArray(d.hinweise)?d.hinweise:[]).slice(0,4);
+  el.innerHTML=`<div style="color:var(--text)"><b>🤖 ${d.passt?"Der Plan geht auf":"Die KI schlägt vor"}:</b> ${esc(String(d.urteil||""))}</div>
+    ${hinw.map(h=>`<div>• ${esc(String(h))}</div>`).join("")}
+    ${tausch.map((t,k)=>`<div style="display:flex;gap:8px;align-items:center;margin-top:6px"><span style="flex:1;min-width:0">🔁 ${esc(t.zu)}${t.grund?` – ${esc(t.grund)}`:""}</span>
+      <button class="btn btn-sm" style="min-height:44px" onclick="blockKiTausch(${k})">Übernehmen</button></div>`).join("")}
+    ${tausch.length>1?`<button class="btn btn-sm" style="min-height:44px;margin-top:6px" onclick="blockKiTauschAlle()">Alle übernehmen</button>`:""}`;
+}
+function blockKiTausch(k){
+  const t=(window._tbKiTausch||[])[k]; if(!t)return;
+  if(typeof tpUebungTausch==="function")tpUebungTausch(t.selId,t.i);
+  t.fertig=true;
+  const b=document.querySelectorAll("#tp-block-ki button")[k]; if(b){ b.disabled=true; b.textContent="✓ Übernommen"; }
+}
+function blockKiTauschAlle(){ (window._tbKiTausch||[]).forEach((t,k)=>{ if(!t.fertig)blockKiTausch(k); }); }
 
 /* ── Block anlegen ────────────────────────────────────────────────────────────── */
 function blockEditorClose(){ document.getElementById("tb-modal")?.remove(); _tbEdit=null; }
@@ -291,6 +438,7 @@ async function blockEditorRender(){
     ${(TB_BLOECKE||[]).length?`<div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin:18px 0 4px">Erfasste Blöcke</div>
       ${TB_BLOECKE.map(b=>`<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--surface2)">
         <div style="flex:1;min-width:0;font-size:var(--s-klein)"><b>${esc(_tbDatumKurz(b.von))} – ${esc(_tbDatumKurz(b.bis))}</b> · ${esc(b.leitfrage)}</div>
+        <button class="btn btn-sm" onclick="blockNeuPlanen(${Number(b.id)})" aria-label="Alle Trainings des Blocks ab ${esc(_tbDatumKurz(b.von))} neu planen">Neu planen</button>
         <button class="btn btn-sm" onclick="blockLoeschen(${Number(b.id)})" aria-label="Block ab ${esc(_tbDatumKurz(b.von))} löschen">Löschen</button></div>`).join("")}`:""}`;
   if(_tbEdit.leitfrage&&geordnet.length===3){
     const tr=await _tbTrainings(_tbEdit.von,bis);
@@ -298,7 +446,8 @@ async function blockEditorRender(){
     const el=document.getElementById("tb-vorschau"); if(!el)return;
     el.innerHTML=zu.length
       ?`<div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-bottom:4px">So verteilt sich der Block (${zu.length} Trainings)</div>
-        ${zu.map(z=>`<div style="font-size:var(--s-klein);padding:2px 0"><b>${esc(_tbDatumKurz(z.datum))}</b> · Einheit ${z.buchstabe}</div>`).join("")}`
+        ${zu.map(z=>`<div style="font-size:var(--s-klein);padding:2px 0"><b>${esc(_tbDatumKurz(z.datum))}</b> · Einheit ${z.buchstabe} · ${esc((typeof vuKurztitel==="function")?vuKurztitel(z.vorlage):z.vorlage)}</div>`).join("")}
+        <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px;line-height:1.45">📅 „Block erfassen“ plant alle ${zu.length} Trainings sofort. <b>Stehende Pläne in diesem Zeitraum werden ersetzt.</b> Gruppen und Feinschliff am Trainingstag: „Aktualisieren nach Anwesenheit“.</div>`
       :`<div style="font-size:var(--s-klein);color:var(--text2)">Im Zeitraum steht noch kein Training im Kalender. Der Block gilt trotzdem; die Einheiten verteilen sich, sobald Trainings eingetragen sind.</div>`;
   }
 }
@@ -313,12 +462,43 @@ async function blockSpeichern(){
     if(typeof sbCheck401==="function"&&sbCheck401(r))return;
     if(!r.ok){ toast(`Block nicht erfasst – Server antwortet ${r.status}`,"err"); if(knopf)knopf.disabled=false; return; }
   }catch(e){ toast("Kein Netz – Block nicht erfasst","err"); if(knopf)knopf.disabled=false; return; }
-  toast("🧱 Block erfasst ✓");
   blockEditorClose();
   await blockLaden();
+  /* v657: Der Block plant alle Trainings im Zeitraum sofort (PO 28.09., „Alle überschreiben“). */
+  const b=(TB_BLOECKE||[]).find(x=>String(x.von)===zeile.von&&String(x.leitfrage)===zeile.leitfrage)||{...zeile};
+  const e=await blockAllePlanen(b);
+  toast(e.fehler?`🧱 Block erfasst – ${e.geplant} von ${e.gesamt} Trainings geplant, ${e.fehler}`:`🧱 Block erfasst ✓ ${e.geplant} Training${e.geplant===1?"":"s"} geplant`,e.fehler?"err":undefined);
   blockBannerRender();
   const d=document.getElementById("tp-date")?.value; if(d)blockPlanKarte(d);
 }
+/* v657 · Alle Trainings eines Blocks planen. Jede Einheit geht über denselben Bau wie
+   „Vorlage übernehmen“ (vuPlanAusVorlage) – mit Abschlussturnier und Stationen. Gruppen werden
+   hier NICHT gebildet: wer kommt, weiß man erst am Tag; dafür gibt es „Aktualisieren nach
+   Anwesenheit“. Bestehende Pläne im Zeitraum werden ersetzt (PO-Entscheidung). */
+async function blockAllePlanen(b){
+  const erg={geplant:0,gesamt:0,fehler:""};
+  if(!b||typeof vuPlanAusVorlage!=="function"||typeof vuPlanSchreiben!=="function"){ erg.fehler="Vorlagen noch nicht geladen"; return erg; }
+  await _tbVorlagenSicher();
+  const zu=blockZuordnung(await _tbTrainings(String(b.von),String(b.bis)),b);
+  erg.gesamt=zu.length;
+  for(const z of zu){
+    const v=_tbVorlage(z.vorlage);
+    if(!v){ erg.fehler=`„${z.vorlage}“ fehlt`; continue; }
+    const {slots,plan,fehlend}=vuPlanAusVorlage(v);
+    if(fehlend){ erg.fehler=`Übung „${fehlend}“ fehlt`; continue; }
+    try{ if(await vuPlanSchreiben(z.datum,slots,plan))erg.geplant++; else erg.fehler="Server lehnt ab"; }
+    catch(e){ erg.fehler="kein Netz"; }
+  }
+  const d=document.getElementById("tp-date")?.value;
+  if(d&&zu.some(z=>z.datum===d)&&typeof tpPlanRestore==="function"){ try{ await tpPlanRestore(d); }catch(e){} }
+  return erg;
+}
+async function blockNeuPlanen(id){
+  const b=(TB_BLOECKE||[]).find(x=>Number(x.id)===Number(id)); if(!b)return;
+  const e=await blockAllePlanen(b);
+  toast(e.fehler?`${e.geplant} von ${e.gesamt} Trainings geplant – ${e.fehler}`:`📅 ${e.geplant} Training${e.geplant===1?"":"s"} neu geplant ✓`,e.fehler?"err":undefined);
+}
+
 async function blockLoeschen(id){
   const b=(TB_BLOECKE||[]).find(x=>Number(x.id)===Number(id)); if(!b)return;
   if(!confirm(`Block „${b.leitfrage}“ (${_tbDatumKurz(b.von)} – ${_tbDatumKurz(b.bis)}) löschen? Bereits übernommene Pläne bleiben stehen.`))return;

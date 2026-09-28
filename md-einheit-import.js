@@ -1221,13 +1221,11 @@ function vuAbschlussturnierSichern(slots){
 /* Setzt Phasen und Übungszuordnung für das Datum – dieselben Strukturen und
    dieselbe Kopfzeile wie tpPlanSave() und der Einheiten-Import. `kopf` wird bewusst
    NICHT geschrieben: eine Vorlage hat keinen Schwerpunkt für diesen einen Tag. */
-async function vorlageUebernehmenSetzen(){
-  const datum=_vuDatum();
-  const v=VORLAGEN.find(x=>String(x.id)===String(_vuAuswahl));
-  if(!v||!datum)return;
-  if(typeof sbToken==="function"&&!sbToken()){ toast("Bitte zuerst als Trainer anmelden","err"); return; }
-  const haupt=document.getElementById("vu-haupt");
-  if(haupt)haupt.disabled=true;
+/* v657: Aus einer Vorlage Phasen und Übungszuordnung bauen – ohne Datum, ohne Schreiben.
+   Genutzt von „Vorlage übernehmen“ (ein Termin) und von der Blockplanung (alle Trainings
+   eines Blocks auf einmal). Rückgabe {slots, plan, fehlend}; fehlend nennt eine Übung, die
+   es nicht mehr gibt – dann wird nichts geschrieben. */
+function vuPlanAusVorlage(v){
   const bl=Array.isArray(v.bloecke)?v.bloecke:[];
   let mainNr=0;
   const slots=[], plan=[];
@@ -1295,11 +1293,32 @@ async function vorlageUebernehmenSetzen(){
        Station für Station neu – ohne diese Marke. Ab dann gilt seine Hand (Abnahme 3). */
     plan.push({formIdx,formName:tpAllForms()[formIdx].name,trainer:"Alle",slotLabel:label,alleFelder:true,key:`${formIdx}-Alle`});
   }
+  if(!fehlend)vuAbschlussturnierSichern(slots);
+  return {slots,plan,fehlend};
+}
+/* v657: Einen fertigen Plan an ein Datum schreiben – derselbe Weg und dieselbe Kopfzeile wie
+   bisher. Gibt true/false zurück; Meldungen macht der Aufrufer. */
+async function vuPlanSchreiben(datum,slots,plan){
+  const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?on_conflict=datum`,{method:"POST",
+    headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates,return=minimal'},
+    body:JSON.stringify({datum,plan,slots,gespeichert_von:((typeof trainerMe==="function")?(await trainerMe()||null):null),updated_at:new Date().toISOString()})});
+  if(typeof sbCheck401==="function"&&sbCheck401(r))return false;
+  if(r.ok&&typeof TP_STAND!=="undefined")delete TP_STAND[datum];
+  return r.ok;
+}
+
+async function vorlageUebernehmenSetzen(){
+  const datum=_vuDatum();
+  const v=VORLAGEN.find(x=>String(x.id)===String(_vuAuswahl));
+  if(!v||!datum)return;
+  if(typeof sbToken==="function"&&!sbToken()){ toast("Bitte zuerst als Trainer anmelden","err"); return; }
+  const haupt=document.getElementById("vu-haupt");
+  if(haupt)haupt.disabled=true;
+  const {slots,plan,fehlend}=vuPlanAusVorlage(v);
   if(fehlend){
     toast(`Die Übung „${fehlend}“ gibt es nicht mehr – nichts geändert`,"err");
     if(haupt)haupt.disabled=false; return;
   }
-  vuAbschlussturnierSichern(slots);
   try{
     const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?on_conflict=datum`,{method:"POST",
       headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates,return=minimal'},

@@ -2242,7 +2242,15 @@ function tpGroesserVorschlaege(selId,idx,n){
     const sp=tpUebungSpanne(o.i);
     return !sp.alle&&sp.min>0&&sp.min<=n&&n<=sp.max+1;
   });
-  passt.sort((a,c)=>(a.x.kat===f.kat?0:1)-(c.x.kat===f.kat?0:1)||(n-tpUebungSpanne(a.i).max)-(n-tpUebungSpanne(c.i).max));
+  /* v657: Rangfolge, damit ein Tausch im Thema bleibt – eine Spielform wird durch eine
+     Spielform ersetzt (nicht durch „Positions-Bingo“), dann zählt das Saisonformat (FUNiño,
+     3+1, Raute; PO 28.09.: „nur FUNiño 3:3 und 3:1 … stark darauf fokussieren“), dann die
+     Kategorie, zuletzt die engste Spanne. */
+  const art=o=>(typeof _tpArt==="function"&&_tpArt(o))||(typeof _tpArtVorschlag==="function"&&_tpArtVorschlag(o))||"";
+  const artF=art(f);
+  const format=o=>/FUNi(ñ|n)o|3\+1|Raute|Flitzer|Aufpasser/i.test(String(o.name||""))?0:1;
+  const rang=o=>[artF&&art(o.x)===artF?0:1, format(o.x), o.x.kat===f.kat?0:1, n-tpUebungSpanne(o.i).max];
+  passt.sort((a,c)=>{ const ra=rang(a), rc=rang(c); for(let k=0;k<ra.length;k++){ if(ra[k]!==rc[k])return ra[k]-rc[k]; } return 0; });
   return passt.slice(0,3);
 }
 function tpGroesserHinweis(selId,idx,n){
