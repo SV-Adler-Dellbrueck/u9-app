@@ -41,10 +41,52 @@ Deno.serve(async (req) => {
     if (!uid) return json({ error: "auth erforderlich" }, 401);
 
     const { data: prof } = await admin.from("profiles").select("role").eq("id", uid).single();
+    const body = await req.json().catch(() => ({}));
+
+    /* v664: Erinnerung der Kasse. Darf das Trainerteam und wer in kasse_team steht. Der Text
+       ist fest, die Empfaenger ergeben sich aus der Datenbank (Familien mit offener Umlage) –
+       die Kasse kann damit keine beliebige Mitteilung an alle schicken. Hoechstens einmal
+       in 20 Stunden (team_config.kasse_erinnert_am). */
+    if (body.art === "kasse_erinnerung") {
+      const email = (userData?.user?.email || "").toLowerCase();
+      let darf = prof?.role === "trainer";
+      if (!darf && email) {
+        const { data: kt } = await admin.from("kasse_team").select("email").eq("email", email).maybeSingle();
+        darf = !!kt;
+      }
+      if (!darf) return json({ error: "Nur die Kasse darf erinnern." }, 403);
+      const { data: tc } = await admin.from("team_config").select("kasse_erinnert_am").eq("id", 1).maybeSingle();
+      const zuletzt = tc?.kasse_erinnert_am ? new Date(tc.kasse_erinnert_am).getTime() : 0;
+      if (Date.now() - zuletzt < 20 * 3600 * 1000) return json({ error: "Heute wurde schon erinnert – morgen wieder." }, 429);
+
+      const { data: umlagen } = await admin.from("kasse_umlagen").select("id").eq("aktiv", true);
+      const { data: kinder } = await admin.from("kader").select("id").or("aktiv.is.null,aktiv.eq.true");
+      const { data: zahl } = await admin.from("kasse_zahlung").select("umlage_id,spieler_id");
+      const bezahlt = new Set((zahl || []).map((z: any) => z.umlage_id + "_" + z.spieler_id));
+      const offen = (kinder || []).filter((k: any) => (umlagen || []).some((u: any) => !bezahlt.has(u.id + "_" + k.id))).map((k: any) => k.id);
+      if (!offen.length) return json({ ok: true, familien: 0, sent: 0 });
+      const { data: ek } = await admin.from("eltern_kinder").select("email,spieler_id").in("spieler_id", offen);
+      const mails = [...new Set((ek || []).map((x: any) => String(x.email || "").toLowerCase()).filter(Boolean))];
+      const familien = new Set((ek || []).map((x: any) => x.spieler_id)).size;
+      const { data: profs } = mails.length ? await admin.from("profiles").select("id").in("email", mails) : { data: [] };
+      const ids = (profs || []).map((p: any) => p.id);
+      await admin.from("team_config").upsert({ id: 1, kasse_erinnert_am: new Date().toISOString() }, { onConflict: "id" });
+      if (!ids.length) return json({ ok: true, familien, sent: 0 });
+      await vapid(admin);
+      const payload = { title: "💰 Mannschaftskasse", body: "Bei euch ist noch ein Beitrag offen. Details im Eltern-Bereich unter „Mehr vom Team“.", url: "./?portal", tag: "adler-kasse" };
+      const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth").in("user_id", ids);
+      let sent = 0; const gone: string[] = [];
+      for (const s of subs || []) {
+        try { await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } } as any, JSON.stringify(payload)); sent++; }
+        catch (err: any) { const c = err?.statusCode; if (c === 404 || c === 410 || c === 403) gone.push(s.endpoint); }
+      }
+      if (gone.length) await admin.from("push_subscriptions").delete().in("endpoint", gone);
+      return json({ ok: true, familien, sent });
+    }
+
     if (!prof || prof.role !== "trainer") return json({ error: "nur Trainer duerfen senden" }, 403);
 
     await vapid(admin);
-    const body = await req.json().catch(() => ({}));
     const audience = body.audience || "parents"; // parents | trainers | all
     const payload = {
       title: (body.title || "SV Adler Dellbrueck U9").toString().slice(0, 120),

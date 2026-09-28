@@ -1003,12 +1003,14 @@ async function elternDashLoad(){
   html+=elRow("🧦","Fundbüro","Verlorenes &amp; Gefundenes – hier sammelt das Team","fundbueroOpen()","#3b82f6");
   html+=`<div id="skill-slot"></div>`;        // Skill der Woche
   if(WAESCHE_AKTIV)html+=`<div id="waesche-slot"></div>`;  // Trikot-Wäsche-Rotator (aktuell ausgeblendet)
+  html+=`<div id="kasse-verwalten-slot"></div>`;   // v664: nur für die Kasse
   if(kasse&&(Number(kasse.saldo)!==0||(kasse.umlagen&&kasse.umlagen.length))){
     const eur=n=>Number(n||0).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";
     html+=card(`<div style="font-weight:700;margin-bottom:6px">💰 Teamkasse</div>
       <div style="font-size:var(--s-text);color:#475569">Kassenstand: <b>${eur(kasse.saldo)}</b></div>
       ${(kasse.umlagen||[]).map(u=>`<div style="display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px">
         <div style="flex:1"><div style="font-weight:700;font-size:var(--s-text)">${esc(u.titel)} · ${eur(u.betrag)}</div>${u.faellig?`<div style="font-size:var(--s-klein);color:#64748b">fällig bis ${u.faellig}</div>`:""}</div>
+        <div class="kz-stand" data-u="${u.id}"></div>
         ${u.paypal_link?`<a href="${esc(u.paypal_link)}" target="_blank" rel="noopener noreferrer" style="background:#0070ba;color:#fff;border-radius:8px;padding:8px 12px;font-size:var(--s-text);font-weight:700;text-decoration:none">PayPal</a>`:""}
       </div>`).join("")}
       <div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px">Informativ. Zahlungen laufen extern über PayPal.</div>`);
@@ -1062,6 +1064,8 @@ async function elternDashLoad(){
   adlerkasseLinkGet().then(l=>{const el=document.getElementById("ak-slot");if(!el)return;el.innerHTML=adlerkasseCardHtml(l)+(l?akShareBtnHtml():"");if(l)window._akLink=l;}).catch(()=>{});
   elternAnsagenLoad();                         // H1: Trainer-Ansagen mit Gelesen-Status
   elternTeamAnsprechLoad();                    // v663: Elternbeirat, Kasse, Beitrag
+  if(typeof elternKasseRolleLoad==="function")elternKasseRolleLoad();      // v664: Kasse verwalten
+  if(typeof elternKasseStandLoad==="function")elternKasseStandLoad(kids);  // v664: bezahlt/offen je eigenes Kind
   elternGenesungLoad(kids);                    // I-A: Genesungsgrüße für pausierte Teamkinder
   elternHelferTodoLoad();                      // J3: heute als Helfer eingetragen? Erinnerung mit Direktlink
   elternMitbringLoad(kids);                    // Event-Mitbringliste: wer bringt was mit
