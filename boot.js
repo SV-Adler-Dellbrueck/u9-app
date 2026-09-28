@@ -3135,7 +3135,7 @@ async function pinCheck(){
     // Trainer-/Quiz-Oberfläche komplett aus dem DOM entfernen – Eltern sehen nur die Card
     document.getElementById("pin-gate")?.remove();
     document.getElementById("main-app")?.remove();
-    if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(()=>{});
+    if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"}).catch(()=>{});
     // ueber routeRender, wie die uebrigen Sonderrouten: wartet kurz auf das Modul,
     // statt bei langsamem Netz weiss zu bleiben (md-matchcard.js ist Welle 2).
     routeRender("renderElternView",params.get("match")||"");
@@ -3148,7 +3148,7 @@ async function pinCheck(){
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content","#1e3a8a");
     document.getElementById("pin-gate")?.remove();
     document.getElementById("main-app")?.remove();
-    if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(()=>{});
+    if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"}).catch(()=>{});
     routeRender("renderDelegateView",params.get("delegate"));
     return;
   }
@@ -3165,7 +3165,7 @@ async function pinCheck(){
       try{sessionStorage.setItem("adler_rsvp_intent",rsvpId);}catch(e){}
       try{history.replaceState({},"",location.pathname+"?portal");}catch(e){}
     }
-    if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(()=>{});
+    if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"}).catch(()=>{});
     routeRender("renderElternPortal");
     setTimeout(pwaInstallNudge,1800); // UX 1: Soft-Install-Nudge für Eltern
     return;
@@ -3176,7 +3176,7 @@ async function pinCheck(){
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content","#1e3a8a");
     document.getElementById("pin-gate")?.remove();
     document.getElementById("main-app")?.remove();
-    if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(()=>{});
+    if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"}).catch(()=>{});
     routeRender("renderTickerView",params.get("ticker")||"");
     setTimeout(pwaInstallNudge,1800);
     return;
@@ -3188,7 +3188,7 @@ async function pinCheck(){
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content","#0f172a");
     document.getElementById("pin-gate")?.remove();
     document.getElementById("main-app")?.remove();
-    if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(()=>{});
+    if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"}).catch(()=>{});
     routeRender("kinderGeraetStart");
     setTimeout(pwaInstallNudge,1800);
     return;
@@ -3199,7 +3199,7 @@ async function pinCheck(){
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content","#1e3a8a");
     document.getElementById("pin-gate")?.remove();
     document.getElementById("main-app")?.remove();
-    if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(()=>{});
+    if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"}).catch(()=>{});
     routeRender("renderKindView",params.get("kind")||"");
     setTimeout(pwaInstallNudge,1800);
     return;
@@ -3229,7 +3229,7 @@ async function pinCheck(){
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content","#1e3a8a");
     document.getElementById("pin-gate")?.remove();
     document.getElementById("main-app")?.remove();
-    if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(()=>{});
+    if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"}).catch(()=>{});
     renderStadionheftView();
     setTimeout(pwaInstallNudge,1800);
     return;
@@ -4075,21 +4075,81 @@ function tpRenderMindsetTip(){
 /* ═══════════════════════════════════
    PWA SETUP
 ═══════════════════════════════════ */
+/* ═══ v655 – Die App holt sich Updates selbst ═══
+   Ein Browser fragt nur beim LADEN einer Seite nach einem neuen Service Worker. Eine
+   App, die im Hintergrund weiterlebt, oder ein Laptop-Tab, der wochenlang offen steht,
+   lädt nie – ein Trainer stand so am 28.09. noch auf v514 (Stand 10.09.). Und kam ein
+   Update doch an, lud die App nur in der ersten Minute neu, danach gab es einen Toast,
+   den niemand sah. Jetzt:
+   1. Nachsehen, wenn die App wieder in den Vordergrund kommt (höchstens alle 5 Min.)
+      und alle 30 Min., solange sie sichtbar ist.
+   2. Ist die neue Version da, wird im passenden Moment neu geladen: sofort in der
+      ersten Minute oder wenn die App gerade im Hintergrund ist, sonst beim nächsten
+      Wechsel weg von der App oder nach 10 Minuten ohne Eingabe – aber nie, solange
+      etwas verloren ginge (offenes Fenster, Text in Arbeit, laufende Uhr, Diktat).
+      Bis dahin steht unten ein Knopf „Neu laden“.
+   Die Nutzer müssen dafür nichts tun und nichts neu installieren. */
+function appNeuLaden(){ location.reload(); }
+/* Darf jetzt neu geladen werden, ohne dass jemand etwas verliert? */
+function appUpdateSicher(){
+  try{
+    for(const m of document.querySelectorAll('[aria-modal="true"]'))       // offenes Fenster
+      if(m.getClientRects().length)return false;                           // (ausgeblendete zählen nicht)
+    const a=document.activeElement;
+    // Ein Feld, in dem gerade geschrieben wird – ein leeres (etwa das PIN-Feld mit Fokus) verliert nichts
+    if(a&&(a.tagName==="TEXTAREA"||(a.tagName==="INPUT"&&!/^(button|submit|checkbox|radio|range|color|file)$/i.test(a.type||"")))&&String(a.value||"").trim())return false;
+    if(a&&a.isContentEditable&&a.textContent.trim())return false;
+    for(const t of document.querySelectorAll("textarea"))if(t.value.trim()&&t.offsetParent)return false;
+  }catch(e){}
+  const laeuft=f=>{ try{ return !!f(); }catch(e){ return false; } };      // Welle 2 kann fehlen
+  if(laeuft(()=>mcState&&mcState.clock_status==="running"))return false;  // Match-Uhr
+  if(laeuft(()=>_stT&&_stT.timer&&!_stT.paused))return false;             // Stationstimer
+  if(laeuft(()=>_dk&&_dk.wollen))return false;                             // Diktat
+  if(laeuft(()=>voiceOn))return false;                                     // Sprachsteuerung
+  return true;
+}
+function appUpdateHinweis(){
+  if(document.getElementById("app-update"))return;
+  const d=document.createElement("div");
+  d.id="app-update"; d.setAttribute("role","status");
+  d.style.cssText="position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom));z-index:9990;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 14px;border-radius:14px;background:var(--text,#0f172a);color:var(--bg,#fff);box-shadow:0 6px 20px rgba(0,0,0,.25);font-size:var(--s-text,13px);font-weight:600;max-width:calc(100vw - 32px)";
+  d.innerHTML='<span>🔄 Neue Version bereit</span><button type="button" style="min-height:44px;padding:0 14px;border:none;border-radius:10px;background:var(--bg,#fff);color:var(--text,#0f172a);font-weight:800;font-family:inherit;font-size:var(--s-text,13px);cursor:pointer">Neu laden</button>';
+  d.querySelector("button").onclick=appNeuLaden;
+  (document.body||document.documentElement).appendChild(d);
+}
 (function(){
-  // Auto-Update: Der SW liefert cache-first (Seite hängt sonst eine Version hinterher).
-  // Sobald ein neuer SW übernimmt, einmal automatisch neu laden – danach ist alles aktuell.
-  if("serviceWorker" in navigator){
-    let swReloaded=false;
-    navigator.serviceWorker.addEventListener("controllerchange",()=>{
-      if(swReloaded)return;
-      swReloaded=true;
-      if(performance.now()<60000){location.reload();}
-      else if(typeof toast==="function"){toast("Neue Version verfügbar – App einmal neu laden");}
-    });
+  if(!("serviceWorker" in navigator))return;
+  const start=Date.now();
+  // Beim allerersten Besuch übernimmt der Worker nur – das ist kein Update, kein Neuladen.
+  let hatteWorker=!!navigator.serviceWorker.controller;
+  let bereit=false, zuletztGeprueft=start, zuletztAktiv=start;
+  function nachsehen(){
+    zuletztGeprueft=Date.now();
+    navigator.serviceWorker.getRegistration().then(r=>r&&r.update()).catch(()=>{});
   }
+  function jetztWennSicher(){ if(bereit&&appUpdateSicher())appNeuLaden(); }
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{
+    if(!hatteWorker){hatteWorker=true;return;}   // erste Übernahme, kein Update
+    if(bereit)return;
+    bereit=true;
+    if(Date.now()-start<60000||document.hidden){ if(appUpdateSicher()){appNeuLaden();return;} }
+    appUpdateHinweis();
+  });
+  document.addEventListener("visibilitychange",()=>{
+    if(document.hidden){ jetztWennSicher(); return; }                // weg von der App: unbemerkt neu laden
+    if(Date.now()-zuletztGeprueft>5*60000)nachsehen();              // zurück: nachsehen
+  });
+  ["pointerdown","keydown"].forEach(t=>addEventListener(t,()=>{zuletztAktiv=Date.now();},{passive:true,capture:true}));
+  setInterval(()=>{
+    if(document.hidden)return;
+    if(Date.now()-zuletztGeprueft>=30*60000)nachsehen();
+    if(bereit&&Date.now()-zuletztAktiv>10*60000)jetztWennSicher(); // Tab steht offen, niemand tippt
+  },60000);
+})();
+(function(){
   // Quiz-Modus: Manifest/Icon kommen aus der Quiz-IIFE – hier nicht überschreiben (B1)
   if(new URLSearchParams(location.search).has("quiz")){
-    if("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(()=>{});
+    if("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"}).catch(()=>{});
     return;
   }
   // Manifest + Apple-Icon kommen statisch aus dem <head> (manifest-trainer.json mit
@@ -4097,7 +4157,7 @@ function tpRenderMindsetTip(){
 
   // Register Service Worker for offline support
   if("serviceWorker" in navigator){
-    navigator.serviceWorker.register("./sw.js").catch(()=>{});
+    navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"}).catch(()=>{});
   }
 
   // Der Install-Hinweis lebt in core.js (pwaInstallNudge/pwaBannerShow): er kennt den

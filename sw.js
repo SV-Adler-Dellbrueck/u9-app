@@ -1,4 +1,4 @@
-const CACHE="u9i-adler-v654";
+const CACHE="u9i-adler-v655";
 const PRECACHE=[
   "./",
   "./index.html",
@@ -80,12 +80,24 @@ self.addEventListener("install",e=>{
   // cache:"reload" umgeht den HTTP-Cache des Browsers. Ohne das kann der Precache eine
   // Datei aus dem Browser-Cache uebernehmen (GitHub Pages liefert HTML mit max-age=600)
   // und der neue Service Worker startet mit einer veralteten index.html.
-  const frisch=PRECACHE.map(u=>new Request(u,{cache:"reload"}));
-  e.waitUntil(
-    caches.open(CACHE)
-      .then(c=>c.addAll(frisch))
-      .then(()=>self.skipWaiting())
-  );
+  /* v655: Datei für Datei statt addAll. addAll ist alles oder nichts – scheitert eine
+     einzige Datei (Netz wackelt, Speicher knapp), bleibt das Gerät still auf der alten
+     Version stehen, Tag für Tag. Jetzt reicht es, wenn die Seiten und der Kern da sind;
+     was fehlt, holt die App beim ersten Gebrauch aus dem Netz nach (siehe fetch). */
+  const PFLICHT=["./trainer/","./eltern/","./kinder/","./core.js","./boot.js","./views.js"];
+  e.waitUntil((async()=>{
+    const c=await caches.open(CACHE);
+    const erg=await Promise.allSettled(PRECACHE.map(u=>c.add(new Request(u,{cache:"reload"})).then(()=>u)));
+    const da=new Set(erg.filter(x=>x.status==="fulfilled").map(x=>x.value));
+    const fehlt=PFLICHT.filter(u=>PRECACHE.includes(u)&&!da.has(u));
+    if(fehlt.length){
+      // Lieber beim alten bleiben – und den halben Cache wieder weg, sonst meldet die
+      // Versionsanzeige (liest den höchsten Cache-Namen) eine Version, die nie lief.
+      await caches.delete(CACHE);
+      throw new Error("Precache unvollständig: "+fehlt.join(", "));
+    }
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener("activate",e=>{

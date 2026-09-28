@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v654 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v655 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -191,6 +191,7 @@ Kinder sehen nie Bewertungen und nie Zahlen zu anderen Kindern. Was die Kabine �
 |---|---|---|
 | **Datenschutz** | Row-Level-Security in der Datenbank: Eltern sehen nur eigene Kinder, Kinder nie Bewertungen, Trainermeetings nur für Trainer. Foto-Freigaben werden überall respektiert. Das öffentliche Repo enthält keine personenbezogenen Daten. Seit v636 (Datenschutz-Audit): Zugriff nur für Mitglieder (Trainer, Eltern mit hinterlegtem Kind, gekoppeltes Kindergerät) – eine angemeldete Sitzung allein reicht nicht mehr; keine Bewertungsrohwerte an Eltern; Galerie ohne Stärken und Trainingszahlen fremder Kinder; öffentliche Fotos nur mit Freigabe „öffentlich“; KI-Dienste bekommen keine Kindernamen und keine Geburtsdaten; Helfer-Codes des Tickers nicht mehr öffentlich lesbar; Einwilligungstext nennt alle Dienste. Seit v642 lädt die App beim Öffnen nichts mehr von fremden Servern: Schrift (Inter), Icons und Diagramme liegen im eigenen Ordner `vendor/`, QR-Codes entstehen im Browser – vorher gingen die IP-Adressen von Eltern und Kindern an Google und jsDelivr. Seit v643 liegen die Schlüssel für Mitteilungen und die nächtlichen Abläufe im Supabase-Tresor (Vault) statt im Code; sie wurden dabei erneuert, und Geräte melden sich beim nächsten Öffnen von selbst neu an. | DSGVO-konform ohne Papierkram. Vertrauen der Eltern. |
 | **Push-Benachrichtigungen** | Erinnerungen an Termine, Ansagen und offene Rückmeldungen. | Weniger Nachfragen, höhere Rückmeldequote. |
+| **Updates von selbst** | Seit v655 sieht die App bei jeder Rückkehr in den Vordergrund und alle 30 Minuten nach einer neuen Version und lädt im passenden Moment neu – beim Wechsel weg von der App, nach 10 Minuten ohne Eingabe oder mit dem Knopf „Neu laden“, nie mit offenem Fenster, Text in Arbeit, laufender Uhr oder Diktat. Fehlt beim Update eine einzelne Nebendatei, kommt es trotzdem an; vorher blieb ein Gerät dann still auf der alten Version. | Eltern und Trainer müssen nichts neu installieren und sehen immer den aktuellen Stand. |
 | **Offline-Fähigkeit** | Die App läuft ohne Netz weiter, Inhaltslisten haben einen lokalen Fallback. | Am Platz ohne Empfang bleibt alles bedienbar. |
 | **Sprach-Eingabe** | Notizen, Bewertungen und Übungsbeschreibungen lassen sich einsprechen. | Schneller als tippen mit kalten Fingern. |
 | **Backup & Export** | Vollständiger Datenexport, CSV für Material, Markdown für das Tagebuch. | Keine Abhängigkeit, Datenhoheit beim Verein. |
