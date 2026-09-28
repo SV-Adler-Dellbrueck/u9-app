@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v653 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v654 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -144,7 +144,7 @@ Zugang mit E-Mail und Passwort, angelegt über die Einladungskarte des Kindes. W
 
 ## 3 · Kinderzugang („Kabine“)
 
-Die Kabine gibt es zweimal: als Modus **innerhalb der Eltern-App** – Eltern geben das Handy weiter, zurück geht es nur mit einem Ausgangs-Code, und nach 60 Minuten sperrt sich das Handy mit „Kabinen-Zeit vorbei“ – auch nach einem Neuladen –, bis ein Erwachsener den Code eingibt. In der Kabine gibt es kein „Teilen“ und keine Links nach draußen; das Video der Woche läuft eingebettet. Vorn stehen acht Kacheln, der Rest unter „Mehr entdecken“. Der Hinweis „Hier fehlt noch ein Foto“ steht nur beim eigenen Kind – und als **eigene App** auf dem Gerät des Kindes, mit eigenem Symbol und eigener Installation.
+Die Kabine gibt es zweimal: als Modus **innerhalb der Eltern-App** – Eltern geben das Handy weiter, zurück geht es nur mit einem Ausgangs-Code, und nach 60 Minuten sperrt sich das Handy mit „Kabinen-Zeit vorbei“ – auch nach einem Neuladen –, bis ein Erwachsener den Code eingibt. In der Kabine gibt es kein „Teilen“ und keine Links nach draußen; das Video der Woche läuft eingebettet. Vorn stehen acht Kacheln, der Rest unter „Mehr entdecken“. Der Hinweis „Hier fehlt noch ein Foto“ steht nur beim eigenen Kind – und als **eigene App** auf dem Gerät des Kindes, mit eigenem Symbol (seit v654 das Adler-Wappen auf grünem Grund mit goldenem Feder-Abzeichen, passend zu Trainer- und Eltern-App) und eigener Installation. Beim Öffnen stürzt das Wappen wie ein Adler ins Stadion, landet mit Lichtblitz, und goldene Federn fliegen in alle Richtungen: „Willkommen in der Kabine!“ (v654).
 
 Für die eigene App bekommt das Kind ein Konto **ohne Namen und ohne E-Mail**, das die Eltern per Code an ihr Kind binden und jederzeit wieder trennen. Sie stellen dort auch die tägliche Appzeit ein; gezählt wird auf dem Server, ein Neustart der App dreht nichts zurück. Ist die Zeit auf, tritt an die Stelle der Kabine ein Schluss-Bildschirm ohne Bedienelemente („Für heute ist die Kabine zu — bis morgen!“).
 
