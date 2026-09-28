@@ -8,7 +8,11 @@
       Namen je Gruppe; Knopf „Anwesenheit anpassen …“ mindestens 56 px
    b) Teams: wer nicht auf „Dabei“ steht, fliegt aus einer gespeicherten Einteilung;
       wer dabei ist und kein Team hat, kommt hinein
-   c) Handänderung bleibt möglich: „Nicht“ nimmt ein Kind aus dem Team, „Dabei“ setzt es hinein */
+   c) Handänderung bleibt möglich: „Nicht“ nimmt ein Kind aus dem Team, „Dabei“ setzt es hinein
+   Dazu PO 28.09. (zwei Bildschirmfotos): „Pass die neue Kachel optisch den anderen an.“ und
+   „Betreuung vor Ort ist ja nicht das Kind, sondern der Name des Elternteils.“
+   d) „Ansprechpartner im Team“ wie die Zeilen darunter: Rand links, Zeichen links
+   e) Betreuung: die Zeile merkt sich das Konto, die Liste zeigt den Vornamen des Elternteils */
 "use strict";
 module.exports = async function (h) {
   const K = h.KINDER, probleme = [], zeilen = [];
@@ -50,5 +54,31 @@ module.exports = async function (h) {
   if (!r.nachDabei) probleme.push("c) „Dabei“ setzt das Kind nicht ins Team");
   zeilen.push(`a) ${r.text.slice(0, 150)}… · Knopf ${r.knopf} px`);
   zeilen.push(`b) nach Abgleich im Team: ${r.teams.join(", ")} · c) Nicht → raus ${r.nachNicht}, Dabei → rein ${r.nachDabei}`);
+  // d) Karte im Stil der Zeilen
+  {
+    const s2 = await h.starten({ start: "/eltern/index.html", warten: 1000,
+      supabase: h.supabaseAttrappe({ team_config: [{ eltern_team: { rollen: [{ rolle: "Elternbeirat", name: "Elternteil von Kind A" }], kasse_beitrag: "40 € pro Saison" } }] }) });
+    const d = await s2.page.evaluate(async () => {
+      const slot = document.createElement("div"); slot.id = "team-ansprech-slot"; document.body.appendChild(slot);
+      await elternTeamAnsprechLoad();
+      const k = document.getElementById("team-ansprech"); if (!k) return null;
+      const cs = getComputedStyle(k);
+      return { links: parseFloat(cs.borderLeftWidth), oben: parseFloat(cs.borderTopWidth), text: k.textContent.replace(/\s+/g, " ").trim() };
+    });
+    await s2.schliessen();
+    if (!d) probleme.push("d) Karte „Ansprechpartner im Team“ fehlt");
+    else {
+      if (!(d.links >= 4 && d.oben <= 1.5)) probleme.push(`d) Rand wie die Zeilen erwartet (links 4 px, sonst 1 px): links ${d.links}, oben ${d.oben}`);
+      if (!/Elternbeirat: Elternteil von Kind A/.test(d.text) || !/Mannschaftskasse: 40 € pro Saison/.test(d.text)) probleme.push("d) Inhalt fehlt: " + d.text);
+      zeilen.push(`d) ${d.text} · Rand links ${d.links} px`);
+    }
+  }
+  // e) Betreuung: Name des Elternteils
+  const fs = require("fs"), path = require("path");
+  const mig = fs.readFileSync(path.join(h.REPO, "supabase/migrations/20260928_v665_betreuung_eltern.sql"), "utf8");
+  if (!/new\.user_id := auth\.uid\(\)/.test(mig)) probleme.push("e) Betreuung merkt sich das Konto nicht");
+  if (!/ea\.vorname[\s\S]*'Elternteil von ' \|\| k\.name/.test(mig)) probleme.push("e) Liste zeigt nicht den Vornamen des Elternteils");
+  if (/select k\.name\s*\n\s*from public\.betreuung/.test(mig)) probleme.push("e) Liste zeigt weiter den Namen des Kindes");
+  zeilen.push("e) betreuung.user_id per Trigger, Liste: Vorname aus „Meine Angaben“ → Anzeigename → „Elternteil von …“");
   return h.ergebnis("v665 Wer ist dabei? auf der Spieltag-Seite, Teams aus der Anwesenheit", probleme.length === 0, probleme.length ? probleme.concat(zeilen) : zeilen);
 };
