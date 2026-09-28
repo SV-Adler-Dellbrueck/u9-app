@@ -1073,6 +1073,27 @@ body:not(.quiz-extern) #view-taktik>*:not(.sl):not(#sit-hub){display:none!import
 .sit-meta{font-size:var(--s-klein);color:var(--text2);margin-bottom:8px}
 .sit-knoepfe{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}
 .sit-knoepfe .btn{min-height:44px;justify-content:center}
+
+/* v653 – Freies Brett (Trainer) und Mein Taktikbrett (Kabine), md-brett.js. Die Fläche
+   bekommt so viel Höhe, wie nach Kopf und Leiste übrig ist; touch-action:none, damit der
+   Finger zeichnet statt die Seite zu verschieben. */
+.br-modal{position:fixed;inset:0;z-index:9000;background:#0f172a;color:#fff;display:flex;flex-direction:column}
+.br-kopf{display:flex;align-items:center;gap:8px;padding:8px 12px}
+.br-titel{flex:1;font-size:var(--s-teil);font-weight:800}
+.br-zu{width:44px;height:44px;border-radius:50%;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:var(--s-seite);cursor:pointer}
+.br-rumpf{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;padding:0 12px 12px}
+.br-flaeche{flex:1;min-height:260px;display:flex;align-items:center;justify-content:center}
+.br-svg{height:100%;max-height:calc(100dvh - 250px);width:auto;max-width:100%;aspect-ratio:180/280;touch-action:none;display:block;border-radius:8px}
+.br-kind .br-svg{max-height:calc(100dvh - 300px)}
+.br-hinweis{text-align:center;font-size:var(--s-text);color:#e2e8f0;min-height:1.2em}
+.br-leiste{display:flex;flex-direction:column;gap:6px}
+.br-reihe{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.br-reihe .btn{min-height:44px;justify-content:center}
+.br-reihe .btn[aria-pressed="true"]{outline:3px solid #fbbf24;outline-offset:1px;font-weight:800}
+.br-punkt{display:inline-block;width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.4)}
+.br-kind .br-reihe .btn{min-height:52px;font-size:var(--s-teil)}
+.br-kabkopf{display:flex;align-items:center;gap:10px;padding:12px 16px;color:#fff}
+.sit-brett{width:100%;min-height:56px;justify-content:center;font-weight:800;margin-bottom:12px}
 .sit-leer{font-size:var(--s-text);color:var(--text2);padding:8px 0;grid-column:1/-1}
 .sit-weitere{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;padding-top:12px;border-top:var(--border)}
 .sit-weitere .btn{flex:1 1 150px;min-height:48px;justify-content:center}

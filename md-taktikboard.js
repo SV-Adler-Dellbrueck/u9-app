@@ -238,7 +238,9 @@ function sitHubRender(){
   const hub=document.getElementById("sit-hub"); if(!hub)return;
   if(!hub.dataset.fertig){
     const formen=[["funino","FUNiño","ti-triangle"],["3+1","3+1","ti-triangle-inverted"],["4+1","4+1 Raute","ti-diamond"],["5+1","5+1","ti-pentagon"]];
-    hub.innerHTML=`<section class="tf-ki" aria-labelledby="sit-ki-t">
+    /* v653: Das freie Brett steht zuerst – am Platz vor den Kindern wird gezeigt, nicht gebaut. */
+    hub.innerHTML=`<button type="button" class="btn sit-brett" onclick="typeof brettOpen==='function'?brettOpen():toast('Das Brett lädt noch – gleich nochmal','info')"><i class="ti ti-pencil"></i>Freies Brett – schieben und mit dem Finger zeichnen</button>
+      <section class="tf-ki" aria-labelledby="sit-ki-t">
         <div id="sit-ki-t" class="tf-ki-t">✨ Beschreib die Situation – die KI zeichnet sie</div>
         <div class="tf-ki-s">Wer steht wo, wohin geht der Ball, was soll passieren. Danach verschiebst du, was nicht passt.</div>
         <textarea id="sit-ki-text" class="wachsen" rows="3" maxlength="2000" placeholder="Zum Beispiel: Der Gegner dribbelt links an der Seite. Unser Flitzer links läuft zurück und stellt ihn, der Aufpasser rückt nach, der Jäger bietet sich in der Mitte an."></textarea>
