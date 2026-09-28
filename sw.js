@@ -1,4 +1,4 @@
-const CACHE="u9i-adler-v652";
+const CACHE="u9i-adler-v653";
 const PRECACHE=[
   "./",
   "./index.html",
@@ -47,6 +47,7 @@ const PRECACHE=[
   "./md-einheit-import.js",
   "./md-block.js",
   "./md-skizze.js",
+  "./md-brett.js",
   "./boot.js",
   "./logo.png",
   "./icon-trainer.png",

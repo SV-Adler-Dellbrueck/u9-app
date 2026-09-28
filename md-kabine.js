@@ -720,6 +720,12 @@ function kabSubConsume(){
   try{history.back();}catch(e){window._mdlSuppress--;}
 }
 // (Der popstate-Teil sitzt im zentralen Back-Handler in core.js – eine Stelle, korrekte Reihenfolge.)
+/* v653: Mein Taktikbrett – schieben und malen, nur auf diesem Gerät (md-brett.js). */
+function kabineBrett(){
+  const b=document.getElementById("kabine-body"); if(!b)return;
+  if(typeof brettKabine!=="function"){ if(typeof toast==="function")toast("Das Brett lädt noch – gleich nochmal","info"); return; }
+  kabSubMark(); brettKabine(b);
+}
 function kabineHome(){
   kabSubConsume(); // Rückkehr per ←-Button: den Unterseiten-History-Eintrag still verbrauchen
   const b=document.getElementById("kabine-body"); if(!b)return;
@@ -765,6 +771,7 @@ function kabineHome(){
       <details id="kab-mehr" style="grid-column:1/-1" ontoggle="window._kabMehrOffen=this.open"${window._kabMehrOffen?" open":""}>
         <summary style="list-style:none;cursor:pointer;min-height:48px;display:flex;align-items:center;justify-content:center;gap:8px;border:1px dashed rgba(255,255,255,.45);border-radius:18px;font-weight:800;font-size:15px;color:#fff">✨ Mehr entdecken <span aria-hidden="true">▾</span></summary>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
+        ${tile("kabineBrett()","✏️","Mein Taktikbrett","rgba(56,189,248,.46)","rgba(2,132,199,.30)",true)}
         ${tile("kabineShowGallery()","🖼️","Team-Galerie","rgba(16,185,129,.48)","rgba(5,150,105,.30)")}
         ${tile("kabineAbzeichen()","🎖️","Abzeichen","rgba(147,51,234,.46)","rgba(109,40,217,.30)")}
         ${tile("kabineRollen()","🎽","Wo spiele ich?","rgba(124,58,237,.46)","rgba(76,29,149,.32)")}
