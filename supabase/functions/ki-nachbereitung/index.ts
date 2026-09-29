@@ -11,7 +11,16 @@
 
    Datenschutz: Kindernamen kommen hier nicht an. Der Client ersetzt sie vor dem Senden durch
    „Kind 1“, „Kind 2“ … und übersetzt die Antwort zurück. Geheimnisse (LLM_API_KEY) stehen
-   ausschließlich in den Secrets. Tageslimit und Zähler teilt sie mit ki-uebung (ki_usage). */
+   ausschließlich in den Secrets. Tageslimit und Zähler teilt sie mit ki-uebung (ki_usage).
+
+   v679 (Stand der ausgerollten Fassung: Version 7) – Aufträge doku/auftrag-tagebuch-ki-sortieren/:
+   · Der Tagebuch-Teil SORTIERT die Worte des Trainers statt sie neu zu schreiben (Ich-Form,
+     aha nur wörtlich oder null, höchstens zwei Konsequenzen, höchstens zwei Rückfragen).
+   · Dazu To-dos mit Vorschlag für die Zuständigkeit aus den Rollen im Trainerstab – nie zugewiesen.
+   · Es gibt keinen zweiten Weg mehr (art „tagebuch“): eine Notiz, ein Aufruf, alles daraus.
+   · Ein Termin („fuer“: d2026-09-28 / t123) zählt am Tag einmal ins Limit; Korrekturen nicht.
+   · Kein Feld wird mitten im Wort oder Satz gekürzt – wenn überhaupt, am Satzende mit „[gekürzt]“
+     (fehlerbild-abgeschnitten.md). */
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
@@ -21,6 +30,7 @@ const CORS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 const LIMIT = 20;          // gemeinsam mit ki-uebung, je Trainer und Tag
+const JE_TERMIN = 6;       // v679: Auswertungen je Termin und Tag (Korrekturen), zählen einmal ins LIMIT
 const MAX_TEXT = 12000;    // etwa fünfzehn Minuten gesprochener Text (v630, vorher 4000)
 
 function j(o: unknown, status = 200) {
@@ -99,20 +109,40 @@ orga.zeitplan: 1 zu eng, 2 passte, 3 zu viel Luft; orga.felder: 1 zu klein, 2 pa
 3 zu groß; orga.helfer: 1 zu wenige, 2 knapp, 3 genug. Sagt er „nur eine Mannschaft“ oder
 nennt keine, gilt das Gesagte für Mannschaft 1.`;
 
-/* v628 PO: „… um nachher die Einträge ins Tagebuch gut aufgearbeitet wiederzufinden und auswerten
-   zu können.“ Kachel: „Ja, und auch Aha/Konsequenz vorschlagen“. Der Vorschlag landet im
-   Tagebuch-Fenster und wird dort vom Trainer geprüft – gespeichert wird nichts von selbst. */
+/* v679 · Sortieren, nicht schreiben (doku/auftrag-tagebuch-ki-sortieren/README.md, Abschnitt 1).
+   Vorher verlangte diese Anweisung eine Beobachtung „geordnet und sachlich“ und ein Aha „in Ich-Form
+   aus Sicht des Trainers“ – heraus kamen Sätze über „den Trainer“ und Erkenntnisse, die er nie
+   gesagt hatte. Grundsatz aus dem Projektgedächtnis: Die App füllt vor, schreibt aber nicht selbst. */
 const FORM_TAGEBUCH = `"tagebuch": {"baustein": "ich"|"spiel_spieler"|"organisation"|"system_fussball",
-  "beobachtung": "…", "aha": "…"|null, "konsequenz": "…"|null, "schlagworte": ["…", "…"]}
-Tagebuch (Trainertagebuch nach DFB-Basis-Coach): baustein = worum es im Kern geht – ich (der
-Trainer selbst: Ansprache, Rolle, Haltung), spiel_spieler (Spiel, Kinder, Technik, Taktik),
-organisation (Ablauf, Zeit, Material, Felder, Helfer), system_fussball (Verein, Verband, Regeln,
-Eltern). beobachtung = was passiert ist, vollständig, geordnet und sachlich, ohne Wertung – bei
-einer langen Notiz gern in mehreren Absätzen (\\n).
-aha = die Erkenntnis in Ich-Form aus Sicht des Trainers – nur wenn die Notiz sie trägt, sonst
-null. konsequenz = die konkreten nächsten Schritte fürs nächste Training – nur wenn die Notiz sie
-trägt, sonst null. schlagworte = 3 bis 5 kurze Themen-Substantive
-(z. B. „Passspiel“, „Raumaufteilung“, „Motivation“, „Organisation Stationen“), keine Namen.`;
+  "beobachtung": "…", "aha": "…"|null, "konsequenzen": ["…"], "schlagworte": ["…"],
+  "rueckfragen": [{"frage": "…", "feld": "aha"|"konsequenz"|"beobachtung"}],
+  "todos": [{"text": "…", "zustaendig": "organisation"|"skill"|"feldtrainer"|null}]}
+
+Tagebuch: Du SORTIERST die Worte des Trainers, du SCHREIBST sie nicht neu.
+- Übernimm seine Sätze. Streiche Füllwörter und Versprecher der Spracherkennung, setze
+  richtige Satzzeichen – aber tausche keine Wörter aus, glätte nicht, fasse nicht zusammen.
+- Ich-Form, wie er gesprochen hat. Niemals „der Trainer“.
+- baustein = worum es im Kern geht: ich (er selbst: Ansprache, Rolle, Haltung), spiel_spieler
+  (Spiel, Kinder, Technik, Taktik), organisation (Ablauf, Zeit, Material, Felder, Helfer),
+  system_fussball (Verein, Verband, Regeln, Eltern).
+- beobachtung = was er über den Ablauf und die Kinder gesagt hat, in seiner Reihenfolge,
+  vollständig; bei langer Notiz in Absätzen (\\n). Nichts weglassen, das er gesagt hat.
+- aha = NUR Sätze, in denen er selbst sagt, was ihm klar wurde, was er gemerkt, gelernt,
+  verstanden hat. Wörtlich übernehmen. Sagt er so etwas nicht: null. Formuliere niemals eine
+  Erkenntnis für ihn, auch nicht, wenn sie naheliegt.
+- konsequenzen = höchstens ZWEI, die Schritte, die er selbst für sich oder das Training angekündigt
+  hat. Nennt er mehr, nimm die, die er betont oder zuerst nennt, und stelle eine Rückfrage, welche zuerst.
+- Nichts, was er nicht gesagt hat: keine Ergänzung, keine Deutung, kein Ratschlag.
+- rueckfragen = höchstens zwei kurze Fragen, wo etwas fehlt, statt es zu ergänzen; feld sagt, in
+  welches Feld die Antwort gehört. Beispiele: {"frage": "Was wurde dir dabei klar?", "feld": "aha"}
+  (wenn aha null ist), {"frage": "Welche Konsequenz zuerst?", "feld": "konsequenz"} (wenn er mehr als
+  zwei nennt). KEINE Frage nach einem Datum – das fragt die App.
+- todos = Aufgaben, die er als zu erledigen ankündigt und die KEINE Konsequenz für sein Training
+  sind: Organisatorisches, Material, Absprachen („Hütchen reichen nicht“, „mit dem U8-Trainer die
+  Platzübergabe klären“). In seinen Worten, je ein kurzer Satz. zustaendig ist nur ein Vorschlag aus
+  den Rollen im Trainerstab: organisation (Material, Orga, Eltern, Räume, Absprachen), skill (Torwart,
+  Einzeltraining), feldtrainer (Stationen, Übungen). Unklar → null. Keine Namen.
+- schlagworte = 3 bis 5 kurze Themen-Substantive, keine Namen.`;
 
 async function llmRuf(provider: string, key: string, model: string, sys: string, user: string) {
   if (provider === "openai") {
@@ -137,28 +167,65 @@ async function llmRuf(provider: string, key: string, model: string, sys: string,
 }
 
 const BAUSTEINE = ["ich", "spiel_spieler", "organisation", "system_fussball"];
+const ROLLEN = ["organisation", "skill", "feldtrainer"];
+const FELDER = ["aha", "konsequenz", "beobachtung"];
 function sanTagebuch(t: any) {
   if (!t || typeof t !== "object") return null;
-  const worte = (Array.isArray(t.schlagworte) ? t.schlagworte : []).map((w: unknown) => String(w || "").trim().slice(0, 40))
-    .filter((w: string) => w && !/^kind \d+$/i.test(w)).slice(0, 5);
+  const worte = (Array.isArray(t.schlagworte) ? t.schlagworte : []).map((w: unknown) => wortKurz(w, 40))
+    .filter((w: string | null) => w && !/^kind \d+$/i.test(w)).slice(0, 5);
+  /* Ältere Antwortform (konsequenz als Text) wird noch gelesen; hart auf zwei gekürzt. */
+  const kListe = Array.isArray(t.konsequenzen) ? t.konsequenzen : (t.konsequenz ? [t.konsequenz] : []);
+  const konsequenzen = kListe.map((k: unknown) => satz(k, 600)).filter(Boolean).slice(0, 2);
+  const rueckfragen = (Array.isArray(t.rueckfragen) ? t.rueckfragen : []).map((r: any) => {
+    const frage = wortKurz(typeof r === "string" ? r : r?.frage, 120);
+    if (!frage) return null;
+    let feld = FELDER.includes(String(r?.feld)) ? String(r.feld) : "";
+    if (!feld) feld = /klar|gemerkt|gelernt|erkenn/i.test(frage) ? "aha" : /konsequenz|zuerst|als nächstes|schritt/i.test(frage) ? "konsequenz" : "beobachtung";
+    return { frage, feld };
+  }).filter(Boolean).slice(0, 2);
+  const todos = (Array.isArray(t.todos) ? t.todos : []).map((x: any) => {
+    const text = satz(typeof x === "string" ? x : x?.text, 300);
+    return text ? { text, zustaendig: ROLLEN.includes(String(x?.zustaendig)) ? String(x.zustaendig) : null } : null;
+  }).filter(Boolean).slice(0, 6);
   const out = { baustein: BAUSTEINE.includes(String(t.baustein)) ? String(t.baustein) : "spiel_spieler",
-    beobachtung: satz(t.beobachtung, 4000), aha: satz(t.aha, 1500), konsequenz: satz(t.konsequenz, 1000), schlagworte: worte };
-  return (out.beobachtung || out.aha || out.konsequenz || worte.length) ? out : null;
+    beobachtung: satz(t.beobachtung, 8000), aha: satz(t.aha, 3000), konsequenzen,
+    konsequenz: konsequenzen.length ? konsequenzen.join("\n") : null,   // für ältere Clients
+    rueckfragen, todos, schlagworte: worte };
+  return (out.beobachtung || out.aha || konsequenzen.length || todos.length || worte.length) ? out : null;
 }
 
 const zahl = (v: unknown, max: number) => { const n = Math.round(Number(v)); return (isFinite(n) && n >= 1 && n <= max) ? n : null; };
-const satz = (v: unknown, max = 200) => { const s = String(v ?? "").trim(); return (s && s.toLowerCase() !== "null") ? s.slice(0, max) : null; };
+/* v679 (fehlerbild-abgeschnitten.md): vorher s.slice(0, max) – mitten im Wort, ohne Hinweis. Jetzt
+   bleibt alles bis zur Grenze stehen; muss gekürzt werden, dann am letzten Satzende davor, und das
+   Feld sagt es mit „[gekürzt]“. Die Grenzen liegen so hoch, dass sie praktisch nie greifen. */
+const GEKUERZT = " [gekürzt]";
+function kuerzen(s: string, max: number) {
+  if (s.length <= max) return s;
+  const vorn = s.slice(0, max - GEKUERZT.length);
+  const ende = Math.max(vorn.lastIndexOf(". "), vorn.lastIndexOf("! "), vorn.lastIndexOf("? "), vorn.lastIndexOf(".\n"), vorn.lastIndexOf("\n"));
+  if (ende > vorn.length * 0.5) return vorn.slice(0, ende + 1).trim() + GEKUERZT;
+  const wort = vorn.lastIndexOf(" ");
+  return (wort > 0 ? vorn.slice(0, wort) : vorn).trim() + " …" + GEKUERZT;
+}
+const satz = (v: unknown, max = 200) => { const s = String(v ?? "").trim(); return (s && s.toLowerCase() !== "null") ? kuerzen(s, max) : null; };
+/* Kurze Texte (Rückfragen, Schlagworte): an der Wortgrenze, nie im Wort. */
+const wortKurz = (v: unknown, max: number) => {
+  const s = String(v ?? "").trim(); if (!s || s.toLowerCase() === "null") return null;
+  if (s.length <= max) return s;
+  const w = s.slice(0, max - 1).lastIndexOf(" ");
+  return (w > 0 ? s.slice(0, w) : s.slice(0, max - 1)).trim() + "…";
+};
 
 function sanTraining(p: any, nrs: Set<number>, kinder: Set<string>, einzelwerte = true) {
   const e = p?.einheit || {};
   const out: any = {
-    einheit: { spass: zahl(e.spass, 5), umsetzung: zahl(e.umsetzung, 5), erfolg: zahl(e.erfolg, 5), notiz: satz(e.notiz, 3000) },
+    einheit: { spass: zahl(e.spass, 5), umsetzung: zahl(e.umsetzung, 5), erfolg: zahl(e.erfolg, 5), notiz: satz(e.notiz, 6000) },
     uebungen: [], kinder: [],
   };
   for (const u of Array.isArray(p?.uebungen) ? p.uebungen : []) {
     const nr = Number(u?.nr); if (!nrs.has(nr)) continue;
     out.uebungen.push({ nr, durchfuehrung: zahl(u.durchfuehrung, 5), spass: zahl(u.spass, 5), anforderung: zahl(u.anforderung, 5),
-      notiz: satz(u.notiz, 800), uebersprungen: u.uebersprungen === true });
+      notiz: satz(u.notiz, 2000), uebersprungen: u.uebersprungen === true });
   }
   if (einzelwerte) for (const k of Array.isArray(p?.kinder) ? p.kinder : []) {
     const name = String(k?.kind || ""); const s = zahl(k?.sterne, 3);
@@ -169,7 +236,7 @@ function sanTraining(p: any, nrs: Set<number>, kinder: Set<string>, einzelwerte 
 function sanSpiel(p: any, nrs: Set<number>, gaeste: Set<string>) {
   const GAST = ["zu_schwach", "passend", "zu_stark"];
   const o = p?.orga || {};
-  const out: any = { teams: [], gaeste: [], getragen: satz(p?.getragen, 1500), arbeiten: satz(p?.arbeiten, 1500),
+  const out: any = { teams: [], gaeste: [], getragen: satz(p?.getragen, 4000), arbeiten: satz(p?.arbeiten, 4000),
     orga: { zeitplan: zahl(o.zeitplan, 3), felder: zahl(o.felder, 3), helfer: zahl(o.helfer, 3) } };
   for (const t of Array.isArray(p?.teams) ? p.teams : []) {
     const nr = Number(t?.nr); if (!nrs.has(nr)) continue;
@@ -203,10 +270,21 @@ Deno.serve(async (req) => {
     const today = new Date().toISOString().slice(0, 10);
     const { data: usage } = await svc.from("ki_usage").select("count").eq("uid", uid).eq("tag", today).maybeSingle();
     const used = usage?.count ?? 0;
-    if (used >= LIMIT) return j({ error: `Tageslimit erreicht (${LIMIT} KI-Anfragen/Tag). Morgen wieder!` }, 429);
 
     const body = await req.json().catch(() => ({}));
-    const art = body?.art === "spiel" ? "spiel" : body?.art === "tagebuch" ? "tagebuch" : "training";
+    /* v679: Der zweite Weg (art „tagebuch“ aus einer gespeicherten Notiz) ist weg – eine Notiz, ein
+       Aufruf. Ein älterer Client bekommt eine klare Meldung statt eines zweiten Vorschlags. */
+    if (body?.art === "tagebuch") return j({ error: "Den Tagebuch-Vorschlag gibt es jetzt direkt aus der Nachbereitung – bitte die App neu laden." }, 410);
+    const art = body?.art === "spiel" ? "spiel" : "training";
+    const fuer = /^[dt][0-9-]{1,30}$/.test(String(body?.fuer || "")) ? String(body.fuer) : "";
+    let lauf: any = null;
+    if (fuer) {
+      const { data } = await svc.from("ki_nachbereitung_lauf").select("anzahl").eq("uid", uid).eq("fuer", fuer).eq("tag", today).maybeSingle();
+      lauf = data;
+      if (lauf && lauf.anzahl >= JE_TERMIN) return j({ error: `Diesen Termin hast du heute schon ${JE_TERMIN}× auswerten lassen. Ändere den Rest bitte von Hand.` }, 429);
+    }
+    const zaehlt = !lauf;   // der erste Aufruf zu einem Termin zählt ins Tageslimit, Korrekturen nicht
+    if (zaehlt && used >= LIMIT) return j({ error: `Tageslimit erreicht (${LIMIT} KI-Anfragen/Tag). Morgen wieder!` }, 429);
     const text = String(body?.text ?? "").trim().slice(0, MAX_TEXT);
     if (text.length < 15) return j({ error: "Die Notiz ist zu kurz – sprich ein paar Sätze zur Einheit." }, 400);
 
@@ -215,11 +293,7 @@ Deno.serve(async (req) => {
        stark) und immer erlaubt. Bis zum Stichtag gesperrt ist nur die Profilbewertung – die läuft
        nicht über diese Funktion. v648 hatte hier bewertung_ab gelesen und die Werte je Kind weggelassen. */
     const einzelwerte = true;
-    if (art === "tagebuch") {
-      /* Nur der Tagebuch-Teil – aus einer gespeicherten Sprachnotiz, wenn der Eintrag später entsteht. */
-      const anlass = String(body?.anlass ?? "").slice(0, 160);
-      user = `ANLASS: ${anlass || "Nachbereitung"}\n\nANTWORTFORM:\n{\n  ${FORM_TAGEBUCH}\n}\n\nSPRACHNOTIZ:\n\"\"\"\n${text}\n\"\"\"`;
-    } else if (art === "training") {
+    if (art === "training") {
       const ue = (Array.isArray(body?.uebungen) ? body.uebungen : []).slice(0, 30)
         .map((u: any) => ({ nr: Number(u?.nr), name: String(u?.name || "").slice(0, 120), bloecke: String(u?.bloecke || "").slice(0, 160) }))
         .filter((u: any) => isFinite(u.nr));
@@ -251,11 +325,12 @@ Deno.serve(async (req) => {
       const m = res.text.match(/\{[\s\S]*\}/); if (m) { try { parsed = JSON.parse(m[0]); } catch { /* unlesbar */ } }
     }
     if (!parsed || typeof parsed !== "object") return j({ error: "Die KI-Antwort war unlesbar. Bitte noch einmal versuchen." }, 502);
-    const ergebnis: any = art === "training" ? sanTraining(parsed, nrs, namen, einzelwerte) : art === "spiel" ? sanSpiel(parsed, nrs, namen) : {};
+    const ergebnis: any = art === "training" ? sanTraining(parsed, nrs, namen, einzelwerte) : sanSpiel(parsed, nrs, namen);
     ergebnis.tagebuch = sanTagebuch(parsed?.tagebuch);
 
-    await svc.from("ki_usage").upsert({ uid, tag: today, count: used + 1 }, { onConflict: "uid,tag" });
-    return j({ art, ergebnis, rest: LIMIT - (used + 1), modell }, 200);
+    if (zaehlt) await svc.from("ki_usage").upsert({ uid, tag: today, count: used + 1 }, { onConflict: "uid,tag" });
+    if (fuer) await svc.from("ki_nachbereitung_lauf").upsert({ uid, fuer, tag: today, anzahl: (lauf?.anzahl ?? 0) + 1 }, { onConflict: "uid,fuer,tag" });
+    return j({ art, ergebnis, rest: LIMIT - (used + (zaehlt ? 1 : 0)), modell, gezaehlt: zaehlt }, 200);
   } catch (_e) {
     return j({ error: "Serverfehler bei der Sprachnotiz." }, 500);
   }

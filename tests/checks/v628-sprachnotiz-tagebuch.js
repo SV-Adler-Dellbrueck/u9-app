@@ -10,6 +10,7 @@
    d) Erfasst werden schlagworte (Liste) und ki_vorschlag=true.
    e) Ohne Vorschlag im Speicher, aber mit gespeicherter Notiz: Knopf „Vorschlag aus der
       Sprachnotiz“ ruft die KI (art „tagebuch“) und füllt aus.
+      v679: umgekehrt – diesen zweiten Weg gibt es nicht mehr (kein Knopf, kein Aufruf).
    f) Liste: Themen-Kacheln mit Anzahl; ein Tipp filtert.
    g) Decknamen hängen an der Kennung (_id), nicht an der Kader-Reihenfolge. */
 "use strict";
@@ -50,23 +51,17 @@ module.exports = async function (h) {
     out.status = document.getElementById("nb-status").textContent;
     await einheitSave(); await warte(200);
     document.getElementById("eb-weiter")?.remove(); document.getElementById("eb-modal")?.remove();
-    // b/c) Tagebuch aus der Einheit
-    await tagebuchAusEinheit(gestern); await warte(80);
-    const w = _TB && _TB.werte;
-    out.b = { ki: _TB && _TB.ki, baustein: w && w.baustein, aha: w && w.aha, konsequenz: w && w.konsequenz, schlagworte: w && w.schlagworte,
-      beobachtung: w && w.beobachtung, hinweis: /Vorschlag der KI/.test(document.getElementById("tb-card").textContent),
-      feld: !!document.getElementById("tb-schlagworte") };
-    // d) erfassen
-    _TB.uebergehen = true;
-    await tagebuchSpeichern(); await warte(100);
-    document.getElementById("tb-modal")?.remove();
+    document.getElementById("nb-weiter")?.remove();
+    /* b/c) v679: Der Vorschlag ist mit der Auswertung schon gespeichert; „Ins Tagebuch“ öffnet die
+       Prüfkarte statt eines zweiten Eintrags. Geprüft wird, was gespeichert wurde. */
+    await tagebuchAusEinheit(gestern); await warte(120);
+    out.b = { pruefkarte: !!document.getElementById("tb-pruefen"), zweitesFenster: !!document.getElementById("tb-card") };
+    if (typeof tbPruefenZu === "function") tbPruefenZu();
     // e) gespeicherte Notiz, kein Vorschlag im Speicher
     _nbTb = null;
     await tagebuchAusEinheit(gestern); await warte(80);
     const knopf = document.getElementById("tb-ki-los");
-    out.e = { knopf: !!knopf };
-    if (knopf) { knopf.click(); for (let i = 0; i < 30 && !(_TB && _TB.ki); i++) await warte(50); }
-    out.e.aha = _TB && _TB.werte.aha; out.e.ki = _TB && _TB.ki;
+    out.e = { knopf: !!knopf, zweiterWeg: typeof tbKiAusGespeichert === "function" };
     tagebuchSchliessen();
     // f) Liste mit Themen
     let box = document.getElementById("tb-liste"); if (!box) { box = document.createElement("div"); box.id = "tb-liste"; document.body.appendChild(box); }
@@ -89,20 +84,22 @@ module.exports = async function (h) {
   const ep = einheitPosts[0] || {};
   if (!/zurückgezogen/.test(ep.sprachnotiz || "")) probleme.push("a) sprachnotiz nicht mit der Einheit gespeichert: " + JSON.stringify(ep).slice(0, 120));
   if (!/Tagebuch-Vorschlag/.test(r.status)) probleme.push("b) Rückmeldung nennt den Tagebuch-Vorschlag nicht: " + r.status);
-  const b = r.b;
-  if (!b.ki || !b.hinweis) probleme.push("b) kein KI-Hinweis im Tagebuch");
-  if (b.baustein !== "ich" || !/zu viel von außen/.test(b.aha || "") || !/eine Anweisung/.test(b.konsequenz || "") || !/Coaching, Ansprache, Ruhe/.test(b.schlagworte || "") || !b.feld)
+  const b = tbPosts.find(x => x.ki_vorschlag === true) || {};
+  if (!r.b.pruefkarte || r.b.zweitesFenster) probleme.push("b) „Ins Tagebuch“ führt nicht zur Prüfkarte: " + JSON.stringify(r.b));
+  if (b.baustein !== "ich" || !/zu viel von außen/.test(b.aha || "") || !/eine Anweisung/.test(b.konsequenz || "") || JSON.stringify(b.schlagworte) !== JSON.stringify(["Coaching", "Ansprache", "Ruhe"]))
     probleme.push("b) Felder: " + JSON.stringify(b).slice(0, 220));
   if (/Kind \d/.test(b.beobachtung || "")) probleme.push("c) „Kind n“ im Tagebuch: " + b.beobachtung);
   if (!/Kind C zog/.test(b.beobachtung || "")) probleme.push("c) Deckname fehlt: " + b.beobachtung);
-  const tp = tbPosts[0] || {};
+  const tp = b;
   if (JSON.stringify(tp.schlagworte) !== JSON.stringify(["Coaching", "Ansprache", "Ruhe"]) || tp.ki_vorschlag !== true) probleme.push("d) erfasst: " + JSON.stringify({ s: tp.schlagworte, k: tp.ki_vorschlag }));
-  if (!r.e.knopf || !r.e.ki || !/gespeicherten Notiz/.test(r.e.aha || "")) probleme.push("e) gespeicherte Notiz: " + JSON.stringify(r.e));
-  const tg = gesendet.find(g => g.art === "tagebuch");
-  if (!tg || /Kind [A-O]\b/.test(tg.text)) probleme.push("e) Aufruf art „tagebuch“ fehlt oder enthält Namen");
+  /* v679 (prozess-nacherfassung.md): „Vorschlag aus der Sprachnotiz“ war ein zweiter KI-Aufruf für
+     denselben Termin – genau die Doppelung, die weg soll. Der Vorschlag entsteht in derselben
+     Auswertung und wird sofort gespeichert; den Knopf und art „tagebuch“ gibt es nicht mehr. */
+  if (r.e.knopf || r.e.zweiterWeg) probleme.push("e) Der zweite Weg ist noch da: " + JSON.stringify(r.e));
+  if (gesendet.some(g => g.art === "tagebuch")) probleme.push("e) Es gab einen zweiten KI-Aufruf art „tagebuch“");
   if (!r.f.themen.some(t => /#Coaching · 2/.test(t)) || !r.f.gefiltert) probleme.push("f) Themen/Filter: " + JSON.stringify(r.f));
   if (r.g.vorher !== r.g.nachher) probleme.push(`g) Deckname wechselt mit der Reihenfolge: ${r.g.vorher} → ${r.g.nachher}`);
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
-  zeilen.push(`Tagebuch: ${b.baustein} · Aha „${b.aha}“ · #${(tp.schlagworte || []).join(" #")} · KI ${tp.ki_vorschlag} · Themen ${r.f.themen.join(" ")}`);
+  zeilen.push(`Tagebuch (v679 sofort gespeichert): ${b.baustein} · Aha „${b.aha}“ · #${(tp.schlagworte || []).join(" #")} · KI ${tp.ki_vorschlag} · Themen ${r.f.themen.join(" ")}`);
   return h.ergebnis("v628 Sprachnotiz → Tagebuch: Rohtext bleibt, KI-Vorschlag mit Decknamen und Schlagworten", probleme.length === 0, probleme.length ? probleme.concat(zeilen) : zeilen);
 };

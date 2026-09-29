@@ -697,15 +697,20 @@
        weil er nicht taeglich gebraucht wird. -->
   <div id="train-sub-tagebuch" class="train-sub">
     <div class="sl nt"><i class="ti ti-book"></i>Trainertagebuch</div>
-    <button class="btn btn-p" onclick="if(typeof tagebuchNeu==='function')tagebuchNeu()" style="width:100%;min-height:56px;justify-content:center;font-size:15px;font-weight:800;margin-bottom:12px"><i class="ti ti-plus"></i>Neuer Eintrag</button>
+    <button class="btn btn-p" onclick="if(typeof tagebuchNeu==='function')tagebuchNeu()" style="width:100%;min-height:56px;justify-content:center;font-size:15px;font-weight:800;margin-bottom:8px"><i class="ti ti-plus"></i>Neuer Eintrag</button>
+    <!-- v679: Gedanke zwischendurch - ein Feld, wird ein Keim. Zweitrangig neben dem neuen Eintrag. -->
+    <button class="btn" onclick="if(typeof tagebuchGedanke==='function')tagebuchGedanke()" style="width:100%;min-height:48px;justify-content:center;margin-bottom:12px"><i class="ti ti-bulb"></i>Gedanke erfassen</button>
     <div id="tb-liste"></div>
     <div class="sl nt" style="margin-top:16px"><i class="ti ti-file-export"></i>Monat ausgeben</div>
+    <!-- v679: Ausgaben getrennt - Lehrgang (nur fertig und bestaetigt), Arbeitsfassung (alles), C-Lizenz folgt -->
+    <div id="tb-ausgabe" role="group" aria-label="Welche Ausgabe" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"></div>
+    <div id="tb-ausgabe-hinweis" style="font-size:12px;color:var(--text2);margin-bottom:8px"></div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
       <input type="month" id="tb-monat" style="min-height:48px;padding:0 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text)">
       <button class="btn" onclick="if(typeof tagebuchMonatKopieren==='function')tagebuchMonatKopieren()" style="min-height:48px"><i class="ti ti-copy"></i>Kopieren</button>
       <button class="btn" onclick="if(typeof tagebuchMonatTeilen==='function')tagebuchMonatTeilen()" style="min-height:48px"><i class="ti ti-share"></i>Teilen</button>
     </div>
-    <div style="font-size:10.5px;color:var(--text3);margin-top:6px">Alle Eintraege des Monats als Markdown, nach Bausteinen sortiert - fuer das Google Doc oder die Abgabe.</div>
+    <div style="font-size:12px;color:var(--text2);margin-top:6px">Alle Einträge des Monats als Markdown, nach Bausteinen sortiert, Kinder als Buchstaben.</div>
   </div><!-- /train-sub-tagebuch -->
 
   <!-- SUB: Spieltag (Nominierung + Rotations-Timer + Blitz-Rating) -->

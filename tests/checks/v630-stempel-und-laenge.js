@@ -31,7 +31,8 @@ module.exports = async function (h) {
     termine: [{ id: 3, datum: gestern, typ: "training", uhrzeit: "17:00" }],
     einheit_bewertung: (u, req) => { if (req.method() !== "GET") { posts.push({ url: req.url(), body: JSON.parse(req.postData() || "{}") }); return { status: 201, body: "[]" }; } return [MEINE_E, PETER_E]; },
     trainings_eval: (u, req) => { if (req.method() !== "GET") { evalPosts.push(JSON.parse(req.postData() || "{}")); return { status: 201, body: "[]" }; } return [{ data: [ALT, PETER_U] }]; },
-    tagebuch_eintrag: [{ id: 1, datum: gestern, autor: "Peter", baustein: "ich", ausloeser: "Training", aha: "a", konsequenz: "k", updated_at: "2026-09-25T20:00:00Z" }],
+    /* v679: Das Tagebuch zeigt nur die eigenen Einträge (persönliche Unterlage) – der Stempel wird am eigenen geprüft. */
+    tagebuch_eintrag: [{ id: 1, datum: gestern, autor: "Charles", baustein: "ich", ausloeser: "Training", aha: "a", konsequenz: "k", updated_at: "2026-09-25T20:00:00Z" }],
     funktionen: { "ki-nachbereitung": () => ({ art: "training", ergebnis: { einheit: { spass: null, umsetzung: null, erfolg: null, notiz: langeNotiz }, uebungen: [], kinder: [] } }) }
   }) });
   const r = await s.page.evaluate(async ({ gestern }) => {
@@ -92,13 +93,14 @@ module.exports = async function (h) {
   if (e.notizLaenge < 1000) probleme.push(`e) lange KI-Notiz gekürzt auf ${e.notizLaenge} Zeichen`);
   if (!(e.hoch1 > e.hoch0 + 40)) probleme.push(`e) Einheits-Notiz wächst nicht mit (${e.hoch0} → ${e.hoch1} px)`);
   const fz = fs.readFileSync(path.join(h.REPO, "md-fazit.js"), "utf8");
-  if (!/id="fz-getragen" class="wachsen" rows="2" maxlength="1500"/.test(fz) || !/id="fz-arbeiten" class="wachsen" rows="2" maxlength="1500"/.test(fz)) probleme.push("e) Spiel-Sätze nicht auf 1500");
+  // v679 (fehlerbild-abgeschnitten.md): die Spiel-Sätze fassen 4000 Zeichen, gekürzt wird nicht mehr
+  if (!/id="fz-getragen" class="wachsen" rows="2" maxlength="4000"/.test(fz) || !/id="fz-arbeiten" class="wachsen" rows="2" maxlength="4000"/.test(fz)) probleme.push("e) Spiel-Sätze nicht auf 4000");
   // f
-  if (!/✍️ Peter/.test(r.f.liste)) probleme.push("f) Tagebuch-Liste ohne Stempel: " + r.f.liste.slice(0, 160));
+  if (!/✍️ Charles · 25\.09\.2026/.test(r.f.liste)) probleme.push("f) Tagebuch-Liste ohne Stempel: " + r.f.liste.slice(0, 160));
   if (r.f.fenster && !/✍️ Charles/.test(r.f.fenster)) probleme.push("f) Tagebuch-Fenster ohne Stempel");
   // g
   const ki = fs.readFileSync(path.join(h.REPO, "supabase/functions/ki-nachbereitung/index.ts"), "utf8");
-  if (/höchstens 200 Zeichen/.test(ki) || !/MAX_TEXT = 12000/.test(ki) || !/satz\(e\.notiz, 3000\)/.test(ki) || !/satz\(t\.beobachtung, 4000\)/.test(ki)) probleme.push("g) KI-Grenzen nicht angehoben");
+  if (/höchstens 200 Zeichen/.test(ki) || !/MAX_TEXT = 12000/.test(ki) || !/satz\(e\.notiz, 6000\)/.test(ki) || !/satz\(t\.beobachtung, 8000\)/.test(ki)) probleme.push("g) KI-Grenzen nicht angehoben");
   const mig = fs.readdirSync(path.join(h.REPO, "supabase/migrations")).filter(f => /einheit_bewertung_je_trainer/.test(f));
   if (!mig.length || !/primary key \(datum, autor\)/.test(fs.readFileSync(path.join(h.REPO, "supabase/migrations", mig[0]), "utf8"))) probleme.push("g) Migration fehlt");
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));

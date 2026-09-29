@@ -6,6 +6,7 @@
    a) Das Modul lebt (MODUL_WACHE greift).
    b) Vorbefüllung aus einer Einheit: Auslöser und Beobachtung stehen, Aha ist leer.
    c) Pflichtfelder: Speichern ohne Aha schickt NICHTS an Supabase, der Text bleibt stehen.
+      v679: Ohne Aha wird als Keim erfasst (status 'keim'), ohne rote Meldung.
    d) Alias: Rang über die Kader-IDs, stabil über zwei Aufrufe.
    e) Namensprüfung: ein Kader-Name im Text setzt den Hinweis, ein Text ohne nicht.
    f) Export: alle sechs Feldnamen in der festgelegten Reihenfolge, Umlaute und
@@ -152,10 +153,11 @@ module.exports = async function (h) {
   if (!r.fundMitName) probleme.push("Ein Kader-Name im Text löst keinen Hinweis aus");
   if (r.fundOhneName) probleme.push(`Text ohne Kader-Namen schlägt trotzdem an: ${r.fundOhneName}`);
 
-  // c) Pflichtfelder
-  if (gesendet.length) probleme.push(`Ohne Aha wurde trotzdem gesendet: ${JSON.stringify((gesendet[0] || {}).body || {}).slice(0, 120)}`);
-  if (!/Aha/.test(r.meldung)) probleme.push(`Keine Meldung zum fehlenden Pflichtfeld: ${JSON.stringify(r.meldung.slice(0, 80))}`);
-  if (!/kleinere Gruppen/.test(r.nachAblehnung)) probleme.push("Der bereits getippte Text ist nach der Ablehnung weg");
+  /* c) v679 (doku/auftrag-tagebuch-alltag): Ohne Aha wird nicht mehr abgelehnt, sondern als Keim
+     erfasst – ohne rote Meldung. Die Regel „fertig nur mit Aha und Konsequenz“ hält die Tabelle. */
+  const keim = gesendet.map(g => g.body || {}).find(b => b.status);
+  if (!keim || keim.status !== "keim" || keim.aha || !/kleinere Gruppen/.test(keim.konsequenz || "")) probleme.push(`Ohne Aha nicht als Keim erfasst: ${JSON.stringify(keim || {}).slice(0, 160)}`);
+  if (/Ohne .*wird nicht erfasst/.test(r.meldung)) probleme.push(`Rote Ablehnung statt Keim: ${JSON.stringify(r.meldung.slice(0, 80))}`);
 
   // f) Export
   const reihenfolge = ["Auslöser", "Beobachtung", "Aha", "Konsequenz", "Beleg", "Anschluss"];
