@@ -609,7 +609,7 @@ function _renderKombiInner(wrap){
     wrap.innerHTML=`<div class="empty"><i class="ti ti-users-group"></i>Für die Aufstellung braucht es mindestens 4 <b>bewertete</b> Kinder – bisher sind es ${bewertet}.
       <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;align-items:center">
         <button class="btn btn-sm" onclick="go('spieltag')">🪄 Feld &amp; Bank fair besetzen (Spieltag)</button>
-        <a href="#" onclick="go('bew');return false" style="font-size:var(--s-text);color:var(--blue-text);font-weight:700">oder Kinder bewerten ›</a>
+        <a href="#" onclick="go('bew');return false" style="display:inline-flex;align-items:center;min-height:44px;padding:0 8px;font-size:var(--s-text);color:var(--blue-text);font-weight:700">oder Kinder bewerten ›</a>
       </div></div>`;
     return;
   }

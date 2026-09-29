@@ -134,7 +134,7 @@ function voiceDiaryOpen(datum){
       <button class="btn btn-p btn-sm" onclick="vdSave(${datum?`'${jsq(datum)}'`:"null"})"><i class="ti ti-device-floppy"></i>Notiz speichern</button>
       <button class="btn btn-sm" style="margin-left:auto" onclick="vdDiktatAus();document.getElementById('vd-modal').remove()">Schließen</button>
     </div>
-    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin:14px 0 4px">Letzte Notizen</div>
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:14px 0 4px">Letzte Notizen</div>
     <div id="vd-list"><div style="font-size:var(--s-text);color:var(--text3)">Lade …</div></div>`;
   modal.appendChild(c);document.body.appendChild(modal);
   vdListLoad();

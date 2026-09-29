@@ -26,7 +26,7 @@ module.exports = async function (h) {
   });
   const fe = s.fehler();
   await s.schliessen();
-  const erlaubt = ["11px", "13px", "15px", "18px", "22px"];
+  const erlaubt = ["12px", "13px", "15px", "18px", "22px"];   // v682: kleinste Stufe 12 px
   if (!d.n) probleme.push("c) Keine Stufe auf der Eltern-Anmeldung gerendert");
   const fremd = d.g.filter(x => !erlaubt.includes(x));
   if (fremd.length) probleme.push("c) Stufen rendern mit " + fremd.join(", "));

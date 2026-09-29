@@ -11,7 +11,7 @@ const fs = require("fs"), path = require("path");
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
   const css = fs.readFileSync(path.join(h.REPO, "styles.css"), "utf8");
-  const soll = { "--s-klein": "11px", "--s-text": "13px", "--s-karte": "15px", "--s-teil": "18px", "--s-seite": "22px" };
+  const soll = { "--s-klein": "12px"  /* v682: 11 → 12 px, kleinste Stufe lesbar am Platz */, "--s-text": "13px", "--s-karte": "15px", "--s-teil": "18px", "--s-seite": "22px" };
   for (const [k, v] of Object.entries(soll)) if (!new RegExp(k + ":" + v).test(css)) probleme.push(`a) ${k} fehlt oder ist nicht ${v}`);
   const SPERRE = /window\.print\(|getContext\(|<svg|createElementNS|\.fillStyle|\.strokeStyle/;
   let fest = 0; const beispiele = [];
@@ -35,7 +35,7 @@ module.exports = async function (h) {
   });
   const fe = s.fehler();
   await s.schliessen();
-  const erlaubt = ["11px", "13px", "15px", "18px", "22px"];
+  const erlaubt = ["12px", "13px", "15px", "18px", "22px"];   // v682: kleinste Stufe 12 px
   if (!d.n) probleme.push("d) Keine Stufe im gerenderten Trainingsplan gefunden");
   const fremd = d.groessen.filter(g => !erlaubt.includes(g));
   if (fremd.length) probleme.push(`d) Stufen rendern mit ${fremd.join(", ")}`);

@@ -218,7 +218,9 @@ async function periodLoad(){
   if(cur){
     box.innerHTML=`<div style="display:flex;align-items:flex-start;gap:8px"><div style="flex:1"><strong>🎯 Schwerpunkt ${esc(monName)}: ${esc(cur.thema)}</strong>${cur.kategorie?`<div style="font-size:var(--s-klein);margin-top:2px">Passende Übungen: <b>${esc(PERIOD_CATS[cur.kategorie]||cur.kategorie)}</b> – über die Kategorien unten filtern.</div>`:""}</div><button onclick="periodOpen()" class="btn btn-sm" style="flex:none">📅 Plan</button></div>`;
   }else{
-    box.innerHTML=`<div style="display:flex;align-items:center;gap:8px"><span style="flex:1">Plane die Saison in <b>Themenblöcken</b> (ein Schwerpunkt je Monat).</span><button onclick="periodOpen()" class="btn btn-sm" style="flex:none">📅 Themenplan</button></div>`;
+    /* v682: ohne Schwerpunkt kein Kasten – der Themenplan steht als Kachel unter „Werkzeuge“,
+       der Hinweis darüber war derselbe Weg ein zweites Mal. */
+    box.innerHTML="";
   }
   // v650: läuft ein Trainingsblock, steht er an dieser Stelle (md-block.js, Welle 2)
   if(typeof blockBannerRender==="function")blockBannerRender();
@@ -367,7 +369,7 @@ function renderTraining(){
       const keys=o.gruppen.concat(oi===TF_OBER.length-1?TF_GRUPPEN.filter(g=>!vergeben.has(g.key)).map(g=>g.key):[]);
       const drin=keys.map(k=>TF_GRUPPEN.find(g=>g.key===k)).filter(g=>g&&counts[g.key]);
       if(!drin.length)return "";
-      return `<div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:${oi?"12px":"0"} 0 4px">${o.label}</div>
+      return `<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:${oi?"12px":"0"} 0 4px">${o.label}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${drin.map(kachel).join("")}</div>`;
     }).join("");
   }
@@ -1068,7 +1070,7 @@ function awRenderTrainerStats(){
      EVAL_DATA. Sie wurde bei jedem Zeichnen berechnet und nie ausgegeben – PO hat sich
      gegen das Feature entschieden. Die Spalte „Einheiten" zeigt die Anwesenheit. */
   let html='<div class="card" style="overflow:hidden;font-size:var(--s-text)">';
-  html+='<div style="display:grid;grid-template-columns:1fr 60px 70px;padding:6px 10px;background:var(--surface2);font-weight:600;font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text2)">';
+  html+='<div style="display:grid;grid-template-columns:1fr 60px 70px;padding:6px 10px;background:var(--surface2);font-weight:600;font-size:var(--s-text);font-weight:800;color:var(--text)">';
   html+='<div>Trainer</div><div>Quote</div><div>Einheiten</div></div>';
   allTrainers.forEach(t=>{
     const s=stats[t];
@@ -1127,7 +1129,7 @@ function awRenderStats(){
     });
   });
   let html='<div class="card" style="overflow:hidden;font-size:var(--s-text)">';
-  html+='<div style="display:grid;grid-template-columns:1fr 60px 60px 70px;padding:6px 10px;background:var(--surface2);font-weight:600;font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text2)">';
+  html+='<div style="display:grid;grid-template-columns:1fr 60px 60px 70px;padding:6px 10px;background:var(--surface2);font-weight:600;font-size:var(--s-text);font-weight:800;color:var(--text)">';
   html+='<div>Spieler</div><div>Quote</div><div title="Durchschnitt der Sterne-Bewertung aus „Einheit bewerten" (nur Tage, an denen das Kind da war)">Ø ★</div><div>Einheiten</div></div>';
   KADER.forEach(k=>{
     const s=stats[k.name];
@@ -3462,10 +3464,10 @@ function renderTeamDiagnose(){
     <button class="btn btn-sm" onclick="tpAddRecoExercise(${m.i})"><i class="ti ti-plus"></i>In Plan</button>
   </div>`;
   box.innerHTML=`<div style="background:linear-gradient(135deg,#eff6ff,#f0fdfa);border:1px solid #bfdbfe;border-radius:var(--rl);padding:12px 14px;margin-bottom:12px">
-    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1e40af"><i class="ti ti-target-arrow" style="font-size:var(--s-text)"></i> Team-Diagnose <span style="font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0">· ${players} bewertete Spieler</span></div>
+    <div style="font-size:var(--s-text);font-weight:800;color:#1e40af"><i class="ti ti-target-arrow" style="font-size:var(--s-text)"></i> Team-Diagnose <span style="font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0">· ${players} bewertete Spieler</span></div>
     <div style="font-size:var(--s-karte);font-weight:700;margin:6px 0 2px">Schwerpunkt heute: ${esc(top.label)} <span style="font-size:var(--s-text);color:#dc2626">Ø ${top.mean}%</span></div>
     <div style="font-size:var(--s-klein);color:var(--text2)">Danach: ${weakest.slice(1,3).map(w=>`${esc(w.label)} (${w.mean}%)`).join(" · ")||"–"}</div>
-    ${reco.length?`<div style="margin-top:8px"><div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:2px">Passende Übungen</div>${reco.slice(0,4).map(chip).join("")}</div>`
+    ${reco.length?`<div style="margin-top:8px"><div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:2px">Passende Übungen</div>${reco.slice(0,4).map(chip).join("")}</div>`
       :`<div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px">Keine getaggte Übung für „${esc(top.label)}" – im Reiter „Übungen“ eine auswählen.</div>`}
   </div>`;
 }
@@ -3891,7 +3893,7 @@ async function tpVorplanLoad(){
   const heute=new Date().toISOString().slice(0,10);
   const rows=(await _termineSelLoad()).filter(t=>t.typ==="training"&&t.datum>=heute)
     .sort((a,b)=>a.datum<b.datum?-1:1).slice(0,TP_VORPLAN_MAX);
-  const kopf=`<div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px">🗓️ Termin – antippen zum Planen</div>`;
+  const kopf=`<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:6px">🗓️ Welcher Termin?</div>`;
   /* Ohne Termin keine Terminwahl: ein Satz und der Weg dorthin, wo Termine entstehen.
      Vorher stand hier bei weniger als zwei Terminen einfach nichts – zusammen mit dem
      entfallenen Dropdown wäre der Trainingsplan damit unbedienbar geworden. */
@@ -4130,7 +4132,7 @@ function tpRenderTeamFokus(){
   const passende=allForms.map((f,i)=>({i,f})).filter(x=>kats.includes(x.f.kat));
   const gewaehlt=passende.filter(x=>x.f.focus).concat(passende.filter(x=>!x.f.focus)).slice(0,3);
   box.innerHTML=`<div style="margin-top:10px;padding:10px 12px;background:var(--blue-bg);border:1px solid #93c5fd;border-radius:var(--rl)">
-    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1e40af;margin-bottom:4px">📊 Team-Schwerpunkt (aus ${spielerzahl} Bewertungen)</div>
+    <div style="font-size:var(--s-text);font-weight:800;color:#1e40af;margin-bottom:4px">📊 Team-Schwerpunkt (aus ${spielerzahl} Bewertungen)</div>
     <div style="font-size:var(--s-text);color:var(--text);margin-bottom:6px">Schwächster Mannschaftswert: <strong>${dimLabel[schwach]}</strong> (Ø ${schwachVal}%). Passende Übungen:</div>
     ${gewaehlt.length?gewaehlt.map(x=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><button class="btn btn-sm" onclick="tpShowExercise(${x.i})"><i class="ti ti-eye"></i></button><span style="font-size:var(--s-text);color:var(--text)">${esc(x.f.name)}</span></div>`).join(""):'<div style="font-size:var(--s-klein);color:var(--text3)">Keine passende Form gefunden.</div>'}
   </div>`;
@@ -4160,7 +4162,7 @@ function tpRenderMindsetTip(){
     timeline.insertAdjacentElement("afterend",box);
   }
   box.innerHTML=`<div style="margin-top:10px;padding:10px 12px;background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7;border-radius:var(--rl)">
-    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#047857;margin-bottom:4px">🧠 Mindset-Baustein des Tages</div>
+    <div style="font-size:var(--s-text);font-weight:800;color:#047857;margin-bottom:4px">🧠 Mindset-Baustein des Tages</div>
     <div style="font-size:var(--s-text);font-weight:600;color:var(--text)">${esc(wahl.f.name)}</div>
     <div style="font-size:var(--s-klein);color:var(--text2);margin:2px 0 6px">${esc(wahl.f.kurz||"")}</div>
     <button class="btn btn-sm" onclick="tpShowExercise(${wahl.i})"><i class="ti ti-eye"></i>Form ansehen</button>
@@ -4449,7 +4451,7 @@ function artDurchsichtRender(){
     </div>`;
   };
   const block=(key,titel)=>nachArt[key].length
-    ? `<div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:12px 2px 5px">${titel} · ${nachArt[key].length}</div>${nachArt[key].map(zeile).join("")}`
+    ? `<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:12px 2px 5px">${titel} · ${nachArt[key].length}</div>${nachArt[key].map(zeile).join("")}`
     : "";
   box.innerHTML=`
     <div style="font-size:var(--s-text);color:var(--text2);line-height:1.55;margin-bottom:8px">
@@ -4528,7 +4530,7 @@ function betrDurchsichtRender(){
       <span style="flex:1;min-width:0;font-size:var(--s-text)"><b>${esc(f.name)}</b><span style="display:block;font-size:var(--s-klein);color:var(--text3)">${esc(f.kat||"eigene")}</span></span>
       <button onclick="betrDurchsichtTipp('${String(f.name).replace(/'/g,"\\'")}')" aria-label="${esc(f.name)}: ${esc(UEBUNG_BETREUUNG[a].lang)}. Antippen schaltet weiter." style="flex:none;min-height:48px;padding:0 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:800;cursor:pointer;white-space:nowrap">${UEBUNG_BETREUUNG[a].kurz}</button>
     </div>`; };
-  const block=(k,t,erkl)=>nach[k].length?`<div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:12px 2px 2px">${t} · ${nach[k].length}</div><div style="font-size:var(--s-klein);color:var(--text2);margin:0 2px 5px">${erkl}</div>${nach[k].map(zeile).join("")}`:"";
+  const block=(k,t,erkl)=>nach[k].length?`<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:12px 2px 2px">${t} · ${nach[k].length}</div><div style="font-size:var(--s-klein);color:var(--text2);margin:0 2px 5px">${erkl}</div>${nach[k].map(zeile).join("")}`:"";
   box.innerHTML=`<div style="font-size:var(--s-text);color:var(--text2);line-height:1.55;margin-bottom:8px">
       ${_bdNurOffene?`<b>${offen.length}</b> Übungen sind noch nicht eingeordnet. Der Vorschlag steht dran – antippen ändert ihn, gespeichert wird erst unten.`:`Alle <b>${alle.length}</b> Übungen mit Einordnung. Antippen ändert, gespeichert wird erst unten.`}
       Gebraucht wird das, wenn ein Trainer allein mehrere Felder hat: Felder ohne Trainer bekommen dann nur Übungen, die allein laufen.</div>

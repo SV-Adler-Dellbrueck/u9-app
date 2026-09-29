@@ -157,11 +157,11 @@ function _wsTabellen(){
   const k=_wsTab(["Altersklasse","Feld","mit Torwart","Rotation","gesamt"],
     WISSEN_KADER.map(x=>({uns:x.uns,z:[x.ak,x.feld,x.tw,x.rot,x.ges]})));
   const zeile=(t,d)=>'<div style="display:flex;gap:8px;padding:5px 0;border-bottom:var(--border);font-size:var(--s-text)"><div style="flex:0 0 38%;font-weight:700;color:var(--text2)">'+_wsEsc(t)+'</div><div style="flex:1">'+_wsEsc(d)+'</div></div>';
-  return '<div style="font-size:var(--s-klein);font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-top:4px">Spielform</div>'+s
-    +'<div style="font-size:var(--s-klein);font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Feldgröße je Spielform</div>'+f
+  return '<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-top:4px">Spielform</div>'+s
+    +'<div style="font-size:var(--s-text);font-weight:800;color:var(--text)">Feldgröße je Spielform</div>'+f
     +'<div style="font-size:var(--s-klein);color:var(--text2);line-height:1.5;margin:-4px 0 10px">'+_wsEsc(WISSEN_FELDER_HERKUNFT)+'</div>'
-    +'<div style="font-size:var(--s-klein);font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Kader je Team</div>'+k
-    +'<div style="font-size:var(--s-klein);font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">Tore, Zonen, Zeit</div>'
+    +'<div style="font-size:var(--s-text);font-weight:800;color:var(--text)">Kader je Team</div>'+k
+    +'<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:2px">Tore, Zonen, Zeit</div>'
     +zeile("Minitore","höchstens 2,0 × 1,2 m")
     +zeile("Wo die Minitore stehen",WISSEN_TORSTAND+" — Quelle: "+WISSEN_TORSTAND_QUELLE+", nicht die Durchführungsbestimmungen.")
     +zeile("Jugendtore","in der F-Jugend auf 1,65 m höhenreduziert")

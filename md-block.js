@@ -102,7 +102,9 @@ async function blockBannerRender(){
   const period=document.getElementById("period-banner");
   if(!b){
     if(period)period.style.display="";
-    el.innerHTML=`<button class="btn btn-sm" style="width:100%;margin-bottom:10px" onclick="blockEditorOpen()">🧱 Trainingsblock anlegen – ein Ziel, drei Einheiten im Wechsel</button>`;
+    /* v682: angelegt wird ein Block im Trainingsplan (blockPlanKarte) – dort, wo die Einheiten
+       entstehen. Unter Übungen stand derselbe Knopf ein zweites Mal über der Suche. */
+    el.innerHTML="";
     return false;
   }
   if(period)period.style.display="none";
@@ -113,7 +115,7 @@ async function blockBannerRender(){
   el.innerHTML=`<div style="background:var(--blue-bg);border:var(--border-s);border-radius:var(--rl);padding:12px;margin-bottom:1rem;font-size:var(--s-text);line-height:1.5;color:var(--text)">
     <div style="display:flex;align-items:flex-start;gap:8px">
       <div style="flex:1;min-width:0">
-        <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)">🧱 Trainingsblock ${laeuft?"bis":"ab"} ${esc(_tbDatumKurz(laeuft?b.bis:b.von))}</div>
+        <div style="font-size:var(--s-text);font-weight:800;color:var(--text)">🧱 Trainingsblock ${laeuft?"bis":"ab"} ${esc(_tbDatumKurz(laeuft?b.bis:b.von))}</div>
         <div style="font-weight:800;margin-top:2px">🎯 ${esc(b.leitfrage)}</div>
         ${b.ziel?`<div style="color:var(--text2)">${esc(b.ziel)}</div>`:""}
       </div>
@@ -151,7 +153,7 @@ async function blockPlanKarte(datum){
   const a=blockAufbauWahl(sk,n);
   const andere=a?a.alle.filter(k=>k!==a.key):[];
   el.innerHTML=`<div id="tp-block-karte" style="border:var(--border-s);border-radius:var(--rl);padding:12px;margin:6px 0 10px;background:var(--surface);line-height:1.5">
-    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)">🧱 Block: ${esc(b.leitfrage)}</div>
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text)">🧱 Block: ${esc(b.leitfrage)}</div>
     <div style="font-size:var(--s-karte);font-weight:800;margin-top:2px">Einheit ${z.buchstabe} · ${esc(z.vorlage)}</div>
     <div style="font-size:var(--s-klein);color:var(--text2)">${z.nr}. von ${zu.length} Trainings im Block${b.ziel?` · ${esc(b.ziel)}`:""}</div>
     ${v&&v.ziel_kinder?`<div id="tp-block-kinderziel" style="font-size:var(--s-text);background:var(--surface2);border-radius:10px;padding:8px 10px;margin-top:8px;line-height:1.45"><b>⚽ Für die Kinder:</b> ${esc(v.ziel_kinder)}</div>`:""}

@@ -50,7 +50,7 @@ function renderLineupEditor(){
   const opts=(cur)=>`<option value="">— frei —</option>`+names.map(n=>`<option value="${esc(n)}"${n===cur?" selected":""}>${esc(n)}${getKader(n)?.nr?" (#"+getKader(n).nr+")":""}${getKader(n)?.tw?" 🥅":""}</option>`).join("");
   const today=new Date().toISOString().slice(0,10);
   box.innerHTML=`
-    <div style="font-size:var(--s-klein);font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px"><i class="ti ti-clipboard-check"></i> Aufstellung festlegen (Spieltag)</div>
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:8px"><i class="ti ti-clipboard-check"></i> Aufstellung festlegen (Spieltag)</div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
       ${KOMBI_POS.map(p=>`
         <div style="display:flex;align-items:center;gap:8px">
@@ -58,7 +58,7 @@ function renderLineupEditor(){
           <select onchange="kombiSetPos('${p.key}',this.value)" style="flex:1;min-height:44px;padding:8px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:var(--s-text);font-family:inherit;background:var(--surface)">${opts(kombiLineup[p.key])}</select>
         </div>`).join("")}
     </div>
-    <div style="font-size:var(--s-klein);font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px"><i class="ti ti-users"></i> Auswechselbank (${bench.length})</div>
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:6px"><i class="ti ti-users"></i> Auswechselbank (${bench.length})</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
       ${bench.length?bench.map(n=>`<span style="font-size:var(--s-text);padding:5px 10px;background:var(--surface2);border:var(--border);border-radius:16px">${getKader(n)?.nr?getKader(n).nr+" ":""}${esc(n)}</span>`).join(""):'<span style="font-size:var(--s-klein);color:var(--text3)">Alle Spieler in der Startelf</span>'}
     </div>

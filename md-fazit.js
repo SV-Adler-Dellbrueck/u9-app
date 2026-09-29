@@ -175,7 +175,7 @@ function fazitRender(){
   const t = _FZ.termin, w = _FZ.wert;
   const d = new Date(t.datum+"T00:00:00");
   const datumStr = ["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()]+" "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"});
-  const sec = x => `<div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:16px 0 6px">${x}</div>`;
+  const sec = x => `<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:16px 0 6px">${x}</div>`;
   const fld = "width:100%;box-sizing:border-box;padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)";
 
   const teamsHtml = _FZ.teams.map(tm=>{
@@ -900,7 +900,7 @@ function nbWegZeichnen(){
       <button type="button" class="btn${weiter?" btn-p":""}" style="flex:1;min-height:48px;justify-content:center" onclick="nbWegFelderMerken();nbWegGehe(1)">${weiter||"überspringen"}</button>
     </div>
     <button type="button" onclick="nbWegFelderMerken();nbWegAus()" style="display:block;margin:10px auto 0;min-height:44px;background:none;border:none;color:var(--text2);font-family:inherit;font-size:var(--s-text);text-decoration:underline;cursor:pointer">Alles auf einen Blick</button>`;
-  const kopf = `${fortschritt}<div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)">${esc(st.titel)}</div>${st.frage?`<div style="font-size:var(--s-teil);font-weight:800;margin:4px 0 12px;line-height:1.3">${esc(st.frage)}</div>`:""}`;
+  const kopf = `${fortschritt}<div style="font-size:var(--s-text);font-weight:800;color:var(--text)">${esc(st.titel)}</div>${st.frage?`<div style="font-size:var(--s-teil);font-weight:800;margin:4px 0 12px;line-height:1.3">${esc(st.frage)}</div>`:""}`;
   const fld = "width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text);resize:vertical";
   let html = "";
   if(st.typ==="start"){
