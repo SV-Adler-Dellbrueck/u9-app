@@ -5,7 +5,11 @@
    Knöpfe schrieben in Felder, die es nicht gab – nichts passierte.
    a) Vor dem Stichtag: kein Schritt „Die Kinder“, die Zählung „Schritt x von y“ ohne ihn,
       am Ende keine Zeile „Kinder: …“
-   b) Ab dem Stichtag: Schritt da, ein Tipp setzt die Sterne (wie v627) */
+   b) Ab dem Stichtag: Schritt da, ein Tipp setzt die Sterne (wie v627)
+   v677 PO 29.09.: „Die Bewertung, die ich dir im Screenshot geschickt hatte, ist ja die Bewertung des
+   Trainingseinsatzes … Die Bewertung, die wir erstmal gesperrt haben, ist die Profilerstellung.“
+   Damit gilt a) nicht mehr: Auch vor dem Stichtag ist der Schritt da und jeder Tipp setzt Sterne –
+   genau das, was im Bildschirmfoto nicht ging. Die Knöpfe laufen nie mehr ins Leere. */
 "use strict";
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
@@ -43,12 +47,11 @@ module.exports = async function (h) {
   };
   const vor = await lauf(h.tagePlus(60));
   const nach = await lauf("2026-01-01");
-  if (vor.r.fehlt) return h.ergebnis("Nachbewertung: Kinder erst ab dem Stichtag", false, ["nbWegStart fehlt"]);
-  if (vor.r.zeilen) probleme.push("a) Vor dem Stichtag stehen Sterne je Kind im Bogen (v648 verletzt)");
-  if (vor.r.schritte.includes("kinder")) probleme.push(`a) Vor dem Stichtag gibt es den Schritt „Die Kinder“ – Knöpfe ohne Wirkung: ${vor.r.schritte.join(",")}`);
-  if (/Kinder: \d/.test(vor.r.ende)) probleme.push("a) Zusammenfassung zählt Kinder, die nicht bewertet werden können");
+  if (vor.r.fehlt) return h.ergebnis("Nachbewertung: Trainingseinsatz je Kind, vor und nach dem Stichtag", false, ["nbWegStart fehlt"]);
+  if (!vor.r.zeilen || !vor.r.schritte.includes("kinder") || vor.r.sterne !== 3) probleme.push(`a) v677: Vor dem Stichtag fehlt der Trainingseinsatz: Zeilen ${vor.r.zeilen}, Schritt ${vor.r.schritte.includes("kinder")}, Sterne ${vor.r.sterne}`);
+  if (!/Kinder: 1 von 2/.test(vor.r.ende)) probleme.push(`a) Zusammenfassung: ${vor.r.ende.slice(0, 160)}`);
   if (!nach.r.schritte.includes("kinder") || nach.r.sterne !== 3) probleme.push(`b) Ab dem Stichtag: Schritt ${nach.r.schritte.includes("kinder")}, Sterne ${nach.r.sterne}`);
   const f = vor.f.concat(nach.f); if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
-  zeilen.push(`a) vor dem Stichtag ${vor.r.schritte.length} Schritte ohne „Die Kinder“ · b) ab dem Stichtag ${nach.r.schritte.length} Schritte, Tipp setzt ${nach.r.sterne} Sterne`);
-  return h.ergebnis("Nachbewertung: Kinder erst ab dem Stichtag", !probleme.length, probleme.length ? probleme : zeilen);
+  zeilen.push(`a) v677: vor dem Stichtag ${vor.r.schritte.length} Schritte mit „Die Kinder“, Tipp setzt ${vor.r.sterne} Sterne · b) ab dem Stichtag ${nach.r.schritte.length} Schritte, Tipp setzt ${nach.r.sterne} Sterne`);
+  return h.ergebnis("Nachbewertung: Trainingseinsatz je Kind, vor und nach dem Stichtag", !probleme.length, probleme.length ? probleme : zeilen);
 };
