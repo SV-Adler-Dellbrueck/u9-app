@@ -17,7 +17,8 @@
    h) Prüfkarte: Rückfrage wörtlich ins Aha, Datum per Tipp auf einen eigenen Termin, „Passt so“
       bestätigt – mit Datum fertig
    i) „Wie war's?“: Karte nach einem Termin mit Zusage; drei Tipps bis gespeichert (Erzählen,
-      KI-Auswertung, Passt so); die KI-Anfrage nennt den Termin (fuer) und keinen Namen
+      KI-Auswertung, Passt so); die KI-Anfrage nennt den Termin (fuer) und keinen Namen. Getippt wird
+      bei laufendem App-Mikrofon – beim Bau fiel auf, dass das Anhalten den Text überschrieb.
    j) Kürzen: nie mitten im Wort; Sprachnotiz und Spiel-Sätze ohne 4000/300-Grenze
    k) Zwei Trainer: Spanne statt Mittelwert; Kinder-Sterne des Kollegen bleiben beim Speichern
    l) Knopfhöhen: Hauptaktionen 56 px, übrige Bedienelemente mindestens 44 px */
@@ -221,7 +222,9 @@ module.exports = async function (h) {
 
   // a)
   const g = E[0] || {};
-  if (g.anlass !== "gedanke" || g.status !== "keim" || g.baustein != null || !/Pausen/.test(g.beobachtung || "")) probleme.push("a) Gedanke: " + JSON.stringify({ a: g.anlass, s: g.status, b: g.baustein }));
+  // a) Der Zustand beim Erfassen – das Zeilenobjekt ist danach ausgearbeitet worden
+  const g0 = (s.gesendet.find(x => /tagebuch_eintrag$/.test(x.pfad) && x.methode === "POST" && x.body && x.body.anlass === "gedanke") || {}).body || {};
+  if (g0.status !== "keim" || g0.baustein != null || !/Pausen/.test(g0.beobachtung || "")) probleme.push("a) Gedanke: " + JSON.stringify({ a: g0.anlass, s: g0.status, b: g0.baustein }));
   if (r.gedankeKnopf !== 56 || !r.gedankeZu) probleme.push(`a) Knopf ${r.gedankeKnopf} px, Fenster zu ${r.gedankeZu}`);
   // b)
   if (!/1 Gedanke wartet auf eine Konsequenz/.test(r.listeKeim)) probleme.push("b) Zahl der Keime fehlt: " + r.listeKeim.slice(0, 200));
@@ -265,16 +268,17 @@ module.exports = async function (h) {
   const anfrage = kiAnfragen[kiAnfragen.length - 1] || {};
   if (anfrage.fuer !== "d" + gestern || K.some(n => (anfrage.text || "").includes(n))) probleme.push("i) KI-Anfrage: " + JSON.stringify({ fuer: anfrage.fuer, text: (anfrage.text || "").slice(0, 80) }));
   if (kiAnfragen.some(a => a.art === "tagebuch")) probleme.push("i) zweiter KI-Weg art „tagebuch“");
-  if (!db.einheit_bewertung.some(b => b.datum === gestern && b.autor === "Charles" && /früher da/.test(b.sprachnotiz || ""))) probleme.push("i) Bewertung nicht gespeichert");
+  if (!db.einheit_bewertung.some(b => b.datum === gestern && b.autor === "Charles" && /früher da/.test(b.sprachnotiz || ""))) probleme.push("i) Bewertung ohne Sprachnotiz gespeichert (v679: Anhalten des Mikrofons überschrieb getippten Text): " + JSON.stringify(s.gesendet.filter(x => /einheit_bewertung/.test(x.pfad)).map(x => ({ q: x.suche, sn: (x.body || {}).sprachnotiz }))).slice(0, 400));
   // j)
   if (!/\[gekürzt\]$/.test(r.j.k) || !/\. \[gekürzt\]$/.test(r.j.k) || r.j.k.length > 200) probleme.push("j) Kürzung am Satzende: " + r.j.k.slice(-40));
   if (!/Wort … \[gekürzt\]$/.test(r.j.w)) probleme.push("j) Kürzung an der Wortgrenze: " + r.j.w.slice(-30));
   if (r.j.notiz !== 5021) probleme.push("j) Sprachnotiz gekürzt: " + r.j.notiz);
-  const fazit = fs.readFileSync(path.join(h.REPO, "md-fazit.js"), "utf8");
+  const ohneKommentar = t => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+  const fazit = ohneKommentar(fs.readFileSync(path.join(h.REPO, "md-fazit.js"), "utf8"));
   if (/\.slice\(0,\s*300\)/.test(fazit) || /\.slice\(0,\s*4000\)/.test(fazit)) probleme.push("j) md-fazit.js kappt noch bei 300 oder 4000 Zeichen");
-  const ki = fs.readFileSync(path.join(h.REPO, "supabase/functions/ki-nachbereitung/index.ts"), "utf8");
+  const kiRoh = fs.readFileSync(path.join(h.REPO, "supabase/functions/ki-nachbereitung/index.ts"), "utf8"), ki = ohneKommentar(kiRoh);
   if (/s\.slice\(0, max\)/.test(ki) || !/\[gekürzt\]/.test(ki) || /art === "tagebuch"\)\s*\{/.test(ki)) probleme.push("j) Edge Function kürzt noch im Wort oder kennt art „tagebuch“");
-  if (!/Du SORTIERST die Worte des Trainers/.test(ki) || !/Niemals „der Trainer“/.test(ki)) probleme.push("j) FORM_TAGEBUCH nicht umgestellt");
+  if (!/Du SORTIERST die Worte des Trainers/.test(kiRoh) || !/Niemals „der Trainer“/.test(kiRoh)) probleme.push("j) FORM_TAGEBUCH nicht umgestellt");
   // k)
   if (!/Spaß ★3–4/.test(r.k.spanne) || !/Umsetzung ★4/.test(r.k.spanne) || /3,5/.test(r.k.spanne)) probleme.push("k) Spanne: " + r.k.spanne);
   if (r.k0.a !== 3 || !r.k0.aVon || r.k0.aVon.Charles !== 3 || r.k0.b !== 2) probleme.push("k) Kinder-Sterne: eigener Wert oder der des Kollegen fehlt: " + JSON.stringify(r.k0));

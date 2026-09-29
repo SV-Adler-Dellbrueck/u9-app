@@ -469,7 +469,15 @@ async function nbGrossAuswerten(art){
   const text = (ta&&ta.value||"").trim();
   nbGrossSync(ta ? ta.value : _nbText);
   if(text.length<15){ if(st) st.textContent = "Erzähl ein paar Sätze – dann kann die KI etwas eintragen."; return; }
-  if(typeof diktatAktiv==="function" && diktatAktiv("nb-gross-text")) diktatPause();
+  /* v679: Das Anhalten der Spracherkennung schrieb ihren Stand ins Feld – was währenddessen getippt
+     oder mit dem Tastatur-Mikrofon diktiert wurde, war danach weg, und gespeichert wurde eine leere
+     Notiz. Der Text, der zur KI geht, bleibt deshalb auch im Feld stehen. */
+  if(typeof diktatAktiv==="function" && diktatAktiv("nb-gross-text") && typeof diktatStop==="function"){
+    /* Beenden statt Pausieren: die Pause schreibt ihren Stand erst beim Ende der Sitzung (onend),
+       also nach dem Absenden. Nach dem Beenden schreibt nichts mehr ins Feld. */
+    const stand = ta.value; diktatStop();
+    if(ta.value !== stand){ ta.value = stand; nbGrossSync(stand); }
+  }
   const los = document.getElementById("nb-gross-los");
   if(los){ los.disabled = true; los.innerHTML = '<i class="ti ti-loader-2"></i>Wertet aus …'; }
   if(st) st.textContent = "";
