@@ -272,11 +272,11 @@ function showLoginGate(){
   gate.id="login-gate";
   gate.style.cssText="position:fixed;inset:0;z-index:9000;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px";
   gate.innerHTML=`<div class="card" style="padding:24px;max-width:340px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.15)">
-    <div style="font-size:16px;font-weight:700;margin-bottom:4px">🔐 Trainer-Anmeldung</div>
-    <div style="font-size:11.5px;color:var(--text2);margin-bottom:14px">Spielerdaten sind geschützt – bitte mit deinem Trainer-Account anmelden.</div>
+    <div style="font-size:var(--s-karte);font-weight:700;margin-bottom:4px">🔐 Trainer-Anmeldung</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:14px">Spielerdaten sind geschützt – bitte mit deinem Trainer-Account anmelden.</div>
     <div class="mg" style="margin-bottom:8px"><label for="login-email">E-Mail</label><input type="email" id="login-email" autocomplete="username" style="width:100%"></div>
     <div class="mg" style="margin-bottom:12px"><label for="login-pw">Passwort</label><input type="password" id="login-pw" autocomplete="current-password" style="width:100%"></div>
-    <div id="login-err" style="font-size:11px;color:#dc2626;margin-bottom:8px;min-height:14px"></div>
+    <div id="login-err" style="font-size:var(--s-klein);color:#dc2626;margin-bottom:8px;min-height:14px"></div>
     <button class="btn btn-p" style="width:100%;min-height:44px" onclick="doLogin()"><i class="ti ti-login"></i>Anmelden</button>
   </div>`;
   document.body.appendChild(gate);
@@ -343,7 +343,7 @@ let lastSyncTs=null; // L4
 // Platz ohne Netz speichert – wird beim nächsten Online-Kontakt automatisch nachgereicht.
 const PENDING_SAVES_KEY="adler_pending_saves";
 function queuePendingSave(row){
-  const q=safeParse(localStorage.getItem(PENDING_SAVES_KEY),[])||[];
+  const q=(safeParse(localStorage.getItem(PENDING_SAVES_KEY),[])||[]).filter(r=>!(r&&r.name===row.name&&r.datum===row.datum));   // v636: gleicher Stichtag ersetzt
   q.push(row);
   localStorage.setItem(PENDING_SAVES_KEY,JSON.stringify(q));
 }
@@ -353,7 +353,7 @@ async function flushPendingSaves(){
   const remaining=[];
   for(const row of q){
     try{
-      const res=await fetch(`${SB_URL}/rest/v1/spielerprofile`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=representation'}),body:JSON.stringify(row)});
+      const res=await fetch(`${SB_URL}/rest/v1/spielerprofile?on_conflict=name,datum`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=representation,resolution=merge-duplicates'}),body:JSON.stringify(row)});   // v636: Upsert wie savePlayer
       if(!res.ok)remaining.push(row);
     }catch(e){remaining.push(row);}
   }
@@ -441,7 +441,7 @@ async function loadDB(){
   window._dbLoaded=true; // L2: Skeletons beenden
   /* v603: Auswahllisten und Kaderliste gehoeren der Trainer-Oberflaeche. Der Eltern-
      Einstieg faehrt dieselbe Startkette; dort brach sie an dieser Stelle bei jedem Start. */
-  if(document.getElementById("p-name")){refreshSelects();renderKader();}
+  if(document.getElementById("p-name")){refreshSelects();renderKader();if(typeof bewAbLaden==="function")bewAbLaden();} // v648: Startdatum der Bewertungen (nur Trainer)
   if(document.getElementById("view-kombi")?.classList.contains("active"))renderKombi();
 }
 // L4: Antippen des Sync-Status zeigt Zeitstempel als Toast
@@ -455,6 +455,8 @@ _adlerOnReady(()=>{
 const skeletonRows=(n=3)=>Array.from({length:n},()=>'<div class="skeleton"></div>').join("");
 
 async function savePlayer(){
+  // v648: vor dem Startdatum keine Einzelbewertung – auch nicht über einen alten Knopf
+  if(typeof bewFreigegeben==="function"&&!bewFreigegeben()){showSt("save-status","Bewerten ist bis zum Ende der Hinrunde gesperrt.","err");return;}
   const meta=getMeta();
   if(!meta.name){showSt("save-status","Spieler auswählen.","err");return;}
   if(countFilled()<totalCrit()){showSt("save-status",`Noch ${totalCrit()-countFilled()} Kriterien offen.`,"err");return;}
@@ -468,14 +470,19 @@ async function savePlayer(){
     attendance:meta.att,strong_foot:meta.foot,notes:meta.notes,
     eltern:meta.eltern,age:meta.age,grp:meta.grp,trainer:meta.trainer,
     fazit:result.text,summary:result.summary,tw:meta.tw,
-    scores:JSON.stringify(Object.values(result.dims)),
+    /* v636: Torwart-Kinder bekommen ihre zwei TW-Dimensionen mit – Profil und Verlauf zeichnen
+       sieben Achsen, gespeichert waren nur fünf (TW-Achsen standen immer auf 0 %). */
+    scores:JSON.stringify(meta.tw?[...Object.values(result.dims),...Object.values(calcScores(v,DIMS_TW).dims)]:Object.values(result.dims)),
     total_score:result.total,pot_score:result.pot,
     radios:JSON.stringify(v)
   };
   const saveBtn=document.querySelector('button[onclick="savePlayer()"]'); // C9: Doppelklick-Schutz
   if(saveBtn)saveBtn.disabled=true;
   try{
-    const res=await fetch(`${SB_URL}/rest/v1/spielerprofile`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=representation','X-Client-Info':'supabase-js/2.0.0'}),body:JSON.stringify(row)});
+    /* v636: Der Primärschlüssel ist (name, datum). Ein zweites Speichern am selben Stichtag –
+       Korrektur im Meeting, „Profil bearbeiten“ – scheiterte vorher mit 409. Jetzt ersetzt es
+       den Stand dieses Tages: ein Kind, ein Stichtag, ein Stand. */
+    const res=await fetch(`${SB_URL}/rest/v1/spielerprofile?on_conflict=name,datum`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=representation,resolution=merge-duplicates','X-Client-Info':'supabase-js/2.0.0'}),body:JSON.stringify(row)});
     if(sbCheck401(res)){showSt("save-status","Anmeldung abgelaufen – bitte neu anmelden und erneut speichern.","err");return;}
     if(res.ok||res.status===201||res.status===204){
       showSt("save-status",`${meta.name} gespeichert – ${result.tw?"TW+":""}${result.rolle?.primLabel} (${result.total}%) – ${meta.trainer}`,"ok");
@@ -491,6 +498,7 @@ async function savePlayer(){
     // Offline auf dem Platz: Bewertung nicht verwerfen, sondern lokal für später vormerken
     queuePendingSave(row);
     showSt("save-status",`${meta.name}: Offline gespeichert – wird automatisch hochgeladen, sobald wieder Netz da ist.`,"info");
+    if(typeof bewRundeAdvance==="function")bewRundeAdvance();   // v636: auch offline zum nächsten Kind
   }
   finally{if(saveBtn)saveBtn.disabled=false;}
 }
@@ -517,7 +525,7 @@ function toastUndo(msg,undoFn,ms){
   document.getElementById("undo-toast")?.remove();
   const el=document.createElement("div");el.id="undo-toast";
   el.setAttribute("role","status");el.setAttribute("aria-live","polite");
-  el.style.cssText="position:fixed;left:12px;right:12px;bottom:78px;z-index:10060;max-width:460px;margin:0 auto;background:#1e293b;color:#fff;border-radius:12px;padding:11px 12px;box-shadow:0 8px 28px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px;font-size:13px;font-family:inherit";
+  el.style.cssText="position:fixed;left:12px;right:12px;bottom:78px;z-index:10060;max-width:460px;margin:0 auto;background:#1e293b;color:#fff;border-radius:12px;padding:11px 12px;box-shadow:0 8px 28px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px;font-size:var(--s-text);font-family:inherit";
   const span=document.createElement("span");span.style.flex="1";span.textContent=msg;
   const btn=document.createElement("button");btn.textContent="↶ Rückgängig";
   btn.style.cssText="background:#fbbf24;color:#1e293b;border:none;border-radius:8px;padding:7px 12px;font-weight:800;font-family:inherit;cursor:pointer;flex:none";
@@ -538,7 +546,7 @@ function clearForm(){
   const attSeg=document.getElementById("p-att-seg");
   if(attSeg){attSeg.querySelectorAll(".seg-btn").forEach(b=>{b.classList.toggle("active",b.dataset.val==="2");});}
   document.getElementById("p-age").value="8";
-  document.getElementById("p-grp").value="flex";
+  // v635: #p-grp gibt es seit dem Ende der A/B-Labels nicht mehr – ungeschützt brach „Leeren“ hier ab.
   document.querySelectorAll('input[type="radio"]').forEach(r=>r.checked=false);
   document.getElementById("fazit-out").value="";
   document.getElementById("pfill").style.width="0%";
@@ -566,7 +574,7 @@ function loadPlayerToForm(p){
   const elSeg=document.getElementById("p-eltern-seg");
   if(elSeg){elSeg.querySelectorAll(".seg-btn").forEach(b=>{b.classList.toggle("active",b.dataset.val===(p.eltern||"2"));});}
   document.getElementById("p-age").value=p.age||"8";
-  document.getElementById("p-grp").value=p.grp||"flex";
+  // v635: #p-grp entfernt (A/B-Labels abgeschafft) – ungeschützt brach „Laden“ hier ab, nach dem Namen.
   document.getElementById("p-trainer").value=p.trainer||(typeof _meTrainer==="string"&&_meTrainer)||((typeof TRAINER!=="undefined"&&TRAINER[0])||"");
   document.getElementById("p-notes").value=p.notes||"";
   const tw=getKader(p.name)?.tw||false;
@@ -604,7 +612,7 @@ function refreshSelects(){
     });
     if(cur&&dbNames.includes(cur))sel.value=cur;
   });
-  if(typeof bewRundeBarRender==="function")bewRundeBarRender(); // Bewertungsrunde-Leiste (Trainermeeting)
+  if(typeof bewSperreAnwenden==="function")bewSperreAnwenden(); // Bewertungsrunde-Leiste bzw. Sperre bis Hinrundenende (v648)
 }
 
 /* ═══════════════════════════════════
@@ -638,7 +646,7 @@ function ensureChart(){
   if(_chartJsPromise)return _chartJsPromise;
   _chartJsPromise=new Promise((res,rej)=>{
     const s=document.createElement("script");
-    s.src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js";
+    s.src="vendor/chart.umd.js";   // v642: selbst ausgeliefert (MIT), vorher cdn.jsdelivr.net
     s.onload=()=>res();
     s.onerror=()=>{_chartJsPromise=null;rej(new Error("Chart.js konnte nicht geladen werden"));};
     document.head.appendChild(s);
@@ -653,7 +661,7 @@ function mapsAnchor(ort,color){ if(!ort)return ""; return `<a href="${mapsUrl(or
 // Eltern-Detailfenster (eigenes Design), sonst kompakter .btn fürs Trainer-Karten-Raster.
 function routeBtn(addr,opts){
   if(!addr)return ""; opts=opts||{};
-  if(opts.block)return `<a href="${mapsUrl(addr)}" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:46px;margin-top:8px;border:1.5px solid #1e3a8a;border-radius:10px;background:#eef2ff;color:#1e3a8a;font-family:inherit;font-size:14px;font-weight:800;text-decoration:none">🧭 Route öffnen</a>`;
+  if(opts.block)return `<a href="${mapsUrl(addr)}" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:46px;margin-top:8px;border:1.5px solid #1e3a8a;border-radius:10px;background:#eef2ff;color:#1e3a8a;font-family:inherit;font-size:var(--s-karte);font-weight:800;text-decoration:none">🧭 Route öffnen</a>`;
   return `<a class="btn btn-sm" href="${mapsUrl(addr)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none"><i class="ti ti-navigation"></i>🧭 Route</a>`;
 }
 
@@ -702,7 +710,7 @@ function terminAbsageChip(t,klein){
 function terminAbsageBanner(t){
   if(!terminFaelltAus(t))return "";
   const g=terminAbsageGrund(t);
-  return `<div style="background:#fee2e2;color:#991b1b;font-size:12.5px;font-weight:800;padding:8px 13px">🔴 Fällt aus${g?" – "+esc(g):""}</div>`;
+  return `<div style="background:#fee2e2;color:#991b1b;font-size:var(--s-text);font-weight:800;padding:8px 13px">🔴 Fällt aus${g?" – "+esc(g):""}</div>`;
 }
 function istPaused(name){ return !!PAUSE_MAP[name]; }
 function pauseBis(name){ return PAUSE_MAP[name]?PAUSE_MAP[name].bis:null; }
@@ -813,8 +821,8 @@ async function wetterInto(elId,dateStr,place,timeStr){
   const rain=(w.rain!=null)?` · 💧 ${w.rain}%`:"";
   const temp=w.hour?`${w.temp} °C`:`${w.tmin}–${w.tmax} °C`;
   const tip=wetterKitTip(w);
-  el.innerHTML=`<span style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text2);background:var(--surface2);border:var(--border);border-radius:20px;padding:3px 10px;margin-top:6px">${w.emoji} ${w.text} · ${temp}${rain}</span>`
-    +(tip?`<div style="font-size:11px;color:var(--text2);margin-top:4px">🎒 ${tip}</div>`:"");
+  el.innerHTML=`<span style="display:inline-flex;align-items:center;gap:5px;font-size:var(--s-klein);color:var(--text2);background:var(--surface2);border:var(--border);border-radius:20px;padding:3px 10px;margin-top:6px">${w.emoji} ${w.text} · ${temp}${rain}</span>`
+    +(tip?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">🎒 ${tip}</div>`:"");
 }
 
 async function xpAward(spielerId,quelle,quelleId){
@@ -891,15 +899,15 @@ function pwaBannerShow(kind){
   const el=document.createElement("div");
   el.id="pwa-nudge";
   el.style.cssText="position:fixed;left:12px;right:12px;bottom:12px;z-index:10050;background:#1e3a8a;color:#fff;border-radius:14px;padding:14px 34px 14px 16px;box-shadow:0 8px 28px rgba(0,0,0,.35);font-family:inherit;max-width:460px;margin:0 auto";
-  const close=`<button onclick="pwaBannerDismiss()" aria-label="Schließen" style="position:absolute;top:8px;right:10px;background:none;border:none;color:rgba(255,255,255,.7);font-size:22px;line-height:1;cursor:pointer">×</button>`;
+  const close=`<button onclick="pwaBannerDismiss()" aria-label="Schließen" style="position:absolute;top:8px;right:10px;background:none;border:none;color:rgba(255,255,255,.7);font-size:var(--s-seite);line-height:1;cursor:pointer">×</button>`;
   const app=pwaKontext().name;
   if(kind==="ios"){
-    el.innerHTML=`${close}<div style="font-weight:800;font-size:15px;margin-bottom:4px">📱 ${app} aufs Handy</div>
-      <div style="font-size:12.5px;line-height:1.55;opacity:.96">Tippe unten in Safari auf <b>Teilen</b> <span style="display:inline-block;border:1px solid rgba(255,255,255,.6);border-radius:5px;padding:0 5px">↑</span> und dann auf <b>„Zum Home-Bildschirm"</b> – danach startet der ${app} wie eine echte App, mit eigenem Symbol.</div>`;
+    el.innerHTML=`${close}<div style="font-weight:800;font-size:var(--s-karte);margin-bottom:4px">📱 ${app} aufs Handy</div>
+      <div style="font-size:var(--s-text);line-height:1.55;opacity:.96">Tippe unten in Safari auf <b>Teilen</b> <span style="display:inline-block;border:1px solid rgba(255,255,255,.6);border-radius:5px;padding:0 5px">↑</span> und dann auf <b>„Zum Home-Bildschirm"</b> – danach startet der ${app} wie eine echte App, mit eigenem Symbol.</div>`;
   }else{
-    el.innerHTML=`${close}<div style="font-weight:800;font-size:15px;margin-bottom:8px">📱 ${app} installieren</div>
-      <div style="font-size:12.5px;opacity:.96;margin-bottom:10px">Als eigene App auf den Startbildschirm – schneller Zugriff, funktioniert auch offline.</div>
-      <button onclick="pwaBannerInstall()" style="background:#fff;color:#1e3a8a;border:none;border-radius:10px;padding:9px 16px;font-family:inherit;font-weight:800;font-size:13.5px;cursor:pointer">Installieren</button>`;
+    el.innerHTML=`${close}<div style="font-weight:800;font-size:var(--s-karte);margin-bottom:8px">📱 ${app} installieren</div>
+      <div style="font-size:var(--s-text);opacity:.96;margin-bottom:10px">Als eigene App auf den Startbildschirm – schneller Zugriff, funktioniert auch offline.</div>
+      <button onclick="pwaBannerInstall()" style="background:#fff;color:#1e3a8a;border:none;border-radius:10px;padding:9px 16px;font-family:inherit;font-weight:800;font-size:var(--s-text);cursor:pointer">Installieren</button>`;
   }
   document.body.appendChild(el);
 }
@@ -912,7 +920,15 @@ function hapticTap(pattern){ try{ if(navigator.vibrate)navigator.vibrate(pattern
 document.addEventListener("click",e=>{ if(e.target&&e.target.closest&&e.target.closest("button,.btn,.nb,.seg-btn"))hapticTap(12); },{passive:true});
 
 /* ═══ Dark Mode: automatisch nach OS + manueller Toggle (in localStorage gemerkt). ═══ */
+/* v620 · Paket C: Die öffentlichen Seiten (Matchday, Delegate, Liveticker, Kind-Link, Übergabe,
+   Turnier/Festival, Stadionheft) haben ein festes helles Layout – weiße Karten auf #f1f5f9. Im
+   dunklen Modus des Handys schalteten die Farb-Tokens trotzdem um, und helle Schrift stand auf
+   Weiß. v615 hatte das nur für den Festival-Link gelöst. Jetzt bleibt jede dieser Seiten hell,
+   auch wenn jemand in der App „dunkel“ gewählt hat. */
+const SEITEN_FEST_HELL=["eltern","match","delegate","ticker","kind","handover","turnier","heft"];
+function _seiteFestHell(){ try{ const p=new URLSearchParams(location.search); return SEITEN_FEST_HELL.some(k=>p.has(k)); }catch(e){ return false; } }
 function applyTheme(t){
+  if(_seiteFestHell())t="light";
   const el=document.documentElement;
   if(t==="dark"||t==="light")el.setAttribute("data-theme",t); else el.removeAttribute("data-theme");
   const btn=document.getElementById("theme-toggle");
@@ -931,10 +947,63 @@ function toggleTheme(){
 _adlerOnReady(()=>{ try{ applyTheme(localStorage.getItem("adler_theme")); }catch(e){} }); // Button-Icon setzen
 if(window.matchMedia){ try{ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{ if(!localStorage.getItem("adler_theme"))applyTheme(null); }); }catch(e){} }
 
+/* ═══ v632 · Schriftgröße je Gerät ═══════════════════════════════════════════════════
+   PO: „… eine Funktion, um die Schriftgröße zu erhöhen für die älteren Kollegen unter uns, die
+   ihre Lesebrille vergessen haben.“ Kacheln: „Trainer und Eltern“, „als v632“.
+   Seit v625/v626 hängen fast alle Schriften an fünf Stufen (--s-klein … --s-seite). Ein
+   Attribut am <html> setzt sie zentral höher (styles.css) – der Text bricht dann um, statt wie
+   beim Zoomen mit zwei Fingern seitlich aus dem Bildschirm zu laufen. Gemerkt je Gerät, gilt
+   nur dort. Nicht auf den festen öffentlichen Seiten (Ticker, Heft, Turnier …) und nicht in der
+   Kinder-App – dort ist die Schrift Gestaltung und ohnehin groß. */
+const SCHRIFT_STUFEN=[{key:"",name:"Normal",zeichen:"A"},{key:"gross",name:"Groß",zeichen:"A+"},{key:"sehrgross",name:"Sehr groß",zeichen:"A++"}];
+function _schriftStufe(k){ return SCHRIFT_STUFEN.find(x=>x.key===(k||""))||SCHRIFT_STUFEN[0]; }
+function applySchrift(k){
+  if(_seiteFestHell()||/\/kinder\//.test(location.pathname))k="";
+  const st=_schriftStufe(k), el=document.documentElement;
+  if(st.key)el.setAttribute("data-schrift",st.key); else el.removeAttribute("data-schrift");
+  const nxt=SCHRIFT_STUFEN[(SCHRIFT_STUFEN.indexOf(st)+1)%SCHRIFT_STUFEN.length];
+  document.querySelectorAll(".schrift-toggle").forEach(b=>{ b.textContent=st.zeichen;
+    b.setAttribute("aria-label",`Schriftgröße: ${st.name} – antippen für ${nxt.name}`); b.title=`Schriftgröße: ${st.name} (antippen für ${nxt.name})`; });
+}
+function schriftWechseln(){
+  let jetzt=""; try{ jetzt=localStorage.getItem("adler_schrift")||""; }catch(e){}
+  const i=SCHRIFT_STUFEN.indexOf(_schriftStufe(jetzt)), nxt=SCHRIFT_STUFEN[(i+1)%SCHRIFT_STUFEN.length];
+  try{ if(nxt.key)localStorage.setItem("adler_schrift",nxt.key); else localStorage.removeItem("adler_schrift"); }catch(e){}
+  applySchrift(nxt.key);
+  if(typeof toast==="function")toast(`🔎 Schrift: ${nxt.name}`);
+  if(typeof hapticTap==="function")hapticTap(12);
+}
+(function(){ try{ applySchrift(localStorage.getItem("adler_schrift")); }catch(e){} })();   // sofort, damit nichts springt
+_adlerOnReady(()=>{ try{ applySchrift(localStorage.getItem("adler_schrift")); }catch(e){} }); // Knopf beschriften
+/* Einmaliger Hinweis für die anderen (PO: „Es geht … um die anderen Trainer und Eltern, nicht um
+   mich“ – Kachel „Ja, Trainer und Eltern“). Wer den Knopf nicht kennt, findet ihn so: eine Karte,
+   einmal je Gerät, mit „Größer stellen“ und „Nein danke“. Hat jemand schon eine Stufe gewählt,
+   erscheint sie gar nicht. */
+function schriftHinweisZeigen(ziel){
+  const el=typeof ziel==="string"?document.getElementById(ziel):ziel; if(!el)return;
+  let weg=false; try{ weg=!!(localStorage.getItem("adler_schrift_hinweis")||localStorage.getItem("adler_schrift")); }catch(e){ weg=true; }
+  if(weg||_seiteFestHell()||/\/kinder\//.test(location.pathname)){ el.innerHTML=""; return; }
+  el.innerHTML=`<div class="schrift-hinweis" role="note" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:var(--surface);color:var(--text);border:1px solid var(--rand-bedien);border-left:4px solid var(--blue,#2563eb);border-radius:12px;padding:10px 12px;margin:0 0 12px">
+    <div style="flex:1 1 200px;font-size:var(--s-text);line-height:1.45"><b>🔎 Schrift zu klein?</b> Oben auf „A“ tippen macht sie größer – nur auf diesem Handy.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" style="min-height:44px" onclick="schriftHinweisAntwort(true)">Größer stellen</button>
+      <button class="btn" style="min-height:44px" onclick="schriftHinweisAntwort(false)">Nein danke</button>
+    </div></div>`;
+}
+function schriftHinweisAntwort(ja){
+  try{ localStorage.setItem("adler_schrift_hinweis","1"); }catch(e){}
+  document.querySelectorAll(".schrift-hinweis").forEach(k=>k.remove());
+  if(ja){ try{ localStorage.setItem("adler_schrift","gross"); }catch(e){} applySchrift("gross"); if(typeof toast==="function")toast("🔎 Schrift: Groß – oben auf „A“ geht es weiter oder zurück"); }
+}
+_adlerOnReady(()=>{ try{ schriftHinweisZeigen("schrift-hinweis-trainer"); }catch(e){} });
+
 /* ═══ Web-Push-Benachrichtigungen ═══
-   Öffentlicher VAPID-Schlüssel (der private liegt nur in der Edge Function push-send).
-   Subscriptions in push_subscriptions (RLS: eigene). Senden macht der Trainer -> Edge Function. */
-const VAPID_PUBLIC="BEC5hAYJQ3IBA0HHrPttPTH_OeH-pdTRx5Q88W1thcJ1e23Ia7MWGB1Y4BUPg_uqt3sdiVcDa6TwPy8odLuD4J0";
+   Öffentlicher VAPID-Schlüssel. Der private liegt seit v643 im Supabase Vault und wird nur von
+   den Edge Functions push-send und push-cron gelesen (RPC adler_geheimnis, nur service_role).
+   Subscriptions in push_subscriptions (RLS: eigene). Senden macht der Trainer -> Edge Function.
+   v643: Schlüssel am 27.09.2026 erneuert – pushSchluesselAbgleich meldet Geräte mit einem Abo
+   zum alten Schlüssel beim nächsten Öffnen still neu an. */
+const VAPID_PUBLIC="BGONplskzpO-FnCZQRWWwLDKggQCjTRfOf8rMu3qae_8jTyLaoXzJ2lHFK9zUqCMOdrVApBbyjVymoTz7nFfg_Y";
 function pushSupported(){ return ("serviceWorker" in navigator)&&("PushManager" in window)&&("Notification" in window); }
 function _urlB64ToU8(b64){
   const pad="=".repeat((4-b64.length%4)%4);
@@ -947,12 +1016,24 @@ async function pushCurrentSub(){
   if(!pushSupported())return null;
   try{ const reg=await navigator.serviceWorker.ready; return await reg.pushManager.getSubscription(); }catch(e){ return null; }
 }
+/* v664: PO 28.09. (Bildschirmfoto): „Wo kann ich die Benachrichtigungen aktivieren?“ –
+   nach einmal „Blockieren“ fragt der Browser nie wieder, die App kann es nicht selbst
+   ändern. Statt nur „nicht erlaubt“ steht hier, wo man es am Gerät wieder einschaltet. */
+function pushGesperrtHilfe(perm){
+  if(perm!=="denied"){toast("Benachrichtigungen wurden nicht erlaubt","err");return;}
+  const ua=navigator.userAgent||"", ios=/iPhone|iPad|iPod/.test(ua);
+  const text=ios
+    ?"Auf diesem Gerät sind Mitteilungen für die Adler-App ausgeschaltet.\n\nSo schaltest du sie ein:\nEinstellungen → Mitteilungen → Adler-App (bzw. der Name des Home-Bildschirm-Symbols) → „Mitteilungen erlauben“.\n\nDanach hier noch einmal auf „Benachrichtigungen aktivieren“ tippen."
+    :"Dein Handy hat Benachrichtigungen für diese Seite einmal blockiert – deshalb fragt es nicht mehr nach.\n\nSo schaltest du sie ein:\n• App vom Startbildschirm: Symbol lange drücken → App-Info → Benachrichtigungen → einschalten.\n• Im Browser: oben links neben der Adresse auf das Schloss bzw. die Einstellungen tippen → Berechtigungen → Benachrichtigungen → Zulassen.\n\nDanach hier noch einmal auf „Benachrichtigungen aktivieren“ tippen.";
+  if(typeof frageJaNein==="function")frageJaNein({titel:"Benachrichtigungen sind blockiert",emoji:"🔔",text,ja:"Verstanden",nein:"Schließen"});
+  else toast("Benachrichtigungen sind in den Einstellungen des Handys blockiert","err");
+}
 async function pushSubscribe(rolle){
   if(!pushSupported()){toast("Benachrichtigungen werden hier nicht unterstützt","err");return false;}
   if(!sbToken()){toast("Bitte zuerst anmelden","err");return false;}
   let perm=Notification.permission;
   if(perm==="default")perm=await Notification.requestPermission();
-  if(perm!=="granted"){toast("Benachrichtigungen wurden nicht erlaubt","err");return false;}
+  if(perm!=="granted"){pushGesperrtHilfe(perm);return false;}
   try{
     const reg=await navigator.serviceWorker.ready;
     let sub=await reg.pushManager.getSubscription();
@@ -972,15 +1053,51 @@ async function pushUnsubscribe(){
     toast("Benachrichtigungen ausgeschaltet");
   }catch(e){}
 }
+/* v643: Ein Abo, das mit einem früheren VAPID-Schlüssel entstand, stellt nie wieder zu (der
+   Push-Dienst antwortet mit 403). Wer Mitteilungen erlaubt hat, soll davon nichts merken: beim
+   Öffnen wird der Schlüssel des vorhandenen Abos verglichen und bei Abweichung still neu
+   angemeldet – mit derselben Rolle, die der Einstieg vorgibt. Ohne Erlaubnis, ohne Anmeldung
+   oder ohne Abo passiert nichts; ohne auslesbaren Schlüssel (sehr alte Browser) auch nicht. */
+function _pushGleicherSchluessel(abo){
+  const k=abo&&abo.options&&abo.options.applicationServerKey;
+  if(!k)return null;
+  const ist=new Uint8Array(k), soll=_urlB64ToU8(VAPID_PUBLIC);
+  return ist.length===soll.length&&ist.every((b,i)=>b===soll[i]);
+}
+async function pushSchluesselAbgleich(){
+  if(!pushSupported()||Notification.permission!=="granted")return "aus";
+  if(typeof sbToken!=="function"||!sbToken())return "ohne-anmeldung";
+  if(/\/kinder\//.test(location.pathname))return "kinder";
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    const alt=await reg.pushManager.getSubscription();
+    if(!alt)return "ohne-abo";
+    const gleich=_pushGleicherSchluessel(alt);
+    if(gleich!==false)return gleich?"aktuell":"unbekannt";
+    try{ await fetch(`${SB_URL}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(alt.endpoint)}`,{method:"DELETE",headers:sbAuthHeaders()}); }catch(e){}
+    try{ await alt.unsubscribe(); }catch(e){}
+    const neu=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:_urlB64ToU8(VAPID_PUBLIC)});
+    const j=neu.toJSON();
+    const rolle=/\/trainer\//.test(location.pathname)?"trainer":"parent";
+    await fetch(`${SB_URL}/rest/v1/push_subscriptions?on_conflict=endpoint`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({endpoint:neu.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,rolle})});
+    return "erneuert";
+  }catch(e){ return "fehler"; }
+}
+// Einmal je Start, sobald jemand angemeldet ist (die Anmeldung kommt oft erst nach dem Laden).
+_adlerOnReady(()=>{
+  let n=0;
+  const versuch=()=>{ if(typeof sbToken==="function"&&sbToken()){ pushSchluesselAbgleich(); return; } if(++n<20)setTimeout(versuch,3000); };
+  setTimeout(versuch,2000);
+});
 // Status-abhängigen An/Aus-Button in einen Slot rendern (rolle: 'parent' | 'trainer').
 async function pushRenderInto(elId, rolle){
   const el=document.getElementById(elId); if(!el)return;
   if(!pushSupported()){ el.innerHTML=""; return; }
   const sub=await pushCurrentSub();
   const on=!!sub && (typeof Notification!=="undefined"&&Notification.permission==="granted");
-  const base="width:100%;min-height:48px;padding:12px;border-radius:10px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer";
+  const base="width:100%;min-height:48px;padding:12px;border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer";
   el.innerHTML=on
-    ? `<button onclick="pushUnsubscribe().then(()=>pushRenderInto('${elId}','${rolle}'))" style="${base};border:1.5px solid #16a34a;background:#f0fdf4;color:#15803d">🔔 Benachrichtigungen an ✓ · zum Ausschalten tippen</button>`
+    ? `<button onclick="pushUnsubscribe().then(()=>pushRenderInto('${elId}','${rolle}'))" style="${base};border:1.5px solid #16a34a;background:var(--green-bg);color:var(--green)">🔔 Benachrichtigungen an ✓ · zum Ausschalten tippen</button>`
     : `<button onclick="pushSubscribe('${rolle}').then(ok=>{if(ok)pushRenderInto('${elId}','${rolle}');})" style="${base};border:none;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff">🔔 Benachrichtigungen aktivieren</button>`;
 }
 // Trainer: Push an alle (subscribed) Eltern senden – via Edge Function push-send.
@@ -1058,15 +1175,28 @@ function nutzungFlush(){
 }
 document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden")nutzungFlush(); });
 
+/* v673 PO 29.09.: „Die neue Kachel Adler-Rufe hat keine Funktion. Wenn ich drauf drücke, passiert
+   nichts.“ Der Knopf rief rufeOpen nur, wenn md-adler-rufe.js (Welle 2) schon geladen war – sonst
+   geschah still nichts. Jetzt wartet der Einstieg bis zu zehn Sekunden und sagt, was los ist. */
+function rufeEinstieg(){
+  if(typeof sbToken==="function"&&!sbToken()){ toast("Bitte einmal neu anmelden – die Anmeldung ist abgelaufen","err"); return; }
+  const los=()=>{ try{ rufeOpen(); }catch(e){ console.error(e); toast("Adler-Rufe konnten nicht öffnen – bitte neu laden","err"); } };
+  if(typeof rufeOpen==="function"){ los(); return; }
+  toast("Adler-Rufe werden geladen …");
+  let n=0; const t=setInterval(()=>{
+    if(typeof rufeOpen==="function"){ clearInterval(t); los(); return; }
+    if(++n>40){ clearInterval(t); toast("Adler-Rufe konnten nicht geladen werden – bitte neu laden","err"); }
+  },250);
+}
 function mdlHead(modalId,emoji,title,sub,col){
   col=col||"#1e3a8a";
   return `<div style="display:flex;align-items:center;gap:11px;margin-bottom:12px;padding:10px 12px;background:linear-gradient(90deg,${col}18,${col}05);border-left:4px solid ${col};border-radius:12px">
-    <div style="width:38px;height:38px;flex:none;border-radius:11px;background:${col};display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 2px 6px ${col}55">${emoji}</div>
+    <div style="width:38px;height:38px;flex:none;border-radius:11px;background:${col};display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);box-shadow:0 2px 6px ${col}55">${emoji}</div>
     <div style="flex:1;min-width:0">
-      <div class="mdl-titel" style="font-size:15.5px;font-weight:800;line-height:1.2;color:var(--text)">${title}</div>
-      ${sub?`<div style="font-size:11px;color:var(--text2);margin-top:1px">${sub}</div>`:""}
+      <div class="mdl-titel" style="font-size:var(--s-karte);font-weight:800;line-height:1.2;color:var(--text)">${title}</div>
+      ${sub?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:1px">${sub}</div>`:""}
     </div>
-    <button onclick="document.getElementById('${modalId}')?.remove()" aria-label="Schließen" style="border:none;background:transparent;font-size:24px;color:var(--text2);cursor:pointer;line-height:1;min-width:44px;min-height:44px;margin:-8px -8px -8px 0;flex:none">×</button>
+    <button onclick="document.getElementById('${modalId}')?.remove()" aria-label="Schließen" style="border:none;background:transparent;font-size:var(--s-seite);color:var(--text2);cursor:pointer;line-height:1;min-width:44px;min-height:44px;margin:-8px -8px -8px 0;flex:none">×</button>
   </div>`;
 }
 
@@ -1102,10 +1232,10 @@ function frageJaNein(o){
     const c=document.createElement("div");
     c.style.cssText="background:var(--surface);color:var(--text);max-width:400px;width:100%;margin:auto;border-radius:16px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
     c.innerHTML=`${mdlHead("frage-modal",o.emoji||"❓",esc(o.titel||"Kurze Frage"),o.unter?esc(o.unter):"",akzent)}
-      <div style="font-size:13.5px;line-height:1.55;color:var(--text);white-space:pre-line;margin:2px 2px 14px">${esc(o.text||"")}</div>
+      <div style="font-size:var(--s-text);line-height:1.55;color:var(--text);white-space:pre-line;margin:2px 2px 14px">${esc(o.text||"")}</div>
       <div style="display:flex;gap:8px">
-        <button type="button" id="frage-nein" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);color:var(--text2);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">${esc(o.nein||"Abbrechen")}</button>
-        <button type="button" id="frage-ja" style="flex:1;min-height:44px;border:none;border-radius:12px;background:${akzent};color:#fff;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer">${esc(o.ja||"Ja, weiter")}</button>
+        <button type="button" id="frage-nein" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);color:var(--text2);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">${esc(o.nein||"Abbrechen")}</button>
+        <button type="button" id="frage-ja" style="flex:1;min-height:44px;border:none;border-radius:12px;background:${akzent};color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${esc(o.ja||"Ja, weiter")}</button>
       </div>`;
     m.appendChild(c); document.body.appendChild(m);
     c.querySelector("#frage-nein").onclick=()=>antwort(false);
@@ -1126,7 +1256,20 @@ window._mdlSuppress=0;
 (function(){
   const RX=/(-modal|-ov|-overlay)$/;
   const stack=[];
-  const isM=n=>n&&n.nodeType===1&&RX.test(n.id||"")&&n.id!=="el-cat-overlay";
+  /* v624: Auch Vollbild-Fenster ohne passende Endung (Festival-Regeln, „Am Rand", Anfahrt,
+     Ergebnis, Übungskonflikt) schlossen mit Zurück die ganze App. Jetzt zählt auch ein
+     sichtbares role="dialog" aria-modal="true" direkt am body. Die Kabine bleibt draußen
+     (Zurück darf den Ausgangs-Code nicht umgehen), ebenso der schmückende Auftakt. */
+  const KAB=/^(kab|ka-|kg-)/;
+  const isM=n=>{
+    /* v658: Die geführte Tour (#fg-ov) auch nicht: sie wechselt selbst die Seiten; ein
+       Verlaufseintrag je Schritt holte beim Weiterblättern per history.back() die vorige
+       Seite zurück – im Prüfstand bis vor den Start der App. */
+    if(!n||n.nodeType!==1||n.id==="el-cat-overlay"||n.id==="adler-intro"||n.id==="fg-ov"||KAB.test(n.id||""))return false;
+    if(RX.test(n.id||""))return true;
+    if(!n.id||n.getAttribute("role")!=="dialog"||n.getAttribute("aria-modal")!=="true")return false;
+    try{ return getComputedStyle(n).display!=="none"; }catch(e){ return false; }
+  };
   function start(){
     new MutationObserver(ms=>{
       for(const m of ms){
@@ -1136,7 +1279,7 @@ window._mdlSuppress=0;
     }).observe(document.body,{childList:true});
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
-  window.addEventListener("popstate",()=>{
+  window.addEventListener("popstate",e=>{
     if(window._mdlSuppress>0){window._mdlSuppress--;return;}
     // Kabinen-Unterseite offen? Zurück-Taste führt zur Kabinen-Startseite statt aus der App
     // (#kabine selbst bleibt untracked, damit Zurück den Kabinen-Code nicht umgeht).
@@ -1144,7 +1287,10 @@ window._mdlSuppress=0;
     // Eltern-Kategorie-Fenster (wird nur versteckt, nicht entfernt) zuerst schließen
     try{ const ov=document.getElementById("el-cat-overlay"); if(ov&&ov.style.display==="block"&&typeof elternCatClose==="function"){ elternCatClose(true); return; } }catch(e){}
     const id=stack.pop();
-    if(id){ const el=document.getElementById(id); if(el)el.remove(); }
+    if(id){ const el=document.getElementById(id); if(el)el.remove(); return; }
+    // v624: kein Fenster offen → eine Seite zurück (Trainer-Bereich, go() in views.js)
+    const ziel=e&&e.state&&e.state.adlerSeite;
+    if(ziel&&typeof seiteZurueck==="function")seiteZurueck(ziel);
   });
 })();
 
@@ -1276,3 +1422,336 @@ _adlerOnReady(()=>{
     }
   }).observe(document.body,{childList:true,subtree:true});
 });
+
+/* ═══════════════════════════════════
+   DIKTAT (v630) – ein Weg für freies Einsprechen in ein Textfeld.
+   PO: „Zum einen stoppt irgendwann die Eingabe … weil der Bildschirm des Handys ausgeht.
+   Dann werden manche Worte mehrfach nacheinander geschrieben, obwohl sie nur einmal gesagt
+   wurden … eine Anzeige, dass wenn gesprochen wird, da auch was ankommt, dass ich auch
+   zwischendurch unterbrechen kann und dann wieder weiter einsprechen kann per Druck.“
+
+   Die drei Ursachen und was hier dagegen steht:
+   1) DOPPELTE WÖRTER. Chrome auf Android liefert im Dauer-Modus (continuous) jedes Zwischen-
+      ergebnis noch einmal als eigenes „fertiges“ Ergebnis – „Heute“, „Heute war“, „Heute war
+      gut“ –, und wer die aneinanderhängt, schreibt alles doppelt. Deshalb kein Dauer-Modus:
+      Jede Äußerung ist eine kurze Sitzung, danach startet die nächste von selbst. Innerhalb
+      einer Sitzung ersetzt ein Ergebnis, das das vorige fortsetzt, dieses (statt es anzuhängen);
+      eine direkt wiederholte Wortgruppe (ab zwei Wörtern) wird einmal geschrieben.
+   2) ABBRUCH. Das Handy beendet die Erkennung nach einer Sprechpause und sowieso, wenn der
+      Bildschirm ausgeht. Der Neustart nach jeder Sitzung fängt die Pause ab, eine Wake-Lock-
+      Sperre hält den Bildschirm an, solange eingesprochen wird. Geht die Seite trotzdem in den
+      Hintergrund, pausiert das Diktat und läuft beim Zurückkommen weiter.
+   3) KEINE RÜCKMELDUNG. Die Anzeige sagt, ob zugehört wird, zeigt das gerade Verstandene
+      live und pulsiert, sobald Sprache erkannt ist. Der Knopf wechselt zwischen Einsprechen,
+      Pause und Weiter einsprechen; nichts Gesagtes geht beim Pausieren verloren.
+
+   Nach 90 Sekunden ohne ein einziges Wort pausiert es von selbst – ein vergessenes Mikrofon
+   soll nicht den Akku leeren. Ein zweites Diktat beendet das erste (ein Mikrofon, ein Feld). */
+let _dk = null;
+function diktatMoeglich(){ return !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
+function diktatAktiv(feldId){ return !!(_dk && _dk.wollen && (!feldId || _dk.feldId===feldId)); }
+function _dkWorte(t){ return String(t||"").toLowerCase().replace(/[.,!?;:„“"«»()…–-]/g," ").split(/\s+/).filter(Boolean); }
+/* Direkt wiederholte Wortgruppen von zwei bis sechs Wörtern einmal schreiben („war gut war gut“).
+   Ein einzelnes doppeltes Wort bleibt – „sehr sehr gut“ ist gesprochen so gemeint. */
+function _dkEntdoppeln(t){
+  let w = String(t||"").trim().split(/\s+/).filter(Boolean);
+  const n = x => x.toLowerCase().replace(/[.,!?;:]/g,"");
+  for(let lauf=0; lauf<4; lauf++){
+    let geaendert = false;
+    for(let len=6; len>=2; len--){
+      for(let i=0; i+2*len<=w.length; i++){
+        let gleich = true;
+        for(let k=0;k<len;k++) if(n(w[i+k])!==n(w[i+len+k])){ gleich=false; break; }
+        if(gleich){ w.splice(i+len,len); geaendert=true; i--; }
+      }
+    }
+    if(!geaendert) break;
+  }
+  return w.join(" ");
+}
+/* Fertige Ergebnisse einer Sitzung zusammenführen: setzt eines das vorige fort, ersetzt es dieses. */
+function _dkZusammen(liste){
+  const out = [];
+  for(const roh of liste){
+    const t = String(roh||"").trim(); if(!t) continue;
+    const a = _dkWorte(t).join(" "), v = out.length ? _dkWorte(out[out.length-1]).join(" ") : "";
+    if(v && a.startsWith(v)) out[out.length-1] = t;
+    else if(v && v.endsWith(a)) continue;
+    else out.push(t);
+  }
+  return _dkEntdoppeln(out.join(" "));
+}
+/* Neuen Satz ans Feld hängen. Beginnt er mit denselben Wörtern (ab zwei), mit denen das Feld
+   endet – das Handy hat den Schluss der letzten Äußerung noch einmal geliefert –, fallen sie weg.
+   v638 · PO: „… beim Einsprechen immer wieder eine Punktsetzung, die automatisch gemacht wird,
+   obwohl ich gar nicht mit dem Satz zu Ende bin … ein paar kurze Pausen, um nachzudenken.“
+   Die Spracherkennung beendet ihre Sitzung an jeder Denkpause; vorher setzte jedes Ende einen Punkt
+   und einen Großbuchstaben. Jetzt schließt ein Satz nur nach einer langen Pause (DK_SATZPAUSE_MS),
+   sonst geht er mit einem Leerzeichen weiter. Die KI-Auswertung setzt ohnehin eigene Sätze. */
+const DK_SATZPAUSE_MS = 3500;
+function _dkAnhaengen(basis, neu, neuerSatz){
+  if(neuerSatz===undefined) neuerSatz = true;
+  let t = String(neu||"").trim(); if(!t) return basis;
+  const bw = _dkWorte(basis), nw = t.split(/\s+/);
+  const nwn = nw.map(x=>_dkWorte(x).join(""));
+  for(let k=Math.min(8, bw.length, nw.length); k>=2; k--){
+    if(bw.slice(-k).join(" ")===nwn.slice(0,k).join(" ")){ t = nw.slice(k).join(" "); break; }
+  }
+  if(!t) return basis;
+  const b = String(basis||"").replace(/\s+$/,"");
+  if(!b || neuerSatz || /[.!?…]$/.test(b)) t = t.charAt(0).toUpperCase() + t.slice(1);
+  if(!b) return t;
+  return (neuerSatz && !/[.!?…:;,]$/.test(b) ? b+"." : b) + " " + t;
+}
+function _dkAnzeige(zustand, text){
+  if(!_dk) return;
+  const a = document.getElementById(_dk.anzeigeId), k = document.getElementById(_dk.knopfId);
+  const L = _dk.labels;
+  if(k){
+    const an = zustand==="hoert";
+    k.innerHTML = an ? '<i class="ti ti-player-pause"></i>'+L.an : (zustand==="pause" ? '<i class="ti ti-microphone"></i>'+L.weiter : '<i class="ti ti-microphone"></i>'+L.aus);
+    k.setAttribute("aria-pressed", an ? "true" : "false");
+  }
+  if(!a) return;
+  if(zustand==="hoert"){
+    a.hidden = false;
+    a.innerHTML = '<span class="dk-punkt'+(_dk.spricht?' dk-spricht':'')+'" aria-hidden="true"></span><b>'+(_dk.spricht?"Ich höre dich":"Hört zu – sprich einfach")+'</b>'
+      + (text ? '<span class="dk-live"> … '+esc(text)+'</span>' : '')
+      + (_dk.ohneSperre ? '<span class="dk-hinweis">Dein Handy hält den Bildschirm nicht von selbst an – tippe zwischendurch kurz aufs Display.</span>' : '');
+    _dk.zuletzt = text;
+  } else if(zustand==="pause"){
+    a.hidden = false;
+    a.innerHTML = '<span class="dk-punkt dk-aus" aria-hidden="true"></span><b>Pause</b> – '+esc(text || "alles Gesagte steht im Feld. Tippe „"+L.weiter+"“, um fortzufahren.");
+  } else if(zustand==="fehler"){
+    a.hidden = false; a.innerHTML = '<b>Mikrofon</b> – '+esc(text||"");
+  } else { a.hidden = true; a.innerHTML = ""; }
+}
+/* Kann das Gerät den Bildschirm nicht wach halten (kein Wake Lock, oder abgelehnt – etwa bis
+   iOS 18.3 in der installierten App), sagt die Anzeige es, statt still auszugehen. */
+async function _dkWach(an){
+  const d = _dk; if(!d) return;
+  try{
+    if(an && !d.sperre){
+      if(!navigator.wakeLock) throw new Error("kein Wake Lock");
+      const s = await navigator.wakeLock.request("screen");
+      if(_dk!==d || !d.wollen){ s.release(); return; }
+      d.sperre = s; d.ohneSperre = false;
+      s.addEventListener && s.addEventListener("release", () => { if(d.sperre===s) d.sperre = null; });
+    }
+    else if(!an && d.sperre){ const s=d.sperre; d.sperre=null; await s.release(); }
+  }catch(e){ d.sperre = null; if(an){ d.ohneSperre = true; if(_dk===d && d.wollen) _dkAnzeige("hoert", d.zuletzt); } }
+}
+function _dkSitzung(){
+  const d = _dk; if(!d || !d.wollen) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const feld = document.getElementById(d.feldId);
+  if(!SR || !feld){ diktatPause(); return; }
+  const rec = new SR(); rec.lang = "de-DE"; rec.continuous = false; rec.interimResults = true; rec.maxAlternatives = 1;
+  d.rec = rec; d.basis = feld.value; d.fertig = []; d.spricht = false;
+  /* Satzende nur nach einer langen Pause seit dem letzten erkannten Wort (oder nach „Weiter“). */
+  d.neuerSatz = !d.zuletztGehoert || (Date.now() - d.zuletztGehoert) >= DK_SATZPAUSE_MS;
+  const schreiben = zwischen => {
+    const f = document.getElementById(d.feldId); if(!f) return;
+    const fest = _dkZusammen(d.fertig);
+    const neu = _dkAnhaengen(d.basis, fest, d.neuerSatz);
+    f.value = (zwischen ? (neu ? neu.replace(/\s*$/," ") : "") + zwischen : neu).slice(0, d.max);
+    f.scrollTop = f.scrollHeight;
+    d.onText && d.onText(f.value);
+  };
+  rec.onspeechstart = () => { if(_dk===d){ d.spricht = true; d.letzte = Date.now(); _dkAnzeige("hoert"); } };
+  rec.onresult = ev => {
+    if(_dk!==d || d.rec!==rec) return;
+    const fertig = [], zw = [];
+    for(let i=0;i<ev.results.length;i++){ const r=ev.results[i]; const t=r[0]&&r[0].transcript||""; (r.isFinal?fertig:zw).push(t); }
+    d.fertig = fertig; d.letzte = Date.now(); d.spricht = true;
+    if(fertig.length || zw.length) d.zuletztGehoert = Date.now();
+    const zwischen = _dkEntdoppeln(zw.join(" "));
+    schreiben(zwischen);
+    _dkAnzeige("hoert", zwischen || _dkZusammen(fertig));
+  };
+  rec.onerror = ev => {
+    if(_dk!==d) return;
+    const e = ev && ev.error;
+    if(e==="not-allowed" || e==="service-not-allowed" || e==="audio-capture"){
+      d.wollen = false; _dkWach(false);
+      _dkAnzeige("fehler", e==="audio-capture" ? "kein Mikrofon gefunden." : "für die App gesperrt – in den Browser-Einstellungen freigeben oder das Mikrofon der Tastatur nutzen.");
+      const k=document.getElementById(d.knopfId); if(k){ k.innerHTML='<i class="ti ti-microphone"></i>'+d.labels.aus; k.setAttribute("aria-pressed","false"); }
+    }
+    /* no-speech, aborted, network: onend folgt und startet neu */
+  };
+  rec.onend = () => {
+    if(_dk!==d || d.rec!==rec) return;
+    schreiben("");                              // Zwischenstand verwerfen, Fertiges bleibt
+    d.rec = null;
+    if(!d.wollen) return;
+    if(document.hidden){ d.wollen = false; d.hintergrund = true; _dkWach(false); _dkAnzeige("pause", "der Bildschirm war aus. Beim Zurückkommen geht es weiter."); return; }
+    if(Date.now() - d.letzte > 90000){ diktatPause("90 Sekunden nichts gehört. Tippe „"+d.labels.weiter+"“, um fortzufahren."); return; }
+    d.neustart = setTimeout(_dkSitzung, 150);
+  };
+  try{ rec.start(); }catch(e){ d.neustart = setTimeout(_dkSitzung, 400); return; }
+  _dkAnzeige("hoert");
+}
+/* opt: { feldId, knopfId, anzeigeId, max, onText, labels:{aus,an,weiter} } */
+function diktatStart(opt){
+  if(!diktatMoeglich()) return false;
+  if(_dk && _dk.feldId!==opt.feldId) diktatStop();
+  if(!_dk) _dk = { feldId:opt.feldId, knopfId:opt.knopfId, anzeigeId:opt.anzeigeId, max:opt.max||4000, onText:opt.onText,
+                   labels:Object.assign({ aus:"Einsprechen", an:"Pause", weiter:"Weiter einsprechen" }, opt.labels||{}) };
+  _dk.wollen = true; _dk.hintergrund = false; _dk.letzte = Date.now(); _dk.zuletztGehoert = 0;   // „Weiter“ beginnt einen neuen Satz
+  _dkWach(true);
+  _dkSitzung();
+  return true;
+}
+function diktatPause(hinweis){
+  const d = _dk; if(!d) return;
+  d.wollen = false; clearTimeout(d.neustart);
+  try{ d.rec && d.rec.stop(); }catch(e){}
+  _dkWach(false);
+  _dkAnzeige("pause", hinweis);
+}
+function diktatUmschalten(opt){ if(diktatAktiv(opt.feldId)) diktatPause(); else diktatStart(opt); }
+function diktatStop(){
+  const d = _dk; if(!d) return;
+  d.wollen = false; clearTimeout(d.neustart);
+  try{ d.rec && d.rec.abort(); }catch(e){}
+  d.rec = null;
+  _dkWach(false);
+  _dkAnzeige("aus");
+  _dk = null;
+}
+document.addEventListener("visibilitychange", () => {
+  if(document.visibilityState==="visible" && _dk && _dk.hintergrund && document.getElementById(_dk.feldId)){
+    _dk.hintergrund = false; _dk.wollen = true; _dk.letzte = Date.now(); _dkWach(true); _dkSitzung();
+  } else if(document.hidden && _dk && _dk.wollen){
+    _dk.hintergrund = true; _dk.wollen = false; clearTimeout(_dk.neustart);
+    try{ _dk.rec && _dk.rec.stop(); }catch(e){}
+    _dkWach(false);
+  }
+});
+
+/* v630 · Mitwachsende Textfelder. PO: „Die Bewertung der Einheiten können durchaus einen
+   größeren Umfang haben … das ist auch gewünscht so, weil wir das nachher alles in einem
+   Trainer-Tagebuch festhalten wollen.“ Ein Feld mit der Klasse `wachsen` wird so hoch wie sein
+   Text, höchstens bis zur halben Bildschirmhöhe; darüber scrollt es. Gilt beim Tippen und – über
+   feldWachsen – auch, wenn die KI oder ein Vorschlag den Text setzt. */
+function feldWachsen(el){
+  if(!el || el.tagName!=="TEXTAREA") return;
+  el.style.height = "auto";
+  el.style.height = Math.min(el.scrollHeight + 2, Math.round(window.innerHeight*0.5)) + "px";
+}
+function felderWachsen(wurzel){ try{ (wurzel||document).querySelectorAll("textarea.wachsen").forEach(feldWachsen); }catch(e){} }
+/* v652: Eine Passwortregel für Trainer und Eltern – mindestens 10 Zeichen, Buchstaben und
+   Ziffern. Dieselbe Regel steht in den Auth-Einstellungen von Supabase („Letters and digits“,
+   Mindestlänge 10) und in der Edge Function eltern-einladung; der Browser sagt es nur früher.
+   Buchstaben heißt A–Z: Umlaute zählen bei Supabase nicht als Buchstabe. Liefert "" oder
+   den Satz, der unter dem Feld steht. */
+function pwRegelFehler(pw){
+  pw=String(pw||"");
+  if(pw.length<10) return "Das Passwort braucht mindestens 10 Zeichen.";
+  if(!/[A-Za-z]/.test(pw)||!/[0-9]/.test(pw)) return "Das Passwort braucht Buchstaben und mindestens eine Ziffer.";
+  return "";
+}
+function pwRegelText(){ return "mindestens 10 Zeichen, mit Buchstaben und Ziffern"; }
+document.addEventListener("input", e => { const t = e.target; if(t && t.classList && t.classList.contains("wachsen")) feldWachsen(t); });
+
+/* v630 · Stempel: wer hat bewertet oder geschrieben, und wann. PO: „… dass immer auch mit einer
+   Art Stempel ersichtlich ist, wer hat die Bewertung vorgenommen aus dem Trainerteam.“
+   „Trainerteam“ steht bei Einträgen von vor v630 – damals wurde der Name nicht erfasst. */
+function stempelText(autor, zeit){
+  const a = String(autor||"").trim() || "Trainerteam";
+  let z = "";
+  if(zeit){ const d = new Date(zeit); if(!isNaN(d)) z = d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"}) + ", " + d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}) + " Uhr"; }
+  return "✍️ " + (a==="Trainerteam" ? "Trainerteam (vor v630 ohne Namen erfasst)" : a) + (z ? " · " + z : "");
+}
+function stempelHtml(autor, zeit, zusatz){
+  return '<div class="stempel">'+esc(stempelText(autor, zeit))+(zusatz?' <span class="stempel-zusatz">'+zusatz+'</span>':'')+'</div>';
+}
+
+/* ═══ v658 · GEFÜHRTE TOUR MIT ZEIGER ════════════════════════════════════════════════
+   PO am 28.09.: „… den Hilfebutton in der Trainer- und vor allen Dingen in der Eltern-App
+   überarbeiten, sodass eine geführte Tour durch die verschiedenen Bereiche der App abläuft“ –
+   und für die Kinder „in kinderverständlicher Sprache“. Kachel: „Geführt mit Zeiger“.
+
+   Ein Motor für alle drei Apps (darum hier in core.js, Welle 1). Ein Schritt ist
+   {sel, vor, emo, t, d}: `vor` öffnet den Bereich (Reiter, Fenster), `sel` ist das Element,
+   das hervorgehoben wird – ein Selektor oder eine Liste, der erste sichtbare gewinnt. Findet
+   sich keins (Bereich leer, Modul noch nicht geladen), steht der Schritt als Karte in der
+   Mitte: die Tour bricht nie ab, nur weil ein Knopf gerade fehlt.
+   Bedienung nur mit Knöpfen (44 px, bei Kindern 56 px), Esc beendet. Die Fläche ringsum
+   fängt jeden Tipp ab – in einer Tour soll nichts aus Versehen gespeichert werden. */
+let _fg=null;
+function fuehrungStart(schritte,opt){
+  _fg={schritte:(schritte||[]).filter(Boolean),i:0,opt:opt||{}};
+  if(!_fg.schritte.length){ _fg=null; return; }
+  _fgZeigen();
+}
+function _fgZiel(sel){
+  const liste=[].concat(sel||[]);
+  for(const q of liste){
+    let el=null; try{ el=document.querySelector(q); }catch(e){}
+    if(el&&el.getClientRects().length){ const r=el.getBoundingClientRect(); if(r.width>0&&r.height>0)return el; }
+  }
+  return null;
+}
+async function _fgZeigen(){
+  const f=_fg; if(!f)return;
+  const s=f.schritte[f.i]; if(!s){ fuehrungEnde(); return; }
+  document.getElementById("fg-ov")?.remove();
+  if(typeof s.vor==="function"){ try{ await s.vor(); }catch(e){} await new Promise(r=>setTimeout(r,s.warte||300)); }
+  if(_fg!==f)return;
+  const ziel=s.sel?_fgZiel(s.sel):null;
+  if(ziel){ try{ ziel.scrollIntoView({block:"center",inline:"nearest"}); }catch(e){} }
+  const kind=!!f.opt.kind, n=f.schritte.length, letzte=f.i===n-1;
+  const ov=document.createElement("div"); ov.id="fg-ov";
+  ov.style.cssText="position:fixed;inset:0;z-index:10080";
+  ov.addEventListener("click",e=>{ if(e.target===ov||e.target.classList.contains("fg-loch"))e.stopPropagation(); });
+  const knopf=kind?"min-height:56px;font-size:var(--s-karte);padding:10px 18px":"min-height:44px;font-size:var(--s-text);padding:9px 16px";
+  ov.innerHTML=`${ziel?'<div class="fg-loch" aria-hidden="true"></div>':'<div class="fg-dunkel" aria-hidden="true" style="position:absolute;inset:0;background:rgba(15,23,42,.72)"></div>'}
+    <div class="fg-blase" role="dialog" aria-modal="true" aria-labelledby="fg-t" style="position:absolute;background:#fff;color:#0f172a;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.45);max-width:360px;width:calc(100% - 32px);box-sizing:border-box">
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <div aria-hidden="true" style="font-size:${kind?"44px":"30px"};line-height:1">${s.emo||"👉"}</div>
+        <div style="flex:1;min-width:0">
+          <div id="fg-t" style="font-size:${kind?"var(--s-teil)":"var(--s-karte)"};font-weight:800;line-height:1.3">${esc(s.t||"")}</div>
+          <div style="font-size:${kind?"var(--s-karte)":"var(--s-text)"};color:#334155;line-height:1.5;margin-top:4px">${esc(s.d||"")}</div>
+        </div>
+      </div>
+      <div style="font-size:var(--s-klein);color:#334155;margin-top:10px;text-align:right">${f.i+1} von ${n}</div>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <button type="button" onclick="${f.i>0?"fuehrungZurueck()":"fuehrungEnde()"}" style="${knopf};border:1.5px solid #94a3b8;border-radius:12px;background:#fff;color:#0f172a;font-family:inherit;font-weight:700;cursor:pointer">${f.i>0?"Zurück":(kind?"Später":"Überspringen")}</button>
+        <button type="button" id="fg-weiter" onclick="fuehrungWeiter()" style="${knopf};margin-left:auto;border:none;border-radius:12px;background:#1e3a8a;color:#fff;font-family:inherit;font-weight:800;cursor:pointer">${letzte?(kind?"Los geht's! ⚽":"Fertig"):"Weiter"}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  _fgPlatz();
+  setTimeout(()=>document.getElementById("fg-weiter")?.focus(),30);
+}
+/* Loch und Blase neu setzen – auch nach Drehen oder Tastatur. Die Blase steht unter dem Ziel,
+   wenn dort Platz ist, sonst darüber, sonst unten am Rand. */
+function _fgPlatz(){
+  const f=_fg, ov=document.getElementById("fg-ov"); if(!f||!ov)return;
+  const s=f.schritte[f.i], ziel=s&&s.sel?_fgZiel(s.sel):null;
+  const loch=ov.querySelector(".fg-loch"), blase=ov.querySelector(".fg-blase");
+  const W=window.innerWidth, H=window.innerHeight;
+  if(!ziel||!loch){
+    blase.style.left="50%"; blase.style.top="50%"; blase.style.transform="translate(-50%,-50%)"; return;
+  }
+  const r=ziel.getBoundingClientRect(), p=6;
+  Object.assign(loch.style,{position:"absolute",left:(r.left-p)+"px",top:(r.top-p)+"px",width:(r.width+2*p)+"px",height:(r.height+2*p)+"px",
+    borderRadius:"14px",boxShadow:"0 0 0 9999px rgba(15,23,42,.72)",outline:"3px solid #facc15",outlineOffset:"0",pointerEvents:"auto"});
+  const bh=blase.offsetHeight, bw=Math.min(360,W-32);
+  let top=r.bottom+p+12;
+  if(top+bh>H-8){ top=r.top-p-12-bh; if(top<8)top=Math.max(8,H-bh-8); }
+  const left=Math.max(16,Math.min(W-bw-16,r.left+r.width/2-bw/2));
+  Object.assign(blase.style,{left:left+"px",top:top+"px",transform:"none"});
+}
+function fuehrungWeiter(){ if(!_fg)return; if(_fg.i<_fg.schritte.length-1){ _fg.i++; _fgZeigen(); } else fuehrungEnde(); }
+function fuehrungZurueck(){ if(!_fg||_fg.i<=0)return; _fg.i--; _fgZeigen(); }
+function fuehrungEnde(){
+  const f=_fg; _fg=null;
+  document.getElementById("fg-ov")?.remove();
+  if(f&&f.opt.schluessel){ try{ localStorage.setItem(f.opt.schluessel,"1"); }catch(e){} }
+  if(f&&typeof f.opt.ende==="function"){ try{ f.opt.ende(); }catch(e){} }
+}
+function fuehrungLaeuft(){ return !!_fg; }
+window.addEventListener("resize",()=>{ if(_fg)_fgPlatz(); });
+document.addEventListener("keydown",e=>{ if(_fg&&e.key==="Escape"){ e.preventDefault(); fuehrungEnde(); } });

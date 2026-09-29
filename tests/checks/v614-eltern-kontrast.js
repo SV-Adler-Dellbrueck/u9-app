@@ -45,7 +45,7 @@ module.exports = async function (h) {
     };
     await lauf("Dashboard", null);
     for (const [n, c] of [["Fahrgemeinschaft", "await elternCarpoolOpen(1,5)"], ["Fan-Fakten", "await elternFanfactsOpen(1,'Kind A')"],
-      ["Abzeichen", "await abzeichenOpen(1,'Kind A',false)"], ["Chronik", "await chronikOpen()"], ["Tour", "elternTourIdx=0;elternTourRender()"],
+      ["Abzeichen", "await abzeichenOpen(1,'Kind A',false)"], ["Chronik", "await chronikOpen()"], ["Tour", "elternTourStart(); await new Promise(r=>setTimeout(r,900))"],
       ["Was ist neu", "whatsNewOpen()"], ["Termin", "await terminDetailOpen(5)"]]) await lauf(n, c);
     await s.schliessen();
   }

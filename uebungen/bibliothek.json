@@ -1,6 +1,6 @@
 {
   "schema": "adler-uebungen/1",
-  "stand": "2026-09-24-1",
+  "stand": "2026-09-29-2",
   "uebungen": [
     {
       "name": "Warm up Adler",
@@ -809,7 +809,7 @@
       "spieler": "6 je Feld (12 = 2 Felder)",
       "feld": "25 x 20 m, je Grundlinie zwei Minitore, Schusszone 6 m",
       "dauer": "30",
-      "ablauf": "Drei gegen drei auf vier Minitore. Treffer zählen nur aus der Schusszone, Seiten- und Toraus werden eingedribbelt oder eingepasst, Abstand drei Meter, kein Schiedsrichter. In drei Wellen ohne Umbau: 10 Minuten frei, 10 Minuten mit Regel „Tor zählt nur nach mindestens einem Zuspiel“, 10 Minuten offen mit fünf Meter breiterem Feld.",
+      "ablauf": "Drei gegen drei auf vier Minitore. Treffer zählen nur aus der Schusszone, Seiten- und Toraus werden eingedribbelt oder eingepasst, Abstand drei Meter, kein Schiedsrichter. In drei gleich langen Wellen ohne Umbau, je ein Drittel der geplanten Zeit: zuerst frei, dann mit der Regel „Tor zählt nur nach mindestens einem Zuspiel“, zum Schluss offen mit fünf Meter breiterem Feld.",
       "varianten": "Leichter: Feld breiter, ein Team in Überzahl, drittes Minitor an der Seitenlinie. Schwerer: Feld schmaler, zwei Zuspiele vor dem Tor, Mitnahme mit dem ersten Kontakt.",
       "coaching": "Bevor du dribbelst – ist jemand freier als du?\nWo kann dich dein Mitspieler sehen?\nAuf welches der beiden Tore ist der Weg kürzer?",
       "spass": 5,
@@ -1205,7 +1205,7 @@
       "spieler": "6",
       "feld": "25 x 20 m, vier Minitore, zwei Schusszonen",
       "dauer": "12",
-      "ablauf": "Feld 25 x 20 m quer, breiter als tief, mit Mittellinie. Je Grundlinie stehen zwei Minitore weit außen in Richtung der Ecken – nie eines in der Mitte. Sechs Meter vor jeder Grundlinie liegt eine Schusszonenlinie.\n\nDrei gegen drei, freies Spiel auf beide Minitore. Das Team am Ball stellt sich als Dreieck auf: einer tief in der eigenen Hälfte am Ball, zwei breit auf Höhe der Mittellinie. Dadurch hat der Ballführende immer zwei Anspielstationen in verschiedene Richtungen, und das verteidigende Team kann nie beide gleichzeitig zustellen.\n\nEin Tor zählt, wenn der Ball aus der eigenen Hälfte heraus über die Schusszonenlinie gespielt und von dort ins Minitor gebracht wird. Die weit außen stehenden Tore zwingen dazu, die Seite zu wechseln, statt durch die Mitte zu laufen.\n\nSpielzeit 3 Minuten, dann Pause und neue Zusammenstellung.",
+      "ablauf": "Feld 25 x 20 m: 25 m von Tor zu Tor, 20 m breit, mit Mittellinie. Je Grundlinie stehen zwei Minitore weit außen in Richtung der Ecken – nie eines in der Mitte. Sechs Meter vor jeder Grundlinie liegt eine Schusszonenlinie.\n\nDrei gegen drei, freies Spiel auf beide Minitore. Das Team am Ball stellt sich als Dreieck auf: einer tief in der eigenen Hälfte am Ball, zwei breit auf Höhe der Mittellinie. Dadurch hat der Ballführende immer zwei Anspielstationen in verschiedene Richtungen, und das verteidigende Team kann nie beide gleichzeitig zustellen.\n\nEin Tor zählt, wenn der Ball aus der eigenen Hälfte heraus über die Schusszonenlinie gespielt und von dort ins Minitor gebracht wird. Die weit außen stehenden Tore zwingen dazu, die Seite zu wechseln, statt durch die Mitte zu laufen.\n\nSpielzeit 3 Minuten, dann Pause und neue Zusammenstellung.",
       "varianten": "- Nur zwei Ballkontakte je Spieler\n- Ein Tor zählt doppelt, wenn vor dem Abschluss die Seite gewechselt wurde\n- Steigerung mit vier Feldspielern und Torhütern: siehe „4+1 gegen 4+1 – Raute (Steigerung)“",
       "coaching": "Wo steht dein Mitspieler, bevor du den Ball annimmst?\nWas passiert mit dem Dreieck, wenn ihr alle drei auf einer Höhe steht?\nWelches Tor ist gerade das leichtere – und warum?",
       "spass": 4,
@@ -1213,117 +1213,117 @@
       "skizze": {
         "li": [
           [
+            142,
             10,
-            88,
-            270,
-            88
+            142,
+            170
           ],
           [
-            26,
-            54,
-            254,
-            54,
+            88,
+            16,
+            88,
+            164,
             "sz"
           ],
           [
-            26,
-            122,
-            254,
-            122,
+            197,
+            16,
+            197,
+            164,
             "sz"
           ]
         ],
         "tor": [
           [
-            40,
-            6,
-            "h",
-            24
+            10,
+            28,
+            "v",
+            18
           ],
           [
-            216,
-            6,
-            "h",
-            24
+            10,
+            114,
+            "v",
+            18
           ],
           [
-            40,
-            160,
-            "h",
-            24
+            263,
+            28,
+            "v",
+            18
           ],
           [
-            216,
-            160,
-            "h",
-            24
+            263,
+            114,
+            "v",
+            18
           ]
         ],
         "p": [
           [
-            132,
-            131,
-            80,
-            96,
+            212,
+            85,
+            155,
+            53,
             "p"
           ],
           [
-            80,
-            88,
-            200,
-            88,
+            142,
+            53,
+            142,
+            127,
             "p"
           ],
           [
-            204,
+            155,
+            129,
+            213,
             96,
-            150,
-            132,
             "p"
           ]
         ],
         "s": [
           [
-            140,
-            138,
+            223,
+            90,
             "g",
             "S"
           ],
           [
-            70,
-            88,
+            142,
+            47,
             "g",
             "S"
           ],
           [
-            210,
-            88,
+            142,
+            133,
             "g",
             "S"
           ],
           [
-            140,
-            72,
+            117,
+            90,
             "r",
             "O"
           ],
           [
-            96,
-            36,
+            58,
+            63,
             "r",
             "O"
           ],
           [
-            192,
-            34,
+            55,
+            122,
             "r",
             "O"
           ]
         ],
         "b": [
           [
-            148,
-            146
+            236,
+            95
           ]
         ],
         "tx": [
@@ -1482,13 +1482,13 @@
     {
       "name": "3 gegen 3 auf vier Minitore – Pass zählt doppelt",
       "kat": "passspiel",
-      "kurz": "Wie die Spieltagsform, aber ein Tor nach Zuspiel zählt doppelt – kein Verbot, nur ein Anreiz.",
+      "kurz": "Ein Tor zählt nur, wenn alle drei Angreifer den Ball per Pass hatten – 1 Punkt, direkt nach einem Pass 2, nach Doppelpass 3.",
       "spieler": "6 je Feld (12 = 2 Felder)",
       "feld": "25 x 20 m, je Grundlinie zwei Minitore weit außen, Schusszone 6 m",
       "dauer": "24",
-      "ablauf": "Enge Stufe zur Leitfrage „Wie kriege ich den Ball zu einem, der frei ist?“. Feld und Tore bleiben wie in „3 gegen 3 auf vier Minitore mit Schusszone“ – die Tore stehen weit außen, nie eines in der Mitte.\n\nTeil A, 11 Minuten: freies Spiel ohne Zusatzregel, drei Durchgänge von 3 Minuten mit einer Minute Pause. Der Trainer schaut zu und lobt. Am Ende eine Frage in die Runde: „Wann war ein Tor heute leicht?“\n\nTeil B, 13 Minuten: genau eine Regel kommt dazu – ein Tor zählt doppelt, wenn davor ein Pass gespielt wurde. Verboten ist nichts, wer allein durchgeht, darf das, es zählt nur einfach. Die verteidigende Seite steht damit vor der Aufgabe, Passwege zuzustellen statt dem Ball nachzulaufen.",
-      "varianten": "Leichter: Feld auf 30 x 22 m verbreitern, bevor an der Regel geändert wird. Schwerer: zwei Zuspiele vor dem Abschluss, oder Tor zählt doppelt nur nach Seitenwechsel.",
-      "coaching": "Wen hast du gesehen, bevor du gepasst hast?\nWohin nimmst du den ersten Kontakt, damit es weitergeht?\nWelchen Weg kannst du zumachen?",
+      "ablauf": "Enge Stufe zur Leitfrage „Wie kriege ich den Ball zu einem, der frei ist?“. Feld und Tore bleiben wie in „3 gegen 3 auf vier Minitore mit Schusszone“ – die Tore stehen weit außen, nie eines in der Mitte.\n\nTeil A, knapp die Hälfte der geplanten Zeit: freies Spiel ohne Zusatzregel, Runden von 3 Minuten mit einer Minute Pause. Der Trainer schaut zu und lobt. Am Ende eine Frage in die Runde: „Wann war ein Tor heute leicht?“\n\nTeil B, die übrige Zeit: Punkte statt Tore. Ein Tor zählt nur, wenn vorher alle drei Angreifer den Ball durch einen Pass bekommen haben. Dann gilt: 1 Punkt für das Tor. 2 Punkte, wenn unmittelbar vor dem Tor ein Pass gespielt wurde – der Torschütze darf den Ball annehmen, es muss keine Direktabnahme sein. 3 Punkte, wenn das Tor nach einem Doppelpass fällt (Pass, sofort zurück, Abschluss). Die Kinder zählen ihre Punkte selbst laut mit. Die verteidigende Seite steht damit vor der Aufgabe, Passwege zuzustellen statt dem Ball nachzulaufen.",
+      "varianten": "Leichter: Feld auf 30 x 22 m verbreitern, bevor an der Regel geändert wird; oder nur zwei der drei Angreifer müssen den Ball gehabt haben. Schwerer: 3 Punkte nur für einen Doppelpass mit Direktabnahme, oder zusätzlich ein Seitenwechsel vor dem Abschluss.",
+      "coaching": "Wen hast du gesehen, bevor du gepasst hast?\nWer von euch hatte den Ball noch nicht?\nWann lohnt sich der Doppelpass – wo steht dein Gegenspieler?\nWelchen Weg kannst du zumachen?",
       "spass": 5,
       "diff": 2,
       "skizze": {
@@ -3680,7 +3680,7 @@
       "spieler": "4 je Feld (TW + 3), bis 6 mit Wechsel; in Provokation 3 gegen den Trainer, optional bis TW + 3 gegen 3 mit nachrückenden Verteidigern",
       "feld": "25 x 30 m, je Seite ein Korridor von 5 m Breite bis 8 m vor dem Zieltor (die letzten 8 m sind frei), Jugendtor liegend als Ziel",
       "dauer": "27",
-      "ablauf": "HAUPTZIEL (Leitfrage 4): vor dem Pass hinschauen, den freien Mitspieler erkennen, ansprechen und flach anspielen; der Angespielte geht entgegen und verarbeitet den Ball mit dem ersten Kontakt so, dass er sofort weiterspielen kann. ENTSCHEIDUNGEN: Die Kinder sollen selbst entscheiden statt einen vorgegebenen Weg abzuspulen – Aufpasser: Seite und Sturzflug; Flitzer: nach dem Schulterblick Rückpass, Aufdrehen oder Dribbling; Jäger: Abschluss oder Rücklage. Der Trainer fragt, statt Lösungen vorzugeben. Weitere Ziele: Raute als Grundordnung, Dribbling mit Finte, 1 gegen 1, Doppelpass, flacher Abschluss. AUFBAU: Starttor mit dem Torwart als Aufpasser, gegenüber ein flach liegendes Jugendtor (nur flache Schüsse zählen). An beiden Seitenlinien ein Korridor aus Markierungstellern von etwa 8 m vor dem Starttor bis 8 m vor dem Zieltor, darin je ein Dummy etwa 3 m vor dem Flitzer. Die letzten 8 m vor dem Zieltor sind frei. Jäger vorn in der Mitte. ABLAUF: Phase 1 – Aufpasser spielt einen Flitzer an und schiebt auf seiner Linie zur Ballseite, der Flitzer stoppt und spielt zurück, der Aufpasser dribbelt zurück zum Ausgangspunkt. Phase 2 schließt ohne Pause an: Pass zum anderen Flitzer, der Aufpasser schiebt wieder zur Ballseite, der Flitzer dribbelt außen am Dummy vorbei bis zum Ende seines Korridors und passt flach zum Jäger oder zieht selbst in die Mitte; der erste Flitzer läuft in seinem Korridor mit und zieht in den letzten 8 m in die Mitte, um frei zu sein, der Aufpasser rückt nach, der Jäger schließt ab. ROTATION: Nach jedem Abschluss wechseln die Rollen – Aufpasser im Tor, Flitzer links, Jäger, Flitzer rechts. Jedes Kind spielt jede Position, auch Torwart. REGEL: Flitzer bleiben im Korridor; ohne Ball schiebt der ballferne Flitzer an die Innenkante seines Korridors; nach dem Korridorende dürfen beide in die Mitte; bei Ballverlust (Optionen G und H) darf der ballferne Flitzer den Korridor verlassen. VERHALTEN OHNE BALL: Die ganze Raute verschiebt zur Ballseite – Aufpasser schiebt mit, ballferner Flitzer an die Innenkante, Jäger bietet sich auf der Ballseite an. So ist bei Rückpass schnell eine Anspielstation da und bei Ballverlust Zugriff auf den Gegner. ZEIT: 27 Minuten in drei Abschnitten zu je 9 Minuten. Minute 1–9 Phase 1 allein, ab Minute 5 Provokation 1; Minute 10–18 ganzer Durchgang mit Provokation 2; Minute 19–27 Provokation 3. Im Training der U9 I gilt die Aufteilung 10/27/11/27 im 75-Minuten-Fenster; die Form füllt einen der beiden Spielblöcke. PROVOKATIONEN: 1 – vor jedem Pass den Namen rufen, der Mitspieler antwortet „Ja“. 2 – beim „Ja“ kurzer Schulterblick. 3 – der Trainer verteidigt vor dem Tor. OPTIONALE PROVOKATIONEN (je nach Gruppe, höchstens zwei je Block): A – zwei Stangen je 1 m neben den Pfosten markieren die Ecken, Tor dort zählt 2 Punkte. B – Finte vor dem Dummy. C – Flitzer aus Phase 1 entscheidet nach Schulterblick, ob Rückpass oder Angriff. D – Pass in den Lauf statt auf den Fuß. E – Jäger darf auf den nachgerückten Aufpasser zurücklegen. F – ab Ballbesitz des Jägers 10-Sekunden-Countdown. G – statt Trainer rücken wartende Kinder als Verteidiger nach (Start 3 m seitlich hinter der Grundlinie beim Pass auf den Jäger, alle 3 Sekunden einer mehr, höchstens drei); Balleroberung: Ball ins Aus, neuer Durchgang. H – Erweiterung von G: Konter aufs Starttor in 10 Sekunden, der Aufpasser muss zurück. I – Standbild: Trainer ruft „Stopp“, alle bleiben stehen und prüfen selbst, ob die Raute mit dem Ball verschoben ist. J – Doppelpass: Jäger lässt sich zum angreifenden Flitzer fallen, Doppelpass, Flitzer kommt mit dem Ball an die Grundlinie. K – 1 gegen 1 im Korridor: ein Kind ersetzt einen Dummy und verteidigt aktiv. L – Sturzflug: Der Aufpasser ruft „Sturzflug“ und spielt statt des kurzen Passes einen Steilpass innen am Dummy vorbei in die freie Zone vor dem Tor; der Flitzer dreht beim Kommando nach außen weg und startet in den freien Raum (leichter: Pass landet im Korridor hinter dem Dummy).",
+      "ablauf": "HAUPTZIEL (Leitfrage 4): vor dem Pass hinschauen, den freien Mitspieler erkennen, ansprechen und flach anspielen; der Angespielte geht entgegen und verarbeitet den Ball mit dem ersten Kontakt so, dass er sofort weiterspielen kann. ENTSCHEIDUNGEN: Die Kinder sollen selbst entscheiden statt einen vorgegebenen Weg abzuspulen – Aufpasser: Seite und Sturzflug; Flitzer: nach dem Schulterblick Rückpass, Aufdrehen oder Dribbling; Jäger: Abschluss oder Rücklage. Der Trainer fragt, statt Lösungen vorzugeben. Weitere Ziele: Raute als Grundordnung, Dribbling mit Finte, 1 gegen 1, Doppelpass, flacher Abschluss. AUFBAU: Starttor mit dem Torwart als Aufpasser, gegenüber ein flach liegendes Jugendtor (nur flache Schüsse zählen). An beiden Seitenlinien ein Korridor aus Markierungstellern von etwa 8 m vor dem Starttor bis 8 m vor dem Zieltor, darin je ein Dummy etwa 3 m vor dem Flitzer. Die letzten 8 m vor dem Zieltor sind frei. Jäger vorn in der Mitte. ABLAUF: Phase 1 – Aufpasser spielt einen Flitzer an und schiebt auf seiner Linie zur Ballseite, der Flitzer stoppt und spielt zurück, der Aufpasser dribbelt zurück zum Ausgangspunkt. Phase 2 schließt ohne Pause an: Pass zum anderen Flitzer, der Aufpasser schiebt wieder zur Ballseite, der Flitzer dribbelt außen am Dummy vorbei bis zum Ende seines Korridors und passt flach zum Jäger oder zieht selbst in die Mitte; der erste Flitzer läuft in seinem Korridor mit und zieht in den letzten 8 m in die Mitte, um frei zu sein, der Aufpasser rückt nach, der Jäger schließt ab. ROTATION: Nach jedem Abschluss wechseln die Rollen – Aufpasser im Tor, Flitzer links, Jäger, Flitzer rechts. Jedes Kind spielt jede Position, auch Torwart. REGEL: Flitzer bleiben im Korridor; ohne Ball schiebt der ballferne Flitzer an die Innenkante seines Korridors; nach dem Korridorende dürfen beide in die Mitte; bei Ballverlust (Optionen G und H) darf der ballferne Flitzer den Korridor verlassen. VERHALTEN OHNE BALL: Die ganze Raute verschiebt zur Ballseite – Aufpasser schiebt mit, ballferner Flitzer an die Innenkante, Jäger bietet sich auf der Ballseite an. So ist bei Rückpass schnell eine Anspielstation da und bei Ballverlust Zugriff auf den Gegner. ZEIT: die geplante Zeit in drei gleich langen Abschnitten. Erstes Drittel Phase 1 allein, ab seiner Hälfte Provokation 1; zweites Drittel ganzer Durchgang mit Provokation 2; letztes Drittel Provokation 3. Die Form füllt einen ganzen Spielblock. PROVOKATIONEN: 1 – vor jedem Pass den Namen rufen, der Mitspieler antwortet „Ja“. 2 – beim „Ja“ kurzer Schulterblick. 3 – der Trainer verteidigt vor dem Tor. OPTIONALE PROVOKATIONEN (je nach Gruppe, höchstens zwei je Block): A – zwei Stangen je 1 m neben den Pfosten markieren die Ecken, Tor dort zählt 2 Punkte. B – Finte vor dem Dummy. C – Flitzer aus Phase 1 entscheidet nach Schulterblick, ob Rückpass oder Angriff. D – Pass in den Lauf statt auf den Fuß. E – Jäger darf auf den nachgerückten Aufpasser zurücklegen. F – ab Ballbesitz des Jägers 10-Sekunden-Countdown. G – statt Trainer rücken wartende Kinder als Verteidiger nach (Start 3 m seitlich hinter der Grundlinie beim Pass auf den Jäger, alle 3 Sekunden einer mehr, höchstens drei); Balleroberung: Ball ins Aus, neuer Durchgang. H – Erweiterung von G: Konter aufs Starttor in 10 Sekunden, der Aufpasser muss zurück. I – Standbild: Trainer ruft „Stopp“, alle bleiben stehen und prüfen selbst, ob die Raute mit dem Ball verschoben ist. J – Doppelpass: Jäger lässt sich zum angreifenden Flitzer fallen, Doppelpass, Flitzer kommt mit dem Ball an die Grundlinie. K – 1 gegen 1 im Korridor: ein Kind ersetzt einen Dummy und verteidigt aktiv. L – Sturzflug: Der Aufpasser ruft „Sturzflug“ und spielt statt des kurzen Passes einen Steilpass innen am Dummy vorbei in die freie Zone vor dem Tor; der Flitzer dreht beim Kommando nach außen weg und startet in den freien Raum (leichter: Pass landet im Korridor hinter dem Dummy).",
       "varianten": "Leichter: Korridore breiter, Dummys weiter weg, Tor abgehängt statt liegend. Mit Torwart: statt des liegenden Tors ein abgehängtes Jugendtor (Höhe per Banner auf 1,65 m begrenzt wie im Spielbetrieb der F-Jugend) mit zweitem Torwart (TW + 3 gegen TW, mit Trainer oder Verteidigern bis TW + 3 gegen 3 + TW); flacher Schuss ist dann keine Pflicht, Option A bleibt anwendbar. Schwerer: Korridore schmaler, Dummys näher an die Flitzer, zwei Kontakte je Flitzer, Pässe mit dem schwächeren Fuß; Wettbewerb: Welche Raute schafft in fünf Minuten die meisten Punkte? INDIVIDUELL: Jedes Kind wird an seinem Stand abgeholt – wer an der Annahme arbeitet, stoppt sauber und spielt zurück; wer weiter ist, nimmt mit dem ersten Kontakt direkt nach außen am Dummy vorbei mit; danach Finte, schwächerer Fuß, Effet oder direktes Weiterleiten. In der Rolle des Torwarts: flache Eröffnung auf den vom Dummy abgewandten Fuß, danach sofort anbieten.",
       "coaching": "Als Frage, je Kind nach Entwicklungsstand. Entgegengehen: Wo kommst du dem Ball entgegen? Kontakt zum Gegner (Dummy im Rücken mit einem Arm berühren, dann entgegengehen): Wo ist dein Gegenspieler, wenn der Ball kommt? Offene Körperstellung: Was kannst du sehen, wenn du so stehst? Erster Kontakt: Wohin legst du dir den Ball? Wahrnehmung: Was hast du beim Schulterblick gesehen – woran erkennst du, dass dein Mitspieler frei ist? Tempowechsel am Dummy: Wann machst du schnell? Doppelpass Jäger–Flitzer: Wie kommt ihr zu zweit vorbei? Abschluss mit Innenseite und Effet: Wie bekommst du den Ball flach ins Eck? 1 gegen 1: Wo ist die Lücke, und wann gehst du? Ohne Ball: Wo ist der Ball – und wo stehst du jetzt? Sturzflug: Wann rufst du Sturzflug (Aufpasser)? Wohin drehst du dich weg (Flitzer)?",
       "diff": 2,
@@ -4410,6 +4410,584 @@
               ]
             ]
           }
+        ]
+      }
+    },
+    {
+      "name": "3+1 gegen 3 – Ball halten, der Torwart ist die Rettung",
+      "kat": "raute",
+      "kurz": "Ballhalten in der 3+1-Raute: Wird es eng, ist der Rückpass zum Torwart die Rettung.",
+      "spieler": "6 je Station (Torwart plus 3 gegen 3), beim siebten Kind wechselt eines ein",
+      "feld": "Halbes Kreisfeld, ca. 20 x 16 m (Länge x Breite): ein Jugendtor mit Torwart, gegenüber zwei Hütchentore an der Mittellinie",
+      "dauer": "12",
+      "ablauf": "Drei Angreifer und ihr Torwart halten den Ball gegen drei Verteidiger. Jeder Rückpass zum Torwart ist erlaubt und zählt als Rettung: Der Torwart spielt sofort zum freien Flitzer.\n\nNach fünf eigenen Pässen in Folge gibt es einen Punkt; ein Tor durch ein Hütchentor zählt ebenfalls einen. Erobern die Verteidiger den Ball, greifen sie das Jugendtor an. Nach 90 Sekunden wechseln die Rollen.",
+      "varianten": "Leichter: 3+1 gegen 2. Schwerer: Der Torwart darf den Ball nur mit dem Fuß spielen und nicht aufnehmen.",
+      "coaching": "Wo ist gerade frei, wenn einer kommt?\nWer kann dem Torwart helfen, den Ball wieder loszuwerden?\nStell deinen Körper zwischen Ball und Gegner.",
+      "spass": 4,
+      "diff": 2,
+      "skizze": {
+        "z": [
+          [
+            20,
+            15,
+            120,
+            150
+          ]
+        ],
+        "li": [
+          [
+            140,
+            15,
+            140,
+            165,
+            "m"
+          ]
+        ],
+        "tor": [
+          [
+            8,
+            72,
+            "v",
+            36,
+            "j"
+          ]
+        ],
+        "dtor": [
+          [
+            140,
+            22,
+            26,
+            "v",
+            "h",
+            "y"
+          ],
+          [
+            140,
+            132,
+            26,
+            "v",
+            "h",
+            "y"
+          ]
+        ],
+        "s": [
+          [
+            30,
+            90,
+            "b",
+            "T"
+          ],
+          [
+            100,
+            90,
+            "b",
+            "J"
+          ],
+          [
+            80,
+            36,
+            "b",
+            "F"
+          ],
+          [
+            80,
+            144,
+            "b",
+            "F"
+          ],
+          [
+            74,
+            70,
+            "r",
+            ""
+          ],
+          [
+            118,
+            64,
+            "r",
+            ""
+          ],
+          [
+            92,
+            120,
+            "r",
+            ""
+          ]
+        ],
+        "b": [
+          [
+            88,
+            40
+          ]
+        ],
+        "p": [
+          [
+            84,
+            44,
+            38,
+            86,
+            "p"
+          ],
+          [
+            38,
+            94,
+            76,
+            138,
+            "p"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            176,
+            "Rückpass zum Torwart = Rettung"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "FUNiño 2 gegen 2 – abschirmen, dann Seite wechseln",
+      "kat": "raute",
+      "kurz": "2 gegen 2 auf vier Minitore: Ball mit dem Körper schützen, dann zum freien Tor drehen.",
+      "spieler": "6 je Station (2 gegen 2, 2 Rotationsspieler)",
+      "feld": "Ca. 20 x 16 m mit vier Minitoren, Tore zählen nur aus der Schusszone (ca. 6 m vor der Grundlinie)",
+      "dauer": "12",
+      "ablauf": "2 gegen 2 auf vier Minitore. Wer den Ball hat und angelaufen wird, schirmt ihn mit dem Körper ab und dreht sich zum anderen Tor.\n\nEin Tor nach einem Seitenwechsel – auf das Tor, das der Ballführende nicht zuerst angesteuert hat – zählt doppelt. Nach jedem Tor wechselt ein Rotationsspieler je Team ein.",
+      "varianten": "Leichter: Der Verteidiger darf erst nach dem ersten Ballkontakt angreifen. Schwerer: 2 gegen 2 plus ein neutraler Aufpasser, der immer beim Ballbesitz-Team mitspielt.",
+      "coaching": "Wo steht dein Körper, wenn einer kommt?\nWelches Tor ist gerade frei?\nErst sichern, dann drehen.",
+      "spass": 4,
+      "diff": 2,
+      "skizze": {
+        "z": [
+          [
+            40,
+            25,
+            200,
+            130
+          ]
+        ],
+        "li": [
+          [
+            140,
+            25,
+            140,
+            155,
+            "m"
+          ],
+          [
+            78,
+            25,
+            78,
+            155,
+            "sz"
+          ],
+          [
+            202,
+            25,
+            202,
+            155,
+            "sz"
+          ]
+        ],
+        "tor": [
+          [
+            33,
+            40,
+            "v",
+            20
+          ],
+          [
+            33,
+            120,
+            "v",
+            20
+          ],
+          [
+            240,
+            40,
+            "v",
+            20
+          ],
+          [
+            240,
+            120,
+            "v",
+            20
+          ]
+        ],
+        "s": [
+          [
+            150,
+            60,
+            "b",
+            "A"
+          ],
+          [
+            170,
+            120,
+            "b",
+            "F"
+          ],
+          [
+            172,
+            56,
+            "r",
+            ""
+          ],
+          [
+            120,
+            100,
+            "r",
+            ""
+          ]
+        ],
+        "b": [
+          [
+            156,
+            64
+          ]
+        ],
+        "p": [
+          [
+            158,
+            70,
+            210,
+            118,
+            "d"
+          ],
+          [
+            212,
+            122,
+            236,
+            128,
+            "s"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            174,
+            "Abschirmen, dann Seite wechseln"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor",
+      "kat": "technik",
+      "kurz": "Der Flitzer geht an der Seite ins 1 gegen 1 und spielt danach in die Mitte oder schließt selbst ab.",
+      "spieler": "6 je Station (Torwart, Flitzer gegen Verteidiger an der Seite, Jäger in der Mitte, 2 warten)",
+      "feld": "Halbes Kreisfeld, ca. 20 x 16 m, mit Jugendtor; an der Seitenlinie ein Hütchenkorridor (ca. 5 m breit) als Duellzone",
+      "dauer": "12",
+      "ablauf": "Der Flitzer startet mit Ball im Seitenkorridor, der Verteidiger kommt ihm entgegen. Kommt der Flitzer vorbei, spielt er in die Mitte auf den Jäger oder schließt selbst ab.\n\nDer Torwart spielt mit: Bekommt er den Ball, eröffnet er sofort zum nächsten Flitzer. Nach jeder Aktion wird im Kreis gewechselt, es warten nie mehr als zwei Kinder.",
+      "varianten": "Leichter: Der Verteidiger startet hinter dem Flitzer. Schwerer: Ein zweiter Verteidiger darf in der Mitte stören (2 gegen 2).",
+      "coaching": "Wann legst du den Ball vorbei, früh oder spät?\nWelche Seite ist frei?\nNach dem Vorbeikommen: Kopf hoch, wer ist in der Mitte?",
+      "spass": 4,
+      "diff": 2,
+      "skizze": {
+        "z": [
+          [
+            140,
+            15,
+            120,
+            150
+          ],
+          [
+            140,
+            15,
+            120,
+            34
+          ]
+        ],
+        "li": [
+          [
+            140,
+            15,
+            140,
+            165,
+            "m"
+          ]
+        ],
+        "tor": [
+          [
+            262,
+            72,
+            "v",
+            36,
+            "j"
+          ]
+        ],
+        "s": [
+          [
+            152,
+            30,
+            "b",
+            "F"
+          ],
+          [
+            200,
+            30,
+            "r",
+            ""
+          ],
+          [
+            200,
+            110,
+            "b",
+            "J"
+          ],
+          [
+            250,
+            90,
+            "y",
+            "T"
+          ]
+        ],
+        "b": [
+          [
+            160,
+            30
+          ]
+        ],
+        "p": [
+          [
+            160,
+            34,
+            226,
+            40,
+            "d"
+          ],
+          [
+            228,
+            44,
+            206,
+            104,
+            "p"
+          ],
+          [
+            208,
+            110,
+            254,
+            96,
+            "s"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            176,
+            "Vorbei, dann Mitte oder Abschluss"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "FUNiño 1 gegen 1 – vorbei, dann das freie Minitor",
+      "kat": "technik",
+      "kurz": "1 gegen 1 auf je zwei Minitore: eine Seite anzeigen, die andere nehmen, aufs freie Tor.",
+      "spieler": "6 je Station (drei Paare, ein Paar spielt, zwei warten kurz)",
+      "feld": "Ca. 16 x 12 m mit zwei Minitoren je Grundlinie",
+      "dauer": "12",
+      "ablauf": "1 gegen 1 auf je zwei Minitore. Der Angreifer dribbelt auf den Verteidiger zu, zeigt eine Seite an und nimmt die andere.\n\nEin Tor ins Minitor, das der Verteidiger gerade nicht schützt, zählt doppelt. Nach 30 Sekunden kommt das nächste Paar.",
+      "varianten": "Leichter: Der Verteidiger darf nur rückwärts laufen, nicht grätschen. Schwerer: Tore zählen nur nach einer Finte vor dem Verteidiger.",
+      "coaching": "Welches Tor schützt er gerade?\nMach ihn neugierig, dann geh auf die andere Seite.\nTraust du dich?",
+      "spass": 4,
+      "diff": 2,
+      "skizze": {
+        "z": [
+          [
+            60,
+            35,
+            160,
+            110
+          ]
+        ],
+        "tor": [
+          [
+            53,
+            50,
+            "v",
+            18
+          ],
+          [
+            53,
+            112,
+            "v",
+            18
+          ],
+          [
+            220,
+            50,
+            "v",
+            18
+          ],
+          [
+            220,
+            112,
+            "v",
+            18
+          ]
+        ],
+        "s": [
+          [
+            100,
+            90,
+            "b",
+            "A"
+          ],
+          [
+            170,
+            70,
+            "r",
+            ""
+          ]
+        ],
+        "b": [
+          [
+            108,
+            90
+          ]
+        ],
+        "p": [
+          [
+            108,
+            94,
+            190,
+            120,
+            "d"
+          ],
+          [
+            192,
+            122,
+            216,
+            122,
+            "s"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            166,
+            "Seite anzeigen, andere nehmen"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Frei für den Wurf",
+      "kat": "wahrnehmung",
+      "kurz": "Werfen und Fangen statt Passen — wer den Ball hat, bleibt stehen, alle anderen machen sich anspielbar.",
+      "spieler": "6-14",
+      "feld": "20 x 20 m",
+      "dauer": "12",
+      "ablauf": "AUFBAU: Feld 20 x 20 m mit vier Hütchen, zwei Teams mit Leibchen, ein Ball je Feld. Bei mehr als acht Kindern ein zweites Feld. ABLAUF: 3 gegen 3, der Ball wird geworfen und gefangen. Wer den Ball in der Hand hat, bleibt stehen. Die Gegner dürfen Würfe abfangen, aber den Ball nicht aus der Hand nehmen. Stufe 1: Fünf Würfe in Folge im eigenen Team sind ein Punkt. Stufe 2: Ein Punkt zählt, wenn der Ball hinter der gegnerischen Grundlinie gefangen wird. Stufe 3: Dieselbe Regel mit dem Fuß — flach passen statt werfen, wer den Ball hat, darf wieder dribbeln.",
+      "varianten": "Leichter: Ein Joker spielt immer beim Team mit Ball mit (3+1 gegen 3), oder das Feld wird größer. Schwerer: Höchstens drei Sekunden mit dem Ball in der Hand, oder 3+3 gegen 3 — zwei Teams gegen eines, und wer den Ball erobert, muss ihn fünf Würfe halten.",
+      "coaching": "Kann dich dein Mitspieler sehen? Wohin läufst du, wenn er den Ball hat? Wer steht gerade frei — und warum?",
+      "diff": 1,
+      "skizze": {
+        "z": [
+          [
+            40,
+            25,
+            200,
+            130
+          ]
+        ],
+        "h": [
+          [
+            40,
+            25,
+            "y"
+          ],
+          [
+            240,
+            25,
+            "y"
+          ],
+          [
+            40,
+            155,
+            "y"
+          ],
+          [
+            240,
+            155,
+            "y"
+          ]
+        ],
+        "ger": [
+          [
+            262,
+            90,
+            "trainer",
+            "w"
+          ]
+        ],
+        "s": [
+          [
+            80,
+            90,
+            "g",
+            "A"
+          ],
+          [
+            150,
+            55,
+            "g",
+            "B"
+          ],
+          [
+            140,
+            125,
+            "g",
+            "C"
+          ],
+          [
+            115,
+            85,
+            "r"
+          ],
+          [
+            185,
+            70,
+            "r"
+          ],
+          [
+            100,
+            125,
+            "r"
+          ]
+        ],
+        "b": [
+          [
+            88,
+            97
+          ]
+        ],
+        "p": [
+          [
+            98,
+            80,
+            138,
+            60,
+            "p",
+            1
+          ],
+          [
+            158,
+            124,
+            205,
+            116,
+            "l",
+            2
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            170,
+            "Mit Ball stehen, ohne Ball freilaufen"
+          ]
         ]
       }
     }

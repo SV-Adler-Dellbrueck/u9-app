@@ -11,7 +11,11 @@
    Zwei Fehler hintereinander an derselben Stelle: erst tat der Knopf nichts (v521), dann
    fuehrte er an der Sache vorbei. Deshalb prueft diese Datei nicht den Klick, sondern das
    ERGEBNIS des Klicks – dass das Fenster zum richtigen Termin offen steht und die
-   Auswertung darin erreichbar ist. */
+   Auswertung darin erreichbar ist.
+
+   v634 – PO: „Ergebnisse zählen bei uns in der U9 noch nicht.“ Das To-Do heisst jetzt
+   „Festival … nachbereiten“ und oeffnet die Nachbereitung (fz-modal) des vergangenen Termins –
+   dieselbe Lage (Termin nur nach id ladbar), dasselbe Ziel: ankommen statt suchen. */
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
   const gestern = h.tagePlus(-1);
@@ -46,35 +50,30 @@ module.exports = async function (h) {
     window.go = name => { window.__geroutet.push(name); if (typeof echtesGo === "function") echtesGo(name); };
     await trainerTodoLoad();
 
-    const haupt = [...slot.querySelectorAll("button")].find(b => /nachtragen/.test(b.textContent || ""));
+    const haupt = [...slot.querySelectorAll("button")].find(b => /Festival .*nachbereiten/.test(b.textContent || ""));
     if (!haupt) return { fehlt: true };
     haupt.click();
-    for (let i = 0; i < 40 && !document.getElementById("tmd-modal"); i++) await new Promise(r => setTimeout(r, 50));
+    for (let i = 0; i < 40 && !document.getElementById("fz-modal"); i++) await new Promise(r => setTimeout(r, 50));
 
-    const modal = document.getElementById("tmd-modal");
+    const modal = document.getElementById("fz-modal");
     const txt = modal ? modal.textContent.replace(/\s+/g, " ").trim() : "";
-    const ergebnisFeld = modal ? !!modal.querySelector('input[onchange*="tmSetResult"]') : false;
-    const blitz = modal ? [...modal.querySelectorAll("button")].some(b => /Blitz-Rating/.test(b.textContent || "")) : false;
-    return { fehlt: false, offen: !!modal, tid: modal ? modal.dataset.tid : null,
-             geroutet: window.__geroutet.slice(), txt: txt.slice(0, 160), ergebnisFeld, blitz };
+    const sprach = modal ? /Sprachnotiz|erzähl|Einsprechen/i.test(txt) : false;
+    return { fehlt: false, offen: !!modal, label: modal ? modal.getAttribute("aria-label") : null,
+             geroutet: window.__geroutet.slice(), txt: txt.slice(0, 160), sprach };
   });
 
   const fehler = s.fehler(); await s.schliessen();
 
-  if (r.fehlt) { probleme.push("Das To-Do „nachtragen“ steht gar nicht in der Kachel"); return h.ergebnis("To-Do öffnet den vergangenen Termin", false, probleme); }
+  if (r.fehlt) { probleme.push("Das To-Do „Festival … nachbereiten“ steht gar nicht in der Kachel"); return h.ergebnis("To-Do öffnet die Nachbereitung des vergangenen Festivals", false, probleme); }
 
-  if (!r.offen) probleme.push("Antippen öffnet kein Termin-Fenster");
-  if (r.geroutet.includes("termine")) probleme.push(`Antippen landet auf der Orga-Seite (go(${JSON.stringify(r.geroutet)})) statt im Termin`);
-  if (r.offen && String(r.tid) !== "77") probleme.push(`Es öffnet sich Termin ${r.tid} statt 77`);
-  /* Der Grund, aus dem der PO hier landet: bewerten und Ergebnis eintragen. Steht das
-     Fenster offen, muss beides darin erreichbar sein – sonst ist der Weg nur kürzer, aber
-     immer noch eine Sackgasse. */
-  if (!r.ergebnisFeld) probleme.push("Im Fenster fehlt das Ergebnis-Feld");
-  if (!r.blitz) probleme.push("Im Fenster fehlt „Auswertung & Blitz-Rating“");
+  if (!r.offen) probleme.push("Antippen öffnet keine Nachbereitung");
+  if (r.geroutet.includes("termine")) probleme.push(`Antippen landet auf der Orga-Seite (go(${JSON.stringify(r.geroutet)}))`);
+  if (r.offen && !/Festival/.test(r.label || "")) probleme.push(`Es öffnet sich „${r.label}“ statt der Festival-Nachbereitung`);
+  /* Der Grund, aus dem der PO hier landet: erzählen, fürs Tagebuch. */
+  if (r.offen && !r.sprach) probleme.push("In der Nachbereitung fehlt der Weg zum Erzählen (Sprachnotiz)");
   if (fehler.length) probleme.push(...fehler.slice(0, 2));
 
-  zeilen.push(`Fenster offen: ${r.offen} · Termin ${r.tid} · go(): ${JSON.stringify(r.geroutet)}`);
-  zeilen.push(`Ergebnis-Feld ${r.ergebnisFeld} · Blitz-Rating ${r.blitz}`);
+  zeilen.push(`Fenster offen: ${r.offen} · „${r.label}“ · go(): ${JSON.stringify(r.geroutet)}`);
   zeilen.push(`Fenster: ${r.txt}`);
-  return h.ergebnis("To-Do öffnet den vergangenen Termin samt Auswertung", !probleme.length, zeilen.concat(probleme));
+  return h.ergebnis("To-Do öffnet die Nachbereitung des vergangenen Festivals", !probleme.length, zeilen.concat(probleme));
 };

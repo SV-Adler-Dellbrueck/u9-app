@@ -32,7 +32,9 @@
   </div>
   <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
     <div style="display:flex;gap:6px">
+      <button type="button" id="rufe-kopf" onclick="rufeEinstieg()" title="Adler-Rufe – der Team-Chat" aria-label="Adler-Rufe öffnen" style="position:relative;border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:16px;line-height:1;flex-shrink:0">💬<span class="rufe-badge" style="display:none;position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#dc2626;color:#fff;font-size:var(--s-klein);font-weight:800;align-items:center;justify-content:center;border:2px solid var(--surface);box-sizing:border-box"></span></button>
       <button id="help-btn" onclick="hilfeOpen()" title="Hilfe & Funktionen" aria-label="Hilfe" style="border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:16px;line-height:1;flex-shrink:0">❓</button>
+      <button class="schrift-toggle" onclick="schriftWechseln()" aria-label="Schriftgröße umschalten">A</button>
       <button id="theme-toggle" onclick="toggleTheme()" title="Hell / Dunkel umschalten" aria-label="Theme umschalten" style="border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:16px;line-height:1;flex-shrink:0">🌙</button>
     </div>
     <div class="cloud-row"><span class="cdot" id="cdot"></span><span id="clbl">Verbinde...</span></div>
@@ -62,6 +64,7 @@
 
 <!-- HOME: Trainer-Dashboard -->
 <div id="view-home" class="view">
+  <div id="schrift-hinweis-trainer"></div>
   <div id="home-content"></div>
 </div>
 
@@ -72,7 +75,6 @@
 <div id="view-ue-team" class="view"></div>
 <div id="view-ue-training" class="view"></div>
 <div id="view-ue-spieltag" class="view"></div>
-<div id="view-ue-taktik" class="view"></div>
 <div id="view-ue-elki" class="view"></div>
 <div id="view-ue-orga" class="view"></div>
 
@@ -138,7 +140,7 @@
       <div style="position:relative;height:220px"><canvas id="live-radar" role="img" aria-label="Live Radar">Live Radar</canvas></div>
     </div>
     <div class="raute-box">
-      <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px"><i class="ti ti-topology-star-3" style="font-size:13px"></i> Rolle</div>
+      <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:8px"><i class="ti ti-topology-star-3" style="font-size:13px"></i> Rolle</div>
       <div class="raute-grid" id="raute-preview">
         <div></div>
         <div class="rpos" id="rp-tw"><div class="rp-l">Torwart</div><div class="rp-r">TW</div><div class="rp-h">+1</div></div>
@@ -197,7 +199,7 @@
 <!-- KADER -->
 <div id="view-kader" class="view">
   <div class="sl nt"><i class="ti ti-users"></i>Kader</div>
-  <button onclick="kaderEditOpen()" style="display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;margin-bottom:8px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.28)"><i class="ti ti-users"></i>Spieler verwalten</button>
+  <button onclick="kaderEditOpen()" style="display:flex;width:100%;justify-content:center;align-items:center;gap:8px;min-height:48px;padding:0 18px;margin-bottom:10px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer"><i class="ti ti-users"></i>Spieler verwalten</button>
   <div class="frow">
     <button class="ftag active" onclick="setF('all',this)">Alle</button>
     <button class="ftag" onclick="setF('tw',this)">🥅 TW-Option</button>
@@ -207,12 +209,11 @@
     <button class="ftag" onclick="setF('jaeger',this)">Jäger</button>
   </div>
   <div id="kader-content"><div class="empty"><i class="ti ti-users"></i>Noch keine Spieler bewertet</div></div>
-  <div class="sl"><i class="ti ti-topology-star-3"></i>Rauten-Besetzung</div>
-  <div id="raute-map"></div>
+  <div class="sl kader-raute"><i class="ti ti-topology-star-3"></i>Rauten-Besetzung</div>
+  <div id="raute-map" class="kader-raute"></div>
   <!-- Selten genutzt: bewusst ans Seitenende (PO-Feedback) -->
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
     <button class="print-btn" style="margin-bottom:0" onclick="printView('kader')"><i class="ti ti-printer"></i>Drucken / PDF</button>
-    <button class="print-btn" style="margin-bottom:0" onclick="backupExport()"><i class="ti ti-download"></i>Saison-Backup</button>
   </div>
 </div>
 
@@ -247,44 +248,11 @@
 <!-- TAKTIK VIEW -->
 <div id="view-taktik" class="view">
   <div class="sl nt"><i class="ti ti-arrows-move"></i>Taktikboard</div>
-  <!-- v510: Drei Beschriftungen und drei umbrechende Knopfreihen ergaben oben auf der Seite
-       einen Block aus elf Knöpfen, hinter dem das Feld erst nach dem Scrollen auftauchte.
-       Jetzt EINE Karte: Spielform als gleich breite Kacheln, darunter die drei Handgriffe
-       am Board, alles Seltenere hinter „Mehr". Im Pro-Modus verschwindet die Karte ganz. -->
-  <button class="btn btn-p" id="tb-pro-exit" onclick="taktikProToggle()"><i class="ti ti-arrows-minimize"></i>Pro-Modus beenden</button>
-  <div class="card tb-kopf">
-    <div class="tb-lbl">Spielform</div>
-    <div class="tb-formen">
-      <button class="btn btn-sm tb-form-btn" data-form="funino" onclick="taktikSetFormation('funino',this)"><i class="ti ti-triangle"></i>FUNiño</button>
-      <button class="btn btn-sm tb-form-btn" data-form="3+1" onclick="taktikSetFormation('3+1',this)"><i class="ti ti-triangle-inverted"></i>3+1</button>
-      <button class="btn btn-p btn-sm tb-form-btn" data-form="4+1" onclick="taktikSetFormation('4+1',this)"><i class="ti ti-diamond"></i>4+1 Raute</button>
-      <button class="btn btn-sm tb-form-btn" data-form="5+1" onclick="taktikSetFormation('5+1',this)"><i class="ti ti-pentagon"></i>5+1</button>
-    </div>
-    <div class="tb-lbl">Board</div>
-    <div class="tb-reihe">
-      <button class="btn btn-sm" id="dw-toggle" onclick="dwToggle()"><i class="ti ti-pencil"></i>Zeichnen</button>
-      <button class="btn btn-sm" onclick="taktikShareBild()"><i class="ti ti-share"></i>Teilen</button>
-      <button class="btn btn-sm" id="tb-pro-btn" onclick="taktikProToggle()" title="Pro-Modus: großes Feld und feste Auswechselbank – am Handy und am Tablet"><i class="ti ti-maximize"></i>Pro-Modus</button>
-    </div>
-    <div class="tb-lbl">Bilder</div>
-    <div class="tb-reihe" id="taktik-bilder"></div>
-    <details class="tb-mehr">
-      <summary>Mehr · Übungen und leeres Feld</summary>
-      <div class="tb-reihe">
-        <button class="btn btn-sm" onclick="taktikReset('leer')"><i class="ti ti-refresh"></i>Leeres Feld</button>
-        <button class="btn btn-sm" onclick="ttSave()" title="Aufstellung + Zeichnung als Übung speichern"><i class="ti ti-device-floppy"></i>Speichern</button>
-        <button class="btn btn-sm" onclick="ttOpen()" title="Gespeicherte Übungen laden"><i class="ti ti-books"></i>Bibliothek</button>
-        <button class="btn btn-sm" onclick="kiCoachOpen()" title="KI schlägt altersgerechte Übungen vor"><i class="ti ti-sparkles"></i>KI-Coach</button>
-        <button class="btn btn-sm" onclick="vtbOpen()"><i class="ti ti-video"></i>Video</button>
-      </div>
-    </details>
-  </div>
-  <div id="dw-toolbar" style="display:none;gap:6px;margin-bottom:8px;flex-wrap:wrap">
-    <button class="btn btn-sm" id="dw-pass" onclick="dwSetMode('pass',this)">╌ Pass</button>
-    <button class="btn btn-sm" id="dw-lauf" onclick="dwSetMode('lauf',this)">→ Laufweg</button>
-    <button class="btn btn-sm" onclick="dwUndo()"><i class="ti ti-arrow-back-up"></i></button>
-    <button class="btn btn-sm" onclick="dwClear()"><i class="ti ti-eraser"></i>Alles weg</button>
-  </div>
+  <!-- v640/v641: Spielsituationen auf der Zeichenfläche der Übungen (md-taktikboard.js, sitHubRender).
+       Alles darunter ist das Brett des Kinder-Quiz (?quiz); im Trainerbereich ist es nie zu sehen.
+       Es bleibt Geschwister-Element – die Quiz-Regeln in styles.css zählen auf direkte Kinder
+       von #view-taktik. -->
+  <div id="sit-hub"></div>
   <div id="tq-panel" style="display:none"></div>
   <div class="tb-wrap">
     <div class="tb-field" id="taktik-field">
@@ -300,11 +268,10 @@
         <rect x="110" y="367" width="80" height="25" rx="1" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1"/>
       </svg>
       <div id="taktik-tokens"></div>
-      <canvas id="tb-draw" style="position:absolute;inset:0;width:100%;height:100%;z-index:22;pointer-events:none;touch-action:none"></canvas>
     </div>
     <div class="tb-hint" style="font-size:10px;color:var(--text2);text-align:center;margin-top:4px">Ziehen = verschieben, die Rolle bleibt · Antippen = Rolle wechseln (TW → Aufpasser → Flitzer L → Flitzer R → Jäger → ohne Rolle)</div>
     <div class="tb-side">
-      <div class="tb-bench-label" style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:12px 0 6px">Auswechselbank</div>
+      <div class="tb-bench-label" style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:12px 0 6px">Auswechselbank</div>
       <div class="tb-bench-area" id="taktik-bench"></div>
     </div>
   </div>
@@ -316,6 +283,7 @@
   <!-- SUB: Formen -->
   <div id="train-sub-formen" class="train-sub">
   <div class="sl nt"><i class="ti ti-ball-football"></i>Übungen</div>
+  <div id="block-banner"></div><!-- v650: laufender Trainingsblock (md-block.js) -->
   <div id="period-banner" style="background:var(--blue-bg);border:1px solid #93c5fd;border-radius:var(--rl);padding:12px;margin-bottom:1rem;font-size:12px;color:#1e40af;line-height:1.6"><strong>Schwerpunkt jetzt: Grundordnung &amp; Raute aufbauen.</strong> 107 Übungen auf Basis des 4-Phasen-Modells.</div>
   <input type="text" id="training-search" placeholder="🔍 Übung suchen (z. B. Passspiel, FUNiño) …" oninput="clearTimeout(window._tfDebounce);window._tfDebounce=setTimeout(renderTraining,200)"
     style="width:100%;box-sizing:border-box;padding:10px 14px;border:1px solid var(--rand-bedien);border-radius:12px;font-size:13.5px;background:var(--surface);font-family:inherit;outline:none;margin-bottom:8px">
@@ -328,22 +296,24 @@
   <!-- v540: Nachschlagen statt Einspielen. Die Vorlagen-Ansicht liest nur; eingesetzt
        wird eine Vorlage im Trainingsplan, wo der Termin steht. Kein zweiter Weg in
        dieselbe Handlung. Welle-2-Modul, deshalb der typeof-Schutz. -->
-  <button onclick="if(typeof vorlagenAnsichtOpen===&quot;function&quot;)vorlagenAnsichtOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="width:100%;min-height:48px;margin:0 0 10px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-layout-grid"></i>Vorlagen ansehen</button>
   <!-- v541: Einstieg in die Durchsicht. Der Vorschlag aus data.js wird nie still
        angewendet; hier sieht man ihn, ändert ihn und schreibt ihn bewusst. Der Knopf
        nennt die Zahl der offenen Übungen und verschwindet, wenn keine mehr offen sind –
        ein Knopf ohne Arbeit dahinter ist Rauschen. Welle 1, deshalb kein typeof-Schutz. -->
-  <div id="tf-art-einstieg" style="margin:0 0 10px"></div>
   <!-- v539: kein Grid mehr am Behaelter – renderTraining setzt je Ueberschrift ein eigenes. -->
   <div id="tf-kacheln" style="margin-bottom:8px"></div>
   <div id="tf-filter" style="display:flex;gap:6px;margin-bottom:10px"></div>
   <div id="training-content"><p style="padding:1rem;color:#64748b;font-size:13px">Lade...</p></div>
-  <div style="font-size:13.5px;font-weight:800;margin:16px 0 8px">🧰 Werkzeuge</div>
+  <!-- v682: Durchsicht (einordnen, ohne Trainer) steht UNTER der Liste – sie ist Arbeit für
+       einmal, die Suche und die Gruppen sind der tägliche Weg und gehören nach oben. -->
+  <div id="tf-art-einstieg" style="margin:8px 0 10px"></div>
+  <div style="font-size:var(--s-text);font-weight:800;margin:16px 0 8px">🧰 Werkzeuge</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+    <button onclick="if(typeof vorlagenAnsichtOpen===&quot;function&quot;)vorlagenAnsichtOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px"><span style="font-size:30px">📋</span><span style="font-size:var(--s-karte);font-weight:800">Vorlagen</span></button>
     <button onclick="openAddTraining()" style="min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px"><span style="font-size:30px">➕</span><span style="font-size:14px;font-weight:800">Eigene Übung</span></button>
     <button onclick="kiCoachOpen()" style="min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px"><span style="font-size:30px">🤖</span><span style="font-size:14px;font-weight:800">KI-Coach</span></button>
     <button onclick="periodOpen()" style="min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px"><span style="font-size:30px">📅</span><span style="font-size:14px;font-weight:800">Themenplan</span></button>
-    <button onclick="var d=document.getElementById('dfb-regal');d.open=true;d.scrollIntoView({behavior:'smooth'})" style="min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px"><span style="font-size:30px">📖</span><span style="font-size:14px;font-weight:800">DFB-Regal</span></button>
+    <button onclick="var d=document.getElementById('dfb-regal');d.open=!d.open;if(d.open)d.scrollIntoView({behavior:'smooth'})" style="grid-column:1/-1;min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px"><span style="font-size:30px">📖</span><span style="font-size:14px;font-weight:800">DFB-Regal</span></button>
   </div>
   <!-- I-D: DFB-Übungs-Regal – kuratierte Links in die offizielle, kostenlose DFB-Datenbank (kein Scraping, nur Verweise) -->
   <details id="dfb-regal" class="el-sect" style="background:var(--surface);border:var(--border-s);border-radius:var(--rl);padding:10px 14px;margin-top:12px">
@@ -353,15 +323,34 @@
     <a href="https://training-service.fussball.de/trainer/f-juniorin/" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:10px;border:var(--border-s);border-left:4px solid #2563eb;border-radius:12px;padding:11px 13px;margin-bottom:8px;text-decoration:none;color:var(--text)"><span style="font-size:18px">🧒</span><span style="flex:1;min-width:0"><span style="display:block;font-size:13px;font-weight:700">F-Jugend-Portal (Praxis &amp; Wissen)</span><span style="display:block;font-size:11px;color:var(--text2)">Artikel zu Kindertraining, Spieltag &amp; Elternarbeit</span></span><span style="color:var(--text3)">↗</span></a>
     <a href="https://training-service.fussball.de/trainer/e-juniorin/training-online/" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:10px;border:var(--border-s);border-left:4px solid #3b82f6;border-radius:12px;padding:11px 13px;text-decoration:none;color:var(--text)"><span style="font-size:18px">📈</span><span style="flex:1;min-width:0"><span style="display:block;font-size:13px;font-weight:700">E-Jugend-Einheiten (Ausblick)</span><span style="display:block;font-size:11px;color:var(--text2)">Für den nächsten Schritt – wenn die Adler rauswachsen</span></span><span style="color:var(--text3)">↗</span></a>
   </details>
-  <div id="training-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;overflow-y:auto;padding:16px">
-    <div style="background:var(--surface);border-radius:var(--rl);max-width:600px;margin:0 auto;padding:20px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
-        <div style="font-size:15px;font-weight:700">Eigene Übung</div>
-        <button onclick="closeAddTraining()" aria-label="Schließen" style="background:none;border:none;font-size:20px;line-height:1;min-width:44px;min-height:44px;cursor:pointer;color:var(--text2);font-family:inherit">×</button>
+  <!-- v639 · PO: „Bei eigene Übung anlegen sollte schon auf der ersten Kachel ein KI-Modus zur
+       Beschreibung der Übung geben … Zusätzlich finde ich die Struktur und Optik nicht optimal.“
+       Oben erzählen (tippen oder einsprechen), die KI füllt ALLE Felder samt Skizze; darunter die
+       Felder in drei ruhigen Abschnitten; unten fest die eine Hauptaktion. Die Feld-IDs bleiben,
+       damit saveCustomTraining und die Skizzen-Anbindung unverändert weiterarbeiten. -->
+  <div id="training-modal" role="dialog" aria-modal="true" aria-labelledby="tf-titel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;overflow-y:auto;padding:16px">
+    <div class="tf-karte">
+      <div class="tf-kopf">
+        <div id="tf-titel" class="tf-titel">➕ Eigene Übung</div>
+        <button onclick="closeAddTraining()" aria-label="Schließen" class="tf-zu">×</button>
       </div>
+
+      <section class="tf-ki" aria-labelledby="tf-ki-t">
+        <div id="tf-ki-t" class="tf-ki-t">✨ Beschreib die Übung – die KI füllt alles aus</div>
+        <div class="tf-ki-s">Aufbau, Ablauf, wie viele Kinder, was du coachst. Name, Felder und Skizze entstehen daraus; danach änderst du, was nicht passt.</div>
+        <textarea id="tf-ki-text" class="wachsen" rows="3" maxlength="4000" placeholder="Zum Beispiel: Vier Hütchen in einer Reihe, jedes Kind dribbelt im Slalom durch und schießt aufs Minitor. Danach außen zurück. Acht Kinder, Feld 20 mal 15."></textarea>
+        <div id="tf-ki-hoer" class="dk-anzeige" hidden></div>
+        <div class="tf-ki-knoepfe">
+          <button type="button" class="btn" id="tf-ki-mic" onclick="tfKiDiktat()"><i class="ti ti-microphone"></i>Einsprechen</button>
+          <button type="button" class="btn tf-ki-los" id="tf-ki-los" onclick="tfKiAuswerten()"><i class="ti ti-sparkles"></i>KI-Auswertung</button>
+        </div>
+        <div id="tf-ki-stand" role="status" aria-live="polite" class="tf-ki-stand"></div>
+      </section>
+
+      <div class="tf-abschnitt">Grunddaten</div>
       <div class="mgrid" style="grid-template-columns:1fr 1fr">
-        <div class="mg s2"><label for="tf-name">Name</label><input type="text" id="tf-name" placeholder="Name der Form"></div>
-        <div class="mg"><label for="tf-kat">Kategorie</label>
+        <div class="mg" style="grid-column:1/-1"><label for="tf-name">Name</label><input type="text" id="tf-name" placeholder="Name der Übung"><div id="tf-name-hinweis" class="tf-ki-stand" hidden>Der Name bleibt: Die Übung steht schon in Trainingsplänen, und die finden sie über ihren Namen.</div></div>
+        <div class="mg" style="grid-column:1/-1"><label for="tf-kat">Kategorie</label>
           <select id="tf-kat">
             <option value="aufwaermen">Aufwärmen</option>
             <option value="raute">Raute</option><option value="passspiel">Passspiel</option>
@@ -371,36 +360,47 @@
             <option value="mindset">Mindset & Selbstvertrauen</option>
           </select>
         </div>
-        <div class="mg"><label for="tf-spieler">Spieleranzahl</label><input type="text" id="tf-spieler" placeholder="z.B. 6-10"></div>
-        <div class="mg"><label for="tf-feld">Feldgröße</label><input type="text" id="tf-feld" placeholder="z.B. 20x15m"></div>
-        <div class="mg"><label for="tf-dauer">Dauer (Min)</label><input type="text" id="tf-dauer" placeholder="z.B. 10-15"></div>
-        <div class="mg"><label>Spaßfaktor</label>
-          <select id="tf-spass"><option value="3">Mittel</option><option value="4">Hoch</option><option value="5" selected>Sehr hoch</option></select>
+      </div>
+      <div class="mgrid tf-drei">
+        <div class="mg"><label for="tf-spieler">Kinder</label><input type="text" id="tf-spieler" placeholder="6-10"></div>
+        <div class="mg"><label for="tf-feld">Feld</label><input type="text" id="tf-feld" placeholder="20x15 m"></div>
+        <div class="mg"><label for="tf-dauer">Minuten</label><input type="text" id="tf-dauer" placeholder="10-15"></div>
+      </div>
+
+      <div class="tf-abschnitt">So läuft sie</div>
+      <div class="mgrid" style="grid-template-columns:1fr">
+        <div class="mg"><label for="tf-ablauf">Ablauf</label>
+          <textarea id="tf-ablauf" class="wachsen" rows="3" placeholder="Aufbau und Ablauf – was passiert nacheinander?"></textarea>
         </div>
-        <div class="mg"><label>Schwierigkeit</label>
-          <select id="tf-diff"><option value="1">Einfach</option><option value="2" selected>Mittel</option><option value="3">Anspruchsvoll</option></select>
+        <div class="mg"><label for="tf-varianten">Varianten</label>
+          <textarea id="tf-varianten" class="wachsen" rows="2" placeholder="Leichter / schwerer"></textarea>
         </div>
-        <div class="mg" style="grid-column:span 2"><label>Ablauf</label>
-          <textarea id="tf-ablauf" rows="3" style="resize:none" placeholder="Wie läuft die Übung ab?"></textarea>
-        </div>
-        <div class="mg" style="grid-column:span 2"><label>Varianten</label>
-          <textarea id="tf-varianten" rows="2" style="resize:none" placeholder="Varianten"></textarea>
-        </div>
-        <div class="mg" style="grid-column:span 2"><label for="tf-coaching">Coaching-Punkte</label>
-          <textarea id="tf-coaching" rows="2" style="resize:none" placeholder="Was soll der Trainer beobachten?"></textarea>
-        </div>
-        <!-- Skizze: Vorlage wählen oder selbst tippen (md-skizze.js, Welle 2) -->
-        <div class="mg" style="grid-column:span 2"><label>Skizze</label>
-          <div id="tf-skizze-vorschau"></div>
-          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-            <button type="button" class="btn btn-sm" id="tf-skizze-ki" onclick="tfSkizzeKi()"><i class="ti ti-robot"></i>Skizze aus der Beschreibung</button>
-            <button type="button" class="btn btn-sm" onclick="tfSkizzeOpen()"><i class="ti ti-pencil"></i>Skizze zeichnen</button>
-            <button type="button" class="btn btn-sm" id="tf-skizze-weg" style="display:none" onclick="tfSkizzeWeg()"><i class="ti ti-trash"></i>Entfernen</button>
-          </div>
+        <div class="mg"><label for="tf-coaching">Coaching-Punkte</label>
+          <textarea id="tf-coaching" class="wachsen" rows="2" placeholder="Was rufst du rein, worauf achtest du?"></textarea>
         </div>
       </div>
-      <div class="brow">
-        <button class="btn btn-p" onclick="saveCustomTraining()"><i class="ti ti-device-floppy"></i>Speichern</button>
+
+      <!-- Skizze: Vorlage wählen oder selbst tippen (md-skizze.js, Welle 2) -->
+      <div class="tf-abschnitt">Skizze</div>
+      <div id="tf-skizze-vorschau"></div>
+      <div class="tf-skizze-knoepfe">
+        <button type="button" class="btn" id="tf-skizze-ki" onclick="tfSkizzeKi()"><i class="ti ti-sparkles"></i>Aus dem Ablauf zeichnen</button>
+        <button type="button" class="btn" onclick="tfSkizzeOpen()"><i class="ti ti-pencil"></i>Zeichnen</button>
+        <button type="button" class="btn" id="tf-skizze-weg" style="display:none" onclick="tfSkizzeWeg()"><i class="ti ti-trash"></i>Entfernen</button>
+      </div>
+
+      <div class="tf-abschnitt">Einordnung</div>
+      <div class="mgrid" style="grid-template-columns:1fr 1fr">
+        <div class="mg"><label for="tf-spass">Spaßfaktor</label>
+          <select id="tf-spass"><option value="3">Mittel</option><option value="4">Hoch</option><option value="5" selected>Sehr hoch</option></select>
+        </div>
+        <div class="mg"><label for="tf-diff">Schwierigkeit</label>
+          <select id="tf-diff"><option value="1">Einfach</option><option value="2" selected>Mittel</option><option value="3">Anspruchsvoll</option></select>
+        </div>
+      </div>
+
+      <div class="tf-fuss">
+        <button class="btn btn-p tf-haupt" id="tf-haupt" onclick="saveCustomTraining()"><i class="ti ti-check"></i>Übung erfassen</button>
         <button class="btn" onclick="closeAddTraining()">Abbrechen</button>
       </div>
     </div>
@@ -411,13 +411,13 @@
   <div id="train-sub-termine" class="train-sub">
     <!-- Der Trainerplan gehoert HIERHER und nicht nur ins Kachel-Menue: wer ueber Termine
          nachdenkt, ist auf dieser Seite – nicht zwei Tipps entfernt im Menue. -->
-    <button class="btn btn-sm" onclick="trainerPlanOpen()" style="width:100%;min-height:44px;justify-content:center;margin-bottom:12px"><i class="ti ti-users-group"></i>Trainerplan – wer ist wann da?</button>
+    <!-- v646: Grillhütte einteilen und umbuchen (md-kasse.js) -->
     <!-- Zugeklappt als Standard (PO): das Formular nahm den ganzen ersten Bildschirm ein,
          obwohl man meistens zu den TERMINEN will und nicht einen neuen anlegt. -->
     <!-- v474: als Knopf erkennbar (gleiche Bauart wie „Trainerplan" darueber). Vorher sah
          die Zeile wie eine Abschnitts-Ueberschrift aus – ohne Rand, ohne Flaeche. -->
-    <button class="btn btn-sm" id="tm-neu-toggle" onclick="tmNeuToggle()" aria-expanded="false" aria-controls="tm-karte"
-            style="width:100%;min-height:44px;justify-content:center;margin-bottom:12px">
+    <button class="btn btn-p" id="tm-neu-toggle" onclick="tmNeuToggle()" aria-expanded="false" aria-controls="tm-karte"
+            style="width:100%;min-height:56px;justify-content:center;margin-bottom:12px;font-size:var(--s-karte);font-weight:800">
       <i class="ti ti-calendar-plus"></i><span>Neuer Termin</span><i class="ti ti-chevron-down" id="tm-neu-chev" style="transition:transform .15s"></i>
     </button>
     <!-- Die Karte traegt eine Akzentfarbe (--tm-akzent), die tmSetTyp auf den Termintyp
@@ -566,6 +566,13 @@
     </div>
     <div class="sl nt"><i class="ti ti-calendar"></i>Kommende Termine</div>
     <div id="tm-upcoming"></div>
+    <!-- v683: Trainerplan und Grillhütte als Kacheln UNTER den Terminen. Oben standen sie als zwei
+         gleich große Knöpfe vor „Neuer Termin“ – drei Knöpfe, bevor man den ersten Termin sah. Sie
+         bleiben auf dieser Seite (PO: wer über Termine nachdenkt, ist hier). -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px">
+      <button onclick="trainerPlanOpen()" style="min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid var(--fam-orga);border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px"><span style="font-size:30px" aria-hidden="true">🧑‍🏫</span><span style="font-size:var(--s-karte);font-weight:800">Trainerplan</span></button>
+      <button onclick="if(typeof grillTrainerOpen==='function')grillTrainerOpen()" style="min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid var(--fam-orga);border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px"><span style="font-size:30px" aria-hidden="true">🔥</span><span style="font-size:var(--s-karte);font-weight:800">Grillhütte</span></button>
+    </div>
     <button class="btn btn-sm" id="tm-archiv-btn" style="margin-top:16px;width:100%;color:var(--text2)" onclick="tmToggleArchiv()"><i class="ti ti-archive"></i>🗄️ Archiv: vergangene Termine anzeigen</button>
     <div id="tm-past" style="display:none;margin-top:8px"></div>
   </div><!-- /train-sub-termine -->
@@ -588,13 +595,14 @@
     <!-- Paket 3: Nettospielzeit der Einheit und Wochenstand, direkt unter der Terminwahl -->
     <div id="tp-netto" style="margin:6px 0 8px"></div>
     <div id="tp-nachbereiten"></div><!-- v483: nach der Einheit der Weg in die Nachbereitung -->
-    <div id="tp-trainer-quelle" style="font-size:10.5px;color:var(--text3);margin-bottom:4px"></div>
+    <div id="tp-trainer-quelle" style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px"></div>
     <!-- v470: umbrechen statt wischen. Als wischbare Zeile lagen bei fünf Trainern zwei
          außerhalb des Bildes – genau dort fehlte der Haken, den der PO gesucht hat. -->
     <div style="display:flex;gap:6px;flex-wrap:wrap;padding:2px 0 8px" id="tp-trainer-checks"><!-- wird aus TRAINER befüllt (D2) --></div>
     <div id="tp-diagnose"></div>
     <!-- v506: Kopf der Einheit (Schwerpunkt, Material, Beobachtung, Notiz) – kommt aus
          trainingsplan.kopf und steht über der Zeitleiste, wo die Einheit beginnt. -->
+    <div id="tp-block"></div><!-- v650: Einheit des Trainingsblocks für diesen Termin, Aufbau nach Kinderzahl -->
     <div id="tp-kopf"></div>
     <!-- v538: „Einheit importieren" ist entfallen. Eine einzelne Einheit als JSON von
          Hand einzulesen hatte nie einen Anwendungsfall – fertige Einheiten kommen über
@@ -626,10 +634,10 @@
     <div class="mg"><label for="aw-date">Termin</label><select id="aw-date" onchange="awLoad()" style="width:100%;padding:8px 12px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:13px;background:var(--surface);font-family:inherit;color:var(--text)"><option>Lade Termine…</option></select></div>
     <!-- Standard: heute + kommende Termine (PO). Vergessenes wird bewusst per Klick nachgetragen. -->
     <div id="aw-nachtragen"></div>
-    <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:10px 0 6px">Anwesende Trainer</div>
-    <div id="aw-trainer-quelle" style="font-size:10.5px;color:var(--text3);margin-bottom:4px"></div>
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:10px 0 6px">Anwesende Trainer</div>
+    <div id="aw-trainer-quelle" style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px"></div>
     <div id="aw-trainer-checks" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"><!-- wird aus TRAINER befüllt (D2) --></div>
-    <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:10px 0 6px">Spieler</div>
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:10px 0 6px">Spieler</div>
     <div id="aw-list"></div>
     <div class="brow" style="margin-top:12px">
       <button onclick="awSave()" style="flex:1;min-width:150px;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.28)"><i class="ti ti-device-floppy"></i>Speichern</button>
@@ -653,30 +661,29 @@
 
   <!-- SUB: Team (G2/G4) -->
   <div id="train-sub-team" class="train-sub">
-    <div class="sl nt"><i class="ti ti-users"></i>Team-Übersicht</div>
-    <div id="team-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:14px"></div>
-    <div class="sl nt"><i class="ti ti-chart-bar"></i>Schwerpunkt-Abstimmung</div>
-    <div style="background:var(--surface);border:var(--border-s);border-radius:var(--rl);padding:12px;margin-bottom:14px">
-      <div style="font-size:12.5px;font-weight:600;margin-bottom:8px">Schwerpunkt fürs nächste Training?</div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-        <span style="font-size:11px;color:var(--text2)">Ich bin:</span>
-        <select id="tv-autor" style="min-height:40px;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit"></select>
-      </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="tv-buttons"></div>
-      <div id="tv-results"></div>
-    </div>
-    <div class="sl nt"><i class="ti ti-message"></i>Team-Pinnwand</div>
+    <!-- v683: Die Pinnwand beginnt mit der Pinnwand. Vorher standen Kennzahlen und die Abstimmung
+         davor, und ganz unten eine Datensicherung – die gehört zu Orga · Einstellungen. -->
+    <div class="sl nt"><i class="ti ti-message"></i>Team-Notizen</div>
     <div style="background:var(--surface);border:var(--border-s);border-radius:var(--rl);padding:12px;margin-bottom:10px">
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-        <select id="tn-autor" style="flex:0 0 130px"></select>
+        <select id="tn-autor" aria-label="Wer schreibt" style="flex:0 0 130px;min-height:48px"></select>
         <input type="text" id="tn-text" placeholder="Kurze Team-Notiz..." maxlength="500" style="flex:1;min-width:180px;padding:10px 12px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:13px;font-family:inherit;outline:none">
       </div>
       <button class="btn btn-p" onclick="tnSend()"><i class="ti ti-send"></i>Senden</button>
     </div>
     <div id="tn-list"></div>
-    <div class="sl nt" style="margin-top:16px"><i class="ti ti-database-export"></i>Daten-Sicherung</div>
-    <button class="btn" onclick="teamBackupDownload()"><i class="ti ti-download"></i>Backup herunterladen</button>
-    <div style="font-size:10.5px;color:var(--text3);margin-top:4px">Lädt alle Tabellen (Profile, Quiz, Anwesenheit, Bewertungen, Notizen, Einheiten) als JSON-Datei.</div>
+    <div class="sl nt"><i class="ti ti-chart-bar"></i>Schwerpunkt-Abstimmung</div>
+    <div style="background:var(--surface);border:var(--border-s);border-radius:var(--rl);padding:12px;margin-bottom:14px">
+      <div style="font-size:var(--s-text);font-weight:800;margin-bottom:8px">Schwerpunkt fürs nächste Training?</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+        <span style="font-size:var(--s-text);color:var(--text2)">Ich bin:</span>
+        <select id="tv-autor" style="min-height:48px;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit"></select>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="tv-buttons"></div>
+      <div id="tv-results"></div>
+    </div>
+    <div class="sl nt"><i class="ti ti-users"></i>Team-Übersicht</div>
+    <div id="team-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:14px"></div>
   </div><!-- /train-sub-team -->
 
   <!-- SUB: Analyse (Meilensteine + Einsatz-Fairness + Formtrend) -->
@@ -694,15 +701,20 @@
        weil er nicht taeglich gebraucht wird. -->
   <div id="train-sub-tagebuch" class="train-sub">
     <div class="sl nt"><i class="ti ti-book"></i>Trainertagebuch</div>
-    <button class="btn btn-p" onclick="if(typeof tagebuchNeu==='function')tagebuchNeu()" style="width:100%;min-height:56px;justify-content:center;font-size:15px;font-weight:800;margin-bottom:12px"><i class="ti ti-plus"></i>Neuer Eintrag</button>
+    <button class="btn btn-p" onclick="if(typeof tagebuchNeu==='function')tagebuchNeu()" style="width:100%;min-height:56px;justify-content:center;font-size:15px;font-weight:800;margin-bottom:8px"><i class="ti ti-plus"></i>Neuer Eintrag</button>
+    <!-- v679: Gedanke zwischendurch - ein Feld, wird ein Keim. Zweitrangig neben dem neuen Eintrag. -->
+    <button class="btn" onclick="if(typeof tagebuchGedanke==='function')tagebuchGedanke()" style="width:100%;min-height:48px;justify-content:center;margin-bottom:12px"><i class="ti ti-bulb"></i>Gedanke erfassen</button>
     <div id="tb-liste"></div>
     <div class="sl nt" style="margin-top:16px"><i class="ti ti-file-export"></i>Monat ausgeben</div>
+    <!-- v679: Ausgaben getrennt - Lehrgang (nur fertig und bestaetigt), Arbeitsfassung (alles), C-Lizenz folgt -->
+    <div id="tb-ausgabe" role="group" aria-label="Welche Ausgabe" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px"></div>
+    <div id="tb-ausgabe-hinweis" style="font-size:12px;color:var(--text2);margin-bottom:8px"></div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
       <input type="month" id="tb-monat" style="min-height:48px;padding:0 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text)">
       <button class="btn" onclick="if(typeof tagebuchMonatKopieren==='function')tagebuchMonatKopieren()" style="min-height:48px"><i class="ti ti-copy"></i>Kopieren</button>
       <button class="btn" onclick="if(typeof tagebuchMonatTeilen==='function')tagebuchMonatTeilen()" style="min-height:48px"><i class="ti ti-share"></i>Teilen</button>
     </div>
-    <div style="font-size:10.5px;color:var(--text3);margin-top:6px">Alle Eintraege des Monats als Markdown, nach Bausteinen sortiert - fuer das Google Doc oder die Abgabe.</div>
+    <div style="font-size:12px;color:var(--text2);margin-top:6px">Alle Einträge des Monats als Markdown, nach Bausteinen sortiert, Kinder als Buchstaben.</div>
   </div><!-- /train-sub-tagebuch -->
 
   <!-- SUB: Spieltag (Nominierung + Rotations-Timer + Blitz-Rating) -->
@@ -716,14 +728,25 @@
          die datengetrieben "4+1 Raute" meldet - deshalb raus. -->
     <div class="abschnitt">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-      <span style="font-size:11px;color:var(--text2);font-weight:600">Spieltag</span>
-      <select id="spieltag-date" onchange="if(typeof _spieltagTurnierBanner==='function')_spieltagTurnierBanner();nomLoad()" style="min-height:40px;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;background:var(--surface);color:var(--text);min-width:190px"></select>
+      <label for="spieltag-date" style="font-size:var(--s-text);color:var(--text);font-weight:800">Spieltag</label>
+      <select id="spieltag-date" onchange="if(typeof _spieltagTurnierBanner==='function')_spieltagTurnierBanner();nomLoad()" style="min-height:48px;flex:1;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;background:var(--surface);color:var(--text);min-width:190px"></select>
     </div>
     <!-- Der Umschalter wird von spieltagTeamSegRender (md-teams.js) gefuellt: so viele
          Knoepfe, wie unter "Vor dem Spiel" Teams festgelegt sind. Frueher standen hier
          fest drei - man konnte auf "Adler 3" tippen, bevor ueberhaupt entschieden war,
          wie viele Teams wir stellen, und die App legte Daten dafuer an. -->
     </div><!-- /Karte Spieltag -->
+    <!-- v681 PO (Kollegen 29.09.): „man findet gar nicht direkt, wo muss ich eigentlich anklicken,
+         vor dem Spiel, während dem Spiel, nach dem Spiel.“ Statt fünf grauer Klappzeilen mit
+         „▾ mehr“ drei große Kacheln; es steht immer nur EINE Phase offen (spieltagPhaseZeigen).
+         Die <details> darunter bleiben als Hülle, damit alle Sprünge (Match-Uhr, Blitz-Rating,
+         Anwesenheit) weiter über .open funktionieren – ihre Kopfzeilen sind ausgeblendet. -->
+    <div id="mt-phasen" class="phasen-kacheln" role="group" aria-label="Phase des Spieltags">
+      <button type="button" class="phase-kachel" data-phase="vor" aria-pressed="false" onclick="spieltagPhaseZeigen('vor')"><span class="pk-emo" aria-hidden="true">📋</span><span class="pk-t">Vor dem Spiel</span><span class="pk-s">Dabei · Teams · Aufstellung</span></button>
+      <button type="button" class="phase-kachel" data-phase="live" aria-pressed="false" onclick="spieltagPhaseZeigen('live')"><span class="pk-emo" aria-hidden="true">⏱️</span><span class="pk-t">Während des Spiels</span><span class="pk-s">Uhr · Wechsel · Ticker</span></button>
+      <button type="button" class="phase-kachel" data-phase="nach" aria-pressed="false" onclick="spieltagPhaseZeigen('nach')"><span class="pk-emo" aria-hidden="true">🏁</span><span class="pk-t">Nach dem Spiel</span><span class="pk-s">Ergebnis · Bericht · Rating</span></button>
+    </div>
+    <div id="mt-phasen-leer" class="phasen-leer">Tippe auf eine Phase – es steht immer nur das offen, was gerade dran ist.</div>
     <!-- Spieltag-Phasen: Vor / Während / Nach dem Spiel – einklappbar für den Fokus -->
     <!-- GLOBAL, nicht je Team: wie viele Teams, wer betreut sie, wer spielt wo.
          Erst danach die Team-Kacheln – das ist die Reihenfolge, in der der PO denkt. -->
@@ -806,7 +829,7 @@
           <div class="sl nt"><i class="ti ti-news"></i>Spielbericht &amp; Ergebnis-Karte</div>
           <div id="bericht-panel"></div>
         </div>
-        <div class="abschnitt">
+        <div class="abschnitt" id="blitz-abschnitt">
           <div class="sl nt"><i class="ti ti-bolt"></i>Blitz-Rating – ganz zum Schluss</div>
           <div id="blitz-panel"></div>
         </div>

@@ -75,7 +75,12 @@ async function reportGenerate(isReroll){
   if(!reportData){matchReport();return;}
   const {per,roster,tore,gegentore,team,datum}=reportData;
   reportShowLoading(isReroll);
-  const spieler=roster.map(name=>({name,highlights:per[name]||{}}));
+  /* v636: Kindernamen verlassen das Gerät nicht. Der KI-Anbieter bekommt „Kind 1“, „Kind 2“ …
+     und die Antwort wird hier zurückübersetzt – wie bei der Nachbereitung (nbMaske, v627). */
+  const kiName={}, echt={};
+  roster.forEach((name,i)=>{ kiName[name]="Kind "+(i+1); echt["Kind "+(i+1)]=name; });
+  const zurueck=t=>String(t||"").replace(/Kind (\d+)/g,(x)=>echt[x]||x);
+  const spieler=roster.map(name=>({name:kiName[name],highlights:per[name]||{}}));
   const seed=Math.random().toString(36).slice(2,8);
   const ctrl=new AbortController(), to=setTimeout(()=>ctrl.abort(),30000);
   try{
@@ -86,7 +91,7 @@ async function reportGenerate(isReroll){
     if(!r.ok||!d.bericht){ matchReportShow(matchReportBuild(per,roster,tore,gegentore),{fallback:true,reason:d.error}); return; }
     const p=(datum||"").split("-"); const ds=p.length===3?`${p[2]}.${p[1]}.${p[0]}`:datum;
     const head=`🦅 Spielbericht${team>1?" – Adler "+team:""} – ${ds}\n\n`;
-    matchReportShow(head+d.bericht,{ai:true,rest:d.rest});
+    matchReportShow(head+zurueck(d.bericht),{ai:true,rest:d.rest});
   }catch(e){
     clearTimeout(to);
     matchReportShow(matchReportBuild(per,roster,tore,gegentore),{fallback:true,reason:e&&e.name==="AbortError"?"timeout":"offline"});
@@ -99,8 +104,8 @@ function reportShowLoading(isReroll){
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px";
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
   modal.innerHTML=`<div style="background:var(--surface);color:var(--text);max-width:420px;width:100%;border-radius:16px;padding:28px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.4)">
-    <div style="font-size:15px;font-weight:700;margin-bottom:8px">📰 ${isReroll?"Neue Formulierung …":"Spielbericht wird geschrieben …"}</div>
-    <div style="font-size:13px;color:var(--text2)">🦅 Der Adler-Coach fasst das Spiel in Worte.</div></div>`;
+    <div style="font-size:var(--s-karte);font-weight:700;margin-bottom:8px">📰 ${isReroll?"Neue Formulierung …":"Spielbericht wird geschrieben …"}</div>
+    <div style="font-size:var(--s-text);color:var(--text2)">🦅 Der Adler-Coach fasst das Spiel in Worte.</div></div>`;
   document.body.appendChild(modal);
 }
 function matchReportShow(text,opts){
@@ -113,15 +118,15 @@ function matchReportShow(text,opts){
   const card=document.createElement("div");
   card.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   const badge=opts.ai
-    ?`<span style="font-size:10px;background:#dbeafe;color:#1e40af;padding:2px 7px;border-radius:10px;font-weight:700">🤖 KI-Bericht${opts.rest!=null?" · "+opts.rest+" heute übrig":""}</span>`
+    ?`<span style="font-size:var(--s-klein);background:#dbeafe;color:#1e40af;padding:2px 7px;border-radius:10px;font-weight:700">🤖 KI-Bericht${opts.rest!=null?" · "+opts.rest+" heute übrig":""}</span>`
     :opts.fallback
-      ?`<span style="font-size:10px;background:#fef3c7;color:#854d0e;padding:2px 7px;border-radius:10px;font-weight:700">📴 Offline-Vorlage</span>`
+      ?`<span style="font-size:var(--s-klein);background:#fef3c7;color:#854d0e;padding:2px 7px;border-radius:10px;font-weight:700">📴 Offline-Vorlage</span>`
       :"";
-  card.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><div style="font-weight:700;font-size:15px">📰 Spielbericht</div>${badge}</div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:10px">${opts.fallback?"Kein Netz/KI – hier eine automatische Vorlage. ":""}Zum Kopieren in die Eltern-Gruppe – frei anpassbar. „Neu würfeln" erzeugt eine neue Variante.</div>`;
+  card.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><div style="font-weight:700;font-size:var(--s-karte)">📰 Spielbericht</div>${badge}</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:10px">${opts.fallback?"Kein Netz/KI – hier eine automatische Vorlage. ":""}Zum Kopieren in die Eltern-Gruppe – frei anpassbar. „Neu würfeln" erzeugt eine neue Variante.</div>`;
   const ta=document.createElement("textarea");
   ta.id="report-text";ta.value=text;
-  ta.style.cssText="width:100%;min-height:280px;font-family:inherit;font-size:13px;line-height:1.5;border:var(--border-s);border-radius:10px;padding:12px;resize:vertical;background:var(--surface2);color:var(--text);box-sizing:border-box";
+  ta.style.cssText="width:100%;min-height:280px;font-family:inherit;font-size:var(--s-text);line-height:1.5;border:var(--border-s);border-radius:10px;padding:12px;resize:vertical;background:var(--surface2);color:var(--text);box-sizing:border-box";
   const bar=document.createElement("div");
   bar.style.cssText="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:12px";
   const radioBtn='speechSynthesis' in window
@@ -169,7 +174,7 @@ function berichtPanelRender(){
       <button class="btn" onclick="matchReport()" style="flex:1;min-height:48px;justify-content:center"><i class="ti ti-news"></i>Spielbericht</button>
       <button class="btn" onclick="ergebnisKarte()" style="flex:1;min-height:48px;justify-content:center"><i class="ti ti-photo"></i>Ergebnis-Karte</button>
     </div>
-    <div style="font-size:10.5px;color:var(--text3);margin-top:6px">Tore und Gegentore kommen aus den Live-Aktionen; der Bericht fasst den Spieltag dieses Teams zusammen – zum Teilen im Eltern-Chat.</div>`;
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px">Tore und Gegentore kommen aus den Live-Aktionen; der Bericht fasst den Spieltag dieses Teams zusammen – zum Teilen im Eltern-Chat.</div>`;
 }
 // Teilbare Ergebnis-Karte (Bild): Ergebnis + Torschützen als Social-Card fürs Familien-/Eltern-Chat.
 async function ergebnisKarte(){
@@ -182,8 +187,10 @@ async function ergebnisKarte(){
   try{const r=await fetch(`${SB_URL}/rest/v1/matchday?datum=eq.${encodeURIComponent(realDate)}&select=gegner&order=datum.desc&limit=1`,{headers:sbAuthHeaders()});if(r.ok){const m=(await r.json())[0];gegner=(m&&m.gegner)||"";}}catch(e){}
   const tore=trows.filter(t=>t.typ==="tor").length||acts.filter(a=>a.aktion==="tor").length;
   const gegentore=trows.filter(t=>t.typ==="gegentor").length;
-  const sc={}; acts.filter(a=>a.aktion==="tor").forEach(a=>{ if(a.spieler)sc[a.spieler]=(sc[a.spieler]||0)+1; });
-  const scorers=Object.entries(sc).sort((a,b)=>b[1]-a[1]).map(([n,c])=>c>1?`${n} (${c})`:n);
+  /* v636: Die Karte ist zum Weiterleiten in den Eltern-Chat gedacht – also eine weitergegebene
+     Ansicht. Keine Kindernamen und keine Torschützen-Rangliste (Fairness vor Ergebnis); das Team
+     hat die Tore gemeinsam geschossen. */
+  const scorers=[];
   const logo=new Image();
   logo.onload=()=>drawErgebnisKarte(logo,{tore,gegentore,gegner,scorers,realDate});
   logo.onerror=()=>drawErgebnisKarte(null,{tore,gegentore,gegner,scorers,realDate});
@@ -271,9 +278,9 @@ async function elternKalenderIcs(){
   toast("Kalenderdatei erstellt ✓");
 }
 // Gebrandeter Ladezustand für alle öffentlichen Eltern-Flächen (statt fadem "Lade...").
-function elternLoader(msg){ return `<div style="text-align:center;padding:56px 16px"><img src="logo.png" alt="" style="width:52px;height:52px;animation:adlerPulse 1.3s ease-in-out infinite"><div style="margin-top:14px;font-size:13px;color:#64748b">${elternEsc(msg||"Lädt …")}</div></div>`; }
+function elternLoader(msg){ return `<div style="text-align:center;padding:56px 16px"><img src="logo.png" alt="" style="width:52px;height:52px;animation:adlerPulse 1.3s ease-in-out infinite"><div style="margin-top:14px;font-size:var(--s-text);color:#64748b">${elternEsc(msg||"Lädt …")}</div></div>`; }
 // Freundlicher, gebrandeter Leer-/Fehlerzustand (Logo + optionales Emoji + Text). msg darf <br> enthalten.
-function elternEmpty(msg,emoji){ return `<div class="elt-fade" style="text-align:center;padding:52px 20px"><img src="logo.png" alt="" style="width:54px;height:54px;opacity:.92">${emoji?`<div style="font-size:30px;margin-top:6px">${emoji}</div>`:""}<div style="margin-top:12px;font-size:14px;color:#64748b;line-height:1.55">${msg}</div></div>`; }
+function elternEmpty(msg,emoji){ return `<div class="elt-fade" style="text-align:center;padding:52px 20px"><img src="logo.png" alt="" style="width:54px;height:54px;opacity:.92">${emoji?`<div style="font-size:30px;margin-top:6px">${emoji}</div>`:""}<div style="margin-top:12px;font-size:var(--s-karte);color:#5b6b81;line-height:1.55">${msg}</div></div>`; }
 /* Persönlicher Kind-Link (?kind=<token>): 1-Tap Zu-/Absage ohne Login.
    Liest/schreibt ausschließlich über die security-definer-RPCs kind_termine / rsvp_by_token. */
 let kindRoot=null, kindToken=null;
@@ -288,7 +295,7 @@ async function renderKindView(token){
 async function kindLoad(){
   let d=null;
   try{const r=await fetch(`${SB_URL}/rest/v1/rpc/kind_termine`,{method:"POST",headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_token:kindToken})});if(r.ok)d=await r.json();}catch(e){}
-  if(!d||!d.ok){ kindRoot.innerHTML='<div style="text-align:center;padding:48px;color:#64748b"><img src="logo.png" style="width:56px;height:56px" alt=""><div style="margin-top:12px">Dieser Link ist ungültig oder abgelaufen.<br>Frag den Trainer nach einem neuen. 🦅</div></div>'; return; }
+  if(!d||!d.ok){ kindRoot.innerHTML='<div style="text-align:center;padding:48px;color:#5b6b81"><img src="logo.png" style="width:56px;height:56px" alt=""><div style="margin-top:12px">Dieser Link ist ungültig oder abgelaufen.<br>Frag den Trainer nach einem neuen. 🦅</div></div>'; return; }
   const wtag=["So","Mo","Di","Mi","Do","Fr","Sa"];
   const evCard=(t)=>{
     const dt=new Date(t.datum+"T00:00:00");
@@ -296,21 +303,21 @@ async function kindLoad(){
     const istTr=t.typ==="training";
     const titel=istTr?"Training":("Spiel"+(t.gegner?" gegen "+elternEsc(t.gegner):""));
     const st=t.status;
-    const btn=(status,emo,lbl,onCol)=>`<button onclick="kindRsvp(${t.id},'${status}')" style="flex:1;min-height:52px;border:2px solid ${st===status?onCol:'#cbd5e1'};border-radius:12px;background:${st===status?onCol:'#fff'};color:${st===status?'#fff':'#334155'};font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">${emo} ${lbl}</button>`;
+    const btn=(status,emo,lbl,onCol)=>`<button onclick="kindRsvp(${t.id},'${status}')" style="flex:1;min-height:52px;border:2px solid ${st===status?onCol:'#cbd5e1'};border-radius:12px;background:${st===status?onCol:'#fff'};color:${st===status?'#fff':'#334155'};font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">${emo} ${lbl}</button>`;
     return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
-      <div style="font-size:15px;font-weight:800;color:#1e293b">${istTr?"🏃 ":"⚽ "}${titel}</div>
-      <div style="font-size:12.5px;color:#64748b;margin:2px 0 10px">${ds}${t.uhrzeit?" · "+t.uhrzeit+" Uhr":""}${t.ort?" · "+elternEsc(t.ort):""}</div>
+      <div style="font-size:var(--s-karte);font-weight:800;color:#1e293b">${istTr?"🏃 ":"⚽ "}${titel}</div>
+      <div style="font-size:var(--s-text);color:#64748b;margin:2px 0 10px">${ds}${t.uhrzeit?" · "+t.uhrzeit+" Uhr":""}${t.ort?" · "+elternEsc(t.ort):""}</div>
       <div style="display:flex;gap:8px">${btn('zugesagt','👍','Dabei','#16a34a')}${btn('abgesagt','👎','Kann nicht','#dc2626')}</div>
     </div>`;
   };
   kindRoot.innerHTML=`<div class="elt-fade">
     <div style="text-align:center;margin:8px 0 16px">
       <img src="logo.png" style="width:60px;height:60px" alt="">
-      <div style="font-size:18px;font-weight:800;color:#1e3a8a;margin-top:6px">Hallo! 👋</div>
-      <div style="font-size:14px;color:#334155">Sag <b>${elternEsc(d.name)}</b> mit einem Tipp zu oder ab.</div>
+      <div style="font-size:var(--s-teil);font-weight:800;color:#1e3a8a;margin-top:6px">Hallo! 👋</div>
+      <div style="font-size:var(--s-karte);color:#334155">Sag <b>${elternEsc(d.name)}</b> mit einem Tipp zu oder ab.</div>
     </div>
     ${d.termine&&d.termine.length?d.termine.map(evCard).join(""):'<div style="text-align:center;color:#64748b;background:#fff;border-radius:16px;padding:24px">Aktuell keine anstehenden Termine. 🎉</div>'}
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:8px">SV Adler Dellbrück e.V. · persönlicher Link für ${elternEsc(d.name)}</div></div>`;
+    <div style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin-top:8px">SV Adler Dellbrück e.V. · persönlicher Link für ${elternEsc(d.name)}</div></div>`;
 }
 async function kindRsvp(terminId,status){
   if(!kindToken)return;

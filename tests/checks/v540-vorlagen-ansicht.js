@@ -166,7 +166,8 @@ module.exports = async function (h) {
   if (modul.lastIndexOf("function vorlagenAnsichtOpen") > modul.lastIndexOf("function bibliothekAbgleich"))
     probleme.push("vorlagenAnsichtOpen steht NACH bibliothekAbgleich – die MODUL_WACHE prüft den letzten Namen der Datei");
   const shell = fs.readFileSync(path.join(h.REPO, "shell.html"), "utf8");
-  const formen = shell.slice(shell.indexOf('id="train-sub-formen"'), shell.indexOf('id="training-content"'));
+  // v682: „Vorlagen“ ist eine Kachel unter Werkzeuge, also unterhalb der Liste – gesucht wird im ganzen Bereich
+  const formen = shell.slice(shell.indexOf('id="train-sub-formen"'), shell.indexOf('/train-sub-formen'));
   if (!/<button[^>]*vorlagenAnsichtOpen/.test(formen)) probleme.push("Der Knopf „Vorlagen ansehen“ fehlt im Übungen-Bereich");
 
   return h.ergebnis("Vorlagen ansehen: nachschlagen ohne übernehmen", !probleme.length, zeilen.concat(probleme));

@@ -1,4 +1,4 @@
-const CACHE="u9i-adler-v618";
+const CACHE="u9i-adler-v683";
 const PRECACHE=[
   "./",
   "./index.html",
@@ -23,7 +23,6 @@ const PRECACHE=[
   "./md-aufstellung.js",
   "./md-print.js",
   "./md-taktikboard.js",
-  "./md-taktik-draw.js",
   "./md-taktik-video.js",
   "./md-kalender.js",
   "./md-gegner.js",
@@ -41,15 +40,18 @@ const PRECACHE=[
   "./md-tagebuch.js",
   "./md-live-vollbild.js",
   "./md-fundbuero.js",
-  "./md-taktik-bib.js",
   "./md-ausruestung.js",
   "./md-galerie.js",
   "./md-kasse.js",
   "./md-ki-coach.js",
   "./md-einheit-import.js",
+  "./md-block.js",
   "./md-skizze.js",
+  "./md-brett.js",
+  "./md-adler-rufe.js",   // v670: Adler-Rufe (Team-Chat)
   "./boot.js",
   "./logo.png",
+  "./badge-adler.png",   // v671: Adler weiß auf transparent – Symbol in der Statusleiste bei Push
   "./icon-trainer.png",
   "./icon-trainer-maskable.png",
   "./icon-eltern.png",
@@ -59,41 +61,45 @@ const PRECACHE=[
   "./manifest-trainer.json",
   "./manifest-eltern.json",
   "./manifest-kinder.json",
-  "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
-  "https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css",
-  "https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
+  /* v642: Schrift, Icons und Chart.js liegen im Repo. Vorher kamen sie von Google Fonts und
+     jsDelivr – jeder Start der App hat dort die IP-Adresse von Eltern und Kindern hinterlassen.
+     Die Schriftdateien stehen einzeln hier, damit auch der erste Start ohne Netz Schrift hat. */
+  "./vendor/inter.css",
+  "./vendor/tabler-icons.min.css",
+  "./vendor/fonts/tabler-icons.woff2",
+  "./vendor/fonts/inter-latin-400-normal.woff2",
+  "./vendor/fonts/inter-latin-ext-400-normal.woff2",
+  "./vendor/fonts/inter-latin-500-normal.woff2",
+  "./vendor/fonts/inter-latin-ext-500-normal.woff2",
+  "./vendor/fonts/inter-latin-600-normal.woff2",
+  "./vendor/fonts/inter-latin-ext-600-normal.woff2",
+  "./vendor/fonts/inter-latin-700-normal.woff2",
+  "./vendor/fonts/inter-latin-ext-700-normal.woff2",
+  "./vendor/chart.umd.js"
 ];
-
-// Font-Dateien aus den precachten CSS-Dateien extrahieren und mitcachen,
-// damit Schrift + Icons auch beim allerersten Offline-Start funktionieren.
-async function precacheFonts(cache){
-  const cssUrls=PRECACHE.filter(u=>u.endsWith(".css")||u.includes("fonts.googleapis"));
-  for(const cssUrl of cssUrls){
-    try{
-      const res=await fetch(cssUrl);
-      if(!res.ok)continue;
-      const css=await res.text();
-      const urls=[...css.matchAll(/url\((['"]?)(https?:\/\/[^)'"]+)\1\)/g)].map(m=>m[2]);
-      await Promise.all([...new Set(urls)].map(async u=>{
-        try{
-          const fr=await fetch(u,{mode:"cors"});
-          if(fr.ok)await cache.put(u,fr);
-        }catch(e){/* einzelne Fontdatei optional */}
-      }));
-    }catch(e){/* CSS optional */}
-  }
-}
 
 self.addEventListener("install",e=>{
   // cache:"reload" umgeht den HTTP-Cache des Browsers. Ohne das kann der Precache eine
   // Datei aus dem Browser-Cache uebernehmen (GitHub Pages liefert HTML mit max-age=600)
   // und der neue Service Worker startet mit einer veralteten index.html.
-  const frisch=PRECACHE.map(u=>new Request(u,{cache:"reload"}));
-  e.waitUntil(
-    caches.open(CACHE)
-      .then(c=>c.addAll(frisch).then(()=>precacheFonts(c)))
-      .then(()=>self.skipWaiting())
-  );
+  /* v655: Datei für Datei statt addAll. addAll ist alles oder nichts – scheitert eine
+     einzige Datei (Netz wackelt, Speicher knapp), bleibt das Gerät still auf der alten
+     Version stehen, Tag für Tag. Jetzt reicht es, wenn die Seiten und der Kern da sind;
+     was fehlt, holt die App beim ersten Gebrauch aus dem Netz nach (siehe fetch). */
+  const PFLICHT=["./trainer/","./eltern/","./kinder/","./core.js","./boot.js","./views.js"];
+  e.waitUntil((async()=>{
+    const c=await caches.open(CACHE);
+    const erg=await Promise.allSettled(PRECACHE.map(u=>c.add(new Request(u,{cache:"reload"})).then(()=>u)));
+    const da=new Set(erg.filter(x=>x.status==="fulfilled").map(x=>x.value));
+    const fehlt=PFLICHT.filter(u=>PRECACHE.includes(u)&&!da.has(u));
+    if(fehlt.length){
+      // Lieber beim alten bleiben – und den halben Cache wieder weg, sonst meldet die
+      // Versionsanzeige (liest den höchsten Cache-Namen) eine Version, die nie lief.
+      await caches.delete(CACHE);
+      throw new Error("Precache unvollständig: "+fehlt.join(", "));
+    }
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener("activate",e=>{
@@ -119,7 +125,6 @@ self.addEventListener("fetch",e=>{
   if(url.includes("open-meteo.com"))return; // Wetter: nie cachen (ignoreSearch würde die Datums-Query zerstören)
   if(url.includes("openstreetmap.org"))return; // Geocoding/Adress-Suche: nie cachen (Query-Sicherheit)
   if(url.includes("openholidaysapi.org"))return; // Ferien-Radar: nie cachen (ignoreSearch würde die Datums-Query zerstören)
-  if(url.includes("api.qrserver.com"))return; // QR-Aushang: nie cachen (ignoreSearch würde die Daten-Query zerstören)
   /* v512/v513: Alles unter uebungen/ ist Quelle fuer den Abgleich beim Oeffnen –
      bibliothek.json (Uebungen) und vorlagen.json (Vorlagen). Aus dem Cache gelesen
      bliebe eine solche Datei fuer immer auf dem Stand der Installation stehen, und weil
@@ -189,7 +194,7 @@ self.addEventListener("push",e=>{
   try{ d=e.data?e.data.json():{}; }catch(_){ try{d={body:e.data.text()};}catch(__){} }
   const title=d.title||"SV Adler Dellbrück U9";
   const opts={
-    body:d.body||"", icon:"./logo.png", badge:"./logo.png",
+    body:d.body||"", icon:"./logo.png", badge:"./badge-adler.png",
     data:{url:d.url||"./"}, tag:d.tag||"adler", renotify:true,
     vibrate:[40,60,40]
   };

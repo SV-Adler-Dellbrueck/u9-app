@@ -4,7 +4,7 @@
    Durchgang: jedes Fenster oeffnet ohne Fehler, hat eine Ueberschrift, und kein beschriftetes
    Bedienelement ist kleiner als 44 px (runde Icon-Knoepfe und Inline-Links ausgenommen –
    so steht es in CLAUDE.md). Neue Fenster gehoeren in diese Liste. */
-const FENSTER = ["ttOpen", "arenaEditOpen", "skillWocheOpen", "elternGespraechOpen", "rollenMatrixOpen",
+const FENSTER = ["arenaEditOpen", "skillWocheOpen", "elternGespraechOpen", "rollenMatrixOpen",
   "periodOpen", "kleingruppenOpen", "awUebersichtOpen", "tgOpen", "fotoAmpelOpen", "chronikOpen",
   "elternTermineOpen", "fundbueroOpen", "ausstattungOpen", "materialOpen", "gegnerManageOpen", "turnierOpen",
   "kasseOpen", "wochenChallengeOpen", "setupTrainerOpen", "pausenOpen", "notfallTrainerOpen",

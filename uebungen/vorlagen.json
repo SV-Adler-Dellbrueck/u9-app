@@ -1,10 +1,11 @@
 {
   "schema": "adler-vorlagen/1",
-  "stand": "2026-09-18-1",
+  "stand": "2026-09-29-2",
   "vorlagen": [
     {
       "name": "L1-1 Ball behalten – Duell um zwei Tore",
       "leitfrage": "Wie behalte ich den Ball, wenn einer kommt?",
+      "ziel_kinder": "Heute lernst du, den Ball mit deinem Körper zu beschützen.",
       "folge_nr": 1,
       "tags": [
         "wenig-platz"
@@ -32,19 +33,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "1gg1 Tore-Duell"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: erst drehen, dann zum Tor",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "1gg1 Tore-Duell"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Feld größer, Regel weg",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "1gg1 Tore-Duell"
         },
         {
@@ -58,6 +59,7 @@
     {
       "name": "L1-2 Ball behalten – König auf dem Feld",
       "leitfrage": "Wie behalte ich den Ball, wenn einer kommt?",
+      "ziel_kinder": "Heute bleibt der Ball bei dir – stell deinen Körper zwischen Ball und Gegner.",
       "folge_nr": 2,
       "tags": [
         "wenig-platz",
@@ -86,19 +88,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei: 1 gegen 1, Aufsteiger und Absteiger",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Fußball-König"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: drei Sekunden abschirmen, bevor ein Tor zählt",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Fußball-König"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Regel weg, Felder größer",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Fußball-König"
         },
         {
@@ -112,6 +114,7 @@
     {
       "name": "L1-3 Ball behalten in Überzahl – der Diamant dreht",
       "leitfrage": "Wie behalte ich den Ball, wenn einer kommt?",
+      "ziel_kinder": "Heute halten wir den Ball zu viert: Pass spielen und schnell einen neuen Platz suchen.",
       "folge_nr": 3,
       "tags": [],
       "dauer_min": 75,
@@ -137,19 +140,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei: vier halten den Ball gegen zwei Jäger",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Diamanten-Jagd"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: wer passt, muss sofort einen anderen Rauten-Punkt besetzen",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Diamanten-Jagd"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Rotation frei, Viereck größer",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Diamanten-Jagd"
         },
         {
@@ -163,6 +166,7 @@
     {
       "name": "L1-4 Ball behalten – die erste Berührung nach vorn",
       "leitfrage": "Wie behalte ich den Ball, wenn einer kommt?",
+      "ziel_kinder": "Heute nimmst du den Ball mit der ersten Berührung nach vorne mit.",
       "folge_nr": 4,
       "tags": [
         "halle",
@@ -191,19 +195,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei: Zuspiel von hinten, erste Berührung nach vorn",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Erste Mitnahme vorwärts"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: ein passiver Gegner im Rücken, der erst nach der Mitnahme angreift",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Erste Mitnahme vorwärts"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: aus der Mitnahme direkt ins 2 gegen 2 auf Minitore",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Erste Mitnahme vorwärts"
         },
         {
@@ -217,6 +221,7 @@
     {
       "name": "L2-1 Vorbeikommen – Mut zum ersten Schritt",
       "leitfrage": "Wie komme ich an einem vorbei?",
+      "ziel_kinder": "Heute traust du dich ins Duell und probierst deinen eigenen Trick.",
       "folge_nr": 1,
       "tags": [
         "wenig-platz",
@@ -245,19 +250,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Mut-Leiter 1gg1"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: Tempowechsel vor der Linie",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Mut-Leiter 1gg1"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: zwei Tore zur Auswahl",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Mut-Leiter 1gg1"
         },
         {
@@ -271,6 +276,7 @@
     {
       "name": "L2-2 Vorbeikommen – drei Finten, ein Duell",
       "leitfrage": "Wie komme ich an einem vorbei?",
+      "ziel_kinder": "Heute lernst du drei Tricks und probierst sie im Duell aus.",
       "folge_nr": 2,
       "tags": [
         "wenig-platz",
@@ -299,19 +305,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei: drei Finten üben, dann 1 gegen 1",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Finte-Wettkampf"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: ein Tor zählt nur nach einer Finte",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Finte-Wettkampf"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Regel weg, zwei Tore zur Auswahl",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Finte-Wettkampf"
         },
         {
@@ -325,6 +331,7 @@
     {
       "name": "L2-3 Vorbeikommen – erst der Parcours, dann der Gegner",
       "leitfrage": "Wie komme ich an einem vorbei?",
+      "ziel_kinder": "Heute dribbelst du mit Blick nach oben – erst durch den Parcours, dann am Gegner vorbei.",
       "folge_nr": 3,
       "tags": [
         "schlechtwetter",
@@ -353,19 +360,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei: durch den Parcours, Tempo selbst wählen",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Dribbling-Parcours"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: am letzten Tor wartet ein Gegner – vorbeikommen, dann abschließen",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Dribbling-Parcours"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Parcours weg, freies 1 gegen 1 auf dieselben Tore",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Dribbling-Parcours"
         },
         {
@@ -379,6 +386,7 @@
     {
       "name": "L2-4 Vorbeikommen – und dann in die Breite",
       "leitfrage": "Wie komme ich an einem vorbei?",
+      "ziel_kinder": "Heute gehst du nach dem Trick nach außen, wo Platz ist.",
       "folge_nr": 4,
       "tags": [],
       "dauer_min": 75,
@@ -404,19 +412,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei: 4 gegen 4 auf je zwei Minitore",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Zwei-Tore-Umschalten"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: ein Tor zählt nur, wenn vorher einer am Gegenspieler vorbeigedribbelt ist",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Zwei-Tore-Umschalten"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Regel weg, Feld breiter",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Zwei-Tore-Umschalten"
         },
         {
@@ -430,6 +438,7 @@
     {
       "name": "L3-1 Tore machen – kurz und mit beiden Füßen",
       "leitfrage": "Wie mache ich ein Tor?",
+      "ziel_kinder": "Heute schießt du mit beiden Füßen aufs Tor.",
       "folge_nr": 1,
       "tags": [
         "vor-spieltag"
@@ -450,26 +459,26 @@
         },
         {
           "typ": "warmup",
-          "label": "Warm up Adler, voll (Spieltagswoche)",
-          "dauer": 12,
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
           "uebung_name": "Warm up Adler"
         },
         {
           "typ": "main",
           "label": "Stufe 1 – frei",
-          "dauer": 10,
+          "dauer": 12,
           "uebung_name": "Torschuss-Wettbewerb"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: erster Kontakt zum Tor",
-          "dauer": 10,
+          "dauer": 12,
           "uebung_name": "Torschuss-Wettbewerb"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Abschluss aus dem Spiel",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Torschuss-Wettbewerb"
         },
         {
@@ -481,7 +490,7 @@
         {
           "typ": "abschluss",
           "label": "Abschlussturnier",
-          "dauer": 17
+          "dauer": 18
         }
       ],
       "ordnung": "ohne Gegner"
@@ -489,6 +498,7 @@
     {
       "name": "L3-2 Tore machen – der letzte Pass geht quer",
       "leitfrage": "Wie mache ich ein Tor?",
+      "ziel_kinder": "Heute spielst du vor dem Tor noch einmal quer – dann trifft dein Mitspieler leichter.",
       "folge_nr": 2,
       "tags": [],
       "dauer_min": 75,
@@ -514,19 +524,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei: 3 gegen 3 auf vier Minitore",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Quer vor Tor"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: Tor zählt nur nach einem Querpass in der letzten Zone",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Quer vor Tor"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Regel weg, Feld größer",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Quer vor Tor"
         },
         {
@@ -540,6 +550,7 @@
     {
       "name": "L3-3 Tore machen – Mut zählt doppelt",
       "leitfrage": "Wie mache ich ein Tor?",
+      "ziel_kinder": "Heute zählt jeder Schuss – auch der, der danebengeht.",
       "folge_nr": 3,
       "tags": [
         "vor-spieltag"
@@ -560,32 +571,32 @@
         },
         {
           "typ": "warmup",
-          "label": "Warm up Adler, voll (Spieltagswoche)",
-          "dauer": 12,
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
           "uebung_name": "Warm up Adler"
         },
         {
           "typ": "main",
           "label": "Stufe 1 – frei: 3 gegen 3, jedes Tor zählt einen Punkt",
-          "dauer": 10,
+          "dauer": 12,
           "uebung_name": "Fehler-Festival"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: Finte und schwacher Fuß zählen zwei Punkte, auch ohne Tor",
-          "dauer": 10,
+          "dauer": 12,
           "uebung_name": "Fehler-Festival"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Wertung bleibt, Feld größer",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Fehler-Festival"
         },
         {
           "typ": "abschluss",
           "label": "Abschlussturnier",
-          "dauer": 17
+          "dauer": 18
         }
       ],
       "ordnung": "Dreieck (3 gegen 3)"
@@ -593,6 +604,7 @@
     {
       "name": "L4-1 Passen – den freien Mitspieler finden",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "ziel_kinder": "Heute schaust du vor dem Pass, wer frei ist.",
       "folge_nr": 1,
       "tags": [],
       "dauer_min": 75,
@@ -618,19 +630,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "4gg2 Ballbesitz"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: höchstens zwei Kontakte",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "4gg2 Ballbesitz"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Kontakte frei, Feld größer",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "4gg2 Ballbesitz"
         },
         {
@@ -644,6 +656,7 @@
     {
       "name": "L4-2 Passen – Lehrgangsform 15:30:15:30",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "ziel_kinder": "Heute heben wir vor dem Pass den Kopf und suchen den freien Mitspieler.",
       "folge_nr": 2,
       "tags": [],
       "dauer_min": 90,
@@ -703,6 +716,7 @@
     {
       "name": "L4-3 Passen – jeder muss einmal",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "ziel_kinder": "Heute bekommt jeder den Ball – wir suchen den, der ihn noch nicht hatte.",
       "folge_nr": 3,
       "tags": [],
       "dauer_min": 75,
@@ -728,19 +742,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei: 3 gegen 3 auf vier Minitore",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Pflichtpass-Funino"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: Tor zählt erst, wenn jeder im Team einmal gepasst hat",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Pflichtpass-Funino"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Regel weg, Feld größer",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Pflichtpass-Funino"
         },
         {
@@ -754,6 +768,7 @@
     {
       "name": "L4-4 Passen – das Dreieck dreht sich",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "ziel_kinder": "Heute läufst du nach deinem Pass sofort weiter.",
       "folge_nr": 4,
       "tags": [
         "halle",
@@ -782,19 +797,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei: passen und zur Position des Empfängers laufen",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Dreieck-Passspiel"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: höchstens zwei Kontakte, ein Gegner in der Mitte",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Dreieck-Passspiel"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: dasselbe Prinzip im 3 gegen 3 auf Minitore",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Dreieck-Passspiel"
         },
         {
@@ -808,6 +823,7 @@
     {
       "name": "L5-1 Anbieten – wo kriege ich den Ball?",
       "leitfrage": "Wo stelle ich mich hin, damit ich den Ball kriege?",
+      "ziel_kinder": "Heute läufst du dich frei, bevor der Ball kommt.",
       "folge_nr": 1,
       "tags": [
         "schlechtwetter"
@@ -835,19 +851,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Scanning-Funino"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: Tor zählt nur nach Seitenwechsel",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Scanning-Funino"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Regel weg, vier Tore",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Scanning-Funino"
         },
         {
@@ -861,6 +877,7 @@
     {
       "name": "L5-2 Anbieten – die Raute lebt",
       "leitfrage": "Wo stelle ich mich hin, damit ich den Ball kriege?",
+      "ziel_kinder": "Heute bleibt jeder auf seinem Platz in der Raute – auch wenn der Ball weit weg ist.",
       "folge_nr": 2,
       "tags": [
         "vor-spieltag"
@@ -881,32 +898,32 @@
         },
         {
           "typ": "warmup",
-          "label": "Warm up Adler, voll (Spieltagswoche)",
-          "dauer": 12,
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
           "uebung_name": "Warm up Adler"
         },
         {
           "typ": "main",
           "label": "Stufe 1 – frei: 4+1 gegen 4+1, Raute als Grundordnung",
-          "dauer": 10,
+          "dauer": 12,
           "uebung_name": "4+1 Lebende Raute"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: Tor zählt nur bei besetzter Raute im Moment des Abschlusses",
-          "dauer": 10,
+          "dauer": 12,
           "uebung_name": "4+1 Lebende Raute"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Regel weg, Spiel wie am Spieltag",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "4+1 Lebende Raute"
         },
         {
           "typ": "abschluss",
           "label": "Abschlussturnier",
-          "dauer": 17
+          "dauer": 18
         }
       ],
       "ordnung": "Raute (4 gegen 4)"
@@ -914,6 +931,7 @@
     {
       "name": "L5-3 Anbieten – jeder hält seinen Korridor",
       "leitfrage": "Wo stelle ich mich hin, damit ich den Ball kriege?",
+      "ziel_kinder": "Heute bleibst du in deiner Bahn und rennst nicht alle zum Ball.",
       "folge_nr": 3,
       "tags": [],
       "dauer_min": 75,
@@ -939,19 +957,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei: 3 gegen 3 auf vier Minitore, Korridore markiert",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Korridor-Funino"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: Tor zählt nur, wenn beim Abschluss alle Korridore besetzt sind",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Korridor-Funino"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Korridore weg, Feld größer",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Korridor-Funino"
         },
         {
@@ -965,6 +983,7 @@
     {
       "name": "L6-1 Zurückholen – sofort nach dem Verlust",
       "leitfrage": "Wie hole ich mir den Ball zurück?",
+      "ziel_kinder": "Heute holst du dir den Ball sofort zurück, wenn du ihn verloren hast.",
       "folge_nr": 1,
       "tags": [
         "wenig-platz"
@@ -992,19 +1011,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Pressing-Welle 2gg2"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: fünf Sekunden nach Verlust",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Pressing-Welle 2gg2"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Regel weg, freies Spiel",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Pressing-Welle 2gg2"
         },
         {
@@ -1018,6 +1037,7 @@
     {
       "name": "L6-2 Zurückholen – Igel, und sofort wieder Adler",
       "leitfrage": "Wie hole ich mir den Ball zurück?",
+      "ziel_kinder": "Heute machen wir uns klein wie ein Igel – und sind danach sofort wieder Adler.",
       "folge_nr": 2,
       "tags": [],
       "dauer_min": 75,
@@ -1043,19 +1063,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei: 3 gegen 3 auf Minitore",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Igel-Pressing-Kreis"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: nach jedem Ballverlust „Igel!“ – enger Kreis um den Ball, Eroberung bringt zwei Bonuspunkte",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Igel-Pressing-Kreis"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: kein Zuruf mehr, die Kinder rufen sich selbst „Igel!“ und „Adler!“ zu",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Igel-Pressing-Kreis"
         },
         {
@@ -1069,6 +1089,7 @@
     {
       "name": "L4-5 Passen – Ball zum Freien, Tor nach Pass zählt doppelt",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "ziel_kinder": "Heute passen wir zum Freien – ein Tor nach einem Pass zählt doppelt.",
       "folge_nr": 5,
       "tags": [],
       "dauer_min": 90,
@@ -1115,6 +1136,7 @@
     {
       "name": "L4-6 3+1 – Adler: breit werden, der Torwart spielt mit",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "ziel_kinder": "Heute werden wir breit wie ein Adler, und der Torwart spielt mit.",
       "folge_nr": 6,
       "tags": [],
       "dauer_min": 75,
@@ -1141,7 +1163,7 @@
         },
         {
           "typ": "spielform",
-          "label": "Hauptteil 1 – Stationen, 3 Min frei, dann eng: Adler aus dem Tor (Punkt nur, wenn der Torwart vorher angespielt wurde) | 2 gegen 1 plus Torwart (Tor nach Querpass zählt doppelt)",
+          "label": "Hauptteil 1 – Stationen: Adler aus dem Tor (Punkt nur, wenn der Torwart vorher angespielt wurde) | 2 gegen 1 plus Torwart (Tor nach Querpass zählt doppelt)",
           "dauer": 12,
           "stationen": [
             {
@@ -1154,7 +1176,7 @@
         },
         {
           "typ": "spielform",
-          "label": "Hauptteil 2 – Gruppen wechseln die Station, 3 Min frei, dann eng: Regeln wie in Hauptteil 1",
+          "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
           "dauer": 12,
           "stationen": [
             {
@@ -1181,6 +1203,7 @@
     {
       "name": "L5-4 3+1 – Raute ohne Aufpasser: wo stehe ich?",
       "leitfrage": "Wo stelle ich mich hin, damit ich den Ball kriege?",
+      "ziel_kinder": "Heute weißt du im 3+1, wo dein Platz ist: Flitzer außen, Jäger vorn.",
       "folge_nr": 4,
       "tags": [],
       "dauer_min": 75,
@@ -1207,7 +1230,7 @@
         },
         {
           "typ": "spielform",
-          "label": "Hauptteil 1 – Stationen, 3 Min frei, dann eng: Jäger und zwei Flitzer (Tor nur mit beiden Flitzern im Korridor) | Adler aus dem Tor (Punkt nur, wenn beide Flitzer am Ball waren)",
+          "label": "Hauptteil 1 – Stationen: Jäger und zwei Flitzer (Tor nur mit beiden Flitzern im Korridor) | Adler aus dem Tor (Punkt nur, wenn beide Flitzer am Ball waren)",
           "dauer": 12,
           "stationen": [
             {
@@ -1220,7 +1243,7 @@
         },
         {
           "typ": "spielform",
-          "label": "Hauptteil 2 – Gruppen wechseln die Station, 3 Min frei, dann eng: Regeln wie in Hauptteil 1",
+          "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
           "dauer": 12,
           "stationen": [
             {
@@ -1247,6 +1270,7 @@
     {
       "name": "L6-3 3+1 – Igel: die Flitzer schließen die Lücke",
       "leitfrage": "Wie hole ich mir den Ball zurück?",
+      "ziel_kinder": "Heute rücken die Flitzer eng vors Tor, wenn der Gegner den Ball hat.",
       "folge_nr": 3,
       "tags": [],
       "dauer_min": 75,
@@ -1273,7 +1297,7 @@
         },
         {
           "typ": "spielform",
-          "label": "Hauptteil 1 – Stationen, 3 Min frei, dann eng: Igel gegen drei (Eroberung vor der Schusshöhe zählt doppelt) | Jäger läuft an, Flitzer stellt zu (Bonus bei Eroberung in fünf Sekunden)",
+          "label": "Hauptteil 1 – Stationen: Igel gegen drei (Eroberung vor der Schusshöhe zählt doppelt) | Jäger läuft an, Flitzer stellt zu (Bonus bei Eroberung in fünf Sekunden)",
           "dauer": 12,
           "stationen": [
             {
@@ -1286,7 +1310,7 @@
         },
         {
           "typ": "spielform",
-          "label": "Hauptteil 2 – Gruppen wechseln die Station, 3 Min frei, dann eng: Regeln wie in Hauptteil 1",
+          "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
           "dauer": 12,
           "stationen": [
             {
@@ -1313,6 +1337,7 @@
     {
       "name": "L4-7 FUNiño – der Aufpasser verteilt",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "ziel_kinder": "Heute verteilt der Aufpasser den Ball zur freien Seite.",
       "folge_nr": 7,
       "tags": [],
       "dauer_min": 75,
@@ -1339,7 +1364,7 @@
         },
         {
           "typ": "spielform",
-          "label": "Hauptteil 1 – Stationen, 3 Min frei, dann eng: 3 gegen 3, Seitenwechsel über den Aufpasser zählt doppelt | 3 gegen 1, der Mittlere hat den Ball",
+          "label": "Hauptteil 1 – Stationen: 3 gegen 3, Seitenwechsel über den Aufpasser zählt doppelt | 3 gegen 1, der Mittlere hat den Ball",
           "dauer": 12,
           "stationen": [
             {
@@ -1352,7 +1377,7 @@
         },
         {
           "typ": "spielform",
-          "label": "Hauptteil 2 – Gruppen wechseln die Station, 3 Min frei, dann eng: Regeln wie in Hauptteil 1",
+          "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
           "dauer": 12,
           "stationen": [
             {
@@ -1379,6 +1404,7 @@
     {
       "name": "L5-5 FUNiño – links, Mitte, rechts",
       "leitfrage": "Wo stelle ich mich hin, damit ich den Ball kriege?",
+      "ziel_kinder": "Heute steht jeder auf seiner Seite: links, Mitte oder rechts.",
       "folge_nr": 5,
       "tags": [],
       "dauer_min": 75,
@@ -1405,7 +1431,7 @@
         },
         {
           "typ": "spielform",
-          "label": "Hauptteil 1 – Stationen, 3 Min frei, dann eng: 3 gegen 3, Tor zählt nur mit einem hinter dem Ball | 3 gegen 2 mit Wandspieler, links, Mitte, rechts besetzt",
+          "label": "Hauptteil 1 – Stationen: 3 gegen 3, Tor zählt nur mit einem hinter dem Ball | 3 gegen 2 mit Wandspieler, links, Mitte, rechts besetzt",
           "dauer": 12,
           "stationen": [
             {
@@ -1418,7 +1444,7 @@
         },
         {
           "typ": "spielform",
-          "label": "Hauptteil 2 – Gruppen wechseln die Station, 3 Min frei, dann eng: Regeln wie in Hauptteil 1",
+          "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
           "dauer": 12,
           "stationen": [
             {
@@ -1445,6 +1471,7 @@
     {
       "name": "L6-4 FUNiño – einer drängt, zwei schützen",
       "leitfrage": "Wie hole ich mir den Ball zurück?",
+      "ziel_kinder": "Heute drängt einer den Gegner ab, und zwei schützen die Tore.",
       "folge_nr": 4,
       "tags": [],
       "dauer_min": 75,
@@ -1471,7 +1498,7 @@
         },
         {
           "typ": "spielform",
-          "label": "Hauptteil 1 – Stationen, 3 Min frei, dann eng: 3 gegen 3, Mittellinie verteidigen (Eroberung vor der Mittellinie gibt einen Punkt) | 2 gegen 2, einer drängt, einer schützt (erobertes Tor zählt doppelt)",
+          "label": "Hauptteil 1 – Stationen: 3 gegen 3, Mittellinie verteidigen (Eroberung vor der Mittellinie gibt einen Punkt) | 2 gegen 2, einer drängt, einer schützt (erobertes Tor zählt doppelt)",
           "dauer": 12,
           "stationen": [
             {
@@ -1484,7 +1511,7 @@
         },
         {
           "typ": "spielform",
-          "label": "Hauptteil 2 – Gruppen wechseln die Station, 3 Min frei, dann eng: Regeln wie in Hauptteil 1",
+          "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
           "dauer": 12,
           "stationen": [
             {
@@ -1511,6 +1538,7 @@
     {
       "name": "L5-6 3+1 gegen FUNiño – große und kleine Tore",
       "leitfrage": "Wo stelle ich mich hin, damit ich den Ball kriege?",
+      "ziel_kinder": "Heute spielen wir auf große und kleine Tore und wechseln schnell die Aufstellung.",
       "folge_nr": 6,
       "tags": [],
       "dauer_min": 75,
@@ -1537,7 +1565,7 @@
         },
         {
           "typ": "spielform",
-          "label": "Hauptteil 1 – Stationen, 3 Min frei, dann eng: Adler aus dem Tor (Punkt nur, wenn der Torwart vorher angespielt wurde) | 3 gegen 1, der Mittlere hat den Ball",
+          "label": "Hauptteil 1 – Stationen: Adler aus dem Tor (Punkt nur, wenn der Torwart vorher angespielt wurde) | 3 gegen 1, der Mittlere hat den Ball",
           "dauer": 12,
           "stationen": [
             {
@@ -1550,7 +1578,7 @@
         },
         {
           "typ": "spielform",
-          "label": "Hauptteil 2 – Gruppen wechseln die Station, 3 Min frei, dann eng: Regeln wie in Hauptteil 1",
+          "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
           "dauer": 12,
           "stationen": [
             {
@@ -1577,6 +1605,7 @@
     {
       "name": "L6-5 3+1 gegen FUNiño – zwei Arten, den Ball zurückzuholen",
       "leitfrage": "Wie hole ich mir den Ball zurück?",
+      "ziel_kinder": "Heute lernst du zwei Arten, dir den Ball zurückzuholen.",
       "folge_nr": 5,
       "tags": [],
       "dauer_min": 75,
@@ -1603,7 +1632,7 @@
         },
         {
           "typ": "spielform",
-          "label": "Hauptteil 1 – Stationen, 3 Min frei, dann eng: Igel gegen drei (Eroberung vor der Schusshöhe zählt doppelt) | einer drängt, einer schützt (Tor innerhalb von fünf Sekunden nach Ballgewinn zählt doppelt)",
+          "label": "Hauptteil 1 – Stationen: Igel gegen drei (Eroberung vor der Schusshöhe zählt doppelt) | einer drängt, einer schützt (Tor innerhalb von fünf Sekunden nach Ballgewinn zählt doppelt)",
           "dauer": 12,
           "stationen": [
             {
@@ -1616,7 +1645,7 @@
         },
         {
           "typ": "spielform",
-          "label": "Hauptteil 2 – Gruppen wechseln die Station, 3 Min frei, dann eng: Regeln wie in Hauptteil 1",
+          "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
           "dauer": 12,
           "stationen": [
             {
@@ -1643,6 +1672,7 @@
     {
       "name": "L4-8 Drei Felder – 3+1 und FUNiño nebeneinander",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
+      "ziel_kinder": "Heute spielst du 3+1 und Funino nebeneinander und bleibst weit genug weg vom Ball, damit du angespielt werden kannst.",
       "folge_nr": 8,
       "tags": [],
       "dauer_min": 75,
@@ -1669,7 +1699,7 @@
         },
         {
           "typ": "spielform",
-          "label": "Hauptteil 1 – drei Stationen, 3 Min frei, dann eng: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
+          "label": "Hauptteil 1 – drei Stationen: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
           "dauer": 12,
           "stationen": [
             {
@@ -1719,6 +1749,408 @@
           "typ": "abschluss",
           "label": "Abschlussturnier auf zwei Feldern: 3+1 gegen 3+1 am Jugendtor, FUNiño 3 gegen 3 an den Minitoren, nach der Hälfte Felder tauschen",
           "dauer": 16
+        }
+      ]
+    },
+    {
+      "name": "L1-5 3+1 – Ball behalten, der Torwart ist die Rettung",
+      "leitfrage": "Wie behalte ich den Ball, wenn einer kommt?",
+      "ziel_kinder": "Heute behalten wir den Ball, und wenn es eng wird, hilft der Torwart.",
+      "folge_nr": 5,
+      "tags": [],
+      "dauer_min": 75,
+      "netto_spielform_min": 38,
+      "skalierung": {
+        "8": "Ein Feld, zwei Teams zu je 4 (3+1), keine Rotation; in den Hauptteilen 1 und 2 zwei Gruppen zu 4 mit den leichteren Varianten (3+1 gegen 1 bzw. ohne Wartende).",
+        "10": "Hauptteile 1 und 2: zwei Gruppen zu 5, an jeder Station rotiert ein Kind nach jedem Durchgang ein. Hauptteil 3 und Turnier: 3+1 gegen 3+1 mit je einem Wechsler – im Plan Feld 2 weglassen.",
+        "12": "Hauptteile 1 und 2: zwei Gruppen zu 6, je Halbfeld eine Station (ist nur ein Jugendtor frei, spielt Station 2 auf zwei Minitore mit Torwart ohne Hände). Hauptteil 3 und Turnier: ein Feld, zwei Teams zu 6 (3+1 plus 2 Rotation) – im Plan Feld 2 weglassen.",
+        "14": "Hauptteile 1 und 2: zwei Gruppen zu 7, an jeder Station rotieren zwei Kinder ein. Hauptteil 3 und Turnier: zwei Felder, 3+1 gegen 3+1 mit Wechslern; fehlt für das zweite Feld das Jugendtor, ersetzen es zwei Minitore mit Torwart ohne Hände in der Schusszone."
+      },
+      "beobachtung": "Welcher Flitzer hat den Ball abgeschirmt statt ihn wegzuschlagen, und wer hat den Torwart als Anspielstation genutzt?",
+      "ordnung": "3+1",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 1 – Stationen: 3+1 gegen 3, der Torwart ist die Rettung | 3+1 gegen 2, Adler aus dem Tor",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "3+1 gegen 3 – Ball halten, der Torwart ist die Rettung"
+            },
+            {
+              "uebung_name": "3+1 gegen 2 – Adler aus dem Tor"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "3+1 gegen 3 – Ball halten, der Torwart ist die Rettung"
+            },
+            {
+              "uebung_name": "3+1 gegen 2 – Adler aus dem Tor"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 3 – offen: 3+1 gegen 3+1 auf einem Feld, beide Gruppen, keine Zusatzregel",
+          "dauer": 10,
+          "uebung_name": "3+1 gegen 3+1 – Raute ohne Aufpasser"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
+      ]
+    },
+    {
+      "name": "L1-6 FUNiño – Ball behalten, einer bleibt hinter dem Ball",
+      "leitfrage": "Wie behalte ich den Ball, wenn einer kommt?",
+      "ziel_kinder": "Heute schützen wir den Ball und suchen das freie Tor.",
+      "folge_nr": 6,
+      "tags": [],
+      "dauer_min": 75,
+      "netto_spielform_min": 38,
+      "skalierung": {
+        "8": "Hauptteile 1 und 2: zwei Gruppen zu 4, Stationen mit der leichteren Variante, höchstens 2 gegen 2. Hauptteil 3: ein FUNiño-Feld 3 gegen 3 plus 2 Rotation – Feld 2 weglassen.",
+        "10": "Hauptteile 1 und 2: zwei Gruppen zu 5, an jeder Station rotiert ein Kind ein. Hauptteil 3 und Turnier: 3 gegen 3 mit je einem Wechsler auf einem Feld – im Plan Feld 2 weglassen.",
+        "12": "Zwei Gruppen zu 6, je Gruppe ein FUNiño-Feld. Hauptteil 3 auf beiden Feldern 3 gegen 3. Turnier: vier Teams zu 3 auf zwei Feldern, Gewinner rückt ein Feld auf.",
+        "14": "Hauptteile 1 und 2: zwei Gruppen zu 7, an jeder Station rotieren zwei Kinder ein. Hauptteil 3 und Turnier: zwei Felder 3 gegen 3 mit je einem Wechsler; das zweite Feld mit vier Hütchentoren, nach jedem Durchgang Felder tauschen."
+      },
+      "beobachtung": "Wer hat als Aufpasser hinter dem Ball gesichert, und wer hat sich mit Ball zum freien Tor gedreht?",
+      "ordnung": "FUNiño",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 1 – Stationen: 3 gegen 3, einer bleibt hinter dem Ball | 2 gegen 2, abschirmen, dann Seite wechseln",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "FUNiño 3 gegen 3 – einer bleibt hinter dem Ball"
+            },
+            {
+              "uebung_name": "FUNiño 2 gegen 2 – abschirmen, dann Seite wechseln"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "FUNiño 3 gegen 3 – einer bleibt hinter dem Ball"
+            },
+            {
+              "uebung_name": "FUNiño 2 gegen 2 – abschirmen, dann Seite wechseln"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 3 – offen: 3 gegen 3 auf vier Minitore, keine Zusatzregel",
+          "dauer": 10,
+          "uebung_name": "3 gegen 3 auf vier Minitore mit Schusszone"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
+      ]
+    },
+    {
+      "name": "L2-5 3+1 – der Flitzer geht ins 1 gegen 1",
+      "leitfrage": "Wie komme ich an einem vorbei?",
+      "ziel_kinder": "Heute traut sich der Flitzer ins Duell und geht vorbei.",
+      "folge_nr": 5,
+      "tags": [],
+      "dauer_min": 75,
+      "netto_spielform_min": 38,
+      "skalierung": {
+        "8": "Ein Feld, zwei Teams zu je 4 (3+1), keine Rotation; in den Hauptteilen 1 und 2 zwei Gruppen zu 4 mit den leichteren Varianten (3+1 gegen 1 bzw. ohne Wartende).",
+        "10": "Hauptteile 1 und 2: zwei Gruppen zu 5, an jeder Station rotiert ein Kind nach jedem Durchgang ein. Hauptteil 3 und Turnier: 3+1 gegen 3+1 mit je einem Wechsler – im Plan Feld 2 weglassen.",
+        "12": "Hauptteile 1 und 2: zwei Gruppen zu 6, je Halbfeld eine Station (ist nur ein Jugendtor frei, spielt Station 2 auf zwei Minitore mit Torwart ohne Hände). Hauptteil 3 und Turnier: ein Feld, zwei Teams zu 6 (3+1 plus 2 Rotation) – im Plan Feld 2 weglassen.",
+        "14": "Hauptteile 1 und 2: zwei Gruppen zu 7, an jeder Station rotieren zwei Kinder ein. Hauptteil 3 und Turnier: zwei Felder, 3+1 gegen 3+1 mit Wechslern; fehlt für das zweite Feld das Jugendtor, ersetzen es zwei Minitore mit Torwart ohne Hände in der Schusszone."
+      },
+      "beobachtung": "Welcher Flitzer hat das 1 gegen 1 gesucht, statt sofort abzuspielen, und hat nach dem Vorbeikommen den Kopf gehoben?",
+      "ordnung": "3+1",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 1 – Stationen: Flitzer-Duell an der Seite | 3 gegen 2 plus Torwart, Jäger und zwei Flitzer",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor"
+            },
+            {
+              "uebung_name": "3 gegen 2 plus Torwart – Jäger und zwei Flitzer"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor"
+            },
+            {
+              "uebung_name": "3 gegen 2 plus Torwart – Jäger und zwei Flitzer"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 3 – offen: 3+1 gegen 3+1 auf einem Feld, beide Gruppen, keine Zusatzregel",
+          "dauer": 10,
+          "uebung_name": "3+1 gegen 3+1 – Raute ohne Aufpasser"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
+      ]
+    },
+    {
+      "name": "L2-6 FUNiño – vorbei und aufs freie Tor",
+      "leitfrage": "Wie komme ich an einem vorbei?",
+      "ziel_kinder": "Heute gehen wir am Gegner vorbei und schießen aufs freie Tor.",
+      "folge_nr": 6,
+      "tags": [],
+      "dauer_min": 75,
+      "netto_spielform_min": 38,
+      "skalierung": {
+        "8": "Hauptteile 1 und 2: zwei Gruppen zu 4, Stationen mit der leichteren Variante, höchstens 2 gegen 2. Hauptteil 3: ein FUNiño-Feld 3 gegen 3 plus 2 Rotation – Feld 2 weglassen.",
+        "10": "Hauptteile 1 und 2: zwei Gruppen zu 5, an jeder Station rotiert ein Kind ein. Hauptteil 3 und Turnier: 3 gegen 3 mit je einem Wechsler auf einem Feld – im Plan Feld 2 weglassen.",
+        "12": "Zwei Gruppen zu 6, je Gruppe ein FUNiño-Feld. Hauptteil 3 auf beiden Feldern 3 gegen 3. Turnier: vier Teams zu 3 auf zwei Feldern, Gewinner rückt ein Feld auf.",
+        "14": "Hauptteile 1 und 2: zwei Gruppen zu 7, an jeder Station rotieren zwei Kinder ein. Hauptteil 3 und Turnier: zwei Felder 3 gegen 3 mit je einem Wechsler; das zweite Feld mit vier Hütchentoren, nach jedem Durchgang Felder tauschen."
+      },
+      "beobachtung": "Welcher Flitzer hat eine Seite angezeigt und die andere genommen, und wer hat gesehen, welches Tor frei war?",
+      "ordnung": "FUNiño",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 1 – Stationen: 1 gegen 1, vorbei, dann das freie Minitor | 3 gegen 2 mit Wandspieler",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "FUNiño 1 gegen 1 – vorbei, dann das freie Minitor"
+            },
+            {
+              "uebung_name": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "FUNiño 1 gegen 1 – vorbei, dann das freie Minitor"
+            },
+            {
+              "uebung_name": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 3 – offen: 3 gegen 3 auf vier Minitore, keine Zusatzregel",
+          "dauer": 10,
+          "uebung_name": "3 gegen 3 auf vier Minitore mit Schusszone"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
+      ]
+    },
+    {
+      "name": "L3-4 3+1 – Abschluss, der Torwart spielt mit",
+      "leitfrage": "Wie mache ich ein Tor?",
+      "ziel_kinder": "Heute schießen wir schnell aufs Tor, bevor der Gegner zurück ist.",
+      "folge_nr": 4,
+      "tags": [],
+      "dauer_min": 75,
+      "netto_spielform_min": 38,
+      "skalierung": {
+        "8": "Ein Feld, zwei Teams zu je 4 (3+1), keine Rotation; in den Hauptteilen 1 und 2 zwei Gruppen zu 4 mit den leichteren Varianten (3+1 gegen 1 bzw. ohne Wartende).",
+        "10": "Hauptteile 1 und 2: zwei Gruppen zu 5, an jeder Station rotiert ein Kind nach jedem Durchgang ein. Hauptteil 3 und Turnier: 3+1 gegen 3+1 mit je einem Wechsler – im Plan Feld 2 weglassen.",
+        "12": "Hauptteile 1 und 2: zwei Gruppen zu 6, je Halbfeld eine Station (ist nur ein Jugendtor frei, spielt Station 2 auf zwei Minitore mit Torwart ohne Hände). Hauptteil 3 und Turnier: ein Feld, zwei Teams zu 6 (3+1 plus 2 Rotation) – im Plan Feld 2 weglassen.",
+        "14": "Hauptteile 1 und 2: zwei Gruppen zu 7, an jeder Station rotieren zwei Kinder ein. Hauptteil 3 und Turnier: zwei Felder, 3+1 gegen 3+1 mit Wechslern; fehlt für das zweite Feld das Jugendtor, ersetzen es zwei Minitore mit Torwart ohne Hände in der Schusszone."
+      },
+      "beobachtung": "Welcher Jäger oder Flitzer hat nach dem Ballgewinn sofort den Weg zum Tor gesucht, und wer hat aus der Schusszone abgeschlossen statt noch einmal zu passen?",
+      "ordnung": "3+1",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 1 – Stationen: 2 gegen 1 plus Torwart, der Flitzer macht es breit | 3+1 gegen 2, schnell abschließen: Tor innerhalb von fünf Sekunden nach Ballgewinn zählt doppelt",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "2 gegen 1 plus Torwart – der Flitzer macht es breit"
+            },
+            {
+              "uebung_name": "3+1 gegen 2 – Adler aus dem Tor"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "2 gegen 1 plus Torwart – der Flitzer macht es breit"
+            },
+            {
+              "uebung_name": "3+1 gegen 2 – Adler aus dem Tor"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 3 – offen: 3+1 gegen 3+1 auf einem Feld, beide Gruppen, keine Zusatzregel",
+          "dauer": 10,
+          "uebung_name": "3+1 gegen 3+1 – Raute ohne Aufpasser"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
+      ]
+    },
+    {
+      "name": "L3-5 FUNiño – aus der Schusszone aufs Minitor",
+      "leitfrage": "Wie mache ich ein Tor?",
+      "ziel_kinder": "Heute kommen wir in die Schusszone und treffen das freie Tor.",
+      "folge_nr": 5,
+      "tags": [],
+      "dauer_min": 75,
+      "netto_spielform_min": 38,
+      "skalierung": {
+        "8": "Hauptteile 1 und 2: zwei Gruppen zu 4, Stationen mit der leichteren Variante, höchstens 2 gegen 2. Hauptteil 3: ein FUNiño-Feld 3 gegen 3 plus 2 Rotation – Feld 2 weglassen.",
+        "10": "Hauptteile 1 und 2: zwei Gruppen zu 5, an jeder Station rotiert ein Kind ein. Hauptteil 3 und Turnier: 3 gegen 3 mit je einem Wechsler auf einem Feld – im Plan Feld 2 weglassen.",
+        "12": "Zwei Gruppen zu 6, je Gruppe ein FUNiño-Feld. Hauptteil 3 auf beiden Feldern 3 gegen 3. Turnier: vier Teams zu 3 auf zwei Feldern, Gewinner rückt ein Feld auf.",
+        "14": "Hauptteile 1 und 2: zwei Gruppen zu 7, an jeder Station rotieren zwei Kinder ein. Hauptteil 3 und Turnier: zwei Felder 3 gegen 3 mit je einem Wechsler; das zweite Feld mit vier Hütchentoren, nach jedem Durchgang Felder tauschen."
+      },
+      "beobachtung": "Welcher Flitzer ist mit Ball in die Schusszone gekommen, und wer hat das freie Tor gewählt?",
+      "ordnung": "FUNiño",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 1 – Stationen: 3 gegen 1, der Mittlere hat den Ball | 3 gegen 3, Seitenwechsel zählt doppelt",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "FUNiño 3 gegen 1 – der Mittlere hat den Ball"
+            },
+            {
+              "uebung_name": "FUNiño 3 gegen 3 – Seitenwechsel zählt doppelt"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "FUNiño 3 gegen 1 – der Mittlere hat den Ball"
+            },
+            {
+              "uebung_name": "FUNiño 3 gegen 3 – Seitenwechsel zählt doppelt"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 3 – offen: 3 gegen 3 auf vier Minitore, keine Zusatzregel",
+          "dauer": 10,
+          "uebung_name": "3 gegen 3 auf vier Minitore mit Schusszone"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
         }
       ]
     }

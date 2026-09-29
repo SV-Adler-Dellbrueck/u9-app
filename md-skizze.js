@@ -561,18 +561,20 @@ function _skzNaechsteNr(){
 
 /* Öffnet den Editor. `start` ist eine vorhandene Beschreibung (oder null),
    `cb(spec|null)` bekommt das Ergebnis – null heißt „keine Skizze". */
-function skzEditorOpen(start,cb){
+/* v640: `opt.titel` – dieselbe Zeichenfläche dient auch dem Taktikboard („Spielsituation“). */
+function skzEditorOpen(start,cb,opt){
+  const titel=(opt&&opt.titel)||"Skizze zur Übung";
   _skzSpec=Object.assign(_skzLeer(),_skzKopie(start||{}));
   _skzCb=cb; _skzWerk="spieler"; _skzFarbe="g"; _skzZaehlen=false; _skzStart=null; _skzVerlauf=[]; _skzZieh=null; _skzBildNr=0;
   document.getElementById("skz-modal")?.remove();
   const m=document.createElement("div"); m.id="skz-modal";
-  m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Skizze zur Übung");
+  m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label",titel);
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;padding:12px;overflow-y:auto";
   m.style.zIndex=(typeof zOben==="function")?zOben(10005):10005;
   m.onclick=e=>{if(e.target===m)m.remove();};
   const c=document.createElement("div");
   c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
-  c.innerHTML=`${mdlHead("skz-modal","🎨","Skizze zur Übung","Vorlage wählen oder selbst tippen","#0284c7")}
+  c.innerHTML=`${mdlHead("skz-modal","🎨",esc(titel),"Vorlage wählen oder selbst tippen","#0284c7")}
     <div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:2px 0 6px">Vorlagen</div>
     <div style="display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;margin-bottom:10px">${skzVorlagenLeiste()}</div>
     <div id="skz-bildleiste"></div>
@@ -754,6 +756,72 @@ async function tfSkizzeKi(){
   }catch(e){
     toast(String((e&&e.message)||"Es hat nicht geklappt – bitte nochmal."),"err");
   }finally{ if(knopf){ knopf.disabled=false; knopf.innerHTML=vorher; } }
+}
+
+/* ═══ v639 – KI ZUERST IN DER ÜBUNGSMASKE ═══
+   PO: „Bei eigene Übung anlegen sollte schon auf der ersten Kachel ein KI-Modus zur Beschreibung
+   der Übung geben. Aktuell liegt der KI-Modus nur auf der Skizzen-Ebene.“
+   Oben erzählt der Trainer (tippen oder einsprechen, derselbe Diktat-Weg wie in der
+   Nachbereitung). „KI-Auswertung“ schickt den Text an ki-uebung (modus „text“: nichts dazuerfinden)
+   und füllt ALLE Felder der Maske samt Skizze. Gespeichert wird erst mit „Übung erfassen“.
+   Kindernamen gehen nicht hinaus – falls jemand welche nennt, maskiert nbMaske (Welle 2, geschützt). */
+const TF_KATS=["aufwaermen","raute","passspiel","wahrnehmung","technik","pressing","spass","torwart","individual","mindset"];
+function tfKiDiktat(){
+  if(typeof diktatUmschalten!=="function"){ toast("Einsprechen geht hier nicht – das Mikrofon der Tastatur funktioniert immer","info"); return; }
+  if(typeof diktatMoeglich==="function"&&!diktatMoeglich()){ toast("Dieses Gerät kann nicht zuhören – nutze das Mikrofon der Tastatur","info"); return; }
+  diktatUmschalten({ feldId:"tf-ki-text", knopfId:"tf-ki-mic", anzeigeId:"tf-ki-hoer", max:4000,
+    onText:()=>{ const f=document.getElementById("tf-ki-text"); if(f&&typeof feldWachsen==="function")feldWachsen(f); } });
+}
+function tfKiStopp(){ if(typeof _dk!=="undefined"&&_dk&&_dk.feldId==="tf-ki-text"&&typeof diktatStop==="function")diktatStop(); }
+/* Eine Antwort von ki-uebung in die Maske schreiben. Nur, was die KI geliefert hat, ersetzt ein
+   Feld – eine leere Angabe lässt stehen, was schon drinsteht. */
+function tfKiEintragen(u, zurueck){
+  const z=t=>zurueck?zurueck(String(t||"")):String(t||"");
+  const setz=(id,v)=>{ const el=document.getElementById(id); v=z(v).trim(); if(!el||!v)return false; el.value=v; if(typeof feldWachsen==="function")feldWachsen(el); return true; };
+  const zahl=t=>String(t||"").replace(/\s*(min(uten)?|minute[n]?)\.?\s*$/i,"").trim();
+  const n=[];
+  if(setz("tf-name",u.titel))n.push("Name");
+  if(TF_KATS.includes(u.kat)){ const k=document.getElementById("tf-kat"); if(k){ k.value=u.kat; n.push("Kategorie"); } }
+  if(setz("tf-spieler",u.spieler))n.push("Kinder");
+  if(setz("tf-feld",u.feld))n.push("Feld");
+  if(setz("tf-dauer",zahl(u.dauer)))n.push("Minuten");
+  const ablauf=[u.beschreibung, u.material?("Material: "+u.material):""].filter(Boolean).join("\n\n");
+  if(setz("tf-ablauf",ablauf))n.push("Ablauf");
+  if(setz("tf-varianten",u.variante))n.push("Varianten");
+  if(setz("tf-coaching",u.coaching))n.push("Coaching");
+  const d=Number(u.diff); if(d>=1&&d<=3){ const el=document.getElementById("tf-diff"); if(el){ el.value=String(d); n.push("Schwierigkeit"); } }
+  const spec=(u.skizze&&typeof skzSpecSaeubern==="function")?skzSpecSaeubern(u.skizze):null;
+  if(spec){ window.TF_SKIZZE=spec; tfSkizzeVorschau(); n.push("Skizze"); }
+  return n;
+}
+async function tfKiAuswerten(){
+  const feld=document.getElementById("tf-ki-text"), st=document.getElementById("tf-ki-stand"), los=document.getElementById("tf-ki-los");
+  const roh=String((feld&&feld.value)||"").trim();
+  if(roh.length<40){ if(st)st.textContent="Erzähl etwas mehr – Aufbau, Ablauf, wie viele Kinder (mindestens zwei, drei Sätze)."; return; }
+  tfKiStopp();
+  const m=(typeof nbMaske==="function")?nbMaske([]):null;
+  const text=m?m.weg(roh):roh;
+  const zurueck=m?(t=>t.replace(/Kind (\d+)/g,(x,k)=>(m.zurueck&&m.zurueck["Kind "+k])||x)):null;
+  if(los){ los.disabled=true; los.innerHTML='<i class="ti ti-loader-2"></i>Wertet aus …'; }
+  if(st)st.textContent="🧠 Die KI liest deine Beschreibung und zeichnet die Skizze …";
+  const ctrl=new AbortController(), zu=setTimeout(()=>ctrl.abort(),60000);
+  try{
+    const kinder=(typeof KADER!=="undefined"&&Array.isArray(KADER))?KADER.filter(k=>k&&k.aktiv!==false).length:0;
+    const r=await fetch(`${SB_URL}/functions/v1/ki-uebung`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({modus:"text",text,kinder}),signal:ctrl.signal});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(String(d.error||("Fehler "+r.status)));
+    const u=(d.uebungen||[])[0];
+    if(!u)throw new Error("Die KI hat keine Übung erkannt – beschreib Aufbau und Ablauf etwas genauer.");
+    const n=tfKiEintragen(u, zurueck);
+    if(st)st.innerHTML=n.length?`✨ Eingetragen: ${esc(n.join(" · "))}. <b>Prüfen, anpassen, dann „Übung erfassen“.</b>`:"Die KI hat nichts gefunden, das zu einem Feld passt – beschreib die Übung genauer.";
+    document.getElementById("tf-name")?.scrollIntoView({block:"center",behavior:"smooth"});
+  }catch(e){
+    const msg=(e&&e.name==="AbortError")?"Zeitüberschreitung – bitte nochmal versuchen.":(e instanceof TypeError)?"Kein Netz – bitte später nochmal.":String((e&&e.message)||"Es hat nicht geklappt.");
+    if(st)st.textContent="Nicht ausgewertet: "+msg+" Dein Text bleibt stehen.";
+  }finally{
+    clearTimeout(zu);
+    if(los){ los.disabled=false; los.innerHTML='<i class="ti ti-sparkles"></i>KI-Auswertung'; }
+  }
 }
 
 /* ═══ v555 – PRÄSENTATIONSMODUS ═══
@@ -1316,8 +1384,14 @@ function skzGrossOpen(idx){
   if(!f){ if(typeof toast==="function")toast("Übung nicht gefunden","err"); return; }
   const spec=skzSpecVon(f);
   if(!spec&&!(f.svg&&f.svg.length>10)){ if(typeof toast==="function")toast("Zu dieser Übung gibt es keine Skizze","info"); return; }
+  skzGrossZeigen(spec,f.svg||"",f.name||"Skizze");
+}
+/* v640: Dieselbe Großansicht für eine Zeichnung, die keine Übung ist – die Spielsituationen
+   im Taktikboard. Wer eine Spec hat, braucht keinen Index in tpAllForms(). */
+function skzGrossZeigen(spec,svg,name){
+  if(!spec&&!(svg&&svg.length>10))return;
   document.getElementById("skz-gross-modal")?.remove();
-  _skzGr={spec,svg:f.svg||"",name:f.name||"Skizze",zoom:1,x:0,y:0,hell:spec?skzHellAn():false,
+  _skzGr={spec,svg:svg||"",name:name||"Skizze",zoom:1,x:0,y:0,hell:spec?skzHellAn():false,
           zeiger:new Map(),d0:0,z0:1,letzterTipp:0,besetzung:null,tausch:null,lauf:0,bild:0,wischX:null,lauft:false,uhr:null,raf:null};
   const m=document.createElement("div");
   m.id="skz-gross-modal";

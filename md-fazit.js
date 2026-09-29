@@ -136,35 +136,37 @@ async function fazitOpen(terminId){
   const c = document.createElement("div");
   c.id = "fz-card";
   c.style.cssText = "background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
-  c.innerHTML = '<div style="padding:20px;color:var(--text3);font-size:12.5px">Lade …</div>';
+  c.innerHTML = '<div style="padding:20px;color:var(--text3);font-size:var(--s-text)">Lade …</div>';
   modal.appendChild(c); document.body.appendChild(modal);
 
   const autor = (typeof trainerMe==="function" ? (await trainerMe()) : "") || "";
   const [teams, gaeste] = await Promise.all([fzTeamsLesen(t.datum), fzGaesteLesen(t)]);
-  let meine = null, fremde = 0;
+  let meine = null, fremde = 0, fremdeRows = [];
   try{
     const r = await fetch(`${SB_URL}/rest/v1/event_bewertung?termin_id=eq.${Number(t.id)}&select=*`,{headers:sbAuthHeaders()});
     if(r.ok){
       const rows = (await r.json())||[];
       meine = rows.find(x=>x.autor===autor) || null;
       fremde = rows.filter(x=>x.autor!==autor).length;
+      fremdeRows = rows.filter(x=>x.autor!==autor);
     }
   }catch(e){}
 
-  _FZ = { termin:t, autor, teams, gaeste, fremde,
+  _FZ = { termin:t, autor, teams, gaeste, fremde, fremdeRows, stand:(meine&&meine.updated_at)||null,
           wert:{ teams:(meine&&meine.teams)||{}, gaeste:(meine&&meine.gaeste)||{},
                  orga:(meine&&meine.orga)||{}, getragen:(meine&&meine.getragen)||"",
                  arbeiten:(meine&&meine.arbeiten)||"" },
           schon: !!meine };
   fazitRender();
+  nbWegStart("spiel");   // v627: geführte Nachbereitung als Standard
 }
 
-function fazitSchliessen(){ document.getElementById("fz-modal")?.remove(); _FZ=null; }
+function fazitSchliessen(){ nbDiktatStop(); _nbWeg=null; document.getElementById("fz-modal")?.remove(); _FZ=null; }   // v628: Notiz und Tagebuch-Vorschlag bleiben bis zum nächsten Termin (nbSprachHtml)
 
 function fzStufenHtml(gruppe, id, stufen, aktuell){
   return `<div style="display:flex;gap:5px">${stufen.map(st=>{
     const an = String(aktuell)===String(st.v);
-    return `<button onclick="fazitSet('${gruppe}','${id}','${st.v}')" aria-pressed="${an}" style="flex:1;min-height:44px;font-size:12px;border:1px solid var(--rand-bedien);border-radius:var(--r);cursor:pointer;font-family:inherit;background:${an?st.c:"var(--surface2)"};color:${an?"#fff":"var(--text2)"};font-weight:${an?"800":"600"}">${an?"✓ ":""}${st.l}</button>`;
+    return `<button onclick="fazitSet('${gruppe}','${id}','${st.v}')" aria-pressed="${an}" style="flex:1;min-height:44px;font-size:var(--s-text);border:1px solid var(--rand-bedien);border-radius:var(--r);cursor:pointer;font-family:inherit;background:${an?st.c:"var(--surface2)"};color:${an?"#fff":"var(--text2)"};font-weight:${an?"800":"600"}">${an?"✓ ":""}${st.l}</button>`;
   }).join("")}</div>`;
 }
 
@@ -173,38 +175,40 @@ function fazitRender(){
   const t = _FZ.termin, w = _FZ.wert;
   const d = new Date(t.datum+"T00:00:00");
   const datumStr = ["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()]+" "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"});
-  const sec = x => `<div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:16px 0 6px">${x}</div>`;
-  const fld = "width:100%;box-sizing:border-box;padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text)";
+  const sec = x => `<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:16px 0 6px">${x}</div>`;
+  const fld = "width:100%;box-sizing:border-box;padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)";
 
   const teamsHtml = _FZ.teams.map(tm=>{
     const v = w.teams[String(tm.nr)] || {};
     return `<div style="border:var(--border-s);border-radius:12px;padding:10px 11px;margin-bottom:8px;background:var(--surface2)">
-      <div style="font-size:13px;font-weight:800;margin-bottom:8px">${esc(tm.name)}${tm.form?`<span style="font-size:11px;font-weight:600;color:var(--text3)"> · ${esc(tm.form)}</span>`:""}</div>
+      <div style="font-size:var(--s-text);font-weight:800;margin-bottom:8px">${esc(tm.name)}${tm.form?`<span style="font-size:var(--s-klein);font-weight:600;color:var(--text3)"> · ${esc(tm.form)}</span>`:""}</div>
       ${FZ_REIHEN.map(re=>`<div style="margin-bottom:7px">
-        <div style="font-size:11.5px;font-weight:700;margin-bottom:3px">${re.emo} ${re.label}<span style="font-weight:500;color:var(--text3)"> · ${re.hint}</span></div>
+        <div style="font-size:var(--s-klein);font-weight:700;margin-bottom:3px">${re.emo} ${re.label}<span style="font-weight:500;color:var(--text3)"> · ${re.hint}</span></div>
         ${fzStufenHtml("teams", tm.nr+":"+re.key, FZ_STUFEN, v[re.key])}
       </div>`).join("")}
     </div>`;
   }).join("");
 
   const gaesteHtml = _FZ.gaeste.length ? _FZ.gaeste.map(g=>`<div style="margin-bottom:7px">
-      <div style="font-size:11.5px;font-weight:700;margin-bottom:3px">${esc(g)}</div>
+      <div style="font-size:var(--s-klein);font-weight:700;margin-bottom:3px">${esc(g)}</div>
       ${fzStufenHtml("gaeste", g, FZ_GAST, w.gaeste[g])}
     </div>`).join("")
-    + `<div style="font-size:10.5px;color:var(--text3);margin-top:2px">Landet beim Gegner in der Gegner-Datenbank – für die Einladungsliste des nächsten Festivals.</div>`
+    + `<div style="font-size:var(--s-klein);color:var(--text3);margin-top:2px">Landet beim Gegner in der Gegner-Datenbank – für die Einladungsliste des nächsten Festivals.</div>`
     : "";
 
   const orgaHtml = FZ_ORGA.map(o=>`<div style="margin-bottom:7px">
-      <div style="font-size:11.5px;font-weight:700;margin-bottom:3px">${o.emo} ${o.label}</div>
+      <div style="font-size:var(--s-klein);font-weight:700;margin-bottom:3px">${o.emo} ${o.label}</div>
       ${fzStufenHtml("orga", o.key, o.stufen.map((l,i)=>({v:i+1,l,c:i===1?"#15803d":"#64748b"})), w.orga[o.key])}
     </div>`).join("");
 
   c.innerHTML = `${mdlHead("fz-modal","📋",fzLabel(t)+" nachbereiten",esc(t.titel||fzLabel(t))+" · "+datumStr,"#0891b2")}
 
-    <div style="font-size:11.5px;color:var(--text2);background:var(--surface2);border-radius:10px;padding:9px 11px;line-height:1.5">
+    <div style="font-size:var(--s-klein);color:var(--text2);background:var(--surface2);border-radius:10px;padding:9px 11px;line-height:1.5">
       Hier geht es um die <b>Mannschaft</b>. Die einzelnen Kinder stehen im Blitz-Rating – was hier gefragt ist, sieht man am einzelnen Kind gar nicht.
     </div>
-    ${_FZ.fremde?`<div style="font-size:11.5px;color:var(--text2);margin-top:6px">👥 ${_FZ.fremde} weitere Einschätzung${_FZ.fremde>1?"en":""} aus dem Trainerteam liegt bereits vor – deine kommt daneben, sie ersetzt nichts.</div>`:""}
+    ${nbSprachHtml("spiel", "t"+t.id)}
+    ${typeof stempelHtml==="function"?stempelHtml(_FZ.autor||"Trainer",_FZ.stand,_FZ.schon?"· deine Nachbereitung":"· du bewertest"):""}
+    ${_FZ.fremde?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">👥 Auch bewertet von ${esc((_FZ.fremdeRows||[]).map(x=>x.autor).join(", "))} – deine Einschätzung kommt daneben, sie ersetzt nichts.</div>`:""}
 
     ${sec("Wie hat die Mannschaft gespielt")}
     ${teamsHtml}
@@ -212,21 +216,23 @@ function fazitRender(){
     ${_FZ.gaeste.length?sec("Wie stark waren die Gäste")+gaesteHtml:""}
 
     ${sec("Zwei Sätze")}
-    <label style="font-size:11.5px;font-weight:700">Das hat getragen
-      <textarea id="fz-getragen" rows="2" maxlength="300" style="${fld};margin-top:3px;resize:vertical" placeholder="Was heute gut lief – auch fürs Lob in der Kabine">${esc(w.getragen)}</textarea></label>
-    <label style="font-size:11.5px;font-weight:700;display:block;margin-top:8px">Daran arbeiten wir
-      <textarea id="fz-arbeiten" rows="2" maxlength="300" style="${fld};margin-top:3px;resize:vertical" placeholder="Steht beim nächsten Trainingsplan wieder da">${esc(w.arbeiten)}</textarea></label>
+    <label style="font-size:var(--s-klein);font-weight:700">Das hat getragen
+      <textarea id="fz-getragen" class="wachsen" rows="2" maxlength="4000" style="${fld};margin-top:3px;resize:vertical" placeholder="Was heute gut lief – auch fürs Lob in der Kabine">${esc(w.getragen)}</textarea></label>
+    <label style="font-size:var(--s-klein);font-weight:700;display:block;margin-top:8px">Daran arbeiten wir
+      <textarea id="fz-arbeiten" class="wachsen" rows="2" maxlength="4000" style="${fld};margin-top:3px;resize:vertical" placeholder="Steht beim nächsten Trainingsplan wieder da">${esc(w.arbeiten)}</textarea></label>
 
     <details style="margin-top:12px;border:var(--border-s);border-radius:12px;background:var(--surface2)">
-      <summary style="cursor:pointer;min-height:44px;display:flex;align-items:center;padding:0 12px;font-size:12.5px;font-weight:800;color:var(--text2)">⚙️ Organisation – wenn etwas hakte</summary>
+      <summary style="cursor:pointer;min-height:44px;display:flex;align-items:center;padding:0 12px;font-size:var(--s-text);font-weight:800;color:var(--text2)">⚙️ Organisation – wenn etwas hakte</summary>
       <div style="padding:2px 12px 12px">${orgaHtml}</div>
     </details>
 
     <div style="display:flex;gap:8px;margin-top:14px">
-      <button class="btn btn-p" style="flex:1;min-height:48px;justify-content:center;font-size:14px;font-weight:800" onclick="fazitSpeichern()"><i class="ti ti-check"></i>Speichern</button>
+      <button class="btn btn-p" style="flex:1;min-height:48px;justify-content:center;font-size:var(--s-karte);font-weight:800" onclick="fazitSpeichern()"><i class="ti ti-check"></i>Speichern</button>
       <button class="btn btn-sm" style="min-height:48px" onclick="fazitSchliessen()">Schließen</button>
     </div>
-    <div style="font-size:10.5px;color:var(--text3);margin-top:6px;text-align:center">Alles freiwillig – auch halb ausgefüllt ist besser als gar nicht.</div>`;
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px;text-align:center">Alles freiwillig – auch halb ausgefüllt ist besser als gar nicht.</div>`;
+  if(typeof felderWachsen==="function") felderWachsen(c);
+  if(_nbWeg && _nbWeg.art==="spiel") nbWegZeichnen();   // v627: der Ablauf überlebt das Neuzeichnen des Bogens
 }
 
 /* Derselbe Knopf nochmal = Antwort zurücknehmen. Ohne das bleibt ein Fehlgriff für immer
@@ -252,17 +258,20 @@ function fazitSet(gruppe, id, wert){
 function fazitTexteMerken(){
   if(!_FZ) return;
   const g = document.getElementById("fz-getragen"), a = document.getElementById("fz-arbeiten");
-  if(g) _FZ.wert.getragen = g.value.slice(0,300);
-  if(a) _FZ.wert.arbeiten = a.value.slice(0,300);
+  /* v679 (fehlerbild-abgeschnitten.md): hier stand .slice(0,300) – der Eintrag vom 26.09. endete
+     deshalb mitten im Satz. Das Feld selbst erlaubt 4000 Zeichen; gekürzt wird nicht mehr. */
+  if(g) _FZ.wert.getragen = g.value;
+  if(a) _FZ.wert.arbeiten = a.value;
 }
 
-async function fazitSpeichern(){
+async function fazitSpeichern(opt){
   if(!_FZ) return;
   fazitTexteMerken();
   const w = _FZ.wert;
   const body = { termin_id:Number(_FZ.termin.id), autor:_FZ.autor, teams:w.teams, gaeste:w.gaeste,
                  orga:w.orga, getragen:w.getragen||null, arbeiten:w.arbeiten||null,
                  updated_at:new Date().toISOString() };
+  const notiz = nbSprachnotizFuer("t"+_FZ.termin.id); if(notiz) body.sprachnotiz = notiz;   // v628
   try{
     const r = await fetch(`${SB_URL}/rest/v1/event_bewertung?on_conflict=termin_id,autor`,
       { method:"POST", headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'}, body:JSON.stringify(body) });
@@ -276,6 +285,7 @@ async function fazitSpeichern(){
   const terminId = Number(_FZ.termin.id);
   fazitSchliessen();
   if(typeof trainerTodoLoad==="function") trainerTodoLoad();
+  if(opt && typeof opt.danach==="function") return opt.danach();   // v679: „Wie war's?“ geht direkt zur Prüfkarte
   if(typeof tagebuchAusEvent==="function") fzWeiterInsTagebuch(terminId);
   else toast("Gespeichert ✓");
 }
@@ -283,6 +293,10 @@ async function fazitSpeichern(){
    Ein Fenster, das sich von selbst oeffnet, waere am Spielfeldrand ein Uebergriff. */
 function fzWeiterInsTagebuch(terminId){
   document.getElementById("fz-weiter")?.remove();
+  /* v679: Liegt aus der Sprachnotiz schon ein gespeicherter Vorschlag, geht es zu dessen Prüfung –
+     kein zweiter Eintrag, kein zweiter KI-Aufruf. */
+  const vid = (typeof tbVorschlagIdFuer==="function") ? tbVorschlagIdFuer("t"+Number(terminId)) : null;
+  if(vid){ nbWeiterZurPruefung(vid, "Gespeichert ✓"); return; }
   const box = document.createElement("div");
   box.id = "fz-weiter";
   box.setAttribute("role","dialog"); box.setAttribute("aria-modal","true");
@@ -290,9 +304,9 @@ function fzWeiterInsTagebuch(terminId){
   box.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10055;display:flex;align-items:center;justify-content:center;padding:18px";
   box.onclick = e => { if(e.target===box) box.remove(); };
   box.innerHTML = `<div style="background:var(--surface);color:var(--text);max-width:380px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
-    <div style="font-size:15px;font-weight:800">Gespeichert ✓</div>
-    <div style="font-size:12.5px;color:var(--text2);margin:6px 0 14px;line-height:1.5">Willst du daraus einen Tagebucheintrag machen? Auslöser und Beobachtung stehen schon da – es fehlen nur dein Aha und die Konsequenz.</div>
-    <button class="btn btn-p" onclick="document.getElementById('fz-weiter').remove();tagebuchAusEvent(${Number(terminId)})" style="width:100%;min-height:56px;justify-content:center;font-size:15px;font-weight:800"><i class="ti ti-book"></i>Ins Tagebuch</button>
+    <div style="font-size:var(--s-karte);font-weight:800">Gespeichert ✓</div>
+    <div style="font-size:var(--s-text);color:var(--text2);margin:6px 0 14px;line-height:1.5">Willst du daraus einen Tagebucheintrag machen? Auslöser und Beobachtung stehen schon da – es fehlen nur dein Aha und die Konsequenz.</div>
+    <button class="btn btn-p" onclick="document.getElementById('fz-weiter').remove();tagebuchAusEvent(${Number(terminId)})" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-book"></i>Ins Tagebuch</button>
     <button class="btn" onclick="document.getElementById('fz-weiter').remove()" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Später</button>
   </div>`;
   document.body.appendChild(box);
@@ -315,6 +329,640 @@ async function fazitOffene(tage){
     const fertig = new Set(b.ok ? ((await b.json())||[]).filter(x=>x.autor===autor).map(x=>Number(x.termin_id)) : []);
     return rows.filter(t=>!fertig.has(Number(t.id)));
   }catch(e){ return []; }
+}
+
+/* ═══ v627 · Sprachnotiz → Nachbereitung ═══════════════════════════════════════
+   PO (Bildschirmfoto „Einheit bewerten“): „Wenn ich Einheiten nachbewerte, sei es Training,
+   Spiele oder Festivals, wäre es gut, dass ich diese auch per Sprachnotiz eingeben kann und die
+   KI dann diese Notizen übernimmt und strukturiert.“
+
+   Oben im Fenster ein Kasten: frei erzählen (Mikrofon-Knopf oder das Mikrofon der Tastatur),
+   dann „In den Bogen übernehmen“. Die Edge Function ki-nachbereitung ordnet das Gesagte den
+   Feldern zu; hier wird es eingetragen – sichtbar, änderbar, NICHT gespeichert. Gespeichert
+   wird wie immer mit dem Knopf unten. Was nicht gesagt wurde, bleibt, wie es war.
+
+   Datenschutz: Vor dem Senden werden alle Kindernamen aus dem Kader durch „Kind 1“, „Kind 2“ …
+   ersetzt; die Antwort wird zurückübersetzt. Beim Sprachmodell kommt kein Name an. */
+let _nbText = "", _nbFuer = "", _nbTb = null;
+let _nbTbSichern = Promise.resolve(null), _nbBewertungZeilen = [], _nbSchnell = null;   // v679
+/* v628: Der gesprochene Text wird mit der Nachbereitung gespeichert (Spalte sprachnotiz) –
+   vorher ging er beim Schließen verloren. Nur für den Termin, zu dem er gehört. */
+/* v679: ohne .slice(0,4000) – die Notiz ist das Original (fehlerbild-abgeschnitten.md). Das Feld
+   nimmt 12000 Zeichen an, genau so viel wird gespeichert. */
+function nbSprachnotizFuer(fuer){ const t = String(_nbText||"").trim(); return (fuer===_nbFuer && t) ? t : undefined; }
+function nbTagebuchVorschlag(fuer){ return (_nbTb && _nbTb.fuer===fuer) ? _nbTb.v : null; }
+/* „Kind n“ aus der KI-Antwort → Vorname im Tagebuch der App (v638, PO: „… dass für mein eigenes
+   Tagebuch innerhalb der App die Klarnamen, also die Vornamen der Spieler … erfasst werden“).
+   Nach außen – Teilen, Export, Lehrgang – ersetzt md-tagebuch.js (tbPseudonym) sie durch Buchstaben.
+   Der Name des Schlüssels bleibt, damit ältere Aufrufer nicht brechen. */
+function nbTbDecknamen(tb, m){
+  if(!tb) return null;
+  const um = t => String(t||"").replace(/Kind (\d+)/g, (x,n)=>{
+    const name = m && m.zurueck ? m.zurueck["Kind "+n] : null;
+    return name ? (typeof tbVorname==="function" ? tbVorname(name) : String(name).split(/\s+/)[0]) : "ein Kind";
+  });
+  /* v679: Konsequenzen als Liste (höchstens zwei), Rückfragen und To-dos – alle zurückübersetzt. */
+  const kons = (Array.isArray(tb.konsequenzen) ? tb.konsequenzen : (tb.konsequenz ? [tb.konsequenz] : [])).map(um).filter(Boolean).slice(0,2);
+  return { baustein:tb.baustein, beobachtung:um(tb.beobachtung), aha:um(tb.aha), konsequenzen:kons,
+           konsequenz:kons.join("\n"), schlagworte:(tb.schlagworte||[]).map(um),
+           rueckfragen:(tb.rueckfragen||[]).map(r=>({ frage:um(r.frage||r), feld:r.feld||"beobachtung" })).slice(0,2),
+           todos:(tb.todos||[]).map(t=>({ text:um(t.text), zustaendig:t.zustaendig||null })).filter(t=>t.text) };
+}
+function nbSprachHtml(art, fuer){
+  /* Der Text gehört zu genau einem Termin – wer zum nächsten Tag wechselt, fängt leer an. */
+  if(String(fuer||"") !== _nbFuer){ _nbFuer = String(fuer||""); _nbText = ""; _nbTb = null; nbDiktatStop(); }
+  const kannHoeren = typeof diktatMoeglich==="function" && diktatMoeglich();
+  const fld = "width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text);resize:vertical";
+  return `<div id="nb-box" style="border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);padding:10px 11px;margin:10px 0 4px">
+    <div style="font-size:var(--s-text);font-weight:800">🎙️ Per Sprachnotiz ausfüllen</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin:2px 0 8px;line-height:1.45">Erzähl frei, wie es lief – ${art==="training"?"Einheit, einzelne Übungen, einzelne Kinder":"Mannschaften, Gäste, was getragen hat, woran ihr arbeitet"}. Die KI trägt ein, was du sagst; gespeichert wird erst mit dem Knopf unten.</div>
+    <textarea id="nb-text" rows="3" maxlength="12000" style="${fld};max-height:50vh" placeholder="${kannHoeren?"Mikrofon antippen und sprechen – oder hier tippen bzw. das Mikrofon der Tastatur nutzen":"Hier tippen oder das Mikrofon der Tastatur nutzen"}" oninput="_nbText=this.value;nbFeldHoehe(this)">${esc(_nbText)}</textarea>
+    <!-- v638: Die Reihe bricht um, statt über den Kasten hinauszuragen (PO-Screenshot: „KI ordnet zu“ ragte rechts heraus). -->
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
+      ${kannHoeren?`<button id="nb-mic" class="btn" style="flex:1 1 150px;min-height:48px;justify-content:center" onclick="nbDiktat('${art}')"><i class="ti ti-microphone"></i>${_nbText?"Weiter einsprechen":"Einsprechen"}</button>`:""}
+      <button id="nb-gross" class="btn" style="flex:0 0 48px;min-height:48px;justify-content:center" onclick="nbGross('${art}',false)" aria-label="Text groß anzeigen und bearbeiten"><i class="ti ti-arrows-maximize"></i></button>
+      <button id="nb-los" class="btn btn-p" style="flex:1 1 150px;min-height:48px;justify-content:center;white-space:nowrap" onclick="nbAuswerten('${art}')"><i class="ti ti-sparkles"></i>KI-Auswertung</button>
+    </div>
+    <div id="nb-status" role="status" aria-live="polite" style="font-size:var(--s-klein);color:var(--text2);margin-top:6px;line-height:1.45"></div>
+  </div>`;
+}
+/* v630: Das Einsprechen läuft über den gemeinsamen Diktat-Weg in core.js (diktatStart) –
+   Bildschirm bleibt an, keine doppelten Wörter, Anzeige was ankommt, Pause und Weiter. */
+function nbDiktatStop(){ if(typeof _dk!=="undefined" && _dk && /^nb-/.test(_dk.feldId)) diktatStop(); }
+function nbDiktat(art){ nbGross(art, true); }
+function nbFeldHoehe(el){ if(!el) return; el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight + 2, Math.round(window.innerHeight*0.5)) + "px"; }
+
+/* v630 · Vollansicht der Sprachnotiz. PO: „Wenn ich eine längere Sprachnachricht eingebe, wird es
+   schwer, diese im Textfeld überhaupt lesen zu können … vielleicht erscheint ein größeres
+   Textfenster. Und dann nochmal einen Button KI-Zusammenfassung.“ Kachel: „So bauen, mit in v630“.
+
+   Einsprechen öffnet sie bildschirmfüllend: oben „Hört zu“ mit dem gerade Verstandenen, darunter
+   der Text groß und bearbeitbar, unten am Daumen Pause/Weiter, daneben „KI auswerten“. Die KI
+   trägt dann NICHT sofort ein, sondern zeigt zuerst, was sie eintragen würde – erst „In den Bogen
+   übernehmen“ setzt die Felder. Es gibt kein zweites Textfeld im Speicher: die Vollansicht
+   schreibt in dasselbe wie das kleine Feld, und der KI-Weg ist derselbe (nbKiHolen, nbKiAnwenden). */
+let _nbGrossErg = null;
+function nbGross(art, mikro){
+  document.getElementById("nb-gross-ov")?.remove();
+  _nbGrossErg = null;
+  const kann = typeof diktatMoeglich==="function" && diktatMoeglich();
+  const ov = document.createElement("div");
+  ov.id = "nb-gross-ov"; ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-label","Sprachnotiz");
+  ov.dataset.art = art;
+  ov.style.cssText = "position:fixed;inset:0;z-index:10068;background:var(--surface);color:var(--text);display:flex;flex-direction:column;gap:8px;padding:12px 14px calc(12px + env(safe-area-inset-bottom))";
+  ov.innerHTML = `<div style="display:flex;align-items:center;gap:8px">
+      <div style="flex:1;font-size:var(--s-teil);font-weight:800">🎙️ Sprachnotiz</div>
+      <button class="btn" style="min-height:44px" onclick="nbGrossZu()" aria-label="Fertig – zurück zum Bogen, der Text bleibt stehen">Fertig</button>
+    </div>
+    <div id="nb-gross-hoer" class="dk-anzeige" style="margin-top:0" hidden></div>
+    <textarea id="nb-gross-text" maxlength="12000" aria-label="Text der Sprachnotiz" oninput="nbGrossTipp(this)"
+      style="flex:1;min-height:0;width:100%;box-sizing:border-box;padding:12px;border:1px solid var(--rand-bedien);border-radius:12px;font-family:inherit;font-size:var(--s-karte);line-height:1.6;background:var(--surface2);color:var(--text);resize:none"
+      placeholder="${kann?"Tippe unten auf „Einsprechen“ und erzähl, wie es lief – oder tippe hier.":"Hier tippen oder das Mikrofon der Tastatur nutzen."}">${esc(_nbText)}</textarea>
+    <div id="nb-gross-vorschau" hidden style="max-height:45vh;overflow-y:auto;border:1px solid var(--rand-bedien);border-radius:12px;padding:10px 12px;background:var(--surface2)"></div>
+    <div id="nb-gross-status" role="status" aria-live="polite" style="font-size:var(--s-klein);color:var(--text2);line-height:1.45"></div>
+    <div id="nb-gross-fuss" style="display:flex;flex-direction:column;gap:8px"></div>`;
+  document.body.appendChild(ov);
+  nbGrossFuss();
+  const ta = document.getElementById("nb-gross-text");
+  ta.scrollTop = ta.scrollHeight;
+  if(mikro && kann) nbGrossMikro();
+  else { try{ ta.focus({preventScroll:true}); ta.setSelectionRange(ta.value.length, ta.value.length); }catch(e){} }
+}
+function nbGrossFuss(){
+  const f = document.getElementById("nb-gross-fuss"), ov = document.getElementById("nb-gross-ov"); if(!f || !ov) return;
+  const art = ov.dataset.art;
+  const kann = typeof diktatMoeglich==="function" && diktatMoeglich();
+  if(_nbGrossErg){
+    f.innerHTML = `<div style="display:flex;gap:8px">
+      <button class="btn" style="flex:0 0 auto;min-height:56px" onclick="nbGrossVorschauWeg()"><i class="ti ti-pencil"></i>Text ändern</button>
+      <button id="nb-gross-ueber" class="btn btn-p" style="flex:1;min-height:56px;justify-content:center" onclick="nbGrossUebernehmen()" ${_nbGrossErg.zeilen.length?"":"disabled"}><i class="ti ti-check"></i>In den Bogen übernehmen</button></div>`;
+    return;
+  }
+  const an = typeof diktatAktiv==="function" && diktatAktiv("nb-gross-text");
+  f.innerHTML = `${kann?`<button id="nb-gross-mic" class="btn" style="min-height:56px;justify-content:center;font-size:var(--s-karte)" onclick="nbGrossMikro()" aria-pressed="${an?"true":"false"}"><i class="ti ti-${an?"player-pause":"microphone"}"></i>${an?"Pause":(_nbText?"Weiter einsprechen":"Einsprechen")}</button>`:""}
+    <button id="nb-gross-los" class="btn btn-p" style="min-height:56px;justify-content:center" onclick="nbGrossAuswerten('${art}')"><i class="ti ti-sparkles"></i>KI-Auswertung</button>`;
+}
+function nbGrossSync(v){
+  _nbText = v;
+  const t = document.getElementById("nb-text"); if(t){ t.value = v; nbFeldHoehe(t); }
+  const b = document.getElementById("nb-mic"); if(b) b.innerHTML = '<i class="ti ti-microphone"></i>'+(v?"Weiter einsprechen":"Einsprechen");
+}
+function nbGrossTipp(el){ nbGrossSync(el.value); if(_nbGrossErg) nbGrossVorschauWeg(); }
+function nbGrossMikro(){
+  if(typeof diktatUmschalten!=="function") return;
+  diktatUmschalten({ feldId:"nb-gross-text", knopfId:"nb-gross-mic", anzeigeId:"nb-gross-hoer", max:12000, onText:nbGrossSync });
+}
+function nbGrossZu(){
+  if(typeof _dk!=="undefined" && _dk && _dk.feldId==="nb-gross-text") diktatStop();
+  const ta = document.getElementById("nb-gross-text"); if(ta) nbGrossSync(ta.value);
+  _nbGrossErg = null;
+  document.getElementById("nb-gross-ov")?.remove();
+}
+function nbGrossVorschauWeg(){
+  _nbGrossErg = null;
+  const v = document.getElementById("nb-gross-vorschau"); if(v){ v.hidden = true; v.innerHTML = ""; }
+  const st = document.getElementById("nb-gross-status"); if(st) st.textContent = "";
+  nbGrossFuss();
+}
+async function nbGrossAuswerten(art){
+  const ta = document.getElementById("nb-gross-text"), st = document.getElementById("nb-gross-status");
+  const text = (ta&&ta.value||"").trim();
+  nbGrossSync(ta ? ta.value : _nbText);
+  if(text.length<15){ if(st) st.textContent = "Erzähl ein paar Sätze – dann kann die KI etwas eintragen."; return; }
+  /* v679: Das Anhalten der Spracherkennung schrieb ihren Stand ins Feld – was währenddessen getippt
+     oder mit dem Tastatur-Mikrofon diktiert wurde, war danach weg, und gespeichert wurde eine leere
+     Notiz. Der Text, der zur KI geht, bleibt deshalb auch im Feld stehen. */
+  if(typeof diktatAktiv==="function" && diktatAktiv("nb-gross-text") && typeof diktatStop==="function"){
+    /* Beenden statt Pausieren: die Pause schreibt ihren Stand erst beim Ende der Sitzung (onend),
+       also nach dem Absenden. Nach dem Beenden schreibt nichts mehr ins Feld. */
+    const stand = ta.value; diktatStop();
+    if(ta.value !== stand){ ta.value = stand; nbGrossSync(stand); }
+  }
+  const los = document.getElementById("nb-gross-los");
+  if(los){ los.disabled = true; los.innerHTML = '<i class="ti ti-loader-2"></i>Wertet aus …'; }
+  if(st) st.textContent = "";
+  let x = null;
+  try{ x = await nbKiHolen(art, text); }
+  catch(e){
+    if(st) st.textContent = "Nicht ausgewertet: "+(e&&e.message||"keine Verbindung")+". Der Text bleibt stehen.";
+    nbGrossFuss(); return;
+  }
+  if(!x || !document.getElementById("nb-gross-ov")){ nbGrossFuss(); return; }
+  /* v638 · PO: „Es wäre schöner, wenn mir die Zusammenfassung angezeigt wird und ich dann direkt
+     in diesem Text Anpassungen vornehmen kann.“ Kein Zwischenschritt „In den Bogen übernehmen“
+     mehr: die KI trägt ein, die Vollansicht schließt, und der Bogen – Sterne und Notizen, alles
+     änderbar – ist die Zusammenfassung. Gespeichert wird weiter erst mit dem Knopf unten. */
+  nbKiAnwenden(art, x.d, x.m);
+  nbGrossZu();
+  if(_nbSchnell && _nbSchnell.fuer===_nbFuer){ nbSchnellAbschluss(art); return; }
+  document.getElementById("nb-box")?.scrollIntoView({block:"start", behavior:"smooth"});
+}
+/* ═══ v679 · „Wie war's?“ – einmal sprechen, alles andere im Hintergrund ═══════════════
+   doku/auftrag-tagebuch-ki-sortieren/prozess-nacherfassung.md. Tippbudget drei: „Erzählen“ auf der
+   Karte (öffnet die Nachbereitung und sofort das Mikrofon), „KI-Auswertung“ (hält das Mikrofon an,
+   wertet aus, speichert Bewertung und Tagebuch-Vorschlag), „Passt so“ auf der Prüfkarte.
+   Es ist dieselbe Nachbereitung wie immer – dieselben Felder, dieselben Tabellen, derselbe
+   KI-Aufruf –, nur ohne die Zwischenschritte. */
+async function nbSchnellAbschluss(art){
+  const s = _nbSchnell; _nbSchnell = null;
+  const zeilen = _nbBewertungZeilen.slice();
+  const weiter = async () => {
+    const id = await _nbTbSichern;
+    if(id && typeof tbPruefenOpen==="function") tbPruefenOpen(id, { bewertung:zeilen, fuer:s.fuer });
+    else toast("Nachbereitet ✓");
+    if(typeof wieWarsKarte==="function") wieWarsKarte();
+  };
+  if(art==="training"){
+    if(typeof einheitSave==="function") await einheitSave({ danach:()=>{ document.getElementById("eb-modal")?.remove(); return weiter(); } });
+  } else await fazitSpeichern({ danach:weiter });
+}
+/* Nach dem Speichern im Bogen: ist ein Vorschlag da, führt der Knopf zu dessen Prüfung. */
+function nbWeiterZurPruefung(id, titel){
+  const box = document.createElement("div");
+  box.id = "nb-weiter";
+  box.setAttribute("role","dialog"); box.setAttribute("aria-modal","true"); box.setAttribute("aria-label", titel);
+  box.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10055;display:flex;align-items:center;justify-content:center;padding:18px";
+  box.onclick = e => { if(e.target===box) box.remove(); };
+  box.innerHTML = `<div style="background:var(--surface);color:var(--text);max-width:380px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
+    <div style="font-size:var(--s-karte);font-weight:800">${esc(titel)}</div>
+    <div style="font-size:var(--s-text);color:var(--text2);margin:6px 0 14px;line-height:1.5">Aus deiner Sprachnotiz liegt ein Tagebuch-Vorschlag bereit – deine Worte, sortiert. Prüfen dauert einen Tipp; bis dahin wartet er als „Noch zu bestätigen“.</div>
+    <button class="btn btn-p" onclick="document.getElementById('nb-weiter').remove();tbPruefenOpen(${Number(id)},{bewertung:_nbBewertungZeilen})" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-book"></i>Vorschlag prüfen</button>
+    <button class="btn" onclick="document.getElementById('nb-weiter').remove()" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Später</button>
+  </div>`;
+  document.body.appendChild(box);
+}
+function nbGrossUebernehmen(){
+  const e = _nbGrossErg; if(!e) return;
+  nbKiAnwenden(e.art, e.d, e.m);
+  nbGrossZu();
+}
+/* Lesbare Zusammenfassung dessen, was nbKiAnwenden setzen würde – ohne etwas zu setzen. Im
+   Trainer-Bereich stehen die echten Namen (wie im Bogen). */
+function nbVorschau(art, e, m){
+  e = e || {};
+  const S = n => "★".repeat(n), z = [];
+  const zur = t => String(t||"").replace(/Kind (\d+)/g,(x,n)=>(m&&m.zurueck&&m.zurueck["Kind "+n])||x);
+  if(art==="training"){
+    const ei = e.einheit || {}, t = [];
+    if(ei.spass) t.push("Spaß "+S(ei.spass)); if(ei.umsetzung) t.push("Umsetzung "+S(ei.umsetzung)); if(ei.erfolg) t.push("Ziel erreicht "+S(ei.erfolg));
+    if(t.length) z.push("Einheit: "+t.join(", "));
+    if(ei.notiz) z.push("Notiz zur Einheit: "+zur(ei.notiz));
+    const plan = (typeof EB_PLAN!=="undefined"?EB_PLAN:[]);
+    for(const u of e.uebungen||[]){
+      const n = (plan[u.nr-1]||{}).formName || ("Übung "+u.nr);
+      if(u.uebersprungen){ z.push("„"+n+"“: fand nicht statt"); continue; }
+      const w = []; if(u.durchfuehrung) w.push("Ablauf "+S(u.durchfuehrung)); if(u.spass) w.push("Spaß "+S(u.spass)); if(u.anforderung) w.push("Anforderung "+S(u.anforderung));
+      if(w.length || u.notiz) z.push("„"+n+"“: "+[w.join(", "), u.notiz?zur(u.notiz):""].filter(Boolean).join(" – "));
+    }
+    if((e.kinder||[]).length) z.push("Kinder: "+e.kinder.map(k=>zur(k.kind)+" "+S(k.sterne)).join(", "));
+  }else{
+    const W = ["","schwach","ok","stark"], teams = (typeof _FZ!=="undefined"&&_FZ&&_FZ.teams)||[];
+    for(const t of e.teams||[]){
+      const n = (teams.find(x=>x.nr===t.nr)||{}).name || ("Mannschaft "+t.nr), w = [];
+      if(t.ordnung) w.push("Ordnung "+W[t.ordnung]); if(t.pass) w.push("Passspiel "+W[t.pass]); if(t.zweikampf) w.push("Zweikämpfe "+W[t.zweikampf]); if(t.spass) w.push("Spaß "+W[t.spass]);
+      if(w.length) z.push(n+": "+w.join(", "));
+    }
+    const G = { zu_schwach:"zu schwach", passend:"passend", zu_stark:"zu stark" };
+    for(const g of e.gaeste||[]) z.push(g.name+": "+(G[g.einschaetzung]||g.einschaetzung));
+    if(e.getragen) z.push("Das hat getragen: "+e.getragen);
+    if(e.arbeiten) z.push("Daran arbeiten wir: "+e.arbeiten);
+    const o = e.orga || {}, OZ = {1:"zu eng",2:"passte",3:"zu viel Luft"}, OF = {1:"zu klein",2:"passten",3:"zu groß"}, OH = {1:"zu wenige",2:"knapp",3:"genug"}, ow = [];
+    if(o.zeitplan) ow.push("Zeitplan "+OZ[o.zeitplan]); if(o.felder) ow.push("Felder "+OF[o.felder]); if(o.helfer) ow.push("Helfer "+OH[o.helfer]);
+    if(ow.length) z.push("Organisation: "+ow.join(", "));
+  }
+  if(e.tagebuch) z.push("Tagebuch-Vorschlag"+((e.tagebuch.schlagworte||[]).length?": #"+e.tagebuch.schlagworte.join(" #"):""));
+  return z;
+}
+/* Kindernamen → „Kind n“. Die anwesenden Kinder bekommen ihre Nummer in der Reihenfolge des
+   Fensters, alle übrigen Kinder des Kaders danach – auch ein Name, der gar nicht bewertet wird,
+   soll nicht beim Sprachmodell landen. Längere Namen zuerst, damit „Ben“ nicht „Benedikt“ zerlegt. */
+function nbMaske(anwesend){
+  const alle = (typeof KADER!=="undefined"?KADER:[]).map(k=>k.name).filter(Boolean);
+  const reihe = [...(anwesend||[]), ...alle.filter(n=>!(anwesend||[]).includes(n))];
+  const hin = {}, zurueck = {};
+  reihe.forEach((n,i)=>{ hin[n] = "Kind "+(i+1); zurueck["Kind "+(i+1)] = n; });
+  /* Ein Durchlauf mit EINEM Muster: nacheinander ersetzt, fasste ein späterer Name die schon
+     gesetzten Platzhalter wieder an. Vornamen allein nur, wenn genau ein Kind so heißt. */
+  const ziel = {};
+  reihe.forEach(n=>{ ziel[String(n).toLowerCase()] = hin[n]; });
+  const vorn = {};
+  reihe.forEach(n=>{ const v = String(n).split(/\s+/)[0]; if(v && v!==n && v.length>2) (vorn[v.toLowerCase()] = vorn[v.toLowerCase()]||[]).push(hin[n]); });
+  Object.keys(vorn).forEach(v=>{ if(vorn[v].length===1 && !ziel[v]) ziel[v] = vorn[v][0]; });
+  const schluessel = Object.keys(ziel).sort((a,b)=>b.length-a.length);
+  const re = schluessel.length ? new RegExp("(^|[^\\p{L}])("+schluessel.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|")+")(?![\\p{L}])","giu") : null;
+  const weg = t => re ? String(t).replace(re, (all, vor, name)=>vor+(ziel[name.toLowerCase()]||name)) : String(t);
+  return { weg, zurueck, kinder: (anwesend||[]).map(n=>hin[n]) };
+}
+/* Holt die KI-Antwort, ohne etwas einzutragen. Wirft bei Fehlern; null, wenn kein Fenster offen ist. */
+async function nbKiHolen(art, text){
+  let body;
+  if(art==="training"){
+    const plan = (typeof EB_PLAN!=="undefined"?EB_PLAN:[]), kids = (typeof EB_SPIELER!=="undefined"?EB_SPIELER:[]);
+    const m = nbMaske(kids);
+    body = { art, text:m.weg(text), kinder:m.kinder,
+      uebungen: plan.map((p,i)=>({ nr:i+1, name:p.formName, bloecke:(typeof einheitBlockNamen==="function"?einheitBlockNamen(p).join(", "):"") })) };
+    body._m = m;
+  }else{
+    if(!_FZ) return null;
+    fazitTexteMerken();
+    const m = nbMaske([]);
+    body = { art:"spiel", festival:_FZ.termin&&_FZ.termin.typ==="turnier", text:m.weg(text),
+      teams:_FZ.teams.map(t=>({nr:t.nr,name:t.name})), gaeste:_FZ.gaeste };
+    body._m = m;
+  }
+  const m = body._m; delete body._m;
+  body.fuer = _nbFuer;   // v679: ein Termin zählt am Tag einmal ins KI-Limit, Korrekturen nicht
+  const r = await fetch(`${SB_URL}/functions/v1/ki-nachbereitung`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const d = await r.json().catch(()=>null);
+  if(!r.ok || !d || !d.ergebnis) throw new Error((d&&d.error)||("Fehler "+r.status));
+  return { d, m };
+}
+/* Trägt die KI-Antwort in den Bogen ein und meldet es unter dem kleinen Feld. */
+function nbKiAnwenden(art, d, m){
+  _nbTb = d.ergebnis.tagebuch ? { fuer:_nbFuer, v:nbTbDecknamen(d.ergebnis.tagebuch, m) } : null;
+  _nbMaskeAktiv = m;
+  const bericht = art==="training" ? nbInsTraining(d.ergebnis, m) : nbInsSpiel(d.ergebnis);
+  if(_nbTb) bericht.push("Tagebuch-Vorschlag");
+  /* v679 (prozess-nacherfassung.md): Der Vorschlag wird sofort gespeichert – wer das Fenster schließt,
+     verliert nichts, und die Startseite zeigt ihn als „Noch zu bestätigen“. Aus derselben Notiz,
+     ohne zweiten KI-Aufruf. Die Zeilen der Bewertung merkt sich die Prüfkarte für die Anzeige. */
+  _nbBewertungZeilen = nbVorschau(art, d.ergebnis, m).filter(z=>!/^Tagebuch-Vorschlag/.test(z));
+  _nbTbSichern = (_nbTb && typeof tbVorschlagSichern==="function")
+    ? tbVorschlagSichern({ fuer:_nbFuer, art, v:_nbTb.v, diktat:_nbText,
+        termin:(art!=="training" && typeof _FZ!=="undefined" && _FZ) ? _FZ.termin : null }).catch(()=>null)
+    : Promise.resolve(null);
+  const st2 = document.getElementById("nb-status");
+  /* v638 · PO: „… oder vielleicht noch mal ein direktes Feedback über das Einsprechen an die KI
+     geben kann, Dinge noch mal zu verändern.“ „Korrektur einsprechen“ hängt an die Notiz an; die
+     nächste Auswertung ersetzt, was die KI vorher eingetragen hat – das Spätere gilt. */
+  const art2 = String(art).replace(/[^a-z]/g,"");
+  if(st2) st2.innerHTML = bericht.length
+    ? "✨ Eingetragen: "+esc(bericht.join(" · "))+". <b>Im Bogen prüfen, ändern und speichern.</b>"
+      + `<div style="margin-top:6px"><button class="btn" style="min-height:44px" onclick="nbKorrektur('${art2}')"><i class="ti ti-microphone"></i>Korrektur einsprechen</button></div>`
+    : "Die KI hat in der Notiz nichts gefunden, das zu einem Feld passt – ergänze ein paar Worte zu Übungen oder Kindern.";
+  return bericht;
+}
+/* Korrektur: Vollansicht mit Mikrofon, die Notiz bekommt eine neue Zeile „Korrektur: “. Die KI
+   liest den ganzen Text; was später gesagt wird, hat Vorrang (Regel im Prompt von ki-nachbereitung). */
+function nbKorrektur(art){
+  const v = String(_nbText||"").replace(/\s+$/,"");
+  if(!/Korrektur:\s*$/.test(v)) nbGrossSync((v ? v+"\n" : "")+"Korrektur: ");
+  nbGross(art, true);
+}
+async function nbAuswerten(art){
+  const ta = document.getElementById("nb-text"), st = document.getElementById("nb-status"), los = document.getElementById("nb-los");
+  const text = (ta&&ta.value||"").trim();
+  if(text.length<15){ if(st) st.textContent = "Erzähl ein paar Sätze – dann kann die KI etwas eintragen."; return; }
+  nbDiktatStop();
+  if(los){ los.disabled = true; los.innerHTML = '<i class="ti ti-loader-2"></i>Wertet aus …'; }
+  if(st) st.textContent = "";
+  const fertig = () => { const l = document.getElementById("nb-los"); if(l){ l.disabled = false; l.innerHTML = '<i class="ti ti-sparkles"></i>KI-Auswertung'; } };
+  let x = null;
+  try{ x = await nbKiHolen(art, text); }
+  catch(e){
+    fertig();
+    if(st) st.textContent = "Nicht übernommen: "+(e&&e.message||"keine Verbindung")+". Die Notiz bleibt stehen.";
+    return;
+  }
+  fertig();
+  if(x) nbKiAnwenden(art, x.d, x.m);
+}
+/* Sterne setzen wie ein Tipp – über einheitSetStar, damit Anzeige und Wert übereinstimmen. */
+function _nbStern(key, wert, max, groesse){
+  const box = document.getElementById("eb-stars-"+key); if(!box || !wert) return false;
+  box.dataset.val = "0";
+  if(typeof einheitSetStar==="function") einheitSetStar(key, wert, max, groesse);
+  return true;
+}
+/* Im Bogen (nur Trainer) stehen die echten Namen – „Kind 2“ aus der KI-Antwort wird zurückübersetzt. */
+let _nbMaskeAktiv = null;
+function nbZurueck(t){ const m=_nbMaskeAktiv; return String(t||"").replace(/Kind (\d+)/g,(x,n)=>(m&&m.zurueck&&m.zurueck["Kind "+n])||x); }
+/* v638 · PO: „… wenn ich dann wieder KI-Auswertung anklicke, dann setzt er einfach den gleichen Text
+   oder einen weiteren Auswertungstext in das große Textfeld hinein, obwohl schon dort was drin steht.“
+   Das Feld merkt sich, was die KI zuletzt hineingeschrieben hat (data-ki). Eine neue Auswertung
+   ersetzt genau diesen Teil; was der Trainer selbst getippt hat, bleibt stehen. */
+/* v679: Muss ein Text in ein Feld mit Grenze, dann am letzten Satzende davor und sichtbar
+   („[gekürzt]“) – nie mitten im Wort (fehlerbild-abgeschnitten.md). */
+function nbKuerzen(t, max){
+  t = String(t||""); if(!max || t.length<=max) return t;
+  const M = " [gekürzt]", vorn = t.slice(0, max - M.length);
+  const ende = Math.max(vorn.lastIndexOf(". "), vorn.lastIndexOf("! "), vorn.lastIndexOf("? "), vorn.lastIndexOf("\n"));
+  if(ende > vorn.length*0.5) return vorn.slice(0, ende+1).trim() + M;
+  const w = vorn.lastIndexOf(" ");
+  return (w>0 ? vorn.slice(0,w) : vorn).trim() + " …" + M;
+}
+function _nbTextDazu(el, satz){
+  satz = nbZurueck(satz);
+  if(!el || !satz) return false;
+  let alt = (el.value||"").trim();
+  const vorher = el.dataset.ki || "";
+  if(vorher && alt.includes(vorher)) alt = alt.replace(vorher, "").replace(/\n{2,}/g,"\n").trim();
+  if(alt.includes(satz)){ el.dataset.ki = satz; return false; }
+  el.dataset.ki = satz;
+  el.value = nbKuerzen(alt ? alt+"\n"+satz : satz, Number(el.getAttribute("maxlength"))||3000);
+  if(typeof feldWachsen==="function") feldWachsen(el);
+  return true;
+}
+function nbInsTraining(e, m){
+  const b = [];
+  const ei = e.einheit || {};
+  const n = ["spass","umsetzung","erfolg"].filter(k=>_nbStern(k, ei[k], 5, 24)).length;
+  if(n) b.push(`Einheit ${n}×★`);
+  if(_nbTextDazu(document.getElementById("eb-notiz"), ei.notiz)) b.push("Notiz");
+  const DIM = { durchfuehrung:"Durchführung", spass:"Spaßfaktor Kinder", anforderung:"Anforderung umgesetzt" };
+  let ue = 0;
+  (e.uebungen||[]).forEach(u=>{
+    const i = Number(u.nr)-1; if(!document.getElementById("eb-ue-"+i)) return;
+    let hier = false;
+    if(u.uebersprungen){ const cb=document.getElementById("eb-skip-"+i); if(cb&&!cb.checked){ cb.checked=true; if(typeof einheitSkipToggle==="function")einheitSkipToggle(i); } hier = true; }
+    else Object.keys(DIM).forEach(k=>{ if(_nbStern(`ue-${i}-${DIM[k]}`, u[k], 5, 19)) hier = true; });
+    if(_nbTextDazu(document.getElementById("eb-ue-notiz-"+i), u.notiz)) hier = true;
+    if(hier) ue++;
+  });
+  if(ue) b.push(`${ue} Übung${ue>1?"en":""}`);
+  const kids = (typeof EB_SPIELER!=="undefined"?EB_SPIELER:[]);
+  let ki = 0;
+  // v648: vor dem Startdatum der Bewertungen keine Sterne je Kind (der Server liefert dann auch keine)
+  /* v677: Einsatz-Sterne immer – nur die Profilbewertung wartet auf den Stichtag. */ (e.kinder||[]).forEach(k=>{ const name = m && m.zurueck[k.kind]; const i = kids.indexOf(name); if(i>=0 && _nbStern(`sp-${i}`, k.sterne, 3, 21)) ki++; });
+  if(ki) b.push(`${ki} Kind${ki>1?"er":""}`);
+  return b;
+}
+function nbInsSpiel(e){
+  if(!_FZ) return [];
+  fazitTexteMerken();
+  const w = _FZ.wert, b = [];
+  let tm = 0;
+  (e.teams||[]).forEach(t=>{
+    const nr = String(t.nr); if(!_FZ.teams.some(x=>String(x.nr)===nr)) return;
+    const v = w.teams[nr] = w.teams[nr] || {}; let hier = false;
+    ["ordnung","pass","zweikampf","spass"].forEach(k=>{ if(t[k]){ v[k] = t[k]; hier = true; } });
+    if(hier) tm++;
+  });
+  if(tm) b.push(`${tm} Mannschaft${tm>1?"en":""}`);
+  let g = 0; (e.gaeste||[]).forEach(x=>{ if(_FZ.gaeste.includes(x.name)){ w.gaeste[x.name] = x.einschaetzung; g++; } });
+  if(g) b.push(`${g} Gast${g>1?"einschätzungen":"einschätzung"}`);
+  /* v638: wie _nbTextDazu – der zuletzt von der KI geschriebene Teil wird ersetzt, nicht verdoppelt. */
+  _FZ.kiText = _FZ.kiText || {};
+  const dazu = (feld, alt, neu) => {
+    if(!neu) return alt; neu = nbZurueck(neu); alt=(alt||"").trim();
+    const vorher = _FZ.kiText[feld];
+    if(vorher && alt.includes(vorher)) alt = alt.replace(vorher,"").replace(/^\s*·\s*|\s*·\s*$/g,"").replace(/\s*·\s*·\s*/g," · ").trim();
+    _FZ.kiText[feld] = neu;
+    return alt.includes(neu) ? alt : nbKuerzen(alt ? alt+" · "+neu : neu, 4000);   // v679: vorher .slice(0,300)
+  };
+  if(e.getragen){ w.getragen = dazu("getragen", w.getragen, e.getragen); b.push("Das hat getragen"); }
+  if(e.arbeiten){ w.arbeiten = dazu("arbeiten", w.arbeiten, e.arbeiten); b.push("Daran arbeiten wir"); }
+  const o = e.orga||{}; let og = 0; ["zeitplan","felder","helfer"].forEach(k=>{ if(o[k]){ w.orga[k] = o[k]; og++; } });
+  if(og) b.push("Organisation");
+  fazitRender();
+  return b;
+}
+
+/* ═══ v627 · Geführte Nachbereitung – Frage für Frage, Antwort-Kacheln ════════════
+   PO: „Zusätzlich wäre es super, wenn ich auf Nachbewertung gehe, ich durch einen
+   Bewertungsprozess durchlaufe. So wie die Multiple-Choice-Kacheln.“ Kacheln: als Standard,
+   Bogen bleibt („Alles auf einen Blick“); Training, Spiel und Festival; Worte mit Sternen.
+
+   Der Ablauf ist eine SCHICHT über dem Bogen, kein zweiter Bogen: jede Kachel setzt genau das
+   Feld, das man sonst von Hand setzen würde (Sterne im DOM beim Training, _FZ.wert bei Spiel
+   und Festival). Gespeichert wird am Ende über einheitSave()/fazitSpeichern() – derselbe Weg,
+   dieselben Tabellen. Schritt 1 bietet die Sprachnotiz an; wer erzählt, findet die Kacheln
+   danach schon vorausgewählt. Ein Tipp auf eine Kachel geht weiter; „überspringen“ lässt das
+   Feld, wie es war. */
+let _nbWeg = null;   // { art, schritte:[…], i }
+const NB_STERNE = n => "★".repeat(n);
+const NB_W = {
+  spass:["kaum","wenig","okay","viel","riesig"],
+  umsetzung:["gar nicht","holprig","okay","gut","genau wie geplant"],
+  erfolg:["nein","kaum","teilweise","größtenteils","voll"],
+  durch:["lief nicht","holprig","okay","gut","top"],
+  anf:["gar nicht","selten","teilweise","meistens","durchgehend"]
+};
+const NB_TEAM = {
+  ordnung:["Traube um den Ball","mal so, mal so","gut verteilt"],
+  pass:["kaum Pässe","einige kamen an","Ketten gespielt"],
+  zweikampf:["zurückgewichen","mal so, mal so","angenommen"],
+  spass:["gedrückt","okay","riesig"]
+};
+function nbWegStart(art){
+  const card = document.getElementById(art==="training" ? "eb-card" : "fz-card"); if(!card) return;
+  const s = [];
+  s.push({ typ:"start", titel:"Nachbewerten" });
+  if(art==="training"){
+    const plan = (typeof EB_PLAN!=="undefined"?EB_PLAN:[]), kids = (typeof EB_SPIELER!=="undefined"?EB_SPIELER:[]);
+    const stern = (key, titel, frage, worte, max, groesse) => ({ typ:"kacheln", titel, frage,
+      kacheln: worte.map((w,i)=>({ wert:i+1, label:(max===3?NB_STERNE(i+1)+" ":NB_STERNE(i+1)+" ")+w })),
+      lesen:()=>(typeof einheitGetStar==="function"?einheitGetStar(key):0), setzen:v=>_nbStern(key, v, max, groesse) });
+    s.push(stern("spass","Die Einheit","Wie viel Spaß hatten die Kinder?",NB_W.spass,5,24));
+    s.push(stern("umsetzung","Die Einheit","Wie gut ließ sich der Plan umsetzen?",NB_W.umsetzung,5,24));
+    s.push(stern("erfolg","Die Einheit","Wurde das Ziel der Einheit erreicht?",NB_W.erfolg,5,24));
+    plan.forEach((p,i)=>{
+      const t = `Übung ${i+1} von ${plan.length}: ${p.formName}`;
+      const skip = () => !!document.getElementById("eb-skip-"+i)?.checked;
+      const d = stern(`ue-${i}-Durchführung`, t, "Wie lief die Durchführung?", NB_W.durch, 5, 19);
+      d.extra = { label:"⏭ fand nicht statt", an:skip, tun:()=>{ const cb=document.getElementById("eb-skip-"+i); if(cb&&!cb.checked){ cb.checked=true; if(typeof einheitSkipToggle==="function")einheitSkipToggle(i); } } };
+      const setzD = d.setzen; d.setzen = v => { const cb=document.getElementById("eb-skip-"+i); if(cb&&cb.checked){ cb.checked=false; if(typeof einheitSkipToggle==="function")einheitSkipToggle(i); } setzD(v); };
+      s.push(d);
+      const sp = stern(`ue-${i}-Spaßfaktor Kinder`, t, "Wie viel Spaß hatten die Kinder dabei?", NB_W.spass, 5, 19); sp.weg = skip; s.push(sp);
+      const an = stern(`ue-${i}-Anforderung umgesetzt`, t, "Wurde die Anforderung umgesetzt?", NB_W.anf, 5, 19); an.weg = skip;
+      an.feld = { id:"eb-ue-notiz-"+i, label:"Kommentar zur Übung (optional) – steht beim nächsten Mal im Plan" };
+      s.push(an);
+    });
+    /* v676 PO 29.09. (Bildschirmfoto): „Ich kann die Kacheln für die Bewertungen nicht anklicken.“
+       Vor dem Start der Einzelbewertung (v648, bewertung_ab) stehen im Bogen keine Sterne je Kind –
+       die Knöpfe hier schrieben ins Leere. Der Schritt kommt nur, wenn der Bogen die Zeilen hat.
+       Seit v677 hat er sie immer (Trainingseinsatz ist nicht gesperrt) – außer ohne erfasste Anwesenheit. */
+    if(kids.length && document.getElementById("eb-stars-sp-0")) s.push({ typ:"kinder", titel:"Die Kinder", frage:"Wie waren die Kinder heute dabei?", kinder:kids });
+    s.push({ typ:"text", titel:"Zum Schluss", frage:"Noch eine Notiz zur Einheit?", felder:[{ id:"eb-notiz", label:"Notiz zur Einheit (optional)" }] });
+  }else{
+    if(!_FZ) return;
+    _FZ.teams.forEach(tm=>{
+      FZ_REIHEN.forEach(re=>{
+        const nr = String(tm.nr);
+        s.push({ typ:"kacheln", titel:tm.name+(tm.form?" · "+tm.form:""), frage:`${re.emo} ${re.label} – ${re.hint}?`,
+          kacheln: NB_TEAM[re.key].map((w,i)=>({ wert:i+1, label:w })),
+          lesen:()=>((_FZ.wert.teams[nr]||{})[re.key]||0),
+          setzen:v=>{ const o=_FZ.wert.teams[nr]=_FZ.wert.teams[nr]||{}; o[re.key]=v; return true; } });
+      });
+    });
+    _FZ.gaeste.forEach(g=>s.push({ typ:"kacheln", titel:"Die Gäste", frage:`Wie stark war ${g}?`,
+      kacheln: FZ_GAST.map(x=>({ wert:x.v, label:x.l })), lesen:()=>_FZ.wert.gaeste[g]||0, setzen:v=>{ _FZ.wert.gaeste[g]=v; return true; } }));
+    s.push({ typ:"text", titel:"Zwei Sätze", frage:"Was hat getragen – und woran arbeitet ihr?", spiel:true,
+      felder:[{ key:"getragen", label:"Das hat getragen" }, { key:"arbeiten", label:"Daran arbeiten wir" }] });
+    s.push({ typ:"orga", titel:"Organisation", frage:"Hat bei der Organisation etwas gehakt? (freiwillig)" });
+  }
+  s.push({ typ:"ende", titel:"Fertig" });
+  _nbWeg = { art, schritte:s, i:0 };
+  nbWegZeichnen();
+}
+function nbWegAus(){
+  const box = document.getElementById("nb-weg");
+  const card = box && box.parentElement;
+  const nb = document.getElementById("nb-box");
+  const platz = card && card.querySelector("[data-nb-platz]");
+  if(platz){ if(nb) platz.replaceWith(nb); else platz.remove(); }
+  if(card) card.classList.remove("nb-weg-an");
+  box && box.remove();
+  _nbWeg = null;
+  if(card) card.scrollIntoView({block:"start"});
+}
+function nbWegGehe(d){
+  if(!_nbWeg) return;
+  let i = _nbWeg.i + d;
+  while(i>0 && i<_nbWeg.schritte.length-1 && _nbWeg.schritte[i].weg && _nbWeg.schritte[i].weg()) i += d>0?1:-1;
+  _nbWeg.i = Math.max(0, Math.min(_nbWeg.schritte.length-1, i));
+  nbWegZeichnen();
+}
+function nbWegWahl(wert){
+  const st = _nbWeg && _nbWeg.schritte[_nbWeg.i]; if(!st) return;
+  if(wert==="extra"){ st.extra && st.extra.tun(); }
+  else if(st.lesen() !== wert) st.setzen(wert);
+  nbWegFelderMerken();
+  nbWegZeichnen();
+  setTimeout(()=>nbWegGehe(1), 180);   // die Wahl kurz sehen, dann weiter
+}
+function nbWegKind(i, wert){
+  const key = "sp-"+i;
+  if((typeof einheitGetStar==="function"?einheitGetStar(key):0) !== wert) _nbStern(key, wert, 3, 21);
+  nbWegZeichnen();
+}
+function nbWegOrga(key, wert){ if(!_FZ) return; _FZ.wert.orga[key] = (_FZ.wert.orga[key]===wert) ? undefined : wert; if(_FZ.wert.orga[key]===undefined) delete _FZ.wert.orga[key]; nbWegZeichnen(); }
+/* Textfelder des Ablaufs schreiben in die Felder des Bogens bzw. in _FZ – beim Weiterblättern. */
+function nbWegFelderMerken(){
+  document.querySelectorAll("#nb-weg [data-nb-ziel]").forEach(el=>{
+    const z = el.dataset.nbZiel;
+    if(z.startsWith("#")){ const f = document.getElementById(z.slice(1)); if(f) f.value = el.value; }
+    else if(_FZ) _FZ.wert[z] = el.value;   // v679: vorher .slice(0,300)
+  });
+}
+function nbWegSpeichern(){
+  nbWegFelderMerken();
+  const art = _nbWeg && _nbWeg.art;
+  nbWegAus();
+  if(art==="training"){ if(typeof einheitSave==="function") einheitSave(); }
+  else fazitSpeichern();
+}
+function nbWegZeichnen(){
+  if(!_nbWeg) return;
+  const card = document.getElementById(_nbWeg.art==="training" ? "eb-card" : "fz-card"); if(!card) return;
+  let box = document.getElementById("nb-weg");
+  if(!box || box.parentElement!==card){
+    box && box.remove();
+    box = document.createElement("div"); box.id = "nb-weg";
+    card.insertBefore(box, card.children[1]||null);
+  }
+  card.classList.add("nb-weg-an");
+  const st = _nbWeg.schritte[_nbWeg.i], n = _nbWeg.schritte.length, i = _nbWeg.i;
+  const kachel = (an, label, onclick, extra) => `<button type="button" class="nb-kachel" aria-pressed="${an}" onclick="${onclick}" style="display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:10px 14px;margin-bottom:8px;border:${an?"2px solid var(--blue)":"1px solid var(--rand-bedien)"};border-radius:12px;background:${an?"var(--blue-bg)":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-karte);font-weight:${an?800:600};text-align:left;cursor:pointer;${extra||""}"><span style="flex:1;min-width:0">${label}</span>${an?'<span aria-hidden="true" style="color:var(--blue-text);font-weight:900">✓</span>':""}</button>`;
+  const fortschritt = `<div style="display:flex;align-items:center;gap:8px;margin:2px 0 10px"><div style="flex:1;height:6px;border-radius:3px;background:var(--surface2);overflow:hidden"><div style="height:100%;width:${Math.round(i/(n-1)*100)}%;background:var(--blue);transition:width .2s"></div></div><span style="font-size:var(--s-klein);color:var(--text2);white-space:nowrap">Schritt ${i+1} von ${n}</span></div>`;
+  const fuss = (weiter) => `<div style="display:flex;gap:8px;margin-top:6px">
+      ${i>0?`<button type="button" class="btn" style="min-height:48px" onclick="nbWegFelderMerken();nbWegGehe(-1)"><i class="ti ti-arrow-left"></i>Zurück</button>`:""}
+      <button type="button" class="btn${weiter?" btn-p":""}" style="flex:1;min-height:48px;justify-content:center" onclick="nbWegFelderMerken();nbWegGehe(1)">${weiter||"überspringen"}</button>
+    </div>
+    <button type="button" onclick="nbWegFelderMerken();nbWegAus()" style="display:block;margin:10px auto 0;min-height:44px;background:none;border:none;color:var(--text2);font-family:inherit;font-size:var(--s-text);text-decoration:underline;cursor:pointer">Alles auf einen Blick</button>`;
+  const kopf = `${fortschritt}<div style="font-size:var(--s-text);font-weight:800;color:var(--text)">${esc(st.titel)}</div>${st.frage?`<div style="font-size:var(--s-teil);font-weight:800;margin:4px 0 12px;line-height:1.3">${esc(st.frage)}</div>`:""}`;
+  const fld = "width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text);resize:vertical";
+  let html = "";
+  if(st.typ==="start"){
+    html = `${fortschritt}<div style="font-size:var(--s-teil);font-weight:800;margin:4px 0 6px">Wie möchtest du anfangen?</div>
+      <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:12px;line-height:1.45">Frage für Frage mit Antwort-Kacheln – oder erst frei erzählen, dann sind die Kacheln schon vorausgewählt.</div>
+      <div data-nb-start></div>
+      ${kachel(false,"➡️ Los geht’s – Frage für Frage","nbWegGehe(1)")}
+      <button type="button" onclick="nbWegAus()" style="display:block;margin:6px auto 0;min-height:44px;background:none;border:none;color:var(--text2);font-family:inherit;font-size:var(--s-text);text-decoration:underline;cursor:pointer">Alles auf einen Blick</button>`;
+  }else if(st.typ==="kacheln"){
+    const akt = st.lesen();
+    html = kopf + st.kacheln.map(k=>kachel(String(akt)===String(k.wert), esc(k.label), `nbWegWahl(${typeof k.wert==="number"?k.wert:"'"+k.wert+"'"})`)).join("")
+      + (st.extra?kachel(st.extra.an(), esc(st.extra.label), "nbWegWahl('extra')", "border-style:dashed"):"")
+      + (st.feld?`<label style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2);margin:4px 0 8px">${esc(st.feld.label)}<input data-nb-ziel="#${st.feld.id}" value="${esc(document.getElementById(st.feld.id)?.value||"")}" maxlength="3000" style="${fld};min-height:44px;margin-top:3px"></label>`:"")
+      + fuss(akt?"Weiter":"");
+  }else if(st.typ==="kinder"){
+    html = kopf + st.kinder.map((name,k)=>{
+      const v = (typeof einheitGetStar==="function"?einheitGetStar("sp-"+k):0);
+      return `<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:var(--border)"><span style="flex:1;min-width:0;font-size:var(--s-text);font-weight:700">${esc(name)}</span>
+        ${[["★","ruhig"],["★★","gut"],["★★★","stark"]].map(([s,l],j)=>`<button type="button" aria-pressed="${v===j+1}" aria-label="${esc(name)}: ${l}" onclick="nbWegKind(${k},${j+1})" style="min-width:58px;min-height:44px;border:${v===j+1?"2px solid var(--blue)":"1px solid var(--rand-bedien)"};border-radius:10px;background:${v===j+1?"var(--blue-bg)":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;line-height:1.1;cursor:pointer">${s}<br>${l}</button>`).join("")}</div>`;
+    }).join("") + fuss("Weiter");
+  }else if(st.typ==="text"){
+    html = kopf + st.felder.map(f=>{
+      const wert = st.spiel ? (_FZ&&_FZ.wert[f.key]||"") : (document.getElementById(f.id)?.value||"");
+      return `<label style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-bottom:8px">${esc(f.label)}<textarea data-nb-ziel="${st.spiel?f.key:"#"+f.id}" rows="3" maxlength="4000" style="${fld};margin-top:3px">${esc(wert)}</textarea></label>`;
+    }).join("") + fuss("Weiter");
+  }else if(st.typ==="orga"){
+    html = kopf + FZ_ORGA.map(o=>`<div style="margin-bottom:10px"><div style="font-size:var(--s-text);font-weight:700;margin-bottom:4px">${o.emo} ${o.label}</div>
+      <div style="display:flex;gap:6px">${o.stufen.map((l,j)=>{ const an=_FZ&&_FZ.wert.orga[o.key]===j+1; return `<button type="button" aria-pressed="${an}" onclick="nbWegOrga('${o.key}',${j+1})" style="flex:1;min-height:48px;border:${an?"2px solid var(--blue)":"1px solid var(--rand-bedien)"};border-radius:10px;background:${an?"var(--blue-bg)":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">${esc(l)}</button>`; }).join("")}</div></div>`).join("") + fuss("Weiter");
+  }else if(st.typ==="ende"){
+    const zusammen = [];
+    if(_nbWeg.art==="training"){
+      const ist = ["spass","umsetzung","erfolg"].filter(k=>einheitGetStar(k)).length;
+      zusammen.push(`Einheit: ${ist} von 3 Fragen beantwortet`);
+      const plan = (typeof EB_PLAN!=="undefined"?EB_PLAN:[]);
+      const ue = plan.filter((p,k)=>document.getElementById("eb-skip-"+k)?.checked || EB_DIMS.some(d=>einheitGetStar(`ue-${k}-${d.key}`))).length;
+      if(plan.length) zusammen.push(`Übungen: ${ue} von ${plan.length}`);
+      const kids = (typeof EB_SPIELER!=="undefined"?EB_SPIELER:[]);
+      if(kids.length && document.getElementById("eb-stars-sp-0")) zusammen.push(`Kinder: ${kids.filter((x,k)=>einheitGetStar("sp-"+k)).length} von ${kids.length}`);
+    }else if(_FZ){
+      _FZ.teams.forEach(t=>zusammen.push(`${t.name}: ${Object.keys(_FZ.wert.teams[String(t.nr)]||{}).length} von 4`));
+      if(_FZ.gaeste.length) zusammen.push(`Gäste: ${Object.keys(_FZ.wert.gaeste).length} von ${_FZ.gaeste.length}`);
+    }
+    html = `${fortschritt}<div style="font-size:var(--s-teil);font-weight:800;margin:4px 0 8px">Fertig – so steht es</div>
+      <div style="font-size:var(--s-text);color:var(--text2);line-height:1.6;margin-bottom:12px">${zusammen.map(esc).join("<br>")}<br>Offene Fragen bleiben leer – auch halb ausgefüllt ist besser als gar nicht.</div>
+      <button type="button" class="btn btn-p" onclick="nbWegSpeichern()" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-check"></i>Speichern</button>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button type="button" class="btn" style="min-height:48px" onclick="nbWegGehe(-1)"><i class="ti ti-arrow-left"></i>Zurück</button>
+        <button type="button" class="btn" style="flex:1;min-height:48px;justify-content:center" onclick="nbWegAus()">Alles auf einen Blick</button>
+      </div>`;
+  }
+  /* Der Sprachnotiz-Kasten gibt es nur einmal (Kennungen nb-text, nb-mic …). In Schritt 1 steht
+     er im Ablauf, sonst an seinem Platz im Bogen. Vor dem Neuzeichnen wird er herausgelöst,
+     damit innerHTML ihn nicht mitnimmt. */
+  let nb = document.getElementById("nb-box");
+  if(nb && box.contains(nb)) nb.remove();
+  if(nb && !card.querySelector("[data-nb-platz]") && card.contains(nb)){ const platz=document.createElement("div"); platz.setAttribute("data-nb-platz",""); platz.hidden=true; nb.replaceWith(platz); }
+  box.innerHTML = html;
+  if(nb){
+    if(st.typ==="start"){ const ziel = box.querySelector("[data-nb-start]"); if(ziel) ziel.replaceWith(nb); }
+    else{ const platz = card.querySelector("[data-nb-platz]"); if(platz){ platz.after(nb); } }
+  }
+  try{ box.scrollIntoView({block:"nearest"}); }catch(e){}
 }
 
 /* MODUL_WACHE: letzter Name der Datei. Stirbt sie vorher, fehlt genau dieser. */

@@ -235,6 +235,12 @@ const BLITZ_CRIT=[
   {key:"form",label:"Tagesform"}
 ];
 function blitzInit(){
+  /* v648: Bis zum Startdatum der Bewertungen (Ende Hinrunde) ist das Blitz-Rating nicht
+     erreichbar – die Nachbereitung auf Mannschaftsebene bleibt. */
+  const abschnitt=document.getElementById("blitz-abschnitt");
+  const frei=typeof bewFreigegeben==="function"&&bewFreigegeben();
+  if(abschnitt)abschnitt.style.display=frei?"":"none";
+  if(!frei){const b=document.getElementById("blitz-panel");if(b)b.innerHTML="";return;}
   // nur die nominierten (dabei) Spieler bewerten, falls eine Nominierung vorliegt
   blitzPlayers=(typeof nominierteSpieler==="function"&&nominierteSpieler().length)?nominierteSpieler():kaderNamen();
   blitzIdx=0;
@@ -247,6 +253,9 @@ function blitzInit(){
     </div>
     <div id="blitz-card"></div>
     <div id="blitz-saved" style="margin-top:12px"></div>`;
+  /* v636: der angemeldete Trainer ist vorgewählt. Vorher stand hier immer der erste Name –
+     wer nicht umschaltete, überschrieb per Upsert (datum,spieler,autor) die Wertung des Kollegen. */
+  if(typeof trainerMe==="function")trainerMe().then(me=>{const s=document.getElementById("blitz-autor");if(me&&s&&[...s.options].some(o=>o.value===me))s.value=me;}).catch(()=>{});
   blitzRenderCard();
   blitzLoadSaved();
 }
@@ -327,6 +336,7 @@ async function blitzRate(){
   const res=await sbQueuedPost("blitz_ratings?on_conflict=datum,spieler,autor",
     {datum,spieler:name,wertung,autor,kriterien},"resolution=merge-duplicates"); // offline -> Queue
   if(res.ok)blitzLoadSaved(); // bei Online: gespeicherte Liste aktualisieren
+  else if(!res.queued&&typeof toast==="function")toast(`Blitz-Rating für ${name} nicht gespeichert – bitte neu anmelden und nochmal`,"err");   // v636: vorher still verworfen
 }
 function blitzSkip(){blitzIdx++;blitzCritPlayer=null;blitzRenderCard();}
 
@@ -388,13 +398,13 @@ function teamStatsRender(){
   if(!wrap)return;
   // Letzte Einheit + Ø-Nachbewertung
   const evalDates=Object.keys(EVAL_DATA).sort().reverse();
-  let evalTile='<div style="font-size:11px;color:var(--text3)">Noch keine Einheit bewertet</div>';
+  let evalTile='<div style="font-size:var(--s-text);color:var(--text2)">Noch keine Einheit bewertet</div>';
   if(evalDates.length){
     const d=evalDates[0];const entries=(EVAL_DATA[d]||[]).filter(e=>!e.skipped); // Übersprungene zählen nicht mit
     let sum=0,cnt=0;
     entries.forEach(e=>Object.entries(e).forEach(([k,v])=>{if(typeof v==="number"&&k!=="formIdx"){sum+=v;cnt++;}}));
     const avg=cnt?(sum/cnt).toFixed(1):"–";
-    evalTile=`<div style="font-size:16px;font-weight:700;color:var(--blue-text)">${avg} ★</div><div style="font-size:10px;color:var(--text2)">${new Date(d).toLocaleDateString("de-DE")}</div>`;
+    evalTile=`<div style="font-size:var(--s-teil);font-weight:800;color:var(--blue-text)">${avg} ★</div><div style="font-size:var(--s-klein);color:var(--text2)">${new Date(d).toLocaleDateString("de-DE")}</div>`;
   }
   // Anwesenheitsquote letzte 4 Termine
   const awDates=Object.keys(AW_DATA).sort().reverse().slice(0,4);
@@ -412,10 +422,10 @@ function teamStatsRender(){
   /* v472: „Bewertung ueberfaellig" stand hier zum dritten Mal (Home-Kachel „15 Bewertungen
      faellig", Team-Menue „15 ueberfaellig", und diese Karte). Der Nag bleibt dort, wo man
      ihn erledigt – im Team-Menue –, die Kachel zeigt ihn als Hinweis. Hier ist er raus. */
-  const tile=(title,body)=>`<div class="card" style="padding:10px 12px"><div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px">${title}</div>${body}</div>`;
+  const tile=(title,body)=>`<div class="card" style="padding:10px 12px"><div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:4px">${title}</div>${body}</div>`;
   wrap.innerHTML=
     tile("Letzte Einheit",evalTile)+
-    tile("Anwesenheit (letzte 4)",`<div style="font-size:16px;font-weight:700;color:var(--teal)">${quote}</div><div style="font-size:10px;color:var(--text2)">${awDates.length} Termin${awDates.length!==1?"e":""}</div>`);
+    tile("Anwesenheit (letzte 4)",`<div style="font-size:var(--s-teil);font-weight:800;color:var(--teal)">${quote}</div><div style="font-size:var(--s-klein);color:var(--text2)">${awDates.length} Termin${awDates.length!==1?"e":""}</div>`);
 }
 
 // L5: Daten-Backup – alle sechs Tabellen als eine JSON-Datei

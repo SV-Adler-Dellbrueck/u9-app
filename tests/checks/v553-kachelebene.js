@@ -53,8 +53,8 @@ module.exports = async function (h) {
     // c) Ein Tipp auf eine Kachel führt ins Detail – über denselben Weg wie die Kachel selbst
     kachelRun("go", "bew"); await warte(150);
     out.nachKachel = sichtbar();
-    out.subbarAktiv = ([...document.querySelectorAll("#tab-subbar .sub-tab.active")]
-      .map(b => b.textContent.replace(/\s+/g, " ").trim())[0]) || "";
+    // v681: statt der Reiterzeile nennt der Zurück-Kopf die Seite
+    out.subbarAktiv = ((document.querySelector("#tab-subbar .seiten-titel") || {}).textContent || "").replace(/\s+/g, " ").trim();
 
     // d) Kein Fenster mehr
     kachelOpen("orga"); await warte(150);
@@ -66,7 +66,9 @@ module.exports = async function (h) {
   // b) Jeder Bereich landet auf seiner eigenen Hülle und markiert seinen Knopf
   Object.keys(r.bereiche).forEach(key => {
     const b = r.bereiche[key];
-    if (String(b.sicht) !== "view-ue-" + key)
+    // v682: Taktik hat keine Kachel-Ebene mehr (sie trug nur „Taktikboard“) – der Knopf führt aufs Brett
+    const ziel = key === "taktik" ? "view-taktik" : "view-ue-" + key;
+    if (String(b.sicht) !== ziel)
       probleme.push(`„${key}“ öffnet ${JSON.stringify(b.sicht)} statt der Kachel-Ebene view-ue-${key}`);
     if (b.knopf !== "nb-" + key)
       probleme.push(`„${key}“: die Leiste markiert ${b.knopf || "nichts"} statt nb-${key}`);
@@ -86,7 +88,7 @@ module.exports = async function (h) {
 
   // c)
   if (String(r.nachKachel) !== "view-bew") probleme.push(`Der Tipp auf eine Kachel landet auf ${JSON.stringify(r.nachKachel)} statt im Detail`);
-  else if (!/Bewerten/.test(r.subbarAktiv)) probleme.push(`Die Reiterzeile markiert „${r.subbarAktiv}“ statt Bewerten`);
+  else if (!/Bewerten/.test(r.subbarAktiv)) probleme.push(`Der Seitenkopf nennt „${r.subbarAktiv}“ statt Bewerten`);
   else zeilen.push("Kachel → Detail, und die Reiterzeile zeigt, wo man steht");
 
   // d)

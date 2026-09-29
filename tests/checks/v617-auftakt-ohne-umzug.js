@@ -7,7 +7,7 @@
    a) Umzug: Auch mit ?umzug=1 erscheint kein Hinweis mehr; umzugHinweis gibt es nicht mehr.
    b) Auftakt in trainer/, eltern/ und kinder/: #adler-intro steht sofort, trägt das Wappen,
       ist aria-hidden, klickt nicht (pointer-events:none), liegt über allen Dialogen
-      (z > 10069) und ist nach spätestens 2 s aus dem DOM.
+      (z > 10069) und ist nach gut 3 s aus dem DOM (v619 verlängert, vorher 1,6 s).
    c) Einmal je Sitzung: nach einem Neuladen kommt er nicht noch einmal.
    d) Geteilte Links (Stadionheft) öffnen ohne Auftakt.
    e) „Bewegung reduzieren": kein Flug, nach spätestens 1,2 s weg.
@@ -40,7 +40,7 @@ module.exports = async function (h) {
       const nachTipp = await s.page.evaluate(() => !!document.getElementById("adler-intro"));
       return { da, ...info, nachTipp };
     }
-    const weg = await s.page.waitForSelector("#adler-intro", { state: "detached", timeout: 3000 }).then(() => true).catch(() => false);
+    const weg = await s.page.waitForSelector("#adler-intro", { state: "detached", timeout: 4500 }).then(() => true).catch(() => false);
     return { da, ...info, weg, ms: Date.now() - t0 };
   };
 
@@ -62,7 +62,8 @@ module.exports = async function (h) {
     if (r.rolle) probleme.push(`b) ${name}: als ${r.rolle} gekennzeichnet`);
     if (!r.wappen) probleme.push(`b) ${name}: ohne Adler-Wappen`);
     if (!/adlerIntroFlug/.test(r.flug)) probleme.push(`b) ${name}: das Wappen fliegt nicht ein (${r.flug})`);
-    if (!r.weg || r.ms > 2600) probleme.push(`b) ${name}: nach ${r.ms} ms noch da`);
+    if (!r.weg || r.ms > 3900) probleme.push(`b) ${name}: nach ${r.ms} ms noch da`);
+    if (r.weg && r.ms < 2800) probleme.push(`b) ${name}: nach ${r.ms} ms schon weg – v619 verlangt rund 3 s, damit er wirkt`);
     zeilen.push(`b) ${name}: Auftakt ${r.flug}, z ${r.z}, weg nach ${r.ms} ms`);
   }
 

@@ -18,6 +18,7 @@ module.exports = async function (h) {
     const rollen = { funino: f.slots.map(x => x.role), dreiEins: d.slots.map(x => x.role) };
     TEAM_ANZAHL = 1; spieltagTeamKartenRender();
     document.getElementById("mt-phase-nom").open = true;
+    await warte(300);   // v681: „Vor dem Spiel“ öffnet Teams-Block und Aufstellung zusammen – erst messen, wenn beide stehen
     tbFormation = "4+1"; rotSeedFromSquad(K.slice(1, 7)); rotRenderControls(); rotRenderLive(); aufRender(); await warte(50);
     const auf = document.getElementById("auf-panel");
     const feldNamen = () => rotField.slice();
@@ -39,6 +40,7 @@ module.exports = async function (h) {
   // 5) Ziehen mit dem Finger: Chip A auf Chip B
   const boxen = await s.page.evaluate(() => {
     const auf = document.getElementById("auf-panel");
+    auf.scrollIntoView({ block: "center" });   // v681: mit „Vor dem Spiel“ steht der Teams-Block darüber offen
     const feld = [...auf.querySelectorAll(".rot-feld, [data-rot-name]")].filter(x => x.closest("[data-rot-bank]") === null);
     const b = n => { const el = auf.querySelector(`[data-rot-name="${n}"]`); const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
     return { vorher: rotField.slice(), a: b(rotField[0]), b: b(rotField[1]), bank: (() => { const r = auf.querySelector("[data-rot-bank]").getBoundingClientRect(); return { x: r.left + 20, y: r.top + r.height / 2 }; })(), feldSpieler: rotField.slice() };
@@ -49,7 +51,7 @@ module.exports = async function (h) {
   await s.page.waitForTimeout(150);
   const zug = await s.page.evaluate(() => ({ feld: rotField.slice(), sel: rotSel, geist: document.querySelectorAll("body > button[data-rot-name]").length }));
   // 6) Ziehen auf die Bank
-  const b2 = await s.page.evaluate(() => { const auf = document.getElementById("auf-panel"); const el = auf.querySelector(`[data-rot-name="${rotField[0]}"]`); const r = el.getBoundingClientRect(); const bk = auf.querySelector("[data-rot-bank]").getBoundingClientRect(); return { n: rotField[0], x: r.left + r.width / 2, y: r.top + r.height / 2, bx: bk.right - 14, by: bk.top + bk.height / 2, feld: rotField.length }; });
+  const b2 = await s.page.evaluate(() => { const auf = document.getElementById("auf-panel"); auf.scrollIntoView({ block: "center" });   /* v632: Inhalt darüber (Hinweiskarte) darf die Bank nicht aus dem Bild schieben */ const el = auf.querySelector(`[data-rot-name="${rotField[0]}"]`); const r = el.getBoundingClientRect(); const bk = auf.querySelector("[data-rot-bank]").getBoundingClientRect(); return { n: rotField[0], x: r.left + r.width / 2, y: r.top + r.height / 2, bx: bk.right - 14, by: bk.top + bk.height / 2, feld: rotField.length }; });
   await s.page.mouse.move(b2.x, b2.y); await s.page.mouse.down(); await s.page.mouse.move(b2.x + 15, b2.y + 15, { steps: 3 }); await s.page.mouse.move(b2.bx, b2.by, { steps: 8 }); await s.page.mouse.up();
   await s.page.waitForTimeout(150);
   const zugBank = await s.page.evaluate(({ n }) => ({ aufBank: rotBench.includes(n), feld: rotField.length, sel: rotSel }), { n: b2.n });

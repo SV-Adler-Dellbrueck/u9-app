@@ -229,6 +229,7 @@ module.exports = async function (h) {
       out.imDom = treffer ? treffer.textContent.trim() : (kopf ? kopf.textContent.trim() : null);
       out.mitStrich = alle.filter(e => e.textContent.includes("|")).length;
       out.title = treffer ? (treffer.getAttribute("title") || "") : "";
+      out.kurz = treffer ? treffer.textContent.replace(/\s+/g, " ").trim() : "";
       /* Der Feldtext muss weiterhin unten an seiner Station stehen – gekürzt wird nur die
          Anzeige oben, nicht das Label. */
       out.feldTexte = (tpFeldTexte(si) || []).length;
@@ -239,20 +240,24 @@ module.exports = async function (h) {
 
     if (!r.hatFunktion) probleme.push("d) tpSlotKopfText fehlt");
     else {
-      const erwartet = ["Hauptteil 1 – Stationen, 3 Min frei, dann eng", "Hauptteil 2 – Regeln wie in Hauptteil 1",
+      /* v623: „3 Min frei, dann eng“ fällt im Kopf weg (PO: der Hinweis ergab keinen Sinn). */
+      const erwartet = ["Hauptteil 1 – Stationen", "Hauptteil 2 – Regeln wie in Hauptteil 1",
                         "Warm-up", "Hauptteil 1 – Stationen: eine einzige, ohne Strich"];
       r.trocken.forEach((t, i) => { if (t !== erwartet[i]) probleme.push(`d) Kurzfassung ${i + 1}: „${t}“ statt „${erwartet[i]}“`); });
       if (!r.gefunden) probleme.push("d) Kein Block mit Feldtexten im übernommenen Plan");
       else {
         if (r.mitStrich) probleme.push(`d) ${r.mitStrich} Blockkopf/-köpfe zeigen weiterhin die Feldtexte hinter „|“`);
-        if (!r.title || !r.title.includes("|")) probleme.push("d) Der volle Text steht nicht im title");
+        /* v658: Der Kopf zeigt nur noch den Blocknamen, ohne title (PO 28.09.: „die Überschriften bei
+           den Spielblöcken … können wir bitte streichen“ – sie blieben stehen, wenn eine Übung getauscht wurde). */
+        if (r.title) probleme.push(`d) Der Kopf trägt weiter einen title: „${r.title.slice(0, 60)}“`);
+        if (/–/.test(r.kurz)) probleme.push(`d) Der Kopf zeigt mehr als den Blocknamen: „${r.kurz}“`);
         if (!String(r.label).includes("|")) probleme.push("d) Das Label selbst wurde verändert – tpFeldTexte verlöre seine Quelle");
         if (r.feldTexte < 2) probleme.push(`d) tpFeldTexte liest nur noch ${r.feldTexte} Teile aus dem Label`);
         if (!r.unten) probleme.push("d) Unter den Stationen steht kein Feldtext mehr");
       }
     }
     if (!probleme.length)
-      zeilen.push(`d) Kopf „${r.imDom}“ (${String(r.label).length} Zeichen im Label, ${r.title.length} im title) · ${r.feldTexte} Feldtexte weiterhin lesbar · ${r.unten} Zeilen unter den Stationen`);
+      zeilen.push(`d) Kopf „${r.imDom}“ (${String(r.label).length} Zeichen im Label, im Kopf nur der Name) · ${r.feldTexte} Feldtexte weiterhin lesbar · ${r.unten} Zeilen unter den Stationen`);
     const f = s.fehler();
     if (f.length) probleme.push("Konsole (d): " + f.join(" | "));
     await s.schliessen();

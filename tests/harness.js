@@ -54,6 +54,9 @@ function supabaseAttrappe(tabellen = {}) {
       const f = (tabellen.auth || {})[a[1]];
       if (f == null) return { status: 200, body: "{}" };
       const w = (typeof f === "function") ? f(u, req) : f;
+      /* v659: Eine Antwort darf ein Promise sein – so lässt sich eine langsame Erneuerung
+         nachstellen (im Netz kommt sie nie im selben Augenblick zurück). */
+      if (w && typeof w.then === "function") return w.then(x => (x && x.status) ? x : { status: 200, body: JSON.stringify(x == null ? {} : x) });
       return (w && w.status) ? w : { status: 200, body: JSON.stringify(w == null ? {} : w) };
     }
     const r = u.pathname.match(/\/rest\/v1\/rpc\/([a-z_]+)$/);
@@ -97,7 +100,7 @@ async function starten(opt = {}) {
       const satz = { pfad: u.pathname, suche: u.search, methode: req.method(), body: (() => { try { return JSON.parse(req.postData() || "null"); } catch (e) { return req.postData(); } })() };
       abgefragt.push(satz);
       if (req.method() !== "GET") gesendet.push(satz);
-      const a = antwort(u, req) || { status: 200, body: "[]" };
+      const a = (await antwort(u, req)) || { status: 200, body: "[]" };
       return r.fulfill({ status: a.status, contentType: "application/json", body: a.body });
     }
     if (u.hostname !== "app.test") return r.fulfill({ status: 200, contentType: "text/plain", body: "" });
@@ -110,8 +113,11 @@ async function starten(opt = {}) {
     const f = path.join(REPO, u.pathname === "/" ? start : u.pathname);
     if (!fs.existsSync(f) || fs.statSync(f).isDirectory()) return r.fulfill({ status: 404, body: "" });
     const typ = f.endsWith(".js") ? "application/javascript" : f.endsWith(".css") ? "text/css" : f.endsWith(".html") ? "text/html"
-      : f.endsWith(".webmanifest") ? "application/manifest+json" : f.endsWith(".json") ? "application/json" : "text/plain";
-    return r.fulfill({ status: 200, contentType: typ, body: fs.readFileSync(f, "utf8") });
+      : f.endsWith(".webmanifest") ? "application/manifest+json" : f.endsWith(".json") ? "application/json"
+      : f.endsWith(".woff2") ? "font/woff2" : f.endsWith(".png") ? "image/png" : "text/plain";
+    /* v642: Schriften liegen seit v642 in vendor/ – als utf8 gelesen wären woff2 und png zerstört. */
+    const binaer = /\.(woff2|png)$/.test(f);
+    return r.fulfill({ status: 200, contentType: typ, body: binaer ? fs.readFileSync(f) : fs.readFileSync(f, "utf8") });
   });
   /* v617: Der Auftakt (intro.js, fliegendes Wappen) liegt 1,6 s über allem. Er ist
      durchklickbar, aber Messungen am Bildschirm sähen ihn – deshalb standardmäßig aus, wie
@@ -119,7 +125,7 @@ async function starten(opt = {}) {
   if (!opt.intro) await ctx.addInitScript(() => { try { sessionStorage.setItem("adler-intro", "1"); } catch (e) {} });
   await ctx.addInitScript(behalten => {
     try {
-      ["adler_tour", "adler_trainer_tour", "adler_eltern_tour"].forEach(k => localStorage.setItem(k, "1"));
+      ["adler_tour", "adler_trainer_tour", "adler_eltern_tour", "adler_kinder_tour"].forEach(k => localStorage.setItem(k, "1"));
       if (!behalten) localStorage.removeItem("adler_blitz");   // bei jedem Aufruf, auch nach reload()
     } catch (e) {}
   }, !!opt.speicherBehalten);

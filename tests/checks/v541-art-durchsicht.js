@@ -56,8 +56,9 @@ module.exports = async function (h) {
     out.offenVorher = offenNamen.length;
 
     // Einstiegsknopf da und beschriftet?
-    const ein = document.getElementById("tf-art-einstieg");
-    out.einstieg = (ein.textContent || "").trim();
+    // Seit v631 steht im selben Behälter auch der Betreuungs-Einstieg – gemessen wird nur der Art-Knopf.
+    const ein = document.querySelector('#tf-art-einstieg button[onclick^="artDurchsichtOpen"]');
+    out.einstieg = ein ? (ein.textContent || "").trim() : "";
 
     // c) Öffnen schreibt nichts
     artDurchsichtOpen();
@@ -67,7 +68,7 @@ module.exports = async function (h) {
 
     const box = document.getElementById("ad-inhalt");
     out.hoehen = [...box.querySelectorAll("button")].map(b => Math.round(b.getBoundingClientRect().height));
-    out.gruppen = [...box.children].filter(e => /text-transform:uppercase/.test(e.getAttribute("style") || ""))
+    out.gruppen = [...box.children].filter(e => /^(Spielform|Übungsform|Weder noch) ·/.test((e.textContent || "").trim()))   // v682: Überschriften ohne Versalien
       .map(e => e.textContent.trim());
 
     // d) Ein Tipp ändert nur die Anzeige
@@ -123,7 +124,7 @@ module.exports = async function (h) {
     renderTraining(); await warte(150);
     return {
       offenNachher: artDurchsichtOffen().length,
-      einstieg: (document.getElementById("tf-art-einstieg").textContent || "").trim(),
+      einstieg: ((document.querySelector('#tf-art-einstieg button[onclick^="artDurchsichtOpen"]') || {}).textContent || "").trim(),
       handUnberuehrt: _tpArt(tpAllForms().find(f => f.name === "Korridor-Funino")),
       beispiel: _tpArt(tpAllForms().find(f => f.name === "Hai & Fische")),
       fensterZu: !document.getElementById("ad-modal")

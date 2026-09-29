@@ -50,7 +50,7 @@ function updateRautePreview(rolle,tw){
 ═══════════════════════════════════ */
 function updateTierHL(){
   const dims=currentDims();
-  getAllT(dims).forEach(n=>[1,2,3,4].forEach(v=>{
+  getAllT(dims).forEach(n=>[0,1,2,3,4].forEach(v=>{
     const l=document.getElementById(`tl-${n}-${v}`);
     if(l)l.classList.toggle("sel",!!document.querySelector(`input[name="${n}"][value="${v}"]`)?.checked);
   }));
@@ -109,6 +109,7 @@ function bewLeerSetzen(hatKind){
 }
 function onPlayerSelect(){
   const name=document.getElementById("p-name").value;
+  bewRundeTrainerZeile();
   if(!name){bewLeerSetzen(false);return;}
   bewLeerSetzen(true);
   const k=getKader(name);
@@ -128,9 +129,9 @@ function onPlayerSelect(){
     const lm=last&&(last.meta||last)||{};
     const setV=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val;};
     setV("p-age",lm.age||"8");
-    setV("p-foot",lm.foot||"R");
+    setV("p-foot",lm.strong_foot||lm.foot||"R");   // v636: gespeichert wird strong_foot, nicht foot
     const seg=(hid,val)=>{const v=String(val||"2");setV(hid,v);document.querySelectorAll(`#${hid}-seg .seg-btn`).forEach(b=>b.classList.toggle("active",b.dataset.val===v));};
-    seg("p-eltern",lm.eltern);seg("p-att",lm.att);
+    seg("p-eltern",lm.eltern);seg("p-att",lm.attendance||lm.att);   // v636: gespeichert wird attendance
     setV("p-notes","");
   }catch(e){}
   showBewSticky(name);
@@ -185,16 +186,120 @@ function bewRundeFinish(){
   try{navigator.vibrate&&navigator.vibrate([40,60,40,60,120]);}catch(e){}
 }
 function bewRundeStop(){ if(confirm("Bewertungsrunde beenden?")){ BEW_RUNDE={active:false,queue:[],idx:0}; bewRundeBarRender(); } }
+// v637/v648: Wann war die letzte Runde, wann ist die nächste fällig? (Takt acht Wochen, fällig ab 49 Tagen)
+function bewRundenZeile(){
+  if(typeof bewRundenStand!=="function")return "";
+  const st=bewRundenStand(), dd=d=>new Date(d+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
+  const txt=st.faellig?(st.letzte&&st.letzte>=BEW_AB?`⏰ Nächste Runde fällig – die letzte war am ${dd(st.letzte)} (vor ${st.tage} Tagen).`:`⏰ Runde fällig – Bewertungen laufen seit ${dd(BEW_AB)}.`)
+    :st.letzte&&st.letzte>=BEW_AB?`Letzte Runde am ${dd(st.letzte)} · nächste fällig ab ${dd(st.faelligAb)}.`
+    :`Bewertungen ab ${dd(BEW_AB)} · alle acht Wochen gemeinsam im Trainerteam.`;
+  return `<div id="bew-runden-stand" style="width:100%;margin-top:6px;font-size:var(--s-klein);color:var(--text2);text-align:center">${txt}</div>`;
+}
+/* v648: Einzelbewertung erst ab dem Datum, das das Trainerteam setzt (engine.js BEW_AB).
+   Gesperrt: Formular weg, ein Satz mit Grund und Datum, das Datumsfeld mit genau einer
+   Hauptaktion. Bisherige Bewertungen bleiben unter Profil und Entwicklung lesbar. */
+function bewSperreAnwenden(){
+  const v=document.getElementById("view-bew"); if(!v)return;
+  if(!document.getElementById("bew-sperre-css")){
+    const st=document.createElement("style"); st.id="bew-sperre-css";
+    st.textContent="#view-bew.bew-gesperrt>:not(#bew-runde-bar){display:none!important}";
+    document.head.appendChild(st);
+  }
+  const zu=!(typeof bewFreigegeben==="function"&&bewFreigegeben());
+  v.classList.toggle("bew-gesperrt",zu);
+  if(zu&&BEW_RUNDE.active)BEW_RUNDE={active:false,queue:[],idx:0};
+  bewRundeBarRender();
+}
+function bewAbFeldHtml(){
+  return `<label for="bew-ab" style="display:block;font-size:var(--s-klein);font-weight:700;margin:10px 0 4px">Erste Bewertungsrunde ab</label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <input id="bew-ab" type="date" value="${BEW_AB||""}" style="min-height:48px;flex:1;min-width:160px;padding:8px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)">
+      <button class="btn btn-p" style="min-height:48px" onclick="bewAbSpeichern(this)">Datum speichern</button>
+    </div>`;
+}
+async function bewAbSpeichern(btn){
+  const el=document.getElementById("bew-ab"), wert=el&&/^\d{4}-\d{2}-\d{2}$/.test(el.value)?el.value:null;
+  if(btn)btn.disabled=true;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/team_einstellungen?on_conflict=id`,{method:"POST",headers:sbAuthHeaders({'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({id:1,bewertung_ab:wert})});
+    if(sbCheck401(r))return;
+    if(!r.ok){toast("Datum nicht gespeichert – nur Trainer dürfen es setzen","err");return;}
+    BEW_AB=wert; bewSperreAnwenden();
+    toast(wert?`Datum gespeichert – Bewertungen ab ${bewAbText()}`:"Datum gespeichert – Bewertungen bleiben gesperrt");
+  }catch(e){toast("Netzwerkfehler – Datum nicht gespeichert","err");}
+  finally{if(btn)btn.disabled=false;}
+}
 function bewRundeBarRender(){
   const bar=document.getElementById("bew-runde-bar"); if(!bar)return;
+  if(typeof bewFreigegeben==="function"&&!bewFreigegeben()){
+    const satz=BEW_AB?`Einzelne Spieler werden bis zum Ende der Hinrunde nicht bewertet. Ab ${bewAbText()} bewertet das ganze Trainerteam jeden Spieler, danach alle acht Wochen.`
+      :"Einzelne Spieler werden bis zum Ende der Hinrunde nicht bewertet. Sobald das Trainerteam das Datum festlegt, bewertet es ab dann jeden Spieler, danach alle acht Wochen.";
+    bar.innerHTML=`<div id="bew-sperre" style="width:100%;padding:14px;border:1.5px solid var(--rand-bedien);border-radius:12px;background:var(--surface)">
+      <div style="font-size:var(--s-karte);font-weight:800;margin-bottom:4px">🔒 Bewerten ist noch gesperrt</div>
+      <div style="font-size:var(--s-text);color:var(--text2)">${satz} Bisherige Bewertungen stehen weiter unter Profil und Entwicklung.</div>
+      ${bewAbFeldHtml()}</div>`;
+    return;
+  }
   if(!BEW_RUNDE.active){
-    bar.innerHTML=`<button onclick="bewRundeStart()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.28)"><i class="ti ti-clipboard-list"></i> Bewertungsrunde starten (alle nacheinander)</button>`;
+    bar.innerHTML=`<button onclick="bewRundeStart()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.28)"><i class="ti ti-clipboard-list"></i> Bewertungsrunde starten (alle nacheinander)</button>${bewRundenZeile()}
+      <details style="width:100%;margin-top:4px;font-size:var(--s-klein)"><summary style="cursor:pointer;color:var(--text2)">Startdatum der Bewertungsrunden ändern</summary>${bewAbFeldHtml()}</details>
+      <div id="bew-runde-trainer" style="width:100%;font-size:var(--s-klein);color:var(--text2);text-align:center"></div>`;
+    bewRundeTrainerZeile();
     return;
   }
   const pos=BEW_RUNDE.idx+1, tot=BEW_RUNDE.queue.length, name=BEW_RUNDE.queue[BEW_RUNDE.idx];
-  bar.innerHTML=`<div style="flex:1;min-width:150px;font-size:12.5px;font-weight:800;color:var(--club-accent)">📋 Runde · Spieler ${pos}/${tot}: ${esc(name)}</div>
+  bar.innerHTML=`<div style="flex:1;min-width:150px;font-size:var(--s-text);font-weight:800;color:var(--club-accent)">📋 Runde · Spieler ${pos}/${tot}: ${esc(name)}</div>
     <button class="btn btn-sm" onclick="bewRundeSkip()">Überspringen ›</button>
-    <button class="btn btn-sm" onclick="bewRundeStop()" style="color:var(--red)">Beenden</button>`;
+    <button class="btn btn-sm" onclick="bewRundeStop()" style="color:var(--red)">Beenden</button>
+    <div id="bew-runde-trainer" style="width:100%;font-size:var(--s-klein);color:var(--text2)"></div>`;
+  bewRundeTrainerZeile();
+}
+/* v648: Die Runde gehört dem ganzen Trainerteam. Über dem Formular steht, wer das gewählte
+   Kind in dieser Runde (letzte 21 Tage, frühestens ab dem Startdatum) schon bewertet hat. */
+function bewRundeTrainerVon(name){
+  if(!name||!BEW_AB||typeof DB==="undefined"||!DB[name])return [];
+  const grenze=new Date(Date.now()-BEW_RUNDE_FENSTER_TAGE*864e5).toISOString().slice(0,10);
+  const ab=grenze>BEW_AB?grenze:BEW_AB, t=new Set();
+  DB[name].forEach(s=>{if(s&&String(s.datum||"").slice(0,10)>=ab&&s.trainer)t.add(String(s.trainer));});
+  return [...t];
+}
+function bewRundeTrainerZeile(){
+  const el=document.getElementById("bew-runde-trainer"); if(!el)return;
+  const name=(document.getElementById("p-name")||{}).value||"";
+  if(!name){el.textContent="";return;}
+  const t=bewRundeTrainerVon(name);
+  el.textContent=t.length?`In dieser Runde schon bewertet von: ${t.join(", ")}`:"In dieser Runde noch von niemandem bewertet.";
+  bewEinsatzZeile(el,name);
+}
+/* v677 PO 29.09.: „… würde es natürlich helfen, wenn man auch dafür eine Übersicht bekommt, wie der
+   Trainingseinsatz des einzelnen Kindes im Laufe der letzten Monate war.“ Die schnellen Sterne nach
+   jedem Training (ruhig · gut · stark, AW_DATA[datum][name].qual) je Monat: Durchschnitt, wie oft
+   bewertet, wie oft da. Nur hier im Trainerbereich, nie für Eltern oder Kinder. */
+function bewEinsatzMonate(name,monate){
+  const heute=new Date().toISOString().slice(0,10);
+  const ab=new Date(); ab.setMonth(ab.getMonth()-(monate||6)+1); ab.setDate(1);
+  const abTag=ab.toISOString().slice(0,10);
+  const tage=(typeof awZaehltage==="function"?awZaehltage():Object.keys(typeof AW_DATA!=="undefined"?AW_DATA:{})).filter(d=>d>=abTag&&d<=heute);
+  const m={};
+  tage.forEach(d=>{
+    const k=d.slice(0,7), e=(AW_DATA[d]||{})[name]||{};
+    const x=m[k]=m[k]||{monat:k,trainings:0,da:0,summe:0,bewertet:0};
+    x.trainings++;
+    if(e.da){ x.da++; if(e.qual>0){ x.summe+=e.qual; x.bewertet++; } }
+  });
+  return Object.values(m).sort((a,b)=>a.monat.localeCompare(b.monat))
+    .map(x=>({...x,schnitt:x.bewertet?Math.round(x.summe/x.bewertet*10)/10:null}));
+}
+function bewEinsatzZeile(anker,name){
+  let box=document.getElementById("bew-einsatz");
+  if(!box){ box=document.createElement("div"); box.id="bew-einsatz"; box.style.cssText="width:100%;margin-top:6px;font-size:var(--s-klein);color:var(--text2);text-align:center"; }
+  if(anker&&box.previousElementSibling!==anker)anker.insertAdjacentElement("afterend",box);
+  if(!name){ box.innerHTML=""; return; }
+  const zeilen=bewEinsatzMonate(name,6);
+  if(!zeilen.length){ box.innerHTML=`🏃 Trainingseinsatz: in den letzten Monaten kein Training erfasst.`; return; }
+  const mon=k=>new Date(k+"-01T00:00:00").toLocaleDateString("de-DE",{month:"short"});
+  box.innerHTML=`<b style="color:var(--text)">🏃 Trainingseinsatz</b> · ${zeilen.map(x=>
+    `<span class="bew-einsatz-monat" style="white-space:nowrap">${esc(mon(x.monat))} ${x.schnitt!=null?"★"+String(x.schnitt).replace(".",",")+` (${x.bewertet}×)`:"ohne Sterne"} · da ${x.da}/${x.trainings}</span>`).join(" &nbsp;|&nbsp; ")}`;
 }
 
 /* ═══════════════════════════════════
@@ -213,7 +318,7 @@ function buildDims(isTw){
     const isTWDim=d.id.startsWith("tw_");
     block.innerHTML=`
       <div class="dim-head" role="button" tabindex="0" onclick="toggleDim(this)">
-        <div class="dim-iw" style="background:${d.col}22"><i class="ti ${d.icon}" style="font-size:15px;color:${d.col}"></i></div>
+        <div class="dim-iw" style="background:${d.col}22"><i class="ti ${d.icon}" style="font-size:var(--s-karte);color:${d.col}"></i></div>
         <div style="flex:1">
           <div class="dim-ht">${isTWDim?"🥅 ":""}${d.label}</div>
           <div class="dim-hs">${d.tier.length} Beobachtungen · ${d.mx.length} Detailwerte · ${Math.round(d.w*100)}% Gewichtung</div>
@@ -225,7 +330,7 @@ function buildDims(isTw){
     wrap.appendChild(block);
     const body=document.getElementById(`dbody-${d.id}`);
     const tt=document.createElement("table");tt.className="tier-t";
-    tt.innerHTML=`<thead><tr><th>Beobachtung</th><th>Ansatz</th><th>Solide</th><th>Gut</th><th>Stark</th></tr></thead>`;
+    tt.innerHTML=`<thead><tr><th>Beobachtung</th><th>Ansatz</th><th>Solide</th><th>Gut</th><th>Stark</th><th>Nicht gesehen</th></tr></thead>`;
     const tb=document.createElement("tbody");
     d.tier.forEach(t=>{
       const tr=document.createElement("tr");
@@ -234,16 +339,19 @@ function buildDims(isTw){
         const bc=o.v===1?"lb1":o.v===2?"lb2":o.v===3?"lb3":"lb4";
         h+=`<td><div class="topt"><label id="tl-${t.n}-${o.v}"><input type="radio" name="${t.n}" value="${o.v}" onchange="onChange()"><span class="lb ${bc}">${["","Ansatz","Solide","Gut","Stark"][o.v]}</span><span><span class="ltitle">${o.t}</span><span class="ldesc">${o.d}</span></span></label></div></td>`;
       });
+      /* v637: „Nicht gesehen“ (Wert 0) – wer ein Kriterium nicht beobachtet hat, muss keinen Wert
+         raten. 0 zählt weder als Ansatz noch in einen Schnitt, nicht als Stärke, nicht als Entwicklungsfeld. */
+      h+=`<td><div class="topt"><label id="tl-${t.n}-0"><input type="radio" name="${t.n}" value="0" onchange="onChange()"><span class="lb lb0">Nicht gesehen</span><span><span class="ldesc">zählt nicht mit</span></span></label></div></td>`;
       tr.innerHTML=h;tb.appendChild(tr);
     });
     tt.appendChild(tb);body.appendChild(tt);
     if(d.mx.length){ // Detail-Matrix nur rendern, wenn die Dimension welche hat (v2: leer)
     const sep=document.createElement("div");
-    sep.style.cssText="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text2);padding:6px 0 4px;margin-top:4px";
+    sep.style.cssText="font-size:var(--s-text);font-weight:800;color:var(--text);padding:6px 0 4px;margin-top:4px";
     sep.textContent="Detail-Bewertung (1–5)";
     body.appendChild(sep);
     const mx=document.createElement("table");mx.className="mx-t";
-    mx.innerHTML=`<thead><tr><th>Kriterium</th><th>1<br><span style="font-weight:400;font-size:9px">Noch nicht</span></th><th>2<br><span style="font-weight:400;font-size:9px">Ansatz</span></th><th>3<br><span style="font-weight:400;font-size:9px">Solide</span></th><th>4<br><span style="font-weight:400;font-size:9px">Gut</span></th><th>5<br><span style="font-weight:400;font-size:9px">Stark</span></th></tr></thead>`;
+    mx.innerHTML=`<thead><tr><th>Kriterium</th><th>1<br><span style="font-weight:400;font-size:var(--s-klein)">Noch nicht</span></th><th>2<br><span style="font-weight:400;font-size:var(--s-klein)">Ansatz</span></th><th>3<br><span style="font-weight:400;font-size:var(--s-klein)">Solide</span></th><th>4<br><span style="font-weight:400;font-size:var(--s-klein)">Gut</span></th><th>5<br><span style="font-weight:400;font-size:var(--s-klein)">Stark</span></th></tr></thead>`;
     const mb=document.createElement("tbody");
     d.mx.forEach(m=>{
       const tr=document.createElement("tr");tr.id=`mxr-${m.n}`;
@@ -257,7 +365,7 @@ function buildDims(isTw){
     mxWrap.className="mx-wrap";
     const mxHint=document.createElement("div");
     mxHint.className="mx-scroll-hint";
-    mxHint.innerHTML='<i class="ti ti-arrows-left-right" style="font-size:12px"></i>Seitwärts scrollen für alle Spalten';
+    mxHint.innerHTML='<i class="ti ti-arrows-left-right" style="font-size:var(--s-text)"></i>Seitwärts scrollen für alle Spalten';
     body.appendChild(mxHint);
     mxWrap.appendChild(mx);
     body.appendChild(mxWrap);
@@ -323,7 +431,7 @@ function wizRender(){
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:var(--surface);border:var(--border-s);border-radius:var(--r);margin-bottom:8px;position:sticky;top:0;z-index:15">
       <button class="btn btn-sm" style="min-width:44px;min-height:44px${wizIdx===0?';opacity:.4':''}" onclick="wizGo(-1)"><i class="ti ti-chevron-left"></i></button>
       <div style="text-align:center;flex:1">
-        <div style="font-size:13px;font-weight:700;color:var(--text)">${label} · ${wizIdx+1}/${blocks.length}</div>
+        <div style="font-size:var(--s-text);font-weight:700;color:var(--text)">${label} · ${wizIdx+1}/${blocks.length}</div>
         <div style="margin-top:4px;display:flex;gap:5px;justify-content:center">${dots}</div>
       </div>
       <button class="btn ${letzte?'btn-p':''} btn-sm" style="min-width:44px;min-height:44px" onclick="${letzte?"document.querySelector('button[onclick=\\\"savePlayer()\\\"]').scrollIntoView({behavior:'smooth'})":"wizGo(1)"}">${letzte?'<i class="ti ti-check"></i>':'<i class="ti ti-chevron-right"></i>'}</button>
@@ -401,6 +509,11 @@ function kidMapFromIds(obj){ if(!obj||typeof obj!=="object"||Array.isArray(obj))
 function kidMapToIds(obj){ if(!obj||typeof obj!=="object"||Array.isArray(obj))return obj; const out={}; Object.keys(obj).forEach(k=>{out[kidNameToKey(k)]=obj[k];}); return out; }
 function kidListFromIds(arr){ if(!Array.isArray(arr))return arr; return arr.map(x=>(typeof x==="number"||/^\d+$/.test(String(x)))?(kidName(x)||("#"+x)):x); }
 function kidListToIds(arr){ if(!Array.isArray(arr))return arr; return arr.map(x=>{ if(typeof x!=="string")return x; const m=x.match(/^#(\d+)$/); if(m)return Number(m[1]); const id=kidId(x); return id!=null?id:x; }); }
+/* v625 PO (Bildschirmfoto Einladungskarten: „Alle oder keine lässt sich nicht anklicken“):
+   loadKader legt die Datenbank-Kennung als `_id` ab, nicht als `id`. Drei Fenster fragten `k.id`
+   und sahen deshalb kein Kind – Einladungskarten („Kein Kader geladen.“), Notfall-Karten (ohne
+   Namen) und Adler-Welt (Federn, Abzeichen). Eine Stelle für beide Schreibweisen. */
+function kaderId(k){ return k?(k._id!=null?k._id:(k.id!=null?k.id:null)):null; }
 async function loadKader(){
   try{
     /* v482 – PO: „Die Anwesenheit der Kinder ist wieder weg." Nach einer Nacht ist der
@@ -429,6 +542,7 @@ async function loadKader(){
         if(x.lieblingsposition)o.lieblingsposition=x.lieblingsposition;
         if(x.foto_path)o.foto_path=x.foto_path;
         o.foto_stadionheft_ok=!!x.foto_stadionheft_ok; // HOTFIX 19 digital: Foto-Freigabe fürs Eltern-Heft
+        if(x.alias)o.alias=x.alias; // v679: fester Buchstabe fürs Tagebuch (kader.alias, einmal vergeben)
         return o;
       }));
     }
@@ -460,12 +574,14 @@ function kaderAktivToggle(cb){
    nur nicht im Weg. Ein Umbau auf einzelnes Speichern hätte die Reihenfolge (sort_order)
    und die Behandlung doppelter Nummern mit angefasst — an beidem war nichts falsch. */
 function _keChips(k){
-  const chip=(txt,farbe,bg)=>`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;border:1px solid ${farbe};color:${farbe};background:${bg};white-space:nowrap">${txt}</span>`;
+  const chip=(txt,farbe,bg)=>`<span style="font-size:var(--s-klein);font-weight:700;padding:2px 7px;border-radius:999px;border:1px solid ${farbe};color:${farbe};background:${bg};white-space:nowrap">${txt}</span>`;
   const c=[];
   if(k.aktiv===false)c.push(chip("nicht im Kader","var(--amber)","transparent"));
   if(k.tw)c.push(chip("🥅 TW","var(--text2)","transparent"));
   if(k.foto_stadionheft_ok)c.push(chip("📰 Foto frei","var(--green)","transparent"));
   if(k.medical)c.push(chip("⚕️ Hinweis","var(--red)","transparent"));
+  // v679 (Nachtrag 28.09., Abschnitt 3): der feste Buchstabe, mit dem jeder Tagebuch-Export dieses Kind nennt
+  if(k.alias)c.push(`<span title="So heißt das Kind in jedem Tagebuch-Export" style="font-size:var(--s-klein);color:var(--text2);white-space:nowrap">Kind ${esc(k.alias)}</span>`);
   return c.join(" ");
 }
 function kaderEditRow(k,i){
@@ -473,12 +589,12 @@ function kaderEditRow(k,i){
   const neu=!k._id&&!k.name;                 // frisch angelegte Zeile: gleich offen
   const kopf=`<button type="button" class="ke-kopf" onclick="kaderZeileAuf(this)" aria-expanded="${neu}"
       style="width:100%;min-height:56px;display:flex;align-items:center;gap:10px;padding:8px 10px;border:none;border-radius:var(--r);background:transparent;color:var(--text);font-family:inherit;text-align:left;cursor:pointer">
-      <span class="ke-kopf-nr" style="min-width:34px;font-size:13px;font-weight:800;color:var(--text3)">${k.nr!=null?"#"+k.nr:"—"}</span>
+      <span class="ke-kopf-nr" style="min-width:34px;font-size:var(--s-text);font-weight:800;color:var(--text3)">${k.nr!=null?"#"+k.nr:"—"}</span>
       <span style="flex:1;min-width:0">
-        <span class="ke-kopf-name" style="display:block;font-size:14px;font-weight:700">${esc(k.name||"Neuer Spieler")}</span>
+        <span class="ke-kopf-name" style="display:block;font-size:var(--s-karte);font-weight:700">${esc(k.name||"Neuer Spieler")}</span>
         <span class="ke-kopf-chips" style="display:block;margin-top:2px">${_keChips(k)}</span>
       </span>
-      <span class="ke-pfeil" aria-hidden="true" style="font-size:16px;color:var(--text3);transition:transform .15s${neu?";transform:rotate(90deg)":""}">›</span>
+      <span class="ke-pfeil" aria-hidden="true" style="font-size:var(--s-karte);color:var(--text3);transition:transform .15s${neu?";transform:rotate(90deg)":""}">›</span>
     </button>`;
   return `<div class="kader-edit-row" data-id="${k._id||''}" data-name="${esc(k.name||'')}" style="border:var(--border-s);border-radius:var(--r);margin-bottom:8px${drin?"":";opacity:0.62"}">
     ${kopf}
@@ -487,47 +603,47 @@ function kaderEditRow(k,i){
       <input class="ke-name" value="${esc(k.name||'')}" placeholder="Name" oninput="kaderKopfFrisch(this)" style="flex:1;min-width:80px;min-height:44px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;background:var(--surface);color:var(--text)">
       <input class="ke-nr" type="number" value="${k.nr!=null?k.nr:''}" placeholder="Nr" oninput="kaderKopfFrisch(this)" style="width:64px;min-height:44px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;background:var(--surface);color:var(--text)">
     </div>
-    <div class="ke-raus-hinweis" style="font-size:11px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:5px 8px;margin-bottom:6px;line-height:1.4${drin?";display:none":""}">Nicht mehr im Kader – taucht in Anwesenheit, Nominierung, Aufstellung und Turnier nicht mehr auf. Alles Bisherige bleibt gespeichert.</div>
+    <div class="ke-raus-hinweis" style="font-size:var(--s-klein);color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:5px 8px;margin-bottom:6px;line-height:1.4${drin?";display:none":""}">Nicht mehr im Kader – taucht in Anwesenheit, Nominierung, Aufstellung und Turnier nicht mehr auf. Alles Bisherige bleibt gespeichert.</div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
-      <label style="font-size:12px;display:flex;align-items:center;gap:4px;min-height:44px" title="Häkchen weg = nicht mehr im Kader. Verschwindet aus Anwesenheit, Nominierung, Aufstellung und Turnier – die Historie bleibt erhalten."><input class="ke-aktiv" type="checkbox" ${drin?"checked":""} onchange="kaderAktivToggle(this)">👥 Im Kader</label>
-      <label style="font-size:12px;display:flex;align-items:center;gap:4px;min-height:44px"><input class="ke-tw" type="checkbox" ${k.tw?"checked":""} onchange="kaderKopfFrisch(this)">🥅 TW</label>
-      <select class="ke-prio" style="min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px;background:var(--surface);color:var(--text)">
+      <label style="font-size:var(--s-text);display:flex;align-items:center;gap:4px;min-height:44px" title="Häkchen weg = nicht mehr im Kader. Verschwindet aus Anwesenheit, Nominierung, Aufstellung und Turnier – die Historie bleibt erhalten."><input class="ke-aktiv" type="checkbox" ${drin?"checked":""} onchange="kaderAktivToggle(this)">👥 Im Kader</label>
+      <label style="font-size:var(--s-text);display:flex;align-items:center;gap:4px;min-height:44px"><input class="ke-tw" type="checkbox" ${k.tw?"checked":""} onchange="kaderKopfFrisch(this)">🥅 TW</label>
+      <select class="ke-prio" style="min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)">
         <option value="0"${(k.twPrio||0)===0?" selected":""}>kein TW</option>
         <option value="1"${k.twPrio===1?" selected":""}>TW primär</option>
         <option value="2"${k.twPrio===2?" selected":""}>TW Option</option>
       </select>
-      <input class="ke-geb" type="date" value="${esc(k.geb||'')}" title="Geburtstag" aria-label="Geburtstag" style="min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px;background:var(--surface);color:var(--text)">
+      <input class="ke-geb" type="date" value="${esc(k.geb||'')}" title="Geburtstag" aria-label="Geburtstag" style="min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)">
     </div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
-      <select class="ke-fuss" title="Starker Fuß" aria-label="Starker Fuß" style="min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px;background:var(--surface);color:var(--text)">
+      <select class="ke-fuss" title="Starker Fuß" aria-label="Starker Fuß" style="min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)">
         <option value=""${!k.starker_fuss?" selected":""}>Fuß?</option>
         <option value="R"${k.starker_fuss==="R"?" selected":""}>Rechts</option>
         <option value="L"${k.starker_fuss==="L"?" selected":""}>Links</option>
         <option value="B"${k.starker_fuss==="B"?" selected":""}>Beidfüßig</option>
       </select>
-      <input class="ke-pos" value="${esc(k.lieblingsposition||'')}" placeholder="Lieblingsposition" style="flex:1;min-width:90px;min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px;background:var(--surface);color:var(--text)">
+      <input class="ke-pos" value="${esc(k.lieblingsposition||'')}" placeholder="Lieblingsposition" style="flex:1;min-width:90px;min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)">
     </div>
     <!-- v544: Die Trikotgröße stand hier nur in v543. Sie ist mit dem zweiten
          Kleidungsstück zu einer Ausgabe geworden (Trikotsatz, Anzug, Jacke haben je
          eigene Größen) und lebt jetzt in „Ausstattung" unter Team – eine Stelle, an
          der auch Datum und Rückgabe stehen. Nicht wieder hier einbauen. -->
     <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-      <span style="font-size:11px;color:var(--text2)">Foto (Karte):</span>
-      <input type="file" accept="image/jpeg,image/png,image/webp" onchange="kaderRowFoto(this)" aria-label="Foto für die Karte" style="font-size:11px;flex:1">
-      ${k.foto_path?'<span style="font-size:10px;color:var(--green)">✓ vorhanden</span>':''}
+      <span style="font-size:var(--s-klein);color:var(--text2)">Foto (Karte):</span>
+      <input type="file" accept="image/jpeg,image/png,image/webp" onchange="kaderRowFoto(this)" aria-label="Foto für die Karte" style="font-size:var(--s-klein);flex:1">
+      ${k.foto_path?'<span style="font-size:var(--s-klein);color:var(--green)">✓ vorhanden</span>':''}
     </div>
-    <label style="display:flex;align-items:flex-start;gap:6px;margin-bottom:6px;font-size:11px;color:var(--text2)" title="Nur mit ausdrücklicher Eltern-Zustimmung. Ohne Häkchen erscheinen überall nur die Initialen.">
+    <label style="display:flex;align-items:flex-start;gap:6px;margin-bottom:6px;font-size:var(--s-klein);color:var(--text2)" title="Nur mit ausdrücklicher Eltern-Zustimmung. Ohne Häkchen erscheinen überall nur die Initialen.">
       <input class="ke-fotook" type="checkbox" ${k.foto_stadionheft_ok?"checked":""} onchange="kaderKopfFrisch(this)" style="margin-top:1px">
       <span>📰 Foto freigegeben für <b>„Adler Nest" &amp; Team-Galerie</b> <span style="color:var(--text3)">(Eltern-Einwilligung eingeholt)</span></span>
     </label>
-    <input class="ke-medical" value="${esc(k.medical||'')}" placeholder="Medical-Hinweis (z. B. Asthma, Allergie…)" oninput="kaderKopfFrisch(this)" style="width:100%;min-height:44px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:12px;background:var(--surface);color:var(--text)">
+    <input class="ke-medical" value="${esc(k.medical||'')}" placeholder="Medical-Hinweis (z. B. Asthma, Allergie…)" oninput="kaderKopfFrisch(this)" style="width:100%;min-height:44px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)">
     ${k._id?`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px">
-      <button type="button" class="btn btn-sm" onclick="kontakteEditOpen(${k._id})" title="Kontakte, Eltern-Login und der persönliche Zu-/Absage-Link" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:10px;line-height:1.2"><i class="ti ti-address-book" style="font-size:17px"></i>Kontakte</button>
-      <button type="button" class="btn btn-sm" onclick="zieleOpen(${k._id})" title="Entwicklungs-Ziele setzen & verfolgen" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:10px;line-height:1.2"><i class="ti ti-target" style="font-size:17px"></i>Ziele</button>
-      <button type="button" class="btn btn-sm" onclick="childWrappedShare(${k._id})" title="Persönliche Saison-Rückblick-Karte zum Teilen mit der Familie" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:10px;line-height:1.2"><i class="ti ti-movie" style="font-size:17px"></i>Saison</button>
-      <button type="button" class="btn btn-sm" onclick="lobRecordOpen(${k._id},'${(k.name||'').replace(/'/g,'')}')" title="Kurzes Sprachlob aufnehmen – das Kind hört es in der Kabine" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:10px;line-height:1.2;grid-column:1/-1"><i class="ti ti-microphone" style="font-size:17px"></i>🎤 Sprachlob aufnehmen</button>
-      <button type="button" class="btn btn-sm btn-d" onclick="kaderEditDelete(this,'${esc(k.name||'')}','${k._id||''}')" style="grid-column:1/-1;justify-content:center;font-size:11px"><i class="ti ti-trash"></i>Endgültig löschen</button>
-    </div>`:'<div style="font-size:10px;color:var(--text3);margin-top:6px">Erst speichern – dann sind Kontakte, Links & Saison-Karte verfügbar.</div>'}
+      <button type="button" class="btn btn-sm" onclick="kontakteEditOpen(${k._id})" title="Kontakte, Eltern-Login und der persönliche Zu-/Absage-Link" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:var(--s-klein);line-height:1.2"><i class="ti ti-address-book" style="font-size:var(--s-teil)"></i>Kontakte</button>
+      <button type="button" class="btn btn-sm" onclick="zieleOpen(${k._id})" title="Entwicklungs-Ziele setzen & verfolgen" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:var(--s-klein);line-height:1.2"><i class="ti ti-target" style="font-size:var(--s-teil)"></i>Ziele</button>
+      <button type="button" class="btn btn-sm" onclick="childWrappedShare(${k._id})" title="Persönliche Saison-Rückblick-Karte zum Teilen mit der Familie" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:var(--s-klein);line-height:1.2"><i class="ti ti-movie" style="font-size:var(--s-teil)"></i>Saison</button>
+      <button type="button" class="btn btn-sm" onclick="lobRecordOpen(${k._id},'${(k.name||'').replace(/'/g,'')}')" title="Kurzes Sprachlob aufnehmen – das Kind hört es in der Kabine" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:var(--s-klein);line-height:1.2;grid-column:1/-1"><i class="ti ti-microphone" style="font-size:var(--s-teil)"></i>🎤 Sprachlob aufnehmen</button>
+      <button type="button" class="btn btn-sm btn-d" onclick="kaderEditDelete(this,'${jsq(k.name||'')}','${k._id||''}')" style="grid-column:1/-1;justify-content:center;font-size:var(--s-klein)"><i class="ti ti-trash"></i>Endgültig löschen</button>
+    </div>`:'<div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px">Erst speichern – dann sind Kontakte, Links & Saison-Karte verfügbar.</div>'}
     </div>
   </div>`;
 }
@@ -593,11 +709,11 @@ function kaderEditOpen(){
   modal.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("kader-edit-modal","👥","Spieler verwalten",`${drin} im Kader${raus?` · ${raus} ausgetragen`:""}`,"#1e3a8a")}
     <input id="ke-filter" type="search" placeholder="Nach Namen suchen…" aria-label="Nach Namen suchen" oninput="kaderFilter(this.value)"
-      style="width:100%;min-height:48px;padding:10px 12px;margin-bottom:10px;border:1px solid var(--rand-bedien);border-radius:10px;box-sizing:border-box;font-family:inherit;font-size:13px;background:var(--surface);color:var(--text)">
+      style="width:100%;min-height:48px;padding:10px 12px;margin-bottom:10px;border:1px solid var(--rand-bedien);border-radius:10px;box-sizing:border-box;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)">
     <div id="kader-edit-list">${KADER.slice().sort((a,b)=>((a.aktiv===false)-(b.aktiv===false))).map((k,i)=>kaderEditRow(k,i)).join("")}</div>
     <button type="button" class="btn btn-sm" onclick="kaderEditAdd()" style="width:100%;margin:2px 0 12px"><i class="ti ti-plus"></i>Spieler erfassen</button>
-    <div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.5">Geburtstag und Medical-Hinweis sehen nur Trainer. Trikotgröße und Ausgabe stehen unter <b>Team → Ausstattung</b>.</div>
-    <button type="button" class="btn btn-p" onclick="kaderSaveAll(this)" style="width:100%;min-height:56px;font-size:15px;font-weight:800"><i class="ti ti-device-floppy"></i>Speichern</button>
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:10px;line-height:1.5">Geburtstag und Medical-Hinweis sehen nur Trainer. Trikotgröße und Ausgabe stehen unter <b>Team → Ausstattung</b>.</div>
+    <button type="button" class="btn btn-p" onclick="kaderSaveAll(this)" style="width:100%;min-height:56px;font-size:var(--s-karte);font-weight:800"><i class="ti ti-device-floppy"></i>Speichern</button>
   </div>`;
   document.body.appendChild(modal);
 }
@@ -649,16 +765,16 @@ function kontakteEditOpen(spielerId){
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
   modal.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:420px;width:100%;margin:auto">
     <div style="font-weight:700;margin-bottom:2px">📇 ${esc(k?k.name:"Spieler")} – Kontakte & Eltern-Login</div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:12px">Login-E-Mails: wer sich im Eltern-Bereich anmelden & zu-/absagen darf. Telefonnummern: beliebig viele (Vater, Mutter, Oma…).</div>
-    <div id="kontakte-body"><div style="color:var(--text3);font-size:12px;padding:12px">Lade…</div></div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:12px">Login-E-Mails: wer sich im Eltern-Bereich anmelden & zu-/absagen darf. Telefonnummern: beliebig viele (Vater, Mutter, Oma…).</div>
+    <div id="kontakte-body"><div style="color:var(--text3);font-size:var(--s-text);padding:12px">Lade…</div></div>
     <!-- v546: Der persönliche Zu-/Absage-Link stand bis hierher in der Stammdatenzeile
          des Kader-Editors, zwischen Geburtstag und Medical-Hinweis. Er ist aber keine
          Eigenschaft des Kindes, sondern ein Zugangsweg für seine Familie – und genau die
          wird hier verwaltet. Als Erinnerung an einen einzelnen Termin taugt er ohnehin
          nicht: er trägt kein Datum. Dafür gibt es das Nachfassen am Termin selbst. -->
     <div style="border-top:var(--border-s);margin-top:14px;padding-top:12px">
-      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:2px">Ohne Anmeldung zu- und absagen</div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5">Ein persönlicher Link für diese Familie: ein Tipp genügt, kein Login. Gilt dauerhaft für alle Termine – wer an einen einzelnen erinnern will, fasst am Termin selbst nach.</div>
+      <div style="font-size:var(--s-text);font-weight:700;color:var(--text2);margin-bottom:2px">Ohne Anmeldung zu- und absagen</div>
+      <div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:8px;line-height:1.5">Ein persönlicher Link für diese Familie: ein Tipp genügt, kein Login. Gilt dauerhaft für alle Termine – wer an einen einzelnen erinnern will, fasst am Termin selbst nach.</div>
       <button type="button" class="btn" style="width:100%" onclick="kindLinkShare(${spielerId})"><i class="ti ti-calendar-check"></i>Zu-/Absage-Link teilen</button>
     </div>
     <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn" onclick="document.getElementById('kontakte-modal').remove()">Schließen</button></div>
@@ -696,44 +812,44 @@ async function kontakteRender(sid){
   let emails=[],phones=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/eltern_kinder?spieler_id=eq.${sid}&select=id,email,label&order=id`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)emails=await r.json();}catch(e){}
   try{const r=await fetch(`${SB_URL}/rest/v1/kind_kontakte?spieler_id=eq.${sid}&select=id,name,rolle,telefon,geburtstag&order=id`,{headers:sbAuthHeaders()});if(r.ok)phones=await r.json();}catch(e){}
-  const inp="padding:7px;border:var(--border-s);border-radius:6px;font-family:inherit;font-size:12px";
+  const inp="padding:7px;border:var(--border-s);border-radius:6px;font-family:inherit;font-size:var(--s-text)";
   // Am Platz wird mit dem Daumen getippt: Aktionen sind beschriftet und 44px hoch,
   // "Loeschen" steht raeumlich abgesetzt und fragt nach (es nimmt einem Elternteil den Zugang).
   const kkZeile="padding:10px 0;border-bottom:1px solid var(--surface2)";
   const kkAktion="flex:1;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px;"
     +"padding:0 12px;border:1.5px solid;border-radius:10px;background:var(--surface);"
-    +"font-family:inherit;font-size:13px;font-weight:700;cursor:pointer";
+    +"font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer";
   const kkLoeschen="min-width:44px;min-height:44px;margin-left:12px;display:inline-flex;align-items:center;justify-content:center;"
-    +"border:1.5px solid var(--red);border-radius:10px;background:var(--red-bg);color:var(--red);font-size:16px;cursor:pointer";
+    +"border:1.5px solid var(--red);border-radius:10px;background:var(--red-bg);color:var(--red);font-size:var(--s-karte);cursor:pointer";
   body.innerHTML=`
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">🔑 Login-E-Mails</div>
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:6px">🔑 Login-E-Mails</div>
     ${emails.length?emails.map(e=>`<div style="${kkZeile}">
-      <div style="font-size:13px;word-break:break-all;margin-bottom:8px">${esc(e.email)}${e.label?` <span style="color:var(--text3);font-size:11px">(${esc(e.label)})</span>`:""}</div>
+      <div style="font-size:var(--s-text);word-break:break-all;margin-bottom:8px">${esc(e.email)}${e.label?` <span style="color:var(--text3);font-size:var(--s-klein)">(${esc(e.label)})</span>`:""}</div>
       <div style="display:flex;gap:8px;align-items:center">
         <button onclick="inviteMail('${jsq(e.email)}','${jsq(kName)}')" style="${kkAktion};border-color:#c4b5fd;color:var(--purple)"><i class="ti ti-mail-forward"></i>Einladen</button>
         <button onclick="kontakteDelEmail(${e.id},${sid},'${jsq(e.email)}')" aria-label="Login-E-Mail entfernen" style="${kkLoeschen}"><i class="ti ti-trash"></i></button>
       </div>
-    </div>`).join(""):'<div style="font-size:12px;color:var(--text3)">Noch keine Login-E-Mail.</div>'}
-    ${emails.length?'<div style="font-size:10.5px;color:var(--text3);margin-top:6px">„Einladen" öffnet dein Mail-Programm mit fertigem Text – du tippst nur noch auf Senden.</div>':""}
+    </div>`).join(""):'<div style="font-size:var(--s-text);color:var(--text3)">Noch keine Login-E-Mail.</div>'}
+    ${emails.length?'<div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px">„Einladen" öffnet dein Mail-Programm mit fertigem Text – du tippst nur noch auf Senden.</div>':""}
     <div style="display:flex;gap:6px;margin:8px 0 16px;flex-wrap:wrap">
       <input id="kk-new-email" type="email" placeholder="eltern@mail.de" style="flex:2;min-width:130px;${inp}">
       <input id="kk-new-email-label" placeholder="Rolle (optional)" style="flex:1;min-width:80px;${inp}">
       <button class="btn" style="min-height:44px" onclick="kontakteAddEmail(${sid})"><i class="ti ti-plus"></i>Hinzufügen</button>
     </div>
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">📞 Telefonnummern</div>
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:6px">📞 Telefonnummern</div>
     ${phones.length?phones.map(p=>`<div style="${kkZeile}">
-      <div style="font-size:13px;margin-bottom:8px">${esc(p.telefon)}${(p.name||p.rolle)?` <span style="color:var(--text3);font-size:11px">(${esc([p.rolle,p.name].filter(Boolean).join(" · "))})</span>`:""}${p.geburtstag?` <span style="color:var(--text3);font-size:11px">🎂 ${new Date(p.geburtstag+"T00:00:00").toLocaleDateString("de-DE")}</span>`:""}</div>
+      <div style="font-size:var(--s-text);margin-bottom:8px">${esc(p.telefon)}${(p.name||p.rolle)?` <span style="color:var(--text3);font-size:var(--s-klein)">(${esc([p.rolle,p.name].filter(Boolean).join(" · "))})</span>`:""}${p.geburtstag?` <span style="color:var(--text3);font-size:var(--s-klein)">🎂 ${new Date(p.geburtstag+"T00:00:00").toLocaleDateString("de-DE")}</span>`:""}</div>
       <div style="display:flex;gap:8px;align-items:center">
-        ${(typeof waNumber==="function"&&waNumber(p.telefon))&&emails.length?`<button onclick="inviteWa('${jsq(p.telefon)}','${jsq(kName)}','${jsq(emails[0].email)}')" style="${kkAktion};border-color:#86efac;color:#15803d"><i class="ti ti-brand-whatsapp"></i>WhatsApp</button>`:`<span style="flex:1;font-size:10.5px;color:var(--text3)">${(typeof waNumber==="function"&&waNumber(p.telefon))?"Erst eine Login-E-Mail hinterlegen":"Keine Handynummer"}</span>`}
+        ${(typeof waNumber==="function"&&waNumber(p.telefon))&&emails.length?`<button onclick="inviteWa('${jsq(p.telefon)}','${jsq(kName)}','${jsq(emails[0].email)}')" style="${kkAktion};border-color:#86efac;color:var(--green)"><i class="ti ti-brand-whatsapp"></i>WhatsApp</button>`:`<span style="flex:1;font-size:var(--s-klein);color:var(--text3)">${(typeof waNumber==="function"&&waNumber(p.telefon))?"Erst eine Login-E-Mail hinterlegen":"Keine Handynummer"}</span>`}
         <button onclick="kontakteDelPhone(${p.id},${sid},'${jsq(p.telefon)}')" aria-label="Telefonnummer entfernen" style="${kkLoeschen}"><i class="ti ti-trash"></i></button>
       </div>
-    </div>`).join(""):'<div style="font-size:12px;color:var(--text3)">Noch keine Nummer.</div>'}
-    ${phones.length?'<div style="font-size:10.5px;color:var(--text3);margin-top:6px">„WhatsApp" öffnet den Chat mit der Einladung. Anmelden kann sich nur, wessen E-Mail oben hinterlegt ist.</div>':""}
+    </div>`).join(""):'<div style="font-size:var(--s-text);color:var(--text3)">Noch keine Nummer.</div>'}
+    ${phones.length?'<div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px">„WhatsApp" öffnet den Chat mit der Einladung. Anmelden kann sich nur, wessen E-Mail oben hinterlegt ist.</div>':""}
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
       <input id="kk-new-tel" type="tel" placeholder="Telefon" style="flex:2;min-width:110px;${inp}">
       <input id="kk-new-rolle" placeholder="Rolle (z. B. Mutter)" style="flex:1;min-width:90px;${inp}">
       <input id="kk-new-name" placeholder="Name (optional)" style="flex:1;min-width:90px;${inp}">
-      <label style="flex:1;min-width:130px;font-size:10px;color:var(--text3)">🎂 Geburtstag (optional)<input id="kk-new-geb" type="date" style="width:100%;${inp}"></label>
+      <label style="flex:1;min-width:130px;font-size:var(--s-klein);color:var(--text3)">🎂 Geburtstag (optional)<input id="kk-new-geb" type="date" style="width:100%;${inp}"></label>
       <button class="btn" style="min-height:44px" onclick="kontakteAddPhone(${sid})"><i class="ti ti-plus"></i>Hinzufügen</button>
     </div>`;
 }
@@ -865,7 +981,7 @@ async function wochenChallengeOpen(){
   const card=document.createElement("div");
   card.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   card.innerHTML=`${mdlHead("wc-modal","🏆","Wochen-Challenge","Heim-Aufgabe der Woche · geschafft = 🪶 20 Federn","var(--amber)")}
-    <textarea id="wc-input" rows="3" placeholder="z. B. „Diese Woche: 50 Ballkontakte im Garten – jeden Tag ein bisschen!&quot;" style="width:100%;padding:9px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box;resize:vertical">${esc(cur)}</textarea>
+    <textarea id="wc-input" rows="3" placeholder="z. B. „Diese Woche: 50 Ballkontakte im Garten – jeden Tag ein bisschen!&quot;" style="width:100%;padding:9px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box;resize:vertical">${esc(cur)}</textarea>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
       <button class="btn btn-p" onclick="wochenChallengeSave()"><i class="ti ti-trophy"></i>Challenge aktiv setzen</button>
       <button class="btn btn-sm" onclick="document.getElementById('wc-modal').remove()">Schließen</button>
@@ -918,7 +1034,7 @@ async function zielUebungenHint(){
   const tags=[]; rows.forEach(z=>{(z.meta&&z.meta.tags||[]).forEach(t=>{if(!tags.includes(t))tags.push(t);});});
   const ex=_zielUebungen(tags,6);
   if(!ex.length){el.innerHTML="";return;}
-  el.innerHTML=`<div style="font-size:11.5px;color:#3730a3;background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:7px 10px;margin-bottom:8px">🎯 <b>Passt zu offenen Entwicklungszielen:</b> ${ex.map(esc).join(" · ")}</div>`;
+  el.innerHTML=`<div style="font-size:var(--s-klein);color:#3730a3;background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:7px 10px;margin-bottom:8px">🎯 <b>Passt zu offenen Entwicklungszielen:</b> ${ex.map(esc).join(" · ")}</div>`;
 }
 async function zieleOpen(spielerId){
   if(!sbToken()){toast("Bitte als Trainer anmelden","err");return;}
@@ -930,10 +1046,10 @@ async function zieleOpen(spielerId){
   const card=document.createElement("div");
   card.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   card.innerHTML=`${mdlHead("ziele-modal","🎯","Entwicklungs-Ziele",`${esc(k?.name||"Spieler")} · 1–2 Förderziele für die Saison`,"var(--amber)")}
-    <div id="ziele-list" style="margin-bottom:12px"><div style="color:var(--text3);font-size:12px">Lade…</div></div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Vorlage antippen (verknüpft passende Übungen) – oder unten frei formulieren:</div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${ZIEL_VORLAGEN.map((v,i)=>`<button onclick="zieleAddVorlage(${spielerId},${i})" style="padding:6px 10px;border:1.5px solid #c7d2fe;border-radius:16px;background:#eef2ff;color:#3730a3;font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer">🎯 ${esc(v.ziel)}</button>`).join("")}</div>
-    <textarea id="ziele-input" rows="2" placeholder="Eigenes Ziel frei formulieren, z. B. „Ruhiger im Aufbau&quot;" style="width:100%;padding:9px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box;resize:vertical"></textarea>
+    <div id="ziele-list" style="margin-bottom:12px"><div style="color:var(--text3);font-size:var(--s-text)">Lade…</div></div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px">Vorlage antippen (verknüpft passende Übungen) – oder unten frei formulieren:</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${ZIEL_VORLAGEN.map((v,i)=>`<button onclick="zieleAddVorlage(${spielerId},${i})" style="padding:6px 10px;border:1.5px solid #c7d2fe;border-radius:16px;background:#eef2ff;color:#3730a3;font-family:inherit;font-size:var(--s-klein);font-weight:600;cursor:pointer">🎯 ${esc(v.ziel)}</button>`).join("")}</div>
+    <textarea id="ziele-input" rows="2" placeholder="Eigenes Ziel frei formulieren, z. B. „Ruhiger im Aufbau&quot;" style="width:100%;padding:9px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box;resize:vertical"></textarea>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
       <button class="btn btn-p" onclick="zieleAdd(${spielerId})"><i class="ti ti-plus"></i>Ziel hinzufügen</button>
       <button class="btn btn-sm" onclick="document.getElementById('ziele-modal').remove()">Schließen</button>
@@ -945,7 +1061,7 @@ async function zieleRender(spielerId){
   const box=document.getElementById("ziele-list");if(!box)return;
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/entwicklungsziele?spieler_id=eq.${spielerId}&select=*&order=status.asc,created_at.desc`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)rows=await r.json();}catch(e){}
-  if(!rows.length){box.innerHTML='<div style="color:var(--text3);font-size:12.5px;padding:6px 0">Noch keine Ziele – setz das erste unten. 🎯</div>';return;}
+  if(!rows.length){box.innerHTML='<div style="color:var(--text3);font-size:var(--s-text);padding:6px 0">Noch keine Ziele – setz das erste unten. 🎯</div>';return;}
   const nm=(KADER.find(x=>x._id===spielerId)||{}).name;
   const snaps=(nm&&typeof DB!=="undefined"&&DB[nm])?DB[nm]:[];
   box.innerHTML=rows.map(z=>{const done=z.status==="erreicht";
@@ -958,17 +1074,17 @@ async function zieleRender(spielerId){
       const last=snaps[snaps.length-1];
       if(base&&last&&last!==base&&last.total_score!=null&&base.total_score!=null){
         const d=last.total_score-base.total_score;
-        trend=`<span style="color:${d>0?"var(--green)":d<0?"var(--red)":"var(--text3)"};font-weight:700">Gesamt ${base.total_score}% → ${last.total_score}% ${d>0?"↗":d<0?"↘":"→"}</span>`;
+        trend=`<span style="color:${d>0?"var(--green)":d<0?"var(--red)":"var(--text2)"};font-weight:700">Gesamt ${base.total_score}% → ${last.total_score}% ${d>0?"↗":d<0?"↘":"→"}</span>`;
       }
     }
     return `<div style="padding:8px 0;border-bottom:1px solid var(--surface2)">
       <div style="display:flex;align-items:flex-start;gap:8px">
-        <button onclick="zieleToggle(${z.id},'${done?'offen':'erreicht'}',${spielerId})" title="${done?'wieder offen':'als erreicht markieren'}" style="border:none;background:transparent;cursor:pointer;font-size:18px;line-height:1;padding:0">${done?'✅':'⬜'}</button>
-        <span style="flex:1;font-size:13px;${done?'text-decoration:line-through;color:var(--text3)':''}">${esc(z.ziel)}</span>
-        <button onclick="zieleDelete(${z.id},${spielerId})" title="löschen" style="border:none;background:transparent;color:var(--red);cursor:pointer;font-size:13px;padding:2px 4px"><i class="ti ti-trash"></i></button>
+        <button onclick="zieleToggle(${z.id},'${done?'offen':'erreicht'}',${spielerId})" title="${done?'wieder offen':'als erreicht markieren'}" style="border:none;background:transparent;cursor:pointer;font-size:var(--s-teil);line-height:1;padding:0">${done?'✅':'⬜'}</button>
+        <span style="flex:1;font-size:var(--s-text);${done?'text-decoration:line-through;color:var(--text3)':''}">${esc(z.ziel)}</span>
+        <button onclick="zieleDelete(${z.id},${spielerId})" title="löschen" style="border:none;background:transparent;color:var(--red);cursor:pointer;font-size:var(--s-text);padding:2px 4px"><i class="ti ti-trash"></i></button>
       </div>
-      ${(!done&&ex.length)?`<div style="font-size:11px;color:var(--text2);margin:2px 0 0 26px">🏃 Passende Übungen: ${ex.map(esc).join(" · ")}</div>`:""}
-      ${trend?`<div style="font-size:11px;margin:3px 0 0 26px">📈 ${trend} <span style="color:var(--text3)">seit Zielsetzung</span></div>`:""}
+      ${(!done&&ex.length)?`<div style="font-size:var(--s-klein);color:var(--text2);margin:2px 0 0 26px">🏃 Passende Übungen: ${ex.map(esc).join(" · ")}</div>`:""}
+      ${trend?`<div style="font-size:var(--s-klein);margin:3px 0 0 26px">📈 ${trend} <span style="color:var(--text3)">seit Zielsetzung</span></div>`:""}
     </div>`;}).join("");
 }
 async function zieleAdd(spielerId){
@@ -1132,16 +1248,43 @@ async function backupExport(){
                    die Rollen (profiles). */
                 "dsgvo_consent","foto_consent","eltern_kinder","profiles",
                 "rueckmeldungen","einsatzzeiten","einheit_bewertung","punkte_log","quiz_progress",
-                "trainingsvorlagen","team_config","team_notizen","team_polls","team_quests",
+                "trainingsvorlagen","team_config","team_einstellungen","team_notizen","team_polls","team_quests",
                 "eltern_leitfaden","fairplay_regeln","fairplay_commit","periodisierung","skill_woche",
                 "entwicklungsziele","nominierung_hinweis","probekinder","aufstellungen","taktik_templates",
                 "trainer_notes","training_live","turnier_plan","turnier_spiele","heimturnier","stadionheft",
                 "betreuung","event_helfer","event_mitbringen","event_puls","elterngespraech_wunsch",
+                /* v644: Löschanträge – der Nachweis, dass und wann ein Antrag erledigt wurde. */
+                "loeschantrag",
+                /* v646: Grillhütten-Einteilung – wer an welchem Heimtermin dran ist. */
+                "dienst_einteilung",
+                /* v668: Tage, an denen eine Familie nicht eingeteilt wird. */
+                "dienst_sperre",
+                /* v671: vom Dienst befreite Familien (Trainerfamilien). */
+                "dienst_befreit",
+                /* v672: Protokoll jeder Änderung einer Rückmeldung. */
+                "rueckmeldung_log",
+                /* v670: Adler-Rufe – Räume, Rufe, Reaktionen, Fixierte, Meldungen, Stummschaltungen, Moderation, Gelesen. */
+                "rufe_raum","rufe_nachricht","rufe_reaktion","rufe_fixiert","rufe_meldung","rufe_stumm","rufe_moderator","rufe_gelesen",
+                /* v673: wer keine Rufe-Benachrichtigungen will; bis wann gemeldet ist. */
+                "rufe_push_aus","rufe_push_stand",
+                /* v674: Abstimmungen und Stimmen (anonyme ohne Namen) */
+                "rufe_umfrage","rufe_stimme",
+                /* v650: Trainingsblöcke – Ziel, Zeitraum und die drei Einheiten im Wechsel. */
+                "trainingsblock",
                 "eltern_poll","eltern_poll_slot","eltern_poll_vote","ansagen","ansagen_gelesen",
                 "kabine_config","kabine_lob","kabine_post","kabine_reporter","kabinen_wahl","kabinen_wahl_stimmen",
+                /* v660: Angaben der Eltern (Name, Handy, Geburtstag). */
+                "eltern_angaben",
                 "kind_fanfacts","kind_kontakte","kind_pause","kind_selbstbild","kind_stimmung",
                 "album_fotos","album_kind","album_tausch","termin_media","ticker_claps","wochen_challenge",
-                "fundbuero","waesche_log","teamkasse","kasse_umlagen","boerse_listings"];
+                "fundbuero","waesche_log","teamkasse","kasse_umlagen","boerse_listings",
+                /* v664: Kassenwart-Kasse – wer bezahlt hat, wer die Kasse führt. */
+                "kasse_zahlung","kasse_team",
+                "match_substitutions",
+                /* v679: Tagebuch als Arbeitsmittel – Konsequenzen und To-dos je Punkt, Kinder je
+                   Eintrag, die nie wieder vergebenen Buchstaben. ki_nachbereitung_lauf ist nur ein
+                   Tageszähler (nur service_role) und gehört nicht in die Sicherung. */
+                "tagebuch_punkt","tagebuch_kind","kader_alias_vergeben"];   // v636: fehlte (geschrieben über sbQueuedPost, die v603-Prüfung sah es nicht)
   const dump={_meta:{app:"U9 Adler Dellbrück",exported_at:new Date().toISOString(),tables,
                      nicht_gesichert:SICHERUNG_AUSNAHMEN}};
   try{
@@ -1149,19 +1292,30 @@ async function backupExport(){
        Achtergruppen gleichzeitig: schnell genug, ohne die Verbindung zu fluten. */
     for(let i=0;i<tables.length;i+=8){
       await Promise.all(tables.slice(i,i+8).map(async t=>{
+        /* v636: seitenweise (PostgREST liefert höchstens 1000 Zeilen je Abfrage) und Fehler
+           zählen. Vorher hieß es „✓“, auch wenn Tabellen leer (401/403) oder abgeschnitten waren. */
         try{
-          const r=await fetch(`${SB_URL}/rest/v1/${t}?select=*`,{headers:sbAuthHeaders()});
-          dump[t]=r.ok?await r.json():{error:r.status};
+          let alle=[], ab=0;
+          for(;;){
+            const r=await fetch(`${SB_URL}/rest/v1/${t}?select=*`,{headers:{...sbAuthHeaders(),'Range-Unit':'items','Range':`${ab}-${ab+999}`}});
+            if(!r.ok&&r.status!==206){ dump[t]={error:r.status}; return; }
+            const teil=await r.json(); alle=alle.concat(teil||[]);
+            if(!teil||teil.length<1000)break; ab+=1000;
+          }
+          dump[t]=alle;
         }catch(e){dump[t]={error:"fetch"};}
       }));
     }
+    const fehler=tables.filter(t=>dump[t]&&!Array.isArray(dump[t]));
+    dump._meta.fehler=fehler;
     const blob=new Blob([JSON.stringify(dump,null,2)],{type:"application/json"});
     const a=document.createElement("a");
     a.href=URL.createObjectURL(blob);
     a.download=`adler-u9-backup-${new Date().toISOString().slice(0,10)}.json`;
     document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(a.href),5000);
-    toast("Backup heruntergeladen ✓");
+    if(fehler.length)toast(`Backup heruntergeladen – aber ${fehler.length} Tabelle(n) fehlen: ${fehler.slice(0,4).join(", ")}${fehler.length>4?" …":""}. Bitte neu anmelden und wiederholen.`,"err");
+    else toast("Backup heruntergeladen ✓ – alle Tabellen vollständig");
   }catch(e){toast("Backup fehlgeschlagen","err");}
 }
 
@@ -1173,9 +1327,9 @@ async function setupTrainerOpen(){
   try{const r=await fetch(`${SB_URL}/rest/v1/kind_notfall?select=spieler_id`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)(await r.json()).forEach(x=>notfall.add(x.spieler_id));}catch(e){}
   if(typeof fotoConsentLoad==="function")await fotoConsentLoad(true);
   const fc=k=>(typeof fotoConsentFor==="function")?fotoConsentFor(k):{intern:!!k.foto_stadionheft_ok,video:false,public_ok:false};
-  const rows=kids.map(k=>{const x=fc(k);return {name:k.name,intern:x.intern,video:x.video,pub:x.public_ok,nf:notfall.has(k.id)};}).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+  const rows=kids.map(k=>{const x=fc(k);return {name:k.name,intern:x.intern,video:x.video,pub:x.public_ok,nf:notfall.has(kaderId(k))};}).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
   const missIntern=rows.filter(r=>!r.intern).length, missNf=rows.filter(r=>!r.nf).length;
-  const cell=ok=>`<span style="font-size:14px">${ok?"✅":"⛔"}</span>`;
+  const cell=ok=>`<span style="font-size:var(--s-karte)">${ok?"✅":"⛔"}</span>`;
   document.getElementById("setup-modal")?.remove();
   const modal=document.createElement("div"); modal.id="setup-modal";
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10050;display:flex;padding:14px;overflow-y:auto";
@@ -1184,10 +1338,10 @@ async function setupTrainerOpen(){
   c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`
     ${mdlHead("setup-modal","🚀","Eltern-Setup","Foto-Freigaben & Notfallkarten je Kind","#0d9488")}
-    <div style="font-size:11.5px;color:var(--text2);margin-bottom:10px">Offen: 📸 ${missIntern} ohne interne Foto-Freigabe · 🚑 ${missNf} ohne Notfallkarte. Foto-Spalten: 🖼️ intern · 🎥 Video · 🌍 öffentlich.</div>
-    <div style="display:grid;grid-template-columns:1fr 34px 34px 34px 34px;gap:2px;font-size:10px;font-weight:700;color:var(--text2);padding:0 4px 4px"><div>Kind</div><div style="text-align:center" title="app-intern">🖼️</div><div style="text-align:center" title="Trainingsvideo">🎥</div><div style="text-align:center" title="öffentlich">🌍</div><div style="text-align:center" title="Notfallkarte">🚑</div></div>
-    ${rows.map(r=>`<div style="display:grid;grid-template-columns:1fr 34px 34px 34px 34px;gap:2px;align-items:center;padding:5px 4px;border-top:var(--border);font-size:13px"><div>${esc(r.name)}</div><div style="text-align:center">${cell(r.intern)}</div><div style="text-align:center">${cell(r.video)}</div><div style="text-align:center">${cell(r.pub)}</div><div style="text-align:center">${cell(r.nf)}</div></div>`).join("")}
-    ${(missIntern||missNf)?`<button class="btn btn-sm btn-p" style="width:100%;margin-top:12px" onclick="setupRemindPush()"><i class="ti ti-bell"></i>Eltern per Push erinnern</button>`:'<div style="text-align:center;color:var(--green);font-size:13px;font-weight:700;margin-top:12px">Alles eingerichtet 🎉</div>'}
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:10px">Offen: 📸 ${missIntern} ohne interne Foto-Freigabe · 🚑 ${missNf} ohne Notfallkarte. Foto-Spalten: 🖼️ intern · 🎥 Video · 🌍 öffentlich.</div>
+    <div style="display:grid;grid-template-columns:1fr 34px 34px 34px 34px;gap:2px;font-size:var(--s-klein);font-weight:700;color:var(--text2);padding:0 4px 4px"><div>Kind</div><div style="text-align:center" title="app-intern">🖼️</div><div style="text-align:center" title="Trainingsvideo">🎥</div><div style="text-align:center" title="öffentlich">🌍</div><div style="text-align:center" title="Notfallkarte">🚑</div></div>
+    ${rows.map(r=>`<div style="display:grid;grid-template-columns:1fr 34px 34px 34px 34px;gap:2px;align-items:center;padding:5px 4px;border-top:var(--border);font-size:var(--s-text)"><div>${esc(r.name)}</div><div style="text-align:center">${cell(r.intern)}</div><div style="text-align:center">${cell(r.video)}</div><div style="text-align:center">${cell(r.pub)}</div><div style="text-align:center">${cell(r.nf)}</div></div>`).join("")}
+    ${(missIntern||missNf)?`<button class="btn btn-sm btn-p" style="width:100%;margin-top:12px" onclick="setupRemindPush()"><i class="ti ti-bell"></i>Eltern per Push erinnern</button>`:'<div style="text-align:center;color:var(--green);font-size:var(--s-text);font-weight:700;margin-top:12px">Alles eingerichtet 🎉</div>'}
     ${typeof fotoAmpelOpen==="function"?`<button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="fotoAmpelOpen()">🚦 Foto-Ampel &amp; Einwilligungstext</button>`:""}
     <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('setup-modal').remove()">Schließen</button>`;
   modal.appendChild(c); document.body.appendChild(modal);
@@ -1213,17 +1367,17 @@ async function pausenOpen(){
   c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`
     ${mdlHead("pause-modal","⏸","Pausen & Wiedereinstieg","","var(--amber)")}
-    <div style="font-size:11.5px;color:var(--text2);margin-bottom:10px">Pausierte Kinder sind bei Prognose, Nominierung und Buddy-Auslosung automatisch raus – bis zum Datum. Grund optional, keine Diagnosen.</div>
-    ${paused.length?`<div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text2);margin:4px 0 2px">Aktuell pausiert</div>${paused.map(k=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:var(--border)"><span style="flex:1;font-size:13px">${esc(k.name)} <span style="color:var(--amber);font-weight:700">· bis ${pauseBisLabel(k.name)}</span>${PAUSE_MAP[k.name].grund?`<span style="color:var(--text3);font-size:11px"> · ${esc(PAUSE_MAP[k.name].grund)}</span>`:""}</span><button class="btn btn-sm" title="Genesungsgrüße vom Team erlauben/stoppen (Familie vorher fragen)" onclick="pauseGruesse(${k._id},${PAUSE_MAP[k.name].gruesse_ok?"false":"true"})">${PAUSE_MAP[k.name].gruesse_ok?"💌 an":"💌 aus"}</button><button class="btn btn-sm" onclick="pauseEnd(${k._id})">Beenden</button></div>`).join("")}`:'<div style="font-size:12.5px;color:var(--text3);padding:4px 0">Aktuell pausiert niemand.</div>'}
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text2);margin:14px 0 4px">Kind pausieren</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:10px">Pausierte Kinder sind bei Prognose, Nominierung und Buddy-Auslosung automatisch raus – bis zum Datum. Grund optional, keine Diagnosen.</div>
+    ${paused.length?`<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:4px 0 2px">Aktuell pausiert</div>${paused.map(k=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:var(--border)"><span style="flex:1;font-size:var(--s-text)">${esc(k.name)} <span style="color:var(--amber);font-weight:700">· bis ${pauseBisLabel(k.name)}</span>${PAUSE_MAP[k.name].grund?`<span style="color:var(--text3);font-size:var(--s-klein)"> · ${esc(PAUSE_MAP[k.name].grund)}</span>`:""}</span><button class="btn btn-sm" title="Genesungsgrüße vom Team erlauben/stoppen (Familie vorher fragen)" onclick="pauseGruesse(${k._id},${PAUSE_MAP[k.name].gruesse_ok?"false":"true"})">${PAUSE_MAP[k.name].gruesse_ok?"💌 an":"💌 aus"}</button><button class="btn btn-sm" onclick="pauseEnd(${k._id})">Beenden</button></div>`).join("")}`:'<div style="font-size:var(--s-text);color:var(--text3);padding:4px 0">Aktuell pausiert niemand.</div>'}
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:14px 0 4px">Kind pausieren</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
       <select id="pause-kid" style="flex:1;min-width:120px;min-height:40px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;background:var(--surface);color:var(--text)">${frei.map(k=>`<option value="${k._id}">${esc(k.name)}</option>`).join("")}</select>
       <input type="date" id="pause-bis" value="${defBis}" style="min-height:40px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;background:var(--surface);color:var(--text)">
     </div>
-    <input type="text" id="pause-grund" maxlength="80" placeholder="Grund (optional, keine Diagnosen)" style="width:100%;margin-top:6px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:12.5px;background:var(--surface);color:var(--text);box-sizing:border-box">
-    <label style="display:flex;align-items:flex-start;gap:8px;font-size:11.5px;color:var(--text2);margin-top:8px;cursor:pointer"><input type="checkbox" id="pause-gruesse" style="margin-top:2px">💌 Team darf Genesungsgrüße schicken <span style="color:var(--text3)">(bitte vorher die Familie fragen – sichtbar wird nur „fehlt gerade", nie der Grund)</span></label>
+    <input type="text" id="pause-grund" maxlength="80" placeholder="Grund (optional, keine Diagnosen)" style="width:100%;margin-top:6px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text);box-sizing:border-box">
+    <label style="display:flex;align-items:flex-start;gap:8px;font-size:var(--s-klein);color:var(--text2);margin-top:8px;cursor:pointer"><input type="checkbox" id="pause-gruesse" style="margin-top:2px">💌 Team darf Genesungsgrüße schicken <span style="color:var(--text3)">(bitte vorher die Familie fragen – sichtbar wird nur „fehlt gerade", nie der Grund)</span></label>
     <button class="btn btn-p btn-sm" style="width:100%;margin-top:8px" onclick="pauseSetFromPicker()">⏸ Pausieren</button>
-    ${reco.length?`<div style="font-size:11.5px;color:#9a3412;background:#fff7ed;border:1px solid #fdba74;border-radius:8px;padding:7px 10px;margin-top:12px">🩹 Zuletzt krank gemeldet (letzte 14 T.): <b>${reco.map(esc).join(", ")}</b> – bei Bedarf hier als Pause setzen.</div>`:""}
+    ${reco.length?`<div style="font-size:var(--s-klein);color:#9a3412;background:#fff7ed;border:1px solid #fdba74;border-radius:8px;padding:7px 10px;margin-top:12px">🩹 Zuletzt krank gemeldet (letzte 14 T.): <b>${reco.map(esc).join(", ")}</b> – bei Bedarf hier als Pause setzen.</div>`:""}
     <button class="btn btn-sm" style="width:100%;margin-top:10px" onclick="document.getElementById('pause-modal').remove()">Schließen</button>`;
   modal.appendChild(c); document.body.appendChild(modal);
 }
@@ -1261,7 +1415,7 @@ async function notfallTrainerOpen(){
     else if(c)localStorage.removeItem("adler_nf_cache");
   }catch(e){} }
   rows=rows||[];
-  const nameById={}; (typeof KADER!=="undefined"?KADER:[]).forEach(k=>{nameById[k.id]=k.name;});
+  const nameById={}; (typeof KADER!=="undefined"?KADER:[]).forEach(k=>{nameById[kaderId(k)]=k.name;});
   const flds=[["notfall_tel","☎️ Notfall"],["notfallkontakt","👤 Kontakt"],["allergien","⚠️ Allergien"],["medikamente","💊 Medikamente"],["krankenversicherung","🏥 Versicherung"],["blutgruppe","🩸 Blutgruppe"],["arzt","🩺 Arzt"],["hinweise","📝 Hinweise"]];
   const cards=rows.filter(x=>flds.some(f=>x[f[0]])).sort((a,b)=>String(nameById[a.spieler_id]||"").localeCompare(String(nameById[b.spieler_id]||"")));
   document.getElementById("nf-tr-modal")?.remove();
@@ -1274,9 +1428,9 @@ async function notfallTrainerOpen(){
   c.innerHTML=`
     ${mdlHead("nf-tr-modal","🚑","Notfallkarten",`Von den Eltern gepflegt · schreibgeschützt${offline?' · <b style="color:var(--amber)">📴 Offline-Stand</b>':""} · vertraulich`,"var(--red)")}
     ${cards.length?cards.map(x=>`<div style="border:var(--border-s);border-left:3px solid var(--red);border-radius:10px;padding:10px 12px;margin-bottom:8px">
-        <div style="font-weight:800;font-size:14px;margin-bottom:4px">${esc(nameById[x.spieler_id]||("Kind #"+x.spieler_id))}</div>
-        ${flds.filter(f=>x[f[0]]).map(f=>`<div style="font-size:12.5px;padding:2px 0"><span style="color:var(--text2)">${f[1]}:</span> ${f[0]==="notfall_tel"?tel(x[f[0]]):esc(x[f[0]])}</div>`).join("")}
-      </div>`).join(""):'<div style="text-align:center;color:var(--text3);font-size:13px;padding:24px">Noch keine Notfallkarten hinterlegt.<br>Die Eltern füllen sie im Eltern-Bereich (🚑 Notfallkarte).</div>'}
+        <div style="font-weight:800;font-size:var(--s-karte);margin-bottom:4px">${esc(nameById[x.spieler_id]||("Kind #"+x.spieler_id))}</div>
+        ${flds.filter(f=>x[f[0]]).map(f=>`<div style="font-size:var(--s-text);padding:2px 0"><span style="color:var(--text2)">${f[1]}:</span> ${f[0]==="notfall_tel"?tel(x[f[0]]):esc(x[f[0]])}</div>`).join("")}
+      </div>`).join(""):'<div style="text-align:center;color:var(--text3);font-size:var(--s-text);padding:24px">Noch keine Notfallkarten hinterlegt.<br>Die Eltern füllen sie im Eltern-Bereich (🚑 Notfallkarte).</div>'}
     <button class="btn btn-sm" style="margin-top:6px" onclick="document.getElementById('nf-tr-modal').remove()">Schließen</button>`;
   modal.appendChild(c); document.body.appendChild(modal);
 }
@@ -1307,23 +1461,25 @@ function renderKader(){
   if(!filtered.length){wrap.innerHTML='<div class="empty"><i class="ti ti-filter"></i>Kein Spieler für diesen Filter</div>';renderRauteMap(bewertet);return;}
   const dimCols=["var(--blue)","#7c3aed","var(--amber)","var(--green)","#0e7490"];
   // Kader-Werkzeuge als einheitliche Kachel-Reihe (Design-Sprache), nicht mehr rechtsbündig verstreut.
-  const kTool=(label,fn,title)=>`<button onclick="${fn}" title="${title}" style="flex:1 1 calc(33.3% - 6px);min-width:120px;min-height:46px;border:1px solid var(--rand-bedien);border-radius:var(--rl);cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--text);background:var(--surface);padding:0 10px">${label}</button>`;
-  let html=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-      ${kTool("⏸ Pausen","pausenOpen()","Kinder pausieren (fließt in Prognose/Nominierung/Buddy)")}
-      ${kTool("🚀 Eltern-Setup","setupTrainerOpen()","Wer hat Foto-Freigabe & Notfallkarte schon eingerichtet?")}
-      ${kTool("🚑 Notfallkarten","notfallTrainerOpen()","Notfall-/Gesundheitskarten der Kinder – schreibgeschützt, für den Platz auch offline")}
-    </div><table class="kader-t"><thead><tr><th>Spieler</th><th>Rolle</th><th>Grp</th><th>Tech.</th><th>Wahr.</th><th>Phys.</th><th>Ges.</th><th>Pot.</th><th>Von</th><th></th></tr></thead><tbody>`;
+  /* v683: Pausen, Eltern-Setup und Notfallkarten standen hier als dritte Knopfreihe über der
+     Liste – alle drei haben ihre Kachel auf der Team-Übersicht bzw. unter Orga · Einstellungen.
+     Solange niemand bewertet ist, zeigt die Liste nur Nummer, Name und den Weg zur Bewertung:
+     sieben leere Spalten mit „noch nicht bewertet“ waren Rauschen. */
+  const irgendwerBewertet=filtered.some(n=>letzter(n));
+  let html=irgendwerBewertet
+    ?`<table class="kader-t"><thead><tr><th>Spieler</th><th>Rolle</th><th>Grp</th><th>Tech.</th><th>Wahr.</th><th>Phys.</th><th>Ges.</th><th>Pot.</th><th>Von</th><th></th></tr></thead><tbody>`
+    :`<table class="kader-t kader-schlank"><tbody>`;
   filtered.forEach(name=>{
     const lat=letzter(name);
     const kd=getKader(name);
-    const nrBadge=kd&&kd.nr?`<span style="font-size:9px;font-weight:700;color:var(--text3);background:var(--surface2);border:var(--border);border-radius:8px;padding:1px 5px;margin-right:4px">${kd.nr}</span>`:"";
+    const nrBadge=kd&&kd.nr?`<span style="font-size:var(--s-klein);font-weight:700;color:var(--text3);background:var(--surface2);border:var(--border);border-radius:8px;padding:1px 5px;margin-right:4px">${kd.nr}</span>`:"";
     if(!lat){
       /* Noch nicht bewertet: das Kind steht trotzdem im Kader – mit dem Weg zur ersten
          Bewertung statt einer Zeile voller Nullen, die Koennen vortaeuschen wuerden. */
       html+=`<tr>
-        <td><div style="font-weight:600;font-size:12.5px">${nrBadge}${esc(name)}${kd&&kd.tw?' <span style="font-size:9px;color:var(--teal);font-weight:700">🥅</span>':""}</div></td>
-        <td colspan="7" style="font-size:11.5px;color:var(--text2)">noch nicht bewertet</td>
-        <td style="white-space:nowrap"><button class="btn btn-sm" onclick="kaderBewerten('${jsq(name)}')" title="Erste Bewertung anlegen"><i class="ti ti-clipboard-plus"></i></button></td>
+        <td><div style="font-weight:600;font-size:var(--s-text)">${nrBadge}${esc(name)}${kd&&kd.tw?' <span style="font-size:var(--s-klein);color:var(--teal);font-weight:700">🥅</span>':""}</div></td>
+        ${irgendwerBewertet?`<td colspan="7" style="font-size:var(--s-klein);color:var(--text2)">noch nicht bewertet</td>`:""}
+        <td style="white-space:nowrap"><button class="btn btn-sm" onclick="kaderBewerten('${jsq(name)}')" title="Erste Bewertung anlegen" aria-label="${esc(name)} bewerten"><i class="ti ti-clipboard-plus"></i>${irgendwerBewertet?"":"Bewerten"}</button></td>
       </tr>`;
       return;
     }
@@ -1335,19 +1491,21 @@ function renderKader(){
     const tot=lat.total_score||0,pot=lat.pot_score||0;
     const grpB=""; // A/B-Label abgeschafft (Evidenz: keine Niveau-Etiketten bei 8-Jaehrigen)
     const mini=val=>{let s='<div class="sm">';for(let i=0;i<5;i++)s+=`<div class="sm-s${val>=(i+1)*20?" on":""}"></div>`;return s+'</div>';};
-    const snBadge=DB[name].length>1?`<span title="${DB[name].length} Bewertungen – mehr = verlässlicher" style="font-size:9px;color:var(--teal);font-weight:600;margin-left:4px">×${DB[name].length}</span>`:"";
+    const snBadge=DB[name].length>1?`<span title="${DB[name].length} Bewertungen – mehr = verlässlicher" style="font-size:var(--s-klein);color:var(--teal);font-weight:600;margin-left:4px">×${DB[name].length}</span>`:"";
     const _tr=(typeof playerTrend==="function")?playerTrend(name):{delta:0,conf:0};
-    const trArrow=_tr.delta>2?`<span title="verbessert (+${_tr.delta}%)" style="color:var(--green);font-size:12px;font-weight:800"> ↗</span>`:_tr.delta<-2?`<span title="gefallen (${_tr.delta}%)" style="color:var(--red);font-size:12px;font-weight:800"> ↘</span>`:_tr.conf>=2?`<span title="stabil" style="color:var(--text3);font-size:12px"> →</span>`:"";
+    const _vg=(typeof bewVergleich==="function")?bewVergleich(name):null;   // v637: Runde gegen Runde
+    if(_vg&&_vg.runden>=2){_tr.delta=_vg.hoch.length?3:(_vg.runter.length?-3:0);_tr.conf=_vg.runden;}
+    const trArrow=_tr.delta>2?`<span title="gewachsen: ${esc(((_vg&&_vg.hoch)||[]).join(", "))}" style="color:var(--green);font-size:var(--s-text);font-weight:800"> ↗</span>`:_tr.delta<-2?`<span title="gesunken: ${esc(((_vg&&_vg.runter)||[]).join(", "))}" style="color:var(--red);font-size:var(--s-text);font-weight:800"> ↘</span>`:_tr.conf>=2?`<span title="stabil" style="color:var(--text3);font-size:var(--s-text)"> →</span>`:"";
     const _hist=(DB[name]||[]).map(s=>s.total_score||0);
     const _spark=(typeof sparklineSVG==="function")?sparklineSVG(_hist):"";
     html+=`<tr>
-      <td><div style="font-weight:600;font-size:12.5px">${getKader(name)?.nr?`<span style="font-size:9px;font-weight:700;color:var(--text3);background:var(--surface2);border:var(--border);border-radius:8px;padding:1px 5px;margin-right:4px">${getKader(name).nr}</span>`:""}${esc(name)}${isTw?" 🥅":""}</div><div style="font-size:10px;color:var(--text2)">${esc(lat.datum||'')}${snBadge}</div></td>
-      <td><span class="rbadge ${bMap[prim]||'rb-flex'}">${isTw?`TW / ${esc(lMap[prim]||prim)}`:esc(lMap[prim]||prim)}</span>${lat.sek_rolle&&!isTw?`<br><span style="font-size:10px;color:var(--text2)">${esc(lat.sek_rolle)}</span>`:""}</td>
+      <td><div style="font-weight:600;font-size:var(--s-text)">${getKader(name)?.nr?`<span style="font-size:var(--s-klein);font-weight:700;color:var(--text3);background:var(--surface2);border:var(--border);border-radius:8px;padding:1px 5px;margin-right:4px">${getKader(name).nr}</span>`:""}${esc(name)}${isTw?" 🥅":""}</div><div style="font-size:var(--s-klein);color:var(--text2)">${esc(lat.datum||'')}${snBadge}</div></td>
+      <td><span class="rbadge ${bMap[prim]||'rb-flex'}">${isTw?`TW / ${esc(lMap[prim]||prim)}`:esc(lMap[prim]||prim)}</span>${lat.sek_rolle&&!isTw?`<br><span style="font-size:var(--s-klein);color:var(--text2)">${esc(lat.sek_rolle)}</span>`:""}</td>
       <td>${grpB}</td>
-      ${[0,1,2].map(i=>`<td><span style="font-size:11px;font-weight:600;color:${dimCols[i]}">${sc[i]||0}%</span>${mini(sc[i]||0)}</td>`).join("")}
-      <td><span style="font-weight:700;font-size:13px">${tot}%</span>${trArrow}${_spark}</td>
-      <td><span style="font-size:11px;color:var(--teal);font-weight:600">${pot}%</span></td>
-      <td style="font-size:11px;color:var(--text2)">${esc(lat.trainer||'–')}</td>
+      ${[0,1,2].map(i=>`<td><span style="font-size:var(--s-klein);font-weight:600;color:${dimCols[i]}">${sc[i]||0}%</span>${mini(sc[i]||0)}</td>`).join("")}
+      <td><span style="font-weight:700;font-size:var(--s-text)">${tot}%</span>${trArrow}${_spark}</td>
+      <td><span style="font-size:var(--s-klein);color:var(--teal);font-weight:600">${pot}%</span></td>
+      <td style="font-size:var(--s-klein);color:var(--text2)">${esc(lat.trainer||'–')}</td>
       <td style="white-space:nowrap">
         <button class="btn btn-sm" data-edit-player data-name="${esc(name)}" data-snap-idx="${DB[name].length-1}" title="Laden"><i class="ti ti-edit"></i></button>
         <button class="btn btn-sm btn-d" data-del-player data-name="${esc(name)}"><i class="ti ti-trash"></i></button>
@@ -1357,9 +1515,13 @@ function renderKader(){
   html+="</tbody></table>";
   const offen=filtered.filter(n=>!letzter(n)).length;
   wrap.innerHTML='<div class="kader-wrap">'+html+'</div>'
-    +(offen?`<div class="kader-hint">${offen} von ${filtered.length} Kindern ${offen===1?"ist":"sind"} noch nicht bewertet – nach dem Saisonstart normal.</div>`:"")
-    +'<div class="kader-hint">Technik, Wahrnehmung und Physis stehen je Spieler im <b>Profil</b>.</div>';
-  renderRauteMap(bewertet.filter(n=>names.includes(n)));   // die Raute kennt nur Bewertete
+    +(offen?`<div class="kader-hint">${offen===filtered.length?"Noch niemand bewertet":`${offen} von ${filtered.length} Kindern ${offen===1?"ist":"sind"} noch nicht bewertet`} – nach dem Saisonstart normal.</div>`:"")
+    +(irgendwerBewertet?'<div class="kader-hint">Technik, Wahrnehmung und Physis stehen je Spieler im <b>Profil</b>.</div>':"");
+  const rb=bewertet.filter(n=>names.includes(n));
+  renderRauteMap(rb);   // die Raute kennt nur Bewertete
+  // v683: Rollen-Filter und Rauten-Besetzung gibt es erst, wenn jemand eine Rolle hat
+  const frow=document.querySelector("#view-kader .frow"); if(frow)frow.hidden=!rb.length;
+  document.querySelectorAll("#view-kader .kader-raute").forEach(el=>{el.hidden=!rb.length;});
 }
 /* Erste Bewertung aus der Kaderliste heraus starten: Reiter wechseln, Kind vorwaehlen. */
 function kaderBewerten(name){
@@ -1368,9 +1530,10 @@ function kaderBewerten(name){
     const sel=document.getElementById("p-name");
     if(sel){
       sel.value=name;
-      if(typeof onChange==="function")onChange();
-      if(typeof updateTierHL==="function")updateTierHL();
-      if(typeof updateDimPills==="function")updateDimPills();
+      /* v635: onPlayerSelect setzt Kriterien und Stammdaten zurück. Vorher standen hier nur
+         onChange & Co. – die Werte des zuvor bewerteten Kindes blieben angehakt und wären
+         unter dem neuen Namen gespeichert worden. */
+      if(typeof onPlayerSelect==="function")onPlayerSelect();
     }
     if(typeof toast==="function")toast(name+" – Bewertung starten");
   },120);
@@ -1378,7 +1541,7 @@ function kaderBewerten(name){
 
 function renderRauteMap(names){
   const wrap=document.getElementById("raute-map");
-  if(!names.length){wrap.innerHTML='<div class="empty" style="padding:1rem;font-size:12px">Noch keine Spieler bewertet</div>';return;}
+  if(!names.length){wrap.innerHTML='<div class="empty" style="padding:1rem;font-size:var(--s-text)">Noch keine Spieler bewertet</div>';return;}
   const posMap={aufpasser:[],flitzer_l:[],flitzer_r:[],jaeger:[],flex:[]};
   const twList=[];
   names.forEach(n=>{
@@ -1393,24 +1556,24 @@ function renderRauteMap(names){
   // TW row - show priority
   const tw1=twList.filter(n=>{const k=getKader(n);return k&&k.twPrio===1;});
   const tw2=twList.filter(n=>{const k=getKader(n);return k&&k.twPrio===2;});
-  html+='<div style="padding:8px 10px;background:#fef9c3;border:1px solid #fcd34d;border-radius:var(--r);margin-bottom:8px;font-size:12px;color:#854d0e">';
+  html+='<div style="padding:8px 10px;background:var(--yellow-bg);border:1px solid #fcd34d;border-radius:var(--r);margin-bottom:8px;font-size:var(--s-text);color:var(--yellow)">';
   html+='<span style="font-weight:700">🥅 Torwart (+1):</span> ';
-  if(tw1.length>0) html+='<span style="font-weight:600">'+tw1.map(esc).join(', ')+'</span> <span style="font-size:10px;opacity:.7">(primär)</span>';
-  if(tw2.length>0) html+=(tw1.length>0?' · ':'')+tw2.map(esc).join(', ')+' <span style="font-size:10px;opacity:.7">(Option)</span>';
+  if(tw1.length>0) html+='<span style="font-weight:600">'+tw1.map(esc).join(', ')+'</span> <span style="font-size:var(--s-klein);opacity:.7">(primär)</span>';
+  if(tw2.length>0) html+=(tw1.length>0?' · ':'')+tw2.map(esc).join(', ')+' <span style="font-size:var(--s-klein);opacity:.7">(Option)</span>';
   if(twList.length===0) html+='<span style="font-style:italic;opacity:.6">Noch nicht bewertet</span>';
   html+='</div>';
   html+=`<div class="rk-grid">
     <div></div>
-    <div class="rk-pos" style="border-color:${cfg.jaeger.col};background:${cfg.jaeger.bg}"><div class="rk-pos-lbl" style="color:${cfg.jaeger.col}">${cfg.jaeger.label}</div>${posMap.jaeger.map(n=>`<div class="rk-player"><i class="ti ti-user" style="font-size:11px;color:${cfg.jaeger.col}"></i>${esc(n)}</div>`).join("")||'<div class="rk-empty">Offen</div>'}</div>
+    <div class="rk-pos" style="border-color:${cfg.jaeger.col};background:${cfg.jaeger.bg}"><div class="rk-pos-lbl" style="color:${cfg.jaeger.col}">${cfg.jaeger.label}</div>${posMap.jaeger.map(n=>`<div class="rk-player"><i class="ti ti-user" style="font-size:var(--s-klein);color:${cfg.jaeger.col}"></i>${esc(n)}</div>`).join("")||'<div class="rk-empty">Offen</div>'}</div>
     <div></div>
-    <div class="rk-pos" style="border-color:${cfg.flitzer_l.col};background:${cfg.flitzer_l.bg}"><div class="rk-pos-lbl" style="color:${cfg.flitzer_l.col}">${cfg.flitzer_l.label}</div>${posMap.flitzer_l.map(n=>`<div class="rk-player"><i class="ti ti-user" style="font-size:11px;color:${cfg.flitzer_l.col}"></i>${esc(n)}</div>`).join("")||'<div class="rk-empty">Offen</div>'}</div>
+    <div class="rk-pos" style="border-color:${cfg.flitzer_l.col};background:${cfg.flitzer_l.bg}"><div class="rk-pos-lbl" style="color:${cfg.flitzer_l.col}">${cfg.flitzer_l.label}</div>${posMap.flitzer_l.map(n=>`<div class="rk-player"><i class="ti ti-user" style="font-size:var(--s-klein);color:${cfg.flitzer_l.col}"></i>${esc(n)}</div>`).join("")||'<div class="rk-empty">Offen</div>'}</div>
     <div></div>
-    <div class="rk-pos" style="border-color:${cfg.flitzer_r.col};background:${cfg.flitzer_r.bg}"><div class="rk-pos-lbl" style="color:${cfg.flitzer_r.col}">${cfg.flitzer_r.label}</div>${posMap.flitzer_r.map(n=>`<div class="rk-player"><i class="ti ti-user" style="font-size:11px;color:${cfg.flitzer_r.col}"></i>${esc(n)}</div>`).join("")||'<div class="rk-empty">Offen</div>'}</div>
+    <div class="rk-pos" style="border-color:${cfg.flitzer_r.col};background:${cfg.flitzer_r.bg}"><div class="rk-pos-lbl" style="color:${cfg.flitzer_r.col}">${cfg.flitzer_r.label}</div>${posMap.flitzer_r.map(n=>`<div class="rk-player"><i class="ti ti-user" style="font-size:var(--s-klein);color:${cfg.flitzer_r.col}"></i>${esc(n)}</div>`).join("")||'<div class="rk-empty">Offen</div>'}</div>
     <div></div>
-    <div class="rk-pos" style="border-color:${cfg.aufpasser.col};background:${cfg.aufpasser.bg}"><div class="rk-pos-lbl" style="color:${cfg.aufpasser.col}">${cfg.aufpasser.label}</div>${posMap.aufpasser.map(n=>`<div class="rk-player"><i class="ti ti-user" style="font-size:11px;color:${cfg.aufpasser.col}"></i>${esc(n)}</div>`).join("")||'<div class="rk-empty">Offen</div>'}</div>
+    <div class="rk-pos" style="border-color:${cfg.aufpasser.col};background:${cfg.aufpasser.bg}"><div class="rk-pos-lbl" style="color:${cfg.aufpasser.col}">${cfg.aufpasser.label}</div>${posMap.aufpasser.map(n=>`<div class="rk-player"><i class="ti ti-user" style="font-size:var(--s-klein);color:${cfg.aufpasser.col}"></i>${esc(n)}</div>`).join("")||'<div class="rk-empty">Offen</div>'}</div>
     <div></div>
   </div>`;
-  if(posMap.flex.length>0)html+=`<div style="margin-top:.75rem;font-size:11.5px;color:var(--text2)"><i class="ti ti-adjustments" style="font-size:13px"></i> Noch ohne feste Rolle: ${posMap.flex.map(n=>esc(n)).join(", ")}</div>`;
+  if(posMap.flex.length>0)html+=`<div style="margin-top:.75rem;font-size:var(--s-klein);color:var(--text2)"><i class="ti ti-adjustments" style="font-size:var(--s-text)"></i> Noch ohne feste Rolle: ${posMap.flex.map(n=>esc(n)).join(", ")}</div>`;
   wrap.innerHTML=html;
 }
 
@@ -1495,24 +1658,24 @@ function renderProfil(){
     <div class="player-card">
       <div class="av ${isTw?"tw":""}">${esc(name.slice(0,2).toUpperCase())}</div>
       <div style="flex:1">
-        <div style="font-weight:700;font-size:15px">${esc(name)}${isTw?" 🥅":""}</div>
+        <div style="font-weight:700;font-size:var(--s-karte)">${esc(name)}${isTw?" 🥅":""}</div>
         <div style="display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:4px">
           <span class="rbadge ${bMap[lat.position]||'rb-flex'}">${esc(prim)}</span>
-          ${!isTw?`<span style="font-size:10.5px;color:var(--text2)">Sek: ${esc(sek)}</span>`:""}
+          ${!isTw?`<span style="font-size:var(--s-klein);color:var(--text2)">Sek: ${esc(sek)}</span>`:""}
           ${grpB}
-          <span style="font-size:10.5px;color:var(--text2)">${esc(lat.trainer||"")} · ${esc(lat.datum||"")}</span>
+          <span style="font-size:var(--s-klein);color:var(--text2)">${esc(lat.trainer||"")} · ${esc(lat.datum||"")}</span>
         </div>
       </div>
       <div style="text-align:right">
-        <div style="font-size:10px;color:var(--text2)">Entwicklungsstand</div>
+        <div style="font-size:var(--s-klein);color:var(--text2)">Entwicklungsstand</div>
         <div style="font-size:26px;font-weight:700;color:var(--blue-text)">${tot}%</div>
-        <div style="font-size:10.5px;color:var(--teal);font-weight:500">Entwicklungstempo ~${pot}%</div>
-        ${typeof raeInfo==="function"&&raeInfo(getKader(name)?.geb)?`<div style="font-size:9.5px;color:var(--text3);max-width:150px;margin-top:2px">${raeInfo(getKader(name)?.geb)}</div>`:""}
+        <div style="font-size:var(--s-klein);color:var(--teal);font-weight:500">Entwicklungstempo ~${pot}%</div>
+        ${typeof raeInfo==="function"&&raeInfo(getKader(name)?.geb)?`<div style="font-size:var(--s-klein);color:var(--text3);max-width:150px;margin-top:2px">${raeInfo(getKader(name)?.geb)}</div>`:""}
       </div>
     </div>
 
     ${summary?`<div class="summary-box">
-      <h3><i class="ti ti-sparkles" style="font-size:13px"></i>Zusammenfassung</h3>
+      <h3><i class="ti ti-sparkles" style="font-size:var(--s-text)"></i>Zusammenfassung</h3>
       <div class="summary-text">${esc(summary)}</div>
       <div class="summary-tags">
         ${st.slice(0,3).map(s=>`<span class="stag pos">+ ${esc(s.split("–")[0].trim())}</span>`).join("")}
@@ -1526,9 +1689,9 @@ function renderProfil(){
     </div>
 
     ${st.length>0||ef.length>0?`<div class="massnahmen-box">
-      <div class="mb-title"><i class="ti ti-list-check" style="font-size:14px"></i>Konkrete Maßnahmen & Erkenntnisse</div>
-      ${st.slice(0,5).map(s=>`<div class="mb-item"><div class="mb-icon" style="background:#dcfce7"><i class="ti ti-plus" style="font-size:11px;color:#15803d"></i></div><div class="mb-text">${esc(s)}</div></div>`).join("")}
-      ${ef.slice(0,5).map(e=>`<div class="mb-item"><div class="mb-icon" style="background:#fee2e2"><i class="ti ti-arrow-right" style="font-size:11px;color:var(--red)"></i></div><div class="mb-text">${esc(e)}</div></div>`).join("")}
+      <div class="mb-title"><i class="ti ti-list-check" style="font-size:var(--s-karte)"></i>Konkrete Maßnahmen & Erkenntnisse</div>
+      ${st.slice(0,5).map(s=>`<div class="mb-item"><div class="mb-icon" style="background:#dcfce7"><i class="ti ti-plus" style="font-size:var(--s-klein);color:var(--green)"></i></div><div class="mb-text">${esc(s)}</div></div>`).join("")}
+      ${ef.slice(0,5).map(e=>`<div class="mb-item"><div class="mb-icon" style="background:#fee2e2"><i class="ti ti-arrow-right" style="font-size:var(--s-klein);color:var(--red)"></i></div><div class="mb-text">${esc(e)}</div></div>`).join("")}
     </div>`:""}
 
     <div id="profil-selbstbild"></div>
@@ -1571,11 +1734,11 @@ async function profilSelbstbildLoad(name){
   const a=row.antworten||{};
   const ueben=KAB_SELBST_FRAGEN.filter(f=>a[f.k]===1);
   slot.innerHTML=`<div class="card" style="padding:12px 14px;margin:10px 0;border-left:3px solid #7c3aed">
-    <div style="font-weight:800;font-size:13.5px;margin-bottom:6px">💪 So sieht ${esc(name)} sich selbst <span style="font-weight:400;color:var(--text2);font-size:11px">(aus der Kabine · ${esc(row.datum)})</span></div>
+    <div style="font-weight:800;font-size:var(--s-text);margin-bottom:6px">💪 So sieht ${esc(name)} sich selbst <span style="font-weight:400;color:var(--text2);font-size:var(--s-klein)">(aus der Kabine · ${esc(row.datum)})</span></div>
     <div style="display:flex;flex-wrap:wrap;gap:6px">
-      ${KAB_SELBST_FRAGEN.map(f=>{const s=KAB_SELBST_STUFEN[a[f.k]];return s?`<span style="font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:12px;background:var(--surface2)">${f.emo} ${esc(f.t)}: ${s[0]}</span>`:"";}).join("")}
+      ${KAB_SELBST_FRAGEN.map(f=>{const s=KAB_SELBST_STUFEN[a[f.k]];return s?`<span style="font-size:var(--s-klein);font-weight:700;padding:4px 9px;border-radius:12px;background:var(--surface2)">${f.emo} ${esc(f.t)}: ${s[0]}</span>`:"";}).join("")}
     </div>
-    ${ueben.length?`<div style="font-size:12px;color:#7c3aed;font-weight:700;margin-top:8px">🌱 Will üben: ${ueben.map(f=>esc(f.t)).join(", ")} – guter Aufhänger fürs nächste Lob oder Entwicklungsziel.</div>`:""}
+    ${ueben.length?`<div style="font-size:var(--s-text);color:#7c3aed;font-weight:700;margin-top:8px">🌱 Will üben: ${ueben.map(f=>esc(f.t)).join(", ")} – guter Aufhänger fürs nächste Lob oder Entwicklungsziel.</div>`:""}
   </div>`;
 }
 /* ═══════════════════════════════════
@@ -1638,49 +1801,50 @@ function adlerWrappedSlides(d,fotos){
   S.push({bg:g("#0f172a","#1e3a8a"),html:`<div>
     <div class="aw-pop" style="font-size:64px">🦅</div>
     <div class="aw-pop d1" style="font-size:30px;font-weight:900;letter-spacing:1px;margin-top:8px">ADLER WRAPPED</div>
-    <div class="aw-pop d2" style="font-size:16px;opacity:.85;margin-top:6px">Saison ${esc(String(d.saison||""))}</div>
-    <div class="aw-pop d3" style="font-size:12px;opacity:.6;margin-top:24px">Tippe rechts → weiter · links ← zurück</div></div>`});
+    <div class="aw-pop d2" style="font-size:var(--s-karte);opacity:.85;margin-top:6px">Saison ${esc(String(d.saison||""))}</div>
+    <div class="aw-pop d3" style="font-size:var(--s-text);opacity:.6;margin-top:24px">Tippe rechts → weiter · links ← zurück</div></div>`});
   S.push({bg:g("#155e75","#06b6d4"),html:`<div>
-    <div class="aw-pop" style="font-size:14px;opacity:.85;text-transform:uppercase;letter-spacing:2px">Ihr wart fleißig</div>
+    <div class="aw-pop" style="font-size:var(--s-karte);opacity:.85;text-transform:uppercase;letter-spacing:2px">Ihr wart fleißig</div>
     <div class="aw-big aw-pop d1">${d.spiele||0}</div>
-    <div class="aw-pop d1" style="font-size:19px;font-weight:800">Spiele & Turniere</div>
-    <div class="aw-pop d2" style="font-size:15px;opacity:.85;margin-top:18px">und <b>${d.trainings||0}</b> Trainingseinheiten 💪</div></div>`});
+    <div class="aw-pop d1" style="font-size:var(--s-teil);font-weight:800">Spiele & Turniere</div>
+    <div class="aw-pop d2" style="font-size:var(--s-karte);opacity:.85;margin-top:18px">und <b>${d.trainings||0}</b> Trainingseinheiten 💪</div></div>`});
   S.push({bg:g("#9a3412","#f97316"),html:`<div>
-    <div class="aw-pop" style="font-size:14px;opacity:.85;text-transform:uppercase;letter-spacing:2px">Gemeinsam erzielt</div>
+    <div class="aw-pop" style="font-size:var(--s-karte);opacity:.85;text-transform:uppercase;letter-spacing:2px">Gemeinsam erzielt</div>
     <div class="aw-big aw-pop d1">${d.tore||0}</div>
-    <div class="aw-pop d1" style="font-size:22px;font-weight:800">Tore ⚽</div></div>`});
+    <div class="aw-pop d1" style="font-size:var(--s-seite);font-weight:800">Tore ⚽</div>${d.torschuetzen_anzahl?`
+    <div class="aw-pop d2" style="font-size:var(--s-karte);opacity:.85;margin-top:16px">von <b>${d.torschuetzen_anzahl}</b> verschiedenen Kindern – Tore schießt hier das Team</div>`:""}</div>`});
   S.push({bg:g("#5b21b6","#8b5cf6"),html:`<div>
     <div class="aw-big aw-pop">${d.aktionen||0}</div>
-    <div class="aw-pop d1" style="font-size:20px;font-weight:800">Ballaktionen 🔥</div>
-    <div class="aw-pop d2" style="font-size:15px;opacity:.85;margin-top:16px">darunter <b>${d.paesse||0}</b> Pässe und <b>${d.paraden||0}</b> Paraden 🧤</div></div>`});
+    <div class="aw-pop d1" style="font-size:var(--s-teil);font-weight:800">Ballaktionen 🔥</div>
+    <div class="aw-pop d2" style="font-size:var(--s-karte);opacity:.85;margin-top:16px">darunter <b>${d.paesse||0}</b> Pässe und <b>${d.paraden||0}</b> Paraden 🧤</div></div>`});
   S.push({bg:g("#065f46","#10b981"),html:`<div>
-    <div class="aw-pop" style="font-size:14px;opacity:.85;text-transform:uppercase;letter-spacing:2px">Team-Missionen</div>
+    <div class="aw-pop" style="font-size:var(--s-karte);opacity:.85;text-transform:uppercase;letter-spacing:2px">Team-Missionen</div>
     <div class="aw-big aw-pop d1">${d.quests_geschafft||0}</div>
-    <div class="aw-pop d1" style="font-size:20px;font-weight:800">Quests geknackt 🏆</div></div>`});
+    <div class="aw-pop d1" style="font-size:var(--s-teil);font-weight:800">Quests geknackt 🏆</div></div>`});
   const awards=[];
-  if(d.top_torschuetze&&d.top_torschuetze.name)awards.push(["⚽","Torschützenkönig",d.top_torschuetze]);
+  // v637: kein Torschützenkönig – Ergebnisse zählen in der U9 nicht („Fairness vor Ergebnis“); die Tore stehen als Teamzahl oben.
   if(d.fleissigste&&d.fleissigste.name)awards.push(["🏃","Fleißbiene (Training)",d.fleissigste]);
   if(d.top_aktiv&&d.top_aktiv.name)awards.push(["🔥","Aktivposten",d.top_aktiv]);
   const awardsHtml=awards.length?awards.map((a,i)=>`<div class="aw-pop d${i+1}" style="background:rgba(255,255,255,.14);border-radius:14px;padding:11px 16px;margin:8px auto;max-width:280px">
     <div style="font-size:26px">${a[0]}</div>
-    <div style="font-size:19px;font-weight:800">${esc(a[2].name)}</div>
-    <div style="font-size:12px;opacity:.85">${a[1]} · ${a[2].wert}</div></div>`).join("")
-    :`<div class="aw-pop" style="opacity:.85;font-size:15px">Sammelt Aktionen am Spieltag – dann gibt's hier eure Helden! 🦅</div>`;
+    <div style="font-size:var(--s-teil);font-weight:800">${esc(a[2].name)}</div>
+    <div style="font-size:var(--s-text);opacity:.85">${a[1]} · ${a[2].wert}</div></div>`).join("")
+    :`<div class="aw-pop" style="opacity:.85;font-size:var(--s-karte)">Sammelt Aktionen am Spieltag – dann gibt's hier eure Helden! 🦅</div>`;
   S.push({bg:g("#1e3a8a","#3b82f6"),confetti:true,html:`<div>
-    <div class="aw-pop" style="font-size:22px;font-weight:900;margin-bottom:14px">🏅 Eure Saison-Helden</div>${awardsHtml}</div>`});
+    <div class="aw-pop" style="font-size:var(--s-seite);font-weight:900;margin-bottom:14px">🏅 Eure Saison-Helden</div>${awardsHtml}</div>`});
   S.push({bg:g("#7c2d12","#dc2626"),confetti:true,html:`<div>
     <div class="aw-pop" style="font-size:58px">🦅❤️</div>
     <div class="aw-pop d1" style="font-size:26px;font-weight:900;margin-top:10px">Was für eine Saison, Adler!</div>
-    <div class="aw-pop d2" style="font-size:15px;opacity:.85;margin-top:10px">${d.spieler_anzahl||0} Kinder · ein Team</div></div>`});
+    <div class="aw-pop d2" style="font-size:var(--s-karte);opacity:.85;margin-top:10px">${d.spieler_anzahl||0} Kinder · ein Team</div></div>`});
   // FEAT X: Galerie-Fotos als Hintergrund einstreuen (Gradient-Overlay -> Text bleibt lesbar).
   // Rein DOM (background-image), daher kein Canvas-Taint. Fotos sind lokale Blob-URLs.
   if(fotos&&fotos.length){
     const overlay=(slide,foto)=>{slide.bg=slide.bg.replace(/linear-gradient\(160deg,\s*([^,]+),\s*([^)]+)\)/,(m,a,b)=>`linear-gradient(160deg,${a.trim()}cc,${b.trim()}cc), url("${foto}") center/cover`);};
     [1,2,3,4,5].forEach((si,k)=>{ if(S[si]&&fotos[k])overlay(S[si],fotos[k]); }); // Intro & Finale bleiben clean
     S.splice(S.length-1,0,{bg:`linear-gradient(160deg,#0f172acc,#1e293bcc), url("${fotos[0]}") center/cover`,html:`<div>
-      <div class="aw-pop" style="font-size:14px;opacity:.9;text-transform:uppercase;letter-spacing:2px">Unsere Momente</div>
+      <div class="aw-pop" style="font-size:var(--s-karte);opacity:.9;text-transform:uppercase;letter-spacing:2px">Unsere Momente</div>
       <div class="aw-pop d1" style="font-size:26px;font-weight:900;margin-top:8px">📸 ${fotos.length} Erinnerungen</div>
-      <div class="aw-pop d2" style="font-size:14px;opacity:.85;margin-top:10px">Eine Saison zum Nie-Vergessen 🦅</div></div>`});
+      <div class="aw-pop d2" style="font-size:var(--s-karte);opacity:.85;margin-top:10px">Eine Saison zum Nie-Vergessen 🦅</div></div>`});
   }
   return S;
 }
@@ -1699,7 +1863,7 @@ function adlerWrappedShow(d,fotos){
   modal.style.cssText="position:fixed;inset:0;z-index:10000;overflow:hidden;color:#fff;font-family:inherit;display:flex;flex-direction:column";
   modal.innerHTML=`
     <div id="aw-bars" style="display:flex;gap:4px;padding:12px 12px 4px;position:relative;z-index:3"></div>
-    <button onclick="adlerWrappedClose()" aria-label="Schließen" style="position:absolute;top:30px;right:12px;z-index:4;background:rgba(0,0,0,.25);border:none;color:#fff;font-size:22px;width:36px;height:36px;border-radius:50%;cursor:pointer">×</button>
+    <button onclick="adlerWrappedClose()" aria-label="Schließen" style="position:absolute;top:30px;right:12px;z-index:4;background:rgba(0,0,0,.25);border:none;color:#fff;font-size:var(--s-seite);width:36px;height:36px;border-radius:50%;cursor:pointer">×</button>
     <div id="aw-stage" style="flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:28px;position:relative;z-index:1"></div>
     <div style="position:absolute;top:32px;bottom:0;left:0;right:0;z-index:2;display:flex">
       <div style="flex:1" role="button" tabindex="0" aria-label="Zurück" onclick="adlerWrappedPrev()"></div>
@@ -1760,8 +1924,7 @@ function _zertCardHtml(name,extra){
         ${staerkenHtml}
       </div>
       <div class="zert-badges">
-        ${snaps.length?`<div class="zb">Entwicklungsstand<b>${tot}%</b></div>
-        <div class="zb">Tempo<b>~${pot}%</b></div>`:""}
+        ${/* v635: keine Bewertungszahlen auf der Urkunde – sie ist an das Kind adressiert (CLAUDE.md: Kinder sehen nie Bewertungszahlen). */""}
         ${extra.federn!=null?`<div class="zb">Federn gesammelt<b>🪶 ${extra.federn}</b></div>`:""}
       </div>`}
       <div class="zert-sign">
@@ -1788,20 +1951,20 @@ async function urkundenOpen(){
   m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Urkunden-Studio");
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{if(e.target===m)m.remove();};
-  const fld="width:100%;box-sizing:border-box;padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13.5px;background:var(--surface2);color:var(--text);margin-top:6px";
+  const fld="width:100%;box-sizing:border-box;padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);margin-top:6px";
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("urk-modal","🏅","Urkunden-Studio","Saison-Urkunden für alle – oder eine Urkunde zum Anlass","var(--amber)")}
-    <div style="font-weight:800;font-size:13px;margin-bottom:4px">Saison-Urkunden (alle Kinder)</div>
-    <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Je Kind eine A4-Seite: Stärken aus der Bewertung, Rolle, Federn und Unterschriften-Zeile – fertig fürs Saisonabschluss-Fest.</div>
+    <div style="font-weight:800;font-size:var(--s-text);margin-bottom:4px">Saison-Urkunden (alle Kinder)</div>
+    <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:8px">Je Kind eine A4-Seite: Stärken aus der Bewertung, Rolle, Federn und Unterschriften-Zeile – fertig fürs Saisonabschluss-Fest.</div>
     <button class="btn btn-p" style="width:100%" onclick="urkundenAlle(this)"><i class="ti ti-printer"></i>Alle ${active.length} Urkunden drucken</button>
-    <div style="font-weight:800;font-size:13px;margin:18px 0 4px">Urkunde zum Anlass</div>
-    <div style="font-size:12px;color:var(--text2)">Turnier, Team-Meilenstein, besondere Leistung – Titel und Text frei.</div>
+    <div style="font-weight:800;font-size:var(--s-text);margin:18px 0 4px">Urkunde zum Anlass</div>
+    <div style="font-size:var(--s-text);color:var(--text2)">Turnier, Team-Meilenstein, besondere Leistung – Titel und Text frei.</div>
     <select id="urk-kind" style="${fld}"><option value="*">Alle Kinder</option>${active.map(k=>`<option value="${esc(k.name)}">${esc(k.name)}</option>`).join("")}</select>
     <input id="urk-titel" placeholder="Titel, z. B. Turnier-Urkunde" value="Turnier-Urkunde" style="${fld}">
     <input id="urk-anlass" placeholder="Anlass/Untertitel, z. B. Sommer-Cup 2026" style="${fld}">
     <textarea id="urk-text" rows="3" style="${fld}" placeholder="Text auf der Urkunde">Für großartigen Einsatz, Teamgeist und Fairplay. Das ganze Adler-Team ist stolz auf dich!</textarea>
     <button class="btn btn-p" style="width:100%;margin-top:10px" onclick="urkundeFrei(this)"><i class="ti ti-printer"></i>Anlass-Urkunde drucken</button>
-    <div style="font-size:10.5px;color:var(--text3);margin-top:10px">Tipp: Im Druckdialog „Als PDF speichern" wählen, um die Urkunden digital zu verschicken.</div>
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-top:10px">Tipp: Im Druckdialog „Als PDF speichern" wählen, um die Urkunden digital zu verschicken.</div>
   </div>`;
   document.body.appendChild(m);
 }
@@ -1838,6 +2001,18 @@ function printZertifikat(){
 // Entwicklungs-Report (druckbar) fürs Elterngespräch – nutzt vorhandene Daten + den
 // generischen Druck-Container (#zert-print / printing-zert). Trend, Dimensionen, Stärken,
 // Anwesenheit, aktuelle Ziele, Trainer-Fazit.
+/* v635: Der Bericht geht an Eltern. Er zeigt Worte statt Prozente und lässt aus dem Trainertext
+   alles weg, was nur fürs Trainerteam ist: Zahlen, den Eltern-Hinweis, die Einordnung mit
+   „Entwicklungstempo“ und den alten Gruppen-Rest („Gruppe:“ aus der A/B-Zeit). Gefiltert
+   wird der gespeicherte Text, damit auch Bewertungen von vor v635 sauber herauskommen. */
+const BERICHT_STUFE=p=>p>=84?"Stark":p>=50?"Gut":p>=17?"Solide":"Ansatz";
+function berichtFazitFuerEltern(text){
+  const weg=/^(ELTERN-HINWEIS|ENTWICKLUNGSPROGNOSE|EINORDNUNG)/;
+  const teile=String(text||"").split(/\n(?=━━ )/);
+  return teile.filter(t=>!weg.test(t.replace(/^━━\s*/,""))).join("\n")
+    .split("\n").filter(z=>!/%|Gruppe:|Messwert/.test(z)).join("\n")
+    .replace(/\n{3,}/g,"\n\n").trim();
+}
 async function entwicklungsReport(){
   const name=document.getElementById("psel-profil")?.value;
   if(!name){toast("Erst einen Spieler wählen","err");return;}
@@ -1846,12 +2021,12 @@ async function entwicklungsReport(){
   const k=getKader(name)||{}, isTw=lat.tw===true||k.tw;
   const v=typeof lat.radios==="string"?safeParse(lat.radios,{}):(lat.radios||{});
   const {dims:ds}=calcScores(v,DIMS_FELD);
-  const dimHtml=DIMS_FELD.map(d=>{const p=Math.round(ds[d.id]||0);return `<div style="display:flex;align-items:center;gap:8px;margin:3px 0">
+  const dimHtml=DIMS_FELD.map(d=>{const p=Math.round(ds[d.id]||0);const ng=ds[d.id]==null;return `<div style="display:flex;align-items:center;gap:8px;margin:3px 0">
     <div style="width:150px;font-size:12px">${esc(d.label)}</div>
     <div style="flex:1;height:10px;background:#e2e8f0;border-radius:5px;overflow:hidden"><div style="height:100%;width:${p}%;background:${d.col};border-radius:5px"></div></div>
-    <div style="width:38px;text-align:right;font-size:12px;font-weight:700">${p}%</div></div>`;}).join("");
-  const tr=playerTrend(name)||{delta:0,conf:snaps.length};
-  const arrow=tr.delta>0?`↗ +${tr.delta}%`:tr.delta<0?`↘ ${tr.delta}%`:"→ stabil";
+    <div style="width:64px;text-align:right;font-size:12px;font-weight:700">${ng?"nicht beobachtet":BERICHT_STUFE(p)}</div></div>`;}).join("");
+  const vg=typeof bewVergleich==="function"?bewVergleich(name):{runden:snaps.length,hoch:[]};   // v637: Runde gegen Runde
+  const arrow=vg.runden<2?"Erste Einschätzung":vg.hoch.length?`↗ gewachsen: ${vg.hoch.slice(0,3).join(", ")}`:"→ auf ähnlichem Stand";
   const badges=(adlerCardData(name)||{}).badges||[];
   const staerken=badges.slice(0,3).map(b=>`<span style="display:inline-block;background:#eef2ff;color:#3730a3;border-radius:14px;padding:3px 10px;font-size:12px;margin:2px 4px 2px 0">${b.icon} ${esc(b.label)}</span>`).join("")||"—";
   // Anwesenheit
@@ -1859,9 +2034,9 @@ async function entwicklungsReport(){
   let gmP=0,gmT=0; try{const r=await fetch(`${SB_URL}/rest/v1/nominierungen?select=data`,{headers:sbAuthHeaders()});if(r.ok)(await r.json()).forEach(row=>{const s=kidMapFromIds(row.data||{})[name];if(s==="dabei"||s==="nicht"||s==="verletzt"){gmT++;if(s==="dabei")gmP++;}});}catch(e){}
   const q=(p,t)=>t?Math.round(p/t*100)+"% ("+p+"/"+t+")":"—";
   // Aktuelle Ziele
-  let goals=[]; if(k.id){try{const r=await fetch(`${SB_URL}/rest/v1/entwicklungsziele?spieler_id=eq.${k.id}&status=eq.offen&select=ziel&order=created_at.desc`,{headers:sbAuthHeaders()});if(r.ok)goals=(await r.json()).map(z=>z.ziel).filter(Boolean);}catch(e){}}
+  let goals=[]; const kid=kaderId(k); if(kid!=null){try{const r=await fetch(`${SB_URL}/rest/v1/entwicklungsziele?spieler_id=eq.${kid}&status=eq.offen&select=ziel&order=created_at.desc`,{headers:sbAuthHeaders()});if(r.ok)goals=(await r.json()).map(z=>z.ziel).filter(Boolean);}catch(e){}}
   const goalsHtml=goals.length?goals.map(g=>`<li style="font-size:12.5px;margin:2px 0">${esc(g)}</li>`).join(""):'<li style="font-size:12.5px;color:#64748b">Noch kein Ziel gesetzt</li>';
-  const fazit=(lat.fazit||"").trim();
+  const fazit=berichtFazitFuerEltern(lat.fazit);
   document.getElementById("zert-print").innerHTML=`
     <div style="max-width:720px;margin:0 auto;padding:24px;font-family:Inter,system-ui,sans-serif;color:#1a1a2e">
       <div style="display:flex;align-items:center;gap:12px;border-bottom:2px solid var(--blue);padding-bottom:10px;margin-bottom:14px">
@@ -1875,9 +2050,9 @@ async function entwicklungsReport(){
 
       <div style="display:flex;gap:14px;margin-bottom:14px">
         <div style="flex:1;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px">
-          <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px">Entwicklungsstand</div>
-          <div style="font-size:24px;font-weight:800;color:var(--blue-text)">${lat.total_score||0}%</div>
-          <div style="font-size:12px;font-weight:700;color:${tr.delta>0?'var(--green)':tr.delta<0?'var(--red)':'#64748b'}">${arrow}</div>
+          <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px">Entwicklung</div>
+          <div style="font-size:16px;font-weight:800;color:var(--blue-text);margin-top:4px">${arrow}</div>
+          <div style="font-size:11.5px;color:#64748b;margin-top:2px">Momentaufnahme aus dem Training, keine Prognose</div>
         </div>
         <div style="flex:1;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px">
           <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px">Anwesenheit</div>
@@ -1928,6 +2103,14 @@ const CARD_BADGES={
    und wird hier nur gelesen - ein zweites Verzeichnis waere eine zweite Wahrheit.
    Gebraucht seit v593 von der Team-Galerie, die aus team_gallery_kind() nur noch die
    Merkmalsschluessel bekommt und daraus das Farbthema ableiten muss. */
+/* v636: EINE Regel für die drei Stärken – dieselbe wie staerken_von() in der Datenbank
+   (Wert absteigend, bei Gleichstand Schlüssel alphabetisch, nur Werte > 0). Vorher löste der
+   Browser Gleichstände über die Reihenfolge in CARD_BADGES, die Datenbank alphabetisch: Eltern,
+   Trainer und Kind sahen auf einer 4er-Skala oft verschiedene Abzeichen und Farben. */
+function staerkenAus(v){
+  return Object.keys(CARD_BADGES).map(key=>({key,val:Number(v&&v[key])||0})).filter(x=>x.val>0)
+    .sort((a,b)=>b.val-a.val||(a.key<b.key?-1:a.key>b.key?1:0)).slice(0,3).map(x=>x.key);
+}
 function feldDimVon(key){
   if(!key||typeof DIMS_FELD==="undefined")return null;
   for(const d of DIMS_FELD){
@@ -1975,17 +2158,17 @@ function cardSkinGalleryEl(federn){
   const unlocked=shown.filter(s=>f>=s.min).length;
   const wrap=document.createElement("div");
   wrap.style.cssText="width:300px;max-width:100%;background:var(--surface);border:var(--border-s);border-radius:14px;padding:10px 12px";
-  wrap.innerHTML=`<div style="font-size:11px;font-weight:800;color:var(--text);margin-bottom:8px">🃏 Karten-Designs <span style="color:var(--text3);font-weight:600">(${unlocked}/${shown.length} frei · ${f} 🪶)</span></div>
+  wrap.innerHTML=`<div style="font-size:var(--s-klein);font-weight:800;color:var(--text);margin-bottom:8px">🃏 Karten-Designs <span style="color:var(--text3);font-weight:600">(${unlocked}/${shown.length} frei · ${f} 🪶)</span></div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">`+
     shown.map(s=>{
       const on=f>=s.min, isActive=active&&active.name===s.name;
       return `<div style="text-align:center;padding:6px 2px;border-radius:10px;${isActive?"background:rgba(250,204,21,.14);outline:2px solid "+(s.border||"#facc15"):""}">
-        <div style="font-size:24px;line-height:1;${on?"":"filter:grayscale(1);opacity:.4"}">${s.emo}</div>
-        <div style="font-size:9px;font-weight:700;color:${on?"var(--text)":"var(--text3)"};margin-top:3px;line-height:1.1">${s.name.replace("-Adler","")}</div>
-        <div style="font-size:8px;color:var(--text3);margin-top:1px">${on?(isActive?"aktiv":"frei ✓"):"🔒 "+s.min+" 🪶"}</div>
+        <div style="font-size:var(--s-seite);line-height:1;${on?"":"filter:grayscale(1);opacity:.4"}">${s.emo}</div>
+        <div style="font-size:var(--s-klein);font-weight:700;color:${on?"var(--text)":"var(--text3)"};margin-top:3px;line-height:1.1">${s.name.replace("-Adler","")}</div>
+        <div style="font-size:var(--s-klein);color:var(--text3);margin-top:1px">${on?(isActive?"aktiv":"frei ✓"):"🔒 "+s.min+" 🪶"}</div>
       </div>`;
     }).join("")+`</div>
-    <div style="font-size:9px;color:var(--text3);margin-top:8px;text-align:center">Sammle Adler-Federn 🪶 – z. B. im Fußball-Wissensquiz – und schalte neue Designs frei!</div>`;
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px;text-align:center">Sammle Adler-Federn 🪶 – z. B. im Fußball-Wissensquiz – und schalte neue Designs frei!</div>`;
   return wrap;
 }
 // On-Screen-Glanz (nur im Modal, nicht im Export): sanftes Gold-/Hero-Pulsieren um die Karte.
@@ -2065,7 +2248,7 @@ function cardCelebrate(wrap,sk,label){
   const modal=document.getElementById("adler-card-modal");
   if(modal){
     const b=document.createElement("div");
-    b.style.cssText="position:fixed;top:12%;left:50%;z-index:10073;background:"+((sk&&sk.border)||"#facc15")+";color:#1a1205;font-weight:900;font-size:16px;padding:10px 18px;border-radius:30px;box-shadow:0 8px 30px rgba(0,0,0,.45);animation:cardBanner 2.8s ease-out forwards";
+    b.style.cssText="position:fixed;top:12%;left:50%;z-index:10073;background:"+((sk&&sk.border)||"#facc15")+";color:#1a1205;font-weight:900;font-size:var(--s-karte);padding:10px 18px;border-radius:30px;box-shadow:0 8px 30px rgba(0,0,0,.45);animation:cardBanner 2.8s ease-out forwards";
     b.textContent=(sk&&sk.emo?sk.emo+" ":"🎉 ")+"Level-Up: "+label+"!";
     modal.appendChild(b);setTimeout(()=>b.remove(),2900);
   }
@@ -2089,23 +2272,28 @@ function cardPosLabel(pos){
   if(m){const seite=/^(r|rechts)$/.test(m[2])?"Rechter":"Linker",base=m[1].trim();return seite+" "+base.charAt(0).toUpperCase()+base.slice(1);}
   return p;
 }
+/* v669 PO 29.09.: „Beim Klick auf die Karte kommt unten die Meldung ‚keine Bewertung vorhanden‘.
+   Geht es nicht um die Spielerkarte des Kindes?“ Die Bewertungen ruhen bis Ende der Hinrunde
+   (v648), also traf das jedes Kind. Wie seit v563 auf Eltern- und Kindergerät steht die Karte
+   jetzt auch ohne Bewertung: Name, Nummer, Foto, Zähler – die Stärken kommen später. */
 function adlerCardData(name){
   const snaps=DB[name]||[];
-  if(!snaps.length)return null;
-  const lat=snaps[snaps.length-1];
+  const kk=getKader(name);
+  if(!snaps.length&&!kk)return null;
+  const k=kk||{};
+  const lat=snaps.length?snaps[snaps.length-1]:{};
   const v=typeof lat.radios==="string"?safeParse(lat.radios,{}):(lat.radios||{});
-  const k=getKader(name)||{};
+  const bewertet=snaps.length>0;
   // Top-3 Staerken (nach Wert; bei Gleichstand egal) – jedes Kind bekommt 3 Badges
-  const strengths=Object.keys(CARD_BADGES).map(key=>({key,val:v[key]||0})).sort((a,b)=>b.val-a.val).slice(0,3);
-  // Design-Farbe: staerkste Dimension (TW -> Gold)
-  const{dims:ds}=calcScores(v,DIMS_FELD);
-  const topDim=Object.entries(ds).sort((a,b)=>b[1]-a[1])[0]||["tech",0];
-  const theme=k.tw?CARD_THEMES.keeper:(CARD_THEMES[topDim[0]]||CARD_THEMES.tech);
+  const strengths=bewertet?staerkenAus(v).map(key=>({key})):[];   // v636: gleiche Regel wie Datenbank und Elternkarte
+  // Design-Farbe: Dimension der ersten Stärke (TW -> Gold) – wie auf Eltern- und Kindergerät
+  const dim0=strengths.length&&typeof feldDimVon==="function"?feldDimVon(strengths[0].key):null;
+  const theme=k.tw?CARD_THEMES.keeper:(bewertet?(CARD_THEMES[dim0]||CARD_THEMES.tech):(CARD_THEMES.neu||CARD_THEMES.tech));
   const posMap={aufpasser:"Aufpasser",jaeger:"Jäger",flitzer_l:"Flitzer",flitzer_r:"Flitzer"};
   const pos=k.lieblingsposition||(k.tw?"Torwart":(posMap[lat.position]||lat.prim_rolle||"Allrounder"));
   const fussMap={L:"linker Fuß",R:"rechter Fuß",B:"beidfüßig"};
   return {name,nr:k.nr,tw:!!k.tw,geb:k.geb,fotoPath:k.foto_path,pos:cardPosLabel(pos),fuss:fussMap[k.starker_fuss||lat.strong_foot]||"",
-          alter:k.geb?homeAlter(k.geb):(lat.age||null), badges:strengths.map(s=>CARD_BADGES[s.key]), theme, spielerId:k.id};
+          alter:k.geb?homeAlter(k.geb):(lat.age||null), badges:strengths.map(s=>CARD_BADGES[s.key]), theme, spielerId:kaderId(k)};
 }
 function adlerCardDraw(ctx,W,H,d,photoImg){
   // Meilenstein-Theme (Teilnahme, nicht Leistung) überschreibt das Dim-Theme.
@@ -2230,8 +2418,8 @@ function adlerCardDraw(ctx,W,H,d,photoImg){
     ctx.textAlign="center";ctx.font="30px Arial";ctx.fillStyle="rgba(255,255,255,.9)";
     ctx.fillText("✨",W/2,by+48);
     ctx.font="700 13px Arial";ctx.fillStyle="#fff";
-    ctx.fillText("Deine Stärken kommen,",W/2,by+76);
-    ctx.fillText("sobald der Trainer sie einträgt.",W/2,by+94);
+    if(d.fremd){ ctx.fillText("Teil der",W/2,by+76); ctx.fillText("Adler-Familie 🦅",W/2,by+94); }   // v636: kein Hinweis, wer (noch) nicht bewertet ist
+    else{ ctx.fillText("Deine Stärken kommen,",W/2,by+76); ctx.fillText("sobald der Trainer sie einträgt.",W/2,by+94); }
   }
   (d.badges||[]).slice(0,3).forEach((b,i)=>{
     const bx=30+bw*i+bw/2;
@@ -2400,18 +2588,18 @@ function renderVerlauf(){
     const prev=snaps[snaps.length-2],curr=snaps[snaps.length-1];
     const scP=safeParse(prev.scores,[]);const scC=safeParse(curr.scores,[]);
     const totD=(curr.total_score||0)-(prev.total_score||0);
-    deltaHtml=`<div class="delta-box"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px"><i class="ti ti-trending-up" style="font-size:13px"></i> Delta ${esc(prev.datum||'–')} → ${esc(curr.datum||'–')}</div>
+    deltaHtml=`<div class="delta-box"><div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:8px"><i class="ti ti-trending-up" style="font-size:var(--s-text)"></i> Delta ${esc(prev.datum||'–')} → ${esc(curr.datum||'–')}</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px">${dl.map((l,i)=>{const d=(scC[i]||0)-(scP[i]||0);return`<span class="hp">${l}: <span class="${d>0?'dp':d<0?'dn':''}">${d>0?'+':''}${d}%</span></span>`;}).join("")}</div>
-    <div style="font-size:12.5px;font-weight:600">Gesamt: <span class="${totD>0?'dp':totD<0?'dn':''}">${totD>0?'+':''}${totD}%</span></div></div>`;
+    <div style="font-size:var(--s-text);font-weight:600">Gesamt: <span class="${totD>0?'dp':totD<0?'dn':''}">${totD>0?'+':''}${totD}%</span></div></div>`;
   }
   let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-    <div style="font-weight:700;font-size:14px">${esc(name)}${isTw?" 🥅":""}</div>
-    <span style="font-size:11px;color:var(--text2)">${snaps.length} Bewertung${snaps.length!==1?"en":""}</span>
+    <div style="font-weight:700;font-size:var(--s-karte)">${esc(name)}${isTw?" 🥅":""}</div>
+    <span style="font-size:var(--s-klein);color:var(--text2)">${snaps.length} Bewertung${snaps.length!==1?"en":""}</span>
   </div>
   ${snaps.length>=2?deltaHtml:""}
   ${snaps.length<2?'<div class="status s-info show" style="margin-bottom:.75rem">Mind. 2 Bewertungen für Verlaufsdiagramm nötig.</div>':""}
   <div style="position:relative;height:240px;margin-bottom:1rem"><canvas id="vc" role="img" aria-label="Verlauf ${esc(name)}">Entwicklung</canvas></div>
-  <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:1rem">${dl.map((l,i)=>`<span style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:var(--text2)"><span style="width:14px;height:3px;background:${cols[i]};display:inline-block;border-radius:2px"></span>${l}</span>`).join("")}</div>
+  <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:1rem">${dl.map((l,i)=>`<span style="display:flex;align-items:center;gap:5px;font-size:var(--s-klein);font-weight:500;color:var(--text2)"><span style="width:14px;height:3px;background:${cols[i]};display:inline-block;border-radius:2px"></span>${l}</span>`).join("")}</div>
   <div class="sl"><i class="ti ti-history"></i>Alle Snapshots</div>`;
   snaps.forEach((s,idx)=>{
     const sc=safeParse(s.scores,[]);
@@ -2419,11 +2607,11 @@ function renderVerlauf(){
     const bMap={aufpasser:"rb-auf",jaeger:"rb-jaeg",flitzer_l:"rb-links",flitzer_r:"rb-rechts"};
     html+=`<div class="hi">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px">
-        <span style="font-weight:600;font-size:13px">${esc(s.datum||'–')}</span>
+        <span style="font-weight:600;font-size:var(--s-text)">${esc(s.datum||'–')}</span>
         <span class="rbadge ${bMap[s.position]||'rb-flex'}">${esc(s.prim_rolle||s.position||'–')}</span>
-        <span style="font-size:10.5px;color:var(--text2)">${esc(s.trainer||'')}</span>
-        <span style="font-size:14px;font-weight:700;color:var(--blue-text)">${s.total_score||0}%</span>
-        <button data-del-snap data-name="${esc(name)}" data-datum="${esc(s.datum||'')}" data-id="${esc(s.id||'')}" style="padding:3px 8px;font-size:10px;background:#fef2f2;color:var(--red);border:1px solid #fca5a5;border-radius:6px;cursor:pointer;font-family:inherit">Löschen</button>
+        <span style="font-size:var(--s-klein);color:var(--text2)">${esc(s.trainer||'')}</span>
+        <span style="font-size:var(--s-karte);font-weight:700;color:var(--blue-text)">${s.total_score||0}%</span>
+        <button data-del-snap data-name="${esc(name)}" data-datum="${esc(s.datum||'')}" data-id="${esc(s.id||'')}" style="padding:3px 8px;font-size:var(--s-klein);background:var(--red-bg);color:var(--red);border:1px solid #fca5a5;border-radius:6px;cursor:pointer;font-family:inherit">Löschen</button>
       </div>
       <div class="hs">${dl.map((l,i)=>{const d=prev?(sc[i]||0)-(prev[i]||0):0;const ds=d>0?`<span class="dp"> +${d}</span>`:d<0?`<span class="dn"> ${d}</span>`:"";return`<span class="hp">${l}: ${sc[i]||0}%${ds}</span>`;}).join("")}</div>
     </div>`;
@@ -2473,7 +2661,7 @@ const TABS={
     {key:"anwesenheit", label:"Anwesenheit",   icon:"ti-checkbox"},
     {key:"planung",     label:"Trainingsplan", icon:"ti-calendar-event"},
     {key:"formen",      label:"Übungen",       icon:"ti-ball-football"},
-    {key:"quizresults", label:"Quiz-Ergebnisse", icon:"ti-brain", hidden:true}, // PO: wohnt jetzt unter Eltern & Kinder; go() braucht den Eintrag weiter
+    {key:"quizresults", label:"Quiz-Ergebnisse", icon:"ti-brain", hidden:true, zurueck:"ue-elki"}, // PO: wohnt jetzt unter Eltern & Kinder; go() braucht den Eintrag weiter
   ]},
   spieltag:{sections:[
     {key:"ue-spieltag", label:"Übersicht", icon:"ti-layout-grid"},
@@ -2482,7 +2670,8 @@ const TABS={
     {key:"analyse",  label:"Analyse",     icon:"ti-chart-dots"},
   ]},
   taktik:  {sections:[
-    {key:"ue-taktik", label:"Übersicht", icon:"ti-layout-grid"},
+    /* v682: keine Kachel-Ebene mehr – sie trug eine einzige Kachel („Taktikboard“) und war
+       damit ein Tipp ohne Wahl. „Taktik“ führt direkt aufs Brett. */
     {key:"taktik",   label:"Taktikboard", icon:"ti-arrows-move"},
   ]},
   orga:    {sections:[
@@ -2519,7 +2708,6 @@ const SECS={
   "ue-team":     {cid:"view-ue-team",     init:()=>kachelSeite("team")},
   "ue-training": {cid:"view-ue-training", init:()=>kachelSeite("training")},
   "ue-spieltag": {cid:"view-ue-spieltag", init:()=>kachelSeite("spieltag")},
-  "ue-taktik":   {cid:"view-ue-taktik",   init:()=>kachelSeite("taktik")},
   "ue-elki":     {cid:"view-ue-elki",     init:()=>kachelSeite("elki")},
   "ue-orga":     {cid:"view-ue-orga",     init:()=>kachelSeite("orga")},
   bew:        {cid:"view-bew",              init:()=>{const s=document.getElementById("p-date");if(s&&s.options.length<=1&&typeof terminSelectFill==="function")terminSelectFill("p-date",{});}},
@@ -2545,7 +2733,8 @@ const SECS={
   team:       {cid:"train-sub-team",       sub:true, init:()=>{w2("tnLoad");w2("teamStatsRender");tvInit();}},
   analyse:    {cid:"train-sub-analyse",    sub:true, init:()=>w2("anInit")},
   tagebuch:   {cid:"train-sub-tagebuch",   sub:true, init:()=>w2("tagebuchListe")},
-  spieltag:   {cid:"train-sub-spieltag",   sub:true, init:()=>{spieltagPhasenZu();spieltagPhaseVorwaehlen();w2("rotRenderControls");w2("nomInit");
+  spieltag:   {cid:"train-sub-spieltag",   sub:true, init:()=>{spieltagPhasenZu();
+                 if(_spieltagPhaseWunsch){const p=_spieltagPhaseWunsch;_spieltagPhaseWunsch=null;spieltagPhaseZeigen(p);}else spieltagPhaseVorwaehlen();w2("rotRenderControls");w2("nomInit");
                  /* v518: Welle-1-Code ruft eine Welle-2-Funktion nie ungeprueft auf. */
                  const ws=document.getElementById("wissen-slot");
                  if(ws&&typeof wissenKachel==="function")ws.innerHTML=wissenKachel();}},
@@ -2554,22 +2743,67 @@ const tabState={}; // zuletzt geöffnete Sektion je Tab (UX: Rückkehr an diesel
 let curSection="bew"; // aktuell sichtbare Sektion (für Pull-to-Refresh)
 function sectionTab(key){ for(const t in TABS){ if(TABS[t].sections.some(s=>s.key===key))return t; } return null; }
 
+/* v681 PO (Kollegen-Rückmeldung 29.09.): „Die Unterseiten … die Kacheln sind verschoben, optisch
+   nicht gut aufgearbeitet … man findet gar nicht direkt, wo man hin will." Die Reiterzeile lief
+   auf fast jeder Detailseite über den Rand („Analys…“, „Entwickl…“) und doppelte die Kacheln der
+   Übersicht – zwei Wege zum selben Ziel, einer davon halb verdeckt. Jetzt gibt es EINEN Weg:
+   Bereich → Kacheln → Seite, und oben auf jeder Seite steht, wo man ist und wohin „zurück“ führt.
+   Die Kachel-Ebenen selbst tragen ihren Kopf aus kachelSeite und brauchen hier nichts. */
 function renderSubbar(tabId,activeKey){
   const bar=document.getElementById("tab-subbar");
   if(!bar)return;
-  const secs=TABS[tabId].sections.filter(s=>!s.hidden);
-  if(secs.length<=1){ bar.style.display="none"; bar.innerHTML=""; return; }
-  bar.style.display="flex";
-  // Aktiver Reiter trägt die Familienfarbe der Kachel (PO: gleiche Optik wie das Kachel-Menü)
-  const fam=(typeof KACHELN!=="undefined"&&KACHELN[tabId])?KACHELN[tabId].col:"var(--blue)";
-  bar.innerHTML=secs.map(s=>`<button class="sub-tab${s.key===activeKey?' active':''}"${s.key===activeKey?` style="background:${fam};box-shadow:none"`:""} onclick="go('${s.key}')"><i class="ti ${s.icon}"></i>${s.label}</button>`).join("");
+  const alle=TABS[tabId].sections, sec=alle.find(s=>s.key===activeKey);
+  const ue=sec&&sec.zurueck?sec.zurueck:(alle[0]&&/^ue-/.test(alle[0].key)?alle[0].key:null);
+  if(!sec||!ue||ue===activeKey||/^ue-/.test(activeKey)){ bar.style.display="none"; bar.innerHTML=""; return; }
+  const zielTab=sectionTab(ue)||tabId, k=(typeof KACHELN!=="undefined"&&KACHELN[zielTab])||{titel:"Übersicht",col:"var(--blue)"};
+  bar.style.cssText="display:flex;align-items:center;gap:10px;margin-bottom:14px";
+  bar.innerHTML=`<button type="button" class="zurueck-kopf" onclick="go('${ue}')" aria-label="Zurück zu ${esc(k.titel)}" style="border-color:${k.col}"><i class="ti ti-chevron-left" aria-hidden="true"></i>${esc(k.titel)}</button>`
+    +`<h2 class="seiten-titel"><i class="ti ${sec.icon}" aria-hidden="true" style="color:${k.col}"></i>${esc(sec.titel||sec.label)}</h2>`;
+  titelDoppeltAus(activeKey, sec.titel||sec.label);
 }
+/* v682: Steht als erste Überschrift einer Unterseite noch einmal ihr Name („Kader“ unter
+   „‹ Team · Kader“), wird sie ausgeblendet. Nur die ERSTE und nur bei gleichem Wort –
+   „Team-Übersicht“ auf der Pinnwand ist ein Abschnitt, kein Titel, und bleibt. */
+function titelDoppeltAus(key,titel){
+  const box=SECS[key]&&document.getElementById(SECS[key].cid); if(!box)return;
+  const erstes=[...box.children].find(el=>el.nodeType===1&&!el.hidden&&el.tagName!=="SCRIPT"&&el.tagName!=="STYLE"&&!/^(tab-subbar)$/.test(el.id));
+  if(!erstes||!erstes.classList.contains("sl"))return;
+  const norm=t=>String(t||"").replace(/\s+/g," ").trim().toLowerCase();
+  const a=norm(erstes.textContent), b=norm(titel);
+  if(a===b||a==="trainer"+b)erstes.setAttribute("data-titel-doppelt","");
+}
+/* v671: Die Überblendung (startViewTransition) ruft _open verzögert auf. Zwei schnelle Tipps –
+   auf einem beschäftigten Gerät, etwa während der Service Worker lädt – konnten dabei in der
+   falschen Reihenfolge ankommen: man tippte „Orga“ und landete auf „Eltern & Kinder“. Geöffnet
+   wird deshalb immer die zuletzt gewählte Seite, nicht die, mit der der Aufruf begann. */
+let _openZiel=null;
 function _open(key){
   const sec=SECS[key]; if(!sec)return;
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
   document.querySelectorAll(".train-sub").forEach(v=>v.classList.remove("active"));
   if(sec.sub)document.getElementById("view-training")?.classList.add("active"); // passiver Host sichtbar machen
   document.getElementById(sec.cid)?.classList.add("active");
+}
+/* v624 PO: „Der Zurück-Button auf dem Handy soll nicht zum Schließen der App führen, sondern
+   Seite zurück." – Jeder Seitenwechsel legt einen Eintrag in den Verlauf; die Zurück-Taste
+   holt die vorige Seite (Handler in core.js). Der unterste Eintrag ist immer die Startseite:
+   Wer mitten in einer Seite einsteigt, kommt mit Zurück erst nach Hause und erst von dort
+   aus der App. Kommt der Wechsel selbst aus der Zurück-Taste, entsteht kein neuer Eintrag. */
+let _seiteAusVerlauf=false;
+function _seiteVerlauf(key){
+  if(_seiteAusVerlauf)return;
+  try{
+    const st=history.state;
+    if(!st||!st.adlerSeite){
+      if(key!=="home"){ history.replaceState({adlerSeite:"home"},""); history.pushState({adlerSeite:key},""); }
+      else history.replaceState({adlerSeite:"home"},"");
+    }else if(key!==curSection)history.pushState({adlerSeite:key},"");
+  }catch(e){}
+}
+function seiteZurueck(key){
+  if(!SECS[key]||key===curSection)return;
+  _seiteAusVerlauf=true;
+  try{ go(key); }finally{ _seiteAusVerlauf=false; }
 }
 function go(key){
   const tabId=sectionTab(key); if(!tabId||!SECS[key])return;
@@ -2585,7 +2819,9 @@ function go(key){
   }
   renderSubbar(tabId,key);
   const reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if(document.startViewTransition&&!reduce)document.startViewTransition(()=>_open(key));else _open(key);
+  // v629: Solange der Auftakt läuft, keine Überblendung – sie friert für ihren Schnappschuss ein Bild ein, und das Wappen hakt mitten im Flug.
+  _openZiel=key;
+  if(document.startViewTransition&&!reduce&&!document.getElementById("adler-intro"))document.startViewTransition(()=>_open(_openZiel||key));else _open(key);
   // Nebenwirkungen (aus altem _svApply/switchTrainSub übernommen)
   if(key==="taktik")requestWakeLock();else releaseWakeLock();
   // Rotations-Timer/Match-Uhr-Tick stoppen beim Verlassen des Spieltags (try/catch: ggf. noch in TDZ beim Start)
@@ -2593,6 +2829,7 @@ function go(key){
   try{ if(key!=="spieltag"&&mcTickId){clearInterval(mcTickId);mcTickId=null;} }catch(e){}
   if(SECS[key].init)setTimeout(SECS[key].init,50);
   tabState[tabId]=key;
+  _seiteVerlauf(key);
   curSection=key;
   try{sessionStorage.setItem("adler_letzte_seite",key);}catch(e){}   // fuers Neuladen (sessionStorage: nur dieser Tab)
 }
@@ -2603,7 +2840,49 @@ function go(key){
    Blitz-Rating, Match-Uhr auf „Waehrend des Spiels") laufen SPAETER und oeffnen weiter. */
 function spieltagPhasenZu(){
   document.querySelectorAll("#train-sub-spieltag details.el-sect").forEach(d=>{d.open=false;});
+  spieltagPhasenKacheln(null);
 }
+/* v681 – Drei Phasen, drei Kacheln, immer nur EINE offen. Eine Phase umfasst mehrere der
+   alten Klappblöcke: „Vor dem Spiel“ ist die globale Team-Festlegung UND die Aufstellung des
+   Teams, „Nach dem Spiel“ auch die Team-Quests. Wer von außen einen Block per .open aufklappt
+   (Match-Uhr → Live, Blitz-Rating → Nach, Anwesenheit → Vor), bekommt über den toggle-Wächter
+   unten die ganze Phase und die passende Kachel markiert – kein Aufrufer muss davon wissen. */
+const ST_PHASEN={vor:["mt-phase-vor","mt-phase-nom"],live:["mt-phase-live"],nach:["mt-phase-nach","mt-phase-quests"]};
+function spieltagPhaseVon(id){ for(const p in ST_PHASEN)if(ST_PHASEN[p].includes(id))return p; return null; }
+function spieltagPhaseAktuell(){
+  for(const p in ST_PHASEN)if(ST_PHASEN[p].some(id=>(document.getElementById(id)||{}).open))return p;
+  return null;
+}
+function spieltagPhasenKacheln(p){
+  document.querySelectorAll("#mt-phasen .phase-kachel").forEach(b=>{
+    const an=b.dataset.phase===p;
+    b.setAttribute("aria-pressed",an?"true":"false"); b.classList.toggle("an",an);
+  });
+  const leer=document.getElementById("mt-phasen-leer"); if(leer)leer.hidden=!!p;
+}
+function spieltagPhaseZeigen(p){
+  if(!ST_PHASEN[p])return;
+  for(const q in ST_PHASEN)ST_PHASEN[q].forEach(id=>{const d=document.getElementById(id); if(d&&d.open!==(q===p))d.open=(q===p);});
+  spieltagPhasenKacheln(p);
+  /* Bei mehreren Teams steckt der Inhalt von Aufstellung, Uhr und Ergebnis in der Kachel des
+     gewählten Teams. Ist keine aufgeklappt, sähe man nach dem Tipp auf „Während“ nichts –
+     also die Kachel des gewählten Teams öffnen. Welle 2, deshalb nur über typeof. */
+  try{
+    if(typeof TEAM_ANZAHL!=="undefined"&&TEAM_ANZAHL>1&&typeof TEAM_KARTE_OFFEN!=="undefined"&&!TEAM_KARTE_OFFEN
+       &&typeof spieltagKarteOeffnen==="function")spieltagKarteOeffnen((typeof spieltagTeam!=="undefined"&&spieltagTeam)||1);
+  }catch(e){}
+}
+document.addEventListener("toggle",e=>{
+  const d=e.target; if(!d||!d.id)return;
+  const p=spieltagPhaseVon(d.id); if(!p)return;
+  if(!d.open){ spieltagPhasenKacheln(spieltagPhaseAktuell()); return; }
+  const stimmig=Object.keys(ST_PHASEN).every(q=>ST_PHASEN[q].every(id=>{const x=document.getElementById(id); return !x||x.open===(q===p);}));
+  if(stimmig)spieltagPhasenKacheln(p); else spieltagPhaseZeigen(p);
+},true);
+/* Sprung von der Spieltag-Übersicht direkt in eine Phase. go() ruft die Seite erst nach 50 ms
+   auf und schließt dabei alle Phasen – der Wunsch wird deshalb dort eingelöst, nicht hier. */
+let _spieltagPhaseWunsch=null;
+function spieltagPhase(p){ _spieltagPhaseWunsch=ST_PHASEN[p]?p:null; go("spieltag"); }
 /* v473 – Rundgang: Am Spieltag lag der Ticker drei Taps tief (Spieltag → Match → „② Während
    des Spiels" aufklappen). Ist der gewaehlte Spieltag HEUTE, oeffnet die Seite den
    Abschnitt, den die Uhrzeit nahelegt: vor dem Anpfiff „① Vor dem Spiel", waehrend „② Live",
@@ -2626,6 +2905,7 @@ async function spieltagPhaseVorwaehlen(){
   let phase="mt-phase-vor";
   if(uhr&&uhr.clock_status&&uhr.clock_status!=="idle")phase="mt-phase-live";
   else if(ab&&jetzt>=ab)phase=(bis&&jetzt>bis)?"mt-phase-nach":"mt-phase-live";
+  if(spieltagPhaseAktuell())return;   // v681: inzwischen selbst eine Phase gewählt – nicht überstimmen
   const d=document.getElementById(phase); if(d)d.open=true;
 }
 /* v553 – Ein Tipp auf die untere Leiste führt IMMER auf die Kachel-Ebene, nicht
@@ -2654,6 +2934,29 @@ function homeAlter(geb){ // Alter in Jahren aus YYYY-MM-DD
   if(h.getMonth()<g.getMonth()||(h.getMonth()===g.getMonth()&&h.getDate()<g.getDate()))a--;
   return a;
 }
+/* v660 PO 28.09.: „… damit wir auch den Eltern als Teil der Mannschaft gratulieren können.“
+   Die Karte stand bis v659 als toter Code in renderHome (gebaut, nie eingesetzt). Jetzt: Kinder
+   aus dem Kader und Eltern aus eltern_angaben, die in den nächsten 14 Tagen Geburtstag haben.
+   Eltern tragen ihren Geburtstag selbst ein; das Alter der Eltern steht bewusst nicht dabei. */
+async function homeGeburtstage(){
+  const slot=document.getElementById("home-geb"); if(!slot)return;
+  const liste=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k.geb&&k.aktiv!==false)
+    .map(k=>({name:k.name,d:homeGebTage(k.geb),alter:homeAlter(k.geb)+1,kind:true}));
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/eltern_angaben?select=vorname,nachname,geburtstag&geburtstag=not.is.null`,{headers:sbAuthHeaders()});
+    if(r.ok)(await r.json()).forEach(e=>{const n=[e.vorname,e.nachname].filter(Boolean).join(" ");if(n)liste.push({name:n,d:homeGebTage(e.geburtstag),kind:false});});
+  }catch(e){}
+  const bald=liste.filter(x=>x.d<=14).sort((a,b)=>a.d-b.d);
+  if(!document.getElementById("home-geb"))return;
+  if(!bald.length){slot.innerHTML="";return;}
+  slot.innerHTML=`<div class="card" style="padding:12px 14px;margin-top:10px;border-left:3px solid var(--amber)">
+    <div style="font-weight:800;font-size:var(--s-text);margin-bottom:4px">🎂 Geburtstage in den nächsten 14 Tagen</div>
+    ${bald.map(x=>`<div style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);padding:3px 0">
+      <span aria-hidden="true">${x.d===0?"🎉":"🎂"}</span><strong>${esc(x.name)}</strong>
+      <span style="color:var(--text2);font-size:var(--s-klein)">${x.kind?"":"Elternteil · "}${x.d===0?(x.kind?`wird HEUTE ${x.alter}!`:"hat HEUTE Geburtstag!"):`in ${x.d} Tag${x.d===1?"":"en"}${x.kind?` · wird ${x.alter}`:""}`}</span>
+    </div>`).join("")}
+  </div>`;
+}
 function homeGebTage(geb){ // Tage bis zum nächsten Geburtstag (0 = heute)
   const h=new Date();h.setHours(0,0,0,0);
   const g=new Date(geb+"T00:00:00");
@@ -2670,13 +2973,13 @@ async function elterngespraecheTrainerLoad(){
   try{const r=await fetch(`${SB_URL}/rest/v1/elterngespraech_wunsch?status=eq.offen&select=id,thema,created_at,spieler_id,kader(name)&order=created_at.asc`,{headers:sbAuthHeaders()});if(!sbCheck401(r)&&r.ok)rows=await r.json();}catch(e){}
   if(!rows.length){box.innerHTML="";return;}
   box.innerHTML=`<div class="card" style="border-left:3px solid #7c3aed;padding:12px 14px;margin-top:10px">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="flex:1;font-weight:800;font-size:13.5px">🗣️ Elterngespräch-Wünsche (${rows.length})</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="flex:1;font-weight:800;font-size:var(--s-text)">🗣️ Elterngespräch-Wünsche (${rows.length})</div>
       <button onclick="epollTrainerOpen()" class="btn btn-sm">🗓️ Terminfindungen</button></div>
     ${rows.map(w=>`<div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-top:var(--border-s)">
       <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:700">${esc((w.kader&&w.kader.name)||"Ein Elternteil")}</div>
-        ${w.thema?`<div style="font-size:11.5px;color:var(--text2);line-height:1.4">${esc(w.thema)}</div>`:`<div style="font-size:11.5px;color:var(--text3)">Kein Thema angegeben</div>`}
-        <div style="font-size:10px;color:var(--text3);margin-top:2px">${new Date(w.created_at).toLocaleDateString("de-DE")}</div>
+        <div style="font-size:var(--s-text);font-weight:700">${esc((w.kader&&w.kader.name)||"Ein Elternteil")}</div>
+        ${w.thema?`<div style="font-size:var(--s-klein);color:var(--text2);line-height:1.4">${esc(w.thema)}</div>`:`<div style="font-size:var(--s-klein);color:var(--text3)">Kein Thema angegeben</div>`}
+        <div style="font-size:var(--s-klein);color:var(--text3);margin-top:2px">${new Date(w.created_at).toLocaleDateString("de-DE")}</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;flex:none">
         ${w.spieler_id?`<button onclick="epollTrainerOpen(${w.spieler_id})" class="btn btn-sm">🗓️ Termine</button>`:""}
@@ -2689,6 +2992,44 @@ async function elterngespraechErledigt(id){
   try{const r=await fetch(`${SB_URL}/rest/v1/elterngespraech_wunsch?id=eq.${id}`,{method:"PATCH",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},body:JSON.stringify({status:"erledigt"})});if(sbCheck401(r))return;if(!r.ok){toast(sbDeniedMsg(r,"Konnte nicht ändern"),"err");return;}}catch(e){toast("Netzwerkfehler","err");return;}
   toast("Als erledigt markiert ✓");
   elterngespraecheTrainerLoad();
+}
+
+/* v644: Löschanträge der Eltern. Oben auf der Startseite, solange einer offen ist – DSGVO
+   gibt einen Monat. „Jetzt löschen“ ruft die Edge Function kind-loeschen: Kaderplatz und alles
+   daran, Einschätzungen, Foto, Sprach-Lobe und Kindergeräte; Pläne und Spielberichte behalten
+   „Ehemaliges Kind“ statt des Namens. confirm() ist im Trainerbereich erlaubt (CLAUDE.md). */
+async function loeschantraegeTrainerLoad(){
+  const box=document.getElementById("la-trainer"); if(!box)return;
+  let rows=[];
+  try{const r=await fetch(`${SB_URL}/rest/v1/loeschantrag?erledigt_am=is.null&select=id,spieler_id,erstellt_am,antrag_email&order=erstellt_am.asc`,{headers:sbAuthHeaders()});if(!sbCheck401(r)&&r.ok)rows=await r.json();}catch(e){}
+  if(!rows.length){box.innerHTML="";return;}
+  const name=id=>((typeof KADER!=="undefined"?KADER:[]).find(k=>Number(kaderId(k))===Number(id))||{}).name||"Kind (nicht im Kader)";
+  box.innerHTML=`<div class="card" style="border-left:3px solid var(--red);padding:12px 14px;margin-top:10px">
+    <div style="font-weight:800;font-size:var(--s-text);margin-bottom:6px">🗑️ Löschanträge (${rows.length})</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px">Eltern bitten, alle Daten ihres Kindes zu löschen. Frist: ein Monat ab Antrag.</div>
+    ${rows.map(a=>{ const tage=Math.floor((Date.now()-new Date(a.erstellt_am))/864e5);
+      return `<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-top:var(--border-s)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:var(--s-text);font-weight:700">${esc(name(a.spieler_id))}</div>
+        <div style="font-size:var(--s-klein);color:var(--text2)">seit ${new Date(a.erstellt_am).toLocaleDateString("de-DE")} (${tage} ${tage===1?"Tag":"Tage"})${a.antrag_email?" · "+esc(a.antrag_email):""}</div>
+      </div>
+      <button onclick="kindVollstaendigLoeschen(${Number(a.spieler_id)},this)" class="btn btn-sm" style="color:var(--red);border-color:var(--red);min-height:44px">Jetzt löschen</button>
+    </div>`;}).join("")}
+  </div>`;
+}
+async function kindVollstaendigLoeschen(spielerId,btn){
+  const k=(typeof KADER!=="undefined"?KADER:[]).find(x=>Number(kaderId(x))===Number(spielerId));
+  const nm=(k&&k.name)||"dieses Kind";
+  if(!confirm(`Alle Daten von ${nm} endgültig löschen?\n\nKaderplatz, Rückmeldungen, Freigaben, Notfallkarte, Kabine, Einschätzungen, Foto und Kindergeräte. In Plänen und Spielberichten steht danach „Ehemaliges Kind“. Das lässt sich nicht rückgängig machen.`))return;
+  if(btn)btn.disabled=true;
+  try{
+    const r=await fetch(`${SB_URL}/functions/v1/kind-loeschen`,{method:"POST",headers:{...sbAuthHeaders(),"Content-Type":"application/json"},body:JSON.stringify({spieler_id:spielerId})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){toast("Nicht gelöscht: "+(d.error||("Fehler "+r.status)),"err");if(btn)btn.disabled=false;return;}
+    toast(`${nm} ist gelöscht ✓`);
+  }catch(e){toast("Kein Netz – nichts gelöscht","err");if(btn)btn.disabled=false;return;}
+  try{ await loadKader(); if(typeof renderKader==="function")renderKader(); }catch(e){}
+  loeschantraegeTrainerLoad();
 }
 
 /* Trainer-Meeting-Doodle: Terminvorschläge, Abstimmung (✓/?/✗) unter Trainern, festlegen.
@@ -2779,7 +3120,7 @@ async function tpollRender(){
   const c=document.getElementById("tm-meet-card"); if(!c)return;
   // min-height:44px – die Felder im „Neues Meeting"-Block waren 33 px hoch und standen
   // damit neben dem 44er-Themenfeld sichtbar aus der Reihe.
-  const FLD="padding:8px;min-height:44px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const FLD="padding:8px;min-height:44px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
   let polls=[],slots=[],votes=[],themen=[];
   const namen=await tpollNamen();
   try{const r=await fetch(`${SB_URL}/rest/v1/trainer_poll?select=*&order=created_at.desc`,{headers:sbAuthHeaders()});if(!sbCheck401(r)&&r.ok)polls=await r.json();}catch(e){}
@@ -2838,9 +3179,9 @@ async function tpollRender(){
         const tage=Math.round((d-new Date(new Date().toISOString().slice(0,10)+"T00:00:00"))/864e5);
         const bald=tage<0?"war am":tage===0?"heute":tage===1?"morgen":"in "+tage+" Tagen";
         return `<div style="border:1.5px solid var(--green);background:var(--green-bg);border-radius:10px;padding:10px 12px;margin-top:6px">
-          <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--green)">✅ Termin steht · ${esc(bald)}</div>
-          <div style="font-size:15px;font-weight:800;color:var(--text);margin-top:2px">${dstr}${zstr}</div>
-          <div style="font-size:10.5px;color:var(--text3);margin-top:3px">✓ ${ja} · ? ${viel} · ✗ ${nein} · <button onclick="tpollOeffnen(${p.id})" style="border:none;background:none;color:var(--blue-text);font-weight:700;cursor:pointer;font-size:10.5px;padding:0">Termin doch ändern</button></div>
+          <div style="font-size:var(--s-text);font-weight:800;color:var(--green)">✅ Termin steht · ${esc(bald)}</div>
+          <div style="font-size:var(--s-karte);font-weight:800;color:var(--text);margin-top:2px">${dstr}${zstr}</div>
+          <div style="font-size:var(--s-klein);color:var(--text3);margin-top:3px">✓ ${ja} · ? ${viel} · ✗ ${nein} · <button onclick="tpollOeffnen(${p.id})" style="border:none;background:none;color:var(--blue-text);font-weight:700;cursor:pointer;font-size:var(--s-klein);padding:0">Termin doch ändern</button></div>
         </div>`;
       }
       const voteBtns=["ja","vielleicht","nein"].map(st=>{const on=mine===st;const emo=st==="ja"?"✓":st==="vielleicht"?"?":"✗";const col=st==="ja"?"var(--green)":st==="vielleicht"?"var(--amber)":"var(--red)";
@@ -2850,19 +3191,19 @@ async function tpollRender(){
          aus verschachtelten <div> erraten, welcher Kasten gemeint ist – und greift dann
          die Fusszeile statt des Kastens. */
       return `<div data-slot="${s.id}"${empfohlen?' data-empfohlen="1"':""} style="border:${empfohlen?"1.5px solid var(--green)":"var(--border-s)"};background:${empfohlen?"var(--green-bg)":"transparent"};border-radius:10px;padding:8px 10px;margin-top:6px">
-        ${empfohlen?`<div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--green);margin-bottom:2px">👍 Hier können alle – niemand hat abgesagt</div>`:""}
+        ${empfohlen?`<div style="font-size:var(--s-text);font-weight:800;color:var(--green);margin-bottom:2px">👍 Hier können alle – niemand hat abgesagt</div>`:""}
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <div style="flex:1;min-width:110px;font-size:12.5px;font-weight:700">${dstr}${zstr}</div>
+          <div style="flex:1;min-width:110px;font-size:var(--s-text);font-weight:700">${dstr}${zstr}</div>
           <div style="display:flex;gap:4px">${voteBtns}</div>
         </div>
-        <div style="font-size:10.5px;color:var(--text3);margin-top:4px">✓ ${ja} · ? ${viel} · ✗ ${nein}${fehltTxt} · <button onclick="tpollDecide(${p.id},${s.id})" style="border:none;background:none;color:var(--blue-text);font-weight:700;cursor:pointer;font-size:10.5px;padding:0">diesen Termin festlegen</button></div>
+        <div style="font-size:var(--s-klein);color:var(--text3);margin-top:4px">✓ ${ja} · ? ${viel} · ✗ ${nein}${fehltTxt} · <button onclick="tpollDecide(${p.id},${s.id})" style="border:none;background:none;color:var(--blue-text);font-weight:700;cursor:pointer;font-size:var(--s-klein);padding:0">diesen Termin festlegen</button></div>
       </div>`;
     }).join("");
     return `<div style="border:var(--border-s);border-radius:12px;padding:12px;margin-bottom:10px">
-      <div style="display:flex;align-items:center;gap:8px"><div style="flex:1;font-weight:800;font-size:14px">🗓️ ${esc(p.titel)}</div>
+      <div style="display:flex;align-items:center;gap:8px"><div style="flex:1;font-weight:800;font-size:var(--s-karte)">🗓️ ${esc(p.titel)}</div>
         <button onclick="tpollDelete(${p.id},'${jsq(p.titel)}')" aria-label="Meeting löschen" style="border:none;background:none;color:var(--red);cursor:pointer;min-width:44px;min-height:44px"><i class="ti ti-trash"></i></button></div>
-      ${steht?"":'<div style="font-size:11px;color:var(--text3)">Stimmt ab: ✓ passt · ? vielleicht · ✗ nicht</div>'}
-      ${slotHtml||'<div style="font-size:11px;color:var(--text3)">Keine Termine.</div>'}
+      ${steht?"":'<div style="font-size:var(--s-klein);color:var(--text3)">Stimmt ab: ✓ passt · ? vielleicht · ✗ nicht</div>'}
+      ${slotHtml||'<div style="font-size:var(--s-klein);color:var(--text3)">Keine Termine.</div>'}
       ${tpollThemenHtml(p.id,themenByPoll[p.id]||[],steht)}
     </div>`;
   }).join("");
@@ -2883,27 +3224,27 @@ async function tpollRender(){
     ? "Für diesen Termin läuft noch keine Abstimmung. Trag unten Vorschläge ein – oder sammelt schon mal Themen."
     : "Noch kein Meeting geplant.";
   c.innerHTML=`${mdlHead("tm-meet-modal","🗓️",esc(kopfTitel),esc(kopfSub),"#334155")}
-    ${pollHtml||`<div style="font-size:12px;color:var(--text3);margin-bottom:10px">${esc(leerSatz)}</div>`}
+    ${pollHtml||`<div style="font-size:var(--s-text);color:var(--text3);margin-bottom:10px">${esc(leerSatz)}</div>`}
     ${(nurTermin&&polls.length)
       /* v529: Im Termin gibt es die Abstimmung schon – ein Block „Neues Meeting" darunter war
          Unsinn und trug vier Felder ohne Beschriftung. Hier fehlt hoechstens ein weiterer
          Vorschlag. Erst wenn der Termin steht, ist auch das vorbei. */
       ? (polls.every(p=>p.status==="entschieden")?"":`<div style="border-top:var(--border);padding-top:12px">
-      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">Weiteren Vorschlag hinzufügen</div>
+      <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:6px">Weiteren Vorschlag hinzufügen</div>
       <div class="mgrid" style="grid-template-columns:1fr 1fr;gap:8px;align-items:end;margin-bottom:0">
-        <label style="font-size:11px;color:var(--text2)">Datum<input type="date" id="tpoll-neu-d" style="width:100%;margin-top:3px;${FLD}"></label>
-        <label style="font-size:11px;color:var(--text2)">Uhrzeit<input type="time" id="tpoll-neu-t" style="width:100%;margin-top:3px;${FLD}"></label>
+        <label style="font-size:var(--s-klein);color:var(--text2)">Datum<input type="date" id="tpoll-neu-d" style="width:100%;margin-top:3px;${FLD}"></label>
+        <label style="font-size:var(--s-klein);color:var(--text2)">Uhrzeit<input type="time" id="tpoll-neu-t" style="width:100%;margin-top:3px;${FLD}"></label>
       </div>
       <button class="btn" onclick="tpollSlotHinzufuegen(${Number(polls[0].id)})" style="width:100%;min-height:48px;margin-top:8px;justify-content:center"><i class="ti ti-plus"></i>Vorschlag hinzufügen</button>
     </div>`)
       : `<div style="border-top:var(--border);padding-top:12px">
-      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">Neues Meeting</div>
-      <label style="font-size:11px;color:var(--text2)">Titel<input id="tpoll-titel" value="${terminZeile?esc(terminZeile.titel||""):""}" placeholder="z. B. Saisonplanung" style="width:100%;margin:3px 0 8px;${FLD}"></label>
+      <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:6px">Neues Meeting</div>
+      <label style="font-size:var(--s-klein);color:var(--text2)">Titel<input id="tpoll-titel" value="${terminZeile?esc(terminZeile.titel||""):""}" placeholder="z. B. Saisonplanung" style="width:100%;margin:3px 0 8px;${FLD}"></label>
       ${[0,1,2,3].map(i=>`<div class="mgrid" style="grid-template-columns:1fr 1fr;gap:8px;align-items:end;margin-bottom:6px">
-        <label style="font-size:11px;color:var(--text2)">Vorschlag ${i+1} · Datum<input type="date" id="tpoll-d${i}" style="width:100%;margin-top:3px;${FLD}"></label>
-        <label style="font-size:11px;color:var(--text2)">Uhrzeit<input type="time" id="tpoll-t${i}" style="width:100%;margin-top:3px;${FLD}"></label>
+        <label style="font-size:var(--s-klein);color:var(--text2)">Vorschlag ${i+1} · Datum<input type="date" id="tpoll-d${i}" style="width:100%;margin-top:3px;${FLD}"></label>
+        <label style="font-size:var(--s-klein);color:var(--text2)">Uhrzeit<input type="time" id="tpoll-t${i}" style="width:100%;margin-top:3px;${FLD}"></label>
       </div>`).join("")}
-      <button class="btn btn-p" onclick="tpollCreate(this)" style="width:100%;min-height:56px;margin-top:4px;justify-content:center;font-size:15px;font-weight:800"><i class="ti ti-plus"></i>Meeting anlegen</button>
+      <button class="btn btn-p" onclick="tpollCreate(this)" style="width:100%;min-height:56px;margin-top:4px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-plus"></i>Meeting anlegen</button>
     </div>`}
     <button class="btn" onclick="document.getElementById('tm-meet-modal').remove();_TPOLL_TERMIN=null;" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Schließen</button>`;
 }
@@ -2913,21 +3254,21 @@ async function tpollRender(){
 function tpollThemenHtml(pollId,liste,steht){
   const offen=liste.filter(t=>!t.erledigt).length;
   const zeilen=liste.map(t=>`<div style="padding:2px 0"><div style="display:flex;align-items:center;gap:6px">
-      <button onclick="tpollThemaToggle(${t.id},${t.erledigt?"false":"true"})" aria-label="${t.erledigt?"wieder öffnen":"abhaken"}" style="border:none;background:transparent;font-size:16px;cursor:pointer;min-width:44px;min-height:44px;margin:-8px 0;flex:none">${t.erledigt?"✅":"⬜"}</button>
-      <div style="flex:1;min-width:0;font-size:13px;line-height:1.4;${t.erledigt?"text-decoration:line-through;color:var(--text3)":"color:var(--text)"}">${esc(t.text)}</div>
+      <button onclick="tpollThemaToggle(${t.id},${t.erledigt?"false":"true"})" aria-label="${t.erledigt?"wieder öffnen":"abhaken"}" style="border:none;background:transparent;font-size:var(--s-karte);cursor:pointer;min-width:44px;min-height:44px;margin:-8px 0;flex:none">${t.erledigt?"✅":"⬜"}</button>
+      <div style="flex:1;min-width:0;font-size:var(--s-text);line-height:1.4;${t.erledigt?"text-decoration:line-through;color:var(--text3)":"color:var(--text)"}">${esc(t.text)}</div>
       <button onclick="tpollThemaDelete(${t.id})" aria-label="Thema löschen" style="border:none;background:transparent;color:var(--text2);cursor:pointer;min-width:44px;min-height:44px;margin:-8px 0;flex:none"><i class="ti ti-x"></i></button>
     </div>
     ${t.erledigt?(String(t.beschluss||"").trim()
-      ? `<div style="font-size:12px;color:var(--text2);line-height:1.45;margin:2px 0 4px 26px;border-left:2px solid var(--green);padding-left:8px">${esc(t.beschluss)}</div>`
-      : `<div style="margin:2px 0 4px 26px"><button class="btn btn-sm" onclick="tpollBeschlussFragen(${t.id},'${jsq(t.text)}')" style="min-height:36px;font-size:11.5px"><i class="ti ti-writing"></i>Was wurde entschieden?</button></div>`):""}
+      ? `<div style="font-size:var(--s-text);color:var(--text2);line-height:1.45;margin:2px 0 4px 26px;border-left:2px solid var(--green);padding-left:8px">${esc(t.beschluss)}</div>`
+      : `<div style="margin:2px 0 4px 26px"><button class="btn btn-sm" onclick="tpollBeschlussFragen(${t.id},'${jsq(t.text)}')" style="min-height:36px;font-size:var(--s-klein)"><i class="ti ti-writing"></i>Was wurde entschieden?</button></div>`):""}
     </div>`).join("");
   return `<div style="border-top:var(--border);margin-top:10px;padding-top:10px">
-    ${!steht?`<div style="font-size:10.5px;color:var(--text3);margin-bottom:4px">Sammeln geht schon jetzt – der Termin muss dafür nicht stehen.</div>`:""}
-    ${liste.some(t=>t.erledigt)?`<div style="display:flex;justify-content:flex-end;margin-bottom:4px"><button class="btn btn-sm" onclick="tpollProtokoll(${pollId})" style="min-height:36px;font-size:11.5px"><i class="ti ti-file-text"></i>Protokoll teilen</button></div>`:""}
-    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px">📝 Themen fürs Meeting${liste.length?` · ${offen} offen von ${liste.length}`:""}</div>
-    ${zeilen||'<div style="font-size:11.5px;color:var(--text3);padding:2px 0 6px">Noch kein Thema. Was soll besprochen werden?</div>'}
+    ${!steht?`<div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:4px">Sammeln geht schon jetzt – der Termin muss dafür nicht stehen.</div>`:""}
+    ${liste.some(t=>t.erledigt)?`<div style="display:flex;justify-content:flex-end;margin-bottom:4px"><button class="btn btn-sm" onclick="tpollProtokoll(${pollId})" style="min-height:36px;font-size:var(--s-klein)"><i class="ti ti-file-text"></i>Protokoll teilen</button></div>`:""}
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:4px">📝 Themen fürs Meeting${liste.length?` · ${offen} offen von ${liste.length}`:""}</div>
+    ${zeilen||'<div style="font-size:var(--s-klein);color:var(--text3);padding:2px 0 6px">Noch kein Thema. Was soll besprochen werden?</div>'}
     <div style="display:flex;gap:6px;margin-top:6px">
-      <input id="tpoll-thema-${pollId}" placeholder="z. B. Trikots nachbestellen" onkeydown="if(event.key==='Enter')tpollThemaAdd(${pollId})" style="flex:1;min-height:44px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box">
+      <input id="tpoll-thema-${pollId}" placeholder="z. B. Trikots nachbestellen" onkeydown="if(event.key==='Enter')tpollThemaAdd(${pollId})" style="flex:1;min-height:44px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box">
       <button class="btn btn-sm" onclick="tpollThemaAdd(${pollId})" aria-label="Thema hinzufügen"><i class="ti ti-plus"></i>Thema</button>
     </div>
   </div>`;
@@ -2974,10 +3315,10 @@ function frageText(o){
     const fertig=v=>{m.remove();res(v);};
     m.onclick=e=>{if(e.target===m)fertig(null);};
     m.innerHTML=`<div style="background:var(--surface);color:var(--text);max-width:400px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
-      <div style="font-size:15px;font-weight:800">${o.emoji||""} ${esc(o.titel||"")}</div>
-      ${o.sub?`<div style="font-size:12.5px;color:var(--text2);margin-top:4px;line-height:1.45">${esc(o.sub)}</div>`:""}
-      <textarea id="frage-text-feld" rows="3" maxlength="300" placeholder="${esc(o.platzhalter||"")}" style="width:100%;box-sizing:border-box;min-height:48px;margin-top:10px;padding:10px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);resize:vertical"></textarea>
-      <button class="btn btn-p" id="frage-text-ok" style="width:100%;min-height:56px;margin-top:10px;justify-content:center;font-size:15px;font-weight:800">${esc(o.ja||"Übernehmen")}</button>
+      <div style="font-size:var(--s-karte);font-weight:800">${o.emoji||""} ${esc(o.titel||"")}</div>
+      ${o.sub?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:4px;line-height:1.45">${esc(o.sub)}</div>`:""}
+      <textarea id="frage-text-feld" rows="3" maxlength="300" placeholder="${esc(o.platzhalter||"")}" style="width:100%;box-sizing:border-box;min-height:48px;margin-top:10px;padding:10px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);resize:vertical"></textarea>
+      <button class="btn btn-p" id="frage-text-ok" style="width:100%;min-height:56px;margin-top:10px;justify-content:center;font-size:var(--s-karte);font-weight:800">${esc(o.ja||"Übernehmen")}</button>
       <button class="btn" id="frage-text-ab" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Abbrechen</button>
     </div>`;
     document.body.appendChild(m);
@@ -3176,7 +3517,7 @@ async function epollTrainerOpen(prefillSpieler){
 }
 async function epollTrainerRender(prefillSpieler){
   const c=document.getElementById("ep-poll-card"); if(!c)return;
-  const FLD="padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const FLD="padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
   let polls=[],slots=[],votes=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/eltern_poll?select=*,kader(name)&order=created_at.desc`,{headers:sbAuthHeaders()});if(!sbCheck401(r)&&r.ok)polls=await r.json();}catch(e){}
   const pids=polls.map(p=>p.id);
@@ -3197,27 +3538,27 @@ async function epollTrainerRender(prefillSpieler){
       const decided=p.decided_slot_id===s.id;
       const antwort=vs.length?`👍 ${ja} · 🤔 ${viel} · 👎 ${nein}`:'<span style="color:var(--text3)">noch keine Antwort</span>';
       return `<div style="border:var(--border-s);${decided?"border-color:var(--green);background:#f0fdf4;color:#14532d;":""}border-radius:10px;padding:8px 10px;margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        <div style="flex:1;min-width:110px;font-size:12.5px;font-weight:700">${dstr}${zstr}${decided?' <span style="color:var(--green)">✅</span>':""}</div>
-        <div style="font-size:11px;color:var(--text2)">${antwort}</div>
+        <div style="flex:1;min-width:110px;font-size:var(--s-text);font-weight:700">${dstr}${zstr}${decided?' <span style="color:var(--green)">✅</span>':""}</div>
+        <div style="font-size:var(--s-klein);color:var(--text2)">${antwort}</div>
         ${p.status!=="entschieden"?`<button onclick="epollDecide(${p.id},${s.id})" class="btn btn-sm">festlegen</button>`:""}
       </div>`;
     }).join("");
     return `<div style="border:var(--border-s);border-radius:12px;padding:12px;margin-bottom:10px">
-      <div style="display:flex;align-items:center;gap:8px"><div style="flex:1;font-weight:800;font-size:14px">🗓️ ${esc((p.kader&&p.kader.name)||"Familie")}${p.titel&&p.titel!=="Elterngespräch"?" · "+esc(p.titel):""}</div>
+      <div style="display:flex;align-items:center;gap:8px"><div style="flex:1;font-weight:800;font-size:var(--s-karte)">🗓️ ${esc((p.kader&&p.kader.name)||"Familie")}${p.titel&&p.titel!=="Elterngespräch"?" · "+esc(p.titel):""}</div>
         <button onclick="epollDelete(${p.id})" aria-label="löschen" style="border:none;background:none;color:var(--red);cursor:pointer;min-width:32px;min-height:32px"><i class="ti ti-trash"></i></button></div>
-      ${p.status==="entschieden"?'<div style="font-size:11px;color:var(--green);font-weight:700">Termin steht ✓</div>':'<div style="font-size:11px;color:var(--text3)">Warte auf die Rückmeldung der Eltern.</div>'}
-      ${slotHtml||'<div style="font-size:11px;color:var(--text3)">Keine Termine.</div>'}
+      ${p.status==="entschieden"?'<div style="font-size:var(--s-klein);color:var(--green);font-weight:700">Termin steht ✓</div>':'<div style="font-size:var(--s-klein);color:var(--text3)">Warte auf die Rückmeldung der Eltern.</div>'}
+      ${slotHtml||'<div style="font-size:var(--s-klein);color:var(--text3)">Keine Termine.</div>'}
     </div>`;
   }).join("");
   const kinder=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k.aktiv!==false);
   const kidOpts=kinder.map(k=>`<option value="${k._id!=null?k._id:k.id}"${(prefillSpieler&&(k._id===prefillSpieler||k.id===prefillSpieler))?" selected":""}>${esc(k.name)}</option>`).join("");
   c.innerHTML=`${mdlHead("ep-poll-modal","🗣️","Elterngespräch-Termine","Einer Familie Termine vorschlagen · Eltern antworten, du legst fest","#475569")}
-    ${pollHtml||'<div style="font-size:12px;color:var(--text3);margin-bottom:10px">Noch keine Terminfindung.</div>'}
+    ${pollHtml||'<div style="font-size:var(--s-text);color:var(--text3);margin-bottom:10px">Noch keine Terminfindung.</div>'}
     <div style="border-top:var(--border);padding-top:12px">
-      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">Neuer Terminvorschlag</div>
-      <label style="font-size:10px;color:var(--text3)">Familie / Kind<select id="epoll-kid" style="width:100%;margin-bottom:6px;${FLD}">${kidOpts}</select></label>
+      <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:6px">Neuer Terminvorschlag</div>
+      <label style="font-size:var(--s-klein);color:var(--text3)">Familie / Kind<select id="epoll-kid" style="width:100%;margin-bottom:6px;${FLD}">${kidOpts}</select></label>
       <input id="epoll-titel" placeholder="Thema (optional, z. B. Entwicklung)" style="width:100%;margin-bottom:6px;${FLD}">
-      <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Terminvorschläge (Datum + Uhrzeit):</div>
+      <div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:4px">Terminvorschläge (Datum + Uhrzeit):</div>
       ${[0,1,2,3].map(i=>`<div style="display:flex;gap:6px;margin-bottom:4px"><input type="date" id="epoll-d${i}" style="flex:2;${FLD}"><input type="time" id="epoll-t${i}" style="flex:1;${FLD}"></div>`).join("")}
       <div style="display:flex;gap:8px;margin-top:4px">
         <button class="btn btn-p btn-sm" onclick="epollCreate(this)"><i class="ti ti-plus"></i>Vorschlagen</button>
@@ -3283,9 +3624,9 @@ async function homeRadarLoad(){
   if(!top.length&&!absent.length){box.innerHTML="";return;}
   const line=(nr,name,right,col)=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--surface2)">
     <span style="flex:1;font-weight:600">${nr!=null?esc(nr)+" ":""}${esc(name)}</span>
-    <span style="font-size:11px;color:${col||'var(--text2)'};font-weight:${col?700:400}">${right}</span></div>`;
+    <span style="font-size:var(--s-klein);color:${col||'var(--text2)'};font-weight:${col?700:400}">${right}</span></div>`;
   const playHtml=top.length?`<div style="font-weight:700;margin-bottom:2px">🎯 Kein Kind übersehen</div>
-    <div style="font-size:10.5px;color:var(--text2);margin-bottom:8px">Zuletzt am wenigsten Spielzeit &amp; Aktionen – gib ihnen bewusst mehr Bühne.</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">Zuletzt am wenigsten Spielzeit &amp; Aktionen – gib ihnen bewusst mehr Bühne.</div>
     ${top.map(s=>line(s.nr,s.name,`${s.min} Min · ${s.act} Aktionen`)).join("")}`:"";
   const absHtml=absent.length?`<div style="font-weight:700;margin:${top.length?"14px":"0"} 0 6px">📅 Zuletzt öfter gefehlt</div>
     ${absent.slice(0,3).map(a=>line(a.nr,a.name,`${a.streak}× nicht da`,"var(--red)")).join("")}`:"";
@@ -3300,7 +3641,7 @@ function einheitStarsHtml(key,val,max,size){
 function einheitStarRow(key,label,val,max,size){
   val=val||0; max=max||5; size=size||24;
   return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0">
-    <span style="font-size:13.5px;font-weight:600;color:var(--text);min-width:0">${label}</span>
+    <span style="font-size:var(--s-text);font-weight:600;color:var(--text);min-width:0">${label}</span>
     <span id="eb-stars-${key}" data-val="${val}" style="white-space:nowrap">${einheitStarsHtml(key,val,max,size)}</span></div>`;
 }
 function einheitSetStar(key,val,max,size){
@@ -3321,19 +3662,28 @@ function einheitRowsHtml(v){ v=v||{}; return einheitStarRow("spass","😄 Spaß"
    EVAL_DATA/trainings_eval (Übungen), AW_DATA/anwesenheit (Spieler-Sterne).
    Keine Datenmigration, alle Auswertungen bleiben gültig. */
 const EB_DIMS=[{key:"Durchführung",label:"Durchführung"},{key:"Spaßfaktor Kinder",label:"Spaßfaktor Kinder"},{key:"Anforderung umgesetzt",label:"Anforderung umgesetzt"}];
-let EB_TERMINE=[], EB_DATUM=null, EB_PLAN=[], EB_SPIELER=[];
+let EB_EVENT_BEW=[];   // v634: Nachbereitungen von Spiel und Festival für die gemeinsame Liste
+let EB_TERMINE=[], EB_DATUM=null, EB_PLAN=[], EB_SPIELER=[], EB_ME="", EB_ALT_OHNE_VON=new Set();
 
 /* v483: aus dem Trainingsplan direkt in die Nachbereitung dieses Tages. */
 async function einheitNachbereiten(datum){
   await einheitBewertenOpen();
   if(datum&&document.getElementById("eb-card"))einheitDetailOpen(datum);
 }
-async function einheitBewertenOpen(){
+async function einheitBewertenOpen(datum){
   if(!sbToken()){toast("Bitte als Trainer anmelden","err");return;}
   document.getElementById("eb-modal")?.remove();
   const heute=new Date().toISOString().slice(0,10);
-  try{const r=await fetch(`${SB_URL}/rest/v1/einheit_bewertung?select=*&order=datum.desc&limit=20`,{headers:sbAuthHeaders()});if(r.ok)EINHEIT_CACHE=await r.json();}catch(e){}
-  try{const r=await fetch(`${SB_URL}/rest/v1/termine?typ=eq.training&datum=lte.${heute}&select=datum,platz,uhrzeit&order=datum.desc&limit=10`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)EB_TERMINE=await r.json();}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/einheit_bewertung?select=*&order=datum.desc&limit=80`,{headers:sbAuthHeaders()});if(r.ok)EINHEIT_CACHE=await r.json();}catch(e){}
+  /* v630: Jeder Trainer bewertet selbst (PK datum+autor) – wer bin ich? */
+  try{EB_ME=((typeof trainerMe==="function")?await trainerMe():"")||"";}catch(e){EB_ME="";}
+  /* v634 PO: „Vielleicht sollten wir dieses Thema irgendwie vereinheitlichen.“ – Kachel „Ja, so bauen“.
+     Ein Einstieg für Training, Spiel und Festival: dieselbe Liste, derselbe Stempel. Training
+     öffnet den Trainingsbogen, Spiel und Festival die Nachbereitung aus md-fazit.js. */
+  try{const r=await fetch(`${SB_URL}/rest/v1/termine?typ=in.(training,spiel,turnier)&datum=lte.${heute}&select=id,typ,titel,gegner,datum,platz,uhrzeit,uhrzeit_ende&order=datum.desc&limit=14`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)EB_TERMINE=((await r.json())||[]).filter(t=>(t.typ||"training")==="training"||typeof terminVorbei!=="function"||terminVorbei(t));}catch(e){}
+  EB_EVENT_BEW=[];
+  const evIds=EB_TERMINE.filter(t=>t.typ&&t.typ!=="training").map(t=>Number(t.id)).filter(Boolean);
+  if(evIds.length){ try{const r=await fetch(`${SB_URL}/rest/v1/event_bewertung?termin_id=in.(${evIds.join(",")})&select=termin_id,autor,updated_at`,{headers:sbAuthHeaders()});if(r.ok)EB_EVENT_BEW=await r.json();}catch(e){} }
   const modal=document.createElement("div");
   modal.id="eb-modal";modal.setAttribute("role","dialog");modal.setAttribute("aria-modal","true");modal.setAttribute("aria-label","Einheit bewerten");
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;display:flex;flex-direction:column;padding:14px;overflow-y:auto";
@@ -3343,26 +3693,54 @@ async function einheitBewertenOpen(){
   c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   modal.appendChild(c);document.body.appendChild(modal);
   einheitListRender();
+  if(datum&&typeof einheitDetailOpen==="function")einheitDetailOpen(datum);   // v633: das To-do öffnet genau seine Einheit
 }
 
+/* v634: Spiel und Festival in derselben Liste. Status und Stempel aus event_bewertung (je Trainer
+   seit v525); ein Tipp schließt die Liste und öffnet die Nachbereitung (Welle 2, geprüft). */
+function einheitListEventZeile(t,wtag){
+  const alle=EB_EVENT_BEW.filter(x=>Number(x.termin_id)===Number(t.id));
+  const bew=alle.find(x=>x.autor===EB_ME);
+  const von=[...new Set(alle.map(x=>x.autor).filter(Boolean))];
+  const dt=new Date(t.datum+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"});
+  const art=t.typ==="turnier"?"🏆 Festival":"⚽ Spiel";
+  const name=t.titel||t.gegner||"";
+  return `<div role="button" tabindex="0" onclick="einheitEventOeffnen(${Number(t.id)})" style="display:flex;align-items:center;gap:10px;padding:11px 10px;border:var(--border-s);border-radius:10px;margin-bottom:6px;cursor:pointer;background:var(--surface2)">
+      <div style="font-size:var(--s-teil)">${bew?"✅":"⭐"}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:var(--s-text);font-weight:700;color:var(--text)">${art} · ${wtag(t.datum)} ${dt}</div>
+        <div style="font-size:var(--s-klein);color:var(--text3)">${name?esc(name)+" · ":""}${bew?"von dir nachbereitet":"von dir noch offen"}${von.length?`<br>✍️ nachbereitet von ${esc(von.join(", "))}`:""}</div>
+      </div>
+      <div style="font-size:var(--s-teil);color:var(--text3)">›</div>
+    </div>`;
+}
+function einheitEventOeffnen(id){
+  if(typeof fazitOpen!=="function"){ toast("Lädt noch – gleich nochmal","err"); return; }
+  document.getElementById("eb-modal")?.remove();
+  fazitOpen(id);
+}
 function einheitListRender(){
   const c=document.getElementById("eb-card"); if(!c)return;
   EB_DATUM=null;
+  c.classList.remove("nb-weg-an"); if(typeof _nbWeg!=="undefined")_nbWeg=null;   // v627: der geführte Ablauf gehört zu einer Einheit, nicht zur Liste
   const wtag=d=>["So","Mo","Di","Mi","Do","Fr","Sa"][new Date(d+"T00:00:00").getDay()];
   const rows=EB_TERMINE.map(t=>{
-    const bew=EINHEIT_CACHE.find(x=>x.datum===t.datum);
+    if(t.typ&&t.typ!=="training")return einheitListEventZeile(t,wtag);
+    const alleB=EINHEIT_CACHE.filter(x=>x.datum===t.datum);
+    const bew=alleB.find(x=>x.autor===EB_ME);
+    const von=[...new Set(alleB.map(x=>x.autor==="Trainerteam"?"Trainerteam":x.autor).filter(Boolean))];
     const dt=new Date(t.datum+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"});
     return `<div role="button" tabindex="0" onclick="einheitDetailOpen('${t.datum}')" style="display:flex;align-items:center;gap:10px;padding:11px 10px;border:var(--border-s);border-radius:10px;margin-bottom:6px;cursor:pointer;background:var(--surface2)">
-      <div style="font-size:20px">${bew?"✅":"⭐"}</div>
+      <div style="font-size:var(--s-teil)">${bew?"✅":"⭐"}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:700;color:var(--text)">${wtag(t.datum)} ${dt}</div>
-        <div style="font-size:10.5px;color:var(--text3)">${t.uhrzeit?String(t.uhrzeit).slice(0,5)+" Uhr":""}${t.platz?" · 🏟️ "+esc(t.platz):""}${bew?" · bewertet":" · noch offen"}</div>
+        <div style="font-size:var(--s-text);font-weight:700;color:var(--text)">🏃 Training · ${wtag(t.datum)} ${dt}</div>
+        <div style="font-size:var(--s-klein);color:var(--text3)">${t.uhrzeit?String(t.uhrzeit).slice(0,5)+" Uhr":""}${t.platz?" · 🏟️ "+esc(t.platz):""}${bew?" · von dir bewertet":" · von dir noch offen"}${von.length?`<br>✍️ bewertet von ${esc(von.join(", "))}`:""}</div>
       </div>
-      <div style="font-size:18px;color:var(--text3)">›</div>
+      <div style="font-size:var(--s-teil);color:var(--text3)">›</div>
     </div>`;
   }).join("");
-  c.innerHTML=`${mdlHead("eb-modal","⭐","Einheit bewerten","Wähle die Trainingseinheit, die du nachbereiten willst","#2563eb")}
-    ${EB_TERMINE.length?rows:'<div style="font-size:12.5px;color:var(--text3);padding:10px 0">Es sind noch keine Trainings-Termine vergangen. Lege sie unter „Termine“ an.</div>'}
+  c.innerHTML=`${mdlHead("eb-modal","📝","Nachbereiten","Training, Spiel oder Festival – erzählen, die KI ordnet, daraus wird ein Tagebucheintrag","#2563eb")}
+    ${EB_TERMINE.length?rows:'<div style="font-size:var(--s-text);color:var(--text3);padding:10px 0">Es ist noch kein Termin vergangen. Lege Termine unter „Termine“ an.</div>'}
     <div style="display:flex;margin-top:10px"><button class="btn btn-sm" style="margin-left:auto" onclick="document.getElementById('eb-modal').remove()">Schließen</button></div>`;
 }
 
@@ -3415,7 +3793,7 @@ function einheitBlockNamen(p){
 async function einheitDetailOpen(datum){
   const c=document.getElementById("eb-card"); if(!c)return;
   EB_DATUM=datum;
-  c.innerHTML='<div style="padding:20px;color:var(--text3);font-size:12.5px">Lade Einheit…</div>';
+  c.innerHTML='<div style="padding:20px;color:var(--text3);font-size:var(--s-text)">Lade Einheit…</div>';
   EB_PLAN=(typeof tpPlanLoad==="function")?await tpPlanLoad(datum):[];
   EB_PLAN=einheitPlanBuendeln(EB_PLAN);
   // P3 (PO): Jeder Trainer bewertet nur SEINE Übungen; „Alle"-Stationen sieht jeder.
@@ -3427,32 +3805,43 @@ async function einheitDetailOpen(datum){
       if(meine.length)EB_PLAN=meine;
     }
   }catch(e){}
-  const ex=EINHEIT_CACHE.find(x=>x.datum===datum)||{};
+  if(!EB_ME){ try{EB_ME=((typeof trainerMe==="function")?await trainerMe():"")||"";}catch(e){} }
+  /* v630: die eigene Bewertung dieses Tages – die der anderen stehen darunter, nur zum Lesen. */
+  const ex=EINHEIT_CACHE.find(x=>x.datum===datum&&x.autor===EB_ME)||{};
+  const andere=EINHEIT_CACHE.filter(x=>x.datum===datum&&x.autor!==EB_ME);
   const evals=(typeof EVAL_DATA!=="undefined"&&EVAL_DATA[datum])||[];
+  EB_ALT_OHNE_VON=new Set();
   const aw=(typeof AW_DATA!=="undefined"&&AW_DATA[datum])||null;
-  const fld="padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box";
-  const kopf=`<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:16px 0 4px">`;
+  const fld="padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const kopf=`<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:16px 0 4px">`;
 
   // ── Übungen aus dem gespeicherten Plan des Tages ──
   let ueHtml;
   if(!EB_PLAN.length){
-    ueHtml=`<div style="font-size:12px;color:var(--text3);background:var(--surface2);border-radius:8px;padding:10px">Für diesen Tag ist kein Trainingsplan gespeichert. Pläne werden ab jetzt automatisch am Datum festgehalten, sobald du im Reiter „Training“ Übungen zuweist.</div>`;
+    ueHtml=`<div style="font-size:var(--s-text);color:var(--text3);background:var(--surface2);border-radius:8px;padding:10px">Für diesen Tag ist kein Trainingsplan gespeichert. Pläne werden ab jetzt automatisch am Datum festgehalten, sobald du im Reiter „Training“ Übungen zuweist.</div>`;
   }else{
     ueHtml=EB_PLAN.map((p,i)=>{
-      const alt=evals.find(e=>e&&e.trainer===p.trainer&&(typeof tfGleicheUebung==="function"?tfGleicheUebung(e,p):e.formIdx===p.formIdx))||{};   // v586: nach Namen
+      const gleich=e=>e&&e.trainer===p.trainer&&(typeof tfGleicheUebung==="function"?tfGleicheUebung(e,p):e.formIdx===p.formIdx);   // v586: nach Namen
+      /* v630: je Trainer eine eigene Bewertung der Übung (Feld „von“). Einträge von vor v630 tragen
+         keinen Namen – die gelten als die eigenen, wie bisher, und werden beim Speichern ersetzt. */
+      let alt=evals.find(e=>gleich(e)&&e.von===EB_ME);
+      if(!alt){ alt=evals.find(e=>gleich(e)&&!e.von); if(alt)EB_ALT_OHNE_VON.add(`${p.formName}|${p.trainer||""}`); }
+      alt=alt||{};
+      const fremdeUe=evals.filter(e=>gleich(e)&&e.von&&e.von!==EB_ME);
       const skip=!!alt.skipped;
-      const badge=p.trainer&&p.trainer!=="Alle"?`<span style="background:#e0e7ff;color:#3730a3;font-size:9px;padding:1px 6px;border-radius:4px;margin-left:6px">${esc(p.trainer)}</span>`:"";
+      const badge=p.trainer&&p.trainer!=="Alle"?`<span style="background:#e0e7ff;color:#3730a3;font-size:var(--s-klein);padding:1px 6px;border-radius:4px;margin-left:6px">${esc(p.trainer)}</span>`:"";
       return `<div id="eb-ue-${i}" data-skip="${skip?1:0}" style="border:var(--border-s);border-radius:10px;padding:10px;margin-bottom:8px">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
-          <span style="font-size:13px;font-weight:700;color:var(--text)">${esc(p.formName)}</span>${badge}
+          <span style="font-size:var(--s-text);font-weight:700;color:var(--text)">${esc(p.formName)}</span>${badge}
         </div>
-        <div style="font-size:10px;color:var(--text3);margin-bottom:6px">${esc(einheitBlockNamen(p).join(" · "))}${(p._labels&&p._labels.length>1)?` <span style="color:var(--text2)">· ${p._labels.length}× im Plan</span>`:""}</div>
+        <div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:6px">${esc(einheitBlockNamen(p).join(" · "))}${(p._labels&&p._labels.length>1)?` <span style="color:var(--text2)">· ${p._labels.length}× im Plan</span>`:""}</div>
         <div id="eb-ue-stars-${i}" style="${skip?"opacity:.35;pointer-events:none":""}">
           ${EB_DIMS.map(d=>einheitStarRow(`ue-${i}-${d.key}`,d.label,alt[d.key]||0,5,19)).join("")}
         </div>
-        <input id="eb-ue-notiz-${i}" value="${esc(alt.notiz||"")}" placeholder="Kommentar zur Übung (optional) – steht beim nächsten Mal im Plan" maxlength="200"
-          style="${fld};width:100%;min-height:44px;margin-top:6px">
-        <label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:11.5px;color:var(--text2);cursor:pointer">
+        <textarea id="eb-ue-notiz-${i}" class="wachsen" rows="1" placeholder="Kommentar zur Übung (optional) – steht beim nächsten Mal im Plan" maxlength="800"
+          style="${fld};width:100%;min-height:44px;margin-top:6px;resize:vertical">${esc(alt.notiz||"")}</textarea>
+        ${fremdeUe.map(f=>`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">${esc(stempelText(f.von,f.am))}: ${EB_DIMS.filter(d=>f[d.key]).map(d=>d.label+" "+"★".repeat(f[d.key])).join(", ")||(f.skipped?"nicht bewertet":"")}${f.notiz?" – "+esc(f.notiz):""}</div>`).join("")}
+        <label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:var(--s-klein);color:var(--text2);cursor:pointer">
           <input type="checkbox" id="eb-skip-${i}" ${skip?"checked":""} onchange="einheitSkipToggle(${i})">
           Übersprungen / anderer Trainer – nicht bewerten
         </label>
@@ -3462,29 +3851,42 @@ async function einheitDetailOpen(datum){
 
   // ── Spieler-Sterne: nur für Kinder, die an dem Tag als anwesend erfasst sind ──
   let spHtml;
+  /* v648 hatte hier auch die Sterne je Kind gesperrt. v677 PO 29.09.: Gesperrt ist nur die
+     Profilbewertung (Team → Bewerten). Die schnellen Sterne zum Trainingseinsatz sammeln genau das
+     Material dafür und sind immer frei. */
   if(!aw){
-    spHtml=`<div style="font-size:12px;color:var(--text3);background:var(--surface2);border-radius:8px;padding:10px">Für diesen Tag ist keine Anwesenheit erfasst. Trage sie unter „Anwesenheit“ ein – danach kannst du die Kinder hier bewerten.</div>`;
+    spHtml=`<div style="font-size:var(--s-text);color:var(--text3);background:var(--surface2);border-radius:8px;padding:10px">Für diesen Tag ist keine Anwesenheit erfasst. Trage sie unter „Anwesenheit“ ein – danach kannst du die Kinder hier bewerten.</div>`;
   }else{
     EB_SPIELER=KADER.filter(k=>aw[k.name]&&aw[k.name].da).map(k=>k.name); // Index statt Name im Key: Namen mit ' wuerden den onclick sprengen
     spHtml=EB_SPIELER.length
       ? EB_SPIELER.map((n,i)=>einheitStarRow(`sp-${i}`,esc(n),(aw[n].qual)||0,3,21)).join("")
-      : `<div style="font-size:12px;color:var(--text3)">An diesem Tag war kein Kind als anwesend eingetragen.</div>`;
+      : `<div style="font-size:var(--s-text);color:var(--text3)">An diesem Tag war kein Kind als anwesend eingetragen.</div>`;
   }
 
   const dt=new Date(datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"});
   c.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
       <button class="btn btn-sm" onclick="einheitListRender()"><i class="ti ti-arrow-left"></i></button>
-      <div style="font-weight:800;font-size:16px">⭐ ${dt}</div>
+      <div style="font-weight:800;font-size:var(--s-karte)">⭐ ${dt}</div>
     </div>
+    ${ex.autor?stempelHtml(ex.autor,ex.updated_at,"· deine Bewertung"):stempelHtml(EB_ME||"Trainer",null,"· du bewertest")}
+    ${andere.length?`<details style="margin:2px 0 4px"><summary style="font-size:var(--s-klein);color:var(--text2);cursor:pointer;min-height:32px">Auch bewertet von ${esc(andere.map(a=>a.autor).join(", "))}</summary>
+      ${andere.map(a=>`<div style="border:var(--border-s);border-radius:8px;padding:8px;margin-top:6px;background:var(--surface2)">${stempelHtml(a.autor,a.updated_at)}
+        <div style="font-size:var(--s-text)">${[["spass","Spaß"],["umsetzung","Umsetzung"],["erfolg","Erfolg"]].filter(([k])=>a[k]).map(([k,l])=>l+" "+"★".repeat(a[k])).join(" · ")||"ohne Sterne"}</div>
+        ${a.notiz?`<div style="font-size:var(--s-text);white-space:pre-wrap;margin-top:4px">${esc(a.notiz)}</div>`:""}</div>`).join("")}</details>
+      ${ebSpanneHtml([ex].concat(andere))}`:""}
+    ${typeof nbSprachHtml==="function"?nbSprachHtml("training","d"+datum):""}
     ${kopf}Die Einheit insgesamt</div>
     <div id="eb-rows">${einheitRowsHtml(ex)}</div>
-    <textarea id="eb-notiz" rows="2" placeholder="Notiz zur Einheit (optional)" style="${fld};width:100%;resize:vertical;margin-top:6px">${esc(ex.notiz||"")}</textarea>
+    <textarea id="eb-notiz" class="wachsen" rows="2" maxlength="3000" placeholder="Notiz zur Einheit (optional)" style="${fld};width:100%;resize:vertical;margin-top:6px">${esc(ex.notiz||"")}</textarea>
     ${kopf}Die Übungen</div>
     ${ueHtml}
-    ${kopf}Die Kinder <span style="font-weight:600;text-transform:none;color:var(--text3)">· 1–3 Sterne</span></div>
+    ${kopf}Die Kinder <span style="font-weight:600;text-transform:none;color:var(--text3)">· Trainingseinsatz, 1–3 Sterne</span></div>
     ${spHtml}
-    <button onclick="einheitSave()" style="width:100%;min-height:56px;margin-top:14px;border:none;border-radius:14px;background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;font-family:inherit;font-size:15px;font-weight:900;cursor:pointer;box-shadow:0 2px 10px rgba(37,99,235,.3)">💾 Nachbewertung speichern</button>
+    <button onclick="einheitSave()" style="width:100%;min-height:56px;margin-top:14px;border:none;border-radius:14px;background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:900;cursor:pointer;box-shadow:0 2px 10px rgba(37,99,235,.3)">💾 Nachbewertung speichern</button>
     <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('eb-modal').remove()">Schließen</button>`;
+  /* v627 PO: geführte Nachbereitung als Standard – Frage für Frage mit Antwort-Kacheln (md-fazit.js). */
+  if(typeof felderWachsen==="function")felderWachsen(c);
+  if(typeof nbWegStart==="function")nbWegStart("training");
 }
 
 function einheitSkipToggle(i){
@@ -3495,17 +3897,18 @@ function einheitSkipToggle(i){
   box.style.pointerEvents=cb.checked?"none":"";
 }
 
-async function einheitSave(){
+async function einheitSave(opt){
   const datum=EB_DATUM; if(!datum){toast("Keine Einheit gewählt","err");return;}
   // 1) Einheit gesamt -> Tabelle einheit_bewertung (unveraendert)
   const g=k=>einheitGetStar(k)||null;
-  const body={datum,spass:g("spass"),umsetzung:g("umsetzung"),erfolg:g("erfolg"),notiz:(document.getElementById("eb-notiz")?.value||"").trim()||null,updated_at:new Date().toISOString()};
+  const body={datum,autor:EB_ME||"Trainer",spass:g("spass"),umsetzung:g("umsetzung"),erfolg:g("erfolg"),notiz:(document.getElementById("eb-notiz")?.value||"").trim()||null,updated_at:new Date().toISOString()};
+  const _sn=(typeof nbSprachnotizFuer==="function")?nbSprachnotizFuer("d"+datum):undefined; if(_sn)body.sprachnotiz=_sn;   // v628: gesprochener Rohtext bleibt erhalten
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/einheit_bewertung?on_conflict=datum`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify(body)});
+    const r=await fetch(`${SB_URL}/rest/v1/einheit_bewertung?on_conflict=datum,autor`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify(body)});
     if(sbCheck401(r))return;
     if(!(r.ok||r.status===201)){toast("Speichern fehlgeschlagen","err");return;}
   }catch(e){toast("Netzwerkfehler","err");return;}
-  const idx=EINHEIT_CACHE.findIndex(x=>x.datum===datum); if(idx>=0)EINHEIT_CACHE[idx]=body; else EINHEIT_CACHE.unshift(body);
+  const idx=EINHEIT_CACHE.findIndex(x=>x.datum===datum&&x.autor===body.autor); if(idx>=0)EINHEIT_CACHE[idx]=body; else EINHEIT_CACHE.unshift(body);
   EINHEIT_CACHE.sort((a,b)=>String(b.datum).localeCompare(String(a.datum)));
 
   // 2) Uebungen -> EVAL_DATA (gleiche Struktur wie evalSave, damit Verlauf/Trainer-Stats weiterlaufen).
@@ -3516,7 +3919,7 @@ async function einheitSave(){
       /* v483 – PO: „Wie kann ein Trainer optional die Übungen nach einem Training bewerten und
          kommentieren?" Das Feld gab es, es blieb immer leer. Jetzt je Übung ein Kommentar –
          er erscheint im Trainingsplan, wenn die Übung wieder gewählt wird (tpUebungKommentare). */
-      const e={name:p.formName,trainer:p.trainer||"",formIdx:p.formIdx,notiz:(document.getElementById("eb-ue-notiz-"+i)?.value||"").trim(),skipped:skip};
+      const e={name:p.formName,trainer:p.trainer||"",formIdx:p.formIdx,notiz:(document.getElementById("eb-ue-notiz-"+i)?.value||"").trim(),skipped:skip,von:EB_ME||"Trainer",am:new Date().toISOString()};
       if(!skip)EB_DIMS.forEach(d=>{e[d.key]=einheitGetStar(`ue-${i}-${d.key}`);});
       return e;
     });
@@ -3531,9 +3934,11 @@ async function einheitSave(){
       const r=await fetch(`${SB_URL}/rest/v1/trainings_eval?datum=eq.${encodeURIComponent(datum)}&select=data`,{headers:sbAuthHeaders()});
       if(r.ok){const rows=await r.json(); if(rows&&rows[0]&&Array.isArray(rows[0].data))basis=rows[0].data;}
     }catch(e){}
-    const schluessel=x=>`${x&&x.name||""}|${x&&x.trainer||""}`;
+    /* v630: Schlüssel mit Namen des Bewertenden – zwei Trainer an einer „Alle“-Station behalten
+       beide ihre Bewertung. Einträge ohne Namen (vor v630), die hier als die eigenen galten, weichen. */
+    const schluessel=x=>`${x&&x.name||""}|${x&&x.trainer||""}|${x&&x.von||""}`;
     const eigene=new Set(evals.map(schluessel));
-    const zusammen=basis.filter(x=>!eigene.has(schluessel(x))).concat(evals);
+    const zusammen=basis.filter(x=>!eigene.has(schluessel(x))&&!(x&&!x.von&&EB_ALT_OHNE_VON.has(`${x.name||""}|${x.trainer||""}`))).concat(evals);
     EVAL_DATA[datum]=zusammen;
     try{localStorage.setItem(EVAL_KEY,JSON.stringify(EVAL_DATA));}catch(e){}
     if(typeof teamTsSet==="function")teamTsSet(EVAL_TS_KEY,datum);
@@ -3543,13 +3948,36 @@ async function einheitSave(){
   // 3) Spieler-Sterne -> AW_DATA[datum][name].qual. "da" bleibt unangetastet, damit die
   //    Anwesenheitsquote nicht kippt; Kinder ohne Anwesenheits-Eintrag werden nicht angelegt.
   if(typeof AW_DATA!=="undefined"&&AW_DATA[datum]){
-    const day=AW_DATA[datum]; let changed=false;
+    let day=AW_DATA[datum]; let changed=false;
+    /* v679 (prozess-nacherfassung.md, zwei Trainer): Gespeichert wird der ganze Tag. Grundlage war
+       die Kopie auf DIESEM Gerät – wer als Zweiter bewertete, schrieb die Sterne des Ersten mit dem
+       alten Stand zurück. Jetzt zuerst der Stand vom Server, dann nur die eigenen Sterne darauf;
+       qual_von hält fest, wer welchen Wert gegeben hat. */
+    const eigene={};
     EB_SPIELER.forEach((name,i)=>{
       if(!day[name]||!day[name].da)return;
       const el=document.getElementById("eb-stars-sp-"+i); if(!el)return;
       const v=parseInt(el.dataset.val)||0;
-      if(day[name].qual!==v){day[name].qual=v;changed=true;}
+      if(v&&day[name].qual!==v)eigene[name]=v;
+      else if(!v&&day[name].qual&&(day[name].qual_von||{})[EB_ME||"Trainer"])eigene[name]=0;   // eigenen Wert zurückgenommen
     });
+    if(Object.keys(eigene).length){
+      try{
+        const r=await fetch(`${SB_URL}/rest/v1/anwesenheit?datum=eq.${encodeURIComponent(datum)}&select=data`,{headers:sbAuthHeaders()});
+        if(r.ok){const rows=await r.json(); const srv=rows&&rows[0]&&rows[0].data; if(srv&&typeof srv==="object"){
+          const namen=typeof kidMapFromIds==="function"?kidMapFromIds(srv):srv;
+          day=Object.assign({},namen); Object.keys(AW_DATA[datum]).forEach(n=>{ if(!day[n])day[n]=AW_DATA[datum][n]; });
+        }}
+      }catch(e){}
+      const ich=EB_ME||"Trainer";
+      Object.keys(eigene).forEach(name=>{
+        if(!day[name])return;
+        const von=Object.assign({},day[name].qual_von||{}); if(eigene[name])von[ich]=eigene[name]; else delete von[ich];
+        day[name]=Object.assign({},day[name],{qual:eigene[name]||Object.values(von).pop()||0,qual_von:von});
+        changed=true;
+      });
+      AW_DATA[datum]=day;
+    }
     if(changed){
       try{localStorage.setItem(AW_KEY,JSON.stringify(AW_DATA));}catch(e){}
       if(typeof teamTsSet==="function")teamTsSet(AW_TS_KEY,datum);
@@ -3560,13 +3988,33 @@ async function einheitSave(){
      in dem die Beobachtung noch frisch ist; eine Stunde spaeter wird sie abgeschrieben
      oder gar nicht. md-tagebuch.js liegt in Welle 2 – ohne die typeof-Wache riesse ein
      fehlendes Modul hier das Ende des Speicherns mit. */
+  einheitListRender();
+  if(opt&&typeof opt.danach==="function") return opt.danach();   // v679: „Wie war's?“ geht direkt zur Prüfkarte
   if(typeof tagebuchAusEinheit==="function") ebWeiterInsTagebuch(datum);
   else toast("Einheit nachbereitet ✓");
-  einheitListRender();
+}
+/* v679 · Zwei Trainer, ein Termin (prozess-nacherfassung.md): Die Einheit zeigt, was die Trainer
+   zusammen sagen – als Spanne, nicht als Mittelwert (PO 29.09.). „Spaß ★3–4“ sagt, dass zwei
+   verschieden gesehen haben; ein Mittelwert ★3,5 täte so, als hätte jemand 3,5 gesagt. Die
+   einzelnen Bewertungen bleiben, wie sie sind. */
+function ebSpanne(rows,key){
+  const w=(rows||[]).map(r=>Number(r&&r[key])||0).filter(Boolean);
+  if(!w.length)return "";
+  const lo=Math.min(...w), hi=Math.max(...w);
+  return lo===hi?`★${lo}`:`★${lo}–${hi}`;
+}
+function ebSpanneHtml(rows){
+  const mit=(rows||[]).filter(r=>r&&(r.spass||r.umsetzung||r.erfolg));
+  if(mit.length<2)return "";
+  const t=[["spass","Spaß"],["umsetzung","Umsetzung"],["erfolg","Ziel erreicht"]].map(([k,l])=>{const x=ebSpanne(mit,k);return x?l+" "+x:"";}).filter(Boolean).join(" · ");
+  return t?`<div class="eb-spanne" style="font-size:var(--s-klein);color:var(--text2);margin:0 0 6px">👥 Zusammen (${mit.length} Trainer): ${t}</div>`:"";
 }
 /* Kein stiller Sprung: gespeichert ist gespeichert, das Tagebuch ist ein Angebot. */
 function ebWeiterInsTagebuch(datum){
   document.getElementById("eb-weiter")?.remove();
+  // v679: Vorschlag aus der Sprachnotiz schon gespeichert → zu dessen Prüfung, kein zweiter Eintrag
+  const vid=(typeof tbVorschlagIdFuer==="function")?tbVorschlagIdFuer("d"+datum):null;
+  if(vid&&typeof nbWeiterZurPruefung==="function"){ nbWeiterZurPruefung(vid,"Einheit nachbereitet ✓"); return; }
   const box=document.createElement("div");
   box.id="eb-weiter";
   box.setAttribute("role","dialog"); box.setAttribute("aria-modal","true");
@@ -3574,9 +4022,9 @@ function ebWeiterInsTagebuch(datum){
   box.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10055;display:flex;align-items:center;justify-content:center;padding:18px";
   box.onclick=e=>{ if(e.target===box) box.remove(); };
   box.innerHTML=`<div style="background:var(--surface);color:var(--text);max-width:380px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
-    <div style="font-size:15px;font-weight:800">Einheit nachbereitet ✓</div>
-    <div style="font-size:12.5px;color:var(--text2);margin:6px 0 14px;line-height:1.5">Willst du daraus einen Tagebucheintrag machen? Auslöser und Beobachtung stehen schon da – es fehlen nur dein Aha und die Konsequenz.</div>
-    <button class="btn btn-p" onclick="document.getElementById('eb-weiter').remove();tagebuchAusEinheit('${String(datum).replace(/'/g,"")}')" style="width:100%;min-height:56px;justify-content:center;font-size:15px;font-weight:800"><i class="ti ti-book"></i>Ins Tagebuch</button>
+    <div style="font-size:var(--s-karte);font-weight:800">Einheit nachbereitet ✓</div>
+    <div style="font-size:var(--s-text);color:var(--text2);margin:6px 0 14px;line-height:1.5">Willst du daraus einen Tagebucheintrag machen? Auslöser und Beobachtung stehen schon da – es fehlen nur dein Aha und die Konsequenz.</div>
+    <button class="btn btn-p" onclick="document.getElementById('eb-weiter').remove();tagebuchAusEinheit('${String(datum).replace(/'/g,"")}')" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-book"></i>Ins Tagebuch</button>
     <button class="btn" onclick="document.getElementById('eb-weiter').remove()" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Später</button>
   </div>`;
   document.body.appendChild(box);
@@ -3605,16 +4053,16 @@ async function anwesenheitQuoteInto(el){
   try{const r=await fetch(`${SB_URL}/rest/v1/nominierungen?select=data&datum=gte.${ab}`,{headers:sbAuthHeaders()});if(r.ok){(await r.json()).forEach(row=>{const data=kidMapFromIds(row.data||{});active.forEach(k=>{const s=data[k.name];if(s&&(s==="dabei"||s==="nicht"||s==="verletzt")){gm[k.name].t++;if(s==="dabei")gm[k.name].p++;}});});}}catch(e){}
   const pct=(o)=>o.t?Math.round(o.p/o.t*100):null;
   const col=(p)=>p==null?"var(--text3)":p>=75?"var(--green)":p>=50?"var(--amber)":"var(--red)";
-  const cell=(o)=>{const p=pct(o);return `<span style="font-weight:700;color:${col(p)}">${p==null?"–":p+"%"}</span> <span style="color:var(--text3);font-size:10px">${o.t?`(${o.p}/${o.t})`:""}</span>`;};
+  const cell=(o)=>{const p=pct(o);return `<span style="font-weight:700;color:${col(p)}">${p==null?"–":p+"%"}</span> <span style="color:var(--text3);font-size:var(--s-klein)">${o.t?`(${o.p}/${o.t})`:""}</span>`;};
   const rows=active.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(k=>`<tr style="border-top:var(--border)">
     <td style="padding:6px 8px;font-weight:600">${esc(k.name)}</td>
     <td style="padding:6px 8px;text-align:right">${cell(tr[k.name])}</td>
     <td style="padding:6px 8px;text-align:right">${cell(gm[k.name])}</td></tr>`).join("");
-  el.innerHTML=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px">
-      <tr style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)"><td style="padding:4px 8px">Spieler</td><td style="padding:4px 8px;text-align:right">🏃 Training</td><td style="padding:4px 8px;text-align:right">⚽ Spiele</td></tr>
+  el.innerHTML=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:var(--s-text)">
+      <tr style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text2)"><td style="padding:4px 8px">Spieler</td><td style="padding:4px 8px;text-align:right">🏃 Training</td><td style="padding:4px 8px;text-align:right">⚽ Spiele</td></tr>
       ${rows||'<tr><td style="padding:8px;color:var(--text3)">Noch keine Daten.</td></tr>'}
     </table></div>
-    <div style="font-size:11px;color:var(--text3);margin-top:8px">Training aus der Anwesenheitsliste, Spiele aus den Nominierungen · gezählt ab Saisonbeginn ${esc(abTr)} bzw. ${esc(ab)} · nur Info</div>`;
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px">Training aus der Anwesenheitsliste, Spiele aus den Nominierungen · gezählt ab Saisonbeginn ${esc(abTr)} bzw. ${esc(ab)} · nur Info</div>`;
 }
 async function anwesenheitOpen(){
   document.getElementById("aq-modal")?.remove();
@@ -3629,21 +4077,6 @@ async function anwesenheitOpen(){
     <button class="btn btn-sm" style="margin-top:12px;width:100%" onclick="document.getElementById('aq-modal').remove()">Schließen</button>`;
   modal.appendChild(cardEl);document.body.appendChild(modal);
   await anwesenheitQuoteInto(document.getElementById("aq-inhalt"));
-}
-// Eltern-Onboarding-Paket: fertige WhatsApp-Nachricht mit Eltern-Link + Kurzanleitung,
-// damit der Trainer die ganze Elternschaft in einem Rutsch an Bord holt.
-function elternInvitePaket(){
-  const url=appRoot()+"eltern/";
-  const msg=`🦅 SV Adler Dellbrück U9 – unsere Eltern-App\n\n`+
-    `Liebe Eltern, ab jetzt läuft alles rund um euer Kind über die Eltern-App:\n`+
-    `✅ Termine zu- & absagen\n📅 alle Termine + Kalender-Export\n📣 Liveticker, wenn ihr mal nicht dabei seid\n🃏 Sammelkarte & Technik-Abzeichen fürs Kind\n🍿 Büdchen- & Mitbringlisten\n\n`+
-    `🔒 Und wichtig: Fotos & Daten eurer Kinder bleiben hier im geschützten Team-Bereich (Server in der EU, ihr entscheidet per Freigabe) – sicherer als jede WhatsApp-Gruppe.\n\n`+
-    `So kommt ihr rein:\n`+
-    `1️⃣ Link öffnen: ${url}\n`+
-    `2️⃣ Mit EURER E-Mail anmelden (die, die ihr dem Trainer gegeben habt) – ihr bekommt einen Code per Mail.\n`+
-    `3️⃣ Im Browser-Menü „Zum Startbildschirm hinzufügen“ – dann läuft sie wie eine echte App.\n\n`+
-    `Bis bald am Platz! 🖤`;
-  elternInviteTeilen(msg);
 }
 /* Drei Wege, und der Trainer erfährt immer, welcher gegriffen hat. Vorher schluckte
    ein .catch(()=>{}) jeden Fehler des Teilen-Menüs, die Zwischenablage lief unbemerkt
@@ -3674,8 +4107,8 @@ function elternInviteTextZeigen(msg){
   const c=document.createElement("div");
   c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`${mdlHead("invite-modal","🔗","Einladungstext","Teilen ging nicht – hier zum Kopieren","#1e3a8a")}
-    <textarea id="invite-text" readonly style="width:100%;height:220px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:12.5px;line-height:1.5;padding:10px;resize:vertical">${esc(msg)}</textarea>
-    <button type="button" id="invite-copy" style="width:100%;min-height:44px;margin-top:10px;border:none;border-radius:12px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer">Text markieren</button>`;
+    <textarea id="invite-text" readonly style="width:100%;height:220px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-text);line-height:1.5;padding:10px;resize:vertical">${esc(msg)}</textarea>
+    <button type="button" id="invite-copy" style="width:100%;min-height:44px;margin-top:10px;border:none;border-radius:12px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">Text markieren</button>`;
   m.appendChild(c); document.body.appendChild(m);
   c.querySelector("#invite-copy").onclick=()=>{
     const t=c.querySelector("#invite-text");
@@ -3706,14 +4139,14 @@ async function ferienLoad(){
 function ferienFuer(datum){ return (window._ferien||[]).find(f=>datum>=f.von&&datum<=f.bis)||null; }
 function ferienBadge(datum){
   const f=ferienFuer(datum);
-  return f?`<span title="Schulferien NRW" style="font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:10px;background:#e0f2fe;color:#0369a1;white-space:nowrap">🏖️ ${esc(f.name)}</span>`:"";
+  return f?`<span title="Schulferien NRW" style="font-size:var(--s-klein);font-weight:700;padding:2px 7px;border-radius:10px;background:#e0f2fe;color:#0369a1;white-space:nowrap">🏖️ ${esc(f.name)}</span>`:"";
 }
 // Warnzeile unter einem Datumsfeld (Termin anlegen/bearbeiten)
 async function ferienDatumHint(input,slotId){
   const slot=document.getElementById(slotId); if(!slot||!input||!input.value)return;
   await ferienLoad();
   const f=ferienFuer(input.value);
-  slot.innerHTML=f?`<div style="font-size:11.5px;color:#0369a1;background:#e0f2fe;border-radius:8px;padding:6px 10px;margin-top:4px">🏖️ Achtung: Das Datum liegt in den <b>${esc(f.name)}</b> (${new Date(f.von+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}–${new Date(f.bis+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}) – mit dünner Beteiligung rechnen.</div>`:"";
+  slot.innerHTML=f?`<div style="font-size:var(--s-klein);color:#0369a1;background:#e0f2fe;border-radius:8px;padding:6px 10px;margin-top:4px">🏖️ Achtung: Das Datum liegt in den <b>${esc(f.name)}</b> (${new Date(f.von+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}–${new Date(f.bis+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}) – mit dünner Beteiligung rechnen.</div>`:"";
 }
 // Dashboard: Hinweis nur, wenn Ferien laufen oder in <21 Tagen beginnen
 async function homeFerien(){
@@ -3729,8 +4162,8 @@ async function homeFerien(){
   const dLabel=d=>new Date(d+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
   const tage=Math.round((new Date(f.von+"T00:00:00")-new Date(heute+"T00:00:00"))/864e5);
   slot.innerHTML=`<div class="card" style="padding:10px 14px;margin-bottom:8px;border-left:3px solid #0ea5e9;display:flex;align-items:center;gap:10px">
-    <span style="font-size:20px">🏖️</span>
-    <div style="font-size:12.5px;color:var(--text2)"><b style="color:var(--text)">${esc(f.name)} NRW</b> ${jetzt?`laufen gerade (bis ${dLabel(f.bis)})`:`starten in ${tage} Tag${tage===1?"":"en"} (${dLabel(f.von)}–${dLabel(f.bis)})`} – Termine ggf. anpassen, Rückmeldungen früh einholen.</div>
+    <span style="font-size:var(--s-teil)">🏖️</span>
+    <div style="font-size:var(--s-text);color:var(--text2)"><b style="color:var(--text)">${esc(f.name)} NRW</b> ${jetzt?`laufen gerade (bis ${dLabel(f.bis)})`:`starten in ${tage} Tag${tage===1?"":"en"} (${dLabel(f.von)}–${dLabel(f.bis)})`} – Termine ggf. anpassen, Rückmeldungen früh einholen.</div>
   </div>`;
 }
 /* ── J2: Saisonstart-Assistent – geführter Übergang in die neue Saison. Sechs Schritte
@@ -3740,7 +4173,7 @@ const SAISONSTART_STEPS=[
   {k:"urkunden", emo:"🏅", t:"Saison-Urkunden drucken",     d:"Alle Kinder in einem Druckauftrag – fürs Abschlussfest.", run:"urkundenOpen()"},
   {k:"kader",    emo:"📋", t:"Kader aufräumen",             d:"Abgänge deaktivieren, Neuzugänge anlegen, Trikotnummern prüfen.", run:"go('kader')"},
   {k:"serie",    emo:"📅", t:"Trainings-Termine anlegen",    d:"Die Trainingstage der neuen Saison eintragen.", run:"go('termine')"},
-  {k:"einladung",emo:"🔗", t:"Eltern-Einladung verschicken",d:"Neue Familien per WhatsApp-Paket in die App holen.", run:"elternInvitePaket()"},
+  {k:"einladung",emo:"🪪", t:"Einladungskarten drucken",   d:"Neue Familien per Karte mit QR-Code in die App holen.", run:"einladungskartenOpen()"},
   {k:"ansage",   emo:"📣", t:"Saisonstart-Ansage senden",   d:"Alle Eltern begrüßen – mit Gelesen-Status.", run:"ansageTrainerOpen()"},
   /* v545: Der Saisonwechsel ist der einzige Zeitpunkt, an dem ohnehin alles ausgepackt
      wird. Eine Inventur, die man „mal machen sollte", macht niemand. */
@@ -3776,15 +4209,15 @@ function saisonStartOpen(){
     ${mdlHead("sstart-modal","🌅","Saisonstart-Check",`Saison ${saisonLabel()} · ${n}/${SAISONSTART_STEPS.length} erledigt`,"#ea580c")}
     <div style="height:6px;background:var(--surface2);border-radius:4px;overflow:hidden;margin-bottom:12px"><div style="height:100%;width:${Math.round(n/SAISONSTART_STEPS.length*100)}%;background:linear-gradient(90deg,#ea580c,#f59e0b);transition:width .3s"></div></div>
     ${SAISONSTART_STEPS.map(s=>`<div style="display:flex;align-items:center;gap:10px;border:var(--border-s);border-left:4px solid ${done[s.k]?"var(--green)":"#ea580c"};border-radius:12px;padding:10px 12px;margin-bottom:8px;${done[s.k]?"opacity:.65":""}">
-      <button onclick="saisonStartToggle('${s.k}')" aria-label="abhaken" style="border:none;background:transparent;font-size:20px;cursor:pointer;min-width:44px;min-height:44px;margin:-6px 0 -6px -8px;flex:none">${done[s.k]?"✅":"⬜"}</button>
+      <button onclick="saisonStartToggle('${s.k}')" aria-label="abhaken" style="border:none;background:transparent;font-size:var(--s-teil);cursor:pointer;min-width:44px;min-height:44px;margin:-6px 0 -6px -8px;flex:none">${done[s.k]?"✅":"⬜"}</button>
       <div style="flex:1;min-width:0">
-        <div style="font-size:13.5px;font-weight:800;${done[s.k]?"text-decoration:line-through":""}">${s.emo} ${s.t}</div>
-        <div style="font-size:11.5px;color:var(--text2)">${s.d}</div>
+        <div style="font-size:var(--s-text);font-weight:800;${done[s.k]?"text-decoration:line-through":""}">${s.emo} ${s.t}</div>
+        <div style="font-size:var(--s-klein);color:var(--text2)">${s.d}</div>
       </div>
       <button class="btn btn-sm" onclick="document.getElementById('sstart-modal').remove();${s.run}">Los</button>
     </div>`).join("")}
-    ${n===SAISONSTART_STEPS.length?'<div style="text-align:center;font-size:13.5px;font-weight:800;color:var(--green);padding:6px">Alles erledigt – auf in die neue Saison! 🦅</div>':""}
-    <button type="button" onclick="saisonStartFertig()" style="width:100%;min-height:44px;margin-top:4px;border:${n===SAISONSTART_STEPS.length?"none":"var(--border-s)"};border-radius:12px;background:${n===SAISONSTART_STEPS.length?"var(--green)":"var(--surface2)"};color:${n===SAISONSTART_STEPS.length?"#fff":"var(--text2)"};font-family:inherit;font-size:13px;font-weight:800;cursor:pointer">Saisonstart abschließen – bis zur nächsten Saison ausblenden</button>
+    ${n===SAISONSTART_STEPS.length?'<div style="text-align:center;font-size:var(--s-text);font-weight:800;color:var(--green);padding:6px">Alles erledigt – auf in die neue Saison! 🦅</div>':""}
+    <button type="button" onclick="saisonStartFertig()" style="width:100%;min-height:44px;margin-top:4px;border:${n===SAISONSTART_STEPS.length?"none":"var(--border-s)"};border-radius:12px;background:${n===SAISONSTART_STEPS.length?"var(--green)":"var(--surface2)"};color:${n===SAISONSTART_STEPS.length?"#fff":"var(--text2)"};font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">Saisonstart abschließen – bis zur nächsten Saison ausblenden</button>
   </div>`;
   document.body.appendChild(m);
 }
@@ -3803,7 +4236,7 @@ async function wahlTrainerOpen(){
   m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Kabinen-Wahl");
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{if(e.target===m)m.remove();};
-  const fld="width:100%;box-sizing:border-box;padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13.5px;background:var(--surface2);color:var(--text);margin-top:6px";
+  const fld="width:100%;box-sizing:border-box;padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);margin-top:6px";
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("wahl-modal","🗳️","Kabinen-Wahl","Die Kinder stimmen in der Kabine ab – Song, Motto, Wunsch-Spielform","#0284c7")}
     <input id="wahl-frage" placeholder="Frage, z. B. Welcher Einlauf-Song im August?" style="${fld}">
@@ -3812,8 +4245,8 @@ async function wahlTrainerOpen(){
     <input id="wahl-opt3" placeholder="Option 3 (optional)" style="${fld}">
     <input id="wahl-opt4" placeholder="Option 4 (optional)" style="${fld}">
     <button class="btn btn-p" style="width:100%;margin-top:10px" onclick="wahlAnlegen(this)"><i class="ti ti-plus"></i>Wahl starten</button>
-    <div style="font-weight:800;font-size:13px;margin:16px 0 6px">Bisherige Wahlen</div>
-    <div id="wahl-liste"><div style="font-size:12px;color:var(--text3)">Lade…</div></div>
+    <div style="font-weight:800;font-size:var(--s-text);margin:16px 0 6px">Bisherige Wahlen</div>
+    <div id="wahl-liste"><div style="font-size:var(--s-text);color:var(--text3)">Lade…</div></div>
   </div>`;
   document.body.appendChild(m);
   wahlListeLoad();
@@ -3822,7 +4255,7 @@ async function wahlListeLoad(){
   const el=document.getElementById("wahl-liste"); if(!el)return;
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/kabinen_wahl?select=*&order=created_at.desc&limit=6`,{headers:sbAuthHeaders()});if(!sbCheck401(r)&&r.ok)rows=(await r.json())||[];}catch(e){}
-  if(!rows.length){el.innerHTML='<div style="font-size:12px;color:var(--text3)">Noch keine Wahl gestartet.</div>';return;}
+  if(!rows.length){el.innerHTML='<div style="font-size:var(--s-text);color:var(--text3)">Noch keine Wahl gestartet.</div>';return;}
   const ergAlle={};
   await Promise.all(rows.map(async w=>{
     try{const r=await fetch(`${SB_URL}/rest/v1/rpc/wahl_ergebnis`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_wahl:w.id})});if(r.ok)ergAlle[w.id]=(await r.json())||[];}catch(e){}
@@ -3832,9 +4265,9 @@ async function wahlListeLoad(){
     const counts=(w.optionen||[]).map((_,i)=>{const e2=erg.find(x=>x.wahl===i);return e2?e2.n:0;});
     const total=counts.reduce((s,n)=>s+n,0);
     return `<div style="border:var(--border-s);border-left:4px solid ${w.aktiv?"#0284c7":"#cbd5e1"};border-radius:12px;padding:10px 12px;margin-bottom:8px;${w.aktiv?"":"opacity:.65"}">
-      <div style="font-size:13px;font-weight:800">${esc(w.frage)} <span style="font-weight:400;color:var(--text3);font-size:11px">· ${total} Stimme${total===1?"":"n"}</span></div>
+      <div style="font-size:var(--s-text);font-weight:800">${esc(w.frage)} <span style="font-weight:400;color:var(--text3);font-size:var(--s-klein)">· ${total} Stimme${total===1?"":"n"}</span></div>
       ${(w.optionen||[]).map((o,i)=>{const pct=total?Math.round(counts[i]/total*100):0;
-        return `<div style="display:flex;align-items:center;gap:8px;margin-top:5px;font-size:12px"><span style="flex:1;min-width:0">${esc(String(o))}</span><span style="color:var(--text2)">${counts[i]}</span><span style="width:70px;height:6px;background:var(--surface2);border-radius:4px;overflow:hidden"><span style="display:block;height:100%;width:${pct}%;background:#0284c7"></span></span></div>`;}).join("")}
+        return `<div style="display:flex;align-items:center;gap:8px;margin-top:5px;font-size:var(--s-text)"><span style="flex:1;min-width:0">${esc(String(o))}</span><span style="color:var(--text2)">${counts[i]}</span><span style="width:70px;height:6px;background:var(--surface2);border-radius:4px;overflow:hidden"><span style="display:block;height:100%;width:${pct}%;background:#0284c7"></span></span></div>`;}).join("")}
       <div style="display:flex;gap:8px;margin-top:8px">
         <button class="btn btn-sm" onclick="wahlToggle(${w.id},${w.aktiv?"false":"true"})">${w.aktiv?"Beenden":"Reaktivieren"}</button>
         <button class="btn btn-sm" style="margin-left:auto;color:var(--red)" onclick="wahlDelete(${w.id})"><i class="ti ti-trash"></i></button>
@@ -3876,10 +4309,49 @@ async function homeMilestone(){
   const slot=document.getElementById("home-milestone"); if(!slot)return;
   if(!frisch.length){slot.innerHTML="";return;}
   slot.innerHTML=frisch.map(m=>`<div class="card" style="padding:10px 14px;margin-bottom:8px;border-left:3px solid #f59e0b;display:flex;align-items:center;gap:10px">
-    <span style="font-size:20px">🎉</span>
-    <div><div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Team-Meilenstein</div>
-    <div style="font-size:13.5px;font-weight:800">${esc(m.label)}</div></div>
+    <span style="font-size:var(--s-teil)">🎉</span>
+    <div><div style="font-size:var(--s-text);font-weight:800;color:var(--text)">Team-Meilenstein</div>
+    <div style="font-size:var(--s-text);font-weight:800">${esc(m.label)}</div></div>
   </div>`).join("");
+}
+/* v672 PO 29.09.: „Kann die App tracken über mehrere Wochen hinweg, wann die Zusagen für einen
+   Termin der Eltern getätigt wurden … im Schnitt vier Tage vorher oder fünf Minuten vorher, wie oft
+   dann wieder abgesagt wurde … auf der Basis des Kindes.“ Kachel: „Bauen, nur Trainer“ – Eltern
+   sehen nichts davon, keine Rangliste (sortiert nach Name, keine Ampelfarben).
+   Vorlauf aus allen Rückmeldungen; Umentscheidungen erst ab v672 (vorher nicht gespeichert). */
+function _rsDauer(std){
+  if(std==null)return "–";
+  const h=Number(std); if(!isFinite(h))return "–";
+  return h<1?"unter 1 Std.":h<24?`${Math.round(h)} Std.`:`${(h/24).toFixed(1).replace(".",",")} Tage`;
+}
+async function rueckmeldeStatistikOpen(){
+  document.getElementById("rs-modal")?.remove();
+  const m=document.createElement("div"); m.id="rs-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Rückmelde-Verhalten");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.onclick=e=>{ if(e.target===m)m.remove(); };
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:640px;width:100%;margin:auto">
+    ${mdlHead("rs-modal","📈","Rückmelde-Verhalten","Je Kind, diese Saison · nur für das Trainerteam","#1e3a8a")}
+    <div id="rs-art" role="group" aria-label="Terminart" style="display:flex;gap:6px;margin-bottom:10px"></div>
+    <div id="rs-inhalt" style="font-size:var(--s-text);color:var(--text2)">Lädt …</div></div>`;
+  document.body.appendChild(m);
+  let rows=[];
+  try{const r=await fetch(`${SB_URL}/rest/v1/rpc/rueckmelde_statistik`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"});if(r.ok)rows=await r.json()||[];}catch(e){}
+  window._rsRows=rows;
+  rueckmeldeStatistikRender("spiel");
+}
+function rueckmeldeStatistikRender(art){
+  const box=document.getElementById("rs-inhalt"), kn=document.getElementById("rs-art"); if(!box)return;
+  const chip=(k,t)=>`<button type="button" class="btn btn-sm" aria-pressed="${k===art}" onclick="rueckmeldeStatistikRender('${k}')" style="${k===art?"background:#1e3a8a;color:#fff;border-color:#1e3a8a":""}">${t}</button>`;
+  if(kn)kn.innerHTML=chip("spiel","⚽ Spieltage")+chip("training","🏃 Training");
+  const rows=(window._rsRows||[]).filter(x=>x.art===art);
+  if(!rows.length){ box.innerHTML=`<div>Noch keine Rückmeldungen in dieser Saison.</div>`; return; }
+  const th=t=>`<th scope="col" style="text-align:right;padding:6px 4px;font-size:var(--s-klein);color:var(--text2);font-weight:700">${t}</th>`;
+  const td=(t,l)=>`<td style="text-align:${l?"left":"right"};padding:6px 4px;border-top:1px solid var(--surface2)" class="${l?"":"zahl"}">${t}</td>`;
+  box.innerHTML=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:var(--s-text);color:var(--text)">
+    <thead><tr><th scope="col" style="text-align:left;padding:6px 4px;font-size:var(--s-klein);color:var(--text2)">Kind</th>${th("Antworten")}${th("Ø vorher")}${th("unter 24 Std.")}${th("umentschieden")}${th("zu → ab")}${art==="spiel"?th("ohne Antwort"):""}</tr></thead>
+    <tbody>${rows.map(x=>`<tr>${td(esc(x.name||""),true)}${td(Number(x.antworten)||0)}${td(_rsDauer(x.vorlauf_std))}${td(Number(x.kurzfristig)||0)}${td(Number(x.umentschieden)||0)}${td(Number(x.zu_dann_ab)||0)}${art==="spiel"?td(Number(x.ohne_antwort)||0):""}</tr>`).join("")}</tbody></table></div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:10px;line-height:1.5">„Ø vorher“: wie lange vor Terminbeginn die erste Antwort kam. „umentschieden“ und „zu → ab“ zählen erst seit dem 29.09.2026 und nur Änderungen der Eltern, nicht des Trainerteams. ${art==="training"?"Beim Training gilt ohne Antwort als zugesagt – hier zählen vor allem Absagen.":"„ohne Antwort“: vergangene Spieltage dieser Saison ohne jede Rückmeldung – auch aus der Zeit, bevor die Familie einen Zugang hatte."}</div>`;
 }
 /* ── H1: Team-Ansagen (Trainer) – senden, Gelesen-Quote je Familie sehen, beenden.
    Eltern bestätigen im Portal mit „Gelesen & verstanden" (ansagen_gelesen); die RPC
@@ -3892,11 +4364,11 @@ async function ansageTrainerOpen(prefill){
   m.onclick=e=>{if(e.target===m)m.remove();};
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("ansage-modal","📣","Team-Ansage","Wichtige Info an alle Eltern – mit Gelesen-Status","#1e3a8a")}
-    <textarea id="ansage-text" rows="3" placeholder="z. B. Sonntag Treffpunkt schon 9:15 am Käfig – bitte pünktlich!" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:14px;background:var(--surface2);color:var(--text);resize:vertical"></textarea>
-    <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);margin-top:8px;cursor:pointer"><input type="checkbox" id="ansage-push" checked>Eltern per Push benachrichtigen</label>
+    <textarea id="ansage-text" rows="3" placeholder="z. B. Sonntag Treffpunkt schon 9:15 am Käfig – bitte pünktlich!" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-karte);background:var(--surface2);color:var(--text);resize:vertical"></textarea>
+    <label style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);color:var(--text2);margin-top:8px;cursor:pointer"><input type="checkbox" id="ansage-push" checked>Eltern per Push benachrichtigen</label>
     <button class="btn btn-p" style="width:100%;margin-top:10px" onclick="ansageSend(this)"><i class="ti ti-send"></i>Ansage senden</button>
-    <div style="font-weight:800;font-size:13px;margin:16px 0 6px">Bisherige Ansagen</div>
-    <div id="ansage-liste"><div style="font-size:12px;color:var(--text3)">Lade…</div></div>
+    <div style="font-weight:800;font-size:var(--s-text);margin:16px 0 6px">Bisherige Ansagen</div>
+    <div id="ansage-liste"><div style="font-size:var(--s-text);color:var(--text3)">Lade…</div></div>
   </div>`;
   document.body.appendChild(m);
   if(prefill&&typeof prefill==="string"){const t=document.getElementById("ansage-text");if(t){t.value=prefill;t.focus();try{t.setSelectionRange(t.value.length,t.value.length);}catch(e){}}}
@@ -3906,17 +4378,17 @@ async function ansageListeLoad(){
   const el=document.getElementById("ansage-liste"); if(!el)return;
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/rpc/ansagen_status`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"});if(!sbCheck401(r)&&r.ok)rows=(await r.json())||[];}catch(e){}
-  if(!rows.length){el.innerHTML='<div style="font-size:12px;color:var(--text3)">Noch keine Ansagen.</div>';return;}
+  if(!rows.length){el.innerHTML='<div style="font-size:var(--s-text);color:var(--text3)">Noch keine Ansagen.</div>';return;}
   el.innerHTML=rows.map(a=>{const d=new Date(a.created_at);const pct=a.familien?Math.round(a.gelesen/a.familien*100):0;
     return `<div style="border:var(--border-s);border-left:4px solid ${a.aktiv?"#1e3a8a":"#cbd5e1"};border-radius:12px;padding:10px 12px;margin-bottom:8px;${a.aktiv?"":"opacity:.6"}">
-      <div style="font-size:13px;line-height:1.45;white-space:pre-wrap">${esc(a.text)}</div>
-      <div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:11.5px;color:var(--text2)">
+      <div style="font-size:var(--s-text);line-height:1.45;white-space:pre-wrap">${esc(a.text)}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:var(--s-klein);color:var(--text2)">
         <span>${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}</span>
         <span style="font-weight:800;color:${a.gelesen>=a.familien?"var(--green)":"var(--amber)"}">👁 Gelesen: ${a.gelesen}/${a.familien} Familien</span>
-        <button onclick="ansageToggle(${a.id},${a.aktiv?"false":"true"})" style="margin-left:auto;min-height:32px;border:none;background:transparent;color:var(--text2);font-family:inherit;font-size:11px;cursor:pointer;text-decoration:underline">${a.aktiv?"Beenden":"Reaktivieren"}</button>
+        <button onclick="ansageToggle(${a.id},${a.aktiv?"false":"true"})" style="margin-left:auto;min-height:32px;border:none;background:transparent;color:var(--text2);font-family:inherit;font-size:var(--s-klein);cursor:pointer;text-decoration:underline">${a.aktiv?"Beenden":"Reaktivieren"}</button>
       </div>
       <div style="height:6px;background:var(--surface2);border-radius:4px;overflow:hidden;margin-top:6px"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#1e3a8a,#2563eb)"></div></div>
-      ${a.aktiv&&Array.isArray(a.fehlt)&&a.fehlt.length&&a.gelesen<a.familien?`<details style="margin-top:6px"><summary style="font-size:11px;color:var(--text3);cursor:pointer">Wer fehlt noch?</summary><div style="font-size:11.5px;color:var(--text2);margin-top:4px">Familien von: ${a.fehlt.map(esc).join(", ")}</div></details>`:""}
+      ${a.aktiv&&Array.isArray(a.fehlt)&&a.fehlt.length&&a.gelesen<a.familien?`<details style="margin-top:6px"><summary style="font-size:var(--s-klein);color:var(--text3);cursor:pointer">Wer fehlt noch?</summary><div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Familien von: ${a.fehlt.map(esc).join(", ")}</div></details>`:""}
     </div>`;}).join("");
 }
 async function ansageSend(btn){
@@ -3958,7 +4430,7 @@ async function probeOpen(){
   m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Probetraining");
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{if(e.target===m)m.remove();};
-  const fld="box-sizing:border-box;padding:10px;border:var(--border-s);border-radius:10px;font-family:inherit;font-size:14px;background:var(--surface2);color:var(--text)";
+  const fld="box-sizing:border-box;padding:10px;border:var(--border-s);border-radius:10px;font-family:inherit;font-size:var(--s-karte);background:var(--surface2);color:var(--text)";
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("probe-modal","🆕","Probetraining","Schnupperkinder – getrennt vom Kader, Auto-Löschung nach Entscheidung","#0891b2")}
     <div style="display:flex;flex-direction:column;gap:8px">
@@ -3968,8 +4440,8 @@ async function probeOpen(){
         <button class="btn btn-p btn-sm" onclick="probeAdd(this)"><i class="ti ti-plus"></i>Anlegen</button>
       </div>
     </div>
-    <div id="probe-liste" style="margin-top:14px"><div style="font-size:12px;color:var(--text3)">Lade…</div></div>
-    <div style="font-size:10.5px;color:var(--text3);margin-top:10px">Datenschutz: Probekinder stehen bewusst NICHT im Kader. Nach „Aufnehmen“/„Absagen“ wird der Eintrag 30 Tage später automatisch gelöscht – Aufgenommene vorher unter Kader → „Spieler verwalten“ anlegen.</div>
+    <div id="probe-liste" style="margin-top:14px"><div style="font-size:var(--s-text);color:var(--text3)">Lade…</div></div>
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-top:10px">Datenschutz: Probekinder stehen bewusst NICHT im Kader. Nach „Aufnehmen“/„Absagen“ wird der Eintrag 30 Tage später automatisch gelöscht – Aufgenommene vorher unter Kader → „Spieler verwalten“ anlegen.</div>
   </div>`;
   document.body.appendChild(m);
   probeListeLoad();
@@ -3979,18 +4451,18 @@ async function probeListeLoad(){
   const el=document.getElementById("probe-liste"); if(!el)return;
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/probekinder?select=*&order=created_at.desc`,{headers:sbAuthHeaders()});if(!sbCheck401(r)&&r.ok)rows=(await r.json())||[];}catch(e){}
-  if(!rows.length){el.innerHTML='<div style="font-size:12px;color:var(--text3)">Aktuell keine Probekinder.</div>';return;}
+  if(!rows.length){el.innerHTML='<div style="font-size:var(--s-text);color:var(--text3)">Aktuell keine Probekinder.</div>';return;}
   el.innerHTML=rows.map(p=>{
     const st=PROBE_STATUS[p.status]||PROBE_STATUS.schnuppert;
     const tel=/^[+\d][\d\s\/-]{5,}$/.test((p.kontakt||"").trim());
     return `<div style="border:var(--border-s);border-left:4px solid ${st[2]};border-radius:12px;padding:10px 12px;margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-weight:800;font-size:14px;flex:1;min-width:0">${esc(p.name)}</span>
-        <span style="font-size:11px;font-weight:800;color:${st[2]}">${st[0]} ${st[1]}${p.entschieden_am?" · "+new Date(p.entschieden_am+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}):""}</span>
+        <span style="font-weight:800;font-size:var(--s-karte);flex:1;min-width:0">${esc(p.name)}</span>
+        <span style="font-size:var(--s-klein);font-weight:800;color:${st[2]}">${st[0]} ${st[1]}${p.entschieden_am?" · "+new Date(p.entschieden_am+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}):""}</span>
       </div>
-      ${p.kontakt?`<div style="font-size:12px;color:var(--text2);margin-top:2px">📞 ${tel?`<a href="tel:${esc(p.kontakt.replace(/[\s\/-]/g,""))}" style="color:var(--blue-text)">${esc(p.kontakt)}</a>`:esc(p.kontakt)}</div>`:""}
+      ${p.kontakt?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:2px">📞 ${tel?`<a href="tel:${esc(p.kontakt.replace(/[\s\/-]/g,""))}" style="color:var(--blue-text)">${esc(p.kontakt)}</a>`:esc(p.kontakt)}</div>`:""}
       <div style="display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap">
-        <span style="font-size:11.5px;color:var(--text2)">🏃 ${p.trainings} Training${p.trainings===1?"":"s"}</span>
+        <span style="font-size:var(--s-klein);color:var(--text2)">🏃 ${p.trainings} Training${p.trainings===1?"":"s"}</span>
         ${p.status==="schnuppert"?`
           <button class="btn btn-sm" onclick="probeTraining(${p.id},${p.trainings})">+1 heute</button>
           <button class="btn btn-sm" style="margin-left:auto;color:var(--green)" onclick="probeStatus(${p.id},'aufnehmen')">✅ Aufnehmen</button>
@@ -4062,9 +4534,9 @@ async function saisonCockpitOpen(){
   let pulsHtml="";
   if(puls&&puls.overall_n){
     const weeks=(puls.weeks||[]).slice(-8);
-    const bars=weeks.map(w=>{const h=Math.round((w.avg/3)*42)+6;const col=w.avg>=2.6?"var(--green)":w.avg>=1.8?"var(--amber)":"var(--red)";return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="font-size:9px;color:var(--text3)">${w.avg}</div><div style="width:68%;height:${h}px;background:${col};border-radius:4px 4px 0 0" title="${w.n} Rückmeldungen"></div><div style="font-size:8.5px;color:var(--text3);white-space:nowrap">${esc(w.wlabel)}</div></div>`;}).join("");
-    pulsHtml=`<div style="font-weight:800;font-size:13.5px;margin:14px 0 4px">🌡️ Eltern-Puls <span style="font-weight:400;color:var(--text2);font-size:11px">(anonym · ${puls.overall_n} Rückmeldungen · Ø ${puls.overall_avg} ${moodEmo(puls.overall_avg)})</span></div>`
-      +(weeks.length?`<div style="display:flex;align-items:flex-end;gap:4px;height:74px;padding:4px 0">${bars}</div>`:'<div style="font-size:12px;color:var(--text3)">Sammelt sich, sobald Eltern nach Events abstimmen.</div>');
+    const bars=weeks.map(w=>{const h=Math.round((w.avg/3)*42)+6;const col=w.avg>=2.6?"var(--green)":w.avg>=1.8?"var(--amber)":"var(--red)";return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="font-size:var(--s-klein);color:var(--text3)">${w.avg}</div><div style="width:68%;height:${h}px;background:${col};border-radius:4px 4px 0 0" title="${w.n} Rückmeldungen"></div><div style="font-size:var(--s-klein);color:var(--text3);white-space:nowrap">${esc(w.wlabel)}</div></div>`;}).join("");
+    pulsHtml=`<div style="font-weight:800;font-size:var(--s-text);margin:14px 0 4px">🌡️ Eltern-Puls <span style="font-weight:400;color:var(--text2);font-size:var(--s-klein)">(anonym · ${puls.overall_n} Rückmeldungen · Ø ${puls.overall_avg} ${moodEmo(puls.overall_avg)})</span></div>`
+      +(weeks.length?`<div style="display:flex;align-items:flex-end;gap:4px;height:74px;padding:4px 0">${bars}</div>`:'<div style="font-size:var(--s-text);color:var(--text3)">Sammelt sich, sobald Eltern nach Events abstimmen.</div>');
   }
   // H2: Kinder-Stimmung (aus der Kabine, letzte 30 Tage) – Ø-Lage + Frühwarnung bei 😞
   let stimmungHtml="";
@@ -4080,9 +4552,9 @@ async function saisonCockpitOpen(){
         const ab14=new Date(Date.now()-14*864e5).toISOString().slice(0,10);
         const traurig={}; rows.filter(x=>x.mood===1&&x.datum>=ab14).forEach(x=>{const n=nameById[x.spieler_id];if(n)traurig[n]=(traurig[n]||0)+1;});
         const tArr=Object.entries(traurig).sort((a,b)=>b[1]-a[1]);
-        stimmungHtml=`<div style="font-weight:800;font-size:13.5px;margin:14px 0 4px">🧒 Kinder-Stimmung <span style="font-weight:400;color:var(--text2);font-size:11px">(Kabine · ${rows.length} Antworten · Ø ${avg} ${moodEmo(Number(avg))})</span></div>`
-          +(tArr.length?`<div style="font-size:12.5px;color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:8px 10px">😞 Zuletzt unzufrieden: <b>${tArr.map(([n,c])=>esc(n)+(c>1?` (${c}×)`:"")).join(", ")}</b> – vielleicht kurz das Gespräch suchen.</div>`
-                     :'<div style="font-size:12.5px;color:var(--green)">Kein Kind hat zuletzt 😞 gedrückt 👍</div>');
+        stimmungHtml=`<div style="font-weight:800;font-size:var(--s-text);margin:14px 0 4px">🧒 Kinder-Stimmung <span style="font-weight:400;color:var(--text2);font-size:var(--s-klein)">(Kabine · ${rows.length} Antworten · Ø ${avg} ${moodEmo(Number(avg))})</span></div>`
+          +(tArr.length?`<div style="font-size:var(--s-text);color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:8px 10px">😞 Zuletzt unzufrieden: <b>${tArr.map(([n,c])=>esc(n)+(c>1?` (${c}×)`:"")).join(", ")}</b> – vielleicht kurz das Gespräch suchen.</div>`
+                     :'<div style="font-size:var(--s-text);color:var(--green)">Kein Kind hat zuletzt 😞 gedrückt 👍</div>');
       }
     }
   }catch(e){}
@@ -4096,9 +4568,9 @@ async function saisonCockpitOpen(){
       if(rows.length){
         const per={}; rows.forEach(x=>per[x.an_spieler]=(per[x.an_spieler]||0)+1);
         const ohne=active.filter(k=>!per[k.id]).map(k=>k.name);
-        postHtml=`<div style="font-weight:800;font-size:13.5px;margin:14px 0 4px">📬 Adler-Post <span style="font-weight:400;color:var(--text2);font-size:11px">(${rows.length} Nachrichten · 60 Tage)</span></div>`
-          +(ohne.length?`<div style="font-size:12.5px;color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:8px 10px">Noch ohne Post: <b>${ohne.map(esc).join(", ")}</b> – vielleicht mal ein Kompliment anstoßen (oder Sprachlob!).</div>`
-                       :'<div style="font-size:12.5px;color:var(--green)">Jedes Kind hat schon Post bekommen 👍</div>');
+        postHtml=`<div style="font-weight:800;font-size:var(--s-text);margin:14px 0 4px">📬 Adler-Post <span style="font-weight:400;color:var(--text2);font-size:var(--s-klein)">(${rows.length} Nachrichten · 60 Tage)</span></div>`
+          +(ohne.length?`<div style="font-size:var(--s-text);color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:8px 10px">Noch ohne Post: <b>${ohne.map(esc).join(", ")}</b> – vielleicht mal ein Kompliment anstoßen (oder Sprachlob!).</div>`
+                       :'<div style="font-size:var(--s-text);color:var(--green)">Jedes Kind hat schon Post bekommen 👍</div>');
       }
     }
   }catch(e){}
@@ -4128,17 +4600,17 @@ async function saisonCockpitOpen(){
       if(arr.length){
         const teamAvg=(arr.reduce((s,x)=>s+x.avg*x.n,0)/arr.reduce((s,x)=>s+x.n,0)).toFixed(1).replace(".",",");
         const col=a=>a>=4?"var(--green)":a>=2?"var(--amber)":"var(--red)";
-        tempoHtml=`<div style="font-weight:800;font-size:13.5px;margin:14px 0 4px">⏱️ Rückmelde-Tempo <span style="font-weight:400;color:var(--text2);font-size:11px">(Zu-/Absagen · Team-Ø ${teamAvg} Tage vor dem Termin)</span></div>`
-          +arr.map(x=>`<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;padding:3px 0"><span style="flex:1">${esc(x.name)}</span>${x.kurz?`<span title="davon kurzfristig (≤1 Tag vorher)" style="font-size:10px;color:var(--text3)">⚡ ${x.kurz}× kurzfristig</span>`:""}<span style="font-weight:700;color:${col(x.avg)}">Ø ${x.avg.toFixed(1).replace(".",",")} Tage</span><span style="font-size:10px;color:var(--text3)">(${x.n})</span></div>`).join("")
-          +`<div style="font-size:10px;color:var(--text3);margin-top:4px">Ø Tage zwischen erster Antwort und Termin – je höher, desto früher meldet die Familie zurück. Exakt gemessen ab Juli 2026; ältere Antworten zählen mit dem Zeitpunkt der letzten Änderung.</div>`;
+        tempoHtml=`<div style="font-weight:800;font-size:var(--s-text);margin:14px 0 4px">⏱️ Rückmelde-Tempo <span style="font-weight:400;color:var(--text2);font-size:var(--s-klein)">(Zu-/Absagen · Team-Ø ${teamAvg} Tage vor dem Termin)</span></div>`
+          +arr.map(x=>`<div style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);padding:3px 0"><span style="flex:1">${esc(x.name)}</span>${x.kurz?`<span title="davon kurzfristig (≤1 Tag vorher)" style="font-size:var(--s-klein);color:var(--text3)">⚡ ${x.kurz}× kurzfristig</span>`:""}<span style="font-weight:700;color:${col(x.avg)}">Ø ${x.avg.toFixed(1).replace(".",",")} Tage</span><span style="font-size:var(--s-klein);color:var(--text3)">(${x.n})</span></div>`).join("")
+          +`<div style="font-size:var(--s-klein);color:var(--text3);margin-top:4px">Ø Tage zwischen erster Antwort und Termin – je höher, desto früher meldet die Familie zurück. Exakt gemessen ab Juli 2026; ältere Antworten zählen mit dem Zeitpunkt der letzten Änderung.</div>`;
       }
     }
   }catch(e){}
   // A-Etappe 2: Rollen-Erfahrung auch im Cockpit (Kurzform + Button zur vollen Matrix)
   let rollenHtml="";
   try{ if(typeof rollenExpFetch==="function"){ const re=await rollenExpFetch(); if(re&&re.games){ const nie=(typeof _neverTW==="function")?_neverTW(re.byKid):[];
-    rollenHtml=`<div style="font-weight:800;font-size:13.5px;margin:14px 0 4px">🎽 Rollen-Erfahrung <span style="font-weight:400;color:var(--text2);font-size:11px">(${re.games} Aufstellungen)</span></div>`
-      +(nie.length?`<div style="font-size:12.5px;color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:8px 10px">🥅 Noch nie im Tor: <b>${nie.map(esc).join(", ")}</b></div>`:'<div style="font-size:12.5px;color:var(--green)">Jedes aktive Kind stand schon mal im Tor 👍</div>')
+    rollenHtml=`<div style="font-weight:800;font-size:var(--s-text);margin:14px 0 4px">🎽 Rollen-Erfahrung <span style="font-weight:400;color:var(--text2);font-size:var(--s-klein)">(${re.games} Aufstellungen)</span></div>`
+      +(nie.length?`<div style="font-size:var(--s-text);color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:8px 10px">🥅 Noch nie im Tor: <b>${nie.map(esc).join(", ")}</b></div>`:'<div style="font-size:var(--s-text);color:var(--green)">Jedes aktive Kind stand schon mal im Tor 👍</div>')
       +`<button class="btn btn-sm" style="margin-top:8px" onclick="document.getElementById('sc-modal').remove();w2('rollenMatrixOpen')"><i class="ti ti-layout-grid"></i>Volle Rollen-Matrix</button>`;
   } } }catch(e){}
   // R6: faire Einsätze – die mit den wenigsten Spiel-Einsätzen (nur wenn überhaupt gespielt wurde)
@@ -4148,9 +4620,9 @@ async function saisonCockpitOpen(){
   const attArr=active.map(k=>({name:k.name,pct:att[k.name].t?Math.round(att[k.name].p/att[k.name].t*100):null,t:att[k.name].t})).filter(x=>x.pct!=null).sort((a,b)=>b.pct-a.pct);
   const topAtt=attArr.slice(0,5);
   const lowAtt=attArr.filter(x=>x.pct<60).slice(-3);
-  const kpi=(v,l,c)=>`<div style="flex:1;min-width:80px;text-align:center;background:var(--surface2);border-radius:12px;padding:10px"><div style="font-size:22px;font-weight:900;color:${c}">${v}</div><div style="font-size:10px;color:var(--text2)">${l}</div></div>`;
+  const kpi=(v,l,c)=>`<div style="flex:1;min-width:80px;text-align:center;background:var(--surface2);border-radius:12px;padding:10px"><div style="font-size:var(--s-seite);font-weight:900;color:${c}">${v}</div><div style="font-size:var(--s-klein);color:var(--text2)">${l}</div></div>`;
   const medal=i=>["🥇","🥈","🥉"][i]||`${i+1}.`;
-  const attRow=x=>`<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;padding:3px 0"><span style="flex:1">${esc(x.name)}</span><span style="font-weight:700;color:${x.pct>=75?"var(--green)":x.pct>=50?"var(--amber)":"var(--red)"}">${x.pct}%</span><span style="font-size:10px;color:var(--text3)">(${x.t})</span></div>`;
+  const attRow=x=>`<div style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);padding:3px 0"><span style="flex:1">${esc(x.name)}</span><span style="font-weight:700;color:${x.pct>=75?"var(--green)":x.pct>=50?"var(--amber)":"var(--red)"}">${x.pct}%</span><span style="font-size:var(--s-klein);color:var(--text3)">(${x.t})</span></div>`;
   document.getElementById("sc-modal")?.remove();
   const modal=document.createElement("div");
   modal.id="sc-modal";modal.setAttribute("role","dialog");modal.setAttribute("aria-modal","true");modal.setAttribute("aria-label","Saison-Cockpit");
@@ -4160,14 +4632,14 @@ async function saisonCockpitOpen(){
   c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`${mdlHead("sc-modal","📈","Saison-Cockpit",`Saison seit ${new Date(ab+"T00:00:00").toLocaleDateString("de-DE",{month:"long",year:"numeric"})} · alles auf einen Blick`,"#1e3a8a")}
     <div style="display:flex;gap:8px;margin-bottom:14px">${kpi(spiele,"Spiele","var(--blue)")}${kpi("⚽ "+toreGesamt,"Tore","var(--green)")}${kpi(trainings,"Trainings","#7c3aed")}</div>
-    <div style="font-weight:800;font-size:13.5px;margin-bottom:4px">🥇 Top-Torschützen</div>
-    ${scorers.length?scorers.map(([n,c],i)=>`<div style="display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0"><span style="width:22px">${medal(i)}</span><span style="flex:1">${esc(n)}</span><span style="font-weight:800;color:var(--green)">${c}</span></div>`).join(""):'<div style="font-size:12px;color:var(--text3)">Noch keine Tore erfasst.</div>'}
-    <div style="font-weight:800;font-size:13.5px;margin:14px 0 4px">📊 Anwesenheit – am zuverlässigsten</div>
-    ${topAtt.length?topAtt.map(attRow).join(""):'<div style="font-size:12px;color:var(--text3)">Noch keine Daten.</div>'}
-    ${lowAtt.length?`<div style="font-weight:800;font-size:12.5px;margin:12px 0 2px;color:var(--amber)">Zuletzt oft gefehlt – dranbleiben</div>${lowAtt.map(attRow).join("")}`:""}
+    <div style="font-weight:800;font-size:var(--s-text);margin-bottom:4px">🥇 Top-Torschützen</div>
+    ${scorers.length?scorers.map(([n,c],i)=>`<div style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);padding:3px 0"><span style="width:22px">${medal(i)}</span><span style="flex:1">${esc(n)}</span><span style="font-weight:800;color:var(--green)">${c}</span></div>`).join(""):'<div style="font-size:var(--s-text);color:var(--text3)">Noch keine Tore erfasst.</div>'}
+    <div style="font-weight:800;font-size:var(--s-text);margin:14px 0 4px">📊 Anwesenheit – am zuverlässigsten</div>
+    ${topAtt.length?topAtt.map(attRow).join(""):'<div style="font-size:var(--s-text);color:var(--text3)">Noch keine Daten.</div>'}
+    ${lowAtt.length?`<div style="font-weight:800;font-size:var(--s-text);margin:12px 0 2px;color:var(--amber)">Zuletzt oft gefehlt – dranbleiben</div>${lowAtt.map(attRow).join("")}`:""}
     ${tempoHtml}
-    ${wenig.length?`<div style="font-weight:800;font-size:13.5px;margin:14px 0 4px">⚖️ Faire Einsätze – wer war seltener dabei</div>${wenig.map(x=>`<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;padding:3px 0"><span style="flex:1">${esc(x.name)}</span><span style="font-size:11px;color:var(--text3)">${x.e} Einsätze</span></div>`).join("")}`:""}
-    ${(toreTeam[2]||toreTeam[3])?`<div style="font-weight:800;font-size:13.5px;margin:14px 0 4px">🏆 Tore je Team</div><div style="display:flex;gap:8px;flex-wrap:wrap">${[1,2,3].filter(t=>toreTeam[t]>0||t===1).map(t=>`<div style="flex:1;min-width:70px;text-align:center;background:var(--surface2);border-radius:10px;padding:8px"><div style="font-size:11px;color:var(--text2)">Adler ${t}</div><div style="font-size:18px;font-weight:900;color:var(--green)">⚽ ${toreTeam[t]||0}</div></div>`).join("")}</div>`:""}
+    ${wenig.length?`<div style="font-weight:800;font-size:var(--s-text);margin:14px 0 4px">⚖️ Faire Einsätze – wer war seltener dabei</div>${wenig.map(x=>`<div style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);padding:3px 0"><span style="flex:1">${esc(x.name)}</span><span style="font-size:var(--s-klein);color:var(--text3)">${x.e} Einsätze</span></div>`).join("")}`:""}
+    ${(toreTeam[2]||toreTeam[3])?`<div style="font-weight:800;font-size:var(--s-text);margin:14px 0 4px">🏆 Tore je Team</div><div style="display:flex;gap:8px;flex-wrap:wrap">${[1,2,3].filter(t=>toreTeam[t]>0||t===1).map(t=>`<div style="flex:1;min-width:70px;text-align:center;background:var(--surface2);border-radius:10px;padding:8px"><div style="font-size:var(--s-klein);color:var(--text2)">Adler ${t}</div><div style="font-size:var(--s-teil);font-weight:900;color:var(--green)">⚽ ${toreTeam[t]||0}</div></div>`).join("")}</div>`:""}
     ${stimmungHtml}
     ${postHtml}
     ${rollenHtml}
@@ -4185,58 +4657,82 @@ async function saisonCockpitOpen(){
 const HELP=[
   {cat:"🏠 Start", items:[
     {t:"Diese Woche", d:"Alle Termine der nächsten 7 Tage auf einen Blick: wie viele Kinder zugesagt haben (aus den Eltern-Rückmeldungen; beim Spieltag zählt „dabei“ aus „Teams festlegen“, sobald die Einteilung steht), ob genug Trainer da sind (aus dem Trainerplan), ob der Trainingsplan steht und die Aufstellung fürs Spiel. Die Quelle steht unter der Karte. Rot wird ein Chip erst drei Tage vor dem Termin – vorher ist „0 zugesagt“ normal. Antippen öffnet den Termin.", run:"document.getElementById('home-woche')?.scrollIntoView({behavior:'smooth',block:'center'})"},
-    {t:"Startseite", d:"To-Do-Banner (nur bei offenen Aufgaben), „Bist du dabei?“ mit den Terminen der nächsten 14 Tage, für die deine Antwort noch fehlt (beantwortet = Karte weg), „Diese Woche“ mit dem Stand je Termin – die erste Zeile ist der nächste Termin mit Wetter, Packtipp und den Sprungknöpfen „Anwesenheit“ und „Plan“ –, der Knopf zu allen Terminen und sechs große Kacheln – dahinter jeweils wieder eine Seite mit Kacheln. Dieselbe Seite erreichst du über die untere Leiste; beide Wege enden im selben Bild.", go:"home"},
+    {t:"Startseite", d:"Von oben nach unten: was zu tun ist (Wie war's?, To-Do-Banner nur bei offenen Aufgaben, „Bist du dabei?“ mit den Terminen der nächsten 14 Tage, für die deine Antwort noch fehlt), <b>seit v682 gleich darunter die sechs großen Bereichs-Kacheln</b> – dahinter jeweils wieder eine Seite mit Kacheln, bei Taktik direkt das Brett –, dann „Diese Woche“ mit dem Stand je Termin (die erste Zeile ist der nächste Termin mit Wetter, Packtipp und den Sprungknöpfen „Anwesenheit“ und „Plan“; woher die Zahlen kommen, steht zugeklappt darunter) und der Knopf zu allen Terminen. Die drei Startschritte erscheinen nur, solange es noch keinen Kader gibt. Dieselbe Seite erreichst du über die untere Leiste; beide Wege enden im selben Bild.", go:"home"},
   ]},
   {cat:"👥 Team", items:[
     {t:"Saison-Cockpit", d:"Torschützen, Anwesenheit, Rückmelde-Tempo der Familien, faire Einsätze, Eltern-Puls, Rückmelde-Tempo – alles auf einen Blick.", run:"saisonCockpitOpen()"},
     {t:"Anwesenheit (Saison)", d:"Drei Reiter: Quote je Kind im Training, Anwesenheit der Trainer, und die Quote inklusive Spiele aus den Nominierungen. Alle drei rechnen auf denselben Zähltagen wie die Zahlen neben der Nominierung: ab dem Saisonstichtag, und nur echte Trainings – Spiel- und Turniertage zählen nicht mit, auch nicht bei der Serie 🔥.", run:"awUebersichtOpen()"},
     {t:"Probetraining", d:"Schnupperkinder verwalten – bewusst getrennt vom Kader, Auto-Löschung nach Entscheidung.", run:"probeOpen()"},
-    {t:"Kader", d:"Über „Spieler verwalten“ pflegst du die Stammdaten. Das Fenster zeigt seit v546 <b>eine ruhige Zeile je Kind</b> – Nummer, Name und der Zustand als Chip (nicht im Kader · TW · Foto frei · Hinweis). Ein Tipp klappt genau dieses Kind auf, ein Tipp auf ein anderes klappt das vorige zu; darunter stehen Name, Nummer, „Im Kader“, Torwart, Geburtstag, starker Fuß, Lieblingsposition, Foto, Foto-Freigabe und der Medical-Hinweis. Oben ein <b>Suchfeld</b>, unten <b>ein</b> Speichern-Knopf – der schreibt alle Zeilen auf einmal, auch die zugeklappten. Geburtstag und Medical-Hinweis sehen nur Trainer, nie die Eltern. <b>Trikotgröße und Ausgabe</b> stehen nicht mehr hier, sondern unter <b>Team → Ausstattung</b> – dort mit Datum und Rückgabe. Der persönliche <b>Zu-/Absage-Link</b> liegt im Kontakte-Fenster des Kindes, weil er ein Zugangsweg der Familie ist und keine Eigenschaft des Kindes; er trägt kein Datum und ersetzt deshalb kein Nachfassen zu einem einzelnen Termin. „Endgültig löschen“ steht ganz unten im aufgeklappten Kind – für einen Vereinswechsel ist fast immer der Haken „Im Kader“ die richtige Wahl, dann bleibt die Historie heil.", run:"einheitBewertenOpen()"},
-    {t:"Übungen", d:"Die Übungs-Datenbank: Gruppen-Kacheln, ⭐-Filter, Skizze je Übung, ➕ direkt in den Trainingsplan · KI-Coach · Themenplan. <b>Neue Übungen kommen von selbst:</b> beim Öffnen gleicht die App die Datei „uebungen/bibliothek.json“ aus dem Repo ab und legt still an, was noch fehlt – gemeldet wird nur, wenn wirklich etwas dazugekommen ist („📚 3 neue Übungen“). <b>Seit v585 kommen auch Änderungen an:</b> Ist eine Bibliotheks-Übung im Repo geändert worden, zieht der Abgleich sie nach – aber nur, solange sie noch so ist, wie sie aus der Bibliothek kam. Sobald du an einer Bibliotheks-Übung eine Skizze gezeichnet hast, gilt sie als deine und wird nie überschrieben; eigene und KI-Übungen fasst der Abgleich ohnehin nicht an. Er wartet außerdem, bis die Datenbank geantwortet hat, bevor er entscheidet, was neu ist – bis v584 konnte er zu früh loslaufen und legte Bibliotheks-Übungen doppelt an. Diese Dubletten sind seit v586 bereinigt, und die Datenbank lässt keine neuen mehr zu. <b>Bibliotheks-Übungen liegen seit v586 in ihrer Kategorie-Kachel</b> (die Raute aus dem Lehrgang also unter „Passen &amp; Spielaufbau“, genau wie im Trainingsplan); „Eigene &amp; KI“ bleibt für selbst angelegte und KI-Übungen. <b>Seit v586 merken sich Trainingsplan und Nachbereitung eine Übung am Namen</b>, nicht mehr an ihrer Position in der Liste – eine gelöschte oder verschobene Zeile kann keinen alten Plan mehr verfälschen; fehlt eine Übung ganz, fällt ihr Eintrag aus dem Plan, statt dass eine fremde erscheint. Die <b>Einsatz-Historie</b> („3× verwendet – zuletzt …“, „🕘 lange her“, „Zuletzt genutzt“) kommt seit v586 aus den gespeicherten Plänen aller Trainer und zählt nur Termine bis heute; bis dahin stand sie seit v474 still auf „noch nicht eingesetzt“. Ohne Netz passiert nichts und beim nächsten Öffnen wieder. Dasselbe gilt für <b>Vorlagen</b> (fertige Einheiten ohne Datum): sie kommen aus „uebungen/vorlagen.json“ (Format „adler-vorlagen/1“) und werden im Trainingsplan über „Vorlage übernehmen“ eingesetzt. Das Fenster beginnt seit v576 mit einem <b>Suchfeld</b> – getippt wird gegen Name und Leitfrage, „L4“ zeigt die vierte Gruppe –, darunter die Liste nach <b>Leitfrage gruppiert</b>: Die Frage steht über ihrer Gruppe statt in jeder Karte, und die Karte nennt dafür, was sie unterscheidet (Blöcke, Dauer, Spielform-Minuten, Ordnung, Rahmen). Die Filter sind eingeklappt; der Knopf darüber sagt, wonach gerade gefiltert wird. Aufgeklappt filtern drei Kachelreihen zusammen: die <b>Leitfrage</b>, die Rahmenbedingung („Passt wenn …“, im Klartext: „wenig Platz“, „schlechtes Wetter“) und <b>„Wie sie stehen“</b> – die Ordnung im Spiel: 1 gegen 1, 2 gegen 2, Dreieck, Raute, dazu die Spielformen des Spieltags <b>3+1</b> (Raute ohne Aufpasser, der Torwart spielt mit), <b>FUNiño</b> (Dreieck ohne Jäger, der Aufpasser als Mittelmann) <b>3+1 gegen FUNiño</b> (großes Tor gegen zwei kleine) und <b>3+1 und FUNiño</b> (beide Formen nebeneinander auf drei Feldern), Überzahl und ohne Gegner. Gezeigt wird nur, was in der Sammlung vorkommt; ein zweiter Tipp hebt den Filter auf. Hauptteil 1 und 2 der Spieltags-Einheiten nennen dieselben zwei Stationen: die Gruppen rücken von Block zu Block ein Feld weiter, bei zwei Feldern ist das der Tausch – ohne dass jemand „⇄ weiterrücken“ drückt. Gibt es mehr Felder als Stationen, wiederholt sich die Stationsliste (Feld 3 spielt wieder Station 1). <b>Nachschlagen kannst du sie hier</b> über „Vorlagen ansehen“: nach Leitfrage gruppiert, je Vorlage die Blöcke mit Dauer und Übung, die Skalierung je Kaderstärke (die Zeile zeigt genau die Stärken, die die Vorlage nennt – 8, 12 und 16 bei den Konzept-Einheiten, 8, 10, 12 und 14 bei den Spieltags-Einheiten, denn der Kader hat höchstens 14 Kinder) und die Beobachtungsfrage. Die Ansicht liest nur – sie hat bewusst keinen Übernehmen-Knopf, weil zum Einsetzen ein Termin gehört und der im Trainingsplan steht. Eine Vorlage verweist über den <b>Namen</b> auf ihre Übungen – fehlt eine, wird sie beim Prüfen benannt und die Vorlage nicht angelegt. <b>Die Kacheln stehen unter drei Überschriften</b> – Einstieg, Hauptteil, Speziell –, die dem Aufbau einer Einheit folgen; eine zusätzliche Ebene zum Durchtippen gibt es bewusst nicht. <b>„🆕 neu“</b> heißt: vor weniger als vier Wochen angelegt. Danach verschwindet das Abzeichen von allein. Dass eine Übung noch nie am Platz war, steht weiter dabei („noch nicht eingesetzt“) – nur eben ruhig, denn das ist eine Angabe fürs Planen und keine Neuigkeit. Übungen aus der mitgelieferten Datenbank tragen kein Anlagedatum und gelten deshalb nie als neu. Bei einer eigenen Übung kannst du die Skizze selbst erzeugen: dreizehn Vorlagen zum Antippen (Rondo, Slalom, Torschuss – und die Spieltagsformen „3 gegen 3, vier Minitore“, „2+1, Jugendtore“ und „Drei gegen einen“) oder mit Spielern, Hütchen, Toren, Zonen, Pfeilen und Linien selbst auf den Platz tippen. Beim Tor entscheidet die Tipp-Position über die Lage: nah am linken oder rechten Rand steht es hochkant und bündig an der Linie, sonst quer. Neben dem Minitor gibt es das <b>Jugendtor</b> – tiefer, mit Netz gezeichnet, für 2+1 und die höhenreduzierten Tore. Dazu zwei Linien: die <b>Mittellinie</b> (durchgezogen weiß) und die <b>Schusszone</b> (gestrichelt gelb); beide setzt du mit zwei Tipps, Anfang und Ende. Was welche Linie bedeutet, steht in der Legende unter jeder Skizze – seit v587 führt sie nur auf, was in der Zeichnung vorkommt (ein Bild ohne Schusszone erklärt auch keine). Unter der Skizze einer Übung liegt <b>„Groß zeigen“</b>: die Zeichnung füllt dann den Bildschirm, zwei Finger zoomen bis zum Vierfachen, ein Doppeltipp setzt zurück. <b>Seit v582 gibt es dort „⛶ Vollbild“</b> – damit verschwinden Browser- und Systemleiste, und die Zeichnung bekommt die Höhe, die sie am Tablet braucht. Ein zweiter Tipp oder die Systemgeste bringt dich zurück; kann dein Gerät kein Vollbild, steht der Knopf gar nicht erst da – gedacht für die Besprechung am Tablet und für den Blick am Platz. Dort schaltest du den Rasen auf eine <b>helle Fassung</b> um, wenn die Sonne auf den Bildschirm scheint; die Wahl merkt sich das Gerät, und gezeichnet bleibt dieselbe Skizze. <b>Seit v598 brauchst du den Editor dafür gar nicht mehr:</b> In der Maske „Neue Übung“ steht neben „Skizze zeichnen“ der Knopf <b>„Skizze aus der Beschreibung“</b> – er nimmt, was dort schon steht (Name, Ablauf, Varianten, Kinderzahl und Feldmaß), und lässt den Adler-Coach daraus zeichnen. Die Zeichnung landet in der Vorschau, nicht in der Datenbank; gespeichert wird sie mit der Übung, und „Skizze zeichnen“ öffnet sie danach zum Ändern. Ohne Ablauf passiert nichts – aus einem Namen allein entsteht kein Aufbau. <b>Seit v581 kannst du die Übung beschreiben statt sie zu tippen</b>: „🤖 Beschreiben“ nimmt deinen Text – getippt oder diktiert – und lässt den Adler-Coach daraus eine Zeichnung machen. Sie landet im Editor, nicht in der Datenbank: Du kannst alles verschieben, ergänzen oder mit „Zurück“ wieder verwerfen. Je genauer der Aufbau dasteht (wie viele Hütchen, wie viele Kinder, wo das Tor), desto besser trifft sie. Diktieren geht nur, wo das Gerät zuhören kann – das Textfeld immer. <b>Seit v598 gibt es „Spieler + Ball“ als eigenes Werkzeug</b> – vorher waren das zwei Elemente, die man von Hand übereinanderschob, und beim Verschieben blieb der Ball liegen. Jetzt ist es eines: der Ball sitzt am Fuß und geht mit. Gezählt wird er in der Materialzeile wie ein einzeln gesetzter. <b>Der Ball ist seit v598 schwarz</b> mit weißem Rand, in beiden Rasenfassungen. Auf dem hellen Rasen war der weiße Ball mit 1,30:1 kaum zu sehen; schwarz kommt dort auf 13,6:1, und auf dem dunklen Rasen trägt der weiße Rand. <b>Die Werkzeuge stehen seit v579 unter vier Überschriften</b> – „Ball und Wege“ zuerst, weil Pass, Dribbling, Schuss und Laufweg in jeder Übung vorkommen. Vorne in den Vorlagen liegen die <b>vier Felder</b>: Feld mit Jugendtoren, FUNiño-Feld, halbes Feld mit Jugendtor, halbes Feld FUNiño – mit Mittellinie, Schusszonen und Eckhütchen, aber bewusst ohne Spieler, denn darauf zeichnest du ja erst. Dazu kommt ein Symbol für die <b>Position des Trainers</b>; es zählt nicht als Material, denn den holst du nicht aus dem Schrank. <b>„① Schritte zählen“</b> nummeriert die Wege in der Reihenfolge, in der du sie tippst: erst nach links, dann zurück, dann nach rechts – so steht die Abfolge auf einem Bild. Wenn es sich bewegen soll, nimmst du weiter mehrere Bilder und „Abspielen“. <b>Seit v578 kannst du das Feld hochkant stellen</b> – der Knopf über der Zeichenfläche legt es um, und alles dreht sich mit: Hütchen, Spieler, Pfeile, Tore, Leitern, auch die weiteren Bilder. Nichts fällt dabei aus dem Bild, und zweimal umschalten bringt dich genau dorthin zurück, wo du warst. Eine Vorlage kommt gedreht ins hochkante Feld, „Leeren“ behält den Zuschnitt. Gedacht ist das für alles, was in die Länge läuft – Slalom, Torschuss auf ein Tor am oberen Rand. <b>Das Dribbling ist seit v578 eine durchgezogene Schlangenlinie</b> statt einer gepunkteten Geraden: der Ball bleibt am Fuß, der Weg schlängelt. Pass gerade, Laufweg gestrichelt, Schuss dick, Dribbling geschwungen – die vier sind damit auch ohne Farbe auseinanderzuhalten. Bei den noch <b>16</b> älteren Übungen, deren Zeichnung von Hand geschrieben ist, gibt es die helle Fassung nicht – das sagt das Fenster dann auch. Es waren 37; mit v597 sind elf Rauten-Übungen und mit v599 zehn aus Pressing und Abschluss auf eine Beschreibung umgestellt worden, aus der die App zeichnet. Damit stimmen dort Legende, Kontrast, helle Fassung und Bildexport von selbst. Neben Spielern, Hütchen und Toren gibt es <b>Geräte</b>: Stange, Markierungsteller, Minihürde und ein Balldepot, dazu <b>Stangentor</b> und <b>Hütchentor</b> zum Durchdribbeln (zwei Tipps, der Abstand ist die Torbreite) und eine <b>Kreiszone</b> für den Mittelkreis. Unter jeder Skizze steht dann, <b>was du dafür brauchst</b> — gezählt wird, was gezeichnet ist, ein Dribbeltor sind zwei Pfosten. Hast du das Material im Schrank gezählt (Kachel Orga, Material), sagt die Zeile auch, wenn etwas fehlt, und benennt, was in keiner Bestandsliste steht. Bei mehreren Übungen auf einem Aufbau zählt das Maximum, nicht die Summe — aufgebaut wird ja nur einmal. Eine Skizze kann <b>mehrere Bilder</b> haben: Aufbau, Pass, Abschluss nacheinander statt alles auf einmal. Unter der Zeichnung stehen dann nummerierte Knöpfe, im großen Fenster wischt man zusätzlich. Im Editor legst du sie über „+ Bild“ an — Spieler und Ball werden übernommen, du verschiebst nur, was sich bewegt; der <b>Aufbau</b> (Feld, Tore, Linien, Hütchen) steht immer in Bild 1 und gilt für alle, denn am Platz wird ja auch nicht umgebaut. Im großen Fenster gibt es dazu <b>„Abspielen“</b>: die Bilder laufen nacheinander ab, Spieler und Ball gleiten dabei von einem Stand zum nächsten, die Pfeile bleiben stehen, solange die Bewegung läuft. Seit v588 steht jedes Bild eine Sekunde, und das Gleiten richtet sich nach der Strecke – ein kurzer Pass gut eine Sekunde, ein Weg über das halbe Feld gut zwei. Ein Tipp aufs Bild hält an. Wer in den Systemeinstellungen „weniger Bewegung“ gewählt hat, bekommt harte Schnitte statt Bewegung. Geteilt wird das Bild, das gerade zu sehen ist. Im großen Fenster steht außerdem <b>„Kinder einsetzen“</b>: die Kreise bekommen die Kürzel der Kinder, die heute da sind – „Ni“ für Nina, „Os“ für Oskar –, und am Tablet zusätzlich das Foto, sofern die Eltern es für die App freigegeben haben. Zwei Chips antippen tauscht zwei Kinder. Gedacht ist das für die Besprechung: ein Kind erkennt sich in einem Kreis mit „S“ nicht wieder, in seinem eigenen Kürzel schon. <b>Gespeichert wird davon nichts</b> – die Übung selbst bleibt namenlos, und das Bild, das du weitergibst, zeigt nie Namen oder Gesichter: die Besetzung gibt es nur im großen Fenster, „Skizze teilen“ arbeitet mit der Zeichnung aus dem Detailfenster. Daneben liegt <b>„Skizze teilen“</b>: daraus wird ein Bild, das du über das Teilen-Menü deines Handys an die Co-Trainer schickst – am Rechner lädt es sich herunter. Die Empfänger brauchen die App dafür nicht. <b>Übungsform, Spielform oder keines von beidem:</b> neben jeder Übung steht, was sie ist – ein Tipp darauf ordnet sie ein, im Kreis über „Spielform“, „Übungsform“, „weder noch“ und zurück auf offen. „Weder noch“ ist für Koordinationsleiter, Laufschule, Fallschule und Rituale: die sind fachlich keines von beidem, und ein Zwang zur Wahl hätte den Spielform-Anteil verzerrt. <b>Für den ersten Durchgang</b> gibt es über der Kachelreihe den Knopf „… Übungen einordnen“: dort stehen alle noch offenen beieinander, jede mit einem Vorschlag, den du antippen und ändern kannst. Gespeichert wird erst mit „Einordnung übernehmen“ – der Vorschlag allein gilt nie als Einordnung. Der Knopf verschwindet, sobald nichts mehr offen ist. Bei einer Spielform entscheidet das Kind selbst, bei einer Übungsform ist der Ablauf vorgegeben. Geraten wird nichts: was du nicht eingeordnet hast, steht als „noch nicht eingeordnet“ da. Die Einordnung hängt am Namen der Übung – benennst du sie um, ist sie weg. Genutzt wird sie beim Vorlagen-Import: die Netto-Spielzeit zählt Hauptteile mit einer Übungsform nicht mehr als Spielzeit mit. <b>Vorlagen mit Stationen:</b> Ein Block einer Vorlage nennt entweder eine Übung für alle Felder oder eine Liste von Stationen mit je eigener Übung – beides zusammen weist der Import ab. Die Reihenfolge der Stationen ist die Reihenfolge der Felder. Wie viele Felder es am Termin gibt, entscheidet seit v570 der <b>Bedarf</b>, nicht mehr allein die Zahl der angehakten Feldtrainer: die Stationen der Einheit, die Trainer und vor allem die <b>Kinderzahl</b> – höchstens sechs je Gruppe, mindestens vier. Dreizehn Kinder ergeben also drei Felder, auch wenn nur zwei Trainer angehakt sind; ein Feld ohne Trainer ist erlaubt und zeigt „👤 Trainer?“. <b>Die Einteilung folgt der Anwesenheit</b> (seit v574): Ist die Anwesenheit des Tages erfasst, fällt aus den Gruppen, wer fehlt, und wer unangemeldet kommt, rückt in die kleinste nach – beim Öffnen des Plans, beim Speichern der Anwesenheit und im Gruppen-Fenster. Vor dem Trainingstag zählen die Zusagen, und dort wird nur ergänzt, nie entfernt: Wer am Mittwoch absagt und am Freitag doch kommt, findet seine Gruppe wieder. Ist weder Anwesenheit noch eine Zusage erfasst, bleibt die Einteilung unangetastet – die Basis wäre dann der ganze Kader, und der sagt nichts darüber, wer heute kommt. Namen, Trainer und von Hand verschobene Kinder bleiben; die App sagt einmal, wen sie verschoben hat. Beim Übernehmen einer Vorlage zieht die Gruppeneinteilung automatisch mit: reicht sie nicht, wird eine Gruppe <b>abgespalten</b> – die bestehenden behalten ihre Kinder, ihren Namen und ihren Trainer, neu gemischt wird nur über „🎲 Neu mischen“. Tragen die Kinder kein weiteres Feld, entfällt die überzählige Station wie bisher, und der Block sagt, wie viele Kinder es dafür bräuchte. Eine Station mit der Rolle „tw“ wird kein Feld, sondern ein paralleler Torwart-Block. <b>Was an welchem Feld gilt:</b> Nennt eine Einheit mehrere Stationen, beschreibt ihr Block-Text die Felder nacheinander, getrennt durch „|“. <b>Seit v598 zeigt der Blockkopf nur noch den Block</b> – „Hauptteil 1 – drei Stationen, 3 Min frei, dann eng“ statt derselben Regeln ein zweites Mal in voller Länge; am Handy waren daraus sechs Zeilen geworden. Der volle Text steht weiter im Label (sonst fänden die Stationen ihre Texte nicht) und erscheint beim Daraufzeigen. Seit v571 steht jeder dieser Teile <b>unter seiner Station</b> statt einmal oben am Block – und darunter, fett, die Anpassung für genau diese Gruppengröße, wenn die Einheit eine nennt: „👥 4 Kinder: zwei Angreifer gegen einen Verteidiger plus Wandspieler“. Hauptteil 2 und 3 verweisen meist nur zurück („Regeln wie in Hauptteil 1“) und holen sich die Texte von dort. Der Text hängt an der <b>Übung</b>: tauschst du sie an einem Feld, verschwindet er mit ihr. Nennt die Einheit für diese Größe nichts und ist die Gruppe kleiner, als die Übung braucht, steht dort ein Hinweis mit der Zahl und dem Weg – Kinder, die laut Übungsbeschreibung ohnehin warten, zählen dabei nicht mit. <b>Seit v572 steht die Zeile immer</b>, wenn die Übung eine Zahl je Station nennt: „👥 5 Kinder: 4 spielen, eines wechselt ein“ oder „👥 4 Kinder: alle spielen“ – du siehst auf einen Blick, ob die Gruppe aufgeht und wer draußen steht. Nennt die Einheit für diese Größe etwas Eigenes, geht ihr Text vor. <b>Seit v595 zählt auch eine Spanne.</b> Bis dahin wartete die Zeile auf das Wort „je Station“, und das schreiben nur die Übungen aus der Bibliothek – die 107 mitgelieferten schreiben „6–10“ oder „8–13“, und dort stand deshalb nichts. Eine Spanne ist aber genau diese Angabe: „6–10“ heißt ab sechs Kindern spielbar, ab elf wechselt jemand ein. Übungen ohne feste Besetzung („beliebig“, „Paare“) sagen jetzt „alle spielen mit“. Stumm bleibt nur, was eine Gesamtzahl nennt – „12 (3 Felder à 4)“ meint alle Kinder zusammen, und wer die 12 als Bedarf eines Feldes läse, zeigte Unsinn. Geraten wird also weiterhin nicht. <b>Seit v573 gleicht die App die Feldstärken aus:</b> Brauchen die Stationen verschieden viele Kinder – bei L4-8 vier am Jugendtor, vier an den Minitoren und sechs am Wandspieler-Feld –, wandern für diesen einen Block so viele Kinder mit, wie nötig. Unter der Station steht dann, wer dazukommt und aus welcher Gruppe, und wer dafür an einem anderen Feld spielt. Die Einteilung selbst ändert sich nicht: Nach dem Block ist jedes Kind wieder in seiner Gruppe, und beim Weiterrücken rechnet sich der Ausgleich neu. Reichen die Kinder nicht für alle Felder, bleibt die Lücke – sie wird angezeigt, nicht verdeckt. <b>Wie viele Gruppen überhaupt?</b> Das rechnet die App jetzt für die gewählte Einheit durch: Jede mögliche Gruppenzahl wird gegen die Stationen geprüft, und die Karte „👥 Trainingsgruppen“ sagt, welche am besten aufgeht. Im Fenster selbst steht der Stern am passenden Knopf, darunter die Rechnung. Für L4-8 kommt dabei genau heraus, was in der Skalierungszeile der Einheit steht – bei 8 und 10 Kindern zwei Felder, bei 12 und 14 drei, und der Knopf „👥 Auf N Gruppen zusammenlegen“ sagt dazu, dass das ein Feld kostet. <b>Seit v577 wartet das Übernehmen auf die Rückmeldungen</b> des Termins: Vorher hing die Feldzahl davon ab, ob die Zusagen schon geladen waren – wer sofort nach dem Terminwechsel übernahm, rechnete mit dem ganzen Kader statt mit den zugesagten Kindern. Bestehende Vorlagen ohne Stationen bleiben unverändert gültig, die Schema-Kennung bleibt adler-vorlagen/1.", go:"formen"},
-    {t:"Trainingsplan", d:"Oben steht, wie viele Kinder <b>dabei</b> sind und wie viele <b>fehlen</b> – aus derselben Liste wie die Gruppen: die gespeicherte Anwesenheit des Termins (auch schon am Vorabend), sonst die Zusagen, sonst der Kader ohne Absagen. Wer in der Anwesenheit abgewählt ist, fällt aus seiner Gruppe. <b>≡ am Block</b> ziehen verschiebt ihn an eine andere Stelle (auch mit den Pfeiltasten); die gewählten Übungen wandern mit. <b>＋ Übung im Aufwärmen</b> hängt eine weitere Übung an. <b>🔁 Durchgänge</b> an einem Hauptteil mit mehreren Stationen: Die Übungen bleiben an ihrer Station, die Gruppen wechseln innerhalb des Blocks – die Blockzeit wird aufgeteilt, der Trainingsstart pfeift jeden Wechsel."},
+    {t:"Kader", d:"Seit v683 schlank, solange niemand bewertet ist: je Kind Nummer, Name und „Bewerten“ – Rollen-Filter und Rauten-Besetzung erscheinen erst mit der ersten Rolle. Pausen und Notfallkarten stehen als Kacheln auf der Team-Seite. Über „Spieler verwalten“ pflegst du die Stammdaten. Das Fenster zeigt seit v546 <b>eine ruhige Zeile je Kind</b> – Nummer, Name und der Zustand als Chip (nicht im Kader · TW · Foto frei · Hinweis). Ein Tipp klappt genau dieses Kind auf, ein Tipp auf ein anderes klappt das vorige zu; darunter stehen Name, Nummer, „Im Kader“, Torwart, Geburtstag, starker Fuß, Lieblingsposition, Foto, Foto-Freigabe und der Medical-Hinweis. Oben ein <b>Suchfeld</b>, unten <b>ein</b> Speichern-Knopf – der schreibt alle Zeilen auf einmal, auch die zugeklappten. Geburtstag und Medical-Hinweis sehen nur Trainer, nie die Eltern. <b>Trikotgröße und Ausgabe</b> stehen nicht mehr hier, sondern unter <b>Team → Ausstattung</b> – dort mit Datum und Rückgabe. Der persönliche <b>Zu-/Absage-Link</b> liegt im Kontakte-Fenster des Kindes, weil er ein Zugangsweg der Familie ist und keine Eigenschaft des Kindes; er trägt kein Datum und ersetzt deshalb kein Nachfassen zu einem einzelnen Termin. „Endgültig löschen“ steht ganz unten im aufgeklappten Kind – für einen Vereinswechsel ist fast immer der Haken „Im Kader“ die richtige Wahl, dann bleibt die Historie heil.", run:"einheitBewertenOpen()"},
+    {t:"Übungen", d:"Die Übungs-Datenbank: Gruppen-Kacheln, ⭐-Filter, Skizze je Übung, ➕ direkt in den Trainingsplan, ✏️ bzw. „Übung bearbeiten“ in der Detailansicht für eigene Übungen (der Name bleibt, sobald sie in einem Plan steht), „Übung kopieren“ bei jeder Übung legt eine Variante als neue Übung an · KI-Coach · Themenplan. <b>Neue Übungen kommen von selbst:</b> beim Öffnen gleicht die App die Datei „uebungen/bibliothek.json“ aus dem Repo ab und legt still an, was noch fehlt – gemeldet wird nur, wenn wirklich etwas dazugekommen ist („📚 3 neue Übungen“). <b>Seit v585 kommen auch Änderungen an:</b> Ist eine Bibliotheks-Übung im Repo geändert worden, zieht der Abgleich sie nach – aber nur, solange sie noch so ist, wie sie aus der Bibliothek kam. Sobald du an einer Bibliotheks-Übung eine Skizze gezeichnet hast, gilt sie als deine und wird nie überschrieben; eigene und KI-Übungen fasst der Abgleich ohnehin nicht an. Er wartet außerdem, bis die Datenbank geantwortet hat, bevor er entscheidet, was neu ist – bis v584 konnte er zu früh loslaufen und legte Bibliotheks-Übungen doppelt an. Diese Dubletten sind seit v586 bereinigt, und die Datenbank lässt keine neuen mehr zu. <b>Bibliotheks-Übungen liegen seit v586 in ihrer Kategorie-Kachel</b> (die Raute aus dem Lehrgang also unter „Passen &amp; Spielaufbau“, genau wie im Trainingsplan); „Eigene &amp; KI“ bleibt für selbst angelegte und KI-Übungen. <b>Seit v586 merken sich Trainingsplan und Nachbereitung eine Übung am Namen</b>, nicht mehr an ihrer Position in der Liste – eine gelöschte oder verschobene Zeile kann keinen alten Plan mehr verfälschen; fehlt eine Übung ganz, fällt ihr Eintrag aus dem Plan, statt dass eine fremde erscheint. Die <b>Einsatz-Historie</b> („3× verwendet – zuletzt …“, „🕘 lange her“, „Zuletzt genutzt“) kommt seit v586 aus den gespeicherten Plänen aller Trainer und zählt nur Termine bis heute; bis dahin stand sie seit v474 still auf „noch nicht eingesetzt“. Ohne Netz passiert nichts und beim nächsten Öffnen wieder. Dasselbe gilt für <b>Vorlagen</b> (fertige Einheiten ohne Datum): sie kommen aus „uebungen/vorlagen.json“ (Format „adler-vorlagen/1“) und werden im Trainingsplan über „Vorlage übernehmen“ eingesetzt. Das Fenster beginnt seit v576 mit einem <b>Suchfeld</b> – getippt wird gegen Name und Leitfrage, „L4“ zeigt die vierte Gruppe –, darunter die Liste nach <b>Leitfrage gruppiert</b>: Die Frage steht über ihrer Gruppe statt in jeder Karte, und die Karte nennt dafür, was sie unterscheidet (Blöcke, Dauer, Spielform-Minuten, Ordnung, Rahmen). Die Filter sind eingeklappt; der Knopf darüber sagt, wonach gerade gefiltert wird. Aufgeklappt filtern drei Kachelreihen zusammen: die <b>Leitfrage</b>, die Rahmenbedingung („Passt wenn …“, im Klartext: „wenig Platz“, „schlechtes Wetter“) und <b>„Wie sie stehen“</b> – die Ordnung im Spiel: 1 gegen 1, 2 gegen 2, Dreieck, Raute, dazu die Spielformen des Spieltags <b>3+1</b> (Raute ohne Aufpasser, der Torwart spielt mit), <b>FUNiño</b> (Dreieck ohne Jäger, der Aufpasser als Mittelmann) <b>3+1 gegen FUNiño</b> (großes Tor gegen zwei kleine) und <b>3+1 und FUNiño</b> (beide Formen nebeneinander auf drei Feldern), Überzahl und ohne Gegner. Gezeigt wird nur, was in der Sammlung vorkommt; ein zweiter Tipp hebt den Filter auf. Hauptteil 1 und 2 der Spieltags-Einheiten nennen dieselben zwei Stationen: die Gruppen rücken von Block zu Block ein Feld weiter, bei zwei Feldern ist das der Tausch – ohne dass jemand „⇄ weiterrücken“ drückt. Gibt es mehr Felder als Stationen, wiederholt sich die Stationsliste (Feld 3 spielt wieder Station 1). <b>Nachschlagen kannst du sie hier</b> über die Kachel „Vorlagen“ unter Werkzeuge: nach Leitfrage gruppiert, je Vorlage die Blöcke mit Dauer und Übung, die Skalierung je Kaderstärke (die Zeile zeigt genau die Stärken, die die Vorlage nennt – 8, 12 und 16 bei den Konzept-Einheiten, 8, 10, 12 und 14 bei den Spieltags-Einheiten, denn der Kader hat höchstens 14 Kinder) und die Beobachtungsfrage. Die Ansicht liest nur – sie hat bewusst keinen Übernehmen-Knopf, weil zum Einsetzen ein Termin gehört und der im Trainingsplan steht. Eine Vorlage verweist über den <b>Namen</b> auf ihre Übungen – fehlt eine, wird sie beim Prüfen benannt und die Vorlage nicht angelegt. <b>Die Kacheln stehen unter drei Überschriften</b> – Einstieg, Hauptteil, Speziell –, die dem Aufbau einer Einheit folgen; eine zusätzliche Ebene zum Durchtippen gibt es bewusst nicht. <b>„🆕 neu“</b> heißt: vor weniger als vier Wochen angelegt. Danach verschwindet das Abzeichen von allein. Dass eine Übung noch nie am Platz war, steht weiter dabei („noch nicht eingesetzt“) – nur eben ruhig, denn das ist eine Angabe fürs Planen und keine Neuigkeit. Übungen aus der mitgelieferten Datenbank tragen kein Anlagedatum und gelten deshalb nie als neu. Bei einer eigenen Übung kannst du die Skizze selbst erzeugen: dreizehn Vorlagen zum Antippen (Rondo, Slalom, Torschuss – und die Spieltagsformen „3 gegen 3, vier Minitore“, „2+1, Jugendtore“ und „Drei gegen einen“) oder mit Spielern, Hütchen, Toren, Zonen, Pfeilen und Linien selbst auf den Platz tippen. Beim Tor entscheidet die Tipp-Position über die Lage: nah am linken oder rechten Rand steht es hochkant und bündig an der Linie, sonst quer. Neben dem Minitor gibt es das <b>Jugendtor</b> – tiefer, mit Netz gezeichnet, für 2+1 und die höhenreduzierten Tore. Dazu zwei Linien: die <b>Mittellinie</b> (durchgezogen weiß) und die <b>Schusszone</b> (gestrichelt gelb); beide setzt du mit zwei Tipps, Anfang und Ende. Was welche Linie bedeutet, steht in der Legende unter jeder Skizze – seit v587 führt sie nur auf, was in der Zeichnung vorkommt (ein Bild ohne Schusszone erklärt auch keine). Unter der Skizze einer Übung liegt <b>„Groß zeigen“</b>: die Zeichnung füllt dann den Bildschirm, zwei Finger zoomen bis zum Vierfachen, ein Doppeltipp setzt zurück. <b>Seit v582 gibt es dort „⛶ Vollbild“</b> – damit verschwinden Browser- und Systemleiste, und die Zeichnung bekommt die Höhe, die sie am Tablet braucht. Ein zweiter Tipp oder die Systemgeste bringt dich zurück; kann dein Gerät kein Vollbild, steht der Knopf gar nicht erst da – gedacht für die Besprechung am Tablet und für den Blick am Platz. Dort schaltest du den Rasen auf eine <b>helle Fassung</b> um, wenn die Sonne auf den Bildschirm scheint; die Wahl merkt sich das Gerät, und gezeichnet bleibt dieselbe Skizze. <b>Seit v598 brauchst du den Editor dafür gar nicht mehr:</b> In der Maske „Neue Übung“ steht neben „Skizze zeichnen“ der Knopf <b>„Skizze aus der Beschreibung“</b> – er nimmt, was dort schon steht (Name, Ablauf, Varianten, Kinderzahl und Feldmaß), und lässt den Adler-Coach daraus zeichnen. Die Zeichnung landet in der Vorschau, nicht in der Datenbank; gespeichert wird sie mit der Übung, und „Skizze zeichnen“ öffnet sie danach zum Ändern. Ohne Ablauf passiert nichts – aus einem Namen allein entsteht kein Aufbau. <b>Seit v581 kannst du die Übung beschreiben statt sie zu tippen</b>: „🤖 Beschreiben“ nimmt deinen Text – getippt oder diktiert – und lässt den Adler-Coach daraus eine Zeichnung machen. Sie landet im Editor, nicht in der Datenbank: Du kannst alles verschieben, ergänzen oder mit „Zurück“ wieder verwerfen. Je genauer der Aufbau dasteht (wie viele Hütchen, wie viele Kinder, wo das Tor), desto besser trifft sie. Diktieren geht nur, wo das Gerät zuhören kann – das Textfeld immer. <b>Seit v598 gibt es „Spieler + Ball“ als eigenes Werkzeug</b> – vorher waren das zwei Elemente, die man von Hand übereinanderschob, und beim Verschieben blieb der Ball liegen. Jetzt ist es eines: der Ball sitzt am Fuß und geht mit. Gezählt wird er in der Materialzeile wie ein einzeln gesetzter. <b>Der Ball ist seit v598 schwarz</b> mit weißem Rand, in beiden Rasenfassungen. Auf dem hellen Rasen war der weiße Ball mit 1,30:1 kaum zu sehen; schwarz kommt dort auf 13,6:1, und auf dem dunklen Rasen trägt der weiße Rand. <b>Die Werkzeuge stehen seit v579 unter vier Überschriften</b> – „Ball und Wege“ zuerst, weil Pass, Dribbling, Schuss und Laufweg in jeder Übung vorkommen. Vorne in den Vorlagen liegen die <b>vier Felder</b>: Feld mit Jugendtoren, FUNiño-Feld, halbes Feld mit Jugendtor, halbes Feld FUNiño – mit Mittellinie, Schusszonen und Eckhütchen, aber bewusst ohne Spieler, denn darauf zeichnest du ja erst. Dazu kommt ein Symbol für die <b>Position des Trainers</b>; es zählt nicht als Material, denn den holst du nicht aus dem Schrank. <b>„① Schritte zählen“</b> nummeriert die Wege in der Reihenfolge, in der du sie tippst: erst nach links, dann zurück, dann nach rechts – so steht die Abfolge auf einem Bild. Wenn es sich bewegen soll, nimmst du weiter mehrere Bilder und „Abspielen“. <b>Seit v578 kannst du das Feld hochkant stellen</b> – der Knopf über der Zeichenfläche legt es um, und alles dreht sich mit: Hütchen, Spieler, Pfeile, Tore, Leitern, auch die weiteren Bilder. Nichts fällt dabei aus dem Bild, und zweimal umschalten bringt dich genau dorthin zurück, wo du warst. Eine Vorlage kommt gedreht ins hochkante Feld, „Leeren“ behält den Zuschnitt. Gedacht ist das für alles, was in die Länge läuft – Slalom, Torschuss auf ein Tor am oberen Rand. <b>Das Dribbling ist seit v578 eine durchgezogene Schlangenlinie</b> statt einer gepunkteten Geraden: der Ball bleibt am Fuß, der Weg schlängelt. Pass gerade, Laufweg gestrichelt, Schuss dick, Dribbling geschwungen – die vier sind damit auch ohne Farbe auseinanderzuhalten. Bei den noch <b>16</b> älteren Übungen, deren Zeichnung von Hand geschrieben ist, gibt es die helle Fassung nicht – das sagt das Fenster dann auch. Es waren 37; mit v597 sind elf Rauten-Übungen und mit v599 zehn aus Pressing und Abschluss auf eine Beschreibung umgestellt worden, aus der die App zeichnet. Damit stimmen dort Legende, Kontrast, helle Fassung und Bildexport von selbst. Neben Spielern, Hütchen und Toren gibt es <b>Geräte</b>: Stange, Markierungsteller, Minihürde und ein Balldepot, dazu <b>Stangentor</b> und <b>Hütchentor</b> zum Durchdribbeln (zwei Tipps, der Abstand ist die Torbreite) und eine <b>Kreiszone</b> für den Mittelkreis. Unter jeder Skizze steht dann, <b>was du dafür brauchst</b> — gezählt wird, was gezeichnet ist, ein Dribbeltor sind zwei Pfosten. Hast du das Material im Schrank gezählt (Kachel Orga, Material), sagt die Zeile auch, wenn etwas fehlt, und benennt, was in keiner Bestandsliste steht. Bei mehreren Übungen auf einem Aufbau zählt das Maximum, nicht die Summe — aufgebaut wird ja nur einmal. Eine Skizze kann <b>mehrere Bilder</b> haben: Aufbau, Pass, Abschluss nacheinander statt alles auf einmal. Unter der Zeichnung stehen dann nummerierte Knöpfe, im großen Fenster wischt man zusätzlich. Im Editor legst du sie über „+ Bild“ an — Spieler und Ball werden übernommen, du verschiebst nur, was sich bewegt; der <b>Aufbau</b> (Feld, Tore, Linien, Hütchen) steht immer in Bild 1 und gilt für alle, denn am Platz wird ja auch nicht umgebaut. Im großen Fenster gibt es dazu <b>„Abspielen“</b>: die Bilder laufen nacheinander ab, Spieler und Ball gleiten dabei von einem Stand zum nächsten, die Pfeile bleiben stehen, solange die Bewegung läuft. Seit v588 steht jedes Bild eine Sekunde, und das Gleiten richtet sich nach der Strecke – ein kurzer Pass gut eine Sekunde, ein Weg über das halbe Feld gut zwei. Ein Tipp aufs Bild hält an. Wer in den Systemeinstellungen „weniger Bewegung“ gewählt hat, bekommt harte Schnitte statt Bewegung. Geteilt wird das Bild, das gerade zu sehen ist. Im großen Fenster steht außerdem <b>„Kinder einsetzen“</b>: die Kreise bekommen die Kürzel der Kinder, die heute da sind – „Ni“ für Nina, „Os“ für Oskar –, und am Tablet zusätzlich das Foto, sofern die Eltern es für die App freigegeben haben. Zwei Chips antippen tauscht zwei Kinder. Gedacht ist das für die Besprechung: ein Kind erkennt sich in einem Kreis mit „S“ nicht wieder, in seinem eigenen Kürzel schon. <b>Gespeichert wird davon nichts</b> – die Übung selbst bleibt namenlos, und das Bild, das du weitergibst, zeigt nie Namen oder Gesichter: die Besetzung gibt es nur im großen Fenster, „Skizze teilen“ arbeitet mit der Zeichnung aus dem Detailfenster. Daneben liegt <b>„Skizze teilen“</b>: daraus wird ein Bild, das du über das Teilen-Menü deines Handys an die Co-Trainer schickst – am Rechner lädt es sich herunter. Die Empfänger brauchen die App dafür nicht. <b>Übungsform, Spielform oder keines von beidem:</b> neben jeder Übung steht, was sie ist – ein Tipp darauf ordnet sie ein, im Kreis über „Spielform“, „Übungsform“, „weder noch“ und zurück auf offen. „Weder noch“ ist für Koordinationsleiter, Laufschule, Fallschule und Rituale: die sind fachlich keines von beidem, und ein Zwang zur Wahl hätte den Spielform-Anteil verzerrt. <b>Für den ersten Durchgang</b> gibt es unter den Übungen den Knopf „… Übungen einordnen“: dort stehen alle noch offenen beieinander, jede mit einem Vorschlag, den du antippen und ändern kannst. Gespeichert wird erst mit „Einordnung übernehmen“ – der Vorschlag allein gilt nie als Einordnung. Der Knopf verschwindet, sobald nichts mehr offen ist. Bei einer Spielform entscheidet das Kind selbst, bei einer Übungsform ist der Ablauf vorgegeben. Geraten wird nichts: was du nicht eingeordnet hast, steht als „noch nicht eingeordnet“ da. Die Einordnung hängt am Namen der Übung – benennst du sie um, ist sie weg. Genutzt wird sie beim Vorlagen-Import: die Spielform-Minuten zählen Hauptteile mit einer Übungsform nicht mehr als Spielzeit mit. <b>Vorlagen mit Stationen:</b> Ein Block einer Vorlage nennt entweder eine Übung für alle Felder oder eine Liste von Stationen mit je eigener Übung – beides zusammen weist der Import ab. Die Reihenfolge der Stationen ist die Reihenfolge der Felder. Wie viele Felder es am Termin gibt, entscheidet seit v570 der <b>Bedarf</b>, nicht mehr allein die Zahl der angehakten Feldtrainer: die Stationen der Einheit, die Trainer und vor allem die <b>Kinderzahl</b> – höchstens sechs je Gruppe, mindestens vier. Dreizehn Kinder ergeben also drei Felder, auch wenn nur zwei Trainer angehakt sind; ein Feld ohne Trainer ist erlaubt und zeigt „👤 Trainer?“. <b>Die Einteilung folgt der Anwesenheit</b> (seit v574): Ist die Anwesenheit des Tages erfasst, fällt aus den Gruppen, wer fehlt, und wer unangemeldet kommt, rückt in die kleinste nach – beim Öffnen des Plans, beim Speichern der Anwesenheit und im Gruppen-Fenster. Vor dem Trainingstag zählen die Zusagen, und dort wird nur ergänzt, nie entfernt: Wer am Mittwoch absagt und am Freitag doch kommt, findet seine Gruppe wieder. Ist weder Anwesenheit noch eine Zusage erfasst, bleibt die Einteilung unangetastet – die Basis wäre dann der ganze Kader, und der sagt nichts darüber, wer heute kommt. Namen, Trainer und von Hand verschobene Kinder bleiben; die App sagt einmal, wen sie verschoben hat. Beim Übernehmen einer Vorlage zieht die Gruppeneinteilung automatisch mit: reicht sie nicht, wird eine Gruppe <b>abgespalten</b> – die bestehenden behalten ihre Kinder, ihren Namen und ihren Trainer, neu gemischt wird nur über „🎲 Neu mischen“. Tragen die Kinder kein weiteres Feld, entfällt die überzählige Station wie bisher, und der Block sagt, wie viele Kinder es dafür bräuchte. Eine Station mit der Rolle „tw“ wird kein Feld, sondern ein paralleler Torwart-Block. <b>Was an welchem Feld gilt:</b> Nennt eine Einheit mehrere Stationen, beschreibt ihr Block-Text die Felder nacheinander, getrennt durch „|“. <b>Seit v598 zeigt der Blockkopf nur noch den Block</b> – „Hauptteil 1 – drei Stationen“ statt derselben Regeln ein zweites Mal in voller Länge (den Zusatz „3 Min frei, dann eng“ gibt es seit v623 nicht mehr: die feste Minutenzahl passte zu keiner Blocklänge); am Handy waren daraus sechs Zeilen geworden. Der volle Text steht weiter im Label (sonst fänden die Stationen ihre Texte nicht). <b>Seit v658 steht oben nur noch der Name des Blocks</b> – „Hauptteil 1“, „Zwischenblock“ –, ohne die Überschrift der Einheit dahinter: tauschst du eine Übung von Hand, passte sie nicht mehr. Seit v571 steht jeder dieser Teile <b>unter seiner Station</b> statt einmal oben am Block – und darunter, fett, die Anpassung für genau diese Gruppengröße, wenn die Einheit eine nennt: „👥 4 Kinder: zwei Angreifer gegen einen Verteidiger plus Wandspieler“. Hauptteil 2 und 3 verweisen meist nur zurück („Regeln wie in Hauptteil 1“) und holen sich die Texte von dort. Der Text hängt an der <b>Übung</b>: tauschst du sie an einem Feld, verschwindet er mit ihr. Nennt die Einheit für diese Größe nichts und ist die Gruppe kleiner, als die Übung braucht, steht dort ein Hinweis mit der Zahl und dem Weg – Kinder, die laut Übungsbeschreibung ohnehin warten, zählen dabei nicht mit. <b>Seit v572 steht die Zeile immer</b>, wenn die Übung eine Zahl je Station nennt: „👥 5 Kinder: 4 spielen, eines wechselt ein“ oder „👥 4 Kinder: alle spielen“ – du siehst auf einen Blick, ob die Gruppe aufgeht und wer draußen steht. Nennt die Einheit für diese Größe etwas Eigenes, geht ihr Text vor. <b>Seit v595 zählt auch eine Spanne.</b> Bis dahin wartete die Zeile auf das Wort „je Station“, und das schreiben nur die Übungen aus der Bibliothek – die 107 mitgelieferten schreiben „6–10“ oder „8–13“, und dort stand deshalb nichts. Eine Spanne ist aber genau diese Angabe: „6–10“ heißt ab sechs Kindern spielbar, ab elf wechselt jemand ein. Übungen ohne feste Besetzung („beliebig“, „Paare“) sagen jetzt „alle spielen mit“. Stumm bleibt nur, was eine Gesamtzahl nennt – „12 (3 Felder à 4)“ meint alle Kinder zusammen, und wer die 12 als Bedarf eines Feldes läse, zeigte Unsinn. Geraten wird also weiterhin nicht. <b>Seit v573 gleicht die App die Feldstärken aus:</b> Brauchen die Stationen verschieden viele Kinder – bei L4-8 vier am Jugendtor, vier an den Minitoren und sechs am Wandspieler-Feld –, wandern für diesen einen Block so viele Kinder mit, wie nötig. Unter der Station steht dann, wer dazukommt und aus welcher Gruppe, und wer dafür an einem anderen Feld spielt. Die Einteilung selbst ändert sich nicht: Nach dem Block ist jedes Kind wieder in seiner Gruppe, und beim Weiterrücken rechnet sich der Ausgleich neu. Reichen die Kinder nicht für alle Felder, bleibt die Lücke – sie wird angezeigt, nicht verdeckt. <b>Wie viele Gruppen überhaupt?</b> Das rechnet die App jetzt für die gewählte Einheit durch: Jede mögliche Gruppenzahl wird gegen die Stationen geprüft, und die Karte „👥 Trainingsgruppen“ sagt, welche am besten aufgeht. Im Fenster selbst steht der Stern am passenden Knopf, darunter die Rechnung. Für L4-8 kommt dabei genau heraus, was in der Skalierungszeile der Einheit steht – bei 8 und 10 Kindern zwei Felder, bei 12 und 14 drei, und der Knopf „👥 Auf N Gruppen zusammenlegen“ sagt dazu, dass das ein Feld kostet. <b>Seit v577 wartet das Übernehmen auf die Rückmeldungen</b> des Termins: Vorher hing die Feldzahl davon ab, ob die Zusagen schon geladen waren – wer sofort nach dem Terminwechsel übernahm, rechnete mit dem ganzen Kader statt mit den zugesagten Kindern. Bestehende Vorlagen ohne Stationen bleiben unverändert gültig, die Schema-Kennung bleibt adler-vorlagen/1. <b>Seit v631: Läuft die Übung ohne Trainer?</b> Jede Übung hat dafür eine von drei Angaben – <b>läuft allein</b> (feste Regeln, die Kinder spielen und zählen selbst), <b>Trainer führt</b> (er ruft, zählt oder korrigiert; einer reicht für alle, aber er muss dabei sein) und <b>Trainer am Feld</b> (er ist Teil der Übung, wirft, schießt oder spielt ein). Die App bringt für alle Übungen einen Vorschlag mit; über „👤 … Übungen: läuft sie ohne Trainer?“ im Übungen-Reiter siehst du ihn durch, ein Tipp schaltet weiter, gespeichert wird erst mit „Einordnung übernehmen“. Gebraucht wird das, wenn du allein mehrere Felder hast: Steht an einem Feld <b>ohne Trainer</b> eine Übung, die einen braucht, sagt die Station es und bietet drei Übungen an, die allein laufen – ein Tipp tauscht. Bekommt das Feld einen Trainer, verschwindet der Hinweis. Im Übungsfenster steht die Angabe als „👤 läuft allein“, solange sie nur Vorschlag ist mit „(Vorschlag)“; in der Übungsauswahl sind die Übungen markiert, die allein laufen. <b>Eigene Übung (seit v639):</b> Oben „Beschreib die Übung“ – tippen oder einsprechen, dann „KI-Auswertung“: die KI füllt alle Felder und zeichnet die Skizze; du prüfst, änderst und tippst unten „Übung erfassen“. Wer lieber selbst ausfüllt, lässt den Kasten einfach leer. <b>Seit v680 folgen die Vorlagen der Zeitstruktur 18/12/12/28:</b> Straßenfußball 10 und Warm-up Adler 8, die drei Stufen 12, 12 und 10 Minuten, Abschlussturnier 18. Ausgenommen sind die beiden Lehrgangsformen (15:30:15:30) und L4-8, wo drei Gruppen über drei Felder rotieren und jede an jedem Feld gleich lange bleibt. Neu seit v678: „Frei für den Wurf“ – Werfen und Fangen statt Passen, wer den Ball hat, bleibt stehen; drei Stufen bis zum Spiel mit dem Fuß. Für den Hauptteil gedacht: Wer nicht frei steht, bekommt den Ball nicht.", go:"formen"},
+    {t:"Trainingsplan", d:"Oben steht, wie viele Kinder <b>dabei</b> sind und wie viele <b>fehlen</b> – aus derselben Liste wie die Gruppen: die gespeicherte Anwesenheit des Termins (auch schon am Vorabend), sonst die Zusagen, sonst der Kader ohne Absagen. Wer in der Anwesenheit abgewählt ist, fällt aus seiner Gruppe. <b>≡ am Block</b> ziehen verschiebt ihn an eine andere Stelle (auch mit den Pfeiltasten); die gewählten Übungen wandern mit. <b>＋ Übung im Aufwärmen</b> hängt eine weitere Übung an. <b>🔁 Durchgänge</b> an einem Hauptteil mit mehreren Stationen: Der folgende Hauptteil wird Durchgang 2 – mit denselben Übungen und Trainern je Station, die Gruppen wechseln, und jeder Durchgang behält seine volle Zeit. Fehlt ein folgender Hauptteil, legt die App ihn an und sagt, um wie viel die Einheit länger wird. Eine eigene Übung im Durchgang ersetzt die übernommene. <b>ℹ️ an einer Übung</b> zeigt oben „Im Plan: … Min.“ – das ist die Länge dieses Blocks; die Minuten in der Beschreibung sind nur der Richtwert, Abschnitte darin gelten als Anteil der geplanten Zeit."},
+    {t:"Grillhütte", d:"Unter Termine die Kachel „🔥 Grillhütte“ unter der Terminliste. Eingeteilt wird immer die <b>Familie</b> (das Kind), nie ein einzelnes Elternteil – seit v668 <b>zwei Familien je Heimtermin</b>. <b>Einteilen</b> füllt alle offenen Plätze künftiger Heimtermine: wer in dieser Saison am seltensten dran war, zuerst; jede Familie einmal, bevor eine zum zweiten Mal dran ist; neue Kinder reihen sich hinten ein; Bestehendes bleibt stehen. <b>Kann an dem Tag nicht</b> sperrt eine Familie für ein Datum – das Einteilen überspringt sie dort. Unten unter <b>Vom Dienst befreit</b> stehen Familien, die nie eingeteilt werden (seit v671, z. B. Trainerfamilien). Übernimmt eine Familie einen Dienst, zählt er seit v672 für sie – die abgebende Familie kommt dann wieder regulär an die Reihe. <b>Umbuchen</b> trägt nach, wenn Familien außerhalb der App getauscht haben. Eltern sehen ihren Dienst ab der Einteilung auf der Startseite („Eure Familie ist eingeteilt“) – alle Eltern, die mit dem Kind verknüpft sind – und im Termin; wer nicht kann, tippt „Ersatz suchen“, eine andere Familie „Übernehmen“ – bis dahin bleibt der Dienst bei der eingeteilten Familie. Verlässt ein Kind den Kader, werden seine künftigen Dienste freigegeben."},
+    {t:"Trainingsblock", d:"Ein Ziel über zwei bis vier Wochen: „🧱 Trainingsblock anlegen“ (im Trainingsplan, solange kein Block ansteht), eine <b>Leitfrage</b> wählen, auf Wunsch einen eigenen Zielsatz, den Zeitraum und <b>genau drei Einheiten</b> aus der Folge dieser Leitfrage. Die App verteilt sie im Wechsel <b>A-B-C-A-B-C</b> auf die Trainings im Zeitraum – so kommt jede Einheit mehrmals, und die Kinder erkennen die Übungen wieder. Im Trainingsplan steht dann oben, welche Einheit heute dran ist und welcher <b>Aufbau zur Kinderzahl</b> passt (aus Anwesenheit, sonst Zusagen, sonst Kader ohne Absagen); die anderen Größen lassen sich aufklappen. „Einheit in den Plan übernehmen“ setzt sie wie „Vorlage übernehmen“. Fällt ein Training weg, rückt der Wechsel nach. Solange ein Block läuft, tritt der Monats-Schwerpunkt zurück. Die Leitfragen stehen als <b>Themen-Kacheln</b> mit ihren Einheiten; jede Einheit zeigt Dauer und Kinderzahlen, „Ablauf ansehen“ klappt die Blöcke auf, „Wählen“ nimmt sie in den Block. Jede Einheit hat ein <b>Ziel für die Kinder</b> in einem Satz („⚽ Heute schaust du vor dem Pass, wer frei ist.“) – es steht in der Vorschau und oben im Trainingsplan, zum Vorlesen vor dem Training."},
+    {t:"Saisonformat (3+1 und FUNiño)", d:"Die Saison spielt 3+1 und FUNiño. Zu jeder Leitfrage gibt es jetzt Einheiten in beiden Formen – seit v667 auch für Ball behalten, Vorbeikommen und Tore machen (L1-5 bis L3-5, mit vier neuen Übungen). Beim Anlegen eines Trainingsblocks sind mit der Leitfrage drei Einheiten vorgewählt, mindestens zwei davon im Saisonformat; ein Satz über den Karten sagt, wie viele. Tauschen und abwählen geht wie bisher."},
+    {t:"Geführte Tour",
+     d:"❓ oben → „Geführte Tour starten“: Die App öffnet die Bereiche selbst und zeigt mit einem gelben Rahmen auf die Stelle, um die es geht – Startseite, Trainingsplan, Block, Gruppen, Übungen, Spieltag, Team, Taktik, Nachbereiten. Eltern haben ihre eigene Tour (❓ im Eltern-Bereich), Kinder in der Kabine „❓ Zeig mir alles“ in einfacher Sprache. Jede Tour kommt beim ersten Öffnen einmal von selbst; „Überspringen“ beendet sie."},
+    {t:"Block automatisch planen",
+     d:"Mit „Block erfassen“ plant die App <b>alle Trainings im Zeitraum sofort</b> – Einheit A, B, C im Wechsel, jede mit Abschlussturnier. Stehende Pläne im Zeitraum werden dabei ersetzt; unter „Erfasste Blöcke“ plant „Neu planen“ alles noch einmal. Am Trainingstag oben im Trainingsplan: <b>„🔄 Aktualisieren nach Anwesenheit“</b>. Zuerst greifen feste Regeln – so viele Gruppen wie Trainer, Kinder aus Anwesenheit oder Zusagen, und jede Station, an der die Gruppe nicht zur Übung passt, bekommt eine passende (Spielform bleibt Spielform, FUNiño und 3+1 zuerst). Danach prüft die KI im selben Thema und schlägt höchstens drei Tausche vor, nur mit Übungen aus der App; jeder Vorschlag hat „Übernehmen“. Fällt die KI aus, gilt der Plan aus den Regeln. An die KI gehen nur Zahlen und Übungen, keine Namen."},
+    {t:"Gruppen, Wechsler, Abschlussturnier", d:"Sind Feldtrainer angehakt, bildet die App <b>so viele Gruppen wie Trainer</b>, auch wenn die Einheit mehr Stationen vorsieht – die überzählige Station entfällt, und am Block steht „👥 3 Gruppen bilden (eine ohne Trainer)“ für den, der es trotzdem will. Ein Kind mehr, als die Übung trägt, wechselt ein. Sind es zwei oder mehr, steht an der Station „⚠️ Zu viele Wechsler“ mit bis zu drei Übungen, die mit so vielen Kindern laufen, und „🤖 Per KI anpassen“: die Übung öffnet sich als Kopie, die KI schreibt sie für die Kinderzahl um, du prüfst und erfasst. Jede übernommene Vorlage endet mit einem <b>Abschlussturnier von 10 Minuten</b>; hat sie keinen eigenen Abschluss, gibt der letzte Spielblock die Zeit ab."},
     {t:"Trainingsturnier", d:"Turnier zum Trainingsabschluss mit Zeitbudget-Automatik – vorab planbar: es hängt am gewählten Termin und wird gespeichert, du kannst es also Tage vorher vorbereiten und findest es am Trainingstag auf jedem Gerät wieder. Gesamtzeit (z. B. 40 Min.) und 1–4 Felder vorgeben, die Automatik wählt Format und Spielzeit (5–10 Min.; bleibt Zeit übrig, gibt es eine Rückrunde statt eines Finales – beim Training soll niemand am Ende nur zuschauen) – reicht die Zeit fair nicht, sagt sie ehrlich, wie viele Minuten fehlen. Ein Platzrechner sagt vorab, wie viele Kinder die gewählte Feld-/Formatkombination gleichzeitig braucht und ob alle Teams durchgehend im Spiel sind. Zwei Modi: Kinder-Turnier (Trainer spielen auf Wunsch in den Teams mit) oder Kinder gegen Eltern (1–4 Eltern-Teams, Duelle parallel auf den Feldern, Duell-Scoreboard, nie Kind gegen Kind). Spielform wählbar (FUNiño, 4+1, 5+1) mit Team-Vorschlag aus der Kinderzahl. Ein Pfiff für alle Felder.", run:"blitzOpen()"},
   ]},
   {cat:"⚽ Spieltag", items:[
+    {t:"Spieltag in drei Phasen", d:"Auf der Spieltag-Seite geht es über drei große Einstiege in den Match: ① Vor dem Spiel (Wer ist dabei, Teams, Kapitän, Aufstellung), ② Während des Spiels (Match-Uhr, Wechsel, Liveticker), ③ Nach dem Spiel (Ergebnis, Spielbericht, Blitz-Rating, Team-Quests). Im Match stehen dieselben drei als Kacheln oben; es ist immer nur eine Phase offen. Am Spieltag selbst wählt die App die passende Phase nach der Uhrzeit vor. Oben links führt „‹ Spieltag“ zurück zur Übersicht – das gilt so auf jeder Unterseite.", run:"go('ue-spieltag')"},
     {t:"Match", d:"Zuerst „Teams festlegen“ in zwei Blöcken: „Wer ist dabei?“ (zugeklappt, sobald jemand dabei ist – vorbelegt aus den Eltern-Rückmeldungen, ohne Antwort bleibt ein Kind offen, „N Offene auf Dabei setzen“ erledigt das am Platz auf einmal; „Dabei“ ist zugleich die Anwesenheit dieses Spieltags und zählt für die Spiele-Quote – die Kachel „Anwesenheit“ auf der Spieltag-Seite führt direkt hierher und klappt die Liste auf, während die Kachel gleichen Namens im Training bei den Trainingsterminen bleibt) und darunter die Teams als Karten mit den Namen: ein Tipp auf einen Namen schiebt das Kind ins nächste Team, zuletzt in die Pause. Die Team-Kacheln darunter zeigen die Namen ohne Aufklappen. Dazu, wie viele Teams wir stellen und welche Spielform jedes Team spielt (beim Kinderfestival etwa Adler 1 auf 4+1, Adler 2 FUNiño, dazu 3+1 und 5+1). Die Automatik setzt Torwart-Kinder zuerst auf die Teams mit Torwart, füllt dann die Felder und verteilt die übrigen Kinder so, dass die Spielzeit je Kind über alle Teams möglichst gleich ist – der Anteil steht je Team dabei. Steht ein Spielplan für den Tag (Festival oder Heimspiel), kommt alles Weitere von dort: „Teams festlegen“ zeigt je Runde, auf welchem Feld ein Team spielt, in welcher Spielform und gegen wen, und die Runde wechselt mit dem Anpfiff im Planer – geändert wird im Spielplan, „Im Spielplan ändern“ führt hin. Auch die Match-Uhr nimmt an so einem Tag ihre Spielzeit von dort (8 Minuten statt der üblichen 10), spielt sie ohne Halbzeit durch und läuft erst, wenn die Runde angepfiffen ist – „Spiel läuft“ steht dann auf den Team-Kacheln, die gerade auf dem Feld sind, und der Wechsel-Timer startet mit – mit der halben Spielzeit als Intervall (bei 8 Minuten also einer in der Mitte, einer am Ende); anhalten kannst du ihn jederzeit. Vor der ersten Runde teilt der Plan die Aufwärmfelder zu: wir immer im Käfig, die Gastvereine der Reihe nach auf die übrigen Felder; auf der Gast-Seite steht das ganz oben. Ohne Spielplan (Auswärtsturnier) legst du die Felder des Tages selbst an (Feld 1: 4+1, Feld 2: FUNiño …): die festen Teams wandern dann mit „Nächste Runde“ ein Feld weiter, und fehlt einem Team auf seinem Feld ein Kind, hilft eines aus dem Team mit der meisten Bank aus – nur für diese Runde, Torwart-Kinder wechseln sich dabei ab, welcher Trainer sie betreut – die Kinder werden dabei automatisch verteilt und lassen sich von Hand umsetzen. „Dabei“ heißt automatisch „Spielt mit“ – wen du pausieren lassen willst, stellst du selbst um. Neben jedem Kind stehen die Trainingsquote und die Zahl der Einsätze; beide zählen ab einem Stichtag (zurzeit: Trainings ab dem 31.08., Spiele ab dem 05.09.2026), damit die faire Einteilung nicht an alten Zahlen hängt. Den Kapitän wählst du in derselben Team-Karte – er bleibt es für den ganzen Spieltag, die App zählt über alle Spiele mit und sortiert die Auswahl nach „am seltensten dran“ (⭐ = noch nie). Danach hat jedes Team seine eigene Kachel in drei Schritten: „① Vor dem Spiel“ zeigt den Kapitän und die Aufstellung (Torwart fest, „Feld & Bank fair besetzen“, das Mini-Feld mit Bank); „② Während des Spiels“ hält Match-Uhr und Wechseltimer, Live-Aktionen und Liveticker sind darunter zugeklappt; „③ Nach dem Spiel“ sammelt die Ergebnisse (am Festivaltag alle Spiele dieses Teams aus dem Spielplan), Spielbericht und Ergebnis-Karte – und ganz zum Schluss das Blitz-Rating. Am Festivaltag ist die Runde aus dem Spielplan das Spiel: jede Live-Aktion, jeder Ticker-Eintrag und jeder Wechsel trägt sie, der Anpfiff im Planer schaltet um. Tore und Gegentore einer Runde werden von selbst zum Ergebnis im Festival-Plan, der Ticker bekommt bei dir und bei den Eltern einen Absatz je Spiel („Runde 3 · gegen Rath-Heumar 2 · Käfig · 2:1“), das Live-Ergebnis im Vollbild zählt nur die laufende Runde – Blitz-Rating und Spielbericht bleiben einmal je Tag. Den Liveticker startest du selbst mit „▶️ Liveticker starten“ – er hängt nicht am Anpfiff und nicht an der Aufstellung. Sobald er läuft, erscheint bei den Eltern ganz oben eine rote LIVE-Kachel mit Teilen-Knopf – der Link geht auch an Oma und Opa, ohne Anmeldung. Stoppst du ihn wieder, kommt nur nichts Neues mehr dazu – das Bisherige bleibt für die Eltern sichtbar. Drei Tage nach dem Spieltag zeigt der Link nur noch den Endstand; die Ereignisse bleiben gespeichert. Beim Blitz-Rating nach dem Spiel zählt pro Kind, Trainer und Spieltag genau eine Bewertung – gehst du ein zweites Mal durch, korrigierst du die erste, statt sie zu verdoppeln. In der Live-Aktion stehen oben die Kinder aus der Aufstellung und unter einer gestrichelten Linie alle weiteren, die heute dabei sind – du kannst also auch tickern, wenn die Aufstellung nicht gepflegt ist. Bei „Parade“ erscheinen nur die Torhüter. Hast du selbst keine Hand frei: „🙋 Jemand anderen tickern lassen“ verschickt einen Link an einen Helfer am Spielfeldrand; der sieht nur die Kinder von heute und die Aktionsknöpfe und kann Tore, Paraden und Gegentore melden – keine Bewertungen, keine Kaderdaten. Der Link gilt nur, solange der Ticker läuft. Die Team-Quests stehen darunter und gelten für alle Teams zusammen. Ist heute Spieltag, öffnet sich beim Betreten der Abschnitt, der zur Uhrzeit passt – vor dem Anpfiff „Vor dem Spiel“, während „Live“, danach „Nach dem Spiel“.", go:"spieltag"},
+    {t:"Spieler bewerten", d:"Team → Bewerten: je Kind 16 Kriterien (Torwart 22) in vier Stufen – Ansatz, Solide (= altersgerecht), Gut, Stark; unter jeder Stufe steht, woran man sie im Spiel erkennt. „Bewertungsrunde starten“ geht alle Kinder nacheinander durch. <b>So wird es verlässlich:</b> vorher im Trainerteam die Stufen-Beschreibungen gemeinsam lesen und an einer gedachten Szene klären, was „Solide“ und was „Gut“ heißt; dann Kriterium für Kriterium über alle Kinder nachdenken statt Kind für Kind (sonst färbt der Gesamteindruck alle Einzelwerte); nur bewerten, was ihr gesehen habt. Ihr bewertet gemeinsam („Bewertet von: Trainerteam“ ist vorgewählt): Damit nicht die erste oder lauteste Stimme den Wert setzt, zeigt jeder seine Stufe gleichzeitig mit den Fingern (1–4); liegt ihr zwei Stufen auseinander, erzählt jeder kurz die Szene, die er gesehen hat – dann entscheidet ihr. Am Ende kurz prüfen, ob oben vor allem früh im Jahr geborene Kinder stehen (Geburtsquartal im Profil). Die Werte sind eine Momentaufnahme aus dem Training, keine Prognose. <b>Seit v635:</b> Kinder sehen nie Zahlen – auch nicht auf der Urkunde. Der Entwicklungsbericht fürs Elterngespräch nennt Stufen in Worten, Stärken, Ziele und Trainingsschwerpunkt, aber keine Prozente und keine Trainer-Interna. <b>Seit v637:</b> Was ihr nicht beobachtet habt, bekommt „Nicht gesehen“ – es zählt nicht mit, statt geraten zu werden. „Gewachsen“ zeigt die App erst, wenn ein Kriterium zwei Stufen gestiegen ist oder zwei Runden hintereinander je eine. <b>Seit v648 (Trainermeeting 27.09.2026):</b> Einzelne Spieler werden erst ab dem Ende der Hinrunde bewertet. Das Datum setzt ihr oben in Bewerten („Erste Bewertungsrunde ab“, sehen und ändern können es nur Trainer). Bis dahin ist das Formular gesperrt, „Runde fällig“ erscheint nirgends, „Einheit bewerten“ zeigt keine Sterne je Kind, das Blitz-Rating ist ausgeblendet, und die KI-Auswertung der Sprachnotiz trägt keine Werte je Kind ein – ein besonderes Ereignis landet als Satz in der Notiz. Ab dem Datum bewertet das ganze Trainerteam jeden Spieler, danach alle acht Wochen; fällig ist eine Runde 49 Tage nach der letzten. Über dem Formular steht, wer das Kind in dieser Runde schon bewertet hat. Seit v677 steht beim gewählten Kind der <b>Trainingseinsatz</b> der letzten sechs Monate: je Monat der Schnitt der schnellen Sterne nach dem Training (ruhig · gut · stark), wie oft bewertet und wie oft da. Diese schnellen Sterne sind nie gesperrt – gesperrt bis zum Startdatum ist nur diese Profilbewertung.", run:"go('bew')"},
     {t:"Aufstellung", d:"Rollen-Empfehlung aus den Bewertungen: wer passt als Aufpasser, Jäger, Flitzer links/rechts. Braucht mindestens 4 bewertete Kinder – wer noch niemanden bewertet hat, nutzt im Spieltag „Feld & Bank fair besetzen“ (verteilt nach Einsatzzeiten).", go:"kombi"},
-    {t:"Spiel & Festival nachbereiten", d:"Die Ebene über dem Blitz-Rating: wie die MANNSCHAFT gespielt hat. Je Team vier Antippreihen in derselben Skala wie beim Blitz-Rating (schwach / ok / stark) – Ordnung im Raum (verteilt geblieben oder Traube um den Ball), Passspiel, Zweikämpfe, Spaß. Warum je Team und nicht einmal für den Tag: Adler 1 und Adler 2 spielen oft in verschiedenen Formen und gegen verschiedene Gäste, ein gemeinsamer Wert mittelt genau das weg. Darunter die Gäste, sportlich eingeschätzt (zu schwach / passend / zu stark) – die Antwort auf die Frage, wen du beim nächsten Festival einlädst, damit die Kinder Spiele bekommen und keine Vorführungen. Dann zwei Sätze, „Das hat getragen“ und „Daran arbeiten wir“, und zugeklappt drei Orga-Fragen (Zeitplan, Felder, Helfer). Alles freiwillig. Jeder Trainer gibt seine eigene Einschätzung ab, sie ersetzt keine andere. Die einzelnen Kinder bleiben im Blitz-Rating – was hier gefragt ist, sieht man am einzelnen Kind gar nicht: ob ein Achtjähriger seine Position hält, hängt an Spielform und Feldgröße, also an deiner Entscheidung. Erreichbar über das To-do auf der Startseite und im Termin-Fenster unter „Nach dem Termin“."},
+    {t:"Spiel & Festival nachbereiten", d:"Die Ebene über dem Blitz-Rating: wie die MANNSCHAFT gespielt hat. Je Team vier Antippreihen in derselben Skala wie beim Blitz-Rating (schwach / ok / stark) – Ordnung im Raum (verteilt geblieben oder Traube um den Ball), Passspiel, Zweikämpfe, Spaß. Warum je Team und nicht einmal für den Tag: Adler 1 und Adler 2 spielen oft in verschiedenen Formen und gegen verschiedene Gäste, ein gemeinsamer Wert mittelt genau das weg. Darunter die Gäste, sportlich eingeschätzt (zu schwach / passend / zu stark) – die Antwort auf die Frage, wen du beim nächsten Festival einlädst, damit die Kinder Spiele bekommen und keine Vorführungen. Dann zwei Sätze, „Das hat getragen“ und „Daran arbeiten wir“, und zugeklappt drei Orga-Fragen (Zeitplan, Felder, Helfer). Alles freiwillig. Jeder Trainer gibt seine eigene Einschätzung ab, sie ersetzt keine andere. Die einzelnen Kinder bleiben im Blitz-Rating – was hier gefragt ist, sieht man am einzelnen Kind gar nicht: ob ein Achtjähriger seine Position hält, hängt an Spielform und Feldgröße, also an deiner Entscheidung. Erreichbar über das To-do auf der Startseite und im Termin-Fenster unter „Nach dem Termin“. <b>Seit v634 ein Einstieg für alles:</b> Auf der Startseite steht immer „📝 Nachbereiten – Training, Spiel, Festival“. Er zeigt die vergangenen Termine aller drei Arten in einer Liste, je mit ⭐ (von dir noch offen) oder ✅ und wer schon nachbereitet hat. Überall derselbe Ablauf: erzählen, die KI ordnet, daraus wird ein Tagebucheintrag. Das To-do „Ergebnis nachtragen“ gibt es nicht mehr – Ergebnisse zählen in der U9 nicht; wer eines festhalten will, trägt es im Termin-Fenster ein. <b>Seit v627 per Sprachnotiz:</b> Oben im Fenster (auch bei „Einheit bewerten“ nach dem Training) steht „🎙️ Per Sprachnotiz ausfüllen“. Erzähl frei, wie es lief – per Mikrofon-Knopf oder mit dem Mikrofon der Tastatur –, dann „KI auswerten“. Die KI trägt ein, was du gesagt hast: Sterne, Stufen, Kommentare, „übersprungen“, Kinder-Sterne. Was du nicht erwähnst, bleibt, wie es war; gespeichert wird erst mit dem Knopf unten. Kindernamen gehen dabei nicht an die KI – sie werden vorher durch „Kind 1“, „Kind 2“ … ersetzt. <b>Seit v627 führt dich die Nachbereitung Frage für Frage:</b> Beim Öffnen fragt sie zuerst, ob du erzählen (Sprachnotiz) oder gleich losgehen willst, dann je Frage fünf Antwort-Kacheln mit Wort und Sternen („★★★★ viel“) – ein Tipp setzt die Antwort und geht weiter, „überspringen“ lässt die Frage leer. Beim Training: Einheit, jede Übung (mit „fand nicht statt“), die Kinder, eine Notiz; bei Spiel und Festival: je Mannschaft die vier Fragen, die Gäste, zwei Sätze, Organisation. Am Ende steht, was beantwortet ist, und „Speichern“. „Alles auf einen Blick“ zeigt jederzeit den gewohnten Bogen mit denselben Werten. <b>Seit v628 bleibt deine Sprachnotiz erhalten</b> – sie wird mit der Nachbereitung gespeichert. Die KI macht daraus zusätzlich einen Tagebuch-Vorschlag: Baustein, Beobachtung, Aha, Konsequenz und drei bis fünf Schlagworte. Der Eintrag danach ist damit vorausgefüllt und als „Vorschlag der KI“ gekennzeichnet – prüfe ihn und schreib ihn in deinen Worten. Kinder stehen im Tagebuch mit Vornamen; nach außen (Kopieren, Teilen, Export) ersetzt die App sie durch Buchstaben. Seit v679 wird der Vorschlag sofort gespeichert und wartet als „Noch zu bestätigen“ – einen zweiten KI-Aufruf für denselben Termin gibt es nicht mehr. Im Tagebuch stehen oben die Themen mit Anzahl – ein Tipp zeigt nur die Einträge zu diesem Thema. <b>Seit v630 hält das Einsprechen durch:</b> Der Bildschirm bleibt an, solange du sprichst, nach einer Sprechpause hört die App von selbst weiter zu, und doppelt gelieferte Wörter stehen nur einmal im Feld. Unter dem Feld siehst du „Hört zu“ und live, was gerade ankommt; der Punkt pulsiert, sobald du sprichst. „Pause“ unterbricht, „Weiter einsprechen“ hängt an – nichts Gesagtes geht verloren. Nach 90 Sekunden Stille pausiert es von selbst. Kann dein Handy den Bildschirm nicht wach halten (etwa ein iPhone vor iOS 18.4 in der installierten App), steht das unter dem Feld – dann zwischendurch kurz aufs Display tippen. Dasselbe gilt für die Trainer-Notiz. <b>Seit v630 öffnet „Einsprechen“ eine Vollansicht:</b> der Text groß und bearbeitbar, unten Pause/Weiter und „KI-Auswertung“. <b>Seit v638</b> trägt die KI direkt in den Bogen ein – der Bogen mit Sternen und Notizen ist die Zusammenfassung, dort änderst du, was nicht passt, und speicherst. Soll die KI etwas ändern, tippe „Korrektur einsprechen“ und sag es („Die Umsetzung war eher drei Sterne“); die nächste Auswertung ersetzt, was die KI vorher eingetragen hat, und verdoppelt nichts. Kurze Denkpausen setzen keinen Punkt mehr – erst nach einer längeren Pause beginnt ein neuer Satz; die Satzzeichen setzt ohnehin die KI. Wer die beste Erkennung will, tippt ins Feld und nutzt das Mikrofon der Handy-Tastatur. „Fertig“ schließt ohne KI, der Text bleibt stehen. Das kleine Feld wächst beim Tippen mit; ⤢ daneben öffnet dieselbe Vollansicht ohne Mikrofon. <b>Seit v630 bewertet jeder Trainer selbst, mit Stempel:</b> Oben im Fenster steht „✍️ Name · Datum, Uhrzeit“. Haben Kollegen denselben Tag schon bewertet, stehen ihre Einschätzungen unter „Auch bewertet von …“ zum Lesen – deine kommt daneben und ersetzt keine. In der Liste steht bei jedem Training, wer es bewertet hat; Bewertungen von vor v630 tragen „Trainerteam“, weil der Name damals nicht erfasst wurde. Auch jede Übungsbewertung und jeder Tagebuch-Eintrag trägt den Stempel. Texte dürfen lang sein: die KI schreibt vollständig statt knapp, Notizen bis 3000 Zeichen, die Sprachnotiz bis etwa 15 Minuten, und die Felder wachsen mit."},
     {t:"Analyse", d:"Auswertung nach dem Spiel: Entwicklungs-Meilensteine aus den Bewertungen, Einsatz-Fairness (zählt Spieltage mit Blitz-Rating je Kind) und Formtrend. Solange kein Spiel bewertet ist, steht dort nur ein Satz mit dem Weg zum Spieltag.", go:"analyse"},
     {t:"Wissen & Nachschlagen", d:"Die Kachel ganz oben im Spieltag – für das, was man am Platz wissen muss und nicht auswendig kann. Drinnen: <b>Spielformen und Feldmaße</b> je Altersklasse (U8/U9 sind hervorgehoben) mit Torgrößen, Schusszone, Mittellinie, Kadergröße und Spielzeit; die <b>Spielregeln</b> vom Wettlauf zum Ball bis zum Strafangriff; <b>was Ordnungsgeld kostet</b> – die schweren Verstöße, für die vor Ort der gastgebende Verein geradesteht; das <b>Warm up Adler</b> mit allen vier Stufen und je einer Skizze; und <b>unsere Zeiten</b> für Training und Spieltag. Jeder Eintrag nennt Quelle und Stand, damit man erkennt, ob eine Zahl noch gilt – die Regelwerte stammen aus den Durchführungsbestimmungen Kinderfußball des Fußballkreises Köln. Es ist immer nur ein Eintrag aufgeklappt. Ein Hinweis steht ausdrücklich dabei: unser Käfig läuft als 4+1, vorgesehen sind für U8/U9 auf Jugendtoren 3+1 – umstellen kann das jeder Trainer je Feld, und die Teamzahlen ziehen dann automatisch mit (von Hand gesetzte bleiben stehen und werden genannt). Weitere Dokumente kommen hier nach und nach dazu.", run:"wissenOpen()"},
-    {t:"Heimspiel & Festival planen", d:"Für jeden Spieltag bei uns – ein Kinderfestival mit zwei bis drei Gastvereinen genauso wie ein normales Heimspiel, bei dem nur ein Gegner kommt, der aber mehrere Teams stellen kann. Beim Heimspiel steht der Gegner schon im Termin und wird gleich mit eingetragen. Unsere Kinder und Teams kommen aus „Teams festlegen“ (änderbar, „Wieder übernehmen“ holt sie zurück); die Gastvereine trägst du mit ihren angereisten Kindern ein, die App macht daraus Teams (10 Kinder = zwei Teams). Standard sind alle vier Felder – Käfig (4+1), Funino 1, Funino 2 und 4+1 oben; je Feld wählst du 4+1, 3+1 (drei Feldspieler und Torwart, ebenfalls auf Jugendtore) oder FUNiño – Teamgröße, Feldname, Skizze und Regelkarte ziehen mit. Braucht der Plan weniger Felder, fallen sie beim Erstellen von hinten weg, zuerst das zweite Jugendtor-Feld oben. Beginn ist die Uhrzeit des Termins (sonst 10:15), zwischen den Runden 5 Minuten Trinkpause. Steht der Plan, klappt die Vorbereitung (Vereine, Felder, Zeiten) zu und im Spielplan ist nur die Runde offen, die gerade läuft oder als Nächstes kommt – auf der Gast-Seite genauso. Im fertigen Plan tauschst du zwei Teams, indem du beide antippst, und trägst rechts das Ergebnis ein (freiwillig, es gibt keine Tabelle) – der Plan liegt in der Datenbank und ist für alle Trainer änderbar. Am Festivaltag pfeifst du jede Runde gemeinsam an: „Runde 1 anpfeifen“ startet einen Countdown, den alle Trainer sehen – in der App und im Gast-Link. Läuft die Zeit ab, gibt dein Handy ein Signal und die Trinkpause zählt rückwärts bis zum nächsten Anpfiff; angepfiffen wird immer von Hand. Die geplanten Uhrzeiten ziehen dabei mit: pfeifst du Runde 2 drei Minuten später an, stehen alle folgenden Runden drei Minuten später. Derselbe Anpfiff startet auch die Match-Uhr der Adler-Teams dieser Runde, und umgekehrt startet der Anpfiff an der Match-Uhr im Spieltag die Festival-Runde – Ticker, Wechsel und Countdown zeigen dieselbe Zeit. Zum Weitergeben gibt es zwei Knöpfe: „Spielplan-Link teilen“ ist der Link für alle – Gast-Trainer, Gast-Eltern und unsere Eltern, nur zum Ansehen. „Ergebnis-Link“ ist derselbe Plan mit Schreib-Code, nur für den Anzeigetisch und die Gast-Trainer; ihr korrigiert Ergebnisse in der App. Auf der Gast-Seite gibt es außerdem „Regeln“ – eine Karte je Spielform, die auf den Feldern steht (4+1, 3+1, FUNiño), und unsere Vereinbarungen. Daneben steht „Am Rand“: unser Codex fürs Verhalten am Spielfeldrand – zwölf kurze Punkte, acht davon direkt aus dem Fairplay-Codex der Eltern-App (änderst du sie dort, ändern sie sich auch für die Gäste). Ganz oben darin und als Karte auf der Gast-Startseite steht die Platzseiten-Regel: an den oberen Feldern sind nur Spieler und Trainer, angefeuert wird am Käfig und an den vorderen Feldern. Welche Felder „oben“ liegen, rechnet die App aus dem Aufbau – bei drei Feldern rutscht das zweite Funino-Feld nach oben, bei vieren ist es das zweite Jugendtor-Feld. Die Skizze zeichnet das mit, samt Schildern „nur Spieler & Trainer“ auf dem oberen Feld und „anfeuern & jubeln“ auf dem vorderen. Der Spielplan-Link ist ausdrücklich auch für die Eltern gedacht – nur der Ergebnis-Link mit Schreib-Code bleibt bei den Trainern. Die Felder heißen wie am Platz – „Käfig“ für das erste 4+1-Feld, „Funino 1/2“, „4+1 oben“ für ein zweites – und jeder Name lässt sich je Feld überschreiben. Aus Beginn, Gesamtdauer und Spielzeit entsteht ein Runden-Plan: pro Runde spielen alle Felder gleichzeitig, jede Mannschaft trifft möglichst jede andere und wechselt dabei zwischen den Formaten. Dabei kommt jede Mannschaft mindestens einmal aufs Jugendtor-Feld: passt das nicht von allein, tauschen zwei Partien derselben Runde das Feld – Gegner, Runde und Uhrzeit bleiben, es ändert sich nur, wo gespielt wird. Hat ein Team weniger Kinder, als die Spielform braucht – vier Kinder auf 4+1 –, steht das als Warnung über dem Plan, mit Runde, Feld und Namen. Weggeräumt wird deshalb nichts: ob jemand aus einer pausierenden Mannschaft aushilft, das Feld eine Nummer kleiner läuft oder ihr die Partien der Runde tauscht, entscheidet ihr. Keine Tabelle – bei uns gewinnt die Freude am Spiel. Den fertigen Plan schickst du als Spielplan-Link (mit Wappen, Feldern und Zeiten, ohne Login). Auf der Gast-Seite steht ein Info-Knopf „Anfahrt, Parken & Felder“: Adresse mit Kartenlink, der Parkhinweis (am Platz oft voll, besser an der Straße) mit Skizze, eine Skizze, wo welches Feld liegt, und deine Zeilen aus „Infos für die Gäste“ – Kaffee und Brötchen, WC, Turnierleitung. Am Spieltag führt die Turnier-Kachel im Spieltag hierher, wenn wir ausrichten; sind wir zu Gast, öffnet sie den Turnier-Modus zum Erfassen der Kurzspiele. Auf dem öffentlichen Link steht neben jedem Team das Wappen seines Vereins – aus der Gegner-Datenbank, beim Speichern übernommen. Fehlt dort ein Wappen, steht nur der Name. Teams desselben Vereins spielen nie gegeneinander – dafür lieber zweimal gegen einen anderen Gast. Die Spielzeit je Begegnung (7–10 Min.) rechnet die App aus den Teams und der Gesamtzeit aus; wer sie von Hand ändert, behält seinen Wert und kann die Empfehlung jederzeit übernehmen.", run:"htOpen()"},
+    {t:"Heimspiel & Festival planen", d:"Für jeden Spieltag bei uns – ein Kinderfestival mit zwei bis drei Gastvereinen genauso wie ein normales Heimspiel, bei dem nur ein Gegner kommt, der aber mehrere Teams stellen kann. Beim Heimspiel steht der Gegner schon im Termin und wird gleich mit eingetragen. Unsere Kinder und Teams kommen aus „Teams festlegen“ (änderbar, „Wieder übernehmen“ holt sie zurück); die Gastvereine trägst du mit ihren angereisten Kindern ein, die App macht daraus Teams (10 Kinder = zwei Teams). Standard sind alle vier Felder – Käfig (4+1), Funino 1, Funino 2 und 4+1 oben; je Feld wählst du 4+1, 3+1 (drei Feldspieler und Torwart, ebenfalls auf Jugendtore) oder FUNiño – Teamgröße, Feldname, Skizze und Regelkarte ziehen mit. Braucht der Plan weniger Felder, fallen sie beim Erstellen von hinten weg, zuerst das zweite Jugendtor-Feld oben. Beginn ist die Uhrzeit des Termins (sonst 10:15), zwischen den Runden 5 Minuten Trinkpause. Steht der Plan, klappt die Vorbereitung (Vereine, Felder, Zeiten) zu und im Spielplan ist nur die Runde offen, die gerade läuft oder als Nächstes kommt – auf der Gast-Seite genauso. Im fertigen Plan tauschst du zwei Teams, indem du beide antippst, und trägst rechts das Ergebnis ein (freiwillig, es gibt keine Tabelle) – der Plan liegt in der Datenbank und ist für alle Trainer änderbar. Am Festivaltag pfeifst du jede Runde gemeinsam an: „Runde 1 anpfeifen“ startet einen Countdown, den alle Trainer sehen – in der App und im Gast-Link. Läuft die Zeit ab, gibt dein Handy ein Signal und die Trinkpause zählt rückwärts bis zum nächsten Anpfiff; angepfiffen wird immer von Hand. Die geplanten Uhrzeiten ziehen dabei mit: pfeifst du Runde 2 drei Minuten später an, stehen alle folgenden Runden drei Minuten später. Derselbe Anpfiff startet auch die Match-Uhr der Adler-Teams dieser Runde, und umgekehrt startet der Anpfiff an der Match-Uhr im Spieltag die Festival-Runde – Ticker, Wechsel und Countdown zeigen dieselbe Zeit. Zum Weitergeben gibt es zwei Knöpfe: „Spielplan-Link teilen“ ist der Link für alle – Gast-Trainer, Gast-Eltern und unsere Eltern, nur zum Ansehen. „Ergebnis-Link“ ist derselbe Plan mit Schreib-Code, nur für den Anzeigetisch und die Gast-Trainer; ihr korrigiert Ergebnisse in der App. Auf der Gast-Seite gibt es außerdem „Regeln“ – eine Karte je Spielform, die auf den Feldern steht (4+1, 3+1, FUNiño), und unsere Vereinbarungen. Daneben steht „Am Rand“: unser Codex fürs Verhalten am Spielfeldrand – zwölf kurze Punkte, acht davon direkt aus dem Fairplay-Codex der Eltern-App (änderst du sie dort, ändern sie sich auch für die Gäste). Ganz oben darin und als Karte auf der Gast-Startseite steht die Platzseiten-Regel: an den oberen Feldern sind nur Spieler und Trainer, angefeuert wird am Käfig und an den vorderen Feldern. Welche Felder „oben“ liegen, rechnet die App aus dem Aufbau – bei drei Feldern rutscht das zweite Funino-Feld nach oben, bei vieren ist es das zweite Jugendtor-Feld. Die Skizze zeichnet das mit, samt Schildern „nur Spieler & Trainer“ auf dem oberen Feld und „anfeuern & jubeln“ auf dem vorderen. Der Spielplan-Link ist ausdrücklich auch für die Eltern gedacht – nur der Ergebnis-Link mit Schreib-Code bleibt bei den Trainern. Die Felder heißen wie am Platz – „Käfig“ für das erste 4+1-Feld, „Funino 1/2“, „4+1 oben“ für ein zweites – und jeder Name lässt sich je Feld überschreiben. Aus Beginn, Gesamtdauer und Spielzeit entsteht ein Runden-Plan: pro Runde spielen alle Felder gleichzeitig, jede Mannschaft trifft möglichst jede andere und wechselt dabei zwischen den Formaten. Dabei kommt jede Mannschaft mindestens einmal aufs Jugendtor-Feld: passt das nicht von allein, tauschen zwei Partien derselben Runde das Feld – Gegner, Runde und Uhrzeit bleiben, es ändert sich nur, wo gespielt wird. Hat ein Team weniger Kinder, als die Spielform braucht – vier Kinder auf 4+1 –, steht das als Warnung über dem Plan, mit Runde, Feld und Namen. Weggeräumt wird deshalb nichts: ob jemand aus einer pausierenden Mannschaft aushilft, das Feld eine Nummer kleiner läuft oder ihr die Partien der Runde tauscht, entscheidet ihr. Keine Tabelle – bei uns gewinnt die Freude am Spiel. Den fertigen Plan schickst du als Spielplan-Link (mit Wappen, Feldern und Zeiten, ohne Login). Auf der Gast-Seite steht ein Info-Knopf „Anfahrt, Parken & Felder“: Adresse mit Kartenlink, der Parkhinweis (am Platz oft voll, besser an der Straße) mit Skizze, eine Skizze, wo welches Feld liegt, und deine Zeilen aus „Infos für die Gäste“ – Kaffee und Brötchen, WC, Turnierleitung. Am Spieltag führt die Turnier-Kachel im Spieltag hierher, wenn wir ausrichten; sind wir zu Gast, öffnet sie den Turnier-Modus zum Erfassen der Kurzspiele. Auf dem öffentlichen Link steht neben jedem Team das Wappen seines Vereins – aus der Gegner-Datenbank, beim Speichern übernommen. Fehlt dort ein Wappen, steht nur der Name. Teams desselben Vereins spielen nie gegeneinander – dafür lieber zweimal gegen einen anderen Gast. Die Spielzeit je Begegnung (7–10 Min.) rechnet die App aus den Teams und der Gesamtzeit aus; wer sie von Hand ändert, behält seinen Wert und kann die Empfehlung jederzeit übernehmen.", run:"htOpen() <b>Seit v623 nennt der Link über den Runden</b> Rundenzahl, Spielzeit, Beginn und Ende und die 5 Minuten Trinkpause und Wechselfenster zwischen den Runden – aus dem Plan errechnet, ändert sich also mit, wenn du die Spielzeit anpasst."},
   ]},
   {cat:"🎯 Taktik", items:[
     {t:"Adler-Coach (KI)", d:"Zwei Eingänge, ein Ergebnis. <b>„💡 Idee beschreiben“</b> (beim Öffnen gewählt): Schwerpunkt, Dauer, Wo und Material einstellen – das genügt schon, der Text darunter ist die Nuance –, dann „Übungen vorschlagen“. Der Coach liefert ein bis drei Übungen für U8/U9, <b>jede mit Skizze</b>. <b>„📋 Text übernehmen“</b> nimmt einen fremden Text von einer Webseite, aus WhatsApp oder aus einem Buch und ordnet ihn ins Format der App, ohne etwas zu erfinden – was nicht dasteht, bleibt leer. Die beiden sind <b>Reiter</b>, keine Aktionsknöpfe: Ein Klick auf den bereits gewählten ändert nichts, das ist kein Fehler. Mitgeschickt wird, was die App ohnehin weiß – Kaderstärke, Monatsschwerpunkt, Platz und Dauer des nächsten Trainings; es steht offen über dem Feld, damit du es korrigieren kannst. <b>Seit v596 kannst du diktieren</b> statt zu tippen: Der Knopf steht nur da, wo dein Gerät zuhören kann, und Gesagtes wird an das Feld angehängt, nicht darüber geschrieben. Gespeichert wird nichts von allein – du entscheidest je Übung, was in die Bibliothek kommt.", run:"kiCoachOpen()"},
-    {t:"Taktikboard", d:"Formationen stellen, Laufwege und Pässe zeichnen, als Bild teilen. Oben eine Karte: die vier Spielformen als gleich breite Kacheln, darunter Zeichnen · Teilen · Pro-Modus; Speichern, Bibliothek, KI-Coach, Video und „Leeres Feld“ liegen hinter „Mehr“. Der Pro-Modus macht das Feld groß und blendet alles andere aus – am Handy einspaltig mit der Bank als Streifen darunter, am Tablet mit der Bank rechts daneben; „Pro-Modus beenden“ steht oben. Auf dem Board stehen nur Kinder, die im Kader aktiv sind.", go:"taktik"},
+    {t:"Freies Brett", d:"Ganz oben unter Taktik: „Freies Brett“ öffnet sofort im Vollbild mit beiden Mannschaften und Ball. „Schieben“ bewegt Spieler und Ball, mit Weiß, Gelb oder Blau zeichnest du mit dem Finger Laufwege und Pässe, „Radieren“ nimmt eine Linie weg, „Stift weg“ alle. Unten wechselst du die Spielform; die Zeichnung bleibt. Gespeichert wird nur auf diesem Gerät – zum Behalten eine Spielsituation anlegen. Die Kinder haben in der Kabine ein eigenes, einfacheres Brett („Mein Taktikbrett“).", go:"taktik"},
+    {t:"Taktikboard", d:"Oben die Spielsituationen – gezeichnet auf derselben Fläche wie die Skizzen der Übungen. „Beschreib die Situation“: tippen oder einsprechen, „Zeichnen lassen“, die KI legt Kinder, Gegner, Ball und Wege aufs ganze Feld; danach verschiebst du, was nicht passt. „Neue Situation“ startet mit FUNiño, 3+1, 4+1 oder 5+1 samt Rollen (TW, A, FL, FR, J). Gespeicherte Situationen zeigst du groß, spielst mehrere Bilder ab, teilst sie als Bild, bearbeitest, benennst um oder löschst sie. Für die Besprechung: „Groß zeigen“ füllt den Bildschirm (am Tablet auch Vollbild), „Kinder einsetzen“ setzt die Namen aus dem Kader auf die Kreise – nur zum Zeigen, gespeichert wird nichts davon. Unten Video und KI-Coach.", go:"taktik"},
   ]},
   {cat:"🪶 Eltern & Kinder", items:[
+    {t:"Adler-Rufe (Team-Chat)", d:"Seit v670 der Chat für Eltern und Trainerteam – Kinder haben keinen Zugang. Ein Raum zum Start; Trainer und Moderatoren legen weitere an (＋ Raum). Über ⋯ an jedem Ruf: reagieren, antworten (mit Zitat), fixieren (höchstens drei, 24 Stunden bis immer), bearbeiten, zurückziehen, melden. Moderatoren archivieren statt zu löschen und schalten für 24 Stunden oder 7 Tage stumm; archivierte Rufe sieht nur das Trainerteam. „@alle“ hebt einen Ruf hervor – nur für Trainer und Moderatoren. 🔍 durchsucht alle Räume. Unter „Adler-Rufe moderieren“ legt ihr fest, wer außer dem Trainerteam moderiert (z. B. der Elternbeirat), und bearbeitet gemeldete Rufe. Namen setzt die App aus „Meine Angaben“, Telefonnummern sieht niemand. Seit v673 sitzt der Einstieg oben in der Kopfzeile: 💬 mit roter Zahl für neue Rufe (Eltern und Trainer); bei Eltern steht zusätzlich ganz oben auf der Startseite eine Zeile mit dem letzten Ruf, solange es Ungelesenes gibt. Seit v673 kommen außerdem Benachrichtigungen aufs Handy: Rufe vom Trainerteam und @alle sofort, alle anderen gebündelt höchstens alle 30 Minuten, zwischen 21 und 7 Uhr keine – Gelesenes nie. Die 🔔 im Chat-Kopf schaltet sie fürs eigene Konto ab und an; die Zahl am Knopf bleibt. Ein Tipp auf die Benachrichtigung öffnet die Adler-Rufe (im Trainerbereich nach der PIN). Seit v674: 🔒 Trainerteam – ein privater Raum je Familie mit dem Trainerteam; mitlesen können nur beide Elternteile (auch für Geschwister derselbe Raum) und das Trainerteam, der Elternbeirat nicht. Das Trainerteam öffnet die Familienräume über „🔒 Familien“. Auch wer stummgeschaltet ist, kann dem Trainerteam dort schreiben. 📊 neben dem Schreibfeld startet eine Abstimmung (alle Eltern dürfen): Frage, zwei bis sechs Antworten, namentlich (alle sehen, wer was gewählt hat) oder anonym (niemand sieht es, auch das Trainerteam nicht – nur die Zahlen), eine oder mehrere Antworten, auf Wunsch mit Schluss nach 24 Stunden, 3 oder 7 Tagen. Nochmal antippen nimmt die Stimme zurück. Beenden über ⋯: wer sie gestartet hat, Trainer und Moderatoren.", run:"rufeOpen()"},
+    {t:"Rückmelde-Verhalten", d:"Seit v672 unter Kommunikation: je Kind, getrennt nach Spieltagen und Training, wie lange vor Terminbeginn im Schnitt die erste Antwort kam, wie oft unter 24 Stunden vorher, wie oft sich die Familie umentschieden hat (auch „zu → ab“) und bei Spieltagen, wie oft gar keine Antwort kam. Gezählt je Kind – egal, welches Elternteil antwortet. Umentscheidungen zählen erst seit dem 29.09.2026, vorher wurden sie nicht gespeichert; Änderungen durch das Trainerteam zählen nicht. Nur das Trainerteam sieht diese Zahlen, Eltern nicht.", run:"rueckmeldeStatistikOpen()"},
     {t:"Team-Ansage", d:"Wichtige Info an alle Eltern – mit Gelesen-Status (wer fehlt noch?).", run:"ansageTrainerOpen()"},
     {t:"Adler Nest", d:"Digitales Stadionheft erstellen & drucken.", run:"stadionheftOpen()"},
-    {t:"Eltern-Bereich", d:"Eltern melden sich mit E-Mail und Passwort an (alternativ Einmal-Code per Mail): Zu- und Absagen, Karte, Quiz, Betreuung vor Ort."},
-    {t:"Einladungskarten", d:"Je Kind eine Karte mit QR-Code, vier pro A4-Seite. Die Eltern scannen, legen E-Mail und Passwort fest und sind sofort angemeldet – kein Mailversand, kein Eintragen der Adresse vorab. Eine Karte gilt für zwei Elternteile und bis zum gewählten Datum; neu drucken macht die alte Karte des Kindes ungültig.", run:"einladungskartenOpen()"},
-    {t:"Adler-Welt-Hub", d:"Federn je Kind, FUT-Karten, Technik-Abzeichen und Wochen-Challenge an einem Ort.", run:"adlerWeltOpen()"},
+    {t:"Eltern-Bereich", d:"Eltern melden sich mit E-Mail und Passwort an (alternativ Einmal-Code per Mail): Zu- und Absagen, Karte, Quiz, Betreuung vor Ort. Neue Passwörter – bei Eltern und Trainern – brauchen mindestens 10 Zeichen mit Buchstaben und Ziffern; ältere, kürzere gelten zum Anmelden weiter."},
+    {t:"Wer hilft mit? freigeben", d:"Seit v662 sehen Eltern bei einem Termin nur die Helfer-Aufgaben, die du freigibst: im Termin bearbeiten unter „Wer hilft“ anhaken und daneben eintragen, wie viele Helfer du brauchst. Zur Auswahl stehen Funino-Tore, Jugendtore, Aufbau (bei Auswärtsspielen nicht), Abbau, Betreuung, Live-Ticker und Fotos, dazu zwei eigene Aufgaben mit freiem Text. Eltern sehen „x von n“; ist eine Aufgabe voll, kann sich niemand mehr eintragen. Ohne Freigabe erscheint bei den Eltern gar nichts."},
+    {t:"Geburtstage und Elternangaben", d:"Seit v660 steht auf der Startseite eine Karte mit allen, die in den nächsten 14 Tagen Geburtstag haben – Kinder aus dem Kader und Eltern, die ihren Geburtstag unter „Meine Angaben“ eingetragen haben (bei Eltern ohne Alter). Eltern tragen dort auch Vor- und Nachname, Handynummer und den Geburtstag ihres Kindes ein; „Erste Schritte“ erinnert sie daran, bis alles ausgefüllt ist. Die Angaben sehen nur das Elternteil selbst und das Trainerteam, und sie stehen in der Sicherung."},
+    {t:"Wer ist dabei? (Spieltag)", d:"Oben auf der Spieltag-Seite: die Rückmeldungen der Eltern zum nächsten Spieltag – wer zugesagt, abgesagt oder krank gemeldet hat und wer noch nicht geantwortet hat. Zusagen stehen im Match automatisch auf „Dabei“ und werden auf die Teams verteilt; wer nicht dabei ist, steht in keinem Team. Mit „Anwesenheit anpassen und Teams ansehen“ änderst du jedes Kind von Hand (Dabei, Nicht, Verletzt) – deine Entscheidung gilt vor der Eltern-Rückmeldung.", run:"go('spieltag')"},
+    {t:"Wer ist dabei? (Training)", d:"Ein Training gilt als zugesagt. Bis die Anwesenheit gespeichert ist, zählen Trainingsplan, Gruppen, „Diese Woche“ und die Anwesenheit selbst dieselben Kinder: <b>alle außer Absagen</b>. In der Anwesenheit sind sie vorbelegt (Hinweis „noch nicht gespeichert“, abgesagte Kinder tragen „abgesagt“) – Fehlende abwählen und speichern. Ausdrückliche Zusagen stehen als Zahl im Trainingsplan."},
+    {t:"Elternbeirat & Kasse", d:"Unter „Eltern & Kinder → Elternbeirat & Kasse“ trägst du ein, wer aus der Elternschaft eine Aufgabe übernommen hat (z. B. Elternbeirat, Kassenwart) und wie hoch der Beitrag zur Mannschaftskasse ist. Die Eltern sehen das im Eltern-Bereich unter „Mehr vom Team“ als Karte „Ansprechpartner im Team“. Nur eintragen, wer einverstanden ist – alle Eltern der Mannschaft sehen es. Gezahlt wird weiter außerhalb der App.", run:"elternTeamEditOpen()"},
+    {t:"Einladungskarten", d:"Je Kind eine Karte mit QR-Code, vier pro A4-Seite. Die Eltern scannen, legen E-Mail und Passwort fest und sind sofort angemeldet – kein Mailversand, kein Eintragen der Adresse vorab. Eine Karte gilt für zwei Elternteile und bis zum gewählten Datum; neu drucken macht die alte Karte des Kindes ungültig. <b>Seit v658 geht es auch ohne Papier:</b> Nach „Karten erzeugen“ steht je Kind „Link kopieren“ – den Link schickst du im persönlichen Chat (nie in die Gruppe), er wirkt genau wie die Karte. Die Links gibt es nur in diesem Fenster; gedruckt wird erst mit „Karten drucken“.", run:"einladungskartenOpen()"},
+    {t:"Adler-Welt-Hub", d:"Federn je Kind, Spielerkarten, Technik-Abzeichen und Wochen-Challenge an einem Ort. 🃏 zeigt die Spielerkarte des Kindes auch ohne Bewertung – Name, Nummer, Foto und Zähler; die Stärken kommen dazu, sobald bewertet ist. Eltern holt ihr über die Einladungskarten (Kommunikation) in die App.", run:"adlerWeltOpen()"},
+    {t:"Federn-Stichtag", d:"In „Team-Quests verwalten“ steht „Federn zählen ab“. Quiz-Federn zählen immer. Training, Serien, Zusagen, Missionen, Album und Abzeichen zählen erst ab diesem Tag – auf der Karte, in der Übersicht und im Team-Level, das ab dem Stichtag ganz neu zählt. Gelöscht wird nichts; ein Anlass von vorher bringt auch nachträglich keine Federn. Feld leeren heißt: alles zählt wieder."},
+    {t:"Federn – wofür es sie gibt", d:"Automatisch: Training anwesend 15 (beim Speichern der Anwesenheit), Serien 25 (3, 5, 8, 12, 16 und 20 Trainings in Folge), Zusage zum Termin 5 (Eltern), Packliste am Vorabend gepackt 5 (Kabine), Sammelalbum halb und voll je 25 (Kabine), Kinder-Quiz 10 (einmal am Tag), Wissensquiz 2 je Frage, Wochen-Challenge 20, Technik-Abzeichen 10 (zuhause abgehakt), Skill der Woche 50 (Eltern bestätigen), Entwicklungsziel erreicht 30 (Trainer), Trikotwäsche 100 (je Waschtermin), Fairplay-Quiz der Eltern 50 (einmal). Team-Quests: wenn das Team alle Quests eines Spieltags schafft, bekommt jedes mitspielende Kind die eingestellte Zahl (Standard 20). Einstellen: „Eltern & Kinder“ → „Team-Quests“ – dort stehen Team-Quest-Federn, der Doppel-Booster (72 Stunden alles doppelt), „Federn zählen ab“ (Karten und Team) und „Team-Level jetzt auf Null“ (nur das Team). Seit v675 frei: „Eltern & Kinder“ → „Federn vergeben“ – 1 bis 100 je Kind ans ganze Team oder an einzelne Kinder, mit Grund, den die Kinder zwei Wochen lang oben in der Kabine sehen. Die Federn je Kind stehen in „Adler-Welt“."},
     {t:"Kabinen-Wahl", d:"Die Kinder stimmen ab (Song, Motto, Spielform) – du legst die Optionen fest.", run:"wahlTrainerOpen()"},
     {t:"Unsere Regeln", d:"Der Fairplay-Codex spricht die Eltern an. Das hier ist sein Gegenstück für die Kinder: höchstens sechs kurze Sätze, die ein Achtjähriger aufsagen kann – in der Kabine unter „Team & Spaß“. Positiv formulieren statt verbieten, und lieber einen Satz ausblenden als einen siebten dazuschreiben; mehr merkt sich niemand. Änderungen gelten sofort für alle Kinder. Ohne Netz zeigt die Kabine die sechs mitgelieferten Sätze.", run:"codexKinderEditOpen()"},
     {t:"Album-Karten-Fotos", d:"Bilder für die Trainer- und Vereins-Sticker im Panini-Sammelalbum.", run:"albumFotosOpen()"},
     {t:"Urkunden-Studio", d:"Saison-Urkunden für alle Kinder in einem Druck + freie Anlass-Urkunde.", run:"urkundenOpen()"},
     {t:"Quiz (Kinder)", d:"Kinder spielen über den Kids-Link (?quiz); Ergebnisse unter Eltern & Kinder → Quiz-Ergebnisse.", go:"quizresults"},
-    {t:"Kinder-App", d:"Die Kabine gibt es seit v592 auch als eigene App auf dem Gerät des Kindes – eigenes Symbol, eigener Name, eigene Installation, unter <b>/kinder/</b>. Koppeln tun die <b>Eltern</b>, nicht du: Sie erzeugen in ihrem Bereich unter „Für die Kinder“ einen sechsstelligen Code, das Kind tippt ihn auf seinem Gerät ein, fertig. Das Gerät bekommt dabei ein Konto <b>ohne Namen und ohne E-Mail</b>; was das Kind sehen darf, entscheidet die Leseregel der Datenbank, nicht die Oberfläche. Die tägliche Appzeit stellen ebenfalls die Eltern ein (0 bis 180 Minuten); gezählt wird sie auf dem Server, ein Neustart der App dreht nichts zurück, und ist sie auf, zeigt das Gerät einen Schluss-Bildschirm ohne Bedienelement. Trennen können die Eltern jederzeit – das Gerät verliert sofort alle Rechte. Für dich: unter Orga → Nutzung steht, wie viele Geräte gekoppelt sind, als reine Zahl ohne Namen. Die Kabine im Eltern-Bereich bleibt daneben bestehen.", run:"nutzungOpen()"},
+    {t:"Kinder-App", d:"Die Kabine gibt es seit v592 auch als eigene App auf dem Gerät des Kindes – eigenes Symbol, eigener Name, eigene Installation, unter <b>/kinder/</b>. Koppeln tun die <b>Eltern</b>, nicht du: Sie erzeugen in ihrem Bereich unter „Für die Kinder“ einen sechsstelligen Code, das Kind tippt ihn auf seinem Gerät ein, fertig. Den Weg zur Kinder-App bekommen sie dort gleich mit: QR-Code zum Abscannen, „WhatsApp“ und „Link kopieren“ – nur den Link, der Code bleibt auf ihrem Bildschirm. Das Gerät bekommt dabei ein Konto <b>ohne Namen und ohne E-Mail</b>; was das Kind sehen darf, entscheidet die Leseregel der Datenbank, nicht die Oberfläche. Die tägliche Appzeit stellen ebenfalls die Eltern ein (0 bis 180 Minuten); gezählt wird sie auf dem Server, ein Neustart der App dreht nichts zurück, und ist sie auf, zeigt das Gerät einen Schluss-Bildschirm ohne Bedienelement. Trennen können die Eltern jederzeit – das Gerät verliert sofort alle Rechte. Für dich: unter Orga → Nutzung steht, wie viele Geräte gekoppelt sind, als reine Zahl ohne Namen. Die Kabine im Eltern-Bereich bleibt daneben bestehen. Seit v659 erscheint nach längerer Pause beim Öffnen kein Code-Bildschirm mehr – die App erneuert zuerst ihre Anmeldung. Kommt der Code-Bildschirm trotzdem, ist das Gerät wirklich entkoppelt.", run:"nutzungOpen()"},
   ]},
   {cat:"📅 Orga", items:[
     {t:"Nutzung", d:"Welche Bereiche, Kacheln und Aktionen in den letzten 7, 30 oder 90 Tagen wirklich benutzt wurden – und welche Kacheln gar nicht. Grundlage fürs Ausmisten. Keine Kindernamen, nur Ereignisse.", run:"nutzungOpen()"},
     {t:"Trainerplan", d:"Alle kommenden Trainings, Spiele und Turniere als Tabelle: Termine untereinander, der Trainerstab als Spalten, ein Tap je Zelle wechselt zwischen dabei ✓, unsicher ?, nicht dabei ✕ und keine Antwort. Der Balken links zeigt die Zahl der Zusagen – rot keine, orange eine, hellgrün zwei, dunkelgrün ab drei. Er bewertet nicht, er zählt: ob ein Termin damit läuft, entscheidet ihr. Der Filter „Höchstens eine Zusage“ zeigt nur die Termine, bei denen noch wenig steht. Unterschied zu „Bist du dabei?“ auf der Startseite: dort beantwortest DU deine Termine, hier siehst du das ganze Team.", run:"trainerPlanOpen()"},
-    {t:"Termine", d:"Das Formular zeigt nur, was zum Typ gehört: eine Treffzeit gibt es bei Spiel, Turnier und Event (bei Spielen −45 Min. vom Anpfiff vorgeschlagen) – beim Training kommen ohnehin alle zur Trainingszeit. „Wiederholen“ steht beim Event, weil Spiele und Turniere jedes Mal andere sind. Unter „Wer hilft“ sagst du, was die Eltern übernehmen sollen: beim Training die Anzahl Funino-Tore und Jugendtore (leer = ohne Zahl anbieten, 0 = wird nicht gebraucht), dazu bei jedem Typ ein freier Hinweis. Das steht im Eltern-Bereich als Beschreibung unter der Aufgabe – ohne sie trägt sich niemand ein. Unter „📣 Für die Eltern“ steht die Platz-Ampel: 🟢 Findet statt / 🔴 Fällt aus. Ein abgesagter Termin trägt ab sofort überall ein rotes Schild „Fällt aus“ (mit deinem Grund, wenn du einen einträgst) – auf der Terminkarte, in der Liste, in „Diese Woche“ und im Eltern-Bereich. Gleichzeitig verschwinden seine Aktionen: kein Plan, keine Teams, keine Anwesenheit, und „Bist du dabei?“ fragt nicht mehr danach; die Kachel oben springt zum nächsten Termin, den es wirklich gibt. Zurücknehmen geht mit 🟢 Findet statt. Dazu: anlegen/bearbeiten · Endzeit (danach automatisch ins Archiv) · Platz · Trainer-Verfügbarkeit · Wetter · Ferien-Warnung.", go:"termine"},
+    {t:"Termine", d:"Oben „Neuer Termin“, darunter die Termine; Trainerplan und Grillhütte stehen seit v683 als Kacheln unter der Liste. Das Formular zeigt nur, was zum Typ gehört: eine Treffzeit gibt es bei Spiel, Turnier und Event (bei Spielen −45 Min. vom Anpfiff vorgeschlagen) – beim Training kommen ohnehin alle zur Trainingszeit. „Wiederholen“ steht beim Event, weil Spiele und Turniere jedes Mal andere sind. Unter „Wer hilft“ sagst du, was die Eltern übernehmen sollen: beim Training die Anzahl Funino-Tore und Jugendtore (leer = ohne Zahl anbieten, 0 = wird nicht gebraucht), dazu bei jedem Typ ein freier Hinweis. Das steht im Eltern-Bereich als Beschreibung unter der Aufgabe – ohne sie trägt sich niemand ein. Unter „📣 Für die Eltern“ steht die Platz-Ampel: 🟢 Findet statt / 🔴 Fällt aus. Ein abgesagter Termin trägt ab sofort überall ein rotes Schild „Fällt aus“ (mit deinem Grund, wenn du einen einträgst) – auf der Terminkarte, in der Liste, in „Diese Woche“ und im Eltern-Bereich. Gleichzeitig verschwinden seine Aktionen: kein Plan, keine Teams, keine Anwesenheit, und „Bist du dabei?“ fragt nicht mehr danach; die Kachel oben springt zum nächsten Termin, den es wirklich gibt. Zurücknehmen geht mit 🟢 Findet statt. Dazu: anlegen/bearbeiten · Endzeit (danach automatisch ins Archiv) · Platz · Trainer-Verfügbarkeit · Wetter · Ferien-Warnung.", go:"termine"},
     {t:"Gegner-Datenbank", d:"Adresse, Ansprechpartner, Telefon/WhatsApp, bisherige Spiele.", run:"gegnerManageOpen()"},
-    {t:"Pinnwand", d:"Team-Notizen fürs Trainerteam.", go:"team"},
-    {t:"Tagebuch", d:"Das Trainertagebuch für den DFB-Basis-Coach – deine persönliche Unterlage, nicht die des Teams. Sechs Felder je Eintrag: Auslöser und Beobachtung sind vorausgefüllt, sobald der Eintrag aus einer Nachbereitung entsteht; Aha und Konsequenz tippst du selbst, und ohne die beiden wird nicht erfasst – ein Eintrag, der sich von allein schreibt, enthält keine Erkenntnis. Dazu optional ein Datum für die erste Umsetzung, ein Beleg und ein Anschluss. Jeder Eintrag gehört zu einem der vier Bausteine des DFB-Entwicklungsmodells (Ich als Trainer, Spiel & Spieler, Organisation, System Fußball); die Liste gruppiert danach und sagt ruhig Bescheid, wenn in einem Baustein seit mehr als drei Wochen nichts steht. Der Weg hinein: nach dem Speichern einer Einheits-Nachbereitung oder eines Spiel-Fazits fragt die App, ob ein Eintrag daraus werden soll – oder hier über „Neuer Eintrag“ für alles außerhalb der App, etwa einen Präsenztag. Weil die Texte später an den Verband gehen, schreibt die Leiste „Kind einfügen“ den Decknamen statt des Namens, und beim Erfassen weist die App auf einen Namen aus dem Kader hin, statt still umzuschreiben. Ausgabe als Markdown, einzeln oder als ganzer Monat, über Kopieren und Teilen – ohne Zugangsdaten und ohne Umweg über einen Server.", go:"tagebuch"},
+    {t:"Pinnwand", d:"Oben die Team-Notizen fürs Trainerteam, darunter die Schwerpunkt-Abstimmung und die Team-Übersicht (letzte Einheit, Anwesenheit). Die Datensicherung steht seit v683 unter Orga · Einstellungen.", go:"team"},
+    {t:"Wie war's? – einmal erzählen", d:"Seit v679: Nach einem Termin, für den du zugesagt hattest, steht auf der Startseite „Wie war's?“ mit einem großen Knopf „Erzählen“. Er öffnet die Nachbereitung mit laufendem Mikrofon. Erzähl, so lang du willst, dann „KI-Auswertung“: Die KI trägt die Bewertung ein, sortiert deine Worte zu einem Tagebuch-Vorschlag und sammelt, was zu tun ist – alles aus einer Notiz, in einem Aufruf, und sofort gespeichert. Danach eine Karte mit allem: Bewertung, Beobachtung, Aha, bis zu zwei Konsequenzen, To-dos. Das Aha steht nur da, wenn du selbst gesagt hast, was dir klar wurde – sonst fragt die KI nach („Was wurde dir dabei klar?“); deine Antwort, getippt oder eingesprochen, kommt wörtlich ins Feld. Das Datum tippst du an: die nächsten drei Termine, an denen du dabei bist, oder „anderes Datum“. „Passt so“ bestätigt alles. Keine Zeit? „Später“ – der Vorschlag wartet als „Noch zu bestätigen“. Bewerten zwei Trainer denselben Tag, zeigt die Einheit die Spanne („Spaß ★3–4“), jeder behält seine Bewertung und seinen eigenen Tagebuch-Vorschlag, und Kinder-Sterne des anderen bleiben stehen. Korrekturen zum selben Termin zählen nicht noch einmal ins Tageslimit der KI."},
+    {t:"Tagebuch", d:"Das Trainertagebuch für den DFB-Basis-Coach – deine persönliche Unterlage, nicht die des Teams. Sechs Felder je Eintrag: Auslöser und Beobachtung sind vorausgefüllt, sobald der Eintrag aus einer Nachbereitung entsteht; Aha und Konsequenz tippst du selbst, und ohne die beiden wird nicht erfasst – ein Eintrag, der sich von allein schreibt, enthält keine Erkenntnis. Dazu optional ein Datum für die erste Umsetzung, ein Beleg und ein Anschluss. Jeder Eintrag gehört zu einem der vier Bausteine des DFB-Entwicklungsmodells (Ich als Trainer, Spiel & Spieler, Organisation, System Fußball); die Liste gruppiert danach und sagt ruhig Bescheid, wenn in einem Baustein seit mehr als drei Wochen nichts steht. Der Weg hinein: nach dem Speichern einer Einheits-Nachbereitung oder eines Spiel-Fazits fragt die App, ob ein Eintrag daraus werden soll – oder hier über „Neuer Eintrag“ für alles außerhalb der App, etwa einen Präsenztag. In der App stehen die Vornamen der Kinder – das Tagebuch sehen nur Trainer, und „Kind einfügen“ schreibt den Vornamen. <b>Nach außen</b> (Kopieren, Teilen, Monatsexport – die Fassung für Lehrgang und Verband) ersetzt die App jeden Namen durch einen Buchstaben („Kind C“, immer dasselbe Kind) und schreibt oben dazu, warum. Ausgabe als Markdown, ohne Zugangsdaten und ohne Umweg über einen Server. <b>Seit v679 ein Arbeitsmittel:</b> <b>💭 Gedanke</b> (Kachel Orga oder hier) – ein Feld, erfassen, fertig; er wird ein <b>Keim</b>. Ein Keim braucht nur Text, bekommt keine Warnung und zählt beim Hinweis „seit drei Wochen nichts notiert“ nicht mit; oben steht, wie viele Gedanken auf eine Konsequenz warten. Ausarbeiten heißt: Baustein, Aha und Konsequenz ergänzen – dann ist er fertig. Auch ein Eintrag ohne Aha wird so erfasst, als Keim, statt abgelehnt. Konsequenzen haben je ein Datum; <b>Wiedervorlage</b> zeigt alle offenen, überfällig · diese Woche · später, und ein Punkt verschwindet erst, wenn du ihn abhakst – verstrichen ist nicht erledigt. Dort stehen auch die To-dos aus den Nachbereitungen, mit einem Vorschlag, wer zuständig sein könnte (nie zugewiesen). <b>Je Kind</b> bündelt alle Einträge, in denen du ein Kind unter „Wer kommt vor?“ markiert hast; neben dem Vornamen steht sein fester Buchstabe – derselbe wie im Kader und in jedem Export, auch wenn andere Kinder den Kader verlassen. Unter „Monat ausgeben“ wählst du die Ausgabe: <b>Lehrgang</b> (die sechs Felder, nur fertige und bestätigte Einträge, ohne Schlagworte) oder <b>Arbeitsfassung</b> (alles, auch Gedanken, Fristen und To-dos); die C-Lizenz folgt. Jede Ausgabe nennt Kinder nur mit Buchstaben. Das Tagebuch zeigt deine eigenen Einträge – jeder Trainer führt seines.", go:"tagebuch"},
     {t:"Trainermeeting", d:"Seit v527 eine eigene Terminart: Du legst ihn wie jeden anderen Termin an („🗓️ Meeting“). Anders als bei den anderen Terminarten fragt das Formular nicht nach einem festen Datum, sondern nach <b>Vorschlag 1 bis 3</b> – Vorschlag 1 steht bis zur Entscheidung als vorläufiges Datum im Kalender, erkennbar an „Termin steht noch nicht“. Nach dem Anlegen geht es direkt weiter, und aus dem Termin heraus laufen beide Teile. <b>Wer kann wann:</b> weitere Vorschläge eintragen, das Trainerteam stimmt ab (✓ passt · ? vielleicht · ✗ nicht), und der Vorschlag, bei dem niemand abgesagt hat und die meisten zugesagt haben, wird als „Hier können alle“ hervorgehoben. Wer noch gar nicht geantwortet hat, steht mit Namen dabei – drei Zusagen bei fünf Trainern heißen eben nicht, dass zwei abgesagt haben. Solange deine Stimme fehlt, erinnert dich die Startseite. <b>Was wir besprechen:</b> Themen können alle Trainer sammeln, und zwar von Anfang an, nicht erst wenn der Termin steht. Beim Abhaken fragt die App, was entschieden wurde; der Satz bleibt unter dem Thema stehen. Schreiben kannst du ihn auch später nachtragen – gefragt wird, aber nicht erzwungen, sonst hakt am Ende niemand mehr ab. Was offen blieb, wandert beim nächsten Meeting von selbst mit. Das Protokoll (Besprochenes mit Beschluss, dann das Offene) gibt es als Markdown über Teilen. <b>Wichtig:</b> Diesen Termin sehen nur Trainer. Das erzwingt die Leseregel der Datenbank, nicht ein Filter in der App – alle anderen Terminarten sind für jeden lesbar, auch ohne Anmeldung, weil Turnierseite und Stadionheft davon leben. Die Kachel „Trainer-Meeting“ unter Orga bleibt als Übersicht über alle Meetings.", run:"trainerMeetingOpen()"},
     {t:"Saisonstart-Check", d:"Sechs Schritte für den Übergang in die neue Saison – Wrapped, Urkunden, Kader, Trainings-Serie, Eltern-Einladung, Ansage. Er steht Juni bis September im Orga-Menü; mit „Saisonstart abschließen“ blendest du ihn bis zur nächsten Saison aus. Von hier aus geht er immer auf.", run:"saisonStartOpen()"},
-    {t:"Teamkasse", d:"Kassen-Link hinterlegen (kein Geld in der App).", run:"kasseOpen()"},
+    {t:"Teamkasse", d:"Kassenstand, Buchungen und Umlagen (z. B. 40 € pro Saison). Unter „Wer hat bezahlt“ hakst du je Kind ab, was angekommen ist; die Eltern sehen nur den Stand ihres eigenen Kindes. „Offene erinnern“ schickt einmal am Tag eine Mitteilung an Familien mit offenem Betrag, „Export“ erzeugt eine CSV für die Kassenprüfung. <b>Seit v664</b> kann ein Elternteil die Kasse führen: unten unter „Wer führt die Kasse“ auswählen – es findet sie dann im Eltern-Bereich unter „Mehr vom Team → Kasse verwalten“. Kein Geld in der App: gezahlt wird außerhalb.", run:"kasseOpen()"},
     {t:"Fundbüro", d:"Liegengebliebenes verwalten.", run:"fundbueroOpen()"},
     {t:"Material", d:"Der Bestand des Teams: Bälle, Hütchen je Farbe, Markierungen, Leibchen, Trinkflaschen, Erste-Hilfe-Set. Je Posten ein <b>Soll</b> (was da sein sollte) und ein <b>Ist</b> (was gezählt wurde). Beide dürfen leer bleiben – leer heißt <b>nicht gezählt</b>, nicht „null Stück“; nur so lässt sich eine Inventur überhaupt abschließen. Jede eingetragene Ist-Zahl setzt das Zähldatum dieses Postens auf heute; oben steht, wann zuletzt überhaupt gezählt wurde, und nach einem halben Jahr wird die Zeile gelb. Liegt ein Posten unter dem Soll, sagt die Zeile, wie viele fehlen. Kleidung wird nicht doppelt gezählt: bei „Trikotsätze“ und „Spieltagsjacken“ steht daneben, wie viele davon gerade bei den Kindern sind (aus „Ausstattung“ unter Team). Neue Posten legst du über „＋“ selbst an. Gezählt wird am besten zweimal im Jahr – der Saisonstart-Check erinnert daran.", run:"materialOpen()"},
     {t:"Ausstattung", d:"Was hat welches Kind von uns bekommen? Oben wählst du den Gegenstand – Trikotsatz FRMD PASN, Präsentationsanzug, Spieltagsjacke –, darunter steht der Kader. Ein Tipp auf das Kästchen setzt die Ausgabe auf heute, rechts daneben trägst du die Größe ein (128, 140, 152 als Vorschlag, frei überschreibbar). Eine Satznummer führen wir nicht: die Nummer am Kind ist die Trikotnummer, und die steht im Kader. Über „↩︎ zurück“ wird eine Rückgabe mit heutigem Datum vermerkt – dafür ist die Liste am Ende da, wenn ein Kind den Verein wechselt. Weitere Gegenstände (Trinkflasche, Rucksack, zweiter Anzug) legst du über „＋“ selbst an; die App muss dafür nicht angefasst werden. Gespeichert wird sofort beim Antippen. Die Zeile oben zählt, wer noch nichts hat.", run:"ausstattungOpen()"},
-    {t:"Adresse der App", d:"Die App liegt seit dem 10.09.2026 unter sv-adler-dellbrueck.github.io/u9-app/ – vorher stand in jedem weitergegebenen Link ein privater Benutzername. Die alte Adresse leitet weiter, verschickte Turnier-, Ticker-, Einladungs- und Kind-Links funktionieren also unverändert. Wer über die Weiterleitung kommt, sieht einmalig einen Hinweis: neu anmelden, Benachrichtigungen wieder erlauben und – wer die App auf dem Startbildschirm hat – sie dort neu ablegen. Nach „Verstanden“ kommt er nicht wieder."},
-    {t:"Backup", d:"Kader-Daten exportieren.", run:"backupExport()"},
+    {t:"Adresse der App", d:"Die App liegt seit dem 10.09.2026 unter sv-adler-dellbrueck.github.io/u9-app/ – vorher stand in jedem weitergegebenen Link ein privater Benutzername. Die alte Adresse leitet weiter, verschickte Turnier-, Ticker-, Einladungs- und Kind-Links funktionieren also unverändert. Wer die App noch von der alten Adresse auf dem Startbildschirm hat, landet jedes Mal erst auf der Weiterleitung – der Einflug des Wappens ist dann schon halb vorbei. Abhilfe: das alte Symbol löschen und die App unter der neuen Adresse neu ablegen, dann neu anmelden und Benachrichtigungen wieder erlauben. Den Hinweis in der App selbst gibt es seit v617 nicht mehr."},
+    {t:"Updates der App", d:"Seit v655 holt sich die App neue Versionen selbst – niemand muss sie neu installieren. Sie sieht nach, sobald sie wieder in den Vordergrund kommt, und alle 30 Minuten, solange sie offen ist. Ist eine neue Version da, lädt sie im passenden Moment neu: in der ersten Minute nach dem Öffnen sofort, sonst beim nächsten Wechsel weg von der App oder nach 10 Minuten ohne Eingabe. Nie, solange etwas verloren ginge – ein offenes Fenster, Text in Arbeit, die laufende Match-Uhr, der Stationstimer oder ein Diktat. Bis dahin steht unten „🔄 Neue Version bereit“ mit dem Knopf „Neu laden“. Welche Version läuft, steht ganz unten auf der Startseite. Wer noch eine Fassung von vor v655 offen hat, lädt einmal von Hand neu; danach geht es von selbst."},
+    {t:"Zurück-Taste am Handy", d:"Seit v624 geht die Zurück-Taste eine Seite zurück, statt die App zu schließen: Ist ein Fenster offen, schließt sie zuerst das Fenster; sonst führt sie zur Seite davor und zuletzt zur Startseite. Erst von der Startseite aus schließt sie die App. Das gilt im Trainer-Bereich, im Eltern-Bereich und auf den geteilten Seiten wie dem Festival-Link (Anfahrt, Regeln, „Am Rand“). In der Kabine führt sie zur Kabinen-Startseite – verlassen lässt sich die Kabine weiter nur mit dem Ausgangs-Code."},
+    {t:"Datensicherung", d:"Alle Tabellen der App als JSON-Datei – seit v683 als Kachel „Datensicherung“ unter Orga · Einstellungen (vorher im Kader und auf der Pinnwand). Enthält personenbezogene Daten der Kinder: nur auf eigenem, gesperrtem Gerät speichern.", run:"backupExport()"},
     {t:"Dark Mode", d:"Hell/Dunkel umschalten.", run:"toggleTheme()"},
+    {t:"Schriftgröße", d:"Oben neben 🌙 steht „A“: ein Tipp macht die Schrift größer – Normal, Groß (A+), Sehr groß (A++), dann wieder Normal. Die Wahl gilt nur auf diesem Gerät und bleibt, bis du sie änderst; die anderen im Trainerteam sehen die App weiter wie gewohnt. Die Zeilen brechen dabei um, statt wie beim Zoomen mit zwei Fingern seitlich aus dem Bildschirm zu laufen. Die untere Leiste behält ihre Größe. Dasselbe gibt es in der Eltern-App. Die Kabine der Kinder und die öffentlichen Seiten (Ticker, Stadionheft, Turnier) bleiben, wie sie sind. Einmal je Gerät erscheint auf der Startseite eine kleine Karte mit „Größer stellen“ – so finden auch die anderen den Knopf. (Seit v632)", run:"schriftWechseln()"},
   ]},
 ];
 function hilfeOpen(){
@@ -4248,8 +4744,8 @@ function hilfeOpen(){
   const c=document.createElement("div");
   c.style.cssText="background:var(--surface);color:var(--text);max-width:480px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`${mdlHead("hilfe-modal","❓","Hilfe & Funktionen","Alles, was die App kann – tippe auf → zum Hinspringen","#475569")}
-    <button class="btn btn-p btn-sm" style="width:100%" onclick="hilfeClose();tourStart()"><i class="ti ti-player-play"></i>Kurze Feature-Tour starten</button>
-    <input type="text" placeholder="Suchen… (z. B. Wetter, Aufstellung)" oninput="hilfeRender(this.value)" style="width:100%;margin-top:10px;padding:8px 12px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box">
+    <button class="btn btn-p btn-sm" style="width:100%" onclick="hilfeClose();tourStart()"><i class="ti ti-player-play"></i>Geführte Tour starten</button>
+    <input type="text" placeholder="Suchen… (z. B. Wetter, Aufstellung)" oninput="hilfeRender(this.value)" style="width:100%;margin-top:10px;padding:8px 12px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box">
     <div id="hilfe-list"></div>
     <button class="btn btn-sm" style="margin-top:12px;width:100%" onclick="hilfeClose()">Schließen</button>`;
   modal.appendChild(c);document.body.appendChild(modal);
@@ -4262,51 +4758,62 @@ function hilfeRender(q){
   const html=HELP.map(g=>{
     const items=g.items.filter(it=>!q||(it.t+" "+it.d).toLowerCase().includes(q));
     if(!items.length)return "";
-    return `<div style="margin-top:10px"><div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">${g.cat}</div>`+
+    return `<div style="margin-top:10px"><div style="font-size:var(--s-text);font-weight:800;color:var(--text)">${g.cat}</div>`+
       items.map(it=>{const act=it.go?`hilfeClose();go('${it.go}')`:it.run?`hilfeClose();${it.run}`:"";
         return `<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-top:var(--border)">
-          <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">${esc(it.t)}</div><div style="font-size:11.5px;color:var(--text2);line-height:1.35">${esc(it.d)}</div></div>
+          <div style="flex:1;min-width:0"><div style="font-size:var(--s-text);font-weight:700">${esc(it.t)}</div><div style="font-size:var(--s-klein);color:var(--text2);line-height:1.35">${it.d}</div></div>
           ${act?`<button class="btn btn-sm" onclick="${act}" title="Öffnen"><i class="ti ti-arrow-right"></i></button>`:""}
         </div>`;}).join("")+`</div>`;
   }).join("");
-  box.innerHTML=html||`<div style="font-size:12px;color:var(--text3);padding:10px 0">Nichts gefunden.</div>`;
+  box.innerHTML=html||`<div style="font-size:var(--s-text);color:var(--text3);padding:10px 0">Nichts gefunden.</div>`;
 }
+/* v658 · Geführte Tour mit Zeiger (PO 28.09.: „… sodass eine geführte Tour durch die
+   verschiedenen Bereiche der App abläuft“). Jeder Schritt öffnet seinen Bereich (`vor`) und
+   zeigt auf das Element (`sel`); fehlt es gerade (kein Block, keine To-dos), steht der Schritt
+   als Karte in der Mitte. Der Motor liegt in core.js (fuehrungStart), damit Eltern und Kinder
+   dieselbe Bedienung bekommen. Texte kurz: eine Sache je Schritt. */
 const TOUR=[
-  {emo:"🦅", t:"Willkommen in der Adler-App", d:"Die Startseite ist bewusst schlank: Ganz oben erscheinen DEINE To-Dos (nur wenn etwas offen ist) – jedes führt dorthin, wo es sich erledigen lässt, und was du nicht mehr nachtragen willst, hakst du mit dem ✓ daneben für das ganze Trainerteam ab, darunter „Bist du dabei?“ – nur die Termine der nächsten 14 Tage, für die deine Antwort noch fehlt; ein Tap auf ✅ 🤔 ❌ genügt, und ist alles beantwortet, verschwindet die Karte. Danach „Diese Woche“ – die Termine der nächsten sieben Tage mit dem Stand (Zusagen, Trainer, Plan, Aufstellung); die erste Zeile ist der nächste Termin mit Wetter, Packtipp und Sprungknopf. Dann ein festgelegtes Trainer-Meeting (falls eines ansteht, mit der Zahl offener Themen), ein Knopf zu allen Terminen der Saison – und sechs große Kacheln, die du auch unten in der Leiste findest. Hinter jeder Kachel wartet wieder eine Seite mit Kacheln – über die Leiste landest du auf genau derselben. Von dort geht es ins Detail, und die Reiterzeile oben bringt dich mit einem Tipp zurück zur Übersicht. Diese Tour findest du jederzeit über ❓ oben rechts."},
-  {emo:"🏃", t:"Kachel: Training", d:"Vier Wege: Anwesenheit (heute + kommende Termine), Trainingsplan mit Stationen und Trainingsstart (die Trainer-Reihe oben zeigt farbig, wer für den Termin zu-, ab- oder noch nicht geantwortet hat), die Übungs-Datenbank und das 🏆 Trainingsturnier, das du vorab planen kannst – auch Eltern gegen Kinder. Die Nachbewertung meldet sich nach dem Training von selbst als To-Do auf der Startseite."},
-  {emo:"⚽", t:"Kachel: Spieltag", d:"Ganz oben „📚 Wissen & Nachschlagen“: Spielformen und Feldmaße, die Spielregeln, was Ordnungsgeld kostet, das Warm up Adler mit allen vier Stufen und unsere Zeiten – zum Nachsehen am Platz. Darunter der Ablauf von oben nach unten: „Teams festlegen“ beantwortet einmal für den ganzen Tag, wer dabei ist und wie viele Teams wir stellen – die Kinder verteilt die App automatisch, du korrigierst nur. Darunter je Team eine Kachel mit Kader, Rollen, Uhr, Rotations-Timer und Liveticker; danach die Team-Quests für alle Teams zusammen. Beim Öffnen sind alle Abschnitte eingeklappt – du tippst auf, was du gerade brauchst. Dazu die Rollen-Empfehlung aus den Bewertungen und die Analyse. Steht ein Turnier an, erscheint ganz unten der Turnier-Bereich (Heimturnier ausrichten mit öffentlichem Link für die Gast-Trainer)."},
-  {emo:"👥", t:"Kachel: Team", d:"Kader verwalten, Spieler alle 6 Wochen in 16 Kriterien bewerten (Live-Radar), Profil mit Sprachlob und Entwicklungs-Report, dazu Saison-Cockpit, Anwesenheit über die Saison und Rollen-Matrix. Unter „Ausstattung“ steht, welches Kind Trikotsatz, Anzug oder Jacke bekommen hat – mit Größe, Ausgabedatum und Rückgabe. Auch Notfallkarten und Probetraining wohnen hier."},
-  {emo:"🎯", t:"Kachel: Taktik", d:"Das Taktikboard: Formationen stellen, Laufwege und Pässe zeichnen, als Bild teilen – im Pro-Modus groß, am Handy wie am Tablet. Unter dem Feld legst du über „+ Bild“ mehrere Stände an und spielst sie ab; gespeicherte Übungen nehmen die Bilder mit. Daneben die Übungs-Datenbank – dort zeichnest du je Übung eine Skizze mit Spielern, Hütchen, Minitoren, Jugendtoren, Zonen, Pfeilen, Mittellinie und Schusszone zeigst sie mit „Groß zeigen“ bildschirmfüllend mit Fingerzoom und hellem Rasen und gibst sie mit „Skizze teilen“ als Bild weiter."},
-  {emo:"🪶", t:"Kachel: Eltern & Kinder", d:"Team-Ansage mit Gelesen-Status, Eltern einladen, Elterngespräche – und die ganze Adler-Welt der Kinder: Federn, Karten, Abzeichen, Kabinen-Wahl, „Unsere Regeln“ für die Kabine, Sammelalbum-Fotos, Team-Quests, Urkunden-Studio und das Adler Nest. Die Kabine gibt es inzwischen auch als eigene App auf dem Gerät des Kindes – gekoppelt wird sie von den Eltern mit einem Code, die Appzeit stellen ebenfalls sie ein. Du musst dafür nichts tun; unter Orga → Nutzung siehst du nur die Zahl der gekoppelten Geräte."},
-  {emo:"📅", t:"Kachel: Orga", d:"Termine mit Endzeit (danach automatisch ins Archiv), Pinnwand fürs Trainerteam, Ferien-Radar, Mitbringlisten (je Event einschaltbar, Standard aus), Trainer-Meeting (steht der Termin, erscheint er auf deiner Startseite – die Eltern sehen ihn nicht), Teamkasse, Material (Bälle, Hütchen, Erste-Hilfe-Set – mit Soll und Ist) und Fundbüro. Ganz unten: Push-Benachrichtigungen und dein Passwort."},
-  {emo:"🧭", t:"Und unten?", d:"Die Leiste am unteren Rand führt zu denselben Bereichen – für den schnellen Daumen-Wechsel. Kacheln und Leiste sind dieselbe Logik, nur zwei Wege. Viel Spaß – auf geht's, Adler! 🎉"},
+  {emo:"🦅", t:"Willkommen im Trainerbereich", vor:()=>openTab("home"),
+   d:"Diese Tour zeigt dir in ein paar Schritten, wo was ist. Du kannst jederzeit mit „Überspringen“ aufhören und sie über ❓ oben neu starten."},
+  {emo:"✅", t:"Deine To-dos", sel:["#trainer-todo-slot"], vor:()=>openTab("home"),
+   d:"Ganz oben steht, was für dich offen ist – Nachbereiten, Rückmeldungen, Löschanträge. Ein Tipp führt direkt dorthin."},
+  {emo:"📅", t:"Diese Woche", sel:["#home-woche","#trainer-termine-slot"],
+   d:"Die Termine der nächsten sieben Tage mit Zusagen, Trainern und Plan. Fehlt deine Antwort, fragt „Bist du dabei?“ danach."},
+  {emo:"🧩", t:"Sechs Bereiche", sel:['#home-content button[onclick="kachelOpen(\'training\')"]'],
+   d:"Training, Spieltag, Team, Taktik, Eltern & Kinder und Orga. Hinter jeder Kachel wartet eine Seite mit weiteren Kacheln."},
+  {emo:"🧭", t:"Die Leiste unten", sel:["#main-nav"],
+   d:"Dieselben Bereiche für den Daumen. Leiste und Kacheln führen auf dieselben Seiten."},
+  {emo:"🗓️", t:"Trainingsplan: Termin wählen", sel:["#tp-vorplan"], vor:()=>go("planung"), warte:500,
+   d:"Oben die Trainings der nächsten Wochen als Kacheln. Tippe einen an, darunter steht sein Plan."},
+  {emo:"🧑‍🏫", t:"Wer ist Trainer?", sel:["#tp-trainer-checks"],
+   d:"Hake an, wer heute auf dem Platz steht. So viele Trainer, so viele Gruppen – eine Gruppe ohne Trainer gibt es nur auf ausdrücklichen Wunsch."},
+  {emo:"🧱", t:"Trainingsblock", sel:["#tp-block-karte","#tp-block"],
+   d:"Läuft ein Block, steht hier die Einheit des Tages mit dem Ziel für die Kinder. Am Trainingstag: „🔄 Aktualisieren nach Anwesenheit“ – die App stellt Gruppen und Übungen passend, die KI prüft im selben Thema."},
+  {emo:"🗂️", t:"Vorlage übernehmen", sel:['#train-sub-planung button[onclick*="vorlageUebernehmenOpen"]'],
+   d:"Fertige Einheiten nach Thema. Jede endet mit einem Abschlussturnier von zehn Minuten."},
+  {emo:"👥", t:"Trainingsgruppen", sel:['#tp-timeline button[onclick="tgOpen()"]'],
+   d:"Die Kinder kommen aus Anwesenheit oder Zusagen. Verschieben geht von Hand; an jeder Station steht, wie viele spielen und wer wechselt."},
+  {emo:"🧱", t:"Block anlegen", sel:["#tp-block","#block-banner"], vor:()=>go("planung"), warte:700,
+   d:"Hier legst du einen Trainingsblock an: Thema wählen, drei Einheiten, Zeitraum – die App plant alle Trainings darin auf einmal."},
+  {emo:"📚", t:"Übungen", sel:["#tf-kacheln","#training-search"],
+   d:"Alle Übungen nach Art geordnet, mit Skizze. „➕ Eigene Übung“: beschreiben oder einsprechen, die KI füllt die Felder."},
+  {emo:"⚽", t:"Spieltag", sel:["#mt-phase-vor"], warte:500,
+   vor:()=>{ go("spieltag"); setTimeout(()=>{ const d=document.getElementById("mt-phase-vor"); if(d)d.open=true; },120); },
+   d:"„Teams festlegen“: einmal sagen, wer dabei ist und wie viele Teams – die App verteilt die Kinder. Darunter Uhr, Rotation und Liveticker."},
+  {emo:"👕", t:"Team", sel:["#view-kader"], vor:()=>go("kader"), warte:400,
+   d:"Kader, Profile, Ausstattung. Einzelbewertungen gibt es erst ab Ende der Hinrunde – dann gemeinsam im Trainerteam."},
+  {emo:"🎯", t:"Taktik", sel:["#sit-hub"], vor:()=>go("taktik"), warte:400,
+   d:"Spielsituationen zeichnen oder von der KI zeichnen lassen, groß zeigen und abspielen. Das „Freie Brett“ ist für den Moment am Platz."},
+  {emo:"📝", t:"Nachbereiten", sel:['#trainer-todo-slot button[onclick="einheitBewertenOpen()"]',"#trainer-todo-slot"], vor:()=>openTab("home"), warte:500,
+   d:"Nach Training, Spiel oder Festival: einsprechen, was los war – die KI ordnet es und macht einen Vorschlag fürs Tagebuch. Gespeichert wird erst, wenn du es prüfst."},
+  {emo:"❓", t:"Hilfe und Schrift", sel:["#help-btn"],
+   d:"❓ öffnet die Hilfe mit allen Funktionen und startet diese Tour neu. Daneben „A“ für größere Schrift und 🌙 für den dunklen Modus."},
 ];
-let tourIdx=0;
 // Nie im Kinder-Quiz: ?quiz laesst #home-content im DOM, renderHome laeuft also mit und
 // wuerde den Kindern die Trainer-Tour zeigen (die von Kader & Trainingsplan erzaehlt).
 function tourMaybe(){ if(document.body.classList.contains("quiz-extern"))return; try{if(localStorage.getItem("adler_trainer_tour"))return;}catch(e){} tourStart(); }
-function tourStart(){ tourIdx=0; tourRender(); }
-function tourNext(){ if(tourIdx<TOUR.length-1){tourIdx++;tourRender();}else tourClose(); }
-function tourPrev(){ if(tourIdx>0){tourIdx--;tourRender();} }
-function tourClose(){ try{localStorage.setItem("adler_trainer_tour","1");}catch(e){} document.getElementById("tour-ov")?.remove(); }
-function tourRender(){
-  document.getElementById("tour-ov")?.remove();
-  const s=TOUR[tourIdx]; if(!s){tourClose();return;}
-  const last=tourIdx===TOUR.length-1;
-  const ov=document.createElement("div"); ov.id="tour-ov";
-  ov.style.cssText="position:fixed;inset:0;z-index:10050;background:rgba(15,23,42,.75);display:flex;align-items:center;justify-content:center;padding:20px";
-  ov.innerHTML=`<div style="background:var(--surface);color:var(--text);max-width:360px;width:100%;border-radius:18px;padding:22px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.5)">
-    <div style="font-size:42px;line-height:1">${s.emo}</div>
-    <div style="font-size:18px;font-weight:800;margin:8px 0 8px">${esc(s.t)}</div>
-    <div style="font-size:13.5px;color:var(--text2);line-height:1.5;text-align:left">${esc(s.d)}</div>
-    <div style="display:flex;gap:6px;justify-content:center;margin:16px 0 4px">${TOUR.map((_,i)=>`<span style="width:7px;height:7px;border-radius:50%;background:${i===tourIdx?'var(--blue)':'var(--border)'}"></span>`).join("")}</div>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      ${tourIdx>0?`<button class="btn btn-sm" onclick="tourPrev()">Zurück</button>`:`<button class="btn btn-sm" onclick="tourClose()">Überspringen</button>`}
-      <button class="btn btn-p btn-sm" style="margin-left:auto" onclick="tourNext()">${last?"Fertig 🚀":"Weiter"}</button>
-    </div>
-  </div>`;
-  document.body.appendChild(ov);
-}
+function tourStart(){ fuehrungStart(TOUR,{schluessel:"adler_trainer_tour",ende:()=>{ try{ openTab("home"); }catch(e){} }}); }
+function tourClose(){ if(typeof fuehrungEnde==="function"&&typeof fuehrungLaeuft==="function"&&fuehrungLaeuft())fuehrungEnde(); else { try{localStorage.setItem("adler_trainer_tour","1");}catch(e){} } }
 
 // Adler-Welt: Trainer-Hub für Federn/Karten/Abzeichen/Challenge – ansehen & verwalten.
 async function adlerWeltOpen(){
@@ -4320,75 +4827,46 @@ async function adlerWeltOpen(){
   c.style.cssText="background:var(--surface);color:var(--text);max-width:480px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   const rows=active.slice().sort((a,b)=>((a.nr==null?99:a.nr)-(b.nr==null?99:b.nr))||a.name.localeCompare(b.name)).map(k=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:var(--border)">
     <div style="flex:1;min-width:0">
-      <div style="font-size:13px;font-weight:700">${k.nr!=null?`<span style="color:var(--text3);font-weight:600">#${k.nr}</span> `:""}${esc(k.name)}</div>
-      <div id="aw-fed-${k.id}" style="font-size:11px;color:#7c3aed;font-weight:700">…</div>
+      <div style="font-size:var(--s-text);font-weight:700">${k.nr!=null?`<span style="color:var(--text3);font-weight:600">#${k.nr}</span> `:""}${esc(k.name)}</div>
+      <div id="aw-fed-${kaderId(k)}" style="font-size:var(--s-klein);color:#7c3aed;font-weight:700">…</div>
     </div>
     <button class="btn btn-sm" onclick="adlerCardOpen('${(k.name||'').replace(/'/g,'')}')" title="FUT-Karte ansehen">🃏</button>
-    <button class="btn btn-sm" onclick="abzeichenOpen(${k.id},'${(k.name||'').replace(/'/g,'')}')" title="Technik-Abzeichen">🎖️</button>
+    <button class="btn btn-sm" onclick="abzeichenOpen(${kaderId(k)},'${(k.name||'').replace(/'/g,'')}')" title="Technik-Abzeichen">🎖️</button>
   </div>`).join("");
   c.innerHTML=`${mdlHead("aw-modal","🪶","Adler-Welt","Federn, Karten, Abzeichen & Challenge – ansehen und verwalten","#7c3aed")}
     <div id="aw-team-level" style="margin-bottom:12px"></div>
+    <button class="btn btn-p btn-sm" style="width:100%;margin-bottom:8px" onclick="document.getElementById('aw-modal').remove();w2('federnVergebenOpen')">${XP_ICON} ${XP_LABEL} vergeben (Team oder einzelne Kinder)</button>
     <button class="btn btn-p btn-sm" style="width:100%" onclick="document.getElementById('aw-modal').remove();wochenChallengeOpen()"><i class="ti ti-trophy"></i>Wochen-Challenge setzen / bearbeiten</button>
     <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('aw-modal').remove();w2('skillWocheOpen')"><i class="ti ti-video"></i>🎬 Skill der Woche setzen</button>
     <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('aw-modal').remove();wahlTrainerOpen()"><i class="ti ti-chart-bar"></i>🗳️ Kabinen-Wahl (Kinder stimmen ab)</button>
     <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('aw-modal').remove();albumFotosOpen()"><i class="ti ti-photo"></i>🃏 Album-Karten-Fotos (Trainer &amp; Verein)</button>
-    <div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 4px">🎵 Kabinen-Playlist</div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Spotify-Link zur U9-Playlist. Die Kinder hören sie in der Kabine.</div>
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:16px 0 4px">🎵 Kabinen-Playlist</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px">Spotify-Link zur U9-Playlist. Die Kinder hören sie in der Kabine; sie lädt dort erst, wenn jemand auf „Playlist laden“ tippt.</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
-      <input id="aw-spotify" type="url" placeholder="https://open.spotify.com/playlist/…" style="flex:1;min-width:150px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text)">
+      <input id="aw-spotify" type="url" placeholder="https://open.spotify.com/playlist/…" style="flex:1;min-width:150px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
       <button class="btn btn-sm" onclick="spotifySave(this)"><i class="ti ti-device-floppy"></i>Speichern</button>
     </div>
-    <div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 0">Spieler · ${XP_ICON} Federn</div>
-    ${rows||'<div style="font-size:12px;color:var(--text3);padding:8px 0">Kein Kader geladen.</div>'}
-    <div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 4px">🔒 Kabinen-Code</div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Mit diesem Code verlassen die Eltern den Kinder-Modus. Er bremst ein Kind – ein Schutz ist er nicht.</div>
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:12px 0 0">Spieler · ${XP_ICON} Federn</div>
+    ${rows||'<div style="font-size:var(--s-text);color:var(--text3);padding:8px 0">Kein Kader geladen.</div>'}
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:16px 0 4px">🔒 Kabinen-Code</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px">Mit diesem Code verlassen die Eltern den Kinder-Modus. Er bremst ein Kind – ein Schutz ist er nicht.</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
-      <input id="aw-kabinencode" type="text" inputmode="numeric" autocomplete="off" placeholder="Neuer Code (min. 4 Zeichen)" style="flex:1;min-width:150px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text)">
+      <input id="aw-kabinencode" type="text" inputmode="numeric" autocomplete="off" placeholder="Neuer Code (min. 4 Zeichen)" style="flex:1;min-width:150px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
       <button class="btn btn-sm" onclick="kabineCodeSave(this)"><i class="ti ti-device-floppy"></i>Code ändern</button>
     </div>
-    <div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 4px">🤝 Unsere Vereinbarung</div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Die Eltern sehen beides in EINEM Dokument: oben die kurzen Fairplay-Regeln, darunter die ausformulierten Punkte nach Rubriken.</div>
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:16px 0 4px">🤝 Unsere Vereinbarung</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px">Die Eltern sehen beides in EINEM Dokument: oben die kurzen Fairplay-Regeln, darunter die ausformulierten Punkte nach Rubriken.</div>
     <button class="btn btn-sm" style="width:100%;margin-bottom:6px" onclick="document.getElementById('aw-modal').remove();w2('fairplayEditOpen')"><i class="ti ti-edit"></i>Fairplay-Regeln bearbeiten (oberer Teil)</button>
     <button class="btn btn-sm" style="width:100%" onclick="document.getElementById('aw-modal').remove();w2('leitfadenEditOpen')"><i class="ti ti-edit"></i>Praktische Punkte bearbeiten (Rubriken)</button>
-    <div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 4px">🏟️ Team-Arena</div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Schlachtruf & Einlauf-Song, die die Kinder in der Kabine sehen.</div>
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:16px 0 4px">🏟️ Team-Arena</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px">Schlachtruf & Einlauf-Song, die die Kinder in der Kabine sehen.</div>
     <button class="btn btn-sm" style="width:100%" onclick="document.getElementById('aw-modal').remove();w2('arenaEditOpen')"><i class="ti ti-flag"></i>Arena bearbeiten</button>
-    <div style="font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 4px">🔗 Eltern einladen</div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Fertige WhatsApp-Nachricht mit Eltern-Link + Kurzanleitung – an die Elternschaft schicken.</div>
-    <button class="btn btn-sm btn-p" style="width:100%" onclick="document.getElementById('aw-modal').remove();elternInvitePaket()"><i class="ti ti-brand-whatsapp"></i>Einladung erstellen</button>
-    <button class="btn btn-sm btn-p" style="width:100%;margin-top:8px" onclick="document.getElementById('aw-modal').remove();einladungskartenOpen()"><i class="ti ti-id-badge-2"></i>Einladungskarten drucken (Zugang per QR)</button>
-    <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="qrAushangOpen()"><i class="ti ti-qrcode"></i>🖨️ QR-Aushang fürs schwarze Brett drucken</button>
     <button class="btn btn-sm" style="margin-top:12px;width:100%" onclick="document.getElementById('aw-modal').remove()">Schließen</button>`;
   modal.appendChild(c);document.body.appendChild(modal);
   if(typeof teamLevelLoad==="function")teamLevelLoad("aw-team-level"); // Küken-Schwarm (Team-Level) jetzt hier
-  active.forEach(k=>{xpTotal(k.id).then(t=>{const el=document.getElementById("aw-fed-"+k.id);if(el){const b=xpBadge(t);el.textContent=`${XP_ICON} ${t} · ${b.emo} ${b.t}`;}}).catch(()=>{});});
+  active.forEach(k=>{xpTotal(kaderId(k)).then(t=>{const el=document.getElementById("aw-fed-"+kaderId(k));if(el){const b=xpBadge(t);el.textContent=`${XP_ICON} ${t} · ${b.emo} ${b.t}`;}}).catch(()=>{});});
   // aktuelle Spotify-Playlist vorbefüllen
   fetch(`${SB_URL}/rest/v1/team_config?id=eq.1&select=spotify_playlist`,{headers:sbAuthHeaders()}).then(r=>r.ok?r.json():[]).then(rows=>{const el=document.getElementById("aw-spotify");if(el&&rows[0]&&rows[0].spotify_playlist)el.value=rows[0].spotify_playlist;}).catch(()=>{});
-}
-/* ── K5: QR-Aushang – druckbares A4-Plakat mit QR-Code zum Eltern-Bereich (schwarzes
-   Brett am Käfig, Probetraining-Eltern). Enthält NUR die öffentliche App-Adresse.
-   v604: Der QR-Code entsteht im Browser (vendor/qrcode.js) statt bei api.qrserver.com –
-   für die Einladungskarten ist das Pflicht (dort steht ein Zugangscode im QR), und
-   hier soll es nicht anders aussehen. ── */
-async function qrAushangOpen(){
-  const link=appRoot()+"eltern/";
-  let qr;
-  try{ qr=await qrSvg(link,6); }catch(e){ toast("QR-Code konnte nicht erzeugt werden – bitte neu laden","err"); return; }
-  const html=`<div class="zert-page"><div class="zert-card">
-    <div class="zert-crest"><img src="logo.png" alt=""></div>
-    <div class="zert-club">SV Adler Dellbrück e.V. · U9</div>
-    <div class="zert-title">Unsere Team-App</div>
-    <div class="zert-season">für alle Adler-Eltern &amp; Schnupper-Familien</div>
-    <div class="zert-text" style="text-align:left;max-width:460px">
-      <b>1.</b> Den Zugang gibt es mit der persönlichen Einladungskarte eures Kindes – einfach das Trainerteam ansprechen.<br>
-      <b>2.</b> Karte scannen, E-Mail und Passwort festlegen – fertig.<br>
-      <b>3.</b> Termine zu-/absagen, Infos &amp; Fotos, Liveticker – und „Die Kabine“ für die Kinder.<br>
-      <span style="font-size:.9em">Schon angemeldet? Dieser Code führt direkt zur App.</span></div>
-    <div style="width:220px;height:220px;margin:14px auto 6px">${qr}</div>
-    <div style="font-size:11px;color:#475569;word-break:break-all">${esc(link)}</div>
-    <div class="zert-sign"><div>Euer Trainerteam<br>${(typeof TRAINER!=="undefined"?TRAINER:[]).join(" · ")}</div><div>Fragen? Sprecht uns am Platz an!</div></div>
-  </div></div>`;
-  _zertPrint(html);
 }
 /* v604: QR-Code als SVG, erzeugt im Browser. Die Bibliothek (MIT, Kazuhiko Arase) liegt
    in vendor/ und wird erst beim ersten Druck geladen – kein Trainer braucht sie beim Start.
@@ -4425,7 +4903,7 @@ async function einladungHash(code){
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
 }
 async function einladungskartenOpen(){
-  const kinder=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k.aktiv!==false&&k.id!=null);
+  const kinder=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k.aktiv!==false&&kaderId(k)!=null);
   let konten={}, karten={};
   try{const r=await fetch(`${SB_URL}/rest/v1/eltern_kinder?select=spieler_id`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)(await r.json()).forEach(x=>konten[x.spieler_id]=(konten[x.spieler_id]||0)+1);}catch(e){}
   try{const r=await fetch(`${SB_URL}/rest/v1/eltern_einladung?select=spieler_id,nutzungen,max_nutzungen,gueltig_bis`,{headers:sbAuthHeaders()});if(r.ok)(await r.json()).forEach(x=>karten[x.spieler_id]=x);}catch(e){}
@@ -4436,25 +4914,25 @@ async function einladungskartenOpen(){
   m.onclick=e=>{if(e.target===m)m.remove();};
   const bis=new Date(Date.now()+7*864e5).toISOString().slice(0,10);
   const zeile=k=>{
-    const n=konten[k.id]||0, c=karten[k.id];
+    const n=konten[kaderId(k)]||0, c=karten[kaderId(k)];
     const stand=[n?`${n} Konto${n>1?"en":""} verbunden`:"noch kein Konto",
       c?(new Date(c.gueltig_bis)>new Date()?`Karte: ${c.nutzungen} von ${c.max_nutzungen} genutzt`:"Karte abgelaufen"):""].filter(Boolean).join(" · ");
     return `<label style="display:flex;align-items:center;gap:10px;min-height:44px;padding:4px 2px;border-bottom:1px solid var(--border);cursor:pointer">
-      <input type="checkbox" class="einl-kind" value="${k.id}" ${n?"":"checked"} style="width:20px;height:20px">
-      <span style="flex:1;min-width:0"><b>${esc(k.name)}</b><br><span style="font-size:11.5px;color:var(--text2)">${esc(stand)}</span></span></label>`;
+      <input type="checkbox" class="einl-kind" value="${kaderId(k)}" ${n?"":"checked"} style="width:20px;height:20px">
+      <span style="flex:1;min-width:0"><b>${esc(k.name)}</b><br><span style="font-size:var(--s-klein);color:var(--text2)">${esc(stand)}</span></span></label>`;
   };
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("einl-modal","🎟️","Einladungskarten","Je Kind eine Karte · QR scannen, E-Mail und Passwort festlegen, fertig","#047857")}
-    <div style="font-size:12.5px;color:var(--text2);margin-bottom:10px">Vier Karten pro A4-Seite zum Ausschneiden. Eine Karte reicht für <b>zwei</b> Elternteile. Kein Mailversand – das Konto ist sofort da.
+    <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:10px">Vier Karten pro A4-Seite zum Ausschneiden. Eine Karte reicht für <b>zwei</b> Elternteile. Kein Mailversand – das Konto ist sofort da.
       <br><b>Neu drucken macht die alte Karte des Kindes ungültig.</b> Vorausgewählt sind die Kinder ohne verbundenes Konto.</div>
     <div style="display:flex;gap:8px;margin-bottom:6px">
       <button class="btn btn-sm" style="flex:1" onclick="document.querySelectorAll('.einl-kind').forEach(c=>c.checked=true)">Alle</button>
       <button class="btn btn-sm" style="flex:1" onclick="document.querySelectorAll('.einl-kind').forEach(c=>c.checked=false)">Keine</button>
     </div>
-    <div style="max-height:46vh;overflow-y:auto;margin-bottom:10px">${kinder.map(zeile).join("")||'<div style="font-size:12.5px;color:var(--text2)">Kein Kader geladen.</div>'}</div>
-    <label for="einl-bis" style="font-size:12px;color:var(--text2)">Gültig bis</label>
-    <input id="einl-bis" type="date" value="${bis}" style="width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:14px;background:var(--surface2);color:var(--text);margin:4px 0 12px">
-    <button id="einl-druck" class="btn btn-p" style="width:100%" onclick="einladungskartenDrucken(this)"><i class="ti ti-printer"></i>Karten erzeugen und drucken</button>
+    <div style="max-height:46vh;overflow-y:auto;margin-bottom:10px">${kinder.map(zeile).join("")||'<div style="font-size:var(--s-text);color:var(--text2)">Kein Kader geladen.</div>'}</div>
+    <label for="einl-bis" style="font-size:var(--s-text);color:var(--text2)">Gültig bis</label>
+    <input id="einl-bis" type="date" value="${bis}" style="width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-karte);background:var(--surface2);color:var(--text);margin:4px 0 12px">
+    <button id="einl-druck" class="btn btn-p" style="width:100%" onclick="einladungskartenDrucken(this)"><i class="ti ti-id-badge-2"></i>Karten erzeugen</button>
     <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('einl-modal').remove()">Schließen</button>
   </div>`;
   document.body.appendChild(m);
@@ -4466,7 +4944,7 @@ async function einladungskartenDrucken(btn){
   if(!bisTag||bisTag<new Date().toISOString().slice(0,10)){toast("Das Datum „Gültig bis“ liegt in der Vergangenheit","err");return;}
   if(!(window.crypto&&crypto.subtle)){toast("Karten lassen sich nur über https erzeugen","err");return;}
   if(btn){btn.disabled=true;btn.textContent="Erzeuge Karten…";}
-  const zurueck=()=>{if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-printer"></i>Karten erzeugen und drucken';}};
+  const zurueck=()=>{if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-id-badge-2"></i>Karten erzeugen';}};
   try{
     await qrBibliothek();
     const gueltig=new Date(bisTag+"T23:59:59").toISOString();
@@ -4481,9 +4959,47 @@ async function einladungskartenDrucken(btn){
     if(!r.ok){toast(sbDeniedMsg(r,"Karten konnten nicht gespeichert werden"),"err");return zurueck();}
     const html=await einladungskartenHtml(karten,bisTag);
     document.getElementById("einl-modal")?.remove();
-    toast(`🎟️ ${karten.length} Karte${karten.length>1?"n":""} bereit – Druckdialog öffnet sich`);
-    _zertPrint(html);
+    const ziel=document.getElementById("zert-print"); if(ziel)ziel.innerHTML=html;
+    einladungFertigZeigen(karten,html,bisTag);
   }catch(e){toast("Karten konnten nicht erzeugt werden: "+e.message,"err");zurueck();}
+}
+/* v658 PO 28.09.: „Link kopieren“ je Karte – für Eltern, die beim Elternabend fehlen. Der Code
+   lebt nur in diesem Fenster (in der Datenbank steht sein SHA-256); wer es schließt, erzeugt neu.
+   Gedruckt wird erst auf Knopfdruck, damit der Druckdialog nicht vor die Links springt. */
+let _einlFertig=null;
+function einladungFertigZeigen(karten,html,bisTag){
+  const kader=(typeof KADER!=="undefined"?KADER:[]);
+  const basis=appRoot()+"eltern/?portal&einladung=";
+  const bis=bisTag.split("-").reverse().join(".");
+  _einlFertig={html,links:karten.map(k=>{const kind=kader.find(x=>kaderId(x)===k.id);
+    return {name:String(kind?.name||"").trim(),url:basis+k.code};})};
+  document.getElementById("einl-fertig")?.remove();
+  const m=document.createElement("div");m.id="einl-fertig";
+  m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Einladungskarten erzeugt");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  const zeilen=_einlFertig.links.map((l,i)=>`<div style="display:flex;align-items:center;gap:10px;min-height:48px;border-bottom:1px solid var(--border)">
+      <b style="flex:1;min-width:0">${esc(l.name)}</b>
+      <button class="btn btn-sm einl-link" style="min-height:44px" onclick="einladungLinkTeilen(${i},this)"><i class="ti ti-link"></i>Link kopieren</button></div>`).join("");
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
+    ${mdlHead("einl-fertig","🎟️",`${karten.length} Karte${karten.length>1?"n":""} erzeugt`,`gültig bis ${esc(bis)}`,"#047857")}
+    <button id="einl-drucken" class="btn btn-p" style="width:100%;min-height:56px" onclick="einladungKartenDruckenJetzt()"><i class="ti ti-printer"></i>Karten drucken</button>
+    <div style="font-size:var(--s-text);color:var(--text2);margin:14px 0 6px">Oder den Link einzeln per WhatsApp schicken – im <b>persönlichen</b> Chat, nie in der Gruppe: wer ihn hat, kommt an die Daten dieses Kindes. Der Link wirkt wie die Karte (zwei Elternteile).</div>
+    ${zeilen}
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:10px">Die Links gibt es nur in diesem Fenster. Danach geht es nur mit neuen Karten – die alten werden dann ungültig.</div>
+    <button class="btn btn-sm" style="width:100%;margin-top:10px" onclick="document.getElementById('einl-fertig').remove()">Schließen</button>
+  </div>`;
+  document.body.appendChild(m);
+  toast(`🎟️ ${karten.length} Karte${karten.length>1?"n":""} bereit`);
+}
+function einladungKartenDruckenJetzt(){ if(_einlFertig)_zertPrint(_einlFertig.html); }
+async function einladungLinkTeilen(i,btn){
+  const l=_einlFertig&&_einlFertig.links[i]; if(!l)return;
+  let ok=false;
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(l.url);ok=true;} }catch(e){}
+  if(!ok){ try{ const t=document.createElement("textarea");t.value=l.url;t.setAttribute("readonly","");t.style.cssText="position:fixed;left:-9999px";
+    document.body.appendChild(t);t.select();ok=document.execCommand("copy");t.remove(); }catch(e){} }
+  if(ok){ if(btn){btn.innerHTML='<i class="ti ti-check"></i>Kopiert';} toast(`🔗 Link für ${l.name} kopiert – jetzt im Chat einfügen`); }
+  else toast("Kopieren ging nicht – bitte die Karte drucken oder als PDF speichern","err");
 }
 async function einladungskartenHtml(karten,bisTag){
   const kader=(typeof KADER!=="undefined"?KADER:[]);
@@ -4491,7 +5007,7 @@ async function einladungskartenHtml(karten,bisTag){
   const basis=appRoot()+"eltern/?portal&einladung=";
   const einzeln=[];
   for(const k of karten){
-    const kind=kader.find(x=>x.id===k.id);
+    const kind=kader.find(x=>kaderId(x)===k.id);
     const vorname=String(kind?.name||"").trim();   // wie im Kader – zwei gleiche Vornamen unterscheidet der Trainer dort
     const qr=await qrSvg(basis+k.code,4);
     einzeln.push(`<div class="einl-karte">
@@ -4536,10 +5052,10 @@ async function albumFotosOpen(){
   m.onclick=e=>{if(e.target===m)m.remove();};
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("albfoto-modal","🃏","Album-Karten-Fotos","Bilder für Trainer- und Vereins-Sticker – die Kinder sehen sie im Sammelalbum","var(--amber)")}
-    <div style="font-size:11.5px;color:var(--text2);margin-bottom:10px">Kinder-Sticker nutzen automatisch das Profilfoto (mit Eltern-Freigabe). Hier pflegst du die restlichen Karten – Querformat wird rund zugeschnitten, max. 3 MB.</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:10px">Kinder-Sticker nutzen automatisch das Profilfoto (mit Eltern-Freigabe). Hier pflegst du die restlichen Karten – Querformat wird rund zugeschnitten, max. 3 MB.</div>
     ${_albumFotoSlots().map(s=>`<div style="display:flex;align-items:center;gap:8px;border:var(--border-s);border-radius:12px;padding:8px 12px;margin-bottom:6px">
-      <span style="flex:1;min-width:0;font-size:13px;font-weight:700">${s.label}</span>
-      <span style="font-size:11px;color:${map[s.key]?"var(--green)":"var(--text3)"}">${map[s.key]?"✅ Foto da":"– kein Foto"}</span>
+      <span style="flex:1;min-width:0;font-size:var(--s-text);font-weight:700">${s.label}</span>
+      <span style="font-size:var(--s-klein);color:${map[s.key]?"var(--green)":"var(--text3)"}">${map[s.key]?"✅ Foto da":"– kein Foto"}</span>
       <label class="btn btn-sm" style="cursor:pointer;margin:0">📷<input type="file" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="albumFotoUpload('${s.key}',this)"></label>
       ${map[s.key]?`<button class="btn btn-sm" style="color:var(--red)" onclick="albumFotoDelete('${s.key}')" title="Foto entfernen"><i class="ti ti-trash"></i></button>`:""}
     </div>`).join("")}
@@ -4588,7 +5104,7 @@ async function kabineCodeSave(btn){
   const code=(el?.value||"").trim();
   if(code.length<4){toast("Mindestens 4 Zeichen","err");return;}
   const hash=await hashPin(code);
-  // Trainer-PIN und Kabinen-Code sind ab Werk beide "1922". Wer den einen kennt, kennt den anderen.
+  // Trainer-PIN und Kabinen-Code sind ab Werk derselbe Wert. Wer den einen kennt, kennt den anderen.
   if(typeof PIN_HASH!=="undefined"&&hash===PIN_HASH){
     if(!confirm("Das ist derselbe Code wie der Trainer-PIN.\n\nWer ihn kennt, kommt damit auch in die Trainer-App.\nTrotzdem verwenden?"))return;
   }
@@ -4613,12 +5129,12 @@ function pwChangeOpen(){
   const m=document.createElement("div");m.id="pw-modal";
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10001;display:flex;align-items:center;justify-content:center;padding:16px";
   m.onclick=e=>{if(e.target===m)m.remove();};
-  const fld="width:100%;padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:14px;background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const fld="width:100%;padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-karte);background:var(--surface2);color:var(--text);box-sizing:border-box";
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);max-width:360px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
-    ${mdlHead("pw-modal","🔑","Passwort ändern","Eigenes, sicheres Passwort (mind. 8 Zeichen)","#334155")}
-    <label style="font-size:11px;color:var(--text2)">Neues Passwort<input type="password" id="pw-new" autocomplete="new-password" style="${fld}"></label>
-    <label style="font-size:11px;color:var(--text2);display:block;margin-top:8px">Nochmal eingeben<input type="password" id="pw-new2" autocomplete="new-password" onkeydown="if(event.key==='Enter')pwChangeSave()" style="${fld}"></label>
-    <div id="pw-err" style="color:var(--red);font-size:12px;min-height:16px;margin-top:6px"></div>
+    ${mdlHead("pw-modal","🔑","Passwort ändern","Eigenes Passwort: "+pwRegelText(),"#334155")}
+    <label style="font-size:var(--s-klein);color:var(--text2)">Neues Passwort<input type="password" id="pw-new" autocomplete="new-password" minlength="10" style="${fld}"></label>
+    <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Nochmal eingeben<input type="password" id="pw-new2" autocomplete="new-password" minlength="10" onkeydown="if(event.key==='Enter')pwChangeSave()" style="${fld}"></label>
+    <div id="pw-err" style="color:var(--red);font-size:var(--s-text);min-height:16px;margin-top:6px"></div>
     <div style="display:flex;gap:8px;margin-top:2px">
       <button class="btn btn-p btn-sm" onclick="pwChangeSave(this)"><i class="ti ti-device-floppy"></i>Speichern</button>
       <button class="btn btn-sm" style="margin-left:auto" onclick="document.getElementById('pw-modal').remove()">Abbrechen</button>
@@ -4630,7 +5146,7 @@ function pwChangeOpen(){
 async function pwChangeSave(btn){
   const p1=document.getElementById("pw-new")?.value||"", p2=document.getElementById("pw-new2")?.value||"";
   const err=document.getElementById("pw-err"); const fail=(msg)=>{ if(err)err.textContent=msg; };
-  if(p1.length<8){fail("Mindestens 8 Zeichen.");return;}
+  {const f=pwRegelFehler(p1);if(f){fail(f);return;}}
   if(p1!==p2){fail("Die Passwörter stimmen nicht überein.");return;}
   if(btn)btn.disabled=true;
   try{
@@ -4674,7 +5190,7 @@ const WOCHE_TAGE=7;
 const WOCHE_ROT_AB=3;   // ab so vielen Tagen vor dem Termin darf ein Chip rot werden
 function _wocheChip(text,art){
   const f={ok:["var(--green-bg)","var(--green)"],warn:["var(--amber-bg)","var(--amber)"],rot:["var(--red-bg)","var(--red)"],neutral:["var(--surface2)","var(--text2)"]}[art||"neutral"];
-  return `<span style="display:inline-block;font-size:11px;font-weight:700;line-height:1.3;padding:3px 8px;border-radius:10px;background:${f[0]};color:${f[1]};border:1px solid ${f[1]}33">${text}</span>`;
+  return `<span style="display:inline-block;font-size:var(--s-klein);font-weight:700;line-height:1.3;padding:3px 8px;border-radius:10px;background:${f[0]};color:${f[1]};border:1px solid ${f[1]}33">${text}</span>`;
 }
 function wocheOpen(id,datum,typ){
   if(typeof nutzungLog==="function")nutzungLog("aktion","woche:"+typ);
@@ -4688,11 +5204,11 @@ async function homeWocheLoad(){
   let fern=false;   // kein Termin in 7 Tagen → der naechste danach
   /* v474: Jede gerechnete Zahl nennt ihre Quelle (Muster v470) – sonst raet der Trainer,
      ob „3 zugesagt" aus den Eltern-Antworten oder aus seiner eigenen Anwesenheit stammt. */
-  const quelle=`<div class="woche-quelle" style="font-size:10.5px;color:var(--text3);margin-top:6px;line-height:1.4">Training: alle dabei außer Absagen · Spiel: Zusagen aus den Eltern-Rückmeldungen, am Spieltag „dabei“ aus „Teams festlegen“ · Trainer aus dem Trainerplan · Plan aus der App</div>`;
+  const quelle=`<details class="woche-quelle-klapp" style="margin-top:6px"><summary style="min-height:44px;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:var(--s-klein);font-weight:700;color:var(--text2)">ⓘ Woher die Zahlen kommen</summary><div class="woche-quelle" style="font-size:var(--s-klein);color:var(--text3);margin-top:0;line-height:1.4">Training: alle dabei außer Absagen · Spiel: Zusagen aus den Eltern-Rückmeldungen, am Spieltag „dabei“ aus „Teams festlegen“ · Trainer aus dem Trainerplan · Plan aus der App</div></details>`;
   const karte=(inner,mitQuelle)=>`<div class="card" style="padding:12px 14px;margin-bottom:10px">
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px">
-      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text2)">🗓️ ${fern?"Als Nächstes":"Diese Woche"}</div>
-      <div style="font-size:11px;color:var(--text3)">${fern?"kein Termin in den nächsten "+WOCHE_TAGE+" Tagen":"nächste "+WOCHE_TAGE+" Tage"}</div>
+      <div style="font-size:var(--s-karte);font-weight:900;color:var(--text)">🗓️ ${fern?"Als Nächstes":"Diese Woche"}</div>
+      <div style="font-size:var(--s-klein);color:var(--text3)">${fern?"kein Termin in den nächsten "+WOCHE_TAGE+" Tagen":"nächste "+WOCHE_TAGE+" Tage"}</div>
     </div>${inner}${mitQuelle?quelle:""}</div>`;
   let termine=[];
   try{
@@ -4709,7 +5225,7 @@ async function homeWocheLoad(){
   }catch(e){slot.innerHTML="";return;}
   if(!document.getElementById("home-woche"))return;   // Tab schon verlassen
   if(!termine.length){
-    slot.innerHTML=karte(`<div style="font-size:12.5px;color:var(--text2)">Kein Termin geplant. <a href="#" onclick="go('termine');return false" style="color:var(--blue-text);font-weight:700">Termin erfassen ›</a></div>`);
+    slot.innerHTML=karte(`<div style="font-size:var(--s-text);color:var(--text2)">Kein Termin geplant. <a href="#" onclick="go('termine');return false" style="color:var(--blue-text);font-weight:700">Termin erfassen ›</a></div>`);
     return;
   }
   const inList=a=>`in.(${a.map(x=>encodeURIComponent(x)).join(",")})`;
@@ -4784,25 +5300,25 @@ async function homeWocheLoad(){
             :t.typ==="event"?`<button class="btn btn-sm" onclick="mitbringTrainerOpen()" style="white-space:nowrap"><i class="ti ti-basket"></i>Mitbringliste</button>`
             :`<button class="btn btn-sm" onclick="tmJump('anwesenheit','${t.datum}')" style="white-space:nowrap"><i class="ti ti-checkbox"></i>Anwesenheit</button>
              <button class="btn btn-sm" onclick="tmJump('planung','${t.datum}')" style="white-space:nowrap"><i class="ti ti-clipboard-list"></i>Plan</button>`}
-          ${t.spielform?`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:${m.col}22;color:${m.col}">${esc(t.spielform)}</span>`:""}
-          ${t.ort?`<span style="font-size:11.5px;color:var(--text2)">${mapsAnchor(t.ort)}</span>`:""}
+          ${t.spielform?`<span style="font-size:var(--s-klein);font-weight:700;padding:2px 7px;border-radius:10px;background:${m.col}22;color:${m.col}">${esc(t.spielform)}</span>`:""}
+          ${t.ort?`<span style="font-size:var(--s-klein);color:var(--text2)">${mapsAnchor(t.ort)}</span>`:""}
         </div>
         <div id="wetter-home"></div><div id="wetter-warn-home"></div><div id="gegner-contact-home"></div>
       </div>`;
     return `<div class="woche-zeile" role="button" tabindex="0" onclick="wocheOpen(${t.id},'${t.datum}','${esc(t.typ)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"
         style="display:flex;gap:10px;align-items:flex-start;min-height:44px;padding:8px 4px;border-top:1px solid var(--rand-bedien);cursor:pointer">
       <div style="flex:0 0 52px;text-align:center">
-        <div style="font-size:11px;font-weight:800;color:${inTagen===0?"var(--red)":"var(--text2)"}">${inTagen===0?"HEUTE":inTagen===1?"morgen":wtag}</div>
-        <div style="font-size:14px;font-weight:800;line-height:1.2">${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}</div>
-        <div style="font-size:11px;color:var(--text2)">${zeit||"&nbsp;"}</div>
+        <div style="font-size:var(--s-klein);font-weight:800;color:${inTagen===0?"var(--red)":"var(--text2)"}">${inTagen===0?"HEUTE":inTagen===1?"morgen":wtag}</div>
+        <div style="font-size:var(--s-karte);font-weight:800;line-height:1.2">${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}</div>
+        <div style="font-size:var(--s-klein);color:var(--text2)">${zeit||"&nbsp;"}</div>
       </div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:13.5px;font-weight:800;line-height:1.25;color:${faelltAus?"var(--text2)":"inherit"}">${m.icon} ${titel}${ort?` <span style="font-weight:500;color:var(--text2);font-size:11.5px">· ${esc(ort)}</span>`:""}</div>
+        <div style="font-size:var(--s-text);font-weight:800;line-height:1.25;color:${faelltAus?"var(--text2)":"inherit"}">${m.icon} ${titel}${ort?` <span style="font-weight:500;color:var(--text2);font-size:var(--s-klein)">· ${esc(ort)}</span>`:""}</div>
         <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">${chips.join("")}</div>
-        ${faelltAus?`<div style="font-size:11px;color:var(--text3);margin-top:5px">Abgesagt – die Eltern sehen den Hinweis in ihrer App. Zum Zurücknehmen den Termin antippen.</div>`:""}
+        ${faelltAus?`<div style="font-size:var(--s-klein);color:var(--text3);margin-top:5px">Abgesagt – die Eltern sehen den Hinweis in ihrer App. Zum Zurücknehmen den Termin antippen.</div>`:""}
         ${erweitert}
       </div>
-      <div aria-hidden="true" style="align-self:center;color:var(--text3);font-size:16px">›</div>
+      <div aria-hidden="true" style="align-self:center;color:var(--text3);font-size:var(--s-karte)">›</div>
     </div>`;
   });
   slot.innerHTML=karte(`<div style="margin:0 -4px">${zeilen.join("")}</div>`,true);
@@ -4827,7 +5343,7 @@ async function nutzungOpen(){
     ${mdlHead("nutzung-modal","📊","Nutzung","Was wirklich benutzt wird – die Grundlage fürs Ausmisten","var(--fam-orga)")}
     <div id="nutzung-zeitraum" style="display:flex;gap:8px;margin-bottom:10px"></div>
     <div id="nutzung-kinder"></div>
-    <div id="nutzung-body"><div style="font-size:12px;color:var(--text2)">Lade Auswertung…</div></div>
+    <div id="nutzung-body"><div style="font-size:var(--s-text);color:var(--text2)">Lade Auswertung…</div></div>
     <button class="btn btn-sm" style="width:100%;margin-top:12px" onclick="nutzungAufraeumen()"><i class="ti ti-trash"></i>Einträge älter als 90 Tage löschen</button>
   </div>`;
   document.body.appendChild(m);
@@ -4851,14 +5367,14 @@ async function kindGeraeteLaden(){
   if(!d||!d.ok){ box.innerHTML=""; return; }
   const limit=d.geraete?(d.limit_min===d.limit_max?`${d.limit_min} Min.`:`${d.limit_min}–${d.limit_max} Min.`):"–";
   box.innerHTML=`<div style="border:var(--border-s);border-radius:var(--rl);padding:10px 12px;margin-bottom:12px">
-    <div style="font-size:13px;font-weight:800">📱 Kinder-App</div>
-    <div style="font-size:12.5px;color:var(--text2);margin-top:4px;line-height:1.6">
+    <div style="font-size:var(--s-text);font-weight:800">📱 Kinder-App</div>
+    <div style="font-size:var(--s-text);color:var(--text2);margin-top:4px;line-height:1.6">
       ${d.geraete===0
         ? "Noch kein Gerät gekoppelt. Die Eltern erzeugen den Code in ihrem Bereich unter „Für die Kinder“."
         : `<b>${d.geraete}</b> ${d.geraete===1?"Gerät":"Geräte"} bei <b>${d.kinder}</b> ${d.kinder===1?"Kind":"Kindern"} gekoppelt · heute ${d.heute_aktiv===0?"noch keins":`<b>${d.heute_aktiv}</b> aktiv`}${d.minuten_heute?` (${d.minuten_heute} Min.)`:""} · Appzeit ${limit} am Tag`}
       ${d.getrennt?`<br><span style="color:var(--text3)">${d.getrennt} ${d.getrennt===1?"Gerät wurde":"Geräte wurden"} wieder getrennt.</span>`:""}
     </div>
-    <div style="font-size:11px;color:var(--text3);margin-top:6px">Nur Summen – welches Kind welches Gerät hat, entscheiden und sehen die Eltern.</div>
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px">Nur Summen – welches Kind welches Gerät hat, entscheiden und sehen die Eltern.</div>
   </div>`;
 }
 function _nutzungZeitraumHtml(){
@@ -4886,22 +5402,22 @@ async function nutzungLaden(tage){
   try{
     const r=await fetch(`${SB_URL}/rest/v1/rpc/nutzung_auswertung`,{method:"POST",headers:{...sbAuthHeaders(),"Content-Type":"application/json"},body:JSON.stringify({p_tage:tage})});
     if(sbCheck401(r))return;
-    if(!r.ok){box.innerHTML=`<div style="font-size:12.5px;color:var(--text2)">Auswertung gerade nicht erreichbar – später noch einmal öffnen.</div>`;return;}
+    if(!r.ok){box.innerHTML=`<div style="font-size:var(--s-text);color:var(--text2)">Auswertung gerade nicht erreichbar – später noch einmal öffnen.</div>`;return;}
     rows=(await r.json())||[];
-  }catch(e){box.innerHTML=`<div style="font-size:12.5px;color:var(--text2)">Kein Netz – die Auswertung braucht den Server.</div>`;return;}
+  }catch(e){box.innerHTML=`<div style="font-size:var(--s-text);color:var(--text2)">Kein Netz – die Auswertung braucht den Server.</div>`;return;}
   if(!document.getElementById("nutzung-body"))return;
-  if(!rows.length){box.innerHTML=`<div style="font-size:12.5px;color:var(--text2)">Noch keine Einträge in den letzten ${tage} Tagen. Das Log läuft seit v453 – einfach benutzen, die Zahlen kommen von selbst.</div>`;return;}
+  if(!rows.length){box.innerHTML=`<div style="font-size:var(--s-text);color:var(--text2)">Noch keine Einträge in den letzten ${tage} Tagen. Das Log läuft seit v453 – einfach benutzen, die Zahlen kommen von selbst.</div>`;return;}
   const tageHer=ts=>{const d=Math.round((Date.now()-new Date(ts))/864e5);return d<=0?"heute":d===1?"gestern":`vor ${d} Tagen`;};
   const gruppe=(titel,ereignis,rolle)=>{
     const l=rows.filter(x=>x.ereignis===ereignis&&(!rolle||x.rolle===rolle)).sort((a,b)=>b.anzahl-a.anzahl);
     if(!l.length)return "";
     const max=Math.max(...l.map(x=>+x.anzahl));
-    return `<div style="font-size:13px;font-weight:800;margin:14px 0 6px">${titel}</div>`+l.map(x=>`
-      <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;font-size:12.5px;padding:5px 0;border-top:1px solid var(--rand-bedien)">
+    return `<div style="font-size:var(--s-text);font-weight:800;margin:14px 0 6px">${titel}</div>`+l.map(x=>`
+      <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;font-size:var(--s-text);padding:5px 0;border-top:1px solid var(--rand-bedien)">
         <div style="min-width:0"><div style="font-weight:700;overflow:hidden;text-overflow:ellipsis">${esc(x.ziel||"–")}</div>
           <div style="height:4px;border-radius:2px;background:var(--surface2);margin-top:4px"><div style="height:4px;border-radius:2px;background:var(--blue);width:${Math.max(4,Math.round(100*x.anzahl/max))}%"></div></div></div>
-        <div style="text-align:right;font-variant-numeric:tabular-nums"><b>${x.anzahl}</b>×<div style="font-size:10.5px;color:var(--text2)">${x.nutzer} Nutzer</div></div>
-        <div style="font-size:10.5px;color:var(--text2);text-align:right;min-width:60px">${tageHer(x.zuletzt)}</div>
+        <div style="text-align:right;font-variant-numeric:tabular-nums"><b>${x.anzahl}</b>×<div style="font-size:var(--s-klein);color:var(--text2)">${x.nutzer} Nutzer</div></div>
+        <div style="font-size:var(--s-klein);color:var(--text2);text-align:right;min-width:60px">${tageHer(x.zuletzt)}</div>
       </div>`).join("");
   };
   const benutzt=new Set(rows.filter(x=>x.ereignis==="aktion").map(x=>x.ziel));
@@ -4912,9 +5428,9 @@ async function nutzungLaden(tage){
     gruppe("Aktionen in den Kacheln","aktion","trainer")+
     gruppe("Eltern-Bereich","eltern-bereich")+
     gruppe("Sonderseiten","route")+
-    (nie.length?`<div style="font-size:13px;font-weight:800;margin:14px 0 6px">Nie benutzt in ${tage} Tagen (${nie.length})</div>
-      <div style="display:flex;flex-wrap:wrap;gap:4px">${nie.map(a=>`<span style="font-size:11px;padding:3px 8px;border-radius:10px;background:var(--surface2);color:var(--text2);border:1px solid var(--rand-bedien)">${esc(a)}</span>`).join("")}</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:6px">Kandidaten fürs Ausmisten – erst nach 4–6 Wochen Daten entscheiden.</div>`:"");
+    (nie.length?`<div style="font-size:var(--s-text);font-weight:800;margin:14px 0 6px">Nie benutzt in ${tage} Tagen (${nie.length})</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">${nie.map(a=>`<span style="font-size:var(--s-klein);padding:3px 8px;border-radius:10px;background:var(--surface2);color:var(--text2);border:1px solid var(--rand-bedien)">${esc(a)}</span>`).join("")}</div>
+      <div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px">Kandidaten fürs Ausmisten – erst nach 4–6 Wochen Daten entscheiden.</div>`:"");
 }
 async function nutzungAufraeumen(){
   if(!confirm("Alle Log-Einträge löschen, die älter als 90 Tage sind?"))return;
@@ -4934,62 +5450,49 @@ async function renderHome(){
   if(!window._tourChecked){window._tourChecked=true;setTimeout(tourMaybe,700);} // Feature-Tour beim ersten Start
   const heute=new Date().toISOString().slice(0,10);
   const card=(inner,accent)=>`<div style="background:var(--surface);border:var(--border-s);${accent?`border-left:3px solid ${accent};`:""}border-radius:var(--rl);padding:12px 14px;margin-bottom:10px">${inner}</div>`;
-  const homeTool=(label,fn)=>`<button onclick="${fn}" style="flex:1 1 calc(50% - 4px);min-width:140px;min-height:46px;border:1px solid var(--rand-bedien);border-radius:var(--rl);cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--text);background:var(--surface);text-align:left;padding:0 12px">${label}</button>`;
+  const homeTool=(label,fn)=>`<button onclick="${fn}" style="flex:1 1 calc(50% - 4px);min-width:140px;min-height:46px;border:1px solid var(--rand-bedien);border-radius:var(--rl);cursor:pointer;font-family:inherit;font-size:var(--s-text);font-weight:700;color:var(--text);background:var(--surface);text-align:left;padding:0 12px">${label}</button>`;
 
   // ── Quick-Stats (sofort, aus lokalen Daten) ──
-  const names=Object.keys(DB||{});
+  /* v636: nur aktive Kinder zählen, und „überfällig“ heißt „bewertet, aber älter als 6 Wochen“.
+     Vorher zählte der Nenner inaktive Kinder und jedes nie bewertete Kind als überfällig –
+     nach dem Saisonstart stand der ganze Kader in Rot. */
+  const names=typeof kaderNamen==="function"?kaderNamen():Object.keys(DB||{});
   const bewertet=names.filter(n=>DB[n]&&DB[n].length).length;
-  const cutoff=new Date(Date.now()-42*86400000).toISOString().slice(0,10); // 6 Wochen (Bewertung alle 6 Wochen im Trainermeeting)
-  const stale=KADER.filter(k=>{
-    const s=DB[k.name];
-    if(!s||!s.length)return true;
-    return (s[s.length-1].datum||"0000")<cutoff;
-  }).length;
+  // v648: fällig nach 49 Tagen, vor dem Startdatum der Bewertungen nie
+  const stale=typeof bewKindFaellig==="function"?names.filter(bewKindFaellig).length:0;
   const statTile=(val,lbl,col,jump)=>`<div role="button" tabindex="0" onclick="${jump}" class="card" style="flex:1;min-width:90px;padding:10px;text-align:center;cursor:pointer">
-    <div style="font-size:22px;font-weight:800;color:${col}">${val}</div>
-    <div style="font-size:10px;color:var(--text2)">${lbl}</div></div>`;
+    <div style="font-size:var(--s-seite);font-weight:800;color:${col}">${val}</div>
+    <div style="font-size:var(--s-klein);color:var(--text2)">${lbl}</div></div>`;
 
-  // ── Geburtstage (nur wenn geb im KADER gepflegt) ──
-  const mitGeb=KADER.filter(k=>k.geb);
-  let gebHtml="";
-  if(!mitGeb.length){
-    gebHtml=card(`<div style="font-size:12px;color:var(--text2)">🎂 Geburtstage: noch keine Daten im Kader gepflegt (Feld <code>geb:"JJJJ-MM-TT"</code> je Spieler ergänzen).</div>`);
-  }else{
-    const soon=mitGeb.map(k=>({k,d:homeGebTage(k.geb)})).filter(x=>x.d<=14).sort((a,b)=>a.d-b.d);
-    if(soon.length){
-      gebHtml=card(soon.map(x=>`<div style="display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0">
-        <span style="font-size:16px">${x.d===0?"🎉":"🎂"}</span>
-        <strong>${esc(x.k.name)}</strong>
-        <span style="color:var(--text2);font-size:11.5px">${x.d===0?`wird HEUTE ${homeAlter(x.k.geb)+1}!`:`wird in ${x.d} Tag${x.d===1?"":"en"} ${homeAlter(x.k.geb)+1}`}</span>
-      </div>`).join(""),"var(--amber)");
-    }
-  }
+  // Geburtstage: seit v660 ein eigener Slot (#home-geb), gefüllt von homeGeburtstage().
 
   // Team-Quests leben jetzt im Spieltag (dort werden sie gezählt & geschafft) – nicht mehr auf der Startseite.
   let onboardHtml="";
-  try{ if(!localStorage.getItem("adler_onboarded")) onboardHtml=`<div id="onboard-card" class="card" style="padding:16px;margin-bottom:12px;border-left:3px solid var(--blue)">
-    <div style="font-weight:800;font-size:15px;margin-bottom:2px">👋 Willkommen im Adler-Trainer!</div>
-    <div style="font-size:12px;color:var(--text2);margin-bottom:12px">In 3 Schritten startklar:</div>
+  /* v682: Die drei Startschritte zeigen sich nur, solange es noch keinen Kader gibt – für ein
+     laufendes Team standen sie als erste Karte da, bis jemand „ausblenden“ fand. */
+  try{ if(!localStorage.getItem("adler_onboarded")&&!names.length) onboardHtml=`<div id="onboard-card" class="card" style="padding:16px;margin-bottom:12px;border-left:3px solid var(--blue)">
+    <div style="font-weight:800;font-size:var(--s-karte);margin-bottom:2px">👋 Willkommen im Adler-Trainer!</div>
+    <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:12px">In 3 Schritten startklar:</div>
     <div style="display:flex;flex-direction:column;gap:8px">
       <button class="btn" style="justify-content:flex-start" onclick="go('kader')"><i class="ti ti-users"></i>1️⃣ Kader anlegen / prüfen</button>
       <button class="btn" style="justify-content:flex-start" onclick="go('termine')"><i class="ti ti-calendar-plus"></i>2️⃣ Ersten Termin eintragen</button>
       <button class="btn" style="justify-content:flex-start" onclick="openTab('spieltag')"><i class="ti ti-ball-football"></i>3️⃣ Am Spieltag loslegen</button>
     </div>
-    <button onclick="onboardingDismiss()" style="margin-top:10px;background:transparent;border:none;color:var(--text3);font-family:inherit;font-size:11.5px;cursor:pointer;text-decoration:underline">Alles klar, ausblenden</button>
+    <button onclick="onboardingDismiss()" style="margin-top:10px;background:transparent;border:none;color:var(--text3);font-family:inherit;font-size:var(--s-klein);cursor:pointer;text-decoration:underline">Alles klar, ausblenden</button>
   </div>`; }catch(e){}
   /* N1-Umbau (PO + Trainerkollegen: „zu überladen"): Die Startseite ist nur noch
      To-Do-Banner → Diese Woche → 6 Kacheln (2×3). ALLE Werkzeuge leben
      jetzt hinter den Kachelseiten (kachelOpen) – nichts wurde gelöscht, nur einsortiert. */
   box.innerHTML=`
     ${onboardHtml}
+    <div id="la-trainer"></div>
+    <div id="eg-trainer"></div>
+    <div id="home-wiewars"></div>
     <div id="trainer-todo-slot"></div>
     <div id="trainer-termine-slot"></div>
-    <div id="eg-trainer"></div>
-    <div id="home-woche"></div>
-    <div id="home-next"></div>
-    <div id="home-meeting"></div>
-    <div id="trainer-alle-termine-slot"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
+    <!-- v682: Die sechs Bereiche stehen direkt unter dem, was zu tun ist – nicht erst nach
+         Woche, Terminen und Geburtstagen am Seitenende. -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0 12px" id="home-bereiche">
       ${kachelTile("training","🏃","Training","var(--fam-training)","var(--fam-training-2)")}
       ${kachelTile("spieltag","⚽","Spieltag","var(--fam-spieltag)","var(--fam-spieltag-2)")}
       ${kachelTile("team","👥","Team","var(--fam-team)","var(--fam-team-2)")}
@@ -4997,10 +5500,18 @@ async function renderHome(){
       ${kachelTile("elki","🪶","Eltern & Kinder","var(--fam-elki)","var(--fam-elki-2)")}
       ${kachelTile("orga","📅","Orga","var(--fam-orga)","var(--fam-orga-2)")}
     </div>
-    <div id="app-version" style="text-align:center;font-size:10.5px;color:var(--text3);margin:14px 0 4px"></div>`;
+    <div id="home-woche"></div>
+    <div id="home-next"></div>
+    <div id="home-meeting"></div>
+    <div id="home-geb"></div>
+    <div id="trainer-alle-termine-slot"></div>
+    <div id="app-version" style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin:14px 0 4px"></div>`;
+  homeGeburtstage();   // v660: Kinder und Eltern, nächste 14 Tage
   appVersionInto("app-version");   // liest die Version aus dem geladenen Cache
   elterngespraecheTrainerLoad(); // offene Elterngespräch-Wünsche (handeln nötig → bleibt oben)
+  loeschantraegeTrainerLoad();   // v644: offene Löschanträge (Frist ein Monat → ganz oben)
   trainerTodoLoad();             // To-Do-Banner (leer = unsichtbar)
+  if(typeof wieWarsKarte==="function")wieWarsKarte();   // v679: „Wie war's?“ / „Noch zu bestätigen“ (md-tagebuch.js, Welle 2)
   homeWocheLoad();               // Diese Woche: Termine mit Zusagen, Trainern, Plan-Stand
   trainerTermineHomeLoad();      // Termine der nächsten 14 Tage zum Antippen
   trainerMeetingHomeLoad();      // festgelegtes Trainer-Meeting (steht nicht in `termine`)
@@ -5011,7 +5522,7 @@ async function renderHome(){
     const r=await fetch(`${SB_URL}/rest/v1/termine?select=*&datum=gte.${heute}&order=datum.asc,uhrzeit.asc.nullslast&limit=10`,{headers:sbAuthHeaders()});
     const slot=document.getElementById("home-next");
     if(!slot)return; // Nutzer hat den Tab schon verlassen
-    if(!r.ok){slot.innerHTML=card('<div style="font-size:12px;color:var(--text3)">Termine offline nicht verfügbar.</div>');return;}
+    if(!r.ok){slot.innerHTML=card('<div style="font-size:var(--s-text);color:var(--text3)">Termine offline nicht verfügbar.</div>');return;}
     const rows=(await r.json()).filter(t=>!(typeof terminVorbei==="function"&&terminVorbei(t)));
     if(typeof TM_TERMINE!=="undefined")TM_TERMINE=rows; // Detail-/Karussell-Klick auf der Startseite findet den Termin (sonst Fallback auf go('termine'))
     /* v472: Das Termin-Karussell ist weg. Es zeigte dieselben Termine, die „Diese Woche"
@@ -5055,11 +5566,11 @@ async function wetterWarnHome(t){
   const warn=(typeof wetterWarn==="function")?wetterWarn(w):null; if(!warn)return;
   const abgesagt=t.platz_status==="abgesagt";
   const tt=(t.titel||t.gegner||"Termin").replace(/'/g,"");
-  el.innerHTML=`<div style="margin-top:8px;padding:10px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px">
-    <div style="font-size:12.5px;font-weight:800;color:var(--red)">⚠️ Wetter kritisch: ${esc(warn.lvl)}</div>
-    <div style="font-size:11.5px;color:#7f1d1d;margin:2px 0 8px">${esc(warn.msg)} Absagen und die Eltern informieren?</div>
+  el.innerHTML=`<div style="margin-top:8px;padding:10px 12px;background:var(--red-bg);border:1px solid #fecaca;border-radius:10px">
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--red)">⚠️ Wetter kritisch: ${esc(warn.lvl)}</div>
+    <div style="font-size:var(--s-klein);color:#7f1d1d;margin:2px 0 8px">${esc(warn.msg)} Absagen und die Eltern informieren?</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
-      ${abgesagt?'<span style="font-size:11.5px;color:var(--red);font-weight:700">🔴 Bereits als „fällt aus" markiert</span>':`<button class="btn btn-sm btn-d" onclick="wetterAbsagen(${Number(t.id)})"><i class="ti ti-x"></i>Platz absagen</button>`}
+      ${abgesagt?'<span style="font-size:var(--s-klein);color:var(--red);font-weight:700">🔴 Bereits als „fällt aus" markiert</span>':`<button class="btn btn-sm btn-d" onclick="wetterAbsagen(${Number(t.id)})"><i class="ti ti-x"></i>Platz absagen</button>`}
       <button class="btn btn-sm" onclick="wetterInfoPush(${Number(t.id)},'${tt}','${t.datum}')"><i class="ti ti-bell"></i>Eltern informieren</button>
     </div>
   </div>`;
@@ -5067,7 +5578,7 @@ async function wetterWarnHome(t){
 async function wetterAbsagen(id){
   if(typeof platzAmpelSet==="function")await platzAmpelSet(id,"abgesagt");
   const el=document.getElementById("wetter-warn-home");
-  if(el)el.querySelector("div>div:last-child").innerHTML='<span style="font-size:11.5px;color:var(--red);font-weight:700">🔴 Als „fällt aus" markiert – jetzt noch die Eltern informieren.</span>';
+  if(el)el.querySelector("div>div:last-child").innerHTML='<span style="font-size:var(--s-klein);color:var(--red);font-weight:700">🔴 Als „fällt aus" markiert – jetzt noch die Eltern informieren.</span>';
 }
 async function wetterInfoPush(id,titel,datum){
   const d=new Date(datum+"T00:00:00"), ds=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()]+" "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
@@ -5143,13 +5654,15 @@ async function trainerTodoLoad(){
      Bildschirm, die dasselbe sagen, kosten nur Platz; deshalb hier gestrichen. */
   // b) Einheit nachbereiten, wenn du laut Trainingsplan eingeteilt warst
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?select=datum,plan&datum=gte.${vor14}&datum=lt.${heute}`,{headers:sbAuthHeaders()});
-    const r2=await fetch(`${SB_URL}/rest/v1/einheit_bewertung?select=datum&datum=gte.${vor14}`,{headers:sbAuthHeaders()});
+    /* v633: neueste zuerst – sonst verdrängten zwei alte Einheiten die von gestern. Bewertungen
+       von vor v630 tragen den Autor „Trainerteam“ und gelten für alle als erledigt. */
+    const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?select=datum,plan&datum=gte.${vor14}&datum=lt.${heute}&order=datum.desc`,{headers:sbAuthHeaders()});
+    const r2=await fetch(`${SB_URL}/rest/v1/einheit_bewertung?select=datum&datum=gte.${vor14}&autor=in.(${encodeURIComponent('"'+(me||"")+'"')},Trainerteam)`,{headers:sbAuthHeaders()});   // v630: je Trainer
     if(r.ok){
       const done=new Set(r2.ok?((await r2.json())||[]).map(x=>x.datum):[]);
       const meine=((await r.json())||[]).filter(row=>!done.has(row.datum)&&JSON.stringify(row.plan||"").includes(`"${me}"`));
       meine.slice(0,2).forEach(row=>{const d=new Date(row.datum+"T00:00:00");
-        todos.push({emo:"⭐",txt:`Einheit vom ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})} nachbereiten – du warst eingeteilt`,act:"einheitBewertenOpen()"});});
+        todos.push({emo:"⭐",txt:`Einheit vom ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})} nachbereiten – du warst eingeteilt`,act:`einheitBewertenOpen('${row.datum}')`});});
     }
   }catch(e){}
   // c) Sprachlob rollierend nach dem letzten Spiel/Turnier
@@ -5191,28 +5704,9 @@ async function trainerTodoLoad(){
       }
     }
   }catch(e){}
-  // e) Ergebnis nachtragen: vergangene Spiele/Turniere ohne Ergebnis (füttert Cockpit,
-  //    Spielbericht, Nach-dem-Spiel-Gruß und Team-Meilensteine – ohne Ergebnis bleibt alles stumm)
-  try{
-    const r=await fetch(`${SB_URL}/rest/v1/termine?select=id,datum,titel,gegner,spielform,uhrzeit_ende,ergebnis,ohne_ergebnis&typ=in.(spiel,turnier)&datum=gte.${vor14}&datum=lte.${heute}&order=datum.desc&limit=5`,{headers:sbAuthHeaders()});
-    if(r.ok){
-      /* v471 – PO: „das To-Do wird nicht gelöscht … dann ist es ärgerlich, wenn es als
-         dauerhaftes To-Do stehen bleibt."
-         Zwei Fehler steckten darin. Erstens fuehrte der Knopf ins Blitz-Rating – dort gibt
-         es gar kein Ergebnisfeld, das To-Do liess sich also durch Antippen nie erledigen.
-         Jetzt oeffnet er das Termin-Detail, wo das Ergebnis eingetragen wird.
-         Zweitens gab es keinen Weg, darauf zu verzichten: ohne_ergebnis am Termin ist
-         diese Entscheidung, und sie gilt fuer das ganze Trainerteam (PO). */
-      const offen=((await r.json())||[]).filter(t=>(typeof terminVorbei!=="function"||terminVorbei(t))&&!(t.ergebnis||"").trim()&&t.ohne_ergebnis!==true);
-      offen.slice(0,2).forEach(t=>{const d=new Date(t.datum+"T00:00:00");
-        todos.push({emo:"⚽",txt:`Ergebnis &amp; Bericht für ${esc(t.titel||t.gegner||"das Spiel")} (${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}) nachtragen`,
-          /* Einfache Anführungszeichen sind Pflicht: der Ausdruck landet in onclick="…",
-             ein doppeltes Zeichen beendet dort das Attribut und der Knopf tut nichts mehr. */
-          act:`(typeof tmDetailOpen==='function'?tmDetailOpen(${Number(t.id)}):go('termine'))`,
-          terminId:Number(t.id),
-          hakenAct:`todoOhneErgebnis(${Number(t.id)})`});});
-    }
-  }catch(e){}
+  /* e) „Ergebnis nachtragen“ ist mit v634 gestrichen. PO: „Ergebnisse zählen bei uns in der U9
+     noch nicht. Deswegen sind die aktuell eher unwichtig.“ Wer eines festhalten will, trägt es im
+     Termin-Fenster ein; die App erinnert nicht mehr daran. An seine Stelle tritt f). */
   /* f) Spiel oder Festival nachbereiten (v525). Erst NACH dem Ergebnis-To-Do: solange das
      Ergebnis fehlt, steht schon eine Zeile zu diesem Termin da, und zwei Aufgaben zum selben
      Tag nebeneinander lesen sich wie ein Vorwurf. fazitOffene liegt in Welle 2 – ohne die
@@ -5220,21 +5714,24 @@ async function trainerTodoLoad(){
   try{
     if(typeof fazitOffene==="function"){
       const offen=await fazitOffene(14);
-      const schonGenannt=new Set(todos.map(x=>x.terminId).filter(Boolean));
-      offen.filter(t=>!schonGenannt.has(Number(t.id))).slice(0,1).forEach(t=>{
+      offen.slice(0,2).forEach(t=>{
         const d=new Date(t.datum+"T00:00:00");
-        todos.push({emo:"📋",txt:`${t.typ==="turnier"?"Festival":"Spiel"} ${esc(t.titel||t.gegner||"")} (${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}) nachbereiten – wie hat die Mannschaft gespielt?`,
+        todos.push({emo:t.typ==="turnier"?"🏆":"⚽",txt:`${t.typ==="turnier"?"Festival":"Spiel"} ${esc(t.titel||t.gegner||"")} (${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}) nachbereiten – erzählen, fürs Tagebuch`,
           act:`(typeof fazitOpen==='function'?fazitOpen(${Number(t.id)}):go('termine'))`});
       });
     }
   }catch(e){}
-  if(!todos.length){slot.innerHTML="";return;}
+  /* v634: Der gemeinsame Einstieg steht immer da – unter den To-dos oder, wenn nichts offen
+     ist, als schmale Zeile. Nachbereiten ist keine Pflicht, die erst ein To-do auslösen muss. */
+  const einstieg=`<button class="btn" onclick="einheitBewertenOpen()" style="width:100%;min-height:44px;justify-content:center;margin-top:${todos.length?4:0}px">📝 Nachbereiten – Training, Spiel, Festival</button>`;
+  if(!todos.length){slot.innerHTML=`<div style="margin-bottom:10px">${einstieg}</div>`;return;}
   slot.innerHTML=`<div class="card" style="border-left:4px solid var(--amber);padding:12px 14px;margin-bottom:10px">
-    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--amber);margin-bottom:8px">📌 Deine To-Dos, ${esc(me)}</div>
+    <div style="font-size:var(--s-karte);font-weight:900;color:var(--text);margin-bottom:8px">📌 Deine To-dos, ${esc(me)}</div>
     ${todos.map(t=>`<div style="display:flex;gap:6px;align-items:stretch;margin-bottom:6px">
-      <button onclick="${t.act}" style="display:flex;gap:10px;align-items:center;flex:1;min-width:0;text-align:left;background:var(--surface);border:1px solid var(--rand-bedien);border-radius:10px;padding:10px 12px;font-family:inherit;cursor:pointer;color:var(--text)"><span style="font-size:17px;line-height:1">${t.emo}</span><span style="flex:1;font-size:12.5px;font-weight:600;line-height:1.4">${t.txt}</span><span style="color:var(--text3)">›</span></button>
-      ${t.hakenAct?`<button onclick="${t.hakenAct}" title="Erledigt – ohne Ergebnis abhaken. Gilt für das ganze Trainerteam." aria-label="To-Do abhaken" style="flex:none;min-width:48px;min-height:44px;background:var(--surface);border:1px solid var(--rand-bedien);border-radius:10px;font-size:17px;cursor:pointer;color:var(--green);font-family:inherit">✓</button>`:""}
+      <button onclick="${t.act}" style="display:flex;gap:10px;align-items:center;flex:1;min-width:0;text-align:left;background:var(--surface);border:1px solid var(--rand-bedien);border-radius:10px;padding:10px 12px;font-family:inherit;cursor:pointer;color:var(--text)"><span style="font-size:var(--s-teil);line-height:1">${t.emo}</span><span style="flex:1;font-size:var(--s-text);font-weight:600;line-height:1.4">${t.txt}</span><span style="color:var(--text3)">›</span></button>
+      ${t.hakenAct?`<button onclick="${t.hakenAct}" title="Erledigt – ohne Ergebnis abhaken. Gilt für das ganze Trainerteam." aria-label="To-Do abhaken" style="flex:none;min-width:48px;min-height:44px;background:var(--surface);border:1px solid var(--rand-bedien);border-radius:10px;font-size:var(--s-teil);cursor:pointer;color:var(--green);font-family:inherit">✓</button>`:""}
     </div>`).join("")}
+    ${einstieg}
   </div>`;
 }
 /* „Bist du dabei?": je ein Tap (✅/🤔/❌) speichert sofort – nochmal tippen nimmt die
@@ -5269,20 +5766,20 @@ function _trsvpKopfText(){
 function _trsvpFilterHtml(){
   const alle=_trsvpRows.length, offen=_trsvpOffen().length;
   const chip=(an,lbl,fn)=>`<button onclick="${fn}" aria-pressed="${an?"true":"false"}"
-    style="min-height:44px;padding:6px 16px;border:1px solid var(--rand-bedien);border-radius:22px;font-family:inherit;font-size:12.5px;font-weight:${an?"700":"500"};cursor:pointer;background:${an?"var(--blue)":"var(--surface)"};color:${an?"#fff":"var(--text2)"}">${lbl}</button>`;
+    style="min-height:44px;padding:6px 16px;border:1px solid var(--rand-bedien);border-radius:22px;font-family:inherit;font-size:var(--s-text);font-weight:${an?"700":"500"};cursor:pointer;background:${an?"var(--blue)":"var(--surface)"};color:${an?"#fff":"var(--text2)"}">${lbl}</button>`;
   return chip(!_trsvpNurOffen,`Alle (${alle})`,"trainerRsvpFilter(false)")+
          chip(_trsvpNurOffen,`Nur offene (${offen})`,"trainerRsvpFilter(true)");
 }
 function _trsvpListHtml(){
   const rows=_trsvpNurOffen?_trsvpOffen():_trsvpRows;
-  if(!rows.length)return `<div style="font-size:12.5px;color:var(--text3);padding:14px;text-align:center">${
+  if(!rows.length)return `<div style="font-size:var(--s-text);color:var(--text3);padding:14px;text-align:center">${
     _trsvpNurOffen?"Alle Termine beantwortet ✓":"Keine kommenden Termine eingetragen."}</div>`;
   let html="", monat="";
   rows.forEach(t=>{
     const m=new Date(t.datum+"T00:00:00").toLocaleDateString("de-DE",{month:"long",year:"numeric"});
     if(m!==monat){
       monat=m;
-      html+=`<div style="position:sticky;top:0;z-index:2;background:var(--surface);font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);padding:8px 2px 4px">${esc(m)}</div>`;
+      html+=`<div style="position:sticky;top:0;z-index:2;background:var(--surface);font-size:var(--s-text);font-weight:800;color:var(--text);padding:8px 2px 4px">${esc(m)}</div>`;
     }
     html+=_trsvpRowHtml(t,_trsvpMe,"trsvp");
   });
@@ -5299,14 +5796,14 @@ function _trsvpRowHtml(t,me,pre){
   const st=(t.trainer_status||{})[me];
   const d=new Date(t.datum+"T00:00:00"), wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
   const zeit=t.uhrzeit?String(t.uhrzeit).slice(0,5)+" Uhr":"";
-  const btn=(val,emo,lbl,col)=>`<button onclick="trainerRsvpSet(${Number(t.id)},'${val}')" aria-pressed="${st===val?"true":"false"}" style="flex:1;min-height:44px;border-radius:10px;border:1.5px solid ${st===val?col:"var(--rand-bedien)"};background:${st===val?col:"var(--surface)"};color:${st===val?"#fff":"var(--text2)"};font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">${emo} ${lbl}</button>`;
+  const btn=(val,emo,lbl,col)=>`<button onclick="trainerRsvpSet(${Number(t.id)},'${val}')" aria-pressed="${st===val?"true":"false"}" style="flex:1;min-height:44px;border-radius:10px;border:1.5px solid ${st===val?col:"var(--rand-bedien)"};background:${st===val?col:"var(--surface)"};color:${st===val?"#fff":"var(--text2)"};font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">${emo} ${lbl}</button>`;
   /* v509: Bei einem abgesagten Termin steht das Schild da, wo sonst die drei Knöpfe sind –
      zu- oder abzusagen gibt es nichts mehr. */
   const faelltAus=typeof terminFaelltAus==="function"&&terminFaelltAus(t);
   return `<div id="${pre}-${t.id}" style="border:var(--border-s);border-left:3px solid ${faelltAus?"var(--text3)":m.col};border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--surface)">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-      <div style="font-size:13px;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${faelltAus?"var(--text2)":"inherit"}">${m.icon} ${esc(t.titel||t.gegner||m.label)}</div>
-      <div style="font-size:11px;color:var(--text2);white-space:nowrap">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${zeit?" · "+zeit:""}</div>
+      <div style="font-size:var(--s-text);font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${faelltAus?"var(--text2)":"inherit"}">${m.icon} ${esc(t.titel||t.gegner||m.label)}</div>
+      <div style="font-size:var(--s-klein);color:var(--text2);white-space:nowrap">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${zeit?" · "+zeit:""}</div>
     </div>
     ${faelltAus?`<div style="margin-top:8px">${terminAbsageChip(t)}</div>`
       :`<div style="display:flex;gap:6px;margin-top:8px">${btn("ja","✅","Dabei","var(--green)")}${btn("unsicher","🤔","Unsicher","#ca8a04")}${btn("nein","❌","Nicht","var(--red)")}</div>`}
@@ -5326,7 +5823,7 @@ async function trainerRsvpQuickOpen(){
   const c=document.createElement("div");
   c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4);display:flex;flex-direction:column;max-height:100%";
   c.innerHTML=`${mdlHead("trsvp-modal","🗓️","Bist du dabei?",`Ein Tap je Termin, ${esc(me)} – nochmal tippen nimmt zurück`,"var(--amber)")}
-    <div id="trsvp-kopf" style="font-size:11.5px;color:var(--text2);margin-bottom:8px">${_trsvpKopfText()}</div>
+    <div id="trsvp-kopf" style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">${_trsvpKopfText()}</div>
     <div id="trsvp-filter" style="display:flex;gap:6px;margin-bottom:10px">${_trsvpFilterHtml()}</div>
     <div id="trsvp-list" style="flex:1;min-height:0;overflow-y:auto">${_trsvpListHtml()}</div>`;
   modal.appendChild(c); document.body.appendChild(modal);
@@ -5410,8 +5907,8 @@ function _tpNamen(){
 function _tpKopfHtml(namen,kurz){
   const sp=`92px repeat(${namen.length},minmax(36px,1fr))`;
   return `<div style="display:grid;grid-template-columns:${sp};gap:3px;position:sticky;top:0;z-index:2;background:var(--surface);padding:0 0 5px">
-    <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);align-self:end">Termin</div>
-    ${namen.map(n=>`<div title="${esc(n)}" style="text-align:center;font-size:10.5px;font-weight:800;color:var(--text2)">${esc(kurz[n])}</div>`).join("")}
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);align-self:end">Termin</div>
+    ${namen.map(n=>`<div title="${esc(n)}" style="text-align:center;font-size:var(--s-klein);font-weight:800;color:var(--text2)">${esc(kurz[n])}</div>`).join("")}
   </div>`;
 }
 function _tpZelleHtml(t,name){
@@ -5424,7 +5921,7 @@ function _tpZelleHtml(t,name){
   return `<button onclick="tpZelleTippen(${Number(t.id)},'${String(name).replace(/'/g,"")}')"
     title="${esc(name)}: ${lbl} – tippen wechselt"
     aria-label="${esc(name)} am ${esc(t.datum)}: ${lbl}"
-    style="min-height:44px;border:none;border-radius:8px;background:${look.bg};color:${look.fg};font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">${look.z}</button>`;
+    style="min-height:44px;border:none;border-radius:8px;background:${look.bg};color:${look.fg};font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">${look.z}</button>`;
 }
 function _tpZeileHtml(t,namen){
   const a=_tpAmpel(t.trainer_status,namen);
@@ -5434,8 +5931,8 @@ function _tpZeileHtml(t,namen){
   const sp=`92px repeat(${namen.length},minmax(36px,1fr))`;
   return `<div id="tp-row-${t.id}" style="display:grid;grid-template-columns:${sp};gap:3px;align-items:center;padding:3px 0;border-top:var(--border)">
     <div style="border-left:4px solid ${a.farbe};padding-left:6px;min-width:0;overflow:hidden">
-      <div style="font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.icon} ${wtag} ${d.getDate()}.${d.getMonth()+1}.</div>
-      <div style="font-size:9.5px;color:${a.stufe<=1?a.farbe:"var(--text3)"};font-weight:${a.stufe<=1?"700":"400"};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.ja===0?"niemand":a.ja+" dabei"}</div>
+      <div style="font-size:var(--s-klein);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.icon} ${wtag} ${d.getDate()}.${d.getMonth()+1}.</div>
+      <div style="font-size:var(--s-klein);color:${a.stufe<=1?a.farbe:"var(--text3)"};font-weight:${a.stufe<=1?"700":"400"};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.ja===0?"niemand":a.ja+" dabei"}</div>
     </div>
     ${namen.map(n=>_tpZelleHtml(t,n)).join("")}
   </div>`;
@@ -5444,13 +5941,13 @@ function _tpListeHtml(){
   const namen=_tpNamen(), kurz=_tpKuerzel(namen);
   let rows=_tpZeilen();
   if(_tpNurEng)rows=rows.filter(t=>_tpAmpel(t.trainer_status,namen).stufe<=1); // 0 oder 1 Zusage
-  if(!rows.length)return `<div style="font-size:12.5px;color:var(--text3);padding:16px;text-align:center">${
+  if(!rows.length)return `<div style="font-size:var(--s-text);color:var(--text3);padding:16px;text-align:center">${
     _tpNurEng?"Überall mindestens zwei Zusagen ✓":"Keine kommenden Trainings, Spiele oder Turniere."}</div>`;
   let html=_tpKopfHtml(namen,kurz), monat="";
   rows.forEach(t=>{
     const mn=new Date(t.datum+"T00:00:00").toLocaleDateString("de-DE",{month:"long",year:"numeric"});
     if(mn!==monat){ monat=mn;
-      html+=`<div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);padding:10px 2px 2px">${esc(mn)}</div>`; }
+      html+=`<div style="font-size:var(--s-text);font-weight:800;color:var(--text);padding:10px 2px 2px">${esc(mn)}</div>`; }
     html+=_tpZeileHtml(t,namen);
   });
   return html;
@@ -5459,7 +5956,7 @@ function _tpFilterHtml(){
   const namen=_tpNamen();
   const alle=_tpZeilen(), eng=alle.filter(t=>_tpAmpel(t.trainer_status,namen).stufe<=1);
   const chip=(an,lbl,fn)=>`<button onclick="${fn}" aria-pressed="${an?"true":"false"}"
-    style="min-height:44px;padding:6px 16px;border:1px solid var(--rand-bedien);border-radius:22px;font-family:inherit;font-size:12.5px;font-weight:${an?"700":"500"};cursor:pointer;background:${an?"var(--blue)":"var(--surface)"};color:${an?"#fff":"var(--text2)"}">${lbl}</button>`;
+    style="min-height:44px;padding:6px 16px;border:1px solid var(--rand-bedien);border-radius:22px;font-family:inherit;font-size:var(--s-text);font-weight:${an?"700":"500"};cursor:pointer;background:${an?"var(--blue)":"var(--surface)"};color:${an?"#fff":"var(--text2)"}">${lbl}</button>`;
   return chip(!_tpNurEng,`Alle (${alle.length})`,"tpFilter(false)")+
          chip(_tpNurEng,`Höchstens eine Zusage (${eng.length})`,"tpFilter(true)");
 }
@@ -5508,10 +6005,10 @@ async function trainerPlanOpen(){
   c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4);display:flex;flex-direction:column;max-height:100%";
   const namen=_tpNamen(), kurz=_tpKuerzel(namen);
   c.innerHTML=`${mdlHead("tp-modal","🧑‍🏫","Trainerplan","Alle Zusagen auf einen Blick","var(--blue)")}
-    <div id="tp-kopf" style="font-size:11.5px;color:var(--text2);margin-bottom:8px">${_tpKopfText()}</div>
+    <div id="tp-kopf" style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">${_tpKopfText()}</div>
     <div id="tp-filter" style="display:flex;gap:6px;margin-bottom:10px">${_tpFilterHtml()}</div>
     <div id="tp-liste" style="flex:1;min-height:0;overflow:auto">${_tpListeHtml()}</div>
-    <div style="font-size:10.5px;color:var(--text3);line-height:1.5;margin-top:10px;padding-top:8px;border-top:var(--border)">
+    <div style="font-size:var(--s-klein);color:var(--text3);line-height:1.5;margin-top:10px;padding-top:8px;border-top:var(--border)">
       ${namen.map(n=>`<b>${esc(kurz[n])}</b> ${esc(n)}`).join(" · ")}<br>
       Tippen wechselt: ✓ dabei → ? unsicher → ✕ nicht dabei → · keine Antwort.<br>
       Balken links nach Zusagen: ${[[0,"keine"],[1,"eine"],[2,"zwei"],[3,"drei und mehr"]].map(([i,w])=>
@@ -5560,7 +6057,7 @@ function _trhomeOrgaBadge(){
 }
 function _trhomeAlleKnopfHtml(){
   const offen=_trsvpAlleOffen();
-  return `<button onclick="trainerRsvpQuickOpen()" style="display:flex;gap:6px;align-items:center;justify-content:center;width:100%;min-height:44px;margin-bottom:12px;background:var(--surface);border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--text2);cursor:pointer">🗓️ Alle ${_trsvpRows.length} Termine<span style="color:var(--text3)">›</span></button>`;
+  return `<button onclick="trainerRsvpQuickOpen()" style="display:flex;gap:6px;align-items:center;justify-content:center;width:100%;min-height:44px;margin-bottom:12px;background:var(--surface);border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:700;color:var(--text2);cursor:pointer">🗓️ Alle ${_trsvpRows.length} Termine<span style="color:var(--text3)">›</span></button>`;
 }
 async function trainerTermineHomeLoad(){
   const slot=document.getElementById("trainer-termine-slot"); if(!slot)return;
@@ -5582,11 +6079,11 @@ async function trainerTermineHomeLoad(){
   const zeigen=offen.slice(0,TRHOME_MAX);
   let inhalt=zeigen.map(t=>_trsvpRowHtml(t,me,"trhome")).join("");
   if(offen.length>zeigen.length)
-    inhalt+=`<div style="font-size:11.5px;color:var(--text3);text-align:center;padding:2px 0 6px">und ${offen.length-zeigen.length} weitere ohne deine Antwort</div>`;
+    inhalt+=`<div style="font-size:var(--s-klein);color:var(--text3);text-align:center;padding:2px 0 6px">und ${offen.length-zeigen.length} weitere ohne deine Antwort</div>`;
   slot.innerHTML=`<div class="card" style="border-left:4px solid var(--amber);padding:12px 14px;margin-bottom:10px">
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px">
-      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--amber)">🗓️ Bist du dabei?</div>
-      <div id="trhome-kopf" style="font-size:11px;color:var(--text2);text-align:right">${_trhomeKopfText()}</div>
+      <div style="font-size:var(--s-karte);font-weight:900;color:var(--text)">🗓️ Bist du dabei?</div>
+      <div id="trhome-kopf" style="font-size:var(--s-klein);color:var(--text2);text-align:right">${_trhomeKopfText()}</div>
     </div>
     ${inhalt}
   </div>`;
@@ -5624,11 +6121,11 @@ async function trainerMeetingHomeLoad(){
       const tage=Math.round((d-new Date(heute+"T00:00:00"))/864e5);
       const bald=tage===0?"heute":tage===1?"morgen":"in "+tage+" Tagen";
       return `<button type="button" onclick="trainerMeetingOpen()" class="card" style="width:100%;text-align:left;border-left:4px solid #334155;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;cursor:pointer;font-family:inherit;min-height:44px">
-        <span style="font-size:20px;flex:none">🗓️</span>
+        <span style="font-size:var(--s-teil);flex:none">🗓️</span>
         <span style="flex:1;min-width:0">
-          <span style="display:block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text2)">Trainer-Meeting · ${esc(bald)}</span>
-          <span style="display:block;font-size:13.5px;font-weight:800;color:var(--text)">${esc(p.titel)}</span>
-          <span style="display:block;font-size:12px;color:var(--text2)">${esc(wann)} · ${offen[p.id]?`📝 ${offen[p.id]} ${offen[p.id]===1?"Thema":"Themen"}`:"noch keine Themen"}</span>
+          <span style="display:block;font-size:var(--s-text);font-weight:800;color:var(--text)">Trainer-Meeting · ${esc(bald)}</span>
+          <span style="display:block;font-size:var(--s-text);font-weight:800;color:var(--text)">${esc(p.titel)}</span>
+          <span style="display:block;font-size:var(--s-text);color:var(--text2)">${esc(wann)} · ${offen[p.id]?`📝 ${offen[p.id]} ${offen[p.id]===1?"Thema":"Themen"}`:"noch keine Themen"}</span>
         </span>
         <span style="color:var(--text3);flex:none">›</span>
       </button>`;
@@ -5652,9 +6149,9 @@ async function homeRsvpNudge(){
   const m=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅",label:t.typ};
   const d=new Date(t.datum+"T00:00:00"), wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
   slot.innerHTML=`<div role="button" tabindex="0" onclick="rsvpOverviewOpen(${t.id})" class="card" style="padding:12px 14px;margin-bottom:10px;border-left:3px solid var(--amber);cursor:pointer;display:flex;align-items:center;gap:8px">
-    <span style="font-size:18px">🔔</span>
-    <span style="flex:1;font-size:12.5px"><strong style="color:var(--amber)">${offen} ohne Rückmeldung</strong> für ${m.icon} ${esc(t.titel||t.gegner||m.label)} · ${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}</span>
-    <span style="font-size:11px;font-weight:800;color:var(--blue-text)">nachfassen ›</span>
+    <span style="font-size:var(--s-teil)">🔔</span>
+    <span style="flex:1;font-size:var(--s-text)"><strong style="color:var(--amber)">${offen} ohne Rückmeldung</strong> für ${m.icon} ${esc(t.titel||t.gegner||m.label)} · ${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}</span>
+    <span style="font-size:var(--s-klein);font-weight:800;color:var(--blue-text)">nachfassen ›</span>
   </div>`;
 }
 
@@ -5672,8 +6169,8 @@ async function homeAntiFrust(){
   if(mitTor>=2 && ohne.length){
     const pick=ohne[new Date().getDate()%ohne.length]; // rotiert täglich, damit alle mal drankommen
     slot.innerHTML=`<div class="card" style="padding:12px 14px;margin-bottom:10px;border-left:3px solid var(--amber);display:flex;align-items:center;gap:8px">
-      <span style="font-size:18px">🌟</span>
-      <span style="flex:1;font-size:12.5px"><strong>${esc(pick)}</strong> hatte diese Saison noch kein Torerlebnis – gib ihm/ihr heute bewusst eine Bühne. 💛</span>
+      <span style="font-size:var(--s-teil)">🌟</span>
+      <span style="flex:1;font-size:var(--s-text)"><strong>${esc(pick)}</strong> hatte diese Saison noch kein Torerlebnis – gib ihm/ihr heute bewusst eine Bühne. 💛</span>
     </div>`;
   } else slot.innerHTML="";
 }
@@ -5688,8 +6185,8 @@ async function homeBirthday(){
     const key="adler_bday_"+new Date().toISOString().slice(0,10)+"_"+k.name;
     let sent=false; try{sent=!!localStorage.getItem(key);}catch(e){}
     return `<div class="card" style="padding:12px 14px;margin-bottom:10px;border-left:3px solid #ec4899">
-      <div style="font-size:13.5px;font-weight:800">🎂 ${esc(k.name)} hat heute Geburtstag – wird ${homeAlter(k.geb)+1}!</div>
-      <button onclick="birthdayPush('${(k.name).replace(/'/g,'')}','${key}')" style="width:100%;min-height:44px;margin-top:8px;border:none;border-radius:10px;background:#ec4899;color:#fff;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer">${sent?"✓ Gruß gesendet – nochmal senden":"🎉 Geburtstags-Gruß als Push senden"}</button>
+      <div style="font-size:var(--s-text);font-weight:800">🎂 ${esc(k.name)} hat heute Geburtstag – wird ${homeAlter(k.geb)+1}!</div>
+      <button onclick="birthdayPush('${(k.name).replace(/'/g,'')}','${key}')" style="width:100%;min-height:44px;margin-top:8px;border:none;border-radius:10px;background:#ec4899;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${sent?"✓ Gruß gesendet – nochmal senden":"🎉 Geburtstags-Gruß als Push senden"}</button>
     </div>`;
   }).join("");
 }
@@ -5732,21 +6229,28 @@ async function heftFotoDataUrl(path){
    heftBuildHtml(cfg,{mask}) baut das Heft rein – die Nachnamen-Maskierung ist
    bereits eingebaut (Aktivierung folgt in der DSGVO-Etappe). ═══ */
 let heftKader=[], heftFanfacts={}, heftTermin=null, heftFotos=[];
-let heftCfg={titel:"Adler Nest · U9", einleitung:"", fokusId:"", fokusText:"", kommentar:""};
+let heftCfg={titel:"Adler Nest · U9", einleitung:"", fokusId:"", fokusText:"", kommentar:"", mask:true};   // v636: Eltern-Version ist Standard
 function heftCfgLoad(){ try{const s=JSON.parse(localStorage.getItem("adler_heft_cfg")||"null"); if(s&&typeof s==="object")heftCfg=Object.assign(heftCfg,s);}catch(e){} }
 function heftCfgSave(){ try{localStorage.setItem("adler_heft_cfg",JSON.stringify(heftCfg));}catch(e){} }
 // DSGVO: Nachname zu Initiale kürzen ("Max Mustermann" -> "Max M."); Einzelnamen bleiben.
 function heftMaskName(name){ const p=String(name||"").trim().split(/\s+/); if(p.length<2)return p[0]||""; return p[0]+" "+p[p.length-1].charAt(0).toUpperCase()+"."; }
+/* v636: Die Eltern-Version (maskiert) ist die, die ausgehängt und verteilt wird. Dort gelten
+   dieselben Regeln wie im digitalen Heft: Foto und Jahrgang nur mit der Freigabe „öffentlich“. */
+function heftOeffentlichOk(k){ return !!(k&&k.foto_stadionheft_ok); }
+function heftJahrgang(k){ const j=String((k&&k.geb)||"").slice(0,4); return /^\d{4}$/.test(j)?j:""; }
 function heftBuildHtml(cfg,opts){
   opts=opts||{}; const mask=!!opts.mask; const nm=n=>mask?heftMaskName(n):n;
+  const fotoVon=i=>(!mask||heftOeffentlichOk(heftKader[i]))?heftFotos[i]:null;
+  const jgVon=k=>(!mask||heftOeffentlichOk(k))?heftJahrgang(k):"";
   const cards=heftKader.map((k,i)=>{
-    const foto=heftFotos[i];
+    const foto=fotoVon(i), jg=jgVon(k);
     const initialen=(k.name||"?").trim().slice(0,1).toUpperCase();
     const spitz=heftFanfacts[k.id];
     const pos=k.lieblingsposition?cardPosLabel(k.lieblingsposition):(k.tw?"Torwart":"");
     return `<div class="heft-card">
       <div class="heft-foto">${foto?`<img src="${foto}" alt="">`:`<span>${esc(initialen)}</span>`}${k.nr!=null?`<div class="heft-nr">${esc(k.nr)}</div>`:""}</div>
       <div class="heft-name">${esc(nm(k.name))}${k.tw?" 🥅":""}</div>
+      ${jg?`<div class="heft-spitz">Jahrgang ${esc(jg)}</div>`:""}
       ${spitz?`<div class="heft-spitz">„${esc(spitz)}"</div>`:""}
       ${pos?`<div class="heft-pos">${esc(pos)}</div>`:""}
     </div>`;
@@ -5762,13 +6266,13 @@ function heftBuildHtml(cfg,opts){
   if(cfg.fokusId){
     const idx=heftKader.findIndex(k=>String(k.id)===String(cfg.fokusId));
     if(idx>=0){
-      const k=heftKader[idx], foto=heftFotos[idx];
+      const k=heftKader[idx], foto=fotoVon(idx), jg=jgVon(k);
       const initialen=(k.name||"?").trim().slice(0,1).toUpperCase();
       fokusHtml=`<div class="heft-fokus">
         <div class="heft-fokus-foto">${foto?`<img src="${foto}" alt="">`:`<span>${esc(initialen)}</span>`}</div>
         <div class="heft-fokus-body">
           <div class="heft-fokus-badge">⭐ Spieler im Fokus</div>
-          <div class="heft-fokus-name">${esc(nm(k.name))}${k.nr!=null?` · #${esc(k.nr)}`:""}</div>
+          <div class="heft-fokus-name">${esc(nm(k.name))}${k.nr!=null?` · #${esc(k.nr)}`:""}${jg?` · Jahrgang ${esc(jg)}`:""}</div>
           ${cfg.fokusText&&cfg.fokusText.trim()?`<div class="heft-fokus-text">${esc(cfg.fokusText).replace(/\n/g,"<br>")}</div>`:""}
         </div></div>`;
     }
@@ -5780,7 +6284,7 @@ function heftBuildHtml(cfg,opts){
   if(reps.length){
     const nameById={}; heftKader.forEach(k=>nameById[k.id]=k.name);
     repHtml=`<div class="heft-komm"><div class="heft-komm-h">🎙️ Kabinen-Reporter – die Kinder haben das Wort</div>
-      ${reps.map(x=>`<div style="margin-top:6px;font-size:12.5px"><b>${esc(x.frage)}</b><br>„${esc(x.antwort)}" – <i>${esc(nm(nameById[x.spieler_id]||"ein Adler"))}</i></div>`).join("")}
+      ${reps.map(x=>`<div style="margin-top:6px;font-size:var(--s-text)"><b>${esc(x.frage)}</b><br>„${esc(x.antwort)}" – <i>${esc(nm(nameById[x.spieler_id]||"ein Adler"))}</i></div>`).join("")}
     </div>`;
   }
   return `<div class="heft-wrap">
@@ -5788,7 +6292,7 @@ function heftBuildHtml(cfg,opts){
       <img src="logo.png" alt="SV Adler Dellbrück">
       <div class="heft-club">SV ADLER DELLBRÜCK e.V.</div>
       <div class="heft-title">${esc(cfg.titel||"Adler Nest")}</div>
-      <div style="font-size:11px;color:#64748b;font-weight:600;letter-spacing:.5px">Das Vereinsheft der jungen Adler 🪺</div>
+      <div style="font-size:var(--s-klein);color:#64748b;font-weight:600;letter-spacing:.5px">Das Vereinsheft der jungen Adler 🪺</div>
       <div class="heft-club">Saison ${typeof saisonLabel==="function"?saisonLabel():""} · unsere Mannschaft</div>
     </div>
     ${spielHtml}
@@ -5809,7 +6313,7 @@ async function stadionheftOpen(){
   try{const ab=new Date(Date.now()-60*864e5).toISOString();
     const r=await fetch(`${SB_URL}/rest/v1/kabine_reporter?select=id,spieler_id,frage,antwort,freigegeben,created_at&created_at=gte.${ab}&order=created_at.desc`,{headers:sbAuthHeaders()});
     if(r.ok)window._heftReporter=(await r.json())||[];}catch(e){}
-  try{const r=await fetch(`${SB_URL}/rest/v1/kader?select=id,name,nr,foto_path,lieblingsposition,tw,aktiv&order=nr.asc.nullslast`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)heftKader=(await r.json()).filter(k=>k.aktiv!==false);}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/kader?select=id,name,nr,geb,foto_path,foto_stadionheft_ok,lieblingsposition,tw,aktiv&order=nr.asc.nullslast`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)heftKader=(await r.json()).filter(k=>k.aktiv!==false);}catch(e){}
   if(!heftKader.length){toast("Kein Kader gefunden","err");return;}
   try{const r=await fetch(`${SB_URL}/rest/v1/kind_fanfacts?select=spieler_id,spitzname`,{headers:sbAuthHeaders()});if(r.ok)(await r.json()).forEach(f=>{if(f.spitzname)heftFanfacts[f.spieler_id]=f.spitzname;});}catch(e){}
   const heute=new Date().toISOString().slice(0,10);
@@ -5858,39 +6362,39 @@ function heftRenderEditor(){
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;flex-direction:column;padding:12px;overflow-y:auto";
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
   const kaderOpts=`<option value="">— keiner —</option>`+heftKader.map(k=>`<option value="${esc(k.id)}"${String(heftCfg.fokusId)===String(k.id)?" selected":""}>${esc(k.name)}${k.nr!=null?" (#"+esc(k.nr)+")":""}</option>`).join("");
-  const fld="width:100%;padding:8px 10px;border:var(--border-s);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box;resize:vertical";
+  const fld="width:100%;padding:8px 10px;border:var(--border-s);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box;resize:vertical";
   const card=document.createElement("div");
   card.style.cssText="background:var(--surface);color:var(--text);max-width:900px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   card.innerHTML=`
     ${mdlHead("heft-modal","📰","Adler-Nest-Editor","frei bearbeiten · Vorschau live · Texte werden gemerkt","#1e3a8a")}
     <button id="heft-ai-btn" onclick="heftAutoContent()" class="btn" style="width:100%;margin-bottom:4px;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;border:none;min-height:44px;font-weight:800"><i class="ti ti-sparkles"></i> Auto-Entwurf aus den letzten Wochen (KI)</button>
-    <div style="font-size:10.5px;color:var(--text2);margin:0 0 12px;text-align:center">Zieht Trainings, Ergebnisse & Geburtstage – kindgerecht formuliert, danach frei änderbar.</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin:0 0 12px;text-align:center">Zieht Trainings, Ergebnisse & Geburtstage – kindgerecht formuliert, danach frei änderbar.</div>
     <div style="display:grid;grid-template-columns:1fr;gap:16px">
       <div style="display:flex;flex-direction:column;gap:10px">
-        <label style="font-size:11px;font-weight:700;color:var(--text2)">Titel
-          <input id="heft-f-titel" type="text" value="${esc(heftCfg.titel||"")}" style="${fld};min-height:40px;font-size:14px"></label>
-        <label style="font-size:11px;font-weight:700;color:var(--text2)">Einleitung / Grußwort
+        <label style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">Titel
+          <input id="heft-f-titel" type="text" value="${esc(heftCfg.titel||"")}" style="${fld};min-height:40px;font-size:var(--s-karte)"></label>
+        <label style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">Einleitung / Grußwort
           <textarea id="heft-f-einl" rows="3" style="${fld}">${esc(heftCfg.einleitung||"")}</textarea></label>
-        <label style="font-size:11px;font-weight:700;color:var(--text2)">⭐ Spieler im Fokus
-          <select id="heft-f-fokus" style="${fld};min-height:40px;font-size:14px">${kaderOpts}</select></label>
-        <label style="font-size:11px;font-weight:700;color:var(--text2)">Text zum Spieler im Fokus
+        <label style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">⭐ Spieler im Fokus
+          <select id="heft-f-fokus" style="${fld};min-height:40px;font-size:var(--s-karte)">${kaderOpts}</select></label>
+        <label style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">Text zum Spieler im Fokus
           <textarea id="heft-f-fokustext" rows="2" style="${fld}">${esc(heftCfg.fokusText||"")}</textarea></label>
-        <label style="font-size:11px;font-weight:700;color:var(--text2)">📣 Trainer-Kommentar
+        <label style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">📣 Trainer-Kommentar
           <textarea id="heft-f-komm" rows="3" style="${fld}">${esc(heftCfg.kommentar||"")}</textarea></label>
         <div id="heft-reporter-queue"></div>
       </div>
       <div>
-        <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px">Vorschau</div>
+        <div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-bottom:6px">Vorschau</div>
         <div id="heft-preview" style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px;max-height:60vh;overflow:auto"></div>
       </div>
     </div>
     <label style="display:flex;align-items:flex-start;gap:8px;margin-top:12px;padding:9px 11px;background:var(--surface2);border:var(--border-s);border-radius:10px;cursor:pointer">
       <input type="checkbox" id="heft-f-mask" ${heftCfg.mask?"checked":""} style="margin-top:2px;width:18px;height:18px;flex:0 0 auto">
-      <span style="font-size:12px;color:var(--text)"><strong>🔒 Eltern-Version (Nachnamen maskiert)</strong><br><span style="font-size:11px;color:var(--text2)">DSGVO: Fürs Verteilen/Aushängen werden Nachnamen zu „Max M." gekürzt. Für die interne Trainer-Version aus lassen.</span></span>
+      <span style="font-size:var(--s-text);color:var(--text)"><strong>🔒 Eltern-Version (Nachnamen maskiert)</strong><br><span style="font-size:var(--s-klein);color:var(--text2)">Fürs Verteilen und Aushängen: Nachnamen werden zu „Max M.“ gekürzt, Foto und Jahrgang erscheinen nur mit der Freigabe „öffentlich“. Nur für die interne Trainer-Version ausschalten.</span></span>
     </label>
     <label style="display:flex;align-items:flex-start;gap:8px;margin-top:8px;padding:9px 11px;background:${heftCfg.published?"#dcfce7":"var(--surface2)"};border:var(--border-s);border-radius:10px;cursor:pointer">
       <input type="checkbox" id="heft-f-pub" ${heftCfg.published?"checked":""} style="margin-top:2px;width:18px;height:18px;flex:0 0 auto">
-      <span style="font-size:12px;color:var(--text)"><strong>👨‍👩‍👧 Für Eltern veröffentlichen (digital)</strong><br><span style="font-size:11px;color:var(--text2)">Sichtbar im Eltern-Bereich. Namen erscheinen dort <b>immer maskiert</b>; Fotos nur bei Einwilligung.${heftCfg.published&&heftCfg._pubAt?" · zuletzt "+new Date(heftCfg._pubAt).toLocaleString("de-DE"):""}</span></span>
+      <span style="font-size:var(--s-text);color:var(--text)"><strong>👨‍👩‍👧 Für Eltern veröffentlichen (digital)</strong><br><span style="font-size:var(--s-klein);color:var(--text2)">Sichtbar im Eltern-Bereich. Namen erscheinen dort <b>immer maskiert</b>; Fotos nur bei Einwilligung.${heftCfg.published&&heftCfg._pubAt?" · zuletzt "+new Date(heftCfg._pubAt).toLocaleString("de-DE"):""}</span></span>
     </label>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:12px">
       <button class="btn btn-p" onclick="heftSaveDb()"><i class="ti ti-device-floppy"></i>Speichern</button>
@@ -5914,9 +6418,9 @@ function heftReporterQueueRender(){
   const nameById={}; heftKader.forEach(k=>nameById[k.id]=k.name);
   const offen=(window._heftReporter||[]).filter(x=>!x.freigegeben);
   if(!offen.length){el.innerHTML="";return;}
-  el.innerHTML=`<div style="font-size:11px;font-weight:700;color:var(--text2)">🎙️ Kabinen-Reporter – ${offen.length} Antwort${offen.length===1?"":"en"} warten auf Freigabe</div>
+  el.innerHTML=`<div style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">🎙️ Kabinen-Reporter – ${offen.length} Antwort${offen.length===1?"":"en"} warten auf Freigabe</div>
     ${offen.map(x=>`<div style="display:flex;align-items:center;gap:8px;border:var(--border-s);border-left:3px solid #14b8a6;border-radius:10px;padding:8px 10px;margin-top:6px">
-      <div style="flex:1;min-width:0;font-size:12px"><b>${esc(nameById[x.spieler_id]||"?")}</b> · ${esc(x.frage)}<br><span style="color:var(--text2)">„${esc(x.antwort)}"</span></div>
+      <div style="flex:1;min-width:0;font-size:var(--s-text)"><b>${esc(nameById[x.spieler_id]||"?")}</b> · ${esc(x.frage)}<br><span style="color:var(--text2)">„${esc(x.antwort)}"</span></div>
       <button class="btn btn-sm" style="color:var(--green)" onclick="heftReporterApprove(${x.id})">✓ Ins Heft</button>
       <button class="btn btn-sm" style="color:var(--red)" onclick="heftReporterDelete(${x.id})"><i class="ti ti-trash"></i></button>
     </div>`).join("")}`;
@@ -5960,9 +6464,23 @@ function heftPrintNow(){
 /* HOTFIX 19 digital: öffentliche Eltern-Ansicht des Stadionhefts (?heft). Ruft die
    Edge Function stadionheft-view – Namen kommen bereits maskiert, Fotos nur bei
    Einwilligung (sonst Initialen). Kein Login, keine Trainer-Daten. */
+/* v661 PO 28.09. (Bildschirmfoto Adler Nest in der installierten Eltern-App): „wie komme ich aus
+   der Ansicht vom Adler Nest wieder zurück in der Eltern-App?" Die Seite ist öffentlich und hatte
+   deshalb keine App-Leiste – in einem App-Fenster ohne Browser-Knöpfe gab es keinen Weg zurück.
+   Kommt man aus der App (&von=app), steht oben „← Zurück zur App“; Gäste mit geteiltem Link sehen
+   ihn nicht. */
+function heftZurueckLeiste(){
+  if(new URLSearchParams(location.search).get("von")!=="app")return "";
+  return `<button id="heft-zurueck" onclick="heftZurueck()" style="display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:8px 14px;margin:0 0 10px;border:1.5px solid #1e3a8a;border-radius:10px;background:#fff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">← Zurück zur App</button>`;
+}
+function heftZurueck(){
+  let intern=false; try{ intern=!!document.referrer&&new URL(document.referrer).origin===location.origin; }catch(e){}
+  if(intern&&history.length>1){ history.back(); return; }
+  location.href=location.pathname+"?portal";
+}
 async function renderStadionheftView(){
   const root=document.createElement("div");
-  root.style.cssText="max-width:460px;margin:0 auto;padding:16px;font-family:inherit;min-height:100vh;background:#f1f5f9";
+  root.style.cssText="max-width:460px;margin:0 auto;padding:16px;font-family:inherit;min-height:100vh;background:var(--bg)";
   document.body.appendChild(root);
   root.innerHTML=(typeof elternLoader==="function")?elternLoader("Adler Nest wird geladen …"):'<div style="text-align:center;padding:48px;color:#64748b">Lade Adler Nest…</div>';
   let d=null;
@@ -5971,7 +6489,7 @@ async function renderStadionheftView(){
     d=r.ok?await r.json():null;
   }catch(e){}
   if(!d||!d.published){
-    root.innerHTML='<div style="text-align:center;padding:48px;color:#64748b"><img src="logo.png" style="width:56px;height:56px" alt=""><div style="margin-top:12px">Aktuell ist kein <b>Adler Nest</b> veröffentlicht.<br>Schau bald wieder rein! 🦅</div></div>';
+    root.innerHTML=heftZurueckLeiste()+'<div style="text-align:center;padding:48px;color:var(--text3)"><img src="logo.png" style="width:56px;height:56px" alt=""><div style="margin-top:12px">Aktuell ist kein <b>Adler Nest</b> veröffentlicht.<br>Schau bald wieder rein! 🦅</div></div>';
     return;
   }
   const h=d.heft||{};
@@ -5979,41 +6497,42 @@ async function renderStadionheftView(){
   const cards=(d.spieler||[]).map(sp=>{
     const pos=sp.lieblingsposition?(typeof cardPosLabel==="function"?cardPosLabel(sp.lieblingsposition):sp.lieblingsposition):(sp.tw?"Torwart":"");
     return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:10px;text-align:center">
-      <div style="width:64px;margin:0 auto 6px;position:relative">${avatar(sp,64)}${sp.nr!=null?`<div style="position:absolute;bottom:-2px;right:-2px;min-width:20px;height:20px;background:#facc15;color:#1e293b;border-radius:10px;border:2px solid #fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 3px">${esc(sp.nr)}</div>`:""}</div>
-      <div style="font-size:14px;font-weight:800;color:#1e293b">${esc(sp.name)}${sp.tw?" 🥅":""}</div>
-      ${sp.spitzname?`<div style="font-size:10.5px;color:#64748b;font-style:italic">„${esc(sp.spitzname)}"</div>`:""}
-      ${pos?`<div style="font-size:10.5px;color:#1a56db;font-weight:700">${esc(pos)}</div>`:""}
+      <div style="width:64px;margin:0 auto 6px;position:relative">${avatar(sp,64)}${sp.nr!=null?`<div style="position:absolute;bottom:-2px;right:-2px;min-width:20px;height:20px;background:#facc15;color:#1e293b;border-radius:10px;border:2px solid #fff;font-size:var(--s-klein);font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 3px">${esc(sp.nr)}</div>`:""}</div>
+      <div style="font-size:var(--s-karte);font-weight:800;color:#1e293b">${esc(sp.name)}${sp.tw?" 🥅":""}</div>
+      ${sp.jahrgang?`<div style="font-size:var(--s-klein);color:#64748b">Jahrgang ${esc(sp.jahrgang)}</div>`:""}
+      ${sp.spitzname?`<div style="font-size:var(--s-klein);color:#64748b;font-style:italic">„${esc(sp.spitzname)}"</div>`:""}
+      ${pos?`<div style="font-size:var(--s-klein);color:var(--blue-text);font-weight:700">${esc(pos)}</div>`:""}
     </div>`;
   }).join("");
   const fk=h.fokus;
   const fokusHtml=fk?`<div style="display:flex;gap:12px;align-items:center;background:linear-gradient(135deg,#fef9c3,#fef3c7);border:1px solid #fde047;border-radius:14px;padding:12px;margin-bottom:12px">
     <div style="flex:0 0 auto">${avatar(fk,66)}</div>
-    <div><div style="font-size:10.5px;font-weight:800;color:#a16207;text-transform:uppercase;letter-spacing:.5px">⭐ Spieler im Fokus</div>
-      <div style="font-size:16px;font-weight:900;color:#1e293b">${esc(fk.name)}${fk.nr!=null?" · #"+esc(fk.nr):""}</div>
-      ${fk.text?`<div style="font-size:12px;color:#475569;margin-top:2px;line-height:1.4">${esc(fk.text).replace(/\n/g,"<br>")}</div>`:""}</div></div>`:"";
-  const nestLbl=t=>`<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin:16px 4px 8px">${t}</div>`;
+    <div><div style="font-size:var(--s-klein);font-weight:800;color:#a16207;text-transform:uppercase;letter-spacing:.5px">⭐ Spieler im Fokus</div>
+      <div style="font-size:var(--s-karte);font-weight:900;color:#1e293b">${esc(fk.name)}${fk.nr!=null?" · #"+esc(fk.nr):""}${fk.jahrgang?" · Jahrgang "+esc(fk.jahrgang):""}</div>
+      ${fk.text?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:2px;line-height:1.4">${esc(fk.text).replace(/\n/g,"<br>")}</div>`:""}</div></div>`:"";
+  const nestLbl=t=>`<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:16px 4px 8px">${t}</div>`;
   // I-C: Kabinen-Reporter-Rubrik (RPC reporter_public: nur Freigegebenes, Namen serverseitig maskiert)
   let repHtml="";
   try{
     const r=await fetch(`${SB_URL}/rest/v1/rpc/reporter_public`,{method:"POST",headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:"{}"});
     if(r.ok){const reps=((await r.json())||[]).slice(0,6);
       if(reps.length)repHtml=nestLbl("🎙️ Kabinen-Reporter – die Kinder haben das Wort")
-        +reps.map(x=>`<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #14b8a6;border-radius:12px;padding:10px 13px;margin-bottom:8px;font-size:12.5px;color:#334155"><b>${esc(x.frage)}</b><br>„${esc(x.antwort)}" – <i>${esc(x.name)}</i></div>`).join("");}
+        +reps.map(x=>`<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #14b8a6;border-radius:12px;padding:10px 13px;margin-bottom:8px;font-size:var(--s-text);color:#334155"><b>${esc(x.frage)}</b><br>„${esc(x.antwort)}" – <i>${esc(x.name)}</i></div>`).join("");}
   }catch(e){}
-  root.innerHTML=`<div class="elt-fade">
+  root.innerHTML=`${heftZurueckLeiste()}<div class="elt-fade">
     <div style="background:linear-gradient(135deg,#1e3a8a,#2563eb);border-radius:16px;padding:18px 16px;text-align:center;color:#fff;margin:4px 0 14px;box-shadow:0 2px 12px rgba(30,58,138,.28)">
       <img src="logo.png" style="width:56px;height:56px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))" alt="SV Adler Dellbrück">
-      <div style="font-size:11px;font-weight:700;letter-spacing:.8px;opacity:.85;margin-top:4px">SV ADLER DELLBRÜCK e.V.</div>
-      <div style="font-size:23px;font-weight:900;margin:2px 0">${esc(h.titel||"Adler Nest")}</div>
-      <div style="font-size:11.5px;opacity:.85">Das Vereinsheft der jungen Adler 🪺</div>
+      <div style="font-size:var(--s-klein);font-weight:700;letter-spacing:.8px;opacity:.85;margin-top:4px">SV ADLER DELLBRÜCK e.V.</div>
+      <div style="font-size:var(--s-seite);font-weight:900;margin:2px 0">${esc(h.titel||"Adler Nest")}</div>
+      <div style="font-size:var(--s-klein);opacity:.85">Das Vereinsheft der jungen Adler 🪺</div>
     </div>
-    ${h.einleitung?`<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #2563eb;border-radius:12px;padding:12px 13px;font-size:13px;color:#334155;line-height:1.55;margin-bottom:12px">${esc(h.einleitung).replace(/\n/g,"<br>")}</div>`:""}
+    ${h.einleitung?`<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #2563eb;border-radius:12px;padding:12px 13px;font-size:var(--s-text);color:#334155;line-height:1.55;margin-bottom:12px">${esc(h.einleitung).replace(/\n/g,"<br>")}</div>`:""}
     ${fokusHtml}
     ${nestLbl("🦅 Unser Kader")}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">${cards}</div>
     ${repHtml}
-    ${h.kommentar?`${nestLbl("📣 Vom Trainerteam")}<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #16a34a;border-radius:12px;padding:12px 13px;font-size:12.5px;color:#334155;line-height:1.55">${esc(h.kommentar).replace(/\n/g,"<br>")}</div>`:""}
-    <div style="text-align:center;font-size:11px;color:var(--text3);margin-top:18px">Auf geht's, Adler! 🦅 · SV Adler Dellbrück e.V.</div></div>`;
+    ${h.kommentar?`${nestLbl("📣 Vom Trainerteam")}<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #16a34a;border-radius:12px;padding:12px 13px;font-size:var(--s-text);color:#334155;line-height:1.55">${esc(h.kommentar).replace(/\n/g,"<br>")}</div>`:""}
+    <div style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin-top:18px">Auf geht's, Adler! 🦅 · SV Adler Dellbrück e.V.</div></div>`;
 }
 
 /* ═══════════════════════════════════
@@ -6031,8 +6550,8 @@ function kachelTile(key,emo,label,c1,c2){
   return `<button onclick="kachelOpen('${key}')" style="min-height:104px;border:none;border-radius:16px;cursor:pointer;font-family:inherit;background:linear-gradient(135deg,${c1},${c2});color:#fff;padding:14px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-shadow:var(--shadow-md);text-align:left">
     <span style="font-size:30px">${emo}</span>
     <span style="min-width:0">
-      <span style="display:block;font-size:15.5px;font-weight:900">${label}</span>
-      <span id="kb-${key}" style="display:block;font-size:12px;min-height:15px"></span>
+      <span style="display:block;font-size:var(--s-karte);font-weight:900">${label}</span>
+      <span id="kb-${key}" style="display:block;font-size:var(--s-text);min-height:15px"></span>
     </span>
   </button>`;
 }
@@ -6055,11 +6574,21 @@ function kTiles(items,col){
     const voll=(t.length%2===1&&i===t.length-1);
     return `<button onclick="kachelRun('${x.fn}'${x.arg!==undefined?`,'${x.arg}'`:""})" style="${voll?"grid-column:1/-1;":""}min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid ${col};border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:12px 8px;text-align:center">
       <span style="font-size:30px">${x.emo}</span>
-      <span style="font-size:14px;font-weight:800;line-height:1.25">${x.label}</span>
+      <span style="font-size:var(--s-karte);font-weight:800;line-height:1.25">${x.label}</span>
     </button>`;
   }).join("")+`</div>`;
 }
-function kSec(t){return `<div style="font-size:13.5px;font-weight:800;color:var(--text);margin:16px 0 8px">${t}</div>`;}
+/* v681: Einstiege, die eine Reihenfolge haben (vor → während → nach), stehen untereinander
+   in voller Breite mit Nummer – nicht im Raster, wo die dritte Kachel quer darunter läge. */
+function kPhasen(items,col){
+  return `<div style="display:flex;flex-direction:column;gap:10px">`+items.map(x=>`<button type="button" class="phase-zeile" onclick="kachelRun('spieltagPhase','${x.arg}')" style="border-left-color:${col}">
+      <span class="pz-nr" style="background:${col}" aria-hidden="true">${x.nr}</span>
+      <span class="pz-emo" aria-hidden="true">${x.emo}</span>
+      <span style="flex:1;min-width:0"><span class="pz-t">${x.label}</span><span class="pz-s">${x.sub}</span></span>
+      <i class="ti ti-chevron-right" aria-hidden="true" style="font-size:var(--s-seite);color:var(--text3)"></i>
+    </button>`).join("")+`</div>`;
+}
+function kSec(t){return `<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:16px 0 8px">${t}</div>`;}
 const KACHELN={
   training:{emo:"🏃",titel:"Training",sub:"Vom Plan bis zum Abpfiff",col:"var(--fam-training)"},
   spieltag:{emo:"⚽",titel:"Spieltag",sub:"Vorher, während, danach",col:"var(--fam-spieltag)"},
@@ -6089,8 +6618,8 @@ function kachelSeite(key){
   el.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
       <span style="font-size:26px;line-height:1">${k.emo}</span>
       <span style="min-width:0">
-        <span style="display:block;font-size:17px;font-weight:900;color:var(--text)">${esc(k.titel)}</span>
-        <span style="display:block;font-size:12px;color:var(--text2)">${esc(k.sub)}</span>
+        <span style="display:block;font-size:var(--s-teil);font-weight:900;color:var(--text)">${esc(k.titel)}</span>
+        <span style="display:block;font-size:var(--s-text);color:var(--text2)">${esc(k.sub)}</span>
       </span>
     </div>
     <div id="kachel-body">${_kachelInhalt(key)}</div>`;
@@ -6107,23 +6636,34 @@ function _kachelInhalt(key){
       {emo:"📚",label:"Übungen",fn:"go",arg:"formen"},
       {emo:"🏆",label:"Trainingsturnier",fn:"blitzOpen"}
     ],col);
-  if(key==="spieltag")return kSec("Rund ums Spiel")
+  /* v665 PO (Bildschirmfotos 28.09.): „Die Meldung der Anwesenheit an Spieltagen ist zu
+     versteckt. Auf der Startkachel ‚Wer ist dabei' müssen direkt die Rückmeldungen der Eltern
+     angezeigt werden." Statt einer Kachel, die in den Match springt, steht hier die Karte
+     mit dem Stand zum nächsten Spieltag (spieltagDabeiKarteLoad). */
+  /* v681 PO (Kollegen 29.09.): „vor dem Spiel, während dem Spiel, nach dem Spiel“ – das sind die
+     drei Fragen am Platz, also stehen sie hier als drei große Einstiege. Jeder führt in den
+     Match mit genau dieser Phase offen; die Kachel „Match“ ist darin aufgegangen. */
+  if(key==="spieltag")return `<div id="st-dabei-karte"></div>`
+    +kSec("Am Spieltag")
+    +kPhasen([
+      {nr:1,emo:"📋",label:"Vor dem Spiel",sub:"Wer ist dabei, Teams, Kapitän, Aufstellung",arg:"vor"},
+      {nr:2,emo:"⏱️",label:"Während des Spiels",sub:"Match-Uhr, Wechsel, Liveticker",arg:"live"},
+      {nr:3,emo:"🏁",label:"Nach dem Spiel",sub:"Ergebnis, Spielbericht, Blitz-Rating",arg:"nach"}
+    ],col)
+    +kSec("Vorbereiten und auswerten")
     +kTiles([
-      {emo:"🎽",label:"Match",fn:"go",arg:"spieltag"},
       {emo:"🧩",label:"Aufstellung",fn:"go",arg:"kombi"},
-      /* v564: NICHT go:anwesenheit – das ist die Liste der Trainingstermine. Die
-         Anwesenheit des Spieltags ist die Nominierung unter „Teams festlegen". */
-      {emo:"✅",label:"Wer ist dabei?",fn:"spieltagAnwesenheitOpen"},   // v610: Name wie im Match; „Anwesenheit" heißt beim Training die Liste der Trainingstermine
       {emo:"📊",label:"Analyse",fn:"go",arg:"analyse"}
     ],col)
     +`<div id="kachel-turnier"></div>`;
   if(key==="team"){
-    const names=Object.keys(DB||{});
+    const names=typeof kaderNamen==="function"?kaderNamen():Object.keys(DB||{});   // v636: nur aktive Kinder
     const bewertet=names.filter(n=>DB[n]&&DB[n].length).length;
-    const cutoff=new Date(Date.now()-42*86400000).toISOString().slice(0,10);
-    const stale=KADER.filter(x=>{const s=DB[x.name];if(!s||!s.length)return true;return (s[s.length-1].datum||"0000")<cutoff;}).length;
-    const tile=(v,l,c,arg)=>`<button onclick="kachelRun('go','${arg}')" style="flex:1;min-width:90px;min-height:72px;border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface);padding:10px;text-align:center;cursor:pointer;font-family:inherit"><div style="font-size:24px;font-weight:900;color:${c}">${v}</div><div style="font-size:12px;color:var(--text2);font-weight:700">${l}</div></button>`;
-    return `<div style="display:flex;gap:10px;margin-bottom:4px">${tile(KADER.length,"Kader","var(--blue)","kader")}${tile(bewertet+"/"+KADER.length,"bewertet","var(--green)","bew")}${tile(stale,"überfällig","var(--red)","bew")}</div>
+    // v648: „Runde fällig“ erst ab dem Startdatum der Bewertungen, dann nach 49 Tagen
+    const frei=typeof bewFreigegeben==="function"&&bewFreigegeben();
+    const stale=frei?names.filter(bewKindFaellig).length:0;
+    const tile=(v,l,c,arg)=>`<button onclick="kachelRun('go','${arg}')" style="flex:1;min-width:90px;min-height:72px;border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface);padding:10px;text-align:center;cursor:pointer;font-family:inherit"><div style="font-size:var(--s-seite);font-weight:900;color:${c}">${v}</div><div style="font-size:var(--s-text);color:var(--text2);font-weight:700">${l}</div></button>`;
+    return `<div style="display:flex;gap:10px;margin-bottom:4px">${tile(names.length,"Kader","var(--blue-text)","kader")}${tile(bewertet+"/"+names.length,"bewertet","var(--green)","bew")}${frei?tile(stale,"Runde fällig","var(--red)","bew"):""}</div>
       <div id="home-antifrust"></div><div id="home-birthday"></div><div id="home-radar"></div>`
       +kSec("Spieler")
       +kTiles([
@@ -6159,12 +6699,16 @@ function _kachelInhalt(key){
     ],col);
   if(key==="elki")return kSec("Kommunikation")
     +kTiles([
+      {emo:"💬",label:"Adler-Rufe",fn:"rufeEinstieg"},
+      {emo:"🛡️",label:"Adler-Rufe moderieren",fn:"rufeModOpen"},
       {emo:"📣",label:"Team-Ansage",fn:"ansageTrainerOpen"},
+      {emo:"📈",label:"Rückmelde-Verhalten",fn:"rueckmeldeStatistikOpen"},
       {emo:"🗣️",label:"Elterngespräch",fn:"epollTrainerOpen"},
       // v610: Die Karten sind seit v604 der Regelweg – vorher nur über Einstellungen erreichbar.
       {emo:"🪪",label:"Einladungskarten",fn:"einladungskartenOpen"},
-      {emo:"🔗",label:"Eltern einladen",fn:"elternInvitePaket"},
-      {emo:"🖨️",label:"QR-Aushang",fn:"qrAushangOpen"}
+      {emo:"👥",label:"Elternbeirat & Kasse",fn:"elternTeamEditOpen"}
+      /* v669 PO 29.09.: „Eltern einladen kann meiner Einschätzung ganz weg ebenso wie QR-Aushang.“
+         Der Weg in die App sind die Einladungskarten (seit v604). */
     ],col)
     +kSec("Adler-Welt (Kinder)")
     +kTiles([
@@ -6174,6 +6718,7 @@ function _kachelInhalt(key){
       {emo:"🤝",label:"Unsere Regeln",fn:"codexKinderEditOpen"},
       {emo:"🖼️",label:"Karten-Fotos",fn:"albumFotosOpen"},
       {emo:"🎯",label:"Team-Quests",fn:"questEditorOpen"},
+      {emo:"🪶",label:"Federn vergeben",fn:"federnVergebenOpen"},   // v675
       {emo:"🏅",label:"Urkunden-Studio",fn:"urkundenOpen"}
     ],col)
     +kSec("Inhalte")
@@ -6189,7 +6734,8 @@ function _kachelInhalt(key){
       // Team-Sicht auf die Verfügbarkeit – NEBEN „Bist du dabei?" (Ich-Sicht), nicht statt.
       {emo:"🧑‍🏫",label:"Trainerplan",fn:"trainerPlanOpen"},
       {emo:"📌",label:"Pinnwand",fn:"go",arg:"team"}, // war nur über die Reiterzeile erreichbar
-      {emo:"📓",label:"Tagebuch",fn:"go",arg:"tagebuch"}
+      {emo:"📓",label:"Tagebuch",fn:"go",arg:"tagebuch"},
+      {emo:"💭",label:"Gedanke",fn:"tagebuchGedanke"}   // v679: ein Feld, ein Knopf – wird ein Keim im Tagebuch
     ],col)
     +kSec("Team-Orga")
     +kTiles([
@@ -6208,7 +6754,9 @@ function _kachelInhalt(key){
       // v610: aus „Team-Orga" hierher – dort trug sie dasselbe 🧰 wie „Material".
       {emo:"⚙️",label:"Setup-Übersicht",fn:"setupTrainerOpen"},
       {emo:"🔑",label:"Passwort ändern",fn:"pwChangeOpen"},
-      {emo:"📊",label:"Nutzung",fn:"nutzungOpen"}
+      {emo:"📊",label:"Nutzung",fn:"nutzungOpen"},
+      // v683: vorher unten auf der Pinnwand und im Kader – eine Sicherung ist Verwaltung, kein Teaminhalt
+      {emo:"💾",label:"Datensicherung",fn:"backupExport"}
     ],col);
   return "";
 }
@@ -6222,8 +6770,49 @@ function _kachelNachladen(key){
       if(typeof homeFerien==="function")homeFerien();
       if(typeof pushRenderInto==="function")pushRenderInto("push-slot-trainer","trainer");
     }
-    if(key==="spieltag")_kachelTurnierCheck();
+    if(key==="spieltag"){_kachelTurnierCheck();spieltagDabeiKarteLoad();}
   }catch(e){}
+}
+/* v665: Karte „Wer ist dabei?" auf der Spieltag-Seite – Eltern-Rückmeldungen zum nächsten
+   Spieltag direkt sichtbar, je Gruppe mit Namen (Trainer-App, Kinder mit Vornamen wie im
+   Kader). Maßgeblich für die Teams bleibt die Anwesenheit im Match (nomStatus): dorthin
+   führt der Knopf, und dort kann der Trainer jede Rückmeldung überstimmen. Stand der
+   Anwesenheit (Trainer-Entscheid) wird mitgezeigt, sobald es sie gibt. */
+async function spieltagDabeiKarteLoad(){
+  const slot=document.getElementById("st-dabei-karte"); if(!slot)return;
+  const heute=new Date().toISOString().slice(0,10);
+  let t=null, rm=[], nom=null;
+  try{const r=await fetch(`${SB_URL}/rest/v1/termine?typ=in.(spiel,turnier)&datum=gte.${heute}&select=id,datum,typ,gegner,titel,uhrzeit&order=datum.asc&limit=1`,{headers:sbAuthHeaders()});if(r.ok)t=((await r.json())||[])[0]||null;}catch(e){}
+  if(!document.getElementById("st-dabei-karte"))return;
+  if(!t){slot.innerHTML=`<div class="abschnitt" style="margin-bottom:10px"><div style="font-weight:800;font-size:var(--s-karte)">✅ Wer ist dabei?</div><div style="font-size:var(--s-text);color:var(--text2);margin-top:4px">Kein Spieltag in Sicht – unter Orga einen Termin „Spiel“ oder „Turnier“ anlegen.</div></div>`;return;}
+  try{const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?termin_id=eq.${t.id}&select=spieler_id,status,kommentar`,{headers:sbAuthHeaders()});if(r.ok)rm=await r.json();}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/nominierungen?datum=eq.${encodeURIComponent(t.datum+"__nom")}&select=data`,{headers:sbAuthHeaders()});if(r.ok){const x=((await r.json())||[])[0];nom=x&&x.data||null;}}catch(e){}
+  if(!document.getElementById("st-dabei-karte"))return;
+  const kader=(typeof kaderAktiv==="function"?kaderAktiv():[]);
+  const perId={}; rm.forEach(x=>perId[x.spieler_id]=x);
+  const gr={zugesagt:[],abgesagt:[],krank:[],offen:[]};
+  kader.forEach(k=>{const x=perId[k._id];const st=x&&gr[x.status]?x.status:"offen";gr[st].push(k);});
+  let dabei=null;
+  if(nom){dabei=kader.filter(k=>nom[k._id]==="dabei"||nom[String(k._id)]==="dabei").length;}
+  const d=new Date(t.datum+"T00:00:00");
+  const wann=d.toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"})+(t.uhrzeit?" · "+String(t.uhrzeit).slice(0,5)+" Uhr":"");
+  const was=t.typ==="turnier"?"Turnier":(t.gegner?"gegen "+t.gegner:"Spiel");
+  const chips=(liste,bg,fg)=>liste.map(k=>`<span style="font-size:var(--s-text);font-weight:700;background:${bg};color:${fg};border-radius:12px;padding:4px 10px">${k.nr?k.nr+" ":""}${esc(k.name)}</span>`).join("");
+  const gruppe=(emo,titel,liste,bg,fg)=>liste.length?`<div style="margin-top:10px"><div style="font-size:var(--s-text);font-weight:800;margin-bottom:5px">${emo} ${titel} · ${liste.length}</div><div style="display:flex;flex-wrap:wrap;gap:5px">${chips(liste,bg,fg)}</div></div>`:"";
+  slot.innerHTML=`<div class="abschnitt" id="st-dabei" style="margin-bottom:10px;border-top:3px solid var(--fam-spieltag)">
+    <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+      <span style="font-weight:900;font-size:var(--s-karte)">✅ Wer ist dabei?</span>
+      <span style="font-size:var(--s-text);color:var(--text2)">${esc(wann)} · ${esc(was)}</span></div>
+    <div style="font-size:var(--s-text);margin-top:6px;line-height:1.5">Eltern: <b>✅ ${gr.zugesagt.length} zugesagt</b> · ❌ ${gr.abgesagt.length} abgesagt · 🤒 ${gr.krank.length} krank · ❓ ${gr.offen.length} ohne Antwort${dabei!=null?`<br>Im Match eingeplant: <b>${dabei} von ${kader.length}</b>`:""}</div>
+    ${gruppe("✅","Zugesagt",gr.zugesagt,"var(--green-bg)","var(--text)")}
+    ${gruppe("❌","Abgesagt",gr.abgesagt,"var(--surface2)","var(--text)")}
+    ${gruppe("🤒","Krank",gr.krank,"var(--surface2)","var(--text)")}
+    ${/* v681: Vor dem Spieltag hat meist noch kaum jemand geantwortet – fünfzehn graue Namen
+         schoben die Phasen-Kacheln aus dem Bild. Die Offenen stehen deshalb zugeklappt. */
+      gr.offen.length?`<details class="st-offen" style="margin-top:10px"><summary style="min-height:44px;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:var(--s-text);font-weight:800">❓ Noch keine Antwort · ${gr.offen.length}<span style="margin-left:auto;font-weight:700;color:var(--text2)">Namen zeigen</span></summary><div style="display:flex;flex-wrap:wrap;gap:5px">${chips(gr.offen,"var(--surface2)","var(--text2)")}</div></details>`:""}
+    <button type="button" class="btn btn-p" id="st-dabei-anpassen" style="width:100%;min-height:56px;margin-top:12px" onclick="if(typeof spieltagAnwesenheitOpen==='function')spieltagAnwesenheitOpen();else go('spieltag')">Anwesenheit anpassen und Teams ansehen</button>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">Zusagen stehen im Match automatisch auf „Dabei“ und kommen in die Teams. Ändern kannst du jedes Kind dort von Hand.</div>
+  </div>`;
 }
 /* PO-Entscheid: Die Turnier-Gruppe erscheint unter Spieltag NUR, wenn etwas ansteht – sonst
    bleibt die Seite schlank. v490: „ansteht" heisst jetzt auch ein Heimspiel; geplant wird es

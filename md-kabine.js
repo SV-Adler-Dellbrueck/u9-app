@@ -74,6 +74,23 @@ function kabineYoutubeEmbed(url){
   const m=String(url||"").match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
   return m?`https://www.youtube-nocookie.com/embed/${m[1]}`:"";
 }
+/* v645: Fremde Inhalte (YouTube, Spotify) laden erst nach einem Tipp. Vorher ging beim bloßen
+   Öffnen der Ansicht die IP-Adresse des Geräts – oft das eines Kindes – an den Anbieter. Der Knopf
+   sagt, woher der Inhalt kommt; erst der Tipp setzt den iframe ein. */
+function kabineEinbettung(id,src,titel,knopf,herkunft,stil,erlaubt){
+  if(!src)return "";
+  return `<div id="${esc(id)}" data-src="${esc(src)}" data-titel="${esc(titel)}" data-stil="${esc(stil)}" data-erlaubt="${esc(erlaubt||"")}" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:8px">
+    <button type="button" onclick="kabineEinbettungLaden('${esc(id)}')" style="min-height:52px;padding:14px 28px;border-radius:16px;border:none;background:#fff;color:#0b2f4d;font-weight:800;font-size:16px;cursor:pointer">${esc(knopf)}</button>
+    <div style="font-size:12px;color:#fff;opacity:.85">${esc(herkunft)}</div></div>`;
+}
+function kabineEinbettungLaden(id){
+  const h=document.getElementById(id); if(!h||!h.dataset.src)return;
+  const f=document.createElement("iframe");
+  f.title=h.dataset.titel||""; f.src=h.dataset.src; f.setAttribute("style",h.dataset.stil||"");
+  if(h.dataset.erlaubt)f.setAttribute("allow",h.dataset.erlaubt);
+  f.setAttribute("allowfullscreen","");
+  h.replaceChildren(f);
+}
 function kabineGesperrt(){ try{return localStorage.getItem(KABINE_SPERRE_KEY)==="1";}catch(e){return false;} }
 function kabineSperre(){
   if(document.getElementById("kabine-sperre"))return;
@@ -92,6 +109,12 @@ async function kabineZeitTick(){
     const d=await kgTick();
     if(d&&typeof d.rest_min==="number")_kgRestMin=d.rest_min;
   }
+  kabineZeitAnzeige();
+}
+/* v636: Nur anzeigen, nichts buchen. kabineHome() rief vorher kabineZeitTick() – auf dem
+   Kindergerät kostete damit jeder Rücksprung zur Startseite eine Minute Appzeit (10× zurück
+   in einer Sekunde = 10 Minuten). Gebucht wird ausschließlich im Minutentakt. */
+function kabineZeitAnzeige(){
   const rest=kabineZeitRestMin();
   if(rest<=0){ kabineZeitEnde(); return; }
   const el=document.getElementById("kab-zeit");
@@ -697,6 +720,12 @@ function kabSubConsume(){
   try{history.back();}catch(e){window._mdlSuppress--;}
 }
 // (Der popstate-Teil sitzt im zentralen Back-Handler in core.js – eine Stelle, korrekte Reihenfolge.)
+/* v653: Mein Taktikbrett – schieben und malen, nur auf diesem Gerät (md-brett.js). */
+function kabineBrett(){
+  const b=document.getElementById("kabine-body"); if(!b)return;
+  if(typeof brettKabine!=="function"){ if(typeof toast==="function")toast("Das Brett lädt noch – gleich nochmal","info"); return; }
+  kabSubMark(); brettKabine(b);
+}
 function kabineHome(){
   kabSubConsume(); // Rückkehr per ←-Button: den Unterseiten-History-Eintrag still verbrauchen
   const b=document.getElementById("kabine-body"); if(!b)return;
@@ -705,8 +734,10 @@ function kabineHome(){
     <div style="text-align:center;padding:18px 16px 6px">
       <div style="font-size:22px;font-weight:900">🦅 Die Kabine</div>
       <div style="font-size:12px;opacity:.8">Adler U9 · Kinder-Modus</div>
+      <button id="kab-hilfe" onclick="kabineTourStart()" aria-label="Zeig mir die Kabine" style="margin-top:8px;min-height:44px;padding:6px 16px;border:1px solid rgba(255,255,255,.45);border-radius:22px;background:rgba(255,255,255,.12);color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">❓ Zeig mir alles</button>
     </div>
     <div id="kab-level" style="padding:2px 16px 6px"></div>
+    <div id="kab-lob"></div>
     <div id="kab-countdown"></div>
     <div id="kab-reveal"></div>
     <div id="kab-pack"></div>
@@ -742,6 +773,7 @@ function kabineHome(){
       <details id="kab-mehr" style="grid-column:1/-1" ontoggle="window._kabMehrOffen=this.open"${window._kabMehrOffen?" open":""}>
         <summary style="list-style:none;cursor:pointer;min-height:48px;display:flex;align-items:center;justify-content:center;gap:8px;border:1px dashed rgba(255,255,255,.45);border-radius:18px;font-weight:800;font-size:15px;color:#fff">✨ Mehr entdecken <span aria-hidden="true">▾</span></summary>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
+        ${tile("kabineBrett()","✏️","Mein Taktikbrett","rgba(56,189,248,.46)","rgba(2,132,199,.30)",true)}
         ${tile("kabineShowGallery()","🖼️","Team-Galerie","rgba(16,185,129,.48)","rgba(5,150,105,.30)")}
         ${tile("kabineAbzeichen()","🎖️","Abzeichen","rgba(147,51,234,.46)","rgba(109,40,217,.30)")}
         ${tile("kabineRollen()","🎽","Wo spiele ich?","rgba(124,58,237,.46)","rgba(76,29,149,.32)")}
@@ -755,16 +787,52 @@ function kabineHome(){
     </div>
     ${window._kindGeraetModus?"":`<button onclick="kabineExit()" style="margin:0 16px 18px;padding:12px;border:none;border-radius:14px;background:rgba(0,0,0,.25);color:#fff;font-family:inherit;font-size:14px;cursor:pointer">🔒 Für Erwachsene: Kabine verlassen</button>`}`;
   teamLevelLoad("kab-level");                                  // C1: Team-Level
+  kabineLobLoad();                                              // v675: Federn vom Trainerteam mit Grund
   if(typeof arenaKabineLoad==="function")arenaKabineLoad("kab-arena"); // C3: Einlauf-Song/Schlachtruf
   kabineCountdownLoad();                                        // G6: Countdown bis zum nächsten Spiel
   kabineRevealLoad();                                           // H4: Rollen-Reveal am Spieltag
   kabinePackLoad();                                             // H3: Spieltag-Packliste
   kabinePostLoad();                                             // I-A: 📬 Adler-Post (Kudos + Genesungsgrüße)
   kabineWahlLoad();                                             // I-A: 🗳️ Kabinen-Wahl
-  kabineZeitTick();                                             // Restzeit-Hinweis
+  kabineZeitAnzeige();                                          // Restzeit-Hinweis (v636: ohne Buchung)
   // kabineStimmungLoad();  // H2 – vom PO vorerst ausgeblendet                                         // H2: Kinder-Stimmungs-Check
   kabineMilestoneLoad();                                        // H7: frische Team-Meilensteine feiern
+  if(!window._kabTourGeprueft){ window._kabTourGeprueft=true; setTimeout(kabineTourMaybe,900); }   // v658
 }
+/* v658 · Tour für Kinder (PO 28.09.: „… für die Kids-App … in kinderverständlicher Sprache für
+   7- bis 9- oder 10-Jährige“). Kurze Sätze, Du-Form, ein Ding pro Schritt, keine Fachwörter
+   wie „Modul“ oder „App-Zeit“. Große Schrift und Knöpfe (opt.kind). Kein Textfeld, kein Netz.
+   Das Quiz lädt eine eigene Seite – deshalb zeigt die Tour auf die Kachel, öffnet sie aber nicht. */
+const KABINE_TOUR=[
+  {emo:"🦅", t:"Hallo, Adler!", sel:["#kab-hilfe"],
+   d:"Das hier ist deine Kabine. Ich zeige dir kurz, was du hier alles machen kannst."},
+  {emo:"⏰", t:"Wann ist das nächste Spiel?", sel:["#kab-countdown"],
+   d:"Hier siehst du, wie oft du noch schlafen musst bis zum nächsten Spiel."},
+  {emo:"🎯", t:"Taktik-Quiz", sel:['#kabine-body button[onclick="kabineQuiz(\'taktik\')"]'],
+   d:"Hier sagst du, wo du hinlaufen würdest. Für richtige Antworten gibt es Federn 🪶."},
+  {emo:"🧠", t:"Fußball-Wissen", sel:['#kabine-body button[onclick="kabineQuiz(\'wissen\')"]'],
+   d:"Fragen rund um Fußball. Wie viele weißt du schon?"},
+  {emo:"🃏", t:"Deine Karte", sel:['#kabine-body button[onclick="kabineMyCard()"]'],
+   d:"Deine eigene Spielerkarte mit Foto und deiner Rolle im Team."},
+  {emo:"⭐", t:"Deine Mission", sel:['#kabine-body button[onclick="kabineMission()"]'],
+   d:"Eine kleine Aufgabe nur für dich. Schaffst du sie?"},
+  {emo:"🏆", t:"Team-Missionen", sel:['#kabine-body button[onclick="kabineShowQuests()"]'],
+   d:"Aufgaben für das ganze Team. Zusammen schafft ihr mehr!"},
+  {emo:"🤝", t:"Unsere Regeln", sel:['#kabine-body button[onclick="kabineCodex()"]'],
+   d:"So spielen wir Adler: fair, mutig und zusammen."},
+  {emo:"👏", t:"Kompliment schenken", sel:['#kabine-body button[onclick="kabineKudos()"]'],
+   d:"Sag einem Mitspieler, was er toll gemacht hat. Das freut jeden!"},
+  {emo:"✨", t:"Mehr entdecken", sel:["#kab-mehr"], vor:()=>{ const d=document.getElementById("kab-mehr"); if(d){ d.open=true; window._kabMehrOffen=true; } },
+   d:"Hier gibt es noch mehr: dein Taktikbrett zum Malen, das Sammelalbum, Abzeichen und die Team-Galerie."},
+  {emo:"⚽", t:"Viel Spaß!", sel:["#kab-hilfe"],
+   d:"Wenn du etwas vergessen hast: Tipp auf „❓ Zeig mir alles“. Und jetzt: Los geht's!"},
+];
+function kabineTourMaybe(){
+  if(!document.getElementById("kab-hilfe"))return;          // nur auf der Startseite der Kabine
+  try{ if(localStorage.getItem("adler_kinder_tour"))return; }catch(e){}
+  kabineTourStart();
+}
+function kabineTourStart(){ if(typeof fuehrungStart==="function")fuehrungStart(KABINE_TOUR,{kind:true,schluessel:"adler_kinder_tour"}); }
 /* v563: Der nächste Termin, bei dem wenigstens eines der angemeldeten Kinder dabei sein
    kann. Ein Spiel, für das abgesagt wurde, ist für dieses Kind kein Spiel: „Noch 4× schlafen"
    wäre eine Vorfreude auf einen Tag zu Hause, und die Packliste eine Aufforderung, für ihn
@@ -1008,6 +1076,20 @@ const KUDOS_TEXTE=[
 const GENESUNG_TEXTE=["💌 Gute Besserung!","🦅 Wir vermissen dich!","💪 Komm bald wieder!","⚽ Der Platz wartet auf dich!"];
 const HORST_TEXTE=["🎂 Alles Gute zum Geburtstag! Das ganze Nest feiert dich heute – dein Horst 🦅"];
 function kabinePostText(typ,key){ const L=typ==="genesung"?GENESUNG_TEXTE:typ==="horst"?HORST_TEXTE:KUDOS_TEXTE; return L[key]||L[0]; }
+/* v675 · Federn, die das Trainerteam frei vergeben hat, mit Grund – die letzten zwei Wochen.
+   Lesend per GET (xp_lob ist stable); Eltern und das Kind selbst sehen nur ihre eigenen. */
+async function kabineLobLoad(){
+  const el=document.getElementById("kab-lob"); if(!el)return;
+  const kids=window._elternKids||[]; if(!kids.length){el.innerHTML="";return;}
+  let rows=[];
+  try{const r=await fetch(`${SB_URL}/rest/v1/rpc/xp_lob?p_ids=${encodeURIComponent("{"+kids.map(k=>Number(k.spieler_id)).join(",")+"}")}`,{headers:sbAuthHeaders()});
+    if(r.ok)rows=(await r.json())||[];}catch(e){}
+  if(!rows.length){el.innerHTML="";return;}
+  el.innerHTML=`<div class="kab-lob" style="margin:2px 16px 8px;padding:10px 14px;border:1px solid rgba(255,255,255,.25);border-radius:16px;background:rgba(255,255,255,.14);color:#fff">
+    <div style="font-size:12px;font-weight:800;opacity:.9;text-transform:uppercase;letter-spacing:.5px">${XP_ICON} Vom Trainerteam</div>
+    ${rows.slice(0,3).map(x=>`<div style="display:flex;gap:8px;align-items:baseline;margin-top:4px;font-size:14px"><b style="flex:none">+${Number(x.delta)||0}</b><span>${esc(x.grund||"")}</span></div>`).join("")}
+  </div>`;
+}
 async function kabinePostLoad(){
   const el=document.getElementById("kab-post"); if(!el)return;
   const kids=window._elternKids||[]; if(!kids.length){el.innerHTML="";return;}
@@ -1356,7 +1438,7 @@ async function kabineHype(){
       <div style="flex:1;font-size:16px;font-weight:800;color:#fff">🎵 Kabinen-Hype</div></div>`;
   if(!embed){ b.innerHTML=head+'<div style="flex:1;display:flex;align-items:center;justify-content:center;color:#fff;opacity:.85;padding:20px;text-align:center">Noch keine Playlist hinterlegt.<br>Der Trainer kann sie in der Adler-Welt setzen. 🎧</div>'; return; }
   b.innerHTML=head+`<div style="flex:1;padding:12px 16px">
-    <iframe title="Kabinen-Playlist" style="border-radius:14px;width:100%;height:420px;border:0" src="${esc(embed)}" allow="encrypted-media; clipboard-write" loading="lazy"></iframe>
+    ${kabineEinbettung("kh-playlist",embed,"Kabinen-Playlist","🎵 Playlist laden","Kommt von Spotify.","border-radius:14px;width:100%;height:420px;border:0","encrypted-media; clipboard-write")}
     <div style="text-align:center;color:#fff;opacity:.8;font-size:12px;margin-top:10px">Vor dem Spiel schön laut – auf geht's, Adler! 🦅</div>
   </div>`;
 }
@@ -1373,7 +1455,7 @@ async function kabineSkillWoche(){
   b.innerHTML=head+`<div style="flex:1;padding:16px;color:#fff;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px">
     <div style="font-size:22px;font-weight:900;margin-top:10px">${esc(sk.titel)}</div>
     ${sk.beschreibung?`<div style="font-size:14px;opacity:.95;line-height:1.5;max-width:420px">${esc(sk.beschreibung)}</div>`:""}
-    ${(sk.video_url&&kabineYoutubeEmbed(sk.video_url))?`<iframe title="Video: ${esc(sk.titel)}" src="${esc(kabineYoutubeEmbed(sk.video_url))}" style="width:100%;max-width:420px;aspect-ratio:16/9;border:0;border-radius:14px" allow="encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>`:""}
+    ${(sk.video_url&&kabineYoutubeEmbed(sk.video_url))?kabineEinbettung("ks-video",kabineYoutubeEmbed(sk.video_url),"Video: "+sk.titel,"▶️ Video laden","Kommt von YouTube.","width:100%;max-width:420px;aspect-ratio:16/9;border:0;border-radius:14px","encrypted-media; picture-in-picture"):""}
     ${(sk.video_url&&!kabineYoutubeEmbed(sk.video_url)&&!isKidsMode)?`<a href="${esc(sk.video_url)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:16px 28px;border-radius:16px;background:#fff;color:#0b2f4d;font-weight:800;font-size:16px;text-decoration:none">▶️ Video ansehen</a>`:""}
     <div style="font-size:13px;opacity:.85;max-width:420px;margin-top:6px">Übe zuhause – wenn du es schaffst, geben deine Eltern die Federn frei! 🪶</div>
   </div>`;
@@ -1516,6 +1598,7 @@ function galleryCardData(g){
   return {name:g.name,nr:g.nr,tw:!!g.tw,fotoPath:g.foto_path,spitzname:g.spitzname||null,
     pos:g.tw?"Torwart":"",fuss:"",alter:null,
     badges:keys.map(k=>CARD_BADGES[k]),theme,
+    fremd:g.staerken==null,   // v636: fremde Karten tragen keine Stärken mehr (team_gallery_kind liefert null)
     counts:{trainings:g.trainings||0,tore:null,paraden:null,aktionen:null,spiele:null,quizRichtig:0,quizBloecke:0}};
 }
 // Erwachsenen-Gate der Kabine: fester Code statt Rechenaufgabe (die war für U9 zu leicht).
@@ -1525,7 +1608,7 @@ function galleryCardData(g){
    sich in Millisekunden durchprobieren. Die echte Zugriffskontrolle macht die RLS.
    Der Hash wird zwischengespeichert, damit die Kabine auch ohne Netz aufgeht. */
 const KABINE_HASH_KEY="adler_kabine_hash";
-const KABINE_HASH_FALLBACK="2c1f3f5f6523af84fde4af934caa1126ae6bcebacd36e397fbddcb8a620c1d73"; // "1922", nur bis zum ersten Laden
+const KABINE_HASH_FALLBACK="2c1f3f5f6523af84fde4af934caa1126ae6bcebacd36e397fbddcb8a620c1d73"; // Vorgabe, nur bis zum ersten Laden (v636: Klartext aus dem Kommentar entfernt)
 async function kabineCodeHash(){
   if(sbToken()){
     try{
@@ -1571,8 +1654,16 @@ function kabineCodeDots(){
   const d=document.getElementById("kabexit-dots"); if(!d)return;
   d.innerHTML=[0,1,2,3].map(i=>`<span style="width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:${i<_kabCode.length?"#fff":"transparent"}"></span>`).join("");
 }
+/* v636: Bremse gegen Durchprobieren. Nach drei falschen Codes eine Minute Pause, danach jeder
+   weitere Fehler wieder eine Minute. Überlebt ein Neuladen (localStorage). Kein echter Schutz –
+   den macht die RLS –, aber ein Kind probiert 10 000 Codes nicht mehr in ein paar Minuten durch. */
+const KABCODE_FEHL_KEY="adler_kabcode_fehl";
+function kabineCodePause(){ try{ const f=JSON.parse(localStorage.getItem(KABCODE_FEHL_KEY)||"{}"); return (f.bis||0)>Date.now()?Math.ceil((f.bis-Date.now())/1000):0; }catch(e){ return 0; } }
+function kabineCodeFehler(){ try{ const f=JSON.parse(localStorage.getItem(KABCODE_FEHL_KEY)||"{}"); f.n=(f.n||0)+1; if(f.n>=3)f.bis=Date.now()+60000; localStorage.setItem(KABCODE_FEHL_KEY,JSON.stringify(f)); }catch(e){} }
 async function kabineCodeTip(t){
   const err=document.getElementById("kabexit-err"); if(err)err.textContent="";
+  const pause=kabineCodePause();
+  if(pause){ _kabCode=""; kabineCodeDots(); if(err)err.textContent=`Zu viele Versuche – bitte ${pause} Sekunden warten.`; return; }
   if(t==="del"){ _kabCode=_kabCode.slice(0,-1); kabineCodeDots(); return; }
   if(_kabCode.length>=4)return;
   _kabCode+=String(t);
@@ -1585,6 +1676,7 @@ async function kabineCodeTip(t){
   try{ [eingabe,soll]=await Promise.all([hashPin(_kabCode),kabineCodeHash()]); }
   catch(e){ _kabCode=""; kabineCodeDots(); if(err)err.textContent="Der Code lässt sich gerade nicht prüfen. Bitte die Seite neu laden."; return; }
   if(eingabe===soll){
+    try{localStorage.removeItem(KABCODE_FEHL_KEY);}catch(e){}
     isKidsMode=false; kabineAktivSet(false); kabSubConsume();
     clearInterval(window._kabZeitTimer); window._kabZeitTimer=null;
     try{localStorage.removeItem(KABINE_START_KEY);}catch(e){}
@@ -1597,7 +1689,8 @@ async function kabineCodeTip(t){
     }
   }else{
     _kabCode=""; kabineCodeDots();
-    if(err)err.textContent="Falscher Code - die Kabine bleibt zu.";
+    kabineCodeFehler();
+    if(err)err.textContent=kabineCodePause()?"Falscher Code – jetzt eine Minute Pause.":"Falscher Code - die Kabine bleibt zu.";
     try{navigator.vibrate&&navigator.vibrate([40,60,40]);}catch(e){}
   }
 }
@@ -1811,14 +1904,33 @@ async function kgAnmelden(){
   }catch(e){ return null; }
 }
 
+let _kgNetzFehler=false;              // v636: kein Netz ≠ nicht gekoppelt
+/* v659 PO 28.09.: „die Kinderapp lädt beim Start immer noch mal den Code ab". Der Zugangs-Token
+   lebt eine Stunde. Nach längerer Pause fragte kgStatus mit dem abgelaufenen Token, bekam 401
+   und zeigte den Kopplungsbildschirm – während die Erneuerung aus core.js noch lief. Jetzt wird
+   erst erneuert und dann gefragt; ein 401 bekommt einen zweiten Anlauf mit neuem Token.
+   Nur wenn der refresh_token abgelehnt wird, ist das Gerät wirklich nicht mehr gekoppelt. */
+async function kgFrisch(){
+  const t=kgToken();
+  if(!t||!t.refresh_token||typeof sbRefreshToken!=="function")return;
+  if((t.expires_at||0)*1000-Date.now()>60000)return;
+  try{ await sbRefreshToken(); }catch(e){}
+}
 async function kgStatus(){
+  _kgNetzFehler=false;
   if(!kgToken())return null;
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/rpc/kind_status`,{method:"POST",headers:kgHeaders(),body:"{}"});
-    if(!r.ok)return null;
+    await kgFrisch();
+    let r=await fetch(`${SB_URL}/rest/v1/rpc/kind_status`,{method:"POST",headers:kgHeaders(),body:"{}"});
+    if(r.status===401&&kgToken()?.refresh_token&&typeof sbRefreshToken==="function"){
+      const ok=await sbRefreshToken();
+      if(ok===null){ _kgNetzFehler=true; return null; }     // offline: nicht als „entkoppelt" deuten
+      if(ok)r=await fetch(`${SB_URL}/rest/v1/rpc/kind_status`,{method:"POST",headers:kgHeaders(),body:"{}"});
+    }
+    if(!r.ok){ if(r.status>=500)_kgNetzFehler=true; return null; }
     const d=await r.json();
     return (d&&d.ok)?d:null;
-  }catch(e){ return null; }
+  }catch(e){ _kgNetzFehler=true; return null; }
 }
 
 /* Einstieg der Route. Ohne Kopplung der Ziffernbildschirm, mit Kopplung die Kabine. */
@@ -1826,6 +1938,19 @@ async function kinderGeraetStart(){
   document.body.style.background="#0f172a";
   const s=await kgStatus();
   if(s)return kgKabine(s);
+  /* v636: Ohne Netz zeigte ein gekoppeltes Gerät den Kopplungsbildschirm („Deine Eltern zeigen dir
+     einen Code …“) – als wäre die Kopplung weg. Jetzt: ein eigener Bildschirm mit „Nochmal“. */
+  if(_kgNetzFehler&&kgToken()){
+    document.getElementById("kg-kopplung")?.remove();
+    const m=document.createElement("div"); m.id="kg-kopplung";
+    m.style.cssText="position:fixed;inset:0;z-index:10060;background:linear-gradient(160deg,#0f172a,#1e3a8a);color:#fff;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center";
+    m.innerHTML=`<div style="max-width:320px"><div style="font-size:58px">📶</div>
+      <div style="font-size:21px;font-weight:900;margin-top:10px">Gerade kein Internet</div>
+      <div style="font-size:15px;line-height:1.6;margin-top:10px;color:#dbeafe">Die Kabine braucht kurz Netz. Gleich nochmal probieren!</div>
+      <button onclick="kinderGeraetStart()" style="margin-top:18px;min-height:56px;padding:12px 26px;border:none;border-radius:14px;background:#fbbf24;color:#1e293b;font-family:inherit;font-size:17px;font-weight:900;cursor:pointer">Nochmal</button></div>`;
+    document.body.appendChild(m);
+    return;
+  }
   kgKopplungsbildschirm();
 }
 
@@ -2057,7 +2182,9 @@ async function kinderAppCode(sid){
     <div style="font-size:34px;font-weight:900;letter-spacing:6px;color:#1e293b;margin:6px 0">${code}</div>
     <div id="ka-uhr-${sid}" style="font-size:12px;color:#64748b"></div>
     <div style="font-size:12.5px;color:#475569;line-height:1.6;margin-top:8px">Auf dem Gerät des Kindes die Kabine öffnen und diesen Code eingeben.</div>
-  </div>`;
+  </div>
+  ${kaLinkBlock(sid)}`;
+  kaLinkQr(sid);
   clearInterval(_kaCodeUhr);
   const tick=()=>{
     const el=document.getElementById("ka-uhr-"+sid); if(!el){clearInterval(_kaCodeUhr);return;}
@@ -2068,6 +2195,45 @@ async function kinderAppCode(sid){
   tick(); _kaCodeUhr=setInterval(tick,1000);
 }
 
+/* v650 – PO: „Ich bekomme einen Code angezeigt, aber die URL ist nicht dabei … über einen
+   WhatsApp-Link direkt schicken oder kopieren.“ Kachel: NUR der Link. Der Code bleibt auf dem
+   Bildschirm der Eltern (siehe oben: er ist der einzige Schutz gegen ein fremdes Gerät) –
+   in der Nachricht stünde er im Chatverlauf, weitergeleitet oder auf dem Familien-Tablet.
+   Der QR-Code ist der schnellste Weg, wenn das Gerät des Kindes daneben liegt: Kamera drauf,
+   Kabine öffnet sich, Code eintippen. Kein Kindername in der Nachricht. */
+function kaKinderUrl(){ return ((typeof appRoot==="function")?appRoot():location.origin+"/")+"kinder/"; }
+function kaNachricht(){
+  return "🦅 Die Kabine der U9 für dein Gerät: "+kaKinderUrl()
+    +"\nIm Browser öffnen (Safari oder Chrome), „Zum Home-Bildschirm“ wählen – den Code mit sechs Zahlen zeige ich dir dann.";
+}
+function kaLinkBlock(sid){
+  const url=kaKinderUrl();
+  return `<div style="border:1px solid #e2e8f0;border-radius:14px;padding:12px;margin:0 0 10px;text-align:center">
+    <div style="font-size:12px;font-weight:700;color:#475569">Kabine auf das Gerät des Kindes holen</div>
+    <div id="ka-qr-${sid}" data-url="${esc(url)}" style="width:168px;max-width:100%;margin:8px auto" aria-label="QR-Code zur Kinder-App"></div>
+    <div style="font-size:12px;color:#64748b;line-height:1.5;margin-bottom:8px">Mit der Kamera des Kindergeräts scannen – oder den Link schicken. Der Code oben steht nicht darin.</div>
+    <div id="ka-link-${sid}" style="font-size:12.5px;color:#1e293b;word-break:break-all;user-select:all;margin-bottom:8px">${esc(url)}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <a href="https://wa.me/?text=${encodeURIComponent(kaNachricht())}" target="_blank" rel="noopener noreferrer"
+         style="display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:12px;background:#15803d;color:#fff;font-weight:800;font-size:14px;text-decoration:none">💬 WhatsApp</a>
+      <button onclick="kaLinkKopieren(${sid})" style="min-height:48px;border:1.5px solid #7c3aed;border-radius:12px;background:#fff;color:#6d28d9;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">🔗 Link kopieren</button>
+    </div>
+  </div>`;
+}
+function kaLinkQr(sid){
+  const el=document.getElementById("ka-qr-"+sid); if(!el||typeof qrSvg!=="function")return;
+  qrSvg(el.dataset.url,4).then(svg=>{ if(el.isConnected)el.innerHTML=svg; }).catch(()=>{ el.remove(); });
+}
+async function kaLinkKopieren(sid){
+  const text=kaNachricht();
+  try{ await navigator.clipboard.writeText(text); toast("Link kopiert ✓"); return; }
+  catch(e){}
+  /* Ohne Zwischenablage-Recht (ältere Browser, eingebettete Ansichten): den Link markieren,
+     dann reicht ein langer Druck auf „Kopieren“. */
+  const el=document.getElementById("ka-link-"+sid);
+  if(el){ const r=document.createRange(); r.selectNodeContents(el); const s=getSelection(); s.removeAllRanges(); s.addRange(r); }
+  toast("Link markiert – jetzt „Kopieren“ wählen");
+}
 async function kinderAppLimit(uid,wert){
   const min=Math.max(0,Math.min(KA_LIMIT_MAX,parseInt(wert,10)||0));
   try{
@@ -2116,8 +2282,10 @@ async function kinderAppTrennen(uid){
 // ein globaler Name darf nicht in beiden Wellen leben.
 function renderTrainerUI(){
   const sel=document.getElementById("p-trainer");
-  if(typeof trainerMe==="function")trainerMe().then(me=>{if(me&&sel&&[...sel.options].some(o=>o.value===me))sel.value=me;}).catch(()=>{}); // eingeloggter Trainer als Default (war: immer der erste)
-  if(sel)sel.innerHTML=TRAINER.map(t=>`<option value="${t}">${t}</option>`).join("");
+  /* v635 PO: „Wir bewerten gemeinsam als Trainer, nicht jeder einzeln“ (Entscheidung v607).
+     „Trainerteam“ steht deshalb vorn und ist vorgewählt; einzelne Namen bleiben für den Fall,
+     dass doch jemand allein nachträgt. */
+  if(sel)sel.innerHTML=["Trainerteam",...TRAINER].map(t=>`<option value="${t}">${t}</option>`).join("");
   const tp=document.getElementById("tp-trainer-checks");
   /* v413: die Chip-Zeile der Planung gehoert jetzt tpTrainerChipsRender (boot.js) –
      angehakt wird, wer ZUGESAGT hat, nicht mehr zwei fest verdrahtete Namen. */

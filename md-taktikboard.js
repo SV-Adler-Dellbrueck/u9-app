@@ -11,110 +11,12 @@ let tbField=[];
 let tbBench=[];
 let tbBall={x:50,y:50};
 
-/* ═══ v558 – BILDER AUF DEM BOARD ═══
-   Dieselbe Idee wie bei den Übungsskizzen, nur auf dem Taktikboard: eine Spielsituation
-   hat einen Vorher- und einen Nachher-Moment. Bisher ließ sich nur einer zeigen.
-
-   Gespeichert wird das Board bereits als Positionsliste in Prozent (`ttSnapshot`) –
-   ein Bild ist also nichts anderes als eine Kopie davon. Abgespielt wird über
-   `transition` auf `left` und `top`; die Spielsteine liegen ohnehin absolut im Feld,
-   es wird nichts neu gezeichnet. */
-let tbBilder=[];          // [{field:[…], ball:{x,y}}] – Bild 1 ist immer der aktuelle Stand
-let tbBildNr=0;
-let tbLauft=false, tbUhr=null;
-function _tbStand(){ return {field:tbField.map(p=>({...p})),ball:{...tbBall}}; }
-function _tbSichern(){ if(tbBilder.length)tbBilder[tbBildNr]=_tbStand(); }
-function _tbHolen(i){
-  const b=tbBilder[i]; if(!b)return;
-  tbField=b.field.map(p=>({...p})); tbBall={...b.ball};
-}
-function taktikBildNeu(){
-  if(!tbField.length){ toast("Erst eine Aufstellung aufs Feld stellen","err"); return; }
-  const max=(typeof SKZ_SCHRITTE_MAX!=="undefined")?SKZ_SCHRITTE_MAX:6;
-  if(!tbBilder.length)tbBilder=[_tbStand()];
-  else _tbSichern();
-  if(tbBilder.length>max){ toast("Mehr als "+(max+1)+" Bilder werden unübersichtlich","info"); return; }
-  tbBilder.splice(tbBildNr+1,0,_tbStand());
-  tbBildNr++;
-  taktikRender();
-  toast("Bild "+(tbBildNr+1)+" angelegt – jetzt verschieben, was sich bewegt");
-}
-function taktikBildWahl(i){
-  if(tbLauft)taktikAbspielenStopp();
-  if(!tbBilder.length)return;
-  _tbSichern();
-  tbBildNr=Math.max(0,Math.min(tbBilder.length-1,Number(i)||0));
-  _tbHolen(tbBildNr);
-  taktikRender();
-}
-function taktikBildWeg(){
-  if(!tbBilder.length||tbBildNr<1)return;
-  tbBilder.splice(tbBildNr,1);
-  tbBildNr=Math.min(tbBildNr-1,tbBilder.length-1);
-  if(tbBilder.length<2)tbBilder=[];
-  if(tbBilder.length)_tbHolen(tbBildNr);
-  taktikRender();
-}
-function taktikAbspielenStopp(){
-  tbLauft=false;
-  if(tbUhr){ clearTimeout(tbUhr); tbUhr=null; }
-  document.querySelectorAll("#taktik-tokens .tb-token,#taktik-tokens .tb-ball").forEach(t=>{ t.style.transition=""; });
-  taktikBildLeiste();
-}
-function taktikAbspielen(){
-  if(tbLauft){ taktikAbspielenStopp(); return; }
-  if(tbBilder.length<2){ toast("Erst ein zweites Bild anlegen","info"); return; }
-  _tbSichern();
-  tbLauft=true; tbBildNr=0; _tbHolen(0); taktikRender();
-  const sanft=(typeof _skzSanft==="function")?_skzSanft():true;
-  const gleit=(typeof SKZ_GLEIT!=="undefined")?SKZ_GLEIT:800;
-  const stand=(typeof SKZ_STAND!=="undefined")?SKZ_STAND:600;
-  const weiter=()=>{
-    if(!tbLauft)return;
-    if(tbBildNr>=tbBilder.length-1){ taktikAbspielenStopp(); return; }
-    tbBildNr++;
-    if(sanft){
-      /* Die Steine liegen absolut in Prozent – ein Übergang auf left/top genügt,
-         nichts wird neu gebaut. */
-      document.querySelectorAll("#taktik-tokens .tb-token,#taktik-tokens .tb-ball").forEach(t=>{
-        t.style.transition="left "+gleit+"ms ease-in-out, top "+gleit+"ms ease-in-out";
-      });
-      _tbHolen(tbBildNr);
-      const b=tbBilder[tbBildNr];
-      [...document.querySelectorAll('#taktik-tokens .tb-token')].forEach((el,i)=>{
-        const p=b.field[i]; if(!p)return; el.style.left=p.x+"%"; el.style.top=p.y+"%";
-      });
-      const ball=document.querySelector("#taktik-tokens .tb-ball");
-      if(ball){ ball.style.left=b.ball.x+"%"; ball.style.top=b.ball.y+"%"; }
-      tbUhr=setTimeout(weiter,gleit+stand);
-    }else{
-      _tbHolen(tbBildNr); taktikRender();
-      tbUhr=setTimeout(weiter,(typeof SKZ_SCHNITT!=="undefined")?SKZ_SCHNITT:1400);
-    }
-    taktikBildLeiste();
-  };
-  taktikBildLeiste();
-  tbUhr=setTimeout(weiter,stand);
-}
-/* Die Leiste steht unter dem Board. Ohne zweites Bild zeigt sie nur „+ Bild“ – wer sie
-   nicht braucht, sieht also fast nichts davon. */
-function taktikBildLeiste(){
-  const box=document.getElementById("taktik-bilder"); if(!box)return;
-  const n=tbBilder.length;
-  let aus="";
-  for(let i=0;i<n;i++){
-    const an=tbBildNr===i;
-    aus+='<button type="button" class="btn btn-sm'+(an?" btn-p":"")+'" onclick="taktikBildWahl('+i+')" aria-pressed="'+(an?"true":"false")+'">Bild '+(i+1)+'</button>';
-  }
-  aus+='<button type="button" class="btn btn-sm" onclick="taktikBildNeu()"><i class="ti ti-plus"></i>Bild</button>';
-  if(n>1){
-    aus+='<button type="button" class="btn btn-sm" onclick="taktikAbspielen()">'+(tbLauft?"⏸ Anhalten":"▶ Abspielen")+'</button>';
-    if(tbBildNr>0)aus+='<button type="button" class="btn btn-sm" onclick="taktikBildWeg()"><i class="ti ti-trash"></i>Bild weg</button>';
-  }
-  box.innerHTML=aus;
-}
+/* v641: Die Bilder (v558), der Pro-Modus, „Teilen“ und die Bibliothek des alten Bretts sind
+   entfallen – all das kann die gemeinsame Zeichenfläche (Spielsituationen, md-skizze.js):
+   mehrere Bilder mit Abspielen, Großansicht im Vollbild mit „Kinder einsetzen“, Teilen als Bild.
+   Das Brett selbst bleibt für das Taktik-Quiz der Kinder (?quiz), das auf #taktik-field in
+   Prozent-Koordinaten rechnet. */
 function taktikSetup(mode){
-  tbBilder=[]; tbBildNr=0; if(tbLauft)taktikAbspielenStopp();
   const names=kaderNamen();   // v510: nur Kinder, die noch dabei sind
   if(mode==="leer"){
     tbField=[];tbBench=[...names];tbBall={x:50,y:50};
@@ -159,85 +61,210 @@ function taktikSetFormation(f,btn){
   else document.querySelector('.tb-form-btn[data-form="'+f+'"]')?.classList.add('btn-p');
   taktikSetup('auto');
 }
-function taktikInit(){taktikSetup("auto");}
+function taktikInit(){ if(document.body.classList.contains("quiz-extern"))taktikSetup("auto"); else sitHubRender(); }
 function taktikReset(mode){taktikSetup(mode);}
-/* Pro-Modus (17.4): Board auf Vollbild maximieren + feste Bank rechts. Reiner CSS-State
-   (body.taktik-pro), zusätzlich best-effort echtes Fullscreen fürs Tablet an der Linie. */
-function taktikProToggle(){
-  const on=document.body.classList.toggle("taktik-pro");
-  document.getElementById("tb-pro-btn")?.classList.toggle("btn-p",on);
-  try{
-    if(on){document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen().catch(()=>{});}
-    else if(document.fullscreenElement){document.exitFullscreen&&document.exitFullscreen().catch(()=>{});}
-  }catch(e){}
-  try{navigator.vibrate&&navigator.vibrate(30);}catch(e){}
+/* ═══ v640 – SPIELSITUATIONEN AUF DER GEMEINSAMEN ZEICHENFLÄCHE ═══
+   PO 27.09.: „Das aktuelle Taktikboard unterscheidet sich von der eigenen Übung unter
+   Training. Sollten wir das vereinheitlichen?" – Antwort: eine Zeichenfläche. Genutzt wird
+   das Board zum Erklären von Situationen und für das Taktik-Quiz der Kinder, sonst kaum.
+
+   Die Seite zeigt die Spielsituationen, gebaut auf dem Skizzen-Editor – dieselbe Fläche,
+   dieselbe KI, dieselbe Großansicht mit Abspielen, Vollbild und „Kinder einsetzen“ und
+   dasselbe Teilen wie bei den Übungen. Seit v641 ist das der einzige Weg im Trainerbereich;
+   das alte Brett sieht nur noch das Quiz (?quiz), weil es mit #taktik-field in
+   Prozent-Koordinaten rechnet.
+
+   Gespeichert wird in taktik_templates (Trainer-RLS, schon in der Sicherung) mit
+   formation „Spielsituation“ und data {typ:"skizze", spec}. Kindernamen stehen dort nie:
+   Die Vorlagen tragen Rollen (TW, A, FL, FR, J), die KI bekommt „Kind n“. */
+const SIT_FORMATION="Spielsituation";
+const SIT_KURZ={TW:"TW",Aufpasser:"A","Flitzer L":"FL","Flitzer R":"FR","Jäger":"J","Abwehr L":"AL","Abwehr R":"AR"};
+let _sitListe=[];
+
+/* Ganzes Feld hochkant (180 × 280): wir spielen nach oben, unser Tor steht unten – wie im
+   alten Brett und im Quiz. Maße wie die halben Felder der Skizzen-Vorlagen (v579). */
+function sitFeld(form){
+  const funino=form==="funino";
+  const spec={hoch:true, z:[[18,24,144,232]], li:[[18,140,162,140,"m"]],
+    h:[[18,24,"y"],[162,24,"y"],[18,256,"y"],[162,256,"y"]]};
+  if(funino){
+    spec.tor=[[46,16,"h",28],[106,16,"h",28],[46,256,"h",28],[106,256,"h",28]];
+    spec.li.push([18,92,162,92,"sz"],[18,188,162,188,"sz"]);
+  }else{
+    spec.tor=[[68,14,"h",44,"j"],[68,256,"h",44,"j"]];
+  }
+  return spec;
 }
-// Verlässt der Trainer das Fullscreen per ESC/Systemgeste, den Pro-State mitziehen.
-document.addEventListener("fullscreenchange",()=>{
-  if(!document.fullscreenElement&&document.body.classList.contains("taktik-pro")){
-    document.body.classList.remove("taktik-pro");
-    document.getElementById("tb-pro-btn")?.classList.remove("btn-p");
+function sitVorlage(form){
+  const spec=sitFeld(form);
+  const f=(typeof FORMATIONS!=="undefined"&&FORMATIONS[form])||null;
+  spec.s=f?f.slots.map(sl=>[Math.round(18+sl.x*1.44),Math.round(24+sl.y*2.32),sl.role==="TW"?"b":"g",SIT_KURZ[sl.role]||""]):[];
+  spec.b=[[90,146]];
+  return spec;
+}
+function sitNeu(form){
+  if(typeof skzEditorOpen!=="function"){ toast("Die Zeichenfläche lädt noch – gleich nochmal","info"); return; }
+  const label=(form&&typeof FORMATIONS!=="undefined"&&FORMATIONS[form])?FORMATIONS[form].label:"Freie Situation";
+  skzEditorOpen(form?sitVorlage(form):sitFeld("4+1"), spec=>sitErfassen(spec,label), {titel:"Spielsituation"});
+}
+function _sitName(vorschlag){
+  const n=(typeof prompt==="function")?prompt("Name der Spielsituation:",vorschlag):vorschlag;
+  if(n===null)return vorschlag;
+  return String(n).trim().slice(0,80)||vorschlag;
+}
+async function sitErfassen(spec,label){
+  if(!spec){ toast("Die Zeichnung ist leer – nichts erfasst","info"); return; }
+  const heute=new Date().toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
+  const name=_sitName((label||"Situation")+" · "+heute);
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/taktik_templates`,{method:"POST",
+      headers:Object.assign({},sbAuthHeaders(),{Prefer:"return=representation"}),
+      body:JSON.stringify({name,formation:SIT_FORMATION,data:{typ:"skizze",spec}})});
+    if(typeof sbCheck401==="function"&&sbCheck401(r))return;
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    toast("Spielsituation erfasst ✓");
+  }catch(e){
+    /* Die Zeichnung darf am Netz nicht verloren gehen: der Editor öffnet sich wieder mit ihr,
+       „Übernehmen“ versucht es erneut. */
+    toast("Nicht erfasst – ohne Netz geht das Speichern nicht. Die Zeichnung bleibt offen.","err");
+    if(typeof skzEditorOpen==="function")skzEditorOpen(spec, s=>sitErfassen(s,label), {titel:"Spielsituation"});
+    return;
   }
-});
-
-// Aufstellung als sauberes PNG rendern und per Web Share API teilen (Fallback: Download).
-// Zeichnet Feld + Tokens auf ein Canvas – kein html2canvas o.ä. nötig.
-// tbRoundRect wohnt seit v391 in engine.js (Welle 1): views.js zeichnet damit
-// Karten und Diagramme und darf dafuer nicht auf ein Welle-2-Modul warten.
-function taktikShareBild(){
-  if(!tbField||!tbField.length){toast("Erst eine Aufstellung aufs Feld stellen","err");return;}
-  const W=600,H=800;
-  const canvas=document.createElement("canvas");
-  canvas.width=W;canvas.height=H;
-  const ctx=canvas.getContext("2d");
-  // Rasen + Linien (analog zum SVG-Feld)
-  ctx.fillStyle="#2d6a2d";ctx.fillRect(0,0,W,H);
-  ctx.strokeStyle="rgba(255,255,255,.45)";ctx.lineWidth=3;
-  ctx.strokeRect(16,16,W-32,H-32);
-  ctx.beginPath();ctx.moveTo(16,H/2);ctx.lineTo(W-16,H/2);ctx.stroke();
-  ctx.beginPath();ctx.arc(W/2,H/2,80,0,Math.PI*2);ctx.stroke();
-  ctx.beginPath();ctx.arc(W/2,H/2,4,0,Math.PI*2);ctx.fillStyle="rgba(255,255,255,.45)";ctx.fill();
-  const col={"tb-tw":"#854d0e","tb-auf":"#1a56db","tb-fl":"#059669","tb-jaeg":"#c2410c","tb-frei":"#475569","tb-bench":"#64748b"};
-  ctx.textAlign="center";ctx.textBaseline="middle";
-  tbField.forEach(p=>{
-    const x=p.x/100*W, y=p.y/100*H;
-    const label=p.name||"";
-    ctx.font="bold 16px Arial";
-    const tw=ctx.measureText(label).width;
-    const pillH=36, pillW=Math.max(52,tw+28);
-    ctx.fillStyle=col[p.cls]||"#475569";
-    tbRoundRect(ctx,x-pillW/2,y-pillH/2,pillW,pillH,pillH/2);ctx.fill();
-    ctx.strokeStyle="rgba(255,255,255,.9)";ctx.lineWidth=2.5;ctx.stroke();
-    ctx.fillStyle="#fff";ctx.fillText(label,x,y);
-  });
-  // Ball
-  if(typeof tbBall==="object"&&tbBall){
-    ctx.fillStyle="#fff";ctx.strokeStyle="#222";ctx.lineWidth=1.5;
-    ctx.beginPath();ctx.arc(tbBall.x/100*W,tbBall.y/100*H,9,0,Math.PI*2);ctx.fill();ctx.stroke();
+  sitListeLaden();
+}
+async function sitListeLaden(){
+  const box=document.getElementById("sit-liste"); if(!box)return;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/taktik_templates?formation=eq.${encodeURIComponent(SIT_FORMATION)}&select=id,name,data,created_at&order=created_at.desc`,{headers:sbAuthHeaders()});
+    if(typeof sbCheck401==="function"&&sbCheck401(r))return;
+    _sitListe=r.ok?((await r.json())||[]).filter(t=>t&&t.data&&t.data.spec):[];
+  }catch(e){ _sitListe=null; }
+  sitListeZeichnen();
+}
+function sitListeZeichnen(){
+  const box=document.getElementById("sit-liste"); if(!box)return;
+  if(_sitListe===null){ box.innerHTML='<div class="sit-leer">Ohne Netz sind die gespeicherten Situationen nicht erreichbar.</div>'; return; }
+  if(!_sitListe.length){ box.innerHTML='<div class="sit-leer">Noch keine Situation erfasst. Beschreib eine oben oder wähle eine Spielform.</div>'; return; }
+  box.innerHTML=_sitListe.map(t=>{
+    let bild=""; try{ bild=(typeof _skz==="function")?_skz(t.data.spec):""; }catch(e){}
+    const bilder=1+((t.data.spec.schritte||[]).length);
+    return `<div class="sit-eintrag" data-id="${Number(t.id)}">
+      <button type="button" class="sit-bild" onclick="sitGross(${Number(t.id)})" aria-label="${esc(t.name)} groß zeigen">${bild}</button>
+      <div class="sit-name">${esc(t.name)}</div>
+      <div class="sit-meta">${bilder>1?bilder+" Bilder · ":""}${new Date(t.created_at).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"})}</div>
+      <div class="sit-knoepfe">
+        <button type="button" class="btn btn-sm" onclick="sitGross(${Number(t.id)})"><i class="ti ti-maximize"></i>${bilder>1?"Abspielen":"Groß zeigen"}</button>
+        <button type="button" class="btn btn-sm" onclick="sitBearbeiten(${Number(t.id)})"><i class="ti ti-pencil"></i>Bearbeiten</button>
+        <button type="button" class="btn btn-sm" onclick="sitUmbenennen(${Number(t.id)})"><i class="ti ti-cursor-text"></i>Umbenennen</button>
+        <button type="button" class="btn btn-sm" onclick="sitLoeschen(${Number(t.id)})" aria-label="${esc(t.name)} löschen"><i class="ti ti-trash"></i>Löschen</button>
+      </div>
+      ${typeof skzTeilenKnopf==="function"?skzTeilenKnopf(t.name):""}
+    </div>`;
+  }).join("");
+}
+function _sitEintrag(id){ return (_sitListe||[]).find(t=>Number(t.id)===Number(id))||null; }
+function sitGross(id){
+  const t=_sitEintrag(id); if(!t||typeof skzGrossZeigen!=="function")return;
+  let svg=""; try{ svg=_skz(t.data.spec); }catch(e){}
+  skzGrossZeigen(t.data.spec,svg,t.name);
+}
+async function _sitPatch(id,patch,ok){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/taktik_templates?id=eq.${Number(id)}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify(patch)});
+    if(typeof sbCheck401==="function"&&sbCheck401(r))return;
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    toast(ok);
+  }catch(e){ toast("Nicht gespeichert – bitte mit Netz nochmal","err"); }
+  sitListeLaden();
+}
+function sitBearbeiten(id){
+  const t=_sitEintrag(id); if(!t||typeof skzEditorOpen!=="function")return;
+  skzEditorOpen(t.data.spec, spec=>{
+    if(!spec){ toast("Die Zeichnung ist leer – zum Entfernen „Löschen“ nehmen","info"); return; }
+    _sitPatch(id,{data:Object.assign({},t.data,{typ:"skizze",spec})},"Spielsituation geändert ✓");
+  }, {titel:"Spielsituation"});
+}
+function sitUmbenennen(id){
+  const t=_sitEintrag(id); if(!t)return;
+  const n=prompt("Neuer Name:",t.name); if(n===null)return;
+  const name=String(n).trim().slice(0,80); if(!name||name===t.name)return;
+  _sitPatch(id,{name},"Umbenannt ✓");
+}
+async function sitLoeschen(id){
+  const t=_sitEintrag(id); if(!t)return;
+  if(!confirm("„"+t.name+"“ löschen?"))return;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/taktik_templates?id=eq.${Number(id)}`,{method:"DELETE",headers:sbAuthHeaders()});
+    if(typeof sbCheck401==="function"&&sbCheck401(r))return;
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    toast("Gelöscht");
+  }catch(e){ toast("Nicht gelöscht – bitte mit Netz nochmal","err"); }
+  sitListeLaden();
+}
+function sitKiDiktat(){
+  if(typeof diktatUmschalten!=="function"){ toast("Einsprechen geht hier nicht – das Mikrofon der Tastatur funktioniert immer","info"); return; }
+  if(typeof diktatMoeglich==="function"&&!diktatMoeglich()){ toast("Dieses Gerät kann nicht zuhören – nutze das Mikrofon der Tastatur","info"); return; }
+  diktatUmschalten({feldId:"sit-ki-text",knopfId:"sit-ki-mic",anzeigeId:"sit-ki-hoer",max:2000,
+    onText:()=>{ const f=document.getElementById("sit-ki-text"); if(f&&typeof feldWachsen==="function")feldWachsen(f); }});
+}
+function sitKiStopp(){ if(typeof _dk!=="undefined"&&_dk&&_dk.feldId==="sit-ki-text"&&typeof diktatStop==="function")diktatStop(); }
+/* Die KI zeichnet mit demselben Dienst wie die Übungen (ki-uebung, modus „text“). Der
+   Vorsatz sagt ihr, dass es um eine Spielsituation auf dem ganzen Feld geht und welche
+   Farbe wer trägt – sonst baut sie einen Übungsaufbau mit Hütchen. Namen gehen als „Kind n“. */
+async function sitKiAuswerten(){
+  const feld=document.getElementById("sit-ki-text"), st=document.getElementById("sit-ki-stand"), los=document.getElementById("sit-ki-los");
+  const roh=String((feld&&feld.value)||"").trim();
+  if(roh.length<15){ if(st)st.textContent="Beschreib die Situation in ein, zwei Sätzen: wer steht wo, wohin läuft der Ball."; return; }
+  if(typeof skzKiSpec!=="function"||typeof skzEditorOpen!=="function"){ if(st)st.textContent="Die Zeichenfläche lädt noch – gleich nochmal."; return; }
+  sitKiStopp();
+  const m=(typeof nbMaske==="function")?nbMaske([]):null;
+  const text=m?m.weg(roh):roh;
+  if(los){ los.disabled=true; los.innerHTML='<i class="ti ti-loader-2"></i>Zeichnet …'; }
+  if(st)st.textContent="🧠 Die KI zeichnet die Situation …";
+  try{
+    let spec=await skzKiSpec("SPIELSITUATION im Spiel (kein Übungsaufbau, keine Hütchen), ganzes Feld hochkant, "
+      +"unser Tor unten, wir spielen nach oben. Eigene Kinder grün, Gegner rot, Torwart blau. "
+      +"Zeige den Ablauf mit Pfeilen oder in mehreren Bildern. Situation: "+text);
+    if(!spec.hoch&&typeof skzDrehen==="function")spec=skzDrehen(spec);
+    if(st)st.textContent="✨ Gezeichnet – prüfen, verschieben, dann „Übernehmen“.";
+    skzEditorOpen(spec, s=>sitErfassen(s,"KI-Situation"), {titel:"Spielsituation"});
+  }catch(e){
+    if(st)st.textContent="Nicht gezeichnet: "+String((e&&e.message)||"Es hat nicht geklappt.")+" Dein Text bleibt stehen.";
+  }finally{
+    if(los){ los.disabled=false; los.innerHTML='<i class="ti ti-sparkles"></i>Zeichnen lassen'; }
   }
-  // Titelzeile
-  ctx.fillStyle="rgba(255,255,255,.92)";ctx.font="bold 22px Arial";ctx.textBaseline="alphabetic";
-  ctx.fillText("SV Adler Dellbrück · U9 · "+((FORMATIONS[tbFormation]||FORMATIONS['4+1']).label),W/2,H-22);
-
-  canvas.toBlob(async(blob)=>{
-    if(!blob){toast("Bild konnte nicht erzeugt werden","err");return;}
-    const file=new File([blob],"aufstellung-u9.png",{type:"image/png"});
-    if(navigator.canShare&&navigator.canShare({files:[file]})){
-      try{await navigator.share({files:[file],title:"Aufstellung U9",text:"Aufstellung SV Adler Dellbrück U9"});}
-      catch(e){/* Nutzer hat abgebrochen */}
-    }else{
-      const a=document.createElement("a");
-      a.href=URL.createObjectURL(blob);
-      a.download="aufstellung-u9.png";
-      document.body.appendChild(a);a.click();a.remove();
-      setTimeout(()=>URL.revokeObjectURL(a.href),5000);
-      toast("Bild heruntergeladen ✓");
-    }
-  },"image/png");
+}
+function sitHubRender(){
+  const hub=document.getElementById("sit-hub"); if(!hub)return;
+  if(!hub.dataset.fertig){
+    const formen=[["funino","FUNiño","ti-triangle"],["3+1","3+1","ti-triangle-inverted"],["4+1","4+1 Raute","ti-diamond"],["5+1","5+1","ti-pentagon"]];
+    /* v653: Das freie Brett steht zuerst – am Platz vor den Kindern wird gezeigt, nicht gebaut. */
+    hub.innerHTML=`<button type="button" class="btn sit-brett" onclick="typeof brettOpen==='function'?brettOpen():toast('Das Brett lädt noch – gleich nochmal','info')"><i class="ti ti-pencil"></i>Freies Brett – schieben und mit dem Finger zeichnen</button>
+      <section class="tf-ki" aria-labelledby="sit-ki-t">
+        <div id="sit-ki-t" class="tf-ki-t">✨ Beschreib die Situation – die KI zeichnet sie</div>
+        <div class="tf-ki-s">Wer steht wo, wohin geht der Ball, was soll passieren. Danach verschiebst du, was nicht passt.</div>
+        <textarea id="sit-ki-text" class="wachsen" rows="3" maxlength="2000" placeholder="Zum Beispiel: Der Gegner dribbelt links an der Seite. Unser Flitzer links läuft zurück und stellt ihn, der Aufpasser rückt nach, der Jäger bietet sich in der Mitte an."></textarea>
+        <div id="sit-ki-hoer" class="dk-anzeige" hidden></div>
+        <div class="tf-ki-knoepfe">
+          <button type="button" class="btn" id="sit-ki-mic" onclick="sitKiDiktat()"><i class="ti ti-microphone"></i>Einsprechen</button>
+          <button type="button" class="btn tf-ki-los" id="sit-ki-los" onclick="sitKiAuswerten()"><i class="ti ti-sparkles"></i>Zeichnen lassen</button>
+        </div>
+        <div id="sit-ki-stand" role="status" aria-live="polite" class="tf-ki-stand"></div>
+      </section>
+      <div class="tf-abschnitt">Neue Situation</div>
+      <div class="sit-formen">${formen.map(([k,l,i])=>`<button type="button" class="btn sit-form" onclick="sitNeu('${k}')"><i class="ti ${i}"></i>${l}</button>`).join("")}</div>
+      <div class="tf-abschnitt">Gespeicherte Situationen</div>
+      <div id="sit-liste"><div class="sit-leer">Lädt …</div></div>
+      <div class="sit-weitere">
+        <button type="button" class="btn" onclick="typeof vtbOpen==='function'&&vtbOpen()"><i class="ti ti-video"></i>Video</button>
+        <button type="button" class="btn" onclick="typeof kiCoachOpen==='function'&&kiCoachOpen()"><i class="ti ti-sparkles"></i>KI-Coach</button>
+      </div>`;
+    hub.dataset.fertig="1";
+  }
+  sitListeLaden();
 }
 
 function taktikRender(){
-  taktikBildLeiste();
   const fieldEl=document.getElementById("taktik-field");
   const benchEl=document.getElementById("taktik-bench");
   if(!fieldEl||!benchEl)return;

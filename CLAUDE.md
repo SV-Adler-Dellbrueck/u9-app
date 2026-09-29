@@ -26,6 +26,8 @@ git clone https://github.com/SV-Adler-Dellbrueck/adler-u9-wissen.git .wissen
 
 Fairness vor Ergebnis, kindgerecht, Datenschutz von Anfang an. Kinder sehen nie Bewertungszahlen. In öffentlichen Ansichten (Liveticker, Turnierseiten, Stadionheft) sind Kindernamen maskiert.
 
+**Trainertagebuch (seit v638):** In der App stehen die Vornamen der Kinder – das Tagebuch sehen nur Trainer. Alles, was es verlässt (Kopieren, Teilen, Monatsexport, Lehrgang, Verband), läuft durch `tbPseudonym` und trägt oben `TB_HINWEIS`: jeder Name wird zum Buchstaben („Kind C“; seit v679 fest in `kader.alias`, einmal vergeben und nie wieder vergeben – `kader_alias_vergeben`). **Dieselbe Regel gilt, wenn das claude.ai-Projekt Tagebuchdaten aus der App zieht**, um etwa den DFB-Basis-Coach-Nachweis zu schreiben: dort nur Buchstaben und derselbe Hinweis, nie Vornamen. An KI-Dienste gehen Namen weiterhin gar nicht (Client maskiert als „Kind n“).
+
 Bewusste Entscheidungen des Auftraggebers — **nicht erneut vorschlagen**:
 
 - Kein Geld in der App (keine Zahlungen, keine Kontodaten)
@@ -113,7 +115,7 @@ Supabase mit durchgängiger Row-Level-Security. Muster für trainer-pflegbare In
 Direkter Schreibzugriff auf Supabase ist erlaubt — seit dem 13.09.2026, vorher war er
 ausgeschlossen.
 
-Schlüssel und Geheimnisse (Push-Zertifikate, Cron-Token) leben ausschließlich in den Edge Functions, nie im Repo. Die Push-Cron-Funktion nie manuell mit echtem Token aufrufen — das verdoppelt Benachrichtigungen an Eltern.
+Schlüssel und Geheimnisse (VAPID-Schlüssel, Cron-Token) liegen seit v643 im Supabase Vault – nie im Repo, nie als Konstante im Code einer Funktion. Edge Functions lesen sie über die RPC `adler_geheimnis` (nur service_role), die Cron-Jobs direkt aus `vault.decrypted_secrets`. Wer einen Schlüssel erneuert, erzeugt ihn dort, wo er gebraucht wird, und liest ihn nie aus. Die Push-Cron-Funktion nie manuell mit echtem Token aufrufen — das verdoppelt Benachrichtigungen an Eltern.
 
 ## Oberfläche
 

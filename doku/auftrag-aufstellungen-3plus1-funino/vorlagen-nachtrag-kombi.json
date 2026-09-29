@@ -31,7 +31,7 @@
     },
     {
      "typ": "spielform",
-     "label": "Hauptteil 1 – Stationen, 3 Min frei, dann eng: Adler aus dem Tor (Punkt nur, wenn der Torwart vorher angespielt wurde) | 3 gegen 1, der Mittlere hat den Ball",
+     "label": "Hauptteil 1 – Stationen: Adler aus dem Tor (Punkt nur, wenn der Torwart vorher angespielt wurde) | 3 gegen 1, der Mittlere hat den Ball",
      "dauer": 12,
      "stationen": [
       {
@@ -44,7 +44,7 @@
     },
     {
      "typ": "spielform",
-     "label": "Hauptteil 2 – Gruppen wechseln die Station, 3 Min frei, dann eng: Regeln wie in Hauptteil 1",
+     "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
      "dauer": 12,
      "stationen": [
       {
@@ -97,7 +97,7 @@
     },
     {
      "typ": "spielform",
-     "label": "Hauptteil 1 – Stationen, 3 Min frei, dann eng: Igel gegen drei (Eroberung vor der Schusshöhe zählt doppelt) | einer drängt, einer schützt (Tor innerhalb von fünf Sekunden nach Ballgewinn zählt doppelt)",
+     "label": "Hauptteil 1 – Stationen: Igel gegen drei (Eroberung vor der Schusshöhe zählt doppelt) | einer drängt, einer schützt (Tor innerhalb von fünf Sekunden nach Ballgewinn zählt doppelt)",
      "dauer": 12,
      "stationen": [
       {
@@ -110,7 +110,7 @@
     },
     {
      "typ": "spielform",
-     "label": "Hauptteil 2 – Gruppen wechseln die Station, 3 Min frei, dann eng: Regeln wie in Hauptteil 1",
+     "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
      "dauer": 12,
      "stationen": [
       {
@@ -163,7 +163,7 @@
     },
     {
      "typ": "spielform",
-     "label": "Hauptteil 1 – drei Stationen, 3 Min frei, dann eng: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
+     "label": "Hauptteil 1 – drei Stationen: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
      "dauer": 12,
      "stationen": [
       {

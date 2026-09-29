@@ -15,7 +15,7 @@ function vtbOpen(){
   m.style.cssText="position:fixed;inset:0;z-index:10000;background:#000;display:flex;flex-direction:column";
   m.innerHTML=`
     <div id="vtb-stage" style="flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden">
-      <div id="vtb-empty" style="color:#94a3b8;text-align:center;padding:24px;font-size:14px;line-height:1.6">🎥 Lade einen kurzen Clip (z. B. 10 Sek) vom Handy,<br>pausiere und zeichne Laufwege ein.</div>
+      <div id="vtb-empty" style="color:#94a3b8;text-align:center;padding:24px;font-size:var(--s-karte);line-height:1.6">🎥 Lade einen kurzen Clip (z. B. 10 Sek) vom Handy,<br>pausiere und zeichne Laufwege ein.</div>
       <video id="vtb-video" playsinline webkit-playsinline style="max-width:100%;max-height:100%;display:none"></video>
       <canvas id="vtb-canvas" style="position:absolute;touch-action:none;display:none"></canvas>
     </div>

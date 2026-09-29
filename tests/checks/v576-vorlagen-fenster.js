@@ -59,6 +59,17 @@ module.exports = async function (h) {
     out.offenZuBeginn = _vuFilterOffen;
     out.chipsZuBeginn = ordChips().length + tagChips().length;
     out.suchfeldDa = !!document.getElementById("vu-suche");
+    /* v656: Zu Beginn stehen Themen-Kacheln, keine Karten. Eine Kachel öffnet ihr Thema. */
+    const themen = () => [...box().querySelectorAll(".vu-thema")];
+    out.themenZuBeginn = themen().length;
+    out.kartenZuBeginn = karten().length;
+    out.themaText = (themen()[0] || {}).textContent ? themen()[0].textContent.replace(/\s+/g, " ").trim() : "";
+    themen()[0]?.click(); await warte(80);
+    out.kartenThema = karten().length;
+    out.zurueckDa = [...box().querySelectorAll("button")].some(b => /Alle Themen/.test(b.textContent || ""));
+    [...box().querySelectorAll("button")].find(b => /Alle Themen/.test(b.textContent || ""))?.click(); await warte(80);
+    out.themenWieder = themen().length;
+    vuSucheSetzen("L"); await warte(80);
     out.kartenAlle = karten().length;
     /* c) Gruppenköpfe: der Text vor der ersten Karte nennt Kürzel und Frage. */
     out.text = (box().textContent || "").replace(/\s+/g, " ");
@@ -66,6 +77,7 @@ module.exports = async function (h) {
     /* Die Leitfrage darf nicht mehr in jeder Karte stehen: dreißig Karten, sechs Fragen. */
     out.frageInKarte = karten().filter(b => /Wie behalte ich den Ball/.test(b.textContent || "")).length;
 
+    vuSucheSetzen(""); await warte(80);
     // aufklappen
     vuFilterAuf(); await warte(80);
     out.offenNachTipp = _vuFilterOffen;
@@ -76,7 +88,7 @@ module.exports = async function (h) {
     out.knopfText = knopf ? knopf.textContent.replace(/\s+/g, " ").trim() : "";
     out.kartenGefiltert = karten().length;
     vuFilterLeeren(); await warte(80);
-    out.nachLeeren = karten().length;
+    out.nachLeeren = themen().length;
 
     // a) Suche
     vuSucheSetzen("L4"); await warte(80);
@@ -88,7 +100,7 @@ module.exports = async function (h) {
     out.leerText = (box().textContent || "").replace(/\s+/g, " ");
     out.wegZurueck = [...box().querySelectorAll("button")].some(b => /Alle zeigen/.test(b.textContent || ""));
     vuSucheSetzen(""); await warte(80);
-    out.wiederAlle = karten().length;
+    out.wiederAlle = themen().length;
     vorlageUebernehmenClose();
     return out;
   }, { datum });
@@ -110,24 +122,33 @@ module.exports = async function (h) {
   if (!/FUNiño/.test(r.knopfText)) probleme.push(`Der Filter-Knopf nennt die Auswahl nicht: „${r.knopfText}“`);
   if (r.tagKacheln.some(t => /-/.test(t))) probleme.push(`Rahmen-Kacheln zeigen noch Datenschlüssel: ${JSON.stringify(r.tagKacheln)}`);
   // c)
-  if (r.kartenAlle !== 30) probleme.push(`${r.kartenAlle} Karten statt 30`);
+  // v667: sechs Einheiten des Saisonformats dazu (PO 29.09.: „Saisonformat ok, bau v667“) – 36 Karten, L1 mit 6
+  if (r.kartenAlle !== 36) probleme.push(`${r.kartenAlle} Karten statt 36`);
   if (r.gruppenKoepfe < 5) probleme.push(`${r.gruppenKoepfe} Gruppenüberschriften – die Liste ist nicht nach Leitfrage gruppiert`);
   if (r.frageInKarte) probleme.push(`Die Leitfrage steht noch in ${r.frageInKarte} Karten, obwohl sie über der Gruppe steht`);
   // a)
   if (!r.sucheL4.length || !r.sucheL4.every(n => /^L4-/.test(n))) probleme.push(`Suche „L4“ findet ${JSON.stringify(r.sucheL4.slice(0, 3))}`);
   if (!r.sucheFrage) probleme.push("Die Suche greift nicht auf die Leitfrage zu");
-  if (r.kartenGefiltert >= 30 || !r.kartenGefiltert) probleme.push(`Der Ordnungsfilter wirkt nicht: ${r.kartenGefiltert} Karten`);
-  if (r.nachLeeren !== 30) probleme.push(`„Filter aufheben“ stellt ${r.nachLeeren} statt 30 Karten her`);
+  if (r.kartenGefiltert >= 36 || !r.kartenGefiltert) probleme.push(`Der Ordnungsfilter wirkt nicht: ${r.kartenGefiltert} Karten`);
+  if (r.nachLeeren !== 6) probleme.push(`„Filter aufheben“ zeigt ${r.nachLeeren} statt 6 Themen`);
   // e)
   if (!/Keine Vorlage passt dazu/.test(r.leerText)) probleme.push("Der leere Zustand sagt nichts");
   if (!r.wegZurueck) probleme.push("Der leere Zustand bietet keinen Weg zurück");
-  if (r.wiederAlle !== 30) probleme.push(`Nach dem Leeren der Suche ${r.wiederAlle} statt 30 Karten`);
+  if (r.wiederAlle !== 6) probleme.push(`Nach dem Leeren der Suche ${r.wiederAlle} statt 6 Themen`);
+  // v656 Themen-Kacheln
+  if (r.themenZuBeginn !== 6) probleme.push(`${r.themenZuBeginn} Themen-Kacheln statt 6`);
+  if (r.kartenZuBeginn) probleme.push(`Zu Beginn stehen schon ${r.kartenZuBeginn} Karten – erst das Thema`);
+  if (!/^L1 6 Einheiten Wie behalte ich den Ball/.test(r.themaText)) probleme.push(`Themen-Kachel sagt nicht, worum es geht: „${r.themaText.slice(0, 80)}“`);
+  if (/L1-1/.test(r.themaText)) probleme.push("Die Themen-Kachel zeigt Kürzel statt Kurztitel");
+  if (r.kartenThema !== 6) probleme.push(`Das Thema öffnet ${r.kartenThema} statt 6 Einheiten`);
+  if (!r.zurueckDa || r.themenWieder !== 6) probleme.push("Aus dem Thema führt kein Weg zurück zu allen Themen");
   if (fehler.length) probleme.push("Konsole: " + fehler[0]);
 
   if (!probleme.length) {
     zeilen.push(`Beginnt mit Suchfeld und eingeklapptem Filter · ${r.kartenAlle} Karten in ${r.gruppenKoepfe} Gruppen, Leitfrage nur noch in der Überschrift`);
     zeilen.push(`Rahmen im Klartext: ${r.tagKacheln.join(" · ")} · Filter-Knopf sagt „${r.knopfText.slice(0, 40)}“`);
-    zeilen.push(`Suche „L4“ → ${r.sucheL4.length} Einheiten · nichts gefunden → Weg zurück · Filter aufheben → ${r.nachLeeren}`);
+    zeilen.push(`Suche „L4“ → ${r.sucheL4.length} Einheiten · nichts gefunden → Weg zurück · Filter aufheben → ${r.nachLeeren} Themen`);
+    zeilen.push(`v656: ${r.themenZuBeginn} Themen-Kacheln zu Beginn, „${r.themaText.slice(0, 70)} …“ → ${r.kartenThema} Einheiten, zurück zu allen Themen`);
   }
   return h.ergebnis("Vorlagen-Fenster: suchen statt scrollen", !probleme.length, zeilen.concat(probleme));
 };

@@ -31,7 +31,7 @@
     },
     {
      "typ": "spielform",
-     "label": "Hauptteil 1 – Stationen, 3 Min frei, dann eng: Adler aus dem Tor (Punkt nur, wenn der Torwart vorher angespielt wurde) | 2 gegen 1 plus Torwart (Tor nach Querpass zählt doppelt)",
+     "label": "Hauptteil 1 – Stationen: Adler aus dem Tor (Punkt nur, wenn der Torwart vorher angespielt wurde) | 2 gegen 1 plus Torwart (Tor nach Querpass zählt doppelt)",
      "dauer": 12,
      "stationen": [
       {
@@ -44,7 +44,7 @@
     },
     {
      "typ": "spielform",
-     "label": "Hauptteil 2 – Gruppen wechseln die Station, 3 Min frei, dann eng: Regeln wie in Hauptteil 1",
+     "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
      "dauer": 12,
      "stationen": [
       {
@@ -97,7 +97,7 @@
     },
     {
      "typ": "spielform",
-     "label": "Hauptteil 1 – Stationen, 3 Min frei, dann eng: Jäger und zwei Flitzer (Tor nur mit beiden Flitzern im Korridor) | Adler aus dem Tor (Punkt nur, wenn beide Flitzer am Ball waren)",
+     "label": "Hauptteil 1 – Stationen: Jäger und zwei Flitzer (Tor nur mit beiden Flitzern im Korridor) | Adler aus dem Tor (Punkt nur, wenn beide Flitzer am Ball waren)",
      "dauer": 12,
      "stationen": [
       {
@@ -110,7 +110,7 @@
     },
     {
      "typ": "spielform",
-     "label": "Hauptteil 2 – Gruppen wechseln die Station, 3 Min frei, dann eng: Regeln wie in Hauptteil 1",
+     "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
      "dauer": 12,
      "stationen": [
       {
@@ -163,7 +163,7 @@
     },
     {
      "typ": "spielform",
-     "label": "Hauptteil 1 – Stationen, 3 Min frei, dann eng: Igel gegen drei (Eroberung vor der Schusshöhe zählt doppelt) | Jäger läuft an, Flitzer stellt zu (Bonus bei Eroberung in fünf Sekunden)",
+     "label": "Hauptteil 1 – Stationen: Igel gegen drei (Eroberung vor der Schusshöhe zählt doppelt) | Jäger läuft an, Flitzer stellt zu (Bonus bei Eroberung in fünf Sekunden)",
      "dauer": 12,
      "stationen": [
       {
@@ -176,7 +176,7 @@
     },
     {
      "typ": "spielform",
-     "label": "Hauptteil 2 – Gruppen wechseln die Station, 3 Min frei, dann eng: Regeln wie in Hauptteil 1",
+     "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
      "dauer": 12,
      "stationen": [
       {
@@ -229,7 +229,7 @@
     },
     {
      "typ": "spielform",
-     "label": "Hauptteil 1 – Stationen, 3 Min frei, dann eng: 3 gegen 3, Seitenwechsel über den Aufpasser zählt doppelt | 3 gegen 1, der Mittlere hat den Ball",
+     "label": "Hauptteil 1 – Stationen: 3 gegen 3, Seitenwechsel über den Aufpasser zählt doppelt | 3 gegen 1, der Mittlere hat den Ball",
      "dauer": 12,
      "stationen": [
       {
@@ -242,7 +242,7 @@
     },
     {
      "typ": "spielform",
-     "label": "Hauptteil 2 – Gruppen wechseln die Station, 3 Min frei, dann eng: Regeln wie in Hauptteil 1",
+     "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
      "dauer": 12,
      "stationen": [
       {
@@ -295,7 +295,7 @@
     },
     {
      "typ": "spielform",
-     "label": "Hauptteil 1 – Stationen, 3 Min frei, dann eng: 3 gegen 3, Tor zählt nur mit einem hinter dem Ball | 3 gegen 2 mit Wandspieler, links, Mitte, rechts besetzt",
+     "label": "Hauptteil 1 – Stationen: 3 gegen 3, Tor zählt nur mit einem hinter dem Ball | 3 gegen 2 mit Wandspieler, links, Mitte, rechts besetzt",
      "dauer": 12,
      "stationen": [
       {
@@ -308,7 +308,7 @@
     },
     {
      "typ": "spielform",
-     "label": "Hauptteil 2 – Gruppen wechseln die Station, 3 Min frei, dann eng: Regeln wie in Hauptteil 1",
+     "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
      "dauer": 12,
      "stationen": [
       {
@@ -361,7 +361,7 @@
     },
     {
      "typ": "spielform",
-     "label": "Hauptteil 1 – Stationen, 3 Min frei, dann eng: 3 gegen 3, Mittellinie verteidigen (Eroberung vor der Mittellinie gibt einen Punkt) | 2 gegen 2, einer drängt, einer schützt (erobertes Tor zählt doppelt)",
+     "label": "Hauptteil 1 – Stationen: 3 gegen 3, Mittellinie verteidigen (Eroberung vor der Mittellinie gibt einen Punkt) | 2 gegen 2, einer drängt, einer schützt (erobertes Tor zählt doppelt)",
      "dauer": 12,
      "stationen": [
       {
@@ -374,7 +374,7 @@
     },
     {
      "typ": "spielform",
-     "label": "Hauptteil 2 – Gruppen wechseln die Station, 3 Min frei, dann eng: Regeln wie in Hauptteil 1",
+     "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
      "dauer": 12,
      "stationen": [
       {

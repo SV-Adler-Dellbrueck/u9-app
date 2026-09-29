@@ -17,10 +17,10 @@ async function adlerkasseLinkGet(){
 function adlerkasseCardHtml(link){
   if(!link||!/^https?:\/\//i.test(link))return ""; // nur echte http(s)-Links (kein javascript: o.ä.)
   return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px;margin-top:12px;text-align:center">
-    <div style="font-size:15px;font-weight:800;color:#1e3a8a">🦅 Adler-Kasse</div>
-    <div style="font-size:12px;color:#64748b;margin:4px 0 10px">Danke, dass du unsere Jungs anfeuerst! Jeder Euro fließt direkt in die Mannschaft – fürs Eis nach dem Sieg 🍦, den Ausflug, die nächste Belohnung.</div>
-    <a href="${esc(link)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:#0070ba;color:#fff;border-radius:10px;padding:11px 22px;font-weight:800;font-size:14px;text-decoration:none">☕ Kleinigkeit spenden</a>
-    <div style="font-size:9.5px;color:#cbd5e1;margin-top:8px">Zahlung läuft extern über PayPal. Die App fasst kein Geld an.</div>
+    <div style="font-size:var(--s-karte);font-weight:800;color:#1e3a8a">🦅 Adler-Kasse</div>
+    <div style="font-size:var(--s-text);color:#64748b;margin:4px 0 10px">Danke, dass du unsere Jungs anfeuerst! Jeder Euro fließt direkt in die Mannschaft – fürs Eis nach dem Sieg 🍦, den Ausflug, die nächste Belohnung.</div>
+    <a href="${esc(link)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:#0070ba;color:#fff;border-radius:10px;padding:11px 22px;font-weight:800;font-size:var(--s-karte);text-decoration:none">☕ Kleinigkeit spenden</a>
+    <div style="font-size:var(--s-klein);color:#cbd5e1;margin-top:8px">Zahlung läuft extern über PayPal. Die App fasst kein Geld an.</div>
   </div>`;
 }
 
@@ -58,7 +58,7 @@ const ELTERN_LEITFADEN=[
   {emo:"🚗", t:"Bringen & Abholen", kat:"termin", d:"Bitte bringt euer Kind nicht deutlich vor Beginn und fahrt dann wieder weg – vor dem offiziellen Start gibt es keine Aufsicht. Holt es ebenso pünktlich nach dem Ende wieder ab. Ein Kind, das allein wartet, ist kein schöner Abschluss einer Einheit. Wenn ausnahmsweise jemand anderes abholt, sagt uns bitte kurz Bescheid."},
   {emo:"🙋", t:"Verhalten beim Training – etwas Abstand", kat:"rand", d:"Setzt euch beim Training bitte etwas abseits und lasst die Kinder mit den Trainern arbeiten. Kinder, die ständig zu Mama oder Papa schauen, sind abgelenkt. Kein Reinrufen, kein Mitcoachen vom Rand – das ist Aufgabe der Trainer."},
   {emo:"📣", t:"Verhalten am Spielfeldrand", kat:"codex", d:"Bei Spielen bleibt bitte hinter der Linie oder Bande und feuert an, statt anzuweisen. Wie wir uns am Spielfeldrand verhalten, steht oben in unseren goldenen Regeln – dem Fairplay-Codex. Bitte lest ihn einmal in Ruhe und tragt ihn mit; ihr findet ihn in der App direkt neben diesem Leitfaden."},
-  {emo:"🧃", t:"Büdchen- & Helferdienste", kat:"helfen", d:"Bei Heimspielen versorgen zwei Familien im Wechsel das Büdchen (Kuchen, Getränke, Kasse). Die Einteilung seht ihr in der App und könnt sie bei Verhinderung weitergeben. Und generell gilt: mit anpacken – Auf- und Abbau, Fahrten, Aufräumen. Das Team lebt davon, dass viele helfen, nicht immer dieselben."},
+  {emo:"🧃", t:"Grillhütte & Helferdienste", kat:"helfen", d:"Bei jedem Heimspiel ist eine Familie für die Grillhütte eingeteilt – reihum, jede kommt dran. Ihr seht euren Dienst im Termin und rechtzeitig vorher auf der Startseite. Wer nicht kann, tippt auf „Ersatz suchen“; eine andere Familie übernimmt mit einem Tipp, bis dahin bleibt der Dienst bei euch. Und generell gilt: mit anpacken – Auf- und Abbau, Fahrten, Aufräumen. Das Team lebt davon, dass viele helfen, nicht immer dieselben."},
   {emo:"👀", t:"Betreuung bei Spielen & Turnieren", kat:"helfen", d:"Bei Spielen und Turnieren suchen wir immer Eltern, die unsere Jungs in den Pausen betreuen und auf sie aufpassen – damit das Trainerteam das nächste Spiel in Ruhe vorbereiten und besprechen kann. Trag dich dafür gern direkt beim Termin unter „Wer hilft mit?“ ein. Schon eine Halbzeit hilft enorm."},
   {emo:"📱", t:"Die Adler-App nutzen – zu- & absagen", kat:"termin", d:"Bitte meldet euer Kind für JEDEN Termin rechtzeitig zu oder ab, am besten bis zum Vortag. Nur so können die Trainer planen und Teams einteilen. Die App ist unser zentraler Draht: Termine, Infos, Aufstellung, Liveticker und Mitbringlisten laufen darüber."},
   {emo:"🤒", t:"Krank oder verletzt?", kat:"gesundheit", d:"Meldet euer Kind bei Krankheit oder Verletzung ab und schickt es erst wieder, wenn es wirklich fit ist. Fieber, Magen-Darm & Co. bleiben zu Hause – auch dem Team zuliebe. Bei längeren Verletzungen sprecht kurz mit den Trainern."},
@@ -114,38 +114,38 @@ async function boerseRender(){
   const meineId=(typeof sbUserId==="function")?sbUserId():null;
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/boerse_listings?select=*&order=created_at.desc`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)rows=await r.json();}catch(e){}
-  const fld="padding:8px;border:1px solid #cbd5e1;border-radius:8px;font-family:inherit;font-size:13px;box-sizing:border-box;background:#fff;color:#0f172a";
+  const fld="padding:8px;border:1px solid #cbd5e1;border-radius:8px;font-family:inherit;font-size:var(--s-text);box-sizing:border-box;background:#fff;color:#0f172a";
   const liste=rows.map(x=>{
     const meins=x.created_by===meineId;
     const reserviert=!!x.reserviert_von;
     const vonMir=x.reserviert_von===meineId;
     let aktion;
-    if(meins)aktion=`<button onclick="boerseDelete(${x.id})" style="min-height:40px;padding:6px 12px;border:1.5px solid var(--red);border-radius:10px;background:#fef2f2;color:#dc2626;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">Entfernen</button>`;
-    else if(vonMir)aktion=`<button onclick="boerseFreigeben(${x.id})" style="min-height:40px;padding:6px 12px;border:1.5px solid #94a3b8;border-radius:10px;background:#f8fafc;color:#475569;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">✓ von dir – freigeben</button>`;
-    else if(reserviert)aktion=`<span style="font-size:12px;color:#b45309;font-weight:700">reserviert</span>`;
-    else aktion=`<button onclick="boerseReservieren(${x.id})" style="min-height:40px;padding:6px 14px;border:none;border-radius:10px;background:#059669;color:#fff;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer">Nehme ich</button>`;
+    if(meins)aktion=`<button onclick="boerseDelete(${x.id})" style="min-height:40px;padding:6px 12px;border:1.5px solid var(--red);border-radius:10px;background:#fef2f2;color:#dc2626;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Entfernen</button>`;
+    else if(vonMir)aktion=`<button onclick="boerseFreigeben(${x.id})" style="min-height:40px;padding:6px 12px;border:1.5px solid #94a3b8;border-radius:10px;background:#f8fafc;color:#475569;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">✓ von dir – freigeben</button>`;
+    else if(reserviert)aktion=`<span style="font-size:var(--s-text);color:#b45309;font-weight:700">reserviert</span>`;
+    else aktion=`<button onclick="boerseReservieren(${x.id})" style="min-height:40px;padding:6px 14px;border:none;border-radius:10px;background:#059669;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">Nehme ich</button>`;
     return `<div style="display:flex;gap:10px;padding:10px 0;border-top:1px solid #f1f5f9">
-      ${x.foto_path?`<img id="bo-img-${x.id}" alt="" style="width:56px;height:56px;flex:none;border-radius:10px;object-fit:cover;background:#f1f5f9">`:`<div style="width:56px;height:56px;flex:none;border-radius:10px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:24px">🛍️</div>`}
+      ${x.foto_path?`<img id="bo-img-${x.id}" alt="" style="width:56px;height:56px;flex:none;border-radius:10px;object-fit:cover;background:#f1f5f9">`:`<div style="width:56px;height:56px;flex:none;border-radius:10px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:var(--s-seite)">🛍️</div>`}
       <div style="flex:1;min-width:0">
-        <div style="font-size:13.5px;font-weight:700">${esc(x.titel)}</div>
-        <div style="font-size:11.5px;color:#64748b">${x.groesse?"Gr. "+esc(x.groesse)+" · ":""}${esc(x.preis||"")}</div>
+        <div style="font-size:var(--s-text);font-weight:700">${esc(x.titel)}</div>
+        <div style="font-size:var(--s-klein);color:#64748b">${x.groesse?"Gr. "+esc(x.groesse)+" · ":""}${esc(x.preis||"")}</div>
         <div style="margin-top:6px">${aktion}</div>
       </div>
     </div>`;
   }).join("");
   c.innerHTML=`${mdlHead("boerse-modal","🛍️","Adler-Börse","Zu klein geworden? Hier findet es ein neues Adler-Kind","#2563eb")}
-    ${liste||'<div style="font-size:12px;color:var(--text3);padding:6px 0">Noch nichts drin. Stell das Erste ein!</div>'}
+    ${liste||'<div style="font-size:var(--s-text);color:var(--text3);padding:6px 0">Noch nichts drin. Stell das Erste ein!</div>'}
     <div style="border-top:1px solid #e2e8f0;margin-top:12px;padding-top:12px">
-      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:6px">Etwas anbieten</div>
+      <div style="font-size:var(--s-text);font-weight:800;color:#64748b;margin-bottom:6px">Etwas anbieten</div>
       <input id="bo-titel" placeholder="Was? z. B. Fußballschuhe blau" style="width:100%;margin-bottom:6px;${fld}">
       <div style="display:flex;gap:6px;margin-bottom:6px">
         <input id="bo-groesse" placeholder="Größe" style="flex:1;${fld}">
         <input id="bo-preis" placeholder="Preis / „Zu verschenken“" style="flex:2;${fld}">
       </div>
-      <input id="bo-foto" type="file" accept="image/jpeg,image/png,image/webp" style="width:100%;margin-bottom:8px;font-size:11px">
+      <input id="bo-foto" type="file" accept="image/jpeg,image/png,image/webp" style="width:100%;margin-bottom:8px;font-size:var(--s-klein)">
       <div style="display:flex;gap:8px">
-        <button onclick="boerseAdd(this)" style="min-height:44px;padding:0 14px;border:none;border-radius:10px;background:#2563eb;color:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">Einstellen</button>
-        <button onclick="document.getElementById('boerse-modal').remove()" style="margin-left:auto;min-height:44px;padding:0 14px;border:1px solid var(--rand-bedien);border-radius:10px;background:#fff;color:#475569;font-family:inherit;font-size:13px;cursor:pointer">Schließen</button>
+        <button onclick="boerseAdd(this)" style="min-height:44px;padding:0 14px;border:none;border-radius:10px;background:#2563eb;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Einstellen</button>
+        <button onclick="document.getElementById('boerse-modal').remove()" style="margin-left:auto;min-height:44px;padding:0 14px;border:1px solid var(--rand-bedien);border-radius:10px;background:#fff;color:#475569;font-family:inherit;font-size:var(--s-text);cursor:pointer">Schließen</button>
       </div>
     </div>`;
   rows.forEach(x=>{ if(x.foto_path)boerseFoto(x.id,x.foto_path); });
@@ -216,14 +216,14 @@ async function skillWocheOpen(){
   const modal=document.createElement("div");
   modal.id="skw-modal";modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10001;display:flex;flex-direction:column;padding:14px;overflow-y:auto";
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
-  const fld="width:100%;padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const fld="width:100%;padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
   const c=document.createElement("div");
   c.style.cssText="background:var(--surface);color:var(--text);max-width:440px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`${mdlHead("skw-modal","🎬","Skill der Woche","Heim-Challenge mit Video · Eltern geben 50 Federn frei","#ea580c")}
-    ${cur?`<div style="font-size:11px;color:var(--text2);background:var(--surface2);border-radius:8px;padding:8px 10px;margin-bottom:10px">Aktuell: <b>${esc(cur.titel)}</b></div>`:""}
-    <label style="font-size:11px;color:var(--text2)">Titel<input id="skw-titel" value="${esc(cur?.titel||"")}" placeholder="z. B. 10× Ball hochhalten" style="${fld}"></label>
-    <label style="font-size:11px;color:var(--text2);display:block;margin-top:8px">Video-Link (YouTube o. ä.)<input id="skw-url" value="${esc(cur?.video_url||"")}" placeholder="https://…" style="${fld}"></label>
-    <label style="font-size:11px;color:var(--text2);display:block;margin-top:8px">Beschreibung (optional)<textarea id="skw-besch" rows="2" style="${fld};resize:vertical">${esc(cur?.beschreibung||"")}</textarea></label>
+    ${cur?`<div style="font-size:var(--s-klein);color:var(--text2);background:var(--surface2);border-radius:8px;padding:8px 10px;margin-bottom:10px">Aktuell: <b>${esc(cur.titel)}</b></div>`:""}
+    <label style="font-size:var(--s-klein);color:var(--text2)">Titel<input id="skw-titel" value="${esc(cur?.titel||"")}" placeholder="z. B. 10× Ball hochhalten" style="${fld}"></label>
+    <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Video-Link (YouTube o. ä.)<input id="skw-url" value="${esc(cur?.video_url||"")}" placeholder="https://…" style="${fld}"></label>
+    <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Beschreibung (optional)<textarea id="skw-besch" rows="2" style="${fld};resize:vertical">${esc(cur?.beschreibung||"")}</textarea></label>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-p btn-sm" onclick="skillWocheSave(this)"><i class="ti ti-device-floppy"></i>Als aktuelle Challenge setzen</button>
       <button class="btn btn-sm" style="margin-left:auto" onclick="document.getElementById('skw-modal').remove()">Schließen</button>
@@ -255,13 +255,13 @@ async function elternSkillLoad(kids){
   let sk=null;
   try{const r=await fetch(`${SB_URL}/rest/v1/skill_woche?aktiv=eq.true&select=*&order=created_at.desc&limit=1`,{headers:sbAuthHeaders()});if(r.ok)sk=(await r.json())[0]||null;}catch(e){}
   if(!sk){ slot.innerHTML=""; return; }
-  const kidBtns=(kids||[]).map(k=>`<button onclick="skillGeschafft(${sk.id},${k.spieler_id},'${jsq((k.kader&&k.kader.name)||"")}')" style="flex:1;min-width:130px;min-height:44px;padding:9px;border:1.5px solid #7c3aed;border-radius:10px;background:#fff;color:#6d28d9;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">🎉 ${esc((k.kader&&k.kader.name)||"Kind")} hat's geschafft</button>`).join("");
+  const kidBtns=(kids||[]).map(k=>`<button onclick="skillGeschafft(${sk.id},${k.spieler_id},'${jsq((k.kader&&k.kader.name)||"")}')" style="flex:1;min-width:130px;min-height:44px;padding:9px;border:1.5px solid #7c3aed;border-radius:10px;background:#fff;color:#6d28d9;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">🎉 ${esc((k.kader&&k.kader.name)||"Kind")} hat's geschafft</button>`).join("");
   slot.innerHTML=`<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
     <div style="font-weight:700;margin-bottom:2px">🎬 Skill der Woche</div>
-    <div style="font-size:14px;font-weight:700;color:#6d28d9;margin:2px 0">${esc(sk.titel)}</div>
-    ${sk.beschreibung?`<div style="font-size:12.5px;color:#475569;margin-bottom:8px">${esc(sk.beschreibung)}</div>`:""}
-    ${sk.video_url?`<a href="${esc(sk.video_url)}" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;padding:11px;border:1.5px solid #7c3aed;border-radius:10px;background:#faf5ff;color:#6d28d9;font-weight:700;font-size:13px;text-decoration:none;margin-bottom:8px">▶️ Video ansehen</a>`:""}
-    <div style="font-size:11px;color:#64748b;margin-bottom:8px">Zuhause geübt und geschafft? Dann Federn freigeben:</div>
+    <div style="font-size:var(--s-karte);font-weight:700;color:#6d28d9;margin:2px 0">${esc(sk.titel)}</div>
+    ${sk.beschreibung?`<div style="font-size:var(--s-text);color:#475569;margin-bottom:8px">${esc(sk.beschreibung)}</div>`:""}
+    ${sk.video_url?`<a href="${esc(sk.video_url)}" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;padding:11px;border:1.5px solid #7c3aed;border-radius:10px;background:#faf5ff;color:#6d28d9;font-weight:700;font-size:var(--s-text);text-decoration:none;margin-bottom:8px">▶️ Video ansehen</a>`:""}
+    <div style="font-size:var(--s-klein);color:#64748b;margin-bottom:8px">Zuhause geübt und geschafft? Dann Federn freigeben:</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">${kidBtns}</div>
   </div>`;
 }
@@ -298,15 +298,15 @@ async function elternWaescheLoad(kids){
   const langeNichtDran=tageHer===null||tageHer>49; // ~7 Wochen oder noch nie
   const fmt=d=>new Date(d+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
   const verlauf=log.length
-    ? log.slice(0,5).map(x=>`<div style="display:flex;gap:6px;font-size:12px;padding:3px 0;border-top:1px solid #f1f5f9"><span style="color:var(--text3);width:44px">${fmt(x.datum)}</span><span>${esc((x.kader&&x.kader.name)||"—")}s Familie</span></div>`).join("")
-    : `<div style="font-size:12px;color:var(--text3);padding:4px 0">Noch niemand eingetragen.</div>`;
-  const kidBtns=(kids||[]).map(k=>`<button onclick="waescheUebernehmen(${k.spieler_id},'${jsq((k.kader&&k.kader.name)||"")}')" style="flex:1;min-width:130px;min-height:44px;padding:9px;border:1.5px solid #2563eb;border-radius:10px;background:#fff;color:#1d4ed8;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">🧺 ${esc((k.kader&&k.kader.name)||"Kind")} übernimmt</button>`).join("");
+    ? log.slice(0,5).map(x=>`<div style="display:flex;gap:6px;font-size:var(--s-text);padding:3px 0;border-top:1px solid #f1f5f9"><span style="color:var(--text3);width:44px">${fmt(x.datum)}</span><span>${esc((x.kader&&x.kader.name)||"—")}s Familie</span></div>`).join("")
+    : `<div style="font-size:var(--s-text);color:var(--text3);padding:4px 0">Noch niemand eingetragen.</div>`;
+  const kidBtns=(kids||[]).map(k=>`<button onclick="waescheUebernehmen(${k.spieler_id},'${jsq((k.kader&&k.kader.name)||"")}')" style="flex:1;min-width:130px;min-height:44px;padding:9px;border:1.5px solid #2563eb;border-radius:10px;background:#fff;color:#1d4ed8;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">🧺 ${esc((k.kader&&k.kader.name)||"Kind")} übernimmt</button>`).join("");
   slot.innerHTML=`<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
     <div style="font-weight:700;margin-bottom:2px">🧺 Trikot-Wäsche</div>
-    <div style="font-size:12px;color:#64748b;margin-bottom:8px">Wer nimmt die Trikots mit? Übernimmt deine Familie, gibt's ${XP_ICON} <b>100 Federn</b> fürs Kind.</div>
-    ${langeNichtDran?`<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:8px 10px;font-size:12px;color:#1e40af;margin-bottom:8px">👋 ${tageHer===null?"Ihr wart noch nicht dran":"Ihr wart lange nicht dran"} – mögt ihr diesmal?</div>`:""}
+    <div style="font-size:var(--s-text);color:#64748b;margin-bottom:8px">Wer nimmt die Trikots mit? Übernimmt deine Familie, gibt's ${XP_ICON} <b>100 Federn</b> fürs Kind.</div>
+    ${langeNichtDran?`<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:8px 10px;font-size:var(--s-text);color:#1e40af;margin-bottom:8px">👋 ${tageHer===null?"Ihr wart noch nicht dran":"Ihr wart lange nicht dran"} – mögt ihr diesmal?</div>`:""}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">${kidBtns}</div>
-    <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:2px">Zuletzt gewaschen</div>
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:2px">Zuletzt gewaschen</div>
     ${verlauf}
   </div>`;
 }
@@ -366,20 +366,20 @@ async function elternMitbringLoad(kids){
   slot.innerHTML=events.map(ev=>{
     const items=itemsMap[ev.id]||[];
     const liste=items.length
-      ? items.map(it=>`<div style="display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 0;border-top:1px solid #f1f5f9">
+      ? items.map(it=>`<div style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);padding:5px 0;border-top:1px solid #f1f5f9">
           <span style="flex:1">🍽️ <b>${esc(it.was)}</b>${it.wer?` <span style="color:var(--text3)">· ${esc(it.wer)}</span>`:""}</span>
-          ${(uid&&it.created_by===uid)?`<button onclick="mitbringDelete(${it.id})" aria-label="Eintrag löschen" style="border:none;background:transparent;color:#dc2626;cursor:pointer;min-width:32px;min-height:32px;font-size:15px">✕</button>`:""}
+          ${(uid&&it.created_by===uid)?`<button onclick="mitbringDelete(${it.id})" aria-label="Eintrag löschen" style="border:none;background:transparent;color:#dc2626;cursor:pointer;min-width:32px;min-height:32px;font-size:var(--s-karte)">✕</button>`:""}
         </div>`).join("")
-      : `<div style="font-size:12px;color:var(--text3);padding:4px 0">Noch nichts eingetragen – mach den Anfang! 🎉</div>`;
-    const kidSel=(kids&&kids.length>1)?`<select id="mb-kid-${ev.id}" style="min-height:44px;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:13px;background:#fff">${kidOpts}</select>`:"";
+      : `<div style="font-size:var(--s-text);color:var(--text3);padding:4px 0">Noch nichts eingetragen – mach den Anfang! 🎉</div>`;
+    const kidSel=(kids&&kids.length>1)?`<select id="mb-kid-${ev.id}" style="min-height:44px;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:#fff">${kidOpts}</select>`:"";
     return `<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
       <div style="font-weight:700;margin-bottom:2px">🎉 ${esc(ev.titel||"Event")} · Mitbringliste</div>
-      <div style="font-size:12px;color:#64748b;margin-bottom:8px">${fmtD(ev.datum)}${ev.ort?" · "+esc(ev.ort):""} — wer bringt was mit? (Salat, Kuchen, Getränke, Pavillon …)</div>
+      <div style="font-size:var(--s-text);color:#64748b;margin-bottom:8px">${fmtD(ev.datum)}${ev.ort?" · "+esc(ev.ort):""} — wer bringt was mit? (Salat, Kuchen, Getränke, Pavillon …)</div>
       ${liste}
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
-        <input id="mb-was-${ev.id}" placeholder="Was bringst du mit?" style="flex:1;min-width:150px;min-height:44px;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:13px" onkeydown="if(event.key==='Enter')mitbringAdd(${ev.id})">
+        <input id="mb-was-${ev.id}" placeholder="Was bringst du mit?" style="flex:1;min-width:150px;min-height:44px;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text)" onkeydown="if(event.key==='Enter')mitbringAdd(${ev.id})">
         ${kidSel}
-        <button onclick="mitbringAdd(${ev.id})" style="min-height:44px;padding:9px 16px;border:none;border-radius:10px;background:#16a34a;color:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">Eintragen</button>
+        <button onclick="mitbringAdd(${ev.id})" style="min-height:44px;padding:9px 16px;border:none;border-radius:10px;background:#16a34a;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Eintragen</button>
       </div>
     </div>`;
   }).join("");
@@ -418,46 +418,250 @@ async function mitbringDelete(id){
   if(document.getElementById("td-mitbring")&&window._tdTermin&&typeof tdMitbringLoad==="function")tdMitbringLoad(window._tdTermin);
 }
 
-/* Büdchen bei Heimspielen: 2 Familien pro Heimspiel, faire Rotation server-seitig
-   (RPC buedchen_plan – weist beim Anschauen automatisch auf, wenn noch nicht voll).
-   Die eigene Familie kann per Opt-out absagen, dann rückt die nächste nach. */
-async function elternBuedchenLoad(termine,kids){
-  const slot=document.getElementById("buedchen-slot"); if(!slot)return;
-  window._elternKids=kids||window._elternKids||[];
-  const heim=(termine||[]).filter(t=>(t.typ==="spiel"||t.typ==="turnier")&&t.heim===true).slice(0,3);
-  if(!heim.length){ slot.innerHTML=""; return; }
-  const meineIds=(kids||[]).map(k=>k.spieler_id);
-  const cards=[];
-  for(const t of heim){
-    let fam=[];
-    try{const r=await fetch(`${SB_URL}/rest/v1/rpc/buedchen_plan`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_termin:t.id})});if(r.ok)fam=await r.json();}catch(e){}
-    const d=new Date(t.datum+"T00:00:00");
-    const wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
-    const zeit=t.uhrzeit?String(t.uhrzeit).slice(0,5)+" Uhr":"";
-    const meine=(fam||[]).find(f=>meineIds.includes(f.spieler_id));
-    if(!meine)continue; // Büdchen ist ein To-Do NUR für die eingeteilten Familien – andere sehen es hier nicht
-    const namen=(fam&&fam.length)?fam.map(f=>esc(f.name)+"s Familie").join(" & "):"– wird eingeteilt –";
-    cards.push(`<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05);${meine?"border:2px solid #16a34a":""}">
-      <div style="font-weight:700;margin-bottom:2px">🍿 Büdchen · Heimspiel${(t.gegner||t.titel)?" gegen "+esc(t.gegner||t.titel):""}</div>
-      <div style="font-size:12px;color:#64748b;margin-bottom:8px">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${zeit?" · "+zeit:""} · 2 Familien betreuen das Büdchen</div>
-      <div style="font-size:13px">Eingeteilt: <b>${namen}</b></div>
-      ${meine?`<div style="margin-top:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:8px 10px;font-size:12.5px;color:#15803d">Ihr seid diesmal dran – danke fürs Büdchen! 🙌</div>
-        <button onclick="buedchenOptout(${t.id},${meine.spieler_id})" style="width:100%;margin-top:8px;min-height:44px;border:1.5px solid #dc2626;border-radius:10px;background:#fff;color:#dc2626;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">Wir können leider nicht – nächste Familie</button>`:""}
-    </div>`);
-  }
-  slot.innerHTML=cards.join("");
+/* ═══ v646 – GRILLHÜTTE: EINTEILUNG REIHUM, „ERSATZ SUCHEN“, „ÜBERNEHMEN“ ═══════════════
+   Auftrag doku/auftrag-grillhuette/ (Paket 22.09. + Nachtrag 27.09., der Vorrang hat).
+   Der frühere Büdchen-Dienst (Tabelle buedchen, zwei Familien, Einteilung beim Anschauen,
+   „Wir können leider nicht – nächste Familie“) meinte dasselbe und ist hiermit abgelöst.
+
+   Datenweg: Tabelle dienst_einteilung (RLS nur Trainer). Eltern lesen und schreiben nur über
+   dienste_public / dienst_freigeben / dienst_uebernehmen – dort gibt es weder kind_id noch
+   Kindernamen, und die Rechte prüft die Datenbank. Bis jemand übernimmt, bleibt die
+   Verantwortung bei der eingeteilten Familie; ein Rückfall durch das Trainerteam ist per
+   Beschluss vom 27.09. ausgeschlossen. */
+const GH_FENSTER_OFFEN=60;      // offene (freigegebene) Dienste anderer Familien
+const GH_STATUS={
+  eingeteilt:{t:"eingeteilt",   f:"var(--green)", bg:"var(--green-bg)"},
+  freigegeben:{t:"Ersatz gesucht",f:"var(--amber)", bg:"var(--amber-bg)"},
+  uebernommen:{t:"übernommen",  f:"var(--green)", bg:"var(--green-bg)"},
+  offen:{t:"noch nicht eingeteilt",f:"var(--text2)",bg:"var(--surface2)"}
+};
+function ghChip(status){ const s=GH_STATUS[status]||GH_STATUS.offen;
+  return `<span class="gh-chip" style="display:inline-block;font-size:var(--s-klein);font-weight:700;color:${s.f};background:${s.bg};border:1px solid ${s.f};border-radius:999px;padding:1px 9px">${s.t}</span>`; }
+function ghTag(datum,uhrzeit){
+  const d=new Date(String(datum).slice(0,10)+"T00:00:00");
+  const wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
+  return `${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${uhrzeit?" · "+String(uhrzeit).slice(0,5)+" Uhr":""}`;
 }
-async function buedchenOptout(terminId,spielerId){
-  if(!await frageJaNein({emoji:"🍿",titel:"Beim Büdchen absagen?",
-    text:"Dann rückt automatisch die nächste Familie nach.",
-    ja:"Absagen",nein:"Doch, wir machen"}))return;
+async function ghDienste(tage){
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/rpc/buedchen_optout`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_termin:terminId,p_spieler:spielerId})});
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/dienste_public`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_tage:tage})});
+    return r.ok?((await r.json())||[]):[];
+  }catch(e){ return []; }
+}
+const GH_KNOPF="width:100%;min-height:48px;margin-top:8px;border-radius:12px;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer";
+/* Ein Dienst aus Sicht der Eltern – dieselbe Zeile auf der Startseite und im Termin. */
+function ghDienstHtml(d){
+  if(d.eigene&&d.status==="eingeteilt")return `<div style="font-size:var(--s-text);line-height:1.5">Ihr seid dran. Könnt ihr nicht, sucht Ersatz – bis eine andere Familie übernimmt, bleibt der Dienst bei euch.</div>
+      <button class="gh-ersatz" onclick="ghErsatzSuchen(${Number(d.dienst_id)})" style="${GH_KNOPF};border:1.5px solid var(--rand-bedien);background:var(--surface);color:var(--text)">Ersatz suchen</button>`;
+  if(d.eigene&&d.status==="freigegeben")return `<div style="font-size:var(--s-text);line-height:1.5">Ersatz wird gesucht. Bis eine andere Familie übernimmt, bleibt der Dienst bei euch.</div>`;
+  if(d.eigene&&d.status==="uebernommen")return `<div style="font-size:var(--s-text);line-height:1.5">Ihr habt diesen Dienst übernommen – danke!</div>`;
+  if(d.kann_uebernehmen)return `<div style="font-size:var(--s-text);line-height:1.5">Die eingeteilte Familie sucht Ersatz. Könnt ihr?</div>
+      <button class="gh-uebernehmen" onclick="ghUebernehmen(${Number(d.dienst_id)})" style="${GH_KNOPF};border:none;background:var(--green);color:#fff">Übernehmen</button>`;
+  if(d.status==="uebernommen")return `<div style="font-size:var(--s-text)">Übernommen von ${esc(d.name||"einer anderen Familie")}.</div>`;
+  if(d.status==="eingeteilt")return `<div style="font-size:var(--s-text)">Eine Familie ist eingeteilt.</div>`;
+  return `<div style="font-size:var(--s-text);color:var(--text2)">Das Trainerteam teilt noch ein.</div>`;
+}
+/* Startseite: der eigene Dienst in den nächsten 14 Tagen und offene Dienste zum Übernehmen.
+   Lehre aus v429 umgekehrt: einen Pflichtdienst muss man Wochen vorher sehen – nicht nur in
+   der Kachel des nächsten Termins. Andere Familien sehen hier nur, was sie übernehmen können. */
+/* v668 PO 29.09.: „… informieren wir auf der ersten Startseite die jeweiligen Eltern … dass ihre
+   Familie für den Grillhüttendienst am Datum zugewiesen wurde.“ Der eigene Dienst steht deshalb
+   ab der Einteilung auf der Startseite, nicht erst 14 Tage vorher – bei allen Eltern, die mit dem
+   Kind verknüpft sind. Offene Dienste anderer Familien weiter nur im 60-Tage-Fenster. */
+async function elternBuedchenLoad(){
+  const slot=document.getElementById("buedchen-slot"); if(!slot)return;
+  const alle=await ghDienste(366);
+  const grenze=new Date(Date.now()+GH_FENSTER_OFFEN*864e5).toISOString().slice(0,10);
+  const zeigen=alle.filter(d=>d.eigene||(d.kann_uebernehmen&&String(d.datum)<=grenze));
+  slot.innerHTML=zeigen.map(d=>`<div class="gh-karte" style="background:var(--surface);border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05);border:2px solid ${d.eigene?"var(--green)":"var(--amber)"}">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px"><b>🔥 Grillhütte${d.eigene?": Ihr seid dran":""}</b>${ghChip(d.status)}</div>
+      <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:8px">${d.eigene&&d.status==="eingeteilt"?"Eure Familie ist eingeteilt: ":""}Heimspiel am ${esc(ghTag(d.datum,d.uhrzeit))}${d.gegner?" · "+esc(d.gegner):""}${Number(d.plaetze)>1?` · ${Number(d.plaetze)} Familien`:""}</div>
+      ${ghDienstHtml(d)}
+    </div>`).join("");
+  if(typeof elternTodoSync==="function")elternTodoSync();
+}
+async function ghErsatzSuchen(id){
+  if(!await frageJaNein({emoji:"🔥",titel:"Ersatz suchen?",
+    text:"Alle anderen Familien sehen den Dienst dann als offen und können ihn mit einem Tipp übernehmen. Bis dahin bleibt er bei euch.",
+    ja:"Ersatz suchen",nein:"Abbrechen"}))return;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/dienst_freigeben`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_id:id})});
     if(sbCheck401(r))return;
-    if(!r.ok){toast(sbDeniedMsg(r,"Konnte nicht ändern"),"err");return;}
-  }catch(e){toast("Netzwerkfehler","err");return;}
-  toast("Danke – die nächste Familie rückt nach.");
-  if(typeof elternDashLoad==="function")elternDashLoad();
+    if(!r.ok){ toast("Das ging nicht – ist der Dienst noch eurer?","err"); return; }
+  }catch(e){ toast("Ohne Netz geht das nicht","err"); return; }
+  toast("Ersatz wird gesucht");
+  ghNeuLaden();
+}
+async function ghUebernehmen(id){
+  if(!await frageJaNein({emoji:"🔥",titel:"Grillhütte übernehmen?",text:"Dann seid ihr an diesem Tag für die Grillhütte eingeteilt.",ja:"Übernehmen",nein:"Abbrechen"}))return;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/dienst_uebernehmen`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_id:id})});
+    if(sbCheck401(r))return;
+    if(!r.ok){ toast("Schon vergeben – eine andere Familie war schneller","err"); ghNeuLaden(); return; }
+  }catch(e){ toast("Ohne Netz geht das nicht","err"); return; }
+  toast("Übernommen");
+  ghNeuLaden();
+}
+function ghNeuLaden(){
+  elternBuedchenLoad();
+  const t=window._tdTermin;
+  if(t&&document.getElementById("td-buedchen")&&typeof tdBuedchenLoad==="function")tdBuedchenLoad(t);
+}
+
+/* ── Trainerbereich: einteilen und umbuchen ──────────────────────────────────── */
+let _ghTr=null;
+async function ghTrainerDaten(){
+  const heute=new Date().toISOString().slice(0,10);
+  let termine=[], dienste=[], profile=[];
+  try{const r=await fetch(`${SB_URL}/rest/v1/termine?heim=is.true&typ=in.(spiel,turnier)&datum=gte.${heute}&select=id,datum,uhrzeit,gegner,titel,typ&order=datum.asc`,{headers:sbAuthHeaders()});if(r.ok)termine=await r.json();}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/dienst_einteilung?dienst=eq.grillhuette&select=id,termin_id,kind_id,status,uebernommen_von,uebernommen_kind,platz&order=platz.asc`,{headers:sbAuthHeaders()});if(r.ok)dienste=await r.json();}catch(e){}
+  let plaetze=2, sperren=[];
+  try{const r=await fetch(`${SB_URL}/rest/v1/team_config?id=eq.1&select=dienst_plaetze`,{headers:sbAuthHeaders()});if(r.ok){const x=(await r.json())[0];if(x&&Number(x.dienst_plaetze))plaetze=Number(x.dienst_plaetze);}}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/dienst_sperre?dienst=eq.grillhuette&datum=gte.${heute}&select=id,kind_id,datum&order=datum.asc`,{headers:sbAuthHeaders()});if(r.ok)sperren=await r.json();}catch(e){}
+  let befreit=[];
+  try{const r=await fetch(`${SB_URL}/rest/v1/dienst_befreit?dienst=eq.grillhuette&select=kind_id,grund`,{headers:sbAuthHeaders()});if(r.ok)befreit=await r.json();}catch(e){}
+  const uids=[...new Set(dienste.map(d=>d.uebernommen_von).filter(Boolean))];
+  if(uids.length){try{const r=await fetch(`${SB_URL}/rest/v1/profiles?id=in.(${uids.join(",")})&select=id,anzeigename`,{headers:sbAuthHeaders()});if(r.ok)profile=await r.json();}catch(e){}}
+  _ghTr={termine,dienste,profile,plaetze,sperren,befreit};
+  return _ghTr;
+}
+function _ghKindName(id){ const k=(typeof KADER!=="undefined"?KADER:[]).find(x=>String((typeof kaderId==="function")?kaderId(x):x.id)===String(id)); return k?k.name:""; }
+function _ghTrZeile(d){
+  if(!d)return "– noch nicht eingeteilt –";
+  const fam=d.kind_id!=null?`${esc(_ghKindName(d.kind_id)||"Kind")}s Familie`:"ohne Familie";
+  /* v672: übernommen – angerechnet wird der übernehmenden Familie; sie steht mit Namen da. */
+  if(d.status==="uebernommen"){ const p=(_ghTr.profile||[]).find(x=>x.id===d.uebernommen_von);
+    const neu=d.uebernommen_kind!=null&&_ghKindName(d.uebernommen_kind)?`${esc(_ghKindName(d.uebernommen_kind))}s Familie`:esc((p&&p.anzeigename)||"einer anderen Familie");
+    return `${fam} → übernommen von ${neu} (zählt für sie)`; }
+  return fam;
+}
+/* Die Zeile in der Trainer-Terminliste (ersetzt „🍿 Büdchen“). */
+async function buedchenTrainerFill(t){
+  const slot=document.getElementById("bd-tm-"+t.id); if(!slot)return;
+  if(!_ghTr)await ghTrainerDaten();
+  const ds=(_ghTr.dienste||[]).filter(x=>x.termin_id===t.id);
+  slot.innerHTML=`🔥 Grillhütte: <b style="color:var(--text)">${ds.length?ds.map(_ghTrZeile).join(" · "):_ghTrZeile(null)}</b> ${ghChip(ds.length?(ds.some(x=>x.status==="freigegeben")?"freigegeben":ds[0].status):"offen")}`;
+}
+async function grillTrainerOpen(){
+  document.getElementById("gh-tr-modal")?.remove();
+  const m=document.createElement("div"); m.id="gh-tr-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Grillhütte");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.onclick=e=>{ if(e.target===m)m.remove(); };
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:560px;width:100%;margin:auto">
+    ${mdlHead("gh-tr-modal","🔥","Grillhütte","Einteilen reihum · umbuchen, wenn Familien außerhalb der App tauschen","#b45309")}
+    <div id="gh-tr-inhalt" style="font-size:var(--s-text);color:var(--text2)">Lädt …</div></div>`;
+  document.body.appendChild(m);
+  if(typeof loadKader==="function"&&(typeof KADER==="undefined"||!KADER.length))await loadKader();
+  await ghTrainerDaten();
+  grillTrainerRender();
+}
+function grillTrainerRender(){
+  const box=document.getElementById("gh-tr-inhalt"); if(!box||!_ghTr)return;
+  const kids=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k.aktiv!==false);
+  const kid=k=>(typeof kaderId==="function")?kaderId(k):k.id;
+  const P=_ghTr.plaetze||2;
+  const jeTermin=t=>_ghTr.dienste.filter(x=>x.termin_id===t.id);
+  const ohne=_ghTr.termine.reduce((a,t)=>a+Math.max(0,P-jeTermin(t).length),0);
+  const famOpt=`<option value="">– Familie wählen –</option>`+kids.map(k=>`<option value="${esc(String(kid(k)))}">${esc(k.name)}s Familie</option>`).join("");
+  const sel="width:100%;min-height:44px;margin-top:2px;border:1px solid var(--rand-bedien);border-radius:8px;font:inherit;background:var(--surface2);color:var(--text)";
+  box.innerHTML=`<button class="btn" id="gh-einteilen" style="width:100%" onclick="grillEinteilen()" ${ohne?"":"disabled"}>Grillhütte einteilen${ohne?` (${ohne} ${ohne===1?"Platz":"Plätze"} offen)`:""}</button>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin:6px 0 12px">${P} Familien je Heimtermin. Wer in dieser Saison am seltensten dran war, kommt zuerst; gesperrte Tage werden übersprungen. Bestehendes bleibt stehen.</div>
+    ${_ghTr.termine.length?_ghTr.termine.map(t=>{ const ds=jeTermin(t);
+      const sp=(_ghTr.sperren||[]).filter(x=>x.datum===t.datum);
+      return `<div class="gh-termin" style="border-top:1px solid var(--surface2);padding:8px 0">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>${esc(ghTag(t.datum,t.uhrzeit))}</b><span style="color:var(--text2)">${esc(t.gegner||t.titel||"")}</span></div>
+        ${Array.from({length:P},(_,i)=>{ const d=ds.find(x=>Number(x.platz||1)===i+1);
+          return `<div style="margin:4px 0 2px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="min-width:4.5em;color:var(--text2)">Familie ${i+1}</span><span>${_ghTrZeile(d)}</span>${ghChip(d?d.status:"offen")}</div>
+          <label style="font-size:var(--s-klein);color:var(--text2)">Umbuchen auf<select onchange="grillUmbuchen(${Number(t.id)},this.value,${i+1})" style="${sel}">${famOpt}</select></label>`; }).join("")}
+        <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">${sp.length?`Kann an dem Tag nicht: ${sp.map(x=>`${esc(_ghKindName(x.kind_id)||"Kind")}s Familie <button class="btn btn-sm" onclick="grillSperreWeg(${Number(x.id)})" aria-label="Sperre für ${esc(_ghKindName(x.kind_id)||"Kind")}s Familie aufheben">aufheben</button>`).join(" ")}`:""}</div>
+        <label style="font-size:var(--s-klein);color:var(--text2)">Familie kann an dem Tag nicht<select onchange="grillSperren(${JSON.stringify(String(t.datum)).replace(/"/g,"&quot;")},this.value)" style="${sel}">${famOpt}</select></label>
+      </div>`; }).join(""):'<div style="color:var(--text2)">Keine künftigen Heimtermine im Kalender.</div>'}
+    ${grillBefreitHtml(kids,kid,sel)}`;
+}
+/* v671 PO 29.09.: „Bei den Grillhüttendiensten die Eltern rausnehmen, die selber Trainer sind.“
+   Befreite Familien teilt „Grillhütte einteilen“ nie ein; eine schon stehende Einteilung bucht
+   der Trainer oben um. */
+function grillBefreitHtml(kids,kid,sel){
+  const bef=(_ghTr.befreit||[]);
+  const frei=kids.filter(k=>!bef.some(b=>String(b.kind_id)===String(kid(k))));
+  return `<div id="gh-befreit" style="border-top:2px solid var(--surface2);margin-top:12px;padding-top:10px">
+    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;color:var(--text2);margin-bottom:6px">Vom Dienst befreit (z. B. Trainerfamilien)</div>
+    ${bef.length?bef.map(b=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;color:var(--text)"><span style="flex:1">${esc(_ghKindName(b.kind_id)||"Kind")}s Familie · ${esc(b.grund||"")}</span>
+      <button class="btn btn-sm" onclick="grillBefreitWeg(${Number(b.kind_id)})" aria-label="Befreiung für ${esc(_ghKindName(b.kind_id)||"Kind")}s Familie aufheben">aufheben</button></div>`).join(""):`<div style="color:var(--text2)">Niemand befreit.</div>`}
+    <label style="font-size:var(--s-klein);color:var(--text2)">Familie befreien<select onchange="grillBefreien(this.value)" style="${sel}"><option value="">– Familie wählen –</option>${frei.map(k=>`<option value="${esc(String(kid(k)))}">${esc(k.name)}s Familie</option>`).join("")}</select></label>
+  </div>`;
+}
+async function grillBefreien(kindId){
+  if(!kindId)return;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/dienst_befreit`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=minimal,resolution=ignore-duplicates'}),body:JSON.stringify({kind_id:Number(kindId),dienst:"grillhuette",grund:"Trainerfamilie"})});
+    if(sbCheck401(r))return;
+    if(!r.ok){ toast(`Nicht befreit – Server antwortet ${r.status}`,"err"); return; }
+  }catch(e){ toast("Kein Netz – nicht befreit","err"); return; }
+  const steht=(_ghTr.dienste||[]).some(d=>String(d.kind_id)===String(kindId)&&d.status==="eingeteilt");
+  toast(steht?"Befreit – steht die Familie schon an einem Termin, oben umbuchen":"Befreit – wird nicht mehr eingeteilt");
+  await ghTrainerDaten(); grillTrainerRender();
+}
+async function grillBefreitWeg(kindId){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/dienst_befreit?kind_id=eq.${Number(kindId)}&dienst=eq.grillhuette`,{method:"DELETE",headers:sbAuthHeaders({'Prefer':'return=minimal'})});
+    if(sbCheck401(r))return;
+    if(!r.ok){ toast(`Nicht aufgehoben – Server antwortet ${r.status}`,"err"); return; }
+  }catch(e){ toast("Kein Netz – nicht aufgehoben","err"); return; }
+  toast("Befreiung aufgehoben");
+  await ghTrainerDaten(); grillTrainerRender();
+}
+async function grillEinteilen(){
+  const k=document.getElementById("gh-einteilen"); if(k)k.disabled=true;
+  let n=0;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/dienst_einteilen`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"});
+    if(sbCheck401(r))return;
+    if(!r.ok){ toast(`Nicht eingeteilt – Server antwortet ${r.status}`,"err"); if(k)k.disabled=false; return; }
+    n=Number(await r.json())||0;
+  }catch(e){ toast("Kein Netz – nicht eingeteilt","err"); if(k)k.disabled=false; return; }
+  toast(n?`${n} Heimtermin${n===1?"":"e"} eingeteilt`:"Alles ist schon eingeteilt");
+  await ghTrainerDaten(); grillTrainerRender();
+}
+/* Kriterium 7: Tausch außerhalb der App nachtragen – die gewählte Familie ist eingeteilt. */
+async function grillUmbuchen(terminId,kindId,platz){
+  if(!kindId)return;
+  platz=Number(platz)||1;
+  const d=_ghTr.dienste.find(x=>x.termin_id===terminId&&Number(x.platz||1)===platz);
+  if(_ghTr.dienste.some(x=>x.termin_id===terminId&&x!==d&&String(x.kind_id)===String(kindId))){ toast("Diese Familie steht an dem Tag schon","err"); grillTrainerRender(); return; }
+  const zeile={kind_id:Number(kindId),status:"eingeteilt",uebernommen_von:null};
+  try{
+    const r=d
+      ?await fetch(`${SB_URL}/rest/v1/dienst_einteilung?id=eq.${Number(d.id)}`,{method:"PATCH",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify(zeile)})
+      :await fetch(`${SB_URL}/rest/v1/dienst_einteilung`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify({termin_id:terminId,dienst:"grillhuette",platz,...zeile})});
+    if(sbCheck401(r))return;
+    if(!r.ok){ toast(`Nicht umgebucht – Server antwortet ${r.status}`,"err"); return; }
+  }catch(e){ toast("Kein Netz – nicht umgebucht","err"); return; }
+  toast("Umgebucht");
+  await ghTrainerDaten(); grillTrainerRender();
+}
+/* v668: Sperrtage – an diesen Tagen teilt „Grillhütte einteilen“ die Familie nicht ein
+   (PO 29.09.: ein Vater ist nur an bestimmten Wochenenden verfügbar). Eine schon stehende
+   Einteilung bleibt; die bucht der Trainer oben um. */
+async function grillSperren(datum,kindId){
+  if(!kindId)return;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/dienst_sperre`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=minimal,resolution=ignore-duplicates'}),body:JSON.stringify({kind_id:Number(kindId),datum,dienst:"grillhuette"})});
+    if(sbCheck401(r))return;
+    if(!r.ok){ toast(`Nicht gesperrt – Server antwortet ${r.status}`,"err"); return; }
+  }catch(e){ toast("Kein Netz – nicht gesperrt","err"); return; }
+  toast("Gesperrt – an dem Tag wird die Familie nicht eingeteilt");
+  await ghTrainerDaten(); grillTrainerRender();
+}
+async function grillSperreWeg(id){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/dienst_sperre?id=eq.${Number(id)}`,{method:"DELETE",headers:sbAuthHeaders({'Prefer':'return=minimal'})});
+    if(sbCheck401(r))return;
+    if(!r.ok){ toast(`Nicht aufgehoben – Server antwortet ${r.status}`,"err"); return; }
+  }catch(e){ toast("Kein Netz – nicht aufgehoben","err"); return; }
+  toast("Sperre aufgehoben");
+  await ghTrainerDaten(); grillTrainerRender();
 }
 /* Elterngespräch: die Eltern signalisieren Bedarf, der Trainer sieht die Wünsche und
    meldet sich zur Terminabstimmung. Anfrage = eine Zeile in elterngespraech_wunsch. */
@@ -466,7 +670,7 @@ async function elternGespraechStatus(){
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/elterngespraech_wunsch?status=eq.offen&select=id,thema,created_at&order=created_at.desc`,{headers:sbAuthHeaders()});if(r.ok)rows=await r.json();}catch(e){}
   if(!rows.length){slot.innerHTML="";return;}
-  slot.innerHTML=rows.map(w=>`<div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:10px;padding:8px 10px;margin-bottom:8px;font-size:12.5px;color:#6b21a8">✓ Anfrage gesendet – der Trainer meldet sich.${w.thema?`<div style="font-size:11px;color:#7c3aed;margin-top:2px">Thema: ${esc(w.thema)}</div>`:""}</div>`).join("");
+  slot.innerHTML=rows.map(w=>`<div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:10px;padding:8px 10px;margin-bottom:8px;font-size:var(--s-text);color:#6b21a8">✓ Anfrage gesendet – der Trainer meldet sich.${w.thema?`<div style="font-size:var(--s-klein);color:#7c3aed;margin-top:2px">Thema: ${esc(w.thema)}</div>`:""}</div>`).join("");
 }
 function elternGespraechOpen(){
   const kids=window._elternKids||[];
@@ -474,15 +678,15 @@ function elternGespraechOpen(){
   const m=document.createElement("div");m.id="eg-modal";
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10041;display:flex;align-items:center;justify-content:center;padding:16px";
   m.onclick=e=>{if(e.target===m)m.remove();};
-  const kidSel=(kids.length>1)?`<label style="font-size:11px;color:#64748b;display:block;margin-bottom:8px">Um welches Kind geht es?<select id="eg-kid" style="width:100%;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:14px;margin-top:2px">${kids.map(k=>`<option value="${k.spieler_id}">${esc((k.kader&&k.kader.name)||"Kind")}</option>`).join("")}</select></label>`:"";
+  const kidSel=(kids.length>1)?`<label style="font-size:var(--s-klein);color:#64748b;display:block;margin-bottom:8px">Um welches Kind geht es?<select id="eg-kid" style="width:100%;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-karte);margin-top:2px">${kids.map(k=>`<option value="${k.spieler_id}">${esc((k.kader&&k.kader.name)||"Kind")}</option>`).join("")}</select></label>`:"";
   m.innerHTML=`<div style="background:#fff;color:#1a1a2e;max-width:380px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
     ${mdlHead("eg-modal","🗣️","Elterngespräch anfragen","","#475569")}
-    <div style="font-size:12px;color:#64748b;margin-bottom:12px">Der Trainer bekommt deinen Wunsch und meldet sich zur Terminabstimmung.</div>
+    <div style="font-size:var(--s-text);color:#64748b;margin-bottom:12px">Der Trainer bekommt deinen Wunsch und meldet sich zur Terminabstimmung.</div>
     ${kidSel}
-    <label style="font-size:11px;color:#64748b">Worum geht es? (optional)<textarea id="eg-thema" rows="3" placeholder="z. B. Entwicklung, Position, eine Frage …" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:14px;margin-top:2px;resize:vertical"></textarea></label>
+    <label style="font-size:var(--s-klein);color:#64748b">Worum geht es? (optional)<textarea id="eg-thema" rows="3" placeholder="z. B. Entwicklung, Position, eine Frage …" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-karte);margin-top:2px;resize:vertical"></textarea></label>
     <div style="display:flex;gap:8px;margin-top:12px">
-      <button onclick="elternGespraechSave(this)" style="flex:1;min-height:44px;border:none;border-radius:10px;background:#7c3aed;color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">Anfrage senden</button>
-      <button onclick="document.getElementById('eg-modal').remove()" style="min-height:44px;padding:0 16px;border:1.5px solid var(--rand-bedien);border-radius:10px;background:#fff;color:#334155;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer">Abbrechen</button>
+      <button onclick="elternGespraechSave(this)" style="flex:1;min-height:44px;border:none;border-radius:10px;background:#7c3aed;color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">Anfrage senden</button>
+      <button onclick="document.getElementById('eg-modal').remove()" style="min-height:44px;padding:0 16px;border:1.5px solid var(--rand-bedien);border-radius:10px;background:#fff;color:#334155;font-family:inherit;font-size:var(--s-karte);font-weight:700;cursor:pointer">Abbrechen</button>
     </div>
   </div>`;
   document.body.appendChild(m);
@@ -531,11 +735,11 @@ async function elternPollLoad(){
       const dstr=new Date(s.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"});
       const zstr=s.uhrzeit?" · "+String(s.uhrzeit).slice(0,5)+" Uhr":"";
       const decided=p.decided_slot_id===s.id;
-      if(p.status==="entschieden")return decided?`<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;margin-top:6px;font-size:13px;font-weight:700;color:#15803d">✅ Termin: ${dstr}${zstr}</div>`:"";
+      if(p.status==="entschieden")return decided?`<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;margin-top:6px;font-size:var(--s-text);font-weight:700;color:#15803d">✅ Termin: ${dstr}${zstr}</div>`:"";
       const mine=((bySlot[s.id]||[]).find(v=>v.voter===uid)||{}).status||null;
       const btns=["ja","vielleicht","nein"].map(st=>{const on=mine===st;const c=st==="ja"?{e:"👍",col:"#16a34a",l:"Passt"}:st==="vielleicht"?{e:"🤔",col:"#ca8a04",l:"Evtl."}:{e:"👎",col:"#dc2626",l:"Nein"};
-        return `<button onclick="epollVote(${s.id},'${st}')" style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;border:1.5px solid ${on?c.col:"var(--rand-bedien)"};background:${on?c.col:"#fff"};color:${on?"#fff":"#334155"};font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer">${c.e} ${c.l}</button>`;}).join("");
-      return `<div style="margin-top:8px"><div style="font-size:12.5px;font-weight:700;margin-bottom:4px">${dstr}${zstr}</div><div style="display:flex;gap:5px">${btns}</div></div>`;
+        return `<button onclick="epollVote(${s.id},'${st}')" style="flex:1;min-width:60px;padding:8px 4px;border-radius:9px;border:1.5px solid ${on?c.col:"var(--rand-bedien)"};background:${on?c.col:"#fff"};color:${on?"#fff":"#334155"};font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">${c.e} ${c.l}</button>`;}).join("");
+      return `<div style="margin-top:8px"><div style="font-size:var(--s-text);font-weight:700;margin-bottom:4px">${dstr}${zstr}</div><div style="display:flex;gap:5px">${btns}</div></div>`;
     }).join("");
     /* PO/Markus: „wenn ich beim ersten Termin eventuell auswähle, wird die Kachel sofort
        ausgeblendet. Das heißt ich kann keinen zweiten Termin ebenfalls mit eventuell
@@ -550,7 +754,7 @@ async function elternPollLoad(){
     const fortschritt=(!alleDa&&offen<ss.length)?` · noch ${offen} von ${ss.length} offen`:"";
     const card=`<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05);border:2px solid #7c3aed">
       <div style="font-weight:700;margin-bottom:2px">🗓️ ${esc(p.titel||"Elterngespräch")}</div>
-      <div style="font-size:12px;color:#64748b;margin-bottom:6px">${p.status==="entschieden"?"Der Termin steht:":`Sag zu jedem Vorschlag kurz Bescheid${fortschritt}`}</div>
+      <div style="font-size:var(--s-text);color:#64748b;margin-bottom:6px">${p.status==="entschieden"?"Der Termin steht:":`Sag zu jedem Vorschlag kurz Bescheid${fortschritt}`}</div>
       ${rows}
     </div>`;
     if(p.status!=="entschieden"&&!alleDa){todoHtml+=card;nochOffen+=offen;} else infoHtml+=card;
@@ -564,14 +768,6 @@ async function epollVote(slotId,status){
   // Die Rückmeldung sagt, ob man fertig ist – sonst sucht man nach der Karte, die noch dasteht.
   const offen=await elternPollLoad();
   toast(offen>0?`Gespeichert – noch ${offen} Vorschlag${offen===1?"":"e"} offen`:"Danke – alle Vorschläge beantwortet ✓");
-}
-// Trainer-Terminliste: die eingeteilten Büdchen-Familien je Heimspiel nachladen (plant bei Bedarf).
-async function buedchenTrainerFill(t){
-  const slot=document.getElementById("bd-tm-"+t.id); if(!slot)return;
-  let fam=[];
-  try{const r=await fetch(`${SB_URL}/rest/v1/rpc/buedchen_plan`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_termin:t.id})});if(r.ok)fam=await r.json();}catch(e){}
-  const namen=(fam&&fam.length)?fam.map(f=>esc(f.name)).join(" & "):"– noch offen –";
-  slot.innerHTML=`🍿 Büdchen: <b style="color:var(--text)">${namen}</b>`;
 }
 
 /* Fairplay-Quiz für die Eltern (Phase 18.3): fester Fragensatz rund um den Codex.
@@ -629,14 +825,14 @@ function fairplayQuizRender(){
   const order=q.opts.map((t,i)=>({t,i})).sort(()=>Math.random()-0.5);
   ov.innerHTML=`<div style="max-width:520px;margin:0 auto;padding:24px 18px 40px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <div style="font-size:13px;font-weight:800;opacity:.9">🤝 Fairplay-Quiz</div>
-      <button onclick="document.getElementById('fq-ov').remove()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer">✕</button>
+      <div style="font-size:var(--s-text);font-weight:800;opacity:.9">🤝 Fairplay-Quiz</div>
+      <button onclick="document.getElementById('fq-ov').remove()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:var(--s-teil);cursor:pointer">✕</button>
     </div>
     <div style="height:6px;background:rgba(255,255,255,.2);border-radius:3px;overflow:hidden;margin-bottom:16px"><div style="height:100%;width:${Math.round(FQ_IDX/FAIRPLAY_QUIZ.length*100)}%;background:#38bdf8;border-radius:3px;transition:width .3s"></div></div>
-    <div style="font-size:11px;opacity:.8;margin-bottom:6px">Frage ${FQ_IDX+1} von ${FAIRPLAY_QUIZ.length}</div>
-    <div style="font-size:18px;font-weight:800;line-height:1.4;margin-bottom:18px">${esc(q.q)}</div>
+    <div style="font-size:var(--s-klein);opacity:.8;margin-bottom:6px">Frage ${FQ_IDX+1} von ${FAIRPLAY_QUIZ.length}</div>
+    <div style="font-size:var(--s-teil);font-weight:800;line-height:1.4;margin-bottom:18px">${esc(q.q)}</div>
     <div id="fq-opts" style="display:flex;flex-direction:column;gap:10px">
-      ${order.map(o=>`<button onclick="fairplayQuizAnswer(${o.i},this)" style="text-align:left;padding:15px 16px;min-height:56px;border:2px solid rgba(255,255,255,.25);border-radius:14px;background:rgba(255,255,255,.08);color:#fff;font-family:inherit;font-size:14.5px;font-weight:600;cursor:pointer">${esc(o.t)}</button>`).join("")}
+      ${order.map(o=>`<button onclick="fairplayQuizAnswer(${o.i},this)" style="text-align:left;padding:15px 16px;min-height:56px;border:2px solid rgba(255,255,255,.25);border-radius:14px;background:rgba(255,255,255,.08);color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:600;cursor:pointer">${esc(o.t)}</button>`).join("")}
     </div>
     <div id="fq-feedback" style="margin-top:16px"></div>
   </div>`;
@@ -650,9 +846,9 @@ function fairplayQuizAnswer(i,btn){
   btn.style.background=richtig?"rgba(34,197,94,.25)":"rgba(239,68,68,.25)";
   try{navigator.vibrate&&navigator.vibrate(richtig?20:[40,40,40]);}catch(e){}
   document.getElementById("fq-feedback").innerHTML=`<div style="background:rgba(255,255,255,.1);border-radius:12px;padding:12px 14px">
-    <div style="font-size:14px;font-weight:800">${richtig?"👍 Genau!":"💡 Fast – so geht's fairer:"}</div>
-    <div style="font-size:13px;opacity:.95;margin-top:3px">${esc(q.fun)}</div>
-    <button onclick="fairplayQuizNext()" style="width:100%;min-height:48px;margin-top:12px;border:none;border-radius:12px;background:#fff;color:#0b2f4d;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer">${FQ_IDX<FAIRPLAY_QUIZ.length-1?"Weiter":"Fertig 🎉"}</button>
+    <div style="font-size:var(--s-karte);font-weight:800">${richtig?"👍 Genau!":"💡 Fast – so geht's fairer:"}</div>
+    <div style="font-size:var(--s-text);opacity:.95;margin-top:3px">${esc(q.fun)}</div>
+    <button onclick="fairplayQuizNext()" style="width:100%;min-height:48px;margin-top:12px;border:none;border-radius:12px;background:#fff;color:#0b2f4d;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">${FQ_IDX<FAIRPLAY_QUIZ.length-1?"Weiter":"Fertig 🎉"}</button>
   </div>`;
 }
 function fairplayQuizNext(){
@@ -677,15 +873,15 @@ async function fairplayQuizResult(){
   if(!document.getElementById("fq-ov"))return;
   try{navigator.vibrate&&navigator.vibrate([100,50,100,50,200]);}catch(e){}
   const federnZeile=neu>0
-    ? `<div style="font-size:17px;font-weight:900;color:#fde047">🪶 +${neu} Federn fürs Kind!</div>`
-    : (schonGehabt?`<div style="font-size:14px;opacity:.92">Die Federn hattet ihr schon – aber Üben schadet nie. 💚</div>`
-                  :`<div style="font-size:13px;opacity:.85">Melde dich an, damit die Federn beim Kind landen.</div>`);
+    ? `<div style="font-size:var(--s-teil);font-weight:900;color:#fde047">🪶 +${neu} Federn fürs Kind!</div>`
+    : (schonGehabt?`<div style="font-size:var(--s-karte);opacity:.92">Die Federn hattet ihr schon – aber Üben schadet nie. 💚</div>`
+                  :`<div style="font-size:var(--s-text);opacity:.85">Melde dich an, damit die Federn beim Kind landen.</div>`);
   ov.innerHTML=`<div style="max-width:520px;margin:0 auto;padding:40px 18px;text-align:center">
     <div style="font-size:56px">🏅</div>
-    <div style="font-size:24px;font-weight:900;margin-top:8px">${FQ_RICHTIG} von ${FAIRPLAY_QUIZ.length} richtig</div>
-    <div style="font-size:14px;opacity:.9;margin:8px 0 16px">Danke, dass ihr Fairplay vorlebt – die Kinder schauen es sich ab.</div>
+    <div style="font-size:var(--s-seite);font-weight:900;margin-top:8px">${FQ_RICHTIG} von ${FAIRPLAY_QUIZ.length} richtig</div>
+    <div style="font-size:var(--s-karte);opacity:.9;margin:8px 0 16px">Danke, dass ihr Fairplay vorlebt – die Kinder schauen es sich ab.</div>
     ${federnZeile}
-    <button onclick="document.getElementById('fq-ov').remove()" style="width:100%;min-height:52px;margin-top:22px;border:none;border-radius:14px;background:#fff;color:#0b2f4d;font-family:inherit;font-size:16px;font-weight:800;cursor:pointer">Schließen</button>
+    <button onclick="document.getElementById('fq-ov').remove()" style="width:100%;min-height:52px;margin-top:22px;border:none;border-radius:14px;background:#fff;color:#0b2f4d;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">Schließen</button>
   </div>`;
 }
 
@@ -717,13 +913,13 @@ async function fairplayCommitLoad(){
   if(committed){
     const d=new Date(committed);
     slot.innerHTML=`<div style="display:flex;align-items:center;gap:10px;padding:12px;border:1.5px solid #16a34a;border-radius:10px;background:#f0fdf4">
-      <span style="font-size:20px">✅</span>
-      <div style="font-size:12.5px;color:#15803d;font-weight:700">Verstanden und dabei${isNaN(d)?"":` · seit ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"})}`}<div style="font-weight:500;color:#166534;font-size:11.5px;margin-top:1px">Danke, dass du unseren Codex mitträgst! 💚</div></div>
+      <span style="font-size:var(--s-teil)">✅</span>
+      <div style="font-size:var(--s-text);color:#15803d;font-weight:700">Verstanden und dabei${isNaN(d)?"":` · seit ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"})}`}<div style="font-weight:500;color:#166534;font-size:var(--s-klein);margin-top:1px">Danke, dass du unseren Codex mitträgst! 💚</div></div>
     </div>`;
   }else{
     slot.innerHTML=`<label style="display:flex;align-items:flex-start;gap:10px;padding:12px;border:1.5px dashed #16a34a;border-radius:10px;background:#f0fdf4;cursor:pointer">
       <input type="checkbox" id="fp-commit-cb" onchange="fairplayCommitDo(this)" style="margin-top:2px;flex:none">
-      <span style="font-size:12.5px;color:#15803d">Ich habe den Codex gelesen – <b>verstanden und ich bin dabei.</b></span>
+      <span style="font-size:var(--s-text);color:#15803d">Ich habe den Codex gelesen – <b>verstanden und ich bin dabei.</b></span>
     </label>`;
   }
 }
@@ -766,11 +962,11 @@ async function fairplayEditOpen(){
 }
 function fairplayEditRender(){
   const c=document.getElementById("fpe-card"); if(!c)return;
-  const fld="padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const fld="padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
   c.innerHTML=`${mdlHead("fpe-modal","🤝","Fairplay-Codex bearbeiten","Diese Regeln sehen die Eltern · Reihenfolge mit den Pfeilen","#16a34a")}
     ${FP_EDIT.map((r,i)=>`<div style="border:var(--border-s);border-radius:10px;padding:10px;margin-bottom:8px">
       <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-        <input value="${esc(r.emo)}" oninput="FP_EDIT[${i}].emo=this.value" maxlength="4" style="width:52px;text-align:center;font-size:18px;${fld}">
+        <input value="${esc(r.emo)}" oninput="FP_EDIT[${i}].emo=this.value" maxlength="4" style="width:52px;text-align:center;font-size:var(--s-teil);${fld}">
         <input value="${esc(r.titel)}" oninput="FP_EDIT[${i}].titel=this.value" placeholder="Titel der Regel" style="flex:1;font-weight:700;${fld}">
       </div>
       <textarea oninput="FP_EDIT[${i}].text=this.value" rows="2" placeholder="Kurze Erklärung (optional)" style="width:100%;resize:vertical;${fld}">${esc(r.text)}</textarea>
@@ -842,8 +1038,8 @@ async function vereinbarungOpen(){
   const karte=(emo,titel,text,nr)=>`<div style="display:flex;gap:13px;align-items:flex-start;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:15px;margin-bottom:10px">
       <div style="font-size:27px;line-height:1">${esc(emo)}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:15.5px;font-weight:800">${nr?nr+". ":""}${esc(titel)}</div>
-        ${text?`<div style="font-size:13.5px;opacity:.95;line-height:1.6;margin-top:4px">${esc(text)}</div>`:""}
+        <div style="font-size:var(--s-karte);font-weight:800">${nr?nr+". ":""}${esc(titel)}</div>
+        ${text?`<div style="font-size:var(--s-text);opacity:.95;line-height:1.6;margin-top:4px">${esc(text)}</div>`:""}
       </div>
     </div>`;
   /* Auffang: Der Offline-Fallback ELTERN_LEITFADEN kennt keine Kategorien, und ein
@@ -854,31 +1050,31 @@ async function vereinbarungOpen(){
   const rubrikHtml=(r)=>{
     const items=teile.filter(x=>x.kat===r.k);
     if(!items.length&&r.k!=="rand")return "";
-    const verweis=r.k==="rand"?`<div style="font-size:12.5px;opacity:.9;line-height:1.6;background:rgba(255,255,255,.07);border-radius:12px;padding:12px;margin-bottom:10px">👆 Wie wir uns am Spielfeldrand verhalten, steht oben im <b>Fairplay-Codex</b>. Hier nur die praktischen Ergänzungen.</div>`:"";
+    const verweis=r.k==="rand"?`<div style="font-size:var(--s-text);opacity:.9;line-height:1.6;background:rgba(255,255,255,.07);border-radius:12px;padding:12px;margin-bottom:10px">👆 Wie wir uns am Spielfeldrand verhalten, steht oben im <b>Fairplay-Codex</b>. Hier nur die praktischen Ergänzungen.</div>`:"";
     return `<details style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:4px 14px;margin-bottom:10px">
-      <summary style="cursor:pointer;padding:12px 0;font-size:15.5px;font-weight:800;list-style:none">${r.emo} ${esc(r.t)} <span style="font-weight:600;opacity:.7;font-size:12.5px">· ${items.length}</span></summary>
+      <summary style="cursor:pointer;padding:12px 0;font-size:var(--s-karte);font-weight:800;list-style:none">${r.emo} ${esc(r.t)} <span style="font-weight:600;opacity:.7;font-size:var(--s-text)">· ${items.length}</span></summary>
       <div style="padding-bottom:10px">${verweis}${items.map(x=>karte(x.emo,x.t,x.d,0)).join("")}</div>
     </details>`;
   };
   ov.innerHTML=`<div style="max-width:560px;margin:0 auto;padding:24px 18px 40px">
     <div style="text-align:center;font-size:40px">🦅</div>
-    <div style="text-align:center;font-size:22px;font-weight:900;letter-spacing:.3px">Unsere Vereinbarung</div>
-    <div style="text-align:center;font-size:13px;opacity:.9;margin:6px 0 20px">SV Adler Dellbrück · U9 – wofür wir als Team stehen</div>
+    <div style="text-align:center;font-size:var(--s-seite);font-weight:900;letter-spacing:.3px">Unsere Vereinbarung</div>
+    <div style="text-align:center;font-size:var(--s-text);opacity:.9;margin:6px 0 20px">SV Adler Dellbrück · U9 – wofür wir als Team stehen</div>
 
-    <div style="font-size:12.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;opacity:.85;margin:6px 2px 10px">🤝 Unser Fairplay-Codex</div>
-    <div style="font-size:12.5px;opacity:.9;line-height:1.6;margin-bottom:12px">Die Haltung, auf die wir uns alle verlassen – kurz und klar.</div>
+    <div style="font-size:var(--s-text);font-weight:800;letter-spacing:.4px;text-transform:uppercase;opacity:.85;margin:6px 2px 10px">🤝 Unser Fairplay-Codex</div>
+    <div style="font-size:var(--s-text);opacity:.9;line-height:1.6;margin-bottom:12px">Die Haltung, auf die wir uns alle verlassen – kurz und klar.</div>
     ${regeln.map((r,i)=>karte(r.emo,r.t,r.d,i+1)).join("")}
     <div id="fp-commit-slot" style="margin:14px 0 6px"></div>
 
-    <div style="font-size:12.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;opacity:.85;margin:26px 2px 10px;border-top:1px solid rgba(255,255,255,.18);padding-top:20px">📖 ${esc(typeof LEITFADEN_NAME!=="undefined"?LEITFADEN_NAME:"Eltern-Leitfaden")}</div>
-    <div style="font-size:12.5px;opacity:.9;line-height:1.6;margin-bottom:12px">Das Praktische zum Nachschlagen – tippe auf eine Rubrik.</div>
+    <div style="font-size:var(--s-text);font-weight:800;letter-spacing:.4px;text-transform:uppercase;opacity:.85;margin:26px 2px 10px;border-top:1px solid rgba(255,255,255,.18);padding-top:20px">📖 ${esc(typeof LEITFADEN_NAME!=="undefined"?LEITFADEN_NAME:"Eltern-Leitfaden")}</div>
+    <div style="font-size:var(--s-text);opacity:.9;line-height:1.6;margin-bottom:12px">Das Praktische zum Nachschlagen – tippe auf eine Rubrik.</div>
     ${VB_RUBRIKEN.map(rubrikHtml).join("")}
     ${rest.length?`<details style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:4px 14px;margin-bottom:10px">
-      <summary style="cursor:pointer;padding:12px 0;font-size:15.5px;font-weight:800;list-style:none">📌 Weitere Punkte <span style="font-weight:600;opacity:.7;font-size:12.5px">· ${rest.length}</span></summary>
+      <summary style="cursor:pointer;padding:12px 0;font-size:var(--s-karte);font-weight:800;list-style:none">📌 Weitere Punkte <span style="font-weight:600;opacity:.7;font-size:var(--s-text)">· ${rest.length}</span></summary>
       <div style="padding-bottom:10px">${rest.map(x=>karte(x.emo,x.t,x.d,0)).join("")}</div>
     </details>`:""}
 
-    <button onclick="document.getElementById('vb-ov').remove()" style="width:100%;min-height:52px;margin-top:18px;border:none;border-radius:14px;background:#fff;color:#065f46;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer">Schließen</button>
+    <button onclick="document.getElementById('vb-ov').remove()" style="width:100%;min-height:52px;margin-top:18px;border:none;border-radius:14px;background:#fff;color:#065f46;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">Schließen</button>
   </div>`;
   if(typeof fairplayCommitLoad==="function")fairplayCommitLoad(); // Häkchen-Zusage nachladen
 }
@@ -889,8 +1085,8 @@ async function leitfadenEditOpen(){
   document.getElementById("lfe-modal")?.remove();
   LF_EDIT=[];
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/eltern_leitfaden?select=emoji,titel,text,kategorie&order=sort.asc,id.asc`,{headers:sbAuthHeaders()});
-    if(r.ok)LF_EDIT=(await r.json()).map(x=>({emo:x.emoji||"",titel:x.titel||"",text:x.text||"",kat:x.kategorie||"wir"}));
+    const r=await fetch(`${SB_URL}/rest/v1/eltern_leitfaden?select=emoji,titel,text,kategorie,aktiv&order=sort.asc,id.asc`,{headers:sbAuthHeaders()});
+    if(r.ok)LF_EDIT=(await r.json()).map(x=>({emo:x.emoji||"",titel:x.titel||"",text:x.text||"",kat:x.kategorie||"wir",aktiv:x.aktiv!==false}));   // v636: aktiv mitlesen
   }catch(e){}
   if(!LF_EDIT.length)LF_EDIT=ELTERN_LEITFADEN.map(r=>({emo:r.emo,titel:r.t,text:r.d,kat:r.kat||"wir"}));
   const modal=document.createElement("div");
@@ -905,15 +1101,15 @@ async function leitfadenEditOpen(){
 }
 function leitfadenEditRender(){
   const c=document.getElementById("lfe-card"); if(!c)return;
-  const fld="padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const fld="padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
   c.innerHTML=`${mdlHead("lfe-modal","📖",esc(LEITFADEN_NAME)+" bearbeiten","Diese Punkte sehen die Eltern · Reihenfolge mit den Pfeilen","#059669")}
     ${LF_EDIT.map((r,i)=>`<div style="border:var(--border-s);border-radius:10px;padding:10px;margin-bottom:8px">
       <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-        <input value="${esc(r.emo)}" oninput="LF_EDIT[${i}].emo=this.value" maxlength="4" style="width:52px;text-align:center;font-size:18px;${fld}">
+        <input value="${esc(r.emo)}" oninput="LF_EDIT[${i}].emo=this.value" maxlength="4" style="width:52px;text-align:center;font-size:var(--s-teil);${fld}">
         <input value="${esc(r.titel)}" oninput="LF_EDIT[${i}].titel=this.value" placeholder="Überschrift" style="flex:1;font-weight:700;${fld}">
       </div>
       <textarea oninput="LF_EDIT[${i}].text=this.value" rows="3" placeholder="Ausformulierter Text" style="width:100%;resize:vertical;${fld}">${esc(r.text)}</textarea>
-      <label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:var(--text2)">Rubrik
+      <label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:var(--s-text);color:var(--text2)">Rubrik
         <select onchange="LF_EDIT[${i}].kat=this.value" style="flex:1;${fld}">
           ${VB_RUBRIKEN.concat([{k:"codex",emo:"🤝",t:"Steht schon im Fairplay-Codex (oben)"}]).map(g=>`<option value="${g.k}" ${(r.kat||"wir")===g.k?"selected":""}>${g.emo} ${esc(g.t)}</option>`).join("")}
         </select>
@@ -934,7 +1130,7 @@ function leitfadenEditAdd(){ LF_EDIT.push({emo:"⭐",titel:"",text:"",kat:"wir"}
 function leitfadenEditDel(i){ LF_EDIT.splice(i,1); leitfadenEditRender(); }
 function leitfadenEditMove(i,dir){ const j=i+dir; if(j<0||j>=LF_EDIT.length)return; const t=LF_EDIT[i];LF_EDIT[i]=LF_EDIT[j];LF_EDIT[j]=t; leitfadenEditRender(); }
 async function leitfadenEditSave(btn){
-  const rows=LF_EDIT.map((r,i)=>({sort:i,emoji:(r.emo||"").trim()||null,titel:(r.titel||"").trim(),text:(r.text||"").trim()||null,kategorie:r.kat||"wir",aktiv:true}))
+  const rows=LF_EDIT.map((r,i)=>({sort:i,emoji:(r.emo||"").trim()||null,titel:(r.titel||"").trim(),text:(r.text||"").trim()||null,kategorie:r.kat||"wir",aktiv:r.aktiv!==false}))   // v636: ausgeblendete Punkte bleiben ausgeblendet (CLAUDE.md: alle Spalten zurückschreiben)
                     .filter(r=>r.titel);
   if(!rows.length){toast("Mindestens ein Punkt mit Überschrift","err");return;}
   if(btn)btn.disabled=true;
@@ -967,9 +1163,9 @@ function elternPlatzAmpelBanner(termin){
             :s==="ausweich"?"Heute auf den Ausweichplatz."
             :"Der Termin findet statt.";
   return `<div style="background:${bg};color:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 4px 16px ${bg}55">
-    <div style="font-size:18px;font-weight:900;display:flex;align-items:center;gap:8px">${a.emo} ${esc(a.lbl)}</div>
-    <div style="font-size:13.5px;opacity:.97;margin-top:4px">${text}${termin.platz_status_note?` <b>${esc(termin.platz_status_note)}</b>`:""}</div>
-    ${wann?`<div style="font-size:10.5px;opacity:.8;margin-top:6px">Aktualisiert ${wann} Uhr vom Trainer</div>`:""}
+    <div style="font-size:var(--s-teil);font-weight:900;display:flex;align-items:center;gap:8px">${a.emo} ${esc(a.lbl)}</div>
+    <div style="font-size:var(--s-text);opacity:.97;margin-top:4px">${text}${termin.platz_status_note?` <b>${esc(termin.platz_status_note)}</b>`:""}</div>
+    ${wann?`<div style="font-size:var(--s-klein);opacity:.8;margin-top:6px">Aktualisiert ${wann} Uhr vom Trainer</div>`:""}
   </div>`;
 }
 /* Kompakter Hinweis IN der Terminkarte – eine Zeile, kein zweiter Block. Leer im
@@ -981,9 +1177,9 @@ function elternPlatzHinweisHtml(termin){
   const text=s==="abgesagt"?"Der Termin fällt aus.":"Heute auf den Ausweichplatz.";
   const wann=termin.platz_status_at?new Date(termin.platz_status_at).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
   return `<div style="background:${bg};color:#fff;border-radius:10px;padding:10px 12px;margin:8px 0 2px">
-    <div style="font-size:14px;font-weight:900">${a.emo} ${esc(a.lbl)}</div>
-    <div style="font-size:12.5px;opacity:.97;margin-top:2px">${text}${termin.platz_status_note?` <b>${esc(termin.platz_status_note)}</b>`:""}</div>
-    ${wann?`<div style="font-size:10px;opacity:.85;margin-top:4px">Aktualisiert ${wann} Uhr vom Trainer</div>`:""}
+    <div style="font-size:var(--s-karte);font-weight:900">${a.emo} ${esc(a.lbl)}</div>
+    <div style="font-size:var(--s-text);opacity:.97;margin-top:2px">${text}${termin.platz_status_note?` <b>${esc(termin.platz_status_note)}</b>`:""}</div>
+    ${wann?`<div style="font-size:var(--s-klein);opacity:.85;margin-top:4px">Aktualisiert ${wann} Uhr vom Trainer</div>`:""}
   </div>`;
 }
 function elternPlatzRandFarbe(termin){
@@ -1013,12 +1209,12 @@ async function elternPauseLoad(termin,kids){
   if(!treffer.length){ box.innerHTML=""; return; }
   const m=(typeof TM_META!=="undefined"&&TM_META[termin.typ])||{label:termin.typ};
   box.innerHTML=treffer.map(t=>`<div style="background:#fffbeb;border:1.5px solid #fcd34d;border-radius:14px;padding:16px;margin-bottom:12px">
-    <div style="font-size:15px;font-weight:800;color:#92400e">😌 Diesmal pausiert ${esc(t.name)}</div>
-    <div style="font-size:12.5px;color:#92400e;line-height:1.55;margin-top:6px">
+    <div style="font-size:var(--s-karte);font-weight:800;color:#92400e">😌 Diesmal pausiert ${esc(t.name)}</div>
+    <div style="font-size:var(--s-text);color:#92400e;line-height:1.55;margin-top:6px">
       Beim ${esc(m.label)} am ${new Date(termin.datum+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})} ist der Kader voll –
       ${esc(t.name)} ist diesmal nicht dabei. Beim nächsten Mal ist er wieder eingeplant.
     </div>
-    ${t.grund?`<div style="margin-top:8px;background:#fff;border-radius:8px;padding:8px 10px;font-size:12.5px;color:#334155">${esc(t.grund)}<div style="font-size:10px;color:var(--text3);margin-top:3px">Nachricht vom Trainer</div></div>`:""}
+    ${t.grund?`<div style="margin-top:8px;background:#fff;border-radius:8px;padding:8px 10px;font-size:var(--s-text);color:#334155">${esc(t.grund)}<div style="font-size:var(--s-klein);color:var(--text3);margin-top:3px">Nachricht vom Trainer</div></div>`:""}
   </div>`).join("");
 }
 
@@ -1040,31 +1236,31 @@ async function elternTurnierplanLoad(termin){
   const erg={}; ergebnisse.forEach(x=>{ if(x.plan_id)erg[x.plan_id]=x; });
 
   const knoepfe=[];
-  if(termin.turnierplan_url)knoepfe.push(`<a href="${esc(termin.turnierplan_url)}" target="_blank" rel="noopener noreferrer" style="flex:1;min-width:130px;text-align:center;padding:9px;border:1.5px solid #1e3a8a;border-radius:10px;background:#fff;color:#1e3a8a;font-size:13px;font-weight:700;text-decoration:none">🔗 Turnierbaum</a>`);
-  if(termin.turnierplan_datei)knoepfe.push(`<button onclick="elternAushangOeffnen('${jsq(termin.turnierplan_datei)}')" style="flex:1;min-width:130px;padding:9px;border:1.5px solid #1e3a8a;border-radius:10px;background:#fff;color:#1e3a8a;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">📄 Aushang ansehen</button>`);
+  if(termin.turnierplan_url)knoepfe.push(`<a href="${esc(termin.turnierplan_url)}" target="_blank" rel="noopener noreferrer" style="flex:1;min-width:130px;text-align:center;padding:9px;border:1.5px solid #1e3a8a;border-radius:10px;background:#fff;color:#1e3a8a;font-size:var(--s-text);font-weight:700;text-decoration:none">🔗 Turnierbaum</a>`);
+  if(termin.turnierplan_datei)knoepfe.push(`<button onclick="elternAushangOeffnen('${jsq(termin.turnierplan_datei)}')" style="flex:1;min-width:130px;padding:9px;border:1.5px solid #1e3a8a;border-radius:10px;background:#fff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📄 Aushang ansehen</button>`);
 
   if(!plan.length&&!knoepfe.length){ box.innerHTML=""; return; }
 
   let liste="";
   if(plan.length){
     const gruppen={};
-    plan.forEach(p=>{ const t=teamLabelFromKey(p.datum)||" · Adler 1"; (gruppen[t]=gruppen[t]||[]).push(p); });
+    plan.forEach(p=>{ const t=(typeof teamLabelFromKey==="function"?teamLabelFromKey(p.datum):"")||" · Adler 1"; (gruppen[t]=gruppen[t]||[]).push(p); });   // v636: Welle-2-Funktion nur geprüft
     const mehrere=Object.keys(gruppen).length>1;
     liste=Object.entries(gruppen).map(([label,zeilen])=>
-      (mehrere?`<div style="font-size:11px;font-weight:700;color:#64748b;margin:8px 0 2px">${esc(label.replace(/^ · /,""))}</div>`:"")
+      (mehrere?`<div style="font-size:var(--s-klein);font-weight:700;color:#64748b;margin:8px 0 2px">${esc(label.replace(/^ · /,""))}</div>`:"")
       +zeilen.map(p=>{
         const e=erg[p.id];
         const farbe=e?(e.tore>e.gegentore?"#059669":e.tore===e.gegentore?"#b45309":"#dc2626"):"#94a3b8";
         return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid #f1f5f9">
-          <span style="font-size:11.5px;color:#64748b;width:44px">${p.uhrzeit?esc(p.uhrzeit):"--:--"}</span>
-          <span style="flex:1;font-size:12.5px">${esc(p.gegner||"?")}${p.feld?`<span style="color:var(--text3);font-size:10.5px"> · ${esc(p.feld)}</span>`:""}</span>
-          <span style="font-weight:800;font-size:13px;color:${farbe}">${e?`${e.tore}:${e.gegentore}`:"–"}</span>
+          <span style="font-size:var(--s-klein);color:#64748b;width:44px">${p.uhrzeit?esc(p.uhrzeit):"--:--"}</span>
+          <span style="flex:1;font-size:var(--s-text)">${esc(p.gegner||"?")}${p.feld?`<span style="color:var(--text3);font-size:var(--s-klein)"> · ${esc(p.feld)}</span>`:""}</span>
+          <span style="font-weight:800;font-size:var(--s-text);color:${farbe}">${e?`${e.tore}:${e.gegentore}`:"–"}</span>
         </div>`;
       }).join("")).join("");
   }
   box.innerHTML=`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
-    <div style="font-size:12.5px;font-weight:700;color:#1e3a8a;margin-bottom:2px">🏆 Turnierplan</div>
-    ${plan.length?`<div style="font-size:11px;color:var(--text3);margin-bottom:2px">Ergebnisse erscheinen, sobald der Trainer sie einträgt.</div>`:""}
+    <div style="font-size:var(--s-text);font-weight:700;color:#1e3a8a;margin-bottom:2px">🏆 Turnierplan</div>
+    ${plan.length?`<div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:2px">Ergebnisse erscheinen, sobald der Trainer sie einträgt.</div>`:""}
     ${liste}
     ${knoepfe.length?`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">${knoepfe.join("")}</div>`:""}
   </div>`;
@@ -1081,7 +1277,7 @@ async function elternAushangOeffnen(pfad){
 /* Fan-Link: Eltern geben den Spenden-Link an Oma, Opa & Fans weiter.
    Nur Weitergabe eines Links – die App fasst weiterhin kein Geld an. */
 function akShareBtnHtml(){
-  return `<button onclick="akShare()" style="width:100%;margin-top:8px;padding:10px;border:1.5px solid #0070ba;border-radius:10px;background:#fff;color:#0070ba;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">📤 Fan-Link teilen (Oma, Opa &amp; Fans)</button>`;
+  return `<button onclick="akShare()" style="width:100%;margin-top:8px;padding:10px;border:1.5px solid #0070ba;border-radius:10px;background:#fff;color:#0070ba;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📤 Fan-Link teilen (Oma, Opa &amp; Fans)</button>`;
 }
 function akShare(){
   const url=window._akLink; if(!url)return;
@@ -1137,12 +1333,12 @@ async function elternMatchGrussLoad(kids){
   (rows||[]).forEach(row=>{
     const st=row.stats||{}, total=Object.values(st).reduce((a,b)=>a+(+b||0),0);
     if(!total)return;
-    const chips=Object.keys(GRUSS_AKT).filter(a=>st[a]).map(a=>`<span style="display:inline-block;background:#f5f3ff;color:#5b21b6;border-radius:12px;padding:3px 9px;font-size:12px;font-weight:700;margin:2px 3px 2px 0">${GRUSS_AKT[a].e} ${st[a]}× ${GRUSS_AKT[a].l}</span>`).join("");
+    const chips=Object.keys(GRUSS_AKT).filter(a=>st[a]).map(a=>`<span style="display:inline-block;background:#f5f3ff;color:#5b21b6;border-radius:12px;padding:3px 9px;font-size:var(--s-text);font-weight:700;margin:2px 3px 2px 0">${GRUSS_AKT[a].e} ${st[a]}× ${GRUSS_AKT[a].l}</span>`).join("");
     cards.push(`<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 2px 10px rgba(0,0,0,.05);border-left:3px solid #7c3aed">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Rückblick · ${d}</div>
-      <div style="font-weight:800;font-size:15px;margin-top:2px">🦅 ${esc(row.name||"Kind")}${game.gegner?` gegen ${esc(game.gegner)}`:""}</div>
+      <div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Rückblick · ${d}</div>
+      <div style="font-weight:800;font-size:var(--s-karte);margin-top:2px">🦅 ${esc(row.name||"Kind")}${game.gegner?` gegen ${esc(game.gegner)}`:""}</div>
       <div style="margin-top:8px">${chips}</div>
-      <div style="font-size:12.5px;color:#15803d;font-weight:700;margin-top:8px">${grussLine(st)}</div>
+      <div style="font-size:var(--s-text);color:#15803d;font-weight:700;margin-top:8px">${grussLine(st)}</div>
     </div>`);
   });
   slot.innerHTML=cards.join("");
@@ -1199,39 +1395,108 @@ async function elternKannJetztLoad(kids){
                                       :{emo:"🎯", text:esc(String(row.text||"").trim())};
       if(!ist.text)return "";
       return `<div style="display:flex;gap:9px;align-items:flex-start;padding:7px 0">
-        <span style="font-size:17px;line-height:1.35;flex:none">${ist.emo}</span>
-        <span style="font-size:13.5px;line-height:1.45;color:#1a1a2e;overflow-wrap:anywhere">${ist.text}</span>
+        <span style="font-size:var(--s-teil);line-height:1.35;flex:none">${ist.emo}</span>
+        <span style="font-size:var(--s-text);line-height:1.45;color:#1a1a2e;overflow-wrap:anywhere">${ist.text}</span>
       </div>`;
     }).filter(Boolean).join("");
     if(!zeilen)continue;
     const kd=k.kader||{};
     karten.push(`<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 2px 10px rgba(0,0,0,.05);border-left:3px solid #16a34a">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Neu dazugekommen</div>
-      <div style="font-weight:800;font-size:15px;margin-top:2px">🌱 Das kann ${esc(kd.name||"dein Kind")} jetzt</div>
+      <div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Neu dazugekommen</div>
+      <div style="font-weight:800;font-size:var(--s-karte);margin-top:2px">🌱 Das kann ${esc(kd.name||"dein Kind")} jetzt</div>
       <div style="margin-top:6px">${zeilen}</div>
     </div>`);
   }
   slot.innerHTML=karten.join("");
 }
-// R7: DSGVO-Datenexport – sammelt die vom Elternteil lesbaren Daten des eigenen Kindes.
+/* v644 – AUSKUNFT UND LÖSCHEN PER KNOPF (Datenschutz-Paket, Entscheidung Charles 27.09.)
+   „Download der Daten, außer die Einschätzungen der Trainer“ und „Konto selbst, Kind per Antrag“.
+
+   Der Download kommt aus der RPC eltern_datenauszug: sie sammelt serverseitig alles zu Konto und
+   Kindern (Stammdaten, Rückmeldungen, Freigaben, Notfallkarte, Kontakte, Kabine, Federn,
+   Anwesenheit, Spielgeschehen …) – ohne Bewertungen, Entwicklungsziele und Trainernotizen. Vorher
+   waren es drei Tabellen aus dem Browser. Die Datei nennt, was fehlt und wo man es anfragt. */
 async function elternDataExport(btn){
   if(btn)btn.disabled=true;
-  const kids=window._elternKids||[];
-  const out={ exportiert_am:new Date().toISOString(), verein:"SV Adler Dellbrück · U9", kinder:[] };
-  for(const k of kids){
-    const kid={ name:(k.kader&&k.kader.name)||"", nr:(k.kader&&k.kader.nr)??null, spieler_id:k.spieler_id, rueckmeldungen:[], federn:[], sprachlob_anzahl:0 };
-    try{const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?spieler_id=eq.${k.spieler_id}&select=termin_id,status,kommentar,updated_at`,{headers:sbAuthHeaders()});if(r.ok)kid.rueckmeldungen=await r.json();}catch(e){}
-    try{const r=await fetch(`${SB_URL}/rest/v1/punkte_log?spieler_id=eq.${k.spieler_id}&select=delta,grund,quelle,created_at&order=created_at.asc`,{headers:sbAuthHeaders()});if(r.ok)kid.federn=await r.json();}catch(e){}
-    try{const r=await fetch(`${SB_URL}/rest/v1/kabine_lob?spieler_id=eq.${k.spieler_id}&select=created_at`,{headers:sbAuthHeaders()});if(r.ok)kid.sprachlob_anzahl=((await r.json())||[]).length;}catch(e){}
-    out.kinder.push(kid);
-  }
   try{
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/eltern_datenauszug`,{method:"POST",headers:{...sbAuthHeaders(),"Content-Type":"application/json"},body:"{}"});
+    if(sbCheck401(r))return;
+    if(!r.ok){toast("Download gerade nicht möglich – bitte später nochmal","err");return;}
+    const out=await r.json();
     const blob=new Blob([JSON.stringify(out,null,2)],{type:"application/json"});
     const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="adler-daten-"+new Date().toISOString().slice(0,10)+".json";
     document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
     toast("Daten heruntergeladen ✓");
-  }catch(e){toast("Download nicht möglich","err");}
-  if(btn)btn.disabled=false;
+  }catch(e){toast("Kein Netz – bitte später nochmal","err");}
+  finally{if(btn)btn.disabled=false;}
+}
+/* Löschen: ein Fenster, zwei Wege. Das eigene Konto löscht man sofort selbst (Edge Function
+   konto-loeschen). Die Daten des Kindes löscht das Trainerteam auf Antrag – der Antrag ist eine
+   Zeile in loeschantrag, der Trainer erledigt ihn mit einem Klick. Kein confirm(): im Eltern-
+   bereich eigene Fenster (CLAUDE.md); das Konto erst nach dem Häkchen. */
+async function elternLoeschenOpen(){
+  const kids=window._elternKids||[];
+  let antraege=[];
+  try{const r=await fetch(`${SB_URL}/rest/v1/loeschantrag?select=spieler_id,erstellt_am,erledigt_am&order=erstellt_am.desc`,{headers:sbAuthHeaders()});if(r.ok)antraege=await r.json();}catch(e){}
+  /* Nach einem Antrag wird das offene Fenster an Ort und Stelle neu gezeichnet – nicht entfernt
+     und neu angelegt: jedes Schließen geht über die Zurück-Taste (core.js), und Schließen plus
+     sofortiges Öffnen brachte deren Verlauf durcheinander. */
+  let m=document.getElementById("el-loeschen-modal");
+  const neu=!m;
+  if(neu){
+    m=document.createElement("div");m.id="el-loeschen-modal";
+    m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Daten löschen");
+    m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10041;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto";
+    m.onclick=e=>{if(e.target===m)m.remove();};
+  }
+  const knopf="width:100%;min-height:48px;border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer";
+  const kinderHtml=kids.map(k=>{
+    const name=esc((k.kader&&k.kader.name)||"Kind");
+    const offen=antraege.find(a=>Number(a.spieler_id)===Number(k.spieler_id)&&!a.erledigt_am);
+    return `<div style="border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;margin-bottom:8px">
+      <div style="font-weight:700;font-size:var(--s-text)">${name}</div>
+      ${offen?`<div role="status" style="font-size:var(--s-klein);color:#475569;margin-top:4px">✓ Löschantrag gestellt am ${new Date(offen.erstellt_am).toLocaleDateString("de-DE")} – das Trainerteam erledigt ihn.</div>`
+        :`<button onclick="elternLoeschantrag(${Number(k.spieler_id)},this)" style="${knopf};margin-top:8px;border:1.5px solid #b91c1c;background:#fff;color:#b91c1c">Daten von ${name} löschen lassen</button>`}
+    </div>`;}).join("");
+  m.innerHTML=`<div style="background:#fff;color:#1a1a2e;max-width:420px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4);margin:auto">
+    ${mdlHead("el-loeschen-modal","🗑️","Daten löschen","","#b91c1c")}
+    <div style="font-weight:800;font-size:var(--s-karte);margin:4px 0 4px">Daten eures Kindes</div>
+    <div style="font-size:var(--s-klein);color:#475569;line-height:1.5;margin-bottom:8px">Das Trainerteam löscht auf euren Antrag alles zu eurem Kind: Kaderplatz, Rückmeldungen, Freigaben, Notfallkarte, Kabine, Fotos, Einschätzungen. In Spielberichten und Plänen steht danach „Ehemaliges Kind“. Sicherungskopien überschreiben sich binnen zehn Wochen.</div>
+    ${kinderHtml||'<div style="font-size:var(--s-klein);color:#475569">Mit diesem Konto ist kein Kind verknüpft.</div>'}
+    <div style="font-weight:800;font-size:var(--s-karte);margin:14px 0 4px">Mein Konto</div>
+    <div style="font-size:var(--s-klein);color:#475569;line-height:1.5;margin-bottom:8px">Sofort und endgültig: Anmeldung, Benachrichtigungen, Einwilligungen, Helferdienste, Stimmungsbilder und die Verknüpfung zu euren Kindern. Die Daten der Kinder bleiben – dafür ist der Antrag oben da.</div>
+    <label style="display:flex;gap:10px;align-items:flex-start;font-size:var(--s-text);min-height:44px;cursor:pointer"><input type="checkbox" id="el-konto-ok" style="width:22px;height:22px;flex:none;margin-top:1px" onchange="document.getElementById('el-konto-los').disabled=!this.checked">Ich habe verstanden, dass mein Konto nicht wiederhergestellt werden kann.</label>
+    <button id="el-konto-los" disabled onclick="elternKontoLoeschen(this)" style="${knopf};margin-top:8px;border:none;background:#b91c1c;color:#fff">Mein Konto endgültig löschen</button>
+    <div id="el-loeschen-stand" role="status" aria-live="polite" style="font-size:var(--s-klein);color:#475569;margin-top:8px;min-height:1em"></div>
+    <button onclick="document.getElementById('el-loeschen-modal').remove()" style="${knopf};margin-top:6px;border:1.5px solid #cbd5e1;background:#fff;color:#334155">Schließen</button>
+  </div>`;
+  if(neu)document.body.appendChild(m);
+}
+async function elternLoeschantrag(spielerId,btn){
+  if(btn)btn.disabled=true;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/loeschantrag`,{method:"POST",headers:{...sbAuthHeaders(),"Prefer":"return=minimal"},
+      body:JSON.stringify({spieler_id:spielerId,antrag_email:sbEmail()})});   // antrag_von setzt die Datenbank (auth.uid())
+    if(sbCheck401(r))return;
+    if(!r.ok&&r.status!==409){toast(sbDeniedMsg(r,"Antrag nicht gesendet"),"err");return;}
+    toast("Löschantrag gesendet – das Trainerteam erledigt ihn ✓");
+  }catch(e){toast("Kein Netz – bitte später nochmal","err");return;}
+  finally{if(btn)btn.disabled=false;}
+  elternLoeschenOpen();
+}
+async function elternKontoLoeschen(btn){
+  if(!document.getElementById("el-konto-ok")?.checked)return;
+  const st=document.getElementById("el-loeschen-stand");
+  if(btn)btn.disabled=true;
+  if(st)st.textContent="Konto wird gelöscht …";
+  try{
+    const r=await fetch(`${SB_URL}/functions/v1/konto-loeschen`,{method:"POST",headers:{...sbAuthHeaders(),"Content-Type":"application/json"},body:JSON.stringify({bestaetigt:true})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){ if(st)st.textContent="Nicht gelöscht: "+(d.error||("Fehler "+r.status))+". Bitte später nochmal oder das Trainerteam ansprechen."; if(btn)btn.disabled=false; return; }
+  }catch(e){ if(st)st.textContent="Kein Netz – das Konto ist noch da. Bitte später nochmal."; if(btn)btn.disabled=false; return; }
+  document.getElementById("el-loeschen-modal")?.remove();
+  toast("Dein Konto ist gelöscht");
+  if(typeof elternPortalLogout==="function")elternPortalLogout();
 }
 // Konferenz: alle Teams eines Spieltags in EINEM Ticker (Key <datum>__konf).
 function elternTickerKonf(datum){
@@ -1291,15 +1556,15 @@ async function elternLiveKachelLoad(termin,eigenesTeam){
   slot.innerHTML=`<div class="el-live" style="background:linear-gradient(135deg,#dc2626,#b91c1c);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 4px 18px rgba(220,38,38,.28);color:#fff">
     <div style="display:flex;align-items:center;gap:8px">
       <span class="el-live-dot" aria-hidden="true" style="width:11px;height:11px;border-radius:50%;background:#fff;flex:none"></span>
-      <span style="font-size:11px;font-weight:900;letter-spacing:1.2px">LIVE</span>
-      <span style="font-size:12px;font-weight:700;opacity:.92">${esc(teamTxt)} · Liveticker läuft</span>
-      <button onclick="elternLiveWeg('${esc(datum)}')" aria-label="Hinweis für heute ausblenden" style="margin-left:auto;border:none;background:rgba(255,255,255,.18);color:#fff;width:32px;height:32px;border-radius:50%;font-size:17px;line-height:1;cursor:pointer;font-family:inherit;flex:none">×</button>
+      <span style="font-size:var(--s-klein);font-weight:900;letter-spacing:1.2px">LIVE</span>
+      <span style="font-size:var(--s-text);font-weight:700;opacity:.92">${esc(teamTxt)} · Liveticker läuft</span>
+      <button onclick="elternLiveWeg('${esc(datum)}')" aria-label="Hinweis für heute ausblenden" style="margin-left:auto;border:none;background:rgba(255,255,255,.18);color:#fff;width:32px;height:32px;border-radius:50%;font-size:var(--s-teil);line-height:1;cursor:pointer;font-family:inherit;flex:none">×</button>
     </div>
     <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-      <button onclick="location.href=location.pathname+'?ticker=${encodeURIComponent(key)}'" style="flex:1;min-width:150px;min-height:46px;border:none;border-radius:10px;background:#fff;color:#b91c1c;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">📣 Liveticker öffnen</button>
-      <button onclick="elternLiveTeilen('${esc(key)}')" style="min-height:46px;padding:0 16px;border:1.5px solid rgba(255,255,255,.85);border-radius:10px;background:transparent;color:#fff;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer">🔗 Teilen</button>
+      <button onclick="location.href=location.pathname+'?ticker=${encodeURIComponent(key)}'" style="flex:1;min-width:150px;min-height:46px;border:none;border-radius:10px;background:#fff;color:#b91c1c;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">📣 Liveticker öffnen</button>
+      <button onclick="elternLiveTeilen('${esc(key)}')" style="min-height:46px;padding:0 16px;border:1.5px solid rgba(255,255,255,.85);border-radius:10px;background:transparent;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">🔗 Teilen</button>
     </div>
-    <div style="font-size:10.5px;opacity:.85;margin-top:7px">Der Link funktioniert ohne Anmeldung – auch für Oma und Opa. Nach dem Spieltag zeigt er nur noch das Ergebnis.</div>
+    <div style="font-size:var(--s-klein);opacity:.85;margin-top:7px">Der Link funktioniert ohne Anmeldung – auch für Oma und Opa. Nach dem Spieltag zeigt er nur noch das Ergebnis.</div>
   </div>`;
 }
 // Container – die eigentliche Auswahl macht elternTickerLoad async (Team-Auto-Erkennung).
@@ -1329,10 +1594,10 @@ async function elternTickerLoad(termin){
   }
   // „Wer betreut mein Kind heute?" – die häufigste Elternfrage am Spieltag.
   const trainerZeile=(t)=>{ const tr=trainerJeTeam[t]||[];
-    return tr.length?`<div style="font-size:11.5px;color:#334155;margin-bottom:4px">🧢 Trainer: <b>${tr.map(elternEsc).join(", ")}</b></div>`:""; };
+    return tr.length?`<div style="font-size:var(--s-klein);color:#334155;margin-bottom:4px">🧢 Trainer: <b>${tr.map(x=>esc(x)).join(", ")}</b></div>`:""; };   // v636: esc (Welle 1) statt elternEsc (Welle 2)
   const wrap=(inner)=>`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
-    <div style="font-size:12.5px;font-weight:700;color:#dc2626;margin-bottom:2px">📣 Liveticker</div>${inner}</div>`;
-  const bigBtn=(label,onclick,filled)=>`<button onclick="${onclick}" style="width:100%;min-height:48px;margin-top:6px;padding:12px;border:1.5px solid #dc2626;border-radius:10px;background:${filled?"#dc2626":"#fff"};color:${filled?"#fff":"#dc2626"};font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">${label}</button>`;
+    <div style="font-size:var(--s-text);font-weight:700;color:#dc2626;margin-bottom:2px">📣 Liveticker</div>${inner}</div>`;
+  const bigBtn=(label,onclick,filled)=>`<button onclick="${onclick}" style="width:100%;min-height:48px;margin-top:6px;padding:12px;border:1.5px solid #dc2626;border-radius:10px;background:${filled?"#dc2626":"#fff"};color:${filled?"#fff":"#dc2626"};font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">${label}</button>`;
   const konfBtn = anzahl>1 ? bigBtn("👥 Konferenz · alle Teams live",`elternTickerKonf('${datum}')`,false) : "";
   /* Die Live-Kachel ganz oben braucht dasselbe Ergebnis der Team-Erkennung – hier ist es
      schon da, ein zweiter Durchlauf waere nur zusaetzliche Last auf dem Elterntelefon. */
@@ -1341,17 +1606,17 @@ async function elternTickerLoad(termin){
 
   if(myTeams.size===1){
     const t=[...myTeams][0];
-    slot.innerHTML=wrap(`<div style="font-size:11px;color:#64748b;margin-bottom:2px">Automatisch erkannt: dein Kind spielt heute in <b style="color:#dc2626">Adler ${t}</b>.</div>${trainerZeile(t)}
+    slot.innerHTML=wrap(`<div style="font-size:var(--s-klein);color:#64748b;margin-bottom:2px">Automatisch erkannt: dein Kind spielt heute in <b style="color:#dc2626">Adler ${t}</b>.</div>${trainerZeile(t)}
       ${bigBtn(`📣 Liveticker öffnen · Adler ${t}`,`elternTicker('${datum}',${t})`,true)}${konfBtn}`);
   }else if(myTeams.size>1){
     const btns=[...myTeams].sort().map(t=>trainerZeile(t)+bigBtn(`📣 Adler ${t} (dein Kind)`,`elternTicker('${datum}',${t})`,true)).join("");
-    slot.innerHTML=wrap(`<div style="font-size:11px;color:#64748b;margin-bottom:2px">Deine Kinder spielen in mehreren Teams:</div>${btns}${konfBtn}`);
+    slot.innerHTML=wrap(`<div style="font-size:var(--s-klein);color:#64748b;margin-bottom:2px">Deine Kinder spielen in mehreren Teams:</div>${btns}${konfBtn}`);
   }else if(anzahl>1){
     // Teams stehen (mehrere), aber das eigene Kind ist (noch) keinem zugeordnet.
-    slot.innerHTML=wrap(`<div style="font-size:11px;color:var(--text3);margin-bottom:2px">Die Team-Einteilung deines Kindes steht noch nicht fest. Sieh einfach alle Teams gemeinsam:</div>${bigBtn("👥 Konferenz · alle Teams live",`elternTickerKonf('${datum}')`,true)}`);
+    slot.innerHTML=wrap(`<div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:2px">Die Team-Einteilung deines Kindes steht noch nicht fest. Sieh einfach alle Teams gemeinsam:</div>${bigBtn("👥 Konferenz · alle Teams live",`elternTickerKonf('${datum}')`,true)}`);
   }else{
     // Nur ein Team an diesem Spieltag – kein Auswahl-/Konferenzbedarf.
-    slot.innerHTML=wrap(`${trainerZeile(1)}<div style="font-size:11px;color:var(--text3);margin-bottom:2px">Nicht dabei? Hier gibt's Tore und Spielstand live.</div>${bigBtn("📣 Liveticker öffnen",`elternTicker('${datum}',1)`,true)}`);
+    slot.innerHTML=wrap(`${trainerZeile(1)}<div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:2px">Nicht dabei? Hier gibt's Tore und Spielstand live.</div>${bigBtn("📣 Liveticker öffnen",`elternTicker('${datum}',1)`,true)}`);
   }
 }
 

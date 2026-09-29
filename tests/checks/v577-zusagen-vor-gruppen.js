@@ -20,7 +20,11 @@
       Zwei gleichzeitige Läufe lasen beide den noch leeren Serverstand, und der später
       zurückkommende überschrieb die inzwischen gebildete Einteilung – „Gruppen gebildet,
       Gruppen weg“. Zwei Riegel: ein geteilter Lauf je Termin, und ein leerer Serverstand
-      löscht nie eine frische Einteilung im Speicher. */
+      löscht nie eine frische Einteilung im Speicher.
+   v666 PO: „Einmal 4 Spieler, in der Übersicht keiner und bei Diese Woche 14.“ Ein Training gilt
+   als zugesagt (kein Opt-out) – der Pool vor der Anwesenheit ist seither „alle außer Absagen“
+   (Quelle „vorab“). Der Wettlauf bleibt derselbe, nur mit den Absagen: zehn Zusagen, fünf
+   Absagen, gebildet wird aus den zehn, die nicht abgesagt haben. */
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
   const datum = h.tagePlus(2), anderes = h.tagePlus(9);
@@ -39,7 +43,7 @@ module.exports = async function (h) {
       trainingsformen: [{ id: 9001, name: "Warm up Adler", kat: "aufwaermen", kurz: "x", dauer: "15", custom: true },
                         { id: 9002, name: "4gg2 Ballbesitz", kat: "passspiel", kurz: "x", dauer: "11", custom: true }],
       /* Zehn Zusagen – die Spieler-IDs sind die Reihenfolge des Prüfkaders. */
-      rueckmeldungen: (u) => zusagen.map((n, i) => ({ spieler_id: i + 1, status: "zugesagt" })),
+      rueckmeldungen: (u) => h.KINDER.slice(0, 15).map((n, i) => ({ spieler_id: i + 1, status: i < 10 ? "zugesagt" : "abgesagt" })),
       trainingsvorlagen: [],
       /* Die Attrappe merkt sich, was die App schreibt – sonst holt `tpPlanRestore` einen
          leeren Plan zurück und der eben übernommene wäre wieder weg. */
@@ -128,7 +132,7 @@ module.exports = async function (h) {
   if (r.kader !== 15) probleme.push(`${r.kader} aktive Kinder im Kader statt 15`);
   if (r.rsvpWaehrend !== null) probleme.push("Der Wettlauf tritt gar nicht ein – TP_KIND_RSVP war schon gesetzt");
   // a)
-  if (r.poolQuelle !== "zusagen") probleme.push(`Der Pool kommt aus „${r.poolQuelle}“ statt aus den Zusagen`);
+  if (r.poolQuelle !== "vorab") probleme.push(`Der Pool kommt aus „${r.poolQuelle}“ statt „vorab“ (alle außer Absagen)`);
   if (r.poolGroesse !== 10) probleme.push(`${r.poolGroesse} Kinder im Pool statt der zehn Zusagen`);
   if (r.gruppen.length !== 2) probleme.push(`${r.gruppen.length} Gruppen (${r.gruppen.join("/")}) statt zwei – gerechnet wurde mit dem Kader, nicht mit den Zusagen`);
   if (r.gruppen.reduce((a, b) => a + b, 0) !== 10) probleme.push(`${r.gruppen.reduce((a, b) => a + b, 0)} Kinder eingeteilt statt zehn`);
