@@ -1157,3 +1157,6 @@ details.el-sect>summary{text-transform:none;letter-spacing:0;color:var(--text)}
    das Brett statt der Zwischenseite sieht. */
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tf-ki-knoepfe .tf-ki-los{color:#c4b5fd;border-color:#a78bfa}}
 :root[data-theme="dark"] .tf-ki-knoepfe .tf-ki-los{color:#c4b5fd;border-color:#a78bfa}
+/* v683: ausgeblendete Filterzeile und Rauten-Besetzung im Kader (renderKader setzt hidden) */
+.frow[hidden],.kader-raute[hidden]{display:none!important}
+.kader-schlank td:last-child{text-align:right;width:1%}

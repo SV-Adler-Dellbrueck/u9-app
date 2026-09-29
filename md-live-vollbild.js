@@ -398,13 +398,13 @@ function teamStatsRender(){
   if(!wrap)return;
   // Letzte Einheit + Ø-Nachbewertung
   const evalDates=Object.keys(EVAL_DATA).sort().reverse();
-  let evalTile='<div style="font-size:11px;color:var(--text3)">Noch keine Einheit bewertet</div>';
+  let evalTile='<div style="font-size:var(--s-text);color:var(--text2)">Noch keine Einheit bewertet</div>';
   if(evalDates.length){
     const d=evalDates[0];const entries=(EVAL_DATA[d]||[]).filter(e=>!e.skipped); // Übersprungene zählen nicht mit
     let sum=0,cnt=0;
     entries.forEach(e=>Object.entries(e).forEach(([k,v])=>{if(typeof v==="number"&&k!=="formIdx"){sum+=v;cnt++;}}));
     const avg=cnt?(sum/cnt).toFixed(1):"–";
-    evalTile=`<div style="font-size:16px;font-weight:700;color:var(--blue-text)">${avg} ★</div><div style="font-size:10px;color:var(--text2)">${new Date(d).toLocaleDateString("de-DE")}</div>`;
+    evalTile=`<div style="font-size:var(--s-teil);font-weight:800;color:var(--blue-text)">${avg} ★</div><div style="font-size:var(--s-klein);color:var(--text2)">${new Date(d).toLocaleDateString("de-DE")}</div>`;
   }
   // Anwesenheitsquote letzte 4 Termine
   const awDates=Object.keys(AW_DATA).sort().reverse().slice(0,4);
@@ -422,10 +422,10 @@ function teamStatsRender(){
   /* v472: „Bewertung ueberfaellig" stand hier zum dritten Mal (Home-Kachel „15 Bewertungen
      faellig", Team-Menue „15 ueberfaellig", und diese Karte). Der Nag bleibt dort, wo man
      ihn erledigt – im Team-Menue –, die Kachel zeigt ihn als Hinweis. Hier ist er raus. */
-  const tile=(title,body)=>`<div class="card" style="padding:10px 12px"><div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px">${title}</div>${body}</div>`;
+  const tile=(title,body)=>`<div class="card" style="padding:10px 12px"><div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:4px">${title}</div>${body}</div>`;
   wrap.innerHTML=
     tile("Letzte Einheit",evalTile)+
-    tile("Anwesenheit (letzte 4)",`<div style="font-size:16px;font-weight:700;color:var(--teal)">${quote}</div><div style="font-size:10px;color:var(--text2)">${awDates.length} Termin${awDates.length!==1?"e":""}</div>`);
+    tile("Anwesenheit (letzte 4)",`<div style="font-size:var(--s-teil);font-weight:800;color:var(--teal)">${quote}</div><div style="font-size:var(--s-klein);color:var(--text2)">${awDates.length} Termin${awDates.length!==1?"e":""}</div>`);
 }
 
 // L5: Daten-Backup – alle sechs Tabellen als eine JSON-Datei

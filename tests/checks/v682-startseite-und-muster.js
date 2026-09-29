@@ -66,7 +66,8 @@ module.exports = async function (h) {
   // c)
   for (const k in r.titel) {
     const x = r.titel[k], a = x.erste.toLowerCase(), b = x.titel.toLowerCase();
-    if (k === "team") { if (!/team-übersicht/i.test(x.erste)) probleme.push(`c) Pinnwand: erste Überschrift „${x.erste}“ – „Team-Übersicht“ ist ein Abschnitt und muss bleiben`); continue; }
+    // v683: die Pinnwand beginnt mit „Team-Notizen“ – ein Abschnitt, kein Titel, und bleibt
+    if (k === "team") { if (!/team-notizen/i.test(x.erste)) probleme.push(`c) Pinnwand: erste Überschrift „${x.erste}“ – „Team-Notizen“ ist ein Abschnitt und muss bleiben`); continue; }
     if (a && (a === b || a === "trainer" + b)) probleme.push(`c) ${k}: „${x.erste}“ wiederholt den Seitennamen`);
   }
   // d)
