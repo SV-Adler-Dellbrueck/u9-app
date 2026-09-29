@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v669 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v670 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -126,6 +126,7 @@ Zugang mit E-Mail und Passwort, angelegt über die Einladungskarte des Kindes. W
 | **Termin-Detail** | Wetter, Adresse mit Route, Fahrgemeinschaft, Mitbringliste bei Events (nur wenn der Trainer sie am Termin einschaltet), Treffzeit. Abgesagte Termine sind deutlich markiert. Seit v637 bei Training, Spiel und Turnier „Was muss mit?“ (Schuhe passend zum eingetragenen Platz) mit direktem Weg zum Trainerteam. | Die üblichen Rückfragen („Wo ist das?“, „Wann treffen wir uns?“) beantworten sich selbst. |
 | **„Wer hilft mit?“** | Helfer-Aufgaben je Termin mit Uhrzeit und Beschreibung: Aufbau, Fotos, Live-Ticker, Betreuung in Pausen, Tore beim Training. Am Tag selbst entscheidbar. Beim Auswärtsspiel entfällt der Aufbau – dort baut der Gastgeber auf. | Hilfe verteilt sich auf viele Schultern, ohne Verpflichtung im Voraus. |
 | **Team-Ansagen** | Wichtige Nachrichten vom Trainerteam, mit „Gelesen“ bestätigen. | Wichtiges geht in keiner Chat-Gruppe unter. |
+| **Adler-Rufe (Team-Chat)** | Seit v670 der Chat für Eltern und Trainerteam (Kinder ohne Zugang): Räume, Antworten mit Zitat, Reaktionen, bis zu drei fixierte Rufe mit Ablauf, @alle für Trainer und Moderatoren, Bearbeiten, Suche; melden, stummschalten, archivieren statt löschen (Archiv nur Trainer). Moderatoren aus der Elternschaft legt das Trainerteam fest. Push folgt. | Absprachen im Team laufen in der App statt in privaten Messenger-Gruppen – mit Regeln, die das Team selbst setzt. |
 | **Liveticker** | Rote LIVE-Kachel, sobald der Ticker läuft. Teilbar per Link ohne Anmeldung. Nach drei Tagen nur noch der Endstand. | Großeltern und Fans sind dabei – ohne Zugang zur App. |
 | **Rückblick** | Zwei Wochen nach Spiel oder Turnier: was das eigene Kind an dem Tag gemacht hat (Einsätze, Rolle, Tore). Danach nur noch in der Saison-Statistik. | Gesprächsstoff am Abendbrottisch, kindgerecht und ohne Noten. |
 | **Sammelkarte, Technik-Abzeichen, Fan-Fakten, Saison-Statistik** | Die Adler-Karte des Kindes mit Federn; die Saison-Statistik als Bild zum Ansehen und auf Wunsch Teilen; Technik-Abzeichen werden zuhause abgehakt; kleine Fakten zum Kind (Spitzname, Lieblingsverein, Schuhgröße). Dort steht auch, was das Kind vom Verein erhalten hat – zum Nachlesen, nicht zum Ändern. | Verbindet Zuhause und Training. Eltern üben mit, ohne Druck, und wissen, was sie haben. |

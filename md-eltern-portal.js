@@ -964,6 +964,13 @@ async function elternDashLoad(){
   // Akzent links in Tönen der Kategorie-Farbe). noClose=true lässt das Fenster offen (z. B. Export).
   const elRow=(emo,label,d,onclick,col,noClose)=>`<button onclick="${noClose?"":"elternCatClose();"}${onclick}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border:1px solid var(--rand-bedien);border-left:4px solid ${col};border-radius:12px;padding:13px;margin-bottom:8px;font-family:inherit;cursor:pointer"><span style="font-size:var(--s-teil);line-height:1">${emo}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-text);font-weight:700;color:#0f172a">${label}</span><span style="display:block;font-size:var(--s-klein);color:#64748b;margin-top:1px">${d}</span></span><span style="font-size:var(--s-karte);color:var(--text3)">›</span></button>`;
   const catBtn=(id,emoji,title,desc,grad)=>`<button onclick="elternCatOpen('${id}')" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:none;border-radius:14px;background:${grad};color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.08)"><span style="font-size:var(--s-seite);line-height:1">${emoji}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">${title}</span><span style="display:block;font-size:var(--s-klein);opacity:.92;margin-top:1px">${desc}</span></span><span style="font-size:var(--s-teil);opacity:.85">›</span></button>`;
+  /* v670: Adler-Rufe – der Team-Chat. Eigener großer Knopf über „Mehr“, mit der Zahl neuer Rufe. */
+  html+=`<button type="button" id="rufe-einstieg" onclick="if(typeof rufeOpen==='function')rufeOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin:4px 0 8px;border:none;border-radius:14px;background:linear-gradient(135deg,#1e3a8a,#1d4ed8);color:#fff;font-family:inherit;cursor:pointer;min-height:56px">
+    <span style="font-size:var(--s-seite);line-height:1" aria-hidden="true">💬</span>
+    <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Adler-Rufe</span><span style="display:block;font-size:var(--s-klein);opacity:.92;margin-top:1px">Der Team-Chat für Eltern und Trainerteam</span></span>
+    <span class="rufe-badge" style="display:none;min-width:24px;height:24px;padding:0 6px;border-radius:999px;background:#dc2626;color:#fff;font-size:var(--s-klein);font-weight:800;align-items:center;justify-content:center"></span>
+    <span style="font-size:var(--s-teil);opacity:.85" aria-hidden="true">›</span>
+  </button>`;
   html+=sec("Mehr");
   // v637: Der Weg zum Trainerteam steht zuerst und heißt so, wie Eltern danach suchen.
   html+=catBtn('kontakt','🗣️','Trainerteam kontaktieren','Frage oder Elterngespräch, Benachrichtigungen','linear-gradient(135deg,#475569,#334155)');
@@ -1067,6 +1074,7 @@ async function elternDashLoad(){
   elternAnsagenLoad();                         // H1: Trainer-Ansagen mit Gelesen-Status
   elternTeamAnsprechLoad();                    // v663: Elternbeirat, Kasse, Beitrag
   if(typeof elternKasseRolleLoad==="function")elternKasseRolleLoad();      // v664: Kasse verwalten
+  if(typeof rufeBadgeLoad==="function")rufeBadgeLoad();                    // v670: neue Adler-Rufe
   if(typeof elternKasseStandLoad==="function")elternKasseStandLoad(kids);  // v664: bezahlt/offen je eigenes Kind
   elternGenesungLoad(kids);                    // I-A: Genesungsgrüße für pausierte Teamkinder
   elternHelferTodoLoad();                      // J3: heute als Helfer eingetragen? Erinnerung mit Direktlink
