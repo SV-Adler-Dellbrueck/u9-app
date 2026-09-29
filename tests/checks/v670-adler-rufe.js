@@ -58,7 +58,7 @@ module.exports = async function (h) {
       text: m.querySelector("#rufe-liste").textContent.replace(/\s+/g, " "),
       img: m.querySelectorAll("#rufe-liste img").length, zitat: m.querySelectorAll(".rf-zitat").length,
       reakt: [...m.querySelectorAll(".rf-reakt")].map(x => x.textContent.trim() + "/" + x.getAttribute("aria-pressed")),
-      fix: (m.querySelector("#rufe-fix") || {}).textContent || "", raumChips: getComputedStyle(m.querySelector("#rufe-raeume")).display,
+      fix: (m.querySelector("#rufe-fix") || {}).textContent || "", raumChips: [...m.querySelectorAll("#rufe-raeume button")].map(b => b.textContent.trim()).join(" | "),
       senden: Math.round(m.querySelector("#rufe-senden").getBoundingClientRect().height) };
     // c) Antworten auf Ruf 3 und senden – @alle als Elternteil zählt nicht
     rufeAntworten(3);
@@ -87,7 +87,9 @@ module.exports = async function (h) {
   if (r.b.zitat !== 1) probleme.push(`b) ${r.b.zitat} Zitate`);
   if (!r.b.reakt.includes("👍 2/true")) probleme.push(`b) Reaktionen: ${JSON.stringify(r.b.reakt)}`);
   if (!/Training fällt aus/.test(r.b.fix)) probleme.push("b) Fixierter Ruf steht nicht oben");
-  if (r.b.raumChips !== "none") probleme.push("b) Raum-Leiste bei einem Raum für Eltern sichtbar");
+  /* v674: Die Leiste steht für Eltern jetzt immer da – dort sitzt „🔒 Trainerteam“. Bei einem offenen
+     Raum trägt sie genau diesen und den privaten Knopf, kein „＋ Raum“. */
+  if (r.b.raumChips !== "📣 Allgemein | 🔒 Trainerteam") probleme.push(`b) Raum-Leiste für Eltern: ${r.b.raumChips}`);
   if (r.b.senden < 48) probleme.push(`b) Senden-Knopf ${r.b.senden} px`);
   const senden = post.find(x => /^POST rufe_nachricht /.test(x)) || "";
   if (!/"raum_id":5/.test(senden) || !/"antwort_auf":3/.test(senden) || !/"an_alle":false/.test(senden)) probleme.push(`c) Senden: ${senden}`);

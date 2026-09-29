@@ -5,6 +5,9 @@
    Moderation: melden, stummschalten, archivieren statt löschen – archivierte Rufe sehen nur
    Trainer. Kinder haben keinen Zugang; Name und Rolle setzt die Datenbank, nicht das Gerät.
    Push seit v673: Edge Function rufe-push (alle 5 Minuten), Entscheidung in rufe_push_faellig().
+   Stufe 2 seit v674: ein privater Raum je Familie mit dem Trainerteam (🔒, Moderatoren aus der
+   Elternschaft lesen dort nicht mit) und Abstimmungen – namentlich oder anonym, eine oder mehrere
+   Antworten, auf Wunsch mit Schluss. Anlegen, abstimmen, beenden nur über RPC.
 
    Datenweg: Tabellen rufe_* mit RLS (Migration 20260929_v670_adler_rufe.sql). Bearbeiten und
    Archivieren nur über RPC. Keine Systemdialoge – alle Rückfragen sind eigene Fenster. */
@@ -38,7 +41,8 @@ async function rufeOpen(raumId){ try{ return await _rufeOpen(raumId); }catch(e){
 async function _rufeOpen(raumId){
   if(typeof sbToken==="function"&&!sbToken()){ toast("Bitte zuerst anmelden","err"); return; }
   document.getElementById("rufe-modal")?.remove();
-  _rf={raeume:[],raum:null,liste:[],reakt:[],fix:[],mod:false,uid:_rfUid(),antwort:null,suche:"",timer:null,letzte:null};
+  _rf={raeume:[],raum:null,liste:[],reakt:[],fix:[],mod:false,uid:_rfUid(),antwort:null,suche:"",timer:null,letzte:null,
+       trainer:/\/trainer\//.test(location.pathname),umf:{},stand:{},unge:{},fam:{}};
   const m=document.createElement("div"); m.id="rufe-modal";
   m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Adler-Rufe");
   m.style.cssText="position:fixed;inset:0;background:var(--bg,#f1f5f9);display:flex;flex-direction:column";
@@ -61,6 +65,7 @@ async function _rufeOpen(raumId){
     <div style="flex:none;background:var(--surface);border-top:1px solid var(--surface2);padding:8px 12px calc(8px + env(safe-area-inset-bottom))">
       <div id="rufe-antwort" style="display:none"></div>
       <div style="display:flex;gap:8px;align-items:flex-end">
+        <button type="button" id="rufe-umfrage-knopf" onclick="rufeUmfrageNeu()" aria-label="Abstimmung starten" title="Abstimmung starten" style="flex:none;width:48px;min-height:48px;border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface2);color:var(--text);font-size:var(--s-teil);cursor:pointer">📊</button>
         <label for="rufe-text" style="position:absolute;left:-9999px">Ruf schreiben</label>
         <textarea id="rufe-text" rows="1" maxlength="2000" placeholder="Ruf schreiben …" oninput="rufeTextWachsen(this)" style="flex:1;min-height:48px;max-height:140px;resize:none;box-sizing:border-box;padding:12px;border:1px solid var(--rand-bedien);border-radius:14px;font:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)"></textarea>
         <button type="button" id="rufe-senden" onclick="rufeSenden()" style="min-width:56px;min-height:48px;border:none;border-radius:14px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">Senden</button>
@@ -68,15 +73,17 @@ async function _rufeOpen(raumId){
     </div>`;
   document.body.appendChild(m);
   const [raeume,modR]=await Promise.all([
-    _rfGet("rufe_raum?archiviert=eq.false&select=id,name,emoji,sort&order=sort.asc,id.asc"),
+    _rfRaeumeHolen(),
     _rfRpc("is_rufe_mod").then(r=>r.ok?r.json():false).catch(()=>false)
   ]);
   if(!_rf)return;
   _rf.raeume=raeume; _rf.mod=modR===true;
-  _rf.raum=(raeume.find(r=>String(r.id)===String(raumId))||raeume[0]||{}).id||null;
+  _rf.raum=(raeume.find(r=>String(r.id)===String(raumId))||raeume.find(r=>!r.familie_kind)||raeume[0]||{}).id||null;
+  await _rfFamilienLaden();
   if(!_rf.raum){ document.getElementById("rufe-liste").innerHTML=`<div style="color:var(--text2);padding:12px 0">Die Adler-Rufe sind für Eltern mit Zugang und das Trainerteam.</div>`; return; }
   rufeRaeumeRender();
   rufeGlockeLaden();
+  _rfUngelesenLaden();
   await rufeLaden(true);
   _rf.timer=setInterval(()=>{ if(!document.getElementById("rufe-modal")){ rufeClose(); return; } if(!document.hidden)rufeLaden(false); },RUFE_TAKT);
 }
@@ -87,19 +94,88 @@ function rufeClose(){
   _rf=null;
   if(typeof rufeBadgeLoad==="function")rufeBadgeLoad();
 }
+function _rfRaeumeHolen(){ return _rfGet("rufe_raum?archiviert=eq.false&select=id,name,emoji,sort,familie_kind&order=sort.asc,id.asc"); }
+/* v674: Familien für das Trainerteam – Kinder, die sich ein Elternkonto teilen, sind eine Familie.
+   Schlüssel ist die kleinste Kind-Kennung (wie rufe_familie in der Datenbank). */
+async function _rfFamilienLaden(){
+  if(!_rf||!_rf.trainer)return;
+  const [ek,kader]=await Promise.all([_rfGet("eltern_kinder?select=email,spieler_id"),_rfGet("kader?select=id,name")]);
+  if(!_rf)return;
+  const name={}; kader.forEach(k=>name[k.id]=k.name);
+  const kinderJeMail={}; ek.forEach(x=>{ const m=(x.email||"").toLowerCase(); (kinderJeMail[m]=kinderJeMail[m]||new Set()).add(x.spieler_id); });
+  const fam={};
+  ek.forEach(x=>{
+    const geschw=new Set(); ek.filter(y=>y.spieler_id===x.spieler_id).forEach(y=>(kinderJeMail[(y.email||"").toLowerCase()]||[]).forEach(k=>geschw.add(k)));
+    const key=Math.min(...geschw); fam[key]=fam[key]||new Set(); geschw.forEach(k=>fam[key].add(k));
+  });
+  _rf.fam={}; Object.keys(fam).forEach(k=>{ _rf.fam[k]=[...fam[k]].map(id=>name[id]).filter(Boolean).sort((a,b)=>a.localeCompare(b,"de")).join(" & ")||"Familie"; });
+}
+function _rfRaumName(r){
+  if(!r)return "";
+  if(r.familie_kind)return "🔒 "+(_rf&&_rf.trainer?(_rf.fam[r.familie_kind]||"Familie"):"Trainerteam");
+  return (r.emoji||"💬")+" "+r.name;
+}
+function _rfAktRaum(){ return _rf?_rf.raeume.find(r=>r.id===_rf.raum)||null:null; }
 function rufeTextWachsen(t){ t.style.height="auto"; t.style.height=Math.min(140,t.scrollHeight)+"px"; }
 
 function rufeRaeumeRender(){
   const box=document.getElementById("rufe-raeume"); if(!box||!_rf)return;
   const chip=(an,txt,on,label)=>`<button type="button" onclick="${on}" aria-pressed="${an}" ${label?`aria-label="${label}"`:""} style="flex:none;min-height:40px;padding:6px 14px;border-radius:999px;border:1.5px solid ${an?"#1e3a8a":"var(--rand-bedien)"};background:${an?"#1e3a8a":"var(--surface)"};color:${an?"#fff":"var(--text)"};font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer;white-space:nowrap">${txt}</button>`;
-  const zeigen=_rf.raeume.length>1||_rf.mod;
-  box.style.display=zeigen?"flex":"none";
-  box.innerHTML=_rf.raeume.map(r=>chip(r.id===_rf.raum,`${esc(r.emoji||"💬")} ${esc(r.name)}`,`rufeRaumWechseln(${Number(r.id)})`)).join("")
-    +(_rf.mod?chip(false,"＋ Raum","rufeRaumNeu()","Neuen Raum anlegen"):"");
+  const zahl=id=>_rf.unge[id]?` · ${_rf.unge[id]}`:"";
+  const offen=_rf.raeume.filter(r=>!r.familie_kind), privat=_rf.raeume.filter(r=>r.familie_kind);
+  box.style.display="flex";
+  let html=offen.map(r=>chip(r.id===_rf.raum,esc(_rfRaumName(r))+zahl(r.id),`rufeRaumWechseln(${Number(r.id)})`)).join("");
+  if(_rf.trainer){
+    /* v674: Das Trainerteam hat viele Familienräume – ein Knopf öffnet die Liste; der gerade
+       offene Familienraum steht zusätzlich als eigener Knopf daneben. */
+    const ungeP=privat.reduce((a,r)=>a+(_rf.unge[r.id]||0),0);
+    html+=chip(false,"🔒 Familien"+(ungeP?` · ${ungeP}`:""),"rufeFamilienOpen()","Private Nachricht an eine Familie");
+    const akt=privat.find(r=>r.id===_rf.raum); if(akt)html+=chip(true,esc(_rfRaumName(akt)),`rufeRaumWechseln(${Number(akt.id)})`);
+  }else{
+    const eigen=privat[0];
+    html+=eigen?chip(eigen.id===_rf.raum,"🔒 Trainerteam"+zahl(eigen.id),`rufeRaumWechseln(${Number(eigen.id)})`,"Privat an das Trainerteam")
+               :chip(false,"🔒 Trainerteam","rufePrivat(null)","Privat an das Trainerteam");
+  }
+  box.innerHTML=html+(_rf.mod?chip(false,"＋ Raum","rufeRaumNeu()","Neuen Raum anlegen"):"");
+  _rfKopfZeigen();
+}
+function _rfKopfZeigen(){
+  const r=_rfAktRaum(); const unter=document.getElementById("rufe-unter"), feld=document.getElementById("rufe-text");
+  const privat=!!(r&&r.familie_kind);
+  if(unter)unter.textContent=privat?(_rf.trainer?"Privat mit Familie "+(_rf.fam[r.familie_kind]||""):"Privat: nur ihr und das Trainerteam"):"Eltern und Trainerteam";
+  if(feld)feld.placeholder=privat?(_rf.trainer?"Nachricht an die Familie …":"Nachricht an das Trainerteam …"):"Ruf schreiben …";
+}
+async function _rfUngelesenLaden(){
+  if(!_rf)return; const u={};
+  (await _rfGet("rpc/rufe_ungelesen")).forEach(x=>u[x.raum_id]=Number(x.anzahl)||0);
+  if(_rf){ _rf.unge=u; rufeRaeumeRender(); }
+}
+/* v674: privaten Raum öffnen – Eltern ihren eigenen, das Trainerteam den einer Familie. Die
+   Datenbank legt ihn beim ersten Mal an und prüft, wer hinein darf. */
+async function rufePrivat(kind){
+  if(!_rf)return;
+  document.getElementById("rufe-menue")?.remove();
+  let id=null;
+  try{ const r=await _rfRpc("rufe_privat_raum",{p_kind:kind}); if(!r.ok){ toast(kind?"Diese Familie hat noch keinen Zugang":"Privater Raum nicht verfügbar","err"); return; } id=await r.json(); }
+  catch(e){ toast("Kein Netz","err"); return; }
+  if(!_rf)return;
+  if(!_rf.raeume.some(r=>r.id===id))_rf.raeume=await _rfRaeumeHolen();
+  _rf.raum=null; await rufeRaumWechseln(id);
+}
+function rufeFamilienOpen(){
+  if(!_rf)return;
+  const raumVon={}; _rf.raeume.filter(r=>r.familie_kind).forEach(r=>raumVon[r.familie_kind]=r);
+  const liste=Object.keys(_rf.fam).map(k=>({k:Number(k),name:_rf.fam[k],raum:raumVon[k]||null,n:raumVon[k]?(_rf.unge[raumVon[k].id]||0):0}))
+    .sort((a,b)=>(b.n-a.n)||((b.raum?1:0)-(a.raum?1:0))||a.name.localeCompare(b.name,"de"));
+  _rfBlatt("rufe-menue","Privat an eine Familie",
+    `<div style="font-size:var(--s-klein);color:var(--text2)">Lesen können nur diese Familie und das Trainerteam – der Elternbeirat nicht.</div>
+    <div style="max-height:55vh;overflow-y:auto">${liste.length?liste.map(f=>`<button type="button" class="rf-familie" style="${_RF_ZEILE}" onclick="rufePrivat(${f.k})"><span aria-hidden="true">🔒</span><span style="flex:1">${esc(f.name)}</span>${f.n?`<b>${f.n} neu</b>`:f.raum?`<span style="font-size:var(--s-klein);color:var(--text2)">Verlauf</span>`:""}</button>`).join("")
+      :`<div style="color:var(--text2);margin-top:8px">Noch keine Familie mit Zugang.</div>`}</div>`);
 }
 async function rufeRaumWechseln(id){
   if(!_rf||_rf.raum===id)return;
   _rf.raum=id; _rf.antwort=null; _rf.letzte=null; rufeAntwortRender();
+  if(_rf.unge[id]){ _rf.unge[id]=0; }
   rufeRaeumeRender();
   document.getElementById("rufe-liste").innerHTML=`<div style="color:var(--text2);padding:12px 0">Lade Rufe …</div>`;
   await rufeLaden(true);
@@ -112,16 +188,21 @@ async function rufeLaden(zumEnde){
   const liste=(await _rfGet(`rufe_nachricht?raum_id=eq.${raum}&select=id,autor,autor_name,autor_zusatz,autor_rolle,text,antwort_auf,an_alle,bearbeitet_am,archiviert_am,created_at&order=created_at.desc&limit=${RUFE_ANZAHL}`)).reverse();
   if(!_rf||_rf.raum!==raum)return;
   const ids=liste.map(n=>n.id);
-  const [reakt,fix]=await Promise.all([
+  const [reakt,fix,umf]=await Promise.all([
     ids.length?_rfGet(`rufe_reaktion?nachricht_id=in.(${ids.join(",")})&select=nachricht_id,user_id,emoji`):Promise.resolve([]),
-    _rfGet(`rufe_fixiert?raum_id=eq.${raum}&select=nachricht_id,bis`)
+    _rfGet(`rufe_fixiert?raum_id=eq.${raum}&select=nachricht_id,bis`),
+    ids.length?_rfGet(`rufe_umfrage?nachricht_id=in.(${ids.join(",")})&select=id,nachricht_id,optionen,anonym,mehrfach,schluss,beendet_am,von`):Promise.resolve([])
   ]);
+  // v674: Stand der Abstimmungen – lesend per GET (die Funktion ist stable)
+  const stand=umf.length?await _rfGet(`rpc/rufe_umfrage_stand?p_ids=${encodeURIComponent("{"+umf.map(u=>Number(u.id)).join(",")+"}")}`):[];
   if(!_rf||_rf.raum!==raum)return;
   const neu=liste.length&&liste[liste.length-1].id!==_rf.letzte;
-  const kennung=JSON.stringify([liste.map(n=>[n.id,n.text,n.archiviert_am]),reakt.length,fix]);
+  const kennung=JSON.stringify([liste.map(n=>[n.id,n.text,n.archiviert_am]),reakt.length,fix,umf.map(u=>[u.id,u.beendet_am]),stand]);
   if(!zumEnde&&kennung===_rf.kennung)return;
   _rf.kennung=kennung;
   _rf.liste=liste; _rf.reakt=reakt; _rf.fix=fix.filter(f=>!f.bis||new Date(f.bis)>new Date());
+  _rf.umf={}; umf.forEach(u=>_rf.umf[u.nachricht_id]=u);
+  _rf.stand={}; stand.forEach(x=>{ (_rf.stand[x.umfrage_id]=_rf.stand[x.umfrage_id]||{})[x.option]=x; });
   const box=document.getElementById("rufe-liste");
   const unten=box&&(box.scrollHeight-box.scrollTop-box.clientHeight<80);
   rufeRender();
@@ -133,7 +214,13 @@ function rufeRender(){
   const box=document.getElementById("rufe-liste"); if(!box)return;
   if(_rf.suche){ rufeSucheRender(); return; }
   rufeFixRender();
-  if(!_rf.liste.length){ box.innerHTML=`<div style="text-align:center;color:var(--text2);font-size:var(--s-text);padding:28px 8px">Noch keine Rufe in diesem Raum.<br>Schreib den ersten – alle Eltern und das Trainerteam lesen mit.</div>`; return; }
+  if(!_rf.liste.length){
+    const r=_rfAktRaum();
+    box.innerHTML=`<div style="text-align:center;color:var(--text2);font-size:var(--s-text);padding:28px 8px">${r&&r.familie_kind
+      ?(_rf.trainer?"Noch nichts geschrieben.<br>Lesen können nur diese Familie und das Trainerteam.":"Hier schreibst du privat dem Trainerteam.<br>Mitlesen können nur ihr als Familie und das Trainerteam – nicht die anderen Eltern.")
+      :"Noch keine Rufe in diesem Raum.<br>Schreib den ersten – alle Eltern und das Trainerteam lesen mit."}</div>`;
+    return;
+  }
   let tag="", html="";
   _rf.liste.forEach(n=>{
     const t=_rfTag(n.created_at);
@@ -158,7 +245,8 @@ function rufeNachrichtHtml(n){
         ${fixiert?`<span style="font-size:var(--s-klein);color:var(--text2)">📌 fixiert</span>`:""}
       </div>
       ${n.antwort_auf?`<div class="rf-zitat" style="margin:4px 0;padding:4px 8px;border-left:3px solid #1e3a8a;background:var(--surface2);border-radius:6px;font-size:var(--s-klein);color:var(--text2)">${zitat?`<b>${esc(zitat.autor_name||"")}</b>: ${esc(String(zitat.text||"").slice(0,120))}`:"Antwort auf einen früheren Ruf"}</div>`:""}
-      <div class="rf-text" style="font-size:var(--s-text);line-height:1.45;margin-top:2px;word-wrap:break-word;${arch?"color:var(--text2);font-style:italic":""}">${_rfText(n.text)}</div>
+      <div class="rf-text" style="font-size:var(--s-text);line-height:1.45;margin-top:2px;word-wrap:break-word;${arch?"color:var(--text2);font-style:italic":""}">${_rf.umf[n.id]?"<b>📊 </b>":""}${_rfText(n.text)}</div>
+      ${_rf.umf[n.id]?rufeUmfrageHtml(_rf.umf[n.id],arch):""}
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px">
         ${Object.keys(r).map(e=>`<button type="button" class="rf-reakt" onclick="rufeReagieren(${Number(n.id)},'${e}')" aria-pressed="${r[e].ich}" aria-label="${e} ${r[e].n}, ${r[e].ich?"zurücknehmen":"dazu"}" style="min-height:32px;padding:2px 8px;border-radius:999px;border:1.5px solid ${r[e].ich?"#1e3a8a":"var(--rand-bedien)"};background:${r[e].ich?"#dbeafe":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);cursor:pointer">${e} ${r[e].n}</button>`).join("")}
         <span style="flex:1"></span>
@@ -217,6 +305,7 @@ async function rufeReagieren(id,emoji){
 }
 async function rufeGelesen(){
   if(!_rf||!_rf.raum)return;
+  if(_rf.unge[_rf.raum]){ _rf.unge[_rf.raum]=0; rufeRaeumeRender(); }
   try{ await fetch(`${SB_URL}/rest/v1/rufe_gelesen?on_conflict=user_id,raum_id`,{method:"POST",headers:sbAuthHeaders({'Prefer':'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify({raum_id:_rf.raum,zuletzt:new Date().toISOString()})}); }catch(e){}
 }
 
@@ -228,7 +317,7 @@ function _rfBlatt(id,titel,inhalt){
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center";
   m.style.zIndex=_rfZ(10005);
   m.onclick=e=>{ if(e.target===m)m.remove(); };
-  m.innerHTML=`<div style="background:var(--surface);color:var(--text);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom))">
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);width:100%;max-width:520px;border-radius:18px 18px 0 0;max-height:92vh;overflow-y:auto;box-sizing:border-box;padding:14px 14px calc(14px + env(safe-area-inset-bottom))">
     <div style="font-size:var(--s-karte);font-weight:800;margin-bottom:10px">${titel}</div>${inhalt}</div>`;
   document.body.appendChild(m);
   return m;
@@ -238,15 +327,19 @@ function rufeMenue(id){
   if(!_rf)return;
   const n=_rf.liste.find(x=>x.id===id); if(!n)return;
   const eigen=n.autor===_rf.uid, fixiert=_rf.fix.some(f=>f.nachricht_id===id);
+  const raum=_rfAktRaum(), privat=!!(raum&&raum.familie_kind);
+  const u=_rf.umf[id], uOffen=u&&!_rfUmfrageZu(u);
+  const darfModerieren=_rf.mod&&(!privat||_rf.trainer);
   const zeile=(emo,txt,on)=>`<button type="button" style="${_RF_ZEILE}" onclick="${on}"><span aria-hidden="true">${emo}</span>${txt}</button>`;
   _rfBlatt("rufe-menue","Ruf von "+esc(eigen?"dir":n.autor_name||""),
     `<div style="display:flex;gap:6px;justify-content:space-between">${RUFE_EMOJI.map(e=>`<button type="button" class="rf-emo" onclick="rufeReagieren(${id},'${e}')" aria-label="Mit ${e} reagieren" style="flex:1;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);font-size:var(--s-teil);cursor:pointer">${e}</button>`).join("")}</div>`
     +zeile("↩️","Antworten",`rufeAntworten(${id})`)
-    +(_rf.mod?(fixiert?zeile("📌","Nicht mehr fixieren",`rufeFixieren(${id},null,true)`):zeile("📌","Oben fixieren …",`rufeFixMenue(${id})`)):"")
-    +(eigen?zeile("✏️","Bearbeiten",`rufeBearbeitenOpen(${id})`):"")
-    +(eigen?zeile("🗄️","Zurückziehen",`rufeArchivieren(${id},true)`):(_rf.mod?zeile("🗄️","Archivieren (nur Trainer sehen ihn noch)",`rufeArchivieren(${id},false)`):""))
-    +(!eigen?zeile("🚩","Melden",`rufeMelden(${id})`):"")
-    +(_rf.mod&&!eigen&&n.autor_rolle!=="trainer"?zeile("🔇","Stummschalten …",`rufeStummMenue('${esc(n.autor)}','${esc(n.autor_name||"")}')`):"")
+    +(darfModerieren?(fixiert?zeile("📌","Nicht mehr fixieren",`rufeFixieren(${id},null,true)`):zeile("📌","Oben fixieren …",`rufeFixMenue(${id})`)):"")
+    +(uOffen&&(u.von===_rf.uid||darfModerieren)?zeile("🏁","Abstimmung beenden",`rufeUmfrageBeenden(${Number(u.id)})`):"")
+    +(eigen&&!u?zeile("✏️","Bearbeiten",`rufeBearbeitenOpen(${id})`):"")
+    +(eigen?zeile("🗄️","Zurückziehen",`rufeArchivieren(${id},true)`):(darfModerieren?zeile("🗄️","Archivieren (nur Trainer sehen ihn noch)",`rufeArchivieren(${id},false)`):""))
+    +(!eigen&&!privat?zeile("🚩","Melden",`rufeMelden(${id})`):"")
+    +(darfModerieren&&!privat&&!eigen&&n.autor_rolle!=="trainer"?zeile("🔇","Stummschalten …",`rufeStummMenue('${esc(n.autor)}','${esc(n.autor_name||"")}')`):"")
     +`<button type="button" onclick="document.getElementById('rufe-menue')?.remove()" style="${_RF_ZEILE};justify-content:center;background:var(--surface2)">Abbrechen</button>`);
 }
 function rufeAntworten(id){
@@ -318,8 +411,96 @@ async function rufeRaumAnlegen(){
   const name=(document.getElementById("rufe-raum-name")?.value||"").trim(); if(!name||!_rf)return;
   try{ const r=await fetch(`${SB_URL}/rest/v1/rufe_raum`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify({name,emoji:"💬",sort:_rf.raeume.length})}); if(!r.ok){ toast("Raum nicht angelegt","err"); return; } }catch(e){ toast("Kein Netz","err"); return; }
   document.getElementById("rufe-menue")?.remove(); toast("Raum angelegt");
-  _rf.raeume=await _rfGet("rufe_raum?archiviert=eq.false&select=id,name,emoji,sort&order=sort.asc,id.asc");
+  _rf.raeume=await _rfRaeumeHolen();
   rufeRaeumeRender();
+}
+
+/* ── v674: Abstimmungen ───────────────────────────────────────────────────────── */
+function _rfUmfrageZu(u){ return !!u.beendet_am||(u.schluss&&new Date(u.schluss)<=new Date()); }
+function rufeUmfrageHtml(u,arch){
+  const st=_rf.stand[u.id]||{}; const zu=_rfUmfrageZu(u)||arch;
+  const tn=Object.values(st)[0]?Number(Object.values(st)[0].teilnehmer)||0:0;
+  const max=Math.max(1,...Object.values(st).map(x=>Number(x.anzahl)||0));
+  const art=[u.anonym?"anonym":"namentlich",u.mehrfach?"mehrere Antworten":"eine Antwort"];
+  const ende=u.beendet_am?"beendet":u.schluss?(zu?"beendet":"bis "+_rfTag(u.schluss)+" "+_rfZeit(u.schluss)):"";
+  return `<div class="rf-umfrage" role="group" aria-label="Abstimmung: ${esc(art.join(", "))}" style="margin-top:6px">
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px">${esc(art.join(" · "))}${ende?" · "+esc(ende):""}</div>
+    ${u.optionen.map((o,i)=>{ const x=st[i]||{anzahl:0,ich:false,namen:null}; const n=Number(x.anzahl)||0; const pct=Math.round(100*n/max);
+      return `<button type="button" class="rf-option" ${zu?"disabled":""} onclick="rufeStimmen(${Number(u.id)},${i})" aria-pressed="${!!x.ich}"
+        aria-label="${esc(o)}: ${n} ${n===1?"Stimme":"Stimmen"}${x.ich?", deine Wahl":""}" style="display:flex;align-items:center;gap:8px;width:100%;min-height:44px;margin-top:4px;padding:6px 10px;border:1.5px solid ${x.ich?"#1e3a8a":"var(--rand-bedien)"};border-radius:10px;
+        background:linear-gradient(90deg,rgba(59,130,246,.28) ${pct}%,var(--surface) ${pct}%);color:var(--text);font-family:inherit;font-size:var(--s-text);text-align:left;cursor:${zu?"default":"pointer"}">
+        <span aria-hidden="true" style="flex:none;width:1.2em;font-weight:800">${x.ich?"✓":""}</span><span style="flex:1;min-width:0">${esc(o)}</span><b>${n}</b></button>
+        ${!u.anonym&&x.namen&&x.namen.length?`<div class="rf-namen" style="font-size:var(--s-klein);color:var(--text2);margin:2px 0 0 28px">${esc(x.namen.join(", "))}</div>`:""}`; }).join("")}
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">${tn===1?"1 hat abgestimmt":tn+" haben abgestimmt"}${zu?"":u.mehrfach?" · antippen wählt an und ab":" · nochmal antippen nimmt die Stimme zurück"}</div>
+  </div>`;
+}
+async function rufeStimmen(umfId,i){
+  if(!_rf)return;
+  const u=Object.values(_rf.umf).find(x=>x.id===umfId); if(!u||_rfUmfrageZu(u))return;
+  const st=_rf.stand[umfId]||{};
+  const meine=Object.keys(st).filter(k=>st[k].ich).map(Number);
+  const neu=u.mehrfach?(meine.includes(i)?meine.filter(k=>k!==i):[...meine,i]):(meine.length===1&&meine[0]===i?[]:[i]);
+  try{ const r=await _rfRpc("rufe_abstimmen",{p_umfrage:umfId,p_optionen:neu}); if(!r.ok){ const t=await r.text().catch(()=>""); toast(/beendet/.test(t)?"Die Abstimmung ist schon beendet":"Stimme nicht gespeichert","err"); return; } }
+  catch(e){ toast("Kein Netz – Stimme nicht gespeichert","err"); return; }
+  await rufeLaden(false);
+}
+async function rufeUmfrageBeenden(umfId){
+  document.getElementById("rufe-menue")?.remove();
+  if(!await frageJaNein({emoji:"🏁",titel:"Abstimmung beenden?",text:"Danach kann niemand mehr abstimmen. Das Ergebnis bleibt stehen.",ja:"Beenden",nein:"Abbrechen"}))return;
+  try{ const r=await _rfRpc("rufe_umfrage_beenden",{p_umfrage:umfId}); if(!r.ok){ toast("Das ging nicht","err"); return; } }catch(e){ toast("Kein Netz","err"); return; }
+  toast("Abstimmung beendet"); await rufeLaden(false);
+}
+function rufeUmfrageNeu(){
+  if(!_rf||!_rf.raum)return;
+  _rf.uNeu={anonym:false};
+  const feld=(i)=>`<label for="rf-opt-${i}" style="position:absolute;left:-9999px">Antwort ${i+1}</label><input id="rf-opt-${i}" class="rf-opt" type="text" maxlength="80" placeholder="Antwort ${i+1}" style="width:100%;box-sizing:border-box;min-height:48px;margin-top:6px;padding:8px 12px;border:1px solid var(--rand-bedien);border-radius:12px;font:inherit;background:var(--surface2);color:var(--text)">`;
+  const wahl=(an,txt,on)=>`<button type="button" class="rf-art" onclick="${on}" aria-pressed="${an}" style="flex:1;min-height:48px;border:1.5px solid ${an?"#1e3a8a":"var(--rand-bedien)"};border-radius:12px;background:${an?"#1e3a8a":"var(--surface)"};color:${an?"#fff":"var(--text)"};font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">${txt}</button>`;
+  _rfBlatt("rufe-menue","📊 Abstimmung starten",`<label for="rf-frage" style="display:block;font-size:var(--s-klein);color:var(--text2)">Frage</label>
+    <input id="rf-frage" type="text" maxlength="300" placeholder="z. B. Grillen nach dem Heimspiel?" style="width:100%;box-sizing:border-box;min-height:48px;padding:8px 12px;border:1px solid var(--rand-bedien);border-radius:12px;font:inherit;background:var(--surface2);color:var(--text)">
+    <div id="rf-opts">${feld(0)}${feld(1)}</div>
+    <button type="button" id="rf-opt-mehr" onclick="rufeUmfrageOption()" style="${_RF_ZEILE};justify-content:center">＋ Antwort</button>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:10px">Wer sieht, wer was gewählt hat?</div>
+    <div id="rf-arten" style="display:flex;gap:8px;margin-top:4px">${wahl(true,"Namentlich","rufeUmfrageArt(false)")}${wahl(false,"Anonym","rufeUmfrageArt(true)")}</div>
+    <div id="rf-art-hinweis" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Namentlich: alle sehen, wer was gewählt hat.</div>
+    <label style="${_RF_ZEILE}"><input id="rf-mehrfach" type="checkbox" style="width:22px;height:22px"> Mehrere Antworten erlaubt</label>
+    <label for="rf-schluss" style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:10px">Schluss</label>
+    <select id="rf-schluss" style="width:100%;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;font:inherit;background:var(--surface2);color:var(--text)">
+      <option value="">Offen, bis jemand beendet</option><option value="24">In 24 Stunden</option><option value="72">In 3 Tagen</option><option value="168">In 7 Tagen</option></select>
+    <button type="button" id="rf-umfrage-los" style="${_RF_ZEILE};justify-content:center;background:#1e3a8a;color:#fff;border:none;font-weight:800" onclick="rufeUmfrageAnlegen()">Abstimmung starten</button>`);
+  setTimeout(()=>document.getElementById("rf-frage")?.focus(),50);
+}
+function rufeUmfrageOption(){
+  const box=document.getElementById("rf-opts"); if(!box)return;
+  const n=box.querySelectorAll(".rf-opt").length; if(n>=6)return;
+  box.insertAdjacentHTML("beforeend",`<label for="rf-opt-${n}" style="position:absolute;left:-9999px">Antwort ${n+1}</label><input id="rf-opt-${n}" class="rf-opt" type="text" maxlength="80" placeholder="Antwort ${n+1}" style="width:100%;box-sizing:border-box;min-height:48px;margin-top:6px;padding:8px 12px;border:1px solid var(--rand-bedien);border-radius:12px;font:inherit;background:var(--surface2);color:var(--text)">`);
+  document.getElementById("rf-opt-"+n)?.focus();
+  if(n+1>=6){ const b=document.getElementById("rf-opt-mehr"); if(b)b.style.display="none"; }
+}
+function rufeUmfrageArt(anonym){
+  if(!_rf)return; _rf.uNeu={...(_rf.uNeu||{}),anonym};
+  document.querySelectorAll("#rf-arten .rf-art").forEach((b,i)=>{ const an=(i===1)===anonym;
+    b.setAttribute("aria-pressed",String(an)); b.style.background=an?"#1e3a8a":"var(--surface)"; b.style.color=an?"#fff":"var(--text)"; b.style.borderColor=an?"#1e3a8a":"var(--rand-bedien)"; });
+  const h=document.getElementById("rf-art-hinweis");
+  if(h)h.textContent=anonym?"Anonym: niemand sieht, wer was gewählt hat – auch das Trainerteam nicht. Nur die Zahlen sind sichtbar.":"Namentlich: alle sehen, wer was gewählt hat.";
+}
+async function rufeUmfrageAnlegen(){
+  if(!_rf||!_rf.raum)return;
+  const frage=(document.getElementById("rf-frage")?.value||"").trim();
+  const opts=[...document.querySelectorAll("#rf-opts .rf-opt")].map(x=>x.value.trim()).filter(Boolean);
+  const eind=[...new Set(opts.map(o=>o.toLowerCase()))];
+  if(!frage){ toast("Bitte eine Frage eintragen","err"); document.getElementById("rf-frage")?.focus(); return; }
+  if(eind.length<2){ toast("Bitte mindestens zwei verschiedene Antworten eintragen","err"); return; }
+  const std=document.getElementById("rf-schluss")?.value;
+  const knopf=document.getElementById("rf-umfrage-los"); if(knopf)knopf.disabled=true;
+  try{
+    const r=await _rfRpc("rufe_umfrage_erstellen",{p_raum:_rf.raum,p_frage:frage,p_optionen:opts,p_anonym:!!(_rf.uNeu&&_rf.uNeu.anonym),
+      p_mehrfach:!!document.getElementById("rf-mehrfach")?.checked,p_stunden:std?Number(std):null});
+    if(typeof sbCheck401==="function"&&sbCheck401(r))return;
+    if(!r.ok){ toast("Abstimmung nicht gestartet – bitte gleich noch einmal","err"); return; }
+  }catch(e){ toast("Kein Netz – Abstimmung nicht gestartet","err"); return; }
+  finally{ if(knopf)knopf.disabled=false; }
+  document.getElementById("rufe-menue")?.remove(); toast("Abstimmung gestartet");
+  await rufeLaden(true);
 }
 
 /* ── Suche ────────────────────────────────────────────────────────────────────── */
@@ -341,7 +522,7 @@ async function rufeSucheRender(){
   const q=_rf.suche.replace(/[%*,()]/g," ").trim(); if(!q)return;
   const treffer=await _rfGet(`rufe_nachricht?text=ilike.*${encodeURIComponent(q)}*&archiviert_am=is.null&select=id,raum_id,autor_name,text,created_at&order=created_at.desc&limit=40`);
   if(!_rf||!_rf.suche)return;
-  const raum=id=>(_rf.raeume.find(r=>r.id===id)||{}).name||"";
+  const raum=id=>_rfRaumName(_rf.raeume.find(r=>r.id===id));
   box.innerHTML=`<div style="font-size:var(--s-klein);color:var(--text2);margin:4px 0 8px">${treffer.length} Treffer für „${esc(_rf.suche)}“</div>`
     +(treffer.length?treffer.map(n=>`<button type="button" onclick="rufeSucheSprung(${Number(n.raum_id)},${Number(n.id)})" style="${_RF_ZEILE};display:block">
       <div style="font-size:var(--s-klein);color:var(--text2)">${esc(n.autor_name||"")} · ${esc(_rfTag(n.created_at))} ${_rfZeit(n.created_at)}${_rf.raeume.length>1?" · "+esc(raum(n.raum_id)):""}</div>
@@ -470,7 +651,7 @@ function _rfAbsicht(){
     if(gesperrt||typeof sbToken!=="function"||!sbToken())return;
     try{sessionStorage.removeItem("adler_rufe_intent");}catch(e){}
     clearInterval(t);
-    rufeOpen();
+    rufeOpen(/^\d+$/.test(offen)?Number(offen):undefined);   // v674: ?rufe=<Raum> aus der Benachrichtigung
   },2000);
 }
 _rfAbsicht();
