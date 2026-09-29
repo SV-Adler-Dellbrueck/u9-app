@@ -1,6 +1,6 @@
 {
   "schema": "adler-vorlagen/1",
-  "stand": "2026-09-29-1",
+  "stand": "2026-09-29-2",
   "vorlagen": [
     {
       "name": "L1-1 Ball behalten – Duell um zwei Tore",
@@ -33,19 +33,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "1gg1 Tore-Duell"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: erst drehen, dann zum Tor",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "1gg1 Tore-Duell"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Feld größer, Regel weg",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "1gg1 Tore-Duell"
         },
         {
@@ -88,19 +88,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei: 1 gegen 1, Aufsteiger und Absteiger",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Fußball-König"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: drei Sekunden abschirmen, bevor ein Tor zählt",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Fußball-König"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Regel weg, Felder größer",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Fußball-König"
         },
         {
@@ -140,19 +140,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei: vier halten den Ball gegen zwei Jäger",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Diamanten-Jagd"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: wer passt, muss sofort einen anderen Rauten-Punkt besetzen",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Diamanten-Jagd"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Rotation frei, Viereck größer",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Diamanten-Jagd"
         },
         {
@@ -195,19 +195,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei: Zuspiel von hinten, erste Berührung nach vorn",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Erste Mitnahme vorwärts"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: ein passiver Gegner im Rücken, der erst nach der Mitnahme angreift",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Erste Mitnahme vorwärts"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: aus der Mitnahme direkt ins 2 gegen 2 auf Minitore",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Erste Mitnahme vorwärts"
         },
         {
@@ -250,19 +250,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Mut-Leiter 1gg1"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: Tempowechsel vor der Linie",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Mut-Leiter 1gg1"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: zwei Tore zur Auswahl",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Mut-Leiter 1gg1"
         },
         {
@@ -305,19 +305,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei: drei Finten üben, dann 1 gegen 1",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Finte-Wettkampf"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: ein Tor zählt nur nach einer Finte",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Finte-Wettkampf"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Regel weg, zwei Tore zur Auswahl",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Finte-Wettkampf"
         },
         {
@@ -360,19 +360,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei: durch den Parcours, Tempo selbst wählen",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Dribbling-Parcours"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: am letzten Tor wartet ein Gegner – vorbeikommen, dann abschließen",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Dribbling-Parcours"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Parcours weg, freies 1 gegen 1 auf dieselben Tore",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Dribbling-Parcours"
         },
         {
@@ -412,19 +412,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei: 4 gegen 4 auf je zwei Minitore",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Zwei-Tore-Umschalten"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: ein Tor zählt nur, wenn vorher einer am Gegenspieler vorbeigedribbelt ist",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Zwei-Tore-Umschalten"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Regel weg, Feld breiter",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Zwei-Tore-Umschalten"
         },
         {
@@ -459,26 +459,26 @@
         },
         {
           "typ": "warmup",
-          "label": "Warm up Adler, voll (Spieltagswoche)",
-          "dauer": 12,
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
           "uebung_name": "Warm up Adler"
         },
         {
           "typ": "main",
           "label": "Stufe 1 – frei",
-          "dauer": 10,
+          "dauer": 12,
           "uebung_name": "Torschuss-Wettbewerb"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: erster Kontakt zum Tor",
-          "dauer": 10,
+          "dauer": 12,
           "uebung_name": "Torschuss-Wettbewerb"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Abschluss aus dem Spiel",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Torschuss-Wettbewerb"
         },
         {
@@ -490,7 +490,7 @@
         {
           "typ": "abschluss",
           "label": "Abschlussturnier",
-          "dauer": 17
+          "dauer": 18
         }
       ],
       "ordnung": "ohne Gegner"
@@ -524,19 +524,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei: 3 gegen 3 auf vier Minitore",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Quer vor Tor"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: Tor zählt nur nach einem Querpass in der letzten Zone",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Quer vor Tor"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Regel weg, Feld größer",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Quer vor Tor"
         },
         {
@@ -571,32 +571,32 @@
         },
         {
           "typ": "warmup",
-          "label": "Warm up Adler, voll (Spieltagswoche)",
-          "dauer": 12,
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
           "uebung_name": "Warm up Adler"
         },
         {
           "typ": "main",
           "label": "Stufe 1 – frei: 3 gegen 3, jedes Tor zählt einen Punkt",
-          "dauer": 10,
+          "dauer": 12,
           "uebung_name": "Fehler-Festival"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: Finte und schwacher Fuß zählen zwei Punkte, auch ohne Tor",
-          "dauer": 10,
+          "dauer": 12,
           "uebung_name": "Fehler-Festival"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Wertung bleibt, Feld größer",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Fehler-Festival"
         },
         {
           "typ": "abschluss",
           "label": "Abschlussturnier",
-          "dauer": 17
+          "dauer": 18
         }
       ],
       "ordnung": "Dreieck (3 gegen 3)"
@@ -630,19 +630,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "4gg2 Ballbesitz"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: höchstens zwei Kontakte",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "4gg2 Ballbesitz"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Kontakte frei, Feld größer",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "4gg2 Ballbesitz"
         },
         {
@@ -742,19 +742,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei: 3 gegen 3 auf vier Minitore",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Pflichtpass-Funino"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: Tor zählt erst, wenn jeder im Team einmal gepasst hat",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Pflichtpass-Funino"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Regel weg, Feld größer",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Pflichtpass-Funino"
         },
         {
@@ -797,19 +797,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei: passen und zur Position des Empfängers laufen",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Dreieck-Passspiel"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: höchstens zwei Kontakte, ein Gegner in der Mitte",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Dreieck-Passspiel"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: dasselbe Prinzip im 3 gegen 3 auf Minitore",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Dreieck-Passspiel"
         },
         {
@@ -851,19 +851,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Scanning-Funino"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: Tor zählt nur nach Seitenwechsel",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Scanning-Funino"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Regel weg, vier Tore",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Scanning-Funino"
         },
         {
@@ -898,32 +898,32 @@
         },
         {
           "typ": "warmup",
-          "label": "Warm up Adler, voll (Spieltagswoche)",
-          "dauer": 12,
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
           "uebung_name": "Warm up Adler"
         },
         {
           "typ": "main",
           "label": "Stufe 1 – frei: 4+1 gegen 4+1, Raute als Grundordnung",
-          "dauer": 10,
+          "dauer": 12,
           "uebung_name": "4+1 Lebende Raute"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: Tor zählt nur bei besetzter Raute im Moment des Abschlusses",
-          "dauer": 10,
+          "dauer": 12,
           "uebung_name": "4+1 Lebende Raute"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Regel weg, Spiel wie am Spieltag",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "4+1 Lebende Raute"
         },
         {
           "typ": "abschluss",
           "label": "Abschlussturnier",
-          "dauer": 17
+          "dauer": 18
         }
       ],
       "ordnung": "Raute (4 gegen 4)"
@@ -957,19 +957,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei: 3 gegen 3 auf vier Minitore, Korridore markiert",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Korridor-Funino"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: Tor zählt nur, wenn beim Abschluss alle Korridore besetzt sind",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Korridor-Funino"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Korridore weg, Feld größer",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Korridor-Funino"
         },
         {
@@ -1011,19 +1011,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Pressing-Welle 2gg2"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: fünf Sekunden nach Verlust",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Pressing-Welle 2gg2"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: Regel weg, freies Spiel",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Pressing-Welle 2gg2"
         },
         {
@@ -1063,19 +1063,19 @@
         {
           "typ": "main",
           "label": "Stufe 1 – frei: 3 gegen 3 auf Minitore",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Igel-Pressing-Kreis"
         },
         {
           "typ": "main",
           "label": "Stufe 2 – eng: nach jedem Ballverlust „Igel!“ – enger Kreis um den Ball, Eroberung bringt zwei Bonuspunkte",
-          "dauer": 11,
+          "dauer": 12,
           "uebung_name": "Igel-Pressing-Kreis"
         },
         {
           "typ": "main",
           "label": "Stufe 3 – offen: kein Zuruf mehr, die Kinder rufen sich selbst „Igel!“ und „Adler!“ zu",
-          "dauer": 11,
+          "dauer": 10,
           "uebung_name": "Igel-Pressing-Kreis"
         },
         {
