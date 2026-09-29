@@ -35,8 +35,8 @@ module.exports = async function (h) {
       const ersteSl = [...box.querySelectorAll(".sl")].find(e => e.getBoundingClientRect().height > 0);
       out.titel[k] = { titel: titel.trim(), erste: ersteSl ? ersteSl.textContent.trim() : "" };
     }
-    go("kader"); await warte(300);
-    const sl = [...document.querySelectorAll("#view-kader .sl, #view-kader .rbox-title")].filter(e => e.getBoundingClientRect().height > 0);
+    go("team"); await warte(300);   // v683: der Kader zeigt ohne Bewertungen keine Überschrift mehr – gemessen wird auf der Pinnwand
+    const sl = [...document.querySelectorAll("#train-sub-team .sl, #train-sub-team .rbox-title")].filter(e => e.getBoundingClientRect().height > 0);
     out.sl = sl.map(e => ({ px: parseFloat(getComputedStyle(e).fontSize), tt: getComputedStyle(e).textTransform }));
     out.klein = getComputedStyle(document.documentElement).getPropertyValue("--s-klein").trim();
     openTab("taktik"); await warte(300);
@@ -71,7 +71,7 @@ module.exports = async function (h) {
     if (a && (a === b || a === "trainer" + b)) probleme.push(`c) ${k}: „${x.erste}“ wiederholt den Seitennamen`);
   }
   // d)
-  if (!r.sl.length) probleme.push("d) keine Überschrift im Kader gemessen");
+  if (!r.sl.length) probleme.push("d) keine Überschrift auf der Pinnwand gemessen");
   r.sl.forEach((x, i) => { if (x.px < 13 || x.tt === "uppercase") probleme.push(`d) Überschrift ${i + 1}: ${x.px}px ${x.tt}`); });
   if (r.klein !== "12px") probleme.push(`d) --s-klein ist ${r.klein}`);
   // e)
