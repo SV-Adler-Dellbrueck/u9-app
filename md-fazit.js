@@ -217,9 +217,9 @@ function fazitRender(){
 
     ${sec("Zwei Sätze")}
     <label style="font-size:var(--s-klein);font-weight:700">Das hat getragen
-      <textarea id="fz-getragen" class="wachsen" rows="2" maxlength="1500" style="${fld};margin-top:3px;resize:vertical" placeholder="Was heute gut lief – auch fürs Lob in der Kabine">${esc(w.getragen)}</textarea></label>
+      <textarea id="fz-getragen" class="wachsen" rows="2" maxlength="4000" style="${fld};margin-top:3px;resize:vertical" placeholder="Was heute gut lief – auch fürs Lob in der Kabine">${esc(w.getragen)}</textarea></label>
     <label style="font-size:var(--s-klein);font-weight:700;display:block;margin-top:8px">Daran arbeiten wir
-      <textarea id="fz-arbeiten" class="wachsen" rows="2" maxlength="1500" style="${fld};margin-top:3px;resize:vertical" placeholder="Steht beim nächsten Trainingsplan wieder da">${esc(w.arbeiten)}</textarea></label>
+      <textarea id="fz-arbeiten" class="wachsen" rows="2" maxlength="4000" style="${fld};margin-top:3px;resize:vertical" placeholder="Steht beim nächsten Trainingsplan wieder da">${esc(w.arbeiten)}</textarea></label>
 
     <details style="margin-top:12px;border:var(--border-s);border-radius:12px;background:var(--surface2)">
       <summary style="cursor:pointer;min-height:44px;display:flex;align-items:center;padding:0 12px;font-size:var(--s-text);font-weight:800;color:var(--text2)">⚙️ Organisation – wenn etwas hakte</summary>
@@ -258,11 +258,13 @@ function fazitSet(gruppe, id, wert){
 function fazitTexteMerken(){
   if(!_FZ) return;
   const g = document.getElementById("fz-getragen"), a = document.getElementById("fz-arbeiten");
-  if(g) _FZ.wert.getragen = g.value.slice(0,300);
-  if(a) _FZ.wert.arbeiten = a.value.slice(0,300);
+  /* v679 (fehlerbild-abgeschnitten.md): hier stand .slice(0,300) – der Eintrag vom 26.09. endete
+     deshalb mitten im Satz. Das Feld selbst erlaubt 4000 Zeichen; gekürzt wird nicht mehr. */
+  if(g) _FZ.wert.getragen = g.value;
+  if(a) _FZ.wert.arbeiten = a.value;
 }
 
-async function fazitSpeichern(){
+async function fazitSpeichern(opt){
   if(!_FZ) return;
   fazitTexteMerken();
   const w = _FZ.wert;
@@ -283,6 +285,7 @@ async function fazitSpeichern(){
   const terminId = Number(_FZ.termin.id);
   fazitSchliessen();
   if(typeof trainerTodoLoad==="function") trainerTodoLoad();
+  if(opt && typeof opt.danach==="function") return opt.danach();   // v679: „Wie war's?“ geht direkt zur Prüfkarte
   if(typeof tagebuchAusEvent==="function") fzWeiterInsTagebuch(terminId);
   else toast("Gespeichert ✓");
 }
@@ -290,6 +293,10 @@ async function fazitSpeichern(){
    Ein Fenster, das sich von selbst oeffnet, waere am Spielfeldrand ein Uebergriff. */
 function fzWeiterInsTagebuch(terminId){
   document.getElementById("fz-weiter")?.remove();
+  /* v679: Liegt aus der Sprachnotiz schon ein gespeicherter Vorschlag, geht es zu dessen Prüfung –
+     kein zweiter Eintrag, kein zweiter KI-Aufruf. */
+  const vid = (typeof tbVorschlagIdFuer==="function") ? tbVorschlagIdFuer("t"+Number(terminId)) : null;
+  if(vid){ nbWeiterZurPruefung(vid, "Gespeichert ✓"); return; }
   const box = document.createElement("div");
   box.id = "fz-weiter";
   box.setAttribute("role","dialog"); box.setAttribute("aria-modal","true");
@@ -337,9 +344,12 @@ async function fazitOffene(tage){
    Datenschutz: Vor dem Senden werden alle Kindernamen aus dem Kader durch „Kind 1“, „Kind 2“ …
    ersetzt; die Antwort wird zurückübersetzt. Beim Sprachmodell kommt kein Name an. */
 let _nbText = "", _nbFuer = "", _nbTb = null;
+let _nbTbSichern = Promise.resolve(null), _nbBewertungZeilen = [], _nbSchnell = null;   // v679
 /* v628: Der gesprochene Text wird mit der Nachbereitung gespeichert (Spalte sprachnotiz) –
    vorher ging er beim Schließen verloren. Nur für den Termin, zu dem er gehört. */
-function nbSprachnotizFuer(fuer){ const t = String(_nbText||"").trim(); return (fuer===_nbFuer && t) ? t.slice(0,4000) : undefined; }
+/* v679: ohne .slice(0,4000) – die Notiz ist das Original (fehlerbild-abgeschnitten.md). Das Feld
+   nimmt 12000 Zeichen an, genau so viel wird gespeichert. */
+function nbSprachnotizFuer(fuer){ const t = String(_nbText||"").trim(); return (fuer===_nbFuer && t) ? t : undefined; }
 function nbTagebuchVorschlag(fuer){ return (_nbTb && _nbTb.fuer===fuer) ? _nbTb.v : null; }
 /* „Kind n“ aus der KI-Antwort → Vorname im Tagebuch der App (v638, PO: „… dass für mein eigenes
    Tagebuch innerhalb der App die Klarnamen, also die Vornamen der Spieler … erfasst werden“).
@@ -351,8 +361,12 @@ function nbTbDecknamen(tb, m){
     const name = m && m.zurueck ? m.zurueck["Kind "+n] : null;
     return name ? (typeof tbVorname==="function" ? tbVorname(name) : String(name).split(/\s+/)[0]) : "ein Kind";
   });
-  return { baustein:tb.baustein, beobachtung:um(tb.beobachtung), aha:um(tb.aha), konsequenz:um(tb.konsequenz),
-           schlagworte:(tb.schlagworte||[]).map(um) };
+  /* v679: Konsequenzen als Liste (höchstens zwei), Rückfragen und To-dos – alle zurückübersetzt. */
+  const kons = (Array.isArray(tb.konsequenzen) ? tb.konsequenzen : (tb.konsequenz ? [tb.konsequenz] : [])).map(um).filter(Boolean).slice(0,2);
+  return { baustein:tb.baustein, beobachtung:um(tb.beobachtung), aha:um(tb.aha), konsequenzen:kons,
+           konsequenz:kons.join("\n"), schlagworte:(tb.schlagworte||[]).map(um),
+           rueckfragen:(tb.rueckfragen||[]).map(r=>({ frage:um(r.frage||r), feld:r.feld||"beobachtung" })).slice(0,2),
+           todos:(tb.todos||[]).map(t=>({ text:um(t.text), zustaendig:t.zustaendig||null })).filter(t=>t.text) };
 }
 function nbSprachHtml(art, fuer){
   /* Der Text gehört zu genau einem Termin – wer zum nächsten Tag wechselt, fängt leer an. */
@@ -472,7 +486,42 @@ async function nbGrossAuswerten(art){
      änderbar – ist die Zusammenfassung. Gespeichert wird weiter erst mit dem Knopf unten. */
   nbKiAnwenden(art, x.d, x.m);
   nbGrossZu();
+  if(_nbSchnell && _nbSchnell.fuer===_nbFuer){ nbSchnellAbschluss(art); return; }
   document.getElementById("nb-box")?.scrollIntoView({block:"start", behavior:"smooth"});
+}
+/* ═══ v679 · „Wie war's?“ – einmal sprechen, alles andere im Hintergrund ═══════════════
+   doku/auftrag-tagebuch-ki-sortieren/prozess-nacherfassung.md. Tippbudget drei: „Erzählen“ auf der
+   Karte (öffnet die Nachbereitung und sofort das Mikrofon), „KI-Auswertung“ (hält das Mikrofon an,
+   wertet aus, speichert Bewertung und Tagebuch-Vorschlag), „Passt so“ auf der Prüfkarte.
+   Es ist dieselbe Nachbereitung wie immer – dieselben Felder, dieselben Tabellen, derselbe
+   KI-Aufruf –, nur ohne die Zwischenschritte. */
+async function nbSchnellAbschluss(art){
+  const s = _nbSchnell; _nbSchnell = null;
+  const zeilen = _nbBewertungZeilen.slice();
+  const weiter = async () => {
+    const id = await _nbTbSichern;
+    if(id && typeof tbPruefenOpen==="function") tbPruefenOpen(id, { bewertung:zeilen, fuer:s.fuer });
+    else toast("Nachbereitet ✓");
+    if(typeof wieWarsKarte==="function") wieWarsKarte();
+  };
+  if(art==="training"){
+    if(typeof einheitSave==="function") await einheitSave({ danach:()=>{ document.getElementById("eb-modal")?.remove(); return weiter(); } });
+  } else await fazitSpeichern({ danach:weiter });
+}
+/* Nach dem Speichern im Bogen: ist ein Vorschlag da, führt der Knopf zu dessen Prüfung. */
+function nbWeiterZurPruefung(id, titel){
+  const box = document.createElement("div");
+  box.id = "nb-weiter";
+  box.setAttribute("role","dialog"); box.setAttribute("aria-modal","true"); box.setAttribute("aria-label", titel);
+  box.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10055;display:flex;align-items:center;justify-content:center;padding:18px";
+  box.onclick = e => { if(e.target===box) box.remove(); };
+  box.innerHTML = `<div style="background:var(--surface);color:var(--text);max-width:380px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
+    <div style="font-size:var(--s-karte);font-weight:800">${esc(titel)}</div>
+    <div style="font-size:var(--s-text);color:var(--text2);margin:6px 0 14px;line-height:1.5">Aus deiner Sprachnotiz liegt ein Tagebuch-Vorschlag bereit – deine Worte, sortiert. Prüfen dauert einen Tipp; bis dahin wartet er als „Noch zu bestätigen“.</div>
+    <button class="btn btn-p" onclick="document.getElementById('nb-weiter').remove();tbPruefenOpen(${Number(id)},{bewertung:_nbBewertungZeilen})" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-book"></i>Vorschlag prüfen</button>
+    <button class="btn" onclick="document.getElementById('nb-weiter').remove()" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Später</button>
+  </div>`;
+  document.body.appendChild(box);
 }
 function nbGrossUebernehmen(){
   const e = _nbGrossErg; if(!e) return;
@@ -554,6 +603,7 @@ async function nbKiHolen(art, text){
     body._m = m;
   }
   const m = body._m; delete body._m;
+  body.fuer = _nbFuer;   // v679: ein Termin zählt am Tag einmal ins KI-Limit, Korrekturen nicht
   const r = await fetch(`${SB_URL}/functions/v1/ki-nachbereitung`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify(body)});
   const d = await r.json().catch(()=>null);
   if(!r.ok || !d || !d.ergebnis) throw new Error((d&&d.error)||("Fehler "+r.status));
@@ -565,6 +615,14 @@ function nbKiAnwenden(art, d, m){
   _nbMaskeAktiv = m;
   const bericht = art==="training" ? nbInsTraining(d.ergebnis, m) : nbInsSpiel(d.ergebnis);
   if(_nbTb) bericht.push("Tagebuch-Vorschlag");
+  /* v679 (prozess-nacherfassung.md): Der Vorschlag wird sofort gespeichert – wer das Fenster schließt,
+     verliert nichts, und die Startseite zeigt ihn als „Noch zu bestätigen“. Aus derselben Notiz,
+     ohne zweiten KI-Aufruf. Die Zeilen der Bewertung merkt sich die Prüfkarte für die Anzeige. */
+  _nbBewertungZeilen = nbVorschau(art, d.ergebnis, m).filter(z=>!/^Tagebuch-Vorschlag/.test(z));
+  _nbTbSichern = (_nbTb && typeof tbVorschlagSichern==="function")
+    ? tbVorschlagSichern({ fuer:_nbFuer, art, v:_nbTb.v, diktat:_nbText,
+        termin:(art!=="training" && typeof _FZ!=="undefined" && _FZ) ? _FZ.termin : null }).catch(()=>null)
+    : Promise.resolve(null);
   const st2 = document.getElementById("nb-status");
   /* v638 · PO: „… oder vielleicht noch mal ein direktes Feedback über das Einsprechen an die KI
      geben kann, Dinge noch mal zu verändern.“ „Korrektur einsprechen“ hängt an die Notiz an; die
@@ -615,6 +673,16 @@ function nbZurueck(t){ const m=_nbMaskeAktiv; return String(t||"").replace(/Kind
    oder einen weiteren Auswertungstext in das große Textfeld hinein, obwohl schon dort was drin steht.“
    Das Feld merkt sich, was die KI zuletzt hineingeschrieben hat (data-ki). Eine neue Auswertung
    ersetzt genau diesen Teil; was der Trainer selbst getippt hat, bleibt stehen. */
+/* v679: Muss ein Text in ein Feld mit Grenze, dann am letzten Satzende davor und sichtbar
+   („[gekürzt]“) – nie mitten im Wort (fehlerbild-abgeschnitten.md). */
+function nbKuerzen(t, max){
+  t = String(t||""); if(!max || t.length<=max) return t;
+  const M = " [gekürzt]", vorn = t.slice(0, max - M.length);
+  const ende = Math.max(vorn.lastIndexOf(". "), vorn.lastIndexOf("! "), vorn.lastIndexOf("? "), vorn.lastIndexOf("\n"));
+  if(ende > vorn.length*0.5) return vorn.slice(0, ende+1).trim() + M;
+  const w = vorn.lastIndexOf(" ");
+  return (w>0 ? vorn.slice(0,w) : vorn).trim() + " …" + M;
+}
 function _nbTextDazu(el, satz){
   satz = nbZurueck(satz);
   if(!el || !satz) return false;
@@ -623,7 +691,7 @@ function _nbTextDazu(el, satz){
   if(vorher && alt.includes(vorher)) alt = alt.replace(vorher, "").replace(/\n{2,}/g,"\n").trim();
   if(alt.includes(satz)){ el.dataset.ki = satz; return false; }
   el.dataset.ki = satz;
-  el.value = (alt ? alt+"\n"+satz : satz).slice(0, Number(el.getAttribute("maxlength"))||3000);
+  el.value = nbKuerzen(alt ? alt+"\n"+satz : satz, Number(el.getAttribute("maxlength"))||3000);
   if(typeof feldWachsen==="function") feldWachsen(el);
   return true;
 }
@@ -672,7 +740,7 @@ function nbInsSpiel(e){
     const vorher = _FZ.kiText[feld];
     if(vorher && alt.includes(vorher)) alt = alt.replace(vorher,"").replace(/^\s*·\s*|\s*·\s*$/g,"").replace(/\s*·\s*·\s*/g," · ").trim();
     _FZ.kiText[feld] = neu;
-    return alt.includes(neu) ? alt : (alt ? alt+" · "+neu : neu).slice(0,300);
+    return alt.includes(neu) ? alt : nbKuerzen(alt ? alt+" · "+neu : neu, 4000);   // v679: vorher .slice(0,300)
   };
   if(e.getragen){ w.getragen = dazu("getragen", w.getragen, e.getragen); b.push("Das hat getragen"); }
   if(e.arbeiten){ w.arbeiten = dazu("arbeiten", w.arbeiten, e.arbeiten); b.push("Daran arbeiten wir"); }
@@ -796,7 +864,7 @@ function nbWegFelderMerken(){
   document.querySelectorAll("#nb-weg [data-nb-ziel]").forEach(el=>{
     const z = el.dataset.nbZiel;
     if(z.startsWith("#")){ const f = document.getElementById(z.slice(1)); if(f) f.value = el.value; }
-    else if(_FZ) _FZ.wert[z] = el.value.slice(0,300);
+    else if(_FZ) _FZ.wert[z] = el.value;   // v679: vorher .slice(0,300)
   });
 }
 function nbWegSpeichern(){
@@ -837,7 +905,7 @@ function nbWegZeichnen(){
     const akt = st.lesen();
     html = kopf + st.kacheln.map(k=>kachel(String(akt)===String(k.wert), esc(k.label), `nbWegWahl(${typeof k.wert==="number"?k.wert:"'"+k.wert+"'"})`)).join("")
       + (st.extra?kachel(st.extra.an(), esc(st.extra.label), "nbWegWahl('extra')", "border-style:dashed"):"")
-      + (st.feld?`<label style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2);margin:4px 0 8px">${esc(st.feld.label)}<input data-nb-ziel="#${st.feld.id}" value="${esc(document.getElementById(st.feld.id)?.value||"")}" maxlength="200" style="${fld};min-height:44px;margin-top:3px"></label>`:"")
+      + (st.feld?`<label style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2);margin:4px 0 8px">${esc(st.feld.label)}<input data-nb-ziel="#${st.feld.id}" value="${esc(document.getElementById(st.feld.id)?.value||"")}" maxlength="3000" style="${fld};min-height:44px;margin-top:3px"></label>`:"")
       + fuss(akt?"Weiter":"");
   }else if(st.typ==="kinder"){
     html = kopf + st.kinder.map((name,k)=>{
@@ -848,7 +916,7 @@ function nbWegZeichnen(){
   }else if(st.typ==="text"){
     html = kopf + st.felder.map(f=>{
       const wert = st.spiel ? (_FZ&&_FZ.wert[f.key]||"") : (document.getElementById(f.id)?.value||"");
-      return `<label style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-bottom:8px">${esc(f.label)}<textarea data-nb-ziel="${st.spiel?f.key:"#"+f.id}" rows="3" maxlength="300" style="${fld};margin-top:3px">${esc(wert)}</textarea></label>`;
+      return `<label style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-bottom:8px">${esc(f.label)}<textarea data-nb-ziel="${st.spiel?f.key:"#"+f.id}" rows="3" maxlength="4000" style="${fld};margin-top:3px">${esc(wert)}</textarea></label>`;
     }).join("") + fuss("Weiter");
   }else if(st.typ==="orga"){
     html = kopf + FZ_ORGA.map(o=>`<div style="margin-bottom:10px"><div style="font-size:var(--s-text);font-weight:700;margin-bottom:4px">${o.emo} ${o.label}</div>
