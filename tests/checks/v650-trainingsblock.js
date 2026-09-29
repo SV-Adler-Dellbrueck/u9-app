@@ -55,6 +55,10 @@ module.exports = async function (h) {
     // c) Block anlegen
     await blockEditorOpen(); await warte(150);
     blockLeitfrageSetzen(0);
+    /* v667 (PO 29.09., „Saisonformat ok“): mit der Leitfrage sind drei Einheiten vorgewählt.
+       Hier geht es um die Wahl von Hand – deshalb erst leeren. */
+    out.cVorwahl = _tbWahlGeordnet().length;
+    _tbEdit.wahl = [];
     blockVorlageUmschalten(2); blockVorlageUmschalten(0); blockVorlageUmschalten(1);
     blockVorlageUmschalten(3);                       // vierte: abgewiesen
     out.cWahl = _tbWahlGeordnet();
@@ -103,6 +107,7 @@ module.exports = async function (h) {
   if (r.a6 !== "ABCABC" || r.a5 !== "ABCAB" || r.a0 !== 0) probleme.push(`a) Wechsel: ${r.a6} / ${r.a5} / ${r.a0}`);
   if (r.b !== "10+1 14+0 8-1 14+2 8+2 null") probleme.push(`b) Aufbauwahl: ${r.b}`);
   if (!/\+1 Kind mehr/.test(r.bText[0]) || !/1 Kind weniger/.test(r.bText[1])) probleme.push(`b) Hinweise: ${JSON.stringify(r.bText)}`);
+  if (r.cVorwahl !== 3) probleme.push(`c) Vorwahl: ${r.cVorwahl} statt 3`);
   if (JSON.stringify(r.cWahl) !== JSON.stringify(["L1-1 Probe 1", "L1-2 Probe 2", "L1-3 Probe 3"])) probleme.push(`c) Auswahl/Reihenfolge: ${JSON.stringify(r.cWahl)}`);
   if (!r.cKnopf) probleme.push("c) „Block erfassen“ bleibt aus");
   const post = gesendet.find(x => x.methode === "POST" && /trainingsblock$/.test(x.pfad));

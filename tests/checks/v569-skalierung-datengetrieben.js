@@ -22,11 +22,11 @@ module.exports = async function (h) {
   // d) Datei
   const vor = JSON.parse(fs.readFileSync(path.join(h.REPO, "uebungen/vorlagen.json"), "utf8"));
   const keys = v => Object.keys(v.skalierung || {}).sort((a, b) => a - b).join("/");
-  const spieltag = (vor.vorlagen || []).filter(v => /^L(4-[678]|5-[456]|6-[345]) /.test(String(v.name)));
+  const spieltag = (vor.vorlagen || []).filter(v => /^L(1-[56]|2-[56]|3-[45]|4-[678]|5-[456]|6-[345]) /.test(String(v.name)));  // v667: dazu die sechs des Saisonformats
   const konzept = (vor.vorlagen || []).filter(v => !spieltag.includes(v));
   const falschNeu = spieltag.filter(v => keys(v) !== "8/10/12/14").map(v => `${v.name} (${keys(v)})`);
   const falschAlt = konzept.filter(v => keys(v) !== "8/12/16").map(v => `${v.name} (${keys(v)})`);
-  if (spieltag.length !== 9) probleme.push(`${spieltag.length} Spieltags-Einheiten in der Datei, erwartet 9`);
+  if (spieltag.length !== 15) probleme.push(`${spieltag.length} Spieltags-Einheiten in der Datei, erwartet 15`);
   if (falschNeu.length) probleme.push("Spieltags-Einheit ohne 8/10/12/14: " + falschNeu.join(", "));
   if (falschAlt.length) probleme.push("Konzept-Einheit ohne 8/12/16: " + falschAlt.join(", "));
 

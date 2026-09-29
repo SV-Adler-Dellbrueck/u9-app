@@ -284,7 +284,10 @@ module.exports = async function (h) {
      dreizehn müssen dabei sein, und nichts Bekanntes darf doppelt angelegt werden. */
   const fehlenU = neueU.map(u => u.name).filter(n => !neuU.includes(n));
   if (fehlenU.length) probleme.push(`Der Abgleich hat diese Übungen des Pakets nicht angelegt: ${fehlenU.join(", ")}`);
-  if (neuV.length !== 9) probleme.push(`Der Abgleich hat ${neuV.length} Vorlagen angelegt statt 9: ${neuV.join(", ")}`);
+  /* v667: Wie bei den Übungen seit v583 – das Saisonformat hängt sechs Einheiten an. Geprüft
+     wird, dass die neun dieses Pakets dabei sind. */
+  const fehlenV = neueV.map(v => v.name).filter(n => !neuV.includes(n));
+  if (fehlenV.length) probleme.push(`Der Abgleich hat diese Vorlagen des Pakets nicht angelegt: ${fehlenV.join(", ")}`);
   const altU = neuU.filter(n => (bib.uebungen || []).slice(0, bestandU).some(u => u.name === n));
   const altV = neuV.filter(n => (vor.vorlagen || []).slice(0, bestandV).some(v => v.name === n));
   if (altU.length || altV.length) probleme.push("Der Abgleich hat Bestehendes noch einmal angelegt: " + altU.concat(altV).join(", "));
@@ -292,7 +295,7 @@ module.exports = async function (h) {
   if (ohneOrdnung.length) probleme.push("Beim Anlegen ging die Ordnung verloren: " + ohneOrdnung.join(", "));
   const ohneSkizze = uebPosts.filter(p => !p.skizze || typeof p.skizze !== "object").map(p => p.name);
   if (ohneSkizze.length) probleme.push("Beim Anlegen ging die Skizze verloren: " + ohneSkizze.join(", "));
-  if (neuU.length === 13 && neuV.length === 9 && !altU.length && !altV.length) zeilen.push(`Abgleich: 13 Übungen und 9 Vorlagen neu, die ${bestandU} und ${bestandV} bestehenden unberührt`);
+  if (!fehlenU.length && !fehlenV.length && !altU.length && !altV.length) zeilen.push(`Abgleich: 13 Übungen und 9 Vorlagen neu, die ${bestandU} und ${bestandV} bestehenden unberührt`);
 
   // 5)
   if (r.netto.length) probleme.push("Netto-Hinweis: " + r.netto.map(x => `${x.name} – ${x.text}`).join(" | "));
@@ -306,7 +309,8 @@ module.exports = async function (h) {
   // 6)
   const fehlendeChips = NEUE_ORDNUNGEN.filter(o => !r.ordChips.includes(o));
   if (fehlendeChips.length) probleme.push(`Kacheln fehlen im Fenster „Vorlage übernehmen“: ${fehlendeChips.join(", ")} (da: ${r.ordChips.join(" · ")})`);
-  const erwartet = { "3+1": 3, "FUNiño": 3, "3+1 gegen FUNiño": 2, "3+1 und FUNiño": 1 };
+  // v667: je drei Einheiten 3+1 und FUNiño aus dem Saisonformat dazu (PO 29.09.: „Saisonformat ok, bau v667“)
+  const erwartet = { "3+1": 6, "FUNiño": 6, "3+1 gegen FUNiño": 2, "3+1 und FUNiño": 1 };
   Object.keys(erwartet).forEach(o => {
     const f = (r.filter || {})[o] || {};
     if (String(f.treffer) !== String(erwartet[o])) probleme.push(`Filter „${o}“ lässt ${f.treffer} Vorlagen stehen, erwartet ${erwartet[o]}`);

@@ -362,7 +362,19 @@ function _tbWahlGeordnet(){
   const folge=_tbFolge(_tbEdit.leitfrage).map(v=>v.name);
   return _tbEdit.wahl.slice().sort((a,b)=>folge.indexOf(a)-folge.indexOf(b));
 }
-function blockLeitfrageSetzen(i){ const f=_tbLeitfragen()[i]; if(!f)return; if(_tbEdit.leitfrage!==f){_tbEdit.leitfrage=f;_tbEdit.wahl=[];} blockEditorRender(); }
+/* v667 · Saisonformat (Beschluss 28.09., Entwurf abgenommen 29.09.): „Die Saison spielt nur
+   FUNiño 3 gegen 3 und 3+1 … die Automatik nimmt je Block mindestens zwei Einheiten in
+   3+1/FUNiño.“ Mit der Leitfrage sind deshalb drei Einheiten vorgewählt – zuerst die im
+   Saisonformat, der Rest in der Reihenfolge der Folge. Gibt es weniger als zwei, stehen alle
+   da, die es gibt, und der Editor sagt das. Abwählen und tauschen bleibt frei. */
+const TB_SAISON_ORDNUNGEN=["3+1","FUNiño","3+1 gegen FUNiño","3+1 und FUNiño"];
+function _tbSaison(v){ return TB_SAISON_ORDNUNGEN.includes(String((v&&v.ordnung)||"")); }
+function _tbVorwahl(leitfrage){
+  const folge=_tbFolge(leitfrage);
+  const saison=folge.filter(_tbSaison), rest=folge.filter(v=>!_tbSaison(v));
+  return saison.concat(rest).slice(0,3).map(v=>v.name);
+}
+function blockLeitfrageSetzen(i){ const f=_tbLeitfragen()[i]; if(!f)return; if(_tbEdit.leitfrage!==f){_tbEdit.leitfrage=f;_tbEdit.wahl=_tbVorwahl(f);} blockEditorRender(); }
 function blockWochenSetzen(w){ _tbEdit.wochen=w; blockEditorRender(); }
 function blockVonSetzen(v){ if(/^\d{4}-\d{2}-\d{2}$/.test(v)){ _tbEdit.von=v; blockEditorRender(); } }
 function blockZielSetzen(t){ _tbEdit.ziel=String(t||"").slice(0,140); }
@@ -379,8 +391,16 @@ function blockVorlageUmschalten(i){
    „Wählen“ ist die eine Handlung; der Aufklapper nur zum Nachsehen. */
 function blockThemaSetzen(i){
   const t=(typeof vuThemen==="function")?vuThemen()[i]:null; if(!t)return;
-  if(_tbEdit.leitfrage!==t.frage){ _tbEdit.leitfrage=t.frage; _tbEdit.wahl=[]; }
+  if(_tbEdit.leitfrage!==t.frage){ _tbEdit.leitfrage=t.frage; _tbEdit.wahl=_tbVorwahl(t.frage); }
   blockEditorRender();
+}
+function _tbSaisonHinweis(folge,geordnet){
+  const da=folge.filter(_tbSaison).length;
+  const gewaehlt=folge.filter(v=>_tbSaison(v)&&geordnet.includes(v.name)).length;
+  const txt=da<2?`Zu dieser Leitfrage gibt es ${da===0?"keine Einheit":"nur eine Einheit"} im Saisonformat (3+1 oder FUNiño) – ${da===0?"die anderen sind vorgewählt":"sie ist vorgewählt"}.`
+    :gewaehlt<2?`Im Saisonformat (3+1 oder FUNiño) sind nur ${gewaehlt} gewählt – vorgesehen sind mindestens zwei.`
+    :`${gewaehlt} von 3 im Saisonformat (3+1 oder FUNiño) vorgewählt – tauschen geht.`;
+  return `<div id="tb-saison" style="font-size:var(--s-klein);color:var(--text2);margin:0 0 6px;line-height:1.45">⚽ ${txt}</div>`;
 }
 function blockEinheitKarte(v,i,p){
   const bl=Array.isArray(v.bloecke)?v.bloecke:[];
@@ -431,6 +451,7 @@ async function blockEditorRender(){
     </div>
     <div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">bis ${esc(_tbDatumKurz(bis))}${ueber.length?` · überschneidet sich mit „${esc(ueber[0].leitfrage)}“ – im Zeitraum gilt der später begonnene Block`:""}</div>
     <div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin:14px 0 4px">3 · Genau drei Einheiten (${geordnet.length}/3)</div>
+    ${_tbEdit.leitfrage?_tbSaisonHinweis(folge,geordnet):""}
     ${_tbEdit.leitfrage?`<div style="display:grid;gap:8px">${folge.map((v,i)=>blockEinheitKarte(v,i,geordnet.indexOf(v.name))).join("")}</div>`
       :`<div style="font-size:var(--s-text);color:var(--text3)">Erst oben eine Leitfrage wählen.</div>`}
     <div id="tb-vorschau" style="margin-top:12px"></div>

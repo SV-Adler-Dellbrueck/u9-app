@@ -4716,6 +4716,11 @@ const UEBUNG_ART_VORSCHLAG={
      der Trainer erst in Steigerung 3 verteidigt. Der Schlüssel heißt hier „spiel“ – das ist
      die Kennung, die `UEBUNG_ART` als „Spielform“ auflöst. */
   "Raute mit Torwart – Angriff über den anderen Flügel":"spiel",
+  /* v667 – Saisonformat (Entwurf abgenommen 29.09.): vier Spielformen mit Gegner. */
+  "3+1 gegen 3 – Ball halten, der Torwart ist die Rettung":"spiel",
+  "FUNiño 2 gegen 2 – abschirmen, dann Seite wechseln":"spiel",
+  "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor":"spiel",
+  "FUNiño 1 gegen 1 – vorbei, dann das freie Minitor":"spiel",
   /* v601 – aus einer Vorlage übernommen (PO 23.09.2026). Spielform: echter Gegner, echter
      Ausgang, und das Kind entscheidet selbst, welches der beiden Ziele es ansteuert. */
   "Zwei Torarten – Schuss oder Dribbling":"spiel"
@@ -4813,6 +4818,10 @@ const UEBUNG_BETREUUNG_VORSCHLAG={
   "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts":"allein",
   "3+1 gegen FUNiño – großes Tor gegen zwei kleine":"allein",
   "Igel gegen drei – Torwart und zwei Flitzer verteidigen":"allein",
+  "3+1 gegen 3 – Ball halten, der Torwart ist die Rettung":"allein",
+  "FUNiño 2 gegen 2 – abschirmen, dann Seite wechseln":"allein",
+  "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor":"allein",
+  "FUNiño 1 gegen 1 – vorbei, dann das freie Minitor":"allein",
   "2 gegen 2 plus Torwart – Jäger läuft an, Flitzer stellt zu":"allein",
   "FUNiño 3 gegen 3 – Mittellinie verteidigen":"allein",
   "FUNiño 2 gegen 2 – einer drängt, einer schützt":"allein",

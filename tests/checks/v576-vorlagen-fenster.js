@@ -122,13 +122,14 @@ module.exports = async function (h) {
   if (!/FUNiño/.test(r.knopfText)) probleme.push(`Der Filter-Knopf nennt die Auswahl nicht: „${r.knopfText}“`);
   if (r.tagKacheln.some(t => /-/.test(t))) probleme.push(`Rahmen-Kacheln zeigen noch Datenschlüssel: ${JSON.stringify(r.tagKacheln)}`);
   // c)
-  if (r.kartenAlle !== 30) probleme.push(`${r.kartenAlle} Karten statt 30`);
+  // v667: sechs Einheiten des Saisonformats dazu (PO 29.09.: „Saisonformat ok, bau v667“) – 36 Karten, L1 mit 6
+  if (r.kartenAlle !== 36) probleme.push(`${r.kartenAlle} Karten statt 36`);
   if (r.gruppenKoepfe < 5) probleme.push(`${r.gruppenKoepfe} Gruppenüberschriften – die Liste ist nicht nach Leitfrage gruppiert`);
   if (r.frageInKarte) probleme.push(`Die Leitfrage steht noch in ${r.frageInKarte} Karten, obwohl sie über der Gruppe steht`);
   // a)
   if (!r.sucheL4.length || !r.sucheL4.every(n => /^L4-/.test(n))) probleme.push(`Suche „L4“ findet ${JSON.stringify(r.sucheL4.slice(0, 3))}`);
   if (!r.sucheFrage) probleme.push("Die Suche greift nicht auf die Leitfrage zu");
-  if (r.kartenGefiltert >= 30 || !r.kartenGefiltert) probleme.push(`Der Ordnungsfilter wirkt nicht: ${r.kartenGefiltert} Karten`);
+  if (r.kartenGefiltert >= 36 || !r.kartenGefiltert) probleme.push(`Der Ordnungsfilter wirkt nicht: ${r.kartenGefiltert} Karten`);
   if (r.nachLeeren !== 6) probleme.push(`„Filter aufheben“ zeigt ${r.nachLeeren} statt 6 Themen`);
   // e)
   if (!/Keine Vorlage passt dazu/.test(r.leerText)) probleme.push("Der leere Zustand sagt nichts");
@@ -137,9 +138,9 @@ module.exports = async function (h) {
   // v656 Themen-Kacheln
   if (r.themenZuBeginn !== 6) probleme.push(`${r.themenZuBeginn} Themen-Kacheln statt 6`);
   if (r.kartenZuBeginn) probleme.push(`Zu Beginn stehen schon ${r.kartenZuBeginn} Karten – erst das Thema`);
-  if (!/^L1 4 Einheiten Wie behalte ich den Ball/.test(r.themaText)) probleme.push(`Themen-Kachel sagt nicht, worum es geht: „${r.themaText.slice(0, 80)}“`);
+  if (!/^L1 6 Einheiten Wie behalte ich den Ball/.test(r.themaText)) probleme.push(`Themen-Kachel sagt nicht, worum es geht: „${r.themaText.slice(0, 80)}“`);
   if (/L1-1/.test(r.themaText)) probleme.push("Die Themen-Kachel zeigt Kürzel statt Kurztitel");
-  if (r.kartenThema !== 4) probleme.push(`Das Thema öffnet ${r.kartenThema} statt 4 Einheiten`);
+  if (r.kartenThema !== 6) probleme.push(`Das Thema öffnet ${r.kartenThema} statt 6 Einheiten`);
   if (!r.zurueckDa || r.themenWieder !== 6) probleme.push("Aus dem Thema führt kein Weg zurück zu allen Themen");
   if (fehler.length) probleme.push("Konsole: " + fehler[0]);
 
