@@ -917,7 +917,11 @@ function _blzDuellTeams(nKids){
 }
 function blzElternAnzahl(m){if(!_blzPlanVerwerfen())return;BLZ.elternAnzahl=m;_blzDuellTeams(BLZ.anzahl);blzSave();blzRender();}
 const BLZ_SPIELFORM={f2:["2 gegen 2 · ohne Torwart",2],funino:["FUNiño (3 gegen 3)",3],f3:["3+1",4],f4:["4+1",5],f5:["5+1",6],frei:["frei",0]};
-function blzSpielform(sf){BLZ.spielform=sf;blzSave();blzRender();}
+function blzSpielform(sf){BLZ.spielform=sf;_blzEingestellt();blzSave();blzRender();}
+/* v687: einmal eingestellt → beim nächsten Öffnen zugeklappt; solange das Fenster offen ist,
+   bleibt der Bereich offen, in dem gerade getippt wurde. */
+let _blzEinstOffen=null;
+function _blzEingestellt(){ BLZ.eingestellt=true; if(_blzEinstOffen==null)_blzEinstOffen=true; }
 // Team-Größen-Vorschlag aus Kinderzahl + Spielform (13 Kinder, FUNiño → 4 Teams)
 function _blzTeamVorschlag(){
   const groesse=(BLZ_SPIELFORM[BLZ.spielform]||[])[1];
@@ -1100,6 +1104,7 @@ function blitzOpen(vorgabeBudget){
   if(!BLZ.datum)BLZ.datum=_blzBindeDatum();          // Altbestand ohne Termin-Bindung
   if(alt&&BLZ.phase==="setup")_blzTeamsAufraeumen(); // gespeicherte Teams gegen den heutigen Pool halten
   document.getElementById("blitz-modal")?.remove();
+  _blzEinstOffen=null;
   const m=document.createElement("div");m.id="blitz-modal";
   m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Trainingsturnier");
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
@@ -1154,7 +1159,12 @@ function _blzSetupHtml(){
     :BLZ.teams.map(teamKarte).join("");
   return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${mChips}</div>
     ${duell?`<div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:8px">Duell-Tag: Gespielt wird NUR Kinder gegen Eltern – nie Kinder gegen Kinder, nie Eltern gegen Eltern. Bei gleich vielen Teams laufen die Duelle parallel auf den Feldern.</div>`:""}
-    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:4px">Spielform</div>
+    <!-- v687: Spielform, Zeit und Felder stehen in einem Klappbereich mit Zusammenfassung. Beim
+         ersten Turnier offen; hat der Trainer sie einmal eingestellt, zu – am Platz zählt dann
+         nur „Teams prüfen, los“. Wer darin etwas ändert, behält ihn offen (_blzEinstOffen). -->
+    <details id="blz-einst" class="blz-einst"${(_blzEinstOffen==null?!BLZ.eingestellt:_blzEinstOffen)?" open":""} ontoggle="_blzEinstOffen=this.open">
+    <summary><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-text);font-weight:800">⚙️ So wird gespielt</span><span style="display:block;font-size:var(--s-text);color:var(--text2)">${esc((BLZ_SPIELFORM[BLZ.spielform||"frei"]||["frei"])[0])} · ${BLZ.budget?BLZ.budget+" Min.":"Zeit frei"} · ${BLZ.felder||1} Feld${(BLZ.felder||1)>1?"er":""}</span></span><span class="blz-aendern">ändern</span></summary>
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:8px 0 4px">Spielform</div>
     <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:8px">${sfChips}</div>
     ${vorschlag?`<div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:8px">💡 ${vorschlag.pool} Kinder → Vorschlag: <b>${vorschlag.teams} Kinder-Team${vorschlag.teams>1?"s":""}</b> (${BLZ_SPIELFORM[BLZ.spielform][0]})${duell?" – und genauso viele Eltern-Teams, dann spielt alles parallel":""}</div>`:""}
     <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:4px">Zeitbudget</div>
@@ -1163,6 +1173,7 @@ function _blzSetupHtml(){
     <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:8px">${fChips}</div>
     ${_blzPlatzHtml()}
     ${_blzDurchspielHtml()}
+    </details>
     ${duell?`<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:4px">Eltern-Teams</div>
     <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:8px">${eChips}</div>`:""}
     ${_blzVorschauHtml()}
@@ -1187,8 +1198,8 @@ function _blzSetupHtml(){
       <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="blzStart()">🔁 Spielplan neu erzeugen</button>`
     :`<button class="btn btn-p" style="width:100%" onclick="blzStart()"><i class="ti ti-tournament"></i>Turnier bauen &amp; los</button>`}`;
 }
-function blzBudget(b){BLZ.budget=b;blzSave();blzRender();}
-function blzFelder(f){BLZ.felder=f;blzSave();blzRender();}
+function blzBudget(b){BLZ.budget=b;_blzEingestellt();blzSave();blzRender();}
+function blzFelder(f){BLZ.felder=f;_blzEingestellt();blzSave();blzRender();}
 function blzAnzahl(n){
   if(!_blzPlanVerwerfen())return;
   BLZ.anzahl=n;

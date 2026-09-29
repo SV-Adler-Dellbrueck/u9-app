@@ -587,60 +587,53 @@
          aber stehen, weil fünfundzwanzig Stellen im Code das Datum daraus lesen.
          NICHT entfernen, ohne tpPlanSave, tpSlotsLoad, tgFor und den Stationstimer
          auf eine andere Quelle umzustellen. -->
+    <!-- v687 PO (30.09.): „Logik und Sinnhaftigkeit der Inhalte und des Aufbaus kritisch überprüfen.“
+         Die Seite folgt jetzt dem Ablauf der Planung in fünf Schritten. Vorher standen die
+         Spielform-Minuten ganz oben (bevor es einen Plan gab), „Vorlage übernehmen“ oben und
+         „Auto-Plan“ ganz unten, obwohl beide dasselbe tun – den Plan füllen –, und am Ende zwei
+         gleich große Knöpfe „Plan speichern“ und „Trainingsstart“. Alle IDs bleiben; nur die
+         Reihenfolge und die Beschriftung der Schritte sind neu. -->
+    <div class="sl nt tp-schritt"><span class="tp-nr" aria-hidden="true">1</span>Termin</div>
     <select id="tp-date" onchange="tpTrainerRsvpLaden(this.value);tpPlanRestore(this.value)" style="display:none"><option>Lade Termine…</option></select>
     <div id="tp-vorplan" style="margin:6px 0 8px"></div>
-    <!-- v542: Wer hat zuletzt gespeichert? Steht dort, wo man den Termin öffnet – nicht
-         erst am Speichern-Knopf, wo die Antwort zu spät käme. -->
     <div id="tp-gespeichert" style="margin:2px 0 6px"></div>
-    <!-- Paket 3: Nettospielzeit der Einheit und Wochenstand, direkt unter der Terminwahl -->
-    <div id="tp-netto" style="margin:6px 0 8px"></div>
     <div id="tp-nachbereiten"></div><!-- v483: nach der Einheit der Weg in die Nachbereitung -->
+    <div class="sl tp-schritt"><span class="tp-nr" aria-hidden="true">2</span>Wer trainiert mit?</div>
     <div id="tp-trainer-quelle" style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px"></div>
-    <!-- v470: umbrechen statt wischen. Als wischbare Zeile lagen bei fünf Trainern zwei
-         außerhalb des Bildes – genau dort fehlte der Haken, den der PO gesucht hat. -->
     <div style="display:flex;gap:6px;flex-wrap:wrap;padding:2px 0 8px" id="tp-trainer-checks"><!-- wird aus TRAINER befüllt (D2) --></div>
-    <div id="tp-diagnose"></div>
-    <!-- v506: Kopf der Einheit (Schwerpunkt, Material, Beobachtung, Notiz) – kommt aus
-         trainingsplan.kopf und steht über der Zeitleiste, wo die Einheit beginnt. -->
+    <div class="sl tp-schritt"><span class="tp-nr" aria-hidden="true">3</span>Inhalt wählen</div>
     <div id="tp-block"></div><!-- v650: Einheit des Trainingsblocks für diesen Termin, Aufbau nach Kinderzahl -->
     <div id="tp-kopf"></div>
-    <!-- v538: „Einheit importieren" ist entfallen. Eine einzelne Einheit als JSON von
-         Hand einzulesen hatte nie einen Anwendungsfall – fertige Einheiten kommen über
-         „Vorlage übernehmen", und neue Inhalte kommen über uebungen/vorlagen.json und
-         uebungen/bibliothek.json, die beim Öffnen automatisch abgeglichen werden. Der
-         Dialog selbst (einheitImportOpen) bleibt im Modul: er trägt dieselbe Prüfung,
-         die der Abgleich benutzt, und wird nur nicht mehr angeboten.
-         „Vorlage übernehmen" steht jetzt allein und über volle Breite, weil es der
-         übliche Weg in eine Einheit ist. KEINE Hauptaktion (56 px): die Seite trägt mit
-         „Plan speichern" und „Trainingsstart" schon zwei, und cockpit-ui lässt genau
-         eine je Bildschirm – ein dritter Hauptknopf würde es weiter verschlechtern. -->
-    <button onclick="if(typeof vorlageUebernehmenOpen===&quot;function&quot;)vorlageUebernehmenOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="width:100%;min-height:48px;margin:0 0 10px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><i class="ti ti-layout-grid"></i>Vorlage übernehmen</button>
-    <div id="tp-timeline"></div>
-    <!-- Aktionen in Kachel-Logik (PO): große Flächen, kein Kleinkram. „Laden" entfällt
-         (der Plan lädt beim Termin-Wechsel automatisch), „Teilen" entfällt (alle Trainer
-         haben die App; fürs Aushelfen gibt es das Vertretungs-Paket). -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
-      <button onclick="tpAddSlot()" style="min-height:72px;border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px 6px"><span style="font-size:24px">➕</span><span style="font-size:13.5px;font-weight:800">Phase hinzufügen</span></button>
-      <button onclick="tpGenerate()" style="min-height:72px;border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px 6px"><span style="font-size:24px">🪄</span><span style="font-size:13.5px;font-weight:800">Auto-Plan</span></button>
-      <button onclick="tpPlanSave(true)" style="grid-column:1/-1;min-height:56px;border:none;border-radius:14px;background:var(--surface);border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;color:var(--text);font-family:inherit;font-size:15px;font-weight:900;cursor:pointer">💾 Plan speichern</button>
-      <button onclick="tlStart()" title="Synchroner Start auf allen Trainer-Handys: alle bereit → 10-Sekunden-Countdown → Stationen laufen überall parallel" style="grid-column:1/-1;min-height:64px;border:none;border-radius:14px;background:linear-gradient(135deg,#15803d,#16a34a);color:#fff;font-family:inherit;font-size:17px;font-weight:900;cursor:pointer;box-shadow:0 2px 10px rgba(22,163,74,.3)">🟢 Trainingsstart</button>
-      <button onclick="stTimerStart()" title="Lokaler Stationstimer – Fallback ohne Netz" style="grid-column:1/-1;min-height:44px;border:none;background:transparent;color:var(--text2);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline">⏱️ Solo-Timer (ohne Netz)</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 6px">
+      <button onclick="if(typeof vorlageUebernehmenOpen===&quot;function&quot;)vorlageUebernehmenOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid var(--fam-training);border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px 6px"><span style="font-size:28px">📋</span><span style="font-size:var(--s-karte);font-weight:800">Vorlage übernehmen</span></button>
+      <button onclick="tpGenerate()" style="min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid var(--fam-training);border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px 6px"><span style="font-size:28px">🪄</span><span style="font-size:var(--s-karte);font-weight:800">Auto-Plan</span></button>
     </div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin:0 0 4px">Oder unten jeden Block selbst belegen.</div>
+    <div class="sl tp-schritt"><span class="tp-nr" aria-hidden="true">4</span>Ablauf und Gruppen</div>
+    <div id="tp-diagnose"></div>
+    <div id="tp-timeline"></div>
+      <button onclick="tpAddSlot()" style="width:100%;margin-top:10px;min-height:56px;border:1px solid var(--rand-bedien);border-top:3px solid var(--fam-training);border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:5px;padding:10px 6px"><span style="font-size:22px">➕</span><span style="font-size:var(--s-karte);font-weight:800">Block hinzufügen</span></button>
+    <div class="sl tp-schritt"><span class="tp-nr" aria-hidden="true">5</span>Speichern und starten</div>
+    <div id="tp-netto" style="margin:6px 0 8px"></div>
+      <button onclick="tpPlanSave(true)" style="width:100%;min-height:48px;margin-bottom:10px;border:none;border-radius:14px;background:var(--surface);border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;color:var(--text);font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">💾 Plan speichern</button>
+      <button onclick="tlStart()" title="Synchroner Start auf allen Trainer-Handys: alle bereit → 10-Sekunden-Countdown → Stationen laufen überall parallel" style="width:100%;min-height:64px;margin-bottom:6px;border:none;border-radius:14px;background:linear-gradient(135deg,#15803d,#16a34a);color:#fff;font-family:inherit;font-size:17px;font-weight:900;cursor:pointer;box-shadow:0 2px 10px rgba(22,163,74,.3)">🟢 Trainingsstart</button>
+      <button onclick="stTimerStart()" title="Lokaler Stationstimer – Fallback ohne Netz" style="width:100%;min-height:44px;border:none;background:transparent;color:var(--text2);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer;text-decoration:underline">⏱️ Solo-Timer (ohne Netz)</button>
   </div><!-- /train-sub-planung -->
 
   <!-- SUB: Anwesenheit -->
   <div id="train-sub-anwesenheit" class="train-sub">
     <div class="sl nt"><i class="ti ti-checkbox"></i>Anwesenheit</div>
-    <div class="mg"><label for="aw-date">Termin</label><select id="aw-date" onchange="awLoad()" style="width:100%;padding:8px 12px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:13px;background:var(--surface);font-family:inherit;color:var(--text)"><option>Lade Termine…</option></select></div>
+    <label for="aw-date" class="sl nt tp-schritt"><span class="tp-nr" aria-hidden="true">1</span>Termin</label>
+    <div class="mg"><select id="aw-date" onchange="awLoad()" style="width:100%;padding:8px 12px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:13px;background:var(--surface);font-family:inherit;color:var(--text)"><option>Lade Termine…</option></select></div>
     <!-- Standard: heute + kommende Termine (PO). Vergessenes wird bewusst per Klick nachgetragen. -->
     <div id="aw-nachtragen"></div>
-    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:10px 0 6px">Anwesende Trainer</div>
+    <div class="sl tp-schritt"><span class="tp-nr" aria-hidden="true">2</span>Welche Trainer waren da?</div>
     <div id="aw-trainer-quelle" style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px"></div>
     <div id="aw-trainer-checks" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"><!-- wird aus TRAINER befüllt (D2) --></div>
-    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:10px 0 6px">Spieler</div>
+    <div class="sl tp-schritt"><span class="tp-nr" aria-hidden="true">3</span>Welche Kinder waren da?</div>
     <div id="aw-list"></div>
     <div class="brow" style="margin-top:12px">
-      <button onclick="awSave()" style="flex:1;min-width:150px;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.28)"><i class="ti ti-device-floppy"></i>Speichern</button>
+      <button id="aw-save-btn" onclick="awSave()" style="flex:1;min-width:150px;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:56px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.28)"><i class="ti ti-device-floppy"></i> Anwesenheit speichern</button>
     </div>
     <!-- Die Saison-Auswertung ist ab v381 NICHT mehr hier (PO): Erfassen und Auswerten sind
          zwei verschiedene Anlaesse. Sie sitzt jetzt in der Team-Kachel unter „Überblick"
