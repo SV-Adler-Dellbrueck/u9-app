@@ -4,7 +4,7 @@
    drei fixierte Rufe mit Ablauf (Signal-Modell), @alle nur für Moderatoren, Bearbeiten, Suche.
    Moderation: melden, stummschalten, archivieren statt löschen – archivierte Rufe sehen nur
    Trainer. Kinder haben keinen Zugang; Name und Rolle setzt die Datenbank, nicht das Gerät.
-   Push folgt in einer eigenen Stufe; bis dahin zählt ein Punkt die ungelesenen Rufe.
+   Push seit v673: Edge Function rufe-push (alle 5 Minuten), Entscheidung in rufe_push_faellig().
 
    Datenweg: Tabellen rufe_* mit RLS (Migration 20260929_v670_adler_rufe.sql). Bearbeiten und
    Archivieren nur über RPC. Keine Systemdialoge – alle Rückfragen sind eigene Fenster. */
@@ -34,7 +34,8 @@ function _rfText(t){
 function _rfZ(n){ return (typeof zOben==="function")?zOben(n):n; }
 
 /* ── Öffnen ───────────────────────────────────────────────────────────────────── */
-async function rufeOpen(raumId){
+async function rufeOpen(raumId){ try{ return await _rufeOpen(raumId); }catch(e){ console.error(e); toast("Adler-Rufe: "+(e&&e.message||"Fehler beim Öffnen"),"err"); } }
+async function _rufeOpen(raumId){
   if(typeof sbToken==="function"&&!sbToken()){ toast("Bitte zuerst anmelden","err"); return; }
   document.getElementById("rufe-modal")?.remove();
   _rf={raeume:[],raum:null,liste:[],reakt:[],fix:[],mod:false,uid:_rfUid(),antwort:null,suche:"",timer:null,letzte:null};
@@ -46,6 +47,7 @@ async function rufeOpen(raumId){
       <span style="font-size:var(--s-seite);line-height:1" aria-hidden="true">📣</span>
       <div style="flex:1;min-width:0"><div style="font-size:var(--s-karte);font-weight:800">Adler-Rufe</div>
         <div id="rufe-unter" style="font-size:var(--s-klein);opacity:.9">Eltern und Trainerteam</div></div>
+      <button type="button" id="rufe-glocke" onclick="rufeGlockeUmschalten()" aria-label="Benachrichtigungen zu Adler-Rufen" aria-pressed="true" style="width:44px;height:44px;border:none;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:var(--s-teil);cursor:pointer">🔔</button>
       <button type="button" id="rufe-suche-knopf" onclick="rufeSucheUmschalten()" aria-label="Suchen" style="width:44px;height:44px;border:none;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:var(--s-teil);cursor:pointer">🔍</button>
       <button type="button" onclick="rufeClose()" aria-label="Schließen" style="width:44px;height:44px;border:none;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:var(--s-teil);cursor:pointer">✕</button>
     </div>
@@ -74,6 +76,7 @@ async function rufeOpen(raumId){
   _rf.raum=(raeume.find(r=>String(r.id)===String(raumId))||raeume[0]||{}).id||null;
   if(!_rf.raum){ document.getElementById("rufe-liste").innerHTML=`<div style="color:var(--text2);padding:12px 0">Die Adler-Rufe sind für Eltern mit Zugang und das Trainerteam.</div>`; return; }
   rufeRaeumeRender();
+  rufeGlockeLaden();
   await rufeLaden(true);
   _rf.timer=setInterval(()=>{ if(!document.getElementById("rufe-modal")){ rufeClose(); return; } if(!document.hidden)rufeLaden(false); },RUFE_TAKT);
 }
@@ -355,9 +358,24 @@ async function rufeSucheSprung(raumId,id){
 
 /* ── Zahl der ungelesenen Rufe (Startseite, Kachel) ───────────────────────────── */
 async function rufeBadgeLoad(){
-  const els=[...document.querySelectorAll(".rufe-badge")]; if(!els.length)return;
+  const els=[...document.querySelectorAll(".rufe-badge")];
+  const hinweis=document.getElementById("rufe-hinweis");
+  if(!els.length&&!hinweis)return;
+  if(typeof sbToken==="function"&&!sbToken())return;
   let n=0, alle=false;
-  try{ const r=await _rfRpc("rufe_ungelesen"); if(r.ok){ (await r.json()||[]).forEach(x=>{ n+=Number(x.anzahl)||0; if(x.an_alle)alle=true; }); } }catch(e){}
+  // lesend per GET (die Funktion ist stable) – ein POST sähe aus wie ein Schreibzugriff
+  (await _rfGet("rpc/rufe_ungelesen")).forEach(x=>{ n+=Number(x.anzahl)||0; if(x.an_alle)alle=true; });
+  /* v673: Gibt es Neues, steht auf der Eltern-Startseite ganz oben eine schmale Zeile mit dem
+     letzten Ruf – ein Tipp öffnet den Chat. Ohne Neues bleibt der Platz leer. */
+  if(hinweis){
+    let letzter=null;
+    if(n){ const l=await _rfGet("rufe_nachricht?archiviert_am=is.null&select=autor_name,text,autor&order=created_at.desc&limit=5"); letzter=l.find(x=>x.autor!==_rfUid())||null; }
+    hinweis.innerHTML=n?`<button type="button" onclick="rufeEinstieg()" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;min-height:48px;margin-bottom:10px;padding:8px 12px;border:1.5px solid ${alle?"#b45309":"#1e3a8a"};border-radius:12px;background:${alle?"#fef3c7":"#eff6ff"};color:#0f172a;font-family:inherit;cursor:pointer">
+      <span aria-hidden="true" style="font-size:var(--s-teil)">💬</span>
+      <span style="flex:1;min-width:0"><b style="display:block;font-size:var(--s-text)">${n===1?"1 neuer Adler-Ruf":n+" neue Adler-Rufe"}${alle?" · an alle":""}</b>
+        ${letzter?`<span style="display:block;font-size:var(--s-klein);color:#334155;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(letzter.autor_name||"")}: ${esc(letzter.text||"")}</span>`:""}</span>
+      <span aria-hidden="true">›</span></button>`:"";
+  }
   els.forEach(el=>{ el.textContent=n?(n>99?"99+":String(n)):""; el.style.display=n?"inline-flex":"none";
     el.setAttribute("aria-label",n?`${n} neue Adler-Rufe${alle?", davon an alle":""}`:""); el.style.background=alle?"#b45309":"#dc2626"; });
 }
@@ -417,4 +435,47 @@ async function rufeModArchivieren(meldId,nachrichtId){
   try{ const r=await _rfRpc("rufe_archivieren",{p_id:nachrichtId}); if(!r.ok){ toast("Nicht archiviert","err"); return; } }catch(e){ toast("Kein Netz","err"); return; }
   await rufeModErledigt(meldId); toast("Archiviert");
 }
+/* ── v673: Benachrichtigungen je Konto ab- und anschalten (Glocke im Kopf) ─────── */
+function _rfGlockeZeigen(an){
+  const b=document.getElementById("rufe-glocke"); if(!b)return;
+  b.textContent=an?"🔔":"🔕"; b.setAttribute("aria-pressed",String(an));
+  b.setAttribute("aria-label",an?"Benachrichtigungen zu Adler-Rufen sind an – antippen zum Abschalten":"Benachrichtigungen zu Adler-Rufen sind aus – antippen zum Einschalten");
+}
+async function rufeGlockeLaden(){
+  if(!_rf||!_rf.uid)return;
+  const aus=await _rfGet(`rufe_push_aus?user_id=eq.${_rf.uid}&select=user_id`);
+  if(_rf){ _rf.glockeAn=!aus.length; _rfGlockeZeigen(_rf.glockeAn); }
+}
+async function rufeGlockeUmschalten(){
+  if(!_rf||!_rf.uid)return;
+  const an=_rf.glockeAn!==false;
+  try{
+    const r=an
+      ?await fetch(`${SB_URL}/rest/v1/rufe_push_aus`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=minimal,resolution=ignore-duplicates'}),body:JSON.stringify({user_id:_rf.uid})})
+      :await fetch(`${SB_URL}/rest/v1/rufe_push_aus?user_id=eq.${_rf.uid}`,{method:"DELETE",headers:sbAuthHeaders({'Prefer':'return=minimal'})});
+    if(!r.ok){ toast("Nicht gespeichert","err"); return; }
+  }catch(e){ toast("Kein Netz","err"); return; }
+  _rf.glockeAn=!an; _rfGlockeZeigen(_rf.glockeAn);
+  toast(_rf.glockeAn?"Benachrichtigungen zu Adler-Rufen an":"Keine Benachrichtigungen mehr zu Adler-Rufen – die Zahl am Knopf bleibt");
+}
+/* v673: Kam man über eine Benachrichtigung (?rufe), öffnet sich der Chat, sobald angemeldet ist –
+   im Trainerbereich erst, wenn die PIN-Sperre offen ist. Höchstens zwei Minuten lang. */
+function _rfAbsicht(){
+  let n=0;
+  const t=setInterval(()=>{
+    let offen=null; try{offen=sessionStorage.getItem("adler_rufe_intent");}catch(e){}
+    if(!offen||++n>60){ clearInterval(t); return; }
+    const gate=document.getElementById("pin-gate");
+    const gesperrt=gate&&!gate.classList.contains("hidden")&&getComputedStyle(gate).display!=="none";
+    if(gesperrt||typeof sbToken!=="function"||!sbToken())return;
+    try{sessionStorage.removeItem("adler_rufe_intent");}catch(e){}
+    clearInterval(t);
+    rufeOpen();
+  },2000);
+}
+_rfAbsicht();
+/* v673: Zahl der neuen Rufe regelmäßig nachziehen (alle 2 Minuten, nur wenn die App sichtbar ist). */
+setTimeout(rufeBadgeLoad,1500);
+setInterval(()=>{ if(!document.hidden&&!document.getElementById("rufe-modal"))rufeBadgeLoad(); },120000);
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden)rufeBadgeLoad(); });
 function rufeModulDa(){ return true; }

@@ -1175,6 +1175,19 @@ function nutzungFlush(){
 }
 document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden")nutzungFlush(); });
 
+/* v673 PO 29.09.: „Die neue Kachel Adler-Rufe hat keine Funktion. Wenn ich drauf drücke, passiert
+   nichts.“ Der Knopf rief rufeOpen nur, wenn md-adler-rufe.js (Welle 2) schon geladen war – sonst
+   geschah still nichts. Jetzt wartet der Einstieg bis zu zehn Sekunden und sagt, was los ist. */
+function rufeEinstieg(){
+  if(typeof sbToken==="function"&&!sbToken()){ toast("Bitte einmal neu anmelden – die Anmeldung ist abgelaufen","err"); return; }
+  const los=()=>{ try{ rufeOpen(); }catch(e){ console.error(e); toast("Adler-Rufe konnten nicht öffnen – bitte neu laden","err"); } };
+  if(typeof rufeOpen==="function"){ los(); return; }
+  toast("Adler-Rufe werden geladen …");
+  let n=0; const t=setInterval(()=>{
+    if(typeof rufeOpen==="function"){ clearInterval(t); los(); return; }
+    if(++n>40){ clearInterval(t); toast("Adler-Rufe konnten nicht geladen werden – bitte neu laden","err"); }
+  },250);
+}
 function mdlHead(modalId,emoji,title,sub,col){
   col=col||"#1e3a8a";
   return `<div style="display:flex;align-items:center;gap:11px;margin-bottom:12px;padding:10px 12px;background:linear-gradient(90deg,${col}18,${col}05);border-left:4px solid ${col};border-radius:12px">
