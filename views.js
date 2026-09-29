@@ -2655,7 +2655,7 @@ const TABS={
     {key:"anwesenheit", label:"Anwesenheit",   icon:"ti-checkbox"},
     {key:"planung",     label:"Trainingsplan", icon:"ti-calendar-event"},
     {key:"formen",      label:"Übungen",       icon:"ti-ball-football"},
-    {key:"quizresults", label:"Quiz-Ergebnisse", icon:"ti-brain", hidden:true}, // PO: wohnt jetzt unter Eltern & Kinder; go() braucht den Eintrag weiter
+    {key:"quizresults", label:"Quiz-Ergebnisse", icon:"ti-brain", hidden:true, zurueck:"ue-elki"}, // PO: wohnt jetzt unter Eltern & Kinder; go() braucht den Eintrag weiter
   ]},
   spieltag:{sections:[
     {key:"ue-spieltag", label:"Übersicht", icon:"ti-layout-grid"},
@@ -2727,7 +2727,8 @@ const SECS={
   team:       {cid:"train-sub-team",       sub:true, init:()=>{w2("tnLoad");w2("teamStatsRender");tvInit();}},
   analyse:    {cid:"train-sub-analyse",    sub:true, init:()=>w2("anInit")},
   tagebuch:   {cid:"train-sub-tagebuch",   sub:true, init:()=>w2("tagebuchListe")},
-  spieltag:   {cid:"train-sub-spieltag",   sub:true, init:()=>{spieltagPhasenZu();spieltagPhaseVorwaehlen();w2("rotRenderControls");w2("nomInit");
+  spieltag:   {cid:"train-sub-spieltag",   sub:true, init:()=>{spieltagPhasenZu();
+                 if(_spieltagPhaseWunsch){const p=_spieltagPhaseWunsch;_spieltagPhaseWunsch=null;spieltagPhaseZeigen(p);}else spieltagPhaseVorwaehlen();w2("rotRenderControls");w2("nomInit");
                  /* v518: Welle-1-Code ruft eine Welle-2-Funktion nie ungeprueft auf. */
                  const ws=document.getElementById("wissen-slot");
                  if(ws&&typeof wissenKachel==="function")ws.innerHTML=wissenKachel();}},
@@ -2736,15 +2737,22 @@ const tabState={}; // zuletzt geöffnete Sektion je Tab (UX: Rückkehr an diesel
 let curSection="bew"; // aktuell sichtbare Sektion (für Pull-to-Refresh)
 function sectionTab(key){ for(const t in TABS){ if(TABS[t].sections.some(s=>s.key===key))return t; } return null; }
 
+/* v681 PO (Kollegen-Rückmeldung 29.09.): „Die Unterseiten … die Kacheln sind verschoben, optisch
+   nicht gut aufgearbeitet … man findet gar nicht direkt, wo man hin will." Die Reiterzeile lief
+   auf fast jeder Detailseite über den Rand („Analys…“, „Entwickl…“) und doppelte die Kacheln der
+   Übersicht – zwei Wege zum selben Ziel, einer davon halb verdeckt. Jetzt gibt es EINEN Weg:
+   Bereich → Kacheln → Seite, und oben auf jeder Seite steht, wo man ist und wohin „zurück“ führt.
+   Die Kachel-Ebenen selbst tragen ihren Kopf aus kachelSeite und brauchen hier nichts. */
 function renderSubbar(tabId,activeKey){
   const bar=document.getElementById("tab-subbar");
   if(!bar)return;
-  const secs=TABS[tabId].sections.filter(s=>!s.hidden);
-  if(secs.length<=1){ bar.style.display="none"; bar.innerHTML=""; return; }
-  bar.style.display="flex";
-  // Aktiver Reiter trägt die Familienfarbe der Kachel (PO: gleiche Optik wie das Kachel-Menü)
-  const fam=(typeof KACHELN!=="undefined"&&KACHELN[tabId])?KACHELN[tabId].col:"var(--blue)";
-  bar.innerHTML=secs.map(s=>`<button class="sub-tab${s.key===activeKey?' active':''}"${s.key===activeKey?` style="background:${fam};box-shadow:none"`:""} onclick="go('${s.key}')"><i class="ti ${s.icon}"></i>${s.label}</button>`).join("");
+  const alle=TABS[tabId].sections, sec=alle.find(s=>s.key===activeKey);
+  const ue=sec&&sec.zurueck?sec.zurueck:(alle[0]&&/^ue-/.test(alle[0].key)?alle[0].key:null);
+  if(!sec||!ue||ue===activeKey||/^ue-/.test(activeKey)){ bar.style.display="none"; bar.innerHTML=""; return; }
+  const zielTab=sectionTab(ue)||tabId, k=(typeof KACHELN!=="undefined"&&KACHELN[zielTab])||{titel:"Übersicht",col:"var(--blue)"};
+  bar.style.cssText="display:flex;align-items:center;gap:10px;margin-bottom:14px";
+  bar.innerHTML=`<button type="button" class="zurueck-kopf" onclick="go('${ue}')" aria-label="Zurück zu ${esc(k.titel)}" style="border-color:${k.col}"><i class="ti ti-chevron-left" aria-hidden="true"></i>${esc(k.titel)}</button>`
+    +`<h2 class="seiten-titel"><i class="ti ${sec.icon}" aria-hidden="true" style="color:${k.col}"></i>${esc(sec.titel||sec.label)}</h2>`;
 }
 /* v671: Die Überblendung (startViewTransition) ruft _open verzögert auf. Zwei schnelle Tipps –
    auf einem beschäftigten Gerät, etwa während der Service Worker lädt – konnten dabei in der
@@ -2814,7 +2822,49 @@ function go(key){
    Blitz-Rating, Match-Uhr auf „Waehrend des Spiels") laufen SPAETER und oeffnen weiter. */
 function spieltagPhasenZu(){
   document.querySelectorAll("#train-sub-spieltag details.el-sect").forEach(d=>{d.open=false;});
+  spieltagPhasenKacheln(null);
 }
+/* v681 – Drei Phasen, drei Kacheln, immer nur EINE offen. Eine Phase umfasst mehrere der
+   alten Klappblöcke: „Vor dem Spiel“ ist die globale Team-Festlegung UND die Aufstellung des
+   Teams, „Nach dem Spiel“ auch die Team-Quests. Wer von außen einen Block per .open aufklappt
+   (Match-Uhr → Live, Blitz-Rating → Nach, Anwesenheit → Vor), bekommt über den toggle-Wächter
+   unten die ganze Phase und die passende Kachel markiert – kein Aufrufer muss davon wissen. */
+const ST_PHASEN={vor:["mt-phase-vor","mt-phase-nom"],live:["mt-phase-live"],nach:["mt-phase-nach","mt-phase-quests"]};
+function spieltagPhaseVon(id){ for(const p in ST_PHASEN)if(ST_PHASEN[p].includes(id))return p; return null; }
+function spieltagPhaseAktuell(){
+  for(const p in ST_PHASEN)if(ST_PHASEN[p].some(id=>(document.getElementById(id)||{}).open))return p;
+  return null;
+}
+function spieltagPhasenKacheln(p){
+  document.querySelectorAll("#mt-phasen .phase-kachel").forEach(b=>{
+    const an=b.dataset.phase===p;
+    b.setAttribute("aria-pressed",an?"true":"false"); b.classList.toggle("an",an);
+  });
+  const leer=document.getElementById("mt-phasen-leer"); if(leer)leer.hidden=!!p;
+}
+function spieltagPhaseZeigen(p){
+  if(!ST_PHASEN[p])return;
+  for(const q in ST_PHASEN)ST_PHASEN[q].forEach(id=>{const d=document.getElementById(id); if(d&&d.open!==(q===p))d.open=(q===p);});
+  spieltagPhasenKacheln(p);
+  /* Bei mehreren Teams steckt der Inhalt von Aufstellung, Uhr und Ergebnis in der Kachel des
+     gewählten Teams. Ist keine aufgeklappt, sähe man nach dem Tipp auf „Während“ nichts –
+     also die Kachel des gewählten Teams öffnen. Welle 2, deshalb nur über typeof. */
+  try{
+    if(typeof TEAM_ANZAHL!=="undefined"&&TEAM_ANZAHL>1&&typeof TEAM_KARTE_OFFEN!=="undefined"&&!TEAM_KARTE_OFFEN
+       &&typeof spieltagKarteOeffnen==="function")spieltagKarteOeffnen((typeof spieltagTeam!=="undefined"&&spieltagTeam)||1);
+  }catch(e){}
+}
+document.addEventListener("toggle",e=>{
+  const d=e.target; if(!d||!d.id)return;
+  const p=spieltagPhaseVon(d.id); if(!p)return;
+  if(!d.open){ spieltagPhasenKacheln(spieltagPhaseAktuell()); return; }
+  const stimmig=Object.keys(ST_PHASEN).every(q=>ST_PHASEN[q].every(id=>{const x=document.getElementById(id); return !x||x.open===(q===p);}));
+  if(stimmig)spieltagPhasenKacheln(p); else spieltagPhaseZeigen(p);
+},true);
+/* Sprung von der Spieltag-Übersicht direkt in eine Phase. go() ruft die Seite erst nach 50 ms
+   auf und schließt dabei alle Phasen – der Wunsch wird deshalb dort eingelöst, nicht hier. */
+let _spieltagPhaseWunsch=null;
+function spieltagPhase(p){ _spieltagPhaseWunsch=ST_PHASEN[p]?p:null; go("spieltag"); }
 /* v473 – Rundgang: Am Spieltag lag der Ticker drei Taps tief (Spieltag → Match → „② Während
    des Spiels" aufklappen). Ist der gewaehlte Spieltag HEUTE, oeffnet die Seite den
    Abschnitt, den die Uhrzeit nahelegt: vor dem Anpfiff „① Vor dem Spiel", waehrend „② Live",
@@ -2837,6 +2887,7 @@ async function spieltagPhaseVorwaehlen(){
   let phase="mt-phase-vor";
   if(uhr&&uhr.clock_status&&uhr.clock_status!=="idle")phase="mt-phase-live";
   else if(ab&&jetzt>=ab)phase=(bis&&jetzt>bis)?"mt-phase-nach":"mt-phase-live";
+  if(spieltagPhaseAktuell())return;   // v681: inzwischen selbst eine Phase gewählt – nicht überstimmen
   const d=document.getElementById(phase); if(d)d.open=true;
 }
 /* v553 – Ein Tipp auf die untere Leiste führt IMMER auf die Kachel-Ebene, nicht
@@ -4608,6 +4659,7 @@ const HELP=[
     {t:"Trainingsturnier", d:"Turnier zum Trainingsabschluss mit Zeitbudget-Automatik – vorab planbar: es hängt am gewählten Termin und wird gespeichert, du kannst es also Tage vorher vorbereiten und findest es am Trainingstag auf jedem Gerät wieder. Gesamtzeit (z. B. 40 Min.) und 1–4 Felder vorgeben, die Automatik wählt Format und Spielzeit (5–10 Min.; bleibt Zeit übrig, gibt es eine Rückrunde statt eines Finales – beim Training soll niemand am Ende nur zuschauen) – reicht die Zeit fair nicht, sagt sie ehrlich, wie viele Minuten fehlen. Ein Platzrechner sagt vorab, wie viele Kinder die gewählte Feld-/Formatkombination gleichzeitig braucht und ob alle Teams durchgehend im Spiel sind. Zwei Modi: Kinder-Turnier (Trainer spielen auf Wunsch in den Teams mit) oder Kinder gegen Eltern (1–4 Eltern-Teams, Duelle parallel auf den Feldern, Duell-Scoreboard, nie Kind gegen Kind). Spielform wählbar (FUNiño, 4+1, 5+1) mit Team-Vorschlag aus der Kinderzahl. Ein Pfiff für alle Felder.", run:"blitzOpen()"},
   ]},
   {cat:"⚽ Spieltag", items:[
+    {t:"Spieltag in drei Phasen", d:"Auf der Spieltag-Seite geht es über drei große Einstiege in den Match: ① Vor dem Spiel (Wer ist dabei, Teams, Kapitän, Aufstellung), ② Während des Spiels (Match-Uhr, Wechsel, Liveticker), ③ Nach dem Spiel (Ergebnis, Spielbericht, Blitz-Rating, Team-Quests). Im Match stehen dieselben drei als Kacheln oben; es ist immer nur eine Phase offen. Am Spieltag selbst wählt die App die passende Phase nach der Uhrzeit vor. Oben links führt „‹ Spieltag“ zurück zur Übersicht – das gilt so auf jeder Unterseite.", run:"go('ue-spieltag')"},
     {t:"Match", d:"Zuerst „Teams festlegen“ in zwei Blöcken: „Wer ist dabei?“ (zugeklappt, sobald jemand dabei ist – vorbelegt aus den Eltern-Rückmeldungen, ohne Antwort bleibt ein Kind offen, „N Offene auf Dabei setzen“ erledigt das am Platz auf einmal; „Dabei“ ist zugleich die Anwesenheit dieses Spieltags und zählt für die Spiele-Quote – die Kachel „Anwesenheit“ auf der Spieltag-Seite führt direkt hierher und klappt die Liste auf, während die Kachel gleichen Namens im Training bei den Trainingsterminen bleibt) und darunter die Teams als Karten mit den Namen: ein Tipp auf einen Namen schiebt das Kind ins nächste Team, zuletzt in die Pause. Die Team-Kacheln darunter zeigen die Namen ohne Aufklappen. Dazu, wie viele Teams wir stellen und welche Spielform jedes Team spielt (beim Kinderfestival etwa Adler 1 auf 4+1, Adler 2 FUNiño, dazu 3+1 und 5+1). Die Automatik setzt Torwart-Kinder zuerst auf die Teams mit Torwart, füllt dann die Felder und verteilt die übrigen Kinder so, dass die Spielzeit je Kind über alle Teams möglichst gleich ist – der Anteil steht je Team dabei. Steht ein Spielplan für den Tag (Festival oder Heimspiel), kommt alles Weitere von dort: „Teams festlegen“ zeigt je Runde, auf welchem Feld ein Team spielt, in welcher Spielform und gegen wen, und die Runde wechselt mit dem Anpfiff im Planer – geändert wird im Spielplan, „Im Spielplan ändern“ führt hin. Auch die Match-Uhr nimmt an so einem Tag ihre Spielzeit von dort (8 Minuten statt der üblichen 10), spielt sie ohne Halbzeit durch und läuft erst, wenn die Runde angepfiffen ist – „Spiel läuft“ steht dann auf den Team-Kacheln, die gerade auf dem Feld sind, und der Wechsel-Timer startet mit – mit der halben Spielzeit als Intervall (bei 8 Minuten also einer in der Mitte, einer am Ende); anhalten kannst du ihn jederzeit. Vor der ersten Runde teilt der Plan die Aufwärmfelder zu: wir immer im Käfig, die Gastvereine der Reihe nach auf die übrigen Felder; auf der Gast-Seite steht das ganz oben. Ohne Spielplan (Auswärtsturnier) legst du die Felder des Tages selbst an (Feld 1: 4+1, Feld 2: FUNiño …): die festen Teams wandern dann mit „Nächste Runde“ ein Feld weiter, und fehlt einem Team auf seinem Feld ein Kind, hilft eines aus dem Team mit der meisten Bank aus – nur für diese Runde, Torwart-Kinder wechseln sich dabei ab, welcher Trainer sie betreut – die Kinder werden dabei automatisch verteilt und lassen sich von Hand umsetzen. „Dabei“ heißt automatisch „Spielt mit“ – wen du pausieren lassen willst, stellst du selbst um. Neben jedem Kind stehen die Trainingsquote und die Zahl der Einsätze; beide zählen ab einem Stichtag (zurzeit: Trainings ab dem 31.08., Spiele ab dem 05.09.2026), damit die faire Einteilung nicht an alten Zahlen hängt. Den Kapitän wählst du in derselben Team-Karte – er bleibt es für den ganzen Spieltag, die App zählt über alle Spiele mit und sortiert die Auswahl nach „am seltensten dran“ (⭐ = noch nie). Danach hat jedes Team seine eigene Kachel in drei Schritten: „① Vor dem Spiel“ zeigt den Kapitän und die Aufstellung (Torwart fest, „Feld & Bank fair besetzen“, das Mini-Feld mit Bank); „② Während des Spiels“ hält Match-Uhr und Wechseltimer, Live-Aktionen und Liveticker sind darunter zugeklappt; „③ Nach dem Spiel“ sammelt die Ergebnisse (am Festivaltag alle Spiele dieses Teams aus dem Spielplan), Spielbericht und Ergebnis-Karte – und ganz zum Schluss das Blitz-Rating. Am Festivaltag ist die Runde aus dem Spielplan das Spiel: jede Live-Aktion, jeder Ticker-Eintrag und jeder Wechsel trägt sie, der Anpfiff im Planer schaltet um. Tore und Gegentore einer Runde werden von selbst zum Ergebnis im Festival-Plan, der Ticker bekommt bei dir und bei den Eltern einen Absatz je Spiel („Runde 3 · gegen Rath-Heumar 2 · Käfig · 2:1“), das Live-Ergebnis im Vollbild zählt nur die laufende Runde – Blitz-Rating und Spielbericht bleiben einmal je Tag. Den Liveticker startest du selbst mit „▶️ Liveticker starten“ – er hängt nicht am Anpfiff und nicht an der Aufstellung. Sobald er läuft, erscheint bei den Eltern ganz oben eine rote LIVE-Kachel mit Teilen-Knopf – der Link geht auch an Oma und Opa, ohne Anmeldung. Stoppst du ihn wieder, kommt nur nichts Neues mehr dazu – das Bisherige bleibt für die Eltern sichtbar. Drei Tage nach dem Spieltag zeigt der Link nur noch den Endstand; die Ereignisse bleiben gespeichert. Beim Blitz-Rating nach dem Spiel zählt pro Kind, Trainer und Spieltag genau eine Bewertung – gehst du ein zweites Mal durch, korrigierst du die erste, statt sie zu verdoppeln. In der Live-Aktion stehen oben die Kinder aus der Aufstellung und unter einer gestrichelten Linie alle weiteren, die heute dabei sind – du kannst also auch tickern, wenn die Aufstellung nicht gepflegt ist. Bei „Parade“ erscheinen nur die Torhüter. Hast du selbst keine Hand frei: „🙋 Jemand anderen tickern lassen“ verschickt einen Link an einen Helfer am Spielfeldrand; der sieht nur die Kinder von heute und die Aktionsknöpfe und kann Tore, Paraden und Gegentore melden – keine Bewertungen, keine Kaderdaten. Der Link gilt nur, solange der Ticker läuft. Die Team-Quests stehen darunter und gelten für alle Teams zusammen. Ist heute Spieltag, öffnet sich beim Betreten der Abschnitt, der zur Uhrzeit passt – vor dem Anpfiff „Vor dem Spiel“, während „Live“, danach „Nach dem Spiel“.", go:"spieltag"},
     {t:"Spieler bewerten", d:"Team → Bewerten: je Kind 16 Kriterien (Torwart 22) in vier Stufen – Ansatz, Solide (= altersgerecht), Gut, Stark; unter jeder Stufe steht, woran man sie im Spiel erkennt. „Bewertungsrunde starten“ geht alle Kinder nacheinander durch. <b>So wird es verlässlich:</b> vorher im Trainerteam die Stufen-Beschreibungen gemeinsam lesen und an einer gedachten Szene klären, was „Solide“ und was „Gut“ heißt; dann Kriterium für Kriterium über alle Kinder nachdenken statt Kind für Kind (sonst färbt der Gesamteindruck alle Einzelwerte); nur bewerten, was ihr gesehen habt. Ihr bewertet gemeinsam („Bewertet von: Trainerteam“ ist vorgewählt): Damit nicht die erste oder lauteste Stimme den Wert setzt, zeigt jeder seine Stufe gleichzeitig mit den Fingern (1–4); liegt ihr zwei Stufen auseinander, erzählt jeder kurz die Szene, die er gesehen hat – dann entscheidet ihr. Am Ende kurz prüfen, ob oben vor allem früh im Jahr geborene Kinder stehen (Geburtsquartal im Profil). Die Werte sind eine Momentaufnahme aus dem Training, keine Prognose. <b>Seit v635:</b> Kinder sehen nie Zahlen – auch nicht auf der Urkunde. Der Entwicklungsbericht fürs Elterngespräch nennt Stufen in Worten, Stärken, Ziele und Trainingsschwerpunkt, aber keine Prozente und keine Trainer-Interna. <b>Seit v637:</b> Was ihr nicht beobachtet habt, bekommt „Nicht gesehen“ – es zählt nicht mit, statt geraten zu werden. „Gewachsen“ zeigt die App erst, wenn ein Kriterium zwei Stufen gestiegen ist oder zwei Runden hintereinander je eine. <b>Seit v648 (Trainermeeting 27.09.2026):</b> Einzelne Spieler werden erst ab dem Ende der Hinrunde bewertet. Das Datum setzt ihr oben in Bewerten („Erste Bewertungsrunde ab“, sehen und ändern können es nur Trainer). Bis dahin ist das Formular gesperrt, „Runde fällig“ erscheint nirgends, „Einheit bewerten“ zeigt keine Sterne je Kind, das Blitz-Rating ist ausgeblendet, und die KI-Auswertung der Sprachnotiz trägt keine Werte je Kind ein – ein besonderes Ereignis landet als Satz in der Notiz. Ab dem Datum bewertet das ganze Trainerteam jeden Spieler, danach alle acht Wochen; fällig ist eine Runde 49 Tage nach der letzten. Über dem Formular steht, wer das Kind in dieser Runde schon bewertet hat. Seit v677 steht beim gewählten Kind der <b>Trainingseinsatz</b> der letzten sechs Monate: je Monat der Schnitt der schnellen Sterne nach dem Training (ruhig · gut · stark), wie oft bewertet und wie oft da. Diese schnellen Sterne sind nie gesperrt – gesperrt bis zum Startdatum ist nur diese Profilbewertung.", run:"go('bew')"},
     {t:"Aufstellung", d:"Rollen-Empfehlung aus den Bewertungen: wer passt als Aufpasser, Jäger, Flitzer links/rechts. Braucht mindestens 4 bewertete Kinder – wer noch niemanden bewertet hat, nutzt im Spieltag „Feld & Bank fair besetzen“ (verteilt nach Einsatzzeiten).", go:"kombi"},
@@ -6504,6 +6556,16 @@ function kTiles(items,col){
     </button>`;
   }).join("")+`</div>`;
 }
+/* v681: Einstiege, die eine Reihenfolge haben (vor → während → nach), stehen untereinander
+   in voller Breite mit Nummer – nicht im Raster, wo die dritte Kachel quer darunter läge. */
+function kPhasen(items,col){
+  return `<div style="display:flex;flex-direction:column;gap:10px">`+items.map(x=>`<button type="button" class="phase-zeile" onclick="kachelRun('spieltagPhase','${x.arg}')" style="border-left-color:${col}">
+      <span class="pz-nr" style="background:${col}" aria-hidden="true">${x.nr}</span>
+      <span class="pz-emo" aria-hidden="true">${x.emo}</span>
+      <span style="flex:1;min-width:0"><span class="pz-t">${x.label}</span><span class="pz-s">${x.sub}</span></span>
+      <i class="ti ti-chevron-right" aria-hidden="true" style="font-size:22px;color:var(--text3)"></i>
+    </button>`).join("")+`</div>`;
+}
 function kSec(t){return `<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:16px 0 8px">${t}</div>`;}
 const KACHELN={
   training:{emo:"🏃",titel:"Training",sub:"Vom Plan bis zum Abpfiff",col:"var(--fam-training)"},
@@ -6556,10 +6618,18 @@ function _kachelInhalt(key){
      versteckt. Auf der Startkachel ‚Wer ist dabei' müssen direkt die Rückmeldungen der Eltern
      angezeigt werden." Statt einer Kachel, die in den Match springt, steht hier die Karte
      mit dem Stand zum nächsten Spieltag (spieltagDabeiKarteLoad). */
+  /* v681 PO (Kollegen 29.09.): „vor dem Spiel, während dem Spiel, nach dem Spiel“ – das sind die
+     drei Fragen am Platz, also stehen sie hier als drei große Einstiege. Jeder führt in den
+     Match mit genau dieser Phase offen; die Kachel „Match“ ist darin aufgegangen. */
   if(key==="spieltag")return `<div id="st-dabei-karte"></div>`
-    +kSec("Rund ums Spiel")
+    +kSec("Am Spieltag")
+    +kPhasen([
+      {nr:1,emo:"📋",label:"Vor dem Spiel",sub:"Wer ist dabei, Teams, Kapitän, Aufstellung",arg:"vor"},
+      {nr:2,emo:"⏱️",label:"Während des Spiels",sub:"Match-Uhr, Wechsel, Liveticker",arg:"live"},
+      {nr:3,emo:"🏁",label:"Nach dem Spiel",sub:"Ergebnis, Spielbericht, Blitz-Rating",arg:"nach"}
+    ],col)
+    +kSec("Vorbereiten und auswerten")
     +kTiles([
-      {emo:"🎽",label:"Match",fn:"go",arg:"spieltag"},
       {emo:"🧩",label:"Aufstellung",fn:"go",arg:"kombi"},
       {emo:"📊",label:"Analyse",fn:"go",arg:"analyse"}
     ],col)
@@ -6713,7 +6783,9 @@ async function spieltagDabeiKarteLoad(){
     ${gruppe("✅","Zugesagt",gr.zugesagt,"var(--green-bg)","var(--text)")}
     ${gruppe("❌","Abgesagt",gr.abgesagt,"var(--surface2)","var(--text)")}
     ${gruppe("🤒","Krank",gr.krank,"var(--surface2)","var(--text)")}
-    ${gruppe("❓","Noch keine Antwort",gr.offen,"var(--surface2)","var(--text2)")}
+    ${/* v681: Vor dem Spieltag hat meist noch kaum jemand geantwortet – fünfzehn graue Namen
+         schoben die Phasen-Kacheln aus dem Bild. Die Offenen stehen deshalb zugeklappt. */
+      gr.offen.length?`<details class="st-offen" style="margin-top:10px"><summary style="min-height:44px;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:var(--s-text);font-weight:800">❓ Noch keine Antwort · ${gr.offen.length}<span style="margin-left:auto;font-weight:700;color:var(--text2)">Namen zeigen</span></summary><div style="display:flex;flex-wrap:wrap;gap:5px">${chips(gr.offen,"var(--surface2)","var(--text2)")}</div></details>`:""}
     <button type="button" class="btn btn-p" id="st-dabei-anpassen" style="width:100%;min-height:56px;margin-top:12px" onclick="if(typeof spieltagAnwesenheitOpen==='function')spieltagAnwesenheitOpen();else go('spieltag')">Anwesenheit anpassen und Teams ansehen</button>
     <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">Zusagen stehen im Match automatisch auf „Dabei“ und kommen in die Teams. Ändern kannst du jedes Kind dort von Hand.</div>
   </div>`;

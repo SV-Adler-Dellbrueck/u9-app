@@ -150,9 +150,12 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .nb.active{background:var(--club-accent);color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.22)} /* L7 */
 .view{display:none}.view.active{display:block}
 
-.sl{font-size:var(--s-klein);font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--text2);margin:1.4rem 0 .6rem;padding-top:.9rem;border-top:var(--border);display:flex;align-items:center;gap:6px}
+/* v681: Abschnitts-Überschriften der Unterseiten wie die der Kachel-Ebene (kSec): normale
+   Schreibung, dunkel, fett. Die grauen 11-px-Versalien lasen sich wie Fußnoten – die Kollegen
+   fanden darüber nicht, wo ein Abschnitt anfängt. */
+.sl{font-size:var(--s-text);font-weight:800;text-transform:none;letter-spacing:0;color:var(--text);margin:1.4rem 0 .6rem;padding-top:.9rem;border-top:var(--border);display:flex;align-items:center;gap:6px}
 .sl:first-child,.sl.nt{border-top:none;margin-top:0;padding-top:0}
-.sl i{font-size:var(--s-karte);color:var(--text3)}
+.sl i{font-size:var(--s-karte);color:var(--text2)}
 
 .mgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:.75rem}
 .mg{display:flex;flex-direction:column;gap:4px}
@@ -434,6 +437,32 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 #tab-subbar{overflow-x:auto;scrollbar-width:none}
 #tab-subbar::-webkit-scrollbar{display:none}
 .sub-tab i{font-size:var(--s-karte)}
+/* v681: Zurück-Kopf statt Reiterzeile. Links der Weg zurück zur Übersicht des Bereichs
+   (44 px, Familienfarbe als Rand), rechts der Name der Seite – gleiche Größe wie der Kopf
+   der Kachel-Ebene, damit Übersicht und Unterseite zusammen aussehen. */
+.zurueck-kopf{flex:none;min-height:44px;display:inline-flex;align-items:center;gap:2px;padding:0 14px 0 8px;border:2px solid var(--rand-bedien);border-radius:22px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer}
+.zurueck-kopf i{font-size:20px}
+.seiten-titel{margin:0;min-width:0;display:flex;align-items:center;gap:8px;font-size:var(--s-teil);font-weight:900;color:var(--text);line-height:1.2}
+.seiten-titel i{font-size:22px}
+/* v681: Spieltag – drei Phasen als Kacheln (Match) und als nummerierte Zeilen (Übersicht). */
+.phasen-kacheln{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 12px}
+.phase-kachel{min-height:104px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px 6px;border:2px solid var(--rand-bedien);border-top:4px solid var(--fam-spieltag);border-radius:14px;background:var(--surface);color:var(--text);font-family:inherit;cursor:pointer;text-align:center}
+.phase-kachel .pk-emo{font-size:28px;line-height:1}
+.phase-kachel .pk-t{font-size:var(--s-text);font-weight:900;line-height:1.2}
+.phase-kachel .pk-s{font-size:var(--s-klein);color:var(--text2);line-height:1.25}
+.phase-kachel.an{background:var(--fam-spieltag);border-color:var(--fam-spieltag);color:#fff;box-shadow:0 3px 0 0 var(--fam-spieltag-2)}
+.phase-kachel.an .pk-s{color:#fff}
+.phase-kachel.an .pk-t::before{content:"✓ "}
+#train-sub-spieltag select{min-height:48px}
+.phasen-leer{font-size:var(--s-text);color:var(--text2);text-align:center;margin:0 0 12px}
+.phasen-leer[hidden]{display:none}
+#mt-phase-vor:not([open]),#mt-phase-nom:not([open]),#mt-phase-live:not([open]),#mt-phase-nach:not([open]),#mt-phase-quests:not([open]){display:none}
+#mt-phase-vor>summary,#mt-phase-nom>summary,#mt-phase-live>summary,#mt-phase-nach>summary,#mt-phase-quests>summary{display:none}
+.phase-zeile{width:100%;min-height:76px;display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--rand-bedien);border-left:5px solid var(--fam-spieltag);border-radius:14px;background:var(--surface);color:var(--text);font-family:inherit;cursor:pointer;text-align:left}
+.phase-zeile .pz-nr{flex:none;width:30px;height:30px;border-radius:50%;color:#fff;font-weight:900;font-size:var(--s-karte);display:flex;align-items:center;justify-content:center}
+.phase-zeile .pz-emo{font-size:28px;line-height:1}
+.phase-zeile .pz-t{display:block;font-size:var(--s-karte);font-weight:900;line-height:1.25}
+.phase-zeile .pz-s{display:block;font-size:var(--s-text);color:var(--text2);margin-top:2px;line-height:1.35}
 @keyframes ptrspin{to{transform:rotate(360deg)}}
 .ptr-spin{animation:ptrspin .8s linear infinite}
 .train-sub{display:none}.train-sub.active{display:block}

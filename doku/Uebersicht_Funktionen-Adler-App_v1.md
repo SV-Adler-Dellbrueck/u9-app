@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v680 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v681 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -12,7 +12,7 @@ Diese Übersicht beschreibt, was die App **heute kann**. Wann eine Funktion dazu
 
 ## 1 · Trainer-App
 
-Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anmeldung. Die Oberfläche ist in sechs Kacheln gegliedert – Training, Spieltag, Team, Taktik, Eltern & Kinder, Orga. Darüber liegt die Startseite. Jeder Bereich beginnt bei seinen Kacheln: die untere Leiste und der Weg über die Startseite führen auf dieselbe Seite, von dort geht es ins Detail, und die Reiterzeile oben führt zurück zur Übersicht.
+Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anmeldung. Die Oberfläche ist in sechs Kacheln gegliedert – Training, Spieltag, Team, Taktik, Eltern & Kinder, Orga. Darüber liegt die Startseite. Jeder Bereich beginnt bei seinen Kacheln: die untere Leiste und der Weg über die Startseite führen auf dieselbe Seite, von dort geht es ins Detail. Seit v681 steht oben auf jeder Detailseite ein Zurück-Kopf („‹ Spieltag“ und der Name der Seite) statt der Reiterzeile, die auf schmalen Handys über den Rand lief – ein Weg: Bereich → Kacheln → Seite. Abschnitts-Überschriften der Unterseiten stehen seitdem wie auf den Kachel-Ebenen in normaler Schreibung und fett.
 
 ### 1.1 Startseite
 
@@ -44,6 +44,7 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 
 | Funktion | Was sie tut | Nutzen |
 |---|---|---|
+| **Drei Phasen am Spieltag** (seit v681) | Die Spieltag-Seite führt mit drei nummerierten Einstiegen hinein: **Vor dem Spiel** (Wer ist dabei, Teams, Kapitän, Aufstellung), **Während des Spiels** (Match-Uhr, Wechsel, Liveticker), **Nach dem Spiel** (Ergebnis, Spielbericht, Blitz-Rating, Team-Quests). Im Match stehen dieselben drei als große Kacheln; es ist immer nur eine Phase offen, die gewählte ist markiert. Am Spieltag selbst wählt die App die Phase nach der Uhrzeit vor. Kinder ohne Rückmeldung stehen auf der Karte „Wer ist dabei?“ zugeklappt. | Am Platz ist sofort klar, wohin man tippt – statt fünf grauer Klappzeilen mit „▾ mehr“. |
 | **Teams festlegen** | „Wer ist dabei?“ vorbelegt aus den Eltern-Rückmeldungen, dann Einteilung in Adler 1 / Adler 2. „Dabei“ zählt zugleich als Anwesenheit des Spieltags; die Kachel **Wer ist dabei?** auf der Spieltag-Seite führt hierher. Feld, Spielform und Gegner kommen aus dem Spielplan des Tages. Kapitän je Team für den ganzen Spieltag. | Eine Quelle für Kader, Anwesenheit und Einsatzquote. Keine doppelte Pflege. |
 | **Festival-Runden am Spieltag** | Feste Teams wandern je Runde ein Feld weiter, Spielform je Feld (4+1, 3+1, FUNiño). Fehlt einem Team auf seinem Feld ein Kind, hilft eines aus dem Team mit der meisten Bank aus, nur für diese Runde. Torwart-Kinder wechseln sich ab. Tore, Ticker und Wechsel werden je Runde gezählt. | Jedes Team sieht beide Formate, niemand sitzt eine Runde komplett draußen. |
 | **Aufstellung am Mini-Feld** | Positionen mit Rollennamen (Aufpasser, Flitzer links und rechts), Tauschen per zwei Tipps oder Ziehen mit dem Finger, gezielt zwischen Feld und Bank. | Umstellen in Sekunden, auch am Spielfeldrand. |
