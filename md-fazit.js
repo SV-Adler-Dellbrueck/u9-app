@@ -732,7 +732,10 @@ function nbWegStart(art){
       an.feld = { id:"eb-ue-notiz-"+i, label:"Kommentar zur Übung (optional) – steht beim nächsten Mal im Plan" };
       s.push(an);
     });
-    if(kids.length) s.push({ typ:"kinder", titel:"Die Kinder", frage:"Wie waren die Kinder heute dabei?", kinder:kids });
+    /* v676 PO 29.09. (Bildschirmfoto): „Ich kann die Kacheln für die Bewertungen nicht anklicken.“
+       Vor dem Start der Einzelbewertung (v648, bewertung_ab) stehen im Bogen keine Sterne je Kind –
+       die Knöpfe hier schrieben ins Leere. Der Schritt kommt nur, wenn der Bogen die Zeilen hat. */
+    if(kids.length && document.getElementById("eb-stars-sp-0")) s.push({ typ:"kinder", titel:"Die Kinder", frage:"Wie waren die Kinder heute dabei?", kinder:kids });
     s.push({ typ:"text", titel:"Zum Schluss", frage:"Noch eine Notiz zur Einheit?", felder:[{ id:"eb-notiz", label:"Notiz zur Einheit (optional)" }] });
   }else{
     if(!_FZ) return;
@@ -858,7 +861,7 @@ function nbWegZeichnen(){
       const ue = plan.filter((p,k)=>document.getElementById("eb-skip-"+k)?.checked || EB_DIMS.some(d=>einheitGetStar(`ue-${k}-${d.key}`))).length;
       if(plan.length) zusammen.push(`Übungen: ${ue} von ${plan.length}`);
       const kids = (typeof EB_SPIELER!=="undefined"?EB_SPIELER:[]);
-      if(kids.length) zusammen.push(`Kinder: ${kids.filter((x,k)=>einheitGetStar("sp-"+k)).length} von ${kids.length}`);
+      if(kids.length && document.getElementById("eb-stars-sp-0")) zusammen.push(`Kinder: ${kids.filter((x,k)=>einheitGetStar("sp-"+k)).length} von ${kids.length}`);
     }else if(_FZ){
       _FZ.teams.forEach(t=>zusammen.push(`${t.name}: ${Object.keys(_FZ.wert.teams[String(t.nr)]||{}).length} von 4`));
       if(_FZ.gaeste.length) zusammen.push(`Gäste: ${Object.keys(_FZ.wert.gaeste).length} von ${_FZ.gaeste.length}`);
