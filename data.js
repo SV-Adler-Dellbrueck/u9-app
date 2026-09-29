@@ -4717,6 +4717,9 @@ const UEBUNG_ART_VORSCHLAG={
      die Kennung, die `UEBUNG_ART` als „Spielform“ auflöst. */
   "Raute mit Torwart – Angriff über den anderen Flügel":"spiel",
   "Frei für den Wurf":"spiel",   // v678: Punkte als Ausgang – Hauptteil, Leitfrage 5
+  /* v684 – Lehrgangsabgabe 4.0: Trainingsform für ERWACHSENE (Ü32), aus PR #210. Im Namen steht
+     die Zielgruppe, damit sie in keiner U9-Planung für eine Kinderübung gehalten wird. */
+  "Lehrgang Erwachsene (Ü32) – 4 gegen 4 + Torhüter: Umschalten nach Ballgewinn":"spiel",
   /* v667 – Saisonformat (Entwurf abgenommen 29.09.): vier Spielformen mit Gegner. */
   "3+1 gegen 3 – Ball halten, der Torwart ist die Rettung":"spiel",
   "FUNiño 2 gegen 2 – abschirmen, dann Seite wechseln":"spiel",
@@ -4888,5 +4891,7 @@ const UEBUNG_BETREUUNG_VORSCHLAG={
   "Adler TW – Einlaufen":"feld",
   "Raute mit Torwart – Angriff über den anderen Flügel":"feld",
   /* v678: feste Regeln, die Kinder zählen ihre Würfe selbst – der Trainer stellt nur die Stufe um */
-  "Frei für den Wurf":"allein"
+  "Frei für den Wurf":"allein",
+  /* v684: der Trainer zählt die 8 Sekunden und friert in den ersten Durchgängen ein */
+  "Lehrgang Erwachsene (Ü32) – 4 gegen 4 + Torhüter: Umschalten nach Ballgewinn":"fuehrt"
 };
