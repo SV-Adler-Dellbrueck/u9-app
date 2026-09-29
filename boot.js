@@ -3220,6 +3220,9 @@ async function pinCheck(){
 
 (function(){
   const params=new URLSearchParams(window.location.search);
+  /* v673: Push zu Adler-Rufen öffnet ./eltern/?rufe bzw. ./trainer/?rufe. Die Absicht wird gemerkt;
+     md-adler-rufe.js öffnet den Chat, sobald angemeldet ist (im Trainerbereich erst nach der PIN). */
+  if(params.has("rufe")){ try{sessionStorage.setItem("adler_rufe_intent","1");}catch(e){} }
   // Eltern-Ansicht: öffentlicher Read-Only-Matchday, kein Login, kein Trainer-/Quiz-UI
   if(params.has("eltern")||params.has("match")){
     document.title="Spieltag – SV Adler Dellbrück U9";

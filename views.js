@@ -1231,6 +1231,8 @@ async function backupExport(){
                 "rueckmeldung_log",
                 /* v670: Adler-Rufe – Räume, Rufe, Reaktionen, Fixierte, Meldungen, Stummschaltungen, Moderation, Gelesen. */
                 "rufe_raum","rufe_nachricht","rufe_reaktion","rufe_fixiert","rufe_meldung","rufe_stumm","rufe_moderator","rufe_gelesen",
+                /* v673: wer keine Rufe-Benachrichtigungen will; bis wann gemeldet ist. */
+                "rufe_push_aus","rufe_push_stand",
                 /* v650: Trainingsblöcke – Ziel, Zeitraum und die drei Einheiten im Wechsel. */
                 "trainingsblock",
                 "eltern_poll","eltern_poll_slot","eltern_poll_vote","ansagen","ansagen_gelesen",
@@ -4535,7 +4537,7 @@ const HELP=[
     {t:"Taktikboard", d:"Oben die Spielsituationen – gezeichnet auf derselben Fläche wie die Skizzen der Übungen. „Beschreib die Situation“: tippen oder einsprechen, „Zeichnen lassen“, die KI legt Kinder, Gegner, Ball und Wege aufs ganze Feld; danach verschiebst du, was nicht passt. „Neue Situation“ startet mit FUNiño, 3+1, 4+1 oder 5+1 samt Rollen (TW, A, FL, FR, J). Gespeicherte Situationen zeigst du groß, spielst mehrere Bilder ab, teilst sie als Bild, bearbeitest, benennst um oder löschst sie. Für die Besprechung: „Groß zeigen“ füllt den Bildschirm (am Tablet auch Vollbild), „Kinder einsetzen“ setzt die Namen aus dem Kader auf die Kreise – nur zum Zeigen, gespeichert wird nichts davon. Unten Video und KI-Coach.", go:"taktik"},
   ]},
   {cat:"🪶 Eltern & Kinder", items:[
-    {t:"Adler-Rufe (Team-Chat)", d:"Seit v670 der Chat für Eltern und Trainerteam – Kinder haben keinen Zugang. Ein Raum zum Start; Trainer und Moderatoren legen weitere an (＋ Raum). Über ⋯ an jedem Ruf: reagieren, antworten (mit Zitat), fixieren (höchstens drei, 24 Stunden bis immer), bearbeiten, zurückziehen, melden. Moderatoren archivieren statt zu löschen und schalten für 24 Stunden oder 7 Tage stumm; archivierte Rufe sieht nur das Trainerteam. „@alle“ hebt einen Ruf hervor – nur für Trainer und Moderatoren. 🔍 durchsucht alle Räume. Unter „Adler-Rufe moderieren“ legt ihr fest, wer außer dem Trainerteam moderiert (z. B. der Elternbeirat), und bearbeitet gemeldete Rufe. Namen setzt die App aus „Meine Angaben“, Telefonnummern sieht niemand. Benachrichtigungen aufs Handy kommen in der nächsten Stufe; bis dahin zählt ein Punkt die neuen Rufe.", run:"rufeOpen()"},
+    {t:"Adler-Rufe (Team-Chat)", d:"Seit v670 der Chat für Eltern und Trainerteam – Kinder haben keinen Zugang. Ein Raum zum Start; Trainer und Moderatoren legen weitere an (＋ Raum). Über ⋯ an jedem Ruf: reagieren, antworten (mit Zitat), fixieren (höchstens drei, 24 Stunden bis immer), bearbeiten, zurückziehen, melden. Moderatoren archivieren statt zu löschen und schalten für 24 Stunden oder 7 Tage stumm; archivierte Rufe sieht nur das Trainerteam. „@alle“ hebt einen Ruf hervor – nur für Trainer und Moderatoren. 🔍 durchsucht alle Räume. Unter „Adler-Rufe moderieren“ legt ihr fest, wer außer dem Trainerteam moderiert (z. B. der Elternbeirat), und bearbeitet gemeldete Rufe. Namen setzt die App aus „Meine Angaben“, Telefonnummern sieht niemand. Seit v673 sitzt der Einstieg oben in der Kopfzeile: 💬 mit roter Zahl für neue Rufe (Eltern und Trainer); bei Eltern steht zusätzlich ganz oben auf der Startseite eine Zeile mit dem letzten Ruf, solange es Ungelesenes gibt. Seit v673 kommen außerdem Benachrichtigungen aufs Handy: Rufe vom Trainerteam und @alle sofort, alle anderen gebündelt höchstens alle 30 Minuten, zwischen 21 und 7 Uhr keine – Gelesenes nie. Die 🔔 im Chat-Kopf schaltet sie fürs eigene Konto ab und an; die Zahl am Knopf bleibt. Ein Tipp auf die Benachrichtigung öffnet die Adler-Rufe (im Trainerbereich nach der PIN).", run:"rufeOpen()"},
     {t:"Rückmelde-Verhalten", d:"Seit v672 unter Kommunikation: je Kind, getrennt nach Spieltagen und Training, wie lange vor Terminbeginn im Schnitt die erste Antwort kam, wie oft unter 24 Stunden vorher, wie oft sich die Familie umentschieden hat (auch „zu → ab“) und bei Spieltagen, wie oft gar keine Antwort kam. Gezählt je Kind – egal, welches Elternteil antwortet. Umentscheidungen zählen erst seit dem 29.09.2026, vorher wurden sie nicht gespeichert; Änderungen durch das Trainerteam zählen nicht. Nur das Trainerteam sieht diese Zahlen, Eltern nicht.", run:"rueckmeldeStatistikOpen()"},
     {t:"Team-Ansage", d:"Wichtige Info an alle Eltern – mit Gelesen-Status (wer fehlt noch?).", run:"ansageTrainerOpen()"},
     {t:"Adler Nest", d:"Digitales Stadionheft erstellen & drucken.", run:"stadionheftOpen()"},
@@ -6515,7 +6517,7 @@ function _kachelInhalt(key){
     ],col);
   if(key==="elki")return kSec("Kommunikation")
     +kTiles([
-      {emo:"💬",label:"Adler-Rufe",fn:"rufeOpen"},
+      {emo:"💬",label:"Adler-Rufe",fn:"rufeEinstieg"},
       {emo:"🛡️",label:"Adler-Rufe moderieren",fn:"rufeModOpen"},
       {emo:"📣",label:"Team-Ansage",fn:"ansageTrainerOpen"},
       {emo:"📈",label:"Rückmelde-Verhalten",fn:"rueckmeldeStatistikOpen"},

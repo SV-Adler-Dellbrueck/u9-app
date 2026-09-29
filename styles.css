@@ -118,7 +118,13 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 0 15px;border-bottom:2px solid var(--club-accent);margin-bottom:18px} /* L7 */
 #club-logo{width:38px;height:38px;border-radius:var(--r);object-fit:contain;flex-shrink:0}
-.logo{display:flex;align-items:center;gap:10px}
+.logo{display:flex;align-items:center;gap:10px;min-width:0}
+/* v673: Mit 💬 im Kopf reicht bei „Sehr groß“ die Breite nicht mehr – der Vereinsname bricht um,
+   die Knöpfe rechts bleiben ganz im Bild. */
+.topbar{gap:8px}
+.topbar>div:last-child{flex-shrink:0}
+.logo>div:last-child{min-width:0}
+.logo-t1,.logo-t2{overflow-wrap:anywhere}
 .logo-badge{width:38px;height:38px;background:var(--blue);border-radius:var(--r);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:var(--s-text);flex-shrink:0;letter-spacing:.5px}
 .logo-t1{font-size:var(--s-karte);font-weight:700;color:var(--text)}
 .logo-t2{font-size:var(--s-klein);color:var(--text2);margin-top:1px}

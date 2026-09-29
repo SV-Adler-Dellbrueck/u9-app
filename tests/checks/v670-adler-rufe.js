@@ -107,7 +107,7 @@ module.exports = async function (h) {
     window.sbToken = () => tok;
     const out = {};
     const kacheln = _kachelInhalt("elki");
-    out.kacheln = { rufe: /rufeOpen/.test(kacheln), mod: /rufeModOpen/.test(kacheln) };
+    out.kacheln = { rufe: /rufeEinstieg/.test(kacheln), mod: /rufeModOpen/.test(kacheln) };
     await rufeOpen(); await w(300);
     out.raumChips = [...document.querySelectorAll("#rufe-raeume button")].map(b => b.textContent.trim());
     document.getElementById("rufe-text").value = "@alle Treffpunkt 9 Uhr";
