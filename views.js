@@ -6563,7 +6563,7 @@ function kPhasen(items,col){
       <span class="pz-nr" style="background:${col}" aria-hidden="true">${x.nr}</span>
       <span class="pz-emo" aria-hidden="true">${x.emo}</span>
       <span style="flex:1;min-width:0"><span class="pz-t">${x.label}</span><span class="pz-s">${x.sub}</span></span>
-      <i class="ti ti-chevron-right" aria-hidden="true" style="font-size:22px;color:var(--text3)"></i>
+      <i class="ti ti-chevron-right" aria-hidden="true" style="font-size:var(--s-seite);color:var(--text3)"></i>
     </button>`).join("")+`</div>`;
 }
 function kSec(t){return `<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:16px 0 8px">${t}</div>`;}
