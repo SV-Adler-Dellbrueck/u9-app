@@ -136,7 +136,7 @@ async function boerseRender(){
   c.innerHTML=`${mdlHead("boerse-modal","🛍️","Adler-Börse","Zu klein geworden? Hier findet es ein neues Adler-Kind","#2563eb")}
     ${liste||'<div style="font-size:var(--s-text);color:var(--text3);padding:6px 0">Noch nichts drin. Stell das Erste ein!</div>'}
     <div style="border-top:1px solid #e2e8f0;margin-top:12px;padding-top:12px">
-      <div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:6px">Etwas anbieten</div>
+      <div style="font-size:var(--s-text);font-weight:800;color:#64748b;margin-bottom:6px">Etwas anbieten</div>
       <input id="bo-titel" placeholder="Was? z. B. Fußballschuhe blau" style="width:100%;margin-bottom:6px;${fld}">
       <div style="display:flex;gap:6px;margin-bottom:6px">
         <input id="bo-groesse" placeholder="Größe" style="flex:1;${fld}">
@@ -306,7 +306,7 @@ async function elternWaescheLoad(kids){
     <div style="font-size:var(--s-text);color:#64748b;margin-bottom:8px">Wer nimmt die Trikots mit? Übernimmt deine Familie, gibt's ${XP_ICON} <b>100 Federn</b> fürs Kind.</div>
     ${langeNichtDran?`<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:8px 10px;font-size:var(--s-text);color:#1e40af;margin-bottom:8px">👋 ${tageHer===null?"Ihr wart noch nicht dran":"Ihr wart lange nicht dran"} – mögt ihr diesmal?</div>`:""}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">${kidBtns}</div>
-    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:2px">Zuletzt gewaschen</div>
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:2px">Zuletzt gewaschen</div>
     ${verlauf}
   </div>`;
 }

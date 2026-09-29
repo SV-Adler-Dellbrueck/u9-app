@@ -358,7 +358,7 @@ function _tmdKarte(t){
     (istSpiel&&t.spielform)?badge(esc(t.spielform),m.col+"22",m.col):"",
     (typeof ferienBadge==="function")?ferienBadge(t.datum):""
   ].join("");
-  const sec=x=>`<div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:14px 0 6px">${x}</div>`;
+  const sec=x=>`<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:14px 0 6px">${x}</div>`;
   const zu=(sum,inner,offen)=>`<details${offen?" open":""} style="margin-top:10px;border:var(--border-s);border-radius:12px;background:var(--surface2)">
       <summary style="cursor:pointer;min-height:44px;display:flex;align-items:center;padding:0 12px;font-size:var(--s-text);font-weight:800;color:var(--text2)">${sum}</summary>
       <div style="padding:2px 12px 12px">${inner}</div></details>`;
@@ -623,7 +623,7 @@ function platzAmpelTrainer(t,nackt){
   /* v491: Im Termin-Fenster steht die Überschrift schon am Klappdeckel – dort nur die Knöpfe. */
   if(nackt)return `<div style="display:flex;gap:6px;flex-wrap:wrap">${btns}</div>${zusatz}`;
   return `<div style="margin:8px 0;padding:8px;background:var(--surface2);border-radius:10px">
-    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:5px">📣 Platz-Status für die Eltern</div>
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:5px">📣 Platz-Status für die Eltern</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">${btns}</div>${zusatz}
   </div>`;
 }
@@ -1093,9 +1093,9 @@ async function turnierOpen(){
   card.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   card.innerHTML=`${mdlHead("turnier-modal","🏆","Turnier-Modus",`${esc(ds)}${spieltagTeam>1?" · Adler "+spieltagTeam:""} · Kurzspiele erfassen`,"#d97706")}
     <div id="turnier-tally" style="margin-bottom:10px"></div>
-    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:4px 0 6px">📅 Spielplan</div>
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:4px 0 6px">📅 Spielplan</div>
     <div id="turnier-plan" style="margin-bottom:14px"><div style="color:var(--text3);font-size:var(--s-text)">Lade…</div></div>
-    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:4px 0 6px">⚽ Gespielte Spiele</div>
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:4px 0 6px">⚽ Gespielte Spiele</div>
     <div id="turnier-list" style="margin-bottom:12px"><div style="color:var(--text3);font-size:var(--s-text)">Lade…</div></div>
     <div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:4px">Spontanes Spiel ohne Plan eintragen:</div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">

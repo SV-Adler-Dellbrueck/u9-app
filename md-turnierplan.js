@@ -1133,7 +1133,7 @@ function _blzSetupHtml(){
      reicht, wird weiterhin ehrlich gesagt, wie viele Minuten fehlen. */
   const bChips=[10,15,20,25,30,35,40,0].map(b=>chip((BLZ.budget||0)===b,b?b+" Min.":"frei",`blzBudget(${b})`)).join("");
   const fChips=[1,2,3,4].map(f=>chip((BLZ.felder||1)===f,f+(f===1?" Feld":" Felder"),`blzFelder(${f})`)).join("");
-  const trainerChips=(typeof TRAINER!=="undefined"&&TRAINER.length)?`<div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px">Trainer spielen mit <span style="font-weight:400;text-transform:none;letter-spacing:0">(landen erst bei den Kindern – antippen schiebt sie weiter${duell?", auch in die Eltern-Teams":""})</span></div>
+  const trainerChips=(typeof TRAINER!=="undefined"&&TRAINER.length)?`<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:4px">Trainer spielen mit <span style="font-weight:400;text-transform:none;letter-spacing:0">(landen erst bei den Kindern – antippen schiebt sie weiter${duell?", auch in die Eltern-Teams":""})</span></div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${TRAINER.map(t=>`<button onclick="blzTrainerToggle('${jsq(t)}')" style="min-height:44px;padding:6px 12px;border:1px solid var(--rand-bedien);border-radius:18px;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer;background:${(BLZ.trainer||[]).indexOf(t)>=0?"#d97706":"var(--surface2)"};color:${(BLZ.trainer||[]).indexOf(t)>=0?"#fff":"var(--text2)"}">🧢 ${esc(t)}</button>`).join("")}</div>`:"";
   const nEltern=BLZ.teams.filter(t=>t.eltern).length;
   const teamKarte=(t,i)=>`<div style="border:var(--border-s);border-left:4px solid ${t.eltern?"#7c3aed":BLZ_FARBEN[i%BLZ_FARBEN.length]};border-radius:12px;padding:8px 10px;margin-bottom:8px">
@@ -1145,7 +1145,7 @@ function _blzSetupHtml(){
       ${t.spieler.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${t.spieler.map(n=>`<button onclick="blzCycle('${jsq(n)}')" title="Tippen = ins nächste Team" style="min-height:44px;padding:6px 12px;border:1px solid var(--rand-bedien);border-radius:18px;font-family:inherit;font-size:var(--s-text);cursor:pointer;background:var(--surface2);color:var(--text)">${esc(n)}</button>`).join("")}</div>`:""}
     </div>`;
   // Im Duell sichtbar getrennt: erst die Eltern-Seite, dann die Kinder-Teams
-  const gruppe=titel=>`<div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:8px 0 4px">${titel}</div>`;
+  const gruppe=titel=>`<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:8px 0 4px">${titel}</div>`;
   const teams=duell
     ?gruppe(`👨‍👩‍👧 Eltern-Seite (${nEltern} Team${nEltern>1?"s":""})`)
       +BLZ.teams.map((t,i)=>t.eltern?teamKarte(t,i):"").join("")
@@ -1154,16 +1154,16 @@ function _blzSetupHtml(){
     :BLZ.teams.map(teamKarte).join("");
   return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${mChips}</div>
     ${duell?`<div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:8px">Duell-Tag: Gespielt wird NUR Kinder gegen Eltern – nie Kinder gegen Kinder, nie Eltern gegen Eltern. Bei gleich vielen Teams laufen die Duelle parallel auf den Feldern.</div>`:""}
-    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px">Spielform</div>
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:4px">Spielform</div>
     <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:8px">${sfChips}</div>
     ${vorschlag?`<div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:8px">💡 ${vorschlag.pool} Kinder → Vorschlag: <b>${vorschlag.teams} Kinder-Team${vorschlag.teams>1?"s":""}</b> (${BLZ_SPIELFORM[BLZ.spielform][0]})${duell?" – und genauso viele Eltern-Teams, dann spielt alles parallel":""}</div>`:""}
-    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px">Zeitbudget</div>
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:4px">Zeitbudget</div>
     <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:8px">${bChips}</div>
-    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px">Spielfelder <span style="font-weight:400;text-transform:none;letter-spacing:0">(3–4 = FUNiño/Kleinfelder · ein Pfiff für alle)</span></div>
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:4px">Spielfelder <span style="font-weight:400;text-transform:none;letter-spacing:0">(3–4 = FUNiño/Kleinfelder · ein Pfiff für alle)</span></div>
     <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:8px">${fChips}</div>
     ${_blzPlatzHtml()}
     ${_blzDurchspielHtml()}
-    ${duell?`<div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px">Eltern-Teams</div>
+    ${duell?`<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:4px">Eltern-Teams</div>
     <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:8px">${eChips}</div>`:""}
     ${_blzVorschauHtml()}
     <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:10px">${nChips}</div>

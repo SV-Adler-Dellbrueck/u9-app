@@ -145,7 +145,7 @@ async function tickerRenderFeed(){
     box.innerHTML=!rows.length?'<div style="color:var(--text3)">Noch keine Ticker-Einträge.</div>'
       :!mitRunde?rows.map(zeile).join("")
       :tickerAbsaetze(rows,spiele).map(g=>`<div style="margin-bottom:8px">
-          <div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);padding:4px 0">${g.runde?`Runde ${g.runde}${g.spiel?` · gegen ${esc(g.spiel.gegner)} · ${esc(g.spiel.feldName)}${g.spiel.tore!=null?` · ${g.spiel.tore}:${g.spiel.gegentore}`:""}`:""}`:"Ohne Runde"}</div>
+          <div style="font-size:var(--s-text);font-weight:800;color:var(--text);padding:4px 0">${g.runde?`Runde ${g.runde}${g.spiel?` · gegen ${esc(g.spiel.gegner)} · ${esc(g.spiel.feldName)}${g.spiel.tore!=null?` · ${g.spiel.tore}:${g.spiel.gegentore}`:""}`:""}`:"Ohne Runde"}</div>
           ${g.events.map(zeile).join("")}</div>`).join("");
   }catch(e){}
 }

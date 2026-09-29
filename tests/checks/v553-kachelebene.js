@@ -66,7 +66,9 @@ module.exports = async function (h) {
   // b) Jeder Bereich landet auf seiner eigenen Hülle und markiert seinen Knopf
   Object.keys(r.bereiche).forEach(key => {
     const b = r.bereiche[key];
-    if (String(b.sicht) !== "view-ue-" + key)
+    // v682: Taktik hat keine Kachel-Ebene mehr (sie trug nur „Taktikboard“) – der Knopf führt aufs Brett
+    const ziel = key === "taktik" ? "view-taktik" : "view-ue-" + key;
+    if (String(b.sicht) !== ziel)
       probleme.push(`„${key}“ öffnet ${JSON.stringify(b.sicht)} statt der Kachel-Ebene view-ue-${key}`);
     if (b.knopf !== "nb-" + key)
       probleme.push(`„${key}“: die Leiste markiert ${b.knopf || "nichts"} statt nb-${key}`);

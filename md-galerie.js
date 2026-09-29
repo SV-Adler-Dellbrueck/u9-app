@@ -85,7 +85,7 @@ async function galerieOpen(terminId,titel){
     ${mdlHead("gal-modal","📸",`Fotos${titel?" · "+esc(titel):""}`,"Team-Galerie zum Termin – für alle Team-Eltern","#7c3aed")}
     ${consentBlock}
     <div style="padding:10px;border:1.5px dashed var(--text3);border-radius:10px;margin-bottom:12px">
-      <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:6px">Foto hinzufügen</div>
+      <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:6px">Foto hinzufügen</div>
       <input id="gal-foto" type="file" accept="image/jpeg, image/png, image/webp" multiple style="width:100%;font-size:var(--s-text);margin-bottom:8px">
       <button class="btn btn-p btn-sm" onclick="galerieUpload(this,${terminId})">📸 Hochladen</button>
       <div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px">Mehrere Fotos auf einmal möglich – sie werden automatisch verkleinert. Für alle Team-Eltern sichtbar.</div>

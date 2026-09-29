@@ -290,7 +290,7 @@ function tbRender(){
     <div id="tb-stempel">${typeof stempelHtml==="function"?stempelHtml(_TB.autor||(typeof _meTrainer!=="undefined"&&_meTrainer)||"Trainer",null,"· schreibt diesen Eintrag"):""}</div>
 
     ${_TB.ki?`<div role="status" style="background:var(--surface2);border:var(--border-s);border-left:4px solid var(--purple);border-radius:10px;padding:10px 12px;font-size:var(--s-text);line-height:1.5;margin-top:10px">✨ <b>Vorschlag aus deiner Sprachnotiz</b> – deine Worte, sortiert. Was du hier änderst und erfasst, gilt als bestätigt.</div>`:""}
-    <div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:14px 0 6px">Baustein</div>
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:14px 0 6px">Baustein</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       ${TB_BAUSTEINE.map(b=>{const an=w.baustein===b.key;
         return `<button onclick="tbBaustein('${b.key}')" aria-pressed="${an}" style="flex:1 1 46%;min-height:48px;font-size:var(--s-text);border:1px solid var(--rand-bedien);border-radius:var(--r);cursor:pointer;font-family:inherit;background:${an?"var(--blue)":"var(--surface2)"};color:${an?"#fff":"var(--text2)"};font-weight:${an?"800":"600"}">${an?"✓ ":""}${b.label}</button>`;}).join("")}
@@ -541,10 +541,10 @@ function tbEintraegeHtml(){
   const top = Object.keys(zaehl).sort((a,b)=>zaehl[b]-zaehl[a]||a.localeCompare(b)).slice(0,12);
   const filt = l => _TB_FILTER ? l.filter(e=>(e.schlagworte||[]).includes(_TB_FILTER)) : l;
   const liste = filt(fertig);
-  const themen = top.length ? `<div style="margin-bottom:12px"><div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:5px">Themen</div>
+  const themen = top.length ? `<div style="margin-bottom:12px"><div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:5px">Themen</div>
     <div style="display:flex;gap:5px;flex-wrap:wrap">${top.map(x=>`<button type="button" onclick="tbFilter('${jsq(x)}')" aria-pressed="${_TB_FILTER===x}" style="min-height:36px;padding:0 11px;border:1px solid var(--rand-bedien);border-radius:18px;background:${_TB_FILTER===x?"var(--purple-bg)":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">#${esc(x)} · ${zaehl[x]}</button>`).join("")}</div>
     ${_TB_FILTER?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:5px">${filt(_TB_LISTE).length} Eintr${filt(_TB_LISTE).length===1?"ag":"äge"} zu „${esc(_TB_FILTER)}“ – noch einmal tippen hebt den Filter auf.</div>`:""}</div>` : "";
-  const kopf = t => `<div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:4px">${t}</div>`;
+  const kopf = t => `<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:4px">${t}</div>`;
   const offenHtml = filt(offen).length ? `<div style="margin-bottom:16px">${kopf("Noch zu bestätigen · "+filt(offen).length)}
     <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px">Vorschläge aus deiner Sprachnotiz. Sie fehlen in der Lehrgangsausgabe, bis du sie bestätigst oder änderst.</div>
     ${filt(offen).map(tbZeile).join("")}</div>` : "";
@@ -621,7 +621,7 @@ function tbWiedervorlageHtml(){
   return gruppen.map(([g,label])=>{
     const zeilen = p.filter(x=>x.gruppe===g); if(!zeilen.length) return "";
     return `<div class="tb-wv-gruppe" data-gruppe="${g}" style="margin-bottom:16px">
-      <div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:${g==="ueberfaellig"?"var(--red)":"var(--text3)"};margin-bottom:6px">${g==="ueberfaellig"?"⏰ ":""}${label} · ${zeilen.length}</div>
+      <div style="font-size:var(--s-text);font-weight:800;color:${g==="ueberfaellig"?"var(--red)":"var(--text2)"};margin-bottom:6px">${g==="ueberfaellig"?"⏰ ":""}${label} · ${zeilen.length}</div>
       ${zeilen.map(x=>{
         const e = _TB_LISTE.find(y=>Number(y.id)===Number(x.eintrag_id));
         const b = e && TB_BAUSTEINE.find(y=>y.key===e.baustein);
@@ -1014,7 +1014,7 @@ function tbPruefenZeichnen(){
   const c = document.getElementById("tb-pruefen-karte"); if(!c || !_TBP) return;
   const e = _TBP.e;
   const fld = "width:100%;box-sizing:border-box;min-height:48px;padding:10px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);resize:vertical";
-  const kopf = t => `<div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:14px 0 6px">${t}</div>`;
+  const kopf = t => `<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:14px 0 6px">${t}</div>`;
   const kannHoeren = typeof diktatMoeglich==="function" && diktatMoeglich();
   c.innerHTML = `${mdlHead("tb-pruefen","✨","Vorschlag prüfen", esc(e.ausloeser||tbDatumDe(e.datum)),"#7c3aed")}
     <div style="font-size:var(--s-text);color:var(--text2);line-height:1.5">Deine Worte, sortiert – nichts dazu erfunden. Was nicht passt, änderst du direkt hier.</div>
