@@ -514,7 +514,7 @@ async function ghTrainerDaten(){
   const heute=new Date().toISOString().slice(0,10);
   let termine=[], dienste=[], profile=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/termine?heim=is.true&typ=in.(spiel,turnier)&datum=gte.${heute}&select=id,datum,uhrzeit,gegner,titel,typ&order=datum.asc`,{headers:sbAuthHeaders()});if(r.ok)termine=await r.json();}catch(e){}
-  try{const r=await fetch(`${SB_URL}/rest/v1/dienst_einteilung?dienst=eq.grillhuette&select=id,termin_id,kind_id,status,uebernommen_von,platz&order=platz.asc`,{headers:sbAuthHeaders()});if(r.ok)dienste=await r.json();}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/dienst_einteilung?dienst=eq.grillhuette&select=id,termin_id,kind_id,status,uebernommen_von,uebernommen_kind,platz&order=platz.asc`,{headers:sbAuthHeaders()});if(r.ok)dienste=await r.json();}catch(e){}
   let plaetze=2, sperren=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/team_config?id=eq.1&select=dienst_plaetze`,{headers:sbAuthHeaders()});if(r.ok){const x=(await r.json())[0];if(x&&Number(x.dienst_plaetze))plaetze=Number(x.dienst_plaetze);}}catch(e){}
   try{const r=await fetch(`${SB_URL}/rest/v1/dienst_sperre?dienst=eq.grillhuette&datum=gte.${heute}&select=id,kind_id,datum&order=datum.asc`,{headers:sbAuthHeaders()});if(r.ok)sperren=await r.json();}catch(e){}
@@ -529,7 +529,10 @@ function _ghKindName(id){ const k=(typeof KADER!=="undefined"?KADER:[]).find(x=>
 function _ghTrZeile(d){
   if(!d)return "– noch nicht eingeteilt –";
   const fam=d.kind_id!=null?`${esc(_ghKindName(d.kind_id)||"Kind")}s Familie`:"ohne Familie";
-  if(d.status==="uebernommen"){ const p=(_ghTr.profile||[]).find(x=>x.id===d.uebernommen_von); return `${fam} → übernommen von ${esc((p&&p.anzeigename)||"einer anderen Familie")}`; }
+  /* v672: übernommen – angerechnet wird der übernehmenden Familie; sie steht mit Namen da. */
+  if(d.status==="uebernommen"){ const p=(_ghTr.profile||[]).find(x=>x.id===d.uebernommen_von);
+    const neu=d.uebernommen_kind!=null&&_ghKindName(d.uebernommen_kind)?`${esc(_ghKindName(d.uebernommen_kind))}s Familie`:esc((p&&p.anzeigename)||"einer anderen Familie");
+    return `${fam} → übernommen von ${neu} (zählt für sie)`; }
   return fam;
 }
 /* Die Zeile in der Trainer-Terminliste (ersetzt „🍿 Büdchen“). */
