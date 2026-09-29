@@ -1152,3 +1152,8 @@ details.el-sect>summary{text-transform:none;letter-spacing:0;color:var(--text)}
    Geräten weg: die Zeile darunter nennt die Mannschaft ohnehin. */
 #rufe-kopf,#help-btn,#theme-toggle,.schrift-toggle{min-width:44px!important;min-height:44px!important}
 @media (max-width:420px){.topbar .logo-badge{display:none}.topbar .logo-t2{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+/* v682: „Zeichnen lassen“ (Taktik, eigene Übung) lag im dunklen Modus bei 2,1:1 – --purple ist
+   dort nicht umdefiniert. Aufgefallen, seit „Taktik“ direkt aufs Brett führt und die Messung
+   das Brett statt der Zwischenseite sieht. */
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tf-ki-knoepfe .tf-ki-los{color:#c4b5fd;border-color:#a78bfa}}
+:root[data-theme="dark"] .tf-ki-knoepfe .tf-ki-los{color:#c4b5fd;border-color:#a78bfa}

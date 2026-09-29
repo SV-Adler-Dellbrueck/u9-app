@@ -68,7 +68,7 @@ module.exports = async function (h) {
 
     const box = document.getElementById("ad-inhalt");
     out.hoehen = [...box.querySelectorAll("button")].map(b => Math.round(b.getBoundingClientRect().height));
-    out.gruppen = [...box.children].filter(e => /text-transform:uppercase/.test(e.getAttribute("style") || ""))
+    out.gruppen = [...box.children].filter(e => /^(Spielform|Übungsform|Weder noch) ·/.test((e.textContent || "").trim()))   // v682: Überschriften ohne Versalien
       .map(e => e.textContent.trim());
 
     // d) Ein Tipp ändert nur die Anzeige
