@@ -893,7 +893,7 @@ async function elternDashLoad(){
       :(offen.length?(dringend?"border:2px solid #ef4444;box-shadow:0 4px 16px rgba(239,68,68,.22)":"border:2px solid #f59e0b;box-shadow:0 4px 16px rgba(245,158,11,.18)"):"");
     terminHtml=`<div id="termin-card" style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;${rand}">
       <div style="display:flex;align-items:center;gap:8px">
-        <div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Nächster Termin</div>
+        <div style="font-size:var(--s-text);font-weight:800;color:var(--text2)">Nächster Termin</div>
         ${offen.length?(dringend?`<span style="margin-left:auto;font-size:var(--s-klein);font-weight:800;color:#b91c1c;background:#fef2f2;border:1px solid #fca5a5;border-radius:20px;padding:2px 8px">⏰ Rückmeldung überfällig – bitte jetzt</span>`:`<span style="margin-left:auto;font-size:var(--s-klein);font-weight:800;color:#b45309;background:#fffbeb;border:1px solid #fcd34d;border-radius:20px;padding:2px 8px">❗ Rückmeldung fehlt</span>`):""}
       </div>
       ${(typeof elternPlatzHinweisHtml==="function")?elternPlatzHinweisHtml(termin):""}
@@ -918,7 +918,7 @@ async function elternDashLoad(){
       </div>
     </div>`;
   }
-  const sec=(t)=>`<div style="font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin:18px 4px 8px">${t}</div>`;
+  const sec=(t)=>`<div style="font-size:var(--s-karte);font-weight:900;color:var(--text);margin:20px 4px 8px">${t}</div>`;   // v686: wie die Überschriften der Trainer-App, keine grauen Versalien
   // Terminkarte und die offenen Rückmeldungen wandern in ihre Slots ganz oben.
   /* Ersatz per FUNKTION, nicht per String: in $-Zeichen der Termindaten („$" im Titel,
      „$&") sieht String.replace sonst Rückverweise und frisst Teile der Karte. */
@@ -927,7 +927,7 @@ async function elternDashLoad(){
            .replace('<div id="eltern-offen-slot"></div>',()=>offenHtml);
   // ── TERMINE ── (Karussell + Kalender-Abo)
   html+=sec("📅 Termine");
-  html+=elternTermineCarouselHtml(termineListe,kids,rsvpAll); // Schnell-Zu-/Absage für alle Termine (deckt „kommende Termine × Kinder" ab)
+  html+=elternTermineCarouselHtml(termineListe,kids,rsvpAll,termin&&termin.id); // v686: Liste ohne den Termin von oben, geantwortet wird oben
   html+=card(`<button onclick="elternTermineOpen()" style="width:100%;min-height:46px;padding:12px;border:1.5px solid #1e3a8a;border-radius:10px;background:#fff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📅 Alle Termine &amp; Kalender-Abo</button>`);
   /* PO: „Rückblick unter Termine setzen." Der Nach-dem-Spiel-Gruß stand über den Terminen
      und drängte sich damit vor das, was zu tun ist. Er bleibt aber eine SICHTBARE Karte und
@@ -1211,13 +1211,13 @@ function elternOffeneRsvpHtml(rows,kids,rsvpAll,ausserId){
         <div style="display:flex;gap:6px">${btns}</div></div>`;
     }).join("");
     return `<div style="border-top:1px solid #f1f5f9;margin-top:10px;padding-top:10px">
-      <div role="button" tabindex="0" onclick="terminDetailOpen(${t.id})" style="cursor:pointer;font-size:var(--s-text);font-weight:800">${m.icon} ${esc(t.titel||t.gegner||m.label)}</div>
+      <div role="button" tabindex="0" onclick="terminDetailOpen(${t.id})" style="cursor:pointer;min-height:44px;display:flex;align-items:center;gap:6px;font-size:var(--s-text);font-weight:800">${m.icon} ${esc(t.titel||t.gegner||m.label)} <span style="margin-left:auto;color:#2563eb" aria-hidden="true">›</span></div>
       <div style="font-size:var(--s-klein);color:#64748b">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${zeit?" · "+zeit:""}${t.platz?" · 🏟️ "+esc(t.platz):""}</div>
       ${kidRows}</div>`;
   }).join("");
   return `<div id="eltern-offen-card" style="background:#fff;border:2px solid #f59e0b;border-radius:14px;padding:14px 16px 16px;margin-bottom:12px;box-shadow:0 4px 16px rgba(245,158,11,.18)">
     <div style="display:flex;align-items:baseline;gap:8px">
-      <div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:#b45309;font-weight:800">❗ Rückmeldung fehlt</div>
+      <div style="font-size:var(--s-karte);color:#b45309;font-weight:900">❗ Rückmeldung fehlt</div>
       <div style="margin-left:auto;font-size:var(--s-klein);color:#64748b">${anzahl} offen · nächste 14 Tage</div>
     </div>
     ${zeilen}</div>`;
@@ -1282,39 +1282,43 @@ function _epAnkerHalten(vor,wurzel){
 function fotoLabel(typ){
   return {training:"Trainings-Fotos",spiel:"Spiel-Fotos",turnier:"Turnier-Fotos"}[typ]||"Event-Fotos";
 }
-function elternTermineCarouselHtml(rows,kids,rsvpAll){
-  const upcoming=(rows||[]).slice(0,10);
-  if(upcoming.length<2)return ""; // bei nur 1 Termin steht der schon oben mit voller Info
+/* v685/v686 – Aus dem Wisch-Karussell wird eine ruhige Liste. Die Zu-/Absage-Knöpfe standen auf
+   dem Dashboard dreimal für dieselben Termine (Nächster Termin, Rückmeldung fehlt, Karussell),
+   und was rechts aus dem Bild ragte, sah niemand. Jetzt: je Termin eine Zeile mit dem Stand je
+   Kind in Worten und Zeichen – ein Tipp öffnet die Details, dort wird geantwortet. Geantwortet
+   wird oben (Nächster Termin, Rückmeldung fehlt), hier wird nur nachgesehen. */
+function elternTermineCarouselHtml(rows,kids,rsvpAll,ohneId){
+  const bis=new Date(Date.now()+14*864e5).toISOString().slice(0,10);
   rsvpAll=rsvpAll||{};
-  const cards=upcoming.map(t=>{
+  // was unter „Rückmeldung fehlt“ steht (14 Tage, ein Kind ohne Antwort), steht hier nicht noch einmal
+  const offenOben=t=>t.datum<=bis&&(kids||[]).some(k=>!((rsvpAll[t.id]||{})[k.spieler_id]));
+  const liste=(rows||[]).filter(t=>Number(t.id)!==Number(ohneId)&&!offenOben(t)).slice(0,4);
+  if(!liste.length)return "";
+  rsvpAll=rsvpAll||{};
+  const zeilen=liste.map(t=>{
     const m=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅",label:t.typ,col:"#1e3a8a"};
     const d=new Date(t.datum+"T00:00:00");
     const wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
-    const zeit=t.treffzeit?("🕒 "+String(t.treffzeit).slice(0,5)+" Uhr (Treffen)"):(t.uhrzeit?String(t.uhrzeit).slice(0,5)+" Uhr":"");
+    const zeit=t.treffzeit?("Treffen "+String(t.treffzeit).slice(0,5)):(t.uhrzeit?String(t.uhrzeit).slice(0,5)+" Uhr":"");
     const rr=rsvpAll[t.id]||{};
-    const kidRows=(kids||[]).map(k=>{
-      const kd=k.kader||{}, st=rr[k.spieler_id]||null;
-      const btns=EP_RSVP_QUICK.map(s=>{
-        const on=st===s, c=EP_RSVP[s];
-        const act=on?`elternRsvpClear(${t.id},${k.spieler_id})`:`elternRsvp(${t.id},${k.spieler_id},'${s}')`;
-        return `<button onclick="${act}" title="${c.lbl}" aria-label="${esc(kd.name||"Kind")}: ${c.lbl}" style="width:36px;height:36px;flex:none;border-radius:9px;border:1.5px solid ${on?c.col:"var(--rand-bedien)"};background:${on?c.col:"#fff"};color:${on?"#fff":"#334155"};font-size:var(--s-karte);line-height:1;cursor:pointer">${c.emo}</button>`;
-      }).join("");
-      return `<div style="display:flex;align-items:center;gap:5px;margin-top:7px">
-        <span style="flex:1;min-width:0;font-size:var(--s-text);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(kd.name||"Kind")}</span>${btns}</div>`;
+    const stand=(kids||[]).map(k=>{
+      const kd=k.kader||{}, st=rr[k.spieler_id]||null, c=st&&EP_RSVP[st];
+      const txt=c?`${c.emo} ${c.lbl}`:"❗ offen";
+      return `<span style="display:inline-block;font-size:var(--s-klein);font-weight:800;color:${c?"var(--text2)":"#b45309"};margin-right:8px">${(kids||[]).length>1?esc(kd.name||"Kind")+": ":""}${txt}</span>`;
     }).join("");
-    return `<div style="min-width:236px;max-width:250px;flex:none;scroll-snap-align:start;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:12px">
-      <div role="button" tabindex="0" onclick="terminDetailOpen(${t.id})" style="cursor:pointer">
-        <div style="font-size:var(--s-text);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.icon} ${esc(t.titel||t.gegner||m.label)}</div>
-        <div style="font-size:var(--s-klein);color:#64748b">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${zeit?" · "+zeit:""}${heimLabel(t)?" · "+heimLabel(t):""}${t.ort?" · "+esc(t.ort):""}</div>
-      </div>
-      ${kidRows}
-      <div role="button" tabindex="0" onclick="terminDetailOpen(${t.id})" style="cursor:pointer;text-align:right;font-size:var(--s-klein);font-weight:800;color:#2563eb;margin-top:8px">Alle Infos ›</div>
-    </div>`;
+    return `<button type="button" onclick="terminDetailOpen(${t.id})" style="display:flex;align-items:center;gap:12px;width:100%;min-height:56px;text-align:left;padding:10px 12px;margin-top:8px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc;color:inherit;font-family:inherit;cursor:pointer">
+      <span style="font-size:var(--s-teil);line-height:1" aria-hidden="true">${m.icon}</span>
+      <span style="flex:1;min-width:0">
+        <span style="display:block;font-size:var(--s-text);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.titel||t.gegner||m.label)}</span>
+        <span style="display:block;font-size:var(--s-klein);color:#475569">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${zeit?" · "+zeit:""}</span>
+        <span style="display:block;margin-top:2px">${stand}</span>
+      </span>
+      <span style="font-size:var(--s-teil);color:#94a3b8" aria-hidden="true">›</span>
+    </button>`;
   }).join("");
-  return `<div style="background:#fff;border-radius:14px;padding:14px 14px 8px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
-    <div style="font-weight:700;margin-bottom:2px">📅 Deine nächsten Termine</div>
-    <div style="font-size:var(--s-text);color:#64748b;margin-bottom:10px">Schnell 👍 zusagen · 🤔 unsicher · 👎 absagen · „Alle Infos" für Details. Wischen →</div>
-    <div data-scrollkeep="termine" style="display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;-webkit-overflow-scrolling:touch">${cards}</div>
+  return `<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
+    <div style="font-weight:800;font-size:var(--s-karte)">📅 Danach</div>
+    ${zeilen}
   </div>`;
 }
 
@@ -1364,7 +1368,7 @@ async function terminDetailOpen(id){
   c.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px">
       <div style="font-size:var(--s-teil);font-weight:800;min-width:0">${m.icon} ${esc(t.titel||t.gegner||m.label)}</div>
-      <button onclick="document.getElementById('td-modal').remove()" style="border:none;background:none;font-size:var(--s-seite);color:var(--text3);cursor:pointer;line-height:1;flex:none">×</button>
+      <button aria-label="Schließen" onclick="document.getElementById('td-modal').remove()" style="min-width:44px;min-height:44px;border:none;background:none;font-size:var(--s-seite);color:var(--text3);cursor:pointer;line-height:1;flex:none">×</button>
     </div>
     <div style="font-size:var(--s-text);color:#64748b;margin-bottom:10px">${wtag} ${d.toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})}${zeit?" · "+zeit:""}</div>
     <div id="td-wetter" style="margin-bottom:6px"></div>

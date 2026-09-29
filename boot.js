@@ -1435,7 +1435,7 @@ function tpShowExercise(formIdx,planMin){
   modal.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:380px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.25)">
     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
       <div style="font-size:var(--s-karte);font-weight:700;color:var(--text)">${esc(f.name)}</div>
-      <button onclick="this.closest('div[style*=fixed]').remove()" style="background:none;border:none;font-size:var(--s-teil);cursor:pointer;color:var(--text2)">×</button>
+      <button aria-label="Schließen" onclick="this.closest('div[style*=fixed]').remove()" style="min-width:44px;min-height:44px;background:none;border:none;font-size:var(--s-teil);cursor:pointer;color:var(--text2)">×</button>
     </div>
     ${zeigKurz?`<div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px">${esc(kurz)}</div>`:""}
     ${f.svg

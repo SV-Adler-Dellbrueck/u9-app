@@ -899,7 +899,7 @@ function pwaBannerShow(kind){
   const el=document.createElement("div");
   el.id="pwa-nudge";
   el.style.cssText="position:fixed;left:12px;right:12px;bottom:12px;z-index:10050;background:#1e3a8a;color:#fff;border-radius:14px;padding:14px 34px 14px 16px;box-shadow:0 8px 28px rgba(0,0,0,.35);font-family:inherit;max-width:460px;margin:0 auto";
-  const close=`<button onclick="pwaBannerDismiss()" aria-label="Schließen" style="position:absolute;top:8px;right:10px;background:none;border:none;color:rgba(255,255,255,.7);font-size:var(--s-seite);line-height:1;cursor:pointer">×</button>`;
+  const close=`<button onclick="pwaBannerDismiss()" aria-label="Schließen" style="min-width:44px;min-height:44px;position:absolute;top:8px;right:10px;background:none;border:none;color:rgba(255,255,255,.7);font-size:var(--s-seite);line-height:1;cursor:pointer">×</button>`;
   const app=pwaKontext().name;
   if(kind==="ios"){
     el.innerHTML=`${close}<div style="font-weight:800;font-size:var(--s-karte);margin-bottom:4px">📱 ${app} aufs Handy</div>
