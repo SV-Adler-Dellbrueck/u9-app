@@ -36,7 +36,7 @@ module.exports = async function (h) {
     for (const t of ["home", "training", "spieltag", "team", "taktik", "elki", "orga"]) await lauf("Reiter " + t, `openTab("${t}")`, false);
     for (const fn of ["materialOpen", "trainerPlanOpen", "pausenOpen", "notfallTrainerOpen", "fundbueroOpen", "kasseOpen", "ausstattungOpen", "mitbringTrainerOpen",
       "trainerMeetingOpen", "saisonCockpitOpen", "awUebersichtOpen", "rollenMatrixOpen", "probeOpen", "ansageTrainerOpen", "epollTrainerOpen", "einladungskartenOpen",
-      "qrAushangOpen", "wahlTrainerOpen", "questEditorOpen", "urkundenOpen", "setupTrainerOpen", "nutzungOpen", "blitzOpen", "wissenAuf"])
+      "wahlTrainerOpen", "questEditorOpen", "urkundenOpen", "setupTrainerOpen", "nutzungOpen", "blitzOpen", "wissenAuf"])
       await lauf(fn, `openTab("home"); if(typeof ${fn}==="function") await ${fn}()`, true);
     await s.schliessen();
   }

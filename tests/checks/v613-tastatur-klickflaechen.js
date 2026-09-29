@@ -104,7 +104,7 @@ module.exports = async function (h) {
     const s = await h.starten({ warten: 2500, breite: 390, hoehe: 900, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen() }) });
     for (const fn of ["materialOpen", "trainerPlanOpen", "pausenOpen", "notfallTrainerOpen", "fundbueroOpen", "kasseOpen", "ausstattungOpen", "mitbringTrainerOpen",
       "trainerMeetingOpen", "saisonCockpitOpen", "awUebersichtOpen", "rollenMatrixOpen", "probeOpen", "ansageTrainerOpen", "epollTrainerOpen", "einladungskartenOpen",
-      "qrAushangOpen", "wahlTrainerOpen", "questEditorOpen", "urkundenOpen", "setupTrainerOpen", "nutzungOpen", "blitzOpen"]) {
+      "wahlTrainerOpen", "questEditorOpen", "urkundenOpen", "setupTrainerOpen", "nutzungOpen", "blitzOpen"]) {
       try {
         zuKlein.push(...await s.page.evaluate(async ({ MESS, fn }) => {
           const mess = eval(MESS); document.getElementById("pin-gate")?.remove();

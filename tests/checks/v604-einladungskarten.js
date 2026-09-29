@@ -163,11 +163,11 @@ module.exports = async function (h) {
     const f = s.fehler(); if (f.length) probleme.push("d) Konsole: " + f.slice(0, 2).join(" | "));
 
     // ── e) kein fremder QR-Dienst ─────────────────────────────────────────────
-    const aushang = await s.page.evaluate(async () => { window.print = () => {}; await qrAushangOpen(); const d = document.getElementById("zert-print"); return { html: d ? d.innerHTML : "", svg: d ? d.querySelectorAll("svg").length : 0 }; });
+    /* v669 PO 29.09.: „Eltern einladen kann … ganz weg ebenso wie QR-Aushang.“ Der Aushang ist
+       entfernt; geprüft bleibt, dass die Karten den QR-Code selbst erzeugen. */
     const fremd = /api\.qrserver\.com|chart\.googleapis|quickchart/i;
     if (fremd.test(r.html)) probleme.push("e) die Einladungskarten holen den QR-Code bei einem fremden Dienst");
-    if (fremd.test(aushang.html) || aushang.svg !== 1) probleme.push("e) der QR-Aushang erzeugt den Code nicht selbst");
-    zeilen.push(`e) Karten und Aushang: QR-Code im Browser erzeugt, kein fremder Dienst (${aushang.svg} SVG im Aushang)`);
+    zeilen.push("e) Karten: QR-Code im Browser erzeugt, kein fremder Dienst");
     await s.schliessen();
   }
 

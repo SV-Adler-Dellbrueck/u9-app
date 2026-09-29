@@ -2218,17 +2218,23 @@ function cardPosLabel(pos){
   if(m){const seite=/^(r|rechts)$/.test(m[2])?"Rechter":"Linker",base=m[1].trim();return seite+" "+base.charAt(0).toUpperCase()+base.slice(1);}
   return p;
 }
+/* v669 PO 29.09.: „Beim Klick auf die Karte kommt unten die Meldung ‚keine Bewertung vorhanden‘.
+   Geht es nicht um die Spielerkarte des Kindes?“ Die Bewertungen ruhen bis Ende der Hinrunde
+   (v648), also traf das jedes Kind. Wie seit v563 auf Eltern- und Kindergerät steht die Karte
+   jetzt auch ohne Bewertung: Name, Nummer, Foto, Zähler – die Stärken kommen später. */
 function adlerCardData(name){
   const snaps=DB[name]||[];
-  if(!snaps.length)return null;
-  const lat=snaps[snaps.length-1];
+  const kk=getKader(name);
+  if(!snaps.length&&!kk)return null;
+  const k=kk||{};
+  const lat=snaps.length?snaps[snaps.length-1]:{};
   const v=typeof lat.radios==="string"?safeParse(lat.radios,{}):(lat.radios||{});
-  const k=getKader(name)||{};
+  const bewertet=snaps.length>0;
   // Top-3 Staerken (nach Wert; bei Gleichstand egal) – jedes Kind bekommt 3 Badges
-  const strengths=staerkenAus(v).map(key=>({key}));   // v636: gleiche Regel wie Datenbank und Elternkarte
+  const strengths=bewertet?staerkenAus(v).map(key=>({key})):[];   // v636: gleiche Regel wie Datenbank und Elternkarte
   // Design-Farbe: Dimension der ersten Stärke (TW -> Gold) – wie auf Eltern- und Kindergerät
   const dim0=strengths.length&&typeof feldDimVon==="function"?feldDimVon(strengths[0].key):null;
-  const theme=k.tw?CARD_THEMES.keeper:(CARD_THEMES[dim0]||CARD_THEMES.tech);
+  const theme=k.tw?CARD_THEMES.keeper:(bewertet?(CARD_THEMES[dim0]||CARD_THEMES.tech):(CARD_THEMES.neu||CARD_THEMES.tech));
   const posMap={aufpasser:"Aufpasser",jaeger:"Jäger",flitzer_l:"Flitzer",flitzer_r:"Flitzer"};
   const pos=k.lieblingsposition||(k.tw?"Torwart":(posMap[lat.position]||lat.prim_rolle||"Allrounder"));
   const fussMap={L:"linker Fuß",R:"rechter Fuß",B:"beidfüßig"};
@@ -3904,21 +3910,6 @@ async function anwesenheitOpen(){
   modal.appendChild(cardEl);document.body.appendChild(modal);
   await anwesenheitQuoteInto(document.getElementById("aq-inhalt"));
 }
-// Eltern-Onboarding-Paket: fertige WhatsApp-Nachricht mit Eltern-Link + Kurzanleitung,
-// damit der Trainer die ganze Elternschaft in einem Rutsch an Bord holt.
-function elternInvitePaket(){
-  const url=appRoot()+"eltern/";
-  const msg=`🦅 SV Adler Dellbrück U9 – unsere Eltern-App\n\n`+
-    `Liebe Eltern, ab jetzt läuft alles rund um euer Kind über die Eltern-App:\n`+
-    `✅ Termine zu- & absagen\n📅 alle Termine + Kalender-Export\n📣 Liveticker, wenn ihr mal nicht dabei seid\n🃏 Sammelkarte & Technik-Abzeichen fürs Kind\n🔥 Grillhütte & Mitbringlisten\n\n`+
-    `🔒 Und wichtig: Fotos & Daten eurer Kinder bleiben hier im geschützten Team-Bereich (Server in der EU, ihr entscheidet per Freigabe) – sicherer als jede WhatsApp-Gruppe.\n\n`+
-    `So kommt ihr rein:\n`+
-    `1️⃣ Link öffnen: ${url}\n`+
-    `2️⃣ Mit EURER E-Mail anmelden (die, die ihr dem Trainer gegeben habt) – ihr bekommt einen Code per Mail.\n`+
-    `3️⃣ Im Browser-Menü „Zum Startbildschirm hinzufügen“ – dann läuft sie wie eine echte App.\n\n`+
-    `Bis bald am Platz! 🖤`;
-  elternInviteTeilen(msg);
-}
 /* Drei Wege, und der Trainer erfährt immer, welcher gegriffen hat. Vorher schluckte
    ein .catch(()=>{}) jeden Fehler des Teilen-Menüs, die Zwischenablage lief unbemerkt
    ins Leere (writeText ist ein Promise, try/catch fängt das nicht) und ein blockiertes
@@ -4014,7 +4005,7 @@ const SAISONSTART_STEPS=[
   {k:"urkunden", emo:"🏅", t:"Saison-Urkunden drucken",     d:"Alle Kinder in einem Druckauftrag – fürs Abschlussfest.", run:"urkundenOpen()"},
   {k:"kader",    emo:"📋", t:"Kader aufräumen",             d:"Abgänge deaktivieren, Neuzugänge anlegen, Trikotnummern prüfen.", run:"go('kader')"},
   {k:"serie",    emo:"📅", t:"Trainings-Termine anlegen",    d:"Die Trainingstage der neuen Saison eintragen.", run:"go('termine')"},
-  {k:"einladung",emo:"🔗", t:"Eltern-Einladung verschicken",d:"Neue Familien per WhatsApp-Paket in die App holen.", run:"elternInvitePaket()"},
+  {k:"einladung",emo:"🪪", t:"Einladungskarten drucken",   d:"Neue Familien per Karte mit QR-Code in die App holen.", run:"einladungskartenOpen()"},
   {k:"ansage",   emo:"📣", t:"Saisonstart-Ansage senden",   d:"Alle Eltern begrüßen – mit Gelesen-Status.", run:"ansageTrainerOpen()"},
   /* v545: Der Saisonwechsel ist der einzige Zeitpunkt, an dem ohnehin alles ausgepackt
      wird. Eine Inventur, die man „mal machen sollte", macht niemand. */
@@ -4502,7 +4493,7 @@ const HELP=[
     {t:"Wer ist dabei? (Training)", d:"Ein Training gilt als zugesagt. Bis die Anwesenheit gespeichert ist, zählen Trainingsplan, Gruppen, „Diese Woche“ und die Anwesenheit selbst dieselben Kinder: <b>alle außer Absagen</b>. In der Anwesenheit sind sie vorbelegt (Hinweis „noch nicht gespeichert“, abgesagte Kinder tragen „abgesagt“) – Fehlende abwählen und speichern. Ausdrückliche Zusagen stehen als Zahl im Trainingsplan."},
     {t:"Elternbeirat & Kasse", d:"Unter „Eltern & Kinder → Elternbeirat & Kasse“ trägst du ein, wer aus der Elternschaft eine Aufgabe übernommen hat (z. B. Elternbeirat, Kassenwart) und wie hoch der Beitrag zur Mannschaftskasse ist. Die Eltern sehen das im Eltern-Bereich unter „Mehr vom Team“ als Karte „Ansprechpartner im Team“. Nur eintragen, wer einverstanden ist – alle Eltern der Mannschaft sehen es. Gezahlt wird weiter außerhalb der App.", run:"elternTeamEditOpen()"},
     {t:"Einladungskarten", d:"Je Kind eine Karte mit QR-Code, vier pro A4-Seite. Die Eltern scannen, legen E-Mail und Passwort fest und sind sofort angemeldet – kein Mailversand, kein Eintragen der Adresse vorab. Eine Karte gilt für zwei Elternteile und bis zum gewählten Datum; neu drucken macht die alte Karte des Kindes ungültig. <b>Seit v658 geht es auch ohne Papier:</b> Nach „Karten erzeugen“ steht je Kind „Link kopieren“ – den Link schickst du im persönlichen Chat (nie in die Gruppe), er wirkt genau wie die Karte. Die Links gibt es nur in diesem Fenster; gedruckt wird erst mit „Karten drucken“.", run:"einladungskartenOpen()"},
-    {t:"Adler-Welt-Hub", d:"Federn je Kind, FUT-Karten, Technik-Abzeichen und Wochen-Challenge an einem Ort.", run:"adlerWeltOpen()"},
+    {t:"Adler-Welt-Hub", d:"Federn je Kind, Spielerkarten, Technik-Abzeichen und Wochen-Challenge an einem Ort. 🃏 zeigt die Spielerkarte des Kindes auch ohne Bewertung – Name, Nummer, Foto und Zähler; die Stärken kommen dazu, sobald bewertet ist. Eltern holt ihr über die Einladungskarten (Kommunikation) in die App.", run:"adlerWeltOpen()"},
     {t:"Federn-Stichtag", d:"In „Team-Quests verwalten“ steht „Federn zählen ab“. Quiz-Federn zählen immer. Training, Serien, Zusagen, Missionen, Album und Abzeichen zählen erst ab diesem Tag – auf der Karte, in der Übersicht und im Team-Level, das ab dem Stichtag ganz neu zählt. Gelöscht wird nichts; ein Anlass von vorher bringt auch nachträglich keine Federn. Feld leeren heißt: alles zählt wieder."},
     {t:"Kabinen-Wahl", d:"Die Kinder stimmen ab (Song, Motto, Spielform) – du legst die Optionen fest.", run:"wahlTrainerOpen()"},
     {t:"Unsere Regeln", d:"Der Fairplay-Codex spricht die Eltern an. Das hier ist sein Gegenstück für die Kinder: höchstens sechs kurze Sätze, die ein Achtjähriger aufsagen kann – in der Kabine unter „Team & Spaß“. Positiv formulieren statt verbieten, und lieber einen Satz ausblenden als einen siebten dazuschreiben; mehr merkt sich niemand. Änderungen gelten sofort für alle Kinder. Ohne Netz zeigt die Kabine die sechs mitgelieferten Sätze.", run:"codexKinderEditOpen()"},
@@ -4657,42 +4648,12 @@ async function adlerWeltOpen(){
     <div style="font-size:var(--s-klein);font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 4px">🏟️ Team-Arena</div>
     <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px">Schlachtruf & Einlauf-Song, die die Kinder in der Kabine sehen.</div>
     <button class="btn btn-sm" style="width:100%" onclick="document.getElementById('aw-modal').remove();w2('arenaEditOpen')"><i class="ti ti-flag"></i>Arena bearbeiten</button>
-    <div style="font-size:var(--s-klein);font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 4px">🔗 Eltern einladen</div>
-    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px">Fertige WhatsApp-Nachricht mit Eltern-Link + Kurzanleitung – an die Elternschaft schicken.</div>
-    <button class="btn btn-sm btn-p" style="width:100%" onclick="document.getElementById('aw-modal').remove();elternInvitePaket()"><i class="ti ti-brand-whatsapp"></i>Einladung erstellen</button>
-    <button class="btn btn-sm btn-p" style="width:100%;margin-top:8px" onclick="document.getElementById('aw-modal').remove();einladungskartenOpen()"><i class="ti ti-id-badge-2"></i>Einladungskarten drucken (Zugang per QR)</button>
-    <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="qrAushangOpen()"><i class="ti ti-qrcode"></i>🖨️ QR-Aushang fürs schwarze Brett drucken</button>
     <button class="btn btn-sm" style="margin-top:12px;width:100%" onclick="document.getElementById('aw-modal').remove()">Schließen</button>`;
   modal.appendChild(c);document.body.appendChild(modal);
   if(typeof teamLevelLoad==="function")teamLevelLoad("aw-team-level"); // Küken-Schwarm (Team-Level) jetzt hier
   active.forEach(k=>{xpTotal(kaderId(k)).then(t=>{const el=document.getElementById("aw-fed-"+kaderId(k));if(el){const b=xpBadge(t);el.textContent=`${XP_ICON} ${t} · ${b.emo} ${b.t}`;}}).catch(()=>{});});
   // aktuelle Spotify-Playlist vorbefüllen
   fetch(`${SB_URL}/rest/v1/team_config?id=eq.1&select=spotify_playlist`,{headers:sbAuthHeaders()}).then(r=>r.ok?r.json():[]).then(rows=>{const el=document.getElementById("aw-spotify");if(el&&rows[0]&&rows[0].spotify_playlist)el.value=rows[0].spotify_playlist;}).catch(()=>{});
-}
-/* ── K5: QR-Aushang – druckbares A4-Plakat mit QR-Code zum Eltern-Bereich (schwarzes
-   Brett am Käfig, Probetraining-Eltern). Enthält NUR die öffentliche App-Adresse.
-   v604: Der QR-Code entsteht im Browser (vendor/qrcode.js) statt bei api.qrserver.com –
-   für die Einladungskarten ist das Pflicht (dort steht ein Zugangscode im QR), und
-   hier soll es nicht anders aussehen. ── */
-async function qrAushangOpen(){
-  const link=appRoot()+"eltern/";
-  let qr;
-  try{ qr=await qrSvg(link,6); }catch(e){ toast("QR-Code konnte nicht erzeugt werden – bitte neu laden","err"); return; }
-  const html=`<div class="zert-page"><div class="zert-card">
-    <div class="zert-crest"><img src="logo.png" alt=""></div>
-    <div class="zert-club">SV Adler Dellbrück e.V. · U9</div>
-    <div class="zert-title">Unsere Team-App</div>
-    <div class="zert-season">für alle Adler-Eltern &amp; Schnupper-Familien</div>
-    <div class="zert-text" style="text-align:left;max-width:460px">
-      <b>1.</b> Den Zugang gibt es mit der persönlichen Einladungskarte eures Kindes – einfach das Trainerteam ansprechen.<br>
-      <b>2.</b> Karte scannen, E-Mail und Passwort festlegen – fertig.<br>
-      <b>3.</b> Termine zu-/absagen, Infos &amp; Fotos, Liveticker – und „Die Kabine“ für die Kinder.<br>
-      <span style="font-size:.9em">Schon angemeldet? Dieser Code führt direkt zur App.</span></div>
-    <div style="width:220px;height:220px;margin:14px auto 6px">${qr}</div>
-    <div style="font-size:var(--s-klein);color:var(--text2);word-break:break-all">${esc(link)}</div>
-    <div class="zert-sign"><div>Euer Trainerteam<br>${(typeof TRAINER!=="undefined"?TRAINER:[]).join(" · ")}</div><div>Fragen? Sprecht uns am Platz an!</div></div>
-  </div></div>`;
-  _zertPrint(html);
 }
 /* v604: QR-Code als SVG, erzeugt im Browser. Die Bibliothek (MIT, Kazuhiko Arase) liegt
    in vendor/ und wird erst beim ersten Druck geladen – kein Trainer braucht sie beim Start.
@@ -6505,9 +6466,9 @@ function _kachelInhalt(key){
       {emo:"🗣️",label:"Elterngespräch",fn:"epollTrainerOpen"},
       // v610: Die Karten sind seit v604 der Regelweg – vorher nur über Einstellungen erreichbar.
       {emo:"🪪",label:"Einladungskarten",fn:"einladungskartenOpen"},
-      {emo:"👥",label:"Elternbeirat & Kasse",fn:"elternTeamEditOpen"},
-      {emo:"🔗",label:"Eltern einladen",fn:"elternInvitePaket"},
-      {emo:"🖨️",label:"QR-Aushang",fn:"qrAushangOpen"}
+      {emo:"👥",label:"Elternbeirat & Kasse",fn:"elternTeamEditOpen"}
+      /* v669 PO 29.09.: „Eltern einladen kann meiner Einschätzung ganz weg ebenso wie QR-Aushang.“
+         Der Weg in die App sind die Einladungskarten (seit v604). */
     ],col)
     +kSec("Adler-Welt (Kinder)")
     +kTiles([
