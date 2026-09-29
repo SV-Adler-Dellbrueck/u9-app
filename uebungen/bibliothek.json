@@ -1,6 +1,6 @@
 {
   "schema": "adler-uebungen/1",
-  "stand": "2026-09-29-1",
+  "stand": "2026-09-29-2",
   "uebungen": [
     {
       "name": "Warm up Adler",
@@ -4869,6 +4869,124 @@
             140,
             166,
             "Seite anzeigen, andere nehmen"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Frei für den Wurf",
+      "kat": "wahrnehmung",
+      "kurz": "Werfen und Fangen statt Passen — wer den Ball hat, bleibt stehen, alle anderen machen sich anspielbar.",
+      "spieler": "6-14",
+      "feld": "20 x 20 m",
+      "dauer": "12",
+      "ablauf": "AUFBAU: Feld 20 x 20 m mit vier Hütchen, zwei Teams mit Leibchen, ein Ball je Feld. Bei mehr als acht Kindern ein zweites Feld. ABLAUF: 3 gegen 3, der Ball wird geworfen und gefangen. Wer den Ball in der Hand hat, bleibt stehen. Die Gegner dürfen Würfe abfangen, aber den Ball nicht aus der Hand nehmen. Stufe 1: Fünf Würfe in Folge im eigenen Team sind ein Punkt. Stufe 2: Ein Punkt zählt, wenn der Ball hinter der gegnerischen Grundlinie gefangen wird. Stufe 3: Dieselbe Regel mit dem Fuß — flach passen statt werfen, wer den Ball hat, darf wieder dribbeln.",
+      "varianten": "Leichter: Ein Joker spielt immer beim Team mit Ball mit (3+1 gegen 3), oder das Feld wird größer. Schwerer: Höchstens drei Sekunden mit dem Ball in der Hand, oder 3+3 gegen 3 — zwei Teams gegen eines, und wer den Ball erobert, muss ihn fünf Würfe halten.",
+      "coaching": "Kann dich dein Mitspieler sehen? Wohin läufst du, wenn er den Ball hat? Wer steht gerade frei — und warum?",
+      "diff": 1,
+      "skizze": {
+        "z": [
+          [
+            40,
+            25,
+            200,
+            130
+          ]
+        ],
+        "h": [
+          [
+            40,
+            25,
+            "y"
+          ],
+          [
+            240,
+            25,
+            "y"
+          ],
+          [
+            40,
+            155,
+            "y"
+          ],
+          [
+            240,
+            155,
+            "y"
+          ]
+        ],
+        "ger": [
+          [
+            262,
+            90,
+            "trainer",
+            "w"
+          ]
+        ],
+        "s": [
+          [
+            80,
+            90,
+            "g",
+            "A"
+          ],
+          [
+            150,
+            55,
+            "g",
+            "B"
+          ],
+          [
+            140,
+            125,
+            "g",
+            "C"
+          ],
+          [
+            115,
+            85,
+            "r"
+          ],
+          [
+            185,
+            70,
+            "r"
+          ],
+          [
+            100,
+            125,
+            "r"
+          ]
+        ],
+        "b": [
+          [
+            88,
+            97
+          ]
+        ],
+        "p": [
+          [
+            98,
+            80,
+            138,
+            60,
+            "p",
+            1
+          ],
+          [
+            158,
+            124,
+            205,
+            116,
+            "l",
+            2
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            170,
+            "Mit Ball stehen, ohne Ball freilaufen"
           ]
         ]
       }

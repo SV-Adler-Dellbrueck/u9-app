@@ -4716,6 +4716,7 @@ const UEBUNG_ART_VORSCHLAG={
      der Trainer erst in Steigerung 3 verteidigt. Der Schlüssel heißt hier „spiel“ – das ist
      die Kennung, die `UEBUNG_ART` als „Spielform“ auflöst. */
   "Raute mit Torwart – Angriff über den anderen Flügel":"spiel",
+  "Frei für den Wurf":"spiel",   // v678: Punkte als Ausgang – Hauptteil, Leitfrage 5
   /* v667 – Saisonformat (Entwurf abgenommen 29.09.): vier Spielformen mit Gegner. */
   "3+1 gegen 3 – Ball halten, der Torwart ist die Rettung":"spiel",
   "FUNiño 2 gegen 2 – abschirmen, dann Seite wechseln":"spiel",
@@ -4885,5 +4886,7 @@ const UEBUNG_BETREUUNG_VORSCHLAG={
   "TW-Fußarbeit-Sterne":"feld",
   "Purzelbaum-Parade":"feld",
   "Adler TW – Einlaufen":"feld",
-  "Raute mit Torwart – Angriff über den anderen Flügel":"feld"
+  "Raute mit Torwart – Angriff über den anderen Flügel":"feld",
+  /* v678: feste Regeln, die Kinder zählen ihre Würfe selbst – der Trainer stellt nur die Stufe um */
+  "Frei für den Wurf":"allein"
 };
