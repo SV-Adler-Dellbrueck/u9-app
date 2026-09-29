@@ -428,7 +428,6 @@ async function mitbringDelete(id){
    Kindernamen, und die Rechte prüft die Datenbank. Bis jemand übernimmt, bleibt die
    Verantwortung bei der eingeteilten Familie; ein Rückfall durch das Trainerteam ist per
    Beschluss vom 27.09. ausgeschlossen. */
-const GH_FENSTER_START=14;      // eigener Dienst auf der Startseite, wenn er so nah ist
 const GH_FENSTER_OFFEN=60;      // offene (freigegebene) Dienste anderer Familien
 const GH_STATUS={
   eingeteilt:{t:"eingeteilt",   f:"var(--green)", bg:"var(--green-bg)"},
@@ -465,14 +464,18 @@ function ghDienstHtml(d){
 /* Startseite: der eigene Dienst in den nächsten 14 Tagen und offene Dienste zum Übernehmen.
    Lehre aus v429 umgekehrt: einen Pflichtdienst muss man Wochen vorher sehen – nicht nur in
    der Kachel des nächsten Termins. Andere Familien sehen hier nur, was sie übernehmen können. */
+/* v668 PO 29.09.: „… informieren wir auf der ersten Startseite die jeweiligen Eltern … dass ihre
+   Familie für den Grillhüttendienst am Datum zugewiesen wurde.“ Der eigene Dienst steht deshalb
+   ab der Einteilung auf der Startseite, nicht erst 14 Tage vorher – bei allen Eltern, die mit dem
+   Kind verknüpft sind. Offene Dienste anderer Familien weiter nur im 60-Tage-Fenster. */
 async function elternBuedchenLoad(){
   const slot=document.getElementById("buedchen-slot"); if(!slot)return;
-  const alle=await ghDienste(GH_FENSTER_OFFEN);
-  const grenze=new Date(Date.now()+GH_FENSTER_START*864e5).toISOString().slice(0,10);
-  const zeigen=alle.filter(d=>(d.eigene&&String(d.datum)<=grenze)||d.kann_uebernehmen);
+  const alle=await ghDienste(366);
+  const grenze=new Date(Date.now()+GH_FENSTER_OFFEN*864e5).toISOString().slice(0,10);
+  const zeigen=alle.filter(d=>d.eigene||(d.kann_uebernehmen&&String(d.datum)<=grenze));
   slot.innerHTML=zeigen.map(d=>`<div class="gh-karte" style="background:var(--surface);border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05);border:2px solid ${d.eigene?"var(--green)":"var(--amber)"}">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px"><b>🔥 Grillhütte${d.eigene?": Ihr seid dran":""}</b>${ghChip(d.status)}</div>
-      <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:8px">Heimspiel am ${esc(ghTag(d.datum,d.uhrzeit))}${d.gegner?" · "+esc(d.gegner):""}</div>
+      <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:8px">${d.eigene&&d.status==="eingeteilt"?"Eure Familie ist eingeteilt: ":""}Heimspiel am ${esc(ghTag(d.datum,d.uhrzeit))}${d.gegner?" · "+esc(d.gegner):""}${Number(d.plaetze)>1?` · ${Number(d.plaetze)} Familien`:""}</div>
       ${ghDienstHtml(d)}
     </div>`).join("");
   if(typeof elternTodoSync==="function")elternTodoSync();
@@ -511,10 +514,13 @@ async function ghTrainerDaten(){
   const heute=new Date().toISOString().slice(0,10);
   let termine=[], dienste=[], profile=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/termine?heim=is.true&typ=in.(spiel,turnier)&datum=gte.${heute}&select=id,datum,uhrzeit,gegner,titel,typ&order=datum.asc`,{headers:sbAuthHeaders()});if(r.ok)termine=await r.json();}catch(e){}
-  try{const r=await fetch(`${SB_URL}/rest/v1/dienst_einteilung?dienst=eq.grillhuette&select=id,termin_id,kind_id,status,uebernommen_von`,{headers:sbAuthHeaders()});if(r.ok)dienste=await r.json();}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/dienst_einteilung?dienst=eq.grillhuette&select=id,termin_id,kind_id,status,uebernommen_von,platz&order=platz.asc`,{headers:sbAuthHeaders()});if(r.ok)dienste=await r.json();}catch(e){}
+  let plaetze=2, sperren=[];
+  try{const r=await fetch(`${SB_URL}/rest/v1/team_config?id=eq.1&select=dienst_plaetze`,{headers:sbAuthHeaders()});if(r.ok){const x=(await r.json())[0];if(x&&Number(x.dienst_plaetze))plaetze=Number(x.dienst_plaetze);}}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/dienst_sperre?dienst=eq.grillhuette&datum=gte.${heute}&select=id,kind_id,datum&order=datum.asc`,{headers:sbAuthHeaders()});if(r.ok)sperren=await r.json();}catch(e){}
   const uids=[...new Set(dienste.map(d=>d.uebernommen_von).filter(Boolean))];
   if(uids.length){try{const r=await fetch(`${SB_URL}/rest/v1/profiles?id=in.(${uids.join(",")})&select=id,anzeigename`,{headers:sbAuthHeaders()});if(r.ok)profile=await r.json();}catch(e){}}
-  _ghTr={termine,dienste,profile};
+  _ghTr={termine,dienste,profile,plaetze,sperren};
   return _ghTr;
 }
 function _ghKindName(id){ const k=(typeof KADER!=="undefined"?KADER:[]).find(x=>String((typeof kaderId==="function")?kaderId(x):x.id)===String(id)); return k?k.name:""; }
@@ -528,8 +534,8 @@ function _ghTrZeile(d){
 async function buedchenTrainerFill(t){
   const slot=document.getElementById("bd-tm-"+t.id); if(!slot)return;
   if(!_ghTr)await ghTrainerDaten();
-  const d=(_ghTr.dienste||[]).find(x=>x.termin_id===t.id);
-  slot.innerHTML=`🔥 Grillhütte: <b style="color:var(--text)">${_ghTrZeile(d)}</b> ${ghChip(d?d.status:"offen")}`;
+  const ds=(_ghTr.dienste||[]).filter(x=>x.termin_id===t.id);
+  slot.innerHTML=`🔥 Grillhütte: <b style="color:var(--text)">${ds.length?ds.map(_ghTrZeile).join(" · "):_ghTrZeile(null)}</b> ${ghChip(ds.length?(ds.some(x=>x.status==="freigegeben")?"freigegeben":ds[0].status):"offen")}`;
 }
 async function grillTrainerOpen(){
   document.getElementById("gh-tr-modal")?.remove();
@@ -548,18 +554,24 @@ async function grillTrainerOpen(){
 function grillTrainerRender(){
   const box=document.getElementById("gh-tr-inhalt"); if(!box||!_ghTr)return;
   const kids=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k.aktiv!==false);
-  const ohne=_ghTr.termine.filter(t=>!_ghTr.dienste.some(d=>d.termin_id===t.id)).length;
-  box.innerHTML=`<button class="btn" id="gh-einteilen" style="width:100%" onclick="grillEinteilen()" ${ohne?"":"disabled"}>Grillhütte einteilen${ohne?` (${ohne} Heimtermin${ohne===1?"":"e"} offen)`:""}</button>
-    <div style="font-size:var(--s-klein);color:var(--text2);margin:6px 0 12px">Verteilt alle künftigen Heimtermine ohne Einteilung reihum auf die aktiven Kinder. Bestehendes bleibt stehen.</div>
-    ${_ghTr.termine.length?_ghTr.termine.map(t=>{ const d=_ghTr.dienste.find(x=>x.termin_id===t.id);
-      return `<div style="border-top:1px solid var(--surface2);padding:8px 0">
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>${esc(ghTag(t.datum,t.uhrzeit))}</b><span style="color:var(--text2)">${esc(t.gegner||t.titel||"")}</span>${ghChip(d?d.status:"offen")}</div>
-        <div style="margin:2px 0 4px">${_ghTrZeile(d)}</div>
-        <label style="font-size:var(--s-klein);color:var(--text2)">Umbuchen auf
-          <select onchange="grillUmbuchen(${Number(t.id)},this.value)" style="width:100%;min-height:44px;margin-top:2px;border:1px solid var(--rand-bedien);border-radius:8px;font:inherit;background:var(--surface2);color:var(--text)">
-            <option value="">– Familie wählen –</option>
-            ${kids.map(k=>{ const id=(typeof kaderId==="function")?kaderId(k):k.id; return `<option value="${esc(String(id))}">${esc(k.name)}s Familie</option>`; }).join("")}
-          </select></label></div>`; }).join(""):'<div style="color:var(--text2)">Keine künftigen Heimtermine im Kalender.</div>'}`;
+  const kid=k=>(typeof kaderId==="function")?kaderId(k):k.id;
+  const P=_ghTr.plaetze||2;
+  const jeTermin=t=>_ghTr.dienste.filter(x=>x.termin_id===t.id);
+  const ohne=_ghTr.termine.reduce((a,t)=>a+Math.max(0,P-jeTermin(t).length),0);
+  const famOpt=`<option value="">– Familie wählen –</option>`+kids.map(k=>`<option value="${esc(String(kid(k)))}">${esc(k.name)}s Familie</option>`).join("");
+  const sel="width:100%;min-height:44px;margin-top:2px;border:1px solid var(--rand-bedien);border-radius:8px;font:inherit;background:var(--surface2);color:var(--text)";
+  box.innerHTML=`<button class="btn" id="gh-einteilen" style="width:100%" onclick="grillEinteilen()" ${ohne?"":"disabled"}>Grillhütte einteilen${ohne?` (${ohne} ${ohne===1?"Platz":"Plätze"} offen)`:""}</button>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin:6px 0 12px">${P} Familien je Heimtermin. Wer in dieser Saison am seltensten dran war, kommt zuerst; gesperrte Tage werden übersprungen. Bestehendes bleibt stehen.</div>
+    ${_ghTr.termine.length?_ghTr.termine.map(t=>{ const ds=jeTermin(t);
+      const sp=(_ghTr.sperren||[]).filter(x=>x.datum===t.datum);
+      return `<div class="gh-termin" style="border-top:1px solid var(--surface2);padding:8px 0">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>${esc(ghTag(t.datum,t.uhrzeit))}</b><span style="color:var(--text2)">${esc(t.gegner||t.titel||"")}</span></div>
+        ${Array.from({length:P},(_,i)=>{ const d=ds.find(x=>Number(x.platz||1)===i+1);
+          return `<div style="margin:4px 0 2px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="min-width:4.5em;color:var(--text2)">Familie ${i+1}</span><span>${_ghTrZeile(d)}</span>${ghChip(d?d.status:"offen")}</div>
+          <label style="font-size:var(--s-klein);color:var(--text2)">Umbuchen auf<select onchange="grillUmbuchen(${Number(t.id)},this.value,${i+1})" style="${sel}">${famOpt}</select></label>`; }).join("")}
+        <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">${sp.length?`Kann an dem Tag nicht: ${sp.map(x=>`${esc(_ghKindName(x.kind_id)||"Kind")}s Familie <button class="btn btn-sm" onclick="grillSperreWeg(${Number(x.id)})" aria-label="Sperre für ${esc(_ghKindName(x.kind_id)||"Kind")}s Familie aufheben">aufheben</button>`).join(" ")}`:""}</div>
+        <label style="font-size:var(--s-klein);color:var(--text2)">Familie kann an dem Tag nicht<select onchange="grillSperren(${JSON.stringify(String(t.datum)).replace(/"/g,"&quot;")},this.value)" style="${sel}">${famOpt}</select></label>
+      </div>`; }).join(""):'<div style="color:var(--text2)">Keine künftigen Heimtermine im Kalender.</div>'}`;
 }
 async function grillEinteilen(){
   const k=document.getElementById("gh-einteilen"); if(k)k.disabled=true;
@@ -574,18 +586,42 @@ async function grillEinteilen(){
   await ghTrainerDaten(); grillTrainerRender();
 }
 /* Kriterium 7: Tausch außerhalb der App nachtragen – die gewählte Familie ist eingeteilt. */
-async function grillUmbuchen(terminId,kindId){
+async function grillUmbuchen(terminId,kindId,platz){
   if(!kindId)return;
-  const d=_ghTr.dienste.find(x=>x.termin_id===terminId);
+  platz=Number(platz)||1;
+  const d=_ghTr.dienste.find(x=>x.termin_id===terminId&&Number(x.platz||1)===platz);
+  if(_ghTr.dienste.some(x=>x.termin_id===terminId&&x!==d&&String(x.kind_id)===String(kindId))){ toast("Diese Familie steht an dem Tag schon","err"); grillTrainerRender(); return; }
   const zeile={kind_id:Number(kindId),status:"eingeteilt",uebernommen_von:null};
   try{
     const r=d
       ?await fetch(`${SB_URL}/rest/v1/dienst_einteilung?id=eq.${Number(d.id)}`,{method:"PATCH",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify(zeile)})
-      :await fetch(`${SB_URL}/rest/v1/dienst_einteilung`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify({termin_id:terminId,dienst:"grillhuette",...zeile})});
+      :await fetch(`${SB_URL}/rest/v1/dienst_einteilung`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=minimal'}),body:JSON.stringify({termin_id:terminId,dienst:"grillhuette",platz,...zeile})});
     if(sbCheck401(r))return;
     if(!r.ok){ toast(`Nicht umgebucht – Server antwortet ${r.status}`,"err"); return; }
   }catch(e){ toast("Kein Netz – nicht umgebucht","err"); return; }
   toast("Umgebucht");
+  await ghTrainerDaten(); grillTrainerRender();
+}
+/* v668: Sperrtage – an diesen Tagen teilt „Grillhütte einteilen“ die Familie nicht ein
+   (PO 29.09.: ein Vater ist nur an bestimmten Wochenenden verfügbar). Eine schon stehende
+   Einteilung bleibt; die bucht der Trainer oben um. */
+async function grillSperren(datum,kindId){
+  if(!kindId)return;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/dienst_sperre`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=minimal,resolution=ignore-duplicates'}),body:JSON.stringify({kind_id:Number(kindId),datum,dienst:"grillhuette"})});
+    if(sbCheck401(r))return;
+    if(!r.ok){ toast(`Nicht gesperrt – Server antwortet ${r.status}`,"err"); return; }
+  }catch(e){ toast("Kein Netz – nicht gesperrt","err"); return; }
+  toast("Gesperrt – an dem Tag wird die Familie nicht eingeteilt");
+  await ghTrainerDaten(); grillTrainerRender();
+}
+async function grillSperreWeg(id){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/dienst_sperre?id=eq.${Number(id)}`,{method:"DELETE",headers:sbAuthHeaders({'Prefer':'return=minimal'})});
+    if(sbCheck401(r))return;
+    if(!r.ok){ toast(`Nicht aufgehoben – Server antwortet ${r.status}`,"err"); return; }
+  }catch(e){ toast("Kein Netz – nicht aufgehoben","err"); return; }
+  toast("Sperre aufgehoben");
   await ghTrainerDaten(); grillTrainerRender();
 }
 /* Elterngespräch: die Eltern signalisieren Bedarf, der Trainer sieht die Wünsche und

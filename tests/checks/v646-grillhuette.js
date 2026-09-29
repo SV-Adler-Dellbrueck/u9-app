@@ -61,7 +61,10 @@ module.exports = async function (h) {
   await s.schliessen();
   if (r.fehlt) return h.ergebnis("v646 Grillhütte", false, ["Funktionen fehlen"]);
 
-  if (r.karten !== 2 || !/Gastverein A/.test(r.text) || !/Gastverein B/.test(r.text) || /Gastverein C|Gastverein D/.test(r.text)) probleme.push(`a) Startseite zeigt ${r.karten} Karten: ${r.text.slice(0, 200)}`);
+  /* v668 PO 29.09.: „… informieren wir auf der ersten Startseite die jeweiligen Eltern, … dass ihre
+     Familie für den Grillhüttendienst am Datum zugewiesen wurde.“ Der eigene Dienst in 30 Tagen
+     (Gastverein C) steht deshalb jetzt auch dort; fremde besetzte Dienste weiter nicht. */
+  if (r.karten !== 3 || !/Gastverein A/.test(r.text) || !/Gastverein B/.test(r.text) || !/Gastverein C/.test(r.text) || /Gastverein D/.test(r.text)) probleme.push(`a) Startseite zeigt ${r.karten} Karten: ${r.text.slice(0, 200)}`);
   if (!r.chips.includes("eingeteilt") || !r.chips.includes("Ersatz gesucht")) probleme.push(`a) Status-Chips: ${JSON.stringify(r.chips)}`);
   if (!r.ersatz || r.ersatz[0] !== "Ersatz suchen" || r.ersatz[1] < 48) probleme.push(`c) Knopf Ersatz suchen: ${JSON.stringify(r.ersatz)}`);
   if (!r.ueb || r.ueb[0] !== "Übernehmen" || r.ueb[1] < 48) probleme.push(`c) Knopf Übernehmen: ${JSON.stringify(r.ueb)}`);

@@ -1987,7 +1987,9 @@ async function tdBetreuungLoad(t,kids){
 /* v646: Grillhütte im Termin (md-kasse.js: ghDienste/ghDienstHtml) – ersetzt das Büdchen. */
 async function tdBuedchenLoad(t){
   const box=document.getElementById("td-buedchen"); if(!box||typeof ghDienste!=="function")return;
-  const d=(await ghDienste(366)).find(x=>Number(x.termin_id)===Number(t.id));
+  /* v668: zwei Familien je Termin – die eigene Zeile zuerst, dann eine zum Übernehmen. */
+  const ds=(await ghDienste(366)).filter(x=>Number(x.termin_id)===Number(t.id));
+  const d=ds.find(x=>x.eigene)||ds.find(x=>x.kann_uebernehmen)||ds[0];
   if(!d){ box.innerHTML=""; return; }
   box.innerHTML=`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px"><b style="font-size:var(--s-text)">🔥 Grillhütte${d.eigene?": Ihr seid dran":""}</b>${ghChip(d.status)}</div>
