@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v685 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v686 (September 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -124,6 +124,7 @@ Zugang mit E-Mail und Passwort, angelegt über die Einladungskarte des Kindes. W
 
 | Funktion | Was sie tut | Nutzen |
 |---|---|---|
+| **Dashboard aufgeräumt** (seit v686) | Jeder Termin erscheint nur einmal mit Zusage-Knöpfen: der nächste oben, offene Rückmeldungen der nächsten 14 Tage darunter. Das Wisch-Karussell ist einer Liste „Danach“ gewichen – je Termin eine Zeile mit dem Stand je Kind („👍 Zusage“, „❗ offen“), ein Tipp öffnet die Details. Überschriften in normaler Schreibung, Bedienflächen mindestens 44 px. | Eltern sehen sofort, was zu tun ist, statt dieselbe Frage dreimal zu beantworten. |
 | **Startseite** | Ganz oben der nächste Termin. Darunter die Termine der nächsten 14 Tage, zu denen die Antwort fehlt. Dann offene Punkte: Mitbringlisten, Grillhütten-Dienst, „Wie war's?“ nach Spielen. Adler News nur bei Neuem. | Alles, was heute von den Eltern gebraucht wird, steht oben – der Rest bleibt ruhig. |
 | **Zu- und Absagen** | Ein Tipp am Termin, nochmal tippen entfernt die Antwort. Alle Termine als Kalender-Abo. Trainings gelten ohne Antwort als zugesagt. | Der Trainer weiß vorab, wer kommt. Eltern müssen nichts schreiben. |
 | **Termin-Detail** | Wetter, Adresse mit Route, Fahrgemeinschaft, Mitbringliste bei Events (nur wenn der Trainer sie am Termin einschaltet), Treffzeit. Abgesagte Termine sind deutlich markiert. Seit v637 bei Training, Spiel und Turnier „Was muss mit?“ (Schuhe passend zum eingetragenen Platz) mit direktem Weg zum Trainerteam. | Die üblichen Rückfragen („Wo ist das?“, „Wann treffen wir uns?“) beantworten sich selbst. |
