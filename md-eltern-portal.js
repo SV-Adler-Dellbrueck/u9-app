@@ -1313,7 +1313,7 @@ function elternTermineCarouselHtml(rows,kids,rsvpAll,ohneId){
         <span style="display:block;font-size:var(--s-klein);color:#475569">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${zeit?" · "+zeit:""}</span>
         <span style="display:block;margin-top:2px">${stand}</span>
       </span>
-      <span style="font-size:var(--s-teil);color:#94a3b8" aria-hidden="true">›</span>
+      <span style="font-size:var(--s-teil);color:#64748b" aria-hidden="true">›</span>
     </button>`;
   }).join("");
   return `<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
