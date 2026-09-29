@@ -1225,6 +1225,8 @@ async function backupExport(){
                 "dienst_einteilung",
                 /* v668: Tage, an denen eine Familie nicht eingeteilt wird. */
                 "dienst_sperre",
+                /* v670: Adler-Rufe – Räume, Rufe, Reaktionen, Fixierte, Meldungen, Stummschaltungen, Moderation, Gelesen. */
+                "rufe_raum","rufe_nachricht","rufe_reaktion","rufe_fixiert","rufe_meldung","rufe_stumm","rufe_moderator","rufe_gelesen",
                 /* v650: Trainingsblöcke – Ziel, Zeitraum und die drei Einheiten im Wechsel. */
                 "trainingsblock",
                 "eltern_poll","eltern_poll_slot","eltern_poll_vote","ansagen","ansagen_gelesen",
@@ -4484,6 +4486,7 @@ const HELP=[
     {t:"Taktikboard", d:"Oben die Spielsituationen – gezeichnet auf derselben Fläche wie die Skizzen der Übungen. „Beschreib die Situation“: tippen oder einsprechen, „Zeichnen lassen“, die KI legt Kinder, Gegner, Ball und Wege aufs ganze Feld; danach verschiebst du, was nicht passt. „Neue Situation“ startet mit FUNiño, 3+1, 4+1 oder 5+1 samt Rollen (TW, A, FL, FR, J). Gespeicherte Situationen zeigst du groß, spielst mehrere Bilder ab, teilst sie als Bild, bearbeitest, benennst um oder löschst sie. Für die Besprechung: „Groß zeigen“ füllt den Bildschirm (am Tablet auch Vollbild), „Kinder einsetzen“ setzt die Namen aus dem Kader auf die Kreise – nur zum Zeigen, gespeichert wird nichts davon. Unten Video und KI-Coach.", go:"taktik"},
   ]},
   {cat:"🪶 Eltern & Kinder", items:[
+    {t:"Adler-Rufe (Team-Chat)", d:"Seit v670 der Chat für Eltern und Trainerteam – Kinder haben keinen Zugang. Ein Raum zum Start; Trainer und Moderatoren legen weitere an (＋ Raum). Über ⋯ an jedem Ruf: reagieren, antworten (mit Zitat), fixieren (höchstens drei, 24 Stunden bis immer), bearbeiten, zurückziehen, melden. Moderatoren archivieren statt zu löschen und schalten für 24 Stunden oder 7 Tage stumm; archivierte Rufe sieht nur das Trainerteam. „@alle“ hebt einen Ruf hervor – nur für Trainer und Moderatoren. 🔍 durchsucht alle Räume. Unter „Adler-Rufe moderieren“ legt ihr fest, wer außer dem Trainerteam moderiert (z. B. der Elternbeirat), und bearbeitet gemeldete Rufe. Namen setzt die App aus „Meine Angaben“, Telefonnummern sieht niemand. Benachrichtigungen aufs Handy kommen in der nächsten Stufe; bis dahin zählt ein Punkt die neuen Rufe.", run:"rufeOpen()"},
     {t:"Team-Ansage", d:"Wichtige Info an alle Eltern – mit Gelesen-Status (wer fehlt noch?).", run:"ansageTrainerOpen()"},
     {t:"Adler Nest", d:"Digitales Stadionheft erstellen & drucken.", run:"stadionheftOpen()"},
     {t:"Eltern-Bereich", d:"Eltern melden sich mit E-Mail und Passwort an (alternativ Einmal-Code per Mail): Zu- und Absagen, Karte, Quiz, Betreuung vor Ort. Neue Passwörter – bei Eltern und Trainern – brauchen mindestens 10 Zeichen mit Buchstaben und Ziffern; ältere, kürzere gelten zum Anmelden weiter."},
@@ -6462,6 +6465,8 @@ function _kachelInhalt(key){
     ],col);
   if(key==="elki")return kSec("Kommunikation")
     +kTiles([
+      {emo:"💬",label:"Adler-Rufe",fn:"rufeOpen"},
+      {emo:"🛡️",label:"Adler-Rufe moderieren",fn:"rufeModOpen"},
       {emo:"📣",label:"Team-Ansage",fn:"ansageTrainerOpen"},
       {emo:"🗣️",label:"Elterngespräch",fn:"epollTrainerOpen"},
       // v610: Die Karten sind seit v604 der Regelweg – vorher nur über Einstellungen erreichbar.
