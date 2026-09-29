@@ -688,7 +688,7 @@ function rotRenderControls(){
   box.innerHTML=`
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
       <span style="font-size:var(--s-klein);color:var(--text2)">Wechsel alle</span>
-      <select id="rot-interval" onchange="rotIntervalMin=parseInt(this.value)" style="min-height:40px;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit">
+      <select id="rot-interval" onchange="rotIntervalMin=parseInt(this.value)" style="min-height:44px;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit">
         ${[3,4,5,6,7].map(m=>`<option value="${m}"${m===rotIntervalMin?" selected":""}>${m} Min.</option>`).join("")}
       </select>
       <button class="btn btn-p" id="rot-startbtn" onclick="rotToggle()" style="min-height:44px">${running?'<i class="ti ti-player-pause"></i>Pause':'<i class="ti ti-player-play"></i>Start'}</button>
@@ -797,7 +797,7 @@ function aufRender(){
       twRow=`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fef3c7;border:1px solid #fcd34d;border-radius:var(--r);font-size:var(--s-text);color:#854d0e;margin-bottom:10px">🥅 <strong>Torwart (Fest): ${esc(rotTW)}</strong><button onclick="rotClearTW()" style="margin-left:auto;min-width:44px;min-height:44px;border:1px solid #fcd34d;border-radius:8px;background:#fff;font-size:var(--s-text);cursor:pointer;color:#854d0e">entfernen</button></div>`;
     }else{
       const opts=[...rotField,...rotBench].map(n=>`<option value="${esc(n)}">${getKader(n)?.nr?getKader(n).nr+" ":""}${esc(n)}</option>`).join("");
-      twRow=`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fffbeb;border:1px dashed #fcd34d;border-radius:var(--r);font-size:var(--s-text);color:#854d0e;margin-bottom:10px">🥅 <strong>Torwart (Fest):</strong><select onchange="rotSetTW(this.value)" style="flex:1;min-height:40px;padding:6px 8px;border:1px solid #fcd34d;border-radius:8px;font-family:inherit;font-size:var(--s-text);background:#fff"><option value="">wählen…</option>${opts}</select></div>`;
+      twRow=`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fffbeb;border:1px dashed #fcd34d;border-radius:var(--r);font-size:var(--s-text);color:#854d0e;margin-bottom:10px">🥅 <strong>Torwart (Fest):</strong><select onchange="rotSetTW(this.value)" style="flex:1;min-height:44px;padding:6px 8px;border:1px solid #fcd34d;border-radius:8px;font-family:inherit;font-size:var(--s-text);background:#fff"><option value="">wählen…</option>${opts}</select></div>`;
     }
   }
   const label=((typeof FORMATIONS!=="undefined"&&FORMATIONS[tbFormation])||{label:tbFormation}).label;

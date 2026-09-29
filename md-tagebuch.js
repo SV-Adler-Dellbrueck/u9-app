@@ -1116,6 +1116,9 @@ async function wieWarsKarte(){
     if(o.ok) offen = (await o.json())||[];
   }catch(e){}
   if(!document.getElementById("home-wiewars")) return;
+  /* v685: welcher Termin hier steht – das To-do zum selben Termin tritt dann zurück (todoDoppelWeg, views.js) */
+  window._wieWarsKey = termin ? (termin.typ==="training" ? "d"+termin.datum : "t"+Number(termin.id)) : null;
+  if(typeof todoDoppelWeg==="function") todoDoppelWeg();
   const karte = "background:var(--surface);border:var(--border-s);border-left:4px solid var(--purple);border-radius:var(--rl);padding:14px;margin-bottom:10px";
   const warten = offen.length ? `${offen.length} Vorschl${offen.length===1?"ag wartet":"äge warten"} auf „Passt so“` : "";
   if(termin){

@@ -283,7 +283,7 @@ function qeRenderList(){
     <input data-i="${i}" data-f="label" value="${esc(q.label||"")}" placeholder="Name" style="flex:1;min-width:70px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text)">
     <select data-i="${i}" data-f="key" style="padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text)">${QUEST_KEYS.map(k=>`<option value="${k.key}"${k.key===q.key?" selected":""}>${k.label}</option>`).join("")}</select>
     <input data-i="${i}" data-f="target" type="number" min="1" value="${q.target||10}" title="Ziel" style="width:52px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text)">
-    <button onclick="qeDelQuest(${i})" title="Löschen" style="border:none;background:transparent;color:#dc2626;cursor:pointer;font-size:var(--s-karte)">🗑</button>
+    <button onclick="qeDelQuest(${i})" title="Löschen" aria-label="Quest löschen" style="min-width:44px;min-height:44px;border:none;background:transparent;color:#dc2626;cursor:pointer;font-size:var(--s-karte)">🗑</button>
   </div>`).join("")||'<div style="font-size:var(--s-text);color:var(--text3);padding:6px">Noch keine Quests – füge eine hinzu.</div>';
 }
 function qeAddQuest(){ qeSyncFromInputs(); qeDraft.push({key:"pass",icon:"🏆",label:"Neue Quest",target:10}); qeRenderList(); }

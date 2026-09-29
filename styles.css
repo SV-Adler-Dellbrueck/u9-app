@@ -1160,3 +1160,9 @@ details.el-sect>summary{text-transform:none;letter-spacing:0;color:var(--text)}
 /* v683: ausgeblendete Filterzeile und Rauten-Besetzung im Kader (renderKader setzt hidden) */
 .frow[hidden],.kader-raute[hidden]{display:none!important}
 .kader-schlank td:last-child{text-align:right;width:1%}
+/* v685: Eingabefelder in den Fenstern hinter den Kacheln lagen bei 21–41 px (Pausen, Wahl,
+   Quest-Editor, Urkunden, Fundbüro, Passwort …) – gemessen in tests/checks/v685-fenster-masse.js.
+   Eine Regel für alle Fenster statt dreißig Einzelstellen, mit Spezifität null (:where): jede
+   eigene Höhenangabe eines Fensters (48 px bei „Eigene Übung“, Material, Ausstattung) gewinnt.
+   Kästchen, Regler und Farbwähler haben ihre eigene Trefferfläche und bleiben, wie sie sind. */
+:where([role="dialog"]) :where(select, textarea, input:not([type=checkbox],[type=radio],[type=range],[type=color],[type=hidden])){min-height:44px}
