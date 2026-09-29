@@ -737,6 +737,7 @@ function kabineHome(){
       <button id="kab-hilfe" onclick="kabineTourStart()" aria-label="Zeig mir die Kabine" style="margin-top:8px;min-height:44px;padding:6px 16px;border:1px solid rgba(255,255,255,.45);border-radius:22px;background:rgba(255,255,255,.12);color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">❓ Zeig mir alles</button>
     </div>
     <div id="kab-level" style="padding:2px 16px 6px"></div>
+    <div id="kab-lob"></div>
     <div id="kab-countdown"></div>
     <div id="kab-reveal"></div>
     <div id="kab-pack"></div>
@@ -786,6 +787,7 @@ function kabineHome(){
     </div>
     ${window._kindGeraetModus?"":`<button onclick="kabineExit()" style="margin:0 16px 18px;padding:12px;border:none;border-radius:14px;background:rgba(0,0,0,.25);color:#fff;font-family:inherit;font-size:14px;cursor:pointer">🔒 Für Erwachsene: Kabine verlassen</button>`}`;
   teamLevelLoad("kab-level");                                  // C1: Team-Level
+  kabineLobLoad();                                              // v675: Federn vom Trainerteam mit Grund
   if(typeof arenaKabineLoad==="function")arenaKabineLoad("kab-arena"); // C3: Einlauf-Song/Schlachtruf
   kabineCountdownLoad();                                        // G6: Countdown bis zum nächsten Spiel
   kabineRevealLoad();                                           // H4: Rollen-Reveal am Spieltag
@@ -1074,6 +1076,20 @@ const KUDOS_TEXTE=[
 const GENESUNG_TEXTE=["💌 Gute Besserung!","🦅 Wir vermissen dich!","💪 Komm bald wieder!","⚽ Der Platz wartet auf dich!"];
 const HORST_TEXTE=["🎂 Alles Gute zum Geburtstag! Das ganze Nest feiert dich heute – dein Horst 🦅"];
 function kabinePostText(typ,key){ const L=typ==="genesung"?GENESUNG_TEXTE:typ==="horst"?HORST_TEXTE:KUDOS_TEXTE; return L[key]||L[0]; }
+/* v675 · Federn, die das Trainerteam frei vergeben hat, mit Grund – die letzten zwei Wochen.
+   Lesend per GET (xp_lob ist stable); Eltern und das Kind selbst sehen nur ihre eigenen. */
+async function kabineLobLoad(){
+  const el=document.getElementById("kab-lob"); if(!el)return;
+  const kids=window._elternKids||[]; if(!kids.length){el.innerHTML="";return;}
+  let rows=[];
+  try{const r=await fetch(`${SB_URL}/rest/v1/rpc/xp_lob?p_ids=${encodeURIComponent("{"+kids.map(k=>Number(k.spieler_id)).join(",")+"}")}`,{headers:sbAuthHeaders()});
+    if(r.ok)rows=(await r.json())||[];}catch(e){}
+  if(!rows.length){el.innerHTML="";return;}
+  el.innerHTML=`<div class="kab-lob" style="margin:2px 16px 8px;padding:10px 14px;border:1px solid rgba(255,255,255,.25);border-radius:16px;background:rgba(255,255,255,.14);color:#fff">
+    <div style="font-size:12px;font-weight:800;opacity:.9;text-transform:uppercase;letter-spacing:.5px">${XP_ICON} Vom Trainerteam</div>
+    ${rows.slice(0,3).map(x=>`<div style="display:flex;gap:8px;align-items:baseline;margin-top:4px;font-size:14px"><b style="flex:none">+${Number(x.delta)||0}</b><span>${esc(x.grund||"")}</span></div>`).join("")}
+  </div>`;
+}
 async function kabinePostLoad(){
   const el=document.getElementById("kab-post"); if(!el)return;
   const kids=window._elternKids||[]; if(!kids.length){el.innerHTML="";return;}

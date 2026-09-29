@@ -29,8 +29,8 @@ async function loadTeamConfig(){
   }catch(e){}
   // v647: Stichtag liegt in team_einstellungen (lesen und schreiben nur Trainer)
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/team_einstellungen?id=eq.1&select=federn_ab`,{headers:sbAuthHeaders()});
-    if(r.ok){const c=(await r.json())[0]; teamFedernAb=(c&&c.federn_ab)||null;}
+    const r=await fetch(`${SB_URL}/rest/v1/team_einstellungen?id=eq.1&select=federn_ab,team_ab`,{headers:sbAuthHeaders()});
+    if(r.ok){const c=(await r.json())[0]; teamFedernAb=(c&&c.federn_ab)||null; teamLevelAb=(c&&c.team_ab)||null;}
   }catch(e){}
   await loadTeamQuests();
 }
@@ -55,6 +55,7 @@ async function loadTeamQuests(){
    Gezählt und gesperrt wird ausschließlich in der Datenbank; hier nur Anzeige und Eingabe.
    Das Datum gilt ab 00:00 Uhr Europe/Berlin, unabhängig von der Zeitzone des Geräts. */
 let teamFedernAb=null;
+let teamLevelAb=null;   // v675: eigener Startpunkt nur fürs Team-Level (team_einstellungen.team_ab)
 function federnAbTag(ts){ try{return ts?new Date(ts).toLocaleDateString("sv-SE",{timeZone:"Europe/Berlin"}):"";}catch(e){return "";} }
 function federnAbMitternacht(tag){
   if(!/^\d{4}-\d{2}-\d{2}$/.test(tag||""))return null;
@@ -247,6 +248,11 @@ function questEditorOpen(){
       <div style="font-size:var(--s-klein);color:var(--text2);margin:2px 0 6px">Quiz-${XP_LABEL} zählen immer. Alles andere – Training, Serien, Zusagen, Missionen, Album – zählt erst ab diesem Tag, auch fürs Team-Level. Gelöscht wird nichts; leer lassen heißt: alles zählt.</div>
       <input id="qe-federn-ab" type="date" value="${federnAbTag(teamFedernAb)}" data-alt="${federnAbTag(teamFedernAb)}" style="min-height:48px;padding:8px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text);box-sizing:border-box">
     </div>
+    <div style="margin:0 0 12px;padding:10px;border:1.5px solid var(--rand-bedien);border-radius:10px">
+      <div style="font-weight:700;font-size:var(--s-text)">🦅 Team-Level</div>
+      <div id="qe-team-ab" style="font-size:var(--s-klein);color:var(--text2);margin:2px 0 8px">${teamLevelAbText()}</div>
+      <button class="btn btn-sm" onclick="teamLevelNeustart(this)">Team-Level jetzt auf Null</button>
+    </div>
     <label for="qe-belohnung" style="font-size:var(--s-klein);color:var(--text2)">🎁 Zusätzliche Belohnung (Freitext, optional)</label>
     <textarea id="qe-belohnung" rows="2" placeholder="z. B. Eis für alle beim nächsten Training!" style="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text);margin:4px 0 12px;box-sizing:border-box">${esc(teamBelohnung)}</textarea>
     <div style="margin:0 0 12px;padding:10px;border:1.5px dashed #f59e0b;border-radius:10px;background:#fffbeb">
@@ -282,6 +288,89 @@ function qeRenderList(){
 }
 function qeAddQuest(){ qeSyncFromInputs(); qeDraft.push({key:"pass",icon:"🏆",label:"Neue Quest",target:10}); qeRenderList(); }
 function qeDelQuest(i){ qeSyncFromInputs(); qeDraft.splice(i,1); qeRenderList(); }
+/* v675 · Team-Level neu starten – nur das Team, die Karten der Kinder behalten ihre Federn
+   (Beschluss 29.09.: „Nur Team-Level“). Es zählt der spätere von Federn-Stichtag und Team-Start. */
+function teamLevelAbText(){
+  const ab=[teamFedernAb,teamLevelAb].filter(Boolean).map(x=>new Date(x)).sort((a,b)=>b-a)[0];
+  return ab?`Zählt seit ${ab.toLocaleString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})} Uhr. Die ${XP_LABEL} auf den Karten der Kinder bleiben unberührt.`
+           :`Zählt alle ${XP_LABEL}. Die Karten der Kinder bleiben beim Neustart unberührt.`;
+}
+async function teamLevelNeustart(btn){
+  if(!await frageJaNein({emoji:"🦅",titel:"Team-Level auf Null?",text:`Das Team beginnt wieder bei Level 1, die ${XP_LABEL}-Meilensteine des Teams starten neu. Die ${XP_LABEL} der Kinder auf ihren Karten bleiben.`,ja:"Auf Null setzen",nein:"Abbrechen",ton:"rot"}))return;
+  const jetzt=new Date().toISOString();
+  if(btn)btn.disabled=true;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/team_einstellungen?on_conflict=id`,{method:"POST",headers:sbAuthHeaders({'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({id:1,team_ab:jetzt})});
+    if(sbCheck401(r))return;
+    if(!r.ok){toast("Team-Level nicht zurückgesetzt","err");return;}
+  }catch(e){toast("Netzwerkfehler","err");return;}
+  finally{if(btn)btn.disabled=false;}
+  teamLevelAb=jetzt;
+  if(typeof _teamFedern!=="undefined")_teamFedern.at=0;
+  const el=document.getElementById("qe-team-ab"); if(el)el.textContent=teamLevelAbText();
+  toast("Team-Level steht wieder auf Null ✓");
+}
+
+/* v675 · Federn frei vergeben – ans ganze Team (jedes Kind bekommt die Zahl) oder an einzelne
+   Kinder. 1–100 je Kind, Grund Pflicht; die Kinder sehen den Grund in der Kabine. */
+let _fv={alle:true};
+function federnVergebenOpen(){
+  document.getElementById("fv-modal")?.remove();
+  const kids=(typeof KADER!=="undefined"?KADER:[]).filter(k=>k&&k.aktiv!==false&&kaderId(k)!=null);
+  _fv={alle:true,kids};
+  const m=document.createElement("div"); m.id="fv-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label",XP_LABEL+" vergeben");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.onclick=e=>{if(e.target===m)m.remove();};
+  const art=(an,txt,on)=>`<button type="button" class="fv-art" onclick="${on}" aria-pressed="${an}" style="flex:1;min-height:48px;border:1.5px solid ${an?"#7c3aed":"var(--rand-bedien)"};border-radius:12px;background:${an?"#7c3aed":"var(--surface)"};color:${an?"#fff":"var(--text)"};font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">${txt}</button>`;
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
+    ${mdlHead("fv-modal",XP_ICON,XP_LABEL+" vergeben","Ans ganze Team oder an einzelne Kinder","#7c3aed")}
+    <label for="fv-anzahl" style="display:block;font-size:var(--s-klein);color:var(--text2)">${XP_LABEL} je Kind (1 bis 100)</label>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px">
+      <input id="fv-anzahl" type="number" min="1" max="100" value="10" inputmode="numeric" style="width:90px;min-height:48px;padding:8px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-karte);font-weight:700;box-sizing:border-box">
+      ${[5,10,20,50].map(n=>`<button type="button" class="btn btn-sm" onclick="document.getElementById('fv-anzahl').value=${n}">${n}</button>`).join("")}
+    </div>
+    <label for="fv-grund" style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:12px">Wofür? (sehen die Kinder in der Kabine)</label>
+    <input id="fv-grund" type="text" maxlength="80" placeholder="z. B. Super Einsatz beim Turnier" style="width:100%;min-height:48px;padding:8px 12px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);box-sizing:border-box;margin-top:4px">
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:12px">An wen?</div>
+    <div id="fv-arten" style="display:flex;gap:8px;margin-top:4px">${art(true,"Ganzes Team ("+kids.length+")","federnVergebenArt(true)")}${art(false,"Einzelne Kinder","federnVergebenArt(false)")}</div>
+    <div id="fv-kinder" style="display:none;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
+      ${kids.map(k=>`<label style="display:flex;align-items:center;gap:8px;min-height:44px;padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:10px;cursor:pointer"><input type="checkbox" class="fv-kind" value="${Number(kaderId(k))}" style="width:20px;height:20px">${esc(k.name)}</label>`).join("")}
+    </div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:12px">Die ${XP_LABEL} landen auf der Karte jedes gewählten Kindes und zählen fürs Team-Level.</div>
+    <button type="button" id="fv-los" class="btn btn-p" style="width:100%;min-height:56px;margin-top:12px" onclick="federnVergebenLos(this)">${XP_ICON} ${XP_LABEL} vergeben</button>
+  </div>`;
+  document.body.appendChild(m);
+  setTimeout(()=>document.getElementById("fv-grund")?.focus(),50);
+}
+function federnVergebenArt(alle){
+  _fv.alle=alle;
+  document.querySelectorAll("#fv-arten .fv-art").forEach((b,i)=>{ const an=(i===0)===alle;
+    b.setAttribute("aria-pressed",String(an)); b.style.background=an?"#7c3aed":"var(--surface)"; b.style.color=an?"#fff":"var(--text)"; b.style.borderColor=an?"#7c3aed":"var(--rand-bedien)"; });
+  const g=document.getElementById("fv-kinder"); if(g)g.style.display=alle?"none":"grid";
+}
+async function federnVergebenLos(btn){
+  const n=parseInt(document.getElementById("fv-anzahl")?.value,10);
+  const grund=(document.getElementById("fv-grund")?.value||"").trim();
+  if(!(n>=1&&n<=100)){toast(`Bitte 1 bis 100 ${XP_LABEL} eintragen`,"err");return;}
+  if(grund.length<3){toast("Bitte kurz sagen, wofür – die Kinder sehen es","err");document.getElementById("fv-grund")?.focus();return;}
+  const ids=_fv.alle?_fv.kids.map(k=>Number(kaderId(k))):[...document.querySelectorAll("#fv-kinder .fv-kind:checked")].map(x=>Number(x.value));
+  if(!ids.length){toast("Bitte mindestens ein Kind wählen","err");return;}
+  const wem=_fv.alle?"das ganze Team ("+ids.length+" Kinder)":ids.length===1?"1 Kind":ids.length+" Kinder";
+  if(!await frageJaNein({emoji:XP_ICON,titel:`${n} ${XP_LABEL} vergeben?`,text:`${n} ${XP_LABEL} je Kind an ${wem}.\nGrund: „${grund}“`,ja:"Vergeben",nein:"Abbrechen"}))return;
+  if(btn)btn.disabled=true;
+  let anzahl=0;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/xp_award_frei`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_spieler_ids:ids,p_anzahl:n,p_grund:grund})});
+    if(sbCheck401(r))return;
+    if(!r.ok){toast(`${XP_LABEL} nicht vergeben`,"err");return;}
+    anzahl=await r.json();
+  }catch(e){toast("Netzwerkfehler",'err');return;}
+  finally{if(btn)btn.disabled=false;}
+  if(typeof _teamFedern!=="undefined")_teamFedern.at=0;
+  document.getElementById("fv-modal")?.remove();
+  toast(`${XP_ICON} ${n} ${XP_LABEL} an ${anzahl===1?"1 Kind":anzahl+" Kinder"} vergeben ✓`);
+}
 async function questSave(btn){
   qeSyncFromInputs();
   const clean=qeDraft.filter(q=>(q.label||"").trim()).map(q=>({key:q.key||"pass",icon:(q.icon||"🏆").trim()||"🏆",label:q.label.trim(),target:Math.max(1,parseInt(q.target)||1)}));
