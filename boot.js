@@ -775,13 +775,22 @@ function awRenderList(){
   const existing=AW_DATA[datum]||{};
   // PO-Umbau: statt langer Zeilenliste ein 3-spaltiges Kachel-Raster – ein Tipp pro Kind
   // (grün = da). Die Sterne aus „Einheit bewerten" bleiben klein auf der Kachel sichtbar.
-  let html=`<button class="btn btn-sm" style="margin:8px 0" onclick="awAlleDa()">✅ Alle da (dann Fehlende abwählen)</button>
+  /* v666 PO: „Einmal 4 Spieler, in der Übersicht keiner und bei Diese Woche 14." Vor dem
+     Speichern stand hier kein einziger Haken, obwohl ein Training als zugesagt gilt. Ist für
+     ein Training noch nichts gespeichert, sind jetzt alle außer den Absagen vorbelegt – wie in
+     „Diese Woche" und im Trainingsplan. Tatsache wird es erst mit „Speichern". */
+  const aktivK=KADER.filter(k=>k.aktiv!==false);
+  const gespeichert=aktivK.some(k=>existing[k.name]);
+  const vorab=(!gespeichert&&window._awVorab&&window._awVorab[datum])||null;
+  let html=(vorab?`<div id="aw-vorab-hinweis" style="font-size:var(--s-klein);color:var(--text2);margin:8px 0 0;line-height:1.4">📣 Vorbelegt: alle außer Absagen${vorab.absage.size?` (${vorab.absage.size} abgesagt)`:""} – noch nicht gespeichert. Fehlende abwählen und speichern.</div>`:"")
+    +`<button class="btn btn-sm" style="margin:8px 0" onclick="awAlleDa()">✅ Alle da (dann Fehlende abwählen)</button>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">`;
-  KADER.filter(k=>k.aktiv!==false).forEach(k=>{
-    const p=existing[k.name]||{da:false,qual:0};
+  aktivK.forEach(k=>{
+    const p=existing[k.name]||{da:vorab?!vorab.absage.has(k.name):false,qual:0};
+    const abgesagt=vorab&&vorab.absage.has(k.name);
     html+=`<button class="aw-tile${p.da?" on":""}" onclick="awToggle(this,'${jsq(k.name)}')" data-player="${esc(k.name)}">
       <span class="aw-ok">✓</span>
-      <span style="font-size:var(--s-text);font-weight:800;line-height:1.2">${esc(k.name)}</span>
+      <span style="font-size:var(--s-text);font-weight:800;line-height:1.2">${esc(k.name)}</span>${abgesagt?`<span style="font-size:var(--s-klein);color:var(--text2)">abgesagt</span>`:""}
       ${p.qual?`<span title="Bewertung aus „Einheit bewerten“" style="font-size:var(--s-klein);color:#f59e0b;letter-spacing:1px">${"★".repeat(p.qual)}</span>`:""}
     </button>`;
   });
@@ -964,10 +973,18 @@ function awLoad(){
      einem Turniertag also nichts. Liefert Rueckmeldungen fuer die Haken und den Typ fuer
      die Karte darunter. */
   const optText=document.getElementById("aw-date")?.selectedOptions?.[0]?.textContent||"";
-  terminDesTages(datum,optText).then(t=>{
+  terminDesTages(datum,optText).then(async t=>{
     if(document.getElementById("aw-date")?.value!==datum)return;   // inzwischen umgeschaltet
     if(!(tatsache&&savedTrainers&&savedTrainers.length)){
       const ts=(t&&t.trainer_status)||{}; const ja=Object.keys(ts).filter(n=>ts[n]==="ja"); if(ja.length)apply(ja);
+    }
+    /* v666: Beim Training die Absagen holen – daraus entsteht die Vorbelegung der Kinder. */
+    if(t&&t.typ==="training"&&t.id!=null){
+      let ab=[];
+      try{const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?termin_id=eq.${t.id}&status=in.(abgesagt,krank)&select=spieler_id`,{headers:sbAuthHeaders()});if(r.ok)ab=(await r.json()||[]).map(x=>x.spieler_id);}catch(e){}
+      const namen=(typeof kidListFromIds==="function")?kidListFromIds(ab):[];
+      (window._awVorab=window._awVorab||{})[datum]={absage:new Set(namen)};
+      if(document.getElementById("aw-date")?.value===datum&&!window._awDirty)awRenderList();
     }
   }).catch(()=>{});
   awRenderList();
@@ -2651,8 +2668,7 @@ async function tpPrognoseLoad(){
   const n=pool.namen.length, fehlen=Math.max(0,pool.basis-n);
   let text, quelle;
   if(pool.quelle==="anwesenheit"){ text=`${n} dabei · ${fehlen} fehlen`; quelle="Anwesenheit"+(pool.abgesagt?`, ${pool.abgesagt} später abgesagt`:""); }
-  else if(pool.quelle==="zusagen"){ text=`${n} zugesagt`+(pool.abgesagt?` · ${pool.abgesagt} abgesagt`:""); quelle="Rückmeldungen, Anwesenheit noch offen"; }
-  else { text=`${n} im Kader`+(pool.abgesagt?` · ${pool.abgesagt} abgesagt`:""); quelle="noch keine Anwesenheit"; }
+  else { text=`${n} dabei`+(pool.abgesagt?` · ${pool.abgesagt} abgesagt`:""); quelle="alle außer Absagen, Anwesenheit noch offen"+(pool.zugesagt?` · ${pool.zugesagt} ausdrücklich zugesagt`:""); }
   el.innerHTML=`<span style="display:inline-flex;align-items:center;gap:6px;font-size:var(--s-text);font-weight:700;background:var(--surface2);border:var(--border);border-radius:20px;padding:4px 12px">👥 ${text} <span style="font-weight:400;color:var(--text2)">(${quelle})</span></span>`;
 }
 
@@ -5116,9 +5132,9 @@ async function tgFertig(){
 function tgKachelHtml(){
   const tg=tgFor();
   const hinweis=tg?tgGroessenHinweis(tg):"";
-  const quelle=tg?({anwesenheit:"aus der Anwesenheit",zusagen:"aus den Zusagen",kader:"aus dem Kader"}[tg.quelle]||""):"";
+  const quelle=tg?({anwesenheit:"aus der Anwesenheit",vorab:"alle außer Absagen",zusagen:"aus den Zusagen",kader:"aus dem Kader"}[tg.quelle]||""):"";
   const sub=tg?tg.gruppen.map(g=>`${g.emo} ${g.name} (${g.kinder.length})`).join(" · ")
-    :"Alle zugesagten Kinder in so viele Gruppen, wie die Einheit und die Kinderzahl brauchen – antippen";
+    :"Alle Kinder außer Absagen in so viele Gruppen, wie die Einheit und die Kinderzahl brauchen – antippen";
   return `<button onclick="tgOpen()" style="width:100%;min-height:76px;margin:4px 0 10px;border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px 8px;box-sizing:border-box">
     <span style="font-size:var(--s-karte);font-weight:900">👥 Trainingsgruppen${tg?"":" bilden"}</span>
     <span style="font-size:var(--s-klein);color:var(--text2);text-align:center">${sub}</span>
@@ -5154,8 +5170,14 @@ function _tgPool(){
     if(!tatsache)da=da.filter(n=>!absage.has(n));
     if(da.length>=2)return {namen:ohnePause(da),quelle:"anwesenheit",basis:basis.length,abgesagt:tatsache?0:basis.filter(n=>tag[n]&&tag[n].da===true&&absage.has(n)).length};
   }
-  if(Array.isArray(TP_KIND_RSVP)&&TP_KIND_RSVP.length>=2)return {namen:ohnePause(TP_KIND_RSVP),quelle:"zusagen",basis:basis.length,abgesagt:basis.filter(n=>absage.has(n)).length};
-  return {namen:basis.filter(n=>!absage.has(n)),quelle:"kader",basis:basis.length,abgesagt:basis.filter(n=>absage.has(n)).length};
+  /* v666 PO (drei Bildschirmfotos zum Fr 02.10.): „Es sind an verschiedenen Stellen
+     unterschiedliche Angaben. Einmal 4 Spieler, in der Übersicht keiner und bei Diese Woche 14."
+     Ein Training gilt als zugesagt (CLAUDE.md: kein Trainings-Opt-out; so zählt seit v609 auch
+     „Diese Woche"). Der Plan nahm dagegen nur die ausdrücklichen Zusagen – vier Kinder, und
+     daraus wären die Gruppen entstanden. Vor der Anwesenheit gilt jetzt überall: alle außer
+     Absagen. Die Zusagen bleiben als Zahl sichtbar, bilden aber keine Gruppen mehr. */
+  return {namen:basis.filter(n=>!absage.has(n)),quelle:"vorab",basis:basis.length,abgesagt:basis.filter(n=>absage.has(n)).length,
+          zugesagt:Array.isArray(TP_KIND_RSVP)?TP_KIND_RSVP.length:0};
 }
 /* Zielgröße vier bis sechs (Auftragspaket). Der Hinweis urteilt nicht, er sagt nur, dass
    eine Gruppe darunter liegt – die Entscheidung bleibt beim Trainer. */
@@ -5247,7 +5269,10 @@ function tgAnwesenheitAbgleich(){
      darüber, wer heute kommt. Eine Einteilung, die der Trainer aus neun Kindern gebaut hat,
      stillschweigend auf fünfzehn aufzufüllen wäre schlimmer als gar kein Abgleich. Genau das
      haben v451, v457 und v514 beim ersten Anlauf gemeldet. */
-  if(pool.quelle!=="anwesenheit"&&pool.quelle!=="zusagen")return null;
+  /* v666: Vor der Anwesenheit ist die Basis „alle außer Absagen" (kein Opt-out) – daraus
+     ergänzt der Abgleich nichts mehr, sonst stünde jede frische Einteilung sofort voll. Die
+     Gruppen entstehen beim Bilden aus dieser Basis; angepasst wird ab der Anwesenheit. */
+  if(pool.quelle!=="anwesenheit")return null;
   const soll=new Set(pool.namen), raus=[], rein=[], drin=new Set();
   tg.gruppen.forEach(g=>{ (g.kinder||[]).forEach(n=>drin.add(n)); });
   pool.namen.forEach(n=>{ if(!drin.has(n))rein.push(n); });

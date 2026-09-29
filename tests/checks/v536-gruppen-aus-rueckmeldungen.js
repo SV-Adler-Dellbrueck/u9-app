@@ -86,7 +86,8 @@ module.exports = async function (h) {
 
   // 10) Quelle
   if (r.rsvpGeladen !== 11) probleme.push(`aus den Rückmeldungen kamen ${r.rsvpGeladen} Kinder (erwartet 11)`);
-  if (!r.pool || r.pool.quelle !== "zusagen") probleme.push(`die Gruppen kommen aus „${r.pool && r.pool.quelle}“ statt aus den Zusagen`);
+  // v666 PO („Einmal 4 Spieler … bei Diese Woche 14“): vor der Anwesenheit alle außer Absagen (Quelle „vorab“) – hier dieselben 11.
+  if (!r.pool || r.pool.quelle !== "vorab") probleme.push(`die Gruppen kommen aus „${r.pool && r.pool.quelle}“ statt „vorab“ (alle außer Absagen)`);
   if (r.pool && r.pool.namen.length !== 11) probleme.push(`der Pool hat ${r.pool.namen.length} Kinder (erwartet 11, nicht den ganzen Kader)`);
 
   // 7) zwei Feldtrainer

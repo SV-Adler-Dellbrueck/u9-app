@@ -1049,8 +1049,10 @@ async function elternDashLoad(){
   html+=`</div>`; // /cat-kontakt
   html+=`</div></div>`; // /el-cat-overlay
   const scrollVor=_epScrollMerken(body);   // Wischposition der Karussells retten
+  const ankerVor=_epAnkerMerken(body);     // v666: senkrechte Lage des Karussells
   body.innerHTML=html;
   _epScrollZurueck(scrollVor,body);        // …und sofort wiederherstellen, vor dem ersten Bild
+  _epAnkerHalten(ankerVor,body);
   try{ const tb=document.getElementById("cat-todo"); if(tb){ new MutationObserver(elternTodoSync).observe(tb,{childList:true,subtree:true}); elternTodoSync(); } }catch(e){}
   elternThemeInit();          // Observer für Modals/Slots (einmalig)
   elternThemeSweep(body);     // Dashboard bei Dark-Theme einfärben
@@ -1237,6 +1239,39 @@ function _epScrollZurueck(merk,wurzel){
     // scroll-snap würde eine sanfte Bewegung mitanimieren – hier soll es einfach dastehen
     if(x>0)el.scrollLeft=x;
   });
+}
+/* v666 PO: „Wenn ich bei den kommenden Terminen auf den Daumen klicke, dann rutscht das Bild ein
+   Stück runter und ich muss wieder hoch scrollen." Nach dem Neuaufbau füllen sich die Karten
+   darüber (Wetter, Betreuung, Helfer …) erst nach und nach und schieben alles darunter weg.
+   Das Termin-Karussell bleibt deshalb dort stehen, wo es beim Antippen war – solange die
+   Karten nachladen, höchstens drei Sekunden und nie gegen eine Bewegung des Nutzers. */
+function _epScroller(el){
+  for(let p=el&&el.parentElement;p;p=p.parentElement){
+    const oy=getComputedStyle(p).overflowY;
+    if((oy==="auto"||oy==="scroll")&&p.scrollHeight>p.clientHeight)return p;
+  }
+  return document.scrollingElement||document.documentElement;
+}
+function _epAnkerMerken(wurzel){
+  const a=(wurzel||document).querySelector('[data-scrollkeep="termine"]'); if(!a)return null;
+  const top=a.getBoundingClientRect().top;
+  if(top<0||top>window.innerHeight)return null;   // nicht im Blick → nichts festzuhalten
+  return {top};
+}
+function _epAnkerHalten(vor,wurzel){
+  if(!vor)return;
+  let aus=false; const stopp=()=>{aus=true;};
+  const ausrichten=()=>{
+    if(aus)return;
+    const a=(wurzel||document).querySelector('[data-scrollkeep="termine"]'); if(!a)return;
+    const d=a.getBoundingClientRect().top-vor.top;
+    if(Math.abs(d)>1){ const sc=_epScroller(a); sc.scrollTop+=d; }
+  };
+  ausrichten();
+  ["touchstart","wheel","keydown"].forEach(ev=>window.addEventListener(ev,stopp,{once:true,passive:true}));
+  let ro=null;
+  try{ ro=new ResizeObserver(ausrichten); ro.observe(wurzel||document.body); }catch(e){}
+  setTimeout(()=>{ aus=true; try{ro&&ro.disconnect();}catch(e){} },3000);
 }
 /* PO: „Event fotos passt nicht zum training vom wording her. ist ja kein Event."
    Stimmt – „Event" war der Name der Technik (event_helfer, Galerie am Termin), nicht der
@@ -1915,23 +1950,39 @@ async function tdNomLoad(t,kids){
   }
   box.innerHTML=zeilen.length?`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px"><div style="font-weight:700;font-size:var(--s-text);margin-bottom:2px">📋 Kader-Nominierung</div>${zeilen.join("")}<div style="font-size:var(--s-klein);color:var(--text3);margin-top:5px">Deine Zusage zeigt dem Trainer, wer verfügbar ist. Den endgültigen Kader stellt er daraus zusammen.</div></div>`:"";
 }
+/* v666 PO: „Ich bleibe vor Ort: die Kachel zum Anklicken braucht den Vornamen des eigenen
+   Kindes nicht. Es ist ja der Zugang des Elternteils." Ein Knopf je Elternteil statt einer je
+   Kind; bei mehreren Kindern gilt er für alle eigenen Kinder des Termins. */
+function betreuungKnopf(terminId,kids,mine,wo){
+  const ids=(kids||[]).map(k=>k.spieler_id);
+  if(!ids.length)return "";
+  const stay=ids.some(id=>mine[id]===true);
+  return `<button type="button" id="betreuung-knopf" onclick="betreuungSetzen(${terminId},[${ids.join(",")}],${stay?"false":"true"},'${wo}')" style="width:100%;min-height:48px;margin-top:6px;padding:11px;border:1.5px solid ${stay?"#059669":"var(--rand-bedien)"};border-radius:10px;background:${stay?"#059669":"#fff"};color:${stay?"#fff":"#334155"};font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">${stay?"✅ Ich bleibe vor Ort":"🙋 Ich bleibe vor Ort"}</button>`;
+}
+async function betreuungSetzen(terminId,ids,stay,wo){
+  let ok=true;
+  for(const id of ids){
+    try{
+      const r=await fetch(`${SB_URL}/rest/v1/betreuung?on_conflict=termin_id,spieler_id`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({termin_id:terminId,spieler_id:id,will_stay:stay})});
+      if(!r.ok)ok=false;
+    }catch(e){ok=false;}
+  }
+  if(!ok){toast("Konnte nicht speichern","err");return;}
+  toast(stay?"Danke – du bleibst vor Ort ✓":"Notiert – du bleibst nicht vor Ort");
+  if(wo==="td"&&typeof terminDetailOpen==="function")terminDetailOpen(terminId); else elternDashLoad();
+}
 async function tdBetreuungLoad(t,kids){
   const box=document.getElementById("td-betreuung"); if(!box)return;
   const ids=(kids||[]).map(k=>k.spieler_id);
   let mine={}, board=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/betreuung?termin_id=eq.${t.id}&spieler_id=in.(${ids.join(",")})&select=spieler_id,will_stay`,{headers:sbAuthHeaders()});if(r.ok)(await r.json()).forEach(x=>mine[x.spieler_id]=x.will_stay);}catch(e){}
   try{const r=await fetch(`${SB_URL}/rest/v1/rpc/betreuung_board`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_termin:t.id})});if(r.ok)board=((await r.json())||[]).map(x=>x.name);}catch(e){}
-  const toggles=(kids||[]).map(k=>{const kd=k.kader||{}, stay=mine[k.spieler_id]===true;
-    return `<button onclick="tdBetreuungToggle(${t.id},${k.spieler_id},${stay?"false":"true"})" style="width:100%;margin-top:6px;padding:11px;border:1.5px solid ${stay?"#059669":"var(--rand-bedien)"};border-radius:10px;background:${stay?"#059669":"#fff"};color:${stay?"#fff":"#334155"};font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">${stay?"✅ "+esc(kd.name||"Kind")+" – ich bleibe vor Ort":"🙋 "+esc(kd.name||"Kind")+": ich bleibe vor Ort"}</button>`;}).join("");
+  const toggles=betreuungKnopf(t.id,kids,mine,"td");
   const list=board.length?`<b style="color:#059669">${board.map(esc).join(", ")}</b>`:`<span style="color:#b45309;font-weight:700">noch niemand – bitte helft mit ⚠️</span>`;
   box.innerHTML=`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
     <div style="font-weight:700;font-size:var(--s-text);margin-bottom:2px">🙋 Betreuung beim Training</div>
     <div style="font-size:var(--s-text);margin-bottom:4px">Vor Ort: ${list}</div>${toggles}
-    <div style="font-size:var(--s-klein);color:#64748b;margin-top:6px">Hier steht dein Vorname aus „Meine Angaben“.</div></div>`;
-}
-async function tdBetreuungToggle(terminId,spielerId,stay){
-  try{const r=await fetch(`${SB_URL}/rest/v1/betreuung?on_conflict=termin_id,spieler_id`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({termin_id:terminId,spieler_id:spielerId,will_stay:stay,updated_at:new Date().toISOString()})});if(!r.ok){toast("Konnte nicht speichern","err");return;}}catch(e){toast("Netzwerkfehler","err");return;}
-  terminDetailOpen(terminId);
+</div>`;
 }
 /* v646: Grillhütte im Termin (md-kasse.js: ghDienste/ghDienstHtml) – ersetzt das Büdchen. */
 async function tdBuedchenLoad(t){
@@ -2016,15 +2067,13 @@ async function elternBetreuungLoad(terminId,kids){
   try{const r=await fetch(`${SB_URL}/rest/v1/betreuung?termin_id=eq.${terminId}&spieler_id=in.(${ids.join(",")})&select=spieler_id,will_stay`,{headers:sbAuthHeaders()});if(r.ok)(await r.json()).forEach(x=>mine[x.spieler_id]=x.will_stay);}catch(e){}
   let board=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/rpc/betreuung_board`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_termin:terminId})});if(r.ok)board=((await r.json())||[]).map(x=>x.name);}catch(e){}
-  const toggles=(kids||[]).map(k=>{const kd=k.kader||{};const stay=mine[k.spieler_id]===true;
-    return `<button onclick="elternBetreuungToggle(${terminId},${k.spieler_id},${stay?"false":"true"})" style="width:100%;margin-top:6px;padding:11px;border:1.5px solid ${stay?"#059669":"var(--rand-bedien)"};border-radius:10px;background:${stay?"#059669":"#fff"};color:${stay?"#fff":"#334155"};font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">${stay?"✅ "+esc(kd.name||"Kind")+" – ich bleibe vor Ort":"🙋 "+esc(kd.name||"Kind")+": ich bleibe vor Ort"}</button>`;}).join("");
+  const toggles=betreuungKnopf(terminId,kids,mine,"dash");
   const list=board.length?`<b style="color:#059669">${board.map(esc).join(", ")}</b>`:`<span style="color:#b45309;font-weight:700">noch niemand – bitte helft mit ⚠️</span>`;
   box.innerHTML=`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
     <div style="font-weight:700;font-size:var(--s-text);margin-bottom:2px">🙋 Betreuung beim Training</div>
     <div style="font-size:var(--s-klein);color:#64748b;margin-bottom:6px">Mindestens ein Elternteil sollte während des Trainings vor Ort bleiben.</div>
     <div style="font-size:var(--s-text);margin-bottom:4px">Vor Ort: ${list}</div>
     ${toggles}
-    <div style="font-size:var(--s-klein);color:#64748b;margin-top:6px">Hier steht dein Vorname aus „Meine Angaben“.</div>
   </div>`;
 }
 /* Helfer-Aufgaben KOMPAKT in der grossen Termin-Kachel.
@@ -2090,14 +2139,6 @@ function elternHelferEigenAuf(){
   b.style.display="flex";
   document.getElementById("helfer-eigen-btn")?.remove();
   document.getElementById("helfer-eigen-k")?.focus();
-}
-async function elternBetreuungToggle(terminId,spielerId,stay){
-  try{
-    const r=await fetch(`${SB_URL}/rest/v1/betreuung?on_conflict=termin_id,spieler_id`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({termin_id:terminId,spieler_id:spielerId,will_stay:stay,updated_at:new Date().toISOString()})});
-    if(!r.ok){toast("Konnte nicht speichern","err");return;}
-    toast(stay?"Danke – du bleibst vor Ort ✓":"Notiert – du bleibst nicht vor Ort");
-    elternDashLoad();
-  }catch(e){toast("Netzwerkfehler","err");}
 }
 // Eltern-Feature-Tour: beim ersten Login einmal, jederzeit über ❓ neu.
 /* v637: Der Rundgang war zehn Seiten lang – beim ersten Öffnen liest das niemand; fünf Karten.

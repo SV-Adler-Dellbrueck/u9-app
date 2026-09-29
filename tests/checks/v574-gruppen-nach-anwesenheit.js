@@ -121,11 +121,12 @@ module.exports = async function (h) {
   // d)
   if (r.nochmal) probleme.push(`Ein zweiter Durchlauf verschiebt noch einmal: ${JSON.stringify(r.nochmal)}`);
   // b)
-  if (r.quelleMorgen !== "zusagen") probleme.push(`Für den künftigen Termin kommt der Pool aus „${r.quelleMorgen}“ statt aus den Zusagen`);
+  // v666 PO („Einmal 4 Spieler … bei Diese Woche 14“): vor der Anwesenheit ist die Basis „vorab“ (alle außer Absagen), ohne Abgleich.
+  if (r.quelleMorgen !== "vorab") probleme.push(`Für den künftigen Termin kommt der Pool aus „${r.quelleMorgen}“ statt „vorab“`);
   if (r.rausMorgen) probleme.push(`Vor dem Trainingstag wurden ${r.rausMorgen} Kinder entfernt – eine Absage ist dort noch keine Tatsache`);
   if (r.summeMorgen !== 12) probleme.push(`Für den künftigen Termin stehen ${r.summeMorgen} Kinder in den Gruppen statt der geplanten 12`);
   // f)
-  if (r.quelleKader !== "kader") probleme.push(`Ohne Anwesenheit und Zusagen kommt der Pool aus „${r.quelleKader}“ statt aus dem Kader`);
+  if (r.quelleKader !== "vorab") probleme.push(`Ohne Anwesenheit und Zusagen kommt der Pool aus „${r.quelleKader}“ statt „vorab“`);
   if (r.ergKader) probleme.push(`Ohne Anwesenheit und Zusagen wird trotzdem verschoben: ${JSON.stringify(r.ergKader)}`);
   if (r.summeKader !== 12) probleme.push(`Ohne Anwesenheit und Zusagen stehen ${r.summeKader} Kinder in den Gruppen statt der eingeteilten 12`);
   // c)
