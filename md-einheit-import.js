@@ -653,8 +653,8 @@ function _evNettoHinweis(v){
      Einordnung zählt mit, könnte aber eine Übungsform sein und die Zahl verfälschen. */
   const unstimmig=_evUnstimmigeBloecke(v&&v.bloecke);
   const dazu=unstimmig.length?` Zählt als Spielform, die Übung ist aber als Übungsform eingeordnet: ${unstimmig.join(", ")}.`:"";
-  if(anteil>EI_NETTO_BAND[1])return `${netto} Min. netto bei ${brutto} Min. Spielform-Blöcken – netto kann nicht größer sein als brutto.`+dazu;
-  if(anteil<EI_NETTO_BAND[0])return `${netto} Min. netto bei ${brutto} Min. Spielform-Blöcken – das ist weniger als die Hälfte; laut Konzept bleiben rund drei Viertel übrig.`+dazu;
+  if(anteil>EI_NETTO_BAND[1])return `${netto} Spielform-Minuten eingetragen bei ${brutto} Min. Spielform-Blöcken – mehr Spielform-Minuten als Spielform-Blöcke geht nicht.`+dazu;
+  if(anteil<EI_NETTO_BAND[0])return `${netto} Spielform-Minuten eingetragen bei ${brutto} Min. Spielform-Blöcken – das ist weniger als sechs Zehntel; laut Konzept bleiben rund drei Viertel übrig.`+dazu;
   return "";
 }
 function _evNorm(s){ return _eiNorm(s); }
@@ -826,7 +826,7 @@ function _evZeileHtml(v){
           <span style="display:block;font-size:var(--s-klein);color:var(--text2)">${esc(v.leitfrage||"")}</span></span>
         <span style="font-size:var(--s-klein);font-weight:800;border-radius:8px;padding:3px 8px;white-space:nowrap;background:${v.neu?"var(--green-bg)":"var(--surface2)"};color:${v.neu?"var(--green)":"var(--text2)"}">${v.neu?"neu":"vorhanden"}</span>
       </div>
-      <div style="font-size:var(--s-klein);color:var(--text3);margin-top:3px">${bl.length} Blöcke · ${summe} Min.${v.netto_spielform_min?` · ${Number(v.netto_spielform_min)} Min. netto`:""} ${tags}</div>
+      <div style="font-size:var(--s-klein);color:var(--text3);margin-top:3px">${bl.length} Blöcke · ${summe} Min.${v.netto_spielform_min?` · ${Number(v.netto_spielform_min)} Min. Spielform`:""} ${tags}</div>
       ${v.hinweis?`<div style="font-size:var(--s-klein);color:var(--amber);background:var(--amber-bg);border-radius:8px;padding:6px 8px;margin-top:5px;line-height:1.45">💡 ${esc(v.hinweis)}</div>`:""}
       <div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px;line-height:1.5">${bl.map(b=>`${Number(b.dauer)}′ ${esc(b.label)}${b.uebung_name?" · "+esc(b.uebung_name):""}`).join("<br>")}</div>
     </div>`;
@@ -1447,7 +1447,7 @@ function vorlagenAnsichtRender(){
     return `<div style="border:var(--border-s);border-radius:12px;margin-bottom:8px;background:var(--surface)">
       <button onclick="vaToggle('${String(v.id).replace(/'/g,"")}')" aria-expanded="${auf}" style="width:100%;min-height:48px;text-align:left;border:none;background:transparent;color:var(--text);font-family:inherit;cursor:pointer;padding:10px 12px">
         <span style="display:block;font-size:var(--s-text);font-weight:800">${v.folge_nr?`${Number(v.folge_nr)}. `:""}${esc(v.name)}</span>
-        <span style="display:block;font-size:var(--s-klein);color:var(--text3);margin-top:3px">${bl.length} ${bl.length===1?"Block":"Blöcke"} · ${summe} Min.${v.netto_spielform_min?` · ${Number(v.netto_spielform_min)} Min. netto`:""}${v.ordnung?" · "+esc(v.ordnung):""}${(Array.isArray(v.tags)&&v.tags.length)?" · "+v.tags.map(esc).join(", "):""}</span>
+        <span style="display:block;font-size:var(--s-klein);color:var(--text3);margin-top:3px">${bl.length} ${bl.length===1?"Block":"Blöcke"} · ${summe} Min.${v.netto_spielform_min?` · ${Number(v.netto_spielform_min)} Min. Spielform`:""}${v.ordnung?" · "+esc(v.ordnung):""}${(Array.isArray(v.tags)&&v.tags.length)?" · "+v.tags.map(esc).join(", "):""}</span>
         <span style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:3px">${auf?"▾ zugeklappt anzeigen":"▸ Blöcke anzeigen"}</span>
       </button>
       ${auf?`<div style="padding:0 12px">${_vaSteckbrief(v)}</div>`:""}

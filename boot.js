@@ -2823,7 +2823,7 @@ async function tpNettoRender(){
 async function tpRichtwertAendern(){
   if(!sbToken()){toast("Bitte als Trainer anmelden","err");return;}
   const jetzt=tpNettoRichtwert();
-  const ein=prompt(`Richtwert Nettospielzeit je Woche in Minuten.\n\nTrainingsphilosophie Deutschland: 48 für U8 bis U16, ab U17 sind es 32.`,String(jetzt));
+  const ein=prompt(`Richtwert Spielform-Minuten je Woche.\n\nTrainingsphilosophie Deutschland: 48 für U8 bis U16, ab U17 sind es 32.`,String(jetzt));
   if(ein==null)return;
   const wert=Math.round(Number(String(ein).replace(",","."))); 
   if(!isFinite(wert)||wert<1||wert>600){toast("Bitte eine Zahl zwischen 1 und 600","err");return;}
