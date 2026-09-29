@@ -518,9 +518,11 @@ async function ghTrainerDaten(){
   let plaetze=2, sperren=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/team_config?id=eq.1&select=dienst_plaetze`,{headers:sbAuthHeaders()});if(r.ok){const x=(await r.json())[0];if(x&&Number(x.dienst_plaetze))plaetze=Number(x.dienst_plaetze);}}catch(e){}
   try{const r=await fetch(`${SB_URL}/rest/v1/dienst_sperre?dienst=eq.grillhuette&datum=gte.${heute}&select=id,kind_id,datum&order=datum.asc`,{headers:sbAuthHeaders()});if(r.ok)sperren=await r.json();}catch(e){}
+  let befreit=[];
+  try{const r=await fetch(`${SB_URL}/rest/v1/dienst_befreit?dienst=eq.grillhuette&select=kind_id,grund`,{headers:sbAuthHeaders()});if(r.ok)befreit=await r.json();}catch(e){}
   const uids=[...new Set(dienste.map(d=>d.uebernommen_von).filter(Boolean))];
   if(uids.length){try{const r=await fetch(`${SB_URL}/rest/v1/profiles?id=in.(${uids.join(",")})&select=id,anzeigename`,{headers:sbAuthHeaders()});if(r.ok)profile=await r.json();}catch(e){}}
-  _ghTr={termine,dienste,profile,plaetze,sperren};
+  _ghTr={termine,dienste,profile,plaetze,sperren,befreit};
   return _ghTr;
 }
 function _ghKindName(id){ const k=(typeof KADER!=="undefined"?KADER:[]).find(x=>String((typeof kaderId==="function")?kaderId(x):x.id)===String(id)); return k?k.name:""; }
@@ -571,7 +573,41 @@ function grillTrainerRender(){
           <label style="font-size:var(--s-klein);color:var(--text2)">Umbuchen auf<select onchange="grillUmbuchen(${Number(t.id)},this.value,${i+1})" style="${sel}">${famOpt}</select></label>`; }).join("")}
         <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">${sp.length?`Kann an dem Tag nicht: ${sp.map(x=>`${esc(_ghKindName(x.kind_id)||"Kind")}s Familie <button class="btn btn-sm" onclick="grillSperreWeg(${Number(x.id)})" aria-label="Sperre für ${esc(_ghKindName(x.kind_id)||"Kind")}s Familie aufheben">aufheben</button>`).join(" ")}`:""}</div>
         <label style="font-size:var(--s-klein);color:var(--text2)">Familie kann an dem Tag nicht<select onchange="grillSperren(${JSON.stringify(String(t.datum)).replace(/"/g,"&quot;")},this.value)" style="${sel}">${famOpt}</select></label>
-      </div>`; }).join(""):'<div style="color:var(--text2)">Keine künftigen Heimtermine im Kalender.</div>'}`;
+      </div>`; }).join(""):'<div style="color:var(--text2)">Keine künftigen Heimtermine im Kalender.</div>'}
+    ${grillBefreitHtml(kids,kid,sel)}`;
+}
+/* v671 PO 29.09.: „Bei den Grillhüttendiensten die Eltern rausnehmen, die selber Trainer sind.“
+   Befreite Familien teilt „Grillhütte einteilen“ nie ein; eine schon stehende Einteilung bucht
+   der Trainer oben um. */
+function grillBefreitHtml(kids,kid,sel){
+  const bef=(_ghTr.befreit||[]);
+  const frei=kids.filter(k=>!bef.some(b=>String(b.kind_id)===String(kid(k))));
+  return `<div id="gh-befreit" style="border-top:2px solid var(--surface2);margin-top:12px;padding-top:10px">
+    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;color:var(--text2);margin-bottom:6px">Vom Dienst befreit (z. B. Trainerfamilien)</div>
+    ${bef.length?bef.map(b=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;color:var(--text)"><span style="flex:1">${esc(_ghKindName(b.kind_id)||"Kind")}s Familie · ${esc(b.grund||"")}</span>
+      <button class="btn btn-sm" onclick="grillBefreitWeg(${Number(b.kind_id)})" aria-label="Befreiung für ${esc(_ghKindName(b.kind_id)||"Kind")}s Familie aufheben">aufheben</button></div>`).join(""):`<div style="color:var(--text2)">Niemand befreit.</div>`}
+    <label style="font-size:var(--s-klein);color:var(--text2)">Familie befreien<select onchange="grillBefreien(this.value)" style="${sel}"><option value="">– Familie wählen –</option>${frei.map(k=>`<option value="${esc(String(kid(k)))}">${esc(k.name)}s Familie</option>`).join("")}</select></label>
+  </div>`;
+}
+async function grillBefreien(kindId){
+  if(!kindId)return;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/dienst_befreit`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=minimal,resolution=ignore-duplicates'}),body:JSON.stringify({kind_id:Number(kindId),dienst:"grillhuette",grund:"Trainerfamilie"})});
+    if(sbCheck401(r))return;
+    if(!r.ok){ toast(`Nicht befreit – Server antwortet ${r.status}`,"err"); return; }
+  }catch(e){ toast("Kein Netz – nicht befreit","err"); return; }
+  const steht=(_ghTr.dienste||[]).some(d=>String(d.kind_id)===String(kindId)&&d.status==="eingeteilt");
+  toast(steht?"Befreit – steht die Familie schon an einem Termin, oben umbuchen":"Befreit – wird nicht mehr eingeteilt");
+  await ghTrainerDaten(); grillTrainerRender();
+}
+async function grillBefreitWeg(kindId){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/dienst_befreit?kind_id=eq.${Number(kindId)}&dienst=eq.grillhuette`,{method:"DELETE",headers:sbAuthHeaders({'Prefer':'return=minimal'})});
+    if(sbCheck401(r))return;
+    if(!r.ok){ toast(`Nicht aufgehoben – Server antwortet ${r.status}`,"err"); return; }
+  }catch(e){ toast("Kein Netz – nicht aufgehoben","err"); return; }
+  toast("Befreiung aufgehoben");
+  await ghTrainerDaten(); grillTrainerRender();
 }
 async function grillEinteilen(){
   const k=document.getElementById("gh-einteilen"); if(k)k.disabled=true;
