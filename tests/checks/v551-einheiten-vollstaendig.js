@@ -40,7 +40,8 @@ const BESTAND = ["L1-1", "L2-1", "L3-1", "L4-1", "L4-2", "L5-1", "L6-1"];
    v568: Dazu die acht Einheiten für 3+1, FUNiño und die Kombination (L4-6, L5-4, L6-3,
    L4-7, L5-5, L6-4, L5-6, L6-5). Die Prüfung der zwanzig bleibt; die Fälle c) und e) gelten
    auch für die Zusatz-Einheiten. */
-const ZUSATZ = ["L4-5", "L4-6", "L5-4", "L6-3", "L4-7", "L5-5", "L6-4", "L5-6", "L6-5", "L4-8"];
+/* v667: Saisonformat (Entwurf abgenommen 29.09.): je eine Einheit 3+1 und FUNiño für L1 bis L3. */
+const ZUSATZ = ["L4-5", "L4-6", "L5-4", "L6-3", "L4-7", "L5-5", "L6-4", "L5-6", "L6-5", "L4-8", "L1-5", "L1-6", "L2-5", "L2-6", "L3-4", "L3-5"];
 /* v569: Der Kader hat höchstens 14 Kinder. Die neun Einheiten für 3+1 und FUNiño skalieren
    deshalb über 8/10/12/14; die zwanzig des Konzepts und L4-5 bleiben bei 8/12/16 (§9). */
 const SKAL_ALT = ["8", "12", "16"], SKAL_NEU = ["8", "10", "12", "14"];

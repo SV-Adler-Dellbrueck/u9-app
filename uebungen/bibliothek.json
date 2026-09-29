@@ -1,6 +1,6 @@
 {
   "schema": "adler-uebungen/1",
-  "stand": "2026-09-26-1",
+  "stand": "2026-09-29-1",
   "uebungen": [
     {
       "name": "Warm up Adler",
@@ -4410,6 +4410,466 @@
               ]
             ]
           }
+        ]
+      }
+    },
+    {
+      "name": "3+1 gegen 3 – Ball halten, der Torwart ist die Rettung",
+      "kat": "raute",
+      "kurz": "Ballhalten in der 3+1-Raute: Wird es eng, ist der Rückpass zum Torwart die Rettung.",
+      "spieler": "6 je Station (Torwart plus 3 gegen 3), beim siebten Kind wechselt eines ein",
+      "feld": "Halbes Kreisfeld, ca. 20 x 16 m (Länge x Breite): ein Jugendtor mit Torwart, gegenüber zwei Hütchentore an der Mittellinie",
+      "dauer": "12",
+      "ablauf": "Drei Angreifer und ihr Torwart halten den Ball gegen drei Verteidiger. Jeder Rückpass zum Torwart ist erlaubt und zählt als Rettung: Der Torwart spielt sofort zum freien Flitzer.\n\nNach fünf eigenen Pässen in Folge gibt es einen Punkt; ein Tor durch ein Hütchentor zählt ebenfalls einen. Erobern die Verteidiger den Ball, greifen sie das Jugendtor an. Nach 90 Sekunden wechseln die Rollen.",
+      "varianten": "Leichter: 3+1 gegen 2. Schwerer: Der Torwart darf den Ball nur mit dem Fuß spielen und nicht aufnehmen.",
+      "coaching": "Wo ist gerade frei, wenn einer kommt?\nWer kann dem Torwart helfen, den Ball wieder loszuwerden?\nStell deinen Körper zwischen Ball und Gegner.",
+      "spass": 4,
+      "diff": 2,
+      "skizze": {
+        "z": [
+          [
+            20,
+            15,
+            120,
+            150
+          ]
+        ],
+        "li": [
+          [
+            140,
+            15,
+            140,
+            165,
+            "m"
+          ]
+        ],
+        "tor": [
+          [
+            8,
+            72,
+            "v",
+            36,
+            "j"
+          ]
+        ],
+        "dtor": [
+          [
+            140,
+            22,
+            26,
+            "v",
+            "h",
+            "y"
+          ],
+          [
+            140,
+            132,
+            26,
+            "v",
+            "h",
+            "y"
+          ]
+        ],
+        "s": [
+          [
+            30,
+            90,
+            "b",
+            "T"
+          ],
+          [
+            100,
+            90,
+            "b",
+            "J"
+          ],
+          [
+            80,
+            36,
+            "b",
+            "F"
+          ],
+          [
+            80,
+            144,
+            "b",
+            "F"
+          ],
+          [
+            74,
+            70,
+            "r",
+            ""
+          ],
+          [
+            118,
+            64,
+            "r",
+            ""
+          ],
+          [
+            92,
+            120,
+            "r",
+            ""
+          ]
+        ],
+        "b": [
+          [
+            88,
+            40
+          ]
+        ],
+        "p": [
+          [
+            84,
+            44,
+            38,
+            86,
+            "p"
+          ],
+          [
+            38,
+            94,
+            76,
+            138,
+            "p"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            176,
+            "Rückpass zum Torwart = Rettung"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "FUNiño 2 gegen 2 – abschirmen, dann Seite wechseln",
+      "kat": "raute",
+      "kurz": "2 gegen 2 auf vier Minitore: Ball mit dem Körper schützen, dann zum freien Tor drehen.",
+      "spieler": "6 je Station (2 gegen 2, 2 Rotationsspieler)",
+      "feld": "Ca. 20 x 16 m mit vier Minitoren, Tore zählen nur aus der Schusszone (ca. 6 m vor der Grundlinie)",
+      "dauer": "12",
+      "ablauf": "2 gegen 2 auf vier Minitore. Wer den Ball hat und angelaufen wird, schirmt ihn mit dem Körper ab und dreht sich zum anderen Tor.\n\nEin Tor nach einem Seitenwechsel – auf das Tor, das der Ballführende nicht zuerst angesteuert hat – zählt doppelt. Nach jedem Tor wechselt ein Rotationsspieler je Team ein.",
+      "varianten": "Leichter: Der Verteidiger darf erst nach dem ersten Ballkontakt angreifen. Schwerer: 2 gegen 2 plus ein neutraler Aufpasser, der immer beim Ballbesitz-Team mitspielt.",
+      "coaching": "Wo steht dein Körper, wenn einer kommt?\nWelches Tor ist gerade frei?\nErst sichern, dann drehen.",
+      "spass": 4,
+      "diff": 2,
+      "skizze": {
+        "z": [
+          [
+            40,
+            25,
+            200,
+            130
+          ]
+        ],
+        "li": [
+          [
+            140,
+            25,
+            140,
+            155,
+            "m"
+          ],
+          [
+            78,
+            25,
+            78,
+            155,
+            "sz"
+          ],
+          [
+            202,
+            25,
+            202,
+            155,
+            "sz"
+          ]
+        ],
+        "tor": [
+          [
+            33,
+            40,
+            "v",
+            20
+          ],
+          [
+            33,
+            120,
+            "v",
+            20
+          ],
+          [
+            240,
+            40,
+            "v",
+            20
+          ],
+          [
+            240,
+            120,
+            "v",
+            20
+          ]
+        ],
+        "s": [
+          [
+            150,
+            60,
+            "b",
+            "A"
+          ],
+          [
+            170,
+            120,
+            "b",
+            "F"
+          ],
+          [
+            172,
+            56,
+            "r",
+            ""
+          ],
+          [
+            120,
+            100,
+            "r",
+            ""
+          ]
+        ],
+        "b": [
+          [
+            156,
+            64
+          ]
+        ],
+        "p": [
+          [
+            158,
+            70,
+            210,
+            118,
+            "d"
+          ],
+          [
+            212,
+            122,
+            236,
+            128,
+            "s"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            174,
+            "Abschirmen, dann Seite wechseln"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor",
+      "kat": "technik",
+      "kurz": "Der Flitzer geht an der Seite ins 1 gegen 1 und spielt danach in die Mitte oder schließt selbst ab.",
+      "spieler": "6 je Station (Torwart, Flitzer gegen Verteidiger an der Seite, Jäger in der Mitte, 2 warten)",
+      "feld": "Halbes Kreisfeld, ca. 20 x 16 m, mit Jugendtor; an der Seitenlinie ein Hütchenkorridor (ca. 5 m breit) als Duellzone",
+      "dauer": "12",
+      "ablauf": "Der Flitzer startet mit Ball im Seitenkorridor, der Verteidiger kommt ihm entgegen. Kommt der Flitzer vorbei, spielt er in die Mitte auf den Jäger oder schließt selbst ab.\n\nDer Torwart spielt mit: Bekommt er den Ball, eröffnet er sofort zum nächsten Flitzer. Nach jeder Aktion wird im Kreis gewechselt, es warten nie mehr als zwei Kinder.",
+      "varianten": "Leichter: Der Verteidiger startet hinter dem Flitzer. Schwerer: Ein zweiter Verteidiger darf in der Mitte stören (2 gegen 2).",
+      "coaching": "Wann legst du den Ball vorbei, früh oder spät?\nWelche Seite ist frei?\nNach dem Vorbeikommen: Kopf hoch, wer ist in der Mitte?",
+      "spass": 4,
+      "diff": 2,
+      "skizze": {
+        "z": [
+          [
+            140,
+            15,
+            120,
+            150
+          ],
+          [
+            140,
+            15,
+            120,
+            34
+          ]
+        ],
+        "li": [
+          [
+            140,
+            15,
+            140,
+            165,
+            "m"
+          ]
+        ],
+        "tor": [
+          [
+            262,
+            72,
+            "v",
+            36,
+            "j"
+          ]
+        ],
+        "s": [
+          [
+            152,
+            30,
+            "b",
+            "F"
+          ],
+          [
+            200,
+            30,
+            "r",
+            ""
+          ],
+          [
+            200,
+            110,
+            "b",
+            "J"
+          ],
+          [
+            250,
+            90,
+            "y",
+            "T"
+          ]
+        ],
+        "b": [
+          [
+            160,
+            30
+          ]
+        ],
+        "p": [
+          [
+            160,
+            34,
+            226,
+            40,
+            "d"
+          ],
+          [
+            228,
+            44,
+            206,
+            104,
+            "p"
+          ],
+          [
+            208,
+            110,
+            254,
+            96,
+            "s"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            176,
+            "Vorbei, dann Mitte oder Abschluss"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "FUNiño 1 gegen 1 – vorbei, dann das freie Minitor",
+      "kat": "technik",
+      "kurz": "1 gegen 1 auf je zwei Minitore: eine Seite anzeigen, die andere nehmen, aufs freie Tor.",
+      "spieler": "6 je Station (drei Paare, ein Paar spielt, zwei warten kurz)",
+      "feld": "Ca. 16 x 12 m mit zwei Minitoren je Grundlinie",
+      "dauer": "12",
+      "ablauf": "1 gegen 1 auf je zwei Minitore. Der Angreifer dribbelt auf den Verteidiger zu, zeigt eine Seite an und nimmt die andere.\n\nEin Tor ins Minitor, das der Verteidiger gerade nicht schützt, zählt doppelt. Nach 30 Sekunden kommt das nächste Paar.",
+      "varianten": "Leichter: Der Verteidiger darf nur rückwärts laufen, nicht grätschen. Schwerer: Tore zählen nur nach einer Finte vor dem Verteidiger.",
+      "coaching": "Welches Tor schützt er gerade?\nMach ihn neugierig, dann geh auf die andere Seite.\nTraust du dich?",
+      "spass": 4,
+      "diff": 2,
+      "skizze": {
+        "z": [
+          [
+            60,
+            35,
+            160,
+            110
+          ]
+        ],
+        "tor": [
+          [
+            53,
+            50,
+            "v",
+            18
+          ],
+          [
+            53,
+            112,
+            "v",
+            18
+          ],
+          [
+            220,
+            50,
+            "v",
+            18
+          ],
+          [
+            220,
+            112,
+            "v",
+            18
+          ]
+        ],
+        "s": [
+          [
+            100,
+            90,
+            "b",
+            "A"
+          ],
+          [
+            170,
+            70,
+            "r",
+            ""
+          ]
+        ],
+        "b": [
+          [
+            108,
+            90
+          ]
+        ],
+        "p": [
+          [
+            108,
+            94,
+            190,
+            120,
+            "d"
+          ],
+          [
+            192,
+            122,
+            216,
+            122,
+            "s"
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            166,
+            "Seite anzeigen, andere nehmen"
+          ]
         ]
       }
     }

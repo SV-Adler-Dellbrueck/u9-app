@@ -1,6 +1,6 @@
 {
   "schema": "adler-vorlagen/1",
-  "stand": "2026-09-28-2",
+  "stand": "2026-09-29-1",
   "vorlagen": [
     {
       "name": "L1-1 Ball behalten – Duell um zwei Tore",
@@ -1749,6 +1749,408 @@
           "typ": "abschluss",
           "label": "Abschlussturnier auf zwei Feldern: 3+1 gegen 3+1 am Jugendtor, FUNiño 3 gegen 3 an den Minitoren, nach der Hälfte Felder tauschen",
           "dauer": 16
+        }
+      ]
+    },
+    {
+      "name": "L1-5 3+1 – Ball behalten, der Torwart ist die Rettung",
+      "leitfrage": "Wie behalte ich den Ball, wenn einer kommt?",
+      "ziel_kinder": "Heute behalten wir den Ball, und wenn es eng wird, hilft der Torwart.",
+      "folge_nr": 5,
+      "tags": [],
+      "dauer_min": 75,
+      "netto_spielform_min": 38,
+      "skalierung": {
+        "8": "Ein Feld, zwei Teams zu je 4 (3+1), keine Rotation; in den Hauptteilen 1 und 2 zwei Gruppen zu 4 mit den leichteren Varianten (3+1 gegen 1 bzw. ohne Wartende).",
+        "10": "Hauptteile 1 und 2: zwei Gruppen zu 5, an jeder Station rotiert ein Kind nach jedem Durchgang ein. Hauptteil 3 und Turnier: 3+1 gegen 3+1 mit je einem Wechsler – im Plan Feld 2 weglassen.",
+        "12": "Hauptteile 1 und 2: zwei Gruppen zu 6, je Halbfeld eine Station (ist nur ein Jugendtor frei, spielt Station 2 auf zwei Minitore mit Torwart ohne Hände). Hauptteil 3 und Turnier: ein Feld, zwei Teams zu 6 (3+1 plus 2 Rotation) – im Plan Feld 2 weglassen.",
+        "14": "Hauptteile 1 und 2: zwei Gruppen zu 7, an jeder Station rotieren zwei Kinder ein. Hauptteil 3 und Turnier: zwei Felder, 3+1 gegen 3+1 mit Wechslern; fehlt für das zweite Feld das Jugendtor, ersetzen es zwei Minitore mit Torwart ohne Hände in der Schusszone."
+      },
+      "beobachtung": "Welcher Flitzer hat den Ball abgeschirmt statt ihn wegzuschlagen, und wer hat den Torwart als Anspielstation genutzt?",
+      "ordnung": "3+1",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 1 – Stationen: 3+1 gegen 3, der Torwart ist die Rettung | 3+1 gegen 2, Adler aus dem Tor",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "3+1 gegen 3 – Ball halten, der Torwart ist die Rettung"
+            },
+            {
+              "uebung_name": "3+1 gegen 2 – Adler aus dem Tor"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "3+1 gegen 3 – Ball halten, der Torwart ist die Rettung"
+            },
+            {
+              "uebung_name": "3+1 gegen 2 – Adler aus dem Tor"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 3 – offen: 3+1 gegen 3+1 auf einem Feld, beide Gruppen, keine Zusatzregel",
+          "dauer": 10,
+          "uebung_name": "3+1 gegen 3+1 – Raute ohne Aufpasser"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
+      ]
+    },
+    {
+      "name": "L1-6 FUNiño – Ball behalten, einer bleibt hinter dem Ball",
+      "leitfrage": "Wie behalte ich den Ball, wenn einer kommt?",
+      "ziel_kinder": "Heute schützen wir den Ball und suchen das freie Tor.",
+      "folge_nr": 6,
+      "tags": [],
+      "dauer_min": 75,
+      "netto_spielform_min": 38,
+      "skalierung": {
+        "8": "Hauptteile 1 und 2: zwei Gruppen zu 4, Stationen mit der leichteren Variante, höchstens 2 gegen 2. Hauptteil 3: ein FUNiño-Feld 3 gegen 3 plus 2 Rotation – Feld 2 weglassen.",
+        "10": "Hauptteile 1 und 2: zwei Gruppen zu 5, an jeder Station rotiert ein Kind ein. Hauptteil 3 und Turnier: 3 gegen 3 mit je einem Wechsler auf einem Feld – im Plan Feld 2 weglassen.",
+        "12": "Zwei Gruppen zu 6, je Gruppe ein FUNiño-Feld. Hauptteil 3 auf beiden Feldern 3 gegen 3. Turnier: vier Teams zu 3 auf zwei Feldern, Gewinner rückt ein Feld auf.",
+        "14": "Hauptteile 1 und 2: zwei Gruppen zu 7, an jeder Station rotieren zwei Kinder ein. Hauptteil 3 und Turnier: zwei Felder 3 gegen 3 mit je einem Wechsler; das zweite Feld mit vier Hütchentoren, nach jedem Durchgang Felder tauschen."
+      },
+      "beobachtung": "Wer hat als Aufpasser hinter dem Ball gesichert, und wer hat sich mit Ball zum freien Tor gedreht?",
+      "ordnung": "FUNiño",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 1 – Stationen: 3 gegen 3, einer bleibt hinter dem Ball | 2 gegen 2, abschirmen, dann Seite wechseln",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "FUNiño 3 gegen 3 – einer bleibt hinter dem Ball"
+            },
+            {
+              "uebung_name": "FUNiño 2 gegen 2 – abschirmen, dann Seite wechseln"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "FUNiño 3 gegen 3 – einer bleibt hinter dem Ball"
+            },
+            {
+              "uebung_name": "FUNiño 2 gegen 2 – abschirmen, dann Seite wechseln"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 3 – offen: 3 gegen 3 auf vier Minitore, keine Zusatzregel",
+          "dauer": 10,
+          "uebung_name": "3 gegen 3 auf vier Minitore mit Schusszone"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
+      ]
+    },
+    {
+      "name": "L2-5 3+1 – der Flitzer geht ins 1 gegen 1",
+      "leitfrage": "Wie komme ich an einem vorbei?",
+      "ziel_kinder": "Heute traut sich der Flitzer ins Duell und geht vorbei.",
+      "folge_nr": 5,
+      "tags": [],
+      "dauer_min": 75,
+      "netto_spielform_min": 38,
+      "skalierung": {
+        "8": "Ein Feld, zwei Teams zu je 4 (3+1), keine Rotation; in den Hauptteilen 1 und 2 zwei Gruppen zu 4 mit den leichteren Varianten (3+1 gegen 1 bzw. ohne Wartende).",
+        "10": "Hauptteile 1 und 2: zwei Gruppen zu 5, an jeder Station rotiert ein Kind nach jedem Durchgang ein. Hauptteil 3 und Turnier: 3+1 gegen 3+1 mit je einem Wechsler – im Plan Feld 2 weglassen.",
+        "12": "Hauptteile 1 und 2: zwei Gruppen zu 6, je Halbfeld eine Station (ist nur ein Jugendtor frei, spielt Station 2 auf zwei Minitore mit Torwart ohne Hände). Hauptteil 3 und Turnier: ein Feld, zwei Teams zu 6 (3+1 plus 2 Rotation) – im Plan Feld 2 weglassen.",
+        "14": "Hauptteile 1 und 2: zwei Gruppen zu 7, an jeder Station rotieren zwei Kinder ein. Hauptteil 3 und Turnier: zwei Felder, 3+1 gegen 3+1 mit Wechslern; fehlt für das zweite Feld das Jugendtor, ersetzen es zwei Minitore mit Torwart ohne Hände in der Schusszone."
+      },
+      "beobachtung": "Welcher Flitzer hat das 1 gegen 1 gesucht, statt sofort abzuspielen, und hat nach dem Vorbeikommen den Kopf gehoben?",
+      "ordnung": "3+1",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 1 – Stationen: Flitzer-Duell an der Seite | 3 gegen 2 plus Torwart, Jäger und zwei Flitzer",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor"
+            },
+            {
+              "uebung_name": "3 gegen 2 plus Torwart – Jäger und zwei Flitzer"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor"
+            },
+            {
+              "uebung_name": "3 gegen 2 plus Torwart – Jäger und zwei Flitzer"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 3 – offen: 3+1 gegen 3+1 auf einem Feld, beide Gruppen, keine Zusatzregel",
+          "dauer": 10,
+          "uebung_name": "3+1 gegen 3+1 – Raute ohne Aufpasser"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
+      ]
+    },
+    {
+      "name": "L2-6 FUNiño – vorbei und aufs freie Tor",
+      "leitfrage": "Wie komme ich an einem vorbei?",
+      "ziel_kinder": "Heute gehen wir am Gegner vorbei und schießen aufs freie Tor.",
+      "folge_nr": 6,
+      "tags": [],
+      "dauer_min": 75,
+      "netto_spielform_min": 38,
+      "skalierung": {
+        "8": "Hauptteile 1 und 2: zwei Gruppen zu 4, Stationen mit der leichteren Variante, höchstens 2 gegen 2. Hauptteil 3: ein FUNiño-Feld 3 gegen 3 plus 2 Rotation – Feld 2 weglassen.",
+        "10": "Hauptteile 1 und 2: zwei Gruppen zu 5, an jeder Station rotiert ein Kind ein. Hauptteil 3 und Turnier: 3 gegen 3 mit je einem Wechsler auf einem Feld – im Plan Feld 2 weglassen.",
+        "12": "Zwei Gruppen zu 6, je Gruppe ein FUNiño-Feld. Hauptteil 3 auf beiden Feldern 3 gegen 3. Turnier: vier Teams zu 3 auf zwei Feldern, Gewinner rückt ein Feld auf.",
+        "14": "Hauptteile 1 und 2: zwei Gruppen zu 7, an jeder Station rotieren zwei Kinder ein. Hauptteil 3 und Turnier: zwei Felder 3 gegen 3 mit je einem Wechsler; das zweite Feld mit vier Hütchentoren, nach jedem Durchgang Felder tauschen."
+      },
+      "beobachtung": "Welcher Flitzer hat eine Seite angezeigt und die andere genommen, und wer hat gesehen, welches Tor frei war?",
+      "ordnung": "FUNiño",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 1 – Stationen: 1 gegen 1, vorbei, dann das freie Minitor | 3 gegen 2 mit Wandspieler",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "FUNiño 1 gegen 1 – vorbei, dann das freie Minitor"
+            },
+            {
+              "uebung_name": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "FUNiño 1 gegen 1 – vorbei, dann das freie Minitor"
+            },
+            {
+              "uebung_name": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 3 – offen: 3 gegen 3 auf vier Minitore, keine Zusatzregel",
+          "dauer": 10,
+          "uebung_name": "3 gegen 3 auf vier Minitore mit Schusszone"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
+      ]
+    },
+    {
+      "name": "L3-4 3+1 – Abschluss, der Torwart spielt mit",
+      "leitfrage": "Wie mache ich ein Tor?",
+      "ziel_kinder": "Heute schießen wir schnell aufs Tor, bevor der Gegner zurück ist.",
+      "folge_nr": 4,
+      "tags": [],
+      "dauer_min": 75,
+      "netto_spielform_min": 38,
+      "skalierung": {
+        "8": "Ein Feld, zwei Teams zu je 4 (3+1), keine Rotation; in den Hauptteilen 1 und 2 zwei Gruppen zu 4 mit den leichteren Varianten (3+1 gegen 1 bzw. ohne Wartende).",
+        "10": "Hauptteile 1 und 2: zwei Gruppen zu 5, an jeder Station rotiert ein Kind nach jedem Durchgang ein. Hauptteil 3 und Turnier: 3+1 gegen 3+1 mit je einem Wechsler – im Plan Feld 2 weglassen.",
+        "12": "Hauptteile 1 und 2: zwei Gruppen zu 6, je Halbfeld eine Station (ist nur ein Jugendtor frei, spielt Station 2 auf zwei Minitore mit Torwart ohne Hände). Hauptteil 3 und Turnier: ein Feld, zwei Teams zu 6 (3+1 plus 2 Rotation) – im Plan Feld 2 weglassen.",
+        "14": "Hauptteile 1 und 2: zwei Gruppen zu 7, an jeder Station rotieren zwei Kinder ein. Hauptteil 3 und Turnier: zwei Felder, 3+1 gegen 3+1 mit Wechslern; fehlt für das zweite Feld das Jugendtor, ersetzen es zwei Minitore mit Torwart ohne Hände in der Schusszone."
+      },
+      "beobachtung": "Welcher Jäger oder Flitzer hat nach dem Ballgewinn sofort den Weg zum Tor gesucht, und wer hat aus der Schusszone abgeschlossen statt noch einmal zu passen?",
+      "ordnung": "3+1",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 1 – Stationen: 2 gegen 1 plus Torwart, der Flitzer macht es breit | 3+1 gegen 2, schnell abschließen: Tor innerhalb von fünf Sekunden nach Ballgewinn zählt doppelt",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "2 gegen 1 plus Torwart – der Flitzer macht es breit"
+            },
+            {
+              "uebung_name": "3+1 gegen 2 – Adler aus dem Tor"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "2 gegen 1 plus Torwart – der Flitzer macht es breit"
+            },
+            {
+              "uebung_name": "3+1 gegen 2 – Adler aus dem Tor"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 3 – offen: 3+1 gegen 3+1 auf einem Feld, beide Gruppen, keine Zusatzregel",
+          "dauer": 10,
+          "uebung_name": "3+1 gegen 3+1 – Raute ohne Aufpasser"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
+      ]
+    },
+    {
+      "name": "L3-5 FUNiño – aus der Schusszone aufs Minitor",
+      "leitfrage": "Wie mache ich ein Tor?",
+      "ziel_kinder": "Heute kommen wir in die Schusszone und treffen das freie Tor.",
+      "folge_nr": 5,
+      "tags": [],
+      "dauer_min": 75,
+      "netto_spielform_min": 38,
+      "skalierung": {
+        "8": "Hauptteile 1 und 2: zwei Gruppen zu 4, Stationen mit der leichteren Variante, höchstens 2 gegen 2. Hauptteil 3: ein FUNiño-Feld 3 gegen 3 plus 2 Rotation – Feld 2 weglassen.",
+        "10": "Hauptteile 1 und 2: zwei Gruppen zu 5, an jeder Station rotiert ein Kind ein. Hauptteil 3 und Turnier: 3 gegen 3 mit je einem Wechsler auf einem Feld – im Plan Feld 2 weglassen.",
+        "12": "Zwei Gruppen zu 6, je Gruppe ein FUNiño-Feld. Hauptteil 3 auf beiden Feldern 3 gegen 3. Turnier: vier Teams zu 3 auf zwei Feldern, Gewinner rückt ein Feld auf.",
+        "14": "Hauptteile 1 und 2: zwei Gruppen zu 7, an jeder Station rotieren zwei Kinder ein. Hauptteil 3 und Turnier: zwei Felder 3 gegen 3 mit je einem Wechsler; das zweite Feld mit vier Hütchentoren, nach jedem Durchgang Felder tauschen."
+      },
+      "beobachtung": "Welcher Flitzer ist mit Ball in die Schusszone gekommen, und wer hat das freie Tor gewählt?",
+      "ordnung": "FUNiño",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 1 – Stationen: 3 gegen 1, der Mittlere hat den Ball | 3 gegen 3, Seitenwechsel zählt doppelt",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "FUNiño 3 gegen 1 – der Mittlere hat den Ball"
+            },
+            {
+              "uebung_name": "FUNiño 3 gegen 3 – Seitenwechsel zählt doppelt"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
+          "dauer": 12,
+          "stationen": [
+            {
+              "uebung_name": "FUNiño 3 gegen 1 – der Mittlere hat den Ball"
+            },
+            {
+              "uebung_name": "FUNiño 3 gegen 3 – Seitenwechsel zählt doppelt"
+            }
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 3 – offen: 3 gegen 3 auf vier Minitore, keine Zusatzregel",
+          "dauer": 10,
+          "uebung_name": "3 gegen 3 auf vier Minitore mit Schusszone"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
         }
       ]
     }
