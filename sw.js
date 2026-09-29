@@ -1,4 +1,4 @@
-const CACHE="u9i-adler-v670";
+const CACHE="u9i-adler-v671";
 const PRECACHE=[
   "./",
   "./index.html",
@@ -51,6 +51,7 @@ const PRECACHE=[
   "./md-adler-rufe.js",   // v670: Adler-Rufe (Team-Chat)
   "./boot.js",
   "./logo.png",
+  "./badge-adler.png",   // v671: Adler weiß auf transparent – Symbol in der Statusleiste bei Push
   "./icon-trainer.png",
   "./icon-trainer-maskable.png",
   "./icon-eltern.png",
@@ -193,7 +194,7 @@ self.addEventListener("push",e=>{
   try{ d=e.data?e.data.json():{}; }catch(_){ try{d={body:e.data.text()};}catch(__){} }
   const title=d.title||"SV Adler Dellbrück U9";
   const opts={
-    body:d.body||"", icon:"./logo.png", badge:"./logo.png",
+    body:d.body||"", icon:"./logo.png", badge:"./badge-adler.png",
     data:{url:d.url||"./"}, tag:d.tag||"adler", renotify:true,
     vibrate:[40,60,40]
   };
