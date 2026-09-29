@@ -47,8 +47,8 @@ module.exports = async function (h) {
       if (btn) { btn.click(); await warte(300); out.kopf[k].danach = document.querySelector(".view.active")?.id || ""; }
     }
     // f)
-    go("kader"); await warte(300);
-    const sl = [...document.querySelectorAll("#view-kader .sl")].find(e => e.getBoundingClientRect().height > 0);
+    go("team"); await warte(300);   // v683: der Kader zeigt ohne Bewertungen keine Überschrift mehr – gemessen wird auf der Pinnwand
+    const sl = [...document.querySelectorAll("#train-sub-team .sl")].find(e => e.getBoundingClientRect().height > 0);
     out.sl = sl ? { px: parseFloat(getComputedStyle(sl).fontSize), tt: getComputedStyle(sl).textTransform } : null;
     return out;
   });
@@ -77,7 +77,7 @@ module.exports = async function (h) {
     if (x.breit) probleme.push(`e) ${k}: Kopf ragt über den Rand`);
   }
   // f)
-  if (!r.sl) probleme.push("f) keine .sl-Überschrift im Kader gefunden");
+  if (!r.sl) probleme.push("f) keine .sl-Überschrift auf der Pinnwand gefunden");
   else if (r.sl.px < 13 || r.sl.tt === "uppercase") probleme.push(`f) .sl ${r.sl.px}px, ${r.sl.tt}`);
   zeilen.push(`Einstiege: ${r.zeilen.map(z => z.h + "px").join(" / ")} · Phasen ${JSON.stringify(r.phasen)}`);
   zeilen.push(`Kopf: ${Object.entries(r.kopf).map(([k, x]) => `${k} ${x.btn}px→${x.danach}`).join(" · ")}`);
