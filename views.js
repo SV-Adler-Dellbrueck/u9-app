@@ -1371,8 +1371,8 @@ async function pausenOpen(){
     ${paused.length?`<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:4px 0 2px">Aktuell pausiert</div>${paused.map(k=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:var(--border)"><span style="flex:1;font-size:var(--s-text)">${esc(k.name)} <span style="color:var(--amber);font-weight:700">· bis ${pauseBisLabel(k.name)}</span>${PAUSE_MAP[k.name].grund?`<span style="color:var(--text3);font-size:var(--s-klein)"> · ${esc(PAUSE_MAP[k.name].grund)}</span>`:""}</span><button class="btn btn-sm" title="Genesungsgrüße vom Team erlauben/stoppen (Familie vorher fragen)" onclick="pauseGruesse(${k._id},${PAUSE_MAP[k.name].gruesse_ok?"false":"true"})">${PAUSE_MAP[k.name].gruesse_ok?"💌 an":"💌 aus"}</button><button class="btn btn-sm" onclick="pauseEnd(${k._id})">Beenden</button></div>`).join("")}`:'<div style="font-size:var(--s-text);color:var(--text3);padding:4px 0">Aktuell pausiert niemand.</div>'}
     <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:14px 0 4px">Kind pausieren</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-      <select id="pause-kid" style="flex:1;min-width:120px;min-height:40px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;background:var(--surface);color:var(--text)">${frei.map(k=>`<option value="${k._id}">${esc(k.name)}</option>`).join("")}</select>
-      <input type="date" id="pause-bis" value="${defBis}" style="min-height:40px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;background:var(--surface);color:var(--text)">
+      <select id="pause-kid" style="flex:1;min-width:120px;min-height:44px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;background:var(--surface);color:var(--text)">${frei.map(k=>`<option value="${k._id}">${esc(k.name)}</option>`).join("")}</select>
+      <input type="date" id="pause-bis" value="${defBis}" style="min-height:44px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;background:var(--surface);color:var(--text)">
     </div>
     <input type="text" id="pause-grund" maxlength="80" placeholder="Grund (optional, keine Diagnosen)" style="width:100%;margin-top:6px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text);box-sizing:border-box">
     <label style="display:flex;align-items:flex-start;gap:8px;font-size:var(--s-klein);color:var(--text2);margin-top:8px;cursor:pointer"><input type="checkbox" id="pause-gruesse" style="margin-top:2px">💌 Team darf Genesungsgrüße schicken <span style="color:var(--text3)">(bitte vorher die Familie fragen – sichtbar wird nur „fehlt gerade", nie der Grund)</span></label>
@@ -6389,11 +6389,11 @@ function heftRenderEditor(){
     <div style="display:grid;grid-template-columns:1fr;gap:16px">
       <div style="display:flex;flex-direction:column;gap:10px">
         <label style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">Titel
-          <input id="heft-f-titel" type="text" value="${esc(heftCfg.titel||"")}" style="${fld};min-height:40px;font-size:var(--s-karte)"></label>
+          <input id="heft-f-titel" type="text" value="${esc(heftCfg.titel||"")}" style="${fld};min-height:44px;font-size:var(--s-karte)"></label>
         <label style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">Einleitung / Grußwort
           <textarea id="heft-f-einl" rows="3" style="${fld}">${esc(heftCfg.einleitung||"")}</textarea></label>
         <label style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">⭐ Spieler im Fokus
-          <select id="heft-f-fokus" style="${fld};min-height:40px;font-size:var(--s-karte)">${kaderOpts}</select></label>
+          <select id="heft-f-fokus" style="${fld};min-height:44px;font-size:var(--s-karte)">${kaderOpts}</select></label>
         <label style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">Text zum Spieler im Fokus
           <textarea id="heft-f-fokustext" rows="2" style="${fld}">${esc(heftCfg.fokusText||"")}</textarea></label>
         <label style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">📣 Trainer-Kommentar

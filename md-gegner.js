@@ -619,7 +619,7 @@ function platzAmpelTrainer(t,nackt){
     const a=PLATZ_AMPEL[k], on=cur===k;
     return `<button onclick="platzAmpelSet(${Number(t.id)},'${k}')" style="flex:1;min-width:96px;min-height:46px;border:2px solid ${a.col};border-radius:10px;cursor:pointer;font-family:inherit;font-size:var(--s-text);font-weight:800;background:${on?a.col:"var(--surface)"};color:${on?"#fff":a.col}">${a.emo} ${a.lbl}</button>`;
   }).join("");
-  const zusatz=cur?`<input id="pa-note-${t.id}" value="${esc(t.platz_status_note||"")}" placeholder="${cur==="ausweich"?"Wohin? z. B. Halle 2":cur==="abgesagt"?"Grund (optional)":"Hinweis (optional)"}" onchange="platzAmpelNote(${Number(t.id)},this.value)" style="width:100%;min-height:40px;margin-top:6px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box">`:"";
+  const zusatz=cur?`<input id="pa-note-${t.id}" value="${esc(t.platz_status_note||"")}" placeholder="${cur==="ausweich"?"Wohin? z. B. Halle 2":cur==="abgesagt"?"Grund (optional)":"Hinweis (optional)"}" onchange="platzAmpelNote(${Number(t.id)},this.value)" style="width:100%;min-height:44px;margin-top:6px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box">`:"";
   /* v491: Im Termin-Fenster steht die Überschrift schon am Klappdeckel – dort nur die Knöpfe. */
   if(nackt)return `<div style="display:flex;gap:6px;flex-wrap:wrap">${btns}</div>${zusatz}`;
   return `<div style="margin:8px 0;padding:8px;background:var(--surface2);border-radius:10px">

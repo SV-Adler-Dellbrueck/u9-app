@@ -249,7 +249,7 @@ function blitzInit(){
   box.innerHTML=`
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
       <span style="font-size:11px;color:var(--text2)">Bewertet von:</span>
-      <select id="blitz-autor" style="min-height:40px;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit">${TRAINER.map(t=>`<option>${t}</option>`).join("")}</select>
+      <select id="blitz-autor" style="min-height:44px;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit">${TRAINER.map(t=>`<option>${t}</option>`).join("")}</select>
     </div>
     <div id="blitz-card"></div>
     <div id="blitz-saved" style="margin-top:12px"></div>`;
