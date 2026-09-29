@@ -53,8 +53,8 @@ module.exports = async function (h) {
     // c) Ein Tipp auf eine Kachel führt ins Detail – über denselben Weg wie die Kachel selbst
     kachelRun("go", "bew"); await warte(150);
     out.nachKachel = sichtbar();
-    out.subbarAktiv = ([...document.querySelectorAll("#tab-subbar .sub-tab.active")]
-      .map(b => b.textContent.replace(/\s+/g, " ").trim())[0]) || "";
+    // v681: statt der Reiterzeile nennt der Zurück-Kopf die Seite
+    out.subbarAktiv = ((document.querySelector("#tab-subbar .seiten-titel") || {}).textContent || "").replace(/\s+/g, " ").trim();
 
     // d) Kein Fenster mehr
     kachelOpen("orga"); await warte(150);
@@ -86,7 +86,7 @@ module.exports = async function (h) {
 
   // c)
   if (String(r.nachKachel) !== "view-bew") probleme.push(`Der Tipp auf eine Kachel landet auf ${JSON.stringify(r.nachKachel)} statt im Detail`);
-  else if (!/Bewerten/.test(r.subbarAktiv)) probleme.push(`Die Reiterzeile markiert „${r.subbarAktiv}“ statt Bewerten`);
+  else if (!/Bewerten/.test(r.subbarAktiv)) probleme.push(`Der Seitenkopf nennt „${r.subbarAktiv}“ statt Bewerten`);
   else zeilen.push("Kachel → Detail, und die Reiterzeile zeigt, wo man steht");
 
   // d)

@@ -724,14 +724,25 @@
          die datengetrieben "4+1 Raute" meldet - deshalb raus. -->
     <div class="abschnitt">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-      <span style="font-size:11px;color:var(--text2);font-weight:600">Spieltag</span>
-      <select id="spieltag-date" onchange="if(typeof _spieltagTurnierBanner==='function')_spieltagTurnierBanner();nomLoad()" style="min-height:40px;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;background:var(--surface);color:var(--text);min-width:190px"></select>
+      <label for="spieltag-date" style="font-size:var(--s-text);color:var(--text);font-weight:800">Spieltag</label>
+      <select id="spieltag-date" onchange="if(typeof _spieltagTurnierBanner==='function')_spieltagTurnierBanner();nomLoad()" style="min-height:48px;flex:1;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;background:var(--surface);color:var(--text);min-width:190px"></select>
     </div>
     <!-- Der Umschalter wird von spieltagTeamSegRender (md-teams.js) gefuellt: so viele
          Knoepfe, wie unter "Vor dem Spiel" Teams festgelegt sind. Frueher standen hier
          fest drei - man konnte auf "Adler 3" tippen, bevor ueberhaupt entschieden war,
          wie viele Teams wir stellen, und die App legte Daten dafuer an. -->
     </div><!-- /Karte Spieltag -->
+    <!-- v681 PO (Kollegen 29.09.): „man findet gar nicht direkt, wo muss ich eigentlich anklicken,
+         vor dem Spiel, während dem Spiel, nach dem Spiel.“ Statt fünf grauer Klappzeilen mit
+         „▾ mehr“ drei große Kacheln; es steht immer nur EINE Phase offen (spieltagPhaseZeigen).
+         Die <details> darunter bleiben als Hülle, damit alle Sprünge (Match-Uhr, Blitz-Rating,
+         Anwesenheit) weiter über .open funktionieren – ihre Kopfzeilen sind ausgeblendet. -->
+    <div id="mt-phasen" class="phasen-kacheln" role="group" aria-label="Phase des Spieltags">
+      <button type="button" class="phase-kachel" data-phase="vor" aria-pressed="false" onclick="spieltagPhaseZeigen('vor')"><span class="pk-emo" aria-hidden="true">📋</span><span class="pk-t">Vor dem Spiel</span><span class="pk-s">Dabei · Teams · Aufstellung</span></button>
+      <button type="button" class="phase-kachel" data-phase="live" aria-pressed="false" onclick="spieltagPhaseZeigen('live')"><span class="pk-emo" aria-hidden="true">⏱️</span><span class="pk-t">Während des Spiels</span><span class="pk-s">Uhr · Wechsel · Ticker</span></button>
+      <button type="button" class="phase-kachel" data-phase="nach" aria-pressed="false" onclick="spieltagPhaseZeigen('nach')"><span class="pk-emo" aria-hidden="true">🏁</span><span class="pk-t">Nach dem Spiel</span><span class="pk-s">Ergebnis · Bericht · Rating</span></button>
+    </div>
+    <div id="mt-phasen-leer" class="phasen-leer">Tippe auf eine Phase – es steht immer nur das offen, was gerade dran ist.</div>
     <!-- Spieltag-Phasen: Vor / Während / Nach dem Spiel – einklappbar für den Fokus -->
     <!-- GLOBAL, nicht je Team: wie viele Teams, wer betreut sie, wer spielt wo.
          Erst danach die Team-Kacheln – das ist die Reihenfolge, in der der PO denkt. -->
