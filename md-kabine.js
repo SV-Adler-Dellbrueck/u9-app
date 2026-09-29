@@ -196,12 +196,12 @@ async function teamLevelLoad(elId){
   const L=teamLevelInfo(total||0);
   el.innerHTML=`<div style="background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;border-radius:16px;padding:14px 16px">
     <div style="display:flex;align-items:center;gap:10px"><span style="font-size:26px">🦅</span>
-      <div style="flex:1;min-width:0"><div style="font-size:11px;opacity:.85;text-transform:uppercase;letter-spacing:.5px">Team-Level ${L.level}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:13px;opacity:.9;font-weight:700">Team-Level ${L.level}</div>
       <div style="font-size:16px;font-weight:900">${esc(L.title)}</div></div>
       <div style="font-size:12px;opacity:.9;white-space:nowrap">${XP_ICON} ${L.total}</div>
     </div>
     <div style="height:10px;background:rgba(255,255,255,.25);border-radius:6px;overflow:hidden;margin-top:10px"><div style="height:100%;width:${L.pct}%;background:#fbbf24;border-radius:6px;transition:width .6s"></div></div>
-    <div style="font-size:11px;opacity:.92;margin-top:6px">Noch ${L.need} ${XP_LABEL} bis Level ${L.level+1} – jede Feder zählt fürs ganze Team!</div>
+    <div style="font-size:13px;opacity:.95;margin-top:6px">Noch ${L.need} ${XP_LABEL} bis Level ${L.level+1} – jede Feder zählt fürs ganze Team!</div>
   </div>`;
 }
 /* C2 → v322: Panini-Album PRO KIND in der DB (album_kind) – geräteübergreifend und
