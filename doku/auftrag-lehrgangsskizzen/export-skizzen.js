@@ -147,7 +147,9 @@ async function exportSkizzen(opt){
    GIF89a-Standard, Palette per Median-Cut) – ohne fremde Werkzeuge, denn ffmpeg gibt es
    in der Prüfumgebung nicht. GIF, weil es überall läuft: WhatsApp, Drive, PowerPoint. */
 async function exportAnimation(opt){
-  const {aus,muster,slug,breite,fps,schlussMs}=Object.assign({aus:__dirname,breite:360,fps:10,schlussMs:2000},opt||{});
+  /* v684 (Lehrgang 4.0): standMs ersetzt SKZ_STAND, gleitFaktor streckt _skzGleitDauer. Ohne Angabe
+     bleibt das GIF bildgleich mit v589 – standMs:null heißt „wie die App“, gleitFaktor 1. */
+  const {aus,muster,slug,breite,fps,schlussMs,standMs,gleitFaktor}=Object.assign({aus:__dirname,breite:360,fps:10,schlussMs:2000,standMs:null,gleitFaktor:1},opt||{});
   if(!muster||!slug)throw new Error("exportAnimation braucht {muster, slug}");
   const s=await h.starten({hoehe:1200,supabase:h.supabaseAttrappe({kader:h.kaderZeilen()})});
   await s.page.evaluate(imBrowserHelfer);
@@ -155,19 +157,19 @@ async function exportAnimation(opt){
   const t=bib.uebungen.filter(u=>muster.test(u.name));
   if(t.length!==1)throw new Error("Muster "+muster+" trifft "+t.length+" Uebungen, erwartet genau 1");
   const u=t[0];
-  const r=await s.page.evaluate(async({spec,B,fps,schlussMs})=>{
+  const r=await s.page.evaluate(async({spec,B,fps,schlussMs,standMs,gleitFaktor})=>{
     const fehlt=["skzBildZahl","_skzBild","_skzZwischen","_skzGleitDauer","_skzBewegt"].filter(n=>typeof window[n]!=="function");
     if(fehlt.length)return {fehlt};
     const n=skzBildZahl(spec), schritt=1000/fps;
     /* 1) Die Zeitleiste – dieselbe wie in _skzGrTakt (md-skizze.js) */
     const zeiten=[];   // {t: 0..1 zwischen Bild i und i+1 | null = Stand}
     for(let i=0;i<n;i++){
-      const stand=(i===n-1)?schlussMs:SKZ_STAND;
+      const stand=(i===n-1)?schlussMs:(standMs==null?SKZ_STAND:standMs);
       for(let k=0;k<Math.round(stand/schritt);k++)zeiten.push({i,t:null});
       if(i===n-1)break;
       const a=_skzBild(spec,i), b=_skzBild(spec,i+1);
       if(!_skzBewegt(a,b)){ zeiten.push({i:i+1,t:null}); continue; }   // stiller Übergang: kurz durchschalten
-      const dauer=_skzGleitDauer(a,b), k=Math.max(1,Math.round(dauer/schritt));
+      const dauer=_skzGleitDauer(a,b)*(gleitFaktor||1), k=Math.max(1,Math.round(dauer/schritt));
       for(let j=1;j<=k;j++){ const x=j/k; zeiten.push({i,t:x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2}); }
     }
     /* 2) Jedes Zwischenbild zeichnen */
@@ -237,7 +239,7 @@ async function exportAnimation(opt){
     }
     let bin=""; for(let p=0;p<out.length;p+=8192)bin+=String.fromCharCode.apply(null,out.slice(p,p+8192));
     return {gif:btoa(bin),bilder:bilder.length,W,H,farben:boxen.length,sekunden:Math.round(zeiten.length*schritt/100)/10};
-  },{spec:u.skizze,B:breite,fps,schlussMs});
+  },{spec:u.skizze,B:breite,fps,schlussMs,standMs,gleitFaktor});
   console.log("Konsolenfehler:",s.fehler().length?s.fehler()[0]:"keine");
   await s.schliessen();
   if(r.fehlt)throw new Error("Im Browser fehlt: "+r.fehlt.join(", "));
