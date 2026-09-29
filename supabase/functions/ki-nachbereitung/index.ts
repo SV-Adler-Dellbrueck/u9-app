@@ -211,10 +211,10 @@ Deno.serve(async (req) => {
     if (text.length < 15) return j({ error: "Die Notiz ist zu kurz – sprich ein paar Sätze zur Einheit." }, 400);
 
     let user = "", nrs = new Set<number>(), namen = new Set<string>();
-    // v648: Werte je Kind erst ab dem Startdatum, das das Trainerteam gesetzt hat (Europe/Berlin)
-    const { data: te } = await svc.from("team_einstellungen").select("bewertung_ab").eq("id", 1).maybeSingle();
-    const heuteBerlin = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" });
-    const einzelwerte = !!te?.bewertung_ab && String(te.bewertung_ab) <= heuteBerlin;
+    /* v677 PO 29.09.: Die Sterne je Kind nach dem Training sind der Trainingseinsatz (ruhig · gut ·
+       stark) und immer erlaubt. Bis zum Stichtag gesperrt ist nur die Profilbewertung – die läuft
+       nicht über diese Funktion. v648 hatte hier bewertung_ab gelesen und die Werte je Kind weggelassen. */
+    const einzelwerte = true;
     if (art === "tagebuch") {
       /* Nur der Tagebuch-Teil – aus einer gespeicherten Sprachnotiz, wenn der Eintrag später entsteht. */
       const anlass = String(body?.anlass ?? "").slice(0, 160);

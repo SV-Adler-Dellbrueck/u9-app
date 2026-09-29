@@ -647,7 +647,7 @@ function nbInsTraining(e, m){
   const kids = (typeof EB_SPIELER!=="undefined"?EB_SPIELER:[]);
   let ki = 0;
   // v648: vor dem Startdatum der Bewertungen keine Sterne je Kind (der Server liefert dann auch keine)
-  if(typeof bewFreigegeben==="function"&&bewFreigegeben())(e.kinder||[]).forEach(k=>{ const name = m && m.zurueck[k.kind]; const i = kids.indexOf(name); if(i>=0 && _nbStern(`sp-${i}`, k.sterne, 3, 21)) ki++; });
+  /* v677: Einsatz-Sterne immer – nur die Profilbewertung wartet auf den Stichtag. */ (e.kinder||[]).forEach(k=>{ const name = m && m.zurueck[k.kind]; const i = kids.indexOf(name); if(i>=0 && _nbStern(`sp-${i}`, k.sterne, 3, 21)) ki++; });
   if(ki) b.push(`${ki} Kind${ki>1?"er":""}`);
   return b;
 }
@@ -734,7 +734,8 @@ function nbWegStart(art){
     });
     /* v676 PO 29.09. (Bildschirmfoto): „Ich kann die Kacheln für die Bewertungen nicht anklicken.“
        Vor dem Start der Einzelbewertung (v648, bewertung_ab) stehen im Bogen keine Sterne je Kind –
-       die Knöpfe hier schrieben ins Leere. Der Schritt kommt nur, wenn der Bogen die Zeilen hat. */
+       die Knöpfe hier schrieben ins Leere. Der Schritt kommt nur, wenn der Bogen die Zeilen hat.
+       Seit v677 hat er sie immer (Trainingseinsatz ist nicht gesperrt) – außer ohne erfasste Anwesenheit. */
     if(kids.length && document.getElementById("eb-stars-sp-0")) s.push({ typ:"kinder", titel:"Die Kinder", frage:"Wie waren die Kinder heute dabei?", kinder:kids });
     s.push({ typ:"text", titel:"Zum Schluss", frage:"Noch eine Notiz zur Einheit?", felder:[{ id:"eb-notiz", label:"Notiz zur Einheit (optional)" }] });
   }else{

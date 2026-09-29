@@ -7,9 +7,12 @@
       (Hinweis auf Profil und Entwicklung).
    2. Davor erscheinen „Bewertungsrunde starten“ und „Runde fällig“ nirgends (Bewerten, Team-Kacheln).
    3. Davor zeigt „Einheit bewerten“ keine Sterne je Kind; Einheit und Übungen sind bewertbar.
+      v677 PO 29.09.: aufgehoben – die Sterne nach dem Training sind der Trainingseinsatz und immer
+      frei; gesperrt bleibt nur die Profilbewertung. Geprüft wird jetzt das Gegenteil.
    4. Davor ist das Blitz-Rating nicht erreichbar.
    5. Davor trägt eine KI-Antwort mit Werten je Kind nichts ein; die Edge Function fragt dann gar
       nicht danach (eigenes Antwortformat ohne „kinder“, Server liest das Datum selbst).
+      v677: ebenfalls aufgehoben – die KI trägt Einsatz-Sterne immer ein.
    6. Datum gestern: alles erreichbar, keine Runde fällig; 48 Tage nach der letzten nicht fällig,
       49 Tage fällig. Zwei Trainer im Abstand von 10 Tagen sind eine Runde, beide stehen über
       dem Formular.
@@ -110,9 +113,9 @@ module.exports = async function (h) {
   }
   const morgenDe = new Date(morgen + "T00:00:00").toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
   if (!r.morgen.bar.includes(morgenDe)) probleme.push(`1) Datum ${morgenDe} fehlt im Satz`);
-  if (r.kiStern !== "0") probleme.push(`5) KI-Antwort trägt Sterne je Kind ein (${r.kiStern})`);
+  if (r.kiStern !== "3") probleme.push(`5) v677: KI-Antwort trägt die Einsatz-Sterne nicht ein (${r.kiStern})`);
   if (r.blitz !== "none") probleme.push(`4) Blitz-Rating erreichbar (${r.blitz})`);
-  if (r.eb.kinderSterne || !r.eb.einheit || !r.eb.uebung || !/Notiz/.test(r.eb.hinweis)) probleme.push(`3) Einheit bewerten: ${JSON.stringify(r.eb)}`);
+  if (r.eb.kinderSterne !== 2 || !r.eb.einheit || !r.eb.uebung || r.eb.hinweis) probleme.push(`3) v677: Einheit bewerten zeigt die Einsatz-Sterne nicht: ${JSON.stringify(r.eb)}`);
   if (r.gespeichert !== "2026-12-12" || !post.some(b => b.bewertung_ab === "2026-12-12" && b.id === 1)) probleme.push(`Datum speichern: ${JSON.stringify(post)}`);
   if (r.gestern.gesperrt || !r.gestern.formSichtbar || !r.gestern.runde || r.gestern.faellig || !/Runde fällig/.test(r.gestern.kacheln)) probleme.push(`6) gestern: ${JSON.stringify({ g: r.gestern.gesperrt, f: r.gestern.formSichtbar, runde: r.gestern.runde, faellig: r.gestern.faellig })}`);
   if (r.blitzFrei === "none") probleme.push("6) Blitz-Rating nach dem Startdatum weiter versteckt");
@@ -121,14 +124,12 @@ module.exports = async function (h) {
 
   // 5) Edge Function
   const ef = fs.readFileSync(path.join(h.REPO, "supabase/functions/ki-nachbereitung/index.ts"), "utf8");
-  const ohne = (ef.match(/const FORM_TRAINING_OHNE_KINDER = `([\s\S]*?)`;/) || [])[1] || "";
-  if (!ohne || /"kinder"/.test(ohne) || !/einheit\.notiz/.test(ohne)) probleme.push("5) Antwortformat ohne Kinderwerte fehlt");
-  if (!/from\("team_einstellungen"\)\.select\("bewertung_ab"\)/.test(ef) || !/if \(einzelwerte\) for/.test(ef)) probleme.push("5) Server entscheidet nicht selbst über Werte je Kind");
+  if (!/const einzelwerte = true;/.test(ef)) probleme.push("5) v677: Edge Function hält die Einsatz-Sterne noch zurück");
   // Kein Datum im Code
   const app = fs.readdirSync(h.REPO).filter(f => /\.js$/.test(f) && f !== "sw.js").map(f => fs.readFileSync(path.join(h.REPO, f), "utf8")).join("\n");
   if (/BEW_AB\s*=\s*"\d{4}/.test(app)) probleme.push("Startdatum fest im Code");
 
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
-  zeilen.push(`gesperrt leer/morgen ✓ · Einheit ohne Kinder-Sterne · Blitz ${r.blitz} · 48 T. ${r.f48} / 49 T. ${r.f49} · ${r.trainerZeile}`);
+  zeilen.push(`gesperrt leer/morgen ✓ · Einsatz-Sterne frei (v677) · Blitz ${r.blitz} · 48 T. ${r.f48} / 49 T. ${r.f49} · ${r.trainerZeile}`);
   return h.ergebnis("v648 Einzelbewertung erst ab Ende der Hinrunde", !probleme.length, probleme.concat(zeilen));
 };
