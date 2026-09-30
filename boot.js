@@ -403,7 +403,7 @@ function _tfKarte(x){
       <span style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:2px">${x.f.dauer||"?"} Min. · ${esc(String(x.f.spieler||"?"))} Sp. · ${esc(x.f.feld||"?")} · ${frische}</span>
     </button>
     <button onclick="tpArtTipp('${(x.f.name||"").replace(/'/g,"\\'")}')" title="Übungsform oder Spielform – antippen zum Einordnen" aria-label="Art der Übung: ${_tpArt(x.f)?UEBUNG_ART[_tpArt(x.f)].lang:"noch nicht eingeordnet"}" style="flex:none;min-height:44px;padding:0 4px;border:none;background:transparent;cursor:pointer">${tpArtChip(x.f,true)}</button>
-    <button onclick="tpSternTipp('${(x.f.name||"").replace(/'/g,"\\'")}')" title="Schwierigkeit antippen zum Ändern" style="min-width:48px;min-height:44px;border:none;background:transparent;color:#f59e0b;font-size:var(--s-text);cursor:pointer;letter-spacing:1px">${"⭐".repeat(stern)}</button>
+    <span role="img" aria-label="Schwierigkeit ${stern} von 3" title="Schwierigkeit – ändern im Übungsdetail" style="min-width:48px;display:inline-flex;align-items:center;justify-content:center;color:#f59e0b;font-size:var(--s-text);letter-spacing:1px">${"⭐".repeat(stern)}</span>
     ${uebungEditierbar(x.f)?`<button onclick="uebungBearbeiten(${x.i})" class="tf-bearbeiten" aria-label="${esc(x.f.name)} bearbeiten" title="Übung bearbeiten" style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-size:var(--s-text);cursor:pointer">✏️</button>`:""}
     <button onclick="tfInPlan(${x.i})" aria-label="In den Trainingsplan übernehmen" title="In den Trainingsplan übernehmen" style="min-width:44px;min-height:44px;border:none;border-radius:10px;background:#16a34a;color:#fff;font-size:var(--s-teil);font-weight:900;cursor:pointer">➕</button>
   </div>`;
@@ -1448,7 +1448,7 @@ function tpShowExercise(formIdx,planMin){
   const zeigKurz=kurz&&!norm(ablauf).startsWith(norm(kurz).replace(/[.…]+$/,""));
   const eigene=!!(f.custom||f.id);
   const modal=document.createElement("div");
-  modal.id="uebung-modal";
+  modal.id="uebung-modal"; modal.dataset.name=f.name;
   // v691: als Dialog gekennzeichnet – vorher griff der zentrale Fokus-Trap hier nicht
   modal.setAttribute("role","dialog"); modal.setAttribute("aria-modal","true"); modal.setAttribute("aria-labelledby","uebung-modal-titel");
   modal.style.cssText="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px";
@@ -1469,6 +1469,10 @@ function tpShowExercise(formIdx,planMin){
       <span style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">👥 ${f.spieler||"?"}</span>
       <span style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">📐 ${f.feld||"?"}</span>
       ${(function(){const b=typeof tpBetreuungWert==="function"?tpBetreuungWert(f):null;return b?`<span class="tp-ex-betr" style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">👤 ${UEBUNG_BETREUUNG[b.wert].kurz}${b.bestaetigt?"":" (Vorschlag)"}</span>`:"";})()}
+    </div>
+    <div id="uebung-sterne" role="group" aria-label="Schwierigkeit" style="display:flex;align-items:center;gap:6px;margin:0 0 8px">
+      <span style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-right:2px">Schwierigkeit</span>
+      ${[1,2,3].map(n=>`<button type="button" data-stern="${n}" aria-pressed="${_tpStern(f)===n}" onclick="tpSternSetzen(this.closest('#uebung-modal').dataset.name,${n})" style="min-height:44px;min-width:56px;padding:0 8px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);cursor:pointer">${"⭐".repeat(n)}</button>`).join("")}
     </div>
     ${f.svg
       ? `<div id="uebung-skizze" style="margin-bottom:2px">${f.svg}</div>${typeof skzLegende==="function"?skzLegende(false,_skzSpecSicher(f)):""}${typeof skzBilderLeiste==="function"?skzBilderLeiste(formIdx):""}${typeof matBedarfZeile==="function"?matBedarfZeile(_skzSpecSicher(f)):""}${typeof skzGrossKnopf==="function"?skzGrossKnopf(f.name,formIdx):""}${typeof skzTeilenKnopf==="function"?skzTeilenKnopf(f.name):""}`
@@ -4689,7 +4693,7 @@ function _tpPickKarte(x){
       <span style="display:block;font-size:var(--s-klein);color:var(--text2)">${x.f.dauer||"?"} Min. · ${esc((typeof PERIOD_CATS!=="undefined"&&PERIOD_CATS[x.f.kat])||x.f.kat||"eigene")} · ${frische}</span>
       ${(function(){const c=tpArtChip(x.f,false);const b=typeof tpBetreuungWert==="function"?tpBetreuungWert(x.f):null;const a=(b&&b.wert==="allein")?'<span style="background:var(--surface2);color:var(--text2);border:var(--border-s);border-radius:6px;padding:1px 6px;font-size:var(--s-klein);font-weight:800;white-space:nowrap">👤 läuft allein</span>':"";return (c||a)?`<span style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">${c}${a}</span>`:"";})()}
     </button>
-    <button onclick="tpSternTipp('${x.f.name.replace(/'/g,"\\'")}')" title="Schwierigkeit antippen zum Ändern" style="min-width:52px;min-height:44px;border:none;background:transparent;color:#f59e0b;font-size:var(--s-text);cursor:pointer;letter-spacing:1px">${"⭐".repeat(stern)}</button>
+    <span role="img" aria-label="Schwierigkeit ${stern} von 3" title="Schwierigkeit – ändern im Übungsdetail" style="min-width:52px;display:inline-flex;align-items:center;justify-content:center;color:#f59e0b;font-size:var(--s-text);letter-spacing:1px">${"⭐".repeat(stern)}</span>
     <button onclick="tpPickerInfo(${x.i})" aria-label="Übung ansehen" title="Skizze & Beschreibung ansehen" style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-size:var(--s-karte);cursor:pointer">ℹ️</button>
   </div>`;
 }
@@ -4698,19 +4702,26 @@ function tpPickerSet(idx){
   if(sel){sel.value=String(idx);try{tpOnSelectChange(sel);}catch(e){}tpPickSync(_tpPick.selId);}
   document.getElementById("tp-pick-modal")?.remove();
 }
-// Sterne-Korrektur: 1 → 2 → 3 → 1; geteilt über team_config.uebung_meta
-async function tpSternTipp(name){
-  const forms=tpAllForms(), f=forms.find(x=>x.name===name);
-  const neu=(_tpStern(f)%3)+1;
+/* v692 PO 30.09.: Ein Tipp auf die Sterne in der Liste änderte sofort und ohne Rückfrage die
+   Schwierigkeit – für das ganze Trainerteam. Ein Fehltipp am Platz verstellte geteilte Daten.
+   In Liste und Übungswahl stehen die Sterne jetzt nur da; gesetzt wird im Übungsdetail, mit
+   drei Knöpfen für genau die Stufe, die man meint (statt 1 → 2 → 3 → 1 im Kreis). */
+async function tpSternSetzen(name,neu){
+  neu=Math.max(1,Math.min(3,Number(neu)||1));
   window._uebungMeta=window._uebungMeta||{};
   window._uebungMeta[name]=neu;
-  // je nach Kontext neu zeichnen: Picker offen -> Picker, sonst Formen-Datenbank
-  if(document.getElementById("tp-pick-modal"))tpPickerRender();else renderTraining();
+  if(document.getElementById("tp-pick-modal"))tpPickerRender();
+  if(typeof renderTraining==="function")renderTraining();
+  document.querySelectorAll("#uebung-sterne button[data-stern]").forEach(b=>b.setAttribute("aria-pressed",String(Number(b.dataset.stern)===neu)));
   try{
-    if(window._uebungMetaId!=null)
-      await fetch(`${SB_URL}/rest/v1/team_config?id=eq.${window._uebungMetaId}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify({uebung_meta:window._uebungMeta})});
-  }catch(e){}
+    if(window._uebungMetaId==null)return;
+    const r=await fetch(`${SB_URL}/rest/v1/team_config?id=eq.${window._uebungMetaId}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify({uebung_meta:window._uebungMeta})});
+    if(r.ok)toast(`Schwierigkeit: ${"⭐".repeat(neu)}`);
+    else toast(sbDeniedMsg(r,"Schwierigkeit nicht gespeichert"),"err");
+  }catch(e){toast("Kein Netz – Schwierigkeit nur auf diesem Gerät","err");}
 }
+// Alter Name, falls ein gespeicherter Verweis ihn noch ruft: stellt eine Stufe weiter.
+function tpSternTipp(name){ const f=tpAllForms().find(x=>x.name===name); return tpSternSetzen(name,(_tpStern(f)%3)+1); }
 // Sichtbaren Auswahl-Button mit dem (versteckten) Select synchron halten
 function tpPickSync(selId){
   const sel=document.getElementById(selId), btn=document.getElementById(selId+"-pick");
