@@ -59,13 +59,14 @@ async function mitbringDeleteTrainer(id){
 }
 
 async function kasseOpen(){
-  if(!sbToken()){toast("Bitte als Trainer anmelden","err");return;}
+  if(!sbToken()){toast("Bitte zuerst anmelden","err");return;}
   document.getElementById("kasse-modal")?.remove();
   const m=document.createElement("div");m.id="kasse-modal";
+  m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Kasse führen");
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{if(e.target===m)m.remove();};
   m.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:460px;width:100%;margin:auto">
-    ${mdlHead("kasse-modal","💰","Teamkasse","Kassenstand, Umlagen und wer bezahlt hat · gezahlt wird außerhalb der App","#1e3a8a")}
+    ${mdlHead("kasse-modal","🧾","Kasse führen","Bewegungen erfassen, Beiträge abhaken · gezahlt wird außerhalb der App","#1e3a8a")}
     <div id="kasse-body"><div style="text-align:center;padding:24px;color:var(--text3)">Lade…</div></div>
   </div>`;
   document.body.appendChild(m);
@@ -77,27 +78,39 @@ async function kasseRender(){
   try{const r=await fetch(`${SB_URL}/rest/v1/teamkasse?select=*&order=datum.desc,id.desc`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)ledger=await r.json();}catch(e){}
   try{const r=await fetch(`${SB_URL}/rest/v1/kasse_umlagen?select=*&order=aktiv.desc,faellig.asc`,{headers:sbAuthHeaders()});if(r.ok)umlagen=await r.json();}catch(e){}
   let spendenLink=""; try{const r=await fetch(`${SB_URL}/rest/v1/team_config?id=eq.1&select=spenden_link`,{headers:sbAuthHeaders()});if(r.ok)spendenLink=(((await r.json())[0])||{}).spenden_link||"";}catch(e){}
-  const saldo=ledger.reduce((s,x)=>s+Number(x.betrag),0);
-  const inp="padding:7px;border:var(--border-s);border-radius:6px;font-family:inherit;font-size:var(--s-text)";
+  // v699: Kassenstand = Buchungen + abgehakte Beiträge (Sammelposten aus kasse_summary)
+  let summe=null; try{const r=await fetch(`${SB_URL}/rest/v1/rpc/kasse_summary`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"});if(r.ok)summe=await r.json();}catch(e){}
+  const sammel=(summe&&summe.sammel)||[];
+  const saldo=summe&&summe.saldo!=null?Number(summe.saldo):ledger.reduce((s,x)=>s+Number(x.betrag),0)+sammel.reduce((s,x)=>s+Number(x.summe),0);
+  const inp="min-height:48px;padding:8px 10px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)";
+  const lbl=t=>`<span style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-bottom:2px">${t}</span>`;
+  const heute=new Date().toISOString().slice(0,10);
   body.innerHTML=`
     <div style="text-align:center;background:var(--surface2);border-radius:12px;padding:12px;margin-bottom:12px">
       <div style="font-size:var(--s-klein);color:var(--text2)">Kassenstand</div>
-      <div style="font-size:26px;font-weight:900;color:${saldo<0?'#dc2626':'#059669'}">${kEur(saldo)}</div>
+      <div style="font-size:26px;font-weight:900;color:${saldo<0?'var(--red)':'var(--green)'}">${kEur(saldo)}</div>
+      <div style="font-size:var(--s-klein);color:var(--text2)">inkl. abgehakter Beiträge</div>
     </div>
-    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;color:var(--text2);margin-bottom:6px">Buchungen</div>
-    <div style="max-height:150px;overflow-y:auto;margin-bottom:8px">
-    ${ledger.length?ledger.map(x=>`<div style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);padding:4px 0;border-bottom:1px solid var(--surface2)">
-      <span style="flex:1">${esc(x.zweck||'—')} <span style="color:var(--text3);font-size:var(--s-klein)">${x.datum||''}</span></span>
-      <span style="font-weight:700;color:${x.betrag<0?'#dc2626':'#059669'}">${x.betrag<0?'':'+'}${kEur(x.betrag)}</span>
-      <button onclick="kasseDelEntry(${x.id},'${jsq(x.zweck||"")}')" title="Löschen" style="border:none;background:transparent;color:#dc2626;cursor:pointer"><i class="ti ti-trash"></i></button>
-    </div>`).join(""):'<div style="font-size:var(--s-text);color:var(--text3)">Noch keine Buchungen.</div>'}
-    </div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
-      <select id="k-typ" style="${inp}"><option value="1">Einnahme</option><option value="-1">Ausgabe</option></select>
-      <input id="k-betrag" type="number" step="0.01" min="0" placeholder="Betrag" style="width:82px;${inp}">
-      <input id="k-zweck" placeholder="Zweck" style="flex:1;min-width:100px;${inp}">
-      <button class="btn btn-sm" onclick="kasseAddEntry()"><i class="ti ti-plus"></i></button>
-    </div>
+    <form id="k-form" onsubmit="event.preventDefault();kasseBuchungSpeichern()" style="border:1px solid var(--rand-bedien);border-radius:12px;padding:12px;margin-bottom:12px">
+      <div id="k-form-titel" style="font-weight:800;font-size:var(--s-karte);margin-bottom:8px">Bewegung erfassen</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <label>${lbl("Art")}<select id="k-typ" style="width:100%;${inp}"><option value="-1">Ausgabe</option><option value="1">Einnahme</option></select></label>
+        <label>${lbl("Betrag in €")}<input id="k-betrag" type="number" inputmode="decimal" step="0.01" min="0" style="width:100%;${inp}"></label>
+        <label>${lbl("Datum")}<input id="k-datum" type="date" value="${heute}" max="${heute}" style="width:100%;${inp}"></label>
+        <label>${lbl("Kategorie")}<select id="k-kat" style="width:100%;${inp}">${KASSE_KAT.map(k=>`<option value="${k.k}"${k.k==="sonstiges"?" selected":""}>${k.e} ${k.t}</option>`).join("")}</select></label>
+      </div>
+      <label style="display:block;margin-top:8px">${lbl("Wofür?")}<input id="k-zweck" maxlength="120" placeholder="z. B. Eis nach dem Turnier" style="width:100%;${inp}"></label>
+      <div style="font-size:var(--s-klein);color:var(--text2);margin-top:2px">Alle Eltern sehen Datum, Kategorie, Zweck und Betrag – bitte keine Namen von Kindern oder Familien.</div>
+      <label style="display:block;margin-top:8px">${lbl("Beleg (Foto oder PDF, optional)")}<input id="k-beleg" type="file" accept="image/*,application/pdf" style="width:100%;font-family:inherit;font-size:var(--s-text)"></label>
+      <div id="k-beleg-alt" style="font-size:var(--s-klein);color:var(--text2)"></div>
+      <div style="font-size:var(--s-klein);color:var(--text2)">Belege sehen nur die Kasse und das Trainerteam.</div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button type="submit" id="k-speichern" class="btn btn-p" style="flex:1;min-height:48px;justify-content:center">Bewegung erfassen</button>
+        <button type="button" id="k-abbrechen" class="btn" style="display:none;min-height:48px" onclick="kasseBuchungAbbrechen()">Abbrechen</button>
+      </div>
+    </form>
+    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;color:var(--text2);margin-bottom:6px">Bewegungen</div>
+    <div style="margin-bottom:16px">${kasseListeHtml(ledger,sammel,true)}</div>
     <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;color:var(--text2);margin-bottom:6px">Umlagen (für Eltern sichtbar)</div>
     ${umlagen.length?umlagen.map(u=>`<div style="display:flex;align-items:center;gap:6px;font-size:var(--s-text);padding:5px 0;border-bottom:1px solid var(--surface2);${u.aktiv?'':'opacity:.5'}">
       <span style="flex:1">${esc(u.titel)} · <b>${kEur(u.betrag)}</b>${u.faellig?` · bis ${u.faellig}`:''}</span>
@@ -120,7 +133,7 @@ async function kasseRender(){
     </div>
     <div style="font-size:var(--s-klein);color:var(--text3);margin-top:4px">Dauerhafter Spenden-Button für Fans (Liveticker) &amp; Eltern-Portal. Leer lassen = kein Button.</div>
     <div style="font-size:var(--s-klein);color:var(--text3);margin-top:12px">Rein informativ – die App verwaltet kein Geld. Zahlungen laufen extern über PayPal.</div>`;
-  window._kasseDaten={ledger,umlagen};
+  window._kasseDaten={ledger,umlagen,sammel,saldo};
   kasseBezahltRender(umlagen);
   kasseRolleRender();
 }
@@ -135,15 +148,6 @@ async function adlerkasseSave(){
   }catch(e){toast("Netzwerkfehler","err");return;}
   toast(link?"🦅 Adler-Kasse-Link gespeichert ✓":"Link entfernt");
 }
-async function kasseAddEntry(){
-  const sign=parseInt(document.getElementById("k-typ")?.value)||1;
-  const val=Math.abs(parseFloat(document.getElementById("k-betrag")?.value)||0);
-  if(!val){toast("Betrag eingeben","err");return;}
-  const zweck=(document.getElementById("k-zweck")?.value||"").trim()||null;
-  try{const r=await fetch(`${SB_URL}/rest/v1/teamkasse`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({betrag:sign*val,zweck})});if(sbCheck401(r))return;if(!r.ok){toast("Fehler","err");return;}}catch(e){return;}
-  kasseRender();
-}
-async function kasseDelEntry(id,zweck){ if(!await frageJaNein({titel:"Buchung löschen?",text:zweck||"",ja:"Löschen",ton:"rot",emoji:"🗑️"}))return; try{const r=await fetch(`${SB_URL}/rest/v1/teamkasse?id=eq.${id}`,{method:"DELETE",headers:sbAuthHeaders()});if(sbCheck401(r))return;}catch(e){} kasseRender(); }
 async function kasseAddUmlage(){
   const titel=(document.getElementById("u-titel")?.value||"").trim();
   const betrag=parseFloat(document.getElementById("u-betrag")?.value)||0;
@@ -154,7 +158,11 @@ async function kasseAddUmlage(){
   kasseRender();
 }
 async function kasseToggleUmlage(id,aktiv){ try{const r=await fetch(`${SB_URL}/rest/v1/kasse_umlagen?id=eq.${id}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify({aktiv})});if(sbCheck401(r))return;}catch(e){} kasseRender(); }
-async function kasseDelUmlage(id){ if(!await frageJaNein({titel:"Umlage löschen?",text:"Die Häkchen „bezahlt“ dieser Umlage verschwinden mit.",ja:"Löschen",ton:"rot",emoji:"🗑️"}))return; try{const r=await fetch(`${SB_URL}/rest/v1/kasse_umlagen?id=eq.${id}`,{method:"DELETE",headers:sbAuthHeaders()});if(sbCheck401(r))return;}catch(e){} kasseRender(); }
+async function kasseDelUmlage(id){
+  // v699: Abgehakte Beiträge stehen im Kassenstand – eine Umlage mit Zahlungen wird nur deaktiviert.
+  const ue=window._kasseUebersicht||{hat:{}};
+  if(Object.keys(ue.hat||{}).some(k=>k.split("_")[0]===String(id))){toast("Diese Umlage hat schon Zahlungen – bitte mit dem Auge deaktivieren statt löschen, sonst fehlt das Geld im Kassenstand.","err");return;}
+  if(!await frageJaNein({titel:"Umlage löschen?",text:"Die Häkchen „bezahlt“ dieser Umlage verschwinden mit.",ja:"Löschen",ton:"rot",emoji:"🗑️"}))return; try{const r=await fetch(`${SB_URL}/rest/v1/kasse_umlagen?id=eq.${id}`,{method:"DELETE",headers:sbAuthHeaders()});if(sbCheck401(r))return;}catch(e){} kasseRender(); }
 
 /* ═══ v664: Kassenwart-Kasse ═══
    PO 28.09.: „Die Mutter von Samu ist neue Kassenwärtin … wie können wir da mit der App
@@ -211,15 +219,174 @@ async function kasseErinnern(btn){
 function kasseCsvZelle(v){const t=String(v==null?"":v);return /[";\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t;}
 function kasseExport(){
   const d=window._kasseDaten||{}, ue=window._kasseUebersicht||{kinder:[],hat:{},umlagen:[]};
-  const z=[["Art","Datum","Zweck / Umlage","Betrag","Kind","Status"]];
-  (d.ledger||[]).slice().reverse().forEach(x=>z.push(["Buchung",x.datum||"",x.zweck||"",String(Number(x.betrag).toFixed(2)).replace(".",","),"",""]));
-  (ue.umlagen||[]).forEach(u=>ue.kinder.forEach(k=>{const am=ue.hat[u.id+"_"+k.id];z.push(["Umlage",am||"",u.titel,String(Number(u.betrag).toFixed(2)).replace(".",","),k.name,am?"bezahlt":"offen"]);}));
+  const z=[["Art","Datum","Kategorie","Zweck / Umlage","Betrag","Kind","Status","Beleg"]];
+  const eu=n=>String(Number(n).toFixed(2)).replace(".",",");
+  (d.ledger||[]).slice().reverse().forEach(x=>z.push(["Buchung",x.datum||"",kasseKat(x.kategorie).t,x.zweck||"",eu(x.betrag),"","",x.beleg?"ja":""]));
+  (d.sammel||[]).forEach(x=>z.push(["Beiträge (Sammelposten)",x.datum||"","Beiträge",`${x.titel} – ${x.anzahl} ${x.anzahl===1?"Familie":"Familien"}`,eu(x.summe),"","",""]));
+  (ue.umlagen||[]).forEach(u=>ue.kinder.forEach(k=>{const am=ue.hat[u.id+"_"+k.id];z.push(["Umlage",am||"","Beiträge",u.titel,eu(u.betrag),k.name,am?"bezahlt":"offen",""]);}));
+  // Summen je Kategorie und Kassenstand – für die Kassenprüfung
+  z.push([]);z.push(["Summe","","Kategorie","","Betrag","","",""]);
+  const sum={}; (d.ledger||[]).forEach(x=>{const k=kasseKat(x.kategorie).t;sum[k]=(sum[k]||0)+Number(x.betrag);});
+  (d.sammel||[]).forEach(x=>{sum["Beiträge"]=(sum["Beiträge"]||0)+Number(x.summe);});
+  Object.keys(sum).sort().forEach(k=>z.push(["Summe","",k,"",eu(sum[k]),"","",""]));
+  if(d.saldo!=null)z.push(["Kassenstand",new Date().toISOString().slice(0,10),"","",eu(d.saldo),"","",""]);
   const csv="﻿"+z.map(r=>r.map(kasseCsvZelle).join(";")).join("\r\n");
   const a=document.createElement("a");
   a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
   a.download=`Mannschaftskasse_${new Date().toISOString().slice(0,10)}.csv`;
   document.body.appendChild(a);a.click();a.remove();
   toast("Export erstellt ✓");
+}
+/* ═══ v699 · Mannschaftskasse – Kategorien, Liste, Buchen mit Beleg, Übersicht für alle Eltern ═══
+   PO 30.09.: „Kachel Mannschaftskasse, in der alle Eltern Leserechte haben … Milja soll eine extra
+   Kachel haben, wo sie Kontobewegungen eintragen und Ausgaben festhalten kann. Damit die Eltern immer
+   den aktuellen Kontostand sehen und alle Ausgaben, für was und wann.“ Abgehakte Beiträge zählen
+   automatisch (Sammelposten ohne Namen). Belege liegen im privaten Bucket „kasse-belege“ – sehen
+   dürfen sie nur Kasse und Trainerteam; Eltern sehen „Beleg vorhanden“. Kategorien = Prüfregel in der DB. */
+const KASSE_KAT=[
+  {k:"uebertrag",e:"↪️",t:"Anfangsbestand / Übertrag"},{k:"beitraege",e:"💶",t:"Beiträge"},{k:"spenden",e:"🎁",t:"Spenden"},
+  {k:"ausruestung",e:"👕",t:"Ausrüstung"},{k:"turniere",e:"🏆",t:"Turniere & Startgelder"},{k:"feiern",e:"🎉",t:"Feiern & Ausflüge"},
+  {k:"sonstiges",e:"📦",t:"Sonstiges"}];
+function kasseKat(k){ return KASSE_KAT.find(x=>x.k===k)||KASSE_KAT[KASSE_KAT.length-1]; }
+function kasseDatum(d){ return d?new Date(d+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"}):""; }
+/* Eine Liste für beide Sichten: Buchungen + Sammelposten, neueste zuerst. bearbeiten=true zeigt
+   Beleg öffnen, Bearbeiten und Löschen (nur die Kasse); sonst „🧾 Beleg vorhanden“. */
+function kasseListeHtml(ledger,sammel,bearbeiten,filter){
+  const zeilen=[...(ledger||[]).map(x=>({...x,art:"b"})),...(sammel||[]).map(x=>({id:"s"+x.id,datum:x.datum,betrag:Number(x.summe),kategorie:"beitraege",zweck:`${x.titel} – ${x.anzahl} ${x.anzahl===1?"Familie":"Familien"}`,art:"s"}))]
+    .filter(x=>!filter||filter==="alle"||(filter==="aus"?Number(x.betrag)<0:Number(x.betrag)>=0))
+    .sort((a,b)=>String(b.datum||"").localeCompare(String(a.datum||""))||(String(b.id)>String(a.id)?1:-1));
+  if(!zeilen.length)return `<div style="font-size:var(--s-text);color:var(--text2);padding:8px 0">${filter==="aus"?"Noch keine Ausgaben.":filter==="ein"?"Noch keine Einnahmen.":"Noch keine Bewegungen."}</div>`;
+  const knopf=(t,l,fn,farbe)=>`<button type="button" onclick="${fn}" aria-label="${l}" title="${l}" style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:${farbe||"var(--text)"};cursor:pointer;font-size:var(--s-text)">${t}</button>`;
+  return zeilen.map(x=>{const k=kasseKat(x.kategorie), aus=Number(x.betrag)<0;
+    return `<div class="kasse-zeile" data-art="${aus?"aus":"ein"}" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--surface2)">
+      <span aria-hidden="true" style="font-size:var(--s-karte)">${k.e}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:var(--s-text);overflow-wrap:anywhere">${esc(x.zweck||k.t)}</div>
+        <div style="font-size:var(--s-klein);color:var(--text2)">${kasseDatum(x.datum)} · ${esc(k.t)}${x.art==="s"?" · automatisch aus „Wer hat bezahlt“":""}${!bearbeiten&&x.beleg?" · 🧾 Beleg vorhanden":""}</div>
+      </div>
+      <span style="font-weight:800;white-space:nowrap;color:${aus?"var(--red)":"var(--green)"}">${aus?"−":"+"} ${kEur(Math.abs(Number(x.betrag)))}</span>
+      ${bearbeiten&&x.art==="b"?`${x.beleg?knopf("🧾","Beleg ansehen",`kasseBelegZeigen('${jsq(x.beleg)}')`):""}${knopf("✏️","Bearbeiten",`kasseBuchungBearbeiten(${Number(x.id)})`)}${knopf("🗑️","Löschen",`kasseDelEntry(${Number(x.id)})`,"var(--red)")}`:""}
+    </div>`;}).join("");
+}
+async function kasseBelegHochladen(file){
+  let blob=file, typ=file.type||"application/octet-stream", endung=(file.name||"").split(".").pop().toLowerCase()||"bin";
+  // Fotos verkleinern (Belege bleiben lesbar, Speicher bleibt klein); PDF und HEIC unverändert
+  if(/^image\/(jpeg|png|webp)$/.test(typ)&&typeof fotoCompress==="function"){ try{ blob=await fotoCompress(file,1600); typ="image/jpeg"; endung="jpg"; }catch(e){} }
+  if(blob.size>10*1024*1024)throw new Error("Der Beleg ist größer als 10 MB");
+  const pfad=((window.crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now()))+"."+endung;
+  const r=await fetch(`${SB_URL}/storage/v1/object/kasse-belege/${pfad}`,{method:"POST",headers:{'Authorization':'Bearer '+sbToken(),'Content-Type':typ},body:blob});
+  if(!r.ok)throw new Error("Beleg nicht hochgeladen");
+  return pfad;
+}
+async function kasseBelegLoeschen(pfad){ if(!pfad)return; try{await fetch(`${SB_URL}/storage/v1/object/kasse-belege/${pfad}`,{method:"DELETE",headers:{'Authorization':'Bearer '+sbToken()}});}catch(e){} }
+async function kasseBelegZeigen(pfad){
+  try{
+    const r=await fetch(`${SB_URL}/storage/v1/object/authenticated/kasse-belege/${pfad}`,{headers:{'Authorization':'Bearer '+sbToken()}});
+    if(!r.ok){toast("Beleg nicht verfügbar","err");return;}
+    const url=URL.createObjectURL(await r.blob());
+    const w=window.open(url,"_blank"); if(!w)location.href=url;
+  }catch(e){toast("Keine Verbindung – Beleg nicht geladen","err");}
+}
+async function kasseBuchungSpeichern(){
+  const knopf=document.getElementById("k-speichern");
+  const sign=parseInt(document.getElementById("k-typ")?.value)||-1;
+  const val=Math.abs(parseFloat(String(document.getElementById("k-betrag")?.value||"").replace(",","."))||0);
+  if(!val){toast("Bitte einen Betrag eingeben","err");return;}
+  const datum=document.getElementById("k-datum")?.value||new Date().toISOString().slice(0,10);
+  const kategorie=document.getElementById("k-kat")?.value||"sonstiges";
+  const zweck=(document.getElementById("k-zweck")?.value||"").trim()||null;
+  const file=document.getElementById("k-beleg")?.files?.[0]||null;
+  const edit=window._kasseEdit||null;
+  if(knopf)knopf.disabled=true;
+  try{
+    let beleg=edit?edit.beleg||null:null;
+    if(file){ const neu=await kasseBelegHochladen(file); if(beleg)await kasseBelegLoeschen(beleg); beleg=neu; }
+    const daten={betrag:sign*val,zweck,datum,kategorie,beleg};
+    const r=edit
+      ?await fetch(`${SB_URL}/rest/v1/teamkasse?id=eq.${edit.id}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify({...daten,geaendert_am:new Date().toISOString()})})
+      :await fetch(`${SB_URL}/rest/v1/teamkasse`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify(daten)});
+    if(sbCheck401(r))return;
+    if(!r.ok){toast("Nicht gespeichert – bitte noch einmal versuchen","err");return;}
+    toast(edit?"Bewegung geändert ✓":"Bewegung erfasst ✓");
+    window._kasseEdit=null;
+  }catch(e){ toast((e&&e.message)||"Keine Verbindung – nicht gespeichert","err"); return; }
+  finally{ if(knopf)knopf.disabled=false; }
+  kasseRender();
+}
+function kasseBuchungBearbeiten(id){
+  const x=((window._kasseDaten||{}).ledger||[]).find(b=>Number(b.id)===Number(id)); if(!x)return;
+  window._kasseEdit={id:x.id,beleg:x.beleg||null};
+  const set=(i,v)=>{const el=document.getElementById(i);if(el)el.value=v;};
+  set("k-typ",Number(x.betrag)<0?"-1":"1"); set("k-betrag",Math.abs(Number(x.betrag)).toFixed(2)); set("k-datum",x.datum||"");
+  set("k-kat",x.kategorie||"sonstiges"); set("k-zweck",x.zweck||"");
+  const t=document.getElementById("k-form-titel"); if(t)t.textContent="Bewegung ändern";
+  const k=document.getElementById("k-speichern"); if(k)k.textContent="Änderung speichern";
+  const a=document.getElementById("k-abbrechen"); if(a)a.style.display="";
+  const alt=document.getElementById("k-beleg-alt"); if(alt)alt.textContent=x.beleg?"Ein Beleg ist hinterlegt – ein neuer ersetzt ihn.":"";
+  document.getElementById("k-form")?.scrollIntoView({behavior:"smooth",block:"start"});
+  document.getElementById("k-betrag")?.focus();
+}
+function kasseBuchungAbbrechen(){ window._kasseEdit=null; kasseRender(); }
+async function kasseDelEntry(id){
+  const x=((window._kasseDaten||{}).ledger||[]).find(b=>Number(b.id)===Number(id));
+  if(!await frageJaNein({titel:"Bewegung löschen?",text:x?`${kasseDatum(x.datum)} · ${x.zweck||kasseKat(x.kategorie).t} · ${kEur(x.betrag)}${x.beleg?" – der Beleg wird mit gelöscht.":""}`:"",ja:"Löschen",ton:"rot",emoji:"🗑️"}))return;
+  try{const r=await fetch(`${SB_URL}/rest/v1/teamkasse?id=eq.${Number(id)}`,{method:"DELETE",headers:sbAuthHeaders()});if(sbCheck401(r))return;if(!r.ok){toast("Nicht gelöscht","err");return;}}catch(e){toast("Keine Verbindung – nicht gelöscht","err");return;}
+  if(x&&x.beleg)await kasseBelegLoeschen(x.beleg);
+  if(window._kasseEdit&&Number(window._kasseEdit.id)===Number(id))window._kasseEdit=null;
+  kasseRender();
+}
+/* Übersicht für alle Eltern (lesen): Kassenstand, Einnahmen/Ausgaben, Beiträge mit Stand des
+   eigenen Kindes, alle Bewegungen mit Filter, Ausgaben je Kategorie. */
+async function mannschaftskasseOpen(){
+  if(!sbToken()){toast("Bitte zuerst anmelden","err");return;}
+  document.getElementById("mk-modal")?.remove();
+  const m=document.createElement("div"); m.id="mk-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-labelledby","mk-titel");
+  m.style.cssText="position:fixed;inset:0;background:var(--bg);z-index:10002;overflow-y:auto";
+  m.innerHTML=`<div style="max-width:560px;margin:0 auto;padding:12px 16px 40px">
+    <div style="display:flex;align-items:center;gap:10px;position:sticky;top:0;background:var(--bg);padding:8px 0 10px;z-index:1">
+      <button type="button" onclick="document.getElementById('mk-modal').remove()" aria-label="Zurück" style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:50%;background:var(--surface);color:var(--text);font-size:var(--s-teil);cursor:pointer">‹</button>
+      <h2 id="mk-titel" style="flex:1;margin:0;font-size:var(--s-teil)">💰 Mannschaftskasse</h2>
+    </div>
+    <div id="mk-body"><div style="text-align:center;padding:24px;color:var(--text2)">Lade …</div></div>
+  </div>`;
+  document.body.appendChild(m);
+  m.querySelector("button")?.focus();
+  let summe=null, ledger=[];
+  try{const r=await fetch(`${SB_URL}/rest/v1/rpc/kasse_summary`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"});if(sbCheck401(r))return;if(r.ok)summe=await r.json();}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/teamkasse?select=id,datum,betrag,zweck,kategorie,beleg&order=datum.desc,id.desc`,{headers:sbAuthHeaders()});if(r.ok)ledger=await r.json();}catch(e){}
+  const body=document.getElementById("mk-body"); if(!body)return;
+  if(!summe){body.innerHTML=`<div style="color:var(--text2);padding:12px 0">Die Kasse lädt gerade nicht – bitte später noch einmal öffnen.</div>`;return;}
+  const sammel=summe.sammel||[], umlagen=summe.umlagen||[];
+  const ein=ledger.filter(x=>Number(x.betrag)>=0).reduce((s,x)=>s+Number(x.betrag),0)+sammel.reduce((s,x)=>s+Number(x.summe),0);
+  const aus=ledger.filter(x=>Number(x.betrag)<0).reduce((s,x)=>s+Number(x.betrag),0);
+  const jeKat={}; ledger.filter(x=>Number(x.betrag)<0).forEach(x=>{jeKat[x.kategorie||"sonstiges"]=(jeKat[x.kategorie||"sonstiges"]||0)+Number(x.betrag);});
+  window._mkDaten={ledger,sammel};
+  const karte=(inner)=>`<div style="background:var(--surface);border:1px solid var(--rand-bedien);border-radius:14px;padding:14px;margin-bottom:12px">${inner}</div>`;
+  const chip=(f,t)=>`<button type="button" class="mk-filter" data-f="${f}" aria-pressed="${f==="alle"}" onclick="mannschaftskasseFilter('${f}')" style="min-height:44px;padding:0 14px;border-radius:22px;border:1.5px solid var(--rand-bedien);background:${f==="alle"?"var(--blue)":"var(--surface)"};color:${f==="alle"?"#fff":"var(--text)"};font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">${t}</button>`;
+  body.innerHTML=
+    karte(`<div style="text-align:center">
+      <div style="font-size:var(--s-klein);color:var(--text2)">Kassenstand heute</div>
+      <div id="mk-saldo" style="font-size:30px;font-weight:900;color:${Number(summe.saldo)<0?"var(--red)":"var(--green)"}">${kEur(summe.saldo)}</div>
+      <div style="display:flex;justify-content:center;gap:16px;font-size:var(--s-text);margin-top:4px"><span>Einnahmen <b>+ ${kEur(ein)}</b></span><span>Ausgaben <b>− ${kEur(Math.abs(aus))}</b></span></div>
+    </div>`)
+   +(umlagen.length?karte(`<div style="font-weight:800;font-size:var(--s-karte);margin-bottom:6px">Beiträge</div>
+      ${umlagen.map(u=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--surface2)">
+        <div style="flex:1"><div style="font-weight:700;font-size:var(--s-text)">${esc(u.titel)} · ${kEur(u.betrag)}</div>${u.faellig?`<div style="font-size:var(--s-klein);color:var(--text2)">fällig bis ${kasseDatum(u.faellig)}</div>`:""}</div>
+        <div class="kz-stand" data-u="${u.id}"></div>
+        ${u.paypal_link&&/^https?:\/\//i.test(u.paypal_link)?`<a href="${esc(u.paypal_link)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:10px;background:var(--blue);color:#fff;font-weight:700;text-decoration:none">PayPal</a>`:""}
+      </div>`).join("")}`):"")
+   +karte(`<div style="font-weight:800;font-size:var(--s-karte);margin-bottom:8px">Alle Bewegungen</div>
+      <div role="group" aria-label="Filter" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">${chip("alle","Alle")}${chip("aus","Ausgaben")}${chip("ein","Einnahmen")}</div>
+      <div id="mk-liste">${kasseListeHtml(ledger,sammel,false)}</div>`)
+   +(Object.keys(jeKat).length?karte(`<div style="font-weight:800;font-size:var(--s-karte);margin-bottom:6px">Ausgaben nach Kategorie</div>
+      ${Object.keys(jeKat).sort((a,b)=>jeKat[a]-jeKat[b]).map(k=>`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:var(--s-text)"><span>${kasseKat(k).e} ${esc(kasseKat(k).t)}</span><b>− ${kEur(Math.abs(jeKat[k]))}</b></div>`).join("")}`):"")
+   +`<div style="font-size:var(--s-klein);color:var(--text2);text-align:center">Die App bewegt kein Geld. Gezahlt wird per PayPal oder bar bei der Kasse – hier steht, was angekommen und ausgegeben ist.</div>`;
+  if(typeof elternKasseStandLoad==="function"&&window._elternKids)elternKasseStandLoad(window._elternKids);
+}
+function mannschaftskasseFilter(f){
+  document.querySelectorAll("#mk-modal .mk-filter").forEach(b=>{const an=b.dataset.f===f;b.setAttribute("aria-pressed",String(an));b.style.background=an?"var(--blue)":"var(--surface)";b.style.color=an?"#fff":"var(--text)";});
+  const d=window._mkDaten||{}; const el=document.getElementById("mk-liste"); if(el)el.innerHTML=kasseListeHtml(d.ledger,d.sammel,false,f);
 }
 /* Nur Trainer: wer die Kasse führt. Auswahl aus den verknüpften Elternkonten. */
 async function kasseRolleRender(){
@@ -258,7 +425,9 @@ async function elternKasseRolleLoad(){
   const slot=document.getElementById("kasse-verwalten-slot"); if(!slot)return;
   let ist=false;
   try{const r=await fetch(`${SB_URL}/rest/v1/rpc/is_kasse`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"});if(r.ok)ist=(await r.json())===true;}catch(e){}
-  slot.innerHTML=ist?`<button type="button" onclick="kasseOpen()" style="width:100%;min-height:56px;margin-bottom:10px;border:none;border-radius:14px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">💰 Kasse verwalten</button>`:"";
+  // v699: eigene Kachel „Kasse führen“ direkt unter „Mannschaftskasse“ – nur für die Kasse
+  slot.innerHTML=ist?`<button type="button" id="kasse-fuehren-kachel" onclick="kasseOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:none;border-radius:14px;background:linear-gradient(135deg,#1e3a8a,#0f766e);color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.12)">
+      <span aria-hidden="true" style="font-size:28px">🧾</span><span style="flex:1"><span style="display:block;font-weight:800;font-size:var(--s-karte)">Kasse führen</span><span style="display:block;font-size:var(--s-klein);opacity:.9">Bewegungen erfassen, Belege, Beiträge abhaken</span></span><span aria-hidden="true" style="font-size:var(--s-seite)">›</span></button>`:"";
 }
 async function elternKasseStandLoad(kids){
   const els=[...document.querySelectorAll(".kz-stand[data-u]")]; if(!els.length||!kids||!kids.length)return;
