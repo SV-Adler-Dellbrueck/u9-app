@@ -1096,7 +1096,7 @@ html[data-schrift] .logo-badge{font-size:calc(13px);white-space:nowrap}
 
 /* v640/v641 – Spielsituationen (md-taktikboard.js). Das alte Brett gehört nur noch dem
    Kinder-Quiz; im Quiz ist der Hub durch „body.quiz-extern #view-taktik>*“ weg. */
-body:not(.quiz-extern) #view-taktik>*:not(.sl):not(#sit-hub){display:none!important}
+body:not(.quiz-extern) #view-taktik>*:not(.sl):not(#sit-hub):not(.bereich-kopf){display:none!important}
 #sit-hub{max-width:720px;margin-bottom:10px}
 .sit-formen{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .sit-form{min-height:48px;justify-content:center;flex-direction:column;gap:2px;font-size:var(--s-klein);padding:6px 4px}
@@ -1180,3 +1180,10 @@ details.blz-einst[open]{padding-bottom:6px}
 .spieler-wahl{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:6px}
 .spieler-wahl-btn{min-height:56px;padding:8px 12px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-karte);font-weight:700;text-align:left;cursor:pointer}
 .spieler-wahl-btn:active{transform:scale(.98)}
+/* v689: Bereichskopf (Taktik) – gleiche Maße wie der Kopf der Kachelseiten */
+.bereich-kopf{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.bereich-emo{font-size:26px;line-height:1}
+.bereich-titel{display:block;font-size:var(--s-teil);font-weight:900;color:var(--text)}
+.bereich-sub{display:block;font-size:var(--s-text);color:var(--text2)}
+.sit-formen .sit-form{min-height:56px;font-size:var(--s-text)}
+.sit-weitere{margin-top:0;padding-top:0;border-top:none}

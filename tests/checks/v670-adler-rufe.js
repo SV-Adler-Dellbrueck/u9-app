@@ -13,7 +13,7 @@
       archivieren oder stummschalten; Melden fragt im eigenen Fenster, kein Systemdialog
    e) Moderator: fixieren (mit Dauer), archivieren über RPC, ＋ Raum
    f) Suche fragt text=ilike ab und zeigt Treffer
-   g) Trainer: Kacheln „Adler-Rufe“ und „Adler-Rufe moderieren“; Sicherung enthält die Tabellen */
+   g) Trainer: Kachel „Adler-Rufe“, im Raum der Knopf 🛡️ Moderieren (v689; vorher eigene Kachel); Sicherung enthält die Tabellen */
 "use strict";
 const fs = require("fs"), path = require("path");
 module.exports = async function (h) {
@@ -109,8 +109,10 @@ module.exports = async function (h) {
     window.sbToken = () => tok;
     const out = {};
     const kacheln = _kachelInhalt("elki");
-    out.kacheln = { rufe: /rufeEinstieg/.test(kacheln), mod: /rufeModOpen/.test(kacheln) };
+    out.kacheln = { rufe: /rufeEinstieg/.test(kacheln) };
     await rufeOpen(); await w(300);
+    // v689: Moderieren ist ein Knopf im Raum (🛡️), keine eigene Kachel mehr
+    out.kacheln.mod = !!document.getElementById("rufe-mod-knopf");
     out.raumChips = [...document.querySelectorAll("#rufe-raeume button")].map(b => b.textContent.trim());
     document.getElementById("rufe-text").value = "@alle Treffpunkt 9 Uhr";
     await rufeSenden(); await w(150);

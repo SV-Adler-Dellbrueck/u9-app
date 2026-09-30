@@ -247,7 +247,9 @@
 
 <!-- TAKTIK VIEW -->
 <div id="view-taktik" class="view">
-  <div class="sl nt"><i class="ti ti-arrows-move"></i>Taktikboard</div>
+  <!-- v689: derselbe Bereichskopf wie auf den Kachelseiten (Emoji, Titel, Unterzeile) – vorher
+       stand hier eine kleine Abschnittszeile „Taktikboard“, als wäre man eine Ebene tiefer. -->
+  <div class="bereich-kopf"><span class="bereich-emo" aria-hidden="true">🎯</span><span><span class="bereich-titel">Taktik</span><span class="bereich-sub">Situationen zeigen, zeichnen, speichern</span></span></div>
   <!-- v640/v641: Spielsituationen auf der Zeichenfläche der Übungen (md-taktikboard.js, sitHubRender).
        Alles darunter ist das Brett des Kinder-Quiz (?quiz); im Trainerbereich ist es nie zu sehen.
        Es bleibt Geschwister-Element – die Quiz-Regeln in styles.css zählen auf direkte Kinder
