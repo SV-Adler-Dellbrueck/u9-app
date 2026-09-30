@@ -1166,3 +1166,13 @@ details.el-sect>summary{text-transform:none;letter-spacing:0;color:var(--text)}
    eigene Höhenangabe eines Fensters (48 px bei „Eigene Übung“, Material, Ausstattung) gewinnt.
    Kästchen, Regler und Farbwähler haben ihre eigene Trefferfläche und bleiben, wie sie sind. */
 :where([role="dialog"]) :where(select, textarea, input:not([type=checkbox],[type=radio],[type=range],[type=color],[type=hidden])){min-height:44px}
+/* v687: Schritte im Trainingsplan – Nummer im Kreis vor der Überschrift, Familienfarbe Training */
+.tp-schritt{gap:8px}
+.tp-nr{flex:none;width:26px;height:26px;border-radius:50%;background:var(--fam-training);color:#fff;font-size:var(--s-text);font-weight:900;display:inline-flex;align-items:center;justify-content:center}
+/* v687: Trainingsturnier – Einstellungen als Klappbereich mit Zusammenfassung */
+details.blz-einst{border:1px solid var(--rand-bedien);border-radius:12px;padding:0 12px;margin-bottom:10px;background:var(--surface)}
+details.blz-einst>summary{list-style:none;min-height:56px;display:flex;align-items:center;gap:10px;cursor:pointer}
+details.blz-einst>summary::-webkit-details-marker{display:none}
+details.blz-einst .blz-aendern{font-size:var(--s-text);font-weight:800;color:var(--blue-text)}
+details.blz-einst[open] .blz-aendern{display:none}
+details.blz-einst[open]{padding-bottom:6px}

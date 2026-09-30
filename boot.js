@@ -415,7 +415,7 @@ function tfInPlan(i){
   setTimeout(()=>{
     const sels=[...document.querySelectorAll(".tp-form-sel")];
     const ziel=sels.find(s=>!s.value&&[...s.options].some(o=>o.value===String(i)));
-    if(!ziel){toast("Kein freier passender Slot – erst Phase hinzufügen","err");return;}
+    if(!ziel){toast("Kein freier passender Slot – erst einen Block hinzufügen","err");return;}
     ziel.value=String(i);
     try{tpOnSelectChange(ziel);}catch(e){}
     tpPickSync(ziel.id);
@@ -785,7 +785,13 @@ function awRenderList(){
   const gespeichert=aktivK.some(k=>existing[k.name]);
   const vorab=(!gespeichert&&window._awVorab&&window._awVorab[datum])||null;
   let html=(vorab?`<div id="aw-vorab-hinweis" style="font-size:var(--s-klein);color:var(--text2);margin:8px 0 0;line-height:1.4">📣 Vorbelegt: alle außer Absagen${vorab.absage.size?` (${vorab.absage.size} abgesagt)`:""} – noch nicht gespeichert. Fehlende abwählen und speichern.</div>`:"")
-    +`<button class="btn btn-sm" style="margin:8px 0" onclick="awAlleDa()">✅ Alle da (dann Fehlende abwählen)</button>
+    /* v687: Zählung statt Aufforderung. „Alle da (dann Fehlende abwählen)“ stand auch dann da,
+       wenn schon alle angehakt waren – jetzt zeigt eine Zeile den Stand, und „Alle da“ kommt nur,
+       wenn jemand fehlt. Der Speichern-Knopf nennt dieselbe Zahl (awZaehlen). */
+    +`<div id="aw-zaehlung" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0">
+      <span id="aw-zahl" style="font-size:var(--s-karte);font-weight:900"></span>
+      <button class="btn btn-sm" id="aw-alle" style="margin-left:auto" onclick="awAlleDa()">✅ Alle da</button>
+    </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">`;
   aktivK.forEach(k=>{
     const p=existing[k.name]||{da:vorab?!vorab.absage.has(k.name):false,qual:0};
@@ -799,11 +805,19 @@ function awRenderList(){
   html+='</div>';
   wrap.innerHTML=html;
   awRenderStats();
+  awZaehlen();
+}
+function awZaehlen(){
+  const alle=[...document.querySelectorAll("#aw-list .aw-tile")], da=alle.filter(b=>b.classList.contains("on")).length, fehlt=alle.length-da;
+  const z=document.getElementById("aw-zahl"); if(z)z.textContent=`✓ ${da} da · ${fehlt} fehl${fehlt===1?"t":"en"}`;
+  const a=document.getElementById("aw-alle"); if(a)a.hidden=!fehlt;
+  const k=document.getElementById("aw-save-btn"); if(k&&alle.length)k.lastChild.textContent=` Anwesenheit speichern · ${da} da`;
 }
 
 function awToggle(btn,name){
   window._awDirty=true; // Haken gesetzt, aber noch nicht gespeichert
   btn.classList.toggle("on");
+  awZaehlen();
 }
 /* v475: Trainer-Haken in der Anwesenheit. Ist der Tag noch nicht da, geht der Tipp in die
    Quelle (Rueckmeldung des Trainings-Termins); am Tag selbst ist er Teil der Anwesenheit
@@ -820,6 +834,7 @@ async function awTrainerToggle(cb){
 function awAlleDa(){
   document.querySelectorAll("#aw-list .aw-tile").forEach(b=>b.classList.add("on"));
   try{navigator.vibrate&&navigator.vibrate(20);}catch(e){}
+  awZaehlen();
 }
 
 function awSave(){
@@ -2959,7 +2974,7 @@ function tpAddSlot(){
   const opts=TP_ADD_OPTS;
   let btns=opts.map((o,i)=>`<button onclick="tpDoAddSlot('${o.typ}');this.closest('div[style*=fixed]').remove()" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 12px;border:1px solid var(--rand-bedien);border-left:3px solid ${o.farbe};border-radius:var(--r);background:var(--surface);cursor:pointer;font-family:inherit;font-size:var(--s-text);text-align:left"><span style="font-size:var(--s-teil)">${o.icon}</span><div><strong>${o.label}</strong><br><span style="font-size:var(--s-klein);color:var(--text2)">${tpKannParallel(o.typ)?"parallel zum Hauptteil, gleiche Dauer":o.dauer+" Min."}</span></div></button>`).join("");
   modal.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:320px;width:100%">
-    <div style="font-size:var(--s-text);font-weight:700;margin-bottom:10px">Phase hinzufügen</div>
+    <div style="font-size:var(--s-text);font-weight:700;margin-bottom:10px">Block hinzufügen</div>
     <div style="display:flex;flex-direction:column;gap:6px">${btns}</div>
   </div>`;
   document.body.appendChild(modal);
@@ -3893,7 +3908,7 @@ async function tpVorplanLoad(){
   const heute=new Date().toISOString().slice(0,10);
   const rows=(await _termineSelLoad()).filter(t=>t.typ==="training"&&t.datum>=heute)
     .sort((a,b)=>a.datum<b.datum?-1:1).slice(0,TP_VORPLAN_MAX);
-  const kopf=`<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:6px">🗓️ Welcher Termin?</div>`;
+  const kopf="";   // v687: die Schritt-Überschrift „1 Termin“ darüber sagt es schon
   /* Ohne Termin keine Terminwahl: ein Satz und der Weg dorthin, wo Termine entstehen.
      Vorher stand hier bei weniger als zwei Terminen einfach nichts – zusammen mit dem
      entfallenen Dropdown wäre der Trainingsplan damit unbedienbar geworden. */
