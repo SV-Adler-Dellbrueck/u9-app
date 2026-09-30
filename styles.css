@@ -1187,3 +1187,5 @@ details.blz-einst[open]{padding-bottom:6px}
 .bereich-sub{display:block;font-size:var(--s-text);color:var(--text2)}
 .sit-formen .sit-form{min-height:56px;font-size:var(--s-text)}
 .sit-weitere{margin-top:0;padding-top:0;border-top:none}
+/* v692: Schwierigkeit im Übungsdetail – gewählte Stufe nicht nur über Farbe */
+#uebung-sterne button[aria-pressed="true"]{border:2px solid var(--green);background:var(--green-bg);font-weight:800}
