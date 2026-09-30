@@ -1449,21 +1449,19 @@ function tpShowExercise(formIdx,planMin){
   const eigene=!!(f.custom||f.id);
   const modal=document.createElement("div");
   modal.id="uebung-modal";
+  // v691: als Dialog gekennzeichnet – vorher griff der zentrale Fokus-Trap hier nicht
+  modal.setAttribute("role","dialog"); modal.setAttribute("aria-modal","true"); modal.setAttribute("aria-labelledby","uebung-modal-titel");
   modal.style.cssText="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px";
   if(typeof zOben==="function")modal.style.zIndex=zOben(9999);
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
   modal.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:380px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.25)">
     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
-      <div style="font-size:var(--s-karte);font-weight:700;color:var(--text)">${esc(f.name)}</div>
+      <div id="uebung-modal-titel" style="font-size:var(--s-karte);font-weight:700;color:var(--text)">${esc(f.name)}</div>
       <button aria-label="Schließen" onclick="this.closest('div[style*=fixed]').remove()" style="min-width:44px;min-height:44px;background:none;border:none;font-size:var(--s-teil);cursor:pointer;color:var(--text2)">×</button>
     </div>
     ${zeigKurz?`<div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px">${esc(kurz)}</div>`:""}
-    ${f.svg
-      ? `<div id="uebung-skizze" style="margin-bottom:2px">${f.svg}</div>${typeof skzLegende==="function"?skzLegende(false,_skzSpecSicher(f)):""}${typeof skzBilderLeiste==="function"?skzBilderLeiste(formIdx):""}${typeof matBedarfZeile==="function"?matBedarfZeile(_skzSpecSicher(f)):""}${typeof skzGrossKnopf==="function"?skzGrossKnopf(f.name,formIdx):""}${typeof skzTeilenKnopf==="function"?skzTeilenKnopf(f.name):""}`
-      : (eigene?`<div style="border:1px dashed var(--text3);border-radius:10px;padding:12px;margin-bottom:8px;text-align:center">
-          <div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:8px">Für diese Übung gibt es noch keine Skizze.</div>
-          <button onclick="uebungSkizzeNachtragen(${formIdx})" style="min-height:44px;padding:8px 14px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">🎨 Skizze zeichnen</button>
-        </div>`:"")}
+    <!-- v691: Kennzahlen zuerst, dann Bild, Ablauf und Coaching; die Handlungen (bearbeiten,
+         kopieren) ans Ende – vorher standen sie zwischen Ablauf und Coaching-Tipps. -->
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
       ${planMin
         ?`<span class="tp-ex-planzeit" style="font-size:var(--s-klein);font-weight:700;background:var(--surface2);border:1px solid var(--rand-bedien);padding:2px 6px;border-radius:4px">⏱ Im Plan: ${planMin} Min.</span>${f.dauer&&String(f.dauer).trim()!==String(planMin)?`<span style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">Richtwert ${esc(f.dauer)}${/min/i.test(String(f.dauer))?"":" Min."}</span>`:""}`
@@ -1472,13 +1470,19 @@ function tpShowExercise(formIdx,planMin){
       <span style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">📐 ${f.feld||"?"}</span>
       ${(function(){const b=typeof tpBetreuungWert==="function"?tpBetreuungWert(f):null;return b?`<span class="tp-ex-betr" style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">👤 ${UEBUNG_BETREUUNG[b.wert].kurz}${b.bestaetigt?"":" (Vorschlag)"}</span>`:"";})()}
     </div>
+    ${f.svg
+      ? `<div id="uebung-skizze" style="margin-bottom:2px">${f.svg}</div>${typeof skzLegende==="function"?skzLegende(false,_skzSpecSicher(f)):""}${typeof skzBilderLeiste==="function"?skzBilderLeiste(formIdx):""}${typeof matBedarfZeile==="function"?matBedarfZeile(_skzSpecSicher(f)):""}${typeof skzGrossKnopf==="function"?skzGrossKnopf(f.name,formIdx):""}${typeof skzTeilenKnopf==="function"?skzTeilenKnopf(f.name):""}`
+      : (eigene?`<div style="border:1px dashed var(--text3);border-radius:10px;padding:12px;margin-bottom:8px;text-align:center">
+          <div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:8px">Für diese Übung gibt es noch keine Skizze.</div>
+          <button onclick="uebungSkizzeNachtragen(${formIdx})" style="min-height:44px;padding:8px 14px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">🎨 Skizze zeichnen</button>
+        </div>`:"")}
     <div style="font-size:var(--s-klein);color:var(--text);white-space:pre-wrap;line-height:1.5;margin-bottom:8px">${esc(f.ablauf||"")}</div>
+    ${f.coaching?`<div style="font-size:var(--s-klein);color:var(--text2);background:var(--surface);padding:8px;border-radius:6px;white-space:pre-wrap;margin-bottom:8px"><strong>🎯 Coaching-Tipps:</strong>\n${esc(f.coaching)}</div>`:""}
+    ${tpReiheHtml(f.name)}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
       ${uebungEditierbar(f)?`<button type="button" class="btn" onclick="uebungBearbeiten(${formIdx})" style="flex:1 1 140px;min-height:44px;justify-content:center"><i class="ti ti-pencil"></i>Übung bearbeiten</button>`:""}
       <button type="button" class="btn" onclick="uebungKopieren(${formIdx})" style="flex:1 1 140px;min-height:44px;justify-content:center"><i class="ti ti-copy"></i>Übung kopieren</button>
     </div>
-    ${tpReiheHtml(f.name)}
-    ${f.coaching?`<div style="font-size:var(--s-klein);color:var(--text2);background:var(--surface);padding:8px;border-radius:6px;white-space:pre-wrap"><strong>🎯 Coaching-Tipps:</strong>\n${esc(f.coaching)}</div>`:""}
     ${histHtml}
   </div>`;
   document.body.appendChild(modal);
@@ -4000,7 +4004,7 @@ function stTimerStart(){
   if(!st.length){toast("Kein Plan vorhanden – erst Stationen anlegen (Auto-Plan)","err");return;}
   _stT={ix:0,left:st[0].dauer*60,timer:null,stations:st,paused:false};
   document.getElementById("st-timer")?.remove();
-  const ov=document.createElement("div"); ov.id="st-timer";
+  const ov=document.createElement("div"); ov.id="st-timer"; ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-label","Solo-Timer");   // v691
   ov.style.cssText="position:fixed;inset:0;background:#0b1220;color:#fff;z-index:11000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;font-family:inherit";
   document.body.appendChild(ov);
   stTimerRender();

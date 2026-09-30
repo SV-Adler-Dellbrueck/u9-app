@@ -159,7 +159,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 
 .mgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:.75rem}
 .mg{display:flex;flex-direction:column;gap:4px}
-.mg label{font-size:var(--s-klein);font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)}
+.mg label{font-size:var(--s-klein);font-weight:700;color:var(--text2)} /* v691: ohne Großbuchstaben, wie die Überschriften seit v682 */
 .mg input,.mg select,.mg textarea{padding:8px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:var(--s-text);background:var(--surface);color:var(--text);outline:none;font-family:inherit;transition:border-color .15s;width:100%}
 .mg input:focus,.mg select:focus,.mg textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,86,219,.1)}
 .s2{grid-column:span 2}.s3{grid-column:span 3}
