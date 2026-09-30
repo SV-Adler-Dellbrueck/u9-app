@@ -1,4 +1,4 @@
-const CACHE="u9i-adler-v698";
+const CACHE="u9i-adler-v699";
 const PRECACHE=[
   "./",
   "./index.html",
@@ -234,8 +234,10 @@ self.addEventListener("notificationclick",e=>{
 });
 function _fensterFragen(c,ziel){
   return new Promise(fertig=>{
-    let erledigt=false; const ende=v=>{ if(!erledigt){ erledigt=true; fertig(v); } };
-    try{ const kanal=new MessageChannel(); kanal.port1.onmessage=ev=>ende(!!(ev.data&&ev.data.ok));
+    let erledigt=false, kanal=null;
+    // v699: den Kanal schließen, sobald die Antwort da ist oder die Zeit um ist – sonst bleibt er offen
+    const ende=v=>{ if(!erledigt){ erledigt=true; try{ kanal&&kanal.port1.close(); }catch(_){} fertig(v); } };
+    try{ kanal=new MessageChannel(); kanal.port1.onmessage=ev=>ende(!!(ev.data&&ev.data.ok));
       c.postMessage({art:"push-ziel",url:ziel},[kanal.port2]); }catch(_){ ende(false); return; }
     setTimeout(()=>ende(false),1500);
   });

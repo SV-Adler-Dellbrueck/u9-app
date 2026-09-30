@@ -970,7 +970,13 @@ async function elternDashLoad(){
   html+=sec("Mehr");
   // v637: Der Weg zum Trainerteam steht zuerst und heißt so, wie Eltern danach suchen.
   html+=catBtn('kontakt','🗣️','Trainerteam kontaktieren','Frage oder Elterngespräch, Benachrichtigungen','linear-gradient(135deg,#475569,#334155)');
-  html+=catBtn('mehr','📰','Mehr vom Team','Adler Nest, Börse, Fundbüro, Kasse','linear-gradient(135deg,#1e3a8a,#2563eb)');
+  /* v699: Mannschaftskasse als eigene Kachel – alle Eltern lesen Kassenstand und jede Bewegung;
+     darunter „Kasse führen“, nur für die Kasse (elternKasseRolleLoad füllt den Slot). */
+  const mkSaldo=kasse&&kasse.saldo!=null?`Kassenstand ${Number(kasse.saldo).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})} € · Ausgaben und Beiträge`:"Kassenstand, Ausgaben und Beiträge";
+  html+=`<button type="button" id="mannschaftskasse-kachel" onclick="if(typeof mannschaftskasseOpen==='function')mannschaftskasseOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:none;border-radius:14px;background:linear-gradient(135deg,#0f766e,#115e59);color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.12)">
+    <span aria-hidden="true" style="font-size:28px">💰</span><span style="flex:1"><span style="display:block;font-weight:800;font-size:var(--s-karte)">Mannschaftskasse</span><span style="display:block;font-size:var(--s-klein);opacity:.9">${mkSaldo}</span></span><span aria-hidden="true" style="font-size:var(--s-seite)">›</span></button>`;
+  html+=`<div id="kasse-verwalten-slot"></div>`;   // v664/v699: „Kasse führen“ – nur für die Kasse
+  html+=catBtn('mehr','📰','Mehr vom Team','Adler Nest, Börse, Fundbüro','linear-gradient(135deg,#1e3a8a,#2563eb)');
   html+=catBtn('regeln','📋','Regeln &amp; Vereinbarungen','Unsere Vereinbarung &amp; das Fairplay-Quiz','linear-gradient(135deg,#15803d,#047857)');
   html+=catBtn('datenschutz','🔒','Datenschutz &amp; Freigaben','Foto/Video, Notfallkarte, Datenexport','linear-gradient(135deg,#0f766e,#115e59)');
   // Versionszeile: hilft, wenn jemand „bei mir sieht das anders aus" meldet (v409)
@@ -1006,18 +1012,7 @@ async function elternDashLoad(){
   html+=elRow("🧦","Fundbüro","Verlorenes &amp; Gefundenes – hier sammelt das Team","fundbueroOpen()","#3b82f6");
   html+=`<div id="skill-slot"></div>`;        // Skill der Woche
   if(WAESCHE_AKTIV)html+=`<div id="waesche-slot"></div>`;  // Trikot-Wäsche-Rotator (aktuell ausgeblendet)
-  html+=`<div id="kasse-verwalten-slot"></div>`;   // v664: nur für die Kasse
-  if(kasse&&(Number(kasse.saldo)!==0||(kasse.umlagen&&kasse.umlagen.length))){
-    const eur=n=>Number(n||0).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";
-    html+=card(`<div style="font-weight:700;margin-bottom:6px">💰 Teamkasse</div>
-      <div style="font-size:var(--s-text);color:#475569">Kassenstand: <b>${eur(kasse.saldo)}</b></div>
-      ${(kasse.umlagen||[]).map(u=>`<div style="display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px">
-        <div style="flex:1"><div style="font-weight:700;font-size:var(--s-text)">${esc(u.titel)} · ${eur(u.betrag)}</div>${u.faellig?`<div style="font-size:var(--s-klein);color:#64748b">fällig bis ${u.faellig}</div>`:""}</div>
-        <div class="kz-stand" data-u="${u.id}"></div>
-        ${u.paypal_link?`<a href="${esc(u.paypal_link)}" target="_blank" rel="noopener noreferrer" style="background:#0070ba;color:#fff;border-radius:8px;padding:8px 12px;font-size:var(--s-text);font-weight:700;text-decoration:none">PayPal</a>`:""}
-      </div>`).join("")}
-      <div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px">Informativ. Zahlungen laufen extern über PayPal.</div>`);
-  }
+  // v699: Teamkasse-Karte und „Kasse verwalten“ sind in die Kacheln „Mannschaftskasse“ / „Kasse führen“ umgezogen
   html+=`<div id="ak-slot"></div>`; // FEAT Z: Adler-Kasse (async, nur wenn Link gesetzt)
   html+=`</div>`; // /cat-mehr
   html+=`<div id="cat-regeln" class="el-cat-panel" style="display:none">`;
@@ -1071,7 +1066,7 @@ async function elternDashLoad(){
   elternTeamAnsprechLoad();                    // v663: Elternbeirat, Kasse, Beitrag
   if(typeof elternKasseRolleLoad==="function")elternKasseRolleLoad();      // v664: Kasse verwalten
   if(typeof rufeBadgeLoad==="function")rufeBadgeLoad();                    // v670: neue Adler-Rufe
-  if(typeof elternKasseStandLoad==="function")elternKasseStandLoad(kids);  // v664: bezahlt/offen je eigenes Kind
+  window._elternKids=kids;   // v699: die Mannschaftskasse zeigt den Stand der eigenen Kinder beim Öffnen
   elternGenesungLoad(kids);                    // I-A: Genesungsgrüße für pausierte Teamkinder
   elternHelferTodoLoad();                      // J3: heute als Helfer eingetragen? Erinnerung mit Direktlink
   elternMitbringLoad(kids);                    // Event-Mitbringliste: wer bringt was mit

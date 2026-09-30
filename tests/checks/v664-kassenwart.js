@@ -6,7 +6,7 @@
    a) Teamkasse: je aktive Umlage „Wer hat bezahlt“ mit Knopf je Kind (44 px, aria-pressed,
       „offen“ als Text); Antippen schreibt kasse_zahlung {umlage_id, spieler_id}
    b) Trainer übergibt die Kasse an ein verknüpftes Elternkonto (kasse_team)
-   c) Eltern-Bereich: „Kasse verwalten“ nur, wenn is_kasse wahr ist
+   c) Eltern-Bereich: „Kasse verwalten“ (seit v699 Kachel „Kasse führen“) nur, wenn is_kasse wahr ist
    d) Eltern sehen je Umlage den Stand ihres Kindes (✓ bezahlt / offen)
    e) „Offene erinnern“ ruft push-send mit art kasse_erinnerung und meldet die Zahl der Familien
    f) Blockierte Benachrichtigungen: Anleitung statt „nicht erlaubt“
@@ -77,7 +77,7 @@ module.exports = async function (h) {
       return { knopf: slot.textContent.trim(), st, hilfe: hilfe.replace(/\s+/g, " ") };
     });
     await s.schliessen();
-    if (ist && !/Kasse verwalten/.test(r.knopf)) probleme.push("c) Kasse sieht „Kasse verwalten“ nicht");
+    if (ist && !/Kasse führen|Kasse verwalten/.test(r.knopf)) probleme.push("c) Kasse sieht „Kasse verwalten“ nicht");
     if (!ist && r.knopf) probleme.push("c) Normales Elternteil sieht „Kasse verwalten“");
     if (ist) {
       if (!/✓ bezahlt/.test(r.st[0]) || !/offen/.test(r.st[1])) probleme.push("d) Stand je Umlage falsch: " + r.st.join(" | "));
