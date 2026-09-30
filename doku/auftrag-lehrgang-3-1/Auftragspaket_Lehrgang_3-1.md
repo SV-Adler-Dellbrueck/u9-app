@@ -3,7 +3,7 @@
 Repo `SV-Adler-Dellbrueck/u9-app`, Stand 19.09.2026 (App v582). Gilt zusammen mit `CLAUDE.md`
 und `Projektgedaechtnis/skizzen-format.md` im privaten Repo.
 
-> **Status: offen.** Entstanden im Projekt-Chat. Zusammengeführt wird auf Charles' Wort.
+> **Status: erledigt** (v583, Nachtrag v602).
 
 ## Ausgangslage
 

@@ -3648,6 +3648,12 @@ const UEB_REIHEN={
 };
 const SKZ_PFEIL={p:'#ffffff',l:'#fde047',s:'#fca5a5',d:'#7dd3fc'};
 const SKZ_PFEIL_NAME={p:'Pass',l:'Laufweg',s:'Schuss',d:'Dribbling'};
+/* v700 – WURFSPIELE (Lehrgang 5.2, PO 30.09.: „Schuss ist ja ein Wurf.“). Die Wegarten bleiben
+   dieselben vier; eine Skizze mit `wurf:true` nennt Pass und Schuss nur anders – im Editor, in
+   der Legende der App und im Export steht damit dasselbe Wort. Kleinster Eingriff statt zweier
+   neuer Pfeilarten, die Prüfung, Zeichnung und Material alle hätten kennen müssen. */
+const SKZ_WURF_NAME={p:'Zuwurf',s:'Torwurf'};
+function skzPfeilName(spec,k){ return (spec&&spec.wurf===true&&SKZ_WURF_NAME[k])||SKZ_PFEIL_NAME[k]; }
 /* v555 – Zwei Rasenvarianten. Dunkel ist die geprüfte Fassung aus v512/v517 und bleibt
    der Standard; hell kam für die Sonne am Platz und die Besprechung am Tablet dazu.
    Der EINZIGE Unterschied ist die Palette: gezeichnet wird Zug für Zug dasselbe, und
@@ -3769,6 +3775,7 @@ function skzSpecSaeubern(spec){
   const F="grbyw", GER=["stange","teller","huerde","depot","ring","dummy","trainer"];
   const aus={};
   if(hoch)aus.hoch=true;
+  if(spec.wurf===true)aus.wurf=true;   // v700: Wurfspiel – Pass und Schuss heißen Zuwurf und Torwurf
   aus.h=liste(spec.h,e=>punkt(e,e=>[farbe(e[2],F,"y")]),24);
   aus.s=liste(spec.s,e=>punkt(e,e=>{ const k=text(e[3],3).replace(/[^0-9A-Za-zÄÖÜäöüß]/g,"");
                                      return k?[farbe(e[2],F,"g"),k]:[farbe(e[2],F,"g")]; }),16);
@@ -4110,8 +4117,8 @@ function skzLegende(hell,spec){
   const wl=c=>'<svg width="32" height="12" viewBox="0 0 32 12" style="flex:none;background:'+R+';border-radius:3px"><path d="'+_skzWelle(2,6,24,6)+'" fill="none" stroke="'+c+'" stroke-width="1.5" stroke-linecap="round"/><path d="M24,2.5 L30,6 L24,9.5 Z" fill="'+c+'"/></svg>';
   const P2=P.pfeil;
   return '<div class="skz-legende" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:10px;color:var(--text2);margin:2px 0 8px">'
-    +(hat("p")?it(li('',1.5,P2.p),SKZ_PFEIL_NAME.p):"")+(hat("l")?it(li('5,3',1.5,P2.l),SKZ_PFEIL_NAME.l):"")
-    +(hat("s")?it(li('',3,P2.s),SKZ_PFEIL_NAME.s):"")+(hat("d")?it(wl(P2.d),SKZ_PFEIL_NAME.d):"")
+    +(hat("p")?it(li('',1.5,P2.p),skzPfeilName(spec,"p")):"")+(hat("l")?it(li('5,3',1.5,P2.l),skzPfeilName(spec,"l")):"")
+    +(hat("s")?it(li('',3,P2.s),skzPfeilName(spec,"s")):"")+(hat("d")?it(wl(P2.d),skzPfeilName(spec,"d")):"")
     +(hat("sz")?it(st('5,4',P.sz),'Schusszone'):"")+(hat("m")?it(st('',P.mittel),'Mittellinie'):"")
     +_skzGerLegende(spec,hell)+'</div>';
 }
@@ -4717,6 +4724,8 @@ const UEBUNG_ART_VORSCHLAG={
      die Kennung, die `UEBUNG_ART` als „Spielform“ auflöst. */
   "Raute mit Torwart – Angriff über den anderen Flügel":"spiel",
   "Frei für den Wurf":"spiel",   // v678: Punkte als Ausgang – Hauptteil, Leitfrage 5
+  "Korb-Chaos-Funino (360°-Variante)":"spiel",   // v700: Lehrgang 5.2 – 3 gegen 3 als Wurfspiel
+  "Endzone und Fähnchen":"spiel",   // v700: L5-7 – Endzonenspiel 4 gegen 4
   /* v684 – Lehrgangsabgabe 4.0: Trainingsform für ERWACHSENE (Ü32), aus PR #210. Im Namen steht
      die Zielgruppe, damit sie in keiner U9-Planung für eine Kinderübung gehalten wird. */
   "Lehrgang Erwachsene (Ü32) – 4 gegen 4 + Torhüter: Umschalten nach Ballgewinn":"spiel",
@@ -4892,6 +4901,10 @@ const UEBUNG_BETREUUNG_VORSCHLAG={
   "Raute mit Torwart – Angriff über den anderen Flügel":"feld",
   /* v678: feste Regeln, die Kinder zählen ihre Würfe selbst – der Trainer stellt nur die Stufe um */
   "Frei für den Wurf":"allein",
+  /* v700: Endzone – feste Regeln, die Kinder spielen selbst; der Trainer schaltet nur die Stufe um */
+  "Endzone und Fähnchen":"allein",
+  /* v700: Lehrgang 5.2 – der Trainer wirft nach jedem Treffer einen neuen Ball ein und zählt in Runde 2 */
+  "Korb-Chaos-Funino (360°-Variante)":"feld",
   /* v684: der Trainer zählt die 8 Sekunden und friert in den ersten Durchgängen ein */
   "Lehrgang Erwachsene (Ü32) – 4 gegen 4 + Torhüter: Umschalten nach Ballgewinn":"fuehrt"
 };

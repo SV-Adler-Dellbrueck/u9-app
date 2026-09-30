@@ -41,9 +41,9 @@ function imBrowserHelfer(){
   window._expLegende=function(spec,BREITE,H_SKZ){
     const A=(typeof skzLegendeArten==="function")?skzLegendeArten(spec):null;
     const eintraege=[
-      {key:"p", art:"linie",c:SKZ_PFEIL.p,w:1.5,dash:"",  kopf:true, txt:SKZ_PFEIL_NAME.p},
+      {key:"p", art:"linie",c:SKZ_PFEIL.p,w:1.5,dash:"",  kopf:true, txt:(typeof skzPfeilName==="function"?skzPfeilName(spec,"p"):SKZ_PFEIL_NAME.p)},
       {key:"l", art:"linie",c:SKZ_PFEIL.l,w:1.5,dash:"5,3",kopf:true, txt:SKZ_PFEIL_NAME.l},
-      {key:"s", art:"linie",c:SKZ_PFEIL.s,w:3,  dash:"",  kopf:true, txt:SKZ_PFEIL_NAME.s},
+      {key:"s", art:"linie",c:SKZ_PFEIL.s,w:3,  dash:"",  kopf:true, txt:(typeof skzPfeilName==="function"?skzPfeilName(spec,"s"):SKZ_PFEIL_NAME.s)},
       /* v583: durchgezogen und geschwungen wie im Bild darueber (v578). */
       {key:"d", art:"welle",c:SKZ_PFEIL.d,w:1.5,dash:"",  kopf:true, txt:SKZ_PFEIL_NAME.d},
       {key:"sz",art:"linie",c:"#fbbf24",   w:2,  dash:"5,4",kopf:false,txt:"Schusszone"},

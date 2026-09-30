@@ -1,6 +1,6 @@
 {
   "schema": "adler-vorlagen/1",
-  "stand": "2026-09-29-2",
+  "stand": "2026-09-30-1",
   "vorlagen": [
     {
       "name": "L1-1 Ball behalten – Duell um zwei Tore",
@@ -2146,6 +2146,59 @@
           "label": "Hauptteil 3 – offen: 3 gegen 3 auf vier Minitore, keine Zusatzregel",
           "dauer": 10,
           "uebung_name": "3 gegen 3 auf vier Minitore mit Schusszone"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier",
+          "dauer": 18
+        }
+      ]
+    },
+    {
+      "name": "L5-7 Endzone und Fähnchen – Freilaufen und Zustellen",
+      "leitfrage": "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?",
+      "ziel_kinder": "Heute läufst du dich frei, damit dein Mitspieler dich sieht – und ohne Ball stellst du dich so, dass du das Bändchen erreichst.",
+      "folge_nr": 7,
+      "tags": [],
+      "dauer_min": 75,
+      "netto_spielform_min": 38,
+      "skalierung": {
+        "8": "1 Feld 28 x 24 m, 4 gegen 4, Endzonen je 4 m",
+        "10": "1 Feld 32 x 26 m, 5 gegen 5, Endzonen je 4 m",
+        "12": "2 Felder je 26 x 20 m, je 3 gegen 3, Endzonen je 4 m; Stufe 2 nach Wirkung getrennt",
+        "14": "2 Felder je 28 x 22 m, je 4 gegen 3 mit wechselnder Überzahl, Endzonen je 4 m"
+      },
+      "beobachtung": "Wer hat sich ohne Ball freigelaufen wie ein Flitzer, wer hat ohne Ball den Weg wie ein Aufpasser zugestellt – und wer hat wie ein Jäger das Bändchen gezogen statt hinterherzurennen?",
+      "ordnung": "Endzone (4 gegen 4)",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 1 – frei: Endzonenspiel",
+          "dauer": 12,
+          "uebung_name": "Endzone und Fähnchen"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 2 – eng: Bändchen ziehen ersetzt den Zweikampf",
+          "dauer": 12,
+          "uebung_name": "Endzone und Fähnchen"
+        },
+        {
+          "typ": "main",
+          "label": "Stufe 3 – offen: Bändchen weg, Feld breiter",
+          "dauer": 10,
+          "uebung_name": "Endzone und Fähnchen"
         },
         {
           "typ": "abschluss",
