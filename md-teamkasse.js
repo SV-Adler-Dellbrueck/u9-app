@@ -128,9 +128,10 @@ async function adlerkasseSave(){
   const link=(document.getElementById("ak-link")?.value||"").trim()||null;
   if(link&&!/^https?:\/\//i.test(link)){toast("Bitte einen vollständigen Link mit https:// eingeben","err");return;}
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/team_config?on_conflict=id`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({id:1,spenden_link:link,updated_at:new Date().toISOString()})});
+    // v698: über kasse_spenden_link_setzen – so darf auch die Kasse (Elternteil) den Link pflegen
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/kasse_spenden_link_setzen`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_link:link})});
     if(sbCheck401(r))return;
-    if(!r.ok){toast("Speichern fehlgeschlagen","err");return;}
+    if(!r.ok){const d=await r.json().catch(()=>({}));toast(d.message||"Link nicht gespeichert","err");return;}
   }catch(e){toast("Netzwerkfehler","err");return;}
   toast(link?"🦅 Adler-Kasse-Link gespeichert ✓":"Link entfernt");
 }
