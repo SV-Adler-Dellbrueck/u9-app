@@ -1104,13 +1104,15 @@ async function pushRenderInto(elId, rolle){
    (Edge Function push-send, art „test“ – nur an das eigene Abo, fester Text, niemand sonst
    bekommt etwas). So lässt sich prüfen, ob Meldungen ankommen, ohne jemanden zu stören und
    ohne auf den 5-Minuten-Takt der Adler-Rufe zu warten. */
+// v696: die Test-Meldung öffnet beim Antippen die App, aus der sie angefordert wurde
+function pushTestZiel(){ const m=location.pathname.match(/\/(trainer|eltern|kinder)\//); return "./"+(m?m[1]:"trainer")+"/"; }
 async function pushTest(knopf){
   if(!sbToken()){toast("Bitte zuerst anmelden","err");return;}
   const sub=await pushCurrentSub();
   if(!sub){toast("Auf diesem Gerät sind keine Benachrichtigungen an","err");return;}
   if(knopf){knopf.disabled=true;knopf.textContent="📨 Wird gesendet …";}
   try{
-    const r=await fetch(`${SB_URL}/functions/v1/push-send`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({art:"test",endpoint:sub.endpoint})});
+    const r=await fetch(`${SB_URL}/functions/v1/push-send`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({art:"test",endpoint:sub.endpoint,url:pushTestZiel()})});
     const d=await r.json().catch(()=>({}));
     if(r.ok&&d.sent)toast("📨 Test gesendet – die Meldung kommt in wenigen Sekunden");
     else toast(d.error||"Test konnte nicht gesendet werden","err");
