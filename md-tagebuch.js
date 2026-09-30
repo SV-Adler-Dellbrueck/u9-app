@@ -212,7 +212,7 @@ async function tbAutor(){
 function tbOeffnen(vor){
   document.getElementById("tb-modal")?.remove();
   const kons = Array.isArray(vor.kons) && vor.kons.length ? vor.kons.map(k=>({...k}))
-             : [{ id:null, text:vor.konsequenz||"", bis:vor.konsequenz_bis||"", erledigt_am:null }];
+             : [{ id:null, text:vor.konsequenz||"", bis:vor.konsequenz_bis||"", erledigt_am:null, dauerhaft:false }];
   _TB = { ...vor, werte:{ baustein:vor.baustein||null, ausloeser:vor.ausloeser||"",
           beobachtung:vor.beobachtung||"", aha:vor.aha||"", konsequenz:kons[0].text||"", konsequenz_bis:kons[0].bis||"",
           beleg:vor.beleg||"", anschluss:vor.anschluss||"", schlagworte:vor.schlagworte||"" },
@@ -246,12 +246,14 @@ function tbFelderLesen(){
   (_TB.kons||[]).forEach((k,i)=>{
     const t = document.getElementById(i ? "tb-konsequenz-"+i : "tb-konsequenz");
     const b = document.getElementById(i ? "tb-konsequenz_bis-"+i : "tb-konsequenz_bis");
-    if(t) k.text = t.value; if(b) k.bis = b.value;
+    const d = document.getElementById(i ? "tb-konsequenz_dauerhaft-"+i : "tb-konsequenz_dauerhaft");
+    if(t) k.text = t.value; if(b) k.bis = b.value; if(d) k.dauerhaft = d.checked;
+    if(k.dauerhaft) k.bis = "";
   });
   if(_TB.kons && _TB.kons[0]){ _TB.werte.konsequenz = _TB.kons[0].text||""; _TB.werte.konsequenz_bis = _TB.kons[0].bis||""; }
 }
 function tbBaustein(key){ if(!_TB) return; tbFelderLesen(); _TB.werte.baustein=key; tbRender(); }
-function tbKonsDazu(){ if(!_TB) return; tbFelderLesen(); if(_TB.kons.length<5) _TB.kons.push({id:null,text:"",bis:"",erledigt_am:null}); tbRender(); }
+function tbKonsDazu(){ if(!_TB) return; tbFelderLesen(); if(_TB.kons.length<5) _TB.kons.push({id:null,text:"",bis:"",erledigt_am:null,dauerhaft:false}); tbRender(); }
 /* v679 · Wer kommt vor? Gesetzt beim Ausarbeiten, von Hand – nie aus dem Text geraten. */
 function tbKindUmschalten(kid){ if(!_TB) return; tbFelderLesen(); kid = Number(kid); if(_TB.kinder.has(kid)) _TB.kinder.delete(kid); else _TB.kinder.add(kid); tbRender(); }
 
@@ -322,8 +324,9 @@ function tbRender(){
 
     ${_TB.kons.map((k,i)=>`<label style="${lbl}">${i?"Weitere Konsequenz":"Konsequenz"}${i?"":fuerFertig}${k.erledigt_am?` <span style="font-weight:600;color:var(--green)">· ✓ erledigt am ${tbDatumDe(k.erledigt_am)}</span>`:""}
       <textarea id="${i?"tb-konsequenz-"+i:"tb-konsequenz"}" class="wachsen" rows="2" onfocus="tbFokus('${i?"konsequenz-"+i:"konsequenz"}')" placeholder="Was machst du beim nächsten Mal anders?" style="${fld};resize:vertical;margin-top:3px">${esc(k.text||"")}</textarea></label>
-      <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:4px">Bis wann
-      <input type="date" id="${i?"tb-konsequenz_bis-"+i:"tb-konsequenz_bis"}" value="${esc(k.bis||"")}" style="${fld};margin-top:3px"></label>`).join("")}
+      ${k.dauerhaft?"":`<label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:4px">Bis wann
+      <input type="date" id="${i?"tb-konsequenz_bis-"+i:"tb-konsequenz_bis"}" value="${esc(k.bis||"")}" style="${fld};margin-top:3px"></label>`}
+      <label style="display:flex;align-items:center;gap:8px;min-height:48px;font-size:var(--s-text);color:var(--text2);cursor:pointer"><input type="checkbox" id="${i?"tb-konsequenz_dauerhaft-"+i:"tb-konsequenz_dauerhaft"}" ${k.dauerhaft?"checked":""} onchange="tbFelderLesen();tbRender()" style="width:22px;height:22px">gilt dauerhaft – ein Grundsatz, keine Frist</label>`).join("")}
     ${_TB.kons.length<5?`<button type="button" class="btn" onclick="tbKonsDazu()" style="width:100%;min-height:48px;margin-top:6px;justify-content:center"><i class="ti ti-plus"></i>Weitere Konsequenz</button>`:""}
 
     <label style="${lbl}">Schlagworte<span style="font-weight:500;color:var(--text3)"> · zum Wiederfinden, mit Komma getrennt</span>
@@ -448,8 +451,8 @@ async function tbPunkteSichern(eintragId, kons, herkunft){
     const t = String(k.text||"").trim();
     try{
       if(k.id && !t && !k.erledigt_am) await fetch(`${SB_URL}/rest/v1/tagebuch_punkt?id=eq.${Number(k.id)}`,{method:"DELETE",headers:H});
-      else if(k.id) await fetch(`${SB_URL}/rest/v1/tagebuch_punkt?id=eq.${Number(k.id)}`,{method:"PATCH",headers:H,body:JSON.stringify({text:t,bis:k.bis||null})});
-      else if(t) await fetch(`${SB_URL}/rest/v1/tagebuch_punkt`,{method:"POST",headers:H,body:JSON.stringify({eintrag_id:eintragId,art:"konsequenz",text:t,bis:k.bis||null,
+      else if(k.id) await fetch(`${SB_URL}/rest/v1/tagebuch_punkt?id=eq.${Number(k.id)}`,{method:"PATCH",headers:H,body:JSON.stringify({text:t,bis:k.dauerhaft?null:(k.bis||null),dauerhaft:!!k.dauerhaft})});
+      else if(t) await fetch(`${SB_URL}/rest/v1/tagebuch_punkt`,{method:"POST",headers:H,body:JSON.stringify({eintrag_id:eintragId,art:"konsequenz",text:t,bis:k.dauerhaft?null:(k.bis||null),dauerhaft:!!k.dauerhaft,
         autor:herkunft.autor||"Trainer",termin_id:herkunft.termin_id||null,datum:herkunft.datum||null})});
     }catch(e){}
   }
@@ -467,7 +470,7 @@ async function tbKinderSichern(eintragId, neu, vorher){
 function tagebuchBearbeiten(id){
   const e = _TB_LISTE.find(x=>Number(x.id)===Number(id)); if(!e) return;
   const kons = _TB_PUNKTE.filter(p=>Number(p.eintrag_id)===Number(id) && p.art==="konsequenz")
-    .map(p=>({id:p.id,text:p.text,bis:p.bis||"",erledigt_am:p.erledigt_am||null}));
+    .map(p=>({id:p.id,text:p.text,bis:p.bis||"",erledigt_am:p.erledigt_am||null,dauerhaft:!!p.dauerhaft}));
   const kinder = _TB_KINDER.filter(k=>Number(k.eintrag_id)===Number(id)).map(k=>Number(k.kader_id));
   tbOeffnen({ id:e.id, status:e.status||"fertig", quelle:e.quelle, terminId:e.termin_id, datum:e.datum, autor:e.autor,
     baustein:e.baustein, ausloeser:e.ausloeser, beobachtung:e.beobachtung, aha:e.aha,
@@ -570,7 +573,7 @@ function tbZeile(e){
   const worte = Array.isArray(e.schlagworte) ? e.schlagworte : [];
   const keim = tbStatus(e)==="keim", offen = tbUnbestaetigt(e);
   const kons = _TB_PUNKTE.filter(p=>Number(p.eintrag_id)===Number(e.id) && p.art==="konsequenz");
-  const konsText = kons.length ? kons.map(p=>esc(p.text)+(p.bis?` (bis ${tbDatumDe(p.bis)})`:"")+(p.erledigt_am?" ✓":"")).join("<br>")
+  const konsText = kons.length ? kons.map(p=>esc(p.text)+tbFristText(p)+(p.erledigt_am?" ✓":"")).join("<br>")
                                : (e.konsequenz ? esc(e.konsequenz)+(e.konsequenz_bis?` (bis ${tbDatumDe(e.konsequenz_bis)})`:"") : "");
   const kinder = _TB_KINDER.filter(k=>Number(k.eintrag_id)===Number(e.id)).map(k=>tbKindName(k.kader_id)).filter(Boolean);
   return `<div class="tb-zeile" data-id="${Number(e.id)}" style="background:var(--surface);border:var(--border-s);${offen?"border-left:4px solid var(--purple);":""}border-radius:var(--rl);padding:11px 12px;margin-bottom:6px">
@@ -588,6 +591,9 @@ function tbZeile(e){
     </div>
   </div>`;
 }
+/* v701 (Nachtrag 2, 29.09.): Eine Konsequenz hat eine Frist oder gilt dauerhaft – ein Grundsatz
+   wie „Anweisungen im Spiel schließe ich aus“ ist keine Aufgabe mit Datum. */
+function tbFristText(p){ return p && p.dauerhaft ? " (gilt dauerhaft)" : (p && p.bis ? ` (bis ${tbDatumDe(p.bis)})` : ""); }
 function tbErsterSatz(t, max){
   const s = String(t||"").trim().split(/\n/)[0];
   const m = s.match(/^.*?[.!?](\s|$)/);
@@ -610,7 +616,7 @@ function tbWiedervorlagePunkte(){
   const heute = new Date().toISOString().slice(0,10);
   const so = new Date(); so.setDate(so.getDate() + ((7 - so.getDay()) % 7)); const sonntag = so.toISOString().slice(0,10);
   const eigene = new Set(_TB_LISTE.map(e=>Number(e.id)));
-  return _TB_PUNKTE.filter(p=>!p.erledigt_am && (p.art==="todo" || eigene.has(Number(p.eintrag_id))))
+  return _TB_PUNKTE.filter(p=>!p.erledigt_am && !p.dauerhaft && (p.art==="todo" || eigene.has(Number(p.eintrag_id))))
     .map(p=>({ ...p, gruppe: !p.bis ? "spaeter" : p.bis < heute ? "ueberfaellig" : p.bis <= sonntag ? "woche" : "spaeter" }))
     .sort((a,b)=>String(a.bis||"9999").localeCompare(String(b.bis||"9999")) || a.id-b.id);
 }
@@ -712,7 +718,7 @@ function tbMarkdown(e, ausgabe){
   const z = [], zeile = t => String(t||"").replace(/\n/g," ");
   const kons = (typeof _TB_PUNKTE!=="undefined" ? _TB_PUNKTE : []).filter(p=>Number(p.eintrag_id)===Number(e.id) && p.art==="konsequenz");
   const konsText = kons.length
-    ? kons.map(p=>zeile(p.text)+(p.bis?` (bis ${tbDatumDe(p.bis)})`:"")+(a==="arbeit"&&p.erledigt_am?` – erledigt am ${tbDatumDe(p.erledigt_am)}`:"")).join("; ")
+    ? kons.map(p=>zeile(p.text)+tbFristText(p)+(a==="arbeit"&&p.erledigt_am?` – erledigt am ${tbDatumDe(p.erledigt_am)}`:"")).join("; ")
     : zeile(e.konsequenz)+(e.konsequenz_bis?` (bis ${tbDatumDe(e.konsequenz_bis)})`:"");
   z.push(`### ${tbDatumDe(e.datum)} — ${b?b.kurz:(tbStatus(e)==="keim"?"GEDANKE":String(e.baustein||"").toUpperCase())}`);
   z.push("");
@@ -972,7 +978,7 @@ async function tbPruefenOpen(id, opt){
   if(!e){ toast("Vorschlag nicht gefunden","err"); return; }
   const kons = punkte.filter(p=>p.art==="konsequenz");
   _TBP = { e, bewertung:opt.bewertung||[], termine: await tbEigeneTermine(),
-    kons: kons.length ? kons.map(p=>({id:p.id,text:p.text,bis:p.bis||""})) : (e.konsequenz ? String(e.konsequenz).split("\n").filter(Boolean).map(t=>({id:null,text:t,bis:e.konsequenz_bis||""})) : []),
+    kons: kons.length ? kons.map(p=>({id:p.id,text:p.text,bis:p.bis||"",dauerhaft:!!p.dauerhaft})) : (e.konsequenz ? String(e.konsequenz).split("\n").filter(Boolean).map(t=>({id:null,text:t,bis:e.konsequenz_bis||""})) : []),
     todos: punkte.filter(p=>p.art==="todo").map(p=>({id:p.id,text:p.text,bis:p.bis||"",zustaendig:p.zustaendig,weg:false})),
     fragen: (Array.isArray(e.rueckfragen)?e.rueckfragen:[]).map(f=>({frage:f.frage||String(f),feld:f.feld||"beobachtung",antwort:""})),
     baustein: e.baustein };
@@ -988,12 +994,13 @@ function tbPruefenLesen(){
   if(!_TBP) return;
   const v = id => { const el = document.getElementById(id); return el ? el.value : null; };
   ["beobachtung","aha"].forEach(k=>{ const x = v("tbp-"+k); if(x!==null) _TBP.e[k] = x; });
-  _TBP.kons.forEach((k,i)=>{ const x = v("tbp-kons-"+i); if(x!==null) k.text = x; const d = v("tbp-kons-bis-"+i); if(d!==null && d) k.bis = d; });
+  _TBP.kons.forEach((k,i)=>{ const x = v("tbp-kons-"+i); if(x!==null) k.text = x; const d = v("tbp-kons-bis-"+i); if(d!==null && d){ k.bis = d; k.dauerhaft = false; } });
   _TBP.todos.forEach((k,i)=>{ const x = v("tbp-todo-"+i); if(x!==null) k.text = x; const d = v("tbp-todo-bis-"+i); if(d!==null && d) k.bis = d; });
   _TBP.fragen.forEach((f,i)=>{ const x = v("tbp-frage-"+i); if(x!==null) f.antwort = x; });
 }
 function tbpBaustein(k){ tbPruefenLesen(); _TBP.baustein = k; tbPruefenZeichnen(); }
-function tbpDatum(liste, i, datum){ tbPruefenLesen(); const x = _TBP[liste][i]; if(x) x.bis = (x.bis===datum) ? "" : datum; tbPruefenZeichnen(); }
+function tbpDatum(liste, i, datum){ tbPruefenLesen(); const x = _TBP[liste][i]; if(x){ x.bis = (x.bis===datum) ? "" : datum; x.dauerhaft = false; } tbPruefenZeichnen(); }
+function tbpDauerhaft(i){ tbPruefenLesen(); const x = _TBP.kons[i]; if(x){ x.dauerhaft = !x.dauerhaft; if(x.dauerhaft){ x.bis = ""; x.anders = false; } } tbPruefenZeichnen(); }
 function tbpAnders(liste, i){ tbPruefenLesen(); const x = _TBP[liste][i]; if(x) x.anders = true; tbPruefenZeichnen(); }
 function tbpTodoWeg(i){ tbPruefenLesen(); const x = _TBP.todos[i]; if(x) x.weg = !x.weg; tbPruefenZeichnen(); }
 function tbpMikro(i){
@@ -1008,6 +1015,7 @@ function tbpDatumChips(liste, i, x){
   return `<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px">${ausT.join("")}
     ${(x.anders||eigen)?`<input type="date" id="tbp-${liste==="kons"?"kons":"todo"}-bis-${i}" value="${esc(x.bis||"")}" aria-label="anderes Datum" style="min-height:44px;padding:0 8px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;background:var(--surface2);color:var(--text)">`
       :`<button type="button" onclick="tbpAnders('${liste}',${i})" style="min-height:44px;padding:0 10px;border:1px dashed var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:var(--s-klein);cursor:pointer">anderes Datum</button>`}
+    ${liste==="kons"?`<button type="button" class="tbp-dauerhaft" onclick="tbpDauerhaft(${i})" aria-pressed="${!!x.dauerhaft}" style="min-height:44px;padding:0 10px;border:${x.dauerhaft?"2px solid var(--blue)":"1px solid var(--rand-bedien)"};border-radius:10px;background:${x.dauerhaft?"var(--blue-bg)":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:${x.dauerhaft?"800":"600"};cursor:pointer">${x.dauerhaft?"✓ ":""}gilt dauerhaft</button>`:""}
   </div>${T.length?"":`<div style="font-size:var(--s-klein);color:var(--text3);margin-top:3px">Keine kommenden Termine mit deiner Zusage – nimm „anderes Datum“.</div>`}`;
 }
 function tbPruefenZeichnen(){
@@ -1018,14 +1026,14 @@ function tbPruefenZeichnen(){
   const kannHoeren = typeof diktatMoeglich==="function" && diktatMoeglich();
   c.innerHTML = `${mdlHead("tb-pruefen","✨","Vorschlag prüfen", esc(e.ausloeser||tbDatumDe(e.datum)),"#7c3aed")}
     <div style="font-size:var(--s-text);color:var(--text2);line-height:1.5">Deine Worte, sortiert – nichts dazu erfunden. Was nicht passt, änderst du direkt hier.</div>
+    <label id="tbp-aha-block" style="display:block;font-size:var(--s-teil);font-weight:800;margin-top:12px;background:var(--purple-bg);border-radius:12px;padding:10px 12px">💡 Aha – das gehört dir${e.aha?"":' <span style="display:block;font-size:var(--s-klein);font-weight:500;color:var(--text2)">Nichts gefunden, das du selbst so gesagt hast – schreib es hier oder beantworte die Rückfrage unten.</span>'}
+      <textarea id="tbp-aha" class="wachsen" rows="3" style="${fld};margin-top:6px;font-size:var(--s-karte);line-height:1.5">${esc(e.aha||"")}</textarea></label>
     ${_TBP.bewertung.length?`${kopf("Bewertung · gespeichert")}<div style="font-size:var(--s-text);line-height:1.6;background:var(--surface2);border-radius:10px;padding:8px 10px">${_TBP.bewertung.map(z=>`<div>${esc(z)}</div>`).join("")}</div>`:""}
     ${kopf("Tagebuch")}
     <div style="display:flex;gap:6px;flex-wrap:wrap">${TB_BAUSTEINE.map(b=>{const an=_TBP.baustein===b.key;
       return `<button type="button" onclick="tbpBaustein('${b.key}')" aria-pressed="${an}" style="flex:1 1 46%;min-height:44px;font-size:var(--s-klein);border:1px solid var(--rand-bedien);border-radius:var(--r);cursor:pointer;font-family:inherit;background:${an?"var(--blue)":"var(--surface2)"};color:${an?"#fff":"var(--text2)"};font-weight:${an?"800":"600"}">${an?"✓ ":""}${b.label}</button>`;}).join("")}</div>
     <label style="display:block;font-size:var(--s-klein);font-weight:700;margin-top:10px">Beobachtung
       <textarea id="tbp-beobachtung" class="wachsen" rows="4" style="${fld};margin-top:3px">${esc(e.beobachtung||"")}</textarea></label>
-    <label style="display:block;font-size:var(--s-klein);font-weight:700;margin-top:10px">Aha${e.aha?"":' <span style="font-weight:500;color:var(--text3)">· nichts gefunden, das du selbst so gesagt hast</span>'}
-      <textarea id="tbp-aha" class="wachsen" rows="2" style="${fld};margin-top:3px">${esc(e.aha||"")}</textarea></label>
     ${_TBP.kons.map((k,i)=>`<label style="display:block;font-size:var(--s-klein);font-weight:700;margin-top:10px">Konsequenz ${_TBP.kons.length>1?i+1:""}
       <textarea id="tbp-kons-${i}" class="wachsen" rows="2" style="${fld};margin-top:3px">${esc(k.text)}</textarea></label>
       <div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Bis wann – ein Termin, an dem du da bist</div>${tbpDatumChips("kons",i,k)}`).join("")}
@@ -1065,7 +1073,7 @@ async function tbPasstSo(){
   const kons = _TBP.kons.filter(k=>String(k.text||"").trim());
   const w = { baustein:_TBP.baustein, ausloeser:e.ausloeser, aha:e.aha };
   const fehlt = tbFehltFuerFertig(w, kons);
-  if(kons.length && kons.some(k=>!k.bis)) fehlt.push("ein Datum je Konsequenz");
+  if(kons.length && kons.some(k=>!k.bis && !k.dauerhaft)) fehlt.push("ein Datum je Konsequenz");
   const jetzt = new Date().toISOString();
   const daten = kons.map(k=>k.bis).filter(Boolean).sort();
   const body = { baustein:_TBP.baustein||null, beobachtung:String(e.beobachtung||"").trim()||null, aha:String(e.aha||"").trim()||null,
@@ -1162,6 +1170,39 @@ async function wieWarsStart(fuer){
   if(typeof nbWegAus==="function" && typeof _nbWeg!=="undefined" && _nbWeg) nbWegAus();
   if(typeof nbGross==="function") nbGross(_nbSchnell.art, true);
 }
+
+/* v701 · Benachrichtigung „Wie war's?“ (prozess-nacherfassung.md: „Tipp auf die Benachrichtigung
+   öffnet direkt die Aufnahme, nicht erst eine Liste“). Die Meldung trägt ?wiewars=d<Datum> (Training),
+   t<Termin> (Spiel, Festival) oder e<Eintrag> (Vorschlag wartet auf „Passt so“). Geöffnet wird erst,
+   wenn angemeldet und die PIN-Sperre offen ist – höchstens zwei Minuten lang, wie bei Adler-Rufe. */
+function _wwGesperrt(){
+  const gate = document.getElementById("pin-gate");
+  const zu = gate && !gate.classList.contains("hidden") && getComputedStyle(gate).display!=="none";
+  return zu || typeof sbToken!=="function" || !sbToken();
+}
+function _wwOeffnen(w){
+  if(w[0]==="e"){ tbPruefenOpen(Number(w.slice(1))); return; }
+  wieWarsStart(w);
+}
+function _wwAbsicht(){
+  let n = 0;
+  const t = setInterval(()=>{
+    let w = null; try{ w = sessionStorage.getItem("adler_wiewars_intent"); }catch(e){}
+    if(!w || ++n>60){ clearInterval(t); return; }
+    if(_wwGesperrt()) return;
+    try{ sessionStorage.removeItem("adler_wiewars_intent"); }catch(e){}
+    clearInterval(t);
+    _wwOeffnen(w);
+  }, 2000);
+}
+function wieWarsAbsichtJetzt(){
+  let w = null; try{ w = sessionStorage.getItem("adler_wiewars_intent"); }catch(e){}
+  if(!w) return;
+  if(_wwGesperrt()){ _wwAbsicht(); return; }
+  try{ sessionStorage.removeItem("adler_wiewars_intent"); }catch(e){}
+  _wwOeffnen(w);
+}
+try{ _wwAbsicht(); }catch(e){}
 
 /* Die Startseite ist schon gezeichnet, wenn dieses Modul (Welle 2) ankommt – die Karte jetzt nachziehen. */
 try{ if(document.getElementById("home-wiewars")) wieWarsKarte(); }catch(e){}

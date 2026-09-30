@@ -74,7 +74,8 @@ module.exports = async function (h) {
     out.normal = knoepfe.filter(b => !/Eintrag erfassen/.test(b.textContent || "")
                                   && !/^tbKindEinfuegen/.test(b.getAttribute("onclick") || "")
                                   && b.getAttribute("aria-label") !== "Schließen").map(h);
-    out.felder = [...card.querySelectorAll("textarea,input")].map(h);
+    // v701: Beim Haken („gilt dauerhaft“) ist die Beschriftung die Tippfläche, nicht das Kästchen.
+    out.felder = [...card.querySelectorAll("textarea,input")].map(el => el.type === "checkbox" ? h(el.closest("label") || el) : h(el));
 
     // Aliasleiste: Antippen schreibt den Decknamen, nicht den Namen
     const chip = knoepfe.find(b => /^tbKindEinfuegen/.test(b.getAttribute("onclick") || ""));

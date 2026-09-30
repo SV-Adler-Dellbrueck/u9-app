@@ -3261,6 +3261,9 @@ async function pinCheck(){
   /* v673: Push zu Adler-Rufen öffnet ./eltern/?rufe bzw. ./trainer/?rufe. Die Absicht wird gemerkt;
      md-adler-rufe.js öffnet den Chat, sobald angemeldet ist (im Trainerbereich erst nach der PIN). */
   if(params.has("rufe")){ try{sessionStorage.setItem("adler_rufe_intent",/^\d+$/.test(params.get("rufe")||"")?params.get("rufe"):"1");}catch(e){} }
+  /* v701: Push „Wie war's?“ öffnet ./trainer/?wiewars=<d Datum | t Termin | e Eintrag>; md-tagebuch.js
+     startet die Aufnahme (bzw. die Prüfkarte), sobald angemeldet und die PIN offen ist. */
+  if(/^(d\d{4}-\d{2}-\d{2}|[te]\d+)$/.test(params.get("wiewars")||"")){ try{sessionStorage.setItem("adler_wiewars_intent",params.get("wiewars"));}catch(e){} }
   // Eltern-Ansicht: öffentlicher Read-Only-Matchday, kein Login, kein Trainer-/Quiz-UI
   if(params.has("eltern")||params.has("match")){
     document.title="Spieltag – SV Adler Dellbrück U9";
