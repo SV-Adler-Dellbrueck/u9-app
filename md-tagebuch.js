@@ -326,7 +326,7 @@ function tbRender(){
       <textarea id="${i?"tb-konsequenz-"+i:"tb-konsequenz"}" class="wachsen" rows="2" onfocus="tbFokus('${i?"konsequenz-"+i:"konsequenz"}')" placeholder="Was machst du beim nächsten Mal anders?" style="${fld};resize:vertical;margin-top:3px">${esc(k.text||"")}</textarea></label>
       ${k.dauerhaft?"":`<label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:4px">Bis wann
       <input type="date" id="${i?"tb-konsequenz_bis-"+i:"tb-konsequenz_bis"}" value="${esc(k.bis||"")}" style="${fld};margin-top:3px"></label>`}
-      <label style="display:flex;align-items:center;gap:8px;min-height:44px;font-size:var(--s-text);color:var(--text2);cursor:pointer"><input type="checkbox" id="${i?"tb-konsequenz_dauerhaft-"+i:"tb-konsequenz_dauerhaft"}" ${k.dauerhaft?"checked":""} onchange="tbFelderLesen();tbRender()" style="width:22px;height:22px">gilt dauerhaft – ein Grundsatz, keine Frist</label>`).join("")}
+      <label style="display:flex;align-items:center;gap:8px;min-height:48px;font-size:var(--s-text);color:var(--text2);cursor:pointer"><input type="checkbox" id="${i?"tb-konsequenz_dauerhaft-"+i:"tb-konsequenz_dauerhaft"}" ${k.dauerhaft?"checked":""} onchange="tbFelderLesen();tbRender()" style="width:22px;height:22px">gilt dauerhaft – ein Grundsatz, keine Frist</label>`).join("")}
     ${_TB.kons.length<5?`<button type="button" class="btn" onclick="tbKonsDazu()" style="width:100%;min-height:48px;margin-top:6px;justify-content:center"><i class="ti ti-plus"></i>Weitere Konsequenz</button>`:""}
 
     <label style="${lbl}">Schlagworte<span style="font-weight:500;color:var(--text3)"> · zum Wiederfinden, mit Komma getrennt</span>
