@@ -1123,6 +1123,12 @@ function pushZielEmpfangen(ev){
       if(typeof rufeAbsichtJetzt==="function")rufeAbsichtJetzt();
       ok=true;
     }
+    else if(gleich&&nur.length===1&&nur[0]==="wiewars"&&/^(d\d{4}-\d{2}-\d{2}|[te]\d+)$/.test(u.searchParams.get("wiewars")||"")){
+      /* v701: Push „Wie war's?“ – bei offener App direkt in die Aufnahme bzw. Prüfkarte. */
+      try{sessionStorage.setItem("adler_wiewars_intent",u.searchParams.get("wiewars"));}catch(e){}
+      if(typeof wieWarsAbsichtJetzt==="function")wieWarsAbsichtJetzt();
+      ok=true;
+    }
   }catch(e){ ok=false; }
   try{ if(ev.ports&&ev.ports[0])ev.ports[0].postMessage({ok}); }catch(e){}
 }
