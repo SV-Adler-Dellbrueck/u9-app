@@ -656,6 +656,19 @@ function _rfAbsicht(){
   },2000);
 }
 _rfAbsicht();
+/* v697: Tipp auf eine Meldung, während die App offen ist – sofort prüfen statt erst in 2 s.
+   Ist das Gespräch schon offen, nur den Raum wechseln. */
+function rufeAbsichtJetzt(){
+  let offen=null; try{offen=sessionStorage.getItem("adler_rufe_intent");}catch(e){}
+  if(!offen)return;
+  const gate=document.getElementById("pin-gate");
+  const gesperrt=gate&&!gate.classList.contains("hidden")&&getComputedStyle(gate).display!=="none";
+  if(gesperrt||typeof sbToken!=="function"||!sbToken()){ _rfAbsicht(); return; }
+  try{sessionStorage.removeItem("adler_rufe_intent");}catch(e){}
+  const raum=/^\d+$/.test(offen)?Number(offen):undefined;
+  if(document.getElementById("rufe-modal")&&raum!==undefined&&typeof rufeRaumWechseln==="function"){ rufeRaumWechseln(raum); return; }
+  rufeOpen(raum);
+}
 /* v673: Zahl der neuen Rufe regelmäßig nachziehen (alle 2 Minuten, nur wenn die App sichtbar ist). */
 setTimeout(rufeBadgeLoad,1500);
 setInterval(()=>{ if(!document.hidden&&!document.getElementById("rufe-modal"))rufeBadgeLoad(); },120000);

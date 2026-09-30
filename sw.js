@@ -1,4 +1,4 @@
-const CACHE="u9i-adler-v696";
+const CACHE="u9i-adler-v697";
 const PRECACHE=[
   "./",
   "./index.html",
@@ -222,7 +222,21 @@ self.addEventListener("notificationclick",e=>{
   const ordner=_zielOrdner(ziel);
   e.waitUntil(clients.matchAll({type:"window",includeUncontrolled:true}).then(cs=>{
     const passend=cs.find(c=>ordner?String(c.url).includes("/"+ordner+"/"):true);
-    if(passend&&"focus" in passend){ try{passend.navigate(ziel);}catch(_){} return passend.focus(); }
-    return clients.openWindow(ziel);
+    if(!passend||!("focus" in passend))return clients.openWindow(ziel);
+    /* v697: Ist die App offen, erst fragen, ob sie das Ziel selbst öffnen kann (Adler-Rufe:
+       direkt ins Gespräch, ohne Neuladen). Antwortet sie nicht binnen 1,5 s – etwa eine alte
+       Fassung ohne Empfänger –, wird sie wie bisher auf das Ziel umgeleitet. */
+    return passend.focus().catch(()=>passend).then(()=>_fensterFragen(passend,ziel)).then(ok=>{
+      if(ok)return;
+      return Promise.resolve().then(()=>passend.navigate(ziel)).catch(()=>clients.openWindow(ziel));
+    });
   }));
 });
+function _fensterFragen(c,ziel){
+  return new Promise(fertig=>{
+    let erledigt=false; const ende=v=>{ if(!erledigt){ erledigt=true; fertig(v); } };
+    try{ const kanal=new MessageChannel(); kanal.port1.onmessage=ev=>ende(!!(ev.data&&ev.data.ok));
+      c.postMessage({art:"push-ziel",url:ziel},[kanal.port2]); }catch(_){ ende(false); return; }
+    setTimeout(()=>ende(false),1500);
+  });
+}

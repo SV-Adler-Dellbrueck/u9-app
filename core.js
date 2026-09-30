@@ -1105,6 +1105,28 @@ async function pushRenderInto(elId, rolle){
    bekommt etwas). So lässt sich prüfen, ob Meldungen ankommen, ohne jemanden zu stören und
    ohne auf den 5-Minuten-Takt der Adler-Rufe zu warten. */
 // v696: die Test-Meldung öffnet beim Antippen die App, aus der sie angefordert wurde
+/* v697: Der Service Worker fragt beim Tipp auf eine Meldung, ob die offene App das Ziel selbst
+   öffnen kann. Adler-Rufe (?rufe=<Raum>) öffnen das Gespräch ohne Neuladen – über dieselbe
+   Absicht wie beim Start (adler_rufe_intent), damit auch die PIN-Sperre beachtet wird.
+   Alles andere beantwortet sie mit „nein“, dann leitet der Service Worker wie bisher um. */
+function pushZielEmpfangen(ev){
+  const d=ev&&ev.data||{}; if(d.art!=="push-ziel")return;
+  let ok=false;
+  try{
+    const u=new URL(d.url,location.href);
+    const gleich=u.origin===location.origin&&u.pathname===location.pathname;
+    const nur=[...u.searchParams.keys()];
+    if(gleich&&!nur.length) ok=true;
+    else if(gleich&&nur.length===1&&nur[0]==="rufe"){
+      const raum=u.searchParams.get("rufe")||"";
+      try{sessionStorage.setItem("adler_rufe_intent",/^\d+$/.test(raum)?raum:"1");}catch(e){}
+      if(typeof rufeAbsichtJetzt==="function")rufeAbsichtJetzt();
+      ok=true;
+    }
+  }catch(e){ ok=false; }
+  try{ if(ev.ports&&ev.ports[0])ev.ports[0].postMessage({ok}); }catch(e){}
+}
+try{ if(navigator.serviceWorker)navigator.serviceWorker.addEventListener("message",pushZielEmpfangen); }catch(e){}
 function pushTestZiel(){ const m=location.pathname.match(/\/(trainer|eltern|kinder)\//); return "./"+(m?m[1]:"trainer")+"/"; }
 async function pushTest(knopf){
   if(!sbToken()){toast("Bitte zuerst anmelden","err");return;}
