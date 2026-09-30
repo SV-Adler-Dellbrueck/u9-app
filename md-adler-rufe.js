@@ -52,6 +52,7 @@ async function _rufeOpen(raumId){
       <div style="flex:1;min-width:0"><div style="font-size:var(--s-karte);font-weight:800">Adler-Rufe</div>
         <div id="rufe-unter" style="font-size:var(--s-klein);opacity:.9">Eltern und Trainerteam</div></div>
       <button type="button" id="rufe-glocke" onclick="rufeGlockeUmschalten()" aria-label="Benachrichtigungen zu Adler-Rufen" aria-pressed="true" style="width:44px;height:44px;border:none;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:var(--s-teil);cursor:pointer">🔔</button>
+      ${/\/trainer\//.test(location.pathname)?`<button type="button" id="rufe-mod-knopf" onclick="rufeModOpen()" aria-label="Moderieren" title="Moderieren: wer moderiert, gemeldete Rufe" style="width:44px;height:44px;border:none;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:var(--s-teil);cursor:pointer">🛡️</button>`:""}
       <button type="button" id="rufe-suche-knopf" onclick="rufeSucheUmschalten()" aria-label="Suchen" style="width:44px;height:44px;border:none;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:var(--s-teil);cursor:pointer">🔍</button>
       <button type="button" onclick="rufeClose()" aria-label="Schließen" style="width:44px;height:44px;border:none;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:var(--s-teil);cursor:pointer">✕</button>
     </div>

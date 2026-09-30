@@ -239,7 +239,13 @@ function sitHubRender(){
   if(!hub.dataset.fertig){
     const formen=[["funino","FUNiño","ti-triangle"],["3+1","3+1","ti-triangle-inverted"],["4+1","4+1 Raute","ti-diamond"],["5+1","5+1","ti-pentagon"]];
     /* v653: Das freie Brett steht zuerst – am Platz vor den Kindern wird gezeigt, nicht gebaut. */
-    hub.innerHTML=`<button type="button" class="btn sit-brett" onclick="typeof brettOpen==='function'?brettOpen():toast('Das Brett lädt noch – gleich nochmal','info')"><i class="ti ti-pencil"></i>Freies Brett – schieben und mit dem Finger zeichnen</button>
+    /* v689: Ein Abschnitt „Neue Situation“ trägt beides – das freie Brett (bleibt die erste Aktion,
+       v653) und die vier Spielformen darunter. Vorher stand das Brett allein oben, der KI-Kasten
+       dazwischen und die Spielformen erst danach, obwohl alle fünf dasselbe tun: ein Brett öffnen. */
+    hub.innerHTML=`<div class="tf-abschnitt">Neue Situation</div>
+      <button type="button" class="btn sit-brett" onclick="typeof brettOpen==='function'?brettOpen():toast('Das Brett lädt noch – gleich nochmal','info')"><i class="ti ti-pencil"></i>Freies Brett – schieben und mit dem Finger zeichnen</button>
+      <div class="sit-formen">${formen.map(([k,l,i])=>`<button type="button" class="btn sit-form" onclick="sitNeu('${k}')"><i class="ti ${i}"></i>${l}</button>`).join("")}</div>
+      <div class="tf-abschnitt">Oder beschreiben</div>
       <section class="tf-ki" aria-labelledby="sit-ki-t">
         <div id="sit-ki-t" class="tf-ki-t">✨ Beschreib die Situation – die KI zeichnet sie</div>
         <div class="tf-ki-s">Wer steht wo, wohin geht der Ball, was soll passieren. Danach verschiebst du, was nicht passt.</div>
@@ -251,10 +257,9 @@ function sitHubRender(){
         </div>
         <div id="sit-ki-stand" role="status" aria-live="polite" class="tf-ki-stand"></div>
       </section>
-      <div class="tf-abschnitt">Neue Situation</div>
-      <div class="sit-formen">${formen.map(([k,l,i])=>`<button type="button" class="btn sit-form" onclick="sitNeu('${k}')"><i class="ti ${i}"></i>${l}</button>`).join("")}</div>
       <div class="tf-abschnitt">Gespeicherte Situationen</div>
       <div id="sit-liste"><div class="sit-leer">Lädt …</div></div>
+      <div class="tf-abschnitt">Weitere Werkzeuge</div>
       <div class="sit-weitere">
         <button type="button" class="btn" onclick="typeof vtbOpen==='function'&&vtbOpen()"><i class="ti ti-video"></i>Video</button>
         <button type="button" class="btn" onclick="typeof kiCoachOpen==='function'&&kiCoachOpen()"><i class="ti ti-sparkles"></i>KI-Coach</button>

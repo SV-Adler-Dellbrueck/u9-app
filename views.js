@@ -4712,10 +4712,10 @@ const HELP=[
   {cat:"🎯 Taktik", items:[
     {t:"Adler-Coach (KI)", d:"Zwei Eingänge, ein Ergebnis. <b>„💡 Idee beschreiben“</b> (beim Öffnen gewählt): Schwerpunkt, Dauer, Wo und Material einstellen – das genügt schon, der Text darunter ist die Nuance –, dann „Übungen vorschlagen“. Der Coach liefert ein bis drei Übungen für U8/U9, <b>jede mit Skizze</b>. <b>„📋 Text übernehmen“</b> nimmt einen fremden Text von einer Webseite, aus WhatsApp oder aus einem Buch und ordnet ihn ins Format der App, ohne etwas zu erfinden – was nicht dasteht, bleibt leer. Die beiden sind <b>Reiter</b>, keine Aktionsknöpfe: Ein Klick auf den bereits gewählten ändert nichts, das ist kein Fehler. Mitgeschickt wird, was die App ohnehin weiß – Kaderstärke, Monatsschwerpunkt, Platz und Dauer des nächsten Trainings; es steht offen über dem Feld, damit du es korrigieren kannst. <b>Seit v596 kannst du diktieren</b> statt zu tippen: Der Knopf steht nur da, wo dein Gerät zuhören kann, und Gesagtes wird an das Feld angehängt, nicht darüber geschrieben. Gespeichert wird nichts von allein – du entscheidest je Übung, was in die Bibliothek kommt.", run:"kiCoachOpen()"},
     {t:"Freies Brett", d:"Ganz oben unter Taktik: „Freies Brett“ öffnet sofort im Vollbild mit beiden Mannschaften und Ball. „Schieben“ bewegt Spieler und Ball, mit Weiß, Gelb oder Blau zeichnest du mit dem Finger Laufwege und Pässe, „Radieren“ nimmt eine Linie weg, „Stift weg“ alle. Unten wechselst du die Spielform; die Zeichnung bleibt. Gespeichert wird nur auf diesem Gerät – zum Behalten eine Spielsituation anlegen. Die Kinder haben in der Kabine ein eigenes, einfacheres Brett („Mein Taktikbrett“).", go:"taktik"},
-    {t:"Taktikboard", d:"Oben die Spielsituationen – gezeichnet auf derselben Fläche wie die Skizzen der Übungen. „Beschreib die Situation“: tippen oder einsprechen, „Zeichnen lassen“, die KI legt Kinder, Gegner, Ball und Wege aufs ganze Feld; danach verschiebst du, was nicht passt. „Neue Situation“ startet mit FUNiño, 3+1, 4+1 oder 5+1 samt Rollen (TW, A, FL, FR, J). Gespeicherte Situationen zeigst du groß, spielst mehrere Bilder ab, teilst sie als Bild, bearbeitest, benennst um oder löschst sie. Für die Besprechung: „Groß zeigen“ füllt den Bildschirm (am Tablet auch Vollbild), „Kinder einsetzen“ setzt die Namen aus dem Kader auf die Kreise – nur zum Zeigen, gespeichert wird nichts davon. Unten Video und KI-Coach.", go:"taktik"},
+    {t:"Taktikboard", d:"Seit v689 in vier Abschnitten: „Neue Situation“ (Freies Brett und die vier Spielformen), „Oder beschreiben“ (die KI zeichnet), „Gespeicherte Situationen“, „Weitere Werkzeuge“ (Video, KI-Coach). Die Spielsituationen sind gezeichnet auf derselben Fläche wie die Skizzen der Übungen. „Beschreib die Situation“: tippen oder einsprechen, „Zeichnen lassen“, die KI legt Kinder, Gegner, Ball und Wege aufs ganze Feld; danach verschiebst du, was nicht passt. „Neue Situation“ startet mit FUNiño, 3+1, 4+1 oder 5+1 samt Rollen (TW, A, FL, FR, J). Gespeicherte Situationen zeigst du groß, spielst mehrere Bilder ab, teilst sie als Bild, bearbeitest, benennst um oder löschst sie. Für die Besprechung: „Groß zeigen“ füllt den Bildschirm (am Tablet auch Vollbild), „Kinder einsetzen“ setzt die Namen aus dem Kader auf die Kreise – nur zum Zeigen, gespeichert wird nichts davon. Unten Video und KI-Coach.", go:"taktik"},
   ]},
   {cat:"🪶 Eltern & Kinder", items:[
-    {t:"Adler-Rufe (Team-Chat)", d:"Seit v670 der Chat für Eltern und Trainerteam – Kinder haben keinen Zugang. Ein Raum zum Start; Trainer und Moderatoren legen weitere an (＋ Raum). Über ⋯ an jedem Ruf: reagieren, antworten (mit Zitat), fixieren (höchstens drei, 24 Stunden bis immer), bearbeiten, zurückziehen, melden. Moderatoren archivieren statt zu löschen und schalten für 24 Stunden oder 7 Tage stumm; archivierte Rufe sieht nur das Trainerteam. „@alle“ hebt einen Ruf hervor – nur für Trainer und Moderatoren. 🔍 durchsucht alle Räume. Unter „Adler-Rufe moderieren“ legt ihr fest, wer außer dem Trainerteam moderiert (z. B. der Elternbeirat), und bearbeitet gemeldete Rufe. Namen setzt die App aus „Meine Angaben“, Telefonnummern sieht niemand. Seit v673 sitzt der Einstieg oben in der Kopfzeile: 💬 mit roter Zahl für neue Rufe (Eltern und Trainer); bei Eltern steht zusätzlich ganz oben auf der Startseite eine Zeile mit dem letzten Ruf, solange es Ungelesenes gibt. Seit v673 kommen außerdem Benachrichtigungen aufs Handy: Rufe vom Trainerteam und @alle sofort, alle anderen gebündelt höchstens alle 30 Minuten, zwischen 21 und 7 Uhr keine – Gelesenes nie. Die 🔔 im Chat-Kopf schaltet sie fürs eigene Konto ab und an; die Zahl am Knopf bleibt. Ein Tipp auf die Benachrichtigung öffnet die Adler-Rufe (im Trainerbereich nach der PIN). Seit v674: 🔒 Trainerteam – ein privater Raum je Familie mit dem Trainerteam; mitlesen können nur beide Elternteile (auch für Geschwister derselbe Raum) und das Trainerteam, der Elternbeirat nicht. Das Trainerteam öffnet die Familienräume über „🔒 Familien“. Auch wer stummgeschaltet ist, kann dem Trainerteam dort schreiben. 📊 neben dem Schreibfeld startet eine Abstimmung (alle Eltern dürfen): Frage, zwei bis sechs Antworten, namentlich (alle sehen, wer was gewählt hat) oder anonym (niemand sieht es, auch das Trainerteam nicht – nur die Zahlen), eine oder mehrere Antworten, auf Wunsch mit Schluss nach 24 Stunden, 3 oder 7 Tagen. Nochmal antippen nimmt die Stimme zurück. Beenden über ⋯: wer sie gestartet hat, Trainer und Moderatoren.", run:"rufeOpen()"},
+    {t:"Adler-Rufe (Team-Chat)", d:"Seit v670 der Chat für Eltern und Trainerteam – Kinder haben keinen Zugang. Ein Raum zum Start; Trainer und Moderatoren legen weitere an (＋ Raum). Über ⋯ an jedem Ruf: reagieren, antworten (mit Zitat), fixieren (höchstens drei, 24 Stunden bis immer), bearbeiten, zurückziehen, melden. Moderatoren archivieren statt zu löschen und schalten für 24 Stunden oder 7 Tage stumm; archivierte Rufe sieht nur das Trainerteam. „@alle“ hebt einen Ruf hervor – nur für Trainer und Moderatoren. 🔍 durchsucht alle Räume. Mit 🛡️ oben im Raum (seit v689, vorher eine eigene Kachel) legt ihr fest, wer außer dem Trainerteam moderiert (z. B. der Elternbeirat), und bearbeitet gemeldete Rufe. Namen setzt die App aus „Meine Angaben“, Telefonnummern sieht niemand. Seit v673 sitzt der Einstieg oben in der Kopfzeile: 💬 mit roter Zahl für neue Rufe (Eltern und Trainer); bei Eltern steht zusätzlich ganz oben auf der Startseite eine Zeile mit dem letzten Ruf, solange es Ungelesenes gibt. Seit v673 kommen außerdem Benachrichtigungen aufs Handy: Rufe vom Trainerteam und @alle sofort, alle anderen gebündelt höchstens alle 30 Minuten, zwischen 21 und 7 Uhr keine – Gelesenes nie. Die 🔔 im Chat-Kopf schaltet sie fürs eigene Konto ab und an; die Zahl am Knopf bleibt. Ein Tipp auf die Benachrichtigung öffnet die Adler-Rufe (im Trainerbereich nach der PIN). Seit v674: 🔒 Trainerteam – ein privater Raum je Familie mit dem Trainerteam; mitlesen können nur beide Elternteile (auch für Geschwister derselbe Raum) und das Trainerteam, der Elternbeirat nicht. Das Trainerteam öffnet die Familienräume über „🔒 Familien“. Auch wer stummgeschaltet ist, kann dem Trainerteam dort schreiben. 📊 neben dem Schreibfeld startet eine Abstimmung (alle Eltern dürfen): Frage, zwei bis sechs Antworten, namentlich (alle sehen, wer was gewählt hat) oder anonym (niemand sieht es, auch das Trainerteam nicht – nur die Zahlen), eine oder mehrere Antworten, auf Wunsch mit Schluss nach 24 Stunden, 3 oder 7 Tagen. Nochmal antippen nimmt die Stimme zurück. Beenden über ⋯: wer sie gestartet hat, Trainer und Moderatoren.", run:"rufeOpen()"},
     {t:"Rückmelde-Verhalten", d:"Seit v672 unter Kommunikation: je Kind, getrennt nach Spieltagen und Training, wie lange vor Terminbeginn im Schnitt die erste Antwort kam, wie oft unter 24 Stunden vorher, wie oft sich die Familie umentschieden hat (auch „zu → ab“) und bei Spieltagen, wie oft gar keine Antwort kam. Gezählt je Kind – egal, welches Elternteil antwortet. Umentscheidungen zählen erst seit dem 29.09.2026, vorher wurden sie nicht gespeichert; Änderungen durch das Trainerteam zählen nicht. Nur das Trainerteam sieht diese Zahlen, Eltern nicht.", run:"rueckmeldeStatistikOpen()"},
     {t:"Team-Ansage", d:"Wichtige Info an alle Eltern – mit Gelesen-Status (wer fehlt noch?).", run:"ansageTrainerOpen()"},
     {t:"Adler Nest", d:"Digitales Stadionheft erstellen & drucken.", run:"stadionheftOpen()"},
@@ -6738,29 +6738,38 @@ function _kachelInhalt(key){
     +kTiles([
       {emo:"🎯",label:"Taktikboard",fn:"go",arg:"taktik"}
     ],col);
-  if(key==="elki")return kSec("Kommunikation")
+  /* v689: 17 gleichförmige Kacheln in drei Gruppen, die nach Themen statt nach Anlass sortiert waren.
+     Jetzt fragt jede Überschrift, was man gerade tun will: schreiben, Eltern verwalten, Kinder
+     belohnen, die Kabine gestalten. „Adler-Rufe moderieren“ ist ein Knopf im Raum selbst (🛡️),
+     dort, wo man eine Meldung sieht – keine eigene Kachel mehr neben dem Chat. */
+  if(key==="elki")return kSec("Nachrichten")
     +kTiles([
       {emo:"💬",label:"Adler-Rufe",fn:"rufeEinstieg"},
-      {emo:"🛡️",label:"Adler-Rufe moderieren",fn:"rufeModOpen"},
       {emo:"📣",label:"Team-Ansage",fn:"ansageTrainerOpen"},
-      {emo:"📈",label:"Rückmelde-Verhalten",fn:"rueckmeldeStatistikOpen"},
-      {emo:"🗣️",label:"Elterngespräch",fn:"epollTrainerOpen"},
+      {emo:"🗣️",label:"Elterngespräch",fn:"epollTrainerOpen"}
+    ],col)
+    +kSec("Eltern verwalten")
+    +kTiles([
       // v610: Die Karten sind seit v604 der Regelweg – vorher nur über Einstellungen erreichbar.
       {emo:"🪪",label:"Einladungskarten",fn:"einladungskartenOpen"},
+      {emo:"📈",label:"Rückmelde-Verhalten",fn:"rueckmeldeStatistikOpen"},
       {emo:"👥",label:"Elternbeirat & Kasse",fn:"elternTeamEditOpen"}
       /* v669 PO 29.09.: „Eltern einladen kann meiner Einschätzung ganz weg ebenso wie QR-Aushang.“
          Der Weg in die App sind die Einladungskarten (seit v604). */
     ],col)
-    +kSec("Adler-Welt (Kinder)")
+    +kSec("Kinder belohnen")
     +kTiles([
-      {emo:"🪶",label:"Adler-Welt",fn:"adlerWeltOpen"},
-      {emo:"🧠",label:"Quiz-Ergebnisse",fn:"go",arg:"quizresults"},
-      {emo:"🗳️",label:"Kabinen-Wahl",fn:"wahlTrainerOpen"},
-      {emo:"🤝",label:"Unsere Regeln",fn:"codexKinderEditOpen"},
-      {emo:"🖼️",label:"Karten-Fotos",fn:"albumFotosOpen"},
-      {emo:"🎯",label:"Team-Quests",fn:"questEditorOpen"},
       {emo:"🪶",label:"Federn vergeben",fn:"federnVergebenOpen"},   // v675
+      {emo:"🎯",label:"Team-Quests",fn:"questEditorOpen"},
       {emo:"🏅",label:"Urkunden-Studio",fn:"urkundenOpen"}
+    ],col)
+    +kSec("Kabine gestalten")
+    +kTiles([
+      {emo:"🦅",label:"Adler-Welt",fn:"adlerWeltOpen"},
+      {emo:"🤝",label:"Unsere Regeln",fn:"codexKinderEditOpen"},
+      {emo:"🗳️",label:"Kabinen-Wahl",fn:"wahlTrainerOpen"},
+      {emo:"🖼️",label:"Karten-Fotos",fn:"albumFotosOpen"},
+      {emo:"🧠",label:"Quiz-Ergebnisse",fn:"go",arg:"quizresults"}
     ],col)
     +kSec("Inhalte")
     +kTiles([
