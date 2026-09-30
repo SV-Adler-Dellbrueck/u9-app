@@ -26,7 +26,7 @@ const SOLL = {
   "Wie komme ich an einem vorbei?": 4,
   "Wie mache ich ein Tor?": 3,
   "Wie kriege ich den Ball zu einem, der frei ist?": 4,
-  "Wo stelle ich mich hin, damit ich den Ball kriege?": 3,
+  "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?": 3,   // v700: Wortlaut vom 13.09. (Beschluss 30.09.)
   "Wie hole ich mir den Ball zurück?": 2
 };
 /* Die sieben, die vor v551 schon in der Datenbank standen. Der Abgleich darf sie nicht
@@ -73,7 +73,11 @@ module.exports = async function (h) {
 
   // b) Wortlaut gegen das Konzept
   const konz = fs.readFileSync(path.join(h.REPO, "doku/ausbildungskonzept-u9-v3.md"), "utf8");
-  const nichtImKonzept = Object.keys(SOLL).filter(f => !konz.includes(f));
+  /* v700: Leitfrage 5 gilt im Wortlaut vom 13.09.2026 (Beschluss 30.09., entscheidungen.md) –
+     jünger als Fassung 3 (10.09.). Das Konzept bleibt, wie es ist (Fassung 4); geprüft wird
+     dort der alte Wortlaut, in den Vorlagen der neue. */
+  const NEU_SEIT_1309 = { "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?": "Wo stelle ich mich hin, damit ich den Ball kriege?" };
+  const nichtImKonzept = Object.keys(SOLL).filter(f => !konz.includes(NEU_SEIT_1309[f] || f));
   if (nichtImKonzept.length) probleme.push("Nicht wörtlich im Konzept: " + nichtImKonzept.join(" · "));
 
   // e) Skalierung und Beobachtung – aus der Datei, ohne Browser; seit v568 auch für die Zusatz-Einheiten

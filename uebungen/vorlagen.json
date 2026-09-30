@@ -822,7 +822,7 @@
     },
     {
       "name": "L5-1 Anbieten – wo kriege ich den Ball?",
-      "leitfrage": "Wo stelle ich mich hin, damit ich den Ball kriege?",
+      "leitfrage": "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?",
       "ziel_kinder": "Heute läufst du dich frei, bevor der Ball kommt.",
       "folge_nr": 1,
       "tags": [
@@ -876,7 +876,7 @@
     },
     {
       "name": "L5-2 Anbieten – die Raute lebt",
-      "leitfrage": "Wo stelle ich mich hin, damit ich den Ball kriege?",
+      "leitfrage": "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?",
       "ziel_kinder": "Heute bleibt jeder auf seinem Platz in der Raute – auch wenn der Ball weit weg ist.",
       "folge_nr": 2,
       "tags": [
@@ -930,7 +930,7 @@
     },
     {
       "name": "L5-3 Anbieten – jeder hält seinen Korridor",
-      "leitfrage": "Wo stelle ich mich hin, damit ich den Ball kriege?",
+      "leitfrage": "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?",
       "ziel_kinder": "Heute bleibst du in deiner Bahn und rennst nicht alle zum Ball.",
       "folge_nr": 3,
       "tags": [],
@@ -1202,7 +1202,7 @@
     },
     {
       "name": "L5-4 3+1 – Raute ohne Aufpasser: wo stehe ich?",
-      "leitfrage": "Wo stelle ich mich hin, damit ich den Ball kriege?",
+      "leitfrage": "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?",
       "ziel_kinder": "Heute weißt du im 3+1, wo dein Platz ist: Flitzer außen, Jäger vorn.",
       "folge_nr": 4,
       "tags": [],
@@ -1403,7 +1403,7 @@
     },
     {
       "name": "L5-5 FUNiño – links, Mitte, rechts",
-      "leitfrage": "Wo stelle ich mich hin, damit ich den Ball kriege?",
+      "leitfrage": "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?",
       "ziel_kinder": "Heute steht jeder auf seiner Seite: links, Mitte oder rechts.",
       "folge_nr": 5,
       "tags": [],
@@ -1537,7 +1537,7 @@
     },
     {
       "name": "L5-6 3+1 gegen FUNiño – große und kleine Tore",
-      "leitfrage": "Wo stelle ich mich hin, damit ich den Ball kriege?",
+      "leitfrage": "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?",
       "ziel_kinder": "Heute spielen wir auf große und kleine Tore und wechseln schnell die Aufstellung.",
       "folge_nr": 6,
       "tags": [],
