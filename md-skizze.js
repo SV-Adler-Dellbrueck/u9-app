@@ -249,6 +249,20 @@ function skzFormat(){
   toast(hoch?"Feld steht jetzt hochkant – alles ist mitgedreht":"Feld liegt jetzt quer – alles ist mitgedreht");
 }
 
+/* v700 – WURFSPIEL. Pass und Schuss heißen bei Wurfspielen Zuwurf und Torwurf (skzPfeilName in
+   data.js). Der Schalter ändert nur die Beschriftung – im Editor, in der Legende und im Export –,
+   an der Zeichnung selbst nichts. */
+function _skzWerkLbl(w){
+  if(w&&(w.typ==="p"||w.typ==="s")&&typeof skzPfeilName==="function")return skzPfeilName(_skzSpec,w.typ);
+  return w?w.lbl:"";
+}
+function skzWurfUm(){
+  _skzMerken();
+  if(!_skzSpec)_skzSpec=_skzLeer();
+  if(_skzSpec.wurf)delete _skzSpec.wurf; else _skzSpec.wurf=true;
+  skzEditorZeichnen();
+  toast(_skzSpec.wurf?"Wurfspiel: Pass und Schuss heißen jetzt Zuwurf und Torwurf":"Kein Wurfspiel mehr: wieder Pass und Schuss");
+}
 /* Wo liegt ein Element? Für den Treffer-Test und fürs Verschieben brauchen alle
    Elemente einen Ankerpunkt – bei Strecken (Pfeil, Zone, Leiter) der Anfang. */
 function _skzAnker(feld,e){
@@ -284,7 +298,8 @@ function skzUndo(){ if(!_skzVerlauf.length){toast("Nichts mehr zurückzunehmen",
 function skzLeeren(){
   _skzMerken();
   const hoch=_skzHochkant();      // v578: Der Zuschnitt ist eine Entscheidung, kein Inhalt
-  _skzSpec=_skzLeer(); if(hoch)_skzSpec.hoch=true;
+  const wurf=!!(_skzSpec&&_skzSpec.wurf);   // v700: Wurfspiel ist wie der Zuschnitt eine Entscheidung
+  _skzSpec=_skzLeer(); if(hoch)_skzSpec.hoch=true; if(wurf)_skzSpec.wurf=true;
   _skzBildNr=0; _skzStart=null; skzEditorZeichnen();
 }
 function skzVorlage(i){
@@ -429,6 +444,14 @@ function skzEditorZeichnen(){
   if(fb){ fb.innerHTML=hoch?"🔄 Querformat":"🔄 Hochkant";
           fb.title=hoch?"Feld quer legen – alles dreht mit":"Feld hochkant stellen – alles dreht mit";
           fb.setAttribute("aria-label",fb.title); }
+  const wb=document.getElementById("skz-wurf");   // v700
+  if(wb){ const an=!!(_skzSpec&&_skzSpec.wurf);
+          wb.setAttribute("aria-pressed",an?"true":"false");
+          wb.title=an?"Wurfspiel an – Zuwurf und Torwurf statt Pass und Schuss":"Als Wurfspiel beschriften (Zuwurf und Torwurf)";
+          wb.style.background=an?"var(--blue)":"var(--surface)"; wb.style.color=an?"#fff":"var(--text2)"; }
+  document.querySelectorAll("[data-werk] .skz-werk-lbl").forEach(el=>{
+    const w=SKZ_WERK.find(x=>x.id===el.parentElement.dataset.werk); if(!w)return;
+    const t=_skzWerkLbl(w); el.textContent=t; el.parentElement.title=t; el.parentElement.setAttribute("aria-label",t); });
   const bl=document.getElementById("skz-bildleiste");
   if(bl)bl.innerHTML=skzBildLeiste();
   const leg=document.getElementById("skz-legende");
@@ -482,7 +505,7 @@ function skzEditorZeichnen(){
     :w.feld==="kr"?(_skzStart?"Jetzt den Rand des Kreises tippen.":"Mittelpunkt tippen, dann den Rand.")
     :w.feld==="li"?(_skzStart?"Jetzt den Endpunkt tippen.":"Startpunkt tippen, dann Endpunkt – die Linie läuft quer über den Platz.")
     :w.zwei?(_skzStart?"Jetzt den Endpunkt tippen.":"Startpunkt tippen, dann Endpunkt.")
-    :"Auf den Platz tippen, um „"+w.lbl+"“ zu setzen.";
+    :"Auf den Platz tippen, um „"+_skzWerkLbl(w)+"“ zu setzen.";
 }
 
 /* Bildleiste des Editors. „+ Bild" übernimmt Spieler, Ball und Beschriftung aus dem
@@ -538,7 +561,7 @@ function skzVorlagenLeiste(){
 /* v579: Die Kacheln unter ihren Überschriften. Gerendert wird einmal beim Öffnen; das
    Hervorheben der gewählten Kachel läuft wie bisher über `#skz-palette button`. */
 function skzPaletteHtml(){
-  const kachel=w=>`<button data-werk="${w.id}" onclick="skzSetWerkzeug('${w.id}')" title="${w.lbl}" aria-label="${w.lbl}" style="min-height:46px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:3px"><span style="font-size:16px;line-height:1">${w.emo}</span>${esc(w.lbl)}</button>`;
+  const kachel=w=>`<button data-werk="${w.id}" onclick="skzSetWerkzeug('${w.id}')" title="${_skzWerkLbl(w)}" aria-label="${_skzWerkLbl(w)}" style="min-height:46px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:3px"><span style="font-size:16px;line-height:1">${w.emo}</span><span class="skz-werk-lbl">${esc(_skzWerkLbl(w))}</span></button>`;
   const raster=inhalt=>`<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:6px">${inhalt}</div>`;
   const kopf=t=>`<div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:4px 0 4px">${esc(t)}</div>`;
   let aus=raster(SKZ_WERK.filter(w=>!w.gruppe).map(kachel).join(""));
@@ -583,6 +606,7 @@ function skzEditorOpen(start,cb,opt){
     <div style="display:flex;justify-content:center;gap:8px;margin-bottom:6px">
       <button type="button" id="skz-ki" onclick="skzKiOpen()" style="min-height:44px;padding:0 14px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">🤖 Beschreiben</button>
       <button type="button" id="skz-format" onclick="skzFormat()" style="min-height:44px;padding:0 14px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer"></button>
+      <button type="button" id="skz-wurf" onclick="skzWurfUm()" aria-pressed="false" style="min-height:44px;padding:0 14px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">🤾 Wurfspiel</button>
     </div>
     <div id="skz-buehne" style="position:relative;width:100%;max-width:340px;margin:0 auto 8px;aspect-ratio:280/180;border-radius:8px;overflow:hidden;touch-action:none;cursor:crosshair"></div>
   <!-- v512: Beim Zeichnen will man sehen, was der gewählte Stift bedeutet. -->

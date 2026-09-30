@@ -106,6 +106,7 @@ function _eiSkizzeFehler(x){
   /* v578: Der Zuschnitt ist eine Entscheidung, kein Inhalt – erlaubt ist nur ja oder nein.
      Eine Zeichenkette („hoch“, „ja“) wäre in JavaScript wahr und legte das Feld still um. */
   if(x.hoch!=null&&typeof x.hoch!=="boolean")f.push("„hoch“ ist kein Ja/Nein-Wert – hochkant wird mit true gesetzt");
+  if(x.wurf!=null&&typeof x.wurf!=="boolean")f.push("„wurf“ ist kein Ja/Nein-Wert – ein Wurfspiel wird mit true gesetzt");   // v700
   if(f.length)return f;
   if(x.schritte==null)return f;
   const max=(typeof SKZ_SCHRITTE_MAX!=="undefined")?SKZ_SCHRITTE_MAX:6;
@@ -580,7 +581,7 @@ const EI_TAGS=["wenig-platz","vor-spieltag","halle","schlechtwetter"];
    getrennten Feldern (L4-8, drei Stationen), nicht gegeneinander. Die Spalte
    trainingsvorlagen.ordnung ist Text ohne Check – nur der Kommentar zieht nach
    (20260918_vorlagen_ordnung_und_skalierung.sql). */
-const EI_ORDNUNGEN=["1 gegen 1","2 gegen 2","Dreieck (3 gegen 3)","Raute (4 gegen 4)","3+1","FUNiño","3+1 gegen FUNiño","3+1 und FUNiño","Überzahl","ohne Gegner"];
+const EI_ORDNUNGEN=["1 gegen 1","2 gegen 2","Dreieck (3 gegen 3)","Raute (4 gegen 4)","3+1","FUNiño","3+1 gegen FUNiño","3+1 und FUNiño","Überzahl","ohne Gegner","Endzone (4 gegen 4)"];   // v700: L5-7 Endzone und Fähnchen
 /* Konzept §2: „Spielformen" sind die Blöcke, in denen wirklich gespielt wird –
    Hauptteil und Abschluss. Das Warm-up zählt nicht mit, das Torwart- und
    Einzeltraining läuft parallel und verlängert die Einheit nicht (TP_PARALLEL_TYPEN). */

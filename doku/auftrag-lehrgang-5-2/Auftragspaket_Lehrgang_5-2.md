@@ -3,7 +3,7 @@
 Repo `SV-Adler-Dellbrueck/u9-app`, Stand 30.09.2026 (App v655). Gilt zusammen mit `CLAUDE.md`
 und `Projektgedaechtnis/skizzen-format.md` im privaten Repo.
 
-> **Status: offen.** Entstanden im Projekt-Chat. Zusammengeführt wird auf Charles' Wort.
+> **Status: umgesetzt in v700** (Entwurfs-PR, zusammengeführt auf Charles' Wort). Zeile 64 wird nach dem Merge als Import gekennzeichnet; Wurfspiele über das Skizzen-Merkmal `wurf`.
 
 ## Ausgangslage
 
