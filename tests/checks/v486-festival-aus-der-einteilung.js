@@ -67,7 +67,7 @@ module.exports = async function (h) {
     const tasten = body.querySelectorAll("button.fst-tausch").length;
     await fstTausch(0, "a"); await warte(200); await fstTausch(1, "b"); await warte(500);
     const nachher = (_HT.plan || []).slice(0, 2).map(p => [p.a, p.b]);
-    return { std, k6, k6g, k8, festZeile, trainZeile, quelle, karte: /Teams festlegen/.test(karte) && !/tmJump\('aufstellung'/.test(karte), modalZu,
+    return { std, k6, k6g, k8, festZeile, trainZeile, quelle, karte: /Zum Spieltag/.test(karte) && !/tmJump\('aufstellung'/.test(karte) /* v702: „Zum Spieltag“ statt „Teams festlegen“ */, modalZu,
       nachSync, hinweis, pauseLabel, startWert, nachHand, felderNachPlan, spiele: plan.length, tasten, vorher, nachher,
       baelle: /Bälle/.test(HT_INFOS_VORLAGE), start: FST_START, pause: FST_PAUSE };
   }, { spiel });
@@ -81,7 +81,7 @@ module.exports = async function (h) {
   // v609: das Training zählt „N dabei“ aus den Absagen (gilt als zugesagt) – nur nicht aus „Teams festlegen“
   if (!/\d+ dabei/.test(r.trainZeile) || /🧩/.test(r.trainZeile)) probleme.push(`Training zeigt nicht „N dabei“ aus den Rückmeldungen: „${r.trainZeile.slice(0, 60)}“`);
   if (!/Teams festlegen/.test(r.quelle)) probleme.push("Quellenzeile nennt „Teams festlegen“ nicht");
-  if (!r.karte) probleme.push("Terminkarte springt nicht nach „Teams festlegen“");
+  if (!r.karte) probleme.push("Terminkarte führt nicht „Zum Spieltag“");
   if (!r.modalZu) probleme.push("Terminfenster bleibt beim Sprung offen");
   if (r.nachSync.kinder !== 9 || r.nachSync.teams !== 2) probleme.push(`Einteilung nicht übernommen: ${JSON.stringify(r.nachSync)} statt 9 Kinder / 2 Teams`);
   if (!/9 dabei/.test(r.hinweis)) probleme.push(`Hinweis nennt die Quelle nicht: „${r.hinweis}“`);

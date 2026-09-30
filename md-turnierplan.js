@@ -578,7 +578,7 @@ function nomRender(){
   box.innerHTML=`<div style="font-size:var(--s-text);margin-bottom:8px;line-height:1.5">Eltern: ✅ <b>${c.zugesagt}</b> zugesagt · ❌ ${c.abgesagt} · 🤒 ${c.krank} · ❓ ${ohneAntwort.length} offen<br>Im Match dabei: <b>${dabeiAlle} von ${aktiv.length}</b></div>
   ${offenBlock}
   <details id="nom-dabei" class="tp-tipp"${(warOffen===undefined?true:warOffen)?" open":""}>
-    <summary>Jedes Kind: dabei, nicht dabei, verletzt${offenAlle?` <span style="font-weight:400;color:var(--text2)">· ${offenAlle} noch nicht gesetzt</span>`:""}</summary>
+    <summary>👥 Wer ist dabei? <b>${dabeiAlle} von ${aktiv.length}</b> · jedes Kind ändern${offenAlle?` <span style="font-weight:400;color:var(--text2)">· ${offenAlle} noch nicht gesetzt</span>`:""}</summary>
     <div>
       <div id="nom-quelle" style="font-size:var(--s-klein);color:var(--text3);margin-bottom:8px;line-height:1.4">📣 Vorbelegt aus den Eltern-Rückmeldungen (zugesagt = Dabei, abgesagt = Nicht, ohne Antwort = offen). Ein Tipp überstimmt die Eltern. <b>Dabei</b> ist die Anwesenheit dieses Spieltags und zählt für die Spiele-Quote.</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">

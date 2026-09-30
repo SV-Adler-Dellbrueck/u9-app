@@ -30,11 +30,14 @@ module.exports = async function (h) {
     _spieltagTypen = { [heim]: "spiel", [auswaerts]: "spiel" };
     _spieltagHeim = { [heim]: true, [auswaerts]: false };
     _spieltagNamen = { [heim]: "", [auswaerts]: "" };
+    // v702: Heim/Auswärts steht in der Termin-Karte oben (spieltagKopfRender), der Banner unten bleibt aus
+    _spieltagTermin = { [heim]: { id: 1, datum: heim, typ: "spiel", heim: true }, [auswaerts]: { id: 2, datum: auswaerts, typ: "spiel", heim: false } };
+    const kopfText = () => (document.getElementById("st-kopf") || {}).textContent || "";
     if (sel) sel.innerHTML = `<option value="${heim}">heim</option><option value="${auswaerts}">auswärts</option>`;
     if (sel) sel.value = heim; _spieltagTurnierBanner();
-    const bHeim = banner ? { hidden: banner.hidden, text: banner.textContent.replace(/\s+/g, " ").trim() } : null;
+    const bHeim = { hidden: !kopfText(), text: kopfText().replace(/\s+/g, " ").trim(), banner: banner ? banner.hidden : null };
     if (sel) sel.value = auswaerts; _spieltagTurnierBanner();
-    const bAus = banner ? banner.hidden : null;
+    const bAus = !/planen/.test(kopfText()) && /Spielplan/.test(kopfText()) && (banner ? banner.hidden : true);
     // 2) Anlegen aus dem Heimspiel-Termin
     await htOpen(heim, "", "heimspiel"); await warte(400);
     const kopf = document.getElementById("hturnier-modal")?.textContent.replace(/\s+/g, " ").trim() || "";
@@ -89,7 +92,7 @@ module.exports = async function (h) {
   if (mitKnopf.length) probleme.push(`Gast-Seite zeigt Anpfiff-Knöpfe in Phase ${mitKnopf.map(k => k.phase).join(", ")}`);
   if (!r.gastAnpfiff) probleme.push("fstAnpfiff wirkt auf der Gast-Seite");
   if (fehler.length) probleme.push(...fehler.slice(0, 3));
-  if (r.bHeim && !/⚽/.test(r.bHeim.text)) probleme.push("Die Kachel trägt beim Heimspiel noch das Turnier-Zeichen");
+  if (r.bHeim && (/Turnier-Modus/.test(r.bHeim.text) || r.bHeim.banner === false)) probleme.push("Beim Heimspiel steht noch der Turnier-Modus (v702: Termin-Karte statt Banner)");
   zeilen.push(`Spieltag: Heimspiel „${(r.bHeim && r.bHeim.text || "").slice(0, 46)}“ · auswärts verborgen ${r.bAus}`);
   zeilen.push(`Angelegt: „${r.nameVorschlag}“, Anlass ${r.anlass}, Vereine ${JSON.stringify(r.vereine)} → ${r.teams} Teams, ${r.spiele} Spiele auf ${r.felder} Feldern`);
   zeilen.push(`Gast-Seite: ${r.knoepfe.map(k => k.phase + " " + k.n + " Knöpfe").join(" · ")} · Anpfiff von aussen wirkungslos ${r.gastAnpfiff}`);

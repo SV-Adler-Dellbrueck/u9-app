@@ -27,7 +27,7 @@ module.exports = async function (h) {
       tmDetailOpen(id);
       const mo = document.getElementById("tmd-modal");
       const txt = mo.textContent.replace(/\s+/g, " ");
-      const gross = [...mo.querySelectorAll("button")].filter(b => Math.round(b.getBoundingClientRect().height) >= 50 && /Planen|planen|Teams festlegen|Trainingsplan|Anwesenheit|Mitbringliste|Turnier-Modus/.test(b.textContent));
+      const gross = [...mo.querySelectorAll("button")].filter(b => Math.round(b.getBoundingClientRect().height) >= 50 && /Planen|planen|Zum Spieltag|Trainingsplan|Anwesenheit|Mitbringliste|Turnier-Modus/.test(b.textContent));
       const abschnitte = [...mo.querySelectorAll("div")].map(d => d.children.length === 0 ? d.textContent.trim() : "").filter(x => /^(WAS DU HIER TUST|WER IST DABEI|NACH DEM TERMIN)$/i.test(x) || ["Was du hier tust", "Wer ist dabei", "Nach dem Termin"].includes(x));
       const det = [...mo.querySelectorAll("details")].map(x => ({ s: x.querySelector("summary").textContent.trim(), offen: x.open }));
       return {
@@ -48,9 +48,9 @@ module.exports = async function (h) {
   const fehler = s.fehler(); await s.schliessen();
   if (r.fehlt) { probleme.push(`${r.fehlt} fehlt`); return h.ergebnis("Termin-Fenster", false, probleme); }
   const L = x => x.gross.map(g => (g.p ? "▶" : "") + g.l).join(" | ");
-  if (r.fest.gross.length !== 2 || !/^▶Festival planen/.test(L(r.fest)) || !/Teams festlegen/.test(L(r.fest))) probleme.push(`Heimturnier morgen: ${L(r.fest)} – erwartet „Festival planen" (primär) und „Teams festlegen"`);
-  if (!/^▶Teams festlegen/.test(L(r.festHeute))) probleme.push(`Am Termintag muss das Match vorn stehen: ${L(r.festHeute)}`);
-  if (r.aus.gross.length !== 1 || !/Teams festlegen/.test(L(r.aus))) probleme.push(`Auswärtsspiel: ${L(r.aus)} – kein Planer, nur das Match`);
+  if (r.fest.gross.length !== 2 || !/^▶Festival planen/.test(L(r.fest)) || !/Zum Spieltag/.test(L(r.fest))) probleme.push(`Heimturnier morgen: ${L(r.fest)} – erwartet „Festival planen" (primär) und „Zum Spieltag" (v702)`);
+  if (!/^▶Zum Spieltag/.test(L(r.festHeute))) probleme.push(`Am Termintag muss das Match vorn stehen: ${L(r.festHeute)}`);
+  if (r.aus.gross.length !== 1 || !/Zum Spieltag/.test(L(r.aus))) probleme.push(`Auswärtsspiel: ${L(r.aus)} – kein Planer, nur das Match`);
   if (!/Trainingsplan/.test(L(r.tr)) || !/Anwesenheit/.test(L(r.tr))) probleme.push(`Training: ${L(r.tr)}`);
   if (r.fest.gross.some(g => g.h < 50)) probleme.push(`große Knöpfe nur ${JSON.stringify(r.fest.gross.map(g => g.h))} px hoch`);
   const soll = ["Was du hier tust", "Wer ist dabei"];
