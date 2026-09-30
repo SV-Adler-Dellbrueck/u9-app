@@ -69,7 +69,7 @@ async function anLoadServer(){
     const maxN=Math.max(0,...counts.map(c=>c.n));
     counts.sort((a,b)=>a.n-b.n);
     fair.innerHTML=(maxN===0?`<div class="empty" style="padding:1.2rem 1rem"><i class="ti ti-scale"></i>Noch kein Spiel bewertet – die Verteilung entsteht mit dem Blitz-Rating nach dem Spiel.
-        <div style="margin-top:10px"><button class="btn btn-sm" onclick="go('spieltag')"><i class="ti ti-ball-football"></i>Zum Spieltag</button></div></div>`:counts.map(c=>{
+        <div style="margin-top:10px"><button class="btn btn-sm" onclick="if(typeof spieltagPhase==='function')spieltagPhase('nach');else go('spieltag')"><i class="ti ti-ball-football"></i>Zum Blitz-Rating</button></div></div>`:counts.map(c=>{
       const pct=Math.round(c.n/maxN*100),low=maxN>=2&&c.n<maxN*0.5;
       return `<div style="margin-bottom:6px"><div style="display:flex;justify-content:space-between;font-size:var(--s-klein);margin-bottom:2px"><span>${low?"⚠️ ":""}${esc(c.name)}</span><span style="color:var(--text2)">${c.n} Spiele</span></div><div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${low?"#dc2626":"#15803d"};border-radius:4px"></div></div></div>`;
     }).join("")+'<div style="font-size:var(--s-klein);color:var(--text3);margin-top:4px">⚠️ = deutlich seltener im Einsatz. Auf faire Verteilung achten. Gezählt werden Spieltage mit Blitz-Rating.</div>');

@@ -604,12 +604,23 @@ function _renderKombiInner(wrap){
      erscheinen erst, wenn es eine Aufstellung gibt, die sie erklaeren. */
   const erklaer=document.getElementById("kombi-erklaer");
   if(erklaer)erklaer.style.display=(combos&&combos.length)?"":"none";
+  const druck=document.getElementById("kombi-druck");
+  if(druck)druck.style.display=(combos&&combos.length)?"":"none";   // v688: nichts zu drucken ohne Aufstellung
   if(!combos||!combos.length){
     const bewertet=(nominiert||Object.keys(DB)).filter(n=>getPlayerData(n)).length;
-    wrap.innerHTML=`<div class="empty"><i class="ti ti-users-group"></i>Für die Aufstellung braucht es mindestens 4 <b>bewertete</b> Kinder – bisher sind es ${bewertet}.
+    /* v688: Solange Bewerten gesperrt ist (bis zum Startdatum), hiess es hier „bisher 0 bewertete
+       Kinder“ samt Link auf eine gesperrte Seite. Jetzt sagt die Seite, ab wann sie rechnet, und
+       führt als Hauptaktion dorthin, wo ohne Bewertung fair aufgestellt wird: „Vor dem Spiel“. */
+    const frei=typeof bewFreigegeben==="function"&&bewFreigegeben();
+    const ab=typeof bewAbText==="function"?bewAbText():"";
+    const satz=frei
+      ?`Für die Aufstellung braucht es mindestens 4 <b>bewertete</b> Kinder – bisher sind es ${bewertet}.`
+      :`Die Rollen-Empfehlung rechnet mit Bewertungen – bewertet wird ${ab?"ab dem "+ab:"ab dem Ende der Hinrunde"}. Bis dahin verteilt „Feld &amp; Bank fair besetzen“ nach Einsatzzeiten.`;
+    const zumMatch=`if(typeof spieltagPhase==='function')spieltagPhase('vor');else go('spieltag')`;
+    wrap.innerHTML=`<div class="empty"><i class="ti ti-users-group"></i>${satz}
       <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;align-items:center">
-        <button class="btn btn-sm" onclick="go('spieltag')">🪄 Feld &amp; Bank fair besetzen (Spieltag)</button>
-        <a href="#" onclick="go('bew');return false" style="display:inline-flex;align-items:center;min-height:44px;padding:0 8px;font-size:var(--s-text);color:var(--blue-text);font-weight:700">oder Kinder bewerten ›</a>
+        <button class="btn btn-p" id="kombi-fair" style="min-height:56px;width:100%;max-width:340px" onclick="${zumMatch}">🪄 Feld &amp; Bank fair besetzen</button>
+        ${frei?`<a href="#" onclick="go('bew');return false" style="display:inline-flex;align-items:center;min-height:44px;padding:0 8px;font-size:var(--s-text);color:var(--blue-text);font-weight:700">oder Kinder bewerten ›</a>`:""}
       </div></div>`;
     return;
   }
