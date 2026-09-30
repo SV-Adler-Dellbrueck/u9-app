@@ -106,6 +106,43 @@ Deno.serve(async (req) => {
       return json({ ok: true, familien, sent });
     }
 
+    /* v702 (Version 6): Erinnerung an die Familien, deren Kind für DIESEN Termin noch keine
+       Rückmeldung hat. Vorher schickte der Knopf „Als Push“ über den allgemeinen Weg an alle
+       Eltern – auch an die, die längst geantwortet hatten. Empfänger ergeben sich aus der
+       Datenbank, der Text ist fest; senden darf nur das Trainerteam. */
+    if (body.art === "rsvp_offen") {
+      if (!prof || prof.role !== "trainer") return json({ error: "nur Trainer duerfen erinnern" }, 403);
+      const tid = Number(body.termin_id);
+      if (!Number.isFinite(tid) || tid <= 0) return json({ error: "Termin fehlt" }, 400);
+      const { data: t } = await admin.from("termine").select("id,typ,titel,gegner,datum,uhrzeit").eq("id", tid).maybeSingle();
+      if (!t) return json({ error: "Termin nicht gefunden" }, 404);
+      const { data: kinder } = await admin.from("kader").select("id").or("aktiv.is.null,aktiv.eq.true");
+      const { data: rm } = await admin.from("rueckmeldungen").select("spieler_id").eq("termin_id", tid);
+      const geantwortet = new Set((rm || []).map((x: any) => x.spieler_id));
+      const offen = (kinder || []).map((k: any) => k.id).filter((id: number) => !geantwortet.has(id));
+      if (!offen.length) return json({ ok: true, familien: 0, sent: 0 });
+      const { data: ek } = await admin.from("eltern_kinder").select("email,spieler_id").in("spieler_id", offen);
+      const mails = [...new Set((ek || []).map((x: any) => String(x.email || "").toLowerCase()).filter(Boolean))];
+      const familien = new Set((ek || []).map((x: any) => x.spieler_id)).size;
+      const { data: profs } = mails.length ? await admin.from("profiles").select("id").in("email", mails) : { data: [] };
+      const ids = (profs || []).map((p: any) => p.id);
+      if (!ids.length) return json({ ok: true, familien, sent: 0 });
+      await vapid(admin);
+      const art: Record<string, string> = { training: "Training", spiel: "Spiel", turnier: "Festival" };
+      const was = t.titel || t.gegner || art[t.typ] || "Termin";
+      const dat = new Date(t.datum + "T00:00:00").toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" });
+      const zeit = t.uhrzeit ? " um " + String(t.uhrzeit).slice(0, 5) + " Uhr" : "";
+      const payload = { title: "📬 Bitte kurz rückmelden", body: `${was} am ${dat}${zeit} – eine kurze Zu- oder Absage hilft bei der Planung.`, url: "./eltern/?rsvp=" + tid, tag: "reminder" };
+      const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth").in("user_id", ids);
+      let sent = 0; const gone: string[] = [];
+      for (const s of subs || []) {
+        try { await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } } as any, JSON.stringify(payload)); sent++; }
+        catch (err: any) { const c = err?.statusCode; if (c === 404 || c === 410 || c === 403) gone.push(s.endpoint); }
+      }
+      if (gone.length) await admin.from("push_subscriptions").delete().in("endpoint", gone);
+      return json({ ok: true, familien, offen: offen.length, sent });
+    }
+
     if (!prof || prof.role !== "trainer") return json({ error: "nur Trainer duerfen senden" }, 403);
 
     await vapid(admin);

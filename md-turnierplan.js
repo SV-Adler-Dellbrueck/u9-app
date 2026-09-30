@@ -248,7 +248,7 @@ let nomStatus={};
    organisiert" – als Dauergast über jedem normalen Spiel war es Ballast. Dieselbe
    Kontext-Logik wie die Turnier-Gruppe im Kachel-Menü (_kachelTurnierCheck, v346).
    Der Typ kommt aus derselben Abfrage, die die Auswahlliste füllt – keine zweite Runde. */
-let _spieltagTypen={}, _spieltagHeim={}, _spieltagNamen={};
+let _spieltagTypen={}, _spieltagHeim={}, _spieltagNamen={}, _spieltagTermin={};
 /* v484 – PO: „Das soll die Kachel Turnier-Modus dann ersetzen." Richten WIR aus, fuehrt der
    Banner in den Festival-Planer (Vereine, Felder, Spielplan, Teilen). Sind wir zu Gast,
    bleibt der Turnier-Modus: dort macht den Plan der Ausrichter, wir erfassen nur Kurzspiele. */
@@ -258,7 +258,11 @@ function _spieltagTurnierBanner(){
   const typ=_spieltagTypen[d], heim=_spieltagHeim[d]===true;
   /* v490: Auch das Heimspiel wird geplant wie ein kleines Festival – ein Gegner, evtl. mehrere
      Teams auf beiden Seiten. Nur auswärts bleibt es beim Turnier-Modus. */
-  b.hidden=!(typ==="turnier"||(typ==="spiel"&&heim));
+  /* v702 PO: „der Turniermodus kann bei Auswärtsspielen ganz unten auch weg.“ Der Banner bleibt
+     aus; was ein Spieltag braucht, steht oben in der Termin-Karte (spieltagKopfRender) – bei
+     Heimspielen „Planen“, auswärts der Spielplan des Gastgebers. */
+  spieltagKopfRender();
+  b.hidden=true;
   if(b.hidden)return;
   const anlass=(typ==="spiel")?"heimspiel":"festival";
   b.onclick=heim?(()=>{ if(typeof htOpen==="function")htOpen(d,_spieltagNamen&&_spieltagNamen[d],anlass); else toast("Planer lädt noch"); })
@@ -277,7 +281,7 @@ function _spieltagTurnierBanner(){
 async function spieltagDatesLoad(preferDatum){
   const sel=document.getElementById("spieltag-date"); if(!sel)return;
   let rows=[];
-  try{const r=await fetch(`${SB_URL}/rest/v1/termine?typ=in.(spiel,turnier)&select=datum,gegner,typ,heim,titel&order=datum.asc`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)rows=await r.json();}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/termine?typ=in.(spiel,turnier)&select=id,datum,gegner,typ,heim,titel,uhrzeit,treffzeit,ort,platz,platz_status,turnierplan_url,turnierplan_datei&order=datum.asc`,{headers:sbAuthHeaders()});if(sbCheck401(r))return;if(r.ok)rows=await r.json();}catch(e){}
   const seen=new Set(), items=[];
   rows.forEach(t=>{if(t.datum&&!seen.has(t.datum)){seen.add(t.datum);items.push(t);}});
   if(!items.length){ sel.innerHTML='<option value="">— kein Spieltag angelegt (unter Orga anlegen) —</option>'; nomLoad(); return; }
@@ -286,26 +290,32 @@ async function spieltagDatesLoad(preferDatum){
   const fmt=(t)=>{const d=new Date(t.datum+"T00:00:00");const wd=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];const ds=d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"2-digit"});const g=t.typ==="turnier"?"🏆 Turnier":(t.gegner?"vs "+t.gegner:"Spiel");return `${wd} ${ds} · ${g}`;};
   sel.innerHTML=items.map(t=>`<option value="${esc(t.datum)}"${t.datum===def?" selected":""}>${esc(fmt(t))}</option>`).join("");
   // Typ je Spieltag merken – das Turnier-Banner haengt daran (siehe _spieltagTurnierBanner)
-  _spieltagTypen={}; _spieltagHeim={}; _spieltagNamen={};
-  items.forEach(t=>{ _spieltagTypen[t.datum]=t.typ; _spieltagHeim[t.datum]=t.heim===true; _spieltagNamen[t.datum]=t.titel||""; });
+  _spieltagTypen={}; _spieltagHeim={}; _spieltagNamen={}; _spieltagTermin={};
+  items.forEach(t=>{ _spieltagTypen[t.datum]=t.typ; _spieltagHeim[t.datum]=t.heim===true; _spieltagNamen[t.datum]=t.titel||""; _spieltagTermin[t.datum]=t; });
   _spieltagTurnierBanner();
+  if(window._spieltagPlanWunsch){ window._spieltagPlanWunsch=false; spieltagPlanOpen(); }   // v702: aus dem Termin „Spielplan“
   nomLoad();
 }
 function nomInit(){
   spieltagTeam=1;                                   // Tab-Eintritt: Standard-Team
   if(typeof TEAM_KARTE_OFFEN!=="undefined")TEAM_KARTE_OFFEN=0;  // … und alle Kacheln zu
-  spieltagDatesLoad(); // Spieltag-Dropdown aus hinterlegten Terminen befüllen (ruft dann nomLoad)
+  /* v702: Kommt man über einen Termin (spieltagZuTermin), gilt dessen Datum. */
+  let wunsch=null; try{ if(typeof _spieltagDatumWunsch!=="undefined"&&_spieltagDatumWunsch){ wunsch=_spieltagDatumWunsch; _spieltagDatumWunsch=null; } }catch(e){}
+  spieltagDatesLoad(wunsch||undefined); // Spieltag-Dropdown aus hinterlegten Terminen befüllen (ruft dann nomLoad)
 }
 // Eltern-RSVP (Phase 10-M, Etappe 3): Rückmeldungen der Eltern zum Termin dieses Datums laden.
 let nomRsvp={}, nomOvr=new Set(); // nomRsvp: name->{status,kommentar}; nomOvr: vom Trainer manuell überstimmte Namen
+let NOM_TERMIN_ID=null;           // v702: Termin des gewählten Spieltags – für „Offene erinnern“
 async function nomLoadRsvp(){
-  nomRsvp={};
+  nomRsvp={}; NOM_TERMIN_ID=null;
   const datum=spieltagRawDate();
   try{
-    const tr=await fetch(`${SB_URL}/rest/v1/termine?datum=eq.${encodeURIComponent(datum)}&select=id&limit=1`,{headers:sbAuthHeaders()});
+    // v702: nur Spiel oder Turnier – ein Training am selben Tag lieferte sonst dessen Rückmeldungen
+    const tr=await fetch(`${SB_URL}/rest/v1/termine?datum=eq.${encodeURIComponent(datum)}&typ=in.(spiel,turnier)&select=id&limit=1`,{headers:sbAuthHeaders()});
     if(!tr.ok)return;
     const trows=await tr.json(); const tid=trows[0]&&trows[0].id;
     if(!tid)return;
+    NOM_TERMIN_ID=tid;
     const rr=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?termin_id=eq.${tid}&select=spieler_id,status,kommentar`,{headers:sbAuthHeaders()});
     if(!rr.ok)return;
     (await rr.json()).forEach(x=>{const k=KADER.find(kk=>kk._id===x.spieler_id); if(k)nomRsvp[k.name]={status:x.status,kommentar:x.kommentar};});
@@ -350,9 +360,13 @@ async function kapitaenLoad(){
   try{
     const r=await fetch(`${SB_URL}/rest/v1/match_actions?aktion=eq.kapitaen&select=spieler,datum&order=created_at.desc`,{headers:sbAuthHeaders()});
     if(sbCheck401(r)||!r.ok)return;
+    /* v702 PO: „vor 10 Minuten die Kapitäne festgelegt … jetzt haben die bereits 1× die
+       Kapitänsrolle gehabt.“ Gezählt wurde jede Wahl – auch die für einen Spieltag, der noch
+       kommt. Jetzt zählt nur, wer an einem VERGANGENEN Spieltag die Binde hatte. */
+    const heuteK=new Date().toLocaleDateString("sv-SE");
     (await r.json()).forEach(x=>{
-      KAP_COUNT[x.spieler]=(KAP_COUNT[x.spieler]||0)+1;
       const m=/^(\d{4}-\d{2}-\d{2})(?:__t(\d+))?$/.exec(String(x.datum||""));
+      if(m&&m[1]<heuteK)KAP_COUNT[x.spieler]=(KAP_COUNT[x.spieler]||0)+1;
       if(m&&m[1]===tag){ const t=m[2]?parseInt(m[2]):1; if(!KAP_HEUTE[t])KAP_HEUTE[t]=x.spieler; }   // jüngster je Team
     });
   }catch(e){}
@@ -401,10 +415,9 @@ async function kapitaenSet(name,t){
   const datum=_kapKey(t);
   // genau ein Kapitän je Team und Spieltag: alten Eintrag dieses Schlüssels entfernen
   try{ await fetch(`${SB_URL}/rest/v1/match_actions?datum=eq.${encodeURIComponent(datum)}&aktion=eq.kapitaen`,{method:"DELETE",headers:sbAuthHeaders()}); }catch(e){}
-  const alt=KAP_HEUTE[t]; if(alt&&KAP_COUNT[alt])KAP_COUNT[alt]--; // Zähler des alten zurück
+  /* v702: Der Zähler kennt nur vergangene Spieltage – eine Wahl ändert ihn nicht. */
   KAP_HEUTE[t]=name;
   if(t===((typeof spieltagTeam!=="undefined")?spieltagTeam:1))matchKapitaen=name;
-  KAP_COUNT[name]=(KAP_COUNT[name]||0)+1;
   try{navigator.vibrate&&navigator.vibrate(30);}catch(e){}
   terminIdForDatum(datum).then(tid=>sbQueuedPost("match_actions",{datum,spieler:name,aktion:"kapitaen",termin_id:tid}));
   if(matchKapitaen===name&&typeof tickerPush==="function")tickerPush(name,"kapitaen");   // Highlight für die Eltern (läuft nur bei offenem Ticker)
@@ -419,7 +432,7 @@ function kapitaenRow(){
   const t=(typeof spieltagTeam!=="undefined")?spieltagTeam:1;
   const kap=(typeof KAP_HEUTE!=="undefined"&&KAP_HEUTE[t])||matchKapitaen;
   if(kap){
-    const n=KAP_COUNT[kap]||1;
+    const n=(KAP_COUNT[kap]||0)+1;   // v702: das wievielte Mal – dieser Spieltag mitgerechnet
     return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:var(--r);font-size:var(--s-text);color:#3730a3;margin-bottom:10px">
       ©️ <strong>Kapitän: ${esc(kap)}</strong><span style="font-size:var(--s-klein);color:#6366f1">${n}. Mal</span></div>`;
   }
@@ -549,17 +562,33 @@ function nomRender(){
         style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:var(--r);cursor:pointer;font-family:inherit;font-size:var(--s-klein);font-weight:${st===s?"700":"500"};background:${st===s?stCfg[s].col:"var(--surface)"};color:${st===s?"#fff":"var(--text)"}">${stCfg[s].lbl}</button>`).join("")}</div>
     </div>`;
   };
-  box.innerHTML=`<details id="nom-dabei" class="tp-tipp"${(warOffen===undefined?!dabeiAlle:warOffen)?" open":""}>
-    <summary>👥 Wer ist dabei? <b>${dabeiAlle} von ${aktiv.length}</b>${offenAlle?` <span style="font-weight:400;color:var(--amber)">· ${offenAlle} offen</span>`:""}</summary>
+  /* v702 PO: „Bei ‚Vor dem Spiel‘ steht direkt eine lange Liste mit allen Spielern … hier wäre bei
+     Bedarf notwendig, händisch als Trainer etwas zu ändern bzw. kurz zu sehen, bei wem die
+     Rückmeldung fehlt.“ Schritt 1 zeigt deshalb zuerst, wer noch nicht geantwortet hat – mit
+     „Offene erinnern“ (Push nur an diese Familien) –, darunter die Liste in der Reihenfolge:
+     ohne Antwort, zugesagt, abgesagt/krank. Die Liste steht offen: sie IST dieser Schritt. */
+  const ohneAntwort=aktiv.filter(k=>!nomRsvp[k.name]).map(k=>k.name);
+  const rang=n=>!nomRsvp[n]?0:nomRsvp[n].status==="zugesagt"?1:2;
+  const sortiert=aktiv.map(k=>k.name).sort((a,b)=>rang(a)-rang(b));
+  const offenBlock=ohneAntwort.length?`<div id="nom-ohne-antwort" style="background:var(--surface2);border-radius:12px;padding:10px 12px;margin-bottom:10px">
+      <div style="font-size:var(--s-text);font-weight:800">❓ Noch keine Antwort der Eltern · ${ohneAntwort.length}</div>
+      <div style="font-size:var(--s-text);color:var(--text2);margin:4px 0 8px;line-height:1.5">${ohneAntwort.map(n=>esc(n)).join(", ")}</div>
+      ${NOM_TERMIN_ID?`<button type="button" class="btn btn-p" id="nom-erinnern" onclick="if(typeof rsvpOffeneErinnern==='function')rsvpOffeneErinnern(${Number(NOM_TERMIN_ID)},this)" style="width:100%;min-height:48px;justify-content:center"><i class="ti ti-bell"></i>Offene per Push erinnern</button>`:""}
+    </div>`:(hasRsvp?`<div style="font-size:var(--s-text);color:var(--green);font-weight:700;margin-bottom:8px">Alle Eltern haben geantwortet ✓</div>`:"");
+  box.innerHTML=`<div style="font-size:var(--s-text);margin-bottom:8px;line-height:1.5">Eltern: ✅ <b>${c.zugesagt}</b> zugesagt · ❌ ${c.abgesagt} · 🤒 ${c.krank} · ❓ ${ohneAntwort.length} offen<br>Im Match dabei: <b>${dabeiAlle} von ${aktiv.length}</b></div>
+  ${offenBlock}
+  <details id="nom-dabei" class="tp-tipp"${(warOffen===undefined?true:warOffen)?" open":""}>
+    <summary>Jedes Kind: dabei, nicht dabei, verletzt${offenAlle?` <span style="font-weight:400;color:var(--text2)">· ${offenAlle} noch nicht gesetzt</span>`:""}</summary>
     <div>
-      <div id="nom-quelle" style="font-size:var(--s-klein);color:var(--text3);margin-bottom:8px;line-height:1.4">📣 Vorbelegt aus den Eltern-Rückmeldungen (zugesagt = Dabei, abgesagt = Nicht, ohne Antwort = offen). <b>Dabei</b> ist die Anwesenheit dieses Spieltags und zählt für die Spiele-Quote.</div>
+      <div id="nom-quelle" style="font-size:var(--s-klein);color:var(--text3);margin-bottom:8px;line-height:1.4">📣 Vorbelegt aus den Eltern-Rückmeldungen (zugesagt = Dabei, abgesagt = Nicht, ohne Antwort = offen). Ein Tipp überstimmt die Eltern. <b>Dabei</b> ist die Anwesenheit dieses Spieltags und zählt für die Spiele-Quote.</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
         ${offenAlle?`<button class="btn btn-sm" id="nom-offene-dabei" onclick="nomOffeneDabei()"><i class="ti ti-users-plus"></i>${offenAlle} Offene auf „Dabei“ setzen</button>`:""}
-        ${hasRsvp?`<button class="btn btn-sm" onclick="nomApplyRsvp()" title="Setzt die Nominierung auf den Stand der Eltern-Rückmeldungen zurück">Eltern-Stand: ✅ ${c.zugesagt} ❌ ${c.abgesagt} 🤒 ${c.krank} – übernehmen</button>`:""}
+        ${hasRsvp?`<button class="btn btn-sm" onclick="nomApplyRsvp()" title="Setzt die Nominierung auf den Stand der Eltern-Rückmeldungen zurück">Eltern-Stand wieder übernehmen</button>`:""}
       </div>
-      ${aktiv.map(k=>zeile(k.name)).join("")}
+      ${sortiert.map(zeile).join("")}
     </div>
-  </details>`;
+  </details>
+  <button type="button" class="btn" onclick="spieltagPhaseZeigen('vor')" style="width:100%;min-height:48px;margin-top:10px;justify-content:center">Weiter: Teams und Kapitäne →</button>`;
 }
 /* v477: Wer ohne Eltern-Antwort am Platz steht, ist dabei – ein Tipp fuer alle Offenen. */
 function nomOffeneDabei(){
@@ -585,6 +614,8 @@ function nomOffeneDabei(){
    Gewartet wird auf die Liste, statt einen festen Zeitwert zu raten: `go` rendert die
    Seite erst, und ein zu kurzer Timeout hätte je nach Gerät mal geklappt und mal nicht. */
 function spieltagAnwesenheitOpen(){
+  /* v702: „Wer kommt?“ ist ein eigener Schritt. */
+  if(typeof spieltagZuTermin==="function"){ spieltagZuTermin(null,"wer"); return; }
   if(typeof go==="function")go("spieltag");
   let versuche=0;
   (function warten(){
@@ -599,6 +630,114 @@ function spieltagAnwesenheitOpen(){
     if(++versuche<40)setTimeout(warten,50);
     else if(vor)vor.scrollIntoView({behavior:"smooth",block:"start"});
   })();
+}
+
+/* ═══ v702 · Termin-Karte oben auf dem Spieltag ═══════════════════════════════════
+   PO: „bei einem Auswärtsspiel kann es vorkommen, dass wir eine URL bekommen mit dem Spielplan
+   oder ein PDF … beim Klick brauch ich eigentlich nur eine Möglichkeit, die URL einzugeben und
+   oder das PDF reinzuladen.“ Link und Datei hingen bisher im Turnier-Modus (termine.turnierplan_url
+   bzw. turnierplan_datei, Bucket termin_media) – dieselben Felder, jetzt ohne Umweg. Eltern sehen
+   beides wie bisher auf ihrer Termin-Seite. */
+function spieltagTerminAktuell(){
+  const d=document.getElementById("spieltag-date")?.value||"";
+  return (typeof _spieltagTermin!=="undefined"&&_spieltagTermin[d])||null;
+}
+function spieltagKopfRender(){
+  const box=document.getElementById("spieltag-kopf"); if(!box)return;
+  const t=spieltagTerminAktuell();
+  if(!t){ box.innerHTML=""; return; }
+  const heim=t.heim===true;
+  const zeit=t.uhrzeit?String(t.uhrzeit).slice(0,5)+" Uhr":"";
+  const treff=t.treffzeit?String(t.treffzeit).slice(0,5):"";
+  const ort=t.ort||(heim&&typeof VEREIN_ADRESSE!=="undefined"?VEREIN_ADRESSE:"");
+  const hatPlan=!!(t.turnierplan_url||t.turnierplan_datei);
+  const knopf=(html,cls)=>`<button type="button" class="btn${cls?" "+cls:""}" style="min-height:48px;justify-content:center" ${html}</button>`;
+  const knoepfe=[];
+  if(heim) knoepfe.push(knopf(`onclick="spieltagHeimPlanen('${esc(t.datum)}')"><i class="ti ti-layout-grid"></i>${t.typ==="spiel"?"Heimspiel planen":"Festival planen"}`,"btn-p"));
+  else knoepfe.push(knopf(`id="st-plan-knopf" onclick="spieltagPlanOpen()"><i class="ti ti-file-text"></i>${hatPlan?"Spielplan":"Spielplan hinzufügen"}`));
+  if(ort&&typeof mapsUrl==="function")knoepfe.push(`<a class="btn" href="${esc(mapsUrl(ort))}" target="_blank" rel="noopener noreferrer" style="min-height:48px;justify-content:center;text-decoration:none"><i class="ti ti-navigation"></i>Route</a>`);
+  if(typeof tmDetailOpen==="function")knoepfe.push(knopf(`onclick="tmDetailOpen(${Number(t.id)})"><i class="ti ti-info-circle"></i>Termin`));
+  box.innerHTML=`<div id="st-kopf" style="margin-top:4px">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:var(--s-text);color:var(--text2);line-height:1.5">
+      <span style="font-weight:800;color:var(--text)">${heim?"🏠 Heim":"🚌 Auswärts"}</span>
+      ${treff?`<span>· Treff ${esc(treff)}</span>`:""}${zeit?`<span>· Beginn ${esc(zeit)}</span>`:""}${t.ort?`<span>· ${esc(t.ort)}</span>`:""}
+      ${!heim&&hatPlan?`<span style="color:var(--green);font-weight:700">· Spielplan da ✓</span>`:""}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:8px">${knoepfe.join("")}</div>
+  </div>`;
+}
+/* Spielplan eines Auswärtsspiels: Link eintragen und/oder PDF bzw. Foto hochladen – ein Fenster. */
+function spieltagPlanOpen(){
+  const t=spieltagTerminAktuell(); if(!t){ toast("Kein Spieltag gewählt","err"); return; }
+  document.getElementById("st-plan-modal")?.remove();
+  const ov=document.createElement("div");
+  ov.id="st-plan-modal"; ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-label","Spielplan");
+  ov.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10060;display:flex;flex-direction:column;padding:14px;overflow-y:auto";
+  ov.onclick=e=>{ if(e.target===ov) ov.remove(); };
+  const fld="width:100%;box-sizing:border-box;min-height:48px;padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)";
+  ov.innerHTML=`<div style="background:var(--surface);color:var(--text);max-width:440px;width:100%;margin:auto;border-radius:16px;padding:16px">
+    ${typeof mdlHead==="function"?mdlHead("st-plan-modal","📄","Spielplan",esc(t.titel||t.gegner||"Spieltag"),"var(--fam-spieltag)"):""}
+    <label style="display:block;font-size:var(--s-text);font-weight:700;margin-top:6px">Link vom Gastgeber
+      <input id="st-plan-url" type="url" inputmode="url" value="${esc(t.turnierplan_url||"")}" placeholder="https://…" style="${fld};margin-top:4px"></label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <button type="button" class="btn btn-p" onclick="spieltagPlanUrlSpeichern(this)" style="min-height:48px;justify-content:center">Link speichern</button>
+      ${t.turnierplan_url?`<a class="btn" href="${esc(t.turnierplan_url)}" target="_blank" rel="noopener noreferrer" style="min-height:48px;justify-content:center;text-decoration:none"><i class="ti ti-external-link"></i>Öffnen</a>`:""}
+    </div>
+    <label style="display:block;font-size:var(--s-text);font-weight:700;margin-top:14px">PDF oder Foto vom Aushang
+      <input id="st-plan-datei" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" style="display:block;margin-top:6px;min-height:44px;font-size:var(--s-text)"></label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <button type="button" class="btn btn-p" onclick="spieltagPlanDateiHochladen(this)" style="min-height:48px;justify-content:center"><i class="ti ti-upload"></i>Hochladen</button>
+      ${t.turnierplan_datei?`<button type="button" class="btn" onclick="spieltagPlanDateiOeffnen()" style="min-height:48px;justify-content:center"><i class="ti ti-file-text"></i>Ansehen</button>`:""}
+    </div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:10px;line-height:1.45">Die Eltern sehen Link und Datei auf ihrer Termin-Seite.</div>
+    <button type="button" class="btn" onclick="document.getElementById('st-plan-modal').remove()" style="width:100%;min-height:48px;margin-top:12px;justify-content:center">Schließen</button>
+  </div>`;
+  document.body.appendChild(ov);
+}
+async function spieltagPlanUrlSpeichern(btn){
+  const t=spieltagTerminAktuell(); if(!t)return;
+  const url=(document.getElementById("st-plan-url")?.value||"").trim();
+  if(url&&!/^https?:\/\/\S+$/i.test(url)){ toast("Bitte einen Link mit https:// eintragen","err"); return; }
+  if(btn)btn.disabled=true;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/termine?id=eq.${Number(t.id)}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify({turnierplan_url:url||null})});
+    if(sbCheck401(r))return;
+    if(!r.ok){ toast(sbDeniedMsg(r,"Konnte nicht speichern"),"err"); return; }
+    t.turnierplan_url=url||null;
+    toast(url?"Link gespeichert ✓":"Link entfernt");
+    spieltagKopfRender(); spieltagPlanOpen();
+  }catch(e){ toast("Netzwerkfehler","err"); }
+  finally{ if(btn)btn.disabled=false; }
+}
+async function spieltagPlanDateiHochladen(btn){
+  const t=spieltagTerminAktuell(); if(!t)return;
+  const input=document.getElementById("st-plan-datei");
+  const file=input&&input.files&&input.files[0];
+  if(!file){ toast("Bitte erst eine Datei wählen","err"); return; }
+  if(file.size>5*1024*1024){ toast("Datei zu groß (höchstens 5 MB)","err"); return; }
+  const istPdf=/pdf$/i.test(file.type)||/\.pdf$/i.test(file.name);
+  if(btn)btn.disabled=true;
+  try{
+    const koerper=istPdf?file:(typeof fotoCompress==="function"?await fotoCompress(file,1600):file);
+    const pfad=`plan/${Number(t.id)}-${Date.now()}.${istPdf?"pdf":"jpg"}`;
+    const up=await fetch(`${SB_URL}/storage/v1/object/termin_media/${pfad}`,{method:"POST",headers:{'Authorization':'Bearer '+sbToken(),'Content-Type':istPdf?"application/pdf":"image/jpeg"},body:koerper});
+    if(!up.ok){ toast("Hochladen fehlgeschlagen","err"); return; }
+    const r=await fetch(`${SB_URL}/rest/v1/termine?id=eq.${Number(t.id)}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify({turnierplan_datei:pfad})});
+    if(sbCheck401(r))return;
+    if(!r.ok){ toast(sbDeniedMsg(r,"Konnte nicht speichern"),"err"); return; }
+    t.turnierplan_datei=pfad;
+    toast("Spielplan hochgeladen ✓");
+    spieltagKopfRender(); spieltagPlanOpen();
+  }catch(e){ toast("Datei konnte nicht verarbeitet werden","err"); }
+  finally{ if(btn)btn.disabled=false; }
+}
+async function spieltagPlanDateiOeffnen(){
+  const t=spieltagTerminAktuell(); if(!t||!t.turnierplan_datei)return;
+  try{
+    const r=await fetch(`${SB_URL}/storage/v1/object/authenticated/termin_media/${t.turnierplan_datei}`,{headers:{'Authorization':'Bearer '+sbToken()}});
+    if(!r.ok){ toast("Datei nicht gefunden","err"); return; }
+    window.open(URL.createObjectURL(await r.blob()),"_blank","noopener");
+  }catch(e){ toast("Netzwerkfehler","err"); }
 }
 
 /* ═══════════════════════════════════

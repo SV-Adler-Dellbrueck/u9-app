@@ -729,6 +729,10 @@
       <label for="spieltag-date" style="font-size:var(--s-text);color:var(--text);font-weight:800">Spieltag</label>
       <select id="spieltag-date" onchange="if(typeof _spieltagTurnierBanner==='function')_spieltagTurnierBanner();nomLoad()" style="min-height:48px;flex:1;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;background:var(--surface);color:var(--text);min-width:190px"></select>
     </div>
+    <!-- v702: Was man über diesen Termin wissen muss – Treffzeit, Ort, bei Auswärtsspielen der
+         Spielplan des Gastgebers (Link oder PDF), bei Heimspielen der Weg in die Planung.
+         Gefüllt von spieltagKopfRender (md-turnierplan.js). -->
+    <div id="spieltag-kopf"></div>
     <!-- Der Umschalter wird von spieltagTeamSegRender (md-teams.js) gefuellt: so viele
          Knoepfe, wie unter "Vor dem Spiel" Teams festgelegt sind. Frueher standen hier
          fest drei - man konnte auf "Adler 3" tippen, bevor ueberhaupt entschieden war,
@@ -739,15 +743,32 @@
          „▾ mehr“ drei große Kacheln; es steht immer nur EINE Phase offen (spieltagPhaseZeigen).
          Die <details> darunter bleiben als Hülle, damit alle Sprünge (Match-Uhr, Blitz-Rating,
          Anwesenheit) weiter über .open funktionieren – ihre Kopfzeilen sind ausgeblendet. -->
-    <div id="mt-phasen" class="phasen-kacheln" role="group" aria-label="Phase des Spieltags">
-      <button type="button" class="phase-kachel" data-phase="vor" aria-pressed="false" onclick="spieltagPhaseZeigen('vor')"><span class="pk-emo" aria-hidden="true">📋</span><span class="pk-t">Vor dem Spiel</span><span class="pk-s">Dabei · Teams · Aufstellung</span></button>
-      <button type="button" class="phase-kachel" data-phase="live" aria-pressed="false" onclick="spieltagPhaseZeigen('live')"><span class="pk-emo" aria-hidden="true">⏱️</span><span class="pk-t">Während des Spiels</span><span class="pk-s">Uhr · Wechsel · Ticker</span></button>
-      <button type="button" class="phase-kachel" data-phase="nach" aria-pressed="false" onclick="spieltagPhaseZeigen('nach')"><span class="pk-emo" aria-hidden="true">🏁</span><span class="pk-t">Nach dem Spiel</span><span class="pk-s">Ergebnis · Bericht · Rating</span></button>
+    <!-- v702 PO: „vielleicht müssen wir über den Prozess noch mal nachdenken, was hier in welcher
+         Reihenfolge Sinn macht.“ Vier Schritte in der Reihenfolge des Samstags: erst wer kommt
+         (Eltern-Rückmeldungen, erinnern, von Hand korrigieren), dann Teams und Kapitäne, dann das
+         Spiel, dann was danach kommt. -->
+    <div id="mt-phasen" class="phasen-kacheln vier" role="group" aria-label="Schritt des Spieltags">
+      <button type="button" class="phase-kachel" data-phase="wer" aria-pressed="false" onclick="spieltagPhaseZeigen('wer')"><span class="pk-emo" aria-hidden="true">📣</span><span class="pk-t">1 · Wer kommt?</span><span class="pk-s">Rückmeldungen · erinnern</span></button>
+      <button type="button" class="phase-kachel" data-phase="vor" aria-pressed="false" onclick="spieltagPhaseZeigen('vor')"><span class="pk-emo" aria-hidden="true">👥</span><span class="pk-t">2 · Teams</span><span class="pk-s">Kapitäne · Aufstellung</span></button>
+      <button type="button" class="phase-kachel" data-phase="live" aria-pressed="false" onclick="spieltagPhaseZeigen('live')"><span class="pk-emo" aria-hidden="true">⏱️</span><span class="pk-t">3 · Während</span><span class="pk-s">Uhr · Wechsel · Ticker</span></button>
+      <button type="button" class="phase-kachel" data-phase="nach" aria-pressed="false" onclick="spieltagPhaseZeigen('nach')"><span class="pk-emo" aria-hidden="true">🏁</span><span class="pk-t">4 · Danach</span><span class="pk-s">Ergebnis · Bericht · Rating</span></button>
     </div>
-    <div id="mt-phasen-leer" class="phasen-leer">Tippe auf eine Phase – es steht immer nur das offen, was gerade dran ist.</div>
+    <div id="mt-phasen-leer" class="phasen-leer">Tippe auf einen Schritt – es steht immer nur das offen, was gerade dran ist.</div>
     <!-- Spieltag-Phasen: Vor / Während / Nach dem Spiel – einklappbar für den Fokus -->
     <!-- GLOBAL, nicht je Team: wie viele Teams, wer betreut sie, wer spielt wo.
          Erst danach die Team-Kacheln – das ist die Reihenfolge, in der der PO denkt. -->
+    <!-- v702: Schritt 1 – wer kommt. Vorher stand diese Liste im selben Block wie die Teams und
+         klappte zu, sobald jemand dabei war; auf der Übersicht stand dieselbe Frage noch einmal als
+         Karte mit Namen, die man nicht antippen konnte. -->
+    <details class="el-sect" id="mt-phase-wer">
+      <summary><i class="ti ti-speakerphone"></i>Wer kommt?</summary>
+      <div>
+        <div class="abschnitt">
+          <div class="sl nt"><i class="ti ti-user-check"></i>Wer kommt?</div>
+          <div id="nom-panel"></div>
+        </div>
+      </div>
+    </details>
     <details class="el-sect" id="mt-phase-vor">
       <summary><i class="ti ti-list-check"></i>Teams festlegen</summary>
       <div>
@@ -759,9 +780,8 @@
              darunter die Aufteilung mit einer Zeile je Kind (#team-panel). Zwei getrennte
              16-Zeilen-Listen uebereinander waren es bis v393 – dieselben Kinder zweimal. -->
         <div class="abschnitt">
-          <div class="sl nt"><i class="ti ti-user-check"></i>Wer ist heute dabei?</div>
-          <div id="nom-panel"></div>
-          <div id="team-panel" style="margin-top:10px"></div>
+          <div class="sl nt"><i class="ti ti-users-group"></i>Teams und Kapitäne</div>
+          <div id="team-panel"></div>
         </div>
       </div>
     </details>
@@ -780,10 +800,9 @@
     <details class="el-sect" id="mt-phase-nom">
       <summary><i class="ti ti-user-check"></i>① Vor dem Spiel<span class="mt-team-tag"></span></summary>
       <div>
-        <div class="abschnitt">
-          <div class="sl nt"><i class="ti ti-copyright"></i>Kapitän</div>
-          <div id="rollen-panel"></div>
-        </div>
+        <!-- v702: Der Kapitän wird in der Team-Karte gewählt und steht dort; die zweite Anzeige
+             hier war eine Doppelung. Das Element bleibt für den Code, der es füllt. -->
+        <div id="rollen-panel" hidden></div>
         <div class="abschnitt">
           <div class="sl nt"><i class="ti ti-soccer-field"></i>Aufstellung</div>
           <div id="auf-panel"></div>

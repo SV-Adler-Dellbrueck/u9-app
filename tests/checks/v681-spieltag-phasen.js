@@ -9,7 +9,10 @@
    d) Ohne Wahl: keine Phase offen, drei Kacheln je mindestens 96 px, keine Klappzeilen sichtbar
    e) Detailseiten: Zurück-Kopf (mind. 44 px) führt zur Übersicht des Bereichs, keine Reiter,
       nichts ragt über den Rand; Übersichtsseiten ohne Kopf
-   f) Abschnitts-Überschriften (.sl) mindestens 13 px, nicht in Versalien */
+   f) Abschnitts-Überschriften (.sl) mindestens 13 px, nicht in Versalien
+   v702 PO (Prozess überdenken): vier Schritte – Wer kommt? / Teams und Kapitäne / Während / Danach.
+   Ohne eigene Wahl steht an einem Tag vor dem Spieltag „Wer kommt?“ offen (die erste Frage);
+   am Handy zwei mal zwei Kacheln à mindestens 80 px. */
 "use strict";
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
@@ -27,7 +30,7 @@ module.exports = async function (h) {
     out.zeilen = [...document.querySelectorAll("#view-ue-spieltag .phase-zeile")].map(b => ({ t: b.textContent.replace(/\s+/g, " ").trim(), h: Math.round(b.getBoundingClientRect().height), on: b.getAttribute("onclick") }));
     out.kopfAufUebersicht = document.getElementById("tab-subbar").style.display !== "none";
     out.phasen = {};
-    for (const p of ["vor", "live", "nach"]) { spieltagPhase(p); await warte(500); out.phasen[p] = { offen: offen(), gedrueckt: gedrueckt() }; }
+    for (const p of ["wer", "vor", "live", "nach"]) { spieltagPhase(p); await warte(500); out.phasen[p] = { offen: offen(), gedrueckt: gedrueckt() }; }
     // c) Sprung von außen: Match-Uhr-artig nur Live öffnen, dann Nach per .open
     spieltagPhaseZeigen("vor"); await warte(50);
     document.getElementById("mt-phase-nach").open = true; await warte(100);
@@ -55,17 +58,17 @@ module.exports = async function (h) {
   const f = s.fehler(); await s.schliessen();
   if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
   // a)
-  if (r.zeilen.length !== 3) probleme.push(`a) ${r.zeilen.length} Phasen-Einstiege statt drei`);
-  ["Vor dem Spiel", "Während des Spiels", "Nach dem Spiel"].forEach((t, i) => { const z = r.zeilen[i]; if (!z || !z.t.includes(t)) probleme.push(`a) Einstieg ${i + 1} ist nicht „${t}“`); else if (z.h < 72) probleme.push(`a) „${t}“ nur ${z.h} px`); });
+  if (r.zeilen.length !== 4) probleme.push(`a) ${r.zeilen.length} Schritte statt vier`);
+  ["Wer kommt?", "Teams und Kapitäne", "Während des Spiels", "Danach"].forEach((t, i) => { const z = r.zeilen[i]; if (!z || !z.t.includes(t)) probleme.push(`a) Einstieg ${i + 1} ist nicht „${t}“`); else if (z.h < 72) probleme.push(`a) „${t}“ nur ${z.h} px`); });
   if (r.kopfAufUebersicht) probleme.push("e) Die Übersichtsseite trägt einen Zurück-Kopf");
   // b)
-  const soll = { vor: "mt-phase-nom,mt-phase-vor", live: "mt-phase-live", nach: "mt-phase-nach,mt-phase-quests" };
+  const soll = { wer: "mt-phase-wer", vor: "mt-phase-nom,mt-phase-vor", live: "mt-phase-live", nach: "mt-phase-nach,mt-phase-quests" };
   for (const p in soll) { const x = r.phasen[p]; if (x.offen !== soll[p]) probleme.push(`b) ${p}: offen ${x.offen} – erwartet ${soll[p]}`); if (x.gedrueckt !== p) probleme.push(`b) ${p}: gedrückt ist „${x.gedrueckt}“`); }
   // c)
   if (r.sprung.offen !== soll.nach || r.sprung.gedrueckt !== "nach") probleme.push(`c) Sprung per .open: offen ${r.sprung.offen}, gedrückt ${r.sprung.gedrueckt}`);
   // d)
-  if (r.ohne.offen || r.ohne.gedrueckt) probleme.push(`d) Ohne Wahl offen: ${r.ohne.offen} / ${r.ohne.gedrueckt}`);
-  if (r.ohne.kacheln.length !== 3 || r.ohne.kacheln.some(x => x < 96)) probleme.push(`d) Phasen-Kacheln ${JSON.stringify(r.ohne.kacheln)} – erwartet drei à 96 px`);
+  if (r.ohne.offen !== "mt-phase-wer" || r.ohne.gedrueckt !== "wer") probleme.push(`d) Ohne Wahl vor dem Spieltag: offen ${r.ohne.offen} / ${r.ohne.gedrueckt} – erwartet „Wer kommt?“`);
+  if (r.ohne.kacheln.length !== 4 || r.ohne.kacheln.some(x => x < 80)) probleme.push(`d) Schritt-Kacheln ${JSON.stringify(r.ohne.kacheln)} – erwartet vier à 80 px`);
   if (r.ohne.summaries) probleme.push(`d) ${r.ohne.summaries} Klappzeilen sichtbar`);
   // e)
   for (const k in r.kopf) {
@@ -81,5 +84,5 @@ module.exports = async function (h) {
   else if (r.sl.px < 13 || r.sl.tt === "uppercase") probleme.push(`f) .sl ${r.sl.px}px, ${r.sl.tt}`);
   zeilen.push(`Einstiege: ${r.zeilen.map(z => z.h + "px").join(" / ")} · Phasen ${JSON.stringify(r.phasen)}`);
   zeilen.push(`Kopf: ${Object.entries(r.kopf).map(([k, x]) => `${k} ${x.btn}px→${x.danach}`).join(" · ")}`);
-  return h.ergebnis("Spieltag in drei Phasen, Zurück-Kopf statt Reiterzeile", !probleme.length, zeilen.concat(probleme));
+  return h.ergebnis("Spieltag in vier Schritten (v702), Zurück-Kopf statt Reiterzeile", !probleme.length, zeilen.concat(probleme));
 };

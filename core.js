@@ -1243,6 +1243,23 @@ async function pushSendToParents(title, body, url){
   }catch(e){toast("Netzwerkfehler","err");return false;}
 }
 
+/* v702: Erinnerung nur an die Familien, deren Kind für diesen Termin noch offen ist (push-send,
+   art „rsvp_offen“ – die Empfänger bestimmt der Server). Die Rückmeldung nennt, wie viele es sind. */
+async function rsvpOffeneErinnern(terminId, knopf){
+  if(!terminId){toast("Kein Termin gewählt","err");return false;}
+  if(knopf){knopf.disabled=true;}
+  try{
+    const r=await fetch(`${SB_URL}/functions/v1/push-send`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({art:"rsvp_offen",termin_id:Number(terminId)})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){toast(d.error||"Erinnerung fehlgeschlagen","err");if(knopf)knopf.disabled=false;return false;}
+    if(!d.familien)toast("Alle haben schon geantwortet 🎉");
+    else toast(d.sent?`📬 Erinnert: ${d.familien} Familie${d.familien===1?"":"n"} ohne Rückmeldung (${d.sent} Handy${d.sent===1?"":"s"})`
+                    :`${d.familien} Familie${d.familien===1?"":"n"} offen – keine hat Benachrichtigungen an. WhatsApp hilft hier.`,d.sent?"":"err");
+    if(knopf){knopf.textContent="✓ Erinnert";}
+    return true;
+  }catch(e){toast("Netzwerkfehler","err");if(knopf)knopf.disabled=false;return false;}
+}
+
 /* A11y: Esc schließt das oberste offene Overlay (mit korrektem Cleanup für Spezial-Overlays). */
 document.addEventListener("keydown",e=>{
   if(e.key!=="Escape")return;
