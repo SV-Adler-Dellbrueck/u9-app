@@ -3,7 +3,7 @@
    a) Gerät kann Push, Erlaubnis offen, kein Abo → Karte „Nichts verpassen“ mit Knopf (≥ 48 px) und × (44 px)
    b) Ein Tipp auf den Knopf meldet an (pushSubscribe „parent“) und die Karte verschwindet
    c) × blendet sie aus und merkt sich das (nach neuem Aufbau bleibt sie weg)
-   d) Keine Karte, wenn schon angemeldet (Erlaubnis + Abo) oder die Erlaubnis gesperrt ist */
+   d) Keine Karte, wenn schon angemeldet (Erlaubnis + Abo); gesperrt zeigt sie seit v698 den Weg zur Freigabe */
 "use strict";
 const b64 = o => Buffer.from(JSON.stringify(o)).toString("base64").replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
 module.exports = async function (h) {
@@ -50,10 +50,11 @@ module.exports = async function (h) {
   });
   const f = s.fehler(); await s.schliessen();
   if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
-  if (!r.a || !/Nichts verpassen/.test(r.a.text) || r.a.knopf < 48 || r.a.zu < 44) probleme.push(`a) Karte: ${JSON.stringify(r.a)}`);
+  if (!r.a || !/Keine Nachricht vom Team verpassen/.test(r.a.text) || r.a.knopf < 48 || r.a.zu < 44) probleme.push(`a) Karte: ${JSON.stringify(r.a)}`);
   if (!r.b.weg || r.b.angemeldet !== 1 || r.b.rolle !== "parent") probleme.push(`b) Einschalten: ${JSON.stringify(r.b)}`);
   if (!r.c.sofortWeg || !r.c.bleibtWeg) probleme.push(`c) Wegklicken: ${JSON.stringify(r.c)}`);
-  if (r.d.beiAbo || r.d.beiSperre) probleme.push(`d) Karte trotz ${r.d.beiAbo ? "Abo" : "Sperre"}`);
-  zeilen.push(`Karte: Knopf ${r.a && r.a.knopf} px, × ${r.a && r.a.zu} px · Tipp meldet an (${r.b.rolle}) · × merkt sich · bei Abo/Sperre keine Karte`);
+  // v698: Bei gesperrter Erlaubnis steht die Karte bewusst da – mit dem Weg zur Freigabe (Prüfung in v698)
+  if (r.d.beiAbo) probleme.push("d) Karte trotz Abo");
+  zeilen.push(`Karte: Knopf ${r.a && r.a.knopf} px, × ${r.a && r.a.zu} px · Tipp meldet an (${r.b.rolle}) · × merkt sich · bei Abo keine Karte`);
   return h.ergebnis("Eltern-App: Benachrichtigungen oben einschalten, solange sie aus sind", !probleme.length, zeilen.concat(probleme));
 };

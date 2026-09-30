@@ -1141,6 +1141,97 @@ async function pushTest(knopf){
   }catch(e){toast("Kein Netz – Test nicht gesendet","err");}
   if(knopf){knopf.disabled=false;knopf.textContent="📨 Test-Benachrichtigung an mich";}
 }
+/* ═══ v698 · Karte „Keine Nachricht vom Team verpassen“ ═════════════════════════════════════
+   PO 30.09.: „Für alle, die die Benachrichtigung noch nicht aktiviert haben, direkt oben auf der
+   Startseite – mit kleinem Text und einer Anleitung dahinter.“ Gemeinsam für Eltern- und
+   Trainer-Startseite. Drei Fälle:
+   aus      – das Handy kann es sofort: Knopf „Einschalten“, danach sofort eine Test-Meldung
+   ios      – iPhone/iPad im Browser: Benachrichtigungen gibt es erst, wenn die App auf dem
+              Home-Bildschirm liegt (iOS 16.4+, WebKit) – Anleitung dorthin
+   gesperrt – einmal „Nicht zulassen“: das Handy fragt nie wieder – Weg zur Freigabe
+   Ohne Karte: schon angemeldet, altes Gerät ohne Push, oder in den letzten 30 Tagen weggeklickt. */
+const PUSH_KARTE_KEY="adler_push_hinweis_weg";
+function pushGeraet(){
+  const ua=navigator.userAgent||"";
+  const ios=/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1);
+  let installiert=false; try{ installiert=navigator.standalone===true||matchMedia("(display-mode: standalone)").matches; }catch(e){}
+  return {ios,installiert};
+}
+async function pushKartenFall(){
+  const g=pushGeraet();
+  if(g.ios&&!g.installiert)return "ios";
+  if(typeof pushSupported!=="function"||!pushSupported())return null;
+  if(Notification.permission==="denied")return "gesperrt";
+  const abo=typeof pushCurrentSub==="function"?await pushCurrentSub():null;
+  if(abo&&Notification.permission==="granted")return null;
+  return "aus";
+}
+async function pushKarteRender(slotId,rolle){
+  const el=document.getElementById(slotId); if(!el)return;
+  el.innerHTML="";
+  let fall=null;
+  try{
+    let weg=0; try{ weg=+localStorage.getItem(PUSH_KARTE_KEY)||0; }catch(e){}
+    if(Date.now()-weg<30*864e5)return;
+    fall=await pushKartenFall();
+  }catch(e){ return; }
+  if(!fall)return;
+  const was=rolle==="trainer"?"neue Adler-Rufe und Nachrichten der Eltern":"alle neuen Nachrichten, Absagen und Zeitänderungen";
+  const T={
+    aus:{text:`Wenn du künftig ${was} direkt aufs Handy bekommen möchtest, schalte hier die Benachrichtigungen ein.`,knopf:"Benachrichtigungen einschalten",fn:`pushKarteAn('${slotId}','${rolle}')`},
+    ios:{text:"Auf dem iPhone kommen Benachrichtigungen nur an, wenn die Adler-App auf dem Home-Bildschirm liegt. Das dauert eine Minute.",knopf:"So geht’s",fn:"pushAnleitung('ios')"},
+    gesperrt:{text:"Benachrichtigungen sind auf diesem Handy blockiert – deshalb fragt es nicht mehr nach. Die Sperre lässt sich in den Einstellungen aufheben.",knopf:"So hebst du die Sperre auf",fn:"pushAnleitung('gesperrt')"}
+  }[fall];
+  el.innerHTML=`<div id="push-hinweis" data-fall="${fall}" role="region" aria-labelledby="push-hinweis-titel" style="position:relative;background:var(--surface);border:1.5px solid var(--rand-bedien);border-left:4px solid var(--blue);border-radius:14px;padding:14px 52px 14px 16px;margin-bottom:12px">
+    <div id="push-hinweis-titel" style="font-size:var(--s-karte);font-weight:800;color:var(--text);margin-bottom:4px">🔔 Keine Nachricht vom Team verpassen</div>
+    <div style="font-size:var(--s-text);color:var(--text2);line-height:1.5;margin-bottom:10px">${T.text}</div>
+    <button type="button" id="push-hinweis-an" class="btn btn-p" onclick="${T.fn}" style="width:100%;min-height:48px;justify-content:center">${T.knopf}</button>
+    ${fall==="aus"?`<button type="button" id="push-hinweis-anleitung" onclick="pushAnleitung('aus')" style="display:block;margin:6px auto 0;min-height:44px;padding:0 12px;border:none;background:transparent;color:var(--text2);font-family:inherit;font-size:var(--s-text);text-decoration:underline;cursor:pointer">So geht’s</button>`:""}
+    <button type="button" onclick="pushKarteWeg('${slotId}')" aria-label="Hinweis ausblenden" style="position:absolute;top:6px;right:6px;min-width:44px;min-height:44px;border:none;background:transparent;color:var(--text2);font-size:var(--s-seite);line-height:1;cursor:pointer">×</button>
+  </div>`;
+}
+async function pushKarteAn(slotId,rolle){
+  const knopf=document.getElementById("push-hinweis-an"); if(knopf)knopf.disabled=true;
+  const ok=typeof pushSubscribe==="function"?await pushSubscribe(rolle):false;
+  if(ok){
+    const el=document.getElementById(slotId); if(el)el.innerHTML="";
+    if(typeof pushRenderInto==="function")pushRenderInto(rolle==="trainer"?"push-slot-trainer":"push-slot-eltern",rolle);
+    if(typeof pushTest==="function")setTimeout(()=>pushTest(null),400);   // gleich sehen, dass es klappt
+    return;
+  }
+  if(knopf)knopf.disabled=false;
+  pushKarteRender(slotId,rolle);   // gesperrt? Dann steht jetzt der Weg zur Freigabe da
+}
+function pushKarteWeg(slotId){
+  try{ localStorage.setItem(PUSH_KARTE_KEY,String(Date.now())); }catch(e){}
+  const el=document.getElementById(slotId); if(el)el.innerHTML="";
+}
+/* Anleitung hinter der Karte – eigenes Fenster statt Systemdialog, das eigene Gerät zuerst. */
+function pushAnleitung(fall){
+  document.getElementById("push-anleitung")?.remove();
+  const g=pushGeraet();
+  const liste=schritte=>`<ol style="margin:6px 0 0;padding-left:22px;line-height:1.6">${schritte.map(x=>`<li style="margin-bottom:4px">${x}</li>`).join("")}</ol>`;
+  const iphone=`<section><h3 style="font-size:var(--s-karte);margin:14px 0 2px">iPhone</h3>${fall==="gesperrt"&&g.installiert?liste([
+      "Die <b>Einstellungen</b> des iPhones öffnen.","<b>Mitteilungen</b> tippen und die Adler-App suchen (Name des Symbols auf dem Home-Bildschirm).","<b>Mitteilungen erlauben</b> einschalten.","Die Adler-App wieder öffnen."])
+    :liste(["Die Adler-App in <b>Safari</b> öffnen.","Auf das <b>Teilen-Symbol</b> tippen (Quadrat mit Pfeil nach oben – bei neueren iOS-Versionen hinter „…“).","<b>Zum Home-Bildschirm</b> wählen und <b>Hinzufügen</b> tippen.","Die App über das <b>neue Symbol</b> öffnen und anmelden.","Oben auf <b>Benachrichtigungen einschalten</b> tippen und <b>Erlauben</b> wählen."])}
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Nötig ist iOS 16.4 oder neuer.</div></section>`;
+  const android=`<section><h3 style="font-size:var(--s-karte);margin:14px 0 2px">Android</h3>${fall==="gesperrt"?liste([
+      "<b>App vom Startbildschirm:</b> Symbol lange drücken → <b>App-Info</b> → <b>Benachrichtigungen</b> → einschalten.","<b>Im Browser (Chrome):</b> links neben der Adresse auf das Symbol tippen → <b>Berechtigungen</b> bzw. <b>Website-Einstellungen</b> → <b>Benachrichtigungen</b> → <b>Zulassen</b>.","Die Adler-App neu öffnen und oben auf <b>Benachrichtigungen einschalten</b> tippen."])
+    :liste(["Oben auf <b>Benachrichtigungen einschalten</b> tippen.","In der Frage des Handys <b>Zulassen</b> wählen.","Sofort kommt eine Test-Meldung – dann klappt es."])}</section>`;
+  const m=document.createElement("div"); m.id="push-anleitung";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-labelledby","push-anleitung-titel");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10050;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.onclick=e=>{ if(e.target===m)m.remove(); };
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px 18px;max-width:440px;width:100%;margin:auto;font-size:var(--s-text)">
+    <div style="display:flex;align-items:center;gap:8px"><h2 id="push-anleitung-titel" style="flex:1;font-size:var(--s-teil);margin:0">🔔 Benachrichtigungen einschalten</h2>
+      <button type="button" aria-label="Schließen" onclick="document.getElementById('push-anleitung').remove()" style="min-width:44px;min-height:44px;border:none;background:transparent;color:var(--text2);font-size:var(--s-seite);cursor:pointer">×</button></div>
+    <div style="color:var(--text2);line-height:1.5;margin-top:4px">Benachrichtigungen gelten je Handy. Wer mehrere Geräte nutzt, schaltet sie auf jedem ein.</div>
+    ${g.ios?iphone+android:android+iphone}
+    <button type="button" class="btn btn-p" onclick="document.getElementById('push-anleitung').remove()" style="width:100%;min-height:48px;margin-top:16px;justify-content:center">Verstanden</button>
+  </div>`;
+  document.body.appendChild(m);
+  m.querySelector("button")?.focus();
+}
 // Trainer: Push an alle (subscribed) Eltern senden – via Edge Function push-send.
 async function pushSendToParents(title, body, url){
   try{

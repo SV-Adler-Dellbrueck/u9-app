@@ -828,10 +828,10 @@ async function elternDashLoad(){
      ist sie das Dringlichste auf der Seite. Sie fuellt sich nur, wenn wirklich getickert
      wird (elternLiveKachelLoad), sonst bleibt der Slot leer und kostet keine Zeile. */
   html+='<div id="eltern-live-slot"></div>';
+  html+='<div id="push-hinweis-slot"></div>';   // v698: ganz oben – Benachrichtigungen, solange sie aus sind
   html+='<div id="rufe-hinweis"></div>';          // v673: neue Adler-Rufe – nur wenn es welche gibt
   html+='<div id="eltern-top-slot"></div>';        // hier landet die Terminkarte (s. u.)
   html+='<div id="eltern-offen-slot"></div>';      // offene Rückmeldungen der nächsten 14 Tage
-  html+='<div id="push-hinweis-slot"></div>';   // v694: Benachrichtigungen einschalten – nur solange sie aus sind
   if(termin&&(termin.typ==="spiel"||termin.typ==="turnier"))html+='<div id="pause-card"></div>';
   html+='<div id="ansage-slot"></div>'; // H1: ungelesene Trainer-Ansagen als Banner
   html+='<div id="genesung-slot"></div>'; // I-A: „X fehlt gerade" – 1-Tap-Genesungsgruß (nur mit Trainer-Freigabe)
@@ -2440,38 +2440,10 @@ async function tdVorberichtLoad(t){
 /* ═══ v694 · Benachrichtigungen einschalten – oben auf der Startseite ═══════════════════════
    PO 30.09.: Der Schalter lag nur unter „Trainerteam kontaktieren“ – dort sucht ihn niemand.
    Solange auf diesem Gerät keine Benachrichtigungen an sind, steht oben eine Karte mit einem
-   Knopf; ein Tipp holt die Erlaubnis und meldet an. Keine Karte, wenn das Gerät es nicht kann,
-   wenn die Erlaubnis im Handy gesperrt ist (ein Tipp liefe ins Leere) oder wenn sie jemand
-   weggeklickt hat (30 Tage Ruhe). */
-const PUSH_HINWEIS_KEY="adler_push_hinweis_weg";
-async function elternPushHinweis(){
-  const el=document.getElementById("push-hinweis-slot"); if(!el)return;
-  el.innerHTML="";
-  try{
-    if(typeof pushSupported!=="function"||!pushSupported())return;
-    if(Notification.permission==="denied")return;
-    let weg=0; try{ weg=+localStorage.getItem(PUSH_HINWEIS_KEY)||0; }catch(e){}
-    if(Date.now()-weg<30*864e5)return;
-    const abo=typeof pushCurrentSub==="function"?await pushCurrentSub():null;
-    if(abo&&Notification.permission==="granted")return;
-  }catch(e){ return; }
-  el.innerHTML=`<div id="push-hinweis" style="position:relative;background:#fff;border:1.5px solid #bfdbfe;border-radius:14px;padding:14px 52px 14px 16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
-    <div style="font-size:var(--s-karte);font-weight:800;color:#1e3a8a;margin-bottom:4px">🔔 Nichts verpassen</div>
-    <div style="font-size:var(--s-text);color:#334155;line-height:1.5;margin-bottom:10px">Absagen, Zeitänderungen und neue Adler-Rufe direkt aufs Handy.</div>
-    <button type="button" id="push-hinweis-an" onclick="elternPushHinweisAn()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">Benachrichtigungen einschalten</button>
-    <button type="button" onclick="elternPushHinweisWeg()" aria-label="Hinweis ausblenden" style="position:absolute;top:6px;right:6px;min-width:44px;min-height:44px;border:none;background:transparent;color:#64748b;font-size:var(--s-seite);line-height:1;cursor:pointer">×</button>
-  </div>`;
-}
-async function elternPushHinweisAn(){
-  const ok=typeof pushSubscribe==="function"?await pushSubscribe("parent"):false;
-  if(ok){
-    const el=document.getElementById("push-hinweis-slot"); if(el)el.innerHTML="";
-    if(typeof pushRenderInto==="function")pushRenderInto("push-slot-eltern","parent");
-  }else if(typeof Notification!=="undefined"&&Notification.permission==="denied"){
-    const el=document.getElementById("push-hinweis-slot"); if(el)el.innerHTML="";   // gesperrt: pushGesperrtHilfe erklärt den Weg
-  }
-}
-function elternPushHinweisWeg(){
-  try{ localStorage.setItem(PUSH_HINWEIS_KEY,String(Date.now())); }catch(e){}
-  const el=document.getElementById("push-hinweis-slot"); if(el)el.innerHTML="";
-}
+   Knopf; ein Tipp holt die Erlaubnis und meldet an. Seit v698 steht sie ganz oben und erscheint
+   auch auf dem iPhone im Browser und bei gesperrter Erlaubnis – dann mit Anleitung. */
+/* v694/v698: Die Karte selbst lebt in core.js (pushKarteRender) – dieselbe steht auf der
+   Trainer-Startseite. Hier nur die Namen, die die Eltern-Startseite und die MODUL_WACHE kennen. */
+async function elternPushHinweis(){ if(typeof pushKarteRender==="function")return pushKarteRender("push-hinweis-slot","parent"); }
+function elternPushHinweisAn(){ if(typeof pushKarteAn==="function")return pushKarteAn("push-hinweis-slot","parent"); }
+function elternPushHinweisWeg(){ if(typeof pushKarteWeg==="function")pushKarteWeg("push-hinweis-slot"); }
