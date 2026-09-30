@@ -45,8 +45,11 @@ module.exports = async function (h) {
   const f = s.fehler(); await s.schliessen();
   if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
   if (r.alteKachel) probleme.push("a) Die alte Sprung-Kachel steht noch da");
-  for (const w of ["Wer ist dabei?", "gegen Gegner B", "✅ 2 zugesagt", "❌ 1 abgesagt", "🤒 1 krank", "ohne Antwort", K[0], K[1], K[2], K[3]])
+  /* v702 PO: „kann auch die Ansicht ‚wer ist dabei‘ zugeklappt haben oder vielleicht ganz weg?“ Die
+     Karte trägt nur noch den Stand; die Namen stehen im Schritt „Wer kommt?“, wo man sie ändern kann. */
+  for (const w of ["Nächster Spieltag", "gegen Gegner B", "2 zugesagt", "❌ 1 abgesagt", "🤒 1 krank", "ohne Antwort", "Wer kommt?"])
     if (!r.text.includes(w)) probleme.push(`a) „${w}“ fehlt in der Karte`);
+  for (const w of [K[0], K[1], K[2], K[3]]) if (r.text.includes(w)) probleme.push(`a) Name „${w}“ steht noch in der Karte (Doppelung)`);
   if (r.knopf < 56) probleme.push(`a) Knopf nur ${r.knopf} px`);
   const soll = [K[0], K[1]].sort();
   if (JSON.stringify(r.teams) !== JSON.stringify(soll)) probleme.push("b) Teams nach Abgleich: " + r.teams.join(", ") + " – erwartet " + soll.join(", "));

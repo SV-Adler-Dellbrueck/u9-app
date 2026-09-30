@@ -41,14 +41,16 @@ module.exports = async function (h) {
   const fehler = s.fehler(); await s.schliessen();
   if (r.fehlt) { probleme.push(`${r.fehlt} fehlt`); return h.ergebnis("Teams festlegen entschlackt", false, probleme); }
   if (!/10 von 15/.test(r.summary)) probleme.push(`„Wer ist dabei?“ ohne Zahl: „${r.summary}“`);
-  if (r.offen) probleme.push("„Wer ist dabei?“ steht offen, obwohl schon Kinder dabei sind");
+  /* v702 PO: „Wer kommt?“ ist ein eigener Schritt – die Liste IST dieser Schritt und steht offen. */
   const teamKnoepfe = r.nomButtons.filter(b => /^(Spielt mit|Pause|Pausiert|1|2|3|4)$/.test(b));
   if (teamKnoepfe.length) probleme.push(`Kinderliste trägt noch Team-Knöpfe: ${JSON.stringify(teamKnoepfe.slice(0, 4))}`);
   const summe = r.chipsJe.filter(k => k.team !== "0").reduce((a, k) => a + k.chips.length, 0);
   if (r.chipsJe.filter(k => k.team !== "0").length !== 2 || summe !== 10) probleme.push(`Team-Karten: ${JSON.stringify(r.chipsJe.map(k => k.team + ":" + k.chips.length))} statt 2 Karten mit 10 Chips`);
   if (r.haupt !== 1) probleme.push(`${r.haupt} Hauptaktionen statt 1`);
   if (r.absatz) probleme.push("der Erklärabsatz steht noch da");
-  if (r.kachelNamen.length !== 2 || r.kachelNamen.reduce((a, b) => a + b, 0) !== 10 || !r.kachelHatNamen) probleme.push(`Team-Kacheln zeigen die Namen nicht ohne Aufklappen: ${JSON.stringify(r.kachelNamen)}`);
+  /* v702 PO: „ich kann die anklicken … es passiert aber nichts.“ Die Namen in den Adler-Kacheln waren nur
+     Anzeige und standen in der Team-Karte darüber noch einmal zum Ändern – die Kachel ist jetzt nur der Umschalter. */
+  if (r.kachelHatNamen) probleme.push("Team-Kacheln zeigen die Namen noch einmal (Doppelung, v702)");
   if (r.nachher === r.vorher) probleme.push(`Chip-Tipp verschiebt nicht (Team ${r.vorher} → ${r.nachher})`);
   if (r.chipH < 44) probleme.push(`Namens-Chip nur ${r.chipH}px hoch`);
   if (fehler.length) probleme.push(...fehler.slice(0, 3));

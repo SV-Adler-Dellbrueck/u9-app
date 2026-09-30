@@ -138,11 +138,9 @@ function mcRenderLive(){
   const einstellbar=(s!=="running");
   const hzBtn=n=>`<button onclick="mcSetHalbzeiten(${n})" aria-pressed="${mcHalbzeiten===n?"true":"false"}"
       style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:var(--r);cursor:pointer;font-family:inherit;font-size:var(--s-text);font-weight:${mcHalbzeiten===n?"700":"500"};background:${mcHalbzeiten===n?"var(--blue)":"var(--surface)"};color:${mcHalbzeiten===n?"#fff":"var(--text2)"}">${n===1?"eine":"zwei"}</button>`;
-  box.innerHTML=`<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-    <div style="font-size:28px;font-weight:800;min-width:70px">${label}</div>
-    <div style="font-size:var(--s-klein);color:var(--text2)">${phase}</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-left:auto">${controls}</div>
-  </div>`+((einstellbar&&mcFestival)?`
+  /* v702: Minute und Phase in einer Zeile, die Knöpfe darunter – am Handy standen sie versetzt. */
+  box.innerHTML=`<div class="mc-kopf"><div class="mc-minute">${label}</div><div class="mc-phase">${phase}</div></div>
+  <div class="mc-knoepfe">${controls}</div>`+((einstellbar&&mcFestival)?`
   <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:var(--border);font-size:var(--s-klein);color:var(--text2)">
     <span>Spielzeit <b>${mcSpieldauer} Min.</b> · aus dem Spielplan</span>
     <button class="btn btn-sm" onclick="mcPlanOeffnen()" style="margin-left:auto"><i class="ti ti-layout-grid"></i>Im Spielplan ändern</button>

@@ -41,7 +41,8 @@ module.exports = async function (h) {
   if (kacheln.fehlt) probleme.push(kacheln.fehlt + " fehlt");
   else {
     // v665: Statt der Kachel steht dort die Karte „Wer ist dabei?“ (st-dabei-karte); ihr Knopf nimmt denselben Weg.
-    if (!/st-dabei-karte/.test(kacheln.spieltag) || !/spieltagAnwesenheitOpen/.test(kacheln.karte || "")) probleme.push("Die Spieltag-Seite führt nicht zur Spieltags-Anwesenheit");
+    // v702: Der Knopf der Karte führt in den Schritt „Wer kommt?“ (spieltagZuTermin …'wer').
+    if (!/st-dabei-karte/.test(kacheln.spieltag) || !/spieltagZuTermin\(.*'wer'\)/.test(kacheln.karte || "")) probleme.push("Die Spieltag-Seite führt nicht zur Spieltags-Anwesenheit");
     if (/kachelRun\('go','anwesenheit'\)/.test(kacheln.spieltag)) probleme.push("Die Spieltag-Kachel führt weiterhin zur Anwesenheit des Trainings");
     if (!/kachelRun\('go','anwesenheit'\)/.test(kacheln.training)) probleme.push("Die Trainings-Kachel führt nicht mehr zur Trainingsliste – die beiden Anwesenheiten müssen getrennt bleiben");
   }
@@ -56,7 +57,7 @@ module.exports = async function (h) {
     return {
       fehlt: null,
       seiteGewaehlt: seite ? !seite.hasAttribute("hidden") && seite.style.display !== "none" : false,
-      vorOffen: (document.getElementById("mt-phase-vor") || {}).open === true,
+      vorOffen: (document.getElementById("mt-phase-wer") || {}).open === true,   // v702: eigener Schritt „Wer kommt?“
       listeOffen: (document.getElementById("nom-dabei") || {}).open === true
     };
   });
@@ -81,7 +82,7 @@ module.exports = async function (h) {
 
   if (offen.fehlt) probleme.push(offen.fehlt + " fehlt");
   else {
-    if (!offen.vorOffen) probleme.push("„Teams festlegen“ ist nicht aufgeklappt");
+    if (!offen.vorOffen) probleme.push("„Wer kommt?“ ist nicht aufgeklappt");
     if (!offen.listeOffen) probleme.push("Die Liste „Wer ist dabei?“ ist nicht aufgeklappt – zugeklappt ist sie von der Kachel aus nicht zu finden");
     if (!weg.seiteSichtbar) probleme.push("Der Weg landet nicht auf der Spieltag-Seite");
     if (weg.knoepfe < K.length * 3) probleme.push(`${weg.knoepfe} Knöpfe für ${K.length} Kinder – erwartet drei je Kind (Dabei, Nicht, Verletzt)`);

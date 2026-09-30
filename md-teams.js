@@ -608,10 +608,9 @@ function spieltagTeamKartenRender(){
         </span>
         <span style="font-size:var(--s-karte);color:var(--text3)">${auf?"▴":"▾"}</span>
       </button>
-      <div class="karte-kader" style="display:flex;flex-wrap:wrap;gap:5px;padding:0 14px 10px">${
-        /* v481: die Namen stehen in der Kachel – nicht erst nach dem Aufklappen und nicht
-           nur in der Anwesenheitsliste zum Zusammenzaehlen. */
-        Object.keys(TEAMS).filter(k=>TEAMS[k]===n).map(k=>`<span style="font-size:var(--s-text);font-weight:700;background:${TEAM_LEIH[k]?"var(--blue-bg)":"var(--surface2)"};border-radius:12px;padding:5px 10px">${getKader(k)&&getKader(k).nr?`<span style="font-weight:500;color:var(--text3)">${getKader(k).nr} </span>`:""}${esc(k)}${istTorwart(k)?" 🥅":""}${TEAM_LEIH[k]?" 🔁":""}</span>`).join("")||'<span style="font-size:var(--s-text);color:var(--text3)">noch niemand eingeteilt</span>'}</div>
+      ${/* v702 PO: „ich kann die anklicken und auswählen, es passiert aber nichts.“ Die Namen standen
+          hier als Anzeige in Knopf-Optik – und in der Team-Karte darüber noch einmal zum Ändern. Die
+          Kachel ist jetzt nur der Umschalter: Team, Zahl der Kinder, Trainer. */""}
       <div id="spieltag-karte-inhalt-${n}" style="padding:0 12px 12px"></div>
     </div>`;
   }).join("");

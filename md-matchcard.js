@@ -830,14 +830,35 @@ async function rotLogSub(spieler,richtung){
   const runde=(typeof teamRundeJetzt==="function")?teamRundeJetzt():null;   // v504
   sbQueuedPost("match_substitutions",{datum,termin_id:tid,spieler,richtung,minute,feld_sek:rotFieldSec[spieler]||0,bank_sek:rotBenchSec[spieler]||0,runde});
 }
-function rotBeep(){
+/* v702: EIN Tonerzeuger für den ganzen Spieltag. Bis v701 entstand bei jedem Piep ein neuer –
+   aus dem Timer heraus, nicht aus einem Tipp. Das iPhone lässt so einen stumm. rotTonBereit()
+   läuft beim Anpfiff (ein Tipp) und schaltet ihn frei; das iPhone kann nicht vibrieren, der
+   Ton ist dort das einzige Signal. */
+let _rotTon=null;
+function rotTonBereit(){
   try{
-    const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
-    const ctx=new AC();const o=ctx.createOscillator();const g=ctx.createGain();
-    o.connect(g);g.connect(ctx.destination);o.type="sine";o.frequency.value=880;
+    const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;
+    if(!_rotTon||_rotTon.state==="closed")_rotTon=new AC();
+    if(_rotTon.state==="suspended")_rotTon.resume();
+    return _rotTon;
+  }catch(e){ return null; }
+}
+function rotBeep(freq,dauer){
+  try{
+    const ctx=rotTonBereit();if(!ctx)return;
+    const o=ctx.createOscillator();const g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);o.type="sine";o.frequency.value=freq||880;
     g.gain.setValueAtTime(.25,ctx.currentTime);o.start();
-    o.stop(ctx.currentTime+.45);setTimeout(()=>ctx.close(),700);
+    o.stop(ctx.currentTime+(dauer||.45));
   }catch(e){}
+}
+/* v702 PO: „kann das Handy vibrieren, wenn der Wechselcountdown noch 15 Sekunden läuft?“
+   Einmal je Wechsel, genau bei 0:15 – rotElapsed steigt um eins je Sekunde. */
+const ROT_VORWARNUNG_SEK=15;
+function rotVorwarnung(){
+  try{navigator.vibrate&&navigator.vibrate([200,100,200]);}catch(e){}
+  rotBeep(660,.25);
+  const cd=document.getElementById("rot-cd"); if(cd){ cd.classList.remove("rot-blink"); void cd.offsetWidth; cd.classList.add("rot-blink"); }
 }
 // Perf: pro Sekunde nur die Textknoten (Countdown, Chip-Zeiten, Wechselvorschlag)
 // aktualisieren statt das ganze Panel via innerHTML neu zu bauen. Fehlt die erwartete
@@ -863,6 +884,7 @@ function rotTick(){
   rotBench.forEach(n=>{rotBenchSec[n]=(rotBenchSec[n]||0)+1;});
   rotField.forEach(n=>{rotFieldSec[n]=(rotFieldSec[n]||0)+1;}); // HOTFIX 12: Spielzeit der Feldspieler
   if(rotTW)rotFieldSec[rotTW]=(rotFieldSec[rotTW]||0)+1; // Torwart spielt auch (feste Position)
+  if(rotIntervalMin*60>ROT_VORWARNUNG_SEK&&rotIntervalMin*60-rotElapsed===ROT_VORWARNUNG_SEK)rotVorwarnung();
   if(rotElapsed>=rotIntervalMin*60){
     rotElapsed=0;rotBeep();try{navigator.vibrate&&navigator.vibrate([100,60,100]);}catch(e){}
   }
@@ -871,7 +893,7 @@ function rotTick(){
 }
 // Idempotente Start/Stop-Funktionen (statt reinem Toggle), damit die Match-Uhr den
 // Rotations-Timer sicher mitsteuern kann, ohne einen bereits korrekten Zustand zu kippen.
-function rotStart(){ if(!rotTimerId){rotTimerId=setInterval(rotTick,1000);requestWakeLock();} rotRenderControls();rotRenderLive(); }
+function rotStart(){ rotTonBereit(); if(!rotTimerId){rotTimerId=setInterval(rotTick,1000);requestWakeLock();} rotRenderControls();rotRenderLive(); }
 function rotStop(){ if(rotTimerId){clearInterval(rotTimerId);rotTimerId=null;} rotPersistTimes(); rotRenderControls();rotRenderLive(); }
 function rotToggle(){ if(rotTimerId)rotStop(); else rotStart(); }
 // Faire Einsatzzeiten: aktuelle Feldzeit je Spieler in Supabase sichern (best-effort, Trainer-Auth).

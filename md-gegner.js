@@ -368,10 +368,11 @@ function _tmdKarte(t){
   const raster=a=>`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">${a.filter(Boolean).map(klein).join("")}</div>`;
 
   /* 1 · Was du hier tust – höchstens zwei große Wege, nach dem Kalender sortiert. */
-  const teamsBtn={i:"ti-users-group",l:"Teams festlegen",c:`tmJump('spieltag','${t.datum}','${t.spielform||""}')`};
+  /* v702: Ein Spieltag hat seine eigene Seite in vier Schritten – dieser Knopf führt hinein. */
+  const teamsBtn={i:"ti-soccer-field",l:"Zum Spieltag",c:`document.getElementById('tmd-modal')?.remove();spieltagZuTermin('${t.datum}')`};
   const planerBtn=t.heim===true
     ? {i:"ti-layout-grid",l:t.typ==="spiel"?"Heimspiel planen":"Festival planen",c:`tmPlanerOpen('${t.datum}','${jsq(t.titel||"")}','${t.typ==="spiel"?"heimspiel":"festival"}')`}
-    : (t.typ==="turnier"?{i:"ti-trophy",l:"Turnier-Modus",c:"tmTurnierModusOpen()"}:null);
+    : null;   // v702 PO: „der Turniermodus kann bei Auswärtsspielen … weg“ – auswärts zählt der Spielplan des Gastgebers
   let gross=[];
   if(t.typ==="training")gross=[{...{i:"ti-clipboard-list",l:"Trainingsplan",c:`tmJump('planung','${t.datum}')`},p:true},
                                {...{i:"ti-checkbox",l:"Anwesenheit",c:`tmJump('anwesenheit','${t.datum}')`},p:false}];
@@ -397,6 +398,8 @@ function _tmdKarte(t){
   ];
   const rest=[
     {i:"ti-edit",l:"Bearbeiten",c:`tmEdit(${Number(t.id)})`},
+    /* v702: Spielplan des Gastgebers (Link oder PDF) – auf der Spieltag-Seite oben. */
+    (istSpiel&&t.heim!==true)?{i:"ti-file-text",l:"Spielplan",c:`document.getElementById('tmd-modal')?.remove();window._spieltagPlanWunsch=true;spieltagZuTermin('${t.datum}','wer')`}:null,
     {i:"ti-calendar-plus",l:"Kalender",c:`tmIcsOne(${Number(t.id)})`},
     routeAddr?{i:"ti-navigation",l:"Route",href:mapsUrl(routeAddr)}:null,
     kommt?{i:"ti-user-share",l:"Vertretung",c:`handoverOpen(${Number(t.id)})`}:null,
@@ -595,16 +598,13 @@ async function rsvpOverviewOpen(terminId){
     ${sec("Krank",groups.krank,"#d97706","🤒")}
     <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
       ${groups.offen.length?`<a class="btn btn-p btn-sm" href="https://wa.me/?text=${encodeURIComponent(waText)}" target="_blank" rel="noopener"><i class="ti ti-brand-whatsapp"></i>WhatsApp</a>`:""}
-      ${groups.offen.length?`<button class="btn btn-sm" onclick="rsvpPushErinnern(${terminId},'${(t.titel||m.label).replace(/'/g,'')}','${datumStr}${zeitStr?' '+zeitStr+' Uhr':''}')"><i class="ti ti-bell"></i>Als Push</button>`:""}
+      ${groups.offen.length?`<button class="btn btn-sm" onclick="rsvpOffeneErinnern(${terminId},this)"><i class="ti ti-bell"></i>Offene per Push erinnern</button>`:""}
       <button class="btn btn-sm" style="margin-left:auto" onclick="document.getElementById('rsvp-ov-modal').remove()">Schließen</button>
     </div>`;
   modal.appendChild(card);document.body.appendChild(modal);
 }
-// Push-Erinnerung an die (subscribten) Eltern – gleicher Deep-Link wie die WhatsApp-Erinnerung.
-async function rsvpPushErinnern(terminId, titel, wann){
-  const url=appRoot()+"?portal&rsvp="+terminId;
-  await pushSendToParents("🦅 Bitte kurz rückmelden", `${titel} · ${wann} – bitte zu- oder absagen.`, url);
-}
+// v702: Push-Erinnerung NUR an Familien ohne Rückmeldung (core.js rsvpOffeneErinnern).
+async function rsvpPushErinnern(terminId){ return rsvpOffeneErinnern(terminId); }
 /* Platz-Ampel: drei Fat-Finger-Buttons je Termin. Setzt termine.platz_status live;
    die Eltern sehen den Status oben im Dashboard. Optionaler kurzer Zusatz (z. B.
    "Halle 2" beim Ausweichplatz oder der Grund bei Absage). */

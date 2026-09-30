@@ -456,8 +456,8 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 #train-sub-spieltag select{min-height:48px}
 .phasen-leer{font-size:var(--s-text);color:var(--text2);text-align:center;margin:0 0 12px}
 .phasen-leer[hidden]{display:none}
-#mt-phase-vor:not([open]),#mt-phase-nom:not([open]),#mt-phase-live:not([open]),#mt-phase-nach:not([open]),#mt-phase-quests:not([open]){display:none}
-#mt-phase-vor>summary,#mt-phase-nom>summary,#mt-phase-live>summary,#mt-phase-nach>summary,#mt-phase-quests>summary{display:none}
+#mt-phase-wer:not([open]),#mt-phase-vor:not([open]),#mt-phase-nom:not([open]),#mt-phase-live:not([open]),#mt-phase-nach:not([open]),#mt-phase-quests:not([open]){display:none}
+#mt-phase-wer>summary,#mt-phase-vor>summary,#mt-phase-nom>summary,#mt-phase-live>summary,#mt-phase-nach>summary,#mt-phase-quests>summary{display:none}
 .phase-zeile{width:100%;min-height:76px;display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--rand-bedien);border-left:5px solid var(--fam-spieltag);border-radius:14px;background:var(--surface);color:var(--text);font-family:inherit;cursor:pointer;text-align:left}
 .phase-zeile .pz-nr{flex:none;width:30px;height:30px;border-radius:50%;color:#fff;font-weight:900;font-size:var(--s-karte);display:flex;align-items:center;justify-content:center}
 .phase-zeile .pz-emo{font-size:28px;line-height:1}
@@ -1189,3 +1189,20 @@ details.blz-einst[open]{padding-bottom:6px}
 .sit-weitere{margin-top:0;padding-top:0;border-top:none}
 /* v692: Schwierigkeit im Übungsdetail – gewählte Stufe nicht nur über Farbe */
 #uebung-sterne button[aria-pressed="true"]{border:2px solid var(--green);background:var(--green-bg);font-weight:800}
+
+/* v702 · Spieltag: Uhr und Wechsel stehen still (Ziffern gleich breit), die Vorwarnung
+   15 Sekunden vor dem Wechsel blinkt kurz – zusätzlich zu Vibration und Ton. */
+#rot-cd,.mc-minute{font-variant-numeric:tabular-nums}
+@keyframes rotBlink{0%,100%{background:transparent}50%{background:var(--amber-bg)}}
+.rot-blink{animation:rotBlink .5s ease-in-out 3;border-radius:10px}
+@media (prefers-reduced-motion: reduce){.rot-blink{animation:none;background:var(--amber-bg)}}
+/* v702 · Match-Uhr: Minute und Phase in einer Zeile, die Knöpfe darunter in voller Breite –
+   am Handy brachen sie vorher versetzt um, und „Abgepfiffen“ schob alles zur Seite. */
+.mc-kopf{display:flex;align-items:baseline;gap:10px;min-width:0}
+.mc-minute{font-size:28px;font-weight:800;white-space:nowrap}
+.mc-phase{font-size:var(--s-klein);color:var(--text2);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mc-knoepfe{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:10px}
+.mc-knoepfe .btn{width:100%;justify-content:center;min-height:48px}
+/* v702 · Spieltag in vier Schritten: am Handy zwei mal zwei Kacheln */
+.phasen-kacheln.vier{grid-template-columns:repeat(4,1fr)}
+@media (max-width:520px){.phasen-kacheln.vier{grid-template-columns:1fr 1fr}.phasen-kacheln.vier .phase-kachel{min-height:84px}}

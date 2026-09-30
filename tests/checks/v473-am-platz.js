@@ -75,7 +75,8 @@ module.exports = async function (h) {
   if (r.infoH < 44) probleme.push(`ℹ️-Knopf im Plan nur ${r.infoH}px`);
   if (r.blitzH < 48) probleme.push(`Blitz-Rating-Wertungsknopf nur ${r.blitzH}px (erwartet 48)`);
   if (!r.offenHeute.includes("mt-phase-live")) probleme.push(`am Spieltag ist „Live“ nicht vorgewählt: ${JSON.stringify(r.offenHeute)}`);
-  if (r.offenMorgen.length) probleme.push(`an einem anderen Tag steht etwas offen: ${JSON.stringify(r.offenMorgen)}`);
+  // v702: an einem anderen Tag steht die erste Frage offen – „Wer kommt?“, sonst nichts
+  if (JSON.stringify(r.offenMorgen) !== JSON.stringify(["mt-phase-wer"])) probleme.push(`an einem anderen Tag offen: ${JSON.stringify(r.offenMorgen)} – erwartet nur „Wer kommt?“`);
   if (fehler.length) probleme.push(...fehler.slice(0, 3));
   zeilen.push(`Sprung: Anwesenheit ${r.awSichtbar} @ ${r.awDatum} · Wochenknöpfe ${JSON.stringify(r.knoepfe)}`);
   zeilen.push(`Plan: Nachbewertung ${r.nachbew} · Tipps ${r.tipps} (offen ${r.tippOffen}, Klapper ${r.tippSummary}px) · ℹ️ ${r.infoH}px · Blitz ${r.blitzH}px`);
