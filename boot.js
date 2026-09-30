@@ -2833,7 +2833,7 @@ async function tpNettoRender(){
   const anteil=gesamt?Math.round(netto/gesamt*100):null;
   const wenig=anteil!=null&&anteil<50;
   const kern=`⚽ Spielform: <b style="color:var(--text)">${netto} von ${gesamt} Minuten</b>${anteil!=null?` (${anteil} %)`:""}`
-    +(wenig?`<br><span style="color:#b45309;font-weight:700">Weniger als die Hälfte – der DFB empfiehlt mindestens 50 % echtes Spielen.</span>`:"");
+    +(wenig?`<br><span style="color:var(--amber);font-weight:700">Weniger als die Hälfte – der DFB empfiehlt mindestens 50 % echtes Spielen.</span>`:"");
   el.innerHTML=zeile(kern);
   if(!datum)return;
   const woche=await tpWocheNetto(datum);
