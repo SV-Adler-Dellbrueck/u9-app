@@ -1171,6 +1171,39 @@ async function wieWarsStart(fuer){
   if(typeof nbGross==="function") nbGross(_nbSchnell.art, true);
 }
 
+/* v701 · Benachrichtigung „Wie war's?“ (prozess-nacherfassung.md: „Tipp auf die Benachrichtigung
+   öffnet direkt die Aufnahme, nicht erst eine Liste“). Die Meldung trägt ?wiewars=d<Datum> (Training),
+   t<Termin> (Spiel, Festival) oder e<Eintrag> (Vorschlag wartet auf „Passt so“). Geöffnet wird erst,
+   wenn angemeldet und die PIN-Sperre offen ist – höchstens zwei Minuten lang, wie bei Adler-Rufe. */
+function _wwGesperrt(){
+  const gate = document.getElementById("pin-gate");
+  const zu = gate && !gate.classList.contains("hidden") && getComputedStyle(gate).display!=="none";
+  return zu || typeof sbToken!=="function" || !sbToken();
+}
+function _wwOeffnen(w){
+  if(w[0]==="e"){ tbPruefenOpen(Number(w.slice(1))); return; }
+  wieWarsStart(w);
+}
+function _wwAbsicht(){
+  let n = 0;
+  const t = setInterval(()=>{
+    let w = null; try{ w = sessionStorage.getItem("adler_wiewars_intent"); }catch(e){}
+    if(!w || ++n>60){ clearInterval(t); return; }
+    if(_wwGesperrt()) return;
+    try{ sessionStorage.removeItem("adler_wiewars_intent"); }catch(e){}
+    clearInterval(t);
+    _wwOeffnen(w);
+  }, 2000);
+}
+function wieWarsAbsichtJetzt(){
+  let w = null; try{ w = sessionStorage.getItem("adler_wiewars_intent"); }catch(e){}
+  if(!w) return;
+  if(_wwGesperrt()){ _wwAbsicht(); return; }
+  try{ sessionStorage.removeItem("adler_wiewars_intent"); }catch(e){}
+  _wwOeffnen(w);
+}
+try{ _wwAbsicht(); }catch(e){}
+
 /* Die Startseite ist schon gezeichnet, wenn dieses Modul (Welle 2) ankommt – die Karte jetzt nachziehen. */
 try{ if(document.getElementById("home-wiewars")) wieWarsKarte(); }catch(e){}
 
