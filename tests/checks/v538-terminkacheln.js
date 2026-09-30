@@ -115,8 +115,10 @@ module.exports = async function (h) {
   if (/<button[^>]*einheitImportOpen/.test(planung)) probleme.push("„Einheit importieren“ wird noch angeboten");
   const vu = planung.match(/<button[^>]*vorlageUebernehmenOpen[^>]*>/);
   if (!vu) probleme.push("„Vorlage übernehmen“ fehlt");
-  else if (!/width:100%/.test(vu[0])) probleme.push("„Vorlage übernehmen“ steht nicht über die volle Breite");
-  else zeilen.push("Knöpfe: „Vorlage übernehmen“ allein und vollbreit, „Einheit importieren“ entfallen");
+  /* v687: „Vorlage übernehmen“ steht als Kachel neben „Auto-Plan“ in Schritt 3 („Inhalt wählen“) –
+     beide füllen den Plan und sind gleichrangig. Geprüft wird die Kachel (≥ 88 px), nicht mehr die volle Breite. */
+  else if (!/min-height:88px/.test(vu[0])) probleme.push("„Vorlage übernehmen“ steht nicht als Kachel in „Inhalt wählen“");
+  else zeilen.push("Knöpfe: „Vorlage übernehmen“ als Kachel neben „Auto-Plan“, „Einheit importieren“ entfallen");
 
   return h.ergebnis("Trainingsplan-Kopf: sechs Kacheln statt Dropdown", !probleme.length, zeilen.concat(probleme));
 };
