@@ -1096,8 +1096,26 @@ async function pushRenderInto(elId, rolle){
   const on=!!sub && (typeof Notification!=="undefined"&&Notification.permission==="granted");
   const base="width:100%;min-height:48px;padding:12px;border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer";
   el.innerHTML=on
-    ? `<button onclick="pushUnsubscribe().then(()=>pushRenderInto('${elId}','${rolle}'))" style="${base};border:1.5px solid #16a34a;background:var(--green-bg);color:var(--green)">🔔 Benachrichtigungen an ✓ · zum Ausschalten tippen</button>`
+    ? `<button onclick="pushUnsubscribe().then(()=>pushRenderInto('${elId}','${rolle}'))" style="${base};border:1.5px solid #16a34a;background:var(--green-bg);color:var(--green)">🔔 Benachrichtigungen an ✓ · zum Ausschalten tippen</button>
+       <button type="button" class="push-test-knopf" onclick="pushTest(this)" style="${base};margin-top:8px;border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text)">📨 Test-Benachrichtigung an mich</button>`
     : `<button onclick="pushSubscribe('${rolle}').then(ok=>{if(ok)pushRenderInto('${elId}','${rolle}');})" style="${base};border:none;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff">🔔 Benachrichtigungen aktivieren</button>`;
+}
+/* v695 PO 30.09.: „Ja, bau den Test-Knopf.“ Schickt eine Probe-Meldung an genau dieses Gerät
+   (Edge Function push-send, art „test“ – nur an das eigene Abo, fester Text, niemand sonst
+   bekommt etwas). So lässt sich prüfen, ob Meldungen ankommen, ohne jemanden zu stören und
+   ohne auf den 5-Minuten-Takt der Adler-Rufe zu warten. */
+async function pushTest(knopf){
+  if(!sbToken()){toast("Bitte zuerst anmelden","err");return;}
+  const sub=await pushCurrentSub();
+  if(!sub){toast("Auf diesem Gerät sind keine Benachrichtigungen an","err");return;}
+  if(knopf){knopf.disabled=true;knopf.textContent="📨 Wird gesendet …";}
+  try{
+    const r=await fetch(`${SB_URL}/functions/v1/push-send`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({art:"test",endpoint:sub.endpoint})});
+    const d=await r.json().catch(()=>({}));
+    if(r.ok&&d.sent)toast("📨 Test gesendet – die Meldung kommt in wenigen Sekunden");
+    else toast(d.error||"Test konnte nicht gesendet werden","err");
+  }catch(e){toast("Kein Netz – Test nicht gesendet","err");}
+  if(knopf){knopf.disabled=false;knopf.textContent="📨 Test-Benachrichtigung an mich";}
 }
 // Trainer: Push an alle (subscribed) Eltern senden – via Edge Function push-send.
 async function pushSendToParents(title, body, url){

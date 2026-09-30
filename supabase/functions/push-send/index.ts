@@ -43,6 +43,26 @@ Deno.serve(async (req) => {
     const { data: prof } = await admin.from("profiles").select("role").eq("id", uid).single();
     const body = await req.json().catch(() => ({}));
 
+    /* v695: Test-Meldung an das EIGENE Gerät. Darf jede angemeldete Person (Trainer und Eltern),
+       geht aber nur an Abos dieses Kontos – mit Endpunkt nur an genau dieses Gerät – und hat
+       einen festen Text. Damit kann niemand anderen etwas schicken. */
+    if (body.art === "test") {
+      let q = admin.from("push_subscriptions").select("endpoint,p256dh,auth").eq("user_id", uid);
+      if (body.endpoint) q = q.eq("endpoint", String(body.endpoint));
+      const { data: subs } = await q;
+      if (!subs || !subs.length) return json({ error: "Auf diesem Gerät sind keine Benachrichtigungen angemeldet." }, 404);
+      await vapid(admin);
+      const payload = { title: "🔔 Test-Benachrichtigung", body: "Es klappt – so kommen Meldungen vom Team auf dieses Handy.", url: "./", tag: "adler-test" };
+      let sent = 0; const gone: string[] = [];
+      for (const s of subs) {
+        try { await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } } as any, JSON.stringify(payload)); sent++; }
+        catch (err: any) { const c = err?.statusCode; if (c === 404 || c === 410 || c === 403) gone.push(s.endpoint); }
+      }
+      if (gone.length) await admin.from("push_subscriptions").delete().in("endpoint", gone);
+      if (!sent) return json({ error: "Das Gerät ist nicht mehr erreichbar – bitte Benachrichtigungen aus- und wieder einschalten.", removed: gone.length }, 410);
+      return json({ ok: true, sent });
+    }
+
     /* v664: Erinnerung der Kasse. Darf das Trainerteam und wer in kasse_team steht. Der Text
        ist fest, die Empfaenger ergeben sich aus der Datenbank (Familien mit offener Umlage) –
        die Kasse kann damit keine beliebige Mitteilung an alle schicken. Hoechstens einmal
