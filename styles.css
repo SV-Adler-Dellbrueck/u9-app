@@ -1176,3 +1176,7 @@ details.blz-einst>summary::-webkit-details-marker{display:none}
 details.blz-einst .blz-aendern{font-size:var(--s-text);font-weight:800;color:var(--blue-text)}
 details.blz-einst[open] .blz-aendern{display:none}
 details.blz-einst[open]{padding-bottom:6px}
+/* v688: Spielerauswahl als Namenskacheln (Profil, Entwicklung) – ein Tipp statt Auswahlliste */
+.spieler-wahl{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:6px}
+.spieler-wahl-btn{min-height:56px;padding:8px 12px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-karte);font-weight:700;text-align:left;cursor:pointer}
+.spieler-wahl-btn:active{transform:scale(.98)}
