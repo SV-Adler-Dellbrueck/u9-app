@@ -235,7 +235,7 @@ async function periodOpen(){
   const opts=Object.entries(PERIOD_CATS).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
   const card=document.createElement("div");
   card.style.cssText="background:var(--surface);color:var(--text);max-width:480px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
-  card.innerHTML=`${mdlHead("period-modal","📅","Saison-Themenplan","Ein Schwerpunkt je Monat · erscheint oben im Trainings-Tab","#2563eb")}
+  card.innerHTML=`${mdlHead("period-modal","📅","Saison-Themenplan","Ein Schwerpunkt je Monat · steht dann oben unter Übungen","#2563eb")}
     <div id="period-list" style="margin-bottom:12px"><div style="color:var(--text3);font-size:var(--s-text)">Lade…</div></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
       <label style="font-size:var(--s-klein);color:var(--text2)">Monat<input type="month" id="period-monat" value="${new Date().toISOString().slice(0,7)}" style="${fld}"></label>
@@ -1347,6 +1347,11 @@ function tpTypMarke(typ){
   if(t!=="spielform"&&t!=="uebungsform")return "";
   const wort=t==="spielform"?"Spielform":"Übungsform";
   return ` <span style="font-size:var(--s-klein);font-weight:800;color:var(--text2);background:var(--surface2);border:var(--border-s);border-radius:6px;padding:1px 6px;white-space:nowrap">${wort}</span>`;
+}
+/* v690: Gesamtdauer der Einheit wie in der Zeitleiste – parallele Blöcke (Torwart, Individual)
+   zählen nicht doppelt. Nenner für den Spielform-Anteil in Schritt 5. */
+function tpGesamtMinuten(){
+  return (tpSlots||[]).reduce((a,s)=>a+(tpIstParallel(s)?0:(Number(s&&s.dauer)||0)),0);
 }
 function tpNettoMinuten(slots){
   return (slots||[]).reduce((a,s)=>{
@@ -2651,8 +2656,9 @@ function tpRenderTimeline(){
      25 unverplante Minuten sahen genauso aus wie ein perfekt gefuellter Plan. */
   const frei=zielDauer-time;
   // Ziel-Dauer wohnt jetzt HIER statt als eigene „Zeitplan"-Zeile im Kopf (PO: schlanker)
-  const sfq=(typeof tpSpielformQuote==="function")?null:null; // Quote wird nach dem DOM-Aufbau gefüllt (braucht die Selects)
-  html+=`<div id="tp-sfq" style="text-align:right;font-size:var(--s-klein);color:var(--text2);margin-top:8px"></div>`;
+  /* v690: Hier stand „Spielform-Anteil: 29 %“ (aus den gewählten Übungen geschätzt), in Schritt 5
+     „Spielform: 40 Minuten“ (aus der Art der Blöcke) – zwei Zahlen für dieselbe Frage, die sich
+     widersprachen. Es gilt nur noch die Minutenzahl in Schritt 5, dort mit ihrem Anteil. */
   html+=`<div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;font-size:var(--s-text);font-weight:${passt?"600":"800"};color:${passt?"var(--text2)":"#dc2626"};margin-top:6px">Gesamt: ${time} von
     <select id="tp-dauer" onchange="tpRenderTimeline()" style="font-size:var(--s-text);min-height:44px;padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;background:var(--surface);color:var(--text)">${[60,75,90].map(d=>`<option value="${d}"${zielDauer===d?" selected":""}>${d}</option>`).join("")}</select>
     Min.${passt?(frei>0?` · noch ${frei} Min. frei`:""):" – zu lang!"}</div>`;
@@ -2766,7 +2772,7 @@ function tpSpielformQuote(){
   return Math.round(spiel/gesamt*100);
 }
 function tpSfqRender(){
-  const el=document.getElementById("tp-sfq"); if(!el)return;
+  const el=document.getElementById("tp-sfq"); if(!el)return;   // v690: ohne Ziel – die Zahl steht in tpNettoRender
   const q=tpSpielformQuote();
   if(q==null){el.innerHTML="";return;}
   const gut=q>=50;
@@ -2821,17 +2827,24 @@ async function tpNettoRender(){
   const netto=tpNettoMinuten(tpSlots);
   const ziel=tpNettoRichtwert();
   const zeile=(inhalt)=>`<div style="font-size:var(--s-text);color:var(--text2);line-height:1.5">${inhalt}</div>`;
-  el.innerHTML=zeile(`⚽ Spielform: <b style="color:var(--text)">${netto} Minuten</b>`);
+  /* v690: eine Zahl für die Spielform – Minuten und ihr Anteil an der Einheit. Unter der Hälfte
+     steht der Hinweis auf die DFB-Empfehlung dabei, als Satz, nicht nur als Farbe. */
+  const gesamt=tpGesamtMinuten();
+  const anteil=gesamt?Math.round(netto/gesamt*100):null;
+  const wenig=anteil!=null&&anteil<50;
+  const kern=`⚽ Spielform: <b style="color:var(--text)">${netto} von ${gesamt} Minuten</b>${anteil!=null?` (${anteil} %)`:""}`
+    +(wenig?`<br><span style="color:var(--amber);font-weight:700">Weniger als die Hälfte – der DFB empfiehlt mindestens 50 % echtes Spielen.</span>`:"");
+  el.innerHTML=zeile(kern);
   if(!datum)return;
   const woche=await tpWocheNetto(datum);
   if(woche==null)return;
   // Reicht die Woche, bleibt es bei der Zahl der Einheit – kein Lob (Vorgabe des Pakets).
   const knopf=`<button onclick="tpRichtwertAendern()" title="Richtwert ändern" style="min-height:44px;border:none;background:transparent;color:var(--text3);font-family:inherit;font-size:var(--s-klein);text-decoration:underline;cursor:pointer;padding:0 4px">Richtwert ${ziel} ändern</button>`;
   if(woche<ziel){
-    el.innerHTML=zeile(`⚽ Spielform: <b style="color:var(--text)">${netto} Minuten</b>`)
+    el.innerHTML=zeile(kern)
       +zeile(`Diese Woche ${woche} von ${ziel} Minuten Spielform. ${knopf}`);
   }else{
-    el.innerHTML=zeile(`⚽ Spielform: <b style="color:var(--text)">${netto} Minuten</b> · diese Woche ${woche} Minuten ${knopf}`);
+    el.innerHTML=zeile(kern)+zeile(`Diese Woche ${woche} Minuten Spielform. ${knopf}`);
   }
 }
 /* Abnahme 6: der Richtwert ist änderbar, ohne dass jemand Code anfasst. Er wird dort
@@ -4130,9 +4143,11 @@ function tpRenderTeamFokus(){
   if(!box){
     box=document.createElement("div");
     box.id="tp-team-fokus";
-    const timeline=document.getElementById("tp-timeline");
-    if(!timeline)return;
-    timeline.insertAdjacentElement("afterend",box);
+    // v690: Hinweiskarten stehen unter „Block hinzufügen“ – zwischen Ablauf und diesem Knopf
+    // trennten sie die Blöcke von der Handlung, die direkt zu ihnen gehört.
+    const anker=document.getElementById("tp-add-slot")||document.getElementById("tp-timeline");
+    if(!anker)return;
+    anker.insertAdjacentElement("afterend",box);
   }
   if(spielerzahl<3){box.innerHTML="";return;} // zu wenig Daten für ein sinnvolles Team-Bild
   const dimLabel={tech:"Technik & Ball",raute:"Rauten-IQ & Taktik",phys:"Physis & Motorik",mental:"Mentalität & Charakter",entw:"Entwicklungspotenzial"};
@@ -4172,9 +4187,9 @@ function tpRenderMindsetTip(){
   if(!box){
     box=document.createElement("div");
     box.id="tp-mindset-tip";
-    const timeline=document.getElementById("tp-timeline");
-    if(!timeline)return;
-    timeline.insertAdjacentElement("afterend",box);
+    const anker=document.getElementById("tp-add-slot")||document.getElementById("tp-timeline");   // v690
+    if(!anker)return;
+    anker.insertAdjacentElement("afterend",box);
   }
   box.innerHTML=`<div style="margin-top:10px;padding:10px 12px;background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7;border-radius:var(--rl)">
     <div style="font-size:var(--s-text);font-weight:800;color:#047857;margin-bottom:4px">🧠 Mindset-Baustein des Tages</div>
@@ -4653,7 +4668,7 @@ function tpPickerRender(){
     const versteckt=Math.max(0,((typeof tpAllForms==="function"?tpAllForms():[]).length)-alle.length);
     html+=`<div style="font-size:var(--s-text);font-weight:800;color:var(--text2);margin:10px 0 6px">${TP_PICK_TITEL[typ]||"Übungen"} (${items.length})</div>`;
     if(versteckt&&TP_PICK_ANDERE[typ])
-      html+=`<div style="font-size:var(--s-klein);color:var(--text3);line-height:1.5;margin:-2px 0 8px">Nur Übungen für diesen Block – die übrigen ${versteckt} liegen in anderen Blöcken (${TP_PICK_ANDERE[typ]}), anzulegen über „➕ Phase hinzufügen".</div>`;
+      html+=`<div style="font-size:var(--s-klein);color:var(--text3);line-height:1.5;margin:-2px 0 8px">Nur Übungen für diesen Block – die übrigen ${versteckt} liegen in anderen Blöcken (${TP_PICK_ANDERE[typ]}), anzulegen über „➕ Block hinzufügen“.</div>`;
   }else{
     html+=`<div style="font-size:var(--s-text);font-weight:800;color:var(--text2);margin:2px 0 6px">${items.length} Übung${items.length===1?"":"en"}</div>`;
   }
@@ -4667,7 +4682,7 @@ function _tpPickKarte(x){
   return `<div style="display:flex;align-items:center;gap:8px;border:var(--border-s);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--surface)">
     <button onclick="tpPickerSet(${x.i})" style="flex:1;min-width:0;min-height:44px;border:none;background:transparent;color:var(--text);font-family:inherit;text-align:left;cursor:pointer;padding:0">
       <span style="display:block;font-size:var(--s-karte);font-weight:800">${esc(x.f.name)}</span>
-      <span style="display:block;font-size:var(--s-klein);color:var(--text2)">${x.f.dauer||"?"} Min. · ${esc(x.f.kat||"eigene")} · ${frische}</span>
+      <span style="display:block;font-size:var(--s-klein);color:var(--text2)">${x.f.dauer||"?"} Min. · ${esc((typeof PERIOD_CATS!=="undefined"&&PERIOD_CATS[x.f.kat])||x.f.kat||"eigene")} · ${frische}</span>
       ${(function(){const c=tpArtChip(x.f,false);const b=typeof tpBetreuungWert==="function"?tpBetreuungWert(x.f):null;const a=(b&&b.wert==="allein")?'<span style="background:var(--surface2);color:var(--text2);border:var(--border-s);border-radius:6px;padding:1px 6px;font-size:var(--s-klein);font-weight:800;white-space:nowrap">👤 läuft allein</span>':"";return (c||a)?`<span style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">${c}${a}</span>`:"";})()}
     </button>
     <button onclick="tpSternTipp('${x.f.name.replace(/'/g,"\\'")}')" title="Schwierigkeit antippen zum Ändern" style="min-width:52px;min-height:44px;border:none;background:transparent;color:#f59e0b;font-size:var(--s-text);cursor:pointer;letter-spacing:1px">${"⭐".repeat(stern)}</button>

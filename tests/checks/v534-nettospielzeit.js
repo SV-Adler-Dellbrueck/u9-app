@@ -125,7 +125,8 @@ module.exports = async function (h) {
   if (!/Diese Woche 40 von 48/.test(r.textWenig || "")) probleme.push(`unter dem Richtwert fehlt der Hinweis: „${(r.textWenig || "").slice(0, 120)}“`);
   if (/Diese Woche \d+ von/.test(r.textGenug || "")) probleme.push(`auf dem Richtwert steht der Mahn-Satz trotzdem: „${(r.textGenug || "").slice(0, 120)}“`);
   if (/super|stark|geschafft|👏|🎉|✅/i.test(r.textGenug || "")) probleme.push(`es wird gelobt, wenn die Woche reicht: „${(r.textGenug || "").slice(0, 120)}“`);
-  if (!/Spielform: 20 Minuten/.test(r.textWenig || "")) probleme.push(`die Zahl der Einheit fehlt: „${(r.textWenig || "").slice(0, 120)}“`);
+  // v690: die Zahl der Einheit steht jetzt mit ihrem Anteil da („20 von 20 Minuten (100 %)“)
+  if (!/Spielform: 20 (von \d+ )?Minuten/.test(r.textWenig || "")) probleme.push(`die Zahl der Einheit fehlt: „${(r.textWenig || "").slice(0, 120)}“`);
   if (!r.knopfRichtwert) probleme.push("der Richtwert lässt sich nicht ohne Codeänderung ändern – kein Knopf dafür");
 
   // 7) Import
