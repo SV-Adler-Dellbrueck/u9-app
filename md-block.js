@@ -137,9 +137,15 @@ async function blockPlanKarte(datum){
     /* Kein Block für diesen Termin: nur dann ein schmaler Weg dorthin, wenn auch keiner
        mehr ansteht – sonst stünde der Knopf unter jedem Spiel und jedem Nachholtermin. */
     const kommt=(TB_BLOECKE||[]).some(x=>String(x.bis)>=_tbHeute());
-    el.innerHTML=kommt?"":`<button class="btn btn-sm" style="width:100%;margin:4px 0 8px" onclick="blockEditorOpen()">🧱 Trainingsblock anlegen – ein Ziel, drei Einheiten im Wechsel</button>`;
+    /* v690: Der Knopf stand in voller Breite über „Vorlage übernehmen“ und „Auto-Plan“ und sah wie ein
+       dritter, gleichrangiger Weg zum heutigen Inhalt aus – er plant aber zwei bis vier Wochen. Jetzt
+       ein leiser Link unter den beiden Hauptwegen. */
+    el.innerHTML="";
+    const neu=document.getElementById("tp-block-neu");
+    if(neu)neu.innerHTML=kommt?"":`<button type="button" id="tp-block-link" onclick="blockEditorOpen()" style="min-height:44px;padding:0;border:none;background:transparent;color:var(--blue-text);font-family:inherit;font-size:var(--s-text);font-weight:700;text-decoration:underline;cursor:pointer;text-align:left">🧱 Über mehrere Wochen planen: Trainingsblock anlegen</button>`;
     return;
   }
+  { const neu=document.getElementById("tp-block-neu"); if(neu)neu.innerHTML=""; }
   const zu=blockZuordnung(await _tbTrainings(String(b.von),String(b.bis)),b);
   const z=zu.find(x=>x.datum===datum);
   if(!z){ el.innerHTML=""; return; }             // kein Training (Spiel, Turnier): der Block schweigt

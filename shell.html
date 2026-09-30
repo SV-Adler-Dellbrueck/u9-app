@@ -308,7 +308,6 @@
   <div id="training-content"><p style="padding:1rem;color:#64748b;font-size:13px">Lade...</p></div>
   <!-- v682: Durchsicht (einordnen, ohne Trainer) steht UNTER der Liste – sie ist Arbeit für
        einmal, die Suche und die Gruppen sind der tägliche Weg und gehören nach oben. -->
-  <div id="tf-art-einstieg" style="margin:8px 0 10px"></div>
   <div style="font-size:var(--s-text);font-weight:800;margin:16px 0 8px">🧰 Werkzeuge</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
     <button onclick="if(typeof vorlagenAnsichtOpen===&quot;function&quot;)vorlagenAnsichtOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px"><span style="font-size:30px">📋</span><span style="font-size:var(--s-karte);font-weight:800">Vorlagen</span></button>
@@ -318,6 +317,9 @@
     <button onclick="var d=document.getElementById('dfb-regal');d.open=!d.open;if(d.open)d.scrollIntoView({behavior:'smooth'})" style="grid-column:1/-1;min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px"><span style="font-size:30px">📖</span><span style="font-size:14px;font-weight:800">DFB-Regal</span></button>
   </div>
   <!-- I-D: DFB-Übungs-Regal – kuratierte Links in die offizielle, kostenlose DFB-Datenbank (kein Scraping, nur Verweise) -->
+  <!-- v690: Die Pflege-Aufgaben (einordnen, läuft sie ohne Trainer?) standen zwischen der Übungsliste
+       und den Werkzeugen – mitten im Suchen. Sie sind Werkzeug, also stehen sie dort, unter den Kacheln. -->
+  <div id="tf-art-einstieg" style="margin:10px 0 10px"></div>
   <details id="dfb-regal" class="el-sect" style="background:var(--surface);border:var(--border-s);border-radius:var(--rl);padding:10px 14px;margin-top:12px">
     <summary style="font-size:13px;font-weight:800;cursor:pointer">📖 DFB „Training online" – offizielle Übungs-Datenbank (kostenlos)</summary>
     <div style="font-size:11.5px;color:var(--text2);margin:8px 0 10px">Alle 2 Wochen neue Einheiten von DFB-Trainern, über 100 F-Jugend-Einheiten im Archiv – gute Ergänzung zur eigenen Bibliothek und zum Auto-Plan.</div>
@@ -611,10 +613,11 @@
       <button onclick="tpGenerate()" style="min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid var(--fam-training);border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px 6px"><span style="font-size:28px">🪄</span><span style="font-size:var(--s-karte);font-weight:800">Auto-Plan</span></button>
     </div>
     <div style="font-size:var(--s-klein);color:var(--text2);margin:0 0 4px">Oder unten jeden Block selbst belegen.</div>
+    <div id="tp-block-neu"></div><!-- v690: „Trainingsblock anlegen“ als leiser Weg unter den beiden Hauptwegen -->
     <div class="sl tp-schritt"><span class="tp-nr" aria-hidden="true">4</span>Ablauf und Gruppen</div>
     <div id="tp-diagnose"></div>
     <div id="tp-timeline"></div>
-      <button onclick="tpAddSlot()" style="width:100%;margin-top:10px;min-height:56px;border:1px solid var(--rand-bedien);border-top:3px solid var(--fam-training);border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:5px;padding:10px 6px"><span style="font-size:22px">➕</span><span style="font-size:var(--s-karte);font-weight:800">Block hinzufügen</span></button>
+      <button id="tp-add-slot" onclick="tpAddSlot()" style="width:100%;margin-top:10px;min-height:56px;border:1px solid var(--rand-bedien);border-top:3px solid var(--fam-training);border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:5px;padding:10px 6px"><span style="font-size:22px">➕</span><span style="font-size:var(--s-karte);font-weight:800">Block hinzufügen</span></button>
     <div class="sl tp-schritt"><span class="tp-nr" aria-hidden="true">5</span>Speichern und starten</div>
     <div id="tp-netto" style="margin:6px 0 8px"></div>
       <button onclick="tpPlanSave(true)" style="width:100%;min-height:48px;margin-bottom:10px;border:none;border-radius:14px;background:var(--surface);border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;color:var(--text);font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">💾 Plan speichern</button>
