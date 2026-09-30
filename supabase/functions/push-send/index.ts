@@ -52,7 +52,9 @@ Deno.serve(async (req) => {
       const { data: subs } = await q;
       if (!subs || !subs.length) return json({ error: "Auf diesem Gerät sind keine Benachrichtigungen angemeldet." }, 404);
       await vapid(admin);
-      const payload = { title: "🔔 Test-Benachrichtigung", body: "Es klappt – so kommen Meldungen vom Team auf dieses Handy.", url: "./", tag: "adler-test" };
+      // v696: Ziel ist die App, aus der der Test kam – nur die drei Einstiege sind erlaubt
+      const ziel = /^\.\/(eltern|trainer|kinder)\/$/.test(String(body.url || "")) ? String(body.url) : "./";
+      const payload = { title: "🔔 Test-Benachrichtigung", body: "Es klappt – so kommen Meldungen vom Team auf dieses Handy.", url: ziel, tag: "adler-test" };
       let sent = 0; const gone: string[] = [];
       for (const s of subs) {
         try { await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } } as any, JSON.stringify(payload)); sent++; }

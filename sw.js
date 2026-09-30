@@ -1,4 +1,4 @@
-const CACHE="u9i-adler-v695";
+const CACHE="u9i-adler-v696";
 const PRECACHE=[
   "./",
   "./index.html",
@@ -200,12 +200,29 @@ self.addEventListener("push",e=>{
   };
   e.waitUntil(self.registration.showNotification(title,opts));
 });
-// Klick auf die Benachrichtigung: vorhandenes Fenster fokussieren/navigieren oder neu öffnen.
+/* v696 PO 30.09.: „Wenn ich oben drauf klicke, öffnet sich die Trainer-App – obwohl ich die
+   Benachrichtigung in der Eltern-App angefordert habe.“ Der Klick nahm das ERSTE offene Fenster,
+   egal welcher App, und lud das Ziel darin. Jetzt bestimmt das Ziel die App (Ordner trainer/,
+   eltern/, kinder/ – bei der Weiche im Wurzelverzeichnis nach denselben Regeln wie index.html),
+   und nur ein Fenster DIESER App wird wiederverwendet; sonst öffnet ein neues. */
+const ELTERN_ROUTEN=["portal","quiz","heft","ticker","kind","delegate","match","eltern","rsvp","handover","turnier","einladung"];
+function _zielOrdner(href){
+  try{
+    const u=new URL(href);
+    const m=u.pathname.match(/\/(trainer|eltern|kinder)\//);
+    if(m)return m[1];
+    if(u.searchParams.has("kinder"))return "kinder";
+    if(ELTERN_ROUTEN.some(k=>u.searchParams.has(k)))return "eltern";
+    return "trainer";   // die Weiche schickt alles Übrige in die Trainer-App
+  }catch(_){ return null; }
+}
 self.addEventListener("notificationclick",e=>{
   e.notification.close();
-  const url=(e.notification.data&&e.notification.data.url)||"./";
+  const ziel=new URL((e.notification.data&&e.notification.data.url)||"./",self.registration.scope).href;
+  const ordner=_zielOrdner(ziel);
   e.waitUntil(clients.matchAll({type:"window",includeUncontrolled:true}).then(cs=>{
-    for(const c of cs){ if("focus" in c){ try{c.navigate(url);}catch(_){} return c.focus(); } }
-    return clients.openWindow(url);
+    const passend=cs.find(c=>ordner?String(c.url).includes("/"+ordner+"/"):true);
+    if(passend&&"focus" in passend){ try{passend.navigate(ziel);}catch(_){} return passend.focus(); }
+    return clients.openWindow(ziel);
   }));
 });
