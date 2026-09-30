@@ -45,7 +45,8 @@ module.exports = async function (h) {
   if (r.tok !== NEU) probleme.push(`Token wurde nicht erneuert (${r.tok})`);
   if (r.kader !== K.length) probleme.push(`Kader nach dem Start: ${r.kader} statt ${K.length} Kinder`);
   if (r.tiles !== K.length) probleme.push(`Anwesenheit zeigt ${r.tiles} Kinder statt ${K.length}`);
-  if (!/Nächstes/.test(r.topbar)) probleme.push(`Kopfzeile bleibt im Rückfall: „${r.topbar}“`);
+  // v693: die Kopfzeile zeigt bewusst fest „Trainerstab · U9 I“ – der nächste Termin steht in Kachel und „Diese Woche“
+  if (r.topbar.trim() !== "Trainerstab · U9 I") probleme.push(`Kopfzeile: „${r.topbar}“`);
   if (!r.hatFn) probleme.push("nachSitzungErneuert fehlt");
   if (r.hatFn && !r.unveraendert) probleme.push("Erneuerung mitten in der Arbeit zeichnet die Anwesenheit neu");
   if (fehler.length) probleme.push(...fehler.slice(0, 3));

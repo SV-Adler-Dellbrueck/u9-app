@@ -2299,6 +2299,6 @@ function renderTrainerUI(){
   if(tv)tv.innerHTML=TRAINER.map(t=>`<option value="${t}">${t}</option>`).join("");
   // Die Kopfzeile listete frueher die Trainernamen ("4+1 Raute · …"). HOTFIX 1
   // hatte das nur dynamisch gemacht, weil Finn fehlte – gebraucht hat es dort niemand.
-  // Jetzt steht im Untertitel der naechste Termin (topbarNaechsterTermin in views.js).
+  // Seit v693 steht dort fest „Trainerstab · U9 I“ (der naechste Termin steht in Kachel und „Diese Woche“).
 }
 renderTrainerUI();

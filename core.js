@@ -232,7 +232,6 @@ async function nachSitzungErneuert(){
   await loadKader();
   if(!KADER.length)return;
   try{ if(typeof loadDB==="function")await loadDB(); }catch(e){}
-  try{ window._topbarChecked=false; if(typeof topbarNaechsterTermin==="function")topbarNaechsterTermin(); window._topbarChecked=true; }catch(e){}
   try{
     const k=(typeof curSection!=="undefined")?curSection:"home";
     if(k==="home"){ if(typeof renderHome==="function")renderHome(); }
