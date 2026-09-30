@@ -48,7 +48,7 @@
    eine Datei anfasst, ohne den Stand hochzusetzen, bekommt es hier gesagt — denn ohne neuen
    Stand holt der Abgleich die Datei gar nicht erst. */
 const ORDNER = "doku/auftrag-aufstellungen-3plus1-funino";
-const NEUE_ORDNUNGEN = ["3+1", "FUNiño", "3+1 gegen FUNiño", "3+1 und FUNiño"];
+const NEUE_ORDNUNGEN = ["3+1", "FUNiño", "3+1 gegen FUNiño", "3+1 und FUNiño", "Endzone (4 gegen 4)"];   // v700: L5-7 wird im selben Abgleich angelegt
 const EINHEITEN = ["L4-6", "L5-4", "L6-3", "L4-7", "L5-5", "L6-4", "L5-6", "L6-5", "L4-8"];
 const STAND_UEB = "2026-09-20-3", STAND_VOR = "2026-09-18-1";
 /* v601: Die Sperrklinke misst jetzt die RICHTUNG, nicht die Gleichheit. Gemeint war
@@ -94,7 +94,9 @@ module.exports = async function (h) {
   const abwU = neueU.filter((u, i) => roh(u) !== roh(anhangU[i])).map(u => u.name);
   /* v656: ziel_kinder kam später dazu (PO-Abnahme 28.09.) – der Nachtrag selbst bleibt der Maßstab. */
   const ohneZiel = v => { if (!v) return v; const { ziel_kinder, ...rest } = v; return rest; };
-  const abwV = neueV.filter((v, i) => roh(ohneZiel(v)) !== roh(ohneZiel(anhangV[i]))).map(v => v.name);
+  /* v700: Leitfrage 5 im Wortlaut vom 13.09. (Beschluss 30.09.) – der Nachtrag trägt noch den alten. */
+  const lfNeu = v => (v && v.leitfrage === "Wo stelle ich mich hin, damit ich den Ball kriege?") ? { ...v, leitfrage: "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?" } : v;
+  const abwV = neueV.filter((v, i) => roh(ohneZiel(lfNeu(v))) !== roh(ohneZiel(anhangV[i]))).map(v => v.name);
   if (abwU.length) probleme.push("Übung in bibliothek.json weicht vom Nachtrag ab: " + abwU.join(", "));
   if (abwV.length) probleme.push("Vorlage in vorlagen.json weicht vom Nachtrag ab: " + abwV.join(", "));
   if (!standMindestens(bib.stand, STAND_UEB)) probleme.push(`bibliothek.json: Stand „${bib.stand}“ liegt vor „${STAND_UEB}“ – ohne neuen Stand holt _bibHolen die Datei nicht`);
@@ -273,7 +275,7 @@ module.exports = async function (h) {
   // 1)
   if (r.fehlerU.length) probleme.push("Übungen kommen nicht durch _euPruefung: " + r.fehlerU.slice(0, 3).join(" | "));
   if (r.fehlerV.length) probleme.push("Vorlagen kommen nicht durch _evPruefung: " + r.fehlerV.slice(0, 3).join(" | "));
-  const soll = ["1 gegen 1", "2 gegen 2", "Dreieck (3 gegen 3)", "Raute (4 gegen 4)", "3+1", "FUNiño", "3+1 gegen FUNiño", "3+1 und FUNiño", "Überzahl", "ohne Gegner"];
+  const soll = ["1 gegen 1", "2 gegen 2", "Dreieck (3 gegen 3)", "Raute (4 gegen 4)", "3+1", "FUNiño", "3+1 gegen FUNiño", "3+1 und FUNiño", "Überzahl", "ohne Gegner", "Endzone (4 gegen 4)"];   // v700: L5-7
   if (String(r.ordnungen) !== String(soll)) probleme.push(`EI_ORDNUNGEN: ${r.ordnungen.join(" · ")} – erwartet ${soll.join(" · ")}`);
   if (!probleme.length) zeilen.push(`Prüfung: 13 Übungen und 9 Vorlagen ohne Fehler durch _euPruefung und _evPruefung · Ordnungen ${r.ordnungen.length}`);
 

@@ -123,13 +123,14 @@ module.exports = async function (h) {
   if (r.tagKacheln.some(t => /-/.test(t))) probleme.push(`Rahmen-Kacheln zeigen noch Datenschlüssel: ${JSON.stringify(r.tagKacheln)}`);
   // c)
   // v667: sechs Einheiten des Saisonformats dazu (PO 29.09.: „Saisonformat ok, bau v667“) – 36 Karten, L1 mit 6
-  if (r.kartenAlle !== 36) probleme.push(`${r.kartenAlle} Karten statt 36`);
+  // v700: dazu L5-7 „Endzone und Fähnchen“ – 37 Karten
+  if (r.kartenAlle !== 37) probleme.push(`${r.kartenAlle} Karten statt 37`);
   if (r.gruppenKoepfe < 5) probleme.push(`${r.gruppenKoepfe} Gruppenüberschriften – die Liste ist nicht nach Leitfrage gruppiert`);
   if (r.frageInKarte) probleme.push(`Die Leitfrage steht noch in ${r.frageInKarte} Karten, obwohl sie über der Gruppe steht`);
   // a)
   if (!r.sucheL4.length || !r.sucheL4.every(n => /^L4-/.test(n))) probleme.push(`Suche „L4“ findet ${JSON.stringify(r.sucheL4.slice(0, 3))}`);
   if (!r.sucheFrage) probleme.push("Die Suche greift nicht auf die Leitfrage zu");
-  if (r.kartenGefiltert >= 36 || !r.kartenGefiltert) probleme.push(`Der Ordnungsfilter wirkt nicht: ${r.kartenGefiltert} Karten`);
+  if (r.kartenGefiltert >= 37 || !r.kartenGefiltert) probleme.push(`Der Ordnungsfilter wirkt nicht: ${r.kartenGefiltert} Karten`);
   if (r.nachLeeren !== 6) probleme.push(`„Filter aufheben“ zeigt ${r.nachLeeren} statt 6 Themen`);
   // e)
   if (!/Keine Vorlage passt dazu/.test(r.leerText)) probleme.push("Der leere Zustand sagt nichts");
