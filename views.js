@@ -5182,26 +5182,10 @@ async function pwChangeSave(btn){
   toast("Passwort geändert ✓ – ab jetzt gilt dein neues Passwort.");
 }
 
-/* Kopfzeile: statt einer veralteten Trainer-Liste der nächste Termin.
-   Fällt still auf "U9 I · Trainerstab" zurück (offline, kein Termin, kein Login). */
-async function topbarNaechsterTermin(){
-  const el=document.getElementById("topbar-sub");
-  if(!el||!sbToken())return;
-  const heute=new Date().toISOString().slice(0,10);
-  try{
-    const r=await fetch(`${SB_URL}/rest/v1/termine?datum=gte.${heute}&select=datum,uhrzeit,uhrzeit_ende,typ,ort,platz&order=datum.asc,uhrzeit.asc.nullslast&limit=6`,{headers:sbAuthHeaders()});
-    if(!r.ok)return;
-    // v478: ein beendetes Training von heute ist nicht mehr „das Naechste"
-    const t=((await r.json())||[]).find(x=>!(typeof terminVorbei==="function"&&terminVorbei(x)));
-    if(!t)return;
-    const m=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅",label:t.typ};
-    const d=new Date(t.datum+"T00:00:00");
-    const wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
-    const zeit=t.uhrzeit?" · "+String(t.uhrzeit).slice(0,5)+" Uhr":"";
-    const ort=t.platz?" · "+t.platz:(t.ort?" · "+t.ort:"");
-    el.textContent=`Nächstes: ${m.icon} ${m.label} ${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${zeit}${ort}`;
-  }catch(e){/* Kopfzeile ist Beiwerk – niemals stören */}
-}
+/* v693 PO 30.09.: Die Kopfzeile zeigte „Nächstes: 🏃 Training Fr 02.10. · 16:45 Uhr · Platz“ – am
+   Handy nach vier Zeichen abgeschnitten und doppelt zur Training-Kachel direkt darunter und zu
+   „Diese Woche“. Sie trägt jetzt fest „Trainerstab · U9 I“ (shell.html); der nächste Termin
+   steht dort, wo er vollständig Platz hat. */
 
 /* ── Diese Woche (v452, Plan-Punkt D) ──────────────────────────────────────────
    Die Startseite kannte den NAECHSTEN Termin und ein Karussell der naechsten fuenf –
@@ -5469,7 +5453,6 @@ async function nutzungAufraeumen(){
 async function renderHome(){
   const box=document.getElementById("home-content");
   if(!box)return;
-  if(!window._topbarChecked){window._topbarChecked=true;topbarNaechsterTermin();}
   if(!window._tourChecked){window._tourChecked=true;setTimeout(tourMaybe,700);} // Feature-Tour beim ersten Start
   const heute=new Date().toISOString().slice(0,10);
   const card=(inner,accent)=>`<div style="background:var(--surface);border:var(--border-s);${accent?`border-left:3px solid ${accent};`:""}border-radius:var(--rl);padding:12px 14px;margin-bottom:10px">${inner}</div>`;
