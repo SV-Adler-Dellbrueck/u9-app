@@ -678,7 +678,8 @@ function ensureChart(){
 
 // Ort/Adresse → antippbarer Karten-Link (Google Maps, öffnet native App auf dem Handy).
 function mapsUrl(q){ return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(q||""); }
-function mapsAnchor(ort,color){ if(!ort)return ""; return `<a href="${mapsUrl(ort)}" target="_blank" rel="noopener" style="color:${color||"var(--blue-text)"};text-decoration:none">📍 ${esc(ort)}</a>`; }
+// v710: ohnePin, wo davor schon ein Ortssymbol steht (sonst „◎ 📍 …“ bzw. „📍 Adresse 📍 …“)
+function mapsAnchor(ort,color,ohnePin){ if(!ort)return ""; return `<a href="${mapsUrl(ort)}" target="_blank" rel="noopener" style="color:${color||"var(--blue-text)"};text-decoration:none">${ohnePin?"":"📍 "}${esc(ort)}</a>`; }
 // F3: klarer „Route"-Knopf (Maps-Deep-Link) aus einer Adresse. block=true -> volle Breite fürs
 // Eltern-Detailfenster (eigenes Design), sonst kompakter .btn fürs Trainer-Karten-Raster.
 function routeBtn(addr,opts){
@@ -1139,7 +1140,9 @@ _adlerOnReady(()=>{
 // Status-abhängigen An/Aus-Button in einen Slot rendern (rolle: 'parent' | 'trainer').
 async function pushRenderInto(elId, rolle){
   const el=document.getElementById(elId); if(!el)return;
-  if(!pushSupported()){ el.innerHTML=""; return; }
+  /* v710: vorher leer – die Karte „Benachrichtigungen“ stand dann ohne Knopf und ohne Grund da. */
+  if(!pushSupported()){ const ios=/iPhone|iPad|iPod/.test(navigator.userAgent||"");
+    el.innerHTML=`<div style="font-size:var(--s-text);color:var(--text2);line-height:1.5;margin-top:6px">${ios?"Auf dem iPhone kommen Benachrichtigungen nur, wenn die App auf dem Home-Bildschirm liegt: in Safari unten auf <b>Teilen</b> → <b>Zum Home-Bildschirm</b>, dann die App von dort öffnen und hier einschalten.":"Dieser Browser kann keine Benachrichtigungen empfangen. Öffne die App in Chrome (Android) oder Safari (iPhone) und lege sie auf den Home-Bildschirm."}</div>`; return; }
   const sub=await pushKontoAbo();   // v705: an = dieses Konto auf diesem Handy
   const on=!!sub && (typeof Notification!=="undefined"&&Notification.permission==="granted");
   const base="width:100%;min-height:48px;padding:12px;border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer";

@@ -417,7 +417,7 @@ function _tmdKarte(t){
     <div style="padding:12px 14px 14px">
 
       ${(t.ort||t.platz)?`<div style="font-size:var(--s-text);color:var(--text2);line-height:1.6">
-        ${t.ort?`<div><i class="ti ti-map-pin"></i> ${mapsAnchor(t.ort)}</div>`:""}
+        ${t.ort?`<div><i class="ti ti-map-pin"></i> ${mapsAnchor(t.ort,null,true)}</div>`:""}
         ${t.platz?`<div>🏟️ ${esc(t.platz)}</div>`:""}
       </div>`:""}
       <div id="wx-tm-${t.id}"></div>
@@ -737,7 +737,7 @@ function tmCard(t){
       </div>
     </div>
     <div style="padding:10px 13px 12px">
-    ${t.ort?`<div style="font-size:var(--s-klein);color:var(--text2)"><i class="ti ti-map-pin" style="font-size:var(--s-klein)"></i> ${mapsAnchor(t.ort)}</div>`:""}
+    ${t.ort?`<div style="font-size:var(--s-klein);color:var(--text2)"><i class="ti ti-map-pin" style="font-size:var(--s-klein)"></i> ${mapsAnchor(t.ort,null,true)}</div>`:""}
     ${t.platz?`<div style="font-size:var(--s-klein);color:var(--text2)">🏟️ Platz: ${esc(t.platz)}</div>`:""}
     ${t.datum>=isoLokal()?platzAmpelTrainer(t):""}
     <div id="wx-tm-${t.id}"></div>

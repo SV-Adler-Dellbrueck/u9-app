@@ -636,7 +636,9 @@ const RUFE_RUHE="21:30–7 Uhr";
 function rufeRuhezeitText(an,trainer,r){
   if(!an)return "🔕 Benachrichtigungen zu Adler-Rufen sind für dich aus – die 🔔 oben schaltet sie wieder ein.";
   if(!r)r=trainer?{von:null,bis:null}:{von:"21:30",bis:"07:00"};
-  const wo=" Ändern: Einstellungen → Benachrichtigungen.";
+  /* v710: eine Kachel „Einstellungen“ gibt es nur bei Trainern – Eltern finden die Ruhezeit unter
+     „Trainerteam kontaktieren“ bei den Benachrichtigungen. */
+  const wo=trainer?" Ändern: Orga → Einstellungen → Benachrichtigungen.":" Ändern: „Trainerteam kontaktieren“ → Benachrichtigungen.";
   if(!r.von||!r.bis)return "🔔 Benachrichtigungen kommen rund um die Uhr."+wo;
   const z=typeof ruhezeitText==="function"?ruhezeitText(r):RUFE_RUHE;
   return "🔔 Benachrichtigungen ruhen "+z+" – was bis dahin ungelesen ist, kommt danach gesammelt."+wo;

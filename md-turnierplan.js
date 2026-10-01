@@ -3573,7 +3573,7 @@ function _fstPublicRender(wrap,row){
     ${helfer?`<div style="font-size:var(--s-klein);color:#475569;margin:-4px 0 10px;text-align:center">✏️ Ergebnisse antippen und eintragen – freiwillig, es gibt keine Tabelle.</div>`:""}
 
     ${fstAufwaermen(row).length?`<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
-      <div style="font-size:var(--s-text);font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">🔥 Aufwärmen</div>
+      <div style="font-size:var(--s-text);font-weight:800;color:#475569;margin-bottom:6px">🔥 Aufwärmen</div>
       <div style="font-size:var(--s-text);color:#475569;margin-bottom:6px">Vor der ersten Runde hat jede Mannschaft ihr eigenes Feld:</div>
       ${fstAufwaermen(row).map(x=>`<div style="display:flex;gap:8px;align-items:center;padding:3px 0;font-size:var(--s-text)"><span style="min-width:0;flex:1;font-weight:700;display:flex;align-items:center">${_htWappenImg(cfg,x.verein,22)}${esc(x.verein)}</span><span style="font-weight:800;color:#1e3a8a">${esc(x.feld)}</span></div>`).join("")}
     </div>`:""}

@@ -248,17 +248,17 @@ async function elternEinladungView(root,code){
     return;
   }
   window._einlCode=code; window._einlVorname=info.vorname||"";
-  const fuer=info.vorname?`Familie von <b>${esc(info.vorname)}</b>`:"eure Familie";
+  const fuer=info.vorname?`die Familie von <b>${esc(info.vorname)}</b>`:"eure Familie";   // v710: „Einladung für die eure Familie“
   let rolle=null; if(sbToken())rolle=await authRole();
   if(rolle==="parent"||rolle==="trainer"){
     elternEinladungRahmen(root,`<div style="font-size:var(--s-karte);font-weight:800;text-align:center">Willkommen bei der U9!</div>
-      <div style="font-size:var(--s-text);color:#334155;text-align:center;margin:8px 0 14px">Einladung für die ${fuer}.<br>Du bist schon angemeldet als <b>${esc(sbEmail()||"")}</b>.</div>
+      <div style="font-size:var(--s-text);color:#334155;text-align:center;margin:8px 0 14px">Einladung für ${fuer}.<br>Du bist schon angemeldet als <b>${esc(sbEmail()||"")}</b>.</div>
       <button id="einl-ok" onclick="elternEinladungEinloesen()" style="${EP_KNOPF};background:#047857">Mit diesem Konto verbinden</button>
       <button onclick="elternEinladungAbmelden()" style="${EP_LINK}">Anderes Konto verwenden</button>`);
     return;
   }
   elternEinladungRahmen(root,`<div style="font-size:var(--s-karte);font-weight:800;text-align:center">Willkommen bei der U9!</div>
-    <div style="font-size:var(--s-text);color:#334155;text-align:center;margin:8px 0 16px">Einladung für die ${fuer}. Leg dir hier deinen Zugang an – das dauert eine Minute.</div>
+    <div style="font-size:var(--s-text);color:#334155;text-align:center;margin:8px 0 16px">Einladung für ${fuer}. Leg dir hier deinen Zugang an – das dauert eine Minute.</div>
     <form onsubmit="event.preventDefault();elternEinladungEinloesen()">
       <label for="einl-email" style="font-size:var(--s-text);color:#475569">Deine E-Mail-Adresse</label>
       <input id="einl-email" type="email" inputmode="email" autocomplete="username" placeholder="name@mail.de" style="${EP_FELD}">
@@ -733,7 +733,7 @@ async function elternAnsagenLoad(){
   if(!offen.length){el.innerHTML="";return;}
   el.innerHTML=offen.map(a=>{const d=new Date(a.created_at);
     return `<div id="ansage-${a.id}" style="background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 2px 10px rgba(30,58,138,.25)">
-      <div style="display:flex;align-items:center;gap:8px;font-size:var(--s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px;opacity:.85"><span style="font-size:var(--s-karte)">📣</span> Ansage vom Trainerteam · ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}</div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);font-weight:800;opacity:.9"><span style="font-size:var(--s-karte)">📣</span> Ansage vom Trainerteam · ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}</div>
       <div style="font-size:var(--s-karte);font-weight:600;line-height:1.5;margin-top:6px;white-space:pre-wrap">${esc(a.text)}</div>
       <button onclick="elternAnsageAck(${a.id},this)" style="width:100%;min-height:44px;margin-top:10px;border:none;border-radius:10px;background:#fff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">✓ Gelesen &amp; verstanden</button>
     </div>`;}).join("");
@@ -981,8 +981,8 @@ async function elternDashLoad(){
   /* v699: Mannschaftskasse als eigene Kachel – alle Eltern lesen Kassenstand und jede Bewegung;
      darunter „Kasse führen“, nur für die Kasse (elternKasseRolleLoad füllt den Slot). */
   const mkSaldo=kasse&&kasse.saldo!=null?`Kassenstand ${Number(kasse.saldo).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})} € · Ausgaben und Beiträge`:"Kassenstand, Ausgaben und Beiträge";
-  html+=`<button type="button" id="mannschaftskasse-kachel" onclick="if(typeof mannschaftskasseOpen==='function')mannschaftskasseOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:none;border-radius:14px;background:linear-gradient(135deg,#0f766e,#115e59);color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.12)">
-    <span aria-hidden="true" style="font-size:28px">💰</span><span style="flex:1"><span style="display:block;font-weight:800;font-size:var(--s-karte)">Mannschaftskasse</span><span style="display:block;font-size:var(--s-klein);opacity:.9">${mkSaldo}</span></span><span aria-hidden="true" style="font-size:var(--s-seite)">›</span></button>`;
+  html+=`<button type="button" id="mannschaftskasse-kachel" onclick="if(typeof mannschaftskasseOpen==='function')mannschaftskasseOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:none;border-radius:14px;background:linear-gradient(135deg,#0f766e,#115e59);color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.08)">
+    <span aria-hidden="true" style="font-size:var(--s-seite);line-height:1">💰</span><span style="flex:1;min-width:0"><span style="display:block;font-weight:800;font-size:var(--s-karte)">Mannschaftskasse</span><span style="display:block;font-size:var(--s-klein);opacity:.92;margin-top:1px">${mkSaldo}</span></span><span aria-hidden="true" style="font-size:var(--s-teil);opacity:.85">›</span></button>`;   // v710: Maße wie catBtn – stand sichtbar aus der Flucht
   html+=`<div id="kasse-verwalten-slot"></div>`;   // v664/v699: „Kasse führen“ – nur für die Kasse
   html+=catBtn('mehr','📰','Mehr vom Team','Adler Nest, Börse, Fundbüro','linear-gradient(135deg,#1e3a8a,#2563eb)');
   html+=catBtn('regeln','📋','Regeln &amp; Vereinbarungen','Unsere Vereinbarung &amp; das Fairplay-Quiz','linear-gradient(135deg,#15803d,#047857)');
@@ -1333,8 +1333,8 @@ function elternTermineCarouselHtml(rows,kids,rsvpAll,ohneId){
 // Adresse fürs Eltern-Detailfenster: echte Adresse als Karten-Link; beim Heimspiel ohne
 // Eintrag die Vereinsadresse; beim Auswärtsspiel ohne Eintrag ein klarer Hinweis.
 function tdAdresse(t){
-  if(t.ort)return mapsAnchor(t.ort);
-  if(t.heim===true)return mapsAnchor(VEREIN_ADRESSE);
+  if(t.ort)return mapsAnchor(t.ort,null,true);
+  if(t.heim===true)return mapsAnchor(VEREIN_ADRESSE,null,true);
   if((t.typ==="spiel"||t.typ==="turnier")&&t.heim===false)return '<span style="color:#b45309">folgt – bitte beim Trainer erfragen</span>';
   return "";
 }
@@ -1376,9 +1376,9 @@ async function terminDetailOpen(id){
       <div style="font-size:var(--s-teil);font-weight:800;min-width:0">${m.icon} ${esc(t.titel||t.gegner||m.label)}</div>
       <button aria-label="Schließen" onclick="document.getElementById('td-modal').remove()" style="min-width:44px;min-height:44px;border:none;background:none;font-size:var(--s-seite);color:var(--text3);cursor:pointer;line-height:1;flex:none">×</button>
     </div>
-    <div style="font-size:var(--s-text);color:#64748b;margin-bottom:10px">${wtag} ${d.toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})}${zeit?" · "+zeit:""}</div>
+    <div style="font-size:var(--s-text);color:#64748b;margin-bottom:10px">${d.toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})}${zeit?" · "+zeit:""}</div>
     <div id="td-wetter" style="margin-bottom:6px"></div>
-    ${istSpiel?infoRow(t.heim===true?"🏠":t.heim===false?"✈️":"❓","Spielort", t.heim===true?"🏠 Heimspiel":t.heim===false?"✈️ Auswärtsspiel":'<span style="color:#b45309">Heim/Auswärts trägt der Trainer noch nach</span>'):""}
+    ${istSpiel?infoRow(t.heim===true?"🏠":t.heim===false?"✈️":"❓","Spielort", t.heim===true?"Heimspiel":t.heim===false?"Auswärtsspiel":'<span style="color:#b45309">Heim/Auswärts trägt der Trainer noch nach</span>'):""}
     ${infoRow("📍","Adresse", tdAdresse(t))}
     ${(t.ort||t.heim===true)?routeBtn(t.ort||VEREIN_ADRESSE,{block:true}):""}
     ${infoRow("🏟️","Platz", t.platz?esc(t.platz):"")}
