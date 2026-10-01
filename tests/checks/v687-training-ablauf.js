@@ -32,10 +32,10 @@ module.exports = async function (h) {
     const knopf = t => [...box.querySelectorAll("button")].find(b => b.textContent.includes(t));
     out.plan = { schritte,
       termin: idx(document.getElementById("tp-vorplan")), trainer: idx(document.getElementById("tp-trainer-checks")),
-      vorlage: idx(knopf("Vorlage übernehmen")), auto: idx(knopf("Auto-Plan")), ablauf: idx(document.getElementById("tp-timeline")),
+      vorlage: idx(knopf("Vorlage übernehmen")), auto: idx(knopf("Training füllen")), ablauf: idx(document.getElementById("tp-timeline")),
       netto: idx(document.getElementById("tp-netto")), speichern: idx(knopf("Plan speichern")), start: idx(knopf("Trainingsstart")),
       s: [1, 2, 3, 4, 5].map(sIdx),
-      nebeneinander: knopf("Vorlage übernehmen") && knopf("Auto-Plan") && knopf("Vorlage übernehmen").parentElement === knopf("Auto-Plan").parentElement,
+      nebeneinander: knopf("Vorlage übernehmen") && knopf("Training füllen") && knopf("Vorlage übernehmen").parentElement === knopf("Training füllen").parentElement,
       hStart: Math.round(knopf("Trainingsstart").getBoundingClientRect().height), hSpeichern: Math.round(knopf("Plan speichern").getBoundingClientRect().height) };
     // b)
     go("anwesenheit"); await w(1200);

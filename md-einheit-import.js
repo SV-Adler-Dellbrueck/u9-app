@@ -1360,6 +1360,10 @@ async function vorlageUebernehmenSetzen(){
   }catch(e){}
   toast(`🗂️ „${v.name}“ übernommen ✓ ${slots.length} Phasen${gruppenText}`);
   if(typeof tpPlanRestore==="function")await tpPlanRestore(datum);
+  /* v713 (PO 01.10.): Nennt die Vorlage eine Übung für alle Felder, spielten bei zwei oder drei
+     Trainern alle Gruppen dasselbe. „Training füllen“ gibt jedem weiteren Feld eine eigene
+     Übung passend zu Gruppengröße und Thema – Feld 1 und eigene Stationen der Vorlage bleiben. */
+  if(typeof tpGenerate==="function"&&typeof tpGetTrainerCount==="function"&&tpGetTrainerCount()>=2)await tpGenerate();
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

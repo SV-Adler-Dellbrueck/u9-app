@@ -4009,7 +4009,7 @@ function stTimerStations(){
 }
 function stTimerStart(){
   const st=stTimerStations();
-  if(!st.length){toast("Kein Plan vorhanden – erst Stationen anlegen (Auto-Plan)","err");return;}
+  if(!st.length){toast("Kein Plan vorhanden – erst Stationen anlegen („Training füllen“)","err");return;}
   _stT={ix:0,left:st[0].dauer*60,timer:null,stations:st,paused:false};
   document.getElementById("st-timer")?.remove();
   const ov=document.createElement("div"); ov.id="st-timer"; ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-label","Solo-Timer");   // v691
@@ -4075,55 +4075,165 @@ function evalStar(btn){
 /* ═══════════════════════════════════
    AUTO-TRAININGSVORSCHLAG
 ═══════════════════════════════════ */
-function tpGenerate(){
+/* ═══ v713 – TRAINING FÜLLEN (PO 01.10.) ═══════════════════════════════════════
+   „Ziel ist es, ohne großen Aufwand und Recherche ein Training per Knopfdruck zu befüllen.
+   Die Anzahl der anwesenden Trainer bestimmt die Stationen in den Hauptteilen. Die gewählten
+   Übungen ergeben sich aus der Anzahl der Stationen und Anzahl der anwesenden Kinder.“
+   Entscheidungen PO am selben Tag: Stationen rotieren (jeder Trainer bleibt an seinem
+   Aufbau, die Gruppen wechseln je Hauptteil – das macht tpVersatz ohnehin), Thema ohne
+   Vorlage aus offenen Tagebuch-Konsequenzen, sonst aus dem Monatsschwerpunkt.
+
+   Bis v712 würfelte der Auto-Plan je Feld und je Hauptteil eine Übung – ohne Blick auf die
+   Gruppengröße, das Thema oder den Aufbau. Und 20 der 37 Vorlagen nennen im ganzen Hauptteil
+   eine einzige Übung (Stufe 1 bis 3 derselben Form), die über `alleFelder` auf jedes Feld
+   ging: bei drei Trainern spielten drei Gruppen dasselbe.
+
+   Jetzt zwei Wege mit derselben Rechnung:
+   · Steht schon ein Plan (Vorlage, Trainingsblock, von Hand), wird er AUFGEFÜLLT: Feld 1 je
+     Hauptteil bleibt, jedes weitere Feld, das leer ist oder nur die Übung von Feld 1
+     wiederholt, bekommt eine eigene – und zwar in allen Hauptteilen dieselbe (Rotation).
+     Was ein Trainer oder eine Vorlage mit eigenen Stationen dort gesetzt hat, bleibt.
+   · Steht noch nichts, entsteht der Ablauf: Aufwärmen, so viele Hauptteile wie Stationen
+     (mindestens zwei, höchstens vier), Abschlussspiel – und dann dieselbe Füllung.
+
+   Welche Übung? Spielerzahl der Übung (tpUebungSpanne) passt zur Gruppe (eine Person mehr ist erlaubt –
+   PO 28.09.: „lieber eine Übung mit einem Spieler mehr, den man ein- und auswechselt“),
+   Kategorie passt zum Thema, Spielform vor Übungsform, keine Übung doppelt, was in den letzten zwei Wochen lief,
+   tritt zurück. Bei Gleichstand entscheidet ein fester Zufall je Datum: derselbe Termin
+   gibt dasselbe Ergebnis, ein anderer Termin ein anderes. */
+/* 0 passt, 1 eine Person zu viel (auswechseln), 2 Spielerzahl unbekannt, sonst je fehlender
+   oder überzähliger Person mehr. Die Spanne liest tpUebungSpanne – dieselbe Rechnung, mit der
+   die Station „zu groß für die Übung“ meldet (v656). */
+function tpGruppePasst(i,g){
+  const sp=tpUebungSpanne(i);
+  if(sp.alle)return 0;
+  if(!sp.max)return 2;
+  if(g>=sp.min&&g<=sp.max)return 0;
+  if(g===sp.max+1)return 1;
+  return 2+(g<sp.min?sp.min-g:g-sp.max);
+}
+function _tpSaat(text){
+  let h=2166136261>>>0;
+  for(const c of String(text))h=Math.imul(h^c.charCodeAt(0),16777619)>>>0;
+  return ()=>{ h=(h+0x6D2B79F5)>>>0; let x=Math.imul(h^(h>>>15),1|h); x^=x+Math.imul(x^(x>>>7),61|x); return ((x^(x>>>14))>>>0)/4294967296; };
+}
+async function _tpThemaFuer(datum){
+  const leer={quelle:"",kats:[],bevorzugt:new Set()};
+  if(typeof tbFokusLaden==="function"&&typeof tbUebungVorschlaege==="function"){
+    try{
+      const pk=await tbFokusLaden(datum), vs=[];
+      (pk||[]).forEach(p=>tbUebungVorschlaege(p.text).forEach(v=>vs.push(v.i)));
+      if(vs.length){
+        const alle=tpAllForms();
+        return {quelle:"Tagebuch",kats:[...new Set(vs.map(i=>(alle[i]||{}).kat).filter(Boolean))],bevorzugt:new Set(vs)};
+      }
+    }catch(e){}
+  }
+  try{
+    const monat=String(datum||isoLokal()).slice(0,7);
+    const r=await fetch(`${SB_URL}/rest/v1/periodisierung?monat=eq.${monat}&select=thema,kategorie`,{headers:sbAuthHeaders()});
+    if(r.ok){ const z=((await r.json())||[])[0]; if(z&&z.kategorie)return {quelle:"Monatsschwerpunkt"+(z.thema?" „"+z.thema+"“":""),kats:[z.kategorie],bevorzugt:new Set()}; }
+  }catch(e){}
+  if(typeof window!=="undefined"&&window._periodKat)return {quelle:"Monatsschwerpunkt",kats:[window._periodKat],bevorzugt:new Set()};
+  return leer;
+}
+/* Eine Übung für eine Station. `kats` sind die Kategorien, die zum Thema gehören (zuerst die
+   der Vorlage, dann Tagebuch/Monat); `weg` ist, was im Training schon steht. */
+function tpStationWahl(g,thema,weg,datum,zufall){
+  // „Freies Spielen“ ist das Abschlussspiel, keine Station.
+  const kandidaten=tpFilteredOpts("main").filter(x=>x.f&&x.f.kat!=="mindset"&&!/^freies spiel/i.test(x.f.name)&&!weg.has(x.i));
+  if(!kandidaten.length)return null;
+  const grenze=new Date(new Date(datum||isoLokal()).getTime()-14*86400000).toISOString().slice(0,10);
+  let best=null;
+  kandidaten.forEach(x=>{
+    const passt=tpGruppePasst(x.i,g);
+    const ki=thema.kats.indexOf(x.f.kat);
+    const hist=(typeof tpGetExerciseHistory==="function")?tpGetExerciseHistory(x.i):[];
+    const kuerzlich=hist.some(d=>d>=grenze&&d<(datum||"9999"));
+    /* Spielform vor Übungsform: Die Trainingsphilosophie rechnet in Spielzeit. Gilt die
+       Einordnung des Teams (team_config), sonst der Vorschlag aus data.js. Koordination und
+       Rituale („weder“) gehören nicht an eine Station. */
+    const art=(typeof _tpArt==="function"&&_tpArt(x.f))||(typeof _tpArtVorschlag==="function"&&_tpArtVorschlag(x.f))||"";
+    const artWert=art==="spiel"?0:art==="uebung"?2:art==="weder"?6:3;
+    const wert=passt*10+(thema.bevorzugt.has(x.i)?0:ki===0?1:ki>0?2:5)+artWert+(kuerzlich?3:0)+zufall();
+    if(!best||wert<best.wert)best={i:x.i,wert,passt};
+  });
+  return best;
+}
+async function tpGenerate(){
   const trainerCount=tpGetTrainerCount();
   if(trainerCount<1){toast("Mindestens 1 Trainer auswählen","err");return;}
-  const slots=[{...TP_PHASEN[0]}];
-  if(trainerCount>=2) slots.push({label:"Torwart-Training",dauer:15,farbe:"#854d0e",typ:"tw"});
-  slots.push({...TP_PHASEN[1]});
-  if(trainerCount>=3) slots.push({label:"Individual-Training",dauer:15,farbe:"#0e7490",typ:"individual"});
-  slots.push({...TP_PHASEN[2]});
-  slots.push({...TP_PHASEN[3]});
-  tpSlots=slots;
+  const datum=_tgDatum();
+  /* Erst die Gruppen: so viele wie Feldtrainer (tgBedarf). Ohne Aufteilung entsteht sie hier,
+     eine bestehende wächst nur – wie beim Übernehmen einer Vorlage (v570). */
+  try{
+    if(typeof tpRsvpBereit==="function")await tpRsvpBereit(datum);
+    if(typeof tgSync==="function")await tgSync();
+    const bedarf=tgBedarf(), tg=tgFor(), jetzt=(tg&&Array.isArray(tg.gruppen))?tg.gruppen.length:0;
+    if(bedarf>jetzt){ if(jetzt)tgErweitern(bedarf); else tgBilden(bedarf); }
+  }catch(e){}
+  const haupt=()=>tpSlots.map((s,i)=>({s,i})).filter(x=>x.s&&tpIstHauptteil(x.s.typ));
+  const wert=(si,p)=>{ const el=document.getElementById(`tp-form-${si}-${p}`); return el&&el.value!==""?Number(el.value):null; };
+  const hatPlan=haupt().some(x=>wert(x.i,0)!=null);
+  if(!hatPlan){
+    const k=Math.max(2,Math.min(4,trainerCount));
+    const farben=["#1a56db","#7c3aed","#0e7490","#b45309"];
+    const dauer=Math.max(10,Math.round(40/k));
+    tpSlots=[{...TP_PHASEN[0]}]
+      .concat(Array.from({length:k},(_,n)=>({label:`Hauptteil ${n+1}`,dauer,farbe:farben[n],typ:"main"})))
+      .concat([{...TP_PHASEN[3]}]);
+  }
   tpRenderTimeline();
-
-  setTimeout(()=>{
-    const allForms=tpAllForms();
-    const warmups=allForms.map((f,i)=>({i,f})).filter(x=>x.f.kat==="aufwaermen");
-    const main=allForms.map((f,i)=>({i,f})).filter(x=>!["aufwaermen","torwart","individual"].includes(x.f.kat)&&!x.f.custom);
-    const tw=allForms.map((f,i)=>({i,f})).filter(x=>x.f.kat==="torwart");
-    const ind=allForms.map((f,i)=>({i,f})).filter(x=>x.f.kat==="individual");
-
-    const pick=(arr)=>arr.length?arr[Math.floor(Math.random()*arr.length)]:null;
-    const used=new Set();
-    const pickUnique=(arr)=>{
-      const avail=arr.filter(x=>!used.has(x.i));
-      if(!avail.length)return pick(arr);
-      const p=pick(avail);
-      if(p)used.add(p.i);
-      return p;
-    };
-
-    tpSlots.forEach((slot,si)=>{
-      const typ=slot.typ||"main";
-      if(typ==="abschluss")return;
-      const noGroups=typ==="warmup"||typ==="abschluss"||typ==="tw";
-      const tgAnz2=((typeof tgFor==="function"&&tgFor())||{}).gruppen?.length||0;
-      const parallelSlots=noGroups?1:Math.min(Math.max(1,trainerCount,tgAnz2),5); // wie tpRenderTimeline: ausgeloste Gruppen duerfen nicht wegfallen
-      for(let p=0;p<parallelSlots;p++){
-        const sel=document.getElementById(`tp-form-${si}-${p}`);
-        if(!sel)continue;
-        let choice=null;
-        if(typ==="warmup") choice=pickUnique(warmups);
-        else if(typ==="tw") choice=pickUnique(tw);
-        else if(typ==="individual") choice=pickUnique(ind);
-        else choice=pickUnique(main);
-        if(choice){sel.value=choice.i;tpOnSelectChange(sel);}
-      }
-    });
-    tpRenderTeamFokus(); // Team-Trainingsgenerator: schwächster Mannschaftswert -> Übungen
-    tpRenderMindsetTip(); // E3: Mindset-Baustein des Tages
-  },100);
+  await new Promise(r=>setTimeout(r,60));
+  const thema=await _tpThemaFuer(datum);
+  const alle=tpAllForms();
+  // Die Vorlage gibt das Thema vor: ihre Kategorien zuerst, Tagebuch/Monat danach.
+  const vorlageKats=[...new Set(haupt().map(x=>wert(x.i,0)).filter(v=>v!=null).map(v=>(alle[v]||{}).kat).filter(k=>k&&k!=="mindset"))];
+  const th={quelle:thema.quelle,bevorzugt:thema.bevorzugt,kats:[...new Set(vorlageKats.concat(thema.kats))]};
+  const tg=tgFor(), groessen=(tg&&Array.isArray(tg.gruppen))?tg.gruppen.map(x=>(x.kinder||[]).length).filter(Boolean):[];
+  const kinder=_tgPool().namen.length;
+  const stationen=Math.max(1,...haupt().map(x=>document.querySelectorAll(`.tp-form-sel[id^="tp-form-${x.i}-"]`).length));
+  const g=groessen.length?Math.max(...groessen):Math.max(1,Math.ceil(kinder/stationen));
+  const zufall=_tpSaat("adler-"+datum);
+  const weg=new Set();
+  haupt().forEach(x=>{ for(let p=0;p<stationen;p++){ const v=wert(x.i,p); if(v!=null)weg.add(v); } });
+  const setze=(si,p,i)=>{ const el=document.getElementById(`tp-form-${si}-${p}`); if(!el||!el.querySelector(`option[value="${i}"]`))return false; el.value=String(i); tpOnSelectChange(el); return true; };
+  let gesetzt=0, eng=0;
+  // Aufwärmen: leer → „Warm up Adler“, sonst eine Aufwärmform
+  tpSlots.forEach((s,si)=>{
+    if(!s||s.typ!=="warmup"||(typeof tpFreiesFenster==="function"&&tpFreiesFenster(s))||wert(si,0)!=null)return;
+    const w=tpFilteredOpts("warmup"); if(!w.length)return;
+    const adler=w.find(x=>/^warm up adler$/i.test(x.f.name));
+    if(setze(si,0,(adler||w[Math.floor(zufall()*w.length)]).i))gesetzt++;
+  });
+  /* Hat der Plan Stationsblöcke (Vorlage mit `stationen`), ist ein Hauptteil OHNE Stationen
+     dort die offene Stufe: beide Gruppen spielen auf einem Feld gegeneinander („Hauptteil 3 –
+     offen: 3+1 gegen FUNiño, beide Gruppen“, 14 Vorlagen). Der bleibt, wie er ist. */
+  const mitStationen=tpSlots.some(sl=>sl&&Number(sl.stationen)>1);
+  const hs=haupt().filter(x=>!(mitStationen&&!(Number(x.s.stationen)>1)&&wert(x.i,0)!=null));
+  if(stationen>1){
+    // Rotation: Station p hat in jedem Hauptteil dieselbe Übung.
+    for(let p=1;p<stationen;p++){
+      let fest=null;
+      hs.forEach(x=>{ const v=wert(x.i,p), v0=wert(x.i,0); if(v!=null&&v!==v0&&fest==null)fest=v; });
+      if(fest==null){ const b=tpStationWahl(g,th,weg,datum,zufall); if(!b)continue; fest=b.i; weg.add(fest); if(b.passt>1)eng++; }
+      hs.forEach(x=>{ const v=wert(x.i,p), v0=wert(x.i,0); if(v==null||v===v0){ if(setze(x.i,p,fest))gesetzt++; } });
+    }
+  }
+  // Feld 1: leer → eigene Übung je Hauptteil (bei einer Station) bzw. eine für alle (Rotation)
+  let fest0=null;
+  hs.forEach(x=>{
+    if(wert(x.i,0)!=null){ if(fest0==null)fest0=wert(x.i,0); return; }
+    if(stationen<=1||fest0==null){ const b=tpStationWahl(g,th,weg,datum,zufall); if(!b)return; weg.add(b.i); if(b.passt>1)eng++; if(stationen>1)fest0=b.i; if(setze(x.i,0,b.i))gesetzt++; }
+    else if(setze(x.i,0,fest0))gesetzt++;
+  });
+  tpRenderTeamFokus();
+  tpRenderMindsetTip();
+  const teile=[`${stationen} Station${stationen===1?"":"en"}`,`Gruppen bis ${g} Kinder`];
+  if(stationen>1)teile.push("Gruppen wechseln je Hauptteil");
+  if(th.quelle)teile.push("Thema: "+th.quelle);
+  toast(gesetzt?`🪄 Training gefüllt – ${teile.join(" · ")}${eng?` · ${eng===1?"eine Station":eng+" Stationen"} ohne passende Größe, bitte prüfen`:""}`:"Alles belegt – nichts zu füllen",gesetzt?"":"");
+  return {stationen,g,gesetzt,eng,thema:th.quelle};
 }
 
 // E3: schlägt zufällig eine der drei Ritual-Formen als festen Baustein der Einheit vor
