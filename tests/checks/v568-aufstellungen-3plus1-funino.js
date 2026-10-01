@@ -25,8 +25,8 @@
       dem Tor“, Feld 2 „2 gegen 1 plus Torwart …“; Hauptteil 2 dieselben Übungen, die
       Gruppen getauscht (Versatz 1); Hauptteil 3 beide Felder „3+1 gegen 3+1 – Raute ohne
       Aufpasser“.
-   4) Dieselbe Vorlage bei DREI Feldtrainern: drei Felder, die Stationsliste wiederholt sich
-      (Feld 3 = Station 1), kein Hinweis „Stationen entfallen“.
+   4) Dieselbe Vorlage bei DREI Feldtrainern: drei Felder, Feld 3 bekommt seit v713 eine eigene
+      Übung (vorher: Wiederholung von Station 1), kein Hinweis „Stationen entfallen“.
    5) Keine der neun löst einen Netto-Hinweis aus; alle tragen Skalierung 8/10/12/14 und eine
       Beobachtungsfrage mit Aufpasser, Flitzer oder Jäger (die Anzeige aller vier Werte prüft
       v569-skalierung-datengetrieben.js).
@@ -355,8 +355,11 @@ module.exports = async function (h) {
   if ((d.trainer || []).length !== 3) probleme.push(`L4-6 bei drei: ${(d.trainer || []).length} Feldtrainer angehakt statt 3`);
   else if (hd.length !== 3) probleme.push(`L4-6 bei drei: ${hd.length} Hauptteile`);
   else {
-    if (String(hd[0].felder) !== String([A, B, A])) probleme.push(`L4-6 bei drei, Hauptteil 1: [${hd[0].felder.join(" | ")}] – die Stationsliste wiederholt sich nicht (Feld 3 = Station 1)`);
-    if (String(hd[1].felder) !== String([A, B, A])) probleme.push(`L4-6 bei drei, Hauptteil 2: [${hd[1].felder.join(" | ")}]`);
+    /* v713 (PO 01.10.): Feld 3 wiederholt nicht mehr Station 1, sondern bekommt eine eigene
+       Übung („Training füllen“) – in Hauptteil 1 und 2 dieselbe, weil die Gruppen rotieren. */
+    const X = hd[0].felder[2];
+    if (hd[0].felder[0] !== A || hd[0].felder[1] !== B || !X || X === A || X === B) probleme.push(`L4-6 bei drei, Hauptteil 1: [${hd[0].felder.join(" | ")}] – Feld 3 braucht eine eigene Übung`);
+    if (String(hd[1].felder) !== String([A, B, X])) probleme.push(`L4-6 bei drei, Hauptteil 2: [${hd[1].felder.join(" | ")}]`);
     if (String(hd[2].felder) !== String([C, C, C])) probleme.push(`L4-6 bei drei, Hauptteil 3: [${hd[2].felder.join(" | ")}]`);
   }
   if (/Stationen? (geplant|entf)/.test(r.hinweisSpur || "")) probleme.push("Bei drei Feldern erscheint ein Hinweis „Stationen entfallen“");
@@ -374,7 +377,7 @@ module.exports = async function (h) {
   if (!probleme.some(p => /L4-6|L5-6|L6-5|L4-8/.test(p))) {
     zeilen.push("L4-6 bei zwei Feldtrainern: Hauptteil 1 [Adler aus dem Tor | Flitzer macht es breit], Hauptteil 2 dieselben Übungen mit getauschten Gruppen (Versatz 1), Hauptteil 3 beide Felder Raute ohne Aufpasser");
     zeilen.push("L5-6 und L6-5 bei zwei: Stationen wie im Paket, Hauptteil 3 beide Felder „großes Tor gegen zwei kleine“");
-    zeilen.push("L4-6 bei drei Feldtrainern: drei Felder, Feld 3 = Station 1 (Wiederholung aus Paket A, seit v568 auch im Code), kein Hinweis");
+    zeilen.push("L4-6 bei drei Feldtrainern: drei Felder, Feld 3 mit eigener Übung (seit v713), Hauptteil 3 offen wie in der Vorlage, kein Hinweis");
     zeilen.push("L4-8 bei drei Feldtrainern: drei verschiedene Übungen, Versatz 0/1/2, die Gruppen rücken im Kreis · bei zwei sagt die Vorschau „3 Stationen geplant, 2 Felder verfügbar“");
   }
 
