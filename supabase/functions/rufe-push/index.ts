@@ -9,6 +9,10 @@
    Ruhezeit 21–7 Uhr; doku/auftrag-tagebuch-ki-sortieren/prozess-nacherfassung.md). Kein eigener
    Cron-Job – ein Aufruf alle fünf Minuten reicht für beides.
 
+   v705 (Version 3): Ruhezeit je Konto (push_ruhezeit) – entscheiden rufe_push_faellig und
+   wiewars_push_faellig in der Datenbank. Dazu holt derselbe Lauf nach, was push-send und push-cron
+   während einer Ruhezeit in push_warteschlange gelegt haben (push_warteschlange_faellig).
+
    NIE von Hand mit dem echten Cron-Schlüssel aufrufen (CLAUDE.md): Die Datenbank merkt sich
    jeden Aufruf als versendet. Schlüssel kommen aus dem Vault (RPC adler_geheimnis, v643). */
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -32,8 +36,11 @@ Deno.serve(async (req) => {
     if (error) return json({ error: error.message }, 500);
     /* Fehlt die Funktion (Migration v701 noch nicht eingespielt), bleiben die Adler-Rufe unberührt. */
     const { data: ww } = await admin.rpc("wiewars_push_faellig");
+    /* v705: Was in eine Ruhezeit fiel (push-send, push-cron), geht jetzt raus – sobald sie vorbei ist. */
+    const { data: ws } = await admin.rpc("push_warteschlange_faellig");
     const faellig = [...((rufe || []) as any[]).map((f) => ({ ...f, tag: "rufe" })),
-                     ...((ww || []) as any[]).map((f) => ({ ...f, tag: "wiewars-" + f.termin_id }))];
+                     ...((ww || []) as any[]).map((f) => ({ ...f, tag: "wiewars-" + f.termin_id })),
+                     ...((ws || []) as any[]).map((w) => ({ user_id: w.user_id, titel: w.payload?.title, text: w.payload?.body, url: w.payload?.url, tag: w.payload?.tag || "adler" }))];
     if (!faellig.length) return json({ ok: true, sent: 0 });
     webpush.setVapidDetails("mailto:trainer@adler-dellbrueck.de",
       await geheimnis(admin, "adler_vapid_public"), await geheimnis(admin, "adler_vapid_private"));
@@ -49,6 +56,6 @@ Deno.serve(async (req) => {
       }
     }
     if (gone.length) await admin.from("push_subscriptions").delete().in("endpoint", gone);
-    return json({ ok: true, empfaenger: faellig.length, wiewars: (ww || []).length, sent, removed: gone.length });
+    return json({ ok: true, empfaenger: faellig.length, wiewars: (ww || []).length, nachgeholt: (ws || []).length, sent, removed: gone.length });
   } catch (e) { return json({ error: String(e) }, 500); }
 });

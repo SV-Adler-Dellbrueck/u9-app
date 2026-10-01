@@ -1097,8 +1097,75 @@ async function pushRenderInto(elId, rolle){
   const base="width:100%;min-height:48px;padding:12px;border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer";
   el.innerHTML=on
     ? `<button onclick="pushUnsubscribe().then(()=>pushRenderInto('${elId}','${rolle}'))" style="${base};border:1.5px solid #16a34a;background:var(--green-bg);color:var(--green)">🔔 Benachrichtigungen an ✓ · zum Ausschalten tippen</button>
-       <button type="button" class="push-test-knopf" onclick="pushTest(this)" style="${base};margin-top:8px;border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text)">📨 Test-Benachrichtigung an mich</button>`
+       <button type="button" class="push-test-knopf" onclick="pushTest(this)" style="${base};margin-top:8px;border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text)">📨 Test-Benachrichtigung an mich</button>
+       <div id="${elId}-ruhe" class="ruhezeit-box"></div>`
     : `<button onclick="pushSubscribe('${rolle}').then(ok=>{if(ok)pushRenderInto('${elId}','${rolle}');})" style="${base};border:none;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff">🔔 Benachrichtigungen aktivieren</button>`;
+  if(on)ruhezeitRender(elId+"-ruhe",rolle);
+}
+/* v705 PO 01.10.: „Wir können ja auch jeden selbst entscheiden lassen, wie seine Ruhezeiten sein
+   sollen. Über eine Möglichkeit wie Einstellungen.“ Kacheln: „Nur in Einstellungen“, „Alle
+   Benachrichtigungen“. Die Wahl gilt fürs Konto (Tabelle push_ruhezeit), nicht fürs Gerät; ohne
+   eigene Wahl Eltern 21:30–7 Uhr, Trainer keine (wie v704). In der Ruhezeit kommt nichts aufs Handy –
+   Adler-Rufe kommen danach gebündelt, alles andere wartet in der Warteschlange (rufe-push). */
+function ruhezeitVorgabe(rolle){ return rolle==="trainer"?{von:null,bis:null,eigen:false}:{von:"21:30",bis:"07:00",eigen:false}; }
+function ruhezeitText(r){
+  if(!r||!r.von||!r.bis)return "keine";
+  const k=t=>{ const [h,m]=String(t).slice(0,5).split(":"); return String(+h)+(m==="00"?"":":"+m); };
+  return k(r.von)+"–"+k(r.bis)+" Uhr";
+}
+async function ruhezeitLaden(rolle){
+  const uid=typeof sbUid==="function"?sbUid():null;
+  if(!uid||typeof SB_URL==="undefined")return ruhezeitVorgabe(rolle);
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/push_ruhezeit?user_id=eq.${uid}&select=von,bis`,{headers:sbAuthHeaders()});
+    const d=r.ok?await r.json():[];
+    if(Array.isArray(d)&&d.length)return {von:d[0].von?String(d[0].von).slice(0,5):null,bis:d[0].bis?String(d[0].bis).slice(0,5):null,eigen:true};
+  }catch(e){}
+  return ruhezeitVorgabe(rolle);
+}
+const RUHE_STUFEN=[{k:"keine",l:"Keine",von:null,bis:null},{k:"abend",l:"21:30–7",von:"21:30",bis:"07:00"},{k:"nacht",l:"22–6",von:"22:00",bis:"06:00"}];
+async function ruhezeitRender(slotId,rolle,r){
+  const el=document.getElementById(slotId); if(!el)return;
+  r=r||await ruhezeitLaden(rolle);
+  const stufe=RUHE_STUFEN.find(x=>x.von===r.von&&x.bis===r.bis);
+  const eigen=!stufe||el.dataset.eigen==="1";
+  const kachel=(k,l,an,fn)=>`<button type="button" class="ruhe-kachel" data-k="${k}" aria-pressed="${an}" onclick="${fn}">${l}</button>`;
+  el.innerHTML=`<div class="ruhe-kopf">🌙 Ruhezeit: <b>${ruhezeitText(r)}</b></div>
+    <div class="ruhe-erkl">In dieser Zeit kommt nichts aufs Handy – was anfällt, kommt danach gesammelt.</div>
+    <div class="ruhe-kacheln" role="group" aria-label="Ruhezeit wählen">
+      ${RUHE_STUFEN.map(x=>kachel(x.k,x.l,!eigen&&x===stufe,`ruhezeitSetzen('${slotId}','${rolle}',${x.von?`'${x.von}'`:"null"},${x.bis?`'${x.bis}'`:"null"})`)).join("")}
+      ${kachel("eigen","Eigene",eigen,`ruhezeitEigenZeigen('${slotId}','${rolle}')`)}
+    </div>
+    ${eigen?`<div class="ruhe-eigen">
+      <label>von <input type="time" id="${slotId}-von" value="${r.von||"22:00"}"></label>
+      <label>bis <input type="time" id="${slotId}-bis" value="${r.bis||"07:00"}"></label>
+      <button type="button" class="ruhe-uebernehmen" onclick="ruhezeitEigenSpeichern('${slotId}','${rolle}')">Übernehmen</button>
+    </div>`:""}`;
+}
+function ruhezeitEigenZeigen(slotId,rolle){
+  const el=document.getElementById(slotId); if(!el)return;
+  el.dataset.eigen="1"; ruhezeitRender(slotId,rolle);
+}
+function ruhezeitEigenSpeichern(slotId,rolle){
+  const v=(document.getElementById(slotId+"-von")||{}).value, b=(document.getElementById(slotId+"-bis")||{}).value;
+  if(!v||!b){toast("Bitte beide Uhrzeiten wählen","err");return;}
+  if(v===b){toast("Beginn und Ende sind gleich – dann lieber „Keine“ wählen","err");return;}
+  return ruhezeitSetzen(slotId,rolle,v,b);
+}
+async function ruhezeitSetzen(slotId,rolle,von,bis){
+  const uid=typeof sbUid==="function"?sbUid():null;
+  if(!uid){toast("Bitte zuerst anmelden","err");return false;}
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/push_ruhezeit?on_conflict=user_id`,{method:"POST",
+      headers:sbAuthHeaders({'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'}),
+      body:JSON.stringify({user_id:uid,von:von||null,bis:bis||null,geaendert_am:new Date().toISOString()})});
+    if(!r.ok){toast("Nicht gespeichert","err");return false;}
+  }catch(e){toast("Kein Netz","err");return false;}
+  const el=document.getElementById(slotId); if(el)delete el.dataset.eigen;
+  const neu={von:von||null,bis:bis||null,eigen:true};
+  toast(neu.von?`🌙 Ruhezeit ${ruhezeitText(neu)} – danach kommt alles gesammelt`:"Keine Ruhezeit – Benachrichtigungen kommen rund um die Uhr");
+  ruhezeitRender(slotId,rolle,neu);
+  return true;
 }
 /* v695 PO 30.09.: „Ja, bau den Test-Knopf.“ Schickt eine Probe-Meldung an genau dieses Gerät
    (Edge Function push-send, art „test“ – nur an das eigene Abo, fester Text, niemand sonst

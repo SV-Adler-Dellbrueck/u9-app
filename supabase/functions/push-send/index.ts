@@ -1,4 +1,5 @@
 /* Edge Function push-send — Trainer schickt eine Mitteilung an Eltern oder Trainer.
+   v705 (Version 7): beachtet die Ruhezeit je Empfänger (verteilen).
 
    v643: Die VAPID-Schlüssel standen bis dahin als Konstante im Code dieser Funktion. Jetzt
    liegen sie im Supabase Vault (adler_vapid_public / adler_vapid_private) und werden über
@@ -26,6 +27,27 @@ async function vapid(admin: any) {
   webpush.setVapidDetails("mailto:trainer@adler-dellbrueck.de",
     await geheimnis(admin, "adler_vapid_public"), await geheimnis(admin, "adler_vapid_private"));
   vapidGesetzt = true;
+}
+
+
+/* v705: Ruhezeit je Konto (Tabelle push_ruhezeit; ohne eigene Wahl Eltern 21:30–7, Trainer keine).
+   Wer gerade ruht, bekommt nichts aufs Handy – die Meldung wartet in push_warteschlange (je Konto
+   und Art eine, die neuere ersetzt die ältere) und geht im 5-Minuten-Lauf rufe-push nach dem Ende
+   der Ruhezeit raus. Die Test-Meldung an das eigene Gerät ist davon ausgenommen. */
+async function verteilen(admin: any, subs: any[], payload: any) {
+  const ids = [...new Set((subs || []).map((s: any) => s.user_id).filter(Boolean))];
+  const { data: r } = ids.length ? await admin.rpc("push_ruhende", { p_users: ids }) : { data: [] };
+  const ruht = new Set(((r || []) as any[]).map((x: any) => x.user_id));
+  const warten = [...ruht].map((u) => ({ user_id: u, tag: String(payload.tag || "adler"), payload, erstellt_am: new Date().toISOString() }));
+  if (warten.length) await admin.from("push_warteschlange").upsert(warten, { onConflict: "user_id,tag" });
+  let sent = 0; const gone: string[] = [];
+  for (const s of subs || []) {
+    if (ruht.has(s.user_id)) continue;
+    try { await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } } as any, JSON.stringify(payload)); sent++; }
+    catch (err: any) { const c = err?.statusCode; if (c === 404 || c === 410 || c === 403) gone.push(s.endpoint); }
+  }
+  if (gone.length) await admin.from("push_subscriptions").delete().in("endpoint", gone);
+  return { sent, wartet: warten.length, removed: gone.length };
 }
 
 Deno.serve(async (req) => {
@@ -96,14 +118,9 @@ Deno.serve(async (req) => {
       if (!ids.length) return json({ ok: true, familien, sent: 0 });
       await vapid(admin);
       const payload = { title: "💰 Mannschaftskasse", body: "Bei euch ist noch ein Beitrag offen. Details im Eltern-Bereich unter „Mehr vom Team“.", url: "./?portal", tag: "adler-kasse" };
-      const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth").in("user_id", ids);
-      let sent = 0; const gone: string[] = [];
-      for (const s of subs || []) {
-        try { await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } } as any, JSON.stringify(payload)); sent++; }
-        catch (err: any) { const c = err?.statusCode; if (c === 404 || c === 410 || c === 403) gone.push(s.endpoint); }
-      }
-      if (gone.length) await admin.from("push_subscriptions").delete().in("endpoint", gone);
-      return json({ ok: true, familien, sent });
+      const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth,user_id").in("user_id", ids);
+      const v = await verteilen(admin, subs || [], payload);
+      return json({ ok: true, familien, sent: v.sent, wartet: v.wartet });
     }
 
     /* v702 (Version 6): Erinnerung an die Familien, deren Kind für DIESEN Termin noch keine
@@ -133,14 +150,9 @@ Deno.serve(async (req) => {
       const dat = new Date(t.datum + "T00:00:00").toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" });
       const zeit = t.uhrzeit ? " um " + String(t.uhrzeit).slice(0, 5) + " Uhr" : "";
       const payload = { title: "📬 Bitte kurz rückmelden", body: `${was} am ${dat}${zeit} – eine kurze Zu- oder Absage hilft bei der Planung.`, url: "./eltern/?rsvp=" + tid, tag: "reminder" };
-      const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth").in("user_id", ids);
-      let sent = 0; const gone: string[] = [];
-      for (const s of subs || []) {
-        try { await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } } as any, JSON.stringify(payload)); sent++; }
-        catch (err: any) { const c = err?.statusCode; if (c === 404 || c === 410 || c === 403) gone.push(s.endpoint); }
-      }
-      if (gone.length) await admin.from("push_subscriptions").delete().in("endpoint", gone);
-      return json({ ok: true, familien, offen: offen.length, sent });
+      const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth,user_id").in("user_id", ids);
+      const v = await verteilen(admin, subs || [], payload);
+      return json({ ok: true, familien, offen: offen.length, sent: v.sent, wartet: v.wartet });
     }
 
     if (!prof || prof.role !== "trainer") return json({ error: "nur Trainer duerfen senden" }, 403);
@@ -154,26 +166,12 @@ Deno.serve(async (req) => {
       tag: (body.tag || "adler").toString(),
     };
 
-    let q = admin.from("push_subscriptions").select("endpoint,p256dh,auth,rolle");
+    let q = admin.from("push_subscriptions").select("endpoint,p256dh,auth,rolle,user_id");
     if (audience === "parents") q = q.eq("rolle", "parent");
     else if (audience === "trainers") q = q.eq("rolle", "trainer");
     const { data: subs } = await q;
-
-    let sent = 0;
-    const gone: string[] = [];
-    for (const s of subs || []) {
-      const sub = { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } };
-      try {
-        await webpush.sendNotification(sub as any, JSON.stringify(payload));
-        sent++;
-      } catch (err: any) {
-        const code = err?.statusCode;
-        // v643: 403 heißt, das Abo gehört zu einem alten Schlüssel – es wird nie wieder zugestellt.
-        if (code === 404 || code === 410 || code === 403) gone.push(s.endpoint);
-      }
-    }
-    if (gone.length) await admin.from("push_subscriptions").delete().in("endpoint", gone);
-    return json({ ok: true, sent, removed: gone.length, total: (subs || []).length });
+    const v = await verteilen(admin, subs || [], payload);
+    return json({ ok: true, sent: v.sent, wartet: v.wartet, removed: v.removed, total: (subs || []).length });
   } catch (e) {
     return json({ error: String(e) }, 500);
   }

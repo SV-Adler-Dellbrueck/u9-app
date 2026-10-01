@@ -623,15 +623,23 @@ function _rfGlockeZeigen(an){
   const b=document.getElementById("rufe-glocke"); if(!b)return;
   b.textContent=an?"🔔":"🔕"; b.setAttribute("aria-pressed",String(an));
   b.setAttribute("aria-label",an?"Benachrichtigungen zu Adler-Rufen sind an – antippen zum Abschalten":"Benachrichtigungen zu Adler-Rufen sind aus – antippen zum Einschalten");
-  const z=document.getElementById("rufe-ruhe"); if(z)z.textContent=rufeRuhezeitText(an,!!(_rf&&_rf.trainer));
+  const z=document.getElementById("rufe-ruhe"); if(!z)return;
+  const tr=!!(_rf&&_rf.trainer);
+  z.textContent=rufeRuhezeitText(an,tr);
+  /* v705: die eigene Ruhezeit (Einstellungen) statt der Vorgabe */
+  if(an&&typeof ruhezeitLaden==="function")ruhezeitLaden(tr?"trainer":"parent").then(r=>{ if(document.getElementById("rufe-ruhe")===z&&_rf&&_rf.glockeAn!==false)z.textContent=rufeRuhezeitText(true,tr,r); }).catch(()=>{});
 }
 /* v704: Die Ruhezeit steht sichtbar im Chat (PO 01.10.: keine Meldung bekommen – der Ruf kam um 22:56 Uhr).
-   Eltern 21:30–7 Uhr, das Trainerteam bekommt Rufe rund um die Uhr (rufe_push_faellig). */
+   v705: Jede und jeder stellt die eigene Ruhezeit bei den Benachrichtigungen in den Einstellungen ein
+   (core.js, ruhezeitRender); ohne eigene Wahl Eltern 21:30–7 Uhr, Trainer keine. Hier steht nur, was gilt. */
 const RUFE_RUHE="21:30–7 Uhr";
-function rufeRuhezeitText(an,trainer){
+function rufeRuhezeitText(an,trainer,r){
   if(!an)return "🔕 Benachrichtigungen zu Adler-Rufen sind für dich aus – die 🔔 oben schaltet sie wieder ein.";
-  return trainer?"🔔 Trainerteam: Benachrichtigungen kommen rund um die Uhr. Eltern bekommen "+RUFE_RUHE+" keine, was bis dahin ungelesen ist, kommt um 7 Uhr gesammelt."
-               :"🔔 Benachrichtigungen ruhen "+RUFE_RUHE+" – was bis dahin ungelesen ist, kommt um 7 Uhr gesammelt.";
+  if(!r)r=trainer?{von:null,bis:null}:{von:"21:30",bis:"07:00"};
+  const wo=" Ändern: Einstellungen → Benachrichtigungen.";
+  if(!r.von||!r.bis)return "🔔 Benachrichtigungen kommen rund um die Uhr."+wo;
+  const z=typeof ruhezeitText==="function"?ruhezeitText(r):RUFE_RUHE;
+  return "🔔 Benachrichtigungen ruhen "+z+" – was bis dahin ungelesen ist, kommt danach gesammelt."+wo;
 }
 async function rufeGlockeLaden(){
   if(!_rf||!_rf.uid)return;

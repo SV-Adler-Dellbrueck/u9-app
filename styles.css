@@ -1221,3 +1221,19 @@ details.blz-einst[open]{padding-bottom:6px}
 .rot-zeile select{min-height:48px;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;font-size:var(--s-karte);background:var(--surface2);color:var(--text)}
 .rot-knoepfe{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 .rot-knoepfe .btn{width:100%;min-height:48px;justify-content:center}
+
+/* v705 Ruhezeit je Konto (unter dem Benachrichtigungs-Schalter in den Einstellungen).
+   Die gewählte Kachel trägt zusätzlich ✓ – Farbe ist nie allein der Hinweis. */
+.ruhezeit-box{margin-top:12px}
+.ruhezeit-box:empty{display:none}
+.ruhe-kopf{font-size:var(--s-text);color:var(--text)}
+.ruhe-erkl{font-size:var(--s-klein);color:var(--text2);margin:2px 0 8px}
+.ruhe-kacheln{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+@media (max-width:360px){.ruhe-kacheln{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.ruhe-kachel{min-height:48px;padding:6px 4px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer}
+.ruhe-kachel[aria-pressed="true"]{border:2px solid var(--blue);background:var(--blue-bg)}
+.ruhe-kachel[aria-pressed="true"]::before{content:"✓ "}
+.ruhe-eigen{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+.ruhe-eigen label{display:flex;align-items:center;gap:6px;font-size:var(--s-text);color:var(--text)}
+.ruhe-eigen input[type=time]{min-height:48px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font:inherit}
+.ruhe-uebernehmen{min-height:48px;padding:8px 14px;border:none;border-radius:10px;background:var(--blue);color:#fff;font:inherit;font-weight:800;cursor:pointer}
