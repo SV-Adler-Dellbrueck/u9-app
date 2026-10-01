@@ -1206,3 +1206,18 @@ details.blz-einst[open]{padding-bottom:6px}
 /* v702 · Spieltag in vier Schritten: am Handy zwei mal zwei Kacheln */
 .phasen-kacheln.vier{grid-template-columns:repeat(4,1fr)}
 @media (max-width:520px){.phasen-kacheln.vier{grid-template-columns:1fr 1fr}.phasen-kacheln.vier .phase-kachel{min-height:84px}}
+
+/* v703 PO (Bildschirmfoto Spieltag „Während“): „Kacheln sind verschoben und nicht an die UX angepasst.“
+   Drei Ursachen: Karten steckten doppelt eingerückt in der Team-Kachel (12 + 14 px je Seite),
+   und zwei Bedienzeilen brachen am Handy einzeln um („zwei“, „Reset“ allein in einer Zeile). */
+[id^="spieltag-karte-inhalt-"]{padding:0 6px 8px!important}
+[id^="spieltag-karte-inhalt-"] .abschnitt{padding:12px 10px;margin-left:0;margin-right:0}
+.mc-einst{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:8px 10px;margin-top:10px;padding-top:10px;border-top:var(--border);font-size:var(--s-text);color:var(--text2)}
+.mc-wert{display:flex;align-items:center;gap:8px}
+.mc-wert input{width:80px;min-height:44px;padding:8px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;font-size:var(--s-karte);font-weight:700;text-align:center;background:var(--surface);color:var(--text);box-sizing:border-box}
+.mc-seg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.mc-seg button{width:100%}
+.rot-zeile{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:10px;margin-bottom:8px;font-size:var(--s-text);color:var(--text2)}
+.rot-zeile select{min-height:48px;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;font-size:var(--s-karte);background:var(--surface2);color:var(--text)}
+.rot-knoepfe{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.rot-knoepfe .btn{width:100%;min-height:48px;justify-content:center}
