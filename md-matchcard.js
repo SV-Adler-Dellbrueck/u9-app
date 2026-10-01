@@ -8,7 +8,7 @@ async function renderElternView(datum){
   document.body.appendChild(root);
   root.innerHTML=elternLoader("Spieltag wird geladen …");
   try{
-    const heute=new Date().toISOString().slice(0,10);
+    const heute=isoLokal();
     const url=datum
       /* v636: ausdrückliche Spalten statt * – delegate_token ist für Anonyme nicht mehr lesbar. */
       ? `${SB_URL}/rest/v1/matchday?datum=eq.${encodeURIComponent(datum)}&published=eq.true&select=datum,gegner,treffpunkt,anpfiff,ort,maps_link,trikot,obst,infos,published,updated_at,typ,gegner_adresse,half,clock_status,started_at,paused_ms,ticker_open,spieldauer_min,halbzeiten`
@@ -673,13 +673,6 @@ function rotSeedFromSquad(squad){
   rotBench=outfield.slice(form.fieldCount);
   rotBenchSec={};rotFieldSec={};squad.forEach(n=>{rotBenchSec[n]=0;rotFieldSec[n]=0;}); // HOTFIX 12
   rotElapsed=0;
-}
-function rotInit(){
-  if(!rotField.length&&!rotBench.length&&!rotTW){
-    rotSeedFromSquad(kaderNamen());
-  }
-  rotRenderControls();
-  rotRenderLive();
 }
 function rotRenderControls(){
   const box=document.getElementById("rot-panel");

@@ -322,7 +322,8 @@ async function teamStatsLoad(){
   const spieltage=new Set(termine.map(t=>t.datum));
   const gezaehlt={};   // name -> Set(basisdatum), damit Adler 1 und 2 nicht doppelt zaehlen
   noms.forEach(row=>{
-    const basis=String(row.datum).replace(/__t\d+$/,"").replace(/__teams$/,"");
+    // v707: auch „__nom“ zählt – Spieltage ohne Team-Zeilen (05.09.) fehlten sonst ganz
+    const basis=String(row.datum).replace(/__t\d+$/,"").replace(/__teams$/,"").replace(/__nom$/,"");
     if(!spieltage.has(basis)||/__teams$/.test(row.datum))return;
     Object.entries(kidMapFromIds(row.data||{})).forEach(([name,status])=>{
       if(name==="_ovr"||status!=="dabei")return;

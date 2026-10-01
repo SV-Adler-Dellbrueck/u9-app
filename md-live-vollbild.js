@@ -447,7 +447,7 @@ async function teamBackupDownload(){
     const blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json"});
     const a=document.createElement("a");
     a.href=URL.createObjectURL(blob);
-    a.download="adler-backup-"+new Date().toISOString().slice(0,10)+".json";
+    a.download="adler-backup-"+isoLokal()+".json";
     document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(a.href),5000);
     toast("Backup heruntergeladen ✓");

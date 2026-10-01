@@ -1,5 +1,5 @@
 -- v664 · Kassenwart-Kasse: ein Elternteil pflegt die Teamkasse, „wer hat bezahlt“ je Kind
--- PO 28.09.: „Die Mutter von Samu ist neue Kassenwärtin … wie können wir da mit der App
+-- PO 28.09.: „Die Mutter eines Kindes ist neue Kassenwärtin … wie können wir da mit der App
 -- unterstützen und helfen? Also wie eine digitale Mannschaftskassen-App.“ Kachel: „Ja, so bauen“
 -- (Rolle „Kasse“ für ein Elternteil, bezahlt/offen je Familie, Erinnerung, Export –
 -- ohne Zahlungsabwicklung). Kein Geld in der App: gezahlt wird außerhalb, hier wird nur

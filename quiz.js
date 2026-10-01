@@ -128,7 +128,7 @@ function tqSaveProgress(player,block,score,total){
   if(!p[player])p[player]={};
   const prev=p[player][block];
   if(!prev||score>prev.score||(score===prev.score&&total<prev.total)){
-    p[player][block]={score,total,date:new Date().toISOString().slice(0,10)};
+    p[player][block]={score,total,date:isoLokal()};
   }
   localStorage.setItem(TQ_PROGRESS_KEY,JSON.stringify(p));
   tqSyncToSupabase(player,block,p[player][block]);
@@ -155,6 +155,9 @@ async function tqLoadProgressFromSupabase(){
     if(!r.ok)return false;
     const rows=await r.json();
     _tqLoaded=true; // nur nach erfolgreichem Laden: initialer Parse-Call ohne Sitzung darf es nicht sperren
+    /* v707: Seit der Prüfung 01.10. liefert die Tabelle nur noch die eigenen Kinder (Trainer: alle).
+       Das Team-Barometer bekommt die Summe aller gelösten Aufgaben aus quiz_team_summe() – ohne Namen. */
+    try{const t=await fetch(`${SB_URL}/rest/v1/rpc/quiz_team_summe`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"});if(t.ok){const v=await t.json();if(typeof v==="number")window._tqTeamSumme=v;}}catch(e){}
     if(!rows.length)return false;
     const p=tqGetProgress(); let changed=false;
     rows.forEach(row=>{
@@ -610,6 +613,7 @@ function tqRenderBarometer(){
   const prog=tqGetProgress();
   let solved=0;
   Object.values(prog).forEach(p=>Object.values(p).forEach(bp=>{solved+=bp.score||0;}));
+  if(typeof window._tqTeamSumme==="number"&&window._tqTeamSumme>solved)solved=window._tqTeamSumme;   // v707: Teamsumme vom Server
   const step=50;
   const ziel=Math.max(step,Math.ceil((solved+1)/step)*step);
   const pct=Math.round(solved/ziel*100);

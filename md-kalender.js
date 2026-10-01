@@ -7,8 +7,8 @@ const VEREIN_ADRESSE="Thurner Kamp 97, 51069 Köln";
 // Nächstes Trainingsdatum: wir trainieren Mo & Fr – das jeweils nächste dieser Tage.
 function tmNextTrainingDate(){
   const d=new Date(); d.setHours(0,0,0,0);
-  for(let i=0;i<8;i++){ const t=new Date(d.getTime()+i*86400000); const wd=t.getDay(); if(wd===1||wd===5)return t.toISOString().slice(0,10); }
-  return d.toISOString().slice(0,10);
+  for(let i=0;i<8;i++){ const t=new Date(d); t.setDate(d.getDate()+i); const wd=t.getDay(); if(wd===1||wd===5)return isoLokal(t); }   // v707: Ortszeit – vorher der Vortag
+  return isoLokal(d);
 }
 /* v527: Das Trainermeeting ist eine eigene Terminart – und die einzige, die Eltern und
    Oeffentlichkeit NICHT sehen. Das erzwingt die Leseregel auf `termine`
@@ -18,7 +18,7 @@ function tmNextTrainingDate(){
 const TM_META={training:{icon:"🏃",label:"Training",col:"#1a56db"},spiel:{icon:"⚽",label:"Spiel",col:"#059669"},turnier:{icon:"🏆",label:"Turnier",col:"#c2410c"},event:{icon:"🎉",label:"Event",col:"#7c3aed"},trainermeeting:{icon:"🗓️",label:"Trainermeeting",col:"#334155"}}; // UX 7: Event mit Freitext-Titel (Saisonabschluss etc.)
 // Saison-Zuordnung aus einem Datum (Saison läuft Jul–Jun)
 function saisonForDate(datum){
-  const d=new Date((datum||new Date().toISOString().slice(0,10))+"T00:00:00");
+  const d=new Date((datum||isoLokal())+"T00:00:00");
   const y=d.getFullYear(), start=d.getMonth()>=6?y:y-1;
   return start+"/"+String(start+1).slice(2);
 }

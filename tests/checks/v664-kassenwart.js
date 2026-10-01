@@ -1,5 +1,5 @@
 /* v664 · Kassenwart-Kasse
-   PO 28.09.: „Die Mutter von Samu ist neue Kassenwärtin … wie können wir da mit der App
+   PO 28.09.: „Die Mutter eines Kindes ist neue Kassenwärtin … wie können wir da mit der App
    unterstützen und helfen? Also wie eine digitale Mannschaftskassen-App.“ Kachel „Ja, so bauen“:
    Rolle „Kasse“ für ein Elternteil, bezahlt/offen je Familie, Erinnerung, Export – ohne
    Zahlungsabwicklung. Dazu PO-Bildschirmfoto „Wo kann ich die Benachrichtigungen aktivieren?“.

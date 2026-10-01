@@ -2,7 +2,7 @@
    PO 29.09.: „Da jetzt alle Eltern informiert sind … können wir die Einteilung durch die App
    vornehmen … immer die Familie einteilen … Trackst das im Hintergrund, dass jeder auch einmal
    zugewiesen wird. Und dann informieren wir auf der ersten Startseite die jeweiligen Eltern …
-   Eine Sondersituation beim Vater von Leif … an welchen Wochenenden er verfügbar ist.“
+   Eine Sondersituation beim Vater eines Kindes … an welchen Wochenenden er verfügbar ist.“
    Kacheln: zwei Familien je Heimtermin; jetzt nur den nächsten Heimtermin einteilen.
    Die Reihenfolge der Einteilung (Saison, Sperrtage, nicht zweimal am selben Tag) steckt in
    dienst_einteilen und ist in der Datenbank mit Probedaten gefahren (Rollback) – die Attrappe

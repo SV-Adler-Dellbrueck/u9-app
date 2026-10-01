@@ -65,7 +65,7 @@ async function kiKontextLaden(){
     const r=await fetch(`${SB_URL}/rest/v1/periodisierung?monat=eq.${monat}&select=thema,kategorie`,{headers:sbAuthHeaders()});
     if(r.ok){const p=((await r.json())||[])[0]; if(p){k.thema=p.thema||""; k.kategorie=p.kategorie||"";}}
   }catch(e){}
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   try{
     const r=await fetch(`${SB_URL}/rest/v1/termine?select=platz,uhrzeit,uhrzeit_ende&typ=eq.training&datum=gte.${heute}&order=datum.asc&limit=1`,{headers:sbAuthHeaders()});
     if(r.ok){const t=((await r.json())||[])[0];

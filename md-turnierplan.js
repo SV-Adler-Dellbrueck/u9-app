@@ -285,7 +285,7 @@ async function spieltagDatesLoad(preferDatum){
   const seen=new Set(), items=[];
   rows.forEach(t=>{if(t.datum&&!seen.has(t.datum)){seen.add(t.datum);items.push(t);}});
   if(!items.length){ sel.innerHTML='<option value="">— kein Spieltag angelegt (unter Orga anlegen) —</option>'; nomLoad(); return; }
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   const def=(preferDatum&&seen.has(preferDatum))?preferDatum:((items.find(t=>t.datum>=heute)||{}).datum||items[items.length-1].datum);
   const fmt=(t)=>{const d=new Date(t.datum+"T00:00:00");const wd=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];const ds=d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"2-digit"});const g=t.typ==="turnier"?"🏆 Turnier":(t.gegner?"vs "+t.gegner:"Spiel");return `${wd} ${ds} · ${g}`;};
   sel.innerHTML=items.map(t=>`<option value="${esc(t.datum)}"${t.datum===def?" selected":""}>${esc(fmt(t))}</option>`).join("");
@@ -1827,7 +1827,7 @@ async function htNeu(btn){
         vereine,
         infos:HT_INFOS_VORLAGE},
       teams:fstTeamsBauen(vereine).map(t=>t.name)};
-    const r=await fetch(`${SB_URL}/rest/v1/heimturnier`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=representation'},body:JSON.stringify(body)});
+    const r=await fetch(`${SB_URL}/rest/v1/heimturnier?select=id`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=representation'},body:JSON.stringify(body)});   // v707: edit_code nicht zurücklesen
     if(sbCheck401(r))return;
     if(!r.ok){toast(sbDeniedMsg(r,"Konnte nicht anlegen"),"err");return;}
     const row=(await r.json())[0];
@@ -1839,7 +1839,10 @@ async function htNeu(btn){
 async function htEdit(id){
   const el=document.getElementById("ht-body"); if(!el)return;
   el.innerHTML='<div style="font-size:var(--s-text);color:var(--text3)">Lade…</div>';
-  try{const r=await fetch(`${SB_URL}/rest/v1/heimturnier?id=eq.${id}&select=*`,{headers:sbAuthHeaders()});if(r.ok)_HT=((await r.json())||[])[0]||null;}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/heimturnier?id=eq.${id}&select=id,slug,name,datum,ort,config,teams,plan,aktiv,created_at,updated_at`,{headers:sbAuthHeaders()});if(r.ok)_HT=((await r.json())||[])[0]||null;}catch(e){}
+  /* v707: Den Schreib-Code (Helfer-Link) dürfen nur Trainer lesen – über heimturnier_code(); vorher
+     konnte jedes angemeldete Elternteil ihn per REST abfragen und damit Ergebnisse eintragen. */
+  if(_HT){try{const c=await fetch(`${SB_URL}/rest/v1/rpc/heimturnier_code`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_id:_HT.id})});if(c.ok){const v=await c.json();if(v)_HT.edit_code=v;}}catch(e){}}
   if(!_HT){el.innerHTML='<div style="font-size:var(--s-text);color:var(--text3)">Nicht gefunden.</div>';return;}
   // v615: Turniere von vor den Wappen bekommen sie beim ersten Öffnen – still, ohne Meldung
   if(_HT.config&&!_HT.config.wappen){ const c=await _htWappenErgaenzen(_HT.config,_HT.teams);
@@ -2936,7 +2939,7 @@ function fstRundeJetzt(row){
   if(st.phase==="laeuft")return {runde:st.runde,status:"laeuft"};
   if(st.phase==="pause"||st.phase==="ende")return st.naechste?{runde:st.naechste,status:"naechste"}:null;
   if(!cfg.startIst||!row.datum)return null;
-  if(row.datum!==new Date().toISOString().slice(0,10))return null;
+  if(row.datum!==isoLokal())return null;
   const jetzt=_fstMin(_fstJetztHhmm()), dauer=Math.max(3,cfg.spieldauer||8);
   const runden=[...new Set((row.plan||[]).map(p=>p.runde))].sort((a,b)=>a-b);
   for(const r of runden){ const p=(row.plan||[]).find(x=>x.runde===r); const t=_fstMin(fstZeitIst(p&&p.zeit,cfg)); if(t!=null&&jetzt>=t&&jetzt<t+dauer)return {runde:r,status:"laeuft"}; }
