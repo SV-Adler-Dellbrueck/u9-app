@@ -1,6 +1,7 @@
 /* Edge Function push-cron — täglicher Lauf (pg_cron „push-reminders-daily“, 15:00 UTC):
    Zusage-Erinnerung für morgen samt Wetterwarnung, Helfer-Vorabend-Push und die
    48-Stunden-Erinnerungen.
+   v705: beachtet die Ruhezeit je Empfänger (push_ruhende, Warteschlange).
 
    NIE von Hand mit dem echten Cron-Schlüssel aufrufen – das verdoppelt die Mitteilungen an
    die Eltern (CLAUDE.md).
@@ -46,7 +47,20 @@ Deno.serve(async (req) => {
     const { data: termine } = await admin.from("termine").select("id,typ,titel,gegner,uhrzeit").in("typ", ["training", "spiel", "turnier"]).eq("datum", morgen).order("uhrzeit", { ascending: true });
     const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth,user_id,rolle");
     const gone: string[] = [];
-    const send = async (sub: any, payload: unknown) => {
+    /* v705: Wer gerade Ruhezeit hat (push_ruhezeit; Eltern ohne eigene Wahl 21:30–7), bekommt die
+       Meldung später – sie wartet in push_warteschlange, rufe-push schickt sie danach. */
+    const subIds = [...new Set((subs || []).map((x: any) => x.user_id).filter(Boolean))];
+    const { data: rh } = subIds.length ? await admin.rpc("push_ruhende", { p_users: subIds }) : { data: [] };
+    const ruht = new Set(((rh || []) as any[]).map((x: any) => x.user_id));
+    let wartet = 0;
+    const schon = new Set<string>();   // v705: ein Handy für mehrere Konten – je Meldung nur einmal
+    const send = async (sub: any, payload: any) => {
+      const k = sub.endpoint + "|" + String(payload.tag || "") + "|" + String(payload.title || "");
+      if (schon.has(k)) return false; schon.add(k);
+      if (ruht.has(sub.user_id)) {
+        await admin.from("push_warteschlange").upsert({ user_id: sub.user_id, tag: String(payload.tag || "adler"), payload, erstellt_am: new Date().toISOString() }, { onConflict: "user_id,tag" });
+        wartet++; return false;
+      }
       try { await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } } as any, JSON.stringify(payload)); return true; }
       catch (e: any) { const c = e?.statusCode; if (c === 404 || c === 410 || c === 403) gone.push(sub.endpoint); return false; }
     };
@@ -147,6 +161,6 @@ Deno.serve(async (req) => {
     }
 
     if (gone.length) await admin.from("push_subscriptions").delete().in("endpoint", gone);
-    return json({ ok: true, sent, skipped_answered: skipped, helfer: helferSent, auto48, removed: gone.length });
+    return json({ ok: true, sent, skipped_answered: skipped, helfer: helferSent, auto48, wartet, removed: gone.length });
   } catch (e) { return json({ error: String(e) }, 500); }
 });

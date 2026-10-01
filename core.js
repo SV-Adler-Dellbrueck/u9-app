@@ -1015,6 +1015,22 @@ async function pushCurrentSub(){
   if(!pushSupported())return null;
   try{ const reg=await navigator.serviceWorker.ready; return await reg.pushManager.getSubscription(); }catch(e){ return null; }
 }
+/* v705 PO 01.10.: „Ich erhalte keine Push-Nachrichten …“ – Ursache: Trainer- und Eltern-App teilen sich
+   auf einem Handy EINE Push-Adresse. Wer in der zweiten App einschaltete, verwarf sie und legte eine neue
+   für das eigene Konto an; das andere Konto zeigte danach ins Leere (am 01.10. vom Push-Dienst abgelehnt
+   und gelöscht). Seit v705 darf eine Adresse mehreren Konten gehören (eindeutig je Adresse UND Konto),
+   Ausschalten löscht nur den eigenen Eintrag und lässt die Adresse des Handys stehen, und „an“ heißt:
+   dieses Handy hat ein Abo UND dieses Konto steht dafür in push_subscriptions. */
+async function pushKontoAbo(){
+  const sub=await pushCurrentSub(); if(!sub)return null;
+  const uid=typeof sbUid==="function"?sbUid():null; if(!uid)return sub;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(sub.endpoint)}&user_id=eq.${uid}&select=id`,{headers:sbAuthHeaders()});
+    if(!r.ok)return sub;                       // Zweifel (offline, Fehler): lieber „an“ zeigen als falsch „aus“
+    const d=await r.json().catch(()=>null);
+    return Array.isArray(d)&&!d.length?null:sub;
+  }catch(e){ return sub; }
+}
 /* v664: PO 28.09. (Bildschirmfoto): „Wo kann ich die Benachrichtigungen aktivieren?“ –
    nach einmal „Blockieren“ fragt der Browser nie wieder, die App kann es nicht selbst
    ändern. Statt nur „nicht erlaubt“ steht hier, wo man es am Gerät wieder einschaltet. */
@@ -1038,7 +1054,7 @@ async function pushSubscribe(rolle){
     let sub=await reg.pushManager.getSubscription();
     if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:_urlB64ToU8(VAPID_PUBLIC)});
     const j=sub.toJSON();
-    const r=await fetch(`${SB_URL}/rest/v1/push_subscriptions?on_conflict=endpoint`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({endpoint:sub.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,rolle:rolle||"parent"})});
+    const r=await fetch(`${SB_URL}/rest/v1/push_subscriptions?on_conflict=endpoint,user_id`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({endpoint:sub.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,rolle:rolle||"parent",user_id:sbUid()})});
     if(sbCheck401(r))return false;
     if(!r.ok){toast(sbDeniedMsg(r,"Konnte nicht aktivieren"),"err");return false;}
     toast("🔔 Benachrichtigungen aktiviert");
@@ -1048,7 +1064,9 @@ async function pushSubscribe(rolle){
 async function pushUnsubscribe(){
   try{
     const sub=await pushCurrentSub();
-    if(sub){ try{await fetch(`${SB_URL}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(sub.endpoint)}`,{method:"DELETE",headers:sbAuthHeaders()});}catch(e){} try{await sub.unsubscribe();}catch(e){} }
+    // v705: nur den eigenen Eintrag löschen – die Adresse des Handys gehört womöglich auch dem anderen Konto
+    const uid=typeof sbUid==="function"?sbUid():null;
+    if(sub&&uid){ try{await fetch(`${SB_URL}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(sub.endpoint)}&user_id=eq.${uid}`,{method:"DELETE",headers:sbAuthHeaders()});}catch(e){} }
     toast("Benachrichtigungen ausgeschaltet");
   }catch(e){}
 }
@@ -1078,7 +1096,7 @@ async function pushSchluesselAbgleich(){
     const neu=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:_urlB64ToU8(VAPID_PUBLIC)});
     const j=neu.toJSON();
     const rolle=/\/trainer\//.test(location.pathname)?"trainer":"parent";
-    await fetch(`${SB_URL}/rest/v1/push_subscriptions?on_conflict=endpoint`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({endpoint:neu.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,rolle})});
+    await fetch(`${SB_URL}/rest/v1/push_subscriptions?on_conflict=endpoint,user_id`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({endpoint:neu.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,rolle,user_id:sbUid()})});
     return "erneuert";
   }catch(e){ return "fehler"; }
 }
@@ -1092,13 +1110,80 @@ _adlerOnReady(()=>{
 async function pushRenderInto(elId, rolle){
   const el=document.getElementById(elId); if(!el)return;
   if(!pushSupported()){ el.innerHTML=""; return; }
-  const sub=await pushCurrentSub();
+  const sub=await pushKontoAbo();   // v705: an = dieses Konto auf diesem Handy
   const on=!!sub && (typeof Notification!=="undefined"&&Notification.permission==="granted");
   const base="width:100%;min-height:48px;padding:12px;border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer";
   el.innerHTML=on
     ? `<button onclick="pushUnsubscribe().then(()=>pushRenderInto('${elId}','${rolle}'))" style="${base};border:1.5px solid #16a34a;background:var(--green-bg);color:var(--green)">🔔 Benachrichtigungen an ✓ · zum Ausschalten tippen</button>
-       <button type="button" class="push-test-knopf" onclick="pushTest(this)" style="${base};margin-top:8px;border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text)">📨 Test-Benachrichtigung an mich</button>`
+       <button type="button" class="push-test-knopf" onclick="pushTest(this)" style="${base};margin-top:8px;border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text)">📨 Test-Benachrichtigung an mich</button>
+       <div id="${elId}-ruhe" class="ruhezeit-box"></div>`
     : `<button onclick="pushSubscribe('${rolle}').then(ok=>{if(ok)pushRenderInto('${elId}','${rolle}');})" style="${base};border:none;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff">🔔 Benachrichtigungen aktivieren</button>`;
+  if(on)ruhezeitRender(elId+"-ruhe",rolle);
+}
+/* v705 PO 01.10.: „Wir können ja auch jeden selbst entscheiden lassen, wie seine Ruhezeiten sein
+   sollen. Über eine Möglichkeit wie Einstellungen.“ Kacheln: „Nur in Einstellungen“, „Alle
+   Benachrichtigungen“. Die Wahl gilt fürs Konto (Tabelle push_ruhezeit), nicht fürs Gerät; ohne
+   eigene Wahl Eltern 21:30–7 Uhr, Trainer keine (wie v704). In der Ruhezeit kommt nichts aufs Handy –
+   Adler-Rufe kommen danach gebündelt, alles andere wartet in der Warteschlange (rufe-push). */
+function ruhezeitVorgabe(rolle){ return rolle==="trainer"?{von:null,bis:null,eigen:false}:{von:"21:30",bis:"07:00",eigen:false}; }
+function ruhezeitText(r){
+  if(!r||!r.von||!r.bis)return "keine";
+  const k=t=>{ const [h,m]=String(t).slice(0,5).split(":"); return String(+h)+(m==="00"?"":":"+m); };
+  return k(r.von)+"–"+k(r.bis)+" Uhr";
+}
+async function ruhezeitLaden(rolle){
+  const uid=typeof sbUid==="function"?sbUid():null;
+  if(!uid||typeof SB_URL==="undefined")return ruhezeitVorgabe(rolle);
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/push_ruhezeit?user_id=eq.${uid}&select=von,bis`,{headers:sbAuthHeaders()});
+    const d=r.ok?await r.json():[];
+    if(Array.isArray(d)&&d.length)return {von:d[0].von?String(d[0].von).slice(0,5):null,bis:d[0].bis?String(d[0].bis).slice(0,5):null,eigen:true};
+  }catch(e){}
+  return ruhezeitVorgabe(rolle);
+}
+const RUHE_STUFEN=[{k:"keine",l:"Keine",von:null,bis:null},{k:"abend",l:"21:30–7",von:"21:30",bis:"07:00"},{k:"nacht",l:"22–6",von:"22:00",bis:"06:00"}];
+async function ruhezeitRender(slotId,rolle,r){
+  const el=document.getElementById(slotId); if(!el)return;
+  r=r||await ruhezeitLaden(rolle);
+  const stufe=RUHE_STUFEN.find(x=>x.von===r.von&&x.bis===r.bis);
+  const eigen=!stufe||el.dataset.eigen==="1";
+  const kachel=(k,l,an,fn)=>`<button type="button" class="ruhe-kachel" data-k="${k}" aria-pressed="${an}" onclick="${fn}">${l}</button>`;
+  el.innerHTML=`<div class="ruhe-kopf">🌙 Ruhezeit: <b>${ruhezeitText(r)}</b></div>
+    <div class="ruhe-erkl">In dieser Zeit kommt nichts aufs Handy – was anfällt, kommt danach gesammelt.</div>
+    <div class="ruhe-kacheln" role="group" aria-label="Ruhezeit wählen">
+      ${RUHE_STUFEN.map(x=>kachel(x.k,x.l,!eigen&&x===stufe,`ruhezeitSetzen('${slotId}','${rolle}',${x.von?`'${x.von}'`:"null"},${x.bis?`'${x.bis}'`:"null"})`)).join("")}
+      ${kachel("eigen","Eigene",eigen,`ruhezeitEigenZeigen('${slotId}','${rolle}')`)}
+    </div>
+    ${eigen?`<div class="ruhe-eigen">
+      <label>von <input type="time" id="${slotId}-von" value="${r.von||"22:00"}"></label>
+      <label>bis <input type="time" id="${slotId}-bis" value="${r.bis||"07:00"}"></label>
+      <button type="button" class="ruhe-uebernehmen" onclick="ruhezeitEigenSpeichern('${slotId}','${rolle}')">Übernehmen</button>
+    </div>`:""}`;
+}
+function ruhezeitEigenZeigen(slotId,rolle){
+  const el=document.getElementById(slotId); if(!el)return;
+  el.dataset.eigen="1"; ruhezeitRender(slotId,rolle);
+}
+function ruhezeitEigenSpeichern(slotId,rolle){
+  const v=(document.getElementById(slotId+"-von")||{}).value, b=(document.getElementById(slotId+"-bis")||{}).value;
+  if(!v||!b){toast("Bitte beide Uhrzeiten wählen","err");return;}
+  if(v===b){toast("Beginn und Ende sind gleich – dann lieber „Keine“ wählen","err");return;}
+  return ruhezeitSetzen(slotId,rolle,v,b);
+}
+async function ruhezeitSetzen(slotId,rolle,von,bis){
+  const uid=typeof sbUid==="function"?sbUid():null;
+  if(!uid){toast("Bitte zuerst anmelden","err");return false;}
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/push_ruhezeit?on_conflict=user_id`,{method:"POST",
+      headers:sbAuthHeaders({'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'}),
+      body:JSON.stringify({user_id:uid,von:von||null,bis:bis||null,geaendert_am:new Date().toISOString()})});
+    if(!r.ok){toast("Nicht gespeichert","err");return false;}
+  }catch(e){toast("Kein Netz","err");return false;}
+  const el=document.getElementById(slotId); if(el)delete el.dataset.eigen;
+  const neu={von:von||null,bis:bis||null,eigen:true};
+  toast(neu.von?`🌙 Ruhezeit ${ruhezeitText(neu)} – danach kommt alles gesammelt`:"Keine Ruhezeit – Benachrichtigungen kommen rund um die Uhr");
+  ruhezeitRender(slotId,rolle,neu);
+  return true;
 }
 /* v695 PO 30.09.: „Ja, bau den Test-Knopf.“ Schickt eine Probe-Meldung an genau dieses Gerät
    (Edge Function push-send, art „test“ – nur an das eigene Abo, fester Text, niemand sonst
@@ -1168,7 +1253,7 @@ async function pushKartenFall(){
   if(g.ios&&!g.installiert)return "ios";
   if(typeof pushSupported!=="function"||!pushSupported())return null;
   if(Notification.permission==="denied")return "gesperrt";
-  const abo=typeof pushCurrentSub==="function"?await pushCurrentSub():null;
+  const abo=typeof pushKontoAbo==="function"?await pushKontoAbo():null;   // v705: je Konto
   if(abo&&Notification.permission==="granted")return null;
   return "aus";
 }

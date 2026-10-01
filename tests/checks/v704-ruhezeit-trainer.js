@@ -7,7 +7,8 @@
    b) Trainer: die Zeile sagt „rund um die Uhr“
    c) Migration: rufe_push_faellig nimmt nachts nur Trainer (keine frühe Rückkehr mehr), Grenze 21:30;
       „Wie war's?“ ruht ebenfalls 21:30–7 Uhr
-   d) Hilfe und Funktionsübersicht nennen 21:30 */
+   d) Hilfe und Funktionsübersicht nennen 21:30
+   Seit v705 gilt die Ruhezeit je Konto (push_ruht) – c) nimmt beide Fassungen an. */
 "use strict";
 const fs = require("fs"), path = require("path");
 module.exports = async function (h) {
@@ -42,13 +43,15 @@ module.exports = async function (h) {
   const neueste = name => fs.readdirSync(migDir).sort().filter(d => fs.readFileSync(path.join(migDir, d), "utf8").includes("function public." + name)).pop();
   const ruf = fs.readFileSync(path.join(migDir, neueste("rufe_push_faellig") || ""), "utf8");
   const ruf1 = ruf.slice(ruf.indexOf("function public.rufe_push_faellig"), ruf.indexOf("end $function$"));
-  if (!/time '21:30'/.test(ruf1) || !/not v_ruhe or p\.role='trainer'/.test(ruf1) || /then return; end if/.test(ruf1)) probleme.push("c) rufe_push_faellig: Ruhezeit nicht 21:30 oder nicht nur für Eltern (" + neueste("rufe_push_faellig") + ")");
+  // v705: die Ruhezeit kommt seither je Konto aus push_ruht (Vorgabe Eltern 21:30–7, Trainer keine) – beides erfüllt die Regel
+  const v705 = /push_ruht\(s\.user_id, p_jetzt\)/.test(ruf1) && /time '21:30'/.test(ruf) && /role = 'trainer'\) then return false/.test(ruf);
+  if (!v705 && (!/time '21:30'/.test(ruf1) || !/not v_ruhe or p\.role='trainer'/.test(ruf1)) || /then return; end if/.test(ruf1)) probleme.push("c) rufe_push_faellig: Ruhezeit nicht 21:30 oder nicht nur für Eltern (" + neueste("rufe_push_faellig") + ")");
   if (!/interval '30 minutes'/.test(ruf1)) probleme.push("c) Bündelung fehlt");
   const ww = fs.readFileSync(path.join(migDir, neueste("wiewars_push_faellig") || ""), "utf8");
-  if (!/time '21:30'/.test(ww.slice(ww.indexOf("function public.wiewars_push_faellig")))) probleme.push("c) Wie war's ruht nicht ab 21:30");
+  if (!/time '21:30'|push_ruht\(p\.id, p_jetzt\)/.test(ww.slice(ww.indexOf("function public.wiewars_push_faellig")))) probleme.push("c) Wie war's ruht nicht ab 21:30");
   const views = fs.readFileSync(path.join(h.REPO, "views.js"), "utf8"), doku = fs.readFileSync(path.join(h.REPO, "doku/Uebersicht_Funktionen-Adler-App_v1.md"), "utf8");
   if (!/21:30 und 7 Uhr/.test(views) || /zwischen 21 und 7 Uhr keine/.test(views)) probleme.push("d) Hilfe nennt die neue Ruhezeit nicht");
-  if (!/21:30–7 Uhr/.test(doku) || /Ruhezeit 21–7 Uhr/.test(doku)) probleme.push("d) Funktionsübersicht nennt die neue Ruhezeit nicht");
+  if (!/21:30–7/.test(doku) || /Ruhezeit 21–7 Uhr/.test(doku)) probleme.push("d) Funktionsübersicht nennt die neue Ruhezeit nicht");
   const fe = el.f.concat(tr.f); if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
   zeilen.push(`Eltern: „${el.r.an}“ · aus: „${el.r.aus}“`, `Trainer: „${tr.r.an}“`);
   return h.ergebnis(titel, !probleme.length, probleme.length ? probleme.concat(zeilen) : zeilen);
