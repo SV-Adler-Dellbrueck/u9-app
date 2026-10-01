@@ -878,7 +878,7 @@ function tmEdit(id){
   const platzOpts=`<option value=""${!platzCur?" selected":""}>– kein Platz –</option>`+PLATZ.map(p=>`<option${p===platzCur?" selected":""}>${p}</option>`).join("");
   /* v708: Spielform als Knöpfe mit Mehrfachauswahl – auswärts bestimmt der Gastgeber, oft gibt
      es zwei Formen (z. B. FUNiño und 3+1). Gespeichert kommagetrennt in termine.spielform. */
-  const sfAn=sfListe(t.spielform).map(x=>x.toLowerCase());
+  const sfAn=(sfListe(t.spielform).length?sfListe(t.spielform):["funino","3+1"]).map(x=>x.toLowerCase());   // v709: ohne Eintrag FUNiño + 3+1
   const sfKnoepfe=SF_FORMEN.map(f=>`<button type="button" class="seg-btn te-sf-k${sfAn.includes(f)?" active":""}" data-val="${f}" aria-pressed="${sfAn.includes(f)}" onclick="tmEditSf(this)">${f==="funino"?"FUNiño":f}</button>`).join("");
   const ausw=isSpiel&&t.heim===false;
   // Spieldauer war im Bearbeiten-Dialog gar nicht vorhanden: einmal angelegt, nie änderbar.
