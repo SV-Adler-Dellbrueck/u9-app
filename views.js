@@ -6545,7 +6545,7 @@ async function renderStadionheftView(){
   const fk=h.fokus;
   const fokusHtml=fk?`<div style="display:flex;gap:12px;align-items:center;background:linear-gradient(135deg,#fef9c3,#fef3c7);border:1px solid #fde047;border-radius:14px;padding:12px;margin-bottom:12px">
     <div style="flex:0 0 auto">${avatar(fk,66)}</div>
-    <div><div style="font-size:var(--s-text);font-weight:800;color:#854d0e">⭐ Spieler im Fokus</div>
+    <div><div style="font-size:var(--s-text);font-weight:800;color:var(--yellow)">⭐ Spieler im Fokus</div>
       <div style="font-size:var(--s-karte);font-weight:900;color:#1e293b">${esc(fk.name)}${fk.nr!=null?" · #"+esc(fk.nr):""}${fk.jahrgang?" · Jahrgang "+esc(fk.jahrgang):""}</div>
       ${fk.text?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:2px;line-height:1.4">${esc(fk.text).replace(/\n/g,"<br>")}</div>`:""}</div></div>`:"";
   const nestLbl=t=>`<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:16px 4px 8px">${t}</div>`;
