@@ -122,7 +122,7 @@ function rufeTextWachsen(t){ t.style.height="auto"; t.style.height=Math.min(140,
 
 function rufeRaeumeRender(){
   const box=document.getElementById("rufe-raeume"); if(!box||!_rf)return;
-  const chip=(an,txt,on,label)=>`<button type="button" onclick="${on}" aria-pressed="${an}" ${label?`aria-label="${label}"`:""} style="flex:none;min-height:40px;padding:6px 14px;border-radius:999px;border:1.5px solid ${an?"#1e3a8a":"var(--rand-bedien)"};background:${an?"#1e3a8a":"var(--surface)"};color:${an?"#fff":"var(--text)"};font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer;white-space:nowrap">${txt}</button>`;
+  const chip=(an,txt,on,label)=>`<button type="button" onclick="${on}" aria-pressed="${an}" ${label?`aria-label="${label}"`:""} style="flex:none;min-height:44px;padding:6px 14px;border-radius:999px;border:1.5px solid ${an?"#1e3a8a":"var(--rand-bedien)"};background:${an?"#1e3a8a":"var(--surface)"};color:${an?"#fff":"var(--text)"};font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer;white-space:nowrap">${txt}</button>`;
   const zahl=id=>_rf.unge[id]?` · ${_rf.unge[id]}`:"";
   const offen=_rf.raeume.filter(r=>!r.familie_kind), privat=_rf.raeume.filter(r=>r.familie_kind);
   box.style.display="flex";
@@ -250,10 +250,10 @@ function rufeNachrichtHtml(n){
       <div class="rf-text" style="font-size:var(--s-text);line-height:1.45;margin-top:2px;word-wrap:break-word;${arch?"color:var(--text2);font-style:italic":""}">${_rf.umf[n.id]?"<b>📊 </b>":""}${_rfText(n.text)}</div>
       ${_rf.umf[n.id]?rufeUmfrageHtml(_rf.umf[n.id],arch):""}
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px">
-        ${Object.keys(r).map(e=>`<button type="button" class="rf-reakt" onclick="rufeReagieren(${Number(n.id)},'${e}')" aria-pressed="${r[e].ich}" aria-label="${e} ${r[e].n}, ${r[e].ich?"zurücknehmen":"dazu"}" style="min-height:32px;padding:2px 8px;border-radius:999px;border:1.5px solid ${r[e].ich?"#1e3a8a":"var(--rand-bedien)"};background:${r[e].ich?"#dbeafe":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);cursor:pointer">${e} ${r[e].n}</button>`).join("")}
+        ${Object.keys(r).map(e=>`<button type="button" class="rf-reakt" onclick="rufeReagieren(${Number(n.id)},'${e}')" aria-pressed="${r[e].ich}" aria-label="${e} ${r[e].n}, ${r[e].ich?"zurücknehmen":"dazu"}" style="min-height:44px;padding:2px 8px;border-radius:999px;border:1.5px solid ${r[e].ich?"#1e3a8a":"var(--rand-bedien)"};background:${r[e].ich?"#dbeafe":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);cursor:pointer">${e} ${r[e].n}</button>`).join("")}
         <span style="flex:1"></span>
         <span style="font-size:var(--s-klein);color:var(--text2)">${arch?"archiviert · ":""}${n.bearbeitet_am?"bearbeitet · ":""}${_rfZeit(n.created_at)}</span>
-        ${arch?"":`<button type="button" class="rf-menue-knopf" onclick="rufeMenue(${Number(n.id)})" aria-label="Aktionen zu diesem Ruf" style="width:36px;height:36px;border:none;border-radius:50%;background:transparent;color:var(--text2);font-size:var(--s-teil);cursor:pointer">⋯</button>`}
+        ${arch?"":`<button type="button" class="rf-menue-knopf" onclick="rufeMenue(${Number(n.id)})" aria-label="Aktionen zu diesem Ruf" style="width:44px;height:44px;border:none;border-radius:50%;background:transparent;color:var(--text2);font-size:var(--s-teil);cursor:pointer">⋯</button>`}
       </div>
     </div></div>`;
 }

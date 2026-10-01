@@ -81,7 +81,7 @@ function voiceBtnUpdate(){
   if(!b)return;
   b.innerHTML=voiceOn
     ? '<i class="ti ti-microphone-2"></i>Hört zu… (tippen = Stopp)'
-    : '<i class="ti ti-microphone"></i>Voice<span style="font-size:var(--s-klein);background:#f59e0b;color:#fff;padding:1px 5px;border-radius:8px;margin-left:5px">Beta</span>';
+    : '<i class="ti ti-microphone"></i>Voice<span style="font-size:var(--s-klein);background:#b45309;color:#fff;padding:1px 5px;border-radius:8px;margin-left:5px">Beta</span>';
   b.classList.toggle("btn-p",voiceOn);
 }
 function voiceStart(){
@@ -196,9 +196,9 @@ function atRender(){
   if(!box)return;
   box.innerHTML=`
     <div id="quest-strip" style="position:relative;overflow:hidden;background:var(--surface);border:var(--border-s);border-radius:12px;padding:10px 12px;margin-bottom:12px">${questStripHTML(questCountsAll())}</div>
-    <button onclick="atLiveOpen()" style="width:100%;min-height:64px;margin-bottom:10px;border:none;border-radius:14px;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;font-size:var(--s-teil);font-weight:800;font-family:inherit;cursor:pointer">⚡ Live-Aktion starten (Vollbild)</button>
+    <button onclick="atLiveOpen()" style="width:100%;min-height:64px;margin-bottom:10px;border:none;border-radius:14px;background:linear-gradient(135deg,#0369a1,#1d4ed8);color:#fff;font-size:var(--s-teil);font-weight:800;font-family:inherit;cursor:pointer">⚡ Live-Aktion starten (Vollbild)</button>
     ${voiceSupported?`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-      <button id="voice-btn" class="btn btn-sm" onclick="voiceToggle()"><i class="ti ti-microphone"></i>Voice<span style="font-size:var(--s-klein);background:#f59e0b;color:#fff;padding:1px 5px;border-radius:8px;margin-left:5px">Beta</span></button>
+      <button id="voice-btn" class="btn btn-sm" onclick="voiceToggle()"><i class="ti ti-microphone"></i>Voice<span style="font-size:var(--s-klein);background:#b45309;color:#fff;padding:1px 5px;border-radius:8px;margin-left:5px">Beta</span></button>
       <span style="font-size:var(--s-klein);color:var(--text3);flex:1;min-width:140px">Sag z. B. „Pass“ und den Namen – du bestätigst vor dem Senden. Braucht Netz &amp; Ruhe.</span>
     </div>`:''}
     <div style="font-size:var(--s-klein);color:var(--text3);text-align:center;margin-top:2px">Alle Aktionen – Pässe, Dribblings, Ballgewinne, Paraden, Tore &amp; Gegentore – erfasst du im Vollbild. Ein Elternteil kann per <b>Helfer-Link</b> übernehmen.</div>`;

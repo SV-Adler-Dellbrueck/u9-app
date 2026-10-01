@@ -274,7 +274,7 @@ async function renderTickerView(key){
     // B1: Applaus-Zähler des Spieltags (aggregiert über alle Teams via baseDatum)
     let claps=0; try{const cr=await fetch(`${SB_URL}/rest/v1/ticker_claps?datum=eq.${encodeURIComponent(baseDatum)}&select=count`,{headers:anon});if(cr.ok){const cj=await cr.json();claps=(cj[0]&&cj[0].count)||0;}}catch(e){}
     const clapBar=`<div style="text-align:center;margin-top:16px">
-      <button onclick="tvClap()" style="border:none;background:linear-gradient(135deg,#f59e0b,#ec4899);color:#fff;border-radius:16px;padding:14px 22px;font-size:var(--s-karte);font-weight:800;font-family:inherit;cursor:pointer;box-shadow:0 4px 16px rgba(236,72,153,.35)">👏 Applaus fürs Team</button>
+      <button onclick="tvClap()" style="border:none;background:linear-gradient(135deg,#c2410c,#be185d);color:#fff;border-radius:16px;padding:14px 22px;font-size:var(--s-karte);font-weight:800;font-family:inherit;cursor:pointer;box-shadow:0 4px 16px rgba(236,72,153,.35)">👏 Applaus fürs Team</button>
       <div style="font-size:var(--s-text);color:#5b6b81;margin-top:8px"><span id="tv-claps" style="font-weight:800;color:#db2777">${claps}</span> mal geklatscht</div>
     </div>`;
     const foot=`${clapBar}${adlerkasseHtml}<div style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin-top:14px">Nur-Ansehen · aktualisiert automatisch · SV Adler Dellbrück e.V.</div>`;
@@ -789,10 +789,10 @@ function aufRender(){
   let twRow="";
   if(rotForm.tw){
     if(rotTW){
-      twRow=`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fef3c7;border:1px solid #fcd34d;border-radius:var(--r);font-size:var(--s-text);color:#854d0e;margin-bottom:10px">🥅 <strong>Torwart (Fest): ${esc(rotTW)}</strong><button onclick="rotClearTW()" style="margin-left:auto;min-width:44px;min-height:44px;border:1px solid #fcd34d;border-radius:8px;background:#fff;font-size:var(--s-text);cursor:pointer;color:#854d0e">entfernen</button></div>`;
+      twRow=`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--r);font-size:var(--s-text);color:var(--text);margin-bottom:10px">🥅 <strong>Torwart (Fest): ${esc(rotTW)}</strong><button onclick="rotClearTW()" style="margin-left:auto;min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:8px;background:var(--surface);font-size:var(--s-text);cursor:pointer;color:var(--text)">entfernen</button></div>`;
     }else{
       const opts=[...rotField,...rotBench].map(n=>`<option value="${esc(n)}">${getKader(n)?.nr?getKader(n).nr+" ":""}${esc(n)}</option>`).join("");
-      twRow=`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fffbeb;border:1px dashed #fcd34d;border-radius:var(--r);font-size:var(--s-text);color:#854d0e;margin-bottom:10px">🥅 <strong>Torwart (Fest):</strong><select onchange="rotSetTW(this.value)" style="flex:1;min-height:44px;padding:6px 8px;border:1px solid #fcd34d;border-radius:8px;font-family:inherit;font-size:var(--s-text);background:#fff"><option value="">wählen…</option>${opts}</select></div>`;
+      twRow=`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--amber-bg);border:1px dashed var(--amber);border-radius:var(--r);font-size:var(--s-text);color:var(--text);margin-bottom:10px">🥅 <strong>Torwart (Fest):</strong><select onchange="rotSetTW(this.value)" style="flex:1;min-height:44px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)"><option value="">wählen…</option>${opts}</select></div>`;
     }
   }
   const label=((typeof FORMATIONS!=="undefined"&&FORMATIONS[tbFormation])||{label:tbFormation}).label;

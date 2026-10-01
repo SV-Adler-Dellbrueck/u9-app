@@ -498,11 +498,13 @@
             <button type="button" class="seg-btn" data-val="ausw" onclick="tmSetHeim(false,this)">✈️ Auswärts</button>
           </div>
         </div>
-        <div class="mg" id="tm-spielform-row" style="margin-top:10px;display:none"><label>Spielform</label>
-          <div class="seg-ctrl" id="tm-spielform-seg">
-            <button type="button" class="seg-btn" data-val="funino" onclick="tmSetSpielform('funino',this)">FUNiño</button>
-            <button type="button" class="seg-btn active" data-val="4+1" onclick="tmSetSpielform('4+1',this)">4+1</button>
-            <button type="button" class="seg-btn" data-val="5+1" onclick="tmSetSpielform('5+1',this)">5+1</button>
+        <!-- v708: mehrere Formen möglich (auswärts bietet der Gastgeber oft zwei an) -->
+        <div class="mg" id="tm-spielform-row" style="margin-top:10px;display:none"><label id="tm-spielform-lbl">Spielform – mehrere möglich</label>
+          <div class="seg-ctrl" id="tm-spielform-seg" role="group" aria-labelledby="tm-spielform-lbl" style="flex-wrap:wrap">
+            <button type="button" class="seg-btn" data-val="funino" aria-pressed="false" onclick="tmSetSpielform('funino',this)">FUNiño</button>
+            <button type="button" class="seg-btn" data-val="3+1" aria-pressed="false" onclick="tmSetSpielform('3+1',this)">3+1</button>
+            <button type="button" class="seg-btn active" data-val="4+1" aria-pressed="true" onclick="tmSetSpielform('4+1',this)">4+1</button>
+            <button type="button" class="seg-btn" data-val="5+1" aria-pressed="false" onclick="tmSetSpielform('5+1',this)">5+1</button>
           </div>
         </div>
         <div class="mg" id="tm-dauer-row" style="margin-top:10px;display:none"><label for="tm-halbzeiten">Spieldauer</label>
@@ -621,7 +623,7 @@
     <div class="sl tp-schritt"><span class="tp-nr" aria-hidden="true">5</span>Speichern und starten</div>
     <div id="tp-netto" style="margin:6px 0 8px"></div>
       <button onclick="tpPlanSave(true)" style="width:100%;min-height:48px;margin-bottom:10px;border:none;border-radius:14px;background:var(--surface);border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;color:var(--text);font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">💾 Plan speichern</button>
-      <button onclick="tlStart()" title="Synchroner Start auf allen Trainer-Handys: alle bereit → 10-Sekunden-Countdown → Stationen laufen überall parallel" style="width:100%;min-height:64px;margin-bottom:6px;border:none;border-radius:14px;background:linear-gradient(135deg,#15803d,#16a34a);color:#fff;font-family:inherit;font-size:17px;font-weight:900;cursor:pointer;box-shadow:0 2px 10px rgba(22,163,74,.3)">🟢 Trainingsstart</button>
+      <button onclick="tlStart()" title="Synchroner Start auf allen Trainer-Handys: alle bereit → 10-Sekunden-Countdown → Stationen laufen überall parallel" style="width:100%;min-height:64px;margin-bottom:6px;border:none;border-radius:14px;background:linear-gradient(135deg,#166534,#15803d);color:#fff;font-family:inherit;font-size:17px;font-weight:900;cursor:pointer;box-shadow:0 2px 10px rgba(22,163,74,.3)">🟢 Trainingsstart</button>
       <button onclick="stTimerStart()" title="Lokaler Stationstimer – Fallback ohne Netz" style="width:100%;min-height:44px;border:none;background:transparent;color:var(--text2);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer;text-decoration:underline">⏱️ Solo-Timer (ohne Netz)</button>
   </div><!-- /train-sub-planung -->
 

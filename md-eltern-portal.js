@@ -436,7 +436,9 @@ async function dsgvoAccept(){
   toast("Danke – Einwilligung gespeichert ✓");
   const ok=window._dsgvoOnOk; window._dsgvoOnOk=null; if(typeof ok==="function")ok();
 }
-const EP_RSVP={zugesagt:{lbl:"Zusage",emo:"👍",col:"#059669"},unsicher:{lbl:"Unsicher",emo:"🤔",col:"#ca8a04"},abgesagt:{lbl:"Absage",emo:"👎",col:"#dc2626"},krank:{lbl:"Krank",emo:"🤒",col:"#d97706"}};
+/* v708: Weiß auf #059669 hatte 3,8:1, auf #ca8a04 2,9:1 – die Töne tragen weiße Schrift und
+   stehen als Schrift auf Weiß; beides braucht 4,5:1. */
+const EP_RSVP={zugesagt:{lbl:"Zusage",emo:"👍",col:"#047857"},unsicher:{lbl:"Unsicher",emo:"🤔",col:"#a16207"},abgesagt:{lbl:"Absage",emo:"👎",col:"#dc2626"},krank:{lbl:"Krank",emo:"🤒",col:"#b45309"}};
 // Schnell-Rückmeldung im Karussell: die drei vom PO gewünschten Stufen.
 const EP_RSVP_QUICK=["zugesagt","unsicher","abgesagt"];
 /* ── Tag/Nacht-Modus für den Eltern-Bereich ──────────────────────────────────
@@ -468,6 +470,8 @@ function _elSweepOne(el){
   }
   ["Top","Right","Bottom","Left"].forEach(side=>{ const p="border"+side+"Color";
     const b=_elRgb(s[p]); if(b&&_elLum(b)>205){ d["elB"+side]=s[p]; s[p]=_elMix(b,[51,65,85],0.72); changed=true; }
+    /* v708: dunkle Markenränder (#1e3a8a, #7c3aed, #1a56db) verschwanden auf dunklem Grund (1,3–2,4:1) – aufhellen. */
+    else if(b&&_elLum(b)<100){ d["elB"+side]=s[p]; s[p]=_elMix(b,[226,232,240],0.55); changed=true; }
   });
   if(changed)d.elSwept="1";
 }
@@ -520,6 +524,10 @@ function elternCatOpen(id){
   const panel=document.getElementById("cat-"+id); if(panel)panel.style.display="block";
   const ttl=document.getElementById("el-cat-title"); if(ttl)ttl.textContent=T[id]||(panel&&panel.dataset&&panel.dataset.catTitle)||""; // Kind-Panels tragen ihren Titel selbst
   ov.style.display="block"; ov.scrollTop=0;
+  /* v708: Das Fenster liegt schon beim Laden im DOM – der Beobachter in core.js sieht es nie
+     „neu“ und kennzeichnete es nicht. Deshalb hier: Dialog, Name, Fokus hinein. */
+  ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-label",(ttl&&ttl.textContent)||"Bereich");
+  if(!ov.hasAttribute("tabindex"))ov.setAttribute("tabindex","-1"); try{ov.focus({preventScroll:true});}catch(e){}
   try{history.pushState({elCat:id},"");}catch(e){} // Zurück-Taste schließt das Fenster (Back-Handler in core.js)
   if(id==="news"&&typeof elternNewsMarkSeen==="function")elternNewsMarkSeen(); // Öffnen = gelesen
   if(typeof elternDarkActive==="function"&&elternDarkActive()&&typeof elternThemeSweep==="function")elternThemeSweep(ov);
@@ -842,7 +850,7 @@ async function elternDashLoad(){
   html+=`<button id="eltern-todo-btn" onclick="elternCatOpen('todo')" style="display:none;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:10px;border:none;border-radius:14px;background:linear-gradient(135deg,#b45309,#92400e);color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 2px 10px rgba(217,119,6,.25)">
     <span style="font-size:var(--s-seite);line-height:1">📌</span>
     <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Zu erledigen</span><span style="display:block;font-size:var(--s-klein);opacity:.92;margin-top:1px">Rückmeldungen, Mitbringen, Grillhütte, „Wie war's"</span></span>
-    <span id="eltern-todo-badge" style="background:#fff;color:#d97706;font-weight:800;font-size:var(--s-text);border-radius:12px;padding:2px 9px"></span>
+    <span id="eltern-todo-badge" style="background:#fff;color:#b45309;font-weight:800;font-size:var(--s-text);border-radius:12px;padding:2px 9px"></span>
     <span style="font-size:var(--s-teil);opacity:.85">›</span>
   </button>`;
   // 📣 Adler News: eigener Button (News ≠ To-Do); Panel #cat-news; roter Badge bei Ungelesenem.
@@ -1359,9 +1367,10 @@ async function terminDetailOpen(id){
   }).join("");
   const infoRow=(icon,label,val)=> val?`<div style="display:flex;gap:8px;font-size:var(--s-text);padding:4px 0"><span style="width:20px">${icon}</span><span style="color:#64748b;min-width:72px">${label}</span><span style="flex:1;font-weight:600;min-width:0">${val}</span></div>`:"";
   // Rohwerte aus dem Termin ("funino"/"4+1"/"5+1") sagen Eltern nichts - deshalb ausschreiben.
-  const SF_KLARTEXT={funino:"FUNiño (3 gegen 3 auf 4 Minitore, ohne Torwart)","4+1":"4+1 (vier Feldspieler + Torwart)","5+1":"5+1 (fünf Feldspieler + Torwart)"};
-  const sfRoh=(t.spielform||"").toLowerCase();
-  const spielformLbl = (istSpiel&&t.spielform)?`${esc(SF_KLARTEXT[sfRoh]||t.spielform)}${t.spieldauer_min?` · ${t.halbzeiten||1}× ${t.spieldauer_min} Min`:""}`:"";
+  const SF_KLARTEXT={funino:"FUNiño (3 gegen 3 auf 4 Minitore, ohne Torwart)","3+1":"3+1 (drei Feldspieler + Torwart)","4+1":"4+1 (vier Feldspieler + Torwart)","5+1":"5+1 (fünf Feldspieler + Torwart)"};
+  /* v708: mehrere Formen (auswärts bietet der Gastgeber oft zwei an) – je Form eine Zeile. */
+  const sfL=sfListe(t.spielform).map(x=>SF_KLARTEXT[x.toLowerCase()]||x);
+  const spielformLbl = (istSpiel&&sfL.length)?`${sfL.map(esc).join("<br>")}${t.spieldauer_min?`<br>${t.halbzeiten||1}× ${t.spieldauer_min} Min`:""}`:"";
   c.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px">
       <div style="font-size:var(--s-teil);font-weight:800;min-width:0">${m.icon} ${esc(t.titel||t.gegner||m.label)}</div>
@@ -1420,7 +1429,7 @@ async function tdMitbringLoad(t){
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
       <input id="mb-was-${t.id}" placeholder="Was bringst du mit?" style="flex:1;min-width:140px;min-height:44px;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text)" onkeydown="if(event.key==='Enter')mitbringAdd(${t.id})">
       ${kids.length>1?`<select id="mb-kid-${t.id}" style="min-height:44px;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:#fff">${kidOpts}</select>`:""}
-      <button onclick="mitbringAdd(${t.id})" style="min-height:44px;padding:9px 16px;border:none;border-radius:10px;background:#16a34a;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Eintragen</button>
+      <button onclick="mitbringAdd(${t.id})" style="min-height:44px;padding:9px 16px;border:none;border-radius:10px;background:#15803d;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Eintragen</button>
     </div>
   </div>`;
 }
@@ -1518,7 +1527,7 @@ async function elternChecklistLoad(kids){
     <div style="display:flex;align-items:center;gap:8px"><div style="font-weight:800;font-size:var(--s-karte)">🚀 Erste Schritte</div><span style="margin-left:auto;font-size:var(--s-klein);color:#64748b">${done}/${total} erledigt</span></div>
     <div style="height:6px;background:#e2e8f0;border-radius:4px;margin:8px 0;overflow:hidden"><div style="height:100%;width:${Math.round(done/total*100)}%;background:#16a34a;transition:width .3s"></div></div>
     ${rows}
-    <button onclick="elternChecklistDismiss()" style="width:100%;margin-top:10px;padding:8px;border:none;background:none;color:var(--text3);font-family:inherit;font-size:var(--s-klein);cursor:pointer">Später · für heute ausblenden</button>
+    <button onclick="elternChecklistDismiss()" style="width:100%;min-height:44px;margin-top:10px;padding:8px;border:none;background:none;color:var(--text3);font-family:inherit;font-size:var(--s-klein);cursor:pointer">Später · für heute ausblenden</button>
   </div>`;
 }
 function elternChecklistDismiss(){ try{localStorage.setItem("adler_setup_hide",isoLokal());}catch(e){} const s=document.getElementById("eltern-checklist-slot"); if(s)s.innerHTML=""; }
@@ -1941,7 +1950,7 @@ async function tdNomLoad(t,kids){
       let html;
       if(s.eingeteilt){
         // Trainer hat final entschieden.
-        if(s.nominiert)          html=`<b style="color:#059669">✅ nominiert – dabei!</b>`;
+        if(s.nominiert)          html=`<b style="color:#047857">✅ nominiert – dabei!</b>`;
         else if(s.status==="verletzt") html=`<b style="color:#dc2626">🩹 verletzt – diesmal Pause</b>`;
         else                     html=`<b style="color:#b45309">😌 diesmal pausiert</b>`;
         if(!s.nominiert&&s.grund) html+=`<div style="font-size:var(--s-klein);color:#64748b">${esc(s.grund)}</div>`;

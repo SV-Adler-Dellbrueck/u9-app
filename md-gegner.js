@@ -137,7 +137,7 @@ function gegnerHistoryHtml(name){
 function gegnerFormRender(g){
   const box=document.getElementById("gegner-form"); if(!box)return;
   g=g||{};
-  const fld="width:100%;padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const fld="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
   box.innerHTML=`<div style="border-top:var(--border-s);padding-top:10px">
     <div style="font-size:var(--s-klein);font-weight:800;color:var(--text2);margin-bottom:6px">${g.id?"✏️ Gegner bearbeiten":"➕ Neuer Gegner"}</div>
     <input type="hidden" id="gg-id" value="${g.id||""}">
@@ -351,7 +351,7 @@ function _tmdKarte(t){
   const hb=heimLabel(t);
   const badges=[
     hb?badge(esc(hb),t.heim?"#dcfce7":"#fef3c7",t.heim?"#15803d":"#b45309"):"",
-    (istSpiel&&t.spielform)?badge(esc(t.spielform),m.col+"22",m.col):"",
+    (istSpiel&&t.spielform)?badge(esc(sfText(t.spielform)),m.col+"22",m.col):"",
     (typeof ferienBadge==="function")?ferienBadge(t.datum):""
   ].join("");
   const sec=x=>`<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:14px 0 6px">${x}</div>`;
@@ -664,7 +664,7 @@ function tmCard(t){
   const datumStr=wtag+" "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
   const istSpiel=t.typ==="spiel"||t.typ==="turnier";
   const zeitStr=t.uhrzeit?String(t.uhrzeit).slice(0,5):((/Uhrzeit:\s*(\d{1,2}:\d{2})/.exec(t.notiz||"")||[])[1]||"");
-  const sfBadge=(istSpiel&&t.spielform)?`<span style="font-size:var(--s-klein);font-weight:700;padding:2px 7px;border-radius:10px;background:${m.col}22;color:${m.col}">${esc(t.spielform)}</span>`:"";
+  const sfBadge=(istSpiel&&t.spielform)?`<span style="font-size:var(--s-klein);font-weight:700;padding:2px 7px;border-radius:10px;background:${m.col}22;color:${m.col}">${esc(sfText(t.spielform))}</span>`:"";
   const hb=heimLabel(t), hBadge=hb?`<span style="font-size:var(--s-klein);font-weight:700;padding:2px 7px;border-radius:10px;background:${t.heim?"#dcfce7":"#fef3c7"};color:${t.heim?"#15803d":"#b45309"}">${hb}</span>`:"";
   const notizClean=(t.notiz&&!/^Uhrzeit:/.test(t.notiz))?t.notiz:"";
   /* PO: „Die Kacheln sehen ungeordnet aus und sind teils bunt, teils weiss. Sind alle
@@ -842,7 +842,7 @@ function renderHandoverView(){
     </div>
     <div style="background:#fff;border-radius:14px;padding:14px">
       <div style="font-weight:800;margin-bottom:4px">📍 Ort</div>
-      <div style="font-size:var(--s-karte)">${addr?e2(addr):(pkt.heim===false?"Auswärts – bitte beim Verein erfragen":"—")}${pkt.platz?` · Platz: ${e2(pkt.platz)}`:""}${pkt.spielform?` · ${e2(pkt.spielform)}`:""}</div>
+      <div style="font-size:var(--s-karte)">${addr?e2(addr):(pkt.heim===false?"Auswärts – bitte beim Verein erfragen":"—")}${pkt.platz?` · Platz: ${e2(pkt.platz)}`:""}${pkt.spielform?` · ${e2(sfText(pkt.spielform))}`:""}</div>
       ${addr?`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;padding:8px 12px;background:#eef2ff;color:#1e3a8a;border-radius:8px;text-decoration:none;font-weight:700;font-size:var(--s-text)">🧭 Route</a>`:""}
     </div>
     <div style="background:#fff;border-radius:14px;padding:14px;margin-top:12px">
@@ -872,11 +872,15 @@ function tmEdit(id){
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10001;display:flex;flex-direction:column;padding:14px;overflow-y:auto";
   modal.style.zIndex=zOben(10001);  // ueber einen evtl. schon offenen Dialog legen
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
-  const fld="width:100%;padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const fld="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
   const PLATZ=isSpiel?PLATZ_SPIEL:PLATZ_TRAINING;
   const platzCur=t.platz||(isSpiel?tmPlatzDefault(t.typ):""); // Spiele ohne Eintrag: sinnvolle Vorbelegung
   const platzOpts=`<option value=""${!platzCur?" selected":""}>– kein Platz –</option>`+PLATZ.map(p=>`<option${p===platzCur?" selected":""}>${p}</option>`).join("");
-  const sfOpts=["funino","3+1","4+1","5+1"].map(s=>`<option${s===t.spielform?" selected":""}>${s}</option>`).join("");
+  /* v708: Spielform als Knöpfe mit Mehrfachauswahl – auswärts bestimmt der Gastgeber, oft gibt
+     es zwei Formen (z. B. FUNiño und 3+1). Gespeichert kommagetrennt in termine.spielform. */
+  const sfAn=sfListe(t.spielform).map(x=>x.toLowerCase());
+  const sfKnoepfe=SF_FORMEN.map(f=>`<button type="button" class="seg-btn te-sf-k${sfAn.includes(f)?" active":""}" data-val="${f}" aria-pressed="${sfAn.includes(f)}" onclick="tmEditSf(this)">${f==="funino"?"FUNiño":f}</button>`).join("");
+  const ausw=isSpiel&&t.heim===false;
   // Spieldauer war im Bearbeiten-Dialog gar nicht vorhanden: einmal angelegt, nie änderbar.
   const hz=Number(t.halbzeiten)||1, dauer=Number(t.spieldauer_min)||10;
   const hzOpts=[[1,"1 Spielzeit"],[2,"2 Halbzeiten"]].map(([v,l])=>`<option value="${v}"${v===hz?" selected":""}>${l}</option>`).join("");
@@ -893,23 +897,32 @@ function tmEdit(id){
     <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Ende${isSpiel?" (Pflicht – danach wandert der Termin ins Archiv)":" (optional)"}<input type="time" id="te-ende" value="${t.uhrzeit_ende?String(t.uhrzeit_ende).slice(0,5):''}" style="${fld}"></label>
     <div id="te-ferien-hint"></div>
     ${!isTraining?`<label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Gegner / Titel<input id="te-titel" value="${esc(t.titel||'')}" style="${fld}"></label>`:''}
-    <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Ort / Adresse<input id="te-ort" value="${esc(t.ort||'')}" style="${fld}"></label>
-    ${(isTraining||isSpiel)?`<label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">${isSpiel?"Spielfeld-Aufteilung":"Platz"}<select id="te-platz" style="${fld}">${platzOpts}</select></label>`:''}
-    ${isSpiel?`<label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Spielform<select id="te-sf" style="${fld}">${sfOpts}</select></label>`:''}
+    ${isSpiel?`<div style="margin-top:8px"><div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:3px">Heim oder Auswärts?</div>
+      <div class="seg-ctrl" id="te-heim-seg">
+        <button type="button" class="seg-btn${ausw?"":" active"}" data-val="heim" aria-pressed="${!ausw}" onclick="tmEditHeim(true,${Number(t.id)})">🏠 Heimspiel</button>
+        <button type="button" class="seg-btn${ausw?" active":""}" data-val="ausw" aria-pressed="${ausw}" onclick="tmEditHeim(false,${Number(t.id)})">✈️ Auswärts</button>
+      </div></div>`:''}
+    <label for="te-ort" style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Ort / Adresse</label>
+    <div style="display:flex;gap:8px"><input id="te-ort" value="${esc(t.ort||'')}" style="${fld};flex:1;min-width:0">
+      <button type="button" class="btn btn-sm" onclick="gegnerAddrSearch('te-ort','te-titel','te-addr-results')" aria-label="Adresse suchen (OpenStreetMap)"><i class="ti ti-map-search"></i>Finden</button></div>
+    <div id="te-addr-results"></div>
+    ${(isTraining||isSpiel)?`<label id="te-platz-row" style="font-size:var(--s-klein);color:var(--text2);display:${ausw?"none":"block"};margin-top:8px">${isSpiel?"Spielfeld-Aufteilung":"Platz"}<select id="te-platz" style="${fld}">${platzOpts}</select></label>`:''}
+    ${isSpiel?`<div style="margin-top:8px"><div id="te-sf-lbl" style="font-size:var(--s-klein);color:var(--text2);margin-bottom:3px">${ausw?"Spielform – was der Gastgeber anbietet, mehrere möglich":"Spielform – mehrere möglich"}</div>
+      <div class="seg-ctrl" id="te-sf" role="group" aria-labelledby="te-sf-lbl" style="flex-wrap:wrap">${sfKnoepfe}</div></div>`:''}
     ${isSpiel?`<div style="margin-top:8px"><div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:3px">Spieldauer</div>
       <div style="display:flex;gap:6px">
         <select id="te-hz" style="${fld}">${hzOpts}</select>
         <select id="te-dauer" style="${fld}">${dauerOpts}</select>
       </div></div>`:''}
     <div style="border-top:var(--border-s);margin-top:12px;padding-top:10px">
-      <div style="font-size:var(--s-klein);color:var(--text2);font-weight:700;margin-bottom:6px">Wer hilft</div>
-      ${tmHelferFreigabeHtml(t)}
+      <div id="te-helfer-titel" style="font-size:var(--s-klein);color:var(--text2);font-weight:700;margin-bottom:6px">${ausw?"Wer betreut die Kinder mit?":"Wer hilft"}</div>
+      <div id="te-helfer-box">${tmHelferFreigabeHtml(t)}</div>
       ${isTraining?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <label style="font-size:var(--s-klein);color:var(--text2)">Funino-Tore<input type="number" id="te-funino" min="0" max="40" step="1" inputmode="numeric" placeholder="Anzahl" value="${t.helfer_funino==null?"":Number(t.helfer_funino)}" style="${fld}"></label>
         <label style="font-size:var(--s-klein);color:var(--text2)">Jugendtore<input type="number" id="te-jugendtore" min="0" max="40" step="1" inputmode="numeric" placeholder="Anzahl" value="${t.helfer_jugendtore==null?"":Number(t.helfer_jugendtore)}" style="${fld}"></label>
       </div>
       <div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Anzahl Tore – steht im Text der Aufgabe, wenn du sie oben freigibst.</div>`:''}
-      <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px">Hinweis für Helfer<input id="te-helfer-hinweis" maxlength="140" placeholder="z. B. was heute anders ist als sonst" value="${esc(t.helfer_hinweis||'')}" style="${fld}"></label>
+      <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px"><span id="te-hinweis-lbl">${ausw?"Hinweis für die Betreuung":"Hinweis für Helfer"}</span><input id="te-helfer-hinweis" maxlength="140" placeholder="z. B. was heute anders ist als sonst" value="${esc(t.helfer_hinweis||'')}" style="${fld}"></label>
       ${t.typ==="event"?`<label style="display:flex;align-items:center;gap:10px;min-height:44px;margin-top:8px;font-size:var(--s-text);cursor:pointer"><input type="checkbox" id="te-mitbringen" ${t.mitbringen?"checked":""} style="width:22px;height:22px;margin:0">Eltern sollen etwas mitbringen (Mitbringliste an)</label>`:''}
     </div>
     <div style="display:flex;gap:8px;margin-top:14px">
@@ -931,8 +944,12 @@ function _tmHelferVorlagen(typ,t){
   const alle=(typeof HELFER_AUFGABEN!=="undefined")?HELFER_AUFGABEN:[];
   return alle.filter(a=>a.typen.includes(typ||"training")).filter(a=>typeof a.wenn!=="function"||a.wenn(t));
 }
+/* v708 PO 01.10.: „Ebenso ‚Wer hilft‘ kann weg. Das einzige, was wir an dieser Stelle als Trainer
+   ankreuzen sollen, ist, wer die Kinder am Turnier mit betreuen kann.“ – auswärts nur Betreuung. */
+const _tmNurBetreuung=t=>!!t&&(t.typ==="spiel"||t.typ==="turnier")&&t.heim===false;
 function tmHelferFreigabeHtml(t){
   const frei=Array.isArray(t.helfer_aufgaben)?t.helfer_aufgaben:[];
+  const nurBetr=_tmNurBetreuung(t);
   const hat=k=>frei.find(x=>x&&x.t===k);
   const zeile=(i,a)=>{const f=hat(a.t);
     return `<div style="display:flex;align-items:center;gap:8px;min-height:44px">
@@ -945,6 +962,13 @@ function tmHelferFreigabeHtml(t){
       <input class="te-hf-eigen" maxlength="40" placeholder="Eigene Aufgabe, z. B. Kuchen fürs Fest" value="${esc((f.t||"").replace(/^📌 /,""))}" aria-label="Eigene Aufgabe ${i+1}" style="flex:1;min-width:0;min-height:44px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
       <input type="number" class="te-hf-eigen-n" min="1" max="20" step="1" inputmode="numeric" value="${Number(f.n)||1}" aria-label="So viele Helfer für eigene Aufgabe ${i+1}" style="width:64px;min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
     </div>`;};
+  if(nurBetr){
+    const b=_tmHelferVorlagen(t.typ,t).filter(a=>/Betreuung/.test(a.t));
+    return `<div id="te-helfer-frei">
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px">Anhaken, wenn Eltern die Kinder am Turnier mit betreuen sollen. Zahl = so viele brauchst du.</div>
+    ${b.map((a,i)=>zeile(i,a)).join("")}
+  </div>`;
+  }
   return `<div id="te-helfer-frei">
     <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px">Eltern sehen nur, was du hier anhakst. Zahl = so viele Helfer brauchst du.</div>
     ${_tmHelferVorlagen(t.typ,t).map((a,i)=>zeile(i,a)).join("")}
@@ -974,8 +998,10 @@ async function tmEditSave(id){
   // bewusst geleert – sonst zeigen die Eltern-Karten weiter eine Zeit, die niemand pflegen kann.
   const body={datum, uhrzeit:(g("te-zeit")?.value||"")||null, uhrzeit_ende:(g("te-ende")?.value||"")||null, ort:(g("te-ort")?.value||"").trim()||null, treffzeit:(g("te-treff")?.value||"")||null};
   if(g("te-titel")){const tt=(g("te-titel").value||"").trim()||null; body.titel=tt; body.gegner=isSpiel?tt:null;}
-  if(g("te-platz"))body.platz=(g("te-platz").value||"").trim()||null;
-  if(g("te-sf"))body.spielform=g("te-sf").value||null;
+  const teAusw=!!document.querySelector('#te-heim-seg .seg-btn[data-val="ausw"].active');
+  if(document.getElementById("te-heim-seg"))body.heim=!teAusw;
+  if(g("te-platz"))body.platz=teAusw?null:((g("te-platz").value||"").trim()||null);   // v708: auswärts kein Feld
+  if(g("te-sf"))body.spielform=[...document.querySelectorAll("#te-sf .te-sf-k.active")].map(b=>b.dataset.val).join(",")||null;
   if(g("te-dauer"))body.spieldauer_min=parseInt(g("te-dauer").value)||10;
   if(g("te-hz"))body.halbzeiten=parseInt(g("te-hz").value)||2;
   /* Torzahlen: leer bleibt null (Aufgabe ohne Zahl), eine ausdrueckliche 0 bleibt 0
@@ -997,6 +1023,25 @@ async function tmEditSave(id){
     else toast("Speichern fehlgeschlagen","err");
   }catch(e){toast("Netzwerkfehler","err");}
 }
+/* v708: Spielform-Knopf an/aus (mehrere möglich). */
+function tmEditSf(btn){
+  const an=!btn.classList.contains("active");
+  btn.classList.toggle("active",an); btn.setAttribute("aria-pressed",String(an));
+}
+/* v708: Heim/Auswärts im Bearbeiten-Fenster – auswärts verschwindet die Spielfeld-Aufteilung,
+   und aus „Wer hilft“ wird „Wer betreut die Kinder mit?“. Schon angehakte Aufgaben bleiben
+   erhalten, solange das Fenster offen ist (Betreuung wird übernommen). */
+function tmEditHeim(heim,id){
+  const t=(TM_TERMINE||[]).find(x=>Number(x.id)===Number(id))||{};
+  document.querySelectorAll("#te-heim-seg .seg-btn").forEach(b=>{const an=(b.dataset.val==="heim")===!!heim; b.classList.toggle("active",an); b.setAttribute("aria-pressed",String(an));});
+  const frei=(typeof tmHelferFreigabeLesen==="function"&&document.getElementById("te-helfer-frei"))?tmHelferFreigabeLesen():t.helfer_aufgaben;
+  const tt=Object.assign({},t,{heim:!!heim,helfer_aufgaben:frei});
+  const row=document.getElementById("te-platz-row"); if(row)row.style.display=heim?"block":"none";
+  const box=document.getElementById("te-helfer-box"); if(box)box.innerHTML=tmHelferFreigabeHtml(tt);
+  const ti=document.getElementById("te-helfer-titel"); if(ti)ti.textContent=heim?"Wer hilft":"Wer betreut die Kinder mit?";
+  const hl=document.getElementById("te-hinweis-lbl"); if(hl)hl.textContent=heim?"Hinweis für Helfer":"Hinweis für die Betreuung";
+  const sl=document.getElementById("te-sf-lbl"); if(sl)sl.textContent=heim?"Spielform – mehrere möglich":"Spielform – was der Gastgeber anbietet, mehrere möglich";
+}
 // Trainer-Verfügbarkeit am Termin togglen: neutral → dabei (ja) → nicht (nein) → neutral.
 async function tmTrainerToggle(id,name){
   const t=(TM_TERMINE||[]).find(x=>Number(x.id)===Number(id)); if(!t)return;
@@ -1013,6 +1058,7 @@ async function tmTrainerToggle(id,name){
 // Spielform des Termins wird an Taktikboard + Rotation durchgereicht (Kopplung Schritt 5).
 function tmJump(ziel,datum,spielform){
   document.getElementById("tmd-modal")?.remove();   // v486: das Terminfenster schliesst beim Sprung
+  spielform=sfListe(spielform)[0]||"";   // v708: mehrere Formen – das Taktikbrett nimmt die erste
   if(spielform&&typeof FORMATIONS!=="undefined"&&FORMATIONS[spielform]){
     if(typeof taktikSetFormation==="function")taktikSetFormation(spielform);
     else tbFormation=spielform;

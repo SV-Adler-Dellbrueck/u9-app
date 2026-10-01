@@ -231,7 +231,7 @@ async function periodOpen(){
   const modal=document.createElement("div");modal.id="period-modal";modal.setAttribute("role","dialog");modal.setAttribute("aria-modal","true");modal.setAttribute("aria-label","Saison-Themenplan");
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;display:flex;flex-direction:column;padding:14px;overflow-y:auto";
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
-  const fld="width:100%;padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const fld="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
   const opts=Object.entries(PERIOD_CATS).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
   const card=document.createElement("div");
   card.style.cssText="background:var(--surface);color:var(--text);max-width:480px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
@@ -362,7 +362,7 @@ function renderTraining(){
   const kEl=document.getElementById("tf-kacheln");
   if(kEl){
     const counts={};alle.forEach(x=>{counts[x.gr]=(counts[x.gr]||0)+1;});
-    const kachel=g=>`<button onclick="_tfDb.gruppe=_tfDb.gruppe==='${g.key}'?null:'${g.key}';renderTraining()" aria-pressed="${_tfDb.gruppe===g.key}" style="min-height:64px;border:1px solid var(--rand-bedien);${_tfDb.gruppe===g.key?"background:#16a34a;color:#fff;border-color:#16a34a;":"background:var(--surface);color:var(--text);"}border-top:3px solid #16a34a;border-radius:14px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer;padding:8px 6px">${g.label}<span style="display:block;font-size:var(--s-klein);font-weight:700;opacity:.7;margin-top:2px">${counts[g.key]} Übungen</span></button>`;
+    const kachel=g=>`<button onclick="_tfDb.gruppe=_tfDb.gruppe==='${g.key}'?null:'${g.key}';renderTraining()" aria-pressed="${_tfDb.gruppe===g.key}" style="min-height:64px;border:1px solid var(--rand-bedien);${_tfDb.gruppe===g.key?"background:#15803d;color:#fff;border-color:#15803d;":"background:var(--surface);color:var(--text);"}border-top:3px solid #16a34a;border-radius:14px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer;padding:8px 6px">${g.label}<span style="display:block;font-size:var(--s-klein);font-weight:700;opacity:.7;margin-top:2px">${counts[g.key]} Übungen</span></button>`;
     const vergeben=new Set(TF_OBER.flatMap(o=>o.gruppen));
     kEl.innerHTML=TF_OBER.map((o,oi)=>{
       // Die letzte Überschrift sammelt auch, was in keiner Liste steht (neue Gruppe).
@@ -374,8 +374,8 @@ function renderTraining(){
     }).join("");
   }
   const fEl=document.getElementById("tf-filter");
-  if(fEl)fEl.innerHTML=[0,1,2,3].map(s=>`<button onclick="_tfDb.stern=${s};renderTraining()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);${_tfDb.stern===s?"background:#16a34a;color:#fff;border-color:#16a34a;":"background:var(--surface2);color:var(--text2);"}border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${s===0?"Alle":"⭐".repeat(s)}</button>`).join("")
-    +`<button onclick="_tfDb.lange=!_tfDb.lange;renderTraining()" title="Übungen, die 4+ Wochen nicht dran waren" style="flex:1.4;min-height:44px;border:1px solid var(--rand-bedien);${_tfDb.lange?"background:#16a34a;color:#fff;border-color:#16a34a;":"background:var(--surface2);color:var(--text2);"}border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">🕘 lange her</button>`;
+  if(fEl)fEl.innerHTML=[0,1,2,3].map(s=>`<button onclick="_tfDb.stern=${s};renderTraining()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);${_tfDb.stern===s?"background:#15803d;color:#fff;border-color:#15803d;":"background:var(--surface2);color:var(--text2);"}border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${s===0?"Alle":"⭐".repeat(s)}</button>`).join("")
+    +`<button onclick="_tfDb.lange=!_tfDb.lange;renderTraining()" title="Übungen, die 4+ Wochen nicht dran waren" style="flex:1.4;min-height:44px;border:1px solid var(--rand-bedien);${_tfDb.lange?"background:#15803d;color:#fff;border-color:#15803d;":"background:var(--surface2);color:var(--text2);"}border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">🕘 lange her</button>`;
   // Ohne Auswahl nur die Kacheln zeigen – keine 100-Übungen-Liste
   if(!search&&!_tfDb.gruppe&&!_tfDb.stern&&!_tfDb.lange){
     wrap.innerHTML='<div style="text-align:center;padding:1.6rem 1rem;color:var(--text2)"><div style="font-size:30px;margin-bottom:6px">📚</div><div style="font-size:var(--s-text);font-weight:700;color:var(--text)">Gruppe antippen oder suchen</div></div>';
@@ -405,7 +405,7 @@ function _tfKarte(x){
     <button onclick="tpArtTipp('${(x.f.name||"").replace(/'/g,"\\'")}')" title="Übungsform oder Spielform – antippen zum Einordnen" aria-label="Art der Übung: ${_tpArt(x.f)?UEBUNG_ART[_tpArt(x.f)].lang:"noch nicht eingeordnet"}" style="flex:none;min-height:44px;padding:0 4px;border:none;background:transparent;cursor:pointer">${tpArtChip(x.f,true)}</button>
     <span role="img" aria-label="Schwierigkeit ${stern} von 3" title="Schwierigkeit – ändern im Übungsdetail" style="min-width:48px;display:inline-flex;align-items:center;justify-content:center;color:#f59e0b;font-size:var(--s-text);letter-spacing:1px">${"⭐".repeat(stern)}</span>
     ${uebungEditierbar(x.f)?`<button onclick="uebungBearbeiten(${x.i})" class="tf-bearbeiten" aria-label="${esc(x.f.name)} bearbeiten" title="Übung bearbeiten" style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-size:var(--s-text);cursor:pointer">✏️</button>`:""}
-    <button onclick="tfInPlan(${x.i})" aria-label="In den Trainingsplan übernehmen" title="In den Trainingsplan übernehmen" style="min-width:44px;min-height:44px;border:none;border-radius:10px;background:#16a34a;color:#fff;font-size:var(--s-teil);font-weight:900;cursor:pointer">➕</button>
+    <button onclick="tfInPlan(${x.i})" aria-label="In den Trainingsplan übernehmen" title="In den Trainingsplan übernehmen" style="min-width:44px;min-height:44px;border:none;border-radius:10px;background:#15803d;color:#fff;font-size:var(--s-teil);font-weight:900;cursor:pointer">➕</button>
   </div>`;
 }
 // Übung aus der Datenbank in den nächsten freien, passenden Slot des Trainingsplans legen.
@@ -4040,7 +4040,7 @@ function stTimerRender(done){
   const ov=document.getElementById("st-timer"); if(!ov)return;
   if(done){
     ov.innerHTML=`<div style="font-size:60px">🎉</div><div style="font-size:26px;font-weight:800;margin:12px 0">Training geschafft!</div>
-      <button onclick="stTimerStop()" style="margin-top:20px;padding:14px 28px;border:none;border-radius:12px;background:#16a34a;color:#fff;font-size:var(--s-karte);font-weight:800;font-family:inherit;cursor:pointer">Fertig</button>`;
+      <button onclick="stTimerStop()" style="margin-top:20px;padding:14px 28px;border:none;border-radius:12px;background:#15803d;color:#fff;font-size:var(--s-karte);font-weight:800;font-family:inherit;cursor:pointer">Fertig</button>`;
     return;
   }
   const s=_stT.stations[_stT.ix]||{}, next=_stT.stations[_stT.ix+1];
@@ -4202,8 +4202,8 @@ function tpRenderMindsetTip(){
     if(!anker)return;
     anker.insertAdjacentElement("afterend",box);
   }
-  box.innerHTML=`<div style="margin-top:10px;padding:10px 12px;background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7;border-radius:var(--rl)">
-    <div style="font-size:var(--s-text);font-weight:800;color:#047857;margin-bottom:4px">🧠 Mindset-Baustein des Tages</div>
+  box.innerHTML=`<div style="margin-top:10px;padding:10px 12px;background:var(--green-bg);color:var(--text);border:1px solid var(--green);border-radius:var(--rl)">
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--green);margin-bottom:4px">🧠 Mindset-Baustein des Tages</div>
     <div style="font-size:var(--s-text);font-weight:600;color:var(--text)">${esc(wahl.f.name)}</div>
     <div style="font-size:var(--s-klein);color:var(--text2);margin:2px 0 6px">${esc(wahl.f.kurz||"")}</div>
     <button class="btn btn-sm" onclick="tpShowExercise(${wahl.i})"><i class="ti ti-eye"></i>Form ansehen</button>
@@ -4661,10 +4661,10 @@ function tpPickerRender(){
     const kacheln=KAT_GRUPPEN.filter(g=>gruppenIm.has(g.key));
     if(gruppenIm.has("eigene"))kacheln.push({key:"eigene",label:"🧪 Eigene & KI"});
     gr.style.display=kacheln.length>1?"grid":"none";
-    gr.innerHTML=kacheln.map(g=>`<button onclick="_tpPick.gruppe=_tpPick.gruppe==='${g.key}'?null:'${g.key}';tpPickerRender()" style="min-height:56px;border:1px solid var(--rand-bedien);${_tpPick.gruppe===g.key?"background:#16a34a;color:#fff;border-color:#16a34a;":"background:var(--surface2);color:var(--text2);"}border-radius:12px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer;padding:8px">${g.label}</button>`).join("");
+    gr.innerHTML=kacheln.map(g=>`<button onclick="_tpPick.gruppe=_tpPick.gruppe==='${g.key}'?null:'${g.key}';tpPickerRender()" style="min-height:56px;border:1px solid var(--rand-bedien);${_tpPick.gruppe===g.key?"background:#15803d;color:#fff;border-color:#15803d;":"background:var(--surface2);color:var(--text2);"}border-radius:12px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer;padding:8px">${g.label}</button>`).join("");
   }
   const st=document.getElementById("tp-pick-sterne");
-  if(st)st.innerHTML=[0,1,2,3].map(s=>`<button onclick="_tpPick.stern=${s};tpPickerRender()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);${_tpPick.stern===s?"background:#16a34a;color:#fff;border-color:#16a34a;":"background:var(--surface2);color:var(--text2);"}border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${s===0?"Alle":"⭐".repeat(s)}</button>`).join("");
+  if(st)st.innerHTML=[0,1,2,3].map(s=>`<button onclick="_tpPick.stern=${s};tpPickerRender()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);${_tpPick.stern===s?"background:#15803d;color:#fff;border-color:#15803d;":"background:var(--surface2);color:var(--text2);"}border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${s===0?"Alle":"⭐".repeat(s)}</button>`).join("");
   const q=(_tpPick.suche||"").trim().toLowerCase();
   let items=alle;
   if(q)items=items.filter(x=>(x.f.name+" "+(x.f.kat||"")).toLowerCase().includes(q));
@@ -5028,7 +5028,7 @@ function _tlRender(){
       <div style="font-size:64px">🎉</div>
       <div style="font-size:var(--s-seite);font-weight:900;margin:10px 0">Training geschafft!</div>
       <div style="font-size:var(--s-text);opacity:.8">Denkt an die Nachbewertung – jeder bewertet seine eigenen Übungen.</div>
-      <button onclick="tlSchliessen()" style="margin-top:24px;padding:14px 28px;border:none;border-radius:12px;background:#16a34a;color:#fff;font-size:var(--s-karte);font-weight:800;font-family:inherit;cursor:pointer">Fertig</button>
+      <button onclick="tlSchliessen()" style="margin-top:24px;padding:14px 28px;border:none;border-radius:12px;background:#15803d;color:#fff;font-size:var(--s-karte);font-weight:800;font-family:inherit;cursor:pointer">Fertig</button>
     </div>`;
     return;
   }
@@ -5049,7 +5049,7 @@ function _tlRender(){
         }).join("")}
       </div>
       ${binBereit?'<div style="font-size:var(--s-karte);opacity:.8">Warten auf die anderen…</div>'
-        :`<button onclick="tlBereit()" style="width:100%;max-width:340px;min-height:64px;border:none;border-radius:16px;background:#16a34a;color:#fff;font-size:var(--s-teil);font-weight:900;font-family:inherit;cursor:pointer">✅ Bereit!</button>`}
+        :`<button onclick="tlBereit()" style="width:100%;max-width:340px;min-height:64px;border:none;border-radius:16px;background:#15803d;color:#fff;font-size:var(--s-teil);font-weight:900;font-family:inherit;cursor:pointer">✅ Bereit!</button>`}
       <button onclick="tlAbbrechen()" style="display:block;margin:18px auto 0;min-height:44px;border:none;background:transparent;color:#94a3b8;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer;text-decoration:underline">🔁 Abbrechen & neu starten</button>
     </div>`;
     return;
@@ -5091,7 +5091,7 @@ function _tlRender(){
       ${_tl.uhr.laps.length?`<div style="font-size:var(--s-text);opacity:.75;margin-top:8px">${_tl.uhr.laps.map((l,i)=>`R${_tl.uhr.laps.length-i}: ${_tlFmt(l)}`).join(" · ")}</div>`:""}
     </div>
     ${ich?'<div style="font-size:var(--s-karte);font-weight:800;color:#4ade80">✅ Gemeldet – warten auf die anderen…</div>'
-      :`<button onclick="tlAbgeschlossen()" style="width:100%;max-width:340px;min-height:60px;border:none;border-radius:16px;background:#16a34a;color:#fff;font-size:var(--s-teil);font-weight:900;font-family:inherit;cursor:pointer">✅ Übung abgeschlossen</button>`}
+      :`<button onclick="tlAbgeschlossen()" style="width:100%;max-width:340px;min-height:60px;border:none;border-radius:16px;background:#15803d;color:#fff;font-size:var(--s-teil);font-weight:900;font-family:inherit;cursor:pointer">✅ Übung abgeschlossen</button>`}
     <button onclick="tlAbbrechen()" style="display:block;margin:14px auto 0;min-height:44px;border:none;background:transparent;color:#94a3b8;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer;text-decoration:underline">🔁 Abbrechen & neu starten</button>
   </div>`;
 }
