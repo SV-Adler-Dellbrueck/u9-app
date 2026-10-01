@@ -573,7 +573,7 @@ function tbZeile(e){
   const worte = Array.isArray(e.schlagworte) ? e.schlagworte : [];
   const keim = tbStatus(e)==="keim", offen = tbUnbestaetigt(e);
   const kons = _TB_PUNKTE.filter(p=>Number(p.eintrag_id)===Number(e.id) && p.art==="konsequenz");
-  const konsText = kons.length ? kons.map(p=>esc(p.text)+tbFristText(p)+(p.erledigt_am?" ✓":"")).join("<br>")
+  const konsText = kons.length ? kons.map(p=>esc(p.text)+tbFristText(p)+(p.wirkung?` · ${TB_WIRKUNG[p.wirkung]||""} (${tbDatumDe(p.wirkung_am)})`:(p.erledigt_am?" ✓":""))).join("<br>")
                                : (e.konsequenz ? esc(e.konsequenz)+(e.konsequenz_bis?` (bis ${tbDatumDe(e.konsequenz_bis)})`:"") : "");
   const kinder = _TB_KINDER.filter(k=>Number(k.eintrag_id)===Number(e.id)).map(k=>tbKindName(k.kader_id)).filter(Boolean);
   return `<div class="tb-zeile" data-id="${Number(e.id)}" style="background:var(--surface);border:var(--border-s);${offen?"border-left:4px solid var(--purple);":""}border-radius:var(--rl);padding:11px 12px;margin-bottom:6px">
@@ -718,7 +718,7 @@ function tbMarkdown(e, ausgabe){
   const z = [], zeile = t => String(t||"").replace(/\n/g," ");
   const kons = (typeof _TB_PUNKTE!=="undefined" ? _TB_PUNKTE : []).filter(p=>Number(p.eintrag_id)===Number(e.id) && p.art==="konsequenz");
   const konsText = kons.length
-    ? kons.map(p=>zeile(p.text)+tbFristText(p)+(a==="arbeit"&&p.erledigt_am?` – erledigt am ${tbDatumDe(p.erledigt_am)}`:"")).join("; ")
+    ? kons.map(p=>zeile(p.text)+tbFristText(p)+(p.wirkung?` – Wirkung am ${tbDatumDe(p.wirkung_am)}: ${({geklappt:"geklappt",teilweise:"teilweise",noch_nicht:"noch nicht"})[p.wirkung]}`:"")+(a==="arbeit"&&p.erledigt_am&&!p.wirkung?` – erledigt am ${tbDatumDe(p.erledigt_am)}`:"")).join("; ")
     : zeile(e.konsequenz)+(e.konsequenz_bis?` (bis ${tbDatumDe(e.konsequenz_bis)})`:"");
   z.push(`### ${tbDatumDe(e.datum)} — ${b?b.kurz:(tbStatus(e)==="keim"?"GEDANKE":String(e.baustein||"").toUpperCase())}`);
   z.push("");
@@ -1206,6 +1206,77 @@ try{ _wwAbsicht(); }catch(e){}
 
 /* Die Startseite ist schon gezeichnet, wenn dieses Modul (Welle 2) ankommt – die Karte jetzt nachziehen. */
 try{ if(document.getElementById("home-wiewars")) wieWarsKarte(); }catch(e){}
+
+/* ── v712 · Trainerkreislauf ────────────────────────────────────────────────────────────────
+   PO 01.10. (Kachel „Trainerkreislauf“): Beobachtung → Konsequenz → nächstes Training → Wirkung.
+   Die Konsequenzen aus dem Tagebuch (tagebuch_punkt, art „konsequenz“) lagen bisher nur im
+   Tagebuch. Jetzt stehen die offenen im Trainingsplan des nächsten Trainings – mit bis zu drei
+   passenden Übungen aus der Bibliothek –, und „Wie war's?“ fragt nach dem Training, ob sie
+   gewirkt haben (geklappt / teilweise / noch nicht). „Geklappt“ hakt sie ab, „gilt dauerhaft“
+   bleibt stehen. So entsteht für den Lehrgang die Kette Beobachtung → Maßnahme → Wirkung. */
+const TB_WIRKUNG = { geklappt:"✅ geklappt", teilweise:"🟡 teilweise", noch_nicht:"🔁 noch nicht" };
+async function tbFokusLaden(datum){
+  if(typeof sbToken!=="function" || !sbToken()) return [];
+  try{
+    const r = await fetch(`${SB_URL}/rest/v1/tagebuch_punkt?select=id,eintrag_id,datum,text,bis,dauerhaft,erledigt_am,wirkung,wirkung_am&art=eq.konsequenz&order=datum.desc&limit=30`,{headers:sbAuthHeaders()});
+    if(!r.ok) return [];
+    const rows = (await r.json())||[];
+    /* offen = nicht erledigt; vor dem Termin entstanden; Frist nicht abgelaufen (oder dauerhaft);
+       wer an diesem Tag schon beantwortet wurde, bleibt sichtbar – mit seiner Antwort. */
+    return rows.filter(p => (!p.erledigt_am || p.wirkung_am===datum)
+      && (!p.datum || p.datum < datum)   // am selben Tag vorgenommen gilt fürs NÄCHSTE Training
+      && (p.dauerhaft || !p.bis || p.bis >= datum)).slice(0,3);
+  }catch(e){ return []; }
+}
+/* Übungen zur Konsequenz: Wörter ab fünf Buchstaben gegen Name, Kurztext und Coaching der
+   Bibliothek; die meisten Treffer zuerst. Ohne Treffer kein Vorschlag – nie raten. */
+function tbUebungVorschlaege(text){
+  const alle = (typeof tpAllForms==="function") ? tpAllForms() : [];
+  const stop = new Set(["immer","nicht","werden","sollen","mehr","diese","dieser","einem","einen","eines","beim","nach","noch","sich","dass","wieder","jetzt","training","trainings","kinder","kindern","übung","übungen","besser"]);
+  const worte = [...new Set(String(text||"").toLowerCase().match(/[a-zäöüß]{5,}/g)||[])].filter(w=>!stop.has(w)).map(w=>w.slice(0,Math.max(5,w.length-2)));
+  if(!worte.length) return [];
+  return alle.map((f,i)=>{ const t=[f.name,f.kurz,f.coaching,f.kat].join(" ").toLowerCase(); return { i, f, n: worte.filter(w=>t.includes(w)).length }; })
+    .filter(x=>x.n>0).sort((a,b)=>b.n-a.n).slice(0,3);
+}
+/* modus „plan“ (Trainingsplan) oder „wirkung“ („Wie war's?“ einer Einheit). */
+async function tbFokusInto(elId, datum, modus){
+  const box = document.getElementById(elId); if(!box) return;
+  if(!datum){ box.innerHTML = ""; return; }
+  const pkt = await tbFokusLaden(datum);
+  if(document.getElementById(elId)!==box) return;
+  if(!pkt.length){ box.innerHTML = ""; return; }
+  const karte = "background:var(--surface);border:1px solid var(--rand-bedien);border-left:4px solid var(--purple);border-radius:var(--rl);padding:10px 12px;margin:6px 0 10px";
+  if(modus==="plan"){
+    box.innerHTML = `<div style="${karte}">
+      <div style="font-size:var(--s-text);font-weight:800">🎯 Vorgenommen – aus dem Tagebuch</div>
+      ${pkt.map(p=>{ const vs = tbUebungVorschlaege(p.text);
+        return `<div style="margin-top:8px;font-size:var(--s-text);line-height:1.5">${esc(p.text)}${p.dauerhaft?' <span style="color:var(--text2)">· gilt dauerhaft</span>':""}
+          ${vs.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">${vs.map(v=>`<button type="button" class="btn btn-sm" onclick="tpShowExercise(${v.i})" style="min-height:44px"><i class="ti ti-eye"></i>${esc(v.f.name)}</button>`).join("")}</div>`:""}</div>`; }).join("")}
+      <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px">Nach dem Training fragt „Wie war's?“, ob es gewirkt hat.</div>
+    </div>`;
+    return;
+  }
+  box.innerHTML = `<div style="${karte}">
+    <div style="font-size:var(--s-text);font-weight:800">🎯 Hat gewirkt, was ihr euch vorgenommen habt?</div>
+    ${pkt.map(p=>`<div style="margin-top:8px"><div style="font-size:var(--s-text);line-height:1.5">${esc(p.text)}</div>
+      <div role="group" aria-label="Wirkung" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">${Object.keys(TB_WIRKUNG).map(k=>`<button type="button" class="btn btn-sm" aria-pressed="${p.wirkung===k}" onclick="tbWirkungSetzen(${Number(p.id)},'${k}','${esc(datum)}','${elId}')" style="min-height:44px;${p.wirkung===k?"background:var(--purple);color:#fff;border-color:var(--purple)":""}">${TB_WIRKUNG[k]}</button>`).join("")}</div></div>`).join("")}
+  </div>`;
+}
+async function tbWirkungSetzen(id, wirkung, datum, elId){
+  const ich = (typeof tbAutor==="function") ? await tbAutor() : "";
+  const p = (await tbFokusLaden(datum)).find(x=>Number(x.id)===Number(id)) || {};
+  const body = { wirkung, wirkung_am: datum };
+  if(wirkung==="geklappt" && !p.dauerhaft){ body.erledigt_am = datum; body.erledigt_von = ich||null; }
+  else if(p.erledigt_am===datum){ body.erledigt_am = null; body.erledigt_von = null; }   // umentschieden am selben Tag
+  try{
+    const r = await fetch(`${SB_URL}/rest/v1/tagebuch_punkt?id=eq.${Number(id)}`,{method:"PATCH",headers:{...sbAuthHeaders(),"Content-Type":"application/json"},body:JSON.stringify(body)});
+    if(typeof sbCheck401==="function" && sbCheck401(r)) return;
+    if(!r.ok){ toast("Konnte nicht speichern","err"); return; }
+  }catch(e){ toast("Netzwerkfehler","err"); return; }
+  const tp = _TB_PUNKTE.find(x=>Number(x.id)===Number(id)); if(tp) Object.assign(tp, body);
+  toast("Wirkung vermerkt ✓");
+  tbFokusInto(elId, datum, "wirkung");
+}
 
 /* MODUL_WACHE: letzte Funktion der Datei. Stirbt sie vorher, fehlt genau dieser Name. */
 function tagebuchModulDa(){ return true; }

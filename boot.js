@@ -3734,6 +3734,7 @@ async function tpKopfLaden(datum){
   const box=document.getElementById("tp-kopf"); if(!box)return;
   box.innerHTML="";
   datum=datum||document.getElementById("tp-date")?.value;
+  if(typeof tbFokusInto==="function")tbFokusInto("tp-fokus",datum,"plan");   // v712: Trainerkreislauf (Welle 2)
   if(!datum||!sbToken())return;
   let k=null;
   try{
