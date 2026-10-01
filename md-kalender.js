@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════
    KALENDER / TERMINE – das Rückgrat, das Training, Spiele und Turniere verbindet
 ═══════════════════════════════════ */
-let tmTyp="training", tmSpielform="4+1", tmHeim=true;
+let tmTyp="training", tmSpielform="funino,3+1", tmHeim=true;   // v709 PO: „immer Funino und 3+1 voreingestellt“
 // Heimadresse des SV Adler Dellbrück – wird bei Training & Heimspielen vorbelegt.
 const VEREIN_ADRESSE="Thurner Kamp 97, 51069 Köln";
 // Nächstes Trainingsdatum: wir trainieren Mo & Fr – das jeweils nächste dieser Tage.
@@ -71,6 +71,11 @@ function tmSetTyp(t,btn){
      faellt weg – die Zeilen dazu blenden die Regeln unten ohnehin schon aus. */
   const istMeeting=(t==="trainermeeting");
   disp("tm-spielform-row", istSpiel);
+  /* v709 PO: „Bei Spielform sollte immer Funino und 3+1 voreingestellt sein.“ – bei jedem neuen
+     Formular (Typwechsel, nach dem Anlegen) wieder auf diese beiden. */
+  if(istSpiel){ const seg=document.getElementById("tm-spielform-seg");
+    if(seg)seg.querySelectorAll(".seg-btn").forEach(b=>{const an=b.dataset.val==="funino"||b.dataset.val==="3+1"; b.classList.toggle("active",an); b.setAttribute("aria-pressed",String(an));});
+    tmSpielform="funino,3+1"; }
   disp("tm-dauer-row", istSpiel);
   disp("tm-heim-row", istSpiel);                          // Heim/Auswärts nur bei Spiel/Turnier
   /* PO: Beim Training kommen alle zur Trainingszeit – eine getrennte Treffzeit gibt es nur,
@@ -319,10 +324,26 @@ async function gegnerAddrSearch(ortId,titelId,boxId){
   const box=document.getElementById(boxId); if(!box)return;
   const gegner=(document.getElementById(titelId)?.value||"").trim();
   const ort=(document.getElementById(ortId)?.value||"").trim();
-  const q=ort||gegner;
-  if(!q){toast("Erst Gegner/Ort eintippen","err");return;}
-  box.innerHTML=`<div style="font-size:var(--s-klein);color:var(--text3);padding:6px 2px">🔍 Suche „${esc(q)}"…</div>`;
-  const res=await osmSearch(q);
+  /* v709 PO 01.10.: „Warum findet er nicht die Hausnummer? Ist es möglich, dass die Adresse des
+     Vereins direkt gesucht wird?“ – OpenStreetMap kennt längst nicht jede Hausnummer und liefert
+     dann nur die Straße. Deshalb: (1) Suche nach dem Getippten UND nach dem Verein/der Anlage aus
+     dem Titel („Kinderfestival · FC Chorweiler U9“ → „FC Chorweiler“), (2) fehlt einem Treffer auf
+     derselben Straße die Hausnummer, wird die getippte eingesetzt. */
+  const verein=gegner.split("·").pop().replace(/\b(U ?\d{1,2}|Kinderfestival|Festival|Turnier|Spieltag|Heimspiel)\b/gi,"").replace(/\s{2,}/g," ").trim();
+  const anfragen=[...new Set([ort,verein].filter(x=>x&&x.length>2))];
+  if(!anfragen.length){toast("Erst Gegner/Ort eintippen","err");return;}
+  box.innerHTML=`<div style="font-size:var(--s-klein);color:var(--text3);padding:6px 2px">🔍 Suche „${esc(anfragen.join("“ und „"))}"…</div>`;
+  const getippt=/^\s*([^\d,]+?)\s+(\d+\s?[a-zA-Z]?)\b/.exec(ort||"");   // „Merianstraße 17a, …“ → Straße + Nummer
+  let res=[];
+  for(let i=0;i<anfragen.length;i++){
+    if(i)await new Promise(x=>setTimeout(x,1100));   // Nominatim: höchstens eine Anfrage je Sekunde
+    (await osmSearch(anfragen[i])).forEach(r=>{
+      if(getippt&&r.road&&!r.hn&&r.road.toLowerCase().replace(/str\.?$/,"straße").startsWith(getippt[1].trim().toLowerCase().replace(/str\.?$/,"straße").slice(0,6)))
+        r.label=[r.name,`${r.road} ${getippt[2].replace(/\s/g,"")}`,r.ort].filter(Boolean).join(", ");
+      if(!res.some(x=>x.label===r.label))res.push(r);
+    });
+  }
+  res=res.slice(0,6);
   if(!res.length){ box.innerHTML=`<div style="font-size:var(--s-klein);color:var(--text3);padding:6px 2px">Keine Adresse gefunden – bitte manuell eintragen.</div>`; return; }
   box.innerHTML=`<div style="font-size:var(--s-klein);color:var(--text3);margin:6px 2px 2px">Tippe die passende Adresse an:</div>`+
     res.map(r=>`<button type="button" onclick="gegnerAddrPick(this)" data-addr="${esc(r.label).replace(/"/g,"&quot;")}" data-ort="${ortId}" data-titel="${titelId}" data-box="${boxId}" style="display:block;width:100%;min-height:44px;text-align:left;margin-top:4px;padding:8px 10px;border:1px solid var(--rand-bedien);border-radius:8px;background:var(--surface);font-family:inherit;font-size:var(--s-klein);color:var(--text);cursor:pointer;white-space:normal;line-height:1.3">📍 ${esc(r.label)}</button>`).join("");

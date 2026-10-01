@@ -61,7 +61,8 @@ module.exports = async function (h) {
     o.neuPlatzWert = document.getElementById("tm-platz").value;
     const seg = document.getElementById("tm-spielform-seg");
     o.neuKnoepfe = [...seg.querySelectorAll(".seg-btn")].map(b => b.dataset.val);
-    seg.querySelector('[data-val="funino"]').click(); seg.querySelector('[data-val="3+1"]').click();
+    o.neuVor = tmSpielform;                       // v709: FUNiño + 3+1 voreingestellt
+    seg.querySelector('[data-val="4+1"]').click();
     o.neuSf = tmSpielform;
     tmSetHeim(true);
     o.neuPlatzHeim = getComputedStyle(document.getElementById("tm-platz-row")).display !== "none";
@@ -82,7 +83,7 @@ module.exports = async function (h) {
   if (!r.hPlatz || r.hAufgaben < 4 || r.hEigene !== 2) probleme.push(`b) heim: Platz ${r.hPlatz}, Aufgaben ${r.hAufgaben}, eigene ${r.hEigene}`);
   if (r.umPlatz || r.umAufgaben.length !== 1) probleme.push(`b) Umschalten auf auswärts: Platz ${r.umPlatz}, ${JSON.stringify(r.umAufgaben)}`);
   if (r.neuPlatzAn || r.neuPlatzWert) probleme.push(`c) Neuer Termin auswärts: Platz sichtbar ${r.neuPlatzAn}, Wert „${r.neuPlatzWert}“`);
-  if (r.neuKnoepfe.join() !== "funino,3+1,4+1,5+1" || r.neuSf !== "funino,3+1,4+1") probleme.push(`c) Neuer Termin Spielform: ${r.neuKnoepfe.join()} → „${r.neuSf}“`);
+  if (r.neuKnoepfe.join() !== "funino,3+1,4+1,5+1" || r.neuVor !== "funino,3+1" || r.neuSf !== "funino,3+1,4+1") probleme.push(`c) Neuer Termin Spielform: ${r.neuKnoepfe.join()} → „${r.neuSf}“`);
   if (!r.neuPlatzHeim) probleme.push("c) zurück auf Heim: Spielfeld-Aufteilung fehlt");
   if (r.sfText !== "FUNiño · 3+1" || r.sfListe.join() !== "4+1") probleme.push(`d) sfText „${r.sfText}“`);
   zeilen.push(`a) auswärts: ${r.sfKnoepfe.length} Spielform-Knöpfe, Aufgaben ${JSON.stringify(r.aufgaben)} → ${JSON.stringify({ sf: b.spielform, platz: b.platz })}`);

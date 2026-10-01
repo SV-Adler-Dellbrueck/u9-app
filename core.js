@@ -760,7 +760,14 @@ async function osmSearch(query){
     const u=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query.trim())}&format=json&limit=5&addressdetails=1&countrycodes=de&accept-language=de`;
     const r=await fetch(u,{headers:{'Accept':'application/json'}});
     if(!r.ok)return [];
-    return ((await r.json())||[]).map(x=>({label:x.display_name,lat:parseFloat(x.lat),lon:parseFloat(x.lon)}));
+    /* v709: kurze Anschrift statt der langen OSM-Kette („…, Fühlingen, Chorweiler, Köln,
+       Nordrhein-Westfalen, 50769, Deutschland“); Name einer Anlage vorn, Straße/Hausnummer,
+       PLZ Ort. road/hn bleiben einzeln, damit die Suche eine getippte Hausnummer ergänzen kann. */
+    return ((await r.json())||[]).map(x=>{ const a=x.address||{};
+      const road=a.road||a.pedestrian||a.footway||"", hn=a.house_number||"", ort=[a.postcode||"",a.city||a.town||a.village||a.municipality||""].join(" ").trim();
+      const name=(x.name&&x.name!==road)?x.name:"";
+      const kurz=[name,[road,hn].join(" ").trim(),ort].filter(Boolean).join(", ");
+      return {label:kurz||x.display_name,voll:x.display_name,name,road,hn,ort,lat:parseFloat(x.lat),lon:parseFloat(x.lon)}; });
   }catch(e){return [];}
 }
 // Ort-String → {lat,lon}, dauerhaft gecacht (localStorage) → pro Ort nur EIN Netz-Aufruf.
