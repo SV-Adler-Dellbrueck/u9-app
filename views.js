@@ -4347,6 +4347,43 @@ function rueckmeldeStatistikRender(art){
     <tbody>${rows.map(x=>`<tr>${td(esc(x.name||""),true)}${td(Number(x.antworten)||0)}${td(_rsDauer(x.vorlauf_std))}${td(Number(x.kurzfristig)||0)}${td(Number(x.umentschieden)||0)}${td(Number(x.zu_dann_ab)||0)}${art==="spiel"?td(Number(x.ohne_antwort)||0):""}</tr>`).join("")}</tbody></table></div>
     <div style="font-size:var(--s-klein);color:var(--text2);margin-top:10px;line-height:1.5">„Ø vorher“: wie lange vor Terminbeginn die erste Antwort kam. „umentschieden“ und „zu → ab“ zählen erst seit dem 29.09.2026 und nur Änderungen der Eltern, nicht des Trainerteams. ${art==="training"?"Beim Training gilt ohne Antwort als zugesagt – hier zählen vor allem Absagen.":"„ohne Antwort“: vergangene Spieltage dieser Saison ohne jede Rückmeldung – auch aus der Zeit, bevor die Familie einen Zugang hatte."}</div>`;
 }
+/* v711 · Wer bekommt Benachrichtigungen? Am 01.10. waren es 6 von 14 Familien – Erinnerungen, Rufe,
+   Nominierung und Kasse erreichten weniger als die Hälfte. Nur das Trainerteam sieht die Liste
+   (RPC push_abdeckung prüft is_trainer); geteilt wird nur eine Anleitung ohne Namen. */
+async function pushAbdeckungOpen(){
+  document.getElementById("pa-modal")?.remove();
+  const m=document.createElement("div"); m.id="pa-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Wer bekommt Benachrichtigungen?");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.onclick=e=>{ if(e.target===m)m.remove(); };
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:520px;width:100%;margin:auto">
+    ${mdlHead("pa-modal","🔔","Wer bekommt Push?","Je Familie · nur für das Trainerteam","#1e3a8a")}
+    <div id="pa-inhalt" style="font-size:var(--s-text);color:var(--text2)">Lädt …</div></div>`;
+  document.body.appendChild(m);
+  let rows=null;
+  try{const r=await fetch(`${SB_URL}/rest/v1/rpc/push_abdeckung`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"});if(r.ok)rows=await r.json();}catch(e){}
+  const box=document.getElementById("pa-inhalt"); if(!box)return;
+  if(!Array.isArray(rows)){ box.innerHTML="Konnte nicht laden – bitte mit Netz noch einmal öffnen."; return; }
+  const an=rows.filter(x=>Number(x.mit_push)>0), ohneKonto=rows.filter(x=>!Number(x.konten)), aus=rows.filter(x=>Number(x.konten)&&!Number(x.mit_push));
+  const zeile=(x,t)=>`<li style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-top:var(--border)"><span style="color:var(--text);font-weight:600">${esc(x.name||"")}</span><span>${t}</span></li>`;
+  box.innerHTML=`<div style="font-size:var(--s-teil);font-weight:800;color:var(--text);margin-bottom:4px">${an.length} von ${rows.length} Familien</div>
+    <div style="margin-bottom:12px">bekommen Erinnerungen, Adler-Rufe und Nominierungen aufs Handy.</div>
+    ${aus.length?`<div style="font-weight:800;color:var(--text);margin-top:8px">🔕 Konto da, Benachrichtigungen aus (${aus.length})</div><ul style="list-style:none;margin:0 0 8px">${aus.map(x=>zeile(x,`${Number(x.konten)} Konto${Number(x.konten)===1?"":"en"}`)).join("")}</ul>`:""}
+    ${ohneKonto.length?`<div style="font-weight:800;color:var(--text);margin-top:8px">🪪 Noch kein Elternkonto (${ohneKonto.length})</div><ul style="list-style:none;margin:0 0 8px">${ohneKonto.map(x=>zeile(x,"Einladungskarte")).join("")}</ul>`:""}
+    ${an.length?`<details style="margin-top:8px"><summary style="cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:700;color:var(--text)">✅ Mit Benachrichtigungen (${an.length})</summary><ul style="list-style:none;margin:0">${an.map(x=>zeile(x,`${Number(x.mit_push)} von ${Number(x.konten)}`)).join("")}</ul></details>`:""}
+    <button type="button" class="btn btn-p" style="width:100%;margin-top:14px;justify-content:center" onclick="pushAnleitungTeilen()"><i class="ti ti-brand-whatsapp"></i>Anleitung an die Eltern teilen</button>
+    <div style="font-size:var(--s-klein);margin-top:8px;line-height:1.5">Die Anleitung nennt keine Namen – sie geht an alle, z. B. in die WhatsApp-Gruppe. Gezählt wird je Konto auf irgendeinem Gerät; wer das Handy wechselt, muss neu einschalten.</div>`;
+}
+function pushAnleitungTeilen(){
+  const url=(typeof appRoot==="function")?appRoot()+"eltern/":location.origin+"/eltern/";
+  const txt="🔔 Damit ihr Erinnerungen, Nominierungen und Nachrichten vom Trainerteam aufs Handy bekommt:\n\n"+
+    "1. Adler-App öffnen: "+url+"\n"+
+    "2. iPhone: erst in Safari unten auf Teilen → „Zum Home-Bildschirm“, dann die App von dort öffnen.\n"+
+    "3. Oben auf der Karte „🔔 Keine Nachricht vom Team verpassen“ auf Einschalten tippen und erlauben.\n\n"+
+    "Bei „Trainerteam kontaktieren“ → Benachrichtigungen könnt ihr auch eine Ruhezeit einstellen. Danke! 🦅";
+  if(navigator.share){ navigator.share({text:txt}).catch(()=>{}); return; }
+  window.open("https://wa.me/?text="+encodeURIComponent(txt),"_blank","noopener");
+}
 /* ── H1: Team-Ansagen (Trainer) – senden, Gelesen-Quote je Familie sehen, beenden.
    Eltern bestätigen im Portal mit „Gelesen & verstanden" (ansagen_gelesen); die RPC
    ansagen_status zählt bestätigte Familien (distinct E-Mail aus eltern_kinder). ── */
@@ -4691,6 +4728,7 @@ const HELP=[
   {cat:"🪶 Eltern & Kinder", items:[
     {t:"Benachrichtigungen einschalten", d:"<b>Seit v698</b> steht in beiden Apps ganz oben die Karte „🔔 Keine Nachricht vom Team verpassen“, solange auf dem Handy keine Benachrichtigungen an sind. Hinter „So geht’s“ liegt eine Anleitung für Android und iPhone; auf dem iPhone muss die App dafür auf dem Home-Bildschirm liegen (iOS 16.4 oder neuer). Nach dem Einschalten kommt sofort eine Test-Meldung. Trainer-App: Orga → Einstellungen → „🔔 Benachrichtigungen aktivieren“, dann die Frage des Handys bestätigen. Eltern-App: seit v694 oben auf der Startseite die Karte „🔔 Nichts verpassen“, solange auf dem Gerät keine Benachrichtigungen an sind; sonst unter „Trainerteam kontaktieren“. Die Freigabe hängt am Gerät – nach einer Neuinstallation einmal neu einschalten. Adler-Rufe lassen sich im Chat oben mit 🔔 einzeln aus- und einschalten. <b>Ruhezeit (seit v705):</b> unter dem grünen Schalter wählt jede und jeder selbst – Keine, 21:30–7, 22–6 oder eigene Zeiten. Sie gilt fürs Konto (auf allen Geräten) und für alle Benachrichtigungen: in dieser Zeit kommt nichts aufs Handy, was anfällt, kommt danach gesammelt. Ohne eigene Wahl haben Eltern 21:30–7 Uhr Ruhe, das Trainerteam keine. Nur die Test-Benachrichtigung kommt immer sofort. Ebenfalls seit v705: Trainer- und Eltern-App auf demselben Handy bekommen beide ihre Meldungen – vorher verdrängte das zuletzt eingeschaltete Konto das andere. Ausschalten gilt nur fürs eigene Konto; schicken beide Konten dasselbe, kommt es nur einmal. Seit v695 steht unter dem grünen Schalter „📨 Test-Benachrichtigung an mich“ – sie geht sofort nur an dieses Gerät. Ein Tipp auf eine Meldung öffnet seit v696 die App, zu der sie gehört – eine Eltern-Meldung die Eltern-App, auch wenn gerade die Trainer-App offen ist. Bei Adler-Rufen landet man direkt im Gespräch mit der neuen Nachricht. Eigene Nachrichten meldet die App nie, und was schon gelesen ist, auch nicht: Adler-Rufe werden alle 5 Minuten verschickt, wer vorher in den Chat schaut, bekommt keine Meldung mehr."},
     {t:"Adler-Rufe (Team-Chat)", d:"Seit v670 der Chat für Eltern und Trainerteam – Kinder haben keinen Zugang. Ein Raum zum Start; Trainer und Moderatoren legen weitere an (＋ Raum). Über ⋯ an jedem Ruf: reagieren, antworten (mit Zitat), fixieren (höchstens drei, 24 Stunden bis immer), bearbeiten, zurückziehen, melden. Moderatoren archivieren statt zu löschen und schalten für 24 Stunden oder 7 Tage stumm; archivierte Rufe sieht nur das Trainerteam. „@alle“ hebt einen Ruf hervor – nur für Trainer und Moderatoren. 🔍 durchsucht alle Räume. Mit 🛡️ oben im Raum (seit v689, vorher eine eigene Kachel) legt ihr fest, wer außer dem Trainerteam moderiert (z. B. der Elternbeirat), und bearbeitet gemeldete Rufe. Namen setzt die App aus „Meine Angaben“, Telefonnummern sieht niemand. Seit v673 sitzt der Einstieg oben in der Kopfzeile: 💬 mit roter Zahl für neue Rufe (Eltern und Trainer); bei Eltern steht zusätzlich ganz oben auf der Startseite eine Zeile mit dem letzten Ruf, solange es Ungelesenes gibt. Seit v673 kommen außerdem Benachrichtigungen aufs Handy: Rufe vom Trainerteam und @alle sofort, alle anderen gebündelt höchstens alle 30 Minuten – Gelesenes nie. Ruhezeit: Eltern bekommen ohne eigene Wahl zwischen 21:30 und 7 Uhr keine (was ungelesen bleibt, kommt danach gesammelt), das Trainerteam bekommt Rufe rund um die Uhr; seit v705 stellt jede und jeder die eigene Ruhezeit bei den Benachrichtigungen in den Einstellungen ein, die Zeile unter dem Chat-Kopf sagt, was gilt. Die 🔔 im Chat-Kopf schaltet sie fürs eigene Konto ab und an; die Zahl am Knopf bleibt. Ein Tipp auf die Benachrichtigung öffnet die Adler-Rufe (im Trainerbereich nach der PIN). Seit v674: 🔒 Trainerteam – ein privater Raum je Familie mit dem Trainerteam; mitlesen können nur beide Elternteile (auch für Geschwister derselbe Raum) und das Trainerteam, der Elternbeirat nicht. Das Trainerteam öffnet die Familienräume über „🔒 Familien“. Auch wer stummgeschaltet ist, kann dem Trainerteam dort schreiben. 📊 neben dem Schreibfeld startet eine Abstimmung (alle Eltern dürfen): Frage, zwei bis sechs Antworten, namentlich (alle sehen, wer was gewählt hat) oder anonym (niemand sieht es, auch das Trainerteam nicht – nur die Zahlen), eine oder mehrere Antworten, auf Wunsch mit Schluss nach 24 Stunden, 3 oder 7 Tagen. Nochmal antippen nimmt die Stimme zurück. Beenden über ⋯: wer sie gestartet hat, Trainer und Moderatoren.", run:"rufeOpen()"},
+    {t:"Wer bekommt Push?", d:"Seit v711 unter Eltern & Kinder → Eltern verwalten: wie viele Familien Benachrichtigungen bekommen, welche ein Konto haben, aber Push aus, und welche noch gar kein Elternkonto. „Anleitung an die Eltern teilen“ schickt eine Anleitung ohne Namen, z. B. in die WhatsApp-Gruppe. Nur das Trainerteam sieht die Liste.", run:"pushAbdeckungOpen()"},
     {t:"Rückmelde-Verhalten", d:"Seit v672 unter Eltern & Kinder → Eltern verwalten: je Kind, getrennt nach Spieltagen und Training, wie lange vor Terminbeginn im Schnitt die erste Antwort kam, wie oft unter 24 Stunden vorher, wie oft sich die Familie umentschieden hat (auch „zu → ab“) und bei Spieltagen, wie oft gar keine Antwort kam. Gezählt je Kind – egal, welches Elternteil antwortet. Umentscheidungen zählen erst seit dem 29.09.2026, vorher wurden sie nicht gespeichert; Änderungen durch das Trainerteam zählen nicht. Nur das Trainerteam sieht diese Zahlen, Eltern nicht.", run:"rueckmeldeStatistikOpen()"},
     {t:"Team-Ansage", d:"Wichtige Info an alle Eltern – mit Gelesen-Status (wer fehlt noch?).", run:"ansageTrainerOpen()"},
     {t:"Adler Nest", d:"Digitales Stadionheft erstellen & drucken.", run:"stadionheftOpen()"},
@@ -6758,6 +6796,7 @@ function _kachelInhalt(key){
       // v610: Die Karten sind seit v604 der Regelweg – vorher nur über Einstellungen erreichbar.
       {emo:"🪪",label:"Einladungskarten",fn:"einladungskartenOpen"},
       {emo:"📈",label:"Rückmelde-Verhalten",fn:"rueckmeldeStatistikOpen"},
+      {emo:"🔔",label:"Wer bekommt Push?",fn:"pushAbdeckungOpen"},   // v711
       {emo:"👥",label:"Elternbeirat & Kasse",fn:"elternTeamEditOpen"}
       /* v669 PO 29.09.: „Eltern einladen kann meiner Einschätzung ganz weg ebenso wie QR-Aushang.“
          Der Weg in die App sind die Einladungskarten (seit v604). */
