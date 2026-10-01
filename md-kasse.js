@@ -216,7 +216,7 @@ async function skillWocheOpen(){
   const modal=document.createElement("div");
   modal.id="skw-modal";modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10001;display:flex;flex-direction:column;padding:14px;overflow-y:auto";
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
-  const fld="width:100%;padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const fld="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
   const c=document.createElement("div");
   c.style.cssText="background:var(--surface);color:var(--text);max-width:440px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`${mdlHead("skw-modal","🎬","Skill der Woche","Heim-Challenge mit Video · Eltern geben 50 Federn frei","#ea580c")}
@@ -379,7 +379,7 @@ async function elternMitbringLoad(kids){
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
         <input id="mb-was-${ev.id}" placeholder="Was bringst du mit?" style="flex:1;min-width:150px;min-height:44px;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text)" onkeydown="if(event.key==='Enter')mitbringAdd(${ev.id})">
         ${kidSel}
-        <button onclick="mitbringAdd(${ev.id})" style="min-height:44px;padding:9px 16px;border:none;border-radius:10px;background:#16a34a;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Eintragen</button>
+        <button onclick="mitbringAdd(${ev.id})" style="min-height:44px;padding:9px 16px;border:none;border-radius:10px;background:#15803d;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Eintragen</button>
       </div>
     </div>`;
   }).join("");
@@ -962,7 +962,7 @@ async function fairplayEditOpen(){
 }
 function fairplayEditRender(){
   const c=document.getElementById("fpe-card"); if(!c)return;
-  const fld="padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const fld="padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
   c.innerHTML=`${mdlHead("fpe-modal","🤝","Fairplay-Codex bearbeiten","Diese Regeln sehen die Eltern · Reihenfolge mit den Pfeilen","#16a34a")}
     ${FP_EDIT.map((r,i)=>`<div style="border:var(--border-s);border-radius:10px;padding:10px;margin-bottom:8px">
       <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
@@ -1101,7 +1101,7 @@ async function leitfadenEditOpen(){
 }
 function leitfadenEditRender(){
   const c=document.getElementById("lfe-card"); if(!c)return;
-  const fld="padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const fld="padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
   c.innerHTML=`${mdlHead("lfe-modal","📖",esc(LEITFADEN_NAME)+" bearbeiten","Diese Punkte sehen die Eltern · Reihenfolge mit den Pfeilen","#059669")}
     ${LF_EDIT.map((r,i)=>`<div style="border:var(--border-s);border-radius:10px;padding:10px;margin-bottom:8px">
       <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">

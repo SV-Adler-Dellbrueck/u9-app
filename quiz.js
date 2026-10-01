@@ -473,7 +473,7 @@ function tqStart(){
   const progress=tqGetProgress();
   const pp=tqPlayer?progress[tqPlayer]||{}:{};
   let html=`<div class="tq-panel">
-    <div style="font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">`;
+    <div style="font-size:12px;font-weight:700;color:var(--purple-text);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">`;
   if(!tqPlayer){
     const auswahl=TQ_EIGENE_KINDER
       ? KADER.filter(k=>TQ_EIGENE_KINDER.includes(k.name))
@@ -541,7 +541,7 @@ function tqBlocksShow(){
   document.body.classList.remove("tq-playing"); // Block-Auswahl: Feld ausblenden
   const pp=(tqGetProgress()[tqPlayer])||{};
   let html=`<div class="tq-panel">
-    <div style="font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">🎯 Taktik-Quiz · ${esc(tqPlayer)}</div>
+    <div style="font-size:12px;font-weight:700;color:var(--purple-text);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">🎯 Taktik-Quiz · ${esc(tqPlayer)}</div>
     <div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:2px">Wähle einen Block!</div>
     <div style="font-size:11px;color:var(--text2);margin-bottom:12px">Jeder Block hat 10 Fragen. Dein Fortschritt wird gespeichert.</div>
     <div id="tq-blocks-grid" style="display:flex;flex-direction:column;gap:8px">`;
@@ -604,7 +604,7 @@ function tqRenderStickers(pp){
   }).join("");
   const geschafft=TQ_BLOCKS.filter((b,i)=>pp[i]&&pp[i].score>=7).length;
   return `<div class="card" style="padding:10px 12px;margin-top:10px">
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--purple);margin-bottom:8px">🏅 Dein Sticker-Heft (${geschafft}/${TQ_BLOCKS.length})</div>
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--purple-text);margin-bottom:8px">🏅 Dein Sticker-Heft (${geschafft}/${TQ_BLOCKS.length})</div>
     <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">${items}</div>
   </div>`;
 }
@@ -618,10 +618,10 @@ function tqRenderBarometer(){
   const ziel=Math.max(step,Math.ceil((solved+1)/step)*step);
   const pct=Math.round(solved/ziel*100);
   const rest=ziel-solved;
-  return `<div style="background:linear-gradient(135deg,#065f46,#059669);border-radius:var(--rl);padding:12px;margin-top:10px;color:#fff">
-    <div style="font-size:12px;font-weight:700;margin-bottom:6px">🎯 Team-Ziel: gemeinsam ${ziel} Aufgaben lösen!</div>
+  return `<div style="background:linear-gradient(135deg,#065f46,#047857);border-radius:var(--rl);padding:12px;margin-top:10px;color:#fff">
+    <div style="font-size:13px;font-weight:700;margin-bottom:6px">🎯 Team-Ziel: gemeinsam ${ziel} Aufgaben lösen!</div>
     <div style="height:12px;background:rgba(255,255,255,.25);border-radius:6px;overflow:hidden"><div style="height:100%;width:${pct}%;background:#fbbf24;border-radius:6px;transition:width .4s"></div></div>
-    <div style="font-size:11px;margin-top:6px;opacity:.95">${solved} geschafft · noch ${rest} bis zum nächsten Ziel 🎉</div>
+    <div style="font-size:12px;margin-top:6px">${solved} geschafft · noch ${rest} bis zum nächsten Ziel 🎉</div>
   </div>`;
 }
 
@@ -673,7 +673,7 @@ function tqLoadScenario(idx){
   panel.innerHTML=`
     <div class="tq-panel">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <div style="font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.5px">${TQ_BLOCKS[tqBlock]?.name||"Quiz"} · ${idx+1}/${tqScenarios.length}</div>
+        <div style="font-size:12px;font-weight:700;color:var(--purple-text);text-transform:uppercase;letter-spacing:.5px">${TQ_BLOCKS[tqBlock]?.name||"Quiz"} · ${idx+1}/${tqScenarios.length}</div>
         <div class="tq-score">⭐ ${tqScore}/${tqTotal}</div>
       </div>
       <div style="display:flex;align-items:flex-start;gap:8px">
@@ -1277,11 +1277,11 @@ function wqRenderLauncher(){
   if(!tqPlayer)return "";
   const done=wqPlayerDone(), total=WQ_QUESTIONS.length, pct=Math.round(done/total*100);
   return `<div class="card" role="button" tabindex="0" style="padding:0;margin-top:10px;overflow:hidden;cursor:pointer" onclick="wqStart()">
-    <div style="background:linear-gradient(135deg,#0ea5e9,#6366f1);padding:12px 14px;color:#fff">
-      <div style="font-size:14px;font-weight:800;margin-bottom:2px">🧠 Fußball-Wissen</div>
-      <div style="font-size:11px;opacity:.95;margin-bottom:8px">${WQ_CATS.length} Kategorien · WM, Bundesliga, Legenden, Stars & mehr — sammle ${XP_ICON} Federn!</div>
+    <div style="background:linear-gradient(135deg,#0369a1,#4f46e5);padding:12px 14px;color:#fff">
+      <div style="font-size:15px;font-weight:800;margin-bottom:2px">🧠 Fußball-Wissen</div>
+      <div style="font-size:13px;margin-bottom:8px">${WQ_CATS.length} Kategorien · WM, Bundesliga, Legenden, Stars & mehr — sammle ${XP_ICON} Federn!</div>
       <div style="height:8px;background:rgba(255,255,255,.25);border-radius:4px;overflow:hidden"><div style="height:100%;width:${pct}%;background:#fbbf24;border-radius:4px;transition:width .4s"></div></div>
-      <div style="font-size:10px;margin-top:5px;opacity:.9">${done}/${total} richtig beantwortet</div>
+      <div style="font-size:12px;margin-top:5px">${done}/${total} richtig beantwortet</div>
     </div>
   </div>`;
 }
@@ -1299,7 +1299,7 @@ function wqRenderCats(){
   panel.style.display="block";
   const prog=(wqGetProgress()[tqPlayer])||{};
   let html=`<div class="tq-panel">
-    <div style="font-size:10px;font-weight:700;color:#0ea5e9;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">🧠 Fußball-Wissen · ${esc(tqPlayer)}</div>
+    <div style="font-size:12px;font-weight:700;color:var(--blue-text);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">🧠 Fußball-Wissen · ${esc(tqPlayer)}</div>
     <div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:2px">Wähle eine Kategorie!</div>
     <div style="font-size:11px;color:var(--text2);margin-bottom:12px">Jede richtige Antwort bringt beim ersten Mal ${XP_ICON} Federn.</div>
     <div style="display:flex;flex-direction:column;gap:8px">`;
@@ -1366,7 +1366,7 @@ function wqRenderQ(){
     : "";
   panel.innerHTML=`<div class="tq-panel">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <div style="font-size:10px;font-weight:700;color:#0ea5e9;text-transform:uppercase;letter-spacing:.5px">${cat.icon} ${cat.name} ${star} · ${wqIdx+1}/${wqQs.length}</div>
+      <div style="font-size:12px;font-weight:700;color:var(--blue-text);text-transform:uppercase;letter-spacing:.5px">${cat.icon} ${cat.name} ${star} · ${wqIdx+1}/${wqQs.length}</div>
       <div class="tq-score">✅ ${wqScore}/${wqIdx}</div>
     </div>
     <div class="wq-question">${esc(q.q)}</div>

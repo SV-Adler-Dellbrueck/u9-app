@@ -307,10 +307,10 @@ function tbRender(){
     ${kinder.length?`<div style="margin-top:10px">
       <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px">Kind einfügen – hier steht der Vorname; beim Teilen und Exportieren wird daraus ein Buchstabe</div>
       <div style="display:flex;gap:5px;flex-wrap:wrap">
-        ${kinder.map(k=>`<button onclick="tbKindEinfuegen('${jsq(k.name)}')" title="Fügt ${esc(tbVorname(k.name))} ein – nach außen ${esc(tbAlias(k.name))}" style="min-height:36px;padding:0 10px;font-size:var(--s-text);border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface2);color:var(--text2);cursor:pointer;font-family:inherit">${esc(k.name)}</button>`).join("")}
+        ${kinder.map(k=>`<button onclick="tbKindEinfuegen('${jsq(k.name)}')" title="Fügt ${esc(tbVorname(k.name))} ein – nach außen ${esc(tbAlias(k.name))}" style="min-height:44px;padding:0 10px;font-size:var(--s-text);border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface2);color:var(--text2);cursor:pointer;font-family:inherit">${esc(k.name)}</button>`).join("")}
       </div>
       <div style="font-size:var(--s-klein);color:var(--text3);margin-top:4px">Der Buchstabe gehört fest zu diesem Kind – auch wenn andere den Kader verlassen.</div>
-      <details style="margin-top:8px"${_TB.kinder.size?" open":""}><summary style="font-size:var(--s-klein);font-weight:700;cursor:pointer;min-height:32px">Wer kommt in diesem Eintrag vor?${_TB.kinder.size?" · "+_TB.kinder.size:""}</summary>
+      <details style="margin-top:8px"${_TB.kinder.size?" open":""}><summary style="font-size:var(--s-klein);font-weight:700;cursor:pointer;min-height:44px">Wer kommt in diesem Eintrag vor?${_TB.kinder.size?" · "+_TB.kinder.size:""}</summary>
         <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px">
         ${kinder.filter(k=>kaderIdVon(k)).map(k=>{const kid=kaderIdVon(k), an=_TB.kinder.has(kid);
           return `<button type="button" onclick="tbKindUmschalten(${kid})" aria-pressed="${an}" style="min-height:48px;padding:0 12px;font-size:var(--s-text);border:${an?"2px solid var(--purple)":"1px solid var(--rand-bedien)"};border-radius:14px;background:${an?"var(--purple-bg)":"var(--surface2)"};color:var(--text);cursor:pointer;font-family:inherit;font-weight:${an?"800":"600"}">${an?"✓ ":""}${esc(tbVorname(k.name))} <span style="color:var(--text2);font-weight:600">· ${esc(tbAlias(k.name).replace(/^Kind /,""))}</span></button>`;}).join("")}
@@ -545,7 +545,7 @@ function tbEintraegeHtml(){
   const filt = l => _TB_FILTER ? l.filter(e=>(e.schlagworte||[]).includes(_TB_FILTER)) : l;
   const liste = filt(fertig);
   const themen = top.length ? `<div style="margin-bottom:12px"><div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:5px">Themen</div>
-    <div style="display:flex;gap:5px;flex-wrap:wrap">${top.map(x=>`<button type="button" onclick="tbFilter('${jsq(x)}')" aria-pressed="${_TB_FILTER===x}" style="min-height:36px;padding:0 11px;border:1px solid var(--rand-bedien);border-radius:18px;background:${_TB_FILTER===x?"var(--purple-bg)":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">#${esc(x)} · ${zaehl[x]}</button>`).join("")}</div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap">${top.map(x=>`<button type="button" onclick="tbFilter('${jsq(x)}')" aria-pressed="${_TB_FILTER===x}" style="min-height:44px;padding:0 11px;border:1px solid var(--rand-bedien);border-radius:18px;background:${_TB_FILTER===x?"var(--purple-bg)":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">#${esc(x)} · ${zaehl[x]}</button>`).join("")}</div>
     ${_TB_FILTER?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:5px">${filt(_TB_LISTE).length} Eintr${filt(_TB_LISTE).length===1?"ag":"äge"} zu „${esc(_TB_FILTER)}“ – noch einmal tippen hebt den Filter auf.</div>`:""}</div>` : "";
   const kopf = t => `<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:4px">${t}</div>`;
   const offenHtml = filt(offen).length ? `<div style="margin-bottom:16px">${kopf("Noch zu bestätigen · "+filt(offen).length)}
@@ -584,10 +584,10 @@ function tbZeile(e){
     ${konsText?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:2px;line-height:1.5"><b>Konsequenz:</b> ${konsText}</div>`:""}
     ${kinder.length?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">👤 ${kinder.map(esc).join(", ")}</div>`:""}
     <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-      ${offen?`<button class="btn btn-sm" onclick="tbPruefenOpen(${Number(e.id)})" style="min-height:36px"><i class="ti ti-checks"></i>Prüfen</button>`
-             :`<button class="btn btn-sm" onclick="tagebuchBearbeiten(${Number(e.id)})" style="min-height:36px"><i class="ti ti-pencil"></i>${keim?"Ausarbeiten":"Bearbeiten"}</button>`}
-      <button class="btn btn-sm" onclick="tagebuchKopieren(${Number(e.id)})" style="min-height:36px"><i class="ti ti-copy"></i>Kopieren</button>
-      <button class="btn btn-sm" onclick="tagebuchTeilen(${Number(e.id)})" style="min-height:36px"><i class="ti ti-share"></i>Teilen</button>
+      ${offen?`<button class="btn btn-sm" onclick="tbPruefenOpen(${Number(e.id)})" style="min-height:44px"><i class="ti ti-checks"></i>Prüfen</button>`
+             :`<button class="btn btn-sm" onclick="tagebuchBearbeiten(${Number(e.id)})" style="min-height:44px"><i class="ti ti-pencil"></i>${keim?"Ausarbeiten":"Bearbeiten"}</button>`}
+      <button class="btn btn-sm" onclick="tagebuchKopieren(${Number(e.id)})" style="min-height:44px"><i class="ti ti-copy"></i>Kopieren</button>
+      <button class="btn btn-sm" onclick="tagebuchTeilen(${Number(e.id)})" style="min-height:44px"><i class="ti ti-share"></i>Teilen</button>
     </div>
   </div>`;
 }
@@ -636,8 +636,8 @@ function tbWiedervorlageHtml(){
           <div style="font-size:var(--s-klein);color:var(--text3)">${x.bis?"bis "+tbDatumDe(x.bis):"ohne Datum"} · ${esc(was)}${x.herkunft?" · "+esc(x.herkunft):""}</div>
           <div style="font-size:var(--s-text);font-weight:700;margin-top:2px">${esc(tbErsterSatz(x.text, 200))}</div>
           <div style="display:flex;gap:6px;margin-top:8px">
-            <button class="btn btn-sm" onclick="tbPunktErledigt(${Number(x.id)})" style="min-height:36px"><i class="ti ti-check"></i>Erledigt</button>
-            ${e?`<button class="btn btn-sm" onclick="${tbUnbestaetigt(e)?"tbPruefenOpen":"tagebuchBearbeiten"}(${Number(e.id)})" style="min-height:36px"><i class="ti ti-arrow-right"></i>Zum Eintrag</button>`:""}
+            <button class="btn btn-sm" onclick="tbPunktErledigt(${Number(x.id)})" style="min-height:44px"><i class="ti ti-check"></i>Erledigt</button>
+            ${e?`<button class="btn btn-sm" onclick="${tbUnbestaetigt(e)?"tbPruefenOpen":"tagebuchBearbeiten"}(${Number(e.id)})" style="min-height:44px"><i class="ti ti-arrow-right"></i>Zum Eintrag</button>`:""}
           </div></div>`;
       }).join("")}</div>`;
   }).join("");

@@ -329,10 +329,10 @@ function _albumDraw(pool,n){
 function _albumStickerHtml(g,n,tap){
   const R=KAB_RAR[g.rar]||KAB_RAR.kind;
   const dunkel=g.rar==="legendaer";
-  if(!n)return `<div style="border-radius:14px;aspect-ratio:3/4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.45);${R.dash?`border:1.5px dashed ${R.dash}`:"border:1.5px dashed rgba(255,255,255,.18)"}">
-      <span style="font-size:9px;font-weight:800;opacity:.65">Nr. ${g.num||"?"}</span>
+  if(!n)return `<div style="border-radius:14px;aspect-ratio:3/4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.8);${R.dash?`border:1.5px dashed ${R.dash}`:"border:1.5px dashed rgba(255,255,255,.18)"}">
+      <span style="font-size:11px;font-weight:800">Nr. ${g.num||"?"}</span>
       <span style="font-size:26px;opacity:.7">❓</span>
-      ${R.lbl?`<span style="font-size:8.5px;font-weight:900;letter-spacing:.5px;opacity:.8">${R.gem?R.gem+" ":""}${R.lbl}</span>`:""}
+      ${R.lbl?`<span style="font-size:10px;font-weight:900;letter-spacing:.5px">${R.gem?R.gem+" ":""}${R.lbl}</span>`:""}
     </div>`;
   return `<div class="${(R.foil?"kab-st":"")+(R.leg?" kab-leg kab-pulse":"")}" ${tap?`role="button" tabindex="0" onclick="kabineStickerZoom('${jsq(g.key)}')"`:""} style="border-radius:14px;aspect-ratio:3/4;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;background:radial-gradient(130% 80% at 50% -10%,rgba(255,255,255,.35),transparent 55%),${R.own};border:2px solid rgba(255,255,255,.6);box-shadow:${R.shadow};color:${dunkel?"#78350f":"#fff"};${tap?"cursor:pointer":""}">
       <div style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:5px 7px 0;font-size:8.5px;font-weight:900;letter-spacing:.4px;box-sizing:border-box">
@@ -676,7 +676,7 @@ async function arenaEditOpen(){
   const m=document.createElement("div");m.id="arena-modal";
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{if(e.target===m)m.remove();};
-  const fld="width:100%;box-sizing:border-box;padding:10px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:14px;background:var(--surface2);color:var(--text);margin-top:4px";
+  const fld="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:14px;background:var(--surface2);color:var(--text);margin-top:4px";
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:420px;width:100%;margin:auto">
     ${mdlHead("arena-modal","🏟️","Team-Arena","","#8b5cf6")}
     <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Schlachtruf & Einlauf-Song – die Kinder sehen sie in der Kabine.</div>
@@ -1551,7 +1551,7 @@ function kabineShowQuests(){
         <span style="font-size:30px">${q.icon}</span>
         <div><div style="font-size:16px;font-weight:800">${esc(q.label)}</div><div style="font-size:13px;opacity:.85">Ziel: ${q.target}</div></div>
       </div>`).join("")}
-      ${teamQuestFedern>0?`<div style="background:linear-gradient(135deg,#10b981,#0ea5e9);border-radius:14px;padding:16px;text-align:center;margin-top:6px"><div style="font-size:13px;opacity:.9">Schafft ihr ALLE Missionen, gibt's</div><div style="font-size:22px;font-weight:900;margin-top:4px">${XP_ICON} ${teamQuestFedern} Federn für jeden!</div></div>`:""}
+      ${teamQuestFedern>0?`<div style="background:linear-gradient(135deg,#047857,#0369a1);border-radius:14px;padding:16px;text-align:center;margin-top:6px;color:#fff"><div style="font-size:15px">Schafft ihr ALLE Missionen, gibt's</div><div style="font-size:22px;font-weight:900;margin-top:4px">${XP_ICON} ${teamQuestFedern} Federn für jeden!</div></div>`:""}
       ${teamBelohnung?`<div style="background:linear-gradient(135deg,#f59e0b,#ec4899);border-radius:14px;padding:16px;text-align:center;margin-top:10px"><div style="font-size:13px;opacity:.9">🎁 Extra-Belohnung</div><div style="font-size:18px;font-weight:900;margin-top:4px">${esc(teamBelohnung)}</div></div>`:""}
     </div>`;
 }
@@ -1797,7 +1797,7 @@ async function codexKinderEditOpen(){
 function codexKinderAktive(){ return KC_EDIT.filter(r=>r.aktiv).length; }
 function codexKinderEditRender(){
   const c=document.getElementById("kce-card"); if(!c)return;
-  const fld="padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:14px;background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const fld="padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:14px;background:var(--surface2);color:var(--text);box-sizing:border-box";
   const aktive=codexKinderAktive(), voll=aktive>=KINDER_CODEX_MAX;
   c.innerHTML=`${mdlHead("kce-modal","🤝","Unsere Regeln bearbeiten","Diese Sätze lesen die Kinder in der Kabine · Reihenfolge mit den Pfeilen","#16a34a")}
     <div id="kce-stand" style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:10px">

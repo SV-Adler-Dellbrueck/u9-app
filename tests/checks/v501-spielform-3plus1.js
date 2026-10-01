@@ -70,7 +70,8 @@ module.exports = async function (h) {
   if (!r.tb || r.tb.form !== "3+1" || r.tb.feld < 3) probleme.push(`Taktikboard 3+1: ${JSON.stringify(r.tb)}`);
   if (!r.tbKnopf) probleme.push("Taktikboard hat keinen 3+1-Knopf");
   const gegner = fs.readFileSync(path.join(h.REPO, "md-gegner.js"), "utf8");
-  if (!/sfOpts=\["funino","3\+1","4\+1","5\+1"\]/.test(gegner)) probleme.push("Termin-Editor bietet 3+1 nicht als Spielform an");
+  // v708: die Formen stehen als Knöpfe aus SF_FORMEN (core.js), nicht mehr als Auswahlliste
+  if (!/SF_FORMEN\.map/.test(gegner) || !/const SF_FORMEN=\["funino","3\+1","4\+1","5\+1"\]/.test(require("fs").readFileSync(require("path").join(h.REPO, "core.js"), "utf8"))) probleme.push("Termin-Editor bietet 3+1 nicht als Spielform an");
   if (fehler.length) probleme.push(...fehler.slice(0, 3));
   zeilen.push(`3+1: ${r.F.auf} auf dem Feld · ${r.F.tore} · Namen ${r.a.join(", ")} / ${r.b.join(", ")} · gekürzt ${r.gek.join(", ")}`);
   zeilen.push(`Plan ${r.planF3}/${r.planN} auf 3+1 · Regelkarten mit 3+1 ${r.regelnMit}, ohne ${r.regelnOhne} · Umschalter ${r.knoepfe.join(" | ")}`);

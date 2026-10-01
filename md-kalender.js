@@ -144,16 +144,24 @@ function tmSetHeim(isHeim,btn){
   if(seg){ seg.querySelectorAll(".seg-btn").forEach(b=>b.classList.remove("active")); const a=btn||seg.querySelector('.seg-btn[data-val="'+(isHeim?"heim":"ausw")+'"]'); if(a)a.classList.add("active"); }
   const ort=document.getElementById("tm-ort");
   if(ort){ if(isHeim)ort.value=VEREIN_ADRESSE; else if(ort.value===VEREIN_ADRESSE)ort.value=""; }
+  /* v708 PO: „Bei Auswärtsspielen … kann Spielfeldform ganz weg“ – aufgeteilt wird beim Gastgeber. */
+  const ist=(tmTyp==="spiel"||tmTyp==="turnier");
+  const pr=document.getElementById("tm-platz-row"), ps=document.getElementById("tm-platz");
+  if(pr&&ist)pr.style.display=isHeim?"":"none";
+  if(ps&&ist){ if(!isHeim)ps.value=""; else if(!ps.value&&typeof tmPlatzDefault==="function")ps.value=tmPlatzDefault(tmTyp); }
+  const sl=document.getElementById("tm-spielform-lbl"); if(sl)sl.textContent=isHeim?"Spielform – mehrere möglich":"Spielform – was der Gastgeber anbietet, mehrere möglich";
 }
 // Heim/Auswärts-Kennzeichnung für Spiele & Turniere (leer bei Training/Event oder unbekannt).
 function heimLabel(t){
   if(!t||(t.typ!=="spiel"&&t.typ!=="turnier")||t.heim==null)return "";
   return t.heim?"🏠 Heim":"✈️ Auswärts";
 }
+/* v708: Mehrfachauswahl – ein Tipp schaltet die Form an oder aus; tmSpielform hält die
+   gewählten kommagetrennt in fester Reihenfolge (FUNiño, 3+1, 4+1, 5+1). */
 function tmSetSpielform(f,btn){
-  tmSpielform=f;
-  btn.parentElement.querySelectorAll(".seg-btn").forEach(b=>b.classList.remove("active"));
-  btn.classList.add("active");
+  const an=!btn.classList.contains("active");
+  btn.classList.toggle("active",an); btn.setAttribute("aria-pressed",String(an));
+  tmSpielform=[...btn.parentElement.querySelectorAll(".seg-btn.active")].map(b=>b.dataset.val).join(",");
 }
 /* Formular auf-/zuklappen. Zugeklappt ist der Standard – der Knopf traegt den Zustand
    auch fuer Vorlesesoftware (aria-expanded), nicht nur im gedrehten Pfeil. */
@@ -245,7 +253,8 @@ async function tmAdd(){
     treffzeit: (document.getElementById("tm-treff")?.value)||null,
     uhrzeit_ende: ende||null,
     saison: saisonForDate(datum),
-    spielform: istSpiel?tmSpielform:null,
+    spielform: istSpiel?(tmSpielform||null):null,
+    ...(istSpiel&&tmHeim===false?{platz:null}:{}),   // v708: auswärts keine Spielfeld-Aufteilung
     gegner: istSpiel?(titel||null):null,
     heim: istSpiel?tmHeim:null,
     spieldauer_min: istSpiel?parseInt(document.getElementById("tm-dauer")?.value||"10"):20,
@@ -303,24 +312,28 @@ async function tmAdd(){
 }
 // Gegner-Adresse per Name finden (OpenStreetMap). Trainer tippt Verein/Platz -> Vorschläge ->
 // Klick übernimmt die Adresse ins Ort-Feld (füttert auch das Termin-Wetter via Geocoding).
-async function gegnerAddrSearch(){
-  const box=document.getElementById("tm-addr-results"); if(!box)return;
-  const gegner=(document.getElementById("tm-titel")?.value||"").trim();
-  const ort=(document.getElementById("tm-ort")?.value||"").trim();
+/* v708: auch im Fenster „Termin bearbeiten“ (Felder te-ort/te-titel). Ohne Angabe die Felder
+   von „Neuer Termin“ wie bisher. */
+async function gegnerAddrSearch(ortId,titelId,boxId){
+  ortId=ortId||"tm-ort"; titelId=titelId||"tm-titel"; boxId=boxId||"tm-addr-results";
+  const box=document.getElementById(boxId); if(!box)return;
+  const gegner=(document.getElementById(titelId)?.value||"").trim();
+  const ort=(document.getElementById(ortId)?.value||"").trim();
   const q=ort||gegner;
   if(!q){toast("Erst Gegner/Ort eintippen","err");return;}
   box.innerHTML=`<div style="font-size:var(--s-klein);color:var(--text3);padding:6px 2px">🔍 Suche „${esc(q)}"…</div>`;
   const res=await osmSearch(q);
   if(!res.length){ box.innerHTML=`<div style="font-size:var(--s-klein);color:var(--text3);padding:6px 2px">Keine Adresse gefunden – bitte manuell eintragen.</div>`; return; }
   box.innerHTML=`<div style="font-size:var(--s-klein);color:var(--text3);margin:6px 2px 2px">Tippe die passende Adresse an:</div>`+
-    res.map(r=>`<button type="button" onclick="gegnerAddrPick(this)" data-addr="${esc(r.label).replace(/"/g,"&quot;")}" style="display:block;width:100%;text-align:left;margin-top:4px;padding:8px 10px;border:1px solid var(--rand-bedien);border-radius:8px;background:var(--surface);font-family:inherit;font-size:var(--s-klein);color:var(--text);cursor:pointer;white-space:normal;line-height:1.3">📍 ${esc(r.label)}</button>`).join("");
+    res.map(r=>`<button type="button" onclick="gegnerAddrPick(this)" data-addr="${esc(r.label).replace(/"/g,"&quot;")}" data-ort="${ortId}" data-titel="${titelId}" data-box="${boxId}" style="display:block;width:100%;min-height:44px;text-align:left;margin-top:4px;padding:8px 10px;border:1px solid var(--rand-bedien);border-radius:8px;background:var(--surface);font-family:inherit;font-size:var(--s-klein);color:var(--text);cursor:pointer;white-space:normal;line-height:1.3">📍 ${esc(r.label)}</button>`).join("");
 }
 function gegnerAddrPick(btn){
   const addr=btn.getAttribute("data-addr")||"";
-  const inp=document.getElementById("tm-ort"); if(inp)inp.value=addr;
-  const name=(document.getElementById("tm-titel")?.value||"").trim();
-  const box=document.getElementById("tm-addr-results");
-  if(box)box.innerHTML=`<div style="font-size:var(--s-klein);color:#16a34a;padding:4px 2px">✓ Adresse übernommen – Wetter nutzt jetzt diesen Ort.</div>`+
+  const ortId=btn.dataset.ort||"tm-ort", titelId=btn.dataset.titel||"tm-titel", boxId=btn.dataset.box||"tm-addr-results";
+  const inp=document.getElementById(ortId); if(inp)inp.value=addr;
+  const name=ortId==="tm-ort"?(document.getElementById(titelId)?.value||"").trim():"";   // „als Gegner merken“ nur bei „Neuer Termin“
+  const box=document.getElementById(boxId);
+  if(box)box.innerHTML=`<div style="font-size:var(--s-klein);color:var(--green);padding:4px 2px">✓ Adresse übernommen – Wetter nutzt jetzt diesen Ort.</div>`+
     (name?`<button type="button" class="btn btn-sm" style="margin-top:4px" onclick="gegnerQuickSave()"><i class="ti ti-address-book"></i>„${esc(name)}" als Gegner merken</button>`:"");
 }
 

@@ -58,7 +58,7 @@ function turnierPlanRender(ergebnisse){
   const box=document.getElementById("turnier-plan");
   if(!box)return;
   const erg={}; (ergebnisse||[]).forEach(x=>{ if(x.plan_id)erg[x.plan_id]=x; });
-  const fld="padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
+  const fld="padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
 
   // Quellen: Link zum Online-Turnierbaum und hochgeladener Aushang
   let quellen="";
@@ -545,7 +545,7 @@ function nomRender(){
   /* v481: die Kinderliste liegt in einem zugeklappten Block, sobald jemand dabei ist –
      die Teams darunter sind der Arbeitsplatz. Hier nur noch Dabei/Nicht/Verletzt; das Team
      wechselt man in der Team-Karte per Chip. */
-  const stCfg={dabei:{lbl:"Dabei",col:"var(--green)"},nicht:{lbl:"Nicht",col:"var(--text3)"},verletzt:{lbl:"Verletzt",col:"var(--red)"}};
+  const stCfg={dabei:{lbl:"Dabei",col:"#15803d"},nicht:{lbl:"Nicht",col:"#475569"},verletzt:{lbl:"Verletzt",col:"#b91c1c"}};   // v708: weiße Schrift – im Dunkelmodus hellten die Variablen auf (1,7:1)
   const rvEmo={zugesagt:"✅",abgesagt:"❌",krank:"🤒"};
   const q=n=>(typeof teamQuoteText==="function"&&typeof teamEinsatzText==="function")?`${teamQuoteText(n)} · ${teamEinsatzText(n)}`:"";
   const zeile=n=>{
@@ -965,7 +965,7 @@ function _blzDurchspielen(){
 function _blzDurchspielHtml(){
   const d=_blzDurchspielen(); if(!d)return "";
   if(d.ok){
-    return `<div style="font-size:var(--s-klein);color:#166534;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:7px 9px;margin-bottom:8px;line-height:1.45">
+    return `<div style="font-size:var(--s-klein);color:var(--text);background:var(--green-bg);border:1px solid var(--green);border-radius:9px;padding:7px 9px;margin-bottom:8px;line-height:1.45">
       ▶️ <b>Alle Teams sind durchgehend im Spiel</b> – kein Team wartet. Zwischen den Runden liegt ${BLZ_W} Min. für Trinken und Platzwechsel.</div>`;
   }
   const grund=!d.gerade
@@ -1000,8 +1000,8 @@ function _blzPlatzHtml(){
       📐 ${kopf}.<br>${wer} dabei (${esc(p.quelle)}) → <b>${p.fehlt} zu wenig</b>. ${rat}${fuss("#8a5a17")}</div>`;
   }
   const rest=p.uebrig?`<b>${p.uebrig}</b> wechseln durch`:`alle spielen gleichzeitig`;
-  return `<div style="font-size:var(--s-klein);color:#166534;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:7px 9px;margin-bottom:8px;line-height:1.45">
-    📐 ${kopf}.<br>${wer} dabei (${esc(p.quelle)}) → ${rest}.${fuss("#2f6b45")}</div>`;
+  return `<div style="font-size:var(--s-klein);color:var(--text);background:var(--green-bg);border:1px solid var(--green);border-radius:9px;padding:7px 9px;margin-bottom:8px;line-height:1.45">
+    📐 ${kopf}.<br>${wer} dabei (${esc(p.quelle)}) → ${rest}.${fuss("var(--text2)")}</div>`;   // v708: Grund folgt jetzt dem Thema
 }
 /* Struktur-Änderung (Modus, Team-Anzahl) macht einen gebauten Spielplan ungültig.
    Ohne Ergebnisse wird er still verworfen; mit Ergebnissen erst nach Rückfrage. */
@@ -1225,7 +1225,7 @@ function _blzVorschauHtml(){
   // BLZ_W gab es immer, benannt wurde es nie – der Trainer sah nur, dass die Rechnung
   // nicht ganz aufging. Es ist die Trinkpause zwischen den Runden.
   if(p.hinweis>0)return `<div style="font-size:var(--s-text);color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:8px 10px;margin-bottom:8px">⏰ Fair (min. ${BLZ_MIN} Min. je Spiel) braucht das kürzeste Format <b>${p.dauer} Min.</b> – das sind <b>${p.hinweis} Min. mehr</b> als geplant. Budget erhöhen, ein Feld dazu – oder bewusst überziehen und trotzdem starten.</div>`;
-  return `<div style="font-size:var(--s-text);color:#166534;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:8px 10px;margin-bottom:8px">✅ Vorschlag: <b>${fmt}</b> à <b>${p.z} Min.</b> → ${p.ms.length} Spiele, ca. <b>${p.dauer} von ${BLZ.budget} Min.</b>${felderTxt}</div>`;
+  return `<div style="font-size:var(--s-text);color:var(--text);background:var(--green-bg);border:1px solid var(--green);border-radius:10px;padding:8px 10px;margin-bottom:8px">✅ Vorschlag: <b>${fmt}</b> à <b>${p.z} Min.</b> → ${p.ms.length} Spiele, ca. <b>${p.dauer} von ${BLZ.budget} Min.</b>${felderTxt}</div>`;
 }
 function blitzOpen(vorgabeBudget){
   const alt=_blzLoad();
@@ -1332,7 +1332,7 @@ function _blzSetupHtml(){
       <input id="blz-runde" type="number" min="1" max="30" value="${BLZ.runde}" style="width:64px;text-align:center;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-karte);background:var(--surface2);color:var(--text)"> <span style="font-size:var(--s-text);color:var(--text2)">Min.</span>
     </div>`:""}
     ${BLZ.plan&&BLZ.plan.length?`
-      <div style="font-size:var(--s-klein);color:#166534;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:8px 10px;margin-bottom:8px">💾 Turnier ist gebaut${BLZ.datum!==_blzHeute()?" (angelegt "+new Date(BLZ.datum+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})+")":""} und bleibt gespeichert, bis ihr es beendet. Kinder/Trainer umsetzen und Namen ändern geht jederzeit – nur Modus- oder Team-Anzahl-Änderungen verwerfen den Plan.</div>
+      <div style="font-size:var(--s-klein);color:var(--text);background:var(--green-bg);border:1px solid var(--green);border-radius:10px;padding:8px 10px;margin-bottom:8px">💾 Turnier ist gebaut${BLZ.datum!==_blzHeute()?" (angelegt "+new Date(BLZ.datum+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})+")":""} und bleibt gespeichert, bis ihr es beendet. Kinder/Trainer umsetzen und Namen ändern geht jederzeit – nur Modus- oder Team-Anzahl-Änderungen verwerfen den Plan.</div>
       <button class="btn btn-p" style="width:100%" onclick="blzWeiter()">▶ Weiter im Turnier (Plan &amp; Ergebnisse behalten)</button>
       <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="blzStart()">🔁 Spielplan neu erzeugen</button>`
     :`<button class="btn btn-p" style="width:100%" onclick="blzStart()"><i class="ti ti-tournament"></i>Turnier bauen &amp; los</button>`}`;
@@ -1605,7 +1605,7 @@ function _blzTimerRender(){
         <div style="font-size:var(--s-karte);font-weight:800;margin-bottom:10px">${(BLZ.felder>1)?`<span style="font-size:var(--s-klein);font-weight:800;background:#334155;border-radius:8px;padding:2px 8px;margin-right:6px">Feld ${x.p.feld||1}</span>`:""}${esc(BLZ.teams[x.p.a].name)} <span style="opacity:.5">vs</span> ${esc(BLZ.teams[x.p.b].name)}</div>
         <div style="display:flex;align-items:center;justify-content:center;gap:14px">${step(x.mi,"ta",x.p.ta)}<span style="font-size:var(--s-seite);font-weight:900">:</span>${step(x.mi,"tb",x.p.tb)}</div>
       </div>`).join(""):'<div style="font-size:var(--s-karte);opacity:.75;padding:20px 0">Für dieses Fenster stehen die Teams noch nicht fest.</div>'}
-      <button onclick="blzTimerStop()" style="width:100%;min-height:54px;border:none;border-radius:14px;background:#16a34a;color:#fff;font-size:var(--s-karte);font-weight:900;font-family:inherit;cursor:pointer;margin-top:4px">✅ Fenster abschließen</button>
+      <button onclick="blzTimerStop()" style="width:100%;min-height:54px;border:none;border-radius:14px;background:#15803d;color:#fff;font-size:var(--s-karte);font-weight:900;font-family:inherit;cursor:pointer;margin-top:4px">✅ Fenster abschließen</button>
     </div>`;
     return;
   }
@@ -1615,7 +1615,7 @@ function _blzTimerRender(){
     <div style="font-size:88px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:2px">${mm+":"+(ss<10?"0":"")+ss}</div>
     <div style="display:flex;gap:10px;margin-top:24px">
       <button onclick="_blzT.paused=!_blzT.paused;_blzTimerRender()" style="padding:14px 24px;border:none;border-radius:12px;background:#334155;color:#fff;font-size:var(--s-karte);font-weight:800;font-family:inherit;cursor:pointer">${_blzT.paused?"▶ Weiter":"⏸ Pause"}</button>
-      <button onclick="blzAbpfiff()" style="padding:14px 24px;border:none;border-radius:12px;background:#16a34a;color:#fff;font-size:var(--s-karte);font-weight:800;font-family:inherit;cursor:pointer">⏹ Abpfiff &amp; Ergebnisse</button>
+      <button onclick="blzAbpfiff()" style="padding:14px 24px;border:none;border-radius:12px;background:#15803d;color:#fff;font-size:var(--s-karte);font-weight:800;font-family:inherit;cursor:pointer">⏹ Abpfiff &amp; Ergebnisse</button>
     </div>
   </div>`;
 }
@@ -1786,7 +1786,7 @@ async function htListe(){
   const el=document.getElementById("ht-body"); if(!el)return;
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/heimturnier?select=id,slug,name,datum,teams,aktiv,config&order=created_at.desc&limit=10`,{headers:sbAuthHeaders()});if(!sbCheck401(r)&&r.ok)rows=(await r.json())||[];}catch(e){}
-  const fld="box-sizing:border-box;padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)";
+  const fld="box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)";
   el.innerHTML=`
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:6px">
       <input id="ht-name" placeholder="Name, z. B. Kinderfestival September" style="${fld}">
@@ -1937,7 +1937,7 @@ async function htPatch(fields){
 function htRender(){
   const el=document.getElementById("ht-body"); if(!el||!_HT)return;
   const cfg=_HT.config||{}, teams=_HT.teams||[], plan=_HT.plan||[];
-  const fld="box-sizing:border-box;padding:8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)";
+  const fld="box-sizing:border-box;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)";
   const istGruppen=cfg.format==="gruppen";
   const gruppen=istGruppen?_htGruppenN(_HT):null;
   const grVon=i=>{if(!gruppen)return "";const g=gruppen.findIndex(idxs=>idxs.indexOf(i)>=0);return g>=0?HT_GRLABEL[g]:"";};
@@ -2846,7 +2846,7 @@ function fstRegelnOpen(){
       <button onclick="document.getElementById('fst-regeln').remove()" aria-label="Schließen" style="min-width:44px;min-height:44px;border:1px solid #cbd5e1;border-radius:12px;background:#fff;font-size:var(--s-teil);cursor:pointer">✕</button>
     </div>
     ${fstRegelnHtml(true,((_htPub&&_htPub.row&&_htPub.row.config)||(_HT&&_HT.config)||{}))}
-    <button onclick="document.getElementById('fst-regeln').remove()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:#16a34a;color:#fff;font-weight:800;font-size:var(--s-karte);cursor:pointer;font-family:inherit">Zurück zum Spielplan</button>
+    <button onclick="document.getElementById('fst-regeln').remove()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:#15803d;color:#fff;font-weight:800;font-size:var(--s-karte);cursor:pointer;font-family:inherit">Zurück zum Spielplan</button>
   </div>`;
   document.body.appendChild(d);
 }
@@ -2912,7 +2912,7 @@ function fstCodexOpen(){
     </div>
     <div style="font-size:var(--s-text);color:#475569;line-height:1.55;margin-bottom:12px">Diese Seite dürft ihr gern an alle Eltern eurer Mannschaft weiterleiten – je mehr sie kennen, desto entspannter wird der Tag für die Kinder.</div>
     ${fstCodexHtml(true,felder)}
-    <button onclick="document.getElementById('fst-codex').remove()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:#16a34a;color:#fff;font-weight:800;font-size:var(--s-karte);cursor:pointer;font-family:inherit">Zurück zum Spielplan</button>
+    <button onclick="document.getElementById('fst-codex').remove()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:#15803d;color:#fff;font-weight:800;font-size:var(--s-karte);cursor:pointer;font-family:inherit">Zurück zum Spielplan</button>
   </div>`;
   document.body.appendChild(d);
 }
@@ -3214,7 +3214,7 @@ function fstRender(){
   const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
   const teams=fstTeamsBauen(vereine);
   const plan=_HT.plan||[];
-  const fld="box-sizing:border-box;padding:9px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);min-height:44px";
+  const fld="box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);min-height:44px";
   const bedarf=fstBedarf(teams,{...cfg,felder});
   const kinderGesamt=vereine.reduce((a,v)=>a+(v.kinder||0),0);
   const platz=felder.reduce((a,f)=>a+_fstF(f.form).auf*2,0);
@@ -3513,7 +3513,7 @@ function fstInfoOpen(){
     ${karte("WC &amp; Kabinen",`<div style="font-size:var(--s-text);line-height:1.55">🚻 Ebenerdig unter dem Vereinsheim – gleich hinter dem großen Platz.</div>`)}
     ${karte("Wo welches Feld liegt",`<div style="font-size:var(--s-text);color:#475569;margin-bottom:8px">Wir spielen im Käfig und auf der linken Hälfte des großen Platzes.</div>${fstZonenSatz(felder)?`<div style="font-size:var(--s-text);line-height:1.55;color:#0f172a;background:#fef2f2;border-left:4px solid #b91c1c;border-radius:8px;padding:8px 10px;margin-bottom:8px">🙌 ${esc(fstZonenSatz(felder))}</div>`:""}${fstAufwaermZeile(row)?`<div style="font-size:var(--s-text);color:#0f172a;margin-bottom:8px">🔥 Aufwärmen: ${fstAufwaermZeile(row)}</div>`:""}<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${felder.map((f,i)=>{const F=_fstF(f.form);return `<span style="font-size:var(--s-klein);font-weight:700;color:#fff;background:${F.farbe};border-radius:20px;padding:5px 11px">${esc(fstFeldName(felder,i))} · ${F.label} · ${F.tore}</span>`;}).join("")}</div>${fstSkizzeFelder(felder)}`)}
     ${cfg.infos?karte("Gut zu wissen",`<div style="font-size:var(--s-text);white-space:pre-wrap;line-height:1.6">${esc(cfg.infos)}</div>`):""}
-    <button onclick="document.getElementById('fst-info').remove()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:#16a34a;color:#fff;font-weight:800;font-size:var(--s-karte);cursor:pointer;font-family:inherit">Zurück zum Spielplan</button>
+    <button onclick="document.getElementById('fst-info').remove()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:#15803d;color:#fff;font-weight:800;font-size:var(--s-karte);cursor:pointer;font-family:inherit">Zurück zum Spielplan</button>
   </div>`;
   document.body.appendChild(d);
 }
@@ -3673,7 +3673,7 @@ function htPubEdit(mi){
         <button onclick="htPubTor(${mi},'tb',1)" aria-label="Tor" style="min-width:52px;min-height:52px;border:1px solid var(--rand-bedien);border-radius:12px;background:#f8fafc;font-size:var(--s-teil);cursor:pointer">+</button>
       </span>
     </div>
-    <button onclick="document.getElementById('htpub-sheet').remove();_htPubLoad()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:#16a34a;color:#fff;font-weight:800;font-size:var(--s-karte);cursor:pointer;font-family:inherit">Fertig</button>`;
+    <button onclick="document.getElementById('htpub-sheet').remove();_htPubLoad()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:#15803d;color:#fff;font-weight:800;font-size:var(--s-karte);cursor:pointer;font-family:inherit">Fertig</button>`;
   document.body.appendChild(sh);
 }
 async function htPubTor(mi,seite,delta){

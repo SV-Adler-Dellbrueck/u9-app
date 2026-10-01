@@ -150,7 +150,7 @@ function questPanelRender(){
   const counts=questCountsAll();
   const chips=teamQuests.map(q=>{
     const ziel=questZiel(q), n=counts[q.key]||0, done=n>=ziel;
-    return `<span style="font-size:var(--s-klein);background:${done?"#ecfdf5":"var(--surface2)"};color:${done?"#065f46":"var(--text)"};border-radius:12px;padding:3px 9px">${q.icon} ${esc(q.label)} · ${n}/${ziel}${done?" ✓":""}</span>`;
+    return `<span style="font-size:var(--s-klein);background:${done?"var(--green-bg)":"var(--surface2)"};color:${done?"var(--green)":"var(--text)"};border-radius:12px;padding:3px 9px">${q.icon} ${esc(q.label)} · ${n}/${ziel}${done?" ✓":""}</span>`;
   }).join("");
   box.innerHTML=`<div style="background:var(--surface);border:var(--border-s);border-left:3px solid #7c3aed;border-radius:12px;padding:12px 14px">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
@@ -162,7 +162,7 @@ function questPanelRender(){
       :`Gezählt werden die Aktionen aus dem Live-Tracker.`}</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px">${chips||'<span style="font-size:var(--s-klein);color:var(--text3)">Noch keine Quests – „Anpassen" antippen.</span>'}</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;font-size:var(--s-klein);color:var(--text2)">
-      ${teamQuestFedern>0?`<span style="background:#ecfdf5;color:#065f46;border-radius:12px;padding:3px 9px;font-weight:700">${XP_ICON} ${teamQuestFedern} Federn pro Kind, wenn ALLE Ziele fallen</span>`:`<span style="color:var(--text3)">Feder-Belohnung aus</span>`}
+      ${teamQuestFedern>0?`<span style="background:var(--green-bg);color:var(--green);border-radius:12px;padding:3px 9px;font-weight:700">${XP_ICON} ${teamQuestFedern} Federn pro Kind, wenn ALLE Ziele fallen</span>`:`<span style="color:var(--text3)">Feder-Belohnung aus</span>`}
       ${teamBelohnung?`<span>🎁 <strong>${esc(teamBelohnung)}</strong></span>`:""}
     </div>
   </div>`;
@@ -235,12 +235,12 @@ function questEditorOpen(){
     <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:12px">Quests anlegen, bearbeiten oder löschen. Jede Quest zählt eine Aktion bis zum Ziel.</div>
     <div id="qe-list"></div>
     <button class="btn btn-sm" style="margin-bottom:12px" onclick="qeAddQuest()"><i class="ti ti-plus"></i>Quest hinzufügen</button>
-    <div style="margin:0 0 12px;padding:10px;border:1.5px dashed #10b981;border-radius:10px;background:#ecfdf5">
-      <label style="font-weight:700;font-size:var(--s-text);color:#065f46">${XP_ICON} Federn, wenn das Team ALLE Quests schafft</label>
-      <div style="font-size:var(--s-klein);color:#047857;margin:2px 0 6px">Bekommt jedes mitspielende Kind gutgeschrieben – automatisch, einmal pro Spieltag.</div>
+    <div style="margin:0 0 12px;padding:10px;border:1.5px dashed var(--green);border-radius:10px;background:var(--green-bg)">
+      <label style="font-weight:700;font-size:var(--s-text);color:var(--green)">${XP_ICON} Federn, wenn das Team ALLE Quests schafft</label>
+      <div style="font-size:var(--s-klein);color:var(--text);margin:2px 0 6px">Bekommt jedes mitspielende Kind gutgeschrieben – automatisch, einmal pro Spieltag.</div>
       <div style="display:flex;align-items:center;gap:8px">
         <input id="qe-federn" type="number" min="0" max="200" value="${teamQuestFedern}" style="width:90px;padding:8px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-karte);font-weight:700;box-sizing:border-box">
-        <span style="font-size:var(--s-text);color:#047857">${XP_ICON} pro Kind</span>
+        <span style="font-size:var(--s-text);color:var(--text)">${XP_ICON} pro Kind</span>
       </div>
     </div>
     <div style="margin:0 0 12px;padding:10px;border:1.5px solid var(--rand-bedien);border-radius:10px">
@@ -255,9 +255,9 @@ function questEditorOpen(){
     </div>
     <label for="qe-belohnung" style="font-size:var(--s-klein);color:var(--text2)">🎁 Zusätzliche Belohnung (Freitext, optional)</label>
     <textarea id="qe-belohnung" rows="2" placeholder="z. B. Eis für alle beim nächsten Training!" style="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text);margin:4px 0 12px;box-sizing:border-box">${esc(teamBelohnung)}</textarea>
-    <div style="margin:0 0 12px;padding:10px;border:1.5px dashed #f59e0b;border-radius:10px;background:#fffbeb">
-      <div style="font-weight:700;font-size:var(--s-text);color:#92400e;margin-bottom:2px">⚡ Doppel-${XP_LABEL}-Booster</div>
-      <div style="font-size:var(--s-klein);color:#78716c;margin-bottom:8px">${xpBoostActive()?`Aktiv bis ${new Date(teamDoubleXpUntil).toLocaleString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})} Uhr – alle ${XP_LABEL} zählen doppelt!`:"72-Stunden-Fenster (z. B. übers Wochenende). Den 2x-Multiplikator rechnet der Server."}</div>
+    <div style="margin:0 0 12px;padding:10px;border:1.5px dashed var(--amber);border-radius:10px;background:var(--amber-bg)">
+      <div style="font-weight:700;font-size:var(--s-text);color:var(--amber);margin-bottom:2px">⚡ Doppel-${XP_LABEL}-Booster</div>
+      <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">${xpBoostActive()?`Aktiv bis ${new Date(teamDoubleXpUntil).toLocaleString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})} Uhr – alle ${XP_LABEL} zählen doppelt!`:"72-Stunden-Fenster (z. B. übers Wochenende). Den 2x-Multiplikator rechnet der Server."}</div>
       <button class="btn btn-sm ${xpBoostActive()?"":"btn-p"}" onclick="xpBoosterToggle(this)">${xpBoostActive()?"Booster beenden":"⚡ 72h aktivieren"}</button>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
@@ -278,11 +278,11 @@ function qeSyncFromInputs(){
 }
 function qeRenderList(){
   const wrap=document.getElementById("qe-list"); if(!wrap)return;
-  wrap.innerHTML=qeDraft.map((q,i)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:8px">
-    <input data-i="${i}" data-f="icon" value="${esc(q.icon||"🏆")}" maxlength="2" style="width:34px;text-align:center;padding:7px 2px;border:1px solid var(--rand-bedien);border-radius:6px;font-size:var(--s-karte)">
-    <input data-i="${i}" data-f="label" value="${esc(q.label||"")}" placeholder="Name" style="flex:1;min-width:70px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text)">
-    <select data-i="${i}" data-f="key" style="padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text)">${QUEST_KEYS.map(k=>`<option value="${k.key}"${k.key===q.key?" selected":""}>${k.label}</option>`).join("")}</select>
-    <input data-i="${i}" data-f="target" type="number" min="1" value="${q.target||10}" title="Ziel" style="width:52px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text)">
+  wrap.innerHTML=qeDraft.map((q,i)=>`<div style="display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-bottom:10px;padding-bottom:8px;border-bottom:var(--border)">
+    <input data-i="${i}" data-f="icon" value="${esc(q.icon||"🏆")}" maxlength="2" style="width:38px;min-height:44px;text-align:center;padding:7px 2px;border:1px solid var(--rand-bedien);border-radius:6px;font-size:var(--s-karte)">
+    <input data-i="${i}" data-f="label" value="${esc(q.label||"")}" placeholder="Name" style="flex:1 1 calc(100% - 44px);min-width:0;min-height:44px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text)">
+    <select data-i="${i}" data-f="key" style="flex:1;min-width:0;min-height:44px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text)">${QUEST_KEYS.map(k=>`<option value="${k.key}"${k.key===q.key?" selected":""}>${k.label}</option>`).join("")}</select>
+    <input data-i="${i}" data-f="target" type="number" min="1" value="${q.target||10}" title="Ziel" aria-label="Ziel" style="width:60px;min-height:44px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text)">
     <button onclick="qeDelQuest(${i})" title="Löschen" aria-label="Quest löschen" style="min-width:44px;min-height:44px;border:none;background:transparent;color:#dc2626;cursor:pointer;font-size:var(--s-karte)">🗑</button>
   </div>`).join("")||'<div style="font-size:var(--s-text);color:var(--text3);padding:6px">Noch keine Quests – füge eine hinzu.</div>';
 }

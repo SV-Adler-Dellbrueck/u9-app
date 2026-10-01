@@ -10,6 +10,7 @@
   --amber:#b45309;--amber-bg:#fffbeb;
   --red:#b91c1c;--red-bg:#fef2f2;
   --purple:#6d28d9;--purple-bg:#f5f3ff;
+  --purple-text:var(--purple);  /* v708: Lila als SCHRIFT – im Dunkeln aufgehellt; --purple bleibt Fläche */
   --teal:#0e7490;--teal-bg:#ecfeff;
   --orange:#c2410c;--orange-bg:#fff7ed;
   /* Trainerplan-Ampel: vier Stufen nach der ZAHL der Zusagen (PO: 0 rot, 1 orange,
@@ -69,7 +70,7 @@
      Diese Töne halten mindestens 4,5:1 auf --surface UND auf --bg (nachgerechnet:
      Rot 5,29/6,45 · Grün 8,40/10,25 · Bernstein 8,76/10,69 · Blau 5,75/7,02).
      --blue selbst bleibt unverändert: es ist Fläche unter weißer Schrift. */
-  --red:#f87171;--green:#4ade80;--amber:#fbbf24;--blue-text:#60a5fa;
+  --red:#f87171;--green:#4ade80;--amber:#fbbf24;--blue-text:#60a5fa;--purple-text:#c4b5fd;
   /* v619: --green ist im Dunkeln hell (Schrift). Als Fläche unter weißer Schrift (aktiver Reiter
      „Training“) ergab das 1,74:1 – die Familienfarbe bleibt deshalb das satte Grün (5,0:1). */
   --fam-training:#15803d;
@@ -89,7 +90,7 @@
      Diese Töne halten mindestens 4,5:1 auf --surface UND auf --bg (nachgerechnet:
      Rot 5,29/6,45 · Grün 8,40/10,25 · Bernstein 8,76/10,69 · Blau 5,75/7,02).
      --blue selbst bleibt unverändert: es ist Fläche unter weißer Schrift. */
-  --red:#f87171;--green:#4ade80;--amber:#fbbf24;--blue-text:#60a5fa;
+  --red:#f87171;--green:#4ade80;--amber:#fbbf24;--blue-text:#60a5fa;--purple-text:#c4b5fd;
   /* v619: --green ist im Dunkeln hell (Schrift). Als Fläche unter weißer Schrift (aktiver Reiter
      „Training“) ergab das 1,74:1 – die Familienfarbe bleibt deshalb das satte Grün (5,0:1). */
   --fam-training:#15803d;
@@ -472,7 +473,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .aw-row:last-child{border-bottom:none}
 .aw-name{flex:1;font-weight:600;color:var(--text)}
 .aw-toggle{width:52px;height:28px;border-radius:14px;background:#7c8ba1;border:none;cursor:pointer;position:relative;transition:background .2s}
-.aw-toggle.on{background:linear-gradient(135deg,#16a34a,#059669);box-shadow:0 1px 6px rgba(22,163,74,.35)}
+.aw-toggle.on{background:linear-gradient(135deg,#15803d,#047857);box-shadow:0 1px 6px rgba(22,163,74,.35)}
 .aw-toggle::after{content:'';position:absolute;width:24px;height:24px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 .aw-toggle.on::after{left:26px}
 .aw-qual{display:flex;gap:2px}
@@ -992,7 +993,7 @@ button:not([class])[style*="background:none"]{min-height:0}
 
 /* Anwesenheit als Kachel-Raster (PO: keine langen Listen) – Zustand über .on */
 .aw-tile{min-height:68px;border:var(--border-s);border-radius:12px;background:var(--surface);color:var(--text2);font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 4px;position:relative}
-.aw-tile .aw-ok{position:absolute;top:4px;right:7px;font-size:var(--s-text);font-weight:900;color:#16a34a;visibility:hidden}
+.aw-tile .aw-ok{position:absolute;top:4px;right:7px;font-size:var(--s-text);font-weight:900;color:var(--green);visibility:hidden}
 .aw-tile.on{background:#dcfce7;border-color:#4ade80;color:#166534}
 .aw-tile.on .aw-ok{visibility:visible}
 html[data-theme="dark"] .aw-tile.on,body.dark .aw-tile.on{background:#14532d;border-color:#22c55e;color:#dcfce7}
@@ -1002,7 +1003,7 @@ html[data-theme="dark"] .aw-tile.on,body.dark .aw-tile.on{background:#14532d;bor
 .tp-check input{position:absolute;opacity:0;pointer-events:none}
 .tp-check span{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:6px 14px;border:var(--border-s);border-radius:18px;background:var(--surface2);color:var(--text2);font-size:var(--s-text);font-weight:700;cursor:pointer;user-select:none}
 .tp-check span::before{content:"🧢"}
-.tp-check input:checked+span{background:#16a34a;border-color:#16a34a;color:#fff}
+.tp-check input:checked+span{background:#15803d;border-color:#15803d;color:#fff}
 
 /* Übungs-Picker-Button in der Planung (ersetzt das sichtbare Dropdown) */
 .tp-pick{flex:1;min-width:0;min-height:48px;text-align:left;border:var(--border-s);border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:600;cursor:pointer;padding:8px 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1237,3 +1238,43 @@ details.blz-einst[open]{padding-bottom:6px}
 .ruhe-eigen label{display:flex;align-items:center;gap:6px;font-size:var(--s-text);color:var(--text)}
 .ruhe-eigen input[type=time]{min-height:48px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font:inherit}
 .ruhe-uebernehmen{min-height:48px;padding:8px 14px;border:none;border-radius:10px;background:var(--blue);color:#fff;font:inherit;font-weight:800;cursor:pointer}
+
+/* ── v708 Lesbarkeit (Optik-Prüfung 01.10.2026) ─────────────────────────────────────────
+   „Drucken / PDF“ war eine feste helle Fläche (#f1f5f9) – im Dunkelmodus stand helle Schrift
+   darauf (1,1:1). */
+.print-btn{background:var(--surface2)}
+.print-btn:hover{background:var(--bg)}
+/* Auswahlfelder ohne eigene Schriftfarbe nahmen das Schwarz des Browsers (1,4:1 im Dunkeln). */
+.tp-coach-sel,#tn-autor,#tv-autor{color:var(--text);background-color:var(--surface2)}
+/* Passwortfelder fehlten in der 44-px-Regel (41 px neben 44 px hohem E-Mail-Feld). */
+input[type="password"]{min-height:44px}
+/* Umschalter: der Rahmen um die Gruppe hatte 1,2:1 (hell) – Bedienelemente brauchen 3:1. */
+.seg-ctrl{border:1px solid var(--rand-bedien)}
+/* Anwesenheit: gewählte Kachel – Rand #4ade80 auf Hellgrau hatte 1,6:1. */
+.aw-tile.on{border-color:var(--green)}
+/* Dunkelmodus: Eingabefelder ohne eigene Farben blieben weiße Kästen (Browser-Vorgabe);
+   color-scheme färbt auch Datums-/Zeitwähler und Bildlaufleisten passend. Felder mit
+   eigener Inline-Farbe behalten sie. */
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark}
+  :root:not([data-theme="light"]) :is(input:not([type=checkbox],[type=radio],[type=range],[type=color],[type=file]),select,textarea){background-color:var(--surface2);color:var(--text)}
+  :root:not([data-theme="light"]) .btn-p{border-color:#60a5fa}}
+:root[data-theme="dark"]{color-scheme:dark}
+:root[data-theme="dark"] :is(input:not([type=checkbox],[type=radio],[type=range],[type=color],[type=file]),select,textarea){background-color:var(--surface2);color:var(--text)}
+/* Hauptknopf im Dunkeln: #1a56db hob sich mit 2,4:1 kaum vom Grund ab – der Rand trägt die Grenze (5,8:1). */
+:root[data-theme="dark"] .btn-p{border-color:#60a5fa}
+/* v708: Kennzahlen in Saison-Cockpit, Pinnwand-Statistik, Anwesenheit und Adler-Welt tragen feste
+   dunkle Markenfarben als SCHRIFT – im Dunkelmodus 2,6–3,0:1. Begrenzt auf diese Bereiche. */
+:root[data-theme="dark"] :is(#sc-modal,#team-stats,#aw-stats,#aw-fed-1,[id^="tm-card-"]) [style*="color:#1a56db"],
+:root[data-theme="dark"] :is(#sc-modal,#team-stats,#aw-stats,#aw-fed-1,[id^="tm-card-"]) [style*="color:#0e7490"]{color:#67e8f9!important}
+:root[data-theme="dark"] :is(#sc-modal,#team-stats,#aw-stats,#aw-fed-1,[id^="tm-card-"]) [style*="color:#7c3aed"],
+:root[data-theme="dark"] :is(#sc-modal,#team-stats,#aw-stats,#aw-fed-1,[id^="tm-card-"]) [style*="color:#6d28d9"]{color:#c4b5fd!important}
+:root[data-theme="dark"] :is(#sc-modal,#team-stats,#aw-stats,#aw-fed-1,[id^="tm-card-"]) [style*="color:#16a34a"],
+:root[data-theme="dark"] :is(#sc-modal,#team-stats,#aw-stats,#aw-fed-1,[id^="tm-card-"]) [style*="color:#15803d"]{color:#4ade80!important}
+:root[data-theme="dark"] :is(#sc-modal,#team-stats,#aw-stats,#aw-fed-1,[id^="tm-card-"]) [style*="color:#dc2626"],
+:root[data-theme="dark"] :is(#sc-modal,#team-stats,#aw-stats,#aw-fed-1,[id^="tm-card-"]) [style*="color:#b91c1c"]{color:#f87171!important}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) :is(#sc-modal,#team-stats,#aw-stats,#aw-fed-1,[id^="tm-card-"]) :is([style*="color:#1a56db"],[style*="color:#0e7490"]){color:#67e8f9!important}
+  :root:not([data-theme="light"]) :is(#sc-modal,#team-stats,#aw-stats,#aw-fed-1,[id^="tm-card-"]) :is([style*="color:#7c3aed"],[style*="color:#6d28d9"]){color:#c4b5fd!important}
+  :root:not([data-theme="light"]) :is(#sc-modal,#team-stats,#aw-stats,#aw-fed-1,[id^="tm-card-"]) :is([style*="color:#16a34a"],[style*="color:#15803d"]){color:#4ade80!important}
+  :root:not([data-theme="light"]) :is(#sc-modal,#team-stats,#aw-stats,#aw-fed-1,[id^="tm-card-"]) :is([style*="color:#dc2626"],[style*="color:#b91c1c"]){color:#f87171!important}
+}

@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v707 (Oktober 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v708 (Oktober 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -100,7 +100,7 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 
 | Funktion | Was sie tut | Nutzen |
 |---|---|---|
-| **Termine** | Seit v683 oben „Neuer Termin“ als Hauptknopf, Trainerplan und Grillhütte als Kacheln unter der Liste. Training, Spiel, Turnier, Event und Trainermeeting. Das Formular zeigt nur, was zum Typ gehört. Serien für Training, Treffzeit-Vorschlag bei Spielen, Platz-Vorschlag je Typ, Helfer-Aufgaben je Termin. Vergangene Termine bleiben erreichbar. Das Termin-Fenster ist die Arbeitsansicht mit Trainer-Chips und Platz-Ampel. | Ein Kalender für alles, ohne Felder, die niemand braucht. |
+| **Termine** | Seit v708 Spielform mit Mehrfachwahl (FUNiño, 3+1, 4+1, 5+1); auswärts keine Spielfeld-Aufteilung und unter „Wer betreut die Kinder mit?“ nur die Betreuung; „Finden“ sucht die Adresse auch im Bearbeiten-Fenster. Seit v683 oben „Neuer Termin“ als Hauptknopf, Trainerplan und Grillhütte als Kacheln unter der Liste. Training, Spiel, Turnier, Event und Trainermeeting. Das Formular zeigt nur, was zum Typ gehört. Serien für Training, Treffzeit-Vorschlag bei Spielen, Platz-Vorschlag je Typ, Helfer-Aufgaben je Termin. Vergangene Termine bleiben erreichbar. Das Termin-Fenster ist die Arbeitsansicht mit Trainer-Chips und Platz-Ampel. | Ein Kalender für alles, ohne Felder, die niemand braucht. |
 | **„Fällt aus“** | Ein Termin wird abgesagt statt gelöscht. Die Absage steht auf der Startseite, in der Terminkarte und in der Kurzzeile, alle Aktionen dazu verschwinden. | Eltern und Trainer sehen den Ausfall überall, die Historie bleibt vollständig. |
 | **Trainermeeting** | Eigene Terminart: Vorschlag 1 bis 3 statt festem Datum, Abstimmung im Trainerteam, Themensammlung vorab, Beschlüsse und Protokoll je Thema. Für Eltern unsichtbar. | Ein Meeting lässt sich vorbereiten, bevor der Termin steht. Themen gehen nicht mehr in Chats verloren. |
 | **Trainerplan** | Alle kommenden Termine als Tabelle, Trainerstab als Spalten, ein Tipp je Zelle. Balken zählt die Zusagen. | Lücken in der Trainerabdeckung fallen Wochen vorher auf. |
@@ -114,7 +114,7 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 | **Nutzung** | Welche Bereiche und Aktionen in den letzten 7, 30 oder 90 Tagen benutzt wurden – ohne Kindernamen. Oben dazu, wie viele Kindergeräte gekoppelt sind, wie viele heute in der Kabine waren und welche Appzeit eingestellt ist, als reine Summen. | Grundlage fürs Ausmisten: Was niemand nutzt, fliegt raus. Und ein Blick darauf, ob die Kinder-App ankommt. |
 | **Backup** | Seit v683 als Kachel „Datensicherung“ unter Orga · Einstellungen (vorher im Kader und auf der Pinnwand). Export aller Tabellen der App (seit v603 wirklich aller: vorher 29 von rund 100). Bewusst nicht darin: Notfallangaben der Eltern, Gerätekennungen für Benachrichtigungen, das Nutzungsprotokoll, die Prüfwerte der Einladungskarten – mit Grund in der Datei vermerkt. | Die einzige Sicherung: Der kostenlose Supabase-Plan sichert selbst nichts. |
 | **Hilfe & Rundgang** | Suchbare Hilfe je Funktion; seit v658 eine geführte Tour mit Zeiger: sie öffnet die Bereiche selbst und rahmt die Stelle ein, um die es geht (17 Schritte). | Ein neuer Trainer findet sich ohne Einweisung zurecht. |
-| **Dark Mode, Adresse der App** | Hell/Dunkel; die App liegt unter einer vereinseigenen Adresse. | Am Flutlichtplatz lesbar; weitergegebene Links enthalten keinen privaten Namen. |
+| **Dark Mode, Adresse der App** | Hell/Dunkel (seit v708 ohne feste helle Kästen und weiße Eingabefelder im Dunkeln, Zusage-Farben und Verlaufsknöpfe mit 4,5:1); die App liegt unter einer vereinseigenen Adresse. | Am Flutlichtplatz lesbar; weitergegebene Links enthalten keinen privaten Namen. |
 
 ---
 

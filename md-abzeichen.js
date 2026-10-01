@@ -25,9 +25,9 @@ async function abzeichenOpen(spielerId,name,kidsMode){
   modal.style.cssText=`position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:${kidsMode?10060:10001};display:flex;flex-direction:column;padding:14px;overflow-y:auto`;
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
   const card=document.createElement("div");
-  card.style.cssText="background:#fff;color:#1a1a2e;max-width:480px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
+  card.style.cssText="background:var(--surface);color:var(--text);max-width:480px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   card.innerHTML=`${mdlHead("abzeichen-modal","🎖️",`Technik-Abzeichen${name?" · "+esc(name):""}`,"","#6d28d9")}
-    <div style="font-size:var(--s-text);color:#64748b;margin-bottom:12px">${kidsMode?`Das hast du schon geschafft! Neue Abzeichen trägt Mama oder Papa im Eltern-Bereich ein – dann gibt's Adler-Federn ${XP_ICON}.`:`Übt zuhause und beim Spielen. Wenn dein Kind ein Abzeichen schafft, hakst du es ab – es gibt Adler-Federn ${XP_ICON}!`}</div>
+    <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:12px">${kidsMode?`Das hast du schon geschafft! Neue Abzeichen trägt Mama oder Papa im Eltern-Bereich ein – dann gibt's Adler-Federn ${XP_ICON}.`:`Übt zuhause und beim Spielen. Wenn dein Kind ein Abzeichen schafft, hakst du es ab – es gibt Adler-Federn ${XP_ICON}!`}</div>
     <div id="abzeichen-list" style="display:flex;flex-direction:column;gap:8px"><div style="color:var(--text3);font-size:var(--s-text)">Lade…</div></div>
     <button class="btn btn-sm" style="margin-top:12px;width:100%" onclick="document.getElementById('abzeichen-modal').remove()">Schließen</button>`;
   modal.appendChild(card);document.body.appendChild(modal);

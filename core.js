@@ -138,6 +138,12 @@ function isoLokal(d){
    „<datum>“, „__t2“, „__t3“ (jedes Kind dort „dabei“ oder „nicht“) und „__teams“. Wer über ALLE Zeilen
    zählt, zählt jedes Kind mehrfach und Kinder aus Team 2/3 als „nicht“ (Prüfung 01.10.: Quoten 56 statt
    100 %, Spiele 9 statt 4). Zählungen lesen deshalb nur diese Zeilen – bis heute, nicht die kommenden. */
+/* v708 PO 01.10.: „Bei Auswärtsspielen … hängt davon ab, was die ausrichtende Mannschaft anbietet.
+   Mehrfachnennungen möglich: Funino, 3+1, 4+1, 5+1.“ termine.spielform bleibt eine Textspalte;
+   mehrere Formen stehen kommagetrennt darin („funino,3+1“). Alle Leser gehen über diese zwei. */
+const SF_FORMEN=["funino","3+1","4+1","5+1"];
+function sfListe(s){ return String(s||"").split(/\s*[,·]\s*/).map(x=>x.trim()).filter(Boolean); }
+function sfText(s){ return sfListe(s).map(x=>x.toLowerCase()==="funino"?"FUNiño":x).join(" · "); }
 function nomZeilenPfad(ab){
   const morgen=new Date(); morgen.setDate(morgen.getDate()+1);
   return "nominierungen?select=datum,data&datum=like.*__nom"+(ab?"&datum=gte."+ab:"")+"&datum=lt."+isoLokal(morgen);

@@ -43,7 +43,7 @@ function einheitImportOpen(){
   m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Einheit importieren");
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{ if(e.target===m)einheitImportClose(); };
-  const fld="box-sizing:border-box;width:100%;padding:10px;border:var(--border-s);border-radius:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--s-text);background:var(--surface2);color:var(--text)";
+  const fld="box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--s-text);background:var(--surface2);color:var(--text)";
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:520px;width:100%;margin:auto">
     ${mdlHead("ei-modal","📥","Einheit importieren","Fertige Einheit als JSON – Übungen, Phasen und Plan in einem Schritt","#16a34a")}
     <div style="font-size:var(--s-text);color:var(--text2);line-height:1.5;margin-bottom:8px">
@@ -375,7 +375,7 @@ function uebungImportOpen(){
   m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Übungen importieren");
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{ if(e.target===m)uebungImportClose(); };
-  const fld="box-sizing:border-box;width:100%;padding:10px;border:var(--border-s);border-radius:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--s-text);background:var(--surface2);color:var(--text)";
+  const fld="box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--s-text);background:var(--surface2);color:var(--text)";
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:520px;width:100%;margin:auto">
     ${mdlHead("eu-modal","📚","Übungen importieren","Nur die Übungsdatenbank füllen – ohne Einheit und ohne Plan","#1a56db")}
     <div style="font-size:var(--s-text);color:var(--text2);line-height:1.5;margin-bottom:8px">
@@ -773,7 +773,7 @@ function vorlagenImportOpen(){
   m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Vorlagen importieren");
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{ if(e.target===m)vorlagenImportClose(); };
-  const fld="box-sizing:border-box;width:100%;padding:10px;border:var(--border-s);border-radius:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--s-text);background:var(--surface2);color:var(--text)";
+  const fld="box-sizing:border-box;width:100%;padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--s-text);background:var(--surface2);color:var(--text)";
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:520px;width:100%;margin:auto">
     ${mdlHead("ev-modal","🗂️","Vorlagen importieren","Fertige Zusammenstellungen ohne Datum und ohne Kinder","#7c3aed")}
     <div style="font-size:var(--s-text);color:var(--text2);line-height:1.5;margin-bottom:8px">
