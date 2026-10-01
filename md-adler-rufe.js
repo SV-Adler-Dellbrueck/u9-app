@@ -56,6 +56,7 @@ async function _rufeOpen(raumId){
       <button type="button" id="rufe-suche-knopf" onclick="rufeSucheUmschalten()" aria-label="Suchen" style="width:44px;height:44px;border:none;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:var(--s-teil);cursor:pointer">🔍</button>
       <button type="button" onclick="rufeClose()" aria-label="Schließen" style="width:44px;height:44px;border:none;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:var(--s-teil);cursor:pointer">✕</button>
     </div>
+    <div id="rufe-ruhe" style="flex:none;padding:6px 12px;background:var(--surface);border-bottom:1px solid var(--surface2);color:var(--text2);font-size:var(--s-klein)">${rufeRuhezeitText(true,_rf.trainer)}</div>
     <div id="rufe-suche" style="display:none;padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--surface2)">
       <label for="rufe-suche-feld" style="position:absolute;left:-9999px">Rufe durchsuchen</label>
       <input id="rufe-suche-feld" type="search" placeholder="Rufe durchsuchen …" oninput="rufeSucheSetzen(this.value)" style="width:100%;box-sizing:border-box;min-height:44px;padding:8px 12px;border:1px solid var(--rand-bedien);border-radius:10px;font:inherit;background:var(--surface2);color:var(--text)">
@@ -622,6 +623,15 @@ function _rfGlockeZeigen(an){
   const b=document.getElementById("rufe-glocke"); if(!b)return;
   b.textContent=an?"🔔":"🔕"; b.setAttribute("aria-pressed",String(an));
   b.setAttribute("aria-label",an?"Benachrichtigungen zu Adler-Rufen sind an – antippen zum Abschalten":"Benachrichtigungen zu Adler-Rufen sind aus – antippen zum Einschalten");
+  const z=document.getElementById("rufe-ruhe"); if(z)z.textContent=rufeRuhezeitText(an,!!(_rf&&_rf.trainer));
+}
+/* v704: Die Ruhezeit steht sichtbar im Chat (PO 01.10.: keine Meldung bekommen – der Ruf kam um 22:56 Uhr).
+   Eltern 21:30–7 Uhr, das Trainerteam bekommt Rufe rund um die Uhr (rufe_push_faellig). */
+const RUFE_RUHE="21:30–7 Uhr";
+function rufeRuhezeitText(an,trainer){
+  if(!an)return "🔕 Benachrichtigungen zu Adler-Rufen sind für dich aus – die 🔔 oben schaltet sie wieder ein.";
+  return trainer?"🔔 Trainerteam: Benachrichtigungen kommen rund um die Uhr. Eltern bekommen "+RUFE_RUHE+" keine, was bis dahin ungelesen ist, kommt um 7 Uhr gesammelt."
+               :"🔔 Benachrichtigungen ruhen "+RUFE_RUHE+" – was bis dahin ungelesen ist, kommt um 7 Uhr gesammelt.";
 }
 async function rufeGlockeLaden(){
   if(!_rf||!_rf.uid)return;
