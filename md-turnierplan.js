@@ -1001,7 +1001,7 @@ function _blzPlatzHtml(){
   }
   const rest=p.uebrig?`<b>${p.uebrig}</b> wechseln durch`:`alle spielen gleichzeitig`;
   return `<div style="font-size:var(--s-klein);color:var(--text);background:var(--green-bg);border:1px solid var(--green);border-radius:9px;padding:7px 9px;margin-bottom:8px;line-height:1.45">
-    📐 ${kopf}.<br>${wer} dabei (${esc(p.quelle)}) → ${rest}.${fuss("#2f6b45")}</div>`;
+    📐 ${kopf}.<br>${wer} dabei (${esc(p.quelle)}) → ${rest}.${fuss("var(--text2)")}</div>`;   // v708: Grund folgt jetzt dem Thema
 }
 /* Struktur-Änderung (Modus, Team-Anzahl) macht einen gebauten Spielplan ungültig.
    Ohne Ergebnisse wird er still verworfen; mit Ergebnissen erst nach Rückfrage. */

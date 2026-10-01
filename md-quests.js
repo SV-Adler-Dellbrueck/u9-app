@@ -150,7 +150,7 @@ function questPanelRender(){
   const counts=questCountsAll();
   const chips=teamQuests.map(q=>{
     const ziel=questZiel(q), n=counts[q.key]||0, done=n>=ziel;
-    return `<span style="font-size:var(--s-klein);background:${done?"#ecfdf5":"var(--surface2)"};color:${done?"#065f46":"var(--text)"};border-radius:12px;padding:3px 9px">${q.icon} ${esc(q.label)} · ${n}/${ziel}${done?" ✓":""}</span>`;
+    return `<span style="font-size:var(--s-klein);background:${done?"var(--green-bg)":"var(--surface2)"};color:${done?"var(--green)":"var(--text)"};border-radius:12px;padding:3px 9px">${q.icon} ${esc(q.label)} · ${n}/${ziel}${done?" ✓":""}</span>`;
   }).join("");
   box.innerHTML=`<div style="background:var(--surface);border:var(--border-s);border-left:3px solid #7c3aed;border-radius:12px;padding:12px 14px">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
@@ -236,11 +236,11 @@ function questEditorOpen(){
     <div id="qe-list"></div>
     <button class="btn btn-sm" style="margin-bottom:12px" onclick="qeAddQuest()"><i class="ti ti-plus"></i>Quest hinzufügen</button>
     <div style="margin:0 0 12px;padding:10px;border:1.5px dashed var(--green);border-radius:10px;background:var(--green-bg)">
-      <label style="font-weight:700;font-size:var(--s-text);color:#065f46">${XP_ICON} Federn, wenn das Team ALLE Quests schafft</label>
-      <div style="font-size:var(--s-klein);color:#047857;margin:2px 0 6px">Bekommt jedes mitspielende Kind gutgeschrieben – automatisch, einmal pro Spieltag.</div>
+      <label style="font-weight:700;font-size:var(--s-text);color:var(--green)">${XP_ICON} Federn, wenn das Team ALLE Quests schafft</label>
+      <div style="font-size:var(--s-klein);color:var(--text);margin:2px 0 6px">Bekommt jedes mitspielende Kind gutgeschrieben – automatisch, einmal pro Spieltag.</div>
       <div style="display:flex;align-items:center;gap:8px">
         <input id="qe-federn" type="number" min="0" max="200" value="${teamQuestFedern}" style="width:90px;padding:8px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-karte);font-weight:700;box-sizing:border-box">
-        <span style="font-size:var(--s-text);color:#047857">${XP_ICON} pro Kind</span>
+        <span style="font-size:var(--s-text);color:var(--text)">${XP_ICON} pro Kind</span>
       </div>
     </div>
     <div style="margin:0 0 12px;padding:10px;border:1.5px solid var(--rand-bedien);border-radius:10px">
@@ -257,7 +257,7 @@ function questEditorOpen(){
     <textarea id="qe-belohnung" rows="2" placeholder="z. B. Eis für alle beim nächsten Training!" style="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text);margin:4px 0 12px;box-sizing:border-box">${esc(teamBelohnung)}</textarea>
     <div style="margin:0 0 12px;padding:10px;border:1.5px dashed var(--amber);border-radius:10px;background:var(--amber-bg)">
       <div style="font-weight:700;font-size:var(--s-text);color:var(--amber);margin-bottom:2px">⚡ Doppel-${XP_LABEL}-Booster</div>
-      <div style="font-size:var(--s-klein);color:#78716c;margin-bottom:8px">${xpBoostActive()?`Aktiv bis ${new Date(teamDoubleXpUntil).toLocaleString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})} Uhr – alle ${XP_LABEL} zählen doppelt!`:"72-Stunden-Fenster (z. B. übers Wochenende). Den 2x-Multiplikator rechnet der Server."}</div>
+      <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">${xpBoostActive()?`Aktiv bis ${new Date(teamDoubleXpUntil).toLocaleString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})} Uhr – alle ${XP_LABEL} zählen doppelt!`:"72-Stunden-Fenster (z. B. übers Wochenende). Den 2x-Multiplikator rechnet der Server."}</div>
       <button class="btn btn-sm ${xpBoostActive()?"":"btn-p"}" onclick="xpBoosterToggle(this)">${xpBoostActive()?"Booster beenden":"⚡ 72h aktivieren"}</button>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end">

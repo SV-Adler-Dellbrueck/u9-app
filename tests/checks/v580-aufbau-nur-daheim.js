@@ -9,7 +9,9 @@
       beim Turnier. Betreuung, Live-Ticker, Fotos und Abbau bleiben wählbar.
    b) Daheim und solange Heim/Auswärts offen ist: Aufbau wählbar.
    c) Wer sich vorher eingetragen hatte, sieht seinen Eintrag im Termin-Detail weiter und kann
-      ihn entfernen – auch ohne Freigabe. */
+      ihn entfernen – auch ohne Freigabe.
+   v708 (PO 01.10.): „Das Einzige, was wir an dieser Stelle als Trainer ankreuzen sollen, ist, wer
+   die Kinder am Turnier mit betreuen kann.“ – auswärts steht seitdem NUR die Betreuung. */
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
   const datum = h.tagePlus(3);
@@ -27,7 +29,7 @@ module.exports = async function (h) {
   const aufbau = l => l.some(x => /Aufbau/.test(x));
   if (aufbau(r.ausSpiel)) probleme.push("a) Auswärtsspiel bietet den Aufbau an");
   if (aufbau(r.ausTurnier)) probleme.push("a) Auswärtsturnier bietet den Aufbau an");
-  ["Betreuung", "Live-Ticker", "Fotografieren", "Abbau"].forEach(w => { if (!r.ausSpiel.some(x => x.includes(w))) probleme.push(`a) Auswärts fehlt „${w}“`); });
+  if (r.ausSpiel.length !== 1 || !/Betreuung/.test(r.ausSpiel[0] || "")) probleme.push(`a) Auswärts soll nur die Betreuung stehen (v708): ${r.ausSpiel.join(" · ")}`);
   if (!aufbau(r.heim)) probleme.push("b) Heimspiel bietet keinen Aufbau an");
   if (!aufbau(r.offen)) probleme.push("b) Offenes Heimrecht bietet keinen Aufbau an");
   zeilen.push(`a/b) auswärts: ${r.ausSpiel.join(" · ")} · daheim: ${r.heim.join(" · ")}`);
