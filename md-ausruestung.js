@@ -165,7 +165,7 @@ async function ausToggle(spielerId,el){
   const art=_ausArtikel(); if(!art)return;
   const k=ausKey(spielerId,art.id);
   const z=AUS_AUSGABE[k]||{spieler_id:spielerId,artikel_id:art.id};
-  if(el.checked){ z.ausgegeben_am=new Date().toISOString().slice(0,10); z.zurueck_am=null; }
+  if(el.checked){ z.ausgegeben_am=isoLokal(); z.zurueck_am=null; }
   else { z.ausgegeben_am=null; z.zurueck_am=null; }
   AUS_AUSGABE[k]=z;
   await ausSchreiben(z);
@@ -176,7 +176,7 @@ async function ausZurueck(spielerId){
   const art=_ausArtikel(); if(!art)return;
   const k=ausKey(spielerId,art.id);
   const z=AUS_AUSGABE[k]; if(!z)return;
-  z.zurueck_am=new Date().toISOString().slice(0,10);
+  z.zurueck_am=isoLokal();
   await ausSchreiben(z);
   ausstattungRender();
 }
@@ -450,7 +450,7 @@ function matFeldTippen(id,feld,wert){
   const p=MAT_POSTEN.find(x=>x.id===id); if(!p)return;
   const roh=String(wert).trim();
   p[feld]=roh===""?null:Math.max(0,parseInt(roh,10)||0);
-  if(feld==="ist")p.zuletzt_gezaehlt=p.ist==null?p.zuletzt_gezaehlt:new Date().toISOString().slice(0,10);
+  if(feld==="ist")p.zuletzt_gezaehlt=p.ist==null?p.zuletzt_gezaehlt:isoLokal();
   clearTimeout(_matTimer[id+feld]);
   _matTimer[id+feld]=setTimeout(()=>matSchreiben(p),900);
 }

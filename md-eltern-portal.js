@@ -580,7 +580,7 @@ async function elternNewsLoad(kids){
   if(cur.ms&&cur.ms>(seen.ms||"")) ms.filter(m=>m.erreicht_am>(seen.ms||"")).slice(0,3).forEach(m=>items.push({emo:"🏆",txt:`Team-Meilenstein: ${esc(m.label)}`,act:"elternCatClose()"})); // H7
   if(cur.kpost&&cur.kpost>(seen.kpost||"")) items.push({emo:"📬",txt:"Neue Adler-Post für dein Kind – Kompliment oder Gruß in der Kabine!",act:"elternCatClose();kabineOpen()"}); // I-A
   if(cur.tr&&cur.tr>(seen.tr||"")){ // J4: Gesprächsfutter für den Abendbrottisch
-    const rb=rueckblick[0], heuteStr=new Date().toISOString().slice(0,10);
+    const rb=rueckblick[0], heuteStr=isoLokal();
     const themen=(rb.themen||[]).slice(0,3).map(esc).join(", ");
     if(themen)items.push({emo:"📖",txt:`${rb.datum===heuteStr?"Heute":"Zuletzt"} im Training geübt: ${themen} – frag dein Kind doch mal danach!`,act:"elternCatClose()"});
   }
@@ -614,7 +614,7 @@ async function chronikOpen(){
     <div id="chronik-body" style="text-align:center;padding:24px;color:var(--text3);font-size:var(--s-text)">Lade die Saison …</div>
   </div>`;
   document.body.appendChild(m);
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   const d0=new Date(), saisonAb=`${d0.getMonth()>=6?d0.getFullYear():d0.getFullYear()-1}-07-01`;
   let termine=[],ms=[];
   try{
@@ -735,7 +735,7 @@ async function elternAnsagenLoad(){
    Gruß im Namen des eigenen Kindes (kabine_post typ=genesung, max 1/Tag per DB-Unique). */
 async function elternGenesungLoad(kids){
   const el=document.getElementById("genesung-slot"); if(!el||!kids||!kids.length)return;
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   const eigene=kids.map(k=>k.spieler_id);
   let pausen=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/kind_pause?select=spieler_id&bis=gte.${heute}`,{headers:sbAuthHeaders()});if(r.ok)pausen=((await r.json())||[]).map(x=>x.spieler_id).filter(id=>!eigene.includes(id));}catch(e){}
@@ -760,7 +760,7 @@ async function elternGenesungLoad(kids){
 async function elternGenesungSend(vonSid,anSid,key,btn){
   if(btn)btn.disabled=true;
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/kabine_post`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({typ:"genesung",von_spieler:vonSid,an_spieler:anSid,text_key:key,datum:new Date().toISOString().slice(0,10)})});
+    const r=await fetch(`${SB_URL}/rest/v1/kabine_post`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({typ:"genesung",von_spieler:vonSid,an_spieler:anSid,text_key:key,datum:isoLokal()})});
     if(r.status===409){document.getElementById("gen-"+anSid)?.remove();toast("Heute schon gegrüßt 🙂");return;}
     if(!r.ok&&r.status!==201){toast("Konnte nicht senden","err");if(btn)btn.disabled=false;return;}
   }catch(e){toast("Netzwerkfehler","err");if(btn)btn.disabled=false;return;}
@@ -782,7 +782,7 @@ async function elternDashLoad(){
   const body=document.getElementById("ep-dash-body");
   if(!body)return;
   const card=(inner)=>`<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">${inner}</div>`;
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   // UX 3: kam der Elternteil über einen Deep-Link (?rsvp=…)? Dann Nudge erzwingen + hinscrollen.
   let rsvpIntent=null; try{rsvpIntent=sessionStorage.getItem("adler_rsvp_intent");}catch(e){}
   let kids=[], termin=null;
@@ -997,7 +997,7 @@ async function elternDashLoad(){
     <div id="cat-news" class="el-cat-panel" style="display:none"></div>
     ${kids.map(k=>{const kd=k.kader||{};const nn=(kd.name||"").replace(/'/g,"");
       return `<div id="cat-kind-${k.spieler_id}" class="el-cat-panel" data-cat-title="🃏 ${esc(kd.name||"Kind")}" style="display:none">
-        ${elRow("🃏","Adler-Karte ansehen","Die FUT-Karte mit den aktuellen Werten",`elternCardOpen(${k.spieler_id})`,"#5b21b6")}
+        ${elRow("🃏","Adler-Karte ansehen","Die Karte deines Kindes – Stärken, Spiele, Trainings, ohne Bewertungszahlen",`elternCardOpen(${k.spieler_id})`,"#5b21b6")}
         ${elRow("🎖️","Technik-Abzeichen","Übungen zu Hause abhaken – Federn sammeln",`abzeichenOpen(${k.spieler_id},'${nn}')`,"#6d28d9")}
         ${elRow("🎧","Sprachlob anhören","Persönliches Lob vom Trainerteam",`lobPlay(${k.spieler_id})`,"#7c3aed")}
         ${elRow("✏️","Fan-Fakten &amp; Foto","Lieblingsverein, Spitzname &amp; Kartenfoto pflegen",`elternFanfactsOpen(${k.spieler_id},'${nn}')`,"#8b5cf6")}
@@ -1184,7 +1184,7 @@ async function elternRsvpClear(terminId,spielerId){
    gefragt: eine Zusage für November hilft niemandem und macht den Block unlesbar.
    Gezeigt wird nur, was WIRKLICH offen ist; ist alles beantwortet, ist der Block weg. */
 function elternOffeneRsvpHtml(rows,kids,rsvpAll,ausserId){
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   const bis=new Date(Date.now()+14*864e5).toISOString().slice(0,10);
   rsvpAll=rsvpAll||{};
   const offen=(rows||[])
@@ -1428,7 +1428,7 @@ async function tdMitbringLoad(t){
    Aggregat (puls_aggregate, keine user_ids). Ein Datensatz pro Elternteil/Termin (upsert). */
 async function tdPulsLoad(t){
   const box=document.getElementById("td-puls"); if(!box)return;
-  const today=new Date().toISOString().slice(0,10);
+  const today=isoLokal();
   if(!(["training","spiel","turnier"].includes(t.typ)&&t.datum<=today)){box.innerHTML="";return;}
   let mine=null;
   try{const r=await fetch(`${SB_URL}/rest/v1/event_puls?termin_id=eq.${t.id}&select=mood,kommentar`,{headers:sbAuthHeaders()});if(r.ok){mine=(await r.json())[0]||null;}}catch(e){}
@@ -1476,7 +1476,7 @@ async function tdPulsSaveText(terminId){
 async function elternChecklistLoad(kids){
   const slot=document.getElementById("eltern-checklist-slot"); if(!slot)return;
   kids=kids||[];
-  try{ if(localStorage.getItem("adler_setup_hide")===new Date().toISOString().slice(0,10)){slot.innerHTML="";return;} }catch(e){}
+  try{ if(localStorage.getItem("adler_setup_hide")===isoLokal()){slot.innerHTML="";return;} }catch(e){}
   let committed=false; const notfallIds=new Set();
   try{const r=await fetch(`${SB_URL}/rest/v1/fairplay_commit?select=committed_at&limit=1`,{headers:sbAuthHeaders()});if(r.ok)committed=((await r.json())||[]).length>0;}catch(e){}
   try{const ids=kids.map(k=>k.spieler_id).join(",");if(ids){const r=await fetch(`${SB_URL}/rest/v1/kind_notfall?spieler_id=in.(${ids})&select=spieler_id`,{headers:sbAuthHeaders()});if(r.ok)(await r.json()).forEach(x=>notfallIds.add(x.spieler_id));}}catch(e){}
@@ -1521,12 +1521,12 @@ async function elternChecklistLoad(kids){
     <button onclick="elternChecklistDismiss()" style="width:100%;margin-top:10px;padding:8px;border:none;background:none;color:var(--text3);font-family:inherit;font-size:var(--s-klein);cursor:pointer">Später · für heute ausblenden</button>
   </div>`;
 }
-function elternChecklistDismiss(){ try{localStorage.setItem("adler_setup_hide",new Date().toISOString().slice(0,10));}catch(e){} const s=document.getElementById("eltern-checklist-slot"); if(s)s.innerHTML=""; }
+function elternChecklistDismiss(){ try{localStorage.setItem("adler_setup_hide",isoLokal());}catch(e){} const s=document.getElementById("eltern-checklist-slot"); if(s)s.innerHTML=""; }
 /* Puls-Erinnerung: sanfter Nudge für das jüngste vergangene Training/Spiel (≤14 Tage), zu dem
    dieser Elternteil noch KEIN Puls-Feedback gegeben hat. Ein Tap genügt (nutzt tdPulsRender/Save). */
 async function pulsNudgeLoad(){
   const slot=document.getElementById("puls-nudge-slot"); if(!slot)return;
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   const vor14=new Date(Date.now()-14*864e5).toISOString().slice(0,10);
   let evs=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/termine?select=id,typ,titel,gegner,datum&typ=in.(training,spiel,turnier)&datum=lt.${heute}&datum=gte.${vor14}&order=datum.desc&limit=6`,{headers:sbAuthHeaders()});if(r.ok)evs=await r.json();}catch(e){}
@@ -1550,7 +1550,7 @@ async function pulsNudgeLoad(){
 async function elternHelferTodoLoad(){
   const slot=document.getElementById("helfer-todo-slot"); if(!slot)return;
   const uid=_sbUid(); if(!uid){slot.innerHTML="";return;}
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   const heutige=(ELTERN_TERMINE||[]).filter(t=>t.datum===heute);
   if(!heutige.length){slot.innerHTML="";return;}
   let rows=[];
@@ -1668,7 +1668,7 @@ function _sbUid(){ try{const t=sbToken();return t?JSON.parse(atob(t.split(".")[1
 function _helferName(){ const kids=window._elternKids||[]; const n=(kids[0]&&kids[0].kader&&kids[0].kader.name)?kids[0].kader.name:"Unsere"; return n+" Familie"; }
 async function tdHelferLoad(t){
   const box=document.getElementById("td-helfer"); if(!box)return;
-  if(t.datum<new Date().toISOString().slice(0,10)){box.innerHTML="";return;} // nur kommende Events
+  if(t.datum<isoLokal()){box.innerHTML="";return;} // nur kommende Events
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/event_helfer?termin_id=eq.${t.id}&select=id,name,aufgabe,user_id&order=created_at.asc`,{headers:sbAuthHeaders()});if(r.ok)rows=await r.json();}catch(e){}
   const uid=_sbUid();
@@ -1719,7 +1719,7 @@ async function tdHelferLoad(t){
 function _helferReload(terminId){
   const t=(ELTERN_TERMINE||[]).find(x=>Number(x.id)===Number(terminId))
     ||((window._tdTermin&&Number(window._tdTermin.id)===Number(terminId))?window._tdTermin:null)
-    ||{id:terminId,datum:new Date().toISOString().slice(0,10)};
+    ||{id:terminId,datum:isoLokal()};
   /* BEIDE Darstellungen nachziehen. Seit die Aufgaben auch in der grossen Kachel stehen,
      wuerde ein Eintrag aus der Kachel sonst erst beim naechsten Laden dort erscheinen –
      man tippt, und nichts passiert. Beide steigen aus, wenn ihr Platz gerade fehlt. */
@@ -2046,6 +2046,8 @@ function elternTermineOpen(){
   modal.appendChild(c);document.body.appendChild(modal);
 }
 function elternTermineIcs(){
+  /* v707: icsLocalStart/icsLocalPlus/icsEscape stammen aus md-spielbericht.js (Welle 2) */
+  if(typeof icsLocalStart!=="function"||typeof icsEscape!=="function"){toast("Der Kalender lädt noch – bitte gleich noch einmal tippen");return;}
   const rows=ELTERN_TERMINE||[];
   if(!rows.length){toast("Keine Termine","err");return;}
   const dtStamp=new Date().toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,"");
@@ -2328,7 +2330,7 @@ async function elternAngabenSave(btn){
   const f=document.getElementById("ang-fehler");
   const body={vorname:w("ang-vor")||null,nachname:w("ang-nach")||null,handy:w("ang-handy")||null,geburtstag:w("ang-geb")||null,updated_at:new Date().toISOString()};
   if(!_angHandyOk(body.handy)){ if(f)f.textContent="Die Handynummer bitte nur mit Ziffern, Leerzeichen, + oder /."; return; }
-  if(body.geburtstag&&body.geburtstag>new Date().toISOString().slice(0,10)){ if(f)f.textContent="Der Geburtstag liegt in der Zukunft."; return; }
+  if(body.geburtstag&&body.geburtstag>isoLokal()){ if(f)f.textContent="Der Geburtstag liegt in der Zukunft."; return; }
   if(btn){btn.disabled=true;btn.textContent="Speichere …";}
   const zurueck=()=>{if(btn){btn.disabled=false;btn.textContent="Angaben speichern";}};
   try{
@@ -2410,6 +2412,7 @@ async function elternTeamEditSave(btn){
   toast("Elternbeirat & Kasse gespeichert ✓");
 }
 async function tdVorberichtLoad(t){
+  if(typeof elternHeaders!=="function"||typeof elternEsc!=="function")return;   // v707: beide aus md-matchcard.js (Welle 2)
   const box=document.getElementById("td-vorbericht"); if(!box)return;
   const gegner=(t.gegner||t.titel||"").trim(); if(!gegner)return;
   let rows=[];

@@ -48,7 +48,7 @@ function renderLineupEditor(){
   const selected=Object.values(kombiLineup).filter(Boolean);
   const bench=names.filter(n=>!selected.includes(n));
   const opts=(cur)=>`<option value="">— frei —</option>`+names.map(n=>`<option value="${esc(n)}"${n===cur?" selected":""}>${esc(n)}${getKader(n)?.nr?" (#"+getKader(n).nr+")":""}${getKader(n)?.tw?" 🥅":""}</option>`).join("");
-  const today=new Date().toISOString().slice(0,10);
+  const today=isoLokal();
   box.innerHTML=`
     <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:8px"><i class="ti ti-clipboard-check"></i> Aufstellung festlegen (Spieltag)</div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">

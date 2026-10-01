@@ -661,7 +661,7 @@ function tvInit(){
 async function tvVote(wahl){
   const autor=document.getElementById("tv-autor")?.value||"";
   if(!autor){toast("Bitte Trainer wählen","err");return;}
-  const datum=new Date().toISOString().slice(0,10);
+  const datum=isoLokal();
   try{
     const r=await fetch(`${SB_URL}/rest/v1/team_polls?on_conflict=datum,autor`,{
       method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},
@@ -675,7 +675,7 @@ async function tvVote(wahl){
 async function tvLoad(){
   const wrap=document.getElementById("tv-results");
   if(!wrap)return;
-  const datum=new Date().toISOString().slice(0,10);
+  const datum=isoLokal();
   try{
     const r=await fetch(`${SB_URL}/rest/v1/team_polls?datum=eq.${encodeURIComponent(datum)}&select=autor,wahl`,{headers:sbAuthHeaders()});
     if(sbCheck401(r))return;
@@ -724,7 +724,7 @@ async function _termineSelLoad(){
 async function terminSelectFill(selId, opt){
   opt=opt||{}; const sel=document.getElementById(selId); if(!sel)return;
   const types=opt.types||["training","spiel","turnier","event"], future=!!opt.future;
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   let rows=(await _termineSelLoad()).filter(t=>types.includes(t.typ));
   // future: NUR heute + kommende (geplant wird nie für die Vergangenheit – PO);
   // vonTagen: zusätzlich die letzten N Tage (Anwesenheits-Nachträge), Rest fliegt raus.
@@ -2807,7 +2807,7 @@ function tpWocheSpanne(datum){
   const tag=(d.getDay()+6)%7;                 // Montag = 0
   const mo=new Date(d); mo.setDate(d.getDate()-tag);
   const so=new Date(mo); so.setDate(mo.getDate()+6);
-  const iso=x=>x.toISOString().slice(0,10);
+  const iso=x=>isoLokal(x);   // v707: Ortszeit – vorher lief die Woche Sonntag bis Samstag
   return {von:iso(mo), bis:iso(so)};
 }
 /* Die Woche zählt die GESPEICHERTEN Einheiten, für den gerade offenen Tag aber den
@@ -3929,7 +3929,7 @@ async function _tpPlanRestoreIntern(datum,lauf){
 const TP_VORPLAN_MAX=6;
 async function tpVorplanLoad(){
   const el=document.getElementById("tp-vorplan"); if(!el)return;
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   const rows=(await _termineSelLoad()).filter(t=>t.typ==="training"&&t.datum>=heute)
     .sort((a,b)=>a.datum<b.datum?-1:1).slice(0,TP_VORPLAN_MAX);
   const kopf="";   // v687: die Schritt-Überschrift „1 Termin“ darüber sagt es schon
@@ -5118,7 +5118,7 @@ const TG_NAMEN=[
    Render-Pfade synchron; localStorage bleibt Offline-Fallback (write-through). */
 let _tgCache={datum:null,tg:null,geladen:false};
 let _tgSaveTimer=null;
-function _tgDatum(){return document.getElementById("tp-date")?.value||new Date().toISOString().slice(0,10);}
+function _tgDatum(){return document.getElementById("tp-date")?.value||isoLokal();}
 function _tgKey(){return "adler_tg_"+_tgDatum();}
 function tgFor(){return (_tgCache.datum===_tgDatum())?_tgCache.tg:null;}
 /* v577: Zwei Läufe zugleich löschten eine frisch gebildete Einteilung. Der Ablauf war:

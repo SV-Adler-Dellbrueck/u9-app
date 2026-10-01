@@ -192,7 +192,7 @@ async function tagebuchAusEvent(terminId){
 
 function tagebuchNeu(){
   if(!tbAngemeldet()) return;
-  tbOeffnen({ quelle:"frei", terminId:null, datum:new Date().toISOString().slice(0,10),
+  tbOeffnen({ quelle:"frei", terminId:null, datum:isoLokal(),
               baustein:"ich", ausloeser:"", beobachtung:"" });
 }
 
@@ -613,8 +613,8 @@ function tbKindName(kid){
    Dinge, und genau daran ist im September etwas liegen geblieben. */
 const TB_ROLLE = { organisation:"Organisation", skill:"Skill Development Coach", feldtrainer:"Feldtrainer" };
 function tbWiedervorlagePunkte(){
-  const heute = new Date().toISOString().slice(0,10);
-  const so = new Date(); so.setDate(so.getDate() + ((7 - so.getDay()) % 7)); const sonntag = so.toISOString().slice(0,10);
+  const heute = isoLokal();
+  const so = new Date(); so.setDate(so.getDate() + ((7 - so.getDay()) % 7)); const sonntag = isoLokal(so);   // v707: Ortszeit
   const eigene = new Set(_TB_LISTE.map(e=>Number(e.id)));
   return _TB_PUNKTE.filter(p=>!p.erledigt_am && !p.dauerhaft && (p.art==="todo" || eigene.has(Number(p.eintrag_id))))
     .map(p=>({ ...p, gruppe: !p.bis ? "spaeter" : p.bis < heute ? "ueberfaellig" : p.bis <= sonntag ? "woche" : "spaeter" }))
@@ -644,7 +644,7 @@ function tbWiedervorlageHtml(){
 }
 async function tbPunktErledigt(id){
   const p = _TB_PUNKTE.find(x=>Number(x.id)===Number(id)); if(!p) return;
-  const heute = new Date().toISOString().slice(0,10), ich = _TB_ICH || await tbAutor();
+  const heute = isoLokal(), ich = _TB_ICH || await tbAutor();
   try{
     const r = await fetch(`${SB_URL}/rest/v1/tagebuch_punkt?id=eq.${Number(id)}`,{method:"PATCH",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({erledigt_am:heute,erledigt_von:ich||null})});
     if(sbCheck401(r)) return;
@@ -858,7 +858,7 @@ async function tagebuchGedankeSpeichern(){
   const m = document.getElementById("tb-gedanke-meldung");
   if(!t){ if(m) m.textContent = "Schreib ein paar Worte – dann wird erfasst."; return; }
   const b = document.getElementById("tb-gedanke-los"); if(b) b.disabled = true;
-  const body = { autor: await tbAutor(), datum:new Date().toISOString().slice(0,10), quelle:"frei", anlass:"gedanke",
+  const body = { autor: await tbAutor(), datum:isoLokal(), quelle:"frei", anlass:"gedanke",
                  status:"keim", baustein:null, ausloeser:null, beobachtung:t, aha:null, konsequenz:null,
                  schlagworte:[], ki_vorschlag:false, updated_at:new Date().toISOString() };
   try{
@@ -958,7 +958,7 @@ async function tbVorschlagSichern(o){
    „Passt so“ bestätigt alles auf einmal; wer nichts ändert, braucht keinen weiteren Tipp. */
 let _TBP = null;
 async function tbEigeneTermine(){
-  const ich = await tbAutor(), heute = new Date().toISOString().slice(0,10);
+  const ich = await tbAutor(), heute = isoLokal();
   try{
     const r = await fetch(`${SB_URL}/rest/v1/termine?select=id,datum,uhrzeit,typ,titel,gegner,trainer_status,platz_status&datum=gte.${heute}&order=datum.asc&limit=60`,{headers:sbAuthHeaders()});
     if(!r.ok) return [];
@@ -1105,7 +1105,7 @@ async function wieWarsKarte(){
   const slot = document.getElementById("home-wiewars"); if(!slot) return;
   if(typeof sbToken!=="function" || !sbToken()){ slot.innerHTML = ""; return; }
   const ich = await tbAutor(); if(!ich){ slot.innerHTML = ""; return; }
-  const heute = new Date().toISOString().slice(0,10), ab = new Date(Date.now()-3*864e5).toISOString().slice(0,10);
+  const heute = isoLokal(), ab = new Date(Date.now()-3*864e5).toISOString().slice(0,10);
   let termin = null, offen = [];
   try{
     const r = await fetch(`${SB_URL}/rest/v1/termine?select=id,datum,uhrzeit,uhrzeit_ende,typ,titel,gegner,trainer_status,platz_status&typ=in.(training,spiel,turnier)&datum=gte.${ab}&datum=lte.${heute}&order=datum.desc,uhrzeit.desc.nullslast&limit=10`,{headers:sbAuthHeaders()});
@@ -1149,7 +1149,7 @@ async function wieWarsKarte(){
 /* terminVorbei kennt nur die Endzeit; ein Training ohne Endzeit gilt 75 Minuten nach Beginn als gelaufen. */
 function tbTerminGelaufen(t){
   if(typeof terminVorbei==="function" && terminVorbei(t)) return true;
-  const heute = new Date().toISOString().slice(0,10);
+  const heute = isoLokal();
   if(t.datum!==heute || t.uhrzeit_ende || !t.uhrzeit) return false;
   const [h,m] = String(t.uhrzeit).split(":").map(Number), jetzt = new Date();
   return jetzt.getHours()*60+jetzt.getMinutes() >= h*60+(m||0)+75;

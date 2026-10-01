@@ -314,7 +314,7 @@ async function waescheUebernehmen(spielerId,name){
   if(!await frageJaNein({emoji:"🧺",titel:"Nächste Wäsche übernehmen?",
     text:`${name||"Dein Kind"}s Familie wäscht die Trikots nach dem nächsten Spiel.\n\nDanke! Es gibt 100 Federn fürs Kind.`,
     ja:"Wir übernehmen",nein:"Abbrechen"}))return;
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   try{
     const r=await fetch(`${SB_URL}/rest/v1/waesche_log`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},body:JSON.stringify({spieler_id:spielerId,datum:heute})});
     if(sbCheck401(r))return;
@@ -338,7 +338,7 @@ async function waescheUebernehmen(spielerId,name){
    JEDEM Event. Jetzt entscheidet der Termin (`termine.mitbringen`, Standard aus): Eltern
    sehen nur eingeschaltete Listen, der Trainer alle – bei ihm steht dran, was noch aus ist. */
 async function mitbringEventsLaden(alle){
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   const r=await fetch(`${SB_URL}/rest/v1/termine?typ=eq.event&datum=gte.${heute}${alle?"":"&mitbringen=is.true"}&select=id,titel,datum,ort,mitbringen&order=datum.asc&limit=4`,{headers:sbAuthHeaders()});
   if(!r.ok)return [];
   return await r.json();
@@ -511,7 +511,7 @@ function ghNeuLaden(){
 /* ── Trainerbereich: einteilen und umbuchen ──────────────────────────────────── */
 let _ghTr=null;
 async function ghTrainerDaten(){
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   let termine=[], dienste=[], profile=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/termine?heim=is.true&typ=in.(spiel,turnier)&datum=gte.${heute}&select=id,datum,uhrzeit,gegner,titel,typ&order=datum.asc`,{headers:sbAuthHeaders()});if(r.ok)termine=await r.json();}catch(e){}
   try{const r=await fetch(`${SB_URL}/rest/v1/dienst_einteilung?dienst=eq.grillhuette&select=id,termin_id,kind_id,status,uebernommen_von,uebernommen_kind,platz&order=platz.asc`,{headers:sbAuthHeaders()});if(r.ok)dienste=await r.json();}catch(e){}
@@ -935,7 +935,7 @@ async function fairplayCommitDo(cb){
   try{navigator.vibrate&&navigator.vibrate([20,30,20]);}catch(e){}
   fairplayCommitLoad(); // Karte im Eltern-Bereich auf die Bestätigung umschalten
 }
-async function fairplayOpen(){ return vereinbarungOpen(); } // Codex lebt jetzt in der gemeinsamen Vereinbarung
+ // Codex lebt jetzt in der gemeinsamen Vereinbarung
 
 /* Trainer-Editor für den Fairplay-Codex. Der Trainer pflegt die Regeln, die Eltern
    sehen sie im Overlay. Gespeichert wird als komplette Liste (delete-all + insert) –
@@ -1318,7 +1318,7 @@ function grussLine(st){
 const GRUSS_MAX_TAGE=14;
 async function elternMatchGrussLoad(kids){
   const slot=document.getElementById("match-gruss-slot"); if(!slot)return;
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   // Untergrenze gleich in die Abfrage: liegt das letzte Spiel länger zurück, kommt gar
   // nichts – dann spart der Rückblick in der Pause auch die Statistik-Abfrage.
   const ab=new Date(Date.now()-GRUSS_MAX_TAGE*864e5).toISOString().slice(0,10);
@@ -1331,7 +1331,7 @@ async function elternMatchGrussLoad(kids){
   const d=new Date(game.datum+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
   const cards=[];
   (rows||[]).forEach(row=>{
-    const st=row.stats||{}, total=Object.values(st).reduce((a,b)=>a+(+b||0),0);
+    const st=row.stats||{}, total=Object.keys(GRUSS_AKT).reduce((a,k)=>a+(+st[k]||0),0);   // v707: nur Ballaktionen – die Kapitänsbinde allein ist kein Rückblick
     if(!total)return;
     const chips=Object.keys(GRUSS_AKT).filter(a=>st[a]).map(a=>`<span style="display:inline-block;background:#f5f3ff;color:#5b21b6;border-radius:12px;padding:3px 9px;font-size:var(--s-text);font-weight:700;margin:2px 3px 2px 0">${GRUSS_AKT[a].e} ${st[a]}× ${GRUSS_AKT[a].l}</span>`).join("");
     cards.push(`<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 2px 10px rgba(0,0,0,.05);border-left:3px solid #7c3aed">
@@ -1424,7 +1424,7 @@ async function elternDataExport(btn){
     if(!r.ok){toast("Download gerade nicht möglich – bitte später nochmal","err");return;}
     const out=await r.json();
     const blob=new Blob([JSON.stringify(out,null,2)],{type:"application/json"});
-    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="adler-daten-"+new Date().toISOString().slice(0,10)+".json";
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="adler-daten-"+isoLokal()+".json";
     document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
     toast("Daten heruntergeladen ✓");
   }catch(e){toast("Kein Netz – bitte später nochmal","err");}
@@ -1535,12 +1535,14 @@ async function elternLiveKachelLoad(termin,eigenesTeam){
   slot.innerHTML="";
   if(!termin||(termin.typ!=="spiel"&&termin.typ!=="turnier"))return;
   const datum=termin.datum;
-  if(datum!==new Date().toISOString().slice(0,10))return;      // nur am Spieltag selbst
+  if(datum!==isoLokal())return;      // nur am Spieltag selbst (v707: Ortszeit)
   if(elternLiveWeggeklickt(datum))return;
   const keys=[datum,datum+"__t2",datum+"__t3"];
   let mds=[];
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/matchday?datum=in.(${keys.map(encodeURIComponent).join(",")})&select=datum,clock_status,ticker_open`,{headers:sbAuthHeaders()});
+    /* v707: matchday lesen angemeldete Eltern per RLS nicht (nur Trainer und der öffentliche Zugang) –
+       die Kachel blieb deshalb immer leer. Gelesen wird wie auf der Ticker-Seite mit dem öffentlichen Schlüssel. */
+    const r=await fetch(`${SB_URL}/rest/v1/matchday?datum=in.(${keys.map(encodeURIComponent).join(",")})&select=datum,clock_status,ticker_open`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
     if(r.ok)mds=await r.json();
   }catch(e){ return; }
   /* v468: Seit der Trainer den Ticker ausdruecklich startet, gibt es ein sauberes Signal –

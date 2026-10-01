@@ -84,7 +84,7 @@ async function kasseRender(){
   const saldo=summe&&summe.saldo!=null?Number(summe.saldo):ledger.reduce((s,x)=>s+Number(x.betrag),0)+sammel.reduce((s,x)=>s+Number(x.summe),0);
   const inp="min-height:48px;padding:8px 10px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)";
   const lbl=t=>`<span style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-bottom:2px">${t}</span>`;
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   body.innerHTML=`
     <div style="text-align:center;background:var(--surface2);border-radius:12px;padding:12px;margin-bottom:12px">
       <div style="font-size:var(--s-klein);color:var(--text2)">Kassenstand</div>
@@ -165,7 +165,7 @@ async function kasseDelUmlage(id){
   if(!await frageJaNein({titel:"Umlage löschen?",text:"Die Häkchen „bezahlt“ dieser Umlage verschwinden mit.",ja:"Löschen",ton:"rot",emoji:"🗑️"}))return; try{const r=await fetch(`${SB_URL}/rest/v1/kasse_umlagen?id=eq.${id}`,{method:"DELETE",headers:sbAuthHeaders()});if(sbCheck401(r))return;}catch(e){} kasseRender(); }
 
 /* ═══ v664: Kassenwart-Kasse ═══
-   PO 28.09.: „Die Mutter von Samu ist neue Kassenwärtin … wie können wir da mit der App
+   PO 28.09.: „Die Mutter eines Kindes ist neue Kassenwärtin … wie können wir da mit der App
    unterstützen?“ Kachel: Rolle „Kasse“ für ein Elternteil, bezahlt/offen je Familie,
    Erinnerung, Export – ohne Zahlungsabwicklung. Die Kasse (Trainer oder ein Konto aus
    kasse_team) hakt ab, was angekommen ist; jede Familie sieht nur ihre eigenen Kinder. */
@@ -229,11 +229,11 @@ function kasseExport(){
   const sum={}; (d.ledger||[]).forEach(x=>{const k=kasseKat(x.kategorie).t;sum[k]=(sum[k]||0)+Number(x.betrag);});
   (d.sammel||[]).forEach(x=>{sum["Beiträge"]=(sum["Beiträge"]||0)+Number(x.summe);});
   Object.keys(sum).sort().forEach(k=>z.push(["Summe","",k,"",eu(sum[k]),"","",""]));
-  if(d.saldo!=null)z.push(["Kassenstand",new Date().toISOString().slice(0,10),"","",eu(d.saldo),"","",""]);
+  if(d.saldo!=null)z.push(["Kassenstand",isoLokal(),"","",eu(d.saldo),"","",""]);
   const csv="﻿"+z.map(r=>r.map(kasseCsvZelle).join(";")).join("\r\n");
   const a=document.createElement("a");
   a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
-  a.download=`Mannschaftskasse_${new Date().toISOString().slice(0,10)}.csv`;
+  a.download=`Mannschaftskasse_${isoLokal()}.csv`;
   document.body.appendChild(a);a.click();a.remove();
   toast("Export erstellt ✓");
 }
@@ -292,7 +292,7 @@ async function kasseBuchungSpeichern(){
   const sign=parseInt(document.getElementById("k-typ")?.value)||-1;
   const val=Math.abs(parseFloat(String(document.getElementById("k-betrag")?.value||"").replace(",","."))||0);
   if(!val){toast("Bitte einen Betrag eingeben","err");return;}
-  const datum=document.getElementById("k-datum")?.value||new Date().toISOString().slice(0,10);
+  const datum=document.getElementById("k-datum")?.value||isoLokal();
   const kategorie=document.getElementById("k-kat")?.value||"sonstiges";
   const zweck=(document.getElementById("k-zweck")?.value||"").trim()||null;
   const file=document.getElementById("k-beleg")?.files?.[0]||null;

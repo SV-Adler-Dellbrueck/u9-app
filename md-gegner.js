@@ -228,7 +228,7 @@ async function tmLoad(){
     const rows=await r.json();
     TM_TERMINE=rows;
     if(rows.some(x=>x.typ==="trainermeeting"))await tmMeetingStatusLaden();
-    const heute=new Date().toISOString().slice(0,10);
+    const heute=isoLokal();
     // Mit Endzeit wandert ein Termin noch am selben Tag ins Archiv (terminVorbei, core.js)
     const vorbei=(typeof terminVorbei==="function")?terminVorbei:(t=>t.datum<heute);
     const kommend=rows.filter(t=>!vorbei(t));
@@ -336,13 +336,9 @@ function tmPlanerOpen(datum,titel,anlass){
   if(typeof htOpen==="function")htOpen(datum,titel,anlass);
   else toast("Der Planer lädt noch – gleich nochmal","err");
 }
-function tmTurnierModusOpen(){
-  document.getElementById("tmd-modal")?.remove();
-  if(typeof turnierOpen==="function")turnierOpen(); else toast("Turnier-Modus lädt noch","err");
-}
 function _tmdKarte(t){
   const m=TM_META[t.typ]||TM_META.training;
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   const kommt=t.datum>=heute, istHeute=t.datum===heute, vorbei=t.datum<heute;
   const istSpiel=t.typ==="spiel"||t.typ==="turnier";
   const routeAddr=t.ort||(t.heim===true?VEREIN_ADRESSE:"");
@@ -471,8 +467,8 @@ function _tmdNachlader(t){
   try{ wetterInto("wx-tm-"+t.id,t.datum,t.ort,t.uhrzeit); }catch(e){}
   if(t.typ==="trainermeeting"){ try{ meetStatusFill(t); }catch(e){} }
   if(t.heim===true&&(t.typ==="spiel"||t.typ==="turnier")){ try{ buedchenTrainerFill(t); }catch(e){} }
-  if(["training","spiel","turnier"].includes(t.typ)&&t.datum<new Date().toISOString().slice(0,10)){ try{ pulsTrainerFill(t); }catch(e){} } // F4
-  if(t.datum>=new Date().toISOString().slice(0,10)){ try{ helferTrainerFill(t); }catch(e){} } // G4
+  if(["training","spiel","turnier"].includes(t.typ)&&t.datum<isoLokal()){ try{ pulsTrainerFill(t); }catch(e){} } // F4
+  if(t.datum>=isoLokal()){ try{ helferTrainerFill(t); }catch(e){} } // G4
 }
 /* Das Detailfenster zeichnet sich NICHT ueber tmLoad() mit: das steigt ohne die
    Terminliste im DOM sofort wieder aus (`if(!up||!pa)return`), und vom Startbildschirm
@@ -679,7 +675,7 @@ function tmCard(t){
      sichtbar, alles Weitere liegt hinter „Mehr" in einem geordneten Zweispalter. Loeschen
      wandert mit hinein – es war als einziger farbig abgesetzte Knopf am rechten Rand
      optisch die auffaelligste Aktion der Karte, obwohl es die seltenste ist. */
-  const kommt=t.datum>=new Date().toISOString().slice(0,10);
+  const kommt=t.datum>=isoLokal();
   /* v509 – PO: „Wäre schön, wenn ‚findet nicht statt' auch in allen anderen Ansichten
      ersichtlich wäre." Auf der Karte heißt das: Schild oben, und die Hauptaktion fällt weg.
      Für einen Termin, den es nicht gibt, wird nichts mehr geplant – Bearbeiten und Löschen
@@ -743,17 +739,17 @@ function tmCard(t){
     <div style="padding:10px 13px 12px">
     ${t.ort?`<div style="font-size:var(--s-klein);color:var(--text2)"><i class="ti ti-map-pin" style="font-size:var(--s-klein)"></i> ${mapsAnchor(t.ort)}</div>`:""}
     ${t.platz?`<div style="font-size:var(--s-klein);color:var(--text2)">🏟️ Platz: ${esc(t.platz)}</div>`:""}
-    ${t.datum>=new Date().toISOString().slice(0,10)?platzAmpelTrainer(t):""}
+    ${t.datum>=isoLokal()?platzAmpelTrainer(t):""}
     <div id="wx-tm-${t.id}"></div>
-    ${(t.heim===true&&(t.typ==="spiel"||t.typ==="turnier")&&t.datum>=new Date().toISOString().slice(0,10))?`<div id="bd-tm-${t.id}" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">🔥 Grillhütte: lädt …</div>`:""}
-    ${(["training","spiel","turnier"].includes(t.typ)&&t.datum<new Date().toISOString().slice(0,10))?`<div id="puls-tm-${t.id}" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px"></div>`:""}
-    ${t.datum>=new Date().toISOString().slice(0,10)?`<div id="helfer-tm-${t.id}" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px"></div>`:""}
-    ${t.datum>=new Date().toISOString().slice(0,10)?`<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-top:6px">
+    ${(t.heim===true&&(t.typ==="spiel"||t.typ==="turnier")&&t.datum>=isoLokal())?`<div id="bd-tm-${t.id}" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">🔥 Grillhütte: lädt …</div>`:""}
+    ${(["training","spiel","turnier"].includes(t.typ)&&t.datum<isoLokal())?`<div id="puls-tm-${t.id}" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px"></div>`:""}
+    ${t.datum>=isoLokal()?`<div id="helfer-tm-${t.id}" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px"></div>`:""}
+    ${t.datum>=isoLokal()?`<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-top:6px">
       <span style="font-size:var(--s-klein);color:var(--text3);font-weight:700">Trainer dabei?</span>
       ${trainerstabNamen(t.trainer_status).map(tn=>{const stt=(t.trainer_status||{})[tn];const bg=stt==="ja"?"#16a34a":stt==="unsicher"?"#ca8a04":stt==="nein"?"#dc2626":"var(--surface2)";const col=stt?"#fff":"var(--text2)";const mk=stt==="ja"?" ✓":stt==="unsicher"?" 🤔":stt==="nein"?" ✕":"";return `<button onclick="tmTrainerToggle(${Number(t.id)},'${tn.replace(/'/g,"")}')" title="Tippen wechselt: dabei → unsicher → nicht dabei → offen" style="border:1px solid var(--rand-bedien);border-radius:12px;padding:2px 8px;font-size:var(--s-klein);font-weight:700;background:${bg};color:${col};cursor:pointer;font-family:inherit">${esc(tn)}${mk}</button>`;}).join("")}
     </div>`:""}
     ${notizClean?`<div style="font-size:var(--s-klein);color:var(--text3)">${esc(notizClean)}</div>`:""}
-    ${(istSpiel&&t.datum<=new Date().toISOString().slice(0,10))?`<div style="display:flex;align-items:center;gap:6px;margin:6px 0"><span style="font-size:var(--s-klein);color:var(--text2)">Ergebnis:</span><input type="text" value="${esc(t.ergebnis||"")}" placeholder="z. B. 3:2" onchange="tmSetResult(${Number(t.id)},this.value)" style="width:90px;padding:5px 8px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:var(--s-text);font-family:inherit"></div>`:""}
+    ${(istSpiel&&t.datum<=isoLokal())?`<div style="display:flex;align-items:center;gap:6px;margin:6px 0"><span style="font-size:var(--s-klein);color:var(--text2)">Ergebnis:</span><input type="text" value="${esc(t.ergebnis||"")}" placeholder="z. B. 3:2" onchange="tmSetResult(${Number(t.id)},this.value)" style="width:90px;padding:5px 8px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:var(--s-text);font-family:inherit"></div>`:""}
     ${actions}
     </div>
   </div>`;
@@ -1064,7 +1060,7 @@ function tmJump(ziel,datum,spielform){
 // Action-Tracker und Liveticker sauber pro Team getrennt; der Delegate-Link ist über
 // das team-eigene matchday-Token automatisch team-spezifisch.
 let spieltagTeam=1;
-function spieltagRawDate(){ return document.getElementById("spieltag-date")?.value||new Date().toISOString().slice(0,10); }
+function spieltagRawDate(){ return document.getElementById("spieltag-date")?.value||isoLokal(); }
 function spieltagKey(){ const d=spieltagRawDate(); return spieltagTeam>1?`${d}__t${spieltagTeam}`:d; }
 // HOTFIX 9: Team aus einem Ticker-/Match-Key ableiten (Datum__t2 -> " · Adler 2"); Team 1 = leer.
 function teamLabelFromKey(key){ const m=/__t(\d+)$/.exec(String(key||"")); return m?` · Adler ${m[1]}`:""; }

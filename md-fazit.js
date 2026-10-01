@@ -316,7 +316,7 @@ function fzWeiterInsTagebuch(terminId){
    Liefert die Termine, nicht das HTML – das To-Do baut views.js, die Auswertung könnte
    später dieselbe Liste brauchen. */
 async function fazitOffene(tage){
-  const heute = new Date().toISOString().slice(0,10);
+  const heute = isoLokal();
   const ab = new Date(Date.now()-(tage||14)*864e5).toISOString().slice(0,10);
   try{
     const r = await fetch(`${SB_URL}/rest/v1/termine?select=id,datum,titel,gegner,typ,uhrzeit_ende&typ=in.(spiel,turnier)&datum=gte.${ab}&datum=lte.${heute}&order=datum.desc&limit=5`,{headers:sbAuthHeaders()});

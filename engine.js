@@ -343,7 +343,7 @@ function playerTrend(name){
    ab dem Startdatum. Das Datum steht nie im Code. */
 const BEW_FAELLIG_TAGE=49, BEW_RUNDE_FENSTER_TAGE=21;
 let BEW_AB=null; // "JJJJ-MM-TT" oder null (= gesperrt)
-function bewHeute(){ try{return new Date().toLocaleDateString("sv-SE",{timeZone:"Europe/Berlin"});}catch(e){return new Date().toISOString().slice(0,10);} }
+function bewHeute(){ try{return new Date().toLocaleDateString("sv-SE",{timeZone:"Europe/Berlin"});}catch(e){return isoLokal();} }
 function bewFreigegeben(){ return !!BEW_AB&&BEW_AB<=bewHeute(); }
 function bewAbText(){ return BEW_AB?new Date(BEW_AB+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"}):""; }
 async function bewAbLaden(){
@@ -394,7 +394,7 @@ function bewRundenStand(){
   if(!bewFreigegeben())return {letzte:letzte||null,tage:null,faellig:false,faelligAb:null,gesperrt:true};
   const bezug=letzte&&letzte>BEW_AB?letzte:BEW_AB;  // frühestens ab dem Startdatum
   const tage=Math.floor((Date.now()-new Date(bezug+"T00:00:00"))/864e5);
-  const ab=new Date(new Date(bezug+"T00:00:00").getTime()+BEW_FAELLIG_TAGE*864e5).toISOString().slice(0,10);
+  const ab=isoLokal(new Date(new Date(bezug+"T00:00:00").getTime()+BEW_FAELLIG_TAGE*864e5));   // v707: Ortszeit
   return {letzte:letzte||null,tage,faellig:tage>=BEW_FAELLIG_TAGE,faelligAb:ab};
 }
 function roleScore(player,role){

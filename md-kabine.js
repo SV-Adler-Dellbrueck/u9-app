@@ -139,7 +139,7 @@ async function kabineOpen(){
   m.innerHTML='<div id="kabine-body" style="flex:1;display:flex;flex-direction:column;overflow:hidden"></div>';
   document.body.appendChild(m);
   // Tages-Tüte je Kind (tuete_tag in der DB verhindert Doppelvergabe – auch geräteübergreifend)
-  try{const heute=new Date().toISOString().slice(0,10);
+  try{const heute=isoLokal();
     (window._elternKids||[]).forEach(async k=>{
       const row=await _albumRow(k.spieler_id);
       if(row.tuete_tag!==heute){row.tuete_tag=heute;row.tueten=Math.min(9,(row.tueten||0)+1);_albumSave(row);}
@@ -148,7 +148,7 @@ async function kabineOpen(){
   // einmalig eine goldene Post vom Maskottchen in den Briefkasten (+ Konfetti).
   (async()=>{try{
     const kids=window._elternKids||[]; if(!kids.length)return;
-    const heute=new Date().toISOString().slice(0,10), md=heute.slice(5);
+    const heute=isoLokal(), md=heute.slice(5);
     const ids=kids.map(k=>k.spieler_id).join(",");
     const r=await fetch(`${SB_URL}/rest/v1/kader?id=in.(${ids})&select=id,geb`,{headers:sbAuthHeaders()});
     if(!r.ok)return;
@@ -259,7 +259,7 @@ async function _spieltageSaison(){
   if(window._kabSpieltage&&Date.now()-window._kabSpieltage.at<300000)return window._kabSpieltage.rows;
   const d=new Date(), y=d.getFullYear();
   const saisonAb=`${d.getMonth()>=6?y:y-1}-07-01`;
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/termine?select=id,datum&typ=in.(spiel,turnier)&datum=gte.${saisonAb}&datum=lte.${heute}&order=datum.asc,id.asc`,{headers:sbAuthHeaders()});
     if(r.ok)rows=(await r.json())||[];}catch(e){}
@@ -453,7 +453,7 @@ async function kabineAlbumPack(){
   // ✨ Spieltags-Glückstüte: die erste Tüte am Spieltag enthält garantiert eine Rarität
   let glueck=false;
   try{
-    const heute=new Date().toISOString().slice(0,10), gk=`adler_glueck_${_albKid}_${heute}`;
+    const heute=isoLokal(), gk=`adler_glueck_${_albKid}_${heute}`;
     if(window._kabSpieltag&&!localStorage.getItem(gk)){
       localStorage.setItem(gk,"1");
       if(!picks.some(p=>p.rar!=="kind")){
@@ -839,7 +839,7 @@ function kabineTourStart(){ if(typeof fuehrungStart==="function")fuehrungStart(K
    die Tasche zu packen. Übersprungen wird nur, wo ALLE Kinder abgesagt haben – wer noch
    nichts gesagt hat, gilt als möglich, denn eine offene Rückmeldung ist keine Absage. */
 async function _kabNaechsterTermin(){
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   let liste=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/termine?select=id,datum,typ,gegner,titel&typ=in.(spiel,turnier)&datum=gte.${heute}&order=datum.asc&limit=8`,{headers:sbAuthHeaders()});if(r.ok)liste=(await r.json())||[];}catch(e){}
   if(!liste.length)return null;
@@ -866,7 +866,7 @@ async function _kabNaechsterTermin(){
 // G6: „Noch X× schlafen bis zum nächsten Spiel!" – Motivation im Kinder-Modus.
 async function kabineCountdownLoad(){
   const el=document.getElementById("kab-countdown"); if(!el)return;
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   const t=await _kabNaechsterTermin();
   if(!t){el.innerHTML="";window._kabSpieltag=false;return;}
   const d=new Date(t.datum+"T00:00:00"), today=new Date(heute+"T00:00:00");
@@ -884,7 +884,7 @@ const KAB_ROLLEN={tw:["🥅","TORWART"],auf:["🛡️","AUFPASSER"],fll:["⚡","
 async function kabineRevealLoad(){
   const el=document.getElementById("kab-reveal"); if(!el)return;
   const kids=window._elternKids||[]; if(!kids.length){el.innerHTML="";return;}
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   let hatSpiel=false;
   try{const r=await fetch(`${SB_URL}/rest/v1/termine?select=id&typ=in.(spiel,turnier)&datum=eq.${heute}&limit=1`,{headers:sbAuthHeaders()});if(r.ok)hatSpiel=!!(await r.json()).length;}catch(e){}
   if(!hatSpiel){el.innerHTML="";return;}
@@ -908,7 +908,7 @@ async function kabineRevealLoad(){
   }).join("");
 }
 function kabineRevealShow(sid,rolle,name){
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   try{localStorage.setItem(`adler_reveal_${sid}_${heute}`,"1");}catch(e){}
   const R=KAB_ROLLEN[rolle]||["⚽","ADLER"];
   const b=document.getElementById("kabine-body"); if(!b)return;
@@ -932,7 +932,7 @@ function _kabPackGet(sid,datum){ try{return JSON.parse(localStorage.getItem(`adl
 async function kabinePackLoad(){
   const el=document.getElementById("kab-pack"); if(!el)return;
   const kids=window._elternKids||[]; if(!kids.length){el.innerHTML="";return;}
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   const t=await _kabNaechsterTermin();
   _kabPackTermin=t;
   if(!t){el.innerHTML="";return;}
@@ -999,7 +999,7 @@ const KAB_MOODS=[[1,"😞","war nicht so gut"],[2,"😐","war okay"],[3,"😄","
 async function kabineStimmungLoad(){
   const el=document.getElementById("kab-stimmung"); if(!el)return;
   const kids=window._elternKids||[]; if(!kids.length){el.innerHTML="";return;}
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   let t=null;
   try{const r=await fetch(`${SB_URL}/rest/v1/termine?select=typ&datum=eq.${heute}&limit=1`,{headers:sbAuthHeaders()});if(r.ok)t=(await r.json())[0]||null;}catch(e){}
   if(!t){el.innerHTML="";return;}
@@ -1020,7 +1020,7 @@ async function kabineStimmungLoad(){
 }
 async function kabineStimmungSet(sid,mood){
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/kind_stimmung?on_conflict=spieler_id,datum`,{method:"POST",headers:sbAuthHeaders({'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({spieler_id:sid,datum:new Date().toISOString().slice(0,10),mood})});
+    const r=await fetch(`${SB_URL}/rest/v1/kind_stimmung?on_conflict=spieler_id,datum`,{method:"POST",headers:sbAuthHeaders({'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({spieler_id:sid,datum:isoLokal(),mood})});
     if(!r.ok&&r.status!==201){toast("Konnte nicht speichern","err");return;}
   }catch(e){toast("Netzwerkfehler","err");return;}
   try{navigator.vibrate&&navigator.vibrate([30,40,60]);}catch(e){}
@@ -1150,7 +1150,7 @@ function kabineKudos(){
 async function kabineKudosFor(vonSid,vonName){
   const b=document.getElementById("kabine-body"); if(!b)return;
   b.innerHTML=`<div style="text-align:center;padding:60px 16px;opacity:.85;color:#fff">Lade …</div>`;
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   let team=[],pausen={};
   // RPC statt Direkt-Select: die Eltern-RLS auf kader zeigt nur die EIGENEN Kinder (Bugfix)
   try{const r=await fetch(`${SB_URL}/rest/v1/rpc/kader_namen`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"});if(r.ok)team=(await r.json())||[];}catch(e){}
@@ -1187,7 +1187,7 @@ function kabineKudosPick(vonSid,vonName,anSid,anName,pausiert){
 }
 async function kabineKudosSend(vonSid,anSid,typ,key,btn){
   if(btn)btn.disabled=true;
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   try{
     const r=await fetch(`${SB_URL}/rest/v1/kabine_post`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({typ,von_spieler:vonSid,an_spieler:anSid,text_key:key,datum:heute})});
     if(r.status===409){toast("Du hast heute schon etwas geschickt 🙂","err");kabineHome();return;}
@@ -1310,7 +1310,7 @@ function kabineStaerkenAnswer(v){
 }
 async function kabineStaerkenSave(){
   const b=document.getElementById("kabine-body"); if(!b)return;
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   try{
     await fetch(`${SB_URL}/rest/v1/kind_selbstbild?on_conflict=spieler_id,datum`,{method:"POST",headers:sbAuthHeaders({'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({spieler_id:_ksSid,datum:heute,antworten:_ksAntworten})});
   }catch(e){}
@@ -1417,7 +1417,7 @@ async function kabineReporterAnswer(idx){
   const q=_krOffen.shift(); if(!q)return;
   try{navigator.vibrate&&navigator.vibrate(25);}catch(e){}
   try{
-    await fetch(`${SB_URL}/rest/v1/kabine_reporter`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({spieler_id:_krSid,frage:q.f,antwort:q.o[idx],datum:new Date().toISOString().slice(0,10)})});
+    await fetch(`${SB_URL}/rest/v1/kabine_reporter`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({spieler_id:_krSid,frage:q.f,antwort:q.o[idx],datum:isoLokal()})});
   }catch(e){}
   kabineReporterFrage();
 }
@@ -2072,7 +2072,7 @@ const KA_LIMIT_MAX   = 180;
 let _kaDaten = null;                // {konten:[], sitzungen:{uid:minuten}}
 let _kaCodeUhr = null;
 
-function kaHeute(){ return new Date().toISOString().slice(0,10); }
+function kaHeute(){ return isoLokal(); }
 function kaKids(){ return (window._elternKids||[]).filter(k=>k&&k.spieler_id); }
 
 async function kinderAppOpen(){

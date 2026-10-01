@@ -240,7 +240,7 @@ function icsLocalStart(datum,time){ const m=time.match(/^(\d{1,2}):(\d{2})/); re
 function icsLocalPlus(datum,time,addMin){ const m=time.match(/^(\d{1,2}):(\d{2})/); const dt=new Date(datum+"T"+m[1].padStart(2,"0")+":"+m[2]+":00"); dt.setMinutes(dt.getMinutes()+addMin); const p=n=>String(n).padStart(2,"0"); return `${dt.getFullYear()}${p(dt.getMonth()+1)}${p(dt.getDate())}T${p(dt.getHours())}${p(dt.getMinutes())}00`; }
 async function elternKalenderIcs(){
   toast("🗓️ Kalender wird erstellt…");
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   let rows=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/matchday?datum=gte.${heute}&published=eq.true&select=datum,gegner,ort,treffpunkt,anpfiff,typ&order=datum.asc`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});if(r.ok)rows=await r.json();}catch(e){}
   if(!rows.length){toast("Keine kommenden Termine","err");return;}

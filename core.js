@@ -125,6 +125,23 @@ function sbEmail(){
 /* Die eigene Konto-Kennung aus dem Ausweis. Gebraucht wird sie dort, wo eine Zeile
    festhalten soll, WER etwas angelegt hat, ohne eine E-Mail zu speichern (Kopplung eines
    Kindergeraets, v591). Wie sbEmail: aus dem Token gelesen, nie nachgefragt. */
+/* v707: Kalendertag in deutscher Ortszeit. `toISOString().slice(0,10)` liefert den UTC-Tag – für eine
+   lokale Mitternacht (new Date(x+"T00:00:00"), setHours(0,…)) ist das in Deutschland IMMER der Vortag,
+   für „jetzt“ zwischen 0 und 2 Uhr nachts. Prüfung 01.10.: neues Training bekam den Vortag vorgeschlagen,
+   die Wochen-Spanne lief Sonntag–Samstag. */
+function isoLokal(d){
+  d=d instanceof Date?d:(d!=null?new Date(d):new Date());
+  const z=n=>String(n).padStart(2,"0");
+  return d.getFullYear()+"-"+z(d.getMonth()+1)+"-"+z(d.getDate());
+}
+/* v707: Die Nominierung eines Spieltags steht in nominierungen „<datum>__nom“. Daneben liegen je Team
+   „<datum>“, „__t2“, „__t3“ (jedes Kind dort „dabei“ oder „nicht“) und „__teams“. Wer über ALLE Zeilen
+   zählt, zählt jedes Kind mehrfach und Kinder aus Team 2/3 als „nicht“ (Prüfung 01.10.: Quoten 56 statt
+   100 %, Spiele 9 statt 4). Zählungen lesen deshalb nur diese Zeilen – bis heute, nicht die kommenden. */
+function nomZeilenPfad(ab){
+  const morgen=new Date(); morgen.setDate(morgen.getDate()+1);
+  return "nominierungen?select=datum,data&datum=like.*__nom"+(ab?"&datum=gte."+ab:"")+"&datum=lt."+isoLokal(morgen);
+}
 function sbUid(){
   const t=sbToken(); if(!t)return null;
   try{ const p=JSON.parse(atob(t.split(".")[1].replace(/-/g,"+").replace(/_/g,"/")));
@@ -462,7 +479,7 @@ async function savePlayer(){
   const v=getV();
   const result=meta.tw?generateFazitTW(v,meta):generateFazitFeld(v,meta);
   const row={
-    name:meta.name,datum:meta.date||new Date().toISOString().slice(0,10),
+    name:meta.name,datum:meta.date||isoLokal(),
     position:result.tw?(result.rolle?.prim||"flex"):result.rolle?.prim,
     prim_rolle:result.tw?`TW / ${result.rolle?.primLabel}`:result.rolle?.primLabel,
     sek_rolle:result.rolle?.sekLabel||"–",
@@ -670,7 +687,7 @@ function routeBtn(addr,opts){
 let PAUSE_MAP={}; let _pauseAt=0;
 async function pauseLoad(force){
   if(!force && PAUSE_MAP && Date.now()-_pauseAt<30000) return PAUSE_MAP;
-  const heute=new Date().toISOString().slice(0,10); const m={};
+  const heute=isoLokal(); const m={};
   try{
     const r=await fetch(`${SB_URL}/rest/v1/kind_pause?select=spieler_id,bis,grund,gruesse_ok&bis=gte.${heute}`,{headers:sbAuthHeaders()});
     if(!sbCheck401(r)&&r.ok)(await r.json()).forEach(x=>{
@@ -685,7 +702,7 @@ function pauseClear(){ _pauseAt=0; }
    Tag aus den aktiven Listen; ohne Endzeit gilt wie bisher der ganze Tag. */
 function terminVorbei(t){
   if(!t||!t.datum)return false;
-  const heute=new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   if(t.datum<heute)return true;
   if(t.datum>heute)return false;
   if(!t.uhrzeit_ende)return false;
