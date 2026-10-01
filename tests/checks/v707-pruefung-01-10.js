@@ -54,7 +54,7 @@ module.exports = async function (h) {
     [/create policy turnier_spiele_mitglied_lesen/, "Turnierergebnisse für Eltern"],
     [/revoke select on public\.heimturnier from authenticated;\s*grant select \(id, slug, name, datum, ort, config, teams, plan, aktiv, created_at, updated_at\)/, "Heimturnier-Code entzogen"],
     [/function public\.heimturnier_code[\s\S]*?is_trainer\(\)/, "heimturnier_code nur Trainer"],
-    [/"quiz select auth"[\s\S]*?ist_eigener_quizname\(player\)/, "Quiz nur eigene"], [/function public\.quiz_team_summe/, "Quiz-Summe"]];
+    [/"quiz select auth"[\s\S]*?ist_anonym\(\) and public\.ist_eigener_quizname\(player\)[\s\S]*?is_parent_of\(k\.id\)/, "Quiz nur eigene (Eltern über is_parent_of)"], [/function public\.quiz_team_summe/, "Quiz-Summe"]];
   muss.forEach(([re, t]) => { if (!re.test(mig)) probleme.push("d) Migration: " + t + " fehlt"); });
   if (/edit_code/.test(mig.replace(/--.*$/gm, "").split("grant select (")[1]?.split(")")[0] || "")) probleme.push("d) edit_code wieder freigegeben");
   // e)

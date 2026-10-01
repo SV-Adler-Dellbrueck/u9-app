@@ -64,9 +64,13 @@ grant execute on function public.heimturnier_code(bigint) to authenticated;
 
 -- Quiz: jedes Mitglied las die Ergebnisse aller Kinder (mit Vornamen) – angezeigt wurde nur das
 -- eigene Kind und die Teamsumme. Jetzt: eigene Zeilen (bzw. alle für Trainer), die Summe per Funktion.
+-- Eltern: Kinder aus eltern_kinder (is_parent_of); Kabine (anonym): das gekoppelte Kind (ist_eigener_quizname).
+-- ist_eigener_quizname allein genügt nicht – für angemeldete Konten gilt dort jeder Kadername.
 drop policy if exists "quiz select auth" on public.quiz_progress;
 create policy "quiz select auth" on public.quiz_progress for select to authenticated
-  using (public.is_trainer() or public.ist_eigener_quizname(player));
+  using (public.is_trainer()
+         or (public.ist_anonym() and public.ist_eigener_quizname(player))
+         or exists (select 1 from public.kader k where k.name = player and public.is_parent_of(k.id)));
 create or replace function public.quiz_team_summe()
 returns integer language sql stable security definer set search_path = public as $$
   select case when public.sitzung_gueltig() then coalesce(sum(score),0)::int else null end from quiz_progress;
