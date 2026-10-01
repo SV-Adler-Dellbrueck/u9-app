@@ -1278,3 +1278,12 @@ input[type="password"]{min-height:44px}
   :root:not([data-theme="light"]) :is(#sc-modal,#team-stats,#aw-stats,#aw-fed-1,[id^="tm-card-"]) :is([style*="color:#16a34a"],[style*="color:#15803d"]){color:#4ade80!important}
   :root:not([data-theme="light"]) :is(#sc-modal,#team-stats,#aw-stats,#aw-fed-1,[id^="tm-card-"]) :is([style*="color:#dc2626"],[style*="color:#b91c1c"]){color:#f87171!important}
 }
+
+/* ── v710 Ordnung (Optik-Prüfung 01.10.2026) ─────────────────────────────────────────────
+   Abschnitts- und Feldüberschriften nicht in Versalien (Regel seit v682/v686: „ÜBUNG“,
+   „BEWEGUNGEN“, „FELD (1/4)“ standen noch so da). Tabellenköpfe und Spielfeld-Beschriftungen
+   bleiben – dort ist es Auszeichnung, keine Überschrift. */
+.tp-feld>label,.tf-section-title,.tm-block-t,.mb-title,.rbox-title,.detail-box-title,.alt-title,.summary-box h3,.fbox h3,.rp-l,.rk-pos-lbl,.kpos-lbl{text-transform:none;letter-spacing:normal}
+/* Kabine „Mehr entdecken“: der Pfeil zeigt, ob offen (drehte sich vorher nicht) */
+.kab-mehr-pfeil{display:inline-block;transition:transform .2s}
+#kab-mehr[open] .kab-mehr-pfeil{transform:rotate(180deg)}

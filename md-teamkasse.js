@@ -109,7 +109,7 @@ async function kasseRender(){
         <button type="button" id="k-abbrechen" class="btn" style="display:none;min-height:48px" onclick="kasseBuchungAbbrechen()">Abbrechen</button>
       </div>
     </form>
-    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;color:var(--text2);margin-bottom:6px">Bewegungen</div>
+    <div style="font-size:var(--s-text);font-weight:700;color:var(--text2);margin-bottom:6px">Bewegungen</div>
     <div style="margin-bottom:16px">${kasseListeHtml(ledger,sammel,true)}</div>
     <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;color:var(--text2);margin-bottom:6px">Umlagen (für Eltern sichtbar)</div>
     ${umlagen.length?umlagen.map(u=>`<div style="display:flex;align-items:center;gap:6px;font-size:var(--s-text);padding:5px 0;border-bottom:1px solid var(--surface2);${u.aktiv?'':'opacity:.5'}">

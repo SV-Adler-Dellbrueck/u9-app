@@ -68,7 +68,7 @@ module.exports = async function (h) {
     window.sbToken = () => tok; await rufeOpen(); await w(600);
     return { zeile: document.getElementById("rufe-ruhe")?.textContent };
   });
-  if (!/ruhen 22–6 Uhr/.test(chat.r.zeile || "") || !/Einstellungen/.test(chat.r.zeile || "")) probleme.push("e) Chat-Zeile: " + JSON.stringify(chat.r));
+  if (!/ruhen 22–6 Uhr/.test(chat.r.zeile || "") || !/(Einstellungen|Trainerteam kontaktieren“) → Benachrichtigungen/.test(chat.r.zeile || "")) probleme.push("e) Chat-Zeile: " + JSON.stringify(chat.r));
   // f) Server
   const lies = p => fs.readFileSync(path.join(h.REPO, p), "utf8");
   const migDir = path.join(h.REPO, "supabase/migrations");

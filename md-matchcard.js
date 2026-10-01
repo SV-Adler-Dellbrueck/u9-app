@@ -767,9 +767,9 @@ function rotRenderLive(){
 /* Feld und Bank – dieselbe Ansicht in ① (Aufstellung) und ② (Wechseltimer). Beide zeigen
    denselben Zustand (rotField, rotBench); ein Tipp an einer Stelle zeichnet beide neu. */
 function rotFeldBankHtml(chip){
-  return `<div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;color:var(--text2);margin-bottom:4px">Feld (${rotField.length}/${rotFieldSize()})</div>
+  return `<div style="font-size:var(--s-text);font-weight:700;color:var(--text2);margin-bottom:4px">Feld (${rotField.length}/${rotFieldSize()})</div>
     ${rotFieldSpatialHtml()}
-    <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;color:var(--text2);margin:10px 0 6px">Bank (${rotBench.length})</div>
+    <div style="font-size:var(--s-text);font-weight:700;color:var(--text2);margin:10px 0 6px">Bank (${rotBench.length})</div>
     <div data-rot-bank="1" style="display:flex;flex-wrap:wrap;gap:6px;min-height:44px;padding:4px;border:1px dashed var(--rand-bedien);border-radius:12px">${rotBench.map(n=>chip(n,false)).join("")||'<span style="font-size:var(--s-klein);color:var(--text3);align-self:center">Bank leer – Feldspieler hierher ziehen</span>'}</div>
     <div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px">Antippen wählt, der zweite Tipp tauscht (Feld↔Feld: Position, Feld↔Bank: Wechsel) · nochmal antippen = Bank · oder einfach ziehen · 🟢 Spielzeit / 🔴 Bankzeit.</div>`;
 }

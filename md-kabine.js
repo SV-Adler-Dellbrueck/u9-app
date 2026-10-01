@@ -751,7 +751,7 @@ function kabineHome(){
       // Kacheln in 4 Farbfamilien (wie im Eltern-Bereich: Farbtöne je Kategorie). Getönte,
       // halbtransparente Gradients bleiben „frosted", leuchten aber je Familie anders.
       const tile=(fn,emo,label,c1,c2,full)=>`<button onclick="${fn}" style="${full?"grid-column:1/-1;":""}border:1px solid rgba(255,255,255,.16);border-radius:22px;background:linear-gradient(135deg,${c1},${c2});color:#fff;font-family:inherit;cursor:pointer;display:flex;${full?"align-items:center;justify-content:center;gap:10px;min-height:76px":"flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:120px"};font-size:17px;font-weight:800"><span style="font-size:${full?34:44}px">${emo}</span>${label}</button>`;
-      const lbl=t=>`<div style="grid-column:1/-1;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin:6px 4px -4px">${t}</div>`;
+      const lbl=t=>`<div style="grid-column:1/-1;font-size:14px;font-weight:800;opacity:.9;margin:6px 4px -4px">${t}</div>`;   // v710: 11 px Versalien bei 65 % waren für Kinder zu klein
       return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:10px 16px 16px;align-content:center">
       ${/* v610: 16 Kacheln auf einen Blick waren für ein Kind zu viel – gesucht wurde, nicht
             gespielt. Vorn stehen acht, der Rest wartet hinter „Mehr entdecken". Ob das Kind
@@ -769,9 +769,9 @@ function kabineHome(){
       ${/* Paket 2: „Unsere Regeln" steht ganz oben in der Gruppe und über die volle Breite –
             es ist die Identität der Mannschaft, nicht ein Spiel unter vielen. */""}
       ${tile("kabineCodex()","🤝","Unsere Regeln","rgba(16,185,129,.56)","rgba(4,120,87,.34)",true)}
-      ${tile("kabineKudos()","👏","Kompliment schenken","rgba(16,185,129,.52)","rgba(5,150,105,.32)")}
+      ${tile("kabineKudos()","👏","Kompliment schenken","rgba(16,185,129,.52)","rgba(5,150,105,.32)",true)}${/* v710: stand allein links neben einer Lücke – wie „Unsere Regeln“ volle Breite */""}
       <details id="kab-mehr" style="grid-column:1/-1" ontoggle="window._kabMehrOffen=this.open"${window._kabMehrOffen?" open":""}>
-        <summary style="list-style:none;cursor:pointer;min-height:48px;display:flex;align-items:center;justify-content:center;gap:8px;border:1px dashed rgba(255,255,255,.45);border-radius:18px;font-weight:800;font-size:15px;color:#fff">✨ Mehr entdecken <span aria-hidden="true">▾</span></summary>
+        <summary style="list-style:none;cursor:pointer;min-height:48px;display:flex;align-items:center;justify-content:center;gap:8px;border:1px dashed rgba(255,255,255,.45);border-radius:18px;font-weight:800;font-size:15px;color:#fff">✨ Mehr entdecken <span class="kab-mehr-pfeil" aria-hidden="true">▾</span></summary>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
         ${tile("kabineBrett()","✏️","Mein Taktikbrett","rgba(56,189,248,.46)","rgba(2,132,199,.30)",true)}
         ${tile("kabineShowGallery()","🖼️","Team-Galerie","rgba(16,185,129,.48)","rgba(5,150,105,.30)")}

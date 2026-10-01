@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v709 (Oktober 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v710 (Oktober 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -114,7 +114,7 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 | **Nutzung** | Welche Bereiche und Aktionen in den letzten 7, 30 oder 90 Tagen benutzt wurden – ohne Kindernamen. Oben dazu, wie viele Kindergeräte gekoppelt sind, wie viele heute in der Kabine waren und welche Appzeit eingestellt ist, als reine Summen. | Grundlage fürs Ausmisten: Was niemand nutzt, fliegt raus. Und ein Blick darauf, ob die Kinder-App ankommt. |
 | **Backup** | Seit v683 als Kachel „Datensicherung“ unter Orga · Einstellungen (vorher im Kader und auf der Pinnwand). Export aller Tabellen der App (seit v603 wirklich aller: vorher 29 von rund 100). Bewusst nicht darin: Notfallangaben der Eltern, Gerätekennungen für Benachrichtigungen, das Nutzungsprotokoll, die Prüfwerte der Einladungskarten – mit Grund in der Datei vermerkt. | Die einzige Sicherung: Der kostenlose Supabase-Plan sichert selbst nichts. |
 | **Hilfe & Rundgang** | Suchbare Hilfe je Funktion; seit v658 eine geführte Tour mit Zeiger: sie öffnet die Bereiche selbst und rahmt die Stelle ein, um die es geht (17 Schritte). | Ein neuer Trainer findet sich ohne Einweisung zurecht. |
-| **Dark Mode, Adresse der App** | Hell/Dunkel (seit v708 ohne feste helle Kästen und weiße Eingabefelder im Dunkeln, Zusage-Farben und Verlaufsknöpfe mit 4,5:1); die App liegt unter einer vereinseigenen Adresse. | Am Flutlichtplatz lesbar; weitergegebene Links enthalten keinen privaten Namen. |
+| **Dark Mode, Adresse der App** | Seit v710 einheitlichere Ordnung: Kacheln gleich groß (keine breite Schlusskachel), Überschriften ohne Versalien, Unterreiter „Spieltag“ statt „Match“, Kinder-Gruppenüberschriften größer. Hell/Dunkel (seit v708 ohne feste helle Kästen und weiße Eingabefelder im Dunkeln, Zusage-Farben und Verlaufsknöpfe mit 4,5:1); die App liegt unter einer vereinseigenen Adresse. | Am Flutlichtplatz lesbar; weitergegebene Links enthalten keinen privaten Namen. |
 
 ---
 
