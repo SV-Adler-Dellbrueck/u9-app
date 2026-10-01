@@ -1015,6 +1015,22 @@ async function pushCurrentSub(){
   if(!pushSupported())return null;
   try{ const reg=await navigator.serviceWorker.ready; return await reg.pushManager.getSubscription(); }catch(e){ return null; }
 }
+/* v705 PO 01.10.: „Ich erhalte keine Push-Nachrichten …“ – Ursache: Trainer- und Eltern-App teilen sich
+   auf einem Handy EINE Push-Adresse. Wer in der zweiten App einschaltete, verwarf sie und legte eine neue
+   für das eigene Konto an; das andere Konto zeigte danach ins Leere (am 01.10. vom Push-Dienst abgelehnt
+   und gelöscht). Seit v705 darf eine Adresse mehreren Konten gehören (eindeutig je Adresse UND Konto),
+   Ausschalten löscht nur den eigenen Eintrag und lässt die Adresse des Handys stehen, und „an“ heißt:
+   dieses Handy hat ein Abo UND dieses Konto steht dafür in push_subscriptions. */
+async function pushKontoAbo(){
+  const sub=await pushCurrentSub(); if(!sub)return null;
+  const uid=typeof sbUid==="function"?sbUid():null; if(!uid)return sub;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(sub.endpoint)}&user_id=eq.${uid}&select=id`,{headers:sbAuthHeaders()});
+    if(!r.ok)return sub;                       // Zweifel (offline, Fehler): lieber „an“ zeigen als falsch „aus“
+    const d=await r.json().catch(()=>null);
+    return Array.isArray(d)&&!d.length?null:sub;
+  }catch(e){ return sub; }
+}
 /* v664: PO 28.09. (Bildschirmfoto): „Wo kann ich die Benachrichtigungen aktivieren?“ –
    nach einmal „Blockieren“ fragt der Browser nie wieder, die App kann es nicht selbst
    ändern. Statt nur „nicht erlaubt“ steht hier, wo man es am Gerät wieder einschaltet. */
@@ -1038,7 +1054,7 @@ async function pushSubscribe(rolle){
     let sub=await reg.pushManager.getSubscription();
     if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:_urlB64ToU8(VAPID_PUBLIC)});
     const j=sub.toJSON();
-    const r=await fetch(`${SB_URL}/rest/v1/push_subscriptions?on_conflict=endpoint`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({endpoint:sub.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,rolle:rolle||"parent"})});
+    const r=await fetch(`${SB_URL}/rest/v1/push_subscriptions?on_conflict=endpoint,user_id`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({endpoint:sub.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,rolle:rolle||"parent",user_id:sbUid()})});
     if(sbCheck401(r))return false;
     if(!r.ok){toast(sbDeniedMsg(r,"Konnte nicht aktivieren"),"err");return false;}
     toast("🔔 Benachrichtigungen aktiviert");
@@ -1048,7 +1064,9 @@ async function pushSubscribe(rolle){
 async function pushUnsubscribe(){
   try{
     const sub=await pushCurrentSub();
-    if(sub){ try{await fetch(`${SB_URL}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(sub.endpoint)}`,{method:"DELETE",headers:sbAuthHeaders()});}catch(e){} try{await sub.unsubscribe();}catch(e){} }
+    // v705: nur den eigenen Eintrag löschen – die Adresse des Handys gehört womöglich auch dem anderen Konto
+    const uid=typeof sbUid==="function"?sbUid():null;
+    if(sub&&uid){ try{await fetch(`${SB_URL}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(sub.endpoint)}&user_id=eq.${uid}`,{method:"DELETE",headers:sbAuthHeaders()});}catch(e){} }
     toast("Benachrichtigungen ausgeschaltet");
   }catch(e){}
 }
@@ -1078,7 +1096,7 @@ async function pushSchluesselAbgleich(){
     const neu=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:_urlB64ToU8(VAPID_PUBLIC)});
     const j=neu.toJSON();
     const rolle=/\/trainer\//.test(location.pathname)?"trainer":"parent";
-    await fetch(`${SB_URL}/rest/v1/push_subscriptions?on_conflict=endpoint`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({endpoint:neu.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,rolle})});
+    await fetch(`${SB_URL}/rest/v1/push_subscriptions?on_conflict=endpoint,user_id`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({endpoint:neu.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,rolle,user_id:sbUid()})});
     return "erneuert";
   }catch(e){ return "fehler"; }
 }
@@ -1092,7 +1110,7 @@ _adlerOnReady(()=>{
 async function pushRenderInto(elId, rolle){
   const el=document.getElementById(elId); if(!el)return;
   if(!pushSupported()){ el.innerHTML=""; return; }
-  const sub=await pushCurrentSub();
+  const sub=await pushKontoAbo();   // v705: an = dieses Konto auf diesem Handy
   const on=!!sub && (typeof Notification!=="undefined"&&Notification.permission==="granted");
   const base="width:100%;min-height:48px;padding:12px;border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer";
   el.innerHTML=on
@@ -1235,7 +1253,7 @@ async function pushKartenFall(){
   if(g.ios&&!g.installiert)return "ios";
   if(typeof pushSupported!=="function"||!pushSupported())return null;
   if(Notification.permission==="denied")return "gesperrt";
-  const abo=typeof pushCurrentSub==="function"?await pushCurrentSub():null;
+  const abo=typeof pushKontoAbo==="function"?await pushKontoAbo():null;   // v705: je Konto
   if(abo&&Notification.permission==="granted")return null;
   return "aus";
 }

@@ -53,7 +53,10 @@ Deno.serve(async (req) => {
     const { data: rh } = subIds.length ? await admin.rpc("push_ruhende", { p_users: subIds }) : { data: [] };
     const ruht = new Set(((rh || []) as any[]).map((x: any) => x.user_id));
     let wartet = 0;
+    const schon = new Set<string>();   // v705: ein Handy für mehrere Konten – je Meldung nur einmal
     const send = async (sub: any, payload: any) => {
+      const k = sub.endpoint + "|" + String(payload.tag || "") + "|" + String(payload.title || "");
+      if (schon.has(k)) return false; schon.add(k);
       if (ruht.has(sub.user_id)) {
         await admin.from("push_warteschlange").upsert({ user_id: sub.user_id, tag: String(payload.tag || "adler"), payload, erstellt_am: new Date().toISOString() }, { onConflict: "user_id,tag" });
         wartet++; return false;

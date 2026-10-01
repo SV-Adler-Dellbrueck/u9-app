@@ -48,9 +48,11 @@ Deno.serve(async (req) => {
     const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth,user_id").in("user_id", ids);
     const gone: string[] = [];
     let sent = 0;
+    const schon = new Set<string>();   // v705: ein Handy für mehrere Konten – je Art nur einmal
     for (const f of faellig as any[]) {
       const payload = JSON.stringify({ title: f.titel, body: f.text, url: f.url, tag: f.tag });
       for (const s of (subs || []).filter((x: any) => x.user_id === f.user_id)) {
+        if (schon.has(s.endpoint + "|" + f.tag)) continue; schon.add(s.endpoint + "|" + f.tag);
         try { await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } } as any, payload); sent++; }
         catch (e: any) { const c = e?.statusCode; if (c === 404 || c === 410 || c === 403) gone.push(s.endpoint); }
       }

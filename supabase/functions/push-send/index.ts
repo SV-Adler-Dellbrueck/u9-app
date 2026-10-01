@@ -40,9 +40,11 @@ async function verteilen(admin: any, subs: any[], payload: any) {
   const ruht = new Set(((r || []) as any[]).map((x: any) => x.user_id));
   const warten = [...ruht].map((u) => ({ user_id: u, tag: String(payload.tag || "adler"), payload, erstellt_am: new Date().toISOString() }));
   if (warten.length) await admin.from("push_warteschlange").upsert(warten, { onConflict: "user_id,tag" });
-  let sent = 0; const gone: string[] = [];
+  let sent = 0; const gone: string[] = []; const schon = new Set<string>();
   for (const s of subs || []) {
     if (ruht.has(s.user_id)) continue;
+    // v705: Ein Handy kann mehreren Konten gehören (Trainer und Elternteil) – dieselbe Meldung nur einmal
+    if (schon.has(s.endpoint)) continue; schon.add(s.endpoint);
     try { await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } } as any, JSON.stringify(payload)); sent++; }
     catch (err: any) { const c = err?.statusCode; if (c === 404 || c === 410 || c === 403) gone.push(s.endpoint); }
   }

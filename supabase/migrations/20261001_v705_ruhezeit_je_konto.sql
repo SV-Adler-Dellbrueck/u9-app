@@ -194,3 +194,14 @@ begin
 end $$;
 revoke all on function public.wiewars_push_faellig(timestamptz) from public, anon, authenticated;
 grant execute on function public.wiewars_push_faellig(timestamptz) to service_role;
+
+-- Ein Handy, mehrere Konten. PO 01.10. („Ich erhalte keine Push-Nachrichten …“), Befund: Trainer- und
+-- Eltern-App teilen sich auf einem Handy EINE Push-Adresse (endpoint). Sie war bisher eindeutig – wer in
+-- der zweiten App einschaltete, verwarf sie und legte eine neue für das eigene Konto an; das Trainerkonto
+-- zeigte danach ins Leere und wurde am 01.10. 08:35 Uhr beim ersten Versand als tot gelöscht.
+-- Jetzt eindeutig je Adresse UND Konto; die Versandfunktionen schicken jede Meldung je Adresse nur einmal.
+alter table public.push_subscriptions drop constraint if exists push_subscriptions_endpoint_key;
+alter table public.push_subscriptions drop constraint if exists push_subscriptions_endpoint_user_key;
+alter table public.push_subscriptions add constraint push_subscriptions_endpoint_user_key unique (endpoint, user_id);
+comment on constraint push_subscriptions_endpoint_user_key on public.push_subscriptions is
+  'v705: eine Push-Adresse (Handy) darf mehreren Konten gehören, z. B. Trainer und Elternteil auf einem Gerät.';

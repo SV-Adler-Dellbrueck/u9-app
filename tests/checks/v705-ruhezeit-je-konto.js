@@ -10,7 +10,13 @@
    f) Server: Tabellen mit RLS, push_ruht/Warteschlange; rufe_push_faellig und wiewars_push_faellig fragen
       push_ruht; push-send verteilt über die Ruhezeit (Test-Meldung ausgenommen), push-cron auch,
       rufe-push holt die Warteschlange nach; Sicherung enthält beide Tabellen
-   g) Hilfe und Funktionsübersicht beschreiben die eigene Ruhezeit */
+   g) Hilfe und Funktionsübersicht beschreiben die eigene Ruhezeit
+   PO 01.10. „Prüf das“ (Trainer bekam keine Meldung): Trainer- und Eltern-App teilen sich auf einem Handy
+   eine Push-Adresse; wer in der zweiten App einschaltete, verwarf sie – das andere Konto zeigte ins Leere.
+   h) Einschalten meldet je Adresse UND Konto an (on_conflict=endpoint,user_id, eigene Kennung);
+      Ausschalten löscht nur den eigenen Eintrag und lässt die Adresse des Handys stehen;
+      „an“ heißt: Handy hat ein Abo und dieses Konto steht dafür drin
+   i) Datenbank eindeutig je Adresse und Konto; die drei Versandfunktionen schicken je Handy nur einmal */
 "use strict";
 const fs = require("fs"), path = require("path");
 module.exports = async function (h) {
@@ -21,8 +27,8 @@ module.exports = async function (h) {
       push_ruhezeit: ruhe, rufe_raum: [{ id: 5, name: "Allgemein", emoji: "📣", sort: 0 }], rufe_nachricht: [], rufe_reaktion: [], rufe_fixiert: [],
       rufe_push_aus: [], rpc: { is_rufe_mod: false } }) });
     const r = await s.page.evaluate(fn, tok).catch(e => ({ fehler: String(e) }));
-    const f = s.fehler(); const ges = s.gesendet.filter(x => /push_ruhezeit/.test(x.pfad)); await s.schliessen();
-    return { r, f, ges };
+    const f = s.fehler(); const alle = s.gesendet.slice(), ges = alle.filter(x => /push_ruhezeit/.test(x.pfad)); await s.schliessen();
+    return { r, f, ges, alle };
   };
   const karte = async tok => {
     const w = ms => new Promise(x => setTimeout(x, ms));
@@ -81,7 +87,36 @@ module.exports = async function (h) {
   if (!/"push_ruhezeit","push_warteschlange"/.test(views)) probleme.push("f) Sicherung ohne die neuen Tabellen");
   if (!/Ruhezeit \(seit v705\)/.test(views) || !/22–6/.test(views)) probleme.push("g) Hilfe beschreibt die eigene Ruhezeit nicht");
   if (!/Ruhezeit seit v705 je Konto/.test(doku)) probleme.push("g) Funktionsübersicht beschreibt die eigene Ruhezeit nicht");
-  const fe = el.f.concat(tr.f, chat.f); if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
+  // h) ein Handy, zwei Konten
+  const hk = await lauf("/eltern/index.html", [], async tok => {
+    const w = ms => new Promise(x => setTimeout(x, ms));
+    window.sbToken = () => tok;
+    let abgemeldet = 0;
+    const sub = { endpoint: "https://push.example/e1", toJSON: () => ({ keys: { p256dh: "p", auth: "a" } }), unsubscribe: async () => { abgemeldet++; return true; }, options: {} };
+    try { Object.defineProperty(Notification, "permission", { configurable: true, get: () => "granted" }); } catch (e) {}
+    try { Object.defineProperty(navigator, "serviceWorker", { configurable: true, value: { ready: Promise.resolve({ pushManager: { getSubscription: async () => sub, subscribe: async () => sub } }), addEventListener() {} } }); } catch (e) {}
+    window.pushSupported = () => true;
+    const out = {};
+    out.an = await pushSubscribe("parent");
+    await pushUnsubscribe(); await w(50);
+    out.abgemeldet = abgemeldet;
+    // „an“ je Konto: Attrappe kennt keinen Eintrag für dieses Konto → aus
+    out.kontoOhneEintrag = (await pushKontoAbo()) === null;
+    return out;
+  });
+  const anm = hk.alle.find(x => /push_subscriptions$/.test(x.pfad) && x.methode === "POST");
+  const ab = hk.alle.find(x => /push_subscriptions$/.test(x.pfad) && x.methode === "DELETE");
+  if (!hk.r || hk.r.fehler) probleme.push("h) Abbruch: " + JSON.stringify(hk.r));
+  else {
+    if (!anm || !/on_conflict=endpoint(%2C|,)user_id/.test(anm.suche) || !anm.body || anm.body.user_id !== "u-eigen") probleme.push("h) Anmeldung nicht je Adresse und Konto: " + JSON.stringify(anm));
+    if (!ab || !/user_id=eq\.u-eigen/.test(ab.suche)) probleme.push("h) Ausschalten löscht nicht nur den eigenen Eintrag: " + JSON.stringify(ab));
+    if (hk.r.abgemeldet !== 0) probleme.push("h) Ausschalten verwirft die Adresse des Handys");
+    if (!hk.r.kontoOhneEintrag) probleme.push("h) „an“, obwohl dieses Konto nicht eingetragen ist");
+  }
+  if (!/drop constraint if exists push_subscriptions_endpoint_key/.test(mig) || !/unique \(endpoint, user_id\)/.test(mig)) probleme.push("i) Datenbank nicht je Adresse und Konto eindeutig");
+  for (const [n, t] of [["push-send", ps], ["push-cron", pc], ["rufe-push", rp]]) if (!/const schon = new Set/.test(t)) probleme.push("i) " + n + " schickt je Handy womöglich doppelt");
+  zeilen.push(`h) Anmeldung ${anm ? anm.suche : "–"} · Ausschalten ${ab ? ab.suche.slice(0, 60) : "–"} · Adresse verworfen ${hk.r && hk.r.abgemeldet}`);
+  const fe = el.f.concat(tr.f, chat.f, hk.f); if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
   zeilen.push(`Eltern „${el.r.kopf}“ → „${el.r.nach}“ → „${el.r.eigen}“ · Trainer „${tr.r.kopf}“ · Kacheln ${JSON.stringify(el.r.hoehen)}`, `Chat: „${chat.r.zeile}“`);
   return h.ergebnis(titel, !probleme.length, probleme.length ? probleme.concat(zeilen) : zeilen);
 };

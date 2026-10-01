@@ -66,7 +66,7 @@ module.exports = async function (h) {
   const a = r.alt;
   if (a.erg !== "erneuert" || !a.log.some(x => /^DELETE push_subscriptions\?endpoint=eq\.https%3A%2F%2Fpush\.example%2Falt/.test(x))
       || !a.log.includes("abmelden") || !a.log.some(x => /^anmelden:65/.test(x)) || !a.gleich
-      || !a.log.some(x => /^POST push_subscriptions\?on_conflict=endpoint .*"rolle":"trainer"/.test(x)))
+      || !a.log.some(x => /^POST push_subscriptions\?on_conflict=endpoint(%2Cuser_id|,user_id)? .*"rolle":"trainer"/.test(x)))
     probleme.push("c) Abo mit altem Schlüssel nicht erneuert: " + JSON.stringify(a));
   if (r.aktuell.erg !== "aktuell" || r.aktuell.log.length) probleme.push("d) aktuelles Abo angefasst: " + JSON.stringify(r.aktuell));
   if (r.ohne.erg !== "aus" || r.ohne.log.length) probleme.push("d) ohne Erlaubnis etwas getan: " + JSON.stringify(r.ohne));

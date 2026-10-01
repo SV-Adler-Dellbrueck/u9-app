@@ -8,7 +8,7 @@
 "use strict";
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
-  const s = await h.starten({ breite: 390, hoehe: 844, warten: 1500, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), termine: [] }) });
+  const s = await h.starten({ breite: 390, hoehe: 844, warten: 1500, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), push_subscriptions: [{ id: 1 }] /* v705: Konto steht für dieses Handy drin */, termine: [] }) });
   await h.sichtbarMachen(s.page, "#main-app");
   const r = await s.page.evaluate(async () => {
     const w = ms => new Promise(x => setTimeout(x, ms));

@@ -11,7 +11,7 @@ module.exports = async function (h) {
   const TOKEN = b64({ alg: "none" }) + "." + b64({ email: "eltern@example.org", sub: "u1", exp: Math.floor(Date.now() / 1000) + 3600 }) + ".x";
   const termine = [{ id: 5, datum: h.tagePlus(2), typ: "training", uhrzeit: "16:45", uhrzeit_ende: "18:00", ort: "Sportplatz" }];
   const s = await h.starten({ start: "/eltern/index.html?portal", angemeldet: false, warten: 1200, breite: 390, hoehe: 844,
-    supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), profiles: [{ role: "parent" }], dsgvo_consent: [{ version: "x" }],
+    supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), push_subscriptions: [{ id: 1 }] /* v705: Konto steht für dieses Handy drin */, profiles: [{ role: "parent" }], dsgvo_consent: [{ version: "x" }],
       eltern_kinder: [{ spieler_id: 1, label: "", kader: { id: 1, name: "Kind A", nr: 7, foto_stadionheft_ok: true } }], termine, rueckmeldungen: [] }) });
   await s.page.evaluate(t => { localStorage.setItem("adler_sb_auth_eltern", JSON.stringify({ access_token: t, refresh_token: "r", expires_at: Math.floor(Date.now() / 1000) + 3600 })); }, TOKEN);
   await s.page.reload({ waitUntil: "networkidle" }); await s.page.waitForTimeout(4000);
