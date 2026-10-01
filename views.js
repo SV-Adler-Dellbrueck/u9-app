@@ -2880,6 +2880,10 @@ function spieltagPhasenKacheln(p){
     b.setAttribute("aria-pressed",an?"true":"false"); b.classList.toggle("an",an);
   });
   const leer=document.getElementById("mt-phasen-leer"); if(leer)leer.hidden=!!p;
+  /* v703 PO (Bildschirmfoto 01.10.): „Wenn ich unten eins der Teams anklicke, passiert nichts.“ Die
+     Kacheln „Adler n“ standen auch unter „Wer kommt?“ – ihr Inhalt (Aufstellung, Uhr, Ergebnis)
+     gehört zu den Schritten 2 bis 4, die dort zu sind. Unter Schritt 1 und ohne Schritt stehen sie nicht. */
+  const tk=document.getElementById("spieltag-teamkarten"); if(tk)tk.hidden=!p||p==="wer";
 }
 function spieltagPhaseZeigen(p){
   if(!ST_PHASEN[p])return;
@@ -2889,7 +2893,7 @@ function spieltagPhaseZeigen(p){
      gewählten Teams. Ist keine aufgeklappt, sähe man nach dem Tipp auf „Während“ nichts –
      also die Kachel des gewählten Teams öffnen. Welle 2, deshalb nur über typeof. */
   try{
-    if(typeof TEAM_ANZAHL!=="undefined"&&TEAM_ANZAHL>1&&typeof TEAM_KARTE_OFFEN!=="undefined"&&!TEAM_KARTE_OFFEN
+    if(p!=="wer"&&typeof TEAM_ANZAHL!=="undefined"&&TEAM_ANZAHL>1&&typeof TEAM_KARTE_OFFEN!=="undefined"&&!TEAM_KARTE_OFFEN   // v703: „Wer kommt?“ hat keine Team-Kacheln
        &&typeof spieltagKarteOeffnen==="function")spieltagKarteOeffnen((typeof spieltagTeam!=="undefined"&&spieltagTeam)||1);
   }catch(e){}
 }

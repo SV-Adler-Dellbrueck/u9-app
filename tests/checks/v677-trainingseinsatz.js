@@ -17,8 +17,11 @@ module.exports = async function (h) {
   const tag = n => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
   const monat = d => d.slice(0, 7);
   // zwei Trainings in diesem Monat, zwei im Vormonat (Tage so gewählt, dass sie sicher im Monat liegen)
-  const heute = new Date(), erster = new Date(heute.getFullYear(), heute.getMonth(), 1, 12);
-  const dieser = [tag(0), new Date(erster).toISOString().slice(0, 10)];
+  // Am Monatsersten fielen „heute“ und „der Erste“ auf einen Tag (ein Training statt zwei; Lauf 01.10.2026) –
+  // dann gilt der Vormonat als „dieser“ Monat
+  const ab = new Date().getDate() === 1 ? 1 : 0;
+  const heute = new Date(Date.now() - ab * 864e5), erster = new Date(heute.getFullYear(), heute.getMonth(), 1, 12);
+  const dieser = [tag(ab), new Date(erster).toISOString().slice(0, 10)];
   const vorm1 = new Date(heute.getFullYear(), heute.getMonth() - 1, 5, 12).toISOString().slice(0, 10);
   const vorm2 = new Date(heute.getFullYear(), heute.getMonth() - 1, 12, 12).toISOString().slice(0, 10);
   const plan = [{ formIdx: 1, formName: "Dribbel Quadrat", trainer: "Alle", slotLabel: "Hauptteil" }];

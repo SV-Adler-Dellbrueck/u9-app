@@ -145,13 +145,12 @@ function mcRenderLive(){
     <span>Spielzeit <b>${mcSpieldauer} Min.</b> · aus dem Spielplan</span>
     <button class="btn btn-sm" onclick="mcPlanOeffnen()" style="margin-left:auto"><i class="ti ti-layout-grid"></i>Im Spielplan ändern</button>
   </div>`:(einstellbar?`
-  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:var(--border);font-size:var(--s-klein);color:var(--text2)">
+  <div class="mc-einst">
     <label for="mc-dauer">${mcHalbzeiten===1?"Spielzeit":"Je Halbzeit"}</label>
-    <input id="mc-dauer" type="number" min="1" max="45" value="${mcSpieldauer}" onchange="mcSetDauer(this.value)"
-      style="width:72px;min-height:44px;padding:8px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;font-size:var(--s-karte);font-weight:700;text-align:center;background:var(--surface);color:var(--text);box-sizing:border-box">
-    <span>Min.</span>
-    <span style="margin-left:8px">Halbzeiten</span>${hzBtn(1)}${hzBtn(2)}
-  </div>`:""));
+    <span class="mc-wert"><input id="mc-dauer" type="number" min="1" max="45" value="${mcSpieldauer}" onchange="mcSetDauer(this.value)"><span>Min.</span></span>
+    <span>Halbzeiten</span>
+    <span class="mc-seg">${hzBtn(1)}${hzBtn(2)}</span>
+  </div>`:""));   /* v703: zwei feste Zeilen statt Umbruch – „zwei“ stand am Handy allein in der dritten Zeile */
 }
 function mcPlanOeffnen(){
   if(typeof teamPlanOeffnen==="function"&&typeof TEAM_PLAN!=="undefined"&&TEAM_PLAN){teamPlanOeffnen();return;}

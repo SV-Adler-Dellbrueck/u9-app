@@ -626,6 +626,8 @@ function spieltagTeamKartenRender(){
 function spieltagKarteOeffnen(n){
   if(TEAM_KARTE_OFFEN===n){ TEAM_KARTE_OFFEN=0; spieltagTeamKartenRender(); return; }
   TEAM_KARTE_OFFEN=n;
+  /* v703: Ohne offenen Schritt 2–4 bliebe die aufgeklappte Kachel leer – dann Schritt 2 öffnen. */
+  if(typeof spieltagPhaseAktuell==="function"&&!["vor","live","nach"].includes(spieltagPhaseAktuell())&&typeof spieltagPhaseZeigen==="function")spieltagPhaseZeigen("vor");
   if(typeof spieltagTeam!=="undefined"&&n!==spieltagTeam&&typeof spieltagSetTeam==="function"){ spieltagSetTeam(n); return; }
   spieltagTeamKartenRender();
   teamInhaltFuellen();   // erst jetzt sind die Panels sichtbar – und müssen gefüllt werden

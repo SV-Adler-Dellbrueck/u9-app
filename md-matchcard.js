@@ -686,13 +686,15 @@ function rotRenderControls(){
   if(!box)return;
   const running=!!rotTimerId;
   box.innerHTML=`
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-      <span style="font-size:var(--s-klein);color:var(--text2)">Wechsel alle</span>
-      <select id="rot-interval" onchange="rotIntervalMin=parseInt(this.value)" style="min-height:44px;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit">
+    <!-- v703 PO (Bildschirmfoto): „Kacheln sind verschoben“ – „Reset“ brach allein in die nächste
+         Zeile. Jetzt fest: oben Abstand, darunter Start und Reset nebeneinander in voller Breite. -->
+    <div class="rot-zeile"><label for="rot-interval">Wechsel alle</label>
+      <select id="rot-interval" onchange="rotIntervalMin=parseInt(this.value)">
         ${[3,4,5,6,7].map(m=>`<option value="${m}"${m===rotIntervalMin?" selected":""}>${m} Min.</option>`).join("")}
-      </select>
-      <button class="btn btn-p" id="rot-startbtn" onclick="rotToggle()" style="min-height:44px">${running?'<i class="ti ti-player-pause"></i>Pause':'<i class="ti ti-player-play"></i>Start'}</button>
-      <button class="btn" onclick="rotReset()" style="min-height:44px"><i class="ti ti-refresh"></i>Reset</button>
+      </select></div>
+    <div class="rot-knoepfe">
+      <button class="btn btn-p" id="rot-startbtn" onclick="rotToggle()">${running?'<i class="ti ti-player-pause"></i>Pause':'<i class="ti ti-player-play"></i>Start'}</button>
+      <button class="btn" onclick="rotReset()"><i class="ti ti-refresh"></i>Reset</button>
     </div>
     <div id="rot-live"></div>`;
   rotDragInit();
