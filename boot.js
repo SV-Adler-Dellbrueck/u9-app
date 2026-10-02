@@ -4304,6 +4304,162 @@ function tpRegelWeg(si){
   tpRenderTimeline();
   if(typeof tpPlanSaveDebounced==="function")tpPlanSaveDebounced();
 }
+/* v719 „Plan anpassen“ – PO 02.10.: „Ich habe einen Trainingsplan schon angelegt. Jetzt haben
+   noch zwei Kinder abgesagt und ein Trainer ist dazugekommen oder weggefallen … wenn vorher drei
+   Trainer da waren mit drei Stationen, dann zwei Stationen draus gemacht werden, geschaut wird, ob
+   die Übungen, die dann noch da sind, auf die Anzahl der Spieler passen.“ Kachel: „Mit Vorschau“.
+   Ablauf: Zu- und Absagen neu lesen → ausrechnen, was sich ändern müsste → im Fenster zeigen →
+   erst „Übernehmen“ ändert Gruppen und Plan. „Training füllen“ bleibt, wie es ist: es füllt nur
+   Lücken und nimmt nie etwas weg. */
+async function tpAnpassen(){
+  const datum=_tgDatum();
+  if(typeof uebungMetaLoad==="function")await uebungMetaLoad();
+  // Zu- und Absagen von Trainern und Kindern frisch – von Hand gesetzte Häkchen bleiben
+  const manuell={...(typeof TP_TRAINER_MANUELL==="object"&&TP_TRAINER_MANUELL||{})};
+  try{ if(typeof tpTrainerRsvpLaden==="function")await tpTrainerRsvpLaden(datum); }catch(e){}
+  try{ Object.assign(TP_TRAINER_MANUELL,manuell); if(typeof tpTrainerChipsRender==="function")tpTrainerChipsRender(); }catch(e){}
+  try{ if(typeof tgSync==="function")await tgSync(); }catch(e){}
+  const v=tpAnpassenVorschlag();
+  if(v.fehler){toast(v.fehler,"err");return v;}
+  tpAnpassenFenster(v);
+  return v;
+}
+/* Rechnet nur, ändert nichts. Rückgabe: was sich an Kindern, Gruppen, Stationen und Übungen
+   ändern würde – die Grundlage für Fenster und Übernehmen. */
+function tpAnpassenVorschlag(){
+  const haupt=tpSlots.map((s,i)=>({s,i})).filter(x=>x.s&&tpIstHauptteil(x.s.typ));
+  const wert=(si,p)=>{ const el=document.getElementById(`tp-form-${si}-${p}`); return el&&el.value!==""?Number(el.value):null; };
+  if(!haupt.some(x=>wert(x.i,0)!=null))return {fehler:"Noch kein Plan – erst „Training füllen“ oder eine Vorlage übernehmen"};
+  const trainer=tpGetCheckedTrainers();
+  if(!trainer.length)return {fehler:"Mindestens 1 Trainer anhaken"};
+  const tg=tgFor(), gruppen=(tg&&Array.isArray(tg.gruppen))?tg.gruppen:[];
+  const pool=_tgPool(), soll=new Set(pool.namen);
+  // Kinder: wer abgesagt hat, geht raus; wer neu dabei ist, kommt in die kleinste Gruppe
+  const drin=new Set(); gruppen.forEach(g=>(g.kinder||[]).forEach(n=>drin.add(n)));
+  const raus=[...drin].filter(n=>!soll.has(n)), rein=pool.namen.filter(n=>!drin.has(n));
+  // Stationen = Trainer (wie „Training füllen“); der gemeinsame Block ohne Stationen bleibt
+  const mitStationen=tpSlots.some(sl=>sl&&Number(sl.stationen)>1);
+  const hs=haupt.filter(x=>!(mitStationen&&!(Number(x.s.stationen)>1)&&wert(x.i,0)!=null));
+  const felder=si=>document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`).length;
+  /* Wie viele Stationen hat der Plan? So viele, wie es Gruppen gibt – ein frisch angehakter Trainer
+     zeigt sofort ein leeres Feld mehr, das zählt noch nicht. Ohne Gruppen zählen die Felder. */
+  const vorher=Math.max(1,gruppen.length?Math.min(gruppen.length,Math.max(...hs.map(x=>felder(x.i)))):Math.max(...hs.map(x=>felder(x.i))));
+  const nachher=Math.max(1,Math.min(5,tgBedarf(pool.namen.length)));
+  /* Welche Station fällt weg? Die des Trainers, der nicht mehr angehakt ist – sonst die hintere.
+     Maßgeblich ist der erste Hauptteil; die Übung hängt an der Station (Rotation). */
+  const ref=hs[0]?hs[0].i:null, frei=new Set(trainer);
+  const weg=[];
+  if(nachher<vorher){
+    const kandidaten=Array.from({length:vorher},(_,p)=>p);
+    const coach=p=>ref!=null?(tpCoaches[`tp-form-${ref}-${p}`]||""):"";
+    kandidaten.filter(p=>coach(p)&&!frei.has(coach(p))).reverse().forEach(p=>{ if(weg.length<vorher-nachher)weg.push(p); });
+    for(let p=vorher-1;p>=0&&weg.length<vorher-nachher;p--) if(!weg.includes(p))weg.push(p);
+  }
+  const bleiben=Array.from({length:vorher},(_,p)=>p).filter(p=>!weg.includes(p));
+  // Gruppen: welche wird aufgelöst? Die des fehlenden Trainers, sonst die kleinste (hinterste)
+  const kinderZahl=pool.namen.length;
+  const g=Math.max(1,Math.ceil(kinderZahl/nachher));
+  const alle=tpAllForms();
+  const name=i=>(alle[i]||{}).name||"?";
+  const wegListe=weg.map(p=>({p,uebung:ref!=null&&wert(ref,p)!=null?name(wert(ref,p)):"",trainer:ref!=null?(tpCoaches[`tp-form-${ref}-${p}`]||""):""}));
+  // Übungen der bleibenden Stationen prüfen: passt sie für Gruppen bis g Kinder?
+  const genutzt=new Set(); hs.forEach(x=>bleiben.forEach(p=>{ const w=wert(x.i,p); if(w!=null)genutzt.add(w); }));
+  const zufall=_tpSaat("anpassen-"+_tgDatum()+"-"+g);
+  const tausch=[], schon=new Map();
+  hs.forEach(x=>bleiben.forEach((p,neuP)=>{
+    const w=wert(x.i,p); if(w==null)return;
+    if(tpGruppePasst(w,g)<2)return;   // passt oder ein Kind zu viel (auswechseln, v656)
+    let neu=schon.get(w);
+    if(neu===undefined){
+      const f=alle[w]||{};
+      const b=tpStationWahl(g,{quelle:"",kats:[f.kat].filter(Boolean),bevorzugt:new Set()},genutzt,_tgDatum(),zufall);
+      neu=(b&&b.passt<2)?b.i:null;
+      if(neu!=null)genutzt.add(neu);
+      schon.set(w,neu);
+    }
+    tausch.push({si:x.i,p,neuP,alt:w,neu,altName:name(w),neuName:neu!=null?name(neu):"",block:x.s.label||"Hauptteil"});
+  }));
+  const dazu=Math.max(0,nachher-vorher);
+  return {datum:_tgDatum(),trainer,raus,rein,vorher,nachher,weg,wegListe,bleiben,g,kinderZahl,tausch,dazu,hs:hs.map(x=>x.i),
+    nichts:!raus.length&&!rein.length&&!weg.length&&!dazu&&!tausch.length};
+}
+function tpAnpassenFenster(v){
+  document.getElementById("tp-anpassen-modal")?.remove();
+  const m=document.createElement("div"); m.id="tp-anpassen-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Plan anpassen");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.onclick=e=>{if(e.target===m)m.remove();};
+  const zeile=(emo,t)=>`<li style="display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--rand-bedien);line-height:1.45"><span aria-hidden="true">${emo}</span><span>${t}</span></li>`;
+  const z=[];
+  if(v.raus.length)z.push(zeile("➖",`${v.raus.length===1?"Ein Kind fehlt":v.raus.length+" Kinder fehlen"} jetzt: ${v.raus.map(esc).join(", ")}`));
+  if(v.rein.length)z.push(zeile("➕",`${v.rein.length===1?"Ein Kind ist":v.rein.length+" Kinder sind"} neu dabei: ${v.rein.map(esc).join(", ")}`));
+  if(v.weg.length)z.push(zeile("🔻",`${v.vorher} → ${v.nachher} Stationen. Es fällt weg: ${v.wegListe.map(w=>`Station ${w.p+1}${w.uebung?` „${esc(w.uebung)}“`:""}${w.trainer?` (${esc(w.trainer)})`:""}`).join(", ")}`));
+  if(v.dazu)z.push(zeile("🔺",`${v.vorher} → ${v.nachher} Stationen. ${v.dazu===1?"Die neue Station bekommt":"Die neuen Stationen bekommen"} eine passende Übung.`));
+  const gesehen=new Set();
+  v.tausch.forEach(t=>{ const k=t.alt+">"+t.neu; if(gesehen.has(k))return; gesehen.add(k);
+    z.push(zeile(t.neu!=null?"🔁":"⚠️",t.neu!=null?`„${esc(t.altName)}“ passt nicht für Gruppen bis ${v.g} Kinder → „${esc(t.neuName)}“`:`„${esc(t.altName)}“ passt nicht für Gruppen bis ${v.g} Kinder – keine passende Übung gefunden, bleibt stehen`)); });
+  const knopf="min-height:48px;padding:0 16px;border-radius:12px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer";
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
+    ${mdlHead("tp-anpassen-modal","🔄","Plan anpassen",`${v.trainer.length} Trainer · ${v.kinderZahl} Kinder · Gruppen bis ${v.g}`,"var(--fam-training)")}
+    ${v.nichts?`<div class="tp-anpassen-leer" style="font-size:var(--s-text);color:var(--text2);padding:8px 0 4px">Alles passt – Stationen, Gruppen und Übungen stimmen mit den Zu- und Absagen überein.</div>`
+      :`<ul class="tp-anpassen-liste" style="list-style:none;margin:0;padding:0;font-size:var(--s-text)">${z.join("")}</ul>
+        <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px">Zusatzregeln, von dir weggelassene Felder und der gemeinsame Block ohne Stationen bleiben, wie sie sind.</div>`}
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap">
+      <button type="button" onclick="document.getElementById('tp-anpassen-modal').remove()" style="${knopf};border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text)">${v.nichts?"Schließen":"Abbrechen"}</button>
+      ${v.nichts?"":`<button type="button" id="tp-anpassen-ok" onclick="tpAnpassenUebernehmen()" style="${knopf};border:none;background:var(--fam-training);color:#fff">Übernehmen</button>`}
+    </div></div>`;
+  window._tpAnpassen=v;
+  document.body.appendChild(m);
+}
+async function tpAnpassenUebernehmen(){
+  const v=window._tpAnpassen; if(!v)return;
+  document.getElementById("tp-anpassen-modal")?.remove();
+  // 1) Kinder in den Gruppen
+  const tg=tgFor();
+  if(tg&&Array.isArray(tg.gruppen)&&tg.gruppen.length){
+    const raus=new Set(v.raus);
+    tg.gruppen.forEach(g=>{ g.kinder=(g.kinder||[]).filter(n=>!raus.has(n)); });
+    v.rein.forEach(n=>{ let z=tg.gruppen[0]; tg.gruppen.forEach(g=>{ if((g.kinder||[]).length<(z.kinder||[]).length)z=g; }); (z.kinder=z.kinder||[]).push(n); });
+    // 2) Gruppenzahl: erst die Gruppe des fehlenden Trainers auflösen, dann wie gewohnt
+    const frei=new Set(v.trainer);
+    while(tg.gruppen.length>v.nachher){
+      let i=tg.gruppen.findIndex(g=>g.trainer&&!frei.has(g.trainer));
+      if(i<0){ i=0; tg.gruppen.forEach((g,j)=>{ if((g.kinder||[]).length<=(tg.gruppen[i].kinder||[]).length)i=j; }); }
+      const aufgeloest=tg.gruppen.splice(i,1)[0];
+      (aufgeloest.kinder||[]).forEach(k=>{ let z=tg.gruppen[0]; tg.gruppen.forEach(g=>{ if((g.kinder||[]).length<(z.kinder||[]).length)z=g; }); z.kinder.push(k); });
+    }
+    tgSave(tg);
+    if(tg.gruppen.length<v.nachher&&typeof tgErweitern==="function")tgErweitern(v.nachher);
+  }else if(typeof tgBilden==="function")tgBilden(v.nachher);
+  // 3) Stationen: wegfallende herausnehmen, die dahinter rücken nach – mit Trainer und Marke
+  const neuVon=new Map();
+  v.hs.forEach(si=>{
+    const sels=[...document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`)];
+    const merk=v.bleiben.map(p=>{ const el=document.getElementById(`tp-form-${si}-${p}`); return {wert:el?el.value:"",station:el?el.dataset.station:undefined,alle:el?el.dataset.alle:undefined,coach:tpCoaches[`tp-form-${si}-${p}`]}; });
+    sels.forEach((el,p)=>{
+      const m=merk[p];
+      el.value=m?m.wert:""; 
+      if(m&&m.station!=null)el.dataset.station=m.station; else delete el.dataset.station;
+      if(m&&m.alle!=null)el.dataset.alle=m.alle; else delete el.dataset.alle;
+      const id=`tp-form-${si}-${p}`; if(m&&m.coach)tpCoaches[id]=m.coach; else delete tpCoaches[id];
+    });
+    v.bleiben.forEach((p,neuP)=>neuVon.set(si+"-"+p,neuP));
+  });
+  // 4) Übungen tauschen, die nicht mehr passen
+  let getauscht=0;
+  v.tausch.forEach(t=>{ if(t.neu==null)return; const el=document.getElementById(`tp-form-${t.si}-${t.neuP}`); if(el&&el.querySelector(`option[value="${t.neu}"]`)){ el.value=String(t.neu); getauscht++; } });
+  tpRenderTimeline();
+  await new Promise(r=>setTimeout(r,60));
+  // 5) Neue Stationen füllt „Training füllen“ – es nimmt nichts weg
+  let gefuellt=null;
+  if(v.dazu&&typeof tpGenerate==="function")gefuellt=await tpGenerate();
+  if(typeof tpPlanSaveDebounced==="function")tpPlanSaveDebounced();
+  const teile=[`${v.nachher} Station${v.nachher===1?"":"en"}`,`Gruppen bis ${v.g} Kinder`];
+  if(getauscht)teile.push(`${getauscht===1?"eine Übung":getauscht+" Übungen"} getauscht`);
+  if(!v.dazu)toast("🔄 Plan angepasst – "+teile.join(" · "));
+  return {getauscht,gefuellt};
+}
+
 // E3: schlägt zufällig eine der drei Ritual-Formen als festen Baustein der Einheit vor
 // Team-Aggregat: Durchschnitt jeder Dimension über alle bewerteten Spieler
 function teamAggregate(){
