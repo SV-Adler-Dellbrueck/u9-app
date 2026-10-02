@@ -548,6 +548,24 @@ function elternTodoSync(){
   btn.style.display=n?"flex":"none";
   const b=document.getElementById("eltern-todo-badge"); if(b)b.textContent=n?String(n):"";
 }
+/* v716 (PO 02.10.): „… unter der Mannschaftskasse auch einen Hinweis im jeweiligen Elternzugang,
+   ob mein Beitrag schon bezahlt ist oder ob er noch offen ist.“ Grundlage sind die Umlagen der
+   Kasse und ihre Häkchen „Wer hat bezahlt“ (kasse_zahlung, RLS: nur die eigenen Kinder). Je aktive
+   Umlage eine Zeile; bei mehreren Kindern mit Vorname. Ohne Umlage bleibt die Zeile leer. */
+async function elternKasseKachelStand(kids, kasse){
+  const el=document.getElementById("mk-beitrag-stand"); if(!el)return;
+  const umlagen=(kasse&&Array.isArray(kasse.umlagen))?kasse.umlagen:[];
+  if(!umlagen.length||!kids||!kids.length){ el.textContent=""; return; }
+  let z=[]; try{const r=await fetch(`${SB_URL}/rest/v1/kasse_zahlung?select=umlage_id,spieler_id`,{headers:sbAuthHeaders()});if(r.ok)z=(await r.json())||[];}catch(e){return;}
+  const viele=kids.length>1, eur=b=>Number(b||0).toLocaleString("de-DE",{minimumFractionDigits:0,maximumFractionDigits:2})+" €";
+  const zeilen=[];
+  umlagen.forEach(u=>kids.forEach(k=>{
+    const ok=z.some(x=>Number(x.umlage_id)===Number(u.id)&&Number(x.spieler_id)===Number(k.spieler_id));
+    const wer=viele?String((k.kader&&k.kader.name)||k.name||"").split(/\s+/)[0]+" · ":"";
+    zeilen.push(`${wer}${esc(u.titel||"Beitrag")}: ${ok?"✓ bezahlt":"○ "+eur(u.betrag)+" offen"}`);
+  }));
+  el.innerHTML=zeilen.join("<br>");
+}
 /* 📣 Adler News: aggregiert „neu seit letztem Blick" (RPC eltern_news + Federn-Level je Kind).
    Gelesen-Status pro Quelle in localStorage adler_news_seen; Erstbesuch = Baseline (keine Flut). */
 async function elternNewsLoad(kids){
@@ -982,7 +1000,7 @@ async function elternDashLoad(){
      darunter „Kasse führen“, nur für die Kasse (elternKasseRolleLoad füllt den Slot). */
   const mkSaldo=kasse&&kasse.saldo!=null?`Kassenstand ${Number(kasse.saldo).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})} € · Ausgaben und Beiträge`:"Kassenstand, Ausgaben und Beiträge";
   html+=`<button type="button" id="mannschaftskasse-kachel" onclick="if(typeof mannschaftskasseOpen==='function')mannschaftskasseOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:none;border-radius:14px;background:linear-gradient(135deg,#0f766e,#115e59);color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.08)">
-    <span aria-hidden="true" style="font-size:var(--s-seite);line-height:1">💰</span><span style="flex:1;min-width:0"><span style="display:block;font-weight:800;font-size:var(--s-karte)">Mannschaftskasse</span><span style="display:block;font-size:var(--s-klein);opacity:.92;margin-top:1px">${mkSaldo}</span></span><span aria-hidden="true" style="font-size:var(--s-teil);opacity:.85">›</span></button>`;   // v710: Maße wie catBtn – stand sichtbar aus der Flucht
+    <span aria-hidden="true" style="font-size:var(--s-seite);line-height:1">💰</span><span style="flex:1;min-width:0"><span style="display:block;font-weight:800;font-size:var(--s-karte)">Mannschaftskasse</span><span style="display:block;font-size:var(--s-klein);opacity:.92;margin-top:1px">${mkSaldo}</span><span id="mk-beitrag-stand" style="display:block;font-size:var(--s-klein);font-weight:700;margin-top:3px"></span></span><span aria-hidden="true" style="font-size:var(--s-teil);opacity:.85">›</span></button>`;   // v710: Maße wie catBtn – stand sichtbar aus der Flucht
   html+=`<div id="kasse-verwalten-slot"></div>`;   // v664/v699: „Kasse führen“ – nur für die Kasse
   html+=catBtn('mehr','📰','Mehr vom Team','Adler Nest, Börse, Fundbüro','linear-gradient(135deg,#1e3a8a,#2563eb)');
   html+=catBtn('regeln','📋','Regeln &amp; Vereinbarungen','Unsere Vereinbarung &amp; das Fairplay-Quiz','linear-gradient(135deg,#15803d,#047857)');
@@ -1075,6 +1093,7 @@ async function elternDashLoad(){
   if(typeof elternKasseRolleLoad==="function")elternKasseRolleLoad();      // v664: Kasse verwalten
   if(typeof rufeBadgeLoad==="function")rufeBadgeLoad();                    // v670: neue Adler-Rufe
   window._elternKids=kids;   // v699: die Mannschaftskasse zeigt den Stand der eigenen Kinder beim Öffnen
+  elternKasseKachelStand(kids, kasse);   // v716: „Beitrag bezahlt / offen“ direkt auf der Kachel
   elternGenesungLoad(kids);                    // I-A: Genesungsgrüße für pausierte Teamkinder
   elternHelferTodoLoad();                      // J3: heute als Helfer eingetragen? Erinnerung mit Direktlink
   elternMitbringLoad(kids);                    // Event-Mitbringliste: wer bringt was mit

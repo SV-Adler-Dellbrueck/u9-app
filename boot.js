@@ -81,9 +81,12 @@ function uebungBearbeiten(formIdx){
   openAddTraining();
   window.TF_EDIT_IDX=formIdx;
   _tfFuellen(f);
-  var genutzt=tpGetExerciseHistory(formIdx).length>0||(typeof tpUebungKommentare==="function"&&tpUebungKommentare(formIdx).length>0);
-  var nf=document.getElementById("tf-name"); if(nf)nf.readOnly=genutzt;
-  var nh=document.getElementById("tf-name-hinweis"); if(nh)nh.hidden=!genutzt;
+  /* v716 (PO 02.10.): Der Name ist wieder änderbar. Steht die Übung schon in Plänen oder
+     Bewertungen, nimmt uebung_umbenennen sie dort mit – der Hinweis sagt, wie oft. */
+  var plaene=tpGetExerciseHistory(formIdx).length, komm=(typeof tpUebungKommentare==="function")?tpUebungKommentare(formIdx).length:0;
+  var nf=document.getElementById("tf-name"); if(nf)nf.readOnly=false;
+  var nh=document.getElementById("tf-name-hinweis");
+  if(nh){ nh.hidden=!(plaene||komm); nh.textContent=(plaene||komm)?`Steht in ${plaene} Plan${plaene===1?"":"en"}${komm?` und ${komm} Bewertung${komm===1?"":"en"}`:""} – ein neuer Name wird dort mitgenommen.`:""; }
   var t=document.getElementById("tf-titel"); if(t)t.textContent="✏️ Übung bearbeiten";
   var k=document.getElementById("tf-haupt"); if(k)k.innerHTML='<i class="ti ti-check"></i>Änderungen speichern';
 }
@@ -120,6 +123,25 @@ function _tfFuellen(f){
 }
 async function uebungAendern(formIdx,form){
   var f=tpAllForms()[formIdx]; if(!f)return;
+  /* v716: Neuer Name → erst überall umbenennen (Pläne, Bewertungen, Vorlagen, Einordnung), dann
+     den Rest speichern. Schlägt das Umbenennen fehl, bleibt alles beim Alten. */
+  if(form.name!==f.name){
+    if(tpAllForms().some(function(x){return x!==f&&_tfNormName(x.name)===_tfNormName(form.name);})){toast("Diesen Namen trägt schon eine Übung – bitte einen anderen wählen","err");return;}
+    if(f.id&&/^\d+$/.test(String(f.id))){
+      try{
+        var rr=await fetch(SB_URL+'/rest/v1/rpc/uebung_umbenennen',{method:'POST',headers:sbAuthHeaders(),body:JSON.stringify({p_alt:f.name,p_neu:form.name})});
+        if(typeof sbCheck401==="function"&&sbCheck401(rr))return;
+        if(!rr.ok){toast("Umbenennen fehlgeschlagen – nichts geändert","err");return;}
+        var erg={}; try{erg=await rr.json()||{};}catch(e){}
+        window._uebungAlias=Object.assign({},window._uebungAlias||{}); window._uebungAlias[f.name]=form.name;
+        ["_uebungMeta","_uebungArt","_uebungBetreuung"].forEach(function(k){ var o=window[k]; if(o&&Object.prototype.hasOwnProperty.call(o,f.name)){ o[form.name]=o[f.name]; delete o[f.name]; } });
+        if(Array.isArray(window._uebungArchiv))window._uebungArchiv=window._uebungArchiv.map(function(n){return n===f.name?form.name:n;});
+        if(typeof _tpEinsatz!=="undefined")_tpEinsatz=null;   // Historie neu aus den Plänen lesen
+        var mit=(erg.plaene||0)+(erg.bewertungen||0)+(erg.vorlagen||0);
+        if(mit)toast(`✏️ Umbenannt – mitgenommen in ${erg.plaene||0} Plänen, ${erg.bewertungen||0} Bewertungen, ${erg.vorlagen||0} Vorlagen`);
+      }catch(e){toast("Offline – Änderung nicht gespeichert","err");return;}
+    }
+  }
   var patch={name:form.name,kat:form.kat,ablauf:form.ablauf,varianten:form.varianten,coaching:form.coaching,
     spieler:form.spieler,feld:form.feld,dauer:form.dauer,spass:form.spass,diff:form.diff,kurz:form.kurz,skizze:form.skizze};
   if(f.tags==="Import")patch.tags="Import (bearbeitet)";   // v585: der Abgleich zieht sie dann nicht mehr nach
@@ -340,7 +362,11 @@ function renderTraining(){
   if(!window._uebungMeta)uebungMetaLoad().then(()=>renderTraining()); // ⭐-Overrides einmal nachladen
   if(!_tpEinsatz)tpEinsatzLaden();                                     // v586: Einsatz-Historie aus den Plänen, einmal je Sitzung
   const search=((document.getElementById('training-search')||{}).value||"").trim().toLowerCase();
-  const alle=tpAllForms().map((f,i)=>({i,f,gr:_tfGruppeVon(f,i)})).filter(x=>!tfDublette(x.i));   // v585
+  /* v716: Archivierte stehen nur in der Archiv-Ansicht. */
+  const alleMitArchiv=tpAllForms().map((f,i)=>({i,f,gr:_tfGruppeVon(f,i)})).filter(x=>!tfDublette(x.i));   // v585
+  const archivZahl=alleMitArchiv.filter(x=>tpIstArchiviert(x.f)).length;
+  if(!archivZahl)_tfDb.archiv=false;
+  const alle=alleMitArchiv.filter(x=>_tfDb.archiv?tpIstArchiviert(x.f):!tpIstArchiviert(x.f));
   // Team-Schwäche einmal je Render bestimmen (Badge „stärkt …“ auf passenden Karten)
   let weak=[];window._tfWeakLabel=null;
   try{
@@ -371,13 +397,13 @@ function renderTraining(){
       if(!drin.length)return "";
       return `<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:${oi?"12px":"0"} 0 4px">${o.label}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${drin.map(kachel).join("")}</div>`;
-    }).join("");
+    }).join("")+(archivZahl?`<button type="button" onclick="_tfDb.archiv=!_tfDb.archiv;_tfDb.gruppe=null;renderTraining()" aria-pressed="${!!_tfDb.archiv}" style="width:100%;margin-top:12px;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;background:${_tfDb.archiv?"var(--surface2)":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📦 Archiv (${archivZahl})${_tfDb.archiv?" – zurück zur aktiven Liste":""}</button>`:"");
   }
   const fEl=document.getElementById("tf-filter");
   if(fEl)fEl.innerHTML=[0,1,2,3].map(s=>`<button onclick="_tfDb.stern=${s};renderTraining()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);${_tfDb.stern===s?"background:#15803d;color:#fff;border-color:#15803d;":"background:var(--surface2);color:var(--text2);"}border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${s===0?"Alle":"⭐".repeat(s)}</button>`).join("")
     +`<button onclick="_tfDb.lange=!_tfDb.lange;renderTraining()" title="Übungen, die 4+ Wochen nicht dran waren" style="flex:1.4;min-height:44px;border:1px solid var(--rand-bedien);${_tfDb.lange?"background:#15803d;color:#fff;border-color:#15803d;":"background:var(--surface2);color:var(--text2);"}border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">🕘 lange her</button>`;
   // Ohne Auswahl nur die Kacheln zeigen – keine 100-Übungen-Liste
-  if(!search&&!_tfDb.gruppe&&!_tfDb.stern&&!_tfDb.lange){
+  if(!search&&!_tfDb.gruppe&&!_tfDb.stern&&!_tfDb.lange&&!_tfDb.archiv){
     wrap.innerHTML='<div style="text-align:center;padding:1.6rem 1rem;color:var(--text2)"><div style="font-size:30px;margin-bottom:6px">📚</div><div style="font-size:var(--s-text);font-weight:700;color:var(--text)">Gruppe antippen oder suchen</div></div>';
     return;
   }
@@ -1287,6 +1313,8 @@ function tfIndexVon(e){
   let k=-1;
   alle.forEach((f,j)=>{ if(k<0&&f&&_tfNormName(f.name)===n&&!tfDublette(j))k=j; });
   if(k<0)k=alle.findIndex(f=>f&&_tfNormName(f.name)===n);
+  /* v716: umbenannt? Dann unter dem heutigen Namen suchen. */
+  if(k<0&&typeof tpNameAktuell==="function"){ const neu=tpNameAktuell(e&&(e.formName||e.name)); if(neu&&neu!==(e.formName||e.name))return tfIndexVon({formName:neu}); }
   return k;
 }
 /* Zwei Einträge meinen dieselbe Übung, wenn ihre Namen gleich sind; nur wenn einer keinen
@@ -1482,11 +1510,12 @@ function tpShowExercise(formIdx,planMin){
         </div>`:"")}
     <div style="font-size:var(--s-klein);color:var(--text);white-space:pre-wrap;line-height:1.5;margin-bottom:8px">${esc(f.ablauf||"")}</div>
     ${f.coaching?`<div style="font-size:var(--s-klein);color:var(--text2);background:var(--surface);padding:8px;border-radius:6px;white-space:pre-wrap;margin-bottom:8px"><strong>🎯 Coaching-Tipps:</strong>\n${esc(f.coaching)}</div>`:""}
-    ${(typeof PROVOKATIONEN!=="undefined"&&Array.isArray(PROVOKATIONEN[f.name])&&PROVOKATIONEN[f.name].length)?`<div class="ue-provokation" style="font-size:var(--s-klein);color:var(--text2);background:var(--surface);padding:8px;border-radius:6px;margin-bottom:8px"><strong>📏 Provokationsregeln (optional, eine pro Block):</strong><ul style="margin:4px 0 0 18px;padding:0">${PROVOKATIONEN[f.name].map(r=>`<li>${esc(r)}</li>`).join("")}</ul></div>`:""}
+    ${(typeof PROVOKATIONEN!=="undefined"&&Array.isArray(PROVOKATIONEN[f.name]||PROVOKATIONEN[tpNameUrsprung(f.name)]))?`<div class="ue-provokation" style="font-size:var(--s-klein);color:var(--text2);background:var(--surface);padding:8px;border-radius:6px;margin-bottom:8px"><strong>📏 Provokationsregeln (optional, eine pro Block):</strong><ul style="margin:4px 0 0 18px;padding:0">${(PROVOKATIONEN[f.name]||PROVOKATIONEN[tpNameUrsprung(f.name)]).map(r=>`<li>${esc(r)}</li>`).join("")}</ul></div>`:""}
     ${tpReiheHtml(f.name)}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
       ${uebungEditierbar(f)?`<button type="button" class="btn" onclick="uebungBearbeiten(${formIdx})" style="flex:1 1 140px;min-height:44px;justify-content:center"><i class="ti ti-pencil"></i>Übung bearbeiten</button>`:""}
       <button type="button" class="btn" onclick="uebungKopieren(${formIdx})" style="flex:1 1 140px;min-height:44px;justify-content:center"><i class="ti ti-copy"></i>Übung kopieren</button>
+      <button type="button" class="btn" onclick="uebungArchivieren(${formIdx},${tpIstArchiviert(f)?"false":"true"})" style="flex:1 1 140px;min-height:44px;justify-content:center">${tpIstArchiviert(f)?"↩ Zurückholen":"📦 Archivieren"}</button>
     </div>
     ${histHtml}
   </div>`;
@@ -4105,9 +4134,9 @@ function evalStar(btn){
    gibt dasselbe Ergebnis, ein anderer Termin ein anderes. */
 /* v714: Zusatzregeln (data.js) und Übungen für Erwachsene (Lehrgang) gehören nie an eine Station
    der Kinder – weder per „Training füllen“ noch als Tausch- oder Tagebuch-Vorschlag. */
-function tpIstZusatzregel(f){ return !!(f&&typeof ZUSATZREGELN!=="undefined"&&ZUSATZREGELN.includes(f.name)); }
+function tpIstZusatzregel(f){ return !!(f&&typeof ZUSATZREGELN!=="undefined"&&(ZUSATZREGELN.includes(f.name)||ZUSATZREGELN.includes(tpNameUrsprung(f.name)))); }
 function tpNurErwachsene(f){ return !!f&&/erwachsene/i.test(String(f.name||"")+" "+String(f.kurz||"").slice(0,40)); }
-function tpStationTauglich(f){ return !!f&&!tpIstZusatzregel(f)&&!tpNurErwachsene(f); }
+function tpStationTauglich(f){ return !!f&&!tpIstZusatzregel(f)&&!tpNurErwachsene(f)&&!tpIstArchiviert(f); }   // v716: Archiv
 /* 0 passt, 1 eine Person zu viel (auswechseln), 2 Spielerzahl unbekannt, sonst je fehlender
    oder überzähliger Person mehr. Die Spanne liest tpUebungSpanne – dieselbe Rechnung, mit der
    die Station „zu groß für die Übung“ meldet (v656). */
@@ -4171,6 +4200,7 @@ async function tpGenerate(){
   const trainerCount=tpGetTrainerCount();
   if(trainerCount<1){toast("Mindestens 1 Trainer auswählen","err");return;}
   const datum=_tgDatum();
+  if(typeof uebungMetaLoad==="function")await uebungMetaLoad();   // v716: Archiv und Einordnung kennen
   /* Erst die Gruppen: so viele wie Feldtrainer (tgBedarf). Ohne Aufteilung entsteht sie hier,
      eine bestehende wächst nur – wie beim Übernehmen einer Vorlage (v570). */
   try{
@@ -4490,12 +4520,42 @@ async function uebungMetaLoad(){
   if(window._uebungMeta)return window._uebungMeta;
   window._uebungMeta={};
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/team_config?select=id,uebung_meta,uebung_art,uebung_betreuung,netto_richtwert&limit=1`,{headers:sbAuthHeaders()});
-    if(r.ok){const row=((await r.json())||[])[0];if(row){window._uebungMeta=row.uebung_meta||{};window._uebungArt=row.uebung_art||{};window._uebungBetreuung=row.uebung_betreuung||{};window._uebungMetaId=row.id;if(row.netto_richtwert!=null)window._nettoRichtwert=Number(row.netto_richtwert)||TP_NETTO_STANDARD;}}
+    const r=await fetch(`${SB_URL}/rest/v1/team_config?select=id,uebung_meta,uebung_art,uebung_betreuung,uebung_archiv,netto_richtwert&limit=1`,{headers:sbAuthHeaders()});
+    if(r.ok){const row=((await r.json())||[])[0];if(row){window._uebungMeta=row.uebung_meta||{};window._uebungArt=row.uebung_art||{};window._uebungBetreuung=row.uebung_betreuung||{};window._uebungArchiv=Array.isArray(row.uebung_archiv)?row.uebung_archiv:[];window._uebungMetaId=row.id;if(row.netto_richtwert!=null)window._nettoRichtwert=Number(row.netto_richtwert)||TP_NETTO_STANDARD;}}
   }catch(e){}
   window._uebungArt=window._uebungArt||{};
   window._uebungBetreuung=window._uebungBetreuung||{};
+  window._uebungArchiv=window._uebungArchiv||[];
+  /* v716: Umbenennungen alt → neu, damit Namen aus der Bibliothek, aus Vorlagen-Dateien und aus
+     Regeln im Code (Provokations-, Zusatzregeln) die umbenannte Übung weiter finden. */
+  try{
+    const r2=await fetch(`${SB_URL}/rest/v1/uebung_umbenannt?select=alt,neu&order=id.asc`,{headers:sbAuthHeaders()});
+    if(r2.ok){ const m={}; ((await r2.json())||[]).forEach(z=>{ if(z&&z.alt&&z.neu)m[z.alt]=z.neu; }); window._uebungAlias=m; }
+  }catch(e){}
+  window._uebungAlias=window._uebungAlias||{};
   return window._uebungMeta;
+}
+/* v716: Name heute (Kette alt → neu → neuer) und ursprünglicher Name (rückwärts). */
+function tpNameAktuell(n){ const m=window._uebungAlias||{}; let x=n, i=0; while(x&&m[x]&&i++<10)x=m[x]; return x; }
+function tpNameUrsprung(n){ const m=window._uebungAlias||{}; let x=n, i=0, z; while(i++<10&&(z=Object.keys(m).find(k=>m[k]===x)))x=z; return x; }
+function tpIstArchiviert(f){ return !!f&&(window._uebungArchiv||[]).includes(f.name); }
+/* Archivieren gilt für jede Übung, auch die mitgelieferten: eine Namensliste in team_config.
+   Alte Pläne, Bewertungen und Vorlagen behalten die Übung – sie verschwindet nur aus Liste,
+   Auswahl, „Training füllen“ und den Vorschlägen. */
+async function uebungArchivieren(formIdx,an){
+  const f=tpAllForms()[formIdx]; if(!f)return;
+  if(window._uebungMetaId==null)await uebungMetaLoad();
+  const alt=(window._uebungArchiv||[]).slice();
+  const neu=an?Array.from(new Set(alt.concat([f.name]))):alt.filter(n=>n!==f.name);
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/team_config?id=eq.${window._uebungMetaId}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify({uebung_archiv:neu})});
+    if(typeof sbCheck401==="function"&&sbCheck401(r))return;
+    if(!r.ok){toast("Nicht gespeichert – bitte nochmal","err");return;}
+  }catch(e){toast("Offline – nicht gespeichert","err");return;}
+  window._uebungArchiv=neu;
+  document.getElementById("uebung-modal")?.remove();
+  renderTraining();
+  toast(an?`📦 „${f.name}“ archiviert – unten unter „Archiv“ zurückholen`:`↩ „${f.name}“ ist wieder aktiv`);
 }
 /* ═══ Übungsform gegen Spielform (Paket 3) ═════════════════════════════════════
    Im Lehrgang ist das die zentrale Unterscheidung: bei einer SPIELFORM entscheidet
@@ -4528,13 +4588,13 @@ const UEBUNG_BETREUUNG={allein:{kurz:"läuft allein", lang:"läuft allein – fe
                         fuehrt:{kurz:"Trainer führt", lang:"Trainer führt – er ruft Kommandos, zählt oder korrigiert; einer reicht für alle, aber er muss dabei sein"},
                         feld:{kurz:"Trainer am Feld", lang:"Trainer am Feld – er ist Teil der Übung (wirft, schießt, spielt ein)"}};
 function _tpBetreuung(f){ const a=(window._uebungBetreuung||{})[f&&f.name]; return UEBUNG_BETREUUNG[a]?a:""; }
-function _tpBetreuungVorschlag(f){ const v=(typeof UEBUNG_BETREUUNG_VORSCHLAG!=="undefined"?UEBUNG_BETREUUNG_VORSCHLAG:{})[f&&f.name]; return UEBUNG_BETREUUNG[v]?v:""; }
+function _tpBetreuungVorschlag(f){ const q=(typeof UEBUNG_BETREUUNG_VORSCHLAG!=="undefined"?UEBUNG_BETREUUNG_VORSCHLAG:{}), v=q[f&&f.name]||q[f&&tpNameUrsprung(f.name)]; return UEBUNG_BETREUUNG[v]?v:""; }
 /* Für Anzeige und Hinweis: bestätigt, sonst der Vorschlag – ausdrücklich als solcher markiert. */
 function tpBetreuungWert(f){ const b=_tpBetreuung(f); if(b)return {wert:b,bestaetigt:true}; const v=_tpBetreuungVorschlag(f); return v?{wert:v,bestaetigt:false}:null; }
 /* Der Vorschlag aus data.js. Er gilt NICHT als Einordnung: _tpArt liest weiter nur
    team_config.uebung_art. Sichtbar wird er allein in der Durchsicht. */
 function _tpArtVorschlag(f){
-  const v=(typeof UEBUNG_ART_VORSCHLAG!=="undefined"?UEBUNG_ART_VORSCHLAG:{})[f&&f.name];
+  const q=(typeof UEBUNG_ART_VORSCHLAG!=="undefined"?UEBUNG_ART_VORSCHLAG:{}), v=q[f&&f.name]||q[f&&tpNameUrsprung(f.name)];   // v716: auch nach Umbenennung
   return UEBUNG_ART[v]?v:"";
 }
 function _tpArt(f){
@@ -4785,7 +4845,7 @@ function _tpPickItems(){
   const forms=tpAllForms();
   return [...sel.options].filter(o=>o.value!=="").map(o=>{
     const i=Number(o.value), f=forms[i];
-    return f?{i,f,label:o.textContent}:null;
+    return (f&&!tpIstArchiviert(f))?{i,f,label:o.textContent}:null;   // v716: Archiv nicht anbieten
   }).filter(Boolean);
 }
 /* Der Picker zeigt immer nur die Übungen, die zum Typ des Zeitplan-Blocks passen
