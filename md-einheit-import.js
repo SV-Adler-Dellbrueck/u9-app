@@ -144,7 +144,10 @@ function _eiFormIndex(name){
   const alle=(typeof tpAllForms==="function"?tpAllForms():[]);
   // v586: die sichtbare Kopie zuerst – eine versteckte Dublette steht in keinem Auswahlfeld
   const k=alle.findIndex((f,i)=>_eiNorm(f&&f.name)===n&&!(typeof tfDublette==="function"&&tfDublette(i)));
-  return k>=0?k:alle.findIndex(f=>_eiNorm(f&&f.name)===n);
+  const j=k>=0?k:alle.findIndex(f=>_eiNorm(f&&f.name)===n);
+  /* v716: umbenannte Übung – Bibliothek und Vorlagen-Datei kennen noch den alten Namen. */
+  if(j<0&&typeof tpNameAktuell==="function"){ const neu=tpNameAktuell(name); if(neu&&neu!==name)return _eiFormIndex(neu); }
+  return j;
 }
 /* Prüfen gibt IMMER eine Liste im Klartext zurück – jeder Fehler mit Blocknummer.
    Solange sie nicht leer ist, wird nichts geschrieben. */
