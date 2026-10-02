@@ -1482,6 +1482,7 @@ function tpShowExercise(formIdx,planMin){
         </div>`:"")}
     <div style="font-size:var(--s-klein);color:var(--text);white-space:pre-wrap;line-height:1.5;margin-bottom:8px">${esc(f.ablauf||"")}</div>
     ${f.coaching?`<div style="font-size:var(--s-klein);color:var(--text2);background:var(--surface);padding:8px;border-radius:6px;white-space:pre-wrap;margin-bottom:8px"><strong>🎯 Coaching-Tipps:</strong>\n${esc(f.coaching)}</div>`:""}
+    ${(typeof PROVOKATIONEN!=="undefined"&&Array.isArray(PROVOKATIONEN[f.name])&&PROVOKATIONEN[f.name].length)?`<div class="ue-provokation" style="font-size:var(--s-klein);color:var(--text2);background:var(--surface);padding:8px;border-radius:6px;margin-bottom:8px"><strong>📏 Provokationsregeln (optional, eine pro Block):</strong><ul style="margin:4px 0 0 18px;padding:0">${PROVOKATIONEN[f.name].map(r=>`<li>${esc(r)}</li>`).join("")}</ul></div>`:""}
     ${tpReiheHtml(f.name)}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
       ${uebungEditierbar(f)?`<button type="button" class="btn" onclick="uebungBearbeiten(${formIdx})" style="flex:1 1 140px;min-height:44px;justify-content:center"><i class="ti ti-pencil"></i>Übung bearbeiten</button>`:""}
