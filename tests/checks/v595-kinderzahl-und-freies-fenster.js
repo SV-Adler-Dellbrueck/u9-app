@@ -47,7 +47,7 @@ module.exports = async function (h) {
     if (!r.raute || r.raute.min !== 10 || r.raute.max !== 10) probleme.push("a) feste Zahl „10“ ergibt " + JSON.stringify(r.raute));
   }
 
-  // ── b) Gesamtangaben bleiben stumm, „je Feld“ schlägt sie ───────────────────
+  // ── b) „je Feld“ schlägt die Gesamtangabe, „à 4“ wird gelesen (v720) ──────────
   {
     const r = await s.page.evaluate(() => {
       // Zwei erfundene Einträge ans Ende hängen und wieder entfernen – so misst der
@@ -60,10 +60,12 @@ module.exports = async function (h) {
       TRAININGSFORMEN.length = vorher;
       return { a, b, c, wiederhergestellt: TRAININGSFORMEN.length === vorher };
     });
-    zeilen.push(`b) „12 (3 Felder à 4)“ → ${r.a.min ? r.a.min : "stumm"} · „6 je Feld (12 = 2 Felder)“ → ${r.b.min} · Wartende abgezogen → ${r.c.min}`);
-    if (r.a.min !== 0) probleme.push(`b) Gesamtangabe „12 (3 Felder à 4)“ wird als ${r.a.min} je Station gelesen`);
+    /* v720 (PO 02.10., „Von–bis + Torwart“): „à 4“ nennt die Station selbst und wird gelesen; Wartende
+       zählen zur Obergrenze statt abgezogen zu werden – gespielt wird weiter mit den aktiven Plätzen. */
+    zeilen.push(`b) „12 (3 Felder à 4)“ → ${r.a.min ? r.a.min : "stumm"} · „6 je Feld (12 = 2 Felder)“ → ${r.b.min} · Wartende: ${r.c.min}–${r.c.max}, aktiv ${r.c.aktiv}`);
+    if (r.a.min !== 4 || r.a.max !== 4) probleme.push(`b) „12 (3 Felder à 4)“ ergibt ${r.a.min}–${r.a.max} statt 4 je Station`);
     if (r.b.min !== 6) probleme.push(`b) „6 je Feld (12 = 2 Felder)“ ergibt ${r.b.min} statt 6 – „je Feld“ muss vor der Gesamtangabe greifen`);
-    if (r.c.min !== 4) probleme.push(`b) Wartende werden nicht abgezogen: ${r.c.min} statt 4`);
+    if (r.c.min !== 4 || r.c.max !== 6 || r.c.aktiv !== 4) probleme.push(`b) „6 je Station (4 spielen, 2 warten)“ ergibt ${r.c.min}–${r.c.max}, aktiv ${r.c.aktiv} statt 4–6, aktiv 4`);
     if (!r.wiederhergestellt) probleme.push("b) der Prüffall hat den Bestand verändert");
   }
 

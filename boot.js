@@ -109,10 +109,39 @@ function uebungKopieren(formIdx){
   var t=document.getElementById("tf-titel"); if(t)t.textContent="📋 Übung kopieren";
   var k=document.getElementById("tf-haupt"); if(k)k.innerHTML='<i class="ti ti-check"></i>Übung erfassen';
 }
+/* v720: Felder „Kinder je Station von–bis“ und „mit Torwart“. Gespeicherte Werte gewinnen; sonst
+   liest tpSpielerAusText den Text vor. Von Hand Getipptes (data-hand) überschreibt das Tippen im
+   Textfeld nicht mehr. */
+function tfSpielerZahlSetzen(f){
+  const mn=document.getElementById("tf-min"), mx=document.getElementById("tf-max"), tw=document.getElementById("tf-tw");
+  if(!mn||!mx||!tw)return;
+  [mn,mx,tw].forEach(e=>{ delete e.dataset.hand; });
+  const a=Number(f&&f.spieler_min)||0, b=Number(f&&f.spieler_max)||0;
+  if(a>0&&b>=a){ mn.value=a; mx.value=b; tw.checked=!!f.mit_torwart; [mn,mx,tw].forEach(e=>{ e.dataset.hand="1"; }); return; }
+  mn.value=""; mx.value=""; tw.checked=!!(f&&f.mit_torwart);
+  tfSpielerAbleiten();
+}
+function tfSpielerAbleiten(){
+  const mn=document.getElementById("tf-min"), mx=document.getElementById("tf-max"), tw=document.getElementById("tf-tw");
+  const txt=document.getElementById("tf-spieler"); if(!mn||!mx||!tw||!txt)return;
+  const t=tpSpielerAusText(txt.value), name=(document.getElementById("tf-name")||{}).value||"";
+  if(!mn.dataset.hand&&!mx.dataset.hand){ mn.value=t.sicher?t.min:""; mx.value=t.sicher?t.max:""; }
+  if(!tw.dataset.hand)tw.checked=t.tw||/\d\s*\+\s*1\b|torw|torh(?:ü|ue)ter/i.test(name);
+}
+function tfSpielerZahlLesen(){
+  const mn=document.getElementById("tf-min"), mx=document.getElementById("tf-max"), tw=document.getElementById("tf-tw");
+  if(!mn||!mx||!tw)return {};
+  let a=parseInt(mn.value,10), b=parseInt(mx.value,10);
+  if(!(a>0)&&b>0)a=b; if(!(b>0)&&a>0)b=a;
+  if(!(a>0))return {spieler_min:null,spieler_max:null,mit_torwart:tw.checked};
+  a=Math.min(30,a); b=Math.min(30,Math.max(a,b));
+  return {spieler_min:a,spieler_max:b,mit_torwart:tw.checked};
+}
 function _tfFuellen(f){
   var setz=function(id,v){var el=document.getElementById(id); if(el){el.value=(v==null?"":String(v)); if(typeof feldWachsen==="function"&&el.tagName==="TEXTAREA")feldWachsen(el);}};
   setz("tf-name",f.name); setz("tf-ablauf",f.ablauf); setz("tf-varianten",f.varianten); setz("tf-coaching",f.coaching);
   setz("tf-spieler",f.spieler); setz("tf-feld",f.feld); setz("tf-dauer",f.dauer);
+  tfSpielerZahlSetzen(f);   // v720
   var kat=document.getElementById("tf-kat"); if(kat&&[...kat.options].some(function(o){return o.value===f.kat;}))kat.value=f.kat;
   if(f.spass)setz("tf-spass",f.spass); if(f.diff)setz("tf-diff",f.diff);
   /* Mitgelieferte Übungen tragen oft nur eine fertige Zeichnung (svg) ohne Beschreibung –
@@ -143,7 +172,8 @@ async function uebungAendern(formIdx,form){
     }
   }
   var patch={name:form.name,kat:form.kat,ablauf:form.ablauf,varianten:form.varianten,coaching:form.coaching,
-    spieler:form.spieler,feld:form.feld,dauer:form.dauer,spass:form.spass,diff:form.diff,kurz:form.kurz,skizze:form.skizze};
+    spieler:form.spieler,feld:form.feld,dauer:form.dauer,spass:form.spass,diff:form.diff,kurz:form.kurz,skizze:form.skizze,
+    spieler_min:form.spieler_min,spieler_max:form.spieler_max,mit_torwart:form.mit_torwart};   // v720
   if(f.tags==="Import")patch.tags="Import (bearbeitet)";   // v585: der Abgleich zieht sie dann nicht mehr nach
   if(f.id){
     try{
@@ -167,6 +197,7 @@ async function saveCustomTraining(){
     varianten:document.getElementById('tf-varianten').value,
     coaching:document.getElementById('tf-coaching').value,
     spieler:document.getElementById('tf-spieler').value,
+    ...tfSpielerZahlLesen(),   // v720: Kinder je Station von–bis, mit Torwart
     feld:document.getElementById('tf-feld').value,
     dauer:document.getElementById('tf-dauer').value,
     spass:parseInt(document.getElementById('tf-spass').value),
@@ -206,6 +237,7 @@ function openAddTraining(){
   document.getElementById('training-modal').style.display='block';
   var ki=document.getElementById('tf-ki-stand'); if(ki)ki.textContent='';   // v639: KI-Kasten oben startet leer
   window.TF_SKIZZE=null;                                   // jede Übung startet ohne Skizze
+  tfSpielerZahlSetzen({});                                 // v720: leere Felder, liest den Text beim Tippen
   if(typeof tfSkizzeVorschau==="function")tfSkizzeVorschau(); // Welle 2 – ungeschützt reißt es den Dialog mit
 }
 function closeAddTraining(){
@@ -1494,7 +1526,10 @@ function tpShowExercise(formIdx,planMin){
       ${planMin
         ?`<span class="tp-ex-planzeit" style="font-size:var(--s-klein);font-weight:700;background:var(--surface2);border:1px solid var(--rand-bedien);padding:2px 6px;border-radius:4px">⏱ Im Plan: ${planMin} Min.</span>${f.dauer&&String(f.dauer).trim()!==String(planMin)?`<span style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">Richtwert ${esc(f.dauer)}${/min/i.test(String(f.dauer))?"":" Min."}</span>`:""}`
         :`<span style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">⏱ ${esc(f.dauer)}</span>`}
-      <span style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">👥 ${f.spieler||"?"}</span>
+      ${(function(){ /* v720: Kinder je Station aus den festen Feldern, der Text als Erklärung daneben */
+        const sp=tpUebungSpanne(formIdx), zahl=sp.alle?"alle":(sp.max?(sp.min===sp.max?String(sp.min):sp.min+"–"+sp.max)+" je Station":"");
+        return `<span class="tp-ex-spieler" title="${esc(String(f.spieler||""))}" style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">👥 ${zahl?esc(zahl):esc(String(f.spieler||"?"))}${sp.tw?" · 🧤 Torwart":""}</span>${zahl&&f.spieler&&String(f.spieler).trim()!==zahl?`<span style="font-size:var(--s-klein);color:var(--text2);padding:2px 0">${esc(String(f.spieler))}</span>`:""}`;
+      })()}
       <span style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">📐 ${f.feld||"?"}</span>
       ${(function(){const b=typeof tpBetreuungWert==="function"?tpBetreuungWert(f):null;return b?`<span class="tp-ex-betr" style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">👤 ${UEBUNG_BETREUUNG[b.wert].kurz}${b.bestaetigt?"":" (Vorschlag)"}</span>`:"";})()}
     </div>
@@ -2223,34 +2258,60 @@ function tpFeldGrundtext(text){
    Besetzung –, sonst die Spanne. min===max bei einer einzelnen Zahl. {min:0} heisst
    weiterhin: keine Angabe, es wird nichts behauptet. */
 const TP_GESAMTANGABE=/\bà\b|\bFelder\b|\binsgesamt\b|\bzusammen\b/i;
-function tpUebungSpanne(formIdx){
-  const f=(typeof tpAllForms==="function")?tpAllForms()[formIdx]:null;
-  const s=String((f||{}).spieler||"").trim();
-  if(!s)return {min:0,max:0,alle:false};
-  if(/\b(beliebig|alle)\b/i.test(s)||/^Paare$/i.test(s))return {min:0,max:0,alle:true};
+/* v720 (PO 02.10.): Jede Übung trägt „Kinder je Station von … bis …“ und „mit Torwart“ als feste
+   Felder (trainingsformen.spieler_min/_max/mit_torwart). Fehlen sie – mitgelieferte Übungen aus
+   data.js, ältere Zeilen –, liest tpSpielerAusText den Text „Spieler“. Dieselbe Rechnung füllt im
+   Editor die Felder vor und hat die Datenbank einmalig vorbelegt.
+   Geändert gegenüber v656: Wartende zählen zur OBERGRENZE, statt abgezogen zu werden. „6 je Station
+   (2 gegen 2, 2 Rotationsspieler)“ galt vorher als „genau 4“ und damit für Gruppen von 6 – genau
+   wofür die Übung gebaut ist – als unpassend. Jetzt: 4 bis 6. Der Torwart zählt immer mit. */
+function tpSpielerAusText(text){
+  const s=String(text||"").trim();
+  const tw=/torw|torh(?:ü|ue)ter|\bTW\b|keeper/i.test(s);
   let warten=0;
   s.replace(/(\d+)\s+(?:warten|wartet|Rotationsspieler)/gi,(_,n)=>{warten+=Number(n);return _;});
-  // Form 1: „N je Station" – die Bibliotheksform, unveraendert.
+  /* aktiv: wie viele gleichzeitig spielen, wenn der Text Wartende nennt – die Station sagt dann
+     „4 spielen, eines wechselt ein“, auch wenn die Übung bis 6 passt (v572). */
+  const aus=(min,max,sicher)=>({min,max,alle:false,tw,sicher:sicher!==false&&max>0,aktiv:warten>0&&max>0?min:null});
+  if(!s)return aus(0,0,false);
+  if(/\b(beliebig|alle)\b/i.test(s)||/^Paare$/i.test(s))return {min:0,max:0,alle:true,tw,sicher:true,aktiv:null};
+  // „… bis 8“ / „bis zu 8“ hinter der eigentlichen Angabe hebt die Obergrenze (Wechselkinder)
+  const bis=m=>{ const b=s.match(/\bbis\s+(?:zu\s+)?(\d+)\b/i); return b&&Number(b[1])>m?Number(b[1]):m; };
+  // Form 1: „N je Station/Feld/…“
   if(/\bje (Station|Feld|Quadrat|Dreieck)/i.test(s)){
-    const m=s.match(/^\s*(\d+)/); if(!m)return {min:0,max:0,alle:false};
-    const n=Math.max(2,Number(m[1])-warten);
-    return {min:n,max:n,alle:false};
+    const m=s.match(/^\s*(\d+)/); if(!m)return aus(0,0,false);
+    const n=Number(m[1]);
+    return aus(Math.max(2,n-warten),bis(n));
   }
-  // Gesamtangabe – lieber nichts sagen als etwas Falsches.
-  if(TP_GESAMTANGABE.test(s))return {min:0,max:0,alle:false};
-  // Form 2: „N+M" (Feldspieler plus Torhueter) zaehlt zusammen.
+  // Form 2: Ausdrücklich ausgerechnet („= 6 - 8“) – zählt den Torwart schon mit
+  const gl=s.match(/=\s*(\d+)\s*(?:[–—-]|bis)\s*(\d+)/);
+  if(gl){ const a=Number(gl[1]), b=Math.max(a,Number(gl[2])); return aus(a,b); }
+  // Gesamtangabe – „12 (3 Felder à 4)“ nennt die Station selbst, sonst lieber nichts sagen
+  if(TP_GESAMTANGABE.test(s)){
+    const a=s.match(/à\s*(\d+)/); if(a){ const n=Number(a[1]); return aus(n,n); }
+    return aus(0,0,false);
+  }
+  const plusTw=/\bplus\s+(?:1\s+|einen?\s+|ein\s+)?(?:Torw|Torh)/i.test(s)?1:0;
+  // Form 3: „N+M“ (Feldspieler plus Torhüter) zählt zusammen
   const plus=s.match(/^\s*(\d+)\s*\+\s*(\d+)/);
-  if(plus){ const n=Number(plus[1])+Number(plus[2])-warten; return {min:n,max:n,alle:false}; }
-  // Form 3: Spanne „N–M" (Halbgeviert, Bindestrich oder „bis").
+  if(plus){ const n=Number(plus[1])+Number(plus[2]); return aus(Math.max(1,n-warten),bis(n)); }
+  // Form 4: Spanne „N–M“ (Halbgeviert, Bindestrich oder „bis“)
   const sp=s.match(/^\s*(\d+)\s*(?:[–—-]|bis)\s*(\d+)/);
-  if(sp){
-    const a=Math.max(1,Number(sp[1])-warten), b=Math.max(a,Number(sp[2])-warten);
-    return {min:a,max:b,alle:false};
-  }
-  // Form 4: eine einzelne Zahl.
+  if(sp){ const a=Number(sp[1])+plusTw, b=Math.max(a,Number(sp[2])+plusTw); return aus(Math.max(1,a-warten),bis(b)); }
+  // Form 5: eine einzelne Zahl
   const eins=s.match(/^\s*(\d+)\s*(?:\(|$|[A-Za-zÄÖÜäöü])/);
-  if(eins){ const n=Math.max(1,Number(eins[1])-warten); return {min:n,max:n,alle:false}; }
-  return {min:0,max:0,alle:false};
+  if(eins){ const n=Number(eins[1])+plusTw; return aus(Math.max(1,n-warten),bis(n)); }
+  return aus(0,0,false);
+}
+function tpUebungSpanne(formIdx){
+  const f=(typeof tpAllForms==="function")?tpAllForms()[formIdx]:null;
+  if(!f)return {min:0,max:0,alle:false,tw:false};
+  const a=Number(f.spieler_min)||0, b=Number(f.spieler_max)||0;
+  const t=tpSpielerAusText(f.spieler);
+  if(a>0&&b>=a)return {min:a,max:b,alle:false,tw:!!f.mit_torwart,aktiv:(t.aktiv&&t.aktiv>=a&&t.aktiv<=b)?t.aktiv:null};
+  // Torwart auch am Namen: „3+1 gegen 3“, „… plus Torwart“
+  const twName=/\d\s*\+\s*1\b|torw|torh(?:ü|ue)ter/i.test(String(f.name||""));
+  return {min:t.min,max:t.max,alle:t.alle,tw:f.mit_torwart!=null?!!f.mit_torwart:(t.tw||twName),aktiv:t.aktiv};
 }
 /* Der Mindestbedarf allein – fuer alles, was nur eine Zahl braucht (Feldzahl, Warnungen). */
 function tpUebungBedarf(formIdx){ return tpUebungSpanne(formIdx).min; }
@@ -2293,17 +2354,21 @@ function tpGruppeHinweis(selId){
        demselben Satz. Bei einer Spanne spielen alle mit, solange die Gruppe hineinpasst;
        erst oberhalb der Obergrenze wechselt jemand ein. */
     const sp=tpUebungSpanne(idx), aktiv=sp.min;
+    /* v720: Wie viele spielen gleichzeitig? Nennt der Text Wartende, die aktiven Plätze – sonst
+       alle bis zur Obergrenze. */
+    const spielen=Math.min(info.n,sp.aktiv||sp.max||info.n);
     if(sp.alle){
       html+=`<div style="font-size:var(--s-klein);color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: alle spielen mit</div>`;
     }else if(aktiv&&info.n>sp.max){
-      const rest=info.n-sp.max;
-      html+=`<div style="font-size:var(--s-klein);color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: ${sp.max} spielen, ${rest===1?"eines wechselt":rest+" wechseln"} ein</div>`;
+      const rest=info.n-spielen;
+      html+=`<div style="font-size:var(--s-klein);color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: ${spielen} spielen, ${rest===1?"eines wechselt":rest+" wechseln"} ein</div>`;
       /* v656 (PO 28.09.): Ein Wechsler je Station ist machbar, mehr nicht – dann keine neue
          Gruppe, sondern eine Übung, die mit so vielen Kindern läuft, oder die bestehende per
          KI angepasst. */
       if(rest>1)html+=tpGroesserHinweis(selId,idx,info.n);
     }else if(aktiv&&info.n>=aktiv){
-      html+=`<div style="font-size:var(--s-klein);color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: alle spielen</div>`;
+      const rest=info.n-spielen;
+      html+=`<div style="font-size:var(--s-klein);color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: ${rest>0?`${spielen} spielen, ${rest===1?"eines wechselt":rest+" wechseln"} ein`:"alle spielen"}</div>`;
     }else if(aktiv&&info.n<aktiv){
       const kinder=(typeof _tgPool==="function")?_tgPool().namen.length:0;
       const jetzt=(((typeof tgFor==="function"&&tgFor())||{}).gruppen||[]).length;
@@ -2316,7 +2381,18 @@ function tpGruppeHinweis(selId){
       html+=`<div class="tp-gruppe-hinweis" style="font-size:var(--s-klein);color:var(--text2);padding:3px 0 0;line-height:1.5">ℹ️ ${info.n} Kinder an dieser Station, die Übung ist für ${aktiv} gedacht.${knopf}</div>`;
     }
   }
+  html+=tpTorwartHinweis(idx,info);   // v720
   el.innerHTML=html;
+}
+/* v720: Braucht die Übung einen Torwart, sagt die Station, wer es in dieser Gruppe sein kann – ein
+   Kind mit Torwart-Vorliebe aus dem Kader (Rangfolge wie im Kader, tw_prio), sonst „wechselt durch“. */
+function tpTorwartHinweis(idx,info){
+  const sp=tpUebungSpanne(idx);
+  if(!sp.tw||!info||!Array.isArray(info.kinder)||!info.kinder.length)return "";
+  const kader=(typeof KADER!=="undefined"&&Array.isArray(KADER))?KADER:[];
+  const tw=info.kinder.map(n=>kader.find(k=>k&&k.name===n)).filter(k=>k&&k.tw)
+    .sort((a,b)=>(Number(a.twPrio||a.tw_prio)||99)-(Number(b.twPrio||b.tw_prio)||99)).map(k=>k.name);
+  return `<div class="tp-torwart-hinweis" style="font-size:var(--s-klein);color:var(--text);padding:3px 0 0;line-height:1.5">🧤 Torwart: ${tw.length?esc(tw.join(" oder ")):"wechselt durch – kein Torwart-Kind in dieser Gruppe"}</div>`;
 }
 function tpGruppeHinweisAll(){ Object.keys(_tpStationGruppe).forEach(tpGruppeHinweis); }
 /* v656 · Mehr Kinder an der Station, als die Übung trägt. PO am 28.09.: „… dann keine neue
@@ -2637,7 +2713,7 @@ function tpRenderTimeline(){
         /* v571: Wer steht hier, und wie viele sind es? Der Feldtext samt der Anpassung für
            genau diese Gruppengröße wird nachträglich gefüllt (tpGruppeHinweis) – die
            gewählte Übung steht erst nach dem Neuzeichnen im Select. */
-        if(isMain)_tpStationGruppe[selId]={n:(tgg&&Array.isArray(tgg.kinder))?tgg.kinder.length:0,si,p};
+        if(isMain)_tpStationGruppe[selId]={n:(tgg&&Array.isArray(tgg.kinder))?tgg.kinder.length:0,si,p,kinder:(tgg&&Array.isArray(tgg.kinder))?tgg.kinder.slice():[]};   // v720: Kinder für den Torwart-Hinweis
         // Eine Karte je Station. Frueher stand hier eine einzige Zeile, die am Handy in
         // fuenf Elemente umbrach – man sah nicht mehr, welches Feld zu welcher Gruppe gehoert.
         // Der Trainername stand doppelt: einmal als Etikett, einmal im (funktionslosen) Dropdown.
@@ -5846,6 +5922,22 @@ function tgZusammenlegen(n){
   tgSave(tg);
   return tg;
 }
+/* v720: Die Gruppen rotieren durch alle Stationen – steht an einer davon ein Torwart, braucht
+   möglichst jede Gruppe ein Kind mit Torwart-Vorliebe. Getauscht wird nur Torwart-Kind gegen ein
+   anderes Kind gleicher Position in der Stärke-Reihe, damit die Gruppen ausgewogen bleiben. Nur beim
+   Bilden – eine bestehende, von Hand geschobene Einteilung bleibt unangetastet. */
+function tgTorwartVerteilen(gruppen){
+  const kader=(typeof KADER!=="undefined"&&Array.isArray(KADER))?KADER:[];
+  const istTw=n=>{ const k=kader.find(x=>x&&x.name===n); return !!(k&&k.tw); };
+  for(let schutz=0;schutz<20;schutz++){
+    const ohne=gruppen.find(g=>!g.kinder.some(istTw)), viele=gruppen.find(g=>g.kinder.filter(istTw).length>1);
+    if(!ohne||!viele)break;
+    const i=viele.kinder.findIndex(istTw), j=ohne.kinder.findIndex(n=>!istTw(n));
+    if(i<0||j<0)break;
+    const a=viele.kinder[i]; viele.kinder[i]=ohne.kinder[j]; ohne.kinder[j]=a;
+  }
+  return gruppen;
+}
 function tgBilden(anzahl){
   /* v570: Ohne ausdrückliche Zahl entscheidet der Bedarf (tgBedarf) – Stationen der
      Einheit, Feldtrainer und Kinderzahl. Vorher war es allein die Trainerzahl. */
@@ -5857,6 +5949,7 @@ function tgBilden(anzahl){
   const gruppen=Array.from({length:n},(_,i)=>({...TG_NAMEN[i%TG_NAMEN.length],trainer:trainers[i]||"",kinder:[]}));
   // Schlangenlinie: ausgewogene Startaufteilung, danach frei verschiebbar
   namen.forEach((k,i)=>{const r=Math.floor(i/n),pos=r%2===0?(i%n):(n-1-(i%n));gruppen[pos].kinder.push(k);});
+  tgTorwartVerteilen(gruppen);   // v720
   const tg={gruppen,ausAnwesenheit:pool.quelle==="anwesenheit",quelle:pool.quelle};
   tgSave(tg);
   return tg;
