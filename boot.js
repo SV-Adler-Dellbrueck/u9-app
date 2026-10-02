@@ -1381,7 +1381,11 @@ function tfGleicheUebung(a,b){
 }
 function tpFilteredOpts(typ,kat){
   const allForms=tpAllForms().map((f,i)=>tfDublette(i)?null:f);   // v585: Dubletten raus, Indizes bleiben
-  if(typ==="warmup") return allForms.map((f,i)=>({i,f})).filter(x=>x.f&&x.f.kat==="aufwaermen");
+  if(typ==="warmup"){
+    // v724: dazu die Übungen aus UEBUNG_AUCH_AUFWAERMEN – sie bleiben zugleich im Hauptteil wählbar
+    const auch=(typeof UEBUNG_AUCH_AUFWAERMEN!=="undefined")?UEBUNG_AUCH_AUFWAERMEN.map(_tfNormName):[];
+    return allForms.map((f,i)=>({i,f})).filter(x=>x.f&&(x.f.kat==="aufwaermen"||auch.includes(_tfNormName(x.f.name))));
+  }
   if(typ==="tw") return allForms.map((f,i)=>({i,f})).filter(x=>x.f&&x.f.kat==="torwart");
   if(typ==="individual") return allForms.map((f,i)=>({i,f})).filter(x=>x.f&&x.f.kat==="individual");
   const mainForms=allForms.map((f,i)=>({i,f})).filter(x=>x.f&&!["aufwaermen","torwart","individual"].includes(x.f.kat)); // custom/KI-Übungen jetzt im Hauptteil wählbar
