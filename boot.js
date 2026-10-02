@@ -2300,7 +2300,7 @@ function tpGroesserVorschlaege(selId,idx,n){
   const alle=tpAllForms(), f=alle[idx]||{};
   const belegt=new Set([...document.querySelectorAll(`select.tp-form-sel[id^="tp-form-${info.si}-"]`)].map(x=>x.value));
   const passt=alle.map((x,i)=>({x,i})).filter(o=>{
-    if(!o.x||!o.x.name||o.i===idx||belegt.has(String(o.i)))return false;
+    if(!o.x||!o.x.name||o.i===idx||belegt.has(String(o.i))||!tpStationTauglich(o.x))return false;   // v714
     const sp=tpUebungSpanne(o.i);
     return !sp.alle&&sp.min>0&&sp.min<=n&&n<=sp.max+1;
   });
@@ -2490,6 +2490,7 @@ function tpRenderTimeline(){
     if(tpIstHauptteil(typ)&&(slot.dauer||0)>=15){
       html+=tpTipp("Nach ~10 Min. variieren oder steigern – 20 Min. dieselbe Übung überfordert die Aufmerksamkeit von 7–9-Jährigen.");
     }
+    if(tpIstHauptteil(typ)&&slot.regel)html+=tpRegelZeile(si,slot);   // v714
     if(tpIstHauptteil(typ)&&(gebunden.size||weg.length)){
       const zusammen=(felderGruppen||[]).filter(f=>f.dazu.length).map(f=>`${f.dazu.join(" + ")} spielt bei ${f.emo} ${f.name.split(" + ")[0]} mit`).join(" · ");
       const grund=gebunden.size?`🧤 ${esc([...gebunden].join(", "))} ${gebunden.size===1?"ist":"sind"} beim Torwart-/Einzeltraining`:"";
@@ -4101,6 +4102,11 @@ function evalStar(btn){
    Kategorie passt zum Thema, Spielform vor Übungsform, keine Übung doppelt, was in den letzten zwei Wochen lief,
    tritt zurück. Bei Gleichstand entscheidet ein fester Zufall je Datum: derselbe Termin
    gibt dasselbe Ergebnis, ein anderer Termin ein anderes. */
+/* v714: Zusatzregeln (data.js) und Übungen für Erwachsene (Lehrgang) gehören nie an eine Station
+   der Kinder – weder per „Training füllen“ noch als Tausch- oder Tagebuch-Vorschlag. */
+function tpIstZusatzregel(f){ return !!(f&&typeof ZUSATZREGELN!=="undefined"&&ZUSATZREGELN.includes(f.name)); }
+function tpNurErwachsene(f){ return !!f&&/erwachsene/i.test(String(f.name||"")+" "+String(f.kurz||"").slice(0,40)); }
+function tpStationTauglich(f){ return !!f&&!tpIstZusatzregel(f)&&!tpNurErwachsene(f); }
 /* 0 passt, 1 eine Person zu viel (auswechseln), 2 Spielerzahl unbekannt, sonst je fehlender
    oder überzähliger Person mehr. Die Spanne liest tpUebungSpanne – dieselbe Rechnung, mit der
    die Station „zu groß für die Übung“ meldet (v656). */
@@ -4141,7 +4147,7 @@ async function _tpThemaFuer(datum){
    der Vorlage, dann Tagebuch/Monat); `weg` ist, was im Training schon steht. */
 function tpStationWahl(g,thema,weg,datum,zufall){
   // „Freies Spielen“ ist das Abschlussspiel, keine Station.
-  const kandidaten=tpFilteredOpts("main").filter(x=>x.f&&x.f.kat!=="mindset"&&!/^freies spiel/i.test(x.f.name)&&!weg.has(x.i));
+  const kandidaten=tpFilteredOpts("main").filter(x=>x.f&&x.f.kat!=="mindset"&&tpStationTauglich(x.f)&&!/^freies spiel/i.test(x.f.name)&&!weg.has(x.i));
   if(!kandidaten.length)return null;
   const grenze=new Date(new Date(datum||isoLokal()).getTime()-14*86400000).toISOString().slice(0,10);
   let best=null;
@@ -4227,6 +4233,19 @@ async function tpGenerate(){
     if(stationen<=1||fest0==null){ const b=tpStationWahl(g,th,weg,datum,zufall); if(!b)return; weg.add(b.i); if(b.passt>1)eng++; if(stationen>1)fest0=b.i; if(setze(x.i,0,b.i))gesetzt++; }
     else if(setze(x.i,0,fest0))gesetzt++;
   });
+  /* v714: Je Hauptteil eine Zusatzregel als Provokationsregel für alle Stationen – passend zum
+     Thema, in jedem Hauptteil eine andere. Was der Trainer weggetippt hat (regel===null) oder
+     selbst gesetzt hat, bleibt. */
+  const regeln=alle.map((f,i)=>({f,i})).filter(x=>tpIstZusatzregel(x.f));
+  const regelWeg=new Set(tpSlots.map(sl=>sl&&sl.regel).filter(Boolean));
+  let regelNeu=0;
+  haupt().forEach(x=>{
+    if(x.s.regel!==undefined||!regeln.length)return;
+    let best=null;
+    regeln.forEach(r=>{ if(regelWeg.has(r.f.name))return; const ki=th.kats.indexOf(r.f.kat); const w=(ki===0?0:ki>0?1:3)+zufall(); if(!best||w<best.w)best={w,n:r.f.name}; });
+    if(best){ x.s.regel=best.n; regelWeg.add(best.n); regelNeu++; }
+  });
+  if(regelNeu){ tpRenderTimeline(); if(typeof tpPlanSaveDebounced==="function")tpPlanSaveDebounced(); }
   tpRenderTeamFokus();
   tpRenderMindsetTip();
   const teile=[`${stationen} Station${stationen===1?"":"en"}`,`Gruppen bis ${g} Kinder`];
@@ -4236,6 +4255,24 @@ async function tpGenerate(){
   return {stationen,g,gesetzt,eng,thema:th.quelle};
 }
 
+/* v714: Die Provokationsregel steht als eine Zeile im Hauptteil – ansehen oder wegtippen.
+   Weggetippt bleibt weg (regel=null), auch beim nächsten „Training füllen“. */
+function tpRegelZeile(si,slot){
+  const alle=tpAllForms(), ri=alle.findIndex(f=>f&&f.name===slot.regel), f=alle[ri];
+  if(!f)return "";
+  const knopf="min-height:44px;min-width:44px;padding:0 10px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer";
+  return `<div class="tp-regel" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:var(--s-klein);color:var(--text);background:var(--surface2);border:1px solid var(--rand-bedien);border-radius:8px;padding:6px 8px;margin:2px 0 6px">
+    <span style="flex:1;min-width:180px;line-height:1.45">📏 <b>Regel für alle Stationen:</b> ${esc(f.name)}${f.kurz?` – ${esc(f.kurz)}`:""}</span>
+    <button type="button" onclick="tpShowExercise(${ri})" style="${knopf}" aria-label="Regel ${esc(f.name)} ansehen"><i class="ti ti-eye"></i></button>
+    <button type="button" onclick="tpRegelWeg(${si})" style="${knopf}" aria-label="Regel ${esc(f.name)} entfernen">✕</button>
+  </div>`;
+}
+function tpRegelWeg(si){
+  if(!tpSlots[si])return;
+  tpSlots[si].regel=null;
+  tpRenderTimeline();
+  if(typeof tpPlanSaveDebounced==="function")tpPlanSaveDebounced();
+}
 // E3: schlägt zufällig eine der drei Ritual-Formen als festen Baustein der Einheit vor
 // Team-Aggregat: Durchschnitt jeder Dimension über alle bewerteten Spieler
 function teamAggregate(){
@@ -4805,7 +4842,7 @@ function _tpPickKarte(x){
     <button onclick="tpPickerSet(${x.i})" style="flex:1;min-width:0;min-height:44px;border:none;background:transparent;color:var(--text);font-family:inherit;text-align:left;cursor:pointer;padding:0">
       <span style="display:block;font-size:var(--s-karte);font-weight:800">${esc(x.f.name)}</span>
       <span style="display:block;font-size:var(--s-klein);color:var(--text2)">${x.f.dauer||"?"} Min. · ${esc((typeof PERIOD_CATS!=="undefined"&&PERIOD_CATS[x.f.kat])||x.f.kat||"eigene")} · ${frische}</span>
-      ${(function(){const c=tpArtChip(x.f,false);const b=typeof tpBetreuungWert==="function"?tpBetreuungWert(x.f):null;const a=(b&&b.wert==="allein")?'<span style="background:var(--surface2);color:var(--text2);border:var(--border-s);border-radius:6px;padding:1px 6px;font-size:var(--s-klein);font-weight:800;white-space:nowrap">👤 läuft allein</span>':"";return (c||a)?`<span style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">${c}${a}</span>`:"";})()}
+      ${(function(){const c=tpArtChip(x.f,false);const b=typeof tpBetreuungWert==="function"?tpBetreuungWert(x.f):null;const a=(b&&b.wert==="allein")?'<span style="background:var(--surface2);color:var(--text2);border:var(--border-s);border-radius:6px;padding:1px 6px;font-size:var(--s-klein);font-weight:800;white-space:nowrap">👤 läuft allein</span>':"";const z=(typeof tpIstZusatzregel==="function"&&tpIstZusatzregel(x.f))?'<span title="Keine eigene Station – wird in eine Spielform eingebaut" style="background:var(--surface2);color:var(--text2);border:var(--border-s);border-radius:6px;padding:1px 6px;font-size:var(--s-klein);font-weight:800;white-space:nowrap">📏 Zusatzregel</span>':"";return (c||a||z)?`<span style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">${c}${a}${z}</span>`:"";})()}
     </button>
     <span role="img" aria-label="Schwierigkeit ${stern} von 3" title="Schwierigkeit – ändern im Übungsdetail" style="min-width:52px;display:inline-flex;align-items:center;justify-content:center;color:#f59e0b;font-size:var(--s-text);letter-spacing:1px">${"⭐".repeat(stern)}</span>
     <button onclick="tpPickerInfo(${x.i})" aria-label="Übung ansehen" title="Skizze & Beschreibung ansehen" style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-size:var(--s-karte);cursor:pointer">ℹ️</button>
