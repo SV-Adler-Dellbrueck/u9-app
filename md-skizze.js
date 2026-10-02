@@ -818,33 +818,57 @@ function tfKiEintragen(u, zurueck){
   if(spec){ window.TF_SKIZZE=spec; tfSkizzeVorschau(); n.push("Skizze"); }
   return n;
 }
+/* v722: Stand des Formulars zum Vergleich vorher/nachher – sagt dem Trainer, was die KI geändert hat. */
+function _tfKiStand(){
+  const w=id=>{ const el=document.getElementById(id); return el?String(el.value||""):""; };
+  return {"Name":w("tf-name"),"Kategorie":w("tf-kat"),"Kinder":w("tf-spieler"),"Feld":w("tf-feld"),"Minuten":w("tf-dauer"),
+    "Ablauf":w("tf-ablauf"),"Varianten":w("tf-varianten"),"Coaching":w("tf-coaching"),"Schwierigkeit":w("tf-diff"),
+    "Skizze":JSON.stringify(window.TF_SKIZZE||null)};
+}
 async function tfKiAuswerten(){
   const feld=document.getElementById("tf-ki-text"), st=document.getElementById("tf-ki-stand"), los=document.getElementById("tf-ki-los");
   const roh=String((feld&&feld.value)||"").trim();
-  if(roh.length<40){ if(st)st.textContent="Erzähl etwas mehr – Aufbau, Ablauf, wie viele Kinder (mindestens zwei, drei Sätze)."; return; }
+  const variante=window.TF_KI_MODUS==="variante";   // v722: Kopie – nur die Änderung
+  if(variante&&roh.length<5){ if(st)st.textContent="Sag kurz, was an der Übung anders sein soll."; return; }
+  if(!variante&&roh.length<40){ if(st)st.textContent="Erzähl etwas mehr – Aufbau, Ablauf, wie viele Kinder (mindestens zwei, drei Sätze)."; return; }
   tfKiStopp();
   const m=(typeof nbMaske==="function")?nbMaske([]):null;
   const text=m?m.weg(roh):roh;
   const zurueck=m?(t=>t.replace(/Kind (\d+)/g,(x,k)=>(m.zurueck&&m.zurueck["Kind "+k])||x)):null;
   if(los){ los.disabled=true; los.innerHTML='<i class="ti ti-loader-2"></i>Wertet aus …'; }
-  if(st)st.textContent="🧠 Die KI liest deine Beschreibung und zeichnet die Skizze …";
+  if(st)st.textContent=variante?"🧠 Die KI arbeitet deine Änderung in die Übung ein …":"🧠 Die KI liest deine Beschreibung und zeichnet die Skizze …";
   const ctrl=new AbortController(), zu=setTimeout(()=>ctrl.abort(),60000);
   try{
     const kinder=(typeof KADER!=="undefined"&&Array.isArray(KADER))?KADER.filter(k=>k&&k.aktiv!==false).length:0;
-    const r=await fetch(`${SB_URL}/functions/v1/ki-uebung`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({modus:"text",text,kinder}),signal:ctrl.signal});
+    /* v722: Bei einer Variante geht die Übung so mit, wie sie gerade im Formular steht – auch was
+       der Trainer schon von Hand geändert hat. Namen von Kindern maskiert dieselbe Maske. */
+    const wert=id=>{ const el=document.getElementById(id); return el?String(el.value||""):""; };
+    const weg=t=>m?m.weg(t):t;
+    const basis=variante?{titel:wert("tf-name"),kat:wert("tf-kat"),dauer:wert("tf-dauer"),spieler:wert("tf-spieler"),feld:wert("tf-feld"),
+      beschreibung:weg(wert("tf-ablauf")),variante:weg(wert("tf-varianten")),coaching:weg(wert("tf-coaching")),diff:Number(wert("tf-diff"))||2,
+      skizze:(window.TF_SKIZZE&&typeof window.TF_SKIZZE==="object")?window.TF_SKIZZE:null}:null;
+    const vorher=variante?_tfKiStand():null;
+    const anfrage=variante?{modus:"variante",basis,aenderung:text,kinder}:{modus:"text",text,kinder};
+    const r=await fetch(`${SB_URL}/functions/v1/ki-uebung`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify(anfrage),signal:ctrl.signal});
     const d=await r.json().catch(()=>({}));
     if(!r.ok)throw new Error(String(d.error||("Fehler "+r.status)));
     const u=(d.uebungen||[])[0];
     if(!u)throw new Error("Die KI hat keine Übung erkannt – beschreib Aufbau und Ablauf etwas genauer.");
     const n=tfKiEintragen(u, zurueck);
-    if(st)st.innerHTML=n.length?`✨ Eingetragen: ${esc(n.join(" · "))}. <b>Prüfen, anpassen, dann „Übung erfassen“.</b>`:"Die KI hat nichts gefunden, das zu einem Feld passt – beschreib die Übung genauer.";
+    if(typeof tfSpielerAbleiten==="function")tfSpielerAbleiten();   // v720: von–bis/Torwart folgen dem neuen Text
+    if(variante){
+      const nachher=_tfKiStand(), geaendert=Object.keys(nachher).filter(k=>nachher[k]!==vorher[k]);
+      if(st)st.innerHTML=geaendert.length?`✨ Geändert: ${esc(geaendert.join(" · "))}. <b>Prüfen, gern noch eine Änderung einsprechen, dann „Übung erfassen“.</b>`:"Die KI hat nichts geändert – sag genauer, was anders sein soll.";
+      if(feld){ feld.value=""; if(typeof feldWachsen==="function")feldWachsen(feld); }   // bereit für die nächste Änderung
+    }
+    else if(st)st.innerHTML=n.length?`✨ Eingetragen: ${esc(n.join(" · "))}. <b>Prüfen, anpassen, dann „Übung erfassen“.</b>`:"Die KI hat nichts gefunden, das zu einem Feld passt – beschreib die Übung genauer.";
     document.getElementById("tf-name")?.scrollIntoView({block:"center",behavior:"smooth"});
   }catch(e){
     const msg=(e&&e.name==="AbortError")?"Zeitüberschreitung – bitte nochmal versuchen.":(e instanceof TypeError)?"Kein Netz – bitte später nochmal.":String((e&&e.message)||"Es hat nicht geklappt.");
     if(st)st.textContent="Nicht ausgewertet: "+msg+" Dein Text bleibt stehen.";
   }finally{
     clearTimeout(zu);
-    if(los){ los.disabled=false; los.innerHTML='<i class="ti ti-sparkles"></i>KI-Auswertung'; }
+    if(los){ los.disabled=false; los.innerHTML=window.TF_KI_MODUS==="variante"?'<i class="ti ti-sparkles"></i>Änderung einarbeiten':'<i class="ti ti-sparkles"></i>KI-Auswertung'; }
   }
 }
 

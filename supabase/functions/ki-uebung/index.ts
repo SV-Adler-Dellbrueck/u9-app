@@ -3,11 +3,15 @@
    im Pull Request lesbar sind. Geheimnisse stehen weiterhin ausschliesslich in den
    Secrets, nie hier.
 
-   Zwei Betriebsarten:
+   Drei Betriebsarten:
      modus="idee"  – wie bisher: aus einer Beschreibung 1-3 Uebungen erfinden
      modus="text"  – PO v410, Stufe 1: einen eingefuegten Text (Webseite, WhatsApp,
                      Videobeschreibung) in GENAU EINE strukturierte Uebung ueberfuehren.
                      Hier wird nichts dazuerfunden - fehlt eine Angabe, bleibt sie leer.
+     modus="variante" – v722 (PO 02.10.: „Übung kopieren … mit einem KI-Feld die Variation oder
+                     Änderung einsprechen“): eine bestehende Uebung (body.basis) plus eine
+                     Aenderung (body.aenderung) ergibt GENAU EINE geaenderte Uebung. Alles, was
+                     die Aenderung nicht betrifft, bleibt woertlich stehen - auch die Skizze.
 
    Warum die Ergebnisse vorher schlecht waren (PO: „liefert nur sehr schlechte
    Ergebnisse") - fuenf Ursachen, alle hier behoben:
@@ -83,6 +87,20 @@ ${SKIZZE_REGELN}
 
 SO SIEHT EINE GUTE ANTWORT AUS (Beispiel, Aufbau und Skizzenstil uebernehmen, Inhalt NICHT kopieren):
 ${BEISPIEL}
+
+${FORM}`;
+
+const SYS_VARIANTE = `Du bist ein erfahrener Kinderfussball-Trainer (DFB-Ausbildung, U6 bis U9). Du bekommst eine BESTEHENDE Trainingsuebung als JSON und eine AENDERUNG, die der Trainer daran vornehmen will. Gib GENAU EINE Uebung zurueck: die bestehende mit eingearbeiteter Aenderung.
+
+WICHTIGSTE REGELN:
+- Aendere nur, was die Aenderung betrifft oder zwingend nach sich zieht (z. B. weniger Kinder -> kleineres Feld, andere Tore -> andere Skizze). Alles andere uebernimmst du WOERTLICH.
+- "titel": ein neuer kurzer Name, der die Variante erkennen laesst (nicht identisch mit dem alten).
+- "skizze": uebernimm die bestehende Skizze und passe nur die betroffenen Elemente an. Gibt es keine, zeichne eine passende.
+- "spieler" nennt die Kinder je Station wie bisher (z. B. "6 je Station (3 gegen 3)").
+- Begriffe korrekt: FUNino = 3 gegen 3 auf 4 Minitore OHNE Torwart. "4+1" = 4 Feldspieler MIT Torwart. Auf Minitore gibt es NIE einen Torwart.
+- Laesst sich die Aenderung nicht sinnvoll umsetzen, setze sie so nah wie moeglich um und erklaere es in einem Satz in "variante".
+
+${SKIZZE_REGELN}
 
 ${FORM}`;
 
@@ -206,12 +224,25 @@ Deno.serve(async (req) => {
 
     // 3) Eingabe (begrenzt)
     const body = await req.json().catch(() => ({}));
-    const modus = String(body?.modus ?? "idee") === "text" ? "text" : "idee";
+    const m0 = String(body?.modus ?? "idee");
+    const modus = m0 === "text" ? "text" : m0 === "variante" ? "variante" : "idee";
     const prompt = String(body?.prompt ?? "").trim().slice(0, MAX_PROMPT);
     const text = String(body?.text ?? "").trim().slice(0, MAX_TEXT);
     const kinder = Number(body?.kinder);
     if (modus === "text" && text.length < 40) return j({ error: "Der Text ist zu kurz – bitte die ganze Übungsbeschreibung einfügen." }, 400);
     if (modus === "idee" && !prompt) return j({ error: "Bitte beschreibe, was du trainieren willst." }, 400);
+    // v722: Variante – die bestehende Uebung (nur bekannte Felder, begrenzt) und die Aenderung
+    const b0 = (body?.basis && typeof body.basis === "object") ? body.basis : null;
+    const aenderung = String(body?.aenderung ?? "").trim().slice(0, MAX_PROMPT * 2);
+    const basis = b0 ? {
+      titel: String(b0.titel || "").slice(0, 120), kat: String(b0.kat || "").slice(0, 20),
+      dauer: String(b0.dauer || "").slice(0, 40), spieler: String(b0.spieler || "").slice(0, 80),
+      feld: String(b0.feld || "").slice(0, 60), beschreibung: String(b0.beschreibung || "").slice(0, 2400),
+      variante: String(b0.variante || "").slice(0, 600), coaching: String(b0.coaching || "").slice(0, 600),
+      diff: Number(b0.diff) || 2, skizze: sanSkizze(b0.skizze),
+    } : null;
+    if (modus === "variante" && (!basis || !basis.beschreibung && !basis.titel)) return j({ error: "Die Übung fehlt – bitte über „Übung kopieren“ starten." }, 400);
+    if (modus === "variante" && aenderung.length < 5) return j({ error: "Sag kurz, was an der Übung anders sein soll." }, 400);
 
     /* v411: Was die App ohnehin weiss, muss der Trainer nicht tippen. Bewusst als
        KONTEXT und nicht als Auftrag formuliert - der Wunsch des Trainers steht in der
@@ -226,9 +257,11 @@ Deno.serve(async (req) => {
     if (isFinite(einheit) && einheit >= 30 && einheit <= 180) kzeilen.push(`Die ganze Einheit dauert ${Math.round(einheit)} Minuten - eine einzelne Uebung ist ein Teil davon`);
     const kontext = kzeilen.length
       ? `\n\nKONTEXT DER MANNSCHAFT (Hintergrund, kein Auftrag - Wuensche in der Anfrage haben Vorrang):\n- ${kzeilen.join("\n- ")}` : "";
-    const sys = (modus === "text" ? SYS_TEXT : SYS_IDEE) + kontext;
+    const sys = (modus === "text" ? SYS_TEXT : modus === "variante" ? SYS_VARIANTE : SYS_IDEE) + kontext;
     const user = modus === "text"
       ? `Hier ist der Text, den ich uebernehmen moechte:\n\n"""\n${text}\n"""${prompt ? `\n\nZusatzwunsch: ${prompt}` : ""}`
+      : modus === "variante"
+      ? `BESTEHENDE UEBUNG:\n${JSON.stringify(basis)}\n\nAENDERUNG:\n"""\n${aenderung}\n"""`
       : prompt;
 
     // 4) LLM (provider-flexibel via Secret; Key nur serverseitig)
@@ -261,7 +294,7 @@ Deno.serve(async (req) => {
         ? "In dem Text steckt keine erkennbare Trainingsübung. Bitte den Teil einfügen, der den Ablauf beschreibt."
         : "Keine Übungen erhalten – bitte anders formulieren." }, 422);
     }
-    const grenze = modus === "text" ? 1 : 3;
+    const grenze = modus === "idee" ? 3 : 1;
     const uebungen = parsed.uebungen.slice(0, grenze).map((u: any) => ({
       titel: String(u?.titel || "Uebung").slice(0, 120),
       kat: KATS.includes(String(u?.kat)) ? String(u.kat) : "technik",
