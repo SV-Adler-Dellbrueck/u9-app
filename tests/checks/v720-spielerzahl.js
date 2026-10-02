@@ -63,9 +63,9 @@ module.exports = async function (h) {
     sp.value = "6 je Station (Torwart + 2 gegen 2, 1 wartet)"; sp.dispatchEvent(new Event("input"));
     const mn = document.getElementById("tf-min"), mx = document.getElementById("tf-max"), tw = document.getElementById("tf-tw");
     out.c = { vor: [mn.value, mx.value, tw.checked],
-      hoehen: [mn, mx].map(e => Math.round(e.getBoundingClientRect().height)) };
+      hoehen: [mn, mx].map(e => Math.round(parseFloat(getComputedStyle(e).minHeight) || 0)) };   // Fenster ist im Prüfstand verdeckt – gemessen wird die Mindesthöhe
     mx.value = "7"; mx.dispatchEvent(new Event("input"));
-    sp.value = "8"; sp.dispatchEvent(new Event("input"));
+    sp.value = "8 mit Torwart"; sp.dispatchEvent(new Event("input"));   // Text ändert sich, von Hand Getipptes bleibt, Torwart folgt dem Text
     out.c.nachHand = [mn.value, mx.value];
     await saveCustomTraining(); await warte(300);
     // d) Bearbeiten
