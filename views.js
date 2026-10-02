@@ -6632,7 +6632,7 @@ function kachelTile(key,emo,label,c1,c2){
      unter den geforderten 4.5:1. Die Abstufung macht die Schriftgroesse. */
   // v718: kompakt (drei je Reihe): Symbol, Name, Live-Hinweis – rund halb so hoch wie vorher
   return `<button onclick="kachelOpen('${key}')" style="min-height:76px;min-width:0;border:none;border-radius:14px;cursor:pointer;font-family:inherit;background:linear-gradient(135deg,${c1},${c2});color:#fff;padding:9px 10px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:2px;box-shadow:var(--shadow-md);text-align:left">
-    <span aria-hidden="true" style="font-size:22px;line-height:1">${emo}</span>
+    <span aria-hidden="true" style="font-size:var(--s-seite);line-height:1">${emo}</span>
     <span style="min-width:0;max-width:100%">
       <span style="display:block;font-size:var(--s-text);font-weight:900;line-height:1.2;overflow-wrap:anywhere">${label}</span>
       <span id="kb-${key}" style="display:block;font-size:var(--s-klein);line-height:1.25;min-height:13px"></span>
