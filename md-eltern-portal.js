@@ -592,6 +592,12 @@ async function elternNewsLoad(kids){
   try{const r=await fetch(`${SB_URL}/rest/v1/rpc/training_rueckblick`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"});if(r.ok)rueckblick=(await r.json())||[];}catch(e){}
   cur.tr=(rueckblick[0]&&rueckblick[0].datum)||"";
   cur.wn=(typeof ELTERN_WHATSNEW!=="undefined"&&ELTERN_WHATSNEW.key)||""; // L2: „Was ist neu"
+  /* v717: „Aus der Adlerschmiede“ – Eltern-Neuerungen aus der Tabelle adlerschmiede ersetzen die
+     feste Liste. Schlüssel: Datum + laufende Nummer des neuesten Eintrags. */
+  let schmiede=[];
+  try{const r=await fetch(`${SB_URL}/rest/v1/adlerschmiede?select=id,datum,emoji,text&order=datum.desc,id.desc&limit=12`,{headers:sbAuthHeaders()});if(r.ok)schmiede=(await r.json())||[];}catch(e){}
+  window._adlerschmiede=schmiede;
+  if(schmiede.length)cur.wn=String(schmiede[0].datum)+"-"+String(schmiede[0].id).padStart(6,"0");
   window._elternNewsCur=cur;
   let seen=null; try{seen=JSON.parse(localStorage.getItem("adler_news_seen")||"null");}catch(e){}
   if(!seen){ try{localStorage.setItem("adler_news_seen",JSON.stringify(cur));}catch(e){} seen=cur; } // Erstbesuch = Baseline
@@ -610,7 +616,13 @@ async function elternNewsLoad(kids){
     const themen=(rb.themen||[]).slice(0,3).map(esc).join(", ");
     if(themen)items.push({emo:"📖",txt:`${rb.datum===heuteStr?"Heute":"Zuletzt"} im Training geübt: ${themen} – frag dein Kind doch mal danach!`,act:"elternCatClose()"});
   }
-  if(cur.wn&&cur.wn>(seen.wn||"")) items.unshift({emo:"🆕",txt:`${esc(ELTERN_WHATSNEW.titel)} – tippen für die Highlights!`,act:"whatsNewOpen()"}); // L2: ganz oben
+  if(cur.wn&&cur.wn>(seen.wn||"")){ // L2 → v717: ganz oben
+    const neuSeit=schmiede.filter(e=>String(e.datum)+"-"+String(e.id).padStart(6,"0")>(seen.wn||"")).length;
+    items.unshift(schmiede.length
+      ?{emo:"🛠️",txt:`Aus der Adlerschmiede: ${neuSeit===1?"eine Neuerung":(neuSeit||schmiede.length)+" Neuerungen"} in eurer App – tippen!`,act:"schmiedeOpen()"}
+      :{emo:"🆕",txt:`${esc(ELTERN_WHATSNEW.titel)} – tippen für die Highlights!`,act:"whatsNewOpen()"});
+  }
+  if(location.hash==="#adlerschmiede"&&schmiede.length){ try{history.replaceState(null,"",location.pathname+location.search);}catch(e){} setTimeout(schmiedeOpen,300); }
   const badge=document.getElementById("eltern-news-badge");
   if(badge){ badge.textContent=items.length?String(items.length):"0"; badge.style.display=items.length?"inline-block":"none"; }
   // Der ganze Knopf verschwindet, wenn nichts Ungelesenes da ist (PO v407).
@@ -690,13 +702,38 @@ async function chronikOpen(){
 /* L2: „Was ist neu" – kuratierte Highlights je App-Stand, erscheint EINMALIG in den
    Adler News (seen-Baseline). KONVENTION: Bei eltern-sichtbaren neuen Features den key
    (sortierbares Datum) hochsetzen und die Punkte austauschen – sonst entdecken
-   Bestandsfamilien neue Funktionen nie (die Tour läuft nur beim ersten Login). */
+   Bestandsfamilien neue Funktionen nie (die Tour läuft nur beim ersten Login).
+   v717: Neue Eltern-Funktionen kommen jetzt als Zeile in die Tabelle adlerschmiede (Form
+   „Kurztitel: Erklärung“); diese Liste ist nur noch der Rückfall ohne Netz bzw. ohne Einträge. */
 const ELTERN_WHATSNEW={key:"2026-09-25",titel:"Neu in eurer App",punkte:[
   "🔑 Anmelden mit E-Mail und Passwort – auch auf einem zweiten Gerät. Über 🔑 oben legst du ein Passwort fest oder änderst es. Der Code per E-Mail bleibt für „Passwort vergessen“.",
   "🎟️ Das zweite Elternteil bekommt mit derselben Einladungskarte einen eigenen Zugang.",
   "⏰ Ist die Kabinen-Zeit um, bleibt das Handy gesperrt, bis ihr den Code eingebt.",
   "🦅 Die Kabine ist aufgeräumt: acht Kacheln vorn, alles Weitere unter „Mehr entdecken“."
 ]};
+/* v717: „Aus der Adlerschmiede“ – was in den letzten sieben Tagen für Eltern neu dazugekommen ist
+   (sonntags 18 Uhr kommt dazu ein Push). Keine Fehlerbehebungen, keine Trainer-Funktionen. Ist die
+   Woche leer, stehen die letzten fünf Einträge da. */
+function schmiedeOpen(){
+  const alle=Array.isArray(window._adlerschmiede)?window._adlerschmiede:[];
+  if(!alle.length){ whatsNewOpen(); return; }
+  const grenze=new Date(Date.now()-6*86400000).toISOString().slice(0,10);
+  let liste=alle.filter(e=>String(e.datum)>=grenze); const woche=liste.length>0;
+  if(!woche)liste=alle.slice(0,5);
+  const dat=d=>new Date(String(d)+"T12:00:00").toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"});
+  document.getElementById("wn-modal")?.remove();
+  const m=document.createElement("div");m.id="wn-modal";
+  m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Aus der Adlerschmiede");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10050;display:flex;align-items:center;justify-content:center;padding:16px";
+  m.onclick=e=>{if(e.target===m)m.remove();};
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:18px;max-width:460px;width:100%;max-height:86vh;overflow-y:auto">
+    ${mdlHead("wn-modal","🛠️","Aus der Adlerschmiede",woche?"Neu in eurer App in den letzten sieben Tagen":"Die letzten Neuerungen in eurer App","#0284c7")}
+    ${liste.map(e=>`<div class="schmiede-eintrag" style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--rand-bedien);font-size:var(--s-text);line-height:1.5"><span aria-hidden="true" style="flex:none">${esc(e.emoji||"🛠️")}</span><span><span style="display:block;font-size:var(--s-klein);color:var(--text2)">${esc(dat(e.datum))}</span>${esc(e.text)}</span></div>`).join("")}
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:10px">Jeden Sonntag um 18 Uhr kommt eine Benachrichtigung, wenn es Neues gibt. Abschalten unter „Trainerteam kontaktieren“ → Benachrichtigungen.</div>
+    <button onclick="document.getElementById('wn-modal').remove()" style="width:100%;min-height:48px;margin-top:14px;padding:11px;border:none;border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Super, danke!</button>
+  </div>`;
+  document.body.appendChild(m);
+}
 function whatsNewOpen(){
   document.getElementById("wn-modal")?.remove();
   const m=document.createElement("div");m.id="wn-modal";

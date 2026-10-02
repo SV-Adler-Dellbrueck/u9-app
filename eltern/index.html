@@ -25,7 +25,8 @@
   // ?portal – also ergaenzen wir es, bevor irgendein Skript location.search liest.
   // ABSOLUTER Pfad: relative URLs wuerden gegen <base href="../"> aufgeloest und die
   // Seite aus ihrem eigenen Scope /eltern/ heraus in die Wurzel schieben.
-  if(!location.search){ try{ history.replaceState({},"",location.pathname+"?portal"); }catch(e){} }
+  // v717: den Anker behalten – die Benachrichtigung „Aus der Adlerschmiede“ öffnet ./eltern/#adlerschmiede
+  if(!location.search){ try{ history.replaceState({},"",location.pathname+"?portal"+location.hash); }catch(e){} }
   // Nur-Lese-Ansichten und das Kinder-Quiz bieten keine Installation an.
   var p=new URLSearchParams(location.search);
   if(p.has("quiz")||p.has("heft")||p.has("ticker")||p.has("kind")||p.has("delegate")||p.has("match")){

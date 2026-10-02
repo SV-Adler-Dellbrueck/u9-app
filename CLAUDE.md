@@ -103,6 +103,11 @@ caches.keys().then(ks => ks.forEach(k => caches.delete(k)));
    umgeschrieben. Ohne das weiß die Projektseite auf claude.ai nicht, was hier entschieden
    wurde — und beide Seiten treffen dauerhafte Entscheidungen.
 8. **`node tests/run.js` vor dem Bump.** Ein Lauf parst alle Dateien, prüft die Ladearchitektur (MODUL_WACHE, Loader, PRECACHE, Wellen) und spielt die bekannten Fallen am echten DOM durch. Erst wenn er grün ist, wird `sw.js` hochgezählt. Ein neuer Fehler bekommt eine neue Datei in `tests/checks/` — mit der Versionsnummer, aus der er stammt.
+9. **Eltern-Neuerung → eine Zeile in `adlerschmiede`** (seit v717). Jede Version, die Eltern etwas
+   Neues zeigt, trägt eine Zeile ein: Datum, Version, Emoji, Text in der Form „Kurztitel: Erklärung“
+   in Elternsprache. Keine Fehlerbehebungen, keine Trainer-Funktionen. Daraus entsteht sonntags um
+   18 Uhr der Push „Aus der Adlerschmiede“ (Edge Function `adlerschmiede-push`, nur wenn es in der
+   Woche etwas gibt) – der Push zeigt nur den Kurztitel.
 
 ## Datenbank
 
@@ -115,7 +120,7 @@ Supabase mit durchgängiger Row-Level-Security. Muster für trainer-pflegbare In
 Direkter Schreibzugriff auf Supabase ist erlaubt — seit dem 13.09.2026, vorher war er
 ausgeschlossen.
 
-Schlüssel und Geheimnisse (VAPID-Schlüssel, Cron-Token) liegen seit v643 im Supabase Vault – nie im Repo, nie als Konstante im Code einer Funktion. Edge Functions lesen sie über die RPC `adler_geheimnis` (nur service_role), die Cron-Jobs direkt aus `vault.decrypted_secrets`. Wer einen Schlüssel erneuert, erzeugt ihn dort, wo er gebraucht wird, und liest ihn nie aus. Die Push-Cron-Funktion nie manuell mit echtem Token aufrufen — das verdoppelt Benachrichtigungen an Eltern.
+Schlüssel und Geheimnisse (VAPID-Schlüssel, Cron-Token) liegen seit v643 im Supabase Vault – nie im Repo, nie als Konstante im Code einer Funktion. Edge Functions lesen sie über die RPC `adler_geheimnis` (nur service_role), die Cron-Jobs direkt aus `vault.decrypted_secrets`. Wer einen Schlüssel erneuert, erzeugt ihn dort, wo er gebraucht wird, und liest ihn nie aus. Die Push-Cron-Funktion nie manuell mit echtem Token aufrufen — das verdoppelt Benachrichtigungen an Eltern. Dasselbe gilt für `rufe-push` und `adlerschmiede-push`; letztere kennt `{"probe":true}`, das nur zurückgibt, was gesendet würde.
 
 ## Oberfläche
 
