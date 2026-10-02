@@ -63,7 +63,7 @@ module.exports = async function (h) {
     sp.value = "6 je Station (Torwart + 2 gegen 2, 1 wartet)"; sp.dispatchEvent(new Event("input"));
     const mn = document.getElementById("tf-min"), mx = document.getElementById("tf-max"), tw = document.getElementById("tf-tw");
     out.c = { vor: [mn.value, mx.value, tw.checked],
-      hoehen: [mn, mx].map(e => Math.round(parseFloat(getComputedStyle(e).minHeight) || 0)) };   // Fenster ist im Prüfstand verdeckt – gemessen wird die Mindesthöhe
+      hoehen: [mn, mx].map(e => Math.round(parseFloat(getComputedStyle(e).minHeight) || 0)) };   // Fenster ist im Prüfstand verdeckt – gemessen wird die Mindesthöhe (48 px wie jedes Eingabefeld)
     mx.value = "7"; mx.dispatchEvent(new Event("input"));
     sp.value = "8 mit Torwart"; sp.dispatchEvent(new Event("input"));   // Text ändert sich, von Hand Getipptes bleibt, Torwart folgt dem Text
     out.c.nachHand = [mn.value, mx.value];
@@ -109,7 +109,7 @@ module.exports = async function (h) {
   if (JSON.stringify(r.c.vor) !== JSON.stringify(["5", "6", true])) probleme.push("c) vorbelegt: " + JSON.stringify(r.c.vor));
   else if (JSON.stringify(r.c.nachHand) !== JSON.stringify(["5", "7"])) probleme.push("c) von Hand überschrieben: " + JSON.stringify(r.c.nachHand));
   else if (!post || post.body.spieler_min !== 5 || post.body.spieler_max !== 7 || post.body.mit_torwart !== true) probleme.push("c) gesendet: " + JSON.stringify(post && post.body).slice(0, 200));
-  else if (r.c.hoehen.some(x => x < 44)) probleme.push("c) Felder " + r.c.hoehen.join("/") + " px");
+  else if (r.c.hoehen.some(x => x < 48)) probleme.push("c) Felder " + r.c.hoehen.join("/") + " px");
   else zeilen.push("c) Text füllt 5–6 + Torwart vor, „bis 7“ von Hand bleibt, gespeichert 5–7 mit Torwart");
 
   const patch = gesendet.find(x => x.m === "PATCH" && x.body && x.body.name === "Testform Feste Felder");

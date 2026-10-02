@@ -2268,11 +2268,13 @@ const TP_GESAMTANGABE=/\bà\b|\bFelder\b|\binsgesamt\b|\bzusammen\b/i;
 function tpSpielerAusText(text){
   const s=String(text||"").trim();
   const tw=/torw|torh(?:ü|ue)ter|\bTW\b|keeper/i.test(s);
-  const aus=(min,max,sicher)=>({min,max,alle:false,tw,sicher:sicher!==false&&max>0});
-  if(!s)return aus(0,0,false);
-  if(/\b(beliebig|alle)\b/i.test(s)||/^Paare$/i.test(s))return {min:0,max:0,alle:true,tw,sicher:true};
   let warten=0;
   s.replace(/(\d+)\s+(?:warten|wartet|Rotationsspieler)/gi,(_,n)=>{warten+=Number(n);return _;});
+  /* aktiv: wie viele gleichzeitig spielen, wenn der Text Wartende nennt – die Station sagt dann
+     „4 spielen, eines wechselt ein“, auch wenn die Übung bis 6 passt (v572). */
+  const aus=(min,max,sicher)=>({min,max,alle:false,tw,sicher:sicher!==false&&max>0,aktiv:warten>0&&max>0?min:null});
+  if(!s)return aus(0,0,false);
+  if(/\b(beliebig|alle)\b/i.test(s)||/^Paare$/i.test(s))return {min:0,max:0,alle:true,tw,sicher:true,aktiv:null};
   // „… bis 8“ / „bis zu 8“ hinter der eigentlichen Angabe hebt die Obergrenze (Wechselkinder)
   const bis=m=>{ const b=s.match(/\bbis\s+(?:zu\s+)?(\d+)\b/i); return b&&Number(b[1])>m?Number(b[1]):m; };
   // Form 1: „N je Station/Feld/…“
@@ -2305,11 +2307,11 @@ function tpUebungSpanne(formIdx){
   const f=(typeof tpAllForms==="function")?tpAllForms()[formIdx]:null;
   if(!f)return {min:0,max:0,alle:false,tw:false};
   const a=Number(f.spieler_min)||0, b=Number(f.spieler_max)||0;
-  if(a>0&&b>=a)return {min:a,max:b,alle:false,tw:!!f.mit_torwart};
   const t=tpSpielerAusText(f.spieler);
+  if(a>0&&b>=a)return {min:a,max:b,alle:false,tw:!!f.mit_torwart,aktiv:(t.aktiv&&t.aktiv>=a&&t.aktiv<=b)?t.aktiv:null};
   // Torwart auch am Namen: „3+1 gegen 3“, „… plus Torwart“
   const twName=/\d\s*\+\s*1\b|torw|torh(?:ü|ue)ter/i.test(String(f.name||""));
-  return {min:t.min,max:t.max,alle:t.alle,tw:f.mit_torwart!=null?!!f.mit_torwart:(t.tw||twName)};
+  return {min:t.min,max:t.max,alle:t.alle,tw:f.mit_torwart!=null?!!f.mit_torwart:(t.tw||twName),aktiv:t.aktiv};
 }
 /* Der Mindestbedarf allein – fuer alles, was nur eine Zahl braucht (Feldzahl, Warnungen). */
 function tpUebungBedarf(formIdx){ return tpUebungSpanne(formIdx).min; }
@@ -2352,17 +2354,21 @@ function tpGruppeHinweis(selId){
        demselben Satz. Bei einer Spanne spielen alle mit, solange die Gruppe hineinpasst;
        erst oberhalb der Obergrenze wechselt jemand ein. */
     const sp=tpUebungSpanne(idx), aktiv=sp.min;
+    /* v720: Wie viele spielen gleichzeitig? Nennt der Text Wartende, die aktiven Plätze – sonst
+       alle bis zur Obergrenze. */
+    const spielen=Math.min(info.n,sp.aktiv||sp.max||info.n);
     if(sp.alle){
       html+=`<div style="font-size:var(--s-klein);color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: alle spielen mit</div>`;
     }else if(aktiv&&info.n>sp.max){
-      const rest=info.n-sp.max;
-      html+=`<div style="font-size:var(--s-klein);color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: ${sp.max} spielen, ${rest===1?"eines wechselt":rest+" wechseln"} ein</div>`;
+      const rest=info.n-spielen;
+      html+=`<div style="font-size:var(--s-klein);color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: ${spielen} spielen, ${rest===1?"eines wechselt":rest+" wechseln"} ein</div>`;
       /* v656 (PO 28.09.): Ein Wechsler je Station ist machbar, mehr nicht – dann keine neue
          Gruppe, sondern eine Übung, die mit so vielen Kindern läuft, oder die bestehende per
          KI angepasst. */
       if(rest>1)html+=tpGroesserHinweis(selId,idx,info.n);
     }else if(aktiv&&info.n>=aktiv){
-      html+=`<div style="font-size:var(--s-klein);color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: alle spielen</div>`;
+      const rest=info.n-spielen;
+      html+=`<div style="font-size:var(--s-klein);color:var(--text);padding:3px 0 0;line-height:1.5;font-weight:700">👥 ${info.n} Kinder: ${rest>0?`${spielen} spielen, ${rest===1?"eines wechselt":rest+" wechseln"} ein`:"alle spielen"}</div>`;
     }else if(aktiv&&info.n<aktiv){
       const kinder=(typeof _tgPool==="function")?_tgPool().namen.length:0;
       const jetzt=(((typeof tgFor==="function"&&tgFor())||{}).gruppen||[]).length;
