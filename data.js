@@ -4673,6 +4673,10 @@ const PROVOKATIONEN={
   "Korb-Chaos-Funino (360°-Variante)":["Nach einem Treffer darf in dasselbe Tor nicht noch einmal geworfen werden.","Jeder im Team muss den Ball vor dem Wurf gehabt haben."],
   "Endzone und Fähnchen":["Die Endzone wird um die Hälfte schmaler.","Der Punkt zählt doppelt, wenn der Ball über drei Stationen in die Endzone kam."]
 };
+/* v724 (PO 02.10.: „Ich brauche die Stangenübung auch als Aufwärmübung in der Auswahl“): Übungen,
+   die ihre Kategorie behalten (Kachel, Hauptteil-Auswahl), aber zusätzlich beim Aufwärmen zur Wahl
+   stehen. Schlüssel ist der Name – gilt auch für Übungen aus der Bibliothek. */
+const UEBUNG_AUCH_AUFWAERMEN=["Stangentausch"];
 const UEBUNG_ART_VORSCHLAG={
   /* Aufwärmen */
   "Hai & Fische":"spiel",
