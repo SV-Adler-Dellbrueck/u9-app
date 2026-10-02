@@ -678,6 +678,8 @@ function ensureChart(){
 
 // Ort/Adresse → antippbarer Karten-Link (Google Maps, öffnet native App auf dem Handy).
 function mapsUrl(q){ return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(q||""); }
+// v726: Navigation vom aktuellen Standort zum Ziel – den Standort sieht nur die Karten-App, nicht wir.
+function mapsRouteUrl(ziel){ return "https://www.google.com/maps/dir/?api=1&travelmode=driving&destination="+encodeURIComponent(ziel||""); }
 // v710: ohnePin, wo davor schon ein Ortssymbol steht (sonst „◎ 📍 …“ bzw. „📍 Adresse 📍 …“)
 function mapsAnchor(ort,color,ohnePin){ if(!ort)return ""; return `<a href="${mapsUrl(ort)}" target="_blank" rel="noopener" style="color:${color||"var(--blue-text)"};text-decoration:none">${ohnePin?"":"📍 "}${esc(ort)}</a>`; }
 // F3: klarer „Route"-Knopf (Maps-Deep-Link) aus einer Adresse. block=true -> volle Breite fürs

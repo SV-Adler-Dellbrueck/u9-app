@@ -216,6 +216,41 @@ function tmMeetingOffenZeile(t){
   if(!t||t.typ!=="trainermeeting"||!TM_MEET_OFFEN.has(Number(t.id)))return "";
   return `<span style="color:var(--text3)"> · Termin steht noch nicht</span>`;
 }
+/* ═══ v726 · Anfahrt ab Dellbrück ═══════════════════════════════════════════════════
+   PO 02.10.: „auf der Startseite für die Anfahrt die Entfernung … zumindest mal die Entfernung von
+   dem Platz in Dellbrück zum jeweiligen Zielort“. Entschieden: Strecke + Abfahrt + Knopf.
+   Gerechnet wird EINMAL je Adresse auf einem Trainergerät (OpenStreetMap: Nominatim für die
+   Adresse, OSRM von FOSSGIS für die Strecke) und am Termin abgelegt – Elterngeräte fragen keinen
+   fremden Dienst. anfahrt_ort merkt, für welche Adresse gerechnet wurde; ändert sich der Ort,
+   wird neu gerechnet. FOSSGIS erlaubt höchstens eine Anfrage je Sekunde, daher die Pause.
+   Live-Verkehr gibt es bewusst nicht in der App: das macht die Karten-App über „Route starten“. */
+const ANFAHRT_START={lat:50.9692,lon:7.0809};   // Thurner Kamp 97 (Nominatim, 02.10.2026)
+async function anfahrtBerechnen(ort){
+  if(!ort||typeof geocodePlace!=="function")return null;
+  const g=await geocodePlace(ort); if(!g||!g.lat)return null;
+  try{
+    const u=`https://routing.openstreetmap.de/routed-car/route/v1/driving/${ANFAHRT_START.lon},${ANFAHRT_START.lat};${g.lon},${g.lat}?overview=false`;
+    const r=await fetch(u); if(!r.ok)return null;
+    const rt=((await r.json())||{}).routes; if(!rt||!rt[0])return null;
+    return {km:Math.round(rt[0].distance/100)/10, min:Math.max(1,Math.round(rt[0].duration/60))};
+  }catch(e){return null;}
+}
+let _anfahrtLaeuft=false;
+async function anfahrtNachziehen(liste){
+  if(_anfahrtLaeuft)return; _anfahrtLaeuft=true;
+  try{
+    const offen=(liste||[]).filter(t=>t&&t.heim===false&&(t.typ==="spiel"||t.typ==="turnier")&&t.ort&&t.anfahrt_ort!==t.ort).slice(0,5);
+    for(const t of offen){
+      const a=await anfahrtBerechnen(t.ort);
+      if(a){
+        try{ const r=await fetch(`${SB_URL}/rest/v1/termine?id=eq.${Number(t.id)}`,{method:"PATCH",headers:sbAuthHeaders(),
+          body:JSON.stringify({anfahrt_km:a.km,anfahrt_min:a.min,anfahrt_ort:t.ort})});
+          if(r.ok)Object.assign(t,{anfahrt_km:a.km,anfahrt_min:a.min,anfahrt_ort:t.ort}); }catch(e){}
+      }
+      await new Promise(x=>setTimeout(x,1100));
+    }
+  }finally{_anfahrtLaeuft=false;}
+}
 async function tmLoad(){
   const up=document.getElementById("tm-upcoming"),pa=document.getElementById("tm-past");
   if(!up||!pa)return;
@@ -243,6 +278,7 @@ async function tmLoad(){
     pa.innerHTML=vergangen.length?vergangen.slice(0,40).map(tmRow).join(""):'<div style="font-size:var(--s-klein);color:var(--text3);padding:6px">Noch keine vergangenen Termine.</div>';
     kFull.forEach(t=>wetterInto("wx-tm-"+t.id,t.datum,t.ort,t.uhrzeit)); // Wetter nur für die vollen Karten
     kFull.filter(t=>t.heim===true&&(t.typ==="spiel"||t.typ==="turnier")).forEach(buedchenTrainerFill); // Büdchen je Heimspiel
+    if(typeof anfahrtNachziehen==="function")anfahrtNachziehen(kommend);   // v726: Strecke ab Dellbrück für Auswärtstermine
   }catch(e){up.innerHTML='<div style="font-size:var(--s-klein);color:var(--text3)">Offline</div>';}
 }
 // J6: Ansage zu einem Termin – öffnet das Ansage-Modal mit vorbefülltem Termin-Text.
