@@ -4813,6 +4813,10 @@ const UEBUNG_ART_VORSCHLAG={
      die Kennung, die `UEBUNG_ART` als „Spielform“ auflöst. */
   "Raute mit Torwart – Angriff über den anderen Flügel":"spiel",
   "Frei für den Wurf":"spiel",   // v678: Punkte als Ausgang – Hauptteil, Leitfrage 5
+  /* v723 – drei Übungen aus den Auftragspaketen vom 02.10. */
+  "Doppelpass durch die Stangen":"uebung",   // fester Ablauf ohne Gegner
+  "Stangentausch":"weder",   // Wahrnehmung und Absprache, kein Fußballentscheid – wie Nummernlauf
+  "Abschlussspiel – 3+1 gegen 3+1 Raute mit Countdown":"spiel",
   "Korb-Chaos-Funino (360°-Variante)":"spiel",   // v700: Lehrgang 5.2 – 3 gegen 3 als Wurfspiel
   "Endzone und Fähnchen":"spiel",   // v700: L5-7 – Endzonenspiel 4 gegen 4
   /* v684 – Lehrgangsabgabe 4.0: Trainingsform für ERWACHSENE (Ü32), aus PR #210. Im Namen steht
@@ -4995,5 +4999,10 @@ const UEBUNG_BETREUUNG_VORSCHLAG={
   /* v700: Lehrgang 5.2 – der Trainer wirft nach jedem Treffer einen neuen Ball ein und zählt in Runde 2 */
   "Korb-Chaos-Funino (360°-Variante)":"feld",
   /* v684: der Trainer zählt die 8 Sekunden und friert in den ersten Durchgängen ein */
-  "Lehrgang Erwachsene (Ü32) – 4 gegen 4 + Torhüter: Umschalten nach Ballgewinn":"fuehrt"
+  "Lehrgang Erwachsene (Ü32) – 4 gegen 4 + Torhüter: Umschalten nach Ballgewinn":"fuehrt",
+  /* v723: Doppelpass und Stangentausch laufen nach dem Zeigen allein; beim Abschlussspiel zählt
+     der Trainer den Countdown und bringt jeden neuen Ball aus dem Depot */
+  "Doppelpass durch die Stangen":"allein",
+  "Stangentausch":"allein",
+  "Abschlussspiel – 3+1 gegen 3+1 Raute mit Countdown":"fuehrt"
 };
