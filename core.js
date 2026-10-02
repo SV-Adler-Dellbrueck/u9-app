@@ -1152,6 +1152,27 @@ async function pushRenderInto(elId, rolle){
        <div id="${elId}-ruhe" class="ruhezeit-box"></div>`
     : `<button onclick="pushSubscribe('${rolle}').then(ok=>{if(ok)pushRenderInto('${elId}','${rolle}');})" style="${base};border:none;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff">🔔 Benachrichtigungen aktivieren</button>`;
   if(on)ruhezeitRender(elId+"-ruhe",rolle);
+  if(on&&rolle!=="trainer"){ const box=document.getElementById(elId+"-ruhe"); if(box){ const d=document.createElement("div"); d.id=elId+"-schmiede"; box.insertAdjacentElement("afterend",d); schmiedePushRender(d.id); } }
+}
+/* v717: „Aus der Adlerschmiede“ (sonntags 18 Uhr, nur wenn es Neues gibt) – je Konto abschaltbar
+   (Tabelle adlerschmiede_push_aus, wie rufe_push_aus). */
+async function schmiedePushRender(slotId){
+  const el=document.getElementById(slotId); if(!el)return;
+  const uid=typeof sbUid==="function"?sbUid():null; if(!uid){el.innerHTML="";return;}
+  let aus=false;
+  try{const r=await fetch(`${SB_URL}/rest/v1/adlerschmiede_push_aus?user_id=eq.${uid}&select=user_id`,{headers:sbAuthHeaders()});aus=r.ok&&((await r.json())||[]).length>0;}catch(e){}
+  el.innerHTML=`<button type="button" class="schmiede-schalter" role="switch" aria-checked="${!aus}" onclick="schmiedePushSetzen('${slotId}',${!aus})" style="width:100%;min-height:48px;margin-top:10px;padding:10px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);text-align:left;cursor:pointer">🛠️ Aus der Adlerschmiede – sonntags 18 Uhr: <b>${aus?"aus":"an"}</b><span style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:2px">Neue Funktionen der Woche, nur wenn es welche gibt</span></button>`;
+}
+async function schmiedePushSetzen(slotId,aus){
+  const uid=typeof sbUid==="function"?sbUid():null; if(!uid)return;
+  try{
+    const r=aus
+      ?await fetch(`${SB_URL}/rest/v1/adlerschmiede_push_aus`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=minimal,resolution=ignore-duplicates'}),body:JSON.stringify({user_id:uid})})
+      :await fetch(`${SB_URL}/rest/v1/adlerschmiede_push_aus?user_id=eq.${uid}`,{method:"DELETE",headers:sbAuthHeaders({'Prefer':'return=minimal'})});
+    if(!r.ok){toast("Nicht gespeichert","err");return;}
+  }catch(e){toast("Kein Netz","err");return;}
+  toast(aus?"🛠️ Adlerschmiede-Benachrichtigung aus":"🛠️ Adlerschmiede-Benachrichtigung an – sonntags 18 Uhr");
+  schmiedePushRender(slotId);
 }
 /* v705 PO 01.10.: „Wir können ja auch jeden selbst entscheiden lassen, wie seine Ruhezeiten sein
    sollen. Über eine Möglichkeit wie Einstellungen.“ Kacheln: „Nur in Einstellungen“, „Alle
@@ -1234,7 +1255,11 @@ function pushZielEmpfangen(ev){
     const u=new URL(d.url,location.href);
     const gleich=u.origin===location.origin&&u.pathname===location.pathname;
     const nur=[...u.searchParams.keys()];
-    if(gleich&&!nur.length) ok=true;
+    if(gleich&&!nur.length){
+      ok=true;
+      // v717: Sonntags-Push „Aus der Adlerschmiede“ – bei offener App gleich das Fenster öffnen
+      if(u.hash==="#adlerschmiede"&&typeof schmiedeOpen==="function"&&Array.isArray(window._adlerschmiede)&&window._adlerschmiede.length) schmiedeOpen();
+    }
     else if(gleich&&nur.length===1&&nur[0]==="rufe"){
       const raum=u.searchParams.get("rufe")||"";
       try{sessionStorage.setItem("adler_rufe_intent",/^\d+$/.test(raum)?raum:"1");}catch(e){}
