@@ -99,6 +99,7 @@ WICHTIGSTE REGELN:
 - "spieler" nennt die Kinder je Station wie bisher (z. B. "6 je Station (3 gegen 3)").
 - Begriffe korrekt: FUNino = 3 gegen 3 auf 4 Minitore OHNE Torwart. "4+1" = 4 Feldspieler MIT Torwart. Auf Minitore gibt es NIE einen Torwart.
 - Laesst sich die Aenderung nicht sinnvoll umsetzen, setze sie so nah wie moeglich um und erklaere es in einem Satz in "variante".
+- "material" bleibt LEER - das Material steht in der bestehenden Uebung schon in "beschreibung".
 
 ${SKIZZE_REGELN}
 
@@ -302,7 +303,7 @@ Deno.serve(async (req) => {
       spieler: String(u?.spieler || "").slice(0, 40),
       feld: String(u?.feld || "").slice(0, 60),
       material: String(u?.material || "").slice(0, 200),
-      beschreibung: String(u?.beschreibung || "").slice(0, 1600),
+      beschreibung: String(u?.beschreibung || "").slice(0, modus === "variante" ? 2400 : 1600),   // v722: eine Variante kuerzt den Ablauf nicht
       variante: String(u?.variante || "").slice(0, 400),
       coaching: String(u?.coaching || "").slice(0, 300),
       diff: [1, 2, 3].includes(Number(u?.diff)) ? Number(u.diff) : 2,

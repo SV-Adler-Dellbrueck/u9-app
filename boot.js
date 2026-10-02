@@ -89,6 +89,7 @@ function uebungBearbeiten(formIdx){
   if(nh){ nh.hidden=!(plaene||komm); nh.textContent=(plaene||komm)?`Steht in ${plaene} Plan${plaene===1?"":"en"}${komm?` und ${komm} Bewertung${komm===1?"":"en"}`:""} – ein neuer Name wird dort mitgenommen.`:""; }
   var t=document.getElementById("tf-titel"); if(t)t.textContent="✏️ Übung bearbeiten";
   var k=document.getElementById("tf-haupt"); if(k)k.innerHTML='<i class="ti ti-check"></i>Änderungen speichern';
+  var vk=document.getElementById("tf-variante"); if(vk)vk.hidden=false;   // v722: Kopieren auch von hier
 }
 /* v640 – PO: „Auch Übung kopieren macht Sinn. Dann wird eine neue Übung angelegt als
    Alternative, die man dann bearbeiten kann." Geht bei JEDER Übung, auch den mitgelieferten:
@@ -104,8 +105,12 @@ function uebungKopieren(formIdx){
   var f=tpAllForms()[formIdx]; if(!f)return;
   document.getElementById("uebung-modal")?.remove();
   openAddTraining();
+  /* v722: Aus dem Bearbeiten heraus kopiert – ohne das hier schriebe „Übung erfassen“ in das
+     Original statt eine neue Übung anzulegen. */
+  window.TF_EDIT_IDX=null;
+  var nh=document.getElementById("tf-name-hinweis"); if(nh)nh.hidden=true;
   _tfFuellen(f);
-  var nf=document.getElementById("tf-name"); if(nf){ nf.value=_tfFreierName(f.name); }
+  var nf=document.getElementById("tf-name"); if(nf){ nf.readOnly=false; nf.value=_tfFreierName(f.name); }
   var t=document.getElementById("tf-titel"); if(t)t.textContent="📋 Variante von „"+f.name+"“";
   tfKiModus("variante",f.name);   // v722: das KI-Feld fragt jetzt nach der Änderung
   var k=document.getElementById("tf-haupt"); if(k)k.innerHTML='<i class="ti ti-check"></i>Übung erfassen';
@@ -254,6 +259,7 @@ function openAddTraining(){
   var ki=document.getElementById('tf-ki-stand'); if(ki)ki.textContent='';   // v639: KI-Kasten oben startet leer
   window.TF_SKIZZE=null;                                   // jede Übung startet ohne Skizze
   tfKiModus("neu");                                        // v722: KI-Feld wieder für eine neue Übung
+  var vk=document.getElementById("tf-variante"); if(vk)vk.hidden=true;   // nur beim Bearbeiten sichtbar
   tfSpielerZahlSetzen({});                                 // v720: leere Felder, liest den Text beim Tippen
   if(typeof tfSkizzeVorschau==="function")tfSkizzeVorschau(); // Welle 2 – ungeschützt reißt es den Dialog mit
 }
