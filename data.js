@@ -4584,6 +4584,13 @@ TRAININGSFORMEN.forEach(f=>{if((!f.svg||f.svg.length<=10)&&f.id&&TF_SKIZZEN[f.id
    Der Schlüssel ist der NAME, wie überall bei uebung_art. Wird eine Übung umbenannt,
    fällt sie hier heraus und steht wieder in der Durchsicht.
    ═══════════════════════════════════════════════════════════════════════════ */
+/* v714 (PO 02.10.): Zusatzregeln – keine eigene Übung, sondern eine Regel, die in eine andere
+   Spielform eingebaut wird („Lobpflicht ist eher wie eine Provokationsregel zu sehen“). Die vier
+   Spielformen mit eingebauter Regel gehören auf Wunsch des PO ebenfalls hierher. „Training füllen“
+   setzt sie nie an eine Station, sondern schlägt je Hauptteil eine als Provokationsregel für alle
+   Stationen vor. Der Schlüssel ist der Name, wie bei uebung_art. */
+const ZUSATZREGELN=["Lobpflicht nach Tor","Ansage-Passspiel","Blick-vor-Ball","Gegenpressing-Pfeife","Torhüter-Tag","Schwacher-Fuß-Tag",
+  "Balleroberung Bonus","5-Sekunden-Hoch","Umschalt-Sprintpresse","Rauten-Umschalten"];
 const UEBUNG_ART_VORSCHLAG={
   /* Aufwärmen */
   "Hai & Fische":"spiel",

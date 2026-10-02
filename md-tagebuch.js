@@ -74,6 +74,16 @@ function tbAliasMap(){
   return map;
 }
 function tbAlias(name){ return tbAliasMap().get(name) || "Kind ?"; }
+/* v714 (PO 02.10.): „Es ist wichtig, dass ich die Kinder mit klarem Vornamen in den Beschreibungen
+   sehe – nicht nur mit Buchstaben.“ Texte aus der KI-Sortierung kommen mit Decknamen zurück
+   („Kind M.“), weil an KI-Dienste nie Namen gehen. In der App – nur für Trainer – wird der Deckname
+   beim ANZEIGEN wieder zum Vornamen. Gespeichert bleibt der Text, wie er ist; alles, was die App
+   verlässt, geht weiter durch tbPseudonym und wird dort wieder zum Buchstaben. */
+function tbKlarnamen(text){
+  const rueck = {};
+  tbAliasMap().forEach((alias, name)=>{ if(alias && alias!=="Kind ?") rueck[alias.slice(5)] = tbVorname(name); });
+  return String(text||"").replace(/\bKind ([A-Z]{1,2})\b/g, (m, b)=> rueck[b] || m);
+}
 
 /* ── v638 · Klarnamen in der App, Buchstaben nach außen ──────────────────────────
    PO: „… dass für mein eigenes Tagebuch innerhalb der App die Klarnamen, also die Vornamen der
@@ -573,14 +583,14 @@ function tbZeile(e){
   const worte = Array.isArray(e.schlagworte) ? e.schlagworte : [];
   const keim = tbStatus(e)==="keim", offen = tbUnbestaetigt(e);
   const kons = _TB_PUNKTE.filter(p=>Number(p.eintrag_id)===Number(e.id) && p.art==="konsequenz");
-  const konsText = kons.length ? kons.map(p=>esc(p.text)+tbFristText(p)+(p.wirkung?` · ${TB_WIRKUNG[p.wirkung]||""} (${tbDatumDe(p.wirkung_am)})`:(p.erledigt_am?" ✓":""))).join("<br>")
-                               : (e.konsequenz ? esc(e.konsequenz)+(e.konsequenz_bis?` (bis ${tbDatumDe(e.konsequenz_bis)})`:"") : "");
+  const konsText = kons.length ? kons.map(p=>esc(tbKlarnamen(p.text))+tbFristText(p)+(p.wirkung?` · ${TB_WIRKUNG[p.wirkung]||""} (${tbDatumDe(p.wirkung_am)})`:(p.erledigt_am?" ✓":""))).join("<br>")
+                               : (e.konsequenz ? esc(tbKlarnamen(e.konsequenz))+(e.konsequenz_bis?` (bis ${tbDatumDe(e.konsequenz_bis)})`:"") : "");
   const kinder = _TB_KINDER.filter(k=>Number(k.eintrag_id)===Number(e.id)).map(k=>tbKindName(k.kader_id)).filter(Boolean);
   return `<div class="tb-zeile" data-id="${Number(e.id)}" style="background:var(--surface);border:var(--border-s);${offen?"border-left:4px solid var(--purple);":""}border-radius:var(--rl);padding:11px 12px;margin-bottom:6px">
     <div style="font-size:var(--s-klein);color:var(--text3)">${tbDatumDe(e.datum)} · ${esc(stempelText(e.autor, e.updated_at||e.created_at))}${e.ki_vorschlag?(offen?" · ✨ Vorschlag, noch nicht bestätigt":" · ✨ aus Sprachnotiz, bestätigt"):""}${keim?" · 💭 Keim":""}</div>
     ${worte.length?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">${worte.map(x=>`<button type="button" onclick="tbFilter('${jsq(x)}')" aria-pressed="${_TB_FILTER===x}" style="min-height:32px;padding:0 10px;border:1px solid var(--rand-bedien);border-radius:16px;background:${_TB_FILTER===x?"var(--purple-bg)":"var(--surface2)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">#${esc(x)}</button>`).join("")}</div>`:""}
-    <div style="font-size:var(--s-text);font-weight:700;margin-top:2px">${esc(e.ausloeser || (keim ? tbErsterSatz(e.beobachtung||e.diktat, 160) : ""))}</div>
-    ${e.aha?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:4px;line-height:1.5"><b>Aha:</b> ${esc(e.aha)}</div>`:""}
+    <div style="font-size:var(--s-text);font-weight:700;margin-top:2px">${esc(tbKlarnamen(e.ausloeser || (keim ? tbErsterSatz(e.beobachtung||e.diktat, 160) : "")))}</div>
+    ${e.aha?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:4px;line-height:1.5"><b>Aha:</b> ${esc(tbKlarnamen(e.aha))}</div>`:""}
     ${konsText?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:2px;line-height:1.5"><b>Konsequenz:</b> ${konsText}</div>`:""}
     ${kinder.length?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">👤 ${kinder.map(esc).join(", ")}</div>`:""}
     <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
@@ -1235,7 +1245,10 @@ function tbUebungVorschlaege(text){
   const stop = new Set(["immer","nicht","werden","sollen","mehr","diese","dieser","einem","einen","eines","beim","nach","noch","sich","dass","wieder","jetzt","training","trainings","kinder","kindern","übung","übungen","besser"]);
   const worte = [...new Set(String(text||"").toLowerCase().match(/[a-zäöüß]{5,}/g)||[])].filter(w=>!stop.has(w)).map(w=>w.slice(0,Math.max(5,w.length-2)));
   if(!worte.length) return [];
-  return alle.map((f,i)=>{ const t=[f.name,f.kurz,f.coaching,f.kat].join(" ").toLowerCase(); return { i, f, n: worte.filter(w=>t.includes(w)).length }; })
+  /* v714: nur Übungen, die an eine Station gehören – keine Zusatzregel, nichts für Erwachsene,
+     kein Aufwärmen, Torwart oder Mindset-Ritual. */
+  const tauglich = f => f && !["aufwaermen","torwart","mindset"].includes(f.kat) && (typeof tpStationTauglich!=="function" || tpStationTauglich(f));
+  return alle.map((f,i)=>{ if(!tauglich(f)) return { i, f, n:0 }; const t=[f.name,f.kurz,f.coaching,f.kat].join(" ").toLowerCase(); return { i, f, n: worte.filter(w=>t.includes(w)).length }; })
     .filter(x=>x.n>0).sort((a,b)=>b.n-a.n).slice(0,3);
 }
 /* modus „plan“ (Trainingsplan) oder „wirkung“ („Wie war's?“ einer Einheit). */
@@ -1247,18 +1260,23 @@ async function tbFokusInto(elId, datum, modus){
   if(!pkt.length){ box.innerHTML = ""; return; }
   const karte = "background:var(--surface);border:1px solid var(--rand-bedien);border-left:4px solid var(--purple);border-radius:var(--rl);padding:10px 12px;margin:6px 0 10px";
   if(modus==="plan"){
-    box.innerHTML = `<div style="${karte}">
-      <div style="font-size:var(--s-text);font-weight:800">🎯 Vorgenommen – aus dem Tagebuch</div>
-      ${pkt.map(p=>{ const vs = tbUebungVorschlaege(p.text);
-        return `<div style="margin-top:8px;font-size:var(--s-text);line-height:1.5">${esc(p.text)}${p.dauerhaft?' <span style="color:var(--text2)">· gilt dauerhaft</span>':""}
-          ${vs.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">${vs.map(v=>`<button type="button" class="btn btn-sm" onclick="tpShowExercise(${v.i})" style="min-height:44px"><i class="ti ti-eye"></i>${esc(v.f.name)}</button>`).join("")}</div>`:""}</div>`; }).join("")}
-      <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px">Nach dem Training fragt „Wie war's?“, ob es gewirkt hat.</div>
+    /* v714 (PO 02.10.: „Die Ansicht ist etwas zu groß“): je Vorsatz zwei Zeilen; Volltext und
+       Übungen erst auf Tippen. Die Vorsätze bleiben, bis „Wie war's?“ sie abhakt – deshalb steht
+       bei jedem Öffnen derselbe Text da, bis nach dem Training geantwortet ist. */
+    box.innerHTML = `<style>.tb-fokus .tb-fokus-text{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.tb-fokus details[open] .tb-fokus-text{display:block;-webkit-line-clamp:unset;overflow:visible}</style><div class="tb-fokus" style="${karte};padding:8px 12px">
+      <div style="font-size:var(--s-text);font-weight:800">🎯 Vorgenommen <span style="font-weight:600;color:var(--text2);font-size:var(--s-klein)">· ${pkt.length} aus dem Tagebuch, bis „Wie war's?“ abhakt</span></div>
+      ${pkt.map(p=>{ const vs = tbUebungVorschlaege(p.text), t = tbKlarnamen(p.text);
+        return `<details style="margin-top:6px;font-size:var(--s-text);line-height:1.45">
+          <summary style="cursor:pointer;min-height:44px;display:flex;align-items:center;gap:6px"><span class="tb-fokus-text">${esc(t)}</span></summary>
+          ${p.dauerhaft?'<div style="font-size:var(--s-klein);color:var(--text2)">gilt dauerhaft</div>':""}
+          ${vs.length?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Passende Übungen:</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">${vs.map(v=>`<button type="button" class="btn btn-sm" onclick="tpShowExercise(${v.i})" style="min-height:44px"><i class="ti ti-eye"></i>${esc(v.f.name)}</button>`).join("")}</div>`:""}
+        </details>`; }).join("")}
     </div>`;
     return;
   }
   box.innerHTML = `<div style="${karte}">
     <div style="font-size:var(--s-text);font-weight:800">🎯 Hat gewirkt, was ihr euch vorgenommen habt?</div>
-    ${pkt.map(p=>`<div style="margin-top:8px"><div style="font-size:var(--s-text);line-height:1.5">${esc(p.text)}</div>
+    ${pkt.map(p=>`<div style="margin-top:8px"><div style="font-size:var(--s-text);line-height:1.5">${esc(tbKlarnamen(p.text))}</div>
       <div role="group" aria-label="Wirkung" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">${Object.keys(TB_WIRKUNG).map(k=>`<button type="button" class="btn btn-sm" aria-pressed="${p.wirkung===k}" onclick="tbWirkungSetzen(${Number(p.id)},'${k}','${esc(datum)}','${elId}')" style="min-height:44px;${p.wirkung===k?"background:var(--purple);color:#fff;border-color:var(--purple)":""}">${TB_WIRKUNG[k]}</button>`).join("")}</div></div>`).join("")}
   </div>`;
 }
