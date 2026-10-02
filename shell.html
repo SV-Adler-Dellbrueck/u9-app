@@ -366,9 +366,15 @@
         </div>
       </div>
       <div class="mgrid tf-drei">
-        <div class="mg"><label for="tf-spieler">Kinder</label><input type="text" id="tf-spieler" placeholder="6-10"></div>
+        <div class="mg"><label for="tf-spieler">Kinder</label><input type="text" id="tf-spieler" placeholder="3 gegen 3, 1 wartet" oninput="tfSpielerAbleiten()"></div>
         <div class="mg"><label for="tf-feld">Feld</label><input type="text" id="tf-feld" placeholder="20x15 m"></div>
         <div class="mg"><label for="tf-dauer">Minuten</label><input type="text" id="tf-dauer" placeholder="10-15"></div>
+      </div>
+      <!-- v720: Kinder je Station von–bis und Torwart – daraus rechnen „Training füllen“ und „Plan anpassen“ -->
+      <div class="tf-spieler-zahl" style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;margin:2px 0 10px">
+        <div class="mg" style="flex:0 0 auto"><label for="tf-min">Kinder je Station von</label><input type="number" id="tf-min" min="1" max="30" inputmode="numeric" style="width:84px;min-height:44px" oninput="this.dataset.hand='1'"></div>
+        <div class="mg" style="flex:0 0 auto"><label for="tf-max">bis</label><input type="number" id="tf-max" min="1" max="30" inputmode="numeric" style="width:84px;min-height:44px" oninput="this.dataset.hand='1'"></div>
+        <label style="display:flex;align-items:center;gap:8px;min-height:44px;font-size:var(--s-text);cursor:pointer"><input type="checkbox" id="tf-tw" style="width:22px;height:22px" onchange="this.dataset.hand='1'">🧤 mit Torwart <span style="color:var(--text2);font-size:var(--s-klein)">(zählt mit)</span></label>
       </div>
 
       <div class="tf-abschnitt">So läuft sie</div>
