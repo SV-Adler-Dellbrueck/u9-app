@@ -85,10 +85,18 @@ async function galerieOpen(terminId,titel){
     ${mdlHead("gal-modal","📸",`Fotos${titel?" · "+esc(titel):""}`,"Team-Galerie zum Termin – für alle Team-Eltern","#7c3aed")}
     ${consentBlock}
     <div style="padding:10px;border:1.5px dashed var(--text3);border-radius:10px;margin-bottom:12px">
-      <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:6px">Foto hinzufügen</div>
-      <input id="gal-foto" type="file" accept="image/jpeg, image/png, image/webp" multiple style="width:100%;font-size:var(--s-text);margin-bottom:8px">
-      <button class="btn btn-p btn-sm" onclick="galerieUpload(this,${terminId})">📸 Hochladen</button>
-      <div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px">Mehrere Fotos auf einmal möglich – sie werden automatisch verkleinert. Für alle Team-Eltern sichtbar.</div>
+      <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:8px">Foto hinzufügen</div>
+      <!-- v721 (PO 02.10.): „direkt Fotos aufnehmen klicken … und es landet direkt in der App“.
+           Kachel: „Zwei Knöpfe“. capture öffnet die Kamera des Handys, das Foto geht sofort in den
+           Upload – auf dem iPhone landet es nicht in der Fotomediathek, auf Android meist auch
+           nicht (das entscheidet die Kamera-App des Herstellers). Die Galerie bleibt für mehrere. -->
+      <div class="gal-knoepfe" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <label class="gal-knopf" id="gal-kamera-knopf" style="position:relative;display:flex;align-items:center;justify-content:center;gap:6px;min-height:48px;padding:0 10px;border-radius:12px;background:#7c3aed;color:#fff;font-weight:800;font-size:var(--s-text);cursor:pointer;text-align:center">📷 Foto aufnehmen
+          <input id="gal-kamera" type="file" accept="image/jpeg, image/png, image/webp" capture="environment" onchange="galerieUpload(this.closest('label'),${terminId},'gal-kamera')" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"></label>
+        <label class="gal-knopf" id="gal-foto-knopf" style="position:relative;display:flex;align-items:center;justify-content:center;gap:6px;min-height:48px;padding:0 10px;border-radius:12px;border:1.5px solid #7c3aed;background:var(--surface);color:var(--text);font-weight:800;font-size:var(--s-text);cursor:pointer;text-align:center">🖼️ Aus Galerie
+          <input id="gal-foto" type="file" accept="image/jpeg, image/png, image/webp" multiple onchange="galerieUpload(this.closest('label'),${terminId},'gal-foto')" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"></label>
+      </div>
+      <div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px">Nach dem Foto wird es sofort hochgeladen und verkleinert. Aus der Galerie gehen bis zu 20 auf einmal. Für alle Team-Eltern sichtbar.</div>
     </div>
     <div id="gal-body"><div style="text-align:center;padding:20px;color:var(--text3)">Lade…</div></div>
   </div>`;
@@ -120,17 +128,22 @@ async function galerieFoto(id,path){
 /* K8: Mehrere Fotos auf einmal – jedes wird clientseitig komprimiert (fotoCompress) und
    nacheinander hochgeladen; der Button zeigt den Fortschritt. So ist der Weg „nach dem
    Spiel alles in die App statt in die WhatsApp-Gruppe" wirklich bequem. */
-async function galerieUpload(btn,terminId){
-  const input=document.getElementById("gal-foto");
+async function galerieUpload(btn,terminId,inputId){
+  const input=document.getElementById(inputId||"gal-foto");   // v721: Kamera oder Galerie
   const files=input&&input.files?[...input.files]:[];
   if(!files.length){toast("Bitte Fotos wählen","err");return;}
   if(files.length>20){toast("Bitte max. 20 Fotos auf einmal","err");return;}
   if(btn)btn.disabled=true;
-  const btnText=btn?btn.innerHTML:"";
+  /* v721: Der Knopf ist ein <label> mit dem Datei-Feld darin – beim Fortschritt wird nur der
+     sichtbare Text getauscht, das Feld bleibt erhalten. */
+  const textKnoten=btn?[...btn.childNodes].find(n=>n.nodeType===3&&n.textContent.trim()):null;
+  const btnText=textKnoten?textKnoten.textContent:(btn?btn.innerHTML:"");
+  const zeige=t=>{ if(!btn)return; if(textKnoten)textKnoten.textContent=t; else btn.innerHTML=t; };
+  if(btn&&btn.tagName==="LABEL"){ btn.style.opacity=".6"; btn.style.pointerEvents="none"; }
   let hoch=0, fehler=0;
   for(let i=0;i<files.length;i++){
     const file=files[i];
-    if(btn)btn.innerHTML=`⬆️ ${i+1}/${files.length} …`;
+    zeige(`⬆️ ${i+1}/${files.length} … `);
     if(file.size>15*1024*1024){fehler++;continue;} // absurde Größen überspringen (Kompression schafft den Rest)
     try{
       const blob=await fotoCompress(file,1000); // 1000px: gute Event-Qualität, schont Storage
@@ -138,12 +151,12 @@ async function galerieUpload(btn,terminId){
       const up=await fetch(`${SB_URL}/storage/v1/object/termin_media/${path}`,{method:"POST",headers:{'Authorization':'Bearer '+sbToken(),'Content-Type':'image/jpeg'},body:blob});
       if(!up.ok){fehler++;continue;}
       const r=await fetch(`${SB_URL}/rest/v1/termin_media`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({termin_id:terminId,foto_path:path})});
-      if(sbCheck401(r)){if(btn){btn.disabled=false;btn.innerHTML=btnText;}return;}
+      if(sbCheck401(r)){if(btn){btn.disabled=false;zeige(btnText);btn.style.opacity="";btn.style.pointerEvents="";}return;}
       if(!r.ok){fehler++;continue;}
       hoch++;
     }catch(e){fehler++;}
   }
-  if(btn){btn.disabled=false;btn.innerHTML=btnText;}
+  if(btn){btn.disabled=false;zeige(btnText);btn.style.opacity="";btn.style.pointerEvents="";}
   if(input)input.value="";
   if(hoch)toast(`📸 ${hoch} Foto${hoch===1?"":"s"} hochgeladen ✓${fehler?` · ${fehler} fehlgeschlagen`:""}`);
   else toast("Upload fehlgeschlagen","err");
