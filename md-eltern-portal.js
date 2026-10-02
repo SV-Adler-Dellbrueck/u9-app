@@ -970,7 +970,7 @@ async function elternDashLoad(){
       <!-- PO: „Beim Training ist der Satz mit der endgültigen Aufstellung egal. nur bei spiel
            jemand turnier" – beim Training wird niemand aufgestellt, da wäre der Zusatz nur
            eine Einschränkung ohne Anlass. Der erste Satz gilt überall. -->
-      <div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px">Aktiven Status nochmal tippen = Rückmeldung entfernen.${(termin.typ==="spiel"||termin.typ==="turnier")?" Deine Rückmeldung ist ein Hinweis – die endgültige Aufstellung entscheidet der Trainer.":""}</div>
+      ${(termin.typ==="spiel"||termin.typ==="turnier")?`<div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px">Deine Rückmeldung ist ein Hinweis – die Aufstellung entscheidet das Trainerteam.</div>`:""}<!-- v718: „Aktiven Status nochmal tippen = entfernen“ steht in der Hilfe -->
       ${termin.typ==="training"?'<div id="betreuung-card"></div>':""}
       <div id="helfer-card"></div><!-- PO: Hilfe wird kurzfristig entschieden, nicht im Voraus -->
 
@@ -990,9 +990,10 @@ async function elternDashLoad(){
   html=html.replace('<div id="eltern-top-slot"></div>',()=>terminHtml)
            .replace('<div id="eltern-offen-slot"></div>',()=>offenHtml);
   // ── TERMINE ── (Karussell + Kalender-Abo)
-  html+=sec("📅 Termine");
-  html+=elternTermineCarouselHtml(termineListe,kids,rsvpAll,termin&&termin.id); // v686: Liste ohne den Termin von oben, geantwortet wird oben
-  html+=card(`<button onclick="elternTermineOpen()" style="width:100%;min-height:46px;padding:12px;border:1.5px solid #1e3a8a;border-radius:10px;background:#fff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📅 Alle Termine &amp; Kalender-Abo</button>`);
+  /* v718 „entschlacken“: Überschrift nur, wenn es weitere Termine gibt; „Alle Termine &
+     Kalender-Abo“ steht als Kachel unter „Mehr“ statt als eigene Karte mit einem Knopf. */
+  const weitereTermine=elternTermineCarouselHtml(termineListe,kids,rsvpAll,termin&&termin.id); // v686: Liste ohne den Termin von oben, geantwortet wird oben
+  if(weitereTermine){ html+=sec("📅 Termine"); html+=weitereTermine; }
   /* PO: „Rückblick unter Termine setzen." Der Nach-dem-Spiel-Gruß stand über den Terminen
      und drängte sich damit vor das, was zu tun ist. Er bleibt aber eine SICHTBARE Karte und
      wandert bewusst nicht in eine Kategorie: er ist das einzige auf dieser Seite, das nichts
@@ -1022,7 +1023,7 @@ async function elternDashLoad(){
       <span style="font-size:var(--s-teil);opacity:.85">›</span>
     </button>`;
   }).join("");
-  html+=`<div id="eltern-level-slot" style="margin:4px 0 12px"></div>`;  // C1: kollektives Team-Level
+  // v718: Das Team-Level steht groß in der Kabine (für die Kinder) – hier nicht noch einmal.
   // ── MEHR VOM TEAM (einklappbar – Referenz/Selteneres) · kasse kam schon parallel oben ──
   // ── Kategorie-Buttons: öffnen je ein fokussiertes Fenster (statt Inline-Akkordeon). Die
   //    Inhalte liegen (versteckt) im Overlay, damit die Async-Loader ihre Slots weiter füllen. ──
@@ -1033,6 +1034,8 @@ async function elternDashLoad(){
   html+=sec("Mehr");
   // v637: Der Weg zum Trainerteam steht zuerst und heißt so, wie Eltern danach suchen.
   html+=catBtn('kontakt','🗣️','Trainerteam kontaktieren','Frage oder Elterngespräch, Benachrichtigungen','linear-gradient(135deg,#475569,#334155)');
+  // v718: vorher eine eigene Karte „Termine“ mit nur diesem Knopf
+  html+=`<button type="button" id="alle-termine-kachel" onclick="elternTermineOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:none;border-radius:14px;background:linear-gradient(135deg,#1e3a8a,#1e40af);color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.08)"><span aria-hidden="true" style="font-size:var(--s-seite);line-height:1">📅</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Alle Termine &amp; Kalender-Abo</span><span style="display:block;font-size:var(--s-klein);opacity:.92;margin-top:1px">Ganze Saison, im eigenen Kalender abonnieren</span></span><span aria-hidden="true" style="font-size:var(--s-teil);opacity:.85">›</span></button>`;
   /* v699: Mannschaftskasse als eigene Kachel – alle Eltern lesen Kassenstand und jede Bewegung;
      darunter „Kasse führen“, nur für die Kasse (elternKasseRolleLoad füllt den Slot). */
   const mkSaldo=kasse&&kasse.saldo!=null?`Kassenstand ${Number(kasse.saldo).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})} € · Ausgaben und Beiträge`:"Kassenstand, Ausgaben und Beiträge";
@@ -1142,7 +1145,6 @@ async function elternDashLoad(){
   elternPushHinweis();                          // v694: Hinweis oben, solange keine Benachrichtigungen an sind
   elternMatchGrussLoad(kids);                   // A1/A2: Nach-dem-Spiel-Gruß pro Kind
   elternKannJetztLoad(kids);                    // Paket 1: „Das kann dein Kind jetzt"
-  if(typeof teamLevelLoad==="function")teamLevelLoad("eltern-level-slot"); // C1: Team-Level
   if(WAESCHE_AKTIV)elternWaescheLoad(kids);    // Trikot-Wäsche-Rotator (aktuell ausgeblendet)
   elternSkillLoad(kids);   // Skill der Woche
   pulsNudgeLoad();         // Puls-Erinnerung fürs jüngste Event ohne Feedback
@@ -2230,7 +2232,7 @@ const ELTERN_TOUR=[
   {emo:"🦅", t:"Willkommen bei den Adlern", vor:_elZu,
    d:"Hier läuft alles rund um dein Kind bei der U9 zusammen. Diese Tour zeigt dir, wo was ist – du startest sie jederzeit über ❓ oben neu."},
   {emo:"👍", t:"Der nächste Termin", sel:["#termin-card"], vor:_elZu,
-   d:"Ganz oben steht der nächste Termin. Training gilt als zugesagt – sag nur ab, wenn dein Kind nicht kommt. Bei Spielen und Festivals tippst du auf Zu- oder Absage."},
+   d:"Ganz oben steht der nächste Termin. Training gilt als zugesagt – sag nur ab, wenn dein Kind nicht kommt. Bei Spielen und Festivals tippst du auf Zu- oder Absage. Nochmal auf die gewählte Antwort tippen nimmt sie zurück."},
   {emo:"📬", t:"Offene Rückmeldungen", sel:["#eltern-offen-card"],
    d:"Stehen in den nächsten 14 Tagen Antworten aus, siehst du sie hier gesammelt."},
   {emo:"🎒", t:"Alles zum Termin", sel:['[onclick^="terminDetailOpen"]'],
@@ -2245,6 +2247,8 @@ const ELTERN_TOUR=[
    d:"Die Kabine gibt es auch als eigene App fürs Tablet oder Handy deines Kindes. Du koppelst sie mit einem Code und legst die Zeit pro Tag fest."},
   {emo:"🪪", t:"Die Karte deines Kindes", sel:['button[onclick^="elternCatOpen(\'kind-"]'],
    d:"Foto, Rolle und schöne Momente – ohne Bewertungszahlen. Hier findest du auch, was dein Kind gerade lernt."},
+  {emo:"📅", t:"Alle Termine", sel:["#alle-termine-kachel"],
+   d:"Die ganze Saison auf einen Blick – und als Abo für den eigenen Kalender, damit neue Termine von selbst erscheinen."},
   {emo:"🗣️", t:"Trainerteam erreichen", sel:['button[onclick="elternCatOpen(\'kontakt\')"]'],
    d:"Fragen, Hinweise, Absprachen: So erreichst du uns direkt."},
   {emo:"🔒", t:"Datenschutz & Freigaben", sel:['button[onclick="elternCatOpen(\'datenschutz\')"]'],
