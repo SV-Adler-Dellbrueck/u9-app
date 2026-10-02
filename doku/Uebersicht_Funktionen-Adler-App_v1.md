@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v720 (Oktober 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v721 (Oktober 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite, Stadionheft).
 
@@ -184,7 +184,7 @@ Kinder sehen nie Bewertungen und nie Zahlen zu anderen Kindern. Was die Kabine �
 | **Team-Level & Meilensteine** | Die ganze Mannschaft steigt gemeinsam auf; Team-Marken für Tore, Spiele, Federn. Das Team-Level zählt ab dem Federn-Stichtag (seit v647). | Erfolg wird als Team erlebt, nicht als Rangliste. |
 | **Unsere Regeln** | Der Codex des Teams in Kindersprache – sechs kurze Sätze, vom Trainerteam pflegbar. | Die Kinder kennen die Regeln in ihren eigenen Worten, nicht in denen der Erwachsenen. |
 | **Sprachlob & Skill der Woche** | Das gesprochene Lob des Trainers anhören; das Video zur Wochen-Challenge sehen. | Persönliche Ansprache und klare Übungsaufgabe. |
-| **Galerie** | Fotos des Teams, ausschließlich mit Freigabe. | Erinnerungen, datenschutzkonform. |
+| **Galerie** | Fotos des Teams, ausschließlich mit Freigabe. Seit v721 am Termin zwei Knöpfe: „📷 Foto aufnehmen“ öffnet direkt die Kamera des Handys und lädt das Foto sofort hoch (auf dem iPhone landet es nicht in der Fotomediathek, auf Android meist nicht – das entscheidet die Kamera-App), „🖼️ Aus Galerie“ nimmt bis zu 20 auf einmal. | Erinnerungen, datenschutzkonform. |
 | **Mein Taktikbrett** | Seit v653 unter „Mehr entdecken“: Spieler und Ball schieben, mit dem Finger malen (Weiß, Gelb), radieren, neu anfangen – FUNiño, 3+1 oder 4+1. Große Steine, kein Textfeld, nichts geht an den Server; die Zeit zählt zur Appzeit. | Die Kinder probieren selbst aus, wohin sie laufen – so wie sie es am Platz gesehen haben. |
 
 ---

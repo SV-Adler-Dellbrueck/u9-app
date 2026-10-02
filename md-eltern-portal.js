@@ -2236,7 +2236,7 @@ const ELTERN_TOUR=[
   {emo:"📬", t:"Offene Rückmeldungen", sel:["#eltern-offen-card"],
    d:"Stehen in den nächsten 14 Tagen Antworten aus, siehst du sie hier gesammelt."},
   {emo:"🎒", t:"Alles zum Termin", sel:['[onclick^="terminDetailOpen"]'],
-   d:"Tippe auf einen Termin: Wetter, Adresse mit Route, „Was muss mit?“, Fahrgemeinschaft und „Wer hilft mit?“. Die ganze Saison und das Kalender-Abo findest du unten unter „Mehr“ → „Alle Termine“."},
+   d:"Tippe auf einen Termin: Wetter, Adresse mit Route, „Was muss mit?“, Fahrgemeinschaft, „Wer hilft mit?“ und die Fotos zum Termin – „📷 Foto aufnehmen“ öffnet direkt die Kamera. Die ganze Saison und das Kalender-Abo findest du unten unter „Mehr“ → „Alle Termine“."},
   {emo:"✅", t:"Zu erledigen", sel:["#eltern-todo-btn"],
    d:"Aufgaben für euch als Familie, zum Beispiel der Grillhütten-Dienst. Könnt ihr nicht, tippt ihr „Ersatz suchen“ – eine andere Familie kann übernehmen."},
   {emo:"📡", t:"Liveticker", sel:["#eltern-live-slot","#eltern-ticker-slot"],
