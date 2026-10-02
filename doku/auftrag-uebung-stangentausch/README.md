@@ -3,9 +3,9 @@
 Stand 02.10.2026. Entstanden im Projekt-Chat nach einer Beschreibung von Charles. Eigene
 Form für die U9 I, Kategorie `wahrnehmung` (Charles nannte „Wahrnehmung und Spaß“; das
 Schema kennt nur eine Kategorie pro Übung). Dauer 6 Minuten, von Charles festgelegt.
-Die Form ist für beliebig viele Kinder gedacht (Viereck, Fünfeck, Sechseck …, auch zu
-zweit), höchstens 14, weil der Kader nicht mehr hat. Die Skizze zeigt als Grundbild das
-Viereck.
+Die Form geht mit 2 bis 6 Kindern (Viereck, Fünfeck, Sechseck, auch zu zweit), optimal sind
+vier. Bei mehr als sechs Kindern wird eine zweite Gruppe aufgemacht, weil es in einem
+größeren Vieleck zu chaotisch wird. Die Skizze zeigt als Grundbild das Viereck.
 
 ## Die Übung
 
@@ -16,11 +16,11 @@ Viereck.
     "name": "Stangentausch",
     "kat": "wahrnehmung",
     "kurz": "Die Kinder stehen im Vieleck, jedes hält eine Stange senkrecht. Zwei sprechen sich ab, tauschen die Plätze und fangen dabei die Stange des anderen, bevor sie umfällt.",
-    "spieler": "2-14",
+    "spieler": "2-6",
     "feld": "Vieleck, Abstand 2 m",
     "dauer": "6",
-    "ablauf": "AUFBAU: Die Kinder stehen in einem Vieleck, je 2 m auseinander: zu viert ein Viereck, zu fünft ein Fünfeck, zu sechst ein Sechseck, und so weiter. Auch zu zweit geht die Form. Jedes Kind hält eine Stange senkrecht auf dem Boden. ABLAUF: Zwei Kinder sprechen sich ab, die Plätze zu tauschen. Dann laufen beide los und lassen die Stange los. Die Stange darf nicht umfallen: Jedes Kind fängt die Stange des anderen auf, bevor sie den Boden berührt. Danach sucht sich jedes Kind den nächsten Partner für einen neuen Tausch. PROVOKATION MIT BALL AM FUSS: Jedes Kind führt beim Tausch einen Ball am Fuß mit. Die Bälle liegen zu Beginn neben den Kindern bereit. TYPISCHE FEHLER: Losgelaufen ohne Zeichen, zu früh oder zu spät losgelassen, Stange wird nicht angeschaut. SKALIERUNG: Das Vieleck wächst mit der Zahl der Kinder, von 2 bis 14 Kindern. Bei 8 oder 12 Kindern ein großes Vieleck oder mehrere kleine nebeneinander. BEOBACHTUNG: Welche Kinder sprechen sich vorher ab, welche laufen einfach los?",
-    "varianten": "Leichter: Die Kinder stehen näher zusammen. Schwerer: Die Abstände werden größer, oder der Tausch läuft mit Ball am Fuß. Die Zahl der Ecken lässt sich ebenfalls ändern.",
+    "ablauf": "AUFBAU: Die Kinder stehen in einem Vieleck, je 2 m auseinander: optimal zu viert ein Viereck, zu fünft ein Fünfeck, zu sechst ein Sechseck. Auch zu zweit geht die Form. Jedes Kind hält eine Stange senkrecht auf dem Boden. ABLAUF: Zwei Kinder sprechen sich ab, die Plätze zu tauschen. Dann laufen beide los und lassen die Stange los. Die Stange darf nicht umfallen: Jedes Kind fängt die Stange des anderen auf, bevor sie den Boden berührt. Danach sucht sich jedes Kind den nächsten Partner für einen neuen Tausch. PROVOKATION MIT BALL AM FUSS: Jedes Kind führt beim Tausch einen Ball am Fuß mit. Die Bälle liegen zu Beginn neben den Kindern bereit. TYPISCHE FEHLER: Losgelaufen ohne Zeichen, zu früh oder zu spät losgelassen, Stange wird nicht angeschaut. SKALIERUNG: Eine Gruppe hat 2 bis 6 Kinder, optimal sind 4. Bei mehr als 6 Kindern eine zweite Gruppe aufmachen, zum Beispiel 8 Kinder = 2 x 4, 12 Kinder = 3 x 4. BEOBACHTUNG: Welche Kinder sprechen sich vorher ab, welche laufen einfach los?",
+    "varianten": "Leichter: Die Kinder stehen näher zusammen. Schwerer: Die Abstände werden größer, oder der Tausch läuft mit Ball am Fuß. Die Zahl der Ecken lässt sich ebenfalls ändern, bis höchstens sechs.",
     "coaching": "Woran merkt dein Partner, dass du losläufst? Wann gibst du das Zeichen? Wohin schaust du, wenn du losläufst?",
     "diff": 2,
     "skizze": {
@@ -37,18 +37,17 @@ Viereck.
 
 ## Warum die Skizze so aussieht
 
-Quer, Grundbild mit vier Kindern, Seitenlänge im Bild 70 Punkte für 2 m. Jedes Kind hat
-seine Stange außen neben sich stehen und seinen Ball daneben liegen (Stufe 1 ohne Ball,
-Stufe 2 mit Ball am Fuß). Gezeigt ist ein Tausch: A und C laufen diagonal aneinander
-vorbei (Pfeile 1 und 2, Laufwege), B und D halten ihre Stange. Die beiden Pfeile liegen
-absichtlich versetzt, damit Nummer und Pfeilspitze sich nicht verdecken. Die Stangen sind
-als Gerät gezeichnet, weil die App kein „Stange in der Hand“ kennt. Weitere Eckenzahlen
-sind im Text beschrieben, nicht gezeichnet; die Skizze bleibt das Viereck.
+Quer, Grundbild mit vier Kindern (die optimale Gruppengröße), Seitenlänge im Bild 70 Punkte
+für 2 m. Jedes Kind hat seine Stange außen neben sich stehen und seinen Ball daneben liegen
+(Stufe 1 ohne Ball, Stufe 2 mit Ball am Fuß). Gezeigt ist ein Tausch: A und C laufen
+diagonal aneinander vorbei (Pfeile 1 und 2, Laufwege), B und D halten ihre Stange. Die
+beiden Pfeile liegen absichtlich versetzt, damit Nummer und Pfeilspitze sich nicht
+verdecken. Die Stangen sind als Gerät gezeichnet, weil die App kein „Stange in der Hand“
+kennt. Fünfeck und Sechseck sind im Text beschrieben, nicht gezeichnet.
 
 Gegen die echte App geprüft (Playwright, Harness des Repos): `_eiSkizzeFehler` leer,
 `_euPruefung` ohne Fehler, engster Spielerabstand 70. Materialliste laut App:
-4 Stangen · 4 Bälle (Grundbild; mit mehr Kindern entsprechend mehr, bei 14 Kindern also
-14 Stangen und 14 Bälle).
+4 Stangen · 4 Bälle (Grundbild; bei sechs Kindern 6 Stangen und 6 Bälle je Gruppe).
 
 ## Dabei
 
