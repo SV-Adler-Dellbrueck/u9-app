@@ -2,7 +2,8 @@
    a) Eigene Übung: ✏️ in der Liste und „Übung bearbeiten“ in der Detailansicht; mitgelieferte nicht.
    b) Die Maske öffnet gefüllt, Titel „Übung bearbeiten“, Knopf „Änderungen speichern“.
    c) Speichern schickt PATCH an genau diese Zeile (kein neues POST), die Liste zeigt den neuen Stand.
-   d) Steht die Übung schon in einem Plan, bleibt der Name gesperrt (Pläne finden sie über den Namen).
+   d) Steht die Übung schon in einem Plan, bleibt der Name seit v716 FREI (PO 02.10.) – der Hinweis sagt,
+      dass der neue Name in Plänen mitgenommen wird (uebung_umbenennen).
    e) Danach erfasst die Maske wieder neu.
    f) PO: „Auch Übung kopieren macht Sinn“ – bei jeder Übung, auch der mitgelieferten: Maske gefüllt,
       Name „… (Variante)“, „Übung erfassen“ legt eine NEUE Übung an, das Original bleibt.
@@ -80,9 +81,9 @@ module.exports = async function (h) {
   if (f.neu !== 1 || f.original !== f.bibName || posts.length !== 1 || posts[0].body.name !== f.bibName + " (Variante)") probleme.push("f) Kopie nicht neu angelegt: " + JSON.stringify({ neu: f.neu, posts: posts.map(x => x.body && x.body.name) }));
   if (!r.g.offen || r.g.neu !== 1) probleme.push("g) doppelter Name nicht abgewiesen: " + JSON.stringify(r.g));
   if (r.c.ablauf !== "Neuer Ablauf mit Abschluss." || r.c.anzahl !== 1 || r.c.zu !== "none") probleme.push("c) lokal: " + JSON.stringify(r.c));
-  if (!r.d.gesperrt || !r.d.hinweis) probleme.push("d) Name im Plan nicht gesperrt: " + JSON.stringify(r.d));
+  if (r.d.gesperrt || !r.d.hinweis) probleme.push("d) Name im Plan gesperrt oder ohne Hinweis: " + JSON.stringify(r.d));
   if (!/Eigene Übung/.test(r.e.titel) || r.e.knopf !== "Übung erfassen" || !r.e.frei || r.e.edit !== null) probleme.push("e) Maske bleibt im Bearbeiten: " + JSON.stringify(r.e));
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
-  zeilen.push(`Kopie: „${f.name}“`, `Maske: ${b.titel} · ${b.knopf} · PATCH ${patch ? patch.suche : "–"} · im Plan: Name gesperrt ${r.d.gesperrt}`);
+  zeilen.push(`Kopie: „${f.name}“`, `Maske: ${b.titel} · ${b.knopf} · PATCH ${patch ? patch.suche : "–"} · im Plan: Name frei ${!r.d.gesperrt}, Hinweis ${r.d.hinweis}`);
   return h.ergebnis("v640 Übungen bearbeiten und kopieren", !probleme.length, probleme.concat(zeilen));
 };
