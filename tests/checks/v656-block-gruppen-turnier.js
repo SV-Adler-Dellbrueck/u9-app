@@ -102,6 +102,8 @@ module.exports = async function (h) {
     tpUebungKiAnpassen(idx, 9); await warte(300);
     const t = document.getElementById("tf-ki-text");
     out.kiText = t ? t.value : "";
+    // v722: Die Maske ist eine Variante der Übung – ihr Name steht im Namensfeld, die KI bekommt die ganze Übung mit
+    out.maskeName = (document.getElementById("tf-name") || {}).value || "";
     out.maskeOffen = (document.getElementById("training-modal") || {}).style?.display !== "none";
     out.kiMitNamen = kinderNamen.some(n => out.kiText.includes(n));
     if (typeof closeAddTraining === "function") closeAddTraining();
@@ -170,7 +172,7 @@ module.exports = async function (h) {
     if (!r.kiKnopf) probleme.push("Kein Knopf „Per KI anpassen“");
     if (r.hoehen.some(x => x < 44)) probleme.push("Knöpfe unter 44 px: " + r.hoehen.join("/"));
     if (!r.maskeOffen) probleme.push("Der KI-Knopf öffnet die Übungsmaske nicht");
-    if (!/für 9 Kinder/.test(r.kiText) || !r.kiText.includes(r.uebung)) probleme.push("Der KI-Auftrag nennt Übung oder Kinderzahl nicht: " + r.kiText.slice(0, 120));
+    if (!/für 9 Kinder/i.test(r.kiText) || !(r.kiText.includes(r.uebung) || r.maskeName.startsWith(r.uebung))) probleme.push("Der KI-Auftrag nennt Übung oder Kinderzahl nicht: " + r.kiText.slice(0, 120));
     if (r.kiMitNamen) probleme.push("Im KI-Auftrag steht ein Kindername");
   }
   // e)

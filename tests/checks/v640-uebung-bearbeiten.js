@@ -77,7 +77,7 @@ module.exports = async function (h) {
   const posts = schreib.filter(x => x.methode === "POST");
   if (posts.some(x => x.body && x.body.name === eigen.name)) probleme.push("c) Bearbeiten legt eine neue Übung an");
   const f = r.f;
-  if (!f.knopf || f.name !== f.bibName + " (Variante)" || !/kopieren/.test(f.titel) || f.knopfText !== "Übung erfassen" || f.edit !== null || !f.ablauf) probleme.push("f) Kopieren: " + JSON.stringify(f));
+  if (!f.knopf || f.name !== f.bibName + " (Variante)" || !/kopieren|Variante von/.test(f.titel) || f.knopfText !== "Übung erfassen" || f.edit !== null || !f.ablauf) probleme.push("f) Kopieren: " + JSON.stringify(f));
   if (f.neu !== 1 || f.original !== f.bibName || posts.length !== 1 || posts[0].body.name !== f.bibName + " (Variante)") probleme.push("f) Kopie nicht neu angelegt: " + JSON.stringify({ neu: f.neu, posts: posts.map(x => x.body && x.body.name) }));
   if (!r.g.offen || r.g.neu !== 1) probleme.push("g) doppelter Name nicht abgewiesen: " + JSON.stringify(r.g));
   if (r.c.ablauf !== "Neuer Ablauf mit Abschluss." || r.c.anzahl !== 1 || r.c.zu !== "none") probleme.push("c) lokal: " + JSON.stringify(r.c));
