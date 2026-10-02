@@ -1,6 +1,6 @@
 {
   "schema": "adler-uebungen/1",
-  "stand": "2026-09-30-1",
+  "stand": "2026-10-02-1",
   "uebungen": [
     {
       "name": "Warm up Adler",
@@ -6408,6 +6408,548 @@
               ]
             ]
           }
+        ]
+      }
+    },
+    {
+      "name": "Doppelpass durch die Stangen",
+      "kat": "technik",
+      "kurz": "Zwei Kinder spielen Doppelpass über eine Stangenlinie, tauschen oben Ball und Rolle, kommen zurück und schließen aufs Minitor ab.",
+      "spieler": "4",
+      "feld": "ca. 6 x 20 m je Station",
+      "dauer": "10",
+      "ablauf": "AUFBAU: Vier Stangen in einer Linie (Abstand ca. 3 m), 3 m hinter der letzten Stange der Dummy. Unten zwei Hütchen als Start, 3 m davor das Minitor. Je ein Kind steht links und rechts der Stangenlinie, zwei weitere warten hinter den Startkindern mit eigenem Ball. ABLAUF: Hin: A und B laufen links und rechts der Stangenlinie nach oben und spielen sich den Ball im Doppelpass durch die Lücken zu. Oben am Dummy übergibt der Ballführer den Ball, beide tauschen Seite und Rolle. Zurück: Doppelpass in die andere Richtung auf den getauschten Seiten. Unten schließt ein Kind aufs Minitor ab. Beide klatschen mit dem nächsten Paar ab, das startet. REGELN: Der Ball bleibt flach. Pass nur durch die Lücke zwischen zwei Stangen. Abschluss erst unten. TYPISCHE FEHLER: Pass zu hart oder zu früh, Partner läuft nicht mit, Ball bleibt bei der Übergabe liegen, Abschluss aus dem Stand ohne Anlauf. SKALIERUNG: 8 Kinder = 2 Stationen, 12 = 3, 16 = 4, immer 4 Kinder je Station, nie mehr als 2 warten. BEOBACHTUNG: Welches Kind sucht die Lücke früh, welches wartet auf den Ball?",
+      "varianten": "Leichter: Stangen weiter auseinander, Pass mit der Innenseite aus dem Stand. Schwerer: Das zweite Paar startet schon, wenn das erste oben am Dummy ankommt, oder Doppelpass nur mit dem schwächeren Fuß.",
+      "coaching": "Wohin läufst du, nachdem du abgespielt hast? Wie bekommt dein Partner den Ball in den Lauf? Was machst du, bevor du aufs Tor schießt?",
+      "diff": 2,
+      "skizze": {
+        "hoch": true,
+        "z": [
+          [
+            18,
+            24,
+            144,
+            232
+          ]
+        ],
+        "tor": [
+          [
+            80,
+            238,
+            "h",
+            20
+          ]
+        ],
+        "h": [
+          [
+            80,
+            212,
+            "y"
+          ],
+          [
+            100,
+            212,
+            "y"
+          ]
+        ],
+        "ger": [
+          [
+            90,
+            190,
+            "stange",
+            "y"
+          ],
+          [
+            90,
+            165,
+            "stange",
+            "y"
+          ],
+          [
+            90,
+            140,
+            "stange",
+            "y"
+          ],
+          [
+            90,
+            115,
+            "stange",
+            "y"
+          ],
+          [
+            90,
+            64,
+            "dummy",
+            "y"
+          ]
+        ],
+        "s": [
+          [
+            62,
+            212,
+            "g",
+            "A"
+          ],
+          [
+            118,
+            212,
+            "g",
+            "B"
+          ],
+          [
+            48,
+            238,
+            "g",
+            "C"
+          ],
+          [
+            132,
+            238,
+            "g",
+            "D"
+          ]
+        ],
+        "b": [
+          [
+            70,
+            219
+          ],
+          [
+            56,
+            245
+          ]
+        ],
+        "p": [
+          [
+            74,
+            186,
+            106,
+            169,
+            "p",
+            1
+          ],
+          [
+            106,
+            161,
+            74,
+            144,
+            "p",
+            2
+          ],
+          [
+            74,
+            136,
+            106,
+            119,
+            "p",
+            3
+          ],
+          [
+            106,
+            111,
+            74,
+            94,
+            "p",
+            4
+          ]
+        ],
+        "tx": [
+          [
+            90,
+            268,
+            "Hin: Doppelpass"
+          ]
+        ],
+        "schritte": [
+          {
+            "s": [
+              [
+                118,
+                84,
+                "g",
+                "A"
+              ],
+              [
+                62,
+                84,
+                "g",
+                "B"
+              ],
+              [
+                48,
+                238,
+                "g",
+                "C"
+              ],
+              [
+                132,
+                238,
+                "g",
+                "D"
+              ]
+            ],
+            "b": [
+              [
+                70,
+                91
+              ],
+              [
+                56,
+                245
+              ]
+            ],
+            "p": [
+              [
+                106,
+                84,
+                74,
+                84,
+                "p"
+              ]
+            ],
+            "tx": [
+              [
+                90,
+                44,
+                "Oben: Rolle tauschen"
+              ]
+            ]
+          },
+          {
+            "s": [
+              [
+                118,
+                200,
+                "g",
+                "A"
+              ],
+              [
+                62,
+                176,
+                "g",
+                "B"
+              ],
+              [
+                48,
+                238,
+                "g",
+                "C"
+              ],
+              [
+                132,
+                238,
+                "g",
+                "D"
+              ]
+            ],
+            "b": [
+              [
+                126,
+                207
+              ],
+              [
+                56,
+                245
+              ]
+            ],
+            "p": [
+              [
+                74,
+                119,
+                106,
+                136,
+                "p"
+              ],
+              [
+                106,
+                144,
+                74,
+                161,
+                "p"
+              ],
+              [
+                74,
+                169,
+                106,
+                186,
+                "p"
+              ],
+              [
+                112,
+                208,
+                98,
+                234,
+                "s"
+              ]
+            ],
+            "tx": [
+              [
+                90,
+                268,
+                "Zurück + Abschluss"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Stangentausch",
+      "kat": "wahrnehmung",
+      "kurz": "Die Kinder stehen im Vieleck, jedes hält eine Stange senkrecht. Zwei sprechen sich ab, tauschen die Plätze und fangen dabei die Stange des anderen, bevor sie umfällt.",
+      "spieler": "2-6",
+      "feld": "Vieleck, Abstand 2 m",
+      "dauer": "6",
+      "ablauf": "AUFBAU: Die Kinder stehen in einem Vieleck, je 2 m auseinander: optimal zu viert ein Viereck, zu fünft ein Fünfeck, zu sechst ein Sechseck. Auch zu zweit geht die Form. Jedes Kind hält eine Stange senkrecht auf dem Boden. ABLAUF: Zwei Kinder sprechen sich ab, die Plätze zu tauschen. Dann laufen beide los und lassen die Stange los. Die Stange darf nicht umfallen: Jedes Kind fängt die Stange des anderen auf, bevor sie den Boden berührt. Danach sucht sich jedes Kind den nächsten Partner für einen neuen Tausch. PROVOKATION MIT BALL AM FUSS: Jedes Kind führt beim Tausch einen Ball am Fuß mit. Die Bälle liegen zu Beginn neben den Kindern bereit. TYPISCHE FEHLER: Losgelaufen ohne Zeichen, zu früh oder zu spät losgelassen, Stange wird nicht angeschaut. SKALIERUNG: Eine Gruppe hat 2 bis 6 Kinder, optimal sind 4. Bei mehr als 6 Kindern eine zweite Gruppe aufmachen, zum Beispiel 8 Kinder = 2 x 4, 12 Kinder = 3 x 4. BEOBACHTUNG: Welche Kinder sprechen sich vorher ab, welche laufen einfach los?",
+      "varianten": "Leichter: Die Kinder stehen näher zusammen. Schwerer: Die Abstände werden größer, oder der Tausch läuft mit Ball am Fuß. Die Zahl der Ecken lässt sich ebenfalls ändern, bis höchstens sechs.",
+      "coaching": "Woran merkt dein Partner, dass du losläufst? Wann gibst du das Zeichen? Wohin schaust du, wenn du losläufst?",
+      "diff": 2,
+      "skizze": {
+        "z": [
+          [
+            55,
+            25,
+            170,
+            130
+          ]
+        ],
+        "ger": [
+          [
+            95,
+            46,
+            "stange",
+            "y"
+          ],
+          [
+            185,
+            46,
+            "stange",
+            "y"
+          ],
+          [
+            185,
+            134,
+            "stange",
+            "y"
+          ],
+          [
+            95,
+            134,
+            "stange",
+            "y"
+          ]
+        ],
+        "s": [
+          [
+            105,
+            55,
+            "g",
+            "A"
+          ],
+          [
+            175,
+            55,
+            "g",
+            "B"
+          ],
+          [
+            175,
+            125,
+            "g",
+            "C"
+          ],
+          [
+            105,
+            125,
+            "g",
+            "D"
+          ]
+        ],
+        "b": [
+          [
+            96,
+            63
+          ],
+          [
+            184,
+            63
+          ],
+          [
+            184,
+            117
+          ],
+          [
+            96,
+            117
+          ]
+        ],
+        "p": [
+          [
+            120,
+            70,
+            160,
+            110,
+            "l",
+            1
+          ],
+          [
+            172,
+            98,
+            132,
+            58,
+            "l",
+            2
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            168,
+            "Absprechen, loslaufen, Stange fangen"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Abschlussspiel – 3+1 gegen 3+1 Raute mit Countdown",
+      "kat": "raute",
+      "kurz": "Das Abschlussspiel des Tages: zwei Teams in der Raute, der Trainer zählt im Angriff einen Countdown, ein Tor nach direktem Pass bringt zwei Punkte.",
+      "spieler": "8–12 (zwei Teams zu je 4, bis zu zwei Wechsler je Team)",
+      "feld": "Kreis-Feld ca. 25 x 20 m, zwei Jugendtore (Ersatz: auf jeder Seite zwei Minitore)",
+      "dauer": "8",
+      "ablauf": "AUFBAU: Feld ca. 25 x 20 m, Mittellinie markiert, an jeder Seite ein Jugendtor mit Torwart. Ist das zweite Jugendtor nicht verfügbar, stehen auf jeder Seite zwei Minitore statt des Jugendtors. Zwei Teams zu je vier Kindern (Torwart und drei Feldspieler) in Leibchen. Der Trainer steht mit dem Balldepot an der Seitenlinie. ABLAUF: 3+1 gegen 3+1 in der Raute: Torwart hinten, zwei Flitzer seitlich, Jäger vorn. Verliert ein Team den Ball, geht er ins Aus oder fällt ein Tor, bringt der Trainer sofort einen neuen Ball aus dem Balldepot ins Spiel. Gespielt wird acht Minuten. PROVOKATIONSREGELN, nacheinander zuschalten: 1) Countdown: Im Angriff zählt der Trainer laut herunter, die Länge legt er selbst fest. Läuft der Countdown ab, wird der Angriff abgebrochen und der Trainer bringt einen neuen Ball. 2) Ein normales Tor zählt einen Punkt, ein Tor nach direktem vorherigem Pass zwei Punkte. 3) Tore zählen nur, wenn die Grundordnung der Raute bei Torerfolg sichtbar war. 4) Steigerung: Tore zählen nur nach vorherigem Pass. TYPISCHE FEHLER: Alle laufen zum Ball, die Raute fällt nach dem Ballgewinn auseinander, der Torwart bleibt auf der Linie, Schuss ohne Blick nach dem Mitspieler. SKALIERUNG: 8 Kinder = ein Spiel, 12 Kinder = ein Spiel mit je zwei Wechslern pro Team, 16 Kinder = zwei Felder. BEOBACHTUNG: Wer von Torwart, Flitzern und Jäger fehlt in der Raute, wenn ein Tor nicht zählt?",
+      "varianten": "Leichter: Der Countdown ist länger, es gelten nur die Regeln 1 und 2. Schwerer: Der Countdown ist kürzer, oder die Regeln 3 und 4 gelten zusammen.",
+      "coaching": "In diesem Spielblock nur ermutigen und loben, wenn die Raute steht.",
+      "diff": 3,
+      "skizze": {
+        "z": [
+          [
+            20,
+            28,
+            240,
+            130
+          ]
+        ],
+        "li": [
+          [
+            140,
+            28,
+            140,
+            158,
+            "m"
+          ]
+        ],
+        "tor": [
+          [
+            8,
+            75,
+            "v",
+            36,
+            "j"
+          ],
+          [
+            262,
+            75,
+            "v",
+            36,
+            "j"
+          ]
+        ],
+        "ger": [
+          [
+            140,
+            167,
+            "trainer",
+            "w"
+          ],
+          [
+            162,
+            167,
+            "depot",
+            "y"
+          ]
+        ],
+        "s": [
+          [
+            34,
+            93,
+            "g",
+            "T"
+          ],
+          [
+            88,
+            50,
+            "g",
+            "F"
+          ],
+          [
+            88,
+            136,
+            "g",
+            "F"
+          ],
+          [
+            146,
+            93,
+            "g",
+            "J"
+          ],
+          [
+            248,
+            93,
+            "r",
+            "T"
+          ],
+          [
+            210,
+            72,
+            "r",
+            "F"
+          ],
+          [
+            210,
+            114,
+            "r",
+            "F"
+          ],
+          [
+            172,
+            60,
+            "r",
+            "J"
+          ]
+        ],
+        "b": [
+          [
+            96,
+            143
+          ]
+        ],
+        "p": [
+          [
+            104,
+            122,
+            136,
+            102,
+            "p",
+            1
+          ],
+          [
+            166,
+            96,
+            258,
+            108,
+            "s",
+            2
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            18,
+            "Pass, dann Tor: 2 Punkte"
+          ]
         ]
       }
     }
