@@ -407,7 +407,7 @@ function dsgvoRenderGate(onOk){
       <li><b>Im Team sichtbar</b> (für angemeldete Eltern und die Kabine): Vornamen und Trikotnummern, Helfer- und Fahrgemeinschaftslisten, Fotos nur mit eurer Freigabe.</li>
       <li><b>Fotos:</b> in einem privaten Speicher, nur mit ausdrücklicher Freigabe je Kind in drei Stufen (App-intern, Video, öffentlich; Standard: aus). Auf öffentlichen Seiten und im Adler Nest nur mit der Stufe „öffentlich“ – dort zusammen mit Vorname, Anfangsbuchstabe des Nachnamens und Jahrgang, nie mit dem Geburtsdatum.</li>
       <li><b>Keine Weitergabe:</b> keine Werbung, kein Verkauf; keine Zahlungs-/Kontodaten in der App.</li>
-      <li><b>Technik und Dienste:</b> Datenbank bei Supabase in Frankfurt (EU); die App-Dateien samt Schrift und Symbolen kommen von GitHub Pages – kein Aufruf bei Google Fonts oder anderen Schriftdiensten; Wetter über open-meteo, Karten über OpenStreetMap (nur Orts- und Termindaten); Push-Mitteilungen über den Dienst eures Browsers (ohne Kindernamen).</li>
+      <li><b>Technik und Dienste:</b> Datenbank bei Supabase in Frankfurt (EU); die App-Dateien samt Schrift und Symbolen kommen von GitHub Pages – kein Aufruf bei Google Fonts oder anderen Schriftdiensten; Wetter über open-meteo, Karten über OpenStreetMap (nur Orts- und Termindaten), die Strecke ab Dellbrück rechnet ein Trainergerät einmal über den OpenStreetMap-Routendienst von FOSSGIS – euer Standort wird dafür nicht abgefragt; Push-Mitteilungen über den Dienst eures Browsers (ohne Kindernamen).</li>
       <li><b>KI:</b> Das Trainerteam nutzt einen KI-Dienst (Anbieter in den USA) als Schreibhilfe für Nachbereitung und Berichte. Kindernamen werden vorher durch „Kind 1“, „Kind 2“ ersetzt und erst auf dem Gerät des Trainers zurückübersetzt.</li>
     </ul>
     <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:var(--s-klein);color:#475569;margin:8px 0">
@@ -968,6 +968,7 @@ async function elternDashLoad(){
       ${(typeof elternPlatzHinweisHtml==="function")?elternPlatzHinweisHtml(termin):""}
       <div style="font-size:var(--s-karte);font-weight:800;margin-top:2px">${m.icon} ${esc(termin.titel||termin.gegner||m.label)}${heimLabel(termin)?` <span style="font-size:var(--s-klein);font-weight:800;padding:2px 7px;border-radius:10px;background:${termin.heim?"#dcfce7":"#fef3c7"};color:${termin.heim?"#15803d":"#b45309"};white-space:nowrap">${heimLabel(termin)}</span>`:""}</div>
       <div style="font-size:var(--s-text);color:#64748b;margin-top:3px">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"})}${zeit?" · "+zeit:""}${termin.ort?" · "+mapsAnchor(termin.ort):""}${termin.platz?" · 🏟️ "+esc(termin.platz):""}</div>
+      ${(typeof elternAnfahrtHtml==="function")?elternAnfahrtHtml(termin):""}
       <div id="wetter-eltern"></div>
       ${trainerJa.length?`<div style="font-size:var(--s-klein);color:#64748b;margin-top:4px">👤 Trainer dabei: ${trainerJa.map(esc).join(", ")}</div>`:""}
       ${kids.length>=2?`<button onclick="elternRsvpAllYes(${termin.id})" style="width:100%;min-height:44px;margin-top:10px;padding:9px;border:1.5px solid #059669;border-radius:10px;background:#f0fdf4;color:#15803d;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">👍 Alle ${kids.length} Kinder zusagen</button>`:""}
@@ -1400,6 +1401,25 @@ function tdAdresse(t){
   if(t.heim===true)return mapsAnchor(VEREIN_ADRESSE,null,true);
   if((t.typ==="spiel"||t.typ==="turnier")&&t.heim===false)return '<span style="color:#b45309">folgt – bitte beim Trainer erfragen</span>';
   return "";
+}
+/* v726 · Anfahrt auf der Karte „Nächster Termin“ (nur auswärts): Strecke und Fahrzeit ab dem Platz
+   in Dellbrück (am Termin abgelegt, siehe anfahrtNachziehen in md-gegner.js), daraus die späteste
+   Abfahrt (Treffzeit bzw. Anstoß minus Fahrzeit minus 5 Minuten, auf 5 Minuten abgerundet), und
+   „Route starten“ – die Karten-App rechnet vom eigenen Standort mit Verkehr. */
+function elternAnfahrtHtml(t){
+  if(!t||t.heim!==false||!(t.typ==="spiel"||t.typ==="turnier")||!t.ort)return "";
+  const km=Number(t.anfahrt_km), min=Number(t.anfahrt_min);
+  let zeile="";
+  if(km>0&&min>0&&t.anfahrt_ort===t.ort){
+    let ab="";
+    const m=String(t.treffzeit||t.uhrzeit||"").match(/^(\d{1,2}):(\d{2})/);
+    if(m){ let x=(+m[1])*60+(+m[2])-min-5; x=Math.floor(x/5)*5;
+      if(x>0)ab=` · Abfahrt spätestens <b>${Math.floor(x/60)}:${String(x%60).padStart(2,"0")} Uhr</b>`; }
+    const kmTxt=String(km<10?km.toFixed(1):Math.round(km)).replace(".",",");
+    zeile=`<div style="font-size:var(--s-text);color:var(--text2);margin-top:6px">🚗 ca. ${kmTxt} km · ${min} Min. ab Platz Dellbrück (ohne Verkehr)${ab}</div>
+      <div style="font-size:var(--s-klein);color:var(--text3);margin-top:1px">Strecke: OSRM · © OpenStreetMap-Mitwirkende</div>`;
+  }
+  return zeile+`<a href="${(typeof mapsRouteUrl==="function"?mapsRouteUrl:mapsUrl)(t.ort)}" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:44px;margin-top:8px;border:1.5px solid #1e3a8a;border-radius:10px;background:#eef2ff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:800;text-decoration:none">🧭 Route starten <span style="font-weight:600">(mit Verkehr)</span></a>`;
 }
 async function terminDetailOpen(id){
   const t=(ELTERN_TERMINE||[]).find(x=>Number(x.id)===Number(id)); if(!t){toast("Termin nicht gefunden","err");return;}
@@ -2237,7 +2257,7 @@ const ELTERN_TOUR=[
   {emo:"🦅", t:"Willkommen bei den Adlern", vor:_elZu,
    d:"Hier läuft alles rund um dein Kind bei der U9 zusammen. Diese Tour zeigt dir, wo was ist – du startest sie jederzeit über ❓ oben neu."},
   {emo:"👍", t:"Der nächste Termin", sel:["#termin-card"], vor:_elZu,
-   d:"Ganz oben steht der nächste Termin. Training gilt als zugesagt – sag nur ab, wenn dein Kind nicht kommt. Bei Spielen und Festivals tippst du auf Zu- oder Absage. Nochmal auf die gewählte Antwort tippen nimmt sie zurück."},
+   d:"Ganz oben steht der nächste Termin. Training gilt als zugesagt – sag nur ab, wenn dein Kind nicht kommt. Bei Spielen und Festivals tippst du auf Zu- oder Absage. Nochmal auf die gewählte Antwort tippen nimmt sie zurück. Bei Auswärtsspielen stehen hier Treffzeit, Strecke ab Dellbrück und die späteste Abfahrt; „Route starten“ öffnet die Navigation mit Verkehr."},
   {emo:"📬", t:"Offene Rückmeldungen", sel:["#eltern-offen-card"],
    d:"Stehen in den nächsten 14 Tagen Antworten aus, siehst du sie hier gesammelt."},
   {emo:"🎒", t:"Alles zum Termin", sel:['[onclick^="terminDetailOpen"]'],
