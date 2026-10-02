@@ -924,7 +924,12 @@ async function elternDashLoad(){
     const m=(typeof TM_META!=="undefined"&&TM_META[termin.typ])||{icon:"📅",label:termin.typ,col:"#1e3a8a"};
     const d=new Date(termin.datum+"T00:00:00");
     const wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
-    const zeit=termin.uhrzeit?String(termin.uhrzeit).slice(0,5)+" Uhr":"";
+    /* v725 (PO 02.10., Bildschirmfoto): „nur noch die Anstoßzeit … und nicht mehr der Treffpunkt“.
+       Seit v686 steht jeder Termin nur einmal – der nächste nicht mehr zusätzlich in der Liste, die
+       „Treffen …“ zeigte. Deshalb trägt diese Karte die Treffzeit jetzt selbst, wie das Termin-Fenster. */
+    const tz=termin.treffzeit?String(termin.treffzeit).slice(0,5):"";
+    const beginn=(termin.typ==="spiel"||termin.typ==="turnier")?"Anstoß":"Beginn";
+    const zeit=termin.uhrzeit?(tz?`🕒 Treffen ${tz} · ${beginn} ${String(termin.uhrzeit).slice(0,5)} Uhr`:String(termin.uhrzeit).slice(0,5)+" Uhr"):(tz?`🕒 Treffen ${tz}`:"");
     const offen=kids.filter(k=>!rsvp[k.spieler_id]);
     const trainerJa=Object.keys(termin.trainer_status||{}).filter(n=>(termin.trainer_status||{})[n]==="ja");
     // Zu-/Absage direkt am Termin – erneuter Klick auf den aktiven Status entfernt ihn wieder.
