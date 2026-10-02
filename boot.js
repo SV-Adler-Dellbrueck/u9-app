@@ -89,6 +89,7 @@ function uebungBearbeiten(formIdx){
   if(nh){ nh.hidden=!(plaene||komm); nh.textContent=(plaene||komm)?`Steht in ${plaene} Plan${plaene===1?"":"en"}${komm?` und ${komm} Bewertung${komm===1?"":"en"}`:""} – ein neuer Name wird dort mitgenommen.`:""; }
   var t=document.getElementById("tf-titel"); if(t)t.textContent="✏️ Übung bearbeiten";
   var k=document.getElementById("tf-haupt"); if(k)k.innerHTML='<i class="ti ti-check"></i>Änderungen speichern';
+  var vk=document.getElementById("tf-variante"); if(vk)vk.hidden=false;   // v722: Kopieren auch von hier
 }
 /* v640 – PO: „Auch Übung kopieren macht Sinn. Dann wird eine neue Übung angelegt als
    Alternative, die man dann bearbeiten kann." Geht bei JEDER Übung, auch den mitgelieferten:
@@ -104,10 +105,30 @@ function uebungKopieren(formIdx){
   var f=tpAllForms()[formIdx]; if(!f)return;
   document.getElementById("uebung-modal")?.remove();
   openAddTraining();
+  /* v722: Aus dem Bearbeiten heraus kopiert – ohne das hier schriebe „Übung erfassen“ in das
+     Original statt eine neue Übung anzulegen. */
+  window.TF_EDIT_IDX=null;
+  var nh=document.getElementById("tf-name-hinweis"); if(nh)nh.hidden=true;
   _tfFuellen(f);
-  var nf=document.getElementById("tf-name"); if(nf){ nf.value=_tfFreierName(f.name); nf.focus(); nf.select&&nf.select(); }
-  var t=document.getElementById("tf-titel"); if(t)t.textContent="📋 Übung kopieren";
+  var nf=document.getElementById("tf-name"); if(nf){ nf.readOnly=false; nf.value=_tfFreierName(f.name); }
+  var t=document.getElementById("tf-titel"); if(t)t.textContent="📋 Variante von „"+f.name+"“";
+  tfKiModus("variante",f.name);   // v722: das KI-Feld fragt jetzt nach der Änderung
   var k=document.getElementById("tf-haupt"); if(k)k.innerHTML='<i class="ti ti-check"></i>Übung erfassen';
+}
+/* v722 (PO 02.10.): „Wenn ich eine Übung kopieren will … öffnet sich die gleiche Übung als
+   Alternative, die ich dann nochmal ändern kann und mit einem KI-Feld die Variation oder Änderung
+   einsprechen kann.“ Das KI-Feld oben im Formular hat zwei Gesichter: bei einer neuen Übung
+   beschreibt man sie ganz („die KI füllt alles aus“), bei einer Kopie nur, was anders sein soll –
+   die KI bekommt dann die ganze Übung mit (ki-uebung, modus „variante“) und ändert nur das. */
+function tfKiModus(modus,name){
+  window.TF_KI_MODUS=modus==="variante"?"variante":"neu";
+  const v=window.TF_KI_MODUS==="variante";
+  const t=document.getElementById("tf-ki-t"), sub=document.querySelector(".tf-ki .tf-ki-s"), feld=document.getElementById("tf-ki-text"), los=document.getElementById("tf-ki-los"), st=document.getElementById("tf-ki-stand");
+  if(t)t.textContent=v?"✨ Was soll anders sein?":"✨ Beschreib die Übung – die KI füllt alles aus";
+  if(sub)sub.textContent=v?`Sprich oder tipp nur die Änderung – die KI kennt „${name||"die Übung"}“ und passt Ablauf, Kinder, Feld und Skizze an. Was du nicht nennst, bleibt.`:"Aufbau, Ablauf, wie viele Kinder, was du coachst. Name, Felder und Skizze entstehen daraus; danach änderst du, was nicht passt.";
+  if(feld){ feld.value=""; feld.placeholder=v?"Zum Beispiel: Statt Minitore zwei Jugendtore, nur 4 Kinder, der Verteidiger startet hinter dem Ball.":"Zum Beispiel: Vier Hütchen in einer Reihe, jedes Kind dribbelt im Slalom durch und schießt aufs Minitor. Danach außen zurück. Acht Kinder, Feld 20 mal 15."; }
+  if(los)los.innerHTML=v?'<i class="ti ti-sparkles"></i>Änderung einarbeiten':'<i class="ti ti-sparkles"></i>KI-Auswertung';
+  if(st)st.textContent="";
 }
 /* v720: Felder „Kinder je Station von–bis“ und „mit Torwart“. Gespeicherte Werte gewinnen; sonst
    liest tpSpielerAusText den Text vor. Von Hand Getipptes (data-hand) überschreibt das Tippen im
@@ -237,6 +258,8 @@ function openAddTraining(){
   document.getElementById('training-modal').style.display='block';
   var ki=document.getElementById('tf-ki-stand'); if(ki)ki.textContent='';   // v639: KI-Kasten oben startet leer
   window.TF_SKIZZE=null;                                   // jede Übung startet ohne Skizze
+  tfKiModus("neu");                                        // v722: KI-Feld wieder für eine neue Übung
+  var vk=document.getElementById("tf-variante"); if(vk)vk.hidden=true;   // nur beim Bearbeiten sichtbar
   tfSpielerZahlSetzen({});                                 // v720: leere Felder, liest den Text beim Tippen
   if(typeof tfSkizzeVorschau==="function")tfSkizzeVorschau(); // Welle 2 – ungeschützt reißt es den Dialog mit
 }
@@ -2443,10 +2466,11 @@ function tpUebungKiAnpassen(idx,n){
   const f=tpAllForms()[idx]; if(!f)return;
   uebungKopieren(idx);
   const t=document.getElementById("tf-ki-text"); if(!t)return;
-  t.value=`Passe diese Übung für ${n} Kinder an einer Station an. Alle sollen spielen, höchstens ein Kind wechselt ein. Gleiches Ziel, gleiche Idee – nur Feld, Teams oder Regeln anpassen.\n\nÜbung: ${f.name}\nBisher: ${f.spieler||"–"} Kinder, Feld ${f.feld||"–"}\nAblauf: ${f.ablauf||""}${f.coaching?"\nCoaching: "+f.coaching:""}`;
+  // v722: Die Kopie ist eine Variante – ins Feld gehört nur die Änderung, die Übung kennt die KI
+  t.value=`Für ${n} Kinder an einer Station anpassen: Alle sollen spielen, höchstens ein Kind wechselt ein. Gleiches Ziel, gleiche Idee – nur Feld, Teams oder Regeln anpassen.`;
   if(typeof feldWachsen==="function")feldWachsen(t);
   if(typeof tfKiAuswerten==="function")tfKiAuswerten();
-  else { const st=document.getElementById("tf-ki-stand"); if(st)st.textContent="Die KI lädt noch – gleich „KI-Auswertung“ tippen."; }
+  else { const st=document.getElementById("tf-ki-stand"); if(st)st.textContent="Die KI lädt noch – gleich „Änderung einarbeiten“ tippen."; }
 }
 /* ═══ v631 · Ein Trainer, mehrere Felder ═══════════════════════════════════════════
    PO: „… Trainingsformen, die auch mit einem einzigen Trainer durchführbar sind“. Seit v570

@@ -412,6 +412,8 @@
       <div class="tf-fuss">
         <button class="btn btn-p tf-haupt" id="tf-haupt" onclick="saveCustomTraining()"><i class="ti ti-check"></i>Übung erfassen</button>
         <button class="btn" onclick="closeAddTraining()">Abbrechen</button>
+        <!-- v722 (PO 02.10., Bildschirmfoto „Wo ist kopieren?“): auch aus dem Bearbeiten heraus -->
+        <button class="btn" id="tf-variante" hidden onclick="if(window.TF_EDIT_IDX!=null)uebungKopieren(window.TF_EDIT_IDX)"><i class="ti ti-copy"></i>Als Variante kopieren</button>
       </div>
     </div>
   </div>
