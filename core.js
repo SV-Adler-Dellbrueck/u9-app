@@ -1013,8 +1013,9 @@ function schriftHinweisZeigen(ziel){
   const el=typeof ziel==="string"?document.getElementById(ziel):ziel; if(!el)return;
   let weg=false; try{ weg=!!(localStorage.getItem("adler_schrift_hinweis")||localStorage.getItem("adler_schrift")); }catch(e){ weg=true; }
   if(weg||_seiteFestHell()||/\/kinder\//.test(location.pathname)){ el.innerHTML=""; return; }
-  el.innerHTML=`<div class="schrift-hinweis" role="note" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:var(--surface);color:var(--text);border:1px solid var(--rand-bedien);border-left:4px solid var(--blue,#2563eb);border-radius:12px;padding:10px 12px;margin:0 0 12px">
-    <div style="flex:1 1 200px;font-size:var(--s-text);line-height:1.45"><b>🔎 Schrift zu klein?</b> Oben auf „A“ tippen macht sie größer – nur auf diesem Handy.</div>
+  // v718: nur noch die Frage – wie es weitergeht, sagt die Meldung nach „Größer stellen“ (Knopf „A“)
+  el.innerHTML=`<div class="schrift-hinweis" role="note" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:var(--surface);color:var(--text);border:1px solid var(--rand-bedien);border-left:4px solid var(--blue,#2563eb);border-radius:12px;padding:8px 10px;margin:0 0 10px">
+    <div style="flex:1 1 140px;font-size:var(--s-text);line-height:1.45"><b>🔎 Schrift zu klein?</b></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn" style="min-height:44px" onclick="schriftHinweisAntwort(true)">Größer stellen</button>
       <button class="btn" style="min-height:44px" onclick="schriftHinweisAntwort(false)">Nein danke</button>
@@ -1329,14 +1330,14 @@ async function pushKarteRender(slotId,rolle){
   const T={
     aus:{text:`Wenn du künftig ${was} direkt aufs Handy bekommen möchtest, schalte hier die Benachrichtigungen ein.`,knopf:"Benachrichtigungen einschalten",fn:`pushKarteAn('${slotId}','${rolle}')`},
     ios:{text:"Auf dem iPhone kommen Benachrichtigungen nur an, wenn die Adler-App auf dem Home-Bildschirm liegt. Das dauert eine Minute.",knopf:"So geht’s",fn:"pushAnleitung('ios')"},
-    gesperrt:{text:"Benachrichtigungen sind auf diesem Handy blockiert – deshalb fragt es nicht mehr nach. Die Sperre lässt sich in den Einstellungen aufheben.",knopf:"So hebst du die Sperre auf",fn:"pushAnleitung('gesperrt')"}
+    gesperrt:{text:"Auf diesem Handy blockiert – in den Einstellungen lässt sich das ändern.",knopf:"So hebst du die Sperre auf",fn:"pushAnleitung('gesperrt')"}
   }[fall];
-  el.innerHTML=`<div id="push-hinweis" data-fall="${fall}" role="region" aria-labelledby="push-hinweis-titel" style="position:relative;background:var(--surface);border:1.5px solid var(--rand-bedien);border-left:4px solid var(--blue);border-radius:14px;padding:14px 52px 14px 16px;margin-bottom:12px">
-    <div id="push-hinweis-titel" style="font-size:var(--s-karte);font-weight:800;color:var(--text);margin-bottom:4px">🔔 Keine Nachricht vom Team verpassen</div>
-    <div style="font-size:var(--s-text);color:var(--text2);line-height:1.5;margin-bottom:10px">${T.text}</div>
+  el.innerHTML=`<div id="push-hinweis" data-fall="${fall}" role="region" aria-labelledby="push-hinweis-titel" style="position:relative;background:var(--surface);border:1.5px solid var(--rand-bedien);border-left:4px solid var(--blue);border-radius:14px;padding:10px 48px 10px 14px;margin-bottom:10px">
+    <div id="push-hinweis-titel" style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:2px">🔔 Keine Nachricht vom Team verpassen</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);line-height:1.45;margin-bottom:8px">${T.text}</div>
     <button type="button" id="push-hinweis-an" class="btn btn-p" onclick="${T.fn}" style="width:100%;min-height:48px;justify-content:center">${T.knopf}</button>
     ${fall==="aus"?`<button type="button" id="push-hinweis-anleitung" onclick="pushAnleitung('aus')" style="display:block;margin:6px auto 0;min-height:44px;padding:0 12px;border:none;background:transparent;color:var(--text2);font-family:inherit;font-size:var(--s-text);text-decoration:underline;cursor:pointer">So geht’s</button>`:""}
-    <button type="button" onclick="pushKarteWeg('${slotId}')" aria-label="Hinweis ausblenden" style="position:absolute;top:6px;right:6px;min-width:44px;min-height:44px;border:none;background:transparent;color:var(--text2);font-size:var(--s-seite);line-height:1;cursor:pointer">×</button>
+    <button type="button" onclick="pushKarteWeg('${slotId}')" aria-label="Hinweis ausblenden" style="position:absolute;top:2px;right:2px;min-width:44px;min-height:44px;border:none;background:transparent;color:var(--text2);font-size:var(--s-seite);line-height:1;cursor:pointer">×</button>
   </div>`;
 }
 async function pushKarteAn(slotId,rolle){

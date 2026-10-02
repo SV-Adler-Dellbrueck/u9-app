@@ -4692,7 +4692,7 @@ async function saisonCockpitOpen(){
 const HELP=[
   {cat:"🏠 Start", items:[
     {t:"Diese Woche", d:"Alle Termine der nächsten 7 Tage auf einen Blick: wie viele Kinder zugesagt haben (aus den Eltern-Rückmeldungen; beim Spieltag zählt „dabei“ aus „Teams festlegen“, sobald die Einteilung steht), ob genug Trainer da sind (aus dem Trainerplan), ob der Trainingsplan steht und die Aufstellung fürs Spiel. Die Quelle steht unter der Karte. Rot wird ein Chip erst drei Tage vor dem Termin – vorher ist „0 zugesagt“ normal. Antippen öffnet den Termin.", run:"document.getElementById('home-woche')?.scrollIntoView({behavior:'smooth',block:'center'})"},
-    {t:"Startseite", d:"Von oben nach unten: was zu tun ist (Wie war's?, To-Do-Banner nur bei offenen Aufgaben, „Bist du dabei?“ mit den Terminen der nächsten 14 Tage, für die deine Antwort noch fehlt), <b>seit v682 gleich darunter die sechs großen Bereichs-Kacheln</b> – dahinter jeweils wieder eine Seite mit Kacheln, bei Taktik direkt das Brett –, dann „Diese Woche“ mit dem Stand je Termin (die erste Zeile ist der nächste Termin mit Wetter, Packtipp und den Sprungknöpfen „Anwesenheit“ und „Plan“; woher die Zahlen kommen, steht zugeklappt darunter) und der Knopf zu allen Terminen. Die drei Startschritte erscheinen nur, solange es noch keinen Kader gibt. Dieselbe Seite erreichst du über die untere Leiste; beide Wege enden im selben Bild.", go:"home"},
+    {t:"Startseite", d:"Von oben nach unten: was zu tun ist (Wie war's?, To-Do-Banner nur bei offenen Aufgaben, „Bist du dabei?“ mit den Terminen der nächsten 14 Tage, für die deine Antwort noch fehlt), <b>seit v682 gleich darunter die sechs Bereichs-Kacheln</b> (seit v718 drei je Reihe und halb so hoch; sie führen dorthin, wohin auch die Leiste unten führt, und zeigen dazu den nächsten Termin) – dahinter jeweils wieder eine Seite mit Kacheln, bei Taktik direkt das Brett –, dann „Diese Woche“ mit dem Stand je Termin (die erste Zeile ist der nächste Termin mit Wetter, Packtipp und den Sprungknöpfen „Anwesenheit“ und „Plan“; woher die Zahlen kommen, steht zugeklappt darunter) und der Knopf zu allen Terminen. Die drei Startschritte erscheinen nur, solange es noch keinen Kader gibt. Dieselbe Seite erreichst du über die untere Leiste; beide Wege enden im selben Bild.", go:"home"},
   ]},
   {cat:"👥 Team", items:[
     {t:"Saison-Cockpit", d:"Torschützen, Anwesenheit, Rückmelde-Tempo der Familien, faire Einsätze, Eltern-Puls, Rückmelde-Tempo – alles auf einen Blick.", run:"saisonCockpitOpen()"},
@@ -5557,7 +5557,9 @@ async function renderHome(){
     <div id="trainer-termine-slot"></div>
     <!-- v682: Die sechs Bereiche stehen direkt unter dem, was zu tun ist – nicht erst nach
          Woche, Terminen und Geburtstagen am Seitenende. -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0 12px" id="home-bereiche">
+    <!-- v718 „entschlacken“: drei Spalten statt zwei, halbe Höhe – die Leiste unten führt
+         ohnehin in dieselben Bereiche, die Kacheln tragen vor allem die Live-Hinweise. -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 12px" id="home-bereiche">
       ${kachelTile("training","🏃","Training","var(--fam-training)","var(--fam-training-2)")}
       ${kachelTile("spieltag","⚽","Spieltag","var(--fam-spieltag)","var(--fam-spieltag-2)")}
       ${kachelTile("team","👥","Team","var(--fam-team)","var(--fam-team-2)")}
@@ -6628,11 +6630,12 @@ function kachelTile(key,emo,label,c1,c2){
      nicht mehr aus der Farbe gebaut werden (frueher `${c1}44`) und ist jetzt neutral.
      Das Badge traegt volle Deckkraft: mit opacity .9 fiel es auf 4.38:1 und lag damit
      unter den geforderten 4.5:1. Die Abstufung macht die Schriftgroesse. */
-  return `<button onclick="kachelOpen('${key}')" style="min-height:104px;border:none;border-radius:16px;cursor:pointer;font-family:inherit;background:linear-gradient(135deg,${c1},${c2});color:#fff;padding:14px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-shadow:var(--shadow-md);text-align:left">
-    <span style="font-size:30px">${emo}</span>
-    <span style="min-width:0">
-      <span style="display:block;font-size:var(--s-karte);font-weight:900">${label}</span>
-      <span id="kb-${key}" style="display:block;font-size:var(--s-text);min-height:15px"></span>
+  // v718: kompakt (drei je Reihe): Symbol, Name, Live-Hinweis – rund halb so hoch wie vorher
+  return `<button onclick="kachelOpen('${key}')" style="min-height:76px;min-width:0;border:none;border-radius:14px;cursor:pointer;font-family:inherit;background:linear-gradient(135deg,${c1},${c2});color:#fff;padding:9px 10px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:2px;box-shadow:var(--shadow-md);text-align:left">
+    <span aria-hidden="true" style="font-size:var(--s-seite);line-height:1">${emo}</span>
+    <span style="min-width:0;max-width:100%">
+      <span style="display:block;font-size:var(--s-text);font-weight:900;line-height:1.2;overflow-wrap:anywhere">${label}</span>
+      <span id="kb-${key}" style="display:block;font-size:var(--s-klein);line-height:1.25;min-height:13px"></span>
     </span>
   </button>`;
 }
