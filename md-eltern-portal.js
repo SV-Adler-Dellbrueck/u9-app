@@ -68,7 +68,11 @@ async function authRole(){
   _authOffline=false;
   if(!sbToken())return null;
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/profiles?select=role&limit=1`,{headers:sbAuthHeaders()});
+    /* v731 (PO 03.10.: „Sehe Löschen nicht im Trainerzugang“): ohne Filter kam die erste Zeile zurück, die die
+       Datenbank zeigt – Trainer dürfen alle Profile lesen, die erste war ein Elternkonto. Die App hielt das
+       Trainerkonto deshalb für „parent“ (kein Löschen in der Galerie u. a.). Immer nur das eigene Profil. */
+    const uid=typeof sbUid==="function"?sbUid():null; if(!uid)return null;
+    const r=await fetch(`${SB_URL}/rest/v1/profiles?select=role&id=eq.${encodeURIComponent(uid)}`,{headers:sbAuthHeaders()});
     if(!r.ok){ if(r.status>=500){_authOffline=true; try{return localStorage.getItem("adler_rolle")||null;}catch(e){return null;}} return null; }
     const rows=await r.json();
     const rolle=(rows[0]&&rows[0].role)||null;
