@@ -1001,7 +1001,7 @@ function tmHelferFreigabeHtml(t){
   if(nurBetr){
     const b=_tmHelferVorlagen(t.typ,t).filter(a=>/Betreuung|Live-Ticker/.test(a.t));   // v728: Ticker-Helfer auch auswärts
     return `<div id="te-helfer-frei">
-    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px">Anhaken, wenn Eltern die Kinder am Turnier mit betreuen oder den Liveticker bedienen sollen. Zahl = so viele brauchst du.</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px">Anhaken, wenn Eltern die Kinder am Turnier mit betreuen oder den Liveticker bedienen sollen. Zahl = so viele brauchst du – beim Live-Ticker eine/r je Team.</div>
     ${b.map((a,i)=>zeile(i,a)).join("")}
   </div>`;
   }

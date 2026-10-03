@@ -21,7 +21,7 @@ create policy th_selbst on public.ticker_helfer for select to authenticated
 
 -- Liefert dem angemeldeten Elternteil seine Freischaltungen für einen Tag samt Helfer-Code: direkt vom
 -- Trainer benannt (ticker_helfer) ODER selbst unter „Wer hilft mit?“ für „📻 Live-Ticker“ eingetragen
--- (event_helfer am Spiel/Turnier dieses Tages, gilt für Adler 1). Legt die
+-- (event_helfer am Spiel/Turnier dieses Tages; Reihenfolge der Eintragung = Adler 1, 2, 3 …). Legt die
 -- Spieltagszeile an, falls der Trainer den Ticker noch nie geöffnet hat (der Code entsteht per Default).
 create or replace function public.mein_ticker_helfer(p_datum date)
  returns table(team int, schluessel text, token uuid, ticker_open boolean)
@@ -33,8 +33,14 @@ begin
     select x.t from (
       select h.team as t from ticker_helfer h where h.datum = p_datum and lower(h.email) = m
       union
-      select 1 from event_helfer e join termine tm on tm.id = e.termin_id
-       where tm.datum = p_datum and tm.typ in ('spiel','turnier') and e.aufgabe = '📻 Live-Ticker' and e.user_id = auth.uid()
+      -- Mehrere Teams am Spieltag (PO 03.10.: „für jedes Team einen Live-Ticker-Bediener“): wer sich als
+      -- Erste/r einträgt, tickert Adler 1, die/der Zweite Adler 2 usw. Der Trainer kann über
+      -- ticker_helfer zusätzlich ein anderes Team freischalten (dann erscheinen beide Knöpfe).
+      select r.t from (
+        select e.user_id, least(6, row_number() over (partition by e.termin_id order by e.created_at, e.id))::int as t
+          from event_helfer e join termine tm on tm.id = e.termin_id
+         where tm.datum = p_datum and tm.typ in ('spiel','turnier') and e.aufgabe = '📻 Live-Ticker'
+      ) r where r.user_id = auth.uid()
     ) x order by x.t loop
     schluessel := case when team > 1 then p_datum::text || '__t' || team else p_datum::text end;
     insert into matchday(datum) values (schluessel) on conflict (datum) do nothing;
