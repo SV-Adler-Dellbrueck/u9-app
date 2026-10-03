@@ -130,7 +130,7 @@ function tmSetTyp(t,btn){
   const zeit=document.getElementById("tm-zeit"), datum=document.getElementById("tm-datum"), ort=document.getElementById("tm-ort");
   tmPlatzFill(t);                                         // Optionen + Vorbelegung passend zum Typ
   if(t==="training"){
-    if(zeit)zeit.value="16:45";                          // Mo & Fr 16:45–18:00
+    if(zeit)zeit.value="16:45";                          // Mo 16:45–18:15, Fr 16:45–18:00 (PO 03.10.)
     if(ort)ort.value=VEREIN_ADRESSE;                     // Training immer auf dem Vereinsgelände
     if(datum&&!datum.value)datum.value=tmNextTrainingDate();
   } else if(istSpiel){
@@ -184,7 +184,8 @@ function tmInit(){
   tmLoad();
 }
 /* Endzeit-Vorschlag nach Vereins-Realität (PO): Spiel +90 min, Turnier +4 h,
-   Training +75 min (16:45 → 18:00) – frei änderbar. Nach der Endzeit verschwindet
+   Training +75 min (16:45 → 18:00), montags +90 min (16:45 → 18:15, PO 03.10.: „Training Montag
+   16.45 bis 18.15, Freitag 16.45 bis 18.00“) – frei änderbar. Nach der Endzeit verschwindet
    der Termin aus den aktiven Listen (terminVorbei in core.js). */
 function tmEndeVorschlag(){
   const z=document.getElementById("tm-zeit")?.value, e=document.getElementById("tm-ende");
@@ -200,7 +201,9 @@ function tmEndeVorschlag(){
     }
   }catch(_e){}
   if(!z||!e||e.value)return;
-  const addMin={spiel:90,turnier:240,training:75}[typeof tmTyp!=="undefined"?tmTyp:""];
+  const typ=typeof tmTyp!=="undefined"?tmTyp:"", dat=document.getElementById("tm-datum")?.value||"";
+  const montag=typ==="training"&&/^\d{4}-\d{2}-\d{2}$/.test(dat)&&new Date(dat+"T12:00:00").getDay()===1;
+  const addMin=montag?90:{spiel:90,turnier:240,training:75}[typ];
   if(!addMin)return;
   const [h,m]=z.split(":").map(Number);
   const t=Math.min(23*60+59,h*60+m+addMin);
