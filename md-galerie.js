@@ -108,8 +108,10 @@ async function galerieRender(terminId){
   let items=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/rpc/termin_gallery`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({p_termin:terminId})});if(r.ok)items=(await r.json())||[];}catch(e){}
   const istTrainer=(await authRole())==="trainer";
+  _galListe[terminId]=items; _galTrainer=istTrainer;   // v731: auch leer merken (Großansicht schließt dann)
   if(!items.length){body.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-size:var(--s-text)">Noch keine Fotos – mach das erste! 📷</div>';return;}
   _galListe[terminId]=items;   // v730: für die Großansicht
+  _galTrainer=istTrainer;        // v731: Löschen auch in der Großansicht
   body.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px">
     ${items.map((f,i)=>`<div style="position:relative">
       <img id="gal-img-${f.id}" alt="Foto ${i+1} von ${items.length} – groß ansehen" role="button" tabindex="0" draggable="false" oncontextmenu="return false" onclick="galerieGross(${terminId},${i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();galerieGross(${terminId},${i})}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;background:#f1f5f9;cursor:zoom-in;-webkit-touch-callout:none;user-select:none">
@@ -170,6 +172,7 @@ async function galerieUpload(btn,terminId,inputId){
    Großansicht mit Wischen. Sichtbar nur für eingeloggte Team-Eltern und das Trainerteam –
    dieselbe Abfrage termin_gallery wie am Termin, keine neue Freigabe. */
 const _galListe={};
+let _galTrainer=false;
 /* v731 (PO 03.10.): „Und die alten Termine raus. Wir starten mit dem Festival heute.“ Die Galerie zeigt
    Spieltage ab diesem Tag; die Fotos älterer Termine bleiben am jeweiligen Termin. */
 const GALERIE_AB="2026-10-03";
@@ -233,6 +236,7 @@ async function galerieGross(terminId,idx){
     const knopf="min-width:48px;min-height:48px;border:none;border-radius:12px;background:rgba(255,255,255,.16);color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer";
     lb.innerHTML=`<div style="display:flex;align-items:center;gap:8px;width:100%;max-width:900px;margin-bottom:8px">
         <span id="gal-gross-zahl" style="flex:1;color:#fff;font-size:var(--s-text);font-weight:700"></span>
+        <button type="button" id="gal-gross-loeschen" aria-label="Foto löschen" style="${knopf};padding:0 14px;display:none">🗑️ Löschen</button>
         <button type="button" onclick="document.getElementById('gal-gross')?.remove()" aria-label="Schließen" style="${knopf}">✕</button></div>
       <div style="position:relative;flex:1;width:100%;max-width:900px;display:flex;align-items:center;justify-content:center;min-height:0">
         <button type="button" id="gal-gross-zurueck" aria-label="Vorheriges Foto" style="${knopf};position:absolute;left:0;z-index:1">‹</button>
@@ -252,6 +256,18 @@ async function galerieGross(terminId,idx){
   ["gal-gross-zurueck","gal-gross-weiter"].forEach(id=>{const b=document.getElementById(id);if(b)b.style.display=liste.length>1?"":"none";});
   document.getElementById("gal-gross-zurueck").onclick=()=>galerieGross(terminId,idx-1);
   document.getElementById("gal-gross-weiter").onclick=()=>galerieGross(terminId,idx+1);
+  /* v731 (PO 03.10.): „Ich sollte auch die Möglichkeit haben, hochgeladene Bilder egal von wem aus der Galerie
+     zu löschen.“ Für Trainer (die Datenbank erlaubt es nur ihnen und dem Hochladenden); Rückfrage wie bisher. */
+  const del=document.getElementById("gal-gross-loeschen");
+  if(del){ del.style.display=_galTrainer?"":"none";
+    del.onclick=async()=>{ const vorher=(_galListe[terminId]||[]).length; await galerieDelete(f.id,f.foto_path,terminId);
+      for(let i=0;i<30&&(_galListe[terminId]||[]).length===vorher;i++) await new Promise(x=>setTimeout(x,100));
+      const rest=_galListe[terminId]||[];
+      if(rest.length===vorher)return;                       // abgebrochen oder fehlgeschlagen
+      if(!rest.length){ lb.remove(); }
+      else galerieGross(terminId,Math.min(idx,rest.length-1));
+      if(document.getElementById("stg-modal"))spieltagGalerieRender();
+    }; }
   const img=document.getElementById("gal-gross-img"); img.alt=`Foto ${idx+1} von ${liste.length}`; img.removeAttribute("src");
   const blob=await _galBlob(f.foto_path);
   if(String(lb.dataset.idx)!==String(idx)||String(lb.dataset.termin)!==String(terminId))return;   // inzwischen weitergewischt
