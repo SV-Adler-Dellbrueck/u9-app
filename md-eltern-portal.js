@@ -68,7 +68,11 @@ async function authRole(){
   _authOffline=false;
   if(!sbToken())return null;
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/profiles?select=role&limit=1`,{headers:sbAuthHeaders()});
+    /* v731 (PO 03.10.: „Sehe Löschen nicht im Trainerzugang“): ohne Filter kam die erste Zeile zurück, die die
+       Datenbank zeigt – Trainer dürfen alle Profile lesen, die erste war ein Elternkonto. Die App hielt das
+       Trainerkonto deshalb für „parent“ (kein Löschen in der Galerie u. a.). Immer nur das eigene Profil. */
+    const uid=typeof sbUid==="function"?sbUid():null; if(!uid)return null;
+    const r=await fetch(`${SB_URL}/rest/v1/profiles?select=role&id=eq.${encodeURIComponent(uid)}`,{headers:sbAuthHeaders()});
     if(!r.ok){ if(r.status>=500){_authOffline=true; try{return localStorage.getItem("adler_rolle")||null;}catch(e){return null;}} return null; }
     const rows=await r.json();
     const rolle=(rows[0]&&rows[0].role)||null;
@@ -1076,7 +1080,7 @@ async function elternDashLoad(){
     <div id="cat-mehr" class="el-cat-panel" style="display:none">`;
   html+=elRow("👤","Meine Angaben","Name, Handy, Geburtstag – und der Geburtstag deines Kindes","elternAngabenOpen()","#1e3a8a");   // v660
   html+=`<div id="team-ansprech-slot"></div>`;   // v663: Elternbeirat, Kasse, Beitrag
-  html+=elRow("📸","Spieltagsgalerie","Fotos von allen Spieltagen – ansehen, groß wischen, speichern, selbst hochladen","spieltagGalerieOpen()","#7c3aed");   // v730
+  html+=elRow("📸","Spieltagsgalerie","Fotos von allen Spieltagen – ansehen, groß wischen, selbst hochladen","spieltagGalerieOpen()","#7c3aed");   // v730
   html+=elRow("📰","Adler Nest (Stadionheft)","Neuigkeiten, Ergebnisse und Geburtstage",`location.href='${location.pathname}?heft&von=app'`,"#1e3a8a");
   html+=elRow("📖","Unsere Saison (Chronik)","Alle Spiele, Feste &amp; Meilensteine als Zeitstrahl – wächst jede Woche","chronikOpen()","#1d4ed8",true);
   html+=elRow("🛍️","Adler-Börse","Zu kleine Schuhe &amp; Trikots an Adler-Kinder weitergeben","boerseOpen()","#2563eb");
@@ -2285,7 +2289,7 @@ const ELTERN_TOUR=[
   {emo:"📬", t:"Offene Rückmeldungen", sel:["#eltern-offen-card"],
    d:"Stehen in den nächsten 14 Tagen Antworten aus, siehst du sie hier gesammelt."},
   {emo:"🎒", t:"Alles zum Termin", sel:['[onclick^="terminDetailOpen"]'],
-   d:"Tippe auf einen Termin: Wetter, Adresse mit Route, „Was muss mit?“, Fahrgemeinschaft, „Wer hilft mit?“ und die Fotos zum Termin – „📷 Foto aufnehmen“ öffnet direkt die Kamera. Alle Spieltagsfotos zusammen – groß ansehen und speichern – stehen unter „Mehr vom Team“ → „Spieltagsgalerie“. Die ganze Saison und das Kalender-Abo findest du unten unter „Mehr“ → „Alle Termine“."},
+   d:"Tippe auf einen Termin: Wetter, Adresse mit Route, „Was muss mit?“, Fahrgemeinschaft, „Wer hilft mit?“ und die Fotos zum Termin – „📷 Foto aufnehmen“ öffnet direkt die Kamera. Alle Spieltagsfotos zusammen – groß ansehen und durchwischen – stehen unter „Mehr vom Team“ → „Spieltagsgalerie“. Die ganze Saison und das Kalender-Abo findest du unten unter „Mehr“ → „Alle Termine“."},
   {emo:"✅", t:"Zu erledigen", sel:["#eltern-todo-btn"],
    d:"Aufgaben für euch als Familie, zum Beispiel der Grillhütten-Dienst. Könnt ihr nicht, tippt ihr „Ersatz suchen“ – eine andere Familie kann übernehmen."},
   {emo:"📡", t:"Liveticker", sel:["#eltern-live-slot","#eltern-ticker-slot"],

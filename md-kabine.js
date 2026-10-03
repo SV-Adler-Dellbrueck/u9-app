@@ -841,7 +841,7 @@ function kabineTourStart(){ if(typeof fuehrungStart==="function")fuehrungStart(K
 async function _kabNaechsterTermin(){
   const heute=isoLokal();
   let liste=[];
-  try{const r=await fetch(`${SB_URL}/rest/v1/termine?select=id,datum,typ,gegner,titel&typ=in.(spiel,turnier)&datum=gte.${heute}&order=datum.asc&limit=8`,{headers:sbAuthHeaders()});if(r.ok)liste=(await r.json())||[];}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/termine?select=id,datum,typ,gegner,titel,uhrzeit,uhrzeit_ende&typ=in.(spiel,turnier)&datum=gte.${heute}&order=datum.asc&limit=8`,{headers:sbAuthHeaders()});if(r.ok)liste=(await r.json())||[];}catch(e){}
   if(!liste.length)return null;
   const kids=(window._elternKids||[]).map(k=>k.spieler_id).filter(Boolean);
   if(!kids.length)return liste[0];
@@ -863,6 +863,21 @@ async function _kabNaechsterTermin(){
   }catch(e){ return liste[0]; }
   return liste.find(t=>kids.some(id=>((abgesagt[t.id]||{})[id]||"")!=="abgesagt"))||null;
 }
+/* v731 (PO 03.10., Bildschirmfoto Kabine): „Heute ist Spieltag sollte 2 Stunden nach dem offiziellen Ende
+   des Spiels auch umspringen auf ‚Heute war Spieltag‘. Vielleicht mit einem motivierenden Hinweis.“
+   Grundlage ist uhrzeit_ende des Termins (bei Spielen Pflicht); ohne Endzeit bleibt es beim alten Text. */
+const KAB_NACH_SPIEL=[
+  "Stark gekämpft, Adler! Jetzt gut essen, viel trinken und die Beine hochlegen. 💪",
+  "Egal wie es ausging: Ihr habt als Team gespielt – darauf kommt es an. 🦅",
+  "Was hat heute richtig gut geklappt? Erzähl es zu Hause – und beim nächsten Training geht’s weiter! ⚽",
+  "Jedes Spiel macht dich ein Stück besser. Ausruhen – und bald wieder Vollgas! 🔥"
+];
+function _kabSpieltagVorbei(t){
+  if(!t||!t.uhrzeit_ende||t.datum!==isoLokal())return false;
+  const m=String(t.uhrzeit_ende).match(/^(\d{1,2}):(\d{2})/); if(!m)return false;
+  const ende=new Date(t.datum+"T00:00:00"); ende.setHours(+m[1],+m[2]+120,0,0);   // offizielles Ende + 2 Stunden
+  return Date.now()>=ende.getTime();
+}
 // G6: „Noch X× schlafen bis zum nächsten Spiel!" – Motivation im Kinder-Modus.
 async function kabineCountdownLoad(){
   const el=document.getElementById("kab-countdown"); if(!el)return;
@@ -872,10 +887,12 @@ async function kabineCountdownLoad(){
   const d=new Date(t.datum+"T00:00:00"), today=new Date(heute+"T00:00:00");
   const days=Math.round((d-today)/864e5);
   window._kabSpieltag=days<=0; // ✨ fürs Album: Spieltags-Glückstüte
-  const label=days<=0?"Heute ist Spieltag! 🔥":days===1?"Morgen ist Spieltag! 🔥":`Noch ${days}× schlafen bis zum Spiel!`;
+  const vorbei=days<=0&&_kabSpieltagVorbei(t);   // v731
+  const label=vorbei?"Heute war Spieltag! 🦅":days<=0?"Heute ist Spieltag! 🔥":days===1?"Morgen ist Spieltag! 🔥":`Noch ${days}× schlafen bis zum Spiel!`;
+  const mut=vorbei?KAB_NACH_SPIEL[[...String(t.datum)].reduce((a,c)=>a+c.charCodeAt(0),0)%KAB_NACH_SPIEL.length]:"";
   el.innerHTML=`<div style="margin:2px 16px 8px;background:rgba(255,255,255,.14);border-radius:16px;padding:12px;text-align:center;color:#fff">
     <div style="font-size:15px;font-weight:900">⚽ ${label}</div>
-    <div style="font-size:12px;opacity:.85;margin-top:2px">${t.typ==="turnier"?"🏆 Turnier":"gegen "+esc(t.gegner||t.titel||"?")} · ${["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()]}, ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}</div>
+    <div style="font-size:12px;opacity:.85;margin-top:2px">${t.typ==="turnier"?"🏆 Turnier":"gegen "+esc(t.gegner||t.titel||"?")} · ${["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()]}, ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}</div>${mut?`<div class="kab-nach-spiel" style="font-size:13px;font-weight:700;margin-top:8px;line-height:1.4">${mut}</div>`:""}
   </div>`;
 }
 /* H4 – Rollen-Reveal: hat der Trainer für HEUTE eine Aufstellung gespeichert, darf das Kind
@@ -938,6 +955,7 @@ async function kabinePackLoad(){
   if(!t){el.innerHTML="";return;}
   const days=Math.round((new Date(t.datum+"T00:00:00")-new Date(heute+"T00:00:00"))/864e5);
   if(days>1){el.innerHTML="";return;} // erst ab dem Vorabend
+  if(days<=0&&_kabSpieltagVorbei(t)){el.innerHTML="";return;} // v731: nach dem Spiel keine Packliste mehr
   const fertig=kids.every(k=>{const st=_kabPackGet(k.spieler_id,t.datum);return KAB_PACK_ITEMS.every((_,i)=>st[i]);});
   el.innerHTML=`<button onclick="kabinePack()" style="display:flex;align-items:center;gap:10px;margin:2px 16px 8px;width:calc(100% - 32px);border:1px solid rgba(255,255,255,.18);border-radius:16px;background:${fertig?"rgba(34,197,94,.28)":"linear-gradient(135deg,rgba(245,158,11,.55),rgba(217,119,6,.35))"};color:#fff;font-family:inherit;cursor:pointer;padding:12px 14px;text-align:left">
     <span style="font-size:26px">🎒</span>

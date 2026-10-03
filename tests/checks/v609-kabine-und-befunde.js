@@ -11,6 +11,10 @@
    g) Stationstimer: Torwart-/Einzeltraining laufen parallel, nicht als eigene Station danach.
    h) Die Anwesenheit eines Termins kommt frisch vom Server, bevor die Gruppen abgeglichen werden. */
 "use strict";
+// v731: authRole() liest das Profil über die Kontokennung (sub) im Schlüssel – echte Supabase-Schlüssel tragen
+// sie immer; der frühere Platzhalter „e.x.y“ hatte keine und galt deshalb als abgemeldet.
+const _jwt = (sub) => [{ alg: "none" }, { sub, email: "eltern@example.org", exp: Math.floor(Date.now() / 1000) + 3600 }].map(o => Buffer.from(JSON.stringify(o)).toString("base64").replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_")).join(".") + ".x";
+const TOKEN609 = _jwt("u-eltern");
 const fs = require("fs"), path = require("path");
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
@@ -61,7 +65,7 @@ module.exports = async function (h) {
     });
     // nach Neuladen: Sperre bleibt, wenn das Flag gesetzt ist
     await s.page.evaluate(() => localStorage.setItem("adler_kabine_gesperrt", "1"));
-    await s.page.evaluate(() => { try { localStorage.setItem("adler_sb_auth_eltern", JSON.stringify({ access_token: "e.x.y", refresh_token: "r", expires_at: Math.floor(Date.now() / 1000) + 3600 })); } catch (e) {} });
+    await s.page.evaluate((tk) => { try { localStorage.setItem("adler_sb_auth_eltern", JSON.stringify({ access_token: tk, refresh_token: "r", expires_at: Math.floor(Date.now() / 1000) + 3600 })); } catch (e) {} }, TOKEN609);
     await s.page.reload({ waitUntil: "networkidle" }); await s.page.waitForTimeout(1800);
     const nachReload = await s.page.evaluate(() => !!document.getElementById("kabine-sperre"));
     const f = s.fehler().filter(x => !/youtube/i.test(x));
