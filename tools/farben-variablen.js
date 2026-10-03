@@ -93,8 +93,11 @@ function stufe(px) {
 }
 /* v626 PO-Kachel „Alles außer Kinder & Anzeigen“: auch die Module. Ausgenommen bleiben die
    Kabine und das Quiz (für Kinder groß gesetzt), das Live-Vollbild (Anzeige auf Distanz) und der
-   Skizzen-Editor (Größen gehören zur Zeichnung). */
-const AUSGENOMMEN = new Set(["md-kabine.js", "md-live-vollbild.js", "md-skizze.js", "quiz.js"]);
+   Skizzen-Editor (Größen gehören zur Zeichnung).
+   v733 (Auftragspaket Adler Nest, PO 03.10.): auch md-nest.js – die Leseansicht des Hefts ist ein
+   Lesestück mit festen Maßen aus dem Gestaltungsentwurf (76 px Titel, 44 px Schlagzeile), ausdrücklich
+   ausgenommen von den Regeln der Bedienoberfläche. Der Editor in derselben Datei nutzt die Stufen. */
+const AUSGENOMMEN = new Set(["md-kabine.js", "md-live-vollbild.js", "md-skizze.js", "quiz.js", "md-nest.js"]);
 const SCHRIFT_DATEIEN = [...DATEIEN, ...fs.readdirSync(ROOT).filter(f => /^(md-.*|engine|data)\.js$/.test(f) && !AUSGENOMMEN.has(f)).sort()];
 let schrift = 0;
 const bericht2 = [];
