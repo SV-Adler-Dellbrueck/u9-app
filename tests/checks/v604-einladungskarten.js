@@ -12,6 +12,9 @@
    f) Server-Seite: Tabelle für anon gesperrt, Zähler nur mit Dienstschlüssel, und ein
       bestehendes Konto bekommt nie ein fremdes Passwort */
 "use strict";
+// v731: authRole() liest das Profil über die Kontokennung (sub) im Schlüssel – echte Supabase-Schlüssel tragen
+// sie immer; der frühere Platzhalter „e.x.y“ hatte keine und galt deshalb als abgemeldet.
+const _jwt = (sub) => [{ alg: "none" }, { sub, email: "eltern@example.org", exp: Math.floor(Date.now() / 1000) + 3600 }].map(o => Buffer.from(JSON.stringify(o)).toString("base64").replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_")).join(".") + ".x";
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
@@ -27,7 +30,7 @@ module.exports = async function (h) {
       let b = {}; try { b = JSON.parse(req.postData() || "{}"); } catch (e) {}
       return antwort(b);
     } },
-    auth: { token: { access_token: "e.x.y", refresh_token: "r", expires_in: 3600 } }
+    auth: { token: { access_token: _jwt("u-eltern"), refresh_token: "r", expires_in: 3600 } }
   });
 
   // ── a) der Weg der Eltern ───────────────────────────────────────────────────
