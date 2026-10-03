@@ -21,7 +21,7 @@ create policy th_selbst on public.ticker_helfer for select to authenticated
 
 -- Liefert dem angemeldeten Elternteil seine Freischaltungen für einen Tag samt Helfer-Code: direkt vom
 -- Trainer benannt (ticker_helfer) ODER selbst unter „Wer hilft mit?“ für „📻 Live-Ticker“ eingetragen
--- (event_helfer am Spiel/Turnier dieses Tages; Reihenfolge der Eintragung = Adler 1, 2, 3 …). Legt die
+-- (event_helfer am Spiel/Turnier dieses Tages; Team des eigenen Kindes, sonst Reihenfolge der Eintragung). Legt die
 -- Spieltagszeile an, falls der Trainer den Ticker noch nie geöffnet hat (der Code entsteht per Default).
 create or replace function public.mein_ticker_helfer(p_datum date)
  returns table(team int, schluessel text, token uuid, ticker_open boolean)
@@ -33,14 +33,21 @@ begin
     select x.t from (
       select h.team as t from ticker_helfer h where h.datum = p_datum and lower(h.email) = m
       union
-      -- Mehrere Teams am Spieltag (PO 03.10.: „für jedes Team einen Live-Ticker-Bediener“): wer sich als
-      -- Erste/r einträgt, tickert Adler 1, die/der Zweite Adler 2 usw. Der Trainer kann über
-      -- ticker_helfer zusätzlich ein anderes Team freischalten (dann erscheinen beide Knöpfe).
-      select r.t from (
-        select e.user_id, least(6, row_number() over (partition by e.termin_id order by e.created_at, e.id))::int as t
+      -- Mehrere Teams am Spieltag (PO 03.10.: „für jedes Team einen Live-Ticker-Bediener … am besten tickert
+      -- ein Elternteil immer das Spiel vom Team, in dem sein Kind spielt“): eingetragene Helfer tickern das
+      -- Team ihres Kindes aus der Team-Einteilung (kind_team). Steht die Einteilung noch nicht, gilt die
+      -- Reihenfolge der Eintragung (Erste/r = Adler 1 …). Der Trainer kann über ticker_helfer zusätzlich
+      -- ein anderes Team freischalten (dann erscheinen beide Knöpfe).
+      select coalesce(k.team, r.rang) from (
+        select e.user_id, least(6, row_number() over (partition by e.termin_id order by e.created_at, e.id))::int as rang
           from event_helfer e join termine tm on tm.id = e.termin_id
          where tm.datum = p_datum and tm.typ in ('spiel','turnier') and e.aufgabe = '📻 Live-Ticker'
-      ) r where r.user_id = auth.uid()
+      ) r
+      left join lateral (
+        select nullif(public.kind_team(ek.spieler_id, p_datum::text)->>'team','')::int as team
+          from eltern_kinder ek where lower(ek.email) = m
+      ) k on k.team is not null
+      where r.user_id = auth.uid()
     ) x order by x.t loop
     schluessel := case when team > 1 then p_datum::text || '__t' || team else p_datum::text end;
     insert into matchday(datum) values (schluessel) on conflict (datum) do nothing;
