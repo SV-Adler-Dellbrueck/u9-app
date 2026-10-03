@@ -1571,6 +1571,24 @@ async function elternLiveKachelLoad(termin,eigenesTeam){
 }
 // v727: Liveticker und Konferenz für Eltern vorerst „bald verfügbar“ (siehe elternTickerLoad).
 const ELTERN_TICKER_BALD=true;
+/* v728 · Vom Trainerteam freigeschaltet: „Ticker bedienen“ und „Ticker ansehen“ für den Spieltag, auch
+   solange der Ticker für alle Eltern noch „bald verfügbar“ ist. Der Helfer-Code kommt über die RPC
+   mein_ticker_helfer nur an das freigeschaltete Konto. */
+async function elternHelferAnhaengen(slot,datum){
+  let rows=[];
+  try{ const r=await fetch(`${SB_URL}/rest/v1/rpc/mein_ticker_helfer`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_datum:datum})});
+    if(r.ok)rows=await r.json(); }catch(e){}
+  if(!Array.isArray(rows)||!rows.length||!slot)return;
+  const box=document.createElement("div");
+  box.id="eltern-helfer-box";
+  box.style.cssText="margin-top:10px;padding:12px;border:2px solid #dc2626;border-radius:12px;background:#fef2f2";
+  box.innerHTML=`<div style="font-size:var(--s-text);font-weight:800;color:#b91c1c">📝 Du bist heute Ticker-Helfer</div>
+    <div style="font-size:var(--s-klein);color:#334155;margin:2px 0 4px">Das Trainerteam hat dich freigeschaltet. Bedienen geht, sobald der Trainer den Ticker startet.</div>`+
+    rows.map(x=>{ const t=Number(x.team)||1, n=t>1?` · Adler ${t}`:"";
+      return `<button onclick="location.href=location.pathname+'?delegate='+encodeURIComponent('${esc(String(x.token||""))}')" style="width:100%;min-height:48px;margin-top:6px;border:none;border-radius:10px;background:#dc2626;color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">📝 Ticker bedienen${n}${x.ticker_open?"":" <span style=\"font-weight:600\">(startet gleich)</span>"}</button>
+        <button onclick="elternTicker('${esc(datum)}',${t})" style="width:100%;min-height:44px;margin-top:6px;border:1.5px solid #dc2626;border-radius:10px;background:#fff;color:#b91c1c;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">📣 Ticker ansehen${n}</button>`; }).join("");
+  slot.appendChild(box);
+}
 // Container – die eigentliche Auswahl macht elternTickerLoad async (Team-Auto-Erkennung).
 function elternTickerHtml(termin){
   if(termin.typ!=="spiel"&&termin.typ!=="turnier")return "";
@@ -1616,6 +1634,7 @@ async function elternTickerLoad(termin){
     const kopf=`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px"><div style="font-size:var(--s-text);font-weight:700;color:#475569;margin-bottom:2px">📣 Liveticker</div>`;
     const teamZeile=eigenesTeam?`<div style="font-size:var(--s-klein);color:#64748b;margin-bottom:2px">Dein Kind spielt heute in <b>Adler ${eigenesTeam}</b>.</div>${trainerZeile(eigenesTeam)}`:(anzahl>1?"":trainerZeile(1));
     slot.innerHTML=kopf+teamZeile+bald+`</div>`;
+    elternHelferAnhaengen(slot,datum);   // v728: freigeschaltete Helfer bedienen den Ticker trotzdem
     return;
   }
   try{ elternLiveKachelLoad(termin,eigenesTeam); }catch(e){}
@@ -1633,6 +1652,6 @@ async function elternTickerLoad(termin){
   }else{
     // Nur ein Team an diesem Spieltag – kein Auswahl-/Konferenzbedarf.
     slot.innerHTML=wrap(`${trainerZeile(1)}<div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:2px">Nicht dabei? Hier gibt's Tore und Spielstand live.</div>${bigBtn("📣 Liveticker öffnen",`elternTicker('${datum}',1)`,true)}`);
-  }
+  }  elternHelferAnhaengen(slot,datum);   // v728
 }
 
