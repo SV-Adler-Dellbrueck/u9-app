@@ -1569,6 +1569,8 @@ async function elternLiveKachelLoad(termin,eigenesTeam){
     <div style="font-size:var(--s-klein);opacity:.85;margin-top:7px">Der Link funktioniert ohne Anmeldung – auch für Oma und Opa. Nach dem Spieltag zeigt er nur noch das Ergebnis.</div>
   </div>`;
 }
+// v727: Liveticker und Konferenz für Eltern vorerst „bald verfügbar“ (siehe elternTickerLoad).
+const ELTERN_TICKER_BALD=true;
 // Container – die eigentliche Auswahl macht elternTickerLoad async (Team-Auto-Erkennung).
 function elternTickerHtml(termin){
   if(termin.typ!=="spiel"&&termin.typ!=="turnier")return "";
@@ -1604,6 +1606,18 @@ async function elternTickerLoad(termin){
   /* Die Live-Kachel ganz oben braucht dasselbe Ergebnis der Team-Erkennung – hier ist es
      schon da, ein zweiter Durchlauf waere nur zusaetzliche Last auf dem Elterntelefon. */
   const eigenesTeam = myTeams.size===1 ? [...myTeams][0] : 0;
+  /* v727 (PO 03.10., Bildschirmfoto): „Stell den Liveticker und die Konferenz vorerst aus bzw. grau
+     unterlegen mit bald in der Adler verfügbar“. Solange ELTERN_TICKER_BALD gilt, sehen Eltern weder
+     die LIVE-Kachel oben noch die Ticker-Knöpfe – nur Team und Trainer ihres Kindes und einen grauen,
+     nicht antippbaren Hinweis. Die Ticker-Seite (?ticker=…) und der Trainerbereich bleiben unberührt.
+     Wieder einschalten: Konstante auf false. */
+  if(typeof ELTERN_TICKER_BALD!=="undefined"&&ELTERN_TICKER_BALD){
+    const bald=`<div role="note" aria-disabled="true" style="width:100%;min-height:48px;margin-top:6px;padding:12px;border:1.5px dashed var(--rand-bedien,#94a3b8);border-radius:10px;background:#f1f5f9;color:#475569;font-size:var(--s-text);font-weight:700;text-align:center;box-sizing:border-box">📣 Liveticker &amp; 👥 Konferenz – <span style="white-space:nowrap">bald in der Adler-App verfügbar</span></div>`;
+    const kopf=`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px"><div style="font-size:var(--s-text);font-weight:700;color:#475569;margin-bottom:2px">📣 Liveticker</div>`;
+    const teamZeile=eigenesTeam?`<div style="font-size:var(--s-klein);color:#64748b;margin-bottom:2px">Dein Kind spielt heute in <b>Adler ${eigenesTeam}</b>.</div>${trainerZeile(eigenesTeam)}`:(anzahl>1?"":trainerZeile(1));
+    slot.innerHTML=kopf+teamZeile+bald+`</div>`;
+    return;
+  }
   try{ elternLiveKachelLoad(termin,eigenesTeam); }catch(e){}
 
   if(myTeams.size===1){

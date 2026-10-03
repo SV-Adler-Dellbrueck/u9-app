@@ -2265,7 +2265,7 @@ const ELTERN_TOUR=[
   {emo:"✅", t:"Zu erledigen", sel:["#eltern-todo-btn"],
    d:"Aufgaben für euch als Familie, zum Beispiel der Grillhütten-Dienst. Könnt ihr nicht, tippt ihr „Ersatz suchen“ – eine andere Familie kann übernehmen."},
   {emo:"📡", t:"Liveticker", sel:["#eltern-live-slot","#eltern-ticker-slot"],
-   d:"Am Spieltag läuft hier der Ticker mit – auch wenn ihr nicht am Platz seid."},
+   d:"Der Liveticker kommt bald: Dann läuft am Spieltag hier der Ticker mit – auch wenn ihr nicht am Platz seid."},
   {emo:"🎮", t:"Die Kabine für dein Kind", sel:['button[onclick="kabineOpen()"]'],
    d:"Hier darf dein Kind spielen: Quiz, Missionen, Sammelalbum. Zurück geht es nur mit deinem Code."},
   {emo:"📱", t:"Kinder-App auf eigenem Gerät", sel:['button[onclick="kinderAppOpen()"]'],
