@@ -109,9 +109,10 @@ async function galerieRender(terminId){
   try{const r=await fetch(`${SB_URL}/rest/v1/rpc/termin_gallery`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({p_termin:terminId})});if(r.ok)items=(await r.json())||[];}catch(e){}
   const istTrainer=(await authRole())==="trainer";
   if(!items.length){body.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-size:var(--s-text)">Noch keine Fotos – mach das erste! 📷</div>';return;}
+  _galListe[terminId]=items;   // v730: für die Großansicht
   body.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px">
-    ${items.map(f=>`<div style="position:relative">
-      <img id="gal-img-${f.id}" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;background:#f1f5f9">
+    ${items.map((f,i)=>`<div style="position:relative">
+      <img id="gal-img-${f.id}" alt="Foto ${i+1} von ${items.length} – groß ansehen" role="button" tabindex="0" onclick="galerieGross(${terminId},${i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();galerieGross(${terminId},${i})}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;background:#f1f5f9;cursor:zoom-in">
       ${istTrainer?`<button onclick="galerieDelete(${f.id},'${esc(f.foto_path)}',${terminId})" title="Löschen" style="position:absolute;top:4px;right:4px;width:40px;height:40px;border:none;border-radius:8px;background:rgba(0,0,0,.55);color:#fff;cursor:pointer">🗑</button>`:""}
     </div>`).join("")}
   </div>`;
@@ -161,6 +162,102 @@ async function galerieUpload(btn,terminId,inputId){
   if(hoch)toast(`📸 ${hoch} Foto${hoch===1?"":"s"} hochgeladen ✓${fehler?` · ${fehler} fehlgeschlagen`:""}`);
   else toast("Upload fehlgeschlagen","err");
   galerieRender(terminId);
+}
+/* ═══ v730: Spieltagsgalerie und Großansicht ═══
+   PO 03.10.: „Dann brauchen wir eine Spieltagsgalerie. Wenn Eltern Bilder in der App hochladen. Darauf
+   sollen die Eltern dann auch Zugriff haben.“ (Das Adler Nest entsteht separat.) Die Fotos liegen schon
+   seit v721 je Termin (termin_media); neu ist der Überblick über alle Spieltage der Saison und eine
+   Großansicht mit Wischen und Speichern. Sichtbar nur für eingeloggte Team-Eltern und das Trainerteam –
+   dieselbe Abfrage termin_gallery wie am Termin, keine neue Freigabe. */
+const _galListe={};
+async function _galBlob(path){
+  try{const r=await fetch(`${SB_URL}/storage/v1/object/authenticated/termin_media/${path}`,{headers:{'Authorization':'Bearer '+sbToken()}});return r.ok?await r.blob():null;}catch(e){return null;}
+}
+async function spieltagGalerieOpen(){
+  if(!sbToken()){toast("Bitte zuerst anmelden","err");return;}
+  document.getElementById("stg-modal")?.remove();
+  const m=document.createElement("div");m.id="stg-modal";
+  m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Spieltagsgalerie");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.style.zIndex=zOben(9998);
+  m.onclick=e=>{if(e.target===m)m.remove();};
+  m.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:560px;width:100%;margin:auto">
+    ${mdlHead("stg-modal","📸","Spieltagsgalerie","Fotos von allen Spieltagen dieser Saison","#7c3aed")}
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:12px;line-height:1.5">🔒 Nur für eingeloggte Team-Eltern und das Trainerteam. Fotos hinzufügen: Spieltag antippen, dann „Foto aufnehmen“ oder „Aus Galerie“.</div>
+    <div id="stg-body"><div style="text-align:center;padding:20px;color:var(--text3)">Lade…</div></div>
+  </div>`;
+  document.body.appendChild(m);
+  spieltagGalerieRender();
+}
+async function spieltagGalerieRender(){
+  const body=document.getElementById("stg-body"); if(!body)return;
+  const heute=isoLokal(), d0=new Date(), saisonAb=`${d0.getMonth()>=6?d0.getFullYear():d0.getFullYear()-1}-07-01`;
+  let termine=[];
+  try{const r=await fetch(`${SB_URL}/rest/v1/termine?select=id,typ,titel,gegner,datum,heim&typ=in.(spiel,turnier)&datum=gte.${saisonAb}&datum=lte.${heute}&order=datum.desc`,{headers:sbAuthHeaders()});if(r.ok)termine=(await r.json())||[];}catch(e){}
+  if(!termine.length){body.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-size:var(--s-text)">In dieser Saison war noch kein Spieltag.</div>';return;}
+  const fotos=await Promise.all(termine.map(async t=>{
+    try{const r=await fetch(`${SB_URL}/rest/v1/rpc/termin_gallery`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({p_termin:t.id})});return r.ok?((await r.json())||[]):[];}catch(e){return [];}
+  }));
+  const wt=["So","Mo","Di","Mi","Do","Fr","Sa"];
+  body.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">${termine.map((t,i)=>{
+    const n=fotos[i].length, d=new Date(t.datum+"T00:00:00"), titel=t.titel||t.gegner||(t.typ==="turnier"?"Festival":"Spiel");
+    const tArg=String(titel).replace(/'/g,"").replace(/"/g,"");
+    return `<button type="button" class="stg-album" data-termin="${t.id}" onclick="galerieOpen(${Number(t.id)},'${esc(tArg)}')" style="display:flex;flex-direction:column;text-align:left;padding:0;border:1px solid var(--border,#cbd5e1);border-radius:12px;background:var(--surface);color:var(--text);overflow:hidden;cursor:pointer;font-family:inherit">
+      <span style="display:block;width:100%;aspect-ratio:4/3;background:#ede9fe;position:relative">${n?`<img id="stg-cover-${t.id}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block">`:`<span aria-hidden="true" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:var(--s-seite)">📷</span>`}</span>
+      <span style="display:block;padding:8px 10px">
+        <span style="display:block;font-weight:800;font-size:var(--s-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(titel)}</span>
+        <span style="display:block;font-size:var(--s-klein);color:var(--text2)">${wt[d.getDay()]} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})} · ${n?(n===1?"1 Foto":n+" Fotos"):"Noch keine Fotos"}</span>
+      </span></button>`;}).join("")}</div>`;
+  termine.forEach(async (t,i)=>{
+    if(!fotos[i].length)return;
+    const b=await _galBlob(fotos[i][0].foto_path), img=document.getElementById("stg-cover-"+t.id);
+    if(b&&img)img.src=URL.createObjectURL(b);
+  });
+}
+/* Großansicht: wischen oder ‹ ›, Pfeiltasten, Escape. „Speichern“ öffnet am Handy das Teilen-Menü
+   (dort „Bild sichern“ / „In Fotos speichern“), sonst einen normalen Download. */
+async function galerieGross(terminId,idx){
+  const liste=_galListe[terminId]||[]; if(!liste.length)return;
+  idx=(idx+liste.length)%liste.length;
+  let lb=document.getElementById("gal-gross");
+  if(!lb){
+    lb=document.createElement("div");lb.id="gal-gross";
+    lb.setAttribute("role","dialog");lb.setAttribute("aria-modal","true");lb.setAttribute("aria-label","Foto groß");
+    lb.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px";
+    lb.style.zIndex=zOben(10050);
+    const knopf="min-width:48px;min-height:48px;border:none;border-radius:12px;background:rgba(255,255,255,.16);color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer";
+    lb.innerHTML=`<div style="display:flex;align-items:center;gap:8px;width:100%;max-width:900px;margin-bottom:8px">
+        <span id="gal-gross-zahl" style="flex:1;color:#fff;font-size:var(--s-text);font-weight:700"></span>
+        <button type="button" id="gal-gross-speichern" style="${knopf};padding:0 14px">⬇️ Speichern</button>
+        <button type="button" onclick="document.getElementById('gal-gross')?.remove()" aria-label="Schließen" style="${knopf}">✕</button></div>
+      <div style="position:relative;flex:1;width:100%;max-width:900px;display:flex;align-items:center;justify-content:center;min-height:0">
+        <button type="button" id="gal-gross-zurueck" aria-label="Vorheriges Foto" style="${knopf};position:absolute;left:0;z-index:1">‹</button>
+        <img id="gal-gross-img" alt="" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px">
+        <button type="button" id="gal-gross-weiter" aria-label="Nächstes Foto" style="${knopf};position:absolute;right:0;z-index:1">›</button></div>`;
+    document.body.appendChild(lb);
+    let x0=null;
+    lb.addEventListener("touchstart",e=>{x0=e.touches[0].clientX;},{passive:true});
+    lb.addEventListener("touchend",e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>50)galerieGross(Number(lb.dataset.termin),Number(lb.dataset.idx)+(dx<0?1:-1));});
+    lb.addEventListener("keydown",e=>{if(e.key==="ArrowRight")galerieGross(Number(lb.dataset.termin),Number(lb.dataset.idx)+1);else if(e.key==="ArrowLeft")galerieGross(Number(lb.dataset.termin),Number(lb.dataset.idx)-1);else if(e.key==="Escape")lb.remove();});
+  }
+  lb.dataset.termin=terminId; lb.dataset.idx=idx;
+  const f=liste[idx];
+  document.getElementById("gal-gross-zahl").textContent=`Foto ${idx+1} von ${liste.length}`;
+  ["gal-gross-zurueck","gal-gross-weiter"].forEach(id=>{const b=document.getElementById(id);if(b)b.style.display=liste.length>1?"":"none";});
+  document.getElementById("gal-gross-zurueck").onclick=()=>galerieGross(terminId,idx-1);
+  document.getElementById("gal-gross-weiter").onclick=()=>galerieGross(terminId,idx+1);
+  const img=document.getElementById("gal-gross-img"); img.alt=`Foto ${idx+1} von ${liste.length}`; img.removeAttribute("src");
+  const sp=document.getElementById("gal-gross-speichern"); sp.disabled=true;
+  const blob=await _galBlob(f.foto_path);
+  if(String(lb.dataset.idx)!==String(idx)||String(lb.dataset.termin)!==String(terminId))return;   // inzwischen weitergewischt
+  if(!blob){toast("Foto konnte nicht geladen werden","err");return;}
+  img.src=URL.createObjectURL(blob); sp.disabled=false;
+  sp.onclick=async()=>{
+    const name=`adler-u9-foto-${terminId}-${idx+1}.jpg`;
+    try{const file=new File([blob],name,{type:"image/jpeg"});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});return;}}catch(e){if(e&&e.name==="AbortError")return;}
+    const a=document.createElement("a");a.href=img.src;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  };
 }
 async function galerieDelete(id,path,terminId){
   if(!await frageJaNein({emoji:"🖼️",titel:"Foto löschen?",
