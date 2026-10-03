@@ -48,7 +48,7 @@ async function renderElternView(datum){
       <div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:16px 0 8px;text-align:center">Für Eltern</div>
       <button onclick="elternKalenderIcs()" style="width:100%;margin-bottom:10px;background:#1e3a8a;color:#fff;border:none;padding:14px;border-radius:12px;font-family:inherit;font-weight:700;font-size:var(--s-karte);cursor:pointer">🗓️ Termine in meinen Kalender</button>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <a href="${appRoot()}?heft" style="text-align:center;background:#fff;border:1.5px solid #1e3a8a;color:#1e3a8a;padding:13px 8px;border-radius:12px;text-decoration:none;font-weight:700;font-size:var(--s-text)">📰 Adler Nest</a>
+        <a href="${appRoot()}?heft" style="text-align:center;background:#fff;border:1.5px solid #1e3a8a;color:#1e3a8a;padding:13px 8px;border-radius:12px;text-decoration:none;font-weight:700;font-size:var(--s-text)">📰 Adler Nest – in der Eltern-App</a>
         <a href="${appRoot()}?portal" style="text-align:center;background:#fff;border:1.5px solid #1e3a8a;color:#1e3a8a;padding:13px 8px;border-radius:12px;text-decoration:none;font-weight:700;font-size:var(--s-text)">👨‍👩‍👧 Mein Kind</a>
       </div>
       <div style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin-top:16px">SV Adler Dellbrück e.V. · Angaben ohne Gewähr</div></div>`;
@@ -266,7 +266,7 @@ async function renderTickerView(key){
           <div style="font-size:34px;font-weight:900;color:#1e3a8a;margin:4px 0">${t}:${g}</div>
           <div style="font-size:var(--s-text);color:#64748b">Adler U9 gegen ${geg}</div>
           <div style="font-size:var(--s-text);color:#334155;margin-top:14px;line-height:1.5">Der Liveticker dieses Spieltags ist beendet.<br>Die Höhepunkte stehen im Adler Nest.</div>`}
-          <a href="${appRoot()}?heft" style="display:inline-block;margin-top:14px;min-height:46px;line-height:46px;padding:0 20px;border-radius:10px;background:#1e3a8a;color:#fff;text-decoration:none;font-weight:800;font-size:var(--s-karte)">📰 Zum Adler Nest</a>
+          <a href="${appRoot()}?heft" style="display:inline-block;margin-top:14px;min-height:46px;line-height:46px;padding:0 20px;border-radius:10px;background:#1e3a8a;color:#fff;text-decoration:none;font-weight:800;font-size:var(--s-karte)">📰 Adler Nest – in der Eltern-App</a>
         </div>
         <div style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin-top:14px">SV Adler Dellbrück e.V.</div>`;
       return;

@@ -5,7 +5,9 @@
       Heft veröffentlicht ist
    b) Der Knopf führt in den Eltern-Bereich (?portal)
    c) Über einen geteilten Link (ohne von=app) steht kein Knopf da
-   d) Die Eltern-App öffnet das Nest mit von=app */
+   d) Die Eltern-App öffnet das Nest mit von=app
+      (v733: das Nest liest man seit den Ausgaben IN der App – nestOpen statt ?heft-Link. a–c gelten weiter
+      für alte Links, die jetzt den Hinweis „Das Adler Nest lesen Eltern in der App“ zeigen.) */
 "use strict";
 const fs = require("fs"), path = require("path");
 module.exports = async function (h) {
@@ -35,8 +37,8 @@ module.exports = async function (h) {
   zeilen.push(`c) geteilter Link: Knopf ${c ? "da" : "nicht da"}`);
 
   const portal = fs.readFileSync(path.join(h.REPO, "md-eltern-portal.js"), "utf8");
-  const ohne = (portal.match(/\?heft'/g) || []).length, mit = (portal.match(/\?heft&von=app'/g) || []).length;
-  if (ohne || !mit) probleme.push(`d) Eltern-App öffnet das Nest ${ohne}× ohne von=app`);
-  zeilen.push(`d) ${mit} Einstiege aus der Eltern-App mit von=app`);
+  const alt = (portal.match(/\?heft/g) || []).length, neu = (portal.match(/nestOpen\(\)/g) || []).length;
+  if (alt || neu < 2) probleme.push(`d) Eltern-App: ${alt} alte ?heft-Links, ${neu} Einstiege über nestOpen()`);
+  zeilen.push(`d) Eltern-App öffnet das Nest ${neu}× in der App (nestOpen), ${alt} alte ?heft-Links`);
   return h.ergebnis("v661 Adler Nest: Zurück zur App", probleme.length === 0, probleme.length ? probleme.concat(zeilen) : zeilen);
 };

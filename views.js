@@ -1252,7 +1252,7 @@ async function backupExport(){
                 "trainingsvorlagen","team_config","team_einstellungen","team_notizen","team_polls","team_quests",
                 "eltern_leitfaden","fairplay_regeln","fairplay_commit","periodisierung","skill_woche",
                 "entwicklungsziele","nominierung_hinweis","probekinder","aufstellungen","taktik_templates",
-                "trainer_notes","training_live","turnier_plan","turnier_spiele","heimturnier","stadionheft",
+                "trainer_notes","training_live","turnier_plan","turnier_spiele","heimturnier","stadionheft","heft_ausgabe",
                 "betreuung","event_helfer","event_mitbringen","event_puls","elterngespraech_wunsch",
                 /* v644: Löschanträge – der Nachweis, dass und wann ein Antrag erledigt wurde. */
                 "loeschantrag",
@@ -4738,6 +4738,7 @@ const HELP=[
     {t:"Wer bekommt Push?", d:"Seit v711 unter Eltern & Kinder → Eltern verwalten: wie viele Familien Benachrichtigungen bekommen, welche ein Konto haben, aber Push aus, und welche noch gar kein Elternkonto. „Anleitung an die Eltern teilen“ schickt eine Anleitung ohne Namen, z. B. in die WhatsApp-Gruppe. Nur das Trainerteam sieht die Liste.", run:"pushAbdeckungOpen()"},
     {t:"Rückmelde-Verhalten", d:"Seit v672 unter Eltern & Kinder → Eltern verwalten: je Kind, getrennt nach Spieltagen und Training, wie lange vor Terminbeginn im Schnitt die erste Antwort kam, wie oft unter 24 Stunden vorher, wie oft sich die Familie umentschieden hat (auch „zu → ab“) und bei Spieltagen, wie oft gar keine Antwort kam. Gezählt je Kind – egal, welches Elternteil antwortet. Umentscheidungen zählen erst seit dem 29.09.2026, vorher wurden sie nicht gespeichert; Änderungen durch das Trainerteam zählen nicht. Nur das Trainerteam sieht diese Zahlen, Eltern nicht.", run:"rueckmeldeStatistikOpen()"},
     {t:"Team-Ansage", d:"Wichtige Info an alle Eltern – mit Gelesen-Status (wer fehlt noch?).", run:"ansageTrainerOpen()"},
+    {t:"Nest-Ausgaben", d:"<b>Seit v733</b> erscheint das Adler Nest nach jedem Spieltag als eigene, nummerierte Ausgabe – nur in der App (Eltern, Kinder-Konten, Trainerteam), nicht mehr über einen öffentlichen Link. „Neue Ausgabe erfassen“, Spieltag wählen, Texte eintragen oder den Entwurf aus dem Projekt-Chat gegenlesen. <b>Bilderstrecke:</b> 4 bis 6 Fotos aus der Galerie des Spieltags antippen (mehr als 6 geht nicht). <b>Uploads:</b> Titelbild (Maskottchen), Hördatei als MP3 (die Dauer liest die App selbst) und bis zu 2 Privatfotos für das Porträt – nur mit dem Häkchen „Familie ist einverstanden“. <b>Porträt:</b> Kind wählen (der Vorschlag „dran ist reihum“ bleibt), Antworten aus dem Kabinen-Reporter direkt hier freigeben – ins Heft kommt nur Freigegebenes; den Spitznamen nur mit Häkchen; der Grund für die Rückennummer erscheint nie. Spieltagskarte, Teams, Kapitäne und Ergebnis liest die App selbst aus Termin, Teameinteilung und Ticker. Die Quellen zu „An diesem Tag“ sehen nur Trainer. „👁 Vorschau“ zeigt die Ausgabe so, wie Eltern sie sehen; „Veröffentlichen“ fragt nach, meldet die Ausgabe auf der Eltern-Startseite und merkt sich das Porträtkind für den Reihum-Vorschlag.", run:"nestEditorOpen()"},
     {t:"Adler Nest", d:"Digitales Stadionheft erstellen & drucken. <b>Seit v732 „Adler im Porträt“:</b> jede Woche wird reihum ein Kind vorgestellt – der Editor schlägt vor, wer dran ist (noch nie oder am längsten nicht im Porträt). „✨ Porträt-Entwurf“ schreibt aus den Fan-Fakten der Eltern und den Antworten im Kabinen-Reporter einen kurzen Text. An die KI gehen keine Namen (das Kind heißt dort „Kind A“, andere Kinder „ein Mitspieler“, kein Spitzname), freie Reporter-Antworten nur, wenn du sie freigegeben hast. Den Vornamen setzt die App ein; du liest, änderst und speicherst – erst dann steht er im Heft. Beim Veröffentlichen merkt sich die App, wer in welcher Woche dran war.", run:"stadionheftOpen()"},
     {t:"Eltern-Bereich", d:"Eltern melden sich mit E-Mail und Passwort an (alternativ Einmal-Code per Mail): Zu- und Absagen, Karte, Quiz, Betreuung vor Ort. Neue Passwörter – bei Eltern und Trainern – brauchen mindestens 10 Zeichen mit Buchstaben und Ziffern; ältere, kürzere gelten zum Anmelden weiter."},
     {t:"Wer hilft mit? freigeben", d:"Seit v662 sehen Eltern bei einem Termin nur die Helfer-Aufgaben, die du freigibst: im Termin bearbeiten unter „Wer hilft“ anhaken und daneben eintragen, wie viele Helfer du brauchst. Zur Auswahl stehen Funino-Tore, Jugendtore, Aufbau (bei Auswärtsspielen nicht), Abbau, Betreuung, Live-Ticker und Fotos, dazu zwei eigene Aufgaben mit freiem Text. Eltern sehen „x von n“; ist eine Aufgabe voll, kann sich niemand mehr eintragen. Ohne Freigabe erscheint bei den Eltern gar nichts. Bei einem Auswärtsspiel steht dort seit v708 nur „Wer betreut die Kinder mit?“ – die Betreuung mit Anzahl und ein Hinweis; aufgebaut, getickert und fotografiert wird beim Gastgeber."},
@@ -6635,61 +6636,21 @@ function heftZurueck(){
   if(intern&&history.length>1){ history.back(); return; }
   location.href=location.pathname+"?portal";
 }
+/* v733 (Auftragspaket Adler Nest, 03.10.): Das Adler Nest erscheint als Ausgabe je Spieltag und ist nur noch
+   hinter dem Login lesbar – die Elternfotos der Spieltagsgalerie zeigen auch Gegnerkinder. Der alte öffentliche
+   Link bleibt für bestehende Links (Matchcard, Spielende-Seite, geteilte Nachrichten) erhalten, zeigt aber keine
+   Ausgabe mehr, sondern den Weg in die App. Die Edge Function stadionheft-view bleibt bis auf Weiteres stehen. */
 async function renderStadionheftView(){
-  const root=document.createElement("div");
+  const root=document.createElement("div"); root.id="heft-hinweis";
   root.style.cssText="max-width:460px;margin:0 auto;padding:16px;font-family:inherit;min-height:100vh;background:var(--bg)";
   document.body.appendChild(root);
-  root.innerHTML=(typeof elternLoader==="function")?elternLoader("Adler Nest wird geladen …"):'<div style="text-align:center;padding:48px;color:#64748b">Lade Adler Nest…</div>';
-  let d=null;
-  try{
-    const r=await fetch(`${SB_URL}/functions/v1/stadionheft-view`,{method:"POST",headers:{'Content-Type':'application/json'},body:JSON.stringify({team:"adler1"})});
-    d=r.ok?await r.json():null;
-  }catch(e){}
-  if(!d||!d.published){
-    root.innerHTML=heftZurueckLeiste()+'<div style="text-align:center;padding:48px;color:var(--text3)"><img src="logo.png" style="width:56px;height:56px" alt=""><div style="margin-top:12px">Aktuell ist kein <b>Adler Nest</b> veröffentlicht.<br>Schau bald wieder rein! 🦅</div></div>';
-    return;
-  }
-  const h=d.heft||{};
-  const avatar=(sp,size)=>`<div style="position:relative;width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#1a56db,#3b82f6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:${Math.round(size*0.38)}px;font-weight:800">${sp.foto_url?`<img src="${sp.foto_url}" alt="" style="width:100%;height:100%;object-fit:cover">`:`<span>${esc((sp.name||"?").slice(0,1).toUpperCase())}</span>`}</div>`;
-  const cards=(d.spieler||[]).map(sp=>{
-    const pos=sp.lieblingsposition?(typeof cardPosLabel==="function"?cardPosLabel(sp.lieblingsposition):sp.lieblingsposition):(sp.tw?"Torwart":"");
-    return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:10px;text-align:center">
-      <div style="width:64px;margin:0 auto 6px;position:relative">${avatar(sp,64)}${sp.nr!=null?`<div style="position:absolute;bottom:-2px;right:-2px;min-width:20px;height:20px;background:#facc15;color:#1e293b;border-radius:10px;border:2px solid #fff;font-size:var(--s-klein);font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 3px">${esc(sp.nr)}</div>`:""}</div>
-      <div style="font-size:var(--s-karte);font-weight:800;color:#1e293b">${esc(sp.name)}${sp.tw?" 🥅":""}</div>
-      ${sp.jahrgang?`<div style="font-size:var(--s-klein);color:#64748b">Jahrgang ${esc(sp.jahrgang)}</div>`:""}
-      ${sp.spitzname?`<div style="font-size:var(--s-klein);color:#64748b;font-style:italic">„${esc(sp.spitzname)}"</div>`:""}
-      ${pos?`<div style="font-size:var(--s-klein);color:var(--blue-text);font-weight:700">${esc(pos)}</div>`:""}
-    </div>`;
-  }).join("");
-  const fk=h.fokus;
-  const fokusHtml=fk?`<div style="display:flex;gap:12px;align-items:center;background:linear-gradient(135deg,#fef9c3,#fef3c7);border:1px solid #fde047;border-radius:14px;padding:12px;margin-bottom:12px">
-    <div style="flex:0 0 auto">${avatar(fk,66)}</div>
-    <div><div style="font-size:var(--s-text);font-weight:800;color:var(--yellow)">🦅 Adler im Porträt</div>
-      <div style="font-size:var(--s-karte);font-weight:900;color:#1e293b">${esc(fk.name)}${fk.nr!=null?" · #"+esc(fk.nr):""}${fk.jahrgang?" · Jahrgang "+esc(fk.jahrgang):""}</div>
-      ${fk.text?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:2px;line-height:1.4">${esc(fk.text).replace(/\n/g,"<br>")}</div>`:""}</div></div>`:"";
-  const nestLbl=t=>`<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:16px 4px 8px">${t}</div>`;
-  // I-C: Kabinen-Reporter-Rubrik (RPC reporter_public: nur Freigegebenes, Namen serverseitig maskiert)
-  let repHtml="";
-  try{
-    const r=await fetch(`${SB_URL}/rest/v1/rpc/reporter_public`,{method:"POST",headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:"{}"});
-    if(r.ok){const reps=((await r.json())||[]).slice(0,6);
-      if(reps.length)repHtml=nestLbl("🎙️ Kabinen-Reporter – die Kinder haben das Wort")
-        +reps.map(x=>`<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #14b8a6;border-radius:12px;padding:10px 13px;margin-bottom:8px;font-size:var(--s-text);color:#334155"><b>${esc(x.frage)}</b><br>„${esc(x.antwort)}" – <i>${esc(x.name)}</i></div>`).join("");}
-  }catch(e){}
-  root.innerHTML=`${heftZurueckLeiste()}<div class="elt-fade">
-    <div style="background:linear-gradient(135deg,#1e3a8a,#2563eb);border-radius:16px;padding:18px 16px;text-align:center;color:#fff;margin:4px 0 14px;box-shadow:0 2px 12px rgba(30,58,138,.28)">
-      <img src="logo.png" style="width:56px;height:56px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))" alt="SV Adler Dellbrück">
-      <div style="font-size:var(--s-klein);font-weight:700;letter-spacing:.8px;opacity:.85;margin-top:4px">SV ADLER DELLBRÜCK e.V.</div>
-      <div style="font-size:var(--s-seite);font-weight:900;margin:2px 0">${esc(h.titel||"Adler Nest")}</div>
-      <div style="font-size:var(--s-klein);opacity:.85">Das Vereinsheft der jungen Adler 🪺</div>
-    </div>
-    ${h.einleitung?`<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #2563eb;border-radius:12px;padding:12px 13px;font-size:var(--s-text);color:#334155;line-height:1.55;margin-bottom:12px">${esc(h.einleitung).replace(/\n/g,"<br>")}</div>`:""}
-    ${fokusHtml}
-    ${nestLbl("🦅 Unser Kader")}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">${cards}</div>
-    ${repHtml}
-    ${h.kommentar?`${nestLbl("📣 Vom Trainerteam")}<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #16a34a;border-radius:12px;padding:12px 13px;font-size:var(--s-text);color:#334155;line-height:1.55">${esc(h.kommentar).replace(/\n/g,"<br>")}</div>`:""}
-    <div style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin-top:18px">Auf geht's, Adler! 🦅 · SV Adler Dellbrück e.V.</div></div>`;
+  root.innerHTML=`${heftZurueckLeiste()}<div style="text-align:center;padding:40px 12px;color:var(--text)">
+    <img src="logo.png" style="width:64px;height:64px" alt="SV Adler Dellbrück">
+    <div style="font-size:var(--s-seite);font-weight:900;margin:12px 0 6px">🪺 Adler Nest</div>
+    <p style="font-size:var(--s-karte);line-height:1.5;margin:0 0 6px">Das Adler Nest lesen Eltern in der App.</p>
+    <p style="font-size:var(--s-text);color:var(--text2);line-height:1.5;margin:0 0 20px">Nach jedem Spieltag erscheint dort eine neue Ausgabe – mit Bericht, Fotos und Porträt. Weil die Fotos auch andere Kinder zeigen, gibt es das Heft nur nach der Anmeldung.</p>
+    <a href="${location.pathname}?portal" id="heft-zum-login" style="display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 24px;border-radius:12px;background:var(--blue);color:#fff;text-decoration:none;font-weight:800;font-size:var(--s-karte)">Zur Eltern-App anmelden</a>
+  </div>`;
 }
 
 /* ═══════════════════════════════════
@@ -6899,7 +6860,8 @@ function _kachelInhalt(key){
     ],col)
     +kSec("Inhalte")
     +kTiles([
-      {emo:"📰",label:"Adler Nest",fn:"stadionheftOpen"},
+      {emo:"🪺",label:"Nest-Ausgaben",fn:"nestEditorOpen"},   // v733: eine Ausgabe je Spieltag
+      {emo:"📰",label:"Adler Nest (Porträt-Vorschlag)",fn:"stadionheftOpen"},
       {emo:"🏆",label:"Adler Wrapped",fn:"adlerWrappedTeaser"}
     ],col)
     +`<div id="home-milestone" style="margin-top:8px"></div>`;

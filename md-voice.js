@@ -178,7 +178,10 @@ async function atInit(){
   try{
     const r=await fetch(`${SB_URL}/rest/v1/match_actions?datum=eq.${encodeURIComponent(datum)}&select=spieler,aktion,runde`,{headers:sbAuthHeaders()});
     if(!sbCheck401(r)&&r.ok){
-      const rows=await r.json();
+      let rows=await r.json();
+      /* v733: Aktionen von Kindern, die heute „nicht“ oder „verletzt“ gemeldet sind, zählen nicht mit. */
+      const vorher=rows.length; if(typeof nomNichtDabei==="function")rows=rows.filter(a=>!nomNichtDabei(a.spieler));
+      if(rows.length<vorher)toast(`${vorher-rows.length===1?"1 Aktion":(vorher-rows.length)+" Aktionen"} von Kindern, die heute nicht dabei sind, ausgeblendet`);
       rows.forEach(a=>{if(!atCounts[a.spieler])atCounts[a.spieler]={};atCounts[a.spieler][a.aktion]=(atCounts[a.spieler][a.aktion]||0)+1;
         if(a.aktion==="tor"&&typeof atTorMerken==="function")atTorMerken(a.runde);});   // v504: Runde je Tor
     }

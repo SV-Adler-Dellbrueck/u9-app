@@ -374,12 +374,24 @@ async function kapitaenLoad(){
 }
 /* Die Kapitänswahl in der Team-Karte unter „Teams festlegen": eine Auswahl je Team, sortiert
    nach „wer war am seltensten dran", Sterne für die, die noch nie die Binde hatten. */
+/* v733 (Befund 03.10.): Die Kapitäne waren am 30.09. gewählt, die Teams am Spieltag um 8:32 Uhr neu
+   eingeteilt – die Wahl blieb stehen, obwohl das Kind in einem anderen Team spielte. Steht der Kapitän nicht
+   mehr im Team, verwirft die App die Wahl (auch in der Datenbank) und bittet um eine neue. */
+let KAP_VERWORFEN={};
+function kapitaenPruefen(t,namen){
+  const cur=KAP_HEUTE[t]; if(!cur||!namen||!namen.length||namen.includes(cur))return;
+  KAP_VERWORFEN[t]=cur; delete KAP_HEUTE[t];
+  if(t===((typeof spieltagTeam!=="undefined")?spieltagTeam:1))matchKapitaen=null;
+  const datum=_kapKey(t);
+  try{ fetch(`${SB_URL}/rest/v1/match_actions?datum=eq.${encodeURIComponent(datum)}&aktion=eq.kapitaen&spieler=eq.${encodeURIComponent(cur)}`,{method:"DELETE",headers:sbAuthHeaders()}).catch(()=>{}); }catch(e){}
+}
 function kapitaenWahlHtml(t,namen){
   if(!namen||!namen.length)return "";
-  const cur=KAP_HEUTE[t]||null;
+  kapitaenPruefen(t,namen);
+  const cur=KAP_HEUTE[t]||null, weg=!cur&&KAP_VERWORFEN[t];
   const nie=namen.filter(n=>!(KAP_COUNT[n]>0));
   const opts=namen.slice().sort((a,b)=>(KAP_COUNT[a]||0)-(KAP_COUNT[b]||0)).map(n=>`<option value="${esc(n)}"${n===cur?" selected":""}>${getKader(n)?.nr?getKader(n).nr+" ":""}${esc(n)} · ${(KAP_COUNT[n]||0)===0?"noch nie ⭐":(KAP_COUNT[n]+"×")}</option>`).join("");
-  return `<div style="display:flex;align-items:center;gap:8px;margin:0 0 6px">
+  return `${weg?`<div class="kap-neu" role="status" style="font-size:var(--s-klein);font-weight:700;color:var(--text);background:var(--orange-bg);border-left:4px solid var(--orange);border-radius:8px;padding:6px 10px;margin:0 0 6px">⚠️ Kapitän neu wählen – ${esc(weg)} spielt jetzt in einem anderen Team.</div>`:""}<div style="display:flex;align-items:center;gap:8px;margin:0 0 6px">
       <span style="font-size:var(--s-text);font-weight:700;white-space:nowrap">©️ Kapitän</span>
       <select onchange="if(this.value)kapitaenSet(this.value,${t})" aria-label="Kapitän Adler ${t}" style="flex:1;min-width:0;min-height:44px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">${cur?"":'<option value="">wählen …</option>'}${opts}</select>
     </div>
@@ -416,7 +428,7 @@ async function kapitaenSet(name,t){
   // genau ein Kapitän je Team und Spieltag: alten Eintrag dieses Schlüssels entfernen
   try{ await fetch(`${SB_URL}/rest/v1/match_actions?datum=eq.${encodeURIComponent(datum)}&aktion=eq.kapitaen`,{method:"DELETE",headers:sbAuthHeaders()}); }catch(e){}
   /* v702: Der Zähler kennt nur vergangene Spieltage – eine Wahl ändert ihn nicht. */
-  KAP_HEUTE[t]=name;
+  KAP_HEUTE[t]=name; delete KAP_VERWORFEN[t];
   if(t===((typeof spieltagTeam!=="undefined")?spieltagTeam:1))matchKapitaen=name;
   try{navigator.vibrate&&navigator.vibrate(30);}catch(e){}
   terminIdForDatum(datum).then(tid=>sbQueuedPost("match_actions",{datum,spieler:name,aktion:"kapitaen",termin_id:tid}));
@@ -515,6 +527,10 @@ async function nomSave(){
    Solange nichts verteilt ist, gilt die ganze Nominierung – so bleibt der Ein-Team-Fall
    unveraendert. Alles, was einen Kader braucht (Rotation, Aufstellung, Blitz-Rating,
    Spielbericht, Aktions-Tracker), haengt an dieser einen Funktion. */
+/* v733 (Befund 03.10.): Im Spieltag standen Aktionen für ein Kind, das als verletzt gemeldet war – Probe-
+   Einträge von einer Woche vorher. Aktionen von Kindern, die ausdrücklich „nicht“ oder „verletzt“ gemeldet
+   sind, zählen nicht mit (Live-Zähler, Spielbericht); wer gar nicht nominiert ist, bleibt unberührt. */
+function nomNichtDabei(name){ const s=(typeof nomStatus==="object"&&nomStatus)?nomStatus[name]:null; return !!s&&s!=="dabei"; }
 function nominierteSpieler(){
   const dabei=KADER.filter(k=>k.aktiv!==false).map(k=>k.name).filter(n=>nomStatus[n]==="dabei");
   if(typeof TEAMS!=="object"||!TEAMS||!Object.keys(TEAMS).length)return dabei;

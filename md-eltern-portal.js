@@ -579,6 +579,10 @@ async function elternNewsLoad(kids){
   if(!data){ panel.innerHTML='<div style="background:#fff;border-radius:14px;padding:20px;text-align:center;color:var(--text3);font-size:var(--s-text)">Neuigkeiten offline nicht verfügbar.</div>'; return; }
   // aktuelle Werte je Quelle
   const cur={ nest:data.nest_at||"", boerse:data.boerse_at||"", fund:data.fund_at||"", skill:data.skill_at||"" };
+  /* v733: „Frisch erschienen“ richtet sich nach der neuesten veröffentlichten Ausgabe (heft_ausgabe), nicht
+     mehr nach dem alten Einzelheft. Vor der Migration fehlt die Funktion – dann bleibt der alte Wert. */
+  try{const r=await fetch(`${SB_URL}/rest/v1/rpc/heft_ausgaben_liste`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"});
+    if(r.ok){const l=(await r.json())||[]; cur.nest=(l[0]&&l[0].veroeffentlicht_am)||"";}}catch(e){}
   (data.lob||[]).forEach(l=>cur["lob_"+l.sid]=l.at);
   const federn={};
   await Promise.all((kids||[]).map(async k=>{ try{federn[k.spieler_id]=await xpTotal(k.spieler_id);}catch(e){federn[k.spieler_id]=0;} }));
@@ -607,7 +611,7 @@ async function elternNewsLoad(kids){
   if(!seen){ try{localStorage.setItem("adler_news_seen",JSON.stringify(cur));}catch(e){} seen=cur; } // Erstbesuch = Baseline
   const kidName=sid=>{const k=(kids||[]).find(x=>x.spieler_id===sid);return (k&&k.kader&&k.kader.name)||"Dein Kind";};
   const items=[];
-  if(cur.nest&&cur.nest>(seen.nest||"")) items.push({emo:"📰",txt:"Das Adler Nest ist frisch erschienen.",act:`location.href='${location.pathname}?heft&von=app'`});
+  if(cur.nest&&cur.nest>(seen.nest||"")) items.push({emo:"📰",txt:"Das Adler Nest ist frisch erschienen.",act:"elternCatClose();if(typeof nestOpen==='function')nestOpen()"});
   if(cur.boerse&&cur.boerse>(seen.boerse||"")) items.push({emo:"🛍️",txt:"Neues in der Adler-Börse.",act:"elternCatClose();boerseOpen()"});
   if(cur.fund&&cur.fund>(seen.fund||"")) items.push({emo:"🧦",txt:"Neues im Fundbüro.",act:"elternCatClose();fundbueroOpen()"});
   if(cur.skill&&cur.skill.slice(0,4)!=="1970"&&cur.skill>(seen.skill||"")) items.push({emo:"🏅",txt:"Neuer Skill der Woche / neue Challenge.",act:"elternCatOpen('mehr')"});
@@ -1081,7 +1085,8 @@ async function elternDashLoad(){
   html+=elRow("👤","Meine Angaben","Name, Handy, Geburtstag – und der Geburtstag deines Kindes","elternAngabenOpen()","#1e3a8a");   // v660
   html+=`<div id="team-ansprech-slot"></div>`;   // v663: Elternbeirat, Kasse, Beitrag
   html+=elRow("📸","Spieltagsgalerie","Fotos von allen Spieltagen – ansehen, groß wischen, selbst hochladen","spieltagGalerieOpen()","#7c3aed");   // v730
-  html+=elRow("📰","Adler Nest (Stadionheft)","Neuigkeiten, Ergebnisse und Geburtstage",`location.href='${location.pathname}?heft&von=app'`,"#1e3a8a");
+  /* v733: Das Adler Nest erscheint nach jedem Spieltag als eigene Ausgabe – zum Lesen und Hören, nur hier im Login. */
+  html+=elRow("🪺","Adler Nest","Nach jedem Spieltag: Bericht, Fotos, Porträt – zum Lesen und Hören","if(typeof nestOpen==='function')nestOpen()","#0044AA");
   html+=elRow("📖","Unsere Saison (Chronik)","Alle Spiele, Feste &amp; Meilensteine als Zeitstrahl – wächst jede Woche","chronikOpen()","#1d4ed8",true);
   html+=elRow("🛍️","Adler-Börse","Zu kleine Schuhe &amp; Trikots an Adler-Kinder weitergeben","boerseOpen()","#2563eb");
   html+=elRow("🧦","Fundbüro","Verlorenes &amp; Gefundenes – hier sammelt das Team","fundbueroOpen()","#3b82f6");
@@ -2289,7 +2294,7 @@ const ELTERN_TOUR=[
   {emo:"📬", t:"Offene Rückmeldungen", sel:["#eltern-offen-card"],
    d:"Stehen in den nächsten 14 Tagen Antworten aus, siehst du sie hier gesammelt."},
   {emo:"🎒", t:"Alles zum Termin", sel:['[onclick^="terminDetailOpen"]'],
-   d:"Tippe auf einen Termin: Wetter, Adresse mit Route, „Was muss mit?“, Fahrgemeinschaft, „Wer hilft mit?“ und die Fotos zum Termin – „📷 Foto aufnehmen“ öffnet direkt die Kamera. Alle Spieltagsfotos zusammen – groß ansehen und durchwischen – stehen unter „Mehr vom Team“ → „Spieltagsgalerie“. Die ganze Saison und das Kalender-Abo findest du unten unter „Mehr“ → „Alle Termine“."},
+   d:"Tippe auf einen Termin: Wetter, Adresse mit Route, „Was muss mit?“, Fahrgemeinschaft, „Wer hilft mit?“ und die Fotos zum Termin – „📷 Foto aufnehmen“ öffnet direkt die Kamera. Alle Spieltagsfotos zusammen – groß ansehen und durchwischen – stehen unter „Mehr vom Team“ → „Spieltagsgalerie“. Dort erscheint nach jedem Spieltag auch das „Adler Nest“ – eine neue Ausgabe zum Lesen und Hören. Die ganze Saison und das Kalender-Abo findest du unten unter „Mehr“ → „Alle Termine“."},
   {emo:"✅", t:"Zu erledigen", sel:["#eltern-todo-btn"],
    d:"Aufgaben für euch als Familie, zum Beispiel der Grillhütten-Dienst. Könnt ihr nicht, tippt ihr „Ersatz suchen“ – eine andere Familie kann übernehmen."},
   {emo:"📡", t:"Liveticker", sel:["#eltern-live-slot","#eltern-ticker-slot"],
