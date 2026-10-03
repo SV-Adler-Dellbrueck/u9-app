@@ -148,7 +148,7 @@ async function tickerHelferListe(){
     window._thEltern=ek;
     if(!box)return;
     box.innerHTML=helfer.map(h=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--surface2);font-size:var(--s-text)">
-        <span style="flex:1">✅ ${esc(_thName(h.email,ek))} darf heute tickern</span>
+        <span style="flex:1">✅ ${esc(_thName(h.email,ek))} tickert ${team>1?"Adler "+team:"heute"}</span>
         <button onclick="tickerHelferWeg('${jsq(h.email)}')" aria-label="Freischaltung zurücknehmen" title="Freischaltung zurücknehmen" style="border:none;background:transparent;color:#b91c1c;font-size:var(--s-teil);cursor:pointer;min-width:44px;min-height:44px">✕</button></div>`).join("");
   }catch(e){}
 }
@@ -172,7 +172,7 @@ async function tickerHelferOeffnen(){
   modal.innerHTML=`<div style="background:var(--surface);width:100%;max-width:520px;max-height:85vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b style="font-size:var(--s-karte);flex:1">👤 Ticker-Helfer · ${team>1?"Adler "+team:"heute"}</b>
       <button onclick="document.getElementById('th-modal').remove()" aria-label="Schließen" style="border:none;background:transparent;font-size:var(--s-teil);cursor:pointer;min-width:44px;min-height:44px">✕</button></div>
-    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">Das Elternteil bekommt eine Mitteilung und sieht in der Eltern-App „Ticker bedienen“ – nur für heute.</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">Je Team tickert genau eine Person – wer hier schon steht, wird ersetzt. Das Elternteil bekommt eine Mitteilung und sieht in der Eltern-App „Ticker bedienen“, nur für heute.</div>
     ${zeilen.length?zeilen.map(z=>`<button onclick="tickerHelferSetzen('${jsq(z.m)}')" class="btn" style="width:100%;min-height:48px;justify-content:flex-start;margin-bottom:6px">${esc(z.n)}</button>`).join("")
       :'<div style="color:var(--text3)">Noch keine Elternkonten verknüpft.</div>'}
   </div>`;
@@ -182,7 +182,7 @@ async function tickerHelferOeffnen(){
 async function tickerHelferSetzen(email){
   const datum=spieltagRawDate(), team=_thTeam();
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/ticker_helfer?on_conflict=datum,team,email`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({datum,team,email})});
+    const r=await fetch(`${SB_URL}/rest/v1/ticker_helfer?on_conflict=datum,team`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({datum,team,email})});
     if(sbCheck401(r))return;
     if(!r.ok){toast("Freischalten hat nicht geklappt","err");return;}
     let hinweis="";

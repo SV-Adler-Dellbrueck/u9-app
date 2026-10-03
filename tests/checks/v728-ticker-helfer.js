@@ -5,7 +5,8 @@
    a) Eltern: liefert mein_ticker_helfer einen Eintrag, steht – auch bei Ticker aus – „Du bist heute
       Ticker-Helfer“ mit „Ticker bedienen“ (?delegate=<Code>) und „Ticker ansehen“, Knöpfe ≥ 44 px
    b) Trainer: „Elternteil als Ticker-Helfer freischalten“ listet die Elternkonten (Kind statt Adresse),
-      ein Tipp schreibt ticker_helfer (Datum, Team 1, E-Mail) und ruft push-send mit art „ticker_helfer“
+      ein Tipp schreibt ticker_helfer (Datum, Team 1, E-Mail) als Upsert auf (datum, team) – je Team genau
+      eine Person (PO 03.10.) – und ruft push-send mit art „ticker_helfer“
    c) Trainer, Auswärtsturnier: unter den Helferaufgaben steht neben „Betreuung“ auch „Live-Ticker“ */
 "use strict";
 const b64 = o => Buffer.from(JSON.stringify(o)).toString("base64").replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
@@ -42,7 +43,7 @@ module.exports = async function (h) {
   const posts = [], pushes = [];
   const t = await h.starten({ supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(),
     eltern_kinder: [{ email: "eltern@example.org", spieler_id: 1, label: "Mama" }, { email: "zwei@example.org", spieler_id: 2, label: "" }],
-    ticker_helfer: (u, req) => { if (req.method() === "POST") { posts.push(JSON.parse(req.postData() || "null")); return { status: 201, body: "" }; } return []; },
+    ticker_helfer: (u, req) => { if (req.method() === "POST") { posts.push(Object.assign(JSON.parse(req.postData() || "null") || {}, { _q: u.search })); return { status: 201, body: "" }; } return []; },
     funktionen: { "push-send": (u, req) => { pushes.push(JSON.parse(req.postData() || "{}")); return { ok: true, sent: 1 }; } } }) });
   const rb = await t.page.evaluate(async () => {
     const w = ms => new Promise(x => setTimeout(x, ms));
@@ -64,6 +65,7 @@ module.exports = async function (h) {
   else {
     if (rb.rolle !== "dialog" || !rb.knoepfe.some(k => /Mama von Kind A/.test(k)) || rb.knoepfe.some(k => /@/.test(k) && /Kind/.test(k))) probleme.push("b) Liste: " + JSON.stringify(rb.knoepfe));
     else if (posts.length !== 1 || posts[0].email !== "eltern@example.org" || posts[0].team !== 1 || !/^\d{4}-\d{2}-\d{2}$/.test(posts[0].datum)) probleme.push("b) ticker_helfer: " + JSON.stringify(posts));
+    else if (!/on_conflict=datum,team(&|$)/.test(posts[0]._q)) probleme.push("b) je Team nur eine Person – Upsert auf (datum, team) fehlt: " + posts[0]._q);
     else if (pushes.length !== 1 || pushes[0].art !== "ticker_helfer" || pushes[0].email !== "eltern@example.org") probleme.push("b) push-send: " + JSON.stringify(pushes));
     else zeilen.push("b) Trainer: Liste „Mama von Kind A“ …, Tipp schreibt ticker_helfer und schickt push-send „ticker_helfer“");
     if (!/Betreuung/.test(rb.html) || !/Live-Ticker/.test(rb.html)) probleme.push("c) Helferaufgaben auswärts: " + rb.html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 200));

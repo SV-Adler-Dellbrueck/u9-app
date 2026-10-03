@@ -1706,7 +1706,7 @@ const HELFER_AUFGABEN=[
    d:()=>"In den Pausen bei den Kindern bleiben, damit das Trainerteam das nächste Spiel vorbereiten kann. Auch eine Halbzeit hilft."},
   {t:"📻 Live-Ticker",   typen:["spiel","turnier"],
    kurz:()=>"Live-Ticker tippen",
-   d:()=>"Während des Spiels kurze Meldungen in der App tippen – für alle, die nicht dabei sein können. Spielen mehrere Teams, tickerst du das Team, in dem dein Kind spielt. Am Spieltag erscheint bei dir „Ticker bedienen“."},
+   d:()=>"Während des Spiels kurze Meldungen in der App tippen – für alle, die nicht dabei sein können. Je Team tickert genau eine Person – das Team, in dem ihr Kind spielt; melden sich mehrere, gilt die frühere Eintragung. Am Spieltag erscheint bei dir „Ticker bedienen“."},
   {t:"📸 Fotografieren", typen:["spiel","turnier","event"],
    kurz:()=>"Fotos machen",
    d:()=>"Ein paar Fotos machen und sie danach in die Galerie laden. Das Handy reicht völlig."}
