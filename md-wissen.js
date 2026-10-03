@@ -118,7 +118,7 @@ const WISSEN = [
     kurz: "Training und Spieltag der U9 I",
     quelle: "Platzbelegung SV Adler Dellbrück", stand: "Saison 2026/2027",
     punkte: [
-      ["Training", "Montag 16:45–18:15 · Freitag 16:30–18:00"],
+      ["Training", "Montag 16:45–18:15 · Freitag 16:45–18:00"],
       ["Platz im Training", "Hauptplatz vorne links – an beiden Tagen, nicht der Käfig"],
       ["Spieltag", "Ungerade Kalenderwochen, Samstag 10:15–11:15"],
       ["Platz am Spieltag", "Linke Platzhälfte und Käfig"],
