@@ -175,7 +175,7 @@ Kinder sehen nie Bewertungen und nie Zahlen zu anderen Kindern. Was die Kabine �
 | **Meine Stärken** | Selbsteinschätzung in fünf Fragen mit drei Stufen. | Das Kind lernt, über sich nachzudenken. Der Trainer sieht Selbst- neben Fremdbild. |
 | **Stimmungs-Check** | Am Tag eines Termins fragt die Kabine das Kind selbst, wie es ihm geht. | Ein leises Frühwarnsystem, direkt vom Kind. |
 | **Packliste** | Ab dem Vorabend packt das Kind seine Tasche virtuell. | Eigenverantwortung, weniger Vergessenes. |
-| **Countdown** | „Noch X-mal schlafen bis zum nächsten Spiel“. | Vorfreude, altersgerecht. |
+| **Countdown** | „Noch X-mal schlafen bis zum nächsten Spiel“. Seit v731 springt „Heute ist Spieltag!“ zwei Stunden nach dem offiziellen Ende auf „Heute war Spieltag! 🦅“ mit einem aufmunternden Satz; die Packliste verschwindet dann. | Vorfreude, altersgerecht. |
 | **Quiz** | Regel- und Taktik-Quiz mit Antwort-Chips; die 100 Taktik-Szenarien folgen den Regeln unserer Spielform (Anstoß und Abstoß in der eigenen Hälfte, Seitenaus und Ecke werden eingedribbelt, kein Schiri, keine Karten). Der Vorlesen-Knopf spielt zu jedem Szenario eine vorproduzierte Aufnahme; fehlt sie, springt die Gerätestimme ein. Seit v651 ohne doppelte Wissensfragen: Zehn Dubletten sind durch neue, belegte Fragen gleicher Kategorie und Stufe ersetzt; eine Prüfung verhindert neue. | Regeln werden spielerisch gelernt – und richtig. |
 | **Kabinen-Reporter** | Interview-Fragen per Antwort-Chips; die Antworten landen im Stadionheft. | Die Kinder haben eine eigene Stimme im Adler Nest. |
 | **Kabinen-Wahl** | Abstimmen über Song, Motto oder Spielform, die der Trainer vorgegeben hat. | Mitbestimmung im sicheren Rahmen. |
