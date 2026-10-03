@@ -739,6 +739,7 @@ function kabineHome(){
     <div id="kab-level" style="padding:2px 16px 6px"></div>
     <div id="kab-lob"></div>
     <div id="kab-countdown"></div>
+    <div id="kab-nest-hinweis"></div>
     <div id="kab-reveal"></div>
     <div id="kab-pack"></div>
     <div id="kab-post"></div>
@@ -793,6 +794,7 @@ function kabineHome(){
   if(typeof arenaKabineLoad==="function")arenaKabineLoad("kab-arena"); // C3: Einlauf-Song/Schlachtruf
   kabineCountdownLoad();                                        // G6: Countdown bis zum nächsten Spiel
   kabineRevealLoad();                                           // H4: Rollen-Reveal am Spieltag
+  if(typeof kabineNestHinweisLoad==="function")kabineNestHinweisLoad();   // v734: „Du bist im nächsten Adler Nest!“
   kabinePackLoad();                                             // H3: Spieltag-Packliste
   kabinePostLoad();                                             // I-A: 📬 Adler-Post (Kudos + Genesungsgrüße)
   kabineWahlLoad();                                             // I-A: 🗳️ Kabinen-Wahl

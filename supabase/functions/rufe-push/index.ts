@@ -38,9 +38,14 @@ Deno.serve(async (req) => {
     const { data: ww } = await admin.rpc("wiewars_push_faellig");
     /* v705: Was in eine Ruhezeit fiel (push-send, push-cron), geht jetzt raus – sobald sie vorbei ist. */
     const { data: ws } = await admin.rpc("push_warteschlange_faellig");
+    /* v734 (Version 4): Porträt-Ablauf fürs Adler Nest – Bogen an die Eltern, Erinnerung nach Mittwoch 20 Uhr,
+       Hinweis an die Trainer ab Montag, Erinnerung Freitagmorgen. portraet_push_faellig() entscheidet und merkt
+       sich jeden Versand (genau einmal). Fehlt die Funktion (Migration v734 noch nicht eingespielt), passiert nichts. */
+    const { data: pp } = await admin.rpc("portraet_push_faellig");
     const faellig = [...((rufe || []) as any[]).map((f) => ({ ...f, tag: "rufe" })),
                      ...((ww || []) as any[]).map((f) => ({ ...f, tag: "wiewars-" + f.termin_id })),
-                     ...((ws || []) as any[]).map((w) => ({ user_id: w.user_id, titel: w.payload?.title, text: w.payload?.body, url: w.payload?.url, tag: w.payload?.tag || "adler" }))];
+                     ...((ws || []) as any[]).map((w) => ({ user_id: w.user_id, titel: w.payload?.title, text: w.payload?.body, url: w.payload?.url, tag: w.payload?.tag || "adler" })),
+                     ...((pp || []) as any[]).map((f) => ({ ...f, tag: "nest-portraet" }))];
     if (!faellig.length) return json({ ok: true, sent: 0 });
     webpush.setVapidDetails("mailto:trainer@adler-dellbrueck.de",
       await geheimnis(admin, "adler_vapid_public"), await geheimnis(admin, "adler_vapid_private"));
@@ -58,6 +63,6 @@ Deno.serve(async (req) => {
       }
     }
     if (gone.length) await admin.from("push_subscriptions").delete().in("endpoint", gone);
-    return json({ ok: true, empfaenger: faellig.length, wiewars: (ww || []).length, nachgeholt: (ws || []).length, sent, removed: gone.length });
+    return json({ ok: true, empfaenger: faellig.length, wiewars: (ww || []).length, nachgeholt: (ws || []).length, portraet: (pp || []).length, sent, removed: gone.length });
   } catch (e) { return json({ error: String(e) }, 500); }
 });
