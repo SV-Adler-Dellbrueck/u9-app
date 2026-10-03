@@ -927,9 +927,7 @@ async function elternDashLoad(){
     /* v725 (PO 02.10., Bildschirmfoto): „nur noch die Anstoßzeit … und nicht mehr der Treffpunkt“.
        Seit v686 steht jeder Termin nur einmal – der nächste nicht mehr zusätzlich in der Liste, die
        „Treffen …“ zeigte. Deshalb trägt diese Karte die Treffzeit jetzt selbst, wie das Termin-Fenster. */
-    const tz=termin.treffzeit?String(termin.treffzeit).slice(0,5):"";
-    const beginn=(termin.typ==="spiel"||termin.typ==="turnier")?"Anstoß":"Beginn";
-    const zeit=termin.uhrzeit?(tz?`🕒 Treffen ${tz} · ${beginn} ${String(termin.uhrzeit).slice(0,5)} Uhr`:String(termin.uhrzeit).slice(0,5)+" Uhr"):(tz?`🕒 Treffen ${tz}`:"");
+    const zeit=elternZeitZeile(termin); // v729: mit Ende
     const offen=kids.filter(k=>!rsvp[k.spieler_id]);
     const trainerJa=Object.keys(termin.trainer_status||{}).filter(n=>(termin.trainer_status||{})[n]==="ja");
     // Zu-/Absage direkt am Termin – erneuter Klick auf den aktiven Status entfernt ihn wieder.
@@ -1268,7 +1266,7 @@ function elternOffeneRsvpHtml(rows,kids,rsvpAll,ausserId){
   const zeilen=offen.map(({t,kinder})=>{
     const m=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅",label:t.typ,col:"#1e3a8a"};
     const d=new Date(t.datum+"T00:00:00"), wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
-    const zeit=t.uhrzeit?String(t.uhrzeit).slice(0,5)+" Uhr":"";
+    const zeit=elternZeitKurz(t); // v729: mit Ende
     const kidRows=kinder.map(k=>{
       const kd=k.kader||{};
       const btns=EP_RSVP_QUICK.map(s=>{
@@ -1368,7 +1366,8 @@ function elternTermineCarouselHtml(rows,kids,rsvpAll,ohneId){
     const m=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅",label:t.typ,col:"#1e3a8a"};
     const d=new Date(t.datum+"T00:00:00");
     const wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
-    const zeit=t.treffzeit?("Treffen "+String(t.treffzeit).slice(0,5)):(t.uhrzeit?String(t.uhrzeit).slice(0,5)+" Uhr":"");
+    // v729: „Treffen 09:45 · bis ca. 11:30“ bzw. „17:00–18:30 Uhr“
+    const zeit=t.treffzeit?("Treffen "+String(t.treffzeit).slice(0,5)+(elternEnde(t)?" · bis "+elternEnde(t):"")):elternZeitKurz(t);
     const rr=rsvpAll[t.id]||{};
     const stand=(kids||[]).map(k=>{
       const kd=k.kader||{}, st=rr[k.spieler_id]||null, c=st&&EP_RSVP[st];
@@ -1406,6 +1405,27 @@ function tdAdresse(t){
    in Dellbrück (am Termin abgelegt, siehe anfahrtNachziehen in md-gegner.js), daraus die späteste
    Abfahrt (Treffzeit bzw. Anstoß minus Fahrzeit minus 5 Minuten, auf 5 Minuten abgerundet), und
    „Route starten“ – die Karten-App rechnet vom eigenen Standort mit Verkehr. */
+/* v729 (PO 03.10.): „In der Eltern-App soll bei Spieltagen zu Hause oder auswärts auch immer das Ende
+   angezeigt werden“ – Kachel: „und auch beim Training die Endzeiten anzeigen“. uhrzeit_ende ist bei
+   Spielen Pflicht und bei Trainings gepflegt. Spieltage enden selten auf die Minute („ca.“), Trainings
+   schon. Eine Stelle für alle Ansichten, damit die Schreibweise überall gleich bleibt. */
+function elternEnde(t){
+  const e=t&&t.uhrzeit_ende?String(t.uhrzeit_ende).slice(0,5):"";
+  return e?(((t.typ==="spiel"||t.typ==="turnier")?"ca. ":"")+e):"";
+}
+// „🕒 Treffen 09:45 · Anstoß 10:15 · Ende ca. 11:30 Uhr“ bzw. „17:00–18:30 Uhr“
+function elternZeitZeile(t){
+  const tz=t.treffzeit?String(t.treffzeit).slice(0,5):"", beg=t.uhrzeit?String(t.uhrzeit).slice(0,5):"", e=elternEnde(t);
+  const spiel=t.typ==="spiel"||t.typ==="turnier";
+  if(beg&&tz)return `🕒 Treffen ${tz} · ${spiel?"Anstoß":"Beginn"} ${beg}${e?" · Ende "+e:""} Uhr`;
+  if(beg)return spiel?`${beg}${e?" · Ende "+e:""} Uhr`:`${beg}${e?"–"+e:""} Uhr`;
+  return tz?`🕒 Treffen ${tz}`:"";
+}
+// kurz für Listen: „10:15–11:30 Uhr“
+function elternZeitKurz(t){
+  const beg=t.uhrzeit?String(t.uhrzeit).slice(0,5):"", e=t.uhrzeit_ende?String(t.uhrzeit_ende).slice(0,5):"";
+  return beg?`${beg}${e?"–"+e:""} Uhr`:"";
+}
 function elternAnfahrtHtml(t){
   if(!t||t.heim!==false||!(t.typ==="spiel"||t.typ==="turnier")||!t.ort)return "";
   const km=Number(t.anfahrt_km), min=Number(t.anfahrt_min);
@@ -1427,8 +1447,7 @@ async function terminDetailOpen(id){
   const m=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅",label:t.typ,col:"#1e3a8a"};
   const d=new Date(t.datum+"T00:00:00");
   const wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
-  const tz=t.treffzeit?String(t.treffzeit).slice(0,5):"";
-  const zeit=t.uhrzeit?(tz?`🕒 Treffen ${tz} · ${t.typ==="spiel"||t.typ==="turnier"?"Anstoß":"Beginn"} ${String(t.uhrzeit).slice(0,5)} Uhr`:String(t.uhrzeit).slice(0,5)+" Uhr"):"";
+  const zeit=t.uhrzeit?elternZeitZeile(t):""; // v729: mit Ende
   const istSpiel=(t.typ==="spiel"||t.typ==="turnier");
   const kidIds=kids.map(k=>k.spieler_id);
   let rsvp={};
@@ -2118,12 +2137,12 @@ function elternTermineOpen(){
     const tm=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅",label:t.typ,col:"#1e3a8a"};
     const td=new Date(t.datum+"T00:00:00");
     const twtag=["So","Mo","Di","Mi","Do","Fr","Sa"][td.getDay()];
-    const tzeit=t.uhrzeit?String(t.uhrzeit).slice(0,5):"";
+    const tzeit=elternZeitKurz(t); // v729: „10:15–11:30 Uhr“
     return `<div style="display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid #f1f5f9${i===0?";background:#eff6ff;border-radius:8px":""}">
       <div style="font-size:var(--s-teil);width:28px;text-align:center">${tm.icon}</div>
       <div style="flex:1;min-width:0">
         <div style="font-weight:700;font-size:var(--s-text)">${esc(t.titel||t.gegner||tm.label)}${i===0?' <span style="font-size:var(--s-klein);color:#2563eb;font-weight:800">· NÄCHSTER</span>':""}</div>
-        <div style="font-size:var(--s-klein);color:#64748b">${twtag} ${td.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${tzeit?" · "+tzeit+" Uhr":""}${heimLabel(t)?" · "+heimLabel(t):""}${t.ort?" · "+esc(t.ort):""}${t.platz?" · 🏟️ "+esc(t.platz):""}</div>
+        <div style="font-size:var(--s-klein);color:#64748b">${twtag} ${td.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${tzeit?" · "+tzeit:""}${heimLabel(t)?" · "+heimLabel(t):""}${t.ort?" · "+esc(t.ort):""}${t.platz?" · 🏟️ "+esc(t.platz):""}</div>
       </div>
       <span style="font-size:var(--s-klein);font-weight:700;color:${tm.col};background:${tm.col}18;border-radius:6px;padding:3px 7px;white-space:nowrap">${tm.label}</span>
     </div>`;}).join(""):'<div style="font-size:var(--s-text);color:var(--text3);padding:10px 0">Aktuell sind keine Termine geplant.</div>';
@@ -2148,7 +2167,7 @@ function elternTermineIcs(){
     const tm=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{label:t.typ};
     const time=(t.uhrzeit?String(t.uhrzeit).slice(0,5):"")||"17:00";
     lines.push("BEGIN:VEVENT","UID:adler-"+t.id+"-"+t.datum+"@adler-u9","DTSTAMP:"+dtStamp,
-      "DTSTART:"+icsLocalStart(t.datum,time),"DTEND:"+icsLocalPlus(t.datum,time,90),
+      "DTSTART:"+icsLocalStart(t.datum,time),"DTEND:"+(t.uhrzeit&&t.uhrzeit_ende&&String(t.uhrzeit_ende)>String(t.uhrzeit)?icsLocalStart(t.datum,String(t.uhrzeit_ende).slice(0,5)):icsLocalPlus(t.datum,time,90)), // v729: echte Endzeit
       "SUMMARY:"+icsEscape((tm.label||"Termin")+": "+(t.titel||t.gegner||tm.label||"")));
     if(t.ort)lines.push("LOCATION:"+icsEscape(t.ort));
     lines.push("END:VEVENT");
@@ -2257,7 +2276,7 @@ const ELTERN_TOUR=[
   {emo:"🦅", t:"Willkommen bei den Adlern", vor:_elZu,
    d:"Hier läuft alles rund um dein Kind bei der U9 zusammen. Diese Tour zeigt dir, wo was ist – du startest sie jederzeit über ❓ oben neu."},
   {emo:"👍", t:"Der nächste Termin", sel:["#termin-card"], vor:_elZu,
-   d:"Ganz oben steht der nächste Termin. Training gilt als zugesagt – sag nur ab, wenn dein Kind nicht kommt. Bei Spielen und Festivals tippst du auf Zu- oder Absage. Nochmal auf die gewählte Antwort tippen nimmt sie zurück. Bei Auswärtsspielen stehen hier Treffzeit, Strecke ab Dellbrück und die späteste Abfahrt; „Route starten“ öffnet die Navigation mit Verkehr."},
+   d:"Ganz oben steht der nächste Termin. Training gilt als zugesagt – sag nur ab, wenn dein Kind nicht kommt. Bei Spielen und Festivals tippst du auf Zu- oder Absage. Nochmal auf die gewählte Antwort tippen nimmt sie zurück. Bei jedem Termin steht auch das Ende – bei Spieltagen ungefähr („Ende ca. 11:30“), beim Training genau. Bei Auswärtsspielen stehen hier Treffzeit, Strecke ab Dellbrück und die späteste Abfahrt; „Route starten“ öffnet die Navigation mit Verkehr."},
   {emo:"📬", t:"Offene Rückmeldungen", sel:["#eltern-offen-card"],
    d:"Stehen in den nächsten 14 Tagen Antworten aus, siehst du sie hier gesammelt."},
   {emo:"🎒", t:"Alles zum Termin", sel:['[onclick^="terminDetailOpen"]'],
