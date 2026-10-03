@@ -29,7 +29,7 @@ Ausgabe 1 (Kinderfestival 03.10.2026) ist im Projekt-Chat fertig entworfen und d
 13. „An diesem Tag“ in jeder Ausgabe: ein historisches Ereignis zum Lernen, ein lustiges zum Schmunzeln, beide vom Kalendertag des Spieltags, kindgerecht, an einer Quelle geprüft.
 14. Privatfotos im Porträt: bis zu 2, von der Familie geliefert, nur mit deren Einverständnis, mit Bildunterschrift.
 15. Porträt-Angaben werden über einen festen Ablauf in der App eingeholt (Abschnitt 8): Eltern bis Mittwoch vor dem Spieltag, Trainer bis Freitag.
-16. Trainingsbeteiligung erscheint im Porträt nur, wenn sie hoch ist, und nur aus App-Daten, nie aus der Erinnerung. Niedrige oder mittlere Beteiligung wird nicht erwähnt, auch nicht umschrieben.
+16. Trainingsbeteiligung erscheint im Porträt nur, wenn sie hoch ist (ab 90 % der Trainings), und nur aus App-Daten, nie aus der Erinnerung. Niedrige oder mittlere Beteiligung wird nicht erwähnt, auch nicht umschrieben.
 
 ## Vorab prüfen (erster Schritt, vor jedem Bau)
 
@@ -142,7 +142,7 @@ Neue Tabellen (RLS Pflicht):
 
 Privatfotos der Eltern liegen in `heft_media` unter einem Pfad je Einreichung; Eltern dürfen dort nur in den Pfad ihrer eigenen Einreichung schreiben. Zieht eine Familie das Einverständnis zurück (Häkchen entfernen), werden die Fotos aus Einreichung und Ausgabe entfernt.
 
-Kennzahl Trainingsbeteiligung: Anteil besuchter Trainings der laufenden Saison aus tatsächlicher Anwesenheit (Prüfpunkt 7). Die App zeigt sie im Editor nur, wenn sie die Schwelle erreicht; die Schwelle ist eine Einstellung im Trainerbereich, Vorschlag 90 %, von Charles zu bestätigen. Kein Wert, keine Rangliste, kein Vergleich mit anderen Kindern im Heft – nur der Satz „bei (fast) jedem Training dabei“.
+Kennzahl Trainingsbeteiligung: Anteil besuchter Trainings der laufenden Saison aus tatsächlicher Anwesenheit (Prüfpunkt 7). Die App zeigt sie im Editor nur, wenn sie die Schwelle erreicht; die Schwelle ist eine Einstellung im Trainerbereich, Standard 90 % (beschlossen 03.10.2026). Kein Wert, keine Rangliste, kein Vergleich mit anderen Kindern im Heft – nur der Satz „bei (fast) jedem Training dabei“.
 
 ## Ablauf je Spieltag (zur Einordnung)
 
