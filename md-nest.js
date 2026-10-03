@@ -228,7 +228,7 @@ function nestHtml(d,medien,liste,aktivId){
     const fuss={links:"links",rechts:"rechts",beide:"beidfüßig",r:"rechts",l:"links",b:"beidfüßig"};
     const steck=[["Position",pos],["Adler seit",p.adler_seit],["Starker Fuß",fuss[String(p.starker_fuss||"").toLowerCase()]||p.starker_fuss],["Jahrgang",p.jahrgang],
       ["Lieblingsverein",p.lieblingsverein],["Vorbild",p.vorbild],["Weiterer Sport",p.weiterer_sport],
-      [p.weiterer_sport?`Lieblingsteam ${p.weiterer_sport}`:"Lieblingsteam",p.weiterer_sport_team]].filter(x=>x[1]!=null&&String(x[1]).trim()!=="");
+      [p.weiterer_sport?`Lieblingsteam ${String(p.weiterer_sport).split(/[,(·–-]/)[0].trim()}`:"Lieblingsteam",p.weiterer_sport_team]].filter(x=>x[1]!=null&&String(x[1]).trim()!=="");
     const abseits=[["Hobby",p.hobby],["Kann richtig gut",p.kann_gut],["Lieblingsessen",p.lieblingsessen],["Lieblingstier",p.lieblingstier],
       ["Musik",p.lieblingsmusik],["Film oder Serie",p.lieblingsfilm],["Größtes Fußball-Erlebnis",p.fussball_erlebnis],["Wenn ich groß bin",p.gross_werden]].filter(x=>x[1]);
     const rep=(p.reporter||[]).filter(x=>x&&x.antwort);

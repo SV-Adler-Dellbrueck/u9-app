@@ -133,9 +133,9 @@ module.exports = async function (h) {
   const re2 = await se.page.evaluate(async (d) => {
     for (let i = 0; i < 40 && typeof nestHtml !== "function"; i++) await new Promise(x => setTimeout(x, 100));
     const box = document.createElement("div"); box.innerHTML = nestHtml(d, [], [], 1); return box.querySelector("#nest-steckbrief")?.textContent || "";
-  }, { ausgabe: { id: 1, nummer: 1 }, termin: null, teams: [], ergebnisse: [], portraet: { name: "Kind B", nr: 8, position: "Flitzer R", starker_fuss: "R" }, naechster: null }).catch(e => String(e));
+  }, { ausgabe: { id: 1, nummer: 1 }, termin: null, teams: [], ergebnisse: [], portraet: { name: "Kind B", nr: 8, position: "Flitzer R", starker_fuss: "R", weiterer_sport: "Eishockey, 2× pro Woche", weiterer_sport_team: "Testteam" }, naechster: null }).catch(e => String(e));
   await se.schliessen();
-  if (!/Starker Fußrechts/.test(re2) || !/Rechter Flitzer/.test(re2)) probleme.push("e2) " + re2);
+  if (!/Starker Fußrechts/.test(re2) || !/Rechter Flitzer/.test(re2) || !/Lieblingsteam EishockeyTestteam/.test(re2)) probleme.push("e2) " + re2);
   else zeilen.push(`e2) Kader-Werte lesbar: „${re2}“`);
 
   // h) alter öffentlicher Link
