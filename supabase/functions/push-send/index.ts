@@ -1,5 +1,6 @@
 /* Edge Function push-send — Trainer schickt eine Mitteilung an Eltern oder Trainer.
    v705 (Version 7): beachtet die Ruhezeit je Empfänger (verteilen).
+   v728 (Version 8): art „ticker_helfer“ – Mitteilung an ein freigeschaltetes Elternkonto.
 
    v643: Die VAPID-Schlüssel standen bis dahin als Konstante im Code dieser Funktion. Jetzt
    liegen sie im Supabase Vault (adler_vapid_public / adler_vapid_private) und werden über
@@ -155,6 +156,26 @@ Deno.serve(async (req) => {
       const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth,user_id").in("user_id", ids);
       const v = await verteilen(admin, subs || [], payload);
       return json({ ok: true, familien, offen: offen.length, sent: v.sent, wartet: v.wartet });
+    }
+
+    /* v728 (Version 8): Ticker-Helfer freigeschaltet. Nur das Trainerteam, nur an das Konto, das für
+       diesen Spieltag in ticker_helfer steht, fester Text – keine freie Mitteilung an Einzelne. */
+    if (body.art === "ticker_helfer") {
+      if (!prof || prof.role !== "trainer") return json({ error: "nur Trainer duerfen freischalten" }, 403);
+      const datum = String(body.datum || ""), team = Number(body.team) || 1, email = String(body.email || "").toLowerCase();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(datum) || !email) return json({ error: "Angaben fehlen" }, 400);
+      // ilike sucht ohne Groß/klein, „_“ wäre dort ein Platzhalter – deshalb danach exakt vergleichen
+      const { data: hs } = await admin.from("ticker_helfer").select("email").eq("datum", datum).eq("team", team).ilike("email", email);
+      if (!(hs || []).some((x: any) => String(x.email).toLowerCase() === email)) return json({ error: "nicht freigeschaltet" }, 404);
+      const { data: profs } = await admin.from("profiles").select("id,email").ilike("email", email);
+      const ids = (profs || []).filter((p: any) => String(p.email || "").toLowerCase() === email).map((p: any) => p.id);
+      if (!ids.length) return json({ ok: true, sent: 0 });
+      await vapid(admin);
+      const tag = new Date(datum + "T00:00:00").toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" });
+      const payload = { title: "📝 Du bist Ticker-Helfer", body: `Das Trainerteam hat dich für den Liveticker am ${tag}${team > 1 ? " (Adler " + team + ")" : ""} eingeteilt. Am Spieltag tippst du in der Eltern-App auf „Ticker bedienen“.`, url: "./eltern/?portal", tag: "adler-ticker-helfer" };
+      const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth,user_id").in("user_id", ids);
+      const v = await verteilen(admin, subs || [], payload);
+      return json({ ok: true, sent: v.sent, wartet: v.wartet });
     }
 
     if (!prof || prof.role !== "trainer") return json({ error: "nur Trainer duerfen senden" }, 403);

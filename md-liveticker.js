@@ -115,7 +115,7 @@ function tickerRenderControls(){
       <button class="btn ${open?"btn-p":""}" onclick="tickerToggle()">${open?"🔴 Ticker läuft – stoppen":"▶️ Liveticker starten"}</button>
       <button class="btn btn-sm" onclick="tickerShareViewLink()"><i class="ti ti-eye"></i>Ansehen-Link</button>
       <button class="btn btn-sm" onclick="tickerShareKonfLink()" title="Ein Link für alle Teams (Konferenz)"><i class="ti ti-users-group"></i>Konferenz-Link</button>
-      <span style="font-size:var(--s-klein);color:var(--text2)">${open?"Eltern sehen positive Highlights live.":"Eltern sehen: „Trainer fokussieren sich zu 100% auf die Kids – kein Ticker heute.“"}</span>
+      <span style="font-size:var(--s-klein);color:var(--text2)">${open?"Eltern sehen positive Highlights live.":"Ticker aus: Eltern sehen „heute aus“ mit einem Augenzwinkern – eingetragene Ticker-Helfer starten, sobald du einschaltest."}</span>
     </div>
     ${open?`<!-- v469 – PO: „dass der Trainer waehrend des Spiels keine Zeit hat, den Liveticker
          zu bedienen." Den Helfer-Link gab es schon, aber als kleinen Knopf zwischen zwei
@@ -123,8 +123,103 @@ function tickerRenderControls(){
          Frage aufkommt: direkt nachdem der Ticker gestartet ist. -->
     <button onclick="tickerShareDelegateLink()" style="width:100%;min-height:52px;margin-bottom:10px;border:1.5px dashed var(--rand-bedien);border-radius:12px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">🙋 Jemand anderen tickern lassen</button>
     <div style="font-size:var(--s-klein);color:var(--text3);margin:-6px 0 10px">Schickt einen Link per WhatsApp oder Mail. Wer ihn öffnet, sieht nur die Kinder von heute und die Aktionsknöpfe – keine Bewertungen, keine Kaderdaten. Er gilt nur, solange der Ticker läuft.</div>`:""}
+    <!-- v728: Elternteil direkt in der App freischalten – Mitteilung und Zugang ohne WhatsApp -->
+    <button onclick="tickerHelferOeffnen()" class="btn" style="width:100%;min-height:48px;margin-bottom:6px"><i class="ti ti-user-plus"></i>👤 Ticker-Helfer einteilen (je Team eine Person)</button>
+    <div id="th-liste" style="margin-bottom:10px"></div>
     <div id="ticker-feed" style="font-size:var(--s-klein);color:var(--text2)"></div>`;
   tickerRenderFeed();
+  tickerHelferListe();
+}
+/* ═══ v728 · Ticker-Helfer aus der Trainer-App freischalten ══════════════════════════════
+   PO 03.10.: „den Elternteil direkt aus der Trainer-App benennen … bekommt dann eine Nachricht in der
+   Eltern-App und den Zugang zum Ticker“. Kachel: ansehen UND selbst tickern. Die Freischaltung gilt für
+   diesen Spieltag und das gewählte Team (ticker_helfer); die Eltern-App holt sich darüber den
+   Helfer-Code (RPC mein_ticker_helfer) und zeigt „Ticker bedienen“. Die Mitteilung schickt push-send
+   (art „ticker_helfer“, fester Text, nur an dieses Konto). */
+function _thTeam(){ return (typeof spieltagTeam!=="undefined"&&spieltagTeam)||1; }
+async function tickerHelferListe(){
+  const box=document.getElementById("th-liste");   // fehlt er (Panel zu), wird trotzdem die Elternliste geladen
+  const datum=spieltagRawDate(), team=_thTeam();
+  try{
+    const [rh,re]=await Promise.all([
+      fetch(`${SB_URL}/rest/v1/ticker_helfer?datum=eq.${datum}&team=eq.${team}&select=email`,{headers:sbAuthHeaders()}),
+      fetch(`${SB_URL}/rest/v1/eltern_kinder?select=email,spieler_id,label`,{headers:sbAuthHeaders()})]);
+    const helfer=rh.ok?await rh.json():[], ek=re.ok?await re.json():[];
+    window._thEltern=ek;
+    if(!box)return;
+    box.innerHTML=helfer.map(h=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--surface2);font-size:var(--s-text)">
+        <span style="flex:1">✅ ${esc(_thName(h.email,ek))} tickert ${team>1?"Adler "+team:"heute"}</span>
+        <button onclick="tickerHelferWeg('${jsq(h.email)}')" aria-label="Freischaltung zurücknehmen" title="Freischaltung zurücknehmen" style="border:none;background:transparent;color:#b91c1c;font-size:var(--s-teil);cursor:pointer;min-width:44px;min-height:44px">✕</button></div>`).join("");
+  }catch(e){}
+}
+function _thName(email,ek){
+  const e=String(email||"").toLowerCase();
+  const z=(ek||[]).filter(x=>String(x.email||"").toLowerCase()===e);
+  const kinder=z.map(x=>{ const k=(typeof KADER!=="undefined"?KADER:[]).find(p=>Number(p._id!=null?p._id:p.id)===Number(x.spieler_id)); return k?k.name:null; }).filter(Boolean);
+  const label=(z.find(x=>x.label)||{}).label;
+  return (label?label+" von ":"Eltern von ")+(kinder.length?kinder.join(" & "):e.replace(/(.).*@/,"$1…@"));
+}
+/* v728 (PO 03.10.): „Im Laufe der Woche vor dem Spiel kann sich jeder eintragen … und in der Trainer-App kann
+   ich dann zuweisen vor dem Spiel.“ Wer sich unter „Wer hilft mit?“ für „📻 Live-Ticker“ gemeldet hat, steht
+   oben (früheste Meldung zuerst), darunter alle übrigen Eltern. Das Datum ist das des Spieltags oben – es
+   lässt sich also schon vor dem Spiel einteilen. */
+async function _thGemeldet(datum){
+  try{
+    const rt=await fetch(`${SB_URL}/rest/v1/termine?datum=eq.${datum}&typ=in.(spiel,turnier)&select=id`,{headers:sbAuthHeaders()});
+    const ids=(rt.ok?await rt.json():[]).map(t=>Number(t.id)).filter(Boolean);
+    if(!ids.length)return [];
+    const re=await fetch(`${SB_URL}/rest/v1/event_helfer?termin_id=in.(${ids.join(",")})&aufgabe=eq.${encodeURIComponent("📻 Live-Ticker")}&select=user_id,created_at&order=created_at.asc`,{headers:sbAuthHeaders()});
+    const rows=re.ok?await re.json():[];
+    const uids=[...new Set(rows.map(x=>x.user_id).filter(Boolean))];
+    if(!uids.length)return [];
+    const rp=await fetch(`${SB_URL}/rest/v1/profiles?id=in.(${uids.join(",")})&select=id,email`,{headers:sbAuthHeaders()});
+    const pr=rp.ok?await rp.json():[];
+    return uids.map(u=>String((pr.find(p=>p.id===u)||{}).email||"").toLowerCase()).filter(Boolean);
+  }catch(e){return [];}
+}
+async function tickerHelferOeffnen(){
+  document.getElementById("th-modal")?.remove();
+  await tickerHelferListe();
+  const ek=window._thEltern||[];
+  const gemeldet=await _thGemeldet(spieltagRawDate());
+  const mails=[...new Set(ek.map(x=>String(x.email||"").toLowerCase()).filter(Boolean))].filter(m=>!gemeldet.includes(m));
+  const zeilen=mails.map(m=>({m,n:_thName(m,ek)})).sort((a,b)=>a.n.localeCompare(b.n,"de"));
+  const knopf=z=>`<button onclick="tickerHelferSetzen('${jsq(z.m)}')" class="btn" style="width:100%;min-height:48px;justify-content:flex-start;margin-bottom:6px">${esc(z.n)}</button>`;
+  const team=_thTeam();
+  const modal=document.createElement("div");
+  modal.id="th-modal"; modal.className="modal"; modal.setAttribute("role","dialog"); modal.setAttribute("aria-modal","true"); modal.setAttribute("aria-label","Ticker-Helfer einteilen");
+  modal.style.cssText="position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.5);display:flex;align-items:flex-end;justify-content:center";
+  modal.innerHTML=`<div style="background:var(--surface);width:100%;max-width:520px;max-height:85vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b style="font-size:var(--s-karte);flex:1">👤 Ticker-Helfer · ${team>1?"Adler "+team:"heute"}</b>
+      <button onclick="document.getElementById('th-modal').remove()" aria-label="Schließen" style="border:none;background:transparent;font-size:var(--s-teil);cursor:pointer;min-width:44px;min-height:44px">✕</button></div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">Je Team tickert genau eine Person – wer hier schon steht, wird ersetzt. Das Elternteil bekommt eine Mitteilung und sieht in der Eltern-App „Ticker bedienen“, nur für heute.</div>
+    <div id="th-gemeldet" style="font-size:var(--s-text);font-weight:800;margin:4px 0 6px">🙋 Gemeldet für den Ticker</div>
+    ${gemeldet.length?gemeldet.map(m=>knopf({m,n:_thName(m,ek)})).join("")
+      :'<div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">Noch niemand – Eltern melden sich unter „Wer hilft mit?“, wenn du beim Termin „📻 Live-Ticker“ anhakst.</div>'}
+    <div style="font-size:var(--s-text);font-weight:800;margin:10px 0 6px">Weitere Eltern</div>
+    ${zeilen.length?zeilen.map(knopf).join(""):'<div style="color:var(--text3)">Keine weiteren Elternkonten.</div>'}
+  </div>`;
+  modal.addEventListener("click",e=>{ if(e.target===modal)modal.remove(); });
+  document.body.appendChild(modal);
+}
+async function tickerHelferSetzen(email){
+  const datum=spieltagRawDate(), team=_thTeam();
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/ticker_helfer?on_conflict=datum,team`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({datum,team,email})});
+    if(sbCheck401(r))return;
+    if(!r.ok){toast("Freischalten hat nicht geklappt","err");return;}
+    let hinweis="";
+    try{ const p=await fetch(`${SB_URL}/functions/v1/push-send`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({art:"ticker_helfer",datum,team,email})});
+      const d=await p.json().catch(()=>({})); hinweis=(d&&d.sent)?" · Mitteilung geschickt":" · ohne Push (in der Eltern-App sichtbar)"; }catch(e){}
+    toast(`✅ ${_thName(email,window._thEltern)} freigeschaltet${hinweis}`);
+  }catch(e){toast("Offline – bitte später nochmal","err");return;}
+  document.getElementById("th-modal")?.remove();
+  tickerHelferListe();
+}
+async function tickerHelferWeg(email){
+  const datum=spieltagRawDate(), team=_thTeam();
+  try{ await fetch(`${SB_URL}/rest/v1/ticker_helfer?datum=eq.${datum}&team=eq.${team}&email=eq.${encodeURIComponent(email)}`,{method:"DELETE",headers:sbAuthHeaders()}); }catch(e){}
+  tickerHelferListe();
 }
 async function tickerRenderFeed(){
   const box=document.getElementById("ticker-feed");

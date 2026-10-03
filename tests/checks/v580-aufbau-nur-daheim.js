@@ -11,7 +11,8 @@
    c) Wer sich vorher eingetragen hatte, sieht seinen Eintrag im Termin-Detail weiter und kann
       ihn entfernen – auch ohne Freigabe.
    v708 (PO 01.10.): „Das Einzige, was wir an dieser Stelle als Trainer ankreuzen sollen, ist, wer
-   die Kinder am Turnier mit betreuen kann.“ – auswärts steht seitdem NUR die Betreuung. */
+   die Kinder am Turnier mit betreuen kann.“ – auswärts steht seitdem NUR die Betreuung, seit v728 dazu der
+   Live-Ticker (PO 03.10.: je Team ein Ticker-Helfer, den der Trainer einteilt). */
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
   const datum = h.tagePlus(3);
@@ -29,7 +30,8 @@ module.exports = async function (h) {
   const aufbau = l => l.some(x => /Aufbau/.test(x));
   if (aufbau(r.ausSpiel)) probleme.push("a) Auswärtsspiel bietet den Aufbau an");
   if (aufbau(r.ausTurnier)) probleme.push("a) Auswärtsturnier bietet den Aufbau an");
-  if (r.ausSpiel.length !== 1 || !/Betreuung/.test(r.ausSpiel[0] || "")) probleme.push(`a) Auswärts soll nur die Betreuung stehen (v708): ${r.ausSpiel.join(" · ")}`);
+  // v728 (PO 03.10.): auswärts zusätzlich der Live-Ticker – je Team eine Person, die der Trainer einteilt
+  if (r.ausSpiel.length !== 2 || !/Betreuung/.test(r.ausSpiel[0] || "") || !/Live-Ticker/.test(r.ausSpiel[1] || "")) probleme.push(`a) Auswärts sollen nur Betreuung und Live-Ticker stehen (v708/v728): ${r.ausSpiel.join(" · ")}`);
   if (!aufbau(r.heim)) probleme.push("b) Heimspiel bietet keinen Aufbau an");
   if (!aufbau(r.offen)) probleme.push("b) Offenes Heimrecht bietet keinen Aufbau an");
   zeilen.push(`a/b) auswärts: ${r.ausSpiel.join(" · ")} · daheim: ${r.heim.join(" · ")}`);

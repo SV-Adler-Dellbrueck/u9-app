@@ -1269,6 +1269,7 @@ async function backupExport(){
                 /* v673: wer keine Rufe-Benachrichtigungen will; bis wann gemeldet ist. */
                 "rufe_push_aus","rufe_push_stand","wiewars_push_log",
                 "adlerschmiede","adlerschmiede_push_aus","adlerschmiede_push_log",   // v717
+                "ticker_helfer",   // v728
                 /* v705: eigene Ruhezeit je Konto und Meldungen, die auf ihr Ende warten. */
                 "push_ruhezeit","push_warteschlange",
                 /* v674: Abstimmungen und Stimmen (anonyme ohne Namen) */
