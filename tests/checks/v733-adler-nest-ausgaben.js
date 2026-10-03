@@ -7,7 +7,8 @@
    b) Zwei Ausgaben: die neueste (02) öffnet, das Archiv zeigt 01; Archiv-Klick öffnet 01
    c) Reihenfolge Deckblatt → Spieltag → Porträt → Rubriken; leere Felder fehlen (kein „null“, kein Platzhalter)
    d) Spieltagskarte, Teams (Kapitän „(C)“) und Ergebnis aus den App-Daten
-   e) Porträtkind ohne starken Fuß: kein Feld „Starker Fuß“; Reporter-Antworten nur, was kommt
+   e) Porträtkind ohne starken Fuß: kein Feld „Starker Fuß“; Reporter-Antworten nur, was kommt;
+      der Kader-Wert „R“ (Trainer pflegt R/L/B) erscheint als „rechts“
    f) Hördatei: Knopf ≥ 48 px mit Dauer, Antippen lädt die Datei; „Zurück zur App“ ≥ 44 px schließt
    g) Schriften lokal: vendor/barlow.css geladen, keine Anfrage an fonts.googleapis.com / fonts.gstatic.com
    h) Alter Link ?heft: Hinweis „Das Adler Nest lesen Eltern in der App“ mit Weg zur Anmeldung, kein Aufruf
@@ -127,6 +128,15 @@ module.exports = async function (h) {
     else zeilen.push(`g) Barlow lokal (barlow.css + ${woff} woff2), ${fonts} Anfragen an Google`);
   }
   if (fa.length || fb.length) probleme.push("Konsole: " + fa.concat(fb).slice(0, 2).join(" | "));
+  // e2) „R“ aus dem Kader wird „rechts“ (Fan-Fakten speichern rechts/links/beide)
+  const se = await h.starten({ warten: 1200, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen() }) });
+  const re2 = await se.page.evaluate(async (d) => {
+    for (let i = 0; i < 40 && typeof nestHtml !== "function"; i++) await new Promise(x => setTimeout(x, 100));
+    const box = document.createElement("div"); box.innerHTML = nestHtml(d, [], [], 1); return box.querySelector("#nest-steckbrief")?.textContent || "";
+  }, { ausgabe: { id: 1, nummer: 1 }, termin: null, teams: [], ergebnisse: [], portraet: { name: "Kind B", nr: 8, position: "Flitzer R", starker_fuss: "R" }, naechster: null }).catch(e => String(e));
+  await se.schliessen();
+  if (!/Starker Fußrechts/.test(re2) || !/Rechter Flitzer/.test(re2)) probleme.push("e2) " + re2);
+  else zeilen.push(`e2) Kader-Werte lesbar: „${re2}“`);
 
   // h) alter öffentlicher Link
   const sh = await h.starten({ start: "/eltern/index.html?heft", angemeldet: false, warten: 1500, supabase: h.supabaseAttrappe({ funktionen: { "stadionheft-view": { published: true, heft: { titel: "Altes Heft" }, spieler: [] } } }) });

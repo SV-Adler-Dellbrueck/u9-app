@@ -224,8 +224,9 @@ function nestHtml(d,medien,liste,aktivId){
   // c) Adler im Porträt
   if(p){
     const pos=p.position?(typeof cardPosLabel==="function"?cardPosLabel(p.position):p.position):(p.tw?"Torwart":"");
-    const fuss={links:"links",rechts:"rechts",beide:"beidfüßig"};
-    const steck=[["Position",pos],["Adler seit",p.adler_seit],["Starker Fuß",fuss[p.starker_fuss]||p.starker_fuss],["Jahrgang",p.jahrgang],
+    // Fan-Fakten speichern „rechts/links/beide“, der Kader (Trainer) „R/L/B“
+    const fuss={links:"links",rechts:"rechts",beide:"beidfüßig",r:"rechts",l:"links",b:"beidfüßig"};
+    const steck=[["Position",pos],["Adler seit",p.adler_seit],["Starker Fuß",fuss[String(p.starker_fuss||"").toLowerCase()]||p.starker_fuss],["Jahrgang",p.jahrgang],
       ["Lieblingsverein",p.lieblingsverein],["Vorbild",p.vorbild],["Weiterer Sport",p.weiterer_sport],
       [p.weiterer_sport?`Lieblingsteam ${p.weiterer_sport}`:"Lieblingsteam",p.weiterer_sport_team]].filter(x=>x[1]!=null&&String(x[1]).trim()!=="");
     const abseits=[["Hobby",p.hobby],["Kann richtig gut",p.kann_gut],["Lieblingsessen",p.lieblingsessen],["Lieblingstier",p.lieblingstier],
