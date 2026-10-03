@@ -115,7 +115,7 @@ function tickerRenderControls(){
       <button class="btn ${open?"btn-p":""}" onclick="tickerToggle()">${open?"🔴 Ticker läuft – stoppen":"▶️ Liveticker starten"}</button>
       <button class="btn btn-sm" onclick="tickerShareViewLink()"><i class="ti ti-eye"></i>Ansehen-Link</button>
       <button class="btn btn-sm" onclick="tickerShareKonfLink()" title="Ein Link für alle Teams (Konferenz)"><i class="ti ti-users-group"></i>Konferenz-Link</button>
-      <span style="font-size:var(--s-klein);color:var(--text2)">${open?"Eltern sehen positive Highlights live.":"Eltern sehen: „Trainer fokussieren sich zu 100% auf die Kids – kein Ticker heute.“"}</span>
+      <span style="font-size:var(--s-klein);color:var(--text2)">${open?"Eltern sehen positive Highlights live.":"Ticker aus: Eltern sehen „heute aus“ mit einem Augenzwinkern – eingetragene Ticker-Helfer starten, sobald du einschaltest."}</span>
     </div>
     ${open?`<!-- v469 – PO: „dass der Trainer waehrend des Spiels keine Zeit hat, den Liveticker
          zu bedienen." Den Helfer-Link gab es schon, aber als kleinen Knopf zwischen zwei
@@ -138,7 +138,7 @@ function tickerRenderControls(){
    (art „ticker_helfer“, fester Text, nur an dieses Konto). */
 function _thTeam(){ return (typeof spieltagTeam!=="undefined"&&spieltagTeam)||1; }
 async function tickerHelferListe(){
-  const box=document.getElementById("th-liste"); if(!box)return;
+  const box=document.getElementById("th-liste");   // fehlt er (Panel zu), wird trotzdem die Elternliste geladen
   const datum=spieltagRawDate(), team=_thTeam();
   try{
     const [rh,re]=await Promise.all([
@@ -146,6 +146,7 @@ async function tickerHelferListe(){
       fetch(`${SB_URL}/rest/v1/eltern_kinder?select=email,spieler_id,label`,{headers:sbAuthHeaders()})]);
     const helfer=rh.ok?await rh.json():[], ek=re.ok?await re.json():[];
     window._thEltern=ek;
+    if(!box)return;
     box.innerHTML=helfer.map(h=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--surface2);font-size:var(--s-text)">
         <span style="flex:1">✅ ${esc(_thName(h.email,ek))} darf heute tickern</span>
         <button onclick="tickerHelferWeg('${jsq(h.email)}')" aria-label="Freischaltung zurücknehmen" title="Freischaltung zurücknehmen" style="border:none;background:transparent;color:#b91c1c;font-size:var(--s-teil);cursor:pointer;min-width:44px;min-height:44px">✕</button></div>`).join("");
@@ -154,7 +155,7 @@ async function tickerHelferListe(){
 function _thName(email,ek){
   const e=String(email||"").toLowerCase();
   const z=(ek||[]).filter(x=>String(x.email||"").toLowerCase()===e);
-  const kinder=z.map(x=>{ const k=(typeof KADER!=="undefined"?KADER:[]).find(p=>Number(p.id)===Number(x.spieler_id)); return k?k.name:null; }).filter(Boolean);
+  const kinder=z.map(x=>{ const k=(typeof KADER!=="undefined"?KADER:[]).find(p=>Number(p._id!=null?p._id:p.id)===Number(x.spieler_id)); return k?k.name:null; }).filter(Boolean);
   const label=(z.find(x=>x.label)||{}).label;
   return (label?label+" von ":"Eltern von ")+(kinder.length?kinder.join(" & "):e.replace(/(.).*@/,"$1…@"));
 }

@@ -1569,8 +1569,12 @@ async function elternLiveKachelLoad(termin,eigenesTeam){
     <div style="font-size:var(--s-klein);opacity:.85;margin-top:7px">Der Link funktioniert ohne Anmeldung – auch für Oma und Opa. Nach dem Spieltag zeigt er nur noch das Ergebnis.</div>
   </div>`;
 }
-// v727: Liveticker und Konferenz für Eltern vorerst „bald verfügbar“ (siehe elternTickerLoad).
-const ELTERN_TICKER_BALD=true;
+// v728: Ticker aus (Schalter im Trainerbereich) – ein Spruch je Spieltag, damit es nicht jedes Mal gleich klingt.
+const ELTERN_TICKER_SPRUECHE=[
+  "🏖️ Unser Kommentator ist heute im Kurzurlaub – kein Liveticker. Das Ergebnis gibt's nach dem Spiel.",
+  "🎙️ Das Mikro hat heute frei – das Trainerteam ist zu 100 % bei den Kindern.",
+  "☕ Unser Reporter holt sich gerade einen Kaffee – heute ohne Liveticker. Daumen drücken!",
+  "🦅 Heute tickert nur der Adler im Herzen – kein Liveticker, aber ganz viel Daumendrücken."];
 /* v728 · Vom Trainerteam freigeschaltet: „Ticker bedienen“ und „Ticker ansehen“ für den Spieltag, auch
    solange der Ticker für alle Eltern noch „bald verfügbar“ ist. Der Helfer-Code kommt über die RPC
    mein_ticker_helfer nur an das freigeschaltete Konto. */
@@ -1624,17 +1628,23 @@ async function elternTickerLoad(termin){
   /* Die Live-Kachel ganz oben braucht dasselbe Ergebnis der Team-Erkennung – hier ist es
      schon da, ein zweiter Durchlauf waere nur zusaetzliche Last auf dem Elterntelefon. */
   const eigenesTeam = myTeams.size===1 ? [...myTeams][0] : 0;
-  /* v727 (PO 03.10., Bildschirmfoto): „Stell den Liveticker und die Konferenz vorerst aus bzw. grau
-     unterlegen mit bald in der Adler verfügbar“. Solange ELTERN_TICKER_BALD gilt, sehen Eltern weder
-     die LIVE-Kachel oben noch die Ticker-Knöpfe – nur Team und Trainer ihres Kindes und einen grauen,
-     nicht antippbaren Hinweis. Die Ticker-Seite (?ticker=…) und der Trainerbereich bleiben unberührt.
-     Wieder einschalten: Konstante auf false. */
-  if(typeof ELTERN_TICKER_BALD!=="undefined"&&ELTERN_TICKER_BALD){
-    const bald=`<div role="note" aria-disabled="true" style="width:100%;min-height:48px;margin-top:6px;padding:12px;border:1.5px dashed var(--rand-bedien,#94a3b8);border-radius:10px;background:#f1f5f9;color:#475569;font-size:var(--s-text);font-weight:700;text-align:center;box-sizing:border-box">📣 Liveticker &amp; 👥 Konferenz – <span style="white-space:nowrap">bald in der Adler-App verfügbar</span></div>`;
-    const kopf=`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px"><div style="font-size:var(--s-text);font-weight:700;color:#475569;margin-bottom:2px">📣 Liveticker</div>`;
+  /* v727 → v728 (PO 03.10.): „In der Trainer-App sollte der Ticker durch einen einfachen Schalter an- und
+     auszuschalten sein, sodass er in der Eltern-App als deaktiviert erscheint mit dem Hinweis, Kommentator
+     kurzfristig im Urlaub oder ein anderer witziger Kommentar.“ Der Schalter ist der vorhandene
+     „Liveticker starten / stoppen“ im Trainerbereich (matchday.ticker_open je Spieltag und Team). Ist er
+     aus, sehen Eltern nur Team, Trainer und einen grauen, nicht antippbaren Hinweis – und wer als
+     Ticker-Helfer eingetragen ist, trotzdem „Ticker bedienen“ (startet, sobald der Trainer einschaltet). */
+  const tKey=(eigenesTeam>1)?`${datum}__t${eigenesTeam}`:datum;
+  let tickerAn=false;
+  try{ const r=await fetch(`${SB_URL}/rest/v1/matchday?datum=eq.${encodeURIComponent(tKey)}&select=ticker_open`,{headers:sbAuthHeaders()});
+    if(r.ok){ const m=await r.json(); tickerAn=!!(m&&m[0]&&m[0].ticker_open===true); } }catch(e){}
+  if(!tickerAn){
+    const spruch=ELTERN_TICKER_SPRUECHE[[...String(datum)].reduce((a,c)=>a+c.charCodeAt(0),0)%ELTERN_TICKER_SPRUECHE.length];
+    const aus=`<div role="note" aria-disabled="true" style="width:100%;min-height:48px;margin-top:6px;padding:12px;border:1.5px dashed var(--rand-bedien,#94a3b8);border-radius:10px;background:#f1f5f9;color:#475569;font-size:var(--s-text);font-weight:700;text-align:center;box-sizing:border-box">${spruch}</div>`;
+    const kopf=`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px"><div style="font-size:var(--s-text);font-weight:700;color:#475569;margin-bottom:2px">📣 Liveticker · heute aus</div>`;
     const teamZeile=eigenesTeam?`<div style="font-size:var(--s-klein);color:#64748b;margin-bottom:2px">Dein Kind spielt heute in <b>Adler ${eigenesTeam}</b>.</div>${trainerZeile(eigenesTeam)}`:(anzahl>1?"":trainerZeile(1));
-    slot.innerHTML=kopf+teamZeile+bald+`</div>`;
-    elternHelferAnhaengen(slot,datum);   // v728: freigeschaltete Helfer bedienen den Ticker trotzdem
+    slot.innerHTML=kopf+teamZeile+aus+`</div>`;
+    elternHelferAnhaengen(slot,datum);   // v728: Ticker-Helfer sehen „Ticker bedienen“ trotzdem
     return;
   }
   try{ elternLiveKachelLoad(termin,eigenesTeam); }catch(e){}

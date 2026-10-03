@@ -999,9 +999,9 @@ function tmHelferFreigabeHtml(t){
       <input type="number" class="te-hf-eigen-n" min="1" max="20" step="1" inputmode="numeric" value="${Number(f.n)||1}" aria-label="So viele Helfer für eigene Aufgabe ${i+1}" style="width:64px;min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
     </div>`;};
   if(nurBetr){
-    const b=_tmHelferVorlagen(t.typ,t).filter(a=>/Betreuung/.test(a.t));
+    const b=_tmHelferVorlagen(t.typ,t).filter(a=>/Betreuung|Live-Ticker/.test(a.t));   // v728: Ticker-Helfer auch auswärts
     return `<div id="te-helfer-frei">
-    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px">Anhaken, wenn Eltern die Kinder am Turnier mit betreuen sollen. Zahl = so viele brauchst du.</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px">Anhaken, wenn Eltern die Kinder am Turnier mit betreuen oder den Liveticker bedienen sollen. Zahl = so viele brauchst du.</div>
     ${b.map((a,i)=>zeile(i,a)).join("")}
   </div>`;
   }

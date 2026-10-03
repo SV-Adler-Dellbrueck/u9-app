@@ -19,7 +19,9 @@ drop policy if exists th_selbst on public.ticker_helfer;
 create policy th_selbst on public.ticker_helfer for select to authenticated
   using (lower(email) = lower(coalesce((select auth.jwt()) ->> 'email', '')));
 
--- Liefert dem angemeldeten Elternteil seine Freischaltungen für einen Tag samt Helfer-Code. Legt die
+-- Liefert dem angemeldeten Elternteil seine Freischaltungen für einen Tag samt Helfer-Code: direkt vom
+-- Trainer benannt (ticker_helfer) ODER selbst unter „Wer hilft mit?“ für „📻 Live-Ticker“ eingetragen
+-- (event_helfer am Spiel/Turnier dieses Tages, gilt für Adler 1). Legt die
 -- Spieltagszeile an, falls der Trainer den Ticker noch nie geöffnet hat (der Code entsteht per Default).
 create or replace function public.mein_ticker_helfer(p_datum date)
  returns table(team int, schluessel text, token uuid, ticker_open boolean)
@@ -27,7 +29,13 @@ create or replace function public.mein_ticker_helfer(p_datum date)
 declare m text := lower(coalesce((select auth.jwt()) ->> 'email', ''));
 begin
   if m = '' then return; end if;
-  for team in select h.team from ticker_helfer h where h.datum = p_datum and lower(h.email) = m order by h.team loop
+  for team in
+    select x.t from (
+      select h.team as t from ticker_helfer h where h.datum = p_datum and lower(h.email) = m
+      union
+      select 1 from event_helfer e join termine tm on tm.id = e.termin_id
+       where tm.datum = p_datum and tm.typ in ('spiel','turnier') and e.aufgabe = '📻 Live-Ticker' and e.user_id = auth.uid()
+    ) x order by x.t loop
     schluessel := case when team > 1 then p_datum::text || '__t' || team else p_datum::text end;
     insert into matchday(datum) values (schluessel) on conflict (datum) do nothing;
     select md.delegate_token, coalesce(md.ticker_open,false) into token, ticker_open from matchday md where md.datum = schluessel;

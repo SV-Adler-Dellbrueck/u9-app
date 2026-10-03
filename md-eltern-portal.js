@@ -1706,7 +1706,7 @@ const HELFER_AUFGABEN=[
    d:()=>"In den Pausen bei den Kindern bleiben, damit das Trainerteam das nächste Spiel vorbereiten kann. Auch eine Halbzeit hilft."},
   {t:"📻 Live-Ticker",   typen:["spiel","turnier"],
    kurz:()=>"Live-Ticker tippen",
-   d:()=>"Während des Spiels kurze Meldungen in der App tippen – für alle, die nicht dabei sein können."},
+   d:()=>"Während des Spiels kurze Meldungen in der App tippen – für alle, die nicht dabei sein können. Am Spieltag erscheint bei dir „Ticker bedienen“."},
   {t:"📸 Fotografieren", typen:["spiel","turnier","event"],
    kurz:()=>"Fotos machen",
    d:()=>"Ein paar Fotos machen und sie danach in die Galerie laden. Das Handy reicht völlig."}
@@ -2265,7 +2265,7 @@ const ELTERN_TOUR=[
   {emo:"✅", t:"Zu erledigen", sel:["#eltern-todo-btn"],
    d:"Aufgaben für euch als Familie, zum Beispiel der Grillhütten-Dienst. Könnt ihr nicht, tippt ihr „Ersatz suchen“ – eine andere Familie kann übernehmen."},
   {emo:"📡", t:"Liveticker", sel:["#eltern-live-slot","#eltern-ticker-slot"],
-   d:"Der Liveticker kommt bald: Dann läuft am Spieltag hier der Ticker mit – auch wenn ihr nicht am Platz seid."},
+   d:"Am Spieltag läuft hier der Liveticker mit, wenn das Trainerteam ihn einschaltet – auch wenn ihr nicht am Platz seid. Wer mithelfen will, trägt sich unter „Wer hilft mit?“ für den Live-Ticker ein."},
   {emo:"🎮", t:"Die Kabine für dein Kind", sel:['button[onclick="kabineOpen()"]'],
    d:"Hier darf dein Kind spielen: Quiz, Missionen, Sammelalbum. Zurück geht es nur mit deinem Code."},
   {emo:"📱", t:"Kinder-App auf eigenem Gerät", sel:['button[onclick="kinderAppOpen()"]'],
