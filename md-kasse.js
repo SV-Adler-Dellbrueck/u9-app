@@ -1586,8 +1586,8 @@ async function elternHelferAnhaengen(slot,datum){
   const box=document.createElement("div");
   box.id="eltern-helfer-box";
   box.style.cssText="margin-top:10px;padding:12px;border:2px solid #dc2626;border-radius:12px;background:#fef2f2";
-  box.innerHTML=`<div style="font-size:var(--s-text);font-weight:800;color:#b91c1c">📝 Du bist heute Ticker-Helfer</div>
-    <div style="font-size:var(--s-klein);color:#334155;margin:2px 0 4px">Das Trainerteam hat dich freigeschaltet. Bedienen geht, sobald der Trainer den Ticker startet.</div>`+
+  box.innerHTML=`<div style="font-size:var(--s-text);font-weight:800;color:#b91c1c">📝 Du bist Ticker-Helfer${datum===isoLokal()?" – heute":""}</div>
+    <div style="font-size:var(--s-klein);color:#334155;margin:2px 0 4px">Das Trainerteam hat dich eingeteilt. Bedienen geht am Spieltag, sobald der Trainer den Ticker startet.</div>`+
     rows.map(x=>{ const t=Number(x.team)||1, n=t>1?` · Adler ${t}`:"";
       return `<button onclick="location.href=location.pathname+'?delegate='+encodeURIComponent('${esc(String(x.token||""))}')" style="width:100%;min-height:48px;margin-top:6px;border:none;border-radius:10px;background:#dc2626;color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">📝 Ticker bedienen${n}${x.ticker_open?"":" <span style=\"font-weight:600\">(startet gleich)</span>"}</button>
         <button onclick="elternTicker('${esc(datum)}',${t})" style="width:100%;min-height:44px;margin-top:6px;border:1.5px solid #dc2626;border-radius:10px;background:#fff;color:#b91c1c;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">📣 Ticker ansehen${n}</button>`; }).join("");

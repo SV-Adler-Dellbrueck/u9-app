@@ -171,7 +171,8 @@ Deno.serve(async (req) => {
       const ids = (profs || []).filter((p: any) => String(p.email || "").toLowerCase() === email).map((p: any) => p.id);
       if (!ids.length) return json({ ok: true, sent: 0 });
       await vapid(admin);
-      const payload = { title: "📝 Du bist heute Ticker-Helfer", body: `Das Trainerteam hat dich für den Liveticker${team > 1 ? " von Adler " + team : ""} freigeschaltet. Öffne die Eltern-App und tippe auf „Ticker bedienen“.`, url: "./eltern/?portal", tag: "adler-ticker-helfer" };
+      const tag = new Date(datum + "T00:00:00").toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" });
+      const payload = { title: "📝 Du bist Ticker-Helfer", body: `Das Trainerteam hat dich für den Liveticker am ${tag}${team > 1 ? " (Adler " + team + ")" : ""} eingeteilt. Am Spieltag tippst du in der Eltern-App auf „Ticker bedienen“.`, url: "./eltern/?portal", tag: "adler-ticker-helfer" };
       const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth,user_id").in("user_id", ids);
       const v = await verteilen(admin, subs || [], payload);
       return json({ ok: true, sent: v.sent, wartet: v.wartet });

@@ -4,7 +4,8 @@
    Helferliste … als Helfereintragung“.
    a) Eltern: liefert mein_ticker_helfer einen Eintrag, steht – auch bei Ticker aus – „Du bist heute
       Ticker-Helfer“ mit „Ticker bedienen“ (?delegate=<Code>) und „Ticker ansehen“, Knöpfe ≥ 44 px
-   b) Trainer: „Elternteil als Ticker-Helfer freischalten“ listet die Elternkonten (Kind statt Adresse),
+   b) Trainer: „Elternteil als Ticker-Helfer freischalten“ listet zuerst, wer sich unter „Wer hilft mit?“ für
+      „📻 Live-Ticker“ gemeldet hat, dann die übrigen Elternkonten (Kind statt Adresse);
       ein Tipp schreibt ticker_helfer (Datum, Team 1, E-Mail) als Upsert auf (datum, team) – je Team genau
       eine Person (PO 03.10.) – und ruft push-send mit art „ticker_helfer“
    c) Trainer, Auswärtsturnier: unter den Helferaufgaben steht neben „Betreuung“ auch „Live-Ticker“ */
@@ -34,15 +35,18 @@ module.exports = async function (h) {
   if (!ra) probleme.push("a) kein Helfer-Kasten");
   else {
     const bed = ra.knoepfe.find(k => /Ticker bedienen/.test(k.t)), an = ra.knoepfe.find(k => /Ticker ansehen/.test(k.t));
-    if (!/Du bist heute Ticker-Helfer/.test(ra.text) || !bed || !an) probleme.push("a) " + JSON.stringify(ra).slice(0, 240));
+    if (!/Du bist Ticker-Helfer/.test(ra.text) || !bed || !an) probleme.push("a) " + JSON.stringify(ra).slice(0, 240));
     else if (!/delegate=/.test(bed.on) || !/11111111-2222-3333-4444-555555555555/.test(bed.on)) probleme.push("a) Bedienen-Ziel: " + bed.on);
     else if (ra.knoepfe.some(k => k.h < 44)) probleme.push("a) Knopfhöhen " + ra.knoepfe.map(k => k.h).join("/"));
-    else zeilen.push(`a) Eltern, Ticker aus: „Du bist heute Ticker-Helfer“, „Ticker bedienen“ (Helfer-Code) und „Ticker ansehen“, ${ra.knoepfe.map(k => k.h).join("/")} px`);
+    else zeilen.push(`a) Eltern, Ticker aus: „Du bist Ticker-Helfer“, „Ticker bedienen“ (Helfer-Code) und „Ticker ansehen“, ${ra.knoepfe.map(k => k.h).join("/")} px`);
   }
   // b) c) Trainer
   const posts = [], pushes = [];
   const t = await h.starten({ supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(),
     eltern_kinder: [{ email: "eltern@example.org", spieler_id: 1, label: "Mama" }, { email: "zwei@example.org", spieler_id: 2, label: "" }],
+    termine: [{ id: 91, datum: heute, typ: "turnier" }],
+    event_helfer: [{ user_id: "u2", created_at: "2026-10-01T10:00:00Z" }],
+    profiles: (u) => /email/.test(u.search) ? [{ id: "u2", email: "zwei@example.org" }] : [{ role: "trainer" }],
     ticker_helfer: (u, req) => { if (req.method() === "POST") { posts.push(Object.assign(JSON.parse(req.postData() || "null") || {}, { _q: u.search })); return { status: 201, body: "" }; } return []; },
     funktionen: { "push-send": (u, req) => { pushes.push(JSON.parse(req.postData() || "{}")); return { ok: true, sent: 1 }; } } }) });
   const rb = await t.page.evaluate(async () => {
@@ -64,10 +68,11 @@ module.exports = async function (h) {
   if (rb.fehlt) probleme.push("b) tickerHelferOeffnen fehlt");
   else {
     if (rb.rolle !== "dialog" || !rb.knoepfe.some(k => /Mama von Kind A/.test(k)) || rb.knoepfe.some(k => /@/.test(k) && /Kind/.test(k))) probleme.push("b) Liste: " + JSON.stringify(rb.knoepfe));
+    else if (rb.knoepfe.filter(k => k !== "✕")[0] !== "Eltern von Kind B") probleme.push("b) Gemeldete nicht oben: " + JSON.stringify(rb.knoepfe));
     else if (posts.length !== 1 || posts[0].email !== "eltern@example.org" || posts[0].team !== 1 || !/^\d{4}-\d{2}-\d{2}$/.test(posts[0].datum)) probleme.push("b) ticker_helfer: " + JSON.stringify(posts));
     else if (!/on_conflict=datum,team(&|$)/.test(posts[0]._q)) probleme.push("b) je Team nur eine Person – Upsert auf (datum, team) fehlt: " + posts[0]._q);
     else if (pushes.length !== 1 || pushes[0].art !== "ticker_helfer" || pushes[0].email !== "eltern@example.org") probleme.push("b) push-send: " + JSON.stringify(pushes));
-    else zeilen.push("b) Trainer: Liste „Mama von Kind A“ …, Tipp schreibt ticker_helfer und schickt push-send „ticker_helfer“");
+    else zeilen.push("b) Trainer: Gemeldete oben („Eltern von Kind B“), dann weitere Eltern; Tipp schreibt ticker_helfer und schickt push-send „ticker_helfer“");
     if (!/Betreuung/.test(rb.html) || !/Live-Ticker/.test(rb.html)) probleme.push("c) Helferaufgaben auswärts: " + rb.html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 200));
     else zeilen.push("c) Auswärtsturnier: „Betreuung“ und „Live-Ticker“ als Helferaufgabe");
   }

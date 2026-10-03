@@ -124,7 +124,7 @@ function tickerRenderControls(){
     <button onclick="tickerShareDelegateLink()" style="width:100%;min-height:52px;margin-bottom:10px;border:1.5px dashed var(--rand-bedien);border-radius:12px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">🙋 Jemand anderen tickern lassen</button>
     <div style="font-size:var(--s-klein);color:var(--text3);margin:-6px 0 10px">Schickt einen Link per WhatsApp oder Mail. Wer ihn öffnet, sieht nur die Kinder von heute und die Aktionsknöpfe – keine Bewertungen, keine Kaderdaten. Er gilt nur, solange der Ticker läuft.</div>`:""}
     <!-- v728: Elternteil direkt in der App freischalten – Mitteilung und Zugang ohne WhatsApp -->
-    <button onclick="tickerHelferOeffnen()" class="btn" style="width:100%;min-height:48px;margin-bottom:6px"><i class="ti ti-user-plus"></i>👤 Elternteil als Ticker-Helfer freischalten</button>
+    <button onclick="tickerHelferOeffnen()" class="btn" style="width:100%;min-height:48px;margin-bottom:6px"><i class="ti ti-user-plus"></i>👤 Ticker-Helfer einteilen (je Team eine Person)</button>
     <div id="th-liste" style="margin-bottom:10px"></div>
     <div id="ticker-feed" style="font-size:var(--s-klein);color:var(--text2)"></div>`;
   tickerRenderFeed();
@@ -159,22 +159,45 @@ function _thName(email,ek){
   const label=(z.find(x=>x.label)||{}).label;
   return (label?label+" von ":"Eltern von ")+(kinder.length?kinder.join(" & "):e.replace(/(.).*@/,"$1…@"));
 }
+/* v728 (PO 03.10.): „Im Laufe der Woche vor dem Spiel kann sich jeder eintragen … und in der Trainer-App kann
+   ich dann zuweisen vor dem Spiel.“ Wer sich unter „Wer hilft mit?“ für „📻 Live-Ticker“ gemeldet hat, steht
+   oben (früheste Meldung zuerst), darunter alle übrigen Eltern. Das Datum ist das des Spieltags oben – es
+   lässt sich also schon vor dem Spiel einteilen. */
+async function _thGemeldet(datum){
+  try{
+    const rt=await fetch(`${SB_URL}/rest/v1/termine?datum=eq.${datum}&typ=in.(spiel,turnier)&select=id`,{headers:sbAuthHeaders()});
+    const ids=(rt.ok?await rt.json():[]).map(t=>Number(t.id)).filter(Boolean);
+    if(!ids.length)return [];
+    const re=await fetch(`${SB_URL}/rest/v1/event_helfer?termin_id=in.(${ids.join(",")})&aufgabe=eq.${encodeURIComponent("📻 Live-Ticker")}&select=user_id,created_at&order=created_at.asc`,{headers:sbAuthHeaders()});
+    const rows=re.ok?await re.json():[];
+    const uids=[...new Set(rows.map(x=>x.user_id).filter(Boolean))];
+    if(!uids.length)return [];
+    const rp=await fetch(`${SB_URL}/rest/v1/profiles?id=in.(${uids.join(",")})&select=id,email`,{headers:sbAuthHeaders()});
+    const pr=rp.ok?await rp.json():[];
+    return uids.map(u=>String((pr.find(p=>p.id===u)||{}).email||"").toLowerCase()).filter(Boolean);
+  }catch(e){return [];}
+}
 async function tickerHelferOeffnen(){
   document.getElementById("th-modal")?.remove();
   await tickerHelferListe();
   const ek=window._thEltern||[];
-  const mails=[...new Set(ek.map(x=>String(x.email||"").toLowerCase()).filter(Boolean))];
+  const gemeldet=await _thGemeldet(spieltagRawDate());
+  const mails=[...new Set(ek.map(x=>String(x.email||"").toLowerCase()).filter(Boolean))].filter(m=>!gemeldet.includes(m));
   const zeilen=mails.map(m=>({m,n:_thName(m,ek)})).sort((a,b)=>a.n.localeCompare(b.n,"de"));
+  const knopf=z=>`<button onclick="tickerHelferSetzen('${jsq(z.m)}')" class="btn" style="width:100%;min-height:48px;justify-content:flex-start;margin-bottom:6px">${esc(z.n)}</button>`;
   const team=_thTeam();
   const modal=document.createElement("div");
-  modal.id="th-modal"; modal.className="modal"; modal.setAttribute("role","dialog"); modal.setAttribute("aria-modal","true"); modal.setAttribute("aria-label","Ticker-Helfer freischalten");
+  modal.id="th-modal"; modal.className="modal"; modal.setAttribute("role","dialog"); modal.setAttribute("aria-modal","true"); modal.setAttribute("aria-label","Ticker-Helfer einteilen");
   modal.style.cssText="position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.5);display:flex;align-items:flex-end;justify-content:center";
   modal.innerHTML=`<div style="background:var(--surface);width:100%;max-width:520px;max-height:85vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b style="font-size:var(--s-karte);flex:1">👤 Ticker-Helfer · ${team>1?"Adler "+team:"heute"}</b>
       <button onclick="document.getElementById('th-modal').remove()" aria-label="Schließen" style="border:none;background:transparent;font-size:var(--s-teil);cursor:pointer;min-width:44px;min-height:44px">✕</button></div>
     <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">Je Team tickert genau eine Person – wer hier schon steht, wird ersetzt. Das Elternteil bekommt eine Mitteilung und sieht in der Eltern-App „Ticker bedienen“, nur für heute.</div>
-    ${zeilen.length?zeilen.map(z=>`<button onclick="tickerHelferSetzen('${jsq(z.m)}')" class="btn" style="width:100%;min-height:48px;justify-content:flex-start;margin-bottom:6px">${esc(z.n)}</button>`).join("")
-      :'<div style="color:var(--text3)">Noch keine Elternkonten verknüpft.</div>'}
+    <div id="th-gemeldet" style="font-size:var(--s-text);font-weight:800;margin:4px 0 6px">🙋 Gemeldet für den Ticker</div>
+    ${gemeldet.length?gemeldet.map(m=>knopf({m,n:_thName(m,ek)})).join("")
+      :'<div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">Noch niemand – Eltern melden sich unter „Wer hilft mit?“, wenn du beim Termin „📻 Live-Ticker“ anhakst.</div>'}
+    <div style="font-size:var(--s-text);font-weight:800;margin:10px 0 6px">Weitere Eltern</div>
+    ${zeilen.length?zeilen.map(knopf).join(""):'<div style="color:var(--text3)">Keine weiteren Elternkonten.</div>'}
   </div>`;
   modal.addEventListener("click",e=>{ if(e.target===modal)modal.remove(); });
   document.body.appendChild(modal);
