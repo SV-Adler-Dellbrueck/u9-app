@@ -1,0 +1,8 @@
+/* Barlow und Barlow Condensed (SIL Open Font License 1.1, vendor/lizenzen/barlow-OFL.txt) – seit v733 für
+   das Adler Nest, selbst ausgeliefert wie Inter (v642): kein Aufruf an fonts.googleapis.com/fonts.gstatic.com.
+   Quelle: github.com/google/fonts (ofl/barlow, ofl/barlowcondensed), auf Latin und Latin-Ext gekürzt. */
+@font-face{font-family:'Barlow';font-style:normal;font-display:swap;font-weight:400;src:url(fonts/barlow-regular.woff2) format('woff2')}
+@font-face{font-family:'Barlow';font-style:normal;font-display:swap;font-weight:600;src:url(fonts/barlow-semibold.woff2) format('woff2')}
+@font-face{font-family:'Barlow';font-style:normal;font-display:swap;font-weight:700;src:url(fonts/barlow-bold.woff2) format('woff2')}
+@font-face{font-family:'Barlow Condensed';font-style:normal;font-display:swap;font-weight:600;src:url(fonts/barlow-condensed-semibold.woff2) format('woff2')}
+@font-face{font-family:'Barlow Condensed';font-style:normal;font-display:swap;font-weight:800;src:url(fonts/barlow-condensed-extrabold.woff2) format('woff2')}

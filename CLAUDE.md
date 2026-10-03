@@ -24,7 +24,7 @@ git clone https://github.com/SV-Adler-Dellbrueck/adler-u9-wissen.git .wissen
 
 ## Leitgedanken des Produkts
 
-Fairness vor Ergebnis, kindgerecht, Datenschutz von Anfang an. Kinder sehen nie Bewertungszahlen. In öffentlichen Ansichten (Liveticker, Turnierseiten, Stadionheft) stehen Kinder nur mit Vornamen; ein Nachname wird auf den Anfangsbuchstaben gekürzt (Beschluss 01.10.2026 – der Kader führt ohnehin nur Vornamen). Bewertungen, Fotos ohne Einwilligung und Kontaktdaten erscheinen dort nie.
+Fairness vor Ergebnis, kindgerecht, Datenschutz von Anfang an. Kinder sehen nie Bewertungszahlen. In öffentlichen Ansichten (Liveticker, Turnierseiten) und im Adler Nest (seit v733 nur hinter dem Login, `heft_ausgabe`) stehen Kinder nur mit Vornamen; ein Nachname wird auf den Anfangsbuchstaben gekürzt (Beschluss 01.10.2026 – der Kader führt ohnehin nur Vornamen). Bewertungen, Fotos ohne Einwilligung und Kontaktdaten erscheinen dort nie.
 
 **Trainertagebuch (seit v638):** In der App stehen die Vornamen der Kinder – das Tagebuch sehen nur Trainer. Alles, was es verlässt (Kopieren, Teilen, Monatsexport, Lehrgang, Verband), läuft durch `tbPseudonym` und trägt oben `TB_HINWEIS`: jeder Name wird zum Buchstaben („Kind C“; seit v679 fest in `kader.alias`, einmal vergeben und nie wieder vergeben – `kader_alias_vergeben`). **Dieselbe Regel gilt, wenn das claude.ai-Projekt Tagebuchdaten aus der App zieht**, um etwa den DFB-Basis-Coach-Nachweis zu schreiben: dort nur Buchstaben und derselbe Hinweis, nie Vornamen. An KI-Dienste gehen Namen weiterhin gar nicht (Client maskiert als „Kind n“).
 

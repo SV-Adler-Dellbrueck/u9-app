@@ -1,4 +1,4 @@
-const CACHE="u9i-adler-v732";
+const CACHE="u9i-adler-v733";
 const PRECACHE=[
   "./",
   "./index.html",
@@ -42,6 +42,7 @@ const PRECACHE=[
   "./md-fundbuero.js",
   "./md-ausruestung.js",
   "./md-galerie.js",
+  "./md-nest.js",   // v733: Adler Nest als Ausgaben (Leseansicht + Editor)
   "./md-kasse.js",
   "./md-ki-coach.js",
   "./md-einheit-import.js",
@@ -66,6 +67,12 @@ const PRECACHE=[
      Die Schriftdateien stehen einzeln hier, damit auch der erste Start ohne Netz Schrift hat. */
   "./vendor/inter.css",
   "./vendor/tabler-icons.min.css",
+  "./vendor/barlow.css",   // v733: Heftschrift des Adler Nest, lokal statt Google
+  "./vendor/fonts/barlow-regular.woff2",
+  "./vendor/fonts/barlow-semibold.woff2",
+  "./vendor/fonts/barlow-bold.woff2",
+  "./vendor/fonts/barlow-condensed-semibold.woff2",
+  "./vendor/fonts/barlow-condensed-extrabold.woff2",
   "./vendor/fonts/tabler-icons.woff2",
   "./vendor/fonts/inter-latin-400-normal.woff2",
   "./vendor/fonts/inter-latin-ext-400-normal.woff2",

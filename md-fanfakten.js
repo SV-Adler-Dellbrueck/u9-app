@@ -4,7 +4,7 @@
    Foto-Upload pfad-basiert: "<spieler_id>/<uuid>.jpg".
 ═══════════════════════════════════ */
 /* v732 (PO 03.10.): Fan-Fakten fürs „Adler im Porträt“ im Adler Nest – zehn kurze, freiwillige Felder.
-   Bewusst ohne Schule, Wohnort, Namen von Geschwistern oder Geburtsdatum: das Heft ist öffentlich lesbar.
+   Bewusst ohne Schule, Wohnort, Namen von Geschwistern oder Geburtsdatum (seit v733 lesen nur angemeldete Team-Familien das Heft).
    Aus diesen Feldern und den Kabinen-Reporter-Antworten schreibt die KI einen Entwurf (ohne Namen), den
    das Trainerteam liest und freigibt. */
 const FF_PORTRAET=[
@@ -18,6 +18,13 @@ const FF_PORTRAET=[
   ["lieblingsfilm","Lieblingsfilm oder -serie","z. B. ein Zeichentrickfilm"],
   ["fussball_erlebnis","Größtes Fußball-Erlebnis","z. B. erster Stadionbesuch"],
   ["gross_werden","Wenn ich groß bin, möchte ich …","z. B. Tierärztin werden"]
+];
+/* v733 (Auftragspaket Adler Nest): für den Steckbrief im Porträt – starker Fuß, Saisonziel und ein
+   weiterer Sport mit Lieblingsteam. Das Heft lesen seit v733 nur noch angemeldete Team-Familien. */
+const FF_STECKBRIEF=[
+  ["saisonziel","Saisonziel – was ich diese Saison lernen will","z. B. Zweikämpfe gewinnen"],
+  ["weiterer_sport","Weiterer Sport","z. B. Eishockey, zweimal pro Woche"],
+  ["weiterer_sport_team","Lieblingsteam in diesem Sport","z. B. Kölner Haie"]
 ];
 async function elternFanfactsOpen(spielerId,kindName){
   document.getElementById("fanfacts-modal")?.remove();
@@ -48,9 +55,15 @@ async function elternFanfactsOpen(spielerId,kindName){
          in den Fan-Fakten, also zweimal – und was ausgegeben wurde, weiß der Verein,
          nicht die Familie. Sie wird jetzt beim Anprobieren erfasst („Ausstattung" beim
          Trainer). Die Schuh-Größe bleibt: die steht nirgends sonst. -->
-    <details style="margin:4px 0 12px;border:1px solid #e2e8f0;border-radius:10px;padding:8px 10px" ${FF_PORTRAET.some(([k])=>f[k])?"open":""}>
+    <details style="margin:4px 0 12px;border:1px solid #e2e8f0;border-radius:10px;padding:8px 10px" ${FF_PORTRAET.concat(FF_STECKBRIEF).some(([k])=>f[k])||f.starker_fuss?"open":""}>
       <summary style="cursor:pointer;font-size:var(--s-text);font-weight:800;color:#1e3a8a;min-height:32px;display:flex;align-items:center">🦅 Fürs „Adler im Porträt“ (freiwillig)</summary>
-      <div style="font-size:var(--s-klein);color:#64748b;margin:6px 0 8px;line-height:1.5">Reihum stellt das Adler Nest jede Woche ein Kind vor. Aus diesen Angaben und den Antworten im Kabinen-Reporter entsteht ein kurzer Text, den das Trainerteam vor dem Druck liest. Das Heft ist öffentlich lesbar – nur Vorname, nichts, woran man euch findet. Leer lassen ist völlig in Ordnung.</div>
+      <div style="font-size:var(--s-klein);color:#64748b;margin:6px 0 8px;line-height:1.5">Reihum stellt das Adler Nest jede Woche ein Kind vor. Aus diesen Angaben und den Antworten im Kabinen-Reporter entsteht ein kurzer Text, den das Trainerteam vor dem Druck liest. Das Heft lesen nur angemeldete Team-Familien in der App; trotzdem steht dort nur der Vorname und nichts, woran man euch findet. Der Grund für die Rückennummer bleibt beim Trainerteam und kommt nicht ins Heft. Leer lassen ist völlig in Ordnung.</div>
+      <label for="ff-starker_fuss" style="font-size:var(--s-text);color:#475569">Starker Fuß</label>
+      <select id="ff-starker_fuss" style="${inp};min-height:44px;background:#fff">
+        ${[["","– bitte wählen –"],["rechts","rechts"],["links","links"],["beide","beide"]].map(([v,l])=>`<option value="${v}"${(f.starker_fuss||"")===v?" selected":""}>${l}</option>`).join("")}
+      </select>
+      ${FF_STECKBRIEF.map(([k,l,ph])=>`<label for="ff-${k}" style="font-size:var(--s-text);color:#475569">${l}</label>
+      <input id="ff-${k}" maxlength="80" value="${esc(f[k]||'')}" placeholder="${esc(ph)}" style="${inp}">`).join("")}
       ${FF_PORTRAET.map(([k,l,ph])=>`<label for="ff-${k}" style="font-size:var(--s-text);color:#475569">${l}</label>
       <input id="ff-${k}" maxlength="80" value="${esc(f[k]||'')}" placeholder="${esc(ph)}" style="${inp}">`).join("")}
     </details>
@@ -100,7 +113,8 @@ async function elternFanfactsSave(spielerId){
     gallery_optin:!!(document.getElementById("ff-gallery")&&document.getElementById("ff-gallery").checked),
     updated_at:new Date().toISOString()};
   const portraet={};
-  FF_PORTRAET.forEach(([k])=>{ const el=document.getElementById("ff-"+k); if(el)portraet[k]=(el.value||"").trim().slice(0,80)||null; });
+  FF_PORTRAET.concat(FF_STECKBRIEF).forEach(([k])=>{ const el=document.getElementById("ff-"+k); if(el)portraet[k]=(el.value||"").trim().slice(0,80)||null; });
+  const fuss=document.getElementById("ff-starker_fuss"); if(fuss)portraet.starker_fuss=fuss.value||null;   // v733
   const senden=b=>fetch(`${SB_URL}/rest/v1/kind_fanfacts?on_conflict=spieler_id`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify(b)});
   try{
     let r=await senden({...body,...portraet});
