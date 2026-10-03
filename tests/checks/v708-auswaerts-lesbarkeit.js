@@ -75,13 +75,14 @@ module.exports = async function (h) {
   if (r.platzSicht) probleme.push("a) auswärts steht die Spielfeld-Aufteilung");
   if (r.sfKnoepfe.join() !== "funino,3+1,4+1,5+1") probleme.push("a) Spielform-Knöpfe: " + r.sfKnoepfe.join());
   if (!/betreut/.test(r.titel || "")) probleme.push("a) Überschrift: " + r.titel);
-  if (r.aufgaben.length !== 1 || !/Betreuung/.test(r.aufgaben[0] || "") || r.eigene) probleme.push(`a) Aufgaben auswärts: ${JSON.stringify(r.aufgaben)}, eigene ${r.eigene}`);
+  // v728 (PO 03.10.): auswärts zusätzlich der Live-Ticker
+  if (r.aufgaben.length !== 2 || !/Betreuung/.test(r.aufgaben[0] || "") || !/Live-Ticker/.test(r.aufgaben[1] || "") || r.eigene) probleme.push(`a) Aufgaben auswärts: ${JSON.stringify(r.aufgaben)}, eigene ${r.eigene}`);
   if (!r.finden) probleme.push("a) kein Knopf „Finden“ für die Adresse");
   const b = r.body || {};
   if (b.spielform !== "funino,3+1" || b.platz !== null || b.heim !== false) probleme.push("a) gespeichert: " + JSON.stringify({ sf: b.spielform, platz: b.platz, heim: b.heim }));
   if (!Array.isArray(b.helfer_aufgaben) || b.helfer_aufgaben.length !== 1 || !/Betreuung/.test(b.helfer_aufgaben[0].t)) probleme.push("a) helfer_aufgaben: " + JSON.stringify(b.helfer_aufgaben));
   if (!r.hPlatz || r.hAufgaben < 4 || r.hEigene !== 2) probleme.push(`b) heim: Platz ${r.hPlatz}, Aufgaben ${r.hAufgaben}, eigene ${r.hEigene}`);
-  if (r.umPlatz || r.umAufgaben.length !== 1) probleme.push(`b) Umschalten auf auswärts: Platz ${r.umPlatz}, ${JSON.stringify(r.umAufgaben)}`);
+  if (r.umPlatz || r.umAufgaben.length !== 2) probleme.push(`b) Umschalten auf auswärts: Platz ${r.umPlatz}, ${JSON.stringify(r.umAufgaben)}`);
   if (r.neuPlatzAn || r.neuPlatzWert) probleme.push(`c) Neuer Termin auswärts: Platz sichtbar ${r.neuPlatzAn}, Wert „${r.neuPlatzWert}“`);
   if (r.neuKnoepfe.join() !== "funino,3+1,4+1,5+1" || r.neuVor !== "funino,3+1" || r.neuSf !== "funino,3+1,4+1") probleme.push(`c) Neuer Termin Spielform: ${r.neuKnoepfe.join()} → „${r.neuSf}“`);
   if (!r.neuPlatzHeim) probleme.push("c) zurück auf Heim: Spielfeld-Aufteilung fehlt");
