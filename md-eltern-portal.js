@@ -1598,7 +1598,11 @@ async function elternChecklistLoad(kids){
   /* v660 PO 28.09.: Eltern tragen ihre eigenen Angaben ein, den Geburtstag ihres Kindes und
      dessen Fan-Fakten. Erledigt heißt: alles ausgefüllt. */
   let angaben=null; const fanIds=new Set();
-  try{const r=await fetch(`${SB_URL}/rest/v1/eltern_angaben?select=vorname,nachname,handy,geburtstag`,{headers:sbAuthHeaders()});if(r.ok)angaben=((await r.json())||[])[0]||null;}catch(e){}
+  /* v729 (PO 03.10., Bildschirmfoto): Ein Vater mit Trainerkonto sah unter „Meine Angaben“ die Angaben eines
+     anderen Vaters – das Trainerteam darf alle Zeilen lesen, die Abfrage nahm ohne Filter die erste. Darum
+     immer nur die eigene Zeile (user_id); ohne bekannte Kennung lieber nichts als etwas Fremdes. */
+  const angUid=typeof sbUid==="function"?sbUid():null;
+  if(angUid)try{const r=await fetch(`${SB_URL}/rest/v1/eltern_angaben?user_id=eq.${encodeURIComponent(angUid)}&select=vorname,nachname,handy,geburtstag`,{headers:sbAuthHeaders()});if(r.ok)angaben=((await r.json())||[])[0]||null;}catch(e){}
   try{const ids=kids.map(k=>k.spieler_id).join(",");if(ids){const r=await fetch(`${SB_URL}/rest/v1/kind_fanfacts?spieler_id=in.(${ids})&select=spieler_id`,{headers:sbAuthHeaders()});if(r.ok)(await r.json()).forEach(x=>fanIds.add(x.spieler_id));}}catch(e){}
   const angabenOk=!!(angaben&&angaben.vorname&&angaben.nachname&&angaben.handy&&angaben.geburtstag);
   const gebAll=kids.length>0&&kids.every(k=>k.kader&&k.kader.geb);
@@ -2402,7 +2406,9 @@ async function elternCardShow(d){
 async function elternAngabenOpen(){
   document.getElementById("angaben-modal")?.remove();
   let a={};
-  try{const r=await fetch(`${SB_URL}/rest/v1/eltern_angaben?select=vorname,nachname,handy,geburtstag`,{headers:sbAuthHeaders()});if(r.ok)a=((await r.json())||[])[0]||{};}catch(e){}
+  // v729: nur die eigene Zeile – mit Trainerrechten käme sonst die erste fremde (siehe elternChecklistLoad)
+  const uid=typeof sbUid==="function"?sbUid():null;
+  if(uid)try{const r=await fetch(`${SB_URL}/rest/v1/eltern_angaben?user_id=eq.${encodeURIComponent(uid)}&select=vorname,nachname,handy,geburtstag`,{headers:sbAuthHeaders()});if(r.ok)a=((await r.json())||[])[0]||{};}catch(e){}
   const kids=window._elternKids||[];
   let mail="";
   try{const s=(typeof sbSession==="function")?sbSession():null;const pl=s&&s.access_token?JSON.parse(atob(s.access_token.split(".")[1].replace(/-/g,"+").replace(/_/g,"/"))):null;mail=(pl&&pl.email)||"";}catch(e){}
