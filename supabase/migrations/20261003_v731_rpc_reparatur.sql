@@ -21,3 +21,29 @@ create or replace function public.fundbuero_board()
  language plpgsql security definer set search_path to 'public' as $$
 begin if not public.sitzung_gueltig() then return; end if; return query select * from public.fundbuero_board_roh(); end
 $$;
+
+-- v731 (PO 03.10., Bildschirmfoto Team-Galerie): Eltern sahen in der Team-Galerie nur das Foto des eigenen
+-- Kindes, bei allen anderen die Initialen – obwohl alle Kinder die Freigabe „App-intern“ haben. Die
+-- Speicher-Regel prüfte die Freigabe über kader / kind_fanfacts / foto_consent; diese Tabellen darf ein
+-- Elternkonto für fremde Kinder nicht lesen, das EXISTS war deshalb immer falsch. Jetzt prüft eine
+-- Funktion mit Definer-Rechten dieselbe Bedingung wie team_gallery_kind(): aktives Kind, Freigabe intern
+-- oder Opt-in, und der Pfad ist sein Kartenfoto. Alle übrigen Zweige der Regel bleiben unverändert.
+create or replace function public.spielerfoto_team_sichtbar(p_name text)
+ returns boolean language sql stable security definer set search_path to 'public' as $$
+  select public.sitzung_gueltig() and exists (
+    select 1 from public.kader k left join public.kind_fanfacts f on f.spieler_id = k.id
+    where coalesce(k.aktiv, true)
+      and (coalesce(f.gallery_optin, false) or exists (select 1 from public.foto_consent c where c.spieler_id = k.id and c.intern))
+      and (p_name = f.foto_path or p_name = k.foto_path));
+$$;
+revoke all on function public.spielerfoto_team_sichtbar(text) from public;
+grant execute on function public.spielerfoto_team_sichtbar(text) to authenticated;
+
+drop policy if exists "spielerfotos auth select" on storage.objects;
+create policy "spielerfotos auth select" on storage.objects for select to authenticated using (
+  bucket_id = 'spielerfotos' and (
+    public.is_trainer()
+    or exists (select 1 from public.kader k where k.foto_path = objects.name and public.is_parent_of(k.id))
+    or (objects.name ~ '^[0-9]+/' and public.is_parent_of(split_part(objects.name, '/', 1)::bigint))
+    or public.spielerfoto_team_sichtbar(objects.name)
+  ));
