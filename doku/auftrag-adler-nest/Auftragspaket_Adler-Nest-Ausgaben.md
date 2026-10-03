@@ -39,6 +39,9 @@ Die Inhalte entstehen im Projekt-Chat: Charles spricht den Spieltag ein, der Cha
 | `spieltag_text` | text | Bericht zum Spieltag, Absätze mit Zeilenumbruch |
 | `portraet_spieler_id` | bigint, darf leer sein | Kind im Porträt (v732) |
 | `portraet_text` | text | |
+| `tag_lernen` | text | „An diesem Tag“, Teil zum Lernen: ein historisches Ereignis vom Kalendertag des Spieltags, kindgerecht |
+| `tag_lustig` | text | „An diesem Tag“, Teil zum Schmunzeln: ein lustiges Ereignis vom selben Kalendertag |
+| `tag_quellen` | text | Quellen zu beiden Teilen, nur für Trainer sichtbar |
 | `kommentar` | text | „Ein Wort vom Trainerteam" |
 | `foto_ids` | bigint[] | IDs aus `termin_media`, höchstens 6 |
 | `status` | text | `entwurf` oder `veroeffentlicht` |
@@ -59,7 +62,7 @@ Neue Funktion `heft_fotos(p_ausgabe bigint)`, `security definer`, prüft `sitzun
 ### 3. Leseansicht in der Eltern-App
 
 - Eintrag „Adler Nest" unter „Mehr vom Team" öffnet die neueste veröffentlichte Ausgabe, darunter eine Liste älterer Ausgaben (Nummer, Spieltag, Gegner).
-- Aufbau: Kopf mit Wappen und Ausgabennummer, Spieltagskarte (Gegner, Datum, Uhrzeit, Heim/Auswärts, Ergebnis aus App-Daten), Fotostrecke mit Großansicht wie in der Spieltagsgalerie, Bericht, „Adler im Porträt", Kabinen-Reporter, Wort vom Trainerteam, Mannschaftsseite.
+- Aufbau: Kopf mit Wappen und Ausgabennummer, Spieltagskarte (Gegner, Datum, Uhrzeit, Heim/Auswärts, Ergebnis aus App-Daten), Fotostrecke mit Großansicht wie in der Spieltagsgalerie, Bericht, „Adler im Porträt", „An diesem Tag“ (Lernen und Schmunzeln), Kabinen-Reporter, Wort vom Trainerteam, Mannschaftsseite.
 - Hauptaktion „Zurück zur App" mindestens 44 px, Antippflächen mindestens 48 px.
 - Das Eltern-Portal zeigt „Das Adler Nest ist frisch erschienen" anhand der neuesten `veroeffentlicht_am` (heute `cur.nest`).
 
@@ -74,6 +77,14 @@ Neue Funktion `heft_fotos(p_ausgabe bigint)`, `security definer`, prüft `sitzun
 ### 5. Alter öffentlicher Link `?heft`
 
 Bleibt für bestehende Links erhalten, zeigt aber keine Ausgaben mehr, sondern den Hinweis „Das Adler Nest lesen Eltern in der App" mit Weg zum Login. Matchcard und Spielende-Seite zeigen den Hinweis, kein totes Ziel. Die Funktion `stadionheft-view` bleibt bestehen, bis Charles sie abschalten lässt. Nicht ohne Wort von Charles löschen.
+
+## Feste Regeln für jede Ausgabe (Charles, 03.10.2026)
+
+Gelten für den Projekt-Chat, der die Texte schreibt, und für jede spätere Hilfe im Editor.
+
+- **Porträt immer aus Fan-Fakten und Kabinen-Reporter.** Beide Quellen gehen bei jedem Porträt ein. Reporter-Antworten nur, wenn sie freigegeben sind; nicht freigegebene gibt allein das Trainerteam frei. Der Spitzname bleibt draußen, wenn Charles ihn nicht ausdrücklich will. Nichts erfinden, keine Wertung, kein Vergleich, keine Kritik. Fehlt etwas, wird der Text kürzer.
+- **„An diesem Tag“ in jeder Ausgabe:** ein historisches Ereignis zum Lernen und ein lustiges zum Schmunzeln, beide vom Kalendertag des Spieltags, kindgerecht. Jede Angabe an einer Quelle geprüft; die Quellen stehen in `tag_quellen`.
+- **Spieltagsdaten aus der App,** nicht aus der Einsprache: Gegner, Ort, Uhrzeit, Spielform, Ergebnis kommen aus `termine` und `match_actions`. Die Einsprache ergänzt Szenen und Stimmung.
 
 ## Nicht Teil dieses Auftrags
 
