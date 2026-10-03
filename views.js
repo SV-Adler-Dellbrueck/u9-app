@@ -6519,7 +6519,7 @@ async function heftPortraetHilfe(){
   const el=document.getElementById("heft-portraet-hilfe"); if(!el)return;
   const v=heftPortraetNaechster(heftKader,await heftPortraetVerlauf());
   const vor=v?`<div style="font-size:var(--s-klein);color:var(--text2)">Reihum dran: <b>${esc(v.kind.name)}</b> ${v.zuletzt?"(zuletzt Woche ab "+esc(new Date(v.zuletzt+"T12:00:00").toLocaleDateString("de-DE"))+")":"(noch nie im Porträt)"}
-      ${String(heftCfg.fokusId)!==String(v.kind.id)?`<button type="button" class="btn btn-sm" onclick="heftPortraetWaehle(${Number(v.kind.id)})" style="margin-left:6px;min-height:36px">Übernehmen</button>`:" ✓"}</div>`:"";
+      ${String(heftCfg.fokusId)!==String(v.kind.id)?`<button type="button" class="btn btn-sm" onclick="heftPortraetWaehle(${Number(v.kind.id)})" style="margin-left:6px;min-height:44px">Übernehmen</button>`:" ✓"}</div>`:"";
   el.innerHTML=`<div style="display:flex;flex-direction:column;gap:6px;border:var(--border-s);border-left:3px solid #7c3aed;border-radius:10px;padding:8px 10px">
     ${vor}
     <button type="button" id="heft-portraet-ki" class="btn" onclick="heftPortraetEntwurf()" ${heftCfg.fokusId?"":"disabled"} style="min-height:44px;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;border:none;font-weight:800">✨ Porträt-Entwurf aus Fan-Fakten &amp; Reporter (KI)</button>
