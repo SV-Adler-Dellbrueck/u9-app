@@ -1270,6 +1270,7 @@ async function backupExport(){
                 "rufe_push_aus","rufe_push_stand","wiewars_push_log",
                 "adlerschmiede","adlerschmiede_push_aus","adlerschmiede_push_log",   // v717
                 "ticker_helfer",   // v728
+                "portraet_verlauf",   // v732
                 /* v705: eigene Ruhezeit je Konto und Meldungen, die auf ihr Ende warten. */
                 "push_ruhezeit","push_warteschlange",
                 /* v674: Abstimmungen und Stimmen (anonyme ohne Namen) */
@@ -4737,7 +4738,7 @@ const HELP=[
     {t:"Wer bekommt Push?", d:"Seit v711 unter Eltern & Kinder → Eltern verwalten: wie viele Familien Benachrichtigungen bekommen, welche ein Konto haben, aber Push aus, und welche noch gar kein Elternkonto. „Anleitung an die Eltern teilen“ schickt eine Anleitung ohne Namen, z. B. in die WhatsApp-Gruppe. Nur das Trainerteam sieht die Liste.", run:"pushAbdeckungOpen()"},
     {t:"Rückmelde-Verhalten", d:"Seit v672 unter Eltern & Kinder → Eltern verwalten: je Kind, getrennt nach Spieltagen und Training, wie lange vor Terminbeginn im Schnitt die erste Antwort kam, wie oft unter 24 Stunden vorher, wie oft sich die Familie umentschieden hat (auch „zu → ab“) und bei Spieltagen, wie oft gar keine Antwort kam. Gezählt je Kind – egal, welches Elternteil antwortet. Umentscheidungen zählen erst seit dem 29.09.2026, vorher wurden sie nicht gespeichert; Änderungen durch das Trainerteam zählen nicht. Nur das Trainerteam sieht diese Zahlen, Eltern nicht.", run:"rueckmeldeStatistikOpen()"},
     {t:"Team-Ansage", d:"Wichtige Info an alle Eltern – mit Gelesen-Status (wer fehlt noch?).", run:"ansageTrainerOpen()"},
-    {t:"Adler Nest", d:"Digitales Stadionheft erstellen & drucken.", run:"stadionheftOpen()"},
+    {t:"Adler Nest", d:"Digitales Stadionheft erstellen & drucken. <b>Seit v732 „Adler im Porträt“:</b> jede Woche wird reihum ein Kind vorgestellt – der Editor schlägt vor, wer dran ist (noch nie oder am längsten nicht im Porträt). „✨ Porträt-Entwurf“ schreibt aus den Fan-Fakten der Eltern und den Antworten im Kabinen-Reporter einen kurzen Text. An die KI gehen keine Namen (das Kind heißt dort „Kind A“, andere Kinder „ein Mitspieler“, kein Spitzname), freie Reporter-Antworten nur, wenn du sie freigegeben hast. Den Vornamen setzt die App ein; du liest, änderst und speicherst – erst dann steht er im Heft. Beim Veröffentlichen merkt sich die App, wer in welcher Woche dran war.", run:"stadionheftOpen()"},
     {t:"Eltern-Bereich", d:"Eltern melden sich mit E-Mail und Passwort an (alternativ Einmal-Code per Mail): Zu- und Absagen, Karte, Quiz, Betreuung vor Ort. Neue Passwörter – bei Eltern und Trainern – brauchen mindestens 10 Zeichen mit Buchstaben und Ziffern; ältere, kürzere gelten zum Anmelden weiter."},
     {t:"Wer hilft mit? freigeben", d:"Seit v662 sehen Eltern bei einem Termin nur die Helfer-Aufgaben, die du freigibst: im Termin bearbeiten unter „Wer hilft“ anhaken und daneben eintragen, wie viele Helfer du brauchst. Zur Auswahl stehen Funino-Tore, Jugendtore, Aufbau (bei Auswärtsspielen nicht), Abbau, Betreuung, Live-Ticker und Fotos, dazu zwei eigene Aufgaben mit freiem Text. Eltern sehen „x von n“; ist eine Aufgabe voll, kann sich niemand mehr eintragen. Ohne Freigabe erscheint bei den Eltern gar nichts. Bei einem Auswärtsspiel steht dort seit v708 nur „Wer betreut die Kinder mit?“ – die Betreuung mit Anzahl und ein Hinweis; aufgebaut, getickert und fotografiert wird beim Gastgeber."},
     {t:"Geburtstage und Elternangaben", d:"Seit v660 steht auf der Startseite eine Karte mit allen, die in den nächsten 14 Tagen Geburtstag haben – Kinder aus dem Kader und Eltern, die ihren Geburtstag unter „Meine Angaben“ eingetragen haben (bei Eltern ohne Alter). Eltern tragen dort auch Vor- und Nachname, Handynummer und den Geburtstag ihres Kindes ein; „Erste Schritte“ erinnert sie daran, bis alles ausgefüllt ist. Die Angaben sehen nur das Elternteil selbst und das Trainerteam, und sie stehen in der Sicherung."},
@@ -6308,7 +6309,7 @@ async function heftFotoDataUrl(path){
   }catch(e){return null;}
 }
 /* ═══ HOTFIX 19: Stadionheft-Editor (WYSIWYG) – ersetzt den Direktdruck.
-   Trainer bearbeitet Titel, Einleitung, „Spieler im Fokus" + Trainer-Kommentar,
+   Trainer bearbeitet Titel, Einleitung, „Adler im Porträt" (bis v731 „Spieler im Fokus") + Trainer-Kommentar,
    sieht eine Live-Vorschau und druckt. Texte bleiben in localStorage erhalten.
    heftBuildHtml(cfg,{mask}) baut das Heft rein – die Nachnamen-Maskierung ist
    bereits eingebaut (Aktivierung folgt in der DSGVO-Etappe). ═══ */
@@ -6355,7 +6356,7 @@ function heftBuildHtml(cfg,opts){
       fokusHtml=`<div class="heft-fokus">
         <div class="heft-fokus-foto">${foto?`<img src="${foto}" alt="">`:`<span>${esc(initialen)}</span>`}</div>
         <div class="heft-fokus-body">
-          <div class="heft-fokus-badge">⭐ Spieler im Fokus</div>
+          <div class="heft-fokus-badge">🦅 Adler im Porträt</div>
           <div class="heft-fokus-name">${esc(nm(k.name))}${k.nr!=null?` · #${esc(k.nr)}`:""}${jg?` · Jahrgang ${esc(jg)}`:""}</div>
           ${cfg.fokusText&&cfg.fokusText.trim()?`<div class="heft-fokus-text">${esc(cfg.fokusText).replace(/\n/g,"<br>")}</div>`:""}
         </div></div>`;
@@ -6459,10 +6460,11 @@ function heftRenderEditor(){
           <input id="heft-f-titel" type="text" value="${esc(heftCfg.titel||"")}" style="${fld};min-height:44px;font-size:var(--s-karte)"></label>
         <label style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">Einleitung / Grußwort
           <textarea id="heft-f-einl" rows="3" style="${fld}">${esc(heftCfg.einleitung||"")}</textarea></label>
-        <label style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">⭐ Spieler im Fokus
+        <label style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">🦅 Adler im Porträt
           <select id="heft-f-fokus" style="${fld};min-height:44px;font-size:var(--s-karte)">${kaderOpts}</select></label>
-        <label style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">Text zum Spieler im Fokus
-          <textarea id="heft-f-fokustext" rows="2" style="${fld}">${esc(heftCfg.fokusText||"")}</textarea></label>
+        <div id="heft-portraet-hilfe"></div>
+        <label style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">Porträt-Text
+          <textarea id="heft-f-fokustext" rows="5" style="${fld}">${esc(heftCfg.fokusText||"")}</textarea></label>
         <label style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">📣 Trainer-Kommentar
           <textarea id="heft-f-komm" rows="3" style="${fld}">${esc(heftCfg.kommentar||"")}</textarea></label>
         <div id="heft-reporter-queue"></div>
@@ -6489,11 +6491,80 @@ function heftRenderEditor(){
   document.body.appendChild(modal);
   const bind=(id,key)=>{const el=document.getElementById(id);if(el)el.oninput=()=>{heftCfg[key]=el.value;heftCfgSave();heftRenderPreview();};};
   bind("heft-f-titel","titel");bind("heft-f-einl","einleitung");bind("heft-f-fokustext","fokusText");bind("heft-f-komm","kommentar");
-  const fokusEl=document.getElementById("heft-f-fokus");if(fokusEl)fokusEl.onchange=()=>{heftCfg.fokusId=fokusEl.value;heftCfgSave();heftRenderPreview();};
+  const fokusEl=document.getElementById("heft-f-fokus");if(fokusEl)fokusEl.onchange=()=>{heftCfg.fokusId=fokusEl.value;heftCfgSave();heftRenderPreview();heftPortraetHilfe();};
   const maskEl=document.getElementById("heft-f-mask");if(maskEl)maskEl.onchange=()=>{heftCfg.mask=maskEl.checked;heftCfgSave();heftRenderPreview();};
   const pubEl=document.getElementById("heft-f-pub");if(pubEl)pubEl.onchange=()=>{heftCfg.published=pubEl.checked;};
   heftReporterQueueRender(); // I-C: offene Kabinen-Reporter-Antworten freigeben
   heftRenderPreview();
+  heftPortraetHilfe();   // v732
+}
+/* ═══ v732: „Adler im Porträt“ ═══
+   PO 03.10.: Fan-Fakten „pro Woche ins Spielerprofil ins Adler Nest einbauen“ und „per KI einen tollen
+   Bericht über den Spieler verfassen“ – Kachel „KI-Entwurf, Trainer gibt frei“. Bewusst „Adler im
+   Porträt“ statt „Spieler der Woche“: reihum, keine Auszeichnung (Fairness vor Ergebnis).
+   Datenschutz: An die KI gehen keine Namen. Das Kind heißt dort „Kind A“, Namen anderer Kinder in
+   Freitexten werden zu „ein Mitspieler“, der Spitzname bleibt ganz draußen; den Vornamen setzt erst
+   die App wieder ein. Ins Heft kommt der Text erst mit „Speichern“ durch das Trainerteam. */
+function heftWochenMontag(){ const d=new Date(isoLokal()+"T12:00:00"); d.setDate(d.getDate()-((d.getDay()+6)%7)); return d.toISOString().slice(0,10); }
+async function heftPortraetVerlauf(){
+  try{const r=await fetch(`${SB_URL}/rest/v1/portraet_verlauf?select=spieler_id,woche&order=woche.desc`,{headers:sbAuthHeaders()});if(r.ok)return (await r.json())||[];}catch(e){}
+  return [];   // vor der Migration v732 gibt es die Tabelle noch nicht – dann eben ohne Verlauf
+}
+function heftPortraetNaechster(kader,verlauf){
+  const zuletzt={}; (verlauf||[]).forEach(v=>{ if(!zuletzt[v.spieler_id]||v.woche>zuletzt[v.spieler_id])zuletzt[v.spieler_id]=v.woche; });
+  const liste=(kader||[]).slice().sort((a,b)=>{ const za=zuletzt[a.id]||"", zb=zuletzt[b.id]||""; return za<zb?-1:za>zb?1:String(a.name).localeCompare(String(b.name),"de"); });
+  return liste[0]?{kind:liste[0],zuletzt:zuletzt[liste[0].id]||null}:null;
+}
+async function heftPortraetHilfe(){
+  const el=document.getElementById("heft-portraet-hilfe"); if(!el)return;
+  const v=heftPortraetNaechster(heftKader,await heftPortraetVerlauf());
+  const vor=v?`<div style="font-size:var(--s-klein);color:var(--text2)">Reihum dran: <b>${esc(v.kind.name)}</b> ${v.zuletzt?"(zuletzt Woche ab "+esc(new Date(v.zuletzt+"T12:00:00").toLocaleDateString("de-DE"))+")":"(noch nie im Porträt)"}
+      ${String(heftCfg.fokusId)!==String(v.kind.id)?`<button type="button" class="btn btn-sm" onclick="heftPortraetWaehle(${Number(v.kind.id)})" style="margin-left:6px;min-height:36px">Übernehmen</button>`:" ✓"}</div>`:"";
+  el.innerHTML=`<div style="display:flex;flex-direction:column;gap:6px;border:var(--border-s);border-left:3px solid #7c3aed;border-radius:10px;padding:8px 10px">
+    ${vor}
+    <button type="button" id="heft-portraet-ki" class="btn" onclick="heftPortraetEntwurf()" ${heftCfg.fokusId?"":"disabled"} style="min-height:44px;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;border:none;font-weight:800">✨ Porträt-Entwurf aus Fan-Fakten &amp; Reporter (KI)</button>
+    <div style="font-size:var(--s-klein);color:var(--text3)">Ohne Namen an die KI – du liest und änderst den Text, ins Heft kommt er erst mit „Speichern“.</div>
+  </div>`;
+}
+function heftPortraetWaehle(id){
+  heftCfg.fokusId=String(id); const sel=document.getElementById("heft-f-fokus"); if(sel)sel.value=String(id);
+  heftCfgSave(); heftRenderPreview(); heftPortraetHilfe();
+}
+const HEFT_PORTRAET_FELDER=["lieblingsverein","lieblingsspieler","adler_seit","nummer_grund","hobby","kann_gut","lieblingsessen","lieblingstier","lieblingsmusik","lieblingsfilm","fussball_erlebnis","gross_werden"];
+function heftPortraetMaske(txt,eigen){
+  let t=String(txt||"");
+  heftKader.forEach(k=>{ const vn=String(k.name||"").trim().split(/\s+/)[0]; if(!vn)return;
+    const re=new RegExp("(^|[^\\p{L}])"+vn.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"(?![\\p{L}])","giu");
+    t=t.replace(re,(m,vor)=>vor+(String(k.id)===String(eigen)?"Kind A":"ein Mitspieler")); });
+  return t;
+}
+async function heftPortraetEntwurf(){
+  const id=heftCfg.fokusId; if(!id){toast("Bitte erst ein Kind wählen","err");return;}
+  const k=heftKader.find(x=>String(x.id)===String(id)); if(!k)return;
+  const btn=document.getElementById("heft-portraet-ki"); if(btn){btn.disabled=true;btn.textContent="Entwurf wird geschrieben …";}
+  try{
+    let ff={}, antworten=[];
+    try{const r=await fetch(`${SB_URL}/rest/v1/kind_fanfacts?spieler_id=eq.${Number(id)}&select=*`,{headers:sbAuthHeaders()});if(r.ok)ff=(await r.json())[0]||{};}catch(e){}
+    try{const r=await fetch(`${SB_URL}/rest/v1/kabine_reporter?spieler_id=eq.${Number(id)}&select=frage,antwort,freigegeben&order=created_at.asc`,{headers:sbAuthHeaders()});if(r.ok)antworten=(await r.json())||[];}catch(e){}
+    // Freitext (nicht aus den Antwortkacheln) geht nur an die KI, wenn das Trainerteam ihn schon gelesen und freigegeben hat
+    const kachelFragen=new Set((typeof REPORTER_FRAGEN!=="undefined"?REPORTER_FRAGEN:[]).filter(q=>!q.frei).map(q=>q.f));
+    antworten=antworten.filter(a=>kachelFragen.has(a.frage)||a.freigegeben);
+    const fakten={}; HEFT_PORTRAET_FELDER.forEach(f=>{ if(ff[f])fakten[f]=heftPortraetMaske(ff[f],id).slice(0,120); });
+    const payload={kind:"Kind A",torwart:!!k.tw,fakten,antworten:antworten.slice(-20).map(a=>({frage:String(a.frage||"").slice(0,120),antwort:heftPortraetMaske(a.antwort,id).slice(0,160)}))};
+    if(!Object.keys(fakten).length&&!payload.antworten.length){toast("Für dieses Kind gibt es noch keine Fan-Fakten und keine Reporter-Antworten","err");return;}
+    const ctrl=new AbortController(), to=setTimeout(()=>ctrl.abort(),35000);
+    const r=await fetch(`${SB_URL}/functions/v1/ki-portraet`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ctrl.signal});
+    clearTimeout(to);
+    if(sbCheck401(r))return;
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!d.text){toast(d.error||("Fehler "+r.status),"err");return;}
+    const vorname=String(k.name||"").trim().split(/\s+/)[0]||"unser Adler";
+    heftCfg.fokusText=String(d.text).replace(/Kind A/g,vorname);
+    const ta=document.getElementById("heft-f-fokustext"); if(ta)ta.value=heftCfg.fokusText;
+    heftCfgSave(); heftRenderPreview();
+    toast("✨ Entwurf da – bitte lesen und anpassen, dann „Speichern“");
+  }catch(e){ toast(e&&e.name==="AbortError"?"Zeitüberschreitung – bitte nochmal":"Netzwerkfehler","err"); }
+  finally{ if(btn){btn.disabled=!heftCfg.fokusId;btn.textContent="✨ Porträt-Entwurf aus Fan-Fakten & Reporter (KI)";} }
 }
 /* ── I-C: Freigabe-Queue der Kabinen-Reporter-Antworten. Nur Freigegebenes erscheint
    im Heft (Vorschau/Druck/Eltern-Ansicht). Löschen entfernt die Antwort endgültig. ── */
@@ -6532,6 +6603,8 @@ async function heftSaveDb(){
     if(sbCheck401(r))return;
     if(!r.ok){toast("Speichern fehlgeschlagen ("+r.status+")","err");return;}
     heftCfg._pubAt=payload.updated_at; heftCfgSave();
+    // v732: veröffentlichtes Porträt in den Verlauf (für „reihum“); vor der Migration schlägt das still fehl
+    if(heftCfg.published&&heftCfg.fokusId){ try{ await fetch(`${SB_URL}/rest/v1/portraet_verlauf?on_conflict=spieler_id,woche`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({spieler_id:Number(heftCfg.fokusId),woche:heftWochenMontag()})}); }catch(e){} }
     toast(heftCfg.published?"✅ Gespeichert & für Eltern veröffentlicht":"✅ Gespeichert (nicht veröffentlicht)");
     heftRenderEditor();
   }catch(e){ toast("Netzwerkfehler beim Speichern","err"); }
@@ -6591,7 +6664,7 @@ async function renderStadionheftView(){
   const fk=h.fokus;
   const fokusHtml=fk?`<div style="display:flex;gap:12px;align-items:center;background:linear-gradient(135deg,#fef9c3,#fef3c7);border:1px solid #fde047;border-radius:14px;padding:12px;margin-bottom:12px">
     <div style="flex:0 0 auto">${avatar(fk,66)}</div>
-    <div><div style="font-size:var(--s-text);font-weight:800;color:var(--yellow)">⭐ Spieler im Fokus</div>
+    <div><div style="font-size:var(--s-text);font-weight:800;color:var(--yellow)">🦅 Adler im Porträt</div>
       <div style="font-size:var(--s-karte);font-weight:900;color:#1e293b">${esc(fk.name)}${fk.nr!=null?" · #"+esc(fk.nr):""}${fk.jahrgang?" · Jahrgang "+esc(fk.jahrgang):""}</div>
       ${fk.text?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:2px;line-height:1.4">${esc(fk.text).replace(/\n/g,"<br>")}</div>`:""}</div></div>`:"";
   const nestLbl=t=>`<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:16px 4px 8px">${t}</div>`;

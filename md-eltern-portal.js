@@ -412,7 +412,7 @@ function dsgvoRenderGate(onOk){
       <li><b>Fotos:</b> in einem privaten Speicher, nur mit ausdrücklicher Freigabe je Kind in drei Stufen (App-intern, Video, öffentlich; Standard: aus). Auf öffentlichen Seiten und im Adler Nest nur mit der Stufe „öffentlich“ – dort zusammen mit Vorname, Anfangsbuchstabe des Nachnamens und Jahrgang, nie mit dem Geburtsdatum.</li>
       <li><b>Keine Weitergabe:</b> keine Werbung, kein Verkauf; keine Zahlungs-/Kontodaten in der App.</li>
       <li><b>Technik und Dienste:</b> Datenbank bei Supabase in Frankfurt (EU); die App-Dateien samt Schrift und Symbolen kommen von GitHub Pages – kein Aufruf bei Google Fonts oder anderen Schriftdiensten; Wetter über open-meteo, Karten über OpenStreetMap (nur Orts- und Termindaten), die Strecke ab Dellbrück rechnet ein Trainergerät einmal über den OpenStreetMap-Routendienst von FOSSGIS – euer Standort wird dafür nicht abgefragt; Push-Mitteilungen über den Dienst eures Browsers (ohne Kindernamen).</li>
-      <li><b>KI:</b> Das Trainerteam nutzt einen KI-Dienst (Anbieter in den USA) als Schreibhilfe für Nachbereitung und Berichte. Kindernamen werden vorher durch „Kind 1“, „Kind 2“ ersetzt und erst auf dem Gerät des Trainers zurückübersetzt.</li>
+      <li><b>KI:</b> Das Trainerteam nutzt einen KI-Dienst (Anbieter in den USA) als Schreibhilfe für Nachbereitung und Berichte. Kindernamen werden vorher durch „Kind 1“, „Kind 2“ ersetzt und erst auf dem Gerät des Trainers zurückübersetzt. Für das „Adler im Porträt“ im Adler Nest gehen die freiwilligen Fan-Fakten und die Antworten aus dem Kabinen-Reporter ebenso ohne Namen und ohne Spitznamen dorthin; der Text erscheint erst, wenn das Trainerteam ihn gelesen hat.</li>
     </ul>
     <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:var(--s-klein);color:#475569;margin:8px 0">
       <b>Verantwortlich:</b> ${esc(VEREIN_DS.name)}, ${esc(VEREIN_DS.anschrift)}.
@@ -1074,7 +1074,7 @@ async function elternDashLoad(){
         ${elRow("🃏","Adler-Karte ansehen","Die Karte deines Kindes – Stärken, Spiele, Trainings, ohne Bewertungszahlen",`elternCardOpen(${k.spieler_id})`,"#5b21b6")}
         ${elRow("🎖️","Technik-Abzeichen","Übungen zu Hause abhaken – Federn sammeln",`abzeichenOpen(${k.spieler_id},'${nn}')`,"#6d28d9")}
         ${elRow("🎧","Sprachlob anhören","Persönliches Lob vom Trainerteam",`lobPlay(${k.spieler_id})`,"#7c3aed")}
-        ${elRow("✏️","Fan-Fakten &amp; Foto","Lieblingsverein, Spitzname &amp; Kartenfoto pflegen",`elternFanfactsOpen(${k.spieler_id},'${nn}')`,"#8b5cf6")}
+        ${elRow("✏️","Fan-Fakten &amp; Foto","Lieblingsverein, Spitzname, Porträt-Fragen &amp; Kartenfoto pflegen",`elternFanfactsOpen(${k.spieler_id},'${nn}')`,"#8b5cf6")}
         ${elRow("📊","Saison-Statistik","Spiele, Einsätze &amp; Highlights – ansehen, auf Wunsch teilen",`childWrappedOpen(${k.spieler_id})`,"#a855f7")}
       </div>`;}).join("")}
     <div id="cat-mehr" class="el-cat-panel" style="display:none">`;

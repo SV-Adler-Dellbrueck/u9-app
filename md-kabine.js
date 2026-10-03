@@ -1378,7 +1378,16 @@ const REPORTER_FRAGEN=[
   {f:"Was rufst du beim Aufwärmen am lautesten?",o:["Adler Dellbrück!","Auf geht's!","Los Team!","Ich rufe lieber nichts"]},
   {f:"Was sagst du jemandem, der ein Tor verschossen hat?",o:["Kopf hoch, nächstes Mal!","Guter Versuch!","Weiter geht's!","Ich klopf ihm auf die Schulter"]},
   {f:"Wenn du eine Superkraft im Fußball hättest?",o:["Rennen wie der Blitz","Schießen wie eine Rakete","Immer richtig zielen","Überallhin springen","Nie müde werden"]},
-  {f:"Was wünschst du dir für diese Saison?",o:["Viele Tore","Viel Spaß","Dass wir zusammenhalten","Ein neuer Trick","Immer besser werden"]}
+  {f:"Was wünschst du dir für diese Saison?",o:["Viele Tore","Viel Spaß","Dass wir zusammenhalten","Ein neuer Trick","Immer besser werden"]},
+  // ── v732 (PO 03.10.): Fragen fürs „Adler im Porträt“ – ohne Namen anderer Kinder, mit ehrlichem Ausweg ──
+  {f:"Wie lange spielst du schon Fußball?",o:["Seit diesem Jahr","Seit letztem Jahr","Schon ganz lange","Seit ich laufen kann","Weiß ich nicht genau"]},
+  {f:"Was kannst du schon richtig gut?",o:["Schnell rennen","Fest schießen","Den Ball halten","Gute Pässe spielen","Dribbeln","Im Tor stehen","Andere anfeuern"]},
+  {f:"Was willst du als Nächstes lernen?",o:["Mit links schießen","Kopfball","Einen neuen Trick","Besser passen","Jonglieren","Weiß ich noch nicht"]},
+  {f:"Mit wem kickst du zuhause?",o:["Mit Mama","Mit Papa","Mit Geschwistern","Mit Freunden","Ganz allein","Mit allen, die mitmachen"]},
+  {f:"Was magst du an den Adlern am meisten?",o:["Meine Freunde im Team","Die Trainer","Die Spiele am Samstag","Das Training","Den Adler-Jubel","Einfach alles"]},
+  /* v732: Ein freies Feld – Kachel „Ja, plus ein freies Feld“. Wie jede Antwort erscheint es erst nach
+     Freigabe durch das Trainerteam im Adler Nest; so kann nichts Unpassendes durchrutschen. */
+  {f:"Was soll jeder über dich wissen?",frei:true}
 ];
 let _krSid=null,_krName="",_krOffen=[];
 function kabineReporter(){
@@ -1427,9 +1436,19 @@ function kabineReporterFrage(){
     <div style="font-size:12px;opacity:.8">🎙️ Kabinen-Reporter · ${esc(_krName)}</div>
     <div style="font-size:22px;font-weight:900;max-width:340px">${esc(q.f)}</div>
     <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:340px">
-      ${q.o.map((o,i)=>`<button onclick="kabineReporterAnswer(${i})" style="border:none;border-radius:16px;padding:14px;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;background:rgba(255,255,255,.14);color:#fff">${esc(o)}</button>`).join("")}
+      ${q.frei?`<textarea id="kr-frei" maxlength="140" rows="3" aria-label="Deine Antwort" placeholder="Schreib es hier hin – ein, zwei Sätze" style="width:100%;box-sizing:border-box;border:none;border-radius:16px;padding:14px;font-family:inherit;font-size:16px;resize:none"></textarea>
+      <button onclick="kabineReporterFrei()" style="border:none;border-radius:16px;padding:14px;font-family:inherit;font-size:15px;font-weight:900;cursor:pointer;background:#fbbf24;color:#1e1b4b;min-height:48px">Fertig ✓</button>
+      <button onclick="_krOffen.shift();kabineReporterFrage()" style="border:none;border-radius:16px;padding:12px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;background:rgba(255,255,255,.10);color:#fff;min-height:44px">Lieber nicht</button>`:""}
+      ${(q.o||[]).map((o,i)=>`<button onclick="kabineReporterAnswer(${i})" style="border:none;border-radius:16px;padding:14px;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;background:rgba(255,255,255,.14);color:#fff">${esc(o)}</button>`).join("")}
     </div>
   </div>`;
+}
+async function kabineReporterFrei(){
+  const el=document.getElementById("kr-frei"), txt=((el&&el.value)||"").trim().slice(0,140);
+  if(!txt){ if(el)el.focus(); return; }
+  const q=_krOffen.shift(); if(!q)return;
+  try{ await fetch(`${SB_URL}/rest/v1/kabine_reporter`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({spieler_id:_krSid,frage:q.f,antwort:txt,datum:isoLokal()})}); }catch(e){}
+  kabineReporterFrage();
 }
 async function kabineReporterAnswer(idx){
   const q=_krOffen.shift(); if(!q)return;
