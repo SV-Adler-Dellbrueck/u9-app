@@ -67,3 +67,15 @@ begin
 end $$;
 revoke all on function public.sonderkarten_kind(bigint) from public, anon;
 grant execute on function public.sonderkarten_kind(bigint) to authenticated;
+
+-- Sticker-Album: die Sonderkarten aller aktiven Kinder auf einmal (PO 04.10.: „im Sticker-Album zu ziehen, mit höherer
+-- Seltenheit“). Dieselben Regeln wie sonderkarten_kind, je Karte dazu die spieler_id.
+create or replace function public.sonderkarten_alle() returns jsonb
+language sql stable security definer set search_path to 'public' as $$
+  select case when not public.sitzung_gueltig() then '[]'::jsonb else
+    coalesce((select jsonb_agg(c || jsonb_build_object('spieler_id', k.id))
+                from public.kader k, jsonb_array_elements(public.sonderkarten_kind(k.id)) c
+               where k.aktiv), '[]'::jsonb) end;
+$$;
+revoke all on function public.sonderkarten_alle() from public, anon;
+grant execute on function public.sonderkarten_alle() to authenticated;

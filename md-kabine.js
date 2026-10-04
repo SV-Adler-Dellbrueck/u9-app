@@ -252,7 +252,10 @@ const KAB_RAR={
   selten:   {lbl:"SELTEN",   gem:"⭐", own:"linear-gradient(135deg,#60a5fa,#1d4ed8)", shadow:"0 4px 14px rgba(59,130,246,.45)", dash:"rgba(96,165,250,.5)", w:30},
   matchday: {lbl:"MATCHDAY", gem:"🔥", own:"linear-gradient(135deg,#fb923c,#dc2626)", shadow:"0 4px 16px rgba(249,115,22,.5)",  dash:"rgba(251,146,60,.55)", w:8, foil:true},
   episch:   {lbl:"EPISCH",   gem:"💎", own:"linear-gradient(135deg,#c084fc,#7c3aed)", shadow:"0 4px 16px rgba(168,85,247,.5)",  dash:"rgba(192,132,252,.5)", w:12, foil:true},
-  legendaer:{lbl:"LEGENDÄR", gem:"👑", own:"linear-gradient(135deg,#fde047,#f59e0b)", shadow:"0 4px 18px rgba(250,204,21,.55)", dash:"rgba(253,224,71,.55)", w:4,  foil:true, leg:true}
+  legendaer:{lbl:"LEGENDÄR", gem:"👑", own:"linear-gradient(135deg,#fde047,#f59e0b)", shadow:"0 4px 18px rgba(250,204,21,.55)", dash:"rgba(253,224,71,.55)", w:4,  foil:true, leg:true},
+  /* v745 (PO 04.10.: „im Sticker-Album zu ziehen, aber mit höherer Seltenheit“ – Kachel: alle drei Arten, zwischen
+     Episch und Legendär, eigene geschenkt wie MATCHDAY) */
+  sonder:   {lbl:"SONDER",   gem:"🃏", own:"linear-gradient(135deg,#22d3ee,#0f766e)", shadow:"0 4px 16px rgba(20,184,166,.5)",  dash:"rgba(45,212,191,.55)", w:6, foil:true}
 };
 // Spieltage der Saison (für die rollierenden MATCHDAY-Karten), 5-Min-Cache
 async function _spieltageSaison(){
@@ -295,6 +298,21 @@ async function _albumPool(){
       const kid=rr[i%rr.length];
       const d=new Date(t.datum+"T00:00:00");
       pool.push({key:"md_"+t.id,label:kid.name,sub:"Spieltag "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}),emo:"🔥",rar:"matchday",kidName:kid.name});
+    });
+  }catch(e){}
+  // 🃏 SONDER (v745): Spieltags-, Kapitäns- und Momentkarten aller Kinder aus sonderkarten_alle – 5-Min-Cache.
+  //  Schlüssel bleiben stabil (Art, Kind, Datum, Team bzw. Moment-ID), damit gezogene Sticker im Album bleiben.
+  try{
+    if(!window._albSonder||Date.now()-window._albSonder.at>300000){
+      const r=await fetch(`${SB_URL}/rest/v1/rpc/sonderkarten_alle`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"});
+      const v=r.ok?await r.json():[]; window._albSonder={at:Date.now(),rows:Array.isArray(v)?v:[]};
+    }
+    const tag=d=>String(d||"").slice(8,10)+"."+String(d||"").slice(5,7)+".";
+    window._albSonder.rows.slice().sort((a,b)=>String(a.datum).localeCompare(String(b.datum))||String(a.art).localeCompare(String(b.art))).forEach(c=>{
+      const key=c.art==="moment"?"sk_mo_"+c.id:c.art==="kapitaen"?`sk_ka_${c.spieler_id}_${c.datum}_${c.team||1}`:`sk_st_${c.spieler_id}_${c.datum}`;
+      pool.push({key,label:c.name,kidName:c.name,rar:"sonder",sk:c,
+        sub:c.art==="moment"?String(c.titel||"Moment").slice(0,24):(c.art==="kapitaen"?"Kapitän ":"Spieltag ")+tag(c.datum),
+        emo:c.art==="moment"?"🎉":c.art==="kapitaen"?"©️":"⚽",alPath:c.foto_path||null});
     });
   }catch(e){}
   // Vom Trainer hinterlegte Karten-Fotos (album_fotos, Adler-Welt) anheften – 5-Min-Cache
@@ -400,10 +418,10 @@ async function kabineAlbumFor(sid,name){
   window._albPoolCache=pool;
   const col=row.sticker||{};
   // 🔥 Eigene MATCHDAY-Karten werden geschenkt: der Star des Spieltags bekommt seine Karte direkt
-  const meineMd=pool.filter(g=>g.rar==="matchday"&&g.kidName===name&&!(col[g.key]||0));
+  const meineMd=pool.filter(g=>(g.rar==="matchday"||g.rar==="sonder")&&g.kidName===name&&!(col[g.key]||0));
   if(meineMd.length){
     meineMd.forEach(g=>col[g.key]=1); row.sticker=col; await _albumSave(row);
-    toast(meineMd.length>1?`🔥 ${meineMd.length} Spieltags-Karten von DIR – geschenkt ins Album!`:"🔥 Die Spieltags-Karte von DIR – geschenkt ins Album!");
+    toast(meineMd.length>1?`🔥 ${meineMd.length} Karten von DIR – geschenkt ins Album!`:"🔥 Eine Karte von DIR – geschenkt ins Album!");
   }
   const got=pool.filter(g=>col[g.key]).length;
   const voll=pool.length>0&&got===pool.length;
@@ -421,7 +439,8 @@ async function kabineAlbumFor(sid,name){
   const albTeil=f=>pool.filter(f).map(g=>_albumStickerHtml(g,col[g.key]||0,!!col[g.key])).join("");
   const cards=albSec("⚽ Unsere Adler")+albTeil(g=>g.rar==="kind")
     +albSec("🧢 Trainer, Verein & Legenden")+albTeil(g=>g.rar==="selten"||g.rar==="episch"||g.rar==="legendaer")
-    +(pool.some(g=>g.rar==="matchday")?albSec("🔥 Spieltags-Karten – nach jedem Spiel eine neue")+albTeil(g=>g.rar==="matchday"):"");
+    +(pool.some(g=>g.rar==="matchday")?albSec("🔥 Spieltags-Karten – nach jedem Spiel eine neue")+albTeil(g=>g.rar==="matchday"):"")
+    +(pool.some(g=>g.rar==="sonder")?albSec("🃏 Sonderkarten – Spieltag, Kapitän, Moment")+albTeil(g=>g.rar==="sonder"):"");
   b.innerHTML=`<div id="kab-album-view" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;position:relative">
     <div style="display:flex;align-items:center;gap:10px;padding:14px 16px">
       <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer">←</button>

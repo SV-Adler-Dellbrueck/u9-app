@@ -31,7 +31,11 @@ set request.jwt.claims='{"sub":"00000000-0000-0000-0000-00000000000c","email":"e
 select count(*) sichtbar from sonderkarte;
 select k->>'art' art, k->>'datum' datum, k->>'satz' satz, k->>'foto_path' foto from jsonb_array_elements(sonderkarten_kind(1)) k;
 reset role;
-\echo '=== Anonym: gesperrt (eine Fehlermeldung gewollt)'
+\echo '=== Eltern B: sonderkarten_alle fürs Sticker-Album – Karten beider Kinder mit spieler_id (erwartet 7)'
+select count(*) alle, count(distinct k->>'spieler_id') kinder from jsonb_array_elements(sonderkarten_alle()) k;
+reset role;
+\echo '=== Anonym: gesperrt (zwei Fehlermeldungen gewollt)'
 set role anon; set request.jwt.claims='{}';
 select sonderkarten_kind(1);
+select sonderkarten_alle();
 reset role;
