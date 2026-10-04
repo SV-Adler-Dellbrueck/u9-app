@@ -1637,7 +1637,9 @@ function galleryCardData(g){
   const theme=g.tw?CARD_THEMES.keeper
     :(keys.length?(CARD_THEMES[dim]||CARD_THEMES.tech):CARD_THEMES.neu);
   return {name:g.name,nr:g.nr,tw:!!g.tw,fotoPath:g.foto_path,spitzname:g.spitzname||null,
-    pos:g.tw?"Torwart":"",fuss:"",alter:null,
+    /* v739 (PO 04.10.: „Dort dürfen schon die Stärken stehen und sowas wie starker Fuß“): Fuß und Position aus
+       team_gallery_kind (kind_fuss: Trainer vor Eltern), Stärken seit v739 auf jeder Karte */
+    pos:g.position||(g.tw?"Torwart":""),fuss:({L:"linker Fuß",R:"rechter Fuß",B:"beidfüßig"})[g.fuss]||"",alter:null,
     badges:keys.map(k=>CARD_BADGES[k]),theme,
     fremd:g.staerken==null,   // v636: fremde Karten tragen keine Stärken mehr (team_gallery_kind liefert null)
     /* v734 (PO 04.10.: „Alle Karten mit Zahlen“): Trainings und Spiele der Saison für jede Karte aus team_gallery_kind.
