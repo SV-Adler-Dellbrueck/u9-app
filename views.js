@@ -640,7 +640,7 @@ function kaderEditRow(k,i){
     ${k._id?`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px">
       <button type="button" class="btn btn-sm" onclick="kontakteEditOpen(${k._id})" title="Kontakte, Eltern-Login und der persönliche Zu-/Absage-Link" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:var(--s-klein);line-height:1.2"><i class="ti ti-address-book" style="font-size:var(--s-teil)"></i>Kontakte</button>
       <button type="button" class="btn btn-sm" onclick="zieleOpen(${k._id})" title="Entwicklungs-Ziele setzen & verfolgen" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:var(--s-klein);line-height:1.2"><i class="ti ti-target" style="font-size:var(--s-teil)"></i>Ziele</button>
-      <button type="button" class="btn btn-sm" onclick="childWrappedShare(${k._id})" title="Persönliche Saison-Rückblick-Karte zum Teilen mit der Familie" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:var(--s-klein);line-height:1.2"><i class="ti ti-movie" style="font-size:var(--s-teil)"></i>Saison</button>
+      ${WRAPPED_SICHTBAR?`<button type="button" class="btn btn-sm" onclick="childWrappedShare(${k._id})" title="Persönliche Saison-Rückblick-Karte zum Teilen mit der Familie" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:var(--s-klein);line-height:1.2"><i class="ti ti-movie" style="font-size:var(--s-teil)"></i>Saison</button>`:""}
       <button type="button" class="btn btn-sm" onclick="lobRecordOpen(${k._id},'${(k.name||'').replace(/'/g,'')}')" title="Kurzes Sprachlob aufnehmen – das Kind hört es in der Kabine" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:var(--s-klein);line-height:1.2;grid-column:1/-1"><i class="ti ti-microphone" style="font-size:var(--s-teil)"></i>🎤 Sprachlob aufnehmen</button>
       <button type="button" class="btn btn-sm btn-d" onclick="kaderEditDelete(this,'${jsq(k.name||'')}','${k._id||''}')" style="grid-column:1/-1;justify-content:center;font-size:var(--s-klein)"><i class="ti ti-trash"></i>Endgültig löschen</button>
     </div>`:'<div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px">Erst speichern – dann sind Kontakte, Links & Saison-Karte verfügbar.</div>'}
@@ -802,7 +802,7 @@ function kinderProfilRender(nachgeladen){
       ${karte("➕","Mehr",`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
         <button type="button" class="btn btn-sm" style="min-height:48px" onclick="kontakteEditOpen(${_kp.id})"><i class="ti ti-address-book"></i>Kontakte &amp; Login</button>
         <button type="button" class="btn btn-sm" style="min-height:48px" onclick="zieleOpen(${_kp.id})"><i class="ti ti-target"></i>Ziele</button>
-        <button type="button" class="btn btn-sm" style="min-height:48px" onclick="childWrappedShare(${_kp.id})"><i class="ti ti-movie"></i>Saison-Karte</button>
+        ${WRAPPED_SICHTBAR?`<button type="button" class="btn btn-sm" style="min-height:48px" onclick="childWrappedShare(${_kp.id})"><i class="ti ti-movie"></i>Saison-Karte</button>`:""}
         <button type="button" class="btn btn-sm" style="min-height:48px" onclick="typeof sonderkartenTrainerOpen==='function'&&sonderkartenTrainerOpen(${_kp.id})"><i class="ti ti-cards"></i>Sonderkarten</button>
         <button type="button" class="btn btn-sm" style="min-height:48px" onclick="lobRecordOpen(${_kp.id},'${jsq(k.name||"")}')"><i class="ti ti-microphone"></i>Sprachlob</button>
         <button type="button" class="btn btn-sm" style="min-height:48px;grid-column:1/-1" onclick="kinderProfilZu();typeof kaderBewerten==='function'&&kaderBewerten('${jsq(k.name||"")}')"><i class="ti ti-chart-radar"></i>Einschätzung öffnen</button>
@@ -1060,6 +1060,10 @@ async function kindLinkShare(spielerId){
   if(navigator.share){navigator.share({title:"Zu-/Absage-Link "+nm,text,url}).catch(()=>{});}
   else{navigator.clipboard?.writeText(url).then(()=>toast("Link kopiert ✓"),()=>prompt("Link:",url));}
 }
+/* v754 (PO 04.10.: „Die Saison aktuell ausblenden. Die meisten Werte tracken wir aktuell nicht.“): Der Saison-Rückblick
+   (Adler Wrapped, Saison-Karte, Saison-Statistik) ist ausgeblendet, bis genug Werte erfasst werden. Auf true setzen, dann
+   erscheinen alle Einstiege wieder; die Funktionen selbst bleiben unverändert. */
+let WRAPPED_SICHTBAR=false;
 // Adler-Wrapped pro Kind: persönliche Saison-Karte (Bild) für die Familie. Daten aus get_child_wrapped.
 async function childWrappedDaten(spielerId){
   let d=null;
@@ -7059,7 +7063,7 @@ function _kachelInhalt(key){
     +kTiles([
       {emo:"🪺",label:"Nest-Ausgaben",fn:"nestEditorOpen"},   // v733: eine Ausgabe je Spieltag
       {emo:"📰",label:"Adler Nest (Porträt-Vorschlag)",fn:"stadionheftOpen"},
-      {emo:"🏆",label:"Adler Wrapped",fn:"adlerWrappedTeaser"}
+      ...(WRAPPED_SICHTBAR?[{emo:"🏆",label:"Adler Wrapped",fn:"adlerWrappedTeaser"}]:[])
     ],col)
     +`<div id="home-milestone" style="margin-top:8px"></div>`;
   if(key==="orga")return `<div id="home-rsvp"></div><div id="home-ferien"></div>`
