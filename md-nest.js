@@ -109,6 +109,7 @@ function _nestDatum(iso,lang){
 }
 function _nestZeit(t){ return t?String(t).slice(0,5):""; }
 function _nestDauer(s){ s=Number(s)||0; if(!s)return ""; return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")+" Min."; }
+function _nestBis(ts){ try{ return new Date(ts).toLocaleDateString("de-DE",{day:"numeric",month:"long",year:"numeric"}); }catch(e){ return ""; } }   // v756: lokales Datum, nicht das UTC-Datum
 function _nestNr(n){ return String(n||0).padStart(2,"0"); }
 // „Kinderfestival · FC Chorweiler U9“ → Format und Gegner; sonst aus typ/gegner
 function nestFormatGegner(t){
@@ -172,7 +173,7 @@ function nestClose(){
   document.getElementById("nest-modal")?.remove(); document.getElementById("nest-gross")?.remove();
   _nestAufraeumen();
 }
-function nestHtml(d,medien,liste,aktivId){
+function nestHtml(d,medien,liste,aktivId,druck){
   const a=d.ausgabe||{}, t=d.termin, p=d.portraet;
   const fg=nestFormatGegner(t);
   const hatTitel=medien.some(x=>x.art==="titelbild"), audio=medien.find(x=>x.art==="audio");
@@ -182,6 +183,7 @@ function nestHtml(d,medien,liste,aktivId){
   // a) Deckblatt
   let h=`<div class="nest-heft" id="nest-heft">
   <section class="nest-deckblatt" data-abschnitt="deckblatt" aria-label="Deckblatt">
+    ${druck&&druck.entwurf?`<div class="nest-entwurf" role="note">ENTWURF – noch nicht veröffentlicht</div>`:""}
     <div class="nest-kopf"><span>SV Adler Dellbrück · U9</span><span>Ausgabe ${_nestNr(a.nummer)}</span></div>
     ${hatTitel?`<img id="nest-titelbild" class="nest-titelbild" alt="Titelbild: das Adler-Maskottchen" draggable="false">`
       :`<div class="nest-titel-leer" aria-hidden="true"><span style="font-size:22px;letter-spacing:2px">AUSGABE</span><span style="font-size:200px;line-height:.9">${_nestNr(a.nummer)}</span></div>`}
@@ -191,7 +193,10 @@ function nestHtml(d,medien,liste,aktivId){
       ${band?`<span class="nest-band">${esc(band)}</span>`:""}
       ${a.schlagzeile?`<h1 class="nest-schlagzeile">${esc(a.schlagzeile)}</h1>`:""}
       <div style="font-size:16px;opacity:.9">${esc(_nestDatum(t?t.datum:(a.veroeffentlicht_am||""),true))}</div>
-      ${audio?`<button type="button" class="nest-hoeren" id="nest-hoeren" onclick="nestHoeren()" aria-label="Adler Nest zum Hören abspielen${a.audio_sekunden?", "+_nestDauer(a.audio_sekunden):""}">
+      ${audio&&druck?(druck.hoer?`<a class="nest-hoeren nest-hoerlink" href="${esc(druck.hoer.url)}" aria-label="Adler Nest zum Hören – Link öffnen">
+          <span class="nest-play" aria-hidden="true">▶</span><span style="flex:1">Adler Nest zum Hören${a.audio_sekunden?` · ${_nestDauer(a.audio_sekunden)}`:""}<br><span style="font-weight:400;opacity:.85;font-size:15px">Tippen oder QR-Code scannen · Link gültig bis ${esc(_nestBis(druck.hoer.bis))}</span></span></a>
+        <div class="nest-qr" aria-hidden="true">${druck.hoer.qr||""}</div>`:""):""}
+      ${audio&&!druck?`<button type="button" class="nest-hoeren" id="nest-hoeren" onclick="nestHoeren()" aria-label="Adler Nest zum Hören abspielen${a.audio_sekunden?", "+_nestDauer(a.audio_sekunden):""}">
           <span class="nest-play" aria-hidden="true" id="nest-play">▶</span><span style="flex:1">Adler Nest zum Hören${a.audio_sekunden?`<br><span style="font-weight:400;opacity:.85" id="nest-dauer">${_nestDauer(a.audio_sekunden)}</span>`:""}</span></button>
         <audio id="nest-audio" preload="none" onended="nestHoerenEnde()"></audio>`:""}
       ${imHeft.length?`<div class="nest-imheft"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.6px;opacity:.8">Im Heft</div>${imHeft.map(([r,x])=>`<div><b>${r}</b>${esc(x)}</div>`).join("")}</div>`:""}
@@ -279,6 +284,7 @@ function nestHtml(d,medien,liste,aktivId){
         <div><b>Wo</b>${n.heim?"zu Hause":"auswärts"}${n.ort?" · "+esc(n.ort):""}</div></div>`:""}
     </section>`;
   }
+  if(druck)return h+`<div class="nest-ende">Auf geht's, Adler!</div></div>`;   // v756: PDF – kein Spendenslot, keine Knöpfe, kein Archiv
   h+=`<div id="nest-kasse-slot"></div>`;   // v735: Spenden-Karte, füllt nestKasseLaden (nur Eltern und Trainer)
   h+=`<div class="nest-ende">Auf geht's, Adler!<button type="button" class="nest-zurueck" onclick="nestClose()">Zurück zur App</button></div>`;
   if((liste||[]).length>1){
@@ -471,6 +477,7 @@ function nestEdRender(){
     ${_nestFeld("tag_lustig","An diesem Tag – zum Schmunzeln",{lang:3})}
     ${_nestFeld("tag_quellen","Quellen zu „An diesem Tag“ (nur Trainerteam)",{lang:2,tip:"Eltern und Kinder sehen dieses Feld nie."})}
     ${_nestFeld("kommentar","Ein Wort vom Trainerteam",{lang:3})}
+    <div id="nest-ed-teilen"></div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:18px">
       <button type="button" class="btn btn-p" id="nest-ed-veroeffentlichen" onclick="${a.status==="veroeffentlicht"?"nestEdSpeichern()":"nestEdVeroeffentlichen()"}" style="min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800">${a.status==="veroeffentlicht"?"Änderungen speichern":"Veröffentlichen"}</button>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -479,7 +486,7 @@ function nestEdRender(){
           :`<button type="button" class="btn" id="nest-ed-entwurf" onclick="nestEdSpeichern()" style="min-height:48px;justify-content:center">Entwurf speichern</button>`}
       </div>
     </div>`;
-  nestEdUploads(); nestEdFotos(); nestEdReporter(); nestEdPrivat(); nestEdVorschlag();
+  nestEdUploads(); nestEdFotos(); nestEdReporter(); nestEdPrivat(); nestEdVorschlag(); nestEdTeilen();
 }
 async function nestEdVorschlag(){
   const el=document.getElementById("nest-ed-vorschlag"); if(!el||typeof heftPortraetNaechster!=="function")return;
@@ -829,6 +836,175 @@ async function nestBogenClose(){
 }
 
 /* Kinder: Hinweis in der Kabine auf die Porträtfragen im Kabinen-Reporter (bis zur Frist der Eltern) */
+/* ═══ v756: PDF-Export und Teil-Link für die Hördatei (Nachtrag 04.10.2026, Beschlüsse 17–19) ═══
+   PDF: Die Leseansicht wird in einen unsichtbaren Druckbereich (#nest-druck) gesetzt, window.print() öffnet den
+   Druckdialog des Geräts („Als PDF sichern“). Kein Dienst Dritter, nichts verlässt das Gerät; die Schriften sind lokal.
+   Erst einmal nur im Trainerbereich (Charles 04.10.). Im PDF steht statt des Players ein antippbarer Link plus QR-Code
+   zur Hörseite ?hoeren=<token> (Edge Function heft-audio, 30 Tage, zurückziehbar). */
+const NEST_PDF_HINWEIS="Dieses PDF enthält Fotos und Vornamen. Bitte nur an Familien weitergeben.";
+function _nestLinkUrl(token){ return appRoot()+"?hoeren="+token; }
+async function nestLinkAktiv(ausgabeId){
+  const r=await fetch(`${SB_URL}/rest/v1/heft_audio_link?ausgabe_id=eq.${Number(ausgabeId)}&zurueckgezogen_am=is.null&gueltig_bis=gt.${encodeURIComponent(new Date().toISOString())}&select=token,gueltig_bis&order=created_at.desc&limit=1`,{headers:sbAuthHeaders()});
+  if(!r.ok)throw new Error("link lesen");
+  const z=(await r.json())[0]; return z?{token:z.token,bis:z.gueltig_bis,url:_nestLinkUrl(z.token)}:null;
+}
+async function nestLinkNeu(ausgabeId){
+  const r=await fetch(`${SB_URL}/rest/v1/rpc/heft_audio_link_neu`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_ausgabe:Number(ausgabeId)})});
+  if(typeof sbCheck401==="function"&&sbCheck401(r))throw new Error("401");
+  if(!r.ok)throw new Error("link neu");
+  const z=(await r.json())[0]; if(!z||!z.token)throw new Error("link leer");
+  return {token:z.token,bis:z.gueltig_bis,url:_nestLinkUrl(z.token)};
+}
+async function nestHoerLink(ausgabeId){ return (await nestLinkAktiv(ausgabeId))||(await nestLinkNeu(ausgabeId)); }   // „ist keiner da oder abgelaufen, wird ein neuer erzeugt“
+function nestDruckStil(hoch,endeHoch){
+  document.getElementById("nest-druck-stil")?.remove();
+  const s=document.createElement("style"); s.id="nest-druck-stil";
+  s.textContent=`#nest-druck{position:absolute;left:-10000px;top:0;width:390px}
+  #nest-druck .nest-heft{max-width:390px;width:390px}
+  #nest-druck .nest-deckblatt{display:flex;flex-direction:column}
+  #nest-druck .nest-deckblatt .nest-unten{flex:1}
+  #nest-druck .nest-hoerlink{text-decoration:none;color:#fff}
+  #nest-druck .nest-qr{width:112px;height:112px;background:#fff;padding:4px;border-radius:8px;margin:0 0 12px}
+  #nest-druck .nest-qr svg{display:block;width:100%;height:100%}
+  #nest-druck .nest-entwurf{background:#b91c1c;color:#fff;text-align:center;font-weight:800;letter-spacing:1px;padding:6px 10px;font-family:'Barlow Condensed',sans-serif}
+  @page{size:390px ${hoch}px;margin:0}
+  @media print{
+    html.nest-druck-aktiv,html.nest-druck-aktiv body{background:#fff!important;margin:0!important;padding:0!important;overflow:visible!important}
+    html.nest-druck-aktiv body>*:not(#nest-druck){display:none!important}
+    #nest-druck{position:static!important;left:auto!important}
+    #nest-druck,#nest-druck *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    #nest-druck section{min-height:${hoch}px}
+    #nest-druck section:last-of-type{min-height:${hoch-(endeHoch||0)}px}   /* das Schlussband gehört auf die letzte Seite */
+    #nest-druck section:not(:last-of-type){break-after:page}
+  }`;
+  document.head.appendChild(s);
+}
+function _nestBilderWarten(wurzel){
+  const warte=[...wurzel.querySelectorAll("img")].filter(i=>i.getAttribute("src")&&!(i.complete&&i.naturalWidth)).map(i=>new Promise(ok=>{ i.onload=i.onerror=ok; setTimeout(ok,8000); }));
+  return Promise.all(warte);
+}
+function nestDruckAufraeumen(){
+  document.getElementById("nest-druck")?.remove(); document.getElementById("nest-druck-stil")?.remove();
+  document.documentElement.classList.remove("nest-druck-aktiv");
+  if(window._nestTitelVorher!=null){ document.title=window._nestTitelVorher; window._nestTitelVorher=null; }
+  _nestAufraeumen();
+}
+async function nestDruckVorbereiten(id){
+  nestStil();
+  if(document.getElementById("nest-modal"))nestClose();   // gleiche Element-Kennungen wie die Leseansicht
+  nestDruckAufraeumen();
+  const [d,medien]=await Promise.all([_nestRpc("heft_ausgabe_lesen",{p_ausgabe:id}),_nestRpc("heft_medien",{p_ausgabe:id})]);
+  if(!d||!d.ausgabe){ toast("Die Ausgabe lässt sich gerade nicht laden","err"); return null; }
+  const entwurf=d.ausgabe.status!=="veroeffentlicht", ml=medien||[];
+  let hoer=null;
+  if(ml.some(x=>x.art==="audio")&&!entwurf){   // Entwurf: kein öffentlicher Link auf eine unveröffentlichte Hördatei
+    try{ const l=await nestHoerLink(id); hoer={url:l.url,bis:l.bis,qr:await qrSvg(l.url,3)}; }
+    catch(e){ toast("Der Hör-Link konnte nicht erzeugt werden – das PDF entsteht ohne","err"); }
+  }
+  const c=document.createElement("div"); c.id="nest-druck"; c.setAttribute("aria-hidden","true");
+  c.innerHTML=nestHtml(d,ml,[],id,{hoer,entwurf});
+  document.body.appendChild(c);
+  await nestMedienLaden(d,ml); await _nestBilderWarten(c);
+  const abs=[...c.querySelectorAll("section")], ende=c.querySelector(".nest-ende");
+  const hoehen=abs.map((x,i)=>Math.ceil(x.getBoundingClientRect().height)+(i===abs.length-1&&ende?Math.ceil(ende.getBoundingClientRect().height):0));
+  const hoch=Math.max(960,...hoehen);
+  nestDruckStil(hoch,ende?Math.ceil(ende.getBoundingClientRect().height):0);
+  window._nestTitelVorher=document.title;
+  document.title="Adler-Nest_Ausgabe-"+_nestNr(d.ausgabe.nummer);   // wird vom Druckdialog als Dateiname vorgeschlagen
+  document.documentElement.classList.add("nest-druck-aktiv");
+  return {hoch,seiten:abs.length,entwurf,hoer:!!hoer};
+}
+async function nestPdf(btn){
+  const a=_nestEd&&_nestEd.a; if(!a||!a.id){ toast("Erst die Ausgabe erfassen","err"); return; }
+  if(btn)btn.disabled=true;
+  try{
+    try{ await nestEdSpeichern(true); }catch(e){}   // das PDF zeigt den gespeicherten Stand
+    const r=await nestDruckVorbereiten(a.id); if(!r)return;
+    window.addEventListener("afterprint",nestDruckAufraeumen,{once:true});
+    setTimeout(()=>window.print(),60);
+  }finally{ if(btn)btn.disabled=false; }
+}
+async function nestEdTeilen(){
+  const box=document.getElementById("nest-ed-teilen"); if(!box||!_nestEd)return; const a=_nestEd.a;
+  if(!a.id){ box.innerHTML=""; return; }
+  const pub=a.status==="veroeffentlicht", hatAudio=!!a.audio_pfad;
+  let link=null, fehler=false;
+  if(pub&&hatAudio){ try{ link=await nestLinkAktiv(a.id); }catch(e){ fehler=true; } }
+  const klein="font-size:var(--s-klein);color:var(--text2)";
+  box.innerHTML=`<div style="font-size:var(--s-karte);font-weight:800;margin:18px 0 4px;color:var(--text)">Teilen</div>
+    <button type="button" class="btn btn-p" id="nest-ed-pdf" onclick="nestPdf(this)" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte)">📄 PDF herunterladen</button>
+    <div style="${klein};margin-top:6px" role="note">${NEST_PDF_HINWEIS}${pub?"":" Aus einem Entwurf entsteht ein PDF mit dem Vermerk „Entwurf“ und ohne Hör-Link."}</div>
+    ${pub&&hatAudio?`<div style="margin-top:12px;padding:10px;border:1px solid var(--rand-bedien);border-radius:var(--r)">
+      <div style="font-weight:700">🎧 Link zur Hördatei</div>
+      <div id="nest-ed-link-stand" style="${klein};margin:4px 0 8px">${fehler?"Der Link lässt sich gerade nicht laden.":link?`Gültig bis ${esc(_nestBis(link.bis))}. Ohne Login abspielbar.`:"Noch kein aktiver Link – das PDF erzeugt beim ersten Mal einen."}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${link?`<button type="button" class="btn" onclick="nestLinkKopieren()" style="min-height:48px">📋 Link kopieren</button>`:""}
+        <button type="button" class="btn" onclick="nestLinkErneuern(this)" style="min-height:48px">🔄 Link erneuern (30 Tage)</button>
+        ${link?`<button type="button" class="btn" onclick="nestLinkZurueckziehen(this)" style="min-height:48px">⛔ Link zurückziehen</button>`:""}
+      </div>
+      <div style="${klein};margin-top:6px">Zurückgezogene Links sind nach höchstens 10 Minuten unwirksam.</div></div>`
+      :(pub?`<div style="${klein};margin-top:8px">Ohne Hördatei entfällt der Hörblock im PDF.</div>`:"")}`;
+  window._nestLinkAktuell=link;
+}
+async function nestLinkKopieren(){
+  const l=window._nestLinkAktuell; if(!l)return;
+  try{ await navigator.clipboard.writeText(l.url); toast("Link kopiert ✓"); }
+  catch(e){ window.prompt("Link zur Hördatei (zum Kopieren markieren):",l.url); }
+}
+async function nestLinkErneuern(btn){
+  const a=_nestEd&&_nestEd.a; if(!a||!a.id)return; if(btn)btn.disabled=true;
+  try{ await nestLinkNeu(a.id); toast("Neuer Link, 30 Tage gültig ✓"); }catch(e){ toast("Link konnte nicht erneuert werden","err"); }
+  nestEdTeilen();
+}
+async function nestLinkZurueckziehen(btn){
+  const a=_nestEd&&_nestEd.a; if(!a||!a.id)return;
+  if(!window.confirm("Link zurückziehen? Wer ihn hat, kann die Hördatei danach nicht mehr abspielen."))return;
+  if(btn)btn.disabled=true;
+  const r=await _nestRpc("heft_audio_link_zurueckziehen",{p_ausgabe:a.id});
+  toast(r==null?"Link konnte nicht zurückgezogen werden":"Link zurückgezogen ✓",r==null?"err":undefined);
+  nestEdTeilen();
+}
+/* Hörseite ?hoeren=<token>: ohne Login, im Heftdesign, nur die Hördatei dieser einen Ausgabe. Keine Cookies, kein Tracking,
+   keine fremden Schriften oder Skripte – die Adresse der Datei ist eine auf 10 Minuten befristete, signierte Adresse
+   aus dem eigenen Speicher; läuft sie ab, holt der Abspielknopf eine neue (und prüft dabei den Link erneut). */
+async function _hoerAbrufen(token){
+  try{
+    const r=await fetch(`${SB_URL}/functions/v1/heft-audio?token=${encodeURIComponent(token)}`,{headers:{apikey:SB_KEY}});
+    const j=await r.json(); return j&&j.ok&&j.url?j:null;
+  }catch(e){ return null; }
+}
+async function renderHoerseite(token){
+  nestStil();
+  document.getElementById("pin-gate")?.remove(); document.getElementById("main-app")?.remove();
+  document.body.style.cssText="margin:0;background:#0A1A3A";
+  let w=document.getElementById("hoer-seite");
+  if(!w){ w=document.createElement("main"); w.id="hoer-seite"; document.body.appendChild(w); }
+  w.className="nest-heft";
+  w.style.cssText="min-height:100vh;background:#0A1A3A;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:32px 20px;text-align:center;max-width:none";
+  w.innerHTML=`<div style="opacity:.8">Einen Moment …</div>`;
+  const j=await _hoerAbrufen(token);
+  if(!j){
+    w.innerHTML=`<img src="logo.png" alt="" width="72" height="72" style="border-radius:50%"><h1 class="nc" style="margin:0;font-size:34px;font-weight:800;text-transform:uppercase">Adler Nest</h1>
+      <p id="hoer-abgelaufen" style="font-size:19px;max-width:340px;margin:0">Dieser Link ist abgelaufen. Das Adler Nest gibt es in der Adler-App.</p>`;
+    return;
+  }
+  let akt=j;
+  w.innerHTML=`<img src="logo.png" alt="" width="72" height="72" style="border-radius:50%">
+    <div class="nc" style="color:var(--heft-gelb);font-weight:800;text-transform:uppercase;letter-spacing:1px;font-size:20px">SV Adler Dellbrück · U9 · Ausgabe ${_nestNr(j.nummer)}</div>
+    <h1 class="nc" style="margin:0;font-size:56px;line-height:.9;font-weight:800;text-transform:uppercase">Adler Nest<br>zum Hören</h1>
+    <button type="button" id="hoer-knopf" class="nest-hoeren" style="max-width:340px;min-height:72px;font-size:22px;justify-content:center" aria-label="Abspielen${j.sekunden?", "+_nestDauer(j.sekunden):""}"><span class="nest-play" id="hoer-sym" aria-hidden="true">▶</span><span>Abspielen${j.sekunden?" · "+_nestDauer(j.sekunden):""}</span></button>
+    <audio id="hoer-audio" preload="none"></audio>
+    <p style="margin:0;opacity:.8;font-size:15px">Das Adler Nest gibt es in der Adler-App.</p>`;
+  const a=document.getElementById("hoer-audio"), sym=document.getElementById("hoer-sym"), knopf=document.getElementById("hoer-knopf");
+  a.onended=()=>{ sym.textContent="▶"; };
+  knopf.onclick=async()=>{
+    if(!a.paused){ a.pause(); sym.textContent="▶"; return; }
+    if(!a.src||a.error){   // erste Wiedergabe oder Adresse abgelaufen: neu holen (prüft den Link erneut)
+      const n=a.error?await _hoerAbrufen(token):akt; if(!n){ renderHoerseite(token); return; } akt=n; a.src=n.url;
+    }
+    try{ await a.play(); sym.textContent="❚❚"; }catch(e){ sym.textContent="▶"; }
+  };
+}
 async function kabineNestHinweisLoad(){
   const el=document.getElementById("kab-nest-hinweis"); if(!el)return;
   const ids=(window._elternKids||[]).map(k=>Number(k.spieler_id)).filter(Boolean); if(!ids.length){el.innerHTML="";return;}

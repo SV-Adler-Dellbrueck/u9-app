@@ -3494,6 +3494,15 @@ async function pinCheck(){
     routeRender("renderHeimturnierView",params.get("turnier")||"");
     return;
   }
+  /* v756: Hörseite des Adler Nest (?hoeren=<token>): ohne Login, nur die Hördatei einer Ausgabe (Edge Function heft-audio) */
+  if(params.has("hoeren")){
+    document.title="Adler Nest zum Hören – SV Adler Dellbrück U9";
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content","#0A1A3A");
+    document.getElementById("pin-gate")?.remove();
+    document.getElementById("main-app")?.remove();
+    routeRender("renderHoerseite",params.get("hoeren")||"");
+    return;
+  }
   // Digitales Stadionheft: Nur-Ansehen fuer alle Eltern (?heft), kein Login. Namen maskiert, Fotos nur bei Einwilligung.
   if(params.has("heft")){
     document.title="Adler Nest – SV Adler Dellbrück U9";

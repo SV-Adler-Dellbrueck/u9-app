@@ -29,7 +29,7 @@
   if(!location.search){ try{ history.replaceState({},"",location.pathname+"?portal"+location.hash); }catch(e){} }
   // Nur-Lese-Ansichten und das Kinder-Quiz bieten keine Installation an.
   var p=new URLSearchParams(location.search);
-  if(p.has("quiz")||p.has("heft")||p.has("ticker")||p.has("kind")||p.has("delegate")||p.has("match")){
+  if(p.has("quiz")||p.has("heft")||p.has("hoeren")||p.has("ticker")||p.has("kind")||p.has("delegate")||p.has("match")){
     document.getElementById("pwa-manifest").remove();
   }
 })();
@@ -79,7 +79,7 @@ window.pinBack=window.pinBack||function(){};window.pinCheck=window.pinCheck||fun
      alles in EINER Welle - dort haengen Module am sofortigen Start und ein falscher
      Schnitt wuerde sie zerstoeren. */
   const _p=new URLSearchParams(location.search);
-  const SONDER=["quiz","ticker","heft","turnier","handover","kind","delegate","match","eltern"];
+  const SONDER=["quiz","ticker","heft","hoeren","turnier","handover","kind","delegate","match","eltern"];
   const istDashboard=!SONDER.some(k=>_p.has(k));
   const KERN=["data.js","core.js","engine.js","views.js","md-eltern-portal.js","md-kasse.js",
     "md-kabine.js","md-kalender.js","md-galerie.js","md-nest.js","md-carpool.js","md-fanfakten.js",
