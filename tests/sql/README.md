@@ -38,3 +38,16 @@ scheitern; fremde Eltern bekommen nichts; ein Privatfoto ohne Einreichung lässt
 Rückzug liefert beide Pfade und leert Einreichung und Ausgabe; Veröffentlichen setzt die Einreichung auf „übernommen“
 (danach für Eltern unsichtbar); ein Trainer ändert keine fremde Stimme; `anon` bekommt nichts. Zehn Fehlermeldungen
 im Lauf sind gewollt.
+
+## v734 · Spielerkarten mit Zahlen
+
+```bash
+psql -d t -f tests/sql/supabase-attrappe.sql && psql -d t -f supabase/migrations/20261004_v734b_karten_zahlen.sql \
+  && psql -d t -f tests/sql/v734-karten-zahlen.sql
+```
+
+Erwartet: Kind A 2 Trainings und 1 Spiel (Spieltag, Vorsaison, abgesagtes und künftiges Training zählen nicht,
+Spiele nur aus `__nom`), Kind B 1 Training über den Vornamen-Schlüssel und 0 Spiele; Eltern von Kind A sehen auf
+beiden Karten der Galerie Zahlen, Stärken nur auf der eigenen; `my_child_card` liefert dieselbe Zählung und bleibt für
+fremde Kinder gesperrt; die Trainer-Galerie zählt gleich; `anon` bekommt eine leere Galerie, und die Zählfunktionen
+scheitern (eine Fehlermeldung ist gewollt).

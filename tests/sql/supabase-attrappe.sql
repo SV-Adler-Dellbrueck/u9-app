@@ -35,5 +35,9 @@ create function public.is_trainer() returns boolean language sql stable security
 create function public.ist_anonym() returns boolean language sql stable as $$ select coalesce((auth.jwt()->>'is_anonymous')::boolean,false) $$;
 create function public.ist_mitglied() returns boolean language sql stable security definer set search_path to 'public' as $$ select public.is_trainer() or (not public.ist_anonym() and exists(select 1 from public.eltern_kinder e where lower(e.email)=lower(coalesce((select auth.jwt())->>'email','')))) or exists(select 1 from public.kind_konto k where k.uid=(select auth.uid()) and k.aktiv) $$;
 create function public.sitzung_gueltig() returns boolean language sql stable security definer set search_path to 'public' as $$ select (select auth.uid()) is not null and public.ist_mitglied() $$;
+-- v734: Platzhalter für die Karten (Bewertungen kennt die Attrappe nicht)
+create table public.spielerprofile(name text, datum text, radios jsonb, position text, prim_rolle text, strong_foot text, age int);
+create table public.quiz_progress(player text, score int);
+create function public.staerken_von(p_name text) returns jsonb language sql stable as $$ select '["f_pass"]'::jsonb $$;
 grant select, insert, update, delete on all tables in schema public to authenticated;
 grant select on all tables in schema public to anon;

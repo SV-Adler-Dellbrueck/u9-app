@@ -2506,11 +2506,18 @@ async function adlerCardStats(name){
       });
     }
   }catch(e){}
-  try{
+  /* v734: Spiele und Trainings der Saison aus derselben Zählung wie die Karten der Eltern und Kinder
+     (kind_spiele_saison / kind_trainings_saison: nur echte Trainingstermine, nur Nominierung „dabei“, bis heute).
+     Fehlt die Funktion (Datenbank vor v734), zählt die App wie bisher selbst. */
+  const kid=(typeof getKader==="function"&&getKader(name))||null;
+  const saison=async(fn)=>{ try{const r=await fetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_id:kid?kid.id:null,p_name:name})});
+    if(r.ok){const v=await r.json(); return typeof v==="number"?v:null;}}catch(e){} return null; };
+  const [spS,trS]=kid?await Promise.all([saison("kind_spiele_saison"),saison("kind_trainings_saison")]):[null,null];
+  if(spS!=null)out.spiele=spS; else try{
     const r=await fetch(`${SB_URL}/rest/v1/${nomZeilenPfad()}`,{headers:sbAuthHeaders()});   // v707: nur die Nominierung, nicht die Team-Zeilen
     if(r.ok){out.spiele=(await r.json()).filter(x=>x.data&&kidMapFromIds(x.data)[name]==="dabei").length;}
   }catch(e){}
-  try{
+  if(trS!=null)out.trainings=trS; else try{
     const r=await fetch(`${SB_URL}/rest/v1/anwesenheit?select=data`,{headers:sbAuthHeaders()});
     if(r.ok){out.trainings=(await r.json()).filter(x=>{const d=x.data&&kidMapFromIds(x.data);return d&&d[name]&&d[name].da===true;}).length;}
   }catch(e){}

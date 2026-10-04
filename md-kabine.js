@@ -1616,7 +1616,7 @@ function kabineRenderGallery(){
   const canvas=document.getElementById("kabine-card");if(!canvas)return;
   canvas.width=500;canvas.height=780;const ctx=canvas.getContext("2d");
   adlerCardDraw(ctx,500,780,d,null);
-  cardApplyGlow(canvas,g.trainings);
+  cardApplyGlow(canvas,g.trainings||0);
   if(d.fotoPath){ fotoLoadImage(d.fotoPath).then(img=>{ if(img&&document.getElementById("kabine-card")===canvas){ adlerCardDraw(ctx,500,780,d,img); } }); }
 }
 function kabineGalleryNav(dir){
@@ -1640,7 +1640,9 @@ function galleryCardData(g){
     pos:g.tw?"Torwart":"",fuss:"",alter:null,
     badges:keys.map(k=>CARD_BADGES[k]),theme,
     fremd:g.staerken==null,   // v636: fremde Karten tragen keine Stärken mehr (team_gallery_kind liefert null)
-    counts:{trainings:g.trainings||0,tore:null,paraden:null,aktionen:null,spiele:null,quizRichtig:0,quizBloecke:0}};
+    /* v734 (PO 04.10.: „Alle Karten mit Zahlen“): Trainings und Spiele der Saison für jede Karte aus team_gallery_kind.
+       Fehlt eine Zahl (Datenbank vor v734), steht „–“ statt einer falschen 0. */
+    counts:{trainings:(g.trainings==null?null:Number(g.trainings)),tore:null,paraden:null,aktionen:null,spiele:(g.spiele==null?null:Number(g.spiele)),quizRichtig:0,quizBloecke:0}};
 }
 // Erwachsenen-Gate der Kabine: fester Code statt Rechenaufgabe (die war für U9 zu leicht).
 /* Kabinen-Code: der SHA-256 liegt in team_config.kabine_code_hash, nicht im Quelltext
