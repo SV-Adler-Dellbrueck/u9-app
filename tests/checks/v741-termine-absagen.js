@@ -1,4 +1,4 @@
-/* v737 · Termine absagen (Ferien, Zeitraum) und Rückmeldung für alle künftigen Termine
+/* v741 · Termine absagen (Ferien, Zeitraum) und Rückmeldung für alle künftigen Termine
    PO 04.10.: „Anstehende Termine wie Trainings jetzt schon absagen wegen Ferien … mit kurzer Begründung, was die
    Eltern dann sehen“ (Kachel: „Ohne Mitteilung“) und „Die Eltern müssen auch immer schon alle Termine in der
    Zukunft zu- und absagen können.“
@@ -127,5 +127,5 @@ module.exports = async function (h) {
   const ep = fs.readFileSync(path.join(h.REPO, "md-eltern-portal.js"), "utf8");
   if (!/neq\("typ", "trainermeeting"\)/.test(ics) || !/STATUS:CANCELLED/.test(ics) || !/STATUS:CANCELLED/.test(ep)) probleme.push("f) Kalender: Trainermeetings oder Absage nicht berücksichtigt");
   zeilen.push("f) Kalender-Abo ohne Trainermeetings, abgesagte als CANCELLED (Abo und Export)");
-  return h.ergebnis("v737 Termine absagen (Ferien, Zeitraum) und Rückmeldung für alle künftigen Termine", !probleme.length, zeilen.concat(probleme));
+  return h.ergebnis("v741 Termine absagen (Ferien, Zeitraum) und Rückmeldung für alle künftigen Termine", !probleme.length, zeilen.concat(probleme));
 };

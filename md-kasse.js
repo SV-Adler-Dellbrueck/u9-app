@@ -1154,7 +1154,7 @@ async function leitfadenEditSave(btn){
    Also: bei `normal` gar nichts. Eine Meldung, die immer dasteht, ist keine Meldung mehr –
    sie kostet nur den Platz, den die Ausnahme bräuchte, um aufzufallen. Der Hinweis lebt
    jetzt IN der Terminkarte (elternPlatzHinweisHtml), nicht als eigene Kachel davor. */
-/* v737: „heute“ nur, wenn es heute ist – eine Absage für die Ferien steht sonst mit „heute“ drei Wochen vorher da. */
+/* v741: „heute“ nur, wenn es heute ist – eine Absage für die Ferien steht sonst mit „heute“ drei Wochen vorher da. */
 function _platzWann(t,gross){
   const heute=(typeof isoLokal==="function")?isoLokal():new Date().toISOString().slice(0,10);
   if(!t||!t.datum||t.datum===heute)return gross?"Heute":"heute";

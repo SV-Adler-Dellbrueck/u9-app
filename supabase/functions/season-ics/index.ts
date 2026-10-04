@@ -1,5 +1,5 @@
 /* Edge Function season-ics — Kalender-Abo der Saison (webcal, ohne Anmeldung, verify_jwt aus).
-   Version 1 lag nur deployt vor; v737 legt den Code ins Repo und ändert zweierlei:
+   Version 1 lag nur deployt vor; v741 legt den Code ins Repo und ändert zweierlei:
    - Abgesagte Termine (platz_status „abgesagt“) stehen als STATUS:CANCELLED mit „Fällt aus“ im Titel und dem
      Grund in der Beschreibung – vorher erschienen sie im abonnierten Kalender wie ein normaler Termin.
    - Trainermeetings fehlen im Abo. Sie sehen nur Trainer (Termin-Fenster: „Diesen Termin sehen nur Trainer“);

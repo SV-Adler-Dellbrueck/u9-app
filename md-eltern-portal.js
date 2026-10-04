@@ -81,6 +81,12 @@ async function authRole(){
   }catch(e){ _authOffline=true; try{return localStorage.getItem("adler_rolle")||null;}catch(e2){return null;} }
 }
 let epEmail="";
+async function elternTrainerHatKind(){
+  const mail=(typeof sbEmail==="function")?sbEmail():null; if(!mail)return false;
+  try{ const r=await fetch(`${SB_URL}/rest/v1/eltern_kinder?email=eq.${encodeURIComponent(mail)}&select=spieler_id&limit=1`,{headers:sbAuthHeaders()});
+    if(r.ok)return ((await r.json())||[]).length>0; }catch(e){}
+  return false;
+}
 async function renderElternPortal(){
   /* v604: Einladungskarte (?portal&einladung=CODE). Den Code sofort aus der Adresse nehmen
      und nur fuer diesen Tab puffern – ein Lesezeichen oder ein geteilter Bildschirm traegt
@@ -112,7 +118,11 @@ async function renderElternPortal(){
     root.innerHTML='<div style="text-align:center;padding:48px;color:#64748b">Lade…</div>';
     const role=await authRole();
     if(role==="parent")return elternPortalDashboard(root);
-    if(role==="trainer")return elternPortalTrainerNotice(root);
+    /* v738 (Markus, 04.10.: „komme gar nicht mehr in die Elternversion … sagt, dass ich als Trainer angemeldet bin“):
+       Seit v731 erkennt die App Trainerkonten richtig – und sperrte damit jeden Trainer aus, der selbst Vater oder
+       Mutter ist. Ein Trainerkonto mit eigenem Kind öffnet das Eltern-Dashboard (es zeigt nur die Kinder der eigenen
+       E-Mail); nur ein Trainerkonto ohne Kind bekommt den Hinweis. */
+    if(role==="trainer"){ if(await elternTrainerHatKind())return elternPortalDashboard(root); return elternPortalTrainerNotice(root); }
     if(_authOffline){ root.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--text2);font-size:var(--s-karte)">📶 Gerade kein Internet.<br><br><button class="btn" style="min-height:48px" onclick="renderElternPortal()">Nochmal versuchen</button></div>'; return; }   // v636: nicht abmelden, nur weil das Netz fehlt
     localStorage.removeItem(SB_TOKEN_KEY_ELTERN); // Session ohne Profil/Rolle → verwerfen
   }
@@ -937,7 +947,7 @@ async function elternDashLoad(){
        Seit v686 steht jeder Termin nur einmal – der nächste nicht mehr zusätzlich in der Liste, die
        „Treffen …“ zeigte. Deshalb trägt diese Karte die Treffzeit jetzt selbst, wie das Termin-Fenster. */
     const zeit=elternZeitZeile(termin); // v729: mit Ende
-    const faelltAus=_elAbgesagt(termin);   // v737: abgesagt → keine Rückmeldung, kein „fehlt“
+    const faelltAus=_elAbgesagt(termin);   // v741: abgesagt → keine Rückmeldung, kein „fehlt“
     const offen=faelltAus?[]:kids.filter(k=>!rsvp[k.spieler_id]);
     const trainerJa=Object.keys(termin.trainer_status||{}).filter(n=>(termin.trainer_status||{})[n]==="ja");
     // Zu-/Absage direkt am Termin – erneuter Klick auf den aktiven Status entfernt ihn wieder.
@@ -1472,7 +1482,7 @@ async function terminDetailOpen(id){
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
   const c=document.createElement("div");
   c.style.cssText="background:#fff;color:#1a1a2e;max-width:460px;width:100%;margin:auto;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
-  const faelltAus=_elAbgesagt(t);   // v737
+  const faelltAus=_elAbgesagt(t);   // v741
   const rsvpRows=faelltAus?`<div style="font-size:var(--s-text);color:#991b1b;font-weight:700;margin-top:4px">Der Termin fällt aus – eine Rückmeldung braucht es nicht.</div>`:kids.map(k=>{
     const kd=k.kader||{}, st=rsvp[k.spieler_id]||null;
     const btns=Object.keys(EP_RSVP).map(s=>{const on=st===s,cc=EP_RSVP[s];
@@ -2145,7 +2155,7 @@ function saisonAboCopy(){
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(SEASON_ICS_HTTPS).then(()=>toast("Abo-Link kopiert ✓ – im Kalender 'Aus URL abonnieren' einfügen"),()=>toast("Kopieren nicht möglich","err"));
   else toast("Kopieren nicht möglich","err");
 }
-/* v737 (PO 04.10.): „Die Eltern müssen auch immer schon alle Termine in der Zukunft zu- und absagen können.“
+/* v741 (PO 04.10.): „Die Eltern müssen auch immer schon alle Termine in der Zukunft zu- und absagen können.“
    „Alle Termine“ lädt deshalb die ganze Saison (nicht nur die 15 der Startseite), zeigt je Kind den Stand mit
    👍/🤔/👎 zum direkten Antippen und öffnet per Tipp auf den Termin die Details. Abgesagte Termine tragen
    „🔴 Fällt aus“ mit Grund und keine Knöpfe. */
@@ -2228,7 +2238,7 @@ function elternTermineIcs(){
     lines.push("BEGIN:VEVENT","UID:adler-"+t.id+"-"+t.datum+"@adler-u9","DTSTAMP:"+dtStamp,
       "DTSTART:"+icsLocalStart(t.datum,time),"DTEND:"+(t.uhrzeit&&t.uhrzeit_ende&&String(t.uhrzeit_ende)>String(t.uhrzeit)?icsLocalStart(t.datum,String(t.uhrzeit_ende).slice(0,5)):icsLocalPlus(t.datum,time,90)), // v729: echte Endzeit
       "SUMMARY:"+icsEscape((_elAbgesagt(t)?"Fällt aus: ":"")+(tm.label||"Termin")+": "+(t.titel||t.gegner||tm.label||"")));
-    if(_elAbgesagt(t))lines.push("STATUS:CANCELLED");   // v737: abgesagt bleibt im Kalender sichtbar, aber als abgesagt
+    if(_elAbgesagt(t))lines.push("STATUS:CANCELLED");   // v741: abgesagt bleibt im Kalender sichtbar, aber als abgesagt
     if(t.ort)lines.push("LOCATION:"+icsEscape(t.ort));
     lines.push("END:VEVENT");
   });
@@ -2340,7 +2350,7 @@ const ELTERN_TOUR=[
   {emo:"📬", t:"Offene Rückmeldungen", sel:["#eltern-offen-card"],
    d:"Stehen in den nächsten 14 Tagen Antworten aus, siehst du sie hier gesammelt."},
   {emo:"🎒", t:"Alles zum Termin", sel:['[onclick^="terminDetailOpen"]'],
-   d:"Tippe auf einen Termin: Wetter, Adresse mit Route, „Was muss mit?“, Fahrgemeinschaft, „Wer hilft mit?“ und die Fotos zum Termin – „📷 Foto aufnehmen“ öffnet direkt die Kamera. Alle Spieltagsfotos zusammen – groß ansehen und durchwischen – stehen unter „Mehr vom Team“ → „Spieltagsgalerie“. Dort erscheint nach jedem Spieltag auch das „Adler Nest“ – eine neue Ausgabe zum Lesen und Hören. Ist euer Kind im nächsten Porträt, steht oben eine Karte mit dem Porträt-Bogen. Die ganze Saison und das Kalender-Abo findest du unten unter „Mehr“ → „Alle Termine“ – seit v737 sagst du dort für jeden künftigen Termin direkt zu oder ab (👍/🤔/👎 je Kind). Fällt ein Termin aus, steht „🔴 Fällt aus“ mit Grund daneben; zurückmelden musst du dann nichts."},
+   d:"Tippe auf einen Termin: Wetter, Adresse mit Route, „Was muss mit?“, Fahrgemeinschaft, „Wer hilft mit?“ und die Fotos zum Termin – „📷 Foto aufnehmen“ öffnet direkt die Kamera. Alle Spieltagsfotos zusammen – groß ansehen und durchwischen – stehen unter „Mehr vom Team“ → „Spieltagsgalerie“. Dort erscheint nach jedem Spieltag auch das „Adler Nest“ – eine neue Ausgabe zum Lesen und Hören. Ist euer Kind im nächsten Porträt, steht oben eine Karte mit dem Porträt-Bogen. Die ganze Saison und das Kalender-Abo findest du unten unter „Mehr“ → „Alle Termine“ – seit v741 sagst du dort für jeden künftigen Termin direkt zu oder ab (👍/🤔/👎 je Kind). Fällt ein Termin aus, steht „🔴 Fällt aus“ mit Grund daneben; zurückmelden musst du dann nichts."},
   {emo:"✅", t:"Zu erledigen", sel:["#eltern-todo-btn"],
    d:"Aufgaben für euch als Familie, zum Beispiel der Grillhütten-Dienst. Könnt ihr nicht, tippt ihr „Ersatz suchen“ – eine andere Familie kann übernehmen."},
   {emo:"📡", t:"Liveticker", sel:["#eltern-live-slot","#eltern-ticker-slot"],

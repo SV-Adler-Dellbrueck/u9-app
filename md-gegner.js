@@ -458,7 +458,7 @@ function _tmdKarte(t){
       </div>`:""}
       <div id="wx-tm-${t.id}"></div>
       ${notizClean?`<div style="font-size:var(--s-text);color:var(--text3);margin-top:6px">${esc(notizClean)}</div>`:""}
-      ${/* v737 (PO 04.10.): „Fällt aus“ direkt im Termin, nicht erst hinter „Für die Eltern“ */ (kommt&&!istMeeting)?`<div id="tm-stattfinden-${t.id}" style="margin-top:10px">${platzAmpelTrainer(t,true)}</div>`:""}
+      ${/* v741 (PO 04.10.): „Fällt aus“ direkt im Termin, nicht erst hinter „Für die Eltern“ */ (kommt&&!istMeeting)?`<div id="tm-stattfinden-${t.id}" style="margin-top:10px">${platzAmpelTrainer(t,true)}</div>`:""}
 
       ${abgesagt
         ? `${sec("Was du hier tust")}<div style="font-size:var(--s-text);color:var(--text2);line-height:1.5">Für diesen Termin ist nichts mehr zu planen. Soll er doch stattfinden, oben wieder auf <b>🟢 Findet statt</b> stellen.</div>`
@@ -654,14 +654,14 @@ function platzAmpelTrainer(t,nackt){
   }).join("");
   const zusatz=cur?`<input id="pa-note-${t.id}" value="${esc(t.platz_status_note||"")}" placeholder="${cur==="ausweich"?"Wohin? z. B. Halle 2":cur==="abgesagt"?"Grund (optional)":"Hinweis (optional)"}" onchange="platzAmpelNote(${Number(t.id)},this.value)" style="width:100%;min-height:44px;margin-top:6px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box">`:"";
   /* v491: Im Termin-Fenster steht die Überschrift schon am Klappdeckel – dort nur die Knöpfe.
-     v737: Das Termin-Fenster zeigt die Knöpfe oben, mit einer Zeile, was die Eltern sehen. */
+     v741: Das Termin-Fenster zeigt die Knöpfe oben, mit einer Zeile, was die Eltern sehen. */
   if(nackt)return `<div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-bottom:4px">Findet der Termin statt? Die Eltern sehen es sofort.</div><div style="display:flex;gap:6px;flex-wrap:wrap">${btns}</div>${zusatz}`;
   return `<div style="margin:8px 0;padding:8px;background:var(--surface2);border-radius:10px">
     <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:5px">📣 Platz-Status für die Eltern</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">${btns}</div>${zusatz}
   </div>`;
 }
-/* v737 (PO 04.10.): „Anstehende Termine wie Trainings jetzt schon absagen wegen Ferien – mit kurzer Begründung,
+/* v741 (PO 04.10.): „Anstehende Termine wie Trainings jetzt schon absagen wegen Ferien – mit kurzer Begründung,
    was die Eltern dann sehen.“ Kachel: „Ohne Mitteilung“. Ein Fenster für Ferien oder einen freien Zeitraum:
    die Trainings darin abhaken, Grund vorbelegt, ein Tipp sagt alle ab – oder nimmt Absagen zurück.
    Geschrieben wird wie bei der Platz-Ampel (platz_status, platz_status_note); keine Push-Nachricht. */

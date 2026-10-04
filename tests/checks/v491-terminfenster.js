@@ -3,7 +3,7 @@
    Festival-Planung oder ins Match sinnvoll. Optimiere diese Seite optisch, strukturell und
    inhaltlich." Geprueft: klare Abschnitte in fester Reihenfolge, zwei grosse Wege (Planer und
    Match) je nach Termintyp und Tag, Ergebnis erst wenn der Termin da ist, Seltenes zugeklappt
-   (Platz-Status bei Absage sichtbar – seit v737 oben im Termin statt aufgeklappt), 44-px-Ziele, und der Sprung in den Planer
+   (Platz-Status bei Absage sichtbar – seit v741 oben im Termin statt aufgeklappt), 44-px-Ziele, und der Sprung in den Planer
    schliesst das Fenster. */
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
@@ -61,7 +61,7 @@ module.exports = async function (h) {
   if (!r.alt.ergebnis) probleme.push("Beim vergangenen Spiel fehlt das Ergebnisfeld");
   if (r.fest.det.length !== 2 || r.fest.det.some(d => d.offen)) probleme.push(`Zugeklapptes: ${JSON.stringify(r.fest.det)}`);
   if (!/Für die Eltern/.test(r.fest.det[0] && r.fest.det[0].s || "")) probleme.push(`erster Klappblock „${r.fest.det[0] && r.fest.det[0].s}“`);
-  // v737 (PO 04.10.): Der Platz-Status steht nicht mehr unter „Für die Eltern“, sondern oben im Termin –
+  // v741 (PO 04.10.): Der Platz-Status steht nicht mehr unter „Für die Eltern“, sondern oben im Termin –
   // bei einer Absage also ohne Aufklappen sichtbar (vorher klappte sich der Block dafür auf).
   if (!r.ab.stattfinden || !r.ab.stattfinden.sichtbar) probleme.push("Bei einer Absage ist der Platz-Status nicht ohne Aufklappen sichtbar");
   if (!/Fällt aus – Platz gesperrt/.test(r.ab.txt)) probleme.push("Die Absage steht nicht oben im Fenster");
