@@ -3,7 +3,9 @@
    auf z-index 10002, die beiden Dialoge auf 10000: sie öffneten sich dahinter. · „In der Ansicht ist oben und unten
    was abgeschnitten vom Bild.“ – justify-content:center schneidet einen zu hohen Flex-Container oben und unten ab.
    a) Aus dem Profil: Kontakte-Dialog und Ziele-Dialog liegen über dem Profil und fangen den Klick in der Bildmitte ab
-   b) Kartenansicht auf niedrigem Bildschirm: Oberkante der Karte liegt im sichtbaren Bereich, Unterkante per Scrollen erreichbar */
+   b) Kartenansicht auf niedrigem Bildschirm: Oberkante der Karte liegt im sichtbaren Bereich, Unterkante per Scrollen erreichbar
+   c) „Mein Training“ in der Kabine (#kabine-body hat overflow:hidden): PO 04.10. „Hier kann ich nicht weiter nach unten scrollen“ –
+      die Seite scrollt selbst, der letzte Knopf (An den Trainer schicken) ist erreichbar */
 "use strict";
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
@@ -56,5 +58,25 @@ module.exports = async function (h) {
   if (b.karteOben < 0 || !b.scrollbar || !b.schliessenImBild || !b.galUnten) probleme.push("b) " + JSON.stringify(b));
   zeilen.push(`b) Karte beginnt bei ${b.karteOben} px, Scrollen erreicht das Ende (Schließen im Bild: ${b.schliessenImBild})`);
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
-  return h.ergebnis("v753 Profil-Dialoge obenauf, Kartenansicht schneidet nicht ab", !probleme.length, probleme.length ? probleme : zeilen);
+  // c) Mein Training in der echten Kabinen-Hülle
+  const e = await h.starten({ start: "/eltern/index.html", bibliothek: true, warten: 2500, breite: 390, hoehe: 640, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), profiles: [{ role: "parent" }], kind_training: [] }) });
+  const c = await e.page.evaluate(async () => {
+    const w = ms => new Promise(x => setTimeout(x, ms));
+    for (let i = 0; i < 80 && typeof kabineMeinTraining !== "function"; i++) await w(50);
+    document.querySelectorAll(".modal-overlay,[role=dialog]").forEach(d => d.remove());
+    const k = document.createElement("div"); k.id = "kabine"; k.style.cssText = "position:fixed;inset:0;z-index:10050;background:#1e3a8a;display:flex;flex-direction:column";
+    k.innerHTML = '<div id="kabine-body" style="flex:1;display:flex;flex-direction:column;overflow:hidden"></div>'; document.body.appendChild(k);
+    window._elternKids = [{ spieler_id: 1, kader: { id: 1, name: "Testa Beispiel" } }];
+    ["adler-mein-training-1", "adler-brett-kind-uebung"].forEach(x => localStorage.removeItem(x));
+    kabineMeinTraining(); await w(500);
+    const s = document.querySelector(".kt-seite");
+    if (!s) return { fehlt: true };
+    s.scrollTop = s.scrollHeight; await w(50);
+    const knopf = document.querySelector(".kt-haupt"), kr = knopf ? knopf.getBoundingClientRect() : null;
+    return { hoehe: s.clientHeight, inhalt: s.scrollHeight, gescrollt: Math.round(s.scrollTop), knopfImBild: !!kr && kr.bottom <= innerHeight + 1 && kr.top >= 0 };
+  });
+  await e.schliessen();
+  if (c.fehlt || !(c.inhalt > c.hoehe) || !(c.gescrollt > 0) || !c.knopfImBild) probleme.push("c) " + JSON.stringify(c));
+  zeilen.push(`c) Mein Training: Inhalt ${c.inhalt} px in ${c.hoehe} px, gescrollt ${c.gescrollt} px, „An den Trainer schicken“ im Bild: ${c.knopfImBild}`);
+  return h.ergebnis("v753 Profil-Dialoge obenauf, Kartenansicht und Mein Training scrollen", !probleme.length, probleme.length ? probleme : zeilen);
 };
