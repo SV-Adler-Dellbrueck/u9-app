@@ -81,6 +81,12 @@ async function authRole(){
   }catch(e){ _authOffline=true; try{return localStorage.getItem("adler_rolle")||null;}catch(e2){return null;} }
 }
 let epEmail="";
+async function elternTrainerHatKind(){
+  const mail=(typeof sbEmail==="function")?sbEmail():null; if(!mail)return false;
+  try{ const r=await fetch(`${SB_URL}/rest/v1/eltern_kinder?email=eq.${encodeURIComponent(mail)}&select=spieler_id&limit=1`,{headers:sbAuthHeaders()});
+    if(r.ok)return ((await r.json())||[]).length>0; }catch(e){}
+  return false;
+}
 async function renderElternPortal(){
   /* v604: Einladungskarte (?portal&einladung=CODE). Den Code sofort aus der Adresse nehmen
      und nur fuer diesen Tab puffern – ein Lesezeichen oder ein geteilter Bildschirm traegt
@@ -112,7 +118,11 @@ async function renderElternPortal(){
     root.innerHTML='<div style="text-align:center;padding:48px;color:#64748b">Lade…</div>';
     const role=await authRole();
     if(role==="parent")return elternPortalDashboard(root);
-    if(role==="trainer")return elternPortalTrainerNotice(root);
+    /* v738 (Markus, 04.10.: „komme gar nicht mehr in die Elternversion … sagt, dass ich als Trainer angemeldet bin“):
+       Seit v731 erkennt die App Trainerkonten richtig – und sperrte damit jeden Trainer aus, der selbst Vater oder
+       Mutter ist. Ein Trainerkonto mit eigenem Kind öffnet das Eltern-Dashboard (es zeigt nur die Kinder der eigenen
+       E-Mail); nur ein Trainerkonto ohne Kind bekommt den Hinweis. */
+    if(role==="trainer"){ if(await elternTrainerHatKind())return elternPortalDashboard(root); return elternPortalTrainerNotice(root); }
     if(_authOffline){ root.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--text2);font-size:var(--s-karte)">📶 Gerade kein Internet.<br><br><button class="btn" style="min-height:48px" onclick="renderElternPortal()">Nochmal versuchen</button></div>'; return; }   // v636: nicht abmelden, nur weil das Netz fehlt
     localStorage.removeItem(SB_TOKEN_KEY_ELTERN); // Session ohne Profil/Rolle → verwerfen
   }

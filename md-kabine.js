@@ -1748,7 +1748,7 @@ function elternPortalTrainerNotice(root){
   root.innerHTML=`<div style="max-width:360px;margin:8vh auto;background:#fff;border-radius:16px;padding:24px;text-align:center">
     <div style="font-size:40px">🧑‍🏫</div>
     <div style="font-size:16px;font-weight:800;margin-top:8px">Du bist als Trainer angemeldet</div>
-    <div style="font-size:13px;color:#64748b;margin:8px 0 16px">Dieser Bereich ist für Eltern. Öffne die Trainer-App ohne <code>?portal</code> in der Adresse.</div>
+    <div style="font-size:13px;color:#64748b;margin:8px 0 16px">Dieses Trainerkonto ist keinem Kind zugeordnet – der Eltern-Bereich zeigt aber die Termine und Rückmeldungen der eigenen Kinder. Bist du auch Vater oder Mutter im Team, trag deine E-Mail unter „Spieler verwalten“ → Kontakte beim Kind ein. Das Adler Nest siehst du als Trainer im Editor unter Eltern &amp; Kinder → Inhalte („👁 Vorschau“).</div>
     <a href="${appRoot()}trainer/" style="display:inline-block;padding:11px 18px;background:#1e3a8a;color:#fff;border-radius:10px;text-decoration:none;font-weight:700">Zur Trainer-App</a>
     <button onclick="elternPortalLogout()" style="display:block;width:100%;margin-top:12px;border:none;background:none;color:#64748b;font-size:12px;cursor:pointer">Abmelden</button>
   </div>`;
