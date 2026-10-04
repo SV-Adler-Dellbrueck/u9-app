@@ -4,10 +4,11 @@
      Grund in der Beschreibung – vorher erschienen sie im abonnierten Kalender wie ein normaler Termin.
    - Trainermeetings fehlen im Abo. Sie sehen nur Trainer (Termin-Fenster: „Diesen Termin sehen nur Trainer“);
      vorher standen sie mit Titel im öffentlich abrufbaren Kalender.
-   Dazu die echte Endzeit (uhrzeit_ende) statt pauschal 90 Minuten, wie im Export der Eltern-App (v729). */
+   Dazu die echte Endzeit (uhrzeit_ende) statt pauschal 90 Minuten, wie im Export der Eltern-App (v729).
+   v742: Semikolon wieder maskiert (die v741-Fassung im Repo hatte einen Backslash zu wenig); deployt als Version 2. */
 import { createClient } from "npm:@supabase/supabase-js@2";
 const pad = (n: any) => String(n).padStart(2, "0");
-function icsEscape(s: any) { return String(s || "").replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\n/g, "\\n"); }
+function icsEscape(s: any) { return String(s || "").replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n"); }
 function dtStart(datum: string, time: string) { const m = (time || "17:00").match(/(\d{1,2}):(\d{2})/) || ["", "17", "00"]; return datum.replace(/-/g, "") + "T" + pad(m[1]) + m[2] + "00"; }
 function dtPlus(datum: string, time: string, addMin: number) { const m = (time || "17:00").match(/(\d{1,2}):(\d{2})/) || ["", "17", "00"]; const d = new Date(datum + "T" + pad(m[1]) + ":" + m[2] + ":00"); d.setMinutes(d.getMinutes() + addMin); return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`; }
 
