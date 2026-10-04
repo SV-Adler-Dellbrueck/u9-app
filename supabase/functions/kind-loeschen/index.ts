@@ -4,7 +4,8 @@
    Die Datenbank erledigt kind_daten_loeschen (nur service_role): Einschätzungen und Quiz weg,
    Spielgeschehen und Pläne mit „Ehemaliges Kind“ statt Namen, dann der Kader-Eintrag – alles
    mit Fremdschlüssel auf ihn fällt per CASCADE mit. Hier dazu, was die Datenbank nicht kann:
-   das Spielerfoto und die Sprach-Lobe im Speicher und die anonymen Konten der Kindergeräte. */
+   das Spielerfoto und die Sprach-Lobe im Speicher und die anonymen Konten der Kindergeräte.
+   v743: dazu die Dateien des Fotoalbums (kind_foto). */
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const cors = {
@@ -35,12 +36,16 @@ Deno.serve(async (req) => {
     if (!kd) return json({ error: "Kind nicht gefunden – vielleicht schon gelöscht" }, 404);
     const { data: lobe } = await admin.from("kabine_lob").select("path").eq("spieler_id", id);
     const { data: konten } = await admin.from("kind_konto").select("uid").eq("spieler_id", id);
+    // v743: Fotoalbum – die Zeilen gehen mit dem Kind, die Dateien nicht von selbst
+    const { data: album } = await admin.from("kind_foto").select("pfad").eq("spieler_id", id);
 
     const { data: erg, error } = await admin.rpc("kind_daten_loeschen", { p_spieler_id: id, p_trainer: uid });
     if (error || erg?.fehler) return json({ error: error?.message || erg?.fehler }, 500);
 
     let dateien = 0, geraete = 0;
     if (kd.foto_path) { const r = await admin.storage.from("spielerfotos").remove([kd.foto_path]); if (!r.error) dateien += r.data?.length || 0; }
+    const albumPfade = (album || []).map((a: any) => a.pfad).filter(Boolean);
+    if (albumPfade.length) { const r = await admin.storage.from("spielerfotos").remove(albumPfade); if (!r.error) dateien += r.data?.length || 0; }
     const pfade = (lobe || []).map((l: any) => l.path).filter(Boolean);
     if (pfade.length) { const r = await admin.storage.from("kabine-lob").remove(pfade); if (!r.error) dateien += r.data?.length || 0; }
     for (const k of konten || []) { const r = await admin.auth.admin.deleteUser((k as any).uid); if (!r.error) geraete++; }

@@ -76,3 +76,17 @@ Erwartet: Trainer sieht Ruf 1 „1 von 3“ (Elternteil A hat den Raum danach ge
 zählt nicht) und den Privatruf an Familie B „1 von 2“ (nur diese Familie); die Namensliste nennt Kind C als „ohne
 Zugang“, im Privatraum nicht. Eltern bekommen aus beiden Funktionen nichts und lesen in `rufe_gelesen` nur die eigene
 Zeile; `_rufe_empfaenger` und `anon` scheitern (zwei Fehlermeldungen sind gewollt).
+
+## v743 · Fotoalbum je Kind
+
+```bash
+bash lauf743.sh   # Attrappe (+ Fan-Fakten-Fuß, punkte_log), v734b, v739, v743 zweimal, dann:
+psql -d k -f tests/sql/v743-kind-fotoalbum.sql
+```
+
+Erwartet: Eltern von Kind A legen sechs Fotos an, das siebte scheitert; ein fremdes Kind, ein fremder Pfad, eine
+fehlende Datei und das direkte Setzen des Kartenfotos scheitern; über `kind_foto_als_karte` wird ein Kartenfoto
+gesetzt und der Zweck geändert. Eltern von Kind B sehen von Kind A nur das Kartenfoto, die Galerie zeigt es, Kind B
+ohne Freigabe ohne Foto; ein Album-Foto ist für sie im Speicher nicht sichtbar, und sie dürfen kein Kartenfoto für
+Kind A setzen. Die eigene Karte von Kind A zeigt das Kartenfoto; der Trainer sieht alle Fotos, löst das Kartenfoto,
+dann zeigt die Galerie wieder das alte Profilfoto. `anon` scheitert. Sieben Fehlermeldungen sind gewollt.
