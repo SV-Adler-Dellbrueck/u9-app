@@ -687,6 +687,86 @@ async function lobPlay(spielerId){
     else toast("Konnte nicht abspielen","err");
   }catch(e){toast("Konnte nicht abspielen","err");}
 }
+/* v755 (PO 04.10.): Sprachlob als Liste – in der Kabine und im Eltern-Bereich alle Lobe nach Datum, antippen = abspielen.
+   „Neu“ bis zum ersten Anhören (kabine_lob.gehoert_am); das Kind sieht den Punkt auf der Kachel in der Kabine, die Eltern
+   den vorhandenen Hinweis „Neues Sprachlob für …“ in den Neuigkeiten und das „Neu“ hier. */
+let _lobAudio=null,_lobSpielt=null;
+function lobDatum(iso){
+  const d=new Date(iso); if(isNaN(d))return "";
+  const heute=new Date(), gleichesJahr=d.getFullYear()===heute.getFullYear();
+  const t=d.toLocaleDateString("de-DE",gleichesJahr?{weekday:"long",day:"numeric",month:"long"}:{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  return t+" · "+d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})+" Uhr";
+}
+function lobListeZu(){
+  try{ if(_lobAudio){_lobAudio.pause();_lobAudio=null;} }catch(e){}
+  _lobSpielt=null;
+  document.getElementById("lob-liste")?.remove();
+  if(typeof lobNeuLaden==="function")lobNeuLaden();
+}
+async function lobListeOpen(spielerId,name){
+  document.getElementById("lob-liste")?.remove();
+  const m=document.createElement("div"); m.id="lob-liste";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Sprachlob für "+(name||"dein Kind"));
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;flex-direction:column;padding:16px;overflow-y:auto";
+  m.style.zIndex=(typeof zOben==="function")?zOben(10060):10060;
+  const innen=document.createElement("div");
+  innen.style.cssText="margin:auto;width:100%;max-width:440px;background:var(--surface);color:var(--text);border-radius:18px;padding:16px;box-sizing:border-box";
+  innen.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+      <div style="flex:1;font-size:var(--s-karte);font-weight:800">🎧 Lob vom Trainer${name?" · "+esc(name):""}</div>
+      <button type="button" class="btn" onclick="lobListeZu()" aria-label="Schließen" style="min-height:44px;min-width:44px">✕</button></div>
+    <div id="lob-liste-inhalt" style="font-size:var(--s-text);color:var(--text2)">Lädt …</div>`;
+  m.appendChild(innen); m.onclick=e=>{ if(e.target===m||e.target===innen.parentNode)lobListeZu(); };
+  document.body.appendChild(m);
+  let zeilen=[];
+  try{ const r=await fetch(`${SB_URL}/rest/v1/kabine_lob?spieler_id=eq.${Number(spielerId)}&select=id,path,created_at,gehoert_am&order=created_at.desc`,{headers:sbAuthHeaders()}); if(r.ok)zeilen=await r.json(); }catch(e){}
+  const el=document.getElementById("lob-liste-inhalt"); if(!el)return;
+  if(!zeilen.length){ el.innerHTML='<div style="padding:14px 0;text-align:center">Noch kein Sprachlob da 🙂<br>Wenn das Trainerteam eins aufnimmt, erscheint es hier.</div>'; return; }
+  const neu=zeilen.filter(z=>!z.gehoert_am).length;
+  el.innerHTML=(neu?`<div style="font-weight:700;color:var(--text);margin-bottom:8px">${neu} neu · ${zeilen.length} insgesamt</div>`:`<div style="margin-bottom:8px">${zeilen.length} Lob${zeilen.length===1?"":"e"} – alle schon gehört 👍</div>`)
+    +`<div role="list" style="display:flex;flex-direction:column;gap:8px">`+zeilen.map(z=>`<button type="button" role="listitem" class="btn lob-zeile" data-id="${z.id}" data-path="${esc(z.path)}" data-neu="${z.gehoert_am?"0":"1"}" onclick="lobAbspielen(this)" aria-pressed="false" style="display:flex;align-items:center;gap:10px;min-height:56px;padding:8px 12px;text-align:left;border-radius:14px;${z.gehoert_am?"":"border:2px solid #db2777;"}">
+      <span aria-hidden="true" class="lob-sym" style="font-size:22px">▶️</span>
+      <span style="flex:1;font-weight:${z.gehoert_am?"500":"800"}">${esc(lobDatum(z.created_at))}</span>
+      ${z.gehoert_am?"":'<span class="lob-neu" style="font-size:var(--s-klein);font-weight:800;color:#fff;background:#db2777;border-radius:999px;padding:2px 10px">Neu</span>'}</button>`).join("")+`</div>`;
+}
+async function lobAbspielen(btn){
+  const id=btn.dataset.id, path=btn.dataset.path;
+  const alleSym=()=>document.querySelectorAll("#lob-liste .lob-zeile").forEach(b=>{ b.setAttribute("aria-pressed","false"); const y=b.querySelector(".lob-sym"); if(y)y.textContent="▶️"; });
+  if(_lobSpielt===id&&_lobAudio){ try{_lobAudio.pause();}catch(e){} _lobAudio=null; _lobSpielt=null; alleSym(); return; }   // zweiter Tipp = Pause
+  try{ if(_lobAudio)_lobAudio.pause(); }catch(e){}
+  alleSym();
+  let url="";
+  try{
+    const sr=await fetch(`${SB_URL}/storage/v1/object/sign/kabine-lob/${path}`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({expiresIn:600})});
+    const sj=await sr.json(); if(sj&&sj.signedURL)url=`${SB_URL}/storage/v1${sj.signedURL}`;
+  }catch(e){}
+  if(!url){ toast("Konnte nicht abspielen","err"); return; }
+  const a=new Audio(url); _lobAudio=a; _lobSpielt=id;
+  btn.setAttribute("aria-pressed","true"); const sym=btn.querySelector(".lob-sym"); if(sym)sym.textContent="⏸️";
+  a.onended=()=>{ if(_lobAudio===a){ _lobAudio=null; _lobSpielt=null; } alleSym(); };
+  a.play().then(()=>{
+    if(btn.dataset.neu==="1"){   // einmal als gehört merken (nur wenn noch leer)
+      btn.dataset.neu="0"; btn.style.border=""; btn.querySelector(".lob-neu")?.remove(); const t=btn.querySelector("span:nth-of-type(2)"); if(t)t.style.fontWeight="500";
+      fetch(`${SB_URL}/rest/v1/kabine_lob?id=eq.${Number(id)}&gehoert_am=is.null`,{method:"PATCH",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({gehoert_am:new Date().toISOString()})}).catch(()=>{});
+    }
+  }).catch(()=>{ toast("Tippe nochmal zum Abspielen","err"); alleSym(); });
+}
+function kabineLobWahl(){
+  const kids=window._elternKids||[];
+  if(kids.length===1){ lobListeOpen(kids[0].spieler_id,(kids[0].kader&&kids[0].kader.name)||""); return; }
+  if(typeof kabinePickKid==="function")kabinePickKid("🎧 Wessen Lob?","lobListeOpen");
+}
+// „Neu“-Punkt auf der Kachel in der Kabine: ungehörte Lobe aller Kinder dieses Geräts
+async function lobNeuLaden(){
+  const kids=window._elternKids||[]; if(!kids.length)return;
+  let n=0;
+  try{ const r=await fetch(`${SB_URL}/rest/v1/kabine_lob?spieler_id=in.(${kids.map(k=>Number(k.spieler_id)).join(",")})&gehoert_am=is.null&select=id`,{headers:sbAuthHeaders()}); if(r.ok)n=(await r.json()).length; }catch(e){}
+  document.querySelectorAll("#kabine-body .kab-lob-neu").forEach(x=>x.remove());
+  if(!n)return;
+  const t=document.querySelector('#kabine-body button[onclick*="kabineLobWahl"]'); if(!t)return;
+  const b=document.createElement("span"); b.className="kab-lob-neu"; b.setAttribute("role","status");
+  b.style.cssText="margin-left:auto;font-size:13px;font-weight:800;color:#fff;background:#db2777;border-radius:999px;padding:3px 12px;white-space:nowrap";
+  b.textContent=n===1?"1 neu":n+" neu"; t.appendChild(b);
+}
 /* C3 – Team-Arena: Einlauf-Song + Schlachtruf (team_config). Identität wie bei den Großen. */
 async function arenaKabineLoad(elId){
   const el=document.getElementById(elId); if(!el)return;
@@ -797,6 +877,8 @@ function kabineHome(){
       ${lbl("Challenges")}
       ${tile("kabineShowQuests()","🏆","Team-Missionen","rgba(245,158,11,.52)","rgba(217,119,6,.32)")}
       ${tile("kabineSkillWoche()","🎬","Skill der Woche","rgba(251,146,60,.48)","rgba(234,88,12,.30)")}
+      ${/* v755: alle Sprachlobe vom Trainerteam nach Datum, „Neu“-Punkt bis zum ersten Anhören – bewusst nicht unter „Mehr entdecken“ */""}
+      ${tile("kabineLobWahl()","🎧","Lob vom Trainer","rgba(219,39,119,.50)","rgba(157,23,77,.34)",true)}
       ${lbl("Team & Spaß")}
       ${/* Paket 2: „Unsere Regeln" steht ganz oben in der Gruppe und über die volle Breite –
             es ist die Identität der Mannschaft, nicht ein Spiel unter vielen. */""}
@@ -824,6 +906,7 @@ function kabineHome(){
     ${window._kindGeraetModus?"":`<button onclick="kabineExit()" style="margin:0 16px 18px;padding:12px;border:none;border-radius:14px;background:rgba(0,0,0,.25);color:#fff;font-family:inherit;font-size:14px;cursor:pointer">🔒 Für Erwachsene: Kabine verlassen</button>`}`;
   teamLevelLoad("kab-level");                                  // C1: Team-Level
   kabineLobLoad();                                              // v675: Federn vom Trainerteam mit Grund
+  lobNeuLaden();                                                // v755: „Neu“-Punkt auf der Kachel „Lob vom Trainer“
   if(typeof arenaKabineLoad==="function")arenaKabineLoad("kab-arena"); // C3: Einlauf-Song/Schlachtruf
   kabineCountdownLoad();                                        // G6: Countdown bis zum nächsten Spiel
   kabineRevealLoad();                                           // H4: Rollen-Reveal am Spieltag
