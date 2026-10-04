@@ -33,7 +33,8 @@ module.exports = async function (h) {
       if (typeof window[fn] !== "function") return { fehlt: fn };
       await window[fn]();
       const b = document.getElementById("kabine-body");
-      const vor = { iframes: b ? b.querySelectorAll("iframe").length : -1 };
+      const kab = document.getElementById("kabine");   // seit v752 liegt der Hype-Player in #kab-hype-host direkt in #kabine
+      const vor = { iframes: kab ? kab.querySelectorAll("iframe").length : -1 };
       const halter = document.getElementById(id);
       const knopf = halter && halter.querySelector("button");
       vor.knopf = knopf ? knopf.textContent.trim() : "";
@@ -41,11 +42,11 @@ module.exports = async function (h) {
       vor.herkunft = halter ? halter.textContent.replace(/\s+/g, " ").trim() : "";
       if (knopf) knopf.click();
       await warte(100);
-      const f = b ? [...b.querySelectorAll("iframe")] : [];
+      const f = kab ? [...kab.querySelectorAll("iframe")] : [];
       return { vor, nach: f.length, src: f[0] ? f[0].src : "" };
     }
     out.video = await lauf("kabineSkillWoche", "ks-video");
-    out.musik = await lauf("kabineHype", "kh-playlist");
+    out.musik = await lauf("kabineHype", "kh-seite");
     return out;
   });
   const pruef = (name, x, muster, herkunft) => {

@@ -1131,7 +1131,7 @@ body:not(.quiz-extern) #view-taktik>*:not(.sl):not(#sit-hub):not(.bereich-kopf){
 .br-kabkopf{display:flex;align-items:center;gap:10px;padding:12px 16px;color:#fff}
 .br-fertig{min-height:48px;padding:0 16px;background:#16a34a;color:#fff;border:none;font-weight:800;font-size:var(--s-teil)}
 /* v751 – „Mein Training“ in der Kabine (md-kindtraining.js): drei Teile als Karten, Bildkarten zur Wahl */
-.kt-seite{display:flex;flex-direction:column;min-height:100%;color:#fff}
+.kt-seite{display:flex;flex-direction:column;flex:1;min-height:0;overflow-y:auto;color:#fff}   /* v753: #kabine-body hat overflow:hidden – ohne eigenes Scrollen war der untere Teil nicht erreichbar */
 .kt-rumpf{padding:0 16px 20px;display:flex;flex-direction:column;gap:12px}
 .kt-intro{margin:0;font-size:var(--s-text);line-height:1.45;color:#e2e8f0}
 .kt-teil{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:18px;padding:12px}
@@ -1336,3 +1336,11 @@ input[type="password"]{min-height:44px}
 /* Kabine „Mehr entdecken“: der Pfeil zeigt, ob offen (drehte sich vorher nicht) */
 .kab-mehr-pfeil{display:inline-block;transition:transform .2s}
 #kab-mehr[open] .kab-mehr-pfeil{transform:rotate(180deg)}
+
+/* v752 – Kabinen-Hype läuft weiter: derselbe Player groß auf der Hype-Seite, als Leiste unten auf allen anderen */
+#kab-hype-host.kh-gross{position:absolute;left:16px;right:16px;z-index:3}
+#kab-hype-host.kh-gross .kh-leiste{display:none}
+#kab-hype-host.kh-mini{position:static;flex:0 0 auto;padding:6px 12px 10px;background:rgba(2,6,23,.75);border-top:1px solid rgba(255,255,255,.2)}
+.kh-leiste{display:flex;align-items:center;gap:8px;margin-bottom:6px;color:#fff}
+.kh-titel{flex:1;font-weight:800;font-size:var(--s-text)}
+.kh-stopp{min-height:44px;padding:0 14px;border-radius:12px;border:none;background:#fff;color:#0b2f4d;font-weight:800;font-family:inherit;cursor:pointer}

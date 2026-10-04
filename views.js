@@ -640,7 +640,7 @@ function kaderEditRow(k,i){
     ${k._id?`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px">
       <button type="button" class="btn btn-sm" onclick="kontakteEditOpen(${k._id})" title="Kontakte, Eltern-Login und der persönliche Zu-/Absage-Link" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:var(--s-klein);line-height:1.2"><i class="ti ti-address-book" style="font-size:var(--s-teil)"></i>Kontakte</button>
       <button type="button" class="btn btn-sm" onclick="zieleOpen(${k._id})" title="Entwicklungs-Ziele setzen & verfolgen" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:var(--s-klein);line-height:1.2"><i class="ti ti-target" style="font-size:var(--s-teil)"></i>Ziele</button>
-      <button type="button" class="btn btn-sm" onclick="childWrappedShare(${k._id})" title="Persönliche Saison-Rückblick-Karte zum Teilen mit der Familie" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:var(--s-klein);line-height:1.2"><i class="ti ti-movie" style="font-size:var(--s-teil)"></i>Saison</button>
+      ${WRAPPED_SICHTBAR?`<button type="button" class="btn btn-sm" onclick="childWrappedShare(${k._id})" title="Persönliche Saison-Rückblick-Karte zum Teilen mit der Familie" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:var(--s-klein);line-height:1.2"><i class="ti ti-movie" style="font-size:var(--s-teil)"></i>Saison</button>`:""}
       <button type="button" class="btn btn-sm" onclick="lobRecordOpen(${k._id},'${(k.name||'').replace(/'/g,'')}')" title="Kurzes Sprachlob aufnehmen – das Kind hört es in der Kabine" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:var(--s-klein);line-height:1.2;grid-column:1/-1"><i class="ti ti-microphone" style="font-size:var(--s-teil)"></i>🎤 Sprachlob aufnehmen</button>
       <button type="button" class="btn btn-sm btn-d" onclick="kaderEditDelete(this,'${jsq(k.name||'')}','${k._id||''}')" style="grid-column:1/-1;justify-content:center;font-size:var(--s-klein)"><i class="ti ti-trash"></i>Endgültig löschen</button>
     </div>`:'<div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px">Erst speichern – dann sind Kontakte, Links & Saison-Karte verfügbar.</div>'}
@@ -802,7 +802,7 @@ function kinderProfilRender(nachgeladen){
       ${karte("➕","Mehr",`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
         <button type="button" class="btn btn-sm" style="min-height:48px" onclick="kontakteEditOpen(${_kp.id})"><i class="ti ti-address-book"></i>Kontakte &amp; Login</button>
         <button type="button" class="btn btn-sm" style="min-height:48px" onclick="zieleOpen(${_kp.id})"><i class="ti ti-target"></i>Ziele</button>
-        <button type="button" class="btn btn-sm" style="min-height:48px" onclick="childWrappedShare(${_kp.id})"><i class="ti ti-movie"></i>Saison-Karte</button>
+        ${WRAPPED_SICHTBAR?`<button type="button" class="btn btn-sm" style="min-height:48px" onclick="childWrappedShare(${_kp.id})"><i class="ti ti-movie"></i>Saison-Karte</button>`:""}
         <button type="button" class="btn btn-sm" style="min-height:48px" onclick="typeof sonderkartenTrainerOpen==='function'&&sonderkartenTrainerOpen(${_kp.id})"><i class="ti ti-cards"></i>Sonderkarten</button>
         <button type="button" class="btn btn-sm" style="min-height:48px" onclick="lobRecordOpen(${_kp.id},'${jsq(k.name||"")}')"><i class="ti ti-microphone"></i>Sprachlob</button>
         <button type="button" class="btn btn-sm" style="min-height:48px;grid-column:1/-1" onclick="kinderProfilZu();typeof kaderBewerten==='function'&&kaderBewerten('${jsq(k.name||"")}')"><i class="ti ti-chart-radar"></i>Einschätzung öffnen</button>
@@ -926,6 +926,7 @@ function kontakteEditOpen(spielerId){
   modal.id="kontakte-modal";
   modal.setAttribute("role","dialog"); modal.setAttribute("aria-modal","true"); modal.setAttribute("aria-label","Kontakte und Eltern-Login");
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10000;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  modal.style.zIndex=(typeof zOben==="function")?zOben(10000):10000;   // v753: über dem Kinderprofil (10002), sonst öffnet sich der Dialog dahinter
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
   modal.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:420px;width:100%;margin:auto">
     <div style="font-weight:700;margin-bottom:2px">📇 ${esc(k?k.name:"Spieler")} – Kontakte & Eltern-Login</div>
@@ -1059,6 +1060,10 @@ async function kindLinkShare(spielerId){
   if(navigator.share){navigator.share({title:"Zu-/Absage-Link "+nm,text,url}).catch(()=>{});}
   else{navigator.clipboard?.writeText(url).then(()=>toast("Link kopiert ✓"),()=>prompt("Link:",url));}
 }
+/* v754 (PO 04.10.: „Die Saison aktuell ausblenden. Die meisten Werte tracken wir aktuell nicht.“): Der Saison-Rückblick
+   (Adler Wrapped, Saison-Karte, Saison-Statistik) ist ausgeblendet, bis genug Werte erfasst werden. Auf true setzen, dann
+   erscheinen alle Einstiege wieder; die Funktionen selbst bleiben unverändert. */
+let WRAPPED_SICHTBAR=false;
 // Adler-Wrapped pro Kind: persönliche Saison-Karte (Bild) für die Familie. Daten aus get_child_wrapped.
 async function childWrappedDaten(spielerId){
   let d=null;
@@ -1113,7 +1118,8 @@ function childWrappedCanvas(logoImg,d){
   if(logoImg){try{ctx.drawImage(logoImg,W/2-40,42,80,80);}catch(e){}}
   ctx.fillStyle="rgba(255,255,255,.9)";ctx.font="bold 15px Arial";ctx.fillText("🦅 ADLER WRAPPED",W/2,150);
   ctx.fillStyle="#facc15";ctx.font="bold 38px Arial";ctx.fillText(((d.name||"")+"s Saison"),W/2,196);
-  const rows=[["⚽",d.tore||0,"Tore"],["🔥",d.aktionen||0,"Ballaktionen"],["⏱️",d.einsatz_min||0,"Minuten Spielzeit"],[XP_ICON,d.xp||0,XP_LABEL+" gesammelt"],["📅",d.spiele||0,"Spiele bestritten"]];
+  // v752: ohne Tore und Ballaktionen (nicht erfasst)
+  const rows=[["📅",d.spiele||0,"Spiele bestritten"],["⏱️",d.einsatz_min||0,"Minuten Spielzeit"],[XP_ICON,d.xp||0,XP_LABEL+" gesammelt"]];
   let y=254;
   rows.forEach(r=>{
     ctx.fillStyle="rgba(255,255,255,.1)";tbRoundRect(ctx,70,y,W-140,82,16);ctx.fill();
@@ -1206,6 +1212,7 @@ async function zieleOpen(spielerId){
   document.getElementById("ziele-modal")?.remove();
   const modal=document.createElement("div");modal.id="ziele-modal";modal.setAttribute("role","dialog");modal.setAttribute("aria-modal","true");modal.setAttribute("aria-label","Entwicklungs-Ziele");
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;display:flex;flex-direction:column;padding:14px;overflow-y:auto";
+  modal.style.zIndex=(typeof zOben==="function")?zOben(10000):10000;   // v753: über dem Kinderprofil (10002), sonst öffnet sich der Dialog dahinter
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
   const card=document.createElement("div");
   card.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
@@ -2005,15 +2012,8 @@ function adlerWrappedSlides(d,fotos){
     <div class="aw-big aw-pop d1">${d.spiele||0}</div>
     <div class="aw-pop d1" style="font-size:var(--s-teil);font-weight:800">Spiele & Turniere</div>
     <div class="aw-pop d2" style="font-size:var(--s-karte);opacity:.85;margin-top:18px">und <b>${d.trainings||0}</b> Trainingseinheiten 💪</div></div>`});
-  S.push({bg:g("#9a3412","#f97316"),html:`<div>
-    <div class="aw-pop" style="font-size:var(--s-karte);opacity:.85;text-transform:uppercase;letter-spacing:2px">Gemeinsam erzielt</div>
-    <div class="aw-big aw-pop d1">${d.tore||0}</div>
-    <div class="aw-pop d1" style="font-size:var(--s-seite);font-weight:800">Tore ⚽</div>${d.torschuetzen_anzahl?`
-    <div class="aw-pop d2" style="font-size:var(--s-karte);opacity:.85;margin-top:16px">von <b>${d.torschuetzen_anzahl}</b> verschiedenen Kindern – Tore schießt hier das Team</div>`:""}</div>`});
-  S.push({bg:g("#5b21b6","#8b5cf6"),html:`<div>
-    <div class="aw-big aw-pop">${d.aktionen||0}</div>
-    <div class="aw-pop d1" style="font-size:var(--s-teil);font-weight:800">Ballaktionen 🔥</div>
-    <div class="aw-pop d2" style="font-size:var(--s-karte);opacity:.85;margin-top:16px">darunter <b>${d.paesse||0}</b> Pässe und <b>${d.paraden||0}</b> Paraden 🧤</div></div>`});
+  /* v752 (PO 04.10.: Tore und Aktionen raus, solange wir sie nicht erfassen): die Folien „Gemeinsam erzielt“
+     (Tore) und „Ballaktionen“ entfallen. */
   S.push({bg:g("#065f46","#10b981"),html:`<div>
     <div class="aw-pop" style="font-size:var(--s-karte);opacity:.85;text-transform:uppercase;letter-spacing:2px">Team-Missionen</div>
     <div class="aw-big aw-pop d1">${d.quests_geschafft||0}</div>
@@ -2021,12 +2021,13 @@ function adlerWrappedSlides(d,fotos){
   const awards=[];
   // v637: kein Torschützenkönig – Ergebnisse zählen in der U9 nicht („Fairness vor Ergebnis“); die Tore stehen als Teamzahl oben.
   if(d.fleissigste&&d.fleissigste.name)awards.push(["🏃","Fleißbiene (Training)",d.fleissigste]);
-  if(d.top_aktiv&&d.top_aktiv.name)awards.push(["🔥","Aktivposten",d.top_aktiv]);
+  // v752: kein „Aktivposten“ mehr – er zählte Ballaktionen, die wir nicht erfassen
+
   const awardsHtml=awards.length?awards.map((a,i)=>`<div class="aw-pop d${i+1}" style="background:rgba(255,255,255,.14);border-radius:14px;padding:11px 16px;margin:8px auto;max-width:280px">
     <div style="font-size:26px">${a[0]}</div>
     <div style="font-size:var(--s-teil);font-weight:800">${esc(a[2].name)}</div>
     <div style="font-size:var(--s-text);opacity:.85">${a[1]} · ${a[2].wert}</div></div>`).join("")
-    :`<div class="aw-pop" style="opacity:.85;font-size:var(--s-karte)">Sammelt Aktionen am Spieltag – dann gibt's hier eure Helden! 🦅</div>`;
+    :`<div class="aw-pop" style="opacity:.85;font-size:var(--s-karte)">Kommt fleißig zum Training – dann gibt's hier eure Helden! 🦅</div>`;
   S.push({bg:g("#1e3a8a","#3b82f6"),confetti:true,html:`<div>
     <div class="aw-pop" style="font-size:var(--s-seite);font-weight:900;margin-bottom:14px">🏅 Eure Saison-Helden</div>${awardsHtml}</div>`});
   S.push({bg:g("#7c2d12","#dc2626"),confetti:true,html:`<div>
@@ -2325,11 +2326,13 @@ const CARD_THEMES={
   neu:{a:"#0f172a",b:"#334155",name:"NEUE SAISON"}
 };
 /* Meilenstein-Karten (Phase 11-R): Design nach TEILNAHME, nicht Leistung.
-   ≥10 Trainings → Gold, ≥20 → Hero. Überschreibt das Dim-Theme. Metallischer Verlauf,
+   ≥8 Trainings → Gold, ≥16 → Hero (seit v752; vorher 10/20). Überschreibt das Dim-Theme. Metallischer Verlauf,
    Doppelrahmen, Glanz + Siegel werden in adlerCardDraw gebacken (bleiben im PNG-Export). */
+/* v752 (PO 04.10., Kachel): Gold ab 8, HERO ab 16 – seit v734 zählen nur Trainings der laufenden Saison,
+   mit 10/20 hatte Anfang Oktober kein Kind mehr Gold. */
 const CARD_MILESTONES=[
-  {min:20, a:"#2a0e57", b:"#f59e0b", name:"HERO", medal:"hero", border:"#fcd34d"},
-  {min:10, a:"#5c4300", b:"#e9c94a", name:"GOLD", medal:"gold", border:"#ffe08a"}
+  {min:16, a:"#2a0e57", b:"#f59e0b", name:"HERO", medal:"hero", border:"#fcd34d"},
+  {min:8,  a:"#5c4300", b:"#e9c94a", name:"GOLD", medal:"gold", border:"#ffe08a"}
 ];
 function cardMilestoneTheme(trainings){ const t=Number(trainings)||0; return CARD_MILESTONES.find(m=>t>=m.min)||null; }
 /* Karten-Skins (Feder-Freischaltung): rein aus dem Federn-Gesamtstand abgeleitet – KEIN
@@ -2589,19 +2592,20 @@ function adlerCardDraw(ctx,W,H,d,photoImg){
   if(sub)ctx.fillText(sub,W/2,nameY+24);
   if(washOn){ctx.shadowColor="transparent";ctx.shadowBlur=0;ctx.shadowOffsetY=0;}
 
-  // ── Einsatz-Zähler (Fleiß statt Skill-Ranking): positionsgerecht (TW → Paraden) ──
+  // ── Einsatz-Zähler (Fleiß statt Skill-Ranking) ──
+  /* v752 (PO 04.10.: „Tore und Aktionen sollten wir erstmal rausnehmen, solange wir das nicht tracken“):
+     nur noch Spiele und Trainings der Saison – zwei große Felder statt vier, zwei davon mit „–“. */
   const c=d.counts||null;
-  const first=d.tw?{ic:"🧤",v:c&&c.paraden,l:"PARADEN"}:{ic:"⚽",v:c&&c.tore,l:"TORE"};
-  const quad=[first,{ic:"🎯",v:c&&c.aktionen,l:"AKTIONEN"},{ic:"👟",v:c&&c.spiele,l:"SPIELE"},{ic:"🏃",v:c&&c.trainings,l:"TRAININGS"}];
-  const ty=nameY+50, tbh=88, tw4=(W-80)/4;
+  const quad=[{ic:"👟",v:c&&c.spiele,l:"SPIELE"},{ic:"🏃",v:c&&c.trainings,l:"TRAININGS"}];
+  const ty=nameY+50, tbh=88, tw4=(W-80)/quad.length;
   ctx.save();tbRoundRect(ctx,40,ty,W-80,tbh,16);ctx.fillStyle="rgba(0,0,0,.20)";ctx.fill();ctx.restore();
   quad.forEach((t,i)=>{
     const tx=40+tw4*i+tw4/2;
     ctx.textAlign="center";
     ctx.font="20px Arial";ctx.fillStyle="#fff";ctx.fillText(t.ic,tx,ty+28);
-    ctx.font="800 26px Arial";ctx.fillText((c&&t.v!=null)?String(t.v):"–",tx,ty+58);
-    ctx.font="600 10px Arial";ctx.fillStyle="rgba(255,255,255,.85)";ctx.fillText(t.l,tx,ty+75);
-    if(i<3){ctx.strokeStyle="rgba(255,255,255,.16)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(40+tw4*(i+1),ty+14);ctx.lineTo(40+tw4*(i+1),ty+tbh-14);ctx.stroke();}
+    ctx.font="800 32px Arial";ctx.fillText((c&&t.v!=null)?String(t.v):"–",tx,ty+60);
+    ctx.font="700 12px Arial";ctx.fillStyle="rgba(255,255,255,.85)";ctx.fillText(t.l,tx,ty+75);
+    if(i<quad.length-1){ctx.strokeStyle="rgba(255,255,255,.16)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(40+tw4*(i+1),ty+14);ctx.lineTo(40+tw4*(i+1),ty+tbh-14);ctx.stroke();}
   });
 
   // ── Badges (immer 3) ──
@@ -2751,19 +2755,26 @@ async function adlerCardOpen(nameArg){
   render(); // sofort (Initialen + "–"), Foto und Zähler laden asynchron nach
   const modal=document.createElement("div");
   modal.id="adler-card-modal";
-  modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:10002;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px;overflow-y:auto";
-  modal.onclick=e=>{if(e.target===modal)modal.remove();};
+  /* v753 (PO 04.10., Bildschirmfoto): Mit justify-content:center schneidet ein Flex-Container, der höher ist als der
+     Bildschirm, oben und unten ab – der obere Teil ist nicht erreichbar. Wie im Eltern-Bereich: innen margin:auto
+     zentriert, solange Platz ist, und scrollt, sobald keiner mehr ist. */
+  modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:10002;display:flex;flex-direction:column;padding:16px;overflow-y:auto";
+  modal.style.zIndex=(typeof zOben==="function")?zOben(10002):10002;
+  const innen=document.createElement("div");
+  innen.style.cssText="margin:auto;display:flex;flex-direction:column;align-items:center;gap:14px;width:100%";
+  modal.appendChild(innen);
+  modal.onclick=e=>{if(e.target===modal||e.target===innen)modal.remove();};
   canvas.style.cssText="max-width:100%;width:300px;height:auto;border-radius:20px;box-shadow:0 12px 40px rgba(0,0,0,.5)";
   const cardWrap=cardHoloWrap(canvas); // FUT 2.0: Foil-Overlay über der Karte
-  modal.appendChild(cardWrap);
+  innen.appendChild(cardWrap);
   const bar=document.createElement("div");
   bar.style.cssText="display:flex;gap:8px;flex-wrap:wrap;justify-content:center";
   bar.innerHTML=`<button class="btn btn-p" onclick="adlerCardShare()"><i class="ti ti-share"></i>Karte teilen</button>
     <button class="btn" onclick="document.getElementById('adler-card-modal').remove()">Schließen</button>`;
-  modal.appendChild(bar);
+  innen.appendChild(bar);
   document.body.appendChild(modal);
   // Federn-Stand → Karten-Skin (wird in render() gebacken) + Foil-Tier + Skin-Galerie
-  if(d.spielerId){ xpTotal(d.spielerId).then(f=>{ if(document.getElementById("adler-card-modal")){ d.federn=f; render(); cardHoloSetTier(cardWrap,cardSkinFor(f)); modal.appendChild(cardSkinGalleryEl(f)); } }).catch(()=>{}); }
+  if(d.spielerId){ xpTotal(d.spielerId).then(f=>{ if(document.getElementById("adler-card-modal")){ d.federn=f; render(); cardHoloSetTier(cardWrap,cardSkinFor(f)); innen.appendChild(cardSkinGalleryEl(f)); } }).catch(()=>{}); }
   // Einsatz-Zähler laden und neu zeichnen (Modal-Guard gegen Race, falls schon geschlossen)
   adlerCardStats(name).then(c=>{ if(document.getElementById("adler-card-modal")){ d.counts=c; render(); cardApplyGlow(canvas,c.trainings); } });
   // Foto (falls vorhanden) laden und neu zeichnen
@@ -4915,6 +4926,7 @@ const HELP=[
   ]},
   {cat:"🎯 Taktik", items:[
     {t:"Adler-Coach (KI)", d:"Zwei Eingänge, ein Ergebnis. <b>„💡 Idee beschreiben“</b> (beim Öffnen gewählt): Schwerpunkt, Dauer, Wo und Material einstellen – das genügt schon, der Text darunter ist die Nuance –, dann „Übungen vorschlagen“. Der Coach liefert ein bis drei Übungen für U8/U9, <b>jede mit Skizze</b>. <b>„📋 Text übernehmen“</b> nimmt einen fremden Text von einer Webseite, aus WhatsApp oder aus einem Buch und ordnet ihn ins Format der App, ohne etwas zu erfinden – was nicht dasteht, bleibt leer. Die beiden sind <b>Reiter</b>, keine Aktionsknöpfe: Ein Klick auf den bereits gewählten ändert nichts, das ist kein Fehler. Mitgeschickt wird, was die App ohnehin weiß – Kaderstärke, Monatsschwerpunkt, Platz und Dauer des nächsten Trainings; es steht offen über dem Feld, damit du es korrigieren kannst. <b>Seit v596 kannst du diktieren</b> statt zu tippen: Der Knopf steht nur da, wo dein Gerät zuhören kann, und Gesagtes wird an das Feld angehängt, nicht darüber geschrieben. Gespeichert wird nichts von allein – du entscheidest je Übung, was in die Bibliothek kommt.", run:"kiCoachOpen()"},
+    {t:"Sprachlob in der Kabine", d:"<b>Seit v755</b> sammelt die Kabine alle Sprachlobe eines Kindes: Kachel „🎧 Lob vom Trainer“ (oben, mit „Neu“-Punkt), darin die Lobe nach Datum, neueste zuerst; antippen spielt ab, nochmal antippen pausiert. Dieselbe Liste öffnen die Eltern unter „Sprachlob anhören“. Ein Lob gilt als gehört, sobald es zum ersten Mal abgespielt wurde. Aufnehmen wie bisher: Kinderprofil → „Sprachlob“. Eine Push-Nachricht an die Eltern gibt es noch nicht – sie sehen den Hinweis in den Neuigkeiten."},
     {t:"Trainingsideen der Kinder", d:"<b>Seit v751</b> können die Kinder in der Kabine unter „Mehr entdecken“ → „📋 Mein Training“ selbst ein Training planen: drei Teile (🔥 Aufwärmen, ⚽ Übung, 🏆 Abschlussspiel), je eine Übung aus einer festen Kinder-Auswahl (fünf je Teil, Übungen aus unserem Training) oder eine eigene Skizze vom Taktikbrett (auch mit Mitspielern), Minuten als Knöpfe – ohne Textfeld und ohne Bewertung. „An den Trainer schicken“ legt es dir vor: Auf der Startseite erscheint „📋 Trainingsideen der Kinder · n neu“. Öffnen markiert sie als gesehen; „👍 Danke sagen“ sieht das Kind unter „Schon geschickt“. Löschen geht hier oder durch die Familie. Höchstens 20 ungelesene Trainings je Kind; das Kindergerät schickt nur, solange Appzeit übrig ist.", run:"if(typeof kindTrainingListe==='function')kindTrainingListe()"},
     {t:"Freies Brett", d:"<b>Seit v750:</b> Unter den Spielformen gibt es „Leeres Feld“ (ohne Tore und Steine); „＋ Hinzufügen“ legt Kinder aus dem Kader mit Vornamen, Torwart, Gegner, Ball, Hütchen, Stange oder Minitor dazu, „Radieren“ nimmt auch Steine weg. Dasselbe können die Kinder in der Kabine im „Mein Taktikbrett“. Ganz oben unter Taktik: „Freies Brett“ öffnet sofort im Vollbild mit beiden Mannschaften und Ball. „Schieben“ bewegt Spieler und Ball, mit Weiß, Gelb oder Blau zeichnest du mit dem Finger Laufwege und Pässe, „Radieren“ nimmt eine Linie weg, „Stift weg“ alle. Unten wechselst du die Spielform; die Zeichnung bleibt. Gespeichert wird nur auf diesem Gerät – zum Behalten eine Spielsituation anlegen. Die Kinder haben in der Kabine ein eigenes, einfacheres Brett („Mein Taktikbrett“).", go:"taktik"},
     {t:"Taktikboard", d:"Seit v689 in vier Abschnitten: „Neue Situation“ (Freies Brett und die vier Spielformen), „Oder beschreiben“ (die KI zeichnet), „Gespeicherte Situationen“, „Weitere Werkzeuge“ (Video, KI-Coach). Die Spielsituationen sind gezeichnet auf derselben Fläche wie die Skizzen der Übungen. „Beschreib die Situation“: tippen oder einsprechen, „Zeichnen lassen“, die KI legt Kinder, Gegner, Ball und Wege aufs ganze Feld; danach verschiebst du, was nicht passt. „Neue Situation“ startet mit FUNiño, 3+1, 4+1 oder 5+1 samt Rollen (TW, A, FL, FR, J). Gespeicherte Situationen zeigst du groß, spielst mehrere Bilder ab, teilst sie als Bild, bearbeitest, benennst um oder löschst sie. Für die Besprechung: „Groß zeigen“ füllt den Bildschirm (am Tablet auch Vollbild), „Kinder einsetzen“ setzt die Namen aus dem Kader auf die Kreise – nur zum Zeigen, gespeichert wird nichts davon. Unten Video und KI-Coach.", go:"taktik"},
@@ -7053,7 +7065,7 @@ function _kachelInhalt(key){
     +kTiles([
       {emo:"🪺",label:"Nest-Ausgaben",fn:"nestEditorOpen"},   // v733: eine Ausgabe je Spieltag
       {emo:"📰",label:"Adler Nest (Porträt-Vorschlag)",fn:"stadionheftOpen"},
-      {emo:"🏆",label:"Adler Wrapped",fn:"adlerWrappedTeaser"}
+      ...(WRAPPED_SICHTBAR?[{emo:"🏆",label:"Adler Wrapped",fn:"adlerWrappedTeaser"}]:[])
     ],col)
     +`<div id="home-milestone" style="margin-top:8px"></div>`;
   if(key==="orga")return `<div id="home-rsvp"></div><div id="home-ferien"></div>`

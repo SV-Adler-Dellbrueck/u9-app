@@ -352,17 +352,29 @@ function _albumStickerHtml(g,n,tap){
       <span style="font-size:26px;opacity:.7">❓</span>
       ${R.lbl?`<span style="font-size:10px;font-weight:900;letter-spacing:.5px">${R.gem?R.gem+" ":""}${R.lbl}</span>`:""}
     </div>`;
-  return `<div class="${(R.foil?"kab-st":"")+(R.leg?" kab-leg kab-pulse":"")}" ${tap?`role="button" tabindex="0" onclick="kabineStickerZoom('${jsq(g.key)}')"`:""} style="border-radius:14px;aspect-ratio:3/4;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;background:radial-gradient(130% 80% at 50% -10%,rgba(255,255,255,.35),transparent 55%),${R.own};border:2px solid rgba(255,255,255,.6);box-shadow:${R.shadow};color:${dunkel?"#78350f":"#fff"};${tap?"cursor:pointer":""}">
-      <div style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:5px 7px 0;font-size:8.5px;font-weight:900;letter-spacing:.4px;box-sizing:border-box">
+  /* v752 (PO 04.10.: „Auf dem Tablet sind die Bilder ganz klein in der Mitte der Karte. Und die Spieltagskarte
+     unterscheidet sich nicht richtig.“): Foto und Schrift wachsen mit der Stickerbreite (Container-Einheiten
+     cqw, nie kleiner als bisher); Sonder-Sticker tragen je Art einen eigenen Rahmen – Spieltag als Rasen mit
+     Mittellinie und Datumsband, Kapitän mit „C“-Binde, Moment mit Sternenkranz. */
+  const sk=g.rar==="sonder"?(String(g.key).startsWith("sk_st")?"st":String(g.key).startsWith("sk_ka")?"ka":"mo"):null;
+  const SK_RAHMEN={
+    st:{bg:"repeating-linear-gradient(0deg,#15803d 0 9%,#16a34a 9% 18%)", lbl:"⚽ SPIELTAG", deko:'<div style="position:absolute;left:0;right:0;top:50%;height:2px;background:rgba(255,255,255,.55)"></div><div style="position:absolute;left:50%;top:50%;width:46cqw;height:46cqw;transform:translate(-50%,-50%);border:2px solid rgba(255,255,255,.55);border-radius:50%"></div>', rund:"18%"},
+    ka:{bg:"linear-gradient(160deg,#0b2f4d,#1e3a8a 55%,#b45309)", lbl:"🎗️ KAPITÄN", deko:'<div style="position:absolute;bottom:30%;right:8%;width:22cqw;height:22cqw;min-width:20px;min-height:20px;border-radius:50%;background:#facc15;color:#0b2f4d;font-weight:900;font-size:max(13px,13cqw);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.4);z-index:2">C</div>', rund:"50%"},
+    mo:{bg:"radial-gradient(circle at 50% 42%,#fde68a 0 18%,#a855f7 46%,#4c1d95 100%)", lbl:"⭐ MOMENT", deko:'<div style="position:absolute;inset:0;pointer-events:none;font-size:max(10px,9cqw);line-height:1"><span style="position:absolute;top:18%;left:8%">✨</span><span style="position:absolute;top:30%;right:8%">⭐</span><span style="position:absolute;bottom:30%;left:10%">⭐</span><span style="position:absolute;bottom:34%;right:12%">✨</span></div>', rund:"50%"}
+  }[sk]||null;
+  const bg=SK_RAHMEN?SK_RAHMEN.bg:`radial-gradient(130% 80% at 50% -10%,rgba(255,255,255,.35),transparent 55%),${R.own}`;
+  return `<div class="${(R.foil?"kab-st":"")+(R.leg?" kab-leg kab-pulse":"")}" ${tap?`role="button" tabindex="0" onclick="kabineStickerZoom('${jsq(g.key)}')"`:""} style="container-type:inline-size;border-radius:14px;aspect-ratio:3/4;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;background:${bg};border:2px solid rgba(255,255,255,.6);box-shadow:${R.shadow};color:${dunkel?"#78350f":"#fff"};${tap?"cursor:pointer":""}">
+      ${SK_RAHMEN?SK_RAHMEN.deko:""}
+      <div style="position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;width:100%;padding:5px 7px 0;font-size:max(8.5px,6cqw);font-weight:900;letter-spacing:.4px;box-sizing:border-box">
         <span>Nr. ${g.num||"?"}</span>${n>1?`<span style="background:rgba(0,0,0,.3);color:#fff;border-radius:8px;padding:0 6px">${n}×</span>`:"<span></span>"}
       </div>
-      ${R.lbl?`<div style="font-size:7.5px;font-weight:900;letter-spacing:1.2px;margin-top:1px">${R.gem?R.gem+" ":""}${R.lbl}</div>`:""}
-      <div data-st-ava="${esc(g.key)}" style="flex:1;display:flex;align-items:center;justify-content:center;width:100%;min-height:0">
-        <div style="width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.25);border:2px solid rgba(255,255,255,.75);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.25)">${g.img?`<img src="${g.img}" alt="" style="width:72%;height:72%;object-fit:contain">`:`<span style="font-size:24px">${g.emo}</span>`}</div>
+      ${(SK_RAHMEN||R.lbl)?`<div style="position:relative;z-index:1;font-size:max(7.5px,5.5cqw);font-weight:900;letter-spacing:1.2px;margin-top:1px;${SK_RAHMEN?"background:rgba(0,0,0,.35);border-radius:6px;padding:1px 6px":""}">${SK_RAHMEN?SK_RAHMEN.lbl:(R.gem?R.gem+" ":"")+R.lbl}</div>`:""}
+      <div data-st-ava="${esc(g.key)}" style="position:relative;z-index:1;flex:1;display:flex;align-items:center;justify-content:center;width:100%;min-height:0">
+        <div style="width:max(46px,58cqw);aspect-ratio:1;border-radius:${SK_RAHMEN?SK_RAHMEN.rund:"50%"};background:rgba(255,255,255,.25);border:2px solid rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.3)">${g.img?`<img src="${g.img}" alt="" style="width:72%;height:72%;object-fit:contain">`:`<span style="font-size:max(24px,26cqw)">${g.emo}</span>`}</div>
       </div>
-      <div style="width:100%;background:rgba(0,0,0,.28);padding:4px 4px 5px;text-align:center;box-sizing:border-box">
-        <div style="font-size:10.5px;font-weight:900;line-height:1.1;color:#fff">${esc(g.label)}</div>
-        ${g.sub?`<div style="font-size:8.5px;color:rgba(255,255,255,.85)">${esc(g.sub)}</div>`:""}
+      <div style="position:relative;z-index:1;width:100%;background:rgba(0,0,0,${SK_RAHMEN?".45":".28"});padding:4px 4px 5px;text-align:center;box-sizing:border-box">
+        <div style="font-size:max(10.5px,8cqw);font-weight:900;line-height:1.1;color:#fff">${esc(g.label)}</div>
+        ${g.sub?`<div style="font-size:max(8.5px,${sk==="st"?"7.5":"6.5"}cqw);${sk==="st"?"font-weight:900;color:#fde047":"color:rgba(255,255,255,.85)"}">${esc(g.sub)}</div>`:""}
       </div>
       ${R.foil?'<div class="stfoil"></div>':""}
     </div>`;
@@ -675,6 +687,86 @@ async function lobPlay(spielerId){
     else toast("Konnte nicht abspielen","err");
   }catch(e){toast("Konnte nicht abspielen","err");}
 }
+/* v755 (PO 04.10.): Sprachlob als Liste – in der Kabine und im Eltern-Bereich alle Lobe nach Datum, antippen = abspielen.
+   „Neu“ bis zum ersten Anhören (kabine_lob.gehoert_am); das Kind sieht den Punkt auf der Kachel in der Kabine, die Eltern
+   den vorhandenen Hinweis „Neues Sprachlob für …“ in den Neuigkeiten und das „Neu“ hier. */
+let _lobAudio=null,_lobSpielt=null;
+function lobDatum(iso){
+  const d=new Date(iso); if(isNaN(d))return "";
+  const heute=new Date(), gleichesJahr=d.getFullYear()===heute.getFullYear();
+  const t=d.toLocaleDateString("de-DE",gleichesJahr?{weekday:"long",day:"numeric",month:"long"}:{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  return t+" · "+d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})+" Uhr";
+}
+function lobListeZu(){
+  try{ if(_lobAudio){_lobAudio.pause();_lobAudio=null;} }catch(e){}
+  _lobSpielt=null;
+  document.getElementById("lob-liste")?.remove();
+  if(typeof lobNeuLaden==="function")lobNeuLaden();
+}
+async function lobListeOpen(spielerId,name){
+  document.getElementById("lob-liste")?.remove();
+  const m=document.createElement("div"); m.id="lob-liste";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Sprachlob für "+(name||"dein Kind"));
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;flex-direction:column;padding:16px;overflow-y:auto";
+  m.style.zIndex=(typeof zOben==="function")?zOben(10060):10060;
+  const innen=document.createElement("div");
+  innen.style.cssText="margin:auto;width:100%;max-width:440px;background:var(--surface);color:var(--text);border-radius:18px;padding:16px;box-sizing:border-box";
+  innen.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+      <div style="flex:1;font-size:var(--s-karte);font-weight:800">🎧 Lob vom Trainer${name?" · "+esc(name):""}</div>
+      <button type="button" class="btn" onclick="lobListeZu()" aria-label="Schließen" style="min-height:44px;min-width:44px">✕</button></div>
+    <div id="lob-liste-inhalt" style="font-size:var(--s-text);color:var(--text2)">Lädt …</div>`;
+  m.appendChild(innen); m.onclick=e=>{ if(e.target===m||e.target===innen.parentNode)lobListeZu(); };
+  document.body.appendChild(m);
+  let zeilen=[];
+  try{ const r=await fetch(`${SB_URL}/rest/v1/kabine_lob?spieler_id=eq.${Number(spielerId)}&select=id,path,created_at,gehoert_am&order=created_at.desc`,{headers:sbAuthHeaders()}); if(r.ok)zeilen=await r.json(); }catch(e){}
+  const el=document.getElementById("lob-liste-inhalt"); if(!el)return;
+  if(!zeilen.length){ el.innerHTML='<div style="padding:14px 0;text-align:center">Noch kein Sprachlob da 🙂<br>Wenn das Trainerteam eins aufnimmt, erscheint es hier.</div>'; return; }
+  const neu=zeilen.filter(z=>!z.gehoert_am).length;
+  el.innerHTML=(neu?`<div style="font-weight:700;color:var(--text);margin-bottom:8px">${neu} neu · ${zeilen.length} insgesamt</div>`:`<div style="margin-bottom:8px">${zeilen.length} Lob${zeilen.length===1?"":"e"} – alle schon gehört 👍</div>`)
+    +`<div role="list" style="display:flex;flex-direction:column;gap:8px">`+zeilen.map(z=>`<button type="button" role="listitem" class="btn lob-zeile" data-id="${z.id}" data-path="${esc(z.path)}" data-neu="${z.gehoert_am?"0":"1"}" onclick="lobAbspielen(this)" aria-pressed="false" style="display:flex;align-items:center;gap:10px;min-height:56px;padding:8px 12px;text-align:left;border-radius:14px;${z.gehoert_am?"":"border:2px solid #db2777;"}">
+      <span aria-hidden="true" class="lob-sym" style="font-size:22px">▶️</span>
+      <span style="flex:1;font-weight:${z.gehoert_am?"500":"800"}">${esc(lobDatum(z.created_at))}</span>
+      ${z.gehoert_am?"":'<span class="lob-neu" style="font-size:var(--s-klein);font-weight:800;color:#fff;background:#db2777;border-radius:999px;padding:2px 10px">Neu</span>'}</button>`).join("")+`</div>`;
+}
+async function lobAbspielen(btn){
+  const id=btn.dataset.id, path=btn.dataset.path;
+  const alleSym=()=>document.querySelectorAll("#lob-liste .lob-zeile").forEach(b=>{ b.setAttribute("aria-pressed","false"); const y=b.querySelector(".lob-sym"); if(y)y.textContent="▶️"; });
+  if(_lobSpielt===id&&_lobAudio){ try{_lobAudio.pause();}catch(e){} _lobAudio=null; _lobSpielt=null; alleSym(); return; }   // zweiter Tipp = Pause
+  try{ if(_lobAudio)_lobAudio.pause(); }catch(e){}
+  alleSym();
+  let url="";
+  try{
+    const sr=await fetch(`${SB_URL}/storage/v1/object/sign/kabine-lob/${path}`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({expiresIn:600})});
+    const sj=await sr.json(); if(sj&&sj.signedURL)url=`${SB_URL}/storage/v1${sj.signedURL}`;
+  }catch(e){}
+  if(!url){ toast("Konnte nicht abspielen","err"); return; }
+  const a=new Audio(url); _lobAudio=a; _lobSpielt=id;
+  btn.setAttribute("aria-pressed","true"); const sym=btn.querySelector(".lob-sym"); if(sym)sym.textContent="⏸️";
+  a.onended=()=>{ if(_lobAudio===a){ _lobAudio=null; _lobSpielt=null; } alleSym(); };
+  a.play().then(()=>{
+    if(btn.dataset.neu==="1"){   // einmal als gehört merken (nur wenn noch leer)
+      btn.dataset.neu="0"; btn.style.border=""; btn.querySelector(".lob-neu")?.remove(); const t=btn.querySelector("span:nth-of-type(2)"); if(t)t.style.fontWeight="500";
+      fetch(`${SB_URL}/rest/v1/kabine_lob?id=eq.${Number(id)}&gehoert_am=is.null`,{method:"PATCH",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({gehoert_am:new Date().toISOString()})}).catch(()=>{});
+    }
+  }).catch(()=>{ toast("Tippe nochmal zum Abspielen","err"); alleSym(); });
+}
+function kabineLobWahl(){
+  const kids=window._elternKids||[];
+  if(kids.length===1){ lobListeOpen(kids[0].spieler_id,(kids[0].kader&&kids[0].kader.name)||""); return; }
+  if(typeof kabinePickKid==="function")kabinePickKid("🎧 Wessen Lob?","lobListeOpen");
+}
+// „Neu“-Punkt auf der Kachel in der Kabine: ungehörte Lobe aller Kinder dieses Geräts
+async function lobNeuLaden(){
+  const kids=window._elternKids||[]; if(!kids.length)return;
+  let n=0;
+  try{ const r=await fetch(`${SB_URL}/rest/v1/kabine_lob?spieler_id=in.(${kids.map(k=>Number(k.spieler_id)).join(",")})&gehoert_am=is.null&select=id`,{headers:sbAuthHeaders()}); if(r.ok)n=(await r.json()).length; }catch(e){}
+  document.querySelectorAll("#kabine-body .kab-lob-neu").forEach(x=>x.remove());
+  if(!n)return;
+  const t=document.querySelector('#kabine-body button[onclick*="kabineLobWahl"]'); if(!t)return;
+  const b=document.createElement("span"); b.className="kab-lob-neu"; b.setAttribute("role","status");
+  b.style.cssText="margin-left:auto;font-size:13px;font-weight:800;color:#fff;background:#db2777;border-radius:999px;padding:3px 12px;white-space:nowrap";
+  b.textContent=n===1?"1 neu":n+" neu"; t.appendChild(b);
+}
 /* C3 – Team-Arena: Einlauf-Song + Schlachtruf (team_config). Identität wie bei den Großen. */
 async function arenaKabineLoad(elId){
   const el=document.getElementById(elId); if(!el)return;
@@ -785,6 +877,8 @@ function kabineHome(){
       ${lbl("Challenges")}
       ${tile("kabineShowQuests()","🏆","Team-Missionen","rgba(245,158,11,.52)","rgba(217,119,6,.32)")}
       ${tile("kabineSkillWoche()","🎬","Skill der Woche","rgba(251,146,60,.48)","rgba(234,88,12,.30)")}
+      ${/* v755: alle Sprachlobe vom Trainerteam nach Datum, „Neu“-Punkt bis zum ersten Anhören – bewusst nicht unter „Mehr entdecken“ */""}
+      ${tile("kabineLobWahl()","🎧","Lob vom Trainer","rgba(219,39,119,.50)","rgba(157,23,77,.34)",true)}
       ${lbl("Team & Spaß")}
       ${/* Paket 2: „Unsere Regeln" steht ganz oben in der Gruppe und über die volle Breite –
             es ist die Identität der Mannschaft, nicht ein Spiel unter vielen. */""}
@@ -812,6 +906,7 @@ function kabineHome(){
     ${window._kindGeraetModus?"":`<button onclick="kabineExit()" style="margin:0 16px 18px;padding:12px;border:none;border-radius:14px;background:rgba(0,0,0,.25);color:#fff;font-family:inherit;font-size:14px;cursor:pointer">🔒 Für Erwachsene: Kabine verlassen</button>`}`;
   teamLevelLoad("kab-level");                                  // C1: Team-Level
   kabineLobLoad();                                              // v675: Federn vom Trainerteam mit Grund
+  lobNeuLaden();                                                // v755: „Neu“-Punkt auf der Kachel „Lob vom Trainer“
   if(typeof arenaKabineLoad==="function")arenaKabineLoad("kab-arena"); // C3: Einlauf-Song/Schlachtruf
   kabineCountdownLoad();                                        // G6: Countdown bis zum nächsten Spiel
   kabineRevealLoad();                                           // H4: Rollen-Reveal am Spieltag
@@ -1499,10 +1594,53 @@ async function kabineHype(){
       <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
       <div style="flex:1;font-size:16px;font-weight:800;color:#fff">🎵 Kabinen-Hype</div></div>`;
   if(!embed){ b.innerHTML=head+'<div style="flex:1;display:flex;align-items:center;justify-content:center;color:#fff;opacity:.85;padding:20px;text-align:center">Noch keine Playlist hinterlegt.<br>Der Trainer kann sie in der Adler-Welt setzen. 🎧</div>'; return; }
-  b.innerHTML=head+`<div style="flex:1;padding:12px 16px">
-    ${kabineEinbettung("kh-playlist",embed,"Kabinen-Playlist","🎵 Playlist laden","Kommt von Spotify.","border-radius:14px;width:100%;height:420px;border:0","encrypted-media; clipboard-write")}
+  /* v752 (PO 04.10.: „Geht es, dass der Kabinen-Hype weiterläuft, wenn man ihn verlässt?“): Der Player
+     steht nicht mehr in der Seite, sondern in #kab-hype-host direkt in #kabine. Ein iframe, das man im DOM
+     umhängt, lädt neu (die Musik bräche ab) – deshalb wechselt nur seine Lage: auf dieser Seite groß über
+     dem Platzhalter #kh-seite, auf jeder anderen Kabinen-Seite als schmale Leiste unten mit ⏹. Mit der
+     Kabine verschwindet auch der Player. */
+  b.innerHTML=head+`<div style="flex:1;padding:12px 16px;overflow:auto">
+    <div id="kh-seite" style="height:420px;display:flex;align-items:center;justify-content:center">
+      ${document.getElementById("kab-hype-host")?"":`<div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        <button type="button" onclick="kabineHypeStart('${jsq(embed)}')" style="min-height:52px;padding:14px 28px;border-radius:16px;border:none;background:#fff;color:#0b2f4d;font-weight:800;font-size:16px;cursor:pointer">🎵 Playlist laden</button>
+        <div style="font-size:12px;color:#fff;opacity:.85">Kommt von Spotify. Läuft weiter, wenn du in der Kabine woanders hingehst.</div></div>`}
+    </div>
     <div style="text-align:center;color:#fff;opacity:.8;font-size:12px;margin-top:10px">Vor dem Spiel schön laut – auf geht's, Adler! 🦅</div>
   </div>`;
+  _khLage();
+}
+function kabineHypeStart(embed){
+  const k=document.getElementById("kabine"); if(!k||!embed)return;
+  document.getElementById("kab-hype-host")?.remove();
+  const h=document.createElement("div"); h.id="kab-hype-host";
+  h.innerHTML=`<div class="kh-leiste"><span class="kh-titel">🎵 Kabinen-Hype läuft</span>
+      <button type="button" class="kh-stopp" onclick="kabineHypeStopp()" aria-label="Musik stoppen">⏹ Stopp</button></div>`;
+  const f=document.createElement("iframe");
+  f.title="Kabinen-Playlist"; f.src=embed; f.setAttribute("allow","encrypted-media; clipboard-write; autoplay");
+  f.setAttribute("style","border-radius:14px;width:100%;height:420px;border:0;display:block");
+  h.appendChild(f);
+  k.appendChild(h);
+  const body=document.getElementById("kabine-body");
+  if(body&&!h._beobachter){ h._beobachter=new MutationObserver(()=>_khLage()); h._beobachter.observe(body,{childList:true,subtree:true}); }
+  _khLage();
+}
+function kabineHypeStopp(){
+  const h=document.getElementById("kab-hype-host"); if(!h)return;
+  try{ h._beobachter&&h._beobachter.disconnect(); }catch(e){}
+  h.remove();
+  if(document.getElementById("kh-seite"))kabineHype();   // auf der Hype-Seite wieder den Knopf zeigen
+}
+function _khLage(){
+  const h=document.getElementById("kab-hype-host"), k=document.getElementById("kabine"); if(!h||!k)return;
+  const platz=document.getElementById("kh-seite"), f=h.querySelector("iframe");
+  if(platz){
+    const r=platz.getBoundingClientRect(), rk=k.getBoundingClientRect();
+    h.className="kh-gross"; h.style.top=Math.round(r.top-rk.top)+"px";
+    if(f)f.style.height="420px";
+  }else{
+    h.className="kh-mini"; h.style.top="";
+    if(f)f.style.height="80px";
+  }
 }
 // Skill der Woche im Kinder-Modus: aktive Challenge holen und das Video zeigen.
 async function kabineSkillWoche(){
