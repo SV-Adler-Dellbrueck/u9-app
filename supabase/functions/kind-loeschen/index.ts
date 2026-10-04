@@ -4,7 +4,9 @@
    Die Datenbank erledigt kind_daten_loeschen (nur service_role): Einschätzungen und Quiz weg,
    Spielgeschehen und Pläne mit „Ehemaliges Kind“ statt Namen, dann der Kader-Eintrag – alles
    mit Fremdschlüssel auf ihn fällt per CASCADE mit. Hier dazu, was die Datenbank nicht kann:
-   das Spielerfoto und die Sprach-Lobe im Speicher und die anonymen Konten der Kindergeräte. */
+   das Spielerfoto und die Sprach-Lobe im Speicher und die anonymen Konten der Kindergeräte.
+   v736: Der private Raum der Familie in den Adler-Rufen hängt per CASCADE am Kader – mit ihm fallen Rufe und
+   Anhangzeilen. Die Dateien dazu (Bucket rufe-anhang, Ordner <raum_id>/) räumt diese Funktion mit ab. */
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const cors = {
@@ -35,6 +37,9 @@ Deno.serve(async (req) => {
     if (!kd) return json({ error: "Kind nicht gefunden – vielleicht schon gelöscht" }, 404);
     const { data: lobe } = await admin.from("kabine_lob").select("path").eq("spieler_id", id);
     const { data: konten } = await admin.from("kind_konto").select("uid").eq("spieler_id", id);
+    const { data: raeume } = await admin.from("rufe_raum").select("id").eq("familie_kind", id);
+    const raumIds = (raeume || []).map((r: any) => r.id);
+    const { data: anhaenge } = raumIds.length ? await admin.from("rufe_anhang").select("pfad").in("raum_id", raumIds) : { data: [] };
 
     const { data: erg, error } = await admin.rpc("kind_daten_loeschen", { p_spieler_id: id, p_trainer: uid });
     if (error || erg?.fehler) return json({ error: error?.message || erg?.fehler }, 500);
@@ -43,6 +48,8 @@ Deno.serve(async (req) => {
     if (kd.foto_path) { const r = await admin.storage.from("spielerfotos").remove([kd.foto_path]); if (!r.error) dateien += r.data?.length || 0; }
     const pfade = (lobe || []).map((l: any) => l.path).filter(Boolean);
     if (pfade.length) { const r = await admin.storage.from("kabine-lob").remove(pfade); if (!r.error) dateien += r.data?.length || 0; }
+    const anhPfade = (anhaenge || []).map((a: any) => a.pfad).filter(Boolean);
+    if (anhPfade.length) { const r = await admin.storage.from("rufe-anhang").remove(anhPfade); if (!r.error) dateien += r.data?.length || 0; }
     for (const k of konten || []) { const r = await admin.auth.admin.deleteUser((k as any).uid); if (!r.error) geraete++; }
 
     return json({ ok: true, ...erg, dateien, kindergeraete: geraete });
