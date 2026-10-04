@@ -128,7 +128,7 @@ async function galerieFoto(id,path){
     if(img)img.src=URL.createObjectURL(await r.blob());
   }catch(e){}
 }
-/* K8: Mehrere Fotos auf einmal – jedes wird clientseitig komprimiert (fotoCompress) und
+/* K8: Mehrere Fotos auf einmal – jedes wird clientseitig verkleinert (fotoVerkleinern, seit v747 ohne Zuschnitt) und
    nacheinander hochgeladen; der Button zeigt den Fortschritt. So ist der Weg „nach dem
    Spiel alles in die App statt in die WhatsApp-Gruppe" wirklich bequem. */
 async function galerieUpload(btn,terminId,inputId){
@@ -149,7 +149,7 @@ async function galerieUpload(btn,terminId,inputId){
     zeige(`⬆️ ${i+1}/${files.length} … `);
     if(file.size>15*1024*1024){fehler++;continue;} // absurde Größen überspringen (Kompression schafft den Rest)
     try{
-      const blob=await fotoCompress(file,1000); // 1000px: gute Event-Qualität, schont Storage
+      const blob=await fotoVerkleinern(file,1600); // v747: ganzes Foto (vorher quadratisch 1000 px), Vorschau schneidet nur die Anzeige zu
       const path=terminId+"/"+((window.crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now())+"-"+i)+".jpg";
       const up=await fetch(`${SB_URL}/storage/v1/object/termin_media/${path}`,{method:"POST",headers:{'Authorization':'Bearer '+sbToken(),'Content-Type':'image/jpeg'},body:blob});
       if(!up.ok){fehler++;continue;}
