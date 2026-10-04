@@ -6,7 +6,8 @@
    mit Fremdschlüssel auf ihn fällt per CASCADE mit. Hier dazu, was die Datenbank nicht kann:
    das Spielerfoto und die Sprach-Lobe im Speicher und die anonymen Konten der Kindergeräte.
    v736: Der private Raum der Familie in den Adler-Rufen hängt per CASCADE am Kader – mit ihm fallen Rufe und
-   Anhangzeilen. Die Dateien dazu (Bucket rufe-anhang, Ordner <raum_id>/) räumt diese Funktion mit ab. */
+   Anhangzeilen. Die Dateien dazu (Bucket rufe-anhang, Ordner <raum_id>/) räumt diese Funktion mit ab.
+   v743: dazu die Dateien des Fotoalbums (kind_foto). */
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const cors = {
@@ -40,12 +41,16 @@ Deno.serve(async (req) => {
     const { data: raeume } = await admin.from("rufe_raum").select("id").eq("familie_kind", id);
     const raumIds = (raeume || []).map((r: any) => r.id);
     const { data: anhaenge } = raumIds.length ? await admin.from("rufe_anhang").select("pfad").in("raum_id", raumIds) : { data: [] };
+    // v743: Fotoalbum – die Zeilen gehen mit dem Kind, die Dateien nicht von selbst
+    const { data: album } = await admin.from("kind_foto").select("pfad").eq("spieler_id", id);
 
     const { data: erg, error } = await admin.rpc("kind_daten_loeschen", { p_spieler_id: id, p_trainer: uid });
     if (error || erg?.fehler) return json({ error: error?.message || erg?.fehler }, 500);
 
     let dateien = 0, geraete = 0;
     if (kd.foto_path) { const r = await admin.storage.from("spielerfotos").remove([kd.foto_path]); if (!r.error) dateien += r.data?.length || 0; }
+    const albumPfade = (album || []).map((a: any) => a.pfad).filter(Boolean);
+    if (albumPfade.length) { const r = await admin.storage.from("spielerfotos").remove(albumPfade); if (!r.error) dateien += r.data?.length || 0; }
     const pfade = (lobe || []).map((l: any) => l.path).filter(Boolean);
     if (pfade.length) { const r = await admin.storage.from("kabine-lob").remove(pfade); if (!r.error) dateien += r.data?.length || 0; }
     const anhPfade = (anhaenge || []).map((a: any) => a.pfad).filter(Boolean);

@@ -52,6 +52,71 @@ beiden Karten der Galerie Zahlen, Stärken nur auf der eigenen; `my_child_card` 
 fremde Kinder gesperrt; die Trainer-Galerie zählt gleich; `anon` bekommt eine leere Galerie, und die Zählfunktionen
 scheitern (eine Fehlermeldung ist gewollt).
 
+## v739 · Spielerkarten Stufe 1 und Adler Wrapped
+
+```bash
+psql -d t -f tests/sql/supabase-attrappe.sql && psql -d t -f supabase/migrations/20261004_v734b_karten_zahlen.sql \
+  && psql -d t -f supabase/migrations/20261004_v739_karten_stufe1.sql && psql -d t -f tests/sql/v739-karten-stufe1.sql
+```
+
+(Für `get_child_wrapped` braucht die Attrappe `kind_fanfacts.starker_fuss`, `punkte_log` und `federn_zaehlt` – siehe
+`$SP/pg/lauf739.sh` bzw. die drei Zeilen vor der Migration.) Erwartet: `kind_fuss` nimmt den Trainerwert vor dem der Eltern
+und versteht beide Schreibweisen; Spielminuten der Saison 150 (90 + 60 ohne Endzeit), 90 und 60 (Vornamen-Schlüssel),
+Vorsaison und Zukunft zählen nicht; Eltern sehen in der Galerie bei allen Karten Stärken, Fuß und Position; die eigene
+Karte trägt den Fuß der Eltern, wenn der Trainer keinen eingetragen hat; Wrapped 2 Spiele und 150 Minuten; fremdes Kind
+im Wrapped verweigert; `anon` leer bzw. verweigert (eine Fehlermeldung gewollt).
+## v740 · Adler-Rufe „Gesehen von …“
+
+```bash
+bash lauf740.sh   # Attrappe (+ profiles.anzeigename, eltern_angaben), v670, v673 bis vor den Cron-Teil, v674, v740 zweimal, dann:
+psql -d r -f tests/sql/v740-rufe-gesehen.sql
+```
+
+Erwartet: Trainer sieht Ruf 1 „1 von 3“ (Elternteil A hat den Raum danach geöffnet, B vorher, B2 nie – der Absender
+zählt nicht) und den Privatruf an Familie B „1 von 2“ (nur diese Familie); die Namensliste nennt Kind C als „ohne
+Zugang“, im Privatraum nicht. Eltern bekommen aus beiden Funktionen nichts und lesen in `rufe_gelesen` nur die eigene
+Zeile; `_rufe_empfaenger` und `anon` scheitern (zwei Fehlermeldungen sind gewollt).
+
+## v743 · Fotoalbum je Kind
+
+```bash
+bash lauf743.sh   # Attrappe (+ Fan-Fakten-Fuß, punkte_log), v734b, v739, v743 zweimal, dann:
+psql -d k -f tests/sql/v743-kind-fotoalbum.sql
+```
+
+Erwartet: Eltern von Kind A legen sechs Fotos an, das siebte scheitert; ein fremdes Kind, ein fremder Pfad, eine
+fehlende Datei und das direkte Setzen des Kartenfotos scheitern; über `kind_foto_als_karte` wird ein Kartenfoto
+gesetzt und der Zweck geändert. Eltern von Kind B sehen von Kind A nur das Kartenfoto, die Galerie zeigt es, Kind B
+ohne Freigabe ohne Foto; ein Album-Foto ist für sie im Speicher nicht sichtbar, und sie dürfen kein Kartenfoto für
+Kind A setzen. Die eigene Karte von Kind A zeigt das Kartenfoto; der Trainer sieht alle Fotos, löst das Kartenfoto,
+dann zeigt die Galerie wieder das alte Profilfoto. `anon` scheitert. Sieben Fehlermeldungen sind gewollt.
+
+## v744 · Sonderkarten
+
+```bash
+bash lauf744.sh   # wie lauf743, dazu v744 zweimal, dann:
+psql -d k -f tests/sql/v744-sonderkarten.sql
+```
+
+Erwartet für Kind A: Momentkarte 03.10., Kapitän 03.10. (Adler 1, 2. Mal), Spieltag 03.10. (Adler 1, Spielform aus dem
+Termin), Kapitän 26.09. (Adler 2, 1. Mal), Spieltag 26.09. (Adler 2, Spielform „funino“ aus `_form`, mit Trainer-Satz);
+der Spieltag in der Zukunft fehlt. Fotos nach Zweck (Aktion, Porträt), die Momentkarte fällt mangels Jubelfoto auf das
+Profilfoto zurück. Eltern sehen fremde Karten nicht und schreiben keine; das Kindergerät sieht nur die eigenen; Eltern
+von Kind B sehen die Tabellenzeilen von Kind A nicht. `anon` scheitert. Zwei Fehlermeldungen sind gewollt.
+
+## v745 · Sonderkarten für alle
+
+```bash
+bash lauf745.sh   # wie lauf744, dazu v745, dann:
+psql -d k -f tests/sql/v745-sonderkarten-alle.sql
+```
+
+Erwartet: wie v744 für das eigene Kind (Fotos nach Zweck aus dem Album). Eltern von Kind A sehen jetzt auch die Karten
+von Kind B (Spieltag 26.09., Kapitän 03.10.), ohne Foto, weil Kind B keine Freigabe hat; das Kindergerät von Kind A
+sieht 5 eigene und 2 fremde Karten. Eltern von Kind B sehen die Tabelle `sonderkarte` weiter nicht, bekommen aber die
+Karten von Kind A samt Trainer-Satz – mit dem Profilfoto statt der Album-Fotos (Kind A hat Freigabe). `anon` scheitert.
+Zwei Fehlermeldungen sind gewollt.
+
 ## v736 · Adler-Ruf: 5.000 Zeichen und Anhänge
 
 ```bash

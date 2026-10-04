@@ -108,6 +108,8 @@ caches.keys().then(ks => ks.forEach(k => caches.delete(k)));
    in Elternsprache. Keine Fehlerbehebungen, keine Trainer-Funktionen. Daraus entsteht sonntags um
    18 Uhr der Push „Aus der Adlerschmiede“ (Edge Function `adlerschmiede-push`, nur wenn es in der
    Woche etwas gibt) – der Push zeigt nur den Kurztitel.
+   **Seit 04.10.2026 erst nach Freigabe:** Emoji und Text vorher Charles im Chat zeigen und fragen, ob die
+   Neuerung den Eltern angezeigt werden soll; eingetragen wird erst nach seinem Wort.
 
 ## Datenbank
 

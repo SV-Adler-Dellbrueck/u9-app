@@ -12,7 +12,7 @@
    Datenweg: Tabellen rufe_* mit RLS (Migration 20260929_v670_adler_rufe.sql). Bearbeiten und
    Archivieren nur über RPC. Keine Systemdialoge – alle Rückfragen sind eigene Fenster.
 
-   v736 (doku/auftrag-rufe-anhaenge): 5.000 Zeichen je Ruf, lange Rufe gekürzt mit „Weiterlesen“, Anhänge
+   v748 (Auftrag als v736 gebaut; doku/auftrag-rufe-anhaenge): 5.000 Zeichen je Ruf, lange Rufe gekürzt mit „Weiterlesen“, Anhänge
    (Bilder, PDF, Word, Excel, PowerPoint; 10 MB, vier je Ruf) im privaten Bucket rufe-anhang. Gesendet wird
    mit Anhängen über rufe_senden (Ruf und Anhänge in einem Aufruf); Bilder zeigt die Blase als Miniatur,
    PDF öffnet im neuen Tab, Office wird heruntergeladen – nie in der App gerendert. Trainer können Anhänge
@@ -225,13 +225,16 @@ async function rufeLaden(zumEnde){
   ]);
   // v674: Stand der Abstimmungen – lesend per GET (die Funktion ist stable)
   const stand=umf.length?await _rfGet(`rpc/rufe_umfrage_stand?p_ids=${encodeURIComponent("{"+umf.map(u=>Number(u.id)).join(",")+"}")}`):[];
+  // v740: „Gesehen von …“ nur für das Trainerteam – die Funktion antwortet Eltern ohnehin leer
+  const ges=_rf.trainer&&ids.length?await _rfGet(`rpc/rufe_gesehen_zahlen?p_ids=${encodeURIComponent("{"+ids.map(Number).join(",")+"}")}`).catch(()=>[]):[];
   if(!_rf||_rf.raum!==raum)return;
   const neu=liste.length&&liste[liste.length-1].id!==_rf.letzte;
-  const kennung=JSON.stringify([liste.map(n=>[n.id,n.text,n.archiviert_am,n.anhang_entfernt_am,(n.rufe_anhang||[]).map(a=>a.id)]),reakt.length,fix,umf.map(u=>[u.id,u.beendet_am]),stand]);
+  const kennung=JSON.stringify([liste.map(n=>[n.id,n.text,n.archiviert_am,n.anhang_entfernt_am,(n.rufe_anhang||[]).map(a=>a.id)]),reakt.length,fix,umf.map(u=>[u.id,u.beendet_am]),stand,ges]);
   if(!zumEnde&&kennung===_rf.kennung)return;
   _rf.kennung=kennung;
   _rf.liste=liste; _rf.reakt=reakt; _rf.fix=fix.filter(f=>!f.bis||new Date(f.bis)>new Date());
   _rf.umf={}; umf.forEach(u=>_rf.umf[u.nachricht_id]=u);
+  _rf.gesehen={}; (Array.isArray(ges)?ges:[]).forEach(x=>_rf.gesehen[x.nachricht_id]={g:Number(x.gesehen)||0,e:Number(x.empfaenger)||0});
   _rf.stand={}; stand.forEach(x=>{ (_rf.stand[x.umfrage_id]=_rf.stand[x.umfrage_id]||{})[x.option]=x; });
   const box=document.getElementById("rufe-liste");
   const unten=box&&(box.scrollHeight-box.scrollTop-box.clientHeight<80);
@@ -284,6 +287,7 @@ function rufeNachrichtHtml(n){
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px">
         ${Object.keys(r).map(e=>`<button type="button" class="rf-reakt" onclick="rufeReagieren(${Number(n.id)},'${e}')" aria-pressed="${r[e].ich}" aria-label="${e} ${r[e].n}, ${r[e].ich?"zurücknehmen":"dazu"}" style="min-height:44px;padding:2px 8px;border-radius:999px;border:1.5px solid ${r[e].ich?"#1e3a8a":"var(--rand-bedien)"};background:${r[e].ich?"#dbeafe":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);cursor:pointer">${e} ${r[e].n}</button>`).join("")}
         <span style="flex:1"></span>
+        ${_rf.trainer&&!arch&&_rf.gesehen&&_rf.gesehen[n.id]?(()=>{ const x=_rf.gesehen[n.id]; return `<button type="button" class="rf-gesehen" onclick="rufeGesehenOpen(${Number(n.id)})" aria-label="Gesehen von ${x.g} von ${x.e} – Namen zeigen" style="min-height:44px;padding:2px 8px;border:none;border-radius:999px;background:transparent;color:var(--text2);font-family:inherit;font-size:var(--s-klein);cursor:pointer"><span aria-hidden="true">👁</span> ${x.g}/${x.e}</button>`; })():""}
         <span style="font-size:var(--s-klein);color:var(--text2)">${arch?"archiviert · ":""}${n.bearbeitet_am?"bearbeitet · ":""}${_rfZeit(n.created_at)}</span>
         ${arch?"":`<button type="button" class="rf-menue-knopf" onclick="rufeMenue(${Number(n.id)})" aria-label="Aktionen zu diesem Ruf" style="width:44px;height:44px;border:none;border-radius:50%;background:transparent;color:var(--text2);font-size:var(--s-teil);cursor:pointer">⋯</button>`}
       </div>
@@ -369,6 +373,33 @@ async function rufeGelesen(){
   try{ await fetch(`${SB_URL}/rest/v1/rufe_gelesen?on_conflict=user_id,raum_id`,{method:"POST",headers:sbAuthHeaders({'Prefer':'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify({raum_id:_rf.raum,zuletzt:new Date().toISOString()})}); }catch(e){}
 }
 
+/* ── v740: Wer hat den Ruf gesehen? (nur Trainerteam) ────────────────────────────
+   „Gesehen“ heißt: das Konto hat den Raum geöffnet, nachdem der Ruf kam (rufe_gelesen). Eine Benachrichtigung
+   allein zählt nicht. Eltern bekommen diese Anzeige nie – die Datenbank antwortet ihnen leer. */
+async function rufeGesehenOpen(id){
+  if(!_rf||!_rf.trainer)return;
+  document.getElementById("rufe-menue")?.remove();
+  const m=_rfBlatt("rufe-gesehen","Wer hat den Ruf gesehen?",`<div style="color:var(--text2);font-size:var(--s-text)">Lädt …</div>`);
+  let liste=[];
+  try{ const r=await fetch(`${SB_URL}/rest/v1/rpc/rufe_gesehen?p_nachricht=${Number(id)}`,{headers:sbAuthHeaders()}); liste=r.ok?await r.json():null; }catch(e){ liste=null; }
+  if(!document.body.contains(m))return;
+  const box=m.firstElementChild;
+  if(!Array.isArray(liste)){ box.lastElementChild.textContent="Konnte nicht geladen werden – bitte gleich noch einmal."; return; }
+  const sort=(a,b)=>String(a.name).localeCompare(String(b.name),"de");
+  const ja=liste.filter(x=>x.gesehen).sort(sort), nein=liste.filter(x=>!x.gesehen&&!x.ohne_zugang).sort(sort), ohne=liste.filter(x=>x.ohne_zugang).sort(sort);
+  const wann=ts=>{ if(!ts)return ""; const d=new Date(ts); return d.toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"})+" "+_rfZeit(ts); };
+  const zeile=(x,zeit)=>`<li style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--surface2)"><span>${x.trainer?"🦅 ":""}${esc(x.name||"")}</span>${zeit?`<span style="color:var(--text2);font-size:var(--s-klein);white-space:nowrap">${esc(zeit)}</span>`:""}</li>`;
+  const block=(titel,arr,fn)=>arr.length?`<div style="font-weight:800;margin-top:12px">${titel} (${arr.length})</div><ul style="list-style:none;margin:4px 0 0;padding:0">${arr.map(fn).join("")}</ul>`:"";
+  box.lastElementChild.remove();
+  box.insertAdjacentHTML("beforeend",
+    block("✓ Gesehen",ja,x=>zeile(x,"zuletzt im Raum "+wann(x.zuletzt)))
+    +block("✗ Noch nicht gesehen",nein,x=>zeile(x,""))
+    +block("Ohne Elternzugang",ohne,x=>zeile(x,"keine App"))
+    +(liste.length?"":`<div style="color:var(--text2)">Noch niemand außer dir kann diesen Raum lesen.</div>`)
+    +`<div style="margin-top:12px;color:var(--text2);font-size:var(--s-klein)">Gesehen heißt: hat den Raum geöffnet, nachdem der Ruf kam – eine Benachrichtigung allein zählt nicht. Diese Anzeige sieht nur das Trainerteam.</div>`
+    +`<button type="button" onclick="document.getElementById('rufe-gesehen')?.remove()" style="${_RF_ZEILE};justify-content:center;background:var(--surface2)">Schließen</button>`);
+}
+
 /* ── Aktionen zu einem Ruf ────────────────────────────────────────────────────── */
 function _rfBlatt(id,titel,inhalt){
   document.getElementById(id)?.remove();
@@ -394,6 +425,7 @@ function rufeMenue(id){
   _rfBlatt("rufe-menue","Ruf von "+esc(eigen?"dir":n.autor_name||""),
     `<div style="display:flex;gap:6px;justify-content:space-between">${RUFE_EMOJI.map(e=>`<button type="button" class="rf-emo" onclick="rufeReagieren(${id},'${e}')" aria-label="Mit ${e} reagieren" style="flex:1;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);font-size:var(--s-teil);cursor:pointer">${e}</button>`).join("")}</div>`
     +zeile("↩️","Antworten",`rufeAntworten(${id})`)
+    +(_rf.trainer&&!n.archiviert_am?zeile("👁","Wer hat ihn gesehen?",`rufeGesehenOpen(${id})`):"")
     +(darfModerieren?(fixiert?zeile("📌","Nicht mehr fixieren",`rufeFixieren(${id},null,true)`):zeile("📌","Oben fixieren …",`rufeFixMenue(${id})`)):"")
     +(uOffen&&(u.von===_rf.uid||darfModerieren)?zeile("🏁","Abstimmung beenden",`rufeUmfrageBeenden(${Number(u.id)})`):"")
     +(eigen&&!u?zeile("✏️","Bearbeiten",`rufeBearbeitenOpen(${id})`):"")

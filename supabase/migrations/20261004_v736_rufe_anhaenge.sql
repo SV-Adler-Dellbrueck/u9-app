@@ -1,5 +1,5 @@
 -- v736 · Adler-Ruf: 5.000 Zeichen und Anhänge (doku/auftrag-rufe-anhaenge/Auftragspaket_Rufe_Anhaenge.md)
--- NICHT von Claude Code angewendet: Der Projekt-Chat prüft und spielt diese Datei vor dem Merge ein.
+-- Am 04.10.2026 von Charles im SQL-Editor eingespielt; ausgeliefert mit App-Version v748 (gebaut als v736).
 -- Lokal gegen ein Postgres 16 mit tests/sql/supabase-attrappe.sql geprüft (tests/sql/v736-rufe-anhaenge.sql).
 --
 -- 1. Zeichenlimit 2.000 → 5.000 (CHECK und rufe_bearbeiten; das Eingabefeld zieht der Client nach).

@@ -1,4 +1,4 @@
-/* v736 · Adler-Ruf: 5.000 Zeichen und Anhänge (doku/auftrag-rufe-anhaenge/Auftragspaket_Rufe_Anhaenge.md)
+/* v748 (gebaut als v736) · Adler-Ruf: 5.000 Zeichen und Anhänge (doku/auftrag-rufe-anhaenge/Auftragspaket_Rufe_Anhaenge.md)
    Rechte, Bucket-Regeln und „kein halber Ruf“ prüft tests/sql/v736-rufe-anhaenge.sql gegen ein echtes Postgres.
    Am DOM:
    a) Regeln als reine Funktionen: Name bereinigt (Pfad, Steuerzeichen, verbotene Zeichen, 120 Zeichen mit Endung),
@@ -61,7 +61,7 @@ module.exports = async function (h) {
   // ── Eltern, 360 px ──
   const s = await start("/eltern/index.html", 360);
   const o = await oeffnen(s, token("u-eigen"));
-  if (o.fehlt) { await s.schliessen(); return h.ergebnis("v736 Adler-Ruf: 5.000 Zeichen und Anhänge", false, ["rufeAnhangPruefen fehlt"]); }
+  if (o.fehlt) { await s.schliessen(); return h.ergebnis("v748 Adler-Ruf: 5.000 Zeichen und Anhänge", false, ["rufeAnhangPruefen fehlt"]); }
   const ra = await s.page.evaluate(async () => {
     const w = ms => new Promise(x => setTimeout(x, ms)), out = {};
     // a)
@@ -182,5 +182,5 @@ module.exports = async function (h) {
   zeilen.push(`i) 📎 ${ra.i.anhang} px · Senden ${ra.i.senden} px · 360 px ohne Querscrollen · Sicherung mit rufe_anhang`);
   if (f1.length) probleme.push("Konsole Eltern: " + f1.slice(0, 2).join(" | "));
   if (f2.length) probleme.push("Konsole Trainer: " + f2.slice(0, 2).join(" | "));
-  return h.ergebnis("v736 Adler-Ruf: 5.000 Zeichen und Anhänge", !probleme.length, zeilen.concat(probleme));
+  return h.ergebnis("v748 Adler-Ruf: 5.000 Zeichen und Anhänge", !probleme.length, zeilen.concat(probleme));
 };

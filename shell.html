@@ -579,6 +579,8 @@
       <button id="tm-gegnerdb-btn" class="btn btn-sm" style="margin-top:8px;width:100%;justify-content:center;min-height:44px;display:none" onclick="gegnerManageOpen()"><i class="ti ti-address-book"></i>Gegner-Datenbank</button>
     </div>
     <div class="sl nt"><i class="ti ti-calendar"></i>Kommende Termine</div>
+    <!-- v741: mehrere Termine auf einmal absagen (Ferien, Zeitraum) -->
+    <button id="tm-absagen-btn" class="btn btn-sm" style="width:100%;justify-content:center;min-height:44px;margin-bottom:8px" onclick="if(typeof tmAbsagenOpen==='function')tmAbsagenOpen();else toast('Lädt noch – gleich noch einmal','err')"><i class="ti ti-beach"></i>Ferien &amp; Zeitraum absagen</button>
     <div id="tm-upcoming"></div>
     <!-- v683: Trainerplan und Grillhütte als Kacheln UNTER den Terminen. Oben standen sie als zwei
          gleich große Knöpfe vor „Neuer Termin“ – drei Knöpfe, bevor man den ersten Termin sah. Sie
