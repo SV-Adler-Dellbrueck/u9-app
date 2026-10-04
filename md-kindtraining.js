@@ -14,10 +14,16 @@
    neue Ideen auf der Startseite, öffnet sie, sagt „👍 Danke“ – das sieht das Kind unter
    „Schon geschickt“. */
 
+/* Charles 04.10.: „Die Kinder sollten nur eine kleine Anzahl an einfachen Übungen zur Auswahl bekommen,
+   sonst wird es viel zu viel.“ Kachel: feste Auswahl, höchstens fünf je Teil – Übungen, die die Kinder aus
+   dem Training kennen. Fehlt eine (umbenannt, gelöscht), fällt sie still weg. */
 const KT_TEILE=[
-  {art:"aufwaermen", emo:"🔥", name:"Aufwärmen",     kats:["aufwaermen","wahrnehmung","spass"],                       min:10},
-  {art:"uebung",     emo:"⚽", name:"Übung",          kats:["technik","passspiel","individual","wahrnehmung","pressing"], min:15},
-  {art:"abschluss",  emo:"🏆", name:"Abschlussspiel", kats:["raute","spass","pressing"],                               min:15}
+  {art:"aufwaermen", emo:"🔥", name:"Aufwärmen", min:10,
+   wahl:["Warm up Adler","Adler 1 – Aktivierung","Adler 2 – Dribbelstaffel","Hai & Fische","Zombieball"]},
+  {art:"uebung",     emo:"⚽", name:"Übung", min:15,
+   wahl:["Doppelpass durch die Stangen","Stangentausch","Adler 3 – Passen mit Klatschen","Adler 4 – Passen und Torschuss","Zwei Torarten – Schuss oder Dribbling"]},
+  {art:"abschluss",  emo:"🏆", name:"Abschlussspiel", min:15,
+   wahl:["FUNiño 1 gegen 1 – vorbei, dann das freie Minitor","Abschlussspiel – 3+1 gegen 3+1 Raute mit Countdown","Eishockey-Reihentausch – 6 gegen 6 in zwei Reihen","Korb-Chaos-Funino (360°-Variante)","Endzone und Fähnchen"]}
 ];
 const KT_MINUTEN=[5,10,15,20];
 let _kt=null;   // {sid, name, teile:[…3], geschickt:[…]}
@@ -118,8 +124,7 @@ function ktWeg(i){ if(!_kt)return; _kt.teile[i]=null; _ktMerken(); ktRender(); }
 function ktWahl(i){
   if(!_kt)return; ktWahlZu();
   const d=KT_TEILE[i];
-  // Übungen mit Skizze zuerst – ein Bild sagt Kindern mehr als der Text
-  const liste=(_ktBib||[]).filter(u=>d.kats.includes(u.kat)).sort((a,b)=>(b.skizze?1:0)-(a.skizze?1:0));
+  const liste=d.wahl.map(n=>(_ktBib||[]).find(u=>u.name===n)).filter(Boolean);
   const w=document.createElement("div");
   w.id="kt-wahl"; w.className="kt-wahl"; w.setAttribute("role","dialog"); w.setAttribute("aria-modal","true"); w.setAttribute("aria-labelledby","kt-wahl-t");
   w.innerHTML=`<div class="kt-wahl-box">

@@ -3,7 +3,7 @@
    kindgerecht.“ Kacheln: „Auch an Trainer schicken“. Die Rechte prüft tests/sql/v751-kind-training.sql.
    a) Kabine: Kachel „Mein Training“ unter „Mehr entdecken“
    b) Drei Teile (Aufwärmen, Übung, Abschlussspiel); ohne Teil sind Schicken und Zeigen aus; alle Knöpfe ≥ 44 px
-   c) „Übung aussuchen“ zeigt Bildkarten nur aus passenden Kategorien, keine Lehrgangsform; Minuten als Knöpfe
+   c) „Übung aussuchen“ zeigt nur die feste Kinder-Auswahl (höchstens fünf je Teil, PO 04.10.); Minuten als Knöpfe
    d) „Selbst zeichnen“ öffnet das Brett mit eigenem Speicherplatz; ein Mitspieler steht mit Vornamen in der
       Skizze, „✓ Fertig“ übernimmt sie; das Taktikbrett des Kindes bleibt unberührt
    e) „An den Trainer schicken“ schreibt kind_training mit spieler_id und genau art/uebung|brett/minuten;
@@ -41,7 +41,7 @@ module.exports = async function (h) {
     ktWahl(0); await w(50);
     const wahl = document.getElementById("kt-wahl");
     out.c = { role: wahl && wahl.getAttribute("role"), karten: wahl ? wahl.querySelectorAll(".kt-karte").length : 0,
-      kats: wahl && wahl._liste ? [...new Set(wahl._liste.map(u => u.kat))].sort() : [], lehrgang: wahl && wahl._liste ? wahl._liste.some(u => /^Lehrgang /.test(u.name)) : true,
+      namen: wahl && wahl._liste ? wahl._liste.map(u => u.name) : [],
       mitBild: wahl ? wahl.querySelectorAll(".kt-karte svg").length : 0 };
     wahl.querySelector(".kt-karte").click(); await w(50);
     ktMinuten(0, 5); await w(30);
@@ -65,9 +65,9 @@ module.exports = async function (h) {
   zeilen.push("a) Kachel „📋 Mein Training“ unter „Mehr entdecken“");
   if (r.b.teile.join("|") !== "🔥 1. Aufwärmen|⚽ 2. Übung|🏆 3. Abschlussspiel" || !r.b.schickenAus || r.b.klein.length) probleme.push(`b) ${JSON.stringify(r.b)}`);
   zeilen.push(`b) ${r.b.teile.join(" · ")} – Schicken aus, solange nichts geplant ist`);
-  const erlaubt = ["aufwaermen", "spass", "wahrnehmung"];
-  if (r.c.role !== "dialog" || r.c.karten < 5 || r.c.kats.some(k => !erlaubt.includes(k)) || r.c.lehrgang || r.c.mitBild < 3 || r.c.min !== "5 Min.") probleme.push(`c) ${JSON.stringify(r.c)}`);
-  zeilen.push(`c) Aufwärmen: ${r.c.karten} Bildkarten (${r.c.kats.join(", ")}), ${r.c.mitBild} mit Skizze, Minuten als Knöpfe`);
+  const soll = ["Warm up Adler", "Adler 1 – Aktivierung", "Adler 2 – Dribbelstaffel", "Hai & Fische", "Zombieball"];
+  if (r.c.role !== "dialog" || r.c.karten !== 5 || JSON.stringify(r.c.namen) !== JSON.stringify(soll) || r.c.mitBild < 3 || r.c.min !== "5 Min.") probleme.push(`c) ${JSON.stringify(r.c)}`);
+  zeilen.push(`c) Aufwärmen: genau ${r.c.karten} Karten (${r.c.namen.join(", ")}), ${r.c.mitBild} mit Skizze, Minuten als Knöpfe`);
   if (!r.d.fertigKnopf || r.d.name !== "Meine eigene Übung" || !/Testa/.test(r.d.svgText) || !r.d.taktikbrettUnberuehrt) probleme.push(`d) ${JSON.stringify(r.d)}`);
   zeilen.push(`d) Eigene Skizze mit „${r.d.svgText}“, Taktikbrett unberührt`);
   let body = null; try { body = JSON.parse(posts[0] || "null"); } catch (e) {}
