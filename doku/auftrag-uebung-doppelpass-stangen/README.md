@@ -6,9 +6,9 @@ Dreistufen-Aufbaus. Maße (Stangen 3 m, Dummy 3 m dahinter, Minitor 3 m vor dem 
 von Charles bestätigt.
 
 **Änderung 04.10.2026:** Als Alternative laufen zwei Parcours nebeneinander parallel und
-schließen auf dasselbe Minitor ab. Auf jedem Parcours startet das zweite Paar, sobald das
-erste am Wendepunkt angekommen ist. Damit verdoppelt sich die Kinderzahl auf 8. Die Skizze
-zeigt weiter **einen** Parcours; die Alternative steht im Text.
+schließen auf dasselbe Minitor ab. Das erste Paar startet am linken Parcours; sobald es am
+Wendepunkt angekommen ist, startet der zweite (rechte) Parcours. Damit verdoppelt sich die
+Kinderzahl auf 8. Die Skizze zeigt weiter **einen** Parcours; die Alternative steht im Text.
 
 ## Die Übung
 
@@ -18,11 +18,11 @@ zeigt weiter **einen** Parcours; die Alternative steht im Text.
   "uebungen": [{
     "name": "Doppelpass durch die Stangen",
     "kat": "technik",
-    "kurz": "Zwei Kinder spielen Doppelpass über eine Stangenlinie, tauschen oben Ball und Rolle, kommen zurück und schließen aufs Minitor ab. Alternativ laufen zwei Parcours parallel auf dasselbe Minitor.",
+    "kurz": "Zwei Kinder spielen Doppelpass über eine Stangenlinie, tauschen oben Ball und Rolle, kommen zurück und schließen aufs Minitor ab. Alternativ laufen zwei Parcours nebeneinander im Wechsel auf dasselbe Minitor.",
     "spieler": "4-8",
     "feld": "ca. 6 x 20 m je Station; Alternative: zwei Parcours nebeneinander, ein gemeinsames Minitor",
     "dauer": "10",
-    "ablauf": "AUFBAU: Vier Stangen in einer Linie (Abstand ca. 3 m), 3 m hinter der letzten Stange der Dummy. Unten zwei Hütchen als Start, 3 m davor das Minitor. Je ein Kind steht links und rechts der Stangenlinie, zwei weitere warten hinter den Startkindern mit eigenem Ball. ABLAUF: Hin: A und B laufen links und rechts der Stangenlinie nach oben und spielen sich den Ball im Doppelpass durch die Lücken zu. Oben am Dummy übergibt der Ballführer den Ball, beide tauschen Seite und Rolle. Zurück: Doppelpass in die andere Richtung auf den getauschten Seiten. Unten schließt ein Kind aufs Minitor ab. Beide klatschen mit dem nächsten Paar ab, das startet. REGELN: Der Ball bleibt flach. Pass nur durch die Lücke zwischen zwei Stangen. Abschluss erst unten. TYPISCHE FEHLER: Pass zu hart oder zu früh, Partner läuft nicht mit, Ball bleibt bei der Übergabe liegen, Abschluss aus dem Stand ohne Anlauf. ALTERNATIVE ZWEI PARCOURS: Zwei Parcours stehen nebeneinander und laufen parallel, beide schließen auf dasselbe Minitor ab. Sobald das erste Paar am Wendepunkt seines Parcours angekommen ist, startet auf diesem Parcours das zweite Paar. Damit verdoppelt sich die Zahl der Kinder auf 8. Stangen und Wendepunkt gibt es je Parcours, das Minitor ist nur einmal da. SKALIERUNG: 4 Kinder = ein Parcours, 8 Kinder = zwei Parcours nebeneinander. Mit mehr Kindern weitere Stationen aufmachen, immer 4 Kinder je Parcours. BEOBACHTUNG: Welches Kind vom Paar sucht die Lücke früh, welches wartet auf den Ball?",
+    "ablauf": "AUFBAU: Vier Stangen in einer Linie (Abstand ca. 3 m), 3 m hinter der letzten Stange der Dummy. Unten zwei Hütchen als Start, 3 m davor das Minitor. Je ein Kind steht links und rechts der Stangenlinie, zwei weitere warten hinter den Startkindern mit eigenem Ball. ABLAUF: Hin: A und B laufen links und rechts der Stangenlinie nach oben und spielen sich den Ball im Doppelpass durch die Lücken zu. Oben am Dummy übergibt der Ballführer den Ball, beide tauschen Seite und Rolle. Zurück: Doppelpass in die andere Richtung auf den getauschten Seiten. Unten schließt ein Kind aufs Minitor ab. Beide klatschen mit dem nächsten Paar ab, das startet. REGELN: Der Ball bleibt flach. Pass nur durch die Lücke zwischen zwei Stangen. Abschluss erst unten. TYPISCHE FEHLER: Pass zu hart oder zu früh, Partner läuft nicht mit, Ball bleibt bei der Übergabe liegen, Abschluss aus dem Stand ohne Anlauf. ALTERNATIVE ZWEI PARCOURS: Zwei Parcours stehen nebeneinander und laufen parallel, beide schließen auf dasselbe Minitor ab. Auf jedem Parcours warten zwei Paare. Das erste Paar startet am linken Parcours. Kommt es am Wendepunkt an, startet das erste Paar des rechten Parcours. Kommt dieses am Wendepunkt an, startet das zweite Paar links, und so geht es im Wechsel weiter. Damit verdoppelt sich die Zahl der Kinder auf 8. Stangen und Wendepunkt gibt es je Parcours, das Minitor ist nur einmal da. SKALIERUNG: 4 Kinder = ein Parcours, 8 Kinder = zwei Parcours nebeneinander. Mit mehr Kindern weitere Stationen aufmachen, immer 4 Kinder je Parcours. BEOBACHTUNG: Welches Kind sucht die Lücke früh, welches wartet auf den Ball?",
     "varianten": "Leichter: Stangen weiter auseinander, Pass mit der Innenseite aus dem Stand. Schwerer: Das zweite Paar startet schon, wenn das erste oben am Dummy ankommt, oder Doppelpass nur mit dem schwächeren Fuß.",
     "coaching": "Wohin läufst du, nachdem du abgespielt hast? Wie bekommt dein Partner den Ball in den Lauf? Was machst du, bevor du aufs Tor schießt?",
     "diff": 2,
@@ -50,10 +50,11 @@ gezeichneten Parcours: 1 Minitor · 2 Hütchen · 4 Stangen · 1 Freistoß-Dummy
 
 ## Offen, nicht geraten
 
-- **Zwei Parcours:** Ob mit „die ersten beiden“ das erste Paar je Parcours gemeint ist
-  (so im Text umgesetzt) oder beide Parcours erst gemeinsam am Wendepunkt sein müssen, ist
-  nicht bestätigt. Abstand der Parcours zueinander und Lage des gemeinsamen Minitors sind
-  nicht festgelegt, die Skizze zeigt die Alternative nicht.
+- **Zwei Parcours:** Charles sagte: „Wenn der linke Parcours am Wendepunkt angekommen ist,
+  startet der zweite.“ Umgesetzt ist ein abwechselnder Start: links, rechts, links, rechts,
+  mit je zwei Paaren pro Parcours. Dass es im Wechsel weitergeht, ist die Lesart; Charles
+  nannte nur den ersten Übergang. Abstand der Parcours zueinander und Lage des gemeinsamen
+  Minitors sind nicht festgelegt, die Skizze zeigt die Alternative nicht.
 - Dauer 10 Min und Schwierigkeit 2 sind von mir gesetzt.
 
 ## Dabei
