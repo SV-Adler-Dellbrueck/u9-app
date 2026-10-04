@@ -6,7 +6,7 @@
    c) Orga: kein Emoji doppelt; „Setup-Übersicht“ steht unter Einstellungen.
    d) Eltern & Kinder: die Einladungskarten haben eine eigene Kachel.
    e) Spieltag: „Turnierplan (auswärts)“ (dieselbe Seite wie „Match“) ist weg.
-   f) Kabine: höchstens acht Kacheln vorn, der Rest hinter „Mehr entdecken“ – keine geht verloren. */
+   f) Kabine: höchstens neun Kacheln vorn (seit v755 „Lob vom Trainer“ mit Neu-Punkt, bewusst nicht hinter „Mehr entdecken“), der Rest dahinter – keine geht verloren. */
 "use strict";
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
@@ -64,7 +64,7 @@ module.exports = async function (h) {
     });
     const f = s.fehler().filter(x => !/youtube/i.test(x));
     await s.schliessen();
-    if (r.vorn.length > 8) probleme.push(`f) vorn stehen ${r.vorn.length} Kacheln`);
+    if (r.vorn.length > 9) probleme.push(`f) vorn stehen ${r.vorn.length} Kacheln`);
     if (!r.mehr || !r.zu) probleme.push("f) kein zugeklapptes „Mehr entdecken“");
     for (const fn of ["kabineQuiz('taktik')", "kabineMyCard()", "kabineCodex()", "kabineShowGallery()", "kabineReporter()", "kabineAlbum()", "kabineStaerken()"])
       if (!r.fn.includes(fn)) probleme.push("f) Kachel verloren: " + fn);
