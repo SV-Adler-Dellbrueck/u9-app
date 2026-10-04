@@ -2325,6 +2325,200 @@ async function kinderAppTrennen(uid){
 // D2: Trainerliste speist Select + beide Checkbox-Leisten.
 // TRAINER steht seit v386 in data.js (Welle 1) – hier NICHT erneut definieren,
 // ein globaler Name darf nicht in beiden Wellen leben.
+/* ── v744 (PO 04.10., Entwurf A/B/C freigegeben): Sonderkarten ────────────────────────────────────────────
+   Spieltag (automatisch bei „dabei“), Kapitän (automatisch mit der Binde), Moment (vergibt der Trainer).
+   Sehen: das Kind, seine Eltern und das Trainerteam – die Datenbank (sonderkarten_kind) liefert sie nur diesen.
+   Kein Ergebnis, keine Tore, keine Rangliste: die Kapitänskarte sagt, was ein Kapitän bei uns tut. */
+const SK_ART={
+  spieltag:{a:"#1e3a8a",b:"#0ea5e9",tag:"SPIELTAG"},
+  kapitaen:{a:"#78350f",b:"#f59e0b",tag:"KAPITÄN"},
+  moment:{a:"#065f46",b:"#10b981",tag:"MOMENT"}
+};
+const SK_KAPITAEN_TEXT="Kapitäne begrüßen den Gegner, sagen „Gut gespielt“ und trösten, wenn’s nicht klappt.";
+const SK_MOMENTE=["Erster Spieltag im Adler-Trikot","Zurück nach Verletzung","Erstes Mal im Tor","Großer Teamgeist","Mutig ausprobiert"];
+const SK_FORM={"4+1":"4+1","3+1":"3+1","5+1":"5+1",funino:"FUNiño"};
+function skDatum(iso,lang){ if(!iso)return ""; const d=new Date(iso+"T12:00:00"); const t=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
+  return (lang?t+" ":"")+String(iso).slice(8,10)+"."+String(iso).slice(5,7)+"."; }
+function skTexte(c){
+  const formen=String(c.spielform||"").split(",").map(x=>SK_FORM[x.trim()]||x.trim()).filter(Boolean).join(" & ");
+  if(c.art==="spieltag")return {tag:"SPIELTAG · "+skDatum(c.datum,true).toUpperCase(), zeile:"⚽ "+[c.titel,c.ort,c.team?"Adler "+c.team:""].filter(Boolean).join(" · "),
+    box:c.satz?"„"+c.satz+"“ – Trainer":"", chips:[formen].filter(Boolean), stempel:"DABEI"};
+  if(c.art==="kapitaen")return {tag:"KAPITÄN", zeile:"🦅 Kapitän von Adler "+(c.team||1)+" · "+skDatum(c.datum,true), box:SK_KAPITAEN_TEXT,
+    chips:[(c.mal||1)+". Mal Kapitän"], binde:true};
+  return {tag:"MOMENT", zeile:"🎉 "+(c.titel||""), box:c.satz||"", chips:[skDatum(c.datum,true)]};
+}
+function _skRR(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function _skZeilen(ctx,text,maxW){ const w=String(text||"").split(/\s+/), z=[]; let a="";
+  w.forEach(x=>{ const t=a?a+" "+x:x; if(ctx.measureText(t).width>maxW&&a){ z.push(a); a=x; } else a=t; }); if(a)z.push(a); return z; }
+/* Zeichnet eine Sonderkarte (520 × 800) – im Streifen klein, im großen Fenster und beim Speichern dieselbe Grafik */
+function sonderkarteDraw(ctx,W,H,c,img){
+  const f=W/260, th=SK_ART[c.art]||SK_ART.moment, t=skTexte(c), P=14*f;
+  ctx.clearRect(0,0,W,H);
+  const g=ctx.createLinearGradient(0,0,W*0.6,H); g.addColorStop(0,th.a); g.addColorStop(1,th.b);
+  _skRR(ctx,0,0,W,H,18*f); ctx.fillStyle=g; ctx.fill(); ctx.save(); _skRR(ctx,0,0,W,H,18*f); ctx.clip();
+  // Kopf
+  ctx.font=`900 ${10*f}px system-ui,sans-serif`; const tw=ctx.measureText(t.tag).width+16*f;
+  _skRR(ctx,P,12*f,tw,20*f,10*f); ctx.fillStyle="rgba(255,255,255,.18)"; ctx.fill();
+  ctx.fillStyle="#fff"; ctx.textBaseline="middle"; ctx.fillText(t.tag,P+8*f,22*f);
+  ctx.font=`900 ${28*f}px system-ui,sans-serif`; ctx.textAlign="right"; ctx.fillText(c.nr!=null?"#"+c.nr:"",W-P,24*f); ctx.textAlign="left";
+  // Foto
+  const fy=46*f, fh=178*f, fw=W-2*P;
+  ctx.save(); _skRR(ctx,P,fy,fw,fh,12*f); ctx.clip();
+  if(img){ const iw=img.width||img.naturalWidth, ih=img.height||img.naturalHeight, s=Math.max(fw/iw,fh/ih);
+    ctx.drawImage(img,P+(fw-iw*s)/2,fy+(fh-ih*s)/2,iw*s,ih*s); }
+  else { const pg=ctx.createLinearGradient(0,fy,0,fy+fh); pg.addColorStop(0,"#cbd5e1"); pg.addColorStop(1,"#94a3b8"); ctx.fillStyle=pg; ctx.fillRect(P,fy,fw,fh);
+    ctx.fillStyle="rgba(71,85,105,.75)"; ctx.beginPath(); ctx.arc(W/2,fy+70*f,30*f,0,Math.PI*2); ctx.fill(); _skRR(ctx,W/2-55*f,fy+108*f,110*f,90*f,40*f); ctx.fill(); }
+  ctx.restore();
+  if(t.stempel){ ctx.save(); ctx.translate(W-P-48*f,fy+fh-22*f); ctx.rotate(-0.21); ctx.font=`900 ${16*f}px system-ui,sans-serif`;
+    const sw=ctx.measureText(t.stempel).width+18*f; _skRR(ctx,-sw/2,-14*f,sw,28*f,8*f); ctx.fillStyle="rgba(0,0,0,.35)"; ctx.fill();
+    ctx.lineWidth=3*f; ctx.strokeStyle="#fff"; ctx.stroke(); ctx.fillStyle="#fff"; ctx.textAlign="center"; ctx.fillText(t.stempel,0,1*f); ctx.restore(); ctx.textAlign="left"; }
+  if(t.binde){ const bx=W-P-22*f, by=fy+fh; ctx.beginPath(); ctx.arc(bx,by,29*f,0,Math.PI*2); ctx.fillStyle="#fcd34d"; ctx.fill(); ctx.lineWidth=4*f; ctx.strokeStyle="#fff"; ctx.stroke();
+    ctx.fillStyle="#78350f"; ctx.font=`900 ${30*f}px system-ui,sans-serif`; ctx.textAlign="center"; ctx.fillText("C",bx,by+1*f); ctx.textAlign="left"; }
+  // Name, Zeile, Kasten
+  let y=fy+fh+22*f; ctx.fillStyle="#fff"; ctx.font=`900 ${22*f}px system-ui,sans-serif`; ctx.fillText(c.name||"",P,y);
+  y+=24*f; ctx.font=`500 ${12*f}px system-ui,sans-serif`; _skZeilen(ctx,t.zeile,fw).slice(0,2).forEach(z=>{ ctx.fillText(z,P,y); y+=16*f; });
+  if(t.box){ ctx.font=`italic 500 ${11.5*f}px system-ui,sans-serif`; const zz=_skZeilen(ctx,t.box,fw-16*f).slice(0,4), bh=zz.length*15*f+12*f;
+    _skRR(ctx,P,y,fw,bh,8*f); ctx.fillStyle="rgba(0,0,0,.2)"; ctx.fill(); ctx.fillStyle="#fff"; zz.forEach((z,i)=>ctx.fillText(z,P+8*f,y+13*f+i*15*f)); }
+  // Chips unten
+  let cx=P; ctx.font=`800 ${11*f}px system-ui,sans-serif`;
+  (t.chips||[]).forEach(ch=>{ const cw=ctx.measureText(ch).width+16*f; _skRR(ctx,cx,H-36*f,cw,22*f,11*f); ctx.fillStyle="rgba(255,255,255,.22)"; ctx.fill(); ctx.fillStyle="#fff"; ctx.fillText(ch,cx+8*f,H-25*f); cx+=cw+6*f; });
+  ctx.restore();
+}
+async function sonderkartenLaden(sid){
+  try{ const r=await fetch(`${SB_URL}/rest/v1/rpc/sonderkarten_kind`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_spieler:Number(sid)})});
+    const v=r.ok?await r.json():null; return Array.isArray(v)?v:null; }catch(e){ return null; }
+}
+function _skCanvas(c,breite){
+  const cv=document.createElement("canvas"); cv.width=520; cv.height=800; const ctx=cv.getContext("2d");
+  sonderkarteDraw(ctx,520,800,c,null);
+  cv.style.cssText=`width:${breite}px;height:${Math.round(breite*800/520)}px;border-radius:${Math.round(breite/14)}px;display:block`;
+  cv.setAttribute("role","img"); cv.setAttribute("aria-label",(SK_ART[c.art]?{spieltag:"Spieltagskarte",kapitaen:"Kapitänskarte",moment:"Momentkarte"}[c.art]:"Sonderkarte")+" vom "+skDatum(c.datum,false));
+  if(c.foto_path&&typeof fotoLoadImage==="function")fotoLoadImage(c.foto_path).then(img=>{ if(img){ c._img=img; sonderkarteDraw(ctx,520,800,c,img); } }).catch(()=>{});
+  return cv;
+}
+/* Streifen unter der eigenen Adler-Karte (Eltern-Portal und Kabine) */
+async function sonderkartenStreifen(sid,host){
+  if(!host)return;
+  const liste=await sonderkartenLaden(sid);
+  if(!liste||!liste.length||!document.body.contains(host))return;
+  const box=document.createElement("div"); box.id="sk-streifen";
+  box.style.cssText="width:100%;max-width:520px;color:#fff";
+  box.innerHTML=`<div style="font-weight:800;font-size:var(--s-text);margin:4px 0 8px;text-align:center">🃏 Sonderkarten · ${liste.length}</div>
+    <div class="sk-reihe" style="display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x mandatory"></div>`;
+  const reihe=box.querySelector(".sk-reihe");
+  liste.forEach(c=>{ const b=document.createElement("button"); b.type="button"; b.className="sk-karte";
+    b.style.cssText="flex:none;border:none;padding:0;background:none;cursor:pointer;scroll-snap-align:start;min-height:44px";
+    b.appendChild(_skCanvas(c,120)); b.onclick=()=>sonderkarteGross(c); reihe.appendChild(b); });
+  host.appendChild(box);
+}
+function sonderkarteGross(c){
+  document.getElementById("sk-gross")?.remove();
+  const m=document.createElement("div"); m.id="sk-gross"; m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Sonderkarte");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:10070;display:flex;flex-direction:column;padding:16px;overflow-y:auto";
+  const innen=document.createElement("div"); innen.style.cssText="margin:auto;display:flex;flex-direction:column;align-items:center;gap:14px";
+  m.onclick=e=>{ if(e.target===m||e.target===innen)m.remove(); };
+  const cv=_skCanvas(c,280); if(c._img)sonderkarteDraw(cv.getContext("2d"),520,800,c,c._img);
+  innen.appendChild(cv);
+  const inKabine=(typeof isKidsMode!=="undefined"&&isKidsMode);
+  const bar=document.createElement("div"); bar.style.cssText="display:flex;gap:8px;flex-wrap:wrap;justify-content:center";
+  bar.innerHTML=`${inKabine?"":`<button type="button" class="btn btn-p" id="sk-teilen"><i class="ti ti-share"></i>Als Bild speichern</button>`}<button type="button" class="btn" onclick="document.getElementById('sk-gross').remove()">Schließen</button>`;
+  innen.appendChild(bar); m.appendChild(innen); document.body.appendChild(m);
+  const tb=document.getElementById("sk-teilen");
+  if(tb)tb.onclick=()=>cv.toBlob(async b=>{ if(!b)return; const file=new File([b],"adler-sonderkarte.png",{type:"image/png"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){ try{ await navigator.share({files:[file],title:"Adler-Sonderkarte"}); }catch(e){} return; }
+    const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download="adler-sonderkarte.png"; a.click(); },"image/png");
+}
+/* Trainer: Sonderkarten eines Kindes – Satz zum Spieltag, Momentkarte vergeben und löschen */
+async function sonderkartenTrainerOpen(sid){
+  document.getElementById("sk-trainer")?.remove();
+  const k=(typeof KADER!=="undefined"?KADER:[]).find(x=>Number(x._id)===Number(sid))||{};
+  const m=document.createElement("div"); m.id="sk-trainer"; m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Sonderkarten");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10065;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto";
+  m.onclick=e=>{ if(e.target===m)m.remove(); };
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);width:100%;max-width:560px;min-height:100vh;box-sizing:border-box;padding:16px">
+    ${typeof mdlHead==="function"?mdlHead("sk-trainer","🃏","Sonderkarten",esc(k.name||""),"#1e3a8a"):""}
+    <div style="font-size:var(--s-klein);color:var(--text2);margin:6px 0 12px;line-height:1.45">Spieltags- und Kapitänskarten entstehen von selbst aus „dabei“ und der Kapitänsbinde. Hier ergänzt du einen Satz zum Spieltag oder vergibst eine Momentkarte. Sehen können sie nur das Kind, seine Eltern und das Trainerteam.</div>
+    <section aria-label="Momentkarte vergeben" style="border:var(--border-s);border-radius:14px;padding:12px;margin-bottom:12px">
+      <div style="font-weight:800;margin-bottom:8px">🎉 Momentkarte vergeben</div>
+      <label for="sk-titel" style="font-size:var(--s-klein);color:var(--text2)">Moment</label>
+      <input id="sk-titel" list="sk-titel-liste" maxlength="60" placeholder="z. B. Erster Spieltag im Adler-Trikot" style="width:100%;min-height:48px;box-sizing:border-box;padding:8px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-text)">
+      <datalist id="sk-titel-liste">${SK_MOMENTE.map(x=>`<option>${esc(x)}</option>`).join("")}</datalist>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <div style="flex:none"><label for="sk-datum" style="font-size:var(--s-klein);color:var(--text2)">Datum</label><input id="sk-datum" type="date" value="${typeof isoLokal==="function"?isoLokal():""}" style="display:block;min-height:48px;padding:8px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit"></div>
+        <div style="flex:1"><label for="sk-satz" style="font-size:var(--s-klein);color:var(--text2)">Satz dazu (freiwillig)</label><input id="sk-satz" maxlength="140" placeholder="z. B. Die Mannschaft hat mitgefeiert." style="display:block;width:100%;min-height:48px;box-sizing:border-box;padding:8px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-text)"></div>
+      </div>
+      <button type="button" class="btn btn-p" style="width:100%;min-height:48px;margin-top:10px;justify-content:center" onclick="sonderkarteMomentVergeben(${Number(sid)})">Momentkarte vergeben</button>
+    </section>
+    <div id="sk-liste" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px"><span style="color:var(--text3)">Lädt …</span></div>
+  </div>`;
+  document.body.appendChild(m);
+  sonderkartenTrainerListe(sid);
+}
+async function sonderkartenTrainerListe(sid){
+  const box=document.getElementById("sk-liste"); if(!box)return;
+  const liste=await sonderkartenLaden(sid);
+  if(!liste){ box.innerHTML=`<span style="color:var(--text2)">Die Sonderkarten lassen sich gerade nicht laden.</span>`; return; }
+  if(!liste.length){ box.innerHTML=`<span style="color:var(--text2);grid-column:1/-1">Noch keine Sonderkarte – die erste entsteht, sobald das Kind an einem Spieltag „dabei“ ist.</span>`; return; }
+  box.innerHTML="";
+  liste.forEach(c=>{
+    const z=document.createElement("div"); z.className="sk-zeile"; z.style.cssText="display:flex;flex-direction:column;gap:6px;align-items:stretch";
+    const b=document.createElement("button"); b.type="button"; b.style.cssText="border:none;padding:0;background:none;cursor:pointer"; b.appendChild(_skCanvas(c,150)); b.onclick=()=>sonderkarteGross(c); z.appendChild(b);
+    if(c.art==="spieltag"){ const e=document.createElement("button"); e.type="button"; e.className="btn btn-sm sk-satz"; e.style.cssText="min-height:44px;justify-content:center";
+      e.innerHTML=c.satz?"✏️ Satz ändern":"✏️ Satz ergänzen"; e.onclick=()=>sonderkarteSatz(sid,c); z.appendChild(e); }
+    if(c.art==="moment"){ const e=document.createElement("button"); e.type="button"; e.className="btn btn-sm btn-d sk-weg"; e.style.cssText="min-height:44px;justify-content:center";
+      e.textContent="🗑️ Entfernen"; e.onclick=()=>sonderkarteMomentLoeschen(sid,c); z.appendChild(e); }
+    box.appendChild(z);
+  });
+}
+async function sonderkarteMomentVergeben(sid){
+  const titel=(document.getElementById("sk-titel")||{}).value||"", datum=(document.getElementById("sk-datum")||{}).value||"", satz=((document.getElementById("sk-satz")||{}).value||"").trim();
+  if(!titel.trim()){ toast("Welcher Moment? Bitte einen Titel wählen oder eintragen.","err"); return; }
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(datum)){ toast("Bitte ein Datum wählen.","err"); return; }
+  try{ const r=await fetch(`${SB_URL}/rest/v1/sonderkarte`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({spieler_id:Number(sid),art:"moment",datum,titel:titel.trim().slice(0,60),satz:satz?satz.slice(0,140):null})});
+    if(!r.ok){ toast("Momentkarte nicht vergeben","err"); return; } }catch(e){ toast("Kein Netz","err"); return; }
+  toast("Momentkarte vergeben 🎉"); ["sk-titel","sk-satz"].forEach(i=>{ const el=document.getElementById(i); if(el)el.value=""; });
+  sonderkartenTrainerListe(sid);
+}
+/* Kleines Eingabefenster statt prompt(): löst mit dem Text auf, mit null bei Abbrechen */
+function _skTextFrage(titel,wert){
+  return new Promise(res=>{
+    document.getElementById("sk-frage")?.remove();
+    const m=document.createElement("div"); m.id="sk-frage"; m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label",titel);
+    m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10080;display:flex;align-items:center;justify-content:center;padding:16px";
+    m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;width:100%;max-width:420px">
+      <div style="font-weight:800;font-size:var(--s-karte);margin-bottom:8px">${esc(titel)}</div>
+      <textarea id="sk-frage-text" maxlength="140" rows="3" placeholder="z. B. Hat in jeder Runde den Kopf gehoben." style="width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-text)">${esc(wert||"")}</textarea>
+      <div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Höchstens 140 Zeichen. Leer speichern entfernt den Satz.</div>
+      <div style="display:flex;gap:8px;margin-top:10px"><button type="button" class="btn" id="sk-frage-nein" style="min-height:48px">Abbrechen</button><button type="button" class="btn btn-p" id="sk-frage-ja" style="flex:1;min-height:48px;justify-content:center">Speichern</button></div></div>`;
+    document.body.appendChild(m);
+    const zu=v=>{ m.remove(); res(v); };
+    m.querySelector("#sk-frage-ja").onclick=()=>zu(m.querySelector("#sk-frage-text").value);
+    m.querySelector("#sk-frage-nein").onclick=()=>zu(null);
+    m.onclick=e=>{ if(e.target===m)zu(null); };
+  });
+}
+async function sonderkarteSatz(sid,c){
+  const neu=await _skTextFrage("Satz zum Spieltag "+skDatum(c.datum,true),c.satz||"");
+  if(neu==null)return;
+  const satz=String(neu).trim().slice(0,140);
+  try{
+    const alt=await fetch(`${SB_URL}/rest/v1/sonderkarte?spieler_id=eq.${Number(sid)}&art=eq.spieltag&datum=eq.${c.datum}&select=id`,{headers:sbAuthHeaders()}).then(r=>r.ok?r.json():[]);
+    const id=alt&&alt[0]&&alt[0].id;
+    let r;
+    if(!satz)r=id?await fetch(`${SB_URL}/rest/v1/sonderkarte?id=eq.${Number(id)}`,{method:"DELETE",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'}}):{ok:true};
+    else if(id)r=await fetch(`${SB_URL}/rest/v1/sonderkarte?id=eq.${Number(id)}`,{method:"PATCH",headers:{...sbAuthHeaders(),'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({satz})});
+    else r=await fetch(`${SB_URL}/rest/v1/sonderkarte`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({spieler_id:Number(sid),art:"spieltag",datum:c.datum,satz})});
+    toast(r.ok?(satz?"Satz gespeichert":"Satz entfernt"):"Satz nicht gespeichert",r.ok?undefined:"err");
+  }catch(e){ toast("Kein Netz","err"); }
+  sonderkartenTrainerListe(sid);
+}
+async function sonderkarteMomentLoeschen(sid,c){
+  if(typeof frageJaNein==="function"&&!await frageJaNein({emoji:"🗑️",ton:"rot",titel:"Momentkarte entfernen?",text:`„${c.titel||""}“ verschwindet beim Kind und bei den Eltern.`,ja:"Entfernen",nein:"Behalten"}))return;
+  try{ const r=await fetch(`${SB_URL}/rest/v1/sonderkarte?id=eq.${Number(c.id)}`,{method:"DELETE",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'}});
+    toast(r.ok?"Momentkarte entfernt":"Nicht entfernt",r.ok?undefined:"err"); }catch(e){ toast("Kein Netz","err"); }
+  sonderkartenTrainerListe(sid);
+}
 function renderTrainerUI(){
   const sel=document.getElementById("p-trainer");
   /* v635 PO: „Wir bewerten gemeinsam als Trainer, nicht jeder einzeln“ (Entscheidung v607).

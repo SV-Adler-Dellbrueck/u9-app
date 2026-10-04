@@ -90,3 +90,16 @@ gesetzt und der Zweck geändert. Eltern von Kind B sehen von Kind A nur das Kart
 ohne Freigabe ohne Foto; ein Album-Foto ist für sie im Speicher nicht sichtbar, und sie dürfen kein Kartenfoto für
 Kind A setzen. Die eigene Karte von Kind A zeigt das Kartenfoto; der Trainer sieht alle Fotos, löst das Kartenfoto,
 dann zeigt die Galerie wieder das alte Profilfoto. `anon` scheitert. Sieben Fehlermeldungen sind gewollt.
+
+## v744 · Sonderkarten
+
+```bash
+bash lauf744.sh   # wie lauf743, dazu v744 zweimal, dann:
+psql -d k -f tests/sql/v744-sonderkarten.sql
+```
+
+Erwartet für Kind A: Momentkarte 03.10., Kapitän 03.10. (Adler 1, 2. Mal), Spieltag 03.10. (Adler 1, Spielform aus dem
+Termin), Kapitän 26.09. (Adler 2, 1. Mal), Spieltag 26.09. (Adler 2, Spielform „funino“ aus `_form`, mit Trainer-Satz);
+der Spieltag in der Zukunft fehlt. Fotos nach Zweck (Aktion, Porträt), die Momentkarte fällt mangels Jubelfoto auf das
+Profilfoto zurück. Eltern sehen fremde Karten nicht und schreiben keine; das Kindergerät sieht nur die eigenen; Eltern
+von Kind B sehen die Tabellenzeilen von Kind A nicht. `anon` scheitert. Zwei Fehlermeldungen sind gewollt.
