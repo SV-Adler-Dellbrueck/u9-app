@@ -4,7 +4,8 @@
    Die Datenbank erledigt kind_daten_loeschen (nur service_role): Einschätzungen und Quiz weg,
    Spielgeschehen und Pläne mit „Ehemaliges Kind“ statt Namen, dann der Kader-Eintrag – alles
    mit Fremdschlüssel auf ihn fällt per CASCADE mit. Hier dazu, was die Datenbank nicht kann:
-   das Spielerfoto und die Sprach-Lobe im Speicher und die anonymen Konten der Kindergeräte. */
+   das Spielerfoto und die Sprach-Lobe im Speicher und die anonymen Konten der Kindergeräte.
+   v743: dazu die Dateien des Fotoalbums (kind_foto). */
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const cors = {
