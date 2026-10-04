@@ -1113,7 +1113,8 @@ function childWrappedCanvas(logoImg,d){
   if(logoImg){try{ctx.drawImage(logoImg,W/2-40,42,80,80);}catch(e){}}
   ctx.fillStyle="rgba(255,255,255,.9)";ctx.font="bold 15px Arial";ctx.fillText("🦅 ADLER WRAPPED",W/2,150);
   ctx.fillStyle="#facc15";ctx.font="bold 38px Arial";ctx.fillText(((d.name||"")+"s Saison"),W/2,196);
-  const rows=[["⚽",d.tore||0,"Tore"],["🔥",d.aktionen||0,"Ballaktionen"],["⏱️",d.einsatz_min||0,"Minuten Spielzeit"],[XP_ICON,d.xp||0,XP_LABEL+" gesammelt"],["📅",d.spiele||0,"Spiele bestritten"]];
+  // v752: ohne Tore und Ballaktionen (nicht erfasst)
+  const rows=[["📅",d.spiele||0,"Spiele bestritten"],["⏱️",d.einsatz_min||0,"Minuten Spielzeit"],[XP_ICON,d.xp||0,XP_LABEL+" gesammelt"]];
   let y=254;
   rows.forEach(r=>{
     ctx.fillStyle="rgba(255,255,255,.1)";tbRoundRect(ctx,70,y,W-140,82,16);ctx.fill();
@@ -2005,15 +2006,8 @@ function adlerWrappedSlides(d,fotos){
     <div class="aw-big aw-pop d1">${d.spiele||0}</div>
     <div class="aw-pop d1" style="font-size:var(--s-teil);font-weight:800">Spiele & Turniere</div>
     <div class="aw-pop d2" style="font-size:var(--s-karte);opacity:.85;margin-top:18px">und <b>${d.trainings||0}</b> Trainingseinheiten 💪</div></div>`});
-  S.push({bg:g("#9a3412","#f97316"),html:`<div>
-    <div class="aw-pop" style="font-size:var(--s-karte);opacity:.85;text-transform:uppercase;letter-spacing:2px">Gemeinsam erzielt</div>
-    <div class="aw-big aw-pop d1">${d.tore||0}</div>
-    <div class="aw-pop d1" style="font-size:var(--s-seite);font-weight:800">Tore ⚽</div>${d.torschuetzen_anzahl?`
-    <div class="aw-pop d2" style="font-size:var(--s-karte);opacity:.85;margin-top:16px">von <b>${d.torschuetzen_anzahl}</b> verschiedenen Kindern – Tore schießt hier das Team</div>`:""}</div>`});
-  S.push({bg:g("#5b21b6","#8b5cf6"),html:`<div>
-    <div class="aw-big aw-pop">${d.aktionen||0}</div>
-    <div class="aw-pop d1" style="font-size:var(--s-teil);font-weight:800">Ballaktionen 🔥</div>
-    <div class="aw-pop d2" style="font-size:var(--s-karte);opacity:.85;margin-top:16px">darunter <b>${d.paesse||0}</b> Pässe und <b>${d.paraden||0}</b> Paraden 🧤</div></div>`});
+  /* v752 (PO 04.10.: Tore und Aktionen raus, solange wir sie nicht erfassen): die Folien „Gemeinsam erzielt“
+     (Tore) und „Ballaktionen“ entfallen. */
   S.push({bg:g("#065f46","#10b981"),html:`<div>
     <div class="aw-pop" style="font-size:var(--s-karte);opacity:.85;text-transform:uppercase;letter-spacing:2px">Team-Missionen</div>
     <div class="aw-big aw-pop d1">${d.quests_geschafft||0}</div>
@@ -2021,12 +2015,13 @@ function adlerWrappedSlides(d,fotos){
   const awards=[];
   // v637: kein Torschützenkönig – Ergebnisse zählen in der U9 nicht („Fairness vor Ergebnis“); die Tore stehen als Teamzahl oben.
   if(d.fleissigste&&d.fleissigste.name)awards.push(["🏃","Fleißbiene (Training)",d.fleissigste]);
-  if(d.top_aktiv&&d.top_aktiv.name)awards.push(["🔥","Aktivposten",d.top_aktiv]);
+  // v752: kein „Aktivposten“ mehr – er zählte Ballaktionen, die wir nicht erfassen
+
   const awardsHtml=awards.length?awards.map((a,i)=>`<div class="aw-pop d${i+1}" style="background:rgba(255,255,255,.14);border-radius:14px;padding:11px 16px;margin:8px auto;max-width:280px">
     <div style="font-size:26px">${a[0]}</div>
     <div style="font-size:var(--s-teil);font-weight:800">${esc(a[2].name)}</div>
     <div style="font-size:var(--s-text);opacity:.85">${a[1]} · ${a[2].wert}</div></div>`).join("")
-    :`<div class="aw-pop" style="opacity:.85;font-size:var(--s-karte)">Sammelt Aktionen am Spieltag – dann gibt's hier eure Helden! 🦅</div>`;
+    :`<div class="aw-pop" style="opacity:.85;font-size:var(--s-karte)">Kommt fleißig zum Training – dann gibt's hier eure Helden! 🦅</div>`;
   S.push({bg:g("#1e3a8a","#3b82f6"),confetti:true,html:`<div>
     <div class="aw-pop" style="font-size:var(--s-seite);font-weight:900;margin-bottom:14px">🏅 Eure Saison-Helden</div>${awardsHtml}</div>`});
   S.push({bg:g("#7c2d12","#dc2626"),confetti:true,html:`<div>
@@ -2325,11 +2320,13 @@ const CARD_THEMES={
   neu:{a:"#0f172a",b:"#334155",name:"NEUE SAISON"}
 };
 /* Meilenstein-Karten (Phase 11-R): Design nach TEILNAHME, nicht Leistung.
-   ≥10 Trainings → Gold, ≥20 → Hero. Überschreibt das Dim-Theme. Metallischer Verlauf,
+   ≥8 Trainings → Gold, ≥16 → Hero (seit v752; vorher 10/20). Überschreibt das Dim-Theme. Metallischer Verlauf,
    Doppelrahmen, Glanz + Siegel werden in adlerCardDraw gebacken (bleiben im PNG-Export). */
+/* v752 (PO 04.10., Kachel): Gold ab 8, HERO ab 16 – seit v734 zählen nur Trainings der laufenden Saison,
+   mit 10/20 hatte Anfang Oktober kein Kind mehr Gold. */
 const CARD_MILESTONES=[
-  {min:20, a:"#2a0e57", b:"#f59e0b", name:"HERO", medal:"hero", border:"#fcd34d"},
-  {min:10, a:"#5c4300", b:"#e9c94a", name:"GOLD", medal:"gold", border:"#ffe08a"}
+  {min:16, a:"#2a0e57", b:"#f59e0b", name:"HERO", medal:"hero", border:"#fcd34d"},
+  {min:8,  a:"#5c4300", b:"#e9c94a", name:"GOLD", medal:"gold", border:"#ffe08a"}
 ];
 function cardMilestoneTheme(trainings){ const t=Number(trainings)||0; return CARD_MILESTONES.find(m=>t>=m.min)||null; }
 /* Karten-Skins (Feder-Freischaltung): rein aus dem Federn-Gesamtstand abgeleitet – KEIN
@@ -2589,19 +2586,20 @@ function adlerCardDraw(ctx,W,H,d,photoImg){
   if(sub)ctx.fillText(sub,W/2,nameY+24);
   if(washOn){ctx.shadowColor="transparent";ctx.shadowBlur=0;ctx.shadowOffsetY=0;}
 
-  // ── Einsatz-Zähler (Fleiß statt Skill-Ranking): positionsgerecht (TW → Paraden) ──
+  // ── Einsatz-Zähler (Fleiß statt Skill-Ranking) ──
+  /* v752 (PO 04.10.: „Tore und Aktionen sollten wir erstmal rausnehmen, solange wir das nicht tracken“):
+     nur noch Spiele und Trainings der Saison – zwei große Felder statt vier, zwei davon mit „–“. */
   const c=d.counts||null;
-  const first=d.tw?{ic:"🧤",v:c&&c.paraden,l:"PARADEN"}:{ic:"⚽",v:c&&c.tore,l:"TORE"};
-  const quad=[first,{ic:"🎯",v:c&&c.aktionen,l:"AKTIONEN"},{ic:"👟",v:c&&c.spiele,l:"SPIELE"},{ic:"🏃",v:c&&c.trainings,l:"TRAININGS"}];
-  const ty=nameY+50, tbh=88, tw4=(W-80)/4;
+  const quad=[{ic:"👟",v:c&&c.spiele,l:"SPIELE"},{ic:"🏃",v:c&&c.trainings,l:"TRAININGS"}];
+  const ty=nameY+50, tbh=88, tw4=(W-80)/quad.length;
   ctx.save();tbRoundRect(ctx,40,ty,W-80,tbh,16);ctx.fillStyle="rgba(0,0,0,.20)";ctx.fill();ctx.restore();
   quad.forEach((t,i)=>{
     const tx=40+tw4*i+tw4/2;
     ctx.textAlign="center";
     ctx.font="20px Arial";ctx.fillStyle="#fff";ctx.fillText(t.ic,tx,ty+28);
-    ctx.font="800 26px Arial";ctx.fillText((c&&t.v!=null)?String(t.v):"–",tx,ty+58);
-    ctx.font="600 10px Arial";ctx.fillStyle="rgba(255,255,255,.85)";ctx.fillText(t.l,tx,ty+75);
-    if(i<3){ctx.strokeStyle="rgba(255,255,255,.16)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(40+tw4*(i+1),ty+14);ctx.lineTo(40+tw4*(i+1),ty+tbh-14);ctx.stroke();}
+    ctx.font="800 32px Arial";ctx.fillText((c&&t.v!=null)?String(t.v):"–",tx,ty+60);
+    ctx.font="700 12px Arial";ctx.fillStyle="rgba(255,255,255,.85)";ctx.fillText(t.l,tx,ty+75);
+    if(i<quad.length-1){ctx.strokeStyle="rgba(255,255,255,.16)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(40+tw4*(i+1),ty+14);ctx.lineTo(40+tw4*(i+1),ty+tbh-14);ctx.stroke();}
   });
 
   // ── Badges (immer 3) ──
