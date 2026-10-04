@@ -278,7 +278,7 @@ function rufeNachrichtHtml(n){
       </div>
       ${n.antwort_auf?`<div class="rf-zitat" style="margin:4px 0;padding:4px 8px;border-left:3px solid #1e3a8a;background:var(--surface2);border-radius:6px;font-size:var(--s-klein);color:var(--text2)">${zitat?`<b>${esc(zitat.autor_name||"")}</b>: ${esc(String(zitat.text||"").slice(0,120))}`:"Antwort auf einen früheren Ruf"}</div>`:""}
       <div class="rf-text" style="font-size:var(--s-text);line-height:1.45;margin-top:2px;word-wrap:break-word;${arch?"color:var(--text2);font-style:italic;":""}${lang?"display:-webkit-box;-webkit-line-clamp:8;line-clamp:8;-webkit-box-orient:vertical;overflow:hidden;":""}">${_rf.umf[n.id]?"<b>📊 </b>":""}${_rfText(n.text)}</div>
-      ${lang?`<button type="button" class="rf-weiter" onclick="rufeWeiterlesen(${Number(n.id)})" style="min-height:44px;padding:0 4px;border:none;background:transparent;color:#1d4ed8;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer;text-decoration:underline">Weiterlesen</button>`:""}
+      ${lang?`<button type="button" class="rf-weiter" onclick="rufeWeiterlesen(${Number(n.id)})" style="min-height:44px;padding:0 4px;border:none;background:transparent;color:var(--blue-text,#1d4ed8);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer;text-decoration:underline">Weiterlesen</button>`:""}
       ${rufeAnhaengeHtml(n)}
       ${_rf.umf[n.id]?rufeUmfrageHtml(_rf.umf[n.id],arch):""}
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px">
