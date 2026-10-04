@@ -160,7 +160,7 @@ async function kindAlbumRender(sid,boxId,wer){
           <button type="button" class="ka-weg" aria-label="Foto löschen" onclick="kindAlbumLoeschen(${Number(sid)},${Number(f.id)})" style="${knopf}">🗑️</button>
         </div>
       </div></div>`).join("")}
-    ${liste.length<KIND_ALBUM_MAX?`<label class="ka-neu" style="${knopf};aspect-ratio:4/5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-style:dashed;text-align:center"><span style="font-size:28px" aria-hidden="true">＋</span>Foto hinzufügen<span style="font-size:11px;color:var(--text3,#64748b)">${liste.length} von ${KIND_ALBUM_MAX}</span><input type="file" accept="image/jpeg,image/png,image/webp" onchange="kindAlbumHochladen(${Number(sid)},this)" style="display:none"></label>`:""}
+    ${liste.length<KIND_ALBUM_MAX?`<label class="ka-neu" style="${knopf};aspect-ratio:4/5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-style:dashed;text-align:center"><span style="font-size:var(--s-seite)" aria-hidden="true">＋</span>Foto hinzufügen<span style="font-size:var(--s-klein);color:var(--text3,#64748b)">${liste.length} von ${KIND_ALBUM_MAX}</span><input type="file" accept="image/jpeg,image/png,image/webp" onchange="kindAlbumHochladen(${Number(sid)},this)" style="display:none"></label>`:""}
   </div>
   <div style="font-size:var(--s-klein);color:var(--text2,#475569);margin-top:6px;line-height:1.45">${liste.some(f=>f.karte)?"Das Kartenfoto steht auf der Spielerkarte":"Ohne Kartenfoto steht das bisherige Profilfoto auf der Karte"}. Andere Familien sehen nur das Kartenfoto – und nur mit der Freigabe „Team intern“. Nie öffentlich, nie im Adler Nest.</div>`;
   box.querySelectorAll(".ka-bild").forEach(el=>{
