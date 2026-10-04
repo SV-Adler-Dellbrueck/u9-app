@@ -1,4 +1,5 @@
-create role anon nologin; create role authenticated nologin;
+do $$ begin if not exists (select 1 from pg_roles where rolname='anon') then create role anon nologin; end if; if not exists (select 1 from pg_roles where rolname='authenticated') then create role authenticated nologin; end if; end $$;
+do $$ begin if not exists (select 1 from pg_roles where rolname='service_role') then create role service_role nologin; end if; end $$;
 alter default privileges in schema public grant all on tables to anon, authenticated; alter default privileges in schema public grant all on sequences to anon, authenticated; alter default privileges in schema public grant execute on functions to anon, authenticated;
 create schema auth; create schema storage;
 create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims', true),''),'{}')::jsonb $$;
@@ -16,15 +17,27 @@ create table public.kind_fanfacts(spieler_id bigint primary key, spitzname text,
 create table public.foto_consent(spieler_id bigint, intern boolean);
 create table public.eltern_kinder(email text, spieler_id bigint);
 create table public.kind_konto(uid uuid, spieler_id bigint, aktiv boolean);
-create table public.termine(id bigint primary key, typ text, datum text, titel text, ort text, ergebnis text, spielform text, gegner text, uhrzeit time, uhrzeit_ende time, heim boolean, treffzeit text);
+create table public.termine(id bigint primary key, typ text, datum text, titel text, ort text, ergebnis text, spielform text, gegner text, uhrzeit time, uhrzeit_ende time, heim boolean, treffzeit text, platz_status text);
 create table public.nominierungen(datum text primary key, data jsonb);
 create table public.match_actions(id bigint primary key, datum text, spieler text, aktion text, created_at timestamptz default now());
 create table public.turnier_spiele(id serial primary key, datum text, gegner text, tore int, gegentore int, created_at timestamptz default now());
 create table public.termin_media(id bigint primary key, termin_id bigint, foto_path text, created_at timestamptz default now());
 create table public.kabine_reporter(id bigint primary key, spieler_id bigint, frage text, antwort text, freigegeben boolean, created_at timestamptz default now());
+create table auth.users(id uuid primary key, email text);
+create table public.anwesenheit(datum text primary key, data jsonb);
+create table public.team_config(id int primary key default 1);
+insert into public.team_config default values;
+create table public.push_subscriptions(endpoint text primary key, user_id uuid);
+create function public.push_ruht(p_user uuid, p_jetzt timestamptz) returns boolean language sql stable as $$ select false $$;
+create function public.is_parent_of(p_spieler bigint) returns boolean language sql stable security definer set search_path to 'public' as $$ select exists(select 1 from public.eltern_kinder where spieler_id = p_spieler and lower(email) = lower(coalesce(auth.jwt()->>'email',''))) $$;
+create function public.is_kind_selbst(p_spieler bigint) returns boolean language sql stable security definer set search_path to 'public' as $$ select exists(select 1 from public.kind_konto where uid = auth.uid() and spieler_id = p_spieler and aktiv) $$;
 create function public.is_trainer() returns boolean language sql stable security definer set search_path to 'public' as $$ select exists(select 1 from public.profiles where id = auth.uid() and role = 'trainer') $$;
 create function public.ist_anonym() returns boolean language sql stable as $$ select coalesce((auth.jwt()->>'is_anonymous')::boolean,false) $$;
 create function public.ist_mitglied() returns boolean language sql stable security definer set search_path to 'public' as $$ select public.is_trainer() or (not public.ist_anonym() and exists(select 1 from public.eltern_kinder e where lower(e.email)=lower(coalesce((select auth.jwt())->>'email','')))) or exists(select 1 from public.kind_konto k where k.uid=(select auth.uid()) and k.aktiv) $$;
 create function public.sitzung_gueltig() returns boolean language sql stable security definer set search_path to 'public' as $$ select (select auth.uid()) is not null and public.ist_mitglied() $$;
+-- v734: Platzhalter für die Karten (Bewertungen kennt die Attrappe nicht)
+create table public.spielerprofile(name text, datum text, radios jsonb, position text, prim_rolle text, strong_foot text, age int);
+create table public.quiz_progress(player text, score int);
+create function public.staerken_von(p_name text) returns jsonb language sql stable as $$ select '["f_pass"]'::jsonb $$;
 grant select, insert, update, delete on all tables in schema public to authenticated;
 grant select on all tables in schema public to anon;
