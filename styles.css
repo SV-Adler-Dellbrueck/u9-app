@@ -1129,6 +1129,44 @@ body:not(.quiz-extern) #view-taktik>*:not(.sl):not(#sit-hub):not(.bereich-kopf){
 .br-punkt{display:inline-block;width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.4)}
 .br-kind .br-reihe .btn{min-height:52px;font-size:var(--s-teil)}
 .br-kabkopf{display:flex;align-items:center;gap:10px;padding:12px 16px;color:#fff}
+.br-fertig{min-height:48px;padding:0 16px;background:#16a34a;color:#fff;border:none;font-weight:800;font-size:var(--s-teil)}
+/* v751 – „Mein Training“ in der Kabine (md-kindtraining.js): drei Teile als Karten, Bildkarten zur Wahl */
+.kt-seite{display:flex;flex-direction:column;min-height:100%;color:#fff}
+.kt-rumpf{padding:0 16px 20px;display:flex;flex-direction:column;gap:12px}
+.kt-intro{margin:0;font-size:var(--s-text);line-height:1.45;color:#e2e8f0}
+.kt-teil{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:18px;padding:12px}
+.kt-kopf{font-size:var(--s-teil);font-weight:800;margin-bottom:8px}
+.kt-knoepfe{display:flex;flex-wrap:wrap;gap:8px}
+.kt-btn{min-height:52px;flex:1 1 140px;justify-content:center;font-size:var(--s-text);font-weight:700}
+.kt-zeile{display:flex;gap:10px;align-items:flex-start;margin-bottom:8px}
+.kt-bild{width:84px;flex:0 0 84px;border-radius:8px;overflow:hidden;background:#2d6a2d}
+.kt-bild svg,.kt-zbild svg,.kt-kbild svg{display:block;width:100%;height:auto}
+.kt-info{flex:1;min-width:0}
+.kt-name{font-weight:800;font-size:var(--s-text);margin-bottom:6px;overflow-wrap:anywhere}
+.kt-min{display:flex;flex-wrap:wrap;gap:6px}
+.kt-mbtn{min-height:44px;padding:0 10px}
+.kt-mbtn[aria-pressed="true"]{outline:3px solid #fbbf24;outline-offset:1px;font-weight:800}
+.kt-summe{text-align:center;font-size:var(--s-teil);font-weight:800;padding:6px 0}
+.kt-aktionen{display:flex;flex-direction:column;gap:8px}
+.kt-aktionen .kt-btn{flex:none;width:100%}
+.kt-haupt{min-height:56px;width:100%;justify-content:center;font-size:var(--s-teil);font-weight:800;background:#16a34a;color:#fff;border:none}
+.kt-haupt[disabled],.kt-btn[disabled]{background:rgba(255,255,255,.18);color:#fff;border:1px dashed rgba(255,255,255,.7);cursor:default}
+.kt-ab{font-size:var(--s-text);font-weight:800;margin:6px 0 4px}
+.kt-gzeile{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:8px 0;border-top:1px solid rgba(255,255,255,.2);font-size:var(--s-text)}
+.kt-status{font-weight:700}
+.kt-wahl,.kt-zeigen{position:fixed;inset:0;z-index:9500;background:#0f172a;color:#fff;overflow:auto;padding:12px 16px 24px}
+.kt-wahl-box{max-width:640px;margin:0 auto}
+.kt-wahl-kopf{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.kt-karten{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.kt-karte{display:flex;flex-direction:column;gap:6px;text-align:left;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);border-radius:14px;padding:8px;color:#fff;font-family:inherit;cursor:pointer;min-height:44px}
+.kt-kbild{border-radius:8px;overflow:hidden;background:#2d6a2d;display:block}
+.kt-kname{font-weight:800;font-size:var(--s-text)}
+.kt-kkurz{font-size:var(--s-klein);color:#e2e8f0;line-height:1.35}
+.kt-ohne{display:flex;align-items:center;justify-content:center;aspect-ratio:180/120;font-size:32px}
+.kt-leer{color:#e2e8f0}
+.kt-zeigen-teile{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;max-width:900px;margin:0 auto}
+.kt-zteil{background:rgba(255,255,255,.08);border-radius:14px;padding:10px}
+.kt-zbild{border-radius:8px;overflow:hidden;background:#2d6a2d;margin:0 auto 6px;max-width:240px}
 /* v750 – „＋ Hinzufügen“: Auswahl über dem Brett (Kader-Vornamen, Torwart, Gegner, Ball, Geräte) */
 .br-wahl{position:absolute;inset:0;z-index:5;background:rgba(15,23,42,.92);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:12px}
 .br-rumpf{position:relative}
