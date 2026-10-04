@@ -1336,3 +1336,11 @@ input[type="password"]{min-height:44px}
 /* Kabine „Mehr entdecken“: der Pfeil zeigt, ob offen (drehte sich vorher nicht) */
 .kab-mehr-pfeil{display:inline-block;transition:transform .2s}
 #kab-mehr[open] .kab-mehr-pfeil{transform:rotate(180deg)}
+
+/* v752 – Kabinen-Hype läuft weiter: derselbe Player groß auf der Hype-Seite, als Leiste unten auf allen anderen */
+#kab-hype-host.kh-gross{position:absolute;left:16px;right:16px;z-index:3}
+#kab-hype-host.kh-gross .kh-leiste{display:none}
+#kab-hype-host.kh-mini{position:static;flex:0 0 auto;padding:6px 12px 10px;background:rgba(2,6,23,.75);border-top:1px solid rgba(255,255,255,.2)}
+.kh-leiste{display:flex;align-items:center;gap:8px;margin-bottom:6px;color:#fff}
+.kh-titel{flex:1;font-weight:800;font-size:var(--s-text)}
+.kh-stopp{min-height:44px;padding:0 14px;border-radius:12px;border:none;background:#fff;color:#0b2f4d;font-weight:800;font-family:inherit;cursor:pointer}

@@ -352,17 +352,29 @@ function _albumStickerHtml(g,n,tap){
       <span style="font-size:26px;opacity:.7">❓</span>
       ${R.lbl?`<span style="font-size:10px;font-weight:900;letter-spacing:.5px">${R.gem?R.gem+" ":""}${R.lbl}</span>`:""}
     </div>`;
-  return `<div class="${(R.foil?"kab-st":"")+(R.leg?" kab-leg kab-pulse":"")}" ${tap?`role="button" tabindex="0" onclick="kabineStickerZoom('${jsq(g.key)}')"`:""} style="border-radius:14px;aspect-ratio:3/4;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;background:radial-gradient(130% 80% at 50% -10%,rgba(255,255,255,.35),transparent 55%),${R.own};border:2px solid rgba(255,255,255,.6);box-shadow:${R.shadow};color:${dunkel?"#78350f":"#fff"};${tap?"cursor:pointer":""}">
-      <div style="display:flex;justify-content:space-between;align-items:center;width:100%;padding:5px 7px 0;font-size:8.5px;font-weight:900;letter-spacing:.4px;box-sizing:border-box">
+  /* v752 (PO 04.10.: „Auf dem Tablet sind die Bilder ganz klein in der Mitte der Karte. Und die Spieltagskarte
+     unterscheidet sich nicht richtig.“): Foto und Schrift wachsen mit der Stickerbreite (Container-Einheiten
+     cqw, nie kleiner als bisher); Sonder-Sticker tragen je Art einen eigenen Rahmen – Spieltag als Rasen mit
+     Mittellinie und Datumsband, Kapitän mit „C“-Binde, Moment mit Sternenkranz. */
+  const sk=g.rar==="sonder"?(String(g.key).startsWith("sk_st")?"st":String(g.key).startsWith("sk_ka")?"ka":"mo"):null;
+  const SK_RAHMEN={
+    st:{bg:"repeating-linear-gradient(0deg,#15803d 0 9%,#16a34a 9% 18%)", lbl:"⚽ SPIELTAG", deko:'<div style="position:absolute;left:0;right:0;top:50%;height:2px;background:rgba(255,255,255,.55)"></div><div style="position:absolute;left:50%;top:50%;width:46cqw;height:46cqw;transform:translate(-50%,-50%);border:2px solid rgba(255,255,255,.55);border-radius:50%"></div>', rund:"18%"},
+    ka:{bg:"linear-gradient(160deg,#0b2f4d,#1e3a8a 55%,#b45309)", lbl:"🎗️ KAPITÄN", deko:'<div style="position:absolute;bottom:30%;right:8%;width:22cqw;height:22cqw;min-width:20px;min-height:20px;border-radius:50%;background:#facc15;color:#0b2f4d;font-weight:900;font-size:max(13px,13cqw);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.4);z-index:2">C</div>', rund:"50%"},
+    mo:{bg:"radial-gradient(circle at 50% 42%,#fde68a 0 18%,#a855f7 46%,#4c1d95 100%)", lbl:"⭐ MOMENT", deko:'<div style="position:absolute;inset:0;pointer-events:none;font-size:max(10px,9cqw);line-height:1"><span style="position:absolute;top:18%;left:8%">✨</span><span style="position:absolute;top:30%;right:8%">⭐</span><span style="position:absolute;bottom:30%;left:10%">⭐</span><span style="position:absolute;bottom:34%;right:12%">✨</span></div>', rund:"50%"}
+  }[sk]||null;
+  const bg=SK_RAHMEN?SK_RAHMEN.bg:`radial-gradient(130% 80% at 50% -10%,rgba(255,255,255,.35),transparent 55%),${R.own}`;
+  return `<div class="${(R.foil?"kab-st":"")+(R.leg?" kab-leg kab-pulse":"")}" ${tap?`role="button" tabindex="0" onclick="kabineStickerZoom('${jsq(g.key)}')"`:""} style="container-type:inline-size;border-radius:14px;aspect-ratio:3/4;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;background:${bg};border:2px solid rgba(255,255,255,.6);box-shadow:${R.shadow};color:${dunkel?"#78350f":"#fff"};${tap?"cursor:pointer":""}">
+      ${SK_RAHMEN?SK_RAHMEN.deko:""}
+      <div style="position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;width:100%;padding:5px 7px 0;font-size:max(8.5px,6cqw);font-weight:900;letter-spacing:.4px;box-sizing:border-box">
         <span>Nr. ${g.num||"?"}</span>${n>1?`<span style="background:rgba(0,0,0,.3);color:#fff;border-radius:8px;padding:0 6px">${n}×</span>`:"<span></span>"}
       </div>
-      ${R.lbl?`<div style="font-size:7.5px;font-weight:900;letter-spacing:1.2px;margin-top:1px">${R.gem?R.gem+" ":""}${R.lbl}</div>`:""}
-      <div data-st-ava="${esc(g.key)}" style="flex:1;display:flex;align-items:center;justify-content:center;width:100%;min-height:0">
-        <div style="width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.25);border:2px solid rgba(255,255,255,.75);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.25)">${g.img?`<img src="${g.img}" alt="" style="width:72%;height:72%;object-fit:contain">`:`<span style="font-size:24px">${g.emo}</span>`}</div>
+      ${(SK_RAHMEN||R.lbl)?`<div style="position:relative;z-index:1;font-size:max(7.5px,5.5cqw);font-weight:900;letter-spacing:1.2px;margin-top:1px;${SK_RAHMEN?"background:rgba(0,0,0,.35);border-radius:6px;padding:1px 6px":""}">${SK_RAHMEN?SK_RAHMEN.lbl:(R.gem?R.gem+" ":"")+R.lbl}</div>`:""}
+      <div data-st-ava="${esc(g.key)}" style="position:relative;z-index:1;flex:1;display:flex;align-items:center;justify-content:center;width:100%;min-height:0">
+        <div style="width:max(46px,58cqw);aspect-ratio:1;border-radius:${SK_RAHMEN?SK_RAHMEN.rund:"50%"};background:rgba(255,255,255,.25);border:2px solid rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.3)">${g.img?`<img src="${g.img}" alt="" style="width:72%;height:72%;object-fit:contain">`:`<span style="font-size:max(24px,26cqw)">${g.emo}</span>`}</div>
       </div>
-      <div style="width:100%;background:rgba(0,0,0,.28);padding:4px 4px 5px;text-align:center;box-sizing:border-box">
-        <div style="font-size:10.5px;font-weight:900;line-height:1.1;color:#fff">${esc(g.label)}</div>
-        ${g.sub?`<div style="font-size:8.5px;color:rgba(255,255,255,.85)">${esc(g.sub)}</div>`:""}
+      <div style="position:relative;z-index:1;width:100%;background:rgba(0,0,0,${SK_RAHMEN?".45":".28"});padding:4px 4px 5px;text-align:center;box-sizing:border-box">
+        <div style="font-size:max(10.5px,8cqw);font-weight:900;line-height:1.1;color:#fff">${esc(g.label)}</div>
+        ${g.sub?`<div style="font-size:max(8.5px,${sk==="st"?"7.5":"6.5"}cqw);${sk==="st"?"font-weight:900;color:#fde047":"color:rgba(255,255,255,.85)"}">${esc(g.sub)}</div>`:""}
       </div>
       ${R.foil?'<div class="stfoil"></div>':""}
     </div>`;
@@ -1499,10 +1511,53 @@ async function kabineHype(){
       <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
       <div style="flex:1;font-size:16px;font-weight:800;color:#fff">🎵 Kabinen-Hype</div></div>`;
   if(!embed){ b.innerHTML=head+'<div style="flex:1;display:flex;align-items:center;justify-content:center;color:#fff;opacity:.85;padding:20px;text-align:center">Noch keine Playlist hinterlegt.<br>Der Trainer kann sie in der Adler-Welt setzen. 🎧</div>'; return; }
-  b.innerHTML=head+`<div style="flex:1;padding:12px 16px">
-    ${kabineEinbettung("kh-playlist",embed,"Kabinen-Playlist","🎵 Playlist laden","Kommt von Spotify.","border-radius:14px;width:100%;height:420px;border:0","encrypted-media; clipboard-write")}
+  /* v752 (PO 04.10.: „Geht es, dass der Kabinen-Hype weiterläuft, wenn man ihn verlässt?“): Der Player
+     steht nicht mehr in der Seite, sondern in #kab-hype-host direkt in #kabine. Ein iframe, das man im DOM
+     umhängt, lädt neu (die Musik bräche ab) – deshalb wechselt nur seine Lage: auf dieser Seite groß über
+     dem Platzhalter #kh-seite, auf jeder anderen Kabinen-Seite als schmale Leiste unten mit ⏹. Mit der
+     Kabine verschwindet auch der Player. */
+  b.innerHTML=head+`<div style="flex:1;padding:12px 16px;overflow:auto">
+    <div id="kh-seite" style="height:420px;display:flex;align-items:center;justify-content:center">
+      ${document.getElementById("kab-hype-host")?"":`<div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        <button type="button" onclick="kabineHypeStart('${jsq(embed)}')" style="min-height:52px;padding:14px 28px;border-radius:16px;border:none;background:#fff;color:#0b2f4d;font-weight:800;font-size:16px;cursor:pointer">🎵 Playlist laden</button>
+        <div style="font-size:12px;color:#fff;opacity:.85">Kommt von Spotify. Läuft weiter, wenn du in der Kabine woanders hingehst.</div></div>`}
+    </div>
     <div style="text-align:center;color:#fff;opacity:.8;font-size:12px;margin-top:10px">Vor dem Spiel schön laut – auf geht's, Adler! 🦅</div>
   </div>`;
+  _khLage();
+}
+function kabineHypeStart(embed){
+  const k=document.getElementById("kabine"); if(!k||!embed)return;
+  document.getElementById("kab-hype-host")?.remove();
+  const h=document.createElement("div"); h.id="kab-hype-host";
+  h.innerHTML=`<div class="kh-leiste"><span class="kh-titel">🎵 Kabinen-Hype läuft</span>
+      <button type="button" class="kh-stopp" onclick="kabineHypeStopp()" aria-label="Musik stoppen">⏹ Stopp</button></div>`;
+  const f=document.createElement("iframe");
+  f.title="Kabinen-Playlist"; f.src=embed; f.setAttribute("allow","encrypted-media; clipboard-write; autoplay");
+  f.setAttribute("style","border-radius:14px;width:100%;height:420px;border:0;display:block");
+  h.appendChild(f);
+  k.appendChild(h);
+  const body=document.getElementById("kabine-body");
+  if(body&&!h._beobachter){ h._beobachter=new MutationObserver(()=>_khLage()); h._beobachter.observe(body,{childList:true,subtree:true}); }
+  _khLage();
+}
+function kabineHypeStopp(){
+  const h=document.getElementById("kab-hype-host"); if(!h)return;
+  try{ h._beobachter&&h._beobachter.disconnect(); }catch(e){}
+  h.remove();
+  if(document.getElementById("kh-seite"))kabineHype();   // auf der Hype-Seite wieder den Knopf zeigen
+}
+function _khLage(){
+  const h=document.getElementById("kab-hype-host"), k=document.getElementById("kabine"); if(!h||!k)return;
+  const platz=document.getElementById("kh-seite"), f=h.querySelector("iframe");
+  if(platz){
+    const r=platz.getBoundingClientRect(), rk=k.getBoundingClientRect();
+    h.className="kh-gross"; h.style.top=Math.round(r.top-rk.top)+"px";
+    if(f)f.style.height="420px";
+  }else{
+    h.className="kh-mini"; h.style.top="";
+    if(f)f.style.height="80px";
+  }
 }
 // Skill der Woche im Kinder-Modus: aktive Challenge holen und das Video zeigen.
 async function kabineSkillWoche(){
