@@ -2456,6 +2456,8 @@ async function elternCardShow(d){
     <button class="btn" onclick="document.getElementById('adler-card-modal').remove()">Schließen</button>`;
   innen.appendChild(bar);
   document.body.appendChild(modal);
+  /* v744: Sonderkarten (Spieltag, Kapitän, Moment) unter der eigenen Karte – nur für Kind, Eltern, Trainer */
+  if(d.spielerId&&typeof sonderkartenStreifen==="function")sonderkartenStreifen(d.spielerId,innen);
   // Federn-Stand → Karten-Skin (in render() gebacken) + Foil-Tier + Unboxing-Feier + Skin-Galerie
   if(d.spielerId){ xpTotal(d.spielerId).then(f=>{ if(document.getElementById("adler-card-modal")){ d.federn=f; render(); cardHoloSetTier(cardWrap,cardSkinFor(f)); cardTierCelebrateMaybe(cardWrap,d.spielerId,f); modal.appendChild(cardSkinGalleryEl(f)); } }).catch(()=>{}); }
   if(d.fotoPath){ const img=await fotoLoadImage(d.fotoPath); if(img&&document.getElementById("adler-card-modal")){ rawPhoto=img; render(); } }
