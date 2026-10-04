@@ -97,8 +97,9 @@ async function kasseRender(){
         <label>${lbl("Art")}<select id="k-typ" style="width:100%;${inp}"><option value="-1">Ausgabe</option><option value="1">Einnahme</option></select></label>
         <label>${lbl("Betrag in €")}<input id="k-betrag" type="number" inputmode="decimal" step="0.01" min="0" style="width:100%;${inp}"></label>
         <label>${lbl("Datum")}<input id="k-datum" type="date" value="${heute}" max="${heute}" style="width:100%;${inp}"></label>
-        <label>${lbl("Kategorie")}<select id="k-kat" style="width:100%;${inp}">${KASSE_KAT.map(k=>`<option value="${k.k}"${k.k==="sonstiges"?" selected":""}>${k.e} ${k.t}</option>`).join("")}</select></label>
+        <label>${lbl("Kategorie")}<select id="k-kat" onchange="kasseKatHinweis()" style="width:100%;${inp}">${KASSE_KAT.map(k=>`<option value="${k.k}"${k.k==="sonstiges"?" selected":""}>${k.e} ${k.t}</option>`).join("")}</select></label>
       </div>
+      <div id="k-kat-hinweis" role="note" style="display:none;font-size:var(--s-klein);color:var(--text2);margin-top:4px">Beiträge bitte unter „Wer hat bezahlt“ abhaken. Eine zusätzliche Buchung zählt sie im Kassenstand doppelt.</div>
       <label style="display:block;margin-top:8px">${lbl("Wofür?")}<input id="k-zweck" maxlength="120" placeholder="z. B. Eis nach dem Turnier" style="width:100%;${inp}"></label>
       <div style="font-size:var(--s-klein);color:var(--text2);margin-top:2px">Alle Eltern sehen Datum, Kategorie, Zweck und Betrag – bitte keine Namen von Kindern oder Familien.</div>
       <label style="display:block;margin-top:8px">${lbl("Beleg (Foto oder PDF, optional)")}<input id="k-beleg" type="file" accept="image/*,application/pdf" style="width:100%;font-family:inherit;font-size:var(--s-text)"></label>
@@ -114,16 +115,20 @@ async function kasseRender(){
     <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;color:var(--text2);margin-bottom:6px">Umlagen (für Eltern sichtbar)</div>
     ${umlagen.length?umlagen.map(u=>`<div style="display:flex;align-items:center;gap:6px;font-size:var(--s-text);padding:5px 0;border-bottom:1px solid var(--surface2);${u.aktiv?'':'opacity:.5'}">
       <span style="flex:1">${esc(u.titel)} · <b>${kEur(u.betrag)}</b>${u.faellig?` · bis ${u.faellig}`:''}</span>
+      <button type="button" onclick="kasseUmlageBearbeiten(${u.id})" aria-label="Umlage ${esc(u.titel)} bearbeiten" title="Bearbeiten" style="min-height:44px;min-width:44px;border:none;background:transparent;cursor:pointer;color:var(--text2);font-size:var(--s-karte)">✏️</button>
       <button onclick="kasseToggleUmlage(${u.id},${!u.aktiv})" title="${u.aktiv?'deaktivieren':'aktivieren'}" style="border:none;background:transparent;cursor:pointer;color:var(--text2)"><i class="ti ti-eye${u.aktiv?'':'-off'}"></i></button>
       <button onclick="kasseDelUmlage(${u.id})" title="Löschen" style="border:none;background:transparent;color:#dc2626;cursor:pointer"><i class="ti ti-trash"></i></button>
     </div>`).join(""):'<div style="font-size:var(--s-text);color:var(--text3)">Keine Umlagen.</div>'}
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+    <div id="u-form-titel" style="font-weight:700;font-size:var(--s-text);margin-top:10px">Umlage erfassen</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
       <input id="u-titel" placeholder="Titel (z. B. Sommerfest)" style="flex:1;min-width:110px;${inp}">
       <input id="u-betrag" type="number" step="0.01" min="0" placeholder="€" style="width:66px;${inp}">
       <input id="u-faellig" type="date" title="fällig bis" style="${inp}">
-      <input id="u-paypal" placeholder="PayPal.Me-Link (optional)" style="flex:1;min-width:130px;${inp}">
-      <button class="btn btn-sm" onclick="kasseAddUmlage()"><i class="ti ti-plus"></i>Umlage</button>
+      <input id="u-paypal" placeholder="PayPal.Me-Link (optional)" aria-label="PayPal.Me-Link (optional)" style="flex:1;min-width:130px;${inp}">
+      <button type="button" id="u-speichern" class="btn btn-sm" style="min-height:44px" onclick="kasseAddUmlage()"><i class="ti ti-plus"></i>Umlage</button>
+      <button type="button" id="u-abbrechen" class="btn btn-sm" style="display:none;min-height:44px" onclick="kasseUmlageAbbrechen()">Abbrechen</button>
     </div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">PayPal-App → Einstellungen → PayPal.Me. Der Link darf mit oder ohne https:// eingefügt werden.</div>
     <div id="kasse-bezahlt-slot"></div>
     <div id="kasse-rolle-slot"></div>
     <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;color:var(--text2);margin:16px 0 6px">🦅 Adler-Kasse (Fan-Spenden-Link)</div>
@@ -134,11 +139,12 @@ async function kasseRender(){
     <div style="font-size:var(--s-klein);color:var(--text3);margin-top:4px">Dauerhafter Spenden-Button für Fans (Liveticker) &amp; Eltern-Portal. Leer lassen = kein Button.</div>
     <div style="font-size:var(--s-klein);color:var(--text3);margin-top:12px">Rein informativ – die App verwaltet kein Geld. Zahlungen laufen extern über PayPal.</div>`;
   window._kasseDaten={ledger,umlagen,sammel,saldo};
+  window._kasseUmlageEdit=null;
   kasseBezahltRender(umlagen);
   kasseRolleRender();
 }
 async function adlerkasseSave(){
-  const link=(document.getElementById("ak-link")?.value||"").trim()||null;
+  const link=kassePaypalVoran(document.getElementById("ak-link")?.value)||null;   // v735: paypal.me/… ohne https:// ergänzen
   if(link&&!/^https?:\/\//i.test(link)){toast("Bitte einen vollständigen Link mit https:// eingeben","err");return;}
   try{
     // v698: über kasse_spenden_link_setzen – so darf auch die Kasse (Elternteil) den Link pflegen
@@ -148,14 +154,73 @@ async function adlerkasseSave(){
   }catch(e){toast("Netzwerkfehler","err");return;}
   toast(link?"🦅 Adler-Kasse-Link gespeichert ✓":"Link entfernt");
 }
+/* v735 (Auftragspaket Umlage bearbeiten / PayPal): PayPal zeigt den eigenen Link als „paypal.me/Name“ ohne
+   https://. Die Eltern-Kachel zeigt den Knopf aber nur bei https:// – ein so gespeicherter Link verschwand still.
+   Deshalb beim Speichern bereinigen und nur echte PayPal.Me-Adressen annehmen (Host muss genau passen). */
+function kassePaypalVoran(roh){
+  const t=String(roh==null?"":roh).trim();
+  if(/^(www\.)?paypal\.me\//i.test(t)||/^www\.paypal\.com\/paypalme\//i.test(t))return "https://"+t;
+  if(/^paypal\.com\/paypalme\//i.test(t))return "https://www."+t;   // Host der PayPal-Seite ist www.paypal.com
+  return t;
+}
+function kassePaypalLink(roh){
+  const t=kassePaypalVoran(roh);
+  if(!t)return {ok:true,link:null};
+  if(!/^https:\/\//i.test(t))return {ok:false};
+  let u; try{u=new URL(t);}catch(e){return {ok:false};}
+  const host=u.hostname.toLowerCase(), pfad=u.pathname;
+  const ok=((host==="paypal.me"||host==="www.paypal.me")&&pfad.length>1)
+    ||(host==="www.paypal.com"&&/^\/paypalme\/[^/]+/i.test(pfad));
+  return ok&&u.protocol==="https:"&&!u.username&&!u.password&&!u.port?{ok:true,link:t}:{ok:false};
+}
 async function kasseAddUmlage(){
   const titel=(document.getElementById("u-titel")?.value||"").trim();
-  const betrag=parseFloat(document.getElementById("u-betrag")?.value)||0;
+  const betrag=Math.round((parseFloat(String(document.getElementById("u-betrag")?.value||"").replace(",","."))||0)*100)/100;
   if(!titel||!betrag){toast("Titel und Betrag eingeben","err");return;}
   const faellig=document.getElementById("u-faellig")?.value||null;
-  const paypal=(document.getElementById("u-paypal")?.value||"").trim()||null;
-  try{const r=await fetch(`${SB_URL}/rest/v1/kasse_umlagen`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({titel,betrag,faellig,paypal_link:paypal})});if(sbCheck401(r))return;if(!r.ok){toast("Fehler","err");return;}}catch(e){return;}
+  const pp=kassePaypalLink(document.getElementById("u-paypal")?.value);
+  if(!pp.ok){toast("Bitte den PayPal.Me-Link einfügen, zum Beispiel paypal.me/DeinName","err");document.getElementById("u-paypal")?.focus();return;}
+  const edit=window._kasseUmlageEdit||null;
+  if(edit){
+    // Ändert sich der Betrag einer Umlage mit Häkchen, ändert sich der Kassenstand – vorher fragen.
+    const alt=Number(edit.betrag);
+    if(betrag!==alt){
+      let ue=window._kasseUebersicht; if(!ue||!ue.hat){const roh=await kasseUebersichtLaden(); ue={hat:{}}; ((roh&&roh.zahlungen)||[]).forEach(z=>{ue.hat[z.u+"_"+z.s]=z.am;});}
+      const n=Object.keys(ue.hat||{}).filter(k=>k.split("_")[0]===String(edit.id)).length;
+      if(n){
+        const diff=Math.round((betrag-alt)*n*100)/100;
+        if(!await frageJaNein({titel:"Betrag ändern?",text:`Der Betrag ändert sich von ${kEur(alt)} auf ${kEur(betrag)}. Bei ${n} abgehakten ${n===1?"Familie":"Familien"} ändert sich der Kassenstand um ${diff>0?"+":""}${kEur(diff)}. Ändern?`,ja:"Ändern",emoji:"💶"}))return;
+      }
+    }
+  }
+  const daten={titel,betrag,faellig,paypal_link:pp.link};
+  try{
+    const r=edit
+      ?await fetch(`${SB_URL}/rest/v1/kasse_umlagen?id=eq.${edit.id}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify(daten)})
+      :await fetch(`${SB_URL}/rest/v1/kasse_umlagen`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify(daten)});
+    if(sbCheck401(r))return;
+    if(!r.ok){toast("Nicht gespeichert – bitte noch einmal versuchen","err");return;}
+  }catch(e){toast("Keine Verbindung – nicht gespeichert","err");return;}
+  toast(edit?"Umlage geändert ✓":"Umlage erfasst ✓");
   kasseRender();
+}
+function kasseUmlageBearbeiten(id){
+  const u=((window._kasseDaten||{}).umlagen||[]).find(x=>Number(x.id)===Number(id)); if(!u)return;
+  window._kasseUmlageEdit={id:u.id,betrag:Number(u.betrag)};
+  const set=(i,v)=>{const el=document.getElementById(i);if(el)el.value=v;};
+  set("u-titel",u.titel||""); set("u-betrag",Number(u.betrag).toFixed(2)); set("u-faellig",u.faellig||""); set("u-paypal",u.paypal_link||"");
+  const t=document.getElementById("u-form-titel"); if(t)t.textContent="Umlage ändern";
+  const k=document.getElementById("u-speichern"); if(k)k.textContent="Änderung speichern";
+  const a=document.getElementById("u-abbrechen"); if(a)a.style.display="";
+  document.getElementById("u-form-titel")?.scrollIntoView({behavior:"smooth",block:"center"});
+  document.getElementById("u-titel")?.focus();
+}
+function kasseUmlageAbbrechen(){ window._kasseUmlageEdit=null; kasseRender(); }
+/* Doppelzählung: Der Kassenstand ist Buchungen plus abgehakte Beiträge. Wer Beiträge zusätzlich bucht, zählt sie doppelt. */
+function kasseKatHinweis(){
+  const el=document.getElementById("k-kat-hinweis"); if(!el)return;
+  const aktiv=((window._kasseDaten||{}).umlagen||[]).some(u=>u.aktiv);
+  el.style.display=(document.getElementById("k-kat")?.value==="beitraege"&&aktiv)?"":"none";
 }
 async function kasseToggleUmlage(id,aktiv){ try{const r=await fetch(`${SB_URL}/rest/v1/kasse_umlagen?id=eq.${id}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify({aktiv})});if(sbCheck401(r))return;}catch(e){} kasseRender(); }
 async function kasseDelUmlage(id){
@@ -318,7 +383,7 @@ function kasseBuchungBearbeiten(id){
   window._kasseEdit={id:x.id,beleg:x.beleg||null};
   const set=(i,v)=>{const el=document.getElementById(i);if(el)el.value=v;};
   set("k-typ",Number(x.betrag)<0?"-1":"1"); set("k-betrag",Math.abs(Number(x.betrag)).toFixed(2)); set("k-datum",x.datum||"");
-  set("k-kat",x.kategorie||"sonstiges"); set("k-zweck",x.zweck||"");
+  set("k-kat",x.kategorie||"sonstiges"); set("k-zweck",x.zweck||""); kasseKatHinweis();
   const t=document.getElementById("k-form-titel"); if(t)t.textContent="Bewegung ändern";
   const k=document.getElementById("k-speichern"); if(k)k.textContent="Änderung speichern";
   const a=document.getElementById("k-abbrechen"); if(a)a.style.display="";
