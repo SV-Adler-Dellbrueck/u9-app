@@ -13,7 +13,8 @@
    g) Schriften lokal: vendor/barlow.css geladen, keine Anfrage an fonts.googleapis.com / fonts.gstatic.com
    h) Alter Link ?heft: Hinweis „Das Adler Nest lesen Eltern in der App“ mit Weg zur Anmeldung, kein Aufruf
       von stadionheft-view
-   i) Editor: das 7. Galeriefoto wird abgelehnt („6 von 6“); bei 2 Privatfotos kein weiteres Hochladen;
+   i) Editor: das 7. Galeriefoto wird abgelehnt („6 von 6“); Privatfotos kommen seit v734 nur aus dem Porträt-Bogen
+      der Eltern (übernehmen/weglassen, kein eigener Upload); ohne Einreichung mit Einverständnis ein Hinweis;
       ohne Häkchen „Familie ist einverstanden“ bleibt das Hochladen gesperrt
    j) Befund 03.10.: Kapitän, der nicht mehr im Team steht, wird verworfen („Kapitän neu wählen“, Zeile
       gelöscht); Aktionen von Kindern, die „verletzt“/„nicht“ gemeldet sind, zählen nicht */
@@ -148,10 +149,10 @@ module.exports = async function (h) {
   else zeilen.push("h) ?heft zeigt „Das Adler Nest lesen Eltern in der App.“ mit Weg zur Anmeldung, ohne alten Inhalt");
 
   // i) Editor
-  const zeile = { id: 5, team: "adler1", nummer: 3, termin_id: 81, status: "entwurf", schlagzeile: "Test", foto_ids: [],
-    portraet_privatfotos: [{ pfad: "5/a.jpg", unterschrift: "Eins", einverstanden: true }, { pfad: "5/b.jpg", unterschrift: "Zwei", einverstanden: true }] };
+  const zeile = { id: 5, team: "adler1", nummer: 3, termin_id: 81, status: "entwurf", schlagzeile: "Test", foto_ids: [], portraet_spieler_id: 2, portraet_privatfotos: [] };
   const st = await h.starten({ warten: 1500, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), termine: [{ id: 81, datum: h.tagePlus(-1), typ: "turnier", titel: "Testfestival" }],
     heft_ausgabe: u => /id=eq\.5/.test(String(u)) ? [zeile] : /select=nummer/.test(String(u)) ? [{ nummer: 3 }] : [zeile], kabine_reporter: [], portraet_verlauf: [],
+    portraet_einreichung: u => /spieler_id=eq\.2/.test(String(u)) ? [{ id: 9, einverstanden_am: new Date().toISOString(), privatfotos: [{ pfad: "einreichung/9/a.jpg", unterschrift: "Eins" }, { pfad: "einreichung/9/b.jpg", unterschrift: "Zwei" }] }] : [],
     rpc: { termin_gallery: [1, 2, 3, 4, 5, 6, 7].map(i => ({ id: 700 + i, foto_path: `81/f${i}.jpg`, created_at: new Date().toISOString() })) } }) });
   await st.page.route(/\/storage\/v1\/object\/authenticated\//, r => r.fulfill({ status: 200, contentType: "image/jpeg", body: JPG }));
   const ri = await st.page.evaluate(async () => {
@@ -163,21 +164,22 @@ module.exports = async function (h) {
     for (const b of knoepfe) { b.click(); await w(30); }
     const out = { fotos: knoepfe.length, gewaehlt: document.querySelectorAll('#nest-ed-fotos .nest-ed-foto[aria-pressed="true"]').length,
       zahl: document.getElementById("nest-foto-zahl")?.textContent, toast: toasts.find(t => /Höchstens 6/.test(t)) || null,
-      privatInput: !!document.getElementById("nest-privat-wahl"), privatText: (document.getElementById("nest-ed-privat") || {}).textContent || "" };
-    // neue Ausgabe: ohne Häkchen kein Hochladen
+      privatUpload: !!document.querySelector("#nest-ed-privat input[type=file]") };
+    const angebot = [...document.querySelectorAll("#nest-ed-privat .nest-ed-privat")]; out.angebot = angebot.length;
+    if (angebot[0]) { angebot[0].click(); await w(400); }
+    out.uebernommen = (_nestEd.a.portraet_privatfotos || []).map(f => f.pfad).join(",");
+    // neue Ausgabe ohne Porträtkind: kein Angebot, Nummer läuft weiter
     await nestEdNeu(); await w(700);
-    const inp = document.getElementById("nest-privat-wahl"), ok = document.getElementById("nest-privat-ok");
     out.neuNummer = (document.querySelector("#nest-ed-body") || {}).textContent.match(/Ausgabe (\d+)/)?.[1];
-    out.gesperrt = !!(inp && inp.disabled);
-    if (ok) { ok.click(); await w(50); }
-    out.frei = !!(inp && !inp.disabled);
+    _nestEd.a.portraet_spieler_id = 3; await nestEdPrivat(); await w(300);
+    out.ohne = (document.getElementById("nest-ed-privat") || {}).textContent || "";
     window.toast = t0;
     return out;
   }).catch(e => ({ fehler: String(e) }));
   const fi = st.fehler(); await st.schliessen();
-  if (ri.fehler || ri.fotos !== 7 || ri.gewaehlt !== 6 || ri.zahl !== "6 von 6" || !ri.toast || ri.privatInput || !/Mehr als 2 Privatfotos/.test(ri.privatText) || !ri.gesperrt || !ri.frei || ri.neuNummer !== "04")
+  if (ri.fehler || ri.fotos !== 7 || ri.gewaehlt !== 6 || ri.zahl !== "6 von 6" || !ri.toast || ri.privatUpload || ri.angebot !== 2 || ri.uebernommen !== "einreichung/9/a.jpg" || !/Keine Fotos mit Einverständnis/.test(ri.ohne) || ri.neuNummer !== "04")
     probleme.push("i) " + JSON.stringify(ri));
-  else zeilen.push(`i) 7 Fotos angetippt → 6 gewählt („${ri.zahl}“, „${ri.toast}“); bei 2 Privatfotos kein Hochladen; neu (Nr. ${ri.neuNummer}): gesperrt bis zum Häkchen`);
+  else zeilen.push(`i) 7 Fotos angetippt → 6 gewählt („${ri.zahl}“, „${ri.toast}“); Privatfotos: ${ri.angebot} aus dem Bogen angeboten, eins übernommen, kein eigener Upload; ohne Einreichung Hinweis; neu Nr. ${ri.neuNummer}`);
   if (fi.length) probleme.push("Konsole Editor: " + fi.slice(0, 2).join(" | "));
 
   // j) Befund 03.10.

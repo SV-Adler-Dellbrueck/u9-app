@@ -357,12 +357,13 @@ async function nestEdListe(){
   let rows=null;
   try{const r=await fetch(`${SB_URL}/rest/v1/heft_ausgabe?select=id,nummer,status,schlagzeile,veroeffentlicht_am,termin_id,termine(datum,titel,gegner)&team=eq.adler1&order=nummer.desc`,{headers:sbAuthHeaders()});if(r.ok)rows=await r.json();}catch(e){}
   if(rows===null){ body.innerHTML=`<div style="font-size:var(--s-text);color:var(--text2);line-height:1.5">Die Ausgaben-Tabelle fehlt noch – die Migration <code>20261003_v733_adler_nest_ausgaben.sql</code> ist nicht eingespielt.</div>`; return; }
-  body.innerHTML=`<button type="button" class="btn btn-p" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800" onclick="nestEdNeu()">＋ Neue Ausgabe erfassen</button>
+  body.innerHTML=`<div id="nest-ablauf" style="margin-bottom:14px"></div><button type="button" class="btn btn-p" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800" onclick="nestEdNeu()">＋ Neue Ausgabe erfassen</button>
     ${rows.length?rows.map(x=>`<button type="button" class="nest-ed-zeile" onclick="nestEdOeffnen(${Number(x.id)})" style="display:flex;align-items:center;gap:10px;width:100%;min-height:56px;margin-top:8px;padding:8px 12px;border:1px solid var(--rand-bedien);border-radius:var(--r);background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-text);text-align:left;cursor:pointer">
         <span style="font-weight:800;min-width:44px">Nr. ${_nestNr(x.nummer)}</span>
         <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(x.schlagzeile||(x.termine&&(x.termine.titel||x.termine.gegner))||"ohne Schlagzeile")}${x.termine&&x.termine.datum?` · ${esc(_nestDatum(x.termine.datum))}`:""}</span>
         ${_nestStatus(x.status)}</button>`).join("")
       :`<div style="margin-top:12px;font-size:var(--s-text);color:var(--text2)">Noch keine Ausgabe. Entwürfe aus dem Projekt-Chat erscheinen hier zum Gegenlesen.</div>`}`;
+  nestAblaufLaden();
 }
 async function _nestEdStammdaten(){
   const d0=new Date(), saison=`${d0.getMonth()>=6?d0.getFullYear():d0.getFullYear()-1}-07-01`;
@@ -464,7 +465,7 @@ async function nestEdVorschlag(){
   if(v&&v.kind)el.innerHTML=`Dran ist reihum: <b>${esc(v.kind.name)}</b> ${v.zuletzt?`(zuletzt in der Woche ab ${esc(_nestDatum(v.zuletzt))})`:"(noch nie im Porträt)"}${Number(_nestEd.a.portraet_spieler_id)!==Number(v.kind.id)?` <button type="button" class="btn btn-sm" style="min-height:44px;margin-left:6px" onclick="nestEdPortraet(${Number(v.kind.id)});document.getElementById('nest-f-portraet').value='${Number(v.kind.id)}'">Übernehmen</button>`:" ✓"}`;
 }
 function nestEdTermin(v){ _nestEd.a.termin_id=v?Number(v):null; _nestEd.a.foto_ids=[]; nestEdFotos(); }
-function nestEdPortraet(v){ _nestEd.a.portraet_spieler_id=v?Number(v):null; nestEdReporter(); nestEdVorschlag(); }
+function nestEdPortraet(v){ _nestEd.a.portraet_spieler_id=v?Number(v):null; _nestEd.a.portraet_privatfotos=[]; nestEdReporter(); nestEdVorschlag(); nestEdPrivat(); }
 async function nestEdFotos(){
   const box=document.getElementById("nest-ed-fotos"); if(!box)return;
   const a=_nestEd.a; let fotos=[];
@@ -541,36 +542,28 @@ async function nestEdHochladen(art,input){
     nestEdUploads();
   }finally{ input.disabled=false; }
 }
-function nestEdPrivat(){
-  const box=document.getElementById("nest-ed-privat"); if(!box)return; const liste=_nestEd.a.portraet_privatfotos||[];
-  box.innerHTML=`<div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin:14px 0 4px">Privatfotos der Familie (${liste.length} von ${NEST_MAX_PRIVAT})</div>
-    ${liste.map((f,i)=>`<div style="display:flex;gap:8px;align-items:center;padding:6px 0;font-size:var(--s-text)"><span style="flex:1">📷 ${esc(f.unterschrift||"ohne Unterschrift")}</span><button type="button" class="btn btn-sm" style="min-height:44px" onclick="nestEdPrivatWeg(${i})">Entfernen</button></div>`).join("")}
-    ${liste.length<NEST_MAX_PRIVAT?`<div style="border:1px dashed var(--rand-bedien);border-radius:var(--r);padding:10px;margin-top:6px">
-      <label for="nest-privat-text" style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">Bildunterschrift</label>
-      <input id="nest-privat-text" maxlength="80" placeholder="z. B. Beim Eishockey" style="width:100%;min-height:48px;padding:8px;margin:4px 0 8px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box">
-      <label style="display:flex;align-items:center;gap:8px;min-height:44px;font-size:var(--s-text)"><input type="checkbox" id="nest-privat-ok" onchange="document.getElementById('nest-privat-wahl').disabled=!this.checked" style="width:20px;height:20px"> Familie ist einverstanden</label>
-      <label class="btn" style="min-height:48px;justify-content:center;cursor:pointer;position:relative">📷 Privatfoto hochladen<input type="file" id="nest-privat-wahl" disabled accept="image/jpeg,image/png,image/webp" onchange="nestEdPrivatHoch(this)" style="position:absolute;opacity:0;width:1px;height:1px"></label>
-    </div>`:`<div style="font-size:var(--s-klein);color:var(--text2)">Mehr als ${NEST_MAX_PRIVAT} Privatfotos gehen nicht.</div>`}`;
+/* v734 (Abschnitt 8): Privatfotos kommen aus dem Porträt-Bogen der Eltern – nur mit deren Einverständnis.
+   Der Trainer übernimmt sie oder lässt sie weg; hochladen kann er sie nicht mehr selbst. */
+async function nestEdPrivat(){
+  const box=document.getElementById("nest-ed-privat"); if(!box||!_nestEd)return;
+  const a=_nestEd.a, sid=a.portraet_spieler_id;
+  if(!sid){ box.innerHTML=""; return; }
+  let e=null; try{const r=await fetch(`${SB_URL}/rest/v1/portraet_einreichung?spieler_id=eq.${Number(sid)}&einverstanden_am=not.is.null&select=id,privatfotos,einverstanden_am&order=created_at.desc&limit=1`,{headers:sbAuthHeaders()});if(r.ok)e=(await r.json())[0]||null;}catch(x){}
+  const fotos=(e&&e.privatfotos)||[]; _nestEd.privatAngebot=fotos;
+  const gewaehlt=p=>(a.portraet_privatfotos||[]).some(x=>x.pfad===p);
+  box.innerHTML=`<div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin:14px 0 4px">Privatfotos aus dem Porträt-Bogen (${(a.portraet_privatfotos||[]).length} von ${NEST_MAX_PRIVAT} übernommen)</div>`
+    +(fotos.length?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${fotos.map((f,i)=>`<button type="button" class="nest-ed-privat" aria-pressed="${gewaehlt(f.pfad)}" onclick="nestEdPrivatKlick(${i})" style="padding:6px;border:${gewaehlt(f.pfad)?"3px solid var(--blue)":"1px solid var(--rand-bedien)"};border-radius:var(--r);background:var(--surface2);color:var(--text);font-family:inherit;text-align:left;cursor:pointer;min-height:44px">
+        <img id="nest-ed-privat-img-${i}" alt="" style="width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:6px;display:block;background:var(--surface)">
+        <span style="display:block;font-size:var(--s-klein);margin-top:4px">${gewaehlt(f.pfad)?"✓ übernommen":"weglassen"} · ${esc(f.unterschrift||"ohne Unterschrift")}</span></button>`).join("")}</div>`
+      :`<div style="font-size:var(--s-text);color:var(--text2)">Keine Fotos mit Einverständnis der Familie.</div>`);
+  fotos.forEach(async(f,i)=>{ const u=await nestBlobUrl("heft_media",f.pfad); const el=document.getElementById("nest-ed-privat-img-"+i); if(u&&el)el.src=u; });
 }
-async function nestEdPrivatHoch(input){
-  const ok=document.getElementById("nest-privat-ok");
-  if(!ok||!ok.checked){ toast("Erst bestätigen, dass die Familie einverstanden ist","err"); input.value=""; return; }
-  const liste=_nestEd.a.portraet_privatfotos||[];
-  if(liste.length>=NEST_MAX_PRIVAT){ toast(`Höchstens ${NEST_MAX_PRIVAT} Privatfotos`,"err"); return; }
-  const file=input.files&&input.files[0]; if(!file)return;
-  input.disabled=true;
-  const pfad=await _nestUpload(file);
-  if(pfad){
-    _nestEd.a.portraet_privatfotos=liste.concat([{pfad,unterschrift:(document.getElementById("nest-privat-text")?.value||"").trim(),einverstanden:true}]);
-    if(await nestEdSpeichern(true))toast("Privatfoto hinzugefügt");
-  }
-  nestEdPrivat();
-}
-async function nestEdPrivatWeg(i){
-  const liste=(_nestEd.a.portraet_privatfotos||[]).slice(); const weg=liste.splice(i,1)[0];
-  _nestEd.a.portraet_privatfotos=liste;
-  if(await nestEdSpeichern(true)&&weg&&weg.pfad){ try{await fetch(`${SB_URL}/storage/v1/object/heft_media/${weg.pfad}`,{method:"DELETE",headers:{'Authorization':'Bearer '+sbToken()}});}catch(e){} }
-  nestEdPrivat();
+function nestEdPrivatKlick(i){
+  const f=(_nestEd.privatAngebot||[])[i]; if(!f)return;
+  const liste=(_nestEd.a.portraet_privatfotos||[]).slice(), k=liste.findIndex(x=>x.pfad===f.pfad);
+  if(k>=0)liste.splice(k,1);
+  else { if(liste.length>=NEST_MAX_PRIVAT){ toast(`Höchstens ${NEST_MAX_PRIVAT} Privatfotos`,"err"); return; } liste.push({pfad:f.pfad,unterschrift:f.unterschrift||""}); }
+  _nestEd.a.portraet_privatfotos=liste; nestEdPrivat();
 }
 function _nestEdDaten(){
   const a=_nestEd.a, b={team:"adler1",nummer:a.nummer,termin_id:a.termin_id||null,foto_ids:(a.foto_ids||[]).slice(0,NEST_MAX_FOTOS),
@@ -618,6 +611,217 @@ async function nestEdZurueckziehen(){
 async function nestEdVorschau(){
   if(!await nestEdSpeichern(true))return;
   nestOpen(_nestEd.a.id);
+}
+
+/* ── Porträt-Ablauf (v734, Abschnitt 8) ─────────────────────
+   Nach einem Spieltag bestätigt ein Trainer das nächste Porträtkind → portraet_einreichung mit Fristen
+   (Mittwoch 20 Uhr Eltern, Freitag 20 Uhr Trainer, gerechnet in der Datenbank). Eltern füllen den Bogen,
+   das Kind sieht in der Kabine den Hinweis auf die Porträtfragen, jeder Trainer hinterlegt 2–3 Stichpunkte.
+   Benachrichtigungen schickt der 5-Minuten-Lauf rufe-push (portraet_push_faellig) – jede genau einmal. */
+function _nestFrist(ts){ try{ return new Date(ts).toLocaleString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+" Uhr"; }catch(e){ return ""; } }
+function _nestAmpel(ok,text){ return `<div class="nest-ampel" data-ok="${ok?1:0}" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:var(--s-text)"><span aria-hidden="true" style="flex:none;width:22px;height:22px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:800;background:${ok?"var(--green-bg)":"var(--orange-bg)"};border:1.5px solid ${ok?"var(--green)":"var(--orange)"};color:var(--text)">${ok?"✓":"!"}</span><span>${ok?"":"<b>fehlt:</b> "}${text}</span></div>`; }
+async function nestAblaufLaden(){
+  const box=document.getElementById("nest-ablauf"); if(!box)return;
+  let e=null, fehlt=false;
+  try{const r=await fetch(`${SB_URL}/rest/v1/portraet_einreichung?status=neq.uebernommen&select=*,kader(id,name,nr),termine(id,datum,titel,gegner)&order=created_at.desc&limit=1`,{headers:sbAuthHeaders()});
+    if(r.ok)e=(await r.json())[0]||null; else fehlt=true;}catch(x){fehlt=true;}
+  const rahmen=inhalt=>`<div style="border:1px solid var(--rand-bedien);border-left:4px solid #0044AA;border-radius:var(--r);padding:12px;background:var(--surface2)"><div style="font-size:var(--s-karte);font-weight:800;margin-bottom:6px">🪺 Nächstes Porträt</div>${inhalt}</div>`;
+  if(fehlt){ box.innerHTML=rahmen(`<div style="font-size:var(--s-text);color:var(--text2)">Der Porträt-Ablauf braucht die Migration <code>20261004_v734_portraet_ablauf.sql</code>.</div>`); return; }
+  if(!e){
+    const heute=isoLokal();
+    const [kader,termine,verlauf]=await Promise.all([
+      fetch(`${SB_URL}/rest/v1/kader?select=id,name,nr,aktiv&order=name`,{headers:sbAuthHeaders()}).then(r=>r.ok?r.json():[]).catch(()=>[]),
+      fetch(`${SB_URL}/rest/v1/termine?select=id,datum,typ,titel,gegner&typ=in.(spiel,turnier)&datum=gt.${heute}&order=datum.asc&limit=6`,{headers:sbAuthHeaders()}).then(r=>r.ok?r.json():[]).catch(()=>[]),
+      (typeof heftPortraetVerlauf==="function")?heftPortraetVerlauf():Promise.resolve([])]);
+    const aktiv=(kader||[]).filter(k=>k.aktiv!==false), v=(typeof heftPortraetNaechster==="function")?heftPortraetNaechster(aktiv,verlauf):null;
+    const sel="width:100%;min-height:48px;padding:8px;margin-top:6px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)";
+    box.innerHTML=rahmen(`<div style="font-size:var(--s-text);color:var(--text2);line-height:1.5">Nach dem Spieltag festlegen, wer im nächsten Heft steht. Dann bekommen die Eltern den Bogen (bis Mittwoch 20 Uhr) und das Trainerteam den Hinweis auf die Stichpunkte (bis Freitag 20 Uhr).</div>
+      <select id="nest-ablauf-kind" aria-label="Porträtkind" style="${sel}">${aktiv.map(k=>`<option value="${Number(k.id)}"${v&&v.kind&&v.kind.id===k.id?" selected":""}>${k.nr!=null?esc(k.nr)+" · ":""}${esc(k.name)}${v&&v.kind&&v.kind.id===k.id?" – dran ist reihum":""}</option>`).join("")}</select>
+      <select id="nest-ablauf-termin" aria-label="Spieltag, nach dem die Ausgabe erscheint" style="${sel}">${(termine||[]).map(t=>`<option value="${Number(t.id)}">${esc(_nestDatum(t.datum))} · ${esc(t.titel||t.gegner||t.typ)}</option>`).join("")||'<option value="">kein kommender Spieltag</option>'}</select>
+      <button type="button" class="btn" id="nest-ablauf-bestaetigen" onclick="nestAblaufBestaetigen()" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Porträtkind bestätigen</button>`);
+    return;
+  }
+  const [stimmen,reporter,profil,satz,cfg]=await Promise.all([
+    fetch(`${SB_URL}/rest/v1/portraet_trainerstimme?einreichung_id=eq.${Number(e.id)}&select=id,trainer_id,stichpunkte`,{headers:sbAuthHeaders()}).then(r=>r.ok?r.json():[]).catch(()=>[]),
+    fetch(`${SB_URL}/rest/v1/kabine_reporter?spieler_id=eq.${Number(e.spieler_id)}&select=id,freigegeben`,{headers:sbAuthHeaders()}).then(r=>r.ok?r.json():[]).catch(()=>[]),
+    fetch(`${SB_URL}/rest/v1/profiles?role=eq.trainer&select=id,anzeigename`,{headers:sbAuthHeaders()}).then(r=>r.ok?r.json():[]).catch(()=>[]),
+    _nestRpc("portraet_beteiligung",{p_spieler:e.spieler_id}),
+    fetch(`${SB_URL}/rest/v1/team_config?select=portraet_schwelle&limit=1`,{headers:sbAuthHeaders()}).then(r=>r.ok?r.json():[]).catch(()=>[])]);
+  const ich=(typeof sbUid==="function")?sbUid():null, meine=(stimmen||[]).find(x=>x.trainer_id===ich);
+  const name=id=>((profil||[]).find(p=>p.id===id)||{}).anzeigename||"Trainer";
+  const nRep=(reporter||[]).length, nFrei=(reporter||[]).filter(x=>x.freigegeben).length, nTr=(profil||[]).length||1;
+  const k=e.kader||{}, t=e.termine||{}, fotos=(e.privatfotos||[]).length, schwelle=((cfg||[])[0]||{}).portraet_schwelle||90;
+  window._nestAblauf=e;
+  box.innerHTML=rahmen(`<div style="font-size:var(--s-teil);font-weight:900">${esc(k.name||"")}${k.nr!=null?" · Nr. "+esc(k.nr):""}</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px">Ausgabe nach ${esc(t.titel||t.gegner||"dem Spieltag")}${t.datum?" am "+esc(_nestDatum(t.datum)):""} · Eltern bis ${esc(_nestFrist(e.frist_eltern))} · Trainer bis ${esc(_nestFrist(e.frist_trainer))}</div>
+    <div id="nest-ampel">
+      ${_nestAmpel(e.status!=="angefragt",e.status!=="angefragt"?`Bogen der Eltern eingereicht${fotos?` (${fotos} ${fotos===1?"Foto":"Fotos"})`:""}`:"Bogen der Eltern")}
+      ${_nestAmpel(nRep>0,nRep?`Antworten des Kindes: ${nRep}, davon ${nFrei} freigegeben (Freigabe in der Ausgabe)`:"Antworten des Kindes im Kabinen-Reporter")}
+      ${_nestAmpel((stimmen||[]).length>0,(stimmen||[]).length?`Trainerstimmen: ${(stimmen||[]).length} von ${nTr}`:"Trainerstimmen")}
+    </div>
+    ${(typeof satz==="string"&&satz)?`<div id="nest-beteiligung" style="font-size:var(--s-text);margin:6px 0">✓ ${esc(satz)} <span style="color:var(--text2)">(aus der Anwesenheitsliste)</span></div>`:""}
+    <label for="nest-stimme" style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2);margin:10px 0 4px">Deine Stichpunkte: was das Kind auszeichnet, woran es arbeitet</label>
+    <textarea id="nest-stimme" rows="3" maxlength="600" style="width:100%;padding:10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text);box-sizing:border-box">${esc((meine&&meine.stichpunkte)||"")}</textarea>
+    <button type="button" class="btn" id="nest-stimme-erfassen" onclick="nestStimmeErfassen()" style="width:100%;min-height:48px;margin-top:6px;justify-content:center">Stimme erfassen</button>
+    ${(stimmen||[]).filter(x=>x.trainer_id!==ich).map(x=>`<div style="font-size:var(--s-text);padding:6px 0;border-top:1px solid var(--rand-bedien);margin-top:6px"><b>${esc(name(x.trainer_id))}:</b> ${esc(x.stichpunkte)}</div>`).join("")}
+    <div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap">
+      <label for="nest-schwelle" style="font-size:var(--s-klein);color:var(--text2);flex:1;min-width:160px">Satz „bei (fast) jedem Training dabei“ ab</label>
+      <input id="nest-schwelle" type="number" min="50" max="100" step="5" value="${Number(schwelle)}" style="width:80px;min-height:44px;padding:6px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)"> <span>%</span>
+      <button type="button" class="btn btn-sm" onclick="nestSchwelleErfassen()" style="min-height:44px">Übernehmen</button>
+    </div>
+    <button type="button" class="btn btn-sm" onclick="nestAblaufVerwerfen()" style="min-height:44px;margin-top:8px">Anderes Kind wählen</button>`);
+}
+async function nestAblaufBestaetigen(){
+  const sid=Number(document.getElementById("nest-ablauf-kind")?.value||0), tid=Number(document.getElementById("nest-ablauf-termin")?.value||0);
+  if(!sid||!tid){ toast("Kind und Spieltag wählen","err"); return; }
+  const r=await _nestRpc("portraet_anfragen",{p_spieler:sid,p_termin:tid});
+  if(!r){ toast("Nicht angelegt – für diesen Spieltag oder dieses Kind läuft schon ein Porträt","err"); return; }
+  toast("Porträtkind bestätigt – Eltern und Trainer werden benachrichtigt"); nestAblaufLaden();
+}
+async function nestAblaufVerwerfen(){
+  const e=window._nestAblauf; if(!e)return;
+  if(!await frageJaNein({emoji:"🪺",titel:"Anderes Kind wählen?",text:"Bogen, Fotos der Eltern und Trainerstimmen zu diesem Porträt werden gelöscht.",ja:"Verwerfen",ton:"rot"}))return;
+  for(const f of (e.privatfotos||[])){ try{await fetch(`${SB_URL}/storage/v1/object/heft_media/${f.pfad}`,{method:"DELETE",headers:{'Authorization':'Bearer '+sbToken()}});}catch(x){} }
+  try{const r=await fetch(`${SB_URL}/rest/v1/portraet_einreichung?id=eq.${Number(e.id)}`,{method:"DELETE",headers:sbAuthHeaders()}); if(!r.ok){toast("Nicht verworfen","err");return;}}catch(x){toast("Netzwerkfehler","err");return;}
+  nestAblaufLaden();
+}
+async function nestStimmeErfassen(){
+  const e=window._nestAblauf, t=(document.getElementById("nest-stimme")?.value||"").trim(); if(!e)return;
+  if(!t){ toast("Erst zwei, drei Stichpunkte eintragen","err"); return; }
+  try{const r=await fetch(`${SB_URL}/rest/v1/portraet_trainerstimme?on_conflict=einreichung_id,trainer_id`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({einreichung_id:e.id,trainer_id:(typeof sbUid==="function"?sbUid():undefined),stichpunkte:t.slice(0,600)})});
+    if(!r.ok){toast("Stimme nicht erfasst","err");return;}}catch(x){toast("Netzwerkfehler","err");return;}
+  toast("Stimme erfasst"); nestAblaufLaden();
+}
+async function nestSchwelleErfassen(){
+  const v=Math.round(Number(document.getElementById("nest-schwelle")?.value||0));
+  if(!(v>=50&&v<=100)){ toast("Schwelle zwischen 50 und 100 %","err"); return; }
+  try{const r=await fetch(`${SB_URL}/rest/v1/team_config?id=not.is.null`,{method:"PATCH",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},body:JSON.stringify({portraet_schwelle:v})}); if(!r.ok){toast("Schwelle nicht gespeichert","err");return;}}catch(x){toast("Netzwerkfehler","err");return;}
+  toast(`Schwelle ${v} % übernommen`); nestAblaufLaden();
+}
+
+/* Eltern: Karte „Euer Kind ist im nächsten Adler Nest“ und der Porträt-Bogen */
+let _nestBogen=null;   // {e, name, fotos:[{pfad,unterschrift}], neu:[pfad], ok:boolean}
+async function nestBogenKarte(kids){
+  const slot=document.getElementById("nest-bogen-slot"); if(!slot)return;
+  const ids=(kids||[]).map(k=>Number(k.spieler_id)).filter(Boolean); if(!ids.length){slot.innerHTML="";return;}
+  let rows=[]; try{const r=await fetch(`${SB_URL}/rest/v1/portraet_einreichung?spieler_id=in.(${ids.join(",")})&status=neq.uebernommen&select=id,spieler_id,status,frist_eltern,privatfotos,einverstanden_am`,{headers:sbAuthHeaders()});if(r.ok)rows=await r.json();}catch(e){}
+  window._nestEinreichungen=rows||[];
+  const nameVon=sid=>{const k=(kids||[]).find(x=>Number(x.spieler_id)===Number(sid));return ((k&&k.kader&&k.kader.name)||"Euer Kind").split(" ")[0];};
+  slot.innerHTML=(rows||[]).map(e=>{ const zu=new Date(e.frist_eltern)<new Date(), fertig=e.status==="eingereicht";
+    return `<button type="button" class="nest-bogen-karte" onclick="nestBogenOpen(${Number(e.id)})" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border:2px solid #0044AA;border-radius:14px;padding:12px 14px;margin-bottom:12px;font-family:inherit;cursor:pointer;min-height:56px">
+      <span style="font-size:var(--s-seite)" aria-hidden="true">🪺</span>
+      <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800;color:#0A1A3A">${esc(nameVon(e.spieler_id))} ist im nächsten Adler Nest</span>
+      <span style="display:block;font-size:var(--s-klein);color:#45506a">${fertig?"✓ Bogen eingereicht – ändern bis "+esc(_nestFrist(e.frist_eltern)):zu?"Der Bogen ist noch offen – ein paar Angaben reichen schon.":"Bitte den Porträt-Bogen ausfüllen bis "+esc(_nestFrist(e.frist_eltern))}</span></span>
+      <span style="font-size:var(--s-karte);color:#45506a" aria-hidden="true">›</span></button>`; }).join("");
+  if(rows.length&&new URLSearchParams(location.search).get("nest")==="bogen"&&!window._nestBogenAuto){ window._nestBogenAuto=true; nestBogenOpen(rows[0].id); }
+}
+async function nestBogenOpen(id){
+  const e=(window._nestEinreichungen||[]).find(x=>Number(x.id)===Number(id)); if(!e)return;
+  const k=(window._elternKids||[]).find(x=>Number(x.spieler_id)===Number(e.spieler_id));
+  _nestBogen={e, name:((k&&k.kader&&k.kader.name)||"Euer Kind").split(" ")[0], fotos:(e.privatfotos||[]).map(f=>({pfad:f.pfad,unterschrift:f.unterschrift||""})), neu:[], ok:!!e.einverstanden_am};
+  document.getElementById("nest-bogen")?.remove();
+  const m=document.createElement("div"); m.id="nest-bogen";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Porträt-Bogen");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.style.zIndex=zOben(10001);
+  document.body.appendChild(m);
+  nestBogenRender();
+}
+function nestBogenRender(){
+  const m=document.getElementById("nest-bogen"); if(!m||!_nestBogen)return; const b=_nestBogen;
+  const inp="width:100%;min-height:48px;padding:9px;margin:4px 0 8px;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box;font-family:inherit;font-size:var(--s-text)";
+  m.innerHTML=`<div style="background:#fff;color:#0A1A3A;border-radius:16px;padding:18px;max-width:420px;width:100%;margin:auto">
+    ${mdlHead("nest-bogen","🪺",`${esc(b.name)} im Adler Nest`,"Euer Kind wird im nächsten Heft vorgestellt","#0044AA")}
+    <div style="font-size:var(--s-text);line-height:1.5;margin-bottom:12px">Bis ${esc(_nestFrist(b.e.frist_eltern))} sammeln wir ein paar Angaben. Das Trainerteam schreibt daraus das Porträt und liest es vor dem Erscheinen. Im Heft steht nur der Vorname. Das Heft lesen nur angemeldete Team-Familien.</div>
+    <div style="font-weight:800;margin:8px 0 4px">1 · Fan-Fakten</div>
+    <div style="font-size:var(--s-klein);color:#45506a;margin-bottom:6px">Hobby, Lieblingsverein, starker Fuß, weiterer Sport, Saisonziel – was ihr eintragt, kann ins Porträt.</div>
+    <button type="button" class="btn" onclick="if(typeof elternFanfactsOpen==='function')elternFanfactsOpen(${Number(b.e.spieler_id)},'${jsq(b.name)}')" style="width:100%;min-height:48px;justify-content:center">✏️ Fan-Fakten ausfüllen</button>
+    <div style="font-weight:800;margin:16px 0 4px">2 · Bis zu zwei Fotos (freiwillig)</div>
+    <div id="nest-bogen-fotos">${b.fotos.map((f,i)=>`<div style="display:flex;gap:8px;align-items:center;padding:6px 0"><img id="nest-bogen-img-${i}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:8px;background:#eef3fb"><span style="flex:1;font-size:var(--s-text)">${esc(f.unterschrift||"ohne Unterschrift")}</span><button type="button" class="btn btn-sm" style="min-height:44px" onclick="nestBogenFotoWeg(${i})">Entfernen</button></div>`).join("")}</div>
+    ${b.fotos.length<NEST_MAX_PRIVAT?`<label for="nest-bogen-text" style="font-size:var(--s-klein);color:#45506a">Bildunterschrift</label>
+      <input id="nest-bogen-text" maxlength="80" placeholder="z. B. Beim Schwimmen" style="${inp}">
+      <label class="btn" style="width:100%;min-height:48px;justify-content:center;cursor:pointer;position:relative;${b.ok?"":"opacity:.55"}">📷 Foto auswählen<input type="file" id="nest-bogen-wahl" accept="image/jpeg,image/png,image/webp" ${b.ok?"":"disabled"} onchange="nestBogenFotoHoch(this)" style="position:absolute;opacity:0;width:1px;height:1px"></label>
+      ${b.ok?"":`<div style="font-size:var(--s-klein);color:#45506a;margin-top:4px">Fotos erst nach dem Häkchen unten.</div>`}`
+      :`<div style="font-size:var(--s-klein);color:#45506a">Mehr als zwei Fotos gehen nicht.</div>`}
+    <label style="display:flex;gap:10px;align-items:flex-start;margin:16px 0 8px;font-size:var(--s-text);line-height:1.4;min-height:44px">
+      <input type="checkbox" id="nest-bogen-ok" ${b.ok?"checked":""} onchange="nestBogenOk(this)" style="width:22px;height:22px;flex:none;margin-top:2px">
+      <span>Wir sind einverstanden, dass diese Angaben und Fotos im Adler Nest erscheinen.</span></label>
+    <button type="button" class="btn btn-p" id="nest-bogen-einreichen" ${b.ok?"":"disabled"} onclick="nestBogenEinreichen()" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800">${b.e.status==="eingereicht"?"Änderungen einreichen":"Bogen einreichen"}</button>
+    <button type="button" onclick="nestBogenClose()" style="display:block;margin:10px auto 0;min-height:44px;border:none;background:none;color:#45506a;font-family:inherit;font-size:var(--s-text);cursor:pointer">Schließen</button>
+  </div>`;
+  b.fotos.forEach(async(f,i)=>{ const u=await nestBlobUrl("heft_media",f.pfad); const el=document.getElementById("nest-bogen-img-"+i); if(u&&el)el.src=u; });
+}
+async function nestBogenOk(el){
+  const b=_nestBogen; if(!b)return;
+  if(el.checked){ b.ok=true; nestBogenRender(); return; }
+  if(!b.e.einverstanden_am&&!b.neu.length){ b.ok=false; nestBogenRender(); return; }
+  if(!await frageJaNein({emoji:"🪺",titel:"Einverständnis zurückziehen?",text:"Eure Fotos werden aus dem Bogen und aus dem Heft entfernt.",ja:"Zurückziehen",ton:"rot"})){ el.checked=true; return; }
+  const weg=(await _nestRpc("portraet_einreichen",{p_einreichung:b.e.id,p_einverstanden:false,p_privatfotos:[]}))||[];
+  const pfade=new Set(weg.map(x=>x.pfad).concat(b.neu));
+  for(const p of pfade){ try{await fetch(`${SB_URL}/storage/v1/object/heft_media/${p}`,{method:"DELETE",headers:{'Authorization':'Bearer '+sbToken()}});}catch(x){} }
+  b.ok=false; b.fotos=[]; b.neu=[]; b.e.einverstanden_am=null; b.e.status="angefragt"; b.e.privatfotos=[];
+  toast("Einverständnis zurückgezogen – Fotos entfernt"); nestBogenRender();
+  if(typeof nestBogenKarte==="function")nestBogenKarte(window._elternKids||[]);
+}
+async function nestBogenFotoHoch(input){
+  const b=_nestBogen, file=input.files&&input.files[0]; if(!b||!file)return;
+  if(!b.ok){ toast("Erst das Einverständnis bestätigen","err"); input.value=""; return; }
+  if(b.fotos.length>=NEST_MAX_PRIVAT){ toast(`Höchstens ${NEST_MAX_PRIVAT} Fotos`,"err"); return; }
+  input.disabled=true;
+  try{
+    const blob=await _nestBildKleiner(file);
+    const pfad=`einreichung/${Number(b.e.id)}/${(crypto&&crypto.randomUUID)?crypto.randomUUID():Date.now()}.jpg`;
+    const r=await fetch(`${SB_URL}/storage/v1/object/heft_media/${pfad}`,{method:"POST",headers:{'Authorization':'Bearer '+sbToken(),'Content-Type':'image/jpeg'},body:blob});
+    if(!r.ok){ toast("Foto nicht hochgeladen","err"); return; }
+    b.fotos.push({pfad,unterschrift:(document.getElementById("nest-bogen-text")?.value||"").trim().slice(0,80)}); b.neu.push(pfad);
+    nestBogenRender();
+  }finally{ input.disabled=false; }
+}
+// Auf höchstens 1600 px Kante verkleinern, Seitenverhältnis bleibt (fotoCompress schneidet quadratisch zu)
+function _nestBildKleiner(file){
+  return new Promise(ok=>{ try{ const u=URL.createObjectURL(file), img=new Image();
+    img.onload=()=>{ const f=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight)), c=document.createElement("canvas");
+      c.width=Math.round(img.naturalWidth*f); c.height=Math.round(img.naturalHeight*f); c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(u); c.toBlob(b=>ok(b||file),"image/jpeg",0.85); };
+    img.onerror=()=>{ URL.revokeObjectURL(u); ok(file); }; img.src=u; }catch(e){ ok(file); } });
+}
+function nestBogenFotoWeg(i){ const b=_nestBogen; if(!b)return; b.fotos.splice(i,1); nestBogenRender(); }
+async function nestBogenEinreichen(){
+  const b=_nestBogen; if(!b)return;
+  if(!b.ok){ toast("Bitte das Einverständnis bestätigen","err"); return; }
+  const weg=await _nestRpc("portraet_einreichen",{p_einreichung:b.e.id,p_einverstanden:true,p_privatfotos:b.fotos});
+  if(weg===null){ toast("Nicht eingereicht – bitte noch einmal versuchen","err"); return; }
+  const behalten=new Set(b.fotos.map(f=>f.pfad));
+  const loeschen=new Set((weg||[]).map(x=>x.pfad).concat(b.neu.filter(p=>!behalten.has(p))));
+  for(const p of loeschen){ try{await fetch(`${SB_URL}/storage/v1/object/heft_media/${p}`,{method:"DELETE",headers:{'Authorization':'Bearer '+sbToken()}});}catch(x){} }
+  b.neu=[]; toast("Bogen eingereicht – danke! 🦅");
+  document.getElementById("nest-bogen")?.remove(); _nestBogen=null;
+  if(typeof nestBogenKarte==="function")nestBogenKarte(window._elternKids||[]);
+}
+async function nestBogenClose(){
+  const b=_nestBogen;
+  // hochgeladen, aber nicht eingereicht: wieder entfernen
+  if(b&&b.neu.length){ for(const p of b.neu){ try{await fetch(`${SB_URL}/storage/v1/object/heft_media/${p}`,{method:"DELETE",headers:{'Authorization':'Bearer '+sbToken()}});}catch(x){} } }
+  document.getElementById("nest-bogen")?.remove(); _nestBogen=null;
+}
+
+/* Kinder: Hinweis in der Kabine auf die Porträtfragen im Kabinen-Reporter (bis zur Frist der Eltern) */
+async function kabineNestHinweisLoad(){
+  const el=document.getElementById("kab-nest-hinweis"); if(!el)return;
+  const ids=(window._elternKids||[]).map(k=>Number(k.spieler_id)).filter(Boolean); if(!ids.length){el.innerHTML="";return;}
+  let rows=[]; try{const r=await fetch(`${SB_URL}/rest/v1/portraet_einreichung?spieler_id=in.(${ids.join(",")})&status=neq.uebernommen&frist_eltern=gt.${encodeURIComponent(new Date().toISOString())}&select=spieler_id`,{headers:sbAuthHeaders()});if(r.ok)rows=await r.json();}catch(e){}
+  if(!(rows||[]).length){el.innerHTML="";return;}
+  el.innerHTML=`<button type="button" onclick="if(typeof kabineReporter==='function')kabineReporter()" style="display:flex;align-items:center;gap:10px;margin:2px 16px 8px;width:calc(100% - 32px);min-height:56px;border:1px solid rgba(255,255,255,.3);border-radius:16px;background:linear-gradient(135deg,rgba(0,68,170,.75),rgba(10,26,58,.6));color:#fff;font-family:inherit;text-align:left;padding:10px 14px;cursor:pointer">
+    <span style="font-size:26px" aria-hidden="true">🪺</span>
+    <span style="flex:1"><span style="display:block;font-size:15px;font-weight:900">Du bist im nächsten Adler Nest!</span>
+    <span style="display:block;font-size:12.5px;opacity:.92">Beantworte im Kabinen-Reporter deine Porträtfragen.</span></span></button>`;
+}
+/* Direktlinks aus den Benachrichtigungen: ./trainer/?nest=ablauf öffnet den Editor, sobald angemeldet. */
+if(typeof location!=="undefined"&&new URLSearchParams(location.search).get("nest")==="ablauf"&&/\/trainer\//.test(location.pathname)){
+  let _nestVersuche=0; const _nestT=setInterval(()=>{ _nestVersuche++;
+    const app=document.getElementById("main-app");
+    if(typeof sbToken==="function"&&sbToken()&&app&&app.style.display!=="none"){ clearInterval(_nestT); nestEditorOpen(); }
+    else if(_nestVersuche>240)clearInterval(_nestT); },500);
 }
 /* Wache für die MODUL_WACHE – muss die letzte Definition der Datei bleiben. */
 function nestModulDa(){ return true; }

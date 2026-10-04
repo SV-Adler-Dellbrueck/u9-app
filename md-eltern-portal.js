@@ -901,6 +901,7 @@ async function elternDashLoad(){
   html+='<div id="eltern-live-slot"></div>';
   html+='<div id="push-hinweis-slot"></div>';   // v698: ganz oben – Benachrichtigungen, solange sie aus sind
   html+='<div id="rufe-hinweis"></div>';          // v673: neue Adler-Rufe – nur wenn es welche gibt
+  html+='<div id="nest-bogen-slot"></div>';       // v734: „Euer Kind ist im nächsten Adler Nest“ – nur während eines Porträts
   html+='<div id="eltern-top-slot"></div>';        // hier landet die Terminkarte (s. u.)
   html+='<div id="eltern-offen-slot"></div>';      // offene Rückmeldungen der nächsten 14 Tage
   if(termin&&(termin.typ==="spiel"||termin.typ==="turnier"))html+='<div id="pause-card"></div>';
@@ -1146,6 +1147,7 @@ async function elternDashLoad(){
   elternTeamAnsprechLoad();                    // v663: Elternbeirat, Kasse, Beitrag
   if(typeof elternKasseRolleLoad==="function")elternKasseRolleLoad();      // v664: Kasse verwalten
   if(typeof rufeBadgeLoad==="function")rufeBadgeLoad();                    // v670: neue Adler-Rufe
+  if(typeof nestBogenKarte==="function")nestBogenKarte(kids);               // v734: Porträt-Bogen fürs Adler Nest
   window._elternKids=kids;   // v699: die Mannschaftskasse zeigt den Stand der eigenen Kinder beim Öffnen
   elternKasseKachelStand(kids, kasse);   // v716: „Beitrag bezahlt / offen“ direkt auf der Kachel
   elternGenesungLoad(kids);                    // I-A: Genesungsgrüße für pausierte Teamkinder
@@ -2294,7 +2296,7 @@ const ELTERN_TOUR=[
   {emo:"📬", t:"Offene Rückmeldungen", sel:["#eltern-offen-card"],
    d:"Stehen in den nächsten 14 Tagen Antworten aus, siehst du sie hier gesammelt."},
   {emo:"🎒", t:"Alles zum Termin", sel:['[onclick^="terminDetailOpen"]'],
-   d:"Tippe auf einen Termin: Wetter, Adresse mit Route, „Was muss mit?“, Fahrgemeinschaft, „Wer hilft mit?“ und die Fotos zum Termin – „📷 Foto aufnehmen“ öffnet direkt die Kamera. Alle Spieltagsfotos zusammen – groß ansehen und durchwischen – stehen unter „Mehr vom Team“ → „Spieltagsgalerie“. Dort erscheint nach jedem Spieltag auch das „Adler Nest“ – eine neue Ausgabe zum Lesen und Hören. Die ganze Saison und das Kalender-Abo findest du unten unter „Mehr“ → „Alle Termine“."},
+   d:"Tippe auf einen Termin: Wetter, Adresse mit Route, „Was muss mit?“, Fahrgemeinschaft, „Wer hilft mit?“ und die Fotos zum Termin – „📷 Foto aufnehmen“ öffnet direkt die Kamera. Alle Spieltagsfotos zusammen – groß ansehen und durchwischen – stehen unter „Mehr vom Team“ → „Spieltagsgalerie“. Dort erscheint nach jedem Spieltag auch das „Adler Nest“ – eine neue Ausgabe zum Lesen und Hören. Ist euer Kind im nächsten Porträt, steht oben eine Karte mit dem Porträt-Bogen. Die ganze Saison und das Kalender-Abo findest du unten unter „Mehr“ → „Alle Termine“."},
   {emo:"✅", t:"Zu erledigen", sel:["#eltern-todo-btn"],
    d:"Aufgaben für euch als Familie, zum Beispiel der Grillhütten-Dienst. Könnt ihr nicht, tippt ihr „Ersatz suchen“ – eine andere Familie kann übernehmen."},
   {emo:"📡", t:"Liveticker", sel:["#eltern-live-slot","#eltern-ticker-slot"],
