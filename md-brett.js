@@ -16,19 +16,29 @@
    und nur fünf Werkzeuge; die Zeit zählt wie jede Kabinen-Seite zur Appzeit. */
 
 const BRETT_B=180, BRETT_H=280;                       // hochkant wie die Spielsituationen
-const BRETT_FORMEN=[["funino","FUNiño"],["3+1","3+1"],["4+1","4+1"],["5+1","5+1"]];
+const BRETT_FORMEN=[["funino","FUNiño"],["3+1","3+1"],["4+1","4+1"],["5+1","5+1"],["leer","Leeres Feld"]];
 const BRETT_KURZ={TW:"TW",Aufpasser:"A","Flitzer L":"FL","Flitzer R":"FR","Jäger":"J","Abwehr L":"AL","Abwehr R":"AR"};
 /* Stiftfarben: hell auf dem dunklen Rasen (alle über 3:1). Der Name steht am Knopf, damit
    die Farbe nie allein trägt. */
 const BRETT_STIFTE=[["w","Weiß","#ffffff"],["y","Gelb","#fbbf24"],["b","Blau","#93c5fd"]];
 const BRETT_MODI={
   trainer:{schluessel:"adler-brett-trainer", r:8,  strich:2.5, formen:BRETT_FORMEN,           stifte:BRETT_STIFTE},
-  kind:   {schluessel:"adler-brett-kind",    r:11, strich:4,   formen:BRETT_FORMEN.slice(0,3), stifte:BRETT_STIFTE.slice(0,2)}
+  kind:   {schluessel:"adler-brett-kind",    r:11, strich:4,   formen:BRETT_FORMEN.filter(f=>f[0]!=="5+1"), stifte:BRETT_STIFTE.slice(0,2)}
 };
 let _br=null;   // {modus,wurzel,stand,werk,stift,verlauf,zieh,strich}
+/* v750 – Charles 04.10.: „im Skizzen-Modus auch möglich, dass das Board komplett leer ist und das
+   Kind selbst alles anlegen kann. Auch die Spieler aussuchen, die aufgestellt werden, aus dem
+   Team-Kader.“ (Kachel: Vorname auf dem Stein.) „Leeres Feld“ hat weder Tore noch Steine; über
+   „＋ Hinzufügen“ kommen Mitspieler aus dem Kader (jedes Kind einmal, Vorname auf ~6 Zeichen),
+   Torwart, Gegner, Ball und Geräte dazu. „Radieren“ nimmt auch Steine wieder weg. Die Namen
+   bleiben wie alles hier nur auf diesem Gerät – kein Textfeld, kein Netzaufruf. */
+const BRETT_DINGE=[["wir","🟢","Mitspieler"],["tw","🧤","Torwart"],["gegner","🔴","Gegner"],["ball","⚽","Ball"],
+  ["huetchen","🔶","Hütchen"],["stange","📍","Stange"],["minitor","🥅","Minitor"]];
+const BRETT_MAX=40;
 
 /* ── Stand ─────────────────────────────────────────────────────────────────────────── */
 function _brFeld(form){
+  if(form==="leer")return {hoch:true, z:[[18,24,144,232]], li:[[18,140,162,140,"m"]]};   // v750: nur der Platz
   const spec={hoch:true, z:[[18,24,144,232]], li:[[18,140,162,140,"m"]],
     h:[[18,24,"y"],[162,24,"y"],[18,256,"y"],[162,256,"y"]]};
   if(form==="funino"){
@@ -41,6 +51,7 @@ function _brFeld(form){
 function _brGrundstellung(form){
   const f=(typeof FORMATIONS!=="undefined"&&FORMATIONS[form])||null;
   const toks=[];
+  if(form==="leer")return {form, toks, striche:[]};
   (f?f.slots:[]).forEach(sl=>{
     const x=Math.round(18+sl.x*1.44), y=Math.round(134+(sl.y/100)*116);   // TW frei vor dem Tor, auch mit großen Kinder-Steinen
     toks.push({t:sl.role==="TW"?"tw":"wir", x, y, k:BRETT_KURZ[sl.role]||""});
@@ -77,8 +88,12 @@ function _brSteineHtml(){
   const F={wir:"#4ade80",tw:"#60a5fa",gegner:"#f87171"};
   return _br.stand.toks.map((t,i)=>{
     if(t.t==="ball")return `<g data-stein="${i}"><circle cx="${t.x}" cy="${t.y}" r="${Math.round(r*.6)}" fill="#111827" stroke="#fff" stroke-width="1.5"/></g>`;
+    if(t.t==="huetchen")return `<g data-stein="${i}"><path d="M${t.x} ${t.y-r*.8} L${t.x+r*.7} ${t.y+r*.6} L${t.x-r*.7} ${t.y+r*.6} Z" fill="#f59e0b" stroke="rgba(0,0,0,.45)" stroke-width="1"/></g>`;
+    if(t.t==="stange")return `<g data-stein="${i}"><rect x="${t.x-1.6}" y="${t.y-r}" width="3.2" height="${r*2}" rx="1.4" fill="#fde047" stroke="rgba(0,0,0,.45)" stroke-width=".8"/></g>`;
+    if(t.t==="minitor")return `<g data-stein="${i}"><rect x="${t.x-r*1.3}" y="${t.y-r*.35}" width="${r*2.6}" height="${r*.7}" fill="none" stroke="#fff" stroke-width="2"/></g>`;
+    const name=t.n?`<text x="${t.x}" y="${t.y+r+r*.75}" text-anchor="middle" font-size="${Math.round(r*.75)}" font-weight="700" fill="#fff" stroke="rgba(0,0,0,.65)" stroke-width="2" paint-order="stroke" font-family="Inter,system-ui,sans-serif">${esc(t.n)}</text>`:"";
     const k=t.k?`<text x="${t.x}" y="${t.y+r*.35}" text-anchor="middle" font-size="${Math.round(r*.9)}" font-weight="700" fill="rgba(0,0,0,.7)" font-family="Inter,system-ui,sans-serif">${t.k}</text>`:"";
-    return `<g data-stein="${i}"><circle cx="${t.x}" cy="${t.y}" r="${r}" fill="${F[t.t]||F.wir}" stroke="rgba(0,0,0,.35)" stroke-width="1.2"/>${k}</g>`;
+    return `<g data-stein="${i}"><circle cx="${t.x}" cy="${t.y}" r="${r}" fill="${F[t.t]||F.wir}" stroke="rgba(0,0,0,.35)" stroke-width="1.2"/>${k}${name}</g>`;
   }).join("");
 }
 function _brBuehne(){
@@ -92,7 +107,8 @@ function _brLeiste(){
   const w=(id,icon,txt)=>`<button type="button" class="btn br-werk" data-werk="${id}" aria-pressed="${_br.werk===id}" onclick="brettWerkzeug('${id}')"><i class="ti ${icon}"></i>${txt}</button>`;
   const stifte=m.stifte.map(([c,name,hex])=>`<button type="button" class="btn br-farbe" data-farbe="${c}" aria-pressed="${_br.werk==="stift"&&_br.stift===c}" onclick="brettStift('${c}')" title="Stift ${name}"><span class="br-punkt" style="background:${hex}"></span>${name}</button>`).join("");
   const formen=m.formen.map(([k,l])=>`<button type="button" class="btn br-form" aria-pressed="${_br.stand.form===k}" onclick="brettForm('${k}')">${l}</button>`).join("");
-  return `<div class="br-reihe" role="group" aria-label="Werkzeug">${w("ziehen","ti-hand-finger","Schieben")}${stifte}${w("radierer","ti-eraser","Radieren")}</div>
+  return `<div class="br-reihe" role="group" aria-label="Werkzeug">${w("ziehen","ti-hand-finger","Schieben")}${stifte}${w("radierer","ti-eraser","Radieren")}
+      <button type="button" class="btn br-neu" onclick="brettWahlAuf()" aria-haspopup="dialog"><i class="ti ti-plus"></i>Hinzufügen</button></div>
     <div class="br-reihe" role="group" aria-label="Brett">
       <button type="button" class="btn" onclick="brettZurueck()"><i class="ti ti-arrow-back-up"></i>Zurück</button>
       ${kind?"":`<button type="button" class="btn" onclick="brettStricheWeg()"><i class="ti ti-scribble-off"></i>Stift weg</button>`}
@@ -102,7 +118,7 @@ function _brLeiste(){
 }
 function _brHinweis(){
   return _br.werk==="stift"?(_br.modus==="kind"?"Mal mit dem Finger, wo du hinläufst.":"Mit dem Finger zeichnen – Laufwege, Pässe, Räume.")
-    :_br.werk==="radierer"?"Tipp auf eine Linie, die weg soll."
+    :_br.werk==="radierer"?(_br.modus==="kind"?"Tipp auf eine Linie oder einen Spieler, der weg soll.":"Tipp auf eine Linie oder einen Stein, der weg soll.")
     :(_br.modus==="kind"?"Zieh die Spieler und den Ball dahin, wo sie hinsollen.":"Spieler und Ball ziehen.");
 }
 function _brAufbauen(){
@@ -142,7 +158,10 @@ function _brSteinBei(x,y){
 function _brRadieren(x,y){
   const nah=8; const vorher=_br.stand.striche.length;
   const i=_br.stand.striche.findIndex(s=>s.pts.some(p=>Math.hypot(p[0]-x,p[1]-y)<=nah));
-  if(i<0)return false;
+  if(i<0){   // v750: keine Linie getroffen – dann ein Stein
+    const k=_brSteinBei(x,y); if(k<0)return false;
+    _brVerlauf(); _br.stand.toks.splice(k,1); _brBuehne(); return true;
+  }
   _brVerlauf(); _br.stand.striche.splice(i,1); _brBuehne(); return _br.stand.striche.length<vorher;
 }
 function _brDown(ev){
@@ -194,6 +213,56 @@ function brettForm(form){
   _brVerlauf(); const striche=_br.stand.striche;
   _br.stand=_brGrundstellung(form); _br.stand.striche=striche;   // Zeichnung bleibt, Aufstellung wechselt
   _brMerken(); _brBuehne(); _brLeisteNeu();
+}
+/* ── v750: Hinzufügen ─────────────────────────────────────────────────────────────── */
+/* Wer im Team ist: in der Kabine die Karten der Team-Galerie (schon geladen, kein Netzaufruf),
+   beim Trainer der Kader. Auf den Stein kommt nur der Vorname, gekürzt. */
+function _brKader(){
+  const roh=_br&&_br.modus==="kind"
+    ?((typeof kabineGalleryData!=="undefined"&&Array.isArray(kabineGalleryData))?kabineGalleryData.map(g=>({id:g.spieler_id,name:g.name})):[])
+    :((typeof KADER!=="undefined"&&Array.isArray(KADER))?KADER.filter(k=>k&&k.aktiv!==false).map(k=>({id:k.id,name:k.name})):[]);
+  return roh.filter(k=>k&&k.name).map(k=>({id:k.id, vorname:String(k.name).trim().split(/\s+/)[0]}))
+    .sort((a,b)=>a.vorname.localeCompare(b.vorname,"de"));
+}
+function brettKurzname(v){ v=String(v||""); return v.length>6?v.slice(0,6):v; }
+function brettWahlAuf(){
+  if(!_br)return; brettWahlZu();
+  const kind=_br.modus==="kind", schon=new Set(_br.stand.toks.filter(t=>t.sid!=null).map(t=>String(t.sid)));
+  const kader=_brKader();
+  const leute=kader.length?kader.map(k=>{ const da=schon.has(String(k.id));
+      return `<button type="button" class="btn br-kopf-wahl" ${da?'disabled aria-disabled="true"':""} onclick="brettNeu('wir',${JSON.stringify(String(k.id)).replace(/"/g,"&quot;")})">${da?"✓ ":""}${esc(k.vorname)}</button>`; }).join("")
+    :`<div class="br-wahl-leer">${kind?"Die Team-Liste lädt noch – schau gleich nochmal.":"Kein Kader geladen."}</div>`;
+  const dinge=BRETT_DINGE.map(([t,emo,txt])=>`<button type="button" class="btn" onclick="brettNeu('${t}')"><span aria-hidden="true">${emo}</span>${t==="wir"?"Mitspieler ohne Namen":txt}</button>`).join("");
+  const d=document.createElement("div");
+  d.id="br-wahl"; d.className="br-wahl"; d.setAttribute("role","dialog"); d.setAttribute("aria-modal","true"); d.setAttribute("aria-labelledby","br-wahl-t");
+  d.innerHTML=`<div class="br-wahl-box">
+      <div class="br-wahl-kopf"><div id="br-wahl-t" class="br-titel">${kind?"Wen stellst du auf?":"Hinzufügen"}</div>
+        <button type="button" class="br-zu" onclick="brettWahlZu()" aria-label="Schließen">✕</button></div>
+      <div class="br-wahl-ab">${kind?"Aus deinem Team":"Aus dem Kader"}</div>
+      <div class="br-wahl-reihe">${leute}</div>
+      <div class="br-wahl-ab">Noch mehr</div>
+      <div class="br-wahl-reihe">${dinge}</div>
+    </div>`;
+  _br.wurzel.appendChild(d);
+  setTimeout(()=>d.querySelector("button:not([disabled])")?.focus(),30);
+}
+function brettWahlZu(){ document.getElementById("br-wahl")?.remove(); }
+function brettNeu(t,sid){
+  if(!_br||!BRETT_DINGE.some(d=>d[0]===t))return;
+  if(_br.stand.toks.length>=BRETT_MAX){ if(typeof toast==="function")toast("Das Brett ist voll – nimm erst etwas weg","info"); return; }
+  const tok={t, x:90, y:140, k:t==="tw"?"TW":""};
+  if(sid!=null){
+    const k=_brKader().find(x=>String(x.id)===String(sid)); if(!k)return;
+    if(_br.stand.toks.some(x=>String(x.sid)===String(sid)))return;
+    tok.sid=k.id; tok.n=brettKurzname(k.vorname);
+  }
+  // nicht übereinander: der erste freie Platz in einem Raster um die Mitte (4 je Reihe, Platz für den Namen)
+  for(let n=0;n<40;n++){
+    const x=45+(n%4)*30, y=100+Math.floor(n/4)*36;
+    if(!_br.stand.toks.some(o=>Math.hypot(o.x-x,o.y-y)<12)){ tok.x=x; tok.y=y; break; }
+  }
+  _brVerlauf(); _br.stand.toks.push(tok); _br.werk="ziehen"; _brMerken(); _brBuehne(); _brLeisteNeu();
+  brettWahlZu();
 }
 function _brStart(modus,wurzel){
   _br={modus, wurzel, stand:_brLaden(modus), werk:"ziehen", stift:BRETT_MODI[modus].stifte[0][0], verlauf:[], zieh:null, strich:null, radiert:false};
