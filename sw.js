@@ -213,7 +213,7 @@ self.addEventListener("push",e=>{
    egal welcher App, und lud das Ziel darin. Jetzt bestimmt das Ziel die App (Ordner trainer/,
    eltern/, kinder/ – bei der Weiche im Wurzelverzeichnis nach denselben Regeln wie index.html),
    und nur ein Fenster DIESER App wird wiederverwendet; sonst öffnet ein neues. */
-const ELTERN_ROUTEN=["portal","quiz","heft","ticker","kind","delegate","match","eltern","rsvp","handover","turnier","einladung"];
+const ELTERN_ROUTEN=["portal","quiz","heft","hoeren","ticker","kind","delegate","match","eltern","rsvp","handover","turnier","einladung"];
 function _zielOrdner(href){
   try{
     const u=new URL(href);
