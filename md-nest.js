@@ -76,6 +76,9 @@ function nestStil(){
   .nest-tag .nest-jahr{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:40px;line-height:1}
   .nest-tag .lern{color:var(--heft-gelb)}
   .nest-tag .nc{font-weight:800;text-transform:uppercase;font-size:18px;letter-spacing:.4px}
+  .nest-kasse-knopf{display:flex;align-items:center;justify-content:center;min-height:48px;margin:10px 0 6px;padding:0 18px;border-radius:12px;background:var(--heft-blau);color:#fff;font-family:'Barlow',sans-serif;font-size:17px;font-weight:700;text-decoration:none}
+  .nest-kasse-klein{font-size:14px;color:var(--heft-grau);margin:0}
+  @media print{#nest-kasse-slot{display:none}}
   .nest-ende{background:var(--heft-blau);color:#fff;text-align:center;padding:20px 16px 26px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:34px;text-transform:uppercase}
   .nest-zurueck{display:block;width:100%;min-height:52px;margin-top:14px;border:none;border-radius:12px;background:var(--heft-gelb);color:var(--heft-dunkel);font-family:'Barlow',sans-serif;font-size:17px;font-weight:700;cursor:pointer}
   .nest-archiv{padding:16px;background:#f3f6fb}
@@ -126,8 +129,11 @@ function nestJahr(txt){
 }
 
 /* ── Leseansicht ─────────────────────────────────────────── */
-async function nestOpen(ausgabeId){
+async function nestOpen(ausgabeId,opts){
   if(!sbToken()){toast("Bitte zuerst anmelden","err");return;}
+  /* v735 (Nachtrag Kasse 04.10.): aus der Kabine mit {kind:true} – dort nie ein Link nach draußen. Das Archiv
+     blättert mit denselben Optionen weiter; das Kindergerät (/kinder/) gilt immer als Kinder-Sicht. */
+  window._nestOpts=Object.assign({},opts||{}); if(typeof _kindGeraet==="function"&&_kindGeraet())window._nestOpts.kind=true;
   nestStil();
   let m=document.getElementById("nest-modal");
   if(!m){
@@ -158,6 +164,7 @@ async function nestOpen(ausgabeId){
   m.innerHTML=nestHtml(d,medien||[],liste,id);
   m.scrollTop=0;
   nestMedienLaden(d,medien||[]);
+  if(!window._nestOpts.kind)nestKasseLaden();
   try{ if(typeof elternNewsSeen==="function")elternNewsSeen("nest"); }catch(e){}
 }
 function nestClose(){
@@ -272,13 +279,29 @@ function nestHtml(d,medien,liste,aktivId){
         <div><b>Wo</b>${n.heim?"zu Hause":"auswärts"}${n.ort?" · "+esc(n.ort):""}</div></div>`:""}
     </section>`;
   }
+  h+=`<div id="nest-kasse-slot"></div>`;   // v735: Spenden-Karte, füllt nestKasseLaden (nur Eltern und Trainer)
   h+=`<div class="nest-ende">Auf geht's, Adler!<button type="button" class="nest-zurueck" onclick="nestClose()">Zurück zur App</button></div>`;
   if((liste||[]).length>1){
     h+=`<nav class="nest-archiv" aria-label="Frühere Ausgaben"><div class="nest-h3" style="margin-top:0">Alle Ausgaben</div>${liste.map(x=>{
       const f=nestFormatGegner(x);
-      return `<button type="button" onclick="nestOpen(${Number(x.id)})"${Number(x.id)===Number(aktivId)?' aria-current="true"':""}><span>Ausgabe ${_nestNr(x.nummer)} · ${esc(x.datum?_nestDatum(x.datum):"")}</span><span style="color:var(--heft-grau);font-size:14px;text-align:right">${esc(f.gegner||f.format||"")}</span></button>`;}).join("")}</nav>`;
+      return `<button type="button" onclick="nestOpen(${Number(x.id)},window._nestOpts)"${Number(x.id)===Number(aktivId)?' aria-current="true"':""}><span>Ausgabe ${_nestNr(x.nummer)} · ${esc(x.datum?_nestDatum(x.datum):"")}</span><span style="color:var(--heft-grau);font-size:14px;text-align:right">${esc(f.gegner||f.format||"")}</span></button>`;}).join("")}</nav>`;
   }
   return h+`</div>`;
+}
+/* v735 (Nachtrag Kasse 04.10.): Wer der Mannschaftskasse freiwillig etwas geben möchte, findet den Adler-Kasse-Link
+   auch im Heft. Ohne Link (oder ohne https://) bleibt der Platzhalter leer – keine Lücke. Nie in der Kinder-Sicht. */
+async function nestKasseLaden(){
+  const slot=document.getElementById("nest-kasse-slot"); if(!slot||(window._nestOpts||{}).kind)return;
+  if(typeof adlerkasseLinkGet!=="function")return;
+  const link=await adlerkasseLinkGet();
+  const s2=document.getElementById("nest-kasse-slot"); if(!s2||(window._nestOpts||{}).kind)return;
+  if(!link||!/^https:\/\//i.test(link)){s2.innerHTML="";return;}
+  s2.innerHTML=`<section class="nest-abschnitt nest-kasse" data-abschnitt="kasse" aria-label="Mannschaftskasse">
+    <h2 class="nest-h2">Die Mannschaftskasse unterstützen</h2>
+    <p class="nest-p">Wer der Mannschaftskasse etwas geben möchte, kann das hier tun. Jeder Betrag bleibt in der Mannschaft: für Turniere, gemeinsame Anschaffungen und kleine Feiern. Freiwillig, ohne Erwartung.</p>
+    <a class="nest-kasse-knopf" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Per PayPal beitragen</a>
+    <p class="nest-kasse-klein">Die Zahlung läuft über PayPal. Die App fasst kein Geld an.</p>
+  </section>`;
 }
 async function nestMedienLaden(d,medien){
   window._nestFotos=medien.filter(x=>x.art==="galerie");
