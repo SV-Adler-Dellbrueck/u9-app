@@ -7,13 +7,13 @@
       Abschlussspiel bis auf „spieler“)
    b) _euPruefung und _eiSkizzeFehler beanstanden nichts
    c) Material aus der Skizze wie im Auftrag
-   d) Kinder je Station: 4 · 2–6 · 8–12 mit Torwart; Art und Betreuung haben einen Vorschlag
+   d) Kinder je Station: 4 (seit v749 4–8, zwei Parcours) · 2–6 · 8–12 mit Torwart; Art und Betreuung haben einen Vorschlag
    e) Kein Kindername in den Einträgen */
 "use strict";
 const fs = require("fs"), path = require("path");
 const SOLL = [
   { ordner: "auftrag-uebung-doppelpass-stangen", name: "Doppelpass durch die Stangen",
-    mat: "1 Minitor · 2 Hütchen · 4 Stangen · 1 Freistoß-Dummy · 2 Bälle", spanne: [4, 4, false], art: "uebung", betr: "allein" },
+    mat: "1 Minitor · 2 Hütchen · 4 Stangen · 1 Freistoß-Dummy · 2 Bälle", spanne: [4, 8, false], art: "uebung", betr: "allein" },   // v749: Paket vom 04.10. – zwei Parcours, 4–8
   { ordner: "auftrag-uebung-stangentausch", name: "Stangentausch",
     mat: "4 Stangen · 4 Bälle", spanne: [2, 6, false], art: "weder", betr: "allein" },
   { ordner: "auftrag-uebung-abschlussspiel-raute-countdown", name: "Abschlussspiel – 3+1 gegen 3+1 Raute mit Countdown",
