@@ -345,7 +345,7 @@ function kasseListeHtml(ledger,sammel,bearbeiten,filter){
 async function kasseBelegHochladen(file){
   let blob=file, typ=file.type||"application/octet-stream", endung=(file.name||"").split(".").pop().toLowerCase()||"bin";
   // Fotos verkleinern (Belege bleiben lesbar, Speicher bleibt klein); PDF und HEIC unverändert
-  if(/^image\/(jpeg|png|webp)$/.test(typ)&&typeof fotoCompress==="function"){ try{ blob=await fotoCompress(file,1600); typ="image/jpeg"; endung="jpg"; }catch(e){} }
+  if(/^image\/(jpeg|png|webp)$/.test(typ)&&typeof fotoVerkleinern==="function"){ try{ blob=await fotoVerkleinern(file,1600); typ="image/jpeg"; endung="jpg"; }catch(e){} }
   if(blob.size>10*1024*1024)throw new Error("Der Beleg ist größer als 10 MB");
   const pfad=((window.crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now()))+"."+endung;
   const r=await fetch(`${SB_URL}/storage/v1/object/kasse-belege/${pfad}`,{method:"POST",headers:{'Authorization':'Bearer '+sbToken(),'Content-Type':typ},body:blob});

@@ -193,7 +193,7 @@ async function turnierPlanDateiUpload(btn){
   const istPdf=/pdf$/i.test(file.type)||/\.pdf$/i.test(file.name);
   if(btn)btn.disabled=true;
   try{
-    const körper=istPdf?file:await fotoCompress(file,1600); // Foto vom Aushang: lesbar, aber sparsam
+    const körper=istPdf?file:await fotoVerkleinern(file,1600); // Foto vom Aushang: lesbar, aber sparsam
     const pfad=`plan/${TP_TERMIN.id}-${Date.now()}.${istPdf?"pdf":"jpg"}`;
     const up=await fetch(`${SB_URL}/storage/v1/object/termin_media/${pfad}`,{method:"POST",
       headers:{'Authorization':'Bearer '+sbToken(),'Content-Type':istPdf?"application/pdf":"image/jpeg"},body:körper});
@@ -734,7 +734,7 @@ async function spieltagPlanDateiHochladen(btn){
   const istPdf=/pdf$/i.test(file.type)||/\.pdf$/i.test(file.name);
   if(btn)btn.disabled=true;
   try{
-    const koerper=istPdf?file:(typeof fotoCompress==="function"?await fotoCompress(file,1600):file);
+    const koerper=istPdf?file:(typeof fotoVerkleinern==="function"?await fotoVerkleinern(file,1600):file);
     const pfad=`plan/${Number(t.id)}-${Date.now()}.${istPdf?"pdf":"jpg"}`;
     const up=await fetch(`${SB_URL}/storage/v1/object/termin_media/${pfad}`,{method:"POST",headers:{'Authorization':'Bearer '+sbToken(),'Content-Type':istPdf?"application/pdf":"image/jpeg"},body:koerper});
     if(!up.ok){ toast("Hochladen fehlgeschlagen","err"); return; }
