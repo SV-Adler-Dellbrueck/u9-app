@@ -71,7 +71,7 @@ module.exports = async function (h) {
     const slides = adlerWrappedSlides({ saison: "2026/27", tore: 9, torschuetzen_anzahl: 4, top_torschuetze: { name: K[5], wert: 5 } }, []);
     const wtxt = slides.map(x => x.html).join(" ");
     out.koenig = /Torschützenkönig/.test(wtxt) || wtxt.includes(K[5]);
-    out.teamzahl = /<b>4<\/b> verschiedenen Kindern/.test(wtxt);
+    out.teamzahl = !/Tore ⚽|verschiedenen Kindern/.test(wtxt);   // seit v752 gibt es keine Tore-Folie mehr (nicht getrackt)
     // g) Eltern-Einstieg
     out.tour = typeof ELTERN_TOUR !== "undefined" ? ELTERN_TOUR.length : "fehlt";
     out.packKunst = typeof tdWasMussMit === "function" ? tdWasMussMit({ typ: "training", platz: "Kunstrasen Nord" }) : "fehlt";
@@ -95,7 +95,7 @@ module.exports = async function (h) {
   if (!r.faellig || !/fällig/.test(r.zeile)) probleme.push(`d) Runde nach ${r.tage} Tagen nicht fällig: „${r.zeile}“`);
   if (r.meilenstein !== 0) probleme.push("e) „nicht gesehen“ → 4 wird als Meilenstein gezählt: " + r.meilenstein);
   if (r.koenig) probleme.push("f) Saisonrückblick nennt noch einen Torschützenkönig");
-  if (!r.teamzahl) probleme.push("f) Teamzahl der Torschützen fehlt");
+  if (!r.teamzahl) probleme.push("f) Team-Wrapped zeigt noch Tore oder die Teamzahl der Torschützen");
   /* v658: Aus fünf Karten wurde eine geführte Tour mit Zeiger – eine Sache je Schritt, kurze
      Sätze. Die Grenze gegen den alten Zehn-Seiten-Rundgang bleibt: höchstens zwölf Schritte. */
   if (typeof r.tour !== "number" || r.tour > 12) probleme.push("g) Rundgang hat " + r.tour + " Schritte (höchstens 12)");
