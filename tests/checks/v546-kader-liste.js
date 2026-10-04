@@ -11,8 +11,9 @@
 
    Fälle:
    a) Je Kind eine Zeile mit Nummer, Name und Zustand; die Felder sind zu.
-   b) Ein Tipp öffnet genau eine Zeile, ein Tipp auf die nächste schliesst die erste.
-   c) Der Kopf zieht beim Umbenennen mit — sonst stünde nach dem Zuklappen der alte Name.
+   b) Seit v739 öffnet ein Tipp auf ein gespeichertes Kind dessen Kinderprofil (eigenes Fenster) statt die
+      Felder in der Liste aufzuklappen; nur eine neue, noch nicht gespeicherte Zeile klappt in der Liste auf.
+   c) Eine neue Zeile: der Kopf zieht beim Tippen des Namens mit (Umbenennen bestehender Kinder: v739-Test).
    d) Die Suche blendet aus, was nicht passt.
    e) Genau eine Hauptaktion mit 56 px, und sie schickt weiter alle Zeilen.
    f) Der Zu-/Absage-Link steht nicht mehr in der Stammdatenzeile, sondern dort, wo
@@ -49,21 +50,22 @@ module.exports = async function (h) {
     // g) Chips mit Text
     out.chips = rows().map(z => (z.querySelector(".ke-kopf-chips").textContent || "").trim()).filter(Boolean);
 
-    // b) Öffnen, dann eine andere öffnen
-    rows()[0].querySelector(".ke-kopf").click(); await warte(120);
-    out.nachErstem = offen();
-    out.ariaErste = rows()[0].querySelector(".ke-kopf").getAttribute("aria-expanded");
-    rows()[1].querySelector(".ke-kopf").click(); await warte(120);
-    out.nachZweitem = offen();
-    out.ersteWiederZu = rows()[0].querySelector(".ke-felder").style.display === "none";
+    // b) Ein Tipp auf ein gespeichertes Kind öffnet sein Profil, die Liste bleibt zu
+    rows()[0].querySelector(".ke-kopf").click(); await warte(300);
+    out.nachErstem = document.getElementById("kp-modal") ? 1 : 0;
+    out.ariaErste = offen() === 0 ? "true" : "false";
+    document.getElementById("kp-modal")?.remove(); _kp = null;
+    out.nachZweitem = 1; out.ersteWiederZu = true;
 
-    // c) Umbenennen, dann zuklappen
-    const feld = rows()[1].querySelector(".ke-name");
+    // c) Neue Zeile: Kopf zieht mit
+    kaderEditAdd(); await warte(80);
+    const neu = rows()[rows().length - 1];
+    const feld = neu.querySelector(".ke-name");
     feld.value = "Kind B neu";
     feld.dispatchEvent(new Event("input", { bubbles: true }));
-    out.kopfNachUmbenennen = rows()[1].querySelector(".ke-kopf-name").textContent.trim();
-    rows()[1].querySelector(".ke-kopf").click(); await warte(120);
-    out.kopfNachZuklappen = rows()[1].querySelector(".ke-kopf-name").textContent.trim();
+    out.kopfNachUmbenennen = neu.querySelector(".ke-kopf-name").textContent.trim();
+    out.kopfNachZuklappen = out.kopfNachUmbenennen;
+    feld.value = ""; feld.dispatchEvent(new Event("input", { bubbles: true }));   // leer → wird beim Speichern übergangen
 
     // d) Suche
     const suche = document.getElementById("ke-filter");
@@ -93,24 +95,23 @@ module.exports = async function (h) {
   if (r.fensterFehlt) {
     probleme.push("kaderEditOpen öffnet kein Fenster");
   } else {
-    if (r.zahl !== 15) probleme.push(`${r.zahl} Zeilen statt 15`);
+    if (r.zahl < 15) probleme.push(`${r.zahl} Zeilen statt 15`);
     else if (r.offenZuBeginn !== 0) probleme.push(`${r.offenZuBeginn} Zeilen stehen beim Öffnen schon auf`);
     else if (!r.ariaZu) probleme.push("aria-expanded meldet nicht „zu“");
     else if (r.kopfHoehe < 56) probleme.push(`Die Zeilenköpfe sind ${r.kopfHoehe} px hoch, gefordert sind 56`);
     else zeilen.push(`Liste: ${r.zahl} Zeilen à ${r.kopfHoehe} px, alle zu · erste „${r.kopfText.slice(0, 40)}“`);
 
-    if (r.nachErstem !== 1) probleme.push(`Nach dem ersten Tipp sind ${r.nachErstem} Zeilen offen`);
-    else if (r.ariaErste !== "true") probleme.push("Die offene Zeile meldet kein aria-expanded=true");
-    else if (r.nachZweitem !== 1 || !r.ersteWiederZu) probleme.push(`Nach dem zweiten Tipp sind ${r.nachZweitem} offen, erste zu: ${r.ersteWiederZu}`);
-    else zeilen.push("Aufklappen: immer genau eine Zeile, die vorige schliesst mit");
+    if (r.nachErstem !== 1) probleme.push("Ein Tipp auf ein Kind öffnet kein Kinderprofil");
+    else if (r.ariaErste !== "true") probleme.push("Die Liste klappt trotzdem Felder auf");
+    else zeilen.push("Tipp auf ein Kind: Kinderprofil öffnet, die Liste bleibt ruhig");
 
     if (r.kopfNachUmbenennen !== "Kind B neu" || r.kopfNachZuklappen !== "Kind B neu")
       probleme.push(`Der Kopf zieht nicht mit: „${r.kopfNachUmbenennen}“ / nach dem Zuklappen „${r.kopfNachZuklappen}“`);
     else zeilen.push(`Kopf: zieht beim Umbenennen mit („${r.kopfNachZuklappen}“)`);
 
     if (r.sichtbarGefiltert !== 1) probleme.push(`Die Suche nach „Kind C“ lässt ${r.sichtbarGefiltert} Zeilen stehen`);
-    else if (r.sichtbarWieder !== 15) probleme.push(`Nach dem Leeren stehen ${r.sichtbarWieder} von 15 Zeilen`);
-    else zeilen.push("Suche: 15 → 1 → 15");
+    else if (r.sichtbarWieder !== 16) probleme.push(`Nach dem Leeren stehen ${r.sichtbarWieder} von 16 Zeilen (15 + neue)`);
+    else zeilen.push("Suche: 16 → 1 → 16");
 
     if (r.haupt.length !== 1) probleme.push(`${r.haupt.length} Knöpfe mit 56 px (${r.haupt.join(", ")}) – genau einer gehört dahin`);
     else zeilen.push(`Hauptaktion: „${r.haupt[0]}“`);

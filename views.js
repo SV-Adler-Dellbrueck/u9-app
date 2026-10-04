@@ -587,7 +587,7 @@ function _keChips(k){
 function kaderEditRow(k,i){
   const drin=k.aktiv!==false;
   const neu=!k._id&&!k.name;                 // frisch angelegte Zeile: gleich offen
-  const kopf=`<button type="button" class="ke-kopf" onclick="kaderZeileAuf(this)" aria-expanded="${neu}"
+  const kopf=`<button type="button" class="ke-kopf" onclick="${k._id?`kinderProfilOpen(${Number(k._id)})`:"kaderZeileAuf(this)"}" aria-expanded="${neu}"
       style="width:100%;min-height:56px;display:flex;align-items:center;gap:10px;padding:8px 10px;border:none;border-radius:var(--r);background:transparent;color:var(--text);font-family:inherit;text-align:left;cursor:pointer">
       <span class="ke-kopf-nr" style="min-width:34px;font-size:var(--s-text);font-weight:800;color:var(--text3)">${k.nr!=null?"#"+k.nr:"—"}</span>
       <span style="flex:1;min-width:0">
@@ -713,14 +713,173 @@ function kaderEditOpen(){
     <div id="kader-edit-list">${KADER.slice().sort((a,b)=>((a.aktiv===false)-(b.aktiv===false))).map((k,i)=>kaderEditRow(k,i)).join("")}</div>
     <button type="button" class="btn btn-sm" onclick="kaderEditAdd()" style="width:100%;margin:2px 0 12px"><i class="ti ti-plus"></i>Spieler erfassen</button>
     <div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:10px;line-height:1.5">Geburtstag und Medical-Hinweis sehen nur Trainer. Trikotgröße und Ausgabe stehen unter <b>Team → Ausstattung</b>.</div>
-    <button type="button" class="btn btn-p" onclick="kaderSaveAll(this)" style="width:100%;min-height:56px;font-size:var(--s-karte);font-weight:800"><i class="ti ti-device-floppy"></i>Speichern</button>
+    <button type="button" id="ke-speichern" class="btn btn-p" onclick="kaderSaveAll(this)" style="width:100%;min-height:56px;font-size:var(--s-karte);font-weight:800;display:none"><i class="ti ti-device-floppy"></i>Neue Spieler speichern</button>
   </div>`;
   document.body.appendChild(modal);
+}
+/* ═══ v739 – Kinderprofil für Trainer ═══════════════════════════════════════════
+   PO 04.10. (Bildschirmfoto der aufgeklappten Kader-Zeile): „sieht ganz schlimm aus … unstrukturiert, nicht optisch
+   gut und schlechte Usability.“ Statt eines Feldsalats in der Liste öffnet ein Tipp auf ein Kind sein Profil:
+   Kopf mit Foto, dann Abschnitte – Stammdaten, Fußball, Foto & Freigaben, Fan-Fakten der Eltern (zum Lesen),
+   Gesundheit, Mehr. Gespeichert wird nur dieses Kind (PATCH kader?id=eq.…); die Liste lädt danach frisch, damit
+   „Neue Spieler speichern“ nie einen alten Stand zurückschreibt. Neue Kinder entstehen weiter in der Liste. */
+const KP_FANFAKTEN=[["spitzname","Spitzname"],["lieblingsverein","Lieblingsverein"],["lieblingsspieler","Lieblingsspieler"],["hobby","Hobby"],["kann_gut","Kann richtig gut"],
+  ["adler_seit","Adler seit"],["nummer_grund","Warum diese Nummer"],["lieblingsessen","Lieblingsessen"],["lieblingstier","Lieblingstier"],["lieblingsmusik","Lieblingsmusik"],
+  ["lieblingsfilm","Lieblingsfilm"],["fussball_erlebnis","Schönstes Fußball-Erlebnis"],["gross_werden","Wenn ich groß bin"],["saisonziel","Saisonziel"],["weiterer_sport","Weiterer Sport"],["weiterer_sport_team","Team im weiteren Sport"]];
+let _kp=null;
+function _kpAlter(geb){ if(!geb)return ""; const g=new Date(geb+"T00:00:00"), h=new Date(); let a=h.getFullYear()-g.getFullYear(); if(h<new Date(h.getFullYear(),g.getMonth(),g.getDate()))a--; return `Jahrgang ${g.getFullYear()} · ${a} Jahre`; }
+function _kpInit(name){ return String(name||"?").split(/\s+/).map(x=>x[0]||"").join("").slice(0,2).toUpperCase(); }
+async function kinderProfilOpen(id){
+  const k=KADER.find(x=>Number(x._id)===Number(id)); if(!k){toast("Kind nicht gefunden","err");return;}
+  _kp={id:Number(id),k:{...k},geaendert:false};
+  document.getElementById("kp-modal")?.remove();
+  const m=document.createElement("div"); m.id="kp-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Profil von "+(k.name||"Kind"));
+  m.style.cssText="position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;justify-content:center;align-items:flex-start;overflow-y:auto";
+  m.style.zIndex=(typeof zOben==="function")?zOben(10002):10002;
+  m.onclick=e=>{ if(e.target===m)kinderProfilZu(); };
+  document.body.appendChild(m);
+  kinderProfilRender();
+  // Nachladen: Fan-Fakten der Eltern, Foto-Freigabe, Foto
+  const [ff,fc]=await Promise.all([
+    fetch(`${SB_URL}/rest/v1/kind_fanfacts?spieler_id=eq.${Number(id)}&select=*`,{headers:sbAuthHeaders()}).then(r=>r.ok?r.json():[]).catch(()=>[]),
+    fetch(`${SB_URL}/rest/v1/foto_consent?spieler_id=eq.${Number(id)}&select=intern,video,public_ok,updated_at`,{headers:sbAuthHeaders()}).then(r=>r.ok?r.json():[]).catch(()=>[])]);
+  if(!_kp||_kp.id!==Number(id))return;
+  _kp.ff=ff[0]||{}; _kp.fc=fc[0]||null;
+  kinderProfilRender(true);
+  const pfad=_kp.ff.foto_path||k.foto_path;
+  if(pfad&&typeof fotoLoadImage==="function"){ const img=await fotoLoadImage(pfad); const ziel=document.getElementById("kp-foto"); if(img&&ziel&&_kp&&_kp.id===Number(id)){ ziel.innerHTML=""; img.alt="Foto von "+k.name; img.style.cssText="width:100%;height:100%;object-fit:cover;border-radius:50%"; ziel.appendChild(img); } }
+}
+function kinderProfilRender(nachgeladen){
+  const m=document.getElementById("kp-modal"); if(!m||!_kp)return;
+  const k=_kp.k, ff=_kp.ff||{}, fc=_kp.fc;
+  const inp="width:100%;min-height:48px;padding:10px 12px;border:1px solid var(--rand-bedien);border-radius:10px;box-sizing:border-box;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)";
+  const lbl=(t,f)=>`<label style="display:block;margin-top:10px"><span style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-bottom:4px">${t}</span>${f}</label>`;
+  const karte=(icon,titel,inhalt,extra)=>`<section class="kp-karte" aria-label="${titel}" style="background:var(--surface);border:var(--border-s);border-radius:16px;padding:14px;margin-top:12px${extra||""}"><h3 style="margin:0;font-size:var(--s-karte);font-weight:800;display:flex;align-items:center;gap:8px"><span aria-hidden="true">${icon}</span>${titel}</h3>${inhalt}</section>`;
+  const seg=(feld,opts,wert)=>`<div class="kp-seg" role="group" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${opts.map(([v,t])=>`<button type="button" class="kp-seg-btn" data-feld="${feld}" data-wert="${v}" aria-pressed="${String(wert)===String(v)}" onclick="kinderProfilSetze('${feld}','${v}')" style="flex:1;min-width:88px;min-height:44px;padding:6px 10px;border-radius:12px;border:1.5px solid ${String(wert)===String(v)?"#1e3a8a":"var(--rand-bedien)"};background:${String(wert)===String(v)?"#1e3a8a":"var(--surface2)"};color:${String(wert)===String(v)?"#fff":"var(--text)"};font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">${String(wert)===String(v)?"✓ ":""}${t}</button>`).join("")}</div>`;
+  const twWert=!k.tw?"feld":(k.twPrio===1?"tw1":k.twPrio===2?"tw2":"tw0");
+  const chips=[k.aktiv===false?"🚫 nicht im Kader":"👥 im Kader",k.tw?"🥅 Torwart":"",k.alias?`Kind ${esc(k.alias)} im Tagebuch`:""].filter(Boolean).map(t=>`<span style="font-size:var(--s-klein);font-weight:700;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.18);white-space:nowrap">${t}</span>`).join(" ");
+  const fanZeilen=KP_FANFAKTEN.filter(([f])=>ff[f]).map(([f,t])=>`<div style="padding:8px 0;border-bottom:1px solid var(--surface2)"><div style="font-size:var(--s-klein);color:var(--text2)">${t}</div><div style="font-size:var(--s-text);font-weight:600">${esc(ff[f])}</div></div>`).join("");
+  const frei=(an,t)=>`<span style="display:inline-flex;align-items:center;gap:4px;font-size:var(--s-klein);font-weight:700;padding:3px 9px;border-radius:999px;border:1px solid ${an?"var(--green)":"var(--rand-bedien)"};color:${an?"var(--green)":"var(--text2)"}">${an?"✓":"✗"} ${t}</span>`;
+  const quelle=ff.foto_path?"Foto von den Eltern (hat Vorrang)":k.foto_path?"Foto vom Trainerteam":"Noch kein Foto";
+  m.innerHTML=`<div style="width:100%;max-width:520px;min-height:100vh;background:var(--bg,#f1f5f9);display:flex;flex-direction:column">
+    <div style="background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:12px 14px 18px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <button type="button" onclick="kinderProfilZu()" aria-label="Zurück zur Liste" style="min-width:44px;min-height:44px;border:none;border-radius:12px;background:rgba(255,255,255,.16);color:#fff;font-size:var(--s-karte);font-weight:800;cursor:pointer">‹</button>
+        <span style="font-size:var(--s-klein);opacity:.9">Kinderprofil</span>
+        <button type="button" onclick="typeof adlerCardOpen==='function'&&adlerCardOpen('${jsq(k.name||"")}')" style="min-height:44px;padding:0 12px;border:none;border-radius:12px;background:rgba(255,255,255,.16);color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">🃏 Karte</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;margin-top:10px">
+        <div id="kp-foto" style="width:84px;height:84px;flex:none;border-radius:50%;border:3px solid #F5B700;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900">${esc(_kpInit(k.name))}</div>
+        <div style="min-width:0">
+          <div style="font-size:26px;font-weight:900;line-height:1.1">${k.nr!=null?`<span style="opacity:.8">#${k.nr}</span> `:""}${esc(k.name||"")}</div>
+          <div style="font-size:var(--s-text);opacity:.92;margin-top:2px">${esc(_kpAlter(k.geb))}${ff.spitzname?` · „${esc(ff.spitzname)}“`:""}</div>
+          <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">${chips}</div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:0 12px 120px">
+      ${karte("🪪","Stammdaten",`
+        <div style="display:grid;grid-template-columns:1fr 110px;gap:8px">${lbl("Vorname",`<input id="kp-name" value="${esc(k.name||"")}" oninput="kinderProfilSetze('name',this.value)" style="${inp}">`)}${lbl("Rückennummer",`<input id="kp-nr" type="number" inputmode="numeric" value="${k.nr!=null?k.nr:""}" oninput="kinderProfilSetze('nr',this.value)" style="${inp}">`)}</div>
+        ${lbl("Geburtstag",`<input id="kp-geb" type="date" value="${esc(k.geb||"")}" oninput="kinderProfilSetze('geb',this.value)" style="${inp}">`)}
+        <label style="display:flex;align-items:center;gap:12px;min-height:48px;margin-top:10px;cursor:pointer"><input id="kp-aktiv" type="checkbox" ${k.aktiv!==false?"checked":""} onchange="kinderProfilSetze('aktiv',this.checked)" style="width:24px;height:24px;flex:none;accent-color:#1e3a8a"><span><b>Im Kader</b><span style="display:block;font-size:var(--s-klein);color:var(--text2)">Ohne Häkchen taucht das Kind in Anwesenheit, Nominierung und Aufstellung nicht mehr auf – alles Bisherige bleibt.</span></span></label>`)}
+      ${karte("⚽","Fußball",`
+        <div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-top:10px">Torwart</div>${seg("tw",[["feld","Feldspieler"],["tw0","Kann ins Tor"],["tw1","Torwart 1. Wahl"],["tw2","Torwart 2. Wahl"]],twWert)}
+        <div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-top:12px">Starker Fuß</div>${seg("fuss",[["R","Rechts"],["L","Links"],["B","Beidfüßig"]],k.starker_fuss||"")}
+        ${!k.starker_fuss&&ff.starker_fuss?`<div class="kp-fuss-eltern" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Laut Eltern: ${esc(ff.starker_fuss)} – das steht auf der Karte, bis du hier etwas wählst.</div>`:""}
+        ${lbl("Lieblingsposition",`<input id="kp-pos" list="kp-pos-liste" value="${esc(k.lieblingsposition||"")}" placeholder="z. B. Abwehr, Sturm, überall" oninput="kinderProfilSetze('lieblingsposition',this.value)" style="${inp}"><datalist id="kp-pos-liste"><option>Abwehr</option><option>Mittelfeld</option><option>Sturm</option><option>Torwart</option><option>Überall</option></datalist>`)}`)}
+      ${karte("📸","Foto &amp; Freigaben",`
+        <div style="display:flex;align-items:center;gap:10px;margin-top:10px"><span style="flex:1;font-size:var(--s-text);color:var(--text2)">${quelle}</span>
+          <label class="btn btn-sm" style="min-height:44px;cursor:pointer"><i class="ti ti-camera"></i>Foto ändern<input type="file" accept="image/jpeg,image/png,image/webp" onchange="kinderProfilFoto(this)" style="display:none"></label></div>
+        <div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-top:12px">Freigabe der Eltern ${fc&&fc.updated_at?`<span style="font-weight:400">· Stand ${new Date(fc.updated_at).toLocaleDateString("de-DE")}</span>`:""}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${nachgeladen?(frei(fc?fc.intern:k.foto_stadionheft_ok,"Team intern")+frei(fc&&fc.video,"Video")+frei(fc&&fc.public_ok,"Öffentlich")):'<span style="font-size:var(--s-klein);color:var(--text3)">Lädt …</span>'}</div>
+        <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">Die Stufen setzen nur die Eltern (Eltern-Bereich → Datenschutz &amp; Freigaben).</div>
+        <label style="display:flex;align-items:center;gap:12px;min-height:48px;margin-top:8px;cursor:pointer"><input id="kp-fotook" type="checkbox" ${k.foto_stadionheft_ok?"checked":""} onchange="kinderProfilSetze('foto_stadionheft_ok',this.checked)" style="width:24px;height:24px;flex:none;accent-color:#1e3a8a"><span style="font-size:var(--s-text)">Foto für Adler Nest &amp; Team-Galerie freigegeben <span style="display:block;font-size:var(--s-klein);color:var(--text2)">Nur mit Einwilligung der Eltern.</span></span></label>`)}
+      ${karte("⭐","Fan-Fakten der Eltern",nachgeladen?(fanZeilen?`<div style="margin-top:4px">${fanZeilen}</div>`:`<div style="font-size:var(--s-text);color:var(--text2);margin-top:8px">Die Eltern haben noch nichts eingetragen.</div>`):`<div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px">Lädt …</div>`)}
+      ${karte("⚕️","Gesundheit",`${lbl("Hinweis für das Trainerteam",`<textarea id="kp-medical" rows="2" placeholder="z. B. Asthma, Allergie, Brille" oninput="kinderProfilSetze('medical',this.value)" style="${inp};resize:vertical">${esc(k.medical||"")}</textarea>`)}<div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">Sehen nur Trainer.</div>`)}
+      ${karte("➕","Mehr",`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+        <button type="button" class="btn btn-sm" style="min-height:48px" onclick="kontakteEditOpen(${_kp.id})"><i class="ti ti-address-book"></i>Kontakte &amp; Login</button>
+        <button type="button" class="btn btn-sm" style="min-height:48px" onclick="zieleOpen(${_kp.id})"><i class="ti ti-target"></i>Ziele</button>
+        <button type="button" class="btn btn-sm" style="min-height:48px" onclick="childWrappedShare(${_kp.id})"><i class="ti ti-movie"></i>Saison-Karte</button>
+        <button type="button" class="btn btn-sm" style="min-height:48px" onclick="lobRecordOpen(${_kp.id},'${jsq(k.name||"")}')"><i class="ti ti-microphone"></i>Sprachlob</button>
+        <button type="button" class="btn btn-sm" style="min-height:48px;grid-column:1/-1" onclick="kinderProfilZu();typeof kaderBewerten==='function'&&kaderBewerten('${jsq(k.name||"")}')"><i class="ti ti-chart-radar"></i>Einschätzung öffnen</button>
+      </div>
+      <button type="button" class="btn btn-sm btn-d" style="width:100%;min-height:44px;margin-top:14px;justify-content:center" onclick="kinderProfilLoeschen()"><i class="ti ti-trash"></i>Endgültig löschen</button>`)}
+    </div>
+    <div style="position:sticky;bottom:0;margin-top:auto;background:var(--surface);border-top:1px solid var(--surface2);padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px">
+      <button type="button" onclick="kinderProfilZu()" class="btn" style="min-height:56px;flex:none">Schließen</button>
+      <button type="button" id="kp-speichern" onclick="kinderProfilSpeichern()" class="btn btn-p" style="flex:1;min-height:56px;font-size:var(--s-karte);font-weight:800;justify-content:center" ${_kp.geaendert?"":"disabled"}>Änderungen speichern</button>
+    </div>
+  </div>`;
+}
+function kinderProfilSetze(feld,wert){
+  if(!_kp)return;
+  const k=_kp.k;
+  if(feld==="tw"){ k.tw=wert!=="feld"; k.twPrio=wert==="tw1"?1:wert==="tw2"?2:0; }
+  else if(feld==="fuss"){ k.starker_fuss=k.starker_fuss===wert?null:wert; }
+  else if(feld==="nr"){ k.nr=wert===""?null:parseInt(wert); }
+  else k[feld]=wert;
+  _kp.geaendert=true;
+  if(feld==="tw"||feld==="fuss"){ kinderProfilRender(_kp.ff!==undefined); const f=document.querySelector(`#kp-modal .kp-seg-btn[data-feld="${feld}"][aria-pressed="true"]`); f&&f.focus(); }
+  const b=document.getElementById("kp-speichern"); if(b)b.disabled=false;
+}
+async function kinderProfilSpeichern(){
+  if(!_kp)return;
+  const k=_kp.k, name=String(k.name||"").trim();
+  if(!name){toast("Bitte einen Namen eintragen","err");document.getElementById("kp-name")?.focus();return;}
+  if(k.nr!=null&&k.aktiv!==false){ const dop=KADER.find(x=>Number(x._id)!==_kp.id&&x.aktiv!==false&&x.nr===k.nr);
+    if(dop){toast(`Nummer ${k.nr} trägt schon ${dop.name}. Jede Nummer gehört genau einem Kind.`,"err");document.getElementById("kp-nr")?.focus();return;} }
+  const daten={name,nr:k.nr,geb:k.geb||null,aktiv:k.aktiv!==false,tw:!!k.tw,tw_prio:k.twPrio||0,starker_fuss:k.starker_fuss||null,
+    lieblingsposition:String(k.lieblingsposition||"").trim()||null,foto_stadionheft_ok:!!k.foto_stadionheft_ok,medical:String(k.medical||"").trim()||null};
+  const b=document.getElementById("kp-speichern"); if(b)b.disabled=true;
+  try{ const r=await fetch(`${SB_URL}/rest/v1/kader?id=eq.${_kp.id}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify(daten)});
+    if(sbCheck401(r))return;
+    if(!r.ok){ const t=await r.text().catch(()=>""); toast(/kader_nr_aktiv_uniq/.test(t)?`Nummer ${k.nr} ist schon vergeben`:"Nicht gespeichert – bitte noch einmal","err"); if(b)b.disabled=false; return; } }
+  catch(e){ toast("Keine Verbindung – nicht gespeichert","err"); if(b)b.disabled=false; return; }
+  _kp.geaendert=false;
+  await loadKader();
+  _kpListeFrisch();
+  toast(`${name} gespeichert ✓`);
+  kinderProfilRender(_kp.ff!==undefined);
+}
+async function kinderProfilZu(){
+  if(_kp&&_kp.geaendert&&typeof frageJaNein==="function"&&!await frageJaNein({emoji:"✏️",titel:"Änderungen verwerfen?",text:"Du hast etwas geändert und noch nicht gespeichert.",ja:"Verwerfen",nein:"Weiter bearbeiten",ton:"rot"}))return;
+  document.getElementById("kp-modal")?.remove(); _kp=null;
+}
+async function kinderProfilFoto(input){
+  if(!_kp)return; const file=input.files&&input.files[0]; input.value=""; if(!file)return;
+  try{
+    const blob=await fotoCompress(file);
+    const path=(crypto&&crypto.randomUUID?crypto.randomUUID():String(Date.now()))+".jpg";
+    const up=await fetch(`${SB_URL}/storage/v1/object/spielerfotos/${path}`,{method:"POST",headers:{'Authorization':'Bearer '+sbToken(),'Content-Type':'image/jpeg'},body:blob});
+    if(!up.ok){toast("Foto-Upload fehlgeschlagen","err");return;}
+    const r=await fetch(`${SB_URL}/rest/v1/kader?id=eq.${_kp.id}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify({foto_path:path})});
+    if(sbCheck401(r)||!r.ok){toast("Foto nicht gespeichert","err");return;}
+  }catch(e){toast("Foto konnte nicht verarbeitet werden","err");return;}
+  await loadKader();
+  const id=_kp.id, geaendert=_kp.geaendert, k=_kp.k;
+  toast(_kp.ff&&_kp.ff.foto_path?"Foto gespeichert ✓ – auf der Karte steht weiter das Foto der Eltern":"Foto gespeichert ✓");
+  if(!geaendert){ kinderProfilOpen(id); } else { const neu=KADER.find(x=>Number(x._id)===id); if(neu)k.foto_path=neu.foto_path; }
+}
+async function kinderProfilLoeschen(){
+  if(!_kp)return; const k=_kp.k;
+  if(!await frageJaNein({emoji:"🗑️",ton:"rot",titel:`${k.name} endgültig löschen?`,text:"Damit verschwinden auch gesammelte Punkte, Foto-Freigabe und Eltern-Zugang; in alten Anwesenheitslisten bleibt nur eine Nummer. Wer den Verein verlässt: besser „Im Kader“ abwählen – dann bleibt die Historie heil.",ja:"Endgültig löschen",nein:"Abbrechen"}))return;
+  try{ const r=await fetch(`${SB_URL}/rest/v1/kader?id=eq.${_kp.id}`,{method:"DELETE",headers:sbAuthHeaders()}); if(sbCheck401(r))return; if(!r.ok){toast("Nicht gelöscht","err");return;} }
+  catch(e){ toast("Keine Verbindung","err"); return; }
+  document.getElementById("kp-modal")?.remove(); _kp=null;
+  await loadKader(); _kpListeFrisch(); toast("Gelöscht");
+}
+function _kpListeFrisch(){
+  const list=document.getElementById("kader-edit-list"); if(!list)return;
+  const neue=[...list.querySelectorAll(".kader-edit-row")].filter(r=>!r.dataset.id);   // noch nicht gespeicherte neue Zeilen behalten
+  list.innerHTML=KADER.slice().sort((a,b)=>((a.aktiv===false)-(b.aktiv===false))).map((k,i)=>kaderEditRow(k,i)).join("");
+  neue.forEach(r=>list.appendChild(r));
 }
 function kaderEditAdd(){
   const list=document.getElementById("kader-edit-list");
   if(!list)return;
   list.insertAdjacentHTML("beforeend",kaderEditRow({name:"",tw:false,twPrio:0},KADER.length));
+  const sp=document.getElementById("ke-speichern"); if(sp)sp.style.display="";
   const neu=list.lastElementChild;
   /* Die neue Zeile steht unten und ist als einzige offen — genau wie nach einem Tipp
      auf eine bestehende. Ohne das Schliessen der anderen stuenden zwei offen. */
@@ -4707,7 +4866,7 @@ const HELP=[
     {t:"Saison-Cockpit", d:"Torschützen, Anwesenheit, Rückmelde-Tempo der Familien, faire Einsätze, Eltern-Puls, Rückmelde-Tempo – alles auf einen Blick.", run:"saisonCockpitOpen()"},
     {t:"Anwesenheit (Saison)", d:"Drei Reiter: Quote je Kind im Training, Anwesenheit der Trainer, und die Quote inklusive Spiele aus den Nominierungen. Alle drei rechnen auf denselben Zähltagen wie die Zahlen neben der Nominierung: ab dem Saisonstichtag, und nur echte Trainings – Spiel- und Turniertage zählen nicht mit, auch nicht bei der Serie 🔥.", run:"awUebersichtOpen()"},
     {t:"Probetraining", d:"Schnupperkinder verwalten – bewusst getrennt vom Kader, Auto-Löschung nach Entscheidung.", run:"probeOpen()"},
-    {t:"Kader", d:"Seit v683 schlank, solange niemand bewertet ist: je Kind Nummer, Name und „Bewerten“ – Rollen-Filter und Rauten-Besetzung erscheinen erst mit der ersten Rolle. Pausen und Notfallkarten stehen als Kacheln auf der Team-Seite. Über „Spieler verwalten“ pflegst du die Stammdaten. Das Fenster zeigt seit v546 <b>eine ruhige Zeile je Kind</b> – Nummer, Name und der Zustand als Chip (nicht im Kader · TW · Foto frei · Hinweis). Ein Tipp klappt genau dieses Kind auf, ein Tipp auf ein anderes klappt das vorige zu; darunter stehen Name, Nummer, „Im Kader“, Torwart, Geburtstag, starker Fuß, Lieblingsposition, Foto, Foto-Freigabe und der Medical-Hinweis. Oben ein <b>Suchfeld</b>, unten <b>ein</b> Speichern-Knopf – der schreibt alle Zeilen auf einmal, auch die zugeklappten. Geburtstag und Medical-Hinweis sehen nur Trainer, nie die Eltern. <b>Trikotgröße und Ausgabe</b> stehen nicht mehr hier, sondern unter <b>Team → Ausstattung</b> – dort mit Datum und Rückgabe. Der persönliche <b>Zu-/Absage-Link</b> liegt im Kontakte-Fenster des Kindes, weil er ein Zugangsweg der Familie ist und keine Eigenschaft des Kindes; er trägt kein Datum und ersetzt deshalb kein Nachfassen zu einem einzelnen Termin. „Endgültig löschen“ steht ganz unten im aufgeklappten Kind – für einen Vereinswechsel ist fast immer der Haken „Im Kader“ die richtige Wahl, dann bleibt die Historie heil.", go:"kader"},
+    {t:"Kader", d:"Seit v683 schlank, solange niemand bewertet ist: je Kind Nummer, Name und „Bewerten“ – Rollen-Filter und Rauten-Besetzung erscheinen erst mit der ersten Rolle. Pausen und Notfallkarten stehen als Kacheln auf der Team-Seite. Über „Spieler verwalten“ pflegst du die Stammdaten. Das Fenster zeigt seit v546 <b>eine ruhige Zeile je Kind</b> – Nummer, Name und der Zustand als Chip (nicht im Kader · TW · Foto frei · Hinweis). <b>Seit v739 öffnet ein Tipp das Kinderprofil</b>: oben Name, Nummer, Jahrgang und Spitzname, darunter Stammdaten, Fußball (Torwart, starker Fuß, Lieblingsposition als Knöpfe), Foto & Freigaben, die Fan-Fakten der Eltern zum Lesen, Gesundheit und ganz unten „Endgültig löschen“. „Änderungen speichern“ wird erst nach einer Änderung aktiv und schreibt nur dieses Kind; wer mit offener Änderung schließt, wird gefragt. Haben die Eltern einen starken Fuß angegeben und du noch nicht, steht er als Hinweis da. Oben ein <b>Suchfeld</b>; „Neue Spieler speichern“ erscheint erst, wenn du unten eine neue Zeile anlegst. Geburtstag und Medical-Hinweis sehen nur Trainer, nie die Eltern. <b>Trikotgröße und Ausgabe</b> stehen nicht mehr hier, sondern unter <b>Team → Ausstattung</b> – dort mit Datum und Rückgabe. Der persönliche <b>Zu-/Absage-Link</b> liegt im Kontakte-Fenster des Kindes, weil er ein Zugangsweg der Familie ist und keine Eigenschaft des Kindes; er trägt kein Datum und ersetzt deshalb kein Nachfassen zu einem einzelnen Termin. „Endgültig löschen“ steht ganz unten im Profil – für einen Vereinswechsel ist fast immer der Haken „Im Kader“ die richtige Wahl, dann bleibt die Historie heil.", go:"kader"},
     /* v685: Der Eintrag war auf gut 20.000 Zeichen gewachsen – jede Version hatte einen Absatz
        angehängt. Jetzt steht hier, was man zum Benutzen braucht; die Entstehung je Version steht
        in der Funktionsübersicht (doku/Uebersicht_Funktionen-Adler-App_v1.md). */
