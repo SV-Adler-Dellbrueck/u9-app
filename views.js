@@ -926,6 +926,7 @@ function kontakteEditOpen(spielerId){
   modal.id="kontakte-modal";
   modal.setAttribute("role","dialog"); modal.setAttribute("aria-modal","true"); modal.setAttribute("aria-label","Kontakte und Eltern-Login");
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10000;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  modal.style.zIndex=(typeof zOben==="function")?zOben(10000):10000;   // v753: über dem Kinderprofil (10002), sonst öffnet sich der Dialog dahinter
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
   modal.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:420px;width:100%;margin:auto">
     <div style="font-weight:700;margin-bottom:2px">📇 ${esc(k?k.name:"Spieler")} – Kontakte & Eltern-Login</div>
@@ -1207,6 +1208,7 @@ async function zieleOpen(spielerId){
   document.getElementById("ziele-modal")?.remove();
   const modal=document.createElement("div");modal.id="ziele-modal";modal.setAttribute("role","dialog");modal.setAttribute("aria-modal","true");modal.setAttribute("aria-label","Entwicklungs-Ziele");
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;display:flex;flex-direction:column;padding:14px;overflow-y:auto";
+  modal.style.zIndex=(typeof zOben==="function")?zOben(10000):10000;   // v753: über dem Kinderprofil (10002), sonst öffnet sich der Dialog dahinter
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
   const card=document.createElement("div");
   card.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
@@ -2749,19 +2751,26 @@ async function adlerCardOpen(nameArg){
   render(); // sofort (Initialen + "–"), Foto und Zähler laden asynchron nach
   const modal=document.createElement("div");
   modal.id="adler-card-modal";
-  modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:10002;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px;overflow-y:auto";
-  modal.onclick=e=>{if(e.target===modal)modal.remove();};
+  /* v753 (PO 04.10., Bildschirmfoto): Mit justify-content:center schneidet ein Flex-Container, der höher ist als der
+     Bildschirm, oben und unten ab – der obere Teil ist nicht erreichbar. Wie im Eltern-Bereich: innen margin:auto
+     zentriert, solange Platz ist, und scrollt, sobald keiner mehr ist. */
+  modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:10002;display:flex;flex-direction:column;padding:16px;overflow-y:auto";
+  modal.style.zIndex=(typeof zOben==="function")?zOben(10002):10002;
+  const innen=document.createElement("div");
+  innen.style.cssText="margin:auto;display:flex;flex-direction:column;align-items:center;gap:14px;width:100%";
+  modal.appendChild(innen);
+  modal.onclick=e=>{if(e.target===modal||e.target===innen)modal.remove();};
   canvas.style.cssText="max-width:100%;width:300px;height:auto;border-radius:20px;box-shadow:0 12px 40px rgba(0,0,0,.5)";
   const cardWrap=cardHoloWrap(canvas); // FUT 2.0: Foil-Overlay über der Karte
-  modal.appendChild(cardWrap);
+  innen.appendChild(cardWrap);
   const bar=document.createElement("div");
   bar.style.cssText="display:flex;gap:8px;flex-wrap:wrap;justify-content:center";
   bar.innerHTML=`<button class="btn btn-p" onclick="adlerCardShare()"><i class="ti ti-share"></i>Karte teilen</button>
     <button class="btn" onclick="document.getElementById('adler-card-modal').remove()">Schließen</button>`;
-  modal.appendChild(bar);
+  innen.appendChild(bar);
   document.body.appendChild(modal);
   // Federn-Stand → Karten-Skin (wird in render() gebacken) + Foil-Tier + Skin-Galerie
-  if(d.spielerId){ xpTotal(d.spielerId).then(f=>{ if(document.getElementById("adler-card-modal")){ d.federn=f; render(); cardHoloSetTier(cardWrap,cardSkinFor(f)); modal.appendChild(cardSkinGalleryEl(f)); } }).catch(()=>{}); }
+  if(d.spielerId){ xpTotal(d.spielerId).then(f=>{ if(document.getElementById("adler-card-modal")){ d.federn=f; render(); cardHoloSetTier(cardWrap,cardSkinFor(f)); innen.appendChild(cardSkinGalleryEl(f)); } }).catch(()=>{}); }
   // Einsatz-Zähler laden und neu zeichnen (Modal-Guard gegen Race, falls schon geschlossen)
   adlerCardStats(name).then(c=>{ if(document.getElementById("adler-card-modal")){ d.counts=c; render(); cardApplyGlow(canvas,c.trainings); } });
   // Foto (falls vorhanden) laden und neu zeichnen

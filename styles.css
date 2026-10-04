@@ -1131,7 +1131,7 @@ body:not(.quiz-extern) #view-taktik>*:not(.sl):not(#sit-hub):not(.bereich-kopf){
 .br-kabkopf{display:flex;align-items:center;gap:10px;padding:12px 16px;color:#fff}
 .br-fertig{min-height:48px;padding:0 16px;background:#16a34a;color:#fff;border:none;font-weight:800;font-size:var(--s-teil)}
 /* v751 – „Mein Training“ in der Kabine (md-kindtraining.js): drei Teile als Karten, Bildkarten zur Wahl */
-.kt-seite{display:flex;flex-direction:column;min-height:100%;color:#fff}
+.kt-seite{display:flex;flex-direction:column;flex:1;min-height:0;overflow-y:auto;color:#fff}   /* v753: #kabine-body hat overflow:hidden – ohne eigenes Scrollen war der untere Teil nicht erreichbar */
 .kt-rumpf{padding:0 16px 20px;display:flex;flex-direction:column;gap:12px}
 .kt-intro{margin:0;font-size:var(--s-text);line-height:1.45;color:#e2e8f0}
 .kt-teil{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:18px;padding:12px}
