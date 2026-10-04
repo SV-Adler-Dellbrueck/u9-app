@@ -7,11 +7,14 @@ create function auth.uid() returns uuid language sql stable as $$ select nullif(
 grant usage on schema auth, storage, public to anon, authenticated;
 grant execute on all functions in schema auth to anon, authenticated;
 create table storage.buckets(id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
-create table storage.objects(id serial primary key, bucket_id text, name text, owner uuid);
+create table storage.objects(id serial primary key, bucket_id text, name text, owner uuid, owner_id text, metadata jsonb);
+-- v736: wie in Supabase – Ordner und Endung eines Pfads
+create function storage.foldername(name text) returns text[] language sql immutable as $$ select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'),1)-1] $$;
+create function storage.extension(name text) returns text language sql immutable as $$ select reverse(split_part(reverse(split_part(name, '/', array_length(string_to_array(name,'/'),1))), '.', 1)) $$;
 alter table storage.objects enable row level security;
 grant select, insert, update, delete on storage.objects to authenticated, anon;
 grant usage on all sequences in schema storage to authenticated;
-create table public.profiles(id uuid primary key, role text);
+create table public.profiles(id uuid primary key, role text, anzeigename text);
 create table public.kader(id bigint primary key, name text, nr int, tw boolean, geb date, aktiv boolean default true, starker_fuss text, lieblingsposition text, foto_path text, foto_stadionheft_ok boolean default false);
 create table public.kind_fanfacts(spieler_id bigint primary key, spitzname text, lieblingsverein text, lieblingsspieler text, foto_path text, gallery_optin boolean, adler_seit text, nummer_grund text, hobby text, lieblingsessen text, lieblingstier text, gross_werden text, lieblingsmusik text, lieblingsfilm text, fussball_erlebnis text, kann_gut text);
 create table public.foto_consent(spieler_id bigint, intern boolean);
@@ -35,6 +38,8 @@ create function public.is_trainer() returns boolean language sql stable security
 create function public.ist_anonym() returns boolean language sql stable as $$ select coalesce((auth.jwt()->>'is_anonymous')::boolean,false) $$;
 create function public.ist_mitglied() returns boolean language sql stable security definer set search_path to 'public' as $$ select public.is_trainer() or (not public.ist_anonym() and exists(select 1 from public.eltern_kinder e where lower(e.email)=lower(coalesce((select auth.jwt())->>'email','')))) or exists(select 1 from public.kind_konto k where k.uid=(select auth.uid()) and k.aktiv) $$;
 create function public.sitzung_gueltig() returns boolean language sql stable security definer set search_path to 'public' as $$ select (select auth.uid()) is not null and public.ist_mitglied() $$;
+-- v736: Vorname der Eltern für die Adler-Rufe
+create table public.eltern_angaben(user_id uuid primary key, vorname text);
 -- v734: Platzhalter für die Karten (Bewertungen kennt die Attrappe nicht)
 create table public.spielerprofile(name text, datum text, radios jsonb, position text, prim_rolle text, strong_foot text, age int);
 create table public.quiz_progress(player text, score int);

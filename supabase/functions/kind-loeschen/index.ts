@@ -5,6 +5,8 @@
    Spielgeschehen und Pläne mit „Ehemaliges Kind“ statt Namen, dann der Kader-Eintrag – alles
    mit Fremdschlüssel auf ihn fällt per CASCADE mit. Hier dazu, was die Datenbank nicht kann:
    das Spielerfoto und die Sprach-Lobe im Speicher und die anonymen Konten der Kindergeräte.
+   v736: Der private Raum der Familie in den Adler-Rufen hängt per CASCADE am Kader – mit ihm fallen Rufe und
+   Anhangzeilen. Die Dateien dazu (Bucket rufe-anhang, Ordner <raum_id>/) räumt diese Funktion mit ab.
    v743: dazu die Dateien des Fotoalbums (kind_foto). */
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -36,6 +38,9 @@ Deno.serve(async (req) => {
     if (!kd) return json({ error: "Kind nicht gefunden – vielleicht schon gelöscht" }, 404);
     const { data: lobe } = await admin.from("kabine_lob").select("path").eq("spieler_id", id);
     const { data: konten } = await admin.from("kind_konto").select("uid").eq("spieler_id", id);
+    const { data: raeume } = await admin.from("rufe_raum").select("id").eq("familie_kind", id);
+    const raumIds = (raeume || []).map((r: any) => r.id);
+    const { data: anhaenge } = raumIds.length ? await admin.from("rufe_anhang").select("pfad").in("raum_id", raumIds) : { data: [] };
     // v743: Fotoalbum – die Zeilen gehen mit dem Kind, die Dateien nicht von selbst
     const { data: album } = await admin.from("kind_foto").select("pfad").eq("spieler_id", id);
 
@@ -48,6 +53,8 @@ Deno.serve(async (req) => {
     if (albumPfade.length) { const r = await admin.storage.from("spielerfotos").remove(albumPfade); if (!r.error) dateien += r.data?.length || 0; }
     const pfade = (lobe || []).map((l: any) => l.path).filter(Boolean);
     if (pfade.length) { const r = await admin.storage.from("kabine-lob").remove(pfade); if (!r.error) dateien += r.data?.length || 0; }
+    const anhPfade = (anhaenge || []).map((a: any) => a.pfad).filter(Boolean);
+    if (anhPfade.length) { const r = await admin.storage.from("rufe-anhang").remove(anhPfade); if (!r.error) dateien += r.data?.length || 0; }
     for (const k of konten || []) { const r = await admin.auth.admin.deleteUser((k as any).uid); if (!r.error) geraete++; }
 
     return json({ ok: true, ...erg, dateien, kindergeraete: geraete });

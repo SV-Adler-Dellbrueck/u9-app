@@ -116,3 +116,21 @@ von Kind B (Spieltag 26.09., Kapitän 03.10.), ohne Foto, weil Kind B keine Frei
 sieht 5 eigene und 2 fremde Karten. Eltern von Kind B sehen die Tabelle `sonderkarte` weiter nicht, bekommen aber die
 Karten von Kind A samt Trainer-Satz – mit dem Profilfoto statt der Album-Fotos (Kind A hat Freigabe). `anon` scheitert.
 Zwei Fehlermeldungen sind gewollt.
+
+## v736 · Adler-Ruf: 5.000 Zeichen und Anhänge
+
+```bash
+psql -d t -f tests/sql/supabase-attrappe.sql && psql -d t -f supabase/migrations/20260929_v670_adler_rufe.sql \
+  && psql -d t -f supabase/migrations/20260929_v674_rufe_privat_umfrage.sql \
+  && psql -d t -f supabase/migrations/20261004_v736_rufe_anhaenge.sql && psql -d t -f tests/sql/v736-rufe-anhaenge.sql
+```
+
+Erwartet: Ruf mit 5.000 Zeichen geht, 5.001 nicht (Senden und Bearbeiten); Hochladen in offenen und eigenen privaten
+Raum geht; fremder privater Raum, `abc/x.pdf`, Raum 999999, `.docm`/`.exe`/`.svg` und fremder Besitzer scheitern; Ruf nur
+mit Anhang trägt „📎 Anhang“; zwei Anhänge gleichen Namens kollidieren nicht; eine nie hochgeladene Datei, fünf
+Anhänge, Makro-Mime und 11 MB scheitern ohne halben Ruf; Eltern ändern und löschen keine Anhänge, räumen aber die
+eigene verwaiste Datei weg (die vergebene nicht); eine andere Familie sieht weder Zeile noch Datei des privaten Raums;
+`anon` bekommt nichts; nach dem Archivieren sieht der Trainer den Anhang, Eltern nicht; Eltern können Anhänge nicht
+endgültig löschen, der Trainer schon (Ruf bleibt mit `anhang_entfernt_am`), und er löscht die Dateien; wird ein Kind
+gelöscht, fallen privater Raum und Anhangzeilen per CASCADE (die Dateien räumt `kind-loeschen` ab). 15 Fehlermeldungen
+im Lauf sind gewollt.

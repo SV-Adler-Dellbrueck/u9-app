@@ -10,10 +10,23 @@
    Antworten, auf Wunsch mit Schluss. Anlegen, abstimmen, beenden nur über RPC.
 
    Datenweg: Tabellen rufe_* mit RLS (Migration 20260929_v670_adler_rufe.sql). Bearbeiten und
-   Archivieren nur über RPC. Keine Systemdialoge – alle Rückfragen sind eigene Fenster. */
+   Archivieren nur über RPC. Keine Systemdialoge – alle Rückfragen sind eigene Fenster.
+
+   v748 (Auftrag als v736 gebaut; doku/auftrag-rufe-anhaenge): 5.000 Zeichen je Ruf, lange Rufe gekürzt mit „Weiterlesen“, Anhänge
+   (Bilder, PDF, Word, Excel, PowerPoint; 10 MB, vier je Ruf) im privaten Bucket rufe-anhang. Gesendet wird
+   mit Anhängen über rufe_senden (Ruf und Anhänge in einem Aufruf); Bilder zeigt die Blase als Miniatur,
+   PDF öffnet im neuen Tab, Office wird heruntergeladen – nie in der App gerendert. Trainer können Anhänge
+   endgültig löschen (rufe_anhaenge_loeschen). Migration 20261004_v736_rufe_anhaenge.sql. */
 const RUFE_EMOJI=["👍","❤️","😂","⚽","👏","🙏"];
 const RUFE_TAKT=8000;          // Nachladen, solange das Fenster offen ist
 const RUFE_ANZAHL=80;          // so viele Rufe je Raum auf einmal
+const RUFE_MAX_TEXT=5000;      // v736: CHECK rufe_nachricht_text_check und rufe_bearbeiten
+const RUFE_LANG=800;           // ab hier zeigt die Blase gekürzt mit „Weiterlesen“
+const RUFE_ANHANG_MAX=4, RUFE_ANHANG_BYTES=10485760;
+const RUFE_ANHANG_TYPEN={jpg:"image/jpeg",jpeg:"image/jpeg",png:"image/png",webp:"image/webp",heic:"image/heic",pdf:"application/pdf",
+  doc:"application/msword",docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  xls:"application/vnd.ms-excel",xlsx:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ppt:"application/vnd.ms-powerpoint",pptx:"application/vnd.openxmlformats-officedocument.presentationml.presentation"};
 let _rf=null;
 
 function _rfUid(){ try{const t=sbToken();return t?JSON.parse(atob(t.split(".")[1])).sub:null;}catch(e){return null;} }
@@ -42,7 +55,7 @@ async function _rufeOpen(raumId){
   if(typeof sbToken==="function"&&!sbToken()){ toast("Bitte zuerst anmelden","err"); return; }
   document.getElementById("rufe-modal")?.remove();
   _rf={raeume:[],raum:null,liste:[],reakt:[],fix:[],mod:false,uid:_rfUid(),antwort:null,suche:"",timer:null,letzte:null,
-       trainer:/\/trainer\//.test(location.pathname),umf:{},stand:{},unge:{},fam:{}};
+       trainer:/\/trainer\//.test(location.pathname),umf:{},stand:{},unge:{},fam:{},dateien:[],offen:new Set(),blobs:{}};
   const m=document.createElement("div"); m.id="rufe-modal";
   m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Adler-Rufe");
   m.style.cssText="position:fixed;inset:0;background:var(--bg,#f1f5f9);display:flex;flex-direction:column";
@@ -66,12 +79,17 @@ async function _rufeOpen(raumId){
     <div id="rufe-liste" aria-live="polite" style="flex:1;overflow-y:auto;padding:8px 12px 12px"><div style="color:var(--text2);font-size:var(--s-text);padding:12px 0">Lade Rufe …</div></div>
     <div style="flex:none;background:var(--surface);border-top:1px solid var(--surface2);padding:8px 12px calc(8px + env(safe-area-inset-bottom))">
       <div id="rufe-antwort" style="display:none"></div>
+      <div id="rufe-chips" style="display:none;flex-wrap:wrap;gap:6px;margin-bottom:6px"></div>
+      <div id="rufe-offen-hinweis" style="display:none;font-size:var(--s-klein);color:var(--text2);margin:0 0 6px">Offener Raum – alle Eltern lesen mit. Bitte keine Fotos anderer Kinder.</div>
+      <input id="rufe-datei" type="file" multiple accept=".jpg,.jpeg,.png,.webp,.heic,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,image/*" onchange="rufeDateiWahl(this)" style="display:none">
       <div style="display:flex;gap:8px;align-items:flex-end">
+        <button type="button" id="rufe-anhang-knopf" onclick="document.getElementById('rufe-datei')?.click()" aria-label="Datei anhängen" title="Datei anhängen (Bild, PDF, Office)" style="flex:none;width:48px;min-height:48px;border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface2);color:var(--text);font-size:var(--s-teil);cursor:pointer">📎</button>
         <button type="button" id="rufe-umfrage-knopf" onclick="rufeUmfrageNeu()" aria-label="Abstimmung starten" title="Abstimmung starten" style="flex:none;width:48px;min-height:48px;border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface2);color:var(--text);font-size:var(--s-teil);cursor:pointer">📊</button>
         <label for="rufe-text" style="position:absolute;left:-9999px">Ruf schreiben</label>
-        <textarea id="rufe-text" rows="1" maxlength="2000" placeholder="Ruf schreiben …" oninput="rufeTextWachsen(this)" style="flex:1;min-height:48px;max-height:140px;resize:none;box-sizing:border-box;padding:12px;border:1px solid var(--rand-bedien);border-radius:14px;font:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)"></textarea>
+        <textarea id="rufe-text" rows="1" maxlength="5000" placeholder="Ruf schreiben …" oninput="rufeTextWachsen(this)" style="flex:1;min-height:48px;max-height:140px;resize:none;box-sizing:border-box;padding:12px;border:1px solid var(--rand-bedien);border-radius:14px;font:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)"></textarea>
         <button type="button" id="rufe-senden" onclick="rufeSenden()" style="min-width:56px;min-height:48px;border:none;border-radius:14px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">Senden</button>
       </div>
+      <div id="rufe-zaehler" aria-live="polite" style="display:none;font-size:var(--s-klein);color:var(--text2);margin-top:4px;text-align:right"></div>
     </div>`;
   document.body.appendChild(m);
   const [raeume,modR]=await Promise.all([
@@ -91,6 +109,9 @@ async function _rufeOpen(raumId){
 }
 function rufeClose(){
   if(_rf&&_rf.timer)clearInterval(_rf.timer);
+  if(_rf){ try{ Object.values(_rf.blobs||{}).forEach(u=>URL.revokeObjectURL(u)); (_rf.dateien||[]).forEach(d=>d.vorschau&&URL.revokeObjectURL(d.vorschau)); }catch(e){} }
+  if(_rfBeob){ try{_rfBeob.disconnect();}catch(e){} _rfBeob=null; }
+  document.getElementById("rufe-gross")?.remove();
   document.getElementById("rufe-modal")?.remove();
   document.getElementById("rufe-menue")?.remove();
   _rf=null;
@@ -118,7 +139,13 @@ function _rfRaumName(r){
   return (r.emoji||"💬")+" "+r.name;
 }
 function _rfAktRaum(){ return _rf?_rf.raeume.find(r=>r.id===_rf.raum)||null:null; }
-function rufeTextWachsen(t){ t.style.height="auto"; t.style.height=Math.min(140,t.scrollHeight)+"px"; }
+function rufeTextWachsen(t){
+  t.style.height="auto"; t.style.height=Math.min(140,t.scrollHeight)+"px";
+  // v736: ab 4.500 Zeichen ein Zähler unter dem Feld
+  const z=document.getElementById("rufe-zaehler"); if(!z||t.id!=="rufe-text")return;
+  const rest=RUFE_MAX_TEXT-t.value.length;
+  z.style.display=t.value.length>=4500?"block":"none"; z.textContent=`Noch ${Math.max(0,rest)} Zeichen`;
+}
 
 function rufeRaeumeRender(){
   const box=document.getElementById("rufe-raeume"); if(!box||!_rf)return;
@@ -142,6 +169,7 @@ function rufeRaeumeRender(){
   _rfKopfZeigen();
 }
 function _rfKopfZeigen(){
+  rufeChipsRender();
   const r=_rfAktRaum(); const unter=document.getElementById("rufe-unter"), feld=document.getElementById("rufe-text");
   const privat=!!(r&&r.familie_kind);
   if(unter)unter.textContent=privat?(_rf.trainer?"Privat mit Familie "+(_rf.fam[r.familie_kind]||""):"Privat: nur ihr und das Trainerteam"):"Eltern und Trainerteam";
@@ -187,7 +215,7 @@ async function rufeRaumWechseln(id){
 async function rufeLaden(zumEnde){
   if(!_rf||!_rf.raum)return;
   const raum=_rf.raum;
-  const liste=(await _rfGet(`rufe_nachricht?raum_id=eq.${raum}&select=id,autor,autor_name,autor_zusatz,autor_rolle,text,antwort_auf,an_alle,bearbeitet_am,archiviert_am,created_at&order=created_at.desc&limit=${RUFE_ANZAHL}`)).reverse();
+  const liste=(await _rfNachrichtenHolen(raum)).reverse();
   if(!_rf||_rf.raum!==raum)return;
   const ids=liste.map(n=>n.id);
   const [reakt,fix,umf]=await Promise.all([
@@ -201,7 +229,7 @@ async function rufeLaden(zumEnde){
   const ges=_rf.trainer&&ids.length?await _rfGet(`rpc/rufe_gesehen_zahlen?p_ids=${encodeURIComponent("{"+ids.map(Number).join(",")+"}")}`).catch(()=>[]):[];
   if(!_rf||_rf.raum!==raum)return;
   const neu=liste.length&&liste[liste.length-1].id!==_rf.letzte;
-  const kennung=JSON.stringify([liste.map(n=>[n.id,n.text,n.archiviert_am]),reakt.length,fix,umf.map(u=>[u.id,u.beendet_am]),stand,ges]);
+  const kennung=JSON.stringify([liste.map(n=>[n.id,n.text,n.archiviert_am,n.anhang_entfernt_am,(n.rufe_anhang||[]).map(a=>a.id)]),reakt.length,fix,umf.map(u=>[u.id,u.beendet_am]),stand,ges]);
   if(!zumEnde&&kennung===_rf.kennung)return;
   _rf.kennung=kennung;
   _rf.liste=liste; _rf.reakt=reakt; _rf.fix=fix.filter(f=>!f.bis||new Date(f.bis)>new Date());
@@ -212,6 +240,7 @@ async function rufeLaden(zumEnde){
   const unten=box&&(box.scrollHeight-box.scrollTop-box.clientHeight<80);
   rufeRender();
   if(box&&(zumEnde||(neu&&unten)))box.scrollTop=box.scrollHeight;
+  rufeBilderBeobachten();
   if(neu){ _rf.letzte=liste[liste.length-1].id; rufeGelesen(); }
 }
 function rufeRender(){
@@ -241,6 +270,7 @@ function rufeNachrichtHtml(n){
   const r={}; _rf.reakt.filter(x=>x.nachricht_id===n.id).forEach(x=>{ (r[x.emoji]=r[x.emoji]||{n:0,ich:false}); r[x.emoji].n++; if(x.user_id===_rf.uid)r[x.emoji].ich=true; });
   const rolle=n.autor_rolle==="trainer"?"🦅 ":n.autor_rolle==="moderator"?"🛡️ ":"";
   const fixiert=_rf.fix.some(f=>f.nachricht_id===n.id);
+  const lang=String(n.text||"").length>RUFE_LANG&&!_rf.offen.has(n.id);
   return `<div class="rf-msg" data-id="${Number(n.id)}" style="display:flex;justify-content:${eigen?"flex-end":"flex-start"};margin:6px 0">
     <div style="max-width:86%;min-width:0;background:${arch?"var(--surface2)":eigen?"#dbeafe":"var(--surface)"};color:var(--text);border:1px solid ${n.an_alle?"#b45309":"var(--surface2)"};border-radius:14px;padding:8px 10px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
       <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">
@@ -250,7 +280,9 @@ function rufeNachrichtHtml(n){
         ${fixiert?`<span style="font-size:var(--s-klein);color:var(--text2)">📌 fixiert</span>`:""}
       </div>
       ${n.antwort_auf?`<div class="rf-zitat" style="margin:4px 0;padding:4px 8px;border-left:3px solid #1e3a8a;background:var(--surface2);border-radius:6px;font-size:var(--s-klein);color:var(--text2)">${zitat?`<b>${esc(zitat.autor_name||"")}</b>: ${esc(String(zitat.text||"").slice(0,120))}`:"Antwort auf einen früheren Ruf"}</div>`:""}
-      <div class="rf-text" style="font-size:var(--s-text);line-height:1.45;margin-top:2px;word-wrap:break-word;${arch?"color:var(--text2);font-style:italic":""}">${_rf.umf[n.id]?"<b>📊 </b>":""}${_rfText(n.text)}</div>
+      <div class="rf-text" style="font-size:var(--s-text);line-height:1.45;margin-top:2px;word-wrap:break-word;${arch?"color:var(--text2);font-style:italic;":""}${lang?"display:-webkit-box;-webkit-line-clamp:8;line-clamp:8;-webkit-box-orient:vertical;overflow:hidden;":""}">${_rf.umf[n.id]?"<b>📊 </b>":""}${_rfText(n.text)}</div>
+      ${lang?`<button type="button" class="rf-weiter" onclick="rufeWeiterlesen(${Number(n.id)})" style="min-height:44px;padding:0 4px;border:none;background:transparent;color:var(--blue-text,#1d4ed8);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer;text-decoration:underline">Weiterlesen</button>`:""}
+      ${rufeAnhaengeHtml(n)}
       ${_rf.umf[n.id]?rufeUmfrageHtml(_rf.umf[n.id],arch):""}
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px">
         ${Object.keys(r).map(e=>`<button type="button" class="rf-reakt" onclick="rufeReagieren(${Number(n.id)},'${e}')" aria-pressed="${r[e].ich}" aria-label="${e} ${r[e].n}, ${r[e].ich?"zurücknehmen":"dazu"}" style="min-height:44px;padding:2px 8px;border-radius:999px;border:1.5px solid ${r[e].ich?"#1e3a8a":"var(--rand-bedien)"};background:${r[e].ich?"#dbeafe":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);cursor:pointer">${e} ${r[e].n}</button>`).join("")}
@@ -285,6 +317,7 @@ function rufeAntwortWeg(){ if(_rf){ _rf.antwort=null; rufeAntwortRender(); } }
 async function rufeSenden(){
   if(!_rf||!_rf.raum)return;
   const feld=document.getElementById("rufe-text"); const text=(feld?.value||"").trim();
+  if(_rf.dateien.length)return rufeSendenMitAnhang(text);
   if(!text)return;
   const knopf=document.getElementById("rufe-senden"); if(knopf)knopf.disabled=true;
   const zeile={raum_id:_rf.raum,text,antwort_auf:_rf.antwort||null,an_alle:_rf.mod&&/(^|\s)@alle\b/i.test(text)};
@@ -295,6 +328,31 @@ async function rufeSenden(){
   }catch(e){ toast("Kein Netz – Ruf nicht gesendet","err"); return; }
   finally{ if(knopf)knopf.disabled=false; }
   feld.value=""; rufeTextWachsen(feld); _rf.antwort=null; rufeAntwortRender();
+  await rufeLaden(true);
+}
+async function rufeSendenMitAnhang(text){
+  const raum=_rf.raum, feld=document.getElementById("rufe-text");
+  const knopf=document.getElementById("rufe-senden"); if(knopf){ knopf.disabled=true; knopf.textContent="…"; }
+  const hoch=[];
+  const fertig=()=>{ if(knopf){ knopf.disabled=false; knopf.textContent="Senden"; } };
+  try{
+    for(const d of _rf.dateien){
+      const pfad=`${raum}/${_rfUuid()}.${d.endung}`;
+      let r;
+      try{ r=await fetch(`${SB_URL}/storage/v1/object/rufe-anhang/${pfad}`,{method:"POST",headers:{'Authorization':'Bearer '+sbToken(),'apikey':SB_KEY,'Content-Type':d.mime,'x-upsert':'false'},body:d.blob}); }
+      catch(e){ r=null; }
+      if(!r||!r.ok){ await _rfAufraeumen(hoch); toast(`„${d.name}“ wurde nicht hochgeladen – der Ruf ist nicht gesendet. Text und Anhänge bleiben stehen.`,"err"); fertig(); return; }
+      hoch.push({pfad,name:d.name,mime:d.mime,groesse:d.blob.size});
+    }
+    const r=await _rfRpc("rufe_senden",{p_raum:raum,p_text:text,p_antwort_auf:_rf.antwort||null,p_an_alle:_rf.mod&&/(^|\s)@alle\b/i.test(text),p_anhaenge:hoch});
+    if(typeof sbCheck401==="function"&&sbCheck401(r)){ await _rfAufraeumen(hoch); fertig(); return; }
+    if(!r.ok){ const t=await r.text().catch(()=>""); await _rfAufraeumen(hoch);
+      toast(/stumm/.test(t)?"Du bist gerade stummgeschaltet – später geht es wieder":"Ruf nicht gesendet – Text und Anhänge bleiben stehen. Bitte gleich noch einmal.","err"); fertig(); return; }
+  }catch(e){ await _rfAufraeumen(hoch); toast("Kein Netz – Ruf nicht gesendet. Text und Anhänge bleiben stehen.","err"); fertig(); return; }
+  fertig();
+  if(!_rf)return;
+  _rf.dateien.forEach(d=>d.vorschau&&URL.revokeObjectURL(d.vorschau)); _rf.dateien=[]; rufeChipsRender();
+  if(feld){ feld.value=""; rufeTextWachsen(feld); } _rf.antwort=null; rufeAntwortRender();
   await rufeLaden(true);
 }
 async function rufeReagieren(id,emoji){
@@ -372,6 +430,7 @@ function rufeMenue(id){
     +(uOffen&&(u.von===_rf.uid||darfModerieren)?zeile("🏁","Abstimmung beenden",`rufeUmfrageBeenden(${Number(u.id)})`):"")
     +(eigen&&!u?zeile("✏️","Bearbeiten",`rufeBearbeitenOpen(${id})`):"")
     +(eigen?zeile("🗄️","Zurückziehen",`rufeArchivieren(${id},true)`):(darfModerieren?zeile("🗄️","Archivieren (nur Trainer sehen ihn noch)",`rufeArchivieren(${id},false)`):""))
+    +(_rf.trainer&&(n.rufe_anhang||[]).length?zeile("🗑️","Anhänge endgültig löschen",`rufeAnhaengeLoeschen(${id})`):"")
     +(!eigen&&!privat?zeile("🚩","Melden",`rufeMelden(${id})`):"")
     +(darfModerieren&&!privat&&!eigen&&n.autor_rolle!=="trainer"?zeile("🔇","Stummschalten …",`rufeStummMenue('${esc(n.autor)}','${esc(n.autor_name||"")}')`):"")
     +`<button type="button" onclick="document.getElementById('rufe-menue')?.remove()" style="${_RF_ZEILE};justify-content:center;background:var(--surface2)">Abbrechen</button>`);
@@ -401,7 +460,7 @@ async function rufeFixieren(id,stunden,loesen){
 function rufeBearbeitenOpen(id){
   const n=_rf&&_rf.liste.find(x=>x.id===id); if(!n)return;
   _rfBlatt("rufe-menue","Ruf bearbeiten",`<label for="rufe-edit" style="position:absolute;left:-9999px">Text</label>
-    <textarea id="rufe-edit" rows="4" maxlength="2000" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--rand-bedien);border-radius:12px;font:inherit;background:var(--surface2);color:var(--text)">${esc(n.text)}</textarea>
+    <textarea id="rufe-edit" rows="4" maxlength="5000" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--rand-bedien);border-radius:12px;font:inherit;background:var(--surface2);color:var(--text)">${esc(n.text)}</textarea>
     <button type="button" style="${_RF_ZEILE};justify-content:center;background:#1e3a8a;color:#fff;border:none;font-weight:800" onclick="rufeBearbeiten(${id})">Speichern</button>`);
   setTimeout(()=>document.getElementById("rufe-edit")?.focus(),50);
 }
@@ -725,4 +784,182 @@ function rufeAbsichtJetzt(){
 setTimeout(rufeBadgeLoad,1500);
 setInterval(()=>{ if(!document.hidden&&!document.getElementById("rufe-modal"))rufeBadgeLoad(); },120000);
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden)rufeBadgeLoad(); });
+/* ── v736: Anhänge ────────────────────────────────────────────────────────────── */
+/* Reine Regeln (im Prüfstand ohne Netz testbar): Name bereinigen, Typ und Größe prüfen, Größe lesbar. */
+function rufeAnhangName(roh){
+  let n=String(roh==null?"":roh).split(/[\\/]/).pop();
+  n=n.replace(/[\u0000-\u001f\u007f]/g,"").replace(/[:*?"<>|]/g,"_").replace(/\s+/g," ").trim().replace(/^\.+/,"");
+  if(!n)n="Datei";
+  if(n.length>120){ const m=n.match(/(\.[A-Za-z0-9]{1,5})$/); const e=m?m[1]:""; n=n.slice(0,120-e.length)+e; }
+  return n;
+}
+function rufeAnhangPruefen(name,groesse){
+  const m=String(name||"").toLowerCase().match(/\.([a-z0-9]{1,5})$/), e=m?m[1]:"";
+  const mime=RUFE_ANHANG_TYPEN[e];
+  if(!mime)return {ok:false,grund:`„${rufeAnhangName(name)}“ geht nicht: erlaubt sind Bilder, PDF, Word, Excel und PowerPoint.`};
+  if(!(Number(groesse)>0))return {ok:false,grund:`„${rufeAnhangName(name)}“ ist leer.`};
+  if(Number(groesse)>RUFE_ANHANG_BYTES)return {ok:false,grund:`„${rufeAnhangName(name)}“ ist größer als 10 MB und lässt sich deshalb nicht anhängen.`};
+  return {ok:true,endung:e==="jpeg"?"jpg":e,mime,art:/^image\//.test(mime)?"bild":e==="pdf"?"pdf":"office"};
+}
+function rufeGroesseText(b){
+  b=Number(b)||0;
+  return b<1048576?Math.max(1,Math.round(b/1024))+" KB":(b/1048576).toFixed(1).replace(".",",")+" MB";
+}
+function _rfAnhangSymbol(mime){
+  return /^image\//.test(mime)?"🖼️":mime==="application/pdf"?"📄":/word/.test(mime)?"📝":/excel|sheet/.test(mime)?"📊":/powerpoint|presentation/.test(mime)?"📽️":"📎";
+}
+function _rfUuid(){
+  if(window.crypto&&crypto.randomUUID)return crypto.randomUUID();
+  const h=[...crypto.getRandomValues(new Uint8Array(16))].map(x=>x.toString(16).padStart(2,"0")).join("");
+  return `${h.slice(0,8)}-${h.slice(8,12)}-4${h.slice(13,16)}-a${h.slice(17,20)}-${h.slice(20,32)}`;
+}
+/* Bilder: längste Kante 1600 px. Screenshots (PNG) bleiben PNG, solange sie höchstens 2 MB groß sind.
+   Kann der Browser das Bild nicht lesen (oft HEIC), geht es unverändert. */
+async function rufeBildKleiner(file,mime){
+  let bild;
+  try{ bild=await createImageBitmap(file); }catch(e){ return null; }
+  const f=Math.min(1,1600/Math.max(bild.width,bild.height));
+  const cv=document.createElement("canvas"); cv.width=Math.round(bild.width*f); cv.height=Math.round(bild.height*f);
+  cv.getContext("2d").drawImage(bild,0,0,cv.width,cv.height);
+  const blob=(typ,q)=>new Promise(res=>cv.toBlob(res,typ,q));
+  if(mime==="image/png"){ const p=await blob("image/png"); if(p&&p.size<=2*1048576)return {blob:p,mime:"image/png",endung:"png"}; }
+  const j=await blob("image/jpeg",0.85);
+  return j?{blob:j,mime:"image/jpeg",endung:"jpg"}:null;
+}
+async function rufeDateiWahl(input){
+  if(!_rf)return;
+  const liste=[...(input.files||[])]; input.value="";
+  for(const f of liste){
+    if(_rf.dateien.length>=RUFE_ANHANG_MAX){ toast("Höchstens vier Anhänge je Ruf – die übrigen sind nicht dabei."); break; }
+    const pr=rufeAnhangPruefen(f.name,f.size);
+    if(!pr.ok){ toast(pr.grund,"err"); continue; }
+    let d={name:rufeAnhangName(f.name),mime:pr.mime,endung:pr.endung,art:pr.art,blob:f};
+    if(pr.art==="bild"){
+      const k=await rufeBildKleiner(f,pr.mime);
+      if(k){ d.blob=k.blob; d.mime=k.mime; d.endung=k.endung; if(k.endung!==pr.endung)d.name=rufeAnhangName(d.name.replace(/\.[^.]+$/,"")+"."+k.endung); }
+      if(d.blob.size>RUFE_ANHANG_BYTES){ toast(`„${d.name}“ ist größer als 10 MB und lässt sich deshalb nicht anhängen.`,"err"); continue; }
+      try{ if(d.mime!=="image/heic")d.vorschau=URL.createObjectURL(d.blob); }catch(e){}
+    }
+    if(!_rf)return;
+    _rf.dateien.push(d);
+  }
+  rufeChipsRender();
+}
+function rufeAnhangWeg(i){
+  if(!_rf)return;
+  const d=_rf.dateien[i]; if(d&&d.vorschau)URL.revokeObjectURL(d.vorschau);
+  _rf.dateien.splice(i,1); rufeChipsRender();
+}
+function rufeChipsRender(){
+  const box=document.getElementById("rufe-chips"), hin=document.getElementById("rufe-offen-hinweis"); if(!box||!_rf)return;
+  const r=_rfAktRaum();
+  box.style.display=_rf.dateien.length?"flex":"none";
+  if(hin)hin.style.display=(_rf.dateien.length&&r&&!r.familie_kind)?"block":"none";
+  box.innerHTML=_rf.dateien.map((d,i)=>`<div class="rf-chip" style="display:flex;align-items:center;gap:6px;max-width:100%;min-height:44px;padding:2px 2px 2px 6px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);color:var(--text)">
+      ${d.vorschau?`<img src="${d.vorschau}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:8px;flex:none">`:`<span aria-hidden="true" style="font-size:var(--s-teil);flex:none">${_rfAnhangSymbol(d.mime)}</span>`}
+      <span style="min-width:0;display:flex;flex-direction:column"><span style="font-size:var(--s-klein);font-weight:700;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(d.name)}</span><span style="font-size:var(--s-klein);color:var(--text2)">${rufeGroesseText(d.blob.size)}</span></span>
+      <button type="button" class="rf-chip-weg" onclick="rufeAnhangWeg(${i})" aria-label="Anhang ${esc(d.name)} entfernen" style="flex:none;width:44px;height:44px;border:none;border-radius:50%;background:transparent;color:var(--text2);font-size:var(--s-karte);cursor:pointer">✕</button></div>`).join("");
+}
+async function _rfAufraeumen(liste){
+  for(const a of liste||[]){ try{ await fetch(`${SB_URL}/storage/v1/object/rufe-anhang/${a.pfad}`,{method:"DELETE",headers:{'Authorization':'Bearer '+sbToken(),'apikey':SB_KEY}}); }catch(e){} }
+}
+/* Nachrichten mit eingebetteten Anhängen in EINER Abfrage. Kennt die Datenbank rufe_anhang noch nicht
+   (Migration v736 nicht eingespielt), lädt die App wie bisher ohne – die Rufe bleiben sichtbar. */
+let _rfOhneAnhang=false;
+async function _rfNachrichtenHolen(raum){
+  const basis="id,autor,autor_name,autor_zusatz,autor_rolle,text,antwort_auf,an_alle,bearbeitet_am,archiviert_am,created_at";
+  const q=sel=>`rufe_nachricht?raum_id=eq.${raum}&select=${sel}&order=created_at.desc&limit=${RUFE_ANZAHL}`;
+  if(!_rfOhneAnhang){
+    try{
+      const r=await fetch(`${SB_URL}/rest/v1/${q(basis+",anhang_entfernt_am,rufe_anhang(id,pfad,name,mime,groesse)")}`,{headers:sbAuthHeaders()});
+      if(r.ok)return await r.json();
+      if(r.status===400)_rfOhneAnhang=true; else return [];
+    }catch(e){ return []; }
+  }
+  return _rfGet(q(basis));
+}
+function rufeAnhaengeHtml(n){
+  if(n.anhang_entfernt_am&&!(n.rufe_anhang||[]).length)return `<div class="rf-anhang-weg" style="margin-top:4px;font-size:var(--s-klein);color:var(--text2);font-style:italic">📎 Anhang entfernt</div>`;
+  const l=n.rufe_anhang||[]; if(!l.length)return "";
+  return `<div class="rf-anhaenge" style="display:flex;flex-direction:column;gap:6px;margin-top:6px">${l.map(a=>/^image\//.test(a.mime)
+    ?`<button type="button" class="rf-bild" onclick="rufeAnhangOeffnen(${Number(n.id)},${Number(a.id)})" aria-label="Bild ${esc(a.name)} groß ansehen" style="display:block;padding:0;border:none;background:transparent;cursor:pointer;min-height:44px;text-align:left">
+        <img data-pfad="${esc(a.pfad)}" alt="Bild: ${esc(a.name)}" style="display:block;max-width:100%;max-height:220px;min-width:120px;min-height:80px;border-radius:10px;background:var(--surface2);object-fit:cover"></button>`
+    :`<button type="button" class="rf-datei" onclick="rufeAnhangOeffnen(${Number(n.id)},${Number(a.id)})" aria-label="${a.mime==="application/pdf"?"PDF öffnen":"Herunterladen"}: ${esc(a.name)}" style="display:flex;align-items:center;gap:8px;min-height:44px;width:100%;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;text-align:left;cursor:pointer">
+        <span aria-hidden="true" style="font-size:var(--s-teil)">${_rfAnhangSymbol(a.mime)}</span>
+        <span style="flex:1;min-width:0;font-size:var(--s-klein);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.name)}</span>
+        <span style="font-size:var(--s-klein);color:var(--text2);flex:none">${rufeGroesseText(a.groesse)}</span></button>`).join("")}</div>`;
+}
+async function _rfBlob(pfad){
+  if(!_rf)return null;
+  if(_rf.blobs[pfad])return _rf.blobs[pfad];
+  try{
+    const r=await fetch(`${SB_URL}/storage/v1/object/authenticated/rufe-anhang/${pfad}`,{headers:{'Authorization':'Bearer '+sbToken(),'apikey':SB_KEY}});
+    if(!r.ok)return null;
+    const u=URL.createObjectURL(await r.blob());
+    if(!_rf){ URL.revokeObjectURL(u); return null; }
+    _rf.blobs[pfad]=u; return u;
+  }catch(e){ return null; }
+}
+/* Miniaturen erst laden, wenn sie ins Bild kommen */
+let _rfBeob=null;
+function rufeBilderBeobachten(){
+  const imgs=[...document.querySelectorAll("#rufe-liste img[data-pfad]:not([src])")]; if(!imgs.length)return;
+  const lade=async img=>{ const u=await _rfBlob(img.dataset.pfad); if(u&&img.isConnected)img.src=u; };
+  if(!("IntersectionObserver" in window)){ imgs.forEach(lade); return; }
+  if(!_rfBeob)_rfBeob=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ _rfBeob.unobserve(e.target); lade(e.target); } }),{root:document.getElementById("rufe-liste"),rootMargin:"200px"});
+  imgs.forEach(i=>_rfBeob.observe(i));
+}
+function rufeWeiterlesen(id){
+  if(!_rf)return; _rf.offen.add(id);
+  const m=document.querySelector(`#rufe-liste .rf-msg[data-id="${Number(id)}"]`); if(!m)return;
+  const t=m.querySelector(".rf-text"); if(t){ ["display","-webkit-line-clamp","line-clamp","-webkit-box-orient","overflow"].forEach(p=>t.style.removeProperty(p)); }
+  m.querySelector(".rf-weiter")?.remove();
+}
+async function rufeAnhangOeffnen(nid,aid){
+  const n=_rf&&_rf.liste.find(x=>x.id===nid); const a=n&&(n.rufe_anhang||[]).find(x=>x.id===aid); if(!a)return;
+  const u=await _rfBlob(a.pfad);
+  if(!u){ toast("Der Anhang lässt sich gerade nicht laden – bitte gleich noch einmal","err"); return; }
+  if(/^image\//.test(a.mime))return rufeBildGross(u,a.name);
+  if(a.mime==="application/pdf"){ const w=window.open(u,"_blank"); if(w)return; }
+  // Office (und PDF ohne neuen Tab): herunterladen, mit Originalnamen – nie in der App anzeigen
+  const l=document.createElement("a"); l.href=u; l.download=a.name; l.rel="noopener"; document.body.appendChild(l); l.click(); l.remove();
+}
+function rufeBildGross(url,name){
+  document.getElementById("rufe-gross")?.remove();
+  const m=document.createElement("div"); m.id="rufe-gross";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Bild groß: "+name);
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;flex-direction:column;padding:12px";
+  m.style.zIndex=_rfZ(10060);
+  const knopf="min-width:48px;min-height:48px;border:none;border-radius:12px;background:rgba(255,255,255,.16);color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer";
+  m.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="flex:1;min-width:0;color:#fff;font-size:var(--s-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(name)}</span>
+      <button type="button" id="rufe-gross-zoom" aria-pressed="false" style="${knopf};padding:0 12px">🔍 Zoom</button>
+      <button type="button" onclick="document.getElementById('rufe-gross')?.remove()" aria-label="Schließen" style="${knopf}">✕</button></div>
+    <div id="rufe-gross-box" style="flex:1;min-height:0;overflow:auto;display:flex;align-items:center;justify-content:center;touch-action:pinch-zoom pan-x pan-y">
+      <img src="${url}" alt="${esc(name)}" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px"></div>`;
+  document.body.appendChild(m);
+  const img=m.querySelector("img"), z=m.querySelector("#rufe-gross-zoom"), box=m.querySelector("#rufe-gross-box");
+  const zoom=()=>{ const an=z.getAttribute("aria-pressed")!=="true"; z.setAttribute("aria-pressed",String(an));
+    img.style.maxWidth=an?"none":"100%"; img.style.maxHeight=an?"none":"100%"; img.style.width=an?"200%":""; box.style.alignItems=an?"flex-start":"center"; box.style.justifyContent=an?"flex-start":"center"; };
+  z.onclick=zoom; img.onclick=zoom;
+  m.addEventListener("keydown",e=>{ if(e.key==="Escape")m.remove(); });
+  setTimeout(()=>z.focus(),30);
+}
+async function rufeAnhaengeLoeschen(id){
+  document.getElementById("rufe-menue")?.remove();
+  const n=_rf&&_rf.liste.find(x=>x.id===id); const l=(n&&n.rufe_anhang)||[]; if(!l.length)return;
+  if(!await frageJaNein({emoji:"🗑️",ton:"rot",titel:"Anhänge endgültig löschen?",
+    text:`${l.length===1?"Der Anhang wird":"Die "+l.length+" Anhänge werden"} für alle gelöscht – auch für das Trainerteam, und nicht wiederherstellbar. Der Ruf bleibt mit dem Hinweis „Anhang entfernt“ stehen.`,
+    ja:"Endgültig löschen",nein:"Abbrechen"}))return;
+  // erst die Dateien, dann die Zeilen – scheitert der Speicher, bleibt alles, wie es war
+  for(const a of l){
+    try{ const r=await fetch(`${SB_URL}/storage/v1/object/rufe-anhang/${a.pfad}`,{method:"DELETE",headers:{'Authorization':'Bearer '+sbToken(),'apikey':SB_KEY}});
+      if(!r.ok&&r.status!==404){ toast("Der Anhang ließ sich nicht löschen – bitte gleich noch einmal","err"); return; } }
+    catch(e){ toast("Kein Netz – nichts gelöscht","err"); return; }
+  }
+  try{ const r=await _rfRpc("rufe_anhaenge_loeschen",{p_nachricht:id}); if(!r.ok){ toast("Die Dateien sind weg, der Eintrag noch nicht – bitte gleich noch einmal","err"); return; } }
+  catch(e){ toast("Kein Netz","err"); return; }
+  l.forEach(a=>{ const u=_rf&&_rf.blobs[a.pfad]; if(u){ URL.revokeObjectURL(u); delete _rf.blobs[a.pfad]; } });
+  toast("Anhänge gelöscht");
+  await rufeLaden(false);
+}
 function rufeModulDa(){ return true; }
