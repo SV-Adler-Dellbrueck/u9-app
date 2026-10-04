@@ -51,3 +51,15 @@ Spiele nur aus `__nom`), Kind B 1 Training über den Vornamen-Schlüssel und 0 S
 beiden Karten der Galerie Zahlen, Stärken nur auf der eigenen; `my_child_card` liefert dieselbe Zählung und bleibt für
 fremde Kinder gesperrt; die Trainer-Galerie zählt gleich; `anon` bekommt eine leere Galerie, und die Zählfunktionen
 scheitern (eine Fehlermeldung ist gewollt).
+
+## v740 · Adler-Rufe „Gesehen von …“
+
+```bash
+bash lauf740.sh   # Attrappe (+ profiles.anzeigename, eltern_angaben), v670, v673 bis vor den Cron-Teil, v674, v740 zweimal, dann:
+psql -d r -f tests/sql/v740-rufe-gesehen.sql
+```
+
+Erwartet: Trainer sieht Ruf 1 „1 von 3“ (Elternteil A hat den Raum danach geöffnet, B vorher, B2 nie – der Absender
+zählt nicht) und den Privatruf an Familie B „1 von 2“ (nur diese Familie); die Namensliste nennt Kind C als „ohne
+Zugang“, im Privatraum nicht. Eltern bekommen aus beiden Funktionen nichts und lesen in `rufe_gelesen` nur die eigene
+Zeile; `_rufe_empfaenger` und `anon` scheitern (zwei Fehlermeldungen sind gewollt).
