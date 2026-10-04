@@ -1129,6 +1129,17 @@ body:not(.quiz-extern) #view-taktik>*:not(.sl):not(#sit-hub):not(.bereich-kopf){
 .br-punkt{display:inline-block;width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.4)}
 .br-kind .br-reihe .btn{min-height:52px;font-size:var(--s-teil)}
 .br-kabkopf{display:flex;align-items:center;gap:10px;padding:12px 16px;color:#fff}
+/* v750 – „＋ Hinzufügen“: Auswahl über dem Brett (Kader-Vornamen, Torwart, Gegner, Ball, Geräte) */
+.br-wahl{position:absolute;inset:0;z-index:5;background:rgba(15,23,42,.92);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:12px}
+.br-rumpf{position:relative}
+.br-wahl-box{width:100%;max-width:520px;color:#fff}
+.br-wahl-kopf{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.br-wahl-ab{font-size:var(--s-text);font-weight:800;margin:12px 0 6px;color:#e2e8f0}
+.br-wahl-reihe{display:flex;flex-wrap:wrap;gap:8px}
+.br-wahl-reihe .btn{min-height:48px;justify-content:center;gap:6px}
+.br-kind .br-wahl-reihe .btn{min-height:52px;font-size:var(--s-teil)}
+.br-wahl-reihe .btn[disabled]{border-style:dashed;cursor:default}
+.br-wahl-leer{font-size:var(--s-text);color:#e2e8f0}
 .sit-brett{width:100%;min-height:56px;justify-content:center;font-weight:800;margin-bottom:12px}
 .sit-leer{font-size:var(--s-text);color:var(--text2);padding:8px 0;grid-column:1/-1}
 .sit-weitere{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;padding-top:12px;border-top:var(--border)}

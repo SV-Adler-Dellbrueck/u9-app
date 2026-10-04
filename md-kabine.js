@@ -846,7 +846,7 @@ const KABINE_TOUR=[
   {emo:"👏", t:"Kompliment schenken", sel:['#kabine-body button[onclick="kabineKudos()"]'],
    d:"Sag einem Mitspieler, was er toll gemacht hat. Das freut jeden!"},
   {emo:"✨", t:"Mehr entdecken", sel:["#kab-mehr"], vor:()=>{ const d=document.getElementById("kab-mehr"); if(d){ d.open=true; window._kabMehrOffen=true; } },
-   d:"Hier gibt es noch mehr: dein Taktikbrett zum Malen, das Sammelalbum, Abzeichen und die Team-Galerie."},
+   d:"Hier gibt es noch mehr: dein Taktikbrett zum Malen und Aufstellen, das Sammelalbum, Abzeichen und die Team-Galerie."},
   {emo:"⚽", t:"Viel Spaß!", sel:["#kab-hilfe"],
    d:"Wenn du etwas vergessen hast: Tipp auf „❓ Zeig mir alles“. Und jetzt: Los geht's!"},
 ];
