@@ -1,6 +1,6 @@
 {
   "schema": "adler-uebungen/1",
-  "stand": "2026-10-02-1",
+  "stand": "2026-10-04-1",
   "uebungen": [
     {
       "name": "Warm up Adler",
@@ -6414,11 +6414,11 @@
     {
       "name": "Doppelpass durch die Stangen",
       "kat": "technik",
-      "kurz": "Zwei Kinder spielen Doppelpass über eine Stangenlinie, tauschen oben Ball und Rolle, kommen zurück und schließen aufs Minitor ab.",
-      "spieler": "4",
-      "feld": "ca. 6 x 20 m je Station",
+      "kurz": "Zwei Kinder spielen Doppelpass über eine Stangenlinie, tauschen oben Ball und Rolle, kommen zurück und schließen aufs Minitor ab. Alternativ laufen zwei Parcours nebeneinander im Wechsel auf dasselbe Minitor.",
+      "spieler": "4-8",
+      "feld": "ca. 6 x 20 m je Station; Alternative: zwei Parcours nebeneinander, ein gemeinsames Minitor",
       "dauer": "10",
-      "ablauf": "AUFBAU: Vier Stangen in einer Linie (Abstand ca. 3 m), 3 m hinter der letzten Stange der Dummy. Unten zwei Hütchen als Start, 3 m davor das Minitor. Je ein Kind steht links und rechts der Stangenlinie, zwei weitere warten hinter den Startkindern mit eigenem Ball. ABLAUF: Hin: A und B laufen links und rechts der Stangenlinie nach oben und spielen sich den Ball im Doppelpass durch die Lücken zu. Oben am Dummy übergibt der Ballführer den Ball, beide tauschen Seite und Rolle. Zurück: Doppelpass in die andere Richtung auf den getauschten Seiten. Unten schließt ein Kind aufs Minitor ab. Beide klatschen mit dem nächsten Paar ab, das startet. REGELN: Der Ball bleibt flach. Pass nur durch die Lücke zwischen zwei Stangen. Abschluss erst unten. TYPISCHE FEHLER: Pass zu hart oder zu früh, Partner läuft nicht mit, Ball bleibt bei der Übergabe liegen, Abschluss aus dem Stand ohne Anlauf. SKALIERUNG: 8 Kinder = 2 Stationen, 12 = 3, 16 = 4, immer 4 Kinder je Station, nie mehr als 2 warten. BEOBACHTUNG: Welches Kind sucht die Lücke früh, welches wartet auf den Ball?",
+      "ablauf": "AUFBAU: Vier Stangen in einer Linie (Abstand ca. 3 m), 3 m hinter der letzten Stange der Dummy. Unten zwei Hütchen als Start, 3 m davor das Minitor. Je ein Kind steht links und rechts der Stangenlinie, zwei weitere warten hinter den Startkindern mit eigenem Ball. ABLAUF: Hin: A und B laufen links und rechts der Stangenlinie nach oben und spielen sich den Ball im Doppelpass durch die Lücken zu. Oben am Dummy übergibt der Ballführer den Ball, beide tauschen Seite und Rolle. Zurück: Doppelpass in die andere Richtung auf den getauschten Seiten. Unten schließt ein Kind aufs Minitor ab. Beide klatschen mit dem nächsten Paar ab, das startet. REGELN: Der Ball bleibt flach. Pass nur durch die Lücke zwischen zwei Stangen. Abschluss erst unten. TYPISCHE FEHLER: Pass zu hart oder zu früh, Partner läuft nicht mit, Ball bleibt bei der Übergabe liegen, Abschluss aus dem Stand ohne Anlauf. ALTERNATIVE ZWEI PARCOURS: Zwei Parcours stehen nebeneinander und laufen parallel, beide schließen auf dasselbe Minitor ab. Auf jedem Parcours warten zwei Paare. Das erste Paar startet am linken Parcours. Kommt es am Wendepunkt an, startet das erste Paar des rechten Parcours. Kommt dieses am Wendepunkt an, startet das zweite Paar links, und so geht es im Wechsel weiter. Damit verdoppelt sich die Zahl der Kinder auf 8. Stangen und Wendepunkt gibt es je Parcours, das Minitor ist nur einmal da. SKALIERUNG: 4 Kinder = ein Parcours, 8 Kinder = zwei Parcours nebeneinander. Mit mehr Kindern weitere Stationen aufmachen, immer 4 Kinder je Parcours. BEOBACHTUNG: Welches Kind sucht die Lücke früh, welches wartet auf den Ball?",
       "varianten": "Leichter: Stangen weiter auseinander, Pass mit der Innenseite aus dem Stand. Schwerer: Das zweite Paar startet schon, wenn das erste oben am Dummy ankommt, oder Doppelpass nur mit dem schwächeren Fuß.",
       "coaching": "Wohin läufst du, nachdem du abgespielt hast? Wie bekommt dein Partner den Ball in den Lauf? Was machst du, bevor du aufs Tor schießt?",
       "diff": 2,
@@ -6950,6 +6950,653 @@
             18,
             "Pass, dann Tor: 2 Punkte"
           ]
+        ]
+      }
+    },
+    {
+      "name": "FUNiño 1 gegen 0 bis 4 gegen 4 – der Angreifer wird Verteidiger",
+      "kat": "pressing",
+      "kurz": "Angelehnt an „Funino vom 1 gegen 1 zum 3 gegen 3“ aus der F-Jugend-Sammlung des SBFV: Die Form wächst von 1 gegen 0 bis 4 gegen 4, der Angreifer der Vorphase verteidigt in der nächsten.",
+      "spieler": "6-8",
+      "feld": "FUNiño-Feld ca. 26 x 20 m, je Grundlinie zwei Minitore",
+      "dauer": "12",
+      "ablauf": "AUFBAU: Feld ca. 26 x 20 m. An jeder Grundlinie stehen zwei Minitore. Hinter jeder Torlinie, zwischen den beiden Toren, stehen 3 bis 4 Kinder mit einem Ballkorb. ABLAUF: Das erste Kind der einen Seite läuft los und spielt 1 gegen 0 auf die Tore der anderen Seite. Es sucht den Abschluss. Danach startet das erste Kind der anderen Seite, der Angreifer der ersten Phase wird zum Verteidiger: 1 gegen 1. So geht es weiter, die Seiten starten abwechselnd und in jeder Phase kommt ein Kind dazu, bis 4 gegen 4 erreicht ist. Nach 4 gegen 4 beginnt die Runde von vorn mit 1 gegen 0. TYPISCHE FEHLER: Der Verteidiger bleibt stehen, statt sofort zu verteidigen. Der Angreifer schaut nur auf den Ball und nicht aufs freie Tor. Der Wechsel von Angriff auf Verteidigung kommt zu spät. SKALIERUNG: 6 Kinder = 3 pro Seite, Endstufe 3 gegen 3. 8 Kinder = 4 pro Seite, Endstufe 4 gegen 4. BEOBACHTUNG: Welches Kind schaltet nach dem eigenen Abschluss sofort um?",
+      "varianten": "Leichter: Endstufe schon bei 3 gegen 3, oder die Tore stehen breiter. Schwerer: Endstufe 4 gegen 4, oder die Phasen laufen ohne Pause ineinander.",
+      "coaching": "Wohin willst du jetzt, wenn du Verteidiger bist? Wo ist das freie Tor? Wer ist jetzt in Überzahl?",
+      "diff": 3,
+      "skizze": {
+        "z": [
+          [
+            48,
+            15,
+            184,
+            150
+          ]
+        ],
+        "tor": [
+          [
+            38,
+            38,
+            "v",
+            20
+          ],
+          [
+            38,
+            112,
+            "v",
+            20
+          ],
+          [
+            234,
+            38,
+            "v",
+            20
+          ],
+          [
+            234,
+            112,
+            "v",
+            20
+          ]
+        ],
+        "ger": [
+          [
+            12,
+            90,
+            "depot",
+            "y"
+          ],
+          [
+            272,
+            90,
+            "depot",
+            "y"
+          ]
+        ],
+        "s": [
+          [
+            130,
+            90,
+            "g",
+            "A"
+          ],
+          [
+            24,
+            90,
+            "g",
+            "B"
+          ],
+          [
+            24,
+            114,
+            "g",
+            "C"
+          ],
+          [
+            258,
+            66,
+            "r",
+            "D"
+          ],
+          [
+            258,
+            90,
+            "r",
+            "E"
+          ],
+          [
+            258,
+            114,
+            "r",
+            "F"
+          ]
+        ],
+        "b": [
+          [
+            138,
+            97
+          ]
+        ],
+        "p": [
+          [
+            152,
+            84,
+            196,
+            68,
+            "d",
+            1
+          ],
+          [
+            200,
+            62,
+            236,
+            50,
+            "s",
+            2
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            176,
+            "1 gegen 0: Angreifer sucht den Abschluss"
+          ]
+        ],
+        "schritte": [
+          {
+            "s": [
+              [
+                80,
+                80,
+                "g",
+                "A"
+              ],
+              [
+                24,
+                90,
+                "g",
+                "B"
+              ],
+              [
+                24,
+                114,
+                "g",
+                "C"
+              ],
+              [
+                150,
+                95,
+                "r",
+                "D"
+              ],
+              [
+                258,
+                90,
+                "r",
+                "E"
+              ],
+              [
+                258,
+                114,
+                "r",
+                "F"
+              ]
+            ],
+            "b": [
+              [
+                157,
+                102
+              ]
+            ],
+            "p": [
+              [
+                132,
+                96,
+                106,
+                100,
+                "d",
+                1
+              ],
+              [
+                100,
+                104,
+                40,
+                122,
+                "s",
+                2
+              ]
+            ],
+            "tx": [
+              [
+                140,
+                176,
+                "1 gegen 1: Angreifer wird Verteidiger"
+              ]
+            ]
+          },
+          {
+            "s": [
+              [
+                110,
+                60,
+                "g",
+                "A"
+              ],
+              [
+                70,
+                95,
+                "g",
+                "B"
+              ],
+              [
+                24,
+                114,
+                "g",
+                "C"
+              ],
+              [
+                190,
+                90,
+                "r",
+                "D"
+              ],
+              [
+                258,
+                90,
+                "r",
+                "E"
+              ],
+              [
+                258,
+                114,
+                "r",
+                "F"
+              ]
+            ],
+            "b": [
+              [
+                78,
+                102
+              ]
+            ],
+            "p": [
+              [
+                90,
+                86,
+                106,
+                70,
+                "p",
+                1
+              ],
+              [
+                128,
+                56,
+                236,
+                48,
+                "s",
+                2
+              ]
+            ],
+            "tx": [
+              [
+                140,
+                176,
+                "2 gegen 1, dann weiter bis 4 gegen 4"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Eishockey-Reihentausch – 6 gegen 6 in zwei Reihen",
+      "kat": "spass",
+      "kurz": "Abschlussspiel: Zwei Teams mit je zwei festen 3er-Reihen tauschen auf Kommando im laufenden Spiel. Wer ein Tor schießt, geht selbstständig 10 Sekunden auf die Strafbank. Der Trainer gibt Provokationsregeln vor.",
+      "spieler": "12-14",
+      "feld": "Jugendtor-Feld ca. 25 x 20 m mit zwei Torhütern oder FUNiño-Feld ca. 26 x 20 m ohne Torhüter",
+      "dauer": "15",
+      "ablauf": "AUFBAU: Zwei Teams zu je 6 Feldspielern, jedes Team teilt sich in zwei feste 3er-Reihen. Variante A: Feld ca. 25 x 20 m, zwei Jugendtore, je Team ein fester Torwart. Variante B: FUNiño-Feld ca. 26 x 20 m, je Seite zwei Minitore, ohne Torhüter. Neben dem Feld warten die Reihen. An der Seite des Feldes ist die Strafbank als Zone mit Hütchen markiert. ABLAUF: Von jedem Team steht eine Reihe auf dem Feld, es wird 3 gegen 3 gespielt. Alle 60 Sekunden gibt der Trainer das Kommando: Beide Reihen tauschen komplett aus, im laufenden Spiel und mit vollem Einsatz. Bei jeder Einwechslung ordnet die Reihe ihre Positionen selbst neu, die Aufstellung muss sich ändern. Jedes Kind, das ein Tor schießt, geht danach selbstständig für 10 Sekunden in die Strafbank-Zone, zählt dort selbst herunter und kommt dann wieder ins Spiel. So spielt sein Team nach jedem Tor kurz in Unterzahl. PROVOKATIONSREGELN: Der Trainer gibt sie während des Spiels vor, zum Beispiel Countdown zum Abschluss oder Tore nach Doppelpass zählen doppelt. Gespielt werden 15 Minuten. TYPISCHE FEHLER: Die Reihe tauscht zu spät oder nur halb. Die neue Reihe startet ohne Absprache. Das Team in Unterzahl verteidigt nicht gemeinsam. Der Torschütze geht nicht von selbst auf die Strafbank oder kommt zu früh zurück. SKALIERUNG: 12 Kinder = FUNiño-Feld ohne Torhüter, 14 Kinder = Jugendtore mit zwei festen Torhütern. BEOBACHTUNG: Welche Reihe ordnet sich beim Tausch von allein neu, welcher Torschütze geht ohne Aufforderung auf die Strafbank?",
+      "varianten": "Leichter: Das Kommando kommt seltener, zum Beispiel alle 90 Sekunden. Schwerer: Zwei Provokationsregeln gelten gleichzeitig.",
+      "coaching": "In diesem Spielblock nur ermutigen und loben, die Reihen ordnen sich selbst.",
+      "diff": 3,
+      "skizze": {
+        "z": [
+          [
+            20,
+            28,
+            240,
+            117
+          ]
+        ],
+        "li": [
+          [
+            140,
+            28,
+            140,
+            145,
+            "m"
+          ]
+        ],
+        "tor": [
+          [
+            8,
+            68,
+            "v",
+            36,
+            "j"
+          ],
+          [
+            262,
+            68,
+            "v",
+            36,
+            "j"
+          ]
+        ],
+        "h": [
+          [
+            118,
+            5,
+            "y"
+          ],
+          [
+            162,
+            5,
+            "y"
+          ],
+          [
+            118,
+            24,
+            "y"
+          ],
+          [
+            162,
+            24,
+            "y"
+          ]
+        ],
+        "s": [
+          [
+            36,
+            86,
+            "g",
+            "T"
+          ],
+          [
+            96,
+            56,
+            "g",
+            "A"
+          ],
+          [
+            96,
+            116,
+            "g",
+            "B"
+          ],
+          [
+            140,
+            86,
+            "g",
+            "C"
+          ],
+          [
+            70,
+            158,
+            "g",
+            "D"
+          ],
+          [
+            94,
+            158,
+            "g",
+            "E"
+          ],
+          [
+            118,
+            158,
+            "g",
+            "F"
+          ],
+          [
+            244,
+            86,
+            "r",
+            "T"
+          ],
+          [
+            184,
+            56,
+            "r",
+            "G"
+          ],
+          [
+            184,
+            116,
+            "r",
+            "H"
+          ],
+          [
+            196,
+            86,
+            "r",
+            "I"
+          ],
+          [
+            162,
+            158,
+            "r",
+            "J"
+          ],
+          [
+            186,
+            158,
+            "r",
+            "K"
+          ],
+          [
+            210,
+            158,
+            "r",
+            "L"
+          ]
+        ],
+        "b": [
+          [
+            148,
+            93
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            176,
+            "3 gegen 3, die zweite Reihe wartet"
+          ]
+        ],
+        "schritte": [
+          {
+            "s": [
+              [
+                36,
+                86,
+                "g",
+                "T"
+              ],
+              [
+                70,
+                158,
+                "g",
+                "A"
+              ],
+              [
+                94,
+                158,
+                "g",
+                "B"
+              ],
+              [
+                118,
+                158,
+                "g",
+                "C"
+              ],
+              [
+                124,
+                50,
+                "g",
+                "D"
+              ],
+              [
+                124,
+                122,
+                "g",
+                "E"
+              ],
+              [
+                100,
+                86,
+                "g",
+                "F"
+              ],
+              [
+                244,
+                86,
+                "r",
+                "T"
+              ],
+              [
+                162,
+                158,
+                "r",
+                "G"
+              ],
+              [
+                186,
+                158,
+                "r",
+                "H"
+              ],
+              [
+                210,
+                158,
+                "r",
+                "I"
+              ],
+              [
+                168,
+                86,
+                "r",
+                "J"
+              ],
+              [
+                192,
+                50,
+                "r",
+                "K"
+              ],
+              [
+                192,
+                122,
+                "r",
+                "L"
+              ]
+            ],
+            "b": [
+              [
+                108,
+                93
+              ]
+            ],
+            "tx": [
+              [
+                140,
+                176,
+                "Alle 60 Sekunden: Reihen tauschen komplett"
+              ]
+            ]
+          },
+          {
+            "s": [
+              [
+                36,
+                86,
+                "g",
+                "T"
+              ],
+              [
+                70,
+                158,
+                "g",
+                "A"
+              ],
+              [
+                94,
+                158,
+                "g",
+                "B"
+              ],
+              [
+                118,
+                158,
+                "g",
+                "C"
+              ],
+              [
+                124,
+                50,
+                "g",
+                "D"
+              ],
+              [
+                124,
+                122,
+                "g",
+                "E"
+              ],
+              [
+                140,
+                12,
+                "g",
+                "F"
+              ],
+              [
+                244,
+                86,
+                "r",
+                "T"
+              ],
+              [
+                162,
+                158,
+                "r",
+                "G"
+              ],
+              [
+                186,
+                158,
+                "r",
+                "H"
+              ],
+              [
+                210,
+                158,
+                "r",
+                "I"
+              ],
+              [
+                168,
+                86,
+                "r",
+                "J"
+              ],
+              [
+                192,
+                50,
+                "r",
+                "K"
+              ],
+              [
+                192,
+                122,
+                "r",
+                "L"
+              ]
+            ],
+            "b": [
+              [
+                132,
+                129
+              ]
+            ],
+            "tx": [
+              [
+                140,
+                176,
+                "Tor: Schütze 10 Sekunden Strafbank"
+              ]
+            ]
+          }
         ]
       }
     }
