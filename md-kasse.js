@@ -1154,13 +1154,20 @@ async function leitfadenEditSave(btn){
    Also: bei `normal` gar nichts. Eine Meldung, die immer dasteht, ist keine Meldung mehr –
    sie kostet nur den Platz, den die Ausnahme bräuchte, um aufzufallen. Der Hinweis lebt
    jetzt IN der Terminkarte (elternPlatzHinweisHtml), nicht als eigene Kachel davor. */
+/* v741: „heute“ nur, wenn es heute ist – eine Absage für die Ferien steht sonst mit „heute“ drei Wochen vorher da. */
+function _platzWann(t,gross){
+  const heute=(typeof isoLokal==="function")?isoLokal():new Date().toISOString().slice(0,10);
+  if(!t||!t.datum||t.datum===heute)return gross?"Heute":"heute";
+  const d=new Date(t.datum+"T00:00:00");
+  return (gross?"Am ":"am ")+["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()]+" "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
+}
 function elternPlatzAmpelBanner(termin){
   const s=termin.platz_status; const a=(typeof PLATZ_AMPEL!=="undefined"&&PLATZ_AMPEL[s]);
   if(!a||s==="normal")return "";
   const bg=s==="abgesagt"?"#dc2626":s==="ausweich"?"#d97706":"#16a34a";
   const wann=termin.platz_status_at?new Date(termin.platz_status_at).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
-  const text=s==="abgesagt"?"Der Termin fällt heute aus."
-            :s==="ausweich"?"Heute auf den Ausweichplatz."
+  const text=s==="abgesagt"?`Der Termin fällt ${_platzWann(termin)} aus.`
+            :s==="ausweich"?`${_platzWann(termin,true)} auf den Ausweichplatz.`
             :"Der Termin findet statt.";
   return `<div style="background:${bg};color:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 4px 16px ${bg}55">
     <div style="font-size:var(--s-teil);font-weight:900;display:flex;align-items:center;gap:8px">${a.emo} ${esc(a.lbl)}</div>
@@ -1174,7 +1181,7 @@ function elternPlatzHinweisHtml(termin){
   const s=termin&&termin.platz_status; const a=(typeof PLATZ_AMPEL!=="undefined"&&PLATZ_AMPEL[s]);
   if(!a||s==="normal")return "";
   const bg=s==="abgesagt"?"#dc2626":"#d97706";
-  const text=s==="abgesagt"?"Der Termin fällt aus.":"Heute auf den Ausweichplatz.";
+  const text=s==="abgesagt"?`Der Termin fällt ${_platzWann(termin)} aus.`:`${_platzWann(termin,true)} auf den Ausweichplatz.`;
   const wann=termin.platz_status_at?new Date(termin.platz_status_at).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
   return `<div style="background:${bg};color:#fff;border-radius:10px;padding:10px 12px;margin:8px 0 2px">
     <div style="font-size:var(--s-karte);font-weight:900">${a.emo} ${esc(a.lbl)}</div>
