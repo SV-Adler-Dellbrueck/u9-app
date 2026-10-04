@@ -164,14 +164,23 @@ function kassePaypalVoran(roh){
   return t;
 }
 function kassePaypalLink(roh){
+  /* Nachtrag 04.10.: hinter dem Namen darf höchstens ein Betrag stehen (paypal.me/Name/40, …/40EUR, …/12,50).
+     Das Komma wird zum Punkt; Abfragen und Fragmente fallen weg. Alles andere lehnt die App ab. */
   const t=kassePaypalVoran(roh);
   if(!t)return {ok:true,link:null};
   if(!/^https:\/\//i.test(t))return {ok:false};
   let u; try{u=new URL(t);}catch(e){return {ok:false};}
-  const host=u.hostname.toLowerCase(), pfad=u.pathname;
-  const ok=((host==="paypal.me"||host==="www.paypal.me")&&pfad.length>1)
-    ||(host==="www.paypal.com"&&/^\/paypalme\/[^/]+/i.test(pfad));
-  return ok&&u.protocol==="https:"&&!u.username&&!u.password&&!u.port?{ok:true,link:t}:{ok:false};
+  if(u.protocol!=="https:"||u.username||u.password||u.port)return {ok:false};
+  const host=u.hostname.toLowerCase();
+  const teile=u.pathname.split("/").filter(Boolean).map(x=>{try{return decodeURIComponent(x);}catch(e){return "\u0000";}});
+  let vor;
+  if(host==="paypal.me"||host==="www.paypal.me")vor=[];
+  else if(host==="www.paypal.com"&&(teile[0]||"").toLowerCase()==="paypalme"){vor=[teile.shift()];}
+  else return {ok:false};
+  const [name,betrag,...rest]=teile;
+  if(!name||!/^[A-Za-z0-9._-]{1,64}$/.test(name)||rest.length)return {ok:false};
+  if(betrag!=null&&!/^\d+([.,]\d{1,2})?[A-Za-z]{0,3}$/.test(betrag))return {ok:false};
+  return {ok:true,link:"https://"+host+"/"+vor.concat([name],betrag!=null?[betrag.replace(",",".")]:[]).join("/")};
 }
 async function kasseAddUmlage(){
   const titel=(document.getElementById("u-titel")?.value||"").trim();

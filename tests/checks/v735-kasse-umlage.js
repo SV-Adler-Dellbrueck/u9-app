@@ -37,7 +37,10 @@ module.exports = async function (h) {
     for (let i = 0; i < 40 && typeof kasseOpen !== "function"; i++) await w(100);
     if (typeof kassePaypalLink !== "function") return { fehlt: true };
     const faelle = ["paypal.me/A", "www.paypal.me/A", "https://paypal.me/A", "paypal.com/paypalme/A", "  paypal.me/A  ", "http://paypal.me/A",
-      "javascript:alert(1)", "https://paypal.me.evil.de/A", "", "https://example.com/x"];
+      "javascript:alert(1)", "https://paypal.me.evil.de/A", "", "https://example.com/x",
+      // Nachtrag 04.10.: Betrag hinter dem Namen
+      "paypal.me/Test/40", "https://paypal.me/Test/40EUR", "paypal.me/Test/12,50?x=1#y", "paypal.com/paypalme/Test/40",
+      "paypal.me/Test/40/x", "paypal.me/Test/abc", "https://paypal.me.evil.de/Test"];
     const pure = faelle.map(f => [f, kassePaypalLink(f)]);
     kasseOpen(); for (let i = 0; i < 40 && !document.getElementById("u-speichern"); i++) await w(100);
     for (let i = 0; i < 40 && !window._kasseUebersicht; i++) await w(100); await w(300);
@@ -49,12 +52,14 @@ module.exports = async function (h) {
   });
   if (ra.fehlt) { probleme.push("kassePaypalLink fehlt"); await s.schliessen(); return h.ergebnis("v735 Kasse: Umlage bearbeiten, PayPal.Me-Link", false, probleme); }
   const soll = { "paypal.me/A": "https://paypal.me/A", "www.paypal.me/A": "https://www.paypal.me/A", "https://paypal.me/A": "https://paypal.me/A",
-    "paypal.com/paypalme/A": "https://www.paypal.com/paypalme/A", "  paypal.me/A  ": "https://paypal.me/A", "": null };
+    "paypal.com/paypalme/A": "https://www.paypal.com/paypalme/A", "  paypal.me/A  ": "https://paypal.me/A", "": null,
+    "paypal.me/Test/40": "https://paypal.me/Test/40", "https://paypal.me/Test/40EUR": "https://paypal.me/Test/40EUR",
+    "paypal.me/Test/12,50?x=1#y": "https://paypal.me/Test/12.50", "paypal.com/paypalme/Test/40": "https://www.paypal.com/paypalme/Test/40" };
   ra.pure.forEach(([f, e]) => {
     if (f in soll) { if (!e.ok || e.link !== soll[f]) probleme.push(`a) „${f}“ → ${JSON.stringify(e)} statt ${soll[f]}`); }
     else if (e.ok) probleme.push(`a) „${f}“ wird angenommen (${e.link})`);
   });
-  zeilen.push(`a) ${ra.pure.filter(([, e]) => e.ok).length} angenommen, ${ra.pure.filter(([, e]) => !e.ok).length} abgelehnt (http, javascript:, paypal.me.evil.de, example.com)`);
+  zeilen.push(`a) ${ra.pure.filter(([, e]) => e.ok).length} angenommen, ${ra.pure.filter(([, e]) => !e.ok).length} abgelehnt (http, javascript:, paypal.me.evil.de, example.com, …/40/x, …/abc)`);
 
   const toasts = [];
   await s.page.exposeFunction("_t735", m => toasts.push(m));
