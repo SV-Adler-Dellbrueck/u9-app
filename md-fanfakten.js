@@ -45,6 +45,8 @@ async function elternFanfactsOpen(spielerId,kindName){
       <input type="file" accept="image/jpeg,image/png,image/webp" onchange="elternFotoUpload(${spielerId},this)" style="font-size:var(--s-klein);flex:1">
       ${f.foto_path?'<span style="font-size:var(--s-klein);color:#059669">✓ vorhanden</span>':''}
     </div>
+    <div style="font-size:var(--s-text);color:#475569">Fotoalbum <span style="font-size:var(--s-klein);color:#64748b">· bis 6 Fotos für die Spielerkarten</span></div>
+    <div id="ka-box-${spielerId}" class="ka-box" style="margin:4px 0 12px"><span style="font-size:var(--s-klein);color:#64748b">Lädt …</span></div>
     <label for="ff-spitz" style="font-size:var(--s-text);color:#475569">Spitzname</label>
     <input id="ff-spitz" value="${esc(f.spitzname||'')}" placeholder="z. B. Mimi" style="${inp}">
     <label for="ff-verein" style="font-size:var(--s-text);color:#475569">Lieblingsverein</label>
@@ -80,6 +82,7 @@ async function elternFanfactsOpen(spielerId,kindName){
     </div>
   </div>`;
   document.body.appendChild(m);
+  kindAlbumRender(spielerId,"ka-box-"+spielerId,"eltern");
 }
 /* v544 – Was das Kind vom Verein hat, zum Nachlesen.
 
@@ -127,6 +130,93 @@ async function elternFanfactsSave(spielerId){
   }catch(e){toast("Netzwerkfehler","err");return;}
   toast("Fan-Fakten gespeichert ✓");
   document.getElementById("fanfacts-modal")?.remove();
+}
+/* ── v743 (PO 04.10., Kachel „So bauen“): Fotoalbum je Kind ─────────────────────────────────────────────
+   Bis zu 6 Fotos mit Zweck; eines davon ist das Kartenfoto. Eltern (Fan-Fakten) und Trainer (Kinderprofil) pflegen
+   es mit denselben Funktionen. Dateien: spielerfotos/<id>/album/<name>.jpg, nicht quadratisch, längste Seite 1600 px.
+   Wer was sieht, regelt die Datenbank (kind_foto): andere Familien nur das Kartenfoto und nur mit Freigabe. */
+const KIND_ALBUM_MAX=6;
+const KIND_ALBUM_ZWECK=[["portraet","Porträt"],["aktion","Aktion"],["jubel","Jubel"],["team","Mit dem Team"],["frei","Frei"]];
+const _kindAlbum={};
+async function kindAlbumLaden(sid){
+  try{ const r=await fetch(`${SB_URL}/rest/v1/kind_foto?spieler_id=eq.${Number(sid)}&select=id,pfad,zweck,karte,created_at&order=created_at.asc`,{headers:sbAuthHeaders()});
+    return r.ok?await r.json():null; }catch(e){ return null; }
+}
+async function kindAlbumRender(sid,boxId,wer){
+  const box=document.getElementById(boxId); if(!box)return;
+  _kindAlbum[sid]={box:boxId,wer:wer||"eltern"};
+  const liste=await kindAlbumLaden(sid);
+  if(!document.getElementById(boxId))return;
+  if(!Array.isArray(liste)){ box.innerHTML=`<span style="font-size:var(--s-klein);color:var(--text2)">Das Fotoalbum lässt sich gerade nicht laden.</span>`; return; }
+  _kindAlbum[sid].liste=liste;
+  const knopf="min-height:44px;min-width:44px;border:1px solid var(--rand-bedien,#94a3b8);border-radius:10px;background:var(--surface,#fff);color:var(--text,#0f172a);font-family:inherit;font-size:var(--s-klein);cursor:pointer;padding:4px 8px";
+  box.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px">
+    ${liste.map(f=>`<div class="ka-foto" data-id="${Number(f.id)}" style="border:${f.karte?"3px solid #1e3a8a":"1px solid var(--surface2,#e2e8f0)"};border-radius:12px;overflow:hidden;background:var(--surface2,#f1f5f9)">
+      <div class="ka-bild" data-pfad="${esc(f.pfad)}" style="aspect-ratio:4/5;display:flex;align-items:center;justify-content:center;color:var(--text3,#64748b);font-size:var(--s-klein)">Lädt …</div>
+      <div style="padding:6px;display:flex;flex-direction:column;gap:6px">
+        <select aria-label="Zweck des Fotos" onchange="kindAlbumZweck(${Number(sid)},${Number(f.id)},this.value)" style="${knopf};width:100%">${KIND_ALBUM_ZWECK.map(([v,l])=>`<option value="${v}"${f.zweck===v?" selected":""}>${l}</option>`).join("")}</select>
+        <div style="display:flex;gap:6px">
+          <button type="button" class="ka-karte" aria-pressed="${!!f.karte}" onclick="kindAlbumKarte(${Number(sid)},${f.karte?"null":Number(f.id)})" style="${knopf};flex:1;${f.karte?"background:#1e3a8a;color:#fff;border-color:#1e3a8a;font-weight:800":""}">${f.karte?"⭐ Kartenfoto":"☆ Als Kartenfoto"}</button>
+          <button type="button" class="ka-weg" aria-label="Foto löschen" onclick="kindAlbumLoeschen(${Number(sid)},${Number(f.id)})" style="${knopf}">🗑️</button>
+        </div>
+      </div></div>`).join("")}
+    ${liste.length<KIND_ALBUM_MAX?`<label class="ka-neu" style="${knopf};aspect-ratio:4/5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-style:dashed;text-align:center"><span style="font-size:28px" aria-hidden="true">＋</span>Foto hinzufügen<span style="font-size:11px;color:var(--text3,#64748b)">${liste.length} von ${KIND_ALBUM_MAX}</span><input type="file" accept="image/jpeg,image/png,image/webp" onchange="kindAlbumHochladen(${Number(sid)},this)" style="display:none"></label>`:""}
+  </div>
+  <div style="font-size:var(--s-klein);color:var(--text2,#475569);margin-top:6px;line-height:1.45">${liste.some(f=>f.karte)?"Das Kartenfoto steht auf der Spielerkarte":"Ohne Kartenfoto steht das bisherige Profilfoto auf der Karte"}. Andere Familien sehen nur das Kartenfoto – und nur mit der Freigabe „Team intern“. Nie öffentlich, nie im Adler Nest.</div>`;
+  box.querySelectorAll(".ka-bild").forEach(el=>{
+    if(typeof fotoLoadImage!=="function")return;
+    fotoLoadImage(el.dataset.pfad).then(img=>{ if(!img){ el.textContent="Kein Bild"; return; } img.alt="Foto"; img.style.cssText="width:100%;height:100%;object-fit:cover"; el.textContent=""; el.appendChild(img); }).catch(()=>{ el.textContent="Kein Bild"; });
+  });
+}
+function kindAlbumNeu(sid){ const a=_kindAlbum[sid]; if(a)kindAlbumRender(sid,a.box,a.wer); }
+/* Längste Seite höchstens 1600 px, kein Zuschnitt */
+async function kindAlbumVerkleinern(file,max){
+  const img=await fotoLoadFromFile(file);
+  const w=img.width||img.naturalWidth, h=img.height||img.naturalHeight, f=Math.min(1,(max||1600)/Math.max(w,h));
+  const cv=document.createElement("canvas"); cv.width=Math.round(w*f); cv.height=Math.round(h*f);
+  cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+  return await new Promise(r=>cv.toBlob(r,"image/jpeg",0.85));
+}
+async function kindAlbumHochladen(sid,input){
+  const file=input.files&&input.files[0]; if(!file)return;
+  const a=_kindAlbum[sid]; if(a&&a.liste&&a.liste.length>=KIND_ALBUM_MAX){ toast("Es sind schon 6 Fotos im Album – erst eines löschen.","err"); return; }
+  input.disabled=true;
+  const pfad=Number(sid)+"/album/"+String((crypto&&crypto.randomUUID)?crypto.randomUUID():Date.now()).replace(/[^A-Za-z0-9_-]/g,"")+".jpg";
+  try{
+    const blob=await kindAlbumVerkleinern(file,1600);
+    const up=await fetch(`${SB_URL}/storage/v1/object/spielerfotos/${pfad}`,{method:"POST",headers:{'Authorization':'Bearer '+sbToken(),'Content-Type':'image/jpeg'},body:blob});
+    if(!up.ok){ toast("Das Foto ließ sich nicht hochladen – bitte noch einmal.","err"); return; }
+    const zweck=(a&&a.liste&&a.liste.length)?"frei":"portraet";
+    const r=await fetch(`${SB_URL}/rest/v1/kind_foto`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({spieler_id:Number(sid),pfad,zweck})});
+    if(!r.ok){
+      try{ await fetch(`${SB_URL}/storage/v1/object/spielerfotos/${pfad}`,{method:"DELETE",headers:{'Authorization':'Bearer '+sbToken()}}); }catch(e){}
+      toast(/6/.test(await r.text().catch(()=>""))?"Es sind schon 6 Fotos im Album.":"Das Foto ließ sich nicht ins Album legen.","err"); return;
+    }
+    toast("Foto im Album ✓");
+  }catch(e){ toast("Das Foto ließ sich nicht verarbeiten – ein anderes Format probieren.","err"); }
+  finally{ input.disabled=false; }
+  kindAlbumNeu(sid);
+}
+async function kindAlbumZweck(sid,id,zweck){
+  try{ const r=await fetch(`${SB_URL}/rest/v1/kind_foto?id=eq.${Number(id)}`,{method:"PATCH",headers:{...sbAuthHeaders(),'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({zweck})});
+    if(!r.ok){ toast("Zweck nicht gespeichert","err"); kindAlbumNeu(sid); } }catch(e){ toast("Kein Netz","err"); }
+}
+async function kindAlbumKarte(sid,id){
+  try{ const r=await fetch(`${SB_URL}/rest/v1/rpc/kind_foto_als_karte`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_spieler:Number(sid),p_id:id==null?null:Number(id)})});
+    toast(r.ok?(id==null?"Kein Kartenfoto mehr – die Karte zeigt das Profilfoto":"Kartenfoto gesetzt ⭐"):"Kartenfoto nicht gespeichert",r.ok?undefined:"err");
+  }catch(e){ toast("Kein Netz","err"); }
+  kindAlbumNeu(sid);
+}
+async function kindAlbumLoeschen(sid,id){
+  const a=_kindAlbum[sid]; const f=a&&a.liste&&a.liste.find(x=>Number(x.id)===Number(id)); if(!f)return;
+  if(typeof frageJaNein==="function"&&!await frageJaNein({emoji:"🗑️",ton:"rot",titel:"Foto löschen?",text:f.karte?"Das ist das Kartenfoto. Danach zeigt die Karte wieder das Profilfoto.":"Das Foto verschwindet aus dem Album.",ja:"Löschen",nein:"Behalten"}))return;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/kind_foto?id=eq.${Number(id)}`,{method:"DELETE",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'}});
+    if(!r.ok){ toast("Foto nicht gelöscht","err"); return; }
+    await fetch(`${SB_URL}/storage/v1/object/spielerfotos/${f.pfad}`,{method:"DELETE",headers:{'Authorization':'Bearer '+sbToken()}}).catch(()=>{});
+    toast("Foto gelöscht");
+  }catch(e){ toast("Kein Netz","err"); }
+  kindAlbumNeu(sid);
 }
 async function elternFotoUpload(spielerId,input){
   const file=input.files&&input.files[0]; if(!file)return;
