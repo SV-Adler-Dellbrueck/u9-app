@@ -3,7 +3,7 @@
    Festival-Planung oder ins Match sinnvoll. Optimiere diese Seite optisch, strukturell und
    inhaltlich." Geprueft: klare Abschnitte in fester Reihenfolge, zwei grosse Wege (Planer und
    Match) je nach Termintyp und Tag, Ergebnis erst wenn der Termin da ist, Seltenes zugeklappt
-   (Platz-Status oeffnet sich bei Absage von selbst), 44-px-Ziele, und der Sprung in den Planer
+   (Platz-Status bei Absage sichtbar – seit v737 oben im Termin statt aufgeklappt), 44-px-Ziele, und der Sprung in den Planer
    schliesst das Fenster. */
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
@@ -34,7 +34,8 @@ module.exports = async function (h) {
         txt, gross: gross.map(b => ({ l: b.textContent.trim(), p: b.classList.contains("btn-p"), h: Math.round(b.getBoundingClientRect().height) })),
         abschnitte, det, ergebnis: !!mo.querySelector('input[placeholder="z. B. 3:2"]'),
         chips: [...mo.querySelectorAll("button")].filter(b => /^(Charles|Finn|Kenneth|Peter|Markus)/.test(b.textContent.trim())).map(b => Math.round(b.getBoundingClientRect().height)),
-        ampel: !!mo.querySelector("button") && /Fällt aus/.test(txt), antworten: /Antworten der Eltern/.test(txt)
+        ampel: !!mo.querySelector("button") && /Fällt aus/.test(txt), antworten: /Antworten der Eltern/.test(txt),
+        stattfinden: (() => { const el = mo.querySelector('[id^="tm-stattfinden-"]'); return el ? { sichtbar: !el.closest("details") && el.offsetParent !== null } : null; })()
       };
     };
     const fest = lies(1), festHeute = lies(2), aus = lies(3), tr = lies(4), alt = lies(5), ab = lies(6);
@@ -60,8 +61,9 @@ module.exports = async function (h) {
   if (!r.alt.ergebnis) probleme.push("Beim vergangenen Spiel fehlt das Ergebnisfeld");
   if (r.fest.det.length !== 2 || r.fest.det.some(d => d.offen)) probleme.push(`Zugeklapptes: ${JSON.stringify(r.fest.det)}`);
   if (!/Für die Eltern/.test(r.fest.det[0] && r.fest.det[0].s || "")) probleme.push(`erster Klappblock „${r.fest.det[0] && r.fest.det[0].s}“`);
-  const abEltern = r.ab.det.find(d => /Für die Eltern/.test(d.s));
-  if (!abEltern || !abEltern.offen) probleme.push("Bei einer Absage bleibt der Platz-Status zugeklappt");
+  // v737 (PO 04.10.): Der Platz-Status steht nicht mehr unter „Für die Eltern“, sondern oben im Termin –
+  // bei einer Absage also ohne Aufklappen sichtbar (vorher klappte sich der Block dafür auf).
+  if (!r.ab.stattfinden || !r.ab.stattfinden.sichtbar) probleme.push("Bei einer Absage ist der Platz-Status nicht ohne Aufklappen sichtbar");
   if (!/Fällt aus – Platz gesperrt/.test(r.ab.txt)) probleme.push("Die Absage steht nicht oben im Fenster");
   if (!r.fest.ampel || !r.fest.antworten) probleme.push(`Platz-Ampel ${r.fest.ampel}, Antworten-Knopf ${r.fest.antworten}`);
   if (r.fest.chips.some(hh => hh < 44)) probleme.push(`Trainer-Chips nur ${JSON.stringify(r.fest.chips)} px hoch`);
@@ -70,6 +72,6 @@ module.exports = async function (h) {
   if (fehler.length) probleme.push(...fehler.slice(0, 3));
   zeilen.push(`Heimturnier morgen: ${L(r.fest)} · am Termintag: ${L(r.festHeute)}`);
   zeilen.push(`Auswärts: ${L(r.aus)} · Training: ${L(r.tr)} · Abschnitte ${JSON.stringify(r.fest.abschnitte)}`);
-  zeilen.push(`Zugeklappt ${r.fest.det.map(d => d.s.slice(0, 18)).join(", ")} · Absage öffnet ${abEltern && abEltern.offen} · Ergebnis vorher ${r.fest.ergebnis}/nachher ${r.alt.ergebnis} · Chips ${r.fest.chips[0]}px`);
+  zeilen.push(`Zugeklappt ${r.fest.det.map(d => d.s.slice(0, 18)).join(", ")} · Absage-Status oben ${!!(r.ab.stattfinden && r.ab.stattfinden.sichtbar)} · Ergebnis vorher ${r.fest.ergebnis}/nachher ${r.alt.ergebnis} · Chips ${r.fest.chips[0]}px`);
   return h.ergebnis("Termin-Fenster: klare Abschnitte, zwei große Wege, Seltenes zugeklappt", !probleme.length, zeilen.concat(probleme));
 };
