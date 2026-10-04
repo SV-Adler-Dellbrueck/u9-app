@@ -147,3 +147,14 @@ statt Übung, mit 31 Minuten und ohne Appzeit scheitert es. Das Kind sieht sein 
 gesehen markieren. Eltern B sehen nichts von Kind A und schicken für das eigene Kind. Der Trainer sieht beide,
 markiert gesehen und Danke, kann die Teile aber nicht ändern. Eltern A sehen das Danke und löschen. Das 21.
 ungelesene Training eines Kindes scheitert; `anon` bekommt nichts. Sieben Fehlermeldungen sind gewollt.
+
+## v755 · Sprachlob gehört (kabine_lob.gehoert_am)
+
+```bash
+bash lauf755.sh   # Attrappe (+ kabine_lob mit Rechten wie v660), v755 zweimal, dann:
+psql -d k -f tests/sql/v755-lob-gehoert.sql
+```
+
+Erwartet: Das Kindergerät von Kind A markiert ein eigenes Lob als gehört (1 Zeile), das von Kind B nicht (0 Zeilen);
+den Pfad ändern scheitert, löschen findet nichts. Eltern B sehen nur Kind B und markieren dort. Der Trainer sieht alle
+drei und kann den Pfad nicht ändern. `anon` sieht und ändert nichts. Drei Fehlermeldungen sind gewollt.
