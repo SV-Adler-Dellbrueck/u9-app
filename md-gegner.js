@@ -458,9 +458,10 @@ function _tmdKarte(t){
       </div>`:""}
       <div id="wx-tm-${t.id}"></div>
       ${notizClean?`<div style="font-size:var(--s-text);color:var(--text3);margin-top:6px">${esc(notizClean)}</div>`:""}
+      ${/* v737 (PO 04.10.): „Fällt aus“ direkt im Termin, nicht erst hinter „Für die Eltern“ */ (kommt&&!istMeeting)?`<div id="tm-stattfinden-${t.id}" style="margin-top:10px">${platzAmpelTrainer(t,true)}</div>`:""}
 
       ${abgesagt
-        ? `${sec("Was du hier tust")}<div style="font-size:var(--s-text);color:var(--text2);line-height:1.5">Für diesen Termin ist nichts mehr zu planen. Soll er doch stattfinden, unten unter „📣 Für die Eltern“ wieder auf <b>🟢 Findet statt</b> stellen.</div>`
+        ? `${sec("Was du hier tust")}<div style="font-size:var(--s-text);color:var(--text2);line-height:1.5">Für diesen Termin ist nichts mehr zu planen. Soll er doch stattfinden, oben wieder auf <b>🟢 Findet statt</b> stellen.</div>`
         : `${sec("Was du hier tust")}
       <div style="display:flex;flex-direction:column;gap:6px">${gross.filter(Boolean).map(grossBtn).join("")}</div>`}
 
@@ -489,7 +490,7 @@ function _tmdKarte(t){
         <div id="puls-tm-${t.id}" style="font-size:var(--s-text);color:var(--text2);margin-top:6px"></div>`:""}
 
       ${istMeeting?"":zu(`📣 Für die Eltern${ampel?" · "+ampel.emo+" "+esc(ampel.lbl):""}`,
-        `${kommt?`<div style="margin-bottom:8px">${platzAmpelTrainer(t,true)}</div>`:""}${raster(elternRest)}`, abgesagt)}
+        raster(elternRest))}
       ${zu("⚙️ Mehr",`${raster(rest)}
         <button class="btn btn-sm btn-d" onclick="tmDelete(${Number(t.id)})" style="width:100%;min-height:44px;justify-content:center;margin-top:6px"><i class="ti ti-trash"></i>Termin löschen</button>`)}
     </div>
@@ -652,12 +653,115 @@ function platzAmpelTrainer(t,nackt){
     return `<button onclick="platzAmpelSet(${Number(t.id)},'${k}')" style="flex:1;min-width:96px;min-height:46px;border:2px solid ${a.col};border-radius:10px;cursor:pointer;font-family:inherit;font-size:var(--s-text);font-weight:800;background:${on?a.col:"var(--surface)"};color:${on?"#fff":a.col}">${a.emo} ${a.lbl}</button>`;
   }).join("");
   const zusatz=cur?`<input id="pa-note-${t.id}" value="${esc(t.platz_status_note||"")}" placeholder="${cur==="ausweich"?"Wohin? z. B. Halle 2":cur==="abgesagt"?"Grund (optional)":"Hinweis (optional)"}" onchange="platzAmpelNote(${Number(t.id)},this.value)" style="width:100%;min-height:44px;margin-top:6px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box">`:"";
-  /* v491: Im Termin-Fenster steht die Überschrift schon am Klappdeckel – dort nur die Knöpfe. */
-  if(nackt)return `<div style="display:flex;gap:6px;flex-wrap:wrap">${btns}</div>${zusatz}`;
+  /* v491: Im Termin-Fenster steht die Überschrift schon am Klappdeckel – dort nur die Knöpfe.
+     v737: Das Termin-Fenster zeigt die Knöpfe oben, mit einer Zeile, was die Eltern sehen. */
+  if(nackt)return `<div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-bottom:4px">Findet der Termin statt? Die Eltern sehen es sofort.</div><div style="display:flex;gap:6px;flex-wrap:wrap">${btns}</div>${zusatz}`;
   return `<div style="margin:8px 0;padding:8px;background:var(--surface2);border-radius:10px">
     <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:5px">📣 Platz-Status für die Eltern</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">${btns}</div>${zusatz}
   </div>`;
+}
+/* v737 (PO 04.10.): „Anstehende Termine wie Trainings jetzt schon absagen wegen Ferien – mit kurzer Begründung,
+   was die Eltern dann sehen.“ Kachel: „Ohne Mitteilung“. Ein Fenster für Ferien oder einen freien Zeitraum:
+   die Trainings darin abhaken, Grund vorbelegt, ein Tipp sagt alle ab – oder nimmt Absagen zurück.
+   Geschrieben wird wie bei der Platz-Ampel (platz_status, platz_status_note); keine Push-Nachricht. */
+let _tmAb=null;
+async function tmAbsagenOpen(){
+  if(typeof ferienLoad==="function"){ try{ await ferienLoad(); }catch(e){} }
+  const heute=isoLokal();
+  const ferien=(window._ferien||[]).filter(f=>f.bis>=heute).slice(0,4);
+  const f0=ferien[0]||null;
+  _tmAb={von:f0?(f0.von<heute?heute:f0.von):heute,bis:f0?f0.bis:heute,grund:f0?f0.name:"",ferien:f0?f0.name:"",nurTraining:true,aus:new Set(),erst:true};
+  document.getElementById("tm-absagen-modal")?.remove();
+  const m=document.createElement("div"); m.id="tm-absagen-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Termine absagen");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.style.zIndex=(typeof zOben==="function")?zOben(9999):9999;
+  m.onclick=e=>{ if(e.target===m)m.remove(); };
+  const inp="min-height:48px;padding:8px 10px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:var(--rl);padding:16px;max-width:460px;width:100%;margin:auto">
+    ${mdlHead("tm-absagen-modal","🏖️","Termine absagen","Ferien oder ein freier Zeitraum · die Eltern sehen „Fällt aus“ mit Grund","#b91c1c")}
+    ${ferien.length?`<div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin:4px 0">Ferien</div>
+      <div id="tm-ab-ferien" style="display:flex;gap:6px;flex-wrap:wrap">${ferien.map((f,i)=>`<button type="button" class="tm-ab-ferien" data-i="${i}" aria-pressed="${i===0}" onclick="tmAbsagenFerien(${i})" style="min-height:44px;padding:6px 12px;border-radius:22px;border:1.5px solid var(--rand-bedien);background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">🏖️ ${esc(f.name)} <span style="font-weight:600;color:var(--text2)">${_tmAbKurz(f.von)}–${_tmAbKurz(f.bis)}</span></button>`).join("")}</div>`:""}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+      <label><span style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2)">Von</span><input id="tm-ab-von" type="date" min="${heute}" value="${_tmAb.von}" onchange="tmAbsagenZeitraum()" style="width:100%;${inp}"></label>
+      <label><span style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2)">Bis</span><input id="tm-ab-bis" type="date" min="${heute}" value="${_tmAb.bis}" onchange="tmAbsagenZeitraum()" style="width:100%;${inp}"></label>
+    </div>
+    <label style="display:block;margin-top:8px"><span style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2)">Grund für die Eltern (optional)</span>
+      <input id="tm-ab-grund" maxlength="80" value="${esc(_tmAb.grund)}" placeholder="z. B. Herbstferien" oninput="_tmAb&&(_tmAb.grund=this.value)" style="width:100%;${inp}"></label>
+    <label style="display:flex;align-items:center;gap:10px;min-height:44px;margin-top:6px;font-size:var(--s-text);cursor:pointer"><input id="tm-ab-nur" type="checkbox" checked onchange="_tmAb.nurTraining=this.checked;_tmAb.erst=true;tmAbsagenListe()" style="width:22px;height:22px">Nur Trainings</label>
+    <div id="tm-ab-liste" style="margin-top:6px"></div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px">Die Eltern sehen „🔴 Fällt aus“ mit dem Grund in Terminliste, Terminkarte und bei „Alle Termine“ – eine Mitteilung aufs Handy geht nicht raus.</div>
+    <button type="button" id="tm-ab-los" class="btn btn-p" onclick="tmAbsagenSpeichern(false)" style="width:100%;min-height:52px;justify-content:center;margin-top:10px;font-weight:800">Termine absagen</button>
+    <button type="button" id="tm-ab-zurueck" class="btn btn-sm" onclick="tmAbsagenSpeichern(true)" style="width:100%;min-height:44px;justify-content:center;margin-top:6px;display:none">Absage zurücknehmen</button>
+  </div>`;
+  document.body.appendChild(m);
+  tmAbsagenListe();
+}
+function _tmAbKurz(iso){ const d=new Date(iso+"T00:00:00"); return d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}); }
+function tmAbsagenFerien(i){
+  const heute=isoLokal(), f=(window._ferien||[]).filter(x=>x.bis>=heute)[i]; if(!f||!_tmAb)return;
+  const altGrund=_tmAb.grund===_tmAb.ferien;
+  _tmAb.von=f.von<heute?heute:f.von; _tmAb.bis=f.bis; _tmAb.ferien=f.name; if(altGrund||!_tmAb.grund)_tmAb.grund=f.name; _tmAb.erst=true;
+  const set=(id,v)=>{const el=document.getElementById(id); if(el)el.value=v;};
+  set("tm-ab-von",_tmAb.von); set("tm-ab-bis",_tmAb.bis); set("tm-ab-grund",_tmAb.grund);
+  document.querySelectorAll(".tm-ab-ferien").forEach(b=>b.setAttribute("aria-pressed",String(Number(b.dataset.i)===i)));
+  tmAbsagenListe();
+}
+function tmAbsagenZeitraum(){
+  if(!_tmAb)return;
+  _tmAb.von=document.getElementById("tm-ab-von")?.value||_tmAb.von; _tmAb.bis=document.getElementById("tm-ab-bis")?.value||_tmAb.bis;
+  if(_tmAb.bis<_tmAb.von){ _tmAb.bis=_tmAb.von; const b=document.getElementById("tm-ab-bis"); if(b)b.value=_tmAb.bis; }
+  document.querySelectorAll(".tm-ab-ferien").forEach(b=>b.setAttribute("aria-pressed","false"));
+  _tmAb.erst=true; tmAbsagenListe();
+}
+function _tmAbTermine(){
+  const heute=isoLokal();
+  return (TM_TERMINE||[]).filter(t=>t.datum>=heute&&t.datum>=_tmAb.von&&t.datum<=_tmAb.bis&&t.typ!=="trainermeeting"&&(!_tmAb.nurTraining||t.typ==="training"))
+    .sort((a,b)=>(a.datum+String(a.uhrzeit||"")).localeCompare(b.datum+String(b.uhrzeit||"")));
+}
+function tmAbsagenListe(){
+  const box=document.getElementById("tm-ab-liste"); if(!box||!_tmAb)return;
+  const liste=_tmAbTermine();
+  // Beim ersten Zeichnen eines Zeitraums: alles abgehakt, was noch stattfindet
+  if(_tmAb.erst){ _tmAb.aus=new Set(liste.filter(t=>t.platz_status!=="abgesagt").map(t=>Number(t.id))); _tmAb.erst=false; }
+  const zeile=t=>{ const m=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅",label:t.typ};
+    const d=new Date(t.datum+"T00:00:00"), wt=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()], schon=t.platz_status==="abgesagt";
+    return `<label class="tm-ab-zeile" style="display:flex;align-items:center;gap:10px;min-height:48px;padding:6px 8px;border-bottom:1px solid var(--surface2);cursor:pointer">
+      <input type="checkbox" data-id="${Number(t.id)}" ${_tmAb.aus.has(Number(t.id))?"checked":""} onchange="tmAbsagenHaken(${Number(t.id)},this.checked)" style="width:22px;height:22px;flex:none">
+      <span aria-hidden="true">${m.icon}</span>
+      <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-text);font-weight:700">${esc(t.titel||m.label)}</span>
+        <span style="display:block;font-size:var(--s-klein);color:var(--text2)">${wt} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${t.uhrzeit?" · "+String(t.uhrzeit).slice(0,5)+" Uhr":""}</span></span>
+      ${schon&&typeof terminAbsageChip==="function"?terminAbsageChip(t,true):""}</label>`; };
+  box.innerHTML=liste.length?`<div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-bottom:2px">${liste.length} ${liste.length===1?"Termin":"Termine"} im Zeitraum</div>${liste.map(zeile).join("")}`
+    :`<div style="font-size:var(--s-text);color:var(--text2);padding:8px 0">In diesem Zeitraum liegt kein ${_tmAb.nurTraining?"Training":"Termin"}.</div>`;
+  tmAbsagenKnoepfe();
+}
+function tmAbsagenHaken(id,an){ if(!_tmAb)return; if(an)_tmAb.aus.add(Number(id)); else _tmAb.aus.delete(Number(id)); tmAbsagenKnoepfe(); }
+function tmAbsagenKnoepfe(){
+  if(!_tmAb)return;
+  const gewaehlt=_tmAbTermine().filter(t=>_tmAb.aus.has(Number(t.id)));
+  const neu=gewaehlt.filter(t=>t.platz_status!=="abgesagt").length, zurueck=gewaehlt.filter(t=>t.platz_status==="abgesagt").length;
+  const los=document.getElementById("tm-ab-los"), zb=document.getElementById("tm-ab-zurueck");
+  if(los){ los.disabled=!neu; los.textContent=neu?`${neu} ${neu===1?"Termin":"Termine"} absagen`:"Termine absagen"; }
+  if(zb){ zb.style.display=zurueck?"":"none"; zb.textContent=`Absage für ${zurueck} ${zurueck===1?"Termin":"Termine"} zurücknehmen`; }
+}
+async function tmAbsagenSpeichern(zuruecknehmen){
+  if(!_tmAb)return;
+  const ids=_tmAbTermine().filter(t=>_tmAb.aus.has(Number(t.id))&&((t.platz_status==="abgesagt")===!!zuruecknehmen)).map(t=>Number(t.id));
+  if(!ids.length)return;
+  const grund=(document.getElementById("tm-ab-grund")?.value||"").trim()||null;
+  const jetzt=new Date().toISOString();
+  const daten=zuruecknehmen?{platz_status:null,platz_status_note:null,platz_status_at:jetzt}:{platz_status:"abgesagt",platz_status_note:grund,platz_status_at:jetzt};
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/termine?id=in.(${ids.join(",")})`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify(daten)});
+    if(sbCheck401(r))return;
+    if(!r.ok){ toast(sbDeniedMsg(r,"Nicht gespeichert"),"err"); return; }
+  }catch(e){ toast("Keine Verbindung – nichts geändert","err"); return; }
+  (TM_TERMINE||[]).forEach(t=>{ if(ids.includes(Number(t.id)))Object.assign(t,daten); });
+  toast(zuruecknehmen?`${ids.length} ${ids.length===1?"Termin findet":"Termine finden"} wieder statt`:`${ids.length} ${ids.length===1?"Termin":"Termine"} abgesagt – die Eltern sehen „Fällt aus“${grund?" · "+grund:""}`);
+  document.getElementById("tm-absagen-modal")?.remove(); _tmAb=null;
+  tmLoad();
 }
 async function platzAmpelSet(id,status){
   try{

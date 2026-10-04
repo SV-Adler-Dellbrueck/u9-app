@@ -937,7 +937,8 @@ async function elternDashLoad(){
        Seit v686 steht jeder Termin nur einmal – der nächste nicht mehr zusätzlich in der Liste, die
        „Treffen …“ zeigte. Deshalb trägt diese Karte die Treffzeit jetzt selbst, wie das Termin-Fenster. */
     const zeit=elternZeitZeile(termin); // v729: mit Ende
-    const offen=kids.filter(k=>!rsvp[k.spieler_id]);
+    const faelltAus=_elAbgesagt(termin);   // v737: abgesagt → keine Rückmeldung, kein „fehlt“
+    const offen=faelltAus?[]:kids.filter(k=>!rsvp[k.spieler_id]);
     const trainerJa=Object.keys(termin.trainer_status||{}).filter(n=>(termin.trainer_status||{})[n]==="ja");
     // Zu-/Absage direkt am Termin – erneuter Klick auf den aktiven Status entfernt ihn wieder.
     const rsvpRows=kids.map(k=>{
@@ -978,13 +979,13 @@ async function elternDashLoad(){
       ${(typeof elternAnfahrtHtml==="function")?elternAnfahrtHtml(termin):""}
       <div id="wetter-eltern"></div>
       ${trainerJa.length?`<div style="font-size:var(--s-klein);color:#64748b;margin-top:4px">👤 Trainer dabei: ${trainerJa.map(esc).join(", ")}</div>`:""}
-      ${kids.length>=2?`<button onclick="elternRsvpAllYes(${termin.id})" style="width:100%;min-height:44px;margin-top:10px;padding:9px;border:1.5px solid #059669;border-radius:10px;background:#f0fdf4;color:#15803d;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">👍 Alle ${kids.length} Kinder zusagen</button>`:""}
-      ${rsvpRows}
+      ${(kids.length>=2&&!faelltAus)?`<button onclick="elternRsvpAllYes(${termin.id})" style="width:100%;min-height:44px;margin-top:10px;padding:9px;border:1.5px solid #059669;border-radius:10px;background:#f0fdf4;color:#15803d;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">👍 Alle ${kids.length} Kinder zusagen</button>`:""}
+      ${faelltAus?"":rsvpRows}
       <!-- PO: „Beim Training ist der Satz mit der endgültigen Aufstellung egal. nur bei spiel
            jemand turnier" – beim Training wird niemand aufgestellt, da wäre der Zusatz nur
            eine Einschränkung ohne Anlass. Der erste Satz gilt überall. -->
       ${(termin.typ==="spiel"||termin.typ==="turnier")?`<div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px">Deine Rückmeldung ist ein Hinweis – die Aufstellung entscheidet das Trainerteam.</div>`:""}<!-- v718: „Aktiven Status nochmal tippen = entfernen“ steht in der Hilfe -->
-      ${termin.typ==="training"?'<div id="betreuung-card"></div>':""}
+      ${(termin.typ==="training"&&!faelltAus)?'<div id="betreuung-card"></div>':""}
       <div id="helfer-card"></div><!-- PO: Hilfe wird kurzfristig entschieden, nicht im Voraus -->
 
       ${termin.typ==="turnier"?'<div id="turnierplan-card"></div>':""}
@@ -1270,7 +1271,7 @@ function elternOffeneRsvpHtml(rows,kids,rsvpAll,ausserId){
   const bis=new Date(Date.now()+14*864e5).toISOString().slice(0,10);
   rsvpAll=rsvpAll||{};
   const offen=(rows||[])
-    .filter(t=>t.datum>=heute&&t.datum<=bis&&Number(t.id)!==Number(ausserId))
+    .filter(t=>t.datum>=heute&&t.datum<=bis&&Number(t.id)!==Number(ausserId)&&!_elAbgesagt(t))
     .map(t=>({t,kinder:(kids||[]).filter(k=>!((rsvpAll[t.id]||{})[k.spieler_id]))}))
     .filter(x=>x.kinder.length);
   if(!offen.length)return "";
@@ -1370,7 +1371,7 @@ function elternTermineCarouselHtml(rows,kids,rsvpAll,ohneId){
   const bis=new Date(Date.now()+14*864e5).toISOString().slice(0,10);
   rsvpAll=rsvpAll||{};
   // was unter „Rückmeldung fehlt“ steht (14 Tage, ein Kind ohne Antwort), steht hier nicht noch einmal
-  const offenOben=t=>t.datum<=bis&&(kids||[]).some(k=>!((rsvpAll[t.id]||{})[k.spieler_id]));
+  const offenOben=t=>t.datum<=bis&&!_elAbgesagt(t)&&(kids||[]).some(k=>!((rsvpAll[t.id]||{})[k.spieler_id]));
   const liste=(rows||[]).filter(t=>Number(t.id)!==Number(ohneId)&&!offenOben(t)).slice(0,4);
   if(!liste.length)return "";
   rsvpAll=rsvpAll||{};
@@ -1381,7 +1382,7 @@ function elternTermineCarouselHtml(rows,kids,rsvpAll,ohneId){
     // v729: „Treffen 09:45 · bis ca. 11:30“ bzw. „17:00–18:30 Uhr“
     const zeit=t.treffzeit?("Treffen "+String(t.treffzeit).slice(0,5)+(elternEnde(t)?" · bis "+elternEnde(t):"")):elternZeitKurz(t);
     const rr=rsvpAll[t.id]||{};
-    const stand=(kids||[]).map(k=>{
+    const stand=_elAbgesagt(t)?(typeof terminAbsageChip==="function"?terminAbsageChip(t):"🔴 Fällt aus"):(kids||[]).map(k=>{
       const kd=k.kader||{}, st=rr[k.spieler_id]||null, c=st&&EP_RSVP[st];
       const txt=c?`${c.emo} ${c.lbl}`:"❗ offen";
       return `<span style="display:inline-block;font-size:var(--s-klein);font-weight:800;color:${c?"var(--text2)":"#b45309"};margin-right:8px">${(kids||[]).length>1?esc(kd.name||"Kind")+": ":""}${txt}</span>`;
@@ -1471,7 +1472,8 @@ async function terminDetailOpen(id){
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
   const c=document.createElement("div");
   c.style.cssText="background:#fff;color:#1a1a2e;max-width:460px;width:100%;margin:auto;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
-  const rsvpRows=kids.map(k=>{
+  const faelltAus=_elAbgesagt(t);   // v737
+  const rsvpRows=faelltAus?`<div style="font-size:var(--s-text);color:#991b1b;font-weight:700;margin-top:4px">Der Termin fällt aus – eine Rückmeldung braucht es nicht.</div>`:kids.map(k=>{
     const kd=k.kader||{}, st=rsvp[k.spieler_id]||null;
     const btns=Object.keys(EP_RSVP).map(s=>{const on=st===s,cc=EP_RSVP[s];
       const act=on?`tdRsvp(${t.id},${k.spieler_id},null)`:`tdRsvp(${t.id},${k.spieler_id},'${s}')`;
@@ -1497,6 +1499,7 @@ async function terminDetailOpen(id){
     ${(t.ort||t.heim===true)?routeBtn(t.ort||VEREIN_ADRESSE,{block:true}):""}
     ${infoRow("🏟️","Platz", t.platz?esc(t.platz):"")}
     ${infoRow("⚽","Spielform", spielformLbl)}
+    ${faelltAus&&typeof elternPlatzHinweisHtml==="function"?elternPlatzHinweisHtml(t):""}
     <div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
       <div style="font-weight:700;font-size:var(--s-text);margin-bottom:2px">✅ Rückmeldung</div>
       ${rsvpRows||'<div style="font-size:var(--s-text);color:var(--text3)">Kein Kind zugeordnet.</div>'}
@@ -2142,35 +2145,75 @@ function saisonAboCopy(){
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(SEASON_ICS_HTTPS).then(()=>toast("Abo-Link kopiert ✓ – im Kalender 'Aus URL abonnieren' einfügen"),()=>toast("Kopieren nicht möglich","err"));
   else toast("Kopieren nicht möglich","err");
 }
-function elternTermineOpen(){
-  const rows=ELTERN_TERMINE||[];
+/* v737 (PO 04.10.): „Die Eltern müssen auch immer schon alle Termine in der Zukunft zu- und absagen können.“
+   „Alle Termine“ lädt deshalb die ganze Saison (nicht nur die 15 der Startseite), zeigt je Kind den Stand mit
+   👍/🤔/👎 zum direkten Antippen und öffnet per Tipp auf den Termin die Details. Abgesagte Termine tragen
+   „🔴 Fällt aus“ mit Grund und keine Knöpfe. */
+function _elAbgesagt(t){ return typeof terminFaelltAus==="function"&&terminFaelltAus(t); }
+let _etRsvp={};
+async function elternTermineOpen(){
   document.getElementById("et-modal")?.remove();
   const modal=document.createElement("div");
   modal.id="et-modal";modal.setAttribute("role","dialog");modal.setAttribute("aria-modal","true");modal.setAttribute("aria-label","Alle Termine");
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10030;display:flex;flex-direction:column;padding:14px;overflow-y:auto";
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
-  const list=rows.length?rows.map((t,i)=>{
-    const tm=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅",label:t.typ,col:"#1e3a8a"};
-    const td=new Date(t.datum+"T00:00:00");
-    const twtag=["So","Mo","Di","Mi","Do","Fr","Sa"][td.getDay()];
-    const tzeit=elternZeitKurz(t); // v729: „10:15–11:30 Uhr“
-    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid #f1f5f9${i===0?";background:#eff6ff;border-radius:8px":""}">
-      <div style="font-size:var(--s-teil);width:28px;text-align:center">${tm.icon}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:700;font-size:var(--s-text)">${esc(t.titel||t.gegner||tm.label)}${i===0?' <span style="font-size:var(--s-klein);color:#2563eb;font-weight:800">· NÄCHSTER</span>':""}</div>
-        <div style="font-size:var(--s-klein);color:#64748b">${twtag} ${td.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${tzeit?" · "+tzeit:""}${heimLabel(t)?" · "+heimLabel(t):""}${t.ort?" · "+esc(t.ort):""}${t.platz?" · 🏟️ "+esc(t.platz):""}</div>
-      </div>
-      <span style="font-size:var(--s-klein);font-weight:700;color:${tm.col};background:${tm.col}18;border-radius:6px;padding:3px 7px;white-space:nowrap">${tm.label}</span>
-    </div>`;}).join(""):'<div style="font-size:var(--s-text);color:var(--text3);padding:10px 0">Aktuell sind keine Termine geplant.</div>';
   const c=document.createElement("div");
   c.style.cssText="background:#fff;color:#1a1a2e;max-width:440px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
-  c.innerHTML=`${mdlHead("et-modal","📅","Alle Termine","Kommende Termine + Kalender-Abo","#1e3a8a")}
-    <div style="max-height:55vh;overflow-y:auto">${list}</div>
-    ${rows.length?`<button onclick="elternTermineIcs()" style="width:100%;margin-top:12px;padding:11px;border:1.5px solid #1e3a8a;border-radius:10px;background:#fff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📥 Alle in meinen Kalender (einmalig)</button>`:""}
+  c.innerHTML=`${mdlHead("et-modal","📅","Alle Termine","Ganze Saison · zu- und absagen · Kalender-Abo","#1e3a8a")}
+    <div id="et-liste" style="max-height:60vh;overflow-y:auto">${elternTermineListeHtml(ELTERN_TERMINE||[])}</div>
+    <button id="et-ics" onclick="elternTermineIcs()" style="width:100%;margin-top:12px;padding:11px;min-height:44px;border:1.5px solid #1e3a8a;border-radius:10px;background:#fff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📥 Alle in meinen Kalender (einmalig)</button>
     <a href="${SEASON_ICS_WEBCAL}" style="display:block;text-align:center;width:100%;margin-top:8px;padding:11px;border:1.5px solid #16a34a;border-radius:10px;background:#f0fdf4;color:#15803d;font-family:inherit;font-size:var(--s-text);font-weight:700;text-decoration:none;box-sizing:border-box">🔔 Termine abonnieren (aktualisiert sich automatisch)</a>
-    <button onclick="saisonAboCopy()" style="width:100%;margin-top:6px;padding:9px;border:none;border-radius:10px;background:#f1f5f9;color:#475569;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">🔗 Abo-Link kopieren (für Google/Apple Kalender)</button>
-    <button onclick="document.getElementById('et-modal').remove()" style="width:100%;margin-top:8px;padding:10px;border:none;border-radius:10px;background:#f1f5f9;color:#334155;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Schließen</button>`;
+    <button onclick="saisonAboCopy()" style="width:100%;margin-top:6px;padding:9px;min-height:44px;border:none;border-radius:10px;background:#f1f5f9;color:#475569;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">🔗 Abo-Link kopieren (für Google/Apple Kalender)</button>
+    <button onclick="document.getElementById('et-modal').remove()" style="width:100%;margin-top:8px;padding:10px;min-height:44px;border:none;border-radius:10px;background:#f1f5f9;color:#334155;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Schließen</button>`;
   modal.appendChild(c);document.body.appendChild(modal);
+  await elternTermineNachladen();
+}
+async function elternTermineNachladen(){
+  const heute=isoLokal(), kids=window._elternKids||[];
+  let rows=null;
+  try{ const r=await fetch(`${SB_URL}/rest/v1/termine?select=*&datum=gte.${heute}&order=datum.asc,uhrzeit.asc.nullslast&limit=300`,{headers:sbAuthHeaders()});
+    if(r.ok)rows=(await r.json()).filter(t=>!(typeof terminVorbei==="function"&&terminVorbei(t))&&t.typ!=="trainermeeting"); }catch(e){}
+  if(rows){
+    // In ELTERN_TERMINE übernehmen, damit Termin-Details und Kalender-Export auch spätere Termine kennen
+    const da=new Set((ELTERN_TERMINE||[]).map(t=>Number(t.id)));
+    rows.forEach(t=>{ if(!da.has(Number(t.id)))ELTERN_TERMINE.push(t); else { const i=ELTERN_TERMINE.findIndex(x=>Number(x.id)===Number(t.id)); ELTERN_TERMINE[i]=t; } });
+  }
+  const liste=rows||ELTERN_TERMINE||[];
+  _etRsvp={};
+  const ids=liste.map(t=>Number(t.id)), kidIds=kids.map(k=>Number(k.spieler_id));
+  if(ids.length&&kidIds.length){
+    try{ const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?termin_id=in.(${ids.join(",")})&spieler_id=in.(${kidIds.join(",")})&select=termin_id,spieler_id,status`,{headers:sbAuthHeaders()});
+      if(r.ok)(await r.json()).forEach(x=>{ (_etRsvp[x.termin_id]=_etRsvp[x.termin_id]||{})[x.spieler_id]=x.status; }); }catch(e){}
+  }
+  const box=document.getElementById("et-liste"); if(box)box.innerHTML=elternTermineListeHtml(liste);
+}
+function elternTermineListeHtml(rows){
+  const kids=window._elternKids||[];
+  if(!rows.length)return '<div style="font-size:var(--s-text);color:var(--text3);padding:10px 0">Aktuell sind keine Termine geplant.</div>';
+  return rows.map((t,i)=>{
+    const tm=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅",label:t.typ,col:"#1e3a8a"};
+    const td=new Date(t.datum+"T00:00:00"), twtag=["So","Mo","Di","Mi","Do","Fr","Sa"][td.getDay()], tzeit=elternZeitKurz(t);
+    const aus=_elAbgesagt(t), rr=_etRsvp[t.id]||{};
+    const kidRows=aus?`<div style="margin-top:4px">${typeof terminAbsageChip==="function"?terminAbsageChip(t):"🔴 Fällt aus"}</div>`:kids.map(k=>{
+      const kd=k.kader||{}, st=rr[k.spieler_id]||null;
+      const btns=EP_RSVP_QUICK.map(s=>{ const cc=EP_RSVP[s], on=st===s;
+        return `<button type="button" class="et-rsvp" onclick="elternTerminRsvp(${Number(t.id)},${Number(k.spieler_id)},'${s}')" aria-pressed="${on}" aria-label="${esc(kd.name||"Kind")}: ${cc.lbl}" style="flex:1;min-width:0;min-height:44px;padding:4px 2px;border-radius:9px;border:1.5px solid ${on?cc.col:"var(--rand-bedien)"};background:${on?cc.col:"#fff"};color:${on?"#fff":"#334155"};font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">${cc.emo} ${cc.lbl}</button>`; }).join("");
+      const stTxt=st&&EP_RSVP[st]?`${EP_RSVP[st].emo} ${EP_RSVP[st].lbl}`:"❗ offen";
+      return `<div style="margin-top:6px"><div style="font-size:var(--s-klein);font-weight:700;color:#475569;margin-bottom:3px">${kids.length>1?esc(kd.name||"Kind")+" · ":""}${stTxt}</div><div style="display:flex;gap:5px">${btns}</div></div>`;
+    }).join("");
+    return `<div class="et-termin" data-id="${Number(t.id)}" style="padding:9px 6px;border-bottom:1px solid #f1f5f9${i===0?";background:#eff6ff;border-radius:8px":""}">
+      <button type="button" onclick="document.getElementById('et-modal')?.remove();terminDetailOpen(${Number(t.id)})" style="display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:0;border:none;background:transparent;color:inherit;font-family:inherit;text-align:left;cursor:pointer">
+        <span style="font-size:var(--s-teil);width:28px;text-align:center" aria-hidden="true">${tm.icon}</span>
+        <span style="flex:1;min-width:0"><span style="display:block;font-weight:700;font-size:var(--s-text);${aus?"color:#64748b;":""}">${esc(t.titel||t.gegner||tm.label)}${i===0?' <span style="font-size:var(--s-klein);color:#2563eb;font-weight:800">· NÄCHSTER</span>':""}</span>
+          <span style="display:block;font-size:var(--s-klein);color:#64748b">${twtag} ${td.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${tzeit?" · "+tzeit:""}${heimLabel(t)?" · "+heimLabel(t):""}${t.ort?" · "+esc(t.ort):""}${t.platz?" · 🏟️ "+esc(t.platz):""}</span></span>
+        <span style="font-size:var(--s-klein);font-weight:700;color:${tm.col};background:${tm.col}18;border-radius:6px;padding:3px 7px;white-space:nowrap">${tm.label}</span>
+      </button>${kidRows}</div>`;}).join("");
+}
+async function elternTerminRsvp(terminId,spielerId,status){
+  const cur=(_etRsvp[terminId]||{})[spielerId]||null;
+  if(cur===status){ if(typeof elternRsvpClear==="function")await elternRsvpClear(terminId,spielerId); }
+  else await elternRsvp(terminId,spielerId,status);
+  await elternTermineNachladen();
 }
 function elternTermineIcs(){
   /* v707: icsLocalStart/icsLocalPlus/icsEscape stammen aus md-spielbericht.js (Welle 2) */
@@ -2184,7 +2227,8 @@ function elternTermineIcs(){
     const time=(t.uhrzeit?String(t.uhrzeit).slice(0,5):"")||"17:00";
     lines.push("BEGIN:VEVENT","UID:adler-"+t.id+"-"+t.datum+"@adler-u9","DTSTAMP:"+dtStamp,
       "DTSTART:"+icsLocalStart(t.datum,time),"DTEND:"+(t.uhrzeit&&t.uhrzeit_ende&&String(t.uhrzeit_ende)>String(t.uhrzeit)?icsLocalStart(t.datum,String(t.uhrzeit_ende).slice(0,5)):icsLocalPlus(t.datum,time,90)), // v729: echte Endzeit
-      "SUMMARY:"+icsEscape((tm.label||"Termin")+": "+(t.titel||t.gegner||tm.label||"")));
+      "SUMMARY:"+icsEscape((_elAbgesagt(t)?"Fällt aus: ":"")+(tm.label||"Termin")+": "+(t.titel||t.gegner||tm.label||"")));
+    if(_elAbgesagt(t))lines.push("STATUS:CANCELLED");   // v737: abgesagt bleibt im Kalender sichtbar, aber als abgesagt
     if(t.ort)lines.push("LOCATION:"+icsEscape(t.ort));
     lines.push("END:VEVENT");
   });
@@ -2296,7 +2340,7 @@ const ELTERN_TOUR=[
   {emo:"📬", t:"Offene Rückmeldungen", sel:["#eltern-offen-card"],
    d:"Stehen in den nächsten 14 Tagen Antworten aus, siehst du sie hier gesammelt."},
   {emo:"🎒", t:"Alles zum Termin", sel:['[onclick^="terminDetailOpen"]'],
-   d:"Tippe auf einen Termin: Wetter, Adresse mit Route, „Was muss mit?“, Fahrgemeinschaft, „Wer hilft mit?“ und die Fotos zum Termin – „📷 Foto aufnehmen“ öffnet direkt die Kamera. Alle Spieltagsfotos zusammen – groß ansehen und durchwischen – stehen unter „Mehr vom Team“ → „Spieltagsgalerie“. Dort erscheint nach jedem Spieltag auch das „Adler Nest“ – eine neue Ausgabe zum Lesen und Hören. Ist euer Kind im nächsten Porträt, steht oben eine Karte mit dem Porträt-Bogen. Die ganze Saison und das Kalender-Abo findest du unten unter „Mehr“ → „Alle Termine“."},
+   d:"Tippe auf einen Termin: Wetter, Adresse mit Route, „Was muss mit?“, Fahrgemeinschaft, „Wer hilft mit?“ und die Fotos zum Termin – „📷 Foto aufnehmen“ öffnet direkt die Kamera. Alle Spieltagsfotos zusammen – groß ansehen und durchwischen – stehen unter „Mehr vom Team“ → „Spieltagsgalerie“. Dort erscheint nach jedem Spieltag auch das „Adler Nest“ – eine neue Ausgabe zum Lesen und Hören. Ist euer Kind im nächsten Porträt, steht oben eine Karte mit dem Porträt-Bogen. Die ganze Saison und das Kalender-Abo findest du unten unter „Mehr“ → „Alle Termine“ – seit v737 sagst du dort für jeden künftigen Termin direkt zu oder ab (👍/🤔/👎 je Kind). Fällt ein Termin aus, steht „🔴 Fällt aus“ mit Grund daneben; zurückmelden musst du dann nichts."},
   {emo:"✅", t:"Zu erledigen", sel:["#eltern-todo-btn"],
    d:"Aufgaben für euch als Familie, zum Beispiel der Grillhütten-Dienst. Könnt ihr nicht, tippt ihr „Ersatz suchen“ – eine andere Familie kann übernehmen."},
   {emo:"📡", t:"Liveticker", sel:["#eltern-live-slot","#eltern-ticker-slot"],
