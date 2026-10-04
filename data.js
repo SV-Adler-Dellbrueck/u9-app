@@ -4164,7 +4164,7 @@ function _skzGerLegende(spec,hell){
 const SKZ_MAT_NAME={
   minitor:"Minitore", jugendtor:"Jugendtore", huetchen:"Hütchen", stange:"Stangen",
   teller:"Markierungsteller", huerde:"Minihürden", leiter:"Koordinationsleiter",
-  wand:"Banden", ball:"Bälle", depot:"Balldepot", ring:"Koordinationsringe",
+  wand:"Banden", ball:"Bälle", depot:"Balldepots", ring:"Koordinationsringe",   // v749: vorher „2 Balldepot“
   dummy:"Freistoß-Dummys"
 };
 /* „1 Bälle" liest niemand zweimal, ohne zu stolpern. */
@@ -4821,6 +4821,9 @@ const UEBUNG_ART_VORSCHLAG={
   "Doppelpass durch die Stangen":"uebung",   // fester Ablauf ohne Gegner
   "Stangentausch":"weder",   // Wahrnehmung und Absprache, kein Fußballentscheid – wie Nummernlauf
   "Abschlussspiel – 3+1 gegen 3+1 Raute mit Countdown":"spiel",
+  /* v749 – Sammelauftrag vom 04.10. */
+  "FUNiño 1 gegen 0 bis 4 gegen 4 – der Angreifer wird Verteidiger":"spiel",
+  "Eishockey-Reihentausch – 6 gegen 6 in zwei Reihen":"spiel",
   "Korb-Chaos-Funino (360°-Variante)":"spiel",   // v700: Lehrgang 5.2 – 3 gegen 3 als Wurfspiel
   "Endzone und Fähnchen":"spiel",   // v700: L5-7 – Endzonenspiel 4 gegen 4
   /* v684 – Lehrgangsabgabe 4.0: Trainingsform für ERWACHSENE (Ü32), aus PR #210. Im Namen steht
@@ -5008,5 +5011,9 @@ const UEBUNG_BETREUUNG_VORSCHLAG={
      der Trainer den Countdown und bringt jeden neuen Ball aus dem Depot */
   "Doppelpass durch die Stangen":"allein",
   "Stangentausch":"allein",
-  "Abschlussspiel – 3+1 gegen 3+1 Raute mit Countdown":"fuehrt"
+  "Abschlussspiel – 3+1 gegen 3+1 Raute mit Countdown":"fuehrt",
+  /* v749: beim FUNiño-Wachstum schickt der Trainer das nächste Startkind, beim Eishockey gibt er
+     das Kommando zum Reihentausch und die Provokationsregeln vor */
+  "FUNiño 1 gegen 0 bis 4 gegen 4 – der Angreifer wird Verteidiger":"fuehrt",
+  "Eishockey-Reihentausch – 6 gegen 6 in zwei Reihen":"fuehrt"
 };
