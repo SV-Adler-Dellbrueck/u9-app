@@ -1618,6 +1618,13 @@ function kabineRenderGallery(){
   adlerCardDraw(ctx,500,780,d,null);
   cardApplyGlow(canvas,g.trainings||0);
   if(d.fotoPath){ fotoLoadImage(d.fotoPath).then(img=>{ if(img&&document.getElementById("kabine-card")===canvas){ adlerCardDraw(ctx,500,780,d,img); } }); }
+  /* v745 (PO 04.10.: „Die Sonderkarten sollen für alle Kinder sichtbar sein“): Streifen unter jeder Karte der Galerie;
+     fremde Karten nur ansehen, Fotos dort nur mit Freigabe (sonderkarten_kind) */
+  if(g.spieler_id&&typeof sonderkartenStreifen==="function"){
+    const host=document.createElement("div"); host.id="kabine-sk"; host.style.cssText="padding:0 12px 12px;display:flex;justify-content:center";
+    b.appendChild(host);
+    const idx=kabineIdx; sonderkartenStreifen(g.spieler_id,host,{fremd:!(typeof kabineEigenesKind==="function"&&kabineEigenesKind(g.name))}).then(()=>{ if(kabineIdx!==idx)host.remove(); });
+  }
 }
 function kabineGalleryNav(dir){
   if(!kabineGalleryData.length)return;
@@ -2327,7 +2334,7 @@ async function kinderAppTrennen(uid){
 // ein globaler Name darf nicht in beiden Wellen leben.
 /* ── v744 (PO 04.10., Entwurf A/B/C freigegeben): Sonderkarten ────────────────────────────────────────────
    Spieltag (automatisch bei „dabei“), Kapitän (automatisch mit der Binde), Moment (vergibt der Trainer).
-   Sehen: das Kind, seine Eltern und das Trainerteam – die Datenbank (sonderkarten_kind) liefert sie nur diesen.
+   Sehen: seit v745 alle Team-Konten (Team-Galerie); Fotos fremder Kinder nur mit Freigabe (sonderkarten_kind).
    Kein Ergebnis, keine Tore, keine Rangliste: die Kapitänskarte sagt, was ein Kapitän bei uns tut. */
 const SK_ART={
   spieltag:{a:"#1e3a8a",b:"#0ea5e9",tag:"SPIELTAG"},
@@ -2397,10 +2404,12 @@ function _skCanvas(c,breite){
   return cv;
 }
 /* Streifen unter der eigenen Adler-Karte (Eltern-Portal und Kabine) */
-async function sonderkartenStreifen(sid,host){
+async function sonderkartenStreifen(sid,host,opt){
+  opt=opt||{};
   if(!host)return;
   const liste=await sonderkartenLaden(sid);
   if(!liste||!liste.length||!document.body.contains(host))return;
+  host.querySelector("#sk-streifen")?.remove();
   const box=document.createElement("div"); box.id="sk-streifen";
   box.style.cssText="width:100%;max-width:520px;color:#fff";
   box.innerHTML=`<div style="font-weight:800;font-size:var(--s-text);margin:4px 0 8px;text-align:center">🃏 Sonderkarten · ${liste.length}</div>
@@ -2408,10 +2417,11 @@ async function sonderkartenStreifen(sid,host){
   const reihe=box.querySelector(".sk-reihe");
   liste.forEach(c=>{ const b=document.createElement("button"); b.type="button"; b.className="sk-karte";
     b.style.cssText="flex:none;border:none;padding:0;background:none;cursor:pointer;scroll-snap-align:start;min-height:44px";
-    b.appendChild(_skCanvas(c,120)); b.onclick=()=>sonderkarteGross(c); reihe.appendChild(b); });
+    b.appendChild(_skCanvas(c,120)); b.onclick=()=>sonderkarteGross(c,opt); reihe.appendChild(b); });
   host.appendChild(box);
 }
-function sonderkarteGross(c){
+function sonderkarteGross(c,opt){
+  opt=opt||{};
   document.getElementById("sk-gross")?.remove();
   const m=document.createElement("div"); m.id="sk-gross"; m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Sonderkarte");
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:10070;display:flex;flex-direction:column;padding:16px;overflow-y:auto";
@@ -2419,7 +2429,8 @@ function sonderkarteGross(c){
   m.onclick=e=>{ if(e.target===m||e.target===innen)m.remove(); };
   const cv=_skCanvas(c,280); if(c._img)sonderkarteDraw(cv.getContext("2d"),520,800,c,c._img);
   innen.appendChild(cv);
-  const inKabine=(typeof isKidsMode!=="undefined"&&isKidsMode);
+  /* v745: fremde Karten (Team-Galerie) nur ansehen, nie speichern; in der Kabine ohnehin kein Teilen */
+  const inKabine=(typeof isKidsMode!=="undefined"&&isKidsMode)||!!opt.fremd;
   const bar=document.createElement("div"); bar.style.cssText="display:flex;gap:8px;flex-wrap:wrap;justify-content:center";
   bar.innerHTML=`${inKabine?"":`<button type="button" class="btn btn-p" id="sk-teilen"><i class="ti ti-share"></i>Als Bild speichern</button>`}<button type="button" class="btn" onclick="document.getElementById('sk-gross').remove()">Schließen</button>`;
   innen.appendChild(bar); m.appendChild(innen); document.body.appendChild(m);
@@ -2437,7 +2448,7 @@ async function sonderkartenTrainerOpen(sid){
   m.onclick=e=>{ if(e.target===m)m.remove(); };
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);width:100%;max-width:560px;min-height:100vh;box-sizing:border-box;padding:16px">
     ${typeof mdlHead==="function"?mdlHead("sk-trainer","🃏","Sonderkarten",esc(k.name||""),"#1e3a8a"):""}
-    <div style="font-size:var(--s-klein);color:var(--text2);margin:6px 0 12px;line-height:1.45">Spieltags- und Kapitänskarten entstehen von selbst aus „dabei“ und der Kapitänsbinde. Hier ergänzt du einen Satz zum Spieltag oder vergibst eine Momentkarte. Sehen können sie nur das Kind, seine Eltern und das Trainerteam.</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin:6px 0 12px;line-height:1.45">Spieltags- und Kapitänskarten entstehen von selbst aus „dabei“ und der Kapitänsbinde. Hier ergänzt du einen Satz zum Spieltag oder vergibst eine Momentkarte. Alle Kinder und Familien sehen sie in der Team-Galerie – schreib Sätze, die vor allen passen. Fotos fremder Kinder nur mit Freigabe „Team intern“.</div>
     <section aria-label="Momentkarte vergeben" style="border:var(--border-s);border-radius:14px;padding:12px;margin-bottom:12px">
       <div style="font-weight:800;margin-bottom:8px">🎉 Momentkarte vergeben</div>
       <label for="sk-titel" style="font-size:var(--s-klein);color:var(--text2)">Moment</label>

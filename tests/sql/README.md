@@ -103,3 +103,16 @@ Termin), Kapitän 26.09. (Adler 2, 1. Mal), Spieltag 26.09. (Adler 2, Spielform 
 der Spieltag in der Zukunft fehlt. Fotos nach Zweck (Aktion, Porträt), die Momentkarte fällt mangels Jubelfoto auf das
 Profilfoto zurück. Eltern sehen fremde Karten nicht und schreiben keine; das Kindergerät sieht nur die eigenen; Eltern
 von Kind B sehen die Tabellenzeilen von Kind A nicht. `anon` scheitert. Zwei Fehlermeldungen sind gewollt.
+
+## v745 · Sonderkarten für alle
+
+```bash
+bash lauf745.sh   # wie lauf744, dazu v745, dann:
+psql -d k -f tests/sql/v745-sonderkarten-alle.sql
+```
+
+Erwartet: wie v744 für das eigene Kind (Fotos nach Zweck aus dem Album). Eltern von Kind A sehen jetzt auch die Karten
+von Kind B (Spieltag 26.09., Kapitän 03.10.), ohne Foto, weil Kind B keine Freigabe hat; das Kindergerät von Kind A
+sieht 5 eigene und 2 fremde Karten. Eltern von Kind B sehen die Tabelle `sonderkarte` weiter nicht, bekommen aber die
+Karten von Kind A samt Trainer-Satz – mit dem Profilfoto statt der Album-Fotos (Kind A hat Freigabe). `anon` scheitert.
+Zwei Fehlermeldungen sind gewollt.
