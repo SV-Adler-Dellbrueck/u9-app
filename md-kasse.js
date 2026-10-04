@@ -1156,7 +1156,7 @@ async function leitfadenEditSave(btn){
    jetzt IN der Terminkarte (elternPlatzHinweisHtml), nicht als eigene Kachel davor. */
 /* v741: „heute“ nur, wenn es heute ist – eine Absage für die Ferien steht sonst mit „heute“ drei Wochen vorher da. */
 function _platzWann(t,gross){
-  const heute=(typeof isoLokal==="function")?isoLokal():new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   if(!t||!t.datum||t.datum===heute)return gross?"Heute":"heute";
   const d=new Date(t.datum+"T00:00:00");
   return (gross?"Am ":"am ")+["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()]+" "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
