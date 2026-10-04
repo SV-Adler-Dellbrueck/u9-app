@@ -13,6 +13,8 @@
    wiewars_push_faellig in der Datenbank. Dazu holt derselbe Lauf nach, was push-send und push-cron
    während einer Ruhezeit in push_warteschlange gelegt haben (push_warteschlange_faellig).
 
+   v734 (Version 4): Porträt-Ablauf fürs Adler Nest (portraet_push_faellig) im selben Lauf.
+
    NIE von Hand mit dem echten Cron-Schlüssel aufrufen (CLAUDE.md): Die Datenbank merkt sich
    jeden Aufruf als versendet. Schlüssel kommen aus dem Vault (RPC adler_geheimnis, v643). */
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -45,7 +47,7 @@ Deno.serve(async (req) => {
     const faellig = [...((rufe || []) as any[]).map((f) => ({ ...f, tag: "rufe" })),
                      ...((ww || []) as any[]).map((f) => ({ ...f, tag: "wiewars-" + f.termin_id })),
                      ...((ws || []) as any[]).map((w) => ({ user_id: w.user_id, titel: w.payload?.title, text: w.payload?.body, url: w.payload?.url, tag: w.payload?.tag || "adler" })),
-                     ...((pp || []) as any[]).map((f) => ({ ...f, tag: "nest-portraet" }))];
+                     ...((pp || []) as any[]).map((f) => ({ ...f, tag: "nest-" + (String(f.url).includes("/trainer/") ? "trainer" : "eltern") }))];
     if (!faellig.length) return json({ ok: true, sent: 0 });
     webpush.setVapidDetails("mailto:trainer@adler-dellbrueck.de",
       await geheimnis(admin, "adler_vapid_public"), await geheimnis(admin, "adler_vapid_private"));
