@@ -62,12 +62,12 @@ function _brGrundstellung(form){
 }
 function _brLaden(modus){
   try{
-    const s=JSON.parse(localStorage.getItem(BRETT_MODI[modus].schluessel)||"null");
+    const s=JSON.parse(localStorage.getItem((_br&&_br.schluessel)||BRETT_MODI[modus].schluessel)||"null");
     if(s&&Array.isArray(s.toks)&&Array.isArray(s.striche)&&s.form)return s;
   }catch(e){}
   return _brGrundstellung("4+1");
 }
-function _brMerken(){ try{ localStorage.setItem(BRETT_MODI[_br.modus].schluessel, JSON.stringify(_br.stand)); }catch(e){} }
+function _brMerken(){ try{ localStorage.setItem(_br.schluessel||BRETT_MODI[_br.modus].schluessel, JSON.stringify(_br.stand)); }catch(e){} }
 function _brVerlauf(){ _br.verlauf.push(JSON.stringify(_br.stand)); if(_br.verlauf.length>30)_br.verlauf.shift(); }
 
 /* ── Zeichnen ──────────────────────────────────────────────────────────────────────── */
@@ -264,8 +264,11 @@ function brettNeu(t,sid){
   _brVerlauf(); _br.stand.toks.push(tok); _br.werk="ziehen"; _brMerken(); _brBuehne(); _brLeisteNeu();
   brettWahlZu();
 }
-function _brStart(modus,wurzel){
-  _br={modus, wurzel, stand:_brLaden(modus), werk:"ziehen", stift:BRETT_MODI[modus].stifte[0][0], verlauf:[], zieh:null, strich:null, radiert:false};
+function _brStart(modus,wurzel,opt){
+  const schluessel=opt?"adler-brett-kind-uebung":null;
+  if(opt){ try{ localStorage.setItem(schluessel, JSON.stringify(opt.stand&&Array.isArray(opt.stand.toks)?opt.stand:_brGrundstellung("leer"))); }catch(e){} }
+  _br={schluessel};
+  _br={modus, wurzel, opt:opt||null, schluessel, stand:_brLaden(modus), werk:"ziehen", stift:BRETT_MODI[modus].stifte[0][0], verlauf:[], zieh:null, strich:null, radiert:false};
   if(!BRETT_MODI[modus].formen.some(f=>f[0]===_br.stand.form))_br.stand=_brGrundstellung("4+1");
   _brAufbauen();
 }
@@ -287,14 +290,39 @@ function brettOpen(){
 function brettClose(){ document.getElementById("brett-modal")?.remove(); if(_br&&_br.modus==="trainer")_br=null; }
 
 /* Kabine: als Unterseite in #kabine-body – wie alle anderen Kabinen-Seiten, mit ←. */
-function brettKabine(ziel){
+/* v751: Mit opt zeichnet das Kind eine eigene Übung für „Mein Training“ – auf einem eigenen
+   Speicherplatz (das Taktikbrett bleibt, wie es war), mit „✓ Fertig“ statt ←, und der Stand geht an
+   opt.fertig zurück. opt.stand füllt das Brett vor (eine schon gezeichnete Übung ändern). */
+function brettKabine(ziel,opt){
   if(!ziel)return;
+  opt=opt||null;
   ziel.innerHTML=`<div class="br-kabkopf">
-      <button type="button" class="br-zu" onclick="brettKabineZu()" aria-label="Zurück zur Kabine">←</button>
-      <div class="br-titel">✏️ Mein Taktikbrett</div></div>
+      <button type="button" class="br-zu" onclick="brettKabineZu()" aria-label="${opt?"Zurück ohne Übernehmen":"Zurück zur Kabine"}">←</button>
+      <div class="br-titel">${opt?esc(opt.titel||"✏️ Meine Übung"):"✏️ Mein Taktikbrett"}</div>
+      ${opt?`<button type="button" class="btn br-fertig" onclick="brettKabineFertig()">✓ Fertig</button>`:""}</div>
     <div class="br-rumpf br-kind" id="brett-kind"></div>`;
-  _brStart("kind", ziel.querySelector("#brett-kind"));
+  _brStart("kind", ziel.querySelector("#brett-kind"), opt);
 }
-function brettKabineZu(){ _br=null; if(typeof kabineHome==="function")kabineHome(); }
+function brettKabineZu(){
+  const opt=_br&&_br.opt; _br=null;
+  if(opt&&typeof opt.zurueck==="function"){ opt.zurueck(); return; }
+  if(typeof kabineHome==="function")kabineHome();
+}
+function brettKabineFertig(){
+  if(!_br||!_br.opt)return;
+  const opt=_br.opt, stand=JSON.parse(JSON.stringify(_br.stand)); _br=null;
+  if(typeof opt.fertig==="function")opt.fertig(stand);
+}
+/* v751: Ein Brett-Stand als fertiges Bild (SVG-Text) – für die Karten in „Mein Training“ und die
+   Trainer-Ansicht. Zeichnet mit denselben Funktionen wie das Brett, ohne es zu öffnen. */
+function brettBild(stand,opt){
+  if(!stand||!Array.isArray(stand.toks))return "";
+  const alt=_br;
+  try{
+    _br={modus:(opt&&opt.modus)||"kind", stand:{form:stand.form||"leer", toks:stand.toks, striche:Array.isArray(stand.striche)?stand.striche:[]}};
+    return `<svg viewBox="0 0 ${BRETT_B} ${BRETT_H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc((opt&&opt.label)||"Eigene Skizze")}">${_brPlatz()}${_brStricheHtml()}${_brSteineHtml()}</svg>`;
+  }catch(e){ return ""; }
+  finally{ _br=alt; }
+}
 
 function brettModulDa(){ return true; }

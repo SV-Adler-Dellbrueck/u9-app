@@ -134,3 +134,16 @@ eigene verwaiste Datei weg (die vergebene nicht); eine andere Familie sieht wede
 endgültig löschen, der Trainer schon (Ruf bleibt mit `anhang_entfernt_am`), und er löscht die Dateien; wird ein Kind
 gelöscht, fallen privater Raum und Anhangzeilen per CASCADE (die Dateien räumt `kind-loeschen` ab). 15 Fehlermeldungen
 im Lauf sind gewollt.
+
+## v751 · Mein Training (kind_training)
+
+```bash
+bash lauf751.sh   # Attrappe (+ kind_zeit_uebrig), v751 zweimal, dann:
+psql -d k -f tests/sql/v751-kind-training.sql
+```
+
+Erwartet: Das Kindergerät von Kind A schickt ein Training (Übung und eigene Skizze); für Kind B, mit Freitext
+statt Übung, mit 31 Minuten und ohne Appzeit scheitert es. Das Kind sieht sein eines Training und kann es nicht als
+gesehen markieren. Eltern B sehen nichts von Kind A und schicken für das eigene Kind. Der Trainer sieht beide,
+markiert gesehen und Danke, kann die Teile aber nicht ändern. Eltern A sehen das Danke und löschen. Das 21.
+ungelesene Training eines Kindes scheitert; `anon` bekommt nichts. Sieben Fehlermeldungen sind gewollt.

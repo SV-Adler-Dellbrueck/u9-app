@@ -796,6 +796,8 @@ function kabineHome(){
         ${/* v733 (PO 03.10.: Kinder-Konten lesen und hören das Adler Nest „vollständig“) */""}
         ${tile("if(typeof nestOpen==='function')nestOpen(null,{kind:true})","🪺","Adler Nest – lesen und hören","rgba(0,68,170,.62)","rgba(10,26,58,.40)",true)}
         ${tile("kabineBrett()","✏️","Mein Taktikbrett","rgba(56,189,248,.46)","rgba(2,132,199,.30)",true)}
+        ${/* v751: ein Training planen wie ein Trainer – und es dem Trainer schicken (md-kindtraining.js) */""}
+        ${tile("if(typeof kabineMeinTraining==='function')kabineMeinTraining()","📋","Mein Training","rgba(34,197,94,.48)","rgba(21,128,61,.32)",true)}
         ${tile("kabineShowGallery()","🖼️","Team-Galerie","rgba(16,185,129,.48)","rgba(5,150,105,.30)")}
         ${tile("kabineAbzeichen()","🎖️","Abzeichen","rgba(147,51,234,.46)","rgba(109,40,217,.30)")}
         ${tile("kabineRollen()","🎽","Wo spiele ich?","rgba(124,58,237,.46)","rgba(76,29,149,.32)")}
