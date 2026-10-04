@@ -52,6 +52,19 @@ beiden Karten der Galerie Zahlen, Stärken nur auf der eigenen; `my_child_card` 
 fremde Kinder gesperrt; die Trainer-Galerie zählt gleich; `anon` bekommt eine leere Galerie, und die Zählfunktionen
 scheitern (eine Fehlermeldung ist gewollt).
 
+## v739 · Spielerkarten Stufe 1 und Adler Wrapped
+
+```bash
+psql -d t -f tests/sql/supabase-attrappe.sql && psql -d t -f supabase/migrations/20261004_v734b_karten_zahlen.sql \
+  && psql -d t -f supabase/migrations/20261004_v739_karten_stufe1.sql && psql -d t -f tests/sql/v739-karten-stufe1.sql
+```
+
+(Für `get_child_wrapped` braucht die Attrappe `kind_fanfacts.starker_fuss`, `punkte_log` und `federn_zaehlt` – siehe
+`$SP/pg/lauf739.sh` bzw. die drei Zeilen vor der Migration.) Erwartet: `kind_fuss` nimmt den Trainerwert vor dem der Eltern
+und versteht beide Schreibweisen; Spielminuten der Saison 150 (90 + 60 ohne Endzeit), 90 und 60 (Vornamen-Schlüssel),
+Vorsaison und Zukunft zählen nicht; Eltern sehen in der Galerie bei allen Karten Stärken, Fuß und Position; die eigene
+Karte trägt den Fuß der Eltern, wenn der Trainer keinen eingetragen hat; Wrapped 2 Spiele und 150 Minuten; fremdes Kind
+im Wrapped verweigert; `anon` leer bzw. verweigert (eine Fehlermeldung gewollt).
 ## v740 · Adler-Rufe „Gesehen von …“
 
 ```bash
