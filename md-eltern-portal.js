@@ -2394,12 +2394,13 @@ function adlerCardDataFromChild(p){
     keys=typeof staerkenAus==="function"?staerkenAus(v):[];   // v636: eine Regel für alle Geräte
     dim=keys.length&&typeof feldDimVon==="function"?feldDimVon(keys[0]):null;
   }
-  const theme=p.tw?CARD_THEMES.keeper:(bewertet?(CARD_THEMES[dim]||CARD_THEMES.tech):CARD_THEMES.neu);
+  const tw1=typeof kartenTorwart==="function"?kartenTorwart(p):!!p.tw;   // v757
+  const theme=tw1?CARD_THEMES.keeper:(bewertet?(CARD_THEMES[dim]||CARD_THEMES.tech):CARD_THEMES.neu);
   const posMap={aufpasser:"Aufpasser",jaeger:"Jäger",flitzer_l:"Flitzer",flitzer_r:"Flitzer"};
-  const pos=p.lieblingsposition||(p.tw?"Torwart":(posMap[p.snap_position]||p.prim_rolle||"Allrounder"));
+  const pos=p.lieblingsposition||(tw1?"Torwart":(posMap[p.snap_position]||p.prim_rolle||"Allrounder"));
   const fussMap={L:"linker Fuß",R:"rechter Fuß",B:"beidfüßig"};
   const s=p.stats||{};
-  return {name:p.name,nr:p.nr,tw:!!p.tw,geb:p.geb,fotoPath:p.foto_path,pos:cardPosLabel(pos),
+  return {name:p.name,nr:p.nr,tw:tw1,geb:p.geb,fotoPath:p.foto_path,pos:cardPosLabel(pos),
     fuss:fussMap[p.starker_fuss||p.strong_foot]||"",
     alter:p.geb?homeAlter(p.geb):(p.age||null), spitzname:p.spitzname||null,
     badges:bewertet?keys.map(k=>CARD_BADGES[k]):[],theme,

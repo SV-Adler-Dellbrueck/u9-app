@@ -1800,12 +1800,13 @@ function galleryCardData(g){
   const keys=(Array.isArray(g.staerken)?g.staerken:(typeof g.staerken==="string"?safeParse(g.staerken,[]):[]))
     .filter(k=>CARD_BADGES[k]).slice(0,3);
   const dim=keys.length&&typeof feldDimVon==="function"?feldDimVon(keys[0]):null;
-  const theme=g.tw?CARD_THEMES.keeper
+  const tw1=typeof kartenTorwart==="function"?kartenTorwart(g):!!g.tw;   // v757: nur „Torwart 1. Wahl“ trägt das Torwart-Thema
+  const theme=tw1?CARD_THEMES.keeper
     :(keys.length?(CARD_THEMES[dim]||CARD_THEMES.tech):CARD_THEMES.neu);
-  return {name:g.name,nr:g.nr,tw:!!g.tw,fotoPath:g.foto_path,spitzname:g.spitzname||null,
+  return {name:g.name,nr:g.nr,tw:tw1,fotoPath:g.foto_path,spitzname:g.spitzname||null,
     /* v739 (PO 04.10.: „Dort dürfen schon die Stärken stehen und sowas wie starker Fuß“): Fuß und Position aus
        team_gallery_kind (kind_fuss: Trainer vor Eltern), Stärken seit v739 auf jeder Karte */
-    pos:g.position||(g.tw?"Torwart":""),fuss:({L:"linker Fuß",R:"rechter Fuß",B:"beidfüßig"})[g.fuss]||"",alter:null,
+    pos:g.position||(tw1?"Torwart":""),fuss:({L:"linker Fuß",R:"rechter Fuß",B:"beidfüßig"})[g.fuss]||"",alter:null,
     badges:keys.map(k=>CARD_BADGES[k]),theme,
     fremd:g.staerken==null,   // v636: fremde Karten tragen keine Stärken mehr (team_gallery_kind liefert null)
     /* v734 (PO 04.10.: „Alle Karten mit Zahlen“): Trainings und Spiele der Saison für jede Karte aus team_gallery_kind.

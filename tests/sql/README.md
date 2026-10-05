@@ -158,3 +158,12 @@ psql -d k -f tests/sql/v755-lob-gehoert.sql
 Erwartet: Das Kindergerät von Kind A markiert ein eigenes Lob als gehört (1 Zeile), das von Kind B nicht (0 Zeilen);
 den Pfad ändern scheitert, löschen findet nichts. Eltern B sehen nur Kind B und markieren dort. Der Trainer sieht alle
 drei und kann den Pfad nicht ändern. `anon` sieht und ändert nichts. Drei Fehlermeldungen sind gewollt.
+
+## v757 · Stärken manuell und tw_prio (kader.staerken_manuell)
+
+```bash
+bash lauf757.sh   # Attrappe (+ tw_prio, Nachbildung von team_gallery_kind und my_child_card), v757 zweimal, dann:
+psql -d k -f tests/sql/v757-staerken-torwart.sql
+```
+
+Erwartet: Eine Auswahl geht bei `staerken_von` vor, eine leere Auswahl fällt auf die Berechnung zurück; vier Schlüssel, ein Freitext und ein Nicht-Array scheitern an der Prüfung (drei Fehlermeldungen gewollt). Die umgeschriebenen Karten-Funktionen liefern `tw_prio` (Rang 2, 1, 0 wie gesetzt); ein zweiter Lauf der Migration ändert nichts.

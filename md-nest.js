@@ -235,7 +235,7 @@ function nestHtml(d,medien,liste,aktivId,druck){
   }
   // c) Adler im Porträt
   if(p){
-    const pos=p.position?(typeof cardPosLabel==="function"?cardPosLabel(p.position):p.position):(p.tw?"Torwart":"");
+    const pos=p.position?(typeof cardPosLabel==="function"?cardPosLabel(p.position):p.position):((typeof kartenTorwart==="function"?kartenTorwart(p):p.tw)?"Torwart":"");
     // Fan-Fakten speichern „rechts/links/beide“, der Kader (Trainer) „R/L/B“
     const fuss={links:"links",rechts:"rechts",beide:"beidfüßig",r:"rechts",l:"links",b:"beidfüßig"};
     const steck=[["Position",pos],["Adler seit",p.adler_seit],["Starker Fuß",fuss[String(p.starker_fuss||"").toLowerCase()]||p.starker_fuss],["Jahrgang",p.jahrgang],
