@@ -74,8 +74,8 @@ module.exports = async function (h) {
   if (!kind || /Tore|Ballaktionen/.test(kind)) probleme.push(`c) Kinder-Wrapped: ${kind}`);
   zeilen.push("c) Wrapped ohne Tore, Ballaktionen und Aktivposten");
   const d = r.d;
-  if (d.gross < 100 || d.klein > 50 || !/SPIELTAG/.test(d.texte[1]) || !d.rasen || !/KAPITÄN/.test(d.texte[2]) || !d.kapC || !/MOMENT/.test(d.texte[3])) probleme.push(`d) Album: ${JSON.stringify(d)}`);
-  zeilen.push(`d) Album: Foto ${d.gross} px auf 200-px-Sticker (Handy ${d.klein} px), Rahmen SPIELTAG/KAPITÄN mit C/MOMENT`);
+  if (d.gross < 100 || d.klein < 80 || !/SPIELTAG/.test(d.texte[1]) || !d.rasen || !/KAPITÄN/.test(d.texte[2]) || !d.kapC || !/MOMENT/.test(d.texte[3])) probleme.push(`d) Album: ${JSON.stringify(d)}`);
+  zeilen.push(`d) Album: Bildfeld ${d.gross} px auf 200-px-Sticker (Handy ${d.klein} px, seit v758 Vollbild), Rahmen SPIELTAG/KAPITÄN mit C/MOMENT`);
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
   return h.ergebnis("v752 Kabine: Hype läuft weiter, Karte ohne Tore, Gold ab 8, Album fürs Tablet", !probleme.length, probleme.length ? probleme : zeilen);
 };

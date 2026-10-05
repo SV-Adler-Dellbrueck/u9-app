@@ -362,6 +362,43 @@ function _albumStickerHtml(g,n,tap){
     ka:{bg:"linear-gradient(160deg,#0b2f4d,#1e3a8a 55%,#b45309)", lbl:"🎗️ KAPITÄN", deko:'<div style="position:absolute;bottom:30%;right:8%;width:22cqw;height:22cqw;min-width:20px;min-height:20px;border-radius:50%;background:#facc15;color:#0b2f4d;font-weight:900;font-size:max(13px,13cqw);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.4);z-index:2">C</div>', rund:"50%"},
     mo:{bg:"radial-gradient(circle at 50% 42%,#fde68a 0 18%,#a855f7 46%,#4c1d95 100%)", lbl:"⭐ MOMENT", deko:'<div style="position:absolute;inset:0;pointer-events:none;font-size:max(10px,9cqw);line-height:1"><span style="position:absolute;top:18%;left:8%">✨</span><span style="position:absolute;top:30%;right:8%">⭐</span><span style="position:absolute;bottom:30%;left:10%">⭐</span><span style="position:absolute;bottom:34%;right:12%">✨</span></div>', rund:"50%"}
   }[sk]||null;
+  /* v758 (PO 05.10.: „Das Bild ist klein in der Mitte … kreativ werden, vor allem die seltenen und epischen Karten“):
+     Das Bild füllt jetzt die ganze Kartenfläche (Foto als Vollbild, Emoji groß vor Strahlen), darüber Nummer und Zähler,
+     unten das Namensband. Je Seltenheit ein eigener Rahmen: Selten silbern, Matchday mit Flammen, Episch mit Strahlenkranz
+     und Funkeln, Legendär mit goldenem Doppelrahmen, Krone und Strahlen. Sonder-Sticker behalten ihre Rahmen (v752). */
+  if(!SK_RAHMEN){
+    const T={
+      kind:     {rahmen:"rgba(255,255,255,.8)", band:"linear-gradient(0deg,#0f172a,#1e293b)", name:"#fff", sub:"rgba(255,255,255,.85)", pille:""},
+      selten:   {rahmen:"#e2e8f0", band:"linear-gradient(0deg,#0f172a,#1e3a8a)", name:"#fff", sub:"#bfdbfe", pille:"linear-gradient(135deg,#3b82f6,#1d4ed8)", glanz:"radial-gradient(circle at 50% 50%,rgba(186,230,253,.55),transparent 62%)", funk:["✦","✧"]},
+      matchday: {rahmen:"#fed7aa", band:"linear-gradient(0deg,#450a0a,#991b1b)", name:"#fff", sub:"#fde68a", pille:"linear-gradient(135deg,#f97316,#dc2626)", glanz:"radial-gradient(circle at 50% 70%,rgba(253,186,116,.6),transparent 62%)", flamme:true},
+      episch:   {rahmen:"#e9d5ff", band:"linear-gradient(0deg,#1e1b4b,#5b21b6)", name:"#fff", sub:"#e9d5ff", pille:"linear-gradient(135deg,#a855f7,#6d28d9)", glanz:"radial-gradient(circle at 50% 50%,rgba(233,213,255,.6),transparent 62%)", strahlen:"rgba(255,255,255,.2)", funk:["✦","✧","✦"]},
+      legendaer:{rahmen:"#fde047", band:"linear-gradient(0deg,#f59e0b,#fde68a)", name:"#3b1d05", sub:"#78350f", pille:"linear-gradient(135deg,#fde047,#f59e0b)", glanz:"radial-gradient(circle at 50% 50%,rgba(255,255,255,.7),transparent 60%)", strahlen:"rgba(255,255,255,.34)", funk:["✦","✧","✦","✧"], krone:true}
+    }[g.rar]||{rahmen:"rgba(255,255,255,.8)",band:"linear-gradient(0deg,#0f172a,#1e293b)",name:"#fff",sub:"rgba(255,255,255,.85)",pille:""};
+    const bgN=`radial-gradient(130% 80% at 50% -10%,rgba(255,255,255,.35),transparent 55%),${R.own}`;
+    const chip="background:rgba(0,0,0,.55);color:#fff;border-radius:8px;padding:0 6px";
+    const funkPos=[["top:20%;left:9%"],["top:34%;right:9%"],["top:55%;left:12%"],["top:48%;right:14%"]];
+    return `<div class="${(R.foil?"kab-st":"")+(R.leg?" kab-leg kab-pulse":"")}" ${tap?`role="button" tabindex="0" aria-label="${esc(g.label)}, ${R.lbl?esc(R.lbl)+", ":""}Nr. ${g.num||"?"}, ${n}×" onclick="kabineStickerZoom('${jsq(g.key)}')"`:""} style="container-type:inline-size;border-radius:14px;aspect-ratio:3/4;position:relative;overflow:hidden;display:flex;flex-direction:column;background:${bgN};border:2px solid ${T.rahmen};box-shadow:${R.shadow};color:#fff;${tap?"cursor:pointer":""}">
+      <div style="flex:1;min-height:0;position:relative">
+        ${T.strahlen?`<div style="position:absolute;inset:0;background:repeating-conic-gradient(from 0deg at 50% 55%,${T.strahlen} 0 7deg,transparent 7deg 18deg)"></div>`:""}
+        ${T.glanz?`<div style="position:absolute;inset:0;background:${T.glanz}"></div>`:""}
+        ${T.flamme?'<div style="position:absolute;left:0;right:0;bottom:0;text-align:center;font-size:max(18px,22cqw);line-height:1;letter-spacing:-.1em;opacity:.85;white-space:nowrap;overflow:hidden">🔥🔥🔥</div>':""}
+        <div data-st-ava="${esc(g.key)}" style="position:absolute;inset:0;overflow:hidden"><div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">${g.img?`<img src="${g.img}" alt="" style="width:62%;height:62%;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.35))">`:`<span style="font-size:max(44px,52cqw);line-height:1;filter:drop-shadow(0 4px 8px rgba(0,0,0,.35))">${g.emo}</span>`}</div></div>
+        <div style="position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.4) 0,transparent 26%,transparent 62%,rgba(0,0,0,.45) 100%)"></div>
+        ${(T.funk||[]).map((f,i)=>`<span style="position:absolute;${funkPos[i%4][0]};font-size:max(9px,8cqw);line-height:1;color:#fff;text-shadow:0 0 6px rgba(255,255,255,.9);pointer-events:none">${f}</span>`).join("")}
+        <div style="position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:center;padding:5px 7px 0;font-size:max(8.5px,6.5cqw);font-weight:900;letter-spacing:.4px;box-sizing:border-box">
+          <span style="${chip}">Nr. ${g.num||"?"}</span>${n>1?`<span style="${chip}">${n}×</span>`:"<span></span>"}
+        </div>
+        ${T.krone?'<div style="position:absolute;left:0;right:0;top:4%;text-align:center;font-size:max(15px,14cqw);line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));pointer-events:none">👑</div>':""}
+        ${R.lbl?`<div style="position:absolute;left:50%;bottom:0;transform:translate(-50%,50%);z-index:3;white-space:nowrap;background:${T.pille};color:${g.rar==="legendaer"?"#3b1d05":"#fff"};border:1.5px solid rgba(255,255,255,.9);border-radius:999px;padding:1px 9px;font-size:max(7.5px,5.8cqw);font-weight:900;letter-spacing:1.2px;box-shadow:0 2px 6px rgba(0,0,0,.35)">${R.gem?R.gem+" ":""}${R.lbl}</div>`:""}
+      </div>
+      <div style="position:relative;z-index:2;background:${T.band};padding:${R.lbl?"max(8px,6.5cqw)":"5px"} 4px 5px;text-align:center;box-sizing:border-box">
+        <div style="font-size:max(10.5px,8.6cqw);font-weight:900;line-height:1.1;color:${T.name}">${esc(g.label)}</div>
+        ${g.sub?`<div style="font-size:max(8.5px,6.6cqw);color:${T.sub}">${esc(g.sub)}</div>`:""}
+      </div>
+      ${g.rar==="legendaer"?'<div style="position:absolute;inset:3px;border:1.5px solid rgba(253,224,71,.95);border-radius:10px;pointer-events:none;z-index:4"></div><div style="position:absolute;inset:6px;border:1px solid rgba(255,255,255,.55);border-radius:8px;pointer-events:none;z-index:4"></div>':g.rar==="episch"?'<div style="position:absolute;inset:3px;border:1.5px solid rgba(165,243,252,.8);border-radius:10px;pointer-events:none;z-index:4"></div>':g.rar==="selten"?'<div style="position:absolute;inset:3px;border:1px solid rgba(255,255,255,.55);border-radius:10px;pointer-events:none;z-index:4"></div>':""}
+      ${R.foil?'<div class="stfoil"></div>':""}
+    </div>`;
+  }
   const bg=SK_RAHMEN?SK_RAHMEN.bg:`radial-gradient(130% 80% at 50% -10%,rgba(255,255,255,.35),transparent 55%),${R.own}`;
   return `<div class="${(R.foil?"kab-st":"")+(R.leg?" kab-leg kab-pulse":"")}" ${tap?`role="button" tabindex="0" onclick="kabineStickerZoom('${jsq(g.key)}')"`:""} style="container-type:inline-size;border-radius:14px;aspect-ratio:3/4;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;background:${bg};border:2px solid rgba(255,255,255,.6);box-shadow:${R.shadow};color:${dunkel?"#78350f":"#fff"};${tap?"cursor:pointer":""}">
       ${SK_RAHMEN?SK_RAHMEN.deko:""}
@@ -384,11 +421,16 @@ function kabineStickerZoom(key){
   const pool=window._albPoolCache||[]; const g=pool.find(x=>x.key===key); if(!g)return;
   const n=((_albRow&&_albRow.sticker)||{})[key]||0; if(!n)return;
   document.getElementById("kab-zoom")?.remove();
-  const z=document.createElement("div"); z.id="kab-zoom";
-  z.style.cssText="position:absolute;inset:0;z-index:5;background:rgba(0,0,0,.65);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px";
+  const z=document.createElement("div"); z.id="kab-zoom"; z.setAttribute("role","dialog"); z.setAttribute("aria-modal","true"); z.setAttribute("aria-label",g.label);
+  z.style.cssText="position:absolute;inset:0;z-index:5;background:rgba(0,0,0,.72);overflow-y:auto;display:flex";
   z.onclick=()=>z.remove();
-  z.innerHTML=`<div style="width:160px;transform:scale(1.55);transform-origin:center">${_albumStickerHtml(g,n)}</div>
-    <div style="font-size:11.5px;color:#fff;opacity:.85;margin-top:34px">Tippen zum Schließen</div>`;
+  /* v758 (PO 05.10.: „Tippen zum Schließen liegt über der Karte“): Die Karte hat jetzt ihre echte Größe statt scale(),
+     der Hinweis steht darunter im Fluss, und ein Schließen-Knopf (44 px) sitzt oben rechts. */
+  z.innerHTML=`<div style="margin:auto;display:flex;flex-direction:column;align-items:center;gap:14px;padding:56px 16px 24px;width:100%;box-sizing:border-box">
+    <button type="button" aria-label="Schließen" onclick="event.stopPropagation();document.getElementById('kab-zoom')?.remove()" style="position:absolute;top:10px;right:10px;width:44px;height:44px;border:none;border-radius:50%;background:rgba(255,255,255,.2);color:#fff;font-size:22px;font-weight:900;cursor:pointer;font-family:inherit">✕</button>
+    <div style="width:min(78vw,300px)">${_albumStickerHtml(g,n)}</div>
+    <div style="font-size:12.5px;color:#fff;opacity:.9">Tippen zum Schließen</div>
+  </div>`;
   const host=document.getElementById("kabine"); if(host)host.appendChild(z);
   try{navigator.vibrate&&navigator.vibrate(15);}catch(e){}
   // Foto auch in der Zoom-Ansicht nachladen
@@ -513,16 +555,12 @@ function kabineAlbumFlip(i){
   c.open=true;
   const el=document.getElementById("pk-"+i); if(!el)return;
   const R=KAB_RAR[c.rar]||KAB_RAR.kind;
-  const dunkel=c.rar==="legendaer";
   try{navigator.vibrate&&navigator.vibrate(R.leg?[60,80,60,80,160]:c.neu?[40,60,90]:30);}catch(e){}
-  el.style.background=c.neu?R.own:"linear-gradient(135deg,#64748b,#475569)";
-  if(c.neu&&R.foil){el.classList.add("kab-st");if(R.leg)el.classList.add("kab-leg");}
-  el.style.boxShadow=c.neu?R.shadow:el.style.boxShadow;
-  el.innerHTML=`<span style="font-size:9px;font-weight:900;letter-spacing:.4px;${c.neu?(dunkel?"color:#78350f":"color:#fff"):"opacity:.8"}">${c.neu?(R.lbl?"✨ "+(R.gem?R.gem+" ":"")+R.lbl+"!":"✨ NEU!"):"schon "+c.count+"×"}</span>
-    ${c.img?`<img src="${c.img}" alt="" style="width:30px;height:30px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.3))">`:`<span style="font-size:26px">${c.emo}</span>`}
-    <span style="font-size:11px;font-weight:800;line-height:1.1;${c.neu&&dunkel?"color:#78350f":""}">${esc(c.label)}</span>
-    ${c.sub?`<span style="font-size:9px;${c.neu&&dunkel?"color:#78350f":"opacity:.9"}">${esc(c.sub)}</span>`:""}
-    ${c.neu&&R.foil?'<div class="stfoil"></div>':""}`;
+  /* v758: aufgedeckt zeigt die Tüte denselben Sticker wie das Album (Vollbild-Optik), „NEU!“ als Marke darüber */
+  el.style.cssText+=";background:none;padding:0;overflow:visible;position:relative;display:block;box-shadow:none;opacity:"+(c.neu?1:.88);
+  el.setAttribute("aria-label",c.label+(c.neu?", neu":", schon "+c.count+"×"));
+  el.innerHTML=_albumStickerHtml(c,c.neu?1:c.count)+(c.neu?`<span style="position:absolute;left:50%;top:-9px;transform:translateX(-50%);z-index:6;background:#facc15;color:#3b1d05;border-radius:999px;padding:1px 9px;font-size:10px;font-weight:900;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.4)">✨ NEU!</span>`:"");
+  try{const m={};m[c.key]=1;_albumFotosLaden([c],m);}catch(e){}
   // Legendär aufgedeckt = sofort feiern, egal ob Duplikat
   if(R.leg){const cont=document.getElementById("kab-pack-open");if(cont&&typeof confetti==="function")confetti(cont);}
   if(window._packCards.every(x=>x.open)){
