@@ -116,7 +116,12 @@ function nestFormatGegner(t){
   if(!t)return {format:"",gegner:""};
   const teile=String(t.titel||"").split("·").map(x=>x.trim()).filter(Boolean);
   const format=(t.typ==="turnier"?(teile[0]||"Turnier"):(t.typ==="spiel"?"Spiel":(teile[0]||"")));
-  const gegner=t.gegner||(teile.length>1?teile.slice(1).join(" · "):"");
+  let gegner=t.gegner||(teile.length>1?teile.slice(1).join(" · "):"");
+  /* v763 (Probe-PDF: „KINDERFESTIVAL · KINDERFESTIVAL · FC CHORWEILER U9“): beginnt der Gegnername mit dem Format, steht das Format nur einmal */
+  if(format&&gegner.toLowerCase().startsWith(format.toLowerCase())){
+    const rest=gegner.slice(format.length).replace(/^[\s·\-–—:]+/,"");
+    gegner=rest;
+  }
   return {format,gegner};
 }
 function nestSpielform(s){
@@ -193,9 +198,9 @@ function nestHtml(d,medien,liste,aktivId,druck){
       ${band?`<span class="nest-band">${esc(band)}</span>`:""}
       ${a.schlagzeile?`<h1 class="nest-schlagzeile">${esc(a.schlagzeile)}</h1>`:""}
       <div style="font-size:16px;opacity:.9">${esc(_nestDatum(t?t.datum:(a.veroeffentlicht_am||""),true))}</div>
-      ${audio&&druck?(druck.hoer?`<a class="nest-hoeren nest-hoerlink" href="${esc(druck.hoer.url)}" aria-label="Adler Nest zum Hören – Link öffnen">
+      ${audio&&druck?(druck.hoer?`<div class="nest-hoerblock"><a class="nest-hoeren nest-hoerlink" href="${esc(druck.hoer.url)}" aria-label="Adler Nest zum Hören – Link öffnen">
           <span class="nest-play" aria-hidden="true">▶</span><span style="flex:1">Adler Nest zum Hören${a.audio_sekunden?` · ${_nestDauer(a.audio_sekunden)}`:""}<br><span style="font-weight:400;opacity:.85;font-size:15px">Tippen oder QR-Code scannen · Link gültig bis ${esc(_nestBis(druck.hoer.bis))}</span></span></a>
-        <div class="nest-qr" aria-hidden="true">${druck.hoer.qr||""}</div>`:""):""}
+        <div class="nest-qr" aria-hidden="true">${druck.hoer.qr||""}</div></div>`:""):""}
       ${audio&&!druck?`<button type="button" class="nest-hoeren" id="nest-hoeren" onclick="nestHoeren()" aria-label="Adler Nest zum Hören abspielen${a.audio_sekunden?", "+_nestDauer(a.audio_sekunden):""}">
           <span class="nest-play" aria-hidden="true" id="nest-play">▶</span><span style="flex:1">Adler Nest zum Hören${a.audio_sekunden?`<br><span style="font-weight:400;opacity:.85" id="nest-dauer">${_nestDauer(a.audio_sekunden)}</span>`:""}</span></button>
         <audio id="nest-audio" preload="none" onended="nestHoerenEnde()"></audio>`:""}
@@ -860,28 +865,155 @@ async function nestLinkNeu(ausgabeId){
   return {token:z.token,bis:z.gueltig_bis,url:_nestLinkUrl(z.token)};
 }
 async function nestHoerLink(ausgabeId){ return (await nestLinkAktiv(ausgabeId))||(await nestLinkNeu(ausgabeId)); }   // „ist keiner da oder abgelaufen, wird ein neuer erzeugt“
-function nestDruckStil(hoch,endeHoch){
+/* v763 (Charles 05.10., Beschluss 20): Das PDF ist DIN A4 hoch und füllt die Seite – statt eines 390-px-Streifens, den der Druckdialog
+   vieler Browser nicht übernimmt. Das Heft wird nicht dem Browser zum Umbrechen überlassen: nestSeiten() setzt es in feste Blätter von
+   210 × 297 mm, misst die Blöcke und schreibt die Fußzeile „Seite X von Y“ selbst (Seitenrand-Felder gibt es nur in Chromium). So sieht das Blatt
+   in jedem Browser gleich aus, auch wenn er @page ignoriert (Safari auf iOS). Nur die Druckausgabe ändert sich – die Leseansicht bleibt. */
+const NEST_A4={rand:14,oben:12,fuss:18,hoch:296.6};   // mm: Seitenrand links/rechts, oben, Fußzeilenbereich unten, Blatthöhe (knapp unter 297, sonst folgt eine Leerseite)
+function nestDruckStil(){
   document.getElementById("nest-druck-stil")?.remove();
   const s=document.createElement("style"); s.id="nest-druck-stil";
-  s.textContent=`#nest-druck{position:absolute;left:-10000px;top:0;width:390px}
-  #nest-druck .nest-heft{max-width:390px;width:390px}
-  #nest-druck .nest-deckblatt{display:flex;flex-direction:column}
-  #nest-druck .nest-deckblatt .nest-unten{flex:1}
+  const R=NEST_A4.rand, O=NEST_A4.oben, F=NEST_A4.fuss, H=NEST_A4.hoch;
+  s.textContent=`@page{size:A4 portrait;margin:0}
+  #nest-druck{position:absolute;left:-10000px;top:0;width:210mm;font-size:10.5pt}
+  #nest-druck .nest-heft{max-width:none;width:210mm;margin:0;line-height:1.45;background:#fff}
+  #nest-druck .nest-seite{position:relative;width:210mm;height:${H}mm;overflow:hidden;background:#fff;break-after:page;page-break-after:always}
+  #nest-druck .nest-seite:last-child{break-after:auto;page-break-after:auto}
+  #nest-druck .nest-seite-inhalt{position:absolute;left:0;right:0;top:0;height:${H-F}mm;padding:${O}mm ${R}mm 0;overflow:hidden}
+  #nest-druck .nest-seite.deck .nest-seite-inhalt{height:${H}mm;padding:0}
+  #nest-druck .nest-fuss{position:absolute;left:${R}mm;right:${R}mm;bottom:8mm;border-top:.3mm solid #c9d4e6;padding-top:2mm;text-align:center;font:600 8pt 'Barlow',sans-serif;color:#45506a}
+  #nest-druck .nest-randlos{margin-left:-${R}mm;margin-right:-${R}mm}
+  #nest-druck .nest-seite-inhalt>.nest-randlos:first-child{margin-top:-${O}mm}
+  #nest-druck .nest-abschnitt{padding:0;border-top:none}
+  #nest-druck .nest-p{font-size:10.5pt;line-height:1.45;margin:0 0 2.5mm}
+  #nest-druck .nest-h2{font-size:22pt;margin:0 0 3mm}
+  #nest-druck .nest-h3{font-size:14pt;margin:5mm 0 2mm}
+  #nest-druck .nest-karte{font-size:10pt;margin:3mm 0;padding:2.5mm 3.5mm;border-radius:2mm;border-left-width:1.5mm}
+  #nest-druck .nest-karte b{min-width:26mm}
+  #nest-druck .nest-zitat{font-size:14pt;margin:3mm 0;padding:3mm 4mm;border-left-width:1.6mm;border-radius:2mm}
+  #nest-druck .nest-teams{display:grid;grid-template-columns:repeat(3,1fr);gap:3mm;margin:0 0 3mm}
+  #nest-druck .nest-team{margin:0;padding:2.5mm 3mm;font-size:10pt;border-radius:2.5mm}
+  #nest-druck .nest-team .nc{font-size:13pt}
+  #nest-druck .nest-fotos{grid-template-columns:repeat(3,1fr);gap:3mm;margin:0 0 3mm}
+  #nest-druck .nest-fotos.zwei{grid-template-columns:repeat(2,1fr)}
+  #nest-druck .nest-fotos button{border-radius:2mm}
+  #nest-druck .nest-gelb{font-size:10.5pt;margin:3mm 0;padding:3mm 4mm;border-radius:2.5mm}
+  #nest-druck .nest-gelb .nc{font-size:13pt}
+  #nest-druck .nest-portraet-kopf{min-height:42mm;padding:6mm ${R}mm;gap:6mm}
+  #nest-druck .nest-portraet-kopf img{width:30mm;height:30mm;border-width:1.2mm}
+  #nest-druck .nest-portraet-kopf .nest-name{font-size:40pt}
+  #nest-druck .nest-portraet-kopf .nest-nr-bg{font-size:150pt;top:-14mm;right:4mm}
+  #nest-druck .nest-steckbrief{grid-template-columns:repeat(4,1fr);gap:2mm;margin:3mm 0}
+  #nest-druck .nest-steckbrief div{font-size:9.5pt;padding:2mm 2.5mm;border-radius:2mm}
+  #nest-druck .nest-steckbrief small{font-size:8pt}
+  #nest-druck #nest-reporter{columns:2;column-gap:6mm}
+  #nest-druck .nest-qa{font-size:10pt;padding:1.8mm 0;break-inside:avoid}
+  #nest-druck .nest-privat{grid-template-columns:repeat(2,1fr);gap:4mm;margin:3mm 0}
+  #nest-druck .nest-privat img{border-radius:2mm}
+  #nest-druck .nest-privat figcaption{font-size:9pt}
+  #nest-druck .nest-chips{gap:2mm;margin:2mm 0}
+  #nest-druck .nest-chips span{font-size:9.5pt;padding:1mm 3mm}
+  #nest-druck .nest-tag{padding:4mm 5mm;margin:3mm 0;border-radius:2.5mm}
+  #nest-druck .nest-tag .nest-jahr{font-size:30pt}
+  #nest-druck .nest-tag .nc{font-size:13pt}
+  #nest-druck .nest-ende{font-size:24pt;padding:5mm ${R}mm 6mm;margin-top:5mm}
+  /* Deckblatt: randlos, füllt das Blatt – das Titelbild nimmt, was der untere Block übrig lässt */
+  #nest-druck .nest-deckblatt{display:flex;flex-direction:column;width:210mm;height:${H}mm;overflow:hidden}
+  #nest-druck .nest-kopf{padding:3.5mm ${R}mm;font-size:12pt}
+  #nest-druck .nest-titelbild,#nest-druck .nest-titel-leer{flex:1 1 0;min-height:0;height:0;aspect-ratio:auto;width:100%;object-fit:cover;object-position:50% 30%}
+  #nest-druck .nest-marke{font-size:46pt;padding:5mm ${R}mm 0}
+  #nest-druck .nest-deckblatt>div[style*="heft-blau"]{padding:2mm ${R}mm 5mm!important}
+  #nest-druck .nest-band{font-size:12pt;padding:1mm 3mm}
+  #nest-druck .nest-unten{flex:none;padding:5mm ${R}mm 9mm}
+  #nest-druck .nest-schlagzeile{font-size:34pt;margin:3mm 0 2mm}
+  #nest-druck .nest-imheft div{font-size:10.5pt;padding:1.2mm 0}
+  #nest-druck .nest-hoerblock{display:flex;align-items:center;gap:5mm;margin:4mm 0}
+  #nest-druck .nest-hoeren{flex:1;width:auto;margin:0;min-height:0;padding:3mm 4mm;font-size:11pt;border-radius:3mm}
+  #nest-druck .nest-hoeren .nest-play{width:10mm;height:10mm;font-size:12pt}
   #nest-druck .nest-hoerlink{text-decoration:none;color:#fff}
-  #nest-druck .nest-qr{width:112px;height:112px;background:#fff;padding:4px;border-radius:8px;margin:0 0 12px}
+  #nest-druck .nest-qr{flex:none;width:32mm;height:32mm;background:#fff;padding:1.5mm;border-radius:2mm;margin:0}
   #nest-druck .nest-qr svg{display:block;width:100%;height:100%}
-  #nest-druck .nest-entwurf{background:#b91c1c;color:#fff;text-align:center;font-weight:800;letter-spacing:1px;padding:6px 10px;font-family:'Barlow Condensed',sans-serif}
-  @page{size:390px ${hoch}px;margin:0}
+  #nest-druck .nest-entwurf{background:#b91c1c;color:#fff;text-align:center;font-weight:800;letter-spacing:1px;padding:2mm 4mm;font-family:'Barlow Condensed',sans-serif}
   @media print{
     html.nest-druck-aktiv,html.nest-druck-aktiv body{background:#fff!important;margin:0!important;padding:0!important;overflow:visible!important}
     html.nest-druck-aktiv body>*:not(#nest-druck){display:none!important}
     #nest-druck{position:static!important;left:auto!important}
     #nest-druck,#nest-druck *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    #nest-druck section{min-height:${hoch}px}
-    #nest-druck section:last-of-type{min-height:${hoch-(endeHoch||0)}px}   /* das Schlussband gehört auf die letzte Seite */
-    #nest-druck section:not(:last-of-type){break-after:page}
   }`;
   document.head.appendChild(s);
+}
+/* Setzt das Heft in feste A4-Blätter. Deckblatt = Blatt 1 (randlos). Spieltag und Porträt beginnen auf neuer Seite; die Rubriken folgen
+   auf der Porträtseite, wenn dort noch mindestens die halbe Seite frei ist, sonst auf einer neuen. Überschriften bleiben bei ihrem ersten
+   Block, Karten, Foto-Reihen und Zitate werden nie zerschnitten. Gibt die Zahl der Blätter zurück. */
+function nestSeiten(c,nr){
+  const heft=c.querySelector(".nest-heft"); if(!heft)return 0;
+  const abs=[...heft.children].filter(x=>x.tagName==="SECTION"), ende=heft.querySelector(":scope>.nest-ende");
+  const mm=v=>v*96/25.4, grenze=mm(NEST_A4.hoch-NEST_A4.fuss);
+  heft.textContent="";
+  const seiten=[]; let cur=null;
+  const neu=(abschnitt,deck)=>{
+    const sd=document.createElement("div"); sd.className="nest-seite"+(deck?" deck":""); if(abschnitt)sd.dataset.abschnitt=abschnitt;
+    const i=document.createElement("div"); i.className="nest-seite-inhalt"; sd.appendChild(i); heft.appendChild(sd); seiten.push(sd); cur=i; return i;
+  };
+  const belegt=i=>{ const l=i.lastElementChild; return l?l.getBoundingClientRect().bottom-i.getBoundingClientRect().top:0; };
+  const setze=(gruppe,abschnitt)=>{
+    if(!cur)neu(abschnitt);
+    gruppe.forEach(n=>cur.appendChild(n));
+    if(belegt(cur)>grenze&&cur.children.length>gruppe.length){      // passt nicht → neue Seite (nur, wenn die Seite nicht sonst leer wäre)
+      gruppe.forEach(n=>n.remove()); neu(abschnitt); gruppe.forEach(n=>cur.appendChild(n));
+    }
+  };
+  abs.forEach(sec=>{
+    const art=sec.dataset.abschnitt;
+    if(art==="deckblatt"){ const i=neu("deckblatt",true); i.appendChild(sec); return; }
+    // Blöcke: Porträt-Kopf randlos, Kinder des Innenfelds einzeln, Teams als Raster, Überschriften an den nächsten Block
+    let knoten=[...sec.children];
+    if(art==="portraet"){ const kopf=knoten[0], innen=knoten[1]; knoten=[kopf,...(innen?[...innen.children]:[])]; kopf.classList.add("nest-randlos"); }
+    const bloecke=[]; let teams=null, heft_=[];
+    knoten.forEach(n=>{
+      if(n.classList&&n.classList.contains("nest-team")){
+        if(!teams){ teams=document.createElement("div"); teams.className="nest-teams"; heft_.push(teams); }
+        teams.appendChild(n); return;
+      }
+      teams=null; heft_.push(n);
+    });
+    let kleben=[];
+    heft_.forEach(n=>{
+      if(/^H[23]$/.test(n.tagName)){ kleben.push(n); return; }
+      if(n.classList.contains("nest-fotos")&&n.children.length===4)n.classList.add("zwei");
+      bloecke.push([...kleben,n]); kleben=[];
+    });
+    if(kleben.length)bloecke.push(kleben);
+    // Seitenstart je Abschnitt
+    if(art==="rubriken"){
+      const frei=cur?grenze-belegt(cur):0;
+      if(!cur||frei<grenze/2||seiten[seiten.length-1].classList.contains("deck"))cur=null;
+    }else cur=null;
+    bloecke.forEach((g,k)=>{ if(k===0&&!cur)neu(art); setze(g,art); });
+  });
+  if(ende){ ende.classList.add("nest-randlos"); setze([ende],"rubriken"); }
+  const n=seiten.length;
+  seiten.forEach((sd,i)=>{
+    if(i===0)return;
+    const f=document.createElement("div"); f.className="nest-fuss"; f.textContent=`Adler Nest · Ausgabe ${_nestNr(nr)} · Seite ${i+1} von ${n}`; sd.appendChild(f);
+  });
+  return n;
+}
+/* Fotos vor dem Druck auf höchstens 1200 px herunterrechnen (Dateigröße des PDFs); PNG bleibt, wie es ist */
+async function _nestBilderKlein(wurzel){
+  const max=1200;
+  for(const im of [...wurzel.querySelectorAll("img")]){
+    try{
+      if(!im.src||!im.naturalWidth||Math.max(im.naturalWidth,im.naturalHeight)<=max)continue;
+      const blob=await (await fetch(im.src)).blob(); if(blob.type==="image/png")continue;
+      const f=max/Math.max(im.naturalWidth,im.naturalHeight), cv=document.createElement("canvas");
+      cv.width=Math.round(im.naturalWidth*f); cv.height=Math.round(im.naturalHeight*f);
+      cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);
+      const klein=await new Promise(ok=>cv.toBlob(ok,"image/jpeg",0.85)); if(!klein)continue;
+      const u=URL.createObjectURL(klein); _nestUrls.push(u);
+      await new Promise(ok=>{ im.onload=im.onerror=ok; im.src=u; });
+    }catch(e){}
+  }
 }
 function _nestBilderWarten(wurzel){
   const warte=[...wurzel.querySelectorAll("img")].filter(i=>i.getAttribute("src")&&!(i.complete&&i.naturalWidth)).map(i=>new Promise(ok=>{ i.onload=i.onerror=ok; setTimeout(ok,8000); }));
@@ -908,15 +1040,13 @@ async function nestDruckVorbereiten(id,opt){
   const c=document.createElement("div"); c.id="nest-druck"; c.setAttribute("aria-hidden","true");
   c.innerHTML=nestHtml(d,ml,[],id,{hoer,entwurf});
   document.body.appendChild(c);
-  await nestMedienLaden(d,ml); await _nestBilderWarten(c);
-  const abs=[...c.querySelectorAll("section")], ende=c.querySelector(".nest-ende");
-  const hoehen=abs.map((x,i)=>Math.ceil(x.getBoundingClientRect().height)+(i===abs.length-1&&ende?Math.ceil(ende.getBoundingClientRect().height):0));
-  const hoch=Math.max(960,...hoehen);
-  nestDruckStil(hoch,ende?Math.ceil(ende.getBoundingClientRect().height):0);
+  nestDruckStil();
+  await nestMedienLaden(d,ml); await _nestBilderWarten(c); await _nestBilderKlein(c);
+  const seiten=nestSeiten(c,d.ausgabe.nummer);
   window._nestTitelVorher=document.title;
   document.title="Adler-Nest_Ausgabe-"+_nestNr(d.ausgabe.nummer);   // wird vom Druckdialog als Dateiname vorgeschlagen
   document.documentElement.classList.add("nest-druck-aktiv");
-  return {hoch,seiten:abs.length,entwurf,hoer:!!hoer};
+  return {seiten,entwurf,hoer:!!hoer};
 }
 async function nestPdf(btn){
   const a=_nestEd&&_nestEd.a; if(!a||!a.id){ toast("Erst die Ausgabe erfassen","err"); return; }
