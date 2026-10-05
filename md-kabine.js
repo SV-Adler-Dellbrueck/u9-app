@@ -939,11 +939,11 @@ function kabineHome(){
       ${lbl("Meine Sachen")}
       ${tile("kabineMyCard()","🃏","Meine Karte","rgba(168,85,247,.50)","rgba(124,58,237,.32)")}
       ${tile("kabineMission()","⭐","Meine Mission","rgba(139,92,246,.46)","rgba(91,33,182,.32)")}
-      ${lbl("Challenges")}
-      ${tile("kabineShowQuests()","🏆","Team-Missionen","rgba(245,158,11,.52)","rgba(217,119,6,.32)")}
-      ${tile("kabineSkillWoche()","🎬","Skill der Woche","rgba(251,146,60,.48)","rgba(234,88,12,.30)")}
-      ${/* v755: alle Sprachlobe vom Trainerteam nach Datum, „Neu“-Punkt bis zum ersten Anhören – bewusst nicht unter „Mehr entdecken“ */""}
+      ${/* v755: alle Sprachlobe vom Trainerteam nach Datum, „Neu“-Punkt bis zum ersten Anhören – bewusst nicht unter „Mehr entdecken“.
+            v761 (PO 05.10.: acht Kacheln vorn): steht jetzt bei „Meine Sachen“ – es ist das Lob für mich –, „Skill der Woche“ wartet hinter „Mehr entdecken“. */""}
       ${tile("kabineLobWahl()","🎧","Lob vom Trainer","rgba(219,39,119,.50)","rgba(157,23,77,.34)",true)}
+      ${lbl("Challenges")}
+      ${tile("kabineShowQuests()","🏆","Team-Missionen","rgba(245,158,11,.52)","rgba(217,119,6,.32)",true)}
       ${lbl("Team & Spaß")}
       ${/* Paket 2: „Unsere Regeln" steht ganz oben in der Gruppe und über die volle Breite –
             es ist die Identität der Mannschaft, nicht ein Spiel unter vielen. */""}
@@ -957,6 +957,7 @@ function kabineHome(){
         ${tile("kabineBrett()","✏️","Mein Taktikbrett","rgba(56,189,248,.46)","rgba(2,132,199,.30)",true)}
         ${/* v751: ein Training planen wie ein Trainer – und es dem Trainer schicken (md-kindtraining.js) */""}
         ${tile("if(typeof kabineMeinTraining==='function')kabineMeinTraining()","📋","Mein Training","rgba(34,197,94,.48)","rgba(21,128,61,.32)",true)}
+        ${tile("kabineSkillWoche()","🎬","Skill der Woche","rgba(251,146,60,.48)","rgba(234,88,12,.30)")}
         ${tile("kabineShowGallery()","🖼️","Team-Galerie","rgba(16,185,129,.48)","rgba(5,150,105,.30)")}
         ${tile("kabineAbzeichen()","🎖️","Abzeichen","rgba(147,51,234,.46)","rgba(109,40,217,.30)")}
         ${tile("kabineRollen()","🎽","Wo spiele ich?","rgba(124,58,237,.46)","rgba(76,29,149,.32)")}
