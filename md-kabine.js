@@ -397,6 +397,7 @@ function _albumStickerHtml(g,n,tap){
       </div>
       ${g.rar==="legendaer"?'<div style="position:absolute;inset:3px;border:1.5px solid rgba(253,224,71,.95);border-radius:10px;pointer-events:none;z-index:4"></div><div style="position:absolute;inset:6px;border:1px solid rgba(255,255,255,.55);border-radius:8px;pointer-events:none;z-index:4"></div>':g.rar==="episch"?'<div style="position:absolute;inset:3px;border:1.5px solid rgba(165,243,252,.8);border-radius:10px;pointer-events:none;z-index:4"></div>':g.rar==="selten"?'<div style="position:absolute;inset:3px;border:1px solid rgba(255,255,255,.55);border-radius:10px;pointer-events:none;z-index:4"></div>':""}
       ${R.foil?'<div class="stfoil"></div>':""}
+      ${R.foil||g.rar==="selten"?'<div class="kab-holo-glanz" aria-hidden="true"></div>':""}
     </div>`;
   }
   const bg=SK_RAHMEN?SK_RAHMEN.bg:`radial-gradient(130% 80% at 50% -10%,rgba(255,255,255,.35),transparent 55%),${R.own}`;
@@ -428,13 +429,34 @@ function kabineStickerZoom(key){
      der Hinweis steht darunter im Fluss, und ein Schließen-Knopf (44 px) sitzt oben rechts. */
   z.innerHTML=`<div style="margin:auto;display:flex;flex-direction:column;align-items:center;gap:14px;padding:56px 16px 24px;width:100%;box-sizing:border-box">
     <button type="button" aria-label="Schließen" onclick="event.stopPropagation();document.getElementById('kab-zoom')?.remove()" style="position:absolute;top:10px;right:10px;width:44px;height:44px;border:none;border-radius:50%;background:rgba(255,255,255,.2);color:#fff;font-size:22px;font-weight:900;cursor:pointer;font-family:inherit">✕</button>
-    <div style="width:min(78vw,300px)">${_albumStickerHtml(g,n)}</div>
+    <div id="kab-zoom-card" class="kab-tilt" style="width:min(78vw,300px)">${_albumStickerHtml(g,n)}</div>
     <div style="font-size:12.5px;color:#fff;opacity:.9">Tippen zum Schließen</div>
   </div>`;
+  _stickerKippen(z.querySelector("#kab-zoom-card"));
   const host=document.getElementById("kabine"); if(host)host.appendChild(z);
   try{navigator.vibrate&&navigator.vibrate(15);}catch(e){}
   // Foto auch in der Zoom-Ansicht nachladen
   _albumFotosLaden([g],(_albRow&&_albRow.sticker)||{});
+}
+/* v759 (PO 05.10.: „Schimmer beim Kippen und Aufdeck-Effekt“): In der Großansicht folgt die Karte dem Finger bzw. der Maus –
+   leicht gekippt, mit wanderndem Lichtreflex und Regenbogen-Schimmer (Selten und höher). Beim Öffnen schwenkt sie kurz von allein,
+   damit man den Effekt sieht, auch ohne zu wischen. Bei „Bewegung reduzieren“ bleibt die Karte ruhig. */
+function _stickerKippen(box){
+  if(!box)return;
+  const ruhig=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const set=(x,y,ho)=>{box.style.setProperty("--ry",((x-.5)*22).toFixed(1)+"deg");box.style.setProperty("--rx",((.5-y)*22).toFixed(1)+"deg");
+    box.style.setProperty("--mx",(x*100).toFixed(0)+"%");box.style.setProperty("--my",(y*100).toFixed(0)+"%");box.style.setProperty("--ho",ho);};
+  let frei=false,bewegt=false,t0=null,raf=0;
+  const pos=e=>{const r=box.getBoundingClientRect();return [Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)),Math.min(1,Math.max(0,(e.clientY-r.top)/r.height))];};
+  box.addEventListener("pointerdown",e=>{frei=true;bewegt=false;cancelAnimationFrame(raf);const [x,y]=pos(e);set(x,y,1);});
+  box.addEventListener("pointermove",e=>{if(e.pointerType!=="mouse"&&!frei)return;cancelAnimationFrame(raf);bewegt=true;const [x,y]=pos(e);set(x,y,1);});
+  const los=()=>{frei=false;set(.5,.5,0);};
+  box.addEventListener("pointerup",los);box.addEventListener("pointerleave",los);box.addEventListener("pointercancel",los);
+  box.addEventListener("click",e=>{if(bewegt){e.stopPropagation();bewegt=false;}});
+  if(ruhig)return;
+  const schritt=t=>{if(!box.isConnected)return;if(t0===null)t0=t;const k=(t-t0)/1800;if(k>=1){set(.5,.5,0);return;}
+    const x=.5+.38*Math.sin(k*Math.PI*2),y=.5+.2*Math.sin(k*Math.PI*4);set(x,y,Math.sin(k*Math.PI));raf=requestAnimationFrame(schritt);};
+  raf=requestAnimationFrame(schritt);
 }
 // Fotos progressiv nachladen (nur Kinder MIT Freigabe – team_gallery liefert foto_path
 // bereits consent-gefiltert). Emoji bleibt Platzhalter, das Foto ersetzt es sanft.
@@ -561,6 +583,11 @@ function kabineAlbumFlip(i){
   el.setAttribute("aria-label",c.label+(c.neu?", neu":", schon "+c.count+"×"));
   el.innerHTML=_albumStickerHtml(c,c.neu?1:c.count)+(c.neu?`<span style="position:absolute;left:50%;top:-9px;transform:translateX(-50%);z-index:6;background:#facc15;color:#3b1d05;border-radius:999px;padding:1px 9px;font-size:10px;font-weight:900;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.4)">✨ NEU!</span>`:"");
   try{const m={};m[c.key]=1;_albumFotosLaden([c],m);}catch(e){}
+  /* v759: Umdreh-Bewegung für jede Karte; neue Karten ab Selten bekommen einen Lichtblitz in ihrer Seltenheitsfarbe */
+  el.classList.add("kab-flip");
+  if(c.neu&&c.rar!=="kind"){const bl=document.createElement("span");bl.className="kab-burst";bl.setAttribute("aria-hidden","true");
+    bl.style.background="radial-gradient(circle,rgba(255,255,255,.95),"+({legendaer:"rgba(253,224,71,.6)",episch:"rgba(192,132,252,.6)",matchday:"rgba(251,146,60,.6)",sonder:"rgba(45,212,191,.6)",selten:"rgba(96,165,250,.6)"}[c.rar]||"rgba(255,255,255,.5)")+" 38%,transparent 66%)";
+    el.appendChild(bl);setTimeout(()=>bl.remove(),1000);}
   // Legendär aufgedeckt = sofort feiern, egal ob Duplikat
   if(R.leg){const cont=document.getElementById("kab-pack-open");if(cont&&typeof confetti==="function")confetti(cont);}
   if(window._packCards.every(x=>x.open)){
