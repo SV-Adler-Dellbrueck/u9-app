@@ -286,7 +286,11 @@ function nestHtml(d,medien,liste,aktivId,druck){
   }
   if(druck)return h+`<div class="nest-ende">Auf geht's, Adler!</div></div>`;   // v756: PDF – kein Spendenslot, keine Knöpfe, kein Archiv
   h+=`<div id="nest-kasse-slot"></div>`;   // v735: Spenden-Karte, füllt nestKasseLaden (nur Eltern und Trainer)
-  h+=`<div class="nest-ende">Auf geht's, Adler!<button type="button" class="nest-zurueck" onclick="nestClose()">Zurück zur App</button></div>`;
+  /* v762 (Charles 05.10.: Nest-PDF auch für Eltern, wenn das Trainerteam es freigibt): Knopf nur für Eltern (nicht im Kinder-Bereich),
+     nur bei veröffentlichter Ausgabe mit gesetzter Freigabe. Das PDF enthält für Eltern keinen Hör-Link (der bleibt dem Trainerteam). */
+  const elternPdf=!(window._nestOpts&&window._nestOpts.kind)&&d.ausgabe&&d.ausgabe.pdf_fuer_eltern===true&&d.ausgabe.status==="veroeffentlicht"&&aktivId;
+  h+=`<div class="nest-ende">Auf geht's, Adler!${elternPdf?`<button type="button" class="nest-zurueck" id="nest-pdf-eltern" onclick="nestPdfLesen(${Number(aktivId)},this)" style="background:#fff">📄 Als PDF speichern</button>
+    <div role="note" style="font:600 14px/1.4 'Barlow',sans-serif;text-transform:none;margin-top:8px;opacity:.9">${NEST_PDF_HINWEIS}</div>`:""}<button type="button" class="nest-zurueck" onclick="nestClose()">Zurück zur App</button></div>`;
   if((liste||[]).length>1){
     h+=`<nav class="nest-archiv" aria-label="Frühere Ausgaben"><div class="nest-h3" style="margin-top:0">Alle Ausgaben</div>${liste.map(x=>{
       const f=nestFormatGegner(x);
@@ -889,7 +893,7 @@ function nestDruckAufraeumen(){
   if(window._nestTitelVorher!=null){ document.title=window._nestTitelVorher; window._nestTitelVorher=null; }
   _nestAufraeumen();
 }
-async function nestDruckVorbereiten(id){
+async function nestDruckVorbereiten(id,opt){
   nestStil();
   if(document.getElementById("nest-modal"))nestClose();   // gleiche Element-Kennungen wie die Leseansicht
   nestDruckAufraeumen();
@@ -897,7 +901,7 @@ async function nestDruckVorbereiten(id){
   if(!d||!d.ausgabe){ toast("Die Ausgabe lässt sich gerade nicht laden","err"); return null; }
   const entwurf=d.ausgabe.status!=="veroeffentlicht", ml=medien||[];
   let hoer=null;
-  if(ml.some(x=>x.art==="audio")&&!entwurf){   // Entwurf: kein öffentlicher Link auf eine unveröffentlichte Hördatei
+  if(ml.some(x=>x.art==="audio")&&!entwurf&&!(opt&&opt.eltern)){   // Entwurf: kein öffentlicher Link auf eine unveröffentlichte Hördatei; Eltern erzeugen keinen öffentlichen Link
     try{ const l=await nestHoerLink(id); hoer={url:l.url,bis:l.bis,qr:await qrSvg(l.url,3)}; }
     catch(e){ toast("Der Hör-Link konnte nicht erzeugt werden – das PDF entsteht ohne","err"); }
   }
@@ -924,6 +928,25 @@ async function nestPdf(btn){
     setTimeout(()=>window.print(),60);
   }finally{ if(btn)btn.disabled=false; }
 }
+async function nestPdfLesen(id,btn){
+  if(btn)btn.disabled=true;
+  try{
+    const r=await nestDruckVorbereiten(id,{eltern:true}); if(!r)return;
+    const zurueck=window._nestOpts||{};
+    window.addEventListener("afterprint",()=>{ nestDruckAufraeumen(); nestOpen(id,zurueck); },{once:true});
+    setTimeout(()=>window.print(),60);
+  }finally{ if(btn)btn.disabled=false; }
+}
+async function nestPdfElternSchalten(an){
+  const a=_nestEd&&_nestEd.a; if(!a||!a.id)return;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/heft_ausgabe?id=eq.${Number(a.id)}`,{method:"PATCH",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},body:JSON.stringify({pdf_fuer_eltern:!!an})});
+    if(!r.ok)throw new Error("status "+r.status);
+    _nestEd.a={...a,pdf_fuer_eltern:!!an};
+    toast(an?"Eltern dürfen das PDF speichern ✓":"PDF für Eltern ausgeschaltet ✓");
+  }catch(e){ toast("Konnte die Einstellung nicht speichern","err"); }
+  nestEdTeilen();
+}
 async function nestEdTeilen(){
   const box=document.getElementById("nest-ed-teilen"); if(!box||!_nestEd)return; const a=_nestEd.a;
   if(!a.id){ box.innerHTML=""; return; }
@@ -933,6 +956,8 @@ async function nestEdTeilen(){
   const klein="font-size:var(--s-klein);color:var(--text2)";
   box.innerHTML=`<div style="font-size:var(--s-karte);font-weight:800;margin:18px 0 4px;color:var(--text)">Teilen</div>
     <button type="button" class="btn btn-p" id="nest-ed-pdf" onclick="nestPdf(this)" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte)">📄 PDF herunterladen</button>
+    ${pub?`<label style="display:flex;align-items:center;gap:10px;min-height:48px;margin-top:10px;font-size:var(--s-text);color:var(--text);cursor:pointer"><input type="checkbox" id="nest-ed-pdf-eltern" ${a.pdf_fuer_eltern===true?"checked":""} onchange="nestPdfElternSchalten(this.checked)" style="width:24px;height:24px"> Eltern dürfen das PDF in der Leseansicht speichern</label>
+    <div style="${klein};margin-top:2px">Ohne Hör-Link; der bleibt beim Trainerteam. Erst nach dem Veröffentlichen.</div>`:""}
     <div style="${klein};margin-top:6px" role="note">${NEST_PDF_HINWEIS}${pub?"":" Aus einem Entwurf entsteht ein PDF mit dem Vermerk „Entwurf“ und ohne Hör-Link."}</div>
     ${pub&&hatAudio?`<div style="margin-top:12px;padding:10px;border:1px solid var(--rand-bedien);border-radius:var(--r)">
       <div style="font-weight:700">🎧 Link zur Hördatei</div>
