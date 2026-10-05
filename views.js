@@ -542,6 +542,7 @@ async function loadKader(){
         if(x.lieblingsposition)o.lieblingsposition=x.lieblingsposition;
         if(x.foto_path)o.foto_path=x.foto_path;
         o.foto_stadionheft_ok=!!x.foto_stadionheft_ok; // HOTFIX 19 digital: Foto-Freigabe fürs Eltern-Heft
+        if(x.staerken_manuell)o.staerken_manuell=x.staerken_manuell; // v757: Stärken, vom Trainerteam gewählt
         if(x.alias)o.alias=x.alias; // v679: fester Buchstabe fürs Tagebuch (kader.alias, einmal vergeben)
         return o;
       }));
@@ -788,6 +789,11 @@ function kinderProfilRender(nachgeladen){
         <div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-top:12px">Starker Fuß</div>${seg("fuss",[["R","Rechts"],["L","Links"],["B","Beidfüßig"]],k.starker_fuss||"")}
         ${!k.starker_fuss&&ff.starker_fuss?`<div class="kp-fuss-eltern" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Laut Eltern: ${esc(ff.starker_fuss)} – das steht auf der Karte, bis du hier etwas wählst.</div>`:""}
         ${lbl("Lieblingsposition",`<input id="kp-pos" list="kp-pos-liste" value="${esc(k.lieblingsposition||"")}" placeholder="z. B. Abwehr, Sturm, überall" oninput="kinderProfilSetze('lieblingsposition',this.value)" style="${inp}"><datalist id="kp-pos-liste"><option>Abwehr</option><option>Mittelfeld</option><option>Sturm</option><option>Torwart</option><option>Überall</option></datalist>`)}`)}
+      ${karte("🏅","Stärken auf der Karte",`
+        <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">Bis zu drei antippen – sie stehen auf der Spielerkarte (Kind, Eltern, Team-Galerie). Ohne Auswahl rechnet die App sie aus der Einschätzung.</div>
+        <div class="kp-staerken" role="group" aria-label="Stärken auf der Karte" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${Object.keys(CARD_BADGES).map(key=>{const b=CARD_BADGES[key],an=staerkenManuell(k).includes(key);return `<button type="button" class="kp-st-btn" data-key="${key}" aria-pressed="${an}" onclick="kinderProfilStaerke('${key}')" style="min-height:44px;padding:6px 12px;border-radius:999px;border:2px solid ${an?"#1e3a8a":"var(--rand-bedien)"};background:${an?"#1e3a8a":"var(--surface2)"};color:${an?"#fff":"var(--text)"};font-weight:${an?800:600};font-family:inherit;font-size:var(--s-text);cursor:pointer">${b.icon} ${esc(b.label)}${an?" ✓":""}</button>`;}).join("")}</div>
+        <div id="kp-st-zahl" role="status" style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">${staerkenManuell(k).length?staerkenManuell(k).length+" von 3 gewählt":"Keine Auswahl – berechnet aus der Einschätzung"}</div>
+        ${staerkenManuell(k).length?`<button type="button" class="btn btn-sm" onclick="kinderProfilStaerkeLeer()" style="min-height:44px;margin-top:6px">Auswahl löschen (wieder berechnen)</button>`:""}`)}
       ${karte("📸","Foto &amp; Freigaben",`
         <div style="display:flex;align-items:center;gap:10px;margin-top:10px"><span style="flex:1;font-size:var(--s-text);color:var(--text2)">${quelle}</span>
           <label class="btn btn-sm" style="min-height:44px;cursor:pointer"><i class="ti ti-camera"></i>Foto ändern<input type="file" accept="image/jpeg,image/png,image/webp" onchange="kinderProfilFoto(this)" style="display:none"></label></div>
@@ -828,13 +834,28 @@ function kinderProfilSetze(feld,wert){
   if(feld==="tw"||feld==="fuss"){ kinderProfilRender(_kp.ff!==undefined); const f=document.querySelector(`#kp-modal .kp-seg-btn[data-feld="${feld}"][aria-pressed="true"]`); f&&f.focus(); }
   const b=document.getElementById("kp-speichern"); if(b)b.disabled=false;
 }
+function kinderProfilStaerke(key){
+  if(!_kp||typeof CARD_BADGES==="undefined"||!CARD_BADGES[key])return;
+  const k=_kp.k, l=staerkenManuell(k), i=l.indexOf(key);
+  if(i>=0)l.splice(i,1);
+  else if(l.length>=3){ toast("Höchstens drei Stärken – erst eine abwählen","err"); return; }
+  else l.push(key);
+  k.staerken_manuell=l.length?l:null; _kp.geaendert=true;
+  kinderProfilRender(_kp.ff!==undefined);
+  const f=document.querySelector(`#kp-modal .kp-st-btn[data-key="${key}"]`); f&&f.focus();
+  const b=document.getElementById("kp-speichern"); if(b)b.disabled=false;
+}
+function kinderProfilStaerkeLeer(){
+  if(!_kp)return; _kp.k.staerken_manuell=null; _kp.geaendert=true; kinderProfilRender(_kp.ff!==undefined);
+  const b=document.getElementById("kp-speichern"); if(b)b.disabled=false;
+}
 async function kinderProfilSpeichern(){
   if(!_kp)return;
   const k=_kp.k, name=String(k.name||"").trim();
   if(!name){toast("Bitte einen Namen eintragen","err");document.getElementById("kp-name")?.focus();return;}
   if(k.nr!=null&&k.aktiv!==false){ const dop=KADER.find(x=>Number(x._id)!==_kp.id&&x.aktiv!==false&&x.nr===k.nr);
     if(dop){toast(`Nummer ${k.nr} trägt schon ${dop.name}. Jede Nummer gehört genau einem Kind.`,"err");document.getElementById("kp-nr")?.focus();return;} }
-  const daten={name,nr:k.nr,geb:k.geb||null,aktiv:k.aktiv!==false,tw:!!k.tw,tw_prio:k.twPrio||0,starker_fuss:k.starker_fuss||null,
+  const daten={name,nr:k.nr,geb:k.geb||null,aktiv:k.aktiv!==false,tw:!!k.tw,tw_prio:k.twPrio||0,staerken_manuell:staerkenManuell(k).length?staerkenManuell(k):null,starker_fuss:k.starker_fuss||null,
     lieblingsposition:String(k.lieblingsposition||"").trim()||null,foto_stadionheft_ok:!!k.foto_stadionheft_ok,medical:String(k.medical||"").trim()||null};
   const b=document.getElementById("kp-speichern"); if(b)b.disabled=true;
   try{ const r=await fetch(`${SB_URL}/rest/v1/kader?id=eq.${_kp.id}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify(daten)});
@@ -2305,6 +2326,21 @@ const CARD_BADGES={
    (Wert absteigend, bei Gleichstand Schlüssel alphabetisch, nur Werte > 0). Vorher löste der
    Browser Gleichstände über die Reihenfolge in CARD_BADGES, die Datenbank alphabetisch: Eltern,
    Trainer und Kind sahen auf einer 4er-Skala oft verschiedene Abzeichen und Farben. */
+/* v757 (PO 04.10.: „Unsere Torhüter sind auch Feldspieler. Wir haben keinen festen Torwart.“): Das gelbe TORWART-Thema und die
+   Handschuhe auf der Karte trägt nur „Torwart 1. Wahl“ (tw_prio 1). „Kann ins Tor“ und „2. Wahl“ bleiben Feldspieler-Karten.
+   Fehlt die Rangfolge (Datenbank vor v757), gilt wie bisher tw. */
+function kartenTorwart(x){
+  if(!x||!x.tw)return false;
+  const p=x.tw_prio!=null?x.tw_prio:x.twPrio;
+  return p==null?true:Number(p)===1;
+}
+/* v757 (PO 04.10.): Stärken auf der Karte – das Trainerteam wählt bis zu drei aus festen Kategorien (kader.staerken_manuell);
+   ohne Auswahl bleibt es bei der Berechnung aus der Einschätzung (staerkenAus). */
+function staerkenManuell(k){
+  const m=k&&k.staerken_manuell;
+  const l=(Array.isArray(m)?m:(typeof m==="string"?safeParse(m,[]):[])).filter(x=>typeof CARD_BADGES!=="undefined"&&CARD_BADGES[x]);
+  return l.slice(0,3);
+}
 function staerkenAus(v){
   return Object.keys(CARD_BADGES).map(key=>({key,val:Number(v&&v[key])||0})).filter(x=>x.val>0)
     .sort((a,b)=>b.val-a.val||(a.key<b.key?-1:a.key>b.key?1:0)).slice(0,3).map(x=>x.key);
@@ -2485,14 +2521,16 @@ function adlerCardData(name){
   const v=typeof lat.radios==="string"?safeParse(lat.radios,{}):(lat.radios||{});
   const bewertet=snaps.length>0;
   // Top-3 Staerken (nach Wert; bei Gleichstand egal) – jedes Kind bekommt 3 Badges
-  const strengths=bewertet?staerkenAus(v).map(key=>({key})):[];   // v636: gleiche Regel wie Datenbank und Elternkarte
+  const manuell=staerkenManuell(k);   // v757: die Auswahl des Trainerteams geht vor
+  const strengths=manuell.length?manuell.map(key=>({key})):(bewertet?staerkenAus(v).map(key=>({key})):[]);   // v636: gleiche Regel wie Datenbank und Elternkarte
   // Design-Farbe: Dimension der ersten Stärke (TW -> Gold) – wie auf Eltern- und Kindergerät
   const dim0=strengths.length&&typeof feldDimVon==="function"?feldDimVon(strengths[0].key):null;
-  const theme=k.tw?CARD_THEMES.keeper:(bewertet?(CARD_THEMES[dim0]||CARD_THEMES.tech):(CARD_THEMES.neu||CARD_THEMES.tech));
+  const tw1=kartenTorwart(k);
+  const theme=tw1?CARD_THEMES.keeper:((bewertet||strengths.length)?(CARD_THEMES[dim0]||CARD_THEMES.tech):(CARD_THEMES.neu||CARD_THEMES.tech));
   const posMap={aufpasser:"Aufpasser",jaeger:"Jäger",flitzer_l:"Flitzer",flitzer_r:"Flitzer"};
-  const pos=k.lieblingsposition||(k.tw?"Torwart":(posMap[lat.position]||lat.prim_rolle||"Allrounder"));
+  const pos=k.lieblingsposition||(tw1?"Torwart":(posMap[lat.position]||lat.prim_rolle||"Allrounder"));
   const fussMap={L:"linker Fuß",R:"rechter Fuß",B:"beidfüßig"};
-  return {name,nr:k.nr,tw:!!k.tw,geb:k.geb,fotoPath:k.foto_path,pos:cardPosLabel(pos),fuss:fussMap[k.starker_fuss||lat.strong_foot]||"",
+  return {name,nr:k.nr,tw:tw1,geb:k.geb,fotoPath:k.foto_path,pos:cardPosLabel(pos),fuss:fussMap[k.starker_fuss||lat.strong_foot]||"",
           alter:k.geb?homeAlter(k.geb):(lat.age||null), badges:strengths.map(s=>CARD_BADGES[s.key]), theme, spielerId:kaderId(k)};
 }
 function adlerCardDraw(ctx,W,H,d,photoImg){
@@ -4939,6 +4977,7 @@ const HELP=[
     {t:"Rückmelde-Verhalten", d:"Seit v672 unter Eltern & Kinder → Eltern verwalten: je Kind, getrennt nach Spieltagen und Training, wie lange vor Terminbeginn im Schnitt die erste Antwort kam, wie oft unter 24 Stunden vorher, wie oft sich die Familie umentschieden hat (auch „zu → ab“) und bei Spieltagen, wie oft gar keine Antwort kam. Gezählt je Kind – egal, welches Elternteil antwortet. Umentscheidungen zählen erst seit dem 29.09.2026, vorher wurden sie nicht gespeichert; Änderungen durch das Trainerteam zählen nicht. Nur das Trainerteam sieht diese Zahlen, Eltern nicht.", run:"rueckmeldeStatistikOpen()"},
     {t:"Team-Ansage", d:"Wichtige Info an alle Eltern – mit Gelesen-Status (wer fehlt noch?).", run:"ansageTrainerOpen()"},
     {t:"Nest-Ausgaben", d:"<b>Seit v733</b> erscheint das Adler Nest nach jedem Spieltag als eigene, nummerierte Ausgabe – nur in der App (Eltern, Kinder-Konten, Trainerteam), nicht mehr über einen öffentlichen Link. „Neue Ausgabe erfassen“, Spieltag wählen, Texte eintragen oder den Entwurf aus dem Projekt-Chat gegenlesen. <b>Bilderstrecke:</b> 4 bis 6 Fotos aus der Galerie des Spieltags antippen (mehr als 6 geht nicht). <b>Uploads:</b> Titelbild (Maskottchen), Hördatei als MP3 (die Dauer liest die App selbst) und bis zu 2 Privatfotos für das Porträt – nur mit dem Häkchen „Familie ist einverstanden“. <b>Porträt:</b> Kind wählen (der Vorschlag „dran ist reihum“ bleibt), Antworten aus dem Kabinen-Reporter direkt hier freigeben – ins Heft kommt nur Freigegebenes; den Spitznamen nur mit Häkchen; der Grund für die Rückennummer erscheint nie. Spieltagskarte, Teams, Kapitäne und Ergebnis liest die App selbst aus Termin, Teameinteilung und Ticker. Die Quellen zu „An diesem Tag“ sehen nur Trainer. „👁 Vorschau“ zeigt die Ausgabe so, wie Eltern sie sehen; „Veröffentlichen“ fragt nach, meldet die Ausgabe auf der Eltern-Startseite und merkt sich das Porträtkind für den Reihum-Vorschlag. <b>Porträt-Ablauf (seit v734)</b> – oben die Karte „🪺 Nächstes Porträt“: Nach dem Spieltag Kind und kommenden Spieltag bestätigen (die App schlägt vor, wer am längsten nicht dran war). Dann bekommen die Eltern den Porträt-Bogen (Fan-Fakten, bis zu 2 Fotos, Pflichthäkchen „einverstanden“) mit Frist Mittwoch 20 Uhr, das Kind in der Kabine den Hinweis auf die Porträtfragen, jeder Trainer am Montag den Hinweis auf seine Stichpunkte (Frist Freitag 20 Uhr). Erinnert wird genau einmal: Eltern nach Mittwoch 20 Uhr, wenn der Bogen fehlt; Trainer ohne Stichpunkte am Freitagmorgen. Die Ampel zeigt Bogen, Antworten des Kindes und Trainerstimmen. Die Trainerstimmen sehen nur Trainer. „Bei (fast) jedem Training dabei“ steht nur da, wenn die Anwesenheitsliste die Schwelle erreicht (Standard 90 %, mindestens 6 erfasste Trainings; einstellbar in der Karte) – sonst kein Wort dazu. Privatfotos übernimmst du in der Ausgabe aus dem Bogen; zieht die Familie das Einverständnis zurück, verschwinden sie auch aus dem Heft. <b>Seit v735</b> steht vor „Auf geht's, Adler!“ die Karte „Die Mannschaftskasse unterstützen“ mit dem Adler-Kasse-Link – nur für Eltern und Trainer, nie in der Kabine und nicht im Druck; ohne Link erscheint nichts.", run:"nestEditorOpen()"},
+    {t:"Stärken und Torwart auf der Spielerkarte", d:"<b>Seit v757</b> wählst du im Kinderprofil unter <b>🏅 Stärken auf der Karte</b> bis zu drei Kategorien aus (Pass-Meister, Torjäger, Teamplayer …). Sie stehen auf der Karte des Kindes bei Kind, Eltern und in der Team-Galerie; ohne Auswahl rechnet die App sie wie bisher aus der Einschätzung. „Auswahl löschen“ geht zurück zur Berechnung. Das gelbe <b>TORWART</b>-Thema mit den Handschuhen trägt nur noch, wer unter „Fußball“ als <b>Torwart 1. Wahl</b> eingetragen ist; „Kann ins Tor“ und „Torwart 2. Wahl“ bleiben Feldspieler-Karten und stehen weiter in der Torwart-Liste beim Spieltag."},
     {t:"Adler Nest als PDF und Hörlink", d:"<b>Seit v756</b> (nur Trainerbereich): Im Editor einer Ausgabe unter „Teilen“ erzeugt <b>📄 PDF herunterladen</b> das Heft als PDF – es öffnet den Druckdialog des Geräts, dort „Als PDF sichern“; die Datei heißt <i>Adler-Nest_Ausgabe-NN</i>. Das PDF enthält Fotos und Vornamen: nur an Familien weitergeben. Statt des Players trägt das Deckblatt einen antippbaren <b>Link mit QR-Code zur Hörseite</b> (ohne Login, 30 Tage gültig). Im Editor siehst du Ablaufdatum, kannst den Link kopieren, <b>erneuern</b> oder <b>zurückziehen</b>; zurückgezogene Links wirken nach höchstens 10 Minuten nicht mehr. Aus einem Entwurf entsteht ein PDF mit dem Vermerk „Entwurf“ und ohne Link."},
     {t:"Adler Nest", d:"Digitales Stadionheft erstellen & drucken. <b>Seit v732 „Adler im Porträt“:</b> jede Woche wird reihum ein Kind vorgestellt – der Editor schlägt vor, wer dran ist (noch nie oder am längsten nicht im Porträt). „✨ Porträt-Entwurf“ schreibt aus den Fan-Fakten der Eltern und den Antworten im Kabinen-Reporter einen kurzen Text. An die KI gehen keine Namen (das Kind heißt dort „Kind A“, andere Kinder „ein Mitspieler“, kein Spitzname), freie Reporter-Antworten nur, wenn du sie freigegeben hast. Den Vornamen setzt die App ein; du liest, änderst und speicherst – erst dann steht er im Heft. Beim Veröffentlichen merkt sich die App, wer in welcher Woche dran war.", run:"stadionheftOpen()"},
     {t:"Eltern-Bereich", d:"Eltern melden sich mit E-Mail und Passwort an (alternativ Einmal-Code per Mail): Zu- und Absagen, Karte, Quiz, Betreuung vor Ort. Neue Passwörter – bei Eltern und Trainern – brauchen mindestens 10 Zeichen mit Buchstaben und Ziffern; ältere, kürzere gelten zum Anmelden weiter."},
@@ -6535,7 +6574,7 @@ function heftBuildHtml(cfg,opts){
     const foto=fotoVon(i), jg=jgVon(k);
     const initialen=(k.name||"?").trim().slice(0,1).toUpperCase();
     const spitz=heftFanfacts[k.id];
-    const pos=k.lieblingsposition?cardPosLabel(k.lieblingsposition):(k.tw?"Torwart":"");
+    const pos=k.lieblingsposition?cardPosLabel(k.lieblingsposition):(kartenTorwart(k)?"Torwart":"");
     return `<div class="heft-card">
       <div class="heft-foto">${foto?`<img src="${foto}" alt="">`:`<span>${esc(initialen)}</span>`}${k.nr!=null?`<div class="heft-nr">${esc(k.nr)}</div>`:""}</div>
       <div class="heft-name">${esc(nm(k.name))}${k.tw?" 🥅":""}</div>

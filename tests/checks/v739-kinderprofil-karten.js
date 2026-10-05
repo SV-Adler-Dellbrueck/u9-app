@@ -4,7 +4,7 @@
    starker Fuß“. Die Datenbankseite (Stärken/Fuß/Position in team_gallery_kind, kind_fuss, Wrapped-Minuten aus den
    Spieltagen) prüft tests/sql/v739-karten-stufe1.sql.
    a) Tipp auf ein Kind öffnet sein Profil: Kopf mit Name/Nummer/Jahrgang/Spitzname, Abschnitte Stammdaten, Fußball,
-      Foto & Freigaben, Fan-Fakten der Eltern, Gesundheit, Mehr; Dialog, alles ≥ 44 px, 390 px ohne Querscrollen
+      (seit v757 Stärken auf der Karte), Foto & Freigaben, Fan-Fakten der Eltern, Gesundheit, Mehr; Dialog, alles ≥ 44 px, 390 px ohne Querscrollen
    b) „Änderungen speichern“ erst nach einer Änderung; Torwart- und Fuß-Wahl als Knöpfe mit aria-pressed
    c) Doppelte Rückennummer wird mit Namen abgelehnt, nichts geschrieben
    d) Speichern schreibt nur dieses Kind (PATCH kader?id=eq.<id>) mit allen Feldern; die Liste zeigt danach den neuen
@@ -72,8 +72,8 @@ module.exports = async function (h) {
   const f = s.fehler(); await s.schliessen();
   if (r.fehlt) return h.ergebnis("v739 Kinderprofil und Spielerkarten Stufe 1", false, ["kinderProfilOpen fehlt"]);
   const a = r.a;
-  if (a.role !== "dialog" || a.titel.join("|") !== "🪪Stammdaten|⚽Fußball|📸Foto & Freigaben|⭐Fan-Fakten der Eltern|⚕️Gesundheit|➕Mehr".replace(/🪪|⚽|📸|⭐|⚕️|➕/g, x => x)) {
-    const erw = ["Stammdaten", "Fußball", "Foto & Freigaben", "Fan-Fakten der Eltern", "Gesundheit", "Mehr"];
+  if (a.role !== "dialog" || a.titel.join("|") !== "🪪Stammdaten|⚽Fußball|🏅Stärken auf der Karte|📸Foto & Freigaben|⭐Fan-Fakten der Eltern|⚕️Gesundheit|➕Mehr".replace(/🪪|⚽|📸|⭐|⚕️|➕/g, x => x)) {
+    const erw = ["Stammdaten", "Fußball", "Stärken auf der Karte", "Foto & Freigaben", "Fan-Fakten der Eltern", "Gesundheit", "Mehr"];
     if (a.role !== "dialog" || !erw.every((t, i) => (a.titel[i] || "").includes(t))) probleme.push(`a) Aufbau: ${a.role} ${JSON.stringify(a.titel)}`);
   }
   if (!/#2 Kind B/.test(a.kopf) || !/Jahrgang 2018/.test(a.kopf) || !/„Flitzer“/.test(a.kopf)) probleme.push(`a) Kopf: „${a.kopf}“`);
