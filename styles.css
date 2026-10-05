@@ -714,13 +714,22 @@ h1.print-header{display:none}
 .kab-st.kab-leg .stfoil{mix-blend-mode:screen;
   background:linear-gradient(115deg,transparent 12%,rgba(240,171,252,.5) 28%,rgba(103,232,249,.5) 40%,rgba(253,224,71,.5) 50%,rgba(134,239,172,.5) 60%,transparent 74%);
   background-size:250% 250%}
+/* v759: Kippen mit Lichtreflex in der Sticker-Großansicht, Umdreh-Bewegung und Lichtblitz in der Tüte */
+.kab-tilt{transform:perspective(700px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .12s ease-out;will-change:transform;touch-action:none}
+.kab-holo-glanz{position:absolute;inset:0;pointer-events:none;z-index:5;opacity:var(--ho,0);mix-blend-mode:soft-light;transition:opacity .2s;
+  background:radial-gradient(circle at var(--mx,50%) var(--my,30%),rgba(255,255,255,.9),transparent 42%),linear-gradient(115deg,rgba(255,0,128,.45),rgba(255,200,0,.45),rgba(0,255,200,.45),rgba(80,120,255,.45))}
+@keyframes kabFlipIn{0%{transform:perspective(600px) rotateY(90deg) scale(.8)}60%{transform:perspective(600px) rotateY(-12deg) scale(1.06)}100%{transform:perspective(600px) rotateY(0) scale(1)}}
+.kab-flip{animation:kabFlipIn .6s cubic-bezier(.2,.8,.3,1) both}
+@keyframes kabBurst{0%{opacity:.95;transform:scale(.4)}100%{opacity:0;transform:scale(2.2)}}
+.kab-burst{position:absolute;inset:-30%;border-radius:50%;pointer-events:none;z-index:7;animation:kabBurst .9s ease-out forwards}
 @keyframes kabPulse{0%,100%{box-shadow:0 0 16px rgba(250,204,21,.5)}50%{box-shadow:0 0 32px rgba(250,204,21,.9)}}
 .kab-pulse{animation:kabPulse 2.4s ease-in-out infinite}
 /* ── A11y-Pass (L5): sichtbarer Tastatur-Fokus überall (nur bei Tastatur-Navigation,
    nicht beim Tippen/Klicken) + Daueranimationen respektieren Bewegungs-Reduktion ── */
 :focus-visible{outline:2px solid #2563eb!important;outline-offset:2px;border-radius:4px}
 @media (prefers-reduced-motion:reduce){
-  .kab-st .stfoil,.kab-pulse,.card-holo .foil{animation:none!important}
+  .kab-st .stfoil,.kab-pulse,.card-holo .foil,.kab-flip,.kab-burst{animation:none!important}
+  .kab-tilt{transform:none!important}
   *{scroll-behavior:auto!important}
 }
 .zert-page{page-break-after:always} /* Urkunden-Studio: je Kind eine A4-Seite */
