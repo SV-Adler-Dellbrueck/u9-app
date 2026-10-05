@@ -1445,7 +1445,7 @@ async function backupExport(){
                 "trainingsvorlagen","team_config","team_einstellungen","team_notizen","team_polls","team_quests",
                 "eltern_leitfaden","fairplay_regeln","fairplay_commit","periodisierung","skill_woche",
                 "entwicklungsziele","nominierung_hinweis","probekinder","aufstellungen","taktik_templates",
-                "trainer_notes","training_live","turnier_plan","turnier_spiele","heimturnier","stadionheft","heft_ausgabe","heft_audio_link","portraet_einreichung","portraet_trainerstimme","portraet_push_log",
+                "trainer_notes","training_live","turnier_plan","turnier_spiele","heimturnier","stadionheft","heft_ausgabe","heft_audio_link","portraet_einreichung","portraet_trainerstimme","portraet_push_log","lob_push_log",
                 "betreuung","event_helfer","event_mitbringen","event_puls","elterngespraech_wunsch",
                 /* v644: Löschanträge – der Nachweis, dass und wann ein Antrag erledigt wurde. */
                 "loeschantrag",
