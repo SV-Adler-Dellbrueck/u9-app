@@ -167,3 +167,12 @@ psql -d k -f tests/sql/v757-staerken-torwart.sql
 ```
 
 Erwartet: Eine Auswahl geht bei `staerken_von` vor, eine leere Auswahl fällt auf die Berechnung zurück; vier Schlüssel, ein Freitext und ein Nicht-Array scheitern an der Prüfung (drei Fehlermeldungen gewollt). Die umgeschriebenen Karten-Funktionen liefern `tw_prio` (Rang 2, 1, 0 wie gesetzt); ein zweiter Lauf der Migration ändert nichts.
+
+## v760 · Sprachlob-Push (lob_push_faellig, lob_push_log)
+
+```bash
+bash lauf760.sh   # Attrappe (+ kabine_lob wie v755), v760 zweimal, dann:
+psql -d k -f tests/sql/v760-lob-push.sql
+```
+
+Erwartet: Von zwei Lobs (vor 5 Tagen, gestern) wird nur das von gestern an beide Elternkonten von Kind A gemeldet (2 Zeilen, nur der Vorname im Text); ein zweiter Lauf liefert nichts. Ein neues Lob für Kind B bleibt offen, solange dessen Eltern keine Benachrichtigungen haben, und geht beim Einschalten genau einmal raus. Ruht ein Konto (Ruhezeit), bekommen es die anderen sofort und das ruhende nachträglich. Drei Tage später verfällt Offenes. Das Protokoll hat 5 Zeilen. `authenticated` und `anon` dürfen weder Funktion noch Protokoll (vier Fehlermeldungen gewollt).
