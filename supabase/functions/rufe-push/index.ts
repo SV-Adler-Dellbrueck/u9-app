@@ -15,6 +15,9 @@
 
    v734 (Version 4): Porträt-Ablauf fürs Adler Nest (portraet_push_faellig) im selben Lauf.
 
+   v760 (Version 5): neues Sprachlob an die Eltern des Kindes (lob_push_faellig, einmal je Lob und Konto,
+   Ruhezeit je Konto, nur Lobs der letzten zwei Tage). Fehlt die Funktion, passiert nichts.
+
    NIE von Hand mit dem echten Cron-Schlüssel aufrufen (CLAUDE.md): Die Datenbank merkt sich
    jeden Aufruf als versendet. Schlüssel kommen aus dem Vault (RPC adler_geheimnis, v643). */
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -44,10 +47,13 @@ Deno.serve(async (req) => {
        Hinweis an die Trainer ab Montag, Erinnerung Freitagmorgen. portraet_push_faellig() entscheidet und merkt
        sich jeden Versand (genau einmal). Fehlt die Funktion (Migration v734 noch nicht eingespielt), passiert nichts. */
     const { data: pp } = await admin.rpc("portraet_push_faellig");
+    /* v760 (Version 5): Sprachlob für das eigene Kind – lob_push_faellig() entscheidet und merkt sich jeden Versand. */
+    const { data: lp } = await admin.rpc("lob_push_faellig");
     const faellig = [...((rufe || []) as any[]).map((f) => ({ ...f, tag: "rufe" })),
                      ...((ww || []) as any[]).map((f) => ({ ...f, tag: "wiewars-" + f.termin_id })),
                      ...((ws || []) as any[]).map((w) => ({ user_id: w.user_id, titel: w.payload?.title, text: w.payload?.body, url: w.payload?.url, tag: w.payload?.tag || "adler" })),
-                     ...((pp || []) as any[]).map((f) => ({ ...f, tag: "nest-" + (String(f.url).includes("/trainer/") ? "trainer" : "eltern") }))];
+                     ...((pp || []) as any[]).map((f) => ({ ...f, tag: "nest-" + (String(f.url).includes("/trainer/") ? "trainer" : "eltern") })),
+                     ...((lp || []) as any[]).map((f) => ({ ...f, tag: "lob-" + f.titel }))];
     if (!faellig.length) return json({ ok: true, sent: 0 });
     webpush.setVapidDetails("mailto:trainer@adler-dellbrueck.de",
       await geheimnis(admin, "adler_vapid_public"), await geheimnis(admin, "adler_vapid_private"));
@@ -65,6 +71,6 @@ Deno.serve(async (req) => {
       }
     }
     if (gone.length) await admin.from("push_subscriptions").delete().in("endpoint", gone);
-    return json({ ok: true, empfaenger: faellig.length, wiewars: (ww || []).length, nachgeholt: (ws || []).length, portraet: (pp || []).length, sent, removed: gone.length });
+    return json({ ok: true, empfaenger: faellig.length, wiewars: (ww || []).length, nachgeholt: (ws || []).length, portraet: (pp || []).length, lob: (lp || []).length, sent, removed: gone.length });
   } catch (e) { return json({ error: String(e) }, 500); }
 });
