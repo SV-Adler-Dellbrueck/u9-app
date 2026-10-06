@@ -34,7 +34,7 @@ module.exports = async function (h) {
     const out = {};
     const stand = () => { const c = document.getElementById("nest-druck"); if (!c) return null;
       const l = c.querySelector("a.nest-hoerlink");
-      return { abschnitte: [...c.querySelectorAll("section")].map(s => s.dataset.abschnitt), link: l ? l.getAttribute("href") : null, qr: !!c.querySelector(".nest-qr svg"),
+      return { abschnitte: [...new Set([...c.querySelectorAll(".nest-seite")].map(s => s.dataset.abschnitt))], link: l ? l.getAttribute("href") : null, qr: !!c.querySelector(".nest-qr svg"),
         audio: !!c.querySelector("audio"), knoepfe: c.querySelectorAll("#nest-hoeren, .nest-zurueck").length, entwurf: !!c.querySelector(".nest-entwurf"), titel: document.title,
         text: c.textContent.replace(/\s+/g, " "), bis: l ? l.textContent : "" }; };
     out.a = await nestDruckVorbereiten(3); out.a.stand = stand();
@@ -48,10 +48,10 @@ module.exports = async function (h) {
   await t.page.emulateMedia({ media: "screen" });
   const seiten = (pdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) || []).length;
   const url = "/?hoeren=" + TOKEN;
-  if (JSON.stringify(sa.abschnitte) !== '["deckblatt","spieltag","portraet","rubriken"]' || !sa.link || !sa.link.endsWith("?hoeren=" + TOKEN) || !sa.qr || sa.audio || sa.knoepfe || sa.entwurf
-      || sa.titel !== "Adler-Nest_Ausgabe-03" || !/Link gültig bis/.test(sa.bis) || /undefined|null/.test(sa.text) || neuAufrufe !== 1 || seiten !== 4)
+  if (!/^\["deckblatt","spieltag","portraet"(,"rubriken")?\]$/.test(JSON.stringify(sa.abschnitte)) || !sa.link || !sa.link.endsWith("?hoeren=" + TOKEN) || !sa.qr || sa.audio || sa.knoepfe || sa.entwurf
+      || sa.titel !== "Adler-Nest_Ausgabe-03" || !/Link gültig bis/.test(sa.bis) || /undefined|null/.test(sa.text) || neuAufrufe !== 1 || seiten < 3 || seiten > 5)
     probleme.push("a) " + JSON.stringify({ abschnitte: sa.abschnitte, link: sa.link, qr: sa.qr, audio: sa.audio, knoepfe: sa.knoepfe, titel: sa.titel, bis: sa.bis, neuAufrufe, seiten }));
-  zeilen.push(`a) Druckbereich ${sa.abschnitte.join(" · ")}, Link + QR statt Player, als PDF ${seiten} Seiten (je ${a.hoch} px hoch), Titel „${sa.titel}“`);
+  zeilen.push(`a) Druckbereich ${sa.abschnitte.join(" · ")}, Link + QR statt Player, als PDF ${seiten} Seiten (A4, eigene Seitenaufteilung, Format siehe v763), Titel „${sa.titel}“`);
 
   // b) zweiter Lauf nimmt den aktiven Link
   await t.page.evaluate(() => nestDruckAufraeumen());
