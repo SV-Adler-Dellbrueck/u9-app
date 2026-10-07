@@ -27,7 +27,9 @@
    v638: Kurze Denkpausen setzen keinen Punkt mehr (PO: „… eine Punktsetzung, die automatisch gemacht
       wird, obwohl ich gar nicht mit dem Satz zu Ende bin“). Die Attrappe startet die Sitzungen ohne
       Pause hintereinander – also geht der Satz weiter; nach „Weiter einsprechen“ beginnt ein neuer.
-   l) ⤢ öffnet die Vollansicht ohne Mikrofon. */
+   l) ⤢ öffnet die Vollansicht ohne Mikrofon.
+   m) v764 (PO: „nicht sofort Live-Aufnahme … zwei Buttons: grün jetzt aufnehmen, rot stoppen oder pausieren“): kein Autostart;
+      grün „Jetzt aufnehmen“ startet, rot „Stopp / Pause“ hält an, beide ≥ 44 px, Farben mit Text. */
 "use strict";
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
@@ -66,6 +68,12 @@ module.exports = async function (h) {
     document.getElementById("nb-mic").click(); await warte(30);
     const ov = document.getElementById("nb-gross-ov");
     out.j = { ov: !!ov, hoch: ov ? ov.getBoundingClientRect().height : 0, vh: innerHeight, dialog: ov && ov.getAttribute("role") === "dialog" };
+    // v764: Die Vollansicht startet das Mikrofon nie von selbst; grün startet, rot pausiert
+    const rot = document.getElementById("nb-gross-stopp"), cs = e => getComputedStyle(e);
+    out.m = { vorStart: sr.length, knopfVor: knopf(), gruen: cs(mic()).backgroundColor, rot: cs(rot).backgroundColor, hGruen: mic().offsetHeight, hRot: rot.offsetHeight,
+      textRot: rot.textContent.trim(), beschriftet: !!rot.getAttribute("aria-label"), druck: mic().getAttribute("aria-pressed") };
+    mic().click(); await warte(30);
+    out.m.druckAn = mic().getAttribute("aria-pressed");
     out.a = { n: sr.length, cont: sr[0] && sr[0].continuous, an: sr[0] && sr[0].an, wl: wl.req, anz: anz(), knopf: knopf(), sichtbar: !document.getElementById("nb-gross-hoer").hidden };
     // b) live + kumulativ
     letzte().onspeechstart && letzte().onspeechstart();
@@ -81,7 +89,7 @@ module.exports = async function (h) {
     out.d = feld();
     // e) Pause
     const vorPause = sr.length;
-    mic().click(); await warte(250);
+    rot.click(); await warte(250);
     out.e = { knopf: knopf(), anz: anz(), n: sr.length - vorPause, rel: wl.rel, feld: feld() };
     mic().click(); await warte(30);
     letzte().onresult(erg(["Kind C war müde"])); await ende();
@@ -116,6 +124,7 @@ module.exports = async function (h) {
     await einheitBewertenOpen(); await einheitDetailOpen(gestern);
     for (let i = 0; i < 40 && !document.getElementById("nb-mic"); i++) await warte(50);
     document.getElementById("nb-mic").click(); await warte(50);
+    document.getElementById("nb-gross-mic").click(); await warte(50);
     out.i.ohne = anz(); nbGrossZu();
     diktatStop(); document.getElementById("eb-modal")?.remove();
     // h) Trainer-Notiz
@@ -128,18 +137,21 @@ module.exports = async function (h) {
   const { a, b, c, d, e, f, g } = r;
   if (a.n !== 1 || a.cont !== false || !a.an) probleme.push(`a) Sitzung: ${JSON.stringify(a)}`);
   if (a.wl < 1) probleme.push("a) keine Bildschirmsperre angefordert");
-  if (!/Hört zu/.test(a.anz) || !a.sichtbar || a.knopf !== "Pause") probleme.push(`a) Anzeige/Knopf: „${a.anz}“ / „${a.knopf}“`);
+  if (!/Hört zu/.test(a.anz) || !a.sichtbar || a.knopf !== "Nimmt auf …") probleme.push(`a) Anzeige/Knopf: „${a.anz}“ / „${a.knopf}“`);
   if (!/heute war/.test(b.liveAnz) || !/heute war/.test(b.liveFeld) || !b.puls) probleme.push(`b) live: ${JSON.stringify(b)}`);
   if (b.kumulativ !== "Heute war es richtig gut") probleme.push(`b) kumulativ: „${b.kumulativ}“`);
   if (c.n !== 2 || !c.an || c.feld !== "Heute war es richtig gut") probleme.push(`c) Neustart: ${JSON.stringify(c)}`);
   if (d !== "Heute war es richtig gut die Kinder hatten Spaß das Passen war sehr sehr gut") probleme.push(`d) „${d}“ – kurze Pausen dürfen keinen Punkt setzen (v638)`);
-  if (e.knopf !== "Weiter einsprechen" || !/Pause/.test(e.anz) || e.n !== 0 || e.rel < 1 || e.feld !== d) probleme.push(`e) Pause: ${JSON.stringify(e)}`);
-  if (e.weiter !== d + ". Kind C war müde" || e.knopf2 !== "Pause" || !e.nbText) probleme.push(`e) Weiter: „${e.weiter}“ ${e.knopf2} ${e.nbText}`);
-  if (f.neuWaehrendAus !== 0 || f.neuDanach !== 1 || !f.an || f.knopf !== "Pause") probleme.push(`f) Bildschirm aus: ${JSON.stringify(f)}`);
-  if (g.neu !== 0 || !/gesperrt/.test(g.anz) || g.knopf !== "Einsprechen") probleme.push(`g) gesperrt: ${JSON.stringify(g)}`);
+  if (e.knopf !== "Weiter aufnehmen" || !/Pause/.test(e.anz) || e.n !== 0 || e.rel < 1 || e.feld !== d) probleme.push(`e) Pause: ${JSON.stringify(e)}`);
+  if (e.weiter !== d + ". Kind C war müde" || e.knopf2 !== "Nimmt auf …" || !e.nbText) probleme.push(`e) Weiter: „${e.weiter}“ ${e.knopf2} ${e.nbText}`);
+  if (f.neuWaehrendAus !== 0 || f.neuDanach !== 1 || !f.an || f.knopf !== "Nimmt auf …") probleme.push(`f) Bildschirm aus: ${JSON.stringify(f)}`);
+  if (g.neu !== 0 || !/gesperrt/.test(g.anz) || g.knopf !== "Weiter aufnehmen") probleme.push(`g) gesperrt: ${JSON.stringify(g)}`);
   if (r.i.mitSperre || !/Dein Handy hält den Bildschirm nicht von selbst an/.test(r.i.ohne)) probleme.push(`i) Hinweis ohne Sperre: ${JSON.stringify(r.i)}`);
   if (!r.j.ov || !r.j.dialog || r.j.hoch < r.j.vh - 2) probleme.push(`j) Vollansicht: ${JSON.stringify(r.j)}`);
   if (!r.j.kleinZeilen || r.j.kleinHoch < 60) probleme.push(`j) kleines Feld wächst nicht mit: ${JSON.stringify(r.j)}`);
+  const m = r.m;
+  if (m.vorStart !== 0 || m.knopfVor !== "Jetzt aufnehmen" || m.druck !== "false" || m.druckAn !== "true" || m.gruen !== "rgb(21, 128, 61)" || m.rot !== "rgb(185, 28, 28)" || m.hGruen < 44 || m.hRot < 44 || !/Stopp/.test(m.textRot) || !m.beschriftet)
+    probleme.push(`m) Tasten (v764): ${JSON.stringify(m)}`);
   const k = r.k;
   if (k.knopf !== "KI-Auswertung") probleme.push(`k) Knopf heißt „${k.knopf}“ statt „KI-Auswertung“`);
   if (k.spassDanach !== 4 || !k.skipDanach || !k.zu || !/Im Bogen prüfen, ändern und speichern/.test(k.status) || !/Korrektur einsprechen/.test(k.status)) probleme.push(`k) direkt eingetragen: ${JSON.stringify(k)}`);

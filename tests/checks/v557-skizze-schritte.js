@@ -183,6 +183,14 @@ module.exports = async function (h) {
   const w = 'const warte=ms=>new Promise(x=>setTimeout(x,ms));';
   const d = {};
 
+  /* v764: Der Abgleich der Bibliothek legt die Übungen nach dem Start an; unter Last (voller Lauf) dauert das
+     länger als der erste Zugriff. Erst warten, bis eine Übung mit Schritten da ist, statt sofort zu zählen. */
+  await schritt(async () => {
+    for (let i = 0; i < 160; i++) {
+      try { if ((tpAllForms() || []).some(f => { const sp = skzSpecVon(f); return sp && skzBildZahl(sp) > 1; })) return; } catch (e) {}
+      await new Promise(x => setTimeout(x, 100));
+    }
+  });
   Object.assign(d, await schritt(() => {
     window.__T = {};
     const alle = tpAllForms() || [];

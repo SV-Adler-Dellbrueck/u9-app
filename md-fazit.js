@@ -417,7 +417,7 @@ function nbGross(art, mikro){
     <div id="nb-gross-hoer" class="dk-anzeige" style="margin-top:0" hidden></div>
     <textarea id="nb-gross-text" maxlength="12000" aria-label="Text der Sprachnotiz" oninput="nbGrossTipp(this)"
       style="flex:1;min-height:0;width:100%;box-sizing:border-box;padding:12px;border:1px solid var(--rand-bedien);border-radius:12px;font-family:inherit;font-size:var(--s-karte);line-height:1.6;background:var(--surface2);color:var(--text);resize:none"
-      placeholder="${kann?"Tippe unten auf „Einsprechen“ und erzähl, wie es lief – oder tippe hier.":"Hier tippen oder das Mikrofon der Tastatur nutzen."}">${esc(_nbText)}</textarea>
+      placeholder="${kann?"Tippe unten auf „Jetzt aufnehmen“ und erzähl in Ruhe, wie es lief – oder tippe hier.":"Hier tippen oder das Mikrofon der Tastatur nutzen."}">${esc(_nbText)}</textarea>
     <div id="nb-gross-vorschau" hidden style="max-height:45vh;overflow-y:auto;border:1px solid var(--rand-bedien);border-radius:12px;padding:10px 12px;background:var(--surface2)"></div>
     <div id="nb-gross-status" role="status" aria-live="polite" style="font-size:var(--s-klein);color:var(--text2);line-height:1.45"></div>
     <div id="nb-gross-fuss" style="display:flex;flex-direction:column;gap:8px"></div>`;
@@ -425,8 +425,12 @@ function nbGross(art, mikro){
   nbGrossFuss();
   const ta = document.getElementById("nb-gross-text");
   ta.scrollTop = ta.scrollHeight;
-  if(mikro && kann) nbGrossMikro();
-  else { try{ ta.focus({preventScroll:true}); ta.setSelectionRange(ta.value.length, ta.value.length); }catch(e){} }
+  /* v764 · PO: „… sollte nicht sofort Live-Aufnahme starten, sondern unten zwei Buttons: grün Play ‚jetzt
+     aufnehmen‘, daneben rot ‚jetzt stoppen oder pausieren‘, so dass ich alles in Ruhe einsprechen kann.“
+     Die Vollansicht startet das Mikrofon nie von selbst; ohne Mikrofon-Wunsch landet der Cursor im Feld. */
+  nbGrossTasten();
+  if(kann){ const hoer = document.getElementById("nb-gross-hoer"); if(hoer) new MutationObserver(nbGrossTasten).observe(hoer, { childList:true, attributes:true, attributeFilter:["hidden"] }); }
+  if(!mikro){ try{ ta.focus({preventScroll:true}); ta.setSelectionRange(ta.value.length, ta.value.length); }catch(e){} }
 }
 function nbGrossFuss(){
   const f = document.getElementById("nb-gross-fuss"), ov = document.getElementById("nb-gross-ov"); if(!f || !ov) return;
@@ -438,9 +442,20 @@ function nbGrossFuss(){
       <button id="nb-gross-ueber" class="btn btn-p" style="flex:1;min-height:56px;justify-content:center" onclick="nbGrossUebernehmen()" ${_nbGrossErg.zeilen.length?"":"disabled"}><i class="ti ti-check"></i>In den Bogen übernehmen</button></div>`;
     return;
   }
-  const an = typeof diktatAktiv==="function" && diktatAktiv("nb-gross-text");
-  f.innerHTML = `${kann?`<button id="nb-gross-mic" class="btn" style="min-height:56px;justify-content:center;font-size:var(--s-karte)" onclick="nbGrossMikro()" aria-pressed="${an?"true":"false"}"><i class="ti ti-${an?"player-pause":"microphone"}"></i>${an?"Pause":(_nbText?"Weiter einsprechen":"Einsprechen")}</button>`:""}
+  f.innerHTML = `${kann?`<div style="display:flex;gap:8px">
+      <button id="nb-gross-mic" type="button" class="btn" style="flex:1 1 0;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800;background:#15803d;border-color:#15803d;color:#fff" onclick="nbGrossStart()" aria-pressed="false"><i class="ti ti-player-play-filled"></i><span>Jetzt aufnehmen</span></button>
+      <button id="nb-gross-stopp" type="button" class="btn" style="flex:1 1 0;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800;background:#b91c1c;border-color:#b91c1c;color:#fff" onclick="nbGrossStopp()" aria-label="Aufnahme pausieren oder stoppen – der Text bleibt stehen"><i class="ti ti-player-pause-filled"></i><span>Stopp / Pause</span></button></div>`:""}
     <button id="nb-gross-los" class="btn btn-p" style="min-height:56px;justify-content:center" onclick="nbGrossAuswerten('${art}')"><i class="ti ti-sparkles"></i>KI-Auswertung</button>`;
+  nbGrossTasten();
+}
+/* Grün zeigt, ob gerade aufgenommen wird (Text und aria-pressed, nicht nur Farbe). */
+function nbGrossTasten(){
+  const g = document.getElementById("nb-gross-mic"); if(!g) return;
+  const an = typeof diktatAktiv==="function" && diktatAktiv("nb-gross-text");
+  g.setAttribute("aria-pressed", an ? "true" : "false");
+  g.querySelector("span").textContent = an ? "Nimmt auf …" : (_nbText ? "Weiter aufnehmen" : "Jetzt aufnehmen");
+  g.querySelector("i").className = "ti ti-" + (an ? "microphone" : "player-play-filled");
+  g.style.boxShadow = an ? "0 0 0 3px var(--surface), 0 0 0 6px #15803d" : "none";
 }
 function nbGrossSync(v){
   _nbText = v;
@@ -448,9 +463,15 @@ function nbGrossSync(v){
   const b = document.getElementById("nb-mic"); if(b) b.innerHTML = '<i class="ti ti-microphone"></i>'+(v?"Weiter einsprechen":"Einsprechen");
 }
 function nbGrossTipp(el){ nbGrossSync(el.value); if(_nbGrossErg) nbGrossVorschauWeg(); }
-function nbGrossMikro(){
-  if(typeof diktatUmschalten!=="function") return;
-  diktatUmschalten({ feldId:"nb-gross-text", knopfId:"nb-gross-mic", anzeigeId:"nb-gross-hoer", max:12000, onText:nbGrossSync });
+/* Zwei feste Tasten statt eines Umschalters. Die Tasten beschriftet nbGrossTasten selbst – darum kein knopfId. */
+function nbGrossOpt(){ return { feldId:"nb-gross-text", knopfId:"nb-gross-keiner", anzeigeId:"nb-gross-hoer", max:12000, onText:nbGrossSync }; }
+function nbGrossStart(){
+  if(typeof diktatStart!=="function" || (typeof diktatAktiv==="function" && diktatAktiv("nb-gross-text"))) return;
+  diktatStart(nbGrossOpt()); nbGrossTasten();
+}
+function nbGrossStopp(){
+  if(typeof diktatPause!=="function" || !(typeof diktatAktiv==="function" && diktatAktiv("nb-gross-text"))) return;
+  diktatPause(); nbGrossTasten();
 }
 function nbGrossZu(){
   if(typeof _dk!=="undefined" && _dk && _dk.feldId==="nb-gross-text") diktatStop();
