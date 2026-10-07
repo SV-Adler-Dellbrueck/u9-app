@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v764 (Oktober 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v765 (Oktober 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite). Das Adler Nest ist seit v733 nur noch nach der Anmeldung lesbar.
 
@@ -125,7 +125,7 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 
 ## 2 · Eltern-App
 
-Zugang mit E-Mail und Passwort, angelegt über die Einladungskarte des Kindes. Wer kein Passwort hat oder es vergessen hat, meldet sich mit einem Einmal-Code per E-Mail an und legt es über 🔑 fest. Eltern sehen nur ihr eigenes Kind, nie Bewertungszahlen. Neue Passwörter brauchen mindestens 10 Zeichen mit Buchstaben und Ziffern (v652, gilt auch für Trainer); ältere, kürzere Passwörter funktionieren zum Anmelden weiter.
+Zugang mit E-Mail und Passwort, angelegt über die Einladungskarte des Kindes. Wer kein Passwort hat oder es vergessen hat, meldet sich mit einem Einmal-Code per E-Mail an und legt es über 🔑 fest. Eltern sehen nur ihr eigenes Kind, nie Bewertungszahlen. Neue Passwörter brauchen mindestens 10 Zeichen mit Buchstaben und Ziffern (v652, gilt auch für Trainer); ältere, kürzere Passwörter funktionieren zum Anmelden weiter. Seit v765 sagt die App bei einer Adresse, die nicht beim Trainerteam hinterlegt ist, was zu tun ist (die Adresse nehmen, die das Trainerteam hat, oder die Einladungskarte), statt „Code konnte nicht gesendet werden“.
 
 | Funktion | Was sie tut | Nutzen |
 |---|---|---|
