@@ -28,6 +28,9 @@ module.exports = async function (h) {
     let slot = document.getElementById("trainer-todo-slot");
     if (!slot) { slot = document.createElement("div"); slot.id = "trainer-todo-slot"; document.body.appendChild(slot); }
     window.trainerMe = async () => "Charles";
+    /* v766: Alles bis 08.10.2026 gilt als erledigt (nbAltbestand). Die Daten dieses Falls liegen relativ zu heute und fielen
+       in den ersten Tagen danach in diesen Zeitraum – der Altbestand ist hier nicht der Gegenstand. */
+    window.nbAltbestand = () => false;
     if (typeof sbToken !== "function" || !sbToken()) window.sbToken = () => "t";
     await trainerTodoLoad();
     const knoepfe = [...slot.querySelectorAll("button")].filter(b => /nachbereiten/.test(b.textContent || ""));
