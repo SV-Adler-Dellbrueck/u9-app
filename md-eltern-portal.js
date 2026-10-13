@@ -28,12 +28,15 @@ function authFehlerDeutsch(m,ersatz){
   if(/email.*(invalid|valid)|unable to validate email/i.test(m))return "Diese E-Mail-Adresse sieht nicht richtig aus.";
   if(/weak|at least|characters/i.test(m))return "Das Passwort ist zu schwach – bitte "+pwRegelText()+".";
   if(/network|failed to fetch/i.test(m))return "Gerade kein Internet – bitte gleich nochmal.";
+  /* v765: Die Datenbank lehnt Adressen ab, die nicht beim Trainerteam hinterlegt sind (Hook hook_restrict_signup_to_whitelist).
+     Vorher stand dafür nur „Code konnte nicht gesendet werden“ – eine Mutter kam damit nicht weiter. */
+  if(/nicht freigeschaltet|not.*(allowed|whitelist)/i.test(m))return "Diese E-Mail-Adresse ist beim Trainerteam nicht hinterlegt. Bitte genau die Adresse nehmen, die du dem Trainerteam gegeben hast – oder die Einladungskarte benutzen.";
   return ersatz;
 }
 async function authOtpRequest(email){
   const r=await fetch(`${SB_URL}/auth/v1/otp`,{method:"POST",headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,create_user:true})});
   const data=await r.json().catch(()=>({}));
-  if(!r.ok)throw new Error(authFehlerDeutsch(data.error_description||data.msg||data.error,"Code konnte nicht gesendet werden."));
+  if(!r.ok)throw new Error(authFehlerDeutsch([data.error_description,data.msg,data.message,data.error,data.error_code].filter(Boolean).join(" "),"Code konnte nicht gesendet werden."));
   return true;
 }
 async function authOtpVerify(email,token){
@@ -195,10 +198,9 @@ async function elternPortalSend(){
   if(!email||!/.+@.+\..+/.test(email)){if(err)err.textContent="Bitte eine gültige E-Mail eingeben";return;}
   const btn=document.getElementById("ep-send");if(btn){btn.disabled=true;btn.textContent="Sende…";}
   try{
-    // Whitelist-Gate: nur vom Trainer hinterlegte E-Mails dürfen einen Code anfordern (Anti-Spam).
-    let ok=true;
-    try{const r=await fetch(`${SB_URL}/rest/v1/rpc/is_email_whitelisted`,{method:"POST",headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_email:email})});if(r.ok)ok=await r.json();}catch(e){}
-    if(!ok){if(err)err.textContent="Diese E-Mail ist noch nicht freigeschaltet. Mit der Einladungskarte vom Trainerteam geht es sofort.";if(btn){btn.disabled=false;btn.textContent="Code anfordern";}return;}
+    /* v765: Den früheren Vorab-Check per RPC is_email_whitelisted gibt es nicht mehr – die Funktion ist seit dem 27.09. für
+       anonyme Aufrufe gesperrt (sie verriet sonst, wer Eltern ist), der Aufruf lief seitdem ins Leere. Die Prüfung macht der Hook
+       der Datenbank; authFehlerDeutsch übersetzt seine Antwort. */
     await authOtpRequest(email);
     epEmail=email;
     document.getElementById("ep-step-email").style.display="none";

@@ -125,7 +125,7 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 
 ## 2 · Eltern-App
 
-Zugang mit E-Mail und Passwort, angelegt über die Einladungskarte des Kindes. Wer kein Passwort hat oder es vergessen hat, meldet sich mit einem Einmal-Code per E-Mail an und legt es über 🔑 fest. Eltern sehen nur ihr eigenes Kind, nie Bewertungszahlen. Neue Passwörter brauchen mindestens 10 Zeichen mit Buchstaben und Ziffern (v652, gilt auch für Trainer); ältere, kürzere Passwörter funktionieren zum Anmelden weiter.
+Zugang mit E-Mail und Passwort, angelegt über die Einladungskarte des Kindes. Wer kein Passwort hat oder es vergessen hat, meldet sich mit einem Einmal-Code per E-Mail an und legt es über 🔑 fest. Eltern sehen nur ihr eigenes Kind, nie Bewertungszahlen. Neue Passwörter brauchen mindestens 10 Zeichen mit Buchstaben und Ziffern (v652, gilt auch für Trainer); ältere, kürzere Passwörter funktionieren zum Anmelden weiter. Seit v765 sagt die App bei einer Adresse, die nicht beim Trainerteam hinterlegt ist, was zu tun ist (die Adresse nehmen, die das Trainerteam hat, oder die Einladungskarte), statt „Code konnte nicht gesendet werden“.
 
 | Funktion | Was sie tut | Nutzen |
 |---|---|---|
