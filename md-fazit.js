@@ -230,6 +230,7 @@ function fazitRender(){
       <button class="btn btn-p" style="flex:1;min-height:48px;justify-content:center;font-size:var(--s-karte);font-weight:800" onclick="fazitSpeichern()"><i class="ti ti-check"></i>Speichern</button>
       <button class="btn btn-sm" style="min-height:48px" onclick="fazitSchliessen()">Schließen</button>
     </div>
+    <button type="button" class="btn" style="width:100%;min-height:48px;margin-top:8px;justify-content:center" onclick="nbVerzichtOpen('t${Number(t.id)}',{art:'${t.typ==="turnier"?"turnier":"spiel"}',datum:'${esc(String(t.datum||"").slice(0,10))}',titel:'${jsq(t.titel||t.gegner||"")}'})"><i class="ti ti-archive"></i>Nichts eintragen</button>
     <div style="font-size:var(--s-klein);color:var(--text3);margin-top:6px;text-align:center">Alles freiwillig – auch halb ausgefüllt ist besser als gar nicht.</div>`;
   if(typeof felderWachsen==="function") felderWachsen(c);
   if(_nbWeg && _nbWeg.art==="spiel") nbWegZeichnen();   // v627: der Ablauf überlebt das Neuzeichnen des Bogens
@@ -327,8 +328,146 @@ async function fazitOffene(tage){
     const ids = rows.map(t=>t.id).join(",");
     const b = await fetch(`${SB_URL}/rest/v1/event_bewertung?termin_id=in.(${ids})&select=termin_id,autor`,{headers:sbAuthHeaders()});
     const fertig = new Set(b.ok ? ((await b.json())||[]).filter(x=>x.autor===autor).map(x=>Number(x.termin_id)) : []);
-    return rows.filter(t=>!fertig.has(Number(t.id)));
+    /* v766: Abgelegtes („Nichts eintragen“) und der Altbestand bis 08.10.2026 gelten als erledigt. */
+    const verz = await nbVerzichtLaden(autor);
+    return rows.filter(t=>!fertig.has(Number(t.id)) && !verz.has("t"+Number(t.id)) && !nbAltbestand(t.datum));
   }catch(e){ return []; }
+}
+
+/* ═══ v766 · Nachbereitung ablehnen ═════════════════════════════════════════════════════
+   PO 13.10.: Bewertungen von Trainings und Spielen müssen sich ablehnen lassen – mit freiwilligem Grund
+   („war nicht dabei“, „keine Zeit“, „nichts Besonderes festgestellt“, eigener Text). Kein Trainer wird
+   gezwungen, etwas einzutragen. Je Trainer und Termin eine Zeile in nachbereitung_verzicht; die Karte
+   „Wie war's?“, die To-dos und die Benachrichtigung fragen danach nicht mehr, das Tagebuch führt die
+   abgelegten Termine in einem eigenen Abschnitt.
+   Altbestand: alles bis einschließlich 08.10.2026 gilt als erledigt (PO 13.10.: „alle vergangenen
+   Bewertungen, Stand 08.10.2026, als erledigt ablegen“) – ohne Eintrag, ohne Zeile je Trainer. */
+const NB_ALTBESTAND_BIS = "2026-10-08";
+const NB_GRUENDE = [
+  { k:"nicht_dabei",       t:"War nicht dabei" },
+  { k:"keine_zeit",        t:"Keine Zeit" },
+  { k:"nichts_besonderes", t:"Nichts Besonderes festgestellt" },
+  { k:"sonstiges",         t:"Anderer Grund" }
+];
+function nbGrundText(k){ const g = NB_GRUENDE.find(x=>x.k===k); return g ? g.t : ""; }
+function nbAltbestand(datum){ return !!datum && String(datum).slice(0,10) <= NB_ALTBESTAND_BIS; }
+/* Menge der abgelegten Schlüssel („d2026-10-08“, „t123“) dieses Trainers; ohne Verbindung oder vor der Migration leer. */
+async function nbVerzichtLaden(autor){
+  const out = new Set();
+  if(!autor || typeof sbToken!=="function" || !sbToken()) return out;
+  try{
+    const r = await fetch(`${SB_URL}/rest/v1/nachbereitung_verzicht?select=schluessel&autor=eq.${encodeURIComponent(autor)}&limit=500`,{headers:sbAuthHeaders()});
+    if(r.ok) ((await r.json())||[]).forEach(x=>out.add(String(x.schluessel)));
+  }catch(e){}
+  return out;
+}
+function nbVerzichtNeuZeichnen(){
+  if(typeof wieWarsKarte==="function") wieWarsKarte();
+  if(typeof trainerTodoLoad==="function") trainerTodoLoad();
+  if(document.getElementById("tb-liste") && typeof tagebuchListe==="function") tagebuchListe();
+}
+/* opt: { art:"training|spiel|turnier", datum:"YYYY-MM-DD", titel:"…", danach:fn } */
+async function nbVerzichtOpen(schluessel, opt){
+  opt = opt || {};
+  schluessel = String(schluessel||"");
+  if(!/^(d\d{4}-\d{2}-\d{2}|t\d+)$/.test(schluessel)){ toast("Dieser Termin lässt sich nicht ablegen","err"); return; }
+  if(typeof sbToken!=="function" || !sbToken()){ toast("Bitte als Trainer anmelden","err"); return; }
+  const art = opt.art || (schluessel[0]==="d" ? "training" : "spiel");
+  const datum = opt.datum || (schluessel[0]==="d" ? schluessel.slice(1) : "");
+  const autor = (typeof trainerMe==="function" ? (await trainerMe()) : "") || "";
+  if(!autor){ toast("Dein Trainername ist nicht bekannt – bitte neu anmelden","err"); return; }
+  let alt = null;
+  try{
+    const r = await fetch(`${SB_URL}/rest/v1/nachbereitung_verzicht?select=grund,notiz&autor=eq.${encodeURIComponent(autor)}&schluessel=eq.${encodeURIComponent(schluessel)}&limit=1`,{headers:sbAuthHeaders()});
+    if(r.ok) alt = ((await r.json())||[])[0] || null;
+  }catch(e){}
+  document.getElementById("nb-verzicht")?.remove();
+  const wo = art==="training" ? "Training" : art==="turnier" ? "Festival" : "Spiel";
+  const wann = datum ? new Date(datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit"}) : "";
+  const box = document.createElement("div");
+  box.id = "nb-verzicht"; box.setAttribute("role","dialog"); box.setAttribute("aria-modal","true"); box.setAttribute("aria-label","Nichts eintragen");
+  box.dataset.schluessel = schluessel; box.dataset.art = art; box.dataset.datum = datum; box.dataset.grund = alt && alt.grund || "";
+  box._danach = opt.danach || null;
+  box.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10080;display:flex;align-items:center;justify-content:center;padding:14px;overflow-y:auto";
+  box.onclick = e => { if(e.target===box) box.remove(); };
+  box.innerHTML = `<div style="background:var(--surface);color:var(--text);max-width:420px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4);margin:auto">
+    <div style="font-size:var(--s-karte);font-weight:800">Nichts eintragen</div>
+    <div style="font-size:var(--s-text);color:var(--text2);margin:2px 0 4px">${esc(wo)}${opt.titel?" „"+esc(opt.titel)+"“":""}${wann?" · "+esc(wann):""}</div>
+    <div style="font-size:var(--s-text);color:var(--text2);margin:0 0 12px;line-height:1.5">Das ist völlig in Ordnung – niemand muss etwas eintragen. Der Termin ist dann abgelegt, die App fragt nicht mehr nach. Ein Grund ist freiwillig.</div>
+    <div role="group" aria-label="Grund (freiwillig)" id="nb-verzicht-gruende" style="display:flex;flex-direction:column;gap:8px"></div>
+    <label for="nb-verzicht-notiz" style="display:block;font-size:var(--s-klein);color:var(--text2);margin:12px 0 4px">Anmerkung (freiwillig)</label>
+    <textarea id="nb-verzicht-notiz" rows="2" maxlength="500" placeholder="z. B. Urlaub, Spätschicht …" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);line-height:1.5;background:var(--surface2);color:var(--text);resize:vertical">${esc(alt&&alt.notiz||"")}</textarea>
+    <div id="nb-verzicht-status" role="status" aria-live="polite" style="font-size:var(--s-klein);color:var(--text2);min-height:1em;margin-top:6px"></div>
+    <button id="nb-verzicht-ok" class="btn btn-p" onclick="nbVerzichtSpeichern()" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800;margin-top:6px"><i class="ti ti-archive"></i>${alt?"Änderung ablegen":"Ablegen"}</button>
+    ${alt?`<button class="btn" onclick="nbVerzichtZurueck()" style="width:100%;min-height:48px;margin-top:8px;justify-content:center"><i class="ti ti-arrow-back-up"></i>Doch eintragen – wieder offen</button>`:""}
+    <button class="btn" onclick="document.getElementById('nb-verzicht').remove()" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Abbrechen</button>
+  </div>`;
+  document.body.appendChild(box);
+  nbVerzichtGruendeZeichnen();
+}
+/* Aus dem Einstieg der geführten Nachbereitung: Termin und Art kennt der Ablauf selbst. */
+function nbVerzichtImWeg(){
+  const art = _nbWeg && _nbWeg.art;
+  if(art==="training" && typeof EB_DATUM!=="undefined" && EB_DATUM){
+    const d = String(EB_DATUM).replace(/[^0-9-]/g,"");
+    nbVerzichtOpen("d"+d, { art:"training", datum:d });
+  }else if(_FZ && _FZ.termin){
+    const t = _FZ.termin;
+    nbVerzichtOpen("t"+Number(t.id), { art:t.typ==="turnier"?"turnier":"spiel", datum:String(t.datum||"").slice(0,10), titel:t.titel||t.gegner||"" });
+  }
+}
+function nbVerzichtGruendeZeichnen(){
+  const box = document.getElementById("nb-verzicht"), host = document.getElementById("nb-verzicht-gruende"); if(!box || !host) return;
+  const gewaehlt = box.dataset.grund || "";
+  host.innerHTML = NB_GRUENDE.map(g=>{
+    const an = gewaehlt===g.k;
+    return `<button type="button" onclick="nbVerzichtGrund('${g.k}')" aria-pressed="${an}" style="display:flex;align-items:center;gap:10px;width:100%;min-height:48px;text-align:left;padding:8px 12px;border-radius:10px;font-family:inherit;font-size:var(--s-karte);font-weight:${an?800:600};cursor:pointer;color:var(--text);background:${an?"var(--surface2)":"var(--surface)"};border:${an?"2px solid var(--purple)":"1px solid var(--rand-bedien)"}"><i class="ti ti-${an?"circle-check-filled":"circle"}" aria-hidden="true"></i><span>${esc(g.t)}</span></button>`;
+  }).join("");
+}
+/* Ein zweiter Tipp nimmt die Wahl zurück – ohne Grund ablegen ist ausdrücklich erlaubt. */
+function nbVerzichtGrund(k){
+  const box = document.getElementById("nb-verzicht"); if(!box) return;
+  box.dataset.grund = box.dataset.grund===k ? "" : k;
+  nbVerzichtGruendeZeichnen();
+}
+async function nbVerzichtSpeichern(){
+  const box = document.getElementById("nb-verzicht"); if(!box) return;
+  const st = document.getElementById("nb-verzicht-status"), ok = document.getElementById("nb-verzicht-ok");
+  if(ok && ok.disabled) return;
+  const autor = (typeof trainerMe==="function" ? (await trainerMe()) : "") || "";
+  if(!autor){ if(st) st.textContent = "Dein Trainername ist nicht bekannt – bitte neu anmelden."; return; }
+  const notiz = (document.getElementById("nb-verzicht-notiz")?.value||"").trim().slice(0,500);
+  const body = { autor, schluessel:box.dataset.schluessel, datum:box.dataset.datum || isoLokal(), art:box.dataset.art,
+                 grund:box.dataset.grund || null, notiz:notiz || null };
+  if(ok){ ok.disabled = true; }
+  try{
+    const r = await fetch(`${SB_URL}/rest/v1/nachbereitung_verzicht?on_conflict=autor,schluessel`,{ method:"POST",
+      headers:{ ...sbAuthHeaders(), 'Prefer':'resolution=merge-duplicates,return=minimal' }, body:JSON.stringify(body) });
+    if(typeof sbCheck401==="function" && sbCheck401(r)) return;
+    if(!r.ok){ if(ok) ok.disabled = false; if(st) st.textContent = (typeof sbDeniedMsg==="function" ? sbDeniedMsg(r,"Konnte nicht ablegen") : "Konnte nicht ablegen")+" – es wurde nichts verändert."; return; }
+  }catch(e){ if(ok) ok.disabled = false; if(st) st.textContent = "Keine Verbindung – es wurde nichts abgelegt. Bitte gleich nochmal."; return; }
+  const danach = box._danach;
+  box.remove();
+  /* Offene Bewertungsfenster schließen: abgelegt heißt, dass hier nichts mehr zu tun ist. */
+  document.getElementById("eb-modal")?.remove();
+  if(typeof fazitSchliessen==="function" && document.getElementById("fz-modal")) fazitSchliessen();
+  toast("Abgelegt ✓ – steht im Tagebuch");
+  nbVerzichtNeuZeichnen();
+  if(typeof danach==="function") danach();
+}
+async function nbVerzichtZurueck(){
+  const box = document.getElementById("nb-verzicht"); if(!box) return;
+  const autor = (typeof trainerMe==="function" ? (await trainerMe()) : "") || "";
+  if(!autor) return;
+  const st = document.getElementById("nb-verzicht-status");
+  try{
+    const r = await fetch(`${SB_URL}/rest/v1/nachbereitung_verzicht?autor=eq.${encodeURIComponent(autor)}&schluessel=eq.${encodeURIComponent(box.dataset.schluessel)}`,{ method:"DELETE", headers:sbAuthHeaders() });
+    if(typeof sbCheck401==="function" && sbCheck401(r)) return;
+    if(!r.ok){ if(st) st.textContent = "Konnte nicht zurücknehmen."; return; }
+  }catch(e){ if(st) st.textContent = "Keine Verbindung – nichts verändert."; return; }
+  box.remove();
+  toast("Wieder offen ✓");
+  nbVerzichtNeuZeichnen();
 }
 
 /* ═══ v627 · Sprachnotiz → Nachbereitung ═══════════════════════════════════════
@@ -929,7 +1068,8 @@ function nbWegZeichnen(){
       <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:12px;line-height:1.45">Frage für Frage mit Antwort-Kacheln – oder erst frei erzählen, dann sind die Kacheln schon vorausgewählt.</div>
       <div data-nb-start></div>
       ${kachel(false,"➡️ Los geht’s – Frage für Frage","nbWegGehe(1)")}
-      <button type="button" onclick="nbWegAus()" style="display:block;margin:6px auto 0;min-height:44px;background:none;border:none;color:var(--text2);font-family:inherit;font-size:var(--s-text);text-decoration:underline;cursor:pointer">Alles auf einen Blick</button>`;
+      <button type="button" onclick="nbWegAus()" style="display:block;margin:6px auto 0;min-height:44px;background:none;border:none;color:var(--text2);font-family:inherit;font-size:var(--s-text);text-decoration:underline;cursor:pointer">Alles auf einen Blick</button>
+      <button type="button" class="nb-nichts" onclick="nbVerzichtImWeg()" style="display:block;margin:6px auto 0;min-height:44px;background:none;border:none;color:var(--text2);font-family:inherit;font-size:var(--s-text);text-decoration:underline;cursor:pointer">Nichts eintragen</button>`;
   }else if(st.typ==="kacheln"){
     const akt = st.lesen();
     html = kopf + st.kacheln.map(k=>kachel(String(akt)===String(k.wert), esc(k.label), `nbWegWahl(${typeof k.wert==="number"?k.wert:"'"+k.wert+"'"})`)).join("")

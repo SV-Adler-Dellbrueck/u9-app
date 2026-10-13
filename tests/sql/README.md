@@ -176,3 +176,15 @@ psql -d k -f tests/sql/v760-lob-push.sql
 ```
 
 Erwartet: Von zwei Lobs (vor 5 Tagen, gestern) wird nur das von gestern an beide Elternkonten von Kind A gemeldet (2 Zeilen, nur der Vorname im Text); ein zweiter Lauf liefert nichts. Ein neues Lob für Kind B bleibt offen, solange dessen Eltern keine Benachrichtigungen haben, und geht beim Einschalten genau einmal raus. Ruht ein Konto (Ruhezeit), bekommen es die anderen sofort und das ruhende nachträglich. Drei Tage später verfällt Offenes. Das Protokoll hat 5 Zeilen. `authenticated` und `anon` dürfen weder Funktion noch Protokoll (vier Fehlermeldungen gewollt).
+
+## v766 · Nachbereitung ablehnen
+
+```bash
+psql -d t -f tests/sql/supabase-attrappe.sql && psql -d t -f tests/sql/v766-nachbereitung-verzicht.sql
+```
+
+(Der Lauf spielt die Migration `20261013_v766_nachbereitung_verzicht.sql` selbst ein, nachdem er die Tabellen anlegt, auf die
+`wiewars_push_faellig` zugreift.) Erwartet: ohne Ablehnen bekommen Anna und Ben je zwei Erinnerungen (4 Zeilen); legt Anna das Spiel
+und das Training ab, bekommt nur noch Ben welche (2 Zeilen). Ein zweites Ablegen desselben Termins durch denselben Trainer, ein
+Schlüssel wie `x7`, ein unbekannter Grund, eine unbekannte Art und eine Anmerkung über 500 Zeichen scheitern (fünf Fehlermeldungen sind
+gewollt). Ein Trainer liest, schreibt und löscht; Eltern sehen 0 Zeilen und können nicht schreiben; `anon` bekommt keinen Zugriff.

@@ -494,7 +494,7 @@ function tagebuchBearbeiten(id){
    darüber (doku/auftrag-tagebuch-alltag): Einträge · Wiedervorlage · Je Kind. Das Tagebuch ist eine
    persönliche Unterlage: die Ansicht zeigt die eigenen Einträge (prozess-nacherfassung: „ein Vorschlag
    je Autor, nur in dessen Tagebuch“); To-dos sehen alle Trainer, sie sind Team-Arbeit. */
-let _TB_PUNKTE = [], _TB_KINDER = [], _TB_SICHT = "eintraege", _TB_KIND = null, _TB_ICH = "";
+let _TB_PUNKTE = [], _TB_KINDER = [], _TB_VERZICHT = [], _TB_SICHT = "eintraege", _TB_KIND = null, _TB_ICH = "";
 async function tagebuchListe(){
   const box = document.getElementById("tb-liste"); if(!box) return;
   if(typeof sbToken==="function" && !sbToken()){ box.innerHTML = tbLeer("Nicht angemeldet.","Melde dich als Trainer an, dann steht das Tagebuch hier."); return; }
@@ -509,9 +509,10 @@ async function tagebuchListe(){
   }catch(e){ box.innerHTML = tbLeer("Offline.","Sobald du wieder online bist, stehen die Einträge hier."); return; }
   /* Punkte und Kinder: fehlen sie (etwa vor der Migration), bleibt die Ansicht wie bisher. */
   const holen = async pfad => { try{ const r = await fetch(`${SB_URL}/rest/v1/${pfad}`,{headers:sbAuthHeaders()}); return r.ok ? ((await r.json())||[]) : []; }catch(e){ return []; } };
-  [_TB_PUNKTE, _TB_KINDER] = await Promise.all([ holen("tagebuch_punkt?select=*&order=bis.asc.nullslast,id.asc&limit=500"),
-                                                 holen("tagebuch_kind?select=eintrag_id,kader_id&limit=2000") ]);
-  if(!Array.isArray(_TB_PUNKTE)) _TB_PUNKTE = []; if(!Array.isArray(_TB_KINDER)) _TB_KINDER = [];
+  [_TB_PUNKTE, _TB_KINDER, _TB_VERZICHT] = await Promise.all([ holen("tagebuch_punkt?select=*&order=bis.asc.nullslast,id.asc&limit=500"),
+                                                 holen("tagebuch_kind?select=eintrag_id,kader_id&limit=2000"),
+                                                 holen("nachbereitung_verzicht?select=*"+(_TB_ICH ? `&autor=eq.${encodeURIComponent(_TB_ICH)}` : "")+"&order=datum.desc,id.desc&limit=100") ]);
+  if(!Array.isArray(_TB_PUNKTE)) _TB_PUNKTE = []; if(!Array.isArray(_TB_KINDER)) _TB_KINDER = []; if(!Array.isArray(_TB_VERZICHT)) _TB_VERZICHT = [];
   tbListeRender();
 }
 function tbLeer(satz, zweiter){
@@ -536,7 +537,7 @@ function tbListeRender(){
     box.innerHTML = reiter + `<div style="background:var(--surface);border:var(--border-s);border-radius:var(--rl);padding:16px;text-align:center">
       <div style="font-size:var(--s-text);font-weight:700">Noch kein Eintrag.</div>
       <div style="font-size:var(--s-text);color:var(--text2);margin:4px 0 10px">Der erste entsteht am schnellsten direkt nach einer Nachbereitung – oder als Gedanke zwischendurch.</div>
-      <button class="btn" onclick="tagebuchGedanke()" style="min-height:48px;justify-content:center;width:100%"><i class="ti ti-bulb"></i>Gedanke erfassen</button></div>`;
+      <button class="btn" onclick="tagebuchGedanke()" style="min-height:48px;justify-content:center;width:100%"><i class="ti ti-bulb"></i>Gedanke erfassen</button></div>` + (_TB_SICHT==="eintraege" ? tbVerzichtHtml() : "");
     tbAusgabeZeichnen();
     return;
   }
@@ -577,7 +578,24 @@ function tbEintraegeHtml(){
       ${luecke?`<div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:6px">${juengst?`Seit dem ${tbDatumDe(juengst)} nichts notiert.`:"Noch nichts notiert."}</div>`:""}
       ${eintraege.map(tbZeile).join("")}
     </div>`;
-  }).join("");
+  }).join("") + tbVerzichtHtml();
+}
+/* v766 · Abgelegte Termine („Nichts eintragen“): eine ruhige Zeile je Termin, mit Grund und Anmerkung. Nur in der App –
+   diese Zeilen stehen in keinem Export und gehen an keine KI. Ein Tipp auf „Wieder öffnen“ nimmt das Ablegen zurück. */
+function tbVerzichtHtml(){
+  if(!_TB_VERZICHT.length) return "";
+  const zeile = v => {
+    const wo = v.art==="training" ? "Training" : v.art==="turnier" ? "Festival" : "Spiel";
+    const grund = typeof nbGrundText==="function" ? nbGrundText(v.grund) : "";
+    return `<div class="tb-verzicht-zeile" data-schluessel="${esc(v.schluessel)}" style="background:var(--surface);border:var(--border-s);border-radius:var(--rl);padding:10px 12px;margin-bottom:6px;display:flex;gap:8px;align-items:center">
+      <div style="flex:1;min-width:0"><div style="font-size:var(--s-text);font-weight:700">${esc(wo)} · ${tbDatumDe(v.datum)}</div>
+        <div style="font-size:var(--s-text);color:var(--text2);line-height:1.45">${grund?esc(grund):"Nichts eingetragen"}${v.notiz?" – "+esc(tbKlarnamen(v.notiz)):""}</div></div>
+      <button type="button" class="btn btn-sm" onclick="nbVerzichtOpen('${esc(v.schluessel)}',{art:'${esc(v.art)}',datum:'${esc(v.datum)}'})" style="min-height:44px;flex:none">Ändern</button>
+    </div>`;
+  };
+  return `<details class="tb-verzicht" style="margin-bottom:16px"><summary style="cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:var(--s-text);font-weight:800;color:var(--text)">Nicht nachbereitet · ${_TB_VERZICHT.length}</summary>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin:0 0 6px">Termine, zu denen du nichts eintragen wolltest oder konntest. Das ist in Ordnung – hier steht nur, dass es bewusst so ist.</div>
+    ${_TB_VERZICHT.map(zeile).join("")}</details>`;
 }
 function tbZeile(e){
   const worte = Array.isArray(e.schlagworte) ? e.schlagworte : [];
@@ -1120,8 +1138,12 @@ async function wieWarsKarte(){
   try{
     const r = await fetch(`${SB_URL}/rest/v1/termine?select=id,datum,uhrzeit,uhrzeit_ende,typ,titel,gegner,trainer_status,platz_status&typ=in.(training,spiel,turnier)&datum=gte.${ab}&datum=lte.${heute}&order=datum.desc,uhrzeit.desc.nullslast&limit=10`,{headers:sbAuthHeaders()});
     const rows = r.ok ? ((await r.json())||[]) : [];
+    /* v766: Abgelegtes („Nichts eintragen“) und der Altbestand bis 08.10.2026 zählen als erledigt. */
+    const verz = typeof nbVerzichtLaden==="function" ? await nbVerzichtLaden(ich) : new Set();
     const kand = rows.filter(t=>(t.trainer_status||{})[ich]==="ja"
       && tbTerminGelaufen(t)
+      && !verz.has(t.typ==="training" ? "d"+t.datum : "t"+Number(t.id))
+      && !(typeof nbAltbestand==="function" && nbAltbestand(t.datum))
       && !(typeof terminFaelltAus==="function" && terminFaelltAus(t)));
     if(kand.length){
       const tage = kand.filter(t=>t.typ==="training").map(t=>t.datum), ids = kand.filter(t=>t.typ!=="training").map(t=>t.id);
@@ -1146,6 +1168,7 @@ async function wieWarsKarte(){
       <div style="font-size:var(--s-teil);font-weight:800">Wie war's?</div>
       <div style="font-size:var(--s-text);color:var(--text2);margin:2px 0 10px">${esc(art)}${termin.typ!=="training"&&(termin.titel||termin.gegner)?" „"+esc(termin.titel||termin.gegner)+"“":""} · ${esc(wann)}. Einmal erzählen – Bewertung, Tagebuch und To-dos entstehen daraus.</div>
       <button class="btn btn-p" onclick="wieWarsStart('${termin.typ==="training"?"d"+esc(termin.datum):"t"+Number(termin.id)}')" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-microphone"></i>Erzählen</button>
+      ${typeof nbVerzichtOpen==="function"?`<button type="button" onclick="nbVerzichtOpen('${termin.typ==="training"?"d"+esc(termin.datum):"t"+Number(termin.id)}',{art:'${esc(termin.typ)}',datum:'${esc(termin.datum)}',titel:'${jsq(termin.typ==="training"?"":(termin.titel||termin.gegner||""))}'})" style="display:block;margin:8px auto 0;min-height:44px;background:none;border:none;color:var(--text2);font-family:inherit;font-size:var(--s-text);text-decoration:underline;cursor:pointer">Nichts eintragen</button>`:""}
       ${warten?`<button type="button" onclick="tbPruefenOpen(${Number(offen[0].id)})" style="display:block;margin:8px auto 0;min-height:44px;background:none;border:none;color:var(--text2);font-family:inherit;font-size:var(--s-text);text-decoration:underline;cursor:pointer">${esc(warten)}</button>`:""}
     </div>`;
   }else if(offen.length){
