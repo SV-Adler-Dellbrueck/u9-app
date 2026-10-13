@@ -58,7 +58,7 @@ module.exports = async function (h) {
   zeilen.push(`c) ${JSON.stringify(re.c).slice(0, 10)}…`);
   zeilen.pop();
   const c = re.c || {};
-  if (!/SPIELTAG · SA 26\.09\./.test(c.spieltag || "") || !/DABEI/.test(c.spieltag) || !/Kinderfestival · Thurner Kamp ·( \| )? ?Adler 2/.test(c.spieltag) || !/FUNiño & 3\+1/.test(c.spieltag) || /:\d/.test((c.spieltag || "").replace(/SA 26\.09\./, ""))
+  if (!/SPIELTAG · SA 26\.09\./.test(c.spieltag || "") || !/DABEI/.test(c.spieltag) || !/Kinderfestival · Thurner Kamp ·( \| )? ?Adler( \| )? ?2/.test(c.spieltag) || !/FUNiño & 3\+1/.test(c.spieltag) || /:\d/.test((c.spieltag || "").replace(/SA 26\.09\./, ""))
     || !/KAPITÄN/.test(c.kapitaen || "") || !/2\. Mal Kapitän/.test(c.kapitaen) || !/Kapitän von Adler 1/.test(c.kapitaen) || !/begrüßen den Gegner/.test(c.kapitaen)
     || !/MOMENT/.test(c.moment || "") || !/Erster Spieltag im Adler-Trikot/.test(c.moment))
     probleme.push(`c) Zeichnen: ${JSON.stringify(c)}`);
