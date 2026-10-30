@@ -52,9 +52,9 @@ module.exports = async function (h) {
 
   if (r.reiter.length !== 3 || !/Absagen/.test(r.reiter[2]) || r.hoehe < 36 || r.gedrueckt !== "false,false,true") probleme.push("a) Reiter: " + JSON.stringify({ reiter: r.reiter, hoehe: r.hoehe, gedrueckt: r.gedrueckt }));
   const sm = r.summe || { kopf: [], zeilen: [] };
-  const z1 = sm.zeilen.find(z => z[0] === K[0]) || [], z2 = sm.zeilen.find(z => z[0] === K[1]) || [];
+  const z1 = sm.zeilen.find(z => z[0].replace(/ ›$/, "") === K[0]) || [], z2 = sm.zeilen.find(z => z[0].replace(/ ›$/, "") === K[1]) || [];
   // K[0]: 2 Absagen (100 Std., 0,5 Std.) · unter 24: 1 · unter 3: 1 · Ø 50,25 Std. = 2,1 Tage;  K[1]: 2 (3 Std., -1) · unter 24: 2 · unter 3: 1 · Ø 1,5 Std. → „2 Std.“
-  if (sm.kopf.join("|") !== "Kind|Absagen|unter 24 Std.|unter 3 Std.|Ø Vorlauf" || sm.zeilen.length !== 2 || sm.zeilen[0][0] !== [K[0], K[1]].sort((a, b) => a.localeCompare(b, "de"))[0]
+  if (sm.kopf.join("|") !== "Kind|Absagen|unter 24 Std.|unter 3 Std.|Ø Vorlauf" || sm.zeilen.length !== 2 || sm.zeilen[0][0].replace(/ ›$/, "") !== [K[0], K[1]].sort((a, b) => a.localeCompare(b, "de"))[0]
       || z1.slice(1).join("|") !== "2|1|1|2,1 Tage" || z2.slice(1).join("|") !== "2|2|1|2 Std." || r.farben) probleme.push("a) Summe je Kind: " + JSON.stringify({ sm, farben: r.farben }));
   zeilen.push(`a) Reiter „${r.reiter[2]}“; Summe je Kind: ${K[0]} ${z1.slice(1).join("/")} · ${K[1]} ${z2.slice(1).join("/")}`);
   const ez = (r.einzeln || { zeilen: [] }).zeilen;
