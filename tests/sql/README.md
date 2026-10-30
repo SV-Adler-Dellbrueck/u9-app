@@ -188,3 +188,14 @@ psql -d t -f tests/sql/supabase-attrappe.sql && psql -d t -f tests/sql/v766-nach
 und das Training ab, bekommt nur noch Ben welche (2 Zeilen). Ein zweites Ablegen desselben Termins durch denselben Trainer, ein
 Schlüssel wie `x7`, ein unbekannter Grund, eine unbekannte Art und eine Anmerkung über 500 Zeichen scheitern (fünf Fehlermeldungen sind
 gewollt). Ein Trainer liest, schreibt und löscht; Eltern sehen 0 Zeilen und können nicht schreiben; `anon` bekommt keinen Zugriff.
+
+## v767 · Absagen mit Vorlauf (rueckmelde_absagen)
+
+```bash
+psql -d t -f tests/sql/supabase-attrappe.sql && psql -d t -f tests/sql/v767-rueckmelde-absagen.sql
+```
+
+(Der Lauf legt `rueckmeldungen`, `rueckmeldung_log` und `saison_beginn` als Attrappe an und spielt die Migration `20261030_v767_rueckmelde_absagen.sql` selbst ein.)
+Erwartet: Der Trainer sieht drei Absagen – Kind A zu Termin 11 mit 20 Std. Vorlauf (aus dem Protokoll, `genau = t`), Kind B zu Termin 12 („krank“,
+Protokoll), Kind A zu Termin 13 mit 72 Std. (nur erste Antwort, `genau = f`). Es fehlen: die vom Trainer eingetragene Absage, die zurückgenommene
+Absage (aktueller Stand „zugesagt“) und das inaktive Kind. Eltern sehen 0 Zeilen; `anon` bekommt keinen Zugriff (eine Fehlermeldung ist gewollt).
