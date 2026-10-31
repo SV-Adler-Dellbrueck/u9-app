@@ -199,3 +199,14 @@ psql -d t -f tests/sql/supabase-attrappe.sql && psql -d t -f tests/sql/v767-ruec
 Erwartet: Der Trainer sieht drei Absagen – Kind A zu Termin 11 mit 20 Std. Vorlauf (aus dem Protokoll, `genau = t`), Kind B zu Termin 12 („krank“,
 Protokoll), Kind A zu Termin 13 mit 72 Std. (nur erste Antwort, `genau = f`). Es fehlen: die vom Trainer eingetragene Absage, die zurückgenommene
 Absage (aktueller Stand „zugesagt“) und das inaktive Kind. Eltern sehen 0 Zeilen; `anon` bekommt keinen Zugriff (eine Fehlermeldung ist gewollt).
+
+## v769 · Rückmeldungen je Termin (rueckmelde_termin)
+
+```bash
+psql -d t -f tests/sql/supabase-attrappe.sql && psql -d t -f tests/sql/v769-rueckmelde-termin.sql
+```
+
+(Der Lauf legt `rueckmeldungen` und `rueckmeldung_log` als Attrappe an und spielt die Migration `20261031_v769_rueckmelde_termin.sql` selbst ein.)
+Erwartet: Der Trainer sieht die vier aktiven Kinder – A zugesagt, B abgesagt mit zwei Verlaufseinträgen, C krank vom Trainer eingetragen, D ohne Antwort
+(`status` leer, `genau = f`); das inaktive Kind E fehlt; ein unbekannter Termin liefert 0 Zeilen. Eltern sehen 0 Zeilen; `anon` bekommt keinen Zugriff
+(eine Fehlermeldung ist gewollt).

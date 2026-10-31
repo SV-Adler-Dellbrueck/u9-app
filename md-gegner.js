@@ -423,6 +423,7 @@ function _tmdKarte(t){
   const istMeeting=t.typ==="trainermeeting";
   const elternRest=[
     {i:"ti-users",l:"Eltern-Info",c:`mdOpen('${t.datum}','${t.typ}')`},
+    ["training","spiel","turnier"].includes(t.typ)?{i:"ti-list-check",l:"Rückmeldungen",c:`rmdOpen(${Number(t.id)})`}:null,
     kommt?{i:"ti-speakerphone",l:"Ansage",c:`ansageVomTermin(${Number(t.id)})`}:null,
     kommt?(()=>{const deepLink=appRoot()+"?portal&rsvp="+t.id;
       const waText=`🦅 SV Adler U9 – bitte kurz rückmelden fürs nächste ${m.label}:\n${t.titel||m.label} am ${datumStr}${zeitStr?" um "+zeitStr+" Uhr":""}${t.ort?" ("+t.ort+")":""}\n👉 Zu-/absagen: ${deepLink}`;
@@ -1316,4 +1317,56 @@ async function turnierRender(){
       <span style="font-weight:800;color:${w}">${x.tore}:${x.gegentore}</span>
       <button onclick="turnierDelete(${x.id})" title="löschen" style="border:none;background:transparent;color:#dc2626;cursor:pointer;font-size:var(--s-text);padding:2px 4px"><i class="ti ti-trash"></i></button>
     </div>`;}).join("");
+}
+
+
+/* ═══ v769 · Rückmeldungen je Termin im Detail ═══════════════════════════════════════════
+   PO 31.10.: „Ich möchte konkret an einem Termin sehen, wer wann abgesagt oder zugesagt hat.“
+   RPC rueckmelde_termin (nur Trainer): je Kind Status, Zeitpunkt der letzten Antwort, Vorlauf bis Terminbeginn und der Verlauf aus
+   dem Protokoll (seit 29.09.2026). Ohne Protokoll ist nur die erste Antwort bekannt – das steht mit „≈“ da. Keine Rangliste. */
+function rmdDauer(std){
+  const h=Number(std); if(std==null||!isFinite(h))return "";
+  if(h<0)return "nach Beginn";
+  return (h<1?"unter 1 Std.":h<24?`${Math.round(h)} Std.`:`${(h/24).toFixed(1).replace(".",",")} Tage`)+" vorher";
+}
+function rmdWann(iso){
+  const d=new Date(iso); if(isNaN(d))return "";
+  return d.toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"})+" "+d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
+}
+const RMD_STATUS={zugesagt:["✅","Zusage"],abgesagt:["❌","Absage"],krank:["🤒","Krank"]};
+async function rmdOpen(terminId){
+  if(typeof sbToken==="function" && !sbToken()){ toast("Bitte als Trainer anmelden","err"); return; }
+  document.getElementById("rmd-modal")?.remove();
+  const m=document.createElement("div"); m.id="rmd-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Rückmeldungen im Detail");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10090;display:flex;align-items:flex-start;justify-content:center;padding:14px;overflow-y:auto";
+  m.onclick=e=>{ if(e.target===m)m.remove(); };
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:560px;width:100%;margin:auto">
+    ${typeof mdlHead==="function"?mdlHead("rmd-modal","📋","Rückmeldungen","Wer hat wann geantwortet · nur für das Trainerteam","#1e3a8a"):""}
+    <div id="rmd-inhalt" style="font-size:var(--s-text);color:var(--text2)">Lädt …</div></div>`;
+  document.body.appendChild(m);
+  let rows=null;
+  try{const r=await fetch(`${SB_URL}/rest/v1/rpc/rueckmelde_termin`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_termin:Number(terminId)})});if(r.ok)rows=await r.json();}catch(e){}
+  const box=document.getElementById("rmd-inhalt"); if(!box)return;
+  if(!Array.isArray(rows)){ box.innerHTML="Die Rückmeldungen lassen sich gerade nicht laden. Ist die Migration v769 eingespielt?"; return; }
+  if(!rows.length){ box.innerHTML="Zu diesem Termin gibt es keine Kinder im Kader."; return; }
+  const gruppen=[["zugesagt","Zusagen"],["abgesagt","Absagen"],["krank","Krank"],[null,"Keine Antwort"]];
+  const zahl=(k)=>rows.filter(x=>(x.status||null)===k).length;
+  const kopf=`<div style="font-weight:800;color:var(--text);margin-bottom:10px">${zahl("zugesagt")} Zusagen · ${zahl("abgesagt")+zahl("krank")} Absagen · ${zahl(null)} ohne Antwort</div>`;
+  const zeile=x=>{
+    const st=RMD_STATUS[x.status]; const verlauf=Array.isArray(x.verlauf)?x.verlauf:[];
+    const wann=x.status&&x.letzte_aenderung?rmdWann(x.letzte_aenderung):"";
+    const std=x.status&&x.letzte_aenderung&&x.beginn?(new Date(x.beginn)-new Date(x.letzte_aenderung))/3600e3:null;
+    const ca=x.genau?"":"≈ ";
+    const weg=verlauf.length>1?verlauf.map(v=>`${(RMD_STATUS[v.status]||["",v.status])[1].toLowerCase()} ${rmdWann(v.am)}${v.trainer?" (Trainerteam)":""}`).join(" → "):"";
+    return `<div class="rmd-zeile" style="padding:8px 0;border-top:1px solid var(--surface2)">
+      <div style="display:flex;gap:8px;align-items:baseline"><span style="flex:1;font-weight:700;color:var(--text)">${esc(x.name||"")}</span><span style="white-space:nowrap">${st?st[0]+" "+st[1]:"–"}</span></div>
+      ${wann?`<div style="font-size:var(--s-klein);color:var(--text2)">${ca}${esc(wann)}${std!=null?" · "+ca+esc(rmdDauer(std)):""}${x.durch_trainer?" · vom Trainerteam eingetragen":""}</div>`:""}
+      ${weg?`<div style="font-size:var(--s-klein);color:var(--text2)">Verlauf: ${esc(weg)}</div>`:""}
+    </div>`;
+  };
+  box.innerHTML=kopf+gruppen.map(([k,t])=>{ const z=rows.filter(x=>(x.status||null)===k); if(!z.length)return "";
+    return `<div style="margin-bottom:12px"><div style="font-weight:800;color:var(--text);margin-bottom:2px">${t} · ${z.length}</div>${z.map(zeile).join("")}</div>`; }).join("")
+    +`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px;line-height:1.5">Seit dem 29.09.2026 steht jeder Wechsel mit Zeitpunkt im Verlauf. Davor oder ohne Verlauf ist nur die erste Antwort bekannt – das zeigt „≈“.</div>`
+    +`<button type="button" class="btn" onclick="document.getElementById('rmd-modal').remove()" style="width:100%;min-height:48px;margin-top:12px;justify-content:center">Schließen</button>`;
 }
