@@ -1420,7 +1420,10 @@ const TP_PARALLEL_TYPEN=["individual","tw"];
    Vorgabe des Auftraggebers und weicht von der alten Rechnung im Vorlagen-Import ab,
    die main UND abschluss zusammenzählte. Es gibt jetzt EINE Definition, hier. */
 const TP_HAUPT_TYPEN=["main","spielform","uebungsform"];
-const TP_SPIEL_TYPEN=["main","spielform"];
+/* v773: „Turnier" – ein Block, in dem nur noch Turnier gespielt wird (Aufwärmen davor, dann
+   Turnier bis zum Schluss). Er braucht keine Übung und keine Gruppen wie das Abschlussspiel,
+   zählt aber – anders als dieses – als Spielform: Nettospielzeit und Spielform-Anteil. */
+const TP_SPIEL_TYPEN=["main","spielform","turnier"];
 function tpIstHauptteil(typ){ return TP_HAUPT_TYPEN.includes(typ||"main"); }
 function tpIstSpielform(typ){ return TP_SPIEL_TYPEN.includes(typ||"main"); }
 /* Nettospielzeit einer Einheit: die Summe der Spielform-Blöcke. Parallele Blöcke
@@ -1431,8 +1434,8 @@ function tpIstSpielform(typ){ return TP_SPIEL_TYPEN.includes(typ||"main"); }
    Aussage des Trainers, und eine Marke „Spielform" wäre eine Behauptung. */
 function tpTypMarke(typ){
   const t=typ||"main";
-  if(t!=="spielform"&&t!=="uebungsform")return "";
-  const wort=t==="spielform"?"Spielform":"Übungsform";
+  if(t!=="spielform"&&t!=="uebungsform"&&t!=="turnier")return "";
+  const wort=t==="spielform"?"Spielform":t==="turnier"?"Turnier · Spielform":"Übungsform";
   return ` <span style="font-size:var(--s-klein);font-weight:800;color:var(--text2);background:var(--surface2);border:var(--border-s);border-radius:6px;padding:1px 6px;white-space:nowrap">${wort}</span>`;
 }
 /* v690: Gesamtdauer der Einheit wie in der Zeitleiste – parallele Blöcke (Torwart, Individual)
@@ -2568,7 +2571,7 @@ function tpRenderTimeline(){
     const parallel=tpIstParallel(slot);
     const startMin=parallel?startsArr[slot.parallelZu]:time;
     const endMin=startMin+(parallel?tpSlots[slot.parallelZu].dauer:slot.dauer);
-    const noGroups=typ==="warmup"||typ==="abschluss"||typ==="tw";
+    const noGroups=typ==="warmup"||typ==="abschluss"||typ==="turnier"||typ==="tw";
     /* v595: Zwei Blockarten brauchen gar keine Uebung.
 
        Das Abschlussspiel ist freies Spiel; das war schon so. Dazu kommt jetzt das
@@ -2580,7 +2583,7 @@ function tpRenderTimeline(){
        tragen kein eigenes Merkmal dafuer, und eines nachzuruesten hiesse, jede Vorlage
        in Datei UND Datenbank anzufassen, ohne dass es mehr aussagte als der Name. */
     const frei=tpFreiesFenster(slot);
-    const noSelect=typ==="abschluss"||frei;
+    const noSelect=typ==="abschluss"||typ==="turnier"||frei;
     /* Stationen = angehakte Trainer, MINDESTENS aber so viele, wie ausgeloste Gruppen
        existieren. Sagt ein Trainer nach der Auslosung ab, fiel sonst eine komplette
        Gruppe aus Anzeige und Trainingsstart – die Kinder tauchten nirgends mehr auf. */
@@ -2910,7 +2913,7 @@ function tpSpielformQuote(){
     if(erklaert?slotTyp==="spielform":_istSpielform(f))spiel+=d;
   });
   // Abschluss zählt immer als Spiel (freies Spiel), auch ohne gewählte Übung
-  tpSlots.forEach(sl=>{if((sl.typ||"main")==="abschluss"){const belegt=document.querySelector(`[id^="tp-form-${tpSlots.indexOf(sl)}-"]`)?.value;if(!belegt){gesamt+=sl.dauer||0;spiel+=sl.dauer||0;}}});
+  tpSlots.forEach(sl=>{if((sl.typ||"main")==="abschluss"||sl.typ==="turnier"){const belegt=document.querySelector(`[id^="tp-form-${tpSlots.indexOf(sl)}-"]`)?.value;if(!belegt){gesamt+=sl.dauer||0;spiel+=sl.dauer||0;}}});
   if(!gesamt)return null;
   return Math.round(spiel/gesamt*100);
 }
@@ -3147,7 +3150,8 @@ const TP_ADD_OPTS=[
   {label:"Torwart-Spielen (rotierend)",dauer:15,farbe:"#854d0e",typ:"tw",icon:"🧤"},
   {label:"Individual-Training",dauer:15,farbe:"#0e7490",typ:"individual",icon:"🎯"},
   {label:"Aufwärmen",dauer:10,farbe:"#059669",typ:"warmup",icon:"🔥"},
-  {label:"Abschlussspiel",dauer:20,farbe:"#c2410c",typ:"abschluss",icon:"🏆"}
+  {label:"Abschlussspiel",dauer:20,farbe:"#c2410c",typ:"abschluss",icon:"🏆"},
+  {label:"Turnierphase",dauer:30,farbe:"#be185d",typ:"turnier",icon:"🏅"}
 ];
 /* Die Dauer stand bisher nur als Text da. Wer eine Phase loeschte, konnte die frei
    gewordene Zeit nirgends verteilen – ein Abschlussspiel liess sich nicht verlaengern. */
@@ -3682,7 +3686,7 @@ function tpPlanEntries(){
     const groupIdx=parseInt(match[2]);
     const slot=tpSlots[slotIdx];
     const typ=slot?.typ||"main";
-    const noGrp=typ==="warmup"||typ==="abschluss"||typ==="tw";
+    const noGrp=typ==="warmup"||typ==="abschluss"||typ==="turnier"||typ==="tw";
     // tpCoaches wurde bisher nur GESCHRIEBEN: das Dropdown "Trainer für diese Station"
     // hatte keinerlei Wirkung. Jetzt entscheidet es, wem die Übung zugerechnet wird
     // (Trainer-Statistik und "Einheit bewerten"). Fällt auf den Gruppen-Trainer zurück.
@@ -5255,7 +5259,7 @@ function _tlSnapshot(){
         kinder:tgg?tgg.kinder.slice():null
       });
     });
-    if(!gruppen.length)gruppen.push({trainer:"Alle",uebung:(slot.typ==="abschluss")?"Freies Spiel / Trainingsturnier":"(frei)",gruppe:null,kinder:null});
+    if(!gruppen.length)gruppen.push({trainer:"Alle",uebung:(slot.typ==="abschluss"||slot.typ==="turnier")?"Freies Spiel / Trainingsturnier":"(frei)",gruppe:null,kinder:null});
     const label=(slot.label||("Station "+(si+1)))+(nDg>1?` · Durchgang ${d+1}/${nDg}`:"");
     stationen.push({si,label,dauer:nDg>1?minuten[d]:Math.max(1,slot.dauer||10),farbe:slot.farbe||"#16a34a",gruppen});
     }
