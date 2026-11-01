@@ -1412,6 +1412,7 @@ function elternTermineCarouselHtml(rows,kids,rsvpAll,ohneId){
   return `<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
     <div style="font-weight:800;font-size:var(--s-karte)">📅 Danach</div>
     ${zeilen}
+    <button type="button" id="danach-alle" onclick="elternTermineOpen()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;margin-top:10px;border:1.5px solid #1e3a8a;border-radius:12px;background:#eef2ff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">Alle Termine der Saison ›</button>
   </div>`;
 }
 
@@ -2065,10 +2066,14 @@ async function tdRsvp(terminId,spielerId,status){
     }else{
       const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?on_conflict=termin_id,spieler_id`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({termin_id:terminId,spieler_id:spielerId,status,updated_at:new Date().toISOString()})});
       if(!r.ok){toast("Konnte nicht speichern","err");return;}
-      if(status==="zugesagt"){const dd=await xpAward(spielerId,"rsvp","t"+terminId);if(dd>0)setTimeout(()=>toast(`${XP_ICON} +${dd} ${XP_LABEL} gesammelt!`),900);}
     }
   }catch(e){toast("Netzwerkfehler","err");return;}
   terminDetailOpen(terminId); // Fenster frisch zeichnen
+  /* v771: Die Liste hinter dem Fenster („Danach“, Karte „Nächster Termin“) zeigte weiter die alte Antwort, bis die Seite neu
+     geladen wurde – PO 04.11.: abgesagt, aber als „Zusage“ angezeigt. Wie elternRsvp: Startseite neu laden. */
+  if(typeof elternDashLoad==="function")elternDashLoad();
+  /* Die Federn kommen erst nach dem Neuzeichnen: scheitert die Gutschrift, bleibt die gespeicherte Antwort trotzdem sichtbar. */
+  if(status==="zugesagt"){ try{ const dd=await xpAward(spielerId,"rsvp","t"+terminId); if(dd>0)setTimeout(()=>toast(`${XP_ICON} +${dd} ${XP_LABEL} gesammelt!`),900); }catch(e){} }
 }
 async function tdNomLoad(t,kids){
   const box=document.getElementById("td-nom"); if(!box)return;
