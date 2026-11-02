@@ -865,7 +865,14 @@ function awRenderList(){
   const aktivK=KADER.filter(k=>k.aktiv!==false);
   const gespeichert=aktivK.some(k=>existing[k.name]);
   const vorab=(!gespeichert&&window._awVorab&&window._awVorab[datum])||null;
-  let html=(vorab?`<div id="aw-vorab-hinweis" style="font-size:var(--s-klein);color:var(--text2);margin:8px 0 0;line-height:1.4">📣 Vorbelegt: alle außer Absagen${vorab.absage.size?` (${vorab.absage.size} abgesagt)`:""} – noch nicht gespeichert. Fehlende abwählen und speichern.</div>`:"")
+  /* v775: Stand je Kind aus den Rückmeldungen. „keine Antwort“ gilt weiter als dabei (ein Training gilt als zugesagt), ist aber
+     sichtbar – an der Kachel und in der Zeile darüber – und lässt sich per Push nachfragen. */
+  const stand=n=>{ if(!vorab)return ""; if(vorab.absage.has(n))return "abgesagt"; if(!vorab.zusage)return ""; if(vorab.zusage.has(n))return "zugesagt"; if(vorab.unsicher&&vorab.unsicher.has(n))return "unsicher"; return "keine Antwort"; };
+  const zahl=w=>aktivK.filter(k=>stand(k.name)===w).length, nOffen=zahl("keine Antwort");
+  const tagesGeschehen=vorab&&vorab.datum&&vorab.datum<isoLokal();
+  const pushKnopf=(vorab&&vorab.zusage&&nOffen&&vorab.terminId&&!tagesGeschehen)
+    ?` <button type="button" class="btn btn-sm" id="aw-offen-push" style="min-height:44px;margin-top:6px" onclick="rsvpOffeneErinnern(${Number(vorab.terminId)},this)"><i class="ti ti-bell"></i> ${nOffen} ohne Antwort per Push erinnern</button>`:"";
+  let html=(vorab?`<div id="aw-vorab-hinweis" style="font-size:var(--s-klein);color:var(--text2);margin:8px 0 0;line-height:1.4">📣 ${vorab.zusage?`Aus den Rückmeldungen: <b>${zahl("zugesagt")} zugesagt</b> · ${vorab.absage.size} abgesagt${zahl("unsicher")?` · ${zahl("unsicher")} unsicher`:""} · <b>${nOffen} ohne Antwort</b>. Ohne Antwort gilt als dabei – noch nicht gespeichert. Fehlende abwählen und speichern.`:`Vorbelegt: alle außer Absagen${vorab.absage.size?` (${vorab.absage.size} abgesagt)`:""} – noch nicht gespeichert. Fehlende abwählen und speichern.`}${pushKnopf}</div>`:"")
     /* v687: Zählung statt Aufforderung. „Alle da (dann Fehlende abwählen)“ stand auch dann da,
        wenn schon alle angehakt waren – jetzt zeigt eine Zeile den Stand, und „Alle da“ kommt nur,
        wenn jemand fehlt. Der Speichern-Knopf nennt dieselbe Zahl (awZaehlen). */
@@ -876,10 +883,10 @@ function awRenderList(){
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">`;
   aktivK.forEach(k=>{
     const p=existing[k.name]||{da:vorab?!vorab.absage.has(k.name):false,qual:0};
-    const abgesagt=vorab&&vorab.absage.has(k.name);
-    html+=`<button class="aw-tile${p.da?" on":""}" onclick="awToggle(this,'${jsq(k.name)}')" data-player="${esc(k.name)}">
+    const st=existing[k.name]?"":stand(k.name);   // gespeicherte Anwesenheit ist Tatsache – dann kein Rückmelde-Stand
+    html+=`<button class="aw-tile${p.da?" on":""}${st==="keine Antwort"?" aw-offen":""}" onclick="awToggle(this,'${jsq(k.name)}')" data-player="${esc(k.name)}" data-stand="${st}">
       <span class="aw-ok">✓</span>
-      <span style="font-size:var(--s-text);font-weight:800;line-height:1.2">${esc(k.name)}</span>${abgesagt?`<span style="font-size:var(--s-klein);color:var(--text2)">abgesagt</span>`:""}
+      <span style="font-size:var(--s-text);font-weight:800;line-height:1.2">${esc(k.name)}</span>${st?`<span class="aw-stand" style="font-size:var(--s-klein);${st==="keine Antwort"?"font-weight:800":"color:var(--text2)"}">${st}</span>`:""}
       ${p.qual?`<span title="Bewertung aus „Einheit bewerten“" style="font-size:var(--s-klein);color:#f59e0b;letter-spacing:1px">${"★".repeat(p.qual)}</span>`:""}
     </button>`;
   });
@@ -1078,10 +1085,14 @@ function awLoad(){
     }
     /* v666: Beim Training die Absagen holen – daraus entsteht die Vorbelegung der Kinder. */
     if(t&&t.typ==="training"&&t.id!=null){
-      let ab=[];
-      try{const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?termin_id=eq.${t.id}&status=in.(abgesagt,krank)&select=spieler_id`,{headers:sbAuthHeaders()});if(r.ok)ab=(await r.json()||[]).map(x=>x.spieler_id);}catch(e){}
-      const namen=(typeof kidListFromIds==="function")?kidListFromIds(ab):[];
-      (window._awVorab=window._awVorab||{})[datum]={absage:new Set(namen)};
+      /* v775 (PO 02.11.): Zusage, Absage, Unsicher und „noch keine Antwort“ sind vier Dinge. Vorher kannte die Vorbelegung nur die
+         Absagen – wer nie geantwortet hatte, sah aus wie jemand, der zugesagt hat. Jetzt trägt jede Kachel ihren Stand. */
+      let rows=[], geladen=false;
+      try{const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?termin_id=eq.${t.id}&select=spieler_id,status`,{headers:sbAuthHeaders()});if(r.ok){rows=await r.json()||[];geladen=true;}}catch(e){}
+      const von=f=>new Set((typeof kidListFromIds==="function")?kidListFromIds(rows.filter(f).map(x=>x.spieler_id)):[]);
+      const vorabEintrag={absage:von(x=>x.status==="abgesagt"||x.status==="krank"),terminId:t.id,datum:datum};
+      if(geladen){vorabEintrag.zusage=von(x=>x.status==="zugesagt");vorabEintrag.unsicher=von(x=>x.status==="unsicher");}
+      (window._awVorab=window._awVorab||{})[datum]=vorabEintrag;
       if(document.getElementById("aw-date")?.value===datum&&!window._awDirty)awRenderList();
     }
   }).catch(()=>{});
