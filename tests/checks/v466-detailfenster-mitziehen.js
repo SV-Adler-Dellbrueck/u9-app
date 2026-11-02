@@ -4,7 +4,8 @@
    die Liste im DOM sofort wieder aus. Vom Startbildschirm aus ist sie nie da. */
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
-  const morgen = h.tagePlus(1);
+  /* v774: drei Tage voraus – unter 24 Stunden wäre der Grund Pflicht und das Grund-Fenster stünde vor „Fällt aus“. */
+  const morgen = h.tagePlus(3);
   const s = await h.starten({ supabase: h.supabaseAttrappe({
     kader: h.kaderZeilen(),
     termine: [{ id: 4711, datum: morgen, typ: "turnier", titel: "Kinderfestival", heim: true,
