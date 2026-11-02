@@ -653,7 +653,7 @@ function platzAmpelTrainer(t,nackt){
     const a=PLATZ_AMPEL[k], on=cur===k;
     return `<button onclick="platzAmpelSet(${Number(t.id)},'${k}')" style="flex:1;min-width:96px;min-height:46px;border:2px solid ${a.col};border-radius:10px;cursor:pointer;font-family:inherit;font-size:var(--s-text);font-weight:800;background:${on?a.col:"var(--surface)"};color:${on?"#fff":a.col}">${a.emo} ${a.lbl}</button>`;
   }).join("");
-  const zusatz=cur?`<input id="pa-note-${t.id}" value="${esc(t.platz_status_note||"")}" placeholder="${cur==="ausweich"?"Wohin? z. B. Halle 2":cur==="abgesagt"?"Grund (optional)":"Hinweis (optional)"}" onchange="platzAmpelNote(${Number(t.id)},this.value)" style="width:100%;min-height:44px;margin-top:6px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box">`:"";
+  const zusatz=cur?`<input id="pa-note-${t.id}" value="${esc(t.platz_status_note||"")}" placeholder="${cur==="ausweich"?"Wohin? z. B. Halle 2":cur==="abgesagt"?(terminKurzfristig(t)?"Grund (Pflicht, Termin unter 24 Std.)":"Grund (optional)"):"Hinweis (optional)"}" onchange="platzAmpelNote(${Number(t.id)},this.value)" style="width:100%;min-height:44px;margin-top:6px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box">`:"";
   /* v491: Im Termin-Fenster steht die Überschrift schon am Klappdeckel – dort nur die Knöpfe.
      v741: Das Termin-Fenster zeigt die Knöpfe oben, mit einer Zeile, was die Eltern sehen. */
   if(nackt)return `<div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-bottom:4px">Findet der Termin statt? Die Eltern sehen es sofort.</div><div style="display:flex;gap:6px;flex-wrap:wrap">${btns}</div>${zusatz}`;
@@ -688,7 +688,7 @@ async function tmAbsagenOpen(){
       <label><span style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2)">Von</span><input id="tm-ab-von" type="date" min="${heute}" value="${_tmAb.von}" onchange="tmAbsagenZeitraum()" style="width:100%;${inp}"></label>
       <label><span style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2)">Bis</span><input id="tm-ab-bis" type="date" min="${heute}" value="${_tmAb.bis}" onchange="tmAbsagenZeitraum()" style="width:100%;${inp}"></label>
     </div>
-    <label style="display:block;margin-top:8px"><span style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2)">Grund für die Eltern (optional)</span>
+    <label style="display:block;margin-top:8px"><span style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2)">Grund für die Eltern (Pflicht, wenn ein Termin unter 24 Std. entfernt ist)</span>
       <input id="tm-ab-grund" maxlength="80" value="${esc(_tmAb.grund)}" placeholder="z. B. Herbstferien" oninput="_tmAb&&(_tmAb.grund=this.value)" style="width:100%;${inp}"></label>
     <label style="display:flex;align-items:center;gap:10px;min-height:44px;margin-top:6px;font-size:var(--s-text);cursor:pointer"><input id="tm-ab-nur" type="checkbox" checked onchange="_tmAb.nurTraining=this.checked;_tmAb.erst=true;tmAbsagenListe()" style="width:22px;height:22px">Nur Trainings</label>
     <div id="tm-ab-liste" style="margin-top:6px"></div>
@@ -752,6 +752,10 @@ async function tmAbsagenSpeichern(zuruecknehmen){
   const ids=_tmAbTermine().filter(t=>_tmAb.aus.has(Number(t.id))&&((t.platz_status==="abgesagt")===!!zuruecknehmen)).map(t=>Number(t.id));
   if(!ids.length)return;
   const grund=(document.getElementById("tm-ab-grund")?.value||"").trim()||null;
+  if(!zuruecknehmen&&!grund&&_tmAbTermine().some(t=>_tmAb.aus.has(Number(t.id))&&t.platz_status!=="abgesagt"&&terminKurzfristig(t))){
+    toast("Ein Termin beginnt in weniger als 24 Stunden – bitte einen Grund eintragen","err");
+    const f=document.getElementById("tm-ab-grund"); if(f)f.focus(); return;
+  }
   const jetzt=new Date().toISOString();
   const daten=zuruecknehmen?{platz_status:null,platz_status_note:null,platz_status_at:jetzt}:{platz_status:"abgesagt",platz_status_note:grund,platz_status_at:jetzt};
   try{
@@ -764,14 +768,31 @@ async function tmAbsagenSpeichern(zuruecknehmen){
   document.getElementById("tm-absagen-modal")?.remove(); _tmAb=null;
   tmLoad();
 }
+/* v774: Fällt ein Termin aus und beginnt er in weniger als 24 Stunden, ist der Grund Pflicht (Charles 02.11.). Er steht
+   im Hinweisfeld und geht an die Eltern („Fällt aus · Grund“). Bei längerem Vorlauf bleibt er freiwillig. */
+function terminKurzfristig(t){
+  return !!t&&typeof absageKurzfristig==="function"&&absageKurzfristig(t.datum,t.uhrzeit);
+}
+const PLATZ_GRUND_CHIPS=["Platz gesperrt","Unwetter","Zu wenige Trainer","Zu wenige Kinder","Feiertag"];
 async function platzAmpelSet(id,status){
+  const tt=(TM_TERMINE||[]).find(x=>Number(x.id)===Number(id));
+  let grund=null;
+  if(status==="abgesagt"&&terminKurzfristig(tt)){
+    const alt=String(tt.platz_status_note||"").trim();
+    if(alt)grund=alt;
+    else if(typeof rsvpGrundFragen==="function"){
+      grund=await rsvpGrundFragen("abgesagt",true,{titel:"🔴 Termin fällt aus – Grund",chips:PLATZ_GRUND_CHIPS,knopf:"Termin absagen",
+        hinweis:"Der Termin beginnt in weniger als 24 Stunden – bitte nenne den Grund. Die Eltern sehen ihn bei „Fällt aus“."});
+      if(!grund)return;
+    }
+  }
   try{
     const r=await fetch(`${SB_URL}/rest/v1/termine?id=eq.${id}`,{method:"PATCH",headers:sbAuthHeaders(),
-      body:JSON.stringify({platz_status:status,platz_status_at:new Date().toISOString()})});
+      body:JSON.stringify(Object.assign({platz_status:status,platz_status_at:new Date().toISOString()},grund?{platz_status_note:grund}:{}))});
     if(sbCheck401(r))return;
     if(!r.ok){toast(sbDeniedMsg(r,"Konnte nicht setzen"),"err");return;}
   }catch(e){toast("Netzwerkfehler","err");return;}
-  const t=(TM_TERMINE||[]).find(x=>Number(x.id)===Number(id)); if(t){t.platz_status=status;t.platz_status_at=new Date().toISOString();}
+  const t=(TM_TERMINE||[]).find(x=>Number(x.id)===Number(id)); if(t){t.platz_status=status;t.platz_status_at=new Date().toISOString();if(grund)t.platz_status_note=grund;}
   try{navigator.vibrate&&navigator.vibrate(20);}catch(e){}
   toast(`Eltern sehen jetzt: ${PLATZ_AMPEL[status].emo} ${PLATZ_AMPEL[status].lbl}`);
   tmDetailNeu(id);   // offenes Detailfenster mitziehen
@@ -779,6 +800,11 @@ async function platzAmpelSet(id,status){
 }
 async function platzAmpelNote(id,val){
   const note=(val||"").trim()||null;
+  const t0=(TM_TERMINE||[]).find(x=>Number(x.id)===Number(id));
+  if(!note&&t0&&t0.platz_status==="abgesagt"&&terminKurzfristig(t0)){
+    toast("Bei einem Termin in den nächsten 24 Stunden bleibt der Grund Pflicht","err");
+    tmDetailNeu(id); tmLoad(); return;
+  }
   try{
     const r=await fetch(`${SB_URL}/rest/v1/termine?id=eq.${id}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify({platz_status_note:note})});
     if(sbCheck401(r))return;

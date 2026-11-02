@@ -1203,40 +1203,73 @@ async function elternDashLoad(){
 /* Grund zur Ab-/Krankmeldung: Chips fuer die haeufigsten Faelle + freies Feld.
    Aufloesung immer mit einem Wert (auch bei Ueberspringen), damit die Rueckmeldung
    selbst nie an diesem Fenster haengen bleibt. */
-function rsvpGrundFragen(status){
+/* v774: Beginnt der Termin in weniger als 24 Stunden, ist der Grund Pflicht (Charles 02.11.): kein „Ohne Grund“,
+   „Speichern“ erst mit Text oder Auswahl, Abbrechen speichert nichts und liefert false. cfg gilt für das Trainerteam
+   (eigener Titel, eigene Auswahl). Ohne Pflicht bleibt alles wie vorher: freiwillig, Abbrechen liefert null. */
+function absageKurzfristig(datum,uhrzeit){
+  if(!datum)return false;
+  const b=new Date(String(datum).slice(0,10)+"T"+String(uhrzeit||"10:00").slice(0,5)+":00");
+  if(isNaN(b.getTime()))return false;
+  return (b.getTime()-Date.now())<24*3600*1000;
+}
+async function rsvpPflichtGrund(terminId){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/termine?id=eq.${Number(terminId)}&select=datum,uhrzeit`,{headers:sbAuthHeaders()});
+    if(!r.ok)return false;
+    const t=(await r.json())[0];
+    return !!t&&absageKurzfristig(t.datum,t.uhrzeit);
+  }catch(e){ return false; }   // ohne Netz lässt sich ohnehin nichts speichern
+}
+function rsvpGrundFragen(status,pflicht,cfg){
+  cfg=cfg||{};
   return new Promise(res=>{
     document.getElementById("rg-ov")?.remove();
-    const chips=status==="krank"
+    const chips=cfg.chips||(status==="krank"
       ? ["Erkältung","Fieber","Verletzung","Arzttermin"]
-      : ["Urlaub","Familientermin","Schule/Hausaufgaben","Anderer Termin"];
+      : ["Urlaub","Familientermin","Schule/Hausaufgaben","Anderer Termin"]);
     const ov=document.createElement("div"); ov.id="rg-ov";
     ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true");
     ov.style.cssText="position:fixed;inset:0;z-index:10060;background:rgba(15,23,42,.55);display:flex;align-items:flex-end;justify-content:center;padding:0";
     const fertig=v=>{ov.remove();res(v||null);};
-    ov.onclick=e=>{if(e.target===ov)fertig(null);};
+    const abbruch=()=>{ov.remove();res(pflicht?false:null);};
+    ov.onclick=e=>{if(e.target===ov)abbruch();};
     ov.innerHTML=`<div style="background:#fff;color:#1a1a2e;width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))">
-      <div style="font-size:var(--s-karte);font-weight:800">${status==="krank"?"🤒 Kurzer Hinweis":"📝 Grund der Absage"}</div>
-      <div style="font-size:var(--s-text);color:#64748b;margin:3px 0 12px">Freiwillig – hilft dem Trainerteam beim Planen.</div>
+      <div style="font-size:var(--s-karte);font-weight:800">${cfg.titel||(status==="krank"?"🤒 Kurzer Hinweis":"📝 Grund der Absage")}</div>
+      <div style="font-size:var(--s-text);color:#64748b;margin:3px 0 12px">${pflicht?(cfg.hinweis||"Der Termin beginnt in weniger als 24 Stunden – bitte nenne kurz den Grund. Ohne Grund lässt sich nicht absagen."):"Freiwillig – hilft dem Trainerteam beim Planen."}</div>
       <div id="rg-chips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
         ${chips.map(c=>`<button data-c="${esc(c)}" style="min-height:44px;padding:8px 14px;border:1.5px solid var(--rand-bedien);border-radius:22px;background:#fff;color:#334155;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">${esc(c)}</button>`).join("")}
       </div>
       <input id="rg-txt" type="text" maxlength="120" placeholder="oder kurz selbst schreiben…" style="width:100%;box-sizing:border-box;min-height:46px;padding:10px 12px;border:1.5px solid var(--rand-bedien);border-radius:12px;font-family:inherit;font-size:var(--s-karte)">
       <div style="display:flex;gap:8px;margin-top:12px">
-        <button id="rg-skip" style="flex:1;min-height:48px;border:1.5px solid var(--rand-bedien);border-radius:12px;background:#fff;color:#64748b;font-family:inherit;font-size:var(--s-karte);font-weight:700;cursor:pointer">Ohne Grund</button>
-        <button id="rg-ok" style="flex:1.4;min-height:48px;border:none;border-radius:12px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">Speichern</button>
+        <button id="rg-skip" style="flex:1;min-height:48px;border:1.5px solid var(--rand-bedien);border-radius:12px;background:#fff;color:#64748b;font-family:inherit;font-size:var(--s-karte);font-weight:700;cursor:pointer">${pflicht?"Abbrechen":"Ohne Grund"}</button>
+        <button id="rg-ok" style="flex:1.4;min-height:48px;border:1.5px solid #64748b;border-radius:12px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">${cfg.knopf||"Speichern"}</button>
       </div>
     </div>`;
     document.body.appendChild(ov);
     ov.querySelectorAll("#rg-chips button").forEach(b=>b.onclick=()=>fertig(b.dataset.c));
-    ov.querySelector("#rg-skip").onclick=()=>fertig(null);
-    ov.querySelector("#rg-ok").onclick=()=>fertig((document.getElementById("rg-txt").value||"").trim()||null);
+    ov.querySelector("#rg-skip").onclick=()=>pflicht?abbruch():fertig(null);
+    const ok=ov.querySelector("#rg-ok"), txt=ov.querySelector("#rg-txt");
+    ok.onclick=()=>{ const v=(txt.value||"").trim(); if(pflicht&&!v){ txt.focus(); return; } fertig(v||null); };
+    if(pflicht){
+      /* Aus-Zustand ohne Farbe als einziges Zeichen: Text sagt es, Knopf ist gesperrt (aria-disabled) und hell mit dunkler Schrift. */
+      const paint=()=>{ const leer=!(txt.value||"").trim(); ok.setAttribute("aria-disabled",leer?"true":"false");
+        ok.style.background=leer?"#e2e8f0":"#1e3a8a"; ok.style.color=leer?"#334155":"#fff"; ok.textContent=leer?"Erst Grund nennen":(cfg.knopf||"Speichern"); };
+      txt.addEventListener("input",paint); paint();
+      ov.querySelectorAll("#rg-chips button").forEach(b=>b.onclick=()=>{ txt.value=b.dataset.c; paint(); txt.focus(); });
+      setTimeout(()=>txt.focus(),50);
+    }
   });
 }
 async function elternRsvp(terminId,spielerId,status){
   let kommentar=null;
   // Der System-Dialog (prompt) sah fremd aus und riss aus der App heraus (PO) – jetzt ein
   // eigenes Fenster mit Schnellauswahl. Abbrechen = Rueckmeldung trotzdem speichern.
-  if(status==="abgesagt"||status==="krank")kommentar=await rsvpGrundFragen(status);
+  if(status==="abgesagt"||status==="krank"){
+    /* v774: Unter 24 Stunden vor Beginn ist der Grund Pflicht; Abbrechen speichert dann nichts. */
+    const pflicht=await rsvpPflichtGrund(terminId);
+    kommentar=await rsvpGrundFragen(status,pflicht);
+    if(kommentar===false)return;
+  }
   try{
     const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?on_conflict=termin_id,spieler_id`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({termin_id:terminId,spieler_id:spielerId,status,kommentar,updated_at:new Date().toISOString()})});
     if(!r.ok){toast("Konnte nicht speichern","err");return;}
@@ -2059,12 +2092,20 @@ async function elternFotoConsentRevoke(spielerId){
   }catch(e){toast("Netzwerkfehler","err");}
 }
 async function tdRsvp(terminId,spielerId,status){
+  /* v774: Auch im Termin-Fenster – beginnt der Termin in weniger als 24 Stunden, braucht eine Absage einen Grund. */
+  let kommentar;
+  if(status==="abgesagt"||status==="krank"){
+    if(await rsvpPflichtGrund(terminId)){
+      kommentar=await rsvpGrundFragen(status,true);
+      if(kommentar===false)return;
+    }
+  }
   try{
     if(status===null){
       const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?termin_id=eq.${terminId}&spieler_id=eq.${spielerId}`,{method:"DELETE",headers:sbAuthHeaders()});
       if(!r.ok){toast("Konnte nicht entfernen","err");return;}
     }else{
-      const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?on_conflict=termin_id,spieler_id`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({termin_id:terminId,spieler_id:spielerId,status,updated_at:new Date().toISOString()})});
+      const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?on_conflict=termin_id,spieler_id`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify(Object.assign({termin_id:terminId,spieler_id:spielerId,status,updated_at:new Date().toISOString()},kommentar?{kommentar}:{}))});
       if(!r.ok){toast("Konnte nicht speichern","err");return;}
     }
   }catch(e){toast("Netzwerkfehler","err");return;}
