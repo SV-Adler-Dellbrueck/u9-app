@@ -372,6 +372,26 @@ function elternMenueUmschalten(){
   const auf=m.style.display==="none"; m.style.display=auf?"flex":"none";
   if(k)k.setAttribute("aria-expanded",auf?"true":"false");
 }
+/* v786 · Einheitliche Linien-Symbole statt Emoji in den runden Scheiben des Eltern-Dashboards (Charles 04.11.: „edler und professioneller“).
+   Eine Linienstärke, eine Größe, Farbe über currentColor (die Scheibe setzt sie, im Dunkeln zieht elternThemeSweep mit). Unbekanntes Zeichen → bleibt das Emoji.
+   Die Scheiben sind aria-hidden; der Sinn steht im Titel daneben. */
+const EP_ICONS={
+  "🗣️":'<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.4A8 8 0 1 1 21 12z"/><path d="M8.5 11h7M8.5 14h4"/>',
+  "📰":'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 12.5h8M8 16h5"/>',
+  "📋":'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5h6v2.5H9z"/><path d="m8.5 12.5 1.5 1.5 3-3M8.5 17.5h7"/>',
+  "🔒":'<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>',
+  "🎮":'<rect x="3" y="8" width="18" height="10" rx="5"/><path d="M8 11v4M6 13h4M15.5 12h.01M17.5 14h.01"/>',
+  "🃏":'<rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="m12 8.5 1.2 2.4 2.6.4-1.9 1.8.5 2.6-2.4-1.3-2.4 1.3.5-2.6-1.9-1.8 2.6-.4z"/>',
+  "💰":'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9M9.5 9.8c0-1 1-1.6 2.5-1.6s2.5.6 2.5 1.6-1 1.5-2.5 1.8-2.5.7-2.5 1.8 1 1.6 2.5 1.6 2.5-.6 2.5-1.6"/>',
+  "📅":'<rect x="4" y="5.5" width="16" height="15" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',
+  "📌":'<path d="m14.5 3.5 6 6-3 .8-3.5 3.7.4 3.8-1.5 1.5-4.2-4.2-5.2 5.2M9.3 9.8l1.5-1.5 3.8.4"/>',
+  "📣":'<path d="M4 10.5v3l11 5V5.5z"/><path d="M15 9a3.5 3.5 0 0 1 0 6M7 14.5l1.2 4.5h2.3L9.5 15"/>',
+  "📱":'<rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/>'
+};
+function epIcon(emoji){
+  const d=EP_ICONS[emoji]; if(!d)return emoji;
+  return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'+d+'</svg>';
+}
 function elternGrussSetzen(kids,termin){
   const g=document.getElementById("ep-gruss"), g2=document.getElementById("ep-gruss2"); if(!g)return;
   const namen=(kids||[]).map(k=>(k.kader&&k.kader.name)||"").filter(Boolean);
@@ -955,7 +975,7 @@ async function elternDashLoad(){
   /* PO v407: „adlernews auch nur wenn etwas drin ist." – wie beim To-Do-Knopf: unsichtbar
      starten, elternNewsLoad blendet ihn nur bei ungelesenen Punkten ein. */
   html+=`<button id="eltern-news-btn" onclick="elternCatOpen('news')" style="display:none;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:10px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)">
-    <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1">📣</span>
+    <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("📣")}</span>
     <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Adler News</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Neues aus dem Team &amp; von deinem Kind</span></span>
     <span id="eltern-news-badge" style="display:none;background:#ef4444;color:#fff;font-weight:800;font-size:var(--s-text);border-radius:12px;padding:2px 9px">0</span>
     <span style="font-size:var(--s-teil);color:#64748b">›</span>
@@ -1058,18 +1078,18 @@ async function elternDashLoad(){
   //    je Kind ein Button, der ein Kind-Fenster im Overlay öffnet)
   html+=sec("🎮 Für die Kinder");
   html+=`<button onclick="kabineOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)">
-    <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1">🎮</span>
+    <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("🎮")}</span>
     <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Die Kabine</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Kinder-Modus: Galerie, Missionen &amp; Quiz (${XP_ICON} Federn)</span></span>
     <span style="font-size:var(--s-teil);color:#64748b">›</span>
   </button>`;
   html+=`<button onclick="kinderAppOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)">
-    <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1">\u{1F4F1}</span>
+    <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("\u{1F4F1}")}</span>
     <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Kinder-App</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Eigenes Ger\u00e4t koppeln und die Appzeit einstellen</span></span>
     <span style="font-size:var(--s-teil);opacity:.85">\u203a</span>
   </button>`;
   html+=kids.map(k=>{const kd=k.kader||{};
     return `<button onclick="elternCatOpen('kind-${k.spieler_id}')" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)">
-      <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1">🃏</span>
+      <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("🃏")}</span>
       <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">${esc(kd.name||"Kind")}${kd.nr!=null?` <span style="font-weight:600;opacity:.8">#${kd.nr}</span>`:""}</span><span id="xp-chip-${k.spieler_id}" style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Karte, Abzeichen, Sprachlob &amp; Statistik</span></span>
       <span style="font-size:var(--s-teil);color:#64748b">›</span>
     </button>`;
@@ -1081,17 +1101,17 @@ async function elternDashLoad(){
   // Einheitliche Aktions-Zeile für die Panel-Inhalte (Icon + Titel + Beschreibung + ›, farbiger
   // Akzent links in Tönen der Kategorie-Farbe). noClose=true lässt das Fenster offen (z. B. Export).
   const elRow=(emo,label,d,onclick,col,noClose)=>`<button onclick="${noClose?"":"elternCatClose();"}${onclick}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border:1px solid var(--rand-bedien);border-left:4px solid ${col};border-radius:12px;padding:13px;margin-bottom:8px;font-family:inherit;cursor:pointer"><span style="font-size:var(--s-teil);line-height:1">${emo}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-text);font-weight:700;color:#0f172a">${label}</span><span style="display:block;font-size:var(--s-klein);color:#64748b;margin-top:1px">${d}</span></span><span style="font-size:var(--s-karte);color:var(--text3)">›</span></button>`;
-  const catBtn=(id,emoji,title,desc,grad)=>`<button onclick="elternCatOpen('${id}')" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)"><span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1">${emoji}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">${title}</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">${desc}</span></span><span style="font-size:var(--s-teil);color:#64748b">›</span></button>`;
+  const catBtn=(id,emoji,title,desc,grad)=>`<button onclick="elternCatOpen('${id}')" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)"><span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon(emoji)}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">${title}</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">${desc}</span></span><span style="font-size:var(--s-teil);color:#64748b">›</span></button>`;
   html+=sec("Mehr");
   // v637: Der Weg zum Trainerteam steht zuerst und heißt so, wie Eltern danach suchen.
   html+=catBtn('kontakt','🗣️','Trainerteam kontaktieren','Frage oder Elterngespräch, Benachrichtigungen','linear-gradient(135deg,#475569,#334155)');
   // v718: vorher eine eigene Karte „Termine“ mit nur diesem Knopf
-  html+=`<button type="button" id="alle-termine-kachel" onclick="elternTermineOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)"><span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1">📅</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Alle Termine &amp; Kalender-Abo</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Ganze Saison, im eigenen Kalender abonnieren</span></span><span aria-hidden="true" style="font-size:var(--s-teil);opacity:.85">›</span></button>`;
+  html+=`<button type="button" id="alle-termine-kachel" onclick="elternTermineOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)"><span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("📅")}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Alle Termine &amp; Kalender-Abo</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Ganze Saison, im eigenen Kalender abonnieren</span></span><span aria-hidden="true" style="font-size:var(--s-teil);opacity:.85">›</span></button>`;
   /* v699: Mannschaftskasse als eigene Kachel – alle Eltern lesen Kassenstand und jede Bewegung;
      darunter „Kasse führen“, nur für die Kasse (elternKasseRolleLoad füllt den Slot). */
   const mkSaldo=kasse&&kasse.saldo!=null?`Kassenstand ${Number(kasse.saldo).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})} € · Ausgaben und Beiträge`:"Kassenstand, Ausgaben und Beiträge";
   html+=`<button type="button" id="mannschaftskasse-kachel" onclick="if(typeof mannschaftskasseOpen==='function')mannschaftskasseOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)">
-    <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1">💰</span><span style="flex:1;min-width:0"><span style="display:block;font-weight:800;font-size:var(--s-karte)">Mannschaftskasse</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">${mkSaldo}</span><span id="mk-beitrag-stand" style="display:block;font-size:var(--s-klein);font-weight:700;margin-top:3px"></span></span><span aria-hidden="true" style="font-size:var(--s-teil);opacity:.85">›</span></button>`;   // v710: Maße wie catBtn – stand sichtbar aus der Flucht
+    <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("💰")}</span><span style="flex:1;min-width:0"><span style="display:block;font-weight:800;font-size:var(--s-karte)">Mannschaftskasse</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">${mkSaldo}</span><span id="mk-beitrag-stand" style="display:block;font-size:var(--s-klein);font-weight:700;margin-top:3px"></span></span><span aria-hidden="true" style="font-size:var(--s-teil);opacity:.85">›</span></button>`;   // v710: Maße wie catBtn – stand sichtbar aus der Flucht
   html+=`<div id="kasse-verwalten-slot"></div>`;   // v664/v699: „Kasse führen“ – nur für die Kasse
   html+=catBtn('mehr','📰','Mehr vom Team','Spieltagsgalerie, Adler Nest, Börse','linear-gradient(135deg,#1e3a8a,#2563eb)');
   html+=catBtn('regeln','📋','Regeln &amp; Vereinbarungen','Unsere Vereinbarung &amp; das Fairplay-Quiz','linear-gradient(135deg,#15803d,#047857)');
