@@ -6,6 +6,7 @@ Ein Befehl, der die bekannten Fallen prüft — **vor jedem Versionsschritt** (`
 npm install                  # einmalig, holt Playwright + Chromium
 node tests/run.js            # oder: npm test
 node tests/run.js turnier    # nur Prüfungen, deren Dateiname „turnier" enthält
+PARALLEL=1 node tests/run.js # eine Prüfung nach der anderen (der alte Ablauf, rund 35 Minuten)
 ```
 
 Die Playwright-Fassung steht **genau** in `package.json` (nicht `^`): Jede Fassung bringt ihre
@@ -63,3 +64,13 @@ module.exports = async function (h) {          // h = harness
   return h.ergebnis("TRAINER ist definiert", wert === "object", [`typeof TRAINER = ${wert}`]);
 };
 ```
+
+## Parallel (seit v782)
+
+Der Lauf startet standardmäßig drei Prüfungen gleichzeitig (`PARALLEL=n` ändert es, `PARALLEL=1` ist der alte Ablauf) und braucht statt rund 35 Minuten etwa 11. Die Ausgabe bleibt in der
+Reihenfolge der Dateien; am Ende steht „Vollständig: N von N Prüfungen gemeldet“ – fehlt eine Meldung, ist der Lauf rot. Jede Prüfung hat ein Zeitlimit (`ZEITLIMIT` in Sekunden, Standard 240): eine
+hängende Prüfung wird als rot gemeldet, statt den Lauf aufzuhalten.
+
+Was dabei gefunden wurde: (1) v589 ersetzt `console.log`, während es exportiert, und schluckte so die Zeile einer gleichzeitig fertigen Prüfung – der Lauf schreibt deshalb über die beim Start
+gesicherte Funktion. (2) v553 wartete mit festen 120 ms auf die Überblendung der Ansicht und wurde unter Last rot – es wartet jetzt, bis die Ansicht 150 ms stillsteht. Wird eine Prüfung nur im
+Parallel-Lauf rot, hat sie vermutlich eine feste Wartezeit: erst mit `PARALLEL=1 node tests/run.js <Name>` gegenprüfen, dann die Wartezeit durch Warten auf den Zustand ersetzen – nicht die Prüfung lockern.
