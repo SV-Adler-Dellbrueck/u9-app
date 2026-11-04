@@ -1388,6 +1388,7 @@ async function rmdOpen(terminId){
     return `<div class="rmd-zeile" style="padding:8px 0;border-top:1px solid var(--surface2)">
       <div style="display:flex;gap:8px;align-items:baseline"><span style="flex:1;font-weight:700;color:var(--text)">${esc(x.name||"")}</span><span style="white-space:nowrap">${st?st[0]+" "+st[1]:"–"}</span></div>
       ${wann?`<div style="font-size:var(--s-klein);color:var(--text2)">${ca}${esc(wann)}${std!=null?" · "+ca+esc(rmdDauer(std)):""}${x.durch_trainer?" · vom Trainerteam eingetragen":""}</div>`:""}
+      ${x.grund&&(x.status==="abgesagt"||x.status==="krank")?`<div style="font-size:var(--s-klein);color:var(--text)">Grund: „${esc(x.grund)}“</div>`:""}
       ${weg?`<div style="font-size:var(--s-klein);color:var(--text2)">Verlauf: ${esc(weg)}</div>`:""}
     </div>`;
   };
