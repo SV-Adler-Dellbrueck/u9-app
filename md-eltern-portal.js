@@ -365,16 +365,38 @@ async function elternPasswortSpeichern(){
     if(typeof toast==="function")toast("✅ Passwort gespeichert");
   }catch(e){if(err)err.textContent=e.message;if(btn){btn.disabled=false;btn.textContent="Speichern";}}
 }
+/* v783: Kopf aufgeräumt – oben nur Rufe und „⋯“; Schrift, Hell/Dunkel, Hilfe, Passwort und Abmelden stehen im aufklappbaren Streifen darunter.
+   Die Begrüßung nennt die Kinder und den nächsten Termin (Daten, die das Dashboard ohnehin geladen hat). */
+function elternMenueUmschalten(){
+  const m=document.getElementById("ep-menue"), k=document.getElementById("ep-menue-knopf"); if(!m)return;
+  const auf=m.style.display==="none"; m.style.display=auf?"flex":"none";
+  if(k)k.setAttribute("aria-expanded",auf?"true":"false");
+}
+function elternGrussSetzen(kids,termin){
+  const g=document.getElementById("ep-gruss"), g2=document.getElementById("ep-gruss2"); if(!g)return;
+  const namen=(kids||[]).map(k=>(k.kader&&k.kader.name)||"").filter(Boolean);
+  if(namen.length)g.textContent="Hallo, Familie von "+namen.join(" & ");
+  if(g2&&termin&&termin.datum){
+    const t0=new Date(isoLokal()+"T00:00:00"), t1=new Date(String(termin.datum).slice(0,10)+"T00:00:00");
+    const n=Math.round((t1-t0)/864e5);
+    const wann=n<=0?"heute":n===1?"morgen":"in "+n+" Tagen";
+    const art=termin.typ==="training"?"Training":termin.typ==="spiel"?"Spiel":termin.typ==="turnier"?"Turnier":"Termin";
+    if(!isNaN(n))g2.textContent="Nächstes: "+art+" "+wann;
+  }
+}
 function elternPortalDashboard(root){
   root.innerHTML=`<div class="ep-wrap">
     <div id="ep-kopf" style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;padding:12px 12px 12px;margin-bottom:12px;background:var(--blue);color:#fff;border-radius:18px;box-shadow:0 2px 8px rgba(26,86,219,.25)">
-      <div style="display:flex;align-items:center;gap:10px;min-width:0"><img src="logo.png" alt="" width="40" height="40" style="flex:none;border-radius:50%;background:#fff"><div style="min-width:0"><div style="font-size:var(--s-teil);font-weight:800;line-height:1.15">Eltern-Bereich</div><div style="font-size:var(--s-klein);opacity:.92">SV Adler Dellbrück · U9</div></div></div>
-      <div style="display:flex;align-items:center;gap:6px;margin-left:auto;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0"><img src="logo.png" alt="" width="40" height="40" style="flex:none;border-radius:50%;background:#fff"><div style="min-width:0"><div style="font-size:var(--s-teil);font-weight:800;line-height:1.15">Eltern-Bereich</div><div id="ep-gruss" style="font-size:var(--s-klein);opacity:.95">SV Adler Dellbrück · U9</div><div id="ep-gruss2" style="font-size:var(--s-klein);opacity:.95"></div></div></div>
+      <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
         <button type="button" id="rufe-kopf" onclick="rufeEinstieg()" title="Adler-Rufe – der Team-Chat" aria-label="Adler-Rufe öffnen" style="position:relative;border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:var(--s-karte);line-height:1">💬<span class="rufe-badge" style="display:none;position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#dc2626;color:#fff;font-size:var(--s-klein);font-weight:800;align-items:center;justify-content:center;border:2px solid #fff;box-sizing:border-box"></span></button>
-        <button class="schrift-toggle" onclick="schriftWechseln()" aria-label="Schriftgröße umschalten" style="min-width:44px;height:44px;background:#fff;color:#334155;border:1.5px solid var(--rand-bedien)">A</button>
-        <button id="theme-toggle" onclick="toggleTheme()" title="Hell / Dunkel umschalten" aria-label="Theme umschalten" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:var(--s-karte);line-height:1">🌙</button>
-        <button onclick="elternTourStart()" title="Kurze Tour" aria-label="Hilfe/Tour" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:var(--s-karte);line-height:1">❓</button>
-        <button onclick="elternPasswortOpen()" title="Passwort festlegen oder ändern" aria-label="Passwort festlegen oder ändern" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:var(--s-karte);line-height:1">🔑</button>
+        <button type="button" id="ep-menue-knopf" onclick="elternMenueUmschalten()" aria-expanded="false" aria-controls="ep-menue" aria-label="Mehr: Schriftgröße, Dunkelmodus, Hilfe, Passwort, Abmelden" title="Mehr" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:var(--s-teil);line-height:1;font-weight:800">⋯</button>
+      </div>
+      <div id="ep-menue" style="display:none;flex-basis:100%;flex-wrap:wrap;justify-content:space-around;gap:8px;padding-top:10px;margin-top:2px;border-top:1px solid rgba(255,255,255,.35)">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:56px"><button class="schrift-toggle" onclick="schriftWechseln()" aria-label="Schriftgröße umschalten" style="min-width:44px;height:44px;background:#fff;color:#334155;border:1.5px solid var(--rand-bedien)">A</button><span style="font-size:var(--s-klein);color:#fff">Schrift</span></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:56px"><button id="theme-toggle" onclick="toggleTheme()" title="Hell / Dunkel umschalten" aria-label="Theme umschalten" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:var(--s-karte);line-height:1">🌙</button><span style="font-size:var(--s-klein);color:#fff">Hell/Dunkel</span></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:56px"><button onclick="elternTourStart()" title="Kurze Tour" aria-label="Hilfe/Tour" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:var(--s-karte);line-height:1">❓</button><span style="font-size:var(--s-klein);color:#fff">Hilfe</span></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:56px"><button onclick="elternPasswortOpen()" title="Passwort festlegen oder ändern" aria-label="Passwort festlegen oder ändern" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:var(--s-karte);line-height:1">🔑</button><span style="font-size:var(--s-klein);color:#fff">Passwort</span></div>
         <button onclick="elternPortalLogout()" style="border:none;background:none;color:#fff;font-size:var(--s-text);text-decoration:underline;cursor:pointer;min-height:44px;padding:0 6px">Abmelden</button>
       </div>
     </div>
@@ -1146,6 +1168,8 @@ async function elternDashLoad(){
   const ankerVor=_epAnkerMerken(body);     // v666: senkrechte Lage des Karussells
   body.innerHTML=html;
   _epScrollZurueck(scrollVor,body);        // …und sofort wiederherstellen, vor dem ersten Bild
+  try{ elternGrussSetzen(kids,termin); }catch(e){}   // v783
+  try{ if(window._epPop){ window._epPop=0; const tk=document.getElementById("termin-card"); if(tk){ tk.classList.remove("ep-pop"); void tk.offsetWidth; tk.classList.add("ep-pop"); } } }catch(e){}
   /* v778: Trainer, die hier ihr eigenes Kind sehen, kommen mit einem Tipp zurück in die Trainer-App. */
   try{ if((localStorage.getItem("adler_rolle")||"")==="trainer"&&typeof appRoot==="function"){
     body.insertAdjacentHTML("afterbegin",`<a id="zur-trainer-app" href="${appRoot()}trainer/" style="display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;margin-bottom:12px;border:1.5px solid #1e3a8a;border-radius:12px;background:#fff;color:#1e3a8a;font-size:var(--s-text);font-weight:800;text-decoration:none">🧢 Zur Trainer-App</a>`);
@@ -1281,6 +1305,7 @@ async function elternRsvp(terminId,spielerId,status){
     if(!r.ok){toast("Konnte nicht speichern","err");return;}
   }catch(e){toast("Netzwerkfehler","err");return;}
   toast("Rückmeldung gespeichert ✓");
+  if(status==="zugesagt")window._epPop=1;   // v783: die Terminkarte bestätigt kurz (nach dem Neuzeichnen)
   // FEAT S: XP für Zusagen (idempotent pro Termin via quelle_id, Punktwert bestimmt der Server)
   if(status==="zugesagt"){const d=await xpAward(spielerId,"rsvp","t"+terminId);if(d>0)setTimeout(()=>toast(`${XP_ICON} +${d} ${XP_LABEL} gesammelt!`),1100);}
   elternDashLoad();
