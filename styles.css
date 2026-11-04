@@ -1357,3 +1357,24 @@ input[type="password"]{min-height:44px}
 .kh-leiste{display:flex;align-items:center;gap:8px;margin-bottom:6px;color:#fff}
 .kh-titel{flex:1;font-weight:800;font-size:var(--s-text)}
 .kh-stopp{min-height:44px;padding:0 14px;border-radius:12px;border:none;background:#fff;color:#0b2f4d;font-weight:800;font-family:inherit;cursor:pointer}
+
+/* v777 · Kacheln einheitlich und mit Rückmeldung beim Antippen (PO 03.11.: „edler und professioneller“).
+   Alle Karten (.card) tragen denselben Schatten aus --shadow; antippbare Karten, Knöpfe und Anwesenheits-Kacheln sinken beim Drücken
+   kurz ein. Nur Form und Bewegung, keine neue Farbe – Kontrast und Statusfarben bleiben unberührt. Wer „Bewegung reduzieren“ eingestellt hat,
+   bekommt keine Bewegung (Medienabfrage). Am Mauszeiger heben antippbare Karten den Schatten leicht an. */
+.card{box-shadow:var(--shadow)}
+.card[onclick]{cursor:pointer}
+@media (prefers-reduced-motion:no-preference){
+  .btn,.aw-tile,.card[onclick]{transition:transform .12s ease,box-shadow .12s ease}
+  .btn:active:not(:disabled),.aw-tile:active,.card[onclick]:active{transform:scale(.98)}
+}
+@media (hover:hover){
+  .card[onclick]:hover{box-shadow:var(--shadow-md)}
+}
+/* v777 · Untere Leiste mit leichtem Glas-Effekt (Liquid-Glass-Trend): 86 % Deckung, damit Beschriftung und Symbole ihren Kontrast behalten, dazu Weichzeichner.
+   Ohne Unterstützung im Browser bleibt es beim bisherigen einfarbigen Grund. */
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) and (background:color-mix(in srgb,red 50%,blue)){
+  #main-nav{background:color-mix(in srgb,var(--surface) 86%,transparent);-webkit-backdrop-filter:saturate(1.4) blur(14px);backdrop-filter:saturate(1.4) blur(14px)}
+}
+/* v777 · Gleich breite Ziffern in Tabellen und Kennzahlen: Zahlen stehen in Listen sauber untereinander. */
+td,th,.zahl,.kpi{font-variant-numeric:tabular-nums}
