@@ -1,4 +1,5 @@
-/* v767 · PO 30.10.: „Wo kann ich sehen, wann Eltern ein Training oder ein Spiel abgesagt haben? Zu wie viel Tagen oder
+/* v779: eine Absage trägt einen Grund (Kind B, Termin 14): er steht unter dem Namen, die anderen Zeilen bleiben ohne.
+   v767 · PO 30.10.: „Wo kann ich sehen, wann Eltern ein Training oder ein Spiel abgesagt haben? Zu wie viel Tagen oder
    Stunden wurde die Absage getätigt?“ Antwort: Reiter „🚫 Absagen“ im Rückmelde-Verhalten (Eltern & Kinder → Eltern verwalten).
    PO-Wahl: „Liste je Absage und zusätzlich Summe je Kind“.
 
@@ -18,7 +19,7 @@ module.exports = async function (h) {
     { spieler_id: 2, name: K[1], termin_id: 11, art: "training", datum: h.tagePlus(-2), titel: null, beginn: vor(48), abgesagt_am: vor(48 + 3), vorlauf_std: 3, genau: true },
     { spieler_id: 1, name: K[0], termin_id: 12, art: "spiel", datum: h.tagePlus(-5), titel: "Testspiel", beginn: vor(120), abgesagt_am: vor(120 + 100), vorlauf_std: 100, genau: true },
     { spieler_id: 1, name: K[0], termin_id: 13, art: "training", datum: h.tagePlus(-9), titel: null, beginn: vor(216), abgesagt_am: vor(216 + 0.5), vorlauf_std: 0.5, genau: false },
-    { spieler_id: 2, name: K[1], termin_id: 14, art: "spiel", datum: h.tagePlus(-12), titel: "Festival", beginn: vor(288), abgesagt_am: vor(288 - 1), vorlauf_std: -1, genau: true }
+    { spieler_id: 2, name: K[1], termin_id: 14, art: "spiel", datum: h.tagePlus(-12), titel: "Festival", beginn: vor(288), abgesagt_am: vor(288 - 1), vorlauf_std: -1, genau: true, grund: "Schule" }
   ];
   let modus = "mitDaten";
   const s = await h.starten({ warten: 1200, hoehe: 1400, supabase: h.supabaseAttrappe({
@@ -63,7 +64,7 @@ module.exports = async function (h) {
       || !ez.some(z => z[1] === K[1] && /^3 Std\. vorher$/.test(z[3]))
       || !ez.some(z => z[1] === K[0] && /Testspiel/.test(z[0]) && /^4,2 Tage vorher$/.test(z[3]))
       || !ez.some(z => z[1] === K[0] && /^≈ /.test(z[2]) && /^≈ (unter 1 Std\.|1 Std\.) vorher$/.test(z[3]))
-      || !ez.some(z => z[3] === "nach Beginn") || !r.hinweis) probleme.push("b) Einzelne Absagen: " + JSON.stringify({ ez, hinweis: r.hinweis }));
+      || !ez.some(z => z[3] === "nach Beginn") || !r.hinweis || !ez.some(z => z[1].startsWith(K[1]) && /Grund: „Schule“/.test(z[1])) || ez.filter(z => /Grund:/.test(z[1])).length !== 1) probleme.push("b) Einzelne Absagen: " + JSON.stringify({ ez, hinweis: r.hinweis }));
   zeilen.push(`b) ${ez.length} Absagen einzeln: ${ez.map(z => z[3]).join(" · ")}`);
   if (!/noch niemand abgesagt/.test(leer) || !/Migration v767/.test(fehler)) probleme.push("c) leer/Fehler: " + JSON.stringify({ leer, fehler }));
   zeilen.push("c) „nach Beginn“, leer („noch niemand abgesagt“) und Fehler (nennt die Migration)");

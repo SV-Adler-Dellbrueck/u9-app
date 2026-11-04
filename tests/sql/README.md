@@ -210,3 +210,13 @@ psql -d t -f tests/sql/supabase-attrappe.sql && psql -d t -f tests/sql/v769-ruec
 Erwartet: Der Trainer sieht die vier aktiven Kinder – A zugesagt, B abgesagt mit zwei Verlaufseinträgen, C krank vom Trainer eingetragen, D ohne Antwort
 (`status` leer, `genau = f`); das inaktive Kind E fehlt; ein unbekannter Termin liefert 0 Zeilen. Eltern sehen 0 Zeilen; `anon` bekommt keinen Zugriff
 (eine Fehlermeldung ist gewollt).
+
+## v779 · Absage-Grund in rueckmelde_absagen und rueckmelde_termin
+
+```bash
+psql -d t -f tests/sql/supabase-attrappe.sql && psql -d t -f tests/sql/v779-rueckmelde-grund.sql
+```
+
+(Der Lauf legt `rueckmeldungen` mit Spalte `kommentar`, `rueckmeldung_log` und `saison_beginn` als Attrappe an und spielt die Migrationen v767, v769 und `20261104_v779_rueckmelde_grund.sql` nacheinander ein.)
+Erwartet: Beide Funktionen liefern die Spalte `grund` – Kind A „Schule“, Kind B leer (ein Kommentar aus Leerzeichen zählt als kein Grund), Kind C „Fieber“ ohne umgebende Leerzeichen. Eltern sehen 0 Zeilen; `anon` bekommt keinen Zugriff (eine Fehlermeldung ist gewollt).
+

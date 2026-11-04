@@ -14,7 +14,7 @@ module.exports = async function (h) {
   const vor = std => new Date(beginn - std * 3600e3).toISOString();
   const rpcZeilen = [
     { spieler_id: 1, name: K[0], status: "zugesagt", erste_antwort: vor(50), letzte_aenderung: vor(50), durch_trainer: false, verlauf: [{ status: "zugesagt", am: vor(50), trainer: false }], beginn: new Date(beginn).toISOString(), genau: true },
-    { spieler_id: 2, name: K[1], status: "abgesagt", erste_antwort: vor(70), letzte_aenderung: vor(3), durch_trainer: false, verlauf: [{ status: "zugesagt", am: vor(70), trainer: false }, { status: "abgesagt", am: vor(3), trainer: false }], beginn: new Date(beginn).toISOString(), genau: true },
+    { spieler_id: 2, name: K[1], status: "abgesagt", grund: "Urlaub", erste_antwort: vor(70), letzte_aenderung: vor(3), durch_trainer: false, verlauf: [{ status: "zugesagt", am: vor(70), trainer: false }, { status: "abgesagt", am: vor(3), trainer: false }], beginn: new Date(beginn).toISOString(), genau: true },
     { spieler_id: 3, name: K[2], status: "krank", erste_antwort: vor(20), letzte_aenderung: vor(20), durch_trainer: true, verlauf: [{ status: "krank", am: vor(20), trainer: true }], beginn: new Date(beginn).toISOString(), genau: true },
     { spieler_id: 4, name: K[3], status: "zugesagt", erste_antwort: vor(96), letzte_aenderung: vor(96), durch_trainer: false, verlauf: [], beginn: new Date(beginn).toISOString(), genau: false },
     { spieler_id: 5, name: K[4], status: null, erste_antwort: null, letzte_aenderung: null, durch_trainer: false, verlauf: [], beginn: new Date(beginn).toISOString(), genau: false }
@@ -63,7 +63,7 @@ module.exports = async function (h) {
   if (!ok) probleme.push("b) " + JSON.stringify(r.b));
   zeilen.push(`b) ${r.b.kopf} · ${r.b.gruppen.join(" · ")}`);
   const kette = z.find(t => t.startsWith(K[1])) || "", krank = z.find(t => t.startsWith(K[2])) || "";
-  if (!/Verlauf: zusage .* → absage /.test(kette) || !/🤒 Krank/.test(krank) || !/vom Trainerteam eingetragen/.test(krank)) probleme.push("c) " + JSON.stringify({ kette, krank }));
+  if (!/Grund: „Urlaub“/.test(kette) || /Grund:/.test(krank) || !/Verlauf: zusage .* → absage /.test(kette) || !/🤒 Krank/.test(krank) || !/vom Trainerteam eingetragen/.test(krank)) probleme.push("c) " + JSON.stringify({ kette, krank }));
   zeilen.push("c) Verlauf als Kette „zusage … → absage …“; vom Trainerteam Eingetragenes gekennzeichnet");
   const migDir = path.join(h.REPO, "supabase/migrations");
   const mig = fs.readdirSync(migDir).filter(n => /v769_rueckmelde_termin/.test(n)).map(n => fs.readFileSync(path.join(migDir, n), "utf8")).join("\n");
