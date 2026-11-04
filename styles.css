@@ -1378,3 +1378,9 @@ input[type="password"]{min-height:44px}
 }
 /* v777 · Gleich breite Ziffern in Tabellen und Kennzahlen: Zahlen stehen in Listen sauber untereinander. */
 td,th,.zahl,.kpi{font-variant-numeric:tabular-nums}
+
+/* v781 · Wärme im Eltern-Bereich (PO 04.11.: „sehr kühl und farblos“): zart blau getönter Seitengrund statt kaltem Grau; die Karten bleiben weiß.
+   Im dunklen Modus bleibt der Grund wie er war. */
+html:has(.ep-wrap) body{background:#eef4fc}
+html[data-theme="dark"]:has(.ep-wrap) body{background:var(--bg)}
+@media (prefers-color-scheme:dark){ html:not([data-theme="light"]):has(.ep-wrap) body{background:var(--bg)} }

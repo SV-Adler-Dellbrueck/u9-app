@@ -1,5 +1,5 @@
 /* v780 · Design-Durchsicht der Eltern-App (PO 04.11.: „Wirklich optische Unterschiede sehe ich nicht“). Paket „Ruhe im Dashboard“:
-   a) Hinweiskarten oben flach: ohne Farbstreifen, der Termin beginnt etwas höher (Oberkante der Terminkarte höchstens 352 px, vorher 356, bei 390 × 844; die Karte „Keine Nachricht verpassen“ bleibt nach v698 ganz oben)
+   a) Hinweiskarten oben flach: ohne Farbstreifen, die Terminkarte beginnt nicht zu tief (Oberkante höchstens 400 px bei 390 × 844; seit v781 mit blauem Kopfband; die Karte „Keine Nachricht verpassen“ bleibt nach v698 ganz oben)
    b) Terminkarte: 1 px Rand und ein 4-px-Streifen für den Status statt 2 px Farbrand; Titel größer als Kindname
    c) Antwortknöpfe einzeilig (≤ 48 px hoch), „Unsicher“ bricht nicht um; beim Antippen der gewählten Antwort bleibt der Text
    d) Untere Kacheln: kein Farbverlauf, helle Karte mit dunkler Schrift, Symbol in runder Scheibe, ≥ 44 px
@@ -36,7 +36,7 @@ module.exports = async function (h) {
   const fe = s.fehler(); await s.schliessen();
   if (r.hinweise.schrift && r.hinweise.schrift !== "1px") probleme.push("a) Schrift-Hinweis hat noch einen Farbstreifen: " + r.hinweise.schrift);
   if (r.hinweise.push && r.hinweise.push !== "1px") probleme.push("a) Push-Hinweis hat noch einen Farbstreifen: " + r.hinweise.push);
-  if (r.tkTop == null || r.tkTop > 352) probleme.push("a) Terminkarte beginnt bei " + r.tkTop + " px (vorher 356, erwartet höchstens 352)");
+  if (r.tkTop == null || r.tkTop > 400) probleme.push("a) Terminkarte beginnt bei " + r.tkTop + " px (erwartet höchstens 400; v781: das blaue Kopfband kostet Höhe)");
   zeilen.push(`a) Hinweise ohne Streifen (${r.hinweise.schrift}/${r.hinweise.push}) · Terminkarte beginnt bei ${r.tkTop} px`);
   if (!r.rand || r.rand.oben !== "1px" || r.rand.links !== "4px") probleme.push("b) Rand: " + JSON.stringify(r.rand));
   if (!(r.schrift.titel > r.schrift.kind)) probleme.push("b) Titel nicht größer als Kindname: " + JSON.stringify(r.schrift));
