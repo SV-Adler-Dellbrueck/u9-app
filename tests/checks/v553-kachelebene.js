@@ -31,8 +31,11 @@ module.exports = async function (h) {
   });
 
   const r = await s.page.evaluate(async () => {
-    const warte = ms => new Promise(x => setTimeout(x, ms));
+    const warte0 = ms => new Promise(x => setTimeout(x, ms));
     const sichtbar = () => [...document.querySelectorAll(".view.active")].map(v => v.id);
+    /* v782: Die Überblendung (View Transition) tauscht die Ansicht erst nach einigen Bildern. Unter Last (mehrere Prüfungen gleichzeitig) reichten feste
+       120 ms nicht. Jetzt wartet jede Stelle, bis die sichtbare Ansicht 150 ms unverändert bleibt (höchstens 3 s). */
+    const warte = async ms => { let letzte = null, n = 0; await warte0(ms); for (let i = 0; i < 60 && n < 3; i++) { const j = sichtbar().join(); if (j === letzte) n++; else { n = 0; letzte = j; } await warte0(50); } };
     const kacheln = () => [...document.querySelectorAll(".view.active button")]
       .map(b => b.textContent.replace(/\s+/g, " ").trim()).filter(Boolean);
     const aktiverKnopf = () => (document.querySelector("#main-nav .nb.active") || {}).id || "";
