@@ -172,7 +172,7 @@ module.exports = async function (h) {
     if (rt.vorher.some(c => /Kind/.test(c)) || !rt.vorher.includes("🔒 Familien · 2")) probleme.push(`e) Knöpfe: ${JSON.stringify(rt.vorher)}`);
     if (!/^🔒\s*Kind C\s*2 neu$/.test(rt.liste[0] || "") || !rt.liste.some(x => x.includes("Kind A & Kind B")) || rt.liste.length !== 3) probleme.push(`e) Familienliste: ${JSON.stringify(rt.liste)}`);
     if (!/der Elternbeirat nicht/.test(rt.hinweis)) probleme.push("e) Hinweis, wer mitliest, fehlt");
-    if (tr[0] !== '{"p_kind":4}' || rt.raum !== 13 || !rt.nachher.includes("🔒 Kind D*") || !/Familie Kind D/.test(rt.unter)) probleme.push(`e) Öffnen: ${JSON.stringify({ tr, rt })}`);
+    if (tr[0] !== '{"p_kind":4}' || rt.raum !== 13 || !rt.nachher.includes("🔒 Kind D*") || !/Familie von Kind D/.test(rt.unter)) probleme.push(`e) Öffnen: ${JSON.stringify({ tr, rt })}`);
   }
   if (f2.length) probleme.push("Konsole Trainer: " + f2.slice(0, 2).join(" | "));
   if (!rt.fehler) zeilen.push(`e) ${rt.vorher.join(" ")} · Liste: ${rt.liste.join(" | ")} → ${tr[0]} → „${rt.unter}“`);
