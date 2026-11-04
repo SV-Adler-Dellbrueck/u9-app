@@ -1384,3 +1384,7 @@ td,th,.zahl,.kpi{font-variant-numeric:tabular-nums}
 html:has(.ep-wrap) body{background:#eef4fc}
 html[data-theme="dark"]:has(.ep-wrap) body{background:var(--bg)}
 @media (prefers-color-scheme:dark){ html:not([data-theme="light"]):has(.ep-wrap) body{background:var(--bg)} }
+
+/* v783 · Zusage bestätigt: die Terminkarte hebt sich einmal kurz an und bekommt einen blauen Schein. Nur ohne „Bewegung reduzieren“. */
+@keyframes epPop{0%{transform:scale(.99);box-shadow:0 0 0 0 rgba(26,86,219,0)}45%{transform:scale(1.012);box-shadow:0 0 0 6px rgba(26,86,219,.18)}100%{transform:scale(1);box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)}}
+@media (prefers-reduced-motion:no-preference){ .ep-pop{animation:epPop .55s ease} }
