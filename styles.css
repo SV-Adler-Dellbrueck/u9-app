@@ -1385,6 +1385,20 @@ html:has(.ep-wrap) body{background:#eef4fc}
 html[data-theme="dark"]:has(.ep-wrap) body{background:var(--bg)}
 @media (prefers-color-scheme:dark){ html:not([data-theme="light"]):has(.ep-wrap) body{background:var(--bg)} }
 
+/* v784 · Wärme auch in der Trainer-App (gleiche Linie wie v781): blaues Kopfband mit weißer Schrift, zart getönter Seitengrund.
+   Hell als Variablen gesetzt, im dunklen Modus bleibt der Kopf wie er war (Kontrast: weiß auf #1a56db = 6,7:1). */
+:root{--kopf-bg:var(--blue);--kopf-t1:#fff;--kopf-t2:#dbe7ff;--kopf-badge-bg:#fff;--kopf-badge-t:var(--blue-dark);--kopf-rand:transparent;--kopf-pad:12px;--kopf-rad:18px;--kopf-schatten:0 2px 8px rgba(26,86,219,.25)}
+html[data-theme="dark"]{--kopf-bg:transparent;--kopf-t1:var(--text);--kopf-t2:var(--text2);--kopf-badge-bg:var(--blue);--kopf-badge-t:#fff;--kopf-rand:var(--club-accent);--kopf-pad:0;--kopf-rad:0;--kopf-schatten:none}
+@media (prefers-color-scheme:dark){ html:not([data-theme="light"]){--kopf-bg:transparent;--kopf-t1:var(--text);--kopf-t2:var(--text2);--kopf-badge-bg:var(--blue);--kopf-badge-t:#fff;--kopf-rand:var(--club-accent);--kopf-pad:0;--kopf-rad:0;--kopf-schatten:none} }
+#main-app>.topbar{background:var(--kopf-bg);border-bottom:2px solid var(--kopf-rand);border-radius:var(--kopf-rad);box-shadow:var(--kopf-schatten);padding:12px var(--kopf-pad) 12px;margin-top:8px}
+#main-app>.topbar .logo-t1{color:var(--kopf-t1)}
+#main-app>.topbar .logo-t2,#main-app>.topbar .cloud-row{color:var(--kopf-t2)}
+#main-app>.topbar .logo-badge{background:var(--kopf-badge-bg);color:var(--kopf-badge-t)}
+html:has(#main-app) body{background:#eef4fc}
+html[data-theme="dark"]:has(#main-app) body{background:var(--bg)}
+@media (prefers-color-scheme:dark){ html:not([data-theme="light"]):has(#main-app) body{background:var(--bg)} }
+/* v784 · Am Handy bleibt im Band genug Breite für „Trainerstab · U9 I“ (v693): schmaleres Polster, engere Abstände. */
+@media (max-width:420px){ #main-app>.topbar{padding-left:min(var(--kopf-pad),8px);padding-right:min(var(--kopf-pad),8px);gap:6px} #main-app>.topbar .logo{gap:8px} }
 /* v783 · Zusage bestätigt: die Terminkarte hebt sich einmal kurz an und bekommt einen blauen Schein. Nur ohne „Bewegung reduzieren“. */
 @keyframes epPop{0%{transform:scale(.99);box-shadow:0 0 0 0 rgba(26,86,219,0)}45%{transform:scale(1.012);box-shadow:0 0 0 6px rgba(26,86,219,.18)}100%{transform:scale(1);box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)}}
 @media (prefers-reduced-motion:no-preference){ .ep-pop{animation:epPop .55s ease} }
