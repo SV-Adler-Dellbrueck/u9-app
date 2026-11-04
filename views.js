@@ -976,6 +976,22 @@ function kontakteEditOpen(spielerId){
    sonst bricht ein Anführungszeichen im Namen aus dem HTML-Attribut aus. */
 function jsq(s){ return String(s==null?"":s).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,"&quot;"); }
 function elternPortalUrl(){ return appRoot()+"?portal"; }
+/* v778 (PO 04.11.): Trainer, die selbst Eltern sind, brauchen einen sichtbaren Weg in die Eltern-Ansicht ihres Kindes – und zurück.
+   Trainer-App: unter Orga steht „Als Elternteil ansehen“, aber nur, wenn zur eigenen E-Mail ein Kind gehört (eltern_kinder, wie in der
+   Eltern-App). Die Eltern-App hat denselben Weg zurück („Zur Trainer-App“). Die Anmeldung bleibt getrennt (je App ein eigener Speicher),
+   darum meldet sich ein Trainer in der Eltern-Ansicht einmal an; danach bleibt sie bestehen. */
+let _tkHatKind=null;
+async function trainerHatKindPruefen(){
+  if(_tkHatKind!==null)return _tkHatKind;
+  try{ _tkHatKind=(typeof elternTrainerHatKind==="function")?!!(await elternTrainerHatKind()):false; }catch(e){ _tkHatKind=false; }
+  return _tkHatKind;
+}
+function elternAnsichtOeffnen(){ location.href=elternPortalUrl(); }
+async function elternUmschalterZeigen(){
+  const slot=document.getElementById("eltern-umschalter"); if(!slot)return;
+  if(!await trainerHatKindPruefen()){ slot.innerHTML=""; return; }
+  slot.innerHTML=kSec("Mein Kind")+kTiles([{emo:"👪",label:"Als Elternteil ansehen",fn:"elternAnsichtOeffnen"}],KACHELN.orga.col);
+}
 function inviteText(email,kind){
   return `Hallo! 🦅\n\nHier ist dein Zugang zum Eltern-Bereich der U9 vom SV Adler Dellbrück`
     +`${kind?` – für ${kind}`:""}.\n\n${elternPortalUrl()}\n\n`
@@ -5062,6 +5078,7 @@ const HELP=[
     {t:"Fundbüro", d:"Liegengebliebenes verwalten.", run:"fundbueroOpen()"},
     {t:"Material", d:"Der Bestand des Teams: Bälle, Hütchen je Farbe, Markierungen, Leibchen, Trinkflaschen, Erste-Hilfe-Set. Je Posten ein <b>Soll</b> (was da sein sollte) und ein <b>Ist</b> (was gezählt wurde). Beide dürfen leer bleiben – leer heißt <b>nicht gezählt</b>, nicht „null Stück“; nur so lässt sich eine Inventur überhaupt abschließen. Jede eingetragene Ist-Zahl setzt das Zähldatum dieses Postens auf heute; oben steht, wann zuletzt überhaupt gezählt wurde, und nach einem halben Jahr wird die Zeile gelb. Liegt ein Posten unter dem Soll, sagt die Zeile, wie viele fehlen. Kleidung wird nicht doppelt gezählt: bei „Trikotsätze“ und „Spieltagsjacken“ steht daneben, wie viele davon gerade bei den Kindern sind (aus „Ausstattung“ unter Team). Neue Posten legst du über „＋“ selbst an. Gezählt wird am besten zweimal im Jahr – der Saisonstart-Check erinnert daran.", run:"materialOpen()"},
     {t:"Ausstattung", d:"Was hat welches Kind von uns bekommen? Oben wählst du den Gegenstand – Trikotsatz FRMD PASN, Präsentationsanzug, Spieltagsjacke –, darunter steht der Kader. Ein Tipp auf das Kästchen setzt die Ausgabe auf heute, rechts daneben trägst du die Größe ein (128, 140, 152 als Vorschlag, frei überschreibbar). Eine Satznummer führen wir nicht: die Nummer am Kind ist die Trikotnummer, und die steht im Kader. Über „↩︎ zurück“ wird eine Rückgabe mit heutigem Datum vermerkt – dafür ist die Liste am Ende da, wenn ein Kind den Verein wechselt. Weitere Gegenstände (Trinkflasche, Rucksack, zweiter Anzug) legst du über „＋“ selbst an; die App muss dafür nicht angefasst werden. Gespeichert wird sofort beim Antippen. Die Zeile oben zählt, wer noch nichts hat.", run:"ausstattungOpen()"},
+    {t:"Trainer, die auch Eltern sind", d:"<b>Seit v778:</b> Gehört zu deiner E-Mail ein Kind, steht unter Orga der Abschnitt „Mein Kind“ mit „Als Elternteil ansehen“. Dort siehst du alles wie die Eltern deines Kindes; oben im Eltern-Bereich bringt dich „Zur Trainer-App“ zurück. Die Anmeldung ist je App getrennt – in der Eltern-Ansicht meldest du dich einmal an, danach bleibt sie bestehen. Schreibst du als Trainer in einen Familienraum der Adler-Rufe, fragt die App vorher, an wen es geht."},
     {t:"Adresse der App", d:"Die App liegt seit dem 10.09.2026 unter sv-adler-dellbrueck.github.io/u9-app/ – vorher stand in jedem weitergegebenen Link ein privater Benutzername. Die alte Adresse leitet weiter, verschickte Turnier-, Ticker-, Einladungs- und Kind-Links funktionieren also unverändert. Wer die App noch von der alten Adresse auf dem Startbildschirm hat, landet jedes Mal erst auf der Weiterleitung – der Einflug des Wappens ist dann schon halb vorbei. Abhilfe: das alte Symbol löschen und die App unter der neuen Adresse neu ablegen, dann neu anmelden und Benachrichtigungen wieder erlauben. Den Hinweis in der App selbst gibt es seit v617 nicht mehr."},
     {t:"Updates der App", d:"Seit v655 holt sich die App neue Versionen selbst – niemand muss sie neu installieren. Sie sieht nach, sobald sie wieder in den Vordergrund kommt, und alle 30 Minuten, solange sie offen ist. Ist eine neue Version da, lädt sie im passenden Moment neu: in der ersten Minute nach dem Öffnen sofort, sonst beim nächsten Wechsel weg von der App oder nach 10 Minuten ohne Eingabe. Nie, solange etwas verloren ginge – ein offenes Fenster, Text in Arbeit, die laufende Match-Uhr, der Stationstimer oder ein Diktat. Bis dahin steht unten „🔄 Neue Version bereit“ mit dem Knopf „Neu laden“. Welche Version läuft, steht ganz unten auf der Startseite. Wer noch eine Fassung von vor v655 offen hat, lädt einmal von Hand neu; danach geht es von selbst."},
     {t:"Zurück-Taste am Handy", d:"Seit v624 geht die Zurück-Taste eine Seite zurück, statt die App zu schließen: Ist ein Fenster offen, schließt sie zuerst das Fenster; sonst führt sie zur Seite davor und zuletzt zur Startseite. Erst von der Startseite aus schließt sie die App. Das gilt im Trainer-Bereich, im Eltern-Bereich und auf den geteilten Seiten wie dem Festival-Link (Anfahrt, Regeln, „Am Rand“). In der Kabine führt sie zur Kabinen-Startseite – verlassen lässt sich die Kabine weiter nur mit dem Ausgangs-Code."},
@@ -7187,6 +7204,7 @@ function _kachelInhalt(key){
       // Saison wechselt der Schlüssel, dann steht er von selbst wieder da.
       (new Date().getMonth()>=5&&new Date().getMonth()<=8&&!saisonStartZu())?{emo:"🌅",label:"Saisonstart-Check",fn:"saisonStartOpen"}:null
     ],col)
+    +`<div id="eltern-umschalter"></div>`
     +kSec("Einstellungen")
     +`<div id="push-slot-trainer" style="margin-bottom:10px"></div>`
     +kTiles([
@@ -7208,6 +7226,7 @@ function _kachelNachladen(key){
       if(typeof homeRsvpNudge==="function")homeRsvpNudge();
       if(typeof homeFerien==="function")homeFerien();
       if(typeof pushRenderInto==="function")pushRenderInto("push-slot-trainer","trainer");
+      elternUmschalterZeigen();
     }
     if(key==="spieltag"){_kachelTurnierCheck();spieltagDabeiKarteLoad();}
   }catch(e){}

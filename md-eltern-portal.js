@@ -1144,6 +1144,10 @@ async function elternDashLoad(){
   const ankerVor=_epAnkerMerken(body);     // v666: senkrechte Lage des Karussells
   body.innerHTML=html;
   _epScrollZurueck(scrollVor,body);        // …und sofort wiederherstellen, vor dem ersten Bild
+  /* v778: Trainer, die hier ihr eigenes Kind sehen, kommen mit einem Tipp zurück in die Trainer-App. */
+  try{ if((localStorage.getItem("adler_rolle")||"")==="trainer"&&typeof appRoot==="function"){
+    body.insertAdjacentHTML("afterbegin",`<a id="zur-trainer-app" href="${appRoot()}trainer/" style="display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;margin-bottom:12px;border:1.5px solid #1e3a8a;border-radius:12px;background:#fff;color:#1e3a8a;font-size:var(--s-text);font-weight:800;text-decoration:none">🧢 Zur Trainer-App</a>`);
+  } }catch(e){}
   _epAnkerHalten(ankerVor,body);
   try{ const tb=document.getElementById("cat-todo"); if(tb){ new MutationObserver(elternTodoSync).observe(tb,{childList:true,subtree:true}); elternTodoSync(); } }catch(e){}
   elternThemeInit();          // Observer für Modals/Slots (einmalig)
