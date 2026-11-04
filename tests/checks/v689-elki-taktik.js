@@ -21,7 +21,8 @@ module.exports = async function (h) {
     out.gruppen = [...body.children].filter(kopf).map(e => e.textContent.trim());
     const knoepfe = [...body.querySelectorAll("button")].map(b => b.textContent.replace(/\s+/g, " ").trim());
     out.mod = knoepfe.some(t => /moderieren/i.test(t));
-    const emos = [...body.querySelectorAll("button")].map(b => [...b.textContent.trim()][0]);
+    // seit v787 steht statt des Emoji ein Linien-Symbol: dann zählt dessen Zeichnung als „dasselbe Symbol“
+    const emos = [...body.querySelectorAll("button")].map(b => b.querySelector("svg") ? b.querySelector("svg").innerHTML : [...b.textContent.trim()][0]);
     out.doppelt = emos.filter((e, i) => emos.indexOf(e) !== i);
     // b)
     window.sbToken = () => "x.eyJzdWIiOiJ1LXRyYWluZXIifQ.x";
