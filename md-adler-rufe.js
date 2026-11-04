@@ -172,7 +172,7 @@ function _rfKopfZeigen(){
   rufeChipsRender();
   const r=_rfAktRaum(); const unter=document.getElementById("rufe-unter"), feld=document.getElementById("rufe-text");
   const privat=!!(r&&r.familie_kind);
-  if(unter)unter.textContent=privat?(_rf.trainer?"Privat mit Familie "+(_rf.fam[r.familie_kind]||""):"Privat: nur ihr und das Trainerteam"):"Eltern und Trainerteam";
+  if(unter)unter.textContent=privat?(_rf.trainer?"Privat mit der Familie von "+(_rf.fam[r.familie_kind]||""):"Privat: nur ihr und das Trainerteam"):"Eltern und Trainerteam";
   if(feld)feld.placeholder=privat?(_rf.trainer?"Nachricht an die Familie …":"Nachricht an das Trainerteam …"):"Ruf schreiben …";
 }
 async function _rfUngelesenLaden(){
@@ -314,9 +314,21 @@ function rufeAntwortRender(){
     <button type="button" onclick="rufeAntwortWeg()" aria-label="Antwort verwerfen" style="width:36px;height:36px;border:none;border-radius:50%;background:transparent;color:var(--text2);cursor:pointer">✕</button>`;
 }
 function rufeAntwortWeg(){ if(_rf){ _rf.antwort=null; rufeAntwortRender(); } }
+/* v776 (PO 03.11.): Markus, als Trainer zugleich Vater, schrieb einen Wunsch seines Sohnes in den privaten Raum einer fremden Familie –
+   als Trainer hat er keinen eigenen Raum „Trainerteam“, sondern nur die Familienräume, und der zuletzt offene blieb stehen. Darum fragt die
+   App das Trainerteam vor jedem Senden in einen Familienraum, wer mitliest. Eltern schreiben nur in ihren eigenen Raum und werden nicht gefragt. */
+async function _rfFamilienRueckfrage(){
+  const r=_rfAktRaum();
+  if(!_rf||!_rf.trainer||!r||!r.familie_kind)return true;
+  const fam=(_rf.fam&&_rf.fam[r.familie_kind])||"dieser Familie";
+  return frageJaNein({emoji:"🔒",titel:"Nachricht an die Familie von "+fam+"?",
+    text:"Diese Nachricht lesen die Familie von "+fam+" und das Trainerteam.\n\nIst sie für alle Eltern oder nur fürs Trainerteam gedacht, brich ab und wähle den passenden Raum.",
+    ja:"Senden",nein:"Abbrechen"});
+}
 async function rufeSenden(){
   if(!_rf||!_rf.raum)return;
   const feld=document.getElementById("rufe-text"); const text=(feld?.value||"").trim();
+  if((text||_rf.dateien.length)&&!await _rfFamilienRueckfrage())return;
   if(_rf.dateien.length)return rufeSendenMitAnhang(text);
   if(!text)return;
   const knopf=document.getElementById("rufe-senden"); if(knopf)knopf.disabled=true;
