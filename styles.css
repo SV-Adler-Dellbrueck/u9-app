@@ -10,6 +10,7 @@
   --amber:#b45309;--amber-bg:#fffbeb;
   --red:#b91c1c;--red-bg:#fef2f2;
   --purple:#6d28d9;--purple-bg:#f5f3ff;
+  --orange-text:var(--orange);  /* v788: Orange (Taktik) als SCHRIFT – im Dunkeln aufgehellt */
   --purple-text:var(--purple);  /* v708: Lila als SCHRIFT – im Dunkeln aufgehellt; --purple bleibt Fläche */
   --teal:#0e7490;--teal-bg:#ecfeff;
   --orange:#c2410c;--orange-bg:#fff7ed;
@@ -70,7 +71,7 @@
      Diese Töne halten mindestens 4,5:1 auf --surface UND auf --bg (nachgerechnet:
      Rot 5,29/6,45 · Grün 8,40/10,25 · Bernstein 8,76/10,69 · Blau 5,75/7,02).
      --blue selbst bleibt unverändert: es ist Fläche unter weißer Schrift. */
-  --red:#f87171;--green:#4ade80;--amber:#fbbf24;--blue-text:#60a5fa;--purple-text:#c4b5fd;
+  --red:#f87171;--green:#4ade80;--amber:#fbbf24;--blue-text:#60a5fa;--purple-text:#c4b5fd;--orange-text:#fb923c;
   /* v619: --green ist im Dunkeln hell (Schrift). Als Fläche unter weißer Schrift (aktiver Reiter
      „Training“) ergab das 1,74:1 – die Familienfarbe bleibt deshalb das satte Grün (5,0:1). */
   --fam-training:#15803d;
@@ -90,7 +91,7 @@
      Diese Töne halten mindestens 4,5:1 auf --surface UND auf --bg (nachgerechnet:
      Rot 5,29/6,45 · Grün 8,40/10,25 · Bernstein 8,76/10,69 · Blau 5,75/7,02).
      --blue selbst bleibt unverändert: es ist Fläche unter weißer Schrift. */
-  --red:#f87171;--green:#4ade80;--amber:#fbbf24;--blue-text:#60a5fa;--purple-text:#c4b5fd;
+  --red:#f87171;--green:#4ade80;--amber:#fbbf24;--blue-text:#60a5fa;--purple-text:#c4b5fd;--orange-text:#fb923c;
   /* v619: --green ist im Dunkeln hell (Schrift). Als Fläche unter weißer Schrift (aktiver Reiter
      „Training“) ergab das 1,74:1 – die Familienfarbe bleibt deshalb das satte Grün (5,0:1). */
   --fam-training:#15803d;
@@ -1404,3 +1405,9 @@ html[data-theme="dark"]:has(#main-app) body{background:var(--bg)}
 @media (prefers-reduced-motion:no-preference){ .ep-pop{animation:epPop .55s ease} }
 /* v787 · „Trainerstab · U9 I“ wird im Band am Handy nicht mehr mit „…“ abgeschnitten, sondern bricht bei Bedarf um. */
 @media (max-width:420px){ #main-app>.topbar .logo-t2{white-space:normal;overflow:visible;text-overflow:clip} }
+
+/* v788 · Taktik trägt auf der Seite ihre Familienfarbe (Charles 04.11., Bildschirmfoto: „Taktik ist auf der Startseite rot und in der Seite selber
+   mit pinkem Rand. Alle anderen Bereiche sind farblich konsistent“). Der KI-Kasten „Beschreib die Situation“ hatte einen lila Rand (Lila gehört
+   Eltern & Kinder); hier nimmt er die Taktik-Farbe, Rand und Knopf. Der Kasten im Fenster „Eigene Übung“ (Training) bleibt wie er war. */
+#sit-hub .tf-ki{border-left-color:var(--fam-taktik)}
+#sit-hub .tf-ki-knoepfe .tf-ki-los{border-color:var(--fam-taktik);color:var(--orange-text)}
