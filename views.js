@@ -4997,7 +4997,7 @@ async function saisonCockpitOpen(){
 const HELP=[
   {cat:"🏠 Start", items:[
     {t:"Diese Woche", d:"Alle Termine der nächsten 7 Tage auf einen Blick: wie viele Kinder zugesagt haben (aus den Eltern-Rückmeldungen; beim Spieltag zählt „dabei“ aus „Teams festlegen“, sobald die Einteilung steht), ob genug Trainer da sind (aus dem Trainerplan), ob der Trainingsplan steht und die Aufstellung fürs Spiel. Die Quelle steht unter der Karte. Rot wird ein Chip erst drei Tage vor dem Termin – vorher ist „0 zugesagt“ normal. Antippen öffnet den Termin.", run:"document.getElementById('home-woche')?.scrollIntoView({behavior:'smooth',block:'center'})"},
-    {t:"Startseite", d:"Von oben nach unten: was zu tun ist (Wie war's?, To-Do-Banner nur bei offenen Aufgaben, „Bist du dabei?“ mit den Terminen der nächsten 14 Tage, für die deine Antwort noch fehlt), <b>seit v682 gleich darunter die sechs Bereichs-Kacheln</b> (seit v718 drei je Reihe und halb so hoch; sie führen dorthin, wohin auch die Leiste unten führt, und zeigen dazu den nächsten Termin) – dahinter jeweils wieder eine Seite mit Kacheln, bei Taktik direkt das Brett –, dann „Diese Woche“ mit dem Stand je Termin (die erste Zeile ist der nächste Termin mit Wetter, Packtipp und den Sprungknöpfen „Anwesenheit“ und „Plan“; woher die Zahlen kommen, steht zugeklappt darunter) und der Knopf zu allen Terminen. Die drei Startschritte erscheinen nur, solange es noch keinen Kader gibt. Dieselbe Seite erreichst du über die untere Leiste; beide Wege enden im selben Bild.", go:"home"},
+    {t:"Startseite", d:"<b>Seit v787:</b> Die Kacheln tragen einheitliche Linien-Symbole, und die Karte „N ohne Rückmeldung“ auf der Orga-Seite hat einen Knopf „Erinnern“ (Push nur an Familien ohne Antwort). Von oben nach unten: was zu tun ist (Wie war's?, To-Do-Banner nur bei offenen Aufgaben, „Bist du dabei?“ mit den Terminen der nächsten 14 Tage, für die deine Antwort noch fehlt), <b>seit v682 gleich darunter die sechs Bereichs-Kacheln</b> (seit v718 drei je Reihe und halb so hoch; sie führen dorthin, wohin auch die Leiste unten führt, und zeigen dazu den nächsten Termin) – dahinter jeweils wieder eine Seite mit Kacheln, bei Taktik direkt das Brett –, dann „Diese Woche“ mit dem Stand je Termin (die erste Zeile ist der nächste Termin mit Wetter, Packtipp und den Sprungknöpfen „Anwesenheit“ und „Plan“; woher die Zahlen kommen, steht zugeklappt darunter) und der Knopf zu allen Terminen. Die drei Startschritte erscheinen nur, solange es noch keinen Kader gibt. Dieselbe Seite erreichst du über die untere Leiste; beide Wege enden im selben Bild.", go:"home"},
   ]},
   {cat:"👥 Team", items:[
     {t:"Saison-Cockpit", d:"Torschützen, Anwesenheit, Rückmelde-Tempo der Familien, faire Einsätze, Eltern-Puls, Rückmelde-Tempo – alles auf einen Blick.", run:"saisonCockpitOpen()"},
@@ -6550,7 +6550,8 @@ async function homeRsvpNudge(){
   slot.innerHTML=`<div role="button" tabindex="0" onclick="rsvpOverviewOpen(${t.id})" class="card" style="padding:12px 14px;margin-bottom:10px;border-left:3px solid var(--amber);cursor:pointer;display:flex;align-items:center;gap:8px">
     <span style="font-size:var(--s-teil)">🔔</span>
     <span style="flex:1;font-size:var(--s-text)"><strong style="color:var(--amber)">${offen} ohne Rückmeldung</strong> für ${m.icon} ${esc(t.titel||t.gegner||m.label)} · ${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}</span>
-    <span style="font-size:var(--s-klein);font-weight:800;color:var(--blue-text)">nachfassen ›</span>
+    <button type="button" class="btn btn-sm" id="home-rsvp-push" style="min-height:44px;flex:none" onclick="event.stopPropagation();rsvpOffeneErinnern(${t.id},this)" onkeydown="event.stopPropagation()" aria-label="Familien ohne Rückmeldung jetzt per Push erinnern"><i class="ti ti-bell"></i>Erinnern</button>
+    <span style="font-size:var(--s-klein);font-weight:800;color:var(--blue-text)" aria-hidden="true">›</span>
   </div>`;
 }
 
@@ -6973,6 +6974,64 @@ async function renderStadionheftView(){
    (2 Spalten, großes Icon, fetter Text; ungerade Gruppe → letzte Kachel volle Breite).
    Alle Aktionen laufen über kachelRun (schließt die Seite, ruft die bestehende Funktion).
 ═══════════════════════════════════ */
+/* v787 · Linien-Symbole auch in der Trainer-App (Startkacheln und Kachelseiten), gleiche Machart wie EP_ICONS in der Eltern-App (v786):
+   eine Strichstärke, currentColor, aria-hidden. Unbekanntes Zeichen bleibt das Emoji – nichts fällt aus. */
+const TR_ICONS={
+  "🏃":"<circle cx=\"14\" cy=\"5\" r=\"2\"/><path d=\"m6 21 3.5-6 3.5 2 2-5-4-2-3 3-3-1M13 17l1.5 4M15 12l3 2 2-1\"/>",
+  "⚽":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m12 8 3.5 2.5-1.3 4h-4.4l-1.3-4zM12 3v5M20 9.5l-4.5 1M17 19l-2.8-4.5M7 19l2.8-4.5M4 9.5l4.5 1\"/>",
+  "👥":"<circle cx=\"9\" cy=\"8\" r=\"3\"/><path d=\"M3.5 19a5.5 5.5 0 0 1 11 0\"/><circle cx=\"17\" cy=\"9\" r=\"2.5\"/><path d=\"M16 14a4.5 4.5 0 0 1 5 4.5\"/>",
+  "👪":"<circle cx=\"9\" cy=\"8\" r=\"3\"/><path d=\"M3.5 19a5.5 5.5 0 0 1 11 0\"/><circle cx=\"17\" cy=\"9\" r=\"2.5\"/><path d=\"M16 14a4.5 4.5 0 0 1 5 4.5\"/>",
+  "🎯":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><circle cx=\"12\" cy=\"12\" r=\"5\"/><circle cx=\"12\" cy=\"12\" r=\"1.2\"/>",
+  "🪶":"<path d=\"M20 4c-8 0-13 4-13 10l-3 6M7 14h6M20 4c0 7-4 11-10 11\"/>",
+  "📅":"<rect x=\"4\" y=\"5.5\" width=\"16\" height=\"15\" rx=\"2\"/><path d=\"M4 10h16M8.5 3.5v4M15.5 3.5v4\"/>",
+  "🗓️":"<rect x=\"4\" y=\"5.5\" width=\"16\" height=\"15\" rx=\"2\"/><path d=\"M4 10h16M8.5 3.5v4M15.5 3.5v4\"/>",
+  "✅":"<rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"3\"/><path d=\"m8.5 12.5 2.5 2.5 4.5-5\"/>",
+  "📋":"<rect x=\"5\" y=\"4\" width=\"14\" height=\"17\" rx=\"2\"/><path d=\"M9 4.5h6v2.5H9z\"/><path d=\"m8.5 12.5 1.5 1.5 3-3M8.5 17.5h7\"/>",
+  "📊":"<path d=\"M5 20V10M12 20V4M19 20v-7\"/>",
+  "📈":"<path d=\"m4 16 5-5 4 4 7-8M15 7h5v5\"/>",
+  "📚":"<path d=\"M5 4h4v16H5zM11 4h4v16h-4zM17.5 5l3 .8-3.5 14.2-3-.8z\"/>",
+  "📝":"<path d=\"M5 19l1-4L16 5l3 3L9 18zM14 7l3 3\"/>",
+  "📌":"<path d=\"m14.5 3.5 6 6-3 .8-3.5 3.7.4 3.8-1.5 1.5-4.2-4.2-5.2 5.2M9.3 9.8l1.5-1.5 3.8.4\"/>",
+  "📓":"<rect x=\"6\" y=\"3.5\" width=\"12\" height=\"17\" rx=\"2\"/><path d=\"M9 8h6M9 12h6M3.5 8H6M3.5 12H6M3.5 16H6\"/>",
+  "💭":"<path d=\"M7 16.5a4 4 0 0 1-.6-7.9A5.5 5.5 0 0 1 17 8a4 4 0 0 1 .5 8z\"/><circle cx=\"8\" cy=\"20\" r=\"1\"/><circle cx=\"5\" cy=\"22\" r=\".6\"/>",
+  "💬":"<path d=\"M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.4A8 8 0 1 1 21 12z\"/><path d=\"M8.5 11h7M8.5 14h4\"/>",
+  "🗣️":"<circle cx=\"9\" cy=\"8\" r=\"3\"/><path d=\"M3.5 19a5.5 5.5 0 0 1 11 0M17 7c1.5 1.5 1.5 4 0 5.5M19.5 5c3 3 3 8 0 11\"/>",
+  "📣":"<path d=\"M4 10.5v3l11 5V5.5z\"/><path d=\"M15 9a3.5 3.5 0 0 1 0 6M7 14.5l1.2 4.5h2.3L9.5 15\"/>",
+  "🔔":"<path d=\"M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0\"/>",
+  "🏆":"<path d=\"M8 4h8v5a4 4 0 0 1-8 0zM8 6H4.5c0 3 1.5 4.5 3.5 4.5M16 6h3.5c0 3-1.5 4.5-3.5 4.5M12 13v4M8.5 20h7M10 17h4\"/>",
+  "🏅":"<circle cx=\"12\" cy=\"14\" r=\"5\"/><path d=\"m8.5 10-2-6h4l1.5 4M15.5 10l2-6h-4L12 8\"/>",
+  "🧩":"<path d=\"M5 5h6v3a1.5 1.5 0 1 0 3 0V5h5v6h-3a1.5 1.5 0 1 0 0 3h3v5H5z\"/>",
+  "🧭":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m15.5 8.5-2 5-5 2 2-5z\"/>",
+  "🆘":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><circle cx=\"12\" cy=\"12\" r=\"3.5\"/><path d=\"m5.6 5.6 3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9\"/>",
+  "👕":"<path d=\"m8 4-5 3 2 4 2-1v10h10V10l2 1 2-4-5-3a4 4 0 0 1-8 0z\"/>",
+  "🎽":"<path d=\"m8 4-5 3 2 4 2-1v10h10V10l2 1 2-4-5-3a4 4 0 0 1-8 0z\"/>",
+  "🎉":"<rect x=\"4\" y=\"9\" width=\"16\" height=\"11\" rx=\"1\"/><path d=\"M3 9h18V6H3zM12 6v14M12 6c-2-3-5-2-4 0M12 6c2-3 5-2 4 0\"/>",
+  "🪪":"<rect x=\"3\" y=\"6\" width=\"18\" height=\"12\" rx=\"2\"/><circle cx=\"9\" cy=\"11.5\" r=\"2\"/><path d=\"M6 16c.5-1.5 5.5-1.5 6 0M14 10h4M14 13h3\"/>",
+  "🌟":"<path d=\"m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.9z\"/>",
+  "🆕":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 8v8M8 12h8\"/>",
+  "🏁":"<path d=\"M6 21V4M6 5h11l-2 4 2 4H6\"/>",
+  "⏱️":"<circle cx=\"12\" cy=\"13\" r=\"8\"/><path d=\"M12 9v4l2.5 1.5M9.5 2.5h5\"/>",
+  "⏸️":"<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M10 9v6M14 9v6\"/>",
+  "🖼️":"<rect x=\"3.5\" y=\"4.5\" width=\"17\" height=\"15\" rx=\"2\"/><circle cx=\"9\" cy=\"10\" r=\"1.5\"/><path d=\"m4 17 5-4 4 3 3-2 4 3\"/>",
+  "📰":"<rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"2\"/><path d=\"M8 9h8M8 12.5h8M8 16h5\"/>",
+  "🧑‍🏫":"<circle cx=\"9\" cy=\"8\" r=\"3\"/><path d=\"M3.5 19a5.5 5.5 0 0 1 11 0M15 6h6v6h-6z\"/>",
+  "💰":"<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 7.5v9M9.5 9.8c0-1 1-1.6 2.5-1.6s2.5.6 2.5 1.6-1 1.5-2.5 1.8-2.5.7-2.5 1.8 1 1.6 2.5 1.6 2.5-.6 2.5-1.6\"/>",
+  "🧰":"<rect x=\"3.5\" y=\"8\" width=\"17\" height=\"11\" rx=\"2\"/><path d=\"M9 8V6h6v2M3.5 13h17\"/>",
+  "🧦":"<circle cx=\"11\" cy=\"11\" r=\"6.5\"/><path d=\"m16 16 4.5 4.5\"/>",
+  "⚙️":"<circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1\"/>",
+  "🔑":"<circle cx=\"8\" cy=\"15\" r=\"4\"/><path d=\"m11 12 8-8M16 7l3 3M14 9l2 2\"/>",
+  "💾":"<path d=\"M5 4h11l3 3v13H5z\"/><path d=\"M8 4v5h7V4M8 20v-6h8v6\"/>",
+  "🦅":"<path d=\"M3 7c4 0 7 1.5 9 5 2-3.5 5-5 9-5-.5 5-3 9-9 12-6-3-8.5-7-9-12z\"/>",
+  "🤝":"<path d=\"m3 12 4-4 5 2 4-2 5 4-5 6-3-1-2 2-6-4z\"/>",
+  "🗳️":"<rect x=\"4\" y=\"13\" width=\"16\" height=\"7\" rx=\"1\"/><path d=\"M8 13 6 7l5 1.5 5-1.5-2 6M10 16h4\"/>",
+  "🧠":"<path d=\"M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 3 3 3 0 0 0 2 3 3 3 0 0 0 3 4h1V4zM15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 3 3 3 0 0 1-2 3 3 3 0 0 1-3 4h-1V4z\"/>",
+  "🪺":"<path d=\"M3.5 12h17a8.5 6 0 0 1-17 0zM7 12c0-2 2.2-3 5-3s5 1 5 3\"/>"
+};
+function trSymbol(emoji,groesse){
+  const d=TR_ICONS[emoji]; if(!d)return emoji;
+  const g=groesse||26;
+  return '<svg viewBox="0 0 24 24" width="'+g+'" height="'+g+'" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'+d+'</svg>';
+}
 function kachelTile(key,emo,label,c1,c2){
   /* c1/c2 sind Farbvariablen (--fam-*), keine Hexwerte – der Schatten kann deshalb
      nicht mehr aus der Farbe gebaut werden (frueher `${c1}44`) und ist jetzt neutral.
@@ -6980,7 +7039,7 @@ function kachelTile(key,emo,label,c1,c2){
      unter den geforderten 4.5:1. Die Abstufung macht die Schriftgroesse. */
   // v718: kompakt (drei je Reihe): Symbol, Name, Live-Hinweis – rund halb so hoch wie vorher
   return `<button onclick="kachelOpen('${key}')" style="min-height:76px;min-width:0;border:none;border-radius:14px;cursor:pointer;font-family:inherit;background:linear-gradient(135deg,${c1},${c2});color:#fff;padding:9px 10px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:2px;box-shadow:var(--shadow-md);text-align:left">
-    <span aria-hidden="true" style="font-size:var(--s-seite);line-height:1">${emo}</span>
+    <span aria-hidden="true" style="font-size:var(--s-seite);line-height:1;display:flex">${trSymbol(emo,26)}</span>
     <span style="min-width:0;max-width:100%">
       <span style="display:block;font-size:var(--s-text);font-weight:900;line-height:1.2;overflow-wrap:anywhere">${label}</span>
       <span id="kb-${key}" style="display:block;font-size:var(--s-klein);line-height:1.25;min-height:13px"></span>
@@ -7008,7 +7067,7 @@ function kTiles(items,col){
        gleich groß; die letzte steht links, die Lücke rechts ist ehrlicher als eine Betonung. */
     const voll=false;
     return `<button onclick="kachelRun('${x.fn}'${x.arg!==undefined?`,'${x.arg}'`:""})" style="${voll?"grid-column:1/-1;":""}min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid ${col};border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:12px 8px;text-align:center">
-      <span style="font-size:30px">${x.emo}</span>
+      <span aria-hidden="true" style="font-size:30px;line-height:1;display:flex;color:${col}">${trSymbol(x.emo,30)}</span>
       <span style="font-size:var(--s-karte);font-weight:800;line-height:1.25">${x.label}</span>
     </button>`;
   }).join("")+`</div>`;
