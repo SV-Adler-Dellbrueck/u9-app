@@ -13,10 +13,13 @@ const REPO = h.REPO;                       // App-Dateien (REPO=/pfad/zur/alten/
 const HIER = __dirname;                     // das Pruefwerkzeug selbst bleibt immer das aktuelle
 const filter = (process.argv[2] || "").toLowerCase();
 const rot = t => `\x1b[31m${t}\x1b[0m`, gruen = t => `\x1b[32m${t}\x1b[0m`, grau = t => `\x1b[2m${t}\x1b[0m`;
+/* v782: Eine Prüfung (v589) ersetzt console.log für die Dauer ihres Exports. Liefen andere gleichzeitig, schluckte das ihre Zeile still (v588 fehlte im
+   Bericht, obwohl sie grün war). Der Lauf schreibt deshalb über die beim Start gesicherte Funktion. */
+const ausgabe = console.log.bind(console);
 const befunde = [];
 const melde = (name, ok, zeilen = []) => {
-  console.log(`${ok ? gruen("✓") : rot("✗")} ${name}`);
-  zeilen.forEach(z => console.log(grau("    " + z)));
+  ausgabe(`${ok ? gruen("✓") : rot("✗")} ${name}`);
+  zeilen.forEach(z => ausgabe(grau("    " + z)));
   if (!ok) befunde.push(name);
 };
 const lies = f => fs.readFileSync(path.join(REPO, f), "utf8");
@@ -121,22 +124,48 @@ melde(`Parsen: ${jsDateien.length} App-Dateien + Pruefwerkzeug`, !parseFehler.le
 /* 3 – Pruefungen am DOM */
 (async () => {
   const dateien = fs.readdirSync(path.join(HIER, "checks")).filter(f => f.endsWith(".js") && f.toLowerCase().includes(filter)).sort();
-  if (!dateien.length) { console.log(grau("keine Pruefung passt zu „" + filter + "“")); }
+  if (!dateien.length) { ausgabe(grau("keine Pruefung passt zu „" + filter + "“")); }
   let browser = null;
   try { browser = await h.chromium().launch(); }
   catch (e) { melde("Playwright/Chromium starten", false, [String(e.message || e)]); }
   if (browser) {
     const hb = { ...h, starten: o => h.starten({ ...(o || {}), browser }) };
-    for (const f of dateien) {
-      const t0 = Date.now();
-      try {
-        const r = await require(path.join(HIER, "checks", f))(hb);
-        melde(`${r.name}  ${grau(f + " · " + ((Date.now() - t0) / 1000).toFixed(1) + " s")}`, r.ok, r.zeilen);
-      } catch (e) { melde(`${f} abgebrochen`, false, [String(e.stack || e).split("\n").slice(0, 4).join(" | ")]); }
-    }
+    /* v782: Die Prüfungen laufen parallel (Standard: 3 gleichzeitig, mit PARALLEL=n änderbar; PARALLEL=1 ist der alte Ablauf). Jede startet ihren
+       eigenen Browser-Kontext, die Ausgabe bleibt in der Reihenfolge der Dateien. Dazu ein Zeitlimit je Prüfung (ZEITLIMIT in Sekunden, Standard 240):
+       eine hängende Prüfung (z. B. ein Dialog, auf den niemand klickt) hielt früher den ganzen Lauf auf, bis jemand ihn abbrach. */
+    const PAR = Math.max(1, Number(process.env.PARALLEL) || Math.min(3, require("os").cpus().length));
+    const LIMIT = (Number(process.env.ZEITLIMIT) || 240) * 1000;
+    const fertig = new Array(dateien.length);
+    let nächste = 0, ausgegeben = 0;
+    const ausgeben = () => {
+      while (ausgegeben < dateien.length && fertig[ausgegeben]) {
+        const x = fertig[ausgegeben++];
+        if (x.fehler) melde(`${x.f} abgebrochen`, false, [String(x.fehler.stack || x.fehler).split("\n").slice(0, 4).join(" | ")]);
+        else melde(`${x.r.name}  ${grau(x.f + " · " + x.sek.toFixed(1) + " s")}`, x.r.ok, x.r.zeilen);
+      }
+    };
+    const arbeiter = async () => {
+      for (;;) {
+        const i = nächste++; if (i >= dateien.length) return;
+        const f = dateien[i], t0 = Date.now();
+        let timer;
+        try {
+          const r = await Promise.race([require(path.join(HIER, "checks", f))(hb),
+            new Promise((_, nein) => { timer = setTimeout(() => nein(new Error(`Zeitlimit von ${LIMIT / 1000} s überschritten – die Prüfung hängt`)), LIMIT); })]);
+          fertig[i] = { f, r, sek: (Date.now() - t0) / 1000 };
+        } catch (e) { fertig[i] = { f, fehler: e }; }
+        finally { clearTimeout(timer); }
+        ausgeben();
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(PAR, dateien.length) }, arbeiter));
+    ausgeben();
+    /* Vollständigkeit: jede Prüfung muss genau eine Zeile gemeldet haben – eine stille Lücke wäre ein falsches Grün. */
+    const fehlend = dateien.filter((f, i) => !fertig[i]);
+    melde(`Vollständig: ${ausgegeben} von ${dateien.length} Prüfungen gemeldet (${PAR} parallel)`, !fehlend.length && ausgegeben === dateien.length, fehlend.map(f => "keine Meldung: " + f));
     await browser.close();
   }
-  console.log("");
-  if (befunde.length) { console.log(rot(`${befunde.length} Befund(e):`)); befunde.forEach(b => console.log(rot("  - " + b))); process.exit(1); }
-  console.log(gruen("Alles gruen – sw.js darf hochgezaehlt werden."));
+  ausgabe("");
+  if (befunde.length) { ausgabe(rot(`${befunde.length} Befund(e):`)); befunde.forEach(b => ausgabe(rot("  - " + b))); process.exit(1); }
+  ausgabe(gruen("Alles gruen – sw.js darf hochgezaehlt werden."));
 })();
