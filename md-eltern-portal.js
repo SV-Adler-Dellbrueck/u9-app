@@ -1042,6 +1042,7 @@ async function elternDashLoad(){
   // ── TERMINE ── (Karussell + Kalender-Abo)
   /* v718 „entschlacken“: Überschrift nur, wenn es weitere Termine gibt; „Alle Termine &
      Kalender-Abo“ steht als Kachel unter „Mehr“ statt als eigene Karte mit einem Knopf. */
+  html+=elternWochenleisteHtml(termineListe,kids,rsvpAll); // v785
   const weitereTermine=elternTermineCarouselHtml(termineListe,kids,rsvpAll,termin&&termin.id); // v686: Liste ohne den Termin von oben, geantwortet wird oben
   if(weitereTermine){ html+=sec("📅 Termine"); html+=weitereTermine; }
   /* PO: „Rückblick unter Termine setzen." Der Nach-dem-Spiel-Gruß stand über den Terminen
@@ -1443,6 +1444,40 @@ function fotoLabel(typ){
    und was rechts aus dem Bild ragte, sah niemand. Jetzt: je Termin eine Zeile mit dem Stand je
    Kind in Worten und Zeichen – ein Tipp öffnet die Details, dort wird geantwortet. Geantwortet
    wird oben (Nächster Termin, Rückmeldung fehlt), hier wird nur nachgesehen. */
+/* v785 · „Diese Woche“ – ein Streifen mit den nächsten sieben Tagen (Charles 04.11.: „Alles außer die offenen Punkte umsetzen“).
+   Je Tag mit Termin eine Kachel: Wochentag, Datum, Symbol des Termins und der Antwortstand aller Kinder als Zeichen UND Wort
+   (✓ zugesagt · ! offen · ✕ Absage/fällt aus) – Farbe ist nie allein Bedeutungsträger. Tippen öffnet das Termin-Fenster.
+   Er erscheint nur, wenn mindestens zwei Termine in der Woche liegen; bei einem steht er ohnehin groß oben. */
+function elternWochenleisteHtml(rows,kids,rsvpAll){
+  const tage=[], heute=new Date(); heute.setHours(0,0,0,0);
+  for(let i=0;i<7;i++){const d=new Date(heute.getTime()+i*864e5); tage.push(d);}
+  const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  const inWoche=(rows||[]).filter(t=>t.datum>=iso(tage[0])&&t.datum<=iso(tage[6]));
+  if(inWoche.length<2)return "";
+  rsvpAll=rsvpAll||{};
+  const WT=["So","Mo","Di","Mi","Do","Fr","Sa"];
+  const zellen=tage.map(d=>{
+    const ts=inWoche.filter(t=>t.datum===iso(d));
+    const kopf=`<span style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2)">${WT[d.getDay()]}</span><span style="display:block;font-size:var(--s-text);font-weight:800">${d.getDate()}</span>`;
+    if(!ts.length)return `<div style="flex:1;min-width:0;text-align:center;padding:8px 0;opacity:.6">${kopf}<span aria-hidden="true" style="display:block;font-size:var(--s-text);color:var(--text3)">·</span></div>`;
+    const t=ts[0], m=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅",label:t.typ};
+    let zeichen, wort;
+    if(_elAbgesagt(t)){zeichen="✕";wort="fällt aus";}
+    else{
+      const rr=rsvpAll[t.id]||{}, st=(kids||[]).map(k=>rr[k.spieler_id]||null);
+      if(st.some(x=>!x)){zeichen="!";wort="Antwort offen";}
+      else if(st.every(x=>x==="zugesagt")){zeichen="✓";wort="zugesagt";}
+      else{zeichen="✕";wort="nicht dabei";}
+    }
+    const farbe=zeichen==="!"?"#b45309":(zeichen==="✓"?"#047857":"var(--text2)");
+    return `<button type="button" onclick="terminDetailOpen(${t.id})" aria-label="${WT[d.getDay()]} ${d.getDate()}., ${esc(t.titel||t.gegner||m.label)}, ${wort}${ts.length>1?", plus "+(ts.length-1)+" weitere":""}" style="flex:1;min-width:0;min-height:64px;text-align:center;padding:6px 0;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:var(--text);font-family:inherit;cursor:pointer">${kopf}<span aria-hidden="true" style="display:block;font-size:var(--s-text);line-height:1.3">${m.icon}</span><span style="display:block;font-size:var(--s-klein);font-weight:800;color:${farbe}">${zeichen}</span></button>`;
+  }).join("");
+  return `<div id="eltern-woche" style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
+    <div style="font-weight:800;font-size:var(--s-karte);margin-bottom:8px">🗓️ Diese Woche</div>
+    <div style="display:flex;gap:4px">${zellen}</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px">✓ zugesagt · ! Antwort offen · ✕ nicht dabei oder fällt aus</div>
+  </div>`;
+}
 function elternTermineCarouselHtml(rows,kids,rsvpAll,ohneId){
   const bis=new Date(Date.now()+14*864e5).toISOString().slice(0,10);
   rsvpAll=rsvpAll||{};
