@@ -1092,11 +1092,13 @@ function tmEdit(id){
       <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px"><span id="te-hinweis-lbl">${ausw?"Hinweis für die Betreuung":"Hinweis für Helfer"}</span><input id="te-helfer-hinweis" maxlength="140" placeholder="z. B. was heute anders ist als sonst" value="${esc(t.helfer_hinweis||'')}" style="${fld}"></label>
       ${t.typ==="event"?`<label style="display:flex;align-items:center;gap:10px;min-height:44px;margin-top:8px;font-size:var(--s-text);cursor:pointer"><input type="checkbox" id="te-mitbringen" ${t.mitbringen?"checked":""} style="width:22px;height:22px;margin:0">Eltern sollen etwas mitbringen (Mitbringliste an)</label>`:''}
     </div>
+    <div id="ta-slot" style="margin-top:14px;padding-top:10px;border-top:1px solid var(--rand-bedien)"></div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-p btn-sm" onclick="tmEditSave(${Number(t.id)})"><i class="ti ti-device-floppy"></i>Speichern</button>
       <button class="btn btn-sm" style="margin-left:auto" onclick="document.getElementById('tm-edit-modal').remove()">Abbrechen</button>
     </div>`;
   modal.appendChild(c);document.body.appendChild(modal);
+  if(typeof taTrainer==="function")taTrainer(t.id);   // v789: Anhänge am Termin
   // I-B: liegt der Termin schon jetzt in den Ferien? Hinweis direkt beim Öffnen zeigen
   if(typeof ferienDatumHint==="function")ferienDatumHint(document.getElementById("te-datum"),"te-ferien-hint");
 }

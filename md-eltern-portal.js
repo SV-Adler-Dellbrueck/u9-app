@@ -937,7 +937,8 @@ async function elternDashLoad(){
     const [r1,r2,r3]=await Promise.all([
       termin?fetch(`${SB_URL}/rest/v1/rueckmeldungen?termin_id=eq.${termin.id}&spieler_id=in.(${kidIds})&select=spieler_id,status,kommentar`,{headers:sbAuthHeaders()}).then(j).catch(()=>null):Promise.resolve(null),
       (tids&&kidIds)?fetch(`${SB_URL}/rest/v1/rueckmeldungen?termin_id=in.(${tids})&spieler_id=in.(${kidIds})&select=termin_id,spieler_id,status`,{headers:sbAuthHeaders()}).then(j).catch(()=>null):Promise.resolve(null),
-      fetch(`${SB_URL}/rest/v1/rpc/kasse_summary`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"}).then(j).catch(()=>null)
+      fetch(`${SB_URL}/rest/v1/rpc/kasse_summary`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"}).then(j).catch(()=>null),
+      (typeof taAnzahlLaden==="function")?taAnzahlLaden(termineListe.map(t=>t.id)).catch(()=>null):Promise.resolve(null)   // v789: Hinweis „📎 Spielplan“ (füllt window._taAnz)
     ]);
     (r1||[]).forEach(x=>rsvp[x.spieler_id]=x);
     (r2||[]).forEach(x=>{(rsvpAll[x.termin_id]=rsvpAll[x.termin_id]||{})[x.spieler_id]=x.status;});
@@ -1031,7 +1032,7 @@ async function elternDashLoad(){
       </div>
       ${(typeof elternPlatzHinweisHtml==="function")?elternPlatzHinweisHtml(termin):""}
       <div style="font-size:var(--s-teil);font-weight:800;margin-top:4px;line-height:1.25">${m.icon} ${esc(termin.titel||termin.gegner||m.label)}${heimLabel(termin)?` <span style="font-size:var(--s-klein);font-weight:800;padding:2px 7px;border-radius:10px;background:${termin.heim?"#dcfce7":"#fef3c7"};color:${termin.heim?"#15803d":"#b45309"};white-space:nowrap">${heimLabel(termin)}</span>`:""}</div>
-      <div style="font-size:var(--s-text);color:#475569;margin-top:4px;line-height:1.4">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"})}${zeit?" · "+zeit:""}${termin.ort?" · "+mapsAnchor(termin.ort):""}${termin.platz?" · 🏟️ "+esc(termin.platz):""}</div>
+      <div style="font-size:var(--s-text);color:#475569;margin-top:4px;line-height:1.4">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"})}${zeit?" · "+zeit:""}${termin.ort?" · "+mapsAnchor(termin.ort):""}${termin.platz?" · 🏟️ "+esc(termin.platz):""}</div>${typeof taChip==="function"?taChip(termin.id):""}
       ${(typeof elternAnfahrtHtml==="function")?elternAnfahrtHtml(termin):""}
       <div id="wetter-eltern"></div>
       ${trainerJa.length?`<div style="font-size:var(--s-klein);color:#64748b;margin-top:4px">👤 Trainer dabei: ${trainerJa.map(esc).join(", ")}</div>`:""}
@@ -1523,6 +1524,7 @@ function elternTermineCarouselHtml(rows,kids,rsvpAll,ohneId){
       <span style="flex:1;min-width:0">
         <span style="display:block;font-size:var(--s-text);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.titel||t.gegner||m.label)}</span>
         <span style="display:block;font-size:var(--s-klein);color:#475569">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${zeit?" · "+zeit:""}</span>
+        ${typeof taChip==="function"?taChip(t.id):""}
         <span style="display:block;margin-top:2px">${stand}</span>
       </span>
       <span style="font-size:var(--s-teil);color:#64748b" aria-hidden="true">›</span>
@@ -1632,6 +1634,7 @@ async function terminDetailOpen(id){
     ${infoRow("🏟️","Platz", t.platz?esc(t.platz):"")}
     ${infoRow("⚽","Spielform", spielformLbl)}
     ${faelltAus&&typeof elternPlatzHinweisHtml==="function"?elternPlatzHinweisHtml(t):""}
+    <div id="td-anhang"></div>
     <div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
       <div style="font-weight:700;font-size:var(--s-text);margin-bottom:2px">✅ Rückmeldung</div>
       ${rsvpRows||'<div style="font-size:var(--s-text);color:var(--text3)">Kein Kind zugeordnet.</div>'}
@@ -1649,6 +1652,7 @@ async function terminDetailOpen(id){
   window._tdTermin=t; // fürs Nachladen der Mitbringliste nach dem Eintragen
   if(istSpiel&&(t.gegner||t.titel))tdVorberichtLoad(t);
   if(t.datum)wetterInto("td-wetter",t.datum,t.ort,t.uhrzeit);
+  if(typeof taEltern==="function")taEltern(t.id);   // v789: Anhänge am Termin (z. B. Spielplan der Gastgeber)
   tdNomLoad(t,kids);
   if(t.typ==="training")tdBetreuungLoad(t,kids);
   if(istSpiel&&t.heim===true)tdBuedchenLoad(t);

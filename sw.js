@@ -1,4 +1,4 @@
-const CACHE="u9i-adler-v788";
+const CACHE="u9i-adler-v789";
 const PRECACHE=[
   "./",
   "./index.html",
@@ -50,7 +50,8 @@ const PRECACHE=[
   "./md-skizze.js",
   "./md-brett.js",
   "./md-kindtraining.js",
-  "./md-adler-rufe.js",   // v670: Adler-Rufe (Team-Chat)
+  "./md-adler-rufe.js",
+  "./md-termin-anhang.js",   // v789: Anhänge am Termin (Spielplan der Gastgeber)   // v670: Adler-Rufe (Team-Chat)
   "./boot.js",
   "./logo.png",
   "./badge-adler.png",   // v671: Adler weiß auf transparent – Symbol in der Statusleiste bei Push
