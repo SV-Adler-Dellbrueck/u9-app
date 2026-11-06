@@ -5012,6 +5012,9 @@ const UEBUNG_BETREUUNG_VORSCHLAG={
   "Doppelpass durch die Stangen":"allein",
   "Stangentausch":"allein",
   "Abschlussspiel – 3+1 gegen 3+1 Raute mit Countdown":"fuehrt",
+  /* v790: beim Joker-Duell coacht der Trainer am Feld (Stufen frei, eng, offen: erst loben, dann fragen); bei den Schau-Toren zeigt er beim Anspiel das Tor */
+  "Joker-Duell – anbieten und freilaufen":"feld",
+  "Schau-Tore – vor dem Ball schauen, dann ins gezeigte Tor":"fuehrt",
   /* v749: beim FUNiño-Wachstum schickt der Trainer das nächste Startkind, beim Eishockey gibt er
      das Kommando zum Reihentausch und die Provokationsregeln vor */
   "FUNiño 1 gegen 0 bis 4 gegen 4 – der Angreifer wird Verteidiger":"fuehrt",

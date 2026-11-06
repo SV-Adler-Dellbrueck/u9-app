@@ -14,6 +14,7 @@ module.exports = async function (h) {
   const probleme = [], zeilen = [];
   const d = JSON.parse(fs.readFileSync(path.join(h.REPO, "uebungen/vorlagen.json"), "utf8"));
   const AUSNAHMEN = ["L4-2", "L4-5", "L4-8"];
+  const STUFEN = { "L5-8": "17-17" };   // v790: L5-8 hat zwei Hauptteile zu je 17 Minuten (Stationen mit Gruppenwechsel)
   let angeglichen = 0;
   for (const v of d.vorlagen) {
     const kurz = v.name.split(" ")[0];
@@ -23,7 +24,7 @@ module.exports = async function (h) {
     if (summe > 75 || v.dauer_min !== 75) probleme.push(`c) ${kurz}: ${summe} Min. in Blöcken, dauer_min ${v.dauer_min}`);
     const warm = b.filter(x => x.typ === "warmup").map(x => x.dauer).join("+");
     const ab = (b.find(x => x.typ === "abschluss") || {}).dauer;
-    if (warm !== "10+8" || stufen.map(x => x.dauer).join("-") !== "12-12-10" || ab !== 18) probleme.push(`a) ${kurz}: ${warm} / ${stufen.map(x => x.dauer).join("-")} / ${ab}`);
+    if (warm !== "10+8" || stufen.map(x => x.dauer).join("-") !== (STUFEN[kurz] || "12-12-10") || ab !== 18) probleme.push(`a) ${kurz}: ${warm} / ${stufen.map(x => x.dauer).join("-")} / ${ab}`);
     else angeglichen++;
     if (b.some(x => /voll/.test(x.label || ""))) probleme.push(`b) ${kurz}: noch „voll“ im Warm-up`);
   }
