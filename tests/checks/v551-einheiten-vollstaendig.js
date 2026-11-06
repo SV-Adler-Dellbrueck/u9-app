@@ -41,11 +41,13 @@ const BESTAND = ["L1-1", "L2-1", "L3-1", "L4-1", "L4-2", "L5-1", "L6-1"];
    L4-7, L5-5, L6-4, L5-6, L6-5). Die Prüfung der zwanzig bleibt; die Fälle c) und e) gelten
    auch für die Zusatz-Einheiten. */
 /* v667: Saisonformat (Entwurf abgenommen 29.09.): je eine Einheit 3+1 und FUNiño für L1 bis L3. */
-const ZUSATZ = ["L4-5", "L4-6", "L5-4", "L6-3", "L4-7", "L5-5", "L6-4", "L5-6", "L6-5", "L4-8", "L1-5", "L1-6", "L2-5", "L2-6", "L3-4", "L3-5", "L5-7"];   // v700: L5-7 Endzone und Fähnchen
+const ZUSATZ = ["L4-5", "L4-6", "L5-4", "L6-3", "L4-7", "L5-5", "L6-4", "L5-6", "L6-5", "L4-8", "L1-5", "L1-6", "L2-5", "L2-6", "L3-4", "L3-5", "L5-7", "L5-8"];   // v700: L5-7 Endzone und Fähnchen · v790: L5-8 Anbieten (Käfig, zwei Stationen)
 /* v569: Der Kader hat höchstens 14 Kinder. Die neun Einheiten für 3+1 und FUNiño skalieren
    deshalb über 8/10/12/14; die zwanzig des Konzepts und L4-5 bleiben bei 8/12/16 (§9). */
 const SKAL_ALT = ["8", "12", "16"], SKAL_NEU = ["8", "10", "12", "14"];
-const skalSoll = v => String(v.name).startsWith("L4-5 ") || !ZUSATZ.some(p => String(v.name).startsWith(p + " ")) ? SKAL_ALT : SKAL_NEU;
+/* v790: L5-8 läuft im Käfig mit zwei Stationen und führt deshalb nur 8/10/12 (kein 14er-Schlüssel: der Kader hat höchstens 14, der Käfig trägt zwei Stationen) */
+const SKAL_L58 = ["8", "10", "12"];
+const skalSoll = v => String(v.name).startsWith("L5-8 ") ? SKAL_L58 : String(v.name).startsWith("L4-5 ") || !ZUSATZ.some(p => String(v.name).startsWith(p + " ")) ? SKAL_ALT : SKAL_NEU;
 
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
@@ -82,7 +84,7 @@ module.exports = async function (h) {
 
   // e) Skalierung und Beobachtung – aus der Datei, ohne Browser; seit v568 auch für die Zusatz-Einheiten
   const ohneSkal = alle.concat(zusatz).filter(v => !skalSoll(v).every(k => String((v.skalierung || {})[k] || "").trim())).map(v => v.name);
-  if (ohneSkal.length) probleme.push("Ohne vollständige Skalierung (8/12/16 bzw. 8/10/12/14): " + ohneSkal.join(", "));
+  if (ohneSkal.length) probleme.push("Ohne vollständige Skalierung (8/12/16, 8/10/12/14 bzw. bei L5-8 8/10/12): " + ohneSkal.join(", "));
   const ohneRolle = alle.concat(zusatz).filter(v => !/Aufpasser|Flitzer|Jäger/.test(String(v.beobachtung || ""))).map(v => v.name);
   if (ohneRolle.length) probleme.push("Beobachtungsfrage ohne Rollenbezug: " + ohneRolle.join(", "));
 

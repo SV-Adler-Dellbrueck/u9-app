@@ -48,7 +48,7 @@
    eine Datei anfasst, ohne den Stand hochzusetzen, bekommt es hier gesagt — denn ohne neuen
    Stand holt der Abgleich die Datei gar nicht erst. */
 const ORDNER = "doku/auftrag-aufstellungen-3plus1-funino";
-const NEUE_ORDNUNGEN = ["3+1", "FUNiño", "3+1 gegen FUNiño", "3+1 und FUNiño", "Endzone (4 gegen 4)"];   // v700: L5-7 wird im selben Abgleich angelegt
+const NEUE_ORDNUNGEN = ["3+1", "FUNiño", "3+1 gegen FUNiño", "3+1 und FUNiño", "Endzone (4 gegen 4)", "1 gegen 1"];   // v700: L5-7 wird im selben Abgleich angelegt · v790: L5-8 trägt „1 gegen 1“
 const EINHEITEN = ["L4-6", "L5-4", "L6-3", "L4-7", "L5-5", "L6-4", "L5-6", "L6-5", "L4-8"];
 const STAND_UEB = "2026-09-20-3", STAND_VOR = "2026-09-18-1";
 /* v601: Die Sperrklinke misst jetzt die RICHTUNG, nicht die Gleichheit. Gemeint war
