@@ -875,11 +875,36 @@ function tagebuchGedanke(){
     ${mdlHead("tb-gedanke","💭","Gedanke","Kommt ins Tagebuch – ausarbeiten kannst du ihn später","#7c3aed")}
     <textarea id="tb-gedanke-text" rows="6" aria-label="Dein Gedanke" placeholder="Was geht dir durch den Kopf? Tippen oder das Mikrofon der Tastatur nutzen." style="width:100%;box-sizing:border-box;min-height:140px;padding:12px;border:var(--border-s);border-radius:10px;font-family:inherit;font-size:var(--s-karte);line-height:1.5;background:var(--surface2);color:var(--text);resize:vertical;margin-top:8px"></textarea>
     <div id="tb-gedanke-meldung" role="status" style="font-size:var(--s-klein);color:var(--text2);min-height:18px;margin-top:4px"></div>
+    <button id="tb-gedanke-ki" class="btn" onclick="tagebuchGedankeSortieren()" style="width:100%;min-height:48px;margin-top:6px;justify-content:center"><i class="ti ti-sparkles"></i>Von der KI sortieren lassen</button>
     <button id="tb-gedanke-los" class="btn btn-p" onclick="tagebuchGedankeSpeichern()" style="width:100%;min-height:56px;margin-top:6px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-check"></i>Gedanke erfassen</button>
     <button class="btn" onclick="document.getElementById('tb-gedanke').remove()" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Abbrechen</button>
   </div>`;
   document.body.appendChild(ov);
   setTimeout(()=>{ try{ document.getElementById("tb-gedanke-text").focus(); }catch(e){} }, 30);
+}
+/* v791 · Gedanke ohne Termin per KI sortieren (Charles 06.11.). Derselbe Weg wie nach einem Training:
+   Namen gehen nie hinaus (nbMaske → „Kind n“), die Antwort kommt zurück auf Vornamen, wird als
+   Vorschlag gesichert und auf der Prüfkarte bestätigt. Die KI sortiert nur, was gesagt wurde. */
+async function tagebuchGedankeSortieren(){
+  const t = (document.getElementById("tb-gedanke-text")?.value||"").trim();
+  const m = document.getElementById("tb-gedanke-meldung");
+  if(t.length<15){ if(m) m.textContent = "Schreib oder sprich ein paar Sätze – dann kann die KI sortieren."; return; }
+  if(typeof nbMaske!=="function" || typeof nbTbDecknamen!=="function"){ if(m) m.textContent = "Die KI-Sortierung ist gerade nicht geladen – bitte kurz warten oder „Gedanke erfassen“ nutzen."; return; }
+  const b = document.getElementById("tb-gedanke-ki"), b2 = document.getElementById("tb-gedanke-los");
+  if(b){ b.disabled = true; b.innerHTML = '<i class="ti ti-loader-2"></i>Sortiert …'; } if(b2) b2.disabled = true;
+  const zurueck = () => { if(b){ b.disabled = false; b.innerHTML = '<i class="ti ti-sparkles"></i>Von der KI sortieren lassen'; } if(b2) b2.disabled = false; };
+  let d = null; const mk = nbMaske([]);
+  try{
+    const r = await fetch(`${SB_URL}/functions/v1/ki-nachbereitung`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({ art:"gedanke", text:mk.weg(t) })});
+    d = await r.json().catch(()=>null);
+    if(!r.ok || !d || !d.ergebnis) throw new Error((d&&d.error)||("Fehler "+r.status));
+  }catch(e){ zurueck(); if(m) m.textContent = "Nicht sortiert: "+(e&&e.message||"keine Verbindung")+". Der Text bleibt stehen – du kannst ihn auch so erfassen."; return; }
+  const v = d.ergebnis.tagebuch ? nbTbDecknamen(d.ergebnis.tagebuch, mk) : null;
+  if(!v){ zurueck(); if(m) m.textContent = "Die KI hat nichts Sortierbares gefunden. Der Text bleibt stehen – „Gedanke erfassen“ speichert ihn unsortiert."; return; }
+  const id = await tbVorschlagSichern({ fuer:"g"+Date.now(), art:"gedanke", v, diktat:t });
+  if(!id){ zurueck(); if(m) m.textContent = "Der Vorschlag ließ sich nicht speichern – der Text bleibt stehen."; return; }
+  document.getElementById("tb-gedanke")?.remove();
+  tbPruefenOpen(id);
 }
 async function tagebuchGedankeSpeichern(){
   const t = (document.getElementById("tb-gedanke-text")?.value||"").trim();
@@ -926,6 +951,10 @@ async function tbVorschlagSichern(o){
     try{ const r = await fetch(`${SB_URL}/rest/v1/trainingsplan?datum=eq.${encodeURIComponent(datum)}&select=kopf`,{headers:sbAuthHeaders()});
          if(r.ok) sp = String(((((await r.json())||[])[0]||{}).kopf||{}).schwerpunkt||"").trim(); }catch(e){}
     ausloeser = `Training U9 vom ${tbDatumDe(datum)}` + (sp ? `, Schwerpunkt „${sp}“` : "");
+  }else if(fuer[0]==="g"){
+    /* v791: ein Gedanke ohne Termin, von der KI sortiert – heutiges Datum, kein Termin */
+    datum = isoLokal(); quelle = "frei"; anlass = "gedanke";
+    ausloeser = `Gedanke vom ${tbDatumDe(datum)}`;
   }else{
     terminId = Number(fuer.slice(1)); quelle = "event"; anlass = "spieltag";
     let t = o.termin;
@@ -942,7 +971,7 @@ async function tbVorschlagSichern(o){
     ki_vorschlag:true, bestaetigt_am:null, diktat:String(o.diktat||"").trim()||null,
     rueckfragen:(v.rueckfragen||[]).slice(0,2), updated_at:new Date().toISOString() };
   let id = tbVorschlagIdFuer(fuer);
-  if(!id){
+  if(!id && fuer[0]!=="g"){   // jeder Gedanke ist ein eigener Eintrag
     try{
       const wo = quelle==="einheit" ? `datum=eq.${encodeURIComponent(datum)}&quelle=eq.einheit` : `termin_id=eq.${terminId}`;
       const r = await fetch(`${SB_URL}/rest/v1/tagebuch_eintrag?select=id&autor=eq.${encodeURIComponent(ich)}&ki_vorschlag=is.true&bestaetigt_am=is.null&${wo}&order=id.desc&limit=1`,{headers:sbAuthHeaders()});
