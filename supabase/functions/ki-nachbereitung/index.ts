@@ -13,7 +13,7 @@
    „Kind 1“, „Kind 2“ … und übersetzt die Antwort zurück. Geheimnisse (LLM_API_KEY) stehen
    ausschließlich in den Secrets. Tageslimit und Zähler teilt sie mit ki-uebung (ki_usage).
 
-   v679 (Stand der ausgerollten Fassung: Version 7) – Aufträge doku/auftrag-tagebuch-ki-sortieren/:
+   v679 (Stand der ausgerollten Fassung: Version 7; v791 (art „gedanke“) wartet auf die Ausrollung als Version 8) – Aufträge doku/auftrag-tagebuch-ki-sortieren/:
    · Der Tagebuch-Teil SORTIERT die Worte des Trainers statt sie neu zu schreiben (Ich-Form,
      aha nur wörtlich oder null, höchstens zwei Konsequenzen, höchstens zwei Rückfragen).
    · Dazu To-dos mit Vorschlag für die Zuständigkeit aus den Rollen im Trainerstab – nie zugewiesen.
@@ -60,6 +60,20 @@ REGELN
   mitten im Satz. Lies über solche Punkte hinweg und setze eigene, richtige Sätze. (v638)
 - Widerspricht sich der Trainer, gilt das zuletzt Gesagte. Eine Zeile „Korrektur: …“ ist eine
   Nachbesserung zu deiner vorigen Auswertung und hat Vorrang vor allem davor. (v638)
+- Antworte AUSSCHLIESSLICH mit einem JSON-Objekt in der verlangten Form.`;
+
+/* v791 · Gedanke ohne Termin (Charles 06.11.: „alles bauen“). Ein frei gesprochener Gedanke wird wie eine
+   Nachbereitung SORTIERT, nicht umgeschrieben – nur der Tagebuch-Teil, keine Bewertung. Die Regeln stehen in
+   FORM_TAGEBUCH und gelten unverändert; Aha und Konsequenz entstehen nur, wenn er sie selbst gesagt hat. */
+const SYS_GEDANKE = `Du bist Assistent eines Kinderfußball-Trainers (U9, SV Adler Dellbrück). Er hat einen Gedanken
+frei gesprochen oder getippt, ohne Bezug zu einem Training oder Spiel. Du sortierst ihn in sein Trainertagebuch.
+
+REGELN
+- Nur was gesagt oder eindeutig gemeint ist. Erfinde nichts, auch keine Erkenntnis und keinen Schritt.
+- Kinder heißen im Text „Kind 1“, „Kind 2“ … Übernimm genau diese Bezeichnung.
+- Satzzeichen der Spracherkennung sind unzuverlässig: ein Punkt steht oft nur an einer Denkpause
+  mitten im Satz. Lies über solche Punkte hinweg und setze eigene, richtige Sätze.
+- Widerspricht sich der Trainer, gilt das zuletzt Gesagte.
 - Antworte AUSSCHLIESSLICH mit einem JSON-Objekt in der verlangten Form.`;
 
 const FORM_TRAINING = `{
@@ -275,8 +289,8 @@ Deno.serve(async (req) => {
     /* v679: Der zweite Weg (art „tagebuch“ aus einer gespeicherten Notiz) ist weg – eine Notiz, ein
        Aufruf. Ein älterer Client bekommt eine klare Meldung statt eines zweiten Vorschlags. */
     if (body?.art === "tagebuch") return j({ error: "Den Tagebuch-Vorschlag gibt es jetzt direkt aus der Nachbereitung – bitte die App neu laden." }, 410);
-    const art = body?.art === "spiel" ? "spiel" : "training";
-    const fuer = /^[dt][0-9-]{1,30}$/.test(String(body?.fuer || "")) ? String(body.fuer) : "";
+    const art = body?.art === "spiel" ? "spiel" : body?.art === "gedanke" ? "gedanke" : "training";
+    const fuer = art !== "gedanke" && /^[dt][0-9-]{1,30}$/.test(String(body?.fuer || "")) ? String(body.fuer) : "";   // ein Gedanke hat keinen Termin: nur das Tageslimit gilt
     let lauf: any = null;
     if (fuer) {
       const { data } = await svc.from("ki_nachbereitung_lauf").select("anzahl").eq("uid", uid).eq("fuer", fuer).eq("tag", today).maybeSingle();
@@ -301,6 +315,8 @@ Deno.serve(async (req) => {
       nrs = new Set(ue.map((u: any) => u.nr)); namen = new Set(kinder);
       user = `ÜBUNGEN DIESER EINHEIT:\n${ue.map((u: any) => `${u.nr}. ${u.name}${u.bloecke ? " (" + u.bloecke + ")" : ""}`).join("\n") || "(keine geplant)"}\n\n`
         + `ANWESENDE KINDER: ${kinder.join(", ") || "(keine erfasst)"}\n\nANTWORTFORM:\n${(einzelwerte ? FORM_TRAINING : FORM_TRAINING_OHNE_KINDER).replace("<TAGEBUCH>", FORM_TAGEBUCH)}\n\nSPRACHNOTIZ:\n"""\n${text}\n"""`;
+    } else if (art === "gedanke") {
+      user = `ANTWORTFORM:\n{\n${FORM_TAGEBUCH}\n}\n\nGEDANKE:\n"""\n${text}\n"""`;
     } else {
       const teams = (Array.isArray(body?.teams) ? body.teams : []).slice(0, 8)
         .map((t: any) => ({ nr: Number(t?.nr), name: String(t?.name || "").slice(0, 60) })).filter((t: any) => isFinite(t.nr));
@@ -316,8 +332,8 @@ Deno.serve(async (req) => {
     const wunsch = Deno.env.get("LLM_MODEL") || (provider === "openai" ? "gpt-4o" : "claude-sonnet-5");
     const rueckfall = provider === "openai" ? "gpt-4o-mini" : "claude-haiku-4-5-20251001";
     let modell = wunsch;
-    let res = await llmRuf(provider, key, wunsch, SYS, user);
-    if (!res.ok && wunsch !== rueckfall) { modell = rueckfall; res = await llmRuf(provider, key, rueckfall, SYS, user); }
+    let res = await llmRuf(provider, key, wunsch, art === "gedanke" ? SYS_GEDANKE : SYS, user);
+    if (!res.ok && wunsch !== rueckfall) { modell = rueckfall; res = await llmRuf(provider, key, rueckfall, art === "gedanke" ? SYS_GEDANKE : SYS, user); }
     if (!res.ok) return j({ error: "KI-Dienst nicht erreichbar (" + res.status + ")" }, 502);
 
     let parsed: any = null;
@@ -325,7 +341,7 @@ Deno.serve(async (req) => {
       const m = res.text.match(/\{[\s\S]*\}/); if (m) { try { parsed = JSON.parse(m[0]); } catch { /* unlesbar */ } }
     }
     if (!parsed || typeof parsed !== "object") return j({ error: "Die KI-Antwort war unlesbar. Bitte noch einmal versuchen." }, 502);
-    const ergebnis: any = art === "training" ? sanTraining(parsed, nrs, namen, einzelwerte) : sanSpiel(parsed, nrs, namen);
+    const ergebnis: any = art === "gedanke" ? {} : art === "training" ? sanTraining(parsed, nrs, namen, einzelwerte) : sanSpiel(parsed, nrs, namen);
     ergebnis.tagebuch = sanTagebuch(parsed?.tagebuch);
 
     if (zaehlt) await svc.from("ki_usage").upsert({ uid, tag: today, count: used + 1 }, { onConflict: "uid,tag" });
