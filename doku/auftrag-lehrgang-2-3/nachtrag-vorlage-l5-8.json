@@ -1,0 +1,44 @@
+{
+  "schema": "adler-vorlagen/1",
+  "vorlagen": [
+    {
+      "name": "L5-8 Anbieten – Joker-Duell und Schau-Tore",
+      "leitfrage": "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?",
+      "ziel_kinder": "Heute stellst du dich so hin, dass dein Mitspieler dich anspielen kann, und schaust, bevor der Ball kommt.",
+      "folge_nr": 8,
+      "tags": ["wenig-platz"],
+      "dauer_min": 75,
+      "netto_spielform_min": 34,
+      "skalierung": {
+        "8": "2 Stationen, je 4 Kinder, Joker-Duell mit einer Bahn",
+        "10": "2 Stationen, je 5 Kinder, Joker-Duell mit zwei Bahnen",
+        "12": "2 Stationen, je 6 Kinder, der sechste holt Bälle und rückt ein"
+      },
+      "beobachtung": "Wer hat sich wie ein Flitzer vom Verteidiger weggelöst, bevor der Ball kam – und wer hat wie ein Aufpasser zwischen Angreifer und Tor gestanden, ohne loszulaufen, bevor der Ball gespielt war?",
+      "bloecke": [
+        {"typ": "warmup", "label": "Straßenfußball-Fenster", "dauer": 10},
+        {"typ": "warmup", "label": "Warm up Adler, kurz", "dauer": 8, "uebung_name": "Warm up Adler"},
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 1 – Stationen: Joker-Duell (frei, eng, offen) | Schau-Tore (frei, eng, offen)",
+          "dauer": 17,
+          "stationen": [
+            {"uebung_name": "Joker-Duell – anbieten und freilaufen"},
+            {"uebung_name": "Schau-Tore – vor dem Ball schauen, dann ins gezeigte Tor"}
+          ]
+        },
+        {
+          "typ": "spielform",
+          "label": "Hauptteil 2 – Gruppen wechseln die Station: Regeln wie in Hauptteil 1",
+          "dauer": 17,
+          "stationen": [
+            {"uebung_name": "Joker-Duell – anbieten und freilaufen"},
+            {"uebung_name": "Schau-Tore – vor dem Ball schauen, dann ins gezeigte Tor"}
+          ]
+        },
+        {"typ": "abschluss", "label": "Abschlussturnier", "dauer": 18}
+      ],
+      "ordnung": "Joker + zwei Duelle (1 gegen 1) | Passgeber + 1 gegen 1"
+    }
+  ]
+}
