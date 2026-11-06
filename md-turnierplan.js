@@ -814,15 +814,16 @@ function _blzMit(b,f){
 /* Wurde für DIESEN Termin schon etwas vorbereitet – auf einem anderen Gerät oder vor
    Tagen? Dann nachladen. Nur wenn lokal nichts zu diesem Termin liegt: was der Trainer
    gerade in der Hand hat, wird nie vom Server überschrieben. */
-async function _blzVomServer(datum){
+async function _blzVomServer(datum,still){
   const vom=await _blzDbLaden(datum);
-  if(!vom||!document.getElementById("blitz-modal"))return;
+  if(!vom||(!still&&!document.getElementById("blitz-modal")))return;
+  if(still&&BLZ&&BLZ.datum===datum&&BLZ.phase!=="setup")return;   // v792: ein laufendes Turnier nie überschreiben
   vom.datum=datum;
   BLZ=vom;
   try{localStorage.setItem("adler_blitz",JSON.stringify(BLZ));}catch(e){}
   if(BLZ.phase==="setup")_blzTeamsAufraeumen();
   blzRender();
-  if(typeof toast==="function")toast("Vorbereitetes Turnier für diesen Termin geladen ✓");
+  if(typeof toast==="function"&&document.getElementById("blitz-modal"))toast("Vorbereitetes Turnier für diesen Termin geladen ✓");
 }
 function _blzLoad(){
   try{
@@ -934,6 +935,24 @@ function _blzAuto(n){
     teams[ziel].spieler.push(name);summe[ziel]+=st(name);
   });
   return {teams,quelle:pool.quelle};
+}
+/* v792 · Teams aus den Trainingsgruppen (Charles 06.11.: „Teams wenn es passt erstmal aus den Trainingsgruppen
+   übernehmen, aber optional änderbar“). Ein Team je Gruppe, mit dem Namen der Gruppe. „Passt“ heißt: zwei bis vier
+   Gruppen, und jede hat nach Abgleich mit der Anwesenheit mindestens „min“ Kinder (die Spielform braucht so viele je Team).
+   Kinder, die in keiner Gruppe stehen, kommen ins kleinste Team. Sonst null – dann mischt die App wie bisher. */
+function _blzGruppenTeams(min){
+  try{
+    const tg=(typeof tgFor==="function")?tgFor():null;
+    const gr=(tg&&Array.isArray(tg.gruppen))?tg.gruppen.filter(g=>g&&Array.isArray(g.kinder)&&g.kinder.length):[];
+    if(gr.length<2||gr.length>4)return null;
+    const pool=_blzPool(), erlaubt=new Set(pool.namen), gesehen=new Set();
+    const teams=gr.map(g=>({name:String(g.name||"Gruppe").split(" + ")[0],spieler:g.kinder.filter(n=>{ if(!erlaubt.has(n)||gesehen.has(n))return false; gesehen.add(n); return true; }),fest:false}));
+    pool.namen.filter(n=>!gesehen.has(n)).forEach(n=>{
+      const t=teams.reduce((a,b)=>b.spieler.length<a.spieler.length?b:a); t.spieler.push(n);
+    });
+    if(teams.some(t=>t.spieler.length<Math.max(2,min||3)))return null;
+    return {teams,quelle:"Trainingsgruppen"};
+  }catch(e){ return null; }
 }
 /* ── PLATZRECHNER ───────────────────────────────────────────────────────────────
    Wie viele Kinder stehen bei dieser Feld-/Spielform-Kombination GLEICHZEITIG auf
@@ -1243,7 +1262,11 @@ function _blzVorschauHtml(){
   if(p.hinweis>0)return `<div style="font-size:var(--s-text);color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:8px 10px;margin-bottom:8px">⏰ Fair (min. ${BLZ_MIN} Min. je Spiel) braucht das kürzeste Format <b>${p.dauer} Min.</b> – das sind <b>${p.hinweis} Min. mehr</b> als geplant. Budget erhöhen, ein Feld dazu – oder bewusst überziehen und trotzdem starten.</div>`;
   return `<div style="font-size:var(--s-text);color:var(--text);background:var(--green-bg);border:1px solid var(--green);border-radius:10px;padding:8px 10px;margin-bottom:8px">✅ Vorschlag: <b>${fmt}</b> à <b>${p.z} Min.</b> → ${p.ms.length} Spiele, ca. <b>${p.dauer} von ${BLZ.budget} Min.</b>${felderTxt}</div>`;
 }
-function blitzOpen(vorgabeBudget){
+/* v792 · Das Turnier-Objekt (BLZ) für den gewählten Termin bereitstellen – für das Trainingsturnier-Fenster
+   UND für den Abschlussspiel-Block im Trainingsplan. „still“: nichts speichern (der Block darf beim bloßen Zeichnen
+   keinen Datenbankeintrag anlegen; gespeichert wird erst, wenn jemand dort etwas ändert). Ein noch nicht gespeichertes
+   Turnier im Speicher bleibt dabei erhalten, damit das Fenster dieselben Teams zeigt wie der Block. */
+function _blzBereit(vorgabeBudget,still){
   const alt=_blzLoad();
   const datum=_blzBindeDatum();
   /* Ein Turnier gehört jetzt zu EINEM Termin. Der lokale Stand zählt deshalb nur,
@@ -1253,11 +1276,21 @@ function blitzOpen(vorgabeBudget){
   const laeuft=!!(alt&&(alt.plan||[]).some(x=>x.ta!=null));
   const lokalPasst=!!(alt&&(alt.datum===datum||laeuft));
   if(lokalPasst){BLZ=alt;}
-  else{const a=_blzAuto(2);BLZ={datum:_blzBindeDatum(),phase:"setup",spielmodus:"kinder",anzahl:2,elternAnzahl:1,spielform:"frei",runde:8,budget:20,felder:1,modus:"rr",quelle:a.quelle,teams:a.teams,trainer:[],plan:[]};blzSave();}
+  else if(BLZ&&BLZ.datum===datum&&BLZ.phase==="setup"){ if(!still)blzSave(); /* ungespeichert aus dem Abschlussspiel-Block – bleibt, wird jetzt gespeichert */ }
+  else{
+    // v792: Teams zuerst aus den Trainingsgruppen, wenn die passen; sonst wie bisher gemischt
+    const a=_blzGruppenTeams(3)||_blzAuto(2);
+    BLZ={datum:_blzBindeDatum(),phase:"setup",spielmodus:"kinder",anzahl:a.teams.length||2,elternAnzahl:1,spielform:"frei",runde:8,budget:20,felder:1,modus:"rr",quelle:a.quelle,teams:a.teams,trainer:[],plan:[]};
+    if(!still)blzSave();
+  }
   // Aus dem Trainingsplan geöffnet: die Dauer des Abschluss-Slots wird zum Zeitbudget
-  if(vorgabeBudget>0&&BLZ.phase==="setup"){BLZ.budget=Math.round(vorgabeBudget);blzSave();}
+  if(vorgabeBudget>0&&BLZ.phase==="setup"){BLZ.budget=Math.round(vorgabeBudget);if(!still)blzSave();}
   if(!BLZ.datum)BLZ.datum=_blzBindeDatum();          // Altbestand ohne Termin-Bindung
-  if(alt&&BLZ.phase==="setup")_blzTeamsAufraeumen(); // gespeicherte Teams gegen den heutigen Pool halten
+  if(BLZ.phase==="setup"&&(alt||still))_blzTeamsAufraeumen(); // gespeicherte Teams gegen den heutigen Pool halten
+  return {alt,datum,lokalPasst};
+}
+function blitzOpen(vorgabeBudget){
+  const {datum,lokalPasst}=_blzBereit(vorgabeBudget,false);
   document.getElementById("blitz-modal")?.remove();
   _blzEinstOffen=null;
   const m=document.createElement("div");m.id="blitz-modal";
@@ -1274,7 +1307,62 @@ function blitzOpen(vorgabeBudget){
   // der Hand hat, wird nie vom Server überschrieben.
   if(!lokalPasst)_blzVomServer(datum);
 }
+/* v792 · Abschlussspiel im Trainingsplan: Spielform (FUNiño oder 4+1) und Teams direkt im Block. Dieselben Daten wie
+   das Trainingsturnier (BLZ): was hier eingestellt wird, steht dort, und umgekehrt. Der Platz im Block ist
+   <div class="tp-abschluss-teams"> (boot.js); gefüllt wird er hier, weil boot.js zu Welle 1 gehört. */
+const ABSCHLUSS_FORMEN=[["funino","FUNiño","3 gegen 3 auf 4 Minitore, ohne Torwart"],["f4","4+1","vier Feldspieler + Torwart"]];
+function _abschlussHtml(){
+  if(!BLZ)return "";
+  if(BLZ.phase!=="setup"||BLZ.spielmodus==="duell")
+    return `<div style="font-size:var(--s-klein);color:var(--text2);padding:6px 0;line-height:1.5">🏆 ${BLZ.phase!=="setup"?"Das Trainingsturnier läuft":"Kinder gegen Eltern"} – Spielform und Teams stehen im Trainingsturnier.</div>`;
+  const sf=BLZ.spielform==="frei"?"funino":BLZ.spielform;
+  const groesse=(BLZ_SPIELFORM[sf]||[])[1]||3;
+  const chips=ABSCHLUSS_FORMEN.map(([k,l])=>`<button type="button" aria-pressed="${sf===k}" onclick="abschlussSpielform('${k}')" style="flex:1;min-width:30%;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer;background:${sf===k?"var(--text)":"var(--surface)"};color:${sf===k?"var(--surface)":"var(--text)"}">${l}${sf===k?" ✓":""}</button>`).join("");
+  const info=(ABSCHLUSS_FORMEN.find(f=>f[0]===sf)||[])[2]||"";
+  const team=(t,i)=>`<div style="border:var(--border-s);border-left:4px solid ${BLZ_FARBEN[i%BLZ_FARBEN.length]};border-radius:12px;padding:8px 10px;margin-top:6px">
+      <div style="font-size:var(--s-text);font-weight:800;color:var(--text)">${esc(t.name)} <span style="font-weight:400;color:var(--text2)">· ${t.spieler.length}</span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${t.spieler.map(n=>`<button type="button" onclick="blzCycle('${jsq(n)}')" title="Tippen = ins nächste Team" style="min-height:44px;padding:6px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);cursor:pointer">${esc(n)}</button>`).join("")||`<span style="font-size:var(--s-klein);color:var(--text3)">noch keine Kinder</span>`}</div>
+    </div>`;
+  const zuWenig=BLZ.teams.filter(t=>!t.eltern&&t.spieler.length<groesse);
+  const warn=zuWenig.length?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px;line-height:1.5">⚠️ ${esc((BLZ_SPIELFORM[sf]||[])[0]||"")} braucht ${groesse} Kinder je Team – es fehlen Kinder bei ${zuWenig.map(t=>esc(t.name)+" ("+t.spieler.length+")").join(", ")}. Tippe ein Kind an, um es ins nächste Team zu schieben.</div>`:"";
+  const ausGruppen=!!_blzGruppenTeams(groesse);
+  return `<div style="margin:6px 0 4px">
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:4px">Spielform</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${chips}</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin:4px 0 6px">${esc(info)}</div>
+    <div style="font-size:var(--s-text);font-weight:800;color:var(--text)">Teams <span style="font-weight:400;color:var(--text2)">· ${esc(BLZ.quelle||"")} · Kind antippen = nächstes Team</span></div>
+    ${BLZ.teams.filter(t=>!t.eltern).map((t,i)=>team(t,i)).join("")}
+    ${warn}
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+      ${ausGruppen?`<button type="button" class="btn btn-sm" style="min-height:44px" onclick="abschlussGruppen()">👥 Aus Trainingsgruppen</button>`:""}
+      <button type="button" class="btn btn-sm" style="min-height:44px" onclick="abschlussMischen()">🎲 Neu mischen</button>
+    </div></div>`;
+}
+let _abschlussServer={};
+function abschlussFuellen(){
+  const els=document.querySelectorAll(".tp-abschluss-teams"); if(!els.length)return;
+  const b=_blzBereit(0,true);
+  els.forEach(el=>{el.innerHTML=_abschlussHtml();});
+  // Wurde für diesen Termin schon etwas vorbereitet (anderes Gerät)? Einmal nachladen, ohne etwas zu überschreiben.
+  if(!b.lokalPasst&&!_abschlussServer[b.datum]){_abschlussServer[b.datum]=1;_blzVomServer(b.datum,true);}
+}
+function abschlussSpielform(k){ _blzBereit(0,true); if(BLZ.phase!=="setup")return; blzSpielform(k); }
+function abschlussGruppen(){
+  _blzBereit(0,true); if(BLZ.phase!=="setup")return;
+  const sf=BLZ.spielform==="frei"?"funino":BLZ.spielform;
+  const g=_blzGruppenTeams((BLZ_SPIELFORM[sf]||[])[1]||3);
+  if(!g){ if(typeof toast==="function")toast("Die Trainingsgruppen passen nicht zur Spielform","err"); return; }
+  if(typeof _blzPlanVerwerfen==="function"&&!_blzPlanVerwerfen())return;
+  BLZ.teams=g.teams.concat(BLZ.teams.filter(t=>t.fest&&!t.eltern)); BLZ.anzahl=g.teams.length; BLZ.quelle=g.quelle;
+  if(typeof _blzTrainerVerteilen==="function")_blzTrainerVerteilen();
+  blzSave(); blzRender();
+}
+function abschlussMischen(){
+  _blzBereit(0,true); if(BLZ.phase!=="setup")return;
+  blzNeuMischen();
+}
 function blzRender(){
+  if(typeof abschlussFuellen==="function"&&document.querySelector(".tp-abschluss-teams")&&BLZ)document.querySelectorAll(".tp-abschluss-teams").forEach(el=>{el.innerHTML=_abschlussHtml();});
   const el=document.getElementById("blitz-body");if(!el||!BLZ)return;
   if(BLZ.phase!=="setup")_blzResolve();
   el.innerHTML=(BLZ.phase==="setup")?_blzSetupHtml():_blzLiveHtml();

@@ -2522,6 +2522,13 @@ function tpBetreuungTausch(selId,idx){
   if(typeof toast==="function")toast("👤 Getauscht – „"+(tpAllForms()[idx]||{}).name+"“ läuft allein");
 }
 
+/* v792: Der Abschlussspiel-Block zeigt Spielform und Teams aus md-turnierplan.js (Welle 2). Ist das Modul noch nicht
+   da, wartet er kurz, statt leer zu bleiben – und reißt nichts mit, wenn es fehlt. */
+function _tpAbschlussNachladen(n){
+  if(!document.querySelector(".tp-abschluss-teams"))return;
+  if(typeof abschlussFuellen==="function"){ try{ abschlussFuellen(); }catch(e){} return; }
+  if(n<12)setTimeout(()=>_tpAbschlussNachladen(n+1),400);
+}
 function tpRenderTimeline(){
   /* v621: Pläne mit Durchgängen alter Art (v605–v620: ein Block, Zeit geteilt) werden zur
      Kette – der folgende Hauptteil wird Durchgang 2, sonst wird er angelegt. */
@@ -2704,6 +2711,7 @@ function tpRenderTimeline(){
       // PO-Wunsch: das Abschlussspiel kann direkt als Blitzturnier laufen – die Slot-Dauer
       // wird zum Zeitbudget (auch 2 gegen 2 ohne Torwart mit bis zu 6 Teams).
       html+=`<div style="font-size:var(--s-klein);color:var(--text2);padding:4px 0">Freies Spiel – Standard: 3 gegen 3 auf 4 Minitore (FUNiño), ohne Torwart</div>
+        ${typ==="abschluss"?`<div class="tp-abschluss-teams"></div>`:""}
         <button class="btn btn-sm" style="margin-top:4px" onclick="blitzOpen(${Number(slot.dauer)||15})" title="Trainingsturnier mit dieser Slot-Dauer als Zeitbudget – vorab planbar, wird zum Termin gespeichert">🏆 Als Trainingsturnier spielen (${slot.dauer} Min.)</button>`;
     } else if(typ==="tw"){
       const twPlayers=KADER.filter(k=>k.tw&&k.aktiv!==false);   // ausgetragene Torhueter nicht mehr anbieten
@@ -2833,6 +2841,7 @@ function tpRenderTimeline(){
   if(typeof tpKgHintAll==="function")tpKgHintAll(); // Kleingruppen-Bedarf initial prüfen
   if(typeof tpNettoRender==="function")tpNettoRender(); // Paket 3: Nettospielzeit + Wochenstand
   tpGruppeHinweisAll();   // v571: Feldtext und Gruppengröße je Station (braucht die gesetzten Selects)
+  _tpAbschlussNachladen(0);   // v792: Spielform und Teams im Abschlussspiel-Block (Welle 2, deshalb mit Warten)
   Object.keys(_tpStationGruppe).forEach(id=>tpBetreuungHinweis(id));   // v631: Feld ohne Trainer braucht eine Übung, die allein läuft
 }
 /* G3 → v605: Wie viele Kinder sind dabei? – PO: „Die Angabe Kinder erwartet ist wenig
