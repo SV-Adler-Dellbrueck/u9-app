@@ -2210,7 +2210,7 @@
     {
       "name": "L5-8 Anbieten – Joker-Duell und Schau-Tore",
       "leitfrage": "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?",
-      "ziel_kinder": "Heute stellst du dich so hin, dass dein Mitspieler dich anspielen kann, und schaust, bevor der Ball kommt.",
+      "ziel_kinder": "Heute schaust du, bevor der Ball kommt (Kopf hoch), und stellst dich so hin, dass dein Mitspieler dich anspielen kann.",
       "folge_nr": 8,
       "tags": [
         "wenig-platz"
@@ -2263,7 +2263,7 @@
         },
         {
           "typ": "abschluss",
-          "label": "Abschlussturnier",
+          "label": "Abschlussturnier – wer bietet sich an, bevor der Ball kommt?",
           "dauer": 18
         }
       ],

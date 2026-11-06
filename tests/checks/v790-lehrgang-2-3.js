@@ -2,16 +2,20 @@
    Charles 06.11.: Kategorie von „Joker-Duell“ wahrnehmung (individual ist in Spielform-Blöcken nicht erlaubt), „ordnung“ der Vorlage „1 gegen 1“
    (Freitext gibt es nicht, nur die feste Liste). Sonst unverändert gegenüber den Nachtragsdateien.
    a) Jede Übung steht genau einmal in der Bibliothek, die Vorlage genau einmal in vorlagen.json – gleich der Nachtragsdatei bis auf die zwei Entscheidungen
-   b) _euPruefung und _eiSkizzeFehler beanstanden nichts; Material wie im Auftrag; drei Bilder (Grundbild + zwei Schritte) mit denselben fünf Spielern;
-      kein Spielerabstand unter 24 (54,0 / 36,1 / 27,7 und 34,7 / 34,4 / 34,9)
+   b) _euPruefung und _eiSkizzeFehler beanstanden nichts; Material wie im Auftrag; sechs Bilder (Grundbild + fünf Schritte; seit der Antwort des Projekt-Chats
+      vom 06.11. beide Runden: im Rücken und frontal) mit denselben fünf Spielern; kein Spielerabstand unter 24
+      (Joker-Duell 54,0 / 36,1 / 27,7 / 40,2 / 43,9 / 30,5, Schau-Tore 34,7 / 34,4 / 37,7 / 26,9 / 33,9 / 27,8)
+      Joker-Duell trennt die Bahnen mit drei Markierungstellern (Gerät „teller“, nicht Hütchen)
+   e) Texte: Vororientierung, Ballversorgung und die Markierungsplatten stehen in den Beschreibungen
    c) _evPruefung beanstandet die Vorlage nicht; jedes uebung_name zeigt auf eine Bibliotheksübung
    d) Kein Kindername in den Einträgen */
 "use strict";
 const fs = require("fs"), path = require("path");
 const SOLL = [
-  { name: "Joker-Duell – anbieten und freilaufen", kat: "wahrnehmung", mat: "2 Minitore · 10 Hütchen · 1 Ball", abst: [54.0, 36.1, 27.7] },
-  { name: "Schau-Tore – vor dem Ball schauen, dann ins gezeigte Tor", kat: "wahrnehmung", mat: "4 Minitore · 4 Hütchen · 1 Ball", abst: [34.7, 34.4, 34.9] }
+  { name: "Joker-Duell – anbieten und freilaufen", kat: "wahrnehmung", mat: "2 Minitore · 7 Hütchen · 3 Markierungsteller · 1 Ball", abst: [54.0, 36.1, 27.7, 40.2, 43.9, 30.5] },
+  { name: "Schau-Tore – vor dem Ball schauen, dann ins gezeigte Tor", kat: "wahrnehmung", mat: "4 Minitore · 4 Hütchen · 1 Ball", abst: [34.7, 34.4, 37.7, 26.9, 33.9, 27.8] }
 ];
+const bibNamen0 = v => v.bloecke.map(b => b.label).join(" | ");
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
   const D = path.join(h.REPO, "doku/auftrag-lehrgang-2-3");
@@ -37,12 +41,25 @@ module.exports = async function (h) {
   // b) Bilder und Spielerabstände aus den Daten
   eintraege.forEach((u, k) => {
     const bilder = [u.skizze.s].concat((u.skizze.schritte || []).map(s => s.s));
-    if (bilder.length !== 3) probleme.push(`b) „${SOLL[k].name}“ hat ${bilder.length} Bilder statt 3`);
+    if (bilder.length !== 6) probleme.push(`b) „${SOLL[k].name}“ hat ${bilder.length} Bilder statt 6`);
     const nm = b => b.map(p => p[3] || (p[2] === "r" ? "rot" : "?")).join(",");
     if (new Set(bilder.map(nm)).size !== 1) probleme.push(`b) „${SOLL[k].name}“ nicht dieselben Spieler in jedem Bild: ${bilder.map(nm).join(" | ")}`);
     const ab = bilder.map(b => Math.round(Math.min(...b.flatMap((p, i) => b.slice(i + 1).map(q => Math.hypot(p[0] - q[0], p[1] - q[1])))) * 10) / 10);
     if (!gleich(ab, SOLL[k].abst) || ab.some(x => x < 24)) probleme.push(`b) „${SOLL[k].name}“ Spielerabstand ${ab.join(" / ")}`);
   });
+  // b) Bahnentrennung: drei Markierungsteller als Gerät, die Hütchen stehen nur an den Ecken und an den Startpunkten
+  const jok = eintraege[0].skizze;
+  if (!(jok.ger || []).length || (jok.ger || []).filter(g => g[2] === "teller").length !== 3 || (jok.h || []).length !== 7) probleme.push(`b) Joker-Duell: Teller ${(jok.ger || []).filter(g => g[2] === "teller").length}, Hütchen ${(jok.h || []).length}`);
+  // e) Texte
+  const [jt, st] = eintraege;
+  for (const [n, u] of [["Joker-Duell", jt], ["Schau-Tore", st]]) {
+    if (!/VORORIENTIERUNG/.test(u.ablauf) || !/Kopf hoch, bevor der Ball kommt/.test(u.ablauf)) probleme.push(`e) ${n}: Vororientierung fehlt im Ablauf`);
+    if (!/BALLVERSORGUNG/.test(u.ablauf)) probleme.push(`e) ${n}: Ballversorgung fehlt im Ablauf`);
+    if (!/Vororientierung/.test(u.kurz)) probleme.push(`e) ${n}: „Vororientierung“ fehlt in „kurz“`);
+    if (/Stufe 1 \(nur loben\):.*\?/.test(u.coaching)) probleme.push(`e) ${n}: Stufe 1 (nur loben) enthält eine Frage`);
+  }
+  if (!/Markierungsplatten/.test(jt.ablauf) || !/Markierungsplatten/.test(jt.feld)) probleme.push("e) Joker-Duell: Markierungsplatten fehlen in Ablauf oder Feld");
+  if (!/Kopf hoch/.test(sollV.ziel_kinder) || !bibNamen0(sollV).includes("bietet sich an, bevor der Ball kommt")) probleme.push("e) Vorlage: Ziel oder Abschluss-Label ohne Vororientierung");
   // b) + c) in der App
   const custom = bib.uebungen.map((u, i) => ({ ...u, id: 6000 + i, custom: true }));
   const t = await h.starten({ warten: 1500, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), trainingsformen: custom }) });
@@ -71,6 +88,6 @@ module.exports = async function (h) {
   const verweise = sollV.bloecke.flatMap(b => [b.uebung_name].concat((b.stationen || []).map(s => s.uebung_name))).filter(Boolean);
   const fehlt = verweise.filter(n => !bibNamen.has(n));
   if (!verweise.length || fehlt.length) probleme.push(`c) Verweise ohne Bibliotheksübung: ${fehlt.join(" | ") || "keine Verweise gefunden"}`);
-  zeilen.push(`Übungen ${SOLL.length}× in der Bibliothek, Vorlage 1× · Material ${SOLL.map(s => s.mat).join(" / ")} · 3 Bilder, gleiche Spieler, Abstand ≥ 24 · ${verweise.length} Verweise → alle in der Bibliothek`);
+  zeilen.push(`Übungen ${SOLL.length}× in der Bibliothek, Vorlage 1× · Material ${SOLL.map(s => s.mat).join(" / ")} · 6 Bilder, gleiche Spieler, Abstand ≥ 24 · Teller statt Hütchen · Vororientierung und Ballversorgung im Text · ${verweise.length} Verweise → alle in der Bibliothek`);
   return h.ergebnis("Lehrgang 2.3: Joker-Duell, Schau-Tore und Vorlage L5-8 in Bibliothek und Vorlagen", !probleme.length, zeilen.concat(probleme));
 };
