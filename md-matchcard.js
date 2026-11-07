@@ -943,22 +943,32 @@ function rotTickLite(){
   if(sg)sg.innerHTML=rotSuggHtml();
   return true;
 }
+/* v797: Der Timer zählt nach der Uhr, nicht nach Aufrufen. Im Hintergrund (Display aus, App
+   gewechselt) drosselt der Browser setInterval – vorher blieb die Wechseluhr dann stehen.
+   _rotLetzt = Zeitpunkt, bis zu dem schon gezählt wurde; ohne Start (direkter Aufruf) zählt ein Aufruf = 1 s. */
+let _rotLetzt=null;
 function rotTick(){
-  rotElapsed++;
-  rotBench.forEach(n=>{rotBenchSec[n]=(rotBenchSec[n]||0)+1;});
-  rotField.forEach(n=>{rotFieldSec[n]=(rotFieldSec[n]||0)+1;}); // HOTFIX 12: Spielzeit der Feldspieler
-  if(rotTW)rotFieldSec[rotTW]=(rotFieldSec[rotTW]||0)+1; // Torwart spielt auch (feste Position)
-  if(rotIntervalMin*60>ROT_VORWARNUNG_SEK&&rotIntervalMin*60-rotElapsed===ROT_VORWARNUNG_SEK)rotVorwarnung();
-  if(rotElapsed>=rotIntervalMin*60){
-    rotElapsed=0;rotBeep();try{navigator.vibrate&&navigator.vibrate([100,60,100]);}catch(e){}
+  const jetzt=Date.now();
+  let d=1;
+  if(_rotLetzt!==null){ d=Math.floor((jetzt-_rotLetzt+50)/1000); if(d<1)return; _rotLetzt+=d*1000; }
+  const ivl=rotIntervalMin*60, vorher=rotElapsed;
+  rotElapsed+=d;
+  rotBench.forEach(n=>{rotBenchSec[n]=(rotBenchSec[n]||0)+d;});
+  rotField.forEach(n=>{rotFieldSec[n]=(rotFieldSec[n]||0)+d;}); // HOTFIX 12: Spielzeit der Feldspieler
+  if(rotTW)rotFieldSec[rotTW]=(rotFieldSec[rotTW]||0)+d; // Torwart spielt auch (feste Position)
+  if(ivl>ROT_VORWARNUNG_SEK&&vorher<ivl-ROT_VORWARNUNG_SEK&&rotElapsed>=ivl-ROT_VORWARNUNG_SEK&&rotElapsed<ivl)rotVorwarnung();
+  if(rotElapsed>=ivl){
+    rotElapsed=rotElapsed%ivl;rotBeep();try{navigator.vibrate&&navigator.vibrate([100,60,100]);}catch(e){}
   }
-  if((++rotPersistCtr%30)===0)rotPersistTimes(); // Faire Einsatzzeiten: alle 30s sichern
+  rotPersistCtr+=d;
+  if(rotPersistCtr>=30){rotPersistCtr=0;rotPersistTimes();} // Faire Einsatzzeiten: alle 30s sichern
   if(!rotTickLite())rotRenderLive(); // punktgenaues Text-Update; sonst voller Render
 }
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&rotTimerId)rotTick(); });
 // Idempotente Start/Stop-Funktionen (statt reinem Toggle), damit die Match-Uhr den
 // Rotations-Timer sicher mitsteuern kann, ohne einen bereits korrekten Zustand zu kippen.
-function rotStart(){ rotTonBereit(); if(!rotTimerId){rotTimerId=setInterval(rotTick,1000);requestWakeLock();} rotRenderControls();rotRenderLive(); }
-function rotStop(){ if(rotTimerId){clearInterval(rotTimerId);rotTimerId=null;} rotPersistTimes(); rotRenderControls();rotRenderLive(); }
+function rotStart(){ rotTonBereit(); if(!rotTimerId){_rotLetzt=Date.now();rotTimerId=setInterval(rotTick,1000);requestWakeLock();} rotRenderControls();rotRenderLive(); }
+function rotStop(){ if(rotTimerId){rotTick();clearInterval(rotTimerId);rotTimerId=null;} _rotLetzt=null; rotPersistTimes(); rotRenderControls();rotRenderLive(); }
 function rotToggle(){ if(rotTimerId)rotStop(); else rotStart(); }
 // Faire Einsatzzeiten: aktuelle Feldzeit je Spieler in Supabase sichern (best-effort, Trainer-Auth).
 let rotPersistCtr=0;
@@ -982,6 +992,7 @@ function rotReset(){
   const gespielt=Object.values(rotFieldSec||{}).some(v=>v>0);
   if(gespielt&&!confirm("Wechsel-Timer zurücksetzen?\n\nDie erfassten Spielzeiten dieses Spiels werden dabei auf 0:00 gesetzt."))return;
   if(rotTimerId){clearInterval(rotTimerId);rotTimerId=null;}
+  _rotLetzt=null;
   rotElapsed=0;
   Object.keys(rotBenchSec).forEach(n=>rotBenchSec[n]=0);
   Object.keys(rotFieldSec).forEach(n=>rotFieldSec[n]=0);

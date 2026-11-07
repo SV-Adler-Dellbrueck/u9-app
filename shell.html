@@ -636,8 +636,11 @@
     <div class="sl tp-schritt"><span class="tp-nr" aria-hidden="true">5</span>Speichern und starten</div>
     <div id="tp-netto" style="margin:6px 0 8px"></div>
       <button onclick="tpPlanSave(true)" style="width:100%;min-height:48px;margin-bottom:10px;border:none;border-radius:14px;background:var(--surface);border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;color:var(--text);font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">💾 Plan speichern</button>
-      <button onclick="tlStart()" title="Synchroner Start auf allen Trainer-Handys: alle bereit → 10-Sekunden-Countdown → Stationen laufen überall parallel" style="width:100%;min-height:64px;margin-bottom:6px;border:none;border-radius:14px;background:linear-gradient(135deg,#166534,#15803d);color:#fff;font-family:inherit;font-size:17px;font-weight:900;cursor:pointer;box-shadow:0 2px 10px rgba(22,163,74,.3)">🟢 Trainingsstart</button>
+      <button id="tp-start-echt" onclick="tlStart()" title="Synchroner Start auf allen Trainer-Handys: alle bereit → 10-Sekunden-Countdown → Stationen laufen überall parallel" style="width:100%;min-height:64px;margin-bottom:6px;border:none;border-radius:14px;background:linear-gradient(135deg,#166534,#15803d);color:#fff;font-family:inherit;font-size:17px;font-weight:900;cursor:pointer;box-shadow:0 2px 10px rgba(22,163,74,.3)">🟢 Trainingsstart</button>
       <button onclick="stTimerStart()" title="Lokaler Stationstimer – Fallback ohne Netz" style="width:100%;min-height:44px;border:none;background:transparent;color:var(--text2);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer;text-decoration:underline">⏱️ Solo-Timer (ohne Netz)</button>
+    <!-- v797: Der Start stand nach rund 4400 px Scroll ganz unten. Diese Leiste klebt über der Navigation,
+         solange der echte Knopf (Schritt 5) nicht im Bild ist, und blendet sich dann aus. -->
+    <div id="tp-start-leiste" class="tp-start-leiste" hidden><button type="button" onclick="tlStart()" aria-label="Trainingsstart – für alle Trainer gleichzeitig">▶ Trainingsstart</button></div>
   </div><!-- /train-sub-planung -->
 
   <!-- SUB: Anwesenheit -->
