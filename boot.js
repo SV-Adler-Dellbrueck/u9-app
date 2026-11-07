@@ -2259,6 +2259,35 @@ function tpSlotKopfText(lab){
    „ – “ beschreibt die Übung der Vorlage und steht, wenn sie noch gilt, ohnehin an der
    Station. Wieder nur die Anzeige: das Label bleibt, Pläne ordnen ihre Übungen darüber zu.
    „– Durchgang n“ gehört zum Namen und bleibt. */
+/* v800: Das Neuzeichnen der ganzen Leiste (bei jeder Dauer, jedem Trainerwechsel) setzte den Bildschirm nach oben und
+   nahm Tastatur- und Screenreader-Nutzern den Fokus. Jetzt werden Scrollstand und fokussiertes Element gemerkt und
+   danach wiederhergestellt (Kennung oder Block + Klasse). */
+["wheel","touchmove","keydown"].forEach(ev=>window.addEventListener(ev,()=>{window._tpHandScroll=Date.now();},{passive:true}));
+function tpRenderTimeline(){
+  const wrap=document.getElementById("tp-timeline");
+  const sy=window.scrollY, fo=document.activeElement;
+  let sel=null;
+  if(wrap&&fo&&fo!==document.body&&wrap.contains(fo)){
+    if(fo.id)sel="#"+(window.CSS&&CSS.escape?CSS.escape(fo.id):fo.id);
+    else{
+      const blk=fo.closest(".tp-slot"), kl=fo.classList&&fo.classList[0];
+      if(blk&&kl&&blk.dataset.si!=null)sel=`.tp-slot[data-si="${blk.dataset.si}"] .${kl}`;
+    }
+  }
+  const r=_tpRenderTimelineIntern();
+  try{
+    if(sel){ const el=document.querySelector(sel); if(el&&el.focus)el.focus({preventScroll:true}); }
+    /* Direkt nach dem Zeichnen ist die Seite oft noch kürzer (Gruppen, Netto-Zeile, Prognose laden nach) – dann
+       schnitte der Browser den Stand ab. Darum noch zweimal nachziehen, solange die Hand nicht selbst gescrollt hat. */
+    const t0=Date.now();
+    const nachziehen=()=>{
+      if((window._tpHandScroll||0)>t0)return;   // Nutzer hat inzwischen selbst gescrollt (Rad, Finger, Tastatur)
+      if(Math.abs(window.scrollY-sy)>2)window.scrollTo({top:sy,left:0,behavior:"instant"});
+    };
+    nachziehen(); setTimeout(nachziehen,150); setTimeout(nachziehen,450);
+  }catch(e){}
+  return r;
+}
 function tpSlotName(lab){
   const kopf=tpSlotKopfText(lab);
   const dg=kopf.match(/\s+–\s+Durchgang\s+(\d+)\s*$/);
@@ -2566,7 +2595,7 @@ function _tpAbschlussNachladen(n){
   if(typeof abschlussFuellen==="function"){ try{ abschlussFuellen(); }catch(e){} return; }
   if(n<12)setTimeout(()=>_tpAbschlussNachladen(n+1),400);
 }
-function tpRenderTimeline(){
+function _tpRenderTimelineIntern(){
   /* v621: Pläne mit Durchgängen alter Art (v605–v620: ein Block, Zeit geteilt) werden zur
      Kette – der folgende Hauptteil wird Durchgang 2, sonst wird er angelegt. */
   const _alt=tpSlots.findIndex(s=>s&&!s.kette&&Number(s.durchgaenge)>1);
@@ -3181,7 +3210,9 @@ function tpIndPlayerChange(slotIdx){
 }
 
 function tpAddSlot(){
-  const modal=document.createElement("div");
+  document.getElementById("tp-add-modal")?.remove();
+  const modal=document.createElement("div"); modal.id="tp-add-modal";   // v800: -modal → Esc schließt (zentrale Regel in core.js)
+  modal.setAttribute("role","dialog"); modal.setAttribute("aria-modal","true"); modal.setAttribute("aria-label","Block hinzufügen");
   modal.style.cssText="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px";
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
   /* Frueher stand hier eine ZWEITE Liste. Sie war auseinandergelaufen: der Knopf versprach

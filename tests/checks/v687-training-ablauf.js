@@ -1,4 +1,4 @@
-/* v687 · Training: Trainingsplan in fünf Schritten, Anwesenheit mit Zählung, Turnier mit Klappbereich
+/* v687 · Training: Trainingsplan in drei Schritten (seit v800, vorher fünf), Anwesenheit mit Zählung, Turnier mit Klappbereich
    PO 30.09. (Bildschirmfoto der Training-Kacheln): „Die erste Untermaske passt, aber darunter die
    Ebene muss besser werden. Hier auch die Logik und Sinnhaftigkeit der Inhalte und des Aufbaus
    kritisch überprüfen und optimieren.“
@@ -34,7 +34,7 @@ module.exports = async function (h) {
       termin: idx(document.getElementById("tp-vorplan")), trainer: idx(document.getElementById("tp-trainer-checks")),
       vorlage: idx(knopf("Vorlage übernehmen")), auto: idx(knopf("Training füllen")), ablauf: idx(document.getElementById("tp-timeline")),
       netto: idx(document.getElementById("tp-netto")), speichern: idx(knopf("Plan speichern")), start: idx(knopf("Trainingsstart")),
-      s: [1, 2, 3, 4, 5].map(sIdx),
+      s: [1, 2, 3].map(sIdx),
       nebeneinander: knopf("Vorlage übernehmen") && knopf("Training füllen") && knopf("Vorlage übernehmen").parentElement === knopf("Training füllen").parentElement,
       hStart: Math.round(knopf("Trainingsstart").getBoundingClientRect().height), hSpeichern: Math.round(knopf("Plan speichern").getBoundingClientRect().height) };
     // b)
@@ -66,16 +66,16 @@ module.exports = async function (h) {
   const f = s.fehler(); await s.schliessen();
   if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
   const p = r.plan;
-  const soll = ["1Termin", "2Wer trainiert mit?", "3Inhalt wählen", "4Ablauf und Gruppen", "5Speichern und starten"];   // die Ziffer steht im Kreis davor (aria-hidden)
+  const soll = ["1Termin und Trainer", "2Plan", "3Speichern und starten"];   // v800: drei statt fünf Schritte   // die Ziffer steht im Kreis davor (aria-hidden)
   if (JSON.stringify(p.schritte) !== JSON.stringify(soll)) probleme.push(`a) Schritte: ${JSON.stringify(p.schritte)}`);
-  const [s1, s2, s3, s4, s5] = p.s;
+  const [s1, s2, s3] = p.s;
   const zw = (x, a, b) => x > a && (b < 0 || x < b);
   if (!zw(p.termin, s1, s2)) probleme.push("a) Terminwahl steht nicht in Schritt 1");
-  if (!zw(p.trainer, s2, s3)) probleme.push("a) Trainer stehen nicht in Schritt 2");
-  if (!zw(p.vorlage, s3, s4) || !zw(p.auto, s3, s4)) probleme.push("a) Vorlage/Auto-Plan stehen nicht in Schritt 3");
+  if (!zw(p.trainer, s1, s2)) probleme.push("a) Trainer stehen nicht in Schritt 1");
+  if (!zw(p.vorlage, s2, s3) || !zw(p.auto, s2, s3)) probleme.push("a) Vorlage/Auto-Plan stehen nicht in Schritt 2");
   if (!p.nebeneinander) probleme.push("a) Vorlage und Auto-Plan stehen nicht nebeneinander");
-  if (!zw(p.ablauf, s4, s5)) probleme.push("a) Der Ablauf steht nicht in Schritt 4");
-  if (!(p.netto > s5 && p.speichern > s5 && p.start > s5)) probleme.push("a) Spielform-Minuten, Speichern und Start stehen nicht in Schritt 5");
+  if (!zw(p.ablauf, s2, s3) || !(p.ablauf > p.vorlage)) probleme.push("a) Der Ablauf steht nicht in Schritt 2 unter den Füll-Kacheln");
+  if (!(p.netto > s3 && p.speichern > s3 && p.start > s3)) probleme.push("a) Spielform-Minuten, Speichern und Start stehen nicht in Schritt 3");
   if (p.hStart < 56 || p.hSpeichern >= p.hStart) probleme.push(`a) Hauptaktion: Start ${p.hStart} px, Speichern ${p.hSpeichern} px`);
   if (r.aw.schritte.length !== 3) probleme.push(`b) Anwesenheit: ${JSON.stringify(r.aw.schritte)}`);
   const n = r.aw.einer.n;
@@ -88,5 +88,5 @@ module.exports = async function (h) {
   if (!/25 Min\./.test(r.blz.summary2)) probleme.push(`c) Zusammenfassung nach der Einstellung: „${r.blz.summary2}“`);
   zeilen.push(`Plan: ${p.schritte.join(" › ")} · Start ${p.hStart} px / Speichern ${p.hSpeichern} px`);
   zeilen.push(`Anwesenheit: „${r.aw.voll.zahl}“ → „${r.aw.einer.zahl}“, Knopf „${r.aw.einer.knopf}“ · Turnier: offen ${r.blz.erst} → danach ${r.blz.zweites} („${r.blz.summary2}“)`);
-  return h.ergebnis("Training: Plan in fünf Schritten, Anwesenheit mit Zählung, Turnier mit Klappbereich", !probleme.length, zeilen.concat(probleme));
+  return h.ergebnis("Training: Plan in drei Schritten, Anwesenheit mit Zählung, Turnier mit Klappbereich", !probleme.length, zeilen.concat(probleme));
 };
