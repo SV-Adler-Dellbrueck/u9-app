@@ -84,6 +84,7 @@ function kombiToMatch(){
   rotBench=squad.filter(n=>!inLineup.has(n));
   rotBenchSec={};rotFieldSec={};[...squad,...inLineup].forEach(n=>{rotBenchSec[n]=0;rotFieldSec[n]=0;});
   rotElapsed=0;
+  if(typeof aufSichern==="function"){ aufSichern(); if(typeof aufSofortSichern==="function")aufSofortSichern(false); }   // v793: die übernommene Aufstellung bleibt stehen
   toast("✅ Aufstellung ins Match übernommen");
   if(typeof go==="function")go("spieltag");
   setTimeout(()=>{ if(typeof rotRenderControls==="function")rotRenderControls(); if(typeof rotRenderLive==="function")rotRenderLive(); },120);
