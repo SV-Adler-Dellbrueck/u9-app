@@ -1269,6 +1269,12 @@ function pushZielEmpfangen(ev){
       if(typeof rufeAbsichtJetzt==="function")rufeAbsichtJetzt();
       ok=true;
     }
+    else if(gleich&&nur.length===1&&nur[0]==="absagen"){
+      /* v802: Push „Kurzfristige Absage“ – bei offener App direkt die Absagen-Liste. */
+      try{sessionStorage.setItem("adler_absagen_intent","1");}catch(e){}
+      if(typeof absagenAbsichtJetzt==="function")absagenAbsichtJetzt();
+      ok=true;
+    }
     else if(gleich&&nur.length===1&&nur[0]==="wiewars"&&/^(d\d{4}-\d{2}-\d{2}|[te]\d+)$/.test(u.searchParams.get("wiewars")||"")){
       /* v701: Push „Wie war's?“ – bei offener App direkt in die Aufnahme bzw. Prüfkarte. */
       try{sessionStorage.setItem("adler_wiewars_intent",u.searchParams.get("wiewars"));}catch(e){}

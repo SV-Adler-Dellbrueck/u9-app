@@ -69,7 +69,7 @@ module.exports = async function (h) {
     const knoepfe = [...document.querySelectorAll(".tp-ringtausch button")].map(b => b.textContent.trim());
     const knopfHoehe = Math.min(...[...document.querySelectorAll(".tp-ringtausch button")].map(b => Math.round(b.getBoundingClientRect().height)));
 
-    // ── Der Knopf: einmal weiterrücken am zweiten Hauptteil (Slot 2) ─────────
+    // ── Der Knopf: einmal einmal wechseln am zweiten Hauptteil (Slot 2) ─────────
     tpVersatzSetzen(2, 1); await warte(150);
     const nachKnopf = { versatz: tpVersatz(2), zeile: zeileVon(1), gespeichert: (tpSlots[2] || {}).versatz };
     // Und wieder zurück
@@ -107,11 +107,11 @@ module.exports = async function (h) {
   if (!/🔵 Blau \(\d+\) → Feld 1/.test(r.zeilen0[0])) probleme.push(`Erster Hauptteil: „${r.zeilen0[0]}“ – erwartet Blau an Feld 1`);
   if (!/🟢 Grün \(\d+\) → Feld 1/.test(r.zeilen0[1])) probleme.push(`Zweiter Hauptteil: „${r.zeilen0[1]}“ – die Gruppen müssen weitergerückt sein`);
   if (!/🔴 Rot \(\d+\) → Feld 1/.test(r.zeilen0[2])) probleme.push(`Dritter Hauptteil: „${r.zeilen0[2]}“ – erwartet Rot an Feld 1`);
-  if (!r.knoepfe.some(t => /weiterrücken/.test(t))) probleme.push("Der Knopf „⇄ weiterrücken“ fehlt");
+  if (!r.knoepfe.some(t => /einmal wechseln/.test(t))) probleme.push("Der Knopf „⇄ einmal wechseln“ fehlt");
   if (r.knopfHoehe < 44) probleme.push(`Die Knöpfe am Block sind ${r.knopfHoehe} px hoch (mindestens 44)`);
 
   // ── Knopf und Zurücknehmen ────────────────────────────────────────────────
-  if (r.nachKnopf.versatz !== 2) probleme.push(`Nach einmal „weiterrücken“ steht der Versatz auf ${r.nachKnopf.versatz} statt 2`);
+  if (r.nachKnopf.versatz !== 2) probleme.push(`Nach einmal „einmal wechseln“ steht der Versatz auf ${r.nachKnopf.versatz} statt 2`);
   if (r.nachKnopf.gespeichert !== 2) probleme.push("Der Versatz wird nicht am Slot festgehalten – er ginge beim Speichern verloren");
   if (!/🔴 Rot \(\d+\) → Feld 1/.test(r.nachKnopf.zeile)) probleme.push(`Nach dem Knopf steht dort „${r.nachKnopf.zeile}“`);
   if (r.nachZurueck.eigen !== undefined) probleme.push("„↩ automatisch“ löscht den eigenen Versatz nicht");
@@ -139,7 +139,7 @@ module.exports = async function (h) {
 
   zeilen.push(`Ringtausch: 2 Gruppen ${r.rechnung.zwei0} → ${r.rechnung.zwei1} → ${r.rechnung.zwei2} · 3 Gruppen ${r.rechnung.drei1} / ${r.rechnung.drei2} / ${r.rechnung.drei3} · 4 Gruppen ${r.rechnung.vier1}`);
   zeilen.push(`Automatisch aus der Blockfolge: ${r.automatisch.join(",")} (nur Hauptteile zählen) · Knöpfe ${r.knoepfe.join(" / ")} · ${r.knopfHoehe} px`);
-  zeilen.push(`Zeitleiste: ${r.zeilen0.map(z => z.split("⇄ weiterrücken")[0].replace(/^⇄\s*/, "").trim()).join(" | ")}`);
+  zeilen.push(`Zeitleiste: ${r.zeilen0.map(z => z.split("⇄ einmal wechseln")[0].replace(/^⇄\s*/, "").trim()).join(" | ")}`);
   zeilen.push(`Timer zeigt dieselbe Zuordnung: ${r.timerGruppen.filter(Boolean).map(x => x.split(" · ")[0]).join(" | ")}`);
   return h.ergebnis("Gruppen rücken von Block zu Block weiter", !probleme.length, zeilen.concat(probleme));
 };

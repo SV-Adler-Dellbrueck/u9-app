@@ -2749,9 +2749,9 @@ function _tpRenderTimelineIntern(){
          Wahl, wessen Übungen er spielt. */
       const _kt=_tpKetteVon(si), _istFolge=_kt.length>1&&_kt[0]!==si;
       const nDg=_kt.length, maxDg=Math.min(5,Math.max(2,felderGruppen.length));
-      const dgWahl=`<label style="display:inline-flex;align-items:center;gap:6px;font-size:var(--s-klein);font-weight:700;color:var(--text)">🔁 Durchgänge
-          <select aria-label="Durchgänge in ${esc(tpSlotName(slot.label))}" onchange="tpDurchgaengeSetzen(${si},this.value)" style="min-height:44px;padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)">
-            ${Array.from({length:maxDg},(_,i)=>i+1).map(n=>`<option value="${n}"${n===nDg?" selected":""}>${n===1?"1 (kein Wechsel)":n}</option>`).join("")}
+      const dgWahl=`<label style="display:inline-flex;align-items:center;gap:6px;font-size:var(--s-klein);font-weight:700;color:var(--text)">🔁 Gruppen wechseln
+          <select aria-label="Gruppen wechseln in ${esc(tpSlotName(slot.label))}" onchange="tpDurchgaengeSetzen(${si},this.value)" style="min-height:44px;padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)">
+            ${Array.from({length:maxDg},(_,i)=>i+1).map(n=>`<option value="${n}"${n===nDg?" selected":""}>${n===1?"nie":`${n-1}× (${n} Durchgänge)`}</option>`).join("")}
           </select></label>`;
       if(_istFolge){
         html+=`<div class="tp-durchgang-von" style="font-size:var(--s-klein);line-height:1.5;padding:4px 8px;margin:2px 0 6px;border-left:3px solid var(--fam-training);background:var(--surface2);border-radius:6px">
@@ -2759,8 +2759,8 @@ function _tpRenderTimelineIntern(){
       }
       {
       html+=`<div class="tp-ringtausch" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:4px 0 6px">
-        <span style="font-size:var(--s-klein);color:var(--text2);flex:1 1 140px;min-width:0">⇄ ${wer}${v?` <b>· ${v}× weitergerückt</b>`:""}</span>
-        <button onclick="tpVersatzSetzen(${si},1)" title="Alle Gruppen rücken ein Feld weiter – bei zwei Gruppen ist das der Tausch" style="min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">⇄ weiterrücken</button>
+        <span style="font-size:var(--s-klein);color:var(--text2);flex:1 1 140px;min-width:0">⇄ ${wer}${v?` <b>· ${v}× gewechselt</b>`:""}</span>
+        <button onclick="tpVersatzSetzen(${si},1)" title="Alle Gruppen wechseln ein Feld weiter – bei zwei Gruppen ist das der Tausch" style="min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">⇄ einmal wechseln</button>
         ${eigen?`<button onclick="tpVersatzZurueck(${si})" title="Wieder der Reihe nach – so wie es sich aus der Reihenfolge der Blöcke ergibt" style="min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">↩ automatisch</button>`:""}
         ${_istFolge?"":dgWahl}
       </div>`;
@@ -3514,6 +3514,8 @@ async function pinCheck(){
   const params=new URLSearchParams(window.location.search);
   /* v673: Push zu Adler-Rufen öffnet ./eltern/?rufe bzw. ./trainer/?rufe. Die Absicht wird gemerkt;
      md-adler-rufe.js öffnet den Chat, sobald angemeldet ist (im Trainerbereich erst nach der PIN). */
+  /* v802: Push „Kurzfristige Absage“ öffnet ./trainer/?absagen – direkt die Absagen-Liste, sobald angemeldet und die PIN offen ist. */
+  if(params.has("absagen")){ try{sessionStorage.setItem("adler_absagen_intent","1");}catch(e){} setTimeout(()=>{ if(typeof absagenAbsichtJetzt==="function")absagenAbsichtJetzt(); },0); }
   if(params.has("rufe")){ try{sessionStorage.setItem("adler_rufe_intent",/^\d+$/.test(params.get("rufe")||"")?params.get("rufe"):"1");}catch(e){} }
   /* v701: Push „Wie war's?“ öffnet ./trainer/?wiewars=<d Datum | t Termin | e Eintrag>; md-tagebuch.js
      startet die Aufnahme (bzw. die Prüfkarte), sobald angemeldet und die PIN offen ist. */
@@ -4521,9 +4523,13 @@ async function tpGenerate(){
   if(!hatPlan){
     const k=Math.max(2,Math.min(4,trainerCount));
     const farben=["#1a56db","#7c3aed","#0e7490","#b45309"];
-    const dauer=Math.max(10,Math.round(40/k));
+    /* v802 (Charles 07.11.: „10-Minuten-Durchgänge“): Bei zwei Stationen blieb jede Gruppe 20 Minuten an einer Übung –
+       der Tipp im Plan rät ab ~10 Minuten zum Variieren. Ab 18 Minuten je Block wird deshalb doppelt so oft gewechselt:
+       vier Blöcke à 10 Minuten statt zwei à 20. Dieselben Stationen, die Gruppen wechseln je Block (tpVersatz). */
+    const bloecke=Math.round(40/k)>=18?k*2:k;
+    const dauer=Math.max(10,Math.round(40/bloecke));
     tpSlots=[{...TP_PHASEN[0]}]
-      .concat(Array.from({length:k},(_,n)=>({label:`Hauptteil ${n+1}`,dauer,farbe:farben[n],typ:"main"})))
+      .concat(Array.from({length:bloecke},(_,n)=>({label:`Hauptteil ${n+1}`,dauer,farbe:farben[n%farben.length],typ:"main"})))
       .concat([{...TP_PHASEN[3]}]);
   }
   tpRenderTimeline();
