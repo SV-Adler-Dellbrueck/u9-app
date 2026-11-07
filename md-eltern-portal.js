@@ -1032,7 +1032,7 @@ async function elternDashLoad(){
       </div>
       ${(typeof elternPlatzHinweisHtml==="function")?elternPlatzHinweisHtml(termin):""}
       <div style="font-size:var(--s-teil);font-weight:800;margin-top:4px;line-height:1.25">${m.icon} ${esc(termin.titel||termin.gegner||m.label)}${heimLabel(termin)?` <span style="font-size:var(--s-klein);font-weight:800;padding:2px 7px;border-radius:10px;background:${termin.heim?"#dcfce7":"#fef3c7"};color:${termin.heim?"#15803d":"#b45309"};white-space:nowrap">${heimLabel(termin)}</span>`:""}</div>
-      <div style="font-size:var(--s-text);color:#475569;margin-top:4px;line-height:1.4">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"})}${zeit?" · "+zeit:""}${termin.ort?" · "+mapsAnchor(termin.ort):""}${termin.platz?" · 🏟️ "+esc(termin.platz):""}</div>${typeof taChip==="function"?taChip(termin.id):""}
+      <div style="font-size:var(--s-text);color:#475569;margin-top:4px;line-height:1.4">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"})}${zeit?" · "+zeit:""}${termin.ort?" · "+mapsAnchor(termin.ort):""}${termin.platz?" · 🏟️ "+esc(termin.platz):""}</div>${typeof taChip==="function"?taChip(termin.id,true):""}
       ${(typeof elternAnfahrtHtml==="function")?elternAnfahrtHtml(termin):""}
       <div id="wetter-eltern"></div>
       ${trainerJa.length?`<div style="font-size:var(--s-klein);color:#64748b;margin-top:4px">👤 Trainer dabei: ${trainerJa.map(esc).join(", ")}</div>`:""}
