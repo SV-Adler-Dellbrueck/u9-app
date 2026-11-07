@@ -669,7 +669,7 @@ async function elternNewsLoad(kids){
   if(cur.boerse&&cur.boerse>(seen.boerse||"")) items.push({emo:"🛍️",txt:"Neues in der Adler-Börse.",act:"elternCatClose();boerseOpen()"});
   if(cur.fund&&cur.fund>(seen.fund||"")) items.push({emo:"🧦",txt:"Neues im Fundbüro.",act:"elternCatClose();fundbueroOpen()"});
   if(cur.skill&&cur.skill.slice(0,4)!=="1970"&&cur.skill>(seen.skill||"")) items.push({emo:"🏅",txt:"Neuer Skill der Woche / neue Challenge.",act:"elternCatOpen('mehr')"});
-  (data.lob||[]).forEach(l=>{ if(l.at>(seen["lob_"+l.sid]||"")) items.push({emo:"🎧",txt:`Neues Sprachlob für ${esc(kidName(l.sid))}.`,act:`elternCatClose();lobPlay(${l.sid})`}); });
+  (data.lob||[]).forEach(l=>{ if(l.at>(seen["lob_"+l.sid]||"")) items.push({emo:"🎧",txt:`Neues vom Trainerteam für ${esc(kidName(l.sid))} (Lob oder Nachricht).`,act:`elternCatClose();lobListeOpen(${l.sid},'${String(kidName(l.sid)).replace(/['\\<>&"]/g,"")}')`});   /* v803: auch Spieltag-Nachrichten, deshalb die Liste statt „jüngstes Lob abspielen“ */ });
   (kids||[]).forEach(k=>{ const lv=cur["level_"+k.spieler_id]; const sv=seen["level_"+k.spieler_id]; if(lv&&sv!=null&&lv!==sv) items.push({emo:"🎉",txt:`${esc(kidName(k.spieler_id))} hat ein neues Level erreicht: ${esc(lv)}!`,act:`elternCatClose();elternCardOpen(${k.spieler_id})`}); });
   if(cur.ms&&cur.ms>(seen.ms||"")) ms.filter(m=>m.erreicht_am>(seen.ms||"")).slice(0,3).forEach(m=>items.push({emo:"🏆",txt:`Team-Meilenstein: ${esc(m.label)}`,act:"elternCatClose()"})); // H7
   if(cur.kpost&&cur.kpost>(seen.kpost||"")) items.push({emo:"📬",txt:"Neue Adler-Post für dein Kind – Kompliment oder Gruß in der Kabine!",act:"elternCatClose();kabineOpen()"}); // I-A
