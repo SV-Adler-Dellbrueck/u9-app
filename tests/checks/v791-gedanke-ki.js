@@ -46,6 +46,9 @@ module.exports = async function (h) {
   if (anfragen.length !== 1) probleme.push("KI-Aufrufe: " + anfragen.length);
   const a = anfragen[0] || {};
   if (a.art !== "gedanke" || a.fuer != null || /Kind B/.test(a.text || "") || !/Kind 2 in der Pause allein/.test(a.text || "")) probleme.push("Anfrage: " + JSON.stringify(a));
+  /* v801: Namensliste des Trainerteams geht mit (Erwachsene, richtige Schreibweise) – nie ein Kindername */
+  if (!Array.isArray(a.trainer) || a.trainer.length < 3 || !a.trainer.includes("Kenneth") || a.trainer.some(t => K.includes(t))) probleme.push("Trainerliste fehlt oder enthält ein Kind: " + JSON.stringify(a.trainer));
+  zeilen.push("Namensliste: " + (a.trainer || []).join(", "));
   zeilen.push("Anfrage art „gedanke“, ohne Termin, Name als „" + ((/Kind \d+/.exec(a.text || "") || [])[0]) + "“");
   const e = db[0] || {};
   if (db.length !== 1 || e.anlass !== "gedanke" || e.quelle !== "frei" || e.termin_id != null || e.ki_vorschlag !== true || e.status !== "keim" || e.bestaetigt_am != null
@@ -54,6 +57,8 @@ module.exports = async function (h) {
   if (!r.dialogZu || !/Passt so/.test(r.karte)) probleme.push("Prüfkarte: dialogZu=" + r.dialogZu + " passtSo=" + /Passt so/.test(r.karte));
   const fn = fs.readFileSync(path.join(h.REPO, "supabase/functions/ki-nachbereitung/index.ts"), "utf8");
   if (!/body\?\.art === "gedanke"/.test(fn) || !/SYS_GEDANKE/.test(fn) || !/art === "gedanke" \? \{\}/.test(fn)) probleme.push("Edge Function kennt art „gedanke“ nicht");
+  if (!/body\?\.trainer/.test(fn) || !/TRAINERTEAM/.test(fn)) probleme.push("Edge Function kennt die Namensliste nicht");
+  if (!/body\.trainer = /.test(fs.readFileSync(path.join(h.REPO, "md-fazit.js"), "utf8"))) probleme.push("Nachbereitung (md-fazit.js) schickt die Namensliste nicht mit");
   zeilen.push("Edge Function: art „gedanke“, eigene Anweisung, nur der Tagebuch-Teil");
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
   return h.ergebnis("v791 Gedanke ohne Termin per KI sortieren", !probleme.length, probleme.length ? probleme : zeilen);

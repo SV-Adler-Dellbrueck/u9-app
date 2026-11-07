@@ -957,7 +957,7 @@ async function tagebuchGedankeSortieren(){
   const zurueck = () => { if(b){ b.disabled = false; b.innerHTML = '<i class="ti ti-sparkles"></i>Von der KI sortieren lassen'; } if(b2) b2.disabled = false; };
   let d = null; const mk = nbMaske([]);
   try{
-    const r = await fetch(`${SB_URL}/functions/v1/ki-nachbereitung`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({ art:"gedanke", text:mk.weg(t) })});
+    const r = await fetch(`${SB_URL}/functions/v1/ki-nachbereitung`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({ art:"gedanke", text:mk.weg(t), trainer:(typeof TRAINER!=="undefined"&&Array.isArray(TRAINER))?TRAINER:[] })});
     d = await r.json().catch(()=>null);
     if(!r.ok || !d || !d.ergebnis) throw new Error((d&&d.error)||("Fehler "+r.status));
   }catch(e){ zurueck(); if(m) m.textContent = "Nicht sortiert: "+(e&&e.message||"keine Verbindung")+". Der Text bleibt stehen – du kannst ihn auch so erfassen."; return; }

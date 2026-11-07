@@ -516,6 +516,46 @@ function nomSet(name,status){
   if(typeof spieltagTeamKartenRender==="function")spieltagTeamKartenRender();
   nomApplyToTools();nomSave();
 }
+/* v801 · „automatische Zusagen“ (Charles 07.11., nach „9 dabei – es haben 12 zugesagt“): Auf der Spieltag-Seite folgt die
+   Einteilung den Eltern schon beim Öffnen (nomLoad). Gespeichert wurde das aber nur, wenn ein Trainer die Seite öffnete – bis
+   dahin zählte die Startseite die alte Einteilung. Jetzt gleicht die Startseite beim Laden die gespeicherte Einteilung der
+   kommenden Spiele und Turniere (14 Tage) selbst mit den Rückmeldungen ab, nach genau den Regeln von nomLoad:
+   · Zusage → „dabei“, Absage oder krank → „nicht“, keine Rückmeldung → unverändert
+   · was ein Trainer von Hand gesetzt hat (_ovr) bleibt, pausierte Kinder bleiben draußen
+   · gibt es noch keine gespeicherte Einteilung, passiert nichts (dann zählt die Startseite die Zusagen)
+   · die Aufteilung auf Teams macht weiterhin die Spieltag-Seite beim Öffnen (teamsNachziehen). */
+let _nomAutoAt=0;
+async function nomAutoAbgleich(termine){
+  if(typeof sbToken==="function"&&!sbToken())return 0;
+  if(Date.now()-_nomAutoAt<60000)return 0;
+  _nomAutoAt=Date.now();
+  const spiele=(termine||[]).filter(t=>t&&(t.typ==="spiel"||t.typ==="turnier")&&t.id&&/^\d{4}-\d{2}-\d{2}$/.test(String(t.datum||"")));
+  if(!spiele.length)return 0;
+  const hole=async url=>{ try{const r=await fetch(`${SB_URL}/rest/v1/${url}`,{headers:sbAuthHeaders()}); return r.ok?((await r.json())||[]):null;}catch(e){return null;} };
+  const ids=spiele.map(t=>t.id).join(","), tage=spiele.map(t=>encodeURIComponent(t.datum+"__nom")).join(",");
+  const [rm,noms]=await Promise.all([ hole(`rueckmeldungen?select=termin_id,spieler_id,status&termin_id=in.(${ids})`), hole(`nominierungen?select=datum,data&datum=in.(${tage})`) ]);
+  if(!rm||!noms||!noms.length)return 0;
+  const pause=(typeof pauseLoad==="function")?await pauseLoad():{};
+  let geaendert=0;
+  for(const t of spiele){
+    const zeile=noms.find(n=>n.datum===t.datum+"__nom"); if(!zeile||!zeile.data||typeof zeile.data!=="object")continue;
+    const d=kidMapFromIds(zeile.data);
+    const ovr=new Set(Array.isArray(d._ovr)?kidListFromIds(d._ovr):[]); delete d._ovr;
+    let neu=0;
+    rm.filter(x=>x.termin_id===t.id).forEach(x=>{
+      const k=KADER.find(kk=>kk.aktiv!==false&&(kk._id===x.spieler_id||kk.id===x.spieler_id)); if(!k||ovr.has(k.name))return;
+      const soll=(pause&&pause[k.name])?"nicht":(x.status==="zugesagt"?"dabei":(x.status==="abgesagt"||x.status==="krank")?"nicht":null);
+      if(soll&&d[k.name]!==soll){ d[k.name]=soll; neu++; }
+    });
+    if(!neu)continue;
+    try{
+      const r=await fetch(`${SB_URL}/rest/v1/nominierungen?on_conflict=datum`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+        body:JSON.stringify({datum:t.datum+"__nom",data:kidMapToIds({...d,_ovr:kidListToIds([...ovr])})})});
+      if(r.ok){ geaendert+=neu; zeile.data=kidMapToIds({...d,_ovr:kidListToIds([...ovr])}); }
+    }catch(e){}
+  }
+  return geaendert;
+}
 async function nomSave(){
   if(!document.getElementById("spieltag-date")?.value)return;
   try{await fetch(`${SB_URL}/rest/v1/nominierungen?on_conflict=datum`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({datum:nomKey(),data:kidMapToIds({...nomStatus,_ovr:kidListToIds([...nomOvr])})})});}catch(e){}

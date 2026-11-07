@@ -771,6 +771,7 @@ async function nbKiHolen(art, text){
     body._m = m;
   }
   const m = body._m; delete body._m;
+  body.trainer = (typeof TRAINER!=="undefined"&&Array.isArray(TRAINER))?TRAINER:[];   // v801: Namensliste fürs Erkennen falsch geschriebener Trainernamen
   body.fuer = _nbFuer;   // v679: ein Termin zählt am Tag einmal ins KI-Limit, Korrekturen nicht
   const r = await fetch(`${SB_URL}/functions/v1/ki-nachbereitung`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify(body)});
   const d = await r.json().catch(()=>null);
