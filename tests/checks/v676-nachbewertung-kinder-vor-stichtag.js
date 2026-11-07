@@ -49,7 +49,8 @@ module.exports = async function (h) {
   const nach = await lauf("2026-01-01");
   if (vor.r.fehlt) return h.ergebnis("Nachbewertung: Trainingseinsatz je Kind, vor und nach dem Stichtag", false, ["nbWegStart fehlt"]);
   if (!vor.r.zeilen || !vor.r.schritte.includes("kinder") || vor.r.sterne !== 3) probleme.push(`a) v677: Vor dem Stichtag fehlt der Trainingseinsatz: Zeilen ${vor.r.zeilen}, Schritt ${vor.r.schritte.includes("kinder")}, Sterne ${vor.r.sterne}`);
-  if (!/Kinder: 1 von 2/.test(vor.r.ende)) probleme.push(`a) Zusammenfassung: ${vor.r.ende.slice(0, 160)}`);
+  /* v795: beide Kinder stehen schon auf „gut“ (2) – die Zählung kennt sie als beantwortet */
+  if (!/Kinder: 2 von 2/.test(vor.r.ende)) probleme.push(`a) Zusammenfassung: ${vor.r.ende.slice(0, 160)}`);
   if (!nach.r.schritte.includes("kinder") || nach.r.sterne !== 3) probleme.push(`b) Ab dem Stichtag: Schritt ${nach.r.schritte.includes("kinder")}, Sterne ${nach.r.sterne}`);
   const f = vor.f.concat(nach.f); if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
   zeilen.push(`a) v677: vor dem Stichtag ${vor.r.schritte.length} Schritte mit „Die Kinder“, Tipp setzt ${vor.r.sterne} Sterne · b) ab dem Stichtag ${nach.r.schritte.length} Schritte, Tipp setzt ${nach.r.sterne} Sterne`);
