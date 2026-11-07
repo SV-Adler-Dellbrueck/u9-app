@@ -146,6 +146,61 @@ function tbDatumDe(d){
   return isNaN(x) ? String(d) : x.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"});
 }
 
+/* ── v794 · Was durchgeführt wurde und wer dabei war ────────────────────────────────────────────
+   Charles 07.11.: „Wichtig ist, dass ihr zukünftig die Übungs- und Trainingsformen in den Tagebucheintrag
+   übernehmen, genauso wie welche Spieler anwesend waren.“ Beides kommt beim Entstehen eines Einheiten-Eintrags
+   automatisch aus dem Trainingsplan und der Anwesenheit des Tages (Spalten durchgefuehrt und anwesend) – ohne KI,
+   nichts erfunden. Gezeigt auf der Prüfkarte und im Eintrag, im Export mit Buchstaben (tbPseudonym). Fehlt die
+   Migration, wird ohne diese Spalten gespeichert (tbSchreibeEintrag). Spieltage: noch nicht. */
+const TB_KONTEXT_SPALTEN = ["durchgefuehrt","anwesend"];
+async function tbKontext(datum){
+  const out = { durchgefuehrt:[], anwesend:[] };
+  try{
+    let plan = (typeof tpPlanLoad==="function") ? await tpPlanLoad(datum) : [];
+    if(typeof einheitPlanBuendeln==="function") plan = einheitPlanBuendeln(plan);
+    (Array.isArray(plan)?plan:[]).forEach(p=>{
+      const name = String(p&&p.formName||"").trim(); if(!name) return;
+      const block = (typeof einheitBlockNamen==="function" ? einheitBlockNamen(p) : []).join(", ");
+      if(!out.durchgefuehrt.some(x=>x.name===name&&x.block===block)) out.durchgefuehrt.push({ name, block });
+    });
+  }catch(e){}
+  try{   // Spielform des Abschlussspiels, wenn für den Tag ein Trainingsturnier vorbereitet ist
+    const r = await fetch(`${SB_URL}/rest/v1/trainingsturnier?datum=eq.${encodeURIComponent(datum)}&select=data`,{headers:sbAuthHeaders()});
+    if(r.ok){
+      const sf = (((await r.json())||[])[0]||{}).data; const k = sf&&sf.spielform;
+      const lab = (k && typeof BLZ_SPIELFORM!=="undefined" && BLZ_SPIELFORM[k]) ? BLZ_SPIELFORM[k][0] : "";
+      if(k && k!=="frei" && lab) out.durchgefuehrt.push({ name:"Abschlussspiel · "+lab, block:"Abschlussspiel" });
+    }
+  }catch(e){}
+  try{
+    let day = (typeof AW_DATA!=="undefined" && AW_DATA[datum]) || null;
+    if(!day){
+      const r = await fetch(`${SB_URL}/rest/v1/anwesenheit?datum=eq.${encodeURIComponent(datum)}&select=data`,{headers:sbAuthHeaders()});
+      if(r.ok){ const srv = (((await r.json())||[])[0]||{}).data; if(srv&&typeof srv==="object") day = (typeof kidMapFromIds==="function") ? kidMapFromIds(srv) : srv; }
+    }
+    if(day) (typeof KADER!=="undefined"?(KADER||[]):[]).forEach(k=>{ if(day[k.name]&&day[k.name].da===true) out.anwesend.push(kaderIdVon(k)); });
+    out.anwesend.sort((a,b)=>a-b);
+  }catch(e){}
+  return out;
+}
+/* Schreiben; ohne die Migration lehnt die Datenbank die neuen Spalten ab – dann noch einmal ohne sie. */
+async function tbSchreibeEintrag(url, method, header, body){
+  let r = await fetch(url,{ method, headers:header, body:JSON.stringify(body) });
+  if(!r.ok && r.status===400 && TB_KONTEXT_SPALTEN.some(k=>k in body)){
+    const b2 = {...body}; TB_KONTEXT_SPALTEN.forEach(k=>{ delete b2[k]; });
+    r = await fetch(url,{ method, headers:header, body:JSON.stringify(b2) });
+  }
+  return r;
+}
+function tbKontextHtml(e){
+  const du = Array.isArray(e&&e.durchgefuehrt) ? e.durchgefuehrt : [], an = Array.isArray(e&&e.anwesend) ? e.anwesend : [];
+  const namen = an.map(tbKindName).filter(Boolean);
+  if(!du.length && !namen.length) return "";
+  return `<div id="tb-kontext" style="background:var(--surface2);border-radius:10px;padding:8px 10px;margin-top:10px;font-size:var(--s-klein);line-height:1.6;color:var(--text2)">
+    ${du.length?`<div><b style="color:var(--text)">Durchgeführt:</b> ${du.map(x=>esc(x.name)+(x.block?` (${esc(x.block)})`:"")).join(" · ")}</div>`:""}
+    ${namen.length?`<div><b style="color:var(--text)">Dabei (${namen.length}):</b> ${esc(namen.join(", "))}</div>`:""}</div>`;
+}
+
 async function tagebuchAusEinheit(datum){
   if(!tbAngemeldet()) return;
   /* v679: Liegt zu diesem Tag schon ein Vorschlag aus der Sprachnotiz, wird der geprüft – kein zweiter Eintrag. */
@@ -168,8 +223,9 @@ async function tagebuchAusEinheit(datum){
   const beobachtung = [String(bew&&bew.notiz||"").trim(), sterne,
                        String(kopf&&kopf.beobachtung||"").trim()].filter(Boolean).join("\n");
 
+  const kx = await tbKontext(datum);
   tbOeffnen({ quelle:"einheit", terminId:null, datum, baustein:"spiel_spieler",
-              ausloeser, beobachtung });
+              ausloeser, beobachtung, durchgefuehrt:kx.durchgefuehrt, anwesend:kx.anwesend });
   tbKiVorschlag("d"+datum);
 }
 
@@ -310,6 +366,7 @@ function tbRender(){
 
     <label style="${lbl}">Auslöser${_TB.quelle==="frei"&&!_TB.id?fuerFertig:'<span style="font-weight:500;color:var(--text3)"> · vorausgefüllt</span>'}
       <textarea id="tb-ausloeser" class="wachsen" rows="2" onfocus="tbFokus('ausloeser')" style="${fld};resize:vertical;margin-top:3px">${esc(w.ausloeser)}</textarea></label>
+    ${tbKontextHtml(_TB)}
 
     <label style="${lbl}">Beobachtung<span style="font-weight:500;color:var(--text3)"> · ${_TB.status==="keim"?"dein Gedanke":"vorausgefüllt"}</span>
       <textarea id="tb-beobachtung" class="wachsen" rows="3" onfocus="tbFokus('beobachtung')" style="${fld};resize:vertical;margin-top:3px">${esc(w.beobachtung)}</textarea></label>
@@ -434,13 +491,13 @@ async function tagebuchSpeichern(){
   /* Eine Änderung von Hand gilt als Bestätigung (KI-Auftrag, Abschnitt 5). */
   if(_TB.ki || _TB.id) body.bestaetigt_am = jetzt;
   if(!_TB.id && _TB.diktat) body.diktat = _TB.diktat;
+  if(Array.isArray(_TB.durchgefuehrt)) body.durchgefuehrt = _TB.durchgefuehrt;   // v794
+  if(Array.isArray(_TB.anwesend)) body.anwesend = _TB.anwesend;
   let id = _TB.id || null;
   try{
     const r = id
-      ? await fetch(`${SB_URL}/rest/v1/tagebuch_eintrag?id=eq.${Number(id)}`,
-          {method:"PATCH",headers:{...sbAuthHeaders(),'Prefer':'return=representation'},body:JSON.stringify(body)})
-      : await fetch(`${SB_URL}/rest/v1/tagebuch_eintrag`,
-          {method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=representation'},body:JSON.stringify(body)});
+      ? await tbSchreibeEintrag(`${SB_URL}/rest/v1/tagebuch_eintrag?id=eq.${Number(id)}`, "PATCH", {...sbAuthHeaders(),'Prefer':'return=representation'}, body)
+      : await tbSchreibeEintrag(`${SB_URL}/rest/v1/tagebuch_eintrag`, "POST", {...sbAuthHeaders(),'Prefer':'return=representation'}, body);
     if(sbCheck401(r)) return;
     if(!r.ok && r.status!==201){ toast(sbDeniedMsg(r,"Konnte nicht erfassen"),"err"); return; }
     if(!id){ const rows = await r.json().catch(()=>null); id = rows && rows[0] && rows[0].id; }
@@ -486,7 +543,8 @@ function tagebuchBearbeiten(id){
     baustein:e.baustein, ausloeser:e.ausloeser, beobachtung:e.beobachtung, aha:e.aha,
     konsequenz:kons.length?"":e.konsequenz, konsequenz_bis:kons.length?"":e.konsequenz_bis, kons:kons.length?kons:null,
     beleg:e.beleg, anschluss:e.anschluss, schlagworte:(e.schlagworte||[]).join(", "),
-    kinder, kinderVorher:kinder, ki:!!e.ki_vorschlag && !e.bestaetigt_am });
+    kinder, kinderVorher:kinder, ki:!!e.ki_vorschlag && !e.bestaetigt_am,
+    durchgefuehrt:Array.isArray(e.durchgefuehrt)?e.durchgefuehrt:undefined, anwesend:Array.isArray(e.anwesend)?e.anwesend:undefined });
 }
 
 /* ── Ansicht ───────────────────────────────────────────────────────────────────── */
@@ -752,6 +810,8 @@ function tbMarkdown(e, ausgabe){
   z.push("");
   if(a==="arbeit") z.push(`- **Status:** ${tbStatus(e)==="keim"?"Keim":"fertig"}${e.ki_vorschlag?(tbUnbestaetigt(e)?" · Vorschlag, noch nicht bestätigt":" · aus Sprachnotiz, bestätigt"):""}`);
   z.push(`- **Auslöser:** ${zeile(e.ausloeser)}`);
+  if(Array.isArray(e.durchgefuehrt) && e.durchgefuehrt.length) z.push(`- **Durchgeführt:** ${e.durchgefuehrt.map(x=>zeile(x.name)+(x.block?` (${zeile(x.block)})`:"")).join(" · ")}`);   // v794
+  { const dabei = (Array.isArray(e.anwesend)?e.anwesend:[]).map(tbKindName).filter(Boolean); if(dabei.length) z.push(`- **Dabei (${dabei.length}):** ${dabei.join(", ")}`); }
   z.push(`- **Beobachtung:** ${zeile(e.beobachtung)}`);
   z.push(`- **Aha:** ${zeile(e.aha)}`);
   z.push(`- **Konsequenz:** ${konsText}`);
@@ -943,7 +1003,7 @@ async function tbVorschlagSichern(o){
   const ich = await tbAutor(); if(!ich) return null;
   const H = {...sbAuthHeaders(),'Content-Type':'application/json'};
   const fuer = String(o.fuer);
-  let datum, terminId = null, quelle, anlass, ausloeser;
+  let datum, terminId = null, quelle, anlass, ausloeser, kx = null;
   if(fuer[0]==="d"){
     datum = fuer.slice(1); quelle = "einheit"; anlass = "einheit";
     try{ terminId = (typeof terminIdForDatum==="function") ? ((await terminIdForDatum(datum)) || null) : null; }catch(e){}
@@ -951,6 +1011,7 @@ async function tbVorschlagSichern(o){
     try{ const r = await fetch(`${SB_URL}/rest/v1/trainingsplan?datum=eq.${encodeURIComponent(datum)}&select=kopf`,{headers:sbAuthHeaders()});
          if(r.ok) sp = String(((((await r.json())||[])[0]||{}).kopf||{}).schwerpunkt||"").trim(); }catch(e){}
     ausloeser = `Training U9 vom ${tbDatumDe(datum)}` + (sp ? `, Schwerpunkt „${sp}“` : "");
+    kx = await tbKontext(datum);   // v794: Übungen, Spielform und anwesende Kinder aus Plan und Anwesenheit
   }else if(fuer[0]==="g"){
     /* v791: ein Gedanke ohne Termin, von der KI sortiert – heutiges Datum, kein Termin */
     datum = isoLokal(); quelle = "frei"; anlass = "gedanke";
@@ -970,6 +1031,7 @@ async function tbVorschlagSichern(o){
     konsequenz:kons.join("\n")||null, konsequenz_bis:null, schlagworte:(v.schlagworte||[]).slice(0,8),
     ki_vorschlag:true, bestaetigt_am:null, diktat:String(o.diktat||"").trim()||null,
     rueckfragen:(v.rueckfragen||[]).slice(0,2), updated_at:new Date().toISOString() };
+  if(kx){ body.durchgefuehrt = kx.durchgefuehrt; body.anwesend = kx.anwesend; }
   let id = tbVorschlagIdFuer(fuer);
   if(!id && fuer[0]!=="g"){   // jeder Gedanke ist ein eigener Eintrag
     try{
@@ -980,11 +1042,11 @@ async function tbVorschlagSichern(o){
   }
   try{
     if(id){
-      const r = await fetch(`${SB_URL}/rest/v1/tagebuch_eintrag?id=eq.${Number(id)}`,{method:"PATCH",headers:H,body:JSON.stringify(body)});
+      const r = await tbSchreibeEintrag(`${SB_URL}/rest/v1/tagebuch_eintrag?id=eq.${Number(id)}`, "PATCH", H, body);
       if(!r.ok && r.status!==204) return null;
       await fetch(`${SB_URL}/rest/v1/tagebuch_punkt?eintrag_id=eq.${Number(id)}&erledigt_am=is.null`,{method:"DELETE",headers:H});
     }else{
-      const r = await fetch(`${SB_URL}/rest/v1/tagebuch_eintrag`,{method:"POST",headers:{...H,'Prefer':'return=representation'},body:JSON.stringify(body)});
+      const r = await tbSchreibeEintrag(`${SB_URL}/rest/v1/tagebuch_eintrag`, "POST", {...H,'Prefer':'return=representation'}, body);
       if(!r.ok && r.status!==201) return null;
       const rows = await r.json().catch(()=>null); id = rows && rows[0] && rows[0].id;
       if(!id) return null;
@@ -1085,6 +1147,7 @@ function tbPruefenZeichnen(){
     <div style="font-size:var(--s-text);color:var(--text2);line-height:1.5">Deine Worte, sortiert – nichts dazu erfunden. Was nicht passt, änderst du direkt hier.</div>
     <label id="tbp-aha-block" style="display:block;font-size:var(--s-teil);font-weight:800;margin-top:12px;background:var(--purple-bg);border-radius:12px;padding:10px 12px">💡 Aha – das gehört dir${e.aha?"":' <span style="display:block;font-size:var(--s-klein);font-weight:500;color:var(--text2)">Nichts gefunden, das du selbst so gesagt hast – schreib es hier oder beantworte die Rückfrage unten.</span>'}
       <textarea id="tbp-aha" class="wachsen" rows="3" style="${fld};margin-top:6px;font-size:var(--s-karte);line-height:1.5">${esc(e.aha||"")}</textarea></label>
+    ${tbKontextHtml(e)}
     ${_TBP.bewertung.length?`${kopf("Bewertung · gespeichert")}<div style="font-size:var(--s-text);line-height:1.6;background:var(--surface2);border-radius:10px;padding:8px 10px">${_TBP.bewertung.map(z=>`<div>${esc(z)}</div>`).join("")}</div>`:""}
     ${kopf("Tagebuch")}
     <div style="display:flex;gap:6px;flex-wrap:wrap">${TB_BAUSTEINE.map(b=>{const an=_TBP.baustein===b.key;
