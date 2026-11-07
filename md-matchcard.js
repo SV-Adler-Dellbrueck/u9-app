@@ -805,7 +805,76 @@ function aufRender(){
   rotDragInit();
 }
 /* Ein Tipp an einer Stelle zeichnet beide Ansichten neu (① und ②). */
-function rotRenderAll(){ rotRenderLive(); aufRender(); }
+function rotRenderAll(){ rotRenderLive(); aufRender(); aufSichern(); }
+/* ── v793 · Die Aufstellung am Spieltag bleibt stehen ─────────────────────────────────────────────
+   Charles 06.11.: „Wenn ich die Aufstellung änder, soll das direkt gespeichert werden, wenn ich die Seite schließe.“
+   Torwart, Feld und Bank (rotTW, rotField, rotBench) lagen nur im Speicher und waren nach dem Neuladen weg – die App
+   setzte sie aus der Nominierung neu. Jetzt: jede Änderung geht nach 0,7 s lokal UND in die Tabelle spieltag_aufstellung
+   (ein Eintrag je Spieltag und Team, Schlüssel wie spieltagKey()); beim Schließen oder Wegwechseln der Seite sofort.
+   Beim Aufbauen der Seite wird die gespeicherte Aufstellung gegen die Nominierung gehalten: wer nicht (mehr) nominiert ist,
+   fliegt raus, wer neu dazukam, steht auf der Bank. Ohne die Tabelle (Migration fehlt) bleibt es bei lokal. */
+const AUF_LS="adler_spieltag_auf";
+let _aufStumm=false, _aufTimer=null, _aufGeaendert=false, _aufSnap=null, _aufTabelleFehlt=false;
+function _aufLokalLesen(){ try{ return JSON.parse(localStorage.getItem(AUF_LS)||"{}")||{}; }catch(e){ return {}; } }
+function aufSichern(){
+  if(_aufStumm||typeof spieltagKey!=="function")return;
+  _aufGeaendert=true;
+  _aufSnap={key:spieltagKey(),daten:{tw:rotTW||null,feld:rotField.slice(),bank:rotBench.slice(),form:tbFormation,t:Date.now()}};   // Schnappschuss: ein Teamwechsel danach schreibt nichts ins falsche Team
+  clearTimeout(_aufTimer); _aufTimer=setTimeout(()=>aufSofortSichern(false),700);
+}
+async function aufSofortSichern(ende){
+  clearTimeout(_aufTimer);
+  const sn=_aufSnap; if(!sn)return; _aufSnap=null;
+  try{
+    const l=_aufLokalLesen(), grenze=Date.now()-30*864e5;
+    Object.keys(l).forEach(k=>{ if(!l[k]||(l[k].t||0)<grenze)delete l[k]; });
+    l[sn.key]=sn.daten; localStorage.setItem(AUF_LS,JSON.stringify(l));
+  }catch(e){}
+  if(_aufTabelleFehlt||typeof sbToken!=="function"||!sbToken())return;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/spieltag_aufstellung?on_conflict=schluessel`,{method:"POST",keepalive:!!ende,
+      headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify({schluessel:sn.key,daten:sn.daten,updated_at:new Date().toISOString()})});
+    if(r.status===404)_aufTabelleFehlt=true;
+  }catch(e){/* lokal ist gesichert */}
+}
+/* Gespeicherte Aufstellung auf die jetzige Nominierung anwenden. false = nichts getan (andere Spielform, keine Nominierung). */
+function aufAnwenden(d){
+  const squad=(typeof nominierteSpieler==="function")?nominierteSpieler():[];
+  if(!squad.length||!d||d.form!==tbFormation)return false;
+  const form=(typeof FORMATIONS!=="undefined"&&FORMATIONS[tbFormation])||{tw:true,fieldCount:5};
+  const ok=new Set(squad), belegt=new Set();
+  const nimm=n=>{ if(typeof n==="string"&&ok.has(n)&&!belegt.has(n)){ belegt.add(n); return true; } return false; };
+  const tw=(form.tw!==false&&nimm(d.tw))?d.tw:null;
+  const feld=(Array.isArray(d.feld)?d.feld:[]).filter(nimm).slice(0,form.fieldCount);
+  const rest=squad.filter(n=>n!==tw&&!feld.includes(n));
+  const alt=(Array.isArray(d.bank)?d.bank:[]).filter(n=>rest.includes(n));
+  const bank=alt.concat(rest.filter(n=>!alt.includes(n)));
+  _aufStumm=true;
+  try{ rotTW=tw; rotField=feld; rotBench=bank; rotSel=null; rotRenderControls(); rotRenderAll(); }
+  finally{ _aufStumm=false; }
+  return true;
+}
+async function aufLaden(){
+  if(typeof spieltagKey!=="function"||rotTimerId)return;
+  const key=spieltagKey();
+  let d=_aufLokalLesen()[key]||null;
+  if(!_aufTabelleFehlt&&typeof sbToken==="function"&&sbToken()){
+    try{
+      const r=await fetch(`${SB_URL}/rest/v1/spieltag_aufstellung?schluessel=eq.${encodeURIComponent(key)}&select=daten`,{headers:sbAuthHeaders()});
+      if(r.status===404)_aufTabelleFehlt=true;
+      else if(r.ok){ const rows=await r.json(); const s=rows[0]&&rows[0].daten; if(s&&(!d||(s.t||0)>=(d.t||0)))d=s; }
+    }catch(e){}
+  }
+  // inzwischen selbst etwas geändert, Timer läuft oder anderes Team geöffnet → die Gespeicherte nicht darüberlegen
+  if(!d||_aufGeaendert||rotTimerId||key!==spieltagKey())return;
+  aufAnwenden(d);
+}
+if(typeof window!=="undefined"&&!window._aufRaus){
+  window._aufRaus=true;
+  window.addEventListener("pagehide",()=>{ aufSofortSichern(true); });
+  document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden")aufSofortSichern(true); });
+}
 function rotMove(name){
   rotSel=null;
   let richtung=null;

@@ -1079,9 +1079,11 @@ function ergPanelRender(){
 function nomApplyToTools(){
   const squad=nominierteSpieler();
   if(!rotTimerId){ // laufendes Spiel nicht zerstören – nur setzen, wenn Timer nicht läuft
+    if(typeof aufSofortSichern==="function")aufSofortSichern(false);   // v793: was der Trainer eben geändert hat, geht vor dem Neusetzen in den Speicher
     rotSeedFromSquad(squad); // Torwart separat, Feldgröße aus Spielform
     rotRenderControls();rotRenderLive();
     if(typeof aufRender==="function")aufRender();
+    if(typeof aufLaden==="function"){ _aufGeaendert=false; aufLaden(); }   // v793: danach die gespeicherte Aufstellung darüberlegen
   }
   teamInhaltFuellen();
 }

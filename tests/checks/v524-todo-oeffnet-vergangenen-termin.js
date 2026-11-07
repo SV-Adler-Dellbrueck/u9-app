@@ -54,6 +54,10 @@ module.exports = async function (h) {
     if (!haupt) return { fehlt: true };
     haupt.click();
     for (let i = 0; i < 40 && !document.getElementById("fz-modal"); i++) await new Promise(r => setTimeout(r, 50));
+    /* v793: Das Fenster steht zuerst mit „Lade …“ da und füllt sich nach dem Abruf des Termins. Unter Last (drei Prüfungen
+       parallel) las die Prüfung den Text noch vor dem Füllen und meldete fälschlich „Weg zum Erzählen fehlt“ – deshalb
+       warten, bis der Ladehinweis weg ist. */
+    for (let i = 0; i < 80 && (!document.getElementById("fz-modal") || /Lade …/.test(document.getElementById("fz-modal").textContent)); i++) await new Promise(r => setTimeout(r, 50));
 
     const modal = document.getElementById("fz-modal");
     const txt = modal ? modal.textContent.replace(/\s+/g, " ").trim() : "";
