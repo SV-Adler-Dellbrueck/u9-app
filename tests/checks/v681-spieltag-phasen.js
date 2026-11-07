@@ -62,7 +62,7 @@ module.exports = async function (h) {
   ["Wer kommt?", "Teams und Kapitäne", "Während des Spiels", "Danach"].forEach((t, i) => { const z = r.zeilen[i]; if (!z || !z.t.includes(t)) probleme.push(`a) Einstieg ${i + 1} ist nicht „${t}“`); else if (z.h < 72) probleme.push(`a) „${t}“ nur ${z.h} px`); });
   if (r.kopfAufUebersicht) probleme.push("e) Die Übersichtsseite trägt einen Zurück-Kopf");
   // b)
-  const soll = { wer: "mt-phase-wer", vor: "mt-phase-nom,mt-phase-vor", live: "mt-phase-live", nach: "mt-phase-nach,mt-phase-quests" };
+  const soll = { wer: "mt-phase-wer", vor: "mt-phase-nom,mt-phase-vor", live: "mt-phase-live", nach: "mt-phase-botschaft,mt-phase-nach,mt-phase-quests" };
   for (const p in soll) { const x = r.phasen[p]; if (x.offen !== soll[p]) probleme.push(`b) ${p}: offen ${x.offen} – erwartet ${soll[p]}`); if (x.gedrueckt !== p) probleme.push(`b) ${p}: gedrückt ist „${x.gedrueckt}“`); }
   // c)
   if (r.sprung.offen !== soll.nach || r.sprung.gedrueckt !== "nach") probleme.push(`c) Sprung per .open: offen ${r.sprung.offen}, gedrückt ${r.sprung.gedrueckt}`);
