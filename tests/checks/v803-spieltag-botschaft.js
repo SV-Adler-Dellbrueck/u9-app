@@ -41,6 +41,7 @@ module.exports = async function (h) {
     const nomVor = {}; KADER.forEach(k => { nomVor[k.name] = "offen"; });
     const dabei = KADER.filter(k => k.aktiv !== false).slice(0, 4).map(k => k.name); dabei.forEach(n => { nomVor[n] = "dabei"; });
     nomStatus = nomVor;
+    spieltagPhaseZeigen("nach"); await w(100);   // wie im Spieltag: „③ Nach dem Spiel“ gewählt – die Karte gehört zu dieser Phase
     await botschaftRender();
     const pan = document.getElementById("botschaft-panel");
     out.a = { text: pan ? pan.textContent.replace(/\s+/g, " ") : "", knopf: !!document.getElementById("bot-offen"), hoehe: Math.round((document.getElementById("bot-offen") || { getBoundingClientRect: () => ({ height: 0 }) }).getBoundingClientRect().height) };
