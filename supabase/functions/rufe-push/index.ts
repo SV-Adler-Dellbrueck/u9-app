@@ -49,11 +49,16 @@ Deno.serve(async (req) => {
     const { data: pp } = await admin.rpc("portraet_push_faellig");
     /* v760 (Version 5): Sprachlob für das eigene Kind – lob_push_faellig() entscheidet und merkt sich jeden Versand. */
     const { data: lp } = await admin.rpc("lob_push_faellig");
+    /* v799 (Version 6): kurzfristige Absagen (unter 24 Std. vor Beginn) an das Trainerteam – absage_push_faellig()
+       entscheidet, merkt sich jede Meldung und legt Ruhezeit-Fälle in die Warteschlange. Fehlt die Funktion
+       (Migration v799 noch nicht eingespielt), passiert nichts. */
+    const { data: ap } = await admin.rpc("absage_push_faellig");
     const faellig = [...((rufe || []) as any[]).map((f) => ({ ...f, tag: "rufe" })),
                      ...((ww || []) as any[]).map((f) => ({ ...f, tag: "wiewars-" + f.termin_id })),
                      ...((ws || []) as any[]).map((w) => ({ user_id: w.user_id, titel: w.payload?.title, text: w.payload?.body, url: w.payload?.url, tag: w.payload?.tag || "adler" })),
                      ...((pp || []) as any[]).map((f) => ({ ...f, tag: "nest-" + (String(f.url).includes("/trainer/") ? "trainer" : "eltern") })),
-                     ...((lp || []) as any[]).map((f) => ({ ...f, tag: "lob-" + f.titel }))];
+                     ...((lp || []) as any[]).map((f) => ({ ...f, tag: "lob-" + f.titel })),
+                     ...((ap || []) as any[]).map((f) => ({ ...f }))];
     if (!faellig.length) return json({ ok: true, sent: 0 });
     webpush.setVapidDetails("mailto:trainer@adler-dellbrueck.de",
       await geheimnis(admin, "adler_vapid_public"), await geheimnis(admin, "adler_vapid_private"));
@@ -71,6 +76,6 @@ Deno.serve(async (req) => {
       }
     }
     if (gone.length) await admin.from("push_subscriptions").delete().in("endpoint", gone);
-    return json({ ok: true, empfaenger: faellig.length, wiewars: (ww || []).length, nachgeholt: (ws || []).length, portraet: (pp || []).length, lob: (lp || []).length, sent, removed: gone.length });
+    return json({ ok: true, empfaenger: faellig.length, wiewars: (ww || []).length, nachgeholt: (ws || []).length, portraet: (pp || []).length, lob: (lp || []).length, absagen: (ap || []).length, sent, removed: gone.length });
   } catch (e) { return json({ error: String(e) }, 500); }
 });
