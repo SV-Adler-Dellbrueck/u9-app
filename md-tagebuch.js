@@ -151,7 +151,7 @@ function tbDatumDe(d){
    übernehmen, genauso wie welche Spieler anwesend waren.“ Beides kommt beim Entstehen eines Einheiten-Eintrags
    automatisch aus dem Trainingsplan und der Anwesenheit des Tages (Spalten durchgefuehrt und anwesend) – ohne KI,
    nichts erfunden. Gezeigt auf der Prüfkarte und im Eintrag, im Export mit Buchstaben (tbPseudonym). Fehlt die
-   Migration, wird ohne diese Spalten gespeichert (tbSchreibeEintrag). Spieltage: noch nicht. */
+   Migration, wird ohne diese Spalten gespeichert (tbSchreibeEintrag). Spiele und Turniere seit v802 (tbKontextSpiel). */
 const TB_KONTEXT_SPALTEN = ["durchgefuehrt","anwesend"];
 async function tbKontext(datum){
   const out = { durchgefuehrt:[], anwesend:[] };
@@ -181,6 +181,27 @@ async function tbKontext(datum){
     if(day) (typeof KADER!=="undefined"?(KADER||[]):[]).forEach(k=>{ if(day[k.name]&&day[k.name].da===true) out.anwesend.push(kaderIdVon(k)); });
     out.anwesend.sort((a,b)=>a-b);
   }catch(e){}
+  return out;
+}
+/* v802 · dasselbe für Spiele und Turniere (Charles 07.11.: „Ja, wie beim Training“). Quelle ist die Einteilung des Spieltags:
+   die Nominierung „<datum>__nom“ (wer ist dabei) und „<datum>__teams“ (Teams und ihre Spielform). Ohne KI, nichts erfunden;
+   fehlt die Einteilung, bleibt das Feld leer. Die Spielform des Termins selbst gilt, wenn keine Team-Zeile eine nennt. */
+async function tbKontextSpiel(t){
+  const out = { durchgefuehrt:[], anwesend:[] };
+  if(!t || !t.datum) return out;
+  const hole = async key => { try{ const r = await fetch(`${SB_URL}/rest/v1/nominierungen?datum=eq.${encodeURIComponent(key)}&select=data`,{headers:sbAuthHeaders()}); if(!r.ok) return null; const d = (((await r.json())||[])[0]||{}).data; return (d&&typeof d==="object") ? ((typeof kidMapFromIds==="function") ? kidMapFromIds(d) : d) : null; }catch(e){ return null; } };
+  const [nom, teams] = await Promise.all([ hole(t.datum+"__nom"), hole(t.datum+"__teams") ]);
+  const lab = k => { const x = (typeof BLZ_SPIELFORM!=="undefined" && BLZ_SPIELFORM[k]) ? BLZ_SPIELFORM[k][0] : ""; return x || String(k||"").replace(/,/g," · "); };
+  const block = t.typ==="turnier" ? "Festival" : "Spiel";
+  const anzahl = Math.max(1, Number(teams && teams._anzahl) || 1), formen = (teams && teams._form && typeof teams._form==="object") ? teams._form : {};
+  for(let n=1; n<=anzahl; n++){
+    const k = formen[n] || formen[String(n)] || (anzahl===1 ? t.spielform : "");
+    const l = k ? lab(k) : "";
+    if(anzahl>1) out.durchgefuehrt.push({ name:`Team ${n}${l?" · "+l:""}`, block });
+    else if(l) out.durchgefuehrt.push({ name:`Spielform ${l}`, block });
+  }
+  if(nom) (typeof KADER!=="undefined"?(KADER||[]):[]).forEach(k=>{ if(nom[k.name]==="dabei") out.anwesend.push(kaderIdVon(k)); });
+  out.anwesend.sort((a,b)=>a-b);
   return out;
 }
 /* Schreiben; ohne die Migration lehnt die Datenbank die neuen Spalten ab – dann noch einmal ohne sie. */
@@ -253,8 +274,9 @@ async function tagebuchAusEvent(terminId){
     String(bew&&bew.arbeiten||"").trim() ? "Daran arbeiten wir: "+bew.arbeiten.trim() : ""
   ].filter(Boolean).join("\n");
 
+  const kx = await tbKontextSpiel(t);   // v802: Spielform, Teams und anwesende Kinder aus der Einteilung
   tbOeffnen({ quelle:"event", terminId:Number(terminId), datum:t.datum,
-              baustein:"organisation", ausloeser, beobachtung });
+              baustein:"organisation", ausloeser, beobachtung, durchgefuehrt:kx.durchgefuehrt, anwesend:kx.anwesend });
   tbKiVorschlag("t"+t.id);
 }
 
@@ -1027,6 +1049,7 @@ async function tbVorschlagSichern(o){
     datum = t.datum;
     const art = t.typ==="turnier" ? "Festival" : "Spiel";
     ausloeser = `${art} „${String(t.titel||t.gegner||art)}“ vom ${tbDatumDe(t.datum)}`;
+    kx = await tbKontextSpiel(t);   // v802
   }
   const kons = (v.konsequenzen || (v.konsequenz ? [v.konsequenz] : [])).filter(Boolean).slice(0,2);
   const body = { autor:ich, datum, quelle, termin_id:terminId, anlass, status:"keim",
