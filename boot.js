@@ -481,7 +481,7 @@ function _tfKarte(x){
   return `<div style="display:flex;align-items:center;gap:8px;border:var(--border-s);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--surface)">
     <button onclick="tpShowExercise(${x.i})" style="flex:1;min-width:0;min-height:44px;border:none;background:transparent;color:var(--text);font-family:inherit;text-align:left;cursor:pointer;padding:0">
       <span style="display:block;font-size:var(--s-karte);font-weight:800">${esc(x.f.name)}${badges.length?" "+badges.join(" "):""}</span>
-      <span style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:2px">${x.f.dauer||"?"} Min. · ${esc(String(x.f.spieler||"?"))} Sp. · ${esc(x.f.feld||"?")} · ${frische}</span>
+      <span style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:2px">${x.f.dauer||"?"} Min. · ${esc(String(x.f.spieler||"?"))} Sp. · ${esc(x.f.feld||"?")} · ${frische}${(()=>{ const bk=tpBewKurz(x.i); return bk?" · "+bk:""; })()}</span>
     </button>
     <button onclick="tpArtTipp('${(x.f.name||"").replace(/'/g,"\\'")}')" title="Übungsform oder Spielform – antippen zum Einordnen" aria-label="Art der Übung: ${_tpArt(x.f)?UEBUNG_ART[_tpArt(x.f)].lang:"noch nicht eingeordnet"}" style="flex:none;min-height:44px;padding:0 4px;border:none;background:transparent;cursor:pointer">${tpArtChip(x.f,true)}</button>
     <span role="img" aria-label="Schwierigkeit ${stern} von 3" title="Schwierigkeit – ändern im Übungsdetail" style="min-width:48px;display:inline-flex;align-items:center;justify-content:center;color:#f59e0b;font-size:var(--s-text);letter-spacing:1px">${"⭐".repeat(stern)}</span>
@@ -1488,6 +1488,42 @@ function tpOnCatChange(selId,si,p){
   if(histDiv)histDiv.innerHTML="";
 }
 
+/* v795 · Bewertung der Übung durch die Trainer (Charles 07.11.): Wie wurde sie bewertet, wenn wir sie eingesetzt haben?
+   Quelle sind die drei Antippreihen je Übung in „Einheit bewerten“ (EVAL_DATA[datum][i]: Durchführung, Spaßfaktor Kinder,
+   Anforderung umgesetzt, je 1–5). Übersprungene und nicht bewertete Übungen zählen nicht. Schnitt = Mittel aller vergebenen Werte.
+   Bewusst als „★ 4,3“ mit Zahl, nicht als Sterne: die ⭐ in der Übungsliste sind die SCHWIERIGKEIT. */
+const TP_BEW_DIMS=["Durchführung","Spaßfaktor Kinder","Anforderung umgesetzt"];
+function tpUebungBewertung(formIdx){
+  const out={n:0,schnitt:null,dims:{},einsaetze:[]};
+  if(typeof EVAL_DATA!=="object"||!EVAL_DATA)return out;
+  const f=tpAllForms()[formIdx], ich={formIdx,formName:f&&f.name};
+  const summe={},anz={}; let sAll=0,nAll=0;
+  Object.keys(EVAL_DATA).sort().reverse().forEach(datum=>{
+    (EVAL_DATA[datum]||[]).forEach(e=>{
+      if(!e||e.skipped||!tfGleicheUebung(e,ich))return;
+      const w={}; let da=false;
+      TP_BEW_DIMS.forEach(k=>{ const v=Number(e[k]); if(v>=1&&v<=5){ w[k]=v; da=true; summe[k]=(summe[k]||0)+v; anz[k]=(anz[k]||0)+1; sAll+=v; nAll++; } });
+      if(da)out.einsaetze.push({datum,trainer:e.trainer||e.von||"",werte:w,notiz:String(e.notiz||"").trim()});
+    });
+  });
+  out.n=out.einsaetze.length;
+  if(nAll){ out.schnitt=sAll/nAll; TP_BEW_DIMS.forEach(k=>{ if(anz[k])out.dims[k]=summe[k]/anz[k]; }); }
+  return out;
+}
+function tpBewZahl(x){ return x==null?"–":x.toFixed(1).replace(".",","); }
+/* Kurzform für Liste und Auswahl: leer, wenn nie bewertet. */
+function tpBewKurz(formIdx){
+  const b=tpUebungBewertung(formIdx); if(!b.n)return "";
+  return `<span title="Ø Bewertung der Trainer: Durchführung, Spaß, Anforderung" aria-label="Bewertung der Trainer im Schnitt ${tpBewZahl(b.schnitt)} von 5, ${b.n} mal bewertet" style="white-space:nowrap">★ ${tpBewZahl(b.schnitt)} <span style="color:var(--text3)">(${b.n}×)</span></span>`;
+}
+/* Detail: Schnitt je Antippreihe und jeder Einsatz mit Datum, Trainer und seinen drei Werten. */
+function tpBewDetailHtml(formIdx){
+  const b=tpUebungBewertung(formIdx); if(!b.n)return "";
+  const kurz={"Durchführung":"Durchführung","Spaßfaktor Kinder":"Spaß","Anforderung umgesetzt":"Anforderung"};
+  const dims=TP_BEW_DIMS.filter(k=>b.dims[k]!=null).map(k=>`${kurz[k]} <b>${tpBewZahl(b.dims[k])}</b>`).join(" · ");
+  const zeilen=b.einsaetze.slice(0,8).map(x=>`<div style="margin-top:3px">• ${new Date(x.datum+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"2-digit"})}${x.trainer?" · "+esc(x.trainer):""}: ${TP_BEW_DIMS.filter(k=>x.werte[k]!=null).map(k=>`${kurz[k]} ${x.werte[k]}/5`).join(" · ")}</div>`).join("");
+  return `<div style="margin-top:8px;font-size:var(--s-klein);color:var(--text2)"><strong>★ Bewertung der Trainer (${b.n}×, Ø ${tpBewZahl(b.schnitt)} von 5)</strong><div style="margin-top:2px">${dims}</div>${zeilen}</div>`;
+}
 /* v483: Kommentare der Trainer zu einer Uebung aus „Einheit bewerten" – juengster zuerst. */
 function tpUebungKommentare(formIdx){
   const out=[];
@@ -1503,7 +1539,8 @@ function tpExerciseHistoryHtml(formIdx){
   if(!hist.length) return '<span style="color:var(--text3);font-size:var(--s-klein)">Noch nie verwendet</span>';
   const k=tpUebungKommentare(formIdx)[0];
   const kurz=k?` · 💬 „${esc(k.notiz.length>70?k.notiz.slice(0,68)+"…":k.notiz)}“`:"";
-  return `<span style="color:var(--text3);font-size:var(--s-klein)" title="${k?esc(k.notiz+" ("+(k.trainer?k.trainer+", ":"")+new Date(k.datum).toLocaleDateString("de-DE")+")"):""}">✓ ${hist.length}× verwendet – zuletzt ${new Date(hist[0]).toLocaleDateString("de-DE")}${kurz}</span>`;
+  const bew=tpBewKurz(formIdx);
+  return `<span style="color:var(--text3);font-size:var(--s-klein)" title="${k?esc(k.notiz+" ("+(k.trainer?k.trainer+", ":"")+new Date(k.datum).toLocaleDateString("de-DE")+")"):""}">${bew?bew+" · ":""}✓ ${hist.length}× verwendet – zuletzt ${new Date(hist[0]).toLocaleDateString("de-DE")}${kurz}</span>`;
 }
 
 /* v518 – PO: „Beim Warm up Adler ist nur eine der vier Übungen zu sehen. Alle vier wären
@@ -1538,7 +1575,7 @@ function tpShowExercise(formIdx,planMin){
   const hist=tpGetExerciseHistory(formIdx);
   const komm=tpUebungKommentare(formIdx).slice(0,3);
   const kommHtml=komm.length?`<div style="margin-top:8px;font-size:var(--s-klein);color:var(--text2)"><strong>💬 Kommentare der Trainer:</strong>${komm.map(k=>`<div style="margin-top:3px">„${esc(k.notiz)}“ <span style="color:var(--text3)">– ${k.trainer?esc(k.trainer)+", ":""}${new Date(k.datum).toLocaleDateString("de-DE")}</span></div>`).join("")}</div>`:"";
-  const histHtml=kommHtml+(hist.length?`<div style="margin-top:8px;font-size:var(--s-klein);color:var(--text2)"><strong>Einsatz-Historie (${hist.length}×):</strong><br>${hist.slice(0,8).map(d=>'• '+new Date(d).toLocaleDateString("de-DE")).join('<br>')}</div>`:'<div style="margin-top:8px;font-size:var(--s-klein);color:var(--text3)">Noch nie in einer Einheit verwendet.</div>');
+  const histHtml=tpBewDetailHtml(formIdx)+kommHtml+(hist.length?`<div style="margin-top:8px;font-size:var(--s-klein);color:var(--text2)"><strong>Einsatz-Historie (${hist.length}×):</strong><br>${hist.slice(0,8).map(d=>'• '+new Date(d).toLocaleDateString("de-DE")).join('<br>')}</div>`:'<div style="margin-top:8px;font-size:var(--s-klein);color:var(--text3)">Noch nie in einer Einheit verwendet.</div>');
   /* PO v412: „oben die Zeile ist abgetrennt im text und unten steht der text komplett
      nochmal." – `kurz` ist bei eigenen Übungen genau der abgeschnittene Anfang von
      `ablauf` (slice(0,80)). Als Untertitel über demselben Text ist das keine
@@ -3862,6 +3899,7 @@ async function tpPlanSave(erzwungen){
       tpEinsatzMerken(datum,plan);                   // v586: zählt sofort als Einsatz, wenn der Termin nicht in der Zukunft liegt
       _tpKonfliktGemeldet="";
       tpStandRender(datum);
+      if(_tpFokus.offen&&_tpFokus.datum===datum)tpFokusSichern();   // v795: der Fokus war gewählt, bevor es die Zeile gab
     }
     if(erzwungen){
       if(r.ok||r.status===201)toast("Plan gespeichert ✓");
@@ -3898,11 +3936,70 @@ async function tpSlotsLoad(datum){
    Folgeeinheit. Er kommt aus dem Import (`trainingsplan.kopf`) und steht über der
    Zeitleiste, dort wo die Einheit anfängt. Aufklappbar: beim Planen ist er wichtig,
    während des Trainings kostet er nur Platz. */
+/* ── v795 · Fokus der Einheit: „Verbesserung von …“ ───────────────────────────────────────────
+   Charles 07.11.: Statt der Vorsätze aus dem eigenen Tagebuch (für die anderen Trainer ohne Belang) steht in Schritt 3
+   der Fokus der Einheit – Chips zum Antippen, dazu ein freies Wort. Die Auswahl kommt aus dem Ausbildungskonzept U9
+   (die sechs Leitfragen) und den Übungskategorien der App; sie ist NICHT aus der Trainingsphilosophie Deutschland
+   abgeschrieben (deren Seiten waren beim Bauen nicht abrufbar). Gespeichert in `trainingsplan.kopf.fokus`
+   ({keys:[…], text:""}) – ohne Schemaänderung; alle Trainer sehen denselben Fokus, im Tagebuch steht er im Auslöser.
+   Die eigenen Vorsätze aus dem Tagebuch bleiben darunter, zugeklappt. */
+const TP_FOKUS=[["ballbesitz","Ball behalten"],["dribbling","Dribbling & 1 gegen 1"],["abschluss","Torabschluss"],["passspiel","Passspiel"],
+  ["anbieten","Anbieten & Freilaufen"],["defensive","Defensivverhalten"],["wahrnehmung","Wahrnehmung & Kopf hoch"],
+  ["taktik","Taktik & Grundordnung"],["umschalten","Umschalten & Pressing"],["torwart","Torwart"],["mindset","Spaß & Mindset"]];
+let _tpFokus={keys:[],text:"",datum:null,offen:false}, _tpFokusTimer=null;
+function tpFokusLabels(f){
+  if(!f||typeof f!=="object")return "";
+  const namen=(Array.isArray(f.keys)?f.keys:[]).map(k=>(TP_FOKUS.find(x=>x[0]===k)||[])[1]).filter(Boolean);
+  const t=String(f.text||"").trim(); if(t)namen.push(t);
+  return namen.join(", ");
+}
+function tpFokusRender(){
+  const box=document.getElementById("tp-fokus"); if(!box)return;
+  const f=_tpFokus;
+  box.innerHTML=`<div class="tp-fokus-karte" style="background:var(--surface);border:1px solid var(--rand-bedien);border-left:4px solid var(--fam-training);border-radius:var(--rl);padding:10px 12px;margin:6px 0 10px">
+    <div style="font-size:var(--s-text);font-weight:800">🎯 Verbesserung von <span style="font-weight:600;color:var(--text2);font-size:var(--s-klein)">· Fokus dieser Einheit, alle Trainer sehen ihn</span></div>
+    <div role="group" aria-label="Fokus der Einheit" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+      ${TP_FOKUS.map(([k,l])=>{const an=f.keys.includes(k);return `<button type="button" aria-pressed="${an}" onclick="tpFokusToggle('${k}')" style="min-height:44px;padding:0 12px;border:${an?"2px solid var(--fam-training)":"1px solid var(--rand-bedien)"};border-radius:22px;background:${an?"var(--surface2)":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:${an?800:600};cursor:pointer">${an?"✓ ":""}${esc(l)}</button>`;}).join("")}
+    </div>
+    <input type="text" id="tp-fokus-text" maxlength="80" value="${esc(f.text||"")}" oninput="tpFokusTextAendern(this.value)" placeholder="Eigener Fokus (optional), z. B. Torwartspiel mit dem Fuß" aria-label="Eigener Fokus" style="width:100%;box-sizing:border-box;min-height:44px;margin-top:8px;padding:0 10px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
+    <details id="tp-vorsaetze-d" hidden style="margin-top:8px"><summary style="cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:var(--s-text);font-weight:700;color:var(--text2)">Eigene Vorsätze aus dem Tagebuch</summary><div id="tp-vorsaetze"></div></details>
+  </div>`;
+}
+function tpFokusToggle(k){
+  const i=_tpFokus.keys.indexOf(k); if(i>=0)_tpFokus.keys.splice(i,1); else _tpFokus.keys.push(k);
+  const t=document.getElementById("tp-fokus-text"), v=t?t.value:_tpFokus.text;
+  tpFokusRender(); const t2=document.getElementById("tp-fokus-text"); if(t2)t2.value=v;
+  tpFokusVorsaetze();
+  clearTimeout(_tpFokusTimer); _tpFokusTimer=setTimeout(tpFokusSichern,600);
+}
+function tpFokusTextAendern(v){ _tpFokus.text=String(v||"").slice(0,80); clearTimeout(_tpFokusTimer); _tpFokusTimer=setTimeout(tpFokusSichern,900); }
+async function tpFokusSichern(){
+  clearTimeout(_tpFokusTimer);
+  const datum=_tpFokus.datum; if(!datum||!sbToken())return;
+  const stand={keys:_tpFokus.keys.slice(),text:_tpFokus.text||""};
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?datum=eq.${encodeURIComponent(datum)}&select=kopf`,{headers:sbAuthHeaders()});
+    if(sbCheck401(r)||!r.ok)return;
+    const rows=(await r.json())||[];
+    if(!rows[0]){ _tpFokus.offen=true; return; }   // noch kein Plan für den Tag: wird beim Speichern des Plans nachgetragen
+    const kopf=Object.assign({},rows[0].kopf||{},{fokus:stand});
+    const w=await fetch(`${SB_URL}/rest/v1/trainingsplan?datum=eq.${encodeURIComponent(datum)}`,{method:"PATCH",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({kopf})});
+    _tpFokus.offen=!(w.ok||w.status===204);
+  }catch(e){ _tpFokus.offen=true; }
+}
+async function tpFokusVorsaetze(){
+  const d=document.getElementById("tp-vorsaetze-d"); if(!d||typeof tbFokusInto!=="function")return;
+  try{ await tbFokusInto("tp-vorsaetze",_tpFokus.datum,"plan"); }catch(e){}
+  const inh=document.getElementById("tp-vorsaetze"); const dd=document.getElementById("tp-vorsaetze-d");
+  if(dd&&inh)dd.hidden=!inh.children.length;
+}
 async function tpKopfLaden(datum){
   const box=document.getElementById("tp-kopf"); if(!box)return;
   box.innerHTML="";
   datum=datum||document.getElementById("tp-date")?.value;
-  if(typeof tbFokusInto==="function")tbFokusInto("tp-fokus",datum,"plan");   // v712: Trainerkreislauf (Welle 2)
+  _tpFokus={keys:[],text:"",datum:datum||null,offen:false};
+  tpFokusRender();
+  tpFokusVorsaetze();   // v712: Trainerkreislauf (Welle 2), seit v795 zugeklappt unter dem Fokus
   if(!datum||!sbToken())return;
   let k=null;
   try{
@@ -3911,6 +4008,9 @@ async function tpKopfLaden(datum){
     const rows=(await r.json())||[];
     k=(rows[0]&&rows[0].kopf)||null;
   }catch(e){return;}
+  if(_tpFokus.datum===datum&&k&&k.fokus&&typeof k.fokus==="object"){   // nur übernehmen, wenn der Trainer inzwischen nichts gewählt hat
+    if(!_tpFokus.keys.length&&!_tpFokus.text){ _tpFokus.keys=Array.isArray(k.fokus.keys)?k.fokus.keys.filter(x=>TP_FOKUS.some(f=>f[0]===x)):[]; _tpFokus.text=String(k.fokus.text||"").slice(0,80); tpFokusRender(); tpFokusVorsaetze(); }
+  }
   tpKopfRender(k);
 }
 function tpKopfRender(k){

@@ -217,8 +217,10 @@ async function tagebuchAusEinheit(datum){
   }catch(e){}
 
   const schwerpunkt = String(kopf&&kopf.schwerpunkt||"").trim();
+  const fokusText = (typeof tpFokusLabels==="function") ? tpFokusLabels(kopf&&kopf.fokus) : "";   // v795
   const ausloeser = `Training U9 vom ${tbDatumDe(datum)}`
-    + (schwerpunkt ? `, Schwerpunkt „${schwerpunkt}“` : "");
+    + (schwerpunkt ? `, Schwerpunkt „${schwerpunkt}“` : "")
+    + (fokusText ? `, Verbesserung von: ${fokusText}` : "");
   const sterne = TB_STERNE.filter(([k])=>bew&&bew[k]).map(([k,l])=>`${l} ${bew[k]}/5`).join(" · ");
   const beobachtung = [String(bew&&bew.notiz||"").trim(), sterne,
                        String(kopf&&kopf.beobachtung||"").trim()].filter(Boolean).join("\n");
@@ -1008,9 +1010,10 @@ async function tbVorschlagSichern(o){
     datum = fuer.slice(1); quelle = "einheit"; anlass = "einheit";
     try{ terminId = (typeof terminIdForDatum==="function") ? ((await terminIdForDatum(datum)) || null) : null; }catch(e){}
     let sp = "";
+    let fokusText = "";
     try{ const r = await fetch(`${SB_URL}/rest/v1/trainingsplan?datum=eq.${encodeURIComponent(datum)}&select=kopf`,{headers:sbAuthHeaders()});
-         if(r.ok) sp = String(((((await r.json())||[])[0]||{}).kopf||{}).schwerpunkt||"").trim(); }catch(e){}
-    ausloeser = `Training U9 vom ${tbDatumDe(datum)}` + (sp ? `, Schwerpunkt „${sp}“` : "");
+         if(r.ok){ const kp = ((((await r.json())||[])[0]||{}).kopf||{}); sp = String(kp.schwerpunkt||"").trim(); fokusText = (typeof tpFokusLabels==="function") ? tpFokusLabels(kp.fokus) : ""; } }catch(e){}
+    ausloeser = `Training U9 vom ${tbDatumDe(datum)}` + (sp ? `, Schwerpunkt „${sp}“` : "") + (fokusText ? `, Verbesserung von: ${fokusText}` : "");
     kx = await tbKontext(datum);   // v794: Übungen, Spielform und anwesende Kinder aus Plan und Anwesenheit
   }else if(fuer[0]==="g"){
     /* v791: ein Gedanke ohne Termin, von der KI sortiert – heutiges Datum, kein Termin */
