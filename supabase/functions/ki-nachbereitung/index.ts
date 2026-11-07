@@ -326,6 +326,18 @@ Deno.serve(async (req) => {
         + `GÄSTE / GEGNER: ${gaeste.join(" · ") || "(keine)"}\n\nANTWORTFORM:\n${FORM_SPIEL.replace("<TAGEBUCH>", FORM_TAGEBUCH)}\n\nSPRACHNOTIZ:\n"""\n${text}\n"""`;
     }
 
+    /* v801: Namensliste des Trainerteams. Die Spracherkennung schreibt Trainernamen in mehreren Fassungen
+       („Kennis“, „Tennis“ für „Kenneth“). Die KI bekommt die richtigen Schreibweisen und darf NUR diese
+       Namen korrigieren – nie Kindernamen (die kommen ohnehin nur als „Kind n“), nie neue Namen erfinden.
+       Es sind Vornamen Erwachsener aus der Trainerliste der App; Kindernamen gehen weiterhin nie hinaus. */
+    const trainer = (Array.isArray(body?.trainer) ? body.trainer : []).slice(0, 12).map((t: unknown) => String(t).trim())
+      .filter((t: string) => /^[\p{L}][\p{L}\- ]{1,29}$/u.test(t));
+    if (trainer.length) {
+      user = `TRAINERTEAM (Erwachsene, richtige Schreibweise): ${trainer.join(", ")}\n`
+        + `Die Spracherkennung schreibt diese Namen oft falsch. Erkennst du in den Worten des Trainers eindeutig einen davon in anderer Schreibweise, schreibe ihn richtig – das ist die einzige Ausnahme vom Austausch-Verbot. `
+        + `Im Zweifel lass das Wort stehen; erfinde keine Namen und ändere keine anderen Wörter.\n\n` + user;
+    }
+
     const provider = (Deno.env.get("LLM_PROVIDER") || "anthropic").toLowerCase();
     const key = Deno.env.get("LLM_API_KEY");
     if (!key) return j({ error: "KI ist noch nicht eingerichtet (LLM_API_KEY fehlt)." }, 503);
