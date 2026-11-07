@@ -60,9 +60,14 @@ async function taAnzahlLaden(ids) {
     return o;
   } catch (e) { return {}; }
 }
-function taChip(terminId) {
+/* v798: Auf der Dashboard-Karte sah der Hinweis wie ein Link aus und tat nichts (Eltern fanden den Spielplan nicht).
+   Dort (klickbar=true) ist er jetzt ein Knopf, der das Termin-Fenster mit dem Anhang öffnet. In Listenzeilen, die selbst
+   schon ein Knopf sind, bleibt es Text. */
+function taChip(terminId, klickbar) {
   const t = (window._taAnz || {})[terminId]; if (!t || !t.length) return "";
-  return `<span class="ta-chip" style="display:block;font-size:var(--s-klein);font-weight:700;color:#475569;margin-top:3px">📎 ${esc(t[0])}${t.length > 1 ? ` · +${t.length - 1}` : ""}</span>`;
+  const txt = `📎 ${esc(t[0])}${t.length > 1 ? ` · +${t.length - 1}` : ""}`;
+  if (!klickbar) return `<span class="ta-chip" style="display:block;font-size:var(--s-klein);font-weight:700;color:#475569;margin-top:3px">${txt}</span>`;
+  return `<button type="button" class="ta-chip" onclick="terminDetailOpen(${Number(terminId)})" aria-label="Anhang ansehen: ${esc(t[0])}" style="display:flex;align-items:center;gap:6px;min-height:44px;margin-top:4px;padding:6px 12px;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${txt}<span aria-hidden="true">›</span></button>`;
 }
 async function taBlob(pfad) {
   if (_taBlobs[pfad]) return _taBlobs[pfad];

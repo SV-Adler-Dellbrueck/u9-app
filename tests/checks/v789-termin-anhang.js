@@ -31,6 +31,10 @@ module.exports = async function (h) {
     const w = ms => new Promise(x => setTimeout(x, ms));
     const out = {};
     out.chipKarte = (document.getElementById("termin-card") || {}).textContent || "";
+    /* v798: der Hinweis auf der Karte ist ein Knopf und öffnet das Termin-Fenster mit dem Anhang */
+    const ck = document.querySelector("#termin-card button.ta-chip");
+    out.chipKnopf = ck ? Math.round(ck.getBoundingClientRect().height) : 0;
+    if (ck) { ck.click(); await w(1200); out.chipOeffnet = !!document.getElementById("td-anhang")?.querySelector("img[data-ta-pfad]"); }
     await terminDetailOpen(100); await w(1200);
     const box = document.getElementById("td-anhang");
     out.titel = box ? box.textContent.replace(/\s+/g, " ").trim() : null;
@@ -47,6 +51,7 @@ module.exports = async function (h) {
   const fe1 = s.fehler(); await s.schliessen();
   if (fe1.length) probleme.push("Konsole (Eltern): " + fe1.slice(0, 2).join(" | "));
   if (!/📎 Spielplan der Gastgeber/.test(a.chipKarte)) probleme.push("a) Terminkarte ohne Hinweis: „" + a.chipKarte.slice(0, 80) + "“");
+  if (a.chipKnopf < 44 || !a.chipOeffnet) probleme.push("a2) Hinweis auf der Karte ist kein bedienbarer Knopf: " + JSON.stringify({ h: a.chipKnopf, offen: a.chipOeffnet }));
   if (!a.titel || !/Anhänge zum Termin/.test(a.titel) || !/Spielplan der Gastgeber/.test(a.titel) || !/Anfahrt/.test(a.titel)) probleme.push("a) Karte im Termin-Fenster: " + a.titel);
   if (!a.bild || a.pdfH < 56 || !a.gross || !a.quer) probleme.push("a) Bild/PDF/groß/quer: " + JSON.stringify({ bild: a.bild, pdfH: a.pdfH, gross: a.gross, quer: a.quer }));
   zeilen.push(`Eltern: Hinweis auf der Terminkarte, Karte mit Bild + PDF (${a.pdfH} px), Bild groß ${a.gross ? "geht" : "geht nicht"}`);
