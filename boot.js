@@ -2670,7 +2670,7 @@ function tpRenderTimeline(){
         ${griff}<span class="tp-slot-label">${parallel?tpParallelIcon(typ):""}${esc(tpSlotName(slot.label))}${tpTypMarke(typ)}</span>
         <span class="tp-slot-time">${startMin}' – ${endMin}'${parallel?` · parallel zu ${tpSlots[slot.parallelZu].label}`:""}</span>
         ${parallel?"":tpDauerSelect(si,slot)}
-        <button class="tp-remove" onclick="tpRemoveSlot(${si})"><i class="ti ti-trash"></i></button>
+        <button class="tp-remove" onclick="tpRemoveSlot(${si})" aria-label="Block ${esc(tpSlotName(slot.label))} löschen" title="Block löschen"><i class="ti ti-trash"></i></button>
       </div>`;
     if(parallel){
       const mains=tpSlots.map((s2,i2)=>({s2,i2})).filter(x=>tpIstHauptteil(x.s2.typ));
@@ -3253,7 +3253,34 @@ function tpRemoveSlot(idx){
      v605: Dasselbe galt für die gewählten Übungen – sie hängen an der Feld-Kennung
      tp-form-<Block>-<Feld>, und die wanderte beim Löschen nicht mit. tpSlotsNeuOrdnen
      zieht Kennungen, Trainer-Zuordnung und parallelZu gemeinsam nach. */
+  /* v797: Der Papierkorb sitzt neben dem Zeitfeld – ein Fehltipp löschte den Block samt Übungswahl
+     ohne Rückfrage. Jetzt bleibt eine Rückgängig-Meldung stehen; sie stellt Block, Auswahlfelder und
+     Trainer an derselben Stelle wieder her (parallele Blöcke, die an ihm hingen, verlieren die Verbindung). */
+  const slot=tpSlots[idx];
+  if(!slot)return;
+  const wrap=document.getElementById("tp-timeline");
+  const felder=[];
+  if(wrap)wrap.querySelectorAll(`[id^="tp-form-${idx}-"],[id^="tp-ind-player-${idx}"]`).forEach(el=>{
+    const m=el.id.match(/^(tp-form-|tp-ind-player-)\d+(.*)$/); if(m)felder.push({pre:m[1],rest:m[2],wert:el.value});
+  });
+  const tw=wrap?[...wrap.querySelectorAll(".tp-tw-player")].filter(el=>String(el.dataset.slot)===String(idx)).map(el=>el.value):[];
+  const coaches={}; Object.keys(tpCoaches).forEach(k=>{ const m=k.match(/^tp-form-(\d+)-(\d+)$/); if(m&&+m[1]===idx)coaches[m[2]]=tpCoaches[k]; });
+  const kopie=JSON.parse(JSON.stringify(slot));
+  if(kopie.parallelZu!=null&&kopie.parallelZu>idx)kopie.parallelZu--;
   tpSlotsNeuOrdnen(tpSlots.map((_,i)=>i).filter(i=>i!==idx));
+  if(typeof toastUndo==="function")toastUndo(`Block „${tpSlotName(slot.label)}“ gelöscht`,()=>{
+    const n=tpSlots.length;
+    tpSlots.push(kopie);
+    Object.keys(coaches).forEach(f=>{tpCoaches[`tp-form-${n}-${f}`]=coaches[f];});
+    tpRenderTimeline();
+    const w2=document.getElementById("tp-timeline");
+    if(w2){
+      felder.forEach(f=>{ const el=document.getElementById(f.pre+n+f.rest); if(el)el.value=f.wert; });
+      [...w2.querySelectorAll(".tp-tw-player")].filter(el=>String(el.dataset.slot)===String(n)).forEach((el,i)=>{ if(tw[i]!=null)el.value=tw[i]; });
+    }
+    const reihe=tpSlots.map((_,i)=>i); reihe.pop(); reihe.splice(Math.min(idx,reihe.length),0,n);
+    tpSlotsNeuOrdnen(reihe);
+  },8000);
 }
 /* v605: Blöcke neu ordnen – für Ziehen, Pfeiltasten und Löschen. `reihe` nennt die alten
    Indizes in der neuen Reihenfolge; wer fehlt, ist gelöscht.
@@ -3897,7 +3924,7 @@ async function tpPlanSave(erzwungen){
       let zeile=null; try{ zeile=((await r.json())||[])[0]; }catch(e){}
       TP_STAND[datum]={updated_at:(zeile&&zeile.updated_at)||new Date().toISOString(),von:(zeile&&zeile.gespeichert_von)||von||""};
       tpEinsatzMerken(datum,plan);                   // v586: zählt sofort als Einsatz, wenn der Termin nicht in der Zukunft liegt
-      _tpKonfliktGemeldet="";
+      _tpKonfliktGemeldet=""; _tpFehlerOffen=false;
       tpStandRender(datum);
       if(_tpFokus.offen&&_tpFokus.datum===datum)tpFokusSichern();   // v795: der Fokus war gewählt, bevor es die Zeile gab
     }
@@ -3905,8 +3932,19 @@ async function tpPlanSave(erzwungen){
       if(r.ok||r.status===201)toast("Plan gespeichert ✓");
       else toast("Plan nicht gespeichert – "+((r.status===401||r.status===403)?"kein Trainer-Recht":"Server antwortet "+r.status),"err");
     }
-  }catch(e){ if(erzwungen)toast("Kein Netz – Plan nicht gespeichert","err"); }
+    if(!(r.ok||r.status===201))tpSpeicherFehler(datum);
+  }catch(e){ if(erzwungen)toast("Kein Netz – Plan nicht gespeichert","err"); tpSpeicherFehler(datum); }
 }
+/* v797: Die Automatik schluckte Fehler still – am Platz ohne Netz stand weiter „Zuletzt gespeichert“,
+   obwohl die letzten Änderungen nur auf dem Handy lagen. Jetzt steht dort die Warnung, und sobald
+   das Netz zurück ist, wird noch einmal gespeichert. */
+let _tpFehlerOffen=false;
+function tpSpeicherFehler(datum){
+  _tpFehlerOffen=true;
+  const el=document.getElementById("tp-gespeichert");
+  if(el)el.innerHTML=`<span role="status" style="font-size:var(--s-klein);color:var(--warn-text,#b45309);font-weight:700">⚠️ Nicht gespeichert – Netz fehlt. Wird nachgeholt, sobald es wieder da ist.</span>`;
+}
+window.addEventListener("online",()=>{ if(_tpFehlerOffen){ _tpFehlerOffen=false; if(typeof tpPlanSave==="function")tpPlanSave(false); } });
 async function tpPlanLoad(datum){
   if(!sbToken())return [];
   try{
@@ -6231,3 +6269,25 @@ function routeRender(name,arg){
     }
   },100);
 }
+
+
+/* v797: Startleiste im Trainingsplan – sichtbar, solange Plan-Blöcke da sind und der echte Startknopf außerhalb des Bildes liegt. */
+(function(){
+  let io=null, echtImBild=false;
+  function leiste(){ return document.getElementById("tp-start-leiste"); }
+  function aktualisieren(){
+    const l=leiste(); if(!l)return;
+    const sub=document.getElementById("train-sub-planung");
+    const hatPlan=!!document.querySelector("#tp-timeline .tp-slot");
+    const sichtbar=!!(sub&&sub.offsetParent!==null);
+    l.hidden=!(hatPlan&&sichtbar&&!echtImBild);
+  }
+  function beobachten(){
+    const echt=document.getElementById("tp-start-echt"); if(!echt||io||typeof IntersectionObserver!=="function")return;
+    io=new IntersectionObserver(es=>{ echtImBild=es.some(e=>e.isIntersecting); aktualisieren(); });
+    io.observe(echt);
+  }
+  function takt(){ beobachten(); aktualisieren(); }
+  setInterval(takt,1500);
+  window.tpStartLeisteAktualisieren=takt;
+})();

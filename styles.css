@@ -1411,3 +1411,12 @@ html[data-theme="dark"]:has(#main-app) body{background:var(--bg)}
    Eltern & Kinder); hier nimmt er die Taktik-Farbe, Rand und Knopf. Der Kasten im Fenster „Eigene Übung“ (Training) bleibt wie er war. */
 #sit-hub .tf-ki{border-left-color:var(--fam-taktik)}
 #sit-hub .tf-ki-knoepfe .tf-ki-los{border-color:var(--fam-taktik);color:var(--orange-text)}
+
+/* v797: feste Startleiste im Trainingsplan; Blockkopf bricht nicht mehr um (Papierkorb blieb sonst unter dem Zeitfeld hängen) */
+.tp-start-leiste{position:sticky;bottom:calc(66px + env(safe-area-inset-bottom));z-index:40;display:flex;justify-content:center;padding:6px 0;pointer-events:none}
+.tp-start-leiste[hidden]{display:none}
+.tp-start-leiste button{pointer-events:auto;min-height:48px;padding:0 22px;border:none;border-radius:24px;background:#166534;color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.28)}
+.tp-slot-head{flex-wrap:nowrap}
+.tp-slot-head .tp-slot-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tp-slot-head .tp-slot-time{white-space:nowrap}
+.tp-slot-head .tp-remove{flex:0 0 auto}
