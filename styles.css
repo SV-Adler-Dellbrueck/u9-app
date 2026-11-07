@@ -458,8 +458,8 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 #train-sub-spieltag select{min-height:48px}
 .phasen-leer{font-size:var(--s-text);color:var(--text2);text-align:center;margin:0 0 12px}
 .phasen-leer[hidden]{display:none}
-#mt-phase-wer:not([open]),#mt-phase-vor:not([open]),#mt-phase-nom:not([open]),#mt-phase-live:not([open]),#mt-phase-nach:not([open]),#mt-phase-quests:not([open]){display:none}
-#mt-phase-wer>summary,#mt-phase-vor>summary,#mt-phase-nom>summary,#mt-phase-live>summary,#mt-phase-nach>summary,#mt-phase-quests>summary{display:none}
+#mt-phase-wer:not([open]),#mt-phase-vor:not([open]),#mt-phase-nom:not([open]),#mt-phase-live:not([open]),#mt-phase-nach:not([open]),#mt-phase-quests:not([open]),#mt-phase-botschaft:not([open]){display:none}
+#mt-phase-wer>summary,#mt-phase-vor>summary,#mt-phase-nom>summary,#mt-phase-live>summary,#mt-phase-nach>summary,#mt-phase-quests>summary,#mt-phase-botschaft>summary{display:none}
 .phase-zeile{width:100%;min-height:76px;display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--rand-bedien);border-left:5px solid var(--fam-spieltag);border-radius:14px;background:var(--surface);color:var(--text);font-family:inherit;cursor:pointer;text-align:left}
 .phase-zeile .pz-nr{flex:none;width:30px;height:30px;border-radius:50%;color:#fff;font-weight:900;font-size:var(--s-karte);display:flex;align-items:center;justify-content:center}
 .phase-zeile .pz-emo{font-size:28px;line-height:1}

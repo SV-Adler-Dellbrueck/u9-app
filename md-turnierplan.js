@@ -500,6 +500,7 @@ async function nomLoad(){
   // ab, und den kennt die App erst, wenn teamsLoad die Einteilung geladen hat. Vorher
   // stand hier der ganze Kader in der Auswahl (PO-Meldung v396).
   nomApplyToTools();
+  if(typeof botschaftRender==="function")botschaftRender();   // v803: Karte „Nachricht an die Kinder“ (Welle 2, geprüft)
   if(document.getElementById("action-panel"))atInit(); // Aktionen fürs neue Datum laden
 }
 function nomSet(name,status){

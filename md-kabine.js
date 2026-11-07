@@ -743,7 +743,7 @@ async function lobUpload(btn){
 // Kind/Eltern: jüngstes Sprachlob abspielen (signierte URL aus dem privaten Bucket).
 async function lobPlay(spielerId){
   let row=null;
-  try{const r=await fetch(`${SB_URL}/rest/v1/kabine_lob?spieler_id=eq.${spielerId}&select=path&order=created_at.desc&limit=1`,{headers:sbAuthHeaders()});if(r.ok)row=(await r.json())[0];}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/kabine_lob?spieler_id=eq.${spielerId}&path=not.is.null&select=path&order=created_at.desc&limit=1`,{headers:sbAuthHeaders()});if(r.ok)row=(await r.json())[0];}catch(e){}
   if(!row){toast("Noch kein Sprachlob da 🙂","err");return;}
   try{
     const sr=await fetch(`${SB_URL}/storage/v1/object/sign/kabine-lob/${row.path}`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({expiresIn:600})});
@@ -783,15 +783,30 @@ async function lobListeOpen(spielerId,name){
   m.appendChild(innen); m.onclick=e=>{ if(e.target===m||e.target===innen.parentNode)lobListeZu(); };
   document.body.appendChild(m);
   let zeilen=[];
-  try{ const r=await fetch(`${SB_URL}/rest/v1/kabine_lob?spieler_id=eq.${Number(spielerId)}&select=id,path,created_at,gehoert_am&order=created_at.desc`,{headers:sbAuthHeaders()}); if(r.ok)zeilen=await r.json(); }catch(e){}
+  try{ const r=await fetch(`${SB_URL}/rest/v1/kabine_lob?spieler_id=eq.${Number(spielerId)}&select=id,path,created_at,gehoert_am,art,nachricht,betreff&order=created_at.desc`,{headers:sbAuthHeaders()}); if(r.ok)zeilen=await r.json(); }catch(e){}
   const el=document.getElementById("lob-liste-inhalt"); if(!el)return;
   if(!zeilen.length){ el.innerHTML='<div style="padding:14px 0;text-align:center">Noch kein Sprachlob da 🙂<br>Wenn das Trainerteam eins aufnimmt, erscheint es hier.</div>'; return; }
   const neu=zeilen.filter(z=>!z.gehoert_am).length;
   el.innerHTML=(neu?`<div style="font-weight:700;color:var(--text);margin-bottom:8px">${neu} neu · ${zeilen.length} insgesamt</div>`:`<div style="margin-bottom:8px">${zeilen.length} Lob${zeilen.length===1?"":"e"} – alle schon gehört 👍</div>`)
-    +`<div role="list" style="display:flex;flex-direction:column;gap:8px">`+zeilen.map(z=>`<button type="button" role="listitem" class="btn lob-zeile" data-id="${z.id}" data-path="${esc(z.path)}" data-neu="${z.gehoert_am?"0":"1"}" onclick="lobAbspielen(this)" aria-pressed="false" style="display:flex;align-items:center;gap:10px;min-height:56px;padding:8px 12px;text-align:left;border-radius:14px;${z.gehoert_am?"":"border:2px solid #db2777;"}">
+    +`<div role="list" style="display:flex;flex-direction:column;gap:8px">`+zeilen.map(z=>z.nachricht||z.art==="spieltag"?lobKarteHtml(z):`<button type="button" role="listitem" class="btn lob-zeile" data-id="${z.id}" data-path="${esc(z.path)}" data-neu="${z.gehoert_am?"0":"1"}" onclick="lobAbspielen(this)" aria-pressed="false" style="display:flex;align-items:center;gap:10px;min-height:56px;padding:8px 12px;text-align:left;border-radius:14px;${z.gehoert_am?"":"border:2px solid #db2777;"}">
       <span aria-hidden="true" class="lob-sym" style="font-size:22px">▶️</span>
       <span style="flex:1;font-weight:${z.gehoert_am?"500":"800"}">${esc(lobDatum(z.created_at))}</span>
-      ${z.gehoert_am?"":'<span class="lob-neu" style="font-size:var(--s-klein);font-weight:800;color:#fff;background:#db2777;border-radius:999px;padding:2px 10px">Neu</span>'}</button>`).join("")+`</div>`;
+      ${z.gehoert_am?"":'<span class="lob-neu" style="font-size:var(--s-klein);font-weight:800;color:#fff;background:#db2777;border-radius:999px;padding:2px 10px">Neu</span>'}</button>`).join("")+`</div>`;  lobKartenGelesen(zeilen);   // v803: gesehene Textnachrichten als gehört vermerken
+}
+/* v803 · Nachricht vom Trainerteam nach einem Spieltag (art „spieltag“): eine Karte mit Betreff, Text und – wenn aufgesprochen –
+   dem Knopf zum Anhören. Wer die Karte sieht, hat den Text gelesen; die Zeile gilt dann als gehört (nur wenn noch leer). */
+function lobKarteHtml(z){
+  const neu=!z.gehoert_am;
+  const hoer=z.path?`<button type="button" class="btn lob-zeile" data-id="${z.id}" data-path="${esc(z.path)}" data-neu="${z.gehoert_am?"0":"1"}" onclick="lobAbspielen(this)" aria-pressed="false" style="display:flex;align-items:center;gap:10px;width:100%;min-height:48px;margin-top:8px;padding:6px 12px;text-align:left;border-radius:12px"><span aria-hidden="true" class="lob-sym" style="font-size:22px">▶️</span><span style="flex:1;font-weight:700">Sprachnachricht anhören</span></button>`:"";
+  return `<div role="listitem" class="lob-karte" data-id="${z.id}" style="border:${neu?"2px solid #db2777":"1px solid var(--surface2)"};border-radius:14px;padding:10px 12px;background:var(--surface)">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span aria-hidden="true">💬</span><span style="flex:1;min-width:0;font-weight:800;color:var(--text)">${esc(z.betreff||"Nachricht vom Trainerteam")}</span>${neu?'<span class="lob-neu" style="font-size:var(--s-klein);font-weight:800;color:#fff;background:#db2777;border-radius:999px;padding:2px 10px">Neu</span>':""}</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin:2px 0 6px">${esc(lobDatum(z.created_at))}</div>
+    ${z.nachricht?`<div style="font-size:var(--s-text);color:var(--text);line-height:1.5;white-space:pre-wrap">${esc(z.nachricht)}</div>`:""}${hoer}</div>`;
+}
+function lobKartenGelesen(zeilen){
+  const ids=(zeilen||[]).filter(z=>!z.gehoert_am&&(z.nachricht||z.art==="spieltag")).map(z=>Number(z.id)).filter(Boolean);
+  if(!ids.length)return;
+  fetch(`${SB_URL}/rest/v1/kabine_lob?id=in.(${ids.join(",")})&gehoert_am=is.null`,{method:"PATCH",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({gehoert_am:new Date().toISOString()})}).catch(()=>{});
 }
 async function lobAbspielen(btn){
   const id=btn.dataset.id, path=btn.dataset.path;
@@ -814,6 +829,177 @@ async function lobAbspielen(btn){
       fetch(`${SB_URL}/rest/v1/kabine_lob?id=eq.${Number(id)}&gehoert_am=is.null`,{method:"PATCH",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({gehoert_am:new Date().toISOString()})}).catch(()=>{});
     }
   }).catch(()=>{ toast("Tippe nochmal zum Abspielen","err"); alleSym(); });
+}
+/* ═══ v803 · Nachricht an alle Kinder eines Spieltags (Charles 07.11.) ═══════════════════════════════════════════
+   „Nach einem Spieltag eine Nachricht (Text oder Sprache) an alle Kinder, die dabei waren – sie geht in die Kabine des Kindes,
+   bei den Eltern kommt ein Push.“ Wer dabei war, steht in der Nominierung des Spieltags („dabei“). Je Kind eine Zeile in
+   kabine_lob (art „spieltag“, gleiche `gruppe`); eine Sprachnachricht wird je Kind einmal in den privaten Bucket gelegt, weil
+   dessen Leserecht am ersten Pfadteil (Kind) hängt. Der Push kommt über lob_push_faellig (Migration v803) im 5-Minuten-Lauf. */
+let _botKinder=[], _botSend=new Set(), _botTermin=null, _botRec=null, _botChunks=[], _botBlob=null, _botBusy=false;
+const BOT_MAX=600;
+function _botKindId(k){ return k&&(k._id!=null?k._id:k.id); }
+function botschaftKinder(){
+  const st=(typeof nomStatus==="object"&&nomStatus)?nomStatus:{};
+  return (typeof KADER!=="undefined"?KADER:[]).filter(k=>k.aktiv!==false&&st[k.name]==="dabei"&&_botKindId(k)!=null);
+}
+async function botschaftTermin(){
+  const datum=(typeof spieltagRawDate==="function")?spieltagRawDate():isoLokal();
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/termine?datum=eq.${encodeURIComponent(datum)}&typ=in.(spiel,turnier)&select=id,typ,titel,gegner,datum&order=uhrzeit.asc.nullslast&limit=1`,{headers:sbAuthHeaders()});
+    if(r.ok){ const t=((await r.json())||[])[0]; if(t)return t; }
+  }catch(e){}
+  return null;
+}
+function botschaftBetreff(t){
+  if(!t)return "Nachricht vom Trainerteam";
+  const art=t.typ==="turnier"?"Turnier":"Spiel", name=String(t.titel||t.gegner||"").trim();
+  const d=new Date(String(t.datum).slice(0,10)+"T00:00:00");
+  const dat=isNaN(d)?"":d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
+  return `Nach dem ${art}${name?` „${name}“`:""}${dat?" · "+dat:""}`.slice(0,160);
+}
+/* Karte im Spieltag unter „③ Nach dem Spiel“: Knopf und, was schon gesendet wurde (mit „wie viele haben es gesehen“). */
+async function botschaftRender(){
+  const box=document.getElementById("botschaft-panel"); if(!box)return;
+  const t=await botschaftTermin(); _botTermin=t;
+  if(!document.getElementById("botschaft-panel"))return;
+  const kinder=botschaftKinder();
+  let gesendet=[];
+  if(t){ try{ const r=await fetch(`${SB_URL}/rest/v1/kabine_lob?termin_id=eq.${Number(t.id)}&art=eq.spieltag&select=gruppe,created_at,nachricht,path,gehoert_am,spieler_id&order=created_at.desc`,{headers:sbAuthHeaders()}); if(r.ok)gesendet=await r.json(); }catch(e){} }
+  const gruppen={}; gesendet.forEach(z=>{ const g=z.gruppe||("z"+z.created_at); (gruppen[g]=gruppen[g]||{zeilen:[],at:z.created_at}).zeilen.push(z); });
+  const liste=Object.keys(gruppen).map(g=>{
+    const x=gruppen[g], n=x.zeilen.length, gesehen=x.zeilen.filter(z=>z.gehoert_am).length, z0=x.zeilen[0];
+    const wann=new Date(x.at).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+    const was=[z0.nachricht?"Text":"",z0.path?"Sprache":""].filter(Boolean).join(" + ");
+    return `<div class="bot-gesendet" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--surface2)">
+      <span style="flex:1;min-width:0;font-size:var(--s-text);color:var(--text)">✅ ${esc(wann)} · ${esc(was)} · an ${n} Kind${n===1?"":"er"}<br><span style="font-size:var(--s-klein);color:var(--text2)">${gesehen} von ${n} schon gesehen oder gehört</span></span>
+      <button type="button" class="btn btn-sm" style="min-height:44px" onclick="botschaftZurueck('${esc(g)}')">Zurückziehen</button></div>`;
+  }).join("");
+  box.innerHTML=`<div style="font-size:var(--s-text);color:var(--text2);line-height:1.5;margin-bottom:8px">${t?`Eine Nachricht an alle Kinder, die beim ${esc(botschaftBetreff(t).replace(/^Nach dem /,""))} dabei waren (<b>${kinder.length}</b>). Sie erscheint in der Kabine des Kindes, die Eltern bekommen eine Benachrichtigung.`:"Für diesen Tag gibt es kein Spiel und kein Turnier – dann gibt es auch keine Spieltag-Nachricht."}</div>
+    ${t?`<button type="button" class="btn btn-p" id="bot-offen" style="width:100%;min-height:56px;justify-content:center" ${kinder.length?"":"disabled"} onclick="botschaftOpen()"><i class="ti ti-message-2"></i>Nachricht an die Kinder</button>${kinder.length?"":'<div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px">Noch kein Kind als „dabei“ eingeteilt – oben unter „Wer kommt?“ prüfen.</div>'}`:""}
+    ${liste?`<div style="margin-top:12px"><div style="font-weight:800;color:var(--text);margin-bottom:2px">Schon gesendet</div>${liste}</div>`:""}`;
+}
+function botschaftZu(){ try{ if(_botRec&&_botRec.state==="recording")_botRec.stop(); }catch(e){} document.getElementById("botschaft-modal")?.remove(); }
+async function botschaftOpen(){
+  if(!sbToken()){ toast("Bitte als Trainer anmelden","err"); return; }
+  const t=_botTermin||await botschaftTermin(); if(!t){ toast("Kein Spiel oder Turnier an diesem Tag","err"); return; }
+  _botTermin=t; _botKinder=botschaftKinder(); _botSend=new Set(_botKinder.map(_botKindId)); _botBlob=null; _botChunks=[]; _botBusy=false;
+  if(!_botKinder.length){ toast("Noch kein Kind als „dabei“ eingeteilt","err"); return; }
+  document.getElementById("botschaft-modal")?.remove();
+  const m=document.createElement("div"); m.id="botschaft-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Nachricht an die Kinder");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10003;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.onclick=e=>{ if(e.target===m)botschaftZu(); };
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
+    ${mdlHead("botschaft-modal","💬","Nachricht an die Kinder",esc(botschaftBetreff(t)),"#db2777")}
+    <label for="bot-text" style="display:block;font-weight:800;margin:4px 0 4px">Text <span style="font-weight:500;color:var(--text2)">(oder Sprache)</span></label>
+    <textarea id="bot-text" maxlength="${BOT_MAX}" rows="5" oninput="botschaftZaehler()" placeholder="z. B. Ihr habt heute toll zusammengespielt – danke für euren Einsatz!" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text)"></textarea>
+    <div id="bot-zaehler" style="font-size:var(--s-klein);color:var(--text2);text-align:right;margin-bottom:8px">0 / ${BOT_MAX}</div>
+    <div style="font-weight:800;margin:4px 0">Sprache aufnehmen <span style="font-weight:500;color:var(--text2)">(optional)</span></div>
+    <div id="bot-aufnahme" style="margin-bottom:10px"></div>
+    <div style="font-weight:800;margin:4px 0">Empfänger <span id="bot-anzahl" style="font-weight:500;color:var(--text2)"></span></div>
+    <div id="bot-kinder" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
+    <div style="font-size:var(--s-klein);color:var(--text2);line-height:1.5;background:var(--surface2);border-radius:10px;padding:8px 10px;margin-bottom:10px">Die Kinder lesen und hören die Nachricht in ihrer Kabine, die Eltern bekommen einen Push mit dem Vornamen ihres Kindes. Bitte <b>keine Namen anderer Kinder, keine Noten und keine Vergleiche</b> – jedes Kind liest dieselbe Nachricht.</div>
+    <div id="bot-meldung" role="status" style="font-size:var(--s-text);color:#b91c1c;min-height:20px;margin-bottom:6px"></div>
+    <div id="bot-knoepfe" style="display:flex;gap:8px"><button type="button" class="btn" style="flex:1;min-height:48px" onclick="botschaftZu()">Abbrechen</button><button type="button" id="bot-senden" class="btn btn-p" style="flex:2;min-height:48px;justify-content:center" onclick="botschaftPruefen()">Prüfen und senden</button></div>
+  </div>`;
+  document.body.appendChild(m);
+  botschaftAufnahmeUI("idle"); botschaftKinderRender();
+}
+function botschaftZaehler(){ const el=document.getElementById("bot-text"), z=document.getElementById("bot-zaehler"); if(el&&z)z.textContent=`${el.value.length} / ${BOT_MAX}`; }
+function botschaftKinderRender(){
+  const box=document.getElementById("bot-kinder"); if(!box)return;
+  box.innerHTML=_botKinder.map(k=>{ const id=_botKindId(k), an=_botSend.has(id);
+    return `<button type="button" class="btn btn-sm" aria-pressed="${an}" onclick="botschaftKindUm(${Number(id)})" style="min-height:44px;${an?"background:#fce7f3;border-color:#db2777;color:#831843;font-weight:800":"color:var(--text2)"}">${an?"✓ ":""}${esc((k.name||"").split(" ")[0])}</button>`; }).join("");
+  const n=document.getElementById("bot-anzahl"); if(n)n.textContent=`· ${_botSend.size} von ${_botKinder.length}`;
+}
+function botschaftKindUm(id){ if(_botSend.has(id))_botSend.delete(id); else _botSend.add(id); botschaftKinderRender(); }
+function botschaftAufnahmeUI(zustand){
+  const el=document.getElementById("bot-aufnahme"); if(!el)return;
+  if(zustand==="recording") el.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><span style="font-size:28px">🔴</span><span style="flex:1;color:#dc2626;font-weight:700">Aufnahme läuft …</span><button type="button" class="btn btn-p" style="min-height:48px" onclick="botschaftAufnahmeStopp()"><i class="ti ti-player-stop"></i>Stopp</button></div>`;
+  else if(zustand==="ready") el.innerHTML=`<audio controls src="${_botBlob?URL.createObjectURL(_botBlob):""}" style="width:100%"></audio><div style="margin-top:6px"><button type="button" class="btn btn-sm" style="min-height:44px" onclick="botschaftAufnahmeStart()"><i class="ti ti-refresh"></i>Neu aufnehmen</button> <button type="button" class="btn btn-sm" style="min-height:44px" onclick="botschaftAufnahmeWeg()">Aufnahme verwerfen</button></div>`;
+  else el.innerHTML=`<button type="button" class="btn" style="min-height:48px" onclick="botschaftAufnahmeStart()"><i class="ti ti-microphone"></i>Aufnahme starten</button>`;
+}
+async function botschaftAufnahmeStart(){
+  if(!(navigator.mediaDevices&&window.MediaRecorder)){ toast("Aufnahme wird hier nicht unterstützt","err"); return; }
+  _botBlob=null; _botChunks=[];
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    _botRec=new MediaRecorder(stream);
+    _botRec.ondataavailable=e=>{ if(e.data&&e.data.size)_botChunks.push(e.data); };
+    _botRec.onstop=()=>{ _botBlob=new Blob(_botChunks,{type:(_botRec&&_botRec.mimeType)||"audio/webm"}); try{stream.getTracks().forEach(t=>t.stop());}catch(_){} botschaftAufnahmeUI("ready"); };
+    _botRec.start(); botschaftAufnahmeUI("recording");
+  }catch(e){ toast("Mikrofon nicht verfügbar – bitte erlauben.","err"); botschaftAufnahmeUI("idle"); }
+}
+function botschaftAufnahmeStopp(){ try{ if(_botRec&&_botRec.state==="recording")_botRec.stop(); }catch(e){} }
+function botschaftAufnahmeWeg(){ _botBlob=null; _botChunks=[]; botschaftAufnahmeUI("idle"); }
+/* Zweiter Schritt: eine Zusammenfassung statt eines Systemdialogs – an wen, was, und dass die Eltern eine Benachrichtigung bekommen. */
+function botschaftPruefen(){
+  const text=(document.getElementById("bot-text")?.value||"").trim(), meld=document.getElementById("bot-meldung");
+  const fehler=!text&&!_botBlob?"Bitte einen Text schreiben oder eine Sprachnachricht aufnehmen.":(!_botSend.size?"Bitte mindestens ein Kind auswählen.":"");
+  if(fehler){ if(meld)meld.textContent=fehler; return; }
+  if(meld)meld.textContent="";
+  const n=_botSend.size, was=[text?"Text":"",_botBlob?"Sprachnachricht":""].filter(Boolean).join(" und ");
+  const k=document.getElementById("bot-knoepfe"); if(!k)return;
+  k.outerHTML=`<div id="bot-knoepfe" style="border:2px solid #db2777;border-radius:12px;padding:10px 12px"><div style="font-weight:800;margin-bottom:4px">${esc(was)} an ${n} Kind${n===1?"":"er"} senden?</div><div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">Die Eltern bekommen dazu eine Benachrichtigung. Gesendetes kannst du unter „③ Nach dem Spiel“ wieder zurückziehen.</div>
+    <div style="display:flex;gap:8px"><button type="button" class="btn" style="flex:1;min-height:48px" onclick="botschaftZurueckZumFormular()">Zurück</button><button type="button" id="bot-ja" class="btn btn-p" style="flex:2;min-height:48px;justify-content:center" onclick="botschaftSenden()">Ja, senden</button></div></div>`;
+}
+function botschaftZurueckZumFormular(){
+  const k=document.getElementById("bot-knoepfe"); if(!k)return;
+  k.outerHTML=`<div id="bot-knoepfe" style="display:flex;gap:8px"><button type="button" class="btn" style="flex:1;min-height:48px" onclick="botschaftZu()">Abbrechen</button><button type="button" id="bot-senden" class="btn btn-p" style="flex:2;min-height:48px;justify-content:center" onclick="botschaftPruefen()">Prüfen und senden</button></div>`;
+}
+function _botUuid(){ return (crypto&&crypto.randomUUID)?crypto.randomUUID():"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==="x"?r:(r&3|8)).toString(16);}); }
+async function botschaftSenden(){
+  if(_botBusy)return; _botBusy=true;
+  const ja=document.getElementById("bot-ja"); if(ja){ ja.disabled=true; ja.textContent="Sendet …"; }
+  const meld=document.getElementById("bot-meldung"), t=_botTermin;
+  const text=(document.getElementById("bot-text")?.value||"").trim().slice(0,BOT_MAX), gruppe=_botUuid(), betreff=botschaftBetreff(t);
+  const kinder=_botKinder.filter(k=>_botSend.has(_botKindId(k)));
+  const ext=(_botBlob&&(_botBlob.type||"").includes("mp4"))?"mp4":"webm";
+  const zeilen=[], ohne=[];
+  const eins=async k=>{
+    const id=_botKindId(k); let path=null;
+    if(_botBlob){
+      path=`${id}/${Date.now()}-sp.${ext}`;
+      try{
+        const up=await fetch(`${SB_URL}/storage/v1/object/kabine-lob/${path}`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':_botBlob.type||"audio/webm"},body:_botBlob});
+        if(!up.ok){ ohne.push(k.name); return; }
+      }catch(e){ ohne.push(k.name); return; }
+    }
+    zeilen.push({spieler_id:id,path,art:"spieltag",nachricht:text||null,betreff,termin_id:t?Number(t.id):null,gruppe});
+  };
+  /* je vier Kinder gleichzeitig – 15 Kinder sind in wenigen Sekunden durch */
+  for(let i=0;i<kinder.length;i+=4) await Promise.all(kinder.slice(i,i+4).map(eins));
+  let ok=false, msg="";
+  if(zeilen.length){
+    try{
+      const r=await fetch(`${SB_URL}/rest/v1/kabine_lob`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify(zeilen)});
+      if(sbCheck401(r)){ _botBusy=false; return; }
+      ok=r.ok; if(!ok)msg=(typeof sbDeniedMsg==="function")?sbDeniedMsg(r,"Speichern fehlgeschlagen – ist die Migration v803 eingespielt?"):"Speichern fehlgeschlagen";
+    }catch(e){ msg="Kein Netz – nichts gesendet."; }
+  }else msg="Kein Kind erreicht – bitte Netz prüfen und noch einmal senden.";
+  _botBusy=false;
+  if(!ok){
+    if(meld)meld.textContent=msg; botschaftZurueckZumFormular(); return;
+  }
+  botschaftZu();
+  toast(ohne.length?`💬 An ${zeilen.length} Kinder gesendet – nicht erreicht: ${ohne.map(n=>String(n).split(" ")[0]).join(", ")}`:`💬 An ${zeilen.length} Kind${zeilen.length===1?"":"er"} gesendet ✓`,ohne.length?"err":undefined);
+  botschaftRender();
+}
+/* Zurückziehen: die Zeilen der Nachricht und – soweit vorhanden – ihre Sprachdateien löschen. */
+async function botschaftZurueck(gruppe){
+  if(!sbToken())return;
+  const g=String(gruppe||""); if(!g)return;
+  let pfade=[];
+  try{
+    const filter=/^[0-9a-f-]{36}$/i.test(g)?`gruppe=eq.${g}`:null;
+    if(!filter){ toast("Diese Nachricht lässt sich nicht zusammen zurückziehen","err"); return; }
+    const r=await fetch(`${SB_URL}/rest/v1/kabine_lob?${filter}&select=path`,{headers:sbAuthHeaders()}); if(r.ok)pfade=((await r.json())||[]).map(x=>x.path).filter(Boolean);
+    const d=await fetch(`${SB_URL}/rest/v1/kabine_lob?${filter}`,{method:"DELETE",headers:sbAuthHeaders()});
+    if(!d.ok){ toast(sbDeniedMsg?sbDeniedMsg(d,"Zurückziehen fehlgeschlagen"):"Zurückziehen fehlgeschlagen","err"); return; }
+  }catch(e){ toast("Kein Netz – nicht zurückgezogen","err"); return; }
+  pfade.forEach(p=>{ fetch(`${SB_URL}/storage/v1/object/kabine-lob/${p}`,{method:"DELETE",headers:sbAuthHeaders()}).catch(()=>{}); });
+  toast("Nachricht zurückgezogen");
+  botschaftRender();
 }
 function kabineLobWahl(){
   const kids=window._elternKids||[];
