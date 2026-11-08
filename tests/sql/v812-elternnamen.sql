@@ -6,7 +6,7 @@ insert into profiles(id, role, anzeigename) values
   ('00000000-0000-0000-0000-000000000011','parent','Gundula Wanderer'),
   ('00000000-0000-0000-0000-000000000012','trainer','Theobald Pfiff') on conflict (id) do update set anzeigename = excluded.anzeigename, role = excluded.role;
 insert into eltern_angaben(user_id, vorname, nachname) values ('00000000-0000-0000-0000-000000000011','Gundula','Wanderer') on conflict do nothing;
-insert into kind_kontakte(spieler_id, name, rolle) values (1, 'Opa Ruprecht', 'Opa');
+insert into kind_kontakte(spieler_id, name, rolle) values (1, 'Opa Ruprecht', 'Opa'), (2, 'Bero Familie', 'Eltern');
 \echo '=== erwachsene_namen: Gundula, Gundula Wanderer, Opa Ruprecht, Ruprecht, Wanderer – nicht Theobald (Trainer), nicht Testa (Kind), nicht „Opa“ allein'
 select wort from export.erwachsene_namen() order by 1;
 \echo '=== Voller Name, Teil und Genitiv → ein Elternteil; Kind → Kind A; Trainer bleibt'
@@ -27,3 +27,5 @@ set role adler_export_lese; select beobachtung from export.tagebuch_eintrag wher
 set role anon; select export.erwachsene_namen(); reset role;
 \echo '=== „Opa“ allein bleibt'
 select export.ohne_namen('Der Opa kam mit.') as t;
+\echo '=== „Familie“ aus Anzeigenamen bleibt ein Wort'
+select export.ohne_namen('Die Familie kam mit Bero.') as t;

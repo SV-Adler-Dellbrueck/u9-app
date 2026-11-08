@@ -9,7 +9,8 @@
 
 insert into export.wort_erlaubt(wort) values
   ('Bescheid'), ('Feedback'), ('Fragen'), ('Frage'), ('Rückmeldung'), ('Tipps'), ('Tipp'), ('Hinweise'), ('Hinweis'),
-  ('Danke'), ('Kinder'), ('Sohn'), ('Tochter'), ('Training'), ('Trainer'), ('Recht'), ('Zeit'), ('Lust'), ('Angst'), ('Sorgen')
+  ('Danke'), ('Kinder'), ('Sohn'), ('Tochter'), ('Training'), ('Trainer'), ('Recht'), ('Zeit'), ('Lust'), ('Angst'), ('Sorgen'),
+  ('Familie'), ('Hütten'), ('Schwarze')   -- Anzeigenamen wie „… Familie“; Nachnamen, die zugleich gewöhnliche Wörter sind
 on conflict do nothing;
 
 create or replace function export.erwachsene_namen() returns table(wort text)
@@ -29,6 +30,8 @@ language sql stable security definer set search_path = public, export as $$
   select distinct n from teile
    where n ~ '^[A-ZÄÖÜ][[:alpha:]]+([ -][A-ZÄÖÜ][[:alpha:]]+)*$' and length(n) >= 3
      and n !~ '^(Vater|Mutter|Papa|Mama|Opa|Oma|Onkel|Tante|Herr|Frau)$'
+     and n !~ '(^|\s)Familie(\s|$)'
+     and not exists (select 1 from export.name_variante v where lower(v.variante) = lower(n))
      and lower(n) not in (select t from trainer where t <> '')
      and not exists (select 1 from export.wort_erlaubt w where lower(w.wort) = lower(n))
      and not exists (select 1 from public.kader k where lower(split_part(btrim(k.name), ' ', 1)) = lower(n))
