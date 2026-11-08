@@ -1317,9 +1317,8 @@ async function wieWarsStart(fuer){
     if(typeof fazitOpen!=="function") return;
     await fazitOpen(Number(fuer.slice(1)));
   }
+  /* v806: derselbe Einstieg wie von Spieltag, Termin und To-do („Wie möchtest du anfangen?“): Erzählen, Leitfaden, Frage für Frage. */
   for(let i=0; i<40 && !document.getElementById("nb-box"); i++) await new Promise(r=>setTimeout(r,50));
-  if(typeof nbWegAus==="function" && typeof _nbWeg!=="undefined" && _nbWeg) nbWegAus();
-  if(typeof nbGross==="function") nbGross(_nbSchnell.art, true);
 }
 
 /* v701 · Benachrichtigung „Wie war's?“ (prozess-nacherfassung.md: „Tipp auf die Benachrichtigung
