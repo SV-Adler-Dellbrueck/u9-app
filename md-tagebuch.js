@@ -115,7 +115,8 @@ function tbPseudonym(text){
   Object.keys(vorn).forEach(v=>{ if(!ziel[v]) ziel[v] = vorn[v].length===1 ? vorn[v][0] : "ein Kind"; });
   const keys = Object.keys(ziel).sort((a,b)=>b.length-a.length);
   if(!keys.length) return t;
-  const re = new RegExp("(^|[^\\p{L}])("+keys.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|")+")(?![\\p{L}])","giu");
+  /* v812: auch mit Genitiv-s („Testas Vater“) – wie im Export */
+  const re = new RegExp("(^|[^\\p{L}])("+keys.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|")+")(?:s|’s|'s)?(?![\\p{L}])","giu");
   const aus = t.replace(re, (all, vor, name)=>vor+(ziel[name.toLowerCase()]||name));
   /* v808: Schreibvarianten der Spracherkennung (gepflegt oder sicher ähnlich) werden ebenfalls zum Buchstaben */
   return typeof namenNachbessern==="function" ? namenNachbessern(aus, a=>"Kind "+a) : aus;

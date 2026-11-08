@@ -2106,17 +2106,18 @@ const NAMEN_ERLAUBT_GRUND=["Kind","Charles","Finn","Kenneth","Peter","Markus","A
 let _namenSchreib=null;
 async function namenSchreibLaden(neu){
   if(_namenSchreib&&!neu) return _namenSchreib;
-  const z={varianten:[],erlaubt:new Set(NAMEN_ERLAUBT_GRUND.map(w=>w.toLowerCase()))};
+  const z={varianten:[],eltern:[],erlaubt:new Set(NAMEN_ERLAUBT_GRUND.map(w=>w.toLowerCase()))};
   try{
     if(typeof sbToken==="function"&&sbToken()){
       const r=await fetch(`${SB_URL}/rest/v1/rpc/namen_schreibweisen`,{headers:sbAuthHeaders()});   // lesend: GET (Funktion ist stable)
-      if(r.ok) ((await r.json())||[]).forEach(x=>{ if(x.art==="name"&&x.wort) z.varianten.push({wort:x.wort,alias:x.alias||null}); else if(x.art==="wort"&&x.wort) z.erlaubt.add(String(x.wort).toLowerCase()); });
+      if(r.ok) ((await r.json())||[]).forEach(x=>{ if(x.art==="name"&&x.wort) z.varianten.push({wort:x.wort,alias:x.alias||null}); else if(x.art==="wort"&&x.wort) z.erlaubt.add(String(x.wort).toLowerCase()); else if(x.art==="eltern"&&x.wort) z.eltern.push(String(x.wort)); });   // v812: Elternnamen
     }
   }catch(e){}
   z.varianten.sort((a,b)=>b.wort.length-a.wort.length);
+  z.eltern.sort((a,b)=>b.length-a.length);
   _namenSchreib=z; return z;
 }
-function namenSchreib(){ return _namenSchreib||{varianten:[],erlaubt:new Set(NAMEN_ERLAUBT_GRUND.map(w=>w.toLowerCase()))}; }
+function namenSchreib(){ return _namenSchreib||{varianten:[],eltern:[],erlaubt:new Set(NAMEN_ERLAUBT_GRUND.map(w=>w.toLowerCase()))}; }
 /* Vornamen mit Buchstaben aus dem Kader: [{name, vorname, alias}] */
 function namenKader(){
   return (typeof KADER!=="undefined"?(KADER||[]):[]).filter(k=>k&&k.name&&k.alias).map(k=>({name:k.name,vorname:String(k.name).trim().split(/\s+/)[0],alias:k.alias}));
@@ -2142,6 +2143,11 @@ function namenNachbessern(text,ziel){
   const ersatz=a=>a?(ziel(a)||"ein Kind"):"ein Kind";
   const wortRe=w=>new RegExp("(^|[^\\p{L}])("+w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")(?![\\p{L}])","gu");
   s.varianten.forEach(v=>{ t=t.replace(wortRe(v.wort),(all,vor)=>vor+ersatz(v.alias)); });
+  /* v812 · Erwachsene wie im Export (export.ohne_erwachsene): hinterlegte Elternnamen (voll und je Teil, auch mit Genitiv-s)
+     → „ein Elternteil“; ein unbekanntes Wort hinter Vater/Mutter/Papa/Mama/Opa/Oma/Onkel/Tante fällt weg, außer „Kind“
+     oder ein erlaubtes Wort („dem Vater Bescheid“ bleibt). */
+  (s.eltern||[]).forEach(w=>{ t=t.replace(new RegExp("(^|[^\\p{L}])("+w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")s?(?![\\p{L}])","gu"),(all,vor)=>vor+"ein Elternteil"); });
+  t=t.replace(/(^|[^\p{L}])(Vater|Mutter|Papa|Mama|Opa|Oma|Onkel|Tante)\s+([A-ZÄÖÜ][a-zäöüß]{2,})(?![\p{L}])/gu,(all,vor,rel,w)=>(w==="Kind"||w==="Elternteil"||s.erlaubt.has(w.toLowerCase()))?all:vor+rel);
   const gesehen=new Set();
   (t.match(/[A-ZÄÖÜ][a-zäöüß]{3,}/gu)||[]).forEach(w=>{
     if(gesehen.has(w)) return; gesehen.add(w);
