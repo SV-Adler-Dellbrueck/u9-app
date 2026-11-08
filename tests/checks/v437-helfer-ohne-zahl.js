@@ -10,7 +10,8 @@ module.exports = async function (h) {
     if (typeof helferTasksFuer !== "function") return null;
     const basis = { id: 1, typ: "training", datum: morgen, uhrzeit: "16:45:00",
       helfer_aufgaben: [{ t: "🥅 Funino-Tore", n: 1 }, { t: "🥅 Jugendtore", n: 1 }] };
-    const lauf = t => helferTasksFuer(t.typ, t).map(a => a.d(t));
+    /* v809: feste Aufgaben (Tee, `immer`) stehen ohne Freigabe da – hier geht es nur um die Tore-Aufgaben. */
+    const lauf = t => helferTasksFuer(t.typ, t).filter(a => !a.immer).map(a => a.d(t));
     return {
       ohne: lauf({ ...basis, helfer_funino: null, helfer_jugendtore: null }),
       null0: lauf({ ...basis, helfer_aufgaben: null, helfer_funino: 8, helfer_jugendtore: 2 }),
