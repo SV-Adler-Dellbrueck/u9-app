@@ -22,7 +22,7 @@ module.exports = async function (h) {
     supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), profiles: [{ role: "parent" }], dsgvo_consent: [{ version: "x" }],
       eltern_kinder: [{ spieler_id: 1, label: "", kader: { id: 1, name: "Kind A", nr: 7, foto_stadionheft_ok: true } }],
       termine, rueckmeldungen: [{ termin_id: 7, spieler_id: 1, status: "zugesagt" }] }) });
-  await s.page.evaluate(t => { localStorage.setItem("adler_sb_auth_eltern", JSON.stringify({ access_token: t, refresh_token: "r", expires_at: Math.floor(Date.now() / 1000) + 3600 })); }, TOKEN);
+  await s.page.evaluate(t => { localStorage.setItem("adler_sb_auth_eltern", JSON.stringify({ access_token: t, refresh_token: "r", expires_at: Math.floor(Date.now() / 1000) + 3600 })); localStorage.setItem("adler_termin_ansicht", "liste"); }, TOKEN); // seit v811 wählbar, „Danach“ steht unter „Liste“
   await s.page.reload({ waitUntil: "networkidle" }); await s.page.waitForTimeout(4500);
   const r = await s.page.evaluate(async () => {
     const w = ms => new Promise(x => setTimeout(x, ms));

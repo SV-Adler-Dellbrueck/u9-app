@@ -1568,7 +1568,8 @@ function _elWocheNav(){
 }
 function elternTermineHtml(rows,kids,rsvpAll,ohneId){
   _elTermDaten=[rows,kids,rsvpAll,ohneId];
-  if(!(rows||[]).length)return "";
+  // wie bisher (v718): steht nur der Termin von oben an, gibt es keinen eigenen Bereich „Termine“
+  if(!(rows||[]).some(t=>Number(t.id)!==Number(ohneId)))return "";
   const a=elternTerminAnsicht();
   const streifen=a!=="liste"?elternWochenStreifenHtml(rows,kids,rsvpAll):"";
   const liste=a!=="kacheln"?elternTermineCarouselHtml(rows,kids,rsvpAll,ohneId,true):"";
@@ -2617,10 +2618,8 @@ const ELTERN_TOUR=[
    d:"Ganz oben steht der nächste Termin. Training gilt als zugesagt – sag nur ab, wenn dein Kind nicht kommt. Bei Spielen und Festivals tippst du auf Zu- oder Absage. Nochmal auf die gewählte Antwort tippen nimmt sie zurück. Bei jedem Termin steht auch das Ende – bei Spieltagen ungefähr („Ende ca. 11:30“), beim Training genau. Bei Auswärtsspielen stehen hier Treffzeit, Strecke ab Dellbrück und die späteste Abfahrt; „Route starten“ öffnet die Navigation mit Verkehr."},
   {emo:"📬", t:"Offene Rückmeldungen", sel:["#eltern-offen-card"],
    d:"Stehen in den nächsten 14 Tagen Antworten aus, siehst du sie hier gesammelt."},
-  {emo:"🗓️", t:"Termine als Kacheln oder Liste", sel:["#eltern-termine-ansicht"],
-   d:"Über den Terminen wählst du die Darstellung: „Kacheln“ zeigt die Wochen nebeneinander – nach links wischen oder den Pfeil tippen für die nächste Woche –, „Liste“ die nächsten Termine untereinander, „Beides“ zeigt beides. Die App merkt sich deine Wahl auf diesem Gerät."},
   {emo:"🎒", t:"Alles zum Termin", sel:['[onclick^="terminDetailOpen"]'],
-   d:"Tippe auf einen Termin: Wetter, Adresse mit Route, „Was muss mit?“, Fahrgemeinschaft, „Wer hilft mit?“ und die Fotos zum Termin – „📷 Foto aufnehmen“ öffnet direkt die Kamera. Alle Spieltagsfotos zusammen – groß ansehen und durchwischen – stehen unter „Mehr vom Team“ → „Spieltagsgalerie“. Dort erscheint nach jedem Spieltag auch das „Adler Nest“ – eine neue Ausgabe zum Lesen und Hören. Ist euer Kind im nächsten Porträt, steht oben eine Karte mit dem Porträt-Bogen. Die ganze Saison und das Kalender-Abo findest du unten unter „Mehr“ → „Alle Termine“ – seit v741 sagst du dort für jeden künftigen Termin direkt zu oder ab (👍/🤔/👎 je Kind). Fällt ein Termin aus, steht „🔴 Fällt aus“ mit Grund daneben; zurückmelden musst du dann nichts. Bei jedem Training und Spieltag steht dort auch „🫖 Tee mitbringen“."},
+   d:"Über den Terminen wählst du die Darstellung: „Kacheln“ zeigt die Wochen nebeneinander (wischen oder Pfeil für die nächste Woche), „Liste“ die Termine untereinander, „Beides“ beides – die App merkt sich deine Wahl. Tippe auf einen Termin: Wetter, Adresse mit Route, „Was muss mit?“, Fahrgemeinschaft, „Wer hilft mit?“ und die Fotos zum Termin – „📷 Foto aufnehmen“ öffnet direkt die Kamera. Alle Spieltagsfotos zusammen – groß ansehen und durchwischen – stehen unter „Mehr vom Team“ → „Spieltagsgalerie“. Dort erscheint nach jedem Spieltag auch das „Adler Nest“ – eine neue Ausgabe zum Lesen und Hören. Ist euer Kind im nächsten Porträt, steht oben eine Karte mit dem Porträt-Bogen. Die ganze Saison und das Kalender-Abo findest du unten unter „Mehr“ → „Alle Termine“ – seit v741 sagst du dort für jeden künftigen Termin direkt zu oder ab (👍/🤔/👎 je Kind). Fällt ein Termin aus, steht „🔴 Fällt aus“ mit Grund daneben; zurückmelden musst du dann nichts. Bei jedem Training und Spieltag steht dort auch „🫖 Tee mitbringen“."},
   {emo:"✅", t:"Zu erledigen", sel:["#eltern-todo-btn"],
    d:"Aufgaben für euch als Familie, zum Beispiel der Grillhütten-Dienst. Könnt ihr nicht, tippt ihr „Ersatz suchen“ – eine andere Familie kann übernehmen."},
   {emo:"📡", t:"Liveticker", sel:["#eltern-live-slot","#eltern-ticker-slot"],
