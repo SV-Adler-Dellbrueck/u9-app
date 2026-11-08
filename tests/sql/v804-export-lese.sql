@@ -22,12 +22,12 @@ select tabelle, id, feld, anzahl from export.namen_verdacht order by 1,2,3;
 insert into export.name_variante(variante, alias) values ('Testi','A');
 select count(*) as verdacht_danach from export.namen_verdacht;
 select beobachtung like '%Kind A stand allein%' as variante_ersetzt from export.tagebuch_eintrag;
-\echo '=== Rolle: lesen darf sie die Views; Tabellen in public, Funktionen und Pflege-Tabellen nicht; schreiben nie'
+\echo '=== Rolle: lesen darf sie die Views (braucht dafür EXECUTE auf den Maskier-Funktionen, v807); Tabellen in public und Pflege-Tabellen nicht; schreiben nie'
 set role adler_export_lese;
 select count(*) as view_lesbar from export.tagebuch_eintrag;
 select * from public.kader;
 select * from public.tagebuch_eintrag;
-select export.ohne_namen('Testa');
+select export.ohne_namen('Testa');   -- seit v807 erlaubt (Funktionen in Views brauchen EXECUTE des Aufrufers)
 select * from export.name_variante;
 insert into export.tagebuch_eintrag(datum) values ('2026-01-01');
 update export.einheit_bewertung set spass = 1;
