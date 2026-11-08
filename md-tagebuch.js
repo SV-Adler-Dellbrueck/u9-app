@@ -436,7 +436,7 @@ function tbRender(){
       </div>
       ${k.dauerhaft&&k.id&&!k.erledigt_am?`<button type="button" class="btn" onclick="tbKonsGiltNicht(${i})" style="width:100%;min-height:48px;margin-top:6px;justify-content:center"><i class="ti ti-check"></i>Gilt nicht mehr – abhaken</button>`:""}
     </div>`).join("")}
-    ${_TB.kons.length<5?`<button type="button" onclick="tbKonsDazu()" style="display:inline-flex;align-items:center;gap:6px;min-height:48px;margin-top:6px;padding:0 4px;background:none;border:0;color:var(--blue);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer"><i class="ti ti-plus"></i>Weitere Konsequenz</button>`:""}
+    ${_TB.kons.length<5?`<button type="button" onclick="tbKonsDazu()" style="display:inline-flex;align-items:center;gap:6px;min-height:48px;margin-top:6px;padding:0 4px;background:none;border:0;color:var(--text);text-decoration:underline;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer"><i class="ti ti-plus"></i>Weitere Konsequenz</button>`:""}
 
     ${frage("Wohin gehört es?", "Baustein")}
     <div role="group" aria-label="Baustein" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
@@ -631,10 +631,12 @@ async function tagebuchListe(){
   if(!Array.isArray(_TB_PUNKTE)) _TB_PUNKTE = []; if(!Array.isArray(_TB_KINDER)) _TB_KINDER = []; if(!Array.isArray(_TB_VERZICHT)) _TB_VERZICHT = [];
   tbListeRender();
 }
-function tbLeer(satz, zweiter){
+function tbLeer(satz, zweiter, aktion){
+  /* v817: Jeder leere Zustand sagt in einem Satz, was hier stünde, und bietet – wo es eine gibt – die passende Aktion an. */
   return `<div style="background:var(--surface);border:var(--border-s);border-radius:var(--rl);padding:16px;text-align:center">
     <div style="font-size:var(--s-text);font-weight:700">${esc(satz)}</div>
-    <div style="font-size:var(--s-text);color:var(--text2);margin-top:4px">${esc(zweiter)}</div></div>`;
+    <div style="font-size:var(--s-text);color:var(--text2);margin-top:4px">${esc(zweiter)}</div>
+    ${aktion?`<button type="button" class="btn" onclick="${aktion[1]}" style="min-height:48px;margin-top:10px;justify-content:center"><i class="ti ${aktion[2]||"ti-plus"}"></i>${esc(aktion[0])}</button>`:""}</div>`;
 }
 function tbStatus(e){ return e && e.status==="keim" ? "keim" : "fertig"; }
 /* Offen zum Bestätigen: ein KI-Vorschlag, den noch niemand mit „Passt so“ oder einer Änderung angenommen hat. */
@@ -662,7 +664,7 @@ function tbListeRender(){
     return;
   }
   if(_TB_SICHT==="eintraege"){
-    box.innerHTML = reiter + tbFilterKopfHtml() + `<div id="tb-treffer">${tbTrefferHtml()}</div>` + tbVerzichtHtml();
+    box.innerHTML = tbNeuHinweisHtml() + reiter + tbFilterKopfHtml() + `<div id="tb-treffer">${tbTrefferHtml()}</div>` + tbVerzichtHtml();
   }else box.innerHTML = reiter + (_TB_SICHT==="wiedervorlage" ? tbWiedervorlageHtml() : tbKindSichtHtml());
   tbAusgabeZeichnen();
 }
@@ -673,6 +675,18 @@ function tbMonatOeffnen(){
   const m = document.getElementById("tb-monat"); if(m && !m.value) m.value = isoLokal().slice(0,7);
   if(!box.hidden){ tbAusgabeZeichnen(); box.scrollIntoView({block:"nearest", behavior:"smooth"}); }
 }
+/* v817 · Kurze Einführung statt Tour: einmal je Gerät drei Sätze zur neuen Liste, „Verstanden“ blendet sie aus. */
+const TB_NEU_KEY = "adler_tb_neu_v817";
+function tbNeuHinweisHtml(){
+  try{ if(localStorage.getItem(TB_NEU_KEY)) return ""; }catch(e){ return ""; }
+  return `<div id="tb-neu" role="note" style="background:var(--surface);border:var(--border-s);border-radius:var(--rl);padding:12px 14px;margin-bottom:12px;font-size:var(--s-text);line-height:1.55">
+    <div style="font-weight:800;margin-bottom:4px">Das Tagebuch ist neu sortiert</div>
+    <div>➕ <b>Notieren</b> für alles – daraus wird bei Bedarf ein ganzer Eintrag.</div>
+    <div>🔍 Suchen und filtern oben, die Einträge stehen nach Datum. Antippen öffnet, „⋯“ kopiert oder teilt.</div>
+    <div>✅ Unter <b>Offen</b> hakst du ab – „Rückgängig“ nimmt es zurück.</div>
+    <button type="button" class="btn" onclick="tbNeuGelesen()" style="min-height:48px;margin-top:8px;justify-content:center">Verstanden</button></div>`;
+}
+function tbNeuGelesen(){ try{ localStorage.setItem(TB_NEU_KEY,"1"); }catch(e){} document.getElementById("tb-neu")?.remove(); }
 function tbChipZahl(c){ return _TB_LISTE.filter(e=>tbChipPasst(e,c)).length; }
 function tbChipPasst(e, c){
   if(c==="alle") return true;
@@ -698,7 +712,7 @@ function tbFilterKopfHtml(){
     .concat(TB_BAUSTEINE.filter(b=>n("b:"+b.key)).map(b=>chip("b:"+b.key, esc(b.label))))
     .concat(themen.map(t=>chip("t:"+t, "#"+esc(t)+" · "+zaehl[t])));
   const offen = _TB_LISTE.filter(tbUnbestaetigt);
-  const hinweis = offen.length ? `<button type="button" onclick="tbPruefenOpen(${Number(offen[0].id)})" style="display:flex;align-items:center;gap:8px;width:100%;min-height:48px;text-align:left;background:var(--purple-bg);border:1px solid var(--purple);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-family:inherit;font-size:var(--s-text);color:var(--text);cursor:pointer">✨ <span style="flex:1"><b>${offen.length===1?"1 Vorschlag wartet":offen.length+" Vorschläge warten"}</b> auf deine Prüfung.</span><b style="color:var(--purple)">Prüfen ›</b></button>` : "";
+  const hinweis = offen.length ? `<button type="button" onclick="tbPruefenOpen(${Number(offen[0].id)})" style="display:flex;align-items:center;gap:8px;width:100%;min-height:48px;text-align:left;background:var(--purple-bg);border:1px solid var(--purple);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-family:inherit;font-size:var(--s-text);color:var(--text);cursor:pointer">✨ <span style="flex:1"><b>${offen.length===1?"1 Vorschlag wartet":offen.length+" Vorschläge warten"}</b> auf deine Prüfung.</span><b style="color:var(--purple-text)">Prüfen ›</b></button>` : "";
   /* Lücke je Baustein (v679): eine ruhige Zeile statt leerer Gruppen – was lange oder noch nie notiert wurde. */
   let luecke = "";
   if(_TB_CHIP==="alle"){
@@ -718,11 +732,12 @@ function tbFilterKopfHtml(){
     ${luecke}${hinweis}`;
 }
 function tbChip(c){ _TB_CHIP = (_TB_CHIP===c && c!=="alle") ? "alle" : c; _TB_FILTER = c.startsWith("t:") && _TB_CHIP===c ? c.slice(2) : null; tbListeRender(); }
+function tbAllesZeigen(){ _TB_SUCHE = ""; _TB_CHIP = "alle"; _TB_FILTER = null; tbListeRender(); }
 function tbSuchen(v){ _TB_SUCHE = String(v||""); const t = document.getElementById("tb-treffer"); if(t) t.innerHTML = tbTrefferHtml(); }
 function tbTrefferHtml(){
   const q = _TB_SUCHE.trim().toLowerCase();
   const liste = _TB_LISTE.filter(e=>tbChipPasst(e,_TB_CHIP) && (!q || q.split(/\s+/).every(w=>tbSucheText(e).includes(w))));
-  if(!liste.length) return tbLeer(q ? "Nichts gefunden." : "Hier ist nichts.", q ? "Anderes Wort versuchen oder den Filter auf „Alle“ stellen." : "Stell den Filter auf „Alle“.");
+  if(!liste.length) return tbLeer(q ? "Nichts gefunden." : "Hier ist nichts.", q ? "Anderes Wort versuchen oder den Filter auf „Alle“ stellen." : "Stell den Filter auf „Alle“.", ["Alles zeigen","tbAllesZeigen()","ti-filter-off"]);
   /* Baustein-Lücke (v679): nur, wenn nach einem Baustein gefiltert wird – als ruhige Zeile, ohne Farbe. */
   let luecke = "";
   if(_TB_CHIP.startsWith("b:")){
@@ -774,12 +789,12 @@ function tbZeile(e){
                                  : (e.konsequenz ? [esc(tbKlarnamen(e.konsequenz))+(e.konsequenz_bis?" · bis "+tbWochentagDatum(e.konsequenz_bis).replace(/^\S+ /,""):"")] : []);
   const kinder = _TB_KINDER.filter(k=>Number(k.eintrag_id)===Number(e.id)).map(k=>tbKindName(k.kader_id)).filter(Boolean);
   const bs = TB_BAUSTEINE.find(b=>b.key===e.baustein);
-  const status = offen ? `<span style="font-size:var(--s-klein);font-weight:800;border-radius:10px;padding:2px 8px;background:var(--purple-bg);color:var(--purple)">Zu prüfen</span>`
-               : keim ? `<span style="font-size:var(--s-klein);font-weight:800;border-radius:10px;padding:2px 8px;background:#fff7e6;color:#8a4b00">Gedanke</span>` : "";
+  const status = offen ? `<span style="font-size:var(--s-klein);font-weight:800;border-radius:10px;padding:2px 8px;background:var(--purple-bg);color:var(--purple-text)">Zu prüfen</span>`
+               : keim ? `<span style="font-size:var(--s-klein);font-weight:800;border-radius:10px;padding:2px 8px;background:var(--amber-bg);color:var(--amber)">Gedanke</span>` : "";
   const anlass = TB_ANLASS_LABEL[e.anlass] && e.anlass!=="gedanke" ? " · "+TB_ANLASS_LABEL[e.anlass] : "";
   const titel = tbKlarnamen(e.ausloeser || tbErsterSatz(e.beobachtung||e.diktat||e.aha||e.konsequenz||"", 120) || "Ohne Titel");
   const zeile = "font-size:var(--s-text);color:var(--text2);margin-top:3px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden";
-  const tag = t => `<span style="font-size:var(--s-klein);color:var(--text2);background:var(--surface2);border:1px solid var(--border,#e2e8f0);border-radius:8px;padding:2px 7px">${t}</span>`;
+  const tag = t => `<span style="font-size:var(--s-klein);color:var(--text2);background:var(--surface2);border:var(--border-s);border-radius:8px;padding:2px 7px">${t}</span>`;
   const tags = [].concat(bs?[tag(esc(bs.label))]:[], kinder.length?[tag("👤 "+kinder.map(esc).join(", "))]:[], worte.slice(0,3).map(w=>tag("#"+esc(w))));
   const oeffnen = offen ? `tbPruefenOpen(${Number(e.id)})` : `tagebuchBearbeiten(${Number(e.id)})`;
   return `<div class="tb-zeile" data-id="${Number(e.id)}" role="button" tabindex="0" aria-label="${esc((offen?"Vorschlag prüfen: ":keim?"Gedanke ausarbeiten: ":"Eintrag öffnen: ")+titel)}" onclick="${oeffnen}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${oeffnen}}" style="display:flex;gap:6px;background:var(--surface);border:var(--border-s);${offen?"border-left:4px solid var(--purple);":""}border-radius:var(--rl);padding:11px 6px 11px 12px;margin-bottom:8px;cursor:pointer">
@@ -845,7 +860,7 @@ function tbWiedervorlagePunkte(){
 }
 function tbWiedervorlageHtml(){
   const p = tbWiedervorlagePunkte();
-  if(!p.length) return tbLeer("Nichts fällig.","Konsequenzen und To-dos mit Frist stehen hier, bis du sie abhakst.");
+  if(!p.length) return tbLeer("Nichts offen.","Konsequenzen und To-dos mit Frist stehen hier, bis du sie abhakst.",["Notieren","tagebuchGedanke()"]);
   const gruppen = [["ueberfaellig","Überfällig"],["woche","Diese Woche"],["spaeter","Später"]];
   return gruppen.map(([g,label])=>{
     const zeilen = p.filter(x=>x.gruppe===g); if(!zeilen.length) return "";
@@ -922,7 +937,7 @@ function tbKindSichtHtml(){
   const ids = new Set(_TB_KINDER.filter(k=>Number(k.kader_id)===_TB_KIND).map(k=>Number(k.eintrag_id)));
   const e = _TB_LISTE.filter(x=>ids.has(Number(x.id))).sort((a,b)=>String(a.datum).localeCompare(String(b.datum)));
   return chips + (e.length ? e.map(tbZeile).join("") + `<button class="btn" onclick="tagebuchKindKopieren()" style="width:100%;min-height:48px;justify-content:center;margin-top:6px"><i class="ti ti-copy"></i>Verlauf kopieren (mit Buchstaben)</button>`
-    : tbLeer("Noch kein Eintrag zu diesem Kind.","Im Eintrag unter „Wer kommt vor?“ markieren – dann steht er hier."));
+    : tbLeer("Noch kein Eintrag zu diesem Kind.","Im Eintrag unter „Wer kommt vor?“ markieren – dann steht er hier.",["Notieren","tagebuchGedanke()"]));
 }
 function tagebuchKindKopieren(){
   const ids = new Set(_TB_KINDER.filter(k=>Number(k.kader_id)===_TB_KIND).map(k=>Number(k.eintrag_id)));
