@@ -420,7 +420,8 @@ function tbRender(){
       <textarea id="${i?"tb-konsequenz-"+i:"tb-konsequenz"}" class="wachsen" rows="2" onfocus="tbFokus('${i?"konsequenz-"+i:"konsequenz"}')" placeholder="Was machst du beim nächsten Mal anders?" style="${fld};resize:vertical;margin-top:3px">${esc(k.text||"")}</textarea></label>
       ${k.dauerhaft?"":`<label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:4px">Bis wann
       <input type="date" id="${i?"tb-konsequenz_bis-"+i:"tb-konsequenz_bis"}" value="${esc(k.bis||"")}" style="${fld};margin-top:3px"></label>`}
-      <label style="display:flex;align-items:center;gap:8px;min-height:48px;font-size:var(--s-text);color:var(--text2);cursor:pointer"><input type="checkbox" id="${i?"tb-konsequenz_dauerhaft-"+i:"tb-konsequenz_dauerhaft"}" ${k.dauerhaft?"checked":""} onchange="tbFelderLesen();tbRender()" style="width:22px;height:22px">gilt dauerhaft – ein Grundsatz, keine Frist</label>`).join("")}
+      <label style="display:flex;align-items:center;gap:8px;min-height:48px;font-size:var(--s-text);color:var(--text2);cursor:pointer"><input type="checkbox" id="${i?"tb-konsequenz_dauerhaft-"+i:"tb-konsequenz_dauerhaft"}" ${k.dauerhaft?"checked":""} onchange="tbFelderLesen();tbRender()" style="width:22px;height:22px">gilt dauerhaft – ein Grundsatz, keine Frist</label>
+      ${k.dauerhaft&&k.id&&!k.erledigt_am?`<button type="button" class="btn" onclick="tbKonsGiltNicht(${i})" style="width:100%;min-height:48px;justify-content:center"><i class="ti ti-check"></i>Gilt nicht mehr – abhaken</button>`:""}`).join("")}
     ${_TB.kons.length<5?`<button type="button" class="btn" onclick="tbKonsDazu()" style="width:100%;min-height:48px;margin-top:6px;justify-content:center"><i class="ti ti-plus"></i>Weitere Konsequenz</button>`:""}
 
     <label style="${lbl}">Schlagworte<span style="font-weight:500;color:var(--text3)"> · zum Wiederfinden, mit Komma getrennt</span>
@@ -754,6 +755,17 @@ function tbWiedervorlageHtml(){
           </div></div>`;
       }).join("")}</div>`;
   }).join("");
+}
+/* v814 · Charles 08.11.2026: Eine dauerhafte Konsequenz ließ sich nicht abhaken – „Erledigt“ gab es nur in der Wiedervorlage, und dort
+   stehen nur Punkte mit Frist. Im Eintrag gibt es dafür jetzt „Gilt nicht mehr – abhaken“: derselbe Weg wie in der Wiedervorlage
+   (erledigt_am, erledigt_von; sind alle Konsequenzen erledigt, trägt der Eintrag das Datum). Der Text bleibt im Eintrag stehen. */
+async function tbKonsGiltNicht(i){
+  if(!_TB) return; tbFelderLesen();
+  const k = _TB.kons[i]; if(!k || !k.id) return;
+  if(!_TB_PUNKTE.some(x=>Number(x.id)===Number(k.id))) _TB_PUNKTE.push({ id:k.id, eintrag_id:_TB.id, art:"konsequenz", erledigt_am:null, dauerhaft:true });
+  await tbPunktErledigt(k.id);
+  const p = _TB_PUNKTE.find(x=>Number(x.id)===Number(k.id));
+  if(p && p.erledigt_am){ k.erledigt_am = p.erledigt_am; tbRender(); }
 }
 async function tbPunktErledigt(id){
   const p = _TB_PUNKTE.find(x=>Number(x.id)===Number(id)); if(!p) return;
