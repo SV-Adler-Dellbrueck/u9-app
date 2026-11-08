@@ -117,6 +117,16 @@ Supabase mit durchgängiger Row-Level-Security. Muster für trainer-pflegbare In
 
 **Vorsicht bei diesem Muster:** Der Editor muss *alle* Spalten lesen und zurückschreiben. Fehlt eine im `INSERT`, ist sie nach dem Speichern für alle Zeilen leer — ohne Fehlermeldung.
 
+### Lesender Datenweg für den Claude-Projekt-Chat (seit v804)
+
+Der Projekt-Chat auf claude.ai liest Tagebuch, Einheiten, Bewertungen und Übungen **nur lesend** und mit Aliassen statt Klarnamen – über einen
+nächtlichen Export in das **private** Repo `adler-u9-wissen` (Ordner `export/`, dazu `export/stand.json` mit Zeitstempel und Zeilenzahlen). Zugang:
+Postgres-Rolle `adler_export_lese` (nur SELECT auf die Views im Schema `export`, kein RLS-Bypass, kein Schreibrecht), Verbindungsadresse nur als
+GitHub Secret `EXPORT_DB_URL` im privaten Repo. Skript `tools/export-tagebuch.mjs` hier im Repo (ohne Daten), Action im privaten Repo. Der Supabase-Konnektor
+im Projekt ist dafür **nicht** geeignet (sein Lesemodus umgeht RLS). Die Whitelist steht in der Migration und im Skript; neue Spalten gehen nicht
+ungeprüft hinaus. Rückweg: Entwürfe des Projekts kommen als Datei nach `eingang/tagebuch/` im privaten Repo, `tools/tagebuch-eingang.mjs` prüft sie,
+eingelesen wird nur auf ausdrücklichen Auftrag von Charles, als Entwurf. Einzelheiten: `doku/auftrag-projekt-datenweg/README.md`.
+
 ### Schreiben von außerhalb der App
 
 Direkter Schreibzugriff auf Supabase ist erlaubt — seit dem 13.09.2026, vorher war er

@@ -27,3 +27,8 @@ tests/out/
 # Zeichnungen geschlossen hat. Einmal `node doku/drive-export.js <datei.md>`
 # stellt sie wieder her.
 doku/*.html
+
+# v804: lokale Installation des Export-Skripts (pg), nie einchecken
+tools/node_modules/
+tools/package-lock.json
+tools/package.json

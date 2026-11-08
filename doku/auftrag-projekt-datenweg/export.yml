@@ -1,0 +1,45 @@
+# Vorlage für .github/workflows/export.yml im PRIVATEN Repo SV-Adler-Dellbrueck/adler-u9-wissen (v804).
+# Das Skript kommt aus dem öffentlichen Repo u9-app (tools/export-tagebuch.mjs), die Daten kommen nie dorthin.
+# Benötigtes Secret im privaten Repo: EXPORT_DB_URL (Verbindungsadresse der Rolle adler_export_lese, nur SELECT auf export.*).
+name: Export aus der App
+on:
+  schedule:
+    - cron: "17 3 * * *"        # täglich 03:17 UTC (04:17 bzw. 05:17 Uhr deutscher Zeit)
+  workflow_dispatch:            # manueller Start: Actions → „Export aus der App“ → Run workflow
+permissions:
+  contents: write               # nur, um export/ zu committen
+concurrency:
+  group: export
+  cancel-in-progress: false
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: SV-Adler-Dellbrueck/u9-app
+          ref: main
+          path: .app
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Abhängigkeit installieren (pg)
+        run: npm install --no-save --no-audit --no-fund --prefix .app/tools pg@8.13.1
+      - name: Export schreiben
+        env:
+          EXPORT_DB_URL: ${{ secrets.EXPORT_DB_URL }}
+        run: node .app/tools/export-tagebuch.mjs export
+      - name: Zusammenfassung
+        run: |
+          echo "### Export aus der App" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          cat export/stand.json >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+      - name: Ablegen (nur export/)
+        run: |
+          git config user.name "adler-export"
+          git config user.email "adler-export@users.noreply.github.com"
+          git add export
+          if git diff --cached --quiet; then echo "Keine Änderung."; else git commit -m "Export aus der App $(date -u +%F)" && git push; fi
