@@ -379,73 +379,95 @@ function tbKindEinfuegen(name){
 function tbFokus(feld){ _TB_FOKUS = feld; }
 
 function tbRender(){
+  /* ═══ v816 · Paket 2 der Tagebuch-Überarbeitung (Charles 08.11.2026: „Bau und merge 2“). Der Eintrag liest sich wie eine
+     Geschichte in vier Fragen – Worum ging es? Was hast du beobachtet? Was ist dir klar geworden? Was änderst du? –, der Baustein
+     steht danach als kleine Auswahl, Seltenes (Schlagworte, Beleg, Anschluss) unter „Mehr“. „Kind einfügen“ und „Wer kommt vor?“
+     sind zugeklappt, bis man sie braucht. Unten steht, was für einen fertigen Eintrag noch fehlt. Kennungen der Felder unverändert. */
   const c = document.getElementById("tb-card"); if(!c||!_TB) return;
   const w = _TB.werte;
   const fld = "width:100%;box-sizing:border-box;min-height:48px;padding:10px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)";
-  const lbl = "font-size:var(--s-klein);font-weight:700;display:block;margin-top:10px";
+  const frage = (text, zusatz) => `<span style="display:block;font-size:var(--s-karte);font-weight:800;color:var(--text);margin-top:16px">${text}${zusatz?`<span style="font-size:var(--s-klein);font-weight:500;color:var(--text3)"> · ${zusatz}</span>`:""}</span>`;
   const kinder = (typeof KADER!=="undefined" ? (KADER||[]) : []).filter(k=>k.aktiv!==false);
-  const fuerFertig = '<span style="font-weight:500;color:var(--text3)"> · für einen fertigen Eintrag</span>';
   const titel = _TB.id ? tbNr(_TB.id)+(_TB.status==="keim" ? "Gedanke ausarbeiten" : "Eintrag bearbeiten")
-              : (_TB.quelle==="frei" ? "Freier Eintrag" : "Aus der Nachbereitung vom "+tbDatumDe(_TB.datum));
+              : (_TB.quelle==="frei" ? "Neuer Eintrag" : "Aus der Nachbereitung vom "+tbDatumDe(_TB.datum));
+  const vorbelegt = _TB.quelle!=="frei" || _TB.id ? "vorausgefüllt" : "";
+  const fehlt = tbFehltFuerFertig(w, _TB.kons);
+  const mehrOffen = !!(String(w.schlagworte||"").trim() || String(w.beleg||"").trim() || String(w.anschluss||"").trim());
 
   c.innerHTML = `${mdlHead("tb-modal","📓","Tagebucheintrag", titel,"#7c3aed")}
     <div id="tb-stempel">${typeof stempelHtml==="function"?stempelHtml(_TB.autor||(typeof _meTrainer!=="undefined"&&_meTrainer)||"Trainer",null,"· schreibt diesen Eintrag"):""}</div>
 
     ${_TB.ki?`<div role="status" style="background:var(--surface2);border:var(--border-s);border-left:4px solid var(--purple);border-radius:10px;padding:10px 12px;font-size:var(--s-text);line-height:1.5;margin-top:10px">✨ <b>Vorschlag aus deiner Sprachnotiz</b> – deine Worte, sortiert. Was du hier änderst und erfasst, gilt als bestätigt.</div>`:""}
-    <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:14px 0 6px">Baustein</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap">
-      ${TB_BAUSTEINE.map(b=>{const an=w.baustein===b.key;
-        return `<button onclick="tbBaustein('${b.key}')" aria-pressed="${an}" style="flex:1 1 46%;min-height:48px;font-size:var(--s-text);border:1px solid var(--rand-bedien);border-radius:var(--r);cursor:pointer;font-family:inherit;background:${an?"var(--blue)":"var(--surface2)"};color:${an?"#fff":"var(--text2)"};font-weight:${an?"800":"600"}">${an?"✓ ":""}${b.label}</button>`;}).join("")}
-    </div>
 
-    <label style="${lbl}">Auslöser${_TB.quelle==="frei"&&!_TB.id?fuerFertig:'<span style="font-weight:500;color:var(--text3)"> · vorausgefüllt</span>'}
-      <textarea id="tb-ausloeser" class="wachsen" rows="2" onfocus="tbFokus('ausloeser')" style="${fld};resize:vertical;margin-top:3px">${esc(w.ausloeser)}</textarea></label>
+    <label>${frage("Worum ging es?", vorbelegt)}
+      <textarea id="tb-ausloeser" class="wachsen" rows="2" onfocus="tbFokus('ausloeser')" placeholder="z. B. Training am Freitag, Turnier in Rath, ein Gespräch" style="${fld};resize:vertical;margin-top:6px">${esc(w.ausloeser)}</textarea></label>
     ${tbKontextHtml(_TB)}
 
-    <label style="${lbl}">Beobachtung<span style="font-weight:500;color:var(--text3)"> · ${_TB.status==="keim"?"dein Gedanke":"vorausgefüllt"}</span>
-      <textarea id="tb-beobachtung" class="wachsen" rows="3" onfocus="tbFokus('beobachtung')" style="${fld};resize:vertical;margin-top:3px">${esc(w.beobachtung)}</textarea></label>
+    <label>${frage("Was hast du beobachtet?", _TB.status==="keim"?"dein Gedanke":vorbelegt)}
+      <textarea id="tb-beobachtung" class="wachsen" rows="3" onfocus="tbFokus('beobachtung')" placeholder="Was ist passiert – so, wie du es gesehen hast" style="${fld};resize:vertical;margin-top:6px">${esc(w.beobachtung)}</textarea></label>
 
-    ${kinder.length?`<div style="margin-top:10px">
-      <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:4px">Kind einfügen – hier steht der Vorname; beim Teilen und Exportieren wird daraus ein Buchstabe</div>
-      <div style="display:flex;gap:5px;flex-wrap:wrap">
-        ${kinder.map(k=>`<button onclick="tbKindEinfuegen('${jsq(k.name)}')" title="Fügt ${esc(tbVorname(k.name))} ein – nach außen ${esc(tbAlias(k.name))}" style="min-height:44px;padding:0 10px;font-size:var(--s-text);border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface2);color:var(--text2);cursor:pointer;font-family:inherit">${esc(k.name)}</button>`).join("")}
-      </div>
-      <div style="font-size:var(--s-klein);color:var(--text3);margin-top:4px">Der Buchstabe gehört fest zu diesem Kind – auch wenn andere den Kader verlassen.</div>
-      <details style="margin-top:8px"${_TB.kinder.size?" open":""}><summary style="font-size:var(--s-klein);font-weight:700;cursor:pointer;min-height:44px">Wer kommt in diesem Eintrag vor?${_TB.kinder.size?" · "+_TB.kinder.size:""}</summary>
-        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px">
+    ${kinder.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+      <details id="tb-kind-einfuegen" style="flex:1 1 100%"><summary style="display:inline-flex;align-items:center;gap:6px;min-height:48px;padding:0 12px;border:1px solid var(--rand-bedien);border-radius:24px;font-size:var(--s-text);font-weight:700;color:var(--text);cursor:pointer;list-style:none">👤 Kind einfügen</summary>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">
+          ${kinder.map(k=>`<button onclick="tbKindEinfuegen('${jsq(k.name)}')" title="Fügt ${esc(tbVorname(k.name))} ein – nach außen ${esc(tbAlias(k.name))}" style="min-height:44px;padding:0 10px;font-size:var(--s-text);border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface2);color:var(--text2);cursor:pointer">${esc(tbVorname(k.name))}</button>`).join("")}
+        </div>
+        <div style="font-size:var(--s-klein);color:var(--text3);margin-top:4px">Hier steht der Vorname; beim Teilen und Exportieren wird daraus ein fester Buchstabe.</div>
+      </details>
+      <details id="tb-kinder-vor" style="flex:1 1 100%"${_TB.kinder.size?" open":""}><summary style="display:inline-flex;align-items:center;gap:6px;min-height:48px;padding:0 12px;border:1px solid var(--rand-bedien);border-radius:24px;font-size:var(--s-text);font-weight:700;color:var(--text);cursor:pointer;list-style:none">Wer kommt vor?${_TB.kinder.size?" · "+_TB.kinder.size:""}</summary>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">
         ${kinder.filter(k=>kaderIdVon(k)).map(k=>{const kid=kaderIdVon(k), an=_TB.kinder.has(kid);
-          return `<button type="button" onclick="tbKindUmschalten(${kid})" aria-pressed="${an}" style="min-height:48px;padding:0 12px;font-size:var(--s-text);border:${an?"2px solid var(--purple)":"1px solid var(--rand-bedien)"};border-radius:14px;background:${an?"var(--purple-bg)":"var(--surface2)"};color:var(--text);cursor:pointer;font-family:inherit;font-weight:${an?"800":"600"}">${an?"✓ ":""}${esc(tbVorname(k.name))} <span style="color:var(--text2);font-weight:600">· ${esc(tbAlias(k.name).replace(/^Kind /,""))}</span></button>`;}).join("")}
+          return `<button type="button" onclick="tbKindUmschalten(${kid})" aria-pressed="${an}" style="min-height:48px;padding:0 12px;font-size:var(--s-text);border:${an?"2px solid var(--purple)":"1px solid var(--rand-bedien)"};border-radius:14px;background:${an?"var(--purple-bg)":"var(--surface2)"};color:var(--text);cursor:pointer;font-family:inherit;font-weight:${an?"700":"400"}">${an?"✓ ":""}${esc(tbVorname(k.name))}</button>`;}).join("")}
         </div>
         <div style="font-size:var(--s-klein);color:var(--text3);margin-top:4px">Daraus entsteht die Sicht je Kind. Nichts wird aus dem Text geraten.</div>
       </details>
     </div>`:""}
 
-    <label style="${lbl}">Aha${fuerFertig}
-      <textarea id="tb-aha" class="wachsen" rows="3" onfocus="tbFokus('aha')" placeholder="Was hast du verstanden, das du vorher nicht wusstest?" style="${fld};resize:vertical;margin-top:3px">${esc(w.aha)}</textarea></label>
+    <label>${frage("Was ist dir klar geworden?", "das Aha – in deinen Worten")}
+      <textarea id="tb-aha" class="wachsen" rows="3" onfocus="tbFokus('aha')" placeholder="Was hast du verstanden, das du vorher nicht wusstest?" style="${fld};resize:vertical;margin-top:6px">${esc(w.aha)}</textarea></label>
 
-    ${_TB.kons.map((k,i)=>`<label style="${lbl}">${i?"Weitere Konsequenz":"Konsequenz"}${i?"":fuerFertig}${k.erledigt_am?` <span style="font-weight:600;color:var(--green)">· ✓ erledigt am ${tbDatumDe(k.erledigt_am)}</span>`:""}
-      <textarea id="${i?"tb-konsequenz-"+i:"tb-konsequenz"}" class="wachsen" rows="2" onfocus="tbFokus('${i?"konsequenz-"+i:"konsequenz"}')" placeholder="Was machst du beim nächsten Mal anders?" style="${fld};resize:vertical;margin-top:3px">${esc(k.text||"")}</textarea></label>
-      ${k.dauerhaft?"":`<label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:4px">Bis wann
-      <input type="date" id="${i?"tb-konsequenz_bis-"+i:"tb-konsequenz_bis"}" value="${esc(k.bis||"")}" style="${fld};margin-top:3px"></label>`}
-      <label style="display:flex;align-items:center;gap:8px;min-height:48px;font-size:var(--s-text);color:var(--text2);cursor:pointer"><input type="checkbox" id="${i?"tb-konsequenz_dauerhaft-"+i:"tb-konsequenz_dauerhaft"}" ${k.dauerhaft?"checked":""} onchange="tbFelderLesen();tbRender()" style="width:22px;height:22px">gilt dauerhaft – ein Grundsatz, keine Frist</label>
-      ${k.dauerhaft&&k.id&&!k.erledigt_am?`<button type="button" class="btn" onclick="tbKonsGiltNicht(${i})" style="width:100%;min-height:48px;justify-content:center"><i class="ti ti-check"></i>Gilt nicht mehr – abhaken</button>`:""}`).join("")}
-    ${_TB.kons.length<5?`<button type="button" class="btn" onclick="tbKonsDazu()" style="width:100%;min-height:48px;margin-top:6px;justify-content:center"><i class="ti ti-plus"></i>Weitere Konsequenz</button>`:""}
+    ${frage("Was änderst du?", "die Konsequenz")}
+    ${_TB.kons.map((k,i)=>`<div style="border:var(--border-s);border-radius:12px;padding:10px;margin-top:8px;background:var(--surface)">
+      ${k.erledigt_am?`<div style="font-size:var(--s-klein);font-weight:700;color:var(--green);margin-bottom:4px">✓ erledigt am ${tbDatumDe(k.erledigt_am)}</div>`:""}
+      <textarea id="${i?"tb-konsequenz-"+i:"tb-konsequenz"}" class="wachsen" rows="2" aria-label="${i?"Weitere Konsequenz":"Konsequenz"}" onfocus="tbFokus('${i?"konsequenz-"+i:"konsequenz"}')" placeholder="Was machst du beim nächsten Mal anders?" style="${fld};resize:vertical">${esc(k.text||"")}</textarea>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px">
+        ${k.dauerhaft?"":`<label style="display:flex;align-items:center;gap:6px;font-size:var(--s-klein);color:var(--text2)">bis
+          <input type="date" id="${i?"tb-konsequenz_bis-"+i:"tb-konsequenz_bis"}" value="${esc(k.bis||"")}" style="min-height:48px;padding:0 8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)"></label>`}
+        <label style="display:flex;align-items:center;gap:8px;min-height:48px;font-size:var(--s-text);color:var(--text2);cursor:pointer"><input type="checkbox" id="${i?"tb-konsequenz_dauerhaft-"+i:"tb-konsequenz_dauerhaft"}" ${k.dauerhaft?"checked":""} onchange="tbFelderLesen();tbRender()" style="width:22px;height:22px">gilt dauerhaft</label>
+      </div>
+      ${k.dauerhaft&&k.id&&!k.erledigt_am?`<button type="button" class="btn" onclick="tbKonsGiltNicht(${i})" style="width:100%;min-height:48px;margin-top:6px;justify-content:center"><i class="ti ti-check"></i>Gilt nicht mehr – abhaken</button>`:""}
+    </div>`).join("")}
+    ${_TB.kons.length<5?`<button type="button" onclick="tbKonsDazu()" style="display:inline-flex;align-items:center;gap:6px;min-height:48px;margin-top:6px;padding:0 4px;background:none;border:0;color:var(--blue);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer"><i class="ti ti-plus"></i>Weitere Konsequenz</button>`:""}
 
-    <label style="${lbl}">Schlagworte<span style="font-weight:500;color:var(--text3)"> · zum Wiederfinden, mit Komma getrennt</span>
-      <input type="text" id="tb-schlagworte" value="${esc(w.schlagworte)}" placeholder="z. B. Passspiel, Raumaufteilung, Motivation" list="tb-schlagwort-vorschlag" style="${fld};margin-top:3px"></label>
-    <datalist id="tb-schlagwort-vorschlag">${tbSchlagwortVorrat().map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
+    ${frage("Wohin gehört es?", "Baustein")}
+    <div role="group" aria-label="Baustein" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+      ${TB_BAUSTEINE.map(b=>{const an=w.baustein===b.key;
+        return `<button onclick="tbBaustein('${b.key}')" aria-pressed="${an}" style="flex:1 1 46%;min-height:48px;font-size:var(--s-text);border:1px solid ${an?"var(--text)":"var(--rand-bedien)"};border-radius:24px;cursor:pointer;font-family:inherit;background:${an?"var(--text)":"var(--surface)"};color:${an?"var(--surface)":"var(--text)"};font-weight:${an?"800":"600"}">${an?"✓ ":""}${esc(b.label)}</button>`;}).join("")}
+    </div>
 
-    <label style="${lbl}">Beleg<span style="font-weight:500;color:var(--text3)"> · optional</span>
-      <input type="text" id="tb-beleg" onfocus="tbFokus('beleg')" value="${esc(w.beleg)}" placeholder="Foto-Hinweis, Zitat, Quelle" style="${fld};margin-top:3px"></label>
-
-    <label style="${lbl}">Anschluss<span style="font-weight:500;color:var(--text3)"> · optional</span>
-      <input type="text" id="tb-anschluss" onfocus="tbFokus('anschluss')" value="${esc(w.anschluss)}" placeholder="Leitfrage, Übung oder App-Feld" style="${fld};margin-top:3px"></label>
+    <details id="tb-mehr"${mehrOffen?" open":""} style="margin-top:14px"><summary style="min-height:48px;display:flex;align-items:center;font-size:var(--s-text);font-weight:700;color:var(--text2);cursor:pointer">Mehr: Schlagworte, Beleg, Anschluss</summary>
+      <label style="font-size:var(--s-klein);font-weight:700;display:block;margin-top:6px">Schlagworte<span style="font-weight:500;color:var(--text3)"> · zum Wiederfinden, mit Komma getrennt</span>
+        <input type="text" id="tb-schlagworte" value="${esc(w.schlagworte)}" placeholder="z. B. Passspiel, Raumaufteilung, Motivation" list="tb-schlagwort-vorschlag" style="${fld};margin-top:3px"></label>
+      <datalist id="tb-schlagwort-vorschlag">${tbSchlagwortVorrat().map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
+      <label style="font-size:var(--s-klein);font-weight:700;display:block;margin-top:10px">Beleg<span style="font-weight:500;color:var(--text3)"> · optional</span>
+        <input type="text" id="tb-beleg" onfocus="tbFokus('beleg')" value="${esc(w.beleg)}" placeholder="Foto-Hinweis, Zitat, Quelle" style="${fld};margin-top:3px"></label>
+      <label style="font-size:var(--s-klein);font-weight:700;display:block;margin-top:10px">Anschluss<span style="font-weight:500;color:var(--text3)"> · optional</span>
+        <input type="text" id="tb-anschluss" onfocus="tbFokus('anschluss')" value="${esc(w.anschluss)}" placeholder="Leitfrage, Übung oder App-Feld" style="${fld};margin-top:3px"></label>
+    </details>
 
     <div id="tb-meldung" style="margin-top:10px">${_TB.namensfund?tbNamensHinweis(_TB.namensfund):""}</div>
+    <div id="tb-fehlt" style="font-size:var(--s-klein);color:var(--text2);margin-top:8px;line-height:1.5">${fehlt.length?`Wird als <b>Gedanke</b> gespeichert – für einen fertigen Eintrag fehlt noch: ${esc(fehlt.join(", "))}.`:"Alles da – wird als <b>fertiger Eintrag</b> gespeichert."}</div>
 
-    <button class="btn btn-p" onclick="tagebuchSpeichern()" style="width:100%;min-height:56px;margin-top:12px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-check"></i>Eintrag erfassen</button>
+    <button class="btn btn-p" onclick="tagebuchSpeichern()" style="width:100%;min-height:56px;margin-top:10px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-check"></i>Eintrag erfassen</button>
     <button class="btn" onclick="tagebuchSchliessen()" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Abbrechen</button>`;
   if(typeof felderWachsen==="function") felderWachsen(c);
+  /* Was fehlt, folgt beim Tippen mit (ohne das Fenster neu zu zeichnen). */
+  c.querySelectorAll("textarea,input[type=date],input[type=checkbox]").forEach(el=>el.addEventListener("input", tbFehltAnzeigen));
+}
+function tbFehltAnzeigen(){
+  const box = document.getElementById("tb-fehlt"); if(!box || !_TB) return;
+  try{ tbFelderLesen(); }catch(e){ return; }
+  const f = tbFehltFuerFertig(_TB.werte, _TB.kons);
+  box.innerHTML = f.length ? `Wird als <b>Gedanke</b> gespeichert – für einen fertigen Eintrag fehlt noch: ${esc(f.join(", "))}.` : "Alles da – wird als <b>fertiger Eintrag</b> gespeichert.";
 }
 /* KADER führt die Kennung als _id (loadKader); die Attrappe der Prüfungen als id. */
 function kaderIdVon(k){ return Number((typeof kaderId==="function" ? kaderId(k) : (k&&(k._id!=null?k._id:k.id))) || 0); }
