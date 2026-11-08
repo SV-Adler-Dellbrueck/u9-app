@@ -752,12 +752,12 @@ function tbZeile(e){
                                  : (e.konsequenz ? [esc(tbKlarnamen(e.konsequenz))+(e.konsequenz_bis?" · bis "+tbWochentagDatum(e.konsequenz_bis).replace(/^\S+ /,""):"")] : []);
   const kinder = _TB_KINDER.filter(k=>Number(k.eintrag_id)===Number(e.id)).map(k=>tbKindName(k.kader_id)).filter(Boolean);
   const bs = TB_BAUSTEINE.find(b=>b.key===e.baustein);
-  const status = offen ? `<span style="font-size:11px;font-weight:800;border-radius:10px;padding:2px 8px;background:var(--purple-bg);color:var(--purple)">Zu prüfen</span>`
-               : keim ? `<span style="font-size:11px;font-weight:800;border-radius:10px;padding:2px 8px;background:#fff7e6;color:#8a4b00">Gedanke</span>` : "";
+  const status = offen ? `<span style="font-size:var(--s-klein);font-weight:800;border-radius:10px;padding:2px 8px;background:var(--purple-bg);color:var(--purple)">Zu prüfen</span>`
+               : keim ? `<span style="font-size:var(--s-klein);font-weight:800;border-radius:10px;padding:2px 8px;background:#fff7e6;color:#8a4b00">Gedanke</span>` : "";
   const anlass = TB_ANLASS_LABEL[e.anlass] && e.anlass!=="gedanke" ? " · "+TB_ANLASS_LABEL[e.anlass] : "";
   const titel = tbKlarnamen(e.ausloeser || tbErsterSatz(e.beobachtung||e.diktat||e.aha||e.konsequenz||"", 120) || "Ohne Titel");
   const zeile = "font-size:var(--s-text);color:var(--text2);margin-top:3px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden";
-  const tag = t => `<span style="font-size:11px;color:var(--text2);background:var(--surface2);border:1px solid var(--border,#e2e8f0);border-radius:8px;padding:2px 7px">${t}</span>`;
+  const tag = t => `<span style="font-size:var(--s-klein);color:var(--text2);background:var(--surface2);border:1px solid var(--border,#e2e8f0);border-radius:8px;padding:2px 7px">${t}</span>`;
   const tags = [].concat(bs?[tag(esc(bs.label))]:[], kinder.length?[tag("👤 "+kinder.map(esc).join(", "))]:[], worte.slice(0,3).map(w=>tag("#"+esc(w))));
   const oeffnen = offen ? `tbPruefenOpen(${Number(e.id)})` : `tagebuchBearbeiten(${Number(e.id)})`;
   return `<div class="tb-zeile" data-id="${Number(e.id)}" role="button" tabindex="0" aria-label="${esc((offen?"Vorschlag prüfen: ":keim?"Gedanke ausarbeiten: ":"Eintrag öffnen: ")+titel)}" onclick="${oeffnen}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${oeffnen}}" style="display:flex;gap:6px;background:var(--surface);border:var(--border-s);${offen?"border-left:4px solid var(--purple);":""}border-radius:var(--rl);padding:11px 6px 11px 12px;margin-bottom:8px;cursor:pointer">
@@ -768,7 +768,7 @@ function tbZeile(e){
       ${konsZeilen.map(k=>`<div style="${zeile}">→ ${k}</div>`).join("")}
       ${tags.length?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">${tags.join("")}</div>`:""}
     </div>
-    <button type="button" class="tb-mehr" onclick="event.stopPropagation();tbMehrMenue(${Number(e.id)},this)" aria-label="Weitere Aktionen zu Nr. ${Number(e.id)}" aria-haspopup="menu" style="flex:none;width:44px;height:44px;border:0;background:none;color:var(--text2);font-size:20px;line-height:1;cursor:pointer;border-radius:22px">⋯</button>
+    <button type="button" class="tb-mehr" onclick="event.stopPropagation();tbMehrMenue(${Number(e.id)},this)" aria-label="Weitere Aktionen zu Nr. ${Number(e.id)}" aria-haspopup="menu" style="flex:none;width:44px;height:44px;border:0;background:none;color:var(--text2);font-size:var(--s-teil);line-height:1;cursor:pointer;border-radius:22px">⋯</button>
   </div>`;
 }
 /* „⋯“ an der Karte: Öffnen/Prüfen, Kopieren, Teilen – selten gebraucht, deshalb nicht mehr als drei Knöpfe auf jeder Karte. */

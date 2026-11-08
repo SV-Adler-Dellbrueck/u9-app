@@ -716,8 +716,8 @@
   <div id="train-sub-tagebuch" class="train-sub">
     <!-- v815: ein Einstieg „Notieren“ (Gedanke, daraus wird bei Bedarf ein ganzer Eintrag); „Monat ausgeben“ als eigener Knopf oben,
          der Bereich darunter ist zugeklappt, weil er einmal im Monat gebraucht wird. -->
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-      <div class="sl nt" style="flex:1;margin:0"><i class="ti ti-book"></i>Trainertagebuch</div>
+    <div class="sl nt"><i class="ti ti-book"></i>Trainertagebuch</div>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
       <button id="tb-monat-knopf" class="btn" onclick="if(typeof tbMonatOeffnen==='function')tbMonatOeffnen()" aria-expanded="false" aria-controls="tb-monat-box" style="min-height:44px"><i class="ti ti-file-export"></i>Monat ausgeben</button>
     </div>
     <button class="btn btn-p" onclick="if(typeof tagebuchGedanke==='function')tagebuchGedanke()" style="width:100%;min-height:56px;justify-content:center;font-size:15px;font-weight:800;margin-bottom:12px"><i class="ti ti-plus"></i>Notieren</button>
