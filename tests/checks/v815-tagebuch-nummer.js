@@ -20,7 +20,7 @@ module.exports = async function (h) {
   const fe = s.fehler(); await s.schliessen();
   if (r.fehlt) probleme.push("tbNr fehlt");
   else {
-    if (!/Nr\. 16 · 06\.11\.2026/.test(r.zeile)) probleme.push("Liste: " + r.zeile.slice(0, 200));
+    if (!/Nr\. 16 · \S+ 06\.11\./.test(r.zeile)) probleme.push("Liste: " + r.zeile.slice(0, 200));
     if (!/Nr\. 16 · Eintrag bearbeiten/.test(r.dialog)) probleme.push("Eintrag: " + r.dialog.slice(0, 120));
     if (/Nr\. /.test(r.neu)) probleme.push("neuer Eintrag zeigt eine Nummer");
     if (!/Nr\. 21 · /.test(r.pruef)) probleme.push("Prüfkarte: " + r.pruef.slice(0, 120));

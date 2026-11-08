@@ -253,9 +253,10 @@ module.exports = async function (h) {
   if (r2.freiTerminId != null) probleme.push(`Freier Eintrag trägt termin_id ${r2.freiTerminId}`);
   if (r2.freiAusloeser.trim()) probleme.push("Freier Eintrag ist vorausgefüllt, obwohl es keine Quelle gibt");
   ["Ich als Trainer", "Spiel & Spieler", "Organisation", "System Fußball"].forEach(b => {
-    if (!r2.listeText.includes(b)) probleme.push(`Die Ansicht gruppiert nicht nach „${b}"`);
+    if (!r2.listeText.includes(b)) probleme.push(`Die Ansicht nennt den Baustein „${b}" nicht (Chip oder Lückenzeile)`);
   });
-  if (!/Seit dem \d{2}\.\d{2}\.\d{4} nichts notiert/.test(r2.listeText)) probleme.push(`Kein Lückenhinweis für den 40 Tage alten Baustein: ${r2.listeText.slice(0, 160)}`);
+  /* v815: Liste nach Datum; die Bausteine stehen als Filterchips und in der ruhigen Lückenzeile („Lange nichts notiert: …“). */
+  if (!/Lange nichts notiert: .*seit dem \d{2}\.\d{2}\.\d{4}/.test(r2.listeText)) probleme.push(`Kein Lückenhinweis für den 40 Tage alten Baustein: ${r2.listeText.slice(0, 160)}`);
   if (!/Noch nichts notiert/.test(r2.listeText)) probleme.push("Kein Hinweis für einen Baustein ganz ohne Eintrag");
   if (fehler2.length) probleme.push(...fehler2.slice(0, 2));
 

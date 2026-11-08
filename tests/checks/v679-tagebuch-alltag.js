@@ -231,7 +231,7 @@ module.exports = async function (h) {
   if (g0.status !== "keim" || g0.baustein != null || !/Pausen/.test(g0.beobachtung || "")) probleme.push("a) Gedanke: " + JSON.stringify({ a: g0.anlass, s: g0.status, b: g0.baustein }));
   if (r.gedankeKnopf !== 56 || !r.gedankeZu) probleme.push(`a) Knopf ${r.gedankeKnopf} px, Fenster zu ${r.gedankeZu}`);
   // b)
-  if (!/1 Gedanke wartet auf eine Konsequenz/.test(r.listeKeim)) probleme.push("b) Zahl der Keime fehlt: " + r.listeKeim.slice(0, 200));
+  if (!/Gedanken · 1/.test(r.listeKeim))   // v815: Filterchip statt Satz probleme.push("b) Zahl der Keime fehlt: " + r.listeKeim.slice(0, 200));
   if (/Ohne .* wird nicht erfasst/.test(r.listeKeim)) probleme.push("b) Warnung beim Keim");
   if (g.status !== "fertig" || g.baustein !== "ich" || !g.bestaetigt_am || g.konsequenz_bis !== gestern) probleme.push("b) Ausarbeiten: " + JSON.stringify({ s: g.status, b: g.baustein, best: !!g.bestaetigt_am, bis: g.konsequenz_bis }));
   // c)
