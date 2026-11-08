@@ -3,7 +3,7 @@
    bzw. die Hilfe brauchen. Kann Aufbau und Abbau betreffen. Ebenso bei Spieltagen und Festivals.
    Und auch andere Dinge könnten wir dort als Trainer eintragen.“ Kacheln: „Ja, mit Anzahl“,
    „Etwas anderes eintragen“ nur bei Freigabe.
-   a) Termin ohne Freigabe: weder Kachel noch Termin-Fenster zeigen Aufgaben oder ein Freifeld
+   a) Termin ohne Freigabe: weder Kachel noch Termin-Fenster zeigen Aufgaben oder ein Freifeld (seit v809 außer „Tee mitbringen“)
    b) Mit Freigabe: nur die freigegebenen Aufgaben, je „x von n“; eine volle Aufgabe lässt sich
       nicht mehr antippen; eigene Aufgaben des Trainers erscheinen; Freifeld nur jetzt
    c) Trainer-Editor: Haken und Zahl ergeben termine.helfer_aufgaben, nichts angehakt = null
@@ -23,7 +23,8 @@ module.exports = async function (h) {
       const td = box("td-helfer"), k = box("helfer-card");
       const ohne = { id: 5, typ: "training", datum, uhrzeit: "16:45" };
       await tdHelferLoad(Object.assign({}, ohne, { id: 6 })); await elternHelferKachelLoad(ohne); await warte(50);
-      const a = { td: td.textContent.trim(), k: k.textContent.trim(), frei: !!document.querySelector("#helfer-eigen-td,#helfer-eigen-btn") };
+      const a = { td: td.textContent.trim(), k: k.textContent.trim(), frei: !!document.querySelector("#helfer-eigen-td,#helfer-eigen-btn"),
+        knoepfe: [...document.querySelectorAll("#td-helfer button[onclick*='tdHelferAdd('], #helfer-card button[onclick*='tdHelferAdd(']")].map(b => b.textContent.replace(/\s+/g, " ").trim()) };
       const mit = Object.assign({}, ohne, { helfer_aufgaben: [{ t: "🛠️ Aufbau", n: 2 }, { t: "🧹 Abbau", n: 3 }, { t: "📌 Kuchen fürs Fest", n: 1 }] });
       await tdHelferLoad(mit); await elternHelferKachelLoad(mit); await warte(50);
       const kText = k.textContent.replace(/\s+/g, " "), tdText = td.textContent.replace(/\s+/g, " ");
@@ -31,7 +32,9 @@ module.exports = async function (h) {
       return { a, kText, tdText, knoepfe, freiTd: !!document.getElementById("helfer-eigen-td"), freiK: !!document.getElementById("helfer-eigen-btn") };
     }, datum);
     const f = s.fehler(); await s.schliessen();
-    if (r.a.td || r.a.k || r.a.frei) probleme.push(`a) Ohne Freigabe steht etwas da: „${(r.a.td + r.a.k).slice(0, 80)}“`);
+    /* v809 (PO 08.11.): „Tee mitbringen“ steht immer da – ohne Freigabe NUR das, und weiter kein Freifeld. */
+    /* Knöpfe zum Eintragen: nur Tee. Einträge anderer Familien dürfen als Liste stehen (die sieht man, sobald der Bereich da ist). */
+    if (!r.a.knoepfe.length || r.a.knoepfe.some(t => !/Tee mitbringen/.test(t)) || r.a.frei) probleme.push(`a) Ohne Freigabe mehr als „Tee mitbringen“ zum Antippen (oder ein Freifeld): ${r.a.knoepfe.join(" | ")}`);
     if (/Funino-Tore|Jugendtore|Betreuung|Live-Ticker/.test(r.kText)) probleme.push("b) Nicht freigegebene Aufgaben erscheinen");
     if (!/2 von 2 · voll/.test(r.kText)) probleme.push("b) Volle Aufgabe nicht als „2 von 2 · voll“ gekennzeichnet: " + r.kText.slice(0, 160));
     if (r.knoepfe.some(t => /Aufbau/.test(t))) probleme.push("b) Volle Aufgabe lässt sich noch antippen");

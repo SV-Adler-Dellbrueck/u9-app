@@ -1111,7 +1111,7 @@ function tmEdit(id){
    angeboten – aufgebaut wird beim Gastgeber. */
 function _tmHelferVorlagen(typ,t){
   const alle=(typeof HELFER_AUFGABEN!=="undefined")?HELFER_AUFGABEN:[];
-  return alle.filter(a=>a.typen.includes(typ||"training")).filter(a=>typeof a.wenn!=="function"||a.wenn(t));
+  return alle.filter(a=>!a.immer).filter(a=>a.typen.includes(typ||"training")).filter(a=>typeof a.wenn!=="function"||a.wenn(t));   // v809: Tee steht immer da
 }
 /* v708 PO 01.10.: „Ebenso ‚Wer hilft‘ kann weg. Das einzige, was wir an dieser Stelle als Trainer
    ankreuzen sollen, ist, wer die Kinder am Turnier mit betreuen kann.“ – auswärts nur Betreuung. */
