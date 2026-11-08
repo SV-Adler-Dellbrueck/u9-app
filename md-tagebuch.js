@@ -378,7 +378,7 @@ function tbRender(){
   const lbl = "font-size:var(--s-klein);font-weight:700;display:block;margin-top:10px";
   const kinder = (typeof KADER!=="undefined" ? (KADER||[]) : []).filter(k=>k.aktiv!==false);
   const fuerFertig = '<span style="font-weight:500;color:var(--text3)"> · für einen fertigen Eintrag</span>';
-  const titel = _TB.id ? (_TB.status==="keim" ? "Gedanke ausarbeiten" : "Eintrag bearbeiten")
+  const titel = _TB.id ? tbNr(_TB.id)+(_TB.status==="keim" ? "Gedanke ausarbeiten" : "Eintrag bearbeiten")
               : (_TB.quelle==="frei" ? "Freier Eintrag" : "Aus der Nachbereitung vom "+tbDatumDe(_TB.datum));
 
   c.innerHTML = `${mdlHead("tb-modal","📓","Tagebucheintrag", titel,"#7c3aed")}
@@ -683,6 +683,9 @@ function tbVerzichtHtml(){
     <div style="font-size:var(--s-klein);color:var(--text2);margin:0 0 6px">Termine, zu denen du nichts eintragen wolltest oder konntest. Das ist in Ordnung – hier steht nur, dass es bewusst so ist.</div>
     ${_TB_VERZICHT.map(zeile).join("")}</details>`;
 }
+/* v815 · Charles 08.11.2026: „Wo sehe ich die Nummerierungen?“ – dieselbe Nummer wie im Export („Eintrag-Nr.“) und in den Berichten,
+   klein vor dem Datum, im geöffneten Eintrag und auf der Prüfkarte. */
+function tbNr(id){ return id ? "Nr. "+Number(id)+" · " : ""; }
 function tbZeile(e){
   const worte = Array.isArray(e.schlagworte) ? e.schlagworte : [];
   const keim = tbStatus(e)==="keim", offen = tbUnbestaetigt(e);
@@ -691,7 +694,7 @@ function tbZeile(e){
                                : (e.konsequenz ? esc(tbKlarnamen(e.konsequenz))+(e.konsequenz_bis?` (bis ${tbDatumDe(e.konsequenz_bis)})`:"") : "");
   const kinder = _TB_KINDER.filter(k=>Number(k.eintrag_id)===Number(e.id)).map(k=>tbKindName(k.kader_id)).filter(Boolean);
   return `<div class="tb-zeile" data-id="${Number(e.id)}" style="background:var(--surface);border:var(--border-s);${offen?"border-left:4px solid var(--purple);":""}border-radius:var(--rl);padding:11px 12px;margin-bottom:6px">
-    <div style="font-size:var(--s-klein);color:var(--text3)">${tbDatumDe(e.datum)} · ${esc(stempelText(e.autor, e.updated_at||e.created_at))}${e.ki_vorschlag?(offen?" · ✨ Vorschlag, noch nicht bestätigt":" · ✨ aus Sprachnotiz, bestätigt"):""}${keim?" · 💭 Keim":""}</div>
+    <div style="font-size:var(--s-klein);color:var(--text3)">${tbNr(e.id)}${tbDatumDe(e.datum)} · ${esc(stempelText(e.autor, e.updated_at||e.created_at))}${e.ki_vorschlag?(offen?" · ✨ Vorschlag, noch nicht bestätigt":" · ✨ aus Sprachnotiz, bestätigt"):""}${keim?" · 💭 Keim":""}</div>
     ${worte.length?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">${worte.map(x=>`<button type="button" onclick="tbFilter('${jsq(x)}')" aria-pressed="${_TB_FILTER===x}" style="min-height:32px;padding:0 10px;border:1px solid var(--rand-bedien);border-radius:16px;background:${_TB_FILTER===x?"var(--purple-bg)":"var(--surface2)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">#${esc(x)}</button>`).join("")}</div>`:""}
     <div style="font-size:var(--s-text);font-weight:700;margin-top:2px">${esc(tbKlarnamen(e.ausloeser || (keim ? tbErsterSatz(e.beobachtung||e.diktat, 160) : "")))}</div>
     ${e.aha?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:4px;line-height:1.5"><b>Aha:</b> ${esc(tbKlarnamen(e.aha))}</div>`:""}
@@ -1226,7 +1229,7 @@ function tbPruefenZeichnen(){
   const fld = "width:100%;box-sizing:border-box;min-height:48px;padding:10px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);resize:vertical";
   const kopf = t => `<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:14px 0 6px">${t}</div>`;
   const kannHoeren = typeof diktatMoeglich==="function" && diktatMoeglich();
-  c.innerHTML = `${mdlHead("tb-pruefen","✨","Vorschlag prüfen", esc(e.ausloeser||tbDatumDe(e.datum)),"#7c3aed")}
+  c.innerHTML = `${mdlHead("tb-pruefen","✨","Vorschlag prüfen", tbNr(e.id)+esc(e.ausloeser||tbDatumDe(e.datum)),"#7c3aed")}
     <div style="font-size:var(--s-text);color:var(--text2);line-height:1.5">Deine Worte, sortiert – nichts dazu erfunden. Was nicht passt, änderst du direkt hier.</div>
     <label id="tbp-aha-block" style="display:block;font-size:var(--s-teil);font-weight:800;margin-top:12px;background:var(--purple-bg);border-radius:12px;padding:10px 12px">💡 Aha – das gehört dir${e.aha?"":' <span style="display:block;font-size:var(--s-klein);font-weight:500;color:var(--text2)">Nichts gefunden, das du selbst so gesagt hast – schreib es hier oder beantworte die Rückfrage unten.</span>'}
       <textarea id="tbp-aha" class="wachsen" rows="3" style="${fld};margin-top:6px;font-size:var(--s-karte);line-height:1.5">${esc(e.aha||"")}</textarea></label>
