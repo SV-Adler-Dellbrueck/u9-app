@@ -120,7 +120,7 @@ Supabase mit durchgängiger Row-Level-Security. Muster für trainer-pflegbare In
 ### Lesender Datenweg für den Claude-Projekt-Chat (seit v804)
 
 Der Projekt-Chat auf claude.ai liest Tagebuch, Einheiten, Bewertungen und Übungen **nur lesend** und mit Aliassen statt Klarnamen – über einen
-nächtlichen Export in das **private** Repo `adler-u9-wissen` (Ordner `export/`, dazu `export/stand.json` mit Zeitstempel und Zeilenzahlen). Zugang:
+nächtlichen Export in das **private** Repo `adler-u9-wissen` (Ordner `export/`, dazu `export/stand.json` mit Zeitstempel, Zeilenzahlen und App-Version). Derselbe Lauf legt `export/app-stand.md` (Kopie von `doku/Uebersicht_Funktionen-Adler-App_v1.md`) und `export/aenderungen.md` (Titel der gemergten PRs) ab – deshalb bleibt Pflicht 6 die einzige Stelle, an der der App-Stand gepflegt wird, und PR-Titel tragen keine Namen. Zugang:
 Postgres-Rolle `adler_export_lese` (nur SELECT auf die Views im Schema `export`, kein RLS-Bypass, kein Schreibrecht), Verbindungsadresse nur als
 GitHub Secret `EXPORT_DB_URL` im privaten Repo. Skript `tools/export-tagebuch.mjs` hier im Repo (ohne Daten), Action im privaten Repo. Der Supabase-Konnektor
 im Projekt ist dafür **nicht** geeignet (sein Lesemodus umgeht RLS). Die Whitelist steht in der Migration und im Skript; neue Spalten gehen nicht

@@ -20,7 +20,7 @@ Einheiten, Bewertungen und Übungen aus der App – ohne Handarbeit, nur lesend 
   08.11.: 7 Stellen mit abweichender Schreibweise in 3 Einträgen).
 - **Skript** `tools/export-tagebuch.mjs` (dieses Repo, ohne Daten) mit fester Spalten-Whitelist, und **GitHub Action** `export.yml` im privaten Repo
   `adler-u9-wissen` (Vorlage: `doku/auftrag-projekt-datenweg/export.yml`): täglich 03:17 UTC und per Knopf. Ausgabe nach `export/`:
-  `tagebuch.md`, `einheiten.md`, `uebungen.md`, `plaene.md`, `stand.json` (Zeitstempel, Zeilenzahlen, Namens-Verdacht). Secret: `EXPORT_DB_URL`
+  `tagebuch.md`, `einheiten.md`, `uebungen.md`, `plaene.md`, `stand.json` (Zeitstempel, Zeilenzahlen, Namens-Verdacht, App-Version), dazu aus `tools/export-appstand.mjs`: `app-stand.md` (Kopie der Funktionsübersicht), `aenderungen.md` (Titel der zusammengeführten Änderungen, neueste zuerst). Secret: `EXPORT_DB_URL`
   (Verbindungsadresse der Rolle, nur im privaten Repo).
 
 ## Rückweg: Projekt → App (kein Schreibrecht für das Projekt)

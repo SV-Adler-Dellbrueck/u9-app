@@ -22,6 +22,7 @@ jobs:
           repository: SV-Adler-Dellbrueck/u9-app
           ref: main
           path: .app
+          fetch-depth: 150            # für die Änderungsliste (git log)
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -31,6 +32,8 @@ jobs:
         env:
           EXPORT_DB_URL: ${{ secrets.EXPORT_DB_URL }}
         run: node .app/tools/export-tagebuch.mjs export
+      - name: App-Stand schreiben (Funktionsübersicht, Änderungsliste, Version)
+        run: node .app/tools/export-appstand.mjs .app export
       - name: Zusammenfassung
         run: |
           echo "### Export aus der App" >> "$GITHUB_STEP_SUMMARY"

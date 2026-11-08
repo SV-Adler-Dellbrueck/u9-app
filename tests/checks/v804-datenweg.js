@@ -50,5 +50,15 @@ module.exports = async function (h) {
   };
   for (const [n, md] of Object.entries(schlecht)) if (!ei.pruefe(md).fehler.length) probleme.push("b) wird fälschlich akzeptiert: " + n);
   zeilen.push("Eingang: guter Entwurf → INSERT als „keim“ mit Alias→Vorname in der Datenbank; 7 schlechte (Alias, Zahl, Link, Autor, leer, Kopf) werden abgelehnt");
+  // c) App-Stand: Version aus sw.js, Stand der Übersicht, Änderungsliste, Abgleich in stand.json
+  const ap = await import(pathToFileURL(path.join(h.REPO, "tools/export-appstand.mjs")).href);
+  const swT = fs.readFileSync(path.join(h.REPO, "sw.js"), "utf8"), uebT = fs.readFileSync(path.join(h.REPO, "doku/Uebersicht_Funktionen-Adler-App_v1.md"), "utf8");
+  const vC = ap.appVersion(swT), sC = ap.uebersichtStand(uebT);
+  if (!vC || vC !== sC) probleme.push("c) App-Version und Stand der Übersicht nicht lesbar oder verschieden: " + vC + " / " + sC);
+  const chg = ap.baueAenderungen([{ datum: "2026-11-08", betreff: "v900: Neu\nZeile (#1)" }, { datum: "2026-11-07", betreff: "v899: Alt" }], "v900");
+  if (!/\*\*v900\*\*/.test(chg) || !/## 08\.11\.2026\n\n- v900: Neu Zeile \(#1\)/.test(chg) || chg.indexOf("v900: Neu") > chg.indexOf("v899")) probleme.push("c) Änderungsliste: " + chg.slice(0, 200));
+  const erg = ap.ergaenzeStand({ zeilen: { a: 1 } }, "v900", "v899");
+  if (erg.zeilen.a !== 1 || erg.app.uebersicht_passt !== false || ap.ergaenzeStand({}, "v9", "v9").app.uebersicht_passt !== true) probleme.push("c) Abgleich in stand.json: " + JSON.stringify(erg));
+  zeilen.push(`App-Stand: Version ${vC} aus sw.js, Übersicht gleich, Änderungsliste neueste zuerst, Abweichung wird in stand.json sichtbar`);
   return h.ergebnis("v804 Datenweg Projekt-Chat (Export, Eingang)", !probleme.length, probleme.length ? probleme : zeilen);
 };
