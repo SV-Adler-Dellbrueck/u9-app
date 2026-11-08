@@ -1706,23 +1706,32 @@ function tdPulsRender(terminId,mine,bare){
     <div style="display:flex;gap:8px;margin:8px 0">
       ${moods.map(mo=>{const on=cur===mo.v;return `<button onclick="tdPulsSave(${terminId},${mo.v})" style="flex:1;padding:10px 6px;border-radius:10px;border:1.5px solid ${on?"#1e3a8a":"var(--rand-bedien)"};background:${on?"#eef2ff":"#fff"};cursor:pointer;font-family:inherit"><div style="font-size:var(--s-seite)">${mo.e}</div><div style="font-size:var(--s-klein);color:#64748b">${mo.l}</div></button>`;}).join("")}
     </div>
-    <input id="td-puls-txt" type="text" maxlength="200" value="${mine&&mine.kommentar?esc(mine.kommentar):""}" placeholder="Optional: ein Satz Feedback…" onblur="tdPulsSaveText(${terminId})" style="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);box-sizing:border-box">
-    <div id="td-puls-done" style="font-size:var(--s-klein);color:#16a34a;margin-top:4px">${cur?"Danke fürs Feedback ✓":""}</div>
+    <input id="td-puls-txt" type="text" maxlength="200" value="${mine&&mine.kommentar?esc(mine.kommentar):""}" placeholder="${cur?"Magst du noch einen Satz dazu schreiben?":"Optional: ein Satz Feedback…"}" aria-label="Kommentar (freiwillig)" onblur="tdPulsSaveText(${terminId})" style="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);box-sizing:border-box">
+    <div id="td-puls-done" style="font-size:var(--s-klein);color:#15803d;margin-top:4px">${cur?"Danke fürs Feedback ✓":""}</div>
+    ${cur?`<button type="button" id="td-puls-fertig" class="btn" onclick="tdPulsFertig(${terminId})" style="width:100%;min-height:44px;margin-top:6px;justify-content:center;font-weight:700">Fertig</button>`:""}
   </div>`;
+}
+/* v809 PO 08.11.: „Sobald auf einen der drei Smileys geklickt wird, geht das Fenster direkt zu und man kann keinen
+   Kommentar mehr hinterlassen.“ Die Stimmung ist sofort gespeichert; der Kommentar bleibt offen, bis „Fertig“. */
+async function tdPulsFertig(terminId){
+  await tdPulsSaveText(terminId);
+  const nud=document.getElementById("puls-nudge-slot");
+  if(nud&&nud.contains(document.getElementById("td-puls"))){ nud.innerHTML=""; pulsNudgeLoad(); return; }
+  const f=document.getElementById("td-puls-fertig"); if(f)f.remove();
+  const d=document.getElementById("td-puls-done"); if(d)d.textContent="Danke fürs Feedback ✓";
 }
 async function tdPulsSave(terminId,mood){
   const txt=(document.getElementById("td-puls-txt")?.value||"").trim().slice(0,200);
   try{
     const r=await fetch(`${SB_URL}/rest/v1/event_puls?on_conflict=termin_id,user_id`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({termin_id:terminId,mood,kommentar:txt||null})});
     if(!r.ok){toast("Konnte nicht speichern","err");return;}
-    tdPulsRender(terminId,{mood,kommentar:txt});
+    const imNudge=!!document.getElementById("puls-nudge-slot")?.contains(document.getElementById("td-puls"));
+    tdPulsRender(terminId,{mood,kommentar:txt},imNudge);
     try{navigator.vibrate&&navigator.vibrate(40);}catch(e){}
-    // Abgestimmt im Zu-erledigen-Fenster? Dann verschwindet das To-Do nach kurzem „Danke ✓"
-    // (elternTodoSync zieht den Zähler über den MutationObserver automatisch nach).
-    const nud=document.getElementById("puls-nudge-slot");
-    if(nud&&nud.contains(document.getElementById("td-puls"))){
-      setTimeout(()=>{const n2=document.getElementById("puls-nudge-slot");if(n2){n2.innerHTML="";pulsNudgeLoad();}},1400);
-    }
+    /* v809: Das To-do schließt nicht mehr von selbst nach 1,4 s – erst „Fertig“ (tdPulsFertig).
+       Der Cursor springt ins Kommentarfeld, damit ein Satz ohne weiteren Tipp möglich ist. */
+    const feld=document.getElementById("td-puls-txt");
+    if(feld&&!txt){ try{ feld.focus({preventScroll:true}); }catch(e){} }
   }catch(e){toast("Netzwerkfehler","err");}
 }
 async function tdPulsSaveText(terminId){
@@ -1881,6 +1890,11 @@ const HELFER_AUFGABEN=[
   {t:"📻 Live-Ticker",   typen:["spiel","turnier"],
    kurz:()=>"Live-Ticker tippen",
    d:()=>"Während des Spiels kurze Meldungen in der App tippen – für alle, die nicht dabei sein können. Trag dich ein – vor dem Spiel teilt das Trainerteam je Team genau eine Person ein. Wer eingeteilt ist, bekommt eine Mitteilung und sieht am Spieltag „Ticker bedienen“."},
+  /* v809 PO 08.11.: „für alle Trainings und Spieltagstermine für die Eltern ein Button ‚Tee mitbringen‘ bei den
+     Helferbuttons“. Steht IMMER da (ohne Freigabe am Termin); TEE_STANDARD = so viele Kannen. */
+  {t:"🫖 Tee mitbringen", typen:["training","spiel","turnier"], immer:true,
+   kurz:()=>"Tee mitbringen",
+   d:()=>"Eine Thermoskanne warmen Tee für die Kinder mitbringen."},
   {t:"📸 Fotografieren", typen:["spiel","turnier","event"],
    kurz:()=>"Fotos machen",
    d:()=>"Ein paar Fotos machen und sie danach in die Galerie laden. Das Handy reicht völlig."}
@@ -1919,9 +1933,12 @@ function helferAbSatz(t,min){
    Ohne Freigabe: keine Aufgabe. Texte der Vorlagen (HELFER_AUFGABEN) bleiben die Beschreibung;
    eigene Aufgaben des Trainers tragen ihren Hinweis selbst. `t` bleibt der Schlüssel in
    event_helfer.aufgabe. */
+const TEE_STANDARD=2;
 function helferTasksFuer(typ,t){
   const frei=(t&&Array.isArray(t.helfer_aufgaben))?t.helfer_aufgaben:[];
-  return frei.filter(x=>x&&x.t).map(x=>{
+  /* v809: Aufgaben mit `immer` stehen bei ihren Termintypen auch ohne Freigabe da (Tee). */
+  const immer=HELFER_AUFGABEN.filter(a=>a.immer&&a.typen.includes((t&&t.typ)||typ)&&!frei.some(x=>x&&x.t===a.t)).map(a=>({t:a.t,n:TEE_STANDARD}));
+  return frei.filter(x=>x&&x.t).concat(immer).map(x=>{
     const v=HELFER_AUFGABEN.find(a=>a.t===x.t);
     const n=Math.max(1,Math.min(20,parseInt(x.n,10)||1));
     if(v)return Object.assign({},v,{n,extra:x.d||""});
@@ -1968,7 +1985,7 @@ async function tdHelferLoad(t){
     <!-- Freifeld: was die Liste nicht kennt. Der Text wird zur Aufgabe – deshalb das feste
          ✏️ davor, damit ein getipptes „Aufbau" nie zufaellig auf einen festen Aufgaben-
          schluessel faellt und dessen Knopf als angehakt erscheinen laesst. -->
-    ${aufgaben.length?`<div style="display:flex;gap:6px;margin-top:8px">
+    ${aufgaben.some(a=>!a.immer)?`<div style="display:flex;gap:6px;margin-top:8px">
       <!-- Rahmen dunkler als bei den Aufgaben-Zeilen darueber (#e2e8f0): einen Knopf erkennt
            man an seiner Beschriftung, ein LEERES Eingabefeld nur an seinem Rand – deshalb
            gilt hier die 3:1-Regel fuer Bedienelemente. #7d8b99 = 3,49:1 auf Weiss. -->
@@ -2002,7 +2019,37 @@ async function tdHelferAdd(terminId,task){
   tdHelferAdd._busy.add(schl); setTimeout(()=>tdHelferAdd._busy.delete(schl),1500);
   try{const r=await fetch(`${SB_URL}/rest/v1/event_helfer`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify({termin_id:terminId,name:_helferName(),aufgabe:task})});if(!r.ok){toast("Konnte nicht eintragen","err");return;}}catch(e){toast("Netzwerkfehler","err");return;}
   try{navigator.vibrate&&navigator.vibrate(30);}catch(e){}
+  adlerDank();   // v809: ein Herz fliegt herein – „Die Adler danken“
   _helferReload(terminId);
+}
+/* v809 PO 08.11.: „wenn jemand einen Helferbutton anklickt sollte ein Herz reingeflogen kommen mit dem Satz
+   ‚die Adler danken‘. Schön animiert. vielleicht sogar mehrere solcher Sätze“. Nie zweimal derselbe Satz
+   hintereinander. Ohne Bewegung (prefers-reduced-motion) wird es nur eingeblendet. Klicks gehen durch. */
+const ADLER_DANK=["Die Adler danken! 💙","Danke, dass du mit anpackst!","Ohne euch läuft nichts – danke!","Starkes Team – auch am Spielfeldrand!","Die Kinder freuen sich – danke!","Ihr seid spitze – die Adler sagen danke!"];
+let _adlerDankLetzt=-1;
+function adlerDank(){
+  let i=Math.floor(Math.random()*ADLER_DANK.length);
+  if(ADLER_DANK.length>1&&i===_adlerDankLetzt)i=(i+1)%ADLER_DANK.length;
+  _adlerDankLetzt=i;
+  if(!document.getElementById("adler-dank-stil")){
+    const st=document.createElement("style"); st.id="adler-dank-stil";
+    st.textContent=`#adler-dank{position:fixed;inset:0;z-index:10090;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+#adler-dank .ad-herz{font-size:96px;line-height:1;filter:drop-shadow(0 6px 16px rgba(30,58,138,.35));animation:adFlug 2.4s cubic-bezier(.2,.8,.2,1) forwards}
+#adler-dank .ad-text{background:#fff;color:#1e3a8a;font-weight:800;font-size:var(--s-karte,18px);padding:10px 18px;border-radius:999px;box-shadow:0 8px 24px rgba(15,23,42,.18);animation:adText 2.4s ease forwards;opacity:0;max-width:86vw;text-align:center}
+#adler-dank .ad-klein{position:absolute;font-size:26px;animation:adFunke 1.6s ease-out forwards;opacity:0}
+@keyframes adFlug{0%{transform:translateY(55vh) scale(.3) rotate(-20deg);opacity:0}30%{transform:translateY(0) scale(1.25) rotate(8deg);opacity:1}42%{transform:scale(.95) rotate(-4deg)}52%{transform:scale(1.08) rotate(0)}62%{transform:scale(1)}85%{opacity:1;transform:translateY(0) scale(1)}100%{transform:translateY(-18vh) scale(.8);opacity:0}}
+@keyframes adText{0%,25%{opacity:0;transform:translateY(12px)}38%{opacity:1;transform:translateY(0)}85%{opacity:1}100%{opacity:0;transform:translateY(-8px)}}
+@keyframes adFunke{0%{opacity:0;transform:translate(0,0) scale(.4)}25%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1)}}
+@media (prefers-reduced-motion:reduce){#adler-dank .ad-herz,#adler-dank .ad-text{animation:adRuhig 2.4s ease forwards}#adler-dank .ad-klein{display:none}@keyframes adRuhig{0%,100%{opacity:0}15%,85%{opacity:1}}}`;
+    document.head.appendChild(st);
+  }
+  document.getElementById("adler-dank")?.remove();
+  const el=document.createElement("div"); el.id="adler-dank";
+  el.setAttribute("role","status"); el.setAttribute("aria-live","polite");
+  const funken=[["-90px","-70px"],["95px","-60px"],["-70px","80px"],["80px","90px"],["0px","-120px"]].map(([dx,dy],k)=>`<span class="ad-klein" aria-hidden="true" style="--dx:${dx};--dy:${dy};animation-delay:${.7+k*.08}s">💙</span>`).join("");
+  el.innerHTML=`<div class="ad-herz" aria-hidden="true">❤️</div><div class="ad-text">${esc(ADLER_DANK[i])}</div>${funken}`;
+  document.body.appendChild(el);
+  setTimeout(()=>{ if(el.parentNode)el.remove(); },2600);
 }
 /* Eigene Aufgabe: freier Text statt einer der vorgegebenen Zeilen. Kein prompt() – im
    Eltern-Bereich verbietet die Hausregel Systemdialoge (v415).
@@ -2454,11 +2501,11 @@ async function elternHelferKachelLoad(t){
     ${freiHtml}
     <!-- Das Eingabefeld erscheint erst auf Tippen: sonst kostet es 44 px in einer Kachel,
          die schon lang ist – fuer etwas, das die wenigsten brauchen. -->
-    <button id="helfer-eigen-btn" onclick="elternHelferEigenAuf(${Number(t.id)})" style="width:100%;min-height:36px;margin-top:6px;padding:6px;border:none;background:none;color:#334155;font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer;text-align:left">✏️ Etwas anderes eintragen</button>
+    ${aufgaben.some(a=>!a.immer)?`<button id="helfer-eigen-btn" onclick="elternHelferEigenAuf(${Number(t.id)})" style="width:100%;min-height:36px;margin-top:6px;padding:6px;border:none;background:none;color:#334155;font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer;text-align:left">✏️ Etwas anderes eintragen</button>
     <div id="helfer-eigen-box" style="display:none;gap:6px;margin-top:2px">
       <input id="helfer-eigen-k" maxlength="60" placeholder="Was übernimmst du?" aria-label="Eigene Aufgabe eintragen" style="flex:1;min-width:0;min-height:44px;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);box-sizing:border-box" onkeydown="if(event.key==='Enter')tdHelferAddEigen(${Number(t.id)},this)">
       <button onclick="tdHelferAddEigen(${Number(t.id)},this)" aria-label="Eigene Aufgabe eintragen" style="min-height:44px;min-width:52px;border:none;border-radius:10px;background:#15803d;color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">✓</button>
-    </div>
+    </div>`:""}
   </div>`;
 }
 function elternHelferEigenAuf(){
@@ -2488,7 +2535,7 @@ const ELTERN_TOUR=[
   {emo:"📬", t:"Offene Rückmeldungen", sel:["#eltern-offen-card"],
    d:"Stehen in den nächsten 14 Tagen Antworten aus, siehst du sie hier gesammelt."},
   {emo:"🎒", t:"Alles zum Termin", sel:['[onclick^="terminDetailOpen"]'],
-   d:"Tippe auf einen Termin: Wetter, Adresse mit Route, „Was muss mit?“, Fahrgemeinschaft, „Wer hilft mit?“ und die Fotos zum Termin – „📷 Foto aufnehmen“ öffnet direkt die Kamera. Alle Spieltagsfotos zusammen – groß ansehen und durchwischen – stehen unter „Mehr vom Team“ → „Spieltagsgalerie“. Dort erscheint nach jedem Spieltag auch das „Adler Nest“ – eine neue Ausgabe zum Lesen und Hören. Ist euer Kind im nächsten Porträt, steht oben eine Karte mit dem Porträt-Bogen. Die ganze Saison und das Kalender-Abo findest du unten unter „Mehr“ → „Alle Termine“ – seit v741 sagst du dort für jeden künftigen Termin direkt zu oder ab (👍/🤔/👎 je Kind). Fällt ein Termin aus, steht „🔴 Fällt aus“ mit Grund daneben; zurückmelden musst du dann nichts."},
+   d:"Tippe auf einen Termin: Wetter, Adresse mit Route, „Was muss mit?“, Fahrgemeinschaft, „Wer hilft mit?“ und die Fotos zum Termin – „📷 Foto aufnehmen“ öffnet direkt die Kamera. Alle Spieltagsfotos zusammen – groß ansehen und durchwischen – stehen unter „Mehr vom Team“ → „Spieltagsgalerie“. Dort erscheint nach jedem Spieltag auch das „Adler Nest“ – eine neue Ausgabe zum Lesen und Hören. Ist euer Kind im nächsten Porträt, steht oben eine Karte mit dem Porträt-Bogen. Die ganze Saison und das Kalender-Abo findest du unten unter „Mehr“ → „Alle Termine“ – seit v741 sagst du dort für jeden künftigen Termin direkt zu oder ab (👍/🤔/👎 je Kind). Fällt ein Termin aus, steht „🔴 Fällt aus“ mit Grund daneben; zurückmelden musst du dann nichts. Bei jedem Training und Spieltag steht dort auch „🫖 Tee mitbringen“."},
   {emo:"✅", t:"Zu erledigen", sel:["#eltern-todo-btn"],
    d:"Aufgaben für euch als Familie, zum Beispiel der Grillhütten-Dienst. Könnt ihr nicht, tippt ihr „Ersatz suchen“ – eine andere Familie kann übernehmen."},
   {emo:"📡", t:"Liveticker", sel:["#eltern-live-slot","#eltern-ticker-slot"],
