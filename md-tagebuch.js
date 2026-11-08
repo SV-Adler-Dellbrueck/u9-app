@@ -957,17 +957,32 @@ function tagebuchGedanke(){
   const ov = document.createElement("div");
   ov.id = "tb-gedanke"; ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-label","Gedanke");
   ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10061;display:flex;padding:14px";
-  ov.onclick = e => { if(e.target===ov) ov.remove(); };
+  /* v814 · Charles 08.11.2026: drei Gedanken gingen verloren, ohne dass ein Speicherversuch beim Server ankam. Seitdem merkt sich das
+     Gerät den Text beim Tippen (bis „Gedanke erfassen“ oder die KI-Sortierung geklappt hat), und ein Tipp neben das Fenster schließt
+     es nur, solange nichts drinsteht. Schließen über × oder „Abbrechen“ behält den Entwurf – beim nächsten Öffnen ist er wieder da. */
+  ov.onclick = e => { if(e.target===ov && !(document.getElementById("tb-gedanke-text")?.value||"").trim()) ov.remove(); };
+  const entwurf = tbGedankeEntwurf();
   ov.innerHTML = `<div style="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
     ${mdlHead("tb-gedanke","💭","Gedanke","Kommt ins Tagebuch – ausarbeiten kannst du ihn später","#7c3aed")}
     <textarea id="tb-gedanke-text" rows="6" aria-label="Dein Gedanke" placeholder="Was geht dir durch den Kopf? Tippen oder das Mikrofon der Tastatur nutzen." style="width:100%;box-sizing:border-box;min-height:140px;padding:12px;border:var(--border-s);border-radius:10px;font-family:inherit;font-size:var(--s-karte);line-height:1.5;background:var(--surface2);color:var(--text);resize:vertical;margin-top:8px"></textarea>
-    <div id="tb-gedanke-meldung" role="status" style="font-size:var(--s-klein);color:var(--text2);min-height:18px;margin-top:4px"></div>
+    <div id="tb-gedanke-meldung" role="status" style="font-size:var(--s-klein);color:var(--text2);min-height:18px;margin-top:4px">${entwurf?`Dein noch nicht erfasster Text von vorhin ist wieder da. <button type="button" onclick="tbGedankeVerwerfen()" style="background:none;border:none;padding:0 2px;color:var(--text);text-decoration:underline;font:inherit;cursor:pointer">Verwerfen</button>`:""}</div>
     <button id="tb-gedanke-ki" class="btn" onclick="tagebuchGedankeSortieren()" style="width:100%;min-height:48px;margin-top:6px;justify-content:center"><i class="ti ti-sparkles"></i>Von der KI sortieren lassen</button>
     <button id="tb-gedanke-los" class="btn btn-p" onclick="tagebuchGedankeSpeichern()" style="width:100%;min-height:56px;margin-top:6px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-check"></i>Gedanke erfassen</button>
     <button class="btn" onclick="document.getElementById('tb-gedanke').remove()" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Abbrechen</button>
   </div>`;
   document.body.appendChild(ov);
+  const ta = document.getElementById("tb-gedanke-text");
+  if(ta){ if(entwurf) ta.value = entwurf; ta.addEventListener("input", ()=>tbGedankeMerken(ta.value)); }
   setTimeout(()=>{ try{ document.getElementById("tb-gedanke-text").focus(); }catch(e){} }, 30);
+}
+/* v814: Entwurf des Gedankens auf diesem Gerät (nur bis zum erfolgreichen Erfassen) */
+const TB_GEDANKE_KEY = "adler_tb_gedanke_entwurf";
+function tbGedankeEntwurf(){ try{ return localStorage.getItem(TB_GEDANKE_KEY)||""; }catch(e){ return ""; } }
+function tbGedankeMerken(t){ try{ if(String(t||"").trim()) localStorage.setItem(TB_GEDANKE_KEY, String(t)); else localStorage.removeItem(TB_GEDANKE_KEY); }catch(e){} }
+function tbGedankeVerwerfen(){
+  tbGedankeMerken("");
+  const ta = document.getElementById("tb-gedanke-text"); if(ta){ ta.value = ""; ta.focus(); }
+  const m = document.getElementById("tb-gedanke-meldung"); if(m) m.textContent = "Entwurf verworfen.";
 }
 /* v791 · Gedanke ohne Termin per KI sortieren (Charles 06.11.). Derselbe Weg wie nach einem Training:
    Namen gehen nie hinaus (nbMaske → „Kind n“), die Antwort kommt zurück auf Vornamen, wird als
@@ -990,6 +1005,7 @@ async function tagebuchGedankeSortieren(){
   if(!v){ zurueck(); if(m) m.textContent = "Die KI hat nichts Sortierbares gefunden. Der Text bleibt stehen – „Gedanke erfassen“ speichert ihn unsortiert."; return; }
   const id = await tbVorschlagSichern({ fuer:"g"+Date.now(), art:"gedanke", v, diktat:t });
   if(!id){ zurueck(); if(m) m.textContent = "Der Vorschlag ließ sich nicht speichern – der Text bleibt stehen."; return; }
+  tbGedankeMerken("");   // v814: erst jetzt ist er sicher gespeichert
   document.getElementById("tb-gedanke")?.remove();
   tbPruefenOpen(id);
 }
@@ -1006,6 +1022,7 @@ async function tagebuchGedankeSpeichern(){
     if(sbCheck401(r)) return;
     if(!r.ok && r.status!==201){ if(b) b.disabled = false; if(m) m.textContent = sbDeniedMsg(r,"Nicht erfasst – der Text bleibt stehen"); return; }
   }catch(e){ if(b) b.disabled = false; if(m) m.textContent = "Keine Verbindung – der Text bleibt stehen. Noch einmal versuchen, sobald du online bist."; return; }
+  tbGedankeMerken("");   // v814
   document.getElementById("tb-gedanke")?.remove();
   toast("Gedanke erfasst ✓");
   if(document.getElementById("tb-liste")) tagebuchListe();
