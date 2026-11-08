@@ -10,6 +10,7 @@
       „Hört zu“, Knopf wird „Pause“.
    b) Das gerade Verstandene steht live in der Anzeige; kumulative Ergebnisse stehen EINMAL im Feld.
    c) Nach dem Sitzungsende startet die nächste von selbst – die Eingabe hört nicht auf.
+   k) seit v813: die KI-Auswertung speichert auch ohne Umweg über die Startseite sofort (Bewertung mit Spaß 4) und schließt den Bogen.
    d) Doppelt gelieferte Wortgruppen stehen einmal da; „sehr sehr gut“ bleibt.
    e) Pause: nichts geht verloren, kein Neustart, Sperre frei, Knopf „Weiter einsprechen“;
       Weiter hängt an.
@@ -33,9 +34,9 @@
 "use strict";
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
-  const gestern = h.tagePlus(-1);
+  const gestern = h.tagePlus(-1), gespeichert = [];
   const s = await h.starten({ hoehe: 1400, supabase: h.supabaseAttrappe({
-    kader: h.kaderZeilen(), profiles: [{ name: "Charles", rolle: "trainer" }], anwesenheit: [], einheit_bewertung: [], trainings_eval: [],
+    kader: h.kaderZeilen(), profiles: [{ name: "Charles", rolle: "trainer" }], anwesenheit: [], einheit_bewertung: (u, req) => { if (req.method() !== "GET") { gespeichert.push(req.postData() || ""); return { status: 201, body: "[]" }; } return []; }, trainings_eval: [],
     trainingsplan: [{ datum: gestern, plan: [{ formIdx: 1, formName: "Dribbel Quadrat", trainer: "Alle", slotLabel: "Warm up" }], kopf: {} }],
     funktionen: { "ki-nachbereitung": () => ({ art: "training", ergebnis: { einheit: { spass: 4, umsetzung: null, erfolg: null, notiz: null },
       uebungen: [{ nr: 1, durchfuehrung: null, spass: null, anforderung: null, notiz: null, uebersprungen: true }], kinder: [],
@@ -109,8 +110,11 @@ module.exports = async function (h) {
     out.k = { knopf: (document.getElementById("nb-gross-los") || {}).textContent.trim() };
     document.getElementById("nb-gross-los").click();
     for (let i = 0; i < 40 && document.getElementById("nb-gross-ov"); i++) await warte(50);
-    out.k.spassDanach = Number(document.getElementById("eb-stars-spass").dataset.val); out.k.skipDanach = document.getElementById("eb-skip-0").checked;
-    out.k.zu = !document.getElementById("nb-gross-ov"); out.k.status = document.getElementById("nb-status").textContent;
+    /* v813: Die Auswertung speichert sofort (wie von der Startseite) und schließt den Bogen – geprüft wird am Gespeicherten. */
+    for (let i = 0; i < 40 && document.getElementById("eb-modal"); i++) await warte(50);
+    out.k.zu = !document.getElementById("nb-gross-ov"); out.k.bogenZu = !document.getElementById("eb-modal");
+    await einheitBewertenOpen(); await einheitDetailOpen(gestern);
+    for (let i = 0; i < 40 && !document.getElementById("nb-gross"); i++) await warte(50);
     // l) ⤢ ohne Mikrofon
     const vorGross = sr.length;
     document.getElementById("nb-gross").click(); await warte(30);
@@ -154,7 +158,8 @@ module.exports = async function (h) {
     probleme.push(`m) Tasten (v764): ${JSON.stringify(m)}`);
   const k = r.k;
   if (k.knopf !== "KI-Auswertung") probleme.push(`k) Knopf heißt „${k.knopf}“ statt „KI-Auswertung“`);
-  if (k.spassDanach !== 4 || !k.skipDanach || !k.zu || !/Im Bogen prüfen, ändern und speichern/.test(k.status) || !/Korrektur einsprechen/.test(k.status)) probleme.push(`k) direkt eingetragen: ${JSON.stringify(k)}`);
+  const gesp = gespeichert.join(" ");
+  if (!k.zu || !k.bogenZu || !/"spass":4/.test(gesp)) probleme.push(`k) sofort gespeichert (v813): ${JSON.stringify(k)} · ${gesp.slice(0, 200)}`);
   if (!r.l.ov || r.l.neu !== 0 || !r.l.text) probleme.push(`l) ⤢: ${JSON.stringify(r.l)}`);
   if (!r.h.weg) probleme.push("h) Trainer-Notiz nutzt den gemeinsamen Weg nicht");
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
