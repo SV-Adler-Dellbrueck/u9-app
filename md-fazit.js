@@ -769,7 +769,10 @@ function nbMaske(anwesend){
   Object.keys(vorn).forEach(v=>{ if(vorn[v].length===1 && !ziel[v]) ziel[v] = vorn[v][0]; });
   const schluessel = Object.keys(ziel).sort((a,b)=>b.length-a.length);
   const re = schluessel.length ? new RegExp("(^|[^\\p{L}])("+schluessel.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|")+")(?![\\p{L}])","giu") : null;
-  const weg = t => re ? String(t).replace(re, (all, vor, name)=>vor+(ziel[name.toLowerCase()]||name)) : String(t);
+  /* v808: Schreibvarianten (gepflegt oder sicher ähnlich) bekommen denselben Platzhalter wie das Kind – an die KI geht kein Name */
+  const proAlias = {}; (typeof KADER!=="undefined"?KADER:[]).forEach(k=>{ if(k&&k.alias&&hin[k.name]) proAlias[k.alias] = hin[k.name]; });
+  const weg = t => { const a = re ? String(t).replace(re, (all, vor, name)=>vor+(ziel[name.toLowerCase()]||name)) : String(t);
+    return typeof namenNachbessern==="function" ? namenNachbessern(a, al=>proAlias[al]||"ein Kind") : a; };
   return { weg, zurueck, kinder: (anwesend||[]).map(n=>hin[n]) };
 }
 /* Holt die KI-Antwort, ohne etwas einzutragen. Wirft bei Fehlern; null, wenn kein Fenster offen ist. */

@@ -2062,3 +2062,110 @@ function fuehrungEnde(){
 function fuehrungLaeuft(){ return !!_fg; }
 window.addEventListener("resize",()=>{ if(_fg)_fgPlatz(); });
 document.addEventListener("keydown",e=>{ if(_fg&&e.key==="Escape"){ e.preventDefault(); fuehrungEnde(); } });
+
+/* ═══ v808 · Kindernamen in Schreibvarianten (Charles 08.11.2026, Namensleck im Tagebuch-Export) ═══════════
+   Die Spracherkennung schreibt Vornamen anders als der Kader („Live“, „Stefan“ …). Ersetzt wurden bisher nur
+   exakte Namen – Varianten gingen in Kopien, Exporte und an die KI. Dieselbe Regel wie in der Datenbank
+   (export.ohne_namen, Migration v808):
+   1) gepflegte Varianten (Trainer, Tabelle export.name_variante) – nur als ganzes Wort in IHRER Schreibweise,
+      damit das gewöhnliche kleingeschriebene Wort stehen bleibt; ohne Buchstaben (Gastkind) → „ein Kind“
+   2) streng automatisch: großgeschrieben, ab 4 Buchstaben, gleicher Kölner Code wie ein Vorname und höchstens
+      ein Buchstabe Abstand – außer erlaubte Wörter. Am Bestand gemessen: kein gewöhnliches Wort getroffen.
+   3) locker (Code gleich, bis 3 Buchstaben) ersetzt NICHT, sondern fragt auf der Prüfkarte nach („Ist das …?“). */
+function koelnerPhonetik(w){
+  const s=String(w||"").toLowerCase().replace(/ä/g,"a").replace(/ö/g,"o").replace(/ü/g,"u").replace(/ß/g,"s").replace(/[^a-z]/g,"");
+  let r="";
+  for(let i=0;i<s.length;i++){
+    const ch=s[i], pr=i?s[i-1]:"", nx=s[i+1]||"";
+    let c="";
+    if("aeijouy".includes(ch)) c="0";
+    else if(ch==="h") c="";
+    else if(ch==="b") c="1";
+    else if(ch==="p") c=nx==="h"?"3":"1";
+    else if(ch==="d"||ch==="t") c=(nx&&"csz".includes(nx))?"8":"2";
+    else if("fvw".includes(ch)) c="3";
+    else if("gkq".includes(ch)) c="4";
+    else if(ch==="c") c=i===0?((nx&&"ahkloqrux".includes(nx))?"4":"8"):((pr&&"sz".includes(pr))?"8":((nx&&"ahkoqux".includes(nx))?"4":"8"));
+    else if(ch==="x") c=(pr&&"ckq".includes(pr))?"8":"48";
+    else if(ch==="l") c="5";
+    else if(ch==="m"||ch==="n") c="6";
+    else if(ch==="r") c="7";
+    else if(ch==="s"||ch==="z") c="8";
+    r+=c;
+  }
+  let o=""; for(const ch of r){ if(!o.length||o[o.length-1]!==ch) o+=ch; }
+  return o?o[0]+o.slice(1).replace(/0/g,""):"";
+}
+function wortAbstand(a,b){
+  a=String(a||"").toLowerCase(); b=String(b||"").toLowerCase();
+  let p=Array.from({length:b.length+1},(_,j)=>j);
+  for(let i=1;i<=a.length;i++){ const c=[i]; for(let j=1;j<=b.length;j++) c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1)); p=c; }
+  return p[b.length];
+}
+const NAMEN_ERLAUBT_GRUND=["Kind","Charles","Finn","Kenneth","Peter","Markus","Auch","Und","Der","Die","Das","Ein","Eine","Mit","Von","Zum","Zur","Bei","Uhr","Team","Sein","Ihre","Sehr","Dann","Wenn","Aber","Noch","Mal","Mutter","Matte","Mitte"];
+let _namenSchreib=null;
+async function namenSchreibLaden(neu){
+  if(_namenSchreib&&!neu) return _namenSchreib;
+  const z={varianten:[],erlaubt:new Set(NAMEN_ERLAUBT_GRUND.map(w=>w.toLowerCase()))};
+  try{
+    if(typeof sbToken==="function"&&sbToken()){
+      const r=await fetch(`${SB_URL}/rest/v1/rpc/namen_schreibweisen`,{method:"POST",headers:{...sbAuthHeaders(),"Content-Type":"application/json"},body:"{}"});
+      if(r.ok) ((await r.json())||[]).forEach(x=>{ if(x.art==="name"&&x.wort) z.varianten.push({wort:x.wort,alias:x.alias||null}); else if(x.art==="wort"&&x.wort) z.erlaubt.add(String(x.wort).toLowerCase()); });
+    }
+  }catch(e){}
+  z.varianten.sort((a,b)=>b.wort.length-a.wort.length);
+  _namenSchreib=z; return z;
+}
+function namenSchreib(){ return _namenSchreib||{varianten:[],erlaubt:new Set(NAMEN_ERLAUBT_GRUND.map(w=>w.toLowerCase()))}; }
+/* Vornamen mit Buchstaben aus dem Kader: [{name, vorname, alias}] */
+function namenKader(){
+  return (typeof KADER!=="undefined"?(KADER||[]):[]).filter(k=>k&&k.name&&k.alias).map(k=>({name:k.name,vorname:String(k.name).trim().split(/\s+/)[0],alias:k.alias}));
+}
+/* Kandidat für ein Wort: {alias|null (zwei gleich nah), d, sicher} oder null */
+function namenAehnlich(wort,kader){
+  if(!/^[A-ZÄÖÜ][a-zäöüß]{2,}$/.test(wort)) return null;
+  const s=namenSchreib(); if(s.erlaubt.has(wort.toLowerCase())||s.varianten.some(v=>v.wort===wort)) return null;
+  const code=koelnerPhonetik(wort); let best=null;
+  (kader||namenKader()).forEach(k=>{
+    if(k.vorname.length<3||k.vorname.toLowerCase()===wort.toLowerCase()) return;
+    if(koelnerPhonetik(k.vorname)!==code) return;
+    const d=wortAbstand(wort,k.vorname); if(d>3) return;
+    if(!best||d<best.d) best={d,kinder:[k]}; else if(d===best.d&&!best.kinder.some(x=>x.alias===k.alias)) best.kinder.push(k);
+  });
+  if(!best) return null;
+  return {d:best.d, kind:best.kinder.length===1?best.kinder[0]:null, sicher:best.d<=1&&wort.length>=4};
+}
+/* Schritt 1 und 2 auf einen Text, der die exakten Namen schon ersetzt hat. ziel(alias) liefert den Ersatz. */
+function namenNachbessern(text,ziel){
+  let t=String(text||""); if(!t) return t;
+  const s=namenSchreib(), kader=namenKader();
+  const ersatz=a=>a?(ziel(a)||"ein Kind"):"ein Kind";
+  const wortRe=w=>new RegExp("(^|[^\\p{L}])("+w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")(?![\\p{L}])","gu");
+  s.varianten.forEach(v=>{ t=t.replace(wortRe(v.wort),(all,vor)=>vor+ersatz(v.alias)); });
+  const gesehen=new Set();
+  (t.match(/[A-ZÄÖÜ][a-zäöüß]{3,}/gu)||[]).forEach(w=>{
+    if(gesehen.has(w)) return; gesehen.add(w);
+    const a=namenAehnlich(w,kader); if(!a||!a.sicher) return;
+    t=t.replace(wortRe(w),(all,vor)=>vor+ersatz(a.kind?a.kind.alias:null));
+  });
+  return t;
+}
+/* Rückfragen für die Prüfkarte: Wörter, die einem Vornamen ähneln (locker), noch nicht entschieden */
+function namenFragen(texte){
+  const kader=namenKader(), aus=[], gesehen=new Set();
+  texte.filter(Boolean).forEach(t=>{
+    (String(t).match(/[A-ZÄÖÜ][a-zäöüß]{2,}/gu)||[]).forEach(w=>{
+      if(gesehen.has(w)) return; gesehen.add(w);
+      const a=namenAehnlich(w,kader); if(a&&a.kind) aus.push({wort:w,alias:a.kind.alias,name:a.kind.vorname,sicher:a.sicher});
+    });
+  });
+  return aus;
+}
+async function namenSchreibSetzen(wort,art,alias){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/rpc/namen_schreibweise_setzen`,{method:"POST",headers:{...sbAuthHeaders(),"Content-Type":"application/json"},body:JSON.stringify({p_wort:wort,p_art:art,p_alias:alias||null})});
+    if(!r.ok) return false;
+  }catch(e){ return false; }
+  await namenSchreibLaden(true);
+  return true;
+}

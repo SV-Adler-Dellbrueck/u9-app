@@ -116,7 +116,9 @@ function tbPseudonym(text){
   const keys = Object.keys(ziel).sort((a,b)=>b.length-a.length);
   if(!keys.length) return t;
   const re = new RegExp("(^|[^\\p{L}])("+keys.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|")+")(?![\\p{L}])","giu");
-  return t.replace(re, (all, vor, name)=>vor+(ziel[name.toLowerCase()]||name));
+  const aus = t.replace(re, (all, vor, name)=>vor+(ziel[name.toLowerCase()]||name));
+  /* v808: Schreibvarianten der Spracherkennung (gepflegt oder sicher ähnlich) werden ebenfalls zum Buchstaben */
+  return typeof namenNachbessern==="function" ? namenNachbessern(aus, a=>"Kind "+a) : aus;
 }
 
 /* ── Namensprüfung ─────────────────────────────────────────────────────────────
@@ -1127,6 +1129,7 @@ async function tbPruefenOpen(id, opt){
     todos: punkte.filter(p=>p.art==="todo").map(p=>({id:p.id,text:p.text,bis:p.bis||"",zustaendig:p.zustaendig,weg:false})),
     fragen: (Array.isArray(e.rueckfragen)?e.rueckfragen:[]).map(f=>({frage:f.frage||String(f),feld:f.feld||"beobachtung",antwort:""})),
     baustein: e.baustein };
+  if(typeof namenSchreibLaden==="function") await namenSchreibLaden();   // v808: Varianten und erlaubte Wörter für „Ist das ein Name?“
   document.getElementById("tb-pruefen")?.remove();
   const ov = document.createElement("div");
   ov.id = "tb-pruefen"; ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-label","Vorschlag prüfen");
@@ -1163,6 +1166,30 @@ function tbpDatumChips(liste, i, x){
     ${liste==="kons"?`<button type="button" class="tbp-dauerhaft" onclick="tbpDauerhaft(${i})" aria-pressed="${!!x.dauerhaft}" style="min-height:44px;padding:0 10px;border:${x.dauerhaft?"2px solid var(--blue)":"1px solid var(--rand-bedien)"};border-radius:10px;background:${x.dauerhaft?"var(--blue-bg)":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:${x.dauerhaft?"800":"600"};cursor:pointer">${x.dauerhaft?"✓ ":""}gilt dauerhaft</button>`:""}
   </div>${T.length?"":`<div style="font-size:var(--s-klein);color:var(--text3);margin-top:3px">Keine kommenden Termine mit deiner Zusage – nimm „anderes Datum“.</div>`}`;
 }
+/* v808 · „Ist das ein Name?“ – Wörter, die einem Vornamen ähneln (gleicher Kölner Code), mit einem Tipp entscheiden.
+   Ja → Schreibvariante dieses Kindes (export.name_variante), Nein → gewöhnliches Wort (export.wort_erlaubt).
+   Danach behandeln Export, Teilen und KI-Maske das Wort richtig. Der Eintrag selbst bleibt, wie er ist. */
+function tbpNamenHtml(kopf){
+  if(!_TBP||typeof namenFragen!=="function") return "";
+  const e=_TBP.e;
+  _TBP.namen = namenFragen([e.ausloeser, e.beobachtung, e.aha, ..._TBP.kons.map(k=>k.text)]);
+  if(!_TBP.namen.length) return "";
+  return `${kopf("🔤 Ist das ein Name?")}<div style="font-size:var(--s-klein);color:var(--text2);line-height:1.45;margin-bottom:6px">Die Spracherkennung schreibt Namen manchmal anders. Ein Tipp genügt – danach wird das Wort im Export, beim Teilen und vor der KI richtig behandelt.</div>
+    ${_TBP.namen.map((n,i)=>`<div class="tbp-name" style="border:var(--border-s);border-radius:10px;padding:8px 10px;margin-bottom:6px">
+      <div style="font-size:var(--s-text)">„<b>${esc(n.wort)}</b>“ – ist das ${esc(n.name)}?</div>
+      <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+        <button type="button" class="btn" onclick="tbpNameEntscheid(${i},'name')" style="flex:1 1 40%;min-height:44px;justify-content:center">Ja, ${esc(n.name)}</button>
+        <button type="button" class="btn" onclick="tbpNameEntscheid(${i},'wort')" style="flex:1 1 40%;min-height:44px;justify-content:center">Nein, normales Wort</button>
+      </div></div>`).join("")}`;
+}
+async function tbpNameEntscheid(i, art){
+  if(!_TBP||!_TBP.namen||!_TBP.namen[i]) return;
+  tbPruefenLesen();
+  const n=_TBP.namen[i];
+  const ok=typeof namenSchreibSetzen==="function" && await namenSchreibSetzen(n.wort, art, art==="name"?n.alias:null);
+  toast(ok?(art==="name"?`„${n.wort}“ gilt jetzt als ${n.name}`:`„${n.wort}“ bleibt ein normales Wort`):"Konnte nicht gespeichert werden", ok?"ok":"err");
+  tbPruefenZeichnen();
+}
 function tbPruefenZeichnen(){
   const c = document.getElementById("tb-pruefen-karte"); if(!c || !_TBP) return;
   const e = _TBP.e;
@@ -1183,6 +1210,7 @@ function tbPruefenZeichnen(){
     ${_TBP.kons.map((k,i)=>`<label style="display:block;font-size:var(--s-klein);font-weight:700;margin-top:10px">Konsequenz ${_TBP.kons.length>1?i+1:""}
       <textarea id="tbp-kons-${i}" class="wachsen" rows="2" style="${fld};margin-top:3px">${esc(k.text)}</textarea></label>
       <div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Bis wann – ein Termin, an dem du da bist</div>${tbpDatumChips("kons",i,k)}`).join("")}
+    ${tbpNamenHtml(kopf)}
     ${_TBP.fragen.length?`${kopf("Rückfragen")}${_TBP.fragen.map((f,i)=>`<div style="margin-bottom:10px">
       <label style="display:block;font-size:var(--s-text);font-weight:700">${esc(f.frage)} <span style="font-weight:500;color:var(--text3);font-size:var(--s-klein)">· Antwort geht wörtlich ins Feld ${f.feld==="aha"?"Aha":f.feld==="konsequenz"?"Konsequenz":"Beobachtung"}</span>
         <textarea id="tbp-frage-${i}" rows="2" style="${fld};margin-top:3px" placeholder="Leer lassen = überspringen">${esc(f.antwort||"")}</textarea></label>
