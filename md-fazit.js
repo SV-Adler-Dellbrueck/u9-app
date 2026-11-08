@@ -541,6 +541,22 @@ function nbFeldHoehe(el){ if(!el) return; el.style.height = "auto"; el.style.hei
    übernehmen“ setzt die Felder. Es gibt kein zweites Textfeld im Speicher: die Vollansicht
    schreibt in dasselbe wie das kleine Feld, und der KI-Weg ist derselbe (nbKiHolen, nbKiAnwenden). */
 let _nbGrossErg = null;
+/* v805 · Leitfaden vor dem Einsprechen (Charles 08.11.2026): vier Punkte in der Reihenfolge des Ablaufs, dazu zwei Sätze, warum zwei Minuten helfen.
+   Training und Spieltag haben je eigene Punkte. „Nichts Besonderes“ ist eine gültige Antwort – sonst wird abgehakt statt erzählt. */
+const NB_LEITFADEN = {
+  training: ["Ankommen und Aufbau – nur, wenn etwas auffiel.", "Deine Übungen: Was lief gut, was musstest du ändern?", "Die Kinder: Hat es Spaß gemacht? Wer fiel positiv oder anders auf?", "Besonderes, zum Beispiel Verletzung, Streit, Material oder Abbau."],
+  spiel: ["Ankunft und Organisation.", "Spielverlauf, Aufstellung und Einsatzzeiten.", "Die Kinder: Spaß, Fairplay, Stimmung.", "Besonderes zu Gegner, Schiedsrichter, Eltern oder Verletzungen."]
+};
+function nbLeitfadenHtml(art, offen){
+  const punkte = NB_LEITFADEN[art==="training" ? "training" : "spiel"];
+  return `<details id="nb-leitfaden" ${offen?"open":""} style="border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2)">
+      <summary style="min-height:44px;display:flex;align-items:center;padding:0 12px;font-weight:800;font-size:var(--s-text);cursor:pointer">Woran du beim Erzählen denken kannst</summary>
+      <div style="padding:0 12px 10px;font-size:var(--s-text);line-height:1.5">
+        <ol style="margin:0 0 8px;padding-left:20px">${punkte.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>
+        <div style="color:var(--text2)">Nur, was dir einfällt – „nichts Besonderes“ ist auch eine Antwort. Zwei Minuten reichen: Was du jetzt sagst, wüssten wir in vier Wochen nicht mehr, und es hilft uns, jedes Kind fair zu fördern.</div>
+      </div>
+    </details>`;
+}
 function nbGross(art, mikro){
   document.getElementById("nb-gross-ov")?.remove();
   _nbGrossErg = null;
@@ -553,6 +569,7 @@ function nbGross(art, mikro){
       <div style="flex:1;font-size:var(--s-teil);font-weight:800">🎙️ Sprachnotiz</div>
       <button class="btn" style="min-height:44px" onclick="nbGrossZu()" aria-label="Fertig – zurück zum Bogen, der Text bleibt stehen">Fertig</button>
     </div>
+    ${nbLeitfadenHtml(art, !_nbText)}
     <div id="nb-gross-hoer" class="dk-anzeige" style="margin-top:0" hidden></div>
     <textarea id="nb-gross-text" maxlength="12000" aria-label="Text der Sprachnotiz" oninput="nbGrossTipp(this)"
       style="flex:1;min-height:0;width:100%;box-sizing:border-box;padding:12px;border:1px solid var(--rand-bedien);border-radius:12px;font-family:inherit;font-size:var(--s-karte);line-height:1.6;background:var(--surface2);color:var(--text);resize:none"
