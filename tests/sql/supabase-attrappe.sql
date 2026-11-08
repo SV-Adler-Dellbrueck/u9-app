@@ -39,7 +39,9 @@ create function public.ist_anonym() returns boolean language sql stable as $$ se
 create function public.ist_mitglied() returns boolean language sql stable security definer set search_path to 'public' as $$ select public.is_trainer() or (not public.ist_anonym() and exists(select 1 from public.eltern_kinder e where lower(e.email)=lower(coalesce((select auth.jwt())->>'email','')))) or exists(select 1 from public.kind_konto k where k.uid=(select auth.uid()) and k.aktiv) $$;
 create function public.sitzung_gueltig() returns boolean language sql stable security definer set search_path to 'public' as $$ select (select auth.uid()) is not null and public.ist_mitglied() $$;
 -- v736: Vorname der Eltern für die Adler-Rufe
-create table public.eltern_angaben(user_id uuid primary key, vorname text);
+create table public.eltern_angaben(user_id uuid primary key, vorname text, nachname text);
+create table public.kind_kontakte(id bigserial primary key, spieler_id bigint, name text, rolle text);
+create table public.event_helfer(id bigserial primary key, termin_id bigint, user_id uuid, name text);
 -- v734: Platzhalter für die Karten (Bewertungen kennt die Attrappe nicht)
 create table public.spielerprofile(name text, datum text, radios jsonb, position text, prim_rolle text, strong_foot text, age int);
 create table public.quiz_progress(player text, score int);

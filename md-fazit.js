@@ -720,7 +720,7 @@ function nbGrossUebernehmen(){
 function nbVorschau(art, e, m){
   e = e || {};
   const S = n => "★".repeat(n), z = [];
-  const zur = t => String(t||"").replace(/Kind (\d+)/g,(x,n)=>(m&&m.zurueck&&m.zurueck["Kind "+n])||x);
+  const zur = t => String(t||"").replace(/(Kind|Elternteil) (\d+)/g,(x,w,n)=>(m&&m.zurueck&&m.zurueck[w+" "+n])||x);
   if(art==="training"){
     const ei = e.einheit || {}, t = [];
     if(ei.spass) t.push("Spaß "+S(ei.spass)); if(ei.umsetzung) t.push("Umsetzung "+S(ei.umsetzung)); if(ei.erfolg) t.push("Ziel erreicht "+S(ei.erfolg));
@@ -768,10 +768,16 @@ function nbMaske(anwesend){
   reihe.forEach(n=>{ const v = String(n).split(/\s+/)[0]; if(v && v!==n && v.length>2) (vorn[v.toLowerCase()] = vorn[v.toLowerCase()]||[]).push(hin[n]); });
   Object.keys(vorn).forEach(v=>{ if(vorn[v].length===1 && !ziel[v]) ziel[v] = vorn[v][0]; });
   const schluessel = Object.keys(ziel).sort((a,b)=>b.length-a.length);
-  const re = schluessel.length ? new RegExp("(^|[^\\p{L}])("+schluessel.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|")+")(?![\\p{L}])","giu") : null;
+  /* v812: auch mit Genitiv-s („Testas Vater“) – wie im Export */
+  const re = schluessel.length ? new RegExp("(^|[^\\p{L}])("+schluessel.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|")+")(?:s|’s|'s)?(?![\\p{L}])","giu") : null;
   /* v808: Schreibvarianten (gepflegt oder sicher ähnlich) bekommen denselben Platzhalter wie das Kind – an die KI geht kein Name */
   const proAlias = {}; (typeof KADER!=="undefined"?KADER:[]).forEach(k=>{ if(k&&k.alias&&hin[k.name]) proAlias[k.alias] = hin[k.name]; });
-  const weg = t => { const a = re ? String(t).replace(re, (all, vor, name)=>vor+(ziel[name.toLowerCase()]||name)) : String(t);
+  /* v812: Elternnamen bekommen „Elternteil 1“, „Elternteil 2“ … – die KI sieht keinen Namen, der Entwurf bekommt ihn zurück */
+  const eltern = (typeof namenSchreib==="function" ? (namenSchreib().eltern||[]) : []);
+  eltern.forEach((n,i)=>{ zurueck["Elternteil "+(i+1)] = n; });
+  const reE = eltern.length ? new RegExp("(^|[^\\p{L}])("+eltern.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|")+")(?![\\p{L}])","gu") : null;
+  const weg = t => { let a = re ? String(t).replace(re, (all, vor, name)=>vor+(ziel[name.toLowerCase()]||name)) : String(t);
+    if(reE) a = a.replace(reE, (all, vor, name)=>vor+"Elternteil "+(eltern.indexOf(name)+1));
     return typeof namenNachbessern==="function" ? namenNachbessern(a, al=>proAlias[al]||"ein Kind") : a; };
   return { weg, zurueck, kinder: (anwesend||[]).map(n=>hin[n]) };
 }
@@ -859,7 +865,7 @@ function _nbStern(key, wert, max, groesse){
 }
 /* Im Bogen (nur Trainer) stehen die echten Namen – „Kind 2“ aus der KI-Antwort wird zurückübersetzt. */
 let _nbMaskeAktiv = null;
-function nbZurueck(t){ const m=_nbMaskeAktiv; return String(t||"").replace(/Kind (\d+)/g,(x,n)=>(m&&m.zurueck&&m.zurueck["Kind "+n])||x); }
+function nbZurueck(t){ const m=_nbMaskeAktiv; return String(t||"").replace(/(Kind|Elternteil) (\d+)/g,(x,w,n)=>(m&&m.zurueck&&m.zurueck[w+" "+n])||x); }
 /* v638 · PO: „… wenn ich dann wieder KI-Auswertung anklicke, dann setzt er einfach den gleichen Text
    oder einen weiteren Auswertungstext in das große Textfeld hinein, obwohl schon dort was drin steht.“
    Das Feld merkt sich, was die KI zuletzt hineingeschrieben hat (data-ki). Eine neue Auswertung
