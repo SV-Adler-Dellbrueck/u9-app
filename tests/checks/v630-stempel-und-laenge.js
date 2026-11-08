@@ -96,7 +96,8 @@ module.exports = async function (h) {
   // v679 (fehlerbild-abgeschnitten.md): die Spiel-Sätze fassen 4000 Zeichen, gekürzt wird nicht mehr
   if (!/id="fz-getragen" class="wachsen" rows="2" maxlength="4000"/.test(fz) || !/id="fz-arbeiten" class="wachsen" rows="2" maxlength="4000"/.test(fz)) probleme.push("e) Spiel-Sätze nicht auf 4000");
   // f
-  if (!/✍️ Charles · 25\.09\.2026/.test(r.f.liste)) probleme.push("f) Tagebuch-Liste ohne Stempel: " + r.f.liste.slice(0, 160));
+  /* v815: Die Liste zeigt nur eigene Einträge – statt des Stempels stehen Nummer und Datum in der Karte; der Stempel bleibt im Fenster. */
+  if (!/Nr\. \d+ · \S+ \d{2}\.\d{2}\./.test(r.f.liste)) probleme.push("f) Tagebuch-Liste ohne Nummer und Datum: " + r.f.liste.slice(0, 160));
   if (r.f.fenster && !/✍️ Charles/.test(r.f.fenster)) probleme.push("f) Tagebuch-Fenster ohne Stempel");
   // g
   const ki = fs.readFileSync(path.join(h.REPO, "supabase/functions/ki-nachbereitung/index.ts"), "utf8");
