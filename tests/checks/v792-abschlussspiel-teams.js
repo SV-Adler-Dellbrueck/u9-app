@@ -1,6 +1,6 @@
 /* v792 · Abschlussspiel im Trainingsplan (Charles 06.11.): „Beim Abschlussspiel brauche ich auch die Möglichkeit auf 4+1
    umzustellen und Teams zu bilden. Teams wenn es passt erstmal aus den Trainingsgruppen übernehmen, aber optional änderbar.“
-   a) Der Block zeigt Spielform (FUNiño ✓ / 4+1) und je Trainingsgruppe ein Team mit dem Gruppennamen und seinen Kindern
+   a) Der Block zeigt Spielform (FUNiño ✓ / 3+1 / 4+1, dritte Form seit v810) und je Trainingsgruppe ein Team mit dem Gruppennamen und seinen Kindern
    b) Beim bloßen Zeichnen wird nichts gespeichert (kein Datenbankeintrag je angesehenem Termin)
    c) 4+1 antippen → Spielform f4, gespeichert; „braucht 5 Kinder je Team“ erscheint nur, wenn ein Team zu klein ist
    d) Kind antippen → ins nächste Team; „Aus Trainingsgruppen“ stellt die Gruppen wieder her
@@ -62,7 +62,7 @@ module.exports = async function (h) {
   const t0 = JSON.stringify([["Blaue Haie", 8], ["Rote Füchse", 7]]);
   if (r.anzahlBloecke !== 1 || !/FUNiño ✓/.test(r.erst.text) || !/4\+1/.test(r.erst.text) || JSON.stringify(r.erst.teams) !== t0 || r.erst.quelle !== "Trainingsgruppen")
     probleme.push("a) " + JSON.stringify(r.erst));
-  if (r.chips.length !== 2 || r.chips.some(c => c[2] < 44) || r.chips[0][1] !== "true" || r.chips[1][1] !== "false") probleme.push("a) Kacheln: " + JSON.stringify(r.chips));
+  if (r.chips.length !== 3 || r.chips.some(c => c[2] < 44) || r.chips[0][1] !== "true" || r.chips.slice(1).some(c => c[1] !== "false")) probleme.push("a) Kacheln: " + JSON.stringify(r.chips));
   zeilen.push("a) Block: FUNiño ✓ / 4+1 · Teams „Blaue Haie“ (8) und „Rote Füchse“ (7) aus den Trainingsgruppen · Kacheln ≥ 44 px");
   if (r.vorher.gespeichert !== null || r.erst.gespeichert !== null || posts.length > 0) probleme.push("b) beim Zeichnen gespeichert: " + JSON.stringify({ lokal: r.erst.gespeichert, posts }));
   zeilen.push("b) Beim Zeichnen nichts gespeichert (kein lokaler Stand, kein Schreibzugriff)");

@@ -1351,7 +1351,49 @@ function blitzOpen(vorgabeBudget){
 /* v792 · Abschlussspiel im Trainingsplan: Spielform (FUNiño oder 4+1) und Teams direkt im Block. Dieselben Daten wie
    das Trainingsturnier (BLZ): was hier eingestellt wird, steht dort, und umgekehrt. Der Platz im Block ist
    <div class="tp-abschluss-teams"> (boot.js); gefüllt wird er hier, weil boot.js zu Welle 1 gehört. */
-const ABSCHLUSS_FORMEN=[["funino","FUNiño","3 gegen 3 auf 4 Minitore, ohne Torwart"],["f4","4+1","vier Feldspieler + Torwart"]];
+const ABSCHLUSS_FORMEN=[["funino","FUNiño","3 gegen 3 auf 4 Minitore, ohne Torwart"],["f3","3+1","drei Feldspieler + Torwart – die aktuelle Vorgabe des Verbands"],["f4","4+1","vier Feldspieler + Torwart"]];
+/* v810 · Charles 08.11.2026: „Abschlussturnier oder Abschlussspiel. Das sollte auch so in der App unterschieden werden.
+   Wenn wir 3 gegen 3 spielen, spielen wir eine Turnierform. Brauchen dazu mindestens 9 Kinder. Bei 4+1 ist es nur ein
+   Abschlussspiel, dazu brauchen wir mindestens 10 Kinder. Da wir nur maximal 13 Kinder haben, geht hier kein Turnier.
+   Sollten wir weniger als 9 Kinder sein, dann spielen entweder die Trainer mit oder wir machen ein Abschlussspiel.
+   Auch 3+1 ist gewünscht … Hier wäre Turnier oder Abschlussspiel möglich.“ (3+1: Turnier ab 12, Spiel ab 8, bestätigt.)
+   Gezählt werden die Kinder des Tages plus mitspielende Trainer. Ein Turnier hat so viele volle Teams wie möglich –
+   auch eine ungerade Zahl (bei 9 Kindern drei Teams, eines pausiert je Runde); die gerade Teamzahl des Fensters
+   „Trainingsturnier“ bleibt davon unberührt. */
+const ABSCHLUSS_REGEL={funino:{turnierAb:9,spielAb:6},f3:{turnierAb:12,spielAb:8},f4:{turnierAb:null,spielAb:10}};
+function abschlussArt(sf,n,wunsch){
+  const r=ABSCHLUSS_REGEL[sf]; if(!r) return null;
+  const g=(BLZ_SPIELFORM[sf]||[])[1]||3;
+  const kannT=r.turnierAb!=null&&n>=r.turnierAb, kannS=n>=r.spielAb;
+  let art=null;
+  if(sf==="funino") art=kannT&&wunsch!=="spiel"?"turnier":(wunsch==="spiel"&&kannS?"spiel":null);
+  else if(sf==="f4") art=kannS?"spiel":null;
+  else art=kannT&&wunsch!=="spiel"?"turnier":(kannS?"spiel":null);
+  return {art,teams:art==="turnier"?Math.floor(n/g):art==="spiel"?2:0,kannT,kannS,n,g,r};
+}
+function _abschlussZahl(){
+  const kinder=(typeof _blzPool==="function"?_blzPool().namen.length:0);
+  const trainer=(BLZ&&Array.isArray(BLZ.trainer))?BLZ.trainer.length:0;
+  return {kinder,trainer,n:kinder+trainer};
+}
+/* Blockname im Plan: „Abschlussturnier …“ ↔ „Abschlussspiel …“ (nur das erste Wort, der Rest der Beschriftung bleibt) */
+function _abschlussNameSetzen(art){
+  if(!art||typeof tpSlots==="undefined"||!Array.isArray(tpSlots)) return false;
+  const wort=art==="turnier"?"Abschlussturnier":"Abschlussspiel";
+  let neu=false;
+  tpSlots.forEach(sl=>{ if(sl&&sl.typ==="abschluss"&&typeof sl.label==="string"&&/^Abschluss(turnier|spiel)\b/.test(sl.label)){
+    const l=sl.label.replace(/^Abschluss(turnier|spiel)\b/,wort); if(l!==sl.label){ sl.label=l; neu=true; } } });
+  return neu;
+}
+function _abschlussAnpassen(){
+  if(!BLZ||BLZ.phase!=="setup") return;
+  const sf=BLZ.spielform==="frei"?"funino":BLZ.spielform;
+  const a=abschlussArt(sf,_abschlussZahl().n,BLZ.abschlussWunsch);
+  if(a&&a.teams&&BLZ.anzahl!==a.teams&&typeof blzAnzahl==="function") blzAnzahl(a.teams);
+  if(a&&_abschlussNameSetzen(a.art)&&typeof tpRenderTimeline==="function") tpRenderTimeline();
+}
+function abschlussWunsch(w){ _blzBereit(0,true); if(BLZ.phase!=="setup")return; BLZ.abschlussWunsch=w; blzSave(); _abschlussAnpassen(); blzRender(); }
+function abschlussTrainer(name){ _blzBereit(0,true); if(BLZ.phase!=="setup"||typeof blzTrainerToggle!=="function")return; blzTrainerToggle(name); _abschlussAnpassen(); }
 function _abschlussHtml(){
   if(!BLZ)return "";
   if(BLZ.phase!=="setup"||BLZ.spielmodus==="duell")
@@ -1367,10 +1409,29 @@ function _abschlussHtml(){
   const zuWenig=BLZ.teams.filter(t=>!t.eltern&&t.spieler.length<groesse);
   const warn=zuWenig.length?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px;line-height:1.5">⚠️ ${esc((BLZ_SPIELFORM[sf]||[])[0]||"")} braucht ${groesse} Kinder je Team – es fehlen Kinder bei ${zuWenig.map(t=>esc(t.name)+" ("+t.spieler.length+")").join(", ")}. Tippe ein Kind an, um es ins nächste Team zu schieben.</div>`:"";
   const ausGruppen=!!_blzGruppenTeams(groesse);
+  const z=_abschlussZahl(), a=abschlussArt(sf,z.n,BLZ.abschlussWunsch)||{};
+  const wer=`${z.kinder} Kinder${z.trainer?` + ${z.trainer} Trainer`:""}`;
+  const knopf=(t,on)=>`<button type="button" class="btn btn-sm" style="min-height:44px" onclick="${on}">${t}</button>`;
+  const trainerKn=(typeof TRAINER!=="undefined"&&TRAINER.length)?TRAINER.map(t=>{const an=(BLZ.trainer||[]).includes(t);return `<button type="button" aria-pressed="${an}" onclick="abschlussTrainer('${jsq(t)}')" style="min-height:44px;padding:6px 12px;border:${an?"2px solid var(--accent)":"1px solid var(--rand-bedien)"};border-radius:999px;background:${an?"var(--accent-bg,var(--surface2))":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-text);cursor:pointer">🧢 ${esc(t)}${an?" ✓":""}</button>`;}).join(""):"";
+  let artHtml="";
+  if(a.art==="turnier") artHtml=`<div class="tp-abschluss-art" data-art="turnier" style="font-size:var(--s-text);font-weight:800;color:var(--text)">🏆 Abschlussturnier · ${a.teams} Teams à ${a.g} <span style="font-weight:400;color:var(--text2)">· ${esc(wer)}</span></div>
+      ${sf==="f3"&&a.kannS?`<div style="margin-top:4px">${knopf("⚽ Lieber Abschlussspiel (2 Teams)","abschlussWunsch('spiel')")}</div>`:""}`;
+  else if(a.art==="spiel") artHtml=`<div class="tp-abschluss-art" data-art="spiel" style="font-size:var(--s-text);font-weight:800;color:var(--text)">⚽ Abschlussspiel · 2 Teams à ${a.g} <span style="font-weight:400;color:var(--text2)">· ${esc(wer)}</span></div>
+      <div style="font-size:var(--s-klein);color:var(--text2);margin-top:2px">${sf==="f4"?"4+1 spielen wir nur als Abschlussspiel – ein Turnier bräuchte 15 Kinder.":""}</div>
+      ${a.kannT?`<div style="margin-top:4px">${knopf("🏆 Lieber Abschlussturnier","abschlussWunsch('turnier')")}</div>`:""}`;
+  else if(a.r){
+    const bis=sf==="funino"?a.r.turnierAb:a.r.spielAb;
+    artHtml=`<div class="tp-abschluss-art" data-art="zuwenig" style="font-size:var(--s-text);font-weight:800;color:var(--text)">⚠️ Zu wenige für ${sf==="funino"?"ein Turnier":"ein Abschlussspiel "+esc((BLZ_SPIELFORM[sf]||[])[0]||"")} <span style="font-weight:400;color:var(--text2)">· ${esc(wer)} von ${bis}</span></div>
+      <div style="font-size:var(--s-klein);color:var(--text2);margin-top:2px">${sf==="funino"?"Entweder spielen Trainer mit, oder es wird ein Abschlussspiel mit zwei Teams.":"Trainer spielen mit, oder du wählst eine kleinere Spielform."}</div>
+      ${sf==="funino"&&a.kannS?`<div style="margin-top:4px">${knopf("⚽ Abschlussspiel (2 Teams)","abschlussWunsch('spiel')")}</div>`:""}`;
+  }
   return `<div style="margin:6px 0 4px">
     <div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:4px">Spielform</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">${chips}</div>
     <div style="font-size:var(--s-klein);color:var(--text2);margin:4px 0 6px">${esc(info)}</div>
+    <div style="border:var(--border-s);border-radius:12px;padding:8px 10px;margin:4px 0 8px;background:var(--surface2)">${artHtml}
+      ${trainerKn&&(a.art!=="turnier"||(BLZ.trainer||[]).length)?`<div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-top:6px">Trainer spielen mit</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${trainerKn}</div>`:""}
+    </div>
     <div style="font-size:var(--s-text);font-weight:800;color:var(--text)">Teams <span style="font-weight:400;color:var(--text2)">· ${esc(BLZ.quelle||"")} · Kind antippen = nächstes Team</span></div>
     ${BLZ.teams.filter(t=>!t.eltern).map((t,i)=>team(t,i)).join("")}
     ${warn}
@@ -1387,7 +1448,7 @@ function abschlussFuellen(){
   // Wurde für diesen Termin schon etwas vorbereitet (anderes Gerät)? Einmal nachladen, ohne etwas zu überschreiben.
   if(!b.lokalPasst&&!_abschlussServer[b.datum]){_abschlussServer[b.datum]=1;_blzVomServer(b.datum,true);}
 }
-function abschlussSpielform(k){ _blzBereit(0,true); if(BLZ.phase!=="setup")return; blzSpielform(k); }
+function abschlussSpielform(k){ _blzBereit(0,true); if(BLZ.phase!=="setup")return; BLZ.abschlussWunsch=null; blzSpielform(k); _abschlussAnpassen(); }
 function abschlussGruppen(){
   _blzBereit(0,true); if(BLZ.phase!=="setup")return;
   const sf=BLZ.spielform==="frei"?"funino":BLZ.spielform;
