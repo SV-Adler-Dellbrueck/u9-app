@@ -59,6 +59,11 @@ module.exports = async function (h) {
   if (!/\*\*v900\*\*/.test(chg) || !/## 08\.11\.2026\n\n- v900: Neu Zeile \(#1\)/.test(chg) || chg.indexOf("v900: Neu") > chg.indexOf("v899")) probleme.push("c) Änderungsliste: " + chg.slice(0, 200));
   const erg = ap.ergaenzeStand({ zeilen: { a: 1 } }, "v900", "v899");
   if (erg.zeilen.a !== 1 || erg.app.uebersicht_passt !== false || ap.ergaenzeStand({}, "v9", "v9").app.uebersicht_passt !== true) probleme.push("c) Abgleich in stand.json: " + JSON.stringify(erg));
+  /* v807: Funktionen in einer View prüft Postgres mit den Rechten des Aufrufers – ohne EXECUTE schlug der erste Lauf der Action fehl. */
+  const mig = fs.readFileSync(path.join(h.REPO, "supabase/migrations/20261112_v807_export_execute.sql"), "utf8");
+  const ausf = mig.replace(/--.*$/gm, "");
+  if (!/grant execute on function export\.ohne_namen\(text\), export\.kind_alias\(bigint\), export\.json_ohne_namen\(jsonb\) to adler_export_lese;/.test(ausf) || /anon|authenticated|public\b/.test(ausf.replace(/export\./g, ""))) probleme.push("c2) Korrektur-Migration v807: EXECUTE für die Rolle fehlt oder geht an andere");
+  zeilen.push("Migration v807: EXECUTE auf den drei Maskier-Funktionen nur für adler_export_lese");
   zeilen.push(`App-Stand: Version ${vC} aus sw.js, Übersicht gleich, Änderungsliste neueste zuerst, Abweichung wird in stand.json sichtbar`);
   return h.ergebnis("v804 Datenweg Projekt-Chat (Export, Eingang)", !probleme.length, probleme.length ? probleme : zeilen);
 };
