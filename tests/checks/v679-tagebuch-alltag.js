@@ -181,7 +181,7 @@ module.exports = async function (h) {
     await tbPasstSo(); await warte(80);
     out.h.zu = !document.getElementById("tb-pruefen");
 
-    // i) Wie war's? – eigene Karte, drei Tipps
+    // i) Wie war's? – eigene Karte, vier Tipps (seit v806 mit gemeinsamem Einstieg)
     let slot = document.getElementById("home-wiewars"); if (!slot) { slot = document.createElement("div"); slot.id = "home-wiewars"; document.body.prepend(slot); }
     _TB_VORSCHLAG = {};
     await wieWarsKarte(); await warte(30);
@@ -191,6 +191,10 @@ module.exports = async function (h) {
     AW_DATA[gestern] = { [K[0]]: { da: true }, [K[1]]: { da: true } };
     let tipps = 0;
     if (erz) { erz.click(); tipps++; }
+    /* v806 (Charles 08.11.2026, Kachel „Ein Einstieg für alle“): die Karte öffnet den gemeinsamen Einstieg, dort „Erzählen“ – ein Tipp mehr als bis v805. */
+    await bis(() => document.getElementById("nb-weg"));
+    const erz2 = [...document.querySelectorAll("#nb-weg button")].find(b => /Erzählen/.test(b.textContent));
+    if (erz2) { erz2.click(); tipps++; }
     await bis(() => document.getElementById("nb-gross-text"));
     document.getElementById("nb-gross-text").value = "Ich war früher da. " + K[0] + " hat viel gefragt. Ich erkläre die Regeln künftig mit einem Bild.";
     nbGrossSync(document.getElementById("nb-gross-text").value);
@@ -264,7 +268,7 @@ module.exports = async function (h) {
   if (!todos.some(p => /Platzübergabe/.test(p.text) && p.zustaendig === "organisation")) probleme.push("g) To-do mit Zuständigkeitsvorschlag fehlt");
   // i)
   if (!/Wie war's\?/.test(r.i.karte) || r.i.erzaehlen !== 56) probleme.push("i) Karte: " + JSON.stringify(r.i));
-  if (r.i.tipps !== 3 || !r.i.fertig) probleme.push(`i) Tipps ${r.i.tipps}, fertig ${r.i.fertig}`);
+  if (r.i.tipps !== 4 || !r.i.fertig) probleme.push(`i) Tipps ${r.i.tipps}, fertig ${r.i.fertig}`);
   const anfrage = kiAnfragen[kiAnfragen.length - 1] || {};
   if (anfrage.fuer !== "d" + gestern || K.some(n => (anfrage.text || "").includes(n))) probleme.push("i) KI-Anfrage: " + JSON.stringify({ fuer: anfrage.fuer, text: (anfrage.text || "").slice(0, 80) }));
   if (kiAnfragen.some(a => a.art === "tagebuch")) probleme.push("i) zweiter KI-Weg art „tagebuch“");

@@ -484,6 +484,7 @@ async function nbVerzichtZurueck(){
    ersetzt; die Antwort wird zurückübersetzt. Beim Sprachmodell kommt kein Name an. */
 let _nbText = "", _nbFuer = "", _nbTb = null;
 let _nbTbSichern = Promise.resolve(null), _nbBewertungZeilen = [], _nbSchnell = null;   // v679
+let _nbMit = "";   // v806: Schlussfrage „Was nehmen wir mit?“ im Kachel-Weg – wird der Tagebuch-Entwurf
 /* v628: Der gesprochene Text wird mit der Nachbereitung gespeichert (Spalte sprachnotiz) –
    vorher ging er beim Schließen verloren. Nur für den Termin, zu dem er gehört. */
 /* v679: ohne .slice(0,4000) – die Notiz ist das Original (fehlerbild-abgeschnitten.md). Das Feld
@@ -509,7 +510,7 @@ function nbTbDecknamen(tb, m){
 }
 function nbSprachHtml(art, fuer){
   /* Der Text gehört zu genau einem Termin – wer zum nächsten Tag wechselt, fängt leer an. */
-  if(String(fuer||"") !== _nbFuer){ _nbFuer = String(fuer||""); _nbText = ""; _nbTb = null; nbDiktatStop(); }
+  if(String(fuer||"") !== _nbFuer){ _nbFuer = String(fuer||""); _nbText = ""; _nbTb = null; _nbMit = ""; nbDiktatStop(); }
   const kannHoeren = typeof diktatMoeglich==="function" && diktatMoeglich();
   const fld = "width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text);resize:vertical";
   return `<div id="nb-box" style="border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);padding:10px 11px;margin:10px 0 4px">
@@ -547,9 +548,9 @@ const NB_LEITFADEN = {
   training: ["Ankommen und Aufbau – nur, wenn etwas auffiel.", "Deine Übungen: Was lief gut, was musstest du ändern?", "Die Kinder: Hat es Spaß gemacht? Wer fiel positiv oder anders auf?", "Besonderes, zum Beispiel Verletzung, Streit, Material oder Abbau."],
   spiel: ["Ankunft und Organisation.", "Spielverlauf, Aufstellung und Einsatzzeiten.", "Die Kinder: Spaß, Fairplay, Stimmung.", "Besonderes zu Gegner, Schiedsrichter, Eltern oder Verletzungen."]
 };
-function nbLeitfadenHtml(art, offen){
+function nbLeitfadenHtml(art, offen, id){
   const punkte = NB_LEITFADEN[art==="training" ? "training" : "spiel"];
-  return `<details id="nb-leitfaden" ${offen?"open":""} style="border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2)">
+  return `<details id="${id||"nb-leitfaden"}" ${offen?"open":""} style="border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2)">
       <summary style="min-height:44px;display:flex;align-items:center;padding:0 12px;font-weight:800;font-size:var(--s-text);cursor:pointer">Woran du beim Erzählen denken kannst</summary>
       <div style="padding:0 12px 10px;font-size:var(--s-text);line-height:1.5">
         <ol style="margin:0 0 8px;padding-left:20px">${punkte.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>
@@ -682,6 +683,7 @@ async function nbGrossAuswerten(art){
    KI-Aufruf –, nur ohne die Zwischenschritte. */
 async function nbSchnellAbschluss(art){
   const s = _nbSchnell; _nbSchnell = null;
+  if(_nbWeg && typeof nbWegAus==="function") nbWegAus();   // v806: von der Startseite steht der Einstieg noch da – er wird zum normalen Bogen, dann wie bisher speichern
   const zeilen = _nbBewertungZeilen.slice();
   const weiter = async () => {
     const id = await _nbTbSichern;
@@ -962,6 +964,8 @@ const NB_TEAM = {
   zweikampf:["zurückgewichen","mal so, mal so","angenommen"],
   spass:["gedrückt","okay","riesig"]
 };
+/* v806 · Charles 08.11.2026: Wer die Fragen per Kachel beantwortet, soll trotzdem ein Tagebuch haben – ein, zwei Sätze genügen. */
+const NB_MIT_FELD = { mit:true, label:"Was nehmen wir mit? Ein, zwei Sätze für dein Tagebuch (optional)" };
 function nbWegStart(art){
   const card = document.getElementById(art==="training" ? "eb-card" : "fz-card"); if(!card) return;
   const s = [];
@@ -991,7 +995,7 @@ function nbWegStart(art){
        die Knöpfe hier schrieben ins Leere. Der Schritt kommt nur, wenn der Bogen die Zeilen hat.
        Seit v677 hat er sie immer (Trainingseinsatz ist nicht gesperrt) – außer ohne erfasste Anwesenheit. */
     if(kids.length && document.getElementById("eb-stars-sp-0")) s.push({ typ:"kinder", titel:"Die Kinder", frage:"Wie waren die Kinder heute dabei?", kinder:kids });
-    s.push({ typ:"text", titel:"Zum Schluss", frage:"Noch eine Notiz zur Einheit?", felder:[{ id:"eb-notiz", label:"Notiz zur Einheit (optional)" }] });
+    s.push({ typ:"text", titel:"Zum Schluss", frage:"Noch eine Notiz zur Einheit?", felder:[{ id:"eb-notiz", label:"Notiz zur Einheit (optional)" }, NB_MIT_FELD] });
   }else{
     if(!_FZ) return;
     _FZ.teams.forEach(tm=>{
@@ -1008,6 +1012,7 @@ function nbWegStart(art){
     s.push({ typ:"text", titel:"Zwei Sätze", frage:"Was hat getragen – und woran arbeitet ihr?", spiel:true,
       felder:[{ key:"getragen", label:"Das hat getragen" }, { key:"arbeiten", label:"Daran arbeiten wir" }] });
     s.push({ typ:"orga", titel:"Organisation", frage:"Hat bei der Organisation etwas gehakt? (freiwillig)" });
+    s.push({ typ:"text", titel:"Zum Schluss", frage:"Was nehmen wir mit?", felder:[NB_MIT_FELD] });
   }
   s.push({ typ:"ende", titel:"Fertig" });
   _nbWeg = { art, schritte:s, i:0 };
@@ -1049,13 +1054,21 @@ function nbWegOrga(key, wert){ if(!_FZ) return; _FZ.wert.orga[key] = (_FZ.wert.o
 function nbWegFelderMerken(){
   document.querySelectorAll("#nb-weg [data-nb-ziel]").forEach(el=>{
     const z = el.dataset.nbZiel;
-    if(z.startsWith("#")){ const f = document.getElementById(z.slice(1)); if(f) f.value = el.value; }
+    if(z==="@mit") _nbMit = el.value;
+    else if(z.startsWith("#")){ const f = document.getElementById(z.slice(1)); if(f) f.value = el.value; }
     else if(_FZ) _FZ.wert[z] = el.value;   // v679: vorher .slice(0,300)
   });
 }
-function nbWegSpeichern(){
+async function nbWegSpeichern(){
   nbWegFelderMerken();
   const art = _nbWeg && _nbWeg.art;
+  /* v806: Schlussfrage → Tagebuch-Entwurf (Gedanke, ohne KI, Wort für Wort). Vor dem Speichern, damit die Prüfkarte ihn findet.
+     Gibt es schon einen Vorschlag aus der Sprachnotiz, gilt der. */
+  const mit = String(_nbMit||"").trim();
+  if(mit && art && _nbFuer && !nbTagebuchVorschlag(_nbFuer) && typeof tbVorschlagSichern==="function"){
+    try{ await tbVorschlagSichern({ fuer:_nbFuer, art, diktat:mit, termin:(art!=="training" && typeof _FZ!=="undefined" && _FZ) ? _FZ.termin : null,
+      v:{ baustein:null, beobachtung:mit, aha:null, konsequenzen:[], schlagworte:[], rueckfragen:[], todos:[] } }); }catch(e){}
+  }
   nbWegAus();
   if(art==="training"){ if(typeof einheitSave==="function") einheitSave(); }
   else fazitSpeichern();
@@ -1083,7 +1096,9 @@ function nbWegZeichnen(){
   let html = "";
   if(st.typ==="start"){
     html = `${fortschritt}<div style="font-size:var(--s-teil);font-weight:800;margin:4px 0 6px">Wie möchtest du anfangen?</div>
-      <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:12px;line-height:1.45">Frage für Frage mit Antwort-Kacheln – oder erst frei erzählen, dann sind die Kacheln schon vorausgewählt.</div>
+      <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:10px;line-height:1.45">Am schnellsten: einmal erzählen, die KI sortiert alles. Oder Frage für Frage mit Kacheln – ohne ein Wort zu sprechen.</div>
+      <button type="button" class="btn btn-p" onclick="nbGross('${_nbWeg.art}',true)" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800;margin-bottom:8px"><i class="ti ti-microphone"></i>Erzählen</button>
+      ${nbLeitfadenHtml(_nbWeg.art, false, "nb-leitfaden-start")}
       <div data-nb-start></div>
       ${kachel(false,"➡️ Los geht’s – Frage für Frage","nbWegGehe(1)")}
       <button type="button" onclick="nbWegAus()" style="display:block;margin:6px auto 0;min-height:44px;background:none;border:none;color:var(--text2);font-family:inherit;font-size:var(--s-text);text-decoration:underline;cursor:pointer">Alles auf einen Blick</button>
@@ -1102,8 +1117,8 @@ function nbWegZeichnen(){
     }).join("") + fuss("Weiter");
   }else if(st.typ==="text"){
     html = kopf + st.felder.map(f=>{
-      const wert = st.spiel ? (_FZ&&_FZ.wert[f.key]||"") : (document.getElementById(f.id)?.value||"");
-      return `<label style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-bottom:8px">${esc(f.label)}<textarea data-nb-ziel="${st.spiel?f.key:"#"+f.id}" rows="3" maxlength="4000" style="${fld};margin-top:3px">${esc(wert)}</textarea></label>`;
+      const wert = f.mit ? _nbMit : st.spiel ? (_FZ&&_FZ.wert[f.key]||"") : (document.getElementById(f.id)?.value||"");
+      return `<label style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-bottom:8px">${esc(f.label)}<textarea data-nb-ziel="${f.mit?"@mit":st.spiel?f.key:"#"+f.id}" rows="3" maxlength="4000" style="${fld};margin-top:3px">${esc(wert)}</textarea></label>`;
     }).join("") + fuss("Weiter");
   }else if(st.typ==="orga"){
     html = kopf + FZ_ORGA.map(o=>`<div style="margin-bottom:10px"><div style="font-size:var(--s-text);font-weight:700;margin-bottom:4px">${o.emo} ${o.label}</div>
