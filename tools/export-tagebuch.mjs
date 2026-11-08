@@ -11,7 +11,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
-export const SKRIPT_VERSION = 1;
+export const SKRIPT_VERSION = 2;   // v808: namen_auto in stand.json
 export const PROJEKT_REF = "wgbcibqcqidudoksfkcv";
 export const WHITELIST = {
   tagebuch_eintrag: ["id", "datum", "quelle", "anlass", "baustein", "status", "ki_vorschlag", "bestaetigt", "autor", "ausloeser", "beobachtung", "aha", "konsequenz", "konsequenz_bis", "konsequenz_erledigt_am", "beleg", "anschluss", "schlagworte", "durchgefuehrt", "anwesend_alias", "termin_id"],
@@ -111,9 +111,11 @@ export function renderPlaene(d, stand) {
   for (const a of d.anwesenheit) o += `- ${de(a.datum)}${a.termin_id ? ` (Termin ${a.termin_id})` : ""}: ${json(a.data)}\n`;
   return o;
 }
-export function baueStand(d, verdacht, jetzt = new Date()) {
+export function baueStand(d, verdacht, jetzt = new Date(), auto = []) {
   return { erzeugt: jetzt.toISOString(), projekt: PROJEKT_REF, skript_version: SKRIPT_VERSION, zeilen: Object.fromEntries(Object.keys(WHITELIST).map((k) => [k, (d[k] || []).length])),
     namens_verdacht: verdacht.map((v) => ({ tabelle: v.tabelle, id: v.id, feld: v.feld, anzahl: v.anzahl })),
+    // v808: Wörter, die die strenge Regel (gleicher Kölner Code, höchstens ein Buchstabe Abstand) als Namen ersetzt hat – nur Zahl, nie das Wort
+    namen_auto: auto.map((v) => ({ tabelle: v.tabelle, id: v.id, feld: v.feld, anzahl: v.anzahl })),
     hinweis: namensHinweis(verdacht) };
 }
 export const namensHinweis = (v) => v.length ? `${v.length} Stelle(n) mit einem Wort, das einem Kindernamen ähnelt und nicht ersetzt wurde. Prüfen; gewöhnliche Wörter in export.wort_erlaubt, Schreibvarianten in export.name_variante eintragen.` : "Keine verdächtigen Wörter gefunden.";
@@ -122,12 +124,14 @@ export async function lade(client) {
   const d = {};
   for (const v of Object.keys(WHITELIST)) d[v] = (await client.query(spaltenAuswahl(v))).rows;
   const verdacht = (await client.query('select tabelle, id, feld, anzahl from export."namen_verdacht" order by 1, 2, 3')).rows;
-  return { d, verdacht };
+  let auto = [];
+  try { auto = (await client.query('select tabelle, id, feld, anzahl from export."namen_auto" order by 1, 2, 3')).rows; } catch { auto = []; }   // vor Migration v808
+  return { d, verdacht, auto };
 }
-export async function schreibe(ordner, d, verdacht, jetzt = new Date()) {
+export async function schreibe(ordner, d, verdacht, jetzt = new Date(), auto = []) {
   const stand = tag(jetzt);
   await mkdir(ordner, { recursive: true });
-  const dateien = { "tagebuch.md": renderTagebuch(d, stand, verdacht), "einheiten.md": renderEinheiten(d, stand), "uebungen.md": renderUebungen(d, stand), "plaene.md": renderPlaene(d, stand), "stand.json": JSON.stringify(baueStand(d, verdacht, jetzt), null, 2) + "\n" };
+  const dateien = { "tagebuch.md": renderTagebuch(d, stand, verdacht), "einheiten.md": renderEinheiten(d, stand), "uebungen.md": renderUebungen(d, stand), "plaene.md": renderPlaene(d, stand), "stand.json": JSON.stringify(baueStand(d, verdacht, jetzt, auto), null, 2) + "\n" };
   for (const [n, inhalt] of Object.entries(dateien)) await writeFile(`${ordner}/${n}`, inhalt, "utf8");
   return Object.keys(dateien);
 }
@@ -140,8 +144,8 @@ async function main() {
   const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false }, application_name: "adler-export" });
   try {
     await client.connect();
-    const { d, verdacht } = await lade(client);
-    const dateien = await schreibe(ordner, d, verdacht);
+    const { d, verdacht, auto } = await lade(client);
+    const dateien = await schreibe(ordner, d, verdacht, new Date(), auto);
     console.log(`Export geschrieben: ${dateien.join(", ")}`);
     console.log(Object.entries(baueStand(d, verdacht).zeilen).map(([k, n]) => `${k}=${n}`).join(" "));
     console.log(namensHinweis(verdacht));
