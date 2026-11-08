@@ -2064,7 +2064,7 @@ window.addEventListener("resize",()=>{ if(_fg)_fgPlatz(); });
 document.addEventListener("keydown",e=>{ if(_fg&&e.key==="Escape"){ e.preventDefault(); fuehrungEnde(); } });
 
 /* ═══ v808 · Kindernamen in Schreibvarianten (Charles 08.11.2026, Namensleck im Tagebuch-Export) ═══════════
-   Die Spracherkennung schreibt Vornamen anders als der Kader („Live“, „Stefan“ …). Ersetzt wurden bisher nur
+   Die Spracherkennung schreibt Vornamen anders als der Kader (ein gewöhnliches Wort, ein anderer Vorname …). Ersetzt wurden bisher nur
    exakte Namen – Varianten gingen in Kopien, Exporte und an die KI. Dieselbe Regel wie in der Datenbank
    (export.ohne_namen, Migration v808):
    1) gepflegte Varianten (Trainer, Tabelle export.name_variante) – nur als ganzes Wort in IHRER Schreibweise,
