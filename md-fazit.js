@@ -672,8 +672,10 @@ async function nbGrossAuswerten(art){
      änderbar – ist die Zusammenfassung. Gespeichert wird weiter erst mit dem Knopf unten. */
   nbKiAnwenden(art, x.d, x.m);
   nbGrossZu();
-  if(_nbSchnell && _nbSchnell.fuer===_nbFuer){ nbSchnellAbschluss(art); return; }
-  document.getElementById("nb-box")?.scrollIntoView({block:"start", behavior:"smooth"});
+  /* v813 · Charles 08.11.2026: „Alles gleich machen“ – jeder Einstieg (Startseite, Spieltag, Termin, To-do) speichert nach der
+     KI-Auswertung sofort und öffnet die Prüfkarte; bisher tat das nur die Startseite, die anderen warteten auf „Speichern“. */
+  if(!_nbSchnell || _nbSchnell.fuer!==_nbFuer) _nbSchnell = { fuer:_nbFuer, art };
+  nbSchnellAbschluss(art);
 }
 /* ═══ v679 · „Wie war's?“ – einmal sprechen, alles andere im Hintergrund ═══════════════
    doku/auftrag-tagebuch-ki-sortieren/prozess-nacherfassung.md. Tippbudget drei: „Erzählen“ auf der
