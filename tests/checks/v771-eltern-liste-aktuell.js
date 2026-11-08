@@ -28,7 +28,7 @@ module.exports = async function (h) {
     termine, rueckmeldungen, team_config: [{ spenden_link: "" }],
     rpc: { eltern_news: {}, training_rueckblick: [], kasse_summary: { saldo: 0, umlagen: [], sammel: [] }, is_kasse: false } }) });
   await s.page.waitForLoadState("networkidle"); await s.page.waitForTimeout(1500);
-  await s.page.evaluate(t => { localStorage.setItem("adler_sb_auth_eltern", JSON.stringify({ access_token: t, refresh_token: "r", expires_at: Math.floor(Date.now() / 1000) + 3600 })); }, TOKEN);
+  await s.page.evaluate(t => { localStorage.setItem("adler_sb_auth_eltern", JSON.stringify({ access_token: t, refresh_token: "r", expires_at: Math.floor(Date.now() / 1000) + 3600 })); localStorage.setItem("adler_termin_ansicht", "liste"); }, TOKEN); // seit v811 wählbar, die Liste „Danach“ zeigt „Liste“
   await s.page.reload({ waitUntil: "networkidle" }); await s.page.waitForTimeout(3500);
   const ids = termine.map(t => t.id), ziel = ids[2];
   /* Kurze Aufrufe: Der Service Worker lädt in den ersten Sekunden einmal neu; ein langer Aufruf über diesen Moment hinweg verliert
