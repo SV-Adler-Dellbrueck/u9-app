@@ -2109,7 +2109,7 @@ async function namenSchreibLaden(neu){
   const z={varianten:[],erlaubt:new Set(NAMEN_ERLAUBT_GRUND.map(w=>w.toLowerCase()))};
   try{
     if(typeof sbToken==="function"&&sbToken()){
-      const r=await fetch(`${SB_URL}/rest/v1/rpc/namen_schreibweisen`,{method:"POST",headers:{...sbAuthHeaders(),"Content-Type":"application/json"},body:"{}"});
+      const r=await fetch(`${SB_URL}/rest/v1/rpc/namen_schreibweisen`,{headers:sbAuthHeaders()});   // lesend: GET (Funktion ist stable)
       if(r.ok) ((await r.json())||[]).forEach(x=>{ if(x.art==="name"&&x.wort) z.varianten.push({wort:x.wort,alias:x.alias||null}); else if(x.art==="wort"&&x.wort) z.erlaubt.add(String(x.wort).toLowerCase()); });
     }
   }catch(e){}
