@@ -868,8 +868,25 @@ async function tbPunktErledigt(id){
     const rest = _TB_PUNKTE.filter(x=>Number(x.eintrag_id)===Number(p.eintrag_id) && x.art==="konsequenz" && !x.erledigt_am);
     if(!rest.length) try{ await fetch(`${SB_URL}/rest/v1/tagebuch_eintrag?id=eq.${Number(p.eintrag_id)}`,{method:"PATCH",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({konsequenz_erledigt_am:heute})}); }catch(e){}
   }
-  toast("Abgehakt ✓ – steht weiter im Eintrag");
+  /* v815 · Charles 08.11.2026: vier Konsequenzen mit Frist in der Zukunft standen nach schnellem Abhaken auf erledigt. Jetzt lässt
+     sich das Abhaken einige Sekunden lang zurücknehmen. */
+  const warAlleErledigt = !!(p.eintrag_id && p.art==="konsequenz" && !_TB_PUNKTE.some(x=>Number(x.eintrag_id)===Number(p.eintrag_id) && x.art==="konsequenz" && !x.erledigt_am));
+  if(typeof toastUndo==="function") toastUndo("Abgehakt ✓", ()=>tbPunktWiederOffen(id, warAlleErledigt));
+  else toast("Abgehakt ✓ – steht weiter im Eintrag");
   tbListeRender();
+}
+async function tbPunktWiederOffen(id, eintragAuch){
+  const p = _TB_PUNKTE.find(x=>Number(x.id)===Number(id)); if(!p) return;
+  const H = {...sbAuthHeaders(),'Content-Type':'application/json'};
+  try{
+    const r = await fetch(`${SB_URL}/rest/v1/tagebuch_punkt?id=eq.${Number(id)}`,{method:"PATCH",headers:H,body:JSON.stringify({erledigt_am:null,erledigt_von:null})});
+    if(!r.ok && r.status!==204){ toast(sbDeniedMsg(r,"Konnte nicht zurücknehmen"),"err"); return; }
+    if(eintragAuch && p.eintrag_id) await fetch(`${SB_URL}/rest/v1/tagebuch_eintrag?id=eq.${Number(p.eintrag_id)}`,{method:"PATCH",headers:H,body:JSON.stringify({konsequenz_erledigt_am:null})});
+  }catch(e){ toast("Netzwerkfehler – nicht zurückgenommen","err"); return; }
+  p.erledigt_am = null; p.erledigt_von = null;
+  toast("Wieder offen");
+  tbListeRender();
+  if(_TB && Array.isArray(_TB.kons)){ const k = _TB.kons.find(x=>Number(x.id)===Number(id)); if(k){ k.erledigt_am = null; tbRender(); } }
 }
 
 /* ── v679 · Sicht je Kind ──────────────────────────────────────────────────────────
