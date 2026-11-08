@@ -1063,9 +1063,8 @@ async function elternDashLoad(){
   // ── TERMINE ── (Karussell + Kalender-Abo)
   /* v718 „entschlacken“: Überschrift nur, wenn es weitere Termine gibt; „Alle Termine &
      Kalender-Abo“ steht als Kachel unter „Mehr“ statt als eigene Karte mit einem Knopf. */
-  html+=elternWochenleisteHtml(termineListe,kids,rsvpAll); // v785
-  const weitereTermine=elternTermineCarouselHtml(termineListe,kids,rsvpAll,termin&&termin.id); // v686: Liste ohne den Termin von oben, geantwortet wird oben
-  if(weitereTermine){ html+=sec("📅 Termine"); html+=weitereTermine; }
+  /* v811: Kacheln (Wochen zum Wischen), Liste („Danach“) oder beides – die Wahl merkt sich das Gerät */
+  html+=elternTermineHtml(termineListe,kids,rsvpAll,termin&&termin.id);
   /* PO: „Rückblick unter Termine setzen." Der Nach-dem-Spiel-Gruß stand über den Terminen
      und drängte sich damit vor das, was zu tun ist. Er bleibt aber eine SICHTBARE Karte und
      wandert bewusst nicht in eine Kategorie: er ist das einzige auf dieser Seite, das nichts
@@ -1477,7 +1476,18 @@ function elternWochenleisteHtml(rows,kids,rsvpAll){
   if(inWoche.length<2)return "";
   rsvpAll=rsvpAll||{};
   const WT=["So","Mo","Di","Mi","Do","Fr","Sa"];
-  const zellen=tage.map(d=>{
+  const zellen=tage.map(d=>_elWocheZelle(d,inWoche,kids,rsvpAll)).join("");
+  return `<div id="eltern-woche" style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
+    <div style="font-weight:800;font-size:var(--s-karte);margin-bottom:8px">🗓️ Diese Woche</div>
+    <div style="display:flex;gap:4px">${zellen}</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px">✓ zugesagt · ! Antwort offen · ✕ nicht dabei oder fällt aus</div>
+  </div>`;
+}
+/* v811: eine Tageszelle des Streifens – gemeinsam für „Diese Woche“ (v785) und die Wochen zum Wischen */
+function _elWocheZelle(d,inWoche,kids,rsvpAll){
+  const WT=["So","Mo","Di","Mi","Do","Fr","Sa"];
+  const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  rsvpAll=rsvpAll||{};
     const ts=inWoche.filter(t=>t.datum===iso(d));
     const kopf=`<span style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2)">${WT[d.getDay()]}</span><span style="display:block;font-size:var(--s-text);font-weight:800">${d.getDate()}</span>`;
     if(!ts.length)return `<div style="flex:1;min-width:0;text-align:center;padding:8px 0;opacity:.6">${kopf}<span aria-hidden="true" style="display:block;font-size:var(--s-text);color:var(--text3)">·</span></div>`;
@@ -1492,14 +1502,88 @@ function elternWochenleisteHtml(rows,kids,rsvpAll){
     }
     const farbe=zeichen==="!"?"#b45309":(zeichen==="✓"?"#047857":"var(--text2)");
     return `<button type="button" onclick="terminDetailOpen(${t.id})" aria-label="${WT[d.getDay()]} ${d.getDate()}., ${esc(t.titel||t.gegner||m.label)}, ${wort}${ts.length>1?", plus "+(ts.length-1)+" weitere":""}" style="flex:1;min-width:0;min-height:64px;text-align:center;padding:6px 0;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:var(--text);font-family:inherit;cursor:pointer">${kopf}<span aria-hidden="true" style="display:block;font-size:var(--s-text);line-height:1.3">${m.icon}</span><span style="display:block;font-size:var(--s-klein);font-weight:800;color:${farbe}">${zeichen}</span></button>`;
-  }).join("");
+  }
+/* v811 · Termine als Kacheln, Liste oder beides (Charles 08.11.2026: Der Streifen zeigte dieselben Termine wie die Liste darunter
+   und ließ sich nicht weiterschieben). Kacheln = Wochenstreifen zum Wischen, so weit Termine geladen sind (höchstens fünf Wochen),
+   Liste = „Danach“, Beides = beides untereinander. Die Wahl merkt sich das Gerät (localStorage „adler_termin_ansicht“),
+   Standard Kacheln. „Alle Termine der Saison“ steht in jeder Ansicht. */
+const TERMIN_ANSICHTEN=[["kacheln","▦ Kacheln"],["liste","☰ Liste"],["beides","Beides"]];
+let _elTermDaten=null;
+function elternTerminAnsicht(){
+  try{const a=localStorage.getItem("adler_termin_ansicht"); if(TERMIN_ANSICHTEN.some(x=>x[0]===a))return a;}catch(e){}
+  return "kacheln";
+}
+function elternTerminAnsichtSetzen(a){
+  try{localStorage.setItem("adler_termin_ansicht",a);}catch(e){}
+  const el=document.getElementById("eltern-termine");
+  if(!el||!_elTermDaten)return;
+  const box=document.createElement("div"); box.innerHTML=elternTermineHtml.apply(null,_elTermDaten);
+  if(box.firstElementChild) el.replaceWith(box.firstElementChild);
+  const b=document.querySelector('#eltern-termine-ansicht [aria-pressed="true"]'); if(b)b.focus();
+  _elWocheNav();
+}
+function elternWochenStreifenHtml(rows,kids,rsvpAll){
+  const heute=new Date(); heute.setHours(0,0,0,0);
+  const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  const kommend=(rows||[]).filter(t=>t.datum>=iso(heute));
+  if(!kommend.length)return "";
+  const letzt=kommend.reduce((m,t)=>t.datum>m?t.datum:m,kommend[0].datum);
+  const tageBis=Math.round((new Date(letzt+"T00:00:00")-heute)/864e5)+1;
+  const wochen=Math.min(5,Math.max(1,Math.ceil(tageBis/7)));
+  const kurz=d=>d.getDate()+"."+(d.getMonth()+1)+".";
+  const seiten=[];
+  for(let w=0;w<wochen;w++){
+    const tage=[]; for(let i=0;i<7;i++)tage.push(new Date(heute.getTime()+(w*7+i)*864e5));
+    const inWoche=kommend.filter(t=>t.datum>=iso(tage[0])&&t.datum<=iso(tage[6]));
+    const titel=(w===0?"Diese Woche":w===1?"Nächste Woche":"In "+w+" Wochen")+" · "+kurz(tage[0])+"–"+kurz(tage[6]);
+    seiten.push(`<div role="group" aria-label="${titel}" style="flex:0 0 100%;min-width:0;scroll-snap-align:start">
+      <div style="font-weight:800;font-size:var(--s-karte);margin-bottom:8px">🗓️ ${titel}</div>
+      <div style="display:flex;gap:4px">${tage.map(d=>_elWocheZelle(d,inWoche,kids,rsvpAll)).join("")}</div>
+    </div>`);
+  }
+  const pfeil=(r,z,l)=>`<button type="button" id="eltern-woche-${r<0?"zurueck":"weiter"}" onclick="elternWocheBlaettern(${r})" aria-label="${l}"${r<0?" disabled":""} style="${r<0?"opacity:.45;":""}width:44px;height:44px;border:1px solid #cbd5e1;border-radius:50%;background:#fff;color:#1e3a8a;font-family:inherit;font-size:var(--s-teil);font-weight:800;cursor:pointer">${z}</button>`;
+  const nav=wochen>1?`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px">
+      ${pfeil(-1,"‹","Woche zurück")}<span id="eltern-woche-pos" aria-live="polite" style="font-size:var(--s-klein);color:var(--text2)">Woche 1 von ${wochen} · wischen oder Pfeil</span>${pfeil(1,"›","Nächste Woche")}
+    </div>`:"";
   return `<div id="eltern-woche" style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
-    <div style="font-weight:800;font-size:var(--s-karte);margin-bottom:8px">🗓️ Diese Woche</div>
-    <div style="display:flex;gap:4px">${zellen}</div>
+    <div id="eltern-woche-band" onscroll="_elWocheNav()" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain">${seiten.join("")}</div>
+    ${nav}
     <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px">✓ zugesagt · ! Antwort offen · ✕ nicht dabei oder fällt aus</div>
   </div>`;
 }
-function elternTermineCarouselHtml(rows,kids,rsvpAll,ohneId){
+function elternWocheBlaettern(r){
+  const b=document.getElementById("eltern-woche-band"); if(!b)return;
+  const ruhig=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const ziel=Math.max(0,Math.round(b.scrollLeft/b.clientWidth)+r)*b.clientWidth;
+  b.scrollTo({left:ziel,behavior:ruhig?"auto":"smooth"});
+  setTimeout(_elWocheNav,ruhig?0:400);
+}
+function _elWocheNav(){
+  const b=document.getElementById("eltern-woche-band"); if(!b||!b.clientWidth)return;
+  const n=b.children.length, i=Math.min(n-1,Math.round(b.scrollLeft/b.clientWidth));
+  const z=document.getElementById("eltern-woche-zurueck"), w=document.getElementById("eltern-woche-weiter"), p=document.getElementById("eltern-woche-pos");
+  if(z){z.disabled=i<=0; z.style.opacity=i<=0?".45":"1";}
+  if(w){w.disabled=i>=n-1; w.style.opacity=i>=n-1?".45":"1";}
+  if(p)p.textContent="Woche "+(i+1)+" von "+n+(i===0?" · wischen oder Pfeil":"");
+}
+function elternTermineHtml(rows,kids,rsvpAll,ohneId){
+  _elTermDaten=[rows,kids,rsvpAll,ohneId];
+  // wie bisher (v718): steht nur der Termin von oben an, gibt es keinen eigenen Bereich „Termine“
+  if(!(rows||[]).some(t=>Number(t.id)!==Number(ohneId)))return "";
+  const a=elternTerminAnsicht();
+  const streifen=a!=="liste"?elternWochenStreifenHtml(rows,kids,rsvpAll):"";
+  const liste=a!=="kacheln"?elternTermineCarouselHtml(rows,kids,rsvpAll,ohneId,true):"";
+  const knopf=TERMIN_ANSICHTEN.map(([k,l])=>`<button type="button" aria-pressed="${a===k}" onclick="elternTerminAnsichtSetzen('${k}')" style="min-height:44px;padding:0 10px;border:0;${k!=="kacheln"?"border-left:1px solid #1e3a8a;":""}background:${a===k?"#1e3a8a":"#fff"};color:${a===k?"#fff":"#1e3a8a"};font-family:inherit;font-size:var(--s-klein);font-weight:800;cursor:pointer;white-space:nowrap">${l}</button>`).join("");
+  return `<div id="eltern-termine">
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:20px 4px 8px">
+      <div style="flex:1;font-size:var(--s-karte);font-weight:900;color:var(--text)">📅 Termine</div>
+      <div id="eltern-termine-ansicht" role="group" aria-label="Termine anzeigen als" style="display:flex;border:1.5px solid #1e3a8a;border-radius:10px;overflow:hidden">${knopf}</div>
+    </div>
+    ${streifen}${liste}
+    <button type="button" id="danach-alle" onclick="elternTermineOpen()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;margin:0 0 12px;border:1.5px solid #1e3a8a;border-radius:12px;background:#eef2ff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">Alle Termine der Saison ›</button>
+  </div>`;
+}
+function elternTermineCarouselHtml(rows,kids,rsvpAll,ohneId,ohneKnopf){
   const bis=new Date(Date.now()+14*864e5).toISOString().slice(0,10);
   rsvpAll=rsvpAll||{};
   // was unter „Rückmeldung fehlt“ steht (14 Tage, ein Kind ohne Antwort), steht hier nicht noch einmal
@@ -1533,7 +1617,7 @@ function elternTermineCarouselHtml(rows,kids,rsvpAll,ohneId){
   return `<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
     <div style="font-weight:800;font-size:var(--s-karte)">📅 Danach</div>
     ${zeilen}
-    <button type="button" id="danach-alle" onclick="elternTermineOpen()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;margin-top:10px;border:1.5px solid #1e3a8a;border-radius:12px;background:#eef2ff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">Alle Termine der Saison ›</button>
+    ${ohneKnopf?"":`<button type="button" id="danach-alle" onclick="elternTermineOpen()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;margin-top:10px;border:1.5px solid #1e3a8a;border-radius:12px;background:#eef2ff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">Alle Termine der Saison ›</button>`}
   </div>`;
 }
 
@@ -2535,7 +2619,7 @@ const ELTERN_TOUR=[
   {emo:"📬", t:"Offene Rückmeldungen", sel:["#eltern-offen-card"],
    d:"Stehen in den nächsten 14 Tagen Antworten aus, siehst du sie hier gesammelt."},
   {emo:"🎒", t:"Alles zum Termin", sel:['[onclick^="terminDetailOpen"]'],
-   d:"Tippe auf einen Termin: Wetter, Adresse mit Route, „Was muss mit?“, Fahrgemeinschaft, „Wer hilft mit?“ und die Fotos zum Termin – „📷 Foto aufnehmen“ öffnet direkt die Kamera. Alle Spieltagsfotos zusammen – groß ansehen und durchwischen – stehen unter „Mehr vom Team“ → „Spieltagsgalerie“. Dort erscheint nach jedem Spieltag auch das „Adler Nest“ – eine neue Ausgabe zum Lesen und Hören. Ist euer Kind im nächsten Porträt, steht oben eine Karte mit dem Porträt-Bogen. Die ganze Saison und das Kalender-Abo findest du unten unter „Mehr“ → „Alle Termine“ – seit v741 sagst du dort für jeden künftigen Termin direkt zu oder ab (👍/🤔/👎 je Kind). Fällt ein Termin aus, steht „🔴 Fällt aus“ mit Grund daneben; zurückmelden musst du dann nichts. Bei jedem Training und Spieltag steht dort auch „🫖 Tee mitbringen“."},
+   d:"Über den Terminen wählst du die Darstellung: „Kacheln“ zeigt die Wochen nebeneinander (wischen oder Pfeil für die nächste Woche), „Liste“ die Termine untereinander, „Beides“ beides – die App merkt sich deine Wahl. Tippe auf einen Termin: Wetter, Adresse mit Route, „Was muss mit?“, Fahrgemeinschaft, „Wer hilft mit?“ und die Fotos zum Termin – „📷 Foto aufnehmen“ öffnet direkt die Kamera. Alle Spieltagsfotos zusammen – groß ansehen und durchwischen – stehen unter „Mehr vom Team“ → „Spieltagsgalerie“. Dort erscheint nach jedem Spieltag auch das „Adler Nest“ – eine neue Ausgabe zum Lesen und Hören. Ist euer Kind im nächsten Porträt, steht oben eine Karte mit dem Porträt-Bogen. Die ganze Saison und das Kalender-Abo findest du unten unter „Mehr“ → „Alle Termine“ – seit v741 sagst du dort für jeden künftigen Termin direkt zu oder ab (👍/🤔/👎 je Kind). Fällt ein Termin aus, steht „🔴 Fällt aus“ mit Grund daneben; zurückmelden musst du dann nichts. Bei jedem Training und Spieltag steht dort auch „🫖 Tee mitbringen“."},
   {emo:"✅", t:"Zu erledigen", sel:["#eltern-todo-btn"],
    d:"Aufgaben für euch als Familie, zum Beispiel der Grillhütten-Dienst. Könnt ihr nicht, tippt ihr „Ersatz suchen“ – eine andere Familie kann übernehmen."},
   {emo:"📡", t:"Liveticker", sel:["#eltern-live-slot","#eltern-ticker-slot"],
