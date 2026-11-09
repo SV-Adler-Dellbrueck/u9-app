@@ -1394,6 +1394,10 @@ function _abschlussAnpassen(){
 }
 function abschlussWunsch(w){ _blzBereit(0,true); if(BLZ.phase!=="setup")return; BLZ.abschlussWunsch=w; blzSave(); _abschlussAnpassen(); blzRender(); }
 function abschlussTrainer(name){ _blzBereit(0,true); if(BLZ.phase!=="setup"||typeof blzTrainerToggle!=="function")return; blzTrainerToggle(name); _abschlussAnpassen(); }
+/* v820: Die Teamlisten sind zugeklappt eine Zeile („Teams: Adler 1 (8) · Adler 2 (7)“) – offen waren sie am Handy
+   gut ein halber Bildschirm. Fehlen in einem Team Kinder, steht die Klappe von selbst offen, damit die Warnung
+   nicht verschwindet. _abschlussTeamsAuf hält sie offen, wenn ein Tipp auf ein Kind neu zeichnet. */
+let _abschlussTeamsAuf=false;
 function _abschlussHtml(){
   if(!BLZ)return "";
   if(BLZ.phase!=="setup"||BLZ.spielmodus==="duell")
@@ -1432,13 +1436,15 @@ function _abschlussHtml(){
     <div style="border:var(--border-s);border-radius:12px;padding:8px 10px;margin:4px 0 8px;background:var(--surface2)">${artHtml}
       ${trainerKn&&(a.art!=="turnier"||(BLZ.trainer||[]).length)?`<div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-top:6px">Trainer spielen mit</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${trainerKn}</div>`:""}
     </div>
-    <div style="font-size:var(--s-text);font-weight:800;color:var(--text)">Teams <span style="font-weight:400;color:var(--text2)">· ${esc(BLZ.quelle||"")} · Kind antippen = nächstes Team</span></div>
+    <details class="tp-teams-d"${_abschlussTeamsAuf||zuWenig.length?" open":""} ontoggle="_abschlussTeamsAuf=this.open" style="border:var(--border-s);border-radius:12px;padding:0 10px;background:var(--surface)">
+    <summary style="cursor:pointer;min-height:48px;display:flex;align-items:center;gap:8px;font-size:var(--s-text);font-weight:800;color:var(--text);list-style:none"><span style="flex:1;min-width:0">👥 Teams: <span style="font-weight:600;color:var(--text2)">${BLZ.teams.filter(t=>!t.eltern).map(t=>esc(t.name)+" ("+t.spieler.length+")").join(" · ")||"noch keine"}</span></span><span aria-hidden="true" style="color:var(--text2)">▾</span></summary>
+    <div style="font-size:var(--s-klein);color:var(--text2)">${esc(BLZ.quelle||"")} · Kind antippen = nächstes Team</div>
     ${BLZ.teams.filter(t=>!t.eltern).map((t,i)=>team(t,i)).join("")}
     ${warn}
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 10px">
       ${ausGruppen?`<button type="button" class="btn btn-sm" style="min-height:44px" onclick="abschlussGruppen()">👥 Aus Trainingsgruppen</button>`:""}
       <button type="button" class="btn btn-sm" style="min-height:44px" onclick="abschlussMischen()">🎲 Neu mischen</button>
-    </div></div>`;
+    </div></details></div>`;
 }
 let _abschlussServer={};
 function abschlussFuellen(){

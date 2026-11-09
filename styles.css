@@ -1428,3 +1428,6 @@ html[data-theme="dark"]:has(#main-app) body{background:var(--bg)}
 .tp-slot-head .tp-remove{order:2;flex:0 0 auto;min-width:44px;min-height:44px}
 .tp-slot-head .tp-slot-time{order:3;white-space:nowrap;margin-left:52px}
 .tp-slot-head .tp-dauer-sel{order:4}
+/* v820 · Zuklappzeilen im Trainingsplan (Fokus, Teams): eigener Pfeil statt des Browser-Dreiecks. */
+#tp-fokus-d>summary::-webkit-details-marker,.tp-teams-d>summary::-webkit-details-marker{display:none}
+#tp-fokus-d[open]>summary>span:last-child,.tp-teams-d[open]>summary>span:last-child{transform:rotate(180deg)}
