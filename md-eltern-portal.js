@@ -133,11 +133,12 @@ async function renderElternPortal(){
 }
 /* v604: Zwei Wege, einer davon ohne E-Mail-Versand. Zuerst E-Mail und Passwort; der
    Einmal-Code bleibt fuer aeltere Konten ohne Passwort und fuer „Passwort vergessen“. */
-const EP_FELD="width:100%;padding:11px;margin:6px 0 12px;border:1px solid var(--rand-bedien);border-radius:10px;font-size:var(--s-karte);box-sizing:border-box";
-const EP_KNOPF="width:100%;min-height:46px;padding:13px;border:none;border-radius:10px;color:#fff;font-size:var(--s-karte);font-weight:700;cursor:pointer";
-const EP_LINK="width:100%;min-height:44px;padding:9px;margin-top:6px;border:none;background:none;color:#475569;font-size:var(--s-text);cursor:pointer;text-decoration:underline";
+/* v822: font-family:inherit – Felder und Knöpfe der Anmeldung standen in der Systemschrift statt in der Schrift der App. */
+const EP_FELD="font-family:inherit;width:100%;padding:11px;margin:6px 0 12px;border:1px solid var(--rand-bedien);border-radius:10px;font-size:var(--s-karte);box-sizing:border-box";
+const EP_KNOPF="font-family:inherit;width:100%;min-height:46px;padding:13px;border:none;border-radius:10px;color:#fff;font-size:var(--s-karte);font-weight:700;cursor:pointer";
+const EP_LINK="font-family:inherit;width:100%;min-height:44px;padding:9px;margin-top:6px;border:none;background:none;color:#475569;font-size:var(--s-text);cursor:pointer;text-decoration:underline";
 function elternPortalKopf(){
-  return `<div style="text-align:center;font-size:40px">🦅</div>
+  return `<div style="text-align:center"><img src="logo.png" alt="SV Adler Dellbrück" width="72" height="72" style="border-radius:50%;background:#fff"></div>
     <div style="text-align:center;font-size:var(--s-teil);font-weight:800;margin-top:6px">Eltern-Bereich</div>
     <div style="text-align:center;font-size:var(--s-text);color:#475569;margin:6px 0 18px">SV Adler Dellbrück U9</div>`;
 }
