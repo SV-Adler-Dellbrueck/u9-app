@@ -1025,13 +1025,20 @@ async function elternDashLoad(){
        EIN Farbstreifen links für den Status (Platz-Status, überfällig, offen); der Rest ist Text und die eine Pille. */
     const streifen=statusRand||(offen.length?(dringend?"#dc2626":"#d97706"):"");
     const rand=`border:1px solid #cbd5e1;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);${streifen?`border-left:4px solid ${streifen};`:""}`;
-    terminHtml=`<div id="termin-card" style="background:#fff;border-radius:18px;padding:18px;margin-bottom:12px;${rand}">
+    /* v821: Der Kopf der Karte ist ein farbiges Band (terminKarteBand, core.js) mit Datumsblock, Countdown, Wetter und
+       rechts dem Stand der eigenen Rückmeldung. Titel und „Nächster Termin“ stehen jetzt dort; alles darunter ist unverändert. */
+    const _zu=kids.filter(k=>rsvp[k.spieler_id]&&rsvp[k.spieler_id].status==="zugesagt").length, _st1=kids.length===1&&rsvp[kids[0].spieler_id]?rsvp[kids[0].spieler_id].status:null;
+    const _zeichen=faelltAus?null:kids.length===1?(_st1?{symbol:EP_RSVP[_st1].emo,text:"Rückmeldung: "+EP_RSVP[_st1].lbl}:{symbol:"❗",text:"Rückmeldung fehlt"})
+      :kids.length?(offen.length?{symbol:"❗",text:`Rückmeldung fehlt für ${offen.length} von ${kids.length} Kindern`}:{symbol:_zu===kids.length?"👍":"✓",text:`${_zu} von ${kids.length} Kindern zugesagt`}):null;
+    const _band=terminKarteBand({typ:termin.typ,datum:termin.datum,zeit:termin.uhrzeit?String(termin.uhrzeit).slice(0,5):"",etikett:"Nächster Termin",wetterId:"wetter-eltern",abgesagt:faelltAus,zeichen:_zeichen,
+      titelHtml:`${m.icon} ${esc(termin.titel||termin.gegner||m.label)}${heimLabel(termin)?` <span style="font-size:var(--s-klein);font-weight:800;padding:2px 7px;border-radius:10px;background:${termin.heim?"#dcfce7":"#fef3c7"};color:${termin.heim?"#15803d":"#b45309"};white-space:nowrap">${heimLabel(termin)}</span>`:""}`});
+    terminHtml=`<div id="termin-card" style="background:#fff;border-radius:18px;padding:10px 10px 18px;margin-bottom:12px;${rand}">
+      ${_band}
+      <div style="padding:10px 8px 0">
       <div style="display:flex;align-items:center;gap:8px">
-        <div style="font-size:var(--s-klein);font-weight:700;color:#475569;letter-spacing:.2px">Nächster Termin</div>
         ${offen.length?(dringend?`<span style="margin-left:auto;font-size:var(--s-klein);font-weight:800;color:#b91c1c;background:#fef2f2;border:1px solid #fca5a5;border-radius:20px;padding:2px 8px">⏰ Rückmeldung überfällig – bitte jetzt</span>`:`<span style="margin-left:auto;font-size:var(--s-klein);font-weight:800;color:#b45309;background:#fffbeb;border:1px solid #fcd34d;border-radius:20px;padding:2px 8px">❗ Rückmeldung fehlt</span>`):""}
       </div>
       ${(typeof elternPlatzHinweisHtml==="function")?elternPlatzHinweisHtml(termin):""}
-      <div style="font-size:var(--s-teil);font-weight:800;margin-top:4px;line-height:1.25">${m.icon} ${esc(termin.titel||termin.gegner||m.label)}${heimLabel(termin)?` <span style="font-size:var(--s-klein);font-weight:800;padding:2px 7px;border-radius:10px;background:${termin.heim?"#dcfce7":"#fef3c7"};color:${termin.heim?"#15803d":"#b45309"};white-space:nowrap">${heimLabel(termin)}</span>`:""}</div>
       <div style="font-size:var(--s-text);color:#475569;margin-top:4px;line-height:1.4">${wtag} ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"})}${zeit?" · "+zeit:""}${termin.ort?" · "+mapsAnchor(termin.ort):""}${termin.platz?" · 🏟️ "+esc(termin.platz):""}</div>${typeof taChip==="function"?taChip(termin.id,true):""}
       ${(typeof elternAnfahrtHtml==="function")?elternAnfahrtHtml(termin):""}
       <div id="wetter-eltern"></div>
@@ -1050,6 +1057,7 @@ async function elternDashLoad(){
       <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
         <button onclick="galerieOpen(${termin.id},'${(termin.titel||termin.gegner||m.label).replace(/'/g,'')}')" style="flex:1;min-width:130px;padding:9px;border:1.5px solid #1e3a8a;border-radius:10px;background:#fff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📸 ${fotoLabel(termin.typ)}</button>
         <!-- „Alle Termine" entfernt: die Kachel „Alle Termine & Kalender-Abo" darunter kann dasselbe + mehr (PO) -->
+      </div>
       </div>
     </div>`;
   }

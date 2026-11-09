@@ -5062,7 +5062,7 @@ async function saisonCockpitOpen(){
 const HELP=[
   {cat:"🏠 Start", items:[
     {t:"Diese Woche", d:"<b>Zusagen gleichen die Einteilung selbst ab (seit v801):</b> Beim Laden der Startseite wird die gespeicherte Einteilung der nächsten Spiele und Turniere mit den Rückmeldungen abgeglichen – Zusage wird „dabei“, Absage oder krank „nicht“. Was du von Hand gesetzt hast und pausierte Kinder bleiben, wie auf der Spieltag-Seite. Die Aufteilung auf Teams macht weiter die Spieltag-Seite beim Öffnen. Alle Termine der nächsten 7 Tage auf einen Blick: wie viele Kinder zugesagt haben (aus den Eltern-Rückmeldungen; beim Spieltag zählt „dabei“ aus „Teams festlegen“, sobald die Einteilung steht), ob genug Trainer da sind (aus dem Trainerplan), ob der Trainingsplan steht und die Aufstellung fürs Spiel. Die Quelle steht unter der Karte. Rot wird ein Chip erst drei Tage vor dem Termin – vorher ist „0 zugesagt“ normal. Antippen öffnet den Termin.", run:"document.getElementById('home-woche')?.scrollIntoView({behavior:'smooth',block:'center'})"},
-    {t:"Startseite", d:"<b>Seit v819:</b> Die sechs farbigen Kacheln sind weg – in die Bereiche führt die Leiste unten, und „Diese Woche“ steht gleich oben. Im Kopf stehen nur noch der Team-Chat und „⋯“; dahinter liegen Hilfe, Schriftgröße und Hell/Dunkel. Es erscheint nur noch ein Hinweis gleichzeitig. <b>Seit v787:</b> Die Kacheln tragen einheitliche Linien-Symbole, und die Karte „N ohne Rückmeldung“ auf der Orga-Seite hat einen Knopf „Erinnern“ (Push nur an Familien ohne Antwort). Von oben nach unten: was zu tun ist (Wie war's?, To-Do-Banner nur bei offenen Aufgaben, „Bist du dabei?“ mit den Terminen der nächsten 14 Tage, für die deine Antwort noch fehlt), <b>seit v682 gleich darunter die sechs Bereichs-Kacheln</b> (seit v718 drei je Reihe und halb so hoch; sie führen dorthin, wohin auch die Leiste unten führt, und zeigen dazu den nächsten Termin) – dahinter jeweils wieder eine Seite mit Kacheln, bei Taktik direkt das Brett –, dann „Diese Woche“ mit dem Stand je Termin (die erste Zeile ist der nächste Termin mit Wetter, Packtipp und den Sprungknöpfen „Anwesenheit“ und „Plan“; woher die Zahlen kommen, steht zugeklappt darunter) und der Knopf zu allen Terminen. Die drei Startschritte erscheinen nur, solange es noch keinen Kader gibt. Dieselbe Seite erreichst du über die untere Leiste; beide Wege enden im selben Bild.", go:"home"},
+    {t:"Startseite", d:"<b>Seit v821:</b> Der nächste Termin steht als farbige Karte oben in „Diese Woche“: großes Datum, „Heute“/„Morgen“/„in 3 Tagen“, Uhrzeit, Wetter als Symbol und rechts ein Ring, der zeigt, wie viele Kinder dabei sind (dieselbe Zahl wie das erste Etikett darunter). Eltern sehen dieselbe Karte mit dem Stand ihrer Rückmeldung. <b>Seit v819:</b> Die sechs farbigen Kacheln sind weg – in die Bereiche führt die Leiste unten, und „Diese Woche“ steht gleich oben. Im Kopf stehen nur noch der Team-Chat und „⋯“; dahinter liegen Hilfe, Schriftgröße und Hell/Dunkel. Es erscheint nur noch ein Hinweis gleichzeitig. <b>Seit v787:</b> Die Kacheln tragen einheitliche Linien-Symbole, und die Karte „N ohne Rückmeldung“ auf der Orga-Seite hat einen Knopf „Erinnern“ (Push nur an Familien ohne Antwort). Von oben nach unten: was zu tun ist (Wie war's?, To-Do-Banner nur bei offenen Aufgaben, „Bist du dabei?“ mit den Terminen der nächsten 14 Tage, für die deine Antwort noch fehlt), <b>seit v682 gleich darunter die sechs Bereichs-Kacheln</b> (seit v718 drei je Reihe und halb so hoch; sie führen dorthin, wohin auch die Leiste unten führt, und zeigen dazu den nächsten Termin) – dahinter jeweils wieder eine Seite mit Kacheln, bei Taktik direkt das Brett –, dann „Diese Woche“ mit dem Stand je Termin (die erste Zeile ist der nächste Termin mit Wetter, Packtipp und den Sprungknöpfen „Anwesenheit“ und „Plan“; woher die Zahlen kommen, steht zugeklappt darunter) und der Knopf zu allen Terminen. Die drei Startschritte erscheinen nur, solange es noch keinen Kader gibt. Dieselbe Seite erreichst du über die untere Leiste; beide Wege enden im selben Bild.", go:"home"},
   ]},
   {cat:"👥 Team", items:[
     {t:"Saison-Cockpit", d:"Torschützen, Anwesenheit, Rückmelde-Tempo der Familien, faire Einsätze, Eltern-Puls, Rückmelde-Tempo – alles auf einen Blick.", run:"saisonCockpitOpen()"},
@@ -5700,7 +5700,9 @@ async function homeWocheLoad(){
        Chip „dabei" aus „Teams festlegen" statt der Eltern-Zusagen. */
     const nomZeile=(t.typ==="spiel"||t.typ==="turnier")?noms.find(n=>n.datum===t.datum+"__nom"):null;
     const dabei=nomZeile&&nomZeile.data?Object.keys(nomZeile.data).filter(k=>k.charAt(0)!=="_"&&nomZeile.data[k]==="dabei").length:0;
+    let ring=null;   // v821: dieselbe Zahl wie das erste Etikett, als Ring im Band des nächsten Termins
     if(dabei){
+      ring={wert:dabei,von:aktive,text:`${dabei} von ${aktive} Kindern eingeteilt`};
       chips.push(_wocheChip(`🧩 ${dabei} dabei`,dabei>=6?"ok":"warn"));
       /* v796 · Charles 07.11.: „Hier steht in der Übersicht 9 dabei. Es haben aber 12 zugesagt.“ Der Chip zählt die
          EINTEILUNG („Teams festlegen“, v486), nicht die Zusagen – wer nach der Einteilung zugesagt hat, fehlte in der
@@ -5718,9 +5720,11 @@ async function homeWocheLoad(){
          bei den Zusagen. */
       if(t.typ==="training"){
         const dabei=Math.max(0,aktive-nein);
+        ring={wert:dabei,von:aktive,text:`${dabei} von ${aktive} Kindern dabei`};
         chips.push(_wocheChip(`${dabei} dabei`,dabei>=6?"ok":"warn"));
         if(nein)chips.push(_wocheChip(`${nein} abgesagt`,"neutral"));
       }else{
+        ring={wert:ja,von:aktive,text:`${ja} von ${aktive} Kindern zugesagt`};
         chips.push(_wocheChip(`${ja} zugesagt`,ja>=6?"ok":ja?"warn":nah?"rot":"neutral"));
         if(nein)chips.push(_wocheChip(`${nein} abgesagt`,"neutral"));
         if(offen)chips.push(_wocheChip(`${offen} offen`,"neutral"));
@@ -5754,6 +5758,17 @@ async function homeWocheLoad(){
         </div>
         <div id="wetter-home"></div><div id="wetter-warn-home"></div><div id="gegner-contact-home"></div>
       </div>`;
+    /* v821: Der nächste Termin trägt statt Datumsspalte und Titelzeile das farbige Band (terminKarteBand, core.js):
+       Datumsblock, Countdown, Wetter-Symbol und der Ring mit derselben Zahl wie das erste Etikett. Etiketten und
+       Knöpfe darunter bleiben. Die übrigen Zeilen der Woche sind unverändert. */
+    if(idx===0&&typeof terminKarteBand==="function") return `<div class="woche-zeile woche-zeile-band" role="button" tabindex="0" onclick="wocheOpen(${t.id},'${t.datum}','${esc(t.typ)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"
+        style="display:block;min-height:44px;padding:4px 4px 8px;cursor:pointer">
+      ${terminKarteBand({typ:t.typ,datum:t.datum,zeit:zeit,wetterId:faelltAus?"":"wetter-home",abgesagt:faelltAus,ring:faelltAus?null:ring,
+        titelHtml:`${m.icon} ${titel}${ort?`<span style="display:block;font-weight:600;font-size:var(--s-klein)">${esc(ort)}</span>`:""}`})}
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">${chips.join("")}</div>
+      ${faelltAus?`<div style="font-size:var(--s-klein);color:var(--text3);margin-top:5px">Abgesagt – die Eltern sehen den Hinweis in ihrer App. Zum Zurücknehmen den Termin antippen.</div>`:""}
+      ${erweitert}
+    </div>`;
     return `<div class="woche-zeile" role="button" tabindex="0" onclick="wocheOpen(${t.id},'${t.datum}','${esc(t.typ)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"
         style="display:flex;gap:10px;align-items:flex-start;min-height:44px;padding:8px 4px;border-top:1px solid var(--rand-bedien);cursor:pointer">
       <div style="flex:0 0 52px;text-align:center">

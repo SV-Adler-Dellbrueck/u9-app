@@ -21,7 +21,7 @@ module.exports = async function (h) {
     /* Bis v818 stand die Uhrzeit in der Training-Kachel. Seit v819 gibt es die Kacheln nicht mehr;
        der nächste Termin steht mit Uhrzeit in „Diese Woche“ – dort wird jetzt gemessen. */
     const woche = (document.getElementById("home-woche") || { innerText: "" }).innerText.replace(/\s+/g, " ");
-    const kachel = (home.match(/Training (Mo|Di|Mi|Do|Fr|Sa|So) \d{1,2}:\d{2}/) || woche.match(/\d{1,2}:\d{2}[^:]{0,40}Training/) || [""])[0];
+    const kachel = (home.match(/Training (Mo|Di|Mi|Do|Fr|Sa|So) \d{1,2}:\d{2}/) || woche.match(/\d{1,2}:\d{2}[^:]{0,40}Training/) || woche.match(/Training[^:]{0,40}\d{1,2}:\d{2}/) /* seit v821 steht die Uhrzeit im Band unter dem Titel */ || [""])[0];
     return { text: el.textContent.trim(), passt: el.scrollWidth <= el.clientWidth + 1, kachel };
   });
   const f = s.fehler(); await s.schliessen();

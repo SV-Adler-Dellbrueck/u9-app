@@ -853,8 +853,50 @@ async function wetterInto(elId,dateStr,place,timeStr){
   const rain=(w.rain!=null)?` · 💧 ${w.rain}%`:"";
   const temp=w.hour?`${w.temp} °C`:`${w.tmin}–${w.tmax} °C`;
   const tip=wetterKitTip(w);
+  /* v821: Die Terminkarte zeigt das Wetter zusätzlich als Symbol im farbigen Band (Element „<elId>-symbol“). */
+  const sy=document.getElementById(elId+"-symbol");
+  if(sy){ sy.textContent=` · ${w.emoji} ${w.hour?w.temp:w.tmax}°`; sy.setAttribute("aria-label",`Wetter: ${w.text}, ${temp}`); }
   el.innerHTML=`<span style="display:inline-flex;align-items:center;gap:5px;font-size:var(--s-klein);color:var(--text2);background:var(--surface2);border:var(--border);border-radius:20px;padding:3px 10px;margin-top:6px">${w.emoji} ${w.text} · ${temp}${rain}</span>`
     +(tip?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">🎒 ${tip}</div>`:"");
+}
+
+/* v821 · Terminkarte: das farbige Band für den nächsten Termin – bei Eltern und Trainern dieselbe Bildsprache.
+   Großer Datumsblock, Countdown („Heute“, „Morgen“, „in 3 Tagen“), Uhrzeit, Wetter als Symbol und rechts ein
+   Zeichen: bei Trainern ein Ring (wie viele dabei sind), bei Eltern der Stand der eigenen Rückmeldung.
+   Es kommen keine neuen Daten dazu – nur eine andere Darstellung dessen, was schon auf der Karte stand.
+   Farbe ist nie der einzige Träger: Terminart, Countdown und Zahlen stehen als Text da.
+   o = { typ, titelHtml (fertig maskiert), datum (JJJJ-MM-TT), zeit ("17:00"), etikett, wetterId, abgesagt,
+         ring:{wert,von,text} | zeichen:{symbol,text} } */
+const TK_FARBEN={training:["var(--fam-training)","var(--fam-training-2)"],spiel:["var(--fam-spieltag)","var(--fam-spieltag-2)"],turnier:["var(--fam-spieltag)","var(--fam-spieltag-2)"]};
+function terminKarteCountdown(datum){
+  const tage=Math.round((new Date(datum+"T00:00:00")-new Date(isoLokal()+"T00:00:00"))/864e5);
+  return tage<=0?"Heute":tage===1?"Morgen":`in ${tage} Tagen`;
+}
+function terminKarteBand(o){
+  const d=new Date(o.datum+"T00:00:00");
+  const wtag=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()], mon=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"][d.getMonth()];
+  const f=o.abgesagt?["#475569","#334155"]:(TK_FARBEN[o.typ]||["var(--fam-orga)","var(--fam-orga-2)"]);
+  let rechts="";
+  if(o.ring&&o.ring.von>0){
+    const u=2*Math.PI*28, anteil=Math.max(0,Math.min(1,o.ring.wert/o.ring.von));
+    rechts=`<div class="tk-ring" role="img" aria-label="${esc(o.ring.text)}" style="flex:none;position:relative;width:66px;height:66px">
+      <svg viewBox="0 0 66 66" width="66" height="66" aria-hidden="true"><circle cx="33" cy="33" r="28" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="4"/><circle cx="33" cy="33" r="28" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-dasharray="${(u*anteil).toFixed(1)} ${u.toFixed(1)}" transform="rotate(-90 33 33)"/></svg>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1"><span style="font-size:17px;font-weight:900">${o.ring.wert}</span><span style="font-size:12px;font-weight:700">von ${o.ring.von}</span></div></div>`;
+  }else if(o.zeichen){
+    rechts=`<div class="tk-zeichen" role="img" aria-label="${esc(o.zeichen.text)}" style="flex:none;width:52px;height:52px;border-radius:50%;background:#fff;color:#0f172a;display:flex;align-items:center;justify-content:center;font-size:24px;line-height:1">${o.zeichen.symbol}</div>`;
+  }
+  return `<div class="tk-band" style="background-color:${f[0]};background-image:linear-gradient(135deg,${f[0]},${f[1]});color:#fff;border-radius:14px;padding:12px;display:flex;align-items:center;gap:12px">
+    <div class="tk-datum" aria-hidden="true" style="flex:none;width:54px;border-radius:12px;background:#fff;color:#0f172a;text-align:center;padding:5px 0 6px;line-height:1.05">
+      <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#475569">${wtag}</div>
+      <div style="font-size:26px;font-weight:900">${d.getDate()}</div>
+      <div style="font-size:12px;font-weight:800;color:#475569">${mon}</div>
+    </div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:var(--s-klein);font-weight:800;letter-spacing:.2px">${o.etikett?esc(o.etikett)+" · ":""}<span class="tk-countdown">${o.abgesagt?"fällt aus":terminKarteCountdown(o.datum)}</span></div>
+      <div class="tk-titel" style="font-size:var(--s-teil);font-weight:900;line-height:1.2;overflow-wrap:anywhere">${o.titelHtml}</div>
+      <div style="font-size:var(--s-text);font-weight:700">${o.zeit?esc(o.zeit)+" Uhr":""}<span${o.wetterId?` id="${o.wetterId}-symbol"`:""}></span></div>
+    </div>${rechts}
+  </div>`;
 }
 
 async function xpAward(spielerId,quelle,quelleId){
