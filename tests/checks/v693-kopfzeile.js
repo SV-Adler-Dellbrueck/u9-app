@@ -18,14 +18,17 @@ module.exports = async function (h) {
     if (typeof topbarNaechsterTermin === "function") { await topbarNaechsterTermin(); await w(200); }
     const el = document.getElementById("topbar-sub");
     const home = (document.getElementById("home-content") || document.body).innerText.replace(/\s+/g, " ");
-    const kachel = (home.match(/Training (Mo|Di|Mi|Do|Fr|Sa|So) \d{1,2}:\d{2}/) || [""])[0];
+    /* Bis v818 stand die Uhrzeit in der Training-Kachel. Seit v819 gibt es die Kacheln nicht mehr;
+       der nächste Termin steht mit Uhrzeit in „Diese Woche“ – dort wird jetzt gemessen. */
+    const woche = (document.getElementById("home-woche") || { innerText: "" }).innerText.replace(/\s+/g, " ");
+    const kachel = (home.match(/Training (Mo|Di|Mi|Do|Fr|Sa|So) \d{1,2}:\d{2}/) || woche.match(/\d{1,2}:\d{2}[^:]{0,40}Training/) || [""])[0];
     return { text: el.textContent.trim(), passt: el.scrollWidth <= el.clientWidth + 1, kachel };
   });
   const f = s.fehler(); await s.schliessen();
   if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
   if (r.text !== "Trainerstab · U9 I") probleme.push(`a) Kopfzeile: „${r.text}“`);
   if (!r.passt) probleme.push("b) Die Kopfzeile ist abgeschnitten");
-  if (!/\d{1,2}:\d{2}/.test(r.kachel)) probleme.push(`c) Training-Kachel ohne Uhrzeit: „${r.kachel}“`);
-  zeilen.push(`Kopfzeile „${r.text}“ · Training-Kachel „${r.kachel}“`);
+  if (!/\d{1,2}:\d{2}/.test(r.kachel)) probleme.push(`c) Nächstes Training ohne Uhrzeit auf der Startseite: „${r.kachel}“`);
+  zeilen.push(`Kopfzeile „${r.text}“ · nächstes Training „${r.kachel}“`);
   return h.ergebnis("Kopfzeile fest „Trainerstab · U9 I“, Termin steht in der Kachel", !probleme.length, zeilen.concat(probleme));
 };

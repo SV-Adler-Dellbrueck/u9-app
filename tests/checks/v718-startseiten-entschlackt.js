@@ -23,15 +23,17 @@ module.exports = async function (h) {
   const rt = await t.page.evaluate(async () => {
     localStorage.removeItem("adler_schrift_hinweis"); localStorage.removeItem("adler_schrift");
     go("home"); await new Promise(r => setTimeout(r, 1200));
+    /* Seit v819 sind die Bereichs-Kacheln ganz weg (v819-start-aufgeraeumt.js prüft das). Teil a)
+       misst sie nur noch, wenn es sie gibt – gegen eine Fassung vor v819. */
     const g = document.getElementById("home-bereiche");
-    if (!g) return { fehlt: true };
-    const k = [...g.children];
-    const spalten = getComputedStyle(g).gridTemplateColumns.split(" ").length;
+    const k = g ? [...g.children] : [];
+    const spalten = g ? getComputedStyle(g).gridTemplateColumns.split(" ").length : 0;
     const hoehen = k.map(e => Math.round(e.getBoundingClientRect().height));
     const ueber = k.filter(e => [...e.querySelectorAll("span")].some(s => s.scrollWidth > s.clientWidth + 1)).map(e => e.textContent.trim());
+    document.querySelectorAll("#push-hinweis").forEach(e => e.remove());   // seit v819 wartet die Schriftfrage, solange die Push-Karte steht
     schriftHinweisZeigen("schrift-hinweis-trainer");
     const sh = document.querySelector("#schrift-hinweis-trainer .schrift-hinweis");
-    return { anzahl: k.length, spalten, hoehen, ueber, schrift: sh ? sh.textContent.replace(/\s+/g, " ").trim() : null };
+    return { ohneKacheln: !g, anzahl: k.length, spalten, hoehen, ueber, schrift: sh ? sh.textContent.replace(/\s+/g, " ").trim() : null };
   });
   const ft = t.fehler(); await t.schliessen();
 
@@ -61,10 +63,10 @@ module.exports = async function (h) {
   const fe = s.fehler(); await s.schliessen();
 
   const titel = "v718 Startseiten entschlackt: Kacheln zu dritt, Hinweise knapp, Termine unter „Mehr“";
-  if (rt.fehlt) return h.ergebnis(titel, false, ["#home-bereiche fehlt"]);
   const f = [].concat(ft, fe); if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
 
-  if (rt.anzahl !== 6 || rt.spalten !== 3) probleme.push(`a) ${rt.anzahl} Kacheln in ${rt.spalten} Spalten`);
+  if (rt.ohneKacheln) zeilen.push("a) keine Bereichs-Kacheln mehr (seit v819)");
+  else if (rt.anzahl !== 6 || rt.spalten !== 3) probleme.push(`a) ${rt.anzahl} Kacheln in ${rt.spalten} Spalten`);
   else if (rt.hoehen.some(x => x < 44 || x > 90)) probleme.push("a) Kachelhöhen " + rt.hoehen.join("/"));
   else if (rt.ueber.length) probleme.push("a) Name läuft über: " + rt.ueber.join(", "));
   else zeilen.push(`a) sechs Kacheln zu dritt, ${Math.min(...rt.hoehen)}–${Math.max(...rt.hoehen)} px hoch`);

@@ -1015,6 +1015,9 @@ function schriftHinweisZeigen(ziel){
   const el=typeof ziel==="string"?document.getElementById(ziel):ziel; if(!el)return;
   let weg=false; try{ weg=!!(localStorage.getItem("adler_schrift_hinweis")||localStorage.getItem("adler_schrift")); }catch(e){ weg=true; }
   if(weg||_seiteFestHell()||/\/kinder\//.test(location.pathname)){ el.innerHTML=""; return; }
+  /* v819: Nur ein Hinweis gleichzeitig. Steht die Karte zu den Benachrichtigungen da, wartet die
+     Schriftfrage – sie kommt beim nächsten Öffnen, wenn jene beantwortet oder weggetippt ist. */
+  if(document.getElementById("push-hinweis")){ el.innerHTML=""; return; }
   // v718: nur noch die Frage – wie es weitergeht, sagt die Meldung nach „Größer stellen“ (Knopf „A“)
   el.innerHTML=`<div class="schrift-hinweis" role="note" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:var(--blue-bg);color:var(--text);border:1px solid #bfdbfe;border-radius:14px;padding:4px 10px;margin:0 0 10px">
     <div style="flex:1 1 140px;font-size:var(--s-text);line-height:1.45"><b>🔎 Schrift zu klein?</b></div>
@@ -1023,10 +1026,16 @@ function schriftHinweisZeigen(ziel){
       <button class="btn" style="min-height:44px;border-color:transparent;background:transparent;color:var(--text2);text-decoration:underline" onclick="schriftHinweisAntwort(false)">Nein danke</button>
     </div></div>`;
 }
+/* v819: Menü im Trainer-Kopf („⋯“) auf und zu. */
+function kopfMenueUmschalten(auf){
+  const m=document.getElementById("kopf-menue"), k=document.getElementById("kopf-menue-knopf"); if(!m)return;
+  const an=typeof auf==="boolean"?auf:m.style.display==="none"; m.style.display=an?"flex":"none";
+  if(k)k.setAttribute("aria-expanded",an?"true":"false");
+}
 function schriftHinweisAntwort(ja){
   try{ localStorage.setItem("adler_schrift_hinweis","1"); }catch(e){}
   document.querySelectorAll(".schrift-hinweis").forEach(k=>k.remove());
-  if(ja){ try{ localStorage.setItem("adler_schrift","gross"); }catch(e){} applySchrift("gross"); if(typeof toast==="function")toast("🔎 Schrift: Groß – oben auf „A“ geht es weiter oder zurück"); }
+  if(ja){ try{ localStorage.setItem("adler_schrift","gross"); }catch(e){} applySchrift("gross"); if(typeof toast==="function")toast("🔎 Schrift: Groß – oben unter „⋯“ auf „A“ geht es weiter oder zurück"); }
 }
 _adlerOnReady(()=>{ try{ schriftHinweisZeigen("schrift-hinweis-trainer"); }catch(e){} });
 
@@ -1347,6 +1356,7 @@ async function pushKarteRender(slotId,rolle){
     ${fall==="aus"?`<button type="button" id="push-hinweis-anleitung" onclick="pushAnleitung('aus')" style="display:block;margin:6px auto 0;min-height:44px;padding:0 12px;border:none;background:transparent;color:var(--text2);font-family:inherit;font-size:var(--s-text);text-decoration:underline;cursor:pointer">So geht’s</button>`:""}
     <button type="button" onclick="pushKarteWeg('${slotId}')" aria-label="Hinweis ausblenden" style="position:absolute;top:2px;right:2px;min-width:44px;min-height:44px;border:none;background:transparent;color:var(--text2);font-size:var(--s-seite);line-height:1;cursor:pointer">×</button>
   </div>`;
+  document.querySelectorAll(".schrift-hinweis").forEach(k=>k.remove());   // v819: nur ein Hinweis gleichzeitig (nicht als beantwortet gemerkt)
 }
 async function pushKarteAn(slotId,rolle){
   const knopf=document.getElementById("push-hinweis-an"); if(knopf)knopf.disabled=true;
