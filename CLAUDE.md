@@ -78,6 +78,16 @@ navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregist
 caches.keys().then(ks => ks.forEach(k => caches.delete(k)));
 ```
 
+**Die Icon-Schrift ist ein Zuschnitt (seit v818).** In `vendor/` liegen nur die Tabler-Icons, die im Code vorkommen; die Vollfassung steht unter `tools/quelle/`. Ein neues Icon im Code ohne neuen Zuschnitt ist ein leeres Kästchen – ohne Fehlermeldung. Deshalb nach jedem neuen `ti-…`:
+
+```bash
+node tools/icons-zuschneiden.js --schreiben   # braucht Python mit fonttools und brotli
+```
+
+Wird ein Icon-Name zusammengesetzt (`"ti-" + …`), müssen alle möglichen Namen als Zeichenketten in derselben Zeile stehen, sonst findet das Werkzeug sie nicht.
+
+**Feste Dateien haben einen eigenen Cache (seit v818).** Alles unter `vendor/` und die PNG-Bilder liegen in `FEST_CACHE` (`sw.js`) und werden bei einem Versionssprung nicht neu geladen. Der Name trägt die Prüfsumme dieser Dateien. Wer eine davon ändert (Logo, Schrift, Bibliothek), ruft `node tools/fest-cache.js --schreiben` auf – sonst behalten alle Geräte die alte Datei. Der Icon-Zuschnitt erledigt das selbst. Dateien, die sich oft ändern, gehören nicht nach `vendor/`.
+
 **`const` auf oberster Ebene hat eine temporale Todeszone.** Bricht eine Datei vorher ab, sind die Konstanten unbenutzbar — auch für Code, der später läuft.
 
 ## Pflichten bei jeder Änderung
