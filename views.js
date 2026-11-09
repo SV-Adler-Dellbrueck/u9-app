@@ -5062,7 +5062,7 @@ async function saisonCockpitOpen(){
 const HELP=[
   {cat:"🏠 Start", items:[
     {t:"Diese Woche", d:"<b>Zusagen gleichen die Einteilung selbst ab (seit v801):</b> Beim Laden der Startseite wird die gespeicherte Einteilung der nächsten Spiele und Turniere mit den Rückmeldungen abgeglichen – Zusage wird „dabei“, Absage oder krank „nicht“. Was du von Hand gesetzt hast und pausierte Kinder bleiben, wie auf der Spieltag-Seite. Die Aufteilung auf Teams macht weiter die Spieltag-Seite beim Öffnen. Alle Termine der nächsten 7 Tage auf einen Blick: wie viele Kinder zugesagt haben (aus den Eltern-Rückmeldungen; beim Spieltag zählt „dabei“ aus „Teams festlegen“, sobald die Einteilung steht), ob genug Trainer da sind (aus dem Trainerplan), ob der Trainingsplan steht und die Aufstellung fürs Spiel. Die Quelle steht unter der Karte. Rot wird ein Chip erst drei Tage vor dem Termin – vorher ist „0 zugesagt“ normal. Antippen öffnet den Termin.", run:"document.getElementById('home-woche')?.scrollIntoView({behavior:'smooth',block:'center'})"},
-    {t:"Startseite", d:"<b>Seit v787:</b> Die Kacheln tragen einheitliche Linien-Symbole, und die Karte „N ohne Rückmeldung“ auf der Orga-Seite hat einen Knopf „Erinnern“ (Push nur an Familien ohne Antwort). Von oben nach unten: was zu tun ist (Wie war's?, To-Do-Banner nur bei offenen Aufgaben, „Bist du dabei?“ mit den Terminen der nächsten 14 Tage, für die deine Antwort noch fehlt), <b>seit v682 gleich darunter die sechs Bereichs-Kacheln</b> (seit v718 drei je Reihe und halb so hoch; sie führen dorthin, wohin auch die Leiste unten führt, und zeigen dazu den nächsten Termin) – dahinter jeweils wieder eine Seite mit Kacheln, bei Taktik direkt das Brett –, dann „Diese Woche“ mit dem Stand je Termin (die erste Zeile ist der nächste Termin mit Wetter, Packtipp und den Sprungknöpfen „Anwesenheit“ und „Plan“; woher die Zahlen kommen, steht zugeklappt darunter) und der Knopf zu allen Terminen. Die drei Startschritte erscheinen nur, solange es noch keinen Kader gibt. Dieselbe Seite erreichst du über die untere Leiste; beide Wege enden im selben Bild.", go:"home"},
+    {t:"Startseite", d:"<b>Seit v819:</b> Die sechs farbigen Kacheln sind weg – in die Bereiche führt die Leiste unten, und „Diese Woche“ steht gleich oben. Im Kopf stehen nur noch der Team-Chat und „⋯“; dahinter liegen Hilfe, Schriftgröße und Hell/Dunkel. Es erscheint nur noch ein Hinweis gleichzeitig. <b>Seit v787:</b> Die Kacheln tragen einheitliche Linien-Symbole, und die Karte „N ohne Rückmeldung“ auf der Orga-Seite hat einen Knopf „Erinnern“ (Push nur an Familien ohne Antwort). Von oben nach unten: was zu tun ist (Wie war's?, To-Do-Banner nur bei offenen Aufgaben, „Bist du dabei?“ mit den Terminen der nächsten 14 Tage, für die deine Antwort noch fehlt), <b>seit v682 gleich darunter die sechs Bereichs-Kacheln</b> (seit v718 drei je Reihe und halb so hoch; sie führen dorthin, wohin auch die Leiste unten führt, und zeigen dazu den nächsten Termin) – dahinter jeweils wieder eine Seite mit Kacheln, bei Taktik direkt das Brett –, dann „Diese Woche“ mit dem Stand je Termin (die erste Zeile ist der nächste Termin mit Wetter, Packtipp und den Sprungknöpfen „Anwesenheit“ und „Plan“; woher die Zahlen kommen, steht zugeklappt darunter) und der Knopf zu allen Terminen. Die drei Startschritte erscheinen nur, solange es noch keinen Kader gibt. Dieselbe Seite erreichst du über die untere Leiste; beide Wege enden im selben Bild.", go:"home"},
   ]},
   {cat:"👥 Team", items:[
     {t:"Saison-Cockpit", d:"Torschützen, Anwesenheit, Rückmelde-Tempo der Familien, faire Einsätze, Eltern-Puls, Rückmelde-Tempo – alles auf einen Blick.", run:"saisonCockpitOpen()"},
@@ -5150,7 +5150,7 @@ const HELP=[
     {t:"Zurück-Taste am Handy", d:"Seit v624 geht die Zurück-Taste eine Seite zurück, statt die App zu schließen: Ist ein Fenster offen, schließt sie zuerst das Fenster; sonst führt sie zur Seite davor und zuletzt zur Startseite. Erst von der Startseite aus schließt sie die App. Das gilt im Trainer-Bereich, im Eltern-Bereich und auf den geteilten Seiten wie dem Festival-Link (Anfahrt, Regeln, „Am Rand“). In der Kabine führt sie zur Kabinen-Startseite – verlassen lässt sich die Kabine weiter nur mit dem Ausgangs-Code."},
     {t:"Datensicherung", d:"Alle Tabellen der App als JSON-Datei – seit v683 als Kachel „Datensicherung“ unter Orga · Einstellungen (vorher im Kader und auf der Pinnwand). Enthält personenbezogene Daten der Kinder: nur auf eigenem, gesperrtem Gerät speichern.", run:"backupExport()"},
     {t:"Dark Mode", d:"Hell/Dunkel umschalten.", run:"toggleTheme()"},
-    {t:"Schriftgröße", d:"Oben neben 🌙 steht „A“: ein Tipp macht die Schrift größer – Normal, Groß (A+), Sehr groß (A++), dann wieder Normal. Die Wahl gilt nur auf diesem Gerät und bleibt, bis du sie änderst; die anderen im Trainerteam sehen die App weiter wie gewohnt. Die Zeilen brechen dabei um, statt wie beim Zoomen mit zwei Fingern seitlich aus dem Bildschirm zu laufen. Die untere Leiste behält ihre Größe. Dasselbe gibt es in der Eltern-App. Die Kabine der Kinder und die öffentlichen Seiten (Ticker, Stadionheft, Turnier) bleiben, wie sie sind. Einmal je Gerät erscheint auf der Startseite eine kleine Karte mit „Größer stellen“ – so finden auch die anderen den Knopf. (Seit v632)", run:"schriftWechseln()"},
+    {t:"Schriftgröße", d:"Oben rechts hinter „⋯“ steht „A“ (seit v819 dort, zusammen mit Hilfe und 🌙): ein Tipp macht die Schrift größer – Normal, Groß (A+), Sehr groß (A++), dann wieder Normal. Die Wahl gilt nur auf diesem Gerät und bleibt, bis du sie änderst; die anderen im Trainerteam sehen die App weiter wie gewohnt. Die Zeilen brechen dabei um, statt wie beim Zoomen mit zwei Fingern seitlich aus dem Bildschirm zu laufen. Die untere Leiste behält ihre Größe. Dasselbe gibt es in der Eltern-App. Die Kabine der Kinder und die öffentlichen Seiten (Ticker, Stadionheft, Turnier) bleiben, wie sie sind. Einmal je Gerät erscheint auf der Startseite eine kleine Karte mit „Größer stellen“ – so finden auch die anderen den Knopf. (Seit v632)", run:"schriftWechseln()"},
   ]},
 ];
 function hilfeOpen(){
@@ -5224,8 +5224,8 @@ const TOUR=[
    d:"Spielsituationen zeichnen oder von der KI zeichnen lassen, groß zeigen und abspielen. Das „Freie Brett“ ist für den Moment am Platz."},
   {emo:"📝", t:"Nachbereiten", sel:['#trainer-todo-slot button[onclick="einheitBewertenOpen()"]',"#trainer-todo-slot"], vor:()=>openTab("home"), warte:500,
    d:"Nach Training, Spiel oder Festival: einsprechen, was los war – die KI ordnet es und macht einen Vorschlag fürs Tagebuch. Gespeichert wird erst, wenn du es prüfst."},
-  {emo:"❓", t:"Hilfe und Schrift", sel:["#help-btn"],
-   d:"❓ öffnet die Hilfe mit allen Funktionen und startet diese Tour neu. Daneben „A“ für größere Schrift und 🌙 für den dunklen Modus."},
+  {emo:"❓", t:"Hilfe und Schrift", sel:["#kopf-menue-knopf"],
+   d:"Hinter „⋯“ oben rechts: ❓ öffnet die Hilfe mit allen Funktionen und startet diese Tour neu, „A“ stellt die Schrift größer, 🌙 schaltet den dunklen Modus."},
 ];
 // Nie im Kinder-Quiz: ?quiz laesst #home-content im DOM, renderHome laeuft also mit und
 // wuerde den Kindern die Trainer-Tour zeigen (die von Kader & Trainingsplan erzaehlt).
@@ -5941,18 +5941,10 @@ async function renderHome(){
     <div id="trainer-todo-slot"></div>
     <div id="home-kindideen"></div>
     <div id="trainer-termine-slot"></div>
-    <!-- v682: Die sechs Bereiche stehen direkt unter dem, was zu tun ist – nicht erst nach
-         Woche, Terminen und Geburtstagen am Seitenende. -->
-    <!-- v718 „entschlacken“: drei Spalten statt zwei, halbe Höhe – die Leiste unten führt
-         ohnehin in dieselben Bereiche, die Kacheln tragen vor allem die Live-Hinweise. -->
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 12px" id="home-bereiche">
-      ${kachelTile("training","🏃","Training","var(--fam-training)","var(--fam-training-2)")}
-      ${kachelTile("spieltag","⚽","Spieltag","var(--fam-spieltag)","var(--fam-spieltag-2)")}
-      ${kachelTile("team","👥","Team","var(--fam-team)","var(--fam-team-2)")}
-      ${kachelTile("taktik","🎯","Taktik","var(--fam-taktik)","var(--fam-taktik-2)")}
-      ${kachelTile("elki","🪶","Eltern & Kinder","var(--fam-elki)","var(--fam-elki-2)")}
-      ${kachelTile("orga","📅","Orga","var(--fam-orga)","var(--fam-orga-2)")}
-    </div>
+    <!-- v819: Die sechs Bereichs-Kacheln sind weg – die Leiste unten führt in dieselben Bereiche,
+         und „Diese Woche“ steht damit im ersten Bildschirm. Was nur die Team-Kachel sagte
+         („n Bewertungen fällig“), steht jetzt als eine Zeile hier. -->
+    <div id="home-team-hinweis"></div>
     <div id="home-woche"></div>
     <div id="home-next"></div>
     <div id="home-meeting"></div>
@@ -5972,7 +5964,7 @@ async function renderHome(){
   trainerTermineHomeLoad();      // Termine der nächsten 14 Tage zum Antippen
   trainerMeetingHomeLoad();      // festgelegtes Trainer-Meeting (steht nicht in `termine`)
   if(typeof tlCheck==="function")tlCheck(); // läuft gerade ein Trainingsstart? → Bereit-Fenster ploppt auf
-  if(stale>0){const b=document.getElementById("kb-team");if(b)b.textContent=stale+" Bewertungen fällig";}
+  if(stale>0){const b=document.getElementById("home-team-hinweis");if(b)b.innerHTML=`<button type="button" class="btn" onclick="kachelOpen('team')" style="width:100%;min-height:44px;justify-content:space-between;margin-bottom:10px"><span><i class="ti ti-users" aria-hidden="true"></i> ${stale} Bewertung${stale===1?"":"en"} fällig</span><span aria-hidden="true">›</span></button>`;}
   // ── Next Event (async nachladen, damit das Dashboard sofort steht) ──
   try{
     const r=await fetch(`${SB_URL}/rest/v1/termine?select=*&datum=gte.${heute}&order=datum.asc,uhrzeit.asc.nullslast&limit=10`,{headers:sbAuthHeaders()});
@@ -7113,20 +7105,6 @@ function trSymbol(emoji,groesse){
   const d=TR_ICONS[emoji]; if(!d)return emoji;
   const g=groesse||26;
   return '<svg viewBox="0 0 24 24" width="'+g+'" height="'+g+'" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'+d+'</svg>';
-}
-function kachelTile(key,emo,label,c1,c2){
-  /* c1/c2 sind Farbvariablen (--fam-*), keine Hexwerte – der Schatten kann deshalb
-     nicht mehr aus der Farbe gebaut werden (frueher `${c1}44`) und ist jetzt neutral.
-     Das Badge traegt volle Deckkraft: mit opacity .9 fiel es auf 4.38:1 und lag damit
-     unter den geforderten 4.5:1. Die Abstufung macht die Schriftgroesse. */
-  // v718: kompakt (drei je Reihe): Symbol, Name, Live-Hinweis – rund halb so hoch wie vorher
-  return `<button onclick="kachelOpen('${key}')" style="min-height:76px;min-width:0;border:none;border-radius:14px;cursor:pointer;font-family:inherit;background:linear-gradient(135deg,${c1},${c2});color:#fff;padding:9px 10px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:2px;box-shadow:var(--shadow-md);text-align:left">
-    <span aria-hidden="true" style="font-size:var(--s-seite);line-height:1;display:flex">${trSymbol(emo,26)}</span>
-    <span style="min-width:0;max-width:100%">
-      <span style="display:block;font-size:var(--s-text);font-weight:900;line-height:1.2;overflow-wrap:anywhere">${label}</span>
-      <span id="kb-${key}" style="display:block;font-size:var(--s-klein);line-height:1.25;min-height:13px"></span>
-    </span>
-  </button>`;
 }
 /* Aktion von einer Kachelseite: Funktion aufrufen, ehrlicher Toast falls sie fehlt.
    v553: Bis hierher raeumte diese Stelle das Kachel-FENSTER weg – sofort bei einer

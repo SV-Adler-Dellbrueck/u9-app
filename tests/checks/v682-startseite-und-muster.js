@@ -26,6 +26,7 @@ module.exports = async function (h) {
     const home = document.getElementById("home-content");
     const pos = id => { const el = document.getElementById(id); return el ? [...home.querySelectorAll("*")].indexOf(el) : -1; };
     out.home = { bereiche: pos("home-bereiche"), woche: pos("home-woche"), onboard: !!document.getElementById("onboard-card") };
+    if (typeof kopfMenueUmschalten === "function") kopfMenueUmschalten(true);   // seit v819 liegen drei der vier Knöpfe hinter „⋯“
     out.kopf = ["#rufe-kopf", "#help-btn", ".schrift-toggle", "#theme-toggle"].map(sel => { const b = document.querySelector(sel); if (!b) return sel + ":fehlt"; const r = b.getBoundingClientRect(); return Math.round(Math.min(r.width, r.height)); });
     out.titel = {};
     for (const k of ["kader", "anwesenheit", "planung", "formen", "tagebuch", "team"]) {
@@ -58,8 +59,10 @@ module.exports = async function (h) {
   const fe = s.fehler(); await s.schliessen();
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
   // a)
-  if (r.home.bereiche < 0 || r.home.woche < 0) probleme.push(`a) Bereiche ${r.home.bereiche} / Woche ${r.home.woche} nicht gefunden`);
-  else if (r.home.bereiche > r.home.woche) probleme.push("a) Die Bereichs-Kacheln stehen erst nach „Diese Woche“");
+  /* Seit v819 gibt es die Bereichs-Kacheln nicht mehr (die Leiste unten führt in dieselben Bereiche,
+     siehe v819-start-aufgeraeumt.js). Gibt es sie doch, gilt weiter: vor „Diese Woche“. */
+  if (r.home.woche < 0) probleme.push("a) „Diese Woche“ nicht gefunden");
+  else if (r.home.bereiche >= 0 && r.home.bereiche > r.home.woche) probleme.push("a) Die Bereichs-Kacheln stehen erst nach „Diese Woche“");
   if (r.home.onboard) probleme.push("a) „Willkommen – in 3 Schritten“ steht trotz Kader da");
   // b)
   r.kopf.forEach((x, i) => { if (typeof x !== "number" || x < 44) probleme.push(`b) Kopf-Knopf ${i + 1}: ${x}`); });
