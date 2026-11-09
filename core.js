@@ -878,18 +878,18 @@ function terminKarteBand(o){
   const f=o.abgesagt?["#475569","#334155"]:(TK_FARBEN[o.typ]||["var(--fam-orga)","var(--fam-orga-2)"]);
   let rechts="";
   if(o.ring&&o.ring.von>0){
-    const u=2*Math.PI*25, anteil=Math.max(0,Math.min(1,o.ring.wert/o.ring.von));
-    rechts=`<div class="tk-ring" role="img" aria-label="${esc(o.ring.text)}" style="flex:none;position:relative;width:62px;height:62px">
-      <svg viewBox="0 0 62 62" width="62" height="62" aria-hidden="true"><circle cx="31" cy="31" r="25" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="5"/><circle cx="31" cy="31" r="25" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-dasharray="${(u*anteil).toFixed(1)} ${u.toFixed(1)}" transform="rotate(-90 31 31)"/></svg>
-      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1"><span style="font-size:var(--s-karte);font-weight:900">${o.ring.wert}</span><span style="font-size:9px;font-weight:700;margin-top:1px">von ${o.ring.von}</span></div></div>`;
+    const u=2*Math.PI*28, anteil=Math.max(0,Math.min(1,o.ring.wert/o.ring.von));
+    rechts=`<div class="tk-ring" role="img" aria-label="${esc(o.ring.text)}" style="flex:none;position:relative;width:66px;height:66px">
+      <svg viewBox="0 0 66 66" width="66" height="66" aria-hidden="true"><circle cx="33" cy="33" r="28" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="4"/><circle cx="33" cy="33" r="28" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-dasharray="${(u*anteil).toFixed(1)} ${u.toFixed(1)}" transform="rotate(-90 33 33)"/></svg>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1"><span style="font-size:17px;font-weight:900">${o.ring.wert}</span><span style="font-size:12px;font-weight:700">von ${o.ring.von}</span></div></div>`;
   }else if(o.zeichen){
     rechts=`<div class="tk-zeichen" role="img" aria-label="${esc(o.zeichen.text)}" style="flex:none;width:52px;height:52px;border-radius:50%;background:#fff;color:#0f172a;display:flex;align-items:center;justify-content:center;font-size:24px;line-height:1">${o.zeichen.symbol}</div>`;
   }
   return `<div class="tk-band" style="background-color:${f[0]};background-image:linear-gradient(135deg,${f[0]},${f[1]});color:#fff;border-radius:14px;padding:12px;display:flex;align-items:center;gap:12px">
     <div class="tk-datum" aria-hidden="true" style="flex:none;width:54px;border-radius:12px;background:#fff;color:#0f172a;text-align:center;padding:5px 0 6px;line-height:1.05">
-      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#475569">${wtag}</div>
+      <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#475569">${wtag}</div>
       <div style="font-size:26px;font-weight:900">${d.getDate()}</div>
-      <div style="font-size:11px;font-weight:800;color:#475569">${mon}</div>
+      <div style="font-size:12px;font-weight:800;color:#475569">${mon}</div>
     </div>
     <div style="flex:1;min-width:0">
       <div style="font-size:var(--s-klein);font-weight:800;letter-spacing:.2px">${o.etikett?esc(o.etikett)+" · ":""}<span class="tk-countdown">${o.abgesagt?"fällt aus":terminKarteCountdown(o.datum)}</span></div>
