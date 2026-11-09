@@ -4024,16 +4024,24 @@ function tpFokusLabels(f){
   const t=String(f.text||"").trim(); if(t)namen.push(t);
   return namen.join(", ");
 }
+/* v820: Der Fokus ist zugeklappt eine Zeile („Fokus der Einheit: …“). Offen belegten die elf Chips am Handy
+   fast einen Bildschirm, bevor der erste Block kam. Ob die Zeile offen steht, merkt sich _tpFokusAuf, damit ein
+   Tipp auf einen Chip (rendert neu) sie nicht wieder zuklappt. Die Vorsätze aus dem Tagebuch stehen darunter,
+   außerhalb der Klappe – sonst lägen sie zwei Tipps tief. */
+let _tpFokusAuf=false;
 function tpFokusRender(){
   const box=document.getElementById("tp-fokus"); if(!box)return;
-  const f=_tpFokus;
-  box.innerHTML=`<div class="tp-fokus-karte" style="background:var(--surface);border:1px solid var(--rand-bedien);border-left:4px solid var(--fam-training);border-radius:var(--rl);padding:10px 12px;margin:6px 0 10px">
-    <div style="font-size:var(--s-text);font-weight:800">🎯 Verbesserung von <span style="font-weight:600;color:var(--text2);font-size:var(--s-klein)">· Fokus dieser Einheit, alle Trainer sehen ihn</span></div>
+  const f=_tpFokus, gewaehlt=tpFokusLabels(f);
+  box.innerHTML=`<div class="tp-fokus-karte" style="background:var(--surface);border:1px solid var(--rand-bedien);border-left:4px solid var(--fam-training);border-radius:var(--rl);padding:2px 12px;margin:6px 0 10px">
+    <details id="tp-fokus-d"${_tpFokusAuf?" open":""} ontoggle="_tpFokusAuf=this.open">
+    <summary style="cursor:pointer;min-height:48px;display:flex;align-items:center;gap:8px;font-size:var(--s-text);font-weight:800;list-style:none"><span style="flex:1;min-width:0">🎯 Fokus der Einheit: <span id="tp-fokus-gewaehlt" style="font-weight:600;color:var(--text2)">${gewaehlt?esc(gewaehlt):"noch keiner – antippen"}</span></span><span aria-hidden="true" style="color:var(--text2)">▾</span></summary>
+    <div style="font-size:var(--s-klein);color:var(--text2)">Verbesserung von … – alle Trainer sehen den Fokus.</div>
     <div role="group" aria-label="Fokus der Einheit" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
       ${TP_FOKUS.map(([k,l])=>{const an=f.keys.includes(k);return `<button type="button" aria-pressed="${an}" onclick="tpFokusToggle('${k}')" style="min-height:44px;padding:0 12px;border:${an?"2px solid var(--fam-training)":"1px solid var(--rand-bedien)"};border-radius:22px;background:${an?"var(--surface2)":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:${an?800:600};cursor:pointer">${an?"✓ ":""}${esc(l)}</button>`;}).join("")}
     </div>
-    <input type="text" id="tp-fokus-text" maxlength="80" value="${esc(f.text||"")}" oninput="tpFokusTextAendern(this.value)" placeholder="Eigener Fokus (optional), z. B. Torwartspiel mit dem Fuß" aria-label="Eigener Fokus" style="width:100%;box-sizing:border-box;min-height:44px;margin-top:8px;padding:0 10px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
-    <details id="tp-vorsaetze-d" hidden style="margin-top:8px"><summary style="cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:var(--s-text);font-weight:700;color:var(--text2)">Eigene Vorsätze aus dem Tagebuch</summary><div id="tp-vorsaetze"></div></details>
+    <input type="text" id="tp-fokus-text" maxlength="80" value="${esc(f.text||"")}" oninput="tpFokusTextAendern(this.value)" placeholder="Eigener Fokus (optional), z. B. Torwartspiel mit dem Fuß" aria-label="Eigener Fokus" style="width:100%;box-sizing:border-box;min-height:44px;margin:8px 0 10px;padding:0 10px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
+    </details>
+    <details id="tp-vorsaetze-d" hidden style="border-top:1px solid var(--border)"><summary style="cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:var(--s-text);font-weight:700;color:var(--text2)">Eigene Vorsätze aus dem Tagebuch</summary><div id="tp-vorsaetze"></div></details>
   </div>`;
 }
 function tpFokusToggle(k){
@@ -4043,7 +4051,7 @@ function tpFokusToggle(k){
   tpFokusVorsaetze();
   clearTimeout(_tpFokusTimer); _tpFokusTimer=setTimeout(tpFokusSichern,600);
 }
-function tpFokusTextAendern(v){ _tpFokus.text=String(v||"").slice(0,80); clearTimeout(_tpFokusTimer); _tpFokusTimer=setTimeout(tpFokusSichern,900); }
+function tpFokusTextAendern(v){ _tpFokus.text=String(v||"").slice(0,80); const g=document.getElementById("tp-fokus-gewaehlt"); if(g)g.textContent=tpFokusLabels(_tpFokus)||"noch keiner – antippen"; clearTimeout(_tpFokusTimer); _tpFokusTimer=setTimeout(tpFokusSichern,900); }
 async function tpFokusSichern(){
   clearTimeout(_tpFokusTimer);
   const datum=_tpFokus.datum; if(!datum||!sbToken())return;
@@ -6308,7 +6316,7 @@ function routeRender(name,arg){
 }
 
 
-/* v797: Startleiste im Trainingsplan – sichtbar, solange Plan-Blöcke da sind und der echte Startknopf außerhalb des Bildes liegt. */
+/* v797: Startleiste im Trainingsplan – sichtbar, solange Plan-Blöcke da sind und der echte Startknopf außerhalb des Bildes liegt (seit v820 nur am Trainingstag). */
 (function(){
   let io=null, echtImBild=false;
   function leiste(){ return document.getElementById("tp-start-leiste"); }
@@ -6317,7 +6325,11 @@ function routeRender(name,arg){
     const sub=document.getElementById("train-sub-planung");
     const hatPlan=!!document.querySelector("#tp-timeline .tp-slot");
     const sichtbar=!!(sub&&sub.offsetParent!==null);
-    l.hidden=!(hatPlan&&sichtbar&&!echtImBild);
+    /* v820: nur am Trainingstag. Beim Planen an anderen Tagen lag der Knopf über Chips und Blöcken;
+       am Platz bleibt der Start einen Tipp entfernt. */
+    const tag=(document.getElementById("tp-date")||{}).value||"";
+    const heute=typeof isoLokal==="function"?isoLokal():new Date().toISOString().slice(0,10);
+    l.hidden=!(hatPlan&&sichtbar&&!echtImBild&&tag===heute);
   }
   function beobachten(){
     const echt=document.getElementById("tp-start-echt"); if(!echt||io||typeof IntersectionObserver!=="function")return;
