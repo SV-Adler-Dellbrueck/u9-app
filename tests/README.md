@@ -65,6 +65,13 @@ module.exports = async function (h) {          // h = harness
 };
 ```
 
+## Icon-Zuschnitt und fester Cache (seit v818)
+
+Zwei Prüfungen werden rot, wenn ein Handgriff vergessen wurde – die Abhilfe steht jeweils in der Meldung:
+
+- `v818-icons-zuschnitt.js`: ein Icon steht im Code, aber nicht in der zugeschnittenen Schrift → `node tools/icons-zuschneiden.js --schreiben`
+- `v818-fester-cache.js`: eine Datei unter `vendor/` oder ein PNG wurde geändert, der Name des festen Caches aber nicht → `node tools/fest-cache.js --schreiben`
+
 ## Parallel (seit v782)
 
 Der Lauf startet standardmäßig drei Prüfungen gleichzeitig (`PARALLEL=n` ändert es, `PARALLEL=1` ist der alte Ablauf) und braucht statt rund 35 Minuten etwa 11. Die Ausgabe bleibt in der

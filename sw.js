@@ -1,4 +1,4 @@
-const CACHE="u9i-adler-v817";
+const CACHE="u9i-adler-v818";
 const PRECACHE=[
   "./",
   "./index.html",
@@ -87,6 +87,22 @@ const PRECACHE=[
   "./vendor/chart.umd.js"
 ];
 
+/* v818: Fester Cache. Schriften, Bibliotheken und Bilder ändern sich fast nie – bis v817 hat
+   trotzdem jedes Gerät mit jeder Version rund 1 MB davon neu geladen. Sie liegen jetzt in einem
+   eigenen Cache, den ein Versionssprung nicht anfasst. Der Name trägt die Prüfsumme dieser
+   Dateien: ändert sich eine (neues Icon, neues Logo), heißt der Cache anders und wird einmal
+   neu gefüllt. Nicht von Hand setzen – node tools/fest-cache.js --schreiben; der Prüflauf wird
+   rot, wenn Name und Inhalt nicht zusammenpassen. Der Name darf nicht mit dem des Versionscaches
+   beginnen: die Versionsanzeige liest die Cache-Namen. */
+const FEST_CACHE="adler-fest-4afe3235";
+const istFest=u=>/^\.\/vendor\/|\.png$/.test(u);
+// Adressen der festen Dateien – erst beim ersten Abruf gebildet, nicht beim Laden der Datei
+let _festAdressen=null;
+function istFesteAdresse(url){
+  if(!_festAdressen)_festAdressen=new Set(PRECACHE.filter(istFest).map(u=>new URL(u,self.location.href).href));
+  return _festAdressen.has(url.split(/[?#]/)[0]);
+}
+
 self.addEventListener("install",e=>{
   // cache:"reload" umgeht den HTTP-Cache des Browsers. Ohne das kann der Precache eine
   // Datei aus dem Browser-Cache uebernehmen (GitHub Pages liefert HTML mit max-age=600)
@@ -98,7 +114,17 @@ self.addEventListener("install",e=>{
   const PFLICHT=["./trainer/","./eltern/","./kinder/","./core.js","./boot.js","./views.js"];
   e.waitUntil((async()=>{
     const c=await caches.open(CACHE);
-    const erg=await Promise.allSettled(PRECACHE.map(u=>c.add(new Request(u,{cache:"reload"})).then(()=>u)));
+    /* v818: Feste Dateien nur holen, wenn sie im festen Cache fehlen. Scheitert eine, hält das
+       die neue Version nicht auf – der fetch-Handler holt sie beim ersten Gebrauch nach. */
+    const fest=await caches.open(FEST_CACHE);
+    const erg=await Promise.allSettled(PRECACHE.map(async u=>{
+      if(istFest(u)){
+        if(!(await fest.match(u)))await fest.add(new Request(u,{cache:"reload"}));
+        return u;
+      }
+      await c.add(new Request(u,{cache:"reload"}));
+      return u;
+    }));
     const da=new Set(erg.filter(x=>x.status==="fulfilled").map(x=>x.value));
     const fehlt=PFLICHT.filter(u=>PRECACHE.includes(u)&&!da.has(u));
     if(fehlt.length){
@@ -114,7 +140,8 @@ self.addEventListener("install",e=>{
 self.addEventListener("activate",e=>{
   e.waitUntil(
     caches.keys().then(keys=>
-      Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))
+      // v818: der feste Cache bleibt; ein fester Cache mit altem Namen geht hier mit weg
+      Promise.all(keys.filter(k=>k!==CACHE&&k!==FEST_CACHE).map(k=>caches.delete(k)))
     ).then(()=>self.clients.claim())
   );
 });
@@ -168,6 +195,29 @@ self.addEventListener("fetch",e=>{
       }catch(err){
         const cached=await caches.match(seitenKey,{ignoreSearch:istSeite});
         return cached||new Response("Offline",{status:503,statusText:"Offline"});
+      }
+    })());
+    return;
+  }
+
+  /* v818: Feste Dateien kommen aus dem festen Cache und werden NICHT im Hintergrund nachgeladen –
+     genau das spart die Übertragung. Fehlt eine (Reparaturweg hat alle Caches gelöscht, oder sie
+     kam beim Installieren nicht an), wird sie aus dem Netz geholt und wieder abgelegt. */
+  if(istFesteAdresse(url)){
+    e.respondWith((async()=>{
+      const fest=await caches.open(FEST_CACHE);
+      const da=await fest.match(e.request,{ignoreSearch:true});
+      if(da)return da;
+      try{
+        const net=await fetch(e.request);
+        if(net&&net.ok){
+          const kopie=net.clone();
+          fest.put(url.split(/[?#]/)[0],kopie).catch(()=>{});
+        }
+        return net;
+      }catch(err){
+        const alt=await caches.match(e.request,{ignoreSearch:true});
+        return alt||new Response("Offline",{status:503,statusText:"Offline"});
       }
     })());
     return;

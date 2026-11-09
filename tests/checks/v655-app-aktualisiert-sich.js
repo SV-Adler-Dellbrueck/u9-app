@@ -104,7 +104,11 @@ module.exports = async function (h) {
     if (vc !== "v9001") probleme.push("c) Version nach dem Neuladen " + vc + " statt v9001");
 
     // d) Eine Nebendatei fehlt: Update kommt trotzdem an (frische Seite lädt sofort neu)
-    kaputt = "/vendor/chart.umd.js"; version = "v9002";
+    /* Seit v818 liegen vendor/ und Bilder im festen Cache und werden bei einem Versionssprung gar
+       nicht mehr geholt – mit chart.umd.js bestünde dieser Teil von selbst. Deshalb eine Datei aus
+       dem Versionscache, die die Trainer-Seite nicht braucht. Die fehlende feste Datei prüft
+       v818-fester-cache.js. */
+    kaputt = "/manifest-kinder.json"; version = "v9002";
     await page.evaluate(() => navigator.serviceWorker.getRegistration().then(r => r.update())).catch(() => {});
     const dOk = await warteBis(async () => { const k = await caches_(); return k.includes("u9i-adler-v9002") && !k.includes("u9i-adler-v9001"); });
     zeilen.push(`d) ohne ${kaputt}: Caches ${(await caches_()).join(", ")}, Ladungen ${await ladungen()}`);
