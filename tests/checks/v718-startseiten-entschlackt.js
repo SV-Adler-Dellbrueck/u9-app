@@ -30,6 +30,7 @@ module.exports = async function (h) {
     const spalten = g ? getComputedStyle(g).gridTemplateColumns.split(" ").length : 0;
     const hoehen = k.map(e => Math.round(e.getBoundingClientRect().height));
     const ueber = k.filter(e => [...e.querySelectorAll("span")].some(s => s.scrollWidth > s.clientWidth + 1)).map(e => e.textContent.trim());
+    document.querySelectorAll("#push-hinweis").forEach(e => e.remove());   // seit v819 wartet die Schriftfrage, solange die Push-Karte steht
     schriftHinweisZeigen("schrift-hinweis-trainer");
     const sh = document.querySelector("#schrift-hinweis-trainer .schrift-hinweis");
     return { ohneKacheln: !g, anzahl: k.length, spalten, hoehen, ueber, schrift: sh ? sh.textContent.replace(/\s+/g, " ").trim() : null };

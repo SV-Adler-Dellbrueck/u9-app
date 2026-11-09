@@ -28,7 +28,8 @@ module.exports = async function (h) {
   if (hell.body !== "rgb(238, 244, 252)") probleme.push("a) Grund hell: " + hell.body);
   if (dunkel.bg === "rgb(26, 86, 219)" || dunkel.k1 < 4.5 || dunkel.k2 < 4.5) probleme.push("b) Kopf dunkel: " + JSON.stringify(dunkel));
   if (dunkel.body === "rgb(238, 244, 252)") probleme.push("b) Grund dunkel blieb hell");
-  if (hell.knoepfe < 4 || !hell.passt || hell.rechts > 390) probleme.push("c) Kopf: " + JSON.stringify(hell));
+  /* seit v819 zwei sichtbare Knöpfe (Team-Chat und „⋯“), vorher vier */
+  if (hell.knoepfe < 2 || !hell.passt || hell.rechts > 390) probleme.push("c) Kopf: " + JSON.stringify(hell));
   zeilen.push(`hell: Band ${hell.bg}, Schrift ${hell.k1.toFixed(1)}:1 / ${hell.k2.toFixed(1)}:1, Grund ${hell.body} · dunkel: Band ${dunkel.bg}, ${dunkel.k1.toFixed(1)}:1`);
   return h.ergebnis("Trainer-App: blaues Kopfband und getönter Grund hell, dunkel unverändert", !probleme.length, zeilen.concat(probleme));
 };

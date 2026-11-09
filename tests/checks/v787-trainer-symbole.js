@@ -33,7 +33,8 @@ module.exports = async function (h) {
   });
   const f = s.fehler(); await s.schliessen();
   if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
-  if (r.start.da !== 6 || r.start.svg !== 6) probleme.push("a) Startkacheln: " + JSON.stringify(r.start));
+  /* Seit v819 gibt es die Startkacheln nicht mehr (v819-start-aufgeraeumt.js). Stehen doch welche da, tragen alle ein Symbol. */
+  if (r.start.da !== r.start.svg || (r.start.da && r.start.da !== 6)) probleme.push("a) Startkacheln: " + JSON.stringify(r.start));
   if (r.orga.emoji.length || r.orga.svg < 3 || r.orga.kmin < 3 || r.orga.sw.length > 1) probleme.push("b) Orga-Kacheln: " + JSON.stringify(r.orga));
   if (r.ohne.length) probleme.push("e) Kacheln ohne Symbol: " + r.ohne.join(" | "));
   if (!r.fallback) probleme.push("c) Rückfall");
