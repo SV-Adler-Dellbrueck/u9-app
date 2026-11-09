@@ -6328,7 +6328,7 @@ function routeRender(name,arg){
     /* v820: nur am Trainingstag. Beim Planen an anderen Tagen lag der Knopf über Chips und Blöcken;
        am Platz bleibt der Start einen Tipp entfernt. */
     const tag=(document.getElementById("tp-date")||{}).value||"";
-    const heute=typeof isoLokal==="function"?isoLokal():new Date().toISOString().slice(0,10);
+    const heute=isoLokal();   // Ortszeit (core.js, Welle 1) – ein UTC-„heute“ wäre abends schon morgen
     l.hidden=!(hatPlan&&sichtbar&&!echtImBild&&tag===heute);
   }
   function beobachten(){
