@@ -1495,7 +1495,7 @@ function _blzSetupHtml(){
   const teamKarte=(t,i)=>`<div style="border:var(--border-s);border-left:4px solid ${t.eltern?"#7c3aed":BLZ_FARBEN[i%BLZ_FARBEN.length]};border-radius:12px;padding:8px 10px;margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:6px">
         <button onclick="blzRename(${i})" title="Team umbenennen" style="border:none;background:transparent;font-family:inherit;font-size:var(--s-text);font-weight:800;color:var(--text);cursor:pointer;min-height:44px;padding:0;margin:-8px 0">${t.eltern?"👨‍👩‍👧 ":""}${esc(t.name)} ✏️</button>
-        <span style="margin-left:auto;font-size:var(--s-klein);color:var(--text3)">${t.eltern?(t.spieler.length?"🧢 "+t.spieler.length+" dabei · ":"")+(nEltern>1?"Duell-Gegner im Wechsel":"tritt in jedem Duell an"):(t.spieler.length?t.spieler.length+" im Team":"ohne Kader-Kinder")}</span>
+        <span style="margin-left:auto;font-size:var(--s-klein);color:var(--text3)">${t.eltern?(t.spieler.length?t.spieler.length+" dabei · ":"")+(nEltern>1?"Duell-Gegner im Wechsel":"tritt in jedem Duell an"):(t.spieler.length?t.spieler.length+" im Team":"ohne Kader-Kinder")}</span>
         ${t.fest?`<button onclick="blzTeamWeg(${i})" aria-label="Team entfernen" style="border:none;background:transparent;color:#dc2626;cursor:pointer;min-width:44px;min-height:44px;margin:-8px -8px -8px 0"><i class="ti ti-trash"></i></button>`:""}
       </div>
       ${t.spieler.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${t.spieler.map(n=>`<button onclick="blzCycle('${jsq(n)}')" title="Tippen = ins nächste Team" style="min-height:44px;padding:6px 12px;border:1px solid var(--rand-bedien);border-radius:18px;font-family:inherit;font-size:var(--s-text);cursor:pointer;background:var(--surface2);color:var(--text)">${esc(n)}</button>`).join("")}</div>`:""}
@@ -1570,11 +1570,85 @@ function blzCycle(name){
   // damit sie beim Eltern-Duell auch auf der Eltern-Seite mitspielen können.
   const istTrainer=name.indexOf("🧢 ")===0;
   let ziel=(von+1)%BLZ.teams.length, runden=0;
+  /* v825: Erwachsene aus der Mitspieler-Liste (👤) wandern nur zwischen den Eltern-Teams – nie in ein Kinder-Team. */
+  if(name.indexOf("👤 ")===0){ while(!BLZ.teams[ziel].eltern&&runden++<BLZ.teams.length)ziel=(ziel+1)%BLZ.teams.length; }
+  else
   while(!istTrainer&&BLZ.teams[ziel].eltern&&runden++<BLZ.teams.length)ziel=(ziel+1)%BLZ.teams.length;
   if(ziel===von)return;
   BLZ.teams[von].spieler=BLZ.teams[von].spieler.filter(x=>x!==name);
   BLZ.teams[ziel].spieler.push(name);
   blzSave();blzRender();
+}
+/* v825 · Kinder-Eltern-Turnier (Charles 10.11.2026): Beim Event mit dem Haken „Kinder-Eltern-Turnier“ tragen die Eltern
+   in ihrer App ein, wer von den Erwachsenen mitspielt (Tabelle event_mitspieler: sich selbst per Tipp, weitere per Namen).
+   Hier sieht der Trainer die Liste und übernimmt sie ins Trainingsturnier „Kinder gegen Eltern“: die Erwachsenen werden
+   reihum auf die Eltern-Teams verteilt (👤 vor dem Namen); ein Tipp schiebt sie ins nächste Eltern-Team. */
+async function elternTurnierMitspieler(terminId){
+  try{ const r=await fetch(`${SB_URL}/rest/v1/event_mitspieler?termin_id=eq.${Number(terminId)}&select=id,name,selbst,created_by&order=id.asc`,{headers:sbAuthHeaders()});
+    if(r.ok)return (await r.json())||[]; }catch(e){}
+  return null;   // null = nicht lesbar (offline oder Tabelle fehlt noch)
+}
+async function elternTurnierOpen(terminId,datum){
+  document.getElementById("et-modal")?.remove();
+  const m=document.createElement("div");m.id="et-modal";
+  m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Kinder-Eltern-Turnier");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10030;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.onclick=e=>{if(e.target===m)m.remove();};
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto;box-sizing:border-box">
+    ${mdlHead("et-modal","⚽","Kinder-Eltern-Turnier","Wer von den Erwachsenen mitspielt – eingetragen in der Eltern-App","#7c3aed")}
+    <div id="et-body"><div style="padding:16px;text-align:center;color:var(--text2)">Lade…</div></div>
+  </div>`;
+  document.body.appendChild(m);
+  elternTurnierRender(terminId,datum);
+}
+async function elternTurnierRender(terminId,datum){
+  const box=document.getElementById("et-body"); if(!box)return;
+  const liste=await elternTurnierMitspieler(terminId);
+  if(!document.getElementById("et-body"))return;
+  if(liste===null){ box.innerHTML=`<div style="font-size:var(--s-text);color:var(--text2);padding:8px 0">Die Liste lässt sich gerade nicht laden.</div>`; return; }
+  const zeilen=liste.length
+    ? liste.map(x=>`<div class="et-zeile" style="display:flex;align-items:center;gap:8px;min-height:44px;border-top:1px solid var(--rand-bedien);font-size:var(--s-text)">
+        <span style="flex:1;min-width:0;overflow-wrap:anywhere"><b>${esc(x.name)}</b>${x.selbst?"":` <span style="color:var(--text2);font-size:var(--s-klein)">· von einer Familie eingetragen</span>`}</span>
+        <button type="button" onclick="elternTurnierEntfernen(${Number(x.id)},${Number(terminId)},'${datum}')" aria-label="${esc(x.name)} aus der Liste nehmen" style="min-width:44px;min-height:44px;border:none;background:transparent;color:var(--text2);cursor:pointer"><i class="ti ti-x" aria-hidden="true"></i></button>
+      </div>`).join("")
+    : `<div style="font-size:var(--s-text);color:var(--text2);padding:8px 0">Noch niemand eingetragen. Die Eltern sehen den Termin mit dem Knopf „Ich spiele mit“.</div>`;
+  box.innerHTML=`<div id="et-anzahl" style="font-size:var(--s-karte);font-weight:800;margin-bottom:4px">${liste.length} Erwachsene${liste.length===1?"r":""} ${liste.length===1?"spielt":"spielen"} mit</div>
+    ${zeilen}
+    <button type="button" class="btn btn-p" ${liste.length?"":"disabled"} onclick="elternTurnierUebernehmen(${Number(terminId)},'${datum}')" style="width:100%;min-height:52px;justify-content:center;margin-top:12px;font-weight:800"><i class="ti ti-trophy"></i>Ins Trainingsturnier übernehmen</button>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px;line-height:1.5">Öffnet das Trainingsturnier „Kinder gegen Eltern“ für diesen Termin und verteilt die Erwachsenen auf die Eltern-Teams. Die Kinder kommen wie immer aus Anwesenheit oder Kader.</div>
+    <button type="button" class="btn" onclick="document.getElementById('et-modal').remove()" style="width:100%;min-height:48px;justify-content:center;margin-top:8px">Schließen</button>`;
+}
+async function elternTurnierEntfernen(id,terminId,datum){
+  try{ const r=await fetch(`${SB_URL}/rest/v1/event_mitspieler?id=eq.${Number(id)}`,{method:"DELETE",headers:sbAuthHeaders()});
+    if(!r.ok){ toast("Nicht entfernt – bitte nochmal versuchen","err"); return; } }catch(e){ toast("Offline – nicht entfernt","err"); return; }
+  elternTurnierRender(terminId,datum);
+}
+/* Namen eindeutig machen (blzCycle findet einen Spieler über seinen Namen) und reihum verteilen. */
+function elternTurnierVerteilen(namen,teams){
+  const gesehen={};
+  const eindeutig=namen.map(n=>{ const k=String(n||"").trim()||"Gast"; gesehen[k]=(gesehen[k]||0)+1; return "👤 "+k+(gesehen[k]>1?" ("+gesehen[k]+")":""); });
+  teams.forEach(t=>{ t.spieler=(t.spieler||[]).filter(n=>String(n).indexOf("👤 ")!==0); });
+  eindeutig.forEach((n,i)=>teams[i%teams.length].spieler.push(n));
+  return eindeutig;
+}
+async function elternTurnierUebernehmen(terminId,datum){
+  const liste=await elternTurnierMitspieler(terminId);
+  if(!liste||!liste.length){ toast("Noch niemand eingetragen","err"); return; }
+  if(typeof terminSelectEnsure==="function")terminSelectEnsure("tp-date",datum);
+  const sel=document.getElementById("tp-date"); if(sel)sel.value=datum;   // das Turnier gehört zu diesem Termin (_blzBindeDatum)
+  _blzBereit(0,false);
+  if(BLZ.phase!=="setup"){ toast("Für diesen Termin läuft schon ein Turnier – die Liste wurde nicht übernommen","err"); }
+  else if(_blzPlanVerwerfen()){
+    const groesse=(BLZ_SPIELFORM[BLZ.spielform]||[])[1]||4;
+    if(BLZ.spielmodus!=="duell"){ BLZ.spielmodus="duell"; BLZ.anzahl=Math.min(3,Math.max(1,BLZ.anzahl===4?3:BLZ.anzahl)); }
+    BLZ.elternAnzahl=Math.min(4,Math.max(1,Math.round(liste.length/groesse)));
+    _blzDuellTeams(BLZ.anzahl);
+    elternTurnierVerteilen(liste.map(x=>x.name),BLZ.teams.filter(t=>t.eltern));
+    blzSave();
+    toast(`${liste.length} Erwachsene auf ${BLZ.elternAnzahl} Eltern-Team${BLZ.elternAnzahl===1?"":"s"} verteilt`);
+  }
+  document.getElementById("et-modal")?.remove(); document.getElementById("tmd-modal")?.remove();
+  blitzOpen();
 }
 function blzTeamPlus(){
   const name=(prompt("Name des Teams (z. B. Eltern, Trainer):")||"").trim();if(!name)return;

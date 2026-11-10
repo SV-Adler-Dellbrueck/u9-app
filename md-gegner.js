@@ -415,6 +415,9 @@ function _tmdKarte(t){
      welchen Termin koennen alle, und was wollen wir besprechen. Beides haengt jetzt am
      Termin statt an einer eigenen Kachel. */
   else if(t.typ==="trainermeeting")gross=[{i:"ti-calendar-question",l:"Termin finden & Themen",c:`tmMeetingOeffnen(${Number(t.id)})`,p:true}];
+  /* v825: Kinder-Eltern-Turnier – der Termin führt zur Liste der Erwachsenen und von dort ins Trainingsturnier. */
+  else if(t.eltern_turnier)gross=[{i:"ti-users-group",l:"Kinder-Eltern-Turnier",c:`typeof elternTurnierOpen==='function'?elternTurnierOpen(${Number(t.id)},'${t.datum}'):toast('Lädt noch – gleich nochmal','err')`,p:true},
+                                  t.mitbringen?{i:"ti-basket",l:"Mitbringliste",c:"mitbringTrainerOpen()",p:false}:null].filter(Boolean);
   else gross=[{i:"ti-basket",l:"Mitbringliste",c:"mitbringTrainerOpen()",p:true}];
   const grossBtn=o=>`<button class="btn${o.p?" btn-p":""}" onclick="${o.c}" style="width:100%;min-height:52px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ${o.i}"></i>${o.l}</button>`;
 
@@ -1091,6 +1094,7 @@ function tmEdit(id){
       <div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Anzahl Tore – steht im Text der Aufgabe, wenn du sie oben freigibst.</div>`:''}
       <label style="font-size:var(--s-klein);color:var(--text2);display:block;margin-top:8px"><span id="te-hinweis-lbl">${ausw?"Hinweis für die Betreuung":"Hinweis für Helfer"}</span><input id="te-helfer-hinweis" maxlength="140" placeholder="z. B. was heute anders ist als sonst" value="${esc(t.helfer_hinweis||'')}" style="${fld}"></label>
       ${t.typ==="event"?`<label style="display:flex;align-items:center;gap:10px;min-height:44px;margin-top:8px;font-size:var(--s-text);cursor:pointer"><input type="checkbox" id="te-mitbringen" ${t.mitbringen?"checked":""} style="width:22px;height:22px;margin:0">Eltern sollen etwas mitbringen (Mitbringliste an)</label>`:''}
+      ${(t.typ==="event"&&("eltern_turnier" in t))?`<label style="display:flex;align-items:center;gap:10px;min-height:44px;margin-top:4px;font-size:var(--s-text);cursor:pointer"><input type="checkbox" id="te-elternturnier" ${t.eltern_turnier?"checked":""} style="width:22px;height:22px;margin:0">Kinder-Eltern-Turnier (Eltern tragen ein, wer mitspielt)</label>`:''}<!-- v825: nur, wenn die Spalte da ist (nach der Migration) -->
     </div>
     <div id="ta-slot" style="margin-top:14px;padding-top:10px;border-top:1px solid var(--rand-bedien)"></div>
     <div style="display:flex;gap:8px;margin-top:14px">
@@ -1181,6 +1185,7 @@ async function tmEditSave(id){
   if(g("te-helfer-hinweis"))body.helfer_hinweis=(g("te-helfer-hinweis").value||"").trim()||null;
   if(document.getElementById("te-helfer-frei"))body.helfer_aufgaben=tmHelferFreigabeLesen();   // v662
   if(g("te-mitbringen"))body.mitbringen=!!g("te-mitbringen").checked; // v566: Mitbringliste nur auf Wunsch
+  if(g("te-elternturnier"))body.eltern_turnier=!!g("te-elternturnier").checked; // v825
   try{
     const r=await fetch(`${SB_URL}/rest/v1/termine?id=eq.${id}`,{method:"PATCH",headers:sbAuthHeaders(),body:JSON.stringify(body)});
     if(sbCheck401(r))return;

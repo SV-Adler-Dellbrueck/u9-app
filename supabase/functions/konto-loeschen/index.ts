@@ -40,6 +40,7 @@ Deno.serve(async (req) => {
     await weg("eltern_poll_vote", "voter", uid);
     await weg("elterngespraech_wunsch", "created_by", uid);
     await admin.from("event_mitbringen").update({ created_by: null }).eq("created_by", uid);
+    await weg("event_mitspieler", "created_by", uid);   // v825: eigene Mitspieler-Einträge (Namen) gehen mit dem Konto
     await admin.from("loeschantrag").update({ antrag_von: null }).eq("antrag_von", uid);
     // Nicht per ilike löschen: „_“ in einer Adresse wäre dort ein Platzhalter und träfe fremde Zeilen.
     if (mail) {

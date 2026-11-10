@@ -17,7 +17,7 @@ const TABLES_FALLBACK = [
   "entwicklungsziele", "album_kind", "album_fotos", "kabine_post", "kind_selbstbild",
   "kabine_reporter", "kind_stimmung", "ansagen", "kabinen_wahl", "kabinen_wahl_stimmen",
   "team_meilensteine", "eltern_leitfaden", "fairplay_regeln", "team_config", "gegner",
-  "event_helfer", "event_mitbringen", "probekinder", "stadionheft", "trainer_poll",
+  "event_helfer", "event_mitbringen", "event_mitspieler", "probekinder", "stadionheft", "trainer_poll",
   "trainer_poll_slot", "trainer_poll_vote", "eltern_poll", "eltern_poll_slot", "eltern_poll_vote",
   "abhol_info", "heimturnier", "trainingsgruppen", "trainingsformen", "dsgvo_consent",
   "quiz_progress", "kind_kontakte", "matchday", "einsatzzeiten", "taktik_templates"

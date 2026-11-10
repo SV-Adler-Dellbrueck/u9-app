@@ -114,6 +114,9 @@ function tmSetTyp(t,btn){
      geleert – sonst wandert er unsichtbar in den nächsten Termin (Falle aus v416). */
   const mbRow=document.getElementById("tm-mitbringen-row"); if(mbRow)mbRow.style.display=(t==="event")?"flex":"none";
   if(t!=="event"){const mb=document.getElementById("tm-mitbringen"); if(mb)mb.checked=false;}
+  // v825: dasselbe für den Haken „Kinder-Eltern-Turnier“
+  const etRow=document.getElementById("tm-elternturnier-row"); if(etRow)etRow.style.display=(t==="event")?"flex":"none";
+  if(t!=="event"){const et=document.getElementById("tm-elternturnier"); if(et)et.checked=false;}
   /* Und ein Satz, der sagt, was nach dem Anlegen kommt – die Frage „wo stimme ich ab?"
      entsteht sonst genau hier und wird erst drei Bildschirme später beantwortet. */
   const mh=document.getElementById("tm-meeting-hinweis");
@@ -274,6 +277,9 @@ async function tmAdd(){
     helfer_hinweis:    (document.getElementById("tm-helfer-hinweis")?.value||"").trim()||null,
     mitbringen:        tmTyp==="event"&&!!document.getElementById("tm-mitbringen")?.checked
   };
+  /* v825: Die Spalte gibt es erst nach der Migration – nur mitschicken, wenn der Haken gesetzt ist,
+     damit ein Termin ohne Haken auch vor der Migration angelegt werden kann. */
+  if(tmTyp==="event"&&document.getElementById("tm-elternturnier")?.checked)body.eltern_turnier=true;
   try{
     const payload=daten.length>1?daten.map(ds=>Object.assign({},body,{datum:ds,saison:saisonForDate(ds)})):body;
     const r=await fetch(`${SB_URL}/rest/v1/termine`,{method:"POST",headers:sbAuthHeaders(),body:JSON.stringify(payload)});
@@ -290,6 +296,7 @@ async function tmAdd(){
          Aufbau sieht beim naechsten Training genauso aus. */
       const hh=document.getElementById("tm-helfer-hinweis"); if(hh)hh.value="";
       const mb=document.getElementById("tm-mitbringen"); if(mb)mb.checked=false;
+      const et=document.getElementById("tm-elternturnier"); if(et)et.checked=false;
       const sSel=document.getElementById("tm-serie"); if(sSel){sSel.value="";tmSerieToggle();}
       const sBis=document.getElementById("tm-serie-bis"); if(sBis)sBis.value="";
       const rb=document.getElementById("tm-addr-results");if(rb)rb.innerHTML="";tmSetTyp(tmTyp);tmLoad();
