@@ -1827,7 +1827,7 @@ async function mitspielerHolen(terminId){
    des Nachnamens), sonst „Elternteil von <Kind>“. */
 async function mitspielerEigenerName(){
   const uid=_sbUid();
-  try{ if(uid){ const r=await fetch(`${SB_URL}/rest/v1/eltern_profil?user_id=eq.${uid}&select=vorname,nachname&limit=1`,{headers:sbAuthHeaders()});
+  try{ if(uid){ const r=await fetch(`${SB_URL}/rest/v1/eltern_angaben?user_id=eq.${encodeURIComponent(uid)}&select=vorname,nachname&limit=1`,{headers:sbAuthHeaders()});
       if(r.ok){ const p=((await r.json())||[])[0]; const v=String((p&&p.vorname)||"").trim(), n=String((p&&p.nachname)||"").trim();
         if(v)return (v+(n?" "+n.charAt(0).toUpperCase()+".":"")).slice(0,40); } } }catch(e){}
   const k=(window._elternKids||[])[0]; const kn=(k&&k.kader&&k.kader.name)||"";

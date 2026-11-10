@@ -32,7 +32,7 @@ module.exports = async function (h) {
     const e = await h.starten({ start: "/eltern/index.html?portal", angemeldet: false, warten: 1000, breite: 390, hoehe: 844,
       supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), profiles: [{ role: "parent" }], dsgvo_consent: [{ version: "x" }],
         eltern_kinder: [{ spieler_id: 1, label: "", kader: { id: 1, name: "Kind A", nr: 7, foto_stadionheft_ok: true } }],
-        termine: [termin(et)], rueckmeldungen: [], event_mitspieler: tabelle, eltern_profil: [{ vorname: "Erwachsener", nachname: "Beispiel" }] }) });
+        termine: [termin(et)], rueckmeldungen: [], event_mitspieler: tabelle, eltern_angaben: [{ vorname: "Erwachsener", nachname: "Beispiel" }] }) });
     await e.page.evaluate(t => { localStorage.setItem("adler_sb_auth_eltern", JSON.stringify({ access_token: t, refresh_token: "r", expires_at: Math.floor(Date.now() / 1000) + 3600 })); }, TOKEN);
     await e.page.reload({ waitUntil: "networkidle" }); await e.page.waitForTimeout(4000);
     const r = await e.page.evaluate(async () => {
