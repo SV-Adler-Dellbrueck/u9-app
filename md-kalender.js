@@ -326,11 +326,19 @@ async function tmAdd(){
        Jetzt sagt die Meldung, welcher Termin den Tag schon belegt, und was zu tun ist. */
     else if(r.status===409){
       const art=({training:"Training",spiel:"Spiel",turnier:"Turnier",event:"Event",trainermeeting:"Trainermeeting"})[tmTyp]||"Termin";
-      const belegt=(typeof TM_TERMINE!=="undefined"?TM_TERMINE:[]).find(x=>x.typ===tmTyp&&x.datum===datum);
+      const tl=(typeof TM_TERMINE!=="undefined"?TM_TERMINE:[]);
+      const hhmm=v=>String(v||"").slice(0,5);
       const tag=new Date(datum+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"});
-      toast(daten.length>1
-        ?`An mindestens einem dieser Tage gibt es schon ein ${art} – bitte die Serie anders legen oder den Termin bearbeiten`
-        :`Am ${tag} gibt es schon ein ${art}${belegt&&belegt.titel?` („${belegt.titel}“)`:""} – bitte dort über „Bearbeiten“ ändern oder ein anderes Datum wählen`,"err");
+      let satz;
+      if(daten.length>1)satz=`An mindestens einem dieser Tage gibt es schon ein ${art} – bitte die Serie anders legen oder den Termin bearbeiten`;
+      else if(tmTyp==="event")
+        /* v827: Events dürfen mehrfach am Tag stehen – nur derselbe Titel zur selben Uhrzeit ist doppelt. */
+        satz=`Am ${tag} gibt es schon ein Event „${titel||"ohne Titel"}“${zeit?` um ${hhmm(zeit)} Uhr`:""} – bitte Titel oder Uhrzeit ändern`;
+      else{
+        const belegt=tl.find(x=>x.typ===tmTyp&&x.datum===datum);
+        satz=`Am ${tag} gibt es schon ein ${art}${belegt&&belegt.titel?` („${belegt.titel}“)`:""} – bitte dort über „Bearbeiten“ ändern oder ein anderes Datum wählen`;
+      }
+      toast(satz,"err");
       const tt=document.getElementById("app-toast"); if(tt){ clearTimeout(tt._tid); tt._tid=setTimeout(()=>tt.classList.remove("show"),8000); }   // ein langer Satz braucht mehr als drei Sekunden
     }
     else toast("Fehler beim Anlegen","err");
