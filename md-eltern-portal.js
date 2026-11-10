@@ -672,12 +672,16 @@ async function elternNewsLoad(kids){
   if(cur.skill&&cur.skill.slice(0,4)!=="1970"&&cur.skill>(seen.skill||"")) items.push({emo:"🏅",txt:"Neuer Skill der Woche / neue Challenge.",act:"elternCatOpen('mehr')"});
   (data.lob||[]).forEach(l=>{ if(l.at>(seen["lob_"+l.sid]||"")) items.push({emo:"🎧",txt:`Neues vom Trainerteam für ${esc(kidName(l.sid))} (Lob oder Nachricht).`,act:`elternCatClose();lobListeOpen(${l.sid},'${String(kidName(l.sid)).replace(/['\\<>&"]/g,"")}')`});   /* v803: auch Spieltag-Nachrichten, deshalb die Liste statt „jüngstes Lob abspielen“ */ });
   (kids||[]).forEach(k=>{ const lv=cur["level_"+k.spieler_id]; const sv=seen["level_"+k.spieler_id]; if(lv&&sv!=null&&lv!==sv) items.push({emo:"🎉",txt:`${esc(kidName(k.spieler_id))} hat ein neues Level erreicht: ${esc(lv)}!`,act:`elternCatClose();elternCardOpen(${k.spieler_id})`}); });
-  if(cur.ms&&cur.ms>(seen.ms||"")) ms.filter(m=>m.erreicht_am>(seen.ms||"")).slice(0,3).forEach(m=>items.push({emo:"🏆",txt:`Team-Meilenstein: ${esc(m.label)}`,act:"elternCatClose()"})); // H7
+  if(cur.ms&&cur.ms>(seen.ms||"")) ms.filter(m=>m.erreicht_am>(seen.ms||"")).slice(0,3).forEach(m=>items.push({emo:"🏆",txt:`Team-Meilenstein: ${esc(m.label)}`,act:""})); // H7 · v824: reine Mitteilung – ein Tipp schließt nichts mehr
   if(cur.kpost&&cur.kpost>(seen.kpost||"")) items.push({emo:"📬",txt:"Neue Adler-Post für dein Kind – Kompliment oder Gruß in der Kabine!",act:"elternCatClose();kabineOpen()"}); // I-A
   if(cur.tr&&cur.tr>(seen.tr||"")){ // J4: Gesprächsfutter für den Abendbrottisch
     const rb=rueckblick[0], heuteStr=isoLokal();
     const themen=(rb.themen||[]).slice(0,3).map(esc).join(", ");
-    if(themen)items.push({emo:"📖",txt:`${rb.datum===heuteStr?"Heute":"Zuletzt"} im Training geübt: ${themen} – frag dein Kind doch mal danach!`,act:"elternCatClose()"});
+    /* v824 · Charles 10.11.: „Neuigkeiten sind direkt [weg], wenn man sie anklickt, z. B. was trainiert wurde. Man kann es
+       gar nicht genau lesen.“ Der Tipp schloss nur das Fenster – und weil Öffnen als gelesen gilt, war die Zeile danach
+       fort. Jetzt öffnet er den Rückblick zum Nachlesen (alle Übungen, auch die der Trainings davor). */
+    window._elternRueckblick=rueckblick;
+    if(themen)items.push({emo:"📖",txt:`${rb.datum===heuteStr?"Heute":"Zuletzt"} im Training geübt: ${themen}${(rb.themen||[]).length>3?" …":""} – tippen zum Nachlesen.`,act:"rueckblickOpen()"});
   }
   if(cur.wn&&cur.wn>(seen.wn||"")){ // L2 → v717: ganz oben
     const neuSeit=schmiede.filter(e=>String(e.datum)+"-"+String(e.id).padStart(6,"0")>(seen.wn||"")).length;
@@ -692,8 +696,32 @@ async function elternNewsLoad(kids){
   const nbtn=document.getElementById("eltern-news-btn");
   if(nbtn)nbtn.style.display=items.length?"flex":"none";
   panel.innerHTML = items.length
-    ? items.map(i=>`<button onclick="${i.act}" style="display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:#fff;border:1px solid var(--rand-bedien);border-radius:12px;padding:12px;margin-bottom:8px;font-family:inherit;cursor:pointer"><span style="font-size:var(--s-teil);line-height:1">${i.emo}</span><span style="flex:1;font-size:var(--s-text);color:#334155;line-height:1.4">${i.txt}</span><span style="font-size:var(--s-karte);color:var(--text3)">›</span></button>`).join("")
+    ? items.map(i=>i.act
+        ?`<button onclick="${i.act}" style="display:flex;gap:10px;align-items:center;width:100%;min-height:48px;text-align:left;background:#fff;border:1px solid var(--rand-bedien);border-radius:12px;padding:12px;margin-bottom:8px;font-family:inherit;cursor:pointer"><span style="font-size:var(--s-teil);line-height:1">${i.emo}</span><span style="flex:1;font-size:var(--s-text);color:#334155;line-height:1.4">${i.txt}</span><span style="font-size:var(--s-karte);color:var(--text3)">›</span></button>`
+        :`<div class="news-mitteilung" style="display:flex;gap:10px;align-items:center;min-height:48px;background:#fff;border:1px solid var(--rand-bedien);border-radius:12px;padding:12px;margin-bottom:8px"><span style="font-size:var(--s-teil);line-height:1">${i.emo}</span><span style="flex:1;font-size:var(--s-text);color:#334155;line-height:1.4">${i.txt}</span></div>`).join("")
     : '<div style="background:#fff;border-radius:14px;padding:24px;text-align:center;color:var(--text3);font-size:var(--s-text)">Aktuell nichts Neues 🦅</div>';
+}
+/* v824: Trainings-Rückblick zum Nachlesen – was in den letzten Trainings geübt wurde (RPC training_rueckblick, bis zu
+   drei Einheiten der letzten sieben Tage). Liegt über dem Neuigkeiten-Fenster; Schließen führt dorthin zurück. */
+function rueckblickOpen(){
+  const liste=(Array.isArray(window._elternRueckblick)?window._elternRueckblick:[]).filter(r=>r&&(r.themen||[]).length);
+  if(!liste.length)return;
+  const heute=isoLokal();
+  const dat=d=>d===heute?"Heute":new Date(String(d)+"T12:00:00").toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit"});
+  document.getElementById("rb-modal")?.remove();
+  const m=document.createElement("div");m.id="rb-modal";
+  m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Im Training geübt");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10050;display:flex;align-items:center;justify-content:center;padding:16px";
+  m.onclick=e=>{if(e.target===m)m.remove();};
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:18px;max-width:460px;width:100%;max-height:86vh;overflow-y:auto">
+    ${mdlHead("rb-modal","📖","Im Training geübt","Gesprächsstoff für zu Hause – frag dein Kind doch mal danach","#15803d")}
+    ${liste.map(r=>`<div class="rb-einheit" style="padding:10px 0;border-top:1px solid var(--rand-bedien)">
+      <div style="font-size:var(--s-text);font-weight:800">${esc(dat(r.datum))}</div>
+      <ul style="margin:6px 0 0;padding-left:20px;font-size:var(--s-text);line-height:1.6">${(r.themen||[]).map(t=>`<li>${esc(t)}</li>`).join("")}</ul>
+    </div>`).join("")}
+    <button onclick="document.getElementById('rb-modal').remove()" style="width:100%;min-height:48px;margin-top:14px;padding:11px;border:none;border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Schließen</button>
+  </div>`;
+  document.body.appendChild(m);
 }
 function elternNewsMarkSeen(){
   try{ if(window._elternNewsCur)localStorage.setItem("adler_news_seen",JSON.stringify(window._elternNewsCur)); }catch(e){}
@@ -1892,6 +1920,26 @@ async function elternChecklistLoad(kids){
 function elternChecklistDismiss(){ try{localStorage.setItem("adler_setup_hide",isoLokal());}catch(e){} const s=document.getElementById("eltern-checklist-slot"); if(s)s.innerHTML=""; }
 /* Puls-Erinnerung: sanfter Nudge für das jüngste vergangene Training/Spiel (≤14 Tage), zu dem
    dieser Elternteil noch KEIN Puls-Feedback gegeben hat. Ein Tap genügt (nutzt tdPulsRender/Save). */
+/* v824 · Charles 10.11. (Bildschirmfoto): „Feedback zum Training nur bei Eltern, wo das Kind auch dabei war … Auch hier
+   sollte es einfach wegzuklicken sein.“ Die Karte fragte jede Familie, auch wenn das Kind abgesagt hatte oder fehlte.
+   Jetzt entscheidet je Termin, ob mindestens ein eigenes Kind dabei war:
+     1. die Anwesenheit der Trainer, wenn sie eingetragen ist (RPC eltern_dabei – Eltern lesen die Tabelle nicht selbst);
+     2. sonst die eigene Rückmeldung: abgesagt oder krank heißt nicht dabei; ohne Rückmeldung gilt ein Training als
+        zugesagt, ein Spiel oder Turnier nur mit Zusage.
+   Gefragt wird nur zum jüngsten solchen Termin. „×“ blendet ihn aus (dieses Gerät), ohne dass ein älterer nachrückt. */
+const PULS_WEG_KEY="adler_puls_weg";
+function _pulsWeg(){ try{ const a=JSON.parse(localStorage.getItem(PULS_WEG_KEY)||"[]"); return Array.isArray(a)?a.map(Number):[]; }catch(e){ return []; } }
+function pulsNudgeWeg(terminId){
+  try{ const a=_pulsWeg(); if(a.indexOf(Number(terminId))<0)a.push(Number(terminId)); localStorage.setItem(PULS_WEG_KEY,JSON.stringify(a.slice(-20))); }catch(e){}
+  const s=document.getElementById("puls-nudge-slot"); if(s)s.innerHTML="";
+  if(typeof elternTodoSync==="function")elternTodoSync();
+}
+function pulsDabei(t,kids,rsvp,anw){
+  if(anw&&typeof anw[t.id]==="boolean")return anw[t.id];
+  return (kids||[]).some(k=>{ const st=(rsvp[t.id+":"+k.spieler_id]||null);
+    if(st==="abgesagt"||st==="krank")return false;
+    return t.typ==="training"?true:st==="zugesagt"; });
+}
 async function pulsNudgeLoad(){
   const slot=document.getElementById("puls-nudge-slot"); if(!slot)return;
   const heute=isoLokal();
@@ -1899,19 +1947,26 @@ async function pulsNudgeLoad(){
   let evs=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/termine?select=id,typ,titel,gegner,datum&typ=in.(training,spiel,turnier)&datum=lt.${heute}&datum=gte.${vor14}&order=datum.desc&limit=6`,{headers:sbAuthHeaders()});if(r.ok)evs=await r.json();}catch(e){}
   if(!evs.length)return;
+  const ids=evs.map(e=>e.id).join(",");
   let answered=new Set();
-  try{const ids=evs.map(e=>e.id).join(",");const r=await fetch(`${SB_URL}/rest/v1/event_puls?termin_id=in.(${ids})&select=termin_id`,{headers:sbAuthHeaders()});if(r.ok)(await r.json()).forEach(x=>answered.add(x.termin_id));}catch(e){}
-  const first=evs.find(e=>!answered.has(e.id));
-  if(!first)return;
+  try{const r=await fetch(`${SB_URL}/rest/v1/event_puls?termin_id=in.(${ids})&select=termin_id`,{headers:sbAuthHeaders()});if(r.ok)(await r.json()).forEach(x=>answered.add(x.termin_id));}catch(e){}
+  const kids=window._elternKids||[], rsvp={}, anw={};
+  try{const r=await fetch(`${SB_URL}/rest/v1/rueckmeldungen?termin_id=in.(${ids})&select=termin_id,spieler_id,status`,{headers:sbAuthHeaders()});if(r.ok)((await r.json())||[]).forEach(x=>{rsvp[x.termin_id+":"+x.spieler_id]=x.status;});}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/rpc/eltern_dabei`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_termine:evs.map(e=>e.id)})});
+    if(r.ok)((await r.json())||[]).forEach(x=>{ if(x&&typeof x.dabei==="boolean")anw[x.termin_id]=x.dabei; });}catch(e){}   // fehlt die Funktion (vor der Migration), zählt die Rückmeldung
+  const first=evs.find(e=>pulsDabei(e,kids,rsvp,anw));
+  if(!first||answered.has(first.id)||_pulsWeg().indexOf(Number(first.id))>=0){ slot.innerHTML=""; if(typeof elternTodoSync==="function")elternTodoSync(); return; }
   const m=(typeof TM_META!=="undefined"&&TM_META[first.typ])||{icon:"📅",label:first.typ};
   const d=new Date(first.datum+"T00:00:00"), ds=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()]+", "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
-  slot.innerHTML=`<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05);border:1.5px solid #bfdbfe">
-    <div style="font-weight:700;font-size:var(--s-karte);margin-bottom:2px">🌡️ Wie war ${m.icon} ${esc(first.titel||first.gegner||m.label)}?</div>
+  slot.innerHTML=`<div id="puls-nudge" style="position:relative;background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05);border:1.5px solid #bfdbfe">
+    <button type="button" onclick="pulsNudgeWeg(${first.id})" aria-label="Frage ausblenden" title="Ausblenden" style="position:absolute;top:2px;right:2px;min-width:44px;min-height:44px;border:none;background:transparent;color:#64748b;font-family:inherit;font-size:var(--s-seite);line-height:1;cursor:pointer">×</button>
+    <div style="font-weight:700;font-size:var(--s-karte);margin-bottom:2px;padding-right:40px">🌡️ Wie war ${m.icon} ${esc(first.titel||first.gegner||m.label)}?</div>
     <div style="font-size:var(--s-klein);color:#64748b">${ds} · anonym, nur fürs Trainerteam – ein Tap genügt.</div>
     <div id="td-puls"></div>
     <button onclick="elternCatClose();galerieOpen(${first.id},'${(first.titel||first.gegner||"").replace(/'/g,"")}')" style="width:100%;min-height:44px;margin-top:8px;padding:9px;border:1.5px solid #7c3aed;border-radius:10px;background:#faf5ff;color:#6d28d9;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📸 Fotos davon in die Team-Galerie laden</button>
   </div>`;
   tdPulsRender(first.id,null,true);
+  if(typeof elternTodoSync==="function")elternTodoSync();
 }
 /* J3: Helfer-Erinnerung – hast du dich für HEUTE als Helfer eingetragen (Fotos, Live-Ticker,
    Aufbau, Betreuung)? Dann erscheint ein To-Do mit Direktlink zur passenden Funktion. */
