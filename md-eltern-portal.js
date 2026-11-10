@@ -1079,6 +1079,7 @@ async function elternDashLoad(){
            eine Einschränkung ohne Anlass. Der erste Satz gilt überall. -->
       ${(termin.typ==="spiel"||termin.typ==="turnier")?`<div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px">Deine Rückmeldung ist ein Hinweis – die Aufstellung entscheidet das Trainerteam.</div>`:""}<!-- v718: „Aktiven Status nochmal tippen = entfernen“ steht in der Hilfe -->
       ${(termin.typ==="training"&&!faelltAus)?'<div id="betreuung-card"></div>':""}
+      ${(termin.typ==="event"&&termin.eltern_turnier&&!faelltAus)?'<div id="mitspieler-card"></div>':""}<!-- v825: Kinder-Eltern-Turnier -->
       <div id="helfer-card"></div><!-- PO: Hilfe wird kurzfristig entschieden, nicht im Voraus -->
 
       ${termin.typ==="turnier"?'<div id="turnierplan-card"></div>':""}
@@ -1236,6 +1237,7 @@ async function elternDashLoad(){
   try{ const tb=document.getElementById("cat-todo"); if(tb){ new MutationObserver(elternTodoSync).observe(tb,{childList:true,subtree:true}); elternTodoSync(); } }catch(e){}
   elternThemeInit();          // Observer für Modals/Slots (einmalig)
   elternThemeSweep(body);     // Dashboard bei Dark-Theme einfärben
+  if(termin&&termin.eltern_turnier&&document.getElementById("mitspieler-card"))mitspielerLoad(termin.id,"mitspieler-card");   // v825
   if(termin&&termin.datum)wetterInto("wetter-eltern",termin.datum,termin.ort,termin.uhrzeit); // Wetter am Termin-Ort + Uhrzeit
   if(termin&&termin.typ==="training")elternBetreuungLoad(termin.id,kids); // wer bleibt vor Ort
   if(termin)elternHelferKachelLoad(termin);                               // Helfer-Aufgaben kompakt
@@ -1766,6 +1768,7 @@ async function terminDetailOpen(id){
     <div id="td-betreuung"></div>
     <div id="td-buedchen"></div>
     <div id="td-helfer"></div>
+    ${(t.typ==="event"&&t.eltern_turnier)?'<div id="td-mitspieler"></div>':""}
     ${t.typ==="event"?'<div id="td-mitbring"></div>':""}
     <button onclick="galerieOpen(${Number(t.id)},'${(t.titel||t.gegner||"").replace(/'/g,"")}')" style="width:100%;margin-top:14px;padding:11px;border:1.5px solid #7c3aed;border-radius:10px;background:#faf5ff;color:#6d28d9;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📸 ${fotoLabel(t.typ)} ansehen &amp; hochladen</button>
     <button onclick="document.getElementById('td-modal').remove()" style="width:100%;margin-top:8px;padding:11px;border:none;border-radius:10px;background:#f1f5f9;color:#334155;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Schließen</button>`;
@@ -1781,6 +1784,7 @@ async function terminDetailOpen(id){
   // „Wie war's" (Puls) lebt jetzt NUR im Zu-erledigen-Fenster (PO: der Termin wandert
   // nach der Endzeit ins Archiv, dort würde die Smiley-Frage niemand mehr finden).
   if(t.typ==="event"&&t.mitbringen)tdMitbringLoad(t); // Mitbringliste nur, wenn der Trainer sie eingeschaltet hat (v566)
+  if(t.typ==="event"&&t.eltern_turnier)mitspielerLoad(t.id,"td-mitspieler"); // v825: Kinder-Eltern-Turnier
 }
 /* Mitbringliste im Termin-Detail: gleiche Liste wie im Zu-erledigen-Fenster, aber IMMER
    einsehbar und änderbar – auch nachdem die Familie schon etwas eingetragen hat. */
@@ -1806,6 +1810,81 @@ async function tdMitbringLoad(t){
       <button onclick="mitbringAdd(${t.id})" style="min-height:44px;padding:9px 16px;border:none;border-radius:10px;background:#15803d;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Eintragen</button>
     </div>
   </div>`;
+}
+/* v825 · Kinder-Eltern-Turnier (Charles 10.11.2026): „… sollen die Eltern eintragen, ob sie selbst mitspielen wollen, am
+   besten per einfachem Klick. Und auch noch andere Personen eintragen können per Namen. … Diese Info dann mit einem netten
+   Text im Termin in der Eltern-App anzeigen.“
+   Ein Block für beide Stellen (Karte „Nächster Termin“ und Termin-Fenster): Text, Liste aller Mitspieler (alle Eltern
+   sehen sie – Entscheidung vom 10.11.), ein Knopf „Ich spiele mit“ (nochmal tippen nimmt es zurück) und ein Feld für
+   weitere Personen. Die Kinder werden wie bei jedem Termin über die Rückmeldung an- oder abgemeldet.
+   Tabelle event_mitspieler: jeder trägt ein und löscht nur seine eigenen Zeilen; der Trainer darf alle entfernen. */
+async function mitspielerHolen(terminId){
+  try{ const r=await fetch(`${SB_URL}/rest/v1/event_mitspieler?termin_id=eq.${Number(terminId)}&select=id,name,selbst,created_by&order=id.asc`,{headers:sbAuthHeaders()});
+    if(r.ok)return (await r.json())||[]; }catch(e){}
+  return null;
+}
+/* Unter welchem Namen steht der Elternteil selbst in der Liste? Der eigene Vorname aus „Deine Angaben“ (mit Anfangsbuchstabe
+   des Nachnamens), sonst „Elternteil von <Kind>“. */
+async function mitspielerEigenerName(){
+  const uid=_sbUid();
+  try{ if(uid){ const r=await fetch(`${SB_URL}/rest/v1/eltern_angaben?user_id=eq.${encodeURIComponent(uid)}&select=vorname,nachname&limit=1`,{headers:sbAuthHeaders()});
+      if(r.ok){ const p=((await r.json())||[])[0]; const v=String((p&&p.vorname)||"").trim(), n=String((p&&p.nachname)||"").trim();
+        if(v)return (v+(n?" "+n.charAt(0).toUpperCase()+".":"")).slice(0,40); } } }catch(e){}
+  const k=(window._elternKids||[])[0]; const kn=(k&&k.kader&&k.kader.name)||"";
+  return (kn?"Elternteil von "+kn:"Ein Elternteil").slice(0,40);
+}
+async function mitspielerLoad(terminId,boxId){
+  const box=document.getElementById(boxId); if(!box)return;
+  const liste=await mitspielerHolen(terminId);
+  if(!document.getElementById(boxId))return;
+  if(liste===null){ box.innerHTML=""; return; }   // offline oder vor der Migration: der Termin bleibt ein normales Event
+  const uid=_sbUid()||"";
+  const ich=liste.find(x=>x.selbst&&x.created_by===uid);
+  const zeilen=liste.map(x=>`<div class="ms-zeile" style="display:flex;align-items:center;gap:8px;min-height:44px;border-top:1px solid #f1f5f9;font-size:var(--s-text)">
+      <span style="flex:1;min-width:0;overflow-wrap:anywhere">⚽ <b>${esc(x.name)}</b>${(x.selbst&&x.created_by===uid)?' <span style="color:#64748b;font-size:var(--s-klein)">· das bist du</span>':""}</span>
+      ${(!x.selbst&&x.created_by===uid)?`<button type="button" onclick="mitspielerWeg(${Number(x.id)},${Number(terminId)})" aria-label="${esc(x.name)} wieder austragen" style="min-width:44px;min-height:44px;border:none;background:transparent;color:#b91c1c;font-size:var(--s-karte);cursor:pointer">✕</button>`:""}
+    </div>`).join("");
+  box.innerHTML=`<div class="ms-block" data-termin="${Number(terminId)}" style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
+    <div style="font-weight:800;font-size:var(--s-karte)">⚽ Kinder-Eltern-Turnier</div>
+    <div style="font-size:var(--s-text);color:#475569;line-height:1.5;margin:2px 0 8px">Diesmal dürfen die Großen ran: Wir spielen Kinder gegen Eltern! Wer hat Lust mitzukicken? Turnschuhe reichen – der Spaß zählt, nicht das Ergebnis. Auch Geschwister, Großeltern und Freunde sind willkommen.</div>
+    <button type="button" class="ms-ich" aria-pressed="${ich?"true":"false"}" onclick="mitspielerIch(${Number(terminId)})" style="width:100%;min-height:48px;padding:10px;border-radius:12px;border:1.5px solid ${ich?"#15803d":"var(--blue)"};background:${ich?"#15803d":"var(--blue)"};color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">${ich?"✓ Du spielst mit – zum Zurücknehmen tippen":"⚽ Ich spiele mit"}</button>
+    <div style="font-size:var(--s-text);font-weight:700;margin-top:12px">${liste.length?`${liste.length} Erwachsene${liste.length===1?"r":""} ${liste.length===1?"spielt":"spielen"} mit`:"Noch niemand eingetragen – mach den Anfang!"}</div>
+    ${zeilen}
+    <label for="ms-name-${boxId}" style="display:block;font-size:var(--s-klein);color:#475569;margin-top:10px">Noch jemand dabei? Namen eintragen</label>
+    <div style="display:flex;gap:6px;margin-top:4px">
+      <input id="ms-name-${boxId}" maxlength="40" placeholder="z. B. Opa Heinz" style="flex:1;min-width:0;min-height:44px;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text)" onkeydown="if(event.key==='Enter')mitspielerDazu(${Number(terminId)},'${boxId}')">
+      <button type="button" onclick="mitspielerDazu(${Number(terminId)},'${boxId}')" style="min-height:44px;padding:9px 16px;border:none;border-radius:10px;background:#15803d;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Eintragen</button>
+    </div>
+  </div>`;
+  if(typeof elternDarkActive==="function"&&elternDarkActive()&&typeof elternThemeSweep==="function")elternThemeSweep(box);
+}
+function mitspielerNeuLaden(terminId){ ["td-mitspieler","mitspieler-card"].forEach(id=>{ const b=document.getElementById(id); if(b)mitspielerLoad(terminId,id); }); }
+async function mitspielerIch(terminId){
+  const uid=_sbUid(); if(!uid){ toast("Bitte zuerst anmelden","err"); return; }
+  const liste=(await mitspielerHolen(terminId))||[];
+  const ich=liste.find(x=>x.selbst&&x.created_by===uid);
+  try{
+    const r=ich
+      ? await fetch(`${SB_URL}/rest/v1/event_mitspieler?id=eq.${Number(ich.id)}`,{method:"DELETE",headers:sbAuthHeaders()})
+      : await fetch(`${SB_URL}/rest/v1/event_mitspieler`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},body:JSON.stringify({termin_id:Number(terminId),name:await mitspielerEigenerName(),selbst:true})});
+    if(!r.ok){ toast("Das hat nicht geklappt – bitte nochmal versuchen","err"); return; }
+    toast(ich?"Du bist wieder ausgetragen":"⚽ Du spielst mit – schön!");
+  }catch(e){ toast("Offline – bitte später nochmal","err"); return; }
+  mitspielerNeuLaden(terminId);
+}
+async function mitspielerDazu(terminId,boxId){
+  const feld=document.getElementById("ms-name-"+boxId), name=String((feld&&feld.value)||"").trim().slice(0,40);
+  if(!name){ toast("Bitte einen Namen eintragen","err"); if(feld)feld.focus(); return; }
+  try{ const r=await fetch(`${SB_URL}/rest/v1/event_mitspieler`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'return=minimal'},body:JSON.stringify({termin_id:Number(terminId),name,selbst:false})});
+    if(!r.ok){ toast("Das hat nicht geklappt – bitte nochmal versuchen","err"); return; }
+    toast("⚽ "+name+" ist eingetragen");
+  }catch(e){ toast("Offline – bitte später nochmal","err"); return; }
+  mitspielerNeuLaden(terminId);
+}
+async function mitspielerWeg(id,terminId){
+  try{ const r=await fetch(`${SB_URL}/rest/v1/event_mitspieler?id=eq.${Number(id)}`,{method:"DELETE",headers:sbAuthHeaders()});
+    if(!r.ok){ toast("Nicht ausgetragen – bitte nochmal versuchen","err"); return; } }catch(e){ toast("Offline – bitte später nochmal","err"); return; }
+  mitspielerNeuLaden(terminId);
 }
 /* F4: Eltern-Puls – anonyme 1-Tap-Stimmung nach Training/Spiel. Der Trainer sieht nur das
    Aggregat (puls_aggregate, keine user_ids). Ein Datensatz pro Elternteil/Termin (upsert). */
