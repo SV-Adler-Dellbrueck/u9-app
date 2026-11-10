@@ -1194,6 +1194,7 @@ async function tmEditSave(id){
          sonst zeigt der Eltern-Link nach einer Ortsänderung noch den alten Platz. */
       if(typeof tmMatchdaySync==="function")tmMatchdaySync(Object.assign({},t,body));
       toast("Termin aktualisiert ✓");terminIdCacheClear();document.getElementById("tm-edit-modal")?.remove();tmLoad();}
+    else if(r.status===409)toast(t.typ==="event"?"Dieses Event gibt es am selben Tag schon mit gleichem Titel und gleicher Uhrzeit – bitte eines von beiden ändern":"An diesem Tag gibt es schon einen Termin dieser Art – bitte ein anderes Datum wählen","err");   // v827
     else toast("Speichern fehlgeschlagen","err");
   }catch(e){toast("Netzwerkfehler","err");}
 }
