@@ -182,7 +182,7 @@ async function feierSenden(){
   if(name)feierNameMerken(name);
   document.getElementById("feier-dialog")?.remove();
   toast(o.modus==="sorte"?"Gespeichert ✓":"Eingetragen – danke! 🎄");
-  feierNeuLaden();
+  feierNeuLaden(); feierObenLoad();
 }
 async function feierFehler(r){
   let t=""; try{ t=await r.text(); }catch(e){}
@@ -198,7 +198,7 @@ async function feierEntfernen(id,key){
   catch(e){ toast("Offline – bitte später nochmal","err"); return; }
   if(typeof sbCheck401==="function"&&sbCheck401(r))return;
   if(!r.ok){ toast("Nicht entfernt – bitte nochmal versuchen","err"); return; }
-  feierNeuLaden();
+  feierNeuLaden(); feierObenLoad();
 }
 
 /* Trainer: gleiche Liste als Fenster, mit Löschrecht für jeden Eintrag. */
@@ -218,6 +218,63 @@ function feierTrainerOeffnen(t){
   </div>`;
   document.body.appendChild(modal);
   feierLoad("feier-trainer-box",t);
+}
+
+/* v830 · Karte ganz oben im Dashboard (Charles 10.11.2026): Die Weihnachtsfeier steht oben, solange
+   a) noch nicht zu- oder abgesagt wurde (für mindestens eines der Kinder fehlt die Antwort), oder
+   b) zugesagt wurde, aber die Familie noch nichts in die Beitragsliste eingetragen hat.
+   Abgesagt, abgesagt-von-der-Mannschaft (fällt aus), vorbei oder eingetragen: keine Karte.
+   Genau eine Hauptaktion; sie öffnet das Termin-Fenster (dort wird geantwortet bzw. eingetragen). */
+async function feierObenLoad(kids){
+  const slot=document.getElementById("feier-slot"); if(!slot)return;
+  kids=kids||window._elternKids||[];
+  const leer=()=>{ if(document.getElementById("feier-slot"))document.getElementById("feier-slot").innerHTML=""; };
+  const heute=isoLokal();
+  const f=FEIER_KONFIG.find(x=>x.datum>=heute);
+  if(!f||!kids.length||!_feierUid()){ leer(); return; }
+  let t=null;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/termine?typ=eq.event&datum=eq.${f.datum}&titel=eq.${encodeURIComponent(f.titel)}&select=*&limit=1`,{headers:sbAuthHeaders()});
+    if(r.ok)t=(await r.json())[0]||null;
+  }catch(e){}
+  /* Nur der Termin der Konfiguration zählt: gleicher Tag, gleicher Titel, Event – nie ein anderer, der zufällig zurückkommt. */
+  if(!t||t.typ!=="event"||t.datum!==f.datum||String(t.titel||"").trim().toLowerCase()!==f.titel.toLowerCase()||(typeof terminFaelltAus==="function"&&terminFaelltAus(t))){ leer(); return; }
+  const ids=kids.map(k=>k.spieler_id).filter(x=>x!=null);
+  let rsvp={}, eigene=0, antwortGeladen=false;
+  try{
+    const [a,b]=await Promise.all([
+      fetch(`${SB_URL}/rest/v1/rueckmeldungen?termin_id=eq.${Number(t.id)}&spieler_id=in.(${ids.join(",")})&select=spieler_id,status`,{headers:sbAuthHeaders()}),
+      fetch(`${SB_URL}/rest/v1/feier_eintraege?feier_key=eq.${encodeURIComponent(f.key)}&erstellt_von=eq.${_feierUid()}&select=id&limit=1`,{headers:sbAuthHeaders()})]);
+    if(a.ok){ (await a.json()).forEach(x=>rsvp[x.spieler_id]=x.status); antwortGeladen=true; }
+    if(b.ok)eigene=(await b.json()).length;
+  }catch(e){}
+  if(!antwortGeladen||!document.getElementById("feier-slot")){ leer(); return; }   // ohne Antwortstand lieber keine Karte als eine falsche
+  const offen=ids.some(id=>!rsvp[id]);
+  const zu=ids.some(id=>rsvp[id]==="zugesagt");
+  let modus=null;
+  if(offen)modus="antwort";
+  else if(zu&&!eigene)modus="eintragen";
+  if(!modus){ leer(); return; }
+  const d=new Date(t.datum+"T00:00:00");
+  const wann=d.toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"})+(t.uhrzeit?" · "+String(t.uhrzeit).slice(0,5)+" Uhr":"");
+  const text=modus==="antwort"?"Seid ihr dabei? Bitte kurz zu- oder absagen.":"Ihr seid dabei – was bringt ihr mit? Tragt euch in die Beitragsliste ein.";
+  slot.innerHTML=`<div class="feier-karte" style="background:var(--surface);color:var(--text);border-radius:14px;padding:16px;margin-bottom:12px;border-left:4px solid var(--green);box-shadow:0 2px 10px rgba(0,0,0,.05)">
+    <div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em">${modus==="antwort"?"Antwort fehlt":"Beitragsliste"}</div>
+    <div style="font-size:var(--s-teil);font-weight:800;margin-top:2px">🎄 ${esc(t.titel||f.titel)}</div>
+    <div style="font-size:var(--s-text);color:var(--text2);margin-top:2px">${esc(wann)}${t.ort?" · "+esc(t.ort):""}</div>
+    <div style="font-size:var(--s-text);margin-top:8px;line-height:1.5">${text}</div>
+    <button type="button" class="feier-karte-knopf" onclick="feierObenOeffnen(${Number(t.id)},'${modus}')" style="width:100%;min-height:56px;margin-top:12px;border:none;border-radius:14px;background:var(--blue);color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">${modus==="antwort"?"Jetzt antworten":"Beitragsliste öffnen"}</button>
+  </div>`;
+}
+function _feierUid(){ try{ return (typeof _sbUid==="function"?_sbUid():sbUserId())||""; }catch(e){ return ""; } }
+async function feierObenOeffnen(terminId,modus){
+  if(typeof terminDetailOpen!=="function")return;
+  /* terminDetailOpen sucht den Termin in ELTERN_TERMINE; liegt er außerhalb der geladenen 15, ergänzen wir ihn. */
+  if(typeof ELTERN_TERMINE!=="undefined"&&!(ELTERN_TERMINE||[]).some(x=>Number(x.id)===Number(terminId))){
+    try{ const r=await fetch(`${SB_URL}/rest/v1/termine?id=eq.${Number(terminId)}&select=*`,{headers:sbAuthHeaders()}); if(r.ok){ const t=(await r.json())[0]; if(t)ELTERN_TERMINE.push(t); } }catch(e){}
+  }
+  await terminDetailOpen(terminId);
+  if(modus==="eintragen")setTimeout(()=>{ const b=document.getElementById("td-feier"); if(b&&b.scrollIntoView)b.scrollIntoView({block:"start"}); },700);
 }
 
 /* Muss die letzte Zeile der Datei bleiben: die MODUL_WACHE prüft diesen Namen. */

@@ -982,6 +982,7 @@ async function elternDashLoad(){
   /* v467: Die Live-Kachel steht NOCH ueber der Terminkarte – waehrend das Spiel laeuft,
      ist sie das Dringlichste auf der Seite. Sie fuellt sich nur, wenn wirklich getickert
      wird (elternLiveKachelLoad), sonst bleibt der Slot leer und kostet keine Zeile. */
+  html+='<div id="feier-slot"></div>';        // v830: Weihnachtsfeier ganz oben, solange Antwort oder Beitragsliste fehlt
   html+='<div id="eltern-live-slot"></div>';
   html+='<div id="push-hinweis-slot"></div>';   // v698: ganz oben – Benachrichtigungen, solange sie aus sind
   html+='<div id="rufe-hinweis"></div>';          // v673: neue Adler-Rufe – nur wenn es welche gibt
@@ -1256,6 +1257,7 @@ async function elternDashLoad(){
   elternGenesungLoad(kids);                    // I-A: Genesungsgrüße für pausierte Teamkinder
   elternHelferTodoLoad();                      // J3: heute als Helfer eingetragen? Erinnerung mit Direktlink
   elternMitbringLoad(kids);                    // Event-Mitbringliste: wer bringt was mit
+  if(typeof feierObenLoad==="function")feierObenLoad(kids);   // v830: Karte „Weihnachtsfeier“ ganz oben (Welle 2, deshalb geprüft)
   elternBuedchenLoad();                        // v646: Grillhütte – eigener Dienst und offene zum Übernehmen
   elternGespraechStatus();                     // laufende Elterngespräch-Anfrage anzeigen
   elternPollLoad();                            // Terminvorschläge des Trainers (Elterngespräch-Doodle)
@@ -1530,18 +1532,52 @@ function _elWocheZelle(d,inWoche,kids,rsvpAll){
     const ts=inWoche.filter(t=>t.datum===iso(d));
     const kopf=`<span style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2)">${WT[d.getDay()]}</span><span style="display:block;font-size:var(--s-text);font-weight:800">${d.getDate()}</span>`;
     if(!ts.length)return `<div style="flex:1;min-width:0;text-align:center;padding:8px 0;opacity:.6">${kopf}<span aria-hidden="true" style="display:block;font-size:var(--s-text);color:var(--text3)">·</span></div>`;
-    const t=ts[0], m=(typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅",label:t.typ};
-    let zeichen, wort;
-    if(_elAbgesagt(t)){zeichen="✕";wort="fällt aus";}
-    else{
+    /* v830: Mehrere Termine am Tag (seit v827 erlaubt) zeigt die Kachel alle – ein Symbol samt Antwortzeichen je Termin;
+       vorher stand nur der erste da (Charles 10.11.: „nur das Kinder-Eltern-Turnier, nicht die Weihnachtsfeier“).
+       Bei einem Termin öffnet der Tipp ihn, bei mehreren eine Auswahl. Weihnachtsfeier 🎄 und Kinder-Eltern-Turnier ⚽
+       tragen eigene Symbole, weil beide „Event“ sind und sonst gleich aussähen. */
+    const status=t=>{
+      if(_elAbgesagt(t))return {zeichen:"✕",wort:"fällt aus"};
       const rr=rsvpAll[t.id]||{}, st=(kids||[]).map(k=>rr[k.spieler_id]||null);
-      if(st.some(x=>!x)){zeichen="!";wort="Antwort offen";}
-      else if(st.every(x=>x==="zugesagt")){zeichen="✓";wort="zugesagt";}
-      else{zeichen="✕";wort="nicht dabei";}
+      if(st.some(x=>!x))return {zeichen:"!",wort:"Antwort offen"};
+      if(st.every(x=>x==="zugesagt"))return {zeichen:"✓",wort:"zugesagt"};
+      return {zeichen:"✕",wort:"nicht dabei"};
+    };
+    const symbol=t=>{
+      if(t.typ==="event"&&typeof feierFuerTermin==="function"&&feierFuerTermin(t))return "🎄";
+      if(t.typ==="event"&&t.eltern_turnier)return "⚽";
+      return ((typeof TM_META!=="undefined"&&TM_META[t.typ])||{icon:"📅"}).icon;
+    };
+    const farbeVon=z=>z==="!"?"#b45309":(z==="✓"?"#047857":"var(--text2)");
+    const einzeln=ts.slice().sort((x,y)=>String(x.uhrzeit||"").localeCompare(String(y.uhrzeit||"")));
+    const info=einzeln.map(t=>({t,s:status(t),ic:symbol(t)}));
+    (window._elTagListe=window._elTagListe||{})[iso(d)]=info.map(x=>({id:x.t.id,ic:x.ic,titel:x.t.titel||x.t.gegner||"Termin",uhr:(x.t.uhrzeit||"").slice(0,5),zeichen:x.s.zeichen,wort:x.s.wort}));
+    const stil="flex:1;min-width:0;min-height:64px;text-align:center;padding:6px 0;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:var(--text);font-family:inherit;cursor:pointer";
+    const tag=`${WT[d.getDay()]} ${d.getDate()}.`;
+    if(info.length===1){
+      const x=info[0];
+      return `<button type="button" onclick="terminDetailOpen(${x.t.id})" aria-label="${tag}, ${esc(x.t.titel||x.t.gegner||"Termin")}, ${x.s.wort}" style="${stil}">${kopf}<span aria-hidden="true" style="display:block;font-size:var(--s-text);line-height:1.3">${x.ic}</span><span style="display:block;font-size:var(--s-klein);font-weight:800;color:${farbeVon(x.s.zeichen)}">${x.s.zeichen}</span></button>`;
     }
-    const farbe=zeichen==="!"?"#b45309":(zeichen==="✓"?"#047857":"var(--text2)");
-    return `<button type="button" onclick="terminDetailOpen(${t.id})" aria-label="${WT[d.getDay()]} ${d.getDate()}., ${esc(t.titel||t.gegner||m.label)}, ${wort}${ts.length>1?", plus "+(ts.length-1)+" weitere":""}" style="flex:1;min-width:0;min-height:64px;text-align:center;padding:6px 0;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:var(--text);font-family:inherit;cursor:pointer">${kopf}<span aria-hidden="true" style="display:block;font-size:var(--s-text);line-height:1.3">${m.icon}</span><span style="display:block;font-size:var(--s-klein);font-weight:800;color:${farbe}">${zeichen}</span></button>`;
+    const zeilen=info.map(x=>`<span aria-hidden="true" style="display:flex;justify-content:center;align-items:center;gap:2px;line-height:1.3"><span style="font-size:var(--s-text)">${x.ic}</span><span style="font-size:var(--s-klein);font-weight:800;color:${farbeVon(x.s.zeichen)}">${x.s.zeichen}</span></span>`).join("");
+    return `<button type="button" onclick="elternTagWahl('${iso(d)}')" aria-label="${tag}, ${info.length} Termine: ${info.map(x=>esc(x.t.titel||x.t.gegner||"Termin")+" "+x.s.wort).join("; ")}" style="${stil}">${kopf}${zeilen}</button>`;
   }
+/* v830: Auswahl, wenn an einem Tag mehrere Termine stehen – je Termin eine Zeile mit Zeit, Titel und Antwortstand in Worten */
+function elternTagWahl(datum){
+  const liste=((window._elTagListe||{})[datum])||[];
+  if(liste.length===1){ terminDetailOpen(liste[0].id); return; }
+  document.getElementById("tag-wahl")?.remove();
+  const m=document.createElement("div");
+  m.id="tag-wahl"; m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Termine an diesem Tag");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10030;display:flex;align-items:flex-end;justify-content:center";
+  m.onclick=e=>{ if(e.target===m)m.remove(); };
+  const d=new Date(datum+"T00:00:00");
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);width:100%;max-width:460px;border-radius:16px 16px 0 0;padding:16px 16px 24px;box-sizing:border-box">
+    <div style="font-weight:800;font-size:var(--s-teil);margin-bottom:8px">${d.toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"})}</div>
+    ${liste.map(x=>`<button type="button" onclick="document.getElementById('tag-wahl')?.remove();terminDetailOpen(${Number(x.id)})" style="display:flex;align-items:center;gap:10px;width:100%;min-height:56px;margin-top:8px;padding:8px 12px;border:1.5px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);text-align:left;cursor:pointer"><span aria-hidden="true" style="font-size:var(--s-teil)">${x.ic}</span><span style="flex:1;min-width:0;overflow-wrap:anywhere"><b>${esc(x.titel)}</b>${x.uhr?" · "+esc(x.uhr)+" Uhr":""}<br><span style="color:var(--text2)">${x.zeichen} ${esc(x.wort)}</span></span></button>`).join("")}
+    <button type="button" onclick="document.getElementById('tag-wahl')?.remove()" style="width:100%;min-height:48px;margin-top:12px;border:1.5px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Schließen</button>
+  </div>`;
+  document.body.appendChild(m);
+}
 /* v811 · Termine als Kacheln, Liste oder beides (Charles 08.11.2026: Der Streifen zeigte dieselben Termine wie die Liste darunter
    und ließ sich nicht weiterschieben). Kacheln = Wochenstreifen zum Wischen, so weit Termine geladen sind (höchstens fünf Wochen),
    Liste = „Danach“, Beides = beides untereinander. Die Wahl merkt sich das Gerät (localStorage „adler_termin_ansicht“),
