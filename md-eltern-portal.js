@@ -1769,6 +1769,7 @@ async function terminDetailOpen(id){
     <div id="td-buedchen"></div>
     <div id="td-helfer"></div>
     ${(t.typ==="event"&&t.eltern_turnier)?'<div id="td-mitspieler"></div>':""}
+    ${(t.typ==="event"&&typeof feierFuerTermin==="function"&&feierFuerTermin(t))?'<div id="td-feier"></div>':""}
     ${t.typ==="event"?'<div id="td-mitbring"></div>':""}
     <button onclick="galerieOpen(${Number(t.id)},'${(t.titel||t.gegner||"").replace(/'/g,"")}')" style="width:100%;margin-top:14px;padding:11px;border:1.5px solid #7c3aed;border-radius:10px;background:#faf5ff;color:#6d28d9;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📸 ${fotoLabel(t.typ)} ansehen &amp; hochladen</button>
     <button onclick="document.getElementById('td-modal').remove()" style="width:100%;margin-top:8px;padding:11px;border:none;border-radius:10px;background:#f1f5f9;color:#334155;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Schließen</button>`;
@@ -1785,6 +1786,7 @@ async function terminDetailOpen(id){
   // nach der Endzeit ins Archiv, dort würde die Smiley-Frage niemand mehr finden).
   if(t.typ==="event"&&t.mitbringen)tdMitbringLoad(t); // Mitbringliste nur, wenn der Trainer sie eingeschaltet hat (v566)
   if(t.typ==="event"&&t.eltern_turnier)mitspielerLoad(t.id,"td-mitspieler"); // v825: Kinder-Eltern-Turnier
+  if(document.getElementById("td-feier")&&typeof feierLoad==="function")feierLoad("td-feier",t); // v828: Beitragsliste (Welle 2, deshalb geprüft)
 }
 /* Mitbringliste im Termin-Detail: gleiche Liste wie im Zu-erledigen-Fenster, aber IMMER
    einsehbar und änderbar – auch nachdem die Familie schon etwas eingetragen hat. */

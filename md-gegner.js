@@ -418,6 +418,9 @@ function _tmdKarte(t){
   /* v825: Kinder-Eltern-Turnier – der Termin führt zur Liste der Erwachsenen und von dort ins Trainingsturnier. */
   else if(t.eltern_turnier)gross=[{i:"ti-users-group",l:"Kinder-Eltern-Turnier",c:`typeof elternTurnierOpen==='function'?elternTurnierOpen(${Number(t.id)},'${t.datum}'):toast('Lädt noch – gleich nochmal','err')`,p:true},
                                   t.mitbringen?{i:"ti-basket",l:"Mitbringliste",c:"mitbringTrainerOpen()",p:false}:null].filter(Boolean);
+  /* v828: Weihnachtsfeier – der Termin führt zur Beitragsliste der Eltern (Trainer dürfen jeden Eintrag entfernen). */
+  else if(typeof feierFuerTermin==="function"&&feierFuerTermin(t))gross=[{i:"ti-gift",l:"Beitragsliste",c:`feierTrainerOeffnen(${Number(t.id)})`,p:true},
+                                  t.mitbringen?{i:"ti-basket",l:"Mitbringliste",c:"mitbringTrainerOpen()",p:false}:null].filter(Boolean);
   else gross=[{i:"ti-basket",l:"Mitbringliste",c:"mitbringTrainerOpen()",p:true}];
   const grossBtn=o=>`<button class="btn${o.p?" btn-p":""}" onclick="${o.c}" style="width:100%;min-height:52px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ${o.i}"></i>${o.l}</button>`;
 
