@@ -117,7 +117,13 @@ function rufeClose(){
   _rf=null;
   if(typeof rufeBadgeLoad==="function")rufeBadgeLoad();
 }
-function _rfRaeumeHolen(){ return _rfGet("rufe_raum?archiviert=eq.false&select=id,name,emoji,sort,familie_kind&order=sort.asc,id.asc"); }
+/* v829: nur_eltern kennzeichnet den Raum ohne Trainerteam. Gibt es die Spalte noch nicht (Migration fehlt),
+   antwortet die Datenbank mit 400 – dann gilt die alte Abfrage, damit die Rufe weiter öffnen. */
+async function _rfRaeumeHolen(){
+  const basis="rufe_raum?archiviert=eq.false&order=sort.asc,id.asc&select=id,name,emoji,sort,familie_kind";
+  try{ const r=await fetch(`${SB_URL}/rest/v1/${basis},nur_eltern`,{headers:sbAuthHeaders()}); if(r.ok)return await r.json(); }catch(e){}
+  return _rfGet(basis);
+}
 /* v674: Familien für das Trainerteam – Kinder, die sich ein Elternkonto teilen, sind eine Familie.
    Schlüssel ist die kleinste Kind-Kennung (wie rufe_familie in der Datenbank). */
 async function _rfFamilienLaden(){
@@ -171,8 +177,8 @@ function rufeRaeumeRender(){
 function _rfKopfZeigen(){
   rufeChipsRender();
   const r=_rfAktRaum(); const unter=document.getElementById("rufe-unter"), feld=document.getElementById("rufe-text");
-  const privat=!!(r&&r.familie_kind);
-  if(unter)unter.textContent=privat?(_rf.trainer?"Privat mit der Familie von "+(_rf.fam[r.familie_kind]||""):"Privat: nur ihr und das Trainerteam"):"Eltern und Trainerteam";
+  const privat=!!(r&&r.familie_kind), nurEltern=!!(r&&r.nur_eltern);
+  if(unter)unter.textContent=nurEltern?"Nur Eltern – das Trainerteam sieht diesen Raum nicht":privat?(_rf.trainer?"Privat mit der Familie von "+(_rf.fam[r.familie_kind]||""):"Privat: nur ihr und das Trainerteam"):"Eltern und Trainerteam";
   if(feld)feld.placeholder=privat?(_rf.trainer?"Nachricht an die Familie …":"Nachricht an das Trainerteam …"):"Ruf schreiben …";
 }
 async function _rfUngelesenLaden(){
