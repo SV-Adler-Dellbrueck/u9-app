@@ -229,7 +229,7 @@ async function feierObenLoad(kids){
   const slot=document.getElementById("feier-slot"); if(!slot)return;
   kids=kids||window._elternKids||[];
   const leer=()=>{ if(document.getElementById("feier-slot"))document.getElementById("feier-slot").innerHTML=""; };
-  const heute=typeof isoLokal==="function"?isoLokal():new Date().toISOString().slice(0,10);
+  const heute=isoLokal();
   const f=FEIER_KONFIG.find(x=>x.datum>=heute);
   if(!f||!kids.length||!_feierUid()){ leer(); return; }
   let t=null;
@@ -237,7 +237,8 @@ async function feierObenLoad(kids){
     const r=await fetch(`${SB_URL}/rest/v1/termine?typ=eq.event&datum=eq.${f.datum}&titel=eq.${encodeURIComponent(f.titel)}&select=*&limit=1`,{headers:sbAuthHeaders()});
     if(r.ok)t=(await r.json())[0]||null;
   }catch(e){}
-  if(!t||(typeof terminFaelltAus==="function"&&terminFaelltAus(t))){ leer(); return; }
+  /* Nur der Termin der Konfiguration zählt: gleicher Tag, gleicher Titel, Event – nie ein anderer, der zufällig zurückkommt. */
+  if(!t||t.typ!=="event"||t.datum!==f.datum||String(t.titel||"").trim().toLowerCase()!==f.titel.toLowerCase()||(typeof terminFaelltAus==="function"&&terminFaelltAus(t))){ leer(); return; }
   const ids=kids.map(k=>k.spieler_id).filter(x=>x!=null);
   let rsvp={}, eigene=0, antwortGeladen=false;
   try{
