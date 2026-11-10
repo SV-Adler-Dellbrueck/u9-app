@@ -258,6 +258,7 @@ function rufeRender(){
     const r=_rfAktRaum();
     box.innerHTML=`<div style="text-align:center;color:var(--text2);font-size:var(--s-text);padding:28px 8px">${r&&r.familie_kind
       ?(_rf.trainer?"Noch nichts geschrieben.<br>Lesen können nur diese Familie und das Trainerteam.":"Hier schreibst du privat dem Trainerteam.<br>Mitlesen können nur ihr als Familie und das Trainerteam – nicht die anderen Eltern.")
+      :(r&&r.nur_eltern)?"Noch keine Rufe in der Elternrunde.<br>Schreib den ersten – hier lesen nur Eltern, das Trainerteam nicht."   // v831
       :"Noch keine Rufe in diesem Raum.<br>Schreib den ersten – alle Eltern und das Trainerteam lesen mit."}</div>`;
     return;
   }
