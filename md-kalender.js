@@ -321,6 +321,18 @@ async function tmAdd(){
         }catch(e){}
       }
     }
+    /* v826 · Charles 10.11.2026: „Fehler beim Anlegen“ – ohne Grund. Die Datenbank lässt je Tag nur einen Termin
+       derselben Art zu (ein Event, ein Training …, Index termine_datum_typ_uidx); die zweite Anlage kommt als 409 zurück.
+       Jetzt sagt die Meldung, welcher Termin den Tag schon belegt, und was zu tun ist. */
+    else if(r.status===409){
+      const art=({training:"Training",spiel:"Spiel",turnier:"Turnier",event:"Event",trainermeeting:"Trainermeeting"})[tmTyp]||"Termin";
+      const belegt=(typeof TM_TERMINE!=="undefined"?TM_TERMINE:[]).find(x=>x.typ===tmTyp&&x.datum===datum);
+      const tag=new Date(datum+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"});
+      toast(daten.length>1
+        ?`An mindestens einem dieser Tage gibt es schon ein ${art} – bitte die Serie anders legen oder den Termin bearbeiten`
+        :`Am ${tag} gibt es schon ein ${art}${belegt&&belegt.titel?` („${belegt.titel}“)`:""} – bitte dort über „Bearbeiten“ ändern oder ein anderes Datum wählen`,"err");
+      const tt=document.getElementById("app-toast"); if(tt){ clearTimeout(tt._tid); tt._tid=setTimeout(()=>tt.classList.remove("show"),8000); }   // ein langer Satz braucht mehr als drei Sekunden
+    }
     else toast("Fehler beim Anlegen","err");
   }catch(e){toast("Netzwerkfehler","err");}
   }finally{ tmAdd._busy=false; }
