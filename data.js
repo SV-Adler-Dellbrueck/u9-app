@@ -4829,6 +4829,9 @@ const UEBUNG_ART_VORSCHLAG={
   /* v684 – Lehrgangsabgabe 4.0: Trainingsform für ERWACHSENE (Ü32), aus PR #210. Im Namen steht
      die Zielgruppe, damit sie in keiner U9-Planung für eine Kinderübung gehalten wird. */
   "Lehrgang Erwachsene (Ü32) – 4 gegen 4 + Torhüter: Umschalten nach Ballgewinn":"spiel",
+  /* v832 – C-Lizenz Aufgabe 3.1 (Gruppenarbeit): Zwei-Seiten-Spiel 4 gegen 4, Thema Spielverlagerung. Übungsart
+     „Spielform“ wie beim Basis-Coach-Paket beschlossen; der Schlüssel heißt im Code `spiel`. */
+  "Lehrgang – Zwei-Seiten-Spiel":"spiel",
   /* v667 – Saisonformat (Entwurf abgenommen 29.09.): vier Spielformen mit Gegner. */
   "3+1 gegen 3 – Ball halten, der Torwart ist die Rettung":"spiel",
   "FUNiño 2 gegen 2 – abschirmen, dann Seite wechseln":"spiel",
@@ -5007,6 +5010,8 @@ const UEBUNG_BETREUUNG_VORSCHLAG={
   "Korb-Chaos-Funino (360°-Variante)":"feld",
   /* v684: der Trainer zählt die 8 Sekunden und friert in den ersten Durchgängen ein */
   "Lehrgang Erwachsene (Ü32) – 4 gegen 4 + Torhüter: Umschalten nach Ballgewinn":"fuehrt",
+  /* v832: C-Lizenz 3.1 – der Trainer an der Mittellinie entscheidet, ob vor dem Tor ein Seitenwechsel per Pass war */
+  "Lehrgang – Zwei-Seiten-Spiel":"fuehrt",
   /* v723: Doppelpass und Stangentausch laufen nach dem Zeigen allein; beim Abschlussspiel zählt
      der Trainer den Countdown und bringt jeden neuen Ball aus dem Depot */
   "Doppelpass durch die Stangen":"allein",
