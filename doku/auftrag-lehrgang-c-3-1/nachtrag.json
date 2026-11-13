@@ -12,7 +12,7 @@
       "varianten": "Leichter: Seitenwechsel darf auch per Dribbling erfolgen. Schwerer: Tor nach zwei Seitenwechseln zählt doppelt, oder der Seitenwechsel muss mit Direktpass gespielt werden.",
       "coaching": "Ziel: Spieler erkennen, wann eine Seite überladen ist, und verlagern gezielt auf die freie Seite. Trainerposition: an der Mittellinie außen, mit Blick auf beide Hälften. Korrekturschwerpunkte: Freilaufen auf der Gegenseite vor dem Pass, Körperhaltung offen zum Spielfeld, Tempo und Genauigkeit des Verlagerungspasses. Fragen: Wo ist gerade viel Platz? Wer kann jetzt anbieten?",
       "diff": 2,
-      "skizze": {"z":[[30,20,220,140]],"tor":[[254,55,"v",20],[254,125,"v",20],[26,55,"v",20],[26,125,"v",20]],"li":[[30,90,250,90,"m"]],"h":[[30,20,"y"],[250,20,"y"],[30,160,"y"],[250,160,"y"],[30,90,"y"],[250,90,"y"]],"ger":[[140,168,"trainer","w"]],"s":[[50,135,"g","A"],[100,145,"g","B"],[120,60,"g","C"],[185,50,"g","D"],[95,115,"r"],[140,125,"r"],[175,110,"r"],[215,135,"r"]],"b":[[58,141]],"p":[[70,139,88,143,"p",1],[113,130,177,59,"p",2],[205,52,244,55,"s",3]],"tx":[[140,86,"Seitenwechsel Pflicht vor jedem Torschuss"]]}
+      "skizze": {"z":[[30,20,220,140]],"tor":[[250,45,"v",20],[250,115,"v",20],[23,45,"v",20],[23,115,"v",20]],"li":[[30,90,250,90,"m"]],"h":[[30,20,"y"],[250,20,"y"],[30,160,"y"],[250,160,"y"],[30,90,"y"],[250,90,"y"]],"ger":[[140,168,"trainer","w"]],"s":[[48,135,"g","A"],[108,150,"g","B"],[120,60,"g","C"],[185,50,"g","D"],[95,115,"r"],[148,138,"r"],[175,110,"r"],[215,135,"r"]],"b":[[56,141]],"p":[[78,144,98,148,"p",1],[123,130,177,61,"p",2],[210,52,244,55,"s",3]],"tx":[[140,86,"Seitenwechsel Pflicht vor jedem Torschuss"]]}
     }
   ]
 }
