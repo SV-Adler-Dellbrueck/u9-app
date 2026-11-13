@@ -23,7 +23,9 @@ module.exports = async function (h) {
     fehler: /oder nimmt in Stufe 1 und 2 die Hände nach vorn\./.test(ab),
     variante: /stellt sich in Stufe 2 erst nach zwei Sekunden in den Weg/.test(jd ? jd.varianten : ""),
     skizze: JSON.stringify(jd ? jd.skizze : "").includes("Bild 2 – Annahme, Verteidiger stellt zu"),
-    stand: bib.stand === "2026-11-08-1",
+    /* v832: „mindestens“ statt „gleich“ – die Bibliothek darf danach neue Stände bekommen (wie v583 seit v601). */
+    stand: (() => { const r = x => String(x || "").split("-").map(t => parseInt(t, 10) || 0), a = r(bib.stand), b = r("2026-11-08-1");
+      for (let i = 0; i < Math.max(a.length, b.length); i++) if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) > (b[i] || 0); return true; })(),
     schauTore: !!st && !/Hände hinter dem Rücken/.test(st.ablauf)
   };
   if (Object.values(pa).includes(false)) probleme.push("a) Übung: " + JSON.stringify(pa));

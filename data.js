@@ -5010,6 +5010,8 @@ const UEBUNG_BETREUUNG_VORSCHLAG={
   "Korb-Chaos-Funino (360°-Variante)":"feld",
   /* v684: der Trainer zählt die 8 Sekunden und friert in den ersten Durchgängen ein */
   "Lehrgang Erwachsene (Ü32) – 4 gegen 4 + Torhüter: Umschalten nach Ballgewinn":"fuehrt",
+  /* v832: C-Lizenz 3.1 – der Trainer an der Mittellinie entscheidet, ob vor dem Tor ein Seitenwechsel per Pass war */
+  "Lehrgang – Zwei-Seiten-Spiel":"fuehrt",
   /* v723: Doppelpass und Stangentausch laufen nach dem Zeigen allein; beim Abschlussspiel zählt
      der Trainer den Countdown und bringt jeden neuen Ball aus dem Depot */
   "Doppelpass durch die Stangen":"allein",
