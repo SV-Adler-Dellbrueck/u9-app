@@ -1633,7 +1633,14 @@ window._mdlSuppress=0;
     new MutationObserver(ms=>{
       for(const m of ms){
         m.addedNodes&&m.addedNodes.forEach(n=>{ if(isM(n)){ stack.push(n.id); try{history.pushState({adlerMdl:n.id},"");}catch(e){} } });
-        m.removedNodes&&m.removedNodes.forEach(n=>{ if(isM(n)){ const i=stack.lastIndexOf(n.id); if(i>=0){ stack.splice(i,1); window._mdlSuppress++; try{history.back();}catch(e){window._mdlSuppress--;} } } });
+        /* v832: Zurückgesprungen wird nur, wenn der aktuelle Verlaufseintrag wirklich einer dieser Fenster ist
+           und kein Rücksprung mehr unterwegs ist. Neuere Chromium-Fassungen überspringen bei history.back()
+           Einträge, die ohne Antippen angelegt wurden (Fenster, die die App selbst öffnet). Öffnete ein
+           solches Fenster zweimal, sprang der zweite Rücksprung über die App hinaus auf die Seite davor –
+           in der App: hinaus aus der App, im Prüfstand: „Execution context was destroyed“. */
+        m.removedNodes&&m.removedNodes.forEach(n=>{ if(isM(n)){ const i=stack.lastIndexOf(n.id); if(i>=0){ stack.splice(i,1);
+          const st=history.state;
+          if(st&&st.adlerMdl&&!(window._mdlSuppress>0)){ window._mdlSuppress=(window._mdlSuppress||0)+1; try{history.back();}catch(e){window._mdlSuppress--;} } } } });
       }
     }).observe(document.body,{childList:true});
   }

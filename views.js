@@ -3120,7 +3120,10 @@ function go(key){
   const reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   // v629: Solange der Auftakt läuft, keine Überblendung – sie friert für ihren Schnappschuss ein Bild ein, und das Wappen hakt mitten im Flug.
   _openZiel=key;
-  if(document.startViewTransition&&!reduce&&!document.getElementById("adler-intro"))document.startViewTransition(()=>_open(_openZiel||key));else _open(key);
+  /* v832: Wird eine Überblendung von der nächsten abgelöst, lehnt `ready` ab („Transition was skipped“ – neuere
+     Chromium-Fassungen melden das als unbehandelten Fehler). Das ist kein Fehler der App; gefangen wird nur `ready`,
+     ein Fehler in _open selbst bleibt über `finished` sichtbar. */
+  if(document.startViewTransition&&!reduce&&!document.getElementById("adler-intro")){ const vt=document.startViewTransition(()=>_open(_openZiel||key)); try{ if(vt&&vt.ready)vt.ready.catch(()=>{}); }catch(e){} }else _open(key);
   // Nebenwirkungen (aus altem _svApply/switchTrainSub übernommen)
   if(key==="taktik"||(typeof rotTimerId!=="undefined"&&rotTimerId))requestWakeLock();else releaseWakeLock(); // v797: laufender Wechseltimer hält den Bildschirm wach
   // Rotations-Timer/Match-Uhr-Tick stoppen beim Verlassen des Spieltags (try/catch: ggf. noch in TDZ beim Start)
