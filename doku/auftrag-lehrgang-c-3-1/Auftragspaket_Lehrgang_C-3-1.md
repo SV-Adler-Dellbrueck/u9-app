@@ -1,10 +1,29 @@
 # Auftragspaket: Übung und Skizze zur C-Lizenz-Abgabe 3.1 (Zwei-Seiten-Spiel)
 
-Repo `SV-Adler-Dellbrueck/u9-app`, Stand 13.11.2026. Gilt zusammen mit `CLAUDE.md` und
+Repo `SV-Adler-Dellbrueck/u9-app`, Stand 14.11.2026. Gilt zusammen mit `CLAUDE.md` und
 `Projektgedaechtnis/skizzen-format.md` im privaten Repo.
 
-> **Status: offen.** Nicht zu verwechseln mit `auftrag-lehrgang-3-1/` (Basis-Coach 3.1, erledigt).
+> **Status: Teil 1 erledigt** (Übung in der App, Bild unter `Projektgedaechtnis/skizzen/aufgabe-c-3-1/`,
+> App v832). **Nachtrag 2 offen**, siehe unten.
+> Nicht zu verwechseln mit `auftrag-lehrgang-3-1/` (Basis-Coach 3.1, erledigt).
 > Dies ist Aufgabe 3.1 der C-Lizenz (Profil Jugend), deshalb eigener Ordner.
+
+## Nachtrag 2 (14.11.2026): Grundlage im Coachingtext
+
+Die Abgabe nennt jetzt die Grundlage der gruppentaktischen Prinzipien. Text der Abgabe und
+Übungstext in der App sind derselbe Text, deshalb muss das Feld `coaching` der Übung
+„Lehrgang – Zwei-Seiten-Spiel" nachgezogen werden. Neu ist genau ein Satz nach dem Ziel:
+
+> Ziel: Spieler erkennen, wann eine Seite überladen ist, und verlagern gezielt auf die freie Seite.
+> **Grundlage: DFB-Spielvision, offensive Leitlinien 2, 3 und 4.** Trainerposition: …
+
+Der Rest des Felds bleibt wörtlich. `nachtrag.json` in diesem Ordner trägt den neuen Text bereits.
+
+**Achtung:** Der Abgleich überspringt Übungen, deren Name schon existiert, und überschreibt nie.
+Die Übung steht seit v832 in der App. Ein geänderter Eintrag in `uebungen/bibliothek.json` allein
+kommt also nicht an. Claude Code entscheidet, auf welchem Weg der Text in den Bestand gelangt
+(Datenweg vor Codeänderung), und meldet das vorher. Danach muss `export/uebungen.md` im privaten
+Repo nach dem nächsten Nachtlauf den neuen Satz zeigen.
 
 ## Ausgangslage
 
@@ -39,7 +58,7 @@ Quer, **ein Bild**, Schrittnummern 1 bis 3 direkt an den Pfeilen.
   die Mittellinie auf die freie obere Seite. 3 Schuss D aufs obere rechte Minitor.
 - **Beschriftung:** „Seitenwechsel Pflicht vor jedem Torschuss" auf der Mittellinie.
 
-## Auftrag
+## Auftrag (Teil 1, erledigt)
 
 1. `nachtrag.json` **vorher** mit `_euPruefung` und die Skizze mit `_eiSkizzeFehler` prüfen und
    melden, was beanstandet wird, bevor geschrieben wird. Koordinaten dürfen angepasst werden, wenn
@@ -62,11 +81,8 @@ Quer, **ein Bild**, Schrittnummern 1 bis 3 direkt an den Pfeilen.
 
 - Thema Spielverlagerung als Zwei-Seiten-Spiel, 4 gegen 4 (Charles, 13.11.2026).
 - Name enthält „Lehrgang", weil die Form nicht für die U9 taugt.
-
-## Offen
-
-- Gruppentaktische Prinzipien der DFB-Leitlinien: Quelle liegt im Projekt noch nicht vor, betrifft
-  nur den Text der Abgabe, nicht die App.
+- Die gruppentaktischen Prinzipien werden aus den offensiven Leitlinien 2, 3 und 4 der
+  DFB-Spielvision abgeleitet (Charles, 14.11.2026).
 
 ## Nicht in diesem Paket
 
