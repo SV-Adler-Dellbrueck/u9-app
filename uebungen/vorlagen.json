@@ -1,6 +1,6 @@
 {
   "schema": "adler-vorlagen/1",
-  "stand": "2026-11-06-1",
+  "stand": "2026-11-15-1",
   "vorlagen": [
     {
       "name": "L1-1 Ball behalten – Duell um zwei Tore",
@@ -2268,6 +2268,47 @@
         }
       ],
       "ordnung": "1 gegen 1"
+    },
+    {
+      "name": "Sonder – Technik-Parcours mit Laufzettel",
+      "leitfrage": "Ohne Leitfrage – Sondereinheit Technik",
+      "ziel_kinder": "Heute suchst du dir deine Stationen selbst aus, schaffst mindestens fünf verschiedene und schreibst ehrlich auf, was du geschafft hast.",
+      "folge_nr": null,
+      "tags": [],
+      "dauer_min": 75,
+      "netto_spielform_min": 14,
+      "skalierung": {
+        "8": "5 Stationen (1, 2, 4, 5, 8), höchstens 2 Kinder je Station; Abschlussspiel statt Turnier",
+        "10": "6 Stationen (ohne 6 und 7), höchstens 2 Kinder je Station",
+        "12": "8 Stationen, höchstens 2 Kinder je Station",
+        "14": "8 Stationen, höchstens 3 Kinder je Station; bei Station 2 und 5 zusätzlich Platz für ein viertes Kind"
+      },
+      "beobachtung": "Wer sucht sich wie ein Flitzer die Dribbel-Stationen und wer wie ein Aufpasser Passtor und Annahme – und wer verlässt seine Lieblingsstation von allein?",
+      "bloecke": [
+        {
+          "typ": "warmup",
+          "label": "Straßenfußball-Fenster",
+          "dauer": 10
+        },
+        {
+          "typ": "warmup",
+          "label": "Warm up Adler, kurz",
+          "dauer": 8,
+          "uebung_name": "Warm up Adler"
+        },
+        {
+          "typ": "uebungsform",
+          "label": "Hauptteil – Technik-Parcours: 30 Min freie Stationen, 4 Min Kreis mit Laufzetteln",
+          "dauer": 34,
+          "uebung_name": "Technik-Parcours – acht Stationen, freie Wahl, Laufzettel"
+        },
+        {
+          "typ": "abschluss",
+          "label": "Abschlussturnier – wer zeigt im Spiel, was er am Parcours geübt hat?",
+          "dauer": 18
+        }
+      ],
+      "ordnung": "ohne Gegner"
     }
   ]
 }

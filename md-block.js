@@ -357,7 +357,9 @@ async function blockEditorOpen(){
 function _tbLeitfragen(){
   const alle=typeof VORLAGEN!=="undefined"?VORLAGEN:[];
   const m=new Map();
-  alle.forEach(v=>{ const f=String(v.leitfrage||""); if(!f)return; const k=_tbKuerzel(v.name)[0]; if(!m.has(f)||k<m.get(f))m.set(f,k); });
+  /* v833: Themen für einen Block nur aus Vorlagen einer Leitfragen-Folge (folge_nr > 0; beim Anlegen wird null zu 0). Eine Sondereinheit ohne Folge
+     („Sonder – Technik-Parcours“) bleibt im Vorlagen-Fenster wählbar, als Block-Thema wäre „Block erfassen“ gesperrt. */
+  alle.forEach(v=>{ const f=String(v.leitfrage||""); if(!f||!(Number(v.folge_nr)>0))return; const k=_tbKuerzel(v.name)[0]; if(!m.has(f)||k<m.get(f))m.set(f,k); });
   return [...m.entries()].sort((a,b)=>a[1]-b[1]).map(e=>e[0]);
 }
 function _tbFolge(leitfrage){
@@ -446,7 +448,7 @@ async function blockEditorRender(){
   const ueber=(TB_BLOECKE||[]).filter(b=>String(b.von)<=bis&&_tbEdit.von<=String(b.bis));
   box.innerHTML=`
     <div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin:4px 0">1 · Ziel: welche Leitfrage?</div>
-    ${(typeof vuThemenKacheln==="function")?vuThemenKacheln("blockThemaSetzen",_tbEdit.leitfrage)
+    ${(typeof vuThemenKacheln==="function")?vuThemenKacheln("blockThemaSetzen",_tbEdit.leitfrage,true)
       :`<div style="display:grid;gap:6px">${fragen.map((f,i)=>chip(_tbEdit.leitfrage===f,esc(f),`blockLeitfrageSetzen(${i})`)).join("")}</div>`}
     <label for="tb-ziel" style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:10px">Eigener Zielsatz (optional)</label>
     <input id="tb-ziel" type="text" maxlength="140" value="${esc(_tbEdit.ziel)}" oninput="blockZielSetzen(this.value)" placeholder="z. B. Jedes Kind traut sich ins 1 gegen 1"

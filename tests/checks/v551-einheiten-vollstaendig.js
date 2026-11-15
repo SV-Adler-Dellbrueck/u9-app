@@ -54,7 +54,8 @@ module.exports = async function (h) {
   const fs = require("fs"), path = require("path");
 
   const vor = JSON.parse(fs.readFileSync(path.join(h.REPO, "uebungen/vorlagen.json"), "utf8"));
-  const alle = (vor.vorlagen || []).filter(v => !ZUSATZ.some(p => String(v.name).startsWith(p)));
+  /* v833: Sondereinheiten ohne Leitfragen-Folge (folge_nr fehlt oder null, z. B. „Sonder – Technik-Parcours“) gehören nicht zum Konzept. */
+  const alle = (vor.vorlagen || []).filter(v => !ZUSATZ.some(p => String(v.name).startsWith(p)) && Number(v.folge_nr) > 0);
   const zusatz = (vor.vorlagen || []).filter(v => ZUSATZ.some(p => String(v.name).startsWith(p)));
   if (zusatz.length !== ZUSATZ.length) probleme.push("Zusatz-Einheit fehlt oder ist mehrfach da: " + ZUSATZ.join(", "));
 
@@ -127,7 +128,8 @@ module.exports = async function (h) {
   if (r.hinweise.length) probleme.push("Netto-Hinweis: " + r.hinweise.map(x => `${x.name} – ${x.text}`).join(" | "));
 
   const neueNamen = angelegt.map(z => z.name);
-  const erwartet = alle.concat(zusatz).filter(v => !BESTAND.some(p => String(v.name).startsWith(p))).map(v => v.name);
+  /* v833: angelegt wird jede Vorlage der Datei, auch eine Sondereinheit ohne Folge – deshalb aus der ganzen Datei. */
+  const erwartet = (vor.vorlagen || []).filter(v => !BESTAND.some(p => String(v.name).startsWith(p))).map(v => v.name);
   if (neueNamen.length !== erwartet.length)
     probleme.push(`Der Abgleich hat ${neueNamen.length} Einheiten angelegt, erwartet ${erwartet.length}`);
   else {

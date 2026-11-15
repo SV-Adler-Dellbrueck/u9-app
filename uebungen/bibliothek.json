@@ -1,6 +1,6 @@
 {
   "schema": "adler-uebungen/1",
-  "stand": "2026-11-13-1",
+  "stand": "2026-11-15-2",
   "uebungen": [
     {
       "name": "Warm up Adler",
@@ -8460,9 +8460,9 @@
       "spieler": "8",
       "feld": "36 x 24 m, Mittellinie längs",
       "dauer": "15",
-      "ablauf": "AUFBAU: Feld 36 x 24 m, an jeder Grundlinie zwei Minitore im Abstand von etwa 12 m (links und rechts), längs durch die Mitte eine Hütchenlinie. Zwei Teams zu je 4 Spielern, kein Torwart, ein Ball, weitere Bälle am Rand. ABLAUF: Team A spielt auf die beiden Minitore am rechten Ende, Team B auf die am linken Ende. Start mit Anspiel von der eigenen Grundlinie. Nach Ballgewinn darf erst geschossen werden, wenn der Ball mindestens einmal per Pass die Mittellinie überquert hat. Ein Tor ohne Seitenwechsel zählt nicht, der Gegner bekommt den Ball. 4 Durchgänge à 3 Minuten, 1 Minute Pause, danach Seiten tauschen. Wertung: Tor nach Seitenwechsel = 1 Punkt.",
-      "varianten": "Leichter: Seitenwechsel darf auch per Dribbling erfolgen. Schwerer: Tor nach zwei Seitenwechseln zählt doppelt, oder der Seitenwechsel muss mit Direktpass gespielt werden.",
-      "coaching": "Ziel: Spieler erkennen, wann eine Seite überladen ist, und verlagern gezielt auf die freie Seite. Trainerposition: an der Mittellinie außen, mit Blick auf beide Hälften. Korrekturschwerpunkte: Freilaufen auf der Gegenseite vor dem Pass, Körperhaltung offen zum Spielfeld, Tempo und Genauigkeit des Verlagerungspasses. Fragen: Wo ist gerade viel Platz? Wer kann jetzt anbieten?",
+      "ablauf": "AUFBAU: Spielfeld 36 x 24 m. Eine Hütchenlinie teilt das Feld längs in zwei Seiten. An jeder Grundlinie zwei Minitore im Abstand von ca. 12 m, je eins pro Seite. Zwei Teams à 4 Spieler in Leibchen, kein Torwart; Bälle beim Trainer am Rand. ABLAUF: Beide Teams greifen an und verteidigen: Jedes verteidigt die zwei Tore an der eigenen Grundlinie und greift die zwei gegenüber an. Alle dürfen sich im ganzen Feld bewegen, die Mittellinie ist nur Markierung. Nach Ballgewinn wird sofort weitergespielt. Torschuss erst, wenn der Ball in diesem Ballbesitz mindestens einmal per Pass über die Mittellinie auf die andere Seite gespielt wurde. Tor nach Seitenwechsel = 1 Punkt. Tor ohne Seitenwechsel zählt nicht. Neustart mit Anspiel von der eigenen Grundlinie: zu Beginn, nach jedem Tor (das andere Team) und nach einem ungültigen Tor (der Gegner). 4 Durchgänge à 3 Min., 1 Min. Pause, danach Seiten tauschen. MATERIAL: 4 Minitore, 6 Hütchen, Leibchen in zwei Farben, ausreichend Bälle.",
+      "varianten": "Leichter – Regeln: Seitenwechsel auch per Dribbling über die Mittellinie gültig. Hilft, wenn der Verlagerungspass noch zu ungenau ist und das Spiel sonst ständig abbricht. Schwerer – Wettbewerb: Tor nach zwei Seitenwechseln zählt doppelt. Belohnt Geduld im Ballbesitz. Regeln: Seitenwechsel nur per Direktpass gültig. Erhöht das Tempo der Verlagerung.",
+      "coaching": "Ziel ist die Verbesserung der Spielverlagerung: Die Spieler erkennen, wann eine Seite überladen ist, und verlagern gezielt auf die freie Seite (Grundlage: DFB-Spielvision, offensive Leitlinien 2, 3 und 4). Trainerposition: an der Mittellinie außen. Von dort sieht er beide Seiten und kann beurteilen, ob der Seitenwechsel gültig war. Freilaufen auf der Gegenseite: Der ballferne Spieler bleibt breit und bietet sich an, bevor der Pass kommt. Typischer Fehler: Alle laufen zum Ball. Eingreifen: Spiel einfrieren, fragen: Wo ist gerade viel Platz? Offene Körperhaltung: Ballannahme mit dem Körper zum Feld, damit beide Seiten im Blick sind. Typischer Fehler: Annahme mit dem Rücken zur freien Seite. Tempo und Genauigkeit des Verlagerungspasses: flach, scharf, in den Lauf. Typischer Fehler: Der Pass ist zu langsam, der Gegner verschiebt rechtzeitig. Im Spiel nur kurz ermutigen; Inhaltliches in den Pausen mit Fragen: Wo ist gerade viel Platz? Wer kann jetzt anbieten? Gruppentaktische Prinzipien (aus den Leitlinien 2, 3 und 4): Breite schaffen: Ein Spieler bleibt auf der ballfernen Seite, auch wenn es ihn zum Ball zieht (Leitlinie 2). Gegenspieler binden: Das Spiel auf der vollen Seite zieht die Gegner dorthin (Leitlinie 3). Freie Räume nutzen: Im richtigen Moment auf die freie Seite verlagern und abschließen (Leitlinie 4). Übertragung ins Spiel: Der Pflicht-Seitenwechsel ist eine Trainingsregel, die die Verlagerung erzwingt. Im Spiel wird situativ verlagert: dann, wenn eine Seite überladen und die andere frei ist.",
       "diff": 2,
       "skizze": {
         "z": [
@@ -8631,6 +8631,273 @@
             140,
             86,
             "Seitenwechsel Pflicht vor jedem Torschuss"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Technik-Parcours – acht Stationen, freie Wahl, Laufzettel",
+      "kat": "technik",
+      "kurz": "Acht Technikstationen im ganzen Käfig: Jedes Kind wählt selbst, wo es übt, allein oder zu zweit, und trägt auf seinem Laufzettel ein, was es geschafft hat.",
+      "spieler": "8-14",
+      "feld": "Ganzer Käfig ca. 40 x 25 m, acht Stationen à ca. 10 x 12 m in zwei Reihen",
+      "dauer": "30",
+      "ablauf": "AUFBAU: Den Käfig in acht Stationen teilen, vier nebeneinander in zwei Reihen, jede ca. 10 x 12 m und mit einer Zahl auf einem Hütchen markiert. Jedes Kind hat einen Ball. Laufzettel und Stifte liegen in einer Kiste an der Seitenlinie; auf dem Laufzettel steht je Station ein Feld für Striche oder den Bestwert und eine Spalte „mit wem“. STATIONEN: 1 Slalom – sechs Hütchen im Abstand von 1,5 m, hin und zurück durchdribbeln, jeder Durchgang ist ein Strich. 2 Hochhalten – Ball mit Fuß, Oberschenkel oder Brust in der Luft halten, eingetragen wird der Bestwert. 3 Passtor zu zweit – zwei Kinder stehen sich 6 m gegenüber, dazwischen ein Hütchentor von 1 m, gezählt werden Treffer von 10 Pässen. 4 Zielschuss – zwei Minitore nebeneinander mit Blick zur Bande, aus 8 m auf eines schießen, Treffer von 5 Schüssen; Bälle nur holen, wenn an diesem Tor niemand schießt. 5 Dribbeltore – sechs Hütchentore verteilt, durch alle sechs einmal dribbeln ist eine Runde, jede Runde ist ein Strich. 6 Ballannahme – Ball selbst hochwerfen oder vom Partner zuwerfen lassen, mit einer Berührung stoppen und mitnehmen, gezählt werden gelungene von 10. 7 Kopf hoch zu zweit – einer dribbelt frei in der Station, der Partner zeigt Finger, der Dribbler ruft die Zahl, nach 10 Zeichen wird getauscht, gezählt werden richtige von 10. 8 Duell 1 gegen 1 – zwei Kinder spielen auf zwei Minitore, wer drei Tore hat, beendet das Duell, gezählt werden eigene Tore. ABLAUF: Jedes Kind beginnt an einer beliebigen Station und wechselt, wann es will. Höchstens drei Kinder gleichzeitig an einer Station; ist sie voll, geht man zur nächsten, so entsteht keine Wartereihe. Nach jeder Station trägt das Kind selbst ein, was es geschafft hat und mit wem. Ziel ist, in den 30 Minuten mindestens fünf verschiedene Stationen zu schaffen. Der Trainer geht von Station zu Station, schaut zu und stellt Fragen. Kein Kopfball. ABSCHLUSS: Danach 4 Minuten Kreis, jedes Kind nennt seine beste Station und eine, die es nächstes Mal schaffen will. TYPISCHE FEHLER: Kinder bleiben die ganze Zeit an ihrer Lieblingsstation. Am Hochhalten bildet sich doch eine Reihe. Gezählt wird großzügig statt ehrlich. Beim Slalom nur mit dem starken Fuß. Ausführliche Beschreibung jeder Station im Trainingsdokument zum 16.11.2026.",
+      "varianten": "Leichter: Nur fünf Stationen, Abstände beim Passtor und Zielschuss kürzer, beim Hochhalten darf der Ball einmal aufspringen. Schwerer: An jeder Station gilt einmal der schwächere Fuß, beim Slalom auf Zeit, beim Passtor nur direkt.",
+      "coaching": "Ziel ist die Verbesserung von Ballgefühl und Technik mit beiden Füßen. Trainerposition: wandernd, immer mit Blick auf möglichst viele Stationen. Gecoacht wird mit Fragen: „Mit welchem Fuß klappt es besser – und warum?“ „Wo musst du hinschauen, damit du die Finger siehst?“ „Was machst du, damit der Ball beim Stoppen bei dir bleibt?“ Wer die Lieblingsstation nicht verlässt, wird gefragt, welche Station er sich als nächste vornimmt. Loben im Moment, wenn ein Kind seinen eigenen Bestwert schlägt, nicht für den höchsten Wert der Gruppe.",
+      "diff": 1,
+      "skizze": {
+        "h": [
+          [
+            62,
+            42,
+            "y"
+          ],
+          [
+            62,
+            54,
+            "y"
+          ],
+          [
+            62,
+            66,
+            "y"
+          ],
+          [
+            62,
+            78,
+            "y"
+          ],
+          [
+            161,
+            60,
+            "y"
+          ],
+          [
+            175,
+            60,
+            "y"
+          ]
+        ],
+        "tor": [
+          [
+            200,
+            26,
+            "h",
+            18
+          ],
+          [
+            228,
+            26,
+            "h",
+            18
+          ],
+          [
+            200,
+            117,
+            "v",
+            16
+          ],
+          [
+            245,
+            117,
+            "v",
+            16
+          ]
+        ],
+        "dtor": [
+          [
+            38,
+            110,
+            12,
+            "h",
+            "h",
+            "y"
+          ],
+          [
+            62,
+            124,
+            12,
+            "h",
+            "h",
+            "y"
+          ],
+          [
+            38,
+            138,
+            12,
+            "h",
+            "h",
+            "y"
+          ]
+        ],
+        "ger": [
+          [
+            140,
+            90,
+            "trainer",
+            "w"
+          ]
+        ],
+        "s": [
+          [
+            44,
+            76,
+            "g",
+            "1"
+          ],
+          [
+            112,
+            64,
+            "g",
+            "2"
+          ],
+          [
+            168,
+            38,
+            "g",
+            "3"
+          ],
+          [
+            168,
+            82,
+            "g",
+            "3"
+          ],
+          [
+            222,
+            78,
+            "g",
+            "4"
+          ],
+          [
+            74,
+            150,
+            "g",
+            "5"
+          ],
+          [
+            112,
+            140,
+            "g",
+            "6"
+          ],
+          [
+            178,
+            108,
+            "g",
+            "7"
+          ],
+          [
+            156,
+            140,
+            "g",
+            "7"
+          ],
+          [
+            214,
+            140,
+            "g",
+            "8"
+          ],
+          [
+            236,
+            116,
+            "r",
+            "8"
+          ]
+        ],
+        "b": [
+          [
+            51,
+            82
+          ],
+          [
+            112,
+            48
+          ],
+          [
+            174,
+            44
+          ],
+          [
+            222,
+            69
+          ],
+          [
+            81,
+            156
+          ],
+          [
+            112,
+            112
+          ],
+          [
+            163,
+            146
+          ],
+          [
+            221,
+            133
+          ]
+        ],
+        "p": [
+          [
+            46,
+            64,
+            50,
+            42,
+            "d"
+          ],
+          [
+            168,
+            48,
+            168,
+            72,
+            "p"
+          ],
+          [
+            224,
+            62,
+            235,
+            38,
+            "s"
+          ],
+          [
+            66,
+            142,
+            56,
+            128,
+            "d"
+          ],
+          [
+            156,
+            128,
+            162,
+            110,
+            "d"
+          ]
+        ],
+        "tx": [
+          [
+            82,
+            13,
+            "1 Slalom · 2 Hochhalten"
+          ],
+          [
+            198,
+            13,
+            "3 Passtor · 4 Zielschuss"
+          ],
+          [
+            80,
+            171,
+            "5 Dribbeltore · 6 Annahme"
+          ],
+          [
+            204,
+            171,
+            "7 Kopf hoch · 8 Duell"
           ]
         ]
       }

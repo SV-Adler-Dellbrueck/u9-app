@@ -29,7 +29,8 @@ module.exports = async function (h) {
   /* v790: L5-8 „Anbieten“ läuft im Käfig mit zwei Stationen: 8/10/12 (der Käfig trägt keine drei). */
   const zusatz8 = (vor.vorlagen || []).filter(v => /^L5-8 /.test(String(v.name)));
   if (zusatz8.length !== 1 || keys(zusatz8[0]) !== "8/10/12") probleme.push(`L5-8: ${zusatz8.map(v => keys(v)).join(", ") || "fehlt"} statt 8/10/12`);
-  const konzept = (vor.vorlagen || []).filter(v => !spieltag.includes(v) && !zusatz.includes(v) && !zusatz8.includes(v));
+  /* v833: Sondereinheiten ohne Folge (Technik-Parcours: 8/10/12/14 nach Käfig und Kaderstärke) sind keine Konzept-Einheiten. */
+  const konzept = (vor.vorlagen || []).filter(v => !spieltag.includes(v) && !zusatz.includes(v) && !zusatz8.includes(v) && Number(v.folge_nr) > 0);
   const falschNeu = spieltag.filter(v => keys(v) !== "8/10/12/14").map(v => `${v.name} (${keys(v)})`);
   const falschAlt = konzept.filter(v => keys(v) !== "8/12/16").map(v => `${v.name} (${keys(v)})`);
   if (spieltag.length !== 15) probleme.push(`${spieltag.length} Spieltags-Einheiten in der Datei, erwartet 15`);
