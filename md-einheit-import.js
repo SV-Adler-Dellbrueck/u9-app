@@ -1065,8 +1065,11 @@ function vuKurztitel(name){
   const t=s.split(/\s+–\s+/);
   return (t.length>1?t.slice(1).join(" – "):s).trim();
 }
-function vuThemenKacheln(wahl,aktiv){
+/* v833: nurFolgen (Blockplanung) – nur Themen mit einer Leitfragen-Folge (folge_nr > 0). Eine Sondereinheit ohne Folge
+   steht im Vorlagen-Fenster, als Block-Thema wäre „Block erfassen“ gesperrt. Der Index bleibt der aus vuThemen(). */
+function vuThemenKacheln(wahl,aktiv,nurFolgen){
   return `<div class="vu-themen" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">${vuThemen().map((t,i)=>{
+    if(nurFolgen&&!t.einheiten.some(v=>Number(v.folge_nr)>0))return "";
     const an=aktiv===t.frage;
     return `<button type="button" class="vu-thema" onclick="${wahl}(${i})" aria-pressed="${an?"true":"false"}" style="display:block;width:100%;text-align:left;min-height:48px;padding:12px;border:1.5px solid ${an?"#7c3aed":"var(--rand-bedien)"};border-radius:12px;background:${an?"#7c3aed14":"var(--surface)"};color:var(--text);font-family:inherit;cursor:pointer">
       <div style="display:flex;gap:8px;align-items:baseline">${t.kuerzel?`<span style="font-size:var(--s-klein);font-weight:900;color:#fff;background:#7c3aed;border-radius:6px;padding:2px 7px">${esc(t.kuerzel)}</span>`:""}

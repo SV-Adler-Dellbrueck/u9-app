@@ -51,6 +51,7 @@ module.exports = async function (h) {
     await blockEditorOpen(); await warte(200);
     out.c = [];
     for (const [i, t] of vuThemen().entries()) {
+      if (!t.einheiten.some(v => Number(v.folge_nr) > 0)) continue;   // v833: Sondereinheit ohne Folge ist kein Block-Thema
       blockThemaSetzen(i); await warte(60);
       const wahl = _tbWahlGeordnet();
       out.c.push({ frage: t.frage, wahl, saison: wahl.filter(n => _tbSaison(VORLAGEN.find(v => v.name === n))).length,

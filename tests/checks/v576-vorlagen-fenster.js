@@ -125,25 +125,26 @@ module.exports = async function (h) {
   // v667: sechs Einheiten des Saisonformats dazu (PO 29.09.: „Saisonformat ok, bau v667“) – 36 Karten, L1 mit 6
   // v700: dazu L5-7 „Endzone und Fähnchen“ – 37 Karten
   // v790: dazu L5-8 „Anbieten – Joker-Duell und Schau-Tore“ – 38 Karten
-  if (r.kartenAlle !== 38) probleme.push(`${r.kartenAlle} Karten statt 38`);
+  // v833: dazu „Sonder – Technik-Parcours mit Laufzettel“ – 39 Karten, im Fenster eine siebte Gruppe „Ohne Leitfrage – Sondereinheit Technik“
+  if (r.kartenAlle !== 39) probleme.push(`${r.kartenAlle} Karten statt 39`);
   if (r.gruppenKoepfe < 5) probleme.push(`${r.gruppenKoepfe} Gruppenüberschriften – die Liste ist nicht nach Leitfrage gruppiert`);
   if (r.frageInKarte) probleme.push(`Die Leitfrage steht noch in ${r.frageInKarte} Karten, obwohl sie über der Gruppe steht`);
   // a)
   if (!r.sucheL4.length || !r.sucheL4.every(n => /^L4-/.test(n))) probleme.push(`Suche „L4“ findet ${JSON.stringify(r.sucheL4.slice(0, 3))}`);
   if (!r.sucheFrage) probleme.push("Die Suche greift nicht auf die Leitfrage zu");
   if (r.kartenGefiltert >= 37 || !r.kartenGefiltert) probleme.push(`Der Ordnungsfilter wirkt nicht: ${r.kartenGefiltert} Karten`);
-  if (r.nachLeeren !== 6) probleme.push(`„Filter aufheben“ zeigt ${r.nachLeeren} statt 6 Themen`);
+  if (r.nachLeeren !== 7) probleme.push(`„Filter aufheben“ zeigt ${r.nachLeeren} statt 7 Themen`);
   // e)
   if (!/Keine Vorlage passt dazu/.test(r.leerText)) probleme.push("Der leere Zustand sagt nichts");
   if (!r.wegZurueck) probleme.push("Der leere Zustand bietet keinen Weg zurück");
-  if (r.wiederAlle !== 6) probleme.push(`Nach dem Leeren der Suche ${r.wiederAlle} statt 6 Themen`);
+  if (r.wiederAlle !== 7) probleme.push(`Nach dem Leeren der Suche ${r.wiederAlle} statt 7 Themen`);
   // v656 Themen-Kacheln
-  if (r.themenZuBeginn !== 6) probleme.push(`${r.themenZuBeginn} Themen-Kacheln statt 6`);
+  if (r.themenZuBeginn !== 7) probleme.push(`${r.themenZuBeginn} Themen-Kacheln statt 7`);   // v833: siebte Kachel „Ohne Leitfrage – Sondereinheit Technik“ (nur im Vorlagen-Fenster, nicht in der Blockplanung)
   if (r.kartenZuBeginn) probleme.push(`Zu Beginn stehen schon ${r.kartenZuBeginn} Karten – erst das Thema`);
   if (!/^L1 6 Einheiten Wie behalte ich den Ball/.test(r.themaText)) probleme.push(`Themen-Kachel sagt nicht, worum es geht: „${r.themaText.slice(0, 80)}“`);
   if (/L1-1/.test(r.themaText)) probleme.push("Die Themen-Kachel zeigt Kürzel statt Kurztitel");
   if (r.kartenThema !== 6) probleme.push(`Das Thema öffnet ${r.kartenThema} statt 6 Einheiten`);
-  if (!r.zurueckDa || r.themenWieder !== 6) probleme.push("Aus dem Thema führt kein Weg zurück zu allen Themen");
+  if (!r.zurueckDa || r.themenWieder !== 7) probleme.push("Aus dem Thema führt kein Weg zurück zu allen Themen");
   if (fehler.length) probleme.push("Konsole: " + fehler[0]);
 
   if (!probleme.length) {
