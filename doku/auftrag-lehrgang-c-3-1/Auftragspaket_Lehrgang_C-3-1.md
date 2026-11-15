@@ -4,7 +4,7 @@ Repo `SV-Adler-Dellbrueck/u9-app`, Stand 14.11.2026. Gilt zusammen mit `CLAUDE.m
 `Projektgedaechtnis/skizzen-format.md` im privaten Repo.
 
 > **Status: Teil 1 erledigt** (Übung in der App, Bild unter `Projektgedaechtnis/skizzen/aufgabe-c-3-1/`,
-> App v832). **Nachtrag 3 offen**, siehe unten. Nachtrag 2 ist darin aufgegangen.
+> App v832). **Nachtrag 3 erledigt** (15.11.2026, v833: die drei Felder direkt in der Datenbank ersetzt, Zeile vorher gesichert; Bibliothek gleichgezogen, Stand 2026-11-15-2). Nachtrag 2 ist darin aufgegangen.
 > Nicht zu verwechseln mit `auftrag-lehrgang-3-1/` (Basis-Coach 3.1, erledigt).
 > Dies ist Aufgabe 3.1 der C-Lizenz (Profil Jugend), deshalb eigener Ordner.
 
