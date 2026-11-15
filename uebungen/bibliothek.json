@@ -1,6 +1,6 @@
 {
   "schema": "adler-uebungen/1",
-  "stand": "2026-11-13-1",
+  "stand": "2026-11-15-1",
   "uebungen": [
     {
       "name": "Warm up Adler",
@@ -8631,6 +8631,273 @@
             140,
             86,
             "Seitenwechsel Pflicht vor jedem Torschuss"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Technik-Parcours – acht Stationen, freie Wahl, Laufzettel",
+      "kat": "technik",
+      "kurz": "Acht Technikstationen im ganzen Käfig: Jedes Kind wählt selbst, wo es übt, allein oder zu zweit, und trägt auf seinem Laufzettel ein, was es geschafft hat.",
+      "spieler": "8-14",
+      "feld": "Ganzer Käfig ca. 40 x 25 m, acht Stationen à ca. 10 x 12 m in zwei Reihen",
+      "dauer": "30",
+      "ablauf": "AUFBAU: Den Käfig in acht Stationen teilen, vier nebeneinander in zwei Reihen, jede ca. 10 x 12 m und mit einer Zahl auf einem Hütchen markiert. Jedes Kind hat einen Ball. Laufzettel und Stifte liegen in einer Kiste an der Seitenlinie; auf dem Laufzettel steht je Station ein Feld für Striche oder den Bestwert und eine Spalte „mit wem“. STATIONEN: 1 Slalom – sechs Hütchen im Abstand von 1,5 m, hin und zurück durchdribbeln, jeder Durchgang ist ein Strich. 2 Hochhalten – Ball mit Fuß, Oberschenkel oder Brust in der Luft halten, eingetragen wird der Bestwert. 3 Passtor zu zweit – zwei Kinder stehen sich 6 m gegenüber, dazwischen ein Hütchentor von 1 m, gezählt werden Treffer von 10 Pässen. 4 Zielschuss – zwei Minitore nebeneinander mit Blick zur Bande, aus 8 m auf eines schießen, Treffer von 5 Schüssen; Bälle nur holen, wenn an diesem Tor niemand schießt. 5 Dribbeltore – sechs Hütchentore verteilt, durch alle sechs einmal dribbeln ist eine Runde, jede Runde ist ein Strich. 6 Ballannahme – Ball selbst hochwerfen oder vom Partner zuwerfen lassen, mit einer Berührung stoppen und mitnehmen, gezählt werden gelungene von 10. 7 Kopf hoch zu zweit – einer dribbelt frei in der Station, der Partner zeigt Finger, der Dribbler ruft die Zahl, nach 10 Zeichen wird getauscht, gezählt werden richtige von 10. 8 Duell 1 gegen 1 – zwei Kinder spielen auf zwei Minitore, wer drei Tore hat, beendet das Duell, gezählt werden eigene Tore. ABLAUF: Jedes Kind beginnt an einer beliebigen Station und wechselt, wann es will. Höchstens drei Kinder gleichzeitig an einer Station; ist sie voll, geht man zur nächsten, so entsteht keine Wartereihe. Nach jeder Station trägt das Kind selbst ein, was es geschafft hat und mit wem. Ziel ist, in den 30 Minuten mindestens fünf verschiedene Stationen zu schaffen. Der Trainer geht von Station zu Station, schaut zu und stellt Fragen. Kein Kopfball. ABSCHLUSS: Danach 4 Minuten Kreis, jedes Kind nennt seine beste Station und eine, die es nächstes Mal schaffen will. TYPISCHE FEHLER: Kinder bleiben die ganze Zeit an ihrer Lieblingsstation. Am Hochhalten bildet sich doch eine Reihe. Gezählt wird großzügig statt ehrlich. Beim Slalom nur mit dem starken Fuß. Ausführliche Beschreibung jeder Station im Trainingsdokument zum 16.11.2026.",
+      "varianten": "Leichter: Nur fünf Stationen, Abstände beim Passtor und Zielschuss kürzer, beim Hochhalten darf der Ball einmal aufspringen. Schwerer: An jeder Station gilt einmal der schwächere Fuß, beim Slalom auf Zeit, beim Passtor nur direkt.",
+      "coaching": "Ziel ist die Verbesserung von Ballgefühl und Technik mit beiden Füßen. Trainerposition: wandernd, immer mit Blick auf möglichst viele Stationen. Gecoacht wird mit Fragen: „Mit welchem Fuß klappt es besser – und warum?“ „Wo musst du hinschauen, damit du die Finger siehst?“ „Was machst du, damit der Ball beim Stoppen bei dir bleibt?“ Wer die Lieblingsstation nicht verlässt, wird gefragt, welche Station er sich als nächste vornimmt. Loben im Moment, wenn ein Kind seinen eigenen Bestwert schlägt, nicht für den höchsten Wert der Gruppe.",
+      "diff": 1,
+      "skizze": {
+        "h": [
+          [
+            62,
+            42,
+            "y"
+          ],
+          [
+            62,
+            54,
+            "y"
+          ],
+          [
+            62,
+            66,
+            "y"
+          ],
+          [
+            62,
+            78,
+            "y"
+          ],
+          [
+            161,
+            60,
+            "y"
+          ],
+          [
+            175,
+            60,
+            "y"
+          ]
+        ],
+        "tor": [
+          [
+            200,
+            26,
+            "h",
+            18
+          ],
+          [
+            228,
+            26,
+            "h",
+            18
+          ],
+          [
+            200,
+            117,
+            "v",
+            16
+          ],
+          [
+            245,
+            117,
+            "v",
+            16
+          ]
+        ],
+        "dtor": [
+          [
+            38,
+            110,
+            12,
+            "h",
+            "h",
+            "y"
+          ],
+          [
+            62,
+            124,
+            12,
+            "h",
+            "h",
+            "y"
+          ],
+          [
+            38,
+            138,
+            12,
+            "h",
+            "h",
+            "y"
+          ]
+        ],
+        "ger": [
+          [
+            140,
+            90,
+            "trainer",
+            "w"
+          ]
+        ],
+        "s": [
+          [
+            44,
+            76,
+            "g",
+            "1"
+          ],
+          [
+            112,
+            64,
+            "g",
+            "2"
+          ],
+          [
+            168,
+            38,
+            "g",
+            "3"
+          ],
+          [
+            168,
+            82,
+            "g",
+            "3"
+          ],
+          [
+            222,
+            78,
+            "g",
+            "4"
+          ],
+          [
+            74,
+            150,
+            "g",
+            "5"
+          ],
+          [
+            112,
+            140,
+            "g",
+            "6"
+          ],
+          [
+            178,
+            108,
+            "g",
+            "7"
+          ],
+          [
+            156,
+            140,
+            "g",
+            "7"
+          ],
+          [
+            214,
+            140,
+            "g",
+            "8"
+          ],
+          [
+            236,
+            116,
+            "r",
+            "8"
+          ]
+        ],
+        "b": [
+          [
+            51,
+            82
+          ],
+          [
+            112,
+            48
+          ],
+          [
+            174,
+            44
+          ],
+          [
+            222,
+            69
+          ],
+          [
+            81,
+            156
+          ],
+          [
+            112,
+            112
+          ],
+          [
+            163,
+            146
+          ],
+          [
+            221,
+            133
+          ]
+        ],
+        "p": [
+          [
+            46,
+            64,
+            50,
+            42,
+            "d"
+          ],
+          [
+            168,
+            48,
+            168,
+            72,
+            "p"
+          ],
+          [
+            224,
+            62,
+            235,
+            38,
+            "s"
+          ],
+          [
+            66,
+            142,
+            56,
+            128,
+            "d"
+          ],
+          [
+            156,
+            128,
+            162,
+            110,
+            "d"
+          ]
+        ],
+        "tx": [
+          [
+            82,
+            13,
+            "1 Slalom · 2 Hochhalten"
+          ],
+          [
+            198,
+            13,
+            "3 Passtor · 4 Zielschuss"
+          ],
+          [
+            80,
+            171,
+            "5 Dribbeltore · 6 Annahme"
+          ],
+          [
+            204,
+            171,
+            "7 Kopf hoch · 8 Duell"
           ]
         ]
       }
