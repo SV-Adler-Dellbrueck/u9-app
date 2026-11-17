@@ -477,13 +477,9 @@ _adlerOnReady(()=>{
 // L2: wiederverwendbare Skeleton-Zeilen
 const skeletonRows=(n=3)=>Array.from({length:n},()=>'<div class="skeleton"></div>').join("");
 
-async function savePlayer(){
-  // v648: vor dem Startdatum keine Einzelbewertung – auch nicht über einen alten Knopf
-  if(typeof bewFreigegeben==="function"&&!bewFreigegeben()){showSt("save-status","Bewerten ist bis zum Ende der Hinrunde gesperrt.","err");return;}
-  const meta=getMeta();
-  if(!meta.name){showSt("save-status","Spieler auswählen.","err");return;}
-  if(countFilled()<totalCrit()){showSt("save-status",`Noch ${totalCrit()-countFilled()} Kriterien offen.`,"err");return;}
-  const v=getV();
+/* v850: Eine Zeile für `spielerprofile` aus Stammdaten und Werten – dieselbe Rechnung für die
+   Bewertung Kind für Kind (savePlayer) und die Runde Kriterium für Kriterium (md-bewertungsrunde.js). */
+function bewZeileBauen(meta,v){
   const result=meta.tw?generateFazitTW(v,meta):generateFazitFeld(v,meta);
   const row={
     name:meta.name,datum:meta.date||isoLokal(),
@@ -499,6 +495,16 @@ async function savePlayer(){
     total_score:result.total,pot_score:result.pot,
     radios:JSON.stringify(v)
   };
+  return {row,result};
+}
+async function savePlayer(){
+  // v648: vor dem Startdatum keine Einzelbewertung – auch nicht über einen alten Knopf
+  if(typeof bewFreigegeben==="function"&&!bewFreigegeben()){showSt("save-status","Bewerten ist bis zum Ende der Hinrunde gesperrt.","err");return;}
+  const meta=getMeta();
+  if(!meta.name){showSt("save-status","Spieler auswählen.","err");return;}
+  if(countFilled()<totalCrit()){showSt("save-status",`Noch ${totalCrit()-countFilled()} Kriterien offen.`,"err");return;}
+  const v=getV();
+  const {row,result}=bewZeileBauen(meta,v);
   const saveBtn=document.querySelector('button[onclick="savePlayer()"]'); // C9: Doppelklick-Schutz
   if(saveBtn)saveBtn.disabled=true;
   try{
@@ -508,7 +514,7 @@ async function savePlayer(){
     const res=await fetch(`${SB_URL}/rest/v1/spielerprofile?on_conflict=name,datum`,{method:"POST",headers:sbAuthHeaders({'Prefer':'return=representation,resolution=merge-duplicates','X-Client-Info':'supabase-js/2.0.0'}),body:JSON.stringify(row)});
     if(sbCheck401(res)){showSt("save-status","Anmeldung abgelaufen – bitte neu anmelden und erneut speichern.","err");return;}
     if(res.ok||res.status===201||res.status===204){
-      showSt("save-status",`${meta.name} gespeichert – ${result.tw?"TW+":""}${result.rolle?.primLabel} (${result.total}%) – ${meta.trainer}`,"ok");
+      showSt("save-status",`${meta.name} gespeichert – ${result.tw?"TW+":""}${result.rolle?.primLabel} – ${meta.trainer}`,"ok");   // v850: ohne Gesamtprozent
       try{navigator.vibrate&&navigator.vibrate(50);}catch(e){} // 1C: haptische Bestätigung auf dem Platz
       await loadDB();
       if(typeof bewRundeAdvance==="function")bewRundeAdvance(); // Bewertungsrunde: automatisch zum nächsten Spieler
@@ -562,9 +568,7 @@ function clearForm(){
   document.getElementById("p-name").value="";
   document.getElementById("p-notes").value="";
   document.getElementById("p-foot").value="R";
-  document.getElementById("p-eltern").value="2";
-  const elSeg=document.getElementById("p-eltern-seg");
-  if(elSeg){elSeg.querySelectorAll(".seg-btn").forEach(b=>{b.classList.toggle("active",b.dataset.val==="2");});}
+  if(typeof bewElternZeigen==="function")bewElternZeigen("");
   document.getElementById("p-att").value="2";
   const attSeg=document.getElementById("p-att-seg");
   if(attSeg){attSeg.querySelectorAll(".seg-btn").forEach(b=>{b.classList.toggle("active",b.dataset.val==="2");});}
@@ -593,9 +597,7 @@ function loadPlayerToForm(p){
   if(document.getElementById("p-att"))document.getElementById("p-att").value=p.attendance||"2";
   const attSeg=document.getElementById("p-att-seg");
   if(attSeg){attSeg.querySelectorAll(".seg-btn").forEach(b=>{b.classList.toggle("active",b.dataset.val===(p.attendance||"2"));});}
-  document.getElementById("p-eltern").value=p.eltern||"2";
-  const elSeg=document.getElementById("p-eltern-seg");
-  if(elSeg){elSeg.querySelectorAll(".seg-btn").forEach(b=>{b.classList.toggle("active",b.dataset.val===(p.eltern||"2"));});}
+  if(typeof bewElternZeigen==="function")bewElternZeigen(p.eltern||"");
   document.getElementById("p-age").value=p.age||"8";
   // v635: #p-grp entfernt (A/B-Labels abgeschafft) – ungeschützt brach „Laden“ hier ab, nach dem Namen.
   document.getElementById("p-trainer").value=p.trainer||(typeof _meTrainer==="string"&&_meTrainer)||((typeof TRAINER!=="undefined"&&TRAINER[0])||"");

@@ -102,39 +102,41 @@
         <option value="">— Spieler wählen —</option>
       </select>
     </div>
+    <div class="mg"><label>Termin</label><select id="p-date" style="width:100%;padding:8px 12px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:13px;background:var(--surface);font-family:inherit;color:var(--text)"><option>Lade Termine…</option></select></div>
+    <!-- "Niveau-Gruppe A/B" entfernt: persistente Leistungslabels fuer 8-Jaehrige widersprechen
+         DFB-Reform/KNVB/US-Soccer und der Streaming-Evidenz (EEF). Gruppen werden tagesaktuell
+         in der Planung gelost (Trainingsgruppen), nie als Kind-Attribut gespeichert. -->
+    <!-- v850: Alter und starker Fuß kommen aus dem Profil, „Bewertet von“ steht auf Trainerteam
+         (Charles 17.11.2026: bewertet wird nur gemeinsam). Wer etwas ändern muss, klappt auf. Die
+         Trainingsbeteiligung wird nicht mehr abgefragt – sie fließt seit v3 in keine Rechnung ein. -->
+    <input type="hidden" id="p-att" value="2">
+    <input type="hidden" id="p-eltern" value="">
+    <details class="mg s3" id="bew-stamm" style="display:none;border:1px solid var(--rand-bedien);border-radius:var(--r);padding:0 10px;background:var(--surface)">
+      <summary style="min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:var(--s-text);font-weight:700;color:var(--text2)">Aus dem Profil: <span id="bew-stamm-kurz" style="font-weight:400;margin-left:6px">Alter, starker Fuß, bewertet vom Trainerteam</span></summary>
+      <div class="mgrid" style="padding-bottom:10px">
     <div class="mg">
       <label>Bewertet von</label>
       <select id="p-trainer"><!-- wird aus TRAINER befüllt (D2) --></select>
     </div>
-    <div class="mg"><label>Termin</label><select id="p-date" style="width:100%;padding:8px 12px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:13px;background:var(--surface);font-family:inherit;color:var(--text)"><option>Lade Termine…</option></select></div>
     <div class="mg"><label for="p-age">Alter</label>
       <select id="p-age">
         <option value="7">7 Jahre</option><option value="8" selected>8 Jahre</option><option value="9">9 Jahre</option>
       </select>
     </div>
-    <!-- "Niveau-Gruppe A/B" entfernt: persistente Leistungslabels fuer 8-Jaehrige widersprechen
-         DFB-Reform/KNVB/US-Soccer und der Streaming-Evidenz (EEF). Gruppen werden tagesaktuell
-         in der Planung gelost (Trainingsgruppen), nie als Kind-Attribut gespeichert. -->
-    <div class="mg s2"><label>Umfeld / Eltern</label>
-      <div class="seg-ctrl" id="p-eltern-seg">
-        <button type="button" class="seg-btn" data-val="1" onclick="segSet('p-eltern',1,this)">⚠️ Erhöhter Druck</button>
-        <button type="button" class="seg-btn active" data-val="2" onclick="segSet('p-eltern',2,this)">👍 Unterstützend</button>
-        <button type="button" class="seg-btn" data-val="3" onclick="segSet('p-eltern',3,this)">⭐ Top-Partner</button>
-      </div>
-      <input type="hidden" id="p-eltern" value="2">
-    </div>
-    <div class="mg"><label>Trainingsbeteiligung</label>
-      <div class="seg-ctrl" id="p-att-seg">
-        <button type="button" class="seg-btn" data-val="1" onclick="segSet('p-att',1,this)">Selten</button>
-        <button type="button" class="seg-btn active" data-val="2" onclick="segSet('p-att',2,this)">Regelmäßig</button>
-        <button type="button" class="seg-btn" data-val="3" onclick="segSet('p-att',3,this)">Fast immer</button>
-      </div>
-      <input type="hidden" id="p-att" value="2">
-    </div>
     <div class="mg"><label>Starker Fuß</label>
       <select id="p-foot">
         <option value="R">Rechtsfüßer</option><option value="L">Linksfüßer</option><option value="B">Beidfüßig</option>
       </select>
+    </div>
+      </div>
+    </details>
+    <!-- v850: Statt der Etiketten „Erhöhter Druck · Unterstützend · Top-Partner“: Beobachtung statt
+         Urteil. Freiwillig, fließt in keine Zahl ein, sehen nur Trainer. -->
+    <div class="mg s3" id="bew-eltern-box" style="display:none">
+      <label for="be-satz">Fürs Elterngespräch (freiwillig)</label>
+      <div style="font-size:var(--s-klein);color:var(--text2);margin:-2px 0 4px">Was am Platz zu sehen war – fließt in keine Zahl ein, sehen nur Trainer.</div>
+      <div id="be-haken"></div>
+      <textarea id="be-satz" rows="2" maxlength="240" placeholder="Was wollen wir mit der Familie besprechen?" style="resize:none" oninput="bewElternSync()"></textarea>
     </div>
     <div class="mg s3"><label for="p-notes">Trainer-Notiz (optional)</label>
       <textarea id="p-notes" rows="2" placeholder="Besondere Beobachtungen aus Training oder Spiel..." style="resize:none"></textarea>
@@ -142,8 +144,7 @@
   </div>
 
   <!-- v474: bis ein Kind gewaehlt ist, nur ein Satz statt dreier leerer Kaesten (bewLeerSetzen) -->
-  <div id="bew-leer" class="empty" style="padding:1.5rem 1rem"><i class="ti ti-user-search"></i>Wähle oben ein Kind – dann erscheinen Kriterien, Live-Profil und Förderplan.
-    <div style="margin-top:10px"><button class="btn btn-sm" onclick="bewRundeStart()"><i class="ti ti-player-play"></i>Bewertungsrunde starten</button></div></div>
+  <div id="bew-leer" class="empty" style="padding:1.5rem 1rem"><i class="ti ti-user-search"></i>Für ein einzelnes Kind: oben wählen – dann erscheinen Kriterien, Live-Profil und Förderplan.</div>
   <div class="live-panel" id="bew-live-panel" style="display:none">
     <div class="radar-live-box">
       <div class="rbox-title"><i class="ti ti-chart-radar" style="font-size:14px"></i>Live-Profil
