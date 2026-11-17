@@ -12,10 +12,13 @@ module.exports = async function (h) {
   const wurzel = process.env.REPO || path.join(__dirname, "..", "..");
   const views = fs.readFileSync(path.join(wurzel, "views.js"), "utf8");
   const soll = ["Startseite", "Kader", "Übungen", "Trainingsblock", "Spieltag", "Spieler bewerten", "Heimspiel & Festival planen",
-    "Benachrichtigungen einschalten", "Rückmelde-Verhalten", "Nest-Ausgaben", "Termine", "Tagebuch", "Trainermeeting", "Teamkasse"];
+    "Benachrichtigungen einschalten", "Rückmelde-Verhalten", "Nest-Ausgaben", "Termine", "Tagebuch", "Trainermeeting", "Teamkasse",
+    /* v848: zweiter Block */
+    "Beitragsliste Weihnachtsfeier", "Grillhütte", "Trainingsturnier", "Wissen & Nachschlagen", "Adler-Coach (KI)", "Taktikboard", "Trainerkreislauf",
+    "Adler Nest als PDF und Hörlink", "Wer ist dabei? (Training)", "Federn – wofür es sie gibt", "Kinder-App", "Wie war's? – einmal erzählen", "Material"];
   let ok = 0;
   for (const t of soll) {
-    const m = views.match(new RegExp('\\{t:"' + t.replace(/[&()]/g, "\\$&") + '", kurz:"([^"]+)", d:"'));
+    const m = views.match(new RegExp('\\{t:"' + t.replace(/[&()?]/g, "\\$&") + '", kurz:"([^"]+)", d:"'));
     if (!m) { probleme.push("a) Kurzfassung fehlt: " + t); continue; }
     if (m[1].length > 330) probleme.push(`a) „${t}“ ist ${m[1].length} Zeichen lang`);
     else if (/\bv\d{3}\b|Seit v|Neu in/.test(m[1])) probleme.push(`a) „${t}“ nennt eine Version`);
