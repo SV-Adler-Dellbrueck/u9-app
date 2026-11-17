@@ -84,14 +84,14 @@ async function mcSave(patch){
   mcRenderLive();
   try{await fetch(`${SB_URL}/rest/v1/matchday?on_conflict=datum`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({datum,...patch})});}catch(e){}
 }
-// Match-Uhr und Rotations-Timer laufen gekoppelt: EIN Button (Anpfiff) startet beide.
+// Spieluhr und Rotations-Timer laufen gekoppelt: EIN Button (Anpfiff) startet beide.
 // Der Rotations-Timer bleibt ueber sein eigenes Panel weiterhin manuell bedienbar
 // (z. B. kurze Trinkpause ohne offizielle Spielunterbrechung).
 // halbzeiten mitschreiben: der oeffentliche Ticker liest matchday anonym und kennt den Termin nicht
 function mcStart(){ const anker=new Date().toISOString();
   mcSave({half:1,clock_status:"running",started_at:anker,paused_ms:0,spieldauer_min:mcSpieldauer,halbzeiten:mcHalbzeiten}); rotStart();
   /* v489: Ist heute unser Festival, ist der Anpfiff hier zugleich der gemeinsame Anpfiff
-     der Runde – derselbe Anker, damit Gast-Link und Match-Uhr dieselbe Restzeit zeigen. */
+     der Runde – derselbe Anker, damit Gast-Link und Spieluhr dieselbe Restzeit zeigen. */
   if(typeof fstAppAnpfiff==="function")fstAppAnpfiff(anker);
   /* Anpfiff: alles Vorbereitende zuklappen und „Während des Spiels" aufmachen –
      ab jetzt braucht der Trainer nur noch Uhr, Wechsel und Aktionen.

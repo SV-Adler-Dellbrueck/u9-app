@@ -4,7 +4,7 @@
    Eingabeorte (Training → Anwesenheit, Spieltag → Teams festlegen), die sich nicht kannten;
    alles am Spieltag liest die Nominierung. Entscheidung (Kacheln): ein Ort je Termintyp.
    Geprueft: die Anwesenheits-Auswahl bietet nur Trainings; „Teams festlegen" nennt seine
-   Quelle und dass „Dabei" die Anwesenheit ist; Kinder ohne Antwort bleiben offen und
+   Quelle und dass „Dabei" die Anwesenheit ist; Kinder ohne Rückmeldung bleiben offen und
    lassen sich mit einem Knopf auf Dabei setzen (Upsert der Nominierung). */
 module.exports = async function (h) {
   const K = h.KINDER, probleme = [], zeilen = [];

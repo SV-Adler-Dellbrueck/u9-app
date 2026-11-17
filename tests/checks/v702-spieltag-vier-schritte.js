@@ -8,7 +8,7 @@
    c) Termin-Karte: auswärts „Spielplan hinzufügen“ (Link speichern → termine.turnierplan_url),
       kein Turnier-Modus-Banner; heim „Festival planen“
    d) Wechsel: 15 Sekunden vorher vibriert es einmal ([200,100,200]), nicht in jeder Sekunde
-   e) Match-Uhr am Handy (360 px): Minute und Phase in einer Zeile, Knöpfe darunter, nichts ragt raus
+   e) Spieluhr am Handy (360 px): Minute und Phase in einer Zeile, Knöpfe darunter, nichts ragt raus
    f) Tipp auf einen Spieltag in „Diese Woche“ führt auf die Spieltag-Seite: dieses Datum, „Wer kommt?“
    g) Startseite: Heimspiel in den nächsten sechs Tagen → Karte; nur Auswärtsspiele → keine
    h) „Spieltag bei uns“ nur, wenn der NÄCHSTE Spieltag ein Heimspiel ist
@@ -87,7 +87,7 @@ module.exports = async function (h) {
     const vib = []; navigator.vibrate = x => { vib.push(JSON.stringify(x)); return true; };
     rotIntervalMin = 1; rotElapsed = 43; rotTick(); rotTick(); rotTick();   // Rest 16 → 15 → 14 … bei 45 genau einmal
     out.d = vib.slice();
-    // e) Match-Uhr
+    // e) Spieluhr
     spieltagPhaseZeigen("live"); await warte(100);
     if (typeof mcState === "undefined" || !mcState) window.mcState = { clock_status: "running", half: 1, started_at: new Date(Date.now() - 180000).toISOString(), paused_ms: 0 };
     else Object.assign(mcState, { clock_status: "running", half: 1, started_at: new Date(Date.now() - 180000).toISOString(), paused_ms: 0 });
@@ -115,7 +115,7 @@ module.exports = async function (h) {
   if (r.a.count[K[1]] !== 1) probleme.push("a) Vergangener Spieltag zählt nicht: " + JSON.stringify(r.a.count));
   if (r.a.heute[1] !== K[0] || r.a.heute[2] !== K[2]) probleme.push("a) Kapitäne des Tages fehlen: " + JSON.stringify(r.a.heute));
   // b)
-  if (!/Noch keine Antwort der Eltern · 13/.test(r.b.block) || r.b.block.includes(K[0]) || !r.b.block.includes(K[2])) probleme.push("b) Block ohne Antwort: " + r.b.block.slice(0, 120));
+  if (!/Noch keine Antwort der Eltern · 13/.test(r.b.block) || r.b.block.includes(K[0]) || !r.b.block.includes(K[2])) probleme.push("b) Block ohne Rückmeldung: " + r.b.block.slice(0, 120));
   if (!r.b.listeOffen) probleme.push("b) Liste ist zugeklappt");
   if (r.b.erste !== K[2] && !r.b.erste.includes(K[2])) probleme.push("b) Offene stehen nicht zuerst: " + r.b.erste);
   if (r.b.knopf < 48) probleme.push("b) Erinnern-Knopf " + r.b.knopf + " px");
@@ -130,7 +130,7 @@ module.exports = async function (h) {
   // d)
   if (JSON.stringify(r.d) !== JSON.stringify(["[200,100,200]"])) probleme.push("d) Vibration: " + JSON.stringify(r.d));
   // e)
-  if (!r.e || !r.e.knUnter || r.e.raus || r.e.knoepfe.some(x => x < 48)) probleme.push("e) Match-Uhr: " + JSON.stringify(r.e));
+  if (!r.e || !r.e.knUnter || r.e.raus || r.e.knoepfe.some(x => x < 48)) probleme.push("e) Spieluhr: " + JSON.stringify(r.e));
   // f)
   if (r.f.datum !== in3 || !r.f.offen || r.f.gedrueckt !== "wer") probleme.push("f) Tipp auf den Termin: " + JSON.stringify(r.f));
   // g) – Heim erst in 10 Tagen: keine Karte (Woche davor = sechs Tage)

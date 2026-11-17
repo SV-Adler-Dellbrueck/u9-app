@@ -1,9 +1,9 @@
 /* v838 · Eltern-Dashboard in drei Zonen, Trainings ohne Mahnung (Charles 17.11.2026, Bestandsaufnahme 3.4 und 3.5).
    a) Reihenfolge: Ansage des Trainerteams ÜBER der Terminkarte; darunter „Noch offen“ (fehlende Antworten, Benachrichtigungen),
       dann „Neu“ (Adler-Rufe). Überschriften mit mindestens 4,5:1 Kontrast.
-   b) Nächster Termin ist ein Training ohne Antwort: ruhiger Hinweis „Gilt als zugesagt“, kein „überfällig“, kein Mahnstreifen,
+   b) Nächster Termin ist ein Training ohne Rückmeldung: ruhiger Hinweis „Gilt als zugesagt“, kein „überfällig“, kein Mahnstreifen,
       Antwortknöpfe weiter da (≥ 44 px). Trainings stehen nicht unter „Rückmeldung fehlt“, Spiel und Event schon.
-   c) Nächster Termin ist ein Spiel ohne Antwort: weiter „Rückmeldung fehlt“ und der Farbstreifen links (4 px).
+   c) Nächster Termin ist ein Spiel ohne Rückmeldung: weiter „Rückmeldung fehlt“ und der Farbstreifen links (4 px).
    d) Eine Zone ohne Inhalt zeigt keine Überschrift (geprüft an „Neu“ ohne Rufe und News). */
 "use strict";
 module.exports = async function (h) {
@@ -48,14 +48,14 @@ module.exports = async function (h) {
   else zeilen.push("a) Reihenfolge: Ansage › nächster Termin › „Noch offen“ › „Neu“ › Termine");
   a.zonen.forEach(z => { const k = (1.05) / (lum(z.farbe) + .05); if (z.sichtbar && k < 4.5) probleme.push(`a) Überschrift „${z.text}“ nur ${k.toFixed(1)}:1 auf Weiß`); });
   // b)
-  if (!/Gilt als zugesagt/.test(a.tkText) || /überfällig|Rückmeldung fehlt/.test(a.tkText)) probleme.push("b) Training ohne Antwort: " + a.tkText.slice(0, 160));
+  if (!/Gilt als zugesagt/.test(a.tkText) || /überfällig|Rückmeldung fehlt/.test(a.tkText)) probleme.push("b) Training ohne Rückmeldung: " + a.tkText.slice(0, 160));
   else if (a.streifen !== "1px") probleme.push("b) Training trägt einen Mahnstreifen: " + a.streifen);
   else if (a.knoepfe.length < 4 || a.knoepfe.some(x => x < 44)) probleme.push("b) Antwortknöpfe: " + a.knoepfe.join("/"));
   else if (/Training/.test(a.offenText) || !/Spielfest/.test(a.offenText) || !/Elternabend/.test(a.offenText)) probleme.push("b) „Rückmeldung fehlt“ listet: " + a.offenText.slice(0, 200));
   else zeilen.push("b) Training: „Gilt als zugesagt“, kein Streifen, vier Antwortknöpfe; offen stehen nur Spielfest und Elternabend");
   // c)
-  if (!/Rückmeldung fehlt|überfällig/.test(c.tkText) || /Gilt als zugesagt/.test(c.tkText) || c.streifen !== "4px") probleme.push(`c) Spiel ohne Antwort: Streifen ${c.streifen}, Text „${c.tkText.slice(0, 120)}“`);
-  else zeilen.push("c) Spiel ohne Antwort: Mahnung und Farbstreifen 4 px bleiben");
+  if (!/Rückmeldung fehlt|überfällig/.test(c.tkText) || /Gilt als zugesagt/.test(c.tkText) || c.streifen !== "4px") probleme.push(`c) Spiel ohne Rückmeldung: Streifen ${c.streifen}, Text „${c.tkText.slice(0, 120)}“`);
+  else zeilen.push("c) Spiel ohne Rückmeldung: Mahnung und Farbstreifen 4 px bleiben");
   // d)
   const cz = Object.fromEntries(c.zonen.map(z => [z.id, z.sichtbar]));
   if (cz.neu !== false) probleme.push("d) „Neu“ ohne Inhalt sichtbar: " + JSON.stringify(cz));

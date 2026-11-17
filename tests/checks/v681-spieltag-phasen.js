@@ -31,7 +31,7 @@ module.exports = async function (h) {
     out.kopfAufUebersicht = document.getElementById("tab-subbar").style.display !== "none";
     out.phasen = {};
     for (const p of ["wer", "vor", "live", "nach"]) { spieltagPhase(p); await warte(500); out.phasen[p] = { offen: offen(), gedrueckt: gedrueckt() }; }
-    // c) Sprung von außen: Match-Uhr-artig nur Live öffnen, dann Nach per .open
+    // c) Sprung von außen: Spieluhr-artig nur Live öffnen, dann Nach per .open
     spieltagPhaseZeigen("vor"); await warte(50);
     document.getElementById("mt-phase-nach").open = true; await warte(100);
     out.sprung = { offen: offen(), gedrueckt: gedrueckt() };

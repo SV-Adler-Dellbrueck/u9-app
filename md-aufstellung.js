@@ -69,10 +69,10 @@ function renderLineupEditor(){
       <button class="btn" onclick="kombiFromSuggestion()"><i class="ti ti-wand"></i>Vorschlag</button>
       <button class="btn" onclick="kombiShareLineup()"><i class="ti ti-share"></i>Teilen</button>
       <button class="btn" onclick="kombiShareLineupBild()"><i class="ti ti-photo"></i>Als Bild</button>
-      <button class="btn btn-p" onclick="kombiToMatch()" title="Diese Aufstellung als Startelf ins Live-Match (Rotations-Timer) laden"><i class="ti ti-arrow-right"></i>In Match übernehmen</button>
+      <button class="btn btn-p" onclick="kombiToMatch()" title="Diese Aufstellung als Startelf in den Spieltag (Wechsel-Timer) laden"><i class="ti ti-arrow-right"></i>In den Spieltag übernehmen</button>
     </div>`;
 }
-// HOTFIX 15: geplante Aufstellung (kombiLineup) als Startelf ins Live-Match (Rotations-Timer) laden.
+// HOTFIX 15: geplante Aufstellung (kombiLineup) als Startelf in den Spieltag (Wechsel-Timer) laden.
 function kombiToMatch(){
   const feld=[kombiLineup.auf,kombiLineup.fll,kombiLineup.flr,kombiLineup.jaeg].filter(Boolean);
   if(!feld.length){toast("Erst die Aufstellung festlegen","err");return;}
@@ -85,7 +85,7 @@ function kombiToMatch(){
   rotBenchSec={};rotFieldSec={};[...squad,...inLineup].forEach(n=>{rotBenchSec[n]=0;rotFieldSec[n]=0;});
   rotElapsed=0;
   if(typeof aufSichern==="function"){ aufSichern(); if(typeof aufSofortSichern==="function")aufSofortSichern(false); }   // v793: die übernommene Aufstellung bleibt stehen
-  toast("✅ Aufstellung ins Match übernommen");
+  toast("✅ Aufstellung in den Spieltag übernommen");
   if(typeof go==="function")go("spieltag");
   setTimeout(()=>{ if(typeof rotRenderControls==="function")rotRenderControls(); if(typeof rotRenderLive==="function")rotRenderLive(); },120);
 }

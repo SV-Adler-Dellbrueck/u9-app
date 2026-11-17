@@ -71,7 +71,7 @@ module.exports = async function (h) {
     if (!(rt.kontrast >= 4.5)) probleme.push("b) Kontrast im Band " + (rt.kontrast || 0).toFixed(2) + ":1");
     if (rt.ueber) probleme.push("b) Seite läuft seitlich über");
   }
-  for (const [name, x, soll] of [["offen", offen.r, /Gilt als zugesagt/], ["zugesagt", zu.r, /Zusage/]]   /* v838: der nächste Termin ist ein Training – ohne Antwort „Gilt als zugesagt“ statt „Rückmeldung fehlt“ */) {
+  for (const [name, x, soll] of [["offen", offen.r, /Gilt als zugesagt/], ["zugesagt", zu.r, /Zusage/]]   /* v838: der nächste Termin ist ein Training – ohne Rückmeldung „Gilt als zugesagt“ statt „Rückmeldung fehlt“ */) {
     if (x.ohneBand) { probleme.push(`c) Eltern (${name}): Karte ohne Band`); continue; }
     if (!x.zeichen || !soll.test(x.zeichen)) probleme.push(`c) Eltern (${name}): Zeichen „${x.zeichen}“`);
     if (x.countdown !== "Morgen" || !/Nächster Termin/.test(x.text)) probleme.push(`c) Eltern (${name}): Band-Text „${x.text}“`);

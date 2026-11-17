@@ -623,7 +623,7 @@ function nomRender(){
      Bedarf notwendig, händisch als Trainer etwas zu ändern bzw. kurz zu sehen, bei wem die
      Rückmeldung fehlt.“ Schritt 1 zeigt deshalb zuerst, wer noch nicht geantwortet hat – mit
      „Offene erinnern“ (Push nur an diese Familien) –, darunter die Liste in der Reihenfolge:
-     ohne Antwort, zugesagt, abgesagt/krank. Die Liste steht offen: sie IST dieser Schritt. */
+     ohne Rückmeldung, zugesagt, abgesagt/krank. Die Liste steht offen: sie IST dieser Schritt. */
   const ohneAntwort=aktiv.filter(k=>!nomRsvp[k.name]).map(k=>k.name);
   const rang=n=>!nomRsvp[n]?0:nomRsvp[n].status==="zugesagt"?1:2;
   const sortiert=aktiv.map(k=>k.name).sort((a,b)=>rang(a)-rang(b));
@@ -632,15 +632,15 @@ function nomRender(){
       <div style="font-size:var(--s-text);color:var(--text2);margin:4px 0 8px;line-height:1.5">${ohneAntwort.map(n=>esc(n)).join(", ")}</div>
       ${NOM_TERMIN_ID?`<button type="button" class="btn btn-p" id="nom-erinnern" onclick="if(typeof rsvpOffeneErinnern==='function')rsvpOffeneErinnern(${Number(NOM_TERMIN_ID)},this)" style="width:100%;min-height:48px;justify-content:center"><i class="ti ti-bell"></i>Offene per Push erinnern</button>`:""}
     </div>`:(hasRsvp?`<div style="font-size:var(--s-text);color:var(--green);font-weight:700;margin-bottom:8px">Alle Eltern haben geantwortet ✓</div>`:"");
-  box.innerHTML=`<div style="font-size:var(--s-text);margin-bottom:8px;line-height:1.5">Eltern: ✅ <b>${c.zugesagt}</b> zugesagt · ❌ ${c.abgesagt} · 🤒 ${c.krank} · ❓ ${ohneAntwort.length} offen<br>Im Match dabei: <b>${dabeiAlle} von ${aktiv.length}</b></div>
+  box.innerHTML=`<div style="font-size:var(--s-text);margin-bottom:8px;line-height:1.5">Eltern: ✅ <b>${c.zugesagt}</b> zugesagt · ❌ ${c.abgesagt} · 🤒 ${c.krank} · ❓ ${ohneAntwort.length} offen<br>Am Spieltag dabei: <b>${dabeiAlle} von ${aktiv.length}</b></div>
   ${offenBlock}
   <details id="nom-dabei" class="tp-tipp"${(warOffen===undefined?true:warOffen)?" open":""}>
     <summary>👥 Wer ist dabei? <b>${dabeiAlle} von ${aktiv.length}</b> · jedes Kind ändern${offenAlle?` <span style="font-weight:400;color:var(--text2)">· ${offenAlle} noch nicht gesetzt</span>`:""}</summary>
     <div>
-      <div id="nom-quelle" style="font-size:var(--s-klein);color:var(--text3);margin-bottom:8px;line-height:1.4">📣 Vorbelegt aus den Eltern-Rückmeldungen (zugesagt = Dabei, abgesagt = Nicht, ohne Antwort = offen). Ein Tipp überstimmt die Eltern. <b>Dabei</b> ist die Anwesenheit dieses Spieltags und zählt für die Spiele-Quote.</div>
+      <div id="nom-quelle" style="font-size:var(--s-klein);color:var(--text3);margin-bottom:8px;line-height:1.4">📣 Vorbelegt aus den Eltern-Rückmeldungen (zugesagt = Dabei, abgesagt = Nicht, ohne Rückmeldung = offen). Ein Tipp überstimmt die Eltern. <b>Dabei</b> ist die Anwesenheit dieses Spieltags und zählt für die Spiele-Quote.</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
         ${offenAlle?`<button class="btn btn-sm" id="nom-offene-dabei" onclick="nomOffeneDabei()"><i class="ti ti-users-plus"></i>${offenAlle} Offene auf „Dabei“ setzen</button>`:""}
-        ${hasRsvp?`<button class="btn btn-sm" onclick="nomApplyRsvp()" title="Setzt die Nominierung auf den Stand der Eltern-Rückmeldungen zurück">Eltern-Stand wieder übernehmen</button>`:""}
+        ${hasRsvp?`<button class="btn btn-sm" onclick="nomApplyRsvp()" title="Setzt die Einteilung auf den Stand der Eltern-Rückmeldungen zurück">Eltern-Stand wieder übernehmen</button>`:""}
       </div>
       ${sortiert.map(zeile).join("")}
     </div>
@@ -3270,7 +3270,7 @@ async function fstErgLoeschen(i){
    PO: „Jedes Spiel im Festival soll gemeinsam angepfiffen werden … dann läuft im
    Spielplan live ein Countdown, den jeder Trainer sieht, egal ob Adler oder extern …
    gekoppelt mit dem Liveticker und den Auswechslungen … gestartet werden kann an
-   beiden Stellen." Umgesetzt wie die Match-Uhr: EIN Anker-Zeitstempel in
+   beiden Stellen." Umgesetzt wie die Spieluhr: EIN Anker-Zeitstempel in
    config.uhr={runde,start,dauer}. Niemand sendet Sekunden – jedes Gerät rechnet die
    Restzeit selbst aus dem Anker. Derselbe Anker geht in die matchday-Zeilen der
    Adler-Teams dieser Runde, damit Ticker und Wechsel dieselbe Zeit zeigen.
@@ -3378,7 +3378,7 @@ function _fstSignal(){
   }catch(e){}
 }
 /* Anpfiff aus dem Festival-Plan. Setzt den Anker, zieht die geplanten Zeiten auf die
-   Wirklichkeit nach (die angepfiffene Runde steht ab jetzt) und startet die Match-Uhren. */
+   Wirklichkeit nach (die angepfiffene Runde steht ab jetzt) und startet die Spieluhren. */
 async function fstAnpfiff(runde){
   /* v490 PO: „Anpfiff dürfen nur die Adler-Trainer, kein externer." Drei Schlösser: der Knopf
      wird nur im Trainer-Fenster gezeichnet, _HT gibt es nur dort, und die Datenbank lässt das
@@ -3406,7 +3406,7 @@ async function fstUhrStoppen(){
   if(await htPatch({config:cfg})){ toast("Uhr zurückgesetzt"); fstRender(); }
 }
 /* Derselbe Anker in die matchday-Zeilen der Adler-Teams, die in dieser Runde spielen:
-   Team 1 liegt auf dem Datum, Team n auf „datum__tn" – so liest die Match-Uhr im
+   Team 1 liegt auf dem Datum, Team n auf „datum__tn" – so liest die Spieluhr im
    Spieltag dieselbe Zeit, und Ticker wie Wechsel-Timer haengen daran. */
 async function fstMatchdayAnpfiff(row,runde,anker,ausser){
   const cfg=(row&&row.config)||{}, teams=(row&&row.teams)||[], plan=(row&&row.plan)||[];
@@ -3450,7 +3450,7 @@ async function fstMatchdayAnpfiff(row,runde,anker,ausser){
     }catch(e){}
   }
 }
-/* Gegenrichtung: der Anpfiff an der Match-Uhr im Spieltag startet die Festival-Runde mit
+/* Gegenrichtung: der Anpfiff an der Spieluhr im Spieltag startet die Festival-Runde mit
    demselben Anker – damit zeigt der Gast-Link dieselbe Restzeit. */
 async function fstAppAnpfiff(anker){
   if(typeof spieltagRawDate!=="function")return;

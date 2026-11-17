@@ -1,7 +1,7 @@
 /* v830 · Weihnachtsfeier ganz oben, und alle Termine eines Tages in der Kachel (Charles 10.11.2026).
    1) „Die Weihnachtsfeier sollte direkt ganz oben angezeigt werden, solange noch nicht zu- oder abgesagt wurde,
       und bei Zusage, wenn nichts in der Mitbringliste eingetragen wurde.“
-      a) keine Antwort → Karte „Antwort fehlt“, ganz oben vor der Terminkarte, Hauptknopf 56 px
+      a) keine Antwort → Karte „Rückmeldung fehlt“, ganz oben vor der Terminkarte, Hauptknopf 56 px
       b) zugesagt, nichts eingetragen → Karte „Beitragsliste“
       c) zugesagt und eingetragen → keine Karte
       d) abgesagt → keine Karte; e) Termin fällt aus → keine Karte
@@ -73,19 +73,19 @@ module.exports = async function (h) {
   if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
   if (!r.vorTerminkarte) probleme.push("1) die Karte steht nicht vor der Terminkarte");
   if (!r.erstesKind) probleme.push("1) die Karte steht nicht ganz oben");
-  if (!r.a || !/Antwort fehlt/i.test(r.a.text) || !/Weihnachtsfeier/.test(r.a.text) || !/Jetzt antworten/i.test(r.a.text)) probleme.push("a) keine Antwort: " + JSON.stringify(r.a));
+  if (!r.a || !/Rückmeldung fehlt/i.test(r.a.text) || !/Weihnachtsfeier/.test(r.a.text) || !/Jetzt antworten/i.test(r.a.text)) probleme.push("a) keine Antwort: " + JSON.stringify(r.a));
   if (r.a && r.a.hoeheKnopf !== 56) probleme.push("a) Hauptknopf " + r.a.hoeheKnopf + " px statt 56");
   if (!r.b || !/Beitragsliste/i.test(r.b.text) || !/Beitragsliste öffnen/i.test(r.b.text)) probleme.push("b) zugesagt ohne Eintrag: " + JSON.stringify(r.b));
   if (r.c) probleme.push("c) Karte trotz Eintrag: " + r.c.text);
   if (r.d) probleme.push("d) Karte trotz Absage: " + r.d.text);
   if (r.e) probleme.push("e) Karte, obwohl der Termin ausfällt: " + r.e.text);
-  if (r.f) probleme.push("f) Karte ohne Antwortstand: " + r.f.text);
+  if (r.f) probleme.push("f) Karte ohne Rückmeldungstand: " + r.f.text);
   if (!/🎄/.test(r.kachelText) || !/⚽/.test(r.kachelText)) probleme.push("2) Kachel zeigt nicht beide Symbole: " + r.kachelText);
   if (!/2 Termine/.test(r.kachelAria || "") || !/Weihnachtsfeier/.test(r.kachelAria || "") || !/Kinder-Eltern-Turnier/.test(r.kachelAria || "")) probleme.push("2) Kachel nennt nicht beide Termine im Namen: " + r.kachelAria);
   if (!r.wahl || r.wahl.filter(x => /Weihnachtsfeier|Kinder-Eltern-Turnier/.test(x.t)).length !== 2) probleme.push("2) Auswahl zeigt nicht beide Termine: " + JSON.stringify(r.wahl));
   if (r.wahl && r.wahl.some(x => x.h < 48)) probleme.push("2) Zeilen der Auswahl unter 48 px: " + r.wahl.map(x => x.h).join("/"));
   if (r.wahl && r.wahl.length >= 2 && !(r.wahl[0].t.indexOf("Turnier") >= 0)) probleme.push("2) Reihenfolge nach Uhrzeit: " + r.wahl[0].t);
   if (!/terminDetailOpen\(112\)/.test(r.einzelnOnclick || "")) probleme.push("2) ein Termin am Tag öffnet nicht direkt: " + r.einzelnOnclick);
-  zeilen.push("Karte: Antwort fehlt / Beitragsliste / weg bei Eintrag, Absage, Ausfall, fehlendem Stand · Kachel zeigt 🎄 und ⚽, Auswahl mit beiden");
+  zeilen.push("Karte: Rückmeldung fehlt / Beitragsliste / weg bei Eintrag, Absage, Ausfall, fehlendem Stand · Kachel zeigt 🎄 und ⚽, Auswahl mit beiden");
   return h.ergebnis(titel, !probleme.length, probleme.concat(zeilen));
 };

@@ -1,7 +1,7 @@
 /* v448 – „wie kann ich ein Kind entfernen?": Haken „Im Kader" im Editor. Entscheidend:
    wird `aktiv` beim Speichern wirklich mitgeschickt, stehen Ausgetragene hinten?
    Dazu die Trainer-Rueckmeldung im Trainingsplan: sie muss vom TRAINING des Tages
-   kommen, nicht vom fruehesten Termin (Spiel am Vormittag ohne Antworten). */
+   kommen, nicht vom fruehesten Termin (Spiel am Vormittag ohne Rückmeldungen). */
 module.exports = async function (h) {
   const RAUS = h.KINDER[3], NEU_RAUS = h.KINDER[0];
   const probleme = [], zeilen = [];
@@ -31,7 +31,7 @@ module.exports = async function (h) {
   }
   zeilen.push(`Editor: ${r.reihenfolge.length} Zeilen, letzte „${letzte && letzte.name}“ · gesendet ${rows.length} Zeilen, aktiv=false bei ${rows.filter(x => x.aktiv === false).length}`);
 
-  // Trainer-Rueckmeldung: Spiel (frueher, ohne Antworten) und Training (spaeter, mit) am selben Tag
+  // Trainer-Rueckmeldung: Spiel (frueher, ohne Rückmeldungen) und Training (spaeter, mit) am selben Tag
   const TERMIN = h.tagePlus(2);
   let STATUS = {};                                     // wird unten aus TRAINER der App gefuellt
   const t = await h.starten({ supabase: h.supabaseAttrappe({ termine: u => {

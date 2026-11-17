@@ -26,7 +26,7 @@ async function renderElternView(datum){
     // Route: Google-Maps-Suche nach der Gegner-Adresse (oder dem Gegnernamen)
     const routeQuery=m.gegner_adresse||m.gegner||m.ort||"";
     const routeUrl=routeQuery?"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(routeQuery):"";
-    // Hub: prominenter Live-Hinweis, wenn die Match-Uhr gerade läuft – der Grund, JETZT reinzuschauen.
+    // Hub: prominenter Live-Hinweis, wenn die Spieluhr gerade läuft – der Grund, JETZT reinzuschauen.
     const liveBanner=(!istTraining&&m.clock_status==="running")?`<a href="#ev-ticker" style="display:block;text-decoration:none;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border-radius:14px;padding:14px 16px;margin-bottom:14px;text-align:center;box-shadow:0 4px 16px rgba(220,38,38,.35)"><div style="font-size:var(--s-karte);font-weight:800">🔴 Wir spielen gerade LIVE!</div><div style="font-size:var(--s-text);opacity:.9;margin-top:2px">Zum Liveticker ↓</div></a>`:"";
     root.innerHTML=`<div class="elt-fade">
       <div style="text-align:center;margin:8px 0 16px">
@@ -965,7 +965,7 @@ function rotTick(){
   if(!rotTickLite())rotRenderLive(); // punktgenaues Text-Update; sonst voller Render
 }
 document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&rotTimerId)rotTick(); });
-// Idempotente Start/Stop-Funktionen (statt reinem Toggle), damit die Match-Uhr den
+// Idempotente Start/Stop-Funktionen (statt reinem Toggle), damit die Spieluhr den
 // Rotations-Timer sicher mitsteuern kann, ohne einen bereits korrekten Zustand zu kippen.
 function rotStart(){ rotTonBereit(); if(!rotTimerId){_rotLetzt=Date.now();rotTimerId=setInterval(rotTick,1000);requestWakeLock();} rotRenderControls();rotRenderLive(); }
 function rotStop(){ if(rotTimerId){rotTick();clearInterval(rotTimerId);rotTimerId=null;} _rotLetzt=null; rotPersistTimes(); rotRenderControls();rotRenderLive(); }

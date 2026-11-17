@@ -2,7 +2,7 @@
    a) Einstieg „Wie möchtest du anfangen?“: großer Knopf „Erzählen“, Leitfaden mit vier Punkten, „Los geht’s – Frage für Frage“
    b) „Wie war’s?“ von der Startseite öffnet denselben Einstieg – nicht mehr direkt die Vollansicht der Sprachnotiz
    c) Kachel-Weg: Schlussfrage „Was nehmen wir mit?“ → beim Speichern ein Tagebuch-Entwurf (Status keim, Wort für Wort, ohne KI-Aufruf);
-      ohne Antwort kein Entwurf */
+      ohne Rückmeldung kein Entwurf */
 "use strict";
 module.exports = async function (h) {
   const probleme = [], zeilen = [];

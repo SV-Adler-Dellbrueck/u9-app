@@ -2,7 +2,7 @@
    nicht so sein. Erst wenn der Countdown offiziell gestartet wurde." Und: „In der Festival-Planung
    sollte drinstehen, auf welchem Feld die Teams warm machen dürfen – Adler immer im Käfig, die
    anderen auf die Felder aus dem Plan verteilt; das soll im externen Link stehen."
-   Geprueft: die Marke „Spiel läuft" haengt am Anpfiff statt an der Auswahl, die Match-Uhr steht
+   Geprueft: die Marke „Spiel läuft" haengt am Anpfiff statt an der Auswahl, die Spieluhr steht
    ohne Anpfiff still (auch bei einer alten laufenden Zeile), und die Aufwaermfelder stehen im
    Planer, im Info-Blatt und auf der Gast-Seite. */
 module.exports = async function (h) {
@@ -67,7 +67,7 @@ module.exports = async function (h) {
   if (ohne.laeuft.some(Boolean)) probleme.push(`Ohne Anpfiff meldet ein Team „Spiel läuft“: ${JSON.stringify(ohne.laeuft)}`);
   if (mit.uhr !== "running") probleme.push(`Nach dem Anpfiff steht die Uhr auf „${mit.uhr}“`);
   if (!mit.laeuft.every(Boolean)) probleme.push(`Nach dem Anpfiff fehlt „Spiel läuft“: ${JSON.stringify(mit.laeuft)}`);
-  if (!/läuft mit dem Spielplan/.test(mit.panel)) probleme.push("Die Match-Uhr nennt den Spielplan nicht als Quelle");
+  if (!/läuft mit dem Spielplan/.test(mit.panel)) probleme.push("Die Spieluhr nennt den Spielplan nicht als Quelle");
   const adler = aw.liste.find(x => /Adler/.test(x.verein));
   if (!adler || !/Käfig/.test(adler.feld)) probleme.push(`Adler wärmt sich auf „${adler && adler.feld}“ auf statt im Käfig`);
   const gaeste = aw.liste.filter(x => !/Adler/.test(x.verein));

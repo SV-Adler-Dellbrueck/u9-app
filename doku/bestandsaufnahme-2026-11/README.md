@@ -70,7 +70,7 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 | # | Befund | Status |
 |---|---|---|
 | 4.1 | „Eltern“ und „Orga“ je rund 15 gleich gewichtete Kacheln; Einstellungen neben Alltag | ✅ v841 Klappen für Seltenes |
-| 4.2 | Dieselbe Sache, mehrere Namen (Spieltag/Match/Matchday, Block/Phase, Rückmeldung/Antwort, sechs „Adler“-Kanäle) – Wortliste | ⬜ |
+| 4.2 | Dieselbe Sache, mehrere Namen (Spieltag/Match/Matchday, Block/Phase, Rückmeldung/Antwort, sechs „Adler“-Kanäle) – Wortliste | teils ✅ v842: Spieltag, Spieluhr, Rückmeldung, Die Kabine, Nachbereitung; offen: Block/Phase, Station/Feld, Schließen/Abbrechen/Fertig, Adler-Kanäle |
 | 4.3 | Die Hilfe ist ein Änderungsprotokoll (Einträge bis 7.900 Zeichen) | ⬜ |
 | 4.4 | Fachsprache ohne Erklärung (Leitfrage, Nominierung, Provokationsregel) | ⬜ |
 | 4.5 | Rund 50 Systemdialoge, 180 von Hand gebaute Fenster | ⬜ schrittweise |

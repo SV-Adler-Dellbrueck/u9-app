@@ -54,7 +54,7 @@ module.exports = async function (h) {
   if (r.a.training < 44 || r.a.spiel < 44 || r.a.meeting !== 0) probleme.push("a) " + JSON.stringify(r.a));
   zeilen.push(`a) Knopf „Rückmeldungen“ bei Training und Spiel (${r.a.training} px), nicht beim Trainermeeting`);
   const z = r.b.zeilen;
-  const ok = r.b.dialog === "dialog" && /2 Zusagen · 2 Absagen · 1 ohne Antwort/.test(r.b.kopf || "")
+  const ok = r.b.dialog === "dialog" && /2 Zusagen · 2 Absagen · 1 ohne Rückmeldung/.test(r.b.kopf || "")
     && ["Zusagen · 2", "Absagen · 1", "Krank · 1", "Keine Antwort · 1"].every(g => r.b.gruppen.includes(g))
     && z.some(t => t.startsWith(K[0]) && /✅ Zusage/.test(t) && /2,1 Tage vorher/.test(t) && !/≈/.test(t))
     && z.some(t => t.startsWith(K[1]) && /❌ Absage/.test(t) && /3 Std\. vorher/.test(t))

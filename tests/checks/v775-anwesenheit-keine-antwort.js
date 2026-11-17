@@ -3,7 +3,7 @@
    entsprechenden Eltern informieren.“
    a) Jede Kachel trägt ihren Stand aus den Rückmeldungen: „zugesagt“, „abgesagt“, „unsicher“ oder „keine Antwort“; die Zeile darüber zählt sie
    b) „keine Antwort“ ist sichtbar (Wort, gestrichelter Rand) und bleibt wie bisher vorbelegt als dabei; Absage bleibt aus
-   c) Knopf „N ohne Antwort per Push erinnern“ (≥ 44 px) ruft push-send mit art rsvp_offen und dem Termin
+   c) Knopf „N ohne Rückmeldung per Push erinnern“ (≥ 44 px) ruft push-send mit art rsvp_offen und dem Termin
    d) Ist für den Tag schon Anwesenheit gespeichert, steht kein Rückmelde-Stand mehr an den Kacheln; liegt der Termin in der Vergangenheit, fehlt der Knopf
    e) Ohne Zusage-Liste (alter Aufruf) bleibt es bei der bisherigen Anzeige */
 "use strict";
@@ -55,9 +55,9 @@ module.exports = async function (h) {
   if (!a.ab || a.ab.stand !== "abgesagt" || a.ab.an || !/abgesagt/.test(a.ab.text)) probleme.push("a) abgesagt: " + JSON.stringify(a.ab));
   if (!a.un || a.un.stand !== "unsicher" || !/unsicher/.test(a.un.text)) probleme.push("a) unsicher: " + JSON.stringify(a.un));
   if (!a.off || a.off.stand !== "keine Antwort" || !/keine Antwort/.test(a.off.text) || !a.off.an || !a.off.offen || a.off.rand !== "dashed") probleme.push("b) keine Antwort: " + JSON.stringify(a.off));
-  if (!/3 zugesagt/.test(a.zeile) || !/1 abgesagt/.test(a.zeile) || !/1 unsicher/.test(a.zeile) || !/10 ohne Antwort/.test(a.zeile)) probleme.push("a) Zeile: " + a.zeile);
+  if (!/3 zugesagt/.test(a.zeile) || !/1 abgesagt/.test(a.zeile) || !/1 unsicher/.test(a.zeile) || !/10 ohne Rückmeldung/.test(a.zeile)) probleme.push("a) Zeile: " + a.zeile);
   zeilen.push(`a) Kacheln: zugesagt, abgesagt (aus), unsicher, keine Antwort (an, gestrichelt) · Zeile „${a.zeile.slice(0, 110)}…“`);
-  if (!r.c.da || r.c.hoehe < 44 || !/10 ohne Antwort per Push erinnern/.test(r.c.text) || pushes.length !== 1 || pushes[0].art !== "rsvp_offen" || pushes[0].termin_id !== 4711) probleme.push("c) " + JSON.stringify({ c: r.c, pushes }));
+  if (!r.c.da || r.c.hoehe < 44 || !/10 ohne Rückmeldung per Push erinnern/.test(r.c.text) || pushes.length !== 1 || pushes[0].art !== "rsvp_offen" || pushes[0].termin_id !== 4711) probleme.push("c) " + JSON.stringify({ c: r.c, pushes }));
   zeilen.push(`c) Knopf „${r.c.text}“ (${r.c.hoehe} px) → push-send ${JSON.stringify(pushes[0] || {})}`);
   if (r.d1.staende !== 0 || r.d1.knopf || r.d2.knopf) probleme.push("d) " + JSON.stringify({ d1: r.d1, d2: r.d2 }));
   zeilen.push("d) gespeicherte Anwesenheit: keine Rückmelde-Stände; Termin in der Vergangenheit: kein Push-Knopf");

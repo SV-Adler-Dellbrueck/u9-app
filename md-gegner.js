@@ -480,7 +480,7 @@ function _tmdKarte(t){
       </div>`:""}
       ${(t.heim===true&&istSpiel&&kommt)?`<div id="bd-tm-${t.id}" style="font-size:var(--s-text);color:var(--text2);margin-top:4px">🔥 Grillhütte: lädt …</div>`:""}
       ${kommt?`<div id="helfer-tm-${t.id}" style="font-size:var(--s-text);color:var(--text2);margin-top:4px"></div>`:""}
-      ${(kommt&&!istMeeting)?`<button class="btn btn-sm" onclick="rsvpOverviewOpen(${Number(t.id)})" style="width:100%;min-height:44px;margin-top:8px;justify-content:center"><i class="ti ti-list-check"></i>Antworten der Eltern</button>`:""}
+      ${(kommt&&!istMeeting)?`<button class="btn btn-sm" onclick="rsvpOverviewOpen(${Number(t.id)})" style="width:100%;min-height:44px;margin-top:8px;justify-content:center"><i class="ti ti-list-check"></i>Rückmeldungen der Eltern</button>`:""}
       ${istMeeting?`<div id="meet-tm-${t.id}" style="font-size:var(--s-klein);color:var(--text2);margin-top:8px;line-height:1.5"></div>
       <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px;line-height:1.5">🔒 Diesen Termin sehen nur Trainer – Eltern und die öffentlichen Seiten bekommen ihn nicht zu Gesicht.</div>`:""}
 
@@ -1280,7 +1280,7 @@ function tmJump(ziel,datum,spielform){
 // Multi-Team-Funino: bei Festivals stellt Adler 2–3 Teams. Da die Spiele NICHT
 // zeitgleich laufen, wählt der Trainer das gerade aktive Team. Der Team-Index wird in
 // den Supabase-Schlüssel kodiert (Team 1 = reines Datum -> abwärtskompatibel,
-// Team 2/3 = "DATE__t2"/"__t3"). So sind Nominierung, Match-Uhr, Rotations-Timer,
+// Team 2/3 = "DATE__t2"/"__t3"). So sind Nominierung, Spieluhr, Rotations-Timer,
 // Action-Tracker und Liveticker sauber pro Team getrennt; der Delegate-Link ist über
 // das team-eigene matchday-Token automatisch team-spezifisch.
 let spieltagTeam=1;
@@ -1389,7 +1389,7 @@ async function rmdOpen(terminId){
   if(!rows.length){ box.innerHTML="Zu diesem Termin gibt es keine Kinder im Kader."; return; }
   const gruppen=[["zugesagt","Zusagen"],["abgesagt","Absagen"],["krank","Krank"],[null,"Keine Antwort"]];
   const zahl=(k)=>rows.filter(x=>(x.status||null)===k).length;
-  const kopf=`<div style="font-weight:800;color:var(--text);margin-bottom:10px">${zahl("zugesagt")} Zusagen · ${zahl("abgesagt")+zahl("krank")} Absagen · ${zahl(null)} ohne Antwort</div>`;
+  const kopf=`<div style="font-weight:800;color:var(--text);margin-bottom:10px">${zahl("zugesagt")} Zusagen · ${zahl("abgesagt")+zahl("krank")} Absagen · ${zahl(null)} ohne Rückmeldung</div>`;
   const zeile=x=>{
     const st=RMD_STATUS[x.status]; const verlauf=Array.isArray(x.verlauf)?x.verlauf:[];
     const wann=x.status&&x.letzte_aenderung?rmdWann(x.letzte_aenderung):"";
