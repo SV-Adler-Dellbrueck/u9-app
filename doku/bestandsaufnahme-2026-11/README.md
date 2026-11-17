@@ -23,7 +23,7 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 | 1.6 | Wenige Kinder: die Trainerzahl schlägt die Kinderzahl (sechs Kinder, zwei Trainer → zwei Dreiergruppen ohne Spielform; `tgBedarf`) | 🔶 PO-Entscheidung v536/v656 |
 | 1.7 | Übungswahl kennt weder Dauer noch Betreuung noch Tore; Thema folgt der Kategorie von Feld 1 statt der Leitfrage (`tpStationWahl`) | ⬜ |
 | 1.8 | Ein Trainer mit zehn und mehr Kindern: die gewählte Spielform ist oft zu klein; besser zwei Felder mit derselben Form | ⬜ |
-| 1.9 | Einzel-Hauptteil ohne Stufen (Technik-Parcours) bekommt bei zwei Trainern weiter eine fremde Übung auf Feld 2 | ⬜ |
+| 1.9 | Einzel-Hauptteil ohne Stufen (Technik-Parcours) bekam bei zwei Trainern eine fremde Übung auf Feld 2 | ✅ v834 |
 | 1.10 | `trainerIstFeldtrainer` wird nirgends aufgerufen – Trainer mit Rolle „organisation“ zählt als Station | ⬜ |
 | 1.11 | Torwart: L3-1 hängt den Torwart-Block an Stufe 1; Gruppenbildung verteilt nach Torwart-Haken statt Rotation | ⬜ |
 | 1.12 | Vorlagen der Typen L4-2/L4-5: `vuAbschlussturnierSichern` schneidet ein zweites Turnier ab | ⬜ |

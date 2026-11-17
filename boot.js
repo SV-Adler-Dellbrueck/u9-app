@@ -4596,9 +4596,11 @@ async function tpGenerate(){
     // Rotation: Station p hat in jedem Hauptteil dieselbe Übung.
     for(let p=1;p<stationen;p++){
       let fest=null;
-      /* v834: Stufen bleiben zusammen – Feld p spielt dort, was Feld 1 spielt. */
-      const frei=hs.filter(x=>!tpIstStufe(x.s));
-      hs.filter(x=>tpIstStufe(x.s)).forEach(x=>{ const v0=wert(x.i,0); if(v0!=null&&wert(x.i,p)==null&&setze(x.i,p,v0))gesetzt++; });
+      /* v834: Stufen bleiben zusammen – Feld p spielt dort, was Feld 1 spielt. Dasselbe gilt für
+         den EINEN Hauptteil einer Sondereinheit (Technik-Parcours: acht Stationen für alle). */
+      const zusammen=x=>tpIstStufe(x.s)||(hs.length===1&&!tpIstStandardHauptteil(x.s)&&wert(x.i,0)!=null);
+      const frei=hs.filter(x=>!zusammen(x));
+      hs.filter(zusammen).forEach(x=>{ const v0=wert(x.i,0); if(v0!=null&&wert(x.i,p)==null&&setze(x.i,p,v0))gesetzt++; });
       if(!frei.length)continue;
       frei.forEach(x=>{ const v=wert(x.i,p), v0=wert(x.i,0); if(v!=null&&v!==v0&&fest==null)fest=v; });
       if(fest==null){ const b=tpStationWahl(g,th,weg,datum,zufall); if(!b)continue; fest=b.i; weg.add(fest); if(b.passt>1)eng++; }

@@ -4,6 +4,7 @@
    b) Leerer Plan, ein Trainer: Straßenfußball-Fenster 10, Aufwärmen 8, EINE Spielform in drei Stufen (12/12/10),
       Abschluss 18 = 70 Minuten; genau eine Zusatzregel, und zwar in Stufe 2; das Fenster bleibt ohne Übung.
    c) Leerer Plan, drei Trainer: Rahmen 10/8/34/18, Stationen im Wechsel wie bisher; höchstens eine Zusatzregel, im zweiten Hauptteil.
+   e) Sondereinheit mit einem einzigen Hauptteil (Technik-Parcours), zwei Trainer: beide Felder spielen den Parcours.
    d) Lehrgangsformen („Lehrgang – …“) kommen nie an eine Station; Ganztagsformen („…-Tag“) sind keine automatische Regel. */
 "use strict";
 module.exports = async function (h) {
@@ -70,6 +71,10 @@ module.exports = async function (h) {
     out.trainerC = tpGetCheckedTrainers().length;
     await tpGenerate(); await warte(400);
     out.c = bild();
+    // e) Sondereinheit mit einem einzigen Hauptteil: beide Felder dieselbe Übung
+    await datumSetzen(d2); tpSlots = [...TP_PHASEN]; tpRenderTimeline(); await warte(100);
+    const vs = VORLAGEN.find(v => /Technik-Parcours/.test(v.name));
+    if (vs) { _vuAuswahl = String(vs.id); await vorlageUebernehmenSetzen(); await warte(700); out.e = bild(); }
     // d)
     out.lehrgang = tpNurErwachsene({ name: "Lehrgang – Zwei-Seiten-Spiel" }) && !tpStationTauglich({ name: "Lehrgang – Zwei-Seiten-Spiel" });
     out.kinderform = tpNurErwachsene({ name: "Pflichtpass-Funino" });
@@ -114,6 +119,10 @@ module.exports = async function (h) {
     if (mr.length > 1 || (mr.length === 1 && mr[0] !== 2)) probleme.push("c) Zusatzregeln in Hauptteil " + mr.join(","));
     if (!probleme.some(p => p.startsWith("c)"))) zeilen.push(`c) drei Trainer: ${r.c.map(x => x.dauer).join("+")} · ${mr.length} Zusatzregel${mr.length ? " in Hauptteil 2" : ""}`);
   }
+  const hE = H(r.e || []);
+  if (!r.e) probleme.push("e) Vorlage Technik-Parcours nicht gefunden");
+  else if (hE.length !== 1 || hE[0].felder.length !== 2 || new Set(hE[0].felder).size !== 1 || !/^Technik-Parcours/.test(hE[0].felder[0] || "")) probleme.push("e) Sondereinheit: Felder " + JSON.stringify(hE.map(x => x.felder)));
+  else zeilen.push("e) Sondereinheit Technik-Parcours, zwei Trainer: beide Felder der Parcours");
   if (!r.lehrgang || r.kinderform) probleme.push("d) Lehrgangsfilter: Lehrgang " + r.lehrgang + ", Kinderform " + r.kinderform);
   if (r.rahmen !== "10+20+20+20") probleme.push("Das leere Gerüst hat sich geändert (Altpläne ohne Struktur hängen daran): " + r.rahmen);
   return h.ergebnis(titel, !probleme.length, probleme.concat(zeilen));
