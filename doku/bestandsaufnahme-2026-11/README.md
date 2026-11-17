@@ -39,7 +39,7 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 | 2.5 | Speichern verhält sich je Seite anders (automatisch, Knopf, beides) | teils ✅: Plan zeigt den Stand seit v797, Anwesenheit seit v845; Aufstellungsseite offen |
 | 2.6 | Teams: Zwischenschritt „In die Nominierungen übertragen“ mit Systemdialog | ✅ v836 „Teams übernehmen“, eigenes Fenster; Hinweis „noch nicht übernommen“ offen |
 | 2.7 | Zwei Aufstellungen in zwei Tabellen, die nichts voneinander wissen | ⬜ groß |
-| 2.8 | „Wer kommt?“ hat fünf Ansichten mit fünf Namen | ⬜ |
+| 2.8 | „Wer kommt?“ hat fünf Ansichten mit fünf Namen | teils ✅ v846: Stand und Detail der Rückmeldungen verbunden, Einstiege gleich benannt; „Wer kommt?“ am Spieltag und die Anwesenheit bleiben eigene Seiten |
 | 2.9 | „Wie war’s?“ erreicht nur, wer zugesagt hat oder im Plan steht | ✅ v844 auch nach gespeicherter Trainer-Anwesenheit (das To-do über den Plan unverändert) |
 | 2.10 | Termin anlegen liegt drei Ebenen tief, kein Einstieg von der Startseite | ✅ v835 |
 | 2.11 | Systemdialoge am Platz (Trainingsstart verwerfen, Gruppenname, Anwesenheit) | ✅ v836 |

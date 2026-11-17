@@ -429,7 +429,7 @@ function _tmdKarte(t){
   const istMeeting=t.typ==="trainermeeting";
   const elternRest=[
     {i:"ti-users",l:"Eltern-Info",c:`mdOpen('${t.datum}','${t.typ}')`},
-    ["training","spiel","turnier"].includes(t.typ)?{i:"ti-list-check",l:"Rückmeldungen",c:`rmdOpen(${Number(t.id)})`}:null,
+    ["training","spiel","turnier"].includes(t.typ)?{i:"ti-list-check",l:"Rückmeldungen im Detail",c:`rmdOpen(${Number(t.id)})`}:null,
     kommt?{i:"ti-speakerphone",l:"Ansage",c:`ansageVomTermin(${Number(t.id)})`}:null,
     kommt?(()=>{const deepLink=appRoot()+"?portal&rsvp="+t.id;
       const waText=`🦅 SV Adler U9 – bitte kurz rückmelden fürs nächste ${m.label}:\n${t.titel||m.label} am ${datumStr}${zeitStr?" um "+zeitStr+" Uhr":""}${t.ort?" ("+t.ort+")":""}\n👉 Zu-/absagen: ${deepLink}`;
@@ -480,7 +480,7 @@ function _tmdKarte(t){
       </div>`:""}
       ${(t.heim===true&&istSpiel&&kommt)?`<div id="bd-tm-${t.id}" style="font-size:var(--s-text);color:var(--text2);margin-top:4px">🔥 Grillhütte: lädt …</div>`:""}
       ${kommt?`<div id="helfer-tm-${t.id}" style="font-size:var(--s-text);color:var(--text2);margin-top:4px"></div>`:""}
-      ${(kommt&&!istMeeting)?`<button class="btn btn-sm" onclick="rsvpOverviewOpen(${Number(t.id)})" style="width:100%;min-height:44px;margin-top:8px;justify-content:center"><i class="ti ti-list-check"></i>Rückmeldungen der Eltern</button>`:""}
+      ${(kommt&&!istMeeting)?`<button class="btn btn-sm" onclick="rsvpOverviewOpen(${Number(t.id)})" style="width:100%;min-height:44px;margin-top:8px;justify-content:center"><i class="ti ti-list-check"></i>Rückmeldungen</button>`:""}
       ${istMeeting?`<div id="meet-tm-${t.id}" style="font-size:var(--s-klein);color:var(--text2);margin-top:8px;line-height:1.5"></div>
       <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px;line-height:1.5">🔒 Diesen Termin sehen nur Trainer – Eltern und die öffentlichen Seiten bekommen ihn nicht zu Gesicht.</div>`:""}
 
@@ -630,7 +630,7 @@ async function rsvpOverviewOpen(terminId){
   const sec=(title,arr,col,emo)=>arr.length?`<div style="margin-top:8px"><div style="font-size:var(--s-klein);font-weight:800;color:${col}">${emo} ${title} (${arr.length})</div><div style="font-size:var(--s-text);color:var(--text2);line-height:1.5">${arr.map(esc).join(", ")}</div></div>`:"";
   const card=document.createElement("div");
   card.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
-  card.innerHTML=`${mdlHead("rsvp-ov-modal","📋","Rückmeldungen",`${m.icon} ${esc(t.titel||m.label)} · ${datumStr}${zeitStr?" · "+zeitStr:""}`,"#d97706")}
+  card.innerHTML=`${mdlHead("rsvp-ov-modal","📋","Rückmeldungen – Stand",`${m.icon} ${esc(t.titel||m.label)} · ${datumStr}${zeitStr?" · "+zeitStr:""}`,"#d97706")}
     <div style="font-size:var(--s-text);font-weight:800;color:${groups.offen.length?"#b45309":"#16a34a"}">${groups.offen.length?groups.offen.length+" noch offen":"Alle haben geantwortet 🎉"}</div>
     ${sec("Offen",groups.offen,"#b45309","❓")}
     ${sec("Zusagen",groups.zugesagt,"#059669","👍")}
@@ -640,7 +640,8 @@ async function rsvpOverviewOpen(terminId){
       ${groups.offen.length?`<a class="btn btn-p btn-sm" href="https://wa.me/?text=${encodeURIComponent(waText)}" target="_blank" rel="noopener"><i class="ti ti-brand-whatsapp"></i>WhatsApp</a>`:""}
       ${groups.offen.length?`<button class="btn btn-sm" onclick="rsvpOffeneErinnern(${terminId},this)"><i class="ti ti-bell"></i>Offene per Push erinnern</button>`:""}
       <button class="btn btn-sm" style="margin-left:auto" onclick="document.getElementById('rsvp-ov-modal').remove()">Schließen</button>
-    </div>`;
+    </div>
+    ${["training","spiel","turnier"].includes(t.typ)?`<button type="button" id="rsvp-ov-detail" class="btn btn-sm" onclick="rmdOpen(${Number(terminId)})" style="width:100%;min-height:44px;margin-top:10px;justify-content:center"><i class="ti ti-clock"></i>Wann wurde geantwortet? Mit Grund und Verlauf</button>`:""}`;
   modal.appendChild(card);document.body.appendChild(modal);
 }
 // v702: Push-Erinnerung NUR an Familien ohne Rückmeldung (core.js rsvpOffeneErinnern).
@@ -893,7 +894,7 @@ function tmCard(t){
      „Aufstellung" und „Mehr" auf 390 px. flex-wrap bleibt als Notnagel. */
   const actions=`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
       ${haupt}
-      ${(kommt&&!faelltAus)?`<button class="btn btn-sm" onclick="rsvpOverviewOpen(${Number(t.id)})" title="Wer hat schon geantwortet?"><i class="ti ti-list-check"></i>Antworten</button>`:""}
+      ${(kommt&&!faelltAus)?`<button class="btn btn-sm" onclick="rsvpOverviewOpen(${Number(t.id)})" title="Wer hat schon geantwortet?"><i class="ti ti-list-check"></i>Rückmeldungen</button>`:""}
       <button class="btn btn-sm" id="tm-mehr-btn-${t.id}" onclick="tmMehrToggle(${Number(t.id)})" aria-expanded="false" aria-controls="tm-mehr-${t.id}"><i class="ti ti-dots"></i>Mehr</button>
     </div>
     <div id="tm-mehr-${t.id}" style="display:none;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">
@@ -1379,7 +1380,7 @@ async function rmdOpen(terminId){
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10090;display:flex;align-items:flex-start;justify-content:center;padding:14px;overflow-y:auto";
   m.onclick=e=>{ if(e.target===m)m.remove(); };
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:560px;width:100%;margin:auto">
-    ${typeof mdlHead==="function"?mdlHead("rmd-modal","📋","Rückmeldungen","Wer hat wann geantwortet · nur für das Trainerteam","#1e3a8a"):""}
+    ${typeof mdlHead==="function"?mdlHead("rmd-modal","📋","Rückmeldungen – im Detail","Wer hat wann geantwortet · nur für das Trainerteam","#1e3a8a"):""}
     <div id="rmd-inhalt" style="font-size:var(--s-text);color:var(--text2)">Lädt …</div></div>`;
   document.body.appendChild(m);
   let rows=null;
@@ -1387,7 +1388,7 @@ async function rmdOpen(terminId){
   const box=document.getElementById("rmd-inhalt"); if(!box)return;
   if(!Array.isArray(rows)){ box.innerHTML="Die Rückmeldungen lassen sich gerade nicht laden. Ist die Migration v769 eingespielt?"; return; }
   if(!rows.length){ box.innerHTML="Zu diesem Termin gibt es keine Kinder im Kader."; return; }
-  const gruppen=[["zugesagt","Zusagen"],["abgesagt","Absagen"],["krank","Krank"],[null,"Keine Antwort"]];
+  const gruppen=[["zugesagt","Zusagen"],["abgesagt","Absagen"],["krank","Krank"],[null,"Keine Rückmeldung"]];
   const zahl=(k)=>rows.filter(x=>(x.status||null)===k).length;
   const kopf=`<div style="font-weight:800;color:var(--text);margin-bottom:10px">${zahl("zugesagt")} Zusagen · ${zahl("abgesagt")+zahl("krank")} Absagen · ${zahl(null)} ohne Rückmeldung</div>`;
   const zeile=x=>{
@@ -1406,5 +1407,7 @@ async function rmdOpen(terminId){
   box.innerHTML=kopf+gruppen.map(([k,t])=>{ const z=rows.filter(x=>(x.status||null)===k); if(!z.length)return "";
     return `<div style="margin-bottom:12px"><div style="font-weight:800;color:var(--text);margin-bottom:2px">${t} · ${z.length}</div>${z.map(zeile).join("")}</div>`; }).join("")
     +`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px;line-height:1.5">Seit dem 29.09.2026 steht jeder Wechsel mit Zeitpunkt im Verlauf. Davor oder ohne Verlauf ist nur die erste Antwort bekannt – das zeigt „≈“.</div>`
-    +`<button type="button" class="btn" onclick="document.getElementById('rmd-modal').remove()" style="width:100%;min-height:48px;margin-top:12px;justify-content:center">Schließen</button>`;
+    /* v846: Stand und Detail sind zwei Seiten derselben Sache – ein Tipp führt hin und zurück. */
+    +`<button type="button" id="rmd-zum-stand" class="btn" onclick="document.getElementById('rmd-modal').remove();if(!document.getElementById('rsvp-ov-modal'))rsvpOverviewOpen(${Number(terminId)})" style="width:100%;min-height:48px;margin-top:12px;justify-content:center"><i class="ti ti-list-check"></i>Zum Stand: wer fehlt noch, erinnern</button>`
+    +`<button type="button" class="btn" onclick="document.getElementById('rmd-modal').remove()" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Schließen</button>`;
 }

@@ -75,7 +75,7 @@ module.exports = async function (h) {
     out.wegInsMeeting = detail ? [...detail.querySelectorAll("button")]
       .filter(b => /tmMeetingOeffnen/.test(b.getAttribute("onclick") || "")).length : 0;
     out.elternInfo = detail ? /Eltern-Info/.test(out.detailText) : null;
-    out.elternAntworten = detail ? /Rückmeldungen der Eltern/.test(out.detailText) : null;
+    out.elternAntworten = detail ? !!detail.querySelector('button[onclick^="rsvpOverviewOpen"]') : null;   // v846: der Knopf heißt „Rückmeldungen“
     out.hinweis = /nur Trainer/.test(out.detailText);
 
     // d–f) Terminfindung aus dem Termin heraus
