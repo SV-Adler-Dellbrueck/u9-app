@@ -231,9 +231,12 @@ async function elternPortalVerify(){
     await authOtpVerify(epEmail,code);
     document.getElementById("eltern-portal")?.remove();
     renderElternPortal();
+    /* v837: „Passwort vergessen“ endete im Dashboard – ohne neues Passwort begann beim nächsten
+       Mal alles von vorn. Einmal nach dem Code-Login das Fenster anbieten; schließen heißt „später“. */
+    setTimeout(()=>{ if(document.getElementById("ep-dash-body")&&typeof elternPasswortOpen==="function"){ elternPasswortOpen(); toast("Angemeldet ✓ Lege jetzt ein neues Passwort fest – oder schließe das Fenster."); } },1800);
   }catch(e){if(err)err.textContent=e.message;if(btn){btn.disabled=false;btn.textContent="Anmelden";}}
 }
-function elternPortalLogout(){ localStorage.removeItem(SB_TOKEN_KEY_ELTERN); try{localStorage.removeItem("adler_rolle");localStorage.removeItem("adler_dsgvo_v");}catch(e){} document.getElementById("eltern-portal")?.remove(); renderElternPortal(); }
+function elternPortalLogout(){ localStorage.removeItem(SB_TOKEN_KEY_ELTERN); try{localStorage.removeItem("adler_rolle");localStorage.removeItem("adler_dsgvo_v");localStorage.removeItem("adler_eltern_stand");}catch(e){} document.getElementById("eltern-portal")?.remove(); renderElternPortal(); }
 /* ═══ v604: Einladungskarte ═══
    Die Karte traegt einen QR-Code auf eltern/?portal&einladung=CODE. renderElternPortal
    puffert den Code und ruft hierher. Die Edge Function eltern-einladung prueft ihn und
@@ -673,7 +676,7 @@ async function elternNewsLoad(kids){
   (data.lob||[]).forEach(l=>{ if(l.at>(seen["lob_"+l.sid]||"")) items.push({emo:"🎧",txt:`Neues vom Trainerteam für ${esc(kidName(l.sid))} (Lob oder Nachricht).`,act:`elternCatClose();lobListeOpen(${l.sid},'${String(kidName(l.sid)).replace(/['\\<>&"]/g,"")}')`});   /* v803: auch Spieltag-Nachrichten, deshalb die Liste statt „jüngstes Lob abspielen“ */ });
   (kids||[]).forEach(k=>{ const lv=cur["level_"+k.spieler_id]; const sv=seen["level_"+k.spieler_id]; if(lv&&sv!=null&&lv!==sv) items.push({emo:"🎉",txt:`${esc(kidName(k.spieler_id))} hat ein neues Level erreicht: ${esc(lv)}!`,act:`elternCatClose();elternCardOpen(${k.spieler_id})`}); });
   if(cur.ms&&cur.ms>(seen.ms||"")) ms.filter(m=>m.erreicht_am>(seen.ms||"")).slice(0,3).forEach(m=>items.push({emo:"🏆",txt:`Team-Meilenstein: ${esc(m.label)}`,act:""})); // H7 · v824: reine Mitteilung – ein Tipp schließt nichts mehr
-  if(cur.kpost&&cur.kpost>(seen.kpost||"")) items.push({emo:"📬",txt:"Neue Adler-Post für dein Kind – Kompliment oder Gruß in der Kabine!",act:"elternCatClose();kabineOpen()"}); // I-A
+  if(cur.kpost&&cur.kpost>(seen.kpost||"")) items.push({emo:"📬",txt:"Neue Adler-Post für dein Kind – Kompliment oder Gruß in der Kabine!",act:"elternCatClose();elternKabineStart()"}); // I-A
   if(cur.tr&&cur.tr>(seen.tr||"")){ // J4: Gesprächsfutter für den Abendbrottisch
     const rb=rueckblick[0], heuteStr=isoLokal();
     const themen=(rb.themen||[]).slice(0,3).map(esc).join(", ");
@@ -931,6 +934,34 @@ async function elternAnsageAck(id,btn){
   document.getElementById("ansage-"+id)?.remove();
   toast("Danke! ✓");
 }
+/* v837: Ein Tipp auf „Die Kabine“ sperrte den Eltern-Bereich sofort; zurück ging es nur mit dem
+   Kabinen-Code, den das Trainerteam mündlich weitergibt. Wer ihn nicht kannte, kam auch an
+   Zu- und Absagen nicht mehr. Beim ersten Start auf diesem Gerät fragt die App deshalb nach. */
+async function elternKabineStart(){
+  let bekannt=false; try{ bekannt=localStorage.getItem("adler_kabine_bekannt")==="1"; }catch(e){}
+  if(!bekannt&&typeof frageJaNein==="function"){
+    const ja=await frageJaNein({emoji:"🎮",titel:"Die Kabine starten?",
+      text:"Die Kabine ist der Kinder-Modus. Sie sperrt den Eltern-Bereich, damit dein Kind nicht herauskommt.\n\nZurück geht es nur mit dem Kabinen-Code (vier Ziffern). Den Code bekommst du vom Trainerteam.",
+      ja:"Ich kenne den Code – starten",nein:"Noch nicht"});
+    if(!ja)return;
+    try{ localStorage.setItem("adler_kabine_bekannt","1"); }catch(e){}
+  }
+  if(typeof kabineOpen==="function")kabineOpen();
+}
+/* v837: der zuletzt geladene Stand (eigene Kinder, nächste Termine) je Gerät und Konto. Nur für
+   den Fall ohne Netz; beim Abmelden weg (sbClear in core.js). Keine Antworten, keine Kontakte. */
+const ELTERN_STAND_KEY="adler_eltern_stand";
+function elternStandMerken(mail,kids,termine){
+  try{ localStorage.setItem(ELTERN_STAND_KEY,JSON.stringify({mail:String(mail||"").toLowerCase(),am:new Date().toISOString(),kids,
+    termine:(termine||[]).slice(0,15).map(t=>({id:t.id,datum:t.datum,uhrzeit:t.uhrzeit,uhrzeit_ende:t.uhrzeit_ende,typ:t.typ,titel:t.titel,ort:t.ort,platz:t.platz,treffzeit:t.treffzeit,platz_status:t.platz_status,gegner:t.gegner,spielform:t.spielform,mitbringen:t.mitbringen,eltern_turnier:t.eltern_turnier,trainer_status:{}}))})); }catch(e){}
+}
+function elternStandLesen(mail){
+  try{ const s=JSON.parse(localStorage.getItem(ELTERN_STAND_KEY)||"null"); return (s&&s.mail===String(mail||"").toLowerCase())?s:null; }catch(e){ return null; }
+}
+function elternStandZeit(iso){
+  const d=new Date(iso); if(isNaN(d))return "letzten Besuch";
+  return d.toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"})+", "+d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})+" Uhr";
+}
 async function elternDashLoad(){
   try{if(typeof elTickerTimer!=="undefined"&&elTickerTimer){clearInterval(elTickerTimer);elTickerTimer=null;}}catch(e){} // Ticker-Poll endet beim Verlassen der Match-Ansicht
   const body=document.getElementById("ep-dash-body");
@@ -939,7 +970,7 @@ async function elternDashLoad(){
   const heute=isoLokal();
   // UX 3: kam der Elternteil über einen Deep-Link (?rsvp=…)? Dann Nudge erzwingen + hinscrollen.
   let rsvpIntent=null; try{rsvpIntent=sessionStorage.getItem("adler_rsvp_intent");}catch(e){}
-  let kids=[], termin=null;
+  let kids=[], termin=null, kinderGeladen=false;
   /* ⚠️ Der Filter auf die eigene E-Mail ist KEINE Bequemlichkeit, sondern der Kern.
      Die RLS auf `eltern_kinder` erlaubt „eigene E-Mail ODER is_trainer()" – ein Trainer
      bekommt hier also ALLE Zuordnungen. Ohne Filter war kids[0] die erste Zeile der
@@ -950,12 +981,32 @@ async function elternDashLoad(){
      RLS verlaesst. Wer „meins" meint, muss „meins" hinschreiben.) */
   const meineMail=(typeof sbEmail==="function")?sbEmail():null;
   if(meineMail){
-    try{const r=await fetch(`${SB_URL}/rest/v1/eltern_kinder?email=eq.${encodeURIComponent(meineMail)}&select=spieler_id,label,kader(id,name,nr,foto_stadionheft_ok,geb)&order=spieler_id.asc`,{headers:sbAuthHeaders()});if(r.ok)kids=await r.json();}catch(e){}
+    try{const r=await fetch(`${SB_URL}/rest/v1/eltern_kinder?email=eq.${encodeURIComponent(meineMail)}&select=spieler_id,label,kader(id,name,nr,foto_stadionheft_ok,geb)&order=spieler_id.asc`,{headers:sbAuthHeaders()});if(r.ok){kids=await r.json();kinderGeladen=true;}}catch(e){}
   }
-  if(!kids.length){ body.innerHTML=card('<div style="color:#475569;font-size:var(--s-text);line-height:1.6">Dein Trainer hat diese E-Mail noch <b>keinem Kind</b> zugeordnet.<br>Bitte gib ihm die E-Mail-Adresse, mit der du dich hier angemeldet hast.</div>'); return; }
+  /* v837: „Kein Netz“ ist nicht „kein Kind“. Scheiterte die Abfrage (Funkloch am Platz,
+     Serverfehler), stand hier „Dein Trainer hat diese E-Mail noch keinem Kind zugeordnet“ –
+     genau dann, wenn Ort und Treffzeit gebraucht werden. Jetzt zeigt die Seite den zuletzt
+     geladenen Stand dieses Geräts mit Zeitangabe; ohne einen solchen eine ehrliche Meldung. */
+  const merk=elternStandLesen(meineMail);
+  let offlineStand=null;
+  if(meineMail&&!kinderGeladen){
+    if(merk&&merk.kids&&merk.kids.length){ kids=merk.kids; offlineStand=merk; }
+    else{
+      body.innerHTML=card('<div style="color:#475569;font-size:var(--s-text);line-height:1.6"><b>Keine Verbindung.</b><br>Die Termine konnten gerade nicht geladen werden.</div><button type="button" onclick="elternDashLoad()" class="btn btn-p" style="width:100%;min-height:56px;margin-top:12px;justify-content:center">Nochmal versuchen</button>');
+      return;
+    }
+  }
+  if(!kids.length){ body.innerHTML=card('<div style="color:#475569;font-size:var(--s-text);line-height:1.6">Diese E-Mail-Adresse ist noch <b>keinem Kind</b> zugeordnet.<br>Nimm die Einladungskarte eures Kindes zur Hand oder nenne dem Trainerteam die E-Mail-Adresse, mit der du dich hier angemeldet hast.</div>'); return; }
   window._elternKids=kids;   // fürs Fairplay-Quiz (Federn fürs eigene Kind)
+  let termineGeladen=false;
   let termineListe=[]; // UX 6: Timeline – die nächsten Termine, nicht nur der eine
-  try{const r=await fetch(`${SB_URL}/rest/v1/termine?select=*&datum=gte.${heute}&order=datum.asc,uhrzeit.asc.nullslast&limit=15`,{headers:sbAuthHeaders()});if(r.ok){termineListe=(await r.json()).filter(t=>!(typeof terminVorbei==="function"&&terminVorbei(t)));termin=termineListe[0]||null;}}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/termine?select=*&datum=gte.${heute}&order=datum.asc,uhrzeit.asc.nullslast&limit=15`,{headers:sbAuthHeaders()});if(r.ok){termineListe=(await r.json()).filter(t=>!(typeof terminVorbei==="function"&&terminVorbei(t)));termin=termineListe[0]||null;termineGeladen=true;}}catch(e){}
+  if(!termineGeladen&&merk&&Array.isArray(merk.termine)){
+    termineListe=merk.termine.filter(t=>t&&t.datum>=heute&&!(typeof terminVorbei==="function"&&terminVorbei(t)));
+    termin=termineListe[0]||null; offlineStand=offlineStand||merk;
+  }
+  if(kinderGeladen&&termineGeladen)elternStandMerken(meineMail,kids,termineListe);
+  window._elternOfflineStand=offlineStand?offlineStand.am:null;
   ELTERN_TERMINE=termineListe; // für den „Alle Termine"-Dialog + Kalender-Export
   // K1: unabhängige Daten PARALLEL laden statt nacheinander (Dashboard-Tempo auf dem Handy):
   // Rückmeldung zum nächsten Termin, Rückmeldungen fürs Karussell und die Kassen-Zusammenfassung.
@@ -982,6 +1033,9 @@ async function elternDashLoad(){
   /* v467: Die Live-Kachel steht NOCH ueber der Terminkarte – waehrend das Spiel laeuft,
      ist sie das Dringlichste auf der Seite. Sie fuellt sich nur, wenn wirklich getickert
      wird (elternLiveKachelLoad), sonst bleibt der Slot leer und kostet keine Zeile. */
+  if(offlineStand)html+=`<div id="eltern-offline" role="status" style="background:#fef3c7;border:1px solid #b45309;border-radius:14px;padding:12px 14px;margin-bottom:12px;color:#78350f;font-size:var(--s-text);line-height:1.5">
+      <b>Keine Verbindung.</b> Du siehst den Stand vom ${esc(elternStandZeit(offlineStand.am))}. Antworten gehen erst wieder mit Netz.
+      <button type="button" onclick="elternDashLoad()" style="display:block;width:100%;min-height:48px;margin-top:8px;border:1px solid #78350f;border-radius:12px;background:#fff;color:#78350f;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">Nochmal versuchen</button></div>`;
   html+='<div id="feier-slot"></div>';        // v830: Weihnachtsfeier ganz oben, solange Antwort oder Beitragsliste fehlt
   html+='<div id="eltern-live-slot"></div>';
   html+='<div id="push-hinweis-slot"></div>';   // v698: ganz oben – Benachrichtigungen, solange sie aus sind
@@ -1116,7 +1170,7 @@ async function elternDashLoad(){
   // ── FÜR DIE KINDER ── (gleiche Button-Optik wie die Kategorien unten: Kabine = Direktstart,
   //    je Kind ein Button, der ein Kind-Fenster im Overlay öffnet)
   html+=sec("🎮 Für die Kinder");
-  html+=`<button onclick="kabineOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)">
+  html+=`<button onclick="elternKabineStart()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)">
     <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("🎮")}</span>
     <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Die Kabine</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Kinder-Modus: Galerie, Missionen &amp; Quiz (${XP_ICON} Federn)</span></span>
     <span style="font-size:var(--s-teil);color:#64748b">›</span>
@@ -2805,8 +2859,8 @@ const ELTERN_TOUR=[
    d:"Aufgaben für euch als Familie, zum Beispiel der Grillhütten-Dienst. Könnt ihr nicht, tippt ihr „Ersatz suchen“ – eine andere Familie kann übernehmen."},
   {emo:"📡", t:"Liveticker", sel:["#eltern-live-slot","#eltern-ticker-slot"],
    d:"Am Spieltag läuft hier der Liveticker mit, wenn das Trainerteam ihn einschaltet – auch wenn ihr nicht am Platz seid. Wer mithelfen will, trägt sich unter „Wer hilft mit?“ für den Live-Ticker ein – das Trainerteam teilt dann je Team eine Person ein."},
-  {emo:"🎮", t:"Die Kabine für dein Kind", sel:['button[onclick="kabineOpen()"]'],
-   d:"Hier darf dein Kind spielen: Quiz, Missionen, Sammelalbum. Zurück geht es nur mit deinem Code."},
+  {emo:"🎮", t:"Die Kabine für dein Kind", sel:['button[onclick="elternKabineStart()"]'],
+   d:"Hier darf dein Kind spielen: Quiz, Missionen, Sammelalbum. Zurück geht es nur mit dem Kabinen-Code, den dir das Trainerteam nennt."},
   {emo:"📱", t:"Kinder-App auf eigenem Gerät", sel:['button[onclick="kinderAppOpen()"]'],
    d:"Die Kabine gibt es auch als eigene App fürs Tablet oder Handy deines Kindes. Du koppelst sie mit einem Code und legst die Zeit pro Tag fest."},
   {emo:"🪪", t:"Die Karte deines Kindes", sel:['button[onclick^="elternCatOpen(\'kind-"]'],

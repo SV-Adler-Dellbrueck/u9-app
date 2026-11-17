@@ -2103,6 +2103,7 @@ function kabineExit(){
     <div style="font-size:13px;opacity:.75;margin-bottom:14px">Code eingeben, um die Kabine zu verlassen</div>
     <div id="kabexit-dots" style="display:flex;gap:12px;justify-content:center;margin-bottom:6px"></div>
     <div id="kabexit-err" style="min-height:18px;font-size:12.5px;color:#fca5a5;font-weight:700;margin-bottom:10px"></div>
+    <div style="font-size:13px;opacity:.8;margin-bottom:12px;line-height:1.4">Code vergessen? Das Trainerteam nennt ihn dir.</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
       ${[1,2,3,4,5,6,7,8,9].map(taste).join("")}
       <button onclick="kabineCodeTip('del')" aria-label="Löschen" style="min-height:64px;border:none;border-radius:16px;background:rgba(255,255,255,.08);color:#fff;font-size:22px;cursor:pointer">⌫</button>
