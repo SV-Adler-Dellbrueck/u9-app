@@ -118,9 +118,10 @@ module.exports = async function (h) {
   if (/terminDetailOpen\(1\)/.test(re.d.offenIds)) probleme.push(`d) „Rückmeldung fehlt“ fragt den abgesagten Termin ab: ${re.d.offenIds}`);
   zeilen.push(`d) nächster Termin „Fällt aus“ ohne Rückmeldeknöpfe, nicht unter „Rückmeldung fehlt“`);
   if (re.e.anzahl < 20 || !re.e.spaet || !abfragen.some(a => /limit=300/.test(a))) probleme.push(`e) ganze Saison: ${re.e.anzahl} Termine (Abfragen ${abfragen.length})`);
-  if (re.e.knoepfe2 !== 3 || re.e.knoepfe1 !== 0 || !/Fällt aus · Platz gesperrt/.test(re.e.text1) || re.e.h < 44) probleme.push(`e) Knöpfe/Absage: ${JSON.stringify(re.e)}`);
+  /* v840: vier Knöpfe je Kind – „Krank“ gibt es jetzt auch in „Alle Termine“ (vorher drei). */
+  if (re.e.knoepfe2 !== 4 || re.e.knoepfe1 !== 0 || !/Fällt aus · Platz gesperrt/.test(re.e.text1) || re.e.h < 44) probleme.push(`e) Knöpfe/Absage: ${JSON.stringify(re.e)}`);
   if (!rueck.some(x => x.termin_id === 33 && x.spieler_id === 1 && x.status === "zugesagt")) probleme.push(`e) Zusage für Termin 33 nicht gespeichert: ${JSON.stringify(rueck)}`);
-  zeilen.push(`e) „Alle Termine“: ${re.e.anzahl} Termine, je Kind 3 Knöpfe (${re.e.h} px), abgesagt „Fällt aus · Platz gesperrt“ ohne Knöpfe, Zusage für einen späten Termin gespeichert`);
+  zeilen.push(`e) „Alle Termine“: ${re.e.anzahl} Termine, je Kind 4 Knöpfe (${re.e.h} px), abgesagt „Fällt aus · Platz gesperrt“ ohne Knöpfe, Zusage für einen späten Termin gespeichert`);
   if (fe.length) probleme.push("Konsole Eltern: " + fe.slice(0, 2).join(" | "));
   // f) Kalender
   const ics = fs.readFileSync(path.join(h.REPO, "supabase/functions/season-ics/index.ts"), "utf8");
