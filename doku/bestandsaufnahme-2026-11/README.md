@@ -52,8 +52,8 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 | 3.1 | Ohne Netz steht „keinem Kind zugeordnet“ statt des Termins | ✅ v837 |
 | 3.2 | Eltern können sich über die Kabine aussperren (Code steht nirgends) | ✅ v837 Rückfrage beim ersten Start |
 | 3.3 | Antwortknöpfe sehen an vier Stellen viermal anders aus; „Krank“ fehlt in zwei Listen | ⬜ |
-| 3.4 | Trainings werden rot gemahnt, obwohl sie als zugesagt gelten | 🔶 |
-| 3.5 | Bis zu elf bedingte Blöcke oben ohne Ordnung; Ansage steht unter Terminkarte | 🔶 Reihenfolgen sind PO-Wünsche |
+| 3.4 | Trainings werden rot gemahnt, obwohl sie als zugesagt gelten | ✅ v838 (Charles 17.11.) |
+| 3.5 | Bis zu elf bedingte Blöcke oben ohne Ordnung; Ansage steht unter Terminkarte | ✅ v838 drei Zonen (Charles 17.11.) |
 | 3.6 | „Neue Adler-Rufe“ öffnet den ersten offenen Raum, nicht den mit dem neuen Ruf | ✅ v837 |
 | 3.7 | Neuigkeiten verschwinden mit dem Lesen, kein Ort zum Nachlesen | ⬜ |
 | 3.8 | „Passwort vergessen“ endet ohne neues Passwort | ✅ v837 |
