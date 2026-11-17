@@ -79,7 +79,7 @@ module.exports = async function (h) {
   if (r.c) probleme.push("c) Karte trotz Eintrag: " + r.c.text);
   if (r.d) probleme.push("d) Karte trotz Absage: " + r.d.text);
   if (r.e) probleme.push("e) Karte, obwohl der Termin ausfällt: " + r.e.text);
-  if (r.f) probleme.push("f) Karte ohne Antwortstand: " + r.f.text);
+  if (r.f) probleme.push("f) Karte ohne Rückmeldungstand: " + r.f.text);
   if (!/🎄/.test(r.kachelText) || !/⚽/.test(r.kachelText)) probleme.push("2) Kachel zeigt nicht beide Symbole: " + r.kachelText);
   if (!/2 Termine/.test(r.kachelAria || "") || !/Weihnachtsfeier/.test(r.kachelAria || "") || !/Kinder-Eltern-Turnier/.test(r.kachelAria || "")) probleme.push("2) Kachel nennt nicht beide Termine im Namen: " + r.kachelAria);
   if (!r.wahl || r.wahl.filter(x => /Weihnachtsfeier|Kinder-Eltern-Turnier/.test(x.t)).length !== 2) probleme.push("2) Auswahl zeigt nicht beide Termine: " + JSON.stringify(r.wahl));

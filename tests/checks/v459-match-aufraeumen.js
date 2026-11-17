@@ -16,7 +16,7 @@ module.exports = async function (h) {
     go("home"); await new Promise(r => setTimeout(r, 200));
     go("spieltag"); await new Promise(r => setTimeout(r, 700));
     out.zurueck = det().map(d => d.open);
-    // gezielter Sprung darf danach oeffnen (wie tmJump/Match-Uhr)
+    // gezielter Sprung darf danach oeffnen (wie tmJump/Spieluhr)
     const nach = document.getElementById("mt-phase-nach"); if (nach) nach.open = true;
     out.sprung = !!(nach && nach.open);
     return out;

@@ -871,8 +871,8 @@ function awRenderList(){
   const zahl=w=>aktivK.filter(k=>stand(k.name)===w).length, nOffen=zahl("keine Antwort");
   const tagesGeschehen=vorab&&vorab.datum&&vorab.datum<isoLokal();
   const pushKnopf=(vorab&&vorab.zusage&&nOffen&&vorab.terminId&&!tagesGeschehen)
-    ?` <button type="button" class="btn btn-sm" id="aw-offen-push" style="min-height:44px;margin-top:6px" onclick="rsvpOffeneErinnern(${Number(vorab.terminId)},this)"><i class="ti ti-bell"></i> ${nOffen} ohne Antwort per Push erinnern</button>`:"";
-  let html=(vorab?`<div id="aw-vorab-hinweis" style="font-size:var(--s-klein);color:var(--text2);margin:8px 0 0;line-height:1.4">📣 ${vorab.zusage?`Aus den Rückmeldungen: <b>${zahl("zugesagt")} zugesagt</b> · ${vorab.absage.size} abgesagt${zahl("unsicher")?` · ${zahl("unsicher")} unsicher`:""} · <b>${nOffen} ohne Antwort</b>. Ohne Antwort gilt als dabei – noch nicht gespeichert. Fehlende abwählen und speichern.`:`Vorbelegt: alle außer Absagen${vorab.absage.size?` (${vorab.absage.size} abgesagt)`:""} – noch nicht gespeichert. Fehlende abwählen und speichern.`}${pushKnopf}</div>`:"")
+    ?` <button type="button" class="btn btn-sm" id="aw-offen-push" style="min-height:44px;margin-top:6px" onclick="rsvpOffeneErinnern(${Number(vorab.terminId)},this)"><i class="ti ti-bell"></i> ${nOffen} ohne Rückmeldung per Push erinnern</button>`:"";
+  let html=(vorab?`<div id="aw-vorab-hinweis" style="font-size:var(--s-klein);color:var(--text2);margin:8px 0 0;line-height:1.4">📣 ${vorab.zusage?`Aus den Rückmeldungen: <b>${zahl("zugesagt")} zugesagt</b> · ${vorab.absage.size} abgesagt${zahl("unsicher")?` · ${zahl("unsicher")} unsicher`:""} · <b>${nOffen} ohne Rückmeldung</b>. Ohne Rückmeldung gilt als dabei – noch nicht gespeichert. Fehlende abwählen und speichern.`:`Vorbelegt: alle außer Absagen${vorab.absage.size?` (${vorab.absage.size} abgesagt)`:""} – noch nicht gespeichert. Fehlende abwählen und speichern.`}${pushKnopf}</div>`:"")
     /* v687: Zählung statt Aufforderung. „Alle da (dann Fehlende abwählen)“ stand auch dann da,
        wenn schon alle angehakt waren – jetzt zeigt eine Zeile den Stand, und „Alle da“ kommt nur,
        wenn jemand fehlt. Der Speichern-Knopf nennt dieselbe Zahl (awZaehlen). */
@@ -4942,7 +4942,7 @@ function appUpdateSicher(){
     for(const t of document.querySelectorAll("textarea"))if(t.value.trim()&&t.offsetParent)return false;
   }catch(e){}
   const laeuft=f=>{ try{ return !!f(); }catch(e){ return false; } };      // Welle 2 kann fehlen
-  if(laeuft(()=>mcState&&mcState.clock_status==="running"))return false;  // Match-Uhr
+  if(laeuft(()=>mcState&&mcState.clock_status==="running"))return false;  // Spieluhr
   if(laeuft(()=>_stT&&_stT.timer&&!_stT.paused))return false;             // Stationstimer
   if(laeuft(()=>_dk&&_dk.wollen))return false;                             // Diktat
   if(laeuft(()=>voiceOn))return false;                                     // Sprachsteuerung
@@ -5778,7 +5778,7 @@ function _tlRender(){
     ov.innerHTML=kopf+`<div style="max-width:520px;margin:8vh auto 0">
       <div style="font-size:64px">🎉</div>
       <div style="font-size:var(--s-seite);font-weight:900;margin:10px 0">Training geschafft!</div>
-      <div style="font-size:var(--s-text);opacity:.8">Denkt an die Nachbewertung – jeder bewertet seine eigenen Übungen.</div>
+      <div style="font-size:var(--s-text);opacity:.8">Denkt an die Nachbereitung – jeder bewertet seine eigenen Übungen.</div>
       <button onclick="tlSchliessen()" style="margin-top:24px;padding:14px 28px;border:none;border-radius:12px;background:#15803d;color:#fff;font-size:var(--s-karte);font-weight:800;font-family:inherit;cursor:pointer">Fertig</button>
     </div>`;
     return;

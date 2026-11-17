@@ -4,7 +4,7 @@
       Teamkasse, Kabine (Kids-Mode) + KADER/TRAINER-Stammdaten.
    2) Spieltag/Taktik: Bearbeitbare Aufstellung, Print/PDF,
       Taktik-Board, Canvas-Draw, Video-Taktikboard.
-   3) Termine/Match-Zentrale: Kalender, Nominierung+RSVP, Match-Uhr,
+   3) Termine/Match-Zentrale: Kalender, Nominierung+RSVP, Spieluhr,
       Ticker, Spielbericht, Analyse, Blitz, Voice, Live-Aktion.
    Laedt nach quiz.js, vor dem Haupt-Skript.
    Top-Level: nur renderTrainerUI() (blockintern definiert).
@@ -969,7 +969,7 @@ async function elternKabineStart(){
   let bekannt=false; try{ bekannt=localStorage.getItem("adler_kabine_bekannt")==="1"; }catch(e){}
   if(!bekannt&&typeof frageJaNein==="function"){
     const ja=await frageJaNein({emoji:"🎮",titel:"Die Kabine starten?",
-      text:"Die Kabine ist der Kinder-Modus. Sie sperrt den Eltern-Bereich, damit dein Kind nicht herauskommt.\n\nZurück geht es nur mit dem Kabinen-Code (vier Ziffern). Den Code bekommst du vom Trainerteam.",
+      text:"Die Kabine ist der Bereich für dein Kind. Sie sperrt den Eltern-Bereich, damit dein Kind nicht herauskommt.\n\nZurück geht es nur mit dem Kabinen-Code (vier Ziffern). Den Code bekommst du vom Trainerteam.",
       ja:"Ich kenne den Code – starten",nein:"Noch nicht"});
     if(!ja)return;
     try{ localStorage.setItem("adler_kabine_bekannt","1"); }catch(e){}
@@ -1214,7 +1214,7 @@ async function elternDashLoad(){
   html+=sec("🎮 Für die Kinder");
   html+=`<button onclick="elternKabineStart()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)">
     <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("🎮")}</span>
-    <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Die Kabine</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Kinder-Modus: Galerie, Missionen &amp; Quiz (${XP_ICON} Federn)</span></span>
+    <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Die Kabine</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Für dein Kind: Galerie, Missionen &amp; Quiz (${XP_ICON} Federn)</span></span>
     <span style="font-size:var(--s-teil);color:#64748b">›</span>
   </button>`;
   html+=`<button onclick="kinderAppOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)">
@@ -1623,7 +1623,7 @@ function elternWochenleisteHtml(rows,kids,rsvpAll){
   return `<div id="eltern-woche" style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
     <div style="font-weight:800;font-size:var(--s-karte);margin-bottom:8px">🗓️ Diese Woche</div>
     <div style="display:flex;gap:4px">${zellen}</div>
-    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px">✓ zugesagt · ! Antwort offen · ✕ nicht dabei oder fällt aus</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px">✓ zugesagt · ! Rückmeldung offen · ✕ nicht dabei oder fällt aus</div>
   </div>`;
 }
 /* v811: eine Tageszelle des Streifens – gemeinsam für „Diese Woche“ (v785) und die Wochen zum Wischen */
@@ -1642,7 +1642,7 @@ function _elWocheZelle(d,inWoche,kids,rsvpAll){
       if(_elAbgesagt(t))return {zeichen:"✕",wort:"fällt aus"};
       const rr=rsvpAll[t.id]||{}, st=(kids||[]).map(k=>rr[k.spieler_id]||null);
       if(elternGiltZugesagt(t)&&st.every(x=>!x||x==="zugesagt"))return {zeichen:"✓",wort:st.some(x=>!x)?EL_GILT_TEXT:"zugesagt"};   // v838
-      if(st.some(x=>!x))return {zeichen:"!",wort:"Antwort offen"};
+      if(st.some(x=>!x))return {zeichen:"!",wort:"Rückmeldung offen"};
       if(st.every(x=>x==="zugesagt"))return {zeichen:"✓",wort:"zugesagt"};
       return {zeichen:"✕",wort:"nicht dabei"};
     };
@@ -1726,7 +1726,7 @@ function elternWochenStreifenHtml(rows,kids,rsvpAll){
   return `<div id="eltern-woche" style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
     <div id="eltern-woche-band" onscroll="_elWocheNav()" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain">${seiten.join("")}</div>
     ${nav}
-    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px">✓ zugesagt · ! Antwort offen · ✕ nicht dabei oder fällt aus</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px">✓ zugesagt · ! Rückmeldung offen · ✕ nicht dabei oder fällt aus</div>
   </div>`;
 }
 function elternWocheBlaettern(r){
@@ -1764,7 +1764,7 @@ function elternTermineHtml(rows,kids,rsvpAll,ohneId){
 function elternTermineCarouselHtml(rows,kids,rsvpAll,ohneId,ohneKnopf){
   const bis=new Date(Date.now()+14*864e5).toISOString().slice(0,10);
   rsvpAll=rsvpAll||{};
-  // was unter „Rückmeldung fehlt“ steht (14 Tage, ein Kind ohne Antwort), steht hier nicht noch einmal
+  // was unter „Rückmeldung fehlt“ steht (14 Tage, ein Kind ohne Rückmeldung), steht hier nicht noch einmal
   const offenOben=t=>t.datum<=bis&&!_elAbgesagt(t)&&(kids||[]).some(k=>!((rsvpAll[t.id]||{})[k.spieler_id]));
   const liste=(rows||[]).filter(t=>Number(t.id)!==Number(ohneId)&&!offenOben(t)).slice(0,4);
   if(!liste.length)return "";

@@ -7,7 +7,7 @@
    gewohnt, jede Statusänderung landet im Protokoll, Eltern lesen es nicht.
    a) Kachel „Rückmelde-Verhalten“ unter Kommunikation; das Fenster ist ein Dialog mit einer Tabelle
       je Kind, sortiert wie geliefert (nach Name), ohne Ampelfarben
-   b) Umschalten Spieltage ↔ Training; „ohne Antwort“ nur bei Spieltagen; Vorlauf lesbar (Tage/Std.)
+   b) Umschalten Spieltage ↔ Training; „ohne Rückmeldung“ nur bei Spieltagen; Vorlauf lesbar (Tage/Std.)
    c) Grillhütte: übernommener Dienst nennt die übernehmende Familie und „zählt für sie“
    d) Sicherung enthält rueckmeldung_log; der Eltern-Bereich ruft die Auswertung nie auf */
 "use strict";
@@ -51,10 +51,10 @@ module.exports = async function (h) {
   if (!r.kachel) probleme.push("a) Kachel fehlt unter Kommunikation");
   if (r.a.dialog !== "dialog") probleme.push("a) kein Dialog");
   if (r.a.zeilen.length !== 2 || r.a.zeilen[0][0] !== K[0]) probleme.push(`a) Zeilen Spieltage: ${JSON.stringify(r.a.zeilen)}`);
-  if (!r.a.kopf.includes("ohne Antwort")) probleme.push("b) Spalte „ohne Antwort“ fehlt bei Spieltagen");
+  if (!r.a.kopf.includes("ohne Rückmeldung")) probleme.push("b) Spalte „ohne Rückmeldung“ fehlt bei Spieltagen");
   if (r.a.farben) probleme.push("a) Ampelfarben in der Tabelle");
   if (!r.a.zeilen.some(z => z.includes("4,0 Tage")) || !r.a.zeilen.some(z => z.includes("5 Std."))) probleme.push(`b) Vorlauf-Format: ${JSON.stringify(r.a.zeilen)}`);
-  if (r.b.kopf.includes("ohne Antwort")) probleme.push("b) „ohne Antwort“ steht auch beim Training");
+  if (r.b.kopf.includes("ohne Rückmeldung")) probleme.push("b) „ohne Rückmeldung“ steht auch beim Training");
   if (r.b.zeilen.length !== 1 || !r.b.zeilen[0].includes("unter 1 Std.")) probleme.push(`b) Training: ${JSON.stringify(r.b.zeilen)}`);
   if (!/übernommen von Kind Bs Familie \(zählt für sie\)/.test(r.c)) probleme.push(`c) Grillhütte: ${r.c.slice(0, 200)}`);
   const views = fs.readFileSync(path.join(h.REPO, "views.js"), "utf8");
@@ -63,6 +63,6 @@ module.exports = async function (h) {
   if (/rueckmelde_statistik/.test(eltern)) probleme.push("d) Der Eltern-Bereich ruft die Auswertung auf");
   if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
   zeilen.push(`a) Tabelle Spieltage: ${r.a.zeilen.map(z => z.slice(0, 3).join("/")).join(" · ")}`);
-  zeilen.push(`b) Training ohne „ohne Antwort“ · c) übernommen zählt für die übernehmende Familie · d) Sicherung, Eltern ohne Zugriff`);
+  zeilen.push(`b) Training ohne „ohne Rückmeldung“ · c) übernommen zählt für die übernehmende Familie · d) Sicherung, Eltern ohne Zugriff`);
   return h.ergebnis("Rückmelde-Verhalten und Übernehmen", !probleme.length, probleme.length ? probleme : zeilen);
 };

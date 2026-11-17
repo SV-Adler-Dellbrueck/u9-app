@@ -34,8 +34,8 @@ module.exports = async function (h) {
   const fe = s.fehler(); await s.schliessen();
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
   if (r.tage !== 7) probleme.push("a) Tage: " + r.tage);
-  if (r.kachel !== 3 || !r.labels.every(l => /, (zugesagt|gilt als zugesagt|Antwort offen|nicht dabei|fällt aus)/.test(l))) probleme.push("a) Kacheln/Labels: " + JSON.stringify(r.labels));
-  if (r.zeichen.join("") !== "✓✓✕") probleme.push("b) Zeichen: " + r.zeichen.join(""));   // v838: Training ohne Antwort gilt als zugesagt (✓ statt !)
+  if (r.kachel !== 3 || !r.labels.every(l => /, (zugesagt|gilt als zugesagt|Rückmeldung offen|nicht dabei|fällt aus)/.test(l))) probleme.push("a) Kacheln/Labels: " + JSON.stringify(r.labels));
+  if (r.zeichen.join("") !== "✓✓✕") probleme.push("b) Zeichen: " + r.zeichen.join(""));   // v838: Training ohne Rückmeldung gilt als zugesagt (✓ statt !)
   if (r.eins !== "") probleme.push("c) bei einem Termin kein Streifen, war: " + r.eins.slice(0, 40));
   if (!r.dashDa || r.unter === false || !r.quer || dashH < 44) probleme.push("d) Dashboard: " + JSON.stringify({ da: r.dashDa, unter: r.unter, quer: r.quer, h: dashH }));
   zeilen.push(`7 Tage, ${r.kachel} Kacheln (${r.zeichen.join(" ")}), Kachelhöhe ${dashH} px, im Dashboard ${r.dashDa ? "da" : "fehlt"}`);

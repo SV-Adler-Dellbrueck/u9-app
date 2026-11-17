@@ -390,7 +390,7 @@ async function flushPendingSaves(){
    Actions, Blitz-Ratings). Da es reine Inserts sind, koennen sie konfliktfrei
    nachgespielt werden – kein Overwrite neuerer Online-Daten moeglich. Reihenfolge
    wird gewahrt (matchday-Upsert vor abhaengigem ticker-Insert). Zustands-Daten
-   (Nominierung/Match-Uhr) laufen weiter local-first bzw. ueber Timestamp-Merge.
+   (Nominierung/Spieluhr) laufen weiter local-first bzw. ueber Timestamp-Merge.
 ═══════════════════════════════════ */
 const SYNC_QUEUE_KEY="adler_sync_queue";
 function syncQueueGet(){return safeParse(localStorage.getItem(SYNC_QUEUE_KEY),[])||[];}

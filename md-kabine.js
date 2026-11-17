@@ -1095,7 +1095,7 @@ function kabineHome(){
     <div style="flex:1;overflow-y:auto">
     <div style="text-align:center;padding:18px 16px 6px">
       <div style="font-size:22px;font-weight:900">🦅 Die Kabine</div>
-      <div style="font-size:12px;opacity:.8">Adler U9 · Kinder-Modus</div>
+      <div style="font-size:12px;opacity:.8">Adler U9 · Die Kabine</div>
       <button id="kab-hilfe" onclick="kabineTourStart()" aria-label="Zeig mir die Kabine" style="margin-top:8px;min-height:44px;padding:6px 16px;border:1px solid rgba(255,255,255,.45);border-radius:22px;background:rgba(255,255,255,.12);color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">❓ Zeig mir alles</button>
     </div>
     <div id="kab-level" style="padding:2px 16px 6px"></div>

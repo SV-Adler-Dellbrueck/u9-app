@@ -82,7 +82,7 @@ async function teamPlanNachziehen(){
   if(typeof spieltagTeam!=="undefined"&&typeof teamFormAnwenden==="function")teamFormAnwenden(spieltagTeam);
 }
 /* v495: Läuft für dieses Team gerade wirklich ein Spiel? Beim Festival sagt das der gemeinsame
-   Anpfiff (Anker + Spielzeit), sonst die Match-Uhr des gewählten Teams. Vorher trug die Kachel
+   Anpfiff (Anker + Spielzeit), sonst die Spieluhr des gewählten Teams. Vorher trug die Kachel
    „Spiel läuft", sobald man ein Team ANTIPPTE – das las sich wie eine laufende Uhr. */
 function teamSpielLaeuft(n){
   if(TEAM_PLAN&&TEAM_PLAN.uhr&&TEAM_PLAN.uhr.start){
@@ -466,7 +466,7 @@ function teamFormSet(t,key){
   teamsAuto(); teamsSpeichern(); teamsRender(); spieltagTeamKartenRender();
   if(typeof spieltagTeam!=="undefined"&&spieltagTeam===t)teamFormAnwenden(t);
 }
-/* Die Werkzeuge in der Team-Kachel (Rotation, Match-Uhr, Aufstellung) lesen tbFormation –
+/* Die Werkzeuge in der Team-Kachel (Rotation, Spieluhr, Aufstellung) lesen tbFormation –
    beim Wechsel auf ein Team gilt dessen Spielform. */
 function teamFormAnwenden(t){
   const key=teamFormVon(t);
@@ -1028,12 +1028,12 @@ function nomApplyRsvp(){
   teamsAuto();                 // die Aufteilung folgt der neuen Nominierung
   spieltagTeamKartenRender();
   nomApplyToTools();nomSave();
-  toast("Änderungen verworfen – die Nominierung folgt wieder den Eltern ✓");
+  toast("Änderungen verworfen – die Einteilung folgt wieder den Rückmeldungen der Eltern ✓");
 }
 /* Sind alle Team-Kacheln zugeklappt, ist der ganze Block unsichtbar (hidden). Die Panels
    darin brauchen dann nicht nachgeladen zu werden – und genau das ist der Normalfall,
    während der Trainer oben in der Liste die Anwesenheit durchtippt. Ohne diese Bremse
-   löste jeder einzelne Tipp Nachladungen für Rollen, Match-Uhr und Blitz-Rating aus. */
+   löste jeder einzelne Tipp Nachladungen für Rollen, Spieluhr und Blitz-Rating aus. */
 function teamInhaltSichtbar(){
   const el=document.getElementById("spieltag-teaminhalt");
   return !!el&&!el.hidden;
@@ -1042,7 +1042,7 @@ function teamInhaltSichtbar(){
    – wenn sich Nominierung oder Einteilung ändern (nomApplyToTools)
    – wenn eine Kachel aufgeklappt wird (spieltagKarteOeffnen)
    Der zweite Weg fehlte und war der Fehler aus v396: beim Laden sind alle Kacheln zu,
-   die Bremse übersprang die Panels – und beim Aufklappen holte sie niemand nach. Match-Uhr
+   die Bremse übersprang die Panels – und beim Aufklappen holte sie niemand nach. Spieluhr
    und faire Rollen blieben leer, ohne dass irgendwo etwas Rotes erschien. */
 function teamInhaltFuellen(){
   if(!teamInhaltSichtbar())return;

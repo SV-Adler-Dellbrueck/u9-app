@@ -248,7 +248,7 @@ async function feierObenLoad(kids){
     if(a.ok){ (await a.json()).forEach(x=>rsvp[x.spieler_id]=x.status); antwortGeladen=true; }
     if(b.ok)eigene=(await b.json()).length;
   }catch(e){}
-  if(!antwortGeladen||!document.getElementById("feier-slot")){ leer(); return; }   // ohne Antwortstand lieber keine Karte als eine falsche
+  if(!antwortGeladen||!document.getElementById("feier-slot")){ leer(); return; }   // ohne Rückmeldungstand lieber keine Karte als eine falsche
   const offen=ids.some(id=>!rsvp[id]);
   const zu=ids.some(id=>rsvp[id]==="zugesagt");
   let modus=null;
@@ -259,7 +259,7 @@ async function feierObenLoad(kids){
   const wann=d.toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"})+(t.uhrzeit?" · "+String(t.uhrzeit).slice(0,5)+" Uhr":"");
   const text=modus==="antwort"?"Seid ihr dabei? Bitte kurz zu- oder absagen.":"Ihr seid dabei – was bringt ihr mit? Tragt euch in die Beitragsliste ein.";
   slot.innerHTML=`<div class="feier-karte" style="background:var(--surface);color:var(--text);border-radius:14px;padding:16px;margin-bottom:12px;border-left:4px solid var(--green);box-shadow:0 2px 10px rgba(0,0,0,.05)">
-    <div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em">${modus==="antwort"?"Antwort fehlt":"Beitragsliste"}</div>
+    <div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em">${modus==="antwort"?"Rückmeldung fehlt":"Beitragsliste"}</div>
     <div style="font-size:var(--s-teil);font-weight:800;margin-top:2px">🎄 ${esc(t.titel||f.titel)}</div>
     <div style="font-size:var(--s-text);color:var(--text2);margin-top:2px">${esc(wann)}${t.ort?" · "+esc(t.ort):""}</div>
     <div style="font-size:var(--s-text);margin-top:8px;line-height:1.5">${text}</div>

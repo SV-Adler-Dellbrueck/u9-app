@@ -3,9 +3,9 @@
    mit dem Liveticker und den Auswechslungen … gestartet werden kann an beiden Stellen."
    Kacheln: Trinkpause zählt rückwärts · Ton und Vibration auf dem Gerät, das angepfiffen hat ·
    alle Adler-Teams der Runde starten mit. Geprueft: Phasen der Uhr aus dem Anker, Anpfiff
-   schreibt Anker und zieht die geplanten Zeiten nach, Match-Uhren der Adler-Teams bekommen
+   schreibt Anker und zieht die geplanten Zeiten nach, Spieluhren der Adler-Teams bekommen
    denselben Anker, Countdown in Trainer- und Gast-Ansicht, Signal beim Ablauf, Anpfiff an der
-   Match-Uhr startet die Festival-Runde. */
+   Spieluhr startet die Festival-Runde. */
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
   const heute = h.heute();
@@ -70,7 +70,7 @@ module.exports = async function (h) {
       vibriert: rufe.length, pauseText, gastText, gastKnopf, gastRest: Math.round(gastRest), spiele: plan.length,
       gruss, gastPause, gastPauseKnopf, gastPauseRest };
   }, { heute });
-  // 5) Anpfiff an der Match-Uhr im Spieltag startet die Festival-Runde – mit demselben Anker
+  // 5) Anpfiff an der Spieluhr im Spieltag startet die Festival-Runde – mit demselben Anker
   if (!r.fehlt) {
     const ohneUhr = JSON.parse(JSON.stringify(r.cfg)); delete ohneUhr.uhr;
     htRow = { id: 7, datum: heute, config: ohneUhr, teams: r.teams, plan: r.plan };
@@ -103,18 +103,18 @@ module.exports = async function (h) {
   const md = gesendet.filter(g => /matchday/.test(g.pfad) && g.methode === "POST");
   const keys = [...new Set(md.map(g => g.body && g.body.datum))].sort();
   const anker = [...new Set(md.map(g => g.body && g.body.started_at))];
-  if (keys.length !== 2 || keys[0] !== h.heute() || keys[1] !== h.heute() + "__t2") probleme.push(`Match-Uhren: ${JSON.stringify(keys)} – erwartet beide Adler-Teams`);
-  if (md.some(g => g.body.clock_status !== "running" || g.body.spieldauer_min !== 8)) probleme.push("Match-Uhr ohne laufenden Status oder falsche Spielzeit");
+  if (keys.length !== 2 || keys[0] !== h.heute() || keys[1] !== h.heute() + "__t2") probleme.push(`Spieluhren: ${JSON.stringify(keys)} – erwartet beide Adler-Teams`);
+  if (md.some(g => g.body.clock_status !== "running" || g.body.spieldauer_min !== 8)) probleme.push("Spieluhr ohne laufenden Status oder falsche Spielzeit");
   const patches = gesendet.filter(g => /heimturnier/.test(g.pfad) && g.methode === "PATCH" && g.body && g.body.config && g.body.config.uhr);
   if (patches.length < 2) probleme.push(`nur ${patches.length} Uhr-Speicherungen – Anpfiff aus der App fehlt`);
   const ausApp = patches[patches.length - 1];
-  if (r.app && ausApp && ausApp.body.config.uhr.start !== r.app.anker) probleme.push("die App-Uhr trägt einen anderen Anker als die Match-Uhr");
-  if (!ausApp || ausApp.body.config.uhr.runde !== 1) probleme.push(`Anpfiff an der Match-Uhr startete Runde ${ausApp && ausApp.body.config.uhr.runde} statt 1`);
+  if (r.app && ausApp && ausApp.body.config.uhr.start !== r.app.anker) probleme.push("die App-Uhr trägt einen anderen Anker als die Spieluhr");
+  if (!ausApp || ausApp.body.config.uhr.runde !== 1) probleme.push(`Anpfiff an der Spieluhr startete Runde ${ausApp && ausApp.body.config.uhr.runde} statt 1`);
   if (anker.length > 2) probleme.push(`${anker.length} verschiedene Anker – alle Uhren müssen denselben tragen`);
   if (fehler.length) probleme.push(...fehler.slice(0, 3));
   zeilen.push(`Anpfiff Runde 2: Rest ${r.rest}s · Plan zeigt ${r.zeigtJetzt} (jetzt ${r.jetzt}) · „${r.uhrText.slice(0, 40)}“`);
   zeilen.push(`Phasen: läuft → ${r.pause} (nächste ${r.pauseNaechste}) → ${r.ende} · Signal ${r.vibriert}× · Gast-Rest ${r.gastRest}s, ${r.gastKnopf} Knöpfe`);
   zeilen.push(`Gäste in der Pause: „${r.gastPause.slice(0, 56)}“ · Rest ${r.gastPauseRest}s · ${r.gastPauseKnopf} Knöpfe · Gruß ${r.gruss}`);
-  zeilen.push(`Match-Uhren: ${JSON.stringify(keys)} mit ${anker.length} Anker · Uhr-Speicherungen ${patches.length} (App startet Runde ${ausApp && ausApp.body.config.uhr.runde})`);
-  return h.ergebnis("Festival-Anpfiff: gemeinsamer Countdown aus einem Anker, gekoppelt mit der Match-Uhr", !probleme.length, zeilen.concat(probleme));
+  zeilen.push(`Spieluhren: ${JSON.stringify(keys)} mit ${anker.length} Anker · Uhr-Speicherungen ${patches.length} (App startet Runde ${ausApp && ausApp.body.config.uhr.runde})`);
+  return h.ergebnis("Festival-Anpfiff: gemeinsamer Countdown aus einem Anker, gekoppelt mit der Spieluhr", !probleme.length, zeilen.concat(probleme));
 };

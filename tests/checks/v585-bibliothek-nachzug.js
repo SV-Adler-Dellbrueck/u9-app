@@ -208,7 +208,7 @@ module.exports = async function (h) {
 
   if (!probleme.length) {
     zeilen.push(`Start: ${r.startZeilen} Zeilen geladen, ${posts.length} neu angelegt, ${patchesAbgleich.length} Nachzüge (Raute: 1 Kopie, Dreieck: 2 Kopien in einem PATCH)`);
-    zeilen.push("Wartet, bis die Datenbank geantwortet hat; ohne Antwort tut er nichts; zweiter Lauf mit gleichem Stand tut nichts");
+    zeilen.push("Wartet, bis die Datenbank geantwortet hat; ohne Rückmeldung tut er nichts; zweiter Lauf mit gleichem Stand tut nichts");
     zeilen.push("„Import (bearbeitet)“ und „Eigene Übung“ bleiben unangetastet · der Editor stellt beim Zeichnen auf „Import (bearbeitet)“ um");
     zeilen.push(`Dubletten: Warm up Adler einmal in der Auswahl (id ${r.warmInAuswahl[0] && r.warmInAuswahl[0].id}), die ältere Kopie bleibt in der Datenbank · bei Passtor gewinnt die bearbeitete Kopie`);
     zeilen.push("trainingsformen steht in der Sicherung");

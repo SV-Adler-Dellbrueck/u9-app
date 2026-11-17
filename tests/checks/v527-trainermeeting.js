@@ -75,7 +75,7 @@ module.exports = async function (h) {
     out.wegInsMeeting = detail ? [...detail.querySelectorAll("button")]
       .filter(b => /tmMeetingOeffnen/.test(b.getAttribute("onclick") || "")).length : 0;
     out.elternInfo = detail ? /Eltern-Info/.test(out.detailText) : null;
-    out.elternAntworten = detail ? /Antworten der Eltern/.test(out.detailText) : null;
+    out.elternAntworten = detail ? /Rückmeldungen der Eltern/.test(out.detailText) : null;
     out.hinweis = /nur Trainer/.test(out.detailText);
 
     // d–f) Terminfindung aus dem Termin heraus
@@ -119,7 +119,7 @@ module.exports = async function (h) {
   // b/c) Detail
   if (r.wegInsMeeting !== 1) probleme.push(`${r.wegInsMeeting} Wege in die Terminfindung statt genau einem`);
   if (r.elternInfo) probleme.push("Der Meeting-Termin bietet „Eltern-Info“ an");
-  if (r.elternAntworten) probleme.push("Der Meeting-Termin zeigt „Antworten der Eltern“");
+  if (r.elternAntworten) probleme.push("Der Meeting-Termin zeigt „Rückmeldungen der Eltern“");
   if (!r.hinweis) probleme.push("Im Meeting-Termin fehlt der Hinweis, dass ihn nur Trainer sehen");
   // d) Empfehlung
   if (!r.kaestenDa) probleme.push("Die Vorschlags-Kästen tragen keine Kennung (data-slot)");
@@ -136,7 +136,7 @@ module.exports = async function (h) {
   if (fehler.length) probleme.push(...fehler.slice(0, 2));
 
   zeilen.push(`Terminart ${r.meta} · Formularknopf ${r.formKnopf} · Wege ins Meeting ${r.wegInsMeeting}`);
-  zeilen.push(`Eltern-Info ${r.elternInfo} · Antworten der Eltern ${r.elternAntworten} · Hinweis ${r.hinweis}`);
+  zeilen.push(`Eltern-Info ${r.elternInfo} · Rückmeldungen der Eltern ${r.elternAntworten} · Hinweis ${r.hinweis}`);
   zeilen.push(`Empfehlung: Slot mit Absage ${r.empfehlung51} · Slot ohne Absage ${r.empfehlung52} · offene Namen ${r.offeneNamen}`);
   zeilen.push(`Themen vor dem Termin ${r.themenOffen} · Beschlussfrage ${r.beschlussFrage} · Abhaken gespeichert ${gepatcht.length}`);
   return h.ergebnis("Trainermeeting: eigene Terminart, Terminfindung und Themen am Termin", !probleme.length, zeilen.concat(probleme));

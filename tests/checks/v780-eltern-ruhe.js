@@ -38,8 +38,8 @@ module.exports = async function (h) {
   if (r.hinweise.push && r.hinweise.push !== "1px") probleme.push("a) Push-Hinweis hat noch einen Farbstreifen: " + r.hinweise.push);
   if (r.tkTop == null || r.tkTop > 400) probleme.push("a) Terminkarte beginnt bei " + r.tkTop + " px (erwartet höchstens 400; v781: das blaue Kopfband kostet Höhe)");
   zeilen.push(`a) Hinweise ohne Streifen (${r.hinweise.schrift}/${r.hinweise.push}) · Terminkarte beginnt bei ${r.tkTop} px`);
-  /* v838: Der nächste Termin ist hier ein Training ohne Antwort – das gilt als zugesagt und trägt keinen Mahnstreifen mehr
-     (vorher 4 px). Der Streifen am Spiel ohne Antwort steht in v838-eltern-zonen.js. */
+  /* v838: Der nächste Termin ist hier ein Training ohne Rückmeldung – das gilt als zugesagt und trägt keinen Mahnstreifen mehr
+     (vorher 4 px). Der Streifen am Spiel ohne Rückmeldung steht in v838-eltern-zonen.js. */
   if (!r.rand || r.rand.oben !== "1px" || r.rand.links !== "1px") probleme.push("b) Rand: " + JSON.stringify(r.rand));
   if (!(r.schrift.titel > r.schrift.kind)) probleme.push("b) Titel nicht größer als Kindname: " + JSON.stringify(r.schrift));
   zeilen.push(`b) Rand ${r.rand && r.rand.oben} + Streifen ${r.rand && r.rand.links} · Titel ${r.schrift.titel} px, Kind ${r.schrift.kind} px`);

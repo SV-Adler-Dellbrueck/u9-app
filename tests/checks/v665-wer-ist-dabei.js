@@ -4,7 +4,7 @@
    werden. Parallel müssen unter Match daraus die Teams gebaut werden. Trainer können händisch
    noch ändern bei Bedarf die Anwesenheit.“ Auf dem Foto: 4 von 14 dabei, aber 10 Kinder in den
    Team-Kacheln – eine alte Einteilung hielt Kinder fest, die gar nicht zugesagt hatten.
-   a) Spieltag-Seite: Karte mit Datum, Zählung (zugesagt/abgesagt/krank/ohne Antwort) und den
+   a) Spieltag-Seite: Karte mit Datum, Zählung (zugesagt/abgesagt/krank/ohne Rückmeldung) und den
       Namen je Gruppe; Knopf „Anwesenheit anpassen …“ mindestens 56 px
    b) Teams: wer nicht auf „Dabei“ steht, fliegt aus einer gespeicherten Einteilung;
       wer dabei ist und kein Team hat, kommt hinein
@@ -47,7 +47,7 @@ module.exports = async function (h) {
   if (r.alteKachel) probleme.push("a) Die alte Sprung-Kachel steht noch da");
   /* v702 PO: „kann auch die Ansicht ‚wer ist dabei‘ zugeklappt haben oder vielleicht ganz weg?“ Die
      Karte trägt nur noch den Stand; die Namen stehen im Schritt „Wer kommt?“, wo man sie ändern kann. */
-  for (const w of ["Nächster Spieltag", "gegen Gegner B", "2 zugesagt", "❌ 1 abgesagt", "🤒 1 krank", "ohne Antwort", "Wer kommt?"])
+  for (const w of ["Nächster Spieltag", "gegen Gegner B", "2 zugesagt", "❌ 1 abgesagt", "🤒 1 krank", "ohne Rückmeldung", "Wer kommt?"])
     if (!r.text.includes(w)) probleme.push(`a) „${w}“ fehlt in der Karte`);
   for (const w of [K[0], K[1], K[2], K[3]]) if (r.text.includes(w)) probleme.push(`a) Name „${w}“ steht noch in der Karte (Doppelung)`);
   if (r.knopf < 56) probleme.push(`a) Knopf nur ${r.knopf} px`);
