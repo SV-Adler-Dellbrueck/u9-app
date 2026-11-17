@@ -1058,10 +1058,21 @@ async function _kgPersist(gruppen){
   }catch(e){}
 }
 
+/* v836: Die Rückfrage ist ein eigenes Fenster statt confirm(). Bei „Zurück“ springt die
+   Terminwahl wieder auf den Tag, dessen Haken noch offen sind – vorher stand oben der neue
+   Tag über den Haken des alten. Ohne offene Haken lädt awLoad sofort, wie bisher. */
 function awLoad(){
-  if(window._awDirty&&!confirm("Ungespeicherte Anwesenheits-Haken verwerfen?"))return;
+  if(!window._awDirty||typeof frageJaNein!=="function"){ _awLoadJetzt(); return; }
+  frageJaNein({emoji:"✅",titel:"Haken noch nicht gespeichert",text:"Du hast Anwesenheits-Haken gesetzt und noch nicht gespeichert. Beim Wechsel des Termins gehen sie verloren.",ja:"Verwerfen und wechseln",nein:"Zurück",ton:"rot"}).then(ja=>{
+    if(ja){ _awLoadJetzt(); return; }
+    const sel=document.getElementById("aw-date");
+    if(sel&&window._awDatumGeladen&&[...sel.options].some(o=>o.value===window._awDatumGeladen))sel.value=window._awDatumGeladen;
+  });
+}
+function _awLoadJetzt(){
   window._awDirty=false;
   const datum=document.getElementById("aw-date").value;
+  window._awDatumGeladen=datum;
   const existing=AW_DATA[datum]||{};
   const savedTrainers=existing._trainers;
   const apply=list=>document.querySelectorAll("#aw-trainer-checks input").forEach(cb=>{cb.checked=(list||[]).includes(cb.value);});
@@ -5614,9 +5625,17 @@ function tlOverlayOpen(){
   _tlRender();
 }
 function tlSchliessen(){ document.getElementById("tl-ov")?.remove(); _tlPollStop(); }
+/* v836: Rückfragen der Live-Ansicht als eigenes Fenster. Die Live-Ansicht liegt über den
+   üblichen Dialog-Ebenen, deshalb hebt sich die Frage ausdrücklich darüber. */
+function _tlFrage(o){
+  if(typeof frageJaNein!=="function")return Promise.resolve(confirm(o.text||o.titel||""));
+  const p=frageJaNein(o);
+  const m=document.getElementById("frage-modal"); if(m)m.style.zIndex="11020";
+  return p;
+}
 // Lobby verwerfen (nur vor Station 1): Session löschen, dann oben Trainer anpassen + neu starten
 async function tlAbbrechen(){
-  if(!confirm("Diesen Trainingsstart für ALLE Geräte verwerfen? Danach im Trainingsplan anpassen und neu starten."))return;
+  if(!await _tlFrage({emoji:"🛑",titel:"Trainingsstart verwerfen?",text:"Der Start wird für ALLE Geräte verworfen. Danach im Trainingsplan anpassen und neu starten.",ja:"Verwerfen",nein:"Zurück",ton:"rot"}))return;
   let _delOk=false;
   try{const r=await fetch(`${SB_URL}/rest/v1/training_live?datum=eq.${_tlHeute()}`,{method:"DELETE",headers:sbAuthHeaders()});_delOk=r.ok;}catch(e){}
   if(!_delOk){toast("Konnte nicht verworfen werden – kein Netz? Nochmal versuchen","err");return;}
@@ -5629,7 +5648,7 @@ async function tlAbbrechen(){
    nicht mehr erwartet – sonst hinge die nächste Station wieder. */
 async function tlOhne(name){
   const row=_tl.row; if(!row)return;
-  if(!confirm(`Ohne ${name} weitermachen? ${name} wird aus dieser Trainingsrunde genommen.`))return;
+  if(!await _tlFrage({emoji:"🧢",titel:`Ohne ${name} weitermachen?`,text:`${name} wird aus dieser Trainingsrunde genommen.`,ja:"Ohne weitermachen",nein:"Zurück"}))return;
   const pflicht=(row.pflicht||[]).filter(t=>t!==name);
   if(!pflicht.length){toast("Mindestens ein Trainer muss dabei bleiben","err");return;}
   const plan=JSON.parse(JSON.stringify(row.plan||{slots:[]}));
@@ -6321,9 +6340,11 @@ function tgTrainerTipp(gi){
   tg.gruppen[gi].trainer=trainers[(cur+1)%trainers.length];
   tgSave(tg);tgRender();
 }
-function tgRename(gi){
+async function tgRename(gi){
   const tg=tgFor(); if(!tg)return;
-  const name=(prompt("Neuer Gruppenname:",tg.gruppen[gi].name)||"").trim(); if(!name)return;
+  /* v836: eigenes Eingabefenster statt prompt() */
+  const roh=(typeof frageText==="function")?await frageText({emoji:"👥",titel:"Gruppe umbenennen",wert:tg.gruppen[gi].name,ja:"Übernehmen"}):prompt("Neuer Gruppenname:",tg.gruppen[gi].name);
+  const name=String(roh||"").replace(/\s+/g," ").trim().slice(0,40); if(!name)return;
   tg.gruppen[gi].name=name;
   tgSave(tg);tgRender();
 }

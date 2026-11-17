@@ -758,7 +758,8 @@ async function teamsZeilenSchreiben(){
 }
 async function teamsAnwenden(){
   if(!Object.keys(TEAMS).length){toast("Erst einteilen","err");return;}
-  if(!confirm(`Einteilung auf ${TEAM_ANZAHL} Team${TEAM_ANZAHL>1?"s":""} übertragen?\n\nDie Nominierung der betroffenen Teams wird überschrieben.`))return;
+  /* v836: eigenes Fenster statt confirm(), und „Teams übernehmen“ statt „Nominierung“. */
+  if(!await frageJaNein({emoji:"👥",titel:`Einteilung für ${TEAM_ANZAHL} Team${TEAM_ANZAHL>1?"s":""} übernehmen?`,text:"Aufstellung, Wechsel-Timer und Eltern-Ansicht arbeiten danach mit dieser Einteilung. Eine frühere Einteilung der betroffenen Teams wird ersetzt.",ja:"Teams übernehmen",nein:"Zurück"}))return;
   clearTimeout(_teamSyncId);   // die gebündelte Sicherung ist hier gegenstandslos
   await teamsSpeichern();
   if(!await teamsZeilenSchreiben()){ toast("Übertragen fehlgeschlagen","err"); return; }
@@ -990,7 +991,7 @@ function teamsRender(){
 
   // Aktionen: eine Hauptaktion, daneben „neu verteilen"
   html+=`<div style="display:flex;flex-direction:column;gap:8px;margin:6px 0 10px">
-      <button class="btn btn-p" onclick="teamsAnwenden()" style="width:100%"${leer?" disabled":""}><i class="ti ti-arrow-right"></i>In die Nominierungen übertragen</button>
+      <button class="btn btn-p" onclick="teamsAnwenden()" style="width:100%"${leer?" disabled":""}><i class="ti ti-arrow-right"></i>Teams übernehmen</button>
       <button class="btn btn-sm" onclick="teamsAuto()" style="width:100%"${leer?" disabled":""} title="Verteilt alle Kinder neu – Handänderungen gehen verloren"><i class="ti ti-wand"></i>Neu verteilen</button>
     </div>
     <div id="team-rollen-hint"></div>`;
