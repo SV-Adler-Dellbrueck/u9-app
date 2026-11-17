@@ -73,7 +73,7 @@ module.exports = async function (h) {
   if (!r.b1.andere) probleme.push("b) Ein To-do zu einem anderen Termin ist mit verschwunden");
   if (r.b2.zeilen || !r.b2.einstieg || r.b2.karte) probleme.push(`b) Ohne To-do bleibt ${JSON.stringify(r.b2)} – erwartet nur die Zeile „Nachbereiten“`);
   const views = fs.readFileSync(path.join(h.REPO, "views.js"), "utf8");
-  const ue = (views.match(/\{t:"Übungen", d:"((?:[^"\\]|\\.)*)"/) || [])[1] || "";
+  const ue = (views.match(/\{t:"Übungen",(?: kurz:"[^"]*",)? d:"((?:[^"\\]|\\.)*)"/) || [])[1] || "";
   if (!ue) probleme.push("c) Hilfetext „Übungen“ nicht gefunden");
   else { if (ue.length > 3000) probleme.push(`c) Hilfetext „Übungen“ hat ${ue.length} Zeichen`); if (!/„Vorlagen“/.test(ue) || !/Eigene Übung/.test(ue)) probleme.push("c) Hilfetext nennt die Kacheln nicht"); }
   zeilen.push(`${n} Fenster gemessen · Hilfe „Übungen“ ${ue.length} Zeichen`);
