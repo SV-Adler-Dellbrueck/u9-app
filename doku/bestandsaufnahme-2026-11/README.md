@@ -1,0 +1,99 @@
+# Bestandsaufnahme November 2026 – Arbeitsliste
+
+Auftrag Charles, 17.11.2026: umfangreiche Überarbeitung von Trainer- und Eltern-App mit Schwerpunkt
+Usability, Logik, Struktur und fachlicher Sinn der Trainingseinheiten. Maßstab: „Ein Trainer muss
+einfach und schnell ans Ergebnis kommen.“
+
+Grundlage sind drei Code-Prüfungen (Trainer-Abläufe, Eltern- und Kinder-App, Trainingsinhalte) und ein
+Durchgang durch alle Hauptbildschirme im Browser, Stand v833. Die Befunde sind am Code belegt, aber
+nicht alle am Gerät nachgestellt – **vor jeder Umsetzung wird der Befund nachgeprüft**. Reihenfolge der
+Pakete laut Charles: 1 zuerst.
+
+Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entscheidung um) · ⬜ offen
+
+## Paket 1 · Planungslogik („Training füllen“, Gruppen)
+
+| # | Befund | Status |
+|---|---|---|
+| 1.1 | Vorlage mit drei Stufen und zwei Trainern: Feld 2 bekam eine fremde Übung, keine Gruppe erlebte frei → eng → offen (`boot.js` `tpGenerate`, seit v713) | ✅ v834 |
+| 1.2 | Jeder Hauptteil bekam automatisch eine Zusatzregel, auch „frei“ und Vorlagen-Blöcke | ✅ v834: höchstens eine je Einheit, zweiter Hauptteil, nie in Vorlagen |
+| 1.3 | Ein Trainer, leerer Plan: vier verschiedene Übungen zu je zehn Minuten | ✅ v834: eine Spielform in drei Stufen |
+| 1.4 | Leerer Plan wich vom 75-Minuten-Rahmen des Konzepts ab (kein Straßenfußball-Fenster) | ✅ v834: 10/8/34/18 beim Füllen |
+| 1.5 | „Lehrgang – Zwei-Seiten-Spiel“ rutschte durch den Erwachsenen-Filter | ✅ v834 |
+| 1.6 | Wenige Kinder: die Trainerzahl schlägt die Kinderzahl (sechs Kinder, zwei Trainer → zwei Dreiergruppen ohne Spielform; `tgBedarf`) | 🔶 PO-Entscheidung v536/v656 |
+| 1.7 | Übungswahl kennt weder Dauer noch Betreuung noch Tore; Thema folgt der Kategorie von Feld 1 statt der Leitfrage (`tpStationWahl`) | ⬜ |
+| 1.8 | Ein Trainer mit zehn und mehr Kindern: die gewählte Spielform ist oft zu klein; besser zwei Felder mit derselben Form | ⬜ |
+| 1.9 | Einzel-Hauptteil ohne Stufen (Technik-Parcours) bekam bei zwei Trainern eine fremde Übung auf Feld 2 | ✅ v834 |
+| 1.10 | `trainerIstFeldtrainer` wird nirgends aufgerufen – Trainer mit Rolle „organisation“ zählt als Station | ⬜ |
+| 1.11 | Torwart: L3-1 hängt den Torwart-Block an Stufe 1; Gruppenbildung verteilt nach Torwart-Haken statt Rotation | ⬜ |
+| 1.12 | Vorlagen der Typen L4-2/L4-5: `vuAbschlussturnierSichern` schneidet ein zweites Turnier ab | ⬜ |
+
+## Paket 2 · Trainer am Platz
+
+| # | Befund | Status |
+|---|---|---|
+| 2.1 | Live-Ansicht „Trainingsstart“ zeigt weder Skizze noch Ablauf (`_tlRender`) | ⬜ |
+| 2.2 | Knopf „Matchday“ führt vor dem Spiel in „Nach dem Spiel“ (`views.js` `tmJump('blitz')`) | ⬜ |
+| 2.3 | Vorlage übernehmen: Vorschau und Hauptknopf stehen unter der ganzen Liste | ⬜ |
+| 2.4 | Trainingsplan ist dreieinhalb Handy-Höhen lang; Planen und Durchführen auf einer Seite, Startknopf ganz unten | ⬜ |
+| 2.5 | Speichern verhält sich je Seite anders (automatisch, Knopf, beides) | ⬜ |
+| 2.6 | Teams: Zwischenschritt „In die Nominierungen übertragen“ mit Systemdialog | ⬜ |
+| 2.7 | Zwei Aufstellungen in zwei Tabellen, die nichts voneinander wissen | ⬜ groß |
+| 2.8 | „Wer kommt?“ hat fünf Ansichten mit fünf Namen | ⬜ |
+| 2.9 | „Wie war’s?“ erreicht nur, wer zugesagt hat oder im Plan steht | ⬜ |
+| 2.10 | Termin anlegen liegt drei Ebenen tief, kein Einstieg von der Startseite | ⬜ |
+| 2.11 | Systemdialoge am Platz (Trainingsstart verwerfen, Gruppenname, Anwesenheit) | ⬜ |
+| 2.12 | Pinnwand fragt „Wer schreibt“ per Auswahlfeld | ⬜ |
+
+## Paket 3 · Eltern-App
+
+| # | Befund | Status |
+|---|---|---|
+| 3.1 | Ohne Netz steht „keinem Kind zugeordnet“ statt des Termins | ⬜ |
+| 3.2 | Eltern können sich über die Kabine aussperren (Code steht nirgends) | ⬜ |
+| 3.3 | Antwortknöpfe sehen an vier Stellen viermal anders aus; „Krank“ fehlt in zwei Listen | ⬜ |
+| 3.4 | Trainings werden rot gemahnt, obwohl sie als zugesagt gelten | 🔶 |
+| 3.5 | Bis zu elf bedingte Blöcke oben ohne Ordnung; Ansage steht unter Terminkarte | 🔶 Reihenfolgen sind PO-Wünsche |
+| 3.6 | „Neue Adler-Rufe“ öffnet den ersten offenen Raum, nicht den mit dem neuen Ruf | ⬜ |
+| 3.7 | Neuigkeiten verschwinden mit dem Lesen, kein Ort zum Nachlesen | ⬜ |
+| 3.8 | „Passwort vergessen“ endet ohne neues Passwort | ⬜ |
+| 3.9 | Erster Besuch stapelt sechs Dinge (Einwilligung, Auftakt, Tour, Hinweise, Checkliste) | 🔶 Tour-Länge v658 |
+| 3.10 | Kontoeinstellungen liegen an vier Orten | ⬜ |
+| 3.11 | Foto-Knopf auf der Terminkarte zeigt den kommenden Termin, also meist nichts | ⬜ |
+| 3.12 | Tipp auf eine Benachrichtigung: erst Auftakt, dann Wartezeit | ⬜ |
+| 3.13 | Wochenkacheln schmal; „✕“ steht für drei Bedeutungen | ⬜ |
+| 3.14 | Barrierefreiheit: `aria-pressed` fehlt, Sperrknopf nur über Deckkraft, Dunkelmodus ungeprüft | ⬜ |
+| 3.15 | „Für die Kinder“ steht vor „Trainerteam kontaktieren“; „Mehr vom Team“ bündelt acht ungleiche Dinge | 🔶 |
+
+## Paket 4 · Struktur und Sprache
+
+| # | Befund | Status |
+|---|---|---|
+| 4.1 | „Eltern“ und „Orga“ je rund 15 gleich gewichtete Kacheln; Einstellungen neben Alltag | ⬜ |
+| 4.2 | Dieselbe Sache, mehrere Namen (Spieltag/Match/Matchday, Block/Phase, Rückmeldung/Antwort, sechs „Adler“-Kanäle) – Wortliste | ⬜ |
+| 4.3 | Die Hilfe ist ein Änderungsprotokoll (Einträge bis 7.900 Zeichen) | ⬜ |
+| 4.4 | Fachsprache ohne Erklärung (Leitfrage, Nominierung, Provokationsregel) | ⬜ |
+| 4.5 | Rund 50 Systemdialoge, 180 von Hand gebaute Fenster | ⬜ schrittweise |
+| 4.6 | Knopf-Stile: Hauptaktion je Seite anders, rund 200 Knöpfe nur mit Inline-Style | ⬜ schrittweise |
+| 4.7 | Toter Code (Import-Fenster, `homeTool`, `statTile`, Taktik-Zweig) | ⬜ |
+| 4.8 | Trainingsplan: Zustand lebt im DOM, Sprünge über Zeitgeber | ⬜ groß, hohes Risiko |
+
+## Paket 5 · Inhalte (Vorlagen und Übungen)
+
+| # | Befund | Status |
+|---|---|---|
+| 5.1 | Skalierungszeilen gehen rechnerisch nicht auf (L5-2, L2-4, L1-3, L2-1) oder widersprechen der Übung | ⬜ |
+| 5.2 | „Warm up Adler“ (Reihenprogramm, 15 Minuten) steht im 8-Minuten-Block von 38 Vorlagen | ⬜ |
+| 5.3 | Sechs Vorlagen sind 34 Minuten Übungsform; drei davon sind die Schlechtwetter-Vorlagen; Blocktyp zählt sie als Spielzeit | ⬜ |
+| 5.4 | Stationen-Vorlagen ohne freie Stufe, höchste Erklärlast (L6-5, „3+1 gegen FUNiño“) | ⬜ |
+| 5.5 | Regeln, die Kinder nicht selbst prüfen können; Kontaktbegrenzung in L4-1/L4-4 | ⬜ |
+| 5.6 | Folge-Nummer ist Entstehungsreihenfolge, keine Progression | ⬜ |
+| 5.7 | Halle und Schlechtwetter dünn; keine Zeilen für 6, 10, 14 Kinder | ⬜ |
+| 5.8 | Material je Einheit steht nirgends als Liste | ⬜ |
+| 5.9 | Rund 14 Fast-Dubletten „3 gegen 3 auf vier Minitore“ | ⬜ |
+| 5.10 | Datenqualität: Spielerzahl, Feld ohne Maß, Coaching im Befehlston, sehr lange Abläufe | ⬜ |
+| 5.11 | Kein Zeitpuffer für Umbau und Trinken | ⬜ |
+
+Paket 5 betrifft Inhalte, die bisher über Auftragspakete aus dem Projekt-Chat entstehen. Änderungen an
+bestehenden Übungen erreichen die Geräte nicht über den Abgleich (er überschreibt nie), sondern
+brauchen ein Update in der Datenbank.

@@ -65,11 +65,12 @@ module.exports = async function (h) {
     out.zeilen = zeilen.length;
     out.knopfHoehen = zeilen.flatMap(z => [...z.querySelectorAll("button")].map(b => Math.round(b.getBoundingClientRect().height)));
     // b)
-    const si0 = haupt[0].si, weg = tpSlots[si0].regel;
+    const si0 = (haupt.find(x => x.sl.regel) || haupt[0]).si, weg = tpSlots[si0].regel;   // v834: es gibt nur noch eine Regel je Einheit
     tpRegelWeg(si0); await warte(100);
     out.nachWeg = tpSlots[si0].regel;
     await tpGenerate(); await warte(300);
     out.nachZweitem = tpSlots[si0].regel;
+    out.andereNachZweitem = haupt.filter(x => x.si !== si0 && tpSlots[x.si].regel).length;
     out.wegName = weg;
     // c)
     out.vorschlaege = tbUebungVorschlaege("Lob für den Mitspieler, Pressing nach Ballverlust und Umschalten nach Ballgewinn").map(v => v.f.name);
@@ -98,10 +99,12 @@ module.exports = async function (h) {
   // a)
   if (r.zahlRegeln !== 10) probleme.push(`a) ${r.zahlRegeln} von 10 Zusatzregeln in der Übungsliste gefunden`);
   if (r.untauglich.length) probleme.push("a) an einer Station: " + r.untauglich.join(", "));
-  else if (r.regeln.some(x => !x) || new Set(r.regeln).size !== r.regeln.length) probleme.push("a) Regeln je Hauptteil: " + JSON.stringify(r.regeln));
-  else if (r.zeilen !== r.regeln.length) probleme.push(`a) ${r.zeilen} Regel-Zeilen statt ${r.regeln.length}`);
+  /* v834 (Charles 17.11.): höchstens eine automatische Regel je Einheit, im zweiten Hauptteil – vorher je Hauptteil eine. */
+  else if (r.regeln.filter(Boolean).length !== 1 || !r.regeln[1]) probleme.push("a) Regeln je Hauptteil: " + JSON.stringify(r.regeln));
+  else if (r.zeilen !== 1) probleme.push(`a) ${r.zeilen} Regel-Zeilen statt 1`);
   else if (r.knopfHoehen.some(x => x < 44)) probleme.push("a) Knopf unter 44 px: " + r.knopfHoehen.join("/"));
-  else zeilen.push(`a) Stationen ${r.stationen[0].join(" · ")}; Regeln ${r.regeln.join(" · ")}`);
+  else zeilen.push(`a) Stationen ${r.stationen[0].join(" · ")}; eine Regel im zweiten Hauptteil: ${r.regeln[1]}`);
+  if (r.andereNachZweitem) probleme.push("b) nach dem Wegtippen hat ein anderer Hauptteil eine Regel bekommen");
 
   // b)
   if (r.nachWeg !== null) probleme.push("b) Wegtippen setzt die Regel nicht auf null: " + r.nachWeg);

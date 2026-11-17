@@ -14,8 +14,8 @@
       belegt; der Knopf heißt „Training füllen“.
    b) Gleicher Termin, noch einmal von vorn → dasselbe Ergebnis (fester Zufall je Datum).
    c) Vorlage L1-1 (eine Übung für alle Felder) mit zwei Trainern übernehmen → Feld 1 behält
-      „1gg1 Tore-Duell“ in jedem Hauptteil, Feld 2 hat eine andere Übung, in allen Hauptteilen
-      dieselbe.
+      „1gg1 Tore-Duell“ in jedem Hauptteil. Seit v834 spielt Feld 2 in den drei Stufen dasselbe
+      (vorher eine fremde Übung – dann erlebte keine Gruppe frei → eng → offen).
    d) Vorlage L4-6 mit eigenen Stationen → die Stationen der Vorlage bleiben, wie sie sind. */
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
@@ -114,7 +114,7 @@ module.exports = async function (h) {
   const spalten = hA.length ? hA[0].felder.map((_, p) => hA.map(x => x.felder[p])) : [];
   const rotiert = spalten.length === 3 && spalten.every(sp => sp.every(n => n && n === sp[0]));
   const verschieden = new Set(spalten.map(sp => sp[0])).size === spalten.length;
-  const warm = r.bildA.find(x => x.typ === "warmup");
+  const warm = r.bildA.find(x => x.typ === "warmup" && x.felder.length);   // v834: davor steht das Straßenfußball-Fenster ohne Übung
   if (r.trainer3 !== 3 || r.kinder !== 14) probleme.push(`a) Voraussetzung: ${r.trainer3} Trainer, ${r.kinder} Kinder`);
   else if (hA.length !== 3) probleme.push(`a) ${hA.length} Hauptteile statt 3`);
   else if (!rotiert) probleme.push("a) Felder tragen nicht in allen Hauptteilen dieselbe Übung: " + JSON.stringify(spalten));
@@ -134,9 +134,10 @@ module.exports = async function (h) {
   if (r.trainer2 !== 2) probleme.push(`c) Voraussetzung: ${r.trainer2} Trainer statt 2`);
   else if (!hC.length || hC.some(x => x.felder.length !== 2)) probleme.push("c) L1-1 mit zwei Trainern: nicht zwei Felder je Hauptteil " + JSON.stringify(hC.map(x => x.felder)));
   else if (!f1.every(n => n === "1gg1 Tore-Duell")) probleme.push("c) Feld 1 hat die Vorlagen-Übung verloren: " + f1.join(" / "));
-  else if (f2.some(n => !n || n === "1gg1 Tore-Duell")) probleme.push("c) Feld 2 wiederholt Feld 1 oder ist leer: " + f2.join(" / "));
-  else if (new Set(f2).size !== 1) probleme.push("c) Feld 2 wechselt die Übung zwischen den Hauptteilen: " + f2.join(" / "));
-  else zeilen.push(`c) L1-1, zwei Trainer: Feld 1 „1gg1 Tore-Duell“, Feld 2 „${f2[0]}“ in allen ${hC.length} Hauptteilen`);
+  /* v834 (Charles 17.11.): Bei Drei-Stufen-Vorlagen spielen alle Felder dieselbe Übung – sonst erlebt keine Gruppe
+     frei → eng → offen. Die fremde Übung auf Feld 2 (v713) gilt nur noch für Hauptteile ohne Stufen. */
+  else if (f2.some(n => n !== "1gg1 Tore-Duell")) probleme.push("c) Feld 2 spielt in einer Stufe etwas anderes als Feld 1: " + f2.join(" / "));
+  else zeilen.push(`c) L1-1, zwei Trainer: beide Felder „1gg1 Tore-Duell“ in allen ${hC.length} Stufen`);
 
   // d)
   const hD = r.bildD.filter(x => ["main", "spielform", "uebungsform"].includes(x.typ));
