@@ -143,7 +143,7 @@ module.exports = async function (h) {
      13 Kinder, zwei Stationen, zwei Trainer: zwei Gruppen (vorher drei aus der Kinderzahl). */
   /* v656, zweite PO-Antwort am 28.09. („L4-8 mit zwei Trainern: zwei Gruppen“): auch drei
      Stationen machen keine dritte Gruppe mehr auf, solange Trainer angehakt sind. */
-  const soll = { "8/3": 2, "10/3": 2, "12/3": 2, "13/3": 2, "14/3": 2, "13/2": 2, "8/1": 2, "3/3": 2 };
+  const soll = { "8/3": 2, "10/3": 2, "12/3": 2, "13/3": 2, "14/3": 2, "13/2": 2, "8/1": 2, "3/3": 1 };   // v835 (Charles 17.11.): unter acht Kindern eine Gruppe, auch bei zwei Trainern
   const abw = Object.keys(soll).filter(k => r.rechnung[k] !== soll[k]).map(k => `${k} → ${r.rechnung[k]} statt ${soll[k]}`);
   if (abw.length) probleme.push("Gruppenzahl falsch gerechnet: " + abw.join(" · "));
   if (r.kinder !== 13) probleme.push(`${r.kinder} Kinder im Pool, erwartet 13`);

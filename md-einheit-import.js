@@ -1089,7 +1089,7 @@ function vorlageUebernehmenRender(opt){
   const tag=(()=>{ if(!datum)return ""; const x=new Date(datum+"T00:00:00"); return isNaN(x)?datum:x.toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}); })();
   if(!VORLAGEN.length){
     box.innerHTML=`<div style="font-size:var(--s-text);color:var(--text2);line-height:1.55;padding:6px 0">
-      Es gibt noch keine Vorlagen. Sie kommen beim Öffnen aus <b>uebungen/vorlagen.json</b> – oder von Hand über „Vorlagen importieren“.</div>
+      Es gibt noch keine Vorlagen. Sie kommen beim nächsten Öffnen der App von selbst.</div>
       <button onclick="vorlageUebernehmenClose()" class="btn" style="width:100%;min-height:48px;margin-top:10px;justify-content:center">Schließen</button>`;
     return;
   }
@@ -1129,10 +1129,13 @@ function vorlageUebernehmenRender(opt){
   });
   /* Keine Versalien: Die Leitfragen sind ganze Fragesätze, und in Großbuchstaben liest sie
      niemand zu Ende. Das Kürzel trägt die Farbe, die Frage bleibt normal gesetzt. */
-  const listeHtml=gruppen.map(g=>{
+  /* v835: Die Vorschau klappt direkt unter der gewählten Karte auf (vorher unter der ganzen
+     Liste – bei 39 Vorlagen hieß das: wählen, weit scrollen, bestätigen). Als Funktion, weil
+     `vorschau` erst weiter unten steht. */
+  const listeHtml=()=>gruppen.map(g=>{
     const t=/^(L\d+) · (.*)$/.exec(g.kopf);
     const kopf=t?`<span style="color:#7c3aed;font-weight:900">${esc(t[1])}</span> <span style="font-weight:700">${esc(t[2])}</span>`:`<span style="font-weight:700">${esc(g.kopf)}</span>`;
-    return `<div style="font-size:var(--s-klein);color:var(--text2);margin:12px 2px 6px;line-height:1.4">${kopf}</div>${g.items.map(karte).join("")}`;
+    return `<div style="font-size:var(--s-klein);color:var(--text2);margin:12px 2px 6px;line-height:1.4">${kopf}</div>${g.items.map(v=>karte(v)+(String(v.id)===String(_vuAuswahl)?vorschau(v):"")).join("")}`;
   }).join("");
   const vorschau=v=>{
     const bl=Array.isArray(v.bloecke)?v.bloecke:[];
@@ -1145,7 +1148,7 @@ function vorlageUebernehmenRender(opt){
       </div>`; };
     const sk=v.skalierung&&typeof v.skalierung==="object"?v.skalierung:{};
     const skZeilen=_evSkalierungSchluessel(sk).map(k=>`<div><b>${k} Kinder:</b> ${esc(String(sk[k]))}</div>`).join("");
-    return `<div style="border:var(--border-s);border-radius:12px;padding:12px;margin-top:10px">
+    return `<div id="vu-vorschau" style="border:1.5px solid #7c3aed;border-radius:12px;padding:12px;margin:0 0 10px">
       <div style="font-size:var(--s-text);font-weight:800">${esc(v.name)}</div>
       <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">${esc(v.leitfrage||"")}${tag?" · "+esc(tag):" · kein Termin gewählt"}</div>
       ${v.ziel_kinder?`<div style="font-size:var(--s-text);background:var(--surface2);border-radius:10px;padding:8px 10px;margin-bottom:8px;line-height:1.45"><b>⚽ Für die Kinder:</b> ${esc(v.ziel_kinder)}</div>`:""}
@@ -1196,10 +1199,13 @@ function vorlageUebernehmenRender(opt){
     <div style="font-size:var(--s-klein);color:var(--text3);margin:8px 2px 0">${treffer.length===VORLAGEN.length?`${VORLAGEN.length} Vorlagen`:`${treffer.length} von ${VORLAGEN.length} Vorlagen`}</div>
     ${themenStart?`<div style="font-size:var(--s-klein);color:var(--text2);margin:10px 2px 6px">Thema wählen – oder oben suchen</div>${vuThemenKacheln("vuThemaWaehlen","")}`
       :_vuFilter.leitfrage&&!_vuFilter.tag&&!_vuFilter.ordnung&&!_vuFilter.suche?`<button type="button" onclick="vuFilterSet('leitfrage',_vuFilter.leitfrage)" class="btn btn-sm" style="min-height:44px;margin-top:10px">← Alle Themen</button>`:""}
-    ${themenStart?"":treffer.length?listeHtml:`<div style="font-size:var(--s-text);color:var(--text2);padding:10px 0">Keine Vorlage passt dazu.${(aktiv||_vuFilter.suche)?` <button onclick="vuFilterLeeren();vuSucheSetzen('')" class="btn btn-sm" style="min-height:44px;margin-top:8px">↩ Alle zeigen</button>`:""}</div>`}
-    ${gewaehlt?vorschau(gewaehlt):""}
-    <button id="vu-haupt" onclick="vorlageUebernehmenSetzen()" class="btn btn-p" style="width:100%;min-height:56px;margin-top:12px;justify-content:center;font-size:var(--s-karte)"${(!gewaehlt||!datum)?" disabled":""}><i class="ti ti-calendar-plus"></i>${_vuPlanDa?"Plan ersetzen":"Auf den Termin setzen"}</button>
-    <button onclick="vorlageUebernehmenClose()" class="btn" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Abbrechen</button>`;
+    ${themenStart?"":treffer.length?listeHtml():`<div style="font-size:var(--s-text);color:var(--text2);padding:10px 0">Keine Vorlage passt dazu.${(aktiv||_vuFilter.suche)?` <button onclick="vuFilterLeeren();vuSucheSetzen('')" class="btn btn-sm" style="min-height:44px;margin-top:8px">↩ Alle zeigen</button>`:""}</div>`}
+    ${gewaehlt&&(themenStart||!treffer.includes(gewaehlt))?vorschau(gewaehlt):""}
+    <div id="vu-fuss" style="position:sticky;bottom:-16px;z-index:2;background:var(--surface);margin:12px -4px 0;padding:8px 4px 24px;border-top:1px solid var(--surface2)">
+      ${gewaehlt?`<div style="font-size:var(--s-klein);color:var(--text2);margin:0 2px 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Gewählt: <b>${esc(gewaehlt.name)}</b>${_vuPlanDa?" · ersetzt den Plan des Termins":""}</div>`:""}
+      <button id="vu-haupt" onclick="vorlageUebernehmenSetzen()" class="btn btn-p" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte)"${(!gewaehlt||!datum)?" disabled":""}><i class="ti ti-calendar-plus"></i>${_vuPlanDa?"Plan ersetzen":"Auf den Termin setzen"}</button>
+    </div>
+    <button onclick="vorlageUebernehmenClose()" class="btn" style="width:100%;min-height:48px;margin-top:4px;justify-content:center">Abbrechen</button>`;
   /* Nach dem Neuzeichnen zurück ins Suchfeld – sonst verlöre jeder Tastendruck den Fokus. */
   if(opt&&opt.fokus==="vu-suche"){
     const el=document.getElementById("vu-suche");
