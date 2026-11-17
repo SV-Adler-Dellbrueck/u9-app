@@ -7173,6 +7173,22 @@ function kPhasen(items,col){
     </button>`).join("")+`</div>`;
 }
 function kSec(t){return `<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:16px 0 8px">${t}</div>`;}
+/* v841: Selten Gebrauchtes klappt zu. „Eltern & Kinder“ zeigte 17 gleich gewichtete Kacheln,
+   „Orga“ 14 – das Tägliche (Adler-Rufe, Termine, Tagebuch) stand zwischen Urkunden-Studio und
+   Datensicherung. Eine Klappe trägt Überschrift und Zahl; ob sie offen ist, merkt sich das
+   Gerät (nur eine Bequemlichkeit – ohne Speicher ist sie einfach zu). */
+function kKlappe(id,titel,items,col){
+  const n=items.filter(Boolean).length;
+  let offen=false; try{ offen=localStorage.getItem("adler_klappe_"+id)==="1"; }catch(e){}
+  return `<details class="k-klappe" data-klappe="${id}"${offen?" open":""} ontoggle="try{localStorage.setItem('adler_klappe_${id}',this.open?'1':'0')}catch(e){}" style="margin-top:14px;border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface)">
+    <summary style="min-height:56px;display:flex;align-items:center;gap:10px;padding:0 14px;cursor:pointer;list-style:none;font-size:var(--s-text);font-weight:800;color:var(--text)">
+      <span style="flex:1;min-width:0">${titel}</span>
+      <span style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">${n} ${n===1?"Eintrag":"Einträge"}</span>
+      <i class="ti ti-chevron-down k-klappe-pfeil" aria-hidden="true" style="font-size:var(--s-teil);color:var(--text2)"></i>
+    </summary>
+    <div style="padding:2px 12px 12px">${kTiles(items,col)}</div>
+  </details>`;
+}
 const KACHELN={
   training:{emo:"🏃",titel:"Training",sub:"Vom Plan bis zum Abpfiff",col:"var(--fam-training)"},
   spieltag:{emo:"⚽",titel:"Spieltag",sub:"Vorher, während, danach",col:"var(--fam-spieltag)"},
@@ -7296,8 +7312,13 @@ function _kachelInhalt(key){
       {emo:"📣",label:"Team-Ansage",fn:"ansageTrainerOpen"},
       {emo:"🗣️",label:"Elterngespräch",fn:"epollTrainerOpen"}
     ],col)
-    +kSec("Eltern verwalten")
+    +kSec("Kinder belohnen")
     +kTiles([
+      {emo:"🪶",label:"Federn vergeben",fn:"federnVergebenOpen"},   // v675
+      {emo:"🎯",label:"Team-Quests",fn:"questEditorOpen"},
+      {emo:"🏅",label:"Urkunden-Studio",fn:"urkundenOpen"}
+    ],col)
+    +kKlappe("elki-eltern","Eltern verwalten",[
       // v610: Die Karten sind seit v604 der Regelweg – vorher nur über Einstellungen erreichbar.
       {emo:"🪪",label:"Einladungskarten",fn:"einladungskartenOpen"},
       {emo:"📈",label:"Rückmelde-Verhalten",fn:"rueckmeldeStatistikOpen"},
@@ -7306,22 +7327,14 @@ function _kachelInhalt(key){
       /* v669 PO 29.09.: „Eltern einladen kann meiner Einschätzung ganz weg ebenso wie QR-Aushang.“
          Der Weg in die App sind die Einladungskarten (seit v604). */
     ],col)
-    +kSec("Kinder belohnen")
-    +kTiles([
-      {emo:"🪶",label:"Federn vergeben",fn:"federnVergebenOpen"},   // v675
-      {emo:"🎯",label:"Team-Quests",fn:"questEditorOpen"},
-      {emo:"🏅",label:"Urkunden-Studio",fn:"urkundenOpen"}
-    ],col)
-    +kSec("Kabine gestalten")
-    +kTiles([
+    +kKlappe("elki-kabine","Kabine gestalten",[
       {emo:"🦅",label:"Adler-Welt",fn:"adlerWeltOpen"},
       {emo:"🤝",label:"Unsere Regeln",fn:"codexKinderEditOpen"},
       {emo:"🗳️",label:"Kabinen-Wahl",fn:"wahlTrainerOpen"},
       {emo:"🖼️",label:"Karten-Fotos",fn:"albumFotosOpen"},
       {emo:"🧠",label:"Quiz-Ergebnisse",fn:"go",arg:"quizresults"}
     ],col)
-    +kSec("Inhalte")
-    +kTiles([
+    +kKlappe("elki-inhalte","Inhalte",[
       {emo:"🪺",label:"Nest-Ausgaben",fn:"nestEditorOpen"},   // v733: eine Ausgabe je Spieltag
       {emo:"📰",label:"Adler Nest (Porträt-Vorschlag)",fn:"stadionheftOpen"},
       ...(WRAPPED_SICHTBAR?[{emo:"🏆",label:"Adler Wrapped",fn:"adlerWrappedTeaser"}]:[])
@@ -7355,9 +7368,8 @@ function _kachelInhalt(key){
       (new Date().getMonth()>=5&&new Date().getMonth()<=8&&!saisonStartZu())?{emo:"🌅",label:"Saisonstart-Check",fn:"saisonStartOpen"}:null
     ],col)
     +`<div id="eltern-umschalter"></div>`
-    +kSec("Einstellungen")
-    +`<div id="push-slot-trainer" style="margin-bottom:10px"></div>`
-    +kTiles([
+    +`<div id="push-slot-trainer" style="margin:14px 0 0"></div>`
+    +kKlappe("orga-einstellungen","Einstellungen",[
       // v610: aus „Team-Orga" hierher – dort trug sie dasselbe 🧰 wie „Material".
       {emo:"⚙️",label:"Setup-Übersicht",fn:"setupTrainerOpen"},
       {emo:"🔑",label:"Passwort ändern",fn:"pwChangeOpen"},
