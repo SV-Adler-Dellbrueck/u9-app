@@ -668,7 +668,9 @@
     <div id="aw-trainer-checks" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"><!-- wird aus TRAINER befüllt (D2) --></div>
     <div class="sl tp-schritt"><span class="tp-nr" aria-hidden="true">3</span>Welche Kinder waren da?</div>
     <div id="aw-list"></div>
-    <div class="brow" style="margin-top:12px">
+    <!-- v845: dauerhafter Stand statt nur einer Meldung, die verschwindet -->
+    <div id="aw-stand" role="status" aria-live="polite" style="min-height:22px;margin-top:12px"></div>
+    <div class="brow" style="margin-top:6px">
       <button id="aw-save-btn" onclick="awSave()" style="flex:1;min-width:150px;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:56px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.28)"><i class="ti ti-device-floppy"></i> Anwesenheit speichern</button>
     </div>
     <!-- Die Saison-Auswertung ist ab v381 NICHT mehr hier (PO): Erfassen und Auswerten sind

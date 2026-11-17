@@ -903,7 +903,7 @@ function awZaehlen(){
 }
 
 function awToggle(btn,name){
-  window._awDirty=true; // Haken gesetzt, aber noch nicht gespeichert
+  window._awDirty=true; awStandRender(); // Haken gesetzt, aber noch nicht gespeichert
   btn.classList.toggle("on");
   awZaehlen();
 }
@@ -912,10 +912,10 @@ function awToggle(btn,name){
    und wird mit „Speichern" zur Tatsache. */
 async function awTrainerToggle(cb){
   const datum=document.getElementById("aw-date")?.value||"";
-  if(awZaehltAlsTatsache(datum)){ window._awDirty=true; return; }
+  if(awZaehltAlsTatsache(datum)){ window._awDirty=true; awStandRender(); return; }
   const optText=document.getElementById("aw-date")?.selectedOptions?.[0]?.textContent||"";
   const t=await terminDesTages(datum,optText); const tid=t?t.id:null;   // v476: auch Spiel/Turnier/Event
-  if(!tid){ window._awDirty=true; return; }   // kein Termin an diesem Tag: wie bisher lokal
+  if(!tid){ window._awDirty=true; awStandRender(); return; }   // kein Termin an diesem Tag: wie bisher lokal
   const st=await trainerRsvpSetzen(tid,cb.value,cb.checked?"ja":"nein",datum);
   if(!st)cb.checked=!cb.checked;   // nicht gespeichert – Haken zuruecknehmen, sonst luegt die Anzeige
 }
@@ -925,6 +925,24 @@ function awAlleDa(){
   awZaehlen();
 }
 
+/* v845: Der Plan sagt seit v797, ob er gespeichert ist – die Anwesenheit sagte es nur in einer
+   Meldung, die nach zwei Sekunden verschwand. Jetzt steht über dem Speichern-Knopf dauerhaft,
+   woran der Trainer ist: offene Haken („Noch nicht gespeichert“) oder der gespeicherte Stand,
+   mit Uhrzeit, wenn in dieser Sitzung gespeichert wurde. Farbe ist nicht der einzige Träger:
+   beide Zustände haben ein eigenes Zeichen und einen eigenen Satz. */
+const _awGespeichertUm={};
+function awStandRender(){
+  const el=document.getElementById("aw-stand"); if(!el)return;
+  const datum=(document.getElementById("aw-date")||{}).value||"";
+  if(window._awDirty){
+    el.innerHTML=`<span style="font-size:var(--s-text);font-weight:700;color:var(--warn-text,#b45309)">● Noch nicht gespeichert – tippe unten auf „Anwesenheit speichern“.</span>`;
+    return;
+  }
+  const um=_awGespeichertUm[datum];
+  const da=(typeof AW_DATA!=="undefined"&&AW_DATA&&AW_DATA[datum]);
+  el.innerHTML=um?`<span style="font-size:var(--s-text);color:var(--text2)">✓ Gespeichert um ${um.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})} Uhr</span>`
+    :da?`<span style="font-size:var(--s-text);color:var(--text2)">✓ Gespeichert</span>`:"";
+}
 function awSave(){
   const datum=document.getElementById("aw-date").value;
   if(!datum){toast("Bitte Datum wählen","err");return;}
@@ -960,7 +978,7 @@ function awSave(){
     const erg=tgAnwesenheitAbgleich();
     if(erg){ tgAbgleichMelden(erg); if(typeof tpRenderTimeline==="function")tpRenderTimeline(); }
   }
-  toast("Anwesenheit gespeichert ✓"); window._awDirty=false;
+  toast("Anwesenheit gespeichert ✓"); _awGespeichertUm[datum]=new Date(); window._awDirty=false; awStandRender();
 }
 
 /* ═══════════════════════════════════
@@ -1070,7 +1088,7 @@ function awLoad(){
   });
 }
 function _awLoadJetzt(){
-  window._awDirty=false;
+  window._awDirty=false; awStandRender();
   const datum=document.getElementById("aw-date").value;
   window._awDatumGeladen=datum;
   const existing=AW_DATA[datum]||{};
