@@ -18,7 +18,7 @@ module.exports = async function (h) {
   let angeglichen = 0;
   for (const v of d.vorlagen) {
     const kurz = v.name.split(" ")[0];
-    const b = v.bloecke, stufen = b.filter(x => x.typ === "main" || x.typ === "spielform");
+    const b = v.bloecke, stufen = b.filter(x => x.typ === "main" || x.typ === "spielform" || x.typ === "uebungsform");   // v847: Stufen dürfen Übungsform sein
     const summe = b.filter(x => x.typ !== "tw").reduce((a, x) => a + x.dauer, 0);
     if (AUSNAHMEN.includes(kurz)) continue;   // die Lehrgangsformen dauern 90 Minuten
     if (!(Number(v.folge_nr) > 0)) continue;   // v833: Sondereinheit ohne Folge (Technik-Parcours: 34 Min. Hauptteil am Stück) folgt nicht dem Stufenraster

@@ -71,7 +71,7 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 |---|---|---|
 | 4.1 | „Eltern“ und „Orga“ je rund 15 gleich gewichtete Kacheln; Einstellungen neben Alltag | ✅ v841 Klappen für Seltenes |
 | 4.2 | Dieselbe Sache, mehrere Namen (Spieltag/Match/Matchday, Block/Phase, Rückmeldung/Antwort, sechs „Adler“-Kanäle) – Wortliste | teils ✅ v842: Spieltag, Spieluhr, Rückmeldung, Die Kabine, Nachbereitung; offen: Block/Phase, Station/Feld, Schließen/Abbrechen/Fertig, Adler-Kanäle |
-| 4.3 | Die Hilfe ist ein Änderungsprotokoll (Einträge bis 7.900 Zeichen) | teils ✅ v843: Kurzfassung zuerst, ganzer Text hinter „Alles dazu“; eigene Kurzfassungen bisher für vier Einträge |
+| 4.3 | Die Hilfe ist ein Änderungsprotokoll (Einträge bis 7.900 Zeichen) | teils ✅ v843: Kurzfassung zuerst, ganzer Text hinter „Alles dazu“; eigene Kurzfassungen für 18 Einträge (v847: die 14 längsten); rund 40 mittellange zeigen den Anriss |
 | 4.4 | Fachsprache ohne Erklärung (Leitfrage, Nominierung, Provokationsregel) | ⬜ |
 | 4.5 | Rund 50 Systemdialoge, 180 von Hand gebaute Fenster | ⬜ schrittweise |
 | 4.6 | Knopf-Stile: Hauptaktion je Seite anders, rund 200 Knöpfe nur mit Inline-Style | ⬜ schrittweise |
@@ -83,8 +83,8 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 | # | Befund | Status |
 |---|---|---|
 | 5.1 | Skalierungszeilen gehen rechnerisch nicht auf (L5-2, L2-4, L1-3, L2-1) oder widersprechen der Übung | teils ✅ v839: L5-2/8, L2-4/12, L1-3/8 berichtigt; Feldmaße gegen die Übungen offen |
-| 5.2 | „Warm up Adler“ (Reihenprogramm, 15 Minuten) steht im 8-Minuten-Block von 38 Vorlagen | ⬜ |
-| 5.3 | Sechs Vorlagen sind 34 Minuten Übungsform; drei davon sind die Schlechtwetter-Vorlagen; Blocktyp zählt sie als Spielzeit | ⬜ |
+| 5.2 | „Warm up Adler“ (Reihenprogramm, 15 Minuten) steht im 8-Minuten-Block von 38 Vorlagen | bleibt so (Charles 17.11.: das Einlaufprogramm wird nicht getauscht) |
+| 5.3 | Sechs Vorlagen sind 34 Minuten Übungsform; drei davon sind die Schlechtwetter-Vorlagen; Blocktyp zählt sie als Spielzeit | teils ✅ v847: L1-4, L2-3, L4-4 mit Stufe 1 und 2 als Übungsform, 21 statt 32 Minuten Spielform (Charles 17.11.); die übrigen drei offen |
 | 5.4 | Stationen-Vorlagen ohne freie Stufe, höchste Erklärlast (L6-5, „3+1 gegen FUNiño“) | ⬜ |
 | 5.5 | Regeln, die Kinder nicht selbst prüfen können; Kontaktbegrenzung in L4-1/L4-4 | ⬜ |
 | 5.6 | Folge-Nummer ist Entstehungsreihenfolge, keine Progression | ⬜ |
