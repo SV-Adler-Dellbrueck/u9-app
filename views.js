@@ -2011,7 +2011,7 @@ function renderProfil(){
     </div>`:""}
 
     <div id="profil-selbstbild"></div>
-    ${(typeof bewElternLesbar==="function"&&bewElternLesbar(lat.eltern))?`<div class="sl"><i class="ti ti-message-circle"></i>Fürs Elterngespräch</div>
+    ${(typeof bewElternLesbar==="function"&&bewElternLesbar(lat.eltern))?`<div class="sl"><i class="ti ti-user"></i>Fürs Elterngespräch</div>
     <div class="detail-box" id="profil-eltern"><div style="font-size:var(--s-text);line-height:1.4">${esc(bewElternLesbar(lat.eltern))}</div><div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Beobachtung des Trainerteams – nur hier, in keinem Bericht für Eltern.</div></div>`:""}
     <div class="sl"><i class="ti ti-file-description"></i>Vollständiges Profil</div>
     <div class="detail-box"><div class="fazit-display">${esc(lat.fazit||'–')}</div></div>
