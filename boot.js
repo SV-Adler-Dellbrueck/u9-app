@@ -5733,6 +5733,17 @@ function tlUhrReset(){_tl.uhr={run:false,seit:0,acc:0,laps:[]};_tlRender();}
 function _tlUhrMs(){const u=_tl.uhr;return u.acc+(u.run?Date.now()-u.seit:0);}
 function _tlFmt(ms){const s=Math.floor(ms/1000);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
 async function _tlMeinName(){ return (typeof _meTrainer==="string"&&_meTrainer)?_meTrainer:await trainerMe(); }
+/* v835: Die Live-Ansicht nannte nur den Namen der Übung. Für Skizze und Ablauf musste der
+   Trainer sie schließen, im Plan zur Station scrollen und ℹ️ tippen – mitten im Training.
+   Der Knopf öffnet dieselbe Übungsansicht wie der Plan, über der Live-Ansicht. Gesucht wird
+   über den Namen: der Schnappschuss (_tlSnapshot) bleibt, wie er ist – andere Geräte im
+   selben Trainingsstart lesen ihn. */
+function _tlUebungIdx(name){ return (typeof tfIndexVon==="function"&&name)?tfIndexVon({formName:String(name)}):-1; }
+function tlUebungZeigen(name){
+  const i=_tlUebungIdx(name); if(i<0||typeof tpShowExercise!=="function")return;
+  tpShowExercise(i);
+  const m=document.getElementById("uebung-modal"); if(m)m.style.zIndex="11010";
+}
 function _tlRender(){
   const ov=document.getElementById("tl-ov"); if(!ov)return;
   const row=_tl.row;
@@ -5799,6 +5810,7 @@ function _tlRender(){
     ${zeigen.map(g=>`<div style="background:#111c33;border-radius:16px;padding:16px;margin-bottom:10px;text-align:left">
       <div style="font-size:var(--s-klein);font-weight:800;opacity:.7">🧢 ${esc(g.trainer)}${g.gruppe?" · "+esc(g.gruppe):""}${meine.length?"":" (nicht deine Gruppe)"}</div>
       <div style="font-size:var(--s-teil);font-weight:900;margin-top:4px">${esc(g.uebung)}</div>
+      ${_tlUebungIdx(g.uebung)>=0?`<button type="button" onclick="tlUebungZeigen(this.dataset.name)" data-name="${esc(g.uebung)}" style="min-height:44px;margin-top:8px;padding:8px 14px;border:1.5px solid rgba(255,255,255,.45);border-radius:12px;background:transparent;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer"><i class="ti ti-clipboard-list"></i> Skizze und Ablauf</button>`:""}
       ${g.kinder&&g.kinder.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${g.kinder.map(k=>`<span style="padding:5px 10px;border-radius:14px;background:rgba(255,255,255,.12);font-size:var(--s-text);font-weight:700">${esc(k)}</span>`).join("")}</div>`:""}
     </div>`).join("")}
     <div style="background:#111c33;border-radius:16px;padding:14px;margin:14px 0">
@@ -6146,6 +6158,12 @@ function tgBedarf(kinder,stationen){
      an. Das gilt auch für Einheiten mit drei Stationen (L4-8): PO am 28.09. „Zwei Gruppen“ –
      die dritte Station entfällt, die Leiste sagt es und bietet „3 Gruppen bilden“ für den,
      der es trotzdem will. Ohne angehakte Trainer gilt die alte Rechnung. */
+  /* v835 (Charles 17.11.): Unter acht Kindern EINE Gruppe, egal wie viele Trainer da sind.
+     Sechs Kinder und zwei Trainer gaben zwei Dreiergruppen – dafür passt keine Spielform, und
+     sechs Kinder tragen ein 3 gegen 3. Der zweite Trainer coacht mit oder nimmt Torwart bzw.
+     Einzeltraining. Wer es anders will, bildet die Gruppen von Hand. Ab acht bleibt v536/v656.
+     Ist die Kinderzahl noch unbekannt (0), gilt die alte Rechnung. */
+  if(k>0&&k<2*TG_ZIEL_MIN)return 1;
   const wunsch=trainer>0?trainer:Math.max(1,st,Math.ceil(k/TG_ZIEL_MAX));
   const platz=Math.max(1,Math.floor(k/TG_ZIEL_MIN));
   return Math.max(1,Math.min(Math.max(Math.min(wunsch,platz),trainer),TG_NAMEN.length));

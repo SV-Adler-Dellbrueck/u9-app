@@ -20,7 +20,7 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 | 1.3 | Ein Trainer, leerer Plan: vier verschiedene Übungen zu je zehn Minuten | ✅ v834: eine Spielform in drei Stufen |
 | 1.4 | Leerer Plan wich vom 75-Minuten-Rahmen des Konzepts ab (kein Straßenfußball-Fenster) | ✅ v834: 10/8/34/18 beim Füllen |
 | 1.5 | „Lehrgang – Zwei-Seiten-Spiel“ rutschte durch den Erwachsenen-Filter | ✅ v834 |
-| 1.6 | Wenige Kinder: die Trainerzahl schlägt die Kinderzahl (sechs Kinder, zwei Trainer → zwei Dreiergruppen ohne Spielform; `tgBedarf`) | 🔶 PO-Entscheidung v536/v656 |
+| 1.6 | Wenige Kinder: die Trainerzahl schlägt die Kinderzahl (sechs Kinder, zwei Trainer → zwei Dreiergruppen ohne Spielform; `tgBedarf`) | ✅ v835 (Charles 17.11.: unter acht Kindern eine Gruppe) |
 | 1.7 | Übungswahl kennt weder Dauer noch Betreuung noch Tore; Thema folgt der Kategorie von Feld 1 statt der Leitfrage (`tpStationWahl`) | ⬜ |
 | 1.8 | Ein Trainer mit zehn und mehr Kindern: die gewählte Spielform ist oft zu klein; besser zwei Felder mit derselben Form | ⬜ |
 | 1.9 | Einzel-Hauptteil ohne Stufen (Technik-Parcours) bekam bei zwei Trainern eine fremde Übung auf Feld 2 | ✅ v834 |
@@ -32,16 +32,16 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 
 | # | Befund | Status |
 |---|---|---|
-| 2.1 | Live-Ansicht „Trainingsstart“ zeigt weder Skizze noch Ablauf (`_tlRender`) | ⬜ |
-| 2.2 | Knopf „Matchday“ führt vor dem Spiel in „Nach dem Spiel“ (`views.js` `tmJump('blitz')`) | ⬜ |
-| 2.3 | Vorlage übernehmen: Vorschau und Hauptknopf stehen unter der ganzen Liste | ⬜ |
+| 2.1 | Live-Ansicht „Trainingsstart“ zeigt weder Skizze noch Ablauf (`_tlRender`) | ✅ v835 |
+| 2.2 | Knopf „Matchday“ führt vor dem Spiel in „Nach dem Spiel“ (`views.js` `tmJump('blitz')`) | ✅ v835 „Zum Spieltag“ |
+| 2.3 | Vorlage übernehmen: Vorschau und Hauptknopf stehen unter der ganzen Liste | ✅ v835 |
 | 2.4 | Trainingsplan ist dreieinhalb Handy-Höhen lang; Planen und Durchführen auf einer Seite, Startknopf ganz unten | ⬜ |
 | 2.5 | Speichern verhält sich je Seite anders (automatisch, Knopf, beides) | ⬜ |
 | 2.6 | Teams: Zwischenschritt „In die Nominierungen übertragen“ mit Systemdialog | ⬜ |
 | 2.7 | Zwei Aufstellungen in zwei Tabellen, die nichts voneinander wissen | ⬜ groß |
 | 2.8 | „Wer kommt?“ hat fünf Ansichten mit fünf Namen | ⬜ |
 | 2.9 | „Wie war’s?“ erreicht nur, wer zugesagt hat oder im Plan steht | ⬜ |
-| 2.10 | Termin anlegen liegt drei Ebenen tief, kein Einstieg von der Startseite | ⬜ |
+| 2.10 | Termin anlegen liegt drei Ebenen tief, kein Einstieg von der Startseite | ✅ v835 |
 | 2.11 | Systemdialoge am Platz (Trainingsstart verwerfen, Gruppenname, Anwesenheit) | ⬜ |
 | 2.12 | Pinnwand fragt „Wer schreibt“ per Auswahlfeld | ⬜ |
 
