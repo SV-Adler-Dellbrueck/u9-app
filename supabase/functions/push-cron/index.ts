@@ -88,21 +88,51 @@ Deno.serve(async (req) => {
       }
       return n;
     };
+    // v845: Hinweis an alle Familien, deren Kind NICHT abgesagt oder krank gemeldet ist (Training gilt als zugesagt).
+    const pushKommende = async (terminId: number, payload: any) => {
+      const { data: rm } = await admin.from("rueckmeldungen").select("spieler_id,status").eq("termin_id", terminId);
+      const fehlt = new Set((rm || []).filter((r: any) => r.status === "abgesagt" || r.status === "krank").map((r: any) => r.spieler_id));
+      let n = 0;
+      for (const s of subs || []) {
+        if ((s as any).rolle !== "parent") continue;
+        const email = uidEmail[(s as any).user_id];
+        const kids = email ? emailKids[email] : null;
+        if (!kids || !kids.length) continue;
+        if (!kids.some((id) => !fehlt.has(id))) continue;
+        if (await send(s, payload)) n++;
+      }
+      return n;
+    };
 
     let sent = 0, skipped = 0, helferSent = 0;
     if (termine && termine.length) {
       // ── Teil 1: RSVP-Erinnerung fuer den ersten Termin morgen (+ Wetter-Warnung, L4) ──
-      const t0: any = termine[0];
+      /* v845 (Charles 17.11.2026): Ein Training gilt als zugesagt – also keine Bitte um Rückmeldung.
+         Erinnert wird an den ersten Termin morgen, der eine Antwort braucht (Spiel, Turnier). Ist
+         morgen nur Training, gibt es einen Push ausschließlich bei einer Wetter-Warnung – als
+         Hinweis an alle Familien, deren Kind nicht abgesagt hat, ohne Bitte um Rückmeldung. */
       const meta: Record<string, string> = { training: "🏃 Training", spiel: "⚽ Spiel", turnier: "🏆 Turnier" };
-      const label = meta[t0.typ] || "Termin";
-      const zeit = t0.uhrzeit ? " um " + String(t0.uhrzeit).slice(0, 5) + " Uhr" : "";
+      const t0: any = (termine as any[]).find((x: any) => x.typ !== "training") || null;
+      const tTraining: any = (termine as any[]).find((x: any) => x.typ === "training") || null;
       const wetter = await wetterWarnung(morgen);
-      sent = await pushOffene(t0.id, {
-        title: "🦅 Morgen: " + label,
-        body: `${t0.titel || t0.gegner || label}${zeit} – bitte noch kurz zu- oder absagen.${wetter}`,
-        url: "./eltern/?rsvp=" + t0.id,
-        tag: "reminder",
-      });
+      if (t0) {
+        const label = meta[t0.typ] || "Termin";
+        const zeit = t0.uhrzeit ? " um " + String(t0.uhrzeit).slice(0, 5) + " Uhr" : "";
+        sent = await pushOffene(t0.id, {
+          title: "🦅 Morgen: " + label,
+          body: `${t0.titel || t0.gegner || label}${zeit} – bitte noch kurz zu- oder absagen.${wetter}`,
+          url: "./eltern/?rsvp=" + t0.id,
+          tag: "reminder",
+        });
+      } else if (tTraining && wetter) {
+        const zeit = tTraining.uhrzeit ? " um " + String(tTraining.uhrzeit).slice(0, 5) + " Uhr" : "";
+        sent = await pushKommende(tTraining.id, {
+          title: "🦅 Morgen: 🏃 Training",
+          body: `Training${zeit}.${wetter} Sagt nur ab, wenn euer Kind fehlt.`,
+          url: "./eltern/?rsvp=" + tTraining.id,
+          tag: "reminder",
+        });
+      }
 
       // ── Teil 2 (K3): Helfer-Vorabend-Push ──
       const tids = termine.map((x: any) => x.id);
@@ -136,7 +166,7 @@ Deno.serve(async (req) => {
     const in2 = new Date(); in2.setDate(in2.getDate() + 2);
     const uebermorgen = in2.toISOString().slice(0, 10);
     const cut48 = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
-    const { data: kandV } = await admin.from("termine").select("id,typ,titel,gegner,uhrzeit,datum").in("typ", ["training", "spiel", "turnier"]).eq("datum", uebermorgen);
+    const { data: kandV } = await admin.from("termine").select("id,typ,titel,gegner,uhrzeit,datum").in("typ", ["spiel", "turnier"]).eq("datum", uebermorgen);   // v845: ohne Training – es gilt als zugesagt
     const { data: kandN } = await admin.from("termine").select("id,typ,titel,gegner,uhrzeit,datum,created_at").in("typ", ["spiel", "turnier"]).gt("datum", heute).lte("created_at", cut48).order("datum").limit(10);
     const { data: logRows } = await admin.from("rsvp_reminder_log").select("termin_id,art");
     const logged = new Set((logRows || []).map((r: any) => r.termin_id + "|" + r.art));
