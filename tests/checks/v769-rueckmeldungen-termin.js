@@ -37,7 +37,7 @@ module.exports = async function (h) {
     TM_TERMINE = termine;
     const knopf = id => { document.getElementById("tmd-modal")?.remove(); tmDetailOpen(id); const mo = document.getElementById("tmd-modal");
       mo.querySelectorAll("details").forEach(d => d.open = true);
-      const b = [...mo.querySelectorAll("button")].find(x => /Rückmeldungen/.test(x.textContent)); return b ? Math.round(b.getBoundingClientRect().height) : 0; };
+      const b = [...mo.querySelectorAll("button")].find(x => /Rückmeldungen im Detail/.test(x.textContent)); return b ? Math.round(b.getBoundingClientRect().height) : 0; };
     const out = { a: { training: knopf(4), spiel: knopf(3), meeting: knopf(8) } };
     document.getElementById("tmd-modal")?.remove();
     await rmdOpen(4); await w(250);
@@ -55,7 +55,7 @@ module.exports = async function (h) {
   zeilen.push(`a) Knopf „Rückmeldungen“ bei Training und Spiel (${r.a.training} px), nicht beim Trainermeeting`);
   const z = r.b.zeilen;
   const ok = r.b.dialog === "dialog" && /2 Zusagen · 2 Absagen · 1 ohne Rückmeldung/.test(r.b.kopf || "")
-    && ["Zusagen · 2", "Absagen · 1", "Krank · 1", "Keine Antwort · 1"].every(g => r.b.gruppen.includes(g))
+    && ["Zusagen · 2", "Absagen · 1", "Krank · 1", "Keine Rückmeldung · 1"].every(g => r.b.gruppen.includes(g))
     && z.some(t => t.startsWith(K[0]) && /✅ Zusage/.test(t) && /2,1 Tage vorher/.test(t) && !/≈/.test(t))
     && z.some(t => t.startsWith(K[1]) && /❌ Absage/.test(t) && /3 Std\. vorher/.test(t))
     && z.some(t => t.startsWith(K[3]) && /≈/.test(t) && /4,0 Tage vorher/.test(t))

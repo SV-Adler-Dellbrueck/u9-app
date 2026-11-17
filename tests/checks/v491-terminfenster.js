@@ -34,7 +34,7 @@ module.exports = async function (h) {
         txt, gross: gross.map(b => ({ l: b.textContent.trim(), p: b.classList.contains("btn-p"), h: Math.round(b.getBoundingClientRect().height) })),
         abschnitte, det, ergebnis: !!mo.querySelector('input[placeholder="z. B. 3:2"]'),
         chips: [...mo.querySelectorAll("button")].filter(b => /^(Charles|Finn|Kenneth|Peter|Markus)/.test(b.textContent.trim())).map(b => Math.round(b.getBoundingClientRect().height)),
-        ampel: !!mo.querySelector("button") && /Fällt aus/.test(txt), antworten: /Rückmeldungen der Eltern/.test(txt),
+        ampel: !!mo.querySelector("button") && /Fällt aus/.test(txt), antworten: !!mo.querySelector('button[onclick^="rsvpOverviewOpen"]'),   // v846: der Knopf heißt „Rückmeldungen“
         stattfinden: (() => { const el = mo.querySelector('[id^="tm-stattfinden-"]'); return el ? { sichtbar: !el.closest("details") && el.offsetParent !== null } : null; })()
       };
     };
