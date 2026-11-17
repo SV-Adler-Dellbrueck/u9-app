@@ -40,7 +40,7 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 | 2.6 | Teams: Zwischenschritt „In die Nominierungen übertragen“ mit Systemdialog | ✅ v836 „Teams übernehmen“, eigenes Fenster; Hinweis „noch nicht übernommen“ offen |
 | 2.7 | Zwei Aufstellungen in zwei Tabellen, die nichts voneinander wissen | ⬜ groß |
 | 2.8 | „Wer kommt?“ hat fünf Ansichten mit fünf Namen | ⬜ |
-| 2.9 | „Wie war’s?“ erreicht nur, wer zugesagt hat oder im Plan steht | ⬜ |
+| 2.9 | „Wie war’s?“ erreicht nur, wer zugesagt hat oder im Plan steht | ✅ v844 auch nach gespeicherter Trainer-Anwesenheit (das To-do über den Plan unverändert) |
 | 2.10 | Termin anlegen liegt drei Ebenen tief, kein Einstieg von der Startseite | ✅ v835 |
 | 2.11 | Systemdialoge am Platz (Trainingsstart verwerfen, Gruppenname, Anwesenheit) | ✅ v836 |
 | 2.12 | Pinnwand fragt „Wer schreibt“ per Auswahlfeld | ✅ v836 vorbelegt |
