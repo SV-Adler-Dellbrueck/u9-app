@@ -16,7 +16,7 @@
 (function adlerIntro(){
   try{
     var q=location.search;
-    if(/[?&](quiz|ticker|heft|turnier|handover|kind|delegate|match|eltern)(=|&|$)/.test(q))return;
+    if(/[?&](quiz|ticker|heft|turnier|handover|kind|delegate|match|eltern|rsvp|rufe)(=|&|$)/.test(q))return;   /* v837: wer aus einer Benachrichtigung kommt (?rsvp, ?rufe), will antworten – kein Auftakt davor */
     try{ if(sessionStorage.getItem("adler-intro"))return; sessionStorage.setItem("adler-intro","1"); }catch(e){}
     var ruhig=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     /* v626 PO: „Kann sich das Logo auch drehen und reinfliegen … oder andere Ideen, die es

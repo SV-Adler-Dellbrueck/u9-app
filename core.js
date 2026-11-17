@@ -93,6 +93,7 @@ function sbClearToken(){
   const s=sbRead(); localStorage.removeItem(s?s.key:sbWriteKey());
   // Gesundheitsdaten der Notfallkarten nie über die Sitzung hinaus auf dem Gerät lassen
   try{ localStorage.removeItem("adler_nf_cache"); }catch(e){}
+  try{ localStorage.removeItem("adler_eltern_stand"); }catch(e){}   // v837: der gemerkte Terminstand gehört zum Konto
   if(typeof trainerMeReset==="function")trainerMeReset(); // Name gehört zum Konto, nicht zum Gerät
 }
 /* „Wer gehört zum Trainerstab" – im Gegensatz zu TRAINER (data.js), das nur sagt,
@@ -1537,9 +1538,11 @@ document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==
 /* v673 PO 29.09.: „Die neue Kachel Adler-Rufe hat keine Funktion. Wenn ich drauf drücke, passiert
    nichts.“ Der Knopf rief rufeOpen nur, wenn md-adler-rufe.js (Welle 2) schon geladen war – sonst
    geschah still nichts. Jetzt wartet der Einstieg bis zu zehn Sekunden und sagt, was los ist. */
-function rufeEinstieg(){
+function rufeEinstieg(raumId){
+  /* v837: ohne Angabe der Raum mit Ungelesenem (gemerkt vom Zähler in md-adler-rufe.js) */
+  if(raumId==null&&typeof window!=="undefined"&&window._rufeNeuRaum!=null)raumId=window._rufeNeuRaum;
   if(typeof sbToken==="function"&&!sbToken()){ toast("Bitte einmal neu anmelden – die Anmeldung ist abgelaufen","err"); return; }
-  const los=()=>{ try{ rufeOpen(); }catch(e){ console.error(e); toast("Adler-Rufe konnten nicht öffnen – bitte neu laden","err"); } };
+  const los=()=>{ try{ rufeOpen(raumId==null?undefined:raumId); }catch(e){ console.error(e); toast("Adler-Rufe konnten nicht öffnen – bitte neu laden","err"); } };
   if(typeof rufeOpen==="function"){ los(); return; }
   toast("Adler-Rufe werden geladen …");
   let n=0; const t=setInterval(()=>{

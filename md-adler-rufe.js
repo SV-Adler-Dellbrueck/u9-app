@@ -657,12 +657,17 @@ async function rufeBadgeLoad(){
   if(typeof sbToken==="function"&&!sbToken())return;
   let n=0, alle=false;
   // lesend per GET (die Funktion ist stable) – ein POST sähe aus wie ein Schreibzugriff
-  (await _rfGet("rpc/rufe_ungelesen")).forEach(x=>{ n+=Number(x.anzahl)||0; if(x.an_alle)alle=true; });
+  /* v837: Der Hinweis öffnete immer den ersten offenen Raum – ein neuer Ruf im privaten Raum
+     oder in der Elternrunde blieb einen Tipp entfernt, und die Vorschau zeigte den jüngsten Ruf
+     irgendeines Raums. Jetzt merkt sich die App den Raum mit dem meisten Ungelesenen. */
+  let neuRaum=null, neuMax=0;
+  (await _rfGet("rpc/rufe_ungelesen")).forEach(x=>{ const a=Number(x.anzahl)||0; n+=a; if(x.an_alle)alle=true; if(a>neuMax&&x.raum_id!=null){ neuMax=a; neuRaum=x.raum_id; } });
+  window._rufeNeuRaum=n?neuRaum:null;
   /* v673: Gibt es Neues, steht auf der Eltern-Startseite ganz oben eine schmale Zeile mit dem
      letzten Ruf – ein Tipp öffnet den Chat. Ohne Neues bleibt der Platz leer. */
   if(hinweis){
     let letzter=null;
-    if(n){ const l=await _rfGet("rufe_nachricht?archiviert_am=is.null&select=autor_name,text,autor&order=created_at.desc&limit=5"); letzter=l.find(x=>x.autor!==_rfUid())||null; }
+    if(n){ const l=await _rfGet(`rufe_nachricht?archiviert_am=is.null${neuRaum!=null?"&raum_id=eq."+encodeURIComponent(neuRaum):""}&select=autor_name,text,autor&order=created_at.desc&limit=5`); letzter=l.find(x=>x.autor!==_rfUid())||null; }
     hinweis.innerHTML=n?`<button type="button" onclick="rufeEinstieg()" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;min-height:48px;margin-bottom:10px;padding:8px 12px;border:1.5px solid ${alle?"#b45309":"#1e3a8a"};border-radius:12px;background:${alle?"#fef3c7":"#eff6ff"};color:#0f172a;font-family:inherit;cursor:pointer">
       <span aria-hidden="true" style="font-size:var(--s-teil)">💬</span>
       <span style="flex:1;min-width:0"><b style="display:block;font-size:var(--s-text)">${n===1?"1 neuer Adler-Ruf":n+" neue Adler-Rufe"}${alle?" · an alle":""}</b>
@@ -776,14 +781,14 @@ function _rfAbsicht(){
   let n=0;
   const t=setInterval(()=>{
     let offen=null; try{offen=sessionStorage.getItem("adler_rufe_intent");}catch(e){}
-    if(!offen||++n>60){ clearInterval(t); return; }
+    if(!offen||++n>300){ clearInterval(t); return; }   // v837: alle 0,4 s statt alle 2 s – weiter höchstens zwei Minuten
     const gate=document.getElementById("pin-gate");
     const gesperrt=gate&&!gate.classList.contains("hidden")&&getComputedStyle(gate).display!=="none";
     if(gesperrt||typeof sbToken!=="function"||!sbToken())return;
     try{sessionStorage.removeItem("adler_rufe_intent");}catch(e){}
     clearInterval(t);
     rufeOpen(/^\d+$/.test(offen)?Number(offen):undefined);   // v674: ?rufe=<Raum> aus der Benachrichtigung
-  },2000);
+  },400);
 }
 _rfAbsicht();
 /* v697: Tipp auf eine Meldung, während die App offen ist – sofort prüfen statt erst in 2 s.
