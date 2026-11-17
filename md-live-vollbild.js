@@ -341,7 +341,20 @@ async function blitzRate(){
 function blitzSkip(){blitzIdx++;blitzCritPlayer=null;blitzRenderCard();}
 
 // G2: Team-Pinnwand
+/* v836: „Wer schreibt“ stand auf dem ersten Namen der Liste – wer nicht umstellte, schrieb unter
+   fremdem Namen. Die Auswahl bleibt (für den Fall, dass jemand am fremden Handy schreibt), ist
+   aber mit dem angemeldeten Trainer vorbelegt. Einmal je Feld, damit eine Handwahl bleibt. */
+async function pinnwandAutorVorwahl(){
+  if(typeof trainerMe!=="function")return;
+  let ich=""; try{ ich=await trainerMe(); }catch(e){}
+  if(!ich)return;
+  ["tn-autor","tv-autor"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&!el.dataset.vorbelegt&&[...el.options].some(o=>o.value===ich)){ el.value=ich; el.dataset.vorbelegt="1"; }
+  });
+}
 async function tnLoad(){
+  pinnwandAutorVorwahl();
   const wrap=document.getElementById("tn-list");
   if(!wrap)return;
   wrap.innerHTML='<div class="empty" style="padding:1rem;font-size:12px">Lade Notizen...</div>';

@@ -27,7 +27,7 @@ module.exports = async function (h) {
     const summary = det ? det.querySelector("summary").textContent.replace(/\s+/g, " ").trim() : "";
     const nomButtons = [...nom.querySelectorAll("button")].map(b => b.textContent.trim());
     const chipsJe = [...team.querySelectorAll(".team-karte[data-team]")].map(k => ({ team: k.dataset.team, chips: [...k.querySelectorAll(".team-chip")].map(c => c.textContent.trim()) }));
-    const haupt = [...team.querySelectorAll("button")].filter(b => /In die Nominierungen übertragen/.test(b.textContent)).length;
+    const haupt = [...team.querySelectorAll("button")].filter(b => /Teams übernehmen/.test(b.textContent)).length;
     const absatz = /Wer auf „Dabei“ steht, wird direkt einem Team/.test(team.textContent + nom.textContent);
     const kachelNamen = [...document.querySelectorAll("#spieltag-teamkarten .karte-kader")].map(k => [...k.querySelectorAll("span")].filter(x => !x.querySelector("span")).length);
     const kachelText = document.getElementById("spieltag-teamkarten").textContent;
