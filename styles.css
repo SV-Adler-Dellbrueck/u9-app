@@ -1435,3 +1435,8 @@ html[data-theme="dark"]:has(#main-app) body{background:var(--bg)}
 @keyframes tk-pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
 .tk-zeichen,.tk-ring{animation:tk-pop .35s ease-out}
 @media (prefers-reduced-motion:reduce){.tk-zeichen,.tk-ring{animation:none}}
+
+/* v841: Klappen auf den Kachelseiten – eigener Pfeil statt des Browser-Dreiecks */
+.k-klappe>summary::-webkit-details-marker{display:none}
+.k-klappe[open]>summary .k-klappe-pfeil{transform:rotate(180deg)}
+.k-klappe>summary:focus-visible{outline:3px solid var(--blue);outline-offset:2px;border-radius:14px}

@@ -54,7 +54,9 @@ module.exports = async function (h) {
   });
   const f = s.fehler(); await s.schliessen();
   if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
-  const soll = ["Nachrichten", "Eltern verwalten", "Kinder belohnen", "Kabine gestalten", "Inhalte"];
+  /* v841: Offen stehen nur noch die zwei täglichen Gruppen; „Eltern verwalten“, „Kabine gestalten“ und „Inhalte“
+     sind Klappen (geprüft in v841-kachelseiten.js). */
+  const soll = ["Nachrichten", "Kinder belohnen"];
   if (JSON.stringify(r.gruppen) !== JSON.stringify(soll)) probleme.push(`a) Gruppen: ${JSON.stringify(r.gruppen)}`);
   if (r.mod) probleme.push("a) Kachel „Adler-Rufe moderieren“ steht noch da");
   if (r.doppelt.length) probleme.push(`a) Emoji doppelt: ${r.doppelt.join(" ")}`);

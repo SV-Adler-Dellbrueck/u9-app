@@ -5064,7 +5064,7 @@ async function saisonCockpitOpen(){
 ═══════════════════════════════════ */
 const HELP=[
   {cat:"🏠 Start", items:[
-    {t:"Diese Woche", d:"<b>Neu in v840 (Eltern-Bereich):</b> Die Antwortknöpfe sehen überall gleich aus – Zusage, Unsicher, Absage, Krank; „Krank“ gibt es jetzt auch unter „Rückmeldung fehlt“ und in „Alle Termine“. <b>Seit v838:</b> Die Startseite der Eltern hat drei Zonen: oben, was jetzt gilt (eure Ansage steht über dem nächsten Termin), dann „Noch offen“ und „Neu“. Trainings werden nicht mehr gemahnt – dort steht „Gilt als zugesagt“; rot gemahnt wird nur bei Spiel, Turnier und Event. <b>Seit v837:</b> Ohne Netz sehen Eltern den zuletzt geladenen Termin mit Zeitangabe statt „keinem Kind zugeordnet“. Die Kabine fragt beim ersten Start nach dem Kabinen-Code, damit sich niemand aussperrt – den Code nennt ihr den Eltern. „Neue Adler-Rufe“ öffnet den Raum mit dem neuen Ruf. Nach „Passwort vergessen“ bietet die App gleich ein neues Passwort an. <b>Seit v836:</b> Rückfragen am Platz erscheinen als Fenster der App statt als Systemmeldung: Trainingsstart verwerfen, Trainer aus der Runde nehmen, Gruppe umbenennen, Terminwechsel in der Anwesenheit mit offenen Haken. Am Spieltag heißt der Knopf unter der Einteilung „Teams übernehmen“. Auf der Pinnwand ist „Wer schreibt“ mit deinem Namen vorbelegt. <b>Seit v835:</b> Oben rechts legt „Termin“ direkt einen neuen Termin an. Am nächsten Spiel heißt der Knopf „Zum Spieltag“ (vorher „Matchday“) und führt vor dem Spiel zu „Wer kommt?“. Während des Trainings zeigt die Live-Ansicht an jeder Übung „Skizze und Ablauf“. Bei „Vorlage übernehmen“ klappt die Vorschau direkt unter der gewählten Einheit auf, der Knopf „Auf den Termin setzen“ bleibt unten stehen. Unter acht Kindern bildet die App eine Gruppe, auch bei zwei Trainern. <b>Zusagen gleichen die Einteilung selbst ab (seit v801):</b> Beim Laden der Startseite wird die gespeicherte Einteilung der nächsten Spiele und Turniere mit den Rückmeldungen abgeglichen – Zusage wird „dabei“, Absage oder krank „nicht“. Was du von Hand gesetzt hast und pausierte Kinder bleiben, wie auf der Spieltag-Seite. Die Aufteilung auf Teams macht weiter die Spieltag-Seite beim Öffnen. Alle Termine der nächsten 7 Tage auf einen Blick: wie viele Kinder zugesagt haben (aus den Eltern-Rückmeldungen; beim Spieltag zählt „dabei“ aus „Teams festlegen“, sobald die Einteilung steht), ob genug Trainer da sind (aus dem Trainerplan), ob der Trainingsplan steht und die Aufstellung fürs Spiel. Die Quelle steht unter der Karte. Rot wird ein Chip erst drei Tage vor dem Termin – vorher ist „0 zugesagt“ normal. Antippen öffnet den Termin.", run:"document.getElementById('home-woche')?.scrollIntoView({behavior:'smooth',block:'center'})"},
+    {t:"Diese Woche", d:"<b>Neu in v841:</b> Auf „Eltern“ und „Orga“ steht nur noch das Tägliche als Kachel. „Eltern verwalten“, „Kabine gestalten“, „Inhalte“ und „Einstellungen“ sind Klappen mit Überschrift und Anzahl – ein Tipp öffnet sie, und das Handy merkt sich, was offen war. Es ist nichts weggefallen. <b>Seit v840 (Eltern-Bereich):</b> Die Antwortknöpfe sehen überall gleich aus – Zusage, Unsicher, Absage, Krank; „Krank“ gibt es jetzt auch unter „Rückmeldung fehlt“ und in „Alle Termine“. <b>Seit v838:</b> Die Startseite der Eltern hat drei Zonen: oben, was jetzt gilt (eure Ansage steht über dem nächsten Termin), dann „Noch offen“ und „Neu“. Trainings werden nicht mehr gemahnt – dort steht „Gilt als zugesagt“; rot gemahnt wird nur bei Spiel, Turnier und Event. <b>Seit v837:</b> Ohne Netz sehen Eltern den zuletzt geladenen Termin mit Zeitangabe statt „keinem Kind zugeordnet“. Die Kabine fragt beim ersten Start nach dem Kabinen-Code, damit sich niemand aussperrt – den Code nennt ihr den Eltern. „Neue Adler-Rufe“ öffnet den Raum mit dem neuen Ruf. Nach „Passwort vergessen“ bietet die App gleich ein neues Passwort an. <b>Seit v836:</b> Rückfragen am Platz erscheinen als Fenster der App statt als Systemmeldung: Trainingsstart verwerfen, Trainer aus der Runde nehmen, Gruppe umbenennen, Terminwechsel in der Anwesenheit mit offenen Haken. Am Spieltag heißt der Knopf unter der Einteilung „Teams übernehmen“. Auf der Pinnwand ist „Wer schreibt“ mit deinem Namen vorbelegt. <b>Seit v835:</b> Oben rechts legt „Termin“ direkt einen neuen Termin an. Am nächsten Spiel heißt der Knopf „Zum Spieltag“ (vorher „Matchday“) und führt vor dem Spiel zu „Wer kommt?“. Während des Trainings zeigt die Live-Ansicht an jeder Übung „Skizze und Ablauf“. Bei „Vorlage übernehmen“ klappt die Vorschau direkt unter der gewählten Einheit auf, der Knopf „Auf den Termin setzen“ bleibt unten stehen. Unter acht Kindern bildet die App eine Gruppe, auch bei zwei Trainern. <b>Zusagen gleichen die Einteilung selbst ab (seit v801):</b> Beim Laden der Startseite wird die gespeicherte Einteilung der nächsten Spiele und Turniere mit den Rückmeldungen abgeglichen – Zusage wird „dabei“, Absage oder krank „nicht“. Was du von Hand gesetzt hast und pausierte Kinder bleiben, wie auf der Spieltag-Seite. Die Aufteilung auf Teams macht weiter die Spieltag-Seite beim Öffnen. Alle Termine der nächsten 7 Tage auf einen Blick: wie viele Kinder zugesagt haben (aus den Eltern-Rückmeldungen; beim Spieltag zählt „dabei“ aus „Teams festlegen“, sobald die Einteilung steht), ob genug Trainer da sind (aus dem Trainerplan), ob der Trainingsplan steht und die Aufstellung fürs Spiel. Die Quelle steht unter der Karte. Rot wird ein Chip erst drei Tage vor dem Termin – vorher ist „0 zugesagt“ normal. Antippen öffnet den Termin.", run:"document.getElementById('home-woche')?.scrollIntoView({behavior:'smooth',block:'center'})"},
     {t:"Kinder-Eltern-Turnier", d:"<b>Seit v825:</b> Beim Anlegen eines Events gibt es den Haken „Kinder-Eltern-Turnier“. Die Eltern sehen dann im Termin einen Hinweis, tragen sich mit einem Tipp auf „Ich spiele mit“ selbst ein und können weitere Personen mit Namen dazuschreiben; alle Eltern sehen die Liste. Im Termin führt „Kinder-Eltern-Turnier“ zur Liste der Erwachsenen (du kannst Einträge entfernen) und mit „Ins Trainingsturnier übernehmen“ ins Trainingsturnier „Kinder gegen Eltern“: die Erwachsenen sind auf die Eltern-Teams verteilt (👤 vor dem Namen), ein Tipp schiebt sie ins nächste Eltern-Team. Die Kinder melden die Eltern wie bei jedem Termin an oder ab."},
     {t:"Beitragsliste Weihnachtsfeier", d:"<b>Seit v828:</b> Im Termin „Weihnachtsfeier“ steht die Liste „Wer bringt was mit?“. Eltern tippen einen freien Platz an (Salat, Frikadellen, Kuchen, Getränke …), geben ihren Namen für die Liste ein – bitte keine Kindernamen – und tragen sich ein; beim Salat wählt man die Sorte. Den eigenen Eintrag kann man ändern oder entfernen, dann ist der Platz wieder frei. Was nicht in der Liste steht, kommt unter „Zusätzlich“ (höchstens drei Einträge je Familie, 80 Zeichen). Hat eine andere Familie den Platz gerade zuerst genommen, meldet die App das. Trainer sehen die Liste über den Termin und dürfen jeden Eintrag entfernen. <b>Seit v830:</b> Solange ihr noch nicht zu- oder abgesagt habt, und nach einer Zusage, solange nichts in der Liste steht, erinnert eine Karte ganz oben auf der Startseite daran. Steht an einem Tag mehr als ein Termin in den Kacheln, zeigt die Kachel alle – ein Tipp öffnet die Auswahl."},
     {t:"Startseite", d:"<b>Seit v822:</b> Die Bereichsseiten (Training, Spieltag, Team, Taktik, Eltern & Kinder, Orga) tragen oben dasselbe Linien-Symbol wie ihre Kacheln; PIN-Seite und Eltern-Anmeldung zeigen das Vereinswappen. <b>Seit v821:</b> Der nächste Termin steht als farbige Karte oben in „Diese Woche“: großes Datum, „Heute“/„Morgen“/„in 3 Tagen“, Uhrzeit, Wetter als Symbol und rechts ein Ring, der zeigt, wie viele Kinder dabei sind (dieselbe Zahl wie das erste Etikett darunter). Eltern sehen dieselbe Karte mit dem Stand ihrer Rückmeldung. <b>Seit v819:</b> Die sechs farbigen Kacheln sind weg – in die Bereiche führt die Leiste unten, und „Diese Woche“ steht gleich oben. Im Kopf stehen nur noch der Team-Chat und „⋯“; dahinter liegen Hilfe, Schriftgröße und Hell/Dunkel. Es erscheint nur noch ein Hinweis gleichzeitig. <b>Seit v787:</b> Die Kacheln tragen einheitliche Linien-Symbole, und die Karte „N ohne Rückmeldung“ auf der Orga-Seite hat einen Knopf „Erinnern“ (Push nur an Familien ohne Antwort). Von oben nach unten: was zu tun ist (Wie war's?, To-Do-Banner nur bei offenen Aufgaben, „Bist du dabei?“ mit den Terminen der nächsten 14 Tage, für die deine Antwort noch fehlt), <b>seit v682 gleich darunter die sechs Bereichs-Kacheln</b> (seit v718 drei je Reihe und halb so hoch; sie führen dorthin, wohin auch die Leiste unten führt, und zeigen dazu den nächsten Termin) – dahinter jeweils wieder eine Seite mit Kacheln, bei Taktik direkt das Brett –, dann „Diese Woche“ mit dem Stand je Termin (die erste Zeile ist der nächste Termin mit Wetter, Packtipp und den Sprungknöpfen „Anwesenheit“ und „Plan“; woher die Zahlen kommen, steht zugeklappt darunter) und der Knopf zu allen Terminen. Die drei Startschritte erscheinen nur, solange es noch keinen Kader gibt. Dieselbe Seite erreichst du über die untere Leiste; beide Wege enden im selben Bild.", go:"home"},
@@ -7173,6 +7173,22 @@ function kPhasen(items,col){
     </button>`).join("")+`</div>`;
 }
 function kSec(t){return `<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:16px 0 8px">${t}</div>`;}
+/* v841: Selten Gebrauchtes klappt zu. „Eltern & Kinder“ zeigte 17 gleich gewichtete Kacheln,
+   „Orga“ 14 – das Tägliche (Adler-Rufe, Termine, Tagebuch) stand zwischen Urkunden-Studio und
+   Datensicherung. Eine Klappe trägt Überschrift und Zahl; ob sie offen ist, merkt sich das
+   Gerät (nur eine Bequemlichkeit – ohne Speicher ist sie einfach zu). */
+function kKlappe(id,titel,items,col){
+  const n=items.filter(Boolean).length;
+  let offen=false; try{ offen=localStorage.getItem("adler_klappe_"+id)==="1"; }catch(e){}
+  return `<details class="k-klappe" data-klappe="${id}"${offen?" open":""} ontoggle="try{localStorage.setItem('adler_klappe_${id}',this.open?'1':'0')}catch(e){}" style="margin-top:14px;border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface)">
+    <summary style="min-height:56px;display:flex;align-items:center;gap:10px;padding:0 14px;cursor:pointer;list-style:none;font-size:var(--s-text);font-weight:800;color:var(--text)">
+      <span style="flex:1;min-width:0">${titel}</span>
+      <span style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">${n} ${n===1?"Eintrag":"Einträge"}</span>
+      <i class="ti ti-chevron-down k-klappe-pfeil" aria-hidden="true" style="font-size:var(--s-teil);color:var(--text2)"></i>
+    </summary>
+    <div style="padding:2px 12px 12px">${kTiles(items,col)}</div>
+  </details>`;
+}
 const KACHELN={
   training:{emo:"🏃",titel:"Training",sub:"Vom Plan bis zum Abpfiff",col:"var(--fam-training)"},
   spieltag:{emo:"⚽",titel:"Spieltag",sub:"Vorher, während, danach",col:"var(--fam-spieltag)"},
@@ -7296,8 +7312,13 @@ function _kachelInhalt(key){
       {emo:"📣",label:"Team-Ansage",fn:"ansageTrainerOpen"},
       {emo:"🗣️",label:"Elterngespräch",fn:"epollTrainerOpen"}
     ],col)
-    +kSec("Eltern verwalten")
+    +kSec("Kinder belohnen")
     +kTiles([
+      {emo:"🪶",label:"Federn vergeben",fn:"federnVergebenOpen"},   // v675
+      {emo:"🎯",label:"Team-Quests",fn:"questEditorOpen"},
+      {emo:"🏅",label:"Urkunden-Studio",fn:"urkundenOpen"}
+    ],col)
+    +kKlappe("elki-eltern","Eltern verwalten",[
       // v610: Die Karten sind seit v604 der Regelweg – vorher nur über Einstellungen erreichbar.
       {emo:"🪪",label:"Einladungskarten",fn:"einladungskartenOpen"},
       {emo:"📈",label:"Rückmelde-Verhalten",fn:"rueckmeldeStatistikOpen"},
@@ -7306,22 +7327,14 @@ function _kachelInhalt(key){
       /* v669 PO 29.09.: „Eltern einladen kann meiner Einschätzung ganz weg ebenso wie QR-Aushang.“
          Der Weg in die App sind die Einladungskarten (seit v604). */
     ],col)
-    +kSec("Kinder belohnen")
-    +kTiles([
-      {emo:"🪶",label:"Federn vergeben",fn:"federnVergebenOpen"},   // v675
-      {emo:"🎯",label:"Team-Quests",fn:"questEditorOpen"},
-      {emo:"🏅",label:"Urkunden-Studio",fn:"urkundenOpen"}
-    ],col)
-    +kSec("Kabine gestalten")
-    +kTiles([
+    +kKlappe("elki-kabine","Kabine gestalten",[
       {emo:"🦅",label:"Adler-Welt",fn:"adlerWeltOpen"},
       {emo:"🤝",label:"Unsere Regeln",fn:"codexKinderEditOpen"},
       {emo:"🗳️",label:"Kabinen-Wahl",fn:"wahlTrainerOpen"},
       {emo:"🖼️",label:"Karten-Fotos",fn:"albumFotosOpen"},
       {emo:"🧠",label:"Quiz-Ergebnisse",fn:"go",arg:"quizresults"}
     ],col)
-    +kSec("Inhalte")
-    +kTiles([
+    +kKlappe("elki-inhalte","Inhalte",[
       {emo:"🪺",label:"Nest-Ausgaben",fn:"nestEditorOpen"},   // v733: eine Ausgabe je Spieltag
       {emo:"📰",label:"Adler Nest (Porträt-Vorschlag)",fn:"stadionheftOpen"},
       ...(WRAPPED_SICHTBAR?[{emo:"🏆",label:"Adler Wrapped",fn:"adlerWrappedTeaser"}]:[])
@@ -7355,9 +7368,8 @@ function _kachelInhalt(key){
       (new Date().getMonth()>=5&&new Date().getMonth()<=8&&!saisonStartZu())?{emo:"🌅",label:"Saisonstart-Check",fn:"saisonStartOpen"}:null
     ],col)
     +`<div id="eltern-umschalter"></div>`
-    +kSec("Einstellungen")
-    +`<div id="push-slot-trainer" style="margin-bottom:10px"></div>`
-    +kTiles([
+    +`<div id="push-slot-trainer" style="margin:14px 0 0"></div>`
+    +kKlappe("orga-einstellungen","Einstellungen",[
       // v610: aus „Team-Orga" hierher – dort trug sie dasselbe 🧰 wie „Material".
       {emo:"⚙️",label:"Setup-Übersicht",fn:"setupTrainerOpen"},
       {emo:"🔑",label:"Passwort ändern",fn:"pwChangeOpen"},
