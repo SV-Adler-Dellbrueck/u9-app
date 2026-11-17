@@ -501,8 +501,16 @@ async function dsgvoAccept(){
 /* v708: Weiß auf #059669 hatte 3,8:1, auf #ca8a04 2,9:1 – die Töne tragen weiße Schrift und
    stehen als Schrift auf Weiß; beides braucht 4,5:1. */
 const EP_RSVP={zugesagt:{lbl:"Zusage",emo:"👍",col:"#047857"},unsicher:{lbl:"Unsicher",emo:"🤔",col:"#a16207"},abgesagt:{lbl:"Absage",emo:"👎",col:"#dc2626"},krank:{lbl:"Krank",emo:"🤒",col:"#b45309"}};
-// Schnell-Rückmeldung im Karussell: die drei vom PO gewünschten Stufen.
-const EP_RSVP_QUICK=["zugesagt","unsicher","abgesagt"];
+/* v840: EINE Bauart für die Antwortknöpfe. Dieselbe Antwort sah an vier Stellen viermal anders aus
+   (mit und ohne Emoji, drei oder vier Stufen, mal mit aria-pressed, mal ohne) – und „Krank“ fehlte
+   in „Rückmeldung fehlt“ und in „Alle Termine“. Jetzt überall: vier Stufen, das Wort ohne Emoji
+   (ruhig, wie die Terminkarte seit v780), ein Haken vor der gewählten Antwort, aria-pressed und
+   ein Name für Vorleseprogramme. `vorab` hebt „Zusage“ hervor, solange nichts gewählt ist. */
+function elternAntwortKnopf(o){
+  const c=EP_RSVP[o.s], on=!!o.on, vor=!on&&o.vorab&&o.s==="zugesagt";
+  return `<button type="button"${o.klasse?` class="${o.klasse}"`:""} onclick="${o.act}" aria-pressed="${on}" aria-label="${esc(o.name||"Kind")}: ${c.lbl}" style="flex:1;min-width:0;min-height:44px;padding:6px 3px;border-radius:12px;border:1.5px solid ${on?c.col:(vor?"var(--blue)":"var(--rand-bedien)")};background:${on?c.col:(vor?"var(--blue)":"#fff")};color:${on||vor?"#fff":"#334155"};font-family:inherit;font-size:var(--s-klein);font-weight:700;line-height:1.15;white-space:nowrap;cursor:pointer">${on?"✓ ":""}${c.lbl}</button>`;
+}
+
 /* ── Tag/Nacht-Modus für den Eltern-Bereich ──────────────────────────────────
    Der Eltern-Bereich ist mit festen Hell-Farben (Inline-Styles) gebaut und reagiert
    – anders als die Trainer-App – nicht auf die CSS-Variablen. Statt hunderte Literale
@@ -1118,7 +1126,7 @@ async function elternDashLoad(){
       const btns=Object.keys(EP_RSVP).map(s=>{
         const on=st===s, c=EP_RSVP[s];
         const act=on?`elternRsvpClear(${termin.id},${k.spieler_id})`:`elternRsvp(${termin.id},${k.spieler_id},'${s}')`;
-        return `<button onclick="${act}" style="flex:1;min-width:0;min-height:44px;padding:6px 3px;border-radius:12px;border:1.5px solid ${on?c.col:(s==="zugesagt"?"var(--blue)":"var(--rand-bedien)")};background:${on?c.col:(s==="zugesagt"?"var(--blue)":"#fff")};color:${on||s==="zugesagt"?"#fff":"#334155"};font-family:inherit;font-size:var(--s-klein);font-weight:700;line-height:1.15;white-space:nowrap;cursor:pointer">${on?"✓ ":""}${c.lbl}</button>`;
+        return elternAntwortKnopf({s,on,act,name:kd.name,vorab:!st});
       }).join("");
       return `<div style="border-top:1px solid #f1f5f9;margin-top:10px;padding-top:10px">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
@@ -1514,9 +1522,9 @@ function elternOffeneRsvpHtml(rows,kids,rsvpAll,ausserId){
     const zeit=elternZeitKurz(t); // v729: mit Ende
     const kidRows=kinder.map(k=>{
       const kd=k.kader||{};
-      const btns=EP_RSVP_QUICK.map(s=>{
+      const btns=Object.keys(EP_RSVP).map(s=>{   // v840: vier Stufen, auch „Krank“
         const c=EP_RSVP[s];
-        return `<button onclick="elternRsvp(${t.id},${k.spieler_id},'${s}')" aria-label="${esc(kd.name||"Kind")}: ${c.lbl}" style="flex:1;min-width:0;min-height:44px;padding:6px 3px;border-radius:10px;border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;font-family:inherit;font-size:var(--s-klein);font-weight:700;line-height:1.15;white-space:nowrap;cursor:pointer">${c.lbl}</button>`;
+        return elternAntwortKnopf({s,on:false,act:`elternRsvp(${t.id},${k.spieler_id},'${s}')`,name:kd.name});
       }).join("");
       return `<div style="margin-top:8px">
         <div style="font-size:var(--s-text);font-weight:700;margin-bottom:5px">${esc(kd.name||"Kind")}${kd.nr!=null?` <span style="color:var(--text3);font-weight:600">#${kd.nr}</span>`:""}</div>
@@ -1866,7 +1874,7 @@ async function terminDetailOpen(id){
     const kd=k.kader||{}, st=rsvp[k.spieler_id]||null;
     const btns=Object.keys(EP_RSVP).map(s=>{const on=st===s,cc=EP_RSVP[s];
       const act=on?`tdRsvp(${t.id},${k.spieler_id},null)`:`tdRsvp(${t.id},${k.spieler_id},'${s}')`;
-      return `<button onclick="${act}" style="flex:1;min-width:0;min-height:44px;padding:6px 3px;border-radius:9px;border:1.5px solid ${on?cc.col:"var(--rand-bedien)"};background:${on?cc.col:"#fff"};color:${on?"#fff":"#334155"};font-family:inherit;font-size:var(--s-klein);font-weight:700;line-height:1.15;cursor:pointer">${cc.emo} ${cc.lbl}</button>`;
+      return elternAntwortKnopf({s,on,act,name:kd.name});
     }).join("");
     return `<div style="margin-top:8px"><div style="font-size:var(--s-text);font-weight:700;margin-bottom:4px">${esc(kd.name||"Kind")}</div><div style="display:flex;gap:6px">${btns}</div></div>`;
   }).join("");
@@ -2752,8 +2760,7 @@ function elternTermineListeHtml(rows){
     const aus=_elAbgesagt(t), rr=_etRsvp[t.id]||{};
     const kidRows=aus?`<div style="margin-top:4px">${typeof terminAbsageChip==="function"?terminAbsageChip(t):"🔴 Fällt aus"}</div>`:kids.map(k=>{
       const kd=k.kader||{}, st=rr[k.spieler_id]||null;
-      const btns=EP_RSVP_QUICK.map(s=>{ const cc=EP_RSVP[s], on=st===s;
-        return `<button type="button" class="et-rsvp" onclick="elternTerminRsvp(${Number(t.id)},${Number(k.spieler_id)},'${s}')" aria-pressed="${on}" aria-label="${esc(kd.name||"Kind")}: ${cc.lbl}" style="flex:1;min-width:0;min-height:44px;padding:4px 2px;border-radius:9px;border:1.5px solid ${on?cc.col:"var(--rand-bedien)"};background:${on?cc.col:"#fff"};color:${on?"#fff":"#334155"};font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">${cc.emo} ${cc.lbl}</button>`; }).join("");
+      const btns=Object.keys(EP_RSVP).map(s=>elternAntwortKnopf({s,on:st===s,klasse:"et-rsvp",name:kd.name,act:`elternTerminRsvp(${Number(t.id)},${Number(k.spieler_id)},'${s}')`})).join("");   // v840
       const stTxt=st&&EP_RSVP[st]?`${EP_RSVP[st].emo} ${EP_RSVP[st].lbl}`:elternGiltZugesagt(t)?"✓ "+EL_GILT_TEXT:"❗ offen";
       return `<div style="margin-top:6px"><div style="font-size:var(--s-klein);font-weight:700;color:#475569;margin-bottom:3px">${kids.length>1?esc(kd.name||"Kind")+" · ":""}${stTxt}</div><div style="display:flex;gap:5px">${btns}</div></div>`;
     }).join("");
