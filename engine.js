@@ -235,11 +235,8 @@ function generateFazitFeld(v,meta){
   r+=sortedDims.length?`Schwächster Messwert: ${wn[wd]} (${sortedDims[0][1]}%)\n\n`:`Zu wenig beobachtet für einen Schwerpunkt – allgemeine Grundlagen:\n\n`;
   r+=uebBank[wd]||uebBank.tech;
 
-  if(parseInt(meta.eltern)===1){
-    r+="\n\n━━ ELTERN-HINWEIS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-    r+="⚠ Externes Coaching belastet die intrinsische Motivation.\nEmpfehlung: Fehler sind Lernmomente, Spielfreude vor Leistung, kein Coaching von der Seitenlinie.";
-  }
-
+  /* v850: Der frühere Eltern-Hinweis („Erhöhter Druck“) ist entfallen – ein Urteil über die Familie
+     gehört nicht in das Profil des Kindes. Beobachtungen fürs Elterngespräch stehen getrennt (bewEltern…). */
   r+="\n\n━━ EINORDNUNG (STAND HEUTE, KEINE PROGNOSE) ━━━━\n";
   r+=`Aktuell: ${total}% · Entwicklungstempo: ~${pot}%\n`;
   if(total>=STUFE_GUT) r+=`${name} ist im Moment weit für U9 I. Mit erhöhtem Anforderungsgrad fördern – Unterforderung vermeiden.`;

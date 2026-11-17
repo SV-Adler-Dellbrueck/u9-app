@@ -97,3 +97,17 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 Paket 5 betrifft Inhalte, die bisher über Auftragspakete aus dem Projekt-Chat entstehen. Änderungen an
 bestehenden Übungen erreichen die Geräte nicht über den Abgleich (er überschreibt nie), sondern
 brauchen ein Update in der Datenbank.
+
+## Nachtrag 17.11. · Spielerbewertung vor der ersten Runde
+
+Auftrag Charles: die Bewertung auf Logik, Sinn und Bedienbarkeit prüfen. Befund: je Kind eine Seite von
+elf Bildschirmhöhen (14 Kinder, 248 Entscheidungen), die Hilfe empfahl „Kriterium für Kriterium“, die
+App konnte nur Kind für Kind; kein Zwischenstand; Alter, Fuß und Beteiligung von Hand; „Umfeld / Eltern“
+als Etikett über die Familie; Prozentzahlen im Formular.
+
+| Punkt | Status |
+|---|---|
+| Runde Kriterium für Kriterium, Zwischenspeicher am Gerät, ein Speichervorgang als „Trainerteam“ | ✅ v850 |
+| „Fürs Elterngespräch“ (drei Beobachtungen, ein Satz) statt Umfeld-Etikett; nur im Profil, in keinem Bericht | ✅ v850 (Charles 17.11.) |
+| Alter und starker Fuß aus dem Profil, Beteiligung und Prozentzahlen aus dem Formular | ✅ v850 |
+| Startdatum der Bewertungen ist in der Datenbank leer – setzt das Trainerteam unter Team → Bewerten | offen (Trainerteam) |

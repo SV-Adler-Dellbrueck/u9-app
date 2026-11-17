@@ -1,4 +1,4 @@
-const CACHE="u9i-adler-v849";
+const CACHE="u9i-adler-v850";
 const PRECACHE=[
   "./",
   "./index.html",
@@ -29,6 +29,7 @@ const PRECACHE=[
   "./md-gegner.js",
   "./md-turnierplan.js",
   "./md-teams.js",
+  "./md-bewertungsrunde.js",
   "./md-matchuhr.js",
   "./md-liveticker.js",
   "./md-spielbericht.js",
