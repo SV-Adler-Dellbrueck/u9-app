@@ -58,7 +58,8 @@ module.exports = async function (h) {
   }, { d2, d3, spiel });
   const fe = s.fehler(); await s.schliessen();
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
-  if (r.zwei.length !== 4 || r.zwei.some(x => x !== 10)) probleme.push("a) zwei Trainer: " + JSON.stringify(r.zwei) + " (erwartet 4 × 10)");
+  /* v834: Der Hauptteil hat 34 Minuten wie im Konzept (vorher 40) – vier Durchgänge zu 9/9/8/8 statt 4 × 10. */
+  if (r.zwei.length !== 4 || r.zwei.some(x => x < 8 || x > 10) || r.zwei.reduce((a, b) => a + b, 0) !== 34) probleme.push("a) zwei Trainer: " + JSON.stringify(r.zwei) + " (erwartet 4 Durchgänge, zusammen 34)");
   if (r.drei.length !== 3) probleme.push("a) drei Trainer: " + JSON.stringify(r.drei) + " (erwartet 3 Blöcke)");
   if (!r.ui.wechseln || r.ui.alt) probleme.push("a) Begriff: " + JSON.stringify(r.ui));
   const kx = r.kx || {};

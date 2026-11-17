@@ -1270,6 +1270,21 @@ const TP_PHASEN=[
   {label:"Hauptteil 2",dauer:20,farbe:"#7c3aed",typ:"main"},
   {label:"Abschlussspiel",dauer:20,farbe:"#c2410c",typ:"abschluss"}
 ];
+/* v834: Was „Training füllen“ aus dem Nichts baut, trägt denselben Rahmen wie die Vorlagen und
+   das Ausbildungskonzept (§2): zehn Minuten freies Spiel ohne Anleitung, acht Minuten Aufwärmen,
+   34 Minuten Hauptteil, 18 Minuten Abschluss – 10+8+34+18 = 70 von 75. Das leere Gerüst oben
+   (TP_PHASEN) bleibt, wie es ist: Altpläne ohne gespeicherte Struktur hängen an seinen Namen. */
+const TP_RAHMEN_KOPF=[
+  {label:"Straßenfußball-Fenster",dauer:10,farbe:"#059669",typ:"warmup"},
+  {label:"Aufwärmen",dauer:8,farbe:"#059669",typ:"warmup"}
+];
+const TP_RAHMEN_ENDE={label:"Abschlussspiel",dauer:18,farbe:"#c2410c",typ:"abschluss"};
+/* v834: Ein Hauptteil „Stufe 1/2/3“ ist eine Stufe derselben Spielform (frei → eng → offen).
+   Dort spielen alle Felder dieselbe Übung – sonst erlebt keine Gruppe die ganze Folge. */
+function tpIstStufe(slot){ return /^\s*Stufe\s*\d/i.test(String((slot||{}).label||"")); }
+/* Nur ein Hauptteil mit dem Standardnamen bekommt von selbst eine Zusatzregel – was aus einer
+   Vorlage kommt oder von Hand benannt ist, regelt sich selbst. */
+function tpIstStandardHauptteil(slot){ return /^\s*Hauptteil\s*\d+\s*$/i.test(String((slot||{}).label||"")); }
 let tpSlots=[...TP_PHASEN];
 /* v586 – EINSATZ-HISTORIE AUS DEN GESPEICHERTEN PLÄNEN, NACH NAMEN.
 
@@ -4451,7 +4466,7 @@ function evalStar(btn){
 /* v714: Zusatzregeln (data.js) und Übungen für Erwachsene (Lehrgang) gehören nie an eine Station
    der Kinder – weder per „Training füllen“ noch als Tausch- oder Tagebuch-Vorschlag. */
 function tpIstZusatzregel(f){ return !!(f&&typeof ZUSATZREGELN!=="undefined"&&(ZUSATZREGELN.includes(f.name)||ZUSATZREGELN.includes(tpNameUrsprung(f.name)))); }
-function tpNurErwachsene(f){ return !!f&&/erwachsene/i.test(String(f.name||"")+" "+String(f.kurz||"").slice(0,40)); }
+function tpNurErwachsene(f){ return !!f&&(/erwachsene/i.test(String(f.name||"")+" "+String(f.kurz||"").slice(0,40))||/^\s*lehrgang\b/i.test(String(f.name||""))); }   // v834: Lehrgangsformen tragen „Lehrgang“ vorn
 function tpStationTauglich(f){ return !!f&&!tpIstZusatzregel(f)&&!tpNurErwachsene(f)&&!tpIstArchiviert(f); }   // v716: Archiv
 /* 0 passt, 1 eine Person zu viel (auswechseln), 2 Spielerzahl unbekannt, sonst je fehlender
    oder überzähliger Person mehr. Die Spanne liest tpUebungSpanne – dieselbe Rechnung, mit der
@@ -4528,17 +4543,26 @@ async function tpGenerate(){
   const haupt=()=>tpSlots.map((s,i)=>({s,i})).filter(x=>x.s&&tpIstHauptteil(x.s.typ));
   const wert=(si,p)=>{ const el=document.getElementById(`tp-form-${si}-${p}`); return el&&el.value!==""?Number(el.value):null; };
   const hatPlan=haupt().some(x=>wert(x.i,0)!=null);
+  let regelZiel=null;      // v834: der eine Hauptteil, der eine Zusatzregel bekommen darf
   if(!hatPlan){
     const k=Math.max(2,Math.min(4,trainerCount));
     const farben=["#1a56db","#7c3aed","#0e7490","#b45309"];
     /* v802 (Charles 07.11.: „10-Minuten-Durchgänge“): Bei zwei Stationen blieb jede Gruppe 20 Minuten an einer Übung –
        der Tipp im Plan rät ab ~10 Minuten zum Variieren. Ab 18 Minuten je Block wird deshalb doppelt so oft gewechselt:
        vier Blöcke à 10 Minuten statt zwei à 20. Dieselben Stationen, die Gruppen wechseln je Block (tpVersatz). */
-    const bloecke=Math.round(40/k)>=18?k*2:k;
-    const dauer=Math.max(10,Math.round(40/bloecke));
-    tpSlots=[{...TP_PHASEN[0]}]
-      .concat(Array.from({length:bloecke},(_,n)=>({label:`Hauptteil ${n+1}`,dauer,farbe:farben[n%farben.length],typ:"main"})))
-      .concat([{...TP_PHASEN[3]}]);
+    /* v834: 34 Minuten Hauptteil wie im Konzept. Ein Trainer bekommt EINE Spielform in drei
+       Stufen (frei → eine Regel → offen) statt vier verschiedener Übungen zu je zehn Minuten:
+       ein Aufbau, eine Erklärung. Ab zwei Trainern bleibt es bei Stationen im Wechsel. */
+    let hauptteile;
+    if(trainerCount===1){
+      hauptteile=[["Stufe 1 – frei",12],["Stufe 2 – eng: eine Regel dazu",12],["Stufe 3 – offen: Regel weg, Feld größer",10]]
+        .map(([label,dauer],n)=>({label,dauer,farbe:farben[n?1:0],typ:"main"}));
+      regelZiel=hauptteile[1];
+    }else{
+      const bloecke=Math.round(34/k)>=17?k*2:k;
+      hauptteile=Array.from({length:bloecke},(_,n)=>({label:`Hauptteil ${n+1}`,dauer:Math.floor(34/bloecke)+(n<34%bloecke?1:0),farbe:farben[n%farben.length],typ:"main"}));
+    }
+    tpSlots=TP_RAHMEN_KOPF.map(x=>({...x})).concat(hauptteile).concat([{...TP_RAHMEN_ENDE}]);
   }
   tpRenderTimeline();
   await new Promise(r=>setTimeout(r,60));
@@ -4572,26 +4596,36 @@ async function tpGenerate(){
     // Rotation: Station p hat in jedem Hauptteil dieselbe Übung.
     for(let p=1;p<stationen;p++){
       let fest=null;
-      hs.forEach(x=>{ const v=wert(x.i,p), v0=wert(x.i,0); if(v!=null&&v!==v0&&fest==null)fest=v; });
+      /* v834: Stufen bleiben zusammen – Feld p spielt dort, was Feld 1 spielt. */
+      const frei=hs.filter(x=>!tpIstStufe(x.s));
+      hs.filter(x=>tpIstStufe(x.s)).forEach(x=>{ const v0=wert(x.i,0); if(v0!=null&&wert(x.i,p)==null&&setze(x.i,p,v0))gesetzt++; });
+      if(!frei.length)continue;
+      frei.forEach(x=>{ const v=wert(x.i,p), v0=wert(x.i,0); if(v!=null&&v!==v0&&fest==null)fest=v; });
       if(fest==null){ const b=tpStationWahl(g,th,weg,datum,zufall); if(!b)continue; fest=b.i; weg.add(fest); if(b.passt>1)eng++; }
-      hs.forEach(x=>{ const v=wert(x.i,p), v0=wert(x.i,0); if(v==null||v===v0){ if(setze(x.i,p,fest))gesetzt++; } });
+      frei.forEach(x=>{ const v=wert(x.i,p), v0=wert(x.i,0); if(v==null||v===v0){ if(setze(x.i,p,fest))gesetzt++; } });
     }
   }
   // Feld 1: leer → eigene Übung je Hauptteil (bei einer Station) bzw. eine für alle (Rotation)
   let fest0=null;
   hs.forEach(x=>{
     if(wert(x.i,0)!=null){ if(fest0==null)fest0=wert(x.i,0); return; }
-    if(stationen<=1||fest0==null){ const b=tpStationWahl(g,th,weg,datum,zufall); if(!b)return; weg.add(b.i); if(b.passt>1)eng++; if(stationen>1)fest0=b.i; if(setze(x.i,0,b.i))gesetzt++; }
+    if((stationen<=1&&!tpIstStufe(x.s))||fest0==null){ const b=tpStationWahl(g,th,weg,datum,zufall); if(!b)return; weg.add(b.i); if(b.passt>1)eng++; if(stationen>1||tpIstStufe(x.s))fest0=b.i; if(setze(x.i,0,b.i))gesetzt++; }
     else if(setze(x.i,0,fest0))gesetzt++;
   });
   /* v714: Je Hauptteil eine Zusatzregel als Provokationsregel für alle Stationen – passend zum
      Thema, in jedem Hauptteil eine andere. Was der Trainer weggetippt hat (regel===null) oder
      selbst gesetzt hat, bleibt. */
-  const regeln=alle.map((f,i)=>({f,i})).filter(x=>tpIstZusatzregel(x.f));
+  /* v834 (Charles 17.11.): höchstens EINE automatische Regel je Einheit, und nie in einem Block
+     aus einer Vorlage oder mit eigenem Namen („frei“, „offen“). Sie gehört in die zweite Stufe
+     bzw. den zweiten Hauptteil – erst frei spielen, dann die Regel. Ganztagsformen („…-Tag“)
+     sind keine Regel für zwölf Minuten. */
+  const regeln=alle.map((f,i)=>({f,i})).filter(x=>tpIstZusatzregel(x.f)&&!/-Tag$/.test(x.f.name));
   const regelWeg=new Set(tpSlots.map(sl=>sl&&sl.regel).filter(Boolean));
   let regelNeu=0;
+  if(!regelZiel&&!regelWeg.size){ const st=haupt().filter(x=>tpIstStandardHauptteil(x.s)&&x.s.regel===undefined); regelZiel=(st[1]||st[0]||{}).s||null; }
+  if(regelWeg.size||haupt().some(x=>x.s.regel===null))regelZiel=null;   // schon eine da, oder der Trainer hat sie weggetippt
   haupt().forEach(x=>{
-    if(x.s.regel!==undefined||!regeln.length)return;
+    if(x.s!==regelZiel||x.s.regel!==undefined||!regeln.length)return;
     let best=null;
     regeln.forEach(r=>{ if(regelWeg.has(r.f.name))return; const ki=th.kats.indexOf(r.f.kat); const w=(ki===0?0:ki>0?1:3)+zufall(); if(!best||w<best.w)best={w,n:r.f.name}; });
     if(best){ x.s.regel=best.n; regelWeg.add(best.n); regelNeu++; }
