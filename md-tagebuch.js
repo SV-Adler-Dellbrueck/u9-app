@@ -1458,7 +1458,19 @@ async function wieWarsKarte(){
     const rows = r.ok ? ((await r.json())||[]) : [];
     /* v766: Abgelegtes („Nichts eintragen“) und der Altbestand bis 08.10.2026 zählen als erledigt. */
     const verz = typeof nbVerzichtLaden==="function" ? await nbVerzichtLaden(ich) : new Set();
-    const kand = rows.filter(t=>(t.trainer_status||{})[ich]==="ja"
+    /* v844: Die Karte kam nur, wenn der Trainer vorher „Bist du dabei?“ mit Ja beantwortet hatte.
+       Wer nie antwortet, aber auf dem Platz stand, bekam keine Erinnerung. Jetzt zählt auch die
+       gespeicherte Anwesenheit des Tages: steht der Trainer dort unter den Trainern, war er da.
+       Gelesen wird nur die Trainerliste (data->_trainers), nicht die Haken der Kinder. */
+    const warDa = new Set();
+    try{
+      const tageAlle = [...new Set(rows.map(t=>t.datum))];
+      if(tageAlle.length){
+        const a = await fetch(`${SB_URL}/rest/v1/anwesenheit?select=datum,trainer:data->_trainers&datum=in.(${tageAlle.join(",")})`,{headers:(typeof sbTeamHeaders==="function"?sbTeamHeaders():sbAuthHeaders())});
+        if(a.ok) ((await a.json())||[]).forEach(x=>{ if(Array.isArray(x.trainer)&&x.trainer.includes(ich)) warDa.add(x.datum); });
+      }
+    }catch(e){}
+    const kand = rows.filter(t=>((t.trainer_status||{})[ich]==="ja" || warDa.has(t.datum))
       && tbTerminGelaufen(t)
       && !verz.has(t.typ==="training" ? "d"+t.datum : "t"+Number(t.id))
       && !(typeof nbAltbestand==="function" && nbAltbestand(t.datum))

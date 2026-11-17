@@ -20,7 +20,7 @@ module.exports = async function (h) {
 
   // ── 2) + 3) + 4) im Trainer-Einstieg: Daten und reine Funktionen ─────────
   const s1 = await h.starten({ warten: 1500, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen() }) });
-  const r1 = await s1.page.evaluate(() => {
+  const r1 = await s1.page.evaluate(async () => {
     const out = { quiz: [], fehlt: [] };
     if (typeof TQ_SCENARIOS === "undefined") { out.fehlt.push("TQ_SCENARIOS"); return out; }
     const texte = sc => [sc.title, sc.desc, sc.task, sc.hint, sc.explain && sc.explain.correct, sc.explain && sc.explain.wrong].join(" | ");
@@ -110,7 +110,9 @@ module.exports = async function (h) {
       out.editor.hoehe = cb ? Math.round(cb.closest("label").getBoundingClientRect().height) : 0;
       if (cb) cb.checked = true;
       out.editor.speichern = typeof tmEditSave === "function";
-      if (cb && typeof tmEditSave === "function") tmEditSave(501);
+      /* v844: Das Speichern läuft asynchron. Ohne zu warten wurde das Fenster sofort entfernt und das Ergebnis manchmal
+         gelesen, bevor der PATCH hinausging – unter Last war der Prüffall deshalb gelegentlich rot (17.11.2026). */
+      if (cb && typeof tmEditSave === "function") { try { await tmEditSave(501); } catch (e) {} }
       document.getElementById("tm-edit-modal")?.remove();
       tmEdit(502);
       out.editor.trainingHaken = !!document.getElementById("te-mitbringen");
