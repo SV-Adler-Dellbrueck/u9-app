@@ -82,13 +82,13 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 
 | # | Befund | Status |
 |---|---|---|
-| 5.1 | Skalierungszeilen gehen rechnerisch nicht auf (L5-2, L2-4, L1-3, L2-1) oder widersprechen der Übung | ⬜ |
+| 5.1 | Skalierungszeilen gehen rechnerisch nicht auf (L5-2, L2-4, L1-3, L2-1) oder widersprechen der Übung | teils ✅ v839: L5-2/8, L2-4/12, L1-3/8 berichtigt; Feldmaße gegen die Übungen offen |
 | 5.2 | „Warm up Adler“ (Reihenprogramm, 15 Minuten) steht im 8-Minuten-Block von 38 Vorlagen | ⬜ |
 | 5.3 | Sechs Vorlagen sind 34 Minuten Übungsform; drei davon sind die Schlechtwetter-Vorlagen; Blocktyp zählt sie als Spielzeit | ⬜ |
 | 5.4 | Stationen-Vorlagen ohne freie Stufe, höchste Erklärlast (L6-5, „3+1 gegen FUNiño“) | ⬜ |
 | 5.5 | Regeln, die Kinder nicht selbst prüfen können; Kontaktbegrenzung in L4-1/L4-4 | ⬜ |
 | 5.6 | Folge-Nummer ist Entstehungsreihenfolge, keine Progression | ⬜ |
-| 5.7 | Halle und Schlechtwetter dünn; keine Zeilen für 6, 10, 14 Kinder | ⬜ |
+| 5.7 | Halle und Schlechtwetter dünn; keine Zeilen für 6, 10, 14 Kinder | Entwurf: `doku/auftrag-skalierung-6-10-14/` wartet auf fachliche Prüfung; Halle offen |
 | 5.8 | Material je Einheit steht nirgends als Liste | ⬜ |
 | 5.9 | Rund 14 Fast-Dubletten „3 gegen 3 auf vier Minitore“ | ⬜ |
 | 5.10 | Datenqualität: Spielerzahl, Feld ohne Maß, Coaching im Befehlston, sehr lange Abläufe | ⬜ |

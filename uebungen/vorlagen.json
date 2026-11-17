@@ -1,6 +1,6 @@
 {
   "schema": "adler-vorlagen/1",
-  "stand": "2026-11-15-1",
+  "stand": "2026-11-17-1",
   "vorlagen": [
     {
       "name": "L1-1 Ball behalten – Duell um zwei Tore",
@@ -120,7 +120,7 @@
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
-        "8": "1 Viereck 12 x 12 m, vier außen gegen zwei in der Mitte, zweite Gruppe wartet nicht – zweites Viereck daneben",
+        "8": "2 Vierecke 10 x 10 m, je drei außen gegen einen in der Mitte",
         "12": "2 Vierecke 12 x 12 m, je vier außen gegen zwei in der Mitte",
         "16": "2 Vierecke 15 x 15 m, je fünf außen gegen drei in der Mitte"
       },
@@ -393,7 +393,7 @@
       "netto_spielform_min": 38,
       "skalierung": {
         "8": "1 Feld 30 x 20 m, 4 gegen 4, je zwei Minitore außen an der Grundlinie",
-        "12": "2 Felder 30 x 20 m, 4 gegen 4, dritte Gruppe wechselt nach je vier Minuten ein",
+        "12": "1 Feld 30 x 20 m, 4 gegen 4, dritte Gruppe wechselt nach je vier Minuten ein",
         "16": "2 Felder 35 x 25 m, 4 gegen 4, zwei Gruppen je Feld im Wechsel"
       },
       "beobachtung": "Wer ist nach dem Vorbeikommen nach außen ausgewichen, statt in den Pulk zu dribbeln – und wer hat wie ein Flitzer die Breite besetzt, bevor der Ball kam?",
@@ -885,7 +885,7 @@
       "dauer_min": 75,
       "netto_spielform_min": 36,
       "skalierung": {
-        "8": "1 Feld 35 x 25 m, 4+1 gegen 4+1 ohne Wechsel – Torhüter rotieren nach je vier Minuten",
+        "8": "1 Feld 30 x 22 m, 3+1 gegen 3+1 ohne Wechsel – Torhüter rotieren nach je vier Minuten",
         "12": "1 Feld 35 x 25 m, 4+1 gegen 4+1, dritte Gruppe wechselt komplett ein",
         "16": "2 Felder 35 x 25 m, je 4+1 gegen 4+1"
       },
