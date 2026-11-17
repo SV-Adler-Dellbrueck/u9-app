@@ -937,6 +937,26 @@ async function elternAnsageAck(id,btn){
 /* v837: Ein Tipp auf „Die Kabine“ sperrte den Eltern-Bereich sofort; zurück ging es nur mit dem
    Kabinen-Code, den das Trainerteam mündlich weitergibt. Wer ihn nicht kannte, kam auch an
    Zu- und Absagen nicht mehr. Beim ersten Start auf diesem Gerät fragt die App deshalb nach. */
+/* v838: Eine Zonen-Überschrift („Noch offen“, „Neu“) zeigt sich nur, wenn bis zur nächsten
+   Überschrift bzw. bis zum Terminbereich etwas Sichtbares steht. Die Slots füllen sich nach und
+   nach – deshalb schaut ein Beobachter zu und prüft bei jeder Änderung neu (gebündelt). */
+function elternZonenPruefen(){
+  document.querySelectorAll("#ep-dash-body .el-zone").forEach(z=>{
+    let sichtbar=false;
+    for(let n=z.nextElementSibling;n&&!n.classList.contains("el-zone")&&n.id!=="eltern-termine-kopf"&&!n.classList.contains("el-zone-ende");n=n.nextElementSibling){
+      if(n.offsetHeight>0){ sichtbar=true; break; }
+    }
+    if(z.hidden===sichtbar)z.hidden=!sichtbar;
+  });
+}
+function elternZonenBeobachten(){
+  const body=document.getElementById("ep-dash-body"); if(!body||typeof MutationObserver==="undefined")return;
+  if(window._elZonenObs)window._elZonenObs.disconnect();
+  let t=null;
+  window._elZonenObs=new MutationObserver(()=>{ clearTimeout(t); t=setTimeout(elternZonenPruefen,60); });
+  window._elZonenObs.observe(body,{childList:true,subtree:true,attributes:true,attributeFilter:["style","hidden"]});
+  elternZonenPruefen();
+}
 async function elternKabineStart(){
   let bekannt=false; try{ bekannt=localStorage.getItem("adler_kabine_bekannt")==="1"; }catch(e){}
   if(!bekannt&&typeof frageJaNein==="function"){
@@ -1036,16 +1056,22 @@ async function elternDashLoad(){
   if(offlineStand)html+=`<div id="eltern-offline" role="status" style="background:#fef3c7;border:1px solid #b45309;border-radius:14px;padding:12px 14px;margin-bottom:12px;color:#78350f;font-size:var(--s-text);line-height:1.5">
       <b>Keine Verbindung.</b> Du siehst den Stand vom ${esc(elternStandZeit(offlineStand.am))}. Antworten gehen erst wieder mit Netz.
       <button type="button" onclick="elternDashLoad()" style="display:block;width:100%;min-height:48px;margin-top:8px;border:1px solid #78350f;border-radius:12px;background:#fff;color:#78350f;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">Nochmal versuchen</button></div>`;
+  /* v838 (Charles 17.11.): drei Zonen statt elf Blöcken in gewachsener Reihenfolge.
+       JETZT  – was gerade gilt: Live, Ansage des Trainerteams, nächster Termin, Pause, Genesungsgruß
+       OFFEN  – was eine Handlung braucht: fehlende Antworten, „Zu erledigen“, Benachrichtigungen, Porträt-Bogen
+       NEU    – was man lesen kann: Adler-Rufe, Adler News
+     Die Ansage steht jetzt ÜBER der Terminkarte (vorher darunter). Die Weihnachtsfeier bleibt ganz
+     oben (v830). Die Zonen sind flach gebaut – Überschrift und Slots sind Geschwister –, und eine
+     Überschrift zeigt sich nur, wenn in ihrer Zone etwas steht (elternZonenPruefen). */
+  const zone=(id,titel)=>`<div class="el-zone" data-zone="${id}" hidden style="font-size:var(--s-klein);font-weight:800;letter-spacing:.3px;color:#475569;margin:14px 2px 8px">${titel}</div>`;
   html+='<div id="feier-slot"></div>';        // v830: Weihnachtsfeier ganz oben, solange Antwort oder Beitragsliste fehlt
   html+='<div id="eltern-live-slot"></div>';
-  html+='<div id="push-hinweis-slot"></div>';   // v698: ganz oben – Benachrichtigungen, solange sie aus sind
-  html+='<div id="rufe-hinweis"></div>';          // v673: neue Adler-Rufe – nur wenn es welche gibt
-  html+='<div id="nest-bogen-slot"></div>';       // v734: „Euer Kind ist im nächsten Adler Nest“ – nur während eines Porträts
-  html+='<div id="eltern-top-slot"></div>';        // hier landet die Terminkarte (s. u.)
-  html+='<div id="eltern-offen-slot"></div>';      // offene Rückmeldungen der nächsten 14 Tage
-  if(termin&&(termin.typ==="spiel"||termin.typ==="turnier"))html+='<div id="pause-card"></div>';
   html+='<div id="ansage-slot"></div>'; // H1: ungelesene Trainer-Ansagen als Banner
+  html+='<div id="eltern-top-slot"></div>';        // hier landet die Terminkarte (s. u.)
+  if(termin&&(termin.typ==="spiel"||termin.typ==="turnier"))html+='<div id="pause-card"></div>';
   html+='<div id="genesung-slot"></div>'; // I-A: „X fehlt gerade" – 1-Tap-Genesungsgruß (nur mit Trainer-Freigabe)
+  html+=zone("offen","Noch offen");
+  html+='<div id="eltern-offen-slot"></div>';      // offene Rückmeldungen der nächsten 14 Tage
   // ── 📌 ZU ERLEDIGEN: alle offenen Punkte gebündelt, ganz oben. Die Loader füllen die Slots;
   //    ist alles leer, blendet elternTodoSync() die ganze Sektion aus. ──
   // 📌 To-Do's als Kategorie-Button (optisch wie die Kategorien unten); Inhalt öffnet sich im
@@ -1056,6 +1082,10 @@ async function elternDashLoad(){
     <span id="eltern-todo-badge" style="background:#fff;color:#b45309;font-weight:800;font-size:var(--s-text);border-radius:12px;padding:2px 9px"></span>
     <span style="font-size:var(--s-teil);color:#fef3c7">›</span>
   </button>`;
+  html+='<div id="push-hinweis-slot"></div>';   // v698 – seit v838 in „Noch offen“: Benachrichtigungen, solange sie aus sind
+  html+='<div id="nest-bogen-slot"></div>';       // v734: „Euer Kind ist im nächsten Adler Nest“ – nur während eines Porträts
+  html+=zone("neu","Neu");
+  html+='<div id="rufe-hinweis"></div>';          // v673: neue Adler-Rufe – nur wenn es welche gibt
   // 📣 Adler News: eigener Button (News ≠ To-Do); Panel #cat-news; roter Badge bei Ungelesenem.
   /* PO v407: „adlernews auch nur wenn etwas drin ist." – wie beim To-Do-Knopf: unsichtbar
      starten, elternNewsLoad blendet ihn nur bei ungelesenen Punkten ein. */
@@ -1065,6 +1095,7 @@ async function elternDashLoad(){
     <span id="eltern-news-badge" style="display:none;background:#ef4444;color:#fff;font-weight:800;font-size:var(--s-text);border-radius:12px;padding:2px 9px">0</span>
     <span style="font-size:var(--s-teil);color:#64748b">›</span>
   </button>`;
+  html+='<div class="el-zone-ende" hidden></div>';   // v838: hier enden die Zonen
   // A1: persönlicher Nach-dem-Spiel-Gruß – der Slot steht jetzt UNTER den Terminen (s. u.).
   if(!termin){
     terminHtml=card('<div style="font-weight:700;margin-bottom:2px">📅 Nächster Termin</div><div style="color:#64748b;font-size:var(--s-text)">Aktuell ist kein Termin geplant.</div>');
@@ -1077,7 +1108,9 @@ async function elternDashLoad(){
        „Treffen …“ zeigte. Deshalb trägt diese Karte die Treffzeit jetzt selbst, wie das Termin-Fenster. */
     const zeit=elternZeitZeile(termin); // v729: mit Ende
     const faelltAus=_elAbgesagt(termin);   // v741: abgesagt → keine Rückmeldung, kein „fehlt“
-    const offen=faelltAus?[]:kids.filter(k=>!rsvp[k.spieler_id]);
+    const ohneAntwort=faelltAus?[]:kids.filter(k=>!rsvp[k.spieler_id]);
+    const giltZu=elternGiltZugesagt(termin);
+    const offen=giltZu?[]:ohneAntwort;      // v838: beim Training wird nicht gemahnt
     const trainerJa=Object.keys(termin.trainer_status||{}).filter(n=>(termin.trainer_status||{})[n]==="ja");
     // Zu-/Absage direkt am Termin – erneuter Klick auf den aktiven Status entfernt ihn wieder.
     const rsvpRows=kids.map(k=>{
@@ -1091,7 +1124,7 @@ async function elternDashLoad(){
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
           <span style="font-weight:700;font-size:var(--s-karte)">${esc(kd.name||"Kind")}</span>
           ${kd.nr!=null?`<span style="color:var(--text3);font-weight:600;font-size:var(--s-text)">#${kd.nr}</span>`:""}
-          <span style="margin-left:auto;font-size:var(--s-klein);font-weight:700;color:${st?EP_RSVP[st].col:"#b45309"}">${st?EP_RSVP[st].emo+" "+EP_RSVP[st].lbl:"❗ offen"}</span>
+          <span style="margin-left:auto;font-size:var(--s-klein);font-weight:700;color:${st?EP_RSVP[st].col:(giltZu?"#475569":"#b45309")}">${st?EP_RSVP[st].emo+" "+EP_RSVP[st].lbl:(giltZu?"✓ "+EL_GILT_TEXT:"❗ offen")}</span>
         </div>
         <div style="display:flex;gap:6px">${btns}</div>
         ${cur&&cur.kommentar?`<div style="font-size:var(--s-klein);color:#64748b;margin-top:3px">„${esc(cur.kommentar)}"</div>`:""}
@@ -1112,7 +1145,7 @@ async function elternDashLoad(){
     /* v821: Der Kopf der Karte ist ein farbiges Band (terminKarteBand, core.js) mit Datumsblock, Countdown, Wetter und
        rechts dem Stand der eigenen Rückmeldung. Titel und „Nächster Termin“ stehen jetzt dort; alles darunter ist unverändert. */
     const _zu=kids.filter(k=>rsvp[k.spieler_id]&&rsvp[k.spieler_id].status==="zugesagt").length, _st1=kids.length===1&&rsvp[kids[0].spieler_id]?rsvp[kids[0].spieler_id].status:null;
-    const _zeichen=faelltAus?null:kids.length===1?(_st1?{symbol:EP_RSVP[_st1].emo,text:"Rückmeldung: "+EP_RSVP[_st1].lbl}:{symbol:"❗",text:"Rückmeldung fehlt"})
+    const _zeichen=faelltAus?null:kids.length===1?(_st1?{symbol:EP_RSVP[_st1].emo,text:"Rückmeldung: "+EP_RSVP[_st1].lbl}:giltZu?{symbol:"✓",text:"Gilt als zugesagt"}:{symbol:"❗",text:"Rückmeldung fehlt"})
       :kids.length?(offen.length?{symbol:"❗",text:`Rückmeldung fehlt für ${offen.length} von ${kids.length} Kindern`}:{symbol:_zu===kids.length?"👍":"✓",text:`${_zu} von ${kids.length} Kindern zugesagt`}):null;
     const _band=terminKarteBand({typ:termin.typ,datum:termin.datum,zeit:termin.uhrzeit?String(termin.uhrzeit).slice(0,5):"",etikett:"Nächster Termin",wetterId:"wetter-eltern",abgesagt:faelltAus,zeichen:_zeichen,
       titelHtml:`${m.icon} ${esc(termin.titel||termin.gegner||m.label)}${heimLabel(termin)?` <span style="font-size:var(--s-klein);font-weight:800;padding:2px 7px;border-radius:10px;background:${termin.heim?"#dcfce7":"#fef3c7"};color:${termin.heim?"#15803d":"#b45309"};white-space:nowrap">${heimLabel(termin)}</span>`:""}`});
@@ -1120,6 +1153,7 @@ async function elternDashLoad(){
       ${_band}
       <div style="padding:10px 8px 0">
       <div style="display:flex;align-items:center;gap:8px">
+        ${giltZu&&ohneAntwort.length?`<span id="termin-gilt-zu" style="font-size:var(--s-klein);font-weight:700;color:#475569;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:20px;padding:3px 10px;line-height:1.35">✓ Gilt als zugesagt – nur absagen, wenn euer Kind fehlt</span>`:""}
         ${offen.length?(dringend?`<span style="margin-left:auto;font-size:var(--s-klein);font-weight:800;color:#b91c1c;background:#fef2f2;border:1px solid #fca5a5;border-radius:20px;padding:2px 8px">⏰ Rückmeldung überfällig – bitte jetzt</span>`:`<span style="margin-left:auto;font-size:var(--s-klein);font-weight:800;color:#b45309;background:#fffbeb;border:1px solid #fcd34d;border-radius:20px;padding:2px 8px">❗ Rückmeldung fehlt</span>`):""}
       </div>
       ${(typeof elternPlatzHinweisHtml==="function")?elternPlatzHinweisHtml(termin):""}
@@ -1281,6 +1315,7 @@ async function elternDashLoad(){
   const scrollVor=_epScrollMerken(body);   // Wischposition der Karussells retten
   const ankerVor=_epAnkerMerken(body);     // v666: senkrechte Lage des Karussells
   body.innerHTML=html;
+  elternZonenBeobachten();   // v838
   _epScrollZurueck(scrollVor,body);        // …und sofort wiederherstellen, vor dem ersten Bild
   try{ elternGrussSetzen(kids,termin); }catch(e){}   // v783
   try{ if(window._epPop){ window._epPop=0; const tk=document.getElementById("termin-card"); if(tk){ tk.classList.remove("ep-pop"); void tk.offsetWidth; tk.classList.add("ep-pop"); } } }catch(e){}
@@ -1458,12 +1493,17 @@ async function elternRsvpClear(terminId,spielerId){
    stünde dieselbe Frage zweimal untereinander. Weiter als 14 Tage wird bewusst nicht
    gefragt: eine Zusage für November hilft niemandem und macht den Block unlesbar.
    Gezeigt wird nur, was WIRKLICH offen ist; ist alles beantwortet, ist der Block weg. */
+/* v838 (Charles 17.11.): Ein Training gilt als zugesagt – also mahnt die App dort nicht. Die rote
+   Mahnung („Rückmeldung fehlt“, „überfällig“) bleibt für Spiel, Turnier und Event, wo eine fehlende
+   Antwort wirklich etwas kostet. Die Regel selbst und die Antwortknöpfe bleiben unverändert. */
+function elternGiltZugesagt(t){ return !!t&&t.typ==="training"; }
+const EL_GILT_TEXT="gilt als zugesagt";
 function elternOffeneRsvpHtml(rows,kids,rsvpAll,ausserId){
   const heute=isoLokal();
   const bis=new Date(Date.now()+14*864e5).toISOString().slice(0,10);
   rsvpAll=rsvpAll||{};
   const offen=(rows||[])
-    .filter(t=>t.datum>=heute&&t.datum<=bis&&Number(t.id)!==Number(ausserId)&&!_elAbgesagt(t))
+    .filter(t=>t.datum>=heute&&t.datum<=bis&&Number(t.id)!==Number(ausserId)&&!_elAbgesagt(t)&&!elternGiltZugesagt(t))
     .map(t=>({t,kinder:(kids||[]).filter(k=>!((rsvpAll[t.id]||{})[k.spieler_id]))}))
     .filter(x=>x.kinder.length);
   if(!offen.length)return "";
@@ -1593,6 +1633,7 @@ function _elWocheZelle(d,inWoche,kids,rsvpAll){
     const status=t=>{
       if(_elAbgesagt(t))return {zeichen:"✕",wort:"fällt aus"};
       const rr=rsvpAll[t.id]||{}, st=(kids||[]).map(k=>rr[k.spieler_id]||null);
+      if(elternGiltZugesagt(t)&&st.every(x=>!x||x==="zugesagt"))return {zeichen:"✓",wort:st.some(x=>!x)?EL_GILT_TEXT:"zugesagt"};   // v838
       if(st.some(x=>!x))return {zeichen:"!",wort:"Antwort offen"};
       if(st.every(x=>x==="zugesagt"))return {zeichen:"✓",wort:"zugesagt"};
       return {zeichen:"✕",wort:"nicht dabei"};
@@ -1729,8 +1770,9 @@ function elternTermineCarouselHtml(rows,kids,rsvpAll,ohneId,ohneKnopf){
     const rr=rsvpAll[t.id]||{};
     const stand=_elAbgesagt(t)?(typeof terminAbsageChip==="function"?terminAbsageChip(t):"🔴 Fällt aus"):(kids||[]).map(k=>{
       const kd=k.kader||{}, st=rr[k.spieler_id]||null, c=st&&EP_RSVP[st];
-      const txt=c?`${c.emo} ${c.lbl}`:"❗ offen";
-      return `<span style="display:inline-block;font-size:var(--s-klein);font-weight:800;color:${c?"var(--text2)":"#b45309"};margin-right:8px">${(kids||[]).length>1?esc(kd.name||"Kind")+": ":""}${txt}</span>`;
+      const ruhig=!c&&elternGiltZugesagt(t);
+      const txt=c?`${c.emo} ${c.lbl}`:ruhig?"✓ "+EL_GILT_TEXT:"❗ offen";
+      return `<span style="display:inline-block;font-size:var(--s-klein);font-weight:800;color:${c||ruhig?"var(--text2)":"#b45309"};margin-right:8px">${(kids||[]).length>1?esc(kd.name||"Kind")+": ":""}${txt}</span>`;
     }).join("");
     return `<button type="button" onclick="terminDetailOpen(${t.id})" style="display:flex;align-items:center;gap:12px;width:100%;min-height:56px;text-align:left;padding:10px 12px;margin-top:8px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc;color:inherit;font-family:inherit;cursor:pointer">
       <span style="font-size:var(--s-teil);line-height:1" aria-hidden="true">${m.icon}</span>
@@ -2712,7 +2754,7 @@ function elternTermineListeHtml(rows){
       const kd=k.kader||{}, st=rr[k.spieler_id]||null;
       const btns=EP_RSVP_QUICK.map(s=>{ const cc=EP_RSVP[s], on=st===s;
         return `<button type="button" class="et-rsvp" onclick="elternTerminRsvp(${Number(t.id)},${Number(k.spieler_id)},'${s}')" aria-pressed="${on}" aria-label="${esc(kd.name||"Kind")}: ${cc.lbl}" style="flex:1;min-width:0;min-height:44px;padding:4px 2px;border-radius:9px;border:1.5px solid ${on?cc.col:"var(--rand-bedien)"};background:${on?cc.col:"#fff"};color:${on?"#fff":"#334155"};font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">${cc.emo} ${cc.lbl}</button>`; }).join("");
-      const stTxt=st&&EP_RSVP[st]?`${EP_RSVP[st].emo} ${EP_RSVP[st].lbl}`:"❗ offen";
+      const stTxt=st&&EP_RSVP[st]?`${EP_RSVP[st].emo} ${EP_RSVP[st].lbl}`:elternGiltZugesagt(t)?"✓ "+EL_GILT_TEXT:"❗ offen";
       return `<div style="margin-top:6px"><div style="font-size:var(--s-klein);font-weight:700;color:#475569;margin-bottom:3px">${kids.length>1?esc(kd.name||"Kind")+" · ":""}${stTxt}</div><div style="display:flex;gap:5px">${btns}</div></div>`;
     }).join("");
     return `<div class="et-termin" data-id="${Number(t.id)}" style="padding:9px 6px;border-bottom:1px solid #f1f5f9${i===0?";background:#eff6ff;border-radius:8px":""}">

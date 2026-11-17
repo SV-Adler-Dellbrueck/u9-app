@@ -91,7 +91,9 @@ module.exports = async function (h) {
   const ft = t.fehler(); await t.schliessen();
   if (f.length) probleme.push("Konsole Eltern: " + f.slice(0, 2).join(" | "));
   if (ft.length) probleme.push("Konsole Trainer: " + ft.slice(0, 2).join(" | "));
-  if (!r.a.slot || !r.a.vorRufe || r.a.direktDavor !== "rufe-hinweis" || !/^(eltern-live-slot|)$/.test(r.a.davor)) probleme.push(`a) Reihenfolge: ${JSON.stringify(r.a)}`);
+  /* v838 (Charles 17.11., drei Zonen): Bei den Eltern steht die Karte nicht mehr ganz oben, sondern in „Noch offen“ –
+     nach „Zu erledigen“, vor dem Porträt-Bogen und vor den Adler-Rufen. Im Trainerbereich bleibt sie ganz oben. */
+  if (!r.a.slot || !r.a.vorRufe || r.a.direktDavor !== "nest-bogen-slot" || r.a.davor !== "eltern-todo-btn") probleme.push(`a) Reihenfolge: ${JSON.stringify(r.a)}`);
   if (r.b.fall !== "aus" || !/Keine Nachricht vom Team verpassen/.test(r.b.text) || !/Wenn du künftig alle neuen Nachrichten/.test(r.b.text) || r.b.knopf < 48 || r.b.sogehts < 44) probleme.push(`b) Karte: ${JSON.stringify(r.b)}`);
   if (!r.b.weg || r.b.an !== 1 || r.b.rolle !== "parent" || r.b.test !== 1) probleme.push(`b) Einschalten: ${JSON.stringify(r.b)}`);
   if (r.c.fall !== "ios" || !/Home-Bildschirm/.test(r.c.text) || !/So geht/.test(r.c.knopf)) probleme.push(`c) iPhone-Karte: ${JSON.stringify(r.c)}`);

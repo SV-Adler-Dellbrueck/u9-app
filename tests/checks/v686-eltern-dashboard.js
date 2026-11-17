@@ -51,7 +51,7 @@ module.exports = async function (h) {
   if (ids.includes(5) || ids.includes(6)) probleme.push(`b) „Danach“ wiederholt einen Termin von oben: ${JSON.stringify(ids)}`);
   r.danachInfo.forEach(x => { if (x.h < 48) probleme.push(`b) Zeile ${x.id} nur ${x.h} px`); });
   const z7 = r.danachInfo.find(x => x.id === 7); if (z7 && !/Zusage/.test(z7.t)) probleme.push(`b) Zeile 7 nennt den Stand nicht: „${z7.t}“`);
-  const z8 = r.danachInfo.find(x => x.id === 8); if (z8 && !/offen/.test(z8.t)) probleme.push(`b) Zeile 8 nennt „offen“ nicht: „${z8.t}“`);
+  const z8 = r.danachInfo.find(x => x.id === 8); if (z8 && !/gilt als zugesagt/.test(z8.t)) probleme.push(`b) Zeile 8 (Training ohne Antwort) nennt „gilt als zugesagt“ nicht: „${z8.t}“`);   // v838: beim Training wird nicht gemahnt, vorher „offen“
   if (r.reihen[7] || r.reihen[8]) probleme.push("b) In „Danach“ stehen Zusage-Knöpfe");
   if (r.titel.length < 3) probleme.push(`c) nur ${r.titel.length} Abschnitts-Überschriften gefunden`);
   r.titel.forEach(x => { if (x.px < 13 || x.tt === "uppercase") probleme.push(`c) „${x.t}“: ${x.px}px ${x.tt}`); });
