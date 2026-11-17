@@ -71,7 +71,7 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 |---|---|---|
 | 4.1 | „Eltern“ und „Orga“ je rund 15 gleich gewichtete Kacheln; Einstellungen neben Alltag | ✅ v841 Klappen für Seltenes |
 | 4.2 | Dieselbe Sache, mehrere Namen (Spieltag/Match/Matchday, Block/Phase, Rückmeldung/Antwort, sechs „Adler“-Kanäle) – Wortliste | teils ✅ v842: Spieltag, Spieluhr, Rückmeldung, Die Kabine, Nachbereitung; offen: Block/Phase, Station/Feld, Schließen/Abbrechen/Fertig, Adler-Kanäle |
-| 4.3 | Die Hilfe ist ein Änderungsprotokoll (Einträge bis 7.900 Zeichen) | teils ✅ v843: Kurzfassung zuerst, ganzer Text hinter „Alles dazu“; eigene Kurzfassungen für 18 Einträge (v847: die 14 längsten); rund 40 mittellange zeigen den Anriss |
+| 4.3 | Die Hilfe ist ein Änderungsprotokoll (Einträge bis 7.900 Zeichen) | teils ✅ v843: Kurzfassung zuerst, ganzer Text hinter „Alles dazu“; eigene Kurzfassungen für 31 Einträge (v847: die 14 längsten, v848: 13 weitere); rund 25 kürzere zeigen den Anriss |
 | 4.4 | Fachsprache ohne Erklärung (Leitfrage, Nominierung, Provokationsregel) | ⬜ |
 | 4.5 | Rund 50 Systemdialoge, 180 von Hand gebaute Fenster | ⬜ schrittweise |
 | 4.6 | Knopf-Stile: Hauptaktion je Seite anders, rund 200 Knöpfe nur mit Inline-Style | ⬜ schrittweise |
