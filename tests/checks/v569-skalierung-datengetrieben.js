@@ -28,14 +28,16 @@ module.exports = async function (h) {
   if (zusatz.length !== 1 || keys(zusatz[0]) !== "8/10/12/14") probleme.push(`L5-7: ${zusatz.map(v => keys(v)).join(", ") || "fehlt"} statt 8/10/12/14`);
   /* v790: L5-8 „Anbieten“ läuft im Käfig mit zwei Stationen: 8/10/12 (der Käfig trägt keine drei). */
   const zusatz8 = (vor.vorlagen || []).filter(v => /^L5-8 /.test(String(v.name)));
-  if (zusatz8.length !== 1 || keys(zusatz8[0]) !== "8/10/12") probleme.push(`L5-8: ${zusatz8.map(v => keys(v)).join(", ") || "fehlt"} statt 8/10/12`);
+  if (zusatz8.length !== 1 || keys(zusatz8[0]) !== "6/8/10/12/14") probleme.push(`L5-8: ${zusatz8.map(v => keys(v)).join(", ") || "fehlt"} statt 6/8/10/12/14`);   // v870: dazu 6 und 14
   /* v833: Sondereinheiten ohne Folge (Technik-Parcours: 8/10/12/14 nach Käfig und Kaderstärke) sind keine Konzept-Einheiten. */
   const konzept = (vor.vorlagen || []).filter(v => !spieltag.includes(v) && !zusatz.includes(v) && !zusatz8.includes(v) && Number(v.folge_nr) > 0);
   const falschNeu = spieltag.filter(v => keys(v) !== "8/10/12/14").map(v => `${v.name} (${keys(v)})`);
-  const falschAlt = konzept.filter(v => keys(v) !== "8/12/16").map(v => `${v.name} (${keys(v)})`);
+  /* v870 (Charles 18.11.): die Konzept-Einheiten tragen dazu Zeilen für 6, 10 und 14 Kinder; L5-2 (Raute 4+1) keine für 6. */
+  const sollAlt = v => /^L5-2 /.test(String(v.name)) ? "8/10/12/14/16" : /^L4-[25] /.test(String(v.name)) ? "8/12/16" : "6/8/10/12/14/16";   // L4-2, L4-5: im Entwurf bewusst nicht ergänzt
+  const falschAlt = konzept.filter(v => keys(v) !== sollAlt(v)).map(v => `${v.name} (${keys(v)})`);
   if (spieltag.length !== 15) probleme.push(`${spieltag.length} Spieltags-Einheiten in der Datei, erwartet 15`);
   if (falschNeu.length) probleme.push("Spieltags-Einheit ohne 8/10/12/14: " + falschNeu.join(", "));
-  if (falschAlt.length) probleme.push("Konzept-Einheit ohne 8/12/16: " + falschAlt.join(", "));
+  if (falschAlt.length) probleme.push("Konzept-Einheit ohne 6/8/10/12/14/16: " + falschAlt.join(", "));
 
   /* Die Attrappe liefert die Vorlagen der Datei fertig aus der Datenbank – ohne Abgleich, denn
      geprüft wird hier nur die Anzeige. */
@@ -86,9 +88,9 @@ module.exports = async function (h) {
   if (String(r.nichts) !== "") probleme.push(`Ohne Skalierung kommt ${JSON.stringify(r.nichts)} statt einer leeren Liste`);
   // b) + c)
   if (String(r.vorschauNeu) !== "8,10,12,14") probleme.push(`Vorschau L4-6 zeigt die Stärken ${JSON.stringify(r.vorschauNeu)} statt 8, 10, 12, 14`);
-  if (String(r.vorschauAlt) !== "8,12,16") probleme.push(`Vorschau L1-1 zeigt die Stärken ${JSON.stringify(r.vorschauAlt)} statt 8, 12, 16`);
+  if (String(r.vorschauAlt) !== "6,8,10,12,14,16") probleme.push(`Vorschau L1-1 zeigt die Stärken ${JSON.stringify(r.vorschauAlt)} statt 6 bis 16`);
   if (String(r.steckbriefNeu) !== "8,10,12,14") probleme.push(`Steckbrief L4-8 zeigt die Stärken ${JSON.stringify(r.steckbriefNeu)} statt 8, 10, 12, 14`);
-  if (String(r.steckbriefAlt) !== "8,12,16") probleme.push(`Steckbrief L5-1 zeigt die Stärken ${JSON.stringify(r.steckbriefAlt)} statt 8, 12, 16`);
+  if (String(r.steckbriefAlt) !== "6,8,10,12,14,16") probleme.push(`Steckbrief L5-1 zeigt die Stärken ${JSON.stringify(r.steckbriefAlt)} statt 6 bis 16`);
   if (fehler.length) probleme.push("Konsole: " + fehler[0]);
   if (!probleme.length) {
     zeilen.push("Rechnung: 8/10/12/14 → vier Zeilen numerisch, 8/12/16 → drei, leere Werte und fremde Schlüssel fallen weg");
