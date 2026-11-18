@@ -2066,6 +2066,7 @@ function _fgZiel(sel){
   }
   return null;
 }
+/* v862: Ein Schritt darf einen Zusatzknopf tragen (s.extra = {text, fn}) – die Eltern-Tour bietet damit im letzten Schritt die Benachrichtigungen an. */
 async function _fgZeigen(){
   const f=_fg; if(!f)return;
   const s=f.schritte[f.i]; if(!s){ fuehrungEnde(); return; }
@@ -2088,6 +2089,7 @@ async function _fgZeigen(){
           <div style="font-size:${kind?"var(--s-karte)":"var(--s-text)"};color:#334155;line-height:1.5;margin-top:4px">${esc(s.d||"")}</div>
         </div>
       </div>
+      ${s.extra?`<button type="button" id="fg-extra" onclick="${s.extra.fn}" style="${knopf};width:100%;margin-top:12px;border:1.5px solid #1e3a8a;border-radius:12px;background:#eff6ff;color:#1e3a8a;font-family:inherit;font-weight:800;cursor:pointer">${esc(s.extra.text)}</button>`:""}
       <div style="font-size:var(--s-klein);color:#334155;margin-top:10px;text-align:right">${f.i+1} von ${n}</div>
       <div style="display:flex;gap:8px;margin-top:6px">
         <button type="button" onclick="${f.i>0?"fuehrungZurueck()":"fuehrungEnde()"}" style="${knopf};border:1.5px solid #94a3b8;border-radius:12px;background:#fff;color:#0f172a;font-family:inherit;font-weight:700;cursor:pointer">${f.i>0?"Zurück":(kind?"Später":"Überspringen")}</button>
