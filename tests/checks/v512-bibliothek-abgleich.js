@@ -160,12 +160,12 @@ module.exports = async function (h) {
   });
   ["Pass", "Laufweg", "Schuss", "Dribbling"].forEach(w => { if (!farben.legende.includes(w)) probleme.push(`In der Legende fehlt „${w}“`); });
 
-  /* Gesucht ist, DASS beide Stellen die Legende zeichnen – nicht, mit welchen Argumenten.
+  /* Gesucht ist, DASS die Stelle die Legende zeichnet – nicht, mit welchen Argumenten.
      Seit v555 nimmt sie die Rasenvariante entgegen und seit v559 die Beschreibung, damit
      die Geräte-Symbole mitkommen; auf den leeren Klammern zu bestehen hieße, jede
      Erweiterung als Fehler zu melden. */
-  const ei = fs.readFileSync(path.join(h.REPO, "md-einheit-import.js"), "utf8");
-  if (!/skzLegende\(/.test(ei)) probleme.push("Die Vorschau des Übungs-Imports zeigt keine Strich-Legende");
+  /* v872: Die Vorschau des Übungs-Imports ist mit dem Fenster entfallen – es bleibt der
+     Skizzen-Editor als Stelle, die die Legende zeichnen muss. */
   const skz = fs.readFileSync(path.join(h.REPO, "md-skizze.js"), "utf8");
   if (!/skzLegende\(/.test(skz)) probleme.push("Der Skizzen-Editor zeigt keine Strich-Legende");
   const cl = fs.readFileSync(path.join(h.REPO, "CLAUDE.md"), "utf8");
