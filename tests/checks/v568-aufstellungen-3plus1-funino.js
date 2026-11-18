@@ -304,7 +304,7 @@ module.exports = async function (h) {
   /* Bei zwei Feldern darf genau L4-8 einen Hinweis tragen – drei Stationen, zwei Felder. */
   const zweiHinweis = r.stationenZwei.map(x => x.name.split(" ")[0]);
   if (String(zweiHinweis) !== "L4-8") probleme.push(`Stationen-Hinweis bei zwei Feldern: ${r.stationenZwei.map(x => x.name).join(", ") || "keiner"} – erwartet genau L4-8`);
-  else if (!/3 Stationen geplant, 2 Felder verfügbar/.test(r.stationenZwei[0].text)) probleme.push(`L4-8 bei zwei Feldern: „${r.stationenZwei[0].text}“`);
+  else if (!/3 Felder geplant, nur 2 verfügbar/.test(r.stationenZwei[0].text)) probleme.push(`L4-8 bei zwei Feldern: „${r.stationenZwei[0].text}“`);
   if (r.stationenDrei.length) probleme.push("Stationen-Hinweis bei drei Feldern: " + r.stationenDrei.map(x => x.name).join(", "));
   if (!r.netto.length && !ohneSkal.length && !ohneRolle.length) zeilen.push("Keine der neun mit Netto-Hinweis · Skalierung 8/10/12/14 und Beobachtungsfrage mit Rollenbezug überall");
 
@@ -323,7 +323,7 @@ module.exports = async function (h) {
   if (r.reiheUeberlauf > 0) probleme.push(`Die Kachelreihe läuft am Handy ${r.reiheUeberlauf} px über den Rand`);
   if (r.chipsAbgeschnitten.length) probleme.push("Kacheltext abgeschnitten: " + r.chipsAbgeschnitten.join(", "));
   if (!fehlendeChips.length && !zuNiedrig.length && !(r.reiheUeberlauf > 0)) zeilen.push(`Kacheln: ${r.ordChips.join(" · ")} · Filter 3+1 → ${r.filter["3+1"].treffer}, FUNiño → ${r.filter["FUNiño"].treffer}, gegen → ${r.filter["3+1 gegen FUNiño"].treffer}, und → ${r.filter["3+1 und FUNiño"].treffer} · ${r.ordChips.length} Kacheln zu ${Math.min(...r.chipHoehen)} px auf ${r.reiheBreite} px Breite`);
-  if (!/3 Stationen geplant, 2 Felder verfügbar/.test(r.vorschauL48 || "")) probleme.push("Die Vorschau von L4-8 bei zwei Feldtrainern sagt nicht, dass die dritte Station entfällt");
+  if (!/3 Felder geplant, nur 2 verfügbar/.test(r.vorschauL48 || "")) probleme.push("Die Vorschau von L4-8 bei zwei Feldtrainern sagt nicht, dass die dritte Station entfällt");
 
   // 7)
   const skzFehler = r.skizzen.filter(x => x.fehler || !x.dunkel || !x.hell).map(x => `${x.name}${x.fehler ? " (" + x.fehler + ")" : ""}`);
@@ -378,7 +378,7 @@ module.exports = async function (h) {
     zeilen.push("L4-6 bei zwei Feldtrainern: Hauptteil 1 [Adler aus dem Tor | Flitzer macht es breit], Hauptteil 2 dieselben Übungen mit getauschten Gruppen (Versatz 1), Hauptteil 3 beide Felder Raute ohne Aufpasser");
     zeilen.push("L5-6 und L6-5 bei zwei: Stationen wie im Paket, Hauptteil 3 beide Felder „großes Tor gegen zwei kleine“");
     zeilen.push("L4-6 bei drei Feldtrainern: drei Felder, Feld 3 mit eigener Übung (seit v713), Hauptteil 3 offen wie in der Vorlage, kein Hinweis");
-    zeilen.push("L4-8 bei drei Feldtrainern: drei verschiedene Übungen, Versatz 0/1/2, die Gruppen rücken im Kreis · bei zwei sagt die Vorschau „3 Stationen geplant, 2 Felder verfügbar“");
+    zeilen.push("L4-8 bei drei Feldtrainern: drei verschiedene Übungen, Versatz 0/1/2, die Gruppen rücken im Kreis · bei zwei sagt die Vorschau „3 Felder geplant, nur 2 verfügbar“");
   }
 
   if (fehler.length) probleme.push("Konsole: " + fehler[0]);

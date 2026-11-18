@@ -965,7 +965,7 @@ async function handoverOpen(id){
     <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:8px">Erzeugt einen <b>Read-Only-Link</b> für eine Ersatz-Betreuung. Zusagen, ${t.typ==="training"?"Trainingsplan":"Spielinfos"} und deine Notiz stecken direkt im Link – kein Login, nichts wird gespeichert.</div>
     <label for="handover-notiz" style="font-size:var(--s-text);font-weight:700">Kurz-Notiz für die Vertretung</label>
     <textarea id="handover-notiz" rows="3" placeholder="z. B. Torwart heute Max · Ball-Beutel im Vereinsheim · Abschluss 4+1 …" style="width:100%;margin-top:4px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);resize:vertical;box-sizing:border-box"></textarea>
-    <div style="font-size:var(--s-klein);color:var(--text3);margin:6px 0 12px">Zusagen: ${grp.zugesagt.length} · offen: ${grp.offen.length} · ab/krank: ${grp.abgesagt.length+grp.krank.length}${plan.length?` · Plan: ${plan.length} Stationen`:""}</div>
+    <div style="font-size:var(--s-klein);color:var(--text3);margin:6px 0 12px">Zusagen: ${grp.zugesagt.length} · offen: ${grp.offen.length} · ab/krank: ${grp.abgesagt.length+grp.krank.length}${plan.length?` · Plan: ${plan.length} ${plan.length===1?"Übung":"Übungen"}`:""}</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-p btn-sm" onclick="handoverGen('open')"><i class="ti ti-external-link"></i>Vorschau</button>
       <button class="btn btn-sm" onclick="handoverGen('copy')"><i class="ti ti-copy"></i>Link kopieren</button>

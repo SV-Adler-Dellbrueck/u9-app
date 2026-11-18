@@ -3121,7 +3121,7 @@ async function elternAngabenOpen(){
     ${kindFelder}
     <div id="ang-fehler" role="alert" style="font-size:var(--s-text);color:#b91c1c;min-height:18px;margin-bottom:6px"></div>
     <button id="ang-save" onclick="elternAngabenSave(this)" style="width:100%;min-height:56px;border:none;border-radius:12px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">Angaben speichern</button>
-    <button onclick="document.getElementById('angaben-modal').remove()" style="width:100%;min-height:44px;margin-top:8px;border:none;background:none;color:#334155;font-family:inherit;font-size:var(--s-text);cursor:pointer">Schließen</button>
+    <button onclick="document.getElementById('angaben-modal').remove()" style="width:100%;min-height:44px;margin-top:8px;border:none;background:none;color:#334155;font-family:inherit;font-size:var(--s-text);cursor:pointer">Abbrechen</button>
   </div>`;
   document.body.appendChild(m);
 }
@@ -3191,7 +3191,7 @@ async function elternTeamEditOpen(){
     <label for="et-beitrag" style="font-size:var(--s-text);color:var(--text2)">Beitrag Mannschaftskasse</label>
     <input id="et-beitrag" maxlength="40" placeholder="z. B. 40 € pro Saison" value="${esc(et.kasse_beitrag||"")}" style="${feld};margin:4px 0 12px">
     <button id="et-save" class="btn btn-p" style="width:100%;min-height:56px" onclick="elternTeamEditSave(this)">Speichern</button>
-    <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('et-modal').remove()">Schließen</button>
+    <button class="btn btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('et-modal').remove()">Abbrechen</button>
   </div>`;
   document.body.appendChild(m);
 }
