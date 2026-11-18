@@ -4734,7 +4734,7 @@ const UEBUNG_ART_VORSCHLAG={
   "Rauten-Umschalten":"uebung",
   "Mini-Turnier Raute":"spiel",
   "Adler vs. Igel - Formwechsel":"uebung",
-  "Igel-Pressing-Kreis":"uebung",
+  "Igel-Pressing-Kreis":"spiel",   // v866 (5.3): laut Ablauf ein Funiño 3 gegen 3 mit Zuruf-Regel – Spielform, keine Übungsform
   "Diamanten-Jagd":"spiel",
   /* Pressing */
   "Gegenpressing-Pfeife":"uebung",

@@ -444,7 +444,7 @@
         "vor-spieltag"
       ],
       "dauer_min": 75,
-      "netto_spielform_min": 36,
+      "netto_spielform_min": 21,
       "skalierung": {
         "8": "1 Tor mit Torhüter, zwei Anspielstationen, Abschluss aus 6–8 m",
         "12": "2 Tore, zwei Torhüter im Wechsel, je zwei Anspielstationen",
@@ -464,19 +464,19 @@
           "uebung_name": "Warm up Adler"
         },
         {
-          "typ": "main",
+          "typ": "uebungsform",
           "label": "Stufe 1 – frei",
           "dauer": 12,
           "uebung_name": "Torschuss-Wettbewerb"
         },
         {
-          "typ": "main",
+          "typ": "uebungsform",
           "label": "Stufe 2 – eng: erster Kontakt zum Tor",
           "dauer": 12,
           "uebung_name": "Torschuss-Wettbewerb"
         },
         {
-          "typ": "main",
+          "typ": "spielform",
           "label": "Stufe 3 – offen: Abschluss aus dem Spiel",
           "dauer": 10,
           "uebung_name": "Torschuss-Wettbewerb"
