@@ -2153,7 +2153,7 @@ let TP_TERMIN_MIN=0;
 function tpPufferText(frei){
   if(frei>=9)return ` · noch ${frei} Min. frei`;
   if(frei>=3)return ` · ${frei} Min. Puffer für Trinken und Umbau`;
-  return ` · <span class="tp-kein-puffer" style="color:#b45309;font-weight:800">${frei>0?`nur ${frei} Min.`:"kein"} Puffer für Trinken und Umbau</span>`;
+  return ` · <span class="tp-kein-puffer" style="color:var(--amber);font-weight:800">${frei>0?`nur ${frei} Min.`:"kein"} Puffer für Trinken und Umbau</span>`;
 }
 function tpTerminMinuten(t){
   const m=s=>{ const x=String(s||"").match(/^(\d{1,2}):(\d{2})/); return x?(+x[1])*60+(+x[2]):null; };
