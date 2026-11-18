@@ -22,13 +22,33 @@ function kombiSetPos(key,value){
   kombiLineup[key]=value;
   renderLineupEditor();
 }
-function kombiFromSuggestion(){
-  const combos=calcBestCombos(verfuegbareSpieler()); // nie abgesagte Spieler vorschlagen
-  if(!combos){toast("Mindestens 4 bewertete Spieler nötig","err");return;}
-  const b=combos[0];
-  kombiLineup={tw:b.tw?b.tw.name:"",auf:b.aufpasser.name,fll:b.flitzer_l.name,flr:b.flitzer_r.name,jaeg:b.jaeger.name};
+/* v855 (Charles 18.11.2026): Der Vorschlag wählte die Fünferkombination mit dem höchsten Rollenwert
+   aus den Bewertungen – also tendenziell immer dieselben Kinder. Jetzt richtet er sich nach der
+   Rollen-Erfahrung (gespeicherte Aufstellungen dieser Saison, wie die Rollen-Matrix): je Rolle das
+   Kind, das sie am seltensten gespielt hat; bei Gleichstand, wer insgesamt am seltensten in einer
+   Startfünf stand, dann die Reihenfolge im Kader. Ins Tor kommen nur Kinder mit Torwart-Haken,
+   solange eines dabei ist. Die Bewertung fließt nicht mehr ein. */
+function kombiVorschlagRechnen(namen,byKid){
+  const zahl=(n,r)=>((byKid[n]||{})[r])||0, ges=n=>((byKid[n]||{}).total)||0;
+  const frei=namen.slice(), wahl={tw:"",auf:"",fll:"",flr:"",jaeg:""};
+  const nimm=(rolle,kandidaten)=>{
+    if(!kandidaten.length)return;
+    const best=kandidaten.slice().sort((a,b)=>zahl(a,rolle)-zahl(b,rolle)||ges(a)-ges(b)||namen.indexOf(a)-namen.indexOf(b))[0];
+    wahl[rolle]=best; frei.splice(frei.indexOf(best),1);
+  };
+  const tw=frei.filter(n=>(typeof getKader==="function"&&getKader(n)||{}).tw);
+  nimm("tw",tw.length?tw:[]);
+  ["auf","fll","flr","jaeg"].forEach(r=>nimm(r,frei));
+  return wahl;
+}
+async function kombiFromSuggestion(){
+  const namen=_lineupNamen();   // nie abgesagte Kinder: die Eingeteilten des Spieltags, sonst der aktive Kader
+  if(namen.length<4){toast("Mindestens 4 Kinder nötig","err");return;}
+  let exp={byKid:{},games:0};
+  try{ if(typeof rollenExpFetch==="function")exp=await rollenExpFetch(); }catch(e){}
+  kombiLineup=kombiVorschlagRechnen(namen,exp.byKid||{});
   renderLineupEditor();
-  toast("Vorschlag übernommen");
+  toast(exp.games?`Vorschlag nach Rollen-Erfahrung aus ${exp.games} Aufstellungen`:"Vorschlag gesetzt – noch keine gespeicherten Aufstellungen, deshalb nach Kader-Reihenfolge");
 }
 /* Wer steht zur Auswahl? Die NOMINIERTEN des Spieltags, sonst der aktive Kader – nicht
    `Object.keys(DB)`. Das waren die Namen aus `spielerprofile`; nach dem Saisonstart-Reset
