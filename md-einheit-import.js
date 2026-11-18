@@ -1218,8 +1218,14 @@ function vorlageUebernehmenRender(opt){
    wird dadurch nicht länger. Der Block behält mindestens zehn Minuten; reicht das nicht,
    wird das Turnier kürzer statt der Block zu klein. */
 const VU_TURNIER_MIN=10;
-function vuAbschlussturnierSichern(slots){
+/* v863 (Bestandsaufnahme 1.12): Kein zweites Turnier und keine gebrochene Lehrgangsform.
+   L4-5 endet im letzten Spielblock schon mit „Abschlussturnier drei Runden zu 4 Min“ – die App hängte
+   ein zweites an und nahm dem Block zehn Minuten. L4-2 ist eine Lehrgangsform 15:30:15:30; der
+   30-Minuten-Spielblock ist dort der Abschluss (Charles 18.11.: „Lehrgangsform bleibt“). */
+function vuAbschlussturnierSichern(slots,vorlage){
   if(!Array.isArray(slots)||slots.some(s=>s&&s.typ==="abschluss"))return false;
+  if(slots.some(s=>s&&/turnier/i.test(String(s.label||""))))return false;
+  if(vorlage&&/lehrgangsform/i.test(String(vorlage.name||"")))return false;
   let k=-1;
   slots.forEach((s,i)=>{ if(s&&(s.typ==="main"||s.typ==="spielform")&&s.parallelZu==null)k=i; });
   if(k<0)return false;
@@ -1306,7 +1312,7 @@ function vuPlanAusVorlage(v){
        Station für Station neu – ohne diese Marke. Ab dann gilt seine Hand (Abnahme 3). */
     plan.push({formIdx,formName:tpAllForms()[formIdx].name,trainer:"Alle",slotLabel:label,alleFelder:true,key:`${formIdx}-Alle`});
   }
-  if(!fehlend)vuAbschlussturnierSichern(slots);
+  if(!fehlend)vuAbschlussturnierSichern(slots,v);
   return {slots,plan,fehlend};
 }
 /* v657: Einen fertigen Plan an ein Datum schreiben – derselbe Weg und dieselbe Kopfzeile wie
