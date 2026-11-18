@@ -1456,3 +1456,6 @@ html[data-theme="dark"]:has(#main-app) body{background:var(--bg)}
 .tp-slot.tp-zu .tp-slot-head .tp-slot-label{flex:1 1 0}
 .tp-slot.tp-zu .tp-slot-head .tp-slot-time{margin-left:auto}
 .tp-slot-head .tp-slot-label{flex-basis:calc(100% - 156px)}
+/* v861 (3.14): Kopfknöpfe der Eltern-App (Adler-Rufe, ⋯) im Dunkelmodus – der Rand var(--rand-bedien) stand mit 2,2:1 auf dem blauen Band. */
+html[data-theme="dark"] #rufe-kopf,html[data-theme="dark"] #ep-menue-knopf{border-color:#c7d0e2 !important}
+@media (prefers-color-scheme:dark){html:not([data-theme="light"]) #rufe-kopf,html:not([data-theme="light"]) #ep-menue-knopf{border-color:#c7d0e2 !important}}
