@@ -465,7 +465,6 @@ async function loadDB(){
   /* v603: Auswahllisten und Kaderliste gehoeren der Trainer-Oberflaeche. Der Eltern-
      Einstieg faehrt dieselbe Startkette; dort brach sie an dieser Stelle bei jedem Start. */
   if(document.getElementById("p-name")){refreshSelects();renderKader();if(typeof bewAbLaden==="function")bewAbLaden();} // v648: Startdatum der Bewertungen (nur Trainer)
-  if(document.getElementById("view-kombi")?.classList.contains("active"))renderKombi();
 }
 // L4: Antippen des Sync-Status zeigt Zeitstempel als Toast
 _adlerOnReady(()=>{

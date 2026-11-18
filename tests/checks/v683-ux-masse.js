@@ -18,7 +18,7 @@ module.exports = async function (h) {
     supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), termine, nominierungen: [], anwesenheit: [], matchday: [], periodisierung: [], trainingsbloecke: [] }) });
   await h.sichtbarMachen(s.page, "#main-app");
   const SEITEN = ["home", "ue-team", "kader", "profil", "bew", "verlauf", "ue-training", "anwesenheit", "planung", "formen",
-    "ue-spieltag", "spieltag", "kombi", "analyse", "taktik", "ue-orga", "termine", "team", "tagebuch", "ue-elki"];
+    "ue-spieltag", "spieltag", "analyse", "taktik", "ue-orga", "termine", "team", "tagebuch", "ue-elki"];
   const r = await s.page.evaluate(async (SEITEN) => {
     const warte = ms => new Promise(x => setTimeout(x, ms));
     await loadKader();

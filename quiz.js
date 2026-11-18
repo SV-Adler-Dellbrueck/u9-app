@@ -205,29 +205,6 @@ function quizRefreshFromServer(view){
   }).catch(()=>{});
 }
 
-function tqShareQuiz(){
-  const url=appRoot()+"?quiz";
-  const text="⚽ Adler U9 Taktik-Quiz – Teste dein Wissen über die Raute!\n"+url;
-  if(navigator.share){
-    navigator.share({title:"Adler U9 Taktik-Quiz",text:"Teste dein Wissen über die Raute!",url:url}).catch(()=>{});
-  }else{
-    const modal=document.createElement("div");
-    modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center";
-    modal.onclick=e=>{if(e.target===modal)modal.remove();};
-    modal.innerHTML=`<div style="background:white;border-radius:12px;padding:20px;max-width:360px;width:90%;text-align:center">
-      <div style="font-size:14px;font-weight:700;margin-bottom:12px">Quiz teilen</div>
-      <input type="text" value="${url}" readonly style="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:6px;font-size:12px;margin-bottom:10px;text-align:center" onclick="this.select()">
-      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-        <button class="btn btn-p btn-sm" onclick="navigator.clipboard.writeText('${url}');toast('Link kopiert ✓');this.closest('div[style*=fixed]').remove()"><i class="ti ti-copy"></i>Kopieren</button>
-        <a href="https://wa.me/?text=${encodeURIComponent(text)}" target="_blank" class="btn btn-sm" style="background:#25D366;color:white;border-color:#25D366;text-decoration:none"><i class="ti ti-brand-whatsapp"></i>WhatsApp</a>
-        <a href="mailto:?subject=${encodeURIComponent("Adler U9 Taktik-Quiz")}&body=${encodeURIComponent(text)}" class="btn btn-sm" style="text-decoration:none"><i class="ti ti-mail"></i>E-Mail</a>
-      </div>
-      <button onclick="this.closest('div[style*=fixed]').remove()" style="margin-top:10px;background:none;border:none;cursor:pointer;font-size:11px;color:var(--text2)">Schließen</button>
-    </div>`;
-    document.body.appendChild(modal);
-  }
-}
-
 function tqResetProgress(){
   const progress=tqGetProgress();
   const players=Object.keys(progress);

@@ -1,6 +1,7 @@
 /* v610 · Paket B aus der App-Prüfung vom 24.09.: Doppelungen raus, ein Name je Sache.
 
-   a) Taktik: keine Kachel „Übungen“ mehr – sie sprang in den Bereich Training.
+   a) Taktik: keine Kachel „Übungen“ mehr – sie sprang in den Bereich Training. Seit v682 hat
+      Taktik gar keine Kachelseite mehr (direkt aufs Brett); seit v871 liefert _kachelInhalt dafür nichts.
    b) Spieltag: die Kachel heißt „Wer ist dabei?“ wie der Block im Match (nicht
       „Anwesenheit“ – das ist beim Training die Liste der Trainingstermine).
    c) Orga: kein Emoji doppelt; „Setup-Übersicht“ steht unter Einstellungen.
@@ -20,7 +21,8 @@ module.exports = async function (h) {
       const labels = key => { const d = document.createElement("div"); d.innerHTML = _kachelInhalt(key);
         return [...d.querySelectorAll("button")].map(b => b.textContent.replace(/\s+/g, " ").trim()); };
       const out = {};
-      ["taktik", "spieltag", "orga", "elki"].forEach(k => out[k] = labels(k));
+      ["spieltag", "orga", "elki"].forEach(k => out[k] = labels(k));
+      out.taktik = labels("taktik");   // v871: keine Kachelseite mehr – erwartet leer
       out.spieltagKarte = /id="st-dabei-karte"/.test(_kachelInhalt("spieltag"));
       const d = document.createElement("div"); d.innerHTML = _kachelInhalt("orga");
       out.orgaEinst = (d.innerHTML.split(/Einstellungen/)[1] || "");
@@ -33,7 +35,7 @@ module.exports = async function (h) {
     const f = s.fehler();
     await s.schliessen();
     const emo = t => (t.match(/^\S+/) || [""])[0];
-    if (r.taktik.some(t => /Übungen/.test(t))) probleme.push("a) Taktik führt weiter eine Kachel „Übungen“: " + r.taktik.join(" | "));
+    if (r.taktik.length) probleme.push("a) Taktik hat wieder Kacheln: " + r.taktik.join(" | "));
     // v665 PO: „Auf der Startkachel ‚Wer ist dabei‘ müssen direkt die Rückmeldungen der Eltern angezeigt werden“ – seither eine Karte (st-dabei-karte), keine Kachel.
     if (!r.spieltagKarte) probleme.push("b) Spieltag: keine Karte „Wer ist dabei?“");
     if (r.spieltag.some(t => /^\S+ Anwesenheit$/.test(t))) probleme.push("b) Spieltag heißt weiter „Anwesenheit“");
@@ -43,7 +45,7 @@ module.exports = async function (h) {
     if (!r.elki.some(t => /Einladungskarten/.test(t))) probleme.push("d) Eltern & Kinder: keine Kachel „Einladungskarten“");
     if (/Turnierplan \(auswärts\)/.test(r.turnier)) probleme.push("e) „Turnierplan (auswärts)“ steht weiter neben „Match“");
     if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
-    zeilen.push(`Taktik: ${r.taktik.join(" | ")} · Spieltag: ${r.spieltag.join(" | ")}`);
+    zeilen.push(`Taktik: keine Kachelseite · Spieltag: ${r.spieltag.join(" | ")}`);
     zeilen.push(`Orga: ${r.orga.join(" | ")} · Auswärtsturnier: „${r.turnier || "(keine Extra-Gruppe)"}“`);
   }
 

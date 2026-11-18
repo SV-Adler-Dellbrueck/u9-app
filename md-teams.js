@@ -249,10 +249,6 @@ function teamAnzahlVorschlag(){
   while(n>1&&Math.floor(z/n)<teamMindestKader())n--; // aber nie unter die spielfähige Größe
   return Math.max(1,n);
 }
-function teamUeberzaehlig(){
-  const z=teamZusagen().length;
-  return Math.max(0,z-TEAM_ANZAHL*teamPlatzProTeam());
-}
 
 /* Zwei Kennzahlen, damit die Auswahl "wer pausiert" begründbar ist:
    – Trainingsbeteiligung der letzten 6 Wochen (aus AW_DATA, lokal + gesyncte anwesenheit)

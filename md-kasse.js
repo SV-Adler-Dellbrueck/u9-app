@@ -1161,20 +1161,6 @@ function _platzWann(t,gross){
   const d=new Date(t.datum+"T00:00:00");
   return (gross?"Am ":"am ")+["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()]+" "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
 }
-function elternPlatzAmpelBanner(termin){
-  const s=termin.platz_status; const a=(typeof PLATZ_AMPEL!=="undefined"&&PLATZ_AMPEL[s]);
-  if(!a||s==="normal")return "";
-  const bg=s==="abgesagt"?"#dc2626":s==="ausweich"?"#d97706":"#16a34a";
-  const wann=termin.platz_status_at?new Date(termin.platz_status_at).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
-  const text=s==="abgesagt"?`Der Termin fällt ${_platzWann(termin)} aus.`
-            :s==="ausweich"?`${_platzWann(termin,true)} auf den Ausweichplatz.`
-            :"Der Termin findet statt.";
-  return `<div style="background:${bg};color:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 4px 16px ${bg}55">
-    <div style="font-size:var(--s-teil);font-weight:900;display:flex;align-items:center;gap:8px">${a.emo} ${esc(a.lbl)}</div>
-    <div style="font-size:var(--s-text);opacity:.97;margin-top:4px">${text}${termin.platz_status_note?` <b>${esc(termin.platz_status_note)}</b>`:""}</div>
-    ${wann?`<div style="font-size:var(--s-klein);opacity:.8;margin-top:6px">Aktualisiert ${wann} Uhr vom Trainer</div>`:""}
-  </div>`;
-}
 /* Kompakter Hinweis IN der Terminkarte – eine Zeile, kein zweiter Block. Leer im
    Normalfall. `randFarbe` gibt der Karte zusätzlich ihre Umrandung. */
 function elternPlatzHinweisHtml(termin){

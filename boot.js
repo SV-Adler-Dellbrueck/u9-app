@@ -505,14 +505,6 @@ function tfInPlan(i){
   },900);
 }
 
-function toggleTF(id){
-  var body=document.getElementById('body-'+id);
-  var chev=document.getElementById('chev-'+id);
-  if(!body)return;
-  var open=body.classList.toggle('open');
-  if(chev)chev.style.transform=open?'rotate(180deg)':'';
-}
-
 /* PRINT: printView() ist weiter oben (bei renderProfil) vollständig definiert –
    inkl. Titel/Meta-Kopf und Aufklappen eingeklappter Dim-Blöcke. Die frühere
    schlanke Duplikat-Definition an dieser Stelle wurde entfernt (sie überschrieb
@@ -4639,17 +4631,6 @@ function stTimerRender(done){
     </div>`;
 }
 
-function evalStar(btn){
-  const stars=btn.parentElement.querySelectorAll(".tb-eval-star");
-  const val=parseInt(btn.dataset.val);
-  const current=Array.from(stars).filter(s=>s.classList.contains("on")).length;
-  const newVal=current===val?0:val;
-  stars.forEach((s,i)=>{
-    s.classList.toggle("on",i<newVal);
-    s.textContent=i<newVal?"★":"☆";
-  });
-}
-
 /* ═══════════════════════════════════
    AUTO-TRAININGSVORSCHLAG
 ═══════════════════════════════════ */
@@ -5689,7 +5670,6 @@ function tpPickSync(selId){
   btn.textContent=(sel.value&&o)?o.textContent:"— Übung wählen —";
   btn.style.fontWeight=sel.value?"800":"600";
 }
-function tpPickSyncAll(){document.querySelectorAll(".tp-form-sel").forEach(s=>tpPickSync(s.id));}
 
 /* ═══════════════════════════════════
    P3: TRAININGSSTART – synchroner Ablauf über alle Trainer-Handys (PO).
@@ -5975,7 +5955,6 @@ function tlUhrRunde(){
 function tlUhrReset(){_tl.uhr={run:false,seit:0,acc:0,laps:[]};_tlRender();}
 function _tlUhrMs(){const u=_tl.uhr;return u.acc+(u.run?Date.now()-u.seit:0);}
 function _tlFmt(ms){const s=Math.floor(ms/1000);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
-async function _tlMeinName(){ return (typeof _meTrainer==="string"&&_meTrainer)?_meTrainer:await trainerMe(); }
 /* v835: Die Live-Ansicht nannte nur den Namen der Übung. Für Skizze und Ablauf musste der
    Trainer sie schließen, im Plan zur Station scrollen und ℹ️ tippen – mitten im Training.
    Der Knopf öffnet dieselbe Übungsansicht wie der Plan, über der Live-Ansicht. Gesucht wird
@@ -6095,7 +6074,6 @@ const TG_NAMEN=[
 let _tgCache={datum:null,tg:null,geladen:false};
 let _tgSaveTimer=null;
 function _tgDatum(){return document.getElementById("tp-date")?.value||isoLokal();}
-function _tgKey(){return "adler_tg_"+_tgDatum();}
 function tgFor(){return (_tgCache.datum===_tgDatum())?_tgCache.tg:null;}
 /* v577: Zwei Läufe zugleich löschten eine frisch gebildete Einteilung. Der Ablauf war:
    Das Übernehmen einer Vorlage ruft tgSync und wartet; währenddessen zeichnet ein anderer

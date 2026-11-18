@@ -24,7 +24,6 @@ function tbRoundRect(ctx,x,y,w,h,r){
 
 const esc=s=>(s+'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const safeParse=(s,fb)=>{try{return s?JSON.parse(s):fb}catch(e){return fb}}; // C1: kaputte scores/radios-Zeilen dürfen keine View crashen
-function segSet(id,val,btn){document.getElementById(id).value=val;btn.parentElement.querySelectorAll(".seg-btn").forEach(b=>b.classList.remove("active"));btn.classList.add("active");}
 const gv=n=>{const e=document.querySelector(`input[name="${n}"]:checked`);return e?parseInt(e.value):null;};
 const safe=n=>gv(n)||0;
 const getKader=name=>KADER.find(k=>k.name===name);
@@ -148,8 +147,6 @@ function calcRolle(v,foot,neutralMissing=false){
    stärkstes/schwächstes Profil, soziale Dimension,
    Zusammenfassung am Anfang getrennt von Maßnahmen
 ═══════════════════════════════════════════════════════ */
-function tn3(val,mx=3){return val?((val-1)/(mx-1))*100:0;}
-function mn5(val,mx=5){return val?((val-1)/(mx-1))*100:0;}
 function generateFazitFeld(v,meta){
   const dims=DIMS_FELD;
   const{dims:ds,total}=calcScores(v,dims);
@@ -405,7 +402,6 @@ function roleScore(player,role){
   // player.rolle wurde in getPlayerData() bereits mit demselben foot berechnet – nicht doppelt tun
   return player.rolle.scores[role]||0;
 }
-function lat_foot(player){return player.lat.strong_foot||"R";}
 
 function socialScore(players){
   // v2-Keys: f_sozial (Soziale Einstellung), f_selbst (Selbstvertrauen), Skala 1–4
@@ -468,63 +464,6 @@ function scoreAufstellung(tw, aufpasser, fl_l, fl_r, jaeger){
   return Math.round(rFit + social + complement);
 }
 
-function generateInsights(tw, aufpasser, fl_l, fl_r, jaeger, score){
-  const insights=[];
-  const v_auf=aufpasser.v, v_jaeg=jaeger.v, v_fl_l=fl_l.v, v_fl_r=fl_r.v;
-
-  // Positive synergies (v2-Keys, Skala 1–4)
-  if((v_auf.f_pass||1)>=3&&(v_jaeg.f_laufweg||1)>=3)
-    insights.push({type:"pos",text:`${aufpasser.name} (Passspiel) + ${jaeger.name} (Tiefenläufe) = starke Verbindung im Kader`});
-  if((v_fl_l.f_tempo||1)>=3&&(v_fl_r.f_tempo||1)>=3)
-    insights.push({type:"pos",text:`${fl_l.name} + ${fl_r.name} bilden die schnellsten Außenbahnen – maximale Breite`});
-  if((v_auf.f_umschalt||1)>=3&&(v_jaeg.f_abschluss||1)>=3)
-    insights.push({type:"pos",text:`${aufpasser.name} gewinnt den Ball, ${jaeger.name} schließt ab – idealer Konter-Rhythmus`});
-  if((v_jaeg.f_selbst||2)>=3)
-    insights.push({type:"pos",text:`${jaeger.name} sucht Druck aktiv – perfekte Mentalität für die Spitze`});
-  // Buddy-System: ein Anker-Kind neben einem stillen/unsicheren Kind
-  {
-    const shyF=p=>((p.v.f_sozial||2)===1)||((p.v.f_selbst||2)===1);
-    const ancF=p=>((p.v.f_sozial||2)>=3)||((p.v.f_selbst||2)>=3);
-    const pairs=[[aufpasser,fl_l],[aufpasser,fl_r],[fl_l,jaeger],[fl_r,jaeger]];
-    for(const [a,b] of pairs){
-      let anc,sh;
-      if(ancF(a)&&shyF(b)){anc=a;sh=b;} else if(ancF(b)&&shyF(a)){anc=b;sh=a;}
-      if(anc){insights.push({type:"pos",text:`${anc.name} gibt ${sh.name} auf der Nachbarposition Rückhalt – ideales Buddy-Paar für ein unsicheres Kind`});break;}
-    }
-  }
-  if((v_auf.f_sozial||2)>=3||(v_jaeg.f_sozial||2)>=3){
-    const leader=[aufpasser,jaeger].find(p=>(p.v.f_sozial||2)>=3);
-    if(leader) insights.push({type:"pos",text:`${leader.name} geht aktiv auf Mitspieler zu – natürlicher Kommunikator auf dem Feld`});
-  }
-
-  // Warnings
-  const sozProbs=[aufpasser,fl_l,fl_r,jaeger].filter(p=>(p.v.f_sozial||2)===1);
-  if(sozProbs.length>=2)
-    insights.push({type:"warn",text:`Achtung: ${sozProbs.map(p=>p.name).join(" + ")} haben beide Tendenzen zur Distanzierung – Gruppenklima beobachten`});
-  else if(sozProbs.length===1)
-    insights.push({type:"warn",text:`${sozProbs[0].name} braucht bewusste Integration ins Team – aktiv ansprechen`});
-
-  const speedDiff=Math.abs((v_fl_l.f_tempo||2)-(v_fl_r.f_tempo||2));
-  if(speedDiff>=2)
-    insights.push({type:"warn",text:`Geschwindigkeitsunterschied zwischen ${fl_l.name} und ${fl_r.name} – eine Seite wird stärker bespielt`});
-
-  if((v_auf.f_raum||1)===1)
-    insights.push({type:"warn",text:`${aufpasser.name} neigt zur Klumpenbildung – klare Korridor-Ansagen nötig`});
-
-  // Einsatz-Fairness: seltener Trainingsgänger allein in der Spitze
-  if(+(jaeger.lat?.attendance||2)===1)
-    insights.push({type:"info",text:`${jaeger.name} ist selten im Training – in der Spitze fehlen dann oft die Abläufe. Ggf. rotieren.`});
-
-  const lowConf=[aufpasser,fl_l,fl_r,jaeger].filter(p=>(p.v.f_selbst||2)===1);
-  if(lowConf.length>=2)
-    insights.push({type:"info",text:`${lowConf.map(p=>p.name).join(", ")} zögern unter Druck – Erfolgserlebnisse gezielt einbauen`});
-
-  if(tw)
-    insights.push({type:"info",text:`Torwart: ${tw.name}${(tw.lat&&tw.lat.tw_komm>=3)?" – kommuniziert und dirigiert die Abwehr aktiv":""}`});
-
-  return insights;
-}
-
 /* Wer steht heute zur Verfuegung? Die Aufstellung darf niemanden vorschlagen, der
    abgesagt hat. Ist keine Nominierung geladen (Team-Reiter, reine Planung), bleibt es
    beim ganzen Kader. calcBestCombos konnte das schon immer – es wurde nur nie genutzt. */
@@ -543,7 +482,7 @@ function calcBestCombos(restrictNames){
   const players=names.map(n=>getPlayerData(n)).filter(Boolean);
   /* Nicht die Zahl der NAMEN zählt, sondern die der BEWERTETEN. Vorher wurde nur oben
      geprüft: 14 nominierte, aber unbewertete Kinder kamen durch, players blieb leer, die
-     Funktion gab ein leeres Array zurück – und renderKombi las combos[0].tw davon.
+     Funktion gab ein leeres Array zurück – und die frühere Aufstellungsseite las combos[0].tw davon.
      Ergebnis: Ausnahme im setTimeout, der Ladekringel drehte sich für immer (PO v399). */
   if(players.length<4)return null;
   const twPlayers=players.filter(p=>getKader(p.name)?.tw);
@@ -588,65 +527,5 @@ function calcBestCombos(restrictNames){
     if(unique.length>=8)break;
   }
   return unique;
-}
-
-function renderKombi(){
-  const wrap=document.getElementById("kombi-content");
-  if(!window._dbLoaded&&!Object.keys(DB).length){wrap.innerHTML=skeletonRows(3);return;} // L2
-  wrap.innerHTML='<div style="text-align:center;padding:2rem;color:var(--text2)"><i class="ti ti-loader" style="font-size:var(--s-seite);animation:spin 1s linear infinite;display:inline-block"></i><div style="margin-top:8px;font-size:var(--s-text)">Berechne beste Aufstellung...</div></div>';
-  /* Der Kringel steht so lange, bis jemand ihn ersetzt – eine Ausnahme hier drin bleibt
-     also als „rechnet ewig" sichtbar. Deshalb abfangen und ehrlich hinschreiben. */
-  setTimeout(()=>{
-    try{ _renderKombiInner(wrap); }
-    catch(e){ wrap.innerHTML='<div class="empty"><i class="ti ti-alert-triangle"></i>Die Aufstellung konnte nicht berechnet werden.<br><span style="font-size:var(--s-klein)">'+esc(String(e&&e.message||e))+'</span></div>'; }
-  },30);
-}
-function _renderKombiInner(wrap){
-  const nominiert=verfuegbareSpieler();
-  const combos=calcBestCombos(nominiert);
-  /* v474: Leerzustand = ein Satz + eine Aktion. Die Erklaerkaesten (Algorithmus, Adler/Igel)
-     erscheinen erst, wenn es eine Aufstellung gibt, die sie erklaeren. */
-  const erklaer=document.getElementById("kombi-erklaer");
-  if(erklaer)erklaer.style.display=(combos&&combos.length)?"":"none";
-  const druck=document.getElementById("kombi-druck");
-  if(druck)druck.style.display=(combos&&combos.length)?"":"none";   // v688: nichts zu drucken ohne Aufstellung
-  if(!combos||!combos.length){
-    const bewertet=(nominiert||Object.keys(DB)).filter(n=>getPlayerData(n)).length;
-    /* v688: Solange Bewerten gesperrt ist (bis zum Startdatum), hiess es hier „bisher 0 bewertete
-       Kinder“ samt Link auf eine gesperrte Seite. Jetzt sagt die Seite, ab wann sie rechnet, und
-       führt als Hauptaktion dorthin, wo ohne Bewertung fair aufgestellt wird: „Vor dem Spiel“. */
-    const frei=typeof bewFreigegeben==="function"&&bewFreigegeben();
-    const ab=typeof bewAbText==="function"?bewAbText():"";
-    const satz=frei
-      ?`Für die Aufstellung braucht es mindestens 4 <b>bewertete</b> Kinder – bisher sind es ${bewertet}.`
-      :`Die Rollen-Empfehlung rechnet mit Bewertungen – bewertet wird ${ab?"ab dem "+ab:"ab dem Ende der Hinrunde"}. Bis dahin verteilt „Feld &amp; Bank fair besetzen“ nach Einsatzzeiten.`;
-    const zumMatch=`if(typeof spieltagPhase==='function')spieltagPhase('vor');else go('spieltag')`;
-    wrap.innerHTML=`<div class="empty"><i class="ti ti-users-group"></i>${satz}
-      <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;align-items:center">
-        <button class="btn btn-p" id="kombi-fair" style="min-height:56px;width:100%;max-width:340px" onclick="${zumMatch}">🪄 Feld &amp; Bank fair besetzen</button>
-        ${frei?`<a href="#" onclick="go('bew');return false" style="display:inline-flex;align-items:center;min-height:44px;padding:0 8px;font-size:var(--s-text);color:var(--blue-text);font-weight:700">oder Kinder bewerten ›</a>`:""}
-      </div></div>`;
-    return;
-  }
-
-  /* v853 (Charles 18.11.2026): Die Seite zeigte „Beste Aufstellung 87 %“ – fünf Kinder aus dem
-     ganzen Kader mit Prozentzahl an der Position –, dazu „Weitere gute Kombinationen“ mit immer
-     denselben Kindern und Sätze über einzelne Kinder. Das ist eine Bestenliste und passt nicht zu
-     „Fairness vor Ergebnis“. Es bleiben: Aufstellung festlegen, der Knopf „Vorschlag“ (setzt die
-     Kinder nach Rollen-Erfahrung, seit v855) und der Weg in den Spieltag. Der Editor wird
-     nicht mehr mit einer Auswahl vorbelegt. */
-  let html=`<div class="kombi-aufstellung" id="kombi-hinweis">
-    <div class="kombi-title">🧭 Rollen-Vorschlag</div>
-    <div class="kombi-sub" style="margin-top:4px">${nominiert
-      ? `„Vorschlag“ setzt aus den <b>${nominiert.length} Kindern, die dabei sind</b>, je Rolle das Kind, das sie in dieser Saison am seltensten gespielt hat.`
-      : `„Vorschlag“ setzt je Rolle das Kind, das sie in dieser Saison am seltensten gespielt hat. Sind am Spieltag Teams eingeteilt, zählt nur, wer dabei ist.`}
-      So spielen mit der Zeit alle Kinder alle Rollen; die Bewertung fließt nicht ein. Gezählt werden die gespeicherten Aufstellungen (Team → Rollen-Matrix). Über Einsatzzeiten entscheidet „Feld &amp; Bank fair besetzen“ am Spieltag.</div>
-  </div>`;
-
-  html+=`<div id="lineup-editor" style="margin-top:16px"></div>`;
-  wrap.innerHTML=html;
-  // md-aufstellung.js ist Welle 2 – ohne Schutz reisst ein fehlendes Modul das
-  // ganze Rendern der Aufstellung mit.
-  if(typeof initLineupEditor==="function")initLineupEditor();   // v853: ohne Vorbelegung
 }
 

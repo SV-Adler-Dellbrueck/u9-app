@@ -42,20 +42,8 @@ module.exports = async function (h) {
   if (!/Technik|Spielintelligenz|Dynamik|Lernen|ausgeglichen/.test(r.werte) || /%/.test(r.werte)) probleme.push("Stärke des bewerteten Kindes fehlt oder steht in Prozent: " + r.werte);
   if (!r.hinweis) probleme.push("Hinweis „noch nicht bewertet“ fehlt");
   if (r.rolleJetzt !== 1) probleme.push(`Rollenfilter zeigt ${r.rolleJetzt} statt 1`);
-  // Dieselbe Annahme sass im Aufstellungs-Editor: ohne Bewertungen bot er kein Kind an
-  const a = await h.starten({ supabase: h.supabaseAttrappe({ kader: rows, spielerprofile: [] }), hoehe: 1600 });
-  const auf = await a.page.evaluate(async () => {
-    await loadKader(); DB = {}; window._dbLoaded = true;
-    let box = document.getElementById("lineup-editor"); if (!box) { box = document.createElement("div"); box.id = "lineup-editor"; document.body.appendChild(box); }
-    kombiLineup = { tw: "", auf: "", fll: "", flr: "", jaeg: "" };
-    renderLineupEditor();
-    const sel = box.querySelector("select");
-    return { optionen: sel ? [...sel.options].filter(o => o.value).length : 0, bank: box.textContent.replace(/\s+/g, " ").trim().length };
-  });
-  await a.schliessen();
-  if (auf.optionen !== 14) probleme.push(`Aufstellungs-Editor bietet ${auf.optionen} Kinder statt 14`);
-  zeilen.push(`Aufstellungs-Editor: ${auf.optionen} Kinder waehlbar`);
+  // v871: Der Aufstellungs-Editor (md-aufstellung.js) ist entfernt – sein Teil entfällt.
   if (fehler.length) probleme.push(...fehler.slice(0, 3));
   zeilen.push(`ohne Bewertungen ${r.leer.length} Zeilen · TW ${r.tw} · mit Bewertung ${r.mitBewertung}, Rollenfilter ${r.rolleJetzt}`);
-  return h.ergebnis("Kader und Aufstellung zeigen die Mannschaft, auch ohne eine einzige Bewertung", !probleme.length, zeilen.concat(probleme));
+  return h.ergebnis("Kader zeigt die Mannschaft, auch ohne eine einzige Bewertung", !probleme.length, zeilen.concat(probleme));
 };

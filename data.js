@@ -48,7 +48,6 @@ const TRAINER=["Charles","Finn","Kenneth","Peter","Markus"];
    per Tipp auf seinen Chip gesetzt – nur für diesen Termin (siehe tpTrainerChipsRender). */
 const TRAINER_ROLLE={Charles:"feldtrainer",Finn:"skill",Kenneth:"feldtrainer",Peter:"feldtrainer",Markus:"organisation"};
 function trainerRolle(name){ return (typeof TRAINER_ROLLE==="object"&&TRAINER_ROLLE[name])||"feldtrainer"; }
-function trainerIstFeldtrainer(name){ return trainerRolle(name)!=="organisation"; }
 
 /* ═══ KRITERIEN FELDSPIELER (DIMS_FELD) ═══ */
 const DIMS_FELD=[

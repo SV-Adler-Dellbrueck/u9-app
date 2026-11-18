@@ -2104,14 +2104,6 @@ async function mitspielerWeg(id,terminId){
 }
 /* F4: Eltern-Puls – anonyme 1-Tap-Stimmung nach Training/Spiel. Der Trainer sieht nur das
    Aggregat (puls_aggregate, keine user_ids). Ein Datensatz pro Elternteil/Termin (upsert). */
-async function tdPulsLoad(t){
-  const box=document.getElementById("td-puls"); if(!box)return;
-  const today=isoLokal();
-  if(!(["training","spiel","turnier"].includes(t.typ)&&t.datum<=today)){box.innerHTML="";return;}
-  let mine=null;
-  try{const r=await fetch(`${SB_URL}/rest/v1/event_puls?termin_id=eq.${t.id}&select=mood,kommentar`,{headers:sbAuthHeaders()});if(r.ok){mine=(await r.json())[0]||null;}}catch(e){}
-  tdPulsRender(t.id,mine);
-}
 function tdPulsRender(terminId,mine,bare){
   const box=document.getElementById("td-puls"); if(!box)return;
   const moods=[{v:3,e:"😀",l:"Top"},{v:2,e:"😐",l:"Ok"},{v:1,e:"😟",l:"Naja"}];
@@ -2766,13 +2758,6 @@ async function tdBuedchenLoad(t){
   box.innerHTML=`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px"><b style="font-size:var(--s-text)">🔥 Grillhütte${d.eigene?": Ihr seid dran":""}</b>${ghChip(d.status)}</div>
     ${ghDienstHtml(d)}</div>`;
-}
-// Vom Event-Termin-Detail zur Mitbringliste auf dem Dashboard (liegt jetzt weit oben).
-function tdMitbringGoto(){
-  document.getElementById("td-modal")?.remove();
-  const el=document.getElementById("mitbring-slot");
-  if(el){ el.scrollIntoView({behavior:"smooth",block:"start"}); try{el.animate([{opacity:.35},{opacity:1}],{duration:500,iterations:2});}catch(e){} }
-  else toast("Die Mitbringliste erscheint, sobald das Event näher rückt.");
 }
 // Alle kommenden Termine als Dialog + Kalender-Export (.ics) – gleiche Quelle wie die Liste.
 let ELTERN_TERMINE=[];

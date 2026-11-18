@@ -620,41 +620,6 @@ body.quiz-extern.tq-playing #view-taktik>.tb-wrap{display:block!important}
 .tb-role-labels{position:absolute;inset:0;pointer-events:none;z-index:5}
 .tb-role-lbl{position:absolute;font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.45);transform:translate(-50%,-50%);pointer-events:none}
 
-/* KOMBI */
-.kombi-aufstellung{background:var(--surface);border:var(--border-s);border-radius:var(--rl);padding:14px;margin-bottom:12px;box-shadow:var(--shadow-md)}
-.kombi-title{font-size:var(--s-text);font-weight:700;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:8px}
-.kombi-score{font-size:var(--s-seite);font-weight:700;color:var(--blue)}
-.kombi-sub{font-size:var(--s-klein);color:var(--text2);margin-bottom:12px}
-.kombi-raute{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;max-width:340px;margin:0 auto 12px}
-.kpos{padding:10px 8px;border-radius:var(--r);text-align:center;border:1.5px solid #e2e8f0}
-.kpos-lbl{font-size:var(--s-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
-.kpos-name{font-size:var(--s-text);font-weight:700}
-.kpos-score{font-size:var(--s-klein);margin-top:2px}
-.kpos-tw{border-color:#854d0e;background:#fef9c3}
-.kpos-tw .kpos-lbl{color:#854d0e}
-.kpos-auf{border-color:#1a56db;background:#e8f0fe}
-.kpos-auf .kpos-lbl{color:#1a56db}
-.kpos-fl-l{border-color:#b45309;background:#fffbeb}
-.kpos-fl-l .kpos-lbl{color:#b45309}
-.kpos-fl-r{border-color:#15803d;background:#f0fdf4}
-.kpos-fl-r .kpos-lbl{color:#15803d}
-.kpos-jaeg{border-color:#c2410c;background:#fff7ed}
-.kpos-jaeg .kpos-lbl{color:#c2410c}
-.kombi-insights{font-size:var(--s-text);line-height:1.7;color:var(--text)}
-.kombi-insight-row{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:var(--border)}
-.kombi-insight-row:last-child{border-bottom:none}
-.ci-icon{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-size:var(--s-klein)}
-.ci-pos{background:#dcfce7;color:#15803d}
-.ci-warn{background:#fef3c7;color:#92400e}
-.ci-info{background:#e8f0fe;color:#1e40af}
-.alt-combos{margin-top:12px}
-.alt-title{font-size:var(--s-klein);font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px}
-.alt-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border:var(--border);border-radius:var(--r);margin-bottom:6px;background:var(--surface);cursor:pointer;transition:background .1s}
-.alt-item:hover{background:var(--surface2)}
-.alt-score{font-size:var(--s-text);font-weight:700;color:var(--blue);width:40px}
-.alt-names{font-size:var(--s-text);color:var(--text);flex:1}
-.alt-tag{font-size:var(--s-klein);padding:2px 7px;border-radius:8px;background:var(--surface2);color:var(--text2)}
-
 /* Scroll hint for matrix */
 .mx-scroll-hint{display:none}
 @media(max-width:768px){
@@ -686,7 +651,6 @@ body.quiz-extern.tq-playing #view-taktik>.tb-wrap{display:block!important}
   .radar-profil-wrap{grid-template-columns:1fr 1fr}
   .kader-t{font-size:9pt}
   .kader-t th,.kader-t td{padding:5px 7px}
-  .kombi-aufstellung{box-shadow:none;border:1px solid #ccc}
   h1.print-header{display:block!important;font-size:16pt;font-weight:700;margin-bottom:4pt;color:#1a56db}
   .print-meta{display:block!important;font-size:9pt;color:#666;margin-bottom:16pt;padding-bottom:8pt;border-bottom:1px solid #ddd}
   .print-section-title{font-size:11pt;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#1a56db;margin:14pt 0 6pt;border-top:1px solid #e2e8f0;padding-top:8pt}
@@ -869,15 +833,6 @@ h1.print-header{display:none}
 .pin-input input:focus{border-color:#fff;background:rgba(255,255,255,.2)}
 .pin-err{font-size:var(--s-klein);color:#fca5a5;min-height:16px;margin-bottom:8px}
 .pin-btn{width:100%;padding:12px;border:none;border-radius:10px;background:#fff;color:#1a56db;font-size:var(--s-karte);font-weight:700;cursor:pointer;font-family:inherit}
-
-/* TRAINING BEWERTUNG */
-.tb-eval{background:var(--surface);border:var(--border-s);border-radius:var(--rl);padding:12px;margin-bottom:8px}
-.tb-eval-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:var(--s-text);font-weight:600}
-.tb-eval-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:var(--s-text)}
-.tb-eval-label{flex:1;color:var(--text2)}
-.tb-eval-stars{display:flex;gap:2px}
-.tb-eval-star{width:22px;height:22px;border:none;background:none;cursor:pointer;font-size:var(--s-karte);color:#cbd5e1}
-.tb-eval-star.on{color:#f59e0b}
 
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:10px;font-size:var(--s-text);font-weight:500;color:#fff;z-index:10075;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.2);font-family:inherit}
@@ -1357,7 +1312,7 @@ input[type="password"]{min-height:44px}
    Abschnitts- und Feldüberschriften nicht in Versalien (Regel seit v682/v686: „ÜBUNG“,
    „BEWEGUNGEN“, „FELD (1/4)“ standen noch so da). Tabellenköpfe und Spielfeld-Beschriftungen
    bleiben – dort ist es Auszeichnung, keine Überschrift. */
-.tp-feld>label,.tf-section-title,.tm-block-t,.mb-title,.rbox-title,.detail-box-title,.alt-title,.summary-box h3,.fbox h3,.rp-l,.rk-pos-lbl,.kpos-lbl{text-transform:none;letter-spacing:normal}
+.tp-feld>label,.tf-section-title,.tm-block-t,.mb-title,.rbox-title,.detail-box-title,.summary-box h3,.fbox h3,.rp-l,.rk-pos-lbl{text-transform:none;letter-spacing:normal}
 /* Kabine „Mehr entdecken“: der Pfeil zeigt, ob offen (drehte sich vorher nicht) */
 .kab-mehr-pfeil{display:inline-block;transition:transform .2s}
 #kab-mehr[open] .kab-mehr-pfeil{transform:rotate(180deg)}
