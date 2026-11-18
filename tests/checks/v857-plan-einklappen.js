@@ -18,7 +18,7 @@ module.exports = async function (h) {
     termine: (u) => { const d = (u.searchParams.get("datum") || "").replace(/^eq\./, ""); return termine.filter(t => !d || t.datum === d); },
     trainingsformen: (bib.uebungen || []).map((u, i) => ({ ...u, id: 6000 + i, custom: true })), trainingsvorlagen: (vor.vorlagen || []).map((v, i) => ({ ...v, id: 500 + i })), periodisierung: [],
     trainingsgruppen: (u, req) => (req.method() === "POST" ? { status: 201, body: "[]" } : []),
-    trainingsplan: (u, req) => { if (req.method() === "POST") { const b = JSON.parse(req.postData() || "{}"); plaene[b.datum] = b; return { status: 201, body: "[]" }; }
+    trainingsplan: (u, req) => { if (req.method() === "POST") { const b = JSON.parse(req.postData() || "{}"); plaene[b.datum] = b; return { status: 201, body: JSON.stringify([b]) }; }   // wie Supabase mit return=representation: die gespeicherte Zeile zurück
       const d = (u.searchParams.get("datum") || "").replace(/^eq\./, ""); return plaene[d] ? [plaene[d]] : []; } }) });
   await h.sichtbarMachen(s.page, "#train-sub-planung"); await h.sichtbarMachen(s.page, "#tp-timeline");
   const r = await s.page.evaluate(async ({ d2 }) => {
