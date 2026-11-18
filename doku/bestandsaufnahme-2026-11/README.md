@@ -21,7 +21,7 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 | 1.4 | Leerer Plan wich vom 75-Minuten-Rahmen des Konzepts ab (kein Straßenfußball-Fenster) | ✅ v834: 10/8/34/18 beim Füllen |
 | 1.5 | „Lehrgang – Zwei-Seiten-Spiel“ rutschte durch den Erwachsenen-Filter | ✅ v834 |
 | 1.6 | Wenige Kinder: die Trainerzahl schlägt die Kinderzahl (sechs Kinder, zwei Trainer → zwei Dreiergruppen ohne Spielform; `tgBedarf`) | ✅ v835 (Charles 17.11.: unter acht Kindern eine Gruppe) |
-| 1.7 | Übungswahl kennt weder Dauer noch Betreuung noch Tore; Thema folgt der Kategorie von Feld 1 statt der Leitfrage (`tpStationWahl`) | ⬜ |
+| 1.7 | Übungswahl kennt weder Dauer noch Betreuung noch Tore; Thema folgt der Kategorie von Feld 1 statt der Leitfrage (`tpStationWahl`) | ✅ v864 (Charles 18.11.): Fokus zuerst, Abzüge für zu lange Übungen und fehlende Betreuung; Tore/Material stehen nur im Freitext – offen |
 | 1.8 | Ein Trainer mit zehn und mehr Kindern: die gewählte Spielform ist oft zu klein; besser zwei Felder mit derselben Form | ✅ v864 (Charles 18.11.): ein Trainer ab 10 Kindern zwei Felder, dieselbe Form; hebt v656 nur für diesen Fall auf |
 | 1.9 | Einzel-Hauptteil ohne Stufen (Technik-Parcours) bekam bei zwei Trainern eine fremde Übung auf Feld 2 | ✅ v834 |
 | 1.10 | `trainerIstFeldtrainer` wird nirgends aufgerufen – Trainer mit Rolle „organisation“ zählt als Station | ✅ nachgeprüft 18.11.: seit v536 nicht vorbelegt, kein Feld (Prüffall v536); nur die Hilfsfunktion ist ungenutzt → toter Code |
