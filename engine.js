@@ -633,14 +633,14 @@ function _renderKombiInner(wrap){
      ganzen Kader mit Prozentzahl an der Position –, dazu „Weitere gute Kombinationen“ mit immer
      denselben Kindern und Sätze über einzelne Kinder. Das ist eine Bestenliste und passt nicht zu
      „Fairness vor Ergebnis“. Es bleiben: Aufstellung festlegen, der Knopf „Vorschlag“ (setzt die
-     Kinder, die dabei sind, nach passender Rolle) und der Weg in den Spieltag. Der Editor wird
+     Kinder nach Rollen-Erfahrung, seit v855) und der Weg in den Spieltag. Der Editor wird
      nicht mehr mit einer Auswahl vorbelegt. */
   let html=`<div class="kombi-aufstellung" id="kombi-hinweis">
     <div class="kombi-title">🧭 Rollen-Vorschlag</div>
     <div class="kombi-sub" style="margin-top:4px">${nominiert
-      ? `„Vorschlag“ setzt aus den <b>${nominiert.length} Kindern, die dabei sind</b>, je Rolle ein Kind, zu dem sie nach der letzten Bewertung passt.`
-      : `„Vorschlag“ setzt je Rolle ein Kind, zu dem sie nach der letzten Bewertung passt. Sind am Spieltag Teams eingeteilt, zählt nur, wer dabei ist.`}
-      Er ist ein Startpunkt, keine Rangfolge: In der U9 spielen alle Kinder weiter alle Rollen, und über Einsatzzeiten entscheidet „Feld &amp; Bank fair besetzen“ am Spieltag.</div>
+      ? `„Vorschlag“ setzt aus den <b>${nominiert.length} Kindern, die dabei sind</b>, je Rolle das Kind, das sie in dieser Saison am seltensten gespielt hat.`
+      : `„Vorschlag“ setzt je Rolle das Kind, das sie in dieser Saison am seltensten gespielt hat. Sind am Spieltag Teams eingeteilt, zählt nur, wer dabei ist.`}
+      So spielen mit der Zeit alle Kinder alle Rollen; die Bewertung fließt nicht ein. Gezählt werden die gespeicherten Aufstellungen (Team → Rollen-Matrix). Über Einsatzzeiten entscheidet „Feld &amp; Bank fair besetzen“ am Spieltag.</div>
   </div>`;
 
   html+=`<div id="lineup-editor" style="margin-top:16px"></div>`;

@@ -36,8 +36,8 @@ module.exports = async function (h) {
   if (r.fehler) return h.ergebnis(titel, false, ["Fehler im Ablauf: " + r.fehler]);
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
   if (/Beste Aufstellung|Weitere gute Kombinationen|beste Kombination|\d\s?%/.test(r.text)) probleme.push("a) Bestenliste oder Prozent sichtbar: " + (r.text.match(/.{0,30}(Beste Aufstellung|Weitere gute|beste Kombination|\d\s?%).{0,20}/) || [""])[0]);
-  else if (!/keine Rangfolge/.test(r.hinweis) || r.kindImHinweis) probleme.push("a) Hinweis fehlt oder nennt ein Kind: " + r.hinweis.slice(0, 120));
-  else zeilen.push("a) keine Bestenliste, kein Prozentzeichen; Hinweis „Startpunkt, keine Rangfolge“");
+  else if (!/am seltensten gespielt/.test(r.hinweis) || r.kindImHinweis) probleme.push("a) Hinweis fehlt oder nennt ein Kind: " + r.hinweis.slice(0, 120));
+  else zeilen.push("a) keine Bestenliste, kein Prozentzeichen; Hinweis nennt die Regel „am seltensten gespielt“");
   if (!r.selN) probleme.push("b) Editor fehlt");
   else if (r.vorbelegt) probleme.push(`b) Editor ist mit ${r.vorbelegt} Kindern vorbelegt`);
   else if (r.nach < 4 || r.doppelt) probleme.push(`b) „Vorschlag“ setzt ${r.nach} Positionen, doppelt: ${r.doppelt}`);
