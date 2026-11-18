@@ -82,6 +82,7 @@ function renderLineupEditor(){
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
       ${bench.length?bench.map(n=>`<span style="font-size:var(--s-text);padding:5px 10px;background:var(--surface2);border:var(--border);border-radius:16px">${getKader(n)?.nr?getKader(n).nr+" ":""}${esc(n)}</span>`).join(""):'<span style="font-size:var(--s-klein);color:var(--text3)">Alle Spieler in der Startelf</span>'}
     </div>
+    ${kombiStandHtml()}
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <input type="date" id="lineup-date" value="${today}" style="min-height:44px;padding:8px 10px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-family:inherit">
       <button class="btn btn-p" onclick="kombiSaveLineup()"><i class="ti ti-device-floppy"></i>Speichern</button>
@@ -173,6 +174,18 @@ function kombiShareLineupBild(){
     }
   },"image/png");
 }
+/* v856 (Bestandsaufnahme 2.5): Die Seite sagte nur per Meldung, dass gespeichert wurde – danach war
+   nicht mehr zu sehen, ob die Aufstellung, die da steht, die gespeicherte ist. Jetzt steht es
+   dauerhaft über den Knöpfen, mit Zeichen und Text. */
+let _kombiStand=null;   // {bild, datum, um} der zuletzt gespeicherten oder geladenen Aufstellung
+function kombiStandHtml(){
+  if(!Object.values(kombiLineup).some(Boolean))return "";
+  const gleich=_kombiStand&&_kombiStand.bild===JSON.stringify(kombiLineup);
+  const tag=d=>new Date(d+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
+  return gleich
+    ?`<div id="lineup-stand" role="status" data-offen="0" style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">✓ Gespeichert für den ${tag(_kombiStand.datum)}${_kombiStand.um?" um "+_kombiStand.um+" Uhr":""}.</div>`
+    :`<div id="lineup-stand" role="status" data-offen="1" style="font-size:var(--s-text);font-weight:700;margin-bottom:8px">● Noch nicht gespeichert – erst mit „Speichern“ zählt die Aufstellung für die Rollen-Erfahrung.</div>`;
+}
 async function kombiSaveLineup(){
   const datum=document.getElementById("lineup-date")?.value;
   if(!datum){toast("Bitte Datum wählen","err");return;}
@@ -182,7 +195,11 @@ async function kombiSaveLineup(){
       body:JSON.stringify({datum,lineup:kombiLineup})
     });
     if(sbCheck401(r))return;
-    if(r.ok||r.status===201){toast("Aufstellung gespeichert ✓");try{navigator.vibrate&&navigator.vibrate(50);}catch(e){}}
+    if(r.ok||r.status===201){
+      _kombiStand={bild:JSON.stringify(kombiLineup),datum,um:new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})};
+      if(typeof rollenExpClear==="function")rollenExpClear();   // der nächste Vorschlag zählt diese Aufstellung mit
+      renderLineupEditor(); const dd=document.getElementById("lineup-date"); if(dd)dd.value=datum;
+      toast("Aufstellung gespeichert ✓");try{navigator.vibrate&&navigator.vibrate(50);}catch(e){}}
     else toast("Fehler beim Speichern","err");
   }catch(e){toast("Netzwerkfehler","err");}
 }
@@ -196,7 +213,8 @@ async function kombiLoadLineup(){
     const rows=await r.json();
     if(!rows.length){toast("Keine gespeicherte Aufstellung für dieses Datum","err");return;}
     kombiLineup=Object.assign({tw:"",auf:"",fll:"",flr:"",jaeg:""},rows[0].lineup||{});
-    renderLineupEditor();
+    _kombiStand={bild:JSON.stringify(kombiLineup),datum,um:""};
+    renderLineupEditor(); const dd=document.getElementById("lineup-date"); if(dd)dd.value=datum;
     toast("Aufstellung geladen ✓");
   }catch(e){toast("Netzwerkfehler","err");}
 }
