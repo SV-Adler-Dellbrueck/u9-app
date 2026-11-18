@@ -49,7 +49,7 @@ module.exports = async function (h) {
     const text = document.body.innerText;
     const k = document.getElementById("alle-termine-kachel");
     let mehrDavor = false;
-    if (k) { let e = k.previousElementSibling; while (e) { if (/^Mehr$/.test((e.textContent || "").trim())) { mehrDavor = true; break; } e = e.previousElementSibling; } }
+    if (k) { let e = k.previousElementSibling; while (e) { if (/^(Mehr|Fürs Team)$/.test((e.textContent || "").trim())) { mehrDavor = true; break; } e = e.previousElementSibling; } }   // seit v862 unter „Fürs Team“
     const out = { kachel: k ? Math.round(k.getBoundingClientRect().height) : 0, mehrDavor,
       ueberschrift: /📅 Termine\n/.test(text + "\n") && [...document.querySelectorAll("div")].some(d => d.textContent.trim() === "📅 Termine"),
       karteMitKnopf: [...document.querySelectorAll("button")].filter(b => /Alle Termine/.test(b.textContent)).length,
