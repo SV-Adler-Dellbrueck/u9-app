@@ -113,7 +113,7 @@ function mcHalftimeStart(){
   rotStop();
 }
 function mcHalftimeEnd(){ mcSave({half:2,clock_status:"running",started_at:new Date().toISOString(),paused_ms:0}); rotStart(); }
-function mcEnd(){ if(mcState&&mcState.clock_status==="running"&&!confirm("Wirklich abpfeifen? Die Uhr lässt sich danach nur auf 0:00 zurücksetzen."))return; mcSave({clock_status:"ended",started_at:null}); rotStop(); }
+async function mcEnd(){ if(mcState&&mcState.clock_status==="running"&&!await frageJaNein({emoji:"🏁",titel:"Abpfeifen?",text:"Wirklich abpfeifen? Die Uhr lässt sich danach nur auf 0:00 zurücksetzen.",ja:"Abpfeifen",ton:"rot"}))return; mcSave({clock_status:"ended",started_at:null}); rotStop(); }
 function mcReset(){ mcSave({half:1,clock_status:"idle",started_at:null,paused_ms:0}); rotStop(); }
 function mcRenderLive(){
   const box=document.getElementById("mc-panel");

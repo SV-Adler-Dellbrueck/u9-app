@@ -166,7 +166,7 @@ async function vdSave(datum){
   vdListLoad();
 }
 async function vdDelete(id){
-  if(!confirm("Diese Notiz löschen?"))return;
+  if(!await frageJaNein({emoji:"🗑️",titel:"Notiz löschen?",text:"Diese Notiz löschen?",ja:"Löschen",ton:"rot"}))return;
   try{const r=await fetch(`${SB_URL}/rest/v1/trainer_notes?id=eq.${id}`,{method:"DELETE",headers:sbAuthHeaders()});if(sbCheck401(r))return;if(!r.ok){toast(sbDeniedMsg(r,"Konnte nicht löschen"),"err");return;}}catch(e){toast("Netzwerkfehler","err");return;}
   vdListLoad();
 }

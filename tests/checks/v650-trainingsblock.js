@@ -86,8 +86,10 @@ module.exports = async function (h) {
     out.eKey = (blockAufbauWahl(SK4, out.eN) || {}).key;
     out.eAufbau = (document.getElementById("tp-block-aufbau") || {}).textContent || "";
     out.eKnopf = (document.getElementById("tp-block-los") || {}).textContent || "";
-    window.confirm = () => true;
-    await blockEinheitUebernehmen(datum); await warte(300);
+    // v874: Die Rückfrage „Plan ersetzen?“ ist ein Fenster der App – bestätigen, falls sie kommt
+    const pE = blockEinheitUebernehmen(datum); let pFertig = false; pE.then(() => { pFertig = true; }, () => { pFertig = true; });
+    for (let i = 0; i < 60 && !pFertig; i++) { const fm = document.getElementById("frage-modal"); if (fm) { fm.querySelector("#frage-ja").click(); break; } await warte(50); }
+    await pE; await warte(300);
     out.eSlots = tpSlots.map(x => x.label);
     // Kein Training an dem Tag → keine Karte
     await blockPlanKarte(trainings[3].datum.replace(/..$/, "00"));

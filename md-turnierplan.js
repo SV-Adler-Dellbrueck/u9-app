@@ -158,7 +158,7 @@ async function turnierPlanImportSave(){
   await turnierPlanLoad(); turnierRender();
 }
 async function turnierPlanDelete(id,gegner){
-  if(!confirm(`Begegnung gegen ${gegner||"?"} aus dem Spielplan entfernen?`))return;
+  if(!await frageJaNein({emoji:"🗑️",titel:"Begegnung entfernen?",text:`Begegnung gegen ${gegner||"?"} aus dem Spielplan entfernen?`,ja:"Entfernen",ton:"rot"}))return;
   try{const r=await fetch(`${SB_URL}/rest/v1/turnier_plan?id=eq.${id}`,{method:"DELETE",headers:sbAuthHeaders()});if(sbCheck401(r))return;}catch(e){}
   await turnierPlanLoad(); turnierRender();
 }
@@ -231,7 +231,7 @@ async function turnierAdd(){
   turnierRender();
 }
 async function turnierDelete(id){
-  if(!confirm("Dieses Turnier-Spiel wirklich löschen?"))return;
+  if(!await frageJaNein({emoji:"🗑️",titel:"Turnier-Spiel löschen?",text:"Dieses Turnier-Spiel wirklich löschen?",ja:"Löschen",ton:"rot"}))return;
   let row=null;
   try{const r=await fetch(`${SB_URL}/rest/v1/turnier_spiele?id=eq.${id}&select=*`,{headers:sbAuthHeaders()});if(r.ok)row=(await r.json())[0];}catch(e){}
   try{await fetch(`${SB_URL}/rest/v1/turnier_spiele?id=eq.${id}`,{method:"DELETE",headers:sbAuthHeaders()});}catch(e){}

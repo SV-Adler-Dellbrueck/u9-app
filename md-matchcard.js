@@ -552,7 +552,7 @@ function mdShareLink(datum){
   const url=appRoot()+"?match="+encodeURIComponent(datum);
   const text=`⚽ Spieltag-Infos U9 (${datum}):\n${url}`;
   if(navigator.share){navigator.share({title:"Spieltag U9",text,url}).catch(()=>{});}
-  else{navigator.clipboard?.writeText(url).then(()=>toast("Eltern-Link kopiert ✓"),()=>prompt("Eltern-Link:",url));}
+  else{navigator.clipboard?.writeText(url).then(()=>toast("Eltern-Link kopiert ✓"),()=>frageText({emoji:"🔗",titel:"Eltern-Link",sub:"Link markieren und kopieren, dann weiterschicken.",wert:url,ja:"Fertig",markieren:true}));}
 }
 
 // Rotations-Timer: faire Einsatzzeiten am Spieltag. Feld/Bank, Timer mit Piepton,
@@ -1060,9 +1060,9 @@ async function rotPersistTimes(){
    ansieht, was er stehen gelassen hat.
    Weil das die erfassten Einsatzzeiten dieses Spiels verwirft, wird gefragt – und die
    Nullen werden auch gespeichert, sonst käme die alte Zahl beim nächsten Laden zurück. */
-function rotReset(){
+async function rotReset(){   // v874: async – die Rückfrage ist ein Fenster der App
   const gespielt=Object.values(rotFieldSec||{}).some(v=>v>0);
-  if(gespielt&&!confirm("Wechsel-Timer zurücksetzen?\n\nDie erfassten Spielzeiten dieses Spiels werden dabei auf 0:00 gesetzt."))return;
+  if(gespielt&&!await frageJaNein({emoji:"🔄",titel:"Wechsel-Timer zurücksetzen?",text:"Die erfassten Spielzeiten dieses Spiels werden dabei auf 0:00 gesetzt.",ja:"Zurücksetzen",ton:"rot"}))return;
   if(_aufStart&&typeof spieltagKey==="function"&&_aufStart.key===spieltagKey())_aufStart=null;   // v858: Reset = Neustart, der nächste Anpfiff zählt
   if(rotTimerId){clearInterval(rotTimerId);rotTimerId=null;}
   _rotLetzt=null;
