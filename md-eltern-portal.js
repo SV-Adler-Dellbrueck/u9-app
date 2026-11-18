@@ -480,12 +480,18 @@ function dsgvoRenderGate(onOk){
       ${VEREIN_DS.link?`<a href="${esc(VEREIN_DS.link)}" target="_blank" rel="noopener" style="color:#1d4ed8">Vollständige Datenschutzerklärung</a>.`:""}
     </div>
     <label style="display:flex;align-items:flex-start;gap:8px;margin:10px 0;font-size:var(--s-text);cursor:pointer">
-      <input type="checkbox" id="dsgvo-cb" style="margin-top:3px" onchange="var b=document.getElementById('dsgvo-ok');b.disabled=!this.checked;b.style.opacity=this.checked?'1':'.5'">
+      <input type="checkbox" id="dsgvo-cb" style="margin-top:1px;width:22px;height:22px;flex:none" onchange="dsgvoKnopf(this.checked)">
       <span>Ich habe die Hinweise gelesen und willige in die beschriebene Verarbeitung ein. Die Einwilligung kann ich jederzeit für die Zukunft widerrufen.</span>
     </label>
-    <button id="dsgvo-ok" disabled onclick="dsgvoAccept()" style="width:100%;min-height:46px;border:none;border-radius:10px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer;opacity:.5">Zustimmen & fortfahren</button>
-    <div style="text-align:center;margin-top:8px"><button onclick="elternPortalLogout()" style="border:none;background:none;color:#64748b;font-size:var(--s-text);cursor:pointer">Ablehnen & abmelden</button></div>
+    <button id="dsgvo-ok" disabled onclick="dsgvoAccept()" style="width:100%;min-height:48px;border:1.5px dashed #94a3b8;border-radius:10px;background:#f1f5f9;color:#334155;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:not-allowed">Erst oben das Häkchen setzen</button>
+    <div style="text-align:center;margin-top:8px"><button onclick="elternPortalLogout()" style="min-height:44px;border:none;background:none;color:#475569;font-size:var(--s-text);cursor:pointer;text-decoration:underline">Ablehnen & abmelden</button></div>
   </div>`;
+}
+/* v859 (3.14): Der gesperrte Knopf war nur blasser – jetzt sagt er, was fehlt, und sieht anders aus. */
+function dsgvoKnopf(an){
+  const b=document.getElementById("dsgvo-ok"); if(!b)return;
+  b.disabled=!an; b.textContent=an?"Zustimmen & fortfahren":"Erst oben das Häkchen setzen";
+  b.style.background=an?"#1e3a8a":"#f1f5f9"; b.style.color=an?"#fff":"#334155"; b.style.border=an?"none":"1.5px dashed #94a3b8"; b.style.cursor=an?"pointer":"not-allowed";
 }
 async function dsgvoAccept(){
   const btn=document.getElementById("dsgvo-ok"); if(btn)btn.disabled=true;
@@ -836,6 +842,31 @@ function schmiedeOpen(){
   </div>`;
   document.body.appendChild(m);
 }
+/* v859 (Bestandsaufnahme 3.7): Ansagen verschwanden nach „Gelesen“, Neuigkeiten nach dem Öffnen – es gab
+   keinen Ort, an dem man etwas noch einmal nachsehen konnte. Hier stehen die Ansagen der letzten 60 Tage
+   (gelesen oder nicht) und die letzten Neuerungen der App. Nur lesen, nichts wird als gelesen markiert. */
+async function elternNachlesenOpen(){
+  const ab=new Date(Date.now()-60*864e5).toISOString();
+  let ansagen=[], schmiede=Array.isArray(window._adlerschmiede)?window._adlerschmiede:[];
+  try{const r=await fetch(`${SB_URL}/rest/v1/ansagen?aktiv=eq.true&created_at=gte.${ab}&select=id,text,created_at&order=created_at.desc&limit=30`,{headers:sbAuthHeaders()});if(r.ok)ansagen=(await r.json())||[];}catch(e){}
+  if(!schmiede.length){ try{const r=await fetch(`${SB_URL}/rest/v1/adlerschmiede?select=id,datum,emoji,text&order=datum.desc,id.desc&limit=12`,{headers:sbAuthHeaders()});if(r.ok)schmiede=(await r.json())||[];}catch(e){} }
+  const tag=d=>new Date(d).toLocaleDateString("de-DE",{weekday:"short",day:"2-digit",month:"2-digit"});
+  document.getElementById("nachlesen-modal")?.remove();
+  const m=document.createElement("div"); m.id="nachlesen-modal";
+  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Nachlesen");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10050;display:flex;align-items:center;justify-content:center;padding:16px";
+  m.onclick=e=>{if(e.target===m)m.remove();};
+  const zeile=(kopf,text)=>`<div class="nachlesen-eintrag" style="padding:10px 0;border-top:1px solid var(--rand-bedien)"><div style="font-size:var(--s-klein);font-weight:700;color:var(--text2)">${kopf}</div><div style="font-size:var(--s-text);line-height:1.5;white-space:pre-wrap;margin-top:2px">${text}</div></div>`;
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:18px;max-width:460px;width:100%;max-height:86vh;overflow-y:auto">
+    ${mdlHead("nachlesen-modal","📣","Nachlesen","Ansagen der letzten 60 Tage und Neues in der App","#1e3a8a")}
+    <div style="font-size:var(--s-karte);font-weight:800;margin-top:4px">Ansagen vom Trainerteam</div>
+    <div id="nachlesen-ansagen">${ansagen.length?ansagen.map(a=>zeile("📣 "+tag(a.created_at),esc(a.text))).join(""):'<div style="font-size:var(--s-text);color:var(--text2);padding:8px 0">In den letzten 60 Tagen gab es keine Ansage.</div>'}</div>
+    <div style="font-size:var(--s-karte);font-weight:800;margin-top:14px">Neu in der App</div>
+    <div id="nachlesen-schmiede">${schmiede.length?schmiede.slice(0,8).map(e=>zeile(`${esc(e.emoji||"🛠️")} ${tag(String(e.datum)+"T12:00:00")}`,esc(e.text))).join(""):'<div style="font-size:var(--s-text);color:var(--text2);padding:8px 0">Noch keine Einträge.</div>'}</div>
+    <button onclick="document.getElementById('nachlesen-modal').remove()" style="width:100%;min-height:48px;margin-top:14px;padding:11px;border:none;border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Schließen</button>
+  </div>`;
+  document.body.appendChild(m);
+}
 function whatsNewOpen(){
   document.getElementById("wn-modal")?.remove();
   const m=document.createElement("div");m.id="wn-modal";
@@ -1182,7 +1213,11 @@ async function elternDashLoad(){
       ${termin.typ==="turnier"?'<div id="turnierplan-card"></div>':""}
       ${(termin.datum===heute&&(termin.typ==="spiel"||termin.typ==="turnier"))?elternTickerHtml(termin):""}
       <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-        <button onclick="galerieOpen(${termin.id},'${(termin.titel||termin.gegner||m.label).replace(/'/g,'')}')" style="flex:1;min-width:130px;padding:9px;border:1.5px solid #1e3a8a;border-radius:10px;background:#fff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📸 ${fotoLabel(termin.typ)}</button>
+        ${termin.datum>heute
+          /* v859 (Bestandsaufnahme 3.11): Vor dem Termin gibt es noch keine Fotos – der Knopf öffnete ein leeres Album.
+             Jetzt führt er zu den Fotos der letzten Spieltage; ab dem Tag selbst wie bisher zu diesem Termin. */
+          ?`<button onclick="if(typeof spieltagGalerieOpen==='function')spieltagGalerieOpen()" style="flex:1;min-width:130px;min-height:44px;padding:9px;border:1.5px solid #1e3a8a;border-radius:10px;background:#fff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📸 Fotos der letzten Spieltage</button>`
+          :`<button onclick="galerieOpen(${termin.id},'${(termin.titel||termin.gegner||m.label).replace(/'/g,'')}')" style="flex:1;min-width:130px;padding:9px;border:1.5px solid #1e3a8a;border-radius:10px;background:#fff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📸 ${fotoLabel(termin.typ)}</button>`}
         <!-- „Alle Termine" entfernt: die Kachel „Alle Termine & Kalender-Abo" darunter kann dasselbe + mehr (PO) -->
       </div>
       </div>
@@ -1278,6 +1313,7 @@ async function elternDashLoad(){
     <div id="cat-mehr" class="el-cat-panel" style="display:none">`;
   html+=elRow("👤","Meine Angaben","Name, Handy, Geburtstag – und der Geburtstag deines Kindes","elternAngabenOpen()","#1e3a8a");   // v660
   html+=`<div id="team-ansprech-slot"></div>`;   // v663: Elternbeirat, Kasse, Beitrag
+  html+=elRow("📣","Nachlesen","Ansagen des Trainerteams und Neues in der App – auch was schon gelesen ist","elternNachlesenOpen()","#1e3a8a");   // v859 (3.7)
   html+=elRow("📸","Spieltagsgalerie","Fotos von allen Spieltagen – ansehen, groß wischen, selbst hochladen","spieltagGalerieOpen()","#7c3aed");   // v730
   /* v733: Das Adler Nest erscheint nach jedem Spieltag als eigene Ausgabe – zum Lesen und Hören, nur hier im Login. */
   html+=elRow("🪺","Adler Nest","Nach jedem Spieltag: Bericht, Fotos, Porträt – zum Lesen und Hören","if(typeof nestOpen==='function')nestOpen()","#0044AA");
@@ -1609,7 +1645,7 @@ function fotoLabel(typ){
    wird oben (Nächster Termin, Rückmeldung fehlt), hier wird nur nachgesehen. */
 /* v785 · „Diese Woche“ – ein Streifen mit den nächsten sieben Tagen (Charles 04.11.: „Alles außer die offenen Punkte umsetzen“).
    Je Tag mit Termin eine Kachel: Wochentag, Datum, Symbol des Termins und der Antwortstand aller Kinder als Zeichen UND Wort
-   (✓ zugesagt · ! offen · ✕ Absage/fällt aus) – Farbe ist nie allein Bedeutungsträger. Tippen öffnet das Termin-Fenster.
+   (✓ zugesagt · ! offen · ✕ Absage · – fällt aus, seit v859) – Farbe ist nie allein Bedeutungsträger. Tippen öffnet das Termin-Fenster.
    Er erscheint nur, wenn mindestens zwei Termine in der Woche liegen; bei einem steht er ohnehin groß oben. */
 function elternWochenleisteHtml(rows,kids,rsvpAll){
   const tage=[], heute=new Date(); heute.setHours(0,0,0,0);
@@ -1623,7 +1659,7 @@ function elternWochenleisteHtml(rows,kids,rsvpAll){
   return `<div id="eltern-woche" style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
     <div style="font-weight:800;font-size:var(--s-karte);margin-bottom:8px">🗓️ Diese Woche</div>
     <div style="display:flex;gap:4px">${zellen}</div>
-    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px">✓ zugesagt · ! Rückmeldung offen · ✕ nicht dabei oder fällt aus</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px">✓ zugesagt · ! Rückmeldung offen · ✕ nicht dabei · – fällt aus</div>
   </div>`;
 }
 /* v811: eine Tageszelle des Streifens – gemeinsam für „Diese Woche“ (v785) und die Wochen zum Wischen */
@@ -1639,7 +1675,7 @@ function _elWocheZelle(d,inWoche,kids,rsvpAll){
        Bei einem Termin öffnet der Tipp ihn, bei mehreren eine Auswahl. Weihnachtsfeier 🎄 und Kinder-Eltern-Turnier ⚽
        tragen eigene Symbole, weil beide „Event“ sind und sonst gleich aussähen. */
     const status=t=>{
-      if(_elAbgesagt(t))return {zeichen:"✕",wort:"fällt aus"};
+      if(_elAbgesagt(t))return {zeichen:"–",wort:"fällt aus"};   // v859 (3.13): eigenes Zeichen, „✕“ heißt nur noch „nicht dabei“
       const rr=rsvpAll[t.id]||{}, st=(kids||[]).map(k=>rr[k.spieler_id]||null);
       if(elternGiltZugesagt(t)&&st.every(x=>!x||x==="zugesagt"))return {zeichen:"✓",wort:st.some(x=>!x)?EL_GILT_TEXT:"zugesagt"};   // v838
       if(st.some(x=>!x))return {zeichen:"!",wort:"Rückmeldung offen"};
@@ -1726,7 +1762,7 @@ function elternWochenStreifenHtml(rows,kids,rsvpAll){
   return `<div id="eltern-woche" style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
     <div id="eltern-woche-band" onscroll="_elWocheNav()" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain">${seiten.join("")}</div>
     ${nav}
-    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px">✓ zugesagt · ! Rückmeldung offen · ✕ nicht dabei oder fällt aus</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px">✓ zugesagt · ! Rückmeldung offen · ✕ nicht dabei · – fällt aus</div>
   </div>`;
 }
 function elternWocheBlaettern(r){
@@ -1911,7 +1947,7 @@ async function terminDetailOpen(id){
     ${(t.typ==="event"&&t.eltern_turnier)?'<div id="td-mitspieler"></div>':""}
     ${(t.typ==="event"&&typeof feierFuerTermin==="function"&&feierFuerTermin(t))?'<div id="td-feier"></div>':""}
     ${t.typ==="event"?'<div id="td-mitbring"></div>':""}
-    <button onclick="galerieOpen(${Number(t.id)},'${(t.titel||t.gegner||"").replace(/'/g,"")}')" style="width:100%;margin-top:14px;padding:11px;border:1.5px solid #7c3aed;border-radius:10px;background:#faf5ff;color:#6d28d9;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📸 ${fotoLabel(t.typ)} ansehen &amp; hochladen</button>
+    ${t.datum>isoLokal()?"":`<button onclick="galerieOpen(${Number(t.id)},'${(t.titel||t.gegner||"").replace(/'/g,"")}')" style="width:100%;margin-top:14px;padding:11px;border:1.5px solid #7c3aed;border-radius:10px;background:#faf5ff;color:#6d28d9;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📸 ${fotoLabel(t.typ)} ansehen &amp; hochladen</button>`}
     <button onclick="document.getElementById('td-modal').remove()" style="width:100%;margin-top:8px;padding:11px;border:none;border-radius:10px;background:#f1f5f9;color:#334155;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Schließen</button>`;
   modal.appendChild(c);document.body.appendChild(modal);
   window._tdTermin=t; // fürs Nachladen der Mitbringliste nach dem Eintragen
