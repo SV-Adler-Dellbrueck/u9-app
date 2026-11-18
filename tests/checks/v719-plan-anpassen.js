@@ -117,7 +117,7 @@ module.exports = async function (h) {
   // a)
   if (breite(vorher.st) !== 3) probleme.push(`a) Ausgangsplan mit ${breite(vorher.st)} Stationen`);
   else if (a.rolle !== "dialog" || a.modal !== "true") probleme.push("a) kein Fenster (role=dialog)");
-  else if (!/3 → 2 Stationen/.test(a.text) || !/Kind B/.test(a.text) || !/Kind C/.test(a.text) || !a.text.includes(a0.klein)) probleme.push("a) Vorschau: " + a.text.slice(0, 260));
+  else if (!/3 → 2 Felder/.test(a.text) || !/Kind B/.test(a.text) || !/Kind C/.test(a.text) || !a.text.includes(a0.klein)) probleme.push("a) Vorschau: " + a.text.slice(0, 260));
   else if (!a.unveraendert) probleme.push("a) die Vorschau hat den Plan schon geändert");
   else zeilen.push(`a) Vorschau: 3 → 2 Stationen, Kind B und C fehlen, „${a0.klein}“ wird getauscht – Plan noch unverändert`);
 
@@ -132,7 +132,7 @@ module.exports = async function (h) {
   else zeilen.push(`b) 2 Stationen (${b.namen[0].join(" · ")}), Gruppen ${b.gruppen.map(g => g.length).join("/")}, Rotation und Regeln bleiben`);
 
   // c)
-  if (!/2 → 3 Stationen/.test(c.text)) probleme.push("c) Vorschau: " + c.text.slice(0, 200));
+  if (!/2 → 3 Felder/.test(c.text)) probleme.push("c) Vorschau: " + c.text.slice(0, 200));
   else if (breite(c2.st) !== 3 || c2.st.some(r => r.some(v => v == null))) probleme.push("c) nach Übernehmen: " + JSON.stringify(c2.namen));
   else if (!rotation(c2.st)) probleme.push("c) Rotation verloren: " + JSON.stringify(c2.namen));
   else zeilen.push(`c) Trainer dazu: 3 Stationen, neue Station „${c2.namen[0][2]}“`);

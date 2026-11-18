@@ -106,7 +106,7 @@ module.exports = async function (h) {
 
   // 5) Hinweis
   if (r.hinweisDrei) probleme.push(`bei drei Feldern erscheint ein Hinweis, obwohl es reicht: „${r.hinweisDrei}“`);
-  if (!/3 Stationen geplant, 2 Felder verfügbar/.test(r.hinweisZwei || "")) probleme.push(`der Hinweis bei zwei Feldern lautet „${r.hinweisZwei}“`);
+  if (!/3 Felder geplant, nur 2 verfügbar/.test(r.hinweisZwei || "")) probleme.push(`der Hinweis bei zwei Feldern lautet „${r.hinweisZwei}“`);
   if (!/1\./.test(r.blockText || "")) probleme.push(`die Vorschau listet die Stationen nicht: „${r.blockText}“`);
   if (r.tw && !/Torwart, parallel/.test(r.blockText || "")) probleme.push(`die Torwart-Station wird in der Vorschau nicht als solche benannt: „${r.blockText}“`);
 

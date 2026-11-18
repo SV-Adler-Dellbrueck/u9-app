@@ -77,7 +77,7 @@ async function elternFanfactsOpen(spielerId,kindName){
       <input id="ff-gallery" type="checkbox" ${f.gallery_optin?"checked":""}> Foto in der Team-Galerie zeigen (Opt-in)
     </label>
     <div style="display:flex;gap:8px;justify-content:flex-end">
-      <button onclick="document.getElementById('fanfacts-modal').remove()" style="border:none;background:none;color:#64748b;font-size:var(--s-text);cursor:pointer">Schließen</button>
+      <button onclick="document.getElementById('fanfacts-modal').remove()" style="border:none;background:none;color:#64748b;font-size:var(--s-text);cursor:pointer">Abbrechen</button>
       <button onclick="elternFanfactsSave(${spielerId})" style="border:none;border-radius:8px;background:#1e3a8a;color:#fff;padding:9px 16px;font-weight:700;font-size:var(--s-text);cursor:pointer">Speichern</button>
     </div>
   </div>`;

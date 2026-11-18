@@ -1046,7 +1046,7 @@ async function arenaEditOpen(){
     <label style="font-size:11px;color:var(--text2);display:block;margin-top:10px">🎵 Einlauf-Song<input id="ar-song" value="${esc(cfg.einlauf_song||"")}" placeholder="z. B. We Are The Champions – Queen" style="${fld}"></label>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-p btn-sm" onclick="arenaSave(this)"><i class="ti ti-device-floppy"></i>Speichern</button>
-      <button class="btn btn-sm" style="margin-left:auto" onclick="document.getElementById('arena-modal').remove()">Schließen</button>
+      <button class="btn btn-sm" style="margin-left:auto" onclick="document.getElementById('arena-modal').remove()">Abbrechen</button>
     </div>`;
   document.body.appendChild(m);
 }
@@ -2281,7 +2281,7 @@ function codexKinderEditRender(){
     <button class="btn btn-sm" style="width:100%;margin-bottom:12px" onclick="codexKinderEditAdd()" ${voll?"disabled":""}><i class="ti ti-plus"></i>Satz hinzufügen</button>
     <div style="display:flex;gap:8px">
       <button class="btn btn-p btn-sm" onclick="codexKinderEditSave(this)"><i class="ti ti-device-floppy"></i>Speichern</button>
-      <button class="btn btn-sm" style="margin-left:auto" onclick="document.getElementById('kce-modal').remove()">Schließen</button>
+      <button class="btn btn-sm" style="margin-left:auto" onclick="document.getElementById('kce-modal').remove()">Abbrechen</button>
     </div>`;
 }
 /* Der Zähler oben soll beim Tippen mitlaufen – aber ohne den ganzen Editor neu zu

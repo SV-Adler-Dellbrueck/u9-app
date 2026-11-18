@@ -1553,6 +1553,18 @@ function rufeEinstieg(raumId){
     if(++n>40){ clearInterval(t); toast("Adler-Rufe konnten nicht geladen werden – bitte neu laden","err"); }
   },250);
 }
+/* v873 (Bestandsaufnahme 4.4): Fachwörter wie „Leitfrage“, „Nominierung“, „Zusatzregel“
+   bekommen an ihrer ersten Stelle je Seite ein ⓘ. Aufgebaut wie der Tipp im Trainingsplan
+   (tpTipp, v473): ein zugeklapptes <details> – per Tastatur erreichbar, ohne eigenes Skript,
+   die Tippfläche 44 × 44 px. Der Satz öffnet sich darunter und bleibt, bis man erneut tippt.
+   Nicht in <label>, <button> oder <summary> setzen: dort wäre es ein Element im Element. */
+function infoTipp(begriff,text){
+  const b=String(begriff||""), t=String(text||"");
+  return `<details class="info-tipp" data-begriff="${esc(b)}"><summary aria-label="Was heißt ${esc(b)}?" title="${esc(t)}"><span aria-hidden="true">ⓘ</span></summary><span class="info-tipp-text">${esc(t)}</span></details>`;
+}
+const INFO_LEITFRAGE="Die Frage, die die Kinder in dieser Einheit beantworten lernen – zum Beispiel ‚Wie kriege ich den Ball zu einem, der frei ist?‘.";
+const INFO_NOMINIERUNG="Wer für einen Spieltag eingeplant ist – die Eltern sehen es im Termin.";
+const INFO_ZUSATZREGEL="Eine Regel, die eine Stufe enger macht und genau das herausfordert, was geübt wird – zum Beispiel ‚Tor zählt nur nach einem Pass‘.";
 function mdlHead(modalId,emoji,title,sub,col){
   col=col||"#1e3a8a";
   return `<div style="display:flex;align-items:center;gap:11px;margin-bottom:12px;padding:10px 12px;background:linear-gradient(90deg,${col}18,${col}05);border-left:4px solid ${col};border-radius:12px">

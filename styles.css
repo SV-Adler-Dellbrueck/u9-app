@@ -1012,6 +1012,13 @@ html,body{overscroll-behavior-y:contain}
 .tp-tipp summary::-webkit-details-marker{display:none}
 .tp-tipp[open] summary{color:var(--text)}
 .tp-tipp div{font-size:var(--s-klein);color:var(--text2);padding:0 10px 8px;line-height:1.45}
+/* v873: ⓘ hinter Fachwörtern (infoTipp in core.js) – Tippfläche 44 × 44 px, Kontrast über --text2 */
+.info-tipp{display:inline;font-weight:400;text-transform:none;letter-spacing:normal}
+.info-tipp>summary{list-style:none;display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;margin:-12px -6px -12px -4px;vertical-align:middle;border-radius:22px;font-size:var(--s-karte);font-weight:700;line-height:1;color:var(--text2);cursor:pointer;user-select:none}
+.info-tipp>summary::-webkit-details-marker{display:none}
+.info-tipp[open]>summary{color:var(--text)}
+.info-tipp>summary:focus-visible{outline:2px solid var(--blue,#1a56db);outline-offset:-4px}
+.info-tipp-text{display:block;margin:4px 0 6px;padding:8px 10px;border-radius:10px;background:var(--surface2);color:var(--text);font-size:var(--s-klein);font-weight:400;line-height:1.45;text-transform:none;letter-spacing:normal;white-space:normal}
 /* v605: Griff zum Verschieben der Blöcke im Trainingsplan */
 .tp-griff{flex:0 0 auto;min-width:44px;min-height:44px;margin:-6px 0 -6px -6px;border:none;background:transparent;color:var(--text2);font-size:var(--s-teil);line-height:1;cursor:grab;touch-action:none;border-radius:8px}
 .tp-griff:focus-visible{outline:2px solid var(--blue,#1a56db);outline-offset:1px}

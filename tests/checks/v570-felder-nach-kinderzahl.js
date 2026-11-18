@@ -170,7 +170,7 @@ module.exports = async function (h) {
     if (h48.some(x => x.stationen !== 3)) probleme.push(`L4-8: Feldbedarf am Block ${h48.map(x => x.stationen).join("/")} statt 3/3/3 – der Slot merkt sich die Stationszahl nicht`);
     h48.forEach((x, i) => { if (String(x.felder) !== String([A, F1])) probleme.push(`L4-8 Hauptteil ${i + 1}: [${x.felder.join(" | ")}] statt der ersten zwei Stationen`); });
   }
-  if (!/3 Stationen geplant, 2 Felder/.test(r.hinweis48 || "")) probleme.push("Bei zwei Gruppen sagt der Block nicht, dass die dritte Station entfällt");
+  if (!/3 Felder geplant, nur 2 verfügbar/.test(r.hinweis48 || "")) probleme.push("Bei zwei Gruppen sagt der Block nicht, dass die dritte Station entfällt");
   if (!/3 Gruppen bilden \(eine ohne Trainer\)/.test(r.hinweis48 || "")) probleme.push("Der Knopf für die dritte Gruppe nennt nicht, dass sie ohne Trainer wäre");
 
   // d)
@@ -184,7 +184,7 @@ module.exports = async function (h) {
     probleme.push(`L4-6 Hauptteil 1 bei zwei Trainern: [${h46[0].felder.join(" | ")}] statt der zwei Stationen`);
 
   // f)
-  if (!/3 Stationen geplant, 2 Felder/.test(r.knopfText || "")) probleme.push("Bei zwei Gruppen und drei Stationen sagt der Block nicht, dass eine Station entfällt");
+  if (!/3 Felder geplant, nur 2 verfügbar/.test(r.knopfText || "")) probleme.push("Bei zwei Gruppen und drei Stationen sagt der Block nicht, dass eine Station entfällt");
   else if (!r.knopfHtml || !/3 Gruppen bilden/.test(r.knopfText || "")) probleme.push("Am Block fehlt der Knopf „3 Gruppen bilden“, obwohl die Kinder für drei Felder reichen");
 
   /* e) Reichen die Kinder nicht, bleibt es bei zwei Feldern – und der Block sagt den Grund
@@ -232,7 +232,7 @@ module.exports = async function (h) {
   if (rk.kinder !== 8) probleme.push(`Zweite Sitzung: ${rk.kinder} Kinder statt 8`);
   const gk = (rk.gruppen || []).slice().sort((a, b) => b - a);
   if (String(gk) !== "4,4") probleme.push(`Bei acht Kindern entstehen Gruppen ${gk.join("/")} statt 4/4`);
-  if (!/3 Stationen geplant, 2 Felder/.test(rk.text || "")) probleme.push("Bei acht Kindern fehlt der Hinweis auf die entfallende Station");
+  if (!/3 Felder geplant, nur 2 verfügbar/.test(rk.text || "")) probleme.push("Bei acht Kindern fehlt der Hinweis auf die entfallende Station");
   else if (!/bräuchte es 12 Kinder/.test(rk.text || "")) probleme.push(`Der Grund fehlt oder nennt die falsche Zahl: „${(rk.text.match(/Für ein weiteres Feld[^.]*\./) || [])[0] || "–"}“`);
   if (rk.knopf) probleme.push("Bei acht Kindern wird ein Knopf angeboten, der nichts bewirken kann");
   if (fehlerKlein.length) probleme.push("Konsole (zweite Sitzung): " + fehlerKlein[0]);
@@ -243,7 +243,7 @@ module.exports = async function (h) {
     zeilen.push(`Abspalten: 7/6 → ${r.nachher.map(x => x.n).join("/")} · Namen, Trainer und die Kinder der bestehenden Gruppen bleiben`);
     zeilen.push(`L4-8 mit 13 Kindern und zwei Trainern: zwei Gruppen ${g48.join("/")}, dritte Station entfällt mit Hinweis und Knopf „3 Gruppen bilden (eine ohne Trainer)“ (v656)`);
     zeilen.push(`L4-6 (zwei Stationen) mit 13 Kindern und zwei Trainern: zwei Felder 7/6, eines wechselt ein (v656)`);
-    zeilen.push(`Von Hand auf zwei Gruppen: Block sagt „3 Stationen geplant, 2 Felder“ und bietet „3 Gruppen bilden“`);
+    zeilen.push(`Von Hand auf zwei Gruppen: Block sagt „3 Felder geplant, nur 2 verfügbar“ und bietet „3 Gruppen bilden“`);
     zeilen.push(`Mit acht Kindern: zwei Gruppen ${gk.join("/")}, kein Knopf – stattdessen die nötige Kinderzahl`);
   }
   return h.ergebnis("Felder und Gruppen folgen der Kinderzahl", !probleme.length, zeilen.concat(probleme));

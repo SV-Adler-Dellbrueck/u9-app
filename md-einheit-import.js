@@ -393,7 +393,7 @@ function _evStationenHinweis(v,felder){
   const bl=(v&&Array.isArray(v.bloecke))?v.bloecke:[];
   const max=bl.reduce((a,b)=>Math.max(a,_evFelderBedarf(b)),0);
   if(!max||!isFinite(felder)||felder<1||max<=felder)return "";
-  return `${max} Stationen geplant, ${felder} ${felder===1?"Feld":"Felder"} verfügbar – die ${max-felder===1?"überzählige Station entfällt":(max-felder)+" überzähligen Stationen entfallen"}.`;
+  return `${max} Felder geplant, nur ${felder} verfügbar – ${max-felder===1?"das überzählige Feld entfällt":"die "+(max-felder)+" überzähligen Felder entfallen"}.`;
 }
 
 /* v569: Die Skalierungszeile liest ihre Schlüssel aus dem Objekt selbst, numerisch sortiert.
@@ -470,7 +470,7 @@ function _evPruefung(text){
         const kat=(tpAllForms()[idx]||{}).kat||"technik";
         if(e.typ&&EI_TYPEN.includes(e.typ)&&!_eiKatPasst(e.typ,kat)){
           const soll=EI_KAT_PHASE[e.typ]?("nur Übungen der Kategorie „"+EI_KAT_PHASE[e.typ]+"“"):"keine Aufwärm-, Torwart- oder Einzeltrainings-Übungen";
-          fehler.push(`${e.wo}: „${e.name}“ hat die Kategorie „${kat}“ und passt nicht in eine Phase vom Typ „${e.typ}“ – dort stehen ${soll}.`);
+          fehler.push(`${e.wo}: „${e.name}“ hat die Kategorie „${kat}“ und passt nicht in einen Block vom Typ „${e.typ}“ – dort stehen ${soll}.`);
         }
       });
     });
@@ -792,7 +792,7 @@ function vorlageUebernehmenRender(opt){
       })()}
       <div style="font-size:var(--s-klein);color:var(--text3);margin-top:8px">Kinder und Torhüter werden nicht zugeteilt – das bleibt im Trainingsplan.</div>
       ${_vuPlanDa?`<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:10px;padding:9px 11px;margin-top:10px;font-size:var(--s-text);color:var(--amber);line-height:1.5">
-        ⚠️ Für diesen Termin steht schon ein Plan. <b>Er wird vollständig ersetzt</b> – Phasen und Übungen.</div>`:""}
+        ⚠️ Für diesen Termin steht schon ein Plan. <b>Er wird vollständig ersetzt</b> – Blöcke und Übungen.</div>`:""}
     </div>`;
   };
   const aktiv=!!(_vuFilter.leitfrage||_vuFilter.tag||_vuFilter.ordnung);
@@ -809,7 +809,7 @@ function vorlageUebernehmenRender(opt){
       <span style="color:var(--text3)">${_vuFilterOffen?"▲":"▼"}</span>
     </button>
     ${_vuFilterOffen?`<div style="border:1px solid var(--rand-bedien);border-top:none;border-radius:0 0 10px 10px;padding:10px;margin-bottom:6px">
-      <div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:0 2px 5px">Leitfrage</div>
+      <div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:0 2px 5px">Leitfrage${typeof infoTipp==="function"?infoTipp("Leitfrage",INFO_LEITFRAGE):""}</div>
       <div style="display:flex;gap:6px;flex-direction:column;margin-bottom:9px">${fragen.map(f=>chip(_vuFilter.leitfrage===f,f,`vuFilterSet('leitfrage','${esc(f).replace(/'/g,"&#39;")}')`)).join("")}</div>
       ${ordnungen.length?`<div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:2px 2px 5px">Wie sie stehen</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">${ordnungen.map(x=>chip(_vuFilter.ordnung===x,x,`vuFilterSet('ordnung','${esc(x).replace(/'/g,"&#39;")}')`)).join("")}</div>`:""}
@@ -1002,7 +1002,7 @@ async function vorlageUebernehmenSetzen(){
       gruppenText=` · ${bedarf} Gruppen`;
     }
   }catch(e){}
-  toast(`🗂️ „${v.name}“ übernommen ✓ ${slots.length} Phasen${gruppenText}`);
+  toast(`🗂️ „${v.name}“ übernommen ✓ ${slots.length} ${slots.length===1?"Block":"Blöcke"}${gruppenText}`);
   if(typeof tpPlanRestore==="function")await tpPlanRestore(datum);
   /* v713 (PO 01.10.): Nennt die Vorlage eine Übung für alle Felder, spielten bei zwei oder drei
      Trainern alle Gruppen dasselbe. „Training füllen“ gibt jedem weiteren Feld eine eigene

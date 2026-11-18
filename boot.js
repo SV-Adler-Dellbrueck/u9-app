@@ -1641,7 +1641,7 @@ function tpShowExercise(formIdx,planMin){
         ?`<span class="tp-ex-planzeit" style="font-size:var(--s-klein);font-weight:700;background:var(--surface2);border:1px solid var(--rand-bedien);padding:2px 6px;border-radius:4px">⏱ Im Plan: ${planMin} Min.</span>${f.dauer&&String(f.dauer).trim()!==String(planMin)?`<span style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">Richtwert ${esc(f.dauer)}${/min/i.test(String(f.dauer))?"":" Min."}</span>`:""}`
         :`<span style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">⏱ ${esc(f.dauer)}</span>`}
       ${(function(){ /* v720: Kinder je Station aus den festen Feldern, der Text als Erklärung daneben */
-        const sp=tpUebungSpanne(formIdx), zahl=sp.alle?"alle":(sp.max?(sp.min===sp.max?String(sp.min):sp.min+"–"+sp.max)+" je Station":"");
+        const sp=tpUebungSpanne(formIdx), zahl=sp.alle?"alle":(sp.max?(sp.min===sp.max?String(sp.min):sp.min+"–"+sp.max)+" je Feld":"");
         return `<span class="tp-ex-spieler" title="${esc(String(f.spieler||""))}" style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">👥 ${zahl?esc(zahl):esc(String(f.spieler||"?"))}${sp.tw?" · 🧤 Torwart":""}</span>${zahl&&f.spieler&&String(f.spieler).trim()!==zahl?`<span style="font-size:var(--s-klein);color:var(--text2);padding:2px 0">${esc(String(f.spieler))}</span>`:""}`;
       })()}
       <span style="font-size:var(--s-klein);background:var(--surface);padding:2px 6px;border-radius:4px">📐 ${f.feld||"?"}</span>
@@ -1659,7 +1659,7 @@ function tpShowExercise(formIdx,planMin){
         </div>`:"")}
     <div style="font-size:var(--s-klein);color:var(--text);white-space:pre-wrap;line-height:1.5;margin-bottom:8px">${esc(f.ablauf||"")}</div>
     ${f.coaching?`<div style="font-size:var(--s-klein);color:var(--text2);background:var(--surface);padding:8px;border-radius:6px;white-space:pre-wrap;margin-bottom:8px"><strong>🎯 Coaching-Tipps:</strong>\n${esc(f.coaching)}</div>`:""}
-    ${(typeof PROVOKATIONEN!=="undefined"&&Array.isArray(PROVOKATIONEN[f.name]||PROVOKATIONEN[tpNameUrsprung(f.name)]))?`<div class="ue-provokation" style="font-size:var(--s-klein);color:var(--text2);background:var(--surface);padding:8px;border-radius:6px;margin-bottom:8px"><strong>📏 Provokationsregeln (optional, eine pro Block):</strong><ul style="margin:4px 0 0 18px;padding:0">${(PROVOKATIONEN[f.name]||PROVOKATIONEN[tpNameUrsprung(f.name)]).map(r=>`<li>${esc(r)}</li>`).join("")}</ul></div>`:""}
+    ${(typeof PROVOKATIONEN!=="undefined"&&Array.isArray(PROVOKATIONEN[f.name]||PROVOKATIONEN[tpNameUrsprung(f.name)]))?`<div class="ue-provokation" style="font-size:var(--s-klein);color:var(--text2);background:var(--surface);padding:8px;border-radius:6px;margin-bottom:8px"><strong>📏 Zusatzregeln</strong>${typeof infoTipp==="function"?infoTipp("Zusatzregel",INFO_ZUSATZREGEL):""} <strong>(optional, eine pro Block):</strong><ul style="margin:4px 0 0 18px;padding:0">${(PROVOKATIONEN[f.name]||PROVOKATIONEN[tpNameUrsprung(f.name)]).map(r=>`<li>${esc(r)}</li>`).join("")}</ul></div>`:""}
     ${tpReiheHtml(f.name)}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
       ${uebungEditierbar(f)?`<button type="button" class="btn" onclick="uebungBearbeiten(${formIdx})" style="flex:1 1 140px;min-height:44px;justify-content:center"><i class="ti ti-pencil"></i>Übung bearbeiten</button>`:""}
@@ -1945,7 +1945,7 @@ function tpCoachSelect(stationId,ausschluss,wegOption){
   const cur=tpCoaches[stationId]||"";
   const list=(avail.length?avail:TRAINER).filter(t=>!(ausschluss&&ausschluss.has(t)&&t!==cur));
   const weg=wegOption?`<option value="__weg">✕ Feld weglassen</option>`:"";
-  return `<select class="tp-coach-sel" data-station="${stationId}" onchange="tpSetCoach('${stationId}',this.value)" aria-label="Trainer für diese Station" title="Wer leitet diese Station?">
+  return `<select class="tp-coach-sel" data-station="${stationId}" onchange="tpSetCoach('${stationId}',this.value)" aria-label="Trainer für dieses Feld" title="Wer leitet dieses Feld?">
     <option value="">👤 Trainer?</option>${list.map(t=>`<option value="${t}"${t===cur?" selected":""}>${t}</option>`).join("")}${weg}
   </select>`;
 }
@@ -2606,7 +2606,7 @@ function tpGruppeHinweis(selId){
       const knopf=(passt<jetzt&&Math.floor(kinder/passt)>=aktiv)
         ? ` <button onclick="tgAnzahlSetzen(${passt});tgFertig()" style="margin-left:6px;min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">👥 ${passt===1?"Alle Kinder an ein Feld":"Auf "+passt+" Gruppen zusammenlegen"} (${jetzt-passt===1?"ein Feld":(jetzt-passt)+" Felder"} weniger)</button>`
         : " Die Einheit nennt für diese Größe keine Anpassung – Regel selbst anpassen oder eine andere Übung wählen.";
-      html+=`<div class="tp-gruppe-hinweis" style="font-size:var(--s-klein);color:var(--text2);padding:3px 0 0;line-height:1.5">ℹ️ ${info.n} Kinder an dieser Station, die Übung ist für ${aktiv} gedacht.${knopf}</div>`;
+      html+=`<div class="tp-gruppe-hinweis" style="font-size:var(--s-klein);color:var(--text2);padding:3px 0 0;line-height:1.5">ℹ️ ${info.n} Kinder an diesem Feld, die Übung ist für ${aktiv} gedacht.${knopf}</div>`;
     }
   }
   html+=tpTorwartHinweis(idx,info);   // v720
@@ -2697,7 +2697,7 @@ function tpUebungKiAnpassen(idx,n){
   uebungKopieren(idx);
   const t=document.getElementById("tf-ki-text"); if(!t)return;
   // v722: Die Kopie ist eine Variante – ins Feld gehört nur die Änderung, die Übung kennt die KI
-  t.value=`Für ${n} Kinder an einer Station anpassen: Alle sollen spielen, höchstens ein Kind wechselt ein. Gleiches Ziel, gleiche Idee – nur Feld, Teams oder Regeln anpassen.`;
+  t.value=`Für ${n} Kinder an einem Feld anpassen: Alle sollen spielen, höchstens ein Kind wechselt ein. Gleiches Ziel, gleiche Idee – nur Feld, Teams oder Regeln anpassen.`;
   if(typeof feldWachsen==="function")feldWachsen(t);
   if(typeof tfKiAuswerten==="function")tfKiAuswerten();
   else { const st=document.getElementById("tf-ki-stand"); if(st)st.textContent="Die KI lädt noch – gleich „Änderung einarbeiten“ tippen."; }
@@ -2881,7 +2881,7 @@ function _tpRenderTimelineIntern(){
       const weg2=moeglich>parallelSlots
         ? ` <button onclick="tgAnzahlSetzen(${moeglich});tgFertig()" style="margin-left:6px;min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">👥 ${moeglich} Gruppen bilden${ohne>0?` (${ohne===1?"eine":ohne} ohne Trainer)`:""}</button>`
         : ` Für ein weiteres Feld bräuchte es ${(parallelSlots+1)*TG_ZIEL_MIN} Kinder – ${kinder} sind da, und unter ${TG_ZIEL_MIN} je Gruppe lässt sich keine Spielform spielen.`;
-      html+=`<div class="tp-stationen-hinweis" style="font-size:var(--s-klein);color:var(--text2);padding:2px 0 6px;line-height:1.5">ℹ️ ${soll} Stationen geplant, ${parallelSlots} ${parallelSlots===1?"Feld":"Felder"} – ${fehlt===1?"eine Station entfällt":fehlt+" Stationen entfallen"}.${weg2}</div>`;
+      html+=`<div class="tp-stationen-hinweis" style="font-size:var(--s-klein);color:var(--text2);padding:2px 0 6px;line-height:1.5">ℹ️ ${soll} Felder geplant, nur ${parallelSlots} verfügbar – ${fehlt===1?"ein Feld entfällt":fehlt+" Felder entfallen"}.${weg2}</div>`;
     }
     /* v514: Wer steht in diesem Block an welchem Feld – und der Ringtausch von Hand.
        Sichtbar nur, wenn es überhaupt mehrere Gruppen auf mehreren Feldern gibt. */
@@ -2901,7 +2901,7 @@ function _tpRenderTimelineIntern(){
           </select></label>`;
       if(_istFolge){
         html+=`<div class="tp-durchgang-von" style="font-size:var(--s-klein);line-height:1.5;padding:4px 8px;margin:2px 0 6px;border-left:3px solid var(--fam-training);background:var(--surface2);border-radius:6px">
-          🔁 <b>Durchgang ${_kt.indexOf(si)+1} von ${nDg}</b> · Übungen und Trainer wie in „${esc(tpSlotName((tpSlots[_kt[0]]||{}).label||"Hauptteil"))}“, die Gruppen wechseln die Station. Eine eigene Übung hier ersetzt die übernommene.</div>`;
+          🔁 <b>Durchgang ${_kt.indexOf(si)+1} von ${nDg}</b> · Übungen und Trainer wie in „${esc(tpSlotName((tpSlots[_kt[0]]||{}).label||"Hauptteil"))}“, die Gruppen wechseln das Feld. Eine eigene Übung hier ersetzt die übernommene.</div>`;
       }
       {
       html+=`<div class="tp-ringtausch" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:4px 0 6px">
@@ -2986,7 +2986,7 @@ function _tpRenderTimelineIntern(){
         html+=`<div class="tp-station">
           <div class="tp-station-head">
             <span class="tp-station-nr">${noGroups?"👥":(folgeGr?p+1:(tgg?tgg.emo:p+1))}</span>
-            <span class="tp-station-titel">${noGroups?warmTitel:(folgeGr?`Station ${p+1}<br><span style="font-weight:400;font-size:var(--s-klein);color:var(--text2)">${folgeGr}</span>`:(tgg?`${tgg.name} (${tgg.kinder.length})`:`Gruppe ${p+1}`))}</span>
+            <span class="tp-station-titel">${noGroups?warmTitel:(folgeGr?`Feld ${p+1}<br><span style="font-weight:400;font-size:var(--s-klein);color:var(--text2)">${folgeGr}</span>`:(tgg?`${tgg.name} (${tgg.kinder.length})`:`Gruppe ${p+1}`))}</span>
             ${(typ==="warmup"&&p>0&&p===parallelSlots-1)?`<button class="tp-remove" onclick="tpWarmMinus(${si})" aria-label="Diese Aufwärm-Übung entfernen" title="Diese Aufwärm-Übung entfernen"><i class="ti ti-x"></i></button>`:""}
             ${noGroups?"":tpCoachSelect(selId,gebunden,isMain&&parallelSlots>1)}
           </div>`;
@@ -3396,7 +3396,7 @@ function tpDauerSelect(si,slot){
   // Altbestand kann krumme Werte tragen (z. B. 12) – die duerfen beim Anzeigen nicht
   // stillschweigend auf einen Nachbarwert springen.
   const werte=TP_DAUER_WERTE.includes(jetzt)?TP_DAUER_WERTE:TP_DAUER_WERTE.concat(jetzt).sort((a,b)=>a-b);
-  return `<select class="tp-dauer-sel" aria-label="Dauer von ${esc(slot.label||"Phase")} in Minuten" onchange="tpSetDauer(${si},this.value)">`
+  return `<select class="tp-dauer-sel" aria-label="Dauer von ${esc(slot.label||"Block")} in Minuten" onchange="tpSetDauer(${si},this.value)">`
     +werte.map(d=>`<option value="${d}"${d===jetzt?" selected":""}>${d} Min.</option>`).join("")
     +`</select>`;
 }
@@ -3928,7 +3928,7 @@ function tpAddRecoExercise(formIdx){
   // bevorzugt eine leere Station, in deren Dropdown die Uebung vorkommt
   let target=sels.find(s=>!s.value&&[...s.options].some(o=>o.value===String(formIdx)))
           ||sels.find(s=>[...s.options].some(o=>o.value===String(formIdx)));
-  if(!target){toast("Erst eine passende Phase (z. B. Individual/Hauptteil) hinzufügen","err");return;}
+  if(!target){toast("Erst einen passenden Block (z. B. Individual/Hauptteil) hinzufügen","err");return;}
   target.value=String(formIdx);
   tpOnSelectChange(target);
   target.scrollIntoView({behavior:"smooth",block:"center"});
@@ -4573,13 +4573,13 @@ function stTimerStations(){
       }
     }catch(e){}
     gruppen=gruppen.concat(zusatz(si));
-    return {label:(slot.label||("Station "+(si+1)))+(nDg>1?` · Durchgang ${d+1}/${nDg}`:""),dauer:nDg>1?minuten[d]:Math.max(1,slot.dauer||10),farbe:slot.farbe||"#1a56db",forms:[...new Set(forms)],gruppen};
+    return {label:(slot.label||("Block "+(si+1)))+(nDg>1?` · Durchgang ${d+1}/${nDg}`:""),dauer:nDg>1?minuten[d]:Math.max(1,slot.dauer||10),farbe:slot.farbe||"#1a56db",forms:[...new Set(forms)],gruppen};
     });
   });
 }
 function stTimerStart(){
   const st=stTimerStations();
-  if(!st.length){toast("Kein Plan vorhanden – erst Stationen anlegen („Training füllen“)","err");return;}
+  if(!st.length){toast("Kein Plan vorhanden – erst Blöcke anlegen („Training füllen“)","err");return;}
   _stT={ix:0,left:st[0].dauer*60,timer:null,stations:st,paused:false};
   document.getElementById("st-timer")?.remove();
   const ov=document.createElement("div"); ov.id="st-timer"; ov.setAttribute("role","dialog"); ov.setAttribute("aria-modal","true"); ov.setAttribute("aria-label","Solo-Timer");   // v691
@@ -4618,12 +4618,12 @@ function stTimerRender(done){
   const mm=Math.floor(Math.max(0,_stT.left)/60), ss=Math.max(0,_stT.left)%60, clock=mm+":"+(ss<10?"0":"")+ss;
   const warn=_stT.left<=10;
   ov.innerHTML=`
-    <div style="font-size:var(--s-text);letter-spacing:1px;color:#94a3b8;text-transform:uppercase">Station ${_stT.ix+1}/${_stT.stations.length}${_stT.paused?" · ⏸ Pause":""}</div>
+    <div style="font-size:var(--s-text);letter-spacing:1px;color:#94a3b8;text-transform:uppercase">Block ${_stT.ix+1}/${_stT.stations.length}${_stT.paused?" · ⏸ Pause":""}</div>
     <div style="font-size:26px;font-weight:800;margin:8px 0;color:${s.farbe||"#60a5fa"}">${esc(s.label||"")}</div>
     ${s.forms&&s.forms.length?`<div style="font-size:var(--s-karte);color:#e2e8f0;margin-bottom:6px;max-width:520px">${s.forms.map(esc).join(" · ")}</div>`:""}
     ${s.gruppen&&s.gruppen.length>1?`<div style="font-size:var(--s-karte);color:#fbbf24;margin-bottom:6px;max-width:520px;font-weight:700">⇄ ${s.gruppen.map(esc).join(" · ")}</div>`:""}
     <div style="font-size:84px;font-weight:900;line-height:1;margin:10px 0;color:${warn?"#f87171":"#fff"}">${clock}</div>
-    ${next?`<div style="font-size:var(--s-karte);color:#94a3b8;max-width:520px">Als Nächstes: ${esc(next.label)}${next.forms&&next.forms.length?" – "+esc(next.forms.join(", ")):""}${(next.gruppen&&next.gruppen.length>1)?`<br><span style="color:#fbbf24">⇄ dann rücken die Gruppen weiter: ${next.gruppen.map(esc).join(" · ")}</span>`:""}</div>`:'<div style="font-size:var(--s-karte);color:#94a3b8">Letzte Station</div>'}
+    ${next?`<div style="font-size:var(--s-karte);color:#94a3b8;max-width:520px">Als Nächstes: ${esc(next.label)}${next.forms&&next.forms.length?" – "+esc(next.forms.join(", ")):""}${(next.gruppen&&next.gruppen.length>1)?`<br><span style="color:#fbbf24">⇄ dann rücken die Gruppen weiter: ${next.gruppen.map(esc).join(" · ")}</span>`:""}</div>`:'<div style="font-size:var(--s-karte);color:#94a3b8">Letzter Block</div>'}
     <div style="display:flex;gap:10px;margin-top:26px;flex-wrap:wrap;justify-content:center">
       <button onclick="stTimerPause()" style="padding:14px 22px;border:none;border-radius:12px;background:#334155;color:#fff;font-size:var(--s-karte);font-weight:700;font-family:inherit;cursor:pointer">${_stT.paused?"▶️ Weiter":"⏸ Pause"}</button>
       <button onclick="stTimerNext()" style="padding:14px 22px;border:none;border-radius:12px;background:#1a56db;color:#fff;font-size:var(--s-karte);font-weight:700;font-family:inherit;cursor:pointer">⏭ Nächste</button>
@@ -4851,10 +4851,10 @@ async function tpGenerate(){
   if(regelNeu){ tpRenderTimeline(); if(typeof tpPlanSaveDebounced==="function")tpPlanSaveDebounced(); }
   tpRenderTeamFokus();
   tpRenderMindsetTip();
-  const teile=[`${stationen} Station${stationen===1?"":"en"}`,`Gruppen bis ${g} Kinder`];
+  const teile=[`${stationen} ${stationen===1?"Feld":"Felder"}`,`Gruppen bis ${g} Kinder`];
   if(stationen>1)teile.push("Gruppen wechseln je Hauptteil");
   if(th.quelle)teile.push("Thema: "+th.quelle);
-  toast(gesetzt?`🪄 Training gefüllt – ${teile.join(" · ")}${eng?` · ${eng===1?"eine Station":eng+" Stationen"} ohne passende Größe, bitte prüfen`:""}`:"Alles belegt – nichts zu füllen",gesetzt?"":"");
+  toast(gesetzt?`🪄 Training gefüllt – ${teile.join(" · ")}${eng?` · ${eng===1?"ein Feld":eng+" Felder"} ohne passende Größe, bitte prüfen`:""}`:"Alles belegt – nichts zu füllen",gesetzt?"":"");
   return {stationen,g,gesetzt,eng,thema:th.quelle};
 }
 
@@ -4865,7 +4865,7 @@ function tpRegelZeile(si,slot){
   if(!f)return "";
   const knopf="min-height:44px;min-width:44px;padding:0 10px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer";
   return `<div class="tp-regel" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:var(--s-klein);color:var(--text);background:var(--surface2);border:1px solid var(--rand-bedien);border-radius:8px;padding:6px 8px;margin:2px 0 6px">
-    <span style="flex:1;min-width:180px;line-height:1.45">📏 <b>Regel für alle Stationen:</b> ${esc(f.name)}${f.kurz?` – ${esc(f.kurz)}`:""}</span>
+    <span style="flex:1;min-width:180px;line-height:1.45">📏 <b>Zusatzregel für alle Felder</b>${typeof infoTipp==="function"?infoTipp("Zusatzregel",INFO_ZUSATZREGEL):""}<b>:</b> ${esc(f.name)}${f.kurz?` – ${esc(f.kurz)}`:""}</span>
     <button type="button" onclick="tpShowExercise(${ri})" style="${knopf}" aria-label="Regel ${esc(f.name)} ansehen"><i class="ti ti-eye"></i></button>
     <button type="button" onclick="tpRegelWeg(${si})" style="${knopf}" aria-label="Regel ${esc(f.name)} entfernen">✕</button>
   </div>`;
@@ -4965,17 +4965,17 @@ function tpAnpassenFenster(v){
   const z=[];
   if(v.raus.length)z.push(zeile("➖",`${v.raus.length===1?"Ein Kind fehlt":v.raus.length+" Kinder fehlen"} jetzt: ${v.raus.map(esc).join(", ")}`));
   if(v.rein.length)z.push(zeile("➕",`${v.rein.length===1?"Ein Kind ist":v.rein.length+" Kinder sind"} neu dabei: ${v.rein.map(esc).join(", ")}`));
-  if(v.weg.length)z.push(zeile("🔻",`${v.vorher} → ${v.nachher} Stationen. Es fällt weg: ${v.wegListe.map(w=>`Station ${w.p+1}${w.uebung?` „${esc(w.uebung)}“`:""}${w.trainer?` (${esc(w.trainer)})`:""}`).join(", ")}`));
-  if(v.dazu)z.push(zeile("🔺",`${v.vorher} → ${v.nachher} Stationen. ${v.dazu===1?"Die neue Station bekommt":"Die neuen Stationen bekommen"} eine passende Übung.`));
+  if(v.weg.length)z.push(zeile("🔻",`${v.vorher} → ${v.nachher} Felder. Es fällt weg: ${v.wegListe.map(w=>`Feld ${w.p+1}${w.uebung?` „${esc(w.uebung)}“`:""}${w.trainer?` (${esc(w.trainer)})`:""}`).join(", ")}`));
+  if(v.dazu)z.push(zeile("🔺",`${v.vorher} → ${v.nachher} Felder. ${v.dazu===1?"Das neue Feld bekommt":"Die neuen Felder bekommen"} eine passende Übung.`));
   const gesehen=new Set();
   v.tausch.forEach(t=>{ const k=t.alt+">"+t.neu; if(gesehen.has(k))return; gesehen.add(k);
     z.push(zeile(t.neu!=null?"🔁":"⚠️",t.neu!=null?`„${esc(t.altName)}“ passt nicht für Gruppen bis ${v.g} Kinder → „${esc(t.neuName)}“`:`„${esc(t.altName)}“ passt nicht für Gruppen bis ${v.g} Kinder – keine passende Übung gefunden, bleibt stehen`)); });
   const knopf="min-height:48px;padding:0 16px;border-radius:12px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer";
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("tp-anpassen-modal","🔄","Plan anpassen",`${v.trainer.length} Trainer · ${v.kinderZahl} Kinder · Gruppen bis ${v.g}`,"var(--fam-training)")}
-    ${v.nichts?`<div class="tp-anpassen-leer" style="font-size:var(--s-text);color:var(--text2);padding:8px 0 4px">Alles passt – Stationen, Gruppen und Übungen stimmen mit den Zu- und Absagen überein.</div>`
+    ${v.nichts?`<div class="tp-anpassen-leer" style="font-size:var(--s-text);color:var(--text2);padding:8px 0 4px">Alles passt – Felder, Gruppen und Übungen stimmen mit den Zu- und Absagen überein.</div>`
       :`<ul class="tp-anpassen-liste" style="list-style:none;margin:0;padding:0;font-size:var(--s-text)">${z.join("")}</ul>
-        <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px">Zusatzregeln, von dir weggelassene Felder und der gemeinsame Block ohne Stationen bleiben, wie sie sind.</div>`}
+        <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px">Zusatzregeln, von dir weggelassene Felder und der gemeinsame Block für alle bleiben, wie sie sind.</div>`}
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap">
       <button type="button" onclick="document.getElementById('tp-anpassen-modal').remove()" style="${knopf};border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text)">${v.nichts?"Schließen":"Abbrechen"}</button>
       ${v.nichts?"":`<button type="button" id="tp-anpassen-ok" onclick="tpAnpassenUebernehmen()" style="${knopf};border:none;background:var(--fam-training);color:#fff">Übernehmen</button>`}
@@ -5026,7 +5026,7 @@ async function tpAnpassenUebernehmen(){
   let gefuellt=null;
   if(v.dazu&&typeof tpGenerate==="function")gefuellt=await tpGenerate();
   if(typeof tpPlanSaveDebounced==="function")tpPlanSaveDebounced();
-  const teile=[`${v.nachher} Station${v.nachher===1?"":"en"}`,`Gruppen bis ${v.g} Kinder`];
+  const teile=[`${v.nachher} ${v.nachher===1?"Feld":"Felder"}`,`Gruppen bis ${v.g} Kinder`];
   if(getauscht)teile.push(`${getauscht===1?"eine Übung":getauscht+" Übungen"} getauscht`);
   if(!v.dazu)toast("🔄 Plan angepasst – "+teile.join(" · "));
   return {getauscht,gefuellt};
@@ -5631,7 +5631,7 @@ function _tpPickKarte(x){
     <button onclick="tpPickerSet(${x.i})" style="flex:1;min-width:0;min-height:44px;border:none;background:transparent;color:var(--text);font-family:inherit;text-align:left;cursor:pointer;padding:0">
       <span style="display:block;font-size:var(--s-karte);font-weight:800">${esc(x.f.name)}</span>
       <span style="display:block;font-size:var(--s-klein);color:var(--text2)">${x.f.dauer||"?"} Min. · ${esc((typeof PERIOD_CATS!=="undefined"&&PERIOD_CATS[x.f.kat])||x.f.kat||"eigene")} · ${frische}</span>
-      ${(function(){const c=tpArtChip(x.f,false);const b=typeof tpBetreuungWert==="function"?tpBetreuungWert(x.f):null;const a=(b&&b.wert==="allein")?'<span style="background:var(--surface2);color:var(--text2);border:var(--border-s);border-radius:6px;padding:1px 6px;font-size:var(--s-klein);font-weight:800;white-space:nowrap">👤 läuft allein</span>':"";const z=(typeof tpIstZusatzregel==="function"&&tpIstZusatzregel(x.f))?'<span title="Keine eigene Station – wird in eine Spielform eingebaut" style="background:var(--surface2);color:var(--text2);border:var(--border-s);border-radius:6px;padding:1px 6px;font-size:var(--s-klein);font-weight:800;white-space:nowrap">📏 Zusatzregel</span>':"";return (c||a||z)?`<span style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">${c}${a}${z}</span>`:"";})()}
+      ${(function(){const c=tpArtChip(x.f,false);const b=typeof tpBetreuungWert==="function"?tpBetreuungWert(x.f):null;const a=(b&&b.wert==="allein")?'<span style="background:var(--surface2);color:var(--text2);border:var(--border-s);border-radius:6px;padding:1px 6px;font-size:var(--s-klein);font-weight:800;white-space:nowrap">👤 läuft allein</span>':"";const z=(typeof tpIstZusatzregel==="function"&&tpIstZusatzregel(x.f))?'<span title="Kein eigenes Feld – wird in eine Spielform eingebaut" style="background:var(--surface2);color:var(--text2);border:var(--border-s);border-radius:6px;padding:1px 6px;font-size:var(--s-klein);font-weight:800;white-space:nowrap">📏 Zusatzregel</span>':"";return (c||a||z)?`<span style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">${c}${a}${z}</span>`:"";})()}
     </button>
     <span role="img" aria-label="Schwierigkeit ${stern} von 3" title="Schwierigkeit – ändern im Übungsdetail" style="min-width:52px;display:inline-flex;align-items:center;justify-content:center;color:#f59e0b;font-size:var(--s-text);letter-spacing:1px">${"⭐".repeat(stern)}</span>
     <button onclick="tpPickerInfo(${x.i})" aria-label="Übung ansehen" title="Skizze & Beschreibung ansehen" style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-size:var(--s-karte);cursor:pointer">ℹ️</button>
@@ -5714,7 +5714,7 @@ function _tlSnapshot(){
       });
     });
     if(!gruppen.length)gruppen.push({trainer:"Alle",uebung:(slot.typ==="abschluss"||slot.typ==="turnier")?"Freies Spiel / Trainingsturnier":"(frei)",gruppe:null,kinder:null});
-    const label=(slot.label||("Station "+(si+1)))+(nDg>1?` · Durchgang ${d+1}/${nDg}`:"");
+    const label=(slot.label||("Block "+(si+1)))+(nDg>1?` · Durchgang ${d+1}/${nDg}`:"");
     stationen.push({si,label,dauer:nDg>1?minuten[d]:Math.max(1,slot.dauer||10),farbe:slot.farbe||"#16a34a",gruppen});
     }
   });
@@ -5770,7 +5770,7 @@ async function tlStart(){
   const pflicht=tpGetCheckedTrainers();
   if(!pflicht.length){toast("Erst oben die Trainer von heute anhaken","err");return;}
   // Ohne Stationen gibt es nichts zu starten – sonst hängt die Runde unaufhaltsam auf „läuft".
-  if(!_tlSnapshot().length){toast("Erst Stationen mit Übungen planen","err");return;}
+  if(!_tlSnapshot().length){toast("Erst Blöcke mit Übungen planen","err");return;}
   if(!pflicht.includes(me)&&pflicht.length)pflicht.push(me);
   const vorhanden=await _tlFetch();
   if(vorhanden===undefined){toast("Kein Netz – nimm den ⏱️ Solo-Timer (läuft ohne Server)","err");return;}
@@ -5790,7 +5790,7 @@ async function tlStart(){
   try{
     const r=await fetch(`${SB_URL}/rest/v1/training_live?on_conflict=datum`,{method:"POST",headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify(body)});
     if(!r.ok&&r.status!==201){toast(sbDeniedMsg(r,"Konnte nicht starten"),"err");return;}
-  }catch(e){toast("Kein Netz – nimm den ⏱️ Stationstimer","err");return;}
+  }catch(e){toast("Kein Netz – nimm den ⏱️ Solo-Timer (ohne Netz)","err");return;}
   _tl.row=body;
   tlOverlayOpen(); _tlPollStart();
   await _tlAdvance(); // Solo-Trainer: nicht auf den ersten Poll-Takt warten – sofort Countdown
@@ -5974,7 +5974,7 @@ function _tlRender(){
   const me=(typeof _meTrainer==="string")?_meTrainer:"";
   const kopf=`<div style="display:flex;align-items:center;gap:8px;max-width:520px;margin:0 auto">
       <span style="font-size:var(--s-teil)">🏃</span>
-      <span style="font-size:var(--s-karte);font-weight:800;flex:1;text-align:left">Trainingsstart · Station ${row.slot+1}/${slots.length||"?"}</span>
+      <span style="font-size:var(--s-karte);font-weight:800;flex:1;text-align:left">Trainingsstart · Block ${row.slot+1}/${slots.length||"?"}</span>
       <button onclick="tlSchliessen()" aria-label="Schließen" style="min-width:44px;min-height:44px;border:none;background:rgba(255,255,255,.12);color:#fff;border-radius:10px;font-size:var(--s-teil);cursor:pointer">✕</button>
     </div>`;
   if(row.status==="fertig"){
@@ -5986,13 +5986,13 @@ function _tlRender(){
     </div>`;
     return;
   }
-  const st=slots[row.slot]||{label:"Station",dauer:10,gruppen:[]};
+  const st=slots[row.slot]||{label:"Block",dauer:10,gruppen:[]};
   if(row.status==="lobby"){
     const noetig=row.slot===0?(row.pflicht||[]):_tlSlotTrainer(row,row.slot);
     const binBereit=me&&row.bereit&&row.bereit[me];
     ov.innerHTML=kopf+`<div style="max-width:520px;margin:6vh auto 0">
       <div style="font-size:52px">🟢</div>
-      <div style="font-size:var(--s-seite);font-weight:900;margin:8px 0">${row.slot===0?"Training startet":"Nächste Station"} – bereit?</div>
+      <div style="font-size:var(--s-seite);font-weight:900;margin:8px 0">${row.slot===0?"Training startet":"Nächster Block"} – bereit?</div>
       <div style="font-size:var(--s-karte);opacity:.85;margin-bottom:16px">${esc(st.label)} · ${st.dauer} Min.</div>
       <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:20px">
         ${noetig.map(t=>{
@@ -6243,7 +6243,7 @@ function tgVorschlagText(tg){
   const v=tpGruppenVorschlag();
   if(!v||!jetzt||v.n===jetzt)return "";
   const summe=v.bedarf.reduce((a,x)=>a+x,0);
-  return `Mit ${v.n} Gruppen ginge die Einheit besser auf: die Stationen brauchen ${v.bedarf.join(" + ")} = ${summe} Kinder.`;
+  return `Mit ${v.n} Gruppen ginge die Einheit besser auf: die Felder brauchen ${v.bedarf.join(" + ")} = ${summe} Kinder.`;
 }
 /* ═══════════════════════════════════════════════════════════════════════════
    v574 – DIE EINTEILUNG FOLGT DER ANWESENHEIT
@@ -6520,10 +6520,10 @@ function tgRender(){
     const vor=(typeof tpGruppenVorschlag==="function")?tpGruppenVorschlag(kinder):null;
     az.innerHTML=`<span style="font-size:var(--s-klein);color:var(--text2);margin-right:2px">Gruppen:</span>`
       +TG_NAMEN.map((_,i)=>{const n=i+1;const an=n===jetzt;const gut=!!(vor&&vor.n===n);
-        return `<button onclick="tgAnzahlSetzen(${n})" aria-pressed="${an?"true":"false"}"${gut?' title="Passt zu den Stationen dieser Einheit"':""} style="min-width:44px;min-height:44px;padding:0 12px;border:1px solid ${gut&&!an?"var(--fam-training)":"var(--rand-bedien)"};${an?"border-color:transparent;background:var(--fam-training);color:#fff;":"background:var(--surface2);color:var(--text);"}border-radius:16px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${an?"✓ ":""}${n}${gut?" ★":""}</button>`;
+        return `<button onclick="tgAnzahlSetzen(${n})" aria-pressed="${an?"true":"false"}"${gut?' title="Passt zu den Feldern dieser Einheit"':""} style="min-width:44px;min-height:44px;padding:0 12px;border:1px solid ${gut&&!an?"var(--fam-training)":"var(--rand-bedien)"};${an?"border-color:transparent;background:var(--fam-training);color:#fff;":"background:var(--surface2);color:var(--text);"}border-radius:16px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${an?"✓ ":""}${n}${gut?" ★":""}</button>`;
       }).join("")
       +`<span style="font-size:var(--s-klein);color:var(--text3);margin-left:2px">${kinder} Kinder</span>`
-      +(vor?`<div style="flex:1 0 100%;font-size:var(--s-klein);color:var(--text2);padding:4px 0 0;line-height:1.5">★ ${vor.n===jetzt?"passt":"empfohlen"}: die Stationen dieser Einheit brauchen ${vor.bedarf.join(" + ")} = ${vor.bedarf.reduce((a,x)=>a+x,0)} Kinder${vor.fehlt?`, ${vor.fehlt} ${vor.fehlt===1?"Platz bleibt":"Plätze bleiben"} leer`:""}${vor.zuviel?`, ${vor.zuviel} ${vor.zuviel===1?"Kind wechselt":"Kinder wechseln"} ein`:""}.</div>`:"");
+      +(vor?`<div style="flex:1 0 100%;font-size:var(--s-klein);color:var(--text2);padding:4px 0 0;line-height:1.5">★ ${vor.n===jetzt?"passt":"empfohlen"}: die Felder dieser Einheit brauchen ${vor.bedarf.join(" + ")} = ${vor.bedarf.reduce((a,x)=>a+x,0)} Kinder${vor.fehlt?`, ${vor.fehlt} ${vor.fehlt===1?"Platz bleibt":"Plätze bleiben"} leer`:""}${vor.zuviel?`, ${vor.zuviel} ${vor.zuviel===1?"Kind wechselt":"Kinder wechseln"} ein`:""}.</div>`:"");
   }
   el.innerHTML=tg.gruppen.map((g,gi)=>`<div style="border:var(--border-s);border-left:4px solid ${g.farbe};border-radius:12px;padding:10px 12px;margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">

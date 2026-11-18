@@ -208,7 +208,7 @@ module.exports = async function (h) {
   // d)
   if (!r.zuKlein.length) probleme.push("Vier Kinder an einer Übung für sechs – es kommt kein Hinweis");
   else {
-    if (!/\b[45] Kinder an dieser Station/.test(r.zuKlein[0])) probleme.push(`Der Hinweis nennt die Gruppengröße nicht: „${r.zuKlein[0]}“`);
+    if (!/\b[45] Kinder an diesem Feld/.test(r.zuKlein[0])) probleme.push(`Der Hinweis nennt die Gruppengröße nicht: „${r.zuKlein[0]}“`);
     if (!/zusammenlegen|Alle Kinder an ein Feld|keine Anpassung/.test(r.zuKlein[0])) probleme.push(`Der Hinweis nennt keinen Weg: „${r.zuKlein[0]}“`);
   }
 

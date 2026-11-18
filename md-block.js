@@ -447,7 +447,7 @@ async function blockEditorRender(){
   const bis=_tbBis();
   const ueber=(TB_BLOECKE||[]).filter(b=>String(b.von)<=bis&&_tbEdit.von<=String(b.bis));
   box.innerHTML=`
-    <div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin:4px 0">1 · Ziel: welche Leitfrage?</div>
+    <div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin:4px 0">1 · Ziel: welche Leitfrage?${typeof infoTipp==="function"?infoTipp("Leitfrage",INFO_LEITFRAGE):""}</div>
     ${(typeof vuThemenKacheln==="function")?vuThemenKacheln("blockThemaSetzen",_tbEdit.leitfrage,true)
       :`<div style="display:grid;gap:6px">${fragen.map((f,i)=>chip(_tbEdit.leitfrage===f,esc(f),`blockLeitfrageSetzen(${i})`)).join("")}</div>`}
     <label for="tb-ziel" style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:10px">Eigener Zielsatz (optional)</label>

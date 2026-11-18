@@ -117,7 +117,7 @@ module.exports = async function (h) {
   else if (!patch || patch.body.spieler_min !== 5 || patch.body.spieler_max !== 7 || patch.body.mit_torwart !== true) probleme.push("d) PATCH: " + JSON.stringify(patch && patch.body).slice(0, 200));
   else zeilen.push("d) Bearbeiten zeigt 4–7 + Torwart, PATCH schreibt 5–7 zurück");
 
-  if (!r.e || !/5–7 je Station/.test(r.e) || !/Torwart/.test(r.e)) probleme.push("e) Ansicht: " + r.e);
+  if (!r.e || !/5–7 je Feld/.test(r.e) || !/Torwart/.test(r.e)) probleme.push("e) Ansicht: " + r.e);
   else zeilen.push(`e) Ansicht „${r.e}“`);
 
   if (!r.f.kA || !/Torwart: Kind A/.test(r.f.mit) || !/wechselt durch/.test(r.f.ohne) || r.f.ohneTwUebung) probleme.push("f) " + JSON.stringify(r.f));
