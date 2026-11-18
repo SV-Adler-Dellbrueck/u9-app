@@ -2745,7 +2745,7 @@ function _tpRenderTimelineIntern(){
   tpSlots.forEach((s,i)=>{
     if(s.parallelZu==null)return;
     const z=tpSlots[s.parallelZu];
-    if(!z||s.parallelZu===i||(z.typ||"main")!=="main")s.parallelZu=null;
+    if(!z||s.parallelZu===i||!tpIstHauptteil(z.typ||"main"))s.parallelZu=null;   // v864: auch parallel zu einer Spiel- oder Übungsform-Stufe (seit v847)
   });
   // Altbestand + neu angelegte Blöcke ohne Ziel: an den ersten Hauptteil hängen (umstellbar
   // über „Läuft parallel zu"). Gilt seit v383 auch für Torwart-Blöcke.
@@ -4713,6 +4713,9 @@ async function tpGenerate(){
     if((stationen<=1&&!tpIstStufe(x.s))||fest0==null){ const b=tpStationWahl(g,th,weg,datum,zufall); if(!b)return; weg.add(b.i); if(b.passt>1)eng++; if(stationen>1||tpIstStufe(x.s))fest0=b.i; if(setze(x.i,0,b.i))gesetzt++; }
     else if(setze(x.i,0,fest0))gesetzt++;
   });
+  /* v864: Stufen spielen auf jedem Feld dieselbe Übung. Die Kopie oben lief, bevor Feld 1 gefüllt war –
+     bei leerem Plan und zwei Feldern (ein Trainer ab zehn Kindern) blieb Feld 2 sonst leer. */
+  if(stationen>1)hs.filter(x=>tpIstStufe(x.s)).forEach(x=>{ const v0=wert(x.i,0); if(v0==null)return; for(let p=1;p<stationen;p++){ if(wert(x.i,p)==null&&setze(x.i,p,v0))gesetzt++; } });
   /* v714: Je Hauptteil eine Zusatzregel als Provokationsregel für alle Stationen – passend zum
      Thema, in jedem Hauptteil eine andere. Was der Trainer weggetippt hat (regel===null) oder
      selbst gesetzt hat, bleibt. */
@@ -6271,6 +6274,10 @@ function tgBedarf(kinder,stationen){
      Einzeltraining. Wer es anders will, bildet die Gruppen von Hand. Ab acht bleibt v536/v656.
      Ist die Kinderzahl noch unbekannt (0), gilt die alte Rechnung. */
   if(k>0&&k<2*TG_ZIEL_MIN)return 1;
+  /* v864 (Charles 18.11., Bestandsaufnahme 1.8): EIN Trainer und zehn oder mehr Kinder → zwei Felder mit derselben Form.
+     Eine Gruppe mit zwölf Kindern trug kaum eine Themenübung – „Training füllen“ wich auf Turnier- und Spaßformen aus,
+     nach einer Vorlage saßen vier Kinder auf der Bank. Hebt v656 nur für diesen Fall auf; ab zwei Trainern gilt v656. */
+  if(trainer===1&&k>=10)return 2;
   const wunsch=trainer>0?trainer:Math.max(1,st,Math.ceil(k/TG_ZIEL_MAX));
   const platz=Math.max(1,Math.floor(k/TG_ZIEL_MIN));
   return Math.max(1,Math.min(Math.max(Math.min(wunsch,platz),trainer),TG_NAMEN.length));
@@ -6337,7 +6344,10 @@ function tgTorwartVerteilen(gruppen){
   for(let schutz=0;schutz<20;schutz++){
     const ohne=gruppen.find(g=>!g.kinder.some(istTw)), viele=gruppen.find(g=>g.kinder.filter(istTw).length>1);
     if(!ohne||!viele)break;
-    const i=viele.kinder.findIndex(istTw), j=ohne.kinder.findIndex(n=>!istTw(n));
+    /* v864: Getauscht wird mit dem Kind auf (möglichst) derselben Position der Stärke-Reihe – vorher immer mit dem
+       ersten Kind der anderen Gruppe, was die Gruppen aus dem Gleichgewicht bringen konnte. */
+    const i=viele.kinder.findIndex(istTw);
+    let j=-1; ohne.kinder.forEach((n,x)=>{ if(!istTw(n)&&(j<0||Math.abs(x-i)<Math.abs(j-i)))j=x; });
     if(i<0||j<0)break;
     const a=viele.kinder[i]; viele.kinder[i]=ohne.kinder[j]; ohne.kinder[j]=a;
   }
