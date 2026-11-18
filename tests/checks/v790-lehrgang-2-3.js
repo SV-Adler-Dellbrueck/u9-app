@@ -34,8 +34,10 @@ module.exports = async function (h) {
   });
   const sollV = JSON.parse(JSON.stringify(nachV.vorlagen[0])); sollV.ordnung = "1 gegen 1";
   const tv = vl.vorlagen.filter(v => v.name === sollV.name);
+  /* v870 (Charles 18.11.): dazu Zeilen für 6 und 14 Kinder – die übrigen Skalierungszeilen bleiben wie in der Nachtragsdatei. */
+  if (tv[0] && tv[0].skalierung) { sollV.skalierung = Object.assign({}, sollV.skalierung); ["6", "14"].forEach(k => { if (tv[0].skalierung[k]) sollV.skalierung[k] = tv[0].skalierung[k]; }); }
   if (tv.length !== 1) probleme.push(`a) Vorlage ${tv.length}× in vorlagen.json`);
-  else if (!gleich(tv[0], sollV)) probleme.push("a) Vorlage weicht von der Nachtragsdatei ab (erlaubt: nur ordnung)");
+  else if (!gleich(tv[0], sollV)) probleme.push("a) Vorlage weicht von der Nachtragsdatei ab (erlaubt: ordnung, Zeilen für 6 und 14 Kinder)");
   const alle = JSON.stringify(eintraege) + JSON.stringify(tv);
   for (const n of h.KINDER) if (alle.includes(n)) probleme.push(`d) Kindername ${n} in den Einträgen`);
   // b) Bilder und Spielerabstände aus den Daten
