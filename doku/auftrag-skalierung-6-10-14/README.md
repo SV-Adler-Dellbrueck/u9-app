@@ -1,6 +1,6 @@
 # Auftragspaket: Skalierungszeilen für 6, 10 und 14 Kinder
 
-**Status:** Entwurf zur fachlichen Prüfung. **Nichts davon ist in der App.**
+**Status:** Eingebaut in v870 (Charles 18.11.): Zehn Kinder im 3 gegen 3 auf zwei Feldern (Frage 1, wie v864), Sechser-Felder rund 15 % kleiner außer L1-3, L5-2 ohne Sechser-Zeile (Fragen 2 und 3). Die Tabellen unten sind der ursprüngliche Entwurf; was gilt, steht in `uebungen/vorlagen.json`.
 Auftrag Charles, 17.11.2026 (Bestandsaufnahme November 2026, Punkt 5.7).
 
 ## Worum es geht
