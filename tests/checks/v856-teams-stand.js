@@ -4,7 +4,7 @@
    b) Stimmen sie überein, steht „✓ Diese Einteilung ist übernommen“.
    c) Nach „Neu verteilen“ erscheint der Hinweis wieder; nach dem Übertragen verschwindet er.
    d) Ohne geladene Team-Zeilen (kein Netz) steht kein Hinweis – lieber nichts als etwas Falsches.
-   e) Seite „Aufstellung“ (2.5): über den Knöpfen steht dauerhaft „Noch nicht gespeichert“ bzw. „✓ Gespeichert für den …“. */
+   e) (v871 entfallen: die alte Seite „Aufstellung“ ist entfernt) */
 "use strict";
 module.exports = async function (h) {
   const titel = "v856 Teams festlegen: Stand „übernommen / noch nicht übernommen“ über dem Knopf";
@@ -35,14 +35,6 @@ module.exports = async function (h) {
     window.sbToken = () => "t";
     out.geschrieben = await teamsZeilenSchreiben(); out.c1 = lies();
     teamsAuto(); teamsRender(); out.c2 = lies(); out.c2stand = teamsStand();
-    // e) Aufstellungsseite: Speicher-Stand (2.5)
-    if (typeof kombiStandHtml === "function") {
-      Object.keys(kombiLineup).forEach(k => { kombiLineup[k] = ""; });
-      let ed = document.getElementById("lineup-editor"); if (!ed) { ed = document.createElement("div"); ed.id = "lineup-editor"; document.body.appendChild(ed); }
-      renderLineupEditor(); const st = () => { const el = document.getElementById("lineup-stand"); return el ? el.dataset.offen + ":" + el.textContent.trim().slice(0, 34) : null; };
-      out.e0 = st(); kombiSetPos("auf", namen[2]); out.e1 = st();
-      await kombiSaveLineup(); out.e2 = st(); kombiSetPos("jaeg", namen[3]); out.e3 = st();
-    }
     return out;
   }, { heute }).catch(e => ({ fehler: String(e) }));
   const fe = s.fehler(); await s.schliessen();
@@ -55,8 +47,6 @@ module.exports = async function (h) {
   if (!r.geschrieben || !r.c1 || r.c1.offen !== "0") probleme.push(`c) nach dem Übertragen: geschrieben ${r.geschrieben}, ${JSON.stringify(r.c1)}`);
   else if (r.c2stand.offen !== (r.c2 ? r.c2.offen === "1" : false)) probleme.push("c) Anzeige und Stand widersprechen sich nach „Neu verteilen“: " + JSON.stringify([r.c2, r.c2stand]));
   else zeilen.push(`c) nach dem Übertragen übernommen; nach „Neu verteilen“ ${r.c2stand.offen ? r.c2stand.anders + " anders" : "unverändert"}`);
-  if (r.e0 !== null || !/^1:● Noch nicht gespeichert/.test(r.e1 || "") || !/^0:✓ Gespeichert für den/.test(r.e2 || "") || !/^1:/.test(r.e3 || "")) probleme.push("e) Aufstellung: " + JSON.stringify([r.e0, r.e1, r.e2, r.e3]));
-  else zeilen.push("e) Aufstellung: leer ohne Hinweis → „Noch nicht gespeichert“ → „✓ Gespeichert für den …“ → nach Änderung wieder offen");
   if (r.d) probleme.push("d) Hinweis ohne geladene Team-Zeilen: " + JSON.stringify(r.d)); else zeilen.push("d) ohne geladene Zeilen kein Hinweis");
   return h.ergebnis(titel, !probleme.length, probleme.concat(zeilen));
 };

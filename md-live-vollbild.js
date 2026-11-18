@@ -10,7 +10,6 @@ const AT_LIVE_ACTS=[AT_ACTIONS[0],AT_ACTIONS[1],AT_ACTIONS[2],{key:"parade",labe
    Blitz-Rating und Bericht. Ohne Spielplan ist die Runde leer und alles zählt wie bisher. */
 let atTorRunden=[];
 function atTorMerken(runde){ atTorRunden.push(runde==null?null:Number(runde)); }
-function atTorVergessen(runde){ const i=atTorRunden.lastIndexOf(runde==null?null:Number(runde)); if(i>=0)atTorRunden.splice(i,1); }
 function atRundeJetzt(){ return (typeof teamRundeJetzt==="function")?teamRundeJetzt():null; }
 function atTore(){
   const r=atRundeJetzt();
@@ -203,25 +202,6 @@ async function atTap(aktion){
   const res=await sbQueuedPost("match_actions",{datum,spieler:atSel,aktion,termin_id:tid,runde},"return=representation"); // offline -> Queue
   if(res.ok&&res.res){try{const rows=await res.res.json();if(rows&&rows[0]&&rows[0].id!=null)entry.id=rows[0].id;}catch(e){}}
   if(aktion==="tor"&&runde&&typeof teamErgebnisNachziehen==="function")teamErgebnisNachziehen(runde);   // v504: Stand in den Plan
-}
-// Undo (Korrektur 2): letzte Aktion am Spielfeldrand zurücknehmen – In-Memory-Zähler
-// runter + die frisch angelegte Supabase-Zeile entfernen (gerade erst erstellt -> Hard-Delete ok).
-async function atUndo(uid){
-  const i=atLog.findIndex(e=>e.uid===uid);
-  if(i<0)return;
-  const e=atLog[i];
-  if(atCounts[e.spieler]&&atCounts[e.spieler][e.aktion]){
-    atCounts[e.spieler][e.aktion]--;
-    if(atCounts[e.spieler][e.aktion]<=0)delete atCounts[e.spieler][e.aktion];
-  }
-  atLog.splice(i,1);
-  if(e.aktion==="tor")atTorVergessen(e.runde);
-  try{navigator.vibrate&&navigator.vibrate(12);}catch(err){}
-  atRender();
-  if(e.id!=null){
-    try{const r=await fetch(`${SB_URL}/rest/v1/match_actions?id=eq.${e.id}`,{method:"DELETE",headers:sbAuthHeaders()});sbCheck401(r);}catch(err){}
-    if(e.aktion==="tor"&&e.runde&&typeof teamErgebnisNachziehen==="function")teamErgebnisNachziehen(e.runde);
-  }
 }
 
 // Blitz-Rating: schnelle Nachbewertung nach dem Spiel (eigenes leichtes Protokoll,

@@ -3,7 +3,8 @@
    (15 Balken „0 Spiele"), Aufstellung (zwei Erklaerkaesten ueber einem Algorithmus ohne
    Daten) und Bewerten (drei leere Kaesten) und Rot-Chips, die jede Woche rot waren.
    Geprueft: Quellenzeile, Quelle an „Kinder erwartet", Knopf-Klasse, ein Satz + Aktion in
-   allen drei Leerzustaenden, Rot erst ab drei Tagen vor dem Termin. */
+   allen drei Leerzustaenden, Rot erst ab drei Tagen vor dem Termin.
+   v871: Die alte Seite „Aufstellung“ ist entfernt – ihr Teil entfällt. */
 module.exports = async function (h) {
   const K = h.KINDER, probleme = [], zeilen = [];
   const nah = h.tagePlus(2), fern = h.tagePlus(5);
@@ -39,12 +40,7 @@ module.exports = async function (h) {
     const fairText = fair?.textContent.replace(/\s+/g, " ").trim() || "";
     const fairNull = (fairText.match(/0 Spiele/g) || []).length;
     const fairBtn = !!fair?.querySelector("button");
-    // 5) Aufstellung: ohne bewertete Kinder keine Erklaerkaesten, ein Knopf
-    go("kombi"); await warte(600);
-    const erklaer = document.getElementById("kombi-erklaer");
-    const erklaerWeg = !!erklaer && !sichtbar(erklaer);
-    const kombiBtn = !!document.querySelector("#kombi-content button");
-    const kombiText = document.getElementById("kombi-content")?.textContent.replace(/\s+/g, " ").trim().slice(0, 90) || "";
+    // 5) Aufstellung: v871 entfallen – die alte Seite gibt es nicht mehr (Mini-Feld am Spieltag, v858)
     // 6) Bewerten: Kaesten erst mit gewaehltem Kind
     // v648: Bewerten ist erst ab dem Startdatum offen – hier liegt es in der Vergangenheit
     BEW_AB = "2026-01-01"; go("bew"); if (typeof bewSperreAnwenden === "function") bewSperreAnwenden(); await warte(400);
@@ -58,7 +54,7 @@ module.exports = async function (h) {
     if (sel) { sel.value = K[0]; if (typeof onPlayerSelect === "function") onPlayerSelect(); }
     await warte(300);
     const leerNach = sichtbar(document.getElementById("bew-leer")), panelNach = sichtbar(document.getElementById("bew-live-panel")), fboxNach = sichtbar(document.getElementById("bew-fbox"));
-    return { quelle, zusage, neuBtn, neuH, prog, fairNull, fairBtn, fairText: fairText.slice(0, 80), erklaerWeg, kombiBtn, kombiText, leerVor, panelVor, fboxVor, leerNach, panelNach, fboxNach };
+    return { quelle, zusage, neuBtn, neuH, prog, fairNull, fairBtn, fairText: fairText.slice(0, 80), leerVor, panelVor, fboxVor, leerNach, panelNach, fboxNach };
   }, { K, nah, fern });
   const fehler = s.fehler(); await s.schliessen();
   if (!/Rückmeldungen/.test(r.quelle)) probleme.push(`Diese Woche nennt keine Quelle: „${r.quelle}“`);
@@ -76,14 +72,12 @@ module.exports = async function (h) {
   if (!/\d+ (dabei|zugesagt|im Kader).*\(.+\)/.test(r.prog)) probleme.push(`Kinderzahl ohne Quelle: „${r.prog}“`);
   if (r.fairNull) probleme.push(`Einsatz-Fairness zeigt ${r.fairNull}× „0 Spiele“ statt eines Satzes`);
   if (!r.fairBtn) probleme.push("Einsatz-Fairness leer ohne Aktion");
-  if (!r.erklaerWeg) probleme.push("Aufstellung leer, Erklärkästen trotzdem sichtbar");
-  if (!r.kombiBtn) probleme.push("Aufstellung leer ohne Aktion");
   if (!r.leerVor || r.panelVor || r.fboxVor) probleme.push(`Bewerten ohne Kind: Satz ${r.leerVor}, Live-Profil ${r.panelVor}, Förderplan ${r.fboxVor}`);
   if (r.leerNach || !r.panelNach || !r.fboxNach) probleme.push(`Bewerten mit Kind: Satz ${r.leerNach}, Live-Profil ${r.panelNach}, Förderplan ${r.fboxNach}`);
   if (fehler.length) probleme.push(...fehler.slice(0, 3));
   zeilen.push(`Woche: Quelle „${r.quelle.slice(0, 40)}…“ · ${r.zusage.map(z => `${z.text.slice(0, 12)}: ${z.zugesagt}${z.trainerRot ? "/Trainer rot" : ""}`).join(" · ")}`);
   zeilen.push(`Neuer Termin: btn ${r.neuBtn} ${r.neuH}px · Prognose „${r.prog}“`);
-  zeilen.push(`Fairness: „${r.fairText}“ (0-Spiele ${r.fairNull}, Aktion ${r.fairBtn}) · Aufstellung: Kästen weg ${r.erklaerWeg}, Aktion ${r.kombiBtn}`);
+  zeilen.push(`Fairness: „${r.fairText}“ (0-Spiele ${r.fairNull}, Aktion ${r.fairBtn})`);
   zeilen.push(`Bewerten ohne Kind: ${r.leerVor}/${r.panelVor}/${r.fboxVor} · mit Kind: ${r.leerNach}/${r.panelNach}/${r.fboxNach}`);
   return h.ergebnis("Nachvollziehbar & leer: Quellen, Knopf, ein Satz + Aktion, Rot erst ab drei Tagen", !probleme.length, zeilen.concat(probleme));
 };

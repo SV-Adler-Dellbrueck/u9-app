@@ -3,9 +3,8 @@
    a) Profil und Entwicklung öffneten leer mit einer Auswahlliste; ohne Bewertung war die Liste
       leer, ohne Satz dazu. Jetzt: Namenskacheln (ein Tipp öffnet das Kind), ohne Bewertung ein
       Satz mit dem Startdatum und keine leere Liste
-   b) Aufstellung während der Bewertungssperre: kein „bisher 0 bewertete Kinder“, kein Link auf die
-      gesperrte Seite, Hauptaktion „Feld & Bank fair besetzen“ (≥ 56 px) führt in den Match,
-      „Aufstellung drucken“ erst, wenn es eine gibt
+   b) (v871 entfallen: die alte Seite „Aufstellung“ ist entfernt; fair besetzt wird im Mini-Feld
+      am Spieltag, geprüft in v858)
    c) Team-Kacheln: vor dem Startdatum kein „0/15 bewertet“, sondern „Bewerten ab …“
    d) Orga: Meetings unter „Termine“; Gedanke, Tagebuch und Pinnwand unter „Notizen“ */
 "use strict";
@@ -23,13 +22,6 @@ module.exports = async function (h) {
     go("profil"); await w(500);
     const pc = document.getElementById("profil-content");
     out.leer = { text: pc.textContent.replace(/\s+/g, " ").trim(), liste: sichtbar(document.getElementById("psel-profil")) };
-    go("kombi"); await w(600);
-    const kc = document.getElementById("kombi-content");
-    const fair = document.getElementById("kombi-fair");
-    out.kombi = { text: kc.textContent.replace(/\s+/g, " ").trim(), fairH: fair ? Math.round(fair.getBoundingClientRect().height) : 0,
-      bewLink: [...kc.querySelectorAll("a")].some(a => /bewerten/i.test(a.textContent)), druck: sichtbar(document.getElementById("kombi-druck")) };
-    if (fair) { fair.click(); await w(600); }
-    out.kombi.nachKlick = typeof curSection !== "undefined" ? curSection : "";
     go("ue-team"); await w(500);
     out.team = document.getElementById("view-ue-team").textContent.replace(/\s+/g, " ");
     // Zwei Kinder bewertet
@@ -55,16 +47,10 @@ module.exports = async function (h) {
   if (r.leer.liste) probleme.push("a) Die leere Auswahlliste steht noch da");
   if (r.wahl.n !== 2 || r.wahl.h < 44 || !r.wahl.liste) probleme.push(`a) Namenskacheln: ${JSON.stringify(r.wahl)}`);
   if (!r.wahl.gewaehlt) probleme.push("a) Ein Tipp auf den Namen wählt das Kind nicht");
-  if (/bisher sind es 0/.test(r.kombi.text) || !/Ende der Hinrunde/.test(r.kombi.text)) probleme.push(`b) Aufstellung gesperrt: „${r.kombi.text}“`);
-  if (r.kombi.bewLink) probleme.push("b) Link „Kinder bewerten“ trotz Sperre");
-  if (r.kombi.fairH < 56) probleme.push(`b) Hauptaktion ${r.kombi.fairH} px`);
-  if (r.kombi.druck) probleme.push("b) „Aufstellung drucken“ ohne Aufstellung");
-  if (r.kombi.nachKlick !== "spieltag") probleme.push(`b) Fair besetzen führt nach „${r.kombi.nachKlick}“`);
   if (/0\/15 bewertet/.test(r.team) || !/Bewerten ab/.test(r.team)) probleme.push("c) Team-Kacheln zeigen während der Sperre „0/15 bewertet“");
   if (!(r.orga.termine.length === 3 && ["Termine", "Trainerplan", "Meetings"].every(t => r.orga.termine.some(x => x.includes(t))))) probleme.push(`d) Termine: ${JSON.stringify(r.orga.termine)}`);
   if (!(r.orga.notizen.length === 3 && ["Gedanke", "Tagebuch", "Pinnwand"].every(t => r.orga.notizen.some(x => x.includes(t))))) probleme.push(`d) Notizen: ${JSON.stringify(r.orga.notizen)}`);
   zeilen.push(`Profil leer: „${r.leer.text}“ · Namenskacheln ${r.wahl.n} × ${r.wahl.h} px`);
-  zeilen.push(`Aufstellung: „${r.kombi.text.slice(0, 90)}…“ · Hauptaktion ${r.kombi.fairH} px → ${r.kombi.nachKlick}`);
   zeilen.push(`Orga: Termine ${r.orga.termine.length} · Notizen ${r.orga.notizen.length}`);
-  return h.ergebnis("Team, Spieltag, Orga: Namenskacheln, Aufstellung in der Sperre, Notizen", !probleme.length, zeilen.concat(probleme));
+  return h.ergebnis("Team, Spieltag, Orga: Namenskacheln, Team-Kacheln in der Sperre, Notizen", !probleme.length, zeilen.concat(probleme));
 };

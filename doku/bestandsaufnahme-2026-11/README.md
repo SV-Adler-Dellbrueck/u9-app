@@ -75,7 +75,7 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 | 4.4 | Fachsprache ohne Erklärung (Leitfrage, Nominierung, Provokationsregel) | ⬜ |
 | 4.5 | Rund 50 Systemdialoge, 180 von Hand gebaute Fenster | ⬜ schrittweise |
 | 4.6 | Knopf-Stile: Hauptaktion je Seite anders, rund 200 Knöpfe nur mit Inline-Style | ⬜ schrittweise |
-| 4.7 | Toter Code (Import-Fenster, `homeTool`, `statTile`, Taktik-Zweig) | ⬜ |
+| 4.7 | Toter Code (Import-Fenster, `homeTool`, `statTile`, Taktik-Zweig) | teils ✅ v871: alte Aufstellung, homeTool/statTile, Taktik-Zweig, 16 ungenutzte Funktionen; Import-Fenster folgen (Charles 18.11.) |
 | 4.8 | Trainingsplan: Zustand lebt im DOM, Sprünge über Zeitgeber | ⬜ groß, hohes Risiko |
 
 ## Paket 5 · Inhalte (Vorlagen und Übungen)

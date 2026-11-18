@@ -44,8 +44,6 @@ function _printNow(viewName){
     subtitle=sel?.value?" – Entwicklung "+sel.value:"";
   } else if(viewName==="kader"){
     subtitle=" – Kaderübersicht";
-  } else if(viewName==="kombi"){
-    subtitle=" – Aufstellungs-Kombinator";
   }
 
   // Add temporary header elements
