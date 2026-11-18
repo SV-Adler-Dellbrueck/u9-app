@@ -88,7 +88,7 @@ function calcPotenzial(v,total,att,isTw){
    „kann nichts“ – gemeint sind erste Ansätze. null/undefined heißt: nicht gesehen. */
 function bewStufeWort(pct){
   if(pct==null||isNaN(pct))return "nicht gesehen";
-  return pct<17?"Ansatz":pct<50?"Solide":pct<83?"Gut":"Stark";
+  return pct<17?"Ansatz":pct<50?"Solide":pct<84?"Gut":"Stark";   // v854: dieselben Grenzen wie im Bericht fürs Elterngespräch
 }
 /* Relative-Age-Effekt-Hinweis: bis zu 12 Monate Unterschied im selben Jahrgang sind bei
    8-Jaehrigen >10% Lebenszeit. Das Badge korrigiert die Trainer-Wahrnehmung beim Bewerten,
