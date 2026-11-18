@@ -129,7 +129,7 @@ module.exports = async function (h) {
     const p = plaene[t.datum] || {};
     const letzte = (p.slots || [])[(p.slots || []).length - 1] || {};
     if (!(p.slots || []).length) probleme.push(`a) ${t.datum}: kein Plan`);
-    else if (letzte.typ !== "abschluss") probleme.push(`a) ${t.datum}: endet nicht mit Abschlussturnier`);
+    else if (letzte.typ !== "abschluss" && !/turnier/i.test(letzte.label || "")) probleme.push(`a) ${t.datum}: endet nicht mit Abschlussturnier`);   // v863: L4-5 bringt das Turnier im letzten Block mit
     if ((p.slots || []).some(x => x.label === "Alt")) probleme.push(`a) ${t.datum}: alter Plan nicht ersetzt`);
   });
   // b)

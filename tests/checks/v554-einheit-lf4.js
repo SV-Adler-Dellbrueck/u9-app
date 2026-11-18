@@ -200,10 +200,10 @@ module.exports = async function (h) {
   if (!plan) probleme.push("Die Übernahme hat keinen Plan geschrieben");
   else {
     const formen = (plan.plan || []).map(e => e.formName);
-    /* v656: Die Vorlage hat keinen Abschluss – die Übernahme hängt ein Abschlussturnier an. */
+    /* v863: L4-5 endet im letzten Spielblock schon mit einem Abschlussturnier – die Übernahme hängt kein zweites an (vorher v656: +1 Phase). */
     const letzte = (plan.slots || [])[(plan.slots || []).length - 1] || {};
-    if ((plan.slots || []).length !== 6) probleme.push(`${(plan.slots || []).length} statt 6 Phasen im Plan (5 + Abschlussturnier)`);
-    else if (letzte.typ !== "abschluss" || !/Abschlussturnier/.test(letzte.label || "")) probleme.push("Die letzte Phase ist kein Abschlussturnier: " + JSON.stringify(letzte));
+    if ((plan.slots || []).length !== 5) probleme.push(`${(plan.slots || []).length} statt 5 Phasen im Plan (kein zweites Turnier)`);
+    else if (!/Abschlussturnier/.test(letzte.label || "")) probleme.push("Die letzte Phase enthält kein Abschlussturnier: " + JSON.stringify(letzte));
     if (formen[0] !== BESTEHEND[0] || formen[3] !== BESTEHEND[1]) probleme.push("Block 2 und 5 zeigen nicht auf die bestehenden Übungen: " + formen.join(" | "));
     if (formen[1] !== NEU[0] || formen[2] !== NEU[1]) probleme.push("Block 3 und 4 zeigen nicht auf die neuen Übungen: " + formen.join(" | "));
     const nachUebernahme = uebPosts().map(p => p.name).slice(ersteNamen.length);
@@ -211,7 +211,7 @@ module.exports = async function (h) {
     const kopien = custom.map(c => c.name).filter((n, i, a) => a.indexOf(n) !== i);
     if (kopien.length) probleme.push("Gleichnamige Kopien in der Übungstabelle: " + kopien.join(", "));
     if (ue.vorher !== ue.nachher) probleme.push(`Die Übernahme hat die Übungsliste von ${ue.vorher} auf ${ue.nachher} verändert`);
-    if (!probleme.length) zeilen.push(`Vorlage: Prüfung sauber, kein Netto-Hinweis, Übernahme auf ${datum} legt 5 Phasen und das Abschlussturnier an – ${formen.length} Übungen zugeordnet, keine Kopie`);
+    if (!probleme.length) zeilen.push(`Vorlage: Prüfung sauber, kein Netto-Hinweis, Übernahme auf ${datum} legt 5 Phasen an, die letzte mit Abschlussturnier – ${formen.length} Übungen zugeordnet, keine Kopie`);
   }
 
   const f = s.fehler();

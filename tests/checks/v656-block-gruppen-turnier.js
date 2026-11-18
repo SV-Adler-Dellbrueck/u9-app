@@ -13,7 +13,7 @@
    a) Rechnung: sind Trainer angehakt und hat die Einheit keine Stationen, gibt es so viele
       Gruppen wie Trainer (14 Kinder, 2 Trainer → 2). Ohne Trainer bleibt die Kinderzahl.
    b) L4-5 bei 14 Kindern und zwei Trainern übernehmen → zwei Gruppen 7/7.
-   c) Abschlussturnier: L4-5 hat keinen Abschluss – angehängt werden 10 Minuten, der letzte
+   c) Abschlussturnier: L4-5 trägt es seit v863 im letzten Block (vorher: angehängt 10 Minuten, der letzte
       Spielblock gibt sie ab, die Gesamtdauer bleibt. Eine Vorlage mit Abschluss bleibt, wie
       sie ist.
    d) Zu viele Wechsler: bei 9 Kindern an einer Übung für 6 steht ein Hinweis mit höchstens
@@ -153,11 +153,13 @@ module.exports = async function (h) {
   // c)
   const letzte = r.slots[r.slots.length - 1] || {};
   const summe = a => a.reduce((x, y) => x + (Number(y.dauer) || 0), 0);
-  if (letzte.typ !== "abschluss" || letzte.label !== "Abschlussturnier" || letzte.dauer !== 10) probleme.push("Kein Abschlussturnier von 10 Minuten am Ende: " + JSON.stringify(letzte));
-  if (r.slots.length !== r.quelle.length + 1) probleme.push(`${r.slots.length} Phasen statt ${r.quelle.length + 1}`);
+  /* v863: L4-5 endet im letzten Spielblock schon mit „Abschlussturnier drei Runden zu 4 Min“ – kein zweites Turnier, der Block behält seine Minuten.
+     Dass eine Vorlage ganz ohne Turnier eines bekommt, prüft v863 c). */
+  if (!/Abschlussturnier/.test(letzte.label || "")) probleme.push("Die Einheit endet nicht mit einem Abschlussturnier: " + JSON.stringify(letzte));
+  if (r.slots.length !== r.quelle.length) probleme.push(`${r.slots.length} Phasen statt ${r.quelle.length} – zweites Turnier angehängt`);
   if (summe(r.slots) !== summe(r.quelle)) probleme.push(`Die Einheit ist ${summe(r.slots)} statt ${summe(r.quelle)} Minuten lang – das Turnier soll aus dem letzten Spielblock kommen`);
   const vorletzte = r.slots[r.slots.length - 2] || {}, quelleLetzte = r.quelle[r.quelle.length - 1] || {};
-  if (vorletzte.dauer !== quelleLetzte.dauer - 10) probleme.push(`Der letzte Spielblock hat ${vorletzte.dauer} statt ${quelleLetzte.dauer - 10} Minuten`);
+  if (letzte.dauer !== quelleLetzte.dauer) probleme.push(`Der letzte Spielblock hat ${letzte.dauer} statt ${quelleLetzte.dauer} Minuten`);
   if (r.mitAbschluss) probleme.push("Eine Vorlage mit eigenem Abschluss bekommt ein zweites Turnier");
   if (String(r.kurz) !== "10,10,2" && String(r.kurz) !== "10,12") {
     if (r.kurz[1] < 10) probleme.push(`Ein kurzer Spielblock wird unter 10 Minuten gedrückt: ${r.kurz.join("/")}`);
@@ -190,7 +192,7 @@ module.exports = async function (h) {
 
   if (!probleme.length) {
     zeilen.push(`Rechnung: 14 Kinder/2 Trainer → ${r.rechnung["14/0"]} Gruppen, drei Stationen ebenfalls ${r.rechnung["13/3"]} · L4-5 übernommen → ${r.gruppen.join("/")}`);
-    zeilen.push(`Abschlussturnier: ${r.slots.map(x => x.dauer).join("+")} = ${summe(r.slots)} Min., letzter Spielblock ${quelleLetzte.dauer}→${vorletzte.dauer} · mit eigenem Abschluss unverändert · kurzer Block ${r.kurz.join("/")}`);
+    zeilen.push(`Abschlussturnier: ${r.slots.map(x => x.dauer).join("+")} = ${summe(r.slots)} Min., letzter Spielblock ${quelleLetzte.dauer}→${letzte.dauer} (Turnier im Block) · mit eigenem Abschluss unverändert · kurzer Block ${r.kurz.join("/")}`);
     zeilen.push(`Zu viele Wechsler bei „${r.uebung}“ und 9 Kindern: ${r.tausch.map(t => `${t.name} (${t.min}–${t.max})`).join(" · ")} + KI-Knopf, alle ≥44 px, Auftrag ohne Namen`);
     zeilen.push(`Kinderziel: ${vor.vorlagen.length} Vorlagen mit Satz, Nachziehen schreibt nur ziel_kinder und nur, wo es fehlt`);
     zeilen.push(`Block: ${r.themen} Themen-Kacheln → ${r.karten} Einheiten-Karten mit Ablauf, 3 über „Wählen“`);
