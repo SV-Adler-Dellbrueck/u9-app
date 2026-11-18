@@ -83,6 +83,13 @@ function calcPotenzial(v,total,att,isTw){
   const fb={1:0,2:3,3:6,4:9}[v["f_freude"]||1]||0;
   return Math.min(100,Math.max(total,Math.round(total*lm+fb)));
 }
+/* v852: Ein Bereichswert (0–100, Mittel der Stufen) als Wort. Die Skala ist Ansatz 0 · Solide 33 ·
+   Gut 67 · Stark 100; genannt wird die nächstliegende Stufe. „Ansatz“ als „0 %“ las sich wie
+   „kann nichts“ – gemeint sind erste Ansätze. null/undefined heißt: nicht gesehen. */
+function bewStufeWort(pct){
+  if(pct==null||isNaN(pct))return "nicht gesehen";
+  return pct<17?"Ansatz":pct<50?"Solide":pct<83?"Gut":"Stark";
+}
 /* Relative-Age-Effekt-Hinweis: bis zu 12 Monate Unterschied im selben Jahrgang sind bei
    8-Jaehrigen >10% Lebenszeit. Das Badge korrigiert die Trainer-Wahrnehmung beim Bewerten,
    ohne die Werte selbst zu verrechnen (Romann/Cobley, Science for Sport). */
@@ -177,7 +184,7 @@ function generateFazitFeld(v,meta){
   else if(fokusSchwach)summary+=`Fokus und die Umsetzung von Hinweisen sind ausbaufähig. `;
   if(sozKrit)summary+=`Im sozialen Miteinander zeigt ${name} Verhalten, das die Teamdynamik erschwert – ein wichtiges Thema. `;
   else if(sozRaw>=3)summary+=`${name} ist ein echter Teamplayer, der Zusammenhalt aktiv fördert. `;
-  summary+=`Als ${typ} aktuell am stärksten in der Rolle ${rolle.primLabel} – in der U9 bewusst weiter alle Rollen durchspielen. Entwicklungsstand: ${total}% · Entwicklungstempo: ~${pot}%.`;
+  summary+=`Als ${typ} aktuell am stärksten in der Rolle ${rolle.primLabel} – in der U9 bewusst weiter alle Rollen durchspielen.`;   // v852: ohne Prozentzahlen
 
   // ── VOLLTEXT ──
   let r="";
@@ -232,13 +239,13 @@ function generateFazitFeld(v,meta){
     entw:"ÜBUNG 1 – 'Freies Spiel mit Aufgabe':\nEine selbst gewählte Finte pro Angriff ausprobieren.\n\nÜBUNG 2 – 'Frag-den-Trainer':\nKind erklärt die Übung mit eigenen Worten."
   };
   const wd=sortedDims.length?sortedDims[0][0]:"tech";
-  r+=sortedDims.length?`Schwächster Messwert: ${wn[wd]} (${sortedDims[0][1]}%)\n\n`:`Zu wenig beobachtet für einen Schwerpunkt – allgemeine Grundlagen:\n\n`;
+  r+=sortedDims.length?`Am Anfang steht: ${wn[wd]} (Stufe ${bewStufeWort(sortedDims[0][1])})\n\n`:`Zu wenig beobachtet für einen Schwerpunkt – allgemeine Grundlagen:\n\n`;
   r+=uebBank[wd]||uebBank.tech;
 
   /* v850: Der frühere Eltern-Hinweis („Erhöhter Druck“) ist entfallen – ein Urteil über die Familie
      gehört nicht in das Profil des Kindes. Beobachtungen fürs Elterngespräch stehen getrennt (bewEltern…). */
   r+="\n\n━━ EINORDNUNG (STAND HEUTE, KEINE PROGNOSE) ━━━━\n";
-  r+=`Aktuell: ${total}% · Entwicklungstempo: ~${pot}%\n`;
+  /* v852 (Charles 18.11.2026): keine Prozentzahlen im Profiltext – Stufen in Worten stehen je Bereich im Profil. */
   if(total>=STUFE_GUT) r+=`${name} ist im Moment weit für U9 I. Mit erhöhtem Anforderungsgrad fördern – Unterforderung vermeiden.`;
   else if(total>=STUFE_SOLIDE) r+=`${name} entwickelt sich altersgerecht auf gutem Kurs. Struktur und positive Wiederholung bringen den nächsten Sprung.`;
   else r+=`${name} ist im Aufbau. Spaßbetonte Grundlagen, Erfolge feiern – keine Leistungsorientierung in diesem Stand.`;
@@ -269,7 +276,7 @@ function generateFazitTW(v,meta){
 
   r+="\n\n━━ ZUSATZ: TORWART-OPTION ━━━━━━━━━━━━━━━━━━━━━\n";
   r+=`TW-Status: ${twPrioText}\n`;
-  r+=`TW-Niveau (separat, nicht Teil des Gesamtscores): ${twTotal}%\n\n`;
+  r+=`TW-Niveau (separat): Stufe ${bewStufeWort(twTotal)}\n\n`;
   const twSt=[];
   if((v["tw_fangen"]||0)>=4)   twSt.push("Fangsicher – klebt am Ball, auch schwierige Bälle festgehalten");
   if((v["tw_reaktion"]||0)>=4) twSt.push("Reflexstark – außergewöhnliche Reaktion für das Alter");
