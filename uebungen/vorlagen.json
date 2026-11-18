@@ -671,13 +671,13 @@
         },
         {
           "typ": "main",
-          "label": "Stufe 2 – eng: höchstens zwei Kontakte",
+          "label": "Stufe 2 – eng: fünf Pässe in Folge = ein Punkt, die Kinder zählen laut mit",
           "dauer": 12,
           "uebung_name": "4gg2 Ballbesitz"
         },
         {
           "typ": "main",
-          "label": "Stufe 3 – offen: Kontakte frei, Feld größer",
+          "label": "Stufe 3 – offen: Zählregel weg, Feld größer",
           "dauer": 10,
           "uebung_name": "4gg2 Ballbesitz"
         },
@@ -844,7 +844,7 @@
         },
         {
           "typ": "uebungsform",
-          "label": "Stufe 2 – eng: höchstens zwei Kontakte, ein Gegner in der Mitte",
+          "label": "Stufe 2 – eng: ein Gegner in der Mitte – berührt er den Ball, tauscht er mit dem Passgeber",
           "dauer": 12,
           "uebung_name": "Dreieck-Passspiel"
         },
