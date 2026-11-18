@@ -348,7 +348,7 @@ async function periodSave(){
   toast("Themenplan gespeichert ✓");periodListRender();periodLoad();
 }
 async function periodDelete(monat){
-  if(!confirm(`Monats-Schwerpunkt für ${monat} wirklich löschen?`))return;
+  if(!await frageJaNein({emoji:"🗑️",titel:"Monats-Schwerpunkt löschen?",text:`Monats-Schwerpunkt für ${monat} wirklich löschen?`,ja:"Löschen",ton:"rot"}))return;
   try{await fetch(`${SB_URL}/rest/v1/periodisierung?monat=eq.${encodeURIComponent(monat)}`,{method:"DELETE",headers:sbAuthHeaders()});}catch(e){}
   periodListRender();periodLoad();
 }
@@ -3232,7 +3232,7 @@ async function tpNettoRender(){
 async function tpRichtwertAendern(){
   if(!sbToken()){toast("Bitte als Trainer anmelden","err");return;}
   const jetzt=tpNettoRichtwert();
-  const ein=prompt(`Richtwert Spielform-Minuten je Woche.\n\nTrainingsphilosophie Deutschland: 48 für U8 bis U16, ab U17 sind es 32.`,String(jetzt));
+  const ein=await frageText({emoji:"⏱️",titel:"Richtwert Spielform-Minuten je Woche",sub:"Trainingsphilosophie Deutschland: 48 für U8 bis U16, ab U17 sind es 32.",wert:String(jetzt),einzeilig:true,zahl:true,markieren:true,ja:"Übernehmen"});   // v874: eigenes Fenster statt Systemdialog
   if(ein==null)return;
   const wert=Math.round(Number(String(ein).replace(",","."))); 
   if(!isFinite(wert)||wert<1||wert>600){toast("Bitte eine Zahl zwischen 1 und 600","err");return;}
@@ -4298,7 +4298,7 @@ function tpMaterialRender(){
 async function tpMaterialEigen(){
   const datum=document.getElementById("tp-date")?.value; if(!datum)return;
   const vorschlag=tpMaterialText(tpMaterialZaehlen()), jetzt=String((window._tpKopfAkt&&window._tpKopfAkt.material)||"").trim();
-  const t=prompt("Material für diese Einheit (leer lassen = Vorschlag aus den Skizzen):",jetzt||vorschlag);
+  const t=await frageText({emoji:"🎒",titel:"Material für diese Einheit",sub:"Leer lassen = Vorschlag aus den Skizzen.",wert:jetzt||vorschlag,ja:"Übernehmen"});   // v874: eigenes Fenster statt Systemdialog
   if(t==null)return;
   const material=String(t).trim().slice(0,300);
   try{

@@ -31,6 +31,8 @@ module.exports = async function (h) {
     let box = document.getElementById("team-panel"); if (!box) { box = document.createElement("div"); box.id = "team-panel"; document.body.appendChild(box); }
     // Ein confirm() beim Anpfiff wäre ein Fehler – wir zählen mit
     let fragen = 0; window.confirm = () => { fragen++; return true; };
+    // v874: rotReset() fragt im Fenster der App – auch das zählt als Rückfrage
+    new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.id === "frage-modal") { fragen++; n.querySelector("#frage-ja")?.click(); } }))).observe(document.body, { childList: true });
     // Zeiten erfassen, damit rotReset() fragen würde
     rotFieldSec["Kind A"] = 120; rotIntervalMin = 5; rotElapsed = 99;
     if (rotTimerId) { clearInterval(rotTimerId); rotTimerId = null; }

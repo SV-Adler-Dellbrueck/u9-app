@@ -256,7 +256,7 @@ async function blitzLoadSaved(){
   }catch(e){}
 }
 async function blitzDelete(id){
-  if(!confirm("Blitz-Bewertung wirklich löschen?"))return;
+  if(!await frageJaNein({emoji:"🗑️",titel:"Blitz-Bewertung löschen?",text:"Blitz-Bewertung wirklich löschen?",ja:"Löschen",ton:"rot"}))return;
   try{const r=await fetch(`${SB_URL}/rest/v1/blitz_ratings?id=eq.${id}`,{method:"DELETE",headers:sbAuthHeaders()});if(sbCheck401(r))return;}catch(e){}
   blitzLoadSaved();
   toast("Blitz-Bewertung gelöscht");
@@ -378,7 +378,7 @@ async function tnPin(id,pinned){
   }catch(e){toast("Netzwerkfehler","err");}
 }
 async function tnDel(id){
-  if(!confirm("Notiz wirklich löschen?"))return;
+  if(!await frageJaNein({emoji:"🗑️",titel:"Notiz löschen?",text:"Notiz wirklich löschen?",ja:"Löschen",ton:"rot"}))return;
   try{
     await fetch(`${SB_URL}/rest/v1/team_notizen?id=eq.${id}`,{method:"DELETE",headers:sbTeamHeaders()});
     tnLoad();

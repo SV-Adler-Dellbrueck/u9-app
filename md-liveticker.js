@@ -66,7 +66,7 @@ async function tickerShareViewLink(){
   const teamTxt=spieltagTeam>1?` (Adler ${spieltagTeam})`:"";
   const text=`📣 Liveticker U9${teamTxt}:\n${url}`;
   if(navigator.share){navigator.share({title:"Liveticker U9",text,url}).catch(()=>{});}
-  else{navigator.clipboard?.writeText(url).then(()=>toast("Ansehen-Link kopiert ✓"),()=>prompt("Ansehen-Link:",url));}
+  else{navigator.clipboard?.writeText(url).then(()=>toast("Ansehen-Link kopiert ✓"),()=>frageText({emoji:"🔗",titel:"Ansehen-Link",sub:"Link markieren und kopieren, dann weiterschicken.",wert:url,ja:"Fertig",markieren:true}));}
 }
 // Konferenz-Link: EIN Link für alle Teams eines Spieltags (?ticker=<datum>__konf).
 async function tickerShareKonfLink(){
@@ -75,7 +75,7 @@ async function tickerShareKonfLink(){
   const url=appRoot()+"?ticker="+encodeURIComponent(datum+"__konf");
   const text=`📣 Liveticker U9 · Konferenz (alle Teams):\n${url}`;
   if(navigator.share){navigator.share({title:"Liveticker U9 · Konferenz",text,url}).catch(()=>{});}
-  else{navigator.clipboard?.writeText(url).then(()=>toast("Konferenz-Link kopiert ✓"),()=>prompt("Konferenz-Link:",url));}
+  else{navigator.clipboard?.writeText(url).then(()=>toast("Konferenz-Link kopiert ✓"),()=>frageText({emoji:"🔗",titel:"Konferenz-Link",sub:"Link markieren und kopieren, dann weiterschicken.",wert:url,ja:"Fertig",markieren:true}));}
 }
 function tickerGoal(){
   if(!atSel){toast("Erst Spieler oben antippen","err");return;}
@@ -104,7 +104,7 @@ async function tickerShareDelegateLink(){
   const url=appRoot()+"?delegate="+encodeURIComponent(mcDelegateToken);
   const text=`⚽ Liveticker-Helfer U9:\n${url}`;
   if(navigator.share){navigator.share({title:"Ticker-Helfer",text,url}).catch(()=>{});}
-  else{navigator.clipboard?.writeText(url).then(()=>toast("Helfer-Link kopiert ✓"),()=>prompt("Helfer-Link:",url));}
+  else{navigator.clipboard?.writeText(url).then(()=>toast("Helfer-Link kopiert ✓"),()=>frageText({emoji:"🔗",titel:"Helfer-Link",sub:"Link markieren und kopieren, dann weiterschicken.",wert:url,ja:"Fertig",markieren:true}));}
 }
 function tickerRenderControls(){
   const box=document.getElementById("ticker-panel");
@@ -247,11 +247,7 @@ async function tickerRenderFeed(){
 // Ticker-Eintrag korrigieren = löschen (auch von Eltern-Helfern gesendete); der Eltern-Feed
 // zeigt danach beim nächsten Poll den bereinigten Stand.
 async function tickerDelete(id,text){
-  if(!confirm(`Ticker-Eintrag löschen?
-
-„${text||""}"
-
-Eltern, die gerade mitlesen, sehen ihn dann nicht mehr.`))return;
+  if(!await frageJaNein({emoji:"🗑️",titel:"Ticker-Eintrag löschen?",text:`„${text||""}“\n\nEltern, die gerade mitlesen, sehen ihn dann nicht mehr.`,ja:"Löschen",ton:"rot"}))return;
   try{const r=await fetch(`${SB_URL}/rest/v1/ticker_events?id=eq.${id}`,{method:"DELETE",headers:sbAuthHeaders()});if(sbCheck401(r))return;}catch(e){}
   if(typeof teamErgebnisNachziehen==="function")teamErgebnisNachziehen();   // v504: ein gelöschtes Gegentor ändert den Stand
   tickerRenderFeed();

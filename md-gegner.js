@@ -1033,7 +1033,7 @@ function renderHandoverView(){
 async function tmDelete(id){
   // HOTFIX 3: Löschen räumt via ON DELETE CASCADE automatisch Anwesenheit, Live-Aktionen,
   // Rückmeldungen und Event-Fotos dieses Termins mit weg (Server-seitig). XP-Ledger bleibt.
-  if(!confirm("Termin wirklich löschen?\n\nAlle zugehörigen Anwesenheiten, Live-Aktionen, Rückmeldungen und Event-Fotos werden mitgelöscht. (Gesammelte Adler-"+XP_LABEL+" bleiben erhalten.)"))return;
+  if(!await frageJaNein({emoji:"🗑️",titel:"Termin löschen?",text:"Termin wirklich löschen?\n\nAlle zugehörigen Anwesenheiten, Live-Aktionen, Rückmeldungen und Event-Fotos werden mitgelöscht. (Gesammelte Adler-"+XP_LABEL+" bleiben erhalten.)",ja:"Löschen",ton:"rot"}))return;
   try{const r=await fetch(`${SB_URL}/rest/v1/termine?id=eq.${id}`,{method:"DELETE",headers:sbAuthHeaders()});if(sbCheck401(r))return;terminIdCacheClear();tmLoad();}catch(e){toast("Netzwerkfehler","err");}
 }
 // Kommenden/vergangenen Termin bearbeiten (Datum, Uhrzeit, Gegner/Titel, Ort, Platz, Spielform).

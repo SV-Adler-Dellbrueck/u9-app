@@ -182,7 +182,7 @@ async function blockEinheitUebernehmen(datum,opt){
   if(!v){ toast(`Die Vorlage „${z.vorlage}“ gibt es nicht mehr`,"err"); return; }
   if(typeof vorlageUebernehmenSetzen!=="function"){ toast("Die Vorlagen sind noch nicht geladen – gleich nochmal","err"); return; }
   if(!(opt&&opt.still)&&typeof _vuPlanVorhanden==="function"&&await _vuPlanVorhanden(datum)
-     &&!confirm(`Für ${_tbDatumKurz(datum)} steht schon ein Plan. Durch Einheit ${z.buchstabe} ersetzen?`))return;
+     &&!await frageJaNein({emoji:"📋",titel:"Plan ersetzen?",text:`Für ${_tbDatumKurz(datum)} steht schon ein Plan. Durch Einheit ${z.buchstabe} ersetzen?`,ja:"Ersetzen",ton:"rot"}))return;
   const knopf=document.getElementById("tp-block-los"); if(knopf)knopf.disabled=true;
   _vuAuswahl=v.id;
   try{ await vorlageUebernehmenSetzen(); }
@@ -532,7 +532,7 @@ async function blockNeuPlanen(id){
 
 async function blockLoeschen(id){
   const b=(TB_BLOECKE||[]).find(x=>Number(x.id)===Number(id)); if(!b)return;
-  if(!confirm(`Block „${b.leitfrage}“ (${_tbDatumKurz(b.von)} – ${_tbDatumKurz(b.bis)}) löschen? Bereits übernommene Pläne bleiben stehen.`))return;
+  if(!await frageJaNein({emoji:"🗑️",titel:"Block löschen?",text:`Block „${b.leitfrage}“ (${_tbDatumKurz(b.von)} – ${_tbDatumKurz(b.bis)}) löschen? Bereits übernommene Pläne bleiben stehen.`,ja:"Löschen",ton:"rot"}))return;
   try{
     const r=await fetch(`${SB_URL}/rest/v1/trainingsblock?id=eq.${Number(id)}`,{method:"DELETE",headers:sbAuthHeaders()});
     if(!r.ok){ toast(`Nicht gelöscht – Server antwortet ${r.status}`,"err"); return; }
