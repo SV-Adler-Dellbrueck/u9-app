@@ -90,7 +90,7 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 | 5.6 | Folge-Nummer ist Entstehungsreihenfolge, keine Progression | ⬜ |
 | 5.7 | Halle und Schlechtwetter dünn; keine Zeilen für 6, 10, 14 Kinder | Entwurf: `doku/auftrag-skalierung-6-10-14/` wartet auf fachliche Prüfung; Halle offen |
 | 5.8 | Material je Einheit steht nirgends als Liste | ✅ v867 (Charles 18.11.): „🎒 Mitnehmen“ aus den Skizzen gezählt, eigene Angabe möglich |
-| 5.9 | Rund 14 Fast-Dubletten „3 gegen 3 auf vier Minitore“ | ⬜ |
+| 5.9 | Rund 14 Fast-Dubletten „3 gegen 3 auf vier Minitore“ | ✅ 18.11. nachgeprüft: 19 Übungen, davon 15 gewollte Varianten; die zwei echten Paare – „Pflichtpass-Funino“ und „Dreiecksduell 3gg3“ (data.js) – im Archiv (team_config.uebung_archiv, Charles 18.11.); L4-3 und alte Pläne behalten die Übung |
 | 5.10 | Datenqualität: Spielerzahl, Feld ohne Maß, Coaching im Befehlston, sehr lange Abläufe | ⬜ |
 | 5.11 | Kein Zeitpuffer für Umbau und Trinken | ✅ v868: nachgeprüft – 37 Vorlagen lassen 5 Min. in 75; die Zeile nennt sie jetzt Puffer und warnt unter 3 Min.; Ziel-Dauer folgt dem Termin (vorher immer 75, auch bei 90-Minuten-Trainings) |
 
