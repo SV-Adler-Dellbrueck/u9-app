@@ -871,7 +871,7 @@ async function rollenExpFetch(){
   rows.forEach(row=>{
     const st=row&&row.daten&&row.daten.start; if(!st)return;
     games++;
-    if(st.tw){ ens(st.tw).tw++; byKid[st.tw].total++; }
+    if(st.tw){ ens(st.tw).tw++; byKid[st.tw].total++; byKid[st.tw].twZuletzt=String(row.schluessel||"").slice(0,10); }   // v865: zuletzt im Tor (Zeilen kommen aufsteigend)
     Object.keys(st.rollen||{}).forEach(rk=>{ if(!(rk in {auf:1,fll:1,flr:1,jaeg:1}))return; (st.rollen[rk]||[]).forEach(nm=>{ if(nm){ ens(nm)[rk]++; byKid[nm].total++; } }); });
   });
   _rollenExp={data:{byKid,games},at:Date.now()};

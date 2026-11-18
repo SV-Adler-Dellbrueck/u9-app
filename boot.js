@@ -2606,15 +2606,39 @@ function tpGruppeHinweis(selId){
 }
 /* v720: Braucht die Übung einen Torwart, sagt die Station, wer es in dieser Gruppe sein kann – ein
    Kind mit Torwart-Vorliebe aus dem Kader (Rangfolge wie im Kader, tw_prio), sonst „wechselt durch“. */
+/* v865 (Charles 18.11., 1.11): Rotation nach „zuletzt im Tor“ – zuerst das Kind mit Torwart-Haken, das am längsten nicht
+   im Tor stand (noch nie zuerst). Quelle sind die gespeicherten Spieltag-Aufstellungen (Torwart beim Anpfiff, rollenExpFetch);
+   ohne diese Daten gilt die Rangfolge aus dem Kader. Der Haken bleibt Voraussetzung. */
+function tpTwZuletzt(name){
+  const d=(typeof _rollenExp!=="undefined"&&_rollenExp&&_rollenExp.data)?_rollenExp.data:null;
+  if(!d||!d.games)return null;   // ohne gespeicherte Aufstellung kein „noch nie im Tor“ an jedem Kind
+  return ((d.byKid||{})[name]||{}).twZuletzt||"";
+}
+function tpTwSortieren(kinder){
+  const prio=k=>Number(k.twPrio||k.tw_prio)||99;
+  return kinder.slice().sort((a,b)=>{ const za=tpTwZuletzt(a.name), zb=tpTwZuletzt(b.name);
+    if(za!=null&&zb!=null&&za!==zb)return za<zb?-1:1; return prio(a)-prio(b); });
+}
+function tpTwZusatz(name){
+  const z=tpTwZuletzt(name); if(z==null)return "";
+  if(!z)return " (noch nie im Tor)";
+  const [y,m,t]=z.split("-"); return t?` (zuletzt im Tor ${Number(t)}.${Number(m)}.)`:"";
+}
 function tpTorwartHinweis(idx,info){
   const sp=tpUebungSpanne(idx);
   if(!sp.tw||!info||!Array.isArray(info.kinder)||!info.kinder.length)return "";
   const kader=(typeof KADER!=="undefined"&&Array.isArray(KADER))?KADER:[];
-  const tw=info.kinder.map(n=>kader.find(k=>k&&k.name===n)).filter(k=>k&&k.tw)
-    .sort((a,b)=>(Number(a.twPrio||a.tw_prio)||99)-(Number(b.twPrio||b.tw_prio)||99)).map(k=>k.name);
-  return `<div class="tp-torwart-hinweis" style="font-size:var(--s-klein);color:var(--text);padding:3px 0 0;line-height:1.5">🧤 Torwart: ${tw.length?esc(tw.join(" oder ")):"wechselt durch – kein Torwart-Kind in dieser Gruppe"}</div>`;
+  const tw=tpTwSortieren(info.kinder.map(n=>kader.find(k=>k&&k.name===n)).filter(k=>k&&k.tw)).map(k=>k.name);
+  return `<div class="tp-torwart-hinweis" style="font-size:var(--s-klein);color:var(--text);padding:3px 0 0;line-height:1.5">🧤 Torwart: ${tw.length?tw.map(n=>esc(n)+esc(tpTwZusatz(n))).join(" oder "):"wechselt durch – kein Torwart-Kind in dieser Gruppe"}</div>`;
 }
-function tpGruppeHinweisAll(){ Object.keys(_tpStationGruppe).forEach(tpGruppeHinweis); }
+function tpGruppeHinweisAll(){
+  Object.keys(_tpStationGruppe).forEach(tpGruppeHinweis);
+  /* v865: Die Torwart-Rotation braucht die Spieltag-Aufstellungen – einmal nachladen und die Hinweise neu setzen. */
+  if(typeof rollenExpFetch==="function"&&!(typeof _rollenExp!=="undefined"&&_rollenExp&&_rollenExp.data)&&!tpGruppeHinweisAll._laedt){
+    tpGruppeHinweisAll._laedt=true;
+    rollenExpFetch().then(()=>{ tpGruppeHinweisAll._laedt=false; Object.keys(_tpStationGruppe).forEach(tpGruppeHinweis); }).catch(()=>{ tpGruppeHinweisAll._laedt=false; });
+  }
+}
 /* v656 · Mehr Kinder an der Station, als die Übung trägt. PO am 28.09.: „… dann keine neue
    Gruppe aufmachen, sondern eine Übung suchen, die mit mehr Spielern funktioniert oder die
    bestehende Übung entsprechend über KI automatisch anpassen und vorschlagen.“ Ein Wechsler
@@ -2893,11 +2917,11 @@ function _tpRenderTimelineIntern(){
         ${typ==="abschluss"?`<div class="tp-abschluss-teams"></div>`:""}
         <button class="btn btn-sm" style="margin-top:4px" onclick="blitzOpen(${Number(slot.dauer)||15})" title="Trainingsturnier mit dieser Slot-Dauer als Zeitbudget – vorab planbar, wird zum Termin gespeichert">🏆 Als Trainingsturnier spielen (${slot.dauer} Min.)</button>`;
     } else if(typ==="tw"){
-      const twPlayers=KADER.filter(k=>k.tw&&k.aktiv!==false);   // ausgetragene Torhueter nicht mehr anbieten
+      const twPlayers=tpTwSortieren(KADER.filter(k=>k.tw&&k.aktiv!==false));   // ausgetragene Torhueter nicht mehr anbieten; v865: wer am längsten nicht im Tor war, zuerst
       html+=`<div style="margin-top:6px">
         <div style="font-size:var(--s-klein);color:var(--text2);font-weight:600;margin-bottom:4px">Torwart-Spieler</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-          ${twPlayers.map(k=>`<label class="tp-check"><input type="checkbox" value="${esc(k.name)}" class="tp-tw-player" data-slot="${si}" checked><span>${k.name}${k.twPrio===1?" ⭐":""}</span></label>`).join("")}
+          ${twPlayers.map(k=>`<label class="tp-check"><input type="checkbox" value="${esc(k.name)}" class="tp-tw-player" data-slot="${si}" checked><span>${k.name}${k.twPrio===1?" ⭐":""}<span style="color:var(--text2);font-size:var(--s-klein)">${esc(tpTwZusatz(k.name))}</span></span></label>`).join("")}
         </div>
         <div class="tp-feld"><label for="tp-form-${si}-0">Übung</label>
           <div class="tp-feld-zeile">
