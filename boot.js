@@ -2745,7 +2745,7 @@ function _tpRenderTimelineIntern(){
   tpSlots.forEach((s,i)=>{
     if(s.parallelZu==null)return;
     const z=tpSlots[s.parallelZu];
-    if(!z||s.parallelZu===i||(z.typ||"main")!=="main")s.parallelZu=null;
+    if(!z||s.parallelZu===i||!tpIstHauptteil(z.typ||"main"))s.parallelZu=null;   // v864: auch parallel zu einer Spiel- oder Übungsform-Stufe (seit v847)
   });
   // Altbestand + neu angelegte Blöcke ohne Ziel: an den ersten Hauptteil hängen (umstellbar
   // über „Läuft parallel zu"). Gilt seit v383 auch für Torwart-Blöcke.
@@ -4605,7 +4605,21 @@ async function _tpThemaFuer(datum){
 }
 /* Eine Übung für eine Station. `kats` sind die Kategorien, die zum Thema gehören (zuerst die
    der Vorlage, dann Tagebuch/Monat); `weg` ist, was im Training schon steht. */
-function tpStationWahl(g,thema,weg,datum,zufall){
+/* v865 (Charles 18.11., Bestandsaufnahme 1.7): Der Tagesfokus „Verbesserung von“ gibt das Thema vor (vor der
+   Kategorie von Feld 1). Fokus → Übungskategorie: */
+const TP_FOKUS_KAT={ballbesitz:"passspiel",dribbling:"technik",abschluss:"technik",passspiel:"passspiel",anbieten:"passspiel",
+  defensive:"pressing",wahrnehmung:"wahrnehmung",taktik:"raute",umschalten:"pressing",mindset:"spass"};
+function tpFokusKats(datum){
+  const f=(typeof _tpFokus!=="undefined")?_tpFokus:null;
+  if(!f||!Array.isArray(f.keys)||(f.datum&&datum&&f.datum!==datum))return [];
+  return [...new Set(f.keys.map(k=>TP_FOKUS_KAT[k]).filter(Boolean))];
+}
+/* Richtwert-Untergrenze der Übungsdauer („20–25“ → 20, 15 → 15). */
+function tpDauerMin(f){ const m=String((f&&f.dauer)||"").match(/\d+/); return m?Number(m[0]):0; }
+/* v865: opt.dauer = Länge des Blocks, opt.betreut = steht an diesem Feld ein Trainer. Beides sind kleine Abzüge
+   (unter 10) – die Gruppengröße bleibt das wichtigste Kriterium. */
+function tpStationWahl(g,thema,weg,datum,zufall,opt){
+  opt=opt||{};
   // „Freies Spielen“ ist das Abschlussspiel, keine Station.
   const kandidaten=tpFilteredOpts("main").filter(x=>x.f&&x.f.kat!=="mindset"&&tpStationTauglich(x.f)&&!/^freies spiel/i.test(x.f.name)&&!weg.has(x.i));
   if(!kandidaten.length)return null;
@@ -4621,7 +4635,9 @@ function tpStationWahl(g,thema,weg,datum,zufall){
        Rituale („weder“) gehören nicht an eine Station. */
     const art=(typeof _tpArt==="function"&&_tpArt(x.f))||(typeof _tpArtVorschlag==="function"&&_tpArtVorschlag(x.f))||"";
     const artWert=art==="spiel"?0:art==="uebung"?2:art==="weder"?6:3;
-    const wert=passt*10+(thema.bevorzugt.has(x.i)?0:ki===0?1:ki>0?2:5)+artWert+(kuerzlich?3:0)+zufall();
+    const dmin=tpDauerMin(x.f), zuLang=opt.dauer>0&&dmin>opt.dauer+2;
+    const bw=(opt.betreut===false&&typeof tpBetreuungWert==="function")?tpBetreuungWert(x.f):null, braucht=!!(bw&&bw.wert!=="allein");
+    const wert=passt*10+(thema.bevorzugt.has(x.i)?0:ki===0?1:ki>0?2:5)+artWert+(kuerzlich?3:0)+(zuLang?2:0)+(braucht?3:0)+zufall();
     if(!best||wert<best.wert)best={i:x.i,wert,passt};
   });
   return best;
@@ -4669,7 +4685,7 @@ async function tpGenerate(){
   const alle=tpAllForms();
   // Die Vorlage gibt das Thema vor: ihre Kategorien zuerst, Tagebuch/Monat danach.
   const vorlageKats=[...new Set(haupt().map(x=>wert(x.i,0)).filter(v=>v!=null).map(v=>(alle[v]||{}).kat).filter(k=>k&&k!=="mindset"))];
-  const th={quelle:thema.quelle,bevorzugt:thema.bevorzugt,kats:[...new Set(vorlageKats.concat(thema.kats))]};
+  const th={quelle:thema.quelle,bevorzugt:thema.bevorzugt,kats:[...new Set(tpFokusKats(datum).concat(vorlageKats,thema.kats))]};   // v865: Fokus zuerst
   const tg=tgFor(), groessen=(tg&&Array.isArray(tg.gruppen))?tg.gruppen.map(x=>(x.kinder||[]).length).filter(Boolean):[];
   const kinder=_tgPool().namen.length;
   const stationen=Math.max(1,...haupt().map(x=>document.querySelectorAll(`.tp-form-sel[id^="tp-form-${x.i}-"]`).length));
@@ -4702,7 +4718,7 @@ async function tpGenerate(){
       hs.filter(zusammen).forEach(x=>{ const v0=wert(x.i,0); if(v0!=null&&wert(x.i,p)==null&&setze(x.i,p,v0))gesetzt++; });
       if(!frei.length)continue;
       frei.forEach(x=>{ const v=wert(x.i,p), v0=wert(x.i,0); if(v!=null&&v!==v0&&fest==null)fest=v; });
-      if(fest==null){ const b=tpStationWahl(g,th,weg,datum,zufall); if(!b)continue; fest=b.i; weg.add(fest); if(b.passt>1)eng++; }
+      if(fest==null){ const b=tpStationWahl(g,th,weg,datum,zufall,{dauer:Math.min(...frei.map(x=>Number(x.s.dauer)||99)),betreut:p<trainerCount}); if(!b)continue; fest=b.i; weg.add(fest); if(b.passt>1)eng++; }
       frei.forEach(x=>{ const v=wert(x.i,p), v0=wert(x.i,0); if(v==null||v===v0){ if(setze(x.i,p,fest))gesetzt++; } });
     }
   }
@@ -4710,9 +4726,12 @@ async function tpGenerate(){
   let fest0=null;
   hs.forEach(x=>{
     if(wert(x.i,0)!=null){ if(fest0==null)fest0=wert(x.i,0); return; }
-    if((stationen<=1&&!tpIstStufe(x.s))||fest0==null){ const b=tpStationWahl(g,th,weg,datum,zufall); if(!b)return; weg.add(b.i); if(b.passt>1)eng++; if(stationen>1||tpIstStufe(x.s))fest0=b.i; if(setze(x.i,0,b.i))gesetzt++; }
+    if((stationen<=1&&!tpIstStufe(x.s))||fest0==null){ const b=tpStationWahl(g,th,weg,datum,zufall,{dauer:Number(x.s.dauer)||0,betreut:tpIstStufe(x.s)?trainerCount>=stationen:trainerCount>0}); if(!b)return; weg.add(b.i); if(b.passt>1)eng++; if(stationen>1||tpIstStufe(x.s))fest0=b.i; if(setze(x.i,0,b.i))gesetzt++; }
     else if(setze(x.i,0,fest0))gesetzt++;
   });
+  /* v864: Stufen spielen auf jedem Feld dieselbe Übung. Die Kopie oben lief, bevor Feld 1 gefüllt war –
+     bei leerem Plan und zwei Feldern (ein Trainer ab zehn Kindern) blieb Feld 2 sonst leer. */
+  if(stationen>1)hs.filter(x=>tpIstStufe(x.s)).forEach(x=>{ const v0=wert(x.i,0); if(v0==null)return; for(let p=1;p<stationen;p++){ if(wert(x.i,p)==null&&setze(x.i,p,v0))gesetzt++; } });
   /* v714: Je Hauptteil eine Zusatzregel als Provokationsregel für alle Stationen – passend zum
      Thema, in jedem Hauptteil eine andere. Was der Trainer weggetippt hat (regel===null) oder
      selbst gesetzt hat, bleibt. */
@@ -6271,6 +6290,10 @@ function tgBedarf(kinder,stationen){
      Einzeltraining. Wer es anders will, bildet die Gruppen von Hand. Ab acht bleibt v536/v656.
      Ist die Kinderzahl noch unbekannt (0), gilt die alte Rechnung. */
   if(k>0&&k<2*TG_ZIEL_MIN)return 1;
+  /* v864 (Charles 18.11., Bestandsaufnahme 1.8): EIN Trainer und zehn oder mehr Kinder → zwei Felder mit derselben Form.
+     Eine Gruppe mit zwölf Kindern trug kaum eine Themenübung – „Training füllen“ wich auf Turnier- und Spaßformen aus,
+     nach einer Vorlage saßen vier Kinder auf der Bank. Hebt v656 nur für diesen Fall auf; ab zwei Trainern gilt v656. */
+  if(trainer===1&&k>=10)return 2;
   const wunsch=trainer>0?trainer:Math.max(1,st,Math.ceil(k/TG_ZIEL_MAX));
   const platz=Math.max(1,Math.floor(k/TG_ZIEL_MIN));
   return Math.max(1,Math.min(Math.max(Math.min(wunsch,platz),trainer),TG_NAMEN.length));
@@ -6337,7 +6360,10 @@ function tgTorwartVerteilen(gruppen){
   for(let schutz=0;schutz<20;schutz++){
     const ohne=gruppen.find(g=>!g.kinder.some(istTw)), viele=gruppen.find(g=>g.kinder.filter(istTw).length>1);
     if(!ohne||!viele)break;
-    const i=viele.kinder.findIndex(istTw), j=ohne.kinder.findIndex(n=>!istTw(n));
+    /* v864: Getauscht wird mit dem Kind auf (möglichst) derselben Position der Stärke-Reihe – vorher immer mit dem
+       ersten Kind der anderen Gruppe, was die Gruppen aus dem Gleichgewicht bringen konnte. */
+    const i=viele.kinder.findIndex(istTw);
+    let j=-1; ohne.kinder.forEach((n,x)=>{ if(!istTw(n)&&(j<0||Math.abs(x-i)<Math.abs(j-i)))j=x; });
     if(i<0||j<0)break;
     const a=viele.kinder[i]; viele.kinder[i]=ohne.kinder[j]; ohne.kinder[j]=a;
   }

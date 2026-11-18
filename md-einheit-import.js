@@ -1273,7 +1273,12 @@ function vuPlanAusVorlage(v){
     if(texte&&texte.length===feldNamen.length)letzteTexte=texte;
     const felder=(texte&&feldNamen.length>1&&texte.length===feldNamen.length&&feldNamen.every(Boolean))
       ? feldNamen.map((u,i)=>({u,t:texte[i]})) : null;
-    slots.push({label,dauer:Number(b.dauer),farbe:_eiFarbe(b.typ,mainNr),typ:b.typ,...(feldStationen>1?{stationen:feldStationen}:{}),...(felder?{felder}:{})});
+    /* v864 (1.11): Ein eigener Torwart- oder Individual-Block der Vorlage läuft parallel zum letzten Hauptteil DAVOR –
+       wie ein von Hand angelegter (tpDoAddSlot). Vorher hängte ihn die Zeitleiste an den ersten Hauptteil: bei L3-1
+       stand das Torwarttraining neben „Stufe 1 – frei“ statt neben Stufe 3. */
+    let parallel=null;
+    if(typeof tpKannParallel==="function"&&tpKannParallel(b.typ)&&typeof tpIstHauptteil==="function"){ slots.forEach((x,i)=>{ if(x&&tpIstHauptteil(x.typ)&&x.parallelZu==null)parallel=i; }); }
+    slots.push({label,dauer:Number(b.dauer),farbe:_eiFarbe(b.typ,mainNr),typ:b.typ,...(parallel!=null?{parallelZu:parallel}:{}),...(feldStationen>1?{stationen:feldStationen}:{}),...(felder?{felder}:{})});
     if(st){
       /* Paket B: verschiedene Übungen je Station. Die Reihenfolge der Liste ist die
          Reihenfolge der Felder. Gibt es am Termin weniger Felder als Stationen, fällt
