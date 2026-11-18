@@ -1687,7 +1687,7 @@ function elternWochenleisteHtml(rows,kids,rsvpAll){
   return `<div id="eltern-woche" style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
     <div style="font-weight:800;font-size:var(--s-karte);margin-bottom:8px">🗓️ Diese Woche</div>
     <div style="display:flex;gap:4px">${zellen}</div>
-    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px">✓ zugesagt · ! Rückmeldung offen · ✕ nicht dabei · – fällt aus</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px"><span style="white-space:nowrap">✓ zugesagt ·</span> <span style="white-space:nowrap">! Rückmeldung offen ·</span> <span style="white-space:nowrap">✕ nicht dabei ·</span> <span style="white-space:nowrap">– fällt aus</span></div>
   </div>`;
 }
 /* v811: eine Tageszelle des Streifens – gemeinsam für „Diese Woche“ (v785) und die Wochen zum Wischen */
@@ -1697,7 +1697,7 @@ function _elWocheZelle(d,inWoche,kids,rsvpAll){
   rsvpAll=rsvpAll||{};
     const ts=inWoche.filter(t=>t.datum===iso(d));
     const kopf=`<span style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2)">${WT[d.getDay()]}</span><span style="display:block;font-size:var(--s-text);font-weight:800">${d.getDate()}</span>`;
-    if(!ts.length)return `<div style="flex:1;min-width:0;text-align:center;padding:8px 0;opacity:.6">${kopf}<span aria-hidden="true" style="display:block;font-size:var(--s-text);color:var(--text3)">·</span></div>`;
+    if(!ts.length)return `<div style="flex:.55 1 0;min-width:0;text-align:center;padding:8px 0;opacity:.6">${kopf}<span aria-hidden="true" style="display:block;font-size:var(--s-text);color:var(--text3)">·</span></div>`;
     /* v830: Mehrere Termine am Tag (seit v827 erlaubt) zeigt die Kachel alle – ein Symbol samt Antwortzeichen je Termin;
        vorher stand nur der erste da (Charles 10.11.: „nur das Kinder-Eltern-Turnier, nicht die Weihnachtsfeier“).
        Bei einem Termin öffnet der Tipp ihn, bei mehreren eine Auswahl. Weihnachtsfeier 🎄 und Kinder-Eltern-Turnier ⚽
@@ -1719,7 +1719,9 @@ function _elWocheZelle(d,inWoche,kids,rsvpAll){
     const einzeln=ts.slice().sort((x,y)=>String(x.uhrzeit||"").localeCompare(String(y.uhrzeit||"")));
     const info=einzeln.map(t=>({t,s:status(t),ic:symbol(t)}));
     (window._elTagListe=window._elTagListe||{})[iso(d)]=info.map(x=>({id:x.t.id,ic:x.ic,titel:x.t.titel||x.t.gegner||"Termin",uhr:(x.t.uhrzeit||"").slice(0,5),zeichen:x.s.zeichen,wort:x.s.wort}));
-    const stil="flex:1;min-width:0;min-height:64px;text-align:center;padding:6px 0;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:var(--text);font-family:inherit;cursor:pointer";
+    /* v861 (3.13): Tage mit Termin bekommen den Platz der leeren Tage – vorher war jede Kachel auf 360 px nur 39 px breit,
+       unter der Mindestgröße für Knöpfe. Leere Tage zeigen nur einen Punkt und dürfen schmal sein. */
+    const stil="flex:1.6 1 0;min-width:44px;min-height:64px;text-align:center;padding:6px 0;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:var(--text);font-family:inherit;cursor:pointer";
     const tag=`${WT[d.getDay()]} ${d.getDate()}.`;
     if(info.length===1){
       const x=info[0];
@@ -1790,7 +1792,7 @@ function elternWochenStreifenHtml(rows,kids,rsvpAll){
   return `<div id="eltern-woche" style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
     <div id="eltern-woche-band" onscroll="_elWocheNav()" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain">${seiten.join("")}</div>
     ${nav}
-    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px">✓ zugesagt · ! Rückmeldung offen · ✕ nicht dabei · – fällt aus</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px"><span style="white-space:nowrap">✓ zugesagt ·</span> <span style="white-space:nowrap">! Rückmeldung offen ·</span> <span style="white-space:nowrap">✕ nicht dabei ·</span> <span style="white-space:nowrap">– fällt aus</span></div>
   </div>`;
 }
 function elternWocheBlaettern(r){
