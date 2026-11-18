@@ -92,8 +92,11 @@ function bkrWeiterText(s){
   const kinder=bkrKinder(s.k.tw), offen=kinder.filter(n=>((BKR.werte[n]||{})[s.k.n])==null).length;
   return offen?`Weiter · ${offen} offen`:"Weiter";
 }
+/* v851: vollständig UND mindestens die Hälfte der Feld-Kriterien gesehen (bewGesehen in views.js). */
+function bkrZuWenig(name){ const g=(typeof bewGesehen==="function")?bewGesehen(BKR.werte[name]||{}):{genug:true}; return g.genug?null:g; }
+function bkrSpeicherbar(name){ return bkrOffen(name)===0&&!bkrZuWenig(name); }
 function bkrSpeicherText(){
-  const fertig=bkrKinder().filter(n=>bkrOffen(n)===0).length;
+  const fertig=bkrKinder().filter(bkrSpeicherbar).length;
   return fertig?`Bewertungen speichern · ${fertig} ${fertig===1?"Kind":"Kinder"}`:"Noch kein Kind vollständig";
 }
 
@@ -160,9 +163,10 @@ function bkrAbschlussHtml(){
   return `<h2 style="font-size:var(--s-teil);font-weight:800;margin:0 0 4px">Abschluss</h2>
     <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:10px">Gespeichert wird als „Trainerteam“ mit dem Datum ${new Date(BKR.datum+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"})}. Die Werte sind eine Momentaufnahme, keine Prognose – Kinder sehen nie Zahlen.</div>
     <div id="bkr-stand" style="border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);padding:4px 12px;margin-bottom:10px">${offen.map(([n,o])=>
-      `<div style="display:flex;gap:8px;align-items:center;min-height:40px;border-top:1px solid var(--surface2);font-size:var(--s-text)"><span style="flex:1;font-weight:700">${esc(n)}</span><span style="color:var(--text2)">${o?`${o} offen – wird nicht gespeichert`:"✓ vollständig"}</span></div>`).join("")}</div>
+      `<div style="display:flex;gap:8px;align-items:center;min-height:40px;border-top:1px solid var(--surface2);font-size:var(--s-text)"><span style="flex:1;font-weight:700">${esc(n)}</span><span style="color:var(--text2);text-align:right">${o?`${o} offen – wird nicht gespeichert`:bkrZuWenig(n)?`nur ${bkrZuWenig(n).gesehen} von ${bkrZuWenig(n).von} gesehen – wird nicht gespeichert`:"✓ vollständig"}</span></div>`).join("")}</div>
     ${fehlt.length?`<button class="btn" id="bkr-ng" onclick="bkrOffeneNichtGesehen()" style="width:100%;min-height:48px;margin-bottom:8px">Alle offenen als „Nicht gesehen“ eintragen</button>
       <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:10px">Oder mit „Zurück“ zu den Kriterien: auf dem Weiter-Knopf steht, wo noch etwas offen ist. Unvollständige Kinder bleiben auf diesem Gerät gemerkt.</div>`:""}
+    ${kinder.some(n=>bkrOffen(n)===0&&bkrZuWenig(n))?`<div id="bkr-zuwenig" style="font-size:var(--s-klein);color:var(--text2);margin-bottom:10px">Für ein Profil muss mindestens die Hälfte der Feld-Kriterien gesehen sein. Diese Kinder bleiben auf dem Gerät gemerkt – in der nächsten Runde oder nach ein paar Trainings nachtragen.</div>`:""}
     <button class="btn" onclick="bkrNeu()" style="width:100%;min-height:44px;color:var(--red)">Runde verwerfen</button>
     <div id="bkr-status" role="status" aria-live="polite" style="font-size:var(--s-text);margin-top:10px"></div>`;
 }
@@ -174,7 +178,7 @@ function bkrOffeneNichtGesehen(){
 async function bkrSpeichern(btn){
   if(typeof bewFreigegeben==="function"&&!bewFreigegeben()){toast("Bewerten ist noch gesperrt","err");return;}
   const status=document.getElementById("bkr-status"), sag=(t,rot)=>{if(status){status.textContent=t;status.style.color=rot?"var(--red)":"var(--text)";}};
-  const fertig=bkrKinder().filter(n=>bkrOffen(n)===0);
+  const fertig=bkrKinder().filter(bkrSpeicherbar);
   if(!fertig.length){sag("Noch kein Kind ist vollständig bewertet.",true);return;}
   const krit=bkrKriterien();
   const zeilen=fertig.map(name=>{

@@ -38,7 +38,8 @@ module.exports = async function (h) {
   if (r.tw !== 2) probleme.push(`TW-Filter zeigt ${r.tw} statt 2 (aus dem Kader, nicht aus Bewertungen)`);
   if (!r.rolle) probleme.push("Rollenfilter ohne Bewertungen muesste leer melden");
   if (r.mitBewertung !== 14) probleme.push(`mit einer Bewertung ${r.mitBewertung} Zeilen statt 14`);
-  if (!/55%/.test(r.werte)) probleme.push("Werte des bewerteten Kindes fehlen: " + r.werte);
+  /* v851: Die Liste nennt die Stärke in Worten statt Gesamt- und Tempo-Prozent. */
+  if (!/Technik|Spielintelligenz|Dynamik|Lernen|ausgeglichen/.test(r.werte) || /%/.test(r.werte)) probleme.push("Stärke des bewerteten Kindes fehlt oder steht in Prozent: " + r.werte);
   if (!r.hinweis) probleme.push("Hinweis „noch nicht bewertet“ fehlt");
   if (r.rolleJetzt !== 1) probleme.push(`Rollenfilter zeigt ${r.rolleJetzt} statt 1`);
   // Dieselbe Annahme sass im Aufstellungs-Editor: ohne Bewertungen bot er kein Kind an

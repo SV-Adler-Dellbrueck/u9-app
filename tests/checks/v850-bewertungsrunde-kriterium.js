@@ -47,7 +47,7 @@ module.exports = async function (h) {
     out.twZeilen = zl().length; out.twHinweis = /Nur die Torhüter/.test(document.getElementById("bkr-inhalt").textContent);
     // alles füllen bis auf ein Kind
     const kr = bkrKriterien(), namen = bkrKinder();
-    namen.forEach((n, i) => { const tw = getKader(n).tw; BKR.werte[n] = {}; kr.forEach(k => { if (!k.tw || tw) BKR.werte[n][k.n] = i % 5; }); });
+    namen.forEach((n, i) => { const tw = getKader(n).tw; BKR.werte[n] = {}; kr.forEach((k, j) => { if (!k.tw || tw) BKR.werte[n][k.n] = (i + j) % 5; }); });
     delete BKR.werte[namen[3]].f_pass;
     // d) Eltern
     BKR.idx = sch.length - 2; bkrRender(); await w(50);

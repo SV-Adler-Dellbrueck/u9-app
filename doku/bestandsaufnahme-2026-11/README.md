@@ -111,3 +111,5 @@ als Etikett über die Familie; Prozentzahlen im Formular.
 | „Fürs Elterngespräch“ (drei Beobachtungen, ein Satz) statt Umfeld-Etikett; nur im Profil, in keinem Bericht | ✅ v850 (Charles 17.11.) |
 | Alter und starker Fuß aus dem Profil, Beteiligung und Prozentzahlen aus dem Formular | ✅ v850 |
 | Startdatum der Bewertungen ist in der Datenbank leer – setzt das Trainerteam unter Team → Bewerten | offen (Trainerteam) |
+| Kind mit (fast) nur „Nicht gesehen“ bekam 0 %, Rolle und Profiltext – jetzt Mindestregel (Hälfte der Feld-Kriterien) | ✅ v851 |
+| Kaderliste: „Ges.“ und „Pot.“ in Prozent – jetzt Stärke in Worten (Charles 18.11.) | ✅ v851 |

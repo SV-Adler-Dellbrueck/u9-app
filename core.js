@@ -504,6 +504,8 @@ async function savePlayer(){
   if(!meta.name){showSt("save-status","Spieler auswählen.","err");return;}
   if(countFilled()<totalCrit()){showSt("save-status",`Noch ${totalCrit()-countFilled()} Kriterien offen.`,"err");return;}
   const v=getV();
+  const gs=(typeof bewGesehen==="function")?bewGesehen(v):{genug:true};
+  if(!gs.genug){showSt("save-status",`Nur ${gs.gesehen} von ${gs.von} Kriterien gesehen – für ein Profil braucht es mindestens die Hälfte. Nichts gespeichert.`,"err");return;}
   const {row,result}=bewZeileBauen(meta,v);
   const saveBtn=document.querySelector('button[onclick="savePlayer()"]'); // C9: Doppelklick-Schutz
   if(saveBtn)saveBtn.disabled=true;
