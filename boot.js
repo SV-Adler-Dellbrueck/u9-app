@@ -2307,6 +2307,74 @@ function tpSlotKopfText(lab){
    nahm Tastatur- und Screenreader-Nutzern den Fokus. Jetzt werden Scrollstand und fokussiertes Element gemerkt und
    danach wiederhergestellt (Kennung oder Block + Klasse). */
 ["wheel","touchmove","keydown"].forEach(ev=>window.addEventListener(ev,()=>{window._tpHandScroll=Date.now();},{passive:true}));
+/* v857 (Bestandsaufnahme 2.4, Charles 18.11.2026): Ein gefüllter Plan mit sieben Blöcken war am
+   Handy rund sechs Bildschirme lang – jede Blockkarte 230 bis 740 px. Jetzt zeigt ein gefüllter
+   Block nur Kopf und eine Zeile mit seinen Übungen; ein Tipp auf Name, Pfeil oder Zeile klappt
+   ihn auf. Ein Block, in dem noch eine Übung fehlt, bleibt offen. Solange der Plan gar keine Übung
+   hat, ist nichts eingeklappt.
+   Reine Sichtebene: die Auswahlfelder bleiben im DOM (nur ausgeblendet) – Speichern, Zeiten und
+   Trainingsstart lesen wie bisher. */
+let _tpOffen=new Set(), _tpAlleOffen=false;
+function tpSlotGefuellt(el){
+  const sels=[...el.querySelectorAll(".tp-form-sel")];
+  if(!sels.length)return true;                                   // freies Spiel, Fenster ohne Übung
+  const typ=((typeof tpSlots!=="undefined"&&tpSlots[Number(el.dataset.si)])||{}).typ||"main";
+  if(typ==="abschluss"||typ==="turnier")return true;             // Abschluss ist auch ohne Übung fertig
+  return sels.every(x=>x.value!=="");
+}
+function tpSlotKurz(el){
+  const alle=(typeof tpAllForms==="function")?tpAllForms():[];
+  const namen=[...el.querySelectorAll(".tp-form-sel")].map(x=>x.value===""?null:((alle[+x.value]||{}).name||null)).filter(Boolean);
+  const regel=((typeof tpSlots!=="undefined"&&tpSlots[Number(el.dataset.si)])||{}).regel;   // die Zusatzregel steht sonst nur im offenen Block
+  return (namen.length?[...new Set(namen)].join(" · "):"freies Spiel – keine Übung")+(regel?` · Regel: ${regel}`:"");
+}
+function tpKlappenAnwenden(){
+  const tl=document.getElementById("tp-timeline"); if(!tl)return;
+  const slots=[...tl.querySelectorAll(".tp-slot")];
+  const hat=slots.some(el=>[...el.querySelectorAll(".tp-form-sel")].some(x=>x.value!==""));
+  let zu=0, klappbare=0;
+  slots.forEach(el=>{
+    const si=Number(el.dataset.si), head=el.querySelector(".tp-slot-head"); if(!head)return;
+    el.querySelector(":scope > .tp-kurz")?.remove(); head.querySelector(".tp-klapp")?.remove();
+    const label=head.querySelector(".tp-slot-label");
+    const klappbar=hat&&tpSlotGefuellt(el);
+    const offen=!klappbar||_tpAlleOffen||_tpOffen.has(si);
+    el.classList.toggle("tp-zu",!offen);
+    if(label){ label.onclick=klappbar?()=>tpKlapp(si):null; label.style.cursor=klappbar?"pointer":""; }
+    if(!klappbar)return;
+    klappbare++;
+    const name=label?label.textContent.trim():"Block";
+    const b=document.createElement("button"); b.type="button"; b.className="tp-klapp";
+    b.setAttribute("aria-expanded",offen?"true":"false"); b.setAttribute("aria-label",`${name} ${offen?"einklappen":"aufklappen"}`);
+    b.textContent=offen?"▾":"▸"; b.onclick=()=>tpKlapp(si);
+    head.insertBefore(b,label||head.firstChild);
+    if(!offen){
+      zu++;
+      const k=document.createElement("button"); k.type="button"; k.className="tp-kurz"; k.textContent=tpSlotKurz(el);
+      k.setAttribute("aria-label",`${name}: ${k.textContent} – aufklappen`); k.onclick=()=>tpKlapp(si);
+      el.appendChild(k);
+    }
+  });
+  document.getElementById("tp-klapp-alle")?.remove();
+  if(!klappbare)return;
+  const sch=document.createElement("button"); sch.type="button"; sch.id="tp-klapp-alle"; sch.className="btn btn-sm";
+  sch.textContent=zu?"Alle aufklappen":"Alle einklappen";
+  sch.onclick=()=>{ if(zu){_tpAlleOffen=true;}else{_tpAlleOffen=false;_tpOffen.clear();} tpKlappenAnwenden(); };
+  const erster=slots[0]; if(erster)erster.parentNode.insertBefore(sch,erster);
+}
+function tpKlapp(si){
+  const el=document.querySelector(`#tp-timeline .tp-slot[data-si="${si}"]`); if(!el)return;
+  if(el.classList.contains("tp-zu")){ _tpOffen.add(si); }
+  else{
+    if(_tpAlleOffen){ _tpAlleOffen=false; document.querySelectorAll("#tp-timeline .tp-slot").forEach(x=>_tpOffen.add(Number(x.dataset.si))); }
+    _tpOffen.delete(si);
+  }
+  tpKlappenAnwenden();
+  const kn=document.querySelector(`#tp-timeline .tp-slot[data-si="${si}"] .tp-klapp`); if(kn)kn.focus({preventScroll:true});
+}
+/* Wer in einem offenen Block von Hand eine Übung wählt, arbeitet dort – der Block bleibt offen,
+   auch wenn er damit vollständig wird. */
+document.addEventListener("change",e=>{ const t=e.target; if(!t||!t.classList||!t.classList.contains("tp-form-sel"))return; const sl=t.closest(".tp-slot"); if(sl&&sl.dataset.si!=null)_tpOffen.add(Number(sl.dataset.si)); },true);
 function tpRenderTimeline(){
   const wrap=document.getElementById("tp-timeline");
   const sy=window.scrollY, fo=document.activeElement;
@@ -2319,6 +2387,7 @@ function tpRenderTimeline(){
     }
   }
   const r=_tpRenderTimelineIntern();
+  try{ tpKlappenAnwenden(); }catch(e){}   // v857: gefüllte Blöcke als eine Zeile
   try{
     if(sel){ const el=document.querySelector(sel); if(el&&el.focus)el.focus({preventScroll:true}); }
     /* Direkt nach dem Zeichnen ist die Seite oft noch kürzer (Gruppen, Netto-Zeile, Prognose laden nach) – dann
@@ -4149,6 +4218,7 @@ function tpKopfRender(k){
 }
 async function tpPlanRestore(datum){
   datum=datum||document.getElementById("tp-date")?.value; if(!datum)return;
+  if(window._tpKlappDatum!==datum){ window._tpKlappDatum=datum; _tpOffen.clear(); _tpAlleOffen=false; }   // v857: neuer Termin, neue Übersicht
   const lauf=++_tpRestoreLauf;
   clearTimeout(_tpPlanTimer);            // eine noch ausstehende Speicherung des VORIGEN Termins gehört nicht hierher
   _tpRestoring=true;

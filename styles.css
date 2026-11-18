@@ -487,6 +487,16 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .tp-slot{background:var(--surface);border:var(--border-s);border-radius:var(--rl);padding:10px 12px;margin-bottom:8px}
 .tp-slot-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:var(--s-text)}
 .tp-slot-label{font-weight:700;color:var(--text)}
+/* v857: gefüllte Blöcke als eine Zeile. Die Auswahlfelder bleiben im DOM, nur ausgeblendet. */
+.tp-slot.tp-zu>:not(.tp-slot-head):not(.tp-kurz){display:none!important}
+.tp-slot.tp-zu{padding-bottom:6px}
+.tp-slot.tp-zu .tp-slot-head{margin-bottom:0}
+.tp-slot.tp-zu .tp-remove,.tp-slot.tp-zu .tp-dauer-sel{display:none!important}   /* Löschen und Dauer erst im offenen Block */
+.tp-slot.tp-zu .tp-slot-head .tp-slot-label{flex:1 1 0}
+.tp-slot.tp-zu .tp-slot-head .tp-slot-time{margin-left:auto}
+.tp-klapp{flex:none;min-width:44px;min-height:44px;border:none;background:none;color:var(--text2);font-size:var(--s-karte);cursor:pointer;border-radius:8px;padding:0}
+.tp-kurz{display:block;width:100%;min-height:44px;text-align:left;border:none;background:none;font-family:inherit;font-size:var(--s-text);line-height:1.35;color:var(--text2);padding:4px 4px 6px;cursor:pointer;border-radius:8px}
+#tp-klapp-alle{display:flex;margin:0 0 8px auto;min-height:44px}
 .tp-slot-time{color:var(--text2);font-size:var(--s-klein)}
 .tp-slot select{padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:var(--s-text);background:var(--surface);font-family:inherit;flex:1}
 
@@ -1441,3 +1451,8 @@ html[data-theme="dark"]:has(#main-app) body{background:var(--bg)}
 .k-klappe>summary::-webkit-details-marker{display:none}
 .k-klappe[open]>summary .k-klappe-pfeil{transform:rotate(180deg)}
 .k-klappe>summary:focus-visible{outline:3px solid var(--blue);outline-offset:2px;border-radius:14px}
+/* v857: der Aufklapp-Pfeil steht zwischen Griff und Name */
+.tp-slot-head .tp-klapp{order:0}
+.tp-slot.tp-zu .tp-slot-head .tp-slot-label{flex:1 1 0}
+.tp-slot.tp-zu .tp-slot-head .tp-slot-time{margin-left:auto}
+.tp-slot-head .tp-slot-label{flex-basis:calc(100% - 156px)}
