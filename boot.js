@@ -2325,7 +2325,8 @@ function tpSlotGefuellt(el){
 function tpSlotKurz(el){
   const alle=(typeof tpAllForms==="function")?tpAllForms():[];
   const namen=[...el.querySelectorAll(".tp-form-sel")].map(x=>x.value===""?null:((alle[+x.value]||{}).name||null)).filter(Boolean);
-  return namen.length?[...new Set(namen)].join(" · "):"freies Spiel – keine Übung";
+  const regel=((typeof tpSlots!=="undefined"&&tpSlots[Number(el.dataset.si)])||{}).regel;   // die Zusatzregel steht sonst nur im offenen Block
+  return (namen.length?[...new Set(namen)].join(" · "):"freies Spiel – keine Übung")+(regel?` · Regel: ${regel}`:"");
 }
 function tpKlappenAnwenden(){
   const tl=document.getElementById("tp-timeline"); if(!tl)return;
