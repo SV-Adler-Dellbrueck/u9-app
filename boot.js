@@ -2147,6 +2147,19 @@ function tpRsvpBereit(datum){
   if(_tpRsvpDatum!==d||!_tpRsvpLauf)return Promise.resolve();
   return _tpRsvpLauf;
 }
+let TP_TERMIN_MIN=0;
+/* v868 (Bestandsaufnahme 5.11): Die freien Minuten sind der Puffer für Trinken und Umbau – und so heißen sie jetzt.
+   Unter drei Minuten sagt die Zeile, dass keine Zeit dafür bleibt; ab neun sind es wirklich freie Minuten. */
+function tpPufferText(frei){
+  if(frei>=9)return ` · noch ${frei} Min. frei`;
+  if(frei>=3)return ` · ${frei} Min. Puffer für Trinken und Umbau`;
+  return ` · <span class="tp-kein-puffer" style="color:var(--amber);font-weight:800">${frei>0?`nur ${frei} Min.`:"kein"} Puffer für Trinken und Umbau</span>`;
+}
+function tpTerminMinuten(t){
+  const m=s=>{ const x=String(s||"").match(/^(\d{1,2}):(\d{2})/); return x?(+x[1])*60+(+x[2]):null; };
+  const a=m(t&&t.uhrzeit), b=m(t&&t.uhrzeit_ende);
+  return (a!=null&&b!=null&&b>a&&b-a<=180)?b-a:0;
+}
 async function tpTrainerRsvpLaden(datum){
   datum=datum||document.getElementById("tp-date")?.value||"";
   const p=_tpRsvpLadenIntern(datum);
@@ -2176,9 +2189,12 @@ async function _tpRsvpLadenIntern(datum){
          (16:45, drei Rueckmeldungen) und Event am selben Tag - geladen wurde das Spiel,
          und weil dann niemand zugesagt hatte, belegte die Automatik still nur den
          eingeloggten Trainer vor. Das Dropdown des Plans bietet ohnehin nur Trainings an. */
-      const r=await fetch(`${SB_URL}/rest/v1/termine?select=id,trainer_status&datum=eq.${encodeURIComponent(datum)}&typ=eq.training&order=uhrzeit.asc.nullslast&limit=1`,{headers:sbAuthHeaders()});
+      const r=await fetch(`${SB_URL}/rest/v1/termine?select=id,trainer_status,uhrzeit,uhrzeit_ende&datum=eq.${encodeURIComponent(datum)}&typ=eq.training&order=uhrzeit.asc.nullslast&limit=1`,{headers:sbAuthHeaders()});
       if(r.ok){const t=((await r.json())||[])[0];
         if(t&&t.id!=null)TP_TERMIN_ID=t.id;
+        /* v868 (5.11): Die Ziel-Dauer folgt dem Termin – vorher stand sie immer auf 75 Minuten, auch an 90-Minuten-Trainings. */
+        TP_TERMIN_MIN=tpTerminMinuten(t);
+        const dsel=document.getElementById("tp-dauer"); if(dsel&&TP_TERMIN_MIN){ if(![...dsel.options].some(o=>+o.value===TP_TERMIN_MIN))dsel.add(new Option(String(TP_TERMIN_MIN),String(TP_TERMIN_MIN))); dsel.value=String(TP_TERMIN_MIN); }
         if(t&&t.trainer_status&&typeof t.trainer_status==="object")TP_RSVP=t.trainer_status;}
     }catch(e){}
   }
@@ -3019,7 +3035,7 @@ function _tpRenderTimelineIntern(){
     html+='</div>';
     if(!parallel)time+=slot.dauer; // parallele Blöcke (Torwart/Individual) zählen nicht doppelt
   });
-  const zielDauer=parseInt(document.getElementById("tp-dauer")?.value)||75; // H3 (Wert VOR dem Neuzeichnen gelesen)
+  const zielDauer=parseInt(document.getElementById("tp-dauer")?.value)||TP_TERMIN_MIN||75;   // v868: ohne Auswahl die Länge des Termins // H3 (Wert VOR dem Neuzeichnen gelesen)
   const passt=time<=zielDauer;
   /* Gewarnt wurde bisher nur nach oben. Loescht man eine Phase, sinkt „Gesamt" still –
      25 unverplante Minuten sahen genauso aus wie ein perfekt gefuellter Plan. */
@@ -3029,8 +3045,8 @@ function _tpRenderTimelineIntern(){
      „Spielform: 40 Minuten“ (aus der Art der Blöcke) – zwei Zahlen für dieselbe Frage, die sich
      widersprachen. Es gilt nur noch die Minutenzahl in Schritt 5, dort mit ihrem Anteil. */
   html+=`<div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;font-size:var(--s-text);font-weight:${passt?"600":"800"};color:${passt?"var(--text2)":"#dc2626"};margin-top:6px">Gesamt: ${time} von
-    <select id="tp-dauer" onchange="tpRenderTimeline()" style="font-size:var(--s-text);min-height:44px;padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;background:var(--surface);color:var(--text)">${[60,75,90].map(d=>`<option value="${d}"${zielDauer===d?" selected":""}>${d}</option>`).join("")}</select>
-    Min.${passt?(frei>0?` · noch ${frei} Min. frei`:""):" – zu lang!"}</div>`;
+    <select id="tp-dauer" onchange="tpRenderTimeline()" style="font-size:var(--s-text);min-height:44px;padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;background:var(--surface);color:var(--text)">${[...new Set([60,75,90].concat(TP_TERMIN_MIN?[TP_TERMIN_MIN]:[]))].sort((x,y)=>x-y).map(d=>`<option value="${d}"${zielDauer===d?" selected":""}>${d}</option>`).join("")}</select>
+    Min.${passt?tpPufferText(frei):" – zu lang!"}</div>`;
   wrap.innerHTML=html;
   // Gemerkte Auswahl wieder einsetzen (siehe oben)
   Object.keys(merk.mark).forEach(id=>{const s=document.getElementById(id); const m=merk.mark[id]; if(s&&m){ if(m.station!=null)s.dataset.station=m.station; if(m.alle)s.dataset.alle=m.alle; }});

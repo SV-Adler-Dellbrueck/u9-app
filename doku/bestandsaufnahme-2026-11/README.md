@@ -92,7 +92,7 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 | 5.8 | Material je Einheit steht nirgends als Liste | ✅ v867 (Charles 18.11.): „🎒 Mitnehmen“ aus den Skizzen gezählt, eigene Angabe möglich |
 | 5.9 | Rund 14 Fast-Dubletten „3 gegen 3 auf vier Minitore“ | ⬜ |
 | 5.10 | Datenqualität: Spielerzahl, Feld ohne Maß, Coaching im Befehlston, sehr lange Abläufe | ⬜ |
-| 5.11 | Kein Zeitpuffer für Umbau und Trinken | ⬜ |
+| 5.11 | Kein Zeitpuffer für Umbau und Trinken | ✅ v868: nachgeprüft – 37 Vorlagen lassen 5 Min. in 75; die Zeile nennt sie jetzt Puffer und warnt unter 3 Min.; Ziel-Dauer folgt dem Termin (vorher immer 75, auch bei 90-Minuten-Trainings) |
 
 Paket 5 betrifft Inhalte, die bisher über Auftragspakete aus dem Projekt-Chat entstehen. Änderungen an
 bestehenden Übungen erreichen die Geräte nicht über den Abgleich (er überschreibt nie), sondern
