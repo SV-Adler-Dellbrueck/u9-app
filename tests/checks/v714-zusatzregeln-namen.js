@@ -61,6 +61,8 @@ module.exports = async function (h) {
     out.stationen = haupt.map(x => [...document.querySelectorAll(`.tp-form-sel[id^="tp-form-${x.si}-"]`)].map(e => e.value === "" ? null : alle[+e.value].name));
     out.untauglich = out.stationen.flat().filter(n => n && !tpStationTauglich(alle.find(f => f.name === n)));
     out.regeln = haupt.map(x => x.sl.regel);
+    /* v857: gefüllte Blöcke sind eingeklappt – die Zusatzregel steht im offenen Block, also erst aufklappen. */
+    if (typeof tpKlappenAnwenden === "function") { _tpAlleOffen = true; tpKlappenAnwenden(); }
     const zeilen = [...document.querySelectorAll("#tp-timeline .tp-regel")];
     out.zeilen = zeilen.length;
     out.knopfHoehen = zeilen.flatMap(z => [...z.querySelectorAll("button")].map(b => Math.round(b.getBoundingClientRect().height)));
