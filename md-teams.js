@@ -857,14 +857,24 @@ function teamEinsatzText(n){
    wichtig für den Übergang zur E-Jugend mit festem Torwart. Keine minutengenaue Abrechnung. */
 const ROLLEN_EXP=[{k:"tw",l:"🥅 TW"},{k:"auf",l:"Aufp."},{k:"fll",l:"Fl.L"},{k:"flr",l:"Fl.R"},{k:"jaeg",l:"Jäger"}];
 let _rollenExp={data:null,at:0};
+/* v858 (Charles 18.11.2026, „Ein Ort: das Mini-Feld“): Gezählt wird die Startaufstellung beim
+   Anpfiff, wie sie das Mini-Feld am Spieltag in spieltag_aufstellung ablegt (daten.start) – je
+   Spieltag und Team, in jeder Spielform. Vorher zählte nur, was auf der Seite „Aufstellung“
+   gespeichert wurde, also nicht, was am Spieltag tatsächlich gespielt wurde. */
 async function rollenExpFetch(){
   if(_rollenExp.data&&Date.now()-_rollenExp.at<60000)return _rollenExp.data;
   const ab=(typeof saisonStart==="function")?saisonStart():"2000-01-01";
   let rows=[];
-  try{const r=await fetch(`${SB_URL}/rest/v1/aufstellungen?select=datum,lineup&datum=gte.${ab}&order=datum.asc`,{headers:sbAuthHeaders()});if(!sbCheck401(r)&&r.ok)rows=await r.json();}catch(e){}
+  try{const r=await fetch(`${SB_URL}/rest/v1/spieltag_aufstellung?select=schluessel,daten&schluessel=gte.${ab}&order=schluessel.asc`,{headers:sbAuthHeaders()});if(!sbCheck401(r)&&r.ok)rows=await r.json();}catch(e){}
   const byKid={}, ens=n=>byKid[n]||(byKid[n]={tw:0,auf:0,fll:0,flr:0,jaeg:0,total:0});
-  rows.forEach(row=>{const lu=row.lineup||{}; ["tw","auf","fll","flr","jaeg"].forEach(rk=>{const nm=lu[rk]; if(nm){ens(nm)[rk]++; byKid[nm].total++;}});});
-  _rollenExp={data:{byKid,games:rows.length},at:Date.now()};
+  let games=0;
+  rows.forEach(row=>{
+    const st=row&&row.daten&&row.daten.start; if(!st)return;
+    games++;
+    if(st.tw){ ens(st.tw).tw++; byKid[st.tw].total++; }
+    Object.keys(st.rollen||{}).forEach(rk=>{ if(!(rk in {auf:1,fll:1,flr:1,jaeg:1}))return; (st.rollen[rk]||[]).forEach(nm=>{ if(nm){ ens(nm)[rk]++; byKid[nm].total++; } }); });
+  });
+  _rollenExp={data:{byKid,games},at:Date.now()};
   return _rollenExp.data;
 }
 function rollenExpClear(){ _rollenExp.at=0; }
@@ -892,8 +902,8 @@ async function rollenMatrixOpen(){
   const c=document.createElement("div");
   c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`
-    ${mdlHead("rollen-modal","🎽","Rollen-Erfahrung",`aus ${games} gespeicherten Aufstellungen (4+1) · Rot = noch nie`,"#2563eb")}
-    ${games?head+rows:'<div style="font-size:var(--s-text);color:var(--text3);padding:16px;text-align:center">Noch keine Aufstellungen gespeichert.<br>Speichere im Spieltag unter „Aufstellung" eine Startelf – dann füllt sich die Matrix.</div>'}
+    ${mdlHead("rollen-modal","🎽","Rollen-Erfahrung",`aus ${games} ${games===1?"Spiel":"Spielen"} (Startaufstellung beim Anpfiff) · Rot = noch nie`,"#2563eb")}
+    ${games?head+rows:'<div style="font-size:var(--s-text);color:var(--text3);padding:16px;text-align:center">Noch kein Spiel angepfiffen.<br>Sobald am Spieltag der Wechsel-Timer startet, zählt die Startaufstellung im Mini-Feld hier mit.</div>'}
     ${games&&nie.length?`<div style="font-size:var(--s-text);color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:8px 10px;margin-top:12px">🥅 <b>Noch nie im Tor:</b> ${nie.map(esc).join(", ")} – vor dem E-Jugend-Wechsel (fester TW) mal ranlassen.</div>`:""}
     <button class="btn btn-sm" style="width:100%;margin-top:12px" onclick="document.getElementById('rollen-modal').remove()">Schließen</button>`;
   modal.appendChild(c); document.body.appendChild(modal);

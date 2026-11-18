@@ -1256,8 +1256,9 @@ function tmJump(ziel,datum,spielform){
     const setD=()=>{ if(typeof terminSelectEnsure==="function")terminSelectEnsure("aw-date",datum); else {const d=document.getElementById("aw-date");if(d)d.value=datum;} if(typeof awLoad==="function")awLoad(); };
     setTimeout(setD,120); setTimeout(setD,450);
   }else if(ziel==="aufstellung"){
-    sv("kombi");
-    setTimeout(()=>{const d=document.getElementById("lineup-date");if(d)d.value=datum;kombiLoadLineup();},400);
+    /* v858: die Aufstellung steht im Mini-Feld unter ② */
+    switchTrainSub("spieltag");
+    setTimeout(()=>{ if(typeof spieltagPhase==="function")spieltagPhase("vor"); },400);
   }else if(ziel==="spieltag"){
     /* v476: nur die Spieltag-Seite mit diesem Datum – ohne aufgeklapptes Blitz-Rating.
        Von der Anwesenheit eines Spiel- oder Turniertags aus. */
