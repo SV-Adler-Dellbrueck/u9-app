@@ -2633,6 +2633,7 @@ function tpTorwartHinweis(idx,info){
 }
 function tpGruppeHinweisAll(){
   Object.keys(_tpStationGruppe).forEach(tpGruppeHinweis);
+  try{ tpMaterialRender(); }catch(e){}   // v867
   /* v865: Die Torwart-Rotation braucht die Spieltag-Aufstellungen – einmal nachladen und die Hinweise neu setzen. */
   if(typeof rollenExpFetch==="function"&&!(typeof _rollenExp!=="undefined"&&_rollenExp&&_rollenExp.data)&&!tpGruppeHinweisAll._laedt){
     tpGruppeHinweisAll._laedt=true;
@@ -3065,6 +3066,7 @@ async function tpPrognoseLoad(){
 }
 
 function tpOnSelectChange(sel){
+  setTimeout(()=>{ try{ tpMaterialRender(); }catch(e){} },0);   // v867: Materialzeile folgt der Auswahl
   /* v608: Hand schlägt Vorlage (Regel aus v535: sobald der Trainer ein Feld ändert, wird der
      Plan Feld für Feld gespeichert). Die Marken fallen deshalb überall weg; jedes Feld steht
      ab dann mit Block und Feld im Plan und braucht sie nicht mehr. */
@@ -4229,9 +4231,84 @@ async function tpKopfLaden(datum){
   }
   tpKopfRender(k);
 }
+/* v867 (Charles 18.11., Bestandsaufnahme 5.8): „🎒 Mitnehmen“ – aus den Skizzen der gewählten Übungen gezählt.
+   Je Block die Summe über alle Felder (ein paralleler Torwart-/Individual-Block zählt zu seinem Hauptteil dazu),
+   über die Einheit das Größte, weil Material zwischen den Blöcken wandert. Bälle: einer je Kind.
+   Tor mit Jugendtor-Marke oder ab 32 Breite = Tor, schmaler = Minitor. Feldmarkierung (Zonen, Linien) zählt nicht.
+   Eine eigene Angabe (kopf.material) gilt vor dem Vorschlag und lässt sich hier setzen. */
+const TP_MAT_NAMEN=[["tore","Tor","Tore"],["minitore","Minitor","Minitore"],["huetchen","Hütchen","Hütchen"],["stangen","Stange","Stangen"],
+  ["teller","Teller","Teller"],["dummys","Dummy","Dummys"],["leitern","Leiter","Leitern"]];
+function tpMaterialVonSpec(sp){
+  const m={tore:0,minitore:0,huetchen:0,stangen:0,teller:0,dummys:0,leitern:0}; if(!sp)return m;
+  (sp.tor||[]).forEach(t=>{ if(t[4]==="j"||Number(t[3])>=32)m.tore++; else m.minitore++; });
+  m.huetchen+=(sp.h||[]).length;
+  (sp.dtor||[]).forEach(t=>{ if(t[4]==="s")m.stangen+=2; else m.huetchen+=2; });
+  (sp.ger||[]).forEach(g=>{ const t=g[2]; if(t==="stange")m.stangen++; else if(t==="teller")m.teller++; else if(t==="dummy")m.dummys++; });
+  m.leitern+=(sp.leiter||[]).length;
+  return m;
+}
+function tpMaterialZaehlen(){
+  const alle=tpAllForms(), slots=(typeof tpSlots!=="undefined"?tpSlots:[]);
+  const jeSlot=slots.map(()=>({tore:0,minitore:0,huetchen:0,stangen:0,teller:0,dummys:0,leitern:0}));
+  const ohne=new Set(); let gezaehlt=0;
+  slots.forEach((s,si)=>{
+    document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`).forEach(sel=>{
+      if(sel.value==="")return; const f=alle[+sel.value]; if(!f)return;
+      const sp=_skzSpecSicher(f); if(!sp){ ohne.add(f.name); return; }
+      gezaehlt++; const m=tpMaterialVonSpec(sp); Object.keys(m).forEach(k=>jeSlot[si][k]+=m[k]);
+    });
+  });
+  // Parallele Blöcke laufen gleichzeitig mit ihrem Hauptteil: dazurechnen
+  slots.forEach((s,si)=>{ if(s&&s.parallelZu!=null&&jeSlot[s.parallelZu]){ Object.keys(jeSlot[si]).forEach(k=>{ jeSlot[s.parallelZu][k]+=jeSlot[si][k]; jeSlot[si][k]=0; }); } });
+  const summe={tore:0,minitore:0,huetchen:0,stangen:0,teller:0,dummys:0,leitern:0};
+  jeSlot.forEach(m=>Object.keys(m).forEach(k=>{ if(m[k]>summe[k])summe[k]=m[k]; }));
+  const kinder=(typeof _tgPool==="function")?_tgPool().namen.length:0;
+  return {summe,ohne:[...ohne],gezaehlt,baelle:kinder};
+}
+function tpMaterialText(z){
+  const teile=TP_MAT_NAMEN.filter(([k])=>z.summe[k]>0).map(([k,e,m])=>`${z.summe[k]} ${z.summe[k]===1?e:m}`);
+  teile.push(z.baelle?`${z.baelle} Bälle`:"ein Ball je Kind");
+  return teile.join(", ");
+}
+function tpMaterialRender(){
+  const box=document.getElementById("tp-material"); if(!box)return;
+  const k=window._tpKopfAkt||null, eigen=String((k&&k.material)||"").trim();
+  const knopf=`<button type="button" class="btn btn-sm" onclick="tpMaterialEigen()" style="min-height:44px" aria-label="Material selbst eintragen">✏️ Ändern</button>`;
+  if(eigen){
+    box.innerHTML=`<div class="tp-material" style="display:flex;align-items:flex-start;gap:8px;padding:6px 10px;margin:0 0 8px;border:var(--border-s);border-radius:10px;font-size:var(--s-text);line-height:1.5">
+      <span aria-hidden="true">🎒</span><span style="flex:1;min-width:0"><b>Mitnehmen:</b> ${esc(eigen)}<span style="display:block;font-size:var(--s-klein);color:var(--text3)">eigene Angabe – leer speichern holt den Vorschlag zurück</span></span>${knopf}</div>`;
+    return;
+  }
+  const z=tpMaterialZaehlen();
+  if(!z.gezaehlt&&!z.ohne.length){ box.innerHTML=""; return; }
+  const ohne=z.ohne.length?` <span style="color:var(--text3)">· ohne Skizze: ${z.ohne.length} ${z.ohne.length===1?"Übung":"Übungen"}</span>`:"";
+  box.innerHTML=`<div class="tp-material" style="display:flex;align-items:flex-start;gap:8px;padding:6px 10px;margin:0 0 8px;border:var(--border-s);border-radius:10px;font-size:var(--s-text);line-height:1.5">
+    <span aria-hidden="true">🎒</span><span style="flex:1;min-width:0"><b>Mitnehmen:</b> ${esc(tpMaterialText(z))}${ohne}<span style="display:block;font-size:var(--s-klein);color:var(--text3)">aus den Skizzen gezählt, ohne Feldmarkierung</span></span>
+    ${knopf}
+  </div>`;
+}
+async function tpMaterialEigen(){
+  const datum=document.getElementById("tp-date")?.value; if(!datum)return;
+  const vorschlag=tpMaterialText(tpMaterialZaehlen()), jetzt=String((window._tpKopfAkt&&window._tpKopfAkt.material)||"").trim();
+  const t=prompt("Material für diese Einheit (leer lassen = Vorschlag aus den Skizzen):",jetzt||vorschlag);
+  if(t==null)return;
+  const material=String(t).trim().slice(0,300);
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?datum=eq.${encodeURIComponent(datum)}&select=kopf`,{headers:sbAuthHeaders()});
+    if(sbCheck401(r)||!r.ok)throw new Error("lesen");
+    const rows=(await r.json())||[];
+    if(!rows[0]){ if(typeof toast==="function")toast("Erst den Plan speichern, dann das Material eintragen."); return; }
+    const kopf=Object.assign({},rows[0].kopf||{}); if(material&&material!==vorschlag)kopf.material=material; else delete kopf.material;
+    const w=await fetch(`${SB_URL}/rest/v1/trainingsplan?datum=eq.${encodeURIComponent(datum)}`,{method:"PATCH",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({kopf})});
+    if(!(w.ok||w.status===204))throw new Error("schreiben");
+    tpKopfRender(kopf); if(typeof toast==="function")toast("🎒 Material gespeichert");
+  }catch(e){ if(typeof toast==="function")toast("Material konnte nicht gespeichert werden – bitte erneut versuchen."); }
+}
 function tpKopfRender(k){
+  window._tpKopfAkt=k||null;   // v867: die Materialzeile weicht einer eigenen Angabe
+  try{ tpMaterialRender(); }catch(e){}
   const box=document.getElementById("tp-kopf"); if(!box)return;
-  const zeilen=[["\u{1F3AF}","Schwerpunkt",k&&k.schwerpunkt],["\u{1F392}","Material",k&&k.material],
+  const zeilen=[["\u{1F3AF}","Schwerpunkt",k&&k.schwerpunkt],["\u{1F392}","Material",document.getElementById("tp-material")?"":(k&&k.material)],   // v867: Material steht in der eigenen Zeile
                 ["\u{1F440}","Beobachtung",k&&k.beobachtung],["\u27A1\uFE0F","F\u00fcr die Folgeeinheit",k&&k.notiz_folge]]
                 .filter(z=>String(z[2]||"").trim());
   if(!zeilen.length){ box.innerHTML=""; return; }
