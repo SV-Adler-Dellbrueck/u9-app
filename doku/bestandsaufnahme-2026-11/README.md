@@ -86,7 +86,7 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 | 5.2 | „Warm up Adler“ (Reihenprogramm, 15 Minuten) steht im 8-Minuten-Block von 38 Vorlagen | bleibt so (Charles 17.11.: das Einlaufprogramm wird nicht getauscht) |
 | 5.3 | Sechs Vorlagen sind 34 Minuten Übungsform; drei davon sind die Schlechtwetter-Vorlagen; Blocktyp zählt sie als Spielzeit | teils ✅ v847: L1-4, L2-3, L4-4 mit Stufe 1 und 2 als Übungsform, 21 statt 32 Minuten Spielform (Charles 17.11.); ✅ v866: L3-1 ebenso (Charles 18.11., 36 → 21 Min), L6-2 war eine falsche Einordnung von „Igel-Pressing-Kreis“ (jetzt Spielform), die Sondereinheit Technik-Parcours bleibt bewusst Übungsform |
 | 5.4 | Stationen-Vorlagen ohne freie Stufe, höchste Erklärlast (L6-5, „3+1 gegen FUNiño“) | ⬜ |
-| 5.5 | Regeln, die Kinder nicht selbst prüfen können; Kontaktbegrenzung in L4-1/L4-4 | ⬜ |
+| 5.5 | Regeln, die Kinder nicht selbst prüfen können; Kontaktbegrenzung in L4-1/L4-4 | ✅ v869 (Charles 18.11.): Pässe laut zählen (L4-1), Tausch bei Ballberührung (L4-4) |
 | 5.6 | Folge-Nummer ist Entstehungsreihenfolge, keine Progression | ⬜ |
 | 5.7 | Halle und Schlechtwetter dünn; keine Zeilen für 6, 10, 14 Kinder | Entwurf: `doku/auftrag-skalierung-6-10-14/` wartet auf fachliche Prüfung; Halle offen |
 | 5.8 | Material je Einheit steht nirgends als Liste | ✅ v867 (Charles 18.11.): „🎒 Mitnehmen“ aus den Skizzen gezählt, eigene Angabe möglich |
