@@ -62,7 +62,7 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 | 3.11 | Foto-Knopf auf der Terminkarte zeigt den kommenden Termin, also meist nichts | ✅ v859 vor dem Termin: Fotos der letzten Spieltage |
 | 3.12 | Tipp auf eine Benachrichtigung: erst Auftakt, dann Wartezeit | ✅ v837 |
 | 3.13 | Wochenkacheln schmal; „✕“ steht für drei Bedeutungen | teils ✅ v859: „–“ für „fällt aus“, „✕“ für „nicht dabei“; ✅ v861: Tage mit Termin 64 statt 39 px breit (360 px) |
-| 3.14 | Barrierefreiheit: `aria-pressed` fehlt, Sperrknopf nur über Deckkraft, Dunkelmodus ungeprüft | teils ✅ aria-pressed an den Antwortknöpfen seit v840; v859 Einwilligungs-Knopf mit Text statt Deckkraft; Dunkelmodus offen |
+| 3.14 | Barrierefreiheit: `aria-pressed` fehlt, Sperrknopf nur über Deckkraft, Dunkelmodus ungeprüft | teils ✅ aria-pressed an den Antwortknöpfen seit v840; v859 Einwilligungs-Knopf mit Text statt Deckkraft; ✅ v861 Dunkelmodus gemessen: Schrift überall ≥ 4,5:1 (Startseite, sechs Bereiche, Termin, Mein Konto), Kachel- und Knopfränder von 2,4:1 auf ≥ 3:1, Kopfknöpfe mit hellem Rand |
 | 3.15 | „Für die Kinder“ steht vor „Trainerteam kontaktieren“; „Mehr vom Team“ bündelt acht ungleiche Dinge | 🔶 |
 
 ## Paket 4 · Struktur und Sprache

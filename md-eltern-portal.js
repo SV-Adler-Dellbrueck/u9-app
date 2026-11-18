@@ -578,7 +578,7 @@ function _elSweepOne(el){
     else if(L<128){ d.elCol=s.color; s.color=_elMix(col,[226,232,240],0.62); changed=true; }   // dunkle Marken-/Textfarbe → aufhellen (v614: 0,5 blieb bei 4,4:1 hängen)
   }
   ["Top","Right","Bottom","Left"].forEach(side=>{ const p="border"+side+"Color";
-    const b=_elRgb(s[p]); if(b&&_elLum(b)>205){ d["elB"+side]=s[p]; s[p]=_elMix(b,[51,65,85],0.72); changed=true; }
+    const b=_elRgb(s[p]); if(b&&_elLum(b)>205){ d["elB"+side]=s[p]; s[p]=_elMix(b,[51,65,85],0.55); changed=true; }   // v861 (3.14): 0,72 ergab 2,4:1 auf der Kartenfläche – Bedienelemente brauchen 3:1
     /* v708: dunkle Markenränder (#1e3a8a, #7c3aed, #1a56db) verschwanden auf dunklem Grund (1,3–2,4:1) – aufhellen. */
     else if(b&&_elLum(b)<100){ d["elB"+side]=s[p]; s[p]=_elMix(b,[226,232,240],0.55); changed=true; }
   });
