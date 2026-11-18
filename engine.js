@@ -629,63 +629,24 @@ function _renderKombiInner(wrap){
     return;
   }
 
-  const best=combos[0];
-  const insights=generateInsights(best.tw,best.aufpasser,best.flitzer_l,best.flitzer_r,best.jaeger,best.score);
-  const icMap={pos:"✓",warn:"⚠",info:"ℹ"};
-  const clsMap={pos:"ci-pos",warn:"ci-warn",info:"ci-info"};
-
-  let html=`<div class="kombi-aufstellung">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-      <div class="kombi-title">⚽ Beste Aufstellung</div>
-      <div class="kombi-score">${best.score}%</div>
-    </div>
-    <div class="kombi-sub">Optimiert nach Rollenfit, Komplementarität &amp; Teamdynamik</div>
-    <div class="kombi-sub" style="margin-top:2px">${nominiert
-      ? `Nur aus den <b>${nominiert.length} nominierten</b> Spielern des Spieltags.`
-      : `Aus <b>allen bewerteten</b> Spielern – am Spieltag nominieren, dann zählt nur, wer dabei ist.`}</div>
-    <div class="kombi-raute">
-      <div></div>
-      <div class="kpos kpos-jaeg"><div class="kpos-lbl">Jäger</div><div class="kpos-name">${esc(best.jaeger.name)}</div><div class="kpos-score">${best.jaeger.total}%</div></div>
-      <div></div>
-      <div class="kpos kpos-fl-l"><div class="kpos-lbl">Flitzer L</div><div class="kpos-name">${esc(best.flitzer_l.name)}</div><div class="kpos-score">${best.flitzer_l.total}%</div></div>
-      <div></div>
-      <div class="kpos kpos-fl-r"><div class="kpos-lbl">Flitzer R</div><div class="kpos-name">${esc(best.flitzer_r.name)}</div><div class="kpos-score">${best.flitzer_r.total}%</div></div>
-      <div></div>
-      <div class="kpos kpos-auf"><div class="kpos-lbl">Aufpasser</div><div class="kpos-name">${esc(best.aufpasser.name)}</div><div class="kpos-score">${best.aufpasser.total}%</div></div>
-      <div></div>
-    </div>
-    ${best.tw?`<div style="text-align:center;padding:6px;background:#fef9c3;border-radius:var(--r);font-size:var(--s-text);font-weight:600;color:#854d0e;margin-bottom:12px">🥅 +1 Torwart: ${esc(best.tw.name)}</div>`:'<div style="text-align:center;padding:6px;background:var(--surface2);border-radius:var(--r);font-size:var(--s-text);color:var(--text2);margin-bottom:12px">🥅 Torwart: kein TW-Spieler bewertet</div>'}
-    <div style="font-size:var(--s-klein);font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px">Analyse & Synergien</div>
-    <div class="kombi-insights">${insights.map(i=>`
-      <div class="kombi-insight-row">
-        <div class="ci-icon ${clsMap[i.type]}">${icMap[i.type]}</div>
-        <div>${esc(i.text)}</div>
-      </div>`).join("")}
-    </div>
+  /* v853 (Charles 18.11.2026): Die Seite zeigte „Beste Aufstellung 87 %“ – fünf Kinder aus dem
+     ganzen Kader mit Prozentzahl an der Position –, dazu „Weitere gute Kombinationen“ mit immer
+     denselben Kindern und Sätze über einzelne Kinder. Das ist eine Bestenliste und passt nicht zu
+     „Fairness vor Ergebnis“. Es bleiben: Aufstellung festlegen, der Knopf „Vorschlag“ (setzt die
+     Kinder, die dabei sind, nach passender Rolle) und der Weg in den Spieltag. Der Editor wird
+     nicht mehr mit einer Auswahl vorbelegt. */
+  let html=`<div class="kombi-aufstellung" id="kombi-hinweis">
+    <div class="kombi-title">🧭 Rollen-Vorschlag</div>
+    <div class="kombi-sub" style="margin-top:4px">${nominiert
+      ? `„Vorschlag“ setzt aus den <b>${nominiert.length} Kindern, die dabei sind</b>, je Rolle ein Kind, zu dem sie nach der letzten Bewertung passt.`
+      : `„Vorschlag“ setzt je Rolle ein Kind, zu dem sie nach der letzten Bewertung passt. Sind am Spieltag Teams eingeteilt, zählt nur, wer dabei ist.`}
+      Er ist ein Startpunkt, keine Rangfolge: In der U9 spielen alle Kinder weiter alle Rollen, und über Einsatzzeiten entscheidet „Feld &amp; Bank fair besetzen“ am Spieltag.</div>
   </div>`;
-
-  // Alternative combos
-  if(combos.length>1){
-    html+=`<div class="alt-combos">
-      <div class="alt-title">Weitere gute Kombinationen</div>
-      ${combos.slice(1,6).map((c,i)=>`
-        <div class="alt-item">
-          <div class="alt-score">${c.score}%</div>
-          <div class="alt-names">
-            <span style="color:#1a56db;font-weight:500">${esc(c.aufpasser.name)}</span> ·
-            <span style="color:#b45309">${esc(c.flitzer_l.name)}</span> ·
-            <span style="color:#15803d">${esc(c.flitzer_r.name)}</span> ·
-            <span style="color:#c2410c">${esc(c.jaeger.name)}</span>
-            ${c.tw?`<span style="color:#854d0e"> · 🥅${esc(c.tw.name)}</span>`:''}
-          </div>
-        </div>`).join("")}
-    </div>`;
-  }
 
   html+=`<div id="lineup-editor" style="margin-top:16px"></div>`;
   wrap.innerHTML=html;
   // md-aufstellung.js ist Welle 2 – ohne Schutz reisst ein fehlendes Modul das
   // ganze Rendern der Aufstellung mit.
-  if(typeof initLineupEditor==="function")initLineupEditor(best);
+  if(typeof initLineupEditor==="function")initLineupEditor();   // v853: ohne Vorbelegung
 }
 

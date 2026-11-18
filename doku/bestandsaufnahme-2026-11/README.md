@@ -114,3 +114,4 @@ als Etikett über die Familie; Prozentzahlen im Formular.
 | Kind mit (fast) nur „Nicht gesehen“ bekam 0 %, Rolle und Profiltext – jetzt Mindestregel (Hälfte der Feld-Kriterien) | ✅ v851 |
 | Kaderliste: „Ges.“ und „Pot.“ in Prozent – jetzt Stärke in Worten (Charles 18.11.) | ✅ v851 |
 | Profil: Entwicklungsstand/-tempo und Bereiche in Prozent, „Ansatz“ als 0 % – jetzt Stufen in Worten (Charles 18.11.) | ✅ v852 |
+| Aufstellung: „Beste Aufstellung 87 %“ und „Weitere gute Kombinationen“ als Bestenliste – entfernt, Rollen-Vorschlag bleibt (Charles 18.11.) | ✅ v853 |
