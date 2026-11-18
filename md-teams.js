@@ -737,6 +737,40 @@ async function teamsSpeichern(){
    Einteilung legen soll. */
 let _teamSyncId=null;
 function teamsSyncBald(){ clearTimeout(_teamSyncId); _teamSyncId=setTimeout(()=>{ teamsZeilenSchreiben(); },900); }
+/* v856 (Bestandsaufnahme 2.6): Ist die Einteilung, die hier steht, schon übernommen? Eine
+   Handkorrektur überträgt sich von selbst (teamSet → teamsSyncBald), ein neuer Vorschlag
+   („Neu verteilen“, andere Teamzahl, andere Spielform, der erste Vorschlag beim Öffnen) nicht –
+   Eltern-Ansicht, Aufstellung und Wechsel-Timer arbeiten dann noch mit dem alten Stand, und
+   nichts sagte es. Verglichen wird mit den Team-Zeilen, wie sie in der Datenbank stehen
+   (beim Laden gemerkt, nach jedem Schreiben nachgezogen) – also auf jedem Gerät gleich. */
+let _teamZeilen=null;   // {teamNr: Set(Namen mit „dabei“)} oder null = unbekannt
+function teamZeilenMerken(rows,tag){
+  const z={}; let gesehen=false;
+  (rows||[]).forEach(x=>{
+    if(!x||!x.data)return;
+    const m=x.datum===tag?1:(String(x.datum).match(new RegExp("^"+tag.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"__t(\\d+)$"))||[])[1];
+    if(!m)return;
+    gesehen=true;
+    const d=(typeof kidMapFromIds==="function")?kidMapFromIds(x.data):x.data;
+    z[Number(m)]=new Set(Object.keys(d).filter(n=>n[0]!=="_"&&d[n]==="dabei"));
+  });
+  _teamZeilen=gesehen?z:{};
+}
+/* {bekannt, offen, anders} – anders = Kinder, deren Team hier anders steht als übernommen. */
+function teamsStand(){
+  if(!_teamZeilen)return {bekannt:false,offen:false,anders:0};
+  const uebernommen={}; Object.keys(_teamZeilen).forEach(t=>_teamZeilen[t].forEach(n=>{uebernommen[n]=Number(t);}));
+  const namen=new Set([...Object.keys(uebernommen),...Object.keys(TEAMS).filter(n=>TEAMS[n])]);
+  let anders=0; namen.forEach(n=>{ if((uebernommen[n]||0)!==(TEAMS[n]||0))anders++; });
+  return {bekannt:true,offen:anders>0,anders};
+}
+function teamsStandHtml(){
+  const st=teamsStand(); if(!st.bekannt||!Object.keys(TEAMS).length)return "";
+  return st.offen
+    ?`<div id="team-stand" role="status" data-offen="1" style="font-size:var(--s-text);font-weight:700;line-height:1.35;border:1.5px solid var(--rand-bedien);border-left:5px solid #b45309;border-radius:10px;padding:8px 10px;background:var(--surface)">● Noch nicht übernommen – ${st.anders} ${st.anders===1?"Kind steht":"Kinder stehen"} hier anders als bei Eltern, Aufstellung und Wechsel-Timer.</div>`
+    :`<div id="team-stand" role="status" data-offen="0" style="font-size:var(--s-klein);color:var(--text2);text-align:center">✓ Diese Einteilung ist übernommen.</div>`;
+}
+function teamsStandNeu(){ const el=document.getElementById("team-stand"); if(!el)return; const t=document.createElement("div"); t.innerHTML=teamsStandHtml(); if(t.firstElementChild)el.replaceWith(t.firstElementChild); else el.remove(); }
 async function teamsZeilenSchreiben(){
   if(!sbToken())return false;
   const d=spieltagRawDate(), alle=KADER.map(k=>k.name);
@@ -754,6 +788,9 @@ async function teamsZeilenSchreiben(){
       if(!r.ok)return false;
     }catch(e){ return false; }
   }
+  /* v856: Was jetzt in den Team-Zeilen steht, ist die Einteilung von eben. */
+  _teamZeilen={}; for(let t=1;t<=TEAM_ANZAHL;t++)_teamZeilen[t]=new Set(alle.filter(n=>TEAMS[n]===t));
+  teamsStandNeu();
   return true;
 }
 async function teamsAnwenden(){
@@ -991,6 +1028,7 @@ function teamsRender(){
 
   // Aktionen: eine Hauptaktion, daneben „neu verteilen"
   html+=`<div style="display:flex;flex-direction:column;gap:8px;margin:6px 0 10px">
+      ${leer?"":teamsStandHtml()}
       <button class="btn btn-p" onclick="teamsAnwenden()" style="width:100%"${leer?" disabled":""}><i class="ti ti-arrow-right"></i>Teams übernehmen</button>
       <button class="btn btn-sm" onclick="teamsAuto()" style="width:100%"${leer?" disabled":""} title="Verteilt alle Kinder neu – Handänderungen gehen verloren"><i class="ti ti-wand"></i>Neu verteilen</button>
     </div>

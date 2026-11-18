@@ -37,7 +37,7 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 | 2.3 | Vorlage übernehmen: Vorschau und Hauptknopf stehen unter der ganzen Liste | ✅ v835 |
 | 2.4 | Trainingsplan ist dreieinhalb Handy-Höhen lang; Planen und Durchführen auf einer Seite, Startknopf ganz unten | teils: seit v797 klebt „Trainingsstart“ über der Navigation; Kürzen offen ⬜ |
 | 2.5 | Speichern verhält sich je Seite anders (automatisch, Knopf, beides) | teils ✅: Plan zeigt den Stand seit v797, Anwesenheit seit v845; Aufstellungsseite offen |
-| 2.6 | Teams: Zwischenschritt „In die Nominierungen übertragen“ mit Systemdialog | ✅ v836 „Teams übernehmen“, eigenes Fenster; Hinweis „noch nicht übernommen“ offen |
+| 2.6 | Teams: Zwischenschritt „In die Nominierungen übertragen“ mit Systemdialog | ✅ v836 „Teams übernehmen“, eigenes Fenster; ✅ v856 Stand „übernommen / noch nicht übernommen“ über dem Knopf |
 | 2.7 | Zwei Aufstellungen in zwei Tabellen, die nichts voneinander wissen | ⬜ groß |
 | 2.8 | „Wer kommt?“ hat fünf Ansichten mit fünf Namen | teils ✅ v846: Stand und Detail der Rückmeldungen verbunden, Einstiege gleich benannt; „Wer kommt?“ am Spieltag und die Anwesenheit bleiben eigene Seiten |
 | 2.9 | „Wie war’s?“ erreicht nur, wer zugesagt hat oder im Plan steht | ✅ v844 auch nach gespeicherter Trainer-Anwesenheit (das To-do über den Plan unverändert) |

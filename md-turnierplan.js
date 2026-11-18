@@ -465,6 +465,7 @@ async function nomLoad(){
     const r=await fetch(`${SB_URL}/rest/v1/nominierungen?datum=like.${encodeURIComponent(tag)}*&select=datum,data`,{headers:sbAuthHeaders()});
     if(!sbCheck401(r)&&r.ok){
       const rows=await r.json();
+      if(typeof teamZeilenMerken==="function")teamZeilenMerken(rows,tag);   // v856: Stand der übernommenen Einteilung
       const global=rows.find(x=>x.datum===nomKey());
       if(global&&global.data){
         const d=kidMapFromIds(global.data); if(Array.isArray(d._ovr))nomOvr=new Set(kidListFromIds(d._ovr)); delete d._ovr; nomStatus=d;
