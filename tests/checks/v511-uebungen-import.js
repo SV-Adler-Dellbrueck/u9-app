@@ -7,6 +7,10 @@
    (2) Übungen kamen nur als NEBENWIRKUNG eines Einheiten-Imports in die App – danach stand
        zwingend ein Trainingsplan für ein Datum da. Das neue Schema `adler-uebungen/1`
        schreibt in `trainingsformen` und in NICHTS sonst.
+   v872: Die Import-Fenster sind entfernt (Charles 18.11.: „Raus, Prüfung bleibt“). Geprüft
+   wird jetzt der Weg, der bleibt: `_euPruefung()` + `_euAnlegen()`, dieselben Funktionen, die
+   `bibliothekAbgleich()` für uebungen/bibliothek.json benutzt. Der Teil zum Einheiten-Import
+   entfällt mit dem Fenster.
    Dazu die Falle aus v506, die hier weiterläuft: die Kategorie-Spiegelung EI_KAT_PHASE muss
    zu tpFilteredOpts() passen, und die neue Liste EI_KATS zu den Kategorien, die der
    Übungs-Editor tatsächlich anbietet. */
@@ -32,11 +36,9 @@ module.exports = async function (h) {
   /* Bewusst in mehreren Schritten gemessen: ein einziges evaluate() über den ganzen Ablauf
      bricht ab, sobald eine Aktion darin die Seite umbaut („Execution context destroyed"). */
   const r = await s.page.evaluate(async () => {
-    if (typeof uebungImportUebernehmen !== "function") return { fehlt: "uebungImportUebernehmen" };
+    if (typeof _euAnlegen !== "function" || typeof _euPruefung !== "function") return { fehlt: "_euPruefung/_euAnlegen" };
     const bau = {
-      open: typeof uebungImportOpen === "function",
-      // v512: Der Übungs-Import ist in den Übungen-Bereich gezogen – er füllt die
-      // Formen-Datenbank und rührt den Plan nicht an.
+      fensterWeg: typeof uebungImportOpen === "undefined" && typeof uebungImportUebernehmen === "undefined",
       knopf: [...document.querySelectorAll("#train-sub-formen button")].some(b => /Übungen importieren/.test(b.textContent)),
       alterKnopf: [...document.querySelectorAll("#train-sub-planung button")].some(b => /Einheit importieren/.test(b.textContent))
     };
@@ -51,11 +53,7 @@ module.exports = async function (h) {
     });
     const editorKats = [...document.querySelectorAll("#tf-kat option")].map(o => o.value);
 
-    // ── Prüfen: fehlerhafte Eingaben, dabei darf nichts geschrieben werden ──
-    const warte = ms => new Promise(r => setTimeout(r, ms));
-    uebungImportOpen(); await warte(60);
-    const setze = t => { document.getElementById("eu-json").value = t; };
-    const pruefe = t => { setze(t); uebungImportPruefen(); return (document.getElementById("eu-melde").textContent || ""); };
+    // ── Prüfen: fehlerhafte Eingaben werden abgewiesen ──
     const schlecht = [
       ["kein JSON", "{nope"],
       ["falsches Schema", JSON.stringify({ schema: "adler-einheit/1", uebungen: [{ name: "A" }] })],
@@ -65,19 +63,16 @@ module.exports = async function (h) {
       ["Skizze kaputt", JSON.stringify({ schema: "adler-uebungen/1", uebungen: [{ name: "A", skizze: { s: "nein" } }] })],
       ["zweimal derselbe Name", JSON.stringify({ schema: "adler-uebungen/1", uebungen: [{ name: "Doppel" }, { name: " doppel " }] })]
     ];
-    const meldungen = schlecht.map(([lbl, txt]) => ({ lbl, rot: /Bitte noch korrigieren/.test(pruefe(txt)) }));
-    uebungImportClose();
+    const meldungen = schlecht.map(([lbl, txt]) => ({ lbl, rot: _euPruefung(txt).fehler.length > 0 }));
     return { bau, abw, editorKats, kats: EI_KATS, meldungen };
   });
   const fehler1 = s.fehler();
-  if (r.fehlt) { probleme.push(`${r.fehlt} fehlt – der Übungs-Import ist nicht geladen`); await s.schliessen(); return h.ergebnis("Übungen importieren", false, probleme); }
+  if (r.fehlt) { probleme.push(`${r.fehlt} fehlt – Prüfung und Anlegen sind nicht geladen`); await s.schliessen(); return h.ergebnis("Übungen anlegen (Abgleichsweg)", false, probleme); }
   const beimPruefen = custom.length;
 
+  // Derselbe Weg wie bibliothekAbgleich(): prüfen, neu markieren, anlegen.
   const r2 = await s.page.evaluate(async ({ SKIZZE }) => {
     const warte = ms => new Promise(r => setTimeout(r, ms));
-    const setze = t => { document.getElementById("eu-json").value = t; };
-    uebungImportOpen(); await warte(60);
-    // ── Gute Datei: drei Übungen, eine mit Zeichnung ──
     const gut = JSON.stringify({
       schema: "adler-uebungen/1",
       uebungen: [
@@ -86,18 +81,13 @@ module.exports = async function (h) {
         { name: "Abwurf-Duell", kat: "torwart" }
       ]
     });
-    setze(gut); uebungImportPruefen(); await warte(60);
     window.__gut = gut;
-    const vor = document.getElementById("eu-vorschau");
-    const vorschau = {
-      text: (vor.textContent || "").replace(/\s+/g, " ").trim().slice(0, 140),
-      neu: (vor.textContent.match(/neu/g) || []).length,
-      skizzeGezeichnet: !!vor.querySelector("svg"),
-      hauptText: (document.getElementById("eu-haupt").textContent || "").trim()
-    };
-    await uebungImportUebernehmen(); await warte(200);
+    const { fehler, daten } = _euPruefung(gut);
+    const liste = daten.uebungen.map(u => ({ ...u, kat: u.kat == null ? "technik" : String(u.kat), neu: _eiFormIndex(u.name) < 0 }));
+    const erg = await _euAnlegen(liste); await warte(200);
     const nachher = {
-      offen: !!document.getElementById("eu-modal"),
+      pruefFehler: fehler.length,
+      erg,
       formen: tpAllForms().filter(f => /Doppelpass-Dreieck|Fangspiel Hai|Abwurf-Duell/.test(f.name)).map(f => ({ name: f.name, kat: f.kat, svg: (f.svg || "").length })),
       // Auswahl im Trainingsplan, nach Phase gefiltert
       imWarmup: tpFilteredOpts("warmup").some(x => x.f.name === "Fangspiel Hai"),
@@ -105,54 +95,27 @@ module.exports = async function (h) {
       imMain: tpFilteredOpts("main").some(x => x.f.name === "Doppelpass-Dreieck"),
       warmupFalsch: tpFilteredOpts("warmup").some(x => x.f.name === "Doppelpass-Dreieck")
     };
-    return { vorschau, nachher };
+    return { nachher };
   }, { SKIZZE });
 
   const r3 = await s.page.evaluate(async () => {
-    const warte = ms => new Promise(r => setTimeout(r, ms));
-    const setze = t => { document.getElementById("eu-json").value = t; };
     // ── Zweiter Lauf derselben Datei: nichts doppelt ──
-    uebungImportOpen(); await warte(60);
-    setze(window.__gut); uebungImportPruefen(); await warte(60);
-    const zweiter = {
-      // Schilder zählen, nicht Wörter: in der Kopfzeile steht „vorhanden" noch einmal
-      neu: [...document.querySelectorAll("#eu-vorschau span")].filter(x => x.textContent.trim() === "vorhanden").length,
-      haupt: (document.getElementById("eu-haupt").textContent || "").trim(),
-      gesperrt: !!document.getElementById("eu-haupt").disabled
-    };
-    uebungImportClose();
-    return { zweiter };
+    const { daten } = _euPruefung(window.__gut);
+    const liste = daten.uebungen.map(u => ({ ...u, neu: _eiFormIndex(u.name) < 0 }));
+    const erg = await _euAnlegen(liste);
+    return { zweiter: { vorhanden: liste.filter(u => !u.neu).length, angelegt: erg.angelegt, uebersprungen: erg.uebersprungen } };
   });
-
-  const r4 = await s.page.evaluate(async ({ SKIZZE }) => {
-    const warte = ms => new Promise(r => setTimeout(r, ms));
-    // ── Einheiten-Import trägt jetzt Skizzen ──
-    const heute = new Date(Date.now() + 4 * 864e5).toISOString().slice(0, 10);
-    einheitImportOpen(); await warte(60);
-    document.getElementById("ei-json").value = JSON.stringify({
-      schema: "adler-einheit/1", datum: heute, dauer_min: 20,
-      bloecke: [{ label: "Ankommen", typ: "warmup", dauer: 20, uebung: { name: "Kegel-Fangen", kat: "aufwaermen", skizze: SKIZZE } }]
-    });
-    await einheitImportPruefen(); await warte(120);
-    await einheitImportUebernehmen(); await warte(250);
-    const einheit = { form: tpAllForms().find(f => f.name === "Kegel-Fangen") || null };
-    return { einheitSkizze: !!(einheit.form && einheit.form.skizze), einheitSvg: (einheit.form && einheit.form.svg || "").length };
-  }, { SKIZZE });
-  Object.assign(r, r2, r3, r4);
-  const fehler = s.fehler(); await s.schliessen();
+  Object.assign(r, r2, r3);
+  const fehler = fehler1.concat(s.fehler()); await s.schliessen();
 
   // Ladearchitektur
   const tr = fs.readFileSync(path.join(h.REPO, "trainer/index.html"), "utf8");
   const el = fs.readFileSync(path.join(h.REPO, "eltern/index.html"), "utf8");
-  if (!r.bau.open) probleme.push("uebungImportOpen fehlt");
+  if (!r.bau.fensterWeg) probleme.push("Das Fenster „Übungen importieren“ ist wieder im Modul (v872: entfallen)");
   /* v539: Der Knopf ist WEG – bewusst. Eingespielt wird über uebungen/bibliothek.json und
      uebungen/vorlagen.json im Repo, die beim Öffnen automatisch abgeglichen werden; der
-     Abgleich benutzt dieselbe Prüfung, die dieser Lauf unten durchspielt. Der Dialog bleibt
-     im Modul erreichbar, er wird nur nicht mehr angeboten. Geprüft wird deshalb jetzt, dass
-     er nicht zurückkommt. */
+     Abgleich benutzt dieselbe Prüfung, die dieser Lauf durchspielt. */
   if (r.bau.knopf) probleme.push("Der Knopf „Übungen importieren“ steht wieder im Übungen-Bereich (v539: entfallen)");
-  /* v538: dasselbe eine Ebene weiter – der Einstieg „Einheit importieren“ im Trainingsplan
-     ist ebenfalls entfallen. Beide Dialoge leben weiter im Modul, nur ohne Knopf. */
   if (r.bau.alterKnopf) probleme.push("Der Knopf „Einheit importieren“ steht wieder im Trainingsplan (v538: entfallen)");
   /* Der Wachname folgt der LETZTEN Funktion der Datei – seit v512 ist das bibliothekAbgleich.
      Geprüft wird hier nur, dass das Modul überhaupt bewacht ist und in beiden Einstiegen
@@ -173,11 +136,11 @@ module.exports = async function (h) {
   if (durchgerutscht.length) probleme.push(`Diese Eingaben wurden nicht abgewiesen: ${durchgerutscht.join(" · ")}`);
   if (beimPruefen) probleme.push(`Beim Prüfen wurden schon ${beimPruefen} Zeilen geschrieben`);
 
-  // Übernehmen
-  if (r.nachher.offen) probleme.push("Das Fenster bleibt nach dem Übernehmen offen");
-  if (custom.length !== 4) probleme.push(`In trainingsformen stehen ${custom.length} neue Zeilen (erwartet 4: 3 aus dem Übungs-Import, 1 aus dem Einheiten-Import)`);
-  if (Object.keys(plaene).length !== 1) probleme.push(`Der Übungs-Import hat einen Trainingsplan geschrieben: ${Object.keys(plaene).join(", ")} (erwartet ist nur der eine aus dem Einheiten-Import)`);
-  if (r.nachher.formen.length !== 3) probleme.push(`Nach dem Import kennt tpAllForms ${r.nachher.formen.length} der drei Übungen`);
+  // Anlegen
+  if (r.nachher.pruefFehler) probleme.push(`Die gute Datei meldet ${r.nachher.pruefFehler} Fehler`);
+  if (custom.length !== 3) probleme.push(`In trainingsformen stehen ${custom.length} neue Zeilen (erwartet 3)`);
+  if (Object.keys(plaene).length) probleme.push(`Das Anlegen von Übungen hat einen Trainingsplan geschrieben: ${Object.keys(plaene).join(", ")}`);
+  if (r.nachher.formen.length !== 3) probleme.push(`Nach dem Anlegen kennt tpAllForms ${r.nachher.formen.length} der drei Übungen`);
   if (!r.nachher.imWarmup || !r.nachher.imTw || !r.nachher.imMain)
     probleme.push(`Die Auswahl im Trainingsplan filtert falsch: Aufwärmen ${r.nachher.imWarmup}, Torwart ${r.nachher.imTw}, Hauptteil ${r.nachher.imMain}`);
   if (r.nachher.warmupFalsch) probleme.push("Eine Passspiel-Übung steht in der Aufwärm-Auswahl");
@@ -188,18 +151,16 @@ module.exports = async function (h) {
   const ohneSkizze = custom.find(f => f.name === "Fangspiel Hai");
   if (ohneSkizze && ohneSkizze.skizze !== null) probleme.push("Eine Übung ohne Zeichnung bekommt jetzt etwas anderes als null");
   const gezeichnet = r.nachher.formen.find(f => f.name === "Doppelpass-Dreieck");
-  if (!gezeichnet || gezeichnet.svg < 100) probleme.push("Die importierte Übung zeigt keine Zeichnung (svg leer)");
-  if (!r.vorschau.skizzeGezeichnet) probleme.push("Die Vorschau zeigt die mitgelieferte Zeichnung nicht");
-  if (!r.einheitSkizze || r.einheitSvg < 100) probleme.push("Der Einheiten-Import transportiert die Zeichnung nicht");
+  if (!gezeichnet || gezeichnet.svg < 100) probleme.push("Die angelegte Übung zeigt keine Zeichnung (svg leer)");
 
   // Zweiter Lauf
-  if (r.zweiter.neu !== 3) probleme.push(`Beim zweiten Lauf sind ${r.zweiter.neu} statt 3 Übungen als „vorhanden“ markiert`);
-  if (!r.zweiter.gesperrt) probleme.push("Beim zweiten Lauf lässt sich trotzdem „anlegen“ drücken");
+  if (r.zweiter.vorhanden !== 3) probleme.push(`Beim zweiten Lauf gelten ${r.zweiter.vorhanden} statt 3 Übungen als vorhanden`);
+  if (r.zweiter.angelegt || custom.length !== 3) probleme.push(`Beim zweiten Lauf wurden ${r.zweiter.angelegt} Übungen doppelt angelegt`);
   if (fehler.length) probleme.push(...fehler.slice(0, 3));
 
-  zeilen.push(`Ladearchitektur: Knöpfe ${r.bau.knopf}/${r.bau.alterKnopf} · MODUL_WACHE auf uebungImportUebernehmen · EI_KATS deckt sich mit dem Editor (${r.kats.length} Kategorien) · EI_KAT_PHASE ↔ tpFilteredOpts ${r.abw.length} Abweichungen`);
-  zeilen.push(`${r.meldungen.length} fehlerhafte Eingaben → ${r.meldungen.filter(m => m.rot).length} Meldungen · Vorschau: „${r.vorschau.hauptText}“, Zeichnung ${r.vorschau.skizzeGezeichnet}`);
-  zeilen.push(`Angelegt: ${custom.length} Zeilen in trainingsformen, ${Object.keys(plaene).length} Plan (nur aus dem Einheiten-Import) · Auswahl: Aufwärmen ${r.nachher.imWarmup}, Torwart ${r.nachher.imTw}, Hauptteil ${r.nachher.imMain}`);
-  zeilen.push(`Zweiter Lauf: „${r.zweiter.haupt}“, gesperrt ${r.zweiter.gesperrt} · Skizze im Einheiten-Import ${r.einheitSkizze}`);
-  return h.ergebnis("Übungen importieren – ohne Datum, mit Zeichnung", !probleme.length, zeilen.concat(probleme));
+  zeilen.push(`Ladearchitektur: Fenster entfernt ${r.bau.fensterWeg} · Knöpfe ${r.bau.knopf}/${r.bau.alterKnopf} · EI_KATS deckt sich mit dem Editor (${r.kats.length} Kategorien) · EI_KAT_PHASE ↔ tpFilteredOpts ${r.abw.length} Abweichungen`);
+  zeilen.push(`${r.meldungen.length} fehlerhafte Eingaben → ${r.meldungen.filter(m => m.rot).length} abgewiesen, ${beimPruefen} Schreibzugriffe`);
+  zeilen.push(`Angelegt über _euAnlegen: ${custom.length} Zeilen in trainingsformen, ${Object.keys(plaene).length} Pläne · Zeichnung ${gezeichnet ? gezeichnet.svg : 0} Zeichen SVG · Auswahl: Aufwärmen ${r.nachher.imWarmup}, Torwart ${r.nachher.imTw}, Hauptteil ${r.nachher.imMain}`);
+  zeilen.push(`Zweiter Lauf: ${r.zweiter.vorhanden} vorhanden, ${r.zweiter.angelegt} angelegt`);
+  return h.ergebnis("Übungen anlegen (Abgleichsweg) – ohne Datum, mit Zeichnung", !probleme.length, zeilen.concat(probleme));
 };

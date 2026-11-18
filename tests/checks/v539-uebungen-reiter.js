@@ -14,8 +14,7 @@
    d) „noch nicht eingesetzt" steht weiter da, aber ohne Abzeichen.
    e) Die Kacheln sind mindestens 48 px hoch (cockpit-ui) und tragen aria-pressed.
    f) „Übungen importieren" und „Vorlagen importieren" werden nicht mehr angeboten;
-      die Dialoge bleiben im Modul erreichbar, weil der automatische Abgleich ihre
-      Prüfung benutzt. */
+      seit v872 sind auch die Dialoge entfernt – Prüfung und Abgleich bleiben. */
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
 
@@ -101,10 +100,15 @@ module.exports = async function (h) {
   if (/<button[^>]*uebungImportOpen/.test(formen)) probleme.push("„Übungen importieren“ wird noch angeboten");
   if (/<button[^>]*vorlagenImportOpen/.test(formen)) probleme.push("„Vorlagen importieren“ wird noch angeboten");
   const modul = fs.readFileSync(path.join(h.REPO, "md-einheit-import.js"), "utf8");
-  ["uebungImportOpen", "vorlagenImportOpen", "bibliothekAbgleich"].forEach(n => {
-    if (!new RegExp(`function ${n}\\b`).test(modul)) probleme.push(`${n} fehlt im Modul – der Abgleich braucht dieselbe Prüfung`);
+  /* v872: Die Dialoge selbst sind entfernt (Charles 18.11.: „Raus, Prüfung bleibt“). Verlangt
+     wird jetzt, dass sie FEHLEN – und dass Prüfung und Abgleich weiter im Modul stehen. */
+  ["uebungImportOpen", "vorlagenImportOpen", "einheitImportOpen"].forEach(n => {
+    if (new RegExp(`function ${n}\\b`).test(modul)) probleme.push(`${n} steht wieder im Modul (v872: entfallen)`);
   });
-  if (!probleme.length) zeilen.push("Knöpfe entfallen, Dialoge und Abgleich im Modul unverändert");
+  ["_euPruefung", "_evPruefung", "bibliothekAbgleich"].forEach(n => {
+    if (!new RegExp(`function ${n}\\b`).test(modul)) probleme.push(`${n} fehlt im Modul – der Abgleich braucht die Prüfung`);
+  });
+  if (!probleme.length) zeilen.push("Knöpfe und Dialoge entfallen, Prüfung und Abgleich im Modul");
 
   return h.ergebnis("Übungen-Reiter: drei Überschriften, „neu“ läuft ab, keine Import-Knöpfe", !probleme.length, zeilen.concat(probleme));
 };
