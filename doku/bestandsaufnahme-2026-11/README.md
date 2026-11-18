@@ -55,14 +55,14 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 | 3.4 | Trainings werden rot gemahnt, obwohl sie als zugesagt gelten | ✅ v838 (Charles 17.11.) |
 | 3.5 | Bis zu elf bedingte Blöcke oben ohne Ordnung; Ansage steht unter Terminkarte | ✅ v838 drei Zonen (Charles 17.11.) |
 | 3.6 | „Neue Adler-Rufe“ öffnet den ersten offenen Raum, nicht den mit dem neuen Ruf | ✅ v837 |
-| 3.7 | Neuigkeiten verschwinden mit dem Lesen, kein Ort zum Nachlesen | ⬜ |
+| 3.7 | Neuigkeiten verschwinden mit dem Lesen, kein Ort zum Nachlesen | ✅ v859 „Nachlesen“: Ansagen 60 Tage, Neues in der App |
 | 3.8 | „Passwort vergessen“ endet ohne neues Passwort | ✅ v837 |
 | 3.9 | Erster Besuch stapelt sechs Dinge (Einwilligung, Auftakt, Tour, Hinweise, Checkliste) | 🔶 Tour-Länge v658 |
 | 3.10 | Kontoeinstellungen liegen an vier Orten | ⬜ |
-| 3.11 | Foto-Knopf auf der Terminkarte zeigt den kommenden Termin, also meist nichts | ⬜ |
+| 3.11 | Foto-Knopf auf der Terminkarte zeigt den kommenden Termin, also meist nichts | ✅ v859 vor dem Termin: Fotos der letzten Spieltage |
 | 3.12 | Tipp auf eine Benachrichtigung: erst Auftakt, dann Wartezeit | ✅ v837 |
-| 3.13 | Wochenkacheln schmal; „✕“ steht für drei Bedeutungen | ⬜ |
-| 3.14 | Barrierefreiheit: `aria-pressed` fehlt, Sperrknopf nur über Deckkraft, Dunkelmodus ungeprüft | ⬜ |
+| 3.13 | Wochenkacheln schmal; „✕“ steht für drei Bedeutungen | teils ✅ v859: „–“ für „fällt aus“, „✕“ für „nicht dabei“; Breite offen |
+| 3.14 | Barrierefreiheit: `aria-pressed` fehlt, Sperrknopf nur über Deckkraft, Dunkelmodus ungeprüft | teils ✅ aria-pressed an den Antwortknöpfen seit v840; v859 Einwilligungs-Knopf mit Text statt Deckkraft; Dunkelmodus offen |
 | 3.15 | „Für die Kinder“ steht vor „Trainerteam kontaktieren“; „Mehr vom Team“ bündelt acht ungleiche Dinge | 🔶 |
 
 ## Paket 4 · Struktur und Sprache
