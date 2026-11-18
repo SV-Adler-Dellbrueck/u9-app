@@ -25,7 +25,7 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 | 1.8 | Ein Trainer mit zehn und mehr Kindern: die gewählte Spielform ist oft zu klein; besser zwei Felder mit derselben Form | ✅ v864 (Charles 18.11.): ein Trainer ab 10 Kindern zwei Felder, dieselbe Form; hebt v656 nur für diesen Fall auf |
 | 1.9 | Einzel-Hauptteil ohne Stufen (Technik-Parcours) bekam bei zwei Trainern eine fremde Übung auf Feld 2 | ✅ v834 |
 | 1.10 | `trainerIstFeldtrainer` wird nirgends aufgerufen – Trainer mit Rolle „organisation“ zählt als Station | ✅ nachgeprüft 18.11.: seit v536 nicht vorbelegt, kein Feld (Prüffall v536); nur die Hilfsfunktion ist ungenutzt → toter Code |
-| 1.11 | Torwart: L3-1 hängt den Torwart-Block an Stufe 1; Gruppenbildung verteilt nach Torwart-Haken statt Rotation | teils ✅ v864: Torwart-Block der Vorlage parallel zum letzten Hauptteil davor, Tausch auf gleicher Position; Rotation „zuletzt im Tor“ beschlossen (Charles 18.11.), folgt |
+| 1.11 | Torwart: L3-1 hängt den Torwart-Block an Stufe 1; Gruppenbildung verteilt nach Torwart-Haken statt Rotation | teils ✅ v864: Torwart-Block der Vorlage parallel zum letzten Hauptteil davor, Tausch auf gleicher Position; ✅ v865 Rotation „zuletzt im Tor“ (Spieltag-Aufstellungen) |
 | 1.12 | Vorlagen der Typen L4-2/L4-5: `vuAbschlussturnierSichern` schneidet ein zweites Turnier ab | ✅ v863: L4-5 bekommt kein zweites Turnier mehr; L4-2 bleibt Lehrgangsform 15:30:15:30 (Charles 18.11.) |
 
 ## Paket 2 · Trainer am Platz
