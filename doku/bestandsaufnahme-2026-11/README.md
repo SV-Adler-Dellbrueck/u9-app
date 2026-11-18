@@ -35,7 +35,7 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 | 2.1 | Live-Ansicht „Trainingsstart“ zeigt weder Skizze noch Ablauf (`_tlRender`) | ✅ v835 |
 | 2.2 | Knopf „Matchday“ führt vor dem Spiel in „Nach dem Spiel“ (`views.js` `tmJump('blitz')`) | ✅ v835 „Zum Spieltag“ |
 | 2.3 | Vorlage übernehmen: Vorschau und Hauptknopf stehen unter der ganzen Liste | ✅ v835 |
-| 2.4 | Trainingsplan ist dreieinhalb Handy-Höhen lang; Planen und Durchführen auf einer Seite, Startknopf ganz unten | teils: seit v797 klebt „Trainingsstart“ über der Navigation; Kürzen offen ⬜ |
+| 2.4 | Trainingsplan ist dreieinhalb Handy-Höhen lang; Planen und Durchführen auf einer Seite, Startknopf ganz unten | ✅ seit v797 klebt „Trainingsstart“ über der Navigation; seit v857 klappen gefüllte Blöcke auf eine Zeile ein (Charles 18.11.) |
 | 2.5 | Speichern verhält sich je Seite anders (automatisch, Knopf, beides) | ✅ Plan zeigt den Stand seit v797, Anwesenheit seit v845, Aufstellungsseite seit v856 |
 | 2.6 | Teams: Zwischenschritt „In die Nominierungen übertragen“ mit Systemdialog | ✅ v836 „Teams übernehmen“, eigenes Fenster; ✅ v856 Stand „übernommen / noch nicht übernommen“ über dem Knopf |
 | 2.7 | Zwei Aufstellungen in zwei Tabellen, die nichts voneinander wissen | ⬜ groß |
