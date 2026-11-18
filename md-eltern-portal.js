@@ -461,7 +461,8 @@ function elternPortalDashboard(root){
   </div>`;
   if(typeof applyTheme==="function")applyTheme(localStorage.getItem("adler_theme")); // Toggle-Icon + data-theme
   if(typeof applySchrift==="function"){ try{ applySchrift(localStorage.getItem("adler_schrift")); }catch(e){} }   // v632: Knopf beschriften
-  if(typeof schriftHinweisZeigen==="function"){ const hdr=root.querySelector(".ep-wrap"); if(hdr&&!document.getElementById("schrift-hinweis-eltern")){ const d=document.createElement("div"); d.id="schrift-hinweis-eltern"; const kopf=hdr.firstElementChild; kopf?kopf.after(d):hdr.prepend(d); schriftHinweisZeigen(d); } }   // v632: einmaliger Hinweis
+  let _tourFertig=false; try{ _tourFertig=!!localStorage.getItem("adler_eltern_tour"); }catch(e){}
+  if(_tourFertig&&typeof schriftHinweisZeigen==="function"){ const hdr=root.querySelector(".ep-wrap"); if(hdr&&!document.getElementById("schrift-hinweis-eltern")){ const d=document.createElement("div"); d.id="schrift-hinweis-eltern"; const kopf=hdr.firstElementChild; kopf?kopf.after(d):hdr.prepend(d); schriftHinweisZeigen(d); } }   // v632: einmaliger Hinweis
   if(typeof elternThemeInit==="function"){ elternThemeInit(); elternThemeSweep(document.getElementById("eltern-portal")||document.body); } // Kopfzeile bei Dark einfärben
   dsgvoEnsureConsent(elternDashLoad); // Dashboard erst nach Datenschutz-Einwilligung laden
   if(typeof kabineGesperrt==="function"&&kabineGesperrt()&&typeof kabineSperre==="function")kabineSperre();   // v609: Kabinen-Zeit war abgelaufen – erst der Code öffnet
@@ -1279,6 +1280,27 @@ async function elternDashLoad(){
   html+=`<div id="kann-jetzt-slot"></div>`;
   // ── FÜR DIE KINDER ── (gleiche Button-Optik wie die Kategorien unten: Kabine = Direktstart,
   //    je Kind ein Button, der ein Kind-Fenster im Overlay öffnet)
+  // v718: Das Team-Level steht groß in der Kabine (für die Kinder) – hier nicht noch einmal.
+  // ── MEHR VOM TEAM (einklappbar – Referenz/Selteneres) · kasse kam schon parallel oben ──
+  // ── Kategorie-Buttons: öffnen je ein fokussiertes Fenster (statt Inline-Akkordeon). Die
+  //    Inhalte liegen (versteckt) im Overlay, damit die Async-Loader ihre Slots weiter füllen. ──
+  // Einheitliche Aktions-Zeile für die Panel-Inhalte (Icon + Titel + Beschreibung + ›, farbiger
+  // Akzent links in Tönen der Kategorie-Farbe). noClose=true lässt das Fenster offen (z. B. Export).
+  const elRow=(emo,label,d,onclick,col,noClose)=>`<button onclick="${noClose?"":"elternCatClose();"}${onclick}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border:1px solid var(--rand-bedien);border-left:4px solid ${col};border-radius:12px;padding:13px;margin-bottom:8px;font-family:inherit;cursor:pointer"><span style="font-size:var(--s-teil);line-height:1">${emo}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-text);font-weight:700;color:#0f172a">${label}</span><span style="display:block;font-size:var(--s-klein);color:#64748b;margin-top:1px">${d}</span></span><span style="font-size:var(--s-karte);color:var(--text3)">›</span></button>`;
+  const catBtn=(id,emoji,title,desc,grad)=>`<button onclick="elternCatOpen('${id}')" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)"><span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon(emoji)}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">${title}</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">${desc}</span></span><span style="font-size:var(--s-teil);color:#64748b">›</span></button>`;
+  /* v862 (Charles 18.11., 3.15): oben „Fürs Team“ (Trainerteam, Termine, Kasse), dann „Für die Kinder“, dann „Mehr“.
+     Vorher stand „Für die Kinder“ vor dem Weg zum Trainerteam. */
+  html+=sec("Fürs Team");
+  // v637: Der Weg zum Trainerteam steht zuerst und heißt so, wie Eltern danach suchen.
+  html+=catBtn('kontakt','🗣️','Trainerteam kontaktieren','Frage oder Elterngespräch','linear-gradient(135deg,#475569,#334155)');
+  // v718: vorher eine eigene Karte „Termine“ mit nur diesem Knopf
+  html+=`<button type="button" id="alle-termine-kachel" onclick="elternTermineOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)"><span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("📅")}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Alle Termine &amp; Kalender-Abo</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Ganze Saison, im eigenen Kalender abonnieren</span></span><span aria-hidden="true" style="font-size:var(--s-teil);opacity:.85">›</span></button>`;
+  /* v699: Mannschaftskasse als eigene Kachel – alle Eltern lesen Kassenstand und jede Bewegung;
+     darunter „Kasse führen“, nur für die Kasse (elternKasseRolleLoad füllt den Slot). */
+  const mkSaldo=kasse&&kasse.saldo!=null?`Kassenstand ${Number(kasse.saldo).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})} € · Ausgaben und Beiträge`:"Kassenstand, Ausgaben und Beiträge";
+  html+=`<button type="button" id="mannschaftskasse-kachel" onclick="if(typeof mannschaftskasseOpen==='function')mannschaftskasseOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)">
+    <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("💰")}</span><span style="flex:1;min-width:0"><span style="display:block;font-weight:800;font-size:var(--s-karte)">Mannschaftskasse</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">${mkSaldo}</span><span id="mk-beitrag-stand" style="display:block;font-size:var(--s-klein);font-weight:700;margin-top:3px"></span></span><span aria-hidden="true" style="font-size:var(--s-teil);opacity:.85">›</span></button>`;   // v710: Maße wie catBtn – stand sichtbar aus der Flucht
+  html+=`<div id="kasse-verwalten-slot"></div>`;   // v664/v699: „Kasse führen“ – nur für die Kasse
   html+=sec("🎮 Für die Kinder");
   html+=`<button onclick="elternKabineStart()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)">
     <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("🎮")}</span>
@@ -1297,26 +1319,8 @@ async function elternDashLoad(){
       <span style="font-size:var(--s-teil);color:#64748b">›</span>
     </button>`;
   }).join("");
-  // v718: Das Team-Level steht groß in der Kabine (für die Kinder) – hier nicht noch einmal.
-  // ── MEHR VOM TEAM (einklappbar – Referenz/Selteneres) · kasse kam schon parallel oben ──
-  // ── Kategorie-Buttons: öffnen je ein fokussiertes Fenster (statt Inline-Akkordeon). Die
-  //    Inhalte liegen (versteckt) im Overlay, damit die Async-Loader ihre Slots weiter füllen. ──
-  // Einheitliche Aktions-Zeile für die Panel-Inhalte (Icon + Titel + Beschreibung + ›, farbiger
-  // Akzent links in Tönen der Kategorie-Farbe). noClose=true lässt das Fenster offen (z. B. Export).
-  const elRow=(emo,label,d,onclick,col,noClose)=>`<button onclick="${noClose?"":"elternCatClose();"}${onclick}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border:1px solid var(--rand-bedien);border-left:4px solid ${col};border-radius:12px;padding:13px;margin-bottom:8px;font-family:inherit;cursor:pointer"><span style="font-size:var(--s-teil);line-height:1">${emo}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-text);font-weight:700;color:#0f172a">${label}</span><span style="display:block;font-size:var(--s-klein);color:#64748b;margin-top:1px">${d}</span></span><span style="font-size:var(--s-karte);color:var(--text3)">›</span></button>`;
-  const catBtn=(id,emoji,title,desc,grad)=>`<button onclick="elternCatOpen('${id}')" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)"><span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon(emoji)}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">${title}</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">${desc}</span></span><span style="font-size:var(--s-teil);color:#64748b">›</span></button>`;
   html+=sec("Mehr");
-  // v637: Der Weg zum Trainerteam steht zuerst und heißt so, wie Eltern danach suchen.
-  html+=catBtn('kontakt','🗣️','Trainerteam kontaktieren','Frage oder Elterngespräch','linear-gradient(135deg,#475569,#334155)');
-  // v718: vorher eine eigene Karte „Termine“ mit nur diesem Knopf
-  html+=`<button type="button" id="alle-termine-kachel" onclick="elternTermineOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)"><span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("📅")}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Alle Termine &amp; Kalender-Abo</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Ganze Saison, im eigenen Kalender abonnieren</span></span><span aria-hidden="true" style="font-size:var(--s-teil);opacity:.85">›</span></button>`;
-  /* v699: Mannschaftskasse als eigene Kachel – alle Eltern lesen Kassenstand und jede Bewegung;
-     darunter „Kasse führen“, nur für die Kasse (elternKasseRolleLoad füllt den Slot). */
-  const mkSaldo=kasse&&kasse.saldo!=null?`Kassenstand ${Number(kasse.saldo).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})} € · Ausgaben und Beiträge`:"Kassenstand, Ausgaben und Beiträge";
-  html+=`<button type="button" id="mannschaftskasse-kachel" onclick="if(typeof mannschaftskasseOpen==='function')mannschaftskasseOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)">
-    <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("💰")}</span><span style="flex:1;min-width:0"><span style="display:block;font-weight:800;font-size:var(--s-karte)">Mannschaftskasse</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">${mkSaldo}</span><span id="mk-beitrag-stand" style="display:block;font-size:var(--s-klein);font-weight:700;margin-top:3px"></span></span><span aria-hidden="true" style="font-size:var(--s-teil);opacity:.85">›</span></button>`;   // v710: Maße wie catBtn – stand sichtbar aus der Flucht
-  html+=`<div id="kasse-verwalten-slot"></div>`;   // v664/v699: „Kasse führen“ – nur für die Kasse
-  html+=catBtn('mehr','📰','Mehr vom Team','Spieltagsgalerie, Adler Nest, Börse','linear-gradient(135deg,#1e3a8a,#2563eb)');
+  html+=catBtn('mehr','📰','Mehr vom Team','Nachlesen, Adler Nest, Spieltagsgalerie, Börse, Fundbüro','linear-gradient(135deg,#1e3a8a,#2563eb)');
   html+=catBtn('regeln','📋','Regeln &amp; Vereinbarungen','Unsere Vereinbarung &amp; das Fairplay-Quiz','linear-gradient(135deg,#15803d,#047857)');
   html+=catBtn('datenschutz','🔒','Freigaben &amp; Notfallkarte','Foto/Video-Freigabe und Notfallkarte je Kind','linear-gradient(135deg,#0f766e,#115e59)');
   // Versionszeile: hilft, wenn jemand „bei mir sieht das anders aus" meldet (v409)
@@ -1344,18 +1348,22 @@ async function elternDashLoad(){
         ${(typeof WRAPPED_SICHTBAR!=="undefined"&&WRAPPED_SICHTBAR)?elRow("📊","Saison-Statistik","Spiele, Einsätze &amp; Highlights – ansehen, auf Wunsch teilen",`childWrappedOpen(${k.spieler_id})`,"#a855f7"):""}
       </div>`;}).join("")}
     <div id="cat-mehr" class="el-cat-panel" style="display:none">`;
-  html+=`<div id="team-ansprech-slot"></div>`;   // v663: Elternbeirat, Kasse, Beitrag
+  const grp=t=>`<div style="font-size:var(--s-text);font-weight:800;color:var(--text2);margin:14px 4px 6px">${t}</div>`;   // v862 (3.15): Gruppen statt neun Dinge ohne Ordnung
+  html+=grp("Lesen");
   html+=elRow("📣","Nachlesen","Ansagen des Trainerteams und Neues in der App – auch was schon gelesen ist","elternNachlesenOpen()","#1e3a8a");   // v859 (3.7)
-  html+=elRow("📸","Spieltagsgalerie","Fotos von allen Spieltagen – ansehen, groß wischen, selbst hochladen","spieltagGalerieOpen()","#7c3aed");   // v730
   /* v733: Das Adler Nest erscheint nach jedem Spieltag als eigene Ausgabe – zum Lesen und Hören, nur hier im Login. */
   html+=elRow("🪺","Adler Nest","Nach jedem Spieltag: Bericht, Fotos, Porträt – zum Lesen und Hören","if(typeof nestOpen==='function')nestOpen()","#0044AA");
   html+=elRow("📖","Unsere Saison (Chronik)","Alle Spiele, Feste &amp; Meilensteine als Zeitstrahl – wächst jede Woche","chronikOpen()","#1d4ed8",true);
+  html+=grp("Fotos");
+  html+=elRow("📸","Spieltagsgalerie","Fotos von allen Spieltagen – ansehen, groß wischen, selbst hochladen","spieltagGalerieOpen()","#7c3aed");   // v730
+  html+=grp("Untereinander");
+  html+=`<div id="team-ansprech-slot"></div>`;   // v663: Elternbeirat, Kasse, Beitrag
   html+=elRow("🛍️","Adler-Börse","Zu kleine Schuhe &amp; Trikots an Adler-Kinder weitergeben","boerseOpen()","#2563eb");
   html+=elRow("🧦","Fundbüro","Verlorenes &amp; Gefundenes – hier sammelt das Team","fundbueroOpen()","#3b82f6");
-  html+=`<div id="skill-slot"></div>`;        // Skill der Woche
-  if(WAESCHE_AKTIV)html+=`<div id="waesche-slot"></div>`;  // Trikot-Wäsche-Rotator (aktuell ausgeblendet)
   // v699: Teamkasse-Karte und „Kasse verwalten“ sind in die Kacheln „Mannschaftskasse“ / „Kasse führen“ umgezogen
   html+=`<div id="ak-slot"></div>`; // FEAT Z: Adler-Kasse (async, nur wenn Link gesetzt)
+  if(WAESCHE_AKTIV)html+=`<div id="waesche-slot"></div>`;  // Trikot-Wäsche-Rotator (aktuell ausgeblendet)
+  html+=`<div id="skill-slot"></div>`;        // Skill der Woche
   html+=`</div>`; // /cat-mehr
   html+=`<div id="cat-regeln" class="el-cat-panel" style="display:none">`;
   html+=elRow("🤝","Unsere Vereinbarung","Fairplay-Codex zum Bestätigen + alles Praktische in 5 Rubriken","vereinbarungOpen()","#15803d");
@@ -2961,34 +2969,37 @@ const _elZu=()=>{
   if(ov&&ov.style.display==="block"&&typeof elternCatClose==="function"){ try{ elternCatClose(); }catch(e){} }
   document.getElementById("td-modal")?.remove();
 };
+/* v862 (Charles 18.11., Bestandsaufnahme 3.9): sechs Schritte statt zwölf – der erste Besuch stapelte
+   Einwilligung, Schrift-Hinweis, Tour mit zwölf Schritten und Push-Karte übereinander. Was wegfiel
+   (Alles zum Termin, Zu erledigen, Liveticker, Freigaben) steht in der Hilfe. Der letzte Schritt bietet die
+   Benachrichtigungen an; Push-Karte und Schrift-Hinweis kommen erst nach der Tour, nie zwei zugleich. */
 const ELTERN_TOUR=[
   {emo:"🦅", t:"Willkommen bei den Adlern", vor:_elZu,
-   d:"Hier läuft alles rund um dein Kind bei der U9 zusammen. Diese Tour zeigt dir, wo was ist – du startest sie jederzeit über ❓ oben neu."},
+   d:"Hier läuft alles rund um dein Kind bei der U9 zusammen. Sechs kurze Schritte zeigen dir, wo was ist – du startest sie jederzeit über ⋯ und ❓ oben neu."},
   {emo:"👍", t:"Der nächste Termin", sel:["#termin-card"], vor:_elZu,
-   d:"Ganz oben steht der nächste Termin. Training gilt als zugesagt – sag nur ab, wenn dein Kind nicht kommt. Bei Spielen und Festivals tippst du auf Zu- oder Absage. Nochmal auf die gewählte Antwort tippen nimmt sie zurück. Bei jedem Termin steht auch das Ende – bei Spieltagen ungefähr („Ende ca. 11:30“), beim Training genau. Bei Auswärtsspielen stehen hier Treffzeit, Strecke ab Dellbrück und die späteste Abfahrt; „Route starten“ öffnet die Navigation mit Verkehr."},
-  {emo:"📬", t:"Offene Rückmeldungen", sel:["#eltern-offen-card"],
-   d:"Stehen in den nächsten 14 Tagen Antworten aus, siehst du sie hier gesammelt."},
-  {emo:"🎒", t:"Alles zum Termin", sel:['[onclick^="terminDetailOpen"]'],
-   d:"Über den Terminen wählst du die Darstellung: „Kacheln“ zeigt die Wochen nebeneinander (wischen oder Pfeil für die nächste Woche), „Liste“ die Termine untereinander, „Beides“ beides – die App merkt sich deine Wahl. Tippe auf einen Termin: Wetter, Adresse mit Route, „Was muss mit?“, Fahrgemeinschaft, „Wer hilft mit?“ und die Fotos zum Termin – „📷 Foto aufnehmen“ öffnet direkt die Kamera. Alle Spieltagsfotos zusammen – groß ansehen und durchwischen – stehen unter „Mehr vom Team“ → „Spieltagsgalerie“. Dort erscheint nach jedem Spieltag auch das „Adler Nest“ – eine neue Ausgabe zum Lesen und Hören. Ist euer Kind im nächsten Porträt, steht oben eine Karte mit dem Porträt-Bogen. Die ganze Saison und das Kalender-Abo findest du unten unter „Mehr“ → „Alle Termine“ – seit v741 sagst du dort für jeden künftigen Termin direkt zu oder ab (👍/🤔/👎 je Kind). Fällt ein Termin aus, steht „🔴 Fällt aus“ mit Grund daneben; zurückmelden musst du dann nichts. Bei jedem Training und Spieltag steht dort auch „🫖 Tee mitbringen“."},
-  {emo:"✅", t:"Zu erledigen", sel:["#eltern-todo-btn"],
-   d:"Aufgaben für euch als Familie, zum Beispiel der Grillhütten-Dienst. Könnt ihr nicht, tippt ihr „Ersatz suchen“ – eine andere Familie kann übernehmen."},
-  {emo:"📡", t:"Liveticker", sel:["#eltern-live-slot","#eltern-ticker-slot"],
-   d:"Am Spieltag läuft hier der Liveticker mit, wenn das Trainerteam ihn einschaltet – auch wenn ihr nicht am Platz seid. Wer mithelfen will, trägt sich unter „Wer hilft mit?“ für den Live-Ticker ein – das Trainerteam teilt dann je Team eine Person ein."},
-  {emo:"🎮", t:"Die Kabine für dein Kind", sel:['button[onclick="elternKabineStart()"]'],
-   d:"Hier darf dein Kind spielen: Quiz, Missionen, Sammelalbum. Zurück geht es nur mit dem Kabinen-Code, den dir das Trainerteam nennt."},
-  {emo:"📱", t:"Kinder-App auf eigenem Gerät", sel:['button[onclick="kinderAppOpen()"]'],
-   d:"Die Kabine gibt es auch als eigene App fürs Tablet oder Handy deines Kindes. Du koppelst sie mit einem Code und legst die Zeit pro Tag fest."},
-  {emo:"🪪", t:"Die Karte deines Kindes", sel:['button[onclick^="elternCatOpen(\'kind-"]'],
-   d:"Foto, Rolle und schöne Momente – ohne Bewertungszahlen. Hier findest du auch, was dein Kind gerade lernt."},
+   d:"Ganz oben steht der nächste Termin. Training gilt als zugesagt – sag nur ab, wenn dein Kind nicht kommt. Bei Spielen und Festivals tippst du auf Zu- oder Absage. Nochmal auf die gewählte Antwort tippen nimmt sie zurück. Ein Tipp auf den Termin zeigt Adresse, Route, „Was muss mit?“ und „Wer hilft mit?“."},
+  {emo:"📬", t:"Noch offen", sel:["#eltern-offen-card","#eltern-todo-btn"],
+   d:"Fehlt eine Rückmeldung oder steht eine Aufgabe für euch an, siehst du es hier gesammelt – auch die ersten Schritte für neue Eltern."},
+  {emo:"🎮", t:"Für die Kinder", sel:['button[onclick="elternKabineStart()"]'],
+   d:"In der Kabine darf dein Kind spielen: Quiz, Missionen, Sammelalbum – zurück geht es nur mit dem Kabinen-Code vom Trainerteam. Darunter: die Kinder-App fürs eigene Gerät und die Karte deines Kindes, ohne Bewertungszahlen."},
   {emo:"🗣️", t:"Trainerteam erreichen", sel:['button[onclick="elternCatOpen(\'kontakt\')"]'],
-   d:"Fragen, Hinweise, Absprachen: So erreichst du uns direkt."},
-  {emo:"🔒", t:"Freigaben & Notfallkarte", sel:['button[onclick="elternCatOpen(\'datenschutz\')"]'],
-   d:"Foto-Freigaben und Notfallkarte je Kind. Ohne dein Häkchen erscheint kein Foto deines Kindes."},
-  {emo:"❓", t:"Hilfe, Schrift und Mein Konto", sel:['button[onclick="elternTourStart()"]'],
-   d:"Unter ⋯ oben rechts: ❓ startet diese Tour neu, „A“ macht die Schrift größer, 🌙 schaltet den dunklen Modus. ⚙️ „Mein Konto“ bündelt deine Angaben, das Passwort, die Benachrichtigungen und deine Daten. Viel Spaß bei den Adlern!"},
+   d:"Fragen, Hinweise, ein Elterngespräch: So erreichst du uns direkt."},
+  {emo:"❓", t:"Hilfe, Schrift und Mein Konto", sel:["#ep-menue-knopf"],
+   d:"Oben rechts unter ⋯: ❓ startet diese Tour neu, „A“ macht die Schrift größer, 🌙 schaltet den dunklen Modus, ⚙️ „Mein Konto“ bündelt Angaben, Passwort, Benachrichtigungen und deine Daten. Viel Spaß bei den Adlern!"},
 ];
 function elternTourMaybe(){ try{if(localStorage.getItem("adler_eltern_tour"))return;}catch(e){} elternTourStart(); }
-function elternTourStart(){ fuehrungStart(ELTERN_TOUR,{schluessel:"adler_eltern_tour",ende:_elZu}); }
+/* v862: Der letzte Schritt bietet an, was für dieses Handy passt: einschalten, die iPhone-Anleitung oder die Sperre lösen. */
+async function elternTourStart(){
+  let fall=null; try{ if(typeof pushKartenFall==="function")fall=await pushKartenFall(); }catch(e){}
+  const extra={aus:{text:"🔔 Benachrichtigungen einschalten",fn:"elternTourPushAn()"},ios:{text:"🔔 Benachrichtigungen auf dem iPhone",fn:"fuehrungEnde();pushAnleitung('ios')"},gesperrt:{text:"🔔 Benachrichtigungen freigeben",fn:"fuehrungEnde();pushAnleitung('gesperrt')"}}[fall];
+  const schritte=ELTERN_TOUR.map((x,i)=>i===ELTERN_TOUR.length-1&&extra?Object.assign({},x,{extra}):x);
+  fuehrungStart(schritte,{schluessel:"adler_eltern_tour",ende:()=>{ _elZu(); if(typeof elternPushHinweis==="function")elternPushHinweis(); }});
+}
+async function elternTourPushAn(){
+  if(typeof fuehrungLaeuft==="function"&&fuehrungLaeuft())fuehrungEnde();
+  const ok=typeof pushSubscribe==="function"?await pushSubscribe("parent"):false;
+  if(ok){ if(typeof elternPushHinweis==="function")elternPushHinweis(); if(typeof pushTest==="function")setTimeout(()=>pushTest(null),400); }
+}
 function elternTourClose(){ if(typeof fuehrungLaeuft==="function"&&fuehrungLaeuft())fuehrungEnde(); else { try{localStorage.setItem("adler_eltern_tour","1");}catch(e){} } }
 // Adler-Karte des eigenen Kindes (Eltern-Sicht): Daten kommen aus der security-definer
 // RPC my_child_card (kein Direktzugriff auf geschützte Tabellen). Baut dieselbe d-Struktur
@@ -3247,6 +3258,10 @@ async function tdVorberichtLoad(t){
    auch auf dem iPhone im Browser und bei gesperrter Erlaubnis – dann mit Anleitung. */
 /* v694/v698: Die Karte selbst lebt in core.js (pushKarteRender) – dieselbe steht auf der
    Trainer-Startseite. Hier nur die Namen, die die Eltern-Startseite und die MODUL_WACHE kennen. */
-async function elternPushHinweis(){ if(typeof pushKarteRender==="function")return pushKarteRender("push-hinweis-slot","parent"); }
+async function elternPushHinweis(){
+  /* v862 (3.9): Beim ersten Besuch bietet der letzte Tour-Schritt die Benachrichtigungen an – die Karte kommt erst nach der Tour. */
+  try{ if(!localStorage.getItem("adler_eltern_tour"))return; }catch(e){}
+  if(typeof pushKarteRender==="function")return pushKarteRender("push-hinweis-slot","parent");
+}
 function elternPushHinweisAn(){ if(typeof pushKarteAn==="function")return pushKarteAn("push-hinweis-slot","parent"); }
 function elternPushHinweisWeg(){ if(typeof pushKarteWeg==="function")pushKarteWeg("push-hinweis-slot"); }

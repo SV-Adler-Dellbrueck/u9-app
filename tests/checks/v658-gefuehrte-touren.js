@@ -85,7 +85,7 @@ module.exports = async function (h) {
   await se.page.reload({ waitUntil: "networkidle" }); await se.page.waitForTimeout(4500);
   const re = await se.page.evaluate(eval(DURCHLAUF), { start: "localStorage.removeItem('adler_eltern_tour'); elternTourStart();", key: "adler_eltern_tour" });
   const fe = se.fehler(); await se.schliessen();
-  pruef("Eltern", re, 12, 7, false);
+  pruef("Eltern", re, 6, 5, false);   // seit v862 sechs Schritte (Charles 18.11., 3.9)
   if (fe.length) probleme.push("Eltern, Konsole: " + fe[0]);
 
   // Kinder (Kabinen-Startseite)
