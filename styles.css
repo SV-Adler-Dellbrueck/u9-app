@@ -265,12 +265,13 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
    ausfuehrlicher im Profil, hier bleiben Spieler, Rolle, Gesamt, Potenzial, Aktionen. */
 .kader-hint{display:none;font-size:var(--s-klein);color:var(--text3);margin-top:6px}
 @media(max-width:560px){
-  .kader-t th:nth-child(3),.kader-t td:nth-child(3),
-  .kader-t th:nth-child(4),.kader-t td:nth-child(4),
-  .kader-t th:nth-child(5),.kader-t td:nth-child(5),
-  .kader-t th:nth-child(6),.kader-t td:nth-child(6),
-  .kader-t th:nth-child(9),.kader-t td:nth-child(9){display:none}
+  .kader-t:not(.kader-w) th:nth-child(3),.kader-t:not(.kader-w) td:nth-child(3),
+  .kader-t:not(.kader-w) th:nth-child(4),.kader-t:not(.kader-w) td:nth-child(4),
+  .kader-t:not(.kader-w) th:nth-child(5),.kader-t:not(.kader-w) td:nth-child(5),
+  .kader-t:not(.kader-w) th:nth-child(6),.kader-t:not(.kader-w) td:nth-child(6),
+  .kader-t:not(.kader-w) th:nth-child(9),.kader-t:not(.kader-w) td:nth-child(9){display:none}
   .kader-t th,.kader-t td{padding:9px 6px}
+  .kader-w th:nth-child(4),.kader-w td:nth-child(4){display:none}   /* v851: „Von“ am Handy ausgeblendet */
   .kader-hint{display:block}
 }
 .rbadge{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:10px;font-size:var(--s-klein);font-weight:600}
