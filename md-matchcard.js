@@ -696,46 +696,48 @@ function rotRenderControls(){
    Spielform verteilen. 4+1 nutzt den echten Kombinator (calcBestCombos, gedeckelt),
    Funino/5+1 nutzen eine Greedy-Verteilung nach Gesamtscore (kein Brute-Force ->
    kein Einfrieren). Torwart separat. Ergebnis ist frei nachjustierbar. */
+/* v858 (Charles 18.11.2026): „Feld & Bank fair besetzen“ rechnete 55 % Einsatzzeit und 45 % Gesamt-
+   bewertung und stellte bei 4+1 die Positionen nach Bewertung – ab der ersten Bewertungsrunde wären
+   bevorzugt höher bewertete Kinder gestartet. Jetzt: Wer startet, entscheidet allein die Einsatzzeit
+   der Saison (wenig gespielt = startet, sonst Kader-Reihenfolge). Die Rollen – auch das Tor – bekommt,
+   wer sie am seltensten gespielt hat (Rollen-Erfahrung aus den Startaufstellungen, md-teams.js).
+   Die Bewertung fließt nicht ein. */
+const AUF_RK={aufpasser:"auf",flitzer_l:"fll",flitzer_r:"flr",jaeger:"jaeg",tw:"tw"};
+function aufRollenVerteilen(starter,slots,byKid,reihe){
+  const zahl=(n,r)=>((byKid[n]||{})[r])||0, ges=n=>((byKid[n]||{}).total)||0, frei=starter.slice(), feld=[];
+  slots.forEach(sl=>{
+    if(!frei.length){ feld.push(null); return; }
+    const r=AUF_RK[sl.rk]||"auf";
+    const best=frei.slice().sort((a,b)=>zahl(a,r)-zahl(b,r)||ges(a)-ges(b)||reihe.indexOf(a)-reihe.indexOf(b))[0];
+    feld.push(best); frei.splice(frei.indexOf(best),1);
+  });
+  return feld.filter(Boolean);
+}
 async function magicLineup(){
   const squad=(typeof nominierteSpieler==="function"?nominierteSpieler():[]);
   const form=(typeof FORMATIONS!=="undefined"&&FORMATIONS[tbFormation])||{tw:true,fieldCount:5};
   const need=form.fieldCount+(form.tw?1:0);
   if(squad.length<need){toast(`Zu wenige nominierte Spieler (${squad.length}/${need}) für ${tbFormation}`,"err");return;}
-  const keeper=form.tw?(squad.find(n=>getKader(n)?.tw)||null):null;
+  let byKid={};
+  try{ if(typeof rollenExpFetch==="function")byKid=((await rollenExpFetch())||{}).byKid||{}; }catch(e){}
+  const zahl=(n,r)=>((byKid[n]||{})[r])||0;
+  const twKinder=squad.filter(n=>getKader(n)?.tw);
+  const keeper=form.tw&&twKinder.length?twKinder.slice().sort((a,b)=>zahl(a,"tw")-zahl(b,"tw")||squad.indexOf(a)-squad.indexOf(b))[0]:null;
   const outfieldPool=squad.filter(n=>n!==keeper);
-  // Saison-Fairness: kumulierte Einsatzzeiten laden (best-effort). Wenig gespielt -> Startvorteil.
+  // Saison-Fairness: kumulierte Einsatzzeiten laden (best-effort). Wenig gespielt -> startet.
   const minutes={}; let fair=false;
   try{const r=await fetch(`${SB_URL}/rest/v1/einsatzzeiten?select=spieler,feld_sek`,{headers:sbAuthHeaders()});if(r.ok){const rows=await r.json();rows.forEach(x=>{if(x.spieler)minutes[x.spieler]=(minutes[x.spieler]||0)+(x.feld_sek||0);});fair=rows.length>0;}}catch(e){}
-  // Basis: Skill-Reihenfolge (Gesamtscore)
-  const skillOrder=outfieldPool.map(n=>{const pd=getPlayerData(n);return {n,s:pd?pd.total:0};}).sort((a,b)=>b.s-a.s).map(x=>x.n);
-  // Blend mit Fairness (55% Fairness / 45% Skill), nur wenn Saisondaten da sind
-  let ranked=skillOrder;
-  if(fair){
-    const maxM=Math.max(1,...outfieldPool.map(n=>minutes[n]||0));
-    const skIdx={}; skillOrder.forEach((n,i)=>skIdx[n]=i); const L=Math.max(1,skillOrder.length-1);
-    const val=n=>0.55*(1-(minutes[n]||0)/maxM)+0.45*(1-(skIdx[n]/L)); // hoch = soll starten (wenig gespielt / stark)
-    ranked=[...outfieldPool].sort((a,b)=>val(b)-val(a));
-  }
-  // Startelf-Positionierung: für 4+1 die gewählten 4 Starter in die beste Raute stellen
-  let ordered=ranked;
-  if(tbFormation==='4+1'&&ranked.length>=4){
-    const starters=ranked.slice(0,4);
-    const combo=calcBestCombos(starters);
-    if(combo&&combo[0]){
-      const b=combo[0];
-      const used=[b.aufpasser.name,b.flitzer_l.name,b.flitzer_r.name,b.jaeger.name];
-      const rest=ranked.filter(n=>!used.includes(n));
-      ordered=[...used,...rest];
-    }
-  }
+  const ranked=fair?outfieldPool.slice().sort((a,b)=>(minutes[a]||0)-(minutes[b]||0)||squad.indexOf(a)-squad.indexOf(b)):outfieldPool.slice();
+  const starter=ranked.slice(0,form.fieldCount);
+  const slots=(form.slots||[]).filter(sl=>sl.rk!=="tw");
   rotTW=keeper; rotSel=null;
-  rotField=ordered.slice(0,form.fieldCount);
-  rotBench=ordered.slice(form.fieldCount);
+  rotField=slots.length?aufRollenVerteilen(starter,slots,byKid,ranked):starter;
+  rotBench=ranked.filter(n=>!rotField.includes(n));
   // Neue Startaufstellung = neuer Anfang: Bank- UND Feldzeiten auf 0. Vorher blieben die
   // Feldzeiten stehen und der Wechselvorschlag rechnete mit Zahlen von vorhin.
   rotBenchSec={};rotFieldSec={};squad.forEach(n=>{rotBenchSec[n]=0;rotFieldSec[n]=0;});rotElapsed=0;
   rotRenderControls();rotRenderAll();
-  toast(fair?"⚖️ Feld & Bank fair besetzt ✓ – wenig-gespielte Kinder starten, frei anpassbar":"Feld & Bank besetzt ✓ – frei anpassbar");
+  toast(fair?"⚖️ Fair besetzt – wenig gespielte Kinder starten, Rollen nach Erfahrung":"Feld & Bank besetzt – Rollen nach Erfahrung, frei anpassbar");
 }
 function fmtSec(s){const m=Math.floor(s/60),ss=s%60;return m+":"+(ss<10?"0":"")+ss;}
 // Wechselvorschlag als eigener Helper: längste Bankzeit rein für kürzeste Bankzeit
@@ -801,8 +803,61 @@ function aufRender(){
       <span style="font-size:var(--s-klein);color:var(--text2)">Spielform <b>${esc(label||"")}</b></span>
       <button class="btn btn-sm" onclick="magicLineup()" title="Verteilt den Kader dieses Teams auf Feld und Bank – wenig gespielte Kinder starten" style="margin-left:auto;min-height:44px">🪄 Feld &amp; Bank fair besetzen</button>
     </div>
-    ${rotFeldBankHtml(rotBankChip)}`;
+    ${rotFeldBankHtml(rotBankChip)}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+      <button class="btn btn-sm" style="min-height:44px" onclick="aufTeilen()"><i class="ti ti-share"></i>Teilen</button>
+      <button class="btn btn-sm" style="min-height:44px" onclick="aufBild()"><i class="ti ti-photo"></i>Als Bild</button>
+      <button class="btn btn-sm" style="min-height:44px" onclick="aufBild(true)"><i class="ti ti-printer"></i>Drucken</button>
+    </div>`;
   rotDragInit();
+}
+/* v858: Teilen, Bild und Drucken – vorher nur auf der Seite „Aufstellung“ (4+1), jetzt am Mini-Feld
+   für jede Spielform. Die Positionen kommen aus FORMATIONS (Rolle und Lage je Slot). */
+function aufPositionen(){
+  const form=(typeof FORMATIONS!=="undefined"&&FORMATIONS[tbFormation])||{slots:[],label:tbFormation};
+  let i=0;
+  return {label:form.label||tbFormation,pos:(form.slots||[]).map(sl=>({role:sl.role,x:sl.x,y:sl.y,name:sl.rk==="tw"?(rotTW||""):(rotField[i++]||"")})),bank:rotBench.slice()};
+}
+function aufTitel(){ const t=(typeof teamLabelFromKey==="function"&&typeof spieltagKey==="function")?teamLabelFromKey(spieltagKey()):""; const d=(typeof spieltagRawDate==="function")?spieltagRawDate():""; return `⚽ Aufstellung U9${t}${d?" · "+new Date(d+"T00:00:00").toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"}):""}`; }
+function aufTeilen(){
+  const a=aufPositionen();
+  const text=[aufTitel()+" · "+a.label,"",...a.pos.map(p=>`${p.role}: ${p.name||"– offen –"}`),"","Bank: "+(a.bank.length?a.bank.join(", "):"–")].join("\n");
+  if(navigator.share){navigator.share({title:"Aufstellung U9",text}).catch(()=>{});return;}
+  try{navigator.clipboard.writeText(text).then(()=>toast("Aufstellung kopiert ✓"),()=>toast("Kopieren nicht möglich","err"));}catch(e){toast("Kopieren nicht möglich","err");}
+}
+function aufBild(drucken){
+  const a=aufPositionen(), W=600, PITCH=690, BENCH=160, H=PITCH+BENCH;
+  const c=document.createElement("canvas"); c.width=W; c.height=H; const ctx=c.getContext("2d");
+  ctx.fillStyle="#2d6a2d";ctx.fillRect(0,0,W,PITCH);
+  ctx.strokeStyle="rgba(255,255,255,.4)";ctx.lineWidth=3;ctx.strokeRect(16,16,W-32,PITCH-32);
+  ctx.beginPath();ctx.arc(W/2,PITCH/2,70,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle="#1e293b";ctx.fillRect(0,PITCH,W,BENCH);
+  ctx.textAlign="center";
+  a.pos.forEach(p=>{
+    const x=16+(W-32)*p.x/100, y=16+(PITCH-60)*p.y/100;
+    ctx.fillStyle="rgba(255,255,255,.85)";ctx.font="12px Arial";ctx.textBaseline="alphabetic";ctx.fillText(p.role,x,y-26);
+    ctx.textBaseline="middle";ctx.font="bold 16px Arial";
+    const disp=p.name||"– offen –", pw=Math.max(54,ctx.measureText(disp).width+28), ph=38;
+    ctx.fillStyle=p.name?"#1e3a8a":"#64748b";
+    if(typeof tbRoundRect==="function")tbRoundRect(ctx,x-pw/2,y-ph/2,pw,ph,ph/2); else ctx.rect(x-pw/2,y-ph/2,pw,ph);
+    ctx.fill();ctx.strokeStyle="rgba(255,255,255,.9)";ctx.lineWidth=2.5;ctx.stroke();ctx.fillStyle="#fff";ctx.fillText(disp,x,y);
+  });
+  ctx.textAlign="left";ctx.textBaseline="top";ctx.fillStyle="rgba(255,255,255,.6)";ctx.font="bold 12px Arial";ctx.fillText("AUSWECHSELBANK",24,PITCH+16);
+  ctx.fillStyle="#fff";ctx.font="15px Arial";
+  let line="",yy=PITCH+42; (a.bank.length?a.bank:["–"]).forEach(w=>{ const t=line?line+"   ·   "+w:w; if(ctx.measureText(t).width>W-48&&line){ctx.fillText(line,24,yy);yy+=24;line=w;} else line=t; }); if(line)ctx.fillText(line,24,yy);
+  ctx.textAlign="center";ctx.fillStyle="rgba(255,255,255,.92)";ctx.font="bold 20px Arial";ctx.textBaseline="alphabetic";
+  ctx.fillText(aufTitel().replace("⚽ ","")+" · "+a.label,W/2,PITCH-14);
+  if(drucken){
+    const url=c.toDataURL("image/png"), w=window.open("","_blank");
+    if(!w){toast("Druckfenster blockiert – „Als Bild“ und dann drucken","err");return;}
+    w.document.write(`<!doctype html><title>Aufstellung U9</title><style>body{margin:0}img{width:100%;max-width:600px;display:block;margin:auto}</style><img src="${url}" onload="setTimeout(()=>print(),200)">`); w.document.close(); return;
+  }
+  c.toBlob(async blob=>{
+    if(!blob){toast("Bild konnte nicht erzeugt werden","err");return;}
+    const file=new File([blob],"aufstellung-u9.png",{type:"image/png"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){ try{await navigator.share({files:[file],title:"Aufstellung U9"});}catch(e){} }
+    else{ const l=document.createElement("a");l.href=URL.createObjectURL(blob);l.download="aufstellung-u9.png";document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(l.href),5000);toast("Bild heruntergeladen ✓"); }
+  },"image/png");
 }
 /* Ein Tipp an einer Stelle zeichnet beide Ansichten neu (① und ②). */
 function rotRenderAll(){ rotRenderLive(); aufRender(); aufSichern(); }
@@ -814,12 +869,27 @@ function rotRenderAll(){ rotRenderLive(); aufRender(); aufSichern(); }
    Beim Aufbauen der Seite wird die gespeicherte Aufstellung gegen die Nominierung gehalten: wer nicht (mehr) nominiert ist,
    fliegt raus, wer neu dazukam, steht auf der Bank. Ohne die Tabelle (Migration fehlt) bleibt es bei lokal. */
 const AUF_LS="adler_spieltag_auf";
+/* v858: Beim ersten Anpfiff eines Spiels wird die Startaufstellung mit Rollen festgehalten (daten.start) –
+   die Rollen-Matrix und „fair besetzen“ zählen sie. Spätere Wechsel ändern sie nicht. */
+let _aufStart=null;
+function aufRollenJetzt(){
+  const form=(typeof FORMATIONS!=="undefined"&&FORMATIONS[tbFormation])||{};
+  const slots=(form.slots||[]).filter(sl=>sl.rk!=="tw"), rollen={};
+  slots.forEach((sl,i)=>{ const n=rotField[i]; if(!n)return; const r=AUF_RK[sl.rk]||"auf"; (rollen[r]=rollen[r]||[]).push(n); });
+  return {tw:(form.tw!==false&&rotTW)||null,rollen,form:tbFormation,t:Date.now(),key:(typeof spieltagKey==="function")?spieltagKey():""};
+}
+function aufStartMerken(){
+  if((_aufStart&&_aufStart.key===spieltagKey())||!rotField.length)return;   // je Spieltag und Team nur der erste Anpfiff
+  _aufStart=aufRollenJetzt();
+  if(typeof rollenExpClear==="function")rollenExpClear();
+  aufSichern(); aufSofortSichern(false);
+}
 let _aufStumm=false, _aufTimer=null, _aufGeaendert=false, _aufSnap=null, _aufTabelleFehlt=false;
 function _aufLokalLesen(){ try{ return JSON.parse(localStorage.getItem(AUF_LS)||"{}")||{}; }catch(e){ return {}; } }
 function aufSichern(){
   if(_aufStumm||typeof spieltagKey!=="function")return;
   _aufGeaendert=true;
-  _aufSnap={key:spieltagKey(),daten:{tw:rotTW||null,feld:rotField.slice(),bank:rotBench.slice(),form:tbFormation,t:Date.now()}};   // Schnappschuss: ein Teamwechsel danach schreibt nichts ins falsche Team
+  _aufSnap={key:spieltagKey(),daten:{tw:rotTW||null,feld:rotField.slice(),bank:rotBench.slice(),form:tbFormation,t:Date.now(),...(_aufStart&&_aufStart.key===spieltagKey()?{start:_aufStart}:{})}};   // Schnappschuss: ein Teamwechsel danach schreibt nichts ins falsche Team
   clearTimeout(_aufTimer); _aufTimer=setTimeout(()=>aufSofortSichern(false),700);
 }
 async function aufSofortSichern(ende){
@@ -850,6 +920,7 @@ function aufAnwenden(d){
   const rest=squad.filter(n=>n!==tw&&!feld.includes(n));
   const alt=(Array.isArray(d.bank)?d.bank:[]).filter(n=>rest.includes(n));
   const bank=alt.concat(rest.filter(n=>!alt.includes(n)));
+  _aufStart=d.start?{...d.start,key:spieltagKey()}:null;   // v858: Startaufstellung dieses Spiels bleibt erhalten
   _aufStumm=true;
   try{ rotTW=tw; rotField=feld; rotBench=bank; rotSel=null; rotRenderControls(); rotRenderAll(); }
   finally{ _aufStumm=false; }
@@ -858,6 +929,7 @@ function aufAnwenden(d){
 async function aufLaden(){
   if(typeof spieltagKey!=="function"||rotTimerId)return;
   const key=spieltagKey();
+  if(_aufStart&&_aufStart.key!==key)_aufStart=null;   // v858: anderer Spieltag oder anderes Team
   let d=_aufLokalLesen()[key]||null;
   if(!_aufTabelleFehlt&&typeof sbToken==="function"&&sbToken()){
     try{
@@ -967,7 +1039,7 @@ function rotTick(){
 document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&rotTimerId)rotTick(); });
 // Idempotente Start/Stop-Funktionen (statt reinem Toggle), damit die Spieluhr den
 // Rotations-Timer sicher mitsteuern kann, ohne einen bereits korrekten Zustand zu kippen.
-function rotStart(){ rotTonBereit(); if(!rotTimerId){_rotLetzt=Date.now();rotTimerId=setInterval(rotTick,1000);requestWakeLock();} rotRenderControls();rotRenderLive(); }
+function rotStart(){ rotTonBereit(); if(!rotTimerId&&rotElapsed===0)aufStartMerken(); if(!rotTimerId){_rotLetzt=Date.now();rotTimerId=setInterval(rotTick,1000);requestWakeLock();} rotRenderControls();rotRenderLive(); }
 function rotStop(){ if(rotTimerId){rotTick();clearInterval(rotTimerId);rotTimerId=null;} _rotLetzt=null; rotPersistTimes(); rotRenderControls();rotRenderLive(); }
 function rotToggle(){ if(rotTimerId)rotStop(); else rotStart(); }
 // Faire Einsatzzeiten: aktuelle Feldzeit je Spieler in Supabase sichern (best-effort, Trainer-Auth).
@@ -991,6 +1063,7 @@ async function rotPersistTimes(){
 function rotReset(){
   const gespielt=Object.values(rotFieldSec||{}).some(v=>v>0);
   if(gespielt&&!confirm("Wechsel-Timer zurücksetzen?\n\nDie erfassten Spielzeiten dieses Spiels werden dabei auf 0:00 gesetzt."))return;
+  if(_aufStart&&typeof spieltagKey==="function"&&_aufStart.key===spieltagKey())_aufStart=null;   // v858: Reset = Neustart, der nächste Anpfiff zählt
   if(rotTimerId){clearInterval(rotTimerId);rotTimerId=null;}
   _rotLetzt=null;
   rotElapsed=0;

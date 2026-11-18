@@ -38,7 +38,7 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 | 2.4 | Trainingsplan ist dreieinhalb Handy-Höhen lang; Planen und Durchführen auf einer Seite, Startknopf ganz unten | ✅ seit v797 klebt „Trainingsstart“ über der Navigation; seit v857 klappen gefüllte Blöcke auf eine Zeile ein (Charles 18.11.) |
 | 2.5 | Speichern verhält sich je Seite anders (automatisch, Knopf, beides) | ✅ Plan zeigt den Stand seit v797, Anwesenheit seit v845, Aufstellungsseite seit v856 |
 | 2.6 | Teams: Zwischenschritt „In die Nominierungen übertragen“ mit Systemdialog | ✅ v836 „Teams übernehmen“, eigenes Fenster; ✅ v856 Stand „übernommen / noch nicht übernommen“ über dem Knopf |
-| 2.7 | Zwei Aufstellungen in zwei Tabellen, die nichts voneinander wissen | ⬜ groß |
+| 2.7 | Zwei Aufstellungen in zwei Tabellen, die nichts voneinander wissen | ✅ v858 ein Ort: das Mini-Feld; Rollen-Matrix zählt die Startaufstellung beim Anpfiff; „fair besetzen“ ohne Bewertung (Charles 18.11.) |
 | 2.8 | „Wer kommt?“ hat fünf Ansichten mit fünf Namen | teils ✅ v846: Stand und Detail der Rückmeldungen verbunden, Einstiege gleich benannt; „Wer kommt?“ am Spieltag und die Anwesenheit bleiben eigene Seiten |
 | 2.9 | „Wie war’s?“ erreicht nur, wer zugesagt hat oder im Plan steht | ✅ v844 auch nach gespeicherter Trainer-Anwesenheit (das To-do über den Plan unverändert) |
 | 2.10 | Termin anlegen liegt drei Ebenen tief, kein Einstieg von der Startseite | ✅ v835 |
