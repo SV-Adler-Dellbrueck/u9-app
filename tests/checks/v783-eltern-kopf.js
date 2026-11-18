@@ -1,5 +1,5 @@
 /* v783 · Eltern-Kopf aufgeräumt, Begrüßung, Bestätigung bei der Zusage (Charles 04.11.: „Alles außer die offenen Punkte umsetzen“)
-   a) Im Band stehen oben nur „Adler-Rufe“ und „⋯“ (zwei Knöpfe, je ≥ 44 px); Schrift, Hell/Dunkel, Hilfe, Passwort und Abmelden liegen im zugeklappten Streifen
+   a) Im Band stehen oben nur „Adler-Rufe“ und „⋯“ (zwei Knöpfe, je ≥ 44 px); Schrift, Hell/Dunkel, Hilfe, Passwort und Abmelden liegen im zugeklappten Streifen (seit v860: Passwort und Abmelden unter „⚙️ Mein Konto“)
       („⋯“ klappt ihn auf und zu, aria-expanded folgt) – die Knöpfe selbst bleiben erhalten
    b) Begrüßung: „Hallo, Familie von <Vorname>“ und „Nächstes: Training morgen“
    c) Nach einer Zusage bekommt die Terminkarte kurz die Klasse ep-pop; die Animation läuft nur ohne „Bewegung reduzieren“ */
@@ -23,7 +23,7 @@ module.exports = async function (h) {
     const band = document.getElementById("ep-kopf"), m = document.getElementById("ep-menue"), k = document.getElementById("ep-menue-knopf");
     const sichtbar = [...band.querySelectorAll("button")].filter(b => b.getBoundingClientRect().height > 0);
     return { sichtbar: sichtbar.map(b => b.id || b.className || b.textContent.trim()), hoehen: sichtbar.map(b => Math.round(b.getBoundingClientRect().height)), zu: m && getComputedStyle(m).display === "none", expanded: k && k.getAttribute("aria-expanded"),
-      drin: ["schrift-toggle", "theme-toggle"].map(c => !!(m && (m.querySelector("." + c) || m.querySelector("#" + c)))), logout: !!(m && /Abmelden/.test(m.textContent)) };
+      drin: ["schrift-toggle", "theme-toggle"].map(c => !!(m && (m.querySelector("." + c) || m.querySelector("#" + c)))), logout: !!(m && (/Abmelden/.test(m.textContent) || m.querySelector("#ep-konto-knopf"))) };   // seit v860 steht Abmelden unter „Mein Konto“
   });
   await ev(() => document.getElementById("ep-menue-knopf").click()); await s.page.waitForTimeout(200);
   r.a2 = await ev(() => { const m = document.getElementById("ep-menue"); return { auf: getComputedStyle(m).display !== "none", expanded: document.getElementById("ep-menue-knopf").getAttribute("aria-expanded"), knoepfe: [...m.querySelectorAll("button")].filter(b => b.getBoundingClientRect().height >= 44).length }; });
@@ -36,7 +36,7 @@ module.exports = async function (h) {
   r.c2 = await ev(() => { const t = document.getElementById("termin-card"); return t ? getComputedStyle(t).animationName : null; });
   const fe = s.fehler(); await s.schliessen();
   if (r.a1.sichtbar.length !== 2 || r.a1.hoehen.some(x => x < 44) || !r.a1.zu || r.a1.expanded !== "false" || r.a1.drin.some(x => !x) || !r.a1.logout) probleme.push("a1) " + JSON.stringify(r.a1));
-  if (!r.a2.auf || r.a2.expanded !== "true" || r.a2.knoepfe < 5 || !r.a3) probleme.push("a2) " + JSON.stringify({ a2: r.a2, a3: r.a3 }));
+  if (!r.a2.auf || r.a2.expanded !== "true" || r.a2.knoepfe < 4 || !r.a3) probleme.push("a2) " + JSON.stringify({ a2: r.a2, a3: r.a3 }));
   zeilen.push(`a) im Band sichtbar: ${r.a1.sichtbar.join(" + ")} (${r.a1.hoehen.join("/")} px) · Streifen zu → auf (${r.a2.knoepfe} Knöpfe ≥ 44 px) → zu`);
   if (!/^Hallo, Familie von Kind C$/.test(r.b.gruss) || !/^Nächstes: Training morgen$/.test(r.b.gruss2)) probleme.push("b) " + JSON.stringify(r.b));
   zeilen.push(`b) „${r.b.gruss}“ · „${r.b.gruss2}“`);
