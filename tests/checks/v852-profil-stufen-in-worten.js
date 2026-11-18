@@ -16,6 +16,7 @@ module.exports = async function (h) {
     if (typeof bewStufeWort !== "function") return { alt: true };
     try { await loadKader(); } catch (e) {}
     out.wort = [null, 0, 16, 33, 67, 100].map(bewStufeWort).join("|");
+    out.gleich = typeof BERICHT_STUFE === "function" ? [0, 16, 17, 49, 50, 83, 84, 100].every(p => BERICHT_STUFE(p) === bewStufeWort(p)) && bewStufeWort(83) === "Gut" : false;   // v854
     const n = KADER.filter(k => k.aktiv !== false && !k.tw)[0].name, v = {};
     DIMS_FELD.forEach(d => d.tier.forEach(t => { v[t.n] = d.id === "entw" ? 1 : d.id === "phys" ? 0 : d.id === "tech" ? 4 : 2; }));
     const bau = dat => bewZeileBauen({ name: n, trainer: "Trainerteam", date: dat, foot: "R", age: "8", grp: "flex", eltern: "", att: "2", notes: "", tw: false }, v).row;
@@ -40,6 +41,7 @@ module.exports = async function (h) {
   if (r.fehler) return h.ergebnis(titel, false, ["Fehler im Ablauf: " + r.fehler]);
   if (fe.length) probleme.push("Konsole: " + fe.slice(0, 2).join(" | "));
   if (r.wort !== "nicht gesehen|Ansatz|Ansatz|Solide|Gut|Stark") probleme.push("Stufenworte: " + r.wort);
+  if (!r.gleich) probleme.push("v854: Profil und Bericht nennen bei gleichem Wert verschiedene Stufen (oder 83 heißt nicht „Gut“)");
   if (/%|Entwicklungsstand|Entwicklungstempo/.test(r.profil)) probleme.push("a) Profil zeigt Prozent oder die alten Kennzahlen: " + (r.profil.match(/.{0,30}(%|Entwicklungs(stand|tempo)).{0,20}/) || [""])[0]);
   else if (!/^Technik=Stark\/\d+$/.test(r.zeilen[0]) || !/^Dynamik=nicht gesehen\/0$/.test(r.zeilen[2]) || r.breit) probleme.push("a) Bereiche: " + JSON.stringify(r.zeilen) + (r.breit ? " · breiter als der Bildschirm" : ""));
   else zeilen.push("a) " + r.zeilen.map(z => z.split("/")[0]).join(" · "));
