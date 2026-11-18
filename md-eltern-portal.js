@@ -369,6 +369,40 @@ async function elternPasswortSpeichern(){
     if(typeof toast==="function")toast("✅ Passwort gespeichert");
   }catch(e){if(err)err.textContent=e.message;if(btn){btn.disabled=false;btn.textContent="Speichern";}}
 }
+/* v860 (Charles 18.11., Bestandsaufnahme 3.10): Alles, was das eigene Konto betrifft, an einem Ort.
+   Vorher lagen Angaben unter „Mehr vom Team“, Push unter „Trainerteam kontaktieren“, Passwort im Kopfmenü
+   und Datenexport/Löschen unter „Datenschutz“. Was das Kind betrifft (Foto-Freigabe, Notfallkarte), bleibt
+   unter „Freigaben & Notfallkarte“. Die Unterfenster liegen eine Ebene darüber; nach dem Speichern ist man
+   wieder hier. */
+function elternKontoOpen(){
+  document.getElementById("ep-konto-modal")?.remove();
+  const m=document.createElement("div");m.id="ep-konto-modal";
+  m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Mein Konto");
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10000;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
+  m.onclick=e=>{if(e.target===m)m.remove();};
+  let mail="";
+  try{const se=(typeof sbSession==="function")?sbSession():null;const pl=se&&se.access_token?JSON.parse(atob(se.access_token.split(".")[1].replace(/-/g,"+").replace(/_/g,"/"))):null;mail=(pl&&pl.email)||"";}catch(e){}
+  const abschn=t=>`<div style="font-size:var(--s-klein);font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.04em;margin:14px 0 6px">${t}</div>`;
+  const zeile=(id,emo,t,d,onclick)=>`<button type="button" id="${id}" onclick="${onclick}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border:1px solid var(--rand-bedien);border-radius:12px;padding:12px;margin-bottom:8px;min-height:48px;font-family:inherit;cursor:pointer;color:#0f172a"><span aria-hidden="true" style="font-size:var(--s-teil);line-height:1">${emo}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-text);font-weight:700">${t}</span><span style="display:block;font-size:var(--s-klein);color:#64748b;margin-top:1px">${d}</span></span><span aria-hidden="true" style="font-size:var(--s-karte);color:#64748b">›</span></button>`;
+  m.innerHTML=`<div style="background:#fff;color:#1a1a2e;border-radius:16px;padding:16px;max-width:440px;width:100%;margin:auto 0">
+    ${mdlHead("ep-konto-modal","⚙️","Mein Konto",mail?esc(mail):"Angaben, Benachrichtigungen und deine Daten","#1e3a8a")}
+    ${abschn("Über mich")}
+    ${zeile("konto-angaben","👤","Meine Angaben","Name, Handy, Geburtstag – und der Geburtstag deines Kindes","elternAngabenOpen()")}
+    ${zeile("konto-passwort","🔑","Passwort ändern","Für die Anmeldung mit E-Mail und Passwort","elternPasswortOpen()")}
+    ${abschn("Benachrichtigungen")}
+    <div style="font-size:var(--s-text);color:#64748b;margin-bottom:6px">Erinnerungen an Termine, offene Rückmeldungen und Neuigkeiten direkt aufs Handy.</div>
+    <div id="push-slot-eltern"></div>
+    ${abschn("Meine Daten")}
+    ${zeile("konto-export","💾","Meine Daten herunterladen","Alles zu deinem Konto und deinen Kindern als Datei (JSON) – ohne Einschätzungen des Trainerteams","elternDataExport(this)")}
+    ${zeile("konto-loeschen","🗑️","Daten löschen","Eigenes Konto sofort löschen · Löschung der Daten deines Kindes beantragen","elternLoeschenOpen()")}
+    <button type="button" id="konto-abmelden" onclick="elternPortalLogout()" style="${EP_LINK};text-align:left;padding-left:2px">Abmelden</button>
+  </div>`;
+  document.body.appendChild(m);
+  if(typeof pushRenderInto==="function")pushRenderInto("push-slot-eltern","parent");
+  try{ if(typeof elternDarkActive==="function"&&elternDarkActive()&&typeof elternThemeSweep==="function")elternThemeSweep(m); }catch(e){}
+  const mn=document.getElementById("ep-menue"); if(mn&&mn.style.display!=="none")elternMenueUmschalten();
+  document.getElementById("konto-angaben")?.focus();
+}
 /* v783: Kopf aufgeräumt – oben nur Rufe und „⋯“; Schrift, Hell/Dunkel, Hilfe, Passwort und Abmelden stehen im aufklappbaren Streifen darunter.
    Die Begrüßung nennt die Kinder und den nächsten Termin (Daten, die das Dashboard ohnehin geladen hat). */
 function elternMenueUmschalten(){
@@ -414,14 +448,13 @@ function elternPortalDashboard(root){
       <div style="display:flex;align-items:center;gap:10px;min-width:0"><img src="logo.png" alt="" width="40" height="40" style="flex:none;border-radius:50%;background:#fff"><div style="min-width:0"><div style="font-size:var(--s-teil);font-weight:800;line-height:1.15">Eltern-Bereich</div><div id="ep-gruss" style="font-size:var(--s-klein);opacity:.95">SV Adler Dellbrück · U9</div><div id="ep-gruss2" style="font-size:var(--s-klein);opacity:.95"></div></div></div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
         <button type="button" id="rufe-kopf" onclick="rufeEinstieg()" title="Adler-Rufe – der Team-Chat" aria-label="Adler-Rufe öffnen" style="position:relative;border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:var(--s-karte);line-height:1">💬<span class="rufe-badge" style="display:none;position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#dc2626;color:#fff;font-size:var(--s-klein);font-weight:800;align-items:center;justify-content:center;border:2px solid #fff;box-sizing:border-box"></span></button>
-        <button type="button" id="ep-menue-knopf" onclick="elternMenueUmschalten()" aria-expanded="false" aria-controls="ep-menue" aria-label="Mehr: Schriftgröße, Dunkelmodus, Hilfe, Passwort, Abmelden" title="Mehr" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:var(--s-teil);line-height:1;font-weight:800">⋯</button>
+        <button type="button" id="ep-menue-knopf" onclick="elternMenueUmschalten()" aria-expanded="false" aria-controls="ep-menue" aria-label="Mehr: Schriftgröße, Dunkelmodus, Hilfe, Mein Konto" title="Mehr" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:var(--s-teil);line-height:1;font-weight:800">⋯</button>
       </div>
       <div id="ep-menue" style="display:none;flex-basis:100%;flex-wrap:wrap;justify-content:space-around;gap:8px;padding-top:10px;margin-top:2px;border-top:1px solid rgba(255,255,255,.35)">
         <div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:56px"><button class="schrift-toggle" onclick="schriftWechseln()" aria-label="Schriftgröße umschalten" style="min-width:44px;height:44px;background:#fff;color:#334155;border:1.5px solid var(--rand-bedien)">A</button><span style="font-size:var(--s-klein);color:#fff">Schrift</span></div>
         <div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:56px"><button id="theme-toggle" onclick="toggleTheme()" title="Hell / Dunkel umschalten" aria-label="Theme umschalten" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:var(--s-karte);line-height:1">🌙</button><span style="font-size:var(--s-klein);color:#fff">Hell/Dunkel</span></div>
         <div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:56px"><button onclick="elternTourStart()" title="Kurze Tour" aria-label="Hilfe/Tour" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:var(--s-karte);line-height:1">❓</button><span style="font-size:var(--s-klein);color:#fff">Hilfe</span></div>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:56px"><button onclick="elternPasswortOpen()" title="Passwort festlegen oder ändern" aria-label="Passwort festlegen oder ändern" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:var(--s-karte);line-height:1">🔑</button><span style="font-size:var(--s-klein);color:#fff">Passwort</span></div>
-        <button onclick="elternPortalLogout()" style="border:none;background:none;color:#fff;font-size:var(--s-text);text-decoration:underline;cursor:pointer;min-height:44px;padding:0 6px">Abmelden</button>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:56px"><button id="ep-konto-knopf" onclick="elternKontoOpen()" title="Mein Konto" aria-label="Mein Konto: Angaben, Passwort, Benachrichtigungen, Daten, Abmelden" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:var(--s-karte);line-height:1">⚙️</button><span style="font-size:var(--s-klein);color:#fff">Mein Konto</span></div>
       </div>
     </div>
     <div id="ep-dash-body"><div style="text-align:center;padding:40px;color:#64748b">Lade…</div></div>
@@ -476,7 +509,7 @@ function dsgvoRenderGate(onOk){
       <b>Verantwortlich:</b> ${esc(VEREIN_DS.name)}, ${esc(VEREIN_DS.anschrift)}.
       <b>Rechtsgrundlage:</b> deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO; für Gesundheitsangaben der Notfallkarte Art. 9 Abs. 2 lit. a DSGVO).
       <b>Speicherdauer:</b> bis zum Saisonende bzw. bis dein Kind das Team verlässt; Einschätzungen des Trainerteams werden zum Saisonwechsel archiviert (nur Trainerteam), Sicherungskopien bis zu zehn Wochen.
-      Auskunft, Löschung und Widerruf sind jederzeit möglich – unter „Datenschutz &amp; Freigaben“ mit einem Knopf oder beim Trainerteam${VEREIN_DS.mail?` oder schreib an <a href="mailto:${esc(VEREIN_DS.mail)}" style="color:#1d4ed8">${esc(VEREIN_DS.mail)}</a>`:""}.
+      Auskunft, Löschung und Widerruf sind jederzeit möglich – unter „Mein Konto“ (oben ⋯) mit einem Knopf oder beim Trainerteam${VEREIN_DS.mail?` oder schreib an <a href="mailto:${esc(VEREIN_DS.mail)}" style="color:#1d4ed8">${esc(VEREIN_DS.mail)}</a>`:""}.
       ${VEREIN_DS.link?`<a href="${esc(VEREIN_DS.link)}" target="_blank" rel="noopener" style="color:#1d4ed8">Vollständige Datenschutzerklärung</a>.`:""}
     </div>
     <label style="display:flex;align-items:flex-start;gap:8px;margin:10px 0;font-size:var(--s-text);cursor:pointer">
@@ -595,7 +628,7 @@ function elternThemeOnToggle(){
 function elternCatOpen(id){
   const ov=document.getElementById("el-cat-overlay"); if(!ov)return;
   if(typeof nutzungLog==="function")nutzungLog("eltern-bereich",id);
-  const T={todo:"📌 Zu erledigen",news:"📣 Adler News",mehr:"📰 Mehr vom Team",regeln:"📋 Regeln & Vereinbarungen",datenschutz:"🔒 Datenschutz & Freigaben",kontakt:"🗣️ Trainerteam kontaktieren"};
+  const T={todo:"📌 Zu erledigen",news:"📣 Adler News",mehr:"📰 Mehr vom Team",regeln:"📋 Regeln & Vereinbarungen",datenschutz:"🔒 Freigaben & Notfallkarte",kontakt:"🗣️ Trainerteam kontaktieren"};
   ov.querySelectorAll(".el-cat-panel").forEach(p=>p.style.display="none");
   const panel=document.getElementById("cat-"+id); if(panel)panel.style.display="block";
   const ttl=document.getElementById("el-cat-title"); if(ttl)ttl.textContent=T[id]||(panel&&panel.dataset&&panel.dataset.catTitle)||""; // Kind-Panels tragen ihren Titel selbst
@@ -837,7 +870,7 @@ function schmiedeOpen(){
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:18px;max-width:460px;width:100%;max-height:86vh;overflow-y:auto">
     ${mdlHead("wn-modal","🛠️","Aus der Adlerschmiede",woche?"Neu in eurer App in den letzten sieben Tagen":"Die letzten Neuerungen in eurer App","#0284c7")}
     ${liste.map(e=>`<div class="schmiede-eintrag" style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--rand-bedien);font-size:var(--s-text);line-height:1.5"><span aria-hidden="true" style="flex:none">${esc(e.emoji||"🛠️")}</span><span><span style="display:block;font-size:var(--s-klein);color:var(--text2)">${esc(dat(e.datum))}</span>${esc(e.text)}</span></div>`).join("")}
-    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:10px">Jeden Sonntag um 18 Uhr kommt eine Benachrichtigung, wenn es Neues gibt. Abschalten unter „Trainerteam kontaktieren“ → Benachrichtigungen.</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-top:10px">Jeden Sonntag um 18 Uhr kommt eine Benachrichtigung, wenn es Neues gibt. Abschalten unter „Mein Konto“ (oben ⋯) → Benachrichtigungen.</div>
     <button onclick="document.getElementById('wn-modal').remove()" style="width:100%;min-height:48px;margin-top:14px;padding:11px;border:none;border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Super, danke!</button>
   </div>`;
   document.body.appendChild(m);
@@ -1274,7 +1307,7 @@ async function elternDashLoad(){
   const catBtn=(id,emoji,title,desc,grad)=>`<button onclick="elternCatOpen('${id}')" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)"><span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon(emoji)}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">${title}</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">${desc}</span></span><span style="font-size:var(--s-teil);color:#64748b">›</span></button>`;
   html+=sec("Mehr");
   // v637: Der Weg zum Trainerteam steht zuerst und heißt so, wie Eltern danach suchen.
-  html+=catBtn('kontakt','🗣️','Trainerteam kontaktieren','Frage oder Elterngespräch, Benachrichtigungen','linear-gradient(135deg,#475569,#334155)');
+  html+=catBtn('kontakt','🗣️','Trainerteam kontaktieren','Frage oder Elterngespräch','linear-gradient(135deg,#475569,#334155)');
   // v718: vorher eine eigene Karte „Termine“ mit nur diesem Knopf
   html+=`<button type="button" id="alle-termine-kachel" onclick="elternTermineOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)"><span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("📅")}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Alle Termine &amp; Kalender-Abo</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Ganze Saison, im eigenen Kalender abonnieren</span></span><span aria-hidden="true" style="font-size:var(--s-teil);opacity:.85">›</span></button>`;
   /* v699: Mannschaftskasse als eigene Kachel – alle Eltern lesen Kassenstand und jede Bewegung;
@@ -1285,7 +1318,7 @@ async function elternDashLoad(){
   html+=`<div id="kasse-verwalten-slot"></div>`;   // v664/v699: „Kasse führen“ – nur für die Kasse
   html+=catBtn('mehr','📰','Mehr vom Team','Spieltagsgalerie, Adler Nest, Börse','linear-gradient(135deg,#1e3a8a,#2563eb)');
   html+=catBtn('regeln','📋','Regeln &amp; Vereinbarungen','Unsere Vereinbarung &amp; das Fairplay-Quiz','linear-gradient(135deg,#15803d,#047857)');
-  html+=catBtn('datenschutz','🔒','Datenschutz &amp; Freigaben','Foto/Video, Notfallkarte, Datenexport','linear-gradient(135deg,#0f766e,#115e59)');
+  html+=catBtn('datenschutz','🔒','Freigaben &amp; Notfallkarte','Foto/Video-Freigabe und Notfallkarte je Kind','linear-gradient(135deg,#0f766e,#115e59)');
   // Versionszeile: hilft, wenn jemand „bei mir sieht das anders aus" meldet (v409)
   html+=`<div id="app-version-eltern" style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin:16px 0 4px"></div>`;
   html+=`<div id="el-cat-overlay" style="display:none;position:fixed;inset:0;z-index:10000;background:var(--bg,#f1f5f9);overflow-y:auto"><div style="max-width:560px;margin:0 auto;padding:12px 16px 40px">
@@ -1311,7 +1344,6 @@ async function elternDashLoad(){
         ${(typeof WRAPPED_SICHTBAR!=="undefined"&&WRAPPED_SICHTBAR)?elRow("📊","Saison-Statistik","Spiele, Einsätze &amp; Highlights – ansehen, auf Wunsch teilen",`childWrappedOpen(${k.spieler_id})`,"#a855f7"):""}
       </div>`;}).join("")}
     <div id="cat-mehr" class="el-cat-panel" style="display:none">`;
-  html+=elRow("👤","Meine Angaben","Name, Handy, Geburtstag – und der Geburtstag deines Kindes","elternAngabenOpen()","#1e3a8a");   // v660
   html+=`<div id="team-ansprech-slot"></div>`;   // v663: Elternbeirat, Kasse, Beitrag
   html+=elRow("📣","Nachlesen","Ansagen des Trainerteams und Neues in der App – auch was schon gelesen ist","elternNachlesenOpen()","#1e3a8a");   // v859 (3.7)
   html+=elRow("📸","Spieltagsgalerie","Fotos von allen Spieltagen – ansehen, groß wischen, selbst hochladen","spieltagGalerieOpen()","#7c3aed");   // v730
@@ -1344,16 +1376,13 @@ async function elternDashLoad(){
     return elRow("📸",`Foto- &amp; Video-Freigabe: ${kn}`,"App-intern / Trainingsvideos / öffentlich – jederzeit widerrufbar",`elternFotoConsentOpen(${k.spieler_id},'${nn}')`,"#0f766e")
          + elRow("🚑",`Notfallkarte: ${kn}`,"Allergien, Medikamente &amp; Notfallkontakt – nur fürs Trainerteam",`notfallOpen(${k.spieler_id},'${nn}')`,"#0d9488");
   }).join("");
-  html+=elRow("💾","Meine Daten herunterladen","Alles zu deinem Konto und deinen Kindern als Datei (JSON) – ohne Einschätzungen des Trainerteams","elternDataExport(this)","#14b8a6",true);
-  html+=elRow("🗑️","Daten löschen","Eigenes Konto sofort löschen · Löschung der Daten deines Kindes beantragen","elternLoeschenOpen()","#b91c1c",true);   // v644
+  html+=elRow("⚙️","Daten herunterladen oder löschen","Steht jetzt unter „Mein Konto“ (oben ⋯)","elternKontoOpen()","#14b8a6");   // v860
   html+=`</div>`; // /cat-datenschutz
   html+=`<div id="cat-kontakt" class="el-cat-panel" style="display:none">`;
   html+=`<div id="eg-slot"></div>`; // Status einer laufenden Elterngespräch-Anfrage
   html+=elRow("🗣️","Elterngespräch anfragen","Kurz Bescheid sagen – der Trainer meldet sich zur Terminabstimmung","elternGespraechOpen()","#334155");
   html+=`<div id="eltern-poll-info-slot"></div>`; // Elterngespräch-Terminfindung: beantwortet/entschieden (offene Abstimmungen leben im To-Do-Fenster)
-  html+=card(`<div style="font-weight:700;margin-bottom:6px">🔔 Benachrichtigungen</div>
-    <div style="font-size:var(--s-text);color:#64748b;margin-bottom:8px">Erinnerungen an Termine, offene Rückmeldungen und Neuigkeiten direkt aufs Handy.</div>
-    <div id="push-slot-eltern"></div>`);
+  html+=elRow("🔔","Benachrichtigungen","An/aus, Ruhezeit und Sonntags-Neuigkeiten – unter „Mein Konto“","elternKontoOpen()","#334155");   // v860
   html+=`</div>`; // /cat-kontakt
   html+=`</div></div>`; // /el-cat-overlay
   const scrollVor=_epScrollMerken(body);   // Wischposition der Karussells retten
@@ -1395,7 +1424,6 @@ async function elternDashLoad(){
   elternGespraechStatus();                     // laufende Elterngespräch-Anfrage anzeigen
   elternPollLoad();                            // Terminvorschläge des Trainers (Elterngespräch-Doodle)
   if(termin)elternTickerLoad(termin);          // Liveticker: Team des Kindes automatisch erkennen
-  if(typeof pushRenderInto==="function")pushRenderInto("push-slot-eltern","parent"); // Push-An/Aus
   elternPushHinweis();                          // v694: Hinweis oben, solange keine Benachrichtigungen an sind
   elternMatchGrussLoad(kids);                   // A1/A2: Nach-dem-Spiel-Gruß pro Kind
   elternKannJetztLoad(kids);                    // Paket 1: „Das kann dein Kind jetzt"
@@ -2952,10 +2980,10 @@ const ELTERN_TOUR=[
    d:"Foto, Rolle und schöne Momente – ohne Bewertungszahlen. Hier findest du auch, was dein Kind gerade lernt."},
   {emo:"🗣️", t:"Trainerteam erreichen", sel:['button[onclick="elternCatOpen(\'kontakt\')"]'],
    d:"Fragen, Hinweise, Absprachen: So erreichst du uns direkt."},
-  {emo:"🔒", t:"Datenschutz & Freigaben", sel:['button[onclick="elternCatOpen(\'datenschutz\')"]'],
-   d:"Foto-Freigaben, Notfallkarte und deine Daten zum Herunterladen. Ohne dein Häkchen erscheint kein Foto deines Kindes."},
-  {emo:"❓", t:"Hilfe und Schrift", sel:['button[onclick="elternTourStart()"]'],
-   d:"❓ startet diese Tour neu. Daneben „A“ für größere Schrift und 🌙 für den dunklen Modus. Viel Spaß bei den Adlern!"},
+  {emo:"🔒", t:"Freigaben & Notfallkarte", sel:['button[onclick="elternCatOpen(\'datenschutz\')"]'],
+   d:"Foto-Freigaben und Notfallkarte je Kind. Ohne dein Häkchen erscheint kein Foto deines Kindes."},
+  {emo:"❓", t:"Hilfe, Schrift und Mein Konto", sel:['button[onclick="elternTourStart()"]'],
+   d:"Unter ⋯ oben rechts: ❓ startet diese Tour neu, „A“ macht die Schrift größer, 🌙 schaltet den dunklen Modus. ⚙️ „Mein Konto“ bündelt deine Angaben, das Passwort, die Benachrichtigungen und deine Daten. Viel Spaß bei den Adlern!"},
 ];
 function elternTourMaybe(){ try{if(localStorage.getItem("adler_eltern_tour"))return;}catch(e){} elternTourStart(); }
 function elternTourStart(){ fuehrungStart(ELTERN_TOUR,{schluessel:"adler_eltern_tour",ende:_elZu}); }
