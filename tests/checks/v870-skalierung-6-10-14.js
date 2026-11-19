@@ -19,7 +19,10 @@ module.exports = async function (h) {
   else zeilen.push("b) 10 Kinder im 3 gegen 3: zwei Felder");
   const mass = t => { const m = String(t || "").match(/(\d+) x (\d+) m/); return m ? (+m[1]) * (+m[2]) : 0; };
   // L1-3: sechs Kinder spielen 4 gegen 2 in EINEM Viereck, acht Kinder 3 gegen 1 in zweien – dort bleibt das Maß der 4-gegen-2-Zeile (12 x 12 m).
-  const groesser = mit.filter(v => !/^L1-3 /.test(v.name) && mass(v.skalierung["6"]) && mass(v.skalierung["8"]) && mass(v.skalierung["6"]) >= mass(v.skalierung["8"]));
+  /* v883 (Charles 19.11.: weniger Wartende, mehr kleinere Felder): Hat die Achter-Zeile mehr Felder als die Sechser-Zeile
+     (L1-1, L6-1, L4-1: zwei Felder für acht, eines für sechs), darf das Feld so groß bleiben wie für sechs – dieselbe Lage wie bei L1-3. */
+  const felder = t => { const m = String(t || "").match(/^(\d+) (?:Feld|Felder|Viereck|Vierecke)\b/); return m ? +m[1] : 1; };
+  const groesser = mit.filter(v => !/^L1-3 /.test(v.name) && !(felder(v.skalierung["8"]) > felder(v.skalierung["6"])) && mass(v.skalierung["6"]) && mass(v.skalierung["8"]) && mass(v.skalierung["6"]) >= mass(v.skalierung["8"]));
   if (groesser.length) probleme.push("c) 6er-Feld nicht kleiner: " + groesser.map(v => v.name.slice(0, 4)).join(", "));
   else zeilen.push("c) 6er-Felder kleiner als die 8er-Felder");
   return h.ergebnis(titel, !probleme.length, probleme.concat(zeilen));

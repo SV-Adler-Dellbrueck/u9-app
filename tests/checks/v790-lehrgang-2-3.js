@@ -28,16 +28,25 @@ module.exports = async function (h) {
   const eintraege = SOLL.map((s, k) => {
     const soll = JSON.parse(JSON.stringify(nachU.uebungen.find(u => u.name === s.name))); soll.kat = s.kat;
     const t = bib.uebungen.filter(u => u.name === s.name);
+    /* v883 (Charles 19.11.): beide Abläufe auf das Nötige gekürzt – kürzer als im Nachtrag, alle drei Stufen bleiben;
+       Vororientierung und Ballversorgung prüft e), den Verteidiger-Absatz v810. Alles andere bleibt wie im Nachtrag. */
+    if (t.length === 1) {
+      const ab = String(t[0].ablauf || "");
+      if (!(ab.length < soll.ablauf.length) || !["STUFE 1 – FREI", "STUFE 2 – ENG", "STUFE 3 – OFFEN"].every(x => ab.includes(x))) probleme.push(`a) „${s.name}“: Ablauf nicht gekürzt oder ohne die drei Stufen`);
+      soll.ablauf = ab;
+    }
     if (t.length !== 1) probleme.push(`a) „${s.name}“ ${t.length}× in der Bibliothek`);
-    else if (!gleich(t[0], soll)) probleme.push(`a) „${s.name}“ weicht von der Nachtragsdatei ab (erlaubt: nur kat)`);
+    else if (!gleich(t[0], soll)) probleme.push(`a) „${s.name}“ weicht von der Nachtragsdatei ab (erlaubt: kat und der gekürzte Ablauf)`);
     return t[0] || soll;
   });
   const sollV = JSON.parse(JSON.stringify(nachV.vorlagen[0])); sollV.ordnung = "1 gegen 1";
   const tv = vl.vorlagen.filter(v => v.name === sollV.name);
   /* v870 (Charles 18.11.): dazu Zeilen für 6 und 14 Kinder – die übrigen Skalierungszeilen bleiben wie in der Nachtragsdatei. */
+  /* v883 (Charles 19.11.): Folge 5 statt 8 (Progression), Tag „halle“ (zwei Stationen 20 x 24 m passen in 27 x 45 m). */
+  sollV.folge_nr = 5; sollV.tags = ["wenig-platz", "halle"];
   if (tv[0] && tv[0].skalierung) { sollV.skalierung = Object.assign({}, sollV.skalierung); ["6", "14"].forEach(k => { if (tv[0].skalierung[k]) sollV.skalierung[k] = tv[0].skalierung[k]; }); }
   if (tv.length !== 1) probleme.push(`a) Vorlage ${tv.length}× in vorlagen.json`);
-  else if (!gleich(tv[0], sollV)) probleme.push("a) Vorlage weicht von der Nachtragsdatei ab (erlaubt: ordnung, Zeilen für 6 und 14 Kinder)");
+  else if (!gleich(tv[0], sollV)) probleme.push("a) Vorlage weicht von der Nachtragsdatei ab (erlaubt: ordnung, Zeilen für 6 und 14 Kinder, Folge 5 und „halle“ seit v883)");
   const alle = JSON.stringify(eintraege) + JSON.stringify(tv);
   for (const n of h.KINDER) if (alle.includes(n)) probleme.push(`d) Kindername ${n} in den Einträgen`);
   // b) Bilder und Spielerabstände aus den Daten

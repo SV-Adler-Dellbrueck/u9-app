@@ -12,7 +12,7 @@
 
    Fälle:
    a) Zwanzig Einheiten, je Leitfrage so viele wie das Konzept vorsieht, folge_nr
-      lückenlos ab 1.
+      lückenlos ab 1 – seit v883 über alle Einheiten der Leitfrage in der beschlossenen Folge.
    b) Die sechs Leitfragen stehen wörtlich im Konzept – nicht sinngemäß.
    c) Die echte Datei läuft ohne Fehler durch `_evPruefung`: jede genannte Übung gibt es,
       und ihre Kategorie passt zur Phase (kein Aufwärm-, Torwart- oder Einzeltraining im
@@ -44,6 +44,16 @@ const BESTAND = ["L1-1", "L2-1", "L3-1", "L4-1", "L4-2", "L5-1", "L6-1"];
 const ZUSATZ = ["L4-5", "L4-6", "L5-4", "L6-3", "L4-7", "L5-5", "L6-4", "L5-6", "L6-5", "L4-8", "L1-5", "L1-6", "L2-5", "L2-6", "L3-4", "L3-5", "L5-7", "L5-8"];   // v700: L5-7 Endzone und Fähnchen · v790: L5-8 Anbieten (Käfig, zwei Stationen)
 /* v569: Der Kader hat höchstens 14 Kinder. Die neun Einheiten für 3+1 und FUNiño skalieren
    deshalb über 8/10/12/14; die zwanzig des Konzepts und L4-5 bleiben bei 8/12/16 (§9). */
+/* v883: die beschlossene Folge je Leitfrage (Charles 19.11.) – Ein-Feld-Formen nach Gegnerdruck, Stationen
+   (1 gegen 1 → FUNiño → 3+1), Kombinationen, Übungsform-Einheiten, Lehrgänge. */
+const FOLGE_V883 = {
+  L1: ["L1-3", "L1-1", "L1-2", "L1-6", "L1-5", "L1-4"],
+  L2: ["L2-1", "L2-2", "L2-4", "L2-6", "L2-5", "L2-3"],
+  L3: ["L3-3", "L3-2", "L3-5", "L3-4", "L3-1"],
+  L4: ["L4-1", "L4-3", "L4-7", "L4-6", "L4-8", "L4-4", "L4-2", "L4-5"],
+  L5: ["L5-3", "L5-1", "L5-2", "L5-7", "L5-8", "L5-5", "L5-4", "L5-6"],
+  L6: ["L6-1", "L6-2", "L6-4", "L6-3", "L6-5"]
+};
 const SKAL_ALT = ["8", "12", "16"], SKAL_NEU = ["8", "10", "12", "14"];
 /* v790: L5-8 läuft im Käfig mit zwei Stationen und führt deshalb nur 8/10/12 (kein 14er-Schlüssel: der Kader hat höchstens 14, der Käfig trägt zwei Stationen) */
 const SKAL_L58 = ["8", "10", "12"];
@@ -67,9 +77,15 @@ module.exports = async function (h) {
   Object.keys(SOLL).forEach(f => {
     const g = je[f] || [];
     if (g.length !== SOLL[f]) { probleme.push(`„${f}“: ${g.length} Einheiten statt ${SOLL[f]}`); return; }
-    const nrn = g.map(v => Number(v.folge_nr)).sort((a, b) => a - b);
-    const soll = g.map((_, i) => i + 1);
+    /* v883 (Charles 19.11.): folge_nr ist die Progression ALLER Einheiten der Leitfrage – erst Ein-Feld-Formen,
+       dann Stationen, dann Kombinationen, Übungsform-Einheiten und Lehrgänge am Ende (Regel in v883 c). Die
+       zwanzig stehen seitdem zwischen den Zusatz-Einheiten; erwartet wird die beschlossene Folge, lückenlos ab 1. */
+    const ganz = (vor.vorlagen || []).filter(v => v.leitfrage === f && Number(v.folge_nr) > 0).sort((a, b) => a.folge_nr - b.folge_nr);
+    const nrn = ganz.map(v => Number(v.folge_nr));
+    const soll = ganz.map((_, i) => i + 1);
     if (String(nrn) !== String(soll)) probleme.push(`„${f}“: folge_nr ${nrn.join(",")} statt ${soll.join(",")}`);
+    const ist = ganz.map(v => String(v.name).split(" ")[0]), sollFolge = FOLGE_V883[String(g[0].name).slice(0, 2)] || [];
+    if (String(ist) !== String(sollFolge)) probleme.push(`„${f}“: Folge ${ist.join(" → ")} statt ${sollFolge.join(" → ")} (Beschluss 19.11.)`);
   });
   const fremd = Object.keys(je).filter(f => !SOLL[f]);
   if (fremd.length) probleme.push("Leitfrage, die das Konzept nicht kennt: " + fremd.join(" · "));
