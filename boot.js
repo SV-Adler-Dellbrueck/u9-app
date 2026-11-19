@@ -1913,7 +1913,7 @@ function tpVersatzZurueck(si){
    dahinter rueckt nach, die Trainer-Zuordnung wandert mit. Zurueck ueber „wieder aufnehmen". */
 function tpFeldWeglassen(si,p){
   const slot=tpSlots[si]; if(!slot)return;
-  const anzahl=document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`).length;
+  const anzahl=tpFelderZahl(si);   // v881: aus dem Modell
   if(anzahl<=1)return;
   const weg=Array.isArray(slot.weg)?slot.weg.slice():[];
   // p ist die Position unter den SICHTBAREN Feldern; auf den Gruppen-Index abbilden
@@ -2713,7 +2713,7 @@ function tpBetreuungHinweis(selId){
   el.innerHTML="";
   const info=_tpStationGruppe[selId], sel=document.getElementById(selId);
   if(!info||!sel||!sel.value)return;
-  const felder=document.querySelectorAll(`select.tp-form-sel[id^="tp-form-${info.si}-"]`).length;
+  const felder=tpFelderZahl(info.si);   // v881: aus dem Modell
   if(felder<2||tpCoaches[selId])return;
   const alle=tpAllForms(), idx=parseInt(sel.value), f=alle[idx];
   const b=tpBetreuungWert(f); if(!b||b.wert==="allein")return;
@@ -2741,6 +2741,74 @@ function _tpAbschlussNachladen(n){
   if(typeof abschlussFuellen==="function"){ try{ abschlussFuellen(); }catch(e){} return; }
   if(n<12)setTimeout(()=>_tpAbschlussNachladen(n+1),400);
 }
+/* v881 · 4.8 Schritt 3 – FELDERZAHL, REIHENFOLGE UND TORWART-ANGEBOT AUS DEM MODELL.
+   Drei reine Funktionen ohne DOM-Zugriff und ohne Nebenwirkung; das Zeichnen nutzt sie selbst,
+   es gibt nur noch eine Rechenstelle. Bisher zählten Speichern, Feld weglassen, Timer,
+   „Training füllen“, Anpassen und Trainingsstart die Auswahlfelder auf der Seite.
+   Trainerauswahl und Trainingsgruppen gehören nicht zum Plan-Zustand (plan-zustand.md,
+   „Bewusst nicht“) und stehen in der Seite: Sie gelten so, wie das Zeichnen sie zuletzt
+   vorgefunden hat (_tpFelderStand) – genau das, woraus die Felder auf der Seite entstanden sind.
+   Vor dem ersten Zeichnen hat kein Block ein Feld, wie zuvor die leere Seite. */
+let _tpFelderStand=null;   // {trainer: angehakte Trainer, tgAnz: Zahl der Gruppen} beim letzten Zeichnen
+/* Was ein Block zeigt: freies Fenster und Abschluss/Turnier ohne Auswahl, Torwart- und Einzelblock
+   ein Feld, alle anderen ihre Felder. Dieselbe Reihenfolge der Fragen wie beim Zeichnen. */
+function _tpFeldArt(slot){
+  const typ=(slot&&slot.typ)||"main";
+  if(tpFreiesFenster(slot))return "frei";
+  if(typ==="abschluss"||typ==="turnier")return "ohne";
+  if(typ==="tw")return "tw";
+  if(typ==="individual")return "einzel";
+  return "felder";
+}
+/* Stationen = angehakte Trainer, MINDESTENS aber so viele, wie ausgeloste Gruppen existieren.
+   Sagt ein Trainer nach der Auslosung ab, fiel sonst eine komplette Gruppe aus Anzeige und
+   Trainingsstart – die Kinder tauchten nirgends mehr auf.
+   Haengt ein Trainer am Torwart-/Einzelblock, zaehlen fuer diesen Hauptteil nur die freien
+   Trainer – ohne die Untergrenze „Gruppenzahl", denn die ueberzaehligen Gruppen spielen hier bei
+   den anderen Feldern mit (tpFelderGruppen). Sonst gilt weiter: nie weniger Felder als Gruppen,
+   damit bei einer Absage keine Gruppe verschwindet.
+   v605: Das Aufwärmen kann mehrere Übungen hintereinander haben (PO: „über ein Plus eine Übung
+   mehr einbauen"). Alle Kinder machen jede davon – es bleibt ein Feld je Übung, nur ohne Gruppen. */
+function _tpFelderRechnung(si){
+  const slot=tpSlots[si]||{}, st=_tpFelderStand||{trainer:[],tgAnz:0};
+  const typ=slot.typ||"main";
+  const noGroups=typ==="warmup"||typ==="abschluss"||typ==="turnier"||typ==="tw";
+  const gebunden=tpIstHauptteil(typ)?tpParallelTrainer(si):new Set();
+  const trainersAlle=st.trainer.slice();
+  const trainers=trainersAlle.filter(t=>!gebunden.has(t));
+  const weg=(tpIstHauptteil(typ)&&Array.isArray(slot.weg))?slot.weg:[];
+  const warmFolge=typ==="warmup"?Math.max(1,Math.min(4,Number(slot.folge)||1)):1;
+  const basisFelder=noGroups?warmFolge:(tpIstHauptteil(typ)&&gebunden.size)?Math.min(Math.max(1,trainers.length),5):Math.min(Math.max(1,trainersAlle.length,st.tgAnz),5);
+  const parallelSlots=Math.max(1,basisFelder-weg.length);   // vom Trainer weggelassene Felder
+  return {gebunden,trainersAlle,trainers,weg,warmFolge,parallelSlots};
+}
+/* Wie viele Übungsfelder hat Block si? So viele Auswahlfelder tp-form-<si>-0 … stehen auf der Seite. */
+function tpFelderZahl(si){
+  const slot=tpSlots[si]; if(!slot||!_tpFelderStand)return 0;
+  const art=_tpFeldArt(slot);
+  if(art==="frei"||art==="ohne")return 0;
+  if(art==="tw"||art==="einzel")return 1;
+  return _tpFelderRechnung(si).parallelSlots;
+}
+/* Render-Reihenfolge: parallele Blöcke stehen direkt UNTER ihrem Ziel-Slot
+   (PO: „zeitlich vor dem Abschluss, aber optisch dahinter eingereiht"). si bleibt der
+   echte Array-Index – alle IDs/Handler zeigen weiter auf tpSlots[si]. */
+function _tpRenderReihe(){
+  const reihe=[];
+  tpSlots.forEach((s,i)=>{
+    if(tpIstParallel(s))return;
+    reihe.push(i);
+    tpSlots.forEach((s2,i2)=>{if(tpKannParallel(s2.typ)&&s2.parallelZu===i)reihe.push(i2);});
+  });
+  tpSlots.forEach((s,i)=>{if(!reihe.includes(i))reihe.push(i);});
+  return reihe;
+}
+/* Welche Torhüter bietet der Torwart-Block si zum Anhaken an? Ausgetragene nicht mehr;
+   v865: wer am längsten nicht im Tor war, zuerst. Andere Blöcke bieten keine an. */
+function tpTwAngebot(si){
+  const slot=tpSlots[si]; if(!slot||_tpFeldArt(slot)!=="tw")return [];
+  return tpTwSortieren(KADER.filter(k=>k.tw&&k.aktiv!==false));
+}
 function _tpRenderTimelineIntern(){
   /* v621: Pläne mit Durchgängen alter Art (v605–v620: ein Block, Zeit geteilt) werden zur
      Kette – der folgende Hauptteil wird Durchgang 2, sonst wird er angelegt. */
@@ -2761,7 +2829,6 @@ function _tpRenderTimelineIntern(){
   wrap.querySelectorAll(".tp-tw-player").forEach(c=>{merk.tw[c.dataset.slot+"|"+c.value]=c.checked;});
   wrap.querySelectorAll('select[id^="tp-ind-player-"]').forEach(s=>{if(s.value)merk.ind[s.id]=s.value;});
   if(typeof renderTeamDiagnose==="function")renderTeamDiagnose(); // Phase 7-C: Team-Diagnose oben
-  const trainerCount=tpGetTrainerCount();
   const allForms=tpAllForms();
   let time=0;
   // F5: Stationstimer + G3: Anwesenheits-Prognose (async gefüllt).
@@ -2786,17 +2853,9 @@ function _tpRenderTimelineIntern(){
   // Parallele Bloecke dauern so lange wie ihr Hauptteil – auch im gespeicherten Plan
   tpSlots.forEach(s=>{if(tpIstParallel(s))s.dauer=tpSlots[s.parallelZu].dauer;});
   let acc=0; const startsArr=tpSlots.map(s=>{const st0=acc;if(!tpIstParallel(s))acc+=s.dauer;return st0;});
-  /* Render-Reihenfolge: parallele Blöcke stehen direkt UNTER ihrem Ziel-Slot
-     (PO: „zeitlich vor dem Abschluss, aber optisch dahinter eingereiht"). si bleibt der
-     echte Array-Index – alle IDs/Handler zeigen weiter auf tpSlots[si]. */
-  const renderOrder=[];
-  tpSlots.forEach((s,i)=>{
-    if(tpIstParallel(s))return;
-    renderOrder.push(i);
-    tpSlots.forEach((s2,i2)=>{if(tpKannParallel(s2.typ)&&s2.parallelZu===i)renderOrder.push(i2);});
-  });
-  tpSlots.forEach((s,i)=>{if(!renderOrder.includes(i))renderOrder.push(i);});
-  renderOrder.forEach(si=>{ const slot=tpSlots[si];
+  /* v881: Trainerauswahl und Gruppenzahl, aus denen die Felder entstehen – für tpFelderZahl */
+  _tpFelderStand={trainer:tpGetCheckedTrainers(),tgAnz:((typeof tgFor==="function"&&tgFor())||{}).gruppen?.length||0};
+  _tpRenderReihe().forEach(si=>{ const slot=tpSlots[si];
     const typ=slot.typ||"main";
     const parallel=tpIstParallel(slot);
     const startMin=parallel?startsArr[slot.parallelZu]:time;
@@ -2812,26 +2871,11 @@ function _tpRenderTimelineIntern(){
        Erkannt wird es am Namen des Blocks, den die Vorlage mitbringt - die Vorlagen
        tragen kein eigenes Merkmal dafuer, und eines nachzuruesten hiesse, jede Vorlage
        in Datei UND Datenbank anzufassen, ohne dass es mehr aussagte als der Name. */
-    const frei=tpFreiesFenster(slot);
-    const noSelect=typ==="abschluss"||typ==="turnier"||frei;
-    /* Stationen = angehakte Trainer, MINDESTENS aber so viele, wie ausgeloste Gruppen
-       existieren. Sagt ein Trainer nach der Auslosung ab, fiel sonst eine komplette
-       Gruppe aus Anzeige und Trainingsstart – die Kinder tauchten nirgends mehr auf. */
-    const tgAnz=((typeof tgFor==="function"&&tgFor())||{}).gruppen?.length||0;
-    const gebunden=tpIstHauptteil(typ)?tpParallelTrainer(si):new Set();
-    const trainersAlle=tpGetCheckedTrainers();
-    const trainers=trainersAlle.filter(t=>!gebunden.has(t));
-    /* Haengt ein Trainer am Torwart-/Einzelblock, zaehlen fuer diesen Hauptteil nur die
-       freien Trainer – ohne die Untergrenze „Gruppenzahl", denn die ueberzaehligen Gruppen
-       spielen hier bei den anderen Feldern mit (tpFelderGruppen). Sonst gilt weiter: nie
-       weniger Felder als Gruppen, damit bei einer Absage keine Gruppe verschwindet. */
-    const weg=(tpIstHauptteil(typ)&&Array.isArray(slot.weg))?slot.weg:[];
-    /* v605: Das Aufwärmen kann mehrere Übungen hintereinander haben (PO: „über ein Plus
-       eine Übung mehr einbauen"). Alle Kinder machen jede davon – es bleibt ein Feld je
-       Übung, nur ohne Gruppen. */
-    const warmFolge=typ==="warmup"?Math.max(1,Math.min(4,Number(slot.folge)||1)):1;
-    const basisFelder=noGroups?warmFolge:(tpIstHauptteil(typ)&&gebunden.size)?Math.min(Math.max(1,trainers.length),5):Math.min(Math.max(1,trainerCount,tgAnz),5);
-    const parallelSlots=Math.max(1,basisFelder-weg.length);   // vom Trainer weggelassene Felder
+    const art=_tpFeldArt(slot);
+    const frei=art==="frei";
+    const noSelect=art==="ohne"||frei;
+    /* v881: Felder, Trainer und weggelassene Felder rechnet _tpFelderRechnung (eine Rechenstelle) */
+    const {gebunden,trainersAlle,trainers,weg,warmFolge,parallelSlots}=_tpFelderRechnung(si);
     const felderGruppen=(tpIstHauptteil(typ)&&typeof tgFor==="function"&&tgFor())?tpFelderGruppen(tgFor(),parallelSlots,weg,tpVersatz(si),tpFeldBedarfe(si,parallelSlots,merk.sel)):null;
     const filtered=tpFilteredOpts(typ);
     const formOpts=filtered.map(x=>`<option value="${x.i}">${esc(x.f.name)} (${esc(x.f.dauer)})</option>`).join("");
@@ -2925,8 +2969,8 @@ function _tpRenderTimelineIntern(){
       html+=`<div style="font-size:var(--s-klein);color:var(--text2);padding:4px 0">Freies Spiel – Standard: 3 gegen 3 auf 4 Minitore (FUNiño), ohne Torwart</div>
         ${typ==="abschluss"?`<div class="tp-abschluss-teams"></div>`:""}
         <button class="btn btn-sm" style="margin-top:4px" onclick="blitzOpen(${Number(slot.dauer)||15})" title="Trainingsturnier mit dieser Slot-Dauer als Zeitbudget – vorab planbar, wird zum Termin gespeichert">🏆 Als Trainingsturnier spielen (${slot.dauer} Min.)</button>`;
-    } else if(typ==="tw"){
-      const twPlayers=tpTwSortieren(KADER.filter(k=>k.tw&&k.aktiv!==false));   // ausgetragene Torhueter nicht mehr anbieten; v865: wer am längsten nicht im Tor war, zuerst
+    } else if(art==="tw"){
+      const twPlayers=tpTwAngebot(si);   // ausgetragene Torhueter nicht mehr anbieten; v865: wer am längsten nicht im Tor war, zuerst
       html+=`<div style="margin-top:6px">
         <div style="font-size:var(--s-klein);color:var(--text2);font-weight:600;margin-bottom:4px">Torwart-Spieler</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
@@ -2944,7 +2988,7 @@ function _tpRenderTimelineIntern(){
         <div class="tp-feld"><label>Trainer</label>${tpCoachSelect(`tp-form-${si}-0`)}</div>
         <div id="tp-form-${si}-0-hist"></div>
       </div>`;
-    } else if(typ==="individual"){
+    } else if(art==="einzel"){
       const playerOpts=KADER.filter(k=>k.aktiv!==false).map(k=>`<option value="${esc(k.name)}">${esc(k.name)}</option>`).join("");
       html+=`<div class="tp-feld"><label for="tp-ind-player-${si}">Spieler</label>
         <select id="tp-ind-player-${si}" onchange="tpIndPlayerChange(${si})">
@@ -2965,7 +3009,8 @@ function _tpRenderTimelineIntern(){
       <div id="tp-form-${si}-0-hist"></div>`;
     } else {
       const tg=(typeof tgFor==="function")?tgFor():null; // Trainingsgruppen: Namen + Trainer je Gruppe
-      for(let p=0;p<parallelSlots;p++){
+      const nFelder=tpFelderZahl(si);
+      for(let p=0;p<nFelder;p++){
         const selId=`tp-form-${si}-${p}`;
         const tgg=(!noGroups)?(felderGruppen?felderGruppen[p]:(tg&&tg.gruppen?tg.gruppen[p]:null)):null;
         if(tpCoaches[selId]&&gebunden.has(tpCoaches[selId]))delete tpCoaches[selId]; // steht jetzt am Torwart-/Einzelblock
@@ -3950,7 +3995,9 @@ function tpAddRecoExercise(formIdx){
                auch leere (ihre Zahl je Block ist die Felderzahl); station/alle sind die rohen
                Marken data-station/data-alle
      tw      – {Blockindex: [angehakte Werte]} nur für Blöcke mit Torwart-Angebot
-     kind    – {Blockindex: Wert der Einzelkind-Auswahl} */
+     kind    – {Blockindex: Wert der Einzelkind-Auswahl}
+     felderZahl – (v881, wahlweise) [Felderzahl je Block] aus tpFelderZahl; fehlt sie, zählen die
+               Felder des Zustands je Block */
 function tpPlanAusZustand(z){
   const allForms=z.formen||[], trainers=z.trainer||[], coaches=z.coaches||{}, slots=z.slots||[];
   const entries=[];
@@ -3987,7 +4034,10 @@ function tpSlotsAusZustand(z){
       if(typ==="tw"){const an=tw[si]; if(Array.isArray(an))o.tw=ids(an.slice());}
       else{const k=kind[si]; if(k)o.kind=id(k);}
     }else if(tpIstHauptteil(typ)){
-      const c=[]; felder.filter(f=>String(f.id||"").startsWith(`tp-form-${si}-`)).forEach((f,p)=>{c[p]=coaches[f.id]||"";});
+      /* v881: Felderzahl aus dem Modell (z.felderZahl); ohne sie zählen die Felder des Zustands */
+      const c=[];
+      if(Array.isArray(z.felderZahl)){ for(let p=0;p<(Number(z.felderZahl[si])||0);p++)c[p]=coaches[`tp-form-${si}-${p}`]||""; }
+      else felder.filter(f=>String(f.id||"").startsWith(`tp-form-${si}-`)).forEach((f,p)=>{c[p]=coaches[f.id]||"";});
       if(c.some(Boolean))o.coaches=c;
     }
     return o;
@@ -4002,7 +4052,7 @@ function _tpZustandAusDom(){
     if(an.length)tw[si]=an.filter(c=>c.checked).map(c=>c.value);
     const k=document.getElementById(`tp-ind-player-${si}`)?.value; if(k!=null)kind[si]=k;
   });
-  return {slots:tpSlots,coaches:tpCoaches,trainer:tpGetCheckedTrainers(),formen:tpAllForms(),felder,tw,kind};
+  return {slots:tpSlots,coaches:tpCoaches,trainer:tpGetCheckedTrainers(),formen:tpAllForms(),felder,tw,kind,felderZahl:tpSlots.map((s,si)=>tpFelderZahl(si))};
 }
 /* Der geplante Zeitplan als Datenstruktur – frueher nur inline in evalRenderList.
    Wird auch von tpPlanSave() gebraucht, damit "Einheit bewerten" spaeter weiss,
@@ -4600,7 +4650,7 @@ function stTimerStations(){
     let gruppen=[];
     try{
       if(tpIstHauptteil(slot.typ)&&typeof tgFor==="function"&&tgFor()){
-        const n=Math.max(1,[...document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`)].length);
+        const n=Math.max(1,tpFelderZahl(si));   // v881: aus dem Modell
         gruppen=tpFelderGruppen(tgFor(),n,(slot.weg||[]),tpVersatz(si)+d,tpFeldBedarfe(si,n)).map((f,i)=>`${f.emo||"👥"} ${(f.name||"").split(" + ")[0]} (${f.kinder.length}) → Feld ${i+1}`);
       }
     }catch(e){}
@@ -4818,7 +4868,7 @@ async function tpGenerate(){
   const th={quelle:thema.quelle,bevorzugt:thema.bevorzugt,kats:[...new Set(tpFokusKats(datum).concat(vorlageKats,thema.kats))]};   // v865: Fokus zuerst
   const tg=tgFor(), groessen=(tg&&Array.isArray(tg.gruppen))?tg.gruppen.map(x=>(x.kinder||[]).length).filter(Boolean):[];
   const kinder=_tgPool().namen.length;
-  const stationen=Math.max(1,...haupt().map(x=>document.querySelectorAll(`.tp-form-sel[id^="tp-form-${x.i}-"]`).length));
+  const stationen=Math.max(1,...haupt().map(x=>tpFelderZahl(x.i)));   // v881: aus dem Modell
   const g=groessen.length?Math.max(...groessen):Math.max(1,Math.ceil(kinder/stationen));
   const zufall=_tpSaat("adler-"+datum);
   const weg=new Set();
@@ -4944,7 +4994,7 @@ function tpAnpassenVorschlag(){
   // Stationen = Trainer (wie „Training füllen“); der gemeinsame Block ohne Stationen bleibt
   const mitStationen=tpSlots.some(sl=>sl&&Number(sl.stationen)>1);
   const hs=haupt.filter(x=>!(mitStationen&&!(Number(x.s.stationen)>1)&&wert(x.i,0)!=null));
-  const felder=si=>document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`).length;
+  const felder=si=>tpFelderZahl(si);   // v881: aus dem Modell
   /* Wie viele Stationen hat der Plan? So viele, wie es Gruppen gibt – ein frisch angehakter Trainer
      zeigt sofort ein leeres Feld mehr, das zählt noch nicht. Ohne Gruppen zählen die Felder. */
   const vorher=Math.max(1,gruppen.length?Math.min(gruppen.length,Math.max(...hs.map(x=>felder(x.i)))):Math.max(...hs.map(x=>felder(x.i))));
@@ -5734,7 +5784,8 @@ function _tlSnapshot(){
     const nDg=tpDurchgaenge(slot), minuten=tpDurchgangMinuten(slot);
     for(let d=0;d<nDg;d++){
     const gruppen=[];
-    const felder=(tg&&tg.gruppen&&tpIstHauptteil(slot.typ))?tpFelderGruppen(tg,sels.length,slot.weg,tpVersatz(si)+d,tpFeldBedarfe(si,sels.length)):null;
+    const nF=tpFelderZahl(si);   // v881: aus dem Modell
+    const felder=(tg&&tg.gruppen&&tpIstHauptteil(slot.typ))?tpFelderGruppen(tg,nF,slot.weg,tpVersatz(si)+d,tpFeldBedarfe(si,nF)):null;
     sels.forEach((s,p)=>{
       const f=s.value?forms[Number(s.value)]:null;
       const tgg=felder?felder[p]:null;
