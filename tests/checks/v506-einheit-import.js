@@ -84,21 +84,22 @@ module.exports = async function (h) {
     kopf: { schwerpunkt: "Ball nach vorne bringen, ohne den Korridor zu verlassen.", material: "12 Hütchen, 4 Minitore", beobachtung: "Wer besetzt nach Ballgewinn die Aufpasser-Position?", notiz_folge: "" },
     updated_at: new Date().toISOString()
   };
-  const nach = await s.page.evaluate(async ({ datum }) => {
+  const nach = await s.page.evaluate(async ({ datum, nM }) => {
     const warte = ms => new Promise(r => setTimeout(r, ms));
     const sel = document.getElementById("tp-date");
     if (sel && ![...sel.options].some(o => o.value === datum)) sel.add(new Option(datum, datum), 0);
     if (sel) sel.value = datum;
     if (typeof go === "function") go("planung");
     if (typeof tpPlanRestore === "function") await tpPlanRestore(datum);
-    await warte(400);
+    // Auf die gesetzten Übungen warten statt fest 400 ms (unter Last zu knapp); höchstens 3 s
     const af = tpAllForms();
+    for (let i = 0; i < 60 && ![...document.querySelectorAll(".tp-form-sel")].some(x => x.value && af[parseInt(x.value)] && af[parseInt(x.value)].name === nM); i++) await warte(50);
     return {
       slots: (typeof tpSlots !== "undefined") ? tpSlots.length : 0,
       sel: [...document.querySelectorAll(".tp-form-sel")].filter(x => x.value).map(x => af[parseInt(x.value)] && af[parseInt(x.value)].name),
       kopf: document.getElementById("tp-kopf") ? document.getElementById("tp-kopf").textContent.replace(/\s+/g, " ").trim() : ""
     };
-  }, { datum });
+  }, { datum, nM: formen.nM });
   if (nach.slots !== 2) probleme.push(`Die Zeitleiste zeigt ${nach.slots} Phasen statt 2`);
   if (!nach.sel.includes(formen.nM)) probleme.push(`Der Hauptteil steht nicht über den Namen in der Zeitleiste (falscher Index gewann): ${nach.sel.join(" | ")}`);
   if (!/Schwerpunkt/.test(nach.kopf)) probleme.push(`Der Kopf der Einheit erscheint nicht über der Zeitleiste: „${nach.kopf.slice(0, 60)}“`);

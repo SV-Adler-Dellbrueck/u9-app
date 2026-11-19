@@ -73,7 +73,9 @@ module.exports = async function (h) {
     out.a.ablegen = hoehe(document.getElementById("nb-verzicht-ok"));
     out.a.notiz = !!document.getElementById("nb-verzicht-notiz") && /freiwillig/.test(dlg().textContent);
     // b) ganz ohne Grund ablegen
-    document.getElementById("nb-verzicht-ok").click(); await bis(() => !dlg()); await warte(150);
+    document.getElementById("nb-verzicht-ok").click(); await bis(() => !dlg());
+    // Auf den Wechsel der Karte warten statt fest 150 ms (unter Last zu knapp); höchstens 3 s
+    await bis(() => slot.textContent.replace(/\s+/g, " ").trim().slice(0, 140) !== out.a.karte, 60);
     out.b = { karte: slot.textContent.replace(/\s+/g, " ").trim().slice(0, 140), tagebuch: null };
     // c) mit Grund und Anmerkung (das zweite Termin = Spiel oder Training, je nach Karte)
     const nichts2 = [...slot.querySelectorAll("button")].find(b => /Nichts eintragen/.test(b.textContent));
