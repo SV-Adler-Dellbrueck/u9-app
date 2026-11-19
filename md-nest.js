@@ -768,20 +768,20 @@ async function nestBogenOpen(id){
 }
 function nestBogenRender(){
   const m=document.getElementById("nest-bogen"); if(!m||!_nestBogen)return; const b=_nestBogen;
-  const inp="width:100%;min-height:48px;padding:9px;margin:4px 0 8px;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box;font-family:inherit;font-size:var(--s-text)";
-  m.innerHTML=`<div style="background:#fff;color:#0A1A3A;border-radius:16px;padding:18px;max-width:420px;width:100%;margin:auto">
+  const inp="width:100%;min-height:48px;padding:9px;margin:4px 0 8px;border:var(--border-s);border-radius:8px;box-sizing:border-box;font-family:inherit;font-size:var(--s-text)";
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:18px;max-width:420px;width:100%;margin:auto">
     ${mdlHead("nest-bogen","🪺",`${esc(b.name)} im Adler Nest`,"Euer Kind wird im nächsten Heft vorgestellt","#0044AA")}
     <div style="font-size:var(--s-text);line-height:1.5;margin-bottom:12px">Bis ${esc(_nestFrist(b.e.frist_eltern))} sammeln wir ein paar Angaben. Das Trainerteam schreibt daraus das Porträt und liest es vor dem Erscheinen. Im Heft steht nur der Vorname. Das Heft lesen nur angemeldete Team-Familien.</div>
     <div style="font-weight:800;margin:8px 0 4px">1 · Fan-Fakten</div>
-    <div style="font-size:var(--s-klein);color:#45506a;margin-bottom:6px">Hobby, Lieblingsverein, starker Fuß, weiterer Sport, Saisonziel – was ihr eintragt, kann ins Porträt.</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px">Hobby, Lieblingsverein, starker Fuß, weiterer Sport, Saisonziel – was ihr eintragt, kann ins Porträt.</div>
     <button type="button" class="btn" onclick="if(typeof elternFanfactsOpen==='function')elternFanfactsOpen(${Number(b.e.spieler_id)},'${jsq(b.name)}')" style="width:100%;min-height:48px;justify-content:center">✏️ Fan-Fakten ausfüllen</button>
     <div style="font-weight:800;margin:16px 0 4px">2 · Bis zu zwei Fotos (freiwillig)</div>
     <div id="nest-bogen-fotos">${b.fotos.map((f,i)=>`<div style="display:flex;gap:8px;align-items:center;padding:6px 0"><img id="nest-bogen-img-${i}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:8px;background:#eef3fb"><span style="flex:1;font-size:var(--s-text)">${esc(f.unterschrift||"ohne Unterschrift")}</span><button type="button" class="btn btn-sm" style="min-height:44px" onclick="nestBogenFotoWeg(${i})">Entfernen</button></div>`).join("")}</div>
-    ${b.fotos.length<NEST_MAX_PRIVAT?`<label for="nest-bogen-text" style="font-size:var(--s-klein);color:#45506a">Bildunterschrift</label>
+    ${b.fotos.length<NEST_MAX_PRIVAT?`<label for="nest-bogen-text" style="font-size:var(--s-klein);color:var(--text2)">Bildunterschrift</label>
       <input id="nest-bogen-text" maxlength="80" placeholder="z. B. Beim Schwimmen" style="${inp}">
       <label class="btn" style="width:100%;min-height:48px;justify-content:center;cursor:pointer;position:relative;${b.ok?"":"opacity:.55"}">📷 Foto auswählen<input type="file" id="nest-bogen-wahl" accept="image/jpeg,image/png,image/webp" ${b.ok?"":"disabled"} onchange="nestBogenFotoHoch(this)" style="position:absolute;opacity:0;width:1px;height:1px"></label>
-      ${b.ok?"":`<div style="font-size:var(--s-klein);color:#45506a;margin-top:4px">Fotos erst nach dem Häkchen unten.</div>`}`
-      :`<div style="font-size:var(--s-klein);color:#45506a">Mehr als zwei Fotos gehen nicht.</div>`}
+      ${b.ok?"":`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Fotos erst nach dem Häkchen unten.</div>`}`
+      :`<div style="font-size:var(--s-klein);color:var(--text2)">Mehr als zwei Fotos gehen nicht.</div>`}
     <label style="display:flex;gap:10px;align-items:flex-start;margin:16px 0 8px;font-size:var(--s-text);line-height:1.4;min-height:44px">
       <input type="checkbox" id="nest-bogen-ok" ${b.ok?"checked":""} onchange="nestBogenOk(this)" style="width:22px;height:22px;flex:none;margin-top:2px">
       <span>Wir sind einverstanden, dass diese Angaben und Fotos im Adler Nest erscheinen.</span></label>

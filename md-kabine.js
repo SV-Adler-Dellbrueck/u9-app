@@ -2552,7 +2552,7 @@ async function kinderAppOpen(){
       <button class="btn" onclick="kinderAppClose()" aria-label="Zurück" style="width:44px;height:44px;font-size:20px;min-width:44px;justify-content:center">←</button>
       <div style="font-size:17px;font-weight:800">📱 Kinder-App</div>
     </div>
-    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:13px;font-size:13px;line-height:1.6;color:#475569;margin-bottom:12px">
+    <div style="background:var(--surface);border:var(--border);border-radius:14px;padding:13px;font-size:13px;line-height:1.6;color:var(--text2);margin-bottom:12px">
       Dein Kind kann die Kabine auf einem <b>eigenen Gerät</b> installieren. Dafür bekommt es
       ein Konto <b>ohne Namen und ohne E-Mail</b>, das du hier an dein Kind bindest und
       jederzeit wieder trennst. Wie lange es täglich darf, stellst du ebenfalls hier ein.
@@ -2570,9 +2570,9 @@ function kinderAppClose(){
 
 async function kinderAppLaden(){
   const b=document.getElementById("ka-body"); if(!b)return;
-  b.innerHTML=`<div style="text-align:center;padding:36px;color:#64748b;font-size:13px">Lädt …</div>`;
+  b.innerHTML=`<div style="text-align:center;padding:36px;color:var(--text3);font-size:13px">Lädt …</div>`;
   const kids=kaKids();
-  if(!kids.length){ b.innerHTML=kaKarte(`<div style="font-size:13px;color:#475569">Für diese Adresse ist noch kein Kind hinterlegt. Sag deinem Trainer Bescheid, dann richtet er das ein.</div>`); return; }
+  if(!kids.length){ b.innerHTML=kaKarte(`<div style="font-size:13px;color:var(--text2)">Für diese Adresse ist noch kein Kind hinterlegt. Sag deinem Trainer Bescheid, dann richtet er das ein.</div>`); return; }
   const ids=kids.map(k=>k.spieler_id).join(",");
   let konten=[], sitzungen={};
   try{
@@ -2587,14 +2587,14 @@ async function kinderAppLaden(){
   b.innerHTML=kids.map(k=>kaKindBlock(k,konten.filter(x=>x.spieler_id===k.spieler_id&&x.aktiv),sitzungen)).join("");
 }
 
-function kaKarte(inner,extra){ return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px;margin-bottom:12px;${extra||""}">${inner}</div>`; }
+function kaKarte(inner,extra){ return `<div style="background:var(--surface);border:var(--border);border-radius:16px;padding:14px;margin-bottom:12px;${extra||""}">${inner}</div>`; }
 
 function kaKindBlock(k,geraete,sitzungen){
   const kd=k.kader||{}, name=esc(kd.name||"Kind"), sid=k.spieler_id;
   const liste=geraete.length ? geraete.map(g=>kaGeraetZeile(g,sitzungen[g.uid]||0)).join("")
-    : `<div style="font-size:13px;color:#64748b;padding:8px 0 12px">Noch kein Gerät gekoppelt.</div>`;
+    : `<div style="font-size:13px;color:var(--text3);padding:8px 0 12px">Noch kein Gerät gekoppelt.</div>`;
   return kaKarte(`
-    <div style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:8px">${name}${kd.nr!=null?` <span style="font-weight:600;color:var(--text3)">#${kd.nr}</span>`:""}</div>
+    <div style="font-size:15px;font-weight:800;color:var(--text);margin-bottom:8px">${name}${kd.nr!=null?` <span style="font-weight:600;color:var(--text3)">#${kd.nr}</span>`:""}</div>
     ${liste}
     <div id="ka-code-${sid}"></div>
     <button class="btn" onclick="kinderAppCode(${sid})" style="width:100%;min-height:48px;margin-top:6px;font-size:14px;justify-content:center">📱 Neues Gerät koppeln</button>`);
@@ -2605,13 +2605,13 @@ function kaGeraetZeile(g,heute){
   const gesperrt=limit===0;
   const farbe=gesperrt?"#64748b":(rest<=0?"#b45309":"#15803d");
   const wort=gesperrt?"gesperrt":(rest<=0?"für heute aufgebraucht":`noch ${rest} Min. heute`);
-  return `<div style="border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:10px">
+  return `<div style="border:var(--border);border-radius:12px;padding:12px;margin-bottom:10px">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-      <span style="font-size:13.5px;font-weight:700;color:#1e293b">${esc(g.geraet||"Gerät des Kindes")}</span>
+      <span style="font-size:13.5px;font-weight:700;color:var(--text)">${esc(g.geraet||"Gerät des Kindes")}</span>
       <span style="font-size:11.5px;font-weight:700;color:${farbe};border:1px solid ${farbe};border-radius:999px;padding:2px 8px">${wort}</span>
     </div>
     <div style="font-size:11.5px;color:var(--text3);margin:3px 0 10px">gekoppelt am ${kaDatum(g.gekoppelt_am)} · heute ${heute} von ${limit} Min. genutzt</div>
-    <label style="display:block;font-size:12.5px;font-weight:700;color:#475569">Appzeit pro Tag: <span id="ka-lbl-${g.uid}">${limit} Minuten</span>
+    <label style="display:block;font-size:12.5px;font-weight:700;color:var(--text2)">Appzeit pro Tag: <span id="ka-lbl-${g.uid}">${limit} Minuten</span>
       <input type="range" min="0" max="${KA_LIMIT_MAX}" step="15" value="${limit}" aria-label="Appzeit pro Tag in Minuten"
              oninput="document.getElementById('ka-lbl-${g.uid}').textContent=this.value+' Minuten'"
              onchange="kinderAppLimit('${g.uid}',this.value)"
@@ -2642,11 +2642,11 @@ async function kinderAppCode(sid){
     if(!r.ok){ toast(sbDeniedMsg(r,"Der Code konnte nicht erzeugt werden."),"err"); return; }
   }catch(e){ toast("Ohne Netz lässt sich kein Code erzeugen.","err"); return; }
   const ende=Date.now()+KA_GUELTIG_MIN*60000;
-  ziel.innerHTML=`<div style="border:2px dashed #7c3aed;border-radius:14px;padding:14px;text-align:center;margin:4px 0 10px;background:#faf5ff">
-    <div style="font-size:12px;font-weight:700;color:#7c3aed">Code für das Gerät des Kindes</div>
-    <div style="font-size:34px;font-weight:900;letter-spacing:6px;color:#1e293b;margin:6px 0">${code}</div>
-    <div id="ka-uhr-${sid}" style="font-size:12px;color:#64748b"></div>
-    <div style="font-size:12.5px;color:#475569;line-height:1.6;margin-top:8px">Auf dem Gerät des Kindes die Kabine öffnen und diesen Code eingeben.</div>
+  ziel.innerHTML=`<div style="border:2px dashed var(--purple-text);border-radius:14px;padding:14px;text-align:center;margin:4px 0 10px;background:var(--purple-bg)">
+    <div style="font-size:12px;font-weight:700;color:var(--purple-text)">Code für das Gerät des Kindes</div>
+    <div style="font-size:34px;font-weight:900;letter-spacing:6px;color:var(--text);margin:6px 0">${code}</div>
+    <div id="ka-uhr-${sid}" style="font-size:12px;color:var(--text3)"></div>
+    <div style="font-size:12.5px;color:var(--text2);line-height:1.6;margin-top:8px">Auf dem Gerät des Kindes die Kabine öffnen und diesen Code eingeben.</div>
   </div>
   ${kaLinkBlock(sid)}`;
   kaLinkQr(sid);
@@ -2673,11 +2673,11 @@ function kaNachricht(){
 }
 function kaLinkBlock(sid){
   const url=kaKinderUrl();
-  return `<div style="border:1px solid #e2e8f0;border-radius:14px;padding:12px;margin:0 0 10px;text-align:center">
-    <div style="font-size:12px;font-weight:700;color:#475569">Kabine auf das Gerät des Kindes holen</div>
+  return `<div style="border:var(--border);border-radius:14px;padding:12px;margin:0 0 10px;text-align:center">
+    <div style="font-size:12px;font-weight:700;color:var(--text2)">Kabine auf das Gerät des Kindes holen</div>
     <div id="ka-qr-${sid}" data-url="${esc(url)}" style="width:168px;max-width:100%;margin:8px auto" aria-label="QR-Code zur Kinder-App"></div>
-    <div style="font-size:12px;color:#64748b;line-height:1.5;margin-bottom:8px">Mit der Kamera des Kindergeräts scannen – oder den Link schicken. Der Code oben steht nicht darin.</div>
-    <div id="ka-link-${sid}" style="font-size:12.5px;color:#1e293b;word-break:break-all;user-select:all;margin-bottom:8px">${esc(url)}</div>
+    <div style="font-size:12px;color:var(--text3);line-height:1.5;margin-bottom:8px">Mit der Kamera des Kindergeräts scannen – oder den Link schicken. Der Code oben steht nicht darin.</div>
+    <div id="ka-link-${sid}" style="font-size:12.5px;color:var(--text);word-break:break-all;user-select:all;margin-bottom:8px">${esc(url)}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
       <a href="https://wa.me/?text=${encodeURIComponent(kaNachricht())}" target="_blank" rel="noopener noreferrer"
          style="display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:12px;background:#15803d;color:#fff;font-weight:800;font-size:14px;text-decoration:none">💬 WhatsApp</a>
@@ -2718,9 +2718,9 @@ function kinderAppTrennenFragen(uid){
   m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Gerät trennen");
   m.style.cssText="position:fixed;inset:0;background:rgba(8,15,35,.6);display:flex;align-items:center;justify-content:center;padding:16px";
   m.style.zIndex=(typeof zOben==="function")?zOben():10060;
-  m.innerHTML=`<div style="background:#fff;border-radius:16px;padding:18px;max-width:340px;width:100%">
-    <div style="font-size:15px;font-weight:800;color:#1e293b">Gerät trennen?</div>
-    <div style="font-size:13px;color:#475569;line-height:1.6;margin:8px 0 14px">Die Kabine geht auf diesem Gerät sofort zu. Zum Wiederverbinden brauchst du einen neuen Code.</div>
+  m.innerHTML=`<div style="background:var(--surface);border-radius:16px;padding:18px;max-width:340px;width:100%">
+    <div style="font-size:15px;font-weight:800;color:var(--text)">Gerät trennen?</div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.6;margin:8px 0 14px">Die Kabine geht auf diesem Gerät sofort zu. Zum Wiederverbinden brauchst du einen neuen Code.</div>
     <button class="btn btn-d" onclick="kinderAppTrennen('${uid}')" style="width:100%;min-height:48px;font-size:14px;justify-content:center">Trennen</button>
     <button class="btn" onclick="document.getElementById('ka-frage').remove()" style="width:100%;min-height:44px;margin-top:8px;font-size:13.5px;justify-content:center">Abbrechen</button>
   </div>`;

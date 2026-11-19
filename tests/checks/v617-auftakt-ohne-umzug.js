@@ -20,31 +20,50 @@ module.exports = async function (h) {
   const probleme = [], zeilen = [];
   const attrappe = () => h.supabaseAttrappe({ kader: h.kaderZeilen(), termine: [] });
 
-  /* Öffnet die Seite neu, als wäre es der erste Start der Sitzung, und misst den Auftakt. */
+  /* Öffnet die Seite neu, als wäre es der erste Start der Sitzung, und misst den Auftakt.
+     v880: Unter Fremdlast (paralleler Prüflauf) wurde der Fall rot, einzeln grün. Gemessen wurde
+     ab dem Befehl zum Seitenwechsel – darin steckte die Ladezeit der Seite, die intro.js gar
+     nicht verspricht. Die Zusage der App (intro.js) lautet: weg 3,1 s nach dem ersten gemalten
+     Bild (ruhig: 1 s). Die Seite misst jetzt selbst (performance.now): wann der Auftakt im DOM
+     steht, wann das erste Bild danach kommt, wann er wieder weg ist. Die Schranken bleiben, wie
+     sie waren (2,8–3,9 s, ruhig ≤ 1,8 s) – nur ohne Ladezeit davor. Gewartet wird auf genau das
+     Ereignis (Datei intro.js gelaufen, Auftakt weg) mit großzügiger Obergrenze; tritt es nie ein,
+     bleibt der Fall rot. */
   const messen = async (s, pfad, opt = {}) => {
     if (opt.ruhig) await s.page.emulateMedia({ reducedMotion: "reduce" });
     if (!opt.gleicheSitzung) await s.page.evaluate(() => { try { sessionStorage.removeItem("adler-intro"); } catch (e) {} });
-    const t0 = Date.now();
     await s.page.goto("https://app.test" + pfad, { waitUntil: "commit" });
-    const da = await s.page.waitForSelector("#adler-intro", { state: "attached", timeout: 1500 }).then(() => true).catch(() => false);
-    if (!da) return { da: false };
-    const info = await s.page.evaluate(() => {
-      const d = document.getElementById("adler-intro"); if (!d) return null;
-      const st = getComputedStyle(d), img = d.querySelector("img");
-      return { hidden: d.getAttribute("aria-hidden"), pe: st.pointerEvents, z: +st.zIndex, rolle: d.getAttribute("role"),
-        wappen: !!img && /logo\.png$/.test(img.getAttribute("src") || ""), flug: img ? getComputedStyle(img).animationName : "" };
-    });
+    // intro.js läuft synchron als erstes im <body>; adlerIntroDa steht ganz unten in der Datei.
+    const gelaufen = await s.page.waitForFunction(() => typeof adlerIntroDa === "function", null, { timeout: 15000, polling: 50 }).then(() => true).catch(() => false);
+    if (!gelaufen) return { da: false, nichtGeladen: true };
+    const info = await s.page.evaluate(() => window.__auftakt && window.__auftakt.info);
+    if (!info) return { da: false };
     if (opt.tippen) {
       await s.page.waitForTimeout(200);
       await s.page.mouse.click(20, 20);
       const nachTipp = await s.page.evaluate(() => !!document.getElementById("adler-intro"));
-      return { da, ...info, nachTipp };
+      return { da: true, ...info, nachTipp };
     }
-    const weg = await s.page.waitForSelector("#adler-intro", { state: "detached", timeout: 4500 }).then(() => true).catch(() => false);
-    return { da, ...info, weg, ms: Date.now() - t0 };
+    const weg = await s.page.waitForFunction(() => window.__auftakt && window.__auftakt.weg, null, { timeout: 15000, polling: 50 }).then(() => true).catch(() => false);
+    const t = await s.page.evaluate(() => window.__auftakt);
+    return { da: true, ...info, weg, ms: weg ? Math.round(t.weg - (t.bild || t.da)) : null };
   };
 
   const s = await h.starten({ start: "/trainer/index.html?umzug=1", supabase: attrappe(), warten: 2200, intro: true });
+  await s.page.context().addInitScript(() => {
+    const a = window.__auftakt = {};
+    new MutationObserver(() => {
+      const d = document.getElementById("adler-intro");
+      if (d && !a.da) {
+        a.da = performance.now();
+        requestAnimationFrame(() => { a.bild = performance.now(); });   // dasselbe Bild, ab dem intro.js zählt
+        const st = getComputedStyle(d), img = d.querySelector("img");
+        a.info = { hidden: d.getAttribute("aria-hidden"), pe: st.pointerEvents, z: +st.zIndex, rolle: d.getAttribute("role"),
+          wappen: !!img && /logo\.png$/.test(img.getAttribute("src") || ""), flug: img ? getComputedStyle(img).animationName : "" };
+      }
+      if (!d && a.da && !a.weg) a.weg = performance.now();
+    }).observe(document, { childList: true, subtree: true });
+  });
 
   // a) Umzug
   const a = await s.page.evaluate(() => ({ hinweis: !!document.getElementById("umzug-hinweis"), fn: typeof umzugHinweis, url: location.search }));

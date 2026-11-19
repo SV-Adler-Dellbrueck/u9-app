@@ -6,14 +6,26 @@
    b) Einstieg mitten in einer Seite: unter ihr liegt die Startseite.
    c) Ein offenes Fenster schließt Zurück zuerst, die Seite bleibt.
    d) Vollbild-Fenster ohne „-modal"-Endung (Festival-Anfahrt, role="dialog") schließt Zurück
-      ebenfalls, statt die App zu verlassen; Schließen per Knopf verbraucht den Eintrag still. */
+      ebenfalls, statt die App zu verlassen; Schließen per Knopf verbraucht den Eintrag still.
+
+   v880: Unter Fremdlast rot, einzeln grün. history.back() ist asynchron – die feste Pause von
+   120 ms reichte unter Last nicht bis zum popstate, gemessen wurde dann der alte Zustand.
+   Jetzt wartet jeder Schritt auf genau sein Ereignis (popstate verarbeitet, Fenster im Verlauf
+   angemeldet, stiller Rückschritt verbraucht), höchstens 5 s; kommt es nie, bleibt der Fall rot.
+   Die App verspricht hier keine Zeit, nur die Reihenfolge. */
 "use strict";
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
   const s = await h.starten({ supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), termine: [] }) });
   const r = await s.page.evaluate(async () => {
     const warte = ms => new Promise(x => setTimeout(x, ms));
-    const zurueck = async () => { history.back(); await warte(120); return curSection; };
+    const bis = async (f, n) => { for (let i = 0; i < (n || 100) && !f(); i++) await warte(50); return f(); };
+    /* Eigener Lauscher NACH dem der App (core.js) – feuert er, hat die App den Schritt schon verarbeitet. */
+    const zurueck = async () => {
+      let pop = false; addEventListener("popstate", () => { pop = true; }, { once: true });
+      history.back(); await bis(() => pop); await warte(0); return curSection;
+    };
+    const angemeldet = () => bis(() => history.state && history.state.adlerMdl);
     if (typeof seiteZurueck !== "function") return { fehlt: true };
     document.getElementById("pin-gate")?.remove();
     const out = {};
@@ -30,17 +42,18 @@ module.exports = async function (h) {
     out.aNeu = history.length - la;
     // c) Fenster über einer Seite
     go("ue-team"); await warte(60);
-    const m = document.createElement("div"); m.id = "probe-modal"; document.body.appendChild(m); await warte(30);
+    const m = document.createElement("div"); m.id = "probe-modal"; document.body.appendChild(m); await angemeldet();
     out.c = { seite: await zurueck(), fenster: !!document.getElementById("probe-modal") };
     // d) Festival-Anfahrt (role=dialog, ohne Endung)
     _htPub = { row: { config: {}, teams: [], plan: [] } };
     if (typeof fstInfoOpen === "function") {
-      fstInfoOpen(); await warte(30);
+      fstInfoOpen(); await angemeldet();
       out.d = { auf: !!document.getElementById("fst-info"), seite: await zurueck() };
       out.d.zu = !document.getElementById("fst-info");
-      fstInfoOpen(); await warte(30);
+      fstInfoOpen(); await angemeldet();
       const vor = curSection;
-      document.querySelector("#fst-info button").click(); await warte(150);
+      document.querySelector("#fst-info button").click();
+      await warte(0); await bis(() => !(window._mdlSuppress > 0));   // der stille Rückschritt ist verbraucht
       out.d.knopf = { zu: !document.getElementById("fst-info"), seite: curSection, vor };
     }
     return out;

@@ -31,49 +31,49 @@ async function elternFanfactsOpen(spielerId,kindName){
   let f={};
   try{const r=await fetch(`${SB_URL}/rest/v1/kind_fanfacts?spieler_id=eq.${spielerId}&select=*`,{headers:sbAuthHeaders()});if(r.ok)f=(await r.json())[0]||{};}catch(e){}
   const ausgabe=await elternAusstattungLesen(spielerId);
-  const half="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box;font-family:inherit;font-size:var(--s-text)";
-  const inp="width:100%;padding:9px;margin:4px 0 10px;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box;font-family:inherit;font-size:var(--s-text)";
+  const half="width:100%;padding:9px;border:var(--border-s);border-radius:8px;box-sizing:border-box;font-family:inherit;font-size:var(--s-text)";
+  const inp="width:100%;padding:9px;margin:4px 0 10px;border:var(--border-s);border-radius:8px;box-sizing:border-box;font-family:inherit;font-size:var(--s-text)";
   const m=document.createElement("div");m.id="fanfacts-modal";
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10001;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{if(e.target===m)m.remove();};
-  m.innerHTML=`<div style="background:#fff;border-radius:16px;padding:18px;max-width:400px;width:100%;margin:auto">
+  m.innerHTML=`<div style="background:var(--surface);border-radius:16px;padding:18px;max-width:400px;width:100%;margin:auto">
     ${mdlHead("fanfacts-modal","✏️",`${esc(kindName||"Kind")} – Fan-Fakten`,"","#475569")}
-    <div style="font-size:var(--s-klein);color:#64748b;margin-bottom:12px">Diese Fan-Fakten pflegst du selbst – die sportliche Bewertung bleibt beim Trainer.</div>
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:12px">Diese Fan-Fakten pflegst du selbst – die sportliche Bewertung bleibt beim Trainer.</div>
     ${ausgabe}
-    <label style="font-size:var(--s-text);color:#475569">Profilbild</label>
+    <label style="font-size:var(--s-text);color:var(--text2)">Profilbild</label>
     <div style="display:flex;align-items:center;gap:8px;margin:4px 0 12px">
       <input type="file" accept="image/jpeg,image/png,image/webp" onchange="elternFotoUpload(${spielerId},this)" style="font-size:var(--s-klein);flex:1">
-      ${f.foto_path?'<span style="font-size:var(--s-klein);color:#059669">✓ vorhanden</span>':''}
+      ${f.foto_path?'<span style="font-size:var(--s-klein);color:var(--green)">✓ vorhanden</span>':''}
     </div>
-    <div style="font-size:var(--s-text);color:#475569">Fotoalbum <span style="font-size:var(--s-klein);color:#64748b">· bis 6 Fotos für die Spielerkarten</span></div>
-    <div id="ka-box-${spielerId}" class="ka-box" style="margin:4px 0 12px"><span style="font-size:var(--s-klein);color:#64748b">Lädt …</span></div>
-    <label for="ff-spitz" style="font-size:var(--s-text);color:#475569">Spitzname</label>
+    <div style="font-size:var(--s-text);color:var(--text2)">Fotoalbum <span style="font-size:var(--s-klein);color:var(--text3)">· bis 6 Fotos für die Spielerkarten</span></div>
+    <div id="ka-box-${spielerId}" class="ka-box" style="margin:4px 0 12px"><span style="font-size:var(--s-klein);color:var(--text3)">Lädt …</span></div>
+    <label for="ff-spitz" style="font-size:var(--s-text);color:var(--text2)">Spitzname</label>
     <input id="ff-spitz" value="${esc(f.spitzname||'')}" placeholder="z. B. Mimi" style="${inp}">
-    <label for="ff-verein" style="font-size:var(--s-text);color:#475569">Lieblingsverein</label>
+    <label for="ff-verein" style="font-size:var(--s-text);color:var(--text2)">Lieblingsverein</label>
     <input id="ff-verein" value="${esc(f.lieblingsverein||'')}" placeholder="z. B. 1. FC Köln" style="${inp}">
-    <label for="ff-spieler" style="font-size:var(--s-text);color:#475569">Lieblingsspieler</label>
+    <label for="ff-spieler" style="font-size:var(--s-text);color:var(--text2)">Lieblingsspieler</label>
     <input id="ff-spieler" value="${esc(f.lieblingsspieler||'')}" placeholder="z. B. Musiala" style="${inp}">
     <!-- v544: Die Trikot-Größe ist hier verschwunden. Sie stand zugleich im Kader und
          in den Fan-Fakten, also zweimal – und was ausgegeben wurde, weiß der Verein,
          nicht die Familie. Sie wird jetzt beim Anprobieren erfasst („Ausstattung" beim
          Trainer). Die Schuh-Größe bleibt: die steht nirgends sonst. -->
-    <details style="margin:4px 0 12px;border:1px solid #e2e8f0;border-radius:10px;padding:8px 10px" ${FF_PORTRAET.concat(FF_STECKBRIEF).some(([k])=>f[k])||f.starker_fuss?"open":""}>
-      <summary style="cursor:pointer;font-size:var(--s-text);font-weight:800;color:#1e3a8a;min-height:32px;display:flex;align-items:center">🦅 Fürs „Adler im Porträt“ (freiwillig)</summary>
-      <div style="font-size:var(--s-klein);color:#64748b;margin:6px 0 8px;line-height:1.5">Reihum stellt das Adler Nest jede Woche ein Kind vor. Aus diesen Angaben und den Antworten im Kabinen-Reporter entsteht ein kurzer Text, den das Trainerteam vor dem Druck liest. Das Heft lesen nur angemeldete Team-Familien in der App; trotzdem steht dort nur der Vorname und nichts, woran man euch findet. Der Grund für die Rückennummer bleibt beim Trainerteam und kommt nicht ins Heft. Leer lassen ist völlig in Ordnung.</div>
-      <label for="ff-starker_fuss" style="font-size:var(--s-text);color:#475569">Starker Fuß</label>
-      <select id="ff-starker_fuss" style="${inp};min-height:44px;background:#fff">
+    <details style="margin:4px 0 12px;border:var(--border);border-radius:10px;padding:8px 10px" ${FF_PORTRAET.concat(FF_STECKBRIEF).some(([k])=>f[k])||f.starker_fuss?"open":""}>
+      <summary style="cursor:pointer;font-size:var(--s-text);font-weight:800;color:var(--blue-text);min-height:32px;display:flex;align-items:center">🦅 Fürs „Adler im Porträt“ (freiwillig)</summary>
+      <div style="font-size:var(--s-klein);color:var(--text3);margin:6px 0 8px;line-height:1.5">Reihum stellt das Adler Nest jede Woche ein Kind vor. Aus diesen Angaben und den Antworten im Kabinen-Reporter entsteht ein kurzer Text, den das Trainerteam vor dem Druck liest. Das Heft lesen nur angemeldete Team-Familien in der App; trotzdem steht dort nur der Vorname und nichts, woran man euch findet. Der Grund für die Rückennummer bleibt beim Trainerteam und kommt nicht ins Heft. Leer lassen ist völlig in Ordnung.</div>
+      <label for="ff-starker_fuss" style="font-size:var(--s-text);color:var(--text2)">Starker Fuß</label>
+      <select id="ff-starker_fuss" style="${inp};min-height:44px;background:var(--surface)">
         ${[["","– bitte wählen –"],["rechts","rechts"],["links","links"],["beide","beide"]].map(([v,l])=>`<option value="${v}"${(f.starker_fuss||"")===v?" selected":""}>${l}</option>`).join("")}
       </select>
-      ${FF_STECKBRIEF.map(([k,l,ph])=>`<label for="ff-${k}" style="font-size:var(--s-text);color:#475569">${l}</label>
+      ${FF_STECKBRIEF.map(([k,l,ph])=>`<label for="ff-${k}" style="font-size:var(--s-text);color:var(--text2)">${l}</label>
       <input id="ff-${k}" maxlength="80" value="${esc(f[k]||'')}" placeholder="${esc(ph)}" style="${inp}">`).join("")}
-      ${FF_PORTRAET.map(([k,l,ph])=>`<label for="ff-${k}" style="font-size:var(--s-text);color:#475569">${l}</label>
+      ${FF_PORTRAET.map(([k,l,ph])=>`<label for="ff-${k}" style="font-size:var(--s-text);color:var(--text2)">${l}</label>
       <input id="ff-${k}" maxlength="80" value="${esc(f[k]||'')}" placeholder="${esc(ph)}" style="${inp}">`).join("")}
     </details>
-    <div style="font-size:var(--s-klein);font-weight:700;color:#475569;margin:6px 0 4px">👟 Schuh-Größe <span style="font-weight:400;color:var(--text3)">(hilft dem Trainer bei Sammelbestellungen)</span></div>
+    <div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin:6px 0 4px">👟 Schuh-Größe <span style="font-weight:400;color:var(--text3)">(hilft dem Trainer bei Sammelbestellungen)</span></div>
     <div style="display:flex;gap:8px;margin-bottom:10px">
       <div style="flex:1"><input id="ff-schuh" value="${esc(f.schuh_groesse||'')}" placeholder="z. B. 31" aria-label="Schuh-Größe" style="${half}"></div>
     </div>
-    <label style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);color:#475569;margin:6px 0 14px">
+    <label style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);color:var(--text2);margin:6px 0 14px">
       <input id="ff-gallery" type="checkbox" ${f.gallery_optin?"checked":""}> Foto in der Team-Galerie zeigen (Opt-in)
     </label>
     <div style="display:flex;gap:8px;justify-content:flex-end">
@@ -101,9 +101,9 @@ async function elternAusstattungLesen(spielerId){
   }catch(e){}
   if(!zeilen.length)return "";
   const datum=d=>{try{return new Date(d+"T00:00:00").toLocaleDateString("de-DE");}catch(e){return d;}};
-  return `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;margin-bottom:12px">
-    <div style="font-size:var(--s-klein);font-weight:700;color:#475569;margin-bottom:5px">👕 Vom Verein erhalten</div>
-    ${zeilen.map(z=>`<div style="font-size:var(--s-text);color:#334155;line-height:1.6">${esc((z.ausstattung_artikel&&z.ausstattung_artikel.name)||"Ausstattung")}${z.groesse?` · Größe ${esc(z.groesse)}`:""}${z.nummer?` · Nr. ${esc(z.nummer)}`:""}${z.ausgegeben_am?` <span style="color:var(--text3)">seit ${datum(z.ausgegeben_am)}</span>`:""}</div>`).join("")}
+  return `<div style="background:var(--surface2);border:var(--border);border-radius:10px;padding:10px 12px;margin-bottom:12px">
+    <div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-bottom:5px">👕 Vom Verein erhalten</div>
+    ${zeilen.map(z=>`<div style="font-size:var(--s-text);color:var(--text);line-height:1.6">${esc((z.ausstattung_artikel&&z.ausstattung_artikel.name)||"Ausstattung")}${z.groesse?` · Größe ${esc(z.groesse)}`:""}${z.nummer?` · Nr. ${esc(z.nummer)}`:""}${z.ausgegeben_am?` <span style="color:var(--text3)">seit ${datum(z.ausgegeben_am)}</span>`:""}</div>`).join("")}
     <div style="font-size:var(--s-klein);color:var(--text3);margin-top:5px">Stimmt etwas nicht? Sag dem Trainerteam Bescheid – geändert wird es dort.</div>
   </div>`;
 }
