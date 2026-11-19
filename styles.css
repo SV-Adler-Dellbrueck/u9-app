@@ -8,7 +8,7 @@
   --club-accent:var(--blue); /* L7: Charles kann hier später Vereinsfarbe eintragen */
   --green:#15803d;--green-bg:#f0fdf4;
   --amber:#b45309;--amber-bg:#fffbeb;
-  --red:#b91c1c;--red-bg:#fef2f2;
+  --red:#b91c1c;--red-bg:#fef2f2;--red-hover:#fee2e2;  /* v876: Fläche von .btn-d unter dem Zeiger */
   --purple:#6d28d9;--purple-bg:#f5f3ff;
   --orange-text:var(--orange);  /* v788: Orange (Taktik) als SCHRIFT – im Dunkeln aufgehellt */
   --purple-text:var(--purple);  /* v708: Lila als SCHRIFT – im Dunkeln aufgehellt; --purple bleibt Fläche */
@@ -65,7 +65,7 @@
   --text:#e6eaf2;--text2:#aab5c6;--text3:#8b98ac;
   --bg:#0f172a;--surface:#1e293b;--surface2:#152033;
   --border:1px solid #334155;--border-s:1px solid #475569;
-  --blue-bg:#172554;--green-bg:#052e1a;--amber-bg:#3a2a08;--red-bg:#3a1010;--purple-bg:#241247;--yellow-bg:#332905;--teal-bg:#082f36;--orange-bg:#3a1e08;
+  --blue-bg:#172554;--green-bg:#052e1a;--amber-bg:#3a2a08;--red-bg:#3a1010;--red-hover:#4c1515;--purple-bg:#241247;--yellow-bg:#332905;--teal-bg:#082f36;--orange-bg:#3a1e08;
   /* Die Statusfarben selbst waren im dunklen Modus nie angepasst – nur ihre hellen
      Flächen. Als Schrift auf dunklem Grund kamen sie auf 2,3–3,0:1, also unlesbar.
      Diese Töne halten mindestens 4,5:1 auf --surface UND auf --bg (nachgerechnet:
@@ -85,7 +85,7 @@
   --text:#e6eaf2;--text2:#aab5c6;--text3:#8b98ac;
   --bg:#0f172a;--surface:#1e293b;--surface2:#152033;
   --border:1px solid #334155;--border-s:1px solid #475569;
-  --blue-bg:#172554;--green-bg:#052e1a;--amber-bg:#3a2a08;--red-bg:#3a1010;--purple-bg:#241247;--yellow-bg:#332905;--teal-bg:#082f36;--orange-bg:#3a1e08;
+  --blue-bg:#172554;--green-bg:#052e1a;--amber-bg:#3a2a08;--red-bg:#3a1010;--red-hover:#4c1515;--purple-bg:#241247;--yellow-bg:#332905;--teal-bg:#082f36;--orange-bg:#3a1e08;
   /* Die Statusfarben selbst waren im dunklen Modus nie angepasst – nur ihre hellen
      Flächen. Als Schrift auf dunklem Grund kamen sie auf 2,3–3,0:1, also unlesbar.
      Diese Töne halten mindestens 4,5:1 auf --surface UND auf --bg (nachgerechnet:
@@ -246,7 +246,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .btn-sm{padding:8px 14px;font-size:var(--s-text);font-weight:600;box-shadow:none}
 /* Taktik-Board: die AKTIVE Spielform klar sichtbar füllen (statt nur dezentem btn-p) */
 .tb-form-btn.btn-p{background:linear-gradient(135deg,#1e3a8a,#2563eb);border-color:transparent;color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.3)}
-.btn-d{background:var(--red-bg);color:var(--red);border-color:var(--red)}.btn-d:hover{background:#fee2e2}
+.btn-d{background:var(--red-bg);color:var(--red);border-color:var(--red)}.btn-d:hover{background:var(--red-hover)}
 .status{padding:10px 14px;border-radius:var(--r);font-size:var(--s-text);margin:6px 0;display:none;font-weight:500}
 .status.show{display:block}
 .s-ok{background:var(--green-bg);color:var(--green);border:1px solid #86efac}
@@ -1418,6 +1418,27 @@ html[data-theme="dark"]:has(#main-app) body{background:var(--bg)}
 .tp-slot.tp-zu .tp-slot-head .tp-slot-label{flex:1 1 0}
 .tp-slot.tp-zu .tp-slot-head .tp-slot-time{margin-left:auto}
 .tp-slot-head .tp-slot-label{flex-basis:calc(100% - 156px)}
-/* v861 (3.14): Kopfknöpfe der Eltern-App (Adler-Rufe, ⋯) im Dunkelmodus – der Rand var(--rand-bedien) stand mit 2,2:1 auf dem blauen Band. */
-html[data-theme="dark"] #rufe-kopf,html[data-theme="dark"] #ep-menue-knopf{border-color:#c7d0e2 !important}
-@media (prefers-color-scheme:dark){html:not([data-theme="light"]) #rufe-kopf,html:not([data-theme="light"]) #ep-menue-knopf{border-color:#c7d0e2 !important}}
+/* v861 (3.14) hatte hier den Rand der Kopfknöpfe (Adler-Rufe, ⋯) im Dunkeln aufgehellt. Seit v876 sind es
+   runde .btn-kopf ohne Rand; ihre Fläche hebt sie ab, die Schrift kommt aus --kopf-t1. */
+
+/* ── v876 · Knöpfe in sechs Bauarten (Charles 19.11., Bestandsaufnahme 4.6) ─────────────────────
+   1 Hauptaktion  .btn.btn-p   – Vereinsblau, höchstens EINE je Bildschirm
+   2 Neben-Aktion .btn / .btn.btn-sm – hell mit Rand
+   3 Gefahr       .btn.btn-d   – rot umrandet
+   4 Listenzeile  .btn.btn-zeile – ganze Breite, links, Emoji/Symbol + Text
+   5 Text-Link    .btn.btn-link  – ohne Rand und Fläche, IMMER unterstrichen (Farbe trägt nie allein)
+   6 Kopfzeile    .btn.btn-kopf  – rund 44 × 44, halbtransparent auf dem Kopfband
+   Farben, Rand, Radius und Polster kommen NUR von hier – im Inline-Stil steht höchstens Platz
+   (margin, width, flex). Grün und Dunkelblau sind keine Knopffarben mehr; Grün bleibt Zustand
+   (aria-pressed, z. B. die gewählte Antwort). Alles über Variablen: hell und dunkel ohne Extraregel.
+   Steht unten in der Datei, damit die Höhen die allgemeine .btn{min-height:48px} schlagen. */
+.btn-zeile{display:flex;width:100%;justify-content:flex-start;align-items:center;gap:12px;text-align:left;padding:12px;border-radius:12px;min-height:48px;font-weight:400;line-height:1.3}
+.btn-link{display:inline-flex;align-items:center;min-height:44px;padding:8px 6px;border:none;background:transparent;box-shadow:none;color:var(--blue-text);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.btn-link:hover{background:transparent;text-decoration-thickness:2px}
+.btn-kopf{flex:none;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;justify-content:center;border:none;border-radius:50%;background:rgba(255,255,255,.12);color:var(--kopf-t1);box-shadow:none;font-size:var(--s-karte);font-weight:800;line-height:1}
+.btn-kopf:hover{background:rgba(255,255,255,.22)}
+/* Fokus sichtbar: der allgemeine Fokusrand (Blau) verschwände auf dem blauen Band. */
+.btn-kopf:focus-visible{outline:2px solid var(--kopf-t1)!important;outline-offset:2px}
+/* Gesperrte Hauptaktion (Einwilligung, Absagegrund): sieht als Neben-Aktion mit gestricheltem Rand anders aus,
+   der Text sagt, was fehlt – Farbe ist nicht das einzige Zeichen. */
+#dsgvo-ok[disabled],#rg-ok[aria-disabled="true"]{border-style:dashed;cursor:not-allowed}
