@@ -1,6 +1,6 @@
 {
  "szenario": "Übung tauschen: Picker, Tausch außerhalb des Typfilters, Dauer, Speichern",
- "haelt_fest": "Fehlerbild 4 – eine getauschte Übung außerhalb des Blocktyps verschwindet beim nächsten Neuzeichnen (tpSetDauer) und fehlt dann im gespeicherten Plan. Behebung in Schritt 9.",
+ "haelt_fest": "Fehlerbild 4 – behoben in v893: eine getauschte Übung außerhalb des Blocktyps bleibt beim nächsten Neuzeichnen (tpSetDauer) erhalten und steht im gespeicherten Plan (vorher verschwand sie).",
  "schritte": [
   {
    "schritt": "Training füllen",
@@ -514,6 +514,15 @@
         "feld": 0
        },
        {
+        "formIdx": 62,
+        "formName": "Fang-Stern",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 1",
+        "key": "62-Finn",
+        "block": 2,
+        "feld": 1
+       },
+       {
         "formIdx": 138,
         "formName": "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor",
         "trainer": "Kenneth",
@@ -637,7 +646,7 @@
     }
    ],
    "dom": {
-    "feldNachNeuzeichnen": ""
+    "feldNachNeuzeichnen": "62"
    }
   }
  ]

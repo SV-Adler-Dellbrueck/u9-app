@@ -223,7 +223,7 @@ const SZENARIEN = [
     ]) },
 
   { id: "G2-uebung-tauschen", titel: "Übung tauschen: Picker, Tausch außerhalb des Typfilters, Dauer, Speichern",
-    haelt: "Fehlerbild 4 – eine getauschte Übung außerhalb des Blocktyps verschwindet beim nächsten Neuzeichnen (tpSetDauer) und fehlt dann im gespeicherten Plan. Behebung in Schritt 9.",
+    haelt: "Fehlerbild 4 – behoben in v893: eine getauschte Übung außerhalb des Blocktyps bleibt beim nächsten Neuzeichnen (tpSetDauer) erhalten und steht im gespeicherten Plan (vorher verschwand sie).",
     schritte: [
       ["Training füllen", p => p.evaluate(async () => { await tpGenerate(); })],
       ["Picker: Hauptteil 1, Feld 1 neu wählen", p => p.evaluate(() => {

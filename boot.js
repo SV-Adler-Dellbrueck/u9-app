@@ -1786,14 +1786,29 @@ function tpWahlSetzen(selId,i,opt){
   return w;
 }
 /* Bietet das Auswahlfeld eines Blocks diese Übung an? Genau die <option>-Liste, die das Zeichnen
-   aus tpFilteredOpts baut – was dort fehlt, fällt beim Zeichnen still weg (Fehlerbilder 4 und 5,
-   behoben erst ab Schritt 9). menge: Zwischenspeicher je Blocktyp für eine Runde. */
+   aus tpFilteredOpts baut. v893: Was dort fehlt, fällt beim Zeichnen nicht mehr weg (Fehlerbild 4,
+   siehe tpWahlMoeglich); es dient weiter zur Auswahl von Vorschlägen. menge: Zwischenspeicher je Blocktyp für eine Runde. */
 function tpWahlZulaessig(si,i,menge){
   const slot=tpSlots[si]; if(!slot||i==null||isNaN(i))return false;
   const typ=slot.typ||"main";
   let m=menge&&menge[typ];
   if(!m){ m=new Set(tpFilteredOpts(typ).map(x=>x.i)); if(menge)menge[typ]=m; }
   return m.has(Number(i));
+}
+/* v893: Gibt es die Übung überhaupt? Eine gewählte Übung bleibt, auch wenn der Blocktyp sie nicht
+   anbietet (Fehlerbild 4) – sie bekommt dann einen Hinweis am Feld (_tpFremdHinweis). */
+function tpWahlMoeglich(i){ return i!=null&&!isNaN(i)&&!!tpAllForms()[Number(i)]; }
+/* v893: Hinweis unter der Übungszeile, wenn die gewählte Übung nicht zum Blocktyp passt. Text und
+   Zeichen tragen die Bedeutung, nicht die Farbe. */
+function _tpFremdHinweis(sel,an){
+  const id=sel.id+"-fremd", da=document.getElementById(id);
+  if(!an){ if(da)da.remove(); return; }
+  if(da)return;
+  const zeile=sel.closest(".tp-feld-zeile")||sel; if(!zeile.parentNode)return;
+  const d=document.createElement("div"); d.id=id; d.className="tp-fremd-hinweis";
+  d.style.cssText="font-size:var(--s-klein);color:var(--text2);padding:2px 0 4px;line-height:1.4";
+  d.textContent="⚠️ Passt nicht zum Blocktyp – bleibt trotzdem im Plan.";
+  zeile.parentNode.insertBefore(d,zeile.nextSibling);
 }
 /* Die Felder eines Blocks in ihrer Reihenfolge (Zahl aus dem Modell, v881). */
 function tpWahlFelder(si){ return Array.from({length:tpFelderZahl(si)},(_,p)=>`tp-form-${si}-${p}`); }
@@ -1828,7 +1843,7 @@ function _tpWahlBereinigen(){
     if(!felder.has(id)||!m){ delete wahl[id]; return; }
     let i=w.i;
     if(w.erbt)i=null;
-    else if(i!=null&&!tpWahlZulaessig(+m[1],i,menge))i=null;
+    else if(i!=null&&!tpWahlMoeglich(i))i=null;   // v893: nur, was es nicht mehr gibt – nicht, was der Blocktyp nicht anbietet
     const n=_tpWahlNorm(i,{station:w.station,alle:w.alle});
     if(n)wahl[id]=n; else delete wahl[id];
   });
@@ -1841,7 +1856,15 @@ function _tpWahlAufSeite(mitHist){
   document.querySelectorAll(".tp-form-sel").forEach(s=>{
     let w=wahl[s.id];
     let v=(w&&w.i!=null)?String(w.i):"";
-    if(v&&!s.querySelector(`option[value="${v}"]`)){ w=_tpWahlNorm(null,w); if(w)wahl[s.id]=w; else delete wahl[s.id]; v=""; }
+    /* v893 (Fehlerbild 4): Eine gewählte Übung, die der Blocktyp nicht anbietet (Tausch, KI-Tausch),
+       bekommt eine eigene Option im Feld und bleibt – vorher fiel sie hier still weg. Nur eine Übung,
+       die es gar nicht (mehr) gibt, fällt weg. */
+    s.querySelectorAll("option[data-fremd]").forEach(o=>{ if(o.value!==v)o.remove(); });
+    if(v&&!s.querySelector(`option[value="${v}"]`)){
+      if(tpWahlMoeglich(w.i)){ const f=tpAllForms()[w.i], o=new Option(`${f.name} (${f.dauer})`,v); o.dataset.fremd="1"; s.add(o); }
+      else{ w=_tpWahlNorm(null,w); if(w)wahl[s.id]=w; else delete wahl[s.id]; v=""; }
+    }
+    _tpFremdHinweis(s,!!(v&&s.querySelector(`option[value="${v}"][data-fremd]`)));
     const neu=s.value!==v; if(neu)s.value=v;
     if(w&&w.station!=null)s.dataset.station=String(w.station); else delete s.dataset.station;
     if(w&&w.alle)s.dataset.alle="1"; else delete s.dataset.alle;
@@ -2097,7 +2120,7 @@ function _tpKetteNachziehen(){
     tpWahlFelder(+fi).forEach((id,p)=>{
       const w=wahl[id], kv=tpWahlIdx(`tp-form-${hi}-${p}`);
       if(!w||w.i==null||w.erbt||(kv!=null&&w.i===kv)){
-        if(kv!=null&&tpWahlZulaessig(+fi,kv,menge))tpWahlSetzen(id,kv,{station:w&&w.station,alle:w&&w.alle,erbt:true});   // v884: über den Setter
+        if(kv!=null&&(tpWahlZulaessig(+fi,kv,menge)||tpWahlMoeglich(kv)))tpWahlSetzen(id,kv,{station:w&&w.station,alle:w&&w.alle,erbt:true});   // v884: über den Setter; v893: auch eine fremde Übung des Kopfes
         else if(w&&w.erbt)tpWahlSetzen(id,null,{station:w.station,alle:w.alle,erbt:true});
       }
     });
@@ -2926,9 +2949,10 @@ function tpGroesserHinweis(selId,idx,n){
 }
 function tpUebungTausch(selId,idx){
   const sel=document.getElementById(selId); if(!sel)return;
-  /* Das Angebot des Feldes bekommt die Übung dazu (auch außerhalb des Blocktyps – Fehlerbild 4:
-     beim nächsten Zeichnen fällt sie still weg, behoben erst ab Schritt 9); gewählt wird über den Zustand (v884). */
-  if(![...sel.options].some(o=>o.value===String(idx))){ const f=tpAllForms()[idx]; if(!f)return; sel.add(new Option(f.name,String(idx))); }
+  /* Gewählt wird über den Zustand (v884). v893 (Fehlerbild 4): eine Übung außerhalb des Blocktyps
+     bekommt ihre Option über die Projektion (_tpWahlAufSeite) und bleibt auch nach dem nächsten
+     Zeichnen und im gespeicherten Plan erhalten – vorher fiel sie beim Neuzeichnen still weg. */
+  if(!tpWahlMoeglich(idx))return;
   tpWahlWaehlen(selId,idx);
   if(typeof toast==="function")toast("🔁 Getauscht – „"+(tpAllForms()[idx]||{}).name+"“");
 }
