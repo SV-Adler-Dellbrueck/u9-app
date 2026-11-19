@@ -374,7 +374,7 @@ const SZENARIEN = [
     ] },
 
   { id: "G10-loeschen-rueckgaengig", titel: "Block löschen und Rückgängig (Torwart-Block mit einem abgewählten Haken)",
-    haelt: "Fehlerbild 2 – Rückgängig stellt die Torwart-Haken über el.value statt .checked her: danach sind wieder alle angehakt. Behebung in Schritt 9.",
+    haelt: "Fehlerbild 2 – behoben in v890: Rückgängig stellt die Torwart-Haken so her, wie sie vor dem Löschen waren (vorher waren danach wieder alle angehakt).",
     schritte: [
       ["Training füllen, Torwart-Block mit Kind B abgewählt, speichern", p => p.evaluate(async () => {
         await tpGenerate();

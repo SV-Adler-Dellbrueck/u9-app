@@ -3736,11 +3736,11 @@ function tpRemoveSlot(idx){
   if(!slot)return;
   /* v884: Die Übungswahl des Blocks aus dem Zustand. v886: das Einzelkind ebenso (vorher über das
      Präfix tp-ind-player-<idx> gesucht, das auch -<idx>X traf – die Gegenstücke tp-ind-player-<n>X
-     gab es beim Rückgängig nie, der Fehler blieb ohne Folge). Die Torwart-Haken werden nicht gemerkt:
-     früher kamen sie über el.value (statt .checked) zurück, also gar nicht – Fehlerbild 2 bleibt,
-     behoben erst ab Schritt 9. */
+     gab es beim Rückgängig nie, der Fehler blieb ohne Folge). v890 (Fehlerbild 2): die Torwart-Haken
+     werden mitgemerkt und kommen so zurück, wie sie vor dem Löschen waren (vorher: alle angehakt). */
   const wahlAlt=tpWahlFelder(idx).map(id=>tpWahlIdx(id));
   const kindAlt=TP_ZUSTAND.kind[idx];
+  const twAlt=Array.isArray(TP_ZUSTAND.tw[idx])?TP_ZUSTAND.tw[idx].slice():undefined;
   const coaches={}; Object.keys(tpCoaches).forEach(k=>{ const m=k.match(/^tp-form-(\d+)-(\d+)$/); if(m&&+m[1]===idx)coaches[m[2]]=tpCoaches[k]; });
   const kopie=JSON.parse(JSON.stringify(slot));
   if(kopie.parallelZu!=null&&kopie.parallelZu>idx)kopie.parallelZu--;
@@ -3755,7 +3755,8 @@ function tpRemoveSlot(idx){
     const felderNeu=tpWahlFelder(n);
     wahlAlt.forEach((i,p)=>{ const id=`tp-form-${n}-${p}`; if(!felderNeu.includes(id))return; const w=TP_ZUSTAND.wahl[id]||{}; tpWahlSetzen(id,i,{station:w.station,alle:w.alle,erbt:w.erbt}); });
     if(kindAlt!==undefined&&_tpFeldArt(tpSlots[n])==="einzel")tpKindSetzen(n,kindAlt);
-    tpTwSetzen(n,null);   // Fehlerbild 2: die Haken kommen als Vorgabe (alle angehakt) zurück, nicht wie vor dem Löschen
+    if(twAlt!==undefined&&_tpFeldArt(tpSlots[n])==="tw")TP_ZUSTAND.tw[n]=twAlt.slice();   // v890: Haken wie vor dem Löschen
+    else tpTwSetzen(n,null);                                                               // nie geändert: Vorgabe (alle)
     const reihe=tpSlots.map((_,i)=>i); reihe.pop(); reihe.splice(Math.min(idx,reihe.length),0,n);
     tpSlotsNeuOrdnen(reihe);
   },8000);
