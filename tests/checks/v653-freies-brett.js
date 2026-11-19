@@ -22,23 +22,32 @@ module.exports = async function (h) {
   {
     const s = await h.starten({ warten: 3000, hoehe: 900, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), taktik_templates: [] }) });
     const p = s.page;
+    let zuletzt = Date.now(); p.on("request", () => { zuletzt = Date.now(); });
     const a = await p.evaluate(async () => {
       const w = ms => new Promise(x => setTimeout(x, ms));
       document.getElementById("pin-gate")?.remove(); const m = document.getElementById("main-app"); if (m) m.style.display = "block";
       try { localStorage.removeItem("adler-brett-trainer"); } catch (e) {}
       for (let i = 0; i < 60 && typeof brettOpen !== "function"; i++) await w(50);
+      /* Seitenübergang (View Transition) von go() abwarten – er fängt sonst die Maus. v890: auf sein Ende (vt.finished) statt fester 700 ms */
+      let vtFertig = Promise.resolve();
+      const sVT = document.startViewTransition ? document.startViewTransition.bind(document) : null;
+      if (sVT) document.startViewTransition = cb => { const vt = sVT(cb); vtFertig = vt.finished.catch(() => {}); return vt; };
       if (typeof go === "function") go("taktik");
-      for (let i = 0; i < 40 && !document.querySelector("#sit-hub .sit-brett"); i++) await w(50);
-      await w(700);   // Seitenübergang (View Transition) von go() abwarten – er fängt sonst die Maus
+      for (let i = 0; i < 100 && !document.querySelector("#sit-hub .sit-brett"); i++) await w(50);
+      await Promise.race([vtFertig, w(8000)]);
+      if (sVT) document.startViewTransition = sVT;
       const hub = document.getElementById("sit-hub");
       const erste = hub && hub.querySelector("button");
       return { da: typeof brettOpen === "function", erste: erste ? erste.textContent.trim() : "" };
     });
     if (!a.da) { await s.schliessen(); return h.ergebnis("v653 Freies Brett", false, ["brettOpen fehlt"]); }
     if (!/Freies Brett/.test(a.erste)) probleme.push(`a) erste Aktion unter Taktik: „${a.erste}“`);
+    /* v890: Erst zählen, wenn der Seitenwechsel nichts mehr nachlädt (500 ms ohne Anfrage, Obergrenze 8 s) – vorher deckte das
+       die feste Wartezeit nach go() zufällig mit ab. */
+    for (let i = 0; i < 160 && Date.now() - zuletzt < 500; i++) await new Promise(x => setTimeout(x, 50));
     await p.evaluate(netz);
     await p.evaluate(() => document.querySelector("#sit-hub .sit-brett").click());
-    await p.waitForTimeout(150);
+    await p.waitForSelector("#brett-modal [data-stein]", { timeout: 5000 }).catch(() => {});
     const b = await p.evaluate(() => {
       const d = document.getElementById("brett-modal");
       return { rolle: d && d.getAttribute("role"), modal: d && d.getAttribute("aria-modal"),
@@ -75,7 +84,7 @@ module.exports = async function (h) {
     const nachZur = await p.evaluate(() => document.querySelectorAll("#brett-modal [data-strich]").length);
     if (nachRad !== 0 || nachZur !== 1) probleme.push(`e) Radieren ${nachRad}, Zurück ${nachZur}`);
     // f) Schließen/Öffnen
-    const f = await p.evaluate(async () => { brettClose(); brettOpen(); await new Promise(x => setTimeout(x, 80));
+    const f = await p.evaluate(async () => { brettClose(); brettOpen(); for (let i = 0; i < 100 && !document.querySelector("#brett-modal .br-svg"); i++) await new Promise(x => setTimeout(x, 50));
       return { striche: document.querySelectorAll("#brett-modal [data-strich]").length, ball: JSON.parse(localStorage.getItem("adler-brett-trainer")).toks.find(t => t.t === "ball") }; });
     if (f.striche !== 1 || !f.ball || Math.abs(f.ball.x - 120) > 4) probleme.push(`f) nach dem Öffnen: ${f.striche} Striche, Ball ${f.ball && f.ball.x}`);
     // g) 3+1
@@ -101,12 +110,12 @@ module.exports = async function (h) {
       document.querySelectorAll(".modal-overlay,[role=dialog]").forEach(d => d.remove());
       const k = document.createElement("div"); k.id = "kabine"; k.innerHTML = '<div id="kabine-body" style="display:flex;flex-direction:column;height:900px;background:#1e3a8a"></div>';
       document.body.appendChild(k);
-      kabineHome(); await w(100);
+      kabineHome(); for (let i = 0; i < 100 && !document.getElementById("kab-mehr"); i++) await w(50);
       const mehr = document.getElementById("kab-mehr");
       const kachel = mehr && [...mehr.querySelectorAll("button")].find(b => /Mein Taktikbrett/.test(b.textContent));
       try { localStorage.removeItem("adler-brett-kind"); } catch (e) {}
       window.__netz = 0; const f0 = window.fetch; window.fetch = function () { window.__netz++; return f0.apply(this, arguments); };
-      if (kachel) kachel.click(); await w(100);
+      if (kachel) { kachel.click(); for (let i = 0; i < 100 && !document.querySelector("#kabine-body .br-svg"); i++) await w(50); }
       const body = document.getElementById("kabine-body");
       const out = { kachel: !!kachel, brett: !!body.querySelector(".br-svg"),
         eingaben: body.querySelectorAll("input,textarea,[contenteditable]").length,

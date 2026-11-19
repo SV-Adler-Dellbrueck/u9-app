@@ -93,16 +93,19 @@ module.exports = async function (h) {
     nichts3.click(); await bis(dlg); g()[0].click(); await warte(10);
     document.getElementById("nb-verzicht-notiz").value = "Urlaub bis Sonntag";
     window.__fehlerAn(true);
-    document.getElementById("nb-verzicht-ok").click(); await warte(200);
+    document.getElementById("nb-verzicht-ok").click(); await bis(() => /nichts (abgelegt|verändert)/i.test((document.getElementById("nb-verzicht-status") || {}).textContent || ""), 60);
     out.d.fehlerOffen = !!dlg(); out.d.fehlerText = (document.getElementById("nb-verzicht-status") || {}).textContent || "";
     out.d.knopfFrei = !!document.getElementById("nb-verzicht-ok") && !document.getElementById("nb-verzicht-ok").disabled;
     window.__fehlerAn(false);
-    document.getElementById("nb-verzicht-ok").click(); await bis(() => !dlg()); await warte(150);
+    const karteVor = slot.textContent.replace(/\s+/g, " ").trim().slice(0, 100);
+    /* v890: statt fester 150 ms auf den Wechsel der Karte warten (bis 3 s) – unter Doppellast stand nach 150 ms noch die
+       Karte desselben Termins da, und e) verglich dann zwei gleiche Karten. */
+    document.getElementById("nb-verzicht-ok").click(); await bis(() => !dlg()); await bis(() => slot.textContent.replace(/\s+/g, " ").trim().slice(0, 100) !== karteVor, 60);
     out.c.karteDanach = slot.textContent.replace(/\s+/g, " ").trim().slice(0, 100);
     // e) Tagebuch
     document.getElementById("tb-liste")?.remove();
     const box = document.createElement("div"); box.id = "tb-liste"; document.body.appendChild(box);
-    await tagebuchListe(); await warte(80);
+    await tagebuchListe(); await bis(() => box.querySelector("details.tb-verzicht .tb-verzicht-zeile"), 60);
     const det = box.querySelector("details.tb-verzicht");
     out.e = { abschnitt: det ? det.querySelector("summary").textContent.trim() : null, zeilen: [...box.querySelectorAll(".tb-verzicht-zeile")].map(z => z.textContent.replace(/\s+/g, " ").trim()) };
     const aendern = [...box.querySelectorAll(".tb-verzicht-zeile")].find(z => /War nicht dabei/.test(z.textContent)).querySelector("button");
@@ -126,7 +129,7 @@ module.exports = async function (h) {
     const bis = async (f, n) => { for (let i = 0; i < (n || 60) && !f(); i++) await warte(50); return f(); };
     const out = {};
     const sichtbar = e => e ? Math.round(e.getBoundingClientRect().height) : 0;
-    const weiter = async (fn) => { fn.click(); await bis(() => document.getElementById("nb-verzicht")); document.getElementById("nb-verzicht-ok").click(); await bis(() => !document.getElementById("nb-verzicht")); await warte(150); };
+    const weiter = async (fn) => { fn.click(); await bis(() => document.getElementById("nb-verzicht")); document.getElementById("nb-verzicht-ok").click(); await bis(() => !document.getElementById("nb-verzicht")); await bis(() => !document.getElementById("eb-modal") && !document.getElementById("fz-modal")); };
     await einheitBewertenOpen(); await einheitDetailOpen(gestern); await bis(() => document.querySelector("#nb-weg .nb-nichts"));
     const w1 = document.querySelector("#nb-weg .nb-nichts");
     out.einheit = { weg: sichtbar(w1) };

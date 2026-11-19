@@ -41,12 +41,14 @@ module.exports = async function (h) {
     const out = { kopf: d.querySelector(".ruhe-kopf")?.textContent, gewaehlt: k.filter(x => x.getAttribute("aria-pressed") === "true").map(x => x.textContent),
       zahl: k.length, hoehen: k.map(x => Math.round(x.getBoundingClientRect().height)), zeile: new Set(k.map(x => Math.round(x.getBoundingClientRect().top))).size,
       haken: k.filter(x => x.getAttribute("aria-pressed") === "true").map(x => getComputedStyle(x, "::before").content) };
-    k.find(x => x.dataset.k === "nacht")?.click(); await w(300);
+    /* v890: statt fester 300/200 ms auf die neue Kopfzeile bzw. die Felder warten (Obergrenze je 8 s) */
+    const kopf = () => d.querySelector(".ruhe-kopf")?.textContent || "";
+    const vor1 = kopf(); k.find(x => x.dataset.k === "nacht")?.click(); for (let i = 0; i < 160 && kopf() === vor1; i++) await w(50);
     out.nach = d.querySelector(".ruhe-kopf")?.textContent;
-    d.querySelector('[data-k="eigen"]')?.click(); await w(200);
+    d.querySelector('[data-k="eigen"]')?.click(); for (let i = 0; i < 100 && !document.getElementById("rz-test-von"); i++) await w(50);
     const von = document.getElementById("rz-test-von"), bis = document.getElementById("rz-test-bis");
     out.felder = !!von && !!bis;
-    if (von && bis) { von.value = "13:00"; bis.value = "14:30"; d.querySelector(".ruhe-uebernehmen")?.click(); await w(300); }
+    if (von && bis) { von.value = "13:00"; bis.value = "14:30"; const vor2 = kopf(); d.querySelector(".ruhe-uebernehmen")?.click(); for (let i = 0; i < 160 && kopf() === vor2; i++) await w(50); }
     out.eigen = d.querySelector(".ruhe-kopf")?.textContent;
     return out;
   };

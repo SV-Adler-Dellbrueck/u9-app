@@ -81,11 +81,11 @@ module.exports = async function (h) {
   const d = await s.page.evaluate(async () => {
     const w = ms => new Promise(x => setTimeout(x, ms));
     const knoepfe = () => document.querySelectorAll(".bot-gesendet button");
-    const n0 = knoepfe().length; knoepfe()[0].click(); await w(700);
+    const n0 = knoepfe().length; knoepfe()[0].click(); for (let i = 0; i < 160 && document.querySelectorAll(".bot-gesendet").length >= n0; i++) await w(50);   // v890: auf das Verschwinden warten
     const n1 = document.querySelectorAll(".bot-gesendet").length; return { n0, n1 };
   });
   const nachErsten = { rest: lobe.length, geloescht: loeschen.length };
-  const d2 = await s.page.evaluate(async () => { const w = ms => new Promise(x => setTimeout(x, ms)); const b = document.querySelectorAll(".bot-gesendet button"); if (b[0]) b[0].click(); await w(700); return document.querySelectorAll(".bot-gesendet").length; });
+  const d2 = await s.page.evaluate(async () => { const w = ms => new Promise(x => setTimeout(x, ms)); const b = document.querySelectorAll(".bot-gesendet button"); const n = document.querySelectorAll(".bot-gesendet").length; if (b[0]) b[0].click(); for (let i = 0; i < 160 && document.querySelectorAll(".bot-gesendet").length >= n; i++) await w(50); return document.querySelectorAll(".bot-gesendet").length; });
   if (d.n0 !== 2 || d.n1 !== 1 || d2 !== 0 || lobe.length !== 0 || loeschen.length !== 4 || nachErsten.rest !== 4 || nachErsten.geloescht !== 0 || loeschen.some(p => !/^\d+\/\d+-sp\.webm$/.test(p))) probleme.push("d) Zurückziehen: " + JSON.stringify({ d, d2, nachErsten, rest: lobe.length, geloescht: loeschen.length }));
   zeilen.push(`Zurückziehen: ${d.n0} Nachrichten gelistet, danach ${lobe.length} Zeilen übrig, ${loeschen.length} Dateien gelöscht`);
   // e) Kabine

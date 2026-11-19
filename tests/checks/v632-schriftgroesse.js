@@ -58,9 +58,13 @@ module.exports = async function (h) {
     return out;
   });
   if (r.fehlt) { await s.schliessen(); return h.ergebnis("v632 Schriftgröße", false, ["schriftWechseln fehlt"]); }
-  await s.page.reload({ waitUntil: "networkidle" }); await s.page.waitForTimeout(300);
+  await s.page.reload({ waitUntil: "networkidle" });
+  // Warten auf den Zustand statt fester 300 ms: die gemerkte Stufe ist gesetzt (Obergrenze 5 s – sonst wird a) rot)
+  await s.page.waitForFunction(() => document.documentElement.getAttribute("data-schrift") === "sehrgross", null, { timeout: 5000 }).catch(() => {});
   const nachLaden = await s.page.evaluate(() => document.documentElement.getAttribute("data-schrift"));
-  await s.page.goto("https://app.test/trainer/index.html?heft", { waitUntil: "networkidle" }); await s.page.waitForTimeout(300);
+  await s.page.goto("https://app.test/trainer/index.html?heft", { waitUntil: "networkidle" });
+  // erst prüfen, wenn der Start die Heft-Route erreicht hat (Titel gesetzt, Trainer-Oberfläche entfernt) – Obergrenze 8 s
+  await s.page.waitForFunction(() => /Adler Nest/.test(document.title) && !document.getElementById("main-app"), null, { timeout: 8000 }).catch(() => {});
   const heft = await s.page.evaluate(() => document.documentElement.getAttribute("data-schrift"));
   const fe = s.fehler();
   await s.schliessen();

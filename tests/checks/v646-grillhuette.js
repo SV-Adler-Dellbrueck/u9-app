@@ -45,10 +45,14 @@ module.exports = async function (h) {
     const ersatz = slot.querySelector(".gh-ersatz"), ueb = slot.querySelector(".gh-uebernehmen");
     out.ersatz = ersatz ? [ersatz.textContent.trim(), Math.round(ersatz.getBoundingClientRect().height)] : null;
     out.ueb = ueb ? [ueb.textContent.trim(), Math.round(ueb.getBoundingClientRect().height)] : null;
-    const klick = async (knopf, ja) => { knopf.click(); await w(60); const f = document.getElementById("frage-modal"); const b = f && [...f.querySelectorAll("button")].find(x => x.textContent.trim() === ja); if (b) b.click(); await w(120); return !!f; };
-    out.frageErsatz = ersatz ? await klick(ersatz, "Ersatz suchen") : false;
+    /* v890: statt fester 60/120 ms auf die Rückfrage und danach auf die Rückmeldung der App warten (Obergrenze je 5 bzw. 8 s;
+       kommt sie nie, fehlt sie in out.toasts und b) wird rot) */
+    const klick = async (knopf, ja, meldung) => { knopf.click(); for (let i = 0; i < 100 && !document.getElementById("frage-modal"); i++) await w(50);
+      const f = document.getElementById("frage-modal"); const b = f && [...f.querySelectorAll("button")].find(x => x.textContent.trim() === ja); if (b) b.click();
+      for (let i = 0; i < 160 && !window._toasts.includes(meldung); i++) await w(50); return !!f; };
+    out.frageErsatz = ersatz ? await klick(ersatz, "Ersatz suchen", "Ersatz wird gesucht") : false;
     const ueb2 = document.querySelector("#buedchen-slot .gh-uebernehmen");
-    out.frageUeb = ueb2 ? await klick(ueb2, "Übernehmen") : false;
+    out.frageUeb = ueb2 ? await klick(ueb2, "Übernehmen", "Übernommen") : false;
     out.toasts = window._toasts.slice(); out.sys = window._sys;
     // e) Termin-Fenster
     const box = document.createElement("div"); box.id = "td-buedchen"; document.body.appendChild(box);

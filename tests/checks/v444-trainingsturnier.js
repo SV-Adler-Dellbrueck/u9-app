@@ -13,19 +13,25 @@ module.exports = async function (h) {
   const warte = (p, ms) => p.evaluate(m => new Promise(r => setTimeout(r, m)), ms);
   const stand = p => p.evaluate(() => ({ datum: BLZ.datum, erstes: BLZ.teams[0].name, felder: BLZ.felder, teams: BLZ.teams.map(t => t.name + ":" + t.spieler.join(",")) }));
   const probleme = [], zeilen = [];
+  /* v890: Warten auf den Zustand statt fester Zeit. Gespeichert wird gebündelt nach 1,2 s (blzSave) – gewartet wird, bis die
+     Tabelle (DB) den erwarteten Namen trägt; geladen wird, bis BLZ den erwarteten Stand zeigt. Obergrenze je 8 s; tritt der
+     Zustand nie ein, bleibt die Prüfung danach rot. */
+  const bis = async (f, n) => { for (let i = 0; i < (n || 160) && !f(); i++) await new Promise(x => setTimeout(x, 50)); return f(); };
+  const inDb = (d, name) => bis(() => !!DB[d] && JSON.stringify(DB[d]).includes(JSON.stringify(name)));
+  const geladen = (p, d, name) => p.waitForFunction(([d, name]) => typeof BLZ !== "undefined" && BLZ && BLZ.datum === d && BLZ.teams[0].name === name, [d, name], { timeout: 8000 }).catch(() => {});
 
   // Geraet A plant vorab
   const a = await h.starten({ supabase });
   await h.terminSetzen(a.page, FR);
   await a.page.evaluate(async kinder => { window.KADER = kinder.map((n, i) => ({ id: i + 1, name: n, aktiv: true })); blitzOpen(); await blzAnzahl(4); BLZ.felder = 2; BLZ.spielform = "funino"; BLZ.teams[0].name = "Die Blauen"; blzSave(); }, h.KINDER);
-  await warte(a.page, 1500);
+  await inDb(FR, "Die Blauen");
   const planA = await stand(a.page);
   await a.schliessen();
   // Geraet B: leerer Speicher
   const b = await h.starten({ supabase });
   await h.terminSetzen(b.page, FR);
   await b.page.evaluate(kinder => { window.KADER = kinder.map((n, i) => ({ id: i + 1, name: n, aktiv: true })); blitzOpen(); }, h.KINDER);
-  await warte(b.page, 1200);
+  await geladen(b.page, FR, "Die Blauen");
   const planB = await stand(b.page);
   await b.schliessen();
   if (!DB[FR]) probleme.push(`nichts unter ${FR} gespeichert (Tabelle: ${Object.keys(DB).join(",") || "leer"})`);
@@ -34,17 +40,18 @@ module.exports = async function (h) {
 
   // Sicherungen auf EINEM Geraet (gemeinsamer localStorage), je Schritt ein frischer Aufruf
   const g = await h.starten({ supabase, speicherBehalten: true });
-  const besuch = async termin => { await g.page.reload({ waitUntil: "networkidle" }); await g.page.waitForTimeout(700);
+  const besuch = async termin => { await g.page.reload({ waitUntil: "networkidle" });
+    await g.page.waitForFunction(() => typeof blitzOpen === "function" && typeof blzSave === "function", null, { timeout: 8000 }).catch(() => {});
     await g.page.evaluate(k => { window.sbToken = () => "attrappe"; window.sbAuthHeaders = x => ({ ...(x || {}), "Content-Type": "application/json" }); window.KADER = k.map((n, i) => ({ id: i + 1, name: n, aktiv: true })); }, h.KINDER);
     await h.terminSetzen(g.page, termin); };
-  await besuch(FR2); await g.page.evaluate(() => { blitzOpen(); BLZ.teams[0].name = "FREITAG"; blzSave(); }); await warte(g.page, 1500);
-  await besuch(MO2); await g.page.evaluate(() => blitzOpen()); await warte(g.page, 1200);
-  await g.page.evaluate(() => { BLZ.teams[0].name = "MONTAG"; blzSave(); }); await warte(g.page, 1500);
+  await besuch(FR2); await g.page.evaluate(() => { blitzOpen(); BLZ.teams[0].name = "FREITAG"; blzSave(); }); await inDb(FR2, "FREITAG");
+  await besuch(MO2); await g.page.evaluate(() => blitzOpen()); await warte(g.page, 1200);   // bewusst fest: ein falsches Nachladen hätte hier Zeit, „MONTAG“ zu überschreiben
+  await g.page.evaluate(() => { BLZ.teams[0].name = "MONTAG"; blzSave(); }); await inDb(MO2, "MONTAG");
   const montag = await stand(g.page);
-  await besuch(FR2); await g.page.evaluate(() => blitzOpen()); await warte(g.page, 1200);
+  await besuch(FR2); await g.page.evaluate(() => blitzOpen()); await geladen(g.page, FR2, "FREITAG");
   const zurueck = await stand(g.page);
-  await g.page.evaluate(() => { BLZ.teams[0].name = "LAEUFT"; BLZ.phase = "live"; BLZ.plan = [{ a: 0, b: 1, phase: "runde", ta: 3, tb: 1, slot: 0, feld: 1 }]; blzSave(); }); await warte(g.page, 1500);
-  await besuch(SPAETER); await g.page.evaluate(() => blitzOpen()); await warte(g.page, 1200);
+  await g.page.evaluate(() => { BLZ.teams[0].name = "LAEUFT"; BLZ.phase = "live"; BLZ.plan = [{ a: 0, b: 1, phase: "runde", ta: 3, tb: 1, slot: 0, feld: 1 }]; blzSave(); }); await inDb(FR2, "LAEUFT");
+  await besuch(SPAETER); await g.page.evaluate(() => blitzOpen()); await warte(g.page, 1200);   // bewusst fest: geprüft wird, dass NICHTS das laufende Turnier überschreibt
   const laufend = await g.page.evaluate(() => ({ erstes: BLZ.teams[0].name, phase: BLZ.phase, ergebnisse: (BLZ.plan || []).filter(x => x.ta != null).length }));
   await g.schliessen();
   if (montag.erstes !== "MONTAG" || zurueck.erstes !== "FREITAG") probleme.push(`Termine vermischt: Montag „${montag.erstes}“, zurueck auf Freitag „${zurueck.erstes}“`);

@@ -37,7 +37,13 @@ module.exports = async function (h) {
     const nm = f => f.map((_, i) => fstFeldName(f, i)).join(",");
     const k6 = nm(fstFelderKuerzen(FST_STANDARD_FELDER, t6klein)), k6g = nm(fstFelderKuerzen(FST_STANDARD_FELDER, t6gross)), k8 = nm(fstFelderKuerzen(FST_STANDARD_FELDER, t8));
     // 2) Startseite
-    go("home"); await warte(900);
+    /* v890: statt fester 900 ms auf die Zeilen der Woche warten (Festival „N dabei“, Training „N dabei“, Quellenzeile); Obergrenze 8 s */
+    go("home");
+    for (let i = 0; i < 160; i++) {
+      const z = [...document.querySelectorAll("#home-woche .woche-zeile")].map(z => z.textContent);
+      if (z.some(x => /Kinderfestival|Turnier/.test(x) && /dabei/.test(x)) && z.some(x => /Training/.test(x) && /dabei/.test(x)) && document.querySelector("#home-woche .woche-quelle")) break;
+      await warte(50);
+    }
     const zeilen = [...document.querySelectorAll("#home-woche .woche-zeile")].map(z => z.textContent.replace(/\s+/g, " "));
     const festZeile = zeilen.find(z => /Kinderfestival|Turnier/.test(z)) || "";
     const trainZeile = zeilen.find(z => /Training/.test(z)) || "";
@@ -47,12 +53,13 @@ module.exports = async function (h) {
     if (typeof TM_TERMINE !== "undefined") { TM_TERMINE.length = 0; TM_TERMINE.push(t); }
     const karte = typeof _tmdInhalt === "function" ? _tmdInhalt(t) : "";
     const modal = document.createElement("div"); modal.id = "tmd-modal"; document.body.appendChild(modal);
-    tmJump("spieltag", spiel); await warte(700);
+    tmJump("spieltag", spiel); for (let i = 0; i < 100 && document.getElementById("tmd-modal"); i++) await warte(50);
     const modalZu = !document.getElementById("tmd-modal");
     // 4) Festival: Einteilung fuellt unsere Zeile
     _HT = { id: 7, name: "Kinderfestival", datum: spiel, config: { art: "festival", felder: FST_STANDARD_FELDER.slice(), vereine: [{ name: "SV Adler Dellbrück", kinder: 14, teams: 2 }, { name: "SV Auweiler-Esch", kinder: 10, teams: 2 }], infos: HT_INFOS_VORLAGE }, teams: [], plan: [] };
     const body = document.createElement("div"); body.id = "ht-body"; document.body.appendChild(body);
-    fstRender(); await warte(600);
+    fstRender();   // v890: der Abgleich mit „Teams festlegen“ läuft nachgelagert – auf den Hinweis warten statt fester 600 ms (Obergrenze 8 s)
+    for (let i = 0; i < 160 && !(/dabei/.test(document.getElementById("fst-einteilung")?.textContent || "") && ((_HT.config.vereine || []).find(v => /Adler/.test(v.name)) || {}).kinder !== 14); i++) await warte(50);
     const unsere = () => (_HT.config.vereine || []).find(v => /Adler/.test(v.name)) || {};
     const nachSync = { kinder: unsere().kinder, teams: unsere().teams };
     const hinweis = document.getElementById("fst-einteilung")?.textContent || "";
