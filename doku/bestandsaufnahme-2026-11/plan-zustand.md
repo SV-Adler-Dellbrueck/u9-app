@@ -27,7 +27,7 @@ Ein Zustandsobjekt im Code führt, die Seite wird daraus gezeichnet. Geändert w
 | Schritt | Inhalt | Risiko |
 |---|---|---|
 | 1 | **Ist-Zustand festschreiben:** Für zehn Abläufe (Vorlage laden, Übung tauschen, Einklappen, Weiterrücken, Öffnen aus der Datenbank, Torwart-Block, Material, Puffer, Feld weglassen, Löschen mit Rückgängig) wird der gespeicherte Inhalt als Sollwert abgelegt. Ändert sich ein Zeichen, wird die Prüfung rot. Nur Tests. | keins |
-| 2 | Speichern rechnet aus einem Zustand statt aus der Seite. | niedrig |
+| 2 | Speichern rechnet aus einem Zustand statt aus der Seite. – **erledigt v879** | niedrig |
 | 3 | Felderzahl und Reihenfolge kommen aus dem Modell statt aus der Seite. | mittel |
 | 4 | Die Übungswahl liegt im Zustand; alle Lesestellen werden umgestellt. | hoch |
 | 5 | Alle Schreibstellen (Öffnen, Erzeugen, Anpassen, Tauschen, Löschen, Verschieben) laufen über die neuen Funktionen. | hoch |
@@ -91,7 +91,7 @@ Schon im Code (nicht im DOM): `tpSlots` (Struktur), `tpCoaches` (Trainer je Feld
 ### Schritte
 
 1. Golden-Master (nur Tests) – **erledigt**: zehn Abläufe G1–G10, Fehlerbilder 1–6 am erfassten Verhalten bestätigt.
-2. `tpPlanSave` rechnet über `tpPlanAusZustand`/`tpSlotsAusZustand`; der Zustand wird vorerst aus dem DOM gelesen (Brücke).
+2. `tpPlanSave` rechnet über `tpPlanAusZustand`/`tpSlotsAusZustand`; der Zustand wird vorerst aus dem DOM gelesen (Brücke). – **erledigt v879**: beide rein (kein DOM), `_tpZustandAusDom()` liest einmalig `.tp-form-sel` (ID, Wert, `data-station`, `data-alle`, Dokumentreihenfolge), Torwart-Haken, Einzelkind, gewählte Trainer; `tpPlanEntries`/`tpSlotsMitZuordnung` sind Zweizeiler. Golden-Master unverändert grün, Prüffall `v879-plan-serialisierer.js`.
 3. Felderzahl und Reihenfolge kommen aus dem Modell (eine Funktion für „wie viele Felder hat Block si“), nicht aus `querySelectorAll`.
 4. Die Übungswahl liegt im Zustand; alle Lesestellen oben lesen `wahl` statt `.tp-form-sel`.
 5. Alle Schreibstellen laufen über die Setter (Öffnen, Erzeugen, Anpassen, Tauschen, Löschen, Verschieben, Feld weglassen).

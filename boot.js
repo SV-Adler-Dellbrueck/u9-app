@@ -3935,34 +3935,80 @@ function tpAddRecoExercise(formIdx){
   toast("Übung in den Plan übernommen ✓");
 }
 
+/* v879 (4.8 Schritt 2): Gespeichert wird aus einem Zustand, nicht mehr direkt aus der Seite.
+   tpPlanAusZustand/tpSlotsAusZustand sind rein – kein DOM, keine Uhr; sie rechnen nur aus dem
+   Zustandsobjekt (und den Kader-Hilfen kidListToIds/kidId). Den Zustand liest vorerst
+   _tpZustandAusDom einmalig aus der Seite (Übergangsbrücke bis Schritt 8). Das Ergebnis ist
+   Zeichen für Zeichen das alte (Golden-Master v877): dieselbe Schlüsselreihenfolge, dieselbe
+   Reihenfolge der Einträge (Dokumentreihenfolge der Auswahlfelder).
+   Zustand:
+     slots   – tpSlots (Struktur)
+     coaches – tpCoaches (Trainer je Feld, Schlüssel Element-ID tp-form-<Block>-<Feld>)
+     trainer – gewählte Trainer in Reihenfolge
+     formen  – tpAllForms()
+     felder  – [{id, wert, station, alle}] je Auswahlfeld .tp-form-sel in Dokumentreihenfolge,
+               auch leere (ihre Zahl je Block ist die Felderzahl); station/alle sind die rohen
+               Marken data-station/data-alle
+     tw      – {Blockindex: [angehakte Werte]} nur für Blöcke mit Torwart-Angebot
+     kind    – {Blockindex: Wert der Einzelkind-Auswahl} */
+function tpPlanAusZustand(z){
+  const allForms=z.formen||[], trainers=z.trainer||[], coaches=z.coaches||{}, slots=z.slots||[];
+  const entries=[];
+  (z.felder||[]).forEach(f=>{
+    if(!f.wert)return;
+    const match=String(f.id||"").match(/tp-form-(\d+)-(\d+)/);
+    if(!match)return;
+    const slotIdx=parseInt(match[1]);
+    const groupIdx=parseInt(match[2]);
+    const slot=slots[slotIdx];
+    const typ=slot?.typ||"main";
+    const noGrp=typ==="warmup"||typ==="abschluss"||typ==="turnier"||typ==="tw";
+    // tpCoaches entscheidet, wem die Übung zugerechnet wird (Trainer-Statistik und
+    // „Einheit bewerten“). Fällt auf den Gruppen-Trainer zurück.
+    const trainer=noGrp?"Alle":(coaches[f.id]||trainers[groupIdx]||`Trainer ${groupIdx+1}`);
+    const formIdx=parseInt(f.wert);
+    const formName=allForms[formIdx]?.name||"?";
+    const eintrag={formIdx,formName,trainer,slotLabel:slot?.label||"",key:`${formIdx}-${trainer}`,block:slotIdx,feld:groupIdx};
+    if(f.station!=null&&f.station!=="")eintrag.station=Number(f.station);   // v608: Vorlagen-Marken bleiben erhalten
+    if(f.alle==="1")eintrag.alleFelder=true;
+    entries.push(eintrag);
+  });
+  return entries;
+}
+function tpSlotsAusZustand(z){
+  const ids=arr=>(typeof kidListToIds==="function")?kidListToIds(arr):arr;
+  const id=n=>{const k=(typeof kidId==="function")?kidId(n):null; return k!=null?k:n;};
+  const coaches=z.coaches||{}, felder=z.felder||[], tw=z.tw||{}, kind=z.kind||{};
+  return (z.slots||[]).map((s,si)=>{
+    const o={...s}; delete o.coaches; delete o.trainer; delete o.tw; delete o.kind;
+    const typ=s.typ||"main";
+    if(tpKannParallel(typ)){
+      const t=coaches[`tp-form-${si}-0`]; if(t)o.trainer=t;
+      if(typ==="tw"){const an=tw[si]; if(Array.isArray(an))o.tw=ids(an.slice());}
+      else{const k=kind[si]; if(k)o.kind=id(k);}
+    }else if(tpIstHauptteil(typ)){
+      const c=[]; felder.filter(f=>String(f.id||"").startsWith(`tp-form-${si}-`)).forEach((f,p)=>{c[p]=coaches[f.id]||"";});
+      if(c.some(Boolean))o.coaches=c;
+    }
+    return o;
+  });
+}
+/* Übergangsbrücke (bis Schritt 8): liest genau das aus der Seite, was die Serialisierer brauchen. */
+function _tpZustandAusDom(){
+  const felder=[...document.querySelectorAll(".tp-form-sel")].map(s=>({id:s.id,wert:s.value,station:s.dataset.station,alle:s.dataset.alle}));
+  const tw={}, kind={};
+  tpSlots.forEach((s,si)=>{
+    const an=[...document.querySelectorAll(`.tp-tw-player[data-slot="${si}"]`)];
+    if(an.length)tw[si]=an.filter(c=>c.checked).map(c=>c.value);
+    const k=document.getElementById(`tp-ind-player-${si}`)?.value; if(k!=null)kind[si]=k;
+  });
+  return {slots:tpSlots,coaches:tpCoaches,trainer:tpGetCheckedTrainers(),formen:tpAllForms(),felder,tw,kind};
+}
 /* Der geplante Zeitplan als Datenstruktur – frueher nur inline in evalRenderList.
    Wird auch von tpPlanSave() gebraucht, damit "Einheit bewerten" spaeter weiss,
    welche Uebungen an einem vergangenen Termin geplant waren. */
 function tpPlanEntries(){
-  const allForms=tpAllForms();
-  const trainers=tpGetCheckedTrainers();
-  const entries=[];
-  document.querySelectorAll(".tp-form-sel").forEach(s=>{
-    if(!s.value)return;
-    const match=s.id.match(/tp-form-(\d+)-(\d+)/);
-    if(!match)return;
-    const slotIdx=parseInt(match[1]);
-    const groupIdx=parseInt(match[2]);
-    const slot=tpSlots[slotIdx];
-    const typ=slot?.typ||"main";
-    const noGrp=typ==="warmup"||typ==="abschluss"||typ==="turnier"||typ==="tw";
-    // tpCoaches wurde bisher nur GESCHRIEBEN: das Dropdown "Trainer für diese Station"
-    // hatte keinerlei Wirkung. Jetzt entscheidet es, wem die Übung zugerechnet wird
-    // (Trainer-Statistik und "Einheit bewerten"). Fällt auf den Gruppen-Trainer zurück.
-    const trainer=noGrp?"Alle":(tpCoaches[s.id]||trainers[groupIdx]||`Trainer ${groupIdx+1}`);
-    const formIdx=parseInt(s.value);
-    const formName=allForms[formIdx]?.name||"?";
-    const eintrag={formIdx,formName,trainer,slotLabel:slot?.label||"",key:`${formIdx}-${trainer}`,block:slotIdx,feld:groupIdx};
-    if(s.dataset.station!=null&&s.dataset.station!=="")eintrag.station=Number(s.dataset.station);   // v608: Vorlagen-Marken bleiben erhalten
-    if(s.dataset.alle==="1")eintrag.alleFelder=true;
-    entries.push(eintrag);
-  });
-  return entries;
+  return tpPlanAusZustand(_tpZustandAusDom());
 }
 /* Plan pro Datum sichern (debounced). Ohne Trainer-Token still ueberspringen –
    der Plan ist trainer-only und darf offline nicht die Queue verstopfen. */
@@ -3979,21 +4025,7 @@ function tpPlanSaveDebounced(){ if(_tpRestoring)return; clearTimeout(_tpPlanTime
    Bis v455 lebte das alles nur im DOM und in tpCoaches – nach dem Neuladen war Finn nicht
    mehr am Torwart-Block, und der Hauptteil hatte wieder vier Felder. Kinder als kader.id. */
 function tpSlotsMitZuordnung(){
-  const ids=arr=>(typeof kidListToIds==="function")?kidListToIds(arr):arr;
-  const id=n=>{const k=(typeof kidId==="function")?kidId(n):null; return k!=null?k:n;};
-  return tpSlots.map((s,si)=>{
-    const o={...s}; delete o.coaches; delete o.trainer; delete o.tw; delete o.kind;
-    const typ=s.typ||"main";
-    if(tpKannParallel(typ)){
-      const t=tpCoaches[`tp-form-${si}-0`]; if(t)o.trainer=t;
-      if(typ==="tw"){const an=[...document.querySelectorAll(`.tp-tw-player[data-slot="${si}"]`)]; if(an.length)o.tw=ids(an.filter(c=>c.checked).map(c=>c.value));}
-      else{const k=document.getElementById(`tp-ind-player-${si}`)?.value; if(k)o.kind=id(k);}
-    }else if(tpIstHauptteil(typ)){
-      const c=[]; document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`).forEach((sel,p)=>{c[p]=tpCoaches[sel.id]||"";});
-      if(c.some(Boolean))o.coaches=c;
-    }
-    return o;
-  });
+  return tpSlotsAusZustand(_tpZustandAusDom());
 }
 /* ═══════════════════════════════════════════════════════════════════════════
    v542 – WER HAT ZULETZT GESPEICHERT, UND WIRD ER ÜBERSCHRIEBEN?

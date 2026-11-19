@@ -109,7 +109,9 @@ module.exports = async function (h) {
     out.e.aendernHoehe = hoehe(aendern);
     aendern.click(); await bis(dlg);
     out.e.vorbelegt = { grund: dlg().dataset.grund, notiz: document.getElementById("nb-verzicht-notiz").value, zurueck: !!knopf("Doch eintragen") };
-    knopf("Doch eintragen").click(); await bis(() => !dlg()); await warte(150);
+    /* v879: statt fester 150 ms auf die neu gezeichnete Karte warten (bis 3 s) – im Parallel-Lauf
+       war die Karte nach 150 ms noch leer und glich so dem leeren Stand aus c). Die Prüfung bleibt gleich streng. */
+    knopf("Doch eintragen").click(); await bis(() => !dlg()); await bis(() => slot.textContent.trim() !== "" && document.querySelectorAll(".tb-verzicht-zeile").length === 1);
     out.e.nachZurueck = { karte: slot.textContent.replace(/\s+/g, " ").trim().slice(0, 100), zeilen: document.querySelectorAll(".tb-verzicht-zeile").length };
     // g) Altbestand
     out.g = { acht: nbAltbestand("2026-10-08"), neun: nbAltbestand("2026-10-09"), fruehe: nbAltbestand("2026-09-30"), leer: nbAltbestand("") };
