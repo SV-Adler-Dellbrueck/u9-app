@@ -25,8 +25,8 @@ module.exports = async function (h) {
     const da = await s.page.evaluate(async () => {
       if (typeof kinderAppOpen !== "function") return "kinderAppOpen fehlt";
       kinderAppOpen();
-      for (let i = 0; i < 60 && !document.getElementById("ka-body"); i++) await new Promise(r => setTimeout(r, 50));
-      for (let i = 0; i < 40 && /Lädt/.test(document.getElementById("ka-body")?.textContent || ""); i++) await new Promise(r => setTimeout(r, 50));
+      for (let i = 0; i < 160 && !document.getElementById("ka-body"); i++) await new Promise(r => setTimeout(r, 50));
+      for (let i = 0; i < 160 && /Lädt/.test(document.getElementById("ka-body")?.textContent || ""); i++) await new Promise(r => setTimeout(r, 50));
       return document.getElementById("ka-body") ? "ok" : "kein ka-body";
     });
     return { s, da };
@@ -44,7 +44,7 @@ module.exports = async function (h) {
         const knopf = [...b.querySelectorAll("button")].find(x => /koppeln/i.test(x.textContent));
         out.knopfHoehe = knopf ? Math.round(knopf.getBoundingClientRect().height) : 0;
         if (knopf) knopf.click();
-        for (let i = 0; i < 40 && !/gültig noch/.test(document.getElementById("ka-body").textContent); i++) await new Promise(r => setTimeout(r, 50));
+        for (let i = 0; i < 160 && !/gültig noch/.test(document.getElementById("ka-body").textContent); i++) await new Promise(r => setTimeout(r, 50));
         const gross = [...b.querySelectorAll("div")].map(d => d.textContent.trim()).find(t => /^\d{6}$/.test(t));
         out.code = gross || "";
         out.uhr = /gültig noch \d+:\d\d Minuten/.test(b.textContent);
@@ -87,20 +87,28 @@ module.exports = async function (h) {
         if (schieber) {
           out.wert = schieber.value; out.max = schieber.max; out.schritt = schieber.step;
           out.hoehe = Math.round(schieber.getBoundingClientRect().height);
+          [...b.querySelectorAll("button")].forEach(x => { x._alt = true; });
           schieber.value = "90";
           schieber.dispatchEvent(new Event("change", { bubbles: true }));
-          await new Promise(r => setTimeout(r, 400));
+          /* v890: nicht fest 400 ms warten – kinderAppLimit schreibt und zeichnet die Liste neu („Lädt …“, dann neue Knöpfe).
+             Gewartet wird, bis ein neuer Trennen-Knopf steht (Obergrenze 8 s; kommt er nie, misst die Prüfung 0 px und wird rot). */
+          for (let i = 0; i < 160; i++) {
+            const t = [...b.querySelectorAll("button")].find(x => /trennen/i.test(x.textContent));
+            if (t && !t._alt && !/Lädt/.test(b.textContent)) break;
+            await new Promise(r => setTimeout(r, 50));
+          }
         }
         const trennen = [...b.querySelectorAll("button")].find(x => /trennen/i.test(x.textContent));
         out.trennenHoehe = trennen ? Math.round(trennen.getBoundingClientRect().height) : 0;
         if (trennen) trennen.click();
-        await new Promise(r => setTimeout(r, 200));
+        for (let i = 0; i < 100 && !document.getElementById("ka-frage"); i++) await new Promise(r => setTimeout(r, 50));
         const frage = document.getElementById("ka-frage");
         out.eigenesFenster = !!frage && frage.getAttribute("role") === "dialog" && frage.getAttribute("aria-modal") === "true";
         const ja = frage ? [...frage.querySelectorAll("button")].find(x => /^Trennen$/.test(x.textContent.trim())) : null;
-        if (ja) { ja.click(); await new Promise(r => setTimeout(r, 400)); }
+        if (ja) ja.click();
         return out;
       });
+      for (let i = 0; i < 160 && !s.gesendet.some(x => /kind_konto/.test(x.pfad) && x.methode === "PATCH" && x.body && x.body.aktiv === false); i++) await new Promise(r => setTimeout(r, 50));
       const patches = s.gesendet.filter(x => /kind_konto/.test(x.pfad) && x.methode === "PATCH");
       zeilen.push(`b) mit Gerät: „${(r.text || "").slice(0, 60)}…" · Schieber ${r.wert}/${r.max} Schritt ${r.schritt}, ${r.hoehe} px`);
       if (!/heute 25 von 60 Min/.test(r.text)) probleme.push("b) die heute genutzte Zeit steht nicht an der Zeile");

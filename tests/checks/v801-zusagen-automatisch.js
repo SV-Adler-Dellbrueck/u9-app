@@ -20,18 +20,22 @@ module.exports = async function (h) {
       },
       rueckmeldungen: rm, trainingsplan: [], trainingsgruppen: [], kind_pause: opts.pause || [] }) });
     await h.sichtbarMachen(s.page, "#home-content");
-    const z = await s.page.evaluate(async () => {
-      const w = ms => new Promise(x => setTimeout(x, ms));
-      await loadKader(); document.getElementById("pin-gate")?.remove(); go("home"); await w(1200);
-      return [...document.querySelectorAll("#home-woche .woche-zeile")].map(x => x.textContent.replace(/\s+/g, " ")).find(x => /Kinderfestival|Turnier/.test(x)) || "";
-    });
+    /* v890: statt fester 1,2 s auf die Zeile warten (bei a) auf „12 dabei“), danach auf 500 ms ohne Anfrage – erst dann ist
+       sicher, dass kein Schreibvorgang mehr folgt (d und e prüfen genau das). Obergrenze je 8 s. */
+    let zuletzt = Date.now(); s.page.on("request", () => { zuletzt = Date.now(); });
+    const lies = () => s.page.evaluate(() => [...document.querySelectorAll("#home-woche .woche-zeile")].map(x => x.textContent.replace(/\s+/g, " ")).find(x => /Kinderfestival|Turnier/.test(x)) || "");
+    await s.page.evaluate(async () => { await loadKader(); document.getElementById("pin-gate")?.remove(); go("home"); });
+    const erwartet = opts.erwartet || (x => /dabei/.test(x));
+    for (let i = 0; i < 160 && !erwartet(await lies()); i++) await new Promise(x => setTimeout(x, 50));
+    for (let i = 0; i < 160 && Date.now() - zuletzt < 500; i++) await new Promise(x => setTimeout(x, 50));
+    const z = await lies();
     const fe = s.fehler(); await s.schliessen();
     return { z, posts, fe, zeile };
   }
   const ids = n => Array.from({ length: n }, (_, i) => i + 1);
   const dabei9 = {}; K.slice(0, 9).forEach(n => { dabei9[n] = "dabei"; });
   // a) 12 Zusagen, 9 eingeteilt
-  const a = await lauf({ nom: { ...dabei9 }, rm: ids(12).map(i => [i, "zugesagt"]) });
+  const a = await lauf({ nom: { ...dabei9 }, rm: ids(12).map(i => [i, "zugesagt"]), erwartet: x => /12 dabei/.test(x) });
   const nDabei = x => Object.keys(x || {}).filter(k => k[0] !== "_" && x[k] === "dabei").length;
   if (!a.posts.length || nDabei(a.posts[0].data) !== 12 || !/12 dabei/.test(a.z) || /noch nicht eingeteilt/.test(a.z)) probleme.push(`a) ${a.posts.length} Schreibzugriffe, dabei ${nDabei((a.posts[0] || {}).data)}, Chip „${a.z.slice(0, 120)}“`);
   // b) Absage nach der Einteilung

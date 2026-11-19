@@ -14,6 +14,8 @@
 const b64 = o => Buffer.from(JSON.stringify(o)).toString("base64").replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
 const JPG = Buffer.from("/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=", "base64");
 module.exports = async function (h) {
+  /* Warten auf einen Zustand im Prüfprozess (s.speicher, s.gesendet, rpcAufrufe) mit Obergrenze n × 50 ms – tritt er nie ein, wird die Prüfung danach rot */
+  const bis = async (f, n) => { for (let i = 0; i < (n || 100) && !f(); i++) await new Promise(x => setTimeout(x, 50)); return f(); };
   const probleme = [], zeilen = [];
   const TOKEN = b64({ alg: "none" }) + "." + b64({ email: "eltern@example.org", sub: "u1", exp: Math.floor(Date.now() / 1000) + 3600 }) + ".x";
   const frist = new Date(Date.now() + 3 * 864e5).toISOString();
@@ -45,7 +47,7 @@ module.exports = async function (h) {
     await nestBogenKarte(window._elternKids || []); await w(200);
     const k = document.querySelector("#nest-bogen-slot .nest-bogen-karte");
     const out = { karte: k ? k.textContent.replace(/\s+/g, " ").trim() : null };
-    if (k) { k.click(); await w(400); }
+    if (k) { k.click(); for (let i = 0; i < 100 && !document.getElementById("nest-bogen-ok"); i++) await w(50); }
     const wahl = document.getElementById("nest-bogen-wahl"), ein = document.getElementById("nest-bogen-einreichen");
     out.vorher = { foto: !!(wahl && wahl.disabled), einreichen: !!(ein && ein.disabled), dialog: document.getElementById("nest-bogen")?.getAttribute("role") };
     document.getElementById("nest-bogen-ok")?.click(); await w(200);
@@ -55,13 +57,17 @@ module.exports = async function (h) {
   }).catch(e => ({ fehler: String(e) }));
   let rb = {};
   if (!ra.fehler) {
-    await s.page.setInputFiles("#nest-bogen-wahl", { name: "a.jpg", mimeType: "image/jpeg", buffer: JPG }); await s.page.waitForTimeout(900);
-    await s.page.setInputFiles("#nest-bogen-wahl", { name: "b.jpg", mimeType: "image/jpeg", buffer: JPG }); await s.page.waitForTimeout(900);
+    await s.page.setInputFiles("#nest-bogen-wahl", { name: "a.jpg", mimeType: "image/jpeg", buffer: JPG });
+    // auf das hochgeladene Foto warten (Verkleinern, POST, neu zeichnen) statt fester 900 ms; Obergrenze 8 s
+    await s.page.waitForFunction(n => _nestBogen && _nestBogen.fotos.length >= n && !document.getElementById("nest-bogen-wahl")?.disabled, 1, { timeout: 8000 }).catch(() => {});
+    await s.page.setInputFiles("#nest-bogen-wahl", { name: "b.jpg", mimeType: "image/jpeg", buffer: JPG });
+    await s.page.waitForFunction(n => _nestBogen && _nestBogen.fotos.length >= n, 2, { timeout: 8000 }).catch(() => {});
     rb = await s.page.evaluate(async () => {
       const w = ms => new Promise(x => setTimeout(x, ms));
       const out = { fotos: _nestBogen ? _nestBogen.fotos.map(f => f.pfad) : [], drittes: !!document.getElementById("nest-bogen-wahl"),
         hinweis: /Mehr als zwei Fotos/.test(document.getElementById("nest-bogen")?.textContent || "") };
-      document.getElementById("nest-bogen-einreichen")?.click(); await w(800);
+      document.getElementById("nest-bogen-einreichen")?.click();
+      for (let i = 0; i < 160 && document.getElementById("nest-bogen"); i++) await w(50);
       out.zu = !document.getElementById("nest-bogen");
       return out;
     }).catch(e => ({ fehler: String(e) }));
@@ -91,11 +97,13 @@ module.exports = async function (h) {
     await nestBogenKarte(window._elternKids || []); await w(200);
     const karte = document.querySelector("#nest-bogen-slot .nest-bogen-karte")?.textContent || "";
     await nestBogenOpen(7); await w(300);
-    document.getElementById("nest-bogen-ok")?.click(); await w(300);
+    document.getElementById("nest-bogen-ok")?.click(); for (let i = 0; i < 100 && !document.getElementById("frage-modal"); i++) await w(50);
     const frage = !!document.getElementById("frage-modal");
-    document.getElementById("frage-ja")?.click(); await w(800);
+    document.getElementById("frage-ja")?.click();
+    for (let i = 0; i < 160 && (document.getElementById("nest-bogen-ok")?.checked || document.querySelectorAll("#nest-bogen-fotos img").length); i++) await w(50);
     return { karte, frage, haken: document.getElementById("nest-bogen-ok")?.checked, fotos: document.querySelectorAll("#nest-bogen-fotos img").length };
   }).catch(e => ({ fehler: String(e) }));
+  await bis(() => s2.speicher.filter(x => /^DELETE heft_media\/einreichung\/7\/[xy]\.jpg/.test(x)).length >= 2 && rpcAufrufe.some(x => x.p_einverstanden === false));
   const sp2 = s2.speicher.slice(); await s2.schliessen();
   const nein = rpcAufrufe.find(x => x.p_einverstanden === false);
   const geloescht = sp2.filter(x => /^DELETE heft_media\/einreichung\/7\/[xy]\.jpg/.test(x)).length;
@@ -111,39 +119,43 @@ module.exports = async function (h) {
     portraet_trainerstimme: opt.stimmen || [], kabine_reporter: [], profiles: [{ id: "t1", anzeigename: "Trainer X" }, { id: "t2", anzeigename: "Trainer Y" }],
     team_config: [{ portraet_schwelle: 90 }], heft_ausgabe: [], portraet_verlauf: [],
     rpc: { portraet_beteiligung: opt.satz, portraet_anfragen: [{ id: 8, status: "angefragt" }] } });
-  const lauf = async (opt, fn) => {
+  const lauf = async (opt, fn, erwartet) => {
     const t = await h.starten({ warten: 1500, supabase: trainer(opt) });
     const r = await t.page.evaluate(fn).catch(e => ({ fehler: String(e) }));
+    if (erwartet && !r.fehler) await bis(() => t.gesendet.some(erwartet));   // auf den erwarteten Schreibvorgang warten (Obergrenze 5 s)
     const g = t.gesendet.slice(), f = t.fehler(); await t.schliessen(); return { r, g, f };
   };
   const ablauf = async () => {
     const w = ms => new Promise(x => setTimeout(x, ms));
     for (let i = 0; i < 40 && typeof nestEditorOpen !== "function"; i++) await w(100);
-    await nestEditorOpen(); await w(1200);
+    await nestEditorOpen();
+    for (let i = 0; i < 160 && !document.querySelector("#nest-ablauf #nest-ampel, #nest-ablauf #nest-ablauf-kind, #nest-ablauf code"); i++) await w(50);   // nestAblaufLaden läuft ohne await
     const box = document.getElementById("nest-ablauf"), txt = box ? box.textContent.replace(/\s+/g, " ") : "";
     const out = { txt, ampel: [...document.querySelectorAll("#nest-ampel .nest-ampel")].map(a => a.dataset.ok).join(""), satz: document.getElementById("nest-beteiligung")?.textContent || null,
       stimmeKnopf: Math.round(document.getElementById("nest-stimme-erfassen")?.getBoundingClientRect().height || 0) };
-    const ta = document.getElementById("nest-stimme"); if (ta) { ta.value = "Übersicht, Passspiel"; document.getElementById("nest-stimme-erfassen").click(); await w(500); }
+    const ta = document.getElementById("nest-stimme"); if (ta) { ta.value = "Übersicht, Passspiel"; document.getElementById("nest-stimme-erfassen").click(); }
     return out;
   };
-  const e1 = await lauf({ einreichung: true, satz: "bei jedem Training dabei", stimmen: [{ id: 1, trainer_id: "t2", stichpunkte: "Mutig im Zweikampf" }] }, ablauf);
+  const stimmePost = x => /portraet_trainerstimme/.test(x.pfad) && x.methode === "POST";
+  const e1 = await lauf({ einreichung: true, satz: "bei jedem Training dabei", stimmen: [{ id: 1, trainer_id: "t2", stichpunkte: "Mutig im Zweikampf" }] }, ablauf, stimmePost);
   const post = e1.g.find(x => /portraet_trainerstimme/.test(x.pfad) && x.methode === "POST");
   if (e1.r.fehler || e1.r.ampel !== "101" || !/Kind B/.test(e1.r.txt) || !/Trainer Y: Mutig im Zweikampf/.test(e1.r.txt) || !post || !/Übersicht, Passspiel/.test(JSON.stringify(post.body || "")) || !/on_conflict=einreichung_id,trainer_id/.test(post.suche || "") || e1.r.stimmeKnopf < 44)
     probleme.push("e) " + JSON.stringify({ ...e1.r, post: post && post.body }));
   else zeilen.push(`e) Ampel Bogen ✓ · Kind ! · Trainer ✓ (${e1.r.ampel}), Stimme von Trainer Y sichtbar, eigene Stimme erfasst`);
-  const e2 = await lauf({ einreichung: true, satz: null }, ablauf);
+  const e2 = await lauf({ einreichung: true, satz: null }, ablauf, stimmePost);
   if (!/bei jedem Training dabei/.test(e1.r.satz || "") || e2.r.satz || /Training dabei\b(?! “)/.test((e2.r.txt || "").replace(/Satz „bei \(fast\) jedem Training dabei“ ab/, "")))
     probleme.push("f) " + JSON.stringify({ mit: e1.r.satz, ohne: e2.r.satz, txt: (e2.r.txt || "").slice(0, 200) }));
   else zeilen.push(`f) über der Schwelle „${e1.r.satz.trim()}“, darunter kein Wort zur Beteiligung`);
   const e3 = await lauf({ einreichung: false }, async () => {
     const w = ms => new Promise(x => setTimeout(x, ms));
     for (let i = 0; i < 40 && typeof nestEditorOpen !== "function"; i++) await w(100);
-    await nestEditorOpen(); await w(1200);
+    await nestEditorOpen();
+    for (let i = 0; i < 160 && !document.querySelector("#nest-ablauf #nest-ampel, #nest-ablauf #nest-ablauf-kind, #nest-ablauf code"); i++) await w(50);
     const k = document.getElementById("nest-ablauf-kind"), t = document.getElementById("nest-ablauf-termin");
     if (k) k.value = "3";
-    document.getElementById("nest-ablauf-bestaetigen")?.click(); await w(500);
+    document.getElementById("nest-ablauf-bestaetigen")?.click();
     return { kinder: k ? k.options.length : 0, termin: t ? t.value : null };
-  });
+  }, x => /rpc\/portraet_anfragen/.test(x.pfad));
   const anf = e3.g.find(x => /rpc\/portraet_anfragen/.test(x.pfad));
   if (e3.r.fehler || !anf || !/"p_spieler":3/.test(JSON.stringify(anf.body || "")) || !/"p_termin":90/.test(JSON.stringify(anf.body || "")))
     probleme.push("g) " + JSON.stringify({ ...e3.r, anf: anf && anf.body }));
@@ -157,7 +169,7 @@ module.exports = async function (h) {
     const w = ms => new Promise(x => setTimeout(x, ms));
     for (let i = 0; i < 40 && typeof kabineNestHinweisLoad !== "function"; i++) await w(100);
     const d = document.createElement("div"); d.id = "kab-nest-hinweis"; document.body.appendChild(d);
-    await kabineNestHinweisLoad(); await w(200);
+    await kabineNestHinweisLoad(); for (let i = 0; i < 100 && !/Porträtfragen/.test(d.textContent); i++) await w(50);
     return d.textContent.replace(/\s+/g, " ").trim();
   }).catch(e => String(e));
   await s3.schliessen();

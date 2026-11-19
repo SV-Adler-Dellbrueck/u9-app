@@ -34,12 +34,12 @@ module.exports = async function (h) {
     kabineIdx = 0; isKidsMode = false; kabineRenderGallery(); await w(500);
     const st = () => document.querySelectorAll("#kabine-body #sk-streifen");
     out.a = { streifen: st().length, karten: [...document.querySelectorAll("#kabine-body .sk-karte canvas")].map(c => c.getAttribute("aria-label")) };
-    document.querySelector("#kabine-body .sk-karte").click(); await w(200);
+    document.querySelector("#kabine-body .sk-karte").click(); for (let i = 0; i < 100 && !document.getElementById("sk-gross"); i++) await w(50);   // v890: auf die Großansicht warten
     out.b = { gross: !!document.getElementById("sk-gross"), speichern: !!document.getElementById("sk-teilen") };
     document.getElementById("sk-gross")?.remove();
     kabineGalleryNav(1); await w(500);
     out.d = { streifen: st().length, karten: document.querySelectorAll("#kabine-body .sk-karte").length };
-    document.querySelector("#kabine-body .sk-karte")?.click(); await w(200);
+    document.querySelector("#kabine-body .sk-karte")?.click(); for (let i = 0; i < 100 && !document.getElementById("sk-gross"); i++) await w(50);
     out.c = { gross: !!document.getElementById("sk-gross"), speichern: !!document.getElementById("sk-teilen") };
     document.getElementById("sk-gross")?.remove();
     // e) Sticker-Album

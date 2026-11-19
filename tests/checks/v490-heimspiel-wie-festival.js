@@ -39,11 +39,11 @@ module.exports = async function (h) {
     if (sel) sel.value = auswaerts; _spieltagTurnierBanner();
     const bAus = !/planen/.test(kopfText()) && /Spielplan/.test(kopfText()) && (banner ? banner.hidden : true);
     // 2) Anlegen aus dem Heimspiel-Termin
-    await htOpen(heim, "", "heimspiel"); await warte(400);
+    await htOpen(heim, "", "heimspiel"); for (let i = 0; i < 100 && !document.getElementById("ht-datum"); i++) await warte(50);
     const kopf = document.getElementById("hturnier-modal")?.textContent.replace(/\s+/g, " ").trim() || "";
     const nameVorschlag = document.getElementById("ht-name")?.value || "";
     document.getElementById("ht-datum").value = heim;
-    await htNeu(); await warte(600);
+    await htNeu(); for (let i = 0; i < 160 && !/Wer spielt mit\?/.test(document.getElementById("ht-body")?.textContent || ""); i++) await warte(50);   // v890: auf den gezeichneten Abschnitt warten statt fester 600 ms
     const cfg = (_HT || {}).config || {};
     const body = document.getElementById("ht-body")?.textContent.replace(/\s+/g, " ").trim() || "";
     const vereine = (cfg.vereine || []).map(v => `${v.name}:${v.teams}`);

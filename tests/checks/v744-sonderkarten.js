@@ -27,17 +27,17 @@ module.exports = async function (h) {
     for (let i = 0; i < 40 && (typeof sonderkartenStreifen !== "function" || typeof elternCardOpen !== "function"); i++) await w(100);
     if (typeof sonderkartenStreifen !== "function") return { fehlt: true };
     window.__k = await sonderkartenLaden(id);
-    await elternCardOpen(id); await w(800);
+    await elternCardOpen(id); for (let i = 0; i < 160 && !document.querySelector("#sk-streifen .sk-karte canvas"); i++) await w(50);   // v890: auf den Streifen warten
     const st = document.getElementById("sk-streifen");
     out.a = st ? { kopf: st.firstElementChild.textContent.trim(), karten: [...st.querySelectorAll(".sk-karte canvas")].map(c => c.getAttribute("aria-label")),
       hoehe: [...st.querySelectorAll(".sk-karte")].map(b => Math.round(b.getBoundingClientRect().height)) } : null;
-    st && st.querySelector(".sk-karte").click(); await w(200);
+    st && st.querySelector(".sk-karte").click(); for (let i = 0; i < 100 && !document.getElementById("sk-gross"); i++) await w(50);   // v890: auf die Großansicht warten
     out.gross = { da: !!document.getElementById("sk-gross"), speichern: !!document.getElementById("sk-teilen") };
     document.getElementById("sk-gross")?.remove(); document.getElementById("adler-card-modal")?.remove();
     // b) Kabine
     window.isKidsMode = true; isKidsMode = true;
-    await elternCardOpen(id); await w(800);
-    document.querySelector("#sk-streifen .sk-karte")?.click(); await w(200);
+    await elternCardOpen(id); for (let i = 0; i < 160 && !document.querySelector("#sk-streifen .sk-karte"); i++) await w(50);
+    document.querySelector("#sk-streifen .sk-karte")?.click(); for (let i = 0; i < 100 && !document.getElementById("sk-gross"); i++) await w(50);
     out.b = { karten: document.querySelectorAll("#sk-streifen .sk-karte").length, gross: !!document.getElementById("sk-gross"), speichern: !!document.getElementById("sk-teilen") };
     isKidsMode = false;
     // c) Zeichnen: Texte abfangen

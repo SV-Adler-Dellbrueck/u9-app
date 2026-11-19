@@ -29,7 +29,12 @@ module.exports = async function (h) {
         alle.push(...await s.page.evaluate(async ({ MESS, helfer, wo, code, fenster }) => {
           eval(helfer); const mess = eval(MESS); const w = ms => new Promise(r => setTimeout(r, ms));
           const vor = new Set(document.body.children); try { await eval("(async()=>{" + code + "})()"); } catch (e) {}
-          await w(900); const o = mess(wo); if (fenster) [...document.body.children].filter(e => !vor.has(e)).forEach(e => e.remove()); return o;
+          /* v890: mindestens 900 ms wie bisher, dann bis die Seite 450 ms lang stillsteht (Zahl der Elemente und Textlänge gleich;
+             Obergrenze 6 s) – unter Last war ein Reiter nach 900 ms noch nicht aufgebaut und es wurde zu wenig gemessen */
+          await w(900);
+          { const st = () => document.querySelectorAll("*").length + ":" + document.body.innerText.length; let alt = st(), gleich = 0;
+            for (let i = 0; i < 40 && gleich < 3; i++) { await w(150); const neu = st(); gleich = neu === alt ? gleich + 1 : 0; alt = neu; } }
+          const o = mess(wo); if (fenster) [...document.body.children].filter(e => !vor.has(e)).forEach(e => e.remove()); return o;
         }, { MESS: MESS_SRC, helfer: h.kontrastHelfer, wo: scheme + ":" + n, code, fenster }));
       } catch (e) { await s.page.waitForTimeout(3000); }   // ein Fenster, das neu lädt, zählt hier nicht
     };

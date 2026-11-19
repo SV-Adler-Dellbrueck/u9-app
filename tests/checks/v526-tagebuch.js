@@ -111,7 +111,7 @@ module.exports = async function (h) {
     return out;
   }, { gestern });
 
-  await s.page.waitForTimeout(200);
+  await Promise.all([s.page.waitForTimeout(200), s.supabaseRuhig()]);   // v890: mindestens wie bisher, dazu bis die Attrappe ruhig ist
   const gesendet = s.gesendet.filter(g => /tagebuch_eintrag/.test(g.pfad || ""));
 
   // f) Export – reine Textfunktion, ohne DOM

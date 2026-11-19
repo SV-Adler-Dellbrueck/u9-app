@@ -18,11 +18,15 @@ module.exports = async function (h) {
     const m = () => document.getElementById("rs-modal");
     const mon = () => { const t = m().querySelector("#rs-monate"); return t ? [...t.querySelectorAll("tbody tr")].map(tr => [...tr.children].map(td => td.textContent.replace(/\s+/g, " ").trim())) : null; };
     const out = {};
-    await rueckmeldeStatistikOpen(); await w(150);
-    [...m().querySelectorAll("#rs-art button")].find(b => /Absagen/.test(b.textContent)).click(); await w(250);
+    /* v890: statt fester 150/250 ms auf die Reiter und dann auf die geladene Monatstabelle warten (Obergrenze 5 bzw. 8 s) */
+    await rueckmeldeStatistikOpen(); for (let i = 0; i < 100 && !m()?.querySelector("#rs-art button"); i++) await w(50);
+    [...m().querySelectorAll("#rs-art button")].find(b => /Absagen/.test(b.textContent)).click();
+    for (let i = 0; i < 160 && !((mon() || []).length && m().querySelector("button.rs-kind")); i++) await w(50);
     out.alle = mon(); out.kopf = [...m().querySelectorAll("#rs-monate thead th")].map(x => x.textContent.trim());
     out.reihenfolge = [...m().querySelectorAll("table")].map(t => t.id || (t.querySelector("thead th")?.textContent.trim()));
-    m().querySelector("button.rs-kind").click(); await w(80);       // erstes Kind (nach Name sortiert)
+    const vorher = JSON.stringify(mon());
+    m().querySelector("button.rs-kind").click();       // erstes Kind (nach Name sortiert)
+    for (let i = 0; i < 100 && JSON.stringify(mon()) === vorher; i++) await w(50);
     out.eins = mon(); out.ueber = (m().querySelector("#rs-monate")?.parentElement?.previousElementSibling?.textContent || "");
     return out;
   });

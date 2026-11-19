@@ -72,8 +72,8 @@ module.exports = async function (h) {
 
     // c) Fenster aus dem Termin
     await tmMeetingOeffnen(92);
-    for (let i = 0; i < 60 && !document.getElementById("tm-meet-card"); i++) await new Promise(r => setTimeout(r, 50));
-    await new Promise(r => setTimeout(r, 400));
+    /* v890: statt fester 400 ms auf „Weiteren Vorschlag hinzufügen“ und einen Kopf ohne „Lade …“ warten; Obergrenze 8 s */
+    for (let i = 0; i < 160 && !(document.getElementById("tm-meet-card") && document.getElementById("tpoll-neu-d") && !/Lade/.test(document.getElementById("tm-meet-card").textContent)); i++) await new Promise(r => setTimeout(r, 50));
     const card = document.getElementById("tm-meet-card");
     out.fenster = card ? card.textContent.replace(/\s+/g, " ").trim() : "";
     out.neuesMeetingBlock = !!document.getElementById("tpoll-titel");
@@ -82,7 +82,7 @@ module.exports = async function (h) {
     return out;
   }, { tagB, tagC });
 
-  await s.page.waitForTimeout(200);
+  await Promise.all([s.page.waitForTimeout(200), s.supabaseRuhig()]);   // v890: mindestens wie bisher, dazu bis die Attrappe ruhig ist
   const slotPosts = s.gesendet.filter(g => /trainer_poll_slot/.test(g.pfad || "") && g.methode === "POST");
   const fehler = s.fehler(); await s.schliessen();
 

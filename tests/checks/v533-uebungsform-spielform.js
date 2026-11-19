@@ -87,7 +87,7 @@ module.exports = async function (h) {
     return out;
   });
 
-  await s.page.waitForTimeout(200);
+  await Promise.all([s.page.waitForTimeout(200), s.supabaseRuhig()]);   // v890: mindestens wie bisher, dazu bis die Attrappe ruhig ist
   const geschrieben = s.gesendet.filter(g => /team_config/.test(g.pfad || ""));
   const fehler = s.fehler();
   await s.schliessen();

@@ -49,6 +49,7 @@ module.exports = async function (h) {
     out.e = { staende: kacheln().filter(b => b.dataset.stand).length, knopf: !!document.getElementById("aw-offen-push"), ab: /abgesagt/.test((tile(K[4]) || {}).textContent || ""), an: kacheln().filter(b => b.classList.contains("on")).length };
     return out;
   }, { K, datum, alt });
+  for (let i = 0; i < 100 && !pushes.length; i++) await new Promise(x => setTimeout(x, 50));   // v890: auf den Aufruf von push-send warten (Obergrenze 5 s)
   const fe = s.fehler(); await s.schliessen();
   const a = r.a;
   if (!a.zu || a.zu.stand !== "zugesagt" || !a.zu.an || !/zugesagt/.test(a.zu.text)) probleme.push("a) zugesagt: " + JSON.stringify(a.zu));

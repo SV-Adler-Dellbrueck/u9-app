@@ -36,11 +36,14 @@ module.exports = async function (h) {
   if (a.fehlt) { await s.schliessen(); return h.ergebnis("v721 Foto direkt aus der Kamera", false, ["galerieOpen fehlt"]); }
   // b) Kamera
   await s.page.setInputFiles("#gal-kamera", { name: "kamera.png", mimeType: "image/png", buffer: PNG });
-  await s.page.waitForTimeout(1500);
+  /* v890: statt fester 1,5 s bzw. 2 s auf Datei und Zeile warten (Obergrenze 10 s) – kommen sie nie, wird b) bzw. c) rot */
+  const bis = async (f, n) => { for (let i = 0; i < (n || 200) && !f(); i++) await new Promise(x => setTimeout(x, 50)); return f(); };
+  await bis(() => speicher.length >= 1 && zeilenNeu.length >= 1);
+  await s.page.waitForFunction(() => { const e = document.getElementById("gal-kamera-knopf"); return e && /Foto aufnehmen/.test(e.textContent) && e.style.pointerEvents !== "none"; }, null, { timeout: 5000 }).catch(() => {});
   const b = { speicher: speicher.length, zeilen: zeilenNeu.slice(), knopf: await s.page.evaluate(() => { const e = document.getElementById("gal-kamera-knopf"); return e ? e.textContent.trim() + "|" + e.style.pointerEvents : null; }) };
   // c) Galerie, zwei Bilder
   await s.page.setInputFiles("#gal-foto", [{ name: "a.png", mimeType: "image/png", buffer: PNG }, { name: "b.png", mimeType: "image/png", buffer: PNG }]);
-  await s.page.waitForTimeout(2000);
+  await bis(() => speicher.length >= 3 && zeilenNeu.length >= 3);
   const c = { speicher: speicher.length, zeilen: zeilenNeu.length };
   const fehler = s.fehler();
   await s.schliessen();
