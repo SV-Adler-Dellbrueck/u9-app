@@ -220,8 +220,7 @@ function blockUebungenPruefen(){
     if(!vor.length){ getauscht.push({selId,von:alt,zu:null,n:info.n}); return; }
     const neu=vor[0];
     if(![...sel.options].some(o=>o.value===String(neu.i)))sel.add(new Option(neu.x.name,String(neu.i)));
-    sel.value=String(neu.i);
-    tpOnSelectChange(sel);
+    tpWahlWaehlen(selId,neu.i);   // v884: gewählt über den Zustand (boot.js, Welle 1)
     getauscht.push({selId,von:alt,zu:neu.x.name,n:info.n});
   });
   return getauscht;
