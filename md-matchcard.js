@@ -17,7 +17,6 @@ async function renderElternView(datum){
     const rows=r.ok?await r.json():[];
     if(!rows.length){root.innerHTML=elternEmpty("Aktuell ist kein Spieltag hinterlegt.<br>Schau bald wieder rein!","📅");return;}
     const m=rows[0];
-    elternCurrent=m; // für die Interaktions-Funktionen
     const istTraining=m.typ==="training";
     const d=new Date(m.datum+"T00:00:00");
     const wtag=["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"][d.getDay()];
@@ -44,7 +43,7 @@ async function renderElternView(datum){
         ${row("ℹ️","Infos",m.infos)}
         ${routeUrl?`<a href="${routeUrl}" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:14px;background:#1e3a8a;color:#fff;padding:13px;border-radius:12px;text-decoration:none;font-weight:600">🗺️ Route ${istTraining?"zum Platz":"zum Gegner"}</a>`:""}
       </div>
-      ${istTraining?``:`<div id="ev-ticker" style="margin-top:14px"></div><div id="ev-einsatz" style="margin-top:14px"></div><div id="ev-fahrt" style="margin-top:14px"></div>`}
+      ${istTraining?``:`<div id="ev-ticker" style="margin-top:14px"></div><div id="ev-einsatz" style="margin-top:14px"></div>`}
       <div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:16px 0 8px;text-align:center">Für Eltern</div>
       <button onclick="elternKalenderIcs()" style="width:100%;margin-bottom:10px;background:#1e3a8a;color:#fff;border:none;padding:14px;border-radius:12px;font-family:inherit;font-weight:700;font-size:var(--s-karte);cursor:pointer">🗓️ Termine in meinen Kalender</button>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -52,9 +51,9 @@ async function renderElternView(datum){
         <a href="${appRoot()}?portal" style="text-align:center;background:#fff;border:1.5px solid #1e3a8a;color:#1e3a8a;padding:13px 8px;border-radius:12px;text-decoration:none;font-weight:700;font-size:var(--s-text)">👨‍👩‍👧 Mein Kind</a>
       </div>
       <div style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin-top:16px">SV Adler Dellbrück e.V. · Angaben ohne Gewähr</div></div>`;
-    /* edLoad/fgLoad lasen aus den Tabellen eltern_dabei bzw. fahrgemeinschaft – die gibt es
-       nicht (mehr). Die lebenden Funktionen sind die Betreuung (betreuung/betreuung_board im
-       Eltern-Portal) und elternCarpoolOpen (md-carpool.js). Die toten Aufrufe sind raus. */
+    /* Anwesenheit und Mitfahren der Eltern laufen über die Betreuung (betreuung/betreuung_board im
+       Eltern-Portal) und elternCarpoolOpen (md-carpool.js). Die alten Funktionen für die Tabellen
+       eltern_dabei und fahrgemeinschaft, die es nicht gibt, sind seit v875 gelöscht. */
     if(istTraining){/* Betreuung + Mitfahren laufen ueber das Eltern-Portal */}
     else{
       elTickerLoad(m.datum,m.spieldauer_min||10);
@@ -343,88 +342,11 @@ async function renderTickerView(key){
   tickerViewTimer=setInterval(async()=>{if(document.hidden)return;await loadClocks();await loadPlan();await draw();},15000); // Hintergrund-Tab pollt nicht weiter
 }
 
-// Eltern-Interaktion (anonym, nur Training): Anwesenheit + Fahrgemeinschaften
-let elternCurrent=null;
+// Anonyme Lese-Hilfen der Eltern-Ansichten (Ticker, Einsatzzeiten; md-eltern-portal.js nutzt sie mit).
+// v875: Der tote Block edLoad/edSignup/fgLoad/fgOffer/fgJoin (Tabellen eltern_dabei und
+// fahrgemeinschaft, die es nicht gibt) ist entfernt; Mitfahren läuft über md-carpool.js.
 function elternHeaders(){return {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};}
 function elternEsc(s){return (s+'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-async function edLoad(datum){
-  const box=document.getElementById("ev-dabei");if(!box)return;
-  let rows=[];
-  try{const r=await fetch(`${SB_URL}/rest/v1/eltern_dabei?datum=eq.${encodeURIComponent(datum)}&select=*&order=created_at.asc`,{headers:elternHeaders()});if(r.ok)rows=await r.json();}catch(e){}
-  const liste=rows.length?rows.map(x=>`<div style="display:flex;align-items:center;gap:6px;font-size:var(--s-text);padding:5px 0;border-bottom:1px solid #f1f5f9"><span style="flex:1">${elternEsc(x.kind)}</span>${x.betreuung?'<span style="font-size:var(--s-klein);background:#dcfce7;color:#15803d;padding:2px 6px;border-radius:8px">Betreuung bleibt</span>':''}</div>`).join(""):'<div style="font-size:var(--s-text);color:var(--text3)">Noch niemand eingetragen.</div>';
-  box.innerHTML=`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px">
-    <div style="font-weight:700;margin-bottom:8px">🙋 Wer ist beim Training dabei? (${rows.length})</div>
-    ${liste}
-    <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">
-      <input type="text" id="ed-kind" placeholder="Name des Kindes" style="padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-size:var(--s-karte);font-family:inherit">
-      <label style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);color:#334155"><input type="checkbox" id="ed-betreuung"> Ein Elternteil bleibt während des Trainings vor Ort</label>
-      <button onclick="edSignup('${datum}')" style="background:#1e3a8a;color:#fff;border:none;padding:12px;border-radius:10px;font-weight:600;cursor:pointer;font-family:inherit">Eintragen</button>
-    </div>
-  </div>`;
-}
-async function edSignup(datum){
-  const kind=(document.getElementById("ed-kind")?.value||"").trim();
-  if(!kind){alert("Bitte den Namen des Kindes eintragen.");return;}
-  const betreuung=!!document.getElementById("ed-betreuung")?.checked;
-  try{
-    await fetch(`${SB_URL}/rest/v1/eltern_dabei`,{method:"POST",headers:elternHeaders(),body:JSON.stringify({datum,kind,betreuung})});
-    edLoad(datum);
-  }catch(e){alert("Konnte nicht speichern. Bitte später erneut.");}
-}
-async function fgLoad(datum){
-  const box=document.getElementById("ev-fahrt");if(!box)return;
-  let rows=[];
-  try{const r=await fetch(`${SB_URL}/rest/v1/fahrgemeinschaft?datum=eq.${encodeURIComponent(datum)}&select=*&order=created_at.asc`,{headers:elternHeaders()});if(r.ok)rows=await r.json();}catch(e){}
-  const liste=rows.length?rows.map(x=>{
-    const mit=Array.isArray(x.mitfahrer)?x.mitfahrer:[];
-    const frei=Math.max(0,(x.plaetze||0)-mit.length);
-    return `<div style="padding:8px 0;border-bottom:1px solid #f1f5f9">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
-        <div style="font-size:var(--s-text);font-weight:600">🚗 ${elternEsc(x.fahrer)}${x.abfahrt?` <span style="font-weight:400;color:#64748b">· ab ${elternEsc(x.abfahrt)}</span>`:''}</div>
-        <span style="font-size:var(--s-klein);color:${frei>0?'#15803d':'#dc2626'}">${frei} frei</span>
-      </div>
-      ${mit.length?`<div style="font-size:var(--s-klein);color:#64748b;margin-top:2px">Mit: ${mit.map(elternEsc).join(", ")}</div>`:''}
-      ${frei>0?`<button onclick="fgJoin(${Number(x.id)},'${datum}')" style="margin-top:6px;background:#f1f5f9;border:1px solid var(--rand-bedien);padding:7px 12px;border-radius:8px;font-size:var(--s-text);cursor:pointer;font-family:inherit">Mitfahren</button>`:''}
-    </div>`;
-  }).join(""):'<div style="font-size:var(--s-text);color:var(--text3)">Noch keine Fahrgemeinschaft angeboten.</div>';
-  box.innerHTML=`<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px">
-    <div style="font-weight:700;margin-bottom:8px">🚗 Fahrgemeinschaften</div>
-    ${liste}
-    <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">
-      <div style="font-size:var(--s-text);color:#64748b">Ich biete eine Mitfahrgelegenheit an:</div>
-      <input type="text" id="fg-fahrer" placeholder="Dein Name" style="padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-size:var(--s-karte);font-family:inherit">
-      <div style="display:flex;gap:6px">
-        <input type="number" id="fg-plaetze" min="1" max="6" placeholder="freie Plätze" style="width:110px;padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-size:var(--s-karte);font-family:inherit">
-        <input type="text" id="fg-abfahrt" placeholder="Abfahrt (z. B. 9:00 Netto)" style="flex:1;padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-size:var(--s-karte);font-family:inherit">
-      </div>
-      <button onclick="fgOffer('${datum}')" style="background:#15803d;color:#fff;border:none;padding:12px;border-radius:10px;font-weight:600;cursor:pointer;font-family:inherit">Fahrt anbieten</button>
-    </div>
-  </div>`;
-}
-async function fgOffer(datum){
-  const fahrer=(document.getElementById("fg-fahrer")?.value||"").trim();
-  const plaetze=parseInt(document.getElementById("fg-plaetze")?.value)||0;
-  const abfahrt=(document.getElementById("fg-abfahrt")?.value||"").trim();
-  if(!fahrer||plaetze<1){alert("Bitte Name und freie Plätze angeben.");return;}
-  try{
-    await fetch(`${SB_URL}/rest/v1/fahrgemeinschaft`,{method:"POST",headers:elternHeaders(),body:JSON.stringify({datum,fahrer,plaetze,abfahrt,mitfahrer:[]})});
-    fgLoad(datum);
-  }catch(e){alert("Konnte nicht speichern.");}
-}
-async function fgJoin(id,datum){
-  const name=prompt("Name des Kindes, das mitfährt:");
-  if(!name||!name.trim())return;
-  try{
-    const r=await fetch(`${SB_URL}/rest/v1/fahrgemeinschaft?id=eq.${id}&select=mitfahrer,plaetze`,{headers:elternHeaders()});
-    const rows=r.ok?await r.json():[];
-    if(!rows.length)return;
-    const mit=Array.isArray(rows[0].mitfahrer)?rows[0].mitfahrer:[];
-    if(mit.length>=(rows[0].plaetze||0)){alert("Leider schon voll.");fgLoad(datum);return;}
-    mit.push(name.trim());
-    await fetch(`${SB_URL}/rest/v1/fahrgemeinschaft?id=eq.${id}`,{method:"PATCH",headers:elternHeaders(),body:JSON.stringify({mitfahrer:mit})});
-    fgLoad(datum);
-  }catch(e){alert("Konnte nicht speichern.");}
-}
 
 /* ── Der Termin ist die Quelle, matchday seine öffentliche Abschrift ─────────
    PO v406: „Die meisten Infos stehen doch schon im Termin selbst oder? also Ort,

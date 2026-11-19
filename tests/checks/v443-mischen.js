@@ -17,10 +17,10 @@ module.exports = async function (h) {
     await kn.click(); await s.page.waitForTimeout(150); laeufe.push(await teams());
   }
   // Ausgewogenheit: 5 starke, 5 mittlere, 5 schwache – die Summen muessen nah beieinander bleiben
-  const bal = await s.page.evaluate(() => {
+  const bal = await s.page.evaluate(async () => {
     const st = {}; KADER.forEach((k, i) => st[k.name] = i < 5 ? 10 : i < 10 ? 5 : 1);
     window.teamStaerke = n => st[n] || 0;
-    blzAnzahl(3);
+    await blzAnzahl(3);   // v875: blzAnzahl ist async (Rückfrage als Fenster)
     const spannen = [], versch = new Set();
     for (let i = 0; i < 6; i++) { blzNeuMischen(); const su = BLZ.teams.map(t => t.spieler.reduce((a, n) => a + st[n], 0)); spannen.push(Math.max(...su) - Math.min(...su)); versch.add(JSON.stringify(BLZ.teams.map(t => t.spieler.join(",")))); }
     return { spanne: Math.max(...spannen), versch: versch.size };

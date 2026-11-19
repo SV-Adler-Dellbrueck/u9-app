@@ -1104,7 +1104,7 @@ async function nestEdTeilen(){
 async function nestLinkKopieren(){
   const l=window._nestLinkAktuell; if(!l)return;
   try{ await navigator.clipboard.writeText(l.url); toast("Link kopiert ✓"); }
-  catch(e){ window.prompt("Link zur Hördatei (zum Kopieren markieren):",l.url); }
+  catch(e){ frageText({emoji:"🔗",titel:"Link zur Hördatei",sub:"Link markieren und kopieren, dann weiterschicken.",wert:l.url,ja:"Fertig",markieren:true}); }
 }
 async function nestLinkErneuern(btn){
   const a=_nestEd&&_nestEd.a; if(!a||!a.id)return; if(btn)btn.disabled=true;
@@ -1113,7 +1113,7 @@ async function nestLinkErneuern(btn){
 }
 async function nestLinkZurueckziehen(btn){
   const a=_nestEd&&_nestEd.a; if(!a||!a.id)return;
-  if(!window.confirm("Link zurückziehen? Wer ihn hat, kann die Hördatei danach nicht mehr abspielen."))return;
+  if(!await frageJaNein({emoji:"⛔",titel:"Link zurückziehen?",text:"Wer ihn hat, kann die Hördatei danach nicht mehr abspielen.",ja:"Zurückziehen",ton:"rot"}))return;
   if(btn)btn.disabled=true;
   const r=await _nestRpc("heft_audio_link_zurueckziehen",{p_ausgabe:a.id});
   toast(r==null?"Link konnte nicht zurückgezogen werden":"Link zurückgezogen ✓",r==null?"err":undefined);

@@ -1,6 +1,6 @@
 # Systemdialoge – Bestandsaufnahme (Punkt 4.5)
 
-Stand: v874 (18.11.2026). Gezählt sind alle Aufrufe von `prompt(`, `confirm(` und `alert(`
+Stand: v875 (18.11.2026; erfasst mit v874). Gezählt sind alle Aufrufe von `prompt(`, `confirm(` und `alert(`
 (auch `window.…`) in den `*.js`-Dateien der Wurzel, Zeilennummern vor dem Umbau (Stand v873).
 Kommentare, die nur „statt confirm()“ erwähnen, zählen nicht. Die HTML-Dateien enthalten keine.
 
@@ -16,10 +16,10 @@ Kopieren. Seit v874 kennt `frageText` ein einzeiliges Feld (`einzeilig`, Enter �
 | Bereich | Paket | Stellen | Stand |
 |---|---|---|---|
 | Trainer · Trainingsalltag | 1 | 19 | ✅ v874 alle umgestellt |
-| Trainer · übrige Bereiche | 2 | 36 | ⬜ |
-| Eltern (toter Code, Tabellen gibt es nicht mehr) | 3 | 7 | ⬜ – eher löschen als umbauen |
+| Trainer · übrige Bereiche | 2 | 36 | ✅ v875 alle umgestellt |
+| Eltern (toter Code, Tabellen gibt es nicht mehr) | 3 | 7 | ✅ v875 mit dem toten Code gelöscht |
 | Kinder | 3 | 0 | – |
-| **Summe** | | **62** | 19 erledigt |
+| **Summe** | | **62** | 62 erledigt |
 
 Dazu vier **Rückfallzweige** `typeof frageJaNein==="function" ? … : confirm(…)` (boot.js `_tlFrage`
 und `tgRename`, md-kindtraining.js `kindTrainingLoeschen`, views.js `bewRundeStop`): Sie greifen nur,
@@ -51,7 +51,7 @@ wenn core.js bzw. views.js fehlen – beide sind Welle 1 und damit immer vor den
 
 Anwesenheit: keine Systemdialoge mehr (der Terminwechsel fragt seit v836 im eigenen Fenster).
 
-## Paket 2 · übriger Trainerbereich (⬜)
+## Paket 2 · übriger Trainerbereich (✅ v875)
 
 | Datei:Zeile | Funktion | Art | Bereich | Zweck |
 |---|---|---|---|---|
@@ -92,7 +92,7 @@ Anwesenheit: keine Systemdialoge mehr (der Terminwechsel fragt seit v836 im eige
 | views.js:6002 | `nutzungAufraeumen` | confirm | Nutzungs-Log | Einträge älter als 90 Tage löschen |
 | views.js:7092 | `heftReporterDelete` | confirm | Adler Nest · Reporter | Reporter-Antwort löschen |
 
-## Paket 3 · Eltern/Kinder (⬜)
+## Paket 3 · Eltern/Kinder (✅ v875 gelöscht)
 
 | Datei:Zeile | Funktion | Art | Bereich | Zweck |
 |---|---|---|---|---|
@@ -104,6 +104,24 @@ Anwesenheit: keine Systemdialoge mehr (der Terminwechsel fragt seit v836 im eige
 | md-matchcard.js:422 | `fgJoin` | alert | Eltern (toter Code) | Fahrt schon voll |
 | md-matchcard.js:426 | `fgJoin` | alert | Eltern (toter Code) | Speichern fehlgeschlagen |
 
-`edLoad`/`fgLoad` sprechen die Tabellen `eltern_dabei` und `fahrgemeinschaft` an, die es nicht
-mehr gibt (siehe Hinweis in views.js); die lebende Fahrgemeinschaft steckt in `rueckmeldungen`.
-Diese sieben Stellen verschwinden am saubersten mit dem toten Code.
+`edLoad`/`fgLoad` sprachen die Tabellen `eltern_dabei` und `fahrgemeinschaft` an, die es nicht
+gibt; die lebende Fahrgemeinschaft steckt in `rueckmeldungen` (md-carpool.js). **v875:** Der Block
+`edLoad`, `edSignup`, `fgLoad`, `fgOffer`, `fgJoin` ist gelöscht, dazu der leere Behälter `#ev-fahrt`
+in der Spieltag-Ansicht für Eltern, die nie gelesene Variable `elternCurrent` und die beiden Einträge
+in `SICHERUNG_AUSNAHMEN` (views.js), die nur wegen dieses Codes dort standen. Niemand außerhalb des
+Blocks rief ihn auf; die MODUL_WACHE von md-matchcard.js (`rotReset`) ist nicht betroffen.
+
+## Ergebnis nach v875
+
+Außerhalb von Kommentaren stehen in keiner JS- oder HTML-Datei der App (Wurzel, `trainer/`,
+`eltern/`, `kinder/`) mehr `prompt(`, `confirm(` oder `alert(` – bis auf die vier Rückfallzweige
+oben. Der Prüffall `tests/checks/v875-dialoge-paket2.js` hält das fest.
+
+**Async gewordene Rückgabewerte (v875):** `_sitName` (md-taktikboard.js) liefert den Namen jetzt
+als Promise; einziger Aufrufer `sitErfassen` wartet mit `await`. Abbrechen behält wie bisher den
+Vorschlag – die Zeichnung ist schon fertig. `_blzPlanVerwerfen` (md-turnierplan.js) liefert
+`true`/`false` als Promise; alle Aufrufer warten mit `await` und sind async: `blzAnzahl`,
+`blzModus` (wartet auch auf `blzAnzahl`), `blzElternAnzahl`, `blzTeamPlus`, `blzTeamWeg`,
+`abschlussGruppen`, `elternTurnierUebernehmen`; über `blzAnzahl` auch `_abschlussAnpassen` und
+dessen Aufrufer `abschlussWunsch`, `abschlussTrainer`, `abschlussSpielform`. Sonst rufen sie nur
+onclick-Handler ohne Rückgabewert auf.

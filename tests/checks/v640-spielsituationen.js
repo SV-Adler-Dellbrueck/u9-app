@@ -31,6 +31,8 @@ module.exports = async function (h) {
     document.getElementById("pin-gate")?.remove(); const m = document.getElementById("main-app"); if (m) m.style.display = "block";
     try { await loadKader(); } catch (e) {}
     window.prompt = (t, v) => v; window.confirm = () => true;
+    // v875: Der Name der Situation kommt aus dem Fenster der App – mit dem Vorschlag übernehmen (wie vorher prompt → v)
+    new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.id === "frage-text-modal") setTimeout(() => n.querySelector("#frage-text-ok")?.click(), 0); }))).observe(document.body, { childList: true });
     go("taktik"); await warte(900);
     for (let i = 0; i < 40 && !document.getElementById("sit-liste")?.querySelector(".sit-eintrag"); i++) await warte(50);
     const zu = el => !el || getComputedStyle(el).display === "none" || !el.getBoundingClientRect().height;

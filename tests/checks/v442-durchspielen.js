@@ -3,7 +3,7 @@
    vorschlag muss gerade sein. Gerechnet mit dem echten Planer, nicht gelesen. */
 module.exports = async function (h) {
   const s = await h.starten();
-  const r = await s.page.evaluate(kinder => {
+  const r = await s.page.evaluate(async kinder => {
     window.KADER = kinder.map((n, i) => ({ id: i + 1, name: n, aktiv: true }));
     const finale = [];
     for (const [teams, budget, felder] of [[5, 30, 1], [5, 30, 2], [4, 30, 1], [3, 30, 1], [5, 40, 1], [6, 30, 2], [4, 30, 2]]) {
@@ -14,7 +14,7 @@ module.exports = async function (h) {
     blitzOpen(); BLZ.spielform = "funino";
     const regel = [];
     for (const [teams, felder, soll] of [[4, 2, true], [4, 1, false], [5, 3, false], [6, 3, true], [6, 2, false], [2, 1, true]]) {
-      blzAnzahl(teams); BLZ.felder = felder;
+      await blzAnzahl(teams); BLZ.felder = felder;   // v875: blzAnzahl ist async (Rückfrage als Fenster)
       const d = _blzDurchspielen();
       regel.push({ teams, felder, ok: d && d.ok === soll && d.gerade === (teams % 2 === 0), ist: d && d.ok, soll });
     }
