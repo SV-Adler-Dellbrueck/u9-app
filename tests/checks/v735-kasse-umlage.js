@@ -99,7 +99,7 @@ module.exports = async function (h) {
   if ((await fragen()) || !p8 || !/id=eq\.8/.test(p8.url) || p8.b.betrag !== 12) probleme.push(`c) Betrag ohne Häkchen: ${JSON.stringify(p8)}`);
   // Betrag mit 8 Häkchen: Abbrechen
   await s.page.evaluate(() => kasseUmlageBearbeiten(7)); await s.page.waitForTimeout(150);
-  await s.page.fill("#u-betrag", "45"); await s.page.click("#u-speichern"); await s.page.waitForTimeout(400);
+  await s.page.fill("#u-betrag", "45"); await s.page.click("#u-speichern"); await s.page.waitForSelector("#frage-modal", { timeout: 5000 }).catch(() => {});   // v880: auf die Rückfrage warten
   const frageText = await s.page.evaluate(() => document.getElementById("frage-modal")?.textContent.replace(/\s+/g, " ") || "");
   await s.page.click("#frage-nein").catch(() => {}); await s.page.waitForTimeout(400);
   const nachAbbr = patches().length;

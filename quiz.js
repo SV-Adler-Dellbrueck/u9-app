@@ -212,8 +212,8 @@ function tqResetProgress(){
   const modal=document.createElement("div");
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center";
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
-  modal.innerHTML=`<div style="background:white;border-radius:12px;padding:20px;max-width:340px;width:90%">
-    <div style="font-size:14px;font-weight:700;margin-bottom:8px;color:#dc2626">Quiz-Ergebnisse zurücksetzen</div>
+  modal.innerHTML=`<div style="background:var(--surface);border-radius:12px;padding:20px;max-width:340px;width:90%">
+    <div style="font-size:14px;font-weight:700;margin-bottom:8px;color:var(--red)">Quiz-Ergebnisse zurücksetzen</div>
     <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Wähle welche Ergebnisse gelöscht werden sollen:</div>
     <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
       <label style="font-size:12px;display:flex;align-items:center;gap:6px"><input type="checkbox" value="__ALL__" class="tq-reset-cb"><strong>Alle Spieler</strong></label>

@@ -88,7 +88,7 @@ module.exports = async function (h) {
       await s.page.fill("#einl-pw", "adler-2026");
       await s.page.fill("#einl-pw2", "adler-2027");
       await s.page.click("#einl-ok");
-      await s.page.waitForTimeout(400);
+      await s.page.waitForFunction(() => (document.getElementById("einl-err")?.textContent || "").trim(), null, { timeout: 5000 }).catch(() => {});   // v880: auf die Meldung warten
       meldung = await s.page.evaluate(() => document.getElementById("einl-err")?.textContent || "");
     }
     const einl = s.gesendet.filter(x => x.body && x.body.aktion === "einloesen");

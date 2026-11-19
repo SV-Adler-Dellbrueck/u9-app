@@ -74,11 +74,11 @@ module.exports = async function (h) {
     return route.fallback();
   });
   await tev(termine => { window.TM_TERMINE = termine.map(x => ({ ...x })); }, termine);
-  tev(() => { platzAmpelSet(100, "abgesagt"); }); await t.page.waitForTimeout(700);
+  tev(() => { platzAmpelSet(100, "abgesagt"); }); await t.page.waitForSelector("#rg-ov", { timeout: 5000 }).catch(() => {});   // v880: auf das Fenster warten statt fester 700 ms
   r.d1 = await tev(() => { const o = document.getElementById("rg-ov"); return o ? { ohneGrund: /Ohne Grund/.test(o.querySelector("#rg-skip").textContent), titel: o.textContent.replace(/\s+/g, " ").trim().slice(0, 60) } : null; });
   await tev(() => document.getElementById("rg-skip")?.click()); await t.page.waitForTimeout(400);
   r.d2 = { patches: patches.length };
-  tev(() => { platzAmpelSet(100, "abgesagt"); }); await t.page.waitForTimeout(700);
+  tev(() => { platzAmpelSet(100, "abgesagt"); }); await t.page.waitForSelector("#rg-ov", { timeout: 5000 }).catch(() => {});   // v880: auf das Fenster warten statt fester 700 ms
   await tev(() => { const x = document.getElementById("rg-txt"); x.value = "Platz gesperrt"; x.dispatchEvent(new Event("input")); });
   await tev(() => document.getElementById("rg-ok")?.click()); await t.page.waitForTimeout(800);
   r.d3 = patches.filter(p => /id=eq\.100/.test(p.url) && p.body.platz_status === "abgesagt" && p.body.platz_status_note === "Platz gesperrt").length;

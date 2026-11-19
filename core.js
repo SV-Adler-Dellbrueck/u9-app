@@ -2092,16 +2092,16 @@ async function _fgZeigen(){
   ov.addEventListener("click",e=>{ if(e.target===ov||e.target.classList.contains("fg-loch"))e.stopPropagation(); });
   const knopf=kind?"min-height:56px;font-size:var(--s-karte)":"justify-content:center";   // v876: Bauarten aus styles.css; Kinder bekommen nur mehr Höhe und Schrift
   ov.innerHTML=`${ziel?'<div class="fg-loch" aria-hidden="true"></div>':'<div class="fg-dunkel" aria-hidden="true" style="position:absolute;inset:0;background:rgba(15,23,42,.72)"></div>'}
-    <div class="fg-blase" role="dialog" aria-modal="true" aria-labelledby="fg-t" style="position:absolute;background:#fff;color:#0f172a;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.45);max-width:360px;width:calc(100% - 32px);box-sizing:border-box">
+    <div class="fg-blase" role="dialog" aria-modal="true" aria-labelledby="fg-t" style="position:absolute;background:var(--surface);color:var(--text);border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.45);max-width:360px;width:calc(100% - 32px);box-sizing:border-box">
       <div style="display:flex;gap:10px;align-items:flex-start">
         <div aria-hidden="true" style="font-size:${kind?"44px":"30px"};line-height:1">${s.emo||"👉"}</div>
         <div style="flex:1;min-width:0">
           <div id="fg-t" style="font-size:${kind?"var(--s-teil)":"var(--s-karte)"};font-weight:800;line-height:1.3">${esc(s.t||"")}</div>
-          <div style="font-size:${kind?"var(--s-karte)":"var(--s-text)"};color:#334155;line-height:1.5;margin-top:4px">${esc(s.d||"")}</div>
+          <div style="font-size:${kind?"var(--s-karte)":"var(--s-text)"};color:var(--text);line-height:1.5;margin-top:4px">${esc(s.d||"")}</div>
         </div>
       </div>
       ${s.extra?`<button type="button" id="fg-extra" onclick="${s.extra.fn}" class="btn" style="${knopf};width:100%;justify-content:center;margin-top:12px">${esc(s.extra.text)}</button>`:""}
-      <div style="font-size:var(--s-klein);color:#334155;margin-top:10px;text-align:right">${f.i+1} von ${n}</div>
+      <div style="font-size:var(--s-klein);color:var(--text);margin-top:10px;text-align:right">${f.i+1} von ${n}</div>
       <div style="display:flex;gap:8px;margin-top:6px">
         <button type="button" onclick="${f.i>0?"fuehrungZurueck()":"fuehrungEnde()"}" class="btn" style="${knopf}">${f.i>0?"Zurück":(kind?"Später":"Überspringen")}</button>
         <button type="button" id="fg-weiter" onclick="fuehrungWeiter()" class="btn btn-p" style="${knopf};margin-left:auto">${letzte?(kind?"Los geht's! ⚽":"Fertig"):"Weiter"}</button>
