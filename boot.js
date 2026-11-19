@@ -2134,8 +2134,15 @@ function tpFeldWeglassen(si,p){
   const sichtbar=tg&&tg.gruppen?tg.gruppen.map((x,i)=>i).filter(i=>!weg.includes(i)):null;
   weg.push(sichtbar?(sichtbar[p]!=null?sichtbar[p]:p):(weg.length+p));
   slot.weg=weg;
-  for(let q=p;q<anzahl-1;q++){const a=tpCoaches[`tp-form-${si}-${q+1}`]; if(a)tpCoaches[`tp-form-${si}-${q}`]=a; else delete tpCoaches[`tp-form-${si}-${q}`];}
+  /* v889 (Fehlerbild 1): Trainer UND Übung rücken nach – vorher nur die Trainer, danach passten
+     Trainer und Übung nicht mehr zusammen. */
+  const wahl=TP_ZUSTAND.wahl;
+  for(let q=p;q<anzahl-1;q++){
+    const a=tpCoaches[`tp-form-${si}-${q+1}`]; if(a)tpCoaches[`tp-form-${si}-${q}`]=a; else delete tpCoaches[`tp-form-${si}-${q}`];
+    const w=wahl[`tp-form-${si}-${q+1}`]; if(w)wahl[`tp-form-${si}-${q}`]=w; else delete wahl[`tp-form-${si}-${q}`];
+  }
   delete tpCoaches[`tp-form-${si}-${anzahl-1}`];
+  delete wahl[`tp-form-${si}-${anzahl-1}`];
   tpGeaendert({speichern:"verzoegert"});
 }
 function tpFeldZurueck(si){ if(tpSlots[si]){delete tpSlots[si].weg; tpGeaendert({speichern:"verzoegert"});} }

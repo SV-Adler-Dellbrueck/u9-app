@@ -358,7 +358,7 @@ const SZENARIEN = [
     })() },
 
   { id: "G9-feld-weglassen", titel: "Mittleres von drei Feldern weglassen",
-    haelt: "Fehlerbild 1 – beim Weglassen des mittleren Feldes rücken die Trainer nach, die Übungen nicht: Trainer und Übung passen danach nicht mehr zusammen. Behebung in Schritt 9.",
+    haelt: "Fehlerbild 1 – behoben in v889: beim Weglassen des mittleren Feldes rücken Trainer und Übungen gemeinsam nach (vorher nur die Trainer, Trainer und Übung passten danach nicht mehr zusammen).",
     schritte: [
       ["Training füllen", p => p.evaluate(async () => { await tpGenerate(); })],
       ["Hauptteil 1: drei Felder mit drei Trainern", p => p.evaluate(() => {
