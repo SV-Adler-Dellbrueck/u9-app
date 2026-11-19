@@ -523,8 +523,8 @@ function skzBildLeiste(){
   };
   let aus='<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px">';
   for(let i=0;i<n;i++)aus+=knopf(i);
-  if(n-1<max)aus+='<button type="button" onclick="skzBildNeu()" style="min-height:44px;padding:0 12px;border:1px dashed var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">+ Bild</button>';
-  if(_skzBildNr>0)aus+='<button type="button" onclick="skzBildWeg()" style="min-height:44px;padding:0 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--red);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">Bild entfernen</button>';
+  if(n-1<max)aus+='<button class="btn btn-sm" type="button" onclick="skzBildNeu()" style="min-height:44px;font-size:12px">+ Bild</button>';
+  if(_skzBildNr>0)aus+='<button class="btn btn-sm btn-d" type="button" onclick="skzBildWeg()" style="min-height:44px;font-size:12px">Bild entfernen</button>';
   return aus+'</div>';
 }
 function skzBildWahl(i){ _skzBildNr=Math.max(0,Number(i)||0); _skzStart=null; _skzZieh=null; skzEditorZeichnen(); }
@@ -604,8 +604,8 @@ function skzEditorOpen(start,cb,opt){
     <!-- v578: Der Zuschnitt gehört über die Zeichenfläche – dorthin, wo man ihn sieht,
          bevor man anfängt zu tippen. Die Beschriftung sagt, wohin der Tipp führt. -->
     <div style="display:flex;justify-content:center;gap:8px;margin-bottom:6px">
-      <button type="button" id="skz-ki" onclick="skzKiOpen()" style="min-height:44px;padding:0 14px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">🤖 Beschreiben</button>
-      <button type="button" id="skz-format" onclick="skzFormat()" style="min-height:44px;padding:0 14px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer"></button>
+      <button class="btn btn-sm" type="button" id="skz-ki" onclick="skzKiOpen()" style="min-height:44px;font-size:12.5px">🤖 Beschreiben</button>
+      <button class="btn btn-sm" type="button" id="skz-format" onclick="skzFormat()" style="min-height:44px;font-size:12.5px"></button>
       <button type="button" id="skz-wurf" onclick="skzWurfUm()" aria-pressed="false" style="min-height:44px;padding:0 14px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">🤾 Wurfspiel</button>
     </div>
     <div id="skz-buehne" style="position:relative;width:100%;max-width:340px;margin:0 auto 8px;aspect-ratio:280/180;border-radius:8px;overflow:hidden;touch-action:none;cursor:crosshair"></div>
@@ -622,8 +622,8 @@ function skzEditorOpen(start,cb,opt){
     </div>
     <div style="display:flex;gap:8px;margin-bottom:10px">
       <button id="skz-zaehlen" onclick="skzZaehlenUm()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer"></button>
-      <button onclick="skzUndo()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">↩︎ Zurück</button>
-      <button onclick="skzLeeren()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">🧹 Leeren</button>
+      <button class="btn btn-sm" onclick="skzUndo()" style="flex:1;justify-content:center;min-height:44px;font-size:12.5px">↩︎ Zurück</button>
+      <button class="btn btn-sm" onclick="skzLeeren()" style="flex:1;justify-content:center;min-height:44px;font-size:12.5px">🧹 Leeren</button>
     </div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-p" style="flex:1" onclick="skzSpeichern()"><i class="ti ti-device-floppy"></i>Übernehmen</button>
@@ -693,9 +693,8 @@ function _skzSlug(s){
 }
 function skzTeilenKnopf(name){
   const n=String(name||"Skizze").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
-  return '<button type="button" class="skz-teilen" data-name="'+n+'" onclick="skzTeilen(this)" '
-    +'style="width:100%;min-height:44px;margin:0 0 8px;border:1px solid var(--rand-bedien);border-radius:10px;'
-    +'background:var(--surface);color:var(--text);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">'
+  return '<button type="button" class="btn btn-sm skz-teilen" data-name="'+n+'" onclick="skzTeilen(this)" '
+    +'style="width:100%;justify-content:center;margin:0 0 8px;min-height:44px;font-size:12.5px">'
     +'📤 Skizze teilen</button>';
 }
 async function skzTeilen(knopf){
@@ -934,9 +933,8 @@ function skzBildSetzen(idx,n){
 }
 function skzGrossKnopf(name,idx){
   const n=String(name||"Skizze").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
-  return '<button type="button" onclick="skzGrossOpen('+Number(idx)+')" data-name="'+n+'" '
-    +'style="width:100%;min-height:44px;margin:0 0 8px;border:1px solid var(--rand-bedien);border-radius:10px;'
-    +'background:var(--surface);color:var(--text);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">'
+  return '<button class="btn btn-sm" type="button" onclick="skzGrossOpen('+Number(idx)+')" data-name="'+n+'" '
+    +'style="width:100%;justify-content:center;margin:0 0 8px;min-height:44px;font-size:12.5px">'
     +'🔍 Groß zeigen</button>';
 }
 let _skzGrPassenGebunden=null;
@@ -1528,7 +1526,7 @@ function skzKiOpen(){
   c.style.cssText="background:var(--surface);color:var(--text);max-width:420px;width:100%;margin:auto;border-radius:16px;padding:14px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`${mdlHead("skz-ki-modal","🤖","Übung beschreiben","Die Zeichnung entsteht daraus – ändern kannst du sie danach","#7c3aed")}
     <textarea id="skz-ki-text" rows="5" placeholder="Zum Beispiel: Vier Hütchen in einer Reihe, jedes Kind dribbelt im Slalom durch und schießt auf ein Minitor. Danach außen zurücklaufen." style="width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:13px;background:var(--surface2);color:var(--text)"></textarea>
-    ${skzKiDiktatMoeglich()?`<button type="button" id="skz-ki-mic" onclick="skzKiDiktat()" style="width:100%;min-height:44px;margin-top:8px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">🎙️ Diktieren</button>`
+    ${skzKiDiktatMoeglich()?`<button class="btn btn-sm" type="button" id="skz-ki-mic" onclick="skzKiDiktat()" style="width:100%;justify-content:center;margin-top:8px;min-height:44px;font-size:12.5px">🎙️ Diktieren</button>`
       :`<div style="font-size:11px;color:var(--text3);margin-top:6px">Diktieren kann dieses Gerät nicht – tippen geht immer.</div>`}
     <div style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.5">Je genauer der Aufbau steht – wie viele Hütchen, wie viele Kinder, wo das Tor –, desto besser trifft die Zeichnung. Sie ersetzt dein Bild nicht, sie ist der erste Wurf.</div>
     <div id="skz-ki-stand" style="font-size:12px;color:var(--text2);margin-top:8px;min-height:18px"></div>

@@ -409,7 +409,7 @@ function tbRender(){
     ${kinder.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
       <details id="tb-kind-einfuegen" style="flex:1 1 100%"><summary style="display:inline-flex;align-items:center;gap:6px;min-height:48px;padding:0 12px;border:1px solid var(--rand-bedien);border-radius:24px;font-size:var(--s-text);font-weight:700;color:var(--text);cursor:pointer;list-style:none">👤 Kind einfügen</summary>
         <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">
-          ${kinder.map(k=>`<button onclick="tbKindEinfuegen('${jsq(k.name)}')" title="Fügt ${esc(tbVorname(k.name))} ein – nach außen ${esc(tbAlias(k.name))}" style="min-height:44px;padding:0 10px;font-size:var(--s-text);border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface2);color:var(--text2);cursor:pointer">${esc(tbVorname(k.name))}</button>`).join("")}
+          ${kinder.map(k=>`<button class="btn btn-sm" onclick="tbKindEinfuegen('${jsq(k.name)}')" title="Fügt ${esc(tbVorname(k.name))} ein – nach außen ${esc(tbAlias(k.name))}" style="min-height:44px;font-size:var(--s-text)">${esc(tbVorname(k.name))}</button>`).join("")}
         </div>
         <div style="font-size:var(--s-klein);color:var(--text3);margin-top:4px">Hier steht der Vorname; beim Teilen und Exportieren wird daraus ein fester Buchstabe.</div>
       </details>
@@ -436,7 +436,7 @@ function tbRender(){
       </div>
       ${k.dauerhaft&&k.id&&!k.erledigt_am?`<button type="button" class="btn" onclick="tbKonsGiltNicht(${i})" style="width:100%;min-height:48px;margin-top:6px;justify-content:center"><i class="ti ti-check"></i>Gilt nicht mehr – abhaken</button>`:""}
     </div>`).join("")}
-    ${_TB.kons.length<5?`<button type="button" onclick="tbKonsDazu()" style="display:inline-flex;align-items:center;gap:6px;min-height:48px;margin-top:6px;padding:0 4px;background:none;border:0;color:var(--text);text-decoration:underline;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer"><i class="ti ti-plus"></i>Weitere Konsequenz</button>`:""}
+    ${_TB.kons.length<5?`<button class="btn btn-link" type="button" onclick="tbKonsDazu()" style="gap:6px;min-height:48px;margin-top:6px;font-size:var(--s-text)"><i class="ti ti-plus"></i>Weitere Konsequenz</button>`:""}
 
     ${frage("Wohin gehört es?", "Baustein")}
     <div role="group" aria-label="Baustein" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
@@ -457,7 +457,7 @@ function tbRender(){
     <div id="tb-meldung" style="margin-top:10px">${_TB.namensfund?tbNamensHinweis(_TB.namensfund):""}</div>
     <div id="tb-fehlt" style="font-size:var(--s-klein);color:var(--text2);margin-top:8px;line-height:1.5">${fehlt.length?`Wird als <b>Gedanke</b> gespeichert – für einen fertigen Eintrag fehlt noch: ${esc(fehlt.join(", "))}.`:"Alles da – wird als <b>fertiger Eintrag</b> gespeichert."}</div>
 
-    <button class="btn btn-p" onclick="tagebuchSpeichern()" style="width:100%;min-height:56px;margin-top:10px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-check"></i>Eintrag erfassen</button>
+    <button class="btn btn-p" onclick="tagebuchSpeichern()" style="width:100%;min-height:56px;margin-top:10px;justify-content:center;font-size:var(--s-karte)"><i class="ti ti-check"></i>Eintrag erfassen</button>
     <button class="btn" onclick="tagebuchSchliessen()" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Abbrechen</button>`;
   if(typeof felderWachsen==="function") felderWachsen(c);
   /* Was fehlt, folgt beim Tippen mit (ohne das Fenster neu zu zeichnen). */
@@ -712,7 +712,7 @@ function tbFilterKopfHtml(){
     .concat(TB_BAUSTEINE.filter(b=>n("b:"+b.key)).map(b=>chip("b:"+b.key, esc(b.label))))
     .concat(themen.map(t=>chip("t:"+t, "#"+esc(t)+" · "+zaehl[t])));
   const offen = _TB_LISTE.filter(tbUnbestaetigt);
-  const hinweis = offen.length ? `<button type="button" onclick="tbPruefenOpen(${Number(offen[0].id)})" style="display:flex;align-items:center;gap:8px;width:100%;min-height:48px;text-align:left;background:var(--purple-bg);border:1px solid var(--purple);border-radius:12px;padding:8px 12px;margin-bottom:10px;font-family:inherit;font-size:var(--s-text);color:var(--text);cursor:pointer">✨ <span style="flex:1"><b>${offen.length===1?"1 Vorschlag wartet":offen.length+" Vorschläge warten"}</b> auf deine Prüfung.</span><b style="color:var(--purple-text)">Prüfen ›</b></button>` : "";
+  const hinweis = offen.length ? `<button class="btn btn-zeile" type="button" onclick="tbPruefenOpen(${Number(offen[0].id)})" style="min-height:48px;margin-bottom:10px;font-size:var(--s-text)">✨ <span style="flex:1"><b>${offen.length===1?"1 Vorschlag wartet":offen.length+" Vorschläge warten"}</b> auf deine Prüfung.</span><b style="color:var(--purple-text)">Prüfen ›</b></button>` : "";
   /* Lücke je Baustein (v679): eine ruhige Zeile statt leerer Gruppen – was lange oder noch nie notiert wurde. */
   let luecke = "";
   if(_TB_CHIP==="alle"){
@@ -805,7 +805,7 @@ function tbZeile(e){
       ${konsZeilen.map(k=>`<div style="${zeile}">→ ${k}</div>`).join("")}
       ${tags.length?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">${tags.join("")}</div>`:""}
     </div>
-    <button type="button" class="tb-mehr" onclick="event.stopPropagation();tbMehrMenue(${Number(e.id)},this)" aria-label="Weitere Aktionen zu Nr. ${Number(e.id)}" aria-haspopup="menu" style="flex:none;width:44px;height:44px;border:0;background:none;color:var(--text2);font-size:var(--s-teil);line-height:1;cursor:pointer;border-radius:22px">⋯</button>
+    <button type="button" class="btn btn-sm tb-mehr" onclick="event.stopPropagation();tbMehrMenue(${Number(e.id)},this)" aria-label="Weitere Aktionen zu Nr. ${Number(e.id)}" aria-haspopup="menu" style="flex:none;width:44px;min-width:44px;height:44px;min-height:44px;justify-content:center;font-size:var(--s-teil);line-height:1">⋯</button>
   </div>`;
 }
 /* „⋯“ an der Karte: Öffnen/Prüfen, Kopieren, Teilen – selten gebraucht, deshalb nicht mehr als drei Knöpfe auf jeder Karte. */
@@ -817,7 +817,7 @@ function tbMehrMenue(id, knopf){
   m.id = "tb-mehr-menue"; m.setAttribute("role","menu");
   const r = knopf.getBoundingClientRect();
   m.style.cssText = `position:fixed;z-index:10050;right:${Math.max(8, window.innerWidth - r.right)}px;top:${Math.min(r.bottom + 4, window.innerHeight - 170)}px;background:var(--surface);color:var(--text);border:var(--border-s);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.22);padding:4px;min-width:200px`;
-  const eintrag = (icon, label, js) => `<button type="button" role="menuitem" onclick="document.getElementById('tb-mehr-menue')?.remove();${js}" style="display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:0 12px;border:0;background:none;border-radius:8px;font-family:inherit;font-size:var(--s-text);color:var(--text);cursor:pointer;text-align:left"><i class="ti ${icon}"></i>${label}</button>`;
+  const eintrag = (icon, label, js) => `<button class="btn btn-zeile" type="button" role="menuitem" onclick="document.getElementById('tb-mehr-menue')?.remove();${js}" style="min-height:44px;margin-top:4px;font-size:var(--s-text)"><i class="ti ${icon}"></i>${label}</button>`;
   m.innerHTML = (offen ? eintrag("ti-checks","Prüfen",`tbPruefenOpen(${Number(id)})`) : eintrag("ti-pencil", keim?"Ausarbeiten":"Bearbeiten", `tagebuchBearbeiten(${Number(id)})`))
     + eintrag("ti-copy","Kopieren (mit Buchstaben)",`tagebuchKopieren(${Number(id)})`)
     + eintrag("ti-share","Teilen (mit Buchstaben)",`tagebuchTeilen(${Number(id)})`);
@@ -1118,10 +1118,10 @@ function tagebuchGedanke(){
   ov.innerHTML = `<div style="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
     ${mdlHead("tb-gedanke","💭","Notieren","Kurz festhalten – ausarbeiten kannst du es später","#7c3aed")}
     <textarea id="tb-gedanke-text" rows="6" aria-label="Dein Gedanke" placeholder="Was geht dir durch den Kopf? Tippen oder das Mikrofon der Tastatur nutzen." style="width:100%;box-sizing:border-box;min-height:140px;padding:12px;border:var(--border-s);border-radius:10px;font-family:inherit;font-size:var(--s-karte);line-height:1.5;background:var(--surface2);color:var(--text);resize:vertical;margin-top:8px"></textarea>
-    <div id="tb-gedanke-meldung" role="status" style="font-size:var(--s-klein);color:var(--text2);min-height:18px;margin-top:4px">${entwurf?`Dein noch nicht erfasster Text von vorhin ist wieder da. <button type="button" onclick="tbGedankeVerwerfen()" style="background:none;border:none;padding:0 2px;color:var(--text);text-decoration:underline;font:inherit;cursor:pointer">Verwerfen</button>`:""}</div>
+    <div id="tb-gedanke-meldung" role="status" style="font-size:var(--s-klein);color:var(--text2);min-height:18px;margin-top:4px">${entwurf?`Dein noch nicht erfasster Text von vorhin ist wieder da. <button class="btn btn-link" type="button" onclick="tbGedankeVerwerfen()">Verwerfen</button>`:""}</div>
     <button id="tb-gedanke-ki" class="btn" onclick="tagebuchGedankeSortieren()" style="width:100%;min-height:48px;margin-top:6px;justify-content:center"><i class="ti ti-sparkles"></i>Von der KI sortieren lassen</button>
-    <button id="tb-gedanke-los" class="btn btn-p" onclick="tagebuchGedankeSpeichern()" style="width:100%;min-height:56px;margin-top:6px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-check"></i>Gedanke erfassen</button>
-    <button type="button" onclick="tbGedankeAusfuehrlich()" style="display:block;width:100%;min-height:44px;margin-top:6px;background:none;border:0;color:var(--text2);font-family:inherit;font-size:var(--s-text);text-decoration:underline;cursor:pointer">Gleich als ganzen Eintrag schreiben</button>
+    <button id="tb-gedanke-los" class="btn btn-p" onclick="tagebuchGedankeSpeichern()" style="width:100%;min-height:56px;margin-top:6px;justify-content:center;font-size:var(--s-karte)"><i class="ti ti-check"></i>Gedanke erfassen</button>
+    <button class="btn btn-link" type="button" onclick="tbGedankeAusfuehrlich()" style="display:flex;width:100%;justify-content:center;margin-top:6px;font-size:var(--s-text)">Gleich als ganzen Eintrag schreiben</button>
     <button class="btn" onclick="document.getElementById('tb-gedanke').remove()" style="width:100%;min-height:48px;margin-top:4px;justify-content:center">Abbrechen</button>
   </div>`;
   document.body.appendChild(ov);
@@ -1334,7 +1334,7 @@ function tbpDatumChips(liste, i, x){
   const eigen = x.bis && !T.some(t=>t.datum===x.bis);
   return `<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px">${ausT.join("")}
     ${(x.anders||eigen)?`<input type="date" id="tbp-${liste==="kons"?"kons":"todo"}-bis-${i}" value="${esc(x.bis||"")}" aria-label="anderes Datum" style="min-height:44px;padding:0 8px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;background:var(--surface2);color:var(--text)">`
-      :`<button type="button" onclick="tbpAnders('${liste}',${i})" style="min-height:44px;padding:0 10px;border:1px dashed var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:var(--s-klein);cursor:pointer">anderes Datum</button>`}
+      :`<button class="btn btn-sm" type="button" onclick="tbpAnders('${liste}',${i})" style="min-height:44px;font-size:var(--s-klein)">anderes Datum</button>`}
     ${liste==="kons"?`<button type="button" class="tbp-dauerhaft" onclick="tbpDauerhaft(${i})" aria-pressed="${!!x.dauerhaft}" style="min-height:44px;padding:0 10px;border:${x.dauerhaft?"2px solid var(--blue)":"1px solid var(--rand-bedien)"};border-radius:10px;background:${x.dauerhaft?"var(--blue-bg)":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:${x.dauerhaft?"800":"600"};cursor:pointer">${x.dauerhaft?"✓ ":""}gilt dauerhaft</button>`:""}
   </div>${T.length?"":`<div style="font-size:var(--s-klein);color:var(--text3);margin-top:3px">Keine kommenden Termine mit deiner Zusage – nimm „anderes Datum“.</div>`}`;
 }
@@ -1390,11 +1390,11 @@ function tbPruefenZeichnen(){
     </div>`).join("")}`:""}
     ${_TBP.todos.length?`${kopf("To-dos · landen in der Wiedervorlage")}${_TBP.todos.map((t,i)=>`<div style="border:var(--border-s);border-radius:10px;padding:8px 10px;margin-bottom:8px${t.weg?";opacity:.5":""}">
       <div style="display:flex;gap:6px;align-items:flex-start"><textarea id="tbp-todo-${i}" rows="1" style="${fld};flex:1"${t.weg?" disabled":""}>${esc(t.text)}</textarea>
-        <button type="button" onclick="tbpTodoWeg(${i})" aria-pressed="${t.weg}" aria-label="${t.weg?"Doch übernehmen":"Nicht übernehmen"}" style="min-width:48px;min-height:48px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit">${t.weg?"↺":"✕"}</button></div>
+        <button class="btn" type="button" onclick="tbpTodoWeg(${i})" aria-pressed="${t.weg}" aria-label="${t.weg?"Doch übernehmen":"Nicht übernehmen"}" style="min-width:48px;min-height:48px;justify-content:center">${t.weg?"↺":"✕"}</button></div>
       ${t.zustaendig?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Vorschlag: ${esc(TB_ROLLE[t.zustaendig]||t.zustaendig)} – nicht zugewiesen</div>`:""}
       ${t.weg?"":tbpDatumChips("todos",i,t)}</div>`).join("")}`:""}
     <div id="tbp-meldung" role="status" style="font-size:var(--s-klein);color:var(--text2);margin-top:8px"></div>
-    <button id="tbp-passt" class="btn btn-p" onclick="tbPasstSo()" style="width:100%;min-height:56px;margin-top:10px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-check"></i>Passt so</button>
+    <button id="tbp-passt" class="btn btn-p" onclick="tbPasstSo()" style="width:100%;min-height:56px;margin-top:10px;justify-content:center;font-size:var(--s-karte)"><i class="ti ti-check"></i>Passt so</button>
     <button class="btn" onclick="tbPruefenZu()" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Später</button>`;
   if(typeof felderWachsen==="function") felderWachsen(c);
 }
@@ -1497,15 +1497,15 @@ async function wieWarsKarte(){
     slot.innerHTML = `<div class="wiewars" style="${karte}">
       <div style="font-size:var(--s-teil);font-weight:800">Wie war's?</div>
       <div style="font-size:var(--s-text);color:var(--text2);margin:2px 0 10px">${esc(art)}${termin.typ!=="training"&&(termin.titel||termin.gegner)?" „"+esc(termin.titel||termin.gegner)+"“":""} · ${esc(wann)}. Einmal erzählen – Bewertung, Tagebuch und To-dos entstehen daraus.</div>
-      <button class="btn btn-p" onclick="wieWarsStart('${termin.typ==="training"?"d"+esc(termin.datum):"t"+Number(termin.id)}')" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-microphone"></i>Erzählen</button>
-      ${typeof nbVerzichtOpen==="function"?`<button type="button" onclick="nbVerzichtOpen('${termin.typ==="training"?"d"+esc(termin.datum):"t"+Number(termin.id)}',{art:'${esc(termin.typ)}',datum:'${esc(termin.datum)}',titel:'${jsq(termin.typ==="training"?"":(termin.titel||termin.gegner||""))}'})" style="display:block;margin:8px auto 0;min-height:44px;background:none;border:none;color:var(--text2);font-family:inherit;font-size:var(--s-text);text-decoration:underline;cursor:pointer">Nichts eintragen</button>`:""}
-      ${warten?`<button type="button" onclick="tbPruefenOpen(${Number(offen[0].id)})" style="display:block;margin:8px auto 0;min-height:44px;background:none;border:none;color:var(--text2);font-family:inherit;font-size:var(--s-text);text-decoration:underline;cursor:pointer">${esc(warten)}</button>`:""}
+      <button class="btn btn-p" onclick="wieWarsStart('${termin.typ==="training"?"d"+esc(termin.datum):"t"+Number(termin.id)}')" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte)"><i class="ti ti-microphone"></i>Erzählen</button>
+      ${typeof nbVerzichtOpen==="function"?`<button class="btn btn-link" type="button" onclick="nbVerzichtOpen('${termin.typ==="training"?"d"+esc(termin.datum):"t"+Number(termin.id)}',{art:'${esc(termin.typ)}',datum:'${esc(termin.datum)}',titel:'${jsq(termin.typ==="training"?"":(termin.titel||termin.gegner||""))}'})" style="display:block;margin:8px auto 0;font-size:var(--s-text)">Nichts eintragen</button>`:""}
+      ${warten?`<button class="btn btn-link" type="button" onclick="tbPruefenOpen(${Number(offen[0].id)})" style="display:block;margin:8px auto 0;font-size:var(--s-text)">${esc(warten)}</button>`:""}
     </div>`;
   }else if(offen.length){
     slot.innerHTML = `<div class="wiewars" style="${karte}">
       <div style="font-size:var(--s-teil);font-weight:800">Noch zu bestätigen</div>
       <div style="font-size:var(--s-text);color:var(--text2);margin:2px 0 10px">${esc(warten)} – zuletzt: ${esc(offen[0].ausloeser||tbDatumDe(offen[0].datum))}.</div>
-      <button class="btn btn-p" onclick="tbPruefenOpen(${Number(offen[0].id)})" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-checks"></i>Prüfen</button>
+      <button class="btn btn-p" onclick="tbPruefenOpen(${Number(offen[0].id)})" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte)"><i class="ti ti-checks"></i>Prüfen</button>
     </div>`;
   }else slot.innerHTML = "";
 }

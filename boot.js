@@ -335,7 +335,7 @@ async function periodListRender(){
   box.innerHTML=rows.map(x=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--surface2)">
     <span style="font-weight:700;font-size:var(--s-klein);color:var(--blue-text);width:58px">${esc(fmtM(x.monat))}</span>
     <span style="flex:1;font-size:var(--s-text)">${esc(x.thema)}${x.kategorie?` <span style="font-size:var(--s-klein);color:var(--text3)">(${esc(PERIOD_CATS[x.kategorie]||x.kategorie)})</span>`:""}</span>
-    <button onclick="periodDelete('${esc(x.monat)}')" title="löschen" style="border:none;background:transparent;color:#dc2626;cursor:pointer;font-size:var(--s-text);padding:2px 4px"><i class="ti ti-trash"></i></button>
+    <button class="btn btn-sm btn-d" onclick="periodDelete('${esc(x.monat)}')" title="löschen" style="min-width:44px;justify-content:center"><i class="ti ti-trash"></i></button>
   </div>`).join("");
 }
 async function periodSave(){
@@ -436,9 +436,9 @@ function renderTraining(){
   const aEl=document.getElementById("tf-art-einstieg");
   if(aEl){
     const offen=(typeof artDurchsichtOffen==="function")?artDurchsichtOffen().length:0;
-    aEl.innerHTML=(offen?`<button onclick="artDurchsichtOpen()" style="width:100%;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">⚽ ${offen} Übung${offen===1?"":"en"} einordnen</button>`:"")
+    aEl.innerHTML=(offen?`<button class="btn" onclick="artDurchsichtOpen()" style="width:100%;min-height:48px;justify-content:center;gap:8px;font-size:var(--s-text)">⚽ ${offen} Übung${offen===1?"":"en"} einordnen</button>`:"")
       /* v631: zweiter Einstieg – läuft die Übung ohne Trainer? Verschwindet, wenn alles bestätigt ist. */
-      +((typeof betrDurchsichtOffen==="function"&&betrDurchsichtOffen().length)?`<button onclick="betrDurchsichtOpen()" style="width:100%;min-height:48px;margin-top:${offen?8:0}px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">👤 ${betrDurchsichtOffen().length} Übungen: läuft sie ohne Trainer?</button>`:"");
+      +((typeof betrDurchsichtOffen==="function"&&betrDurchsichtOffen().length)?`<button class="btn" onclick="betrDurchsichtOpen()" style="width:100%;min-height:48px;margin-top:${offen?8:0}px;justify-content:center;gap:8px;font-size:var(--s-text)">👤 ${betrDurchsichtOffen().length} Übungen: läuft sie ohne Trainer?</button>`:"");
   }
   const kEl=document.getElementById("tf-kacheln");
   if(kEl){
@@ -452,7 +452,7 @@ function renderTraining(){
       if(!drin.length)return "";
       return `<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:${oi?"12px":"0"} 0 4px">${o.label}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${drin.map(kachel).join("")}</div>`;
-    }).join("")+(archivZahl?`<button type="button" onclick="_tfDb.archiv=!_tfDb.archiv;_tfDb.gruppe=null;renderTraining()" aria-pressed="${!!_tfDb.archiv}" style="width:100%;margin-top:12px;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;background:${_tfDb.archiv?"var(--surface2)":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📦 Archiv (${archivZahl})${_tfDb.archiv?" – zurück zur aktiven Liste":""}</button>`:"");
+    }).join("")+(archivZahl?`<button class="btn" type="button" onclick="_tfDb.archiv=!_tfDb.archiv;_tfDb.gruppe=null;renderTraining()" aria-pressed="${!!_tfDb.archiv}" style="width:100%;margin-top:12px;min-height:48px;justify-content:center;font-size:var(--s-text)">📦 Archiv (${archivZahl})${_tfDb.archiv?" – zurück zur aktiven Liste":""}</button>`:"");
   }
   const fEl=document.getElementById("tf-filter");
   if(fEl)fEl.innerHTML=[0,1,2,3].map(s=>`<button onclick="_tfDb.stern=${s};renderTraining()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);${_tfDb.stern===s?"background:#15803d;color:#fff;border-color:#15803d;":"background:var(--surface2);color:var(--text2);"}border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${s===0?"Alle":"⭐".repeat(s)}</button>`).join("")
@@ -485,8 +485,8 @@ function _tfKarte(x){
     </button>
     <button onclick="tpArtTipp('${(x.f.name||"").replace(/'/g,"\\'")}')" title="Übungsform oder Spielform – antippen zum Einordnen" aria-label="Art der Übung: ${_tpArt(x.f)?UEBUNG_ART[_tpArt(x.f)].lang:"noch nicht eingeordnet"}" style="flex:none;min-height:44px;padding:0 4px;border:none;background:transparent;cursor:pointer">${tpArtChip(x.f,true)}</button>
     <span role="img" aria-label="Schwierigkeit ${stern} von 3" title="Schwierigkeit – ändern im Übungsdetail" style="min-width:48px;display:inline-flex;align-items:center;justify-content:center;color:#f59e0b;font-size:var(--s-text);letter-spacing:1px">${"⭐".repeat(stern)}</span>
-    ${uebungEditierbar(x.f)?`<button onclick="uebungBearbeiten(${x.i})" class="tf-bearbeiten" aria-label="${esc(x.f.name)} bearbeiten" title="Übung bearbeiten" style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-size:var(--s-text);cursor:pointer">✏️</button>`:""}
-    <button onclick="tfInPlan(${x.i})" aria-label="In den Trainingsplan übernehmen" title="In den Trainingsplan übernehmen" style="min-width:44px;min-height:44px;border:none;border-radius:10px;background:#15803d;color:#fff;font-size:var(--s-teil);font-weight:900;cursor:pointer">➕</button>
+    ${uebungEditierbar(x.f)?`<button onclick="uebungBearbeiten(${x.i})" class="btn btn-sm tf-bearbeiten" aria-label="${esc(x.f.name)} bearbeiten" title="Übung bearbeiten" style="min-width:44px;min-height:44px;justify-content:center;font-size:var(--s-text)">✏️</button>`:""}
+    <button class="btn btn-sm" onclick="tfInPlan(${x.i})" aria-label="In den Trainingsplan übernehmen" title="In den Trainingsplan übernehmen" style="min-width:44px;min-height:44px;justify-content:center;font-size:var(--s-teil)">➕</button>
   </div>`;
 }
 // Übung aus der Datenbank in den nächsten freien, passenden Slot des Trainingsplans legen.
@@ -1631,7 +1631,7 @@ function tpShowExercise(formIdx,planMin){
   modal.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:380px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.25)">
     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
       <div id="uebung-modal-titel" style="font-size:var(--s-karte);font-weight:700;color:var(--text)">${esc(f.name)}</div>
-      <button aria-label="Schließen" onclick="this.closest('div[style*=fixed]').remove()" style="min-width:44px;min-height:44px;background:none;border:none;font-size:var(--s-teil);cursor:pointer;color:var(--text2)">×</button>
+      <button class="btn" aria-label="Schließen" onclick="this.closest('div[style*=fixed]').remove()" style="min-width:44px;min-height:44px;justify-content:center;font-size:var(--s-teil)">×</button>
     </div>
     ${zeigKurz?`<div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px">${esc(kurz)}</div>`:""}
     <!-- v691: Kennzahlen zuerst, dann Bild, Ablauf und Coaching; die Handlungen (bearbeiten,
@@ -1655,7 +1655,7 @@ function tpShowExercise(formIdx,planMin){
       ? `<div id="uebung-skizze" style="margin-bottom:2px">${f.svg}</div>${typeof skzLegende==="function"?skzLegende(false,_skzSpecSicher(f)):""}${typeof skzBilderLeiste==="function"?skzBilderLeiste(formIdx):""}${typeof matBedarfZeile==="function"?matBedarfZeile(_skzSpecSicher(f)):""}${typeof skzGrossKnopf==="function"?skzGrossKnopf(f.name,formIdx):""}${typeof skzTeilenKnopf==="function"?skzTeilenKnopf(f.name):""}`
       : (eigene?`<div style="border:1px dashed var(--text3);border-radius:10px;padding:12px;margin-bottom:8px;text-align:center">
           <div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:8px">Für diese Übung gibt es noch keine Skizze.</div>
-          <button onclick="uebungSkizzeNachtragen(${formIdx})" style="min-height:44px;padding:8px 14px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">🎨 Skizze zeichnen</button>
+          <button class="btn btn-sm" onclick="uebungSkizzeNachtragen(${formIdx})" style="min-height:44px;font-size:var(--s-text)">🎨 Skizze zeichnen</button>
         </div>`:"")}
     <div style="font-size:var(--s-klein);color:var(--text);white-space:pre-wrap;line-height:1.5;margin-bottom:8px">${esc(f.ablauf||"")}</div>
     ${f.coaching?`<div style="font-size:var(--s-klein);color:var(--text2);background:var(--surface);padding:8px;border-radius:6px;white-space:pre-wrap;margin-bottom:8px"><strong>🎯 Coaching-Tipps:</strong>\n${esc(f.coaching)}</div>`:""}
@@ -2604,7 +2604,7 @@ function tpGruppeHinweis(selId){
       /* Zusammenlegen hilft nur, wenn dadurch wirklich Gruppen in Übungsgröße entstehen –
          und es kostet ein Feld. Beides steht im Knopf, damit es niemand nebenbei wegtippt. */
       const knopf=(passt<jetzt&&Math.floor(kinder/passt)>=aktiv)
-        ? ` <button onclick="tgAnzahlSetzen(${passt});tgFertig()" style="margin-left:6px;min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">👥 ${passt===1?"Alle Kinder an ein Feld":"Auf "+passt+" Gruppen zusammenlegen"} (${jetzt-passt===1?"ein Feld":(jetzt-passt)+" Felder"} weniger)</button>`
+        ? ` <button class="btn btn-sm" onclick="tgAnzahlSetzen(${passt});tgFertig()" style="margin-left:6px;min-height:44px;font-size:var(--s-klein)">👥 ${passt===1?"Alle Kinder an ein Feld":"Auf "+passt+" Gruppen zusammenlegen"} (${jetzt-passt===1?"ein Feld":(jetzt-passt)+" Felder"} weniger)</button>`
         : " Die Einheit nennt für diese Größe keine Anpassung – Regel selbst anpassen oder eine andere Übung wählen.";
       html+=`<div class="tp-gruppe-hinweis" style="font-size:var(--s-klein);color:var(--text2);padding:3px 0 0;line-height:1.5">ℹ️ ${info.n} Kinder an diesem Feld, die Übung ist für ${aktiv} gedacht.${knopf}</div>`;
     }
@@ -2862,7 +2862,7 @@ function _tpRenderTimelineIntern(){
       const zusammen=(felderGruppen||[]).filter(f=>f.dazu.length).map(f=>`${f.dazu.join(" + ")} spielt bei ${f.emo} ${f.name.split(" + ")[0]} mit`).join(" · ");
       const grund=gebunden.size?`🧤 ${esc([...gebunden].join(", "))} ${gebunden.size===1?"ist":"sind"} beim Torwart-/Einzeltraining`:"";
       const wegText=weg.length?`✕ ${weg.length} Feld${weg.length===1?"":"er"} weggelassen`:"";
-      html+=`<div class="tp-parallel-hinweis" style="font-size:var(--s-klein);color:var(--text2);padding:2px 0 6px">${[grund,wegText].filter(Boolean).join(" · ")} – ${parallelSlots} Feld${parallelSlots===1?"":"er"} statt ${Math.max(1,trainersAlle.length)}${zusammen?" · "+esc(zusammen):""}${weg.length?` <button class="tp-feld-zurueck" onclick="tpFeldZurueck(${si})" style="margin-left:6px;min-height:28px;padding:2px 10px;border:1px solid var(--rand-bedien);border-radius:8px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">↩ Feld wieder aufnehmen</button>`:""}</div>`;
+      html+=`<div class="tp-parallel-hinweis" style="font-size:var(--s-klein);color:var(--text2);padding:2px 0 6px">${[grund,wegText].filter(Boolean).join(" · ")} – ${parallelSlots} Feld${parallelSlots===1?"":"er"} statt ${Math.max(1,trainersAlle.length)}${zusammen?" · "+esc(zusammen):""}${weg.length?` <button class="btn btn-sm tp-feld-zurueck" onclick="tpFeldZurueck(${si})" style="margin-left:6px;min-height:44px;font-size:var(--s-klein)">↩ Feld wieder aufnehmen</button>`:""}</div>`;
     }
     /* v570: Die Einheit bringt ihren Feldbedarf mit (`slot.stationen` aus der Vorlage).
        Passen die Stationen nicht auf die Felder, steht das jetzt AM BLOCK – bisher erfuhr
@@ -2879,7 +2879,7 @@ function _tpRenderTimelineIntern(){
       const trainerDa=(typeof tpGetCheckedTrainers==="function")?tpGetCheckedTrainers().length:0;
       const ohne=trainerDa>0?moeglich-trainerDa:0;
       const weg2=moeglich>parallelSlots
-        ? ` <button onclick="tgAnzahlSetzen(${moeglich});tgFertig()" style="margin-left:6px;min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">👥 ${moeglich} Gruppen bilden${ohne>0?` (${ohne===1?"eine":ohne} ohne Trainer)`:""}</button>`
+        ? ` <button class="btn btn-sm" onclick="tgAnzahlSetzen(${moeglich});tgFertig()" style="margin-left:6px;min-height:44px;font-size:var(--s-klein)">👥 ${moeglich} Gruppen bilden${ohne>0?` (${ohne===1?"eine":ohne} ohne Trainer)`:""}</button>`
         : ` Für ein weiteres Feld bräuchte es ${(parallelSlots+1)*TG_ZIEL_MIN} Kinder – ${kinder} sind da, und unter ${TG_ZIEL_MIN} je Gruppe lässt sich keine Spielform spielen.`;
       html+=`<div class="tp-stationen-hinweis" style="font-size:var(--s-klein);color:var(--text2);padding:2px 0 6px;line-height:1.5">ℹ️ ${soll} Felder geplant, nur ${parallelSlots} verfügbar – ${fehlt===1?"ein Feld entfällt":fehlt+" Felder entfallen"}.${weg2}</div>`;
     }
@@ -2906,8 +2906,8 @@ function _tpRenderTimelineIntern(){
       {
       html+=`<div class="tp-ringtausch" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:4px 0 6px">
         <span style="font-size:var(--s-klein);color:var(--text2);flex:1 1 140px;min-width:0">⇄ ${wer}${v?` <b>· ${v}× gewechselt</b>`:""}</span>
-        <button onclick="tpVersatzSetzen(${si},1)" title="Alle Gruppen wechseln ein Feld weiter – bei zwei Gruppen ist das der Tausch" style="min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">⇄ einmal wechseln</button>
-        ${eigen?`<button onclick="tpVersatzZurueck(${si})" title="Wieder der Reihe nach – so wie es sich aus der Reihenfolge der Blöcke ergibt" style="min-height:44px;padding:2px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer">↩ automatisch</button>`:""}
+        <button class="btn btn-sm" onclick="tpVersatzSetzen(${si},1)" title="Alle Gruppen wechseln ein Feld weiter – bei zwei Gruppen ist das der Tausch" style="min-height:44px;font-size:var(--s-klein)">⇄ einmal wechseln</button>
+        ${eigen?`<button class="btn btn-sm" onclick="tpVersatzZurueck(${si})" title="Wieder der Reihe nach – so wie es sich aus der Reihenfolge der Blöcke ergibt" style="min-height:44px;font-size:var(--s-klein)">↩ automatisch</button>`:""}
         ${_istFolge?"":dgWahl}
       </div>`;
       }
@@ -3021,7 +3021,7 @@ function _tpRenderTimelineIntern(){
       // (z. B. Schattenläufer = paarweise; Hai & Fische = alle zusammen → kein Button)
       if(typ==="warmup"){
         html+=`<div id="tp-kg-${si}"></div>`;
-        if(warmFolge<4)html+=`<button class="tp-plus" onclick="tpWarmPlus(${si})" style="width:100%;min-height:44px;margin-top:6px;border:1.5px dashed var(--rand-bedien);border-radius:10px;background:transparent;color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">＋ Übung im Aufwärmen</button>`;
+        if(warmFolge<4)html+=`<button class="btn tp-plus" onclick="tpWarmPlus(${si})" style="width:100%;min-height:44px;margin-top:6px;justify-content:center;font-size:var(--s-text)">＋ Übung im Aufwärmen</button>`;
       }
     }
     html+='</div>';
@@ -3218,7 +3218,7 @@ async function tpNettoRender(){
   const woche=await tpWocheNetto(datum);
   if(woche==null)return;
   // Reicht die Woche, bleibt es bei der Zahl der Einheit – kein Lob (Vorgabe des Pakets).
-  const knopf=`<button onclick="tpRichtwertAendern()" title="Richtwert ändern" style="min-height:44px;border:none;background:transparent;color:var(--text3);font-family:inherit;font-size:var(--s-klein);text-decoration:underline;cursor:pointer;padding:0 4px">Richtwert ${ziel} ändern</button>`;
+  const knopf=`<button class="btn btn-link" onclick="tpRichtwertAendern()" title="Richtwert ändern" style="font-size:var(--s-klein)">Richtwert ${ziel} ändern</button>`;
   if(woche<ziel){
     el.innerHTML=zeile(kern)
       +zeile(`Diese Woche ${woche} von ${ziel} Minuten Spielform. ${knopf}`);
@@ -3345,7 +3345,7 @@ function tpIndPlayerChange(slotIdx){
   if(matched.length){
     matched.forEach(m=>{
       html+=`<div style="display:flex;align-items:center;gap:4px;padding:2px 0">
-        <button onclick="document.getElementById('tp-form-${slotIdx}-0').value='${m.i}';tpOnSelectChange(document.getElementById('tp-form-${slotIdx}-0'))" style="background:var(--green-bg);border:1px solid #bbf7d0;border-radius:4px;padding:2px 6px;font-size:var(--s-klein);cursor:pointer;font-family:inherit">
+        <button class="btn btn-sm" onclick="document.getElementById('tp-form-${slotIdx}-0').value='${m.i}';tpOnSelectChange(document.getElementById('tp-form-${slotIdx}-0'))" style="font-size:var(--s-klein)">
           ⭐ ${esc(m.f.name)}</button>
         <span style="font-size:var(--s-klein);color:var(--text3)">→ ${m.deficit.label} verbessern</span>
       </div>`;
@@ -3366,7 +3366,7 @@ function tpAddSlot(){
      „Abschlussspiel · 15 Min.", eingefuegt wurden 20, und aus „Torwart-Training" wurde in
      der Leiste „Torwart-Spielen (rotierend)". Jetzt beschreibt TP_ADD_OPTS beides. */
   const opts=TP_ADD_OPTS;
-  let btns=opts.map((o,i)=>`<button onclick="tpDoAddSlot('${o.typ}');this.closest('div[style*=fixed]').remove()" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 12px;border:1px solid var(--rand-bedien);border-left:3px solid ${o.farbe};border-radius:var(--r);background:var(--surface);cursor:pointer;font-family:inherit;font-size:var(--s-text);text-align:left"><span style="font-size:var(--s-teil)">${o.icon}</span><div><strong>${o.label}</strong><br><span style="font-size:var(--s-klein);color:var(--text2)">${tpKannParallel(o.typ)?"parallel zum Hauptteil, gleiche Dauer":o.dauer+" Min."}</span></div></button>`).join("");
+  let btns=opts.map((o,i)=>`<button class="btn btn-zeile" onclick="tpDoAddSlot('${o.typ}');this.closest('div[style*=fixed]').remove()" style="gap:8px;font-size:var(--s-text)"><span style="font-size:var(--s-teil)">${o.icon}</span><div><strong>${o.label}</strong><br><span style="font-size:var(--s-klein);color:var(--text2)">${tpKannParallel(o.typ)?"parallel zum Hauptteil, gleiche Dauer":o.dauer+" Min."}</span></div></button>`).join("");
   modal.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:320px;width:100%">
     <div style="font-size:var(--s-text);font-weight:700;margin-bottom:10px">Block hinzufügen</div>
     <div style="display:flex;flex-direction:column;gap:6px">${btns}</div>
@@ -4047,7 +4047,7 @@ function tpKonfliktFragen(datum,stand){
     <div style="font-size:var(--s-text);color:var(--text2);line-height:1.6;margin-bottom:14px">
       ${stand.von?`<b>${esc(stand.von)}</b> hat`:"Jemand hat"} ${wann?`am ${wann} `:""}für diesen Termin gespeichert, seit du ihn geöffnet hast.
       Speicherst du jetzt, wird diese Fassung vollständig ersetzt.</div>
-    <button onclick="tpKonfliktTrotzdem('${String(datum).replace(/'/g,"")}')" style="width:100%;min-height:56px;border:none;border-radius:14px;background:var(--surface);border:1px solid var(--rand-bedien);border-top:3px solid #b45309;color:var(--text);font-family:inherit;font-size:var(--s-karte);font-weight:900;cursor:pointer">Meine Fassung speichern</button>
+    <button class="btn btn-p" onclick="tpKonfliktTrotzdem('${String(datum).replace(/'/g,"")}')" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte)">Meine Fassung speichern</button>
     <button onclick="tpKonfliktHolen('${String(datum).replace(/'/g,"")}')" class="btn btn-sm" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Seine Fassung laden und meine verwerfen</button>
     <div style="display:flex;margin-top:8px"><button class="btn btn-sm" style="margin-left:auto;min-height:48px" onclick="document.getElementById('tp-konflikt').remove()">Erst mal nichts tun</button></div>
   </div>`;
@@ -4863,11 +4863,11 @@ async function tpGenerate(){
 function tpRegelZeile(si,slot){
   const alle=tpAllForms(), ri=alle.findIndex(f=>f&&f.name===slot.regel), f=alle[ri];
   if(!f)return "";
-  const knopf="min-height:44px;min-width:44px;padding:0 10px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer";
+  const knopf="min-height:44px;min-width:44px;justify-content:center;font-size:var(--s-klein)";   // v877: .btn.btn-sm, hier nur Platz
   return `<div class="tp-regel" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:var(--s-klein);color:var(--text);background:var(--surface2);border:1px solid var(--rand-bedien);border-radius:8px;padding:6px 8px;margin:2px 0 6px">
     <span style="flex:1;min-width:180px;line-height:1.45">📏 <b>Zusatzregel für alle Felder</b>${typeof infoTipp==="function"?infoTipp("Zusatzregel",INFO_ZUSATZREGEL):""}<b>:</b> ${esc(f.name)}${f.kurz?` – ${esc(f.kurz)}`:""}</span>
-    <button type="button" onclick="tpShowExercise(${ri})" style="${knopf}" aria-label="Regel ${esc(f.name)} ansehen"><i class="ti ti-eye"></i></button>
-    <button type="button" onclick="tpRegelWeg(${si})" style="${knopf}" aria-label="Regel ${esc(f.name)} entfernen">✕</button>
+    <button class="btn btn-sm" type="button" onclick="tpShowExercise(${ri})" style="${knopf}" aria-label="Regel ${esc(f.name)} ansehen"><i class="ti ti-eye"></i></button>
+    <button class="btn btn-sm" type="button" onclick="tpRegelWeg(${si})" style="${knopf}" aria-label="Regel ${esc(f.name)} entfernen">✕</button>
   </div>`;
 }
 function tpRegelWeg(si){
@@ -4970,15 +4970,15 @@ function tpAnpassenFenster(v){
   const gesehen=new Set();
   v.tausch.forEach(t=>{ const k=t.alt+">"+t.neu; if(gesehen.has(k))return; gesehen.add(k);
     z.push(zeile(t.neu!=null?"🔁":"⚠️",t.neu!=null?`„${esc(t.altName)}“ passt nicht für Gruppen bis ${v.g} Kinder → „${esc(t.neuName)}“`:`„${esc(t.altName)}“ passt nicht für Gruppen bis ${v.g} Kinder – keine passende Übung gefunden, bleibt stehen`)); });
-  const knopf="min-height:48px;padding:0 16px;border-radius:12px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer";
+  const knopf="min-height:48px;font-size:var(--s-text)";   // v877: .btn / .btn-p, hier nur Platz
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("tp-anpassen-modal","🔄","Plan anpassen",`${v.trainer.length} Trainer · ${v.kinderZahl} Kinder · Gruppen bis ${v.g}`,"var(--fam-training)")}
     ${v.nichts?`<div class="tp-anpassen-leer" style="font-size:var(--s-text);color:var(--text2);padding:8px 0 4px">Alles passt – Felder, Gruppen und Übungen stimmen mit den Zu- und Absagen überein.</div>`
       :`<ul class="tp-anpassen-liste" style="list-style:none;margin:0;padding:0;font-size:var(--s-text)">${z.join("")}</ul>
         <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px">Zusatzregeln, von dir weggelassene Felder und der gemeinsame Block für alle bleiben, wie sie sind.</div>`}
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap">
-      <button type="button" onclick="document.getElementById('tp-anpassen-modal').remove()" style="${knopf};border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text)">${v.nichts?"Schließen":"Abbrechen"}</button>
-      ${v.nichts?"":`<button type="button" id="tp-anpassen-ok" onclick="tpAnpassenUebernehmen()" style="${knopf};border:none;background:var(--fam-training);color:#fff">Übernehmen</button>`}
+      <button class="btn" type="button" onclick="document.getElementById('tp-anpassen-modal').remove()" style="${knopf};justify-content:center">${v.nichts?"Schließen":"Abbrechen"}</button>
+      ${v.nichts?"":`<button class="btn btn-p" type="button" id="tp-anpassen-ok" onclick="tpAnpassenUebernehmen()" style="${knopf};justify-content:center">Übernehmen</button>`}
     </div></div>`;
   window._tpAnpassen=v;
   document.body.appendChild(m);
@@ -5158,7 +5158,7 @@ function appUpdateHinweis(){
   const d=document.createElement("div");
   d.id="app-update"; d.setAttribute("role","status");
   d.style.cssText="position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom));z-index:9990;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 14px;border-radius:14px;background:var(--text,#0f172a);color:var(--bg,#fff);box-shadow:0 6px 20px rgba(0,0,0,.25);font-size:var(--s-text,13px);font-weight:600;max-width:calc(100vw - 32px)";
-  d.innerHTML='<span>🔄 Neue Version bereit</span><button type="button" style="min-height:44px;padding:0 14px;border:none;border-radius:10px;background:var(--bg,#fff);color:var(--text,#0f172a);font-weight:800;font-family:inherit;font-size:var(--s-text,13px);cursor:pointer">Neu laden</button>';
+  d.innerHTML='<span>🔄 Neue Version bereit</span><button class="btn btn-sm" type="button" style="min-height:44px;font-size:var(--s-text,13px)">Neu laden</button>';
   d.querySelector("button").onclick=appNeuLaden;
   (document.body||document.documentElement).appendChild(d);
 }
@@ -5425,7 +5425,7 @@ function artDurchsichtRender(){
        aria-label, dass ein Tipp weiterschaltet. */
     return `<div style="display:flex;align-items:center;gap:8px;border:var(--border-s);border-radius:10px;padding:8px 10px;margin-bottom:6px;background:var(--surface)">
       <span style="flex:1;min-width:0;font-size:var(--s-text)"><b>${esc(f.name)}</b><span style="display:block;font-size:var(--s-klein);color:var(--text3)">${esc(f.kat||"eigene")}</span></span>
-      <button onclick="artDurchsichtTipp('${String(f.name).replace(/'/g,"\\'")}')" aria-label="${esc(f.name)}: ${UEBUNG_ART[a].lang}. Antippen schaltet weiter." style="flex:none;min-height:48px;padding:0 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:800;cursor:pointer;white-space:nowrap">${UEBUNG_ART[a].kurz}</button>
+      <button class="btn btn-sm" onclick="artDurchsichtTipp('${String(f.name).replace(/'/g,"\\'")}')" aria-label="${esc(f.name)}: ${UEBUNG_ART[a].lang}. Antippen schaltet weiter." style="flex:none;min-height:48px;font-size:var(--s-klein);white-space:nowrap">${UEBUNG_ART[a].kurz}</button>
     </div>`;
   };
   const block=(key,titel)=>nachArt[key].length
@@ -5438,7 +5438,7 @@ function artDurchsichtRender(){
     </div>
     <button class="btn btn-sm" style="min-height:48px;width:100%;justify-content:center" onclick="artDurchsichtFilter()">${_adNurOffene?"Auch die schon eingeordneten zeigen":"Nur die offenen zeigen"}</button>
     ${block("spiel","Spielform")}${block("uebung","Übungsform")}${block("weder","Weder noch")}
-    <button onclick="artDurchsichtUebernehmen(this)" style="width:100%;min-height:56px;margin-top:14px;border:none;border-radius:14px;background:var(--surface);border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;color:var(--text);font-family:inherit;font-size:var(--s-karte);font-weight:900;cursor:pointer">💾 Einordnung übernehmen</button>
+    <button class="btn btn-p" onclick="artDurchsichtUebernehmen(this)" style="width:100%;min-height:56px;margin-top:14px;justify-content:center;font-size:var(--s-karte)">💾 Einordnung übernehmen</button>
     <div style="display:flex;margin-top:8px"><button class="btn btn-sm" style="margin-left:auto;min-height:48px" onclick="artDurchsichtClose()">Ohne Speichern schließen</button></div>`;
 }
 /* Ein Schreibvorgang für alles – nicht 107 einzelne. team_config trägt die Einordnung
@@ -5506,7 +5506,7 @@ function betrDurchsichtRender(){
   const zeile=f=>{ const a=_bdAuswahl[f.name];
     return `<div style="display:flex;align-items:center;gap:8px;border:var(--border-s);border-radius:10px;padding:8px 10px;margin-bottom:6px;background:var(--surface)">
       <span style="flex:1;min-width:0;font-size:var(--s-text)"><b>${esc(f.name)}</b><span style="display:block;font-size:var(--s-klein);color:var(--text3)">${esc(f.kat||"eigene")}</span></span>
-      <button onclick="betrDurchsichtTipp('${String(f.name).replace(/'/g,"\\'")}')" aria-label="${esc(f.name)}: ${esc(UEBUNG_BETREUUNG[a].lang)}. Antippen schaltet weiter." style="flex:none;min-height:48px;padding:0 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-klein);font-weight:800;cursor:pointer;white-space:nowrap">${UEBUNG_BETREUUNG[a].kurz}</button>
+      <button class="btn btn-sm" onclick="betrDurchsichtTipp('${String(f.name).replace(/'/g,"\\'")}')" aria-label="${esc(f.name)}: ${esc(UEBUNG_BETREUUNG[a].lang)}. Antippen schaltet weiter." style="flex:none;min-height:48px;font-size:var(--s-klein);white-space:nowrap">${UEBUNG_BETREUUNG[a].kurz}</button>
     </div>`; };
   const block=(k,t,erkl)=>nach[k].length?`<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:12px 2px 2px">${t} · ${nach[k].length}</div><div style="font-size:var(--s-klein);color:var(--text2);margin:0 2px 5px">${erkl}</div>${nach[k].map(zeile).join("")}`:"";
   box.innerHTML=`<div style="font-size:var(--s-text);color:var(--text2);line-height:1.55;margin-bottom:8px">
@@ -5514,7 +5514,7 @@ function betrDurchsichtRender(){
       Gebraucht wird das, wenn ein Trainer allein mehrere Felder hat: Felder ohne Trainer bekommen dann nur Übungen, die allein laufen.</div>
     <button class="btn btn-sm" style="min-height:48px;width:100%;justify-content:center" onclick="betrDurchsichtFilter()">${_bdNurOffene?"Auch die schon eingeordneten zeigen":"Nur die offenen zeigen"}</button>
     ${block("allein","Läuft allein","Feste Regeln – die Kinder spielen, zählen und wechseln selbst.")}${block("fuehrt","Trainer führt","Er ruft, zählt oder korrigiert – einer reicht für alle, aber er muss dabei sein.")}${block("feld","Trainer am Feld","Er ist Teil der Übung: wirft, schießt, spielt ein.")}
-    <button onclick="betrDurchsichtUebernehmen(this)" style="width:100%;min-height:56px;margin-top:14px;border-radius:14px;background:var(--surface);border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;color:var(--text);font-family:inherit;font-size:var(--s-karte);font-weight:900;cursor:pointer">💾 Einordnung übernehmen</button>
+    <button class="btn btn-p" onclick="betrDurchsichtUebernehmen(this)" style="width:100%;min-height:56px;margin-top:14px;justify-content:center;font-size:var(--s-karte)">💾 Einordnung übernehmen</button>
     <div style="display:flex;margin-top:8px"><button class="btn btn-sm" style="margin-left:auto;min-height:48px" onclick="betrDurchsichtClose()">Ohne Speichern schließen</button></div>`;
 }
 async function betrDurchsichtUebernehmen(btn){
@@ -5634,7 +5634,7 @@ function _tpPickKarte(x){
       ${(function(){const c=tpArtChip(x.f,false);const b=typeof tpBetreuungWert==="function"?tpBetreuungWert(x.f):null;const a=(b&&b.wert==="allein")?'<span style="background:var(--surface2);color:var(--text2);border:var(--border-s);border-radius:6px;padding:1px 6px;font-size:var(--s-klein);font-weight:800;white-space:nowrap">👤 läuft allein</span>':"";const z=(typeof tpIstZusatzregel==="function"&&tpIstZusatzregel(x.f))?'<span title="Kein eigenes Feld – wird in eine Spielform eingebaut" style="background:var(--surface2);color:var(--text2);border:var(--border-s);border-radius:6px;padding:1px 6px;font-size:var(--s-klein);font-weight:800;white-space:nowrap">📏 Zusatzregel</span>':"";return (c||a||z)?`<span style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">${c}${a}${z}</span>`:"";})()}
     </button>
     <span role="img" aria-label="Schwierigkeit ${stern} von 3" title="Schwierigkeit – ändern im Übungsdetail" style="min-width:52px;display:inline-flex;align-items:center;justify-content:center;color:#f59e0b;font-size:var(--s-text);letter-spacing:1px">${"⭐".repeat(stern)}</span>
-    <button onclick="tpPickerInfo(${x.i})" aria-label="Übung ansehen" title="Skizze & Beschreibung ansehen" style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-size:var(--s-karte);cursor:pointer">ℹ️</button>
+    <button class="btn btn-sm" onclick="tpPickerInfo(${x.i})" aria-label="Übung ansehen" title="Skizze & Beschreibung ansehen" style="min-width:44px;min-height:44px;justify-content:center;font-size:var(--s-karte)">ℹ️</button>
   </div>`;
 }
 function tpPickerSet(idx){
@@ -5975,7 +5975,7 @@ function _tlRender(){
   const kopf=`<div style="display:flex;align-items:center;gap:8px;max-width:520px;margin:0 auto">
       <span style="font-size:var(--s-teil)">🏃</span>
       <span style="font-size:var(--s-karte);font-weight:800;flex:1;text-align:left">Trainingsstart · Block ${row.slot+1}/${slots.length||"?"}</span>
-      <button onclick="tlSchliessen()" aria-label="Schließen" style="min-width:44px;min-height:44px;border:none;background:rgba(255,255,255,.12);color:#fff;border-radius:10px;font-size:var(--s-teil);cursor:pointer">✕</button>
+      <button class="btn btn-kopf" onclick="tlSchliessen()" aria-label="Schließen" style="font-size:var(--s-teil)">✕</button>
     </div>`;
   if(row.status==="fertig"){
     ov.innerHTML=kopf+`<div style="max-width:520px;margin:8vh auto 0">
@@ -5999,7 +5999,7 @@ function _tlRender(){
           const da=row.bereit&&row.bereit[t];
           // Wer nicht kommt (Handy weg, kurzfristig abgesagt), darf herausgenommen werden –
           // sonst blockiert ein einziger fehlender Trainer die gesamte Runde.
-          return `<span style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:18px;font-size:var(--s-text);font-weight:800;background:${da?"#16a34a":"rgba(255,255,255,.12)"}">${da?"✅":"⏳"} ${esc(t)}${da?"":`<button onclick="tlOhne('${t.replace(/'/g,"\\'")}')" title="ohne ${esc(t)} weitermachen" aria-label="ohne ${esc(t)} weitermachen" style="min-width:24px;min-height:24px;border:none;border-radius:50%;background:rgba(255,255,255,.2);color:#fff;font-size:var(--s-text);font-weight:900;cursor:pointer;line-height:1">✕</button>`}</span>`;
+          return `<span style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:18px;font-size:var(--s-text);font-weight:800;background:${da?"#16a34a":"rgba(255,255,255,.12)"}">${da?"✅":"⏳"} ${esc(t)}${da?"":`<button class="btn btn-kopf" onclick="tlOhne('${t.replace(/'/g,"\\'")}')" title="ohne ${esc(t)} weitermachen" aria-label="ohne ${esc(t)} weitermachen" style="font-size:var(--s-text)">✕</button>`}</span>`;
         }).join("")}
       </div>
       ${binBereit?'<div style="font-size:var(--s-karte);opacity:.8">Warten auf die anderen…</div>'
@@ -6529,10 +6529,10 @@ function tgRender(){
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
         <button onclick="tgRename(${gi})" title="Gruppe umbenennen" style="border:none;background:transparent;font-family:inherit;font-size:var(--s-karte);font-weight:900;color:${g.farbe};cursor:pointer;min-height:44px;padding:0;margin:-8px 0">${g.emo} ${esc(g.name)} ✏️</button>
         <span style="font-size:var(--s-klein);color:var(--text3)">${g.kinder.length} Kinder</span>
-        <button onclick="tgTrainerTipp(${gi})" title="Trainer wechseln" style="margin-left:auto;min-height:44px;padding:4px 12px;border:1px solid var(--rand-bedien);border-radius:16px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">🧢 ${esc(g.trainer||"– Trainer –")}</button>
+        <button class="btn btn-sm" onclick="tgTrainerTipp(${gi})" title="Trainer wechseln" style="margin-left:auto;min-height:44px;font-size:var(--s-text)">🧢 ${esc(g.trainer||"– Trainer –")}</button>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
-        ${g.kinder.map(k=>`<button onclick="tgKindTipp(${gi},'${k.replace(/'/g,"\\'")}')" title="Antippen = nächste Gruppe" style="min-height:44px;padding:6px 12px;border:1px solid var(--rand-bedien);border-radius:18px;font-family:inherit;font-size:var(--s-text);cursor:pointer;background:var(--surface2);color:var(--text)">${esc(k)}</button>`).join("")||'<span style="font-size:var(--s-klein);color:var(--text3)">leer</span>'}
+        ${g.kinder.map(k=>`<button class="btn btn-sm" onclick="tgKindTipp(${gi},'${k.replace(/'/g,"\\'")}')" title="Antippen = nächste Gruppe" style="min-height:44px;font-size:var(--s-text)">${esc(k)}</button>`).join("")||'<span style="font-size:var(--s-klein);color:var(--text3)">leer</span>'}
       </div>
     </div>`).join("");
 }
@@ -6594,7 +6594,7 @@ function routeRender(name,arg){
         '<div style="font-size:34px;margin-bottom:10px">📡</div>'+
         '<div style="font-weight:700;margin-bottom:6px">Diese Ansicht konnte nicht geladen werden</div>'+
         '<div style="font-size:var(--s-text);color:#64748b;margin-bottom:16px">Die Verbindung war zu langsam oder ist abgebrochen.</div>'+
-        '<button onclick="location.reload()" style="min-height:44px;padding:10px 20px;border:0;border-radius:10px;background:#1e3a8a;color:#fff;font-size:var(--s-karte);font-weight:600">Neu laden</button></div>';
+        '<button class="btn btn-p" onclick="location.reload()" style="min-height:44px;font-size:var(--s-karte)">Neu laden</button></div>';
     }
   },100);
 }
