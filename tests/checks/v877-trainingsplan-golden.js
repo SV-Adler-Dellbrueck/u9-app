@@ -223,7 +223,7 @@ const SZENARIEN = [
     ]) },
 
   { id: "G2-uebung-tauschen", titel: "Übung tauschen: Picker, Tausch außerhalb des Typfilters, Dauer, Speichern",
-    haelt: "Fehlerbild 4 – behoben in v893: eine getauschte Übung außerhalb des Blocktyps bleibt beim nächsten Neuzeichnen (tpSetDauer) erhalten und steht im gespeicherten Plan (vorher verschwand sie).",
+    haelt: "Fehlerbild 4 – behoben in v893: eine getauschte Übung außerhalb des Blocktyps bleibt beim nächsten Neuzeichnen (tpSetDauer) erhalten und steht im gespeicherten Plan (vorher verschwand sie). Seit v895 (Fehlerbild 7) speichert tpSetDauer außerdem verzögert von selbst.",
     schritte: [
       ["Training füllen", p => p.evaluate(async () => { await tpGenerate(); })],
       ["Picker: Hauptteil 1, Feld 1 neu wählen", p => p.evaluate(() => {
@@ -300,7 +300,7 @@ const SZENARIEN = [
     ] },
 
   { id: "G6-torwart-parallel", titel: "Torwart-Block parallel: anlegen, parallelZu, Haken ab, Trainer, Einzeltraining mit Kind",
-    haelt: "Fehlerbild 7 (Nebenbefund) – Block anlegen, „läuft parallel zu“, Torwart-Haken und Einzelkind speichern nicht von selbst; erst tpPlanSave(true) schreibt sie. Behebung in Schritt 9.",
+    haelt: "Fehlerbild 7 (Nebenbefund) – behoben in v895: Block anlegen, „läuft parallel zu“, Torwart-Haken und Einzelkind speichern verzögert von selbst (vorher erst tpPlanSave(true)).",
     schritte: [
       ["Training füllen", p => p.evaluate(async () => { await tpGenerate(); })],
       ["Torwart-Block anlegen, parallel zu Hauptteil 1, Kind B abwählen", p => p.evaluate(() => {
@@ -339,7 +339,7 @@ const SZENARIEN = [
     ] },
 
   { id: "G8-puffer", titel: "Puffer: Gesamtzeile bei frei ≥ 9, 3–8, < 3 Minuten und nach Wechsel der Zieldauer",
-    haelt: "Ist-Zustand der Puffer-Zeile (v868). Nebenbefund Fehlerbild 7: tpSetDauer speichert nicht von selbst.",
+    haelt: "Ist-Zustand der Puffer-Zeile (v868). Nebenbefund Fehlerbild 7 – behoben in v895: tpSetDauer und die Ziel-Dauer speichern verzögert von selbst (vorher nicht).",
     schritte: (() => {
       const zeile = () => { const z = [...document.querySelectorAll("#tp-timeline div")].find(d => d.querySelector(":scope > #tp-dauer"));
         return z ? [...z.childNodes].map(n => n.id === "tp-dauer" ? n.value : n.textContent).join("").replace(/\s+/g, " ").trim() : null; };

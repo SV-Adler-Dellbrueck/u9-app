@@ -1704,8 +1704,8 @@ const TP_ZUSTAND={wahl:{},tw:{},kind:{}};
 /* Angehakte Torhüter des Blocks si in der Reihenfolge des Angebots (wie die Haken auf der Seite). */
 function tpTwAn(si){ const l=TP_ZUSTAND.tw[si]; return tpTwAngebot(si).map(k=>k.name).filter(n=>l===undefined||l.includes(n)); }
 function tpKindVon(si){ return TP_ZUSTAND.kind[si]||""; }
-/* Haken name an/aus; name null: zurück zur Vorgabe (alle angebotenen). Speichert nicht von selbst
-   (wie bisher – Fehlerbild 7, behoben erst ab Schritt 9). */
+/* Haken name an/aus; name null: zurück zur Vorgabe (alle angebotenen). Speichert nicht selbst – der
+   Haken ruft danach tpGeaendert (v895: verzögert speichern, Fehlerbild 7 behoben). */
 function tpTwSetzen(si,name,an){
   const tw=TP_ZUSTAND.tw;
   if(name==null)delete tw[si];
@@ -2660,8 +2660,10 @@ function tpRenderTimeline(){
    – speichern nach der Regel, die die Stelle schon vorher hatte (TP_SPEICHERN):
        "verzoegert" – tpPlanSaveDebounced (1,2 s, beim Öffnen gesperrt),
        "sofort"     – tpPlanSave (nur „⇄ weiterrücken“ und „Versatz zurück“),
-       "nein"       – Dauer, neuer Block, „läuft parallel zu“, Torwart-Haken, Einzelkind, Ziel-Dauer
-                      speichern weiter nicht von selbst (Fehlerbild 7, behoben erst ab Schritt 9).
+       "nein"       – nur noch das Zwischen-Zeichnen in tpGenerate und tpAnpassenUebernehmen (gespeichert wird dort nach dem Füllen).
+     v895 (Fehlerbild 7): Dauer, neuer Block, „läuft parallel zu“, Torwart-Haken, Einzelkind und
+     Ziel-Dauer speichern jetzt ebenfalls verzögert; die Schutzregel in tpPlanSave (nie leer über voll)
+     gilt dabei wie für jede Automatik.
    Seit die Seite nicht mehr die Wahrheit ist, entfallen die Wartezeiten, die nur auf die Seite
    warteten: 60 ms in tpGenerate und tpAnpassenUebernehmen, Materialzeile 0 ms, der Durchgangs-Umbau
    aus dem Zeichnen (alte `durchgaenge` macht seit v884 das Öffnen, tpZustandLaden). */
@@ -3158,7 +3160,7 @@ function _tpRenderTimelineIntern(){
     if(parallel){
       const mains=tpSlots.map((s2,i2)=>({s2,i2})).filter(x=>tpIstHauptteil(x.s2.typ));
       html+=`<div class="tp-feld"><label>Läuft parallel zu</label>
-        <select onchange="tpSlots[${si}].parallelZu=Number(this.value);tpGeaendert({speichern:'nein'})" style="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
+        <select onchange="tpSlots[${si}].parallelZu=Number(this.value);tpGeaendert({speichern:'verzoegert'})" style="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
           ${mains.map(x=>`<option value="${x.i2}"${slot.parallelZu===x.i2?" selected":""}>${x.s2.label}</option>`).join("")}
         </select></div>`;
     }
@@ -3238,7 +3240,7 @@ function _tpRenderTimelineIntern(){
       html+=`<div style="margin-top:6px">
         <div style="font-size:var(--s-klein);color:var(--text2);font-weight:600;margin-bottom:4px">Torwart-Spieler</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-          ${twPlayers.map(k=>`<label class="tp-check"><input type="checkbox" value="${esc(k.name)}" class="tp-tw-player" data-slot="${si}" onchange="tpTwSetzen(Number(this.dataset.slot),this.value,this.checked);tpGeaendert({zeichnen:false,speichern:'nein'})" checked><span>${k.name}${k.twPrio===1?" ⭐":""}<span style="color:var(--text2);font-size:var(--s-klein)">${esc(tpTwZusatz(k.name))}</span></span></label>`).join("")}
+          ${twPlayers.map(k=>`<label class="tp-check"><input type="checkbox" value="${esc(k.name)}" class="tp-tw-player" data-slot="${si}" onchange="tpTwSetzen(Number(this.dataset.slot),this.value,this.checked);tpGeaendert({zeichnen:false,speichern:'verzoegert'})" checked><span>${k.name}${k.twPrio===1?" ⭐":""}<span style="color:var(--text2);font-size:var(--s-klein)">${esc(tpTwZusatz(k.name))}</span></span></label>`).join("")}
         </div>
         <div class="tp-feld"><label for="tp-form-${si}-0">Übung</label>
           <div class="tp-feld-zeile">
@@ -3255,7 +3257,7 @@ function _tpRenderTimelineIntern(){
     } else if(art==="einzel"){
       const playerOpts=KADER.filter(k=>k.aktiv!==false).map(k=>`<option value="${esc(k.name)}">${esc(k.name)}</option>`).join("");
       html+=`<div class="tp-feld"><label for="tp-ind-player-${si}">Spieler</label>
-        <select id="tp-ind-player-${si}" onchange="tpKindSetzen(${si},this.value);tpIndPlayerChange(${si});tpGeaendert({zeichnen:false,speichern:'nein'})">
+        <select id="tp-ind-player-${si}" onchange="tpKindSetzen(${si},this.value);tpIndPlayerChange(${si});tpGeaendert({zeichnen:false,speichern:'verzoegert'})">
           <option value="">— Spieler wählen —</option>${playerOpts}
         </select>
       </div>
@@ -3346,7 +3348,7 @@ function _tpRenderTimelineIntern(){
      „Spielform: 40 Minuten“ (aus der Art der Blöcke) – zwei Zahlen für dieselbe Frage, die sich
      widersprachen. Es gilt nur noch die Minutenzahl in Schritt 5, dort mit ihrem Anteil. */
   html+=`<div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;font-size:var(--s-text);font-weight:${passt?"600":"800"};color:${passt?"var(--text2)":"#dc2626"};margin-top:6px">Gesamt: ${time} von
-    <select id="tp-dauer" onchange="tpGeaendert({speichern:'nein'})" style="font-size:var(--s-text);min-height:44px;padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;background:var(--surface);color:var(--text)">${[...new Set([60,75,90].concat(TP_TERMIN_MIN?[TP_TERMIN_MIN]:[]))].sort((x,y)=>x-y).map(d=>`<option value="${d}"${zielDauer===d?" selected":""}>${d}</option>`).join("")}</select>
+    <select id="tp-dauer" onchange="tpGeaendert({speichern:'verzoegert'})" style="font-size:var(--s-text);min-height:44px;padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;background:var(--surface);color:var(--text)">${[...new Set([60,75,90].concat(TP_TERMIN_MIN?[TP_TERMIN_MIN]:[]))].sort((x,y)=>x-y).map(d=>`<option value="${d}"${zielDauer===d?" selected":""}>${d}</option>`).join("")}</select>
     Min.${passt?tpPufferText(frei):" – zu lang!"}</div>`;
   wrap.innerHTML=html;
   // v883: Übungswahl aus dem Zustand auf die neuen Auswahlfelder (Wert, Marken, Picker-Knopf, Historie)
@@ -3726,7 +3728,7 @@ function tpSetDauer(si,wert){
   if(!tpSlots[si])return;
   tpSlots[si].dauer=Math.max(1,Number(wert)||10);
   tpSlots.forEach(s=>{if(tpKannParallel(s.typ)&&s.parallelZu===si)s.dauer=tpSlots[si].dauer;}); // Torwart/Einzel laufen genauso lang
-  tpGeaendert({speichern:"nein"});   // Fehlerbild 7: speichert nicht von selbst (Schritt 9)
+  tpGeaendert({speichern:"verzoegert"});   // v895 (Fehlerbild 7): speichert verzögert wie die übrigen Änderungen
 }
 /* Angesprochen wird der Blocktyp beim NAMEN, nicht über seine Position im Dialog.
    Die Position hat sich mit Paket 3 verschoben (Spielform und Übungsform kamen dazu) –
@@ -3743,7 +3745,7 @@ function tpDoAddSlot(idx){
     if(mi>=0){neu.parallelZu=mi;neu.dauer=tpSlots[mi].dauer;}   // gleiche Dauer wie der Hauptteil
   }
   tpSlots.push(neu);
-  tpGeaendert({speichern:"nein"});   // Fehlerbild 7: speichert nicht von selbst (Schritt 9)
+  tpGeaendert({speichern:"verzoegert"});   // v895 (Fehlerbild 7): speichert verzögert wie die übrigen Änderungen
 }
 
 function tpRemoveSlot(idx){
