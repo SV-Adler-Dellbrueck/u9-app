@@ -1,4 +1,4 @@
-/* v883 · Vorlagen-Qualität (Bestandsaufnahme 5.4, 5.6, 5.10, 5.1-Rest, Halle) – Beschlüsse von Charles am 19.11.2026.
+/* v882 · Vorlagen-Qualität (Bestandsaufnahme 5.4, 5.6, 5.10, 5.1-Rest, Halle) – Beschlüsse von Charles am 19.11.2026.
 
    a) Jede Stationen-Vorlage endet mit einer offenen Stufe ohne Zusatzregel: der letzte Hauptteil hat keine Stationen,
       heißt „… – offen:“ und sagt „keine Zusatzregel“; weder er noch das Abschlussturnier tragen eine Regel.
@@ -8,8 +8,9 @@
       Großbuchstaben, keine geraden Anführungszeichen; jede Zeile endet auf „?“ oder ist ein Lob aus LOB.
    c) folge_nr je Leitfrage lückenlos ab 1 und als Progression: Ein-Feld-Formen (nach Gegnerdruck, bei Gleichstand
       nach diff) → Stationen (1 gegen 1 → FUNiño → 3+1) → Kombinationen → Übungsform-Einheiten → Lehrgänge (90 Min.).
-   d) Tag „halle“ genau dort, wo die gleichzeitig benötigten Felder der größten Skalierungszeile (ohne Maß in der
-      Zeile: der Standardaufbau aus dem Feld der Übung) zusammen in eine Normhalle 27 x 45 m passen. Die Felder stehen
+   d) Tag „halle“ genau dort, wo die gleichzeitig benötigten Felder der Skalierungszeile der tatsächlichen Kadergröße
+      (14; fehlt sie, die nächstkleinere vorhandene; ohne Maß in der Zeile der Standardaufbau aus dem Feld der Übung)
+      zusammen in eine Normhalle 27 x 45 m passen (Charles 19.11.). Die Felder stehen
       in HALLE; jedes Maß muss wörtlich in der genannten Quelle stehen, sonst ist die Tabelle veraltet.
    e) „4gg2 Ballbesitz“: fünf Pässe in Folge = ein Punkt wie L4-1, keine Pflicht-Kontaktbegrenzung (nur als
       freiwillige Steigerung), die Skizze sagt dasselbe.
@@ -31,7 +32,7 @@ const U32 = "Lehrgang Erwachsene (Ü32) – 4 gegen 4 + Torhüter: Umschalten na
 /* Archivstand nach dem einmaligen Update: die zwei Dubletten aus 5.9 (18.11.) und die Ü32-Form. */
 const ARCHIV_NACH_UPDATE = ["Pflichtpass-Funino", "Dreiecksduell 3gg3", U32];
 
-/* Halle: je Vorlage die Aufbauten, die gleichzeitig stehen. „Maß@Quelle“: Z = größte Skalierungszeile, sonst der Name
+/* Halle: je Vorlage die Aufbauten, die gleichzeitig stehen. „Maß@Quelle“: Z = Zeile für 14 Kinder (sonst die nächstkleinere), sonst der Name
    der Übung (ihr Feld) oder „L<i>“ = Label des Blocks i. Ohne Maß in den Daten (L3-1: „Strafraum“) gibt es keinen Tag. */
 const H = (...sets) => sets;
 const S31 = (a, b) => H([a, b], ["25 x 20@3+1 gegen 3+1 – Raute ohne Aufpasser", "25 x 20@3+1 gegen 3+1 – Raute ohne Aufpasser"]);
@@ -43,27 +44,27 @@ const HALLE = {
   "L1-2": H(["12 x 10@Z", "12 x 10@Z", "12 x 10@Z", "12 x 10@Z"]),
   "L1-3": H(["15 x 15@Z", "15 x 15@Z"]),
   "L1-4": H(["15 x 10@Erste Mitnahme vorwärts", "15 x 10@Erste Mitnahme vorwärts"]),
-  "L2-1": H(["22 x 28@Z", "22 x 28@Z"]),
+  "L2-1": H(["18 x 22@Z", "18 x 22@Z"]),
   "L2-2": H(["25 x 18@Z", "25 x 18@Z"]),
   "L2-3": H(["15 x 8@Dribbling-Parcours", "15 x 8@Dribbling-Parcours", "15 x 8@Dribbling-Parcours"]),
-  "L2-4": H(["35 x 25@Z", "35 x 25@Z"]),
+  "L2-4": H(["30 x 20@Z", "30 x 20@Z"]),
   "L3-1": null,
-  "L3-2": H(["30 x 22@Z", "30 x 22@Z"]),
-  "L3-3": H(["30 x 22@Z", "30 x 22@Z"]),
-  "L4-1": H(["24 x 24@Z", "24 x 24@Z"]),
-  "L4-2": H(["8 x 8@Drei gegen einen im Quadrat", "8 x 8@Drei gegen einen im Quadrat", "8 x 8@Drei gegen einen im Quadrat", "8 x 8@Drei gegen einen im Quadrat"],
+  "L3-2": H(["25 x 20@Z", "25 x 20@Z"]),
+  "L3-3": H(["25 x 20@Z", "25 x 20@Z"]),
+  "L4-1": H(["24 x 24@Z", "20 x 20@Z"]),
+  "L4-2": H(["8 x 8@Drei gegen einen im Quadrat", "8 x 8@Drei gegen einen im Quadrat", "8 x 8@Drei gegen einen im Quadrat"],
     ["25 x 20@3 gegen 3 auf vier Minitore mit Schusszone", "25 x 20@3 gegen 3 auf vier Minitore mit Schusszone"],
-    ["12 x 12@Passtor im Quadrat", "12 x 12@Passtor im Quadrat", "12 x 12@Passtor im Quadrat", "12 x 12@Passtor im Quadrat"],
-    ["25 x 20@2+1 gegen 2+1 auf Jugendtore", "25 x 20@2+1 gegen 2+1 auf Jugendtore"]),
-  "L4-3": H(["30 x 22@Z", "30 x 22@Z"]),
+    ["12 x 12@Passtor im Quadrat", "12 x 12@Passtor im Quadrat", "12 x 12@Passtor im Quadrat"],
+    ["25 x 20@3 gegen 3 auf vier Minitore mit Schusszone", "25 x 20@2+1 gegen 2+1 auf Jugendtore"]),
+  "L4-3": H(["25 x 20@Z", "25 x 20@Z"]),
   "L4-4": H(["10 m Abstand@Z", "10 m Abstand@Z", "10 m Abstand@Z", "10 m Abstand@Z"]),
   "L4-5": H(["30 x 22@L4", "30 x 22@L4"]),
   "L5-1": H(["20 x 18@Scanning-Funino", "20 x 18@Scanning-Funino"]),
-  "L5-2": H(["35 x 25@Z", "35 x 25@Z"]),
-  "L5-3": H(["30 x 24@Z", "30 x 24@Z"]),
+  "L5-2": H(["35 x 25@Z"]),
+  "L5-3": H(["25 x 20@Z", "25 x 20@Z"]),
   "L5-7": H(["28 x 22@Z", "28 x 22@Z"]),
   "L6-1": H(["25 x 30@Z", "25 x 30@Z"]),
-  "L6-2": H(["30 x 22@Z", "30 x 22@Z"]),
+  "L6-2": H(["25 x 20@Z", "25 x 20@Z"]),
   "L1-5": S31("20 x 16@3+1 gegen 3 – Ball halten, der Torwart ist die Rettung", HALB),
   "L2-5": S31("20 x 16@Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor", "12 x 20@3 gegen 2 plus Torwart – Jäger und zwei Flitzer"),
   "L3-4": S31("12 x 20@2 gegen 1 plus Torwart – der Flitzer macht es breit", HALB),
@@ -83,7 +84,7 @@ const HALLE = {
   "L5-8": H(["20 x 24@Joker-Duell – anbieten und freilaufen", "20 x 24@Joker-Duell – anbieten und freilaufen"]),
   "Sonder": H(["40 x 25@Technik-Parcours – acht Stationen, freie Wahl, Laufzettel"])
 };
-const HALLE_MASS = [27, 45];
+const HALLE_MASS = [27, 45], KADER = 14;
 
 /* Passen die Rechtecke (je Ausrichtung frei) in W x Hh? Guillotine-Schnitte, für bis zu vier Felder vollständig. */
 function passt(rects, W, Hh) {
@@ -103,7 +104,7 @@ function passt(rects, W, Hh) {
 }
 
 module.exports = async function (h) {
-  const titel = "v883 Vorlagen-Qualität: offen ohne Regel, Coaching als Frage, Folge, Halle, 4gg2, Ü32";
+  const titel = "v882 Vorlagen-Qualität: offen ohne Regel, Coaching als Frage, Folge, Halle, 4gg2, Ü32";
   const probleme = [], zeilen = [];
   const lies = f => JSON.parse(fs.readFileSync(path.join(h.REPO, f), "utf8"));
   const vor = lies("uebungen/vorlagen.json"), bib = lies("uebungen/bibliothek.json");
@@ -220,7 +221,7 @@ module.exports = async function (h) {
   V.forEach(v => {
     const k = kurz(v);
     if (!(k in HALLE)) { dFehler.push(`${k}: fehlt in der Halle-Tabelle`); return; }
-    const keys = Object.keys(v.skalierung || {}).map(Number).sort((a, b) => a - b);
+    const keys = Object.keys(v.skalierung || {}).map(Number).filter(n => n <= KADER).sort((a, b) => a - b);
     const Z = (v.skalierung || {})[String(keys[keys.length - 1])] || "";
     const sets = HALLE[k];
     let ok = !!sets;

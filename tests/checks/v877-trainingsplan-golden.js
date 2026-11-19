@@ -117,7 +117,7 @@ const VOR = () => JSON.parse(fs.readFileSync(path.join(REPO, "uebungen/vorlagen.
 function testVorlagen() {
   const alle = VOR().vorlagen || [];
   const nach = k => alle.find(v => String(v.name || "").startsWith(k));
-  /* v883: Der Golden-Master hält den Code fest, nicht den Inhalt. Seit dem Beschluss vom 19.11. hat L4-8 eine offene Stufe
+  /* v882: Der Golden-Master hält den Code fest, nicht den Inhalt. Seit dem Beschluss vom 19.11. hat L4-8 eine offene Stufe
      statt des dritten Stationsdurchgangs – geprüft wird deshalb weiter die Fassung des Nachtrags (drei Durchgänge),
      mit Kinderziel und Folge der Datei wie bisher. */
   const l48ist = nach("L4-8"), l11 = nach("L1-1");

@@ -116,7 +116,7 @@ module.exports = async function (h) {
     out.karten = tb().querySelectorAll(".tb-einheit").length;
     out.ablauf = tb().querySelectorAll(".tb-einheit details").length;
     const waehlen = () => [...tb().querySelectorAll(".tb-einheit button")];
-    /* v883: Die Vorwahl folgt der neuen folge_nr – bei Leitfrage 4 stehen die drei vorgewählten jetzt an Stelle 3 bis 5,
+    /* v882: Die Vorwahl folgt der neuen folge_nr – bei Leitfrage 4 stehen die drei vorgewählten jetzt an Stelle 3 bis 5,
        vorher hinten. Damit „Wählen“ geprüft wird und nicht die Lage der Vorwahl, erst alles abwählen, dann drei wählen. */
     for (const b of waehlen().filter(b => b.getAttribute("aria-pressed") === "true")) { b.click(); await warte(60); }
     waehlen()[0]?.click(); await warte(80);

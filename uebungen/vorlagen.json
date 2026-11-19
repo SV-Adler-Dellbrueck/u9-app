@@ -238,7 +238,8 @@
       "ziel_kinder": "Heute traust du dich ins Duell und probierst deinen eigenen Trick.",
       "folge_nr": 1,
       "tags": [
-        "wenig-platz"
+        "wenig-platz",
+        "halle"
       ],
       "dauer_min": 75,
       "netto_spielform_min": 37,
@@ -528,7 +529,9 @@
       "leitfrage": "Wie mache ich ein Tor?",
       "ziel_kinder": "Heute spielst du vor dem Tor noch einmal quer – dann trifft dein Mitspieler leichter.",
       "folge_nr": 2,
-      "tags": [],
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -584,7 +587,8 @@
       "ziel_kinder": "Heute zählt jeder Schuss – auch der, der danebengeht.",
       "folge_nr": 1,
       "tags": [
-        "vor-spieltag"
+        "vor-spieltag",
+        "halle"
       ],
       "dauer_min": 75,
       "netto_spielform_min": 36,
@@ -640,7 +644,9 @@
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
       "ziel_kinder": "Heute schaust du vor dem Pass, wer frei ist.",
       "folge_nr": 1,
-      "tags": [],
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -757,7 +763,9 @@
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
       "ziel_kinder": "Heute bekommt jeder den Ball – wir suchen den, der ihn noch nicht hatte.",
       "folge_nr": 2,
-      "tags": [],
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -929,7 +937,8 @@
       "ziel_kinder": "Heute bleibt jeder auf seinem Platz in der Raute – auch wenn der Ball weit weg ist.",
       "folge_nr": 3,
       "tags": [
-        "vor-spieltag"
+        "vor-spieltag",
+        "halle"
       ],
       "dauer_min": 75,
       "netto_spielform_min": 36,
@@ -984,7 +993,9 @@
       "leitfrage": "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?",
       "ziel_kinder": "Heute bleibst du in deiner Bahn und rennst nicht alle zum Ball.",
       "folge_nr": 1,
-      "tags": [],
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -1096,7 +1107,9 @@
       "leitfrage": "Wie hole ich mir den Ball zurück?",
       "ziel_kinder": "Heute machen wir uns klein wie ein Igel – und sind danach sofort wieder Adler.",
       "folge_nr": 2,
-      "tags": [],
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {

@@ -82,16 +82,16 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 
 | # | Befund | Status |
 |---|---|---|
-| 5.1 | Skalierungszeilen gehen rechnerisch nicht auf (L5-2, L2-4, L1-3, L2-1) oder widersprechen der Übung | teils ✅ v839: L5-2/8, L2-4/12, L1-3/8 berichtigt; Feldmaße gegen die Übungen offen |
+| 5.1 | Skalierungszeilen gehen rechnerisch nicht auf (L5-2, L2-4, L1-3, L2-1) oder widersprechen der Übung | ✅ v839: L5-2/8, L2-4/12, L1-3/8 berichtigt; ✅ v882: Feldmaße – weniger Wartende, mehr kleinere Felder (L1-1/8, L6-1/8 und /12, L4-1/8, /10, /14, L2-1/14), nur Maße aus derselben Vorlage (Charles 19.11.) |
 | 5.2 | „Warm up Adler“ (Reihenprogramm, 15 Minuten) steht im 8-Minuten-Block von 38 Vorlagen | bleibt so (Charles 17.11.: das Einlaufprogramm wird nicht getauscht) |
 | 5.3 | Sechs Vorlagen sind 34 Minuten Übungsform; drei davon sind die Schlechtwetter-Vorlagen; Blocktyp zählt sie als Spielzeit | teils ✅ v847: L1-4, L2-3, L4-4 mit Stufe 1 und 2 als Übungsform, 21 statt 32 Minuten Spielform (Charles 17.11.); ✅ v866: L3-1 ebenso (Charles 18.11., 36 → 21 Min), L6-2 war eine falsche Einordnung von „Igel-Pressing-Kreis“ (jetzt Spielform), die Sondereinheit Technik-Parcours bleibt bewusst Übungsform |
-| 5.4 | Stationen-Vorlagen ohne freie Stufe, höchste Erklärlast (L6-5, „3+1 gegen FUNiño“) | ⬜ |
+| 5.4 | Stationen-Vorlagen ohne freie Stufe, höchste Erklärlast (L6-5, „3+1 gegen FUNiño“) | ✅ v882 (Charles 19.11.): jede Stationen-Vorlage endet mit einer offenen Stufe ohne Zusatzregel – L6-5 Hauptteil 3 und Turnier ohne neue Regel, L4-8 offene Stufe statt drittem Durchgang, L5-6 im Wortlaut; L5-8 bleibt in der Struktur (offene Stufe in beiden Stationen) |
 | 5.5 | Regeln, die Kinder nicht selbst prüfen können; Kontaktbegrenzung in L4-1/L4-4 | ✅ v869 (Charles 18.11.): Pässe laut zählen (L4-1), Tausch bei Ballberührung (L4-4) |
-| 5.6 | Folge-Nummer ist Entstehungsreihenfolge, keine Progression | ⬜ |
-| 5.7 | Halle und Schlechtwetter dünn; keine Zeilen für 6, 10, 14 Kinder | ✅ v870 (Charles 18.11.): 58 Zeilen in 20 Vorlagen; Halle offen |
+| 5.6 | Folge-Nummer ist Entstehungsreihenfolge, keine Progression | ✅ v882 (Charles 19.11.): folge_nr je Leitfrage als Progression – Ein-Feld-Formen, Stationen, Kombinationen, Übungsform-Einheiten, Lehrgänge; Namen bleiben |
+| 5.7 | Halle und Schlechtwetter dünn; keine Zeilen für 6, 10, 14 Kinder | ✅ v870 (Charles 18.11.): 58 Zeilen in 20 Vorlagen; ✅ v882 Halle: Tag „halle“ nach Normhalle 27 x 45 m mit der Zeile für 14 Kinder (Charles 19.11.) |
 | 5.8 | Material je Einheit steht nirgends als Liste | ✅ v867 (Charles 18.11.): „🎒 Mitnehmen“ aus den Skizzen gezählt, eigene Angabe möglich |
 | 5.9 | Rund 14 Fast-Dubletten „3 gegen 3 auf vier Minitore“ | ✅ 18.11. nachgeprüft: 19 Übungen, davon 15 gewollte Varianten; die zwei echten Paare – „Pflichtpass-Funino“ und „Dreiecksduell 3gg3“ (data.js) – im Archiv (team_config.uebung_archiv, Charles 18.11.); L4-3 und alte Pläne behalten die Übung |
-| 5.10 | Datenqualität: Spielerzahl, Feld ohne Maß, Coaching im Befehlston, sehr lange Abläufe | ⬜ |
+| 5.10 | Datenqualität: Spielerzahl, Feld ohne Maß, Coaching im Befehlston, sehr lange Abläufe | teils ✅ v882: Coaching der 20 Grundübungen als Frage oder Lob, „4gg2 Ballbesitz“ wie L4-1, Abläufe der L5-8-Übungen gekürzt, Ü32-Form ins Archiv (Datenbank); offen: lange Abläufe, Feld- und Spielerformate |
 | 5.11 | Kein Zeitpuffer für Umbau und Trinken | ✅ v868: nachgeprüft – 37 Vorlagen lassen 5 Min. in 75; die Zeile nennt sie jetzt Puffer und warnt unter 3 Min.; Ziel-Dauer folgt dem Termin (vorher immer 75, auch bei 90-Minuten-Trainings) |
 
 Paket 5 betrifft Inhalte, die bisher über Auftragspakete aus dem Projekt-Chat entstehen. Änderungen an

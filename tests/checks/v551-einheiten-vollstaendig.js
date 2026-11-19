@@ -12,7 +12,7 @@
 
    Fälle:
    a) Zwanzig Einheiten, je Leitfrage so viele wie das Konzept vorsieht, folge_nr
-      lückenlos ab 1 – seit v883 über alle Einheiten der Leitfrage in der beschlossenen Folge.
+      lückenlos ab 1 – seit v882 über alle Einheiten der Leitfrage in der beschlossenen Folge.
    b) Die sechs Leitfragen stehen wörtlich im Konzept – nicht sinngemäß.
    c) Die echte Datei läuft ohne Fehler durch `_evPruefung`: jede genannte Übung gibt es,
       und ihre Kategorie passt zur Phase (kein Aufwärm-, Torwart- oder Einzeltraining im
@@ -44,7 +44,7 @@ const BESTAND = ["L1-1", "L2-1", "L3-1", "L4-1", "L4-2", "L5-1", "L6-1"];
 const ZUSATZ = ["L4-5", "L4-6", "L5-4", "L6-3", "L4-7", "L5-5", "L6-4", "L5-6", "L6-5", "L4-8", "L1-5", "L1-6", "L2-5", "L2-6", "L3-4", "L3-5", "L5-7", "L5-8"];   // v700: L5-7 Endzone und Fähnchen · v790: L5-8 Anbieten (Käfig, zwei Stationen)
 /* v569: Der Kader hat höchstens 14 Kinder. Die neun Einheiten für 3+1 und FUNiño skalieren
    deshalb über 8/10/12/14; die zwanzig des Konzepts und L4-5 bleiben bei 8/12/16 (§9). */
-/* v883: die beschlossene Folge je Leitfrage (Charles 19.11.) – Ein-Feld-Formen nach Gegnerdruck, Stationen
+/* v882: die beschlossene Folge je Leitfrage (Charles 19.11.) – Ein-Feld-Formen nach Gegnerdruck, Stationen
    (1 gegen 1 → FUNiño → 3+1), Kombinationen, Übungsform-Einheiten, Lehrgänge. */
 const FOLGE_V883 = {
   L1: ["L1-3", "L1-1", "L1-2", "L1-6", "L1-5", "L1-4"],
@@ -77,8 +77,8 @@ module.exports = async function (h) {
   Object.keys(SOLL).forEach(f => {
     const g = je[f] || [];
     if (g.length !== SOLL[f]) { probleme.push(`„${f}“: ${g.length} Einheiten statt ${SOLL[f]}`); return; }
-    /* v883 (Charles 19.11.): folge_nr ist die Progression ALLER Einheiten der Leitfrage – erst Ein-Feld-Formen,
-       dann Stationen, dann Kombinationen, Übungsform-Einheiten und Lehrgänge am Ende (Regel in v883 c). Die
+    /* v882 (Charles 19.11.): folge_nr ist die Progression ALLER Einheiten der Leitfrage – erst Ein-Feld-Formen,
+       dann Stationen, dann Kombinationen, Übungsform-Einheiten und Lehrgänge am Ende (Regel in v882 c). Die
        zwanzig stehen seitdem zwischen den Zusatz-Einheiten; erwartet wird die beschlossene Folge, lückenlos ab 1. */
     const ganz = (vor.vorlagen || []).filter(v => v.leitfrage === f && Number(v.folge_nr) > 0).sort((a, b) => a.folge_nr - b.folge_nr);
     const nrn = ganz.map(v => Number(v.folge_nr));

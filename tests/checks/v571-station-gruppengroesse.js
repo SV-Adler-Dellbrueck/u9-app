@@ -47,7 +47,7 @@ module.exports = async function (h) {
   const custom = (bib.uebungen || []).map((u, i) => ({ ...u, id: 6000 + i, custom: true }));
   const rows = (vor.vorlagen || []).map((v, i) => ({ ...v, id: 500 + i }));
 
-  /* v883: L4-8 hat seit dem Beschluss vom 19.11. zwei Stationsdurchgänge und dann eine offene Stufe (geprüft in v568 9).
+  /* v882: L4-8 hat seit dem Beschluss vom 19.11. zwei Stationsdurchgänge und dann eine offene Stufe (geprüft in v568 9).
      Diese Prüfung gilt der Mechanik dreier Stationen über drei Hauptteile – sie nimmt deshalb die Fassung des Nachtrags
      (drei Durchgänge) als Prüfstück; Name, Kinderziel und id bleiben die der Datei. */
   const l48alt = JSON.parse(fs.readFileSync(path.join(h.REPO, "doku/auftrag-aufstellungen-3plus1-funino/vorlagen-nachtrag-kombi.json"), "utf8")).vorlagen.find(v => /^L4-8 /.test(v.name));

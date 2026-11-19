@@ -82,7 +82,7 @@ module.exports = async function (h) {
     if (!x.knopf) probleme.push(`c) „${x.frage}“: „Block erfassen“ gesperrt trotz Vorwahl`);
   });
   const l1 = r.c.find(x => /Ball, wenn einer kommt/.test(x.frage)) || { wahl: [] };
-  /* v883: folge_nr als Progression (Charles 19.11.) – die Saisonformate bleiben vorgewählt, dazu jetzt L1-3 (Folge 1) statt L1-1 */
+  /* v882: folge_nr als Progression (Charles 19.11.) – die Saisonformate bleiben vorgewählt, dazu jetzt L1-3 (Folge 1) statt L1-1 */
   if (l1.wahl.map(n => n.slice(0, 4)).join(",") !== "L1-3,L1-6,L1-5") probleme.push(`c) L1 vorgewählt: ${l1.wahl.join(", ")}`);
   if (!/^L1-5 /.test(r.d.wahl[0] || "") || r.d.wahl.length !== 3) probleme.push(`d) Vorwahl bei nur einer: ${r.d.wahl.join(", ")}`);
   if (!/nur eine Einheit/.test(r.d.hinweis)) probleme.push(`d) Hinweis: „${r.d.hinweis.replace(/<[^>]+>/g, "")}“`);
