@@ -679,12 +679,12 @@ function elternGespraechOpen(){
   const m=document.createElement("div");m.id="eg-modal";
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10041;display:flex;align-items:center;justify-content:center;padding:16px";
   m.onclick=e=>{if(e.target===m)m.remove();};
-  const kidSel=(kids.length>1)?`<label style="font-size:var(--s-klein);color:#64748b;display:block;margin-bottom:8px">Um welches Kind geht es?<select id="eg-kid" style="width:100%;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-karte);margin-top:2px">${kids.map(k=>`<option value="${k.spieler_id}">${esc((k.kader&&k.kader.name)||"Kind")}</option>`).join("")}</select></label>`:"";
-  m.innerHTML=`<div style="background:#fff;color:#1a1a2e;max-width:380px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
+  const kidSel=(kids.length>1)?`<label style="font-size:var(--s-klein);color:var(--text3);display:block;margin-bottom:8px">Um welches Kind geht es?<select id="eg-kid" style="width:100%;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-karte);margin-top:2px">${kids.map(k=>`<option value="${k.spieler_id}">${esc((k.kader&&k.kader.name)||"Kind")}</option>`).join("")}</select></label>`:"";
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);max-width:380px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
     ${mdlHead("eg-modal","🗣️","Elterngespräch anfragen","","#475569")}
-    <div style="font-size:var(--s-text);color:#64748b;margin-bottom:12px">Der Trainer bekommt deinen Wunsch und meldet sich zur Terminabstimmung.</div>
+    <div style="font-size:var(--s-text);color:var(--text3);margin-bottom:12px">Der Trainer bekommt deinen Wunsch und meldet sich zur Terminabstimmung.</div>
     ${kidSel}
-    <label style="font-size:var(--s-klein);color:#64748b">Worum geht es? (optional)<textarea id="eg-thema" rows="3" placeholder="z. B. Entwicklung, Position, eine Frage …" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-karte);margin-top:2px;resize:vertical"></textarea></label>
+    <label style="font-size:var(--s-klein);color:var(--text3)">Worum geht es? (optional)<textarea id="eg-thema" rows="3" placeholder="z. B. Entwicklung, Position, eine Frage …" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-karte);margin-top:2px;resize:vertical"></textarea></label>
     <div style="display:flex;gap:8px;margin-top:12px">
       <button class="btn btn-p" onclick="elternGespraechSave(this)" style="flex:1;min-height:44px;font-size:var(--s-karte);justify-content:center">Anfrage senden</button>
       <button class="btn" onclick="document.getElementById('eg-modal').remove()" style="min-height:44px;font-size:var(--s-karte);justify-content:center">Abbrechen</button>
@@ -1448,21 +1448,21 @@ async function elternLoeschenOpen(){
   const kinderHtml=kids.map(k=>{
     const name=esc((k.kader&&k.kader.name)||"Kind");
     const offen=antraege.find(a=>Number(a.spieler_id)===Number(k.spieler_id)&&!a.erledigt_am);
-    return `<div style="border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;margin-bottom:8px">
+    return `<div style="border:var(--border);border-radius:12px;padding:10px 12px;margin-bottom:8px">
       <div style="font-weight:700;font-size:var(--s-text)">${name}</div>
-      ${offen?`<div role="status" style="font-size:var(--s-klein);color:#475569;margin-top:4px">✓ Löschantrag gestellt am ${new Date(offen.erstellt_am).toLocaleDateString("de-DE")} – das Trainerteam erledigt ihn.</div>`
+      ${offen?`<div role="status" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">✓ Löschantrag gestellt am ${new Date(offen.erstellt_am).toLocaleDateString("de-DE")} – das Trainerteam erledigt ihn.</div>`
         :`<button class="btn btn-d" onclick="elternLoeschantrag(${Number(k.spieler_id)},this)" style="${knopf};margin-top:8px">Daten von ${name} löschen lassen</button>`}
     </div>`;}).join("");
-  m.innerHTML=`<div style="background:#fff;color:#1a1a2e;max-width:420px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4);margin:auto">
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);max-width:420px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4);margin:auto">
     ${mdlHead("el-loeschen-modal","🗑️","Daten löschen","","#b91c1c")}
     <div style="font-weight:800;font-size:var(--s-karte);margin:4px 0 4px">Daten eures Kindes</div>
-    <div style="font-size:var(--s-klein);color:#475569;line-height:1.5;margin-bottom:8px">Das Trainerteam löscht auf euren Antrag alles zu eurem Kind: Kaderplatz, Rückmeldungen, Freigaben, Notfallkarte, Kabine, Fotos, Einschätzungen. In Spielberichten und Plänen steht danach „Ehemaliges Kind“. Sicherungskopien überschreiben sich binnen zehn Wochen.</div>
-    ${kinderHtml||'<div style="font-size:var(--s-klein);color:#475569">Mit diesem Konto ist kein Kind verknüpft.</div>'}
+    <div style="font-size:var(--s-klein);color:var(--text2);line-height:1.5;margin-bottom:8px">Das Trainerteam löscht auf euren Antrag alles zu eurem Kind: Kaderplatz, Rückmeldungen, Freigaben, Notfallkarte, Kabine, Fotos, Einschätzungen. In Spielberichten und Plänen steht danach „Ehemaliges Kind“. Sicherungskopien überschreiben sich binnen zehn Wochen.</div>
+    ${kinderHtml||'<div style="font-size:var(--s-klein);color:var(--text2)">Mit diesem Konto ist kein Kind verknüpft.</div>'}
     <div style="font-weight:800;font-size:var(--s-karte);margin:14px 0 4px">Mein Konto</div>
-    <div style="font-size:var(--s-klein);color:#475569;line-height:1.5;margin-bottom:8px">Sofort und endgültig: Anmeldung, Benachrichtigungen, Einwilligungen, Helferdienste, Stimmungsbilder und die Verknüpfung zu euren Kindern. Die Daten der Kinder bleiben – dafür ist der Antrag oben da.</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);line-height:1.5;margin-bottom:8px">Sofort und endgültig: Anmeldung, Benachrichtigungen, Einwilligungen, Helferdienste, Stimmungsbilder und die Verknüpfung zu euren Kindern. Die Daten der Kinder bleiben – dafür ist der Antrag oben da.</div>
     <label style="display:flex;gap:10px;align-items:flex-start;font-size:var(--s-text);min-height:44px;cursor:pointer"><input type="checkbox" id="el-konto-ok" style="width:22px;height:22px;flex:none;margin-top:1px" onchange="document.getElementById('el-konto-los').disabled=!this.checked">Ich habe verstanden, dass mein Konto nicht wiederhergestellt werden kann.</label>
     <button id="el-konto-los" class="btn btn-d" disabled onclick="elternKontoLoeschen(this)" style="${knopf};margin-top:8px">Mein Konto endgültig löschen</button>
-    <div id="el-loeschen-stand" role="status" aria-live="polite" style="font-size:var(--s-klein);color:#475569;margin-top:8px;min-height:1em"></div>
+    <div id="el-loeschen-stand" role="status" aria-live="polite" style="font-size:var(--s-klein);color:var(--text2);margin-top:8px;min-height:1em"></div>
     <button class="btn" onclick="document.getElementById('el-loeschen-modal').remove()" style="${knopf};margin-top:6px">Schließen</button>
   </div>`;
   if(neu)document.body.appendChild(m);

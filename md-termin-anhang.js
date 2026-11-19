@@ -66,7 +66,7 @@ async function taAnzahlLaden(ids) {
 function taChip(terminId, klickbar) {
   const t = (window._taAnz || {})[terminId]; if (!t || !t.length) return "";
   const txt = `📎 ${esc(t[0])}${t.length > 1 ? ` · +${t.length - 1}` : ""}`;
-  if (!klickbar) return `<span class="ta-chip" style="display:block;font-size:var(--s-klein);font-weight:700;color:#475569;margin-top:3px">${txt}</span>`;
+  if (!klickbar) return `<span class="ta-chip" style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2);margin-top:3px">${txt}</span>`;
   return `<button type="button" class="ta-chip btn btn-sm" onclick="terminDetailOpen(${Number(terminId)})" aria-label="Anhang ansehen: ${esc(t[0])}" style="display:flex;align-items:center;gap:6px;min-height:44px;margin-top:4px;font-size:var(--s-text)">${txt}<span aria-hidden="true">›</span></button>`;
 }
 async function taBlob(pfad) {
@@ -96,16 +96,16 @@ async function taEltern(terminId) {
   if (!document.getElementById("td-anhang")) return;     // Fenster schon zu
   if (!liste || !liste.length) { box.innerHTML = ""; return; }
   window._taAnz = window._taAnz || {}; window._taAnz[terminId] = liste.map(a => a.titel);
-  box.innerHTML = `<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
+  box.innerHTML = `<div style="border-top:var(--border);margin-top:12px;padding-top:10px">
     <div style="font-weight:700;font-size:var(--s-text);margin-bottom:6px">📎 ${liste.length === 1 ? esc(liste[0].titel) : "Anhänge zum Termin"}</div>
     ${liste.map(a => /^image\//.test(a.mime)
-      ? `<div style="margin-bottom:8px">${liste.length > 1 ? `<div style="font-size:var(--s-klein);color:#475569;margin-bottom:2px">${esc(a.titel)}</div>` : ""}
-          <button type="button" onclick="taOeffnen('${esc(a.pfad)}','${esc(a.mime)}','${esc(a.titel).replace(/'/g, "")}')" aria-label="${esc(a.titel)} groß ansehen" style="display:block;width:100%;padding:0;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc;cursor:pointer;overflow:hidden">
+      ? `<div style="margin-bottom:8px">${liste.length > 1 ? `<div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:2px">${esc(a.titel)}</div>` : ""}
+          <button type="button" onclick="taOeffnen('${esc(a.pfad)}','${esc(a.mime)}','${esc(a.titel).replace(/'/g, "")}')" aria-label="${esc(a.titel)} groß ansehen" style="display:block;width:100%;padding:0;border:var(--border-s);border-radius:12px;background:var(--surface2);cursor:pointer;overflow:hidden">
             <img data-ta-pfad="${esc(a.pfad)}" alt="${esc(a.titel)}" style="display:block;width:100%;max-height:260px;min-height:120px;object-fit:contain"></button>
-          <div style="font-size:var(--s-klein);color:#475569;margin-top:2px">Antippen zum Vergrößern</div></div>`
+          <div style="font-size:var(--s-klein);color:var(--text2);margin-top:2px">Antippen zum Vergrößern</div></div>`
       : `<button class="btn btn-zeile" type="button" onclick="taOeffnen('${esc(a.pfad)}','${esc(a.mime)}','${esc(a.name).replace(/'/g, "")}')" aria-label="PDF öffnen: ${esc(a.titel)}" style="display:flex;align-items:center;gap:10px;width:100%;min-height:56px;margin-bottom:8px;text-align:left">
           <span aria-hidden="true" style="font-size:var(--s-teil)">📄</span>
-          <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-text);font-weight:800">${esc(a.titel)}</span><span style="display:block;font-size:var(--s-klein);color:#475569">PDF · ${taGroesse(a.groesse)} · antippen zum Öffnen</span></span></button>`).join("")}
+          <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-text);font-weight:800">${esc(a.titel)}</span><span style="display:block;font-size:var(--s-klein);color:var(--text2)">PDF · ${taGroesse(a.groesse)} · antippen zum Öffnen</span></span></button>`).join("")}
   </div>`;
   box.querySelectorAll("img[data-ta-pfad]").forEach(async img => { const u = await taBlob(img.dataset.taPfad); if (u && img.isConnected) img.src = u; });
 }

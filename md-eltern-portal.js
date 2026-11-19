@@ -339,14 +339,14 @@ function elternPasswortOpen(){
   m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Passwort festlegen");
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10040;display:flex;align-items:center;justify-content:center;padding:16px";
   m.onclick=e=>{if(e.target===m)m.remove();};
-  m.innerHTML=`<form onsubmit="event.preventDefault();elternPasswortSpeichern()" style="background:#fff;color:#1a1a2e;border-radius:16px;padding:20px;max-width:360px;width:100%">
+  m.innerHTML=`<form onsubmit="event.preventDefault();elternPasswortSpeichern()" style="background:var(--surface);color:var(--text);border-radius:16px;padding:20px;max-width:360px;width:100%">
     <div style="font-size:var(--s-karte);font-weight:800;margin-bottom:4px">🔑 Passwort festlegen</div>
-    <div style="font-size:var(--s-text);color:#475569;margin-bottom:10px">Danach kannst du dich mit E-Mail und Passwort anmelden – auch auf einem zweiten Gerät.</div>
-    <label for="ep-neu1" style="font-size:var(--s-text);color:#475569">Neues Passwort (${pwRegelText()})</label>
+    <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:10px">Danach kannst du dich mit E-Mail und Passwort anmelden – auch auf einem zweiten Gerät.</div>
+    <label for="ep-neu1" style="font-size:var(--s-text);color:var(--text2)">Neues Passwort (${pwRegelText()})</label>
     <input id="ep-neu1" type="password" autocomplete="new-password" minlength="10" style="${EP_FELD}">
-    <label for="ep-neu2" style="font-size:var(--s-text);color:#475569">Wiederholen</label>
+    <label for="ep-neu2" style="font-size:var(--s-text);color:var(--text2)">Wiederholen</label>
     <input id="ep-neu2" type="password" autocomplete="new-password" minlength="10" style="${EP_FELD}">
-    <div id="ep-neu-err" role="alert" style="font-size:var(--s-text);color:#b91c1c;min-height:16px;margin-bottom:6px"></div>
+    <div id="ep-neu-err" role="alert" style="font-size:var(--s-text);color:var(--red);min-height:16px;margin-bottom:6px"></div>
     <button id="ep-neu-ok" type="submit" class="btn btn-p" style="${EP_KNOPF}">Speichern</button>
     <button type="button" onclick="document.getElementById('ep-pw-modal').remove()" class="btn btn-link" style="${EP_LINK}">Abbrechen</button>
   </form>`;
@@ -383,15 +383,15 @@ function elternKontoOpen(){
   m.onclick=e=>{if(e.target===m)m.remove();};
   let mail="";
   try{const se=(typeof sbSession==="function")?sbSession():null;const pl=se&&se.access_token?JSON.parse(atob(se.access_token.split(".")[1].replace(/-/g,"+").replace(/_/g,"/"))):null;mail=(pl&&pl.email)||"";}catch(e){}
-  const abschn=t=>`<div style="font-size:var(--s-klein);font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.04em;margin:14px 0 6px">${t}</div>`;
-  const zeile=(id,emo,t,d,onclick)=>`<button type="button" id="${id}" onclick="${onclick}" class="btn btn-zeile" style="margin-bottom:8px"><span aria-hidden="true" style="font-size:var(--s-teil);line-height:1">${emo}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-text);font-weight:700">${t}</span><span style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:1px">${d}</span></span><span aria-hidden="true" style="font-size:var(--s-karte);color:#64748b">›</span></button>`;
-  m.innerHTML=`<div style="background:#fff;color:#1a1a2e;border-radius:16px;padding:16px;max-width:440px;width:100%;margin:auto 0">
+  const abschn=t=>`<div style="font-size:var(--s-klein);font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;margin:14px 0 6px">${t}</div>`;
+  const zeile=(id,emo,t,d,onclick)=>`<button type="button" id="${id}" onclick="${onclick}" class="btn btn-zeile" style="margin-bottom:8px"><span aria-hidden="true" style="font-size:var(--s-teil);line-height:1">${emo}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-text);font-weight:700">${t}</span><span style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:1px">${d}</span></span><span aria-hidden="true" style="font-size:var(--s-karte);color:var(--text3)">›</span></button>`;
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:440px;width:100%;margin:auto 0">
     ${mdlHead("ep-konto-modal","⚙️","Mein Konto",mail?esc(mail):"Angaben, Benachrichtigungen und deine Daten","#1e3a8a")}
     ${abschn("Über mich")}
     ${zeile("konto-angaben","👤","Meine Angaben","Name, Handy, Geburtstag – und der Geburtstag deines Kindes","elternAngabenOpen()")}
     ${zeile("konto-passwort","🔑","Passwort ändern","Für die Anmeldung mit E-Mail und Passwort","elternPasswortOpen()")}
     ${abschn("Benachrichtigungen")}
-    <div style="font-size:var(--s-text);color:#64748b;margin-bottom:6px">Erinnerungen an Termine, offene Rückmeldungen und Neuigkeiten direkt aufs Handy.</div>
+    <div style="font-size:var(--s-text);color:var(--text3);margin-bottom:6px">Erinnerungen an Termine, offene Rückmeldungen und Neuigkeiten direkt aufs Handy.</div>
     <div id="push-slot-eltern"></div>
     ${abschn("Meine Daten")}
     ${zeile("konto-export","💾","Meine Daten herunterladen","Alles zu deinem Konto und deinen Kindern als Datei (JSON) – ohne Einschätzungen des Trainerteams","elternDataExport(this)")}
@@ -790,7 +790,7 @@ async function chronikOpen(){
   const m=document.createElement("div");m.id="chronik-modal";
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10050;display:flex;align-items:flex-start;justify-content:center;padding:14px;overflow-y:auto";
   m.onclick=e=>{if(e.target===m)m.remove();};
-  m.innerHTML=`<div id="chronik-card" style="background:#fff;color:#1a1a2e;border-radius:16px;padding:18px;max-width:520px;width:100%;margin:auto">
+  m.innerHTML=`<div id="chronik-card" style="background:var(--surface);color:var(--text);border-radius:16px;padding:18px;max-width:520px;width:100%;margin:auto">
     ${mdlHead("chronik-modal","📖","Unsere Saison","Spiele, Feste und Meilensteine – die Chronik der jungen Adler","#1e3a8a")}
     <div id="chronik-body" style="text-align:center;padding:24px;color:var(--text3);font-size:var(--s-text)">Lade die Saison …</div>
   </div>`;
@@ -826,14 +826,14 @@ async function chronikOpen(){
       const t=e.t, istSpiel=t.typ!=="event";
       const icon=t.typ==="turnier"?"🏆":t.typ==="event"?"🎉":"⚽";
       const erg=(t.ergebnis||"").trim();
-      html+=`<div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid ${istSpiel?"#1e3a8a":"#f59e0b"};border-radius:12px;padding:10px 13px;margin-bottom:8px;text-align:left">
+      html+=`<div style="background:var(--surface);border:var(--border);border-left:4px solid ${istSpiel?"#1e3a8a":"#f59e0b"};border-radius:12px;padding:10px 13px;margin-bottom:8px;text-align:left">
         <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:var(--s-teil)">${icon}</span>
-          <span style="flex:1;min-width:0;font-size:var(--s-text);font-weight:800;color:#0f172a">${esc(t.titel||t.gegner||(istSpiel?"Spiel":"Event"))}${t.heim===true?' <span style="font-size:var(--s-klein);font-weight:800;color:#15803d">HEIM</span>':t.heim===false?' <span style="font-size:var(--s-klein);font-weight:800;color:#b45309">AUSW.</span>':""}</span>
+          <span style="flex:1;min-width:0;font-size:var(--s-text);font-weight:800;color:var(--text)">${esc(t.titel||t.gegner||(istSpiel?"Spiel":"Event"))}${t.heim===true?' <span style="font-size:var(--s-klein);font-weight:800;color:var(--green)">HEIM</span>':t.heim===false?' <span style="font-size:var(--s-klein);font-weight:800;color:var(--amber)">AUSW.</span>':""}</span>
           <span style="font-size:var(--s-klein);color:var(--text3)">${ds}</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
-          ${istSpiel?`<span style="font-size:var(--s-text);font-weight:900;color:${erg?"var(--text)":"var(--text3)"}">${erg?esc(erg):"– Ergebnis folgt –"}</span>`:'<span style="font-size:var(--s-klein);color:#64748b">Team-Event</span>'}
+          ${istSpiel?`<span style="font-size:var(--s-text);font-weight:900;color:${erg?"var(--text)":"var(--text3)"}">${erg?esc(erg):"– Ergebnis folgt –"}</span>`:'<span style="font-size:var(--s-klein);color:var(--text3)">Team-Event</span>'}
           <button onclick="galerieOpen(${Number(t.id)},'${(t.titel||t.gegner||"").replace(/'/g,"")}')" class="btn btn-sm" style="margin-left:auto">📸 Fotos</button>
         </div>
       </div>`;
@@ -907,9 +907,9 @@ function whatsNewOpen(){
   const m=document.createElement("div");m.id="wn-modal";
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10050;display:flex;align-items:center;justify-content:center;padding:16px";
   m.onclick=e=>{if(e.target===m)m.remove();};
-  m.innerHTML=`<div style="background:#fff;color:#1a1a2e;border-radius:16px;padding:18px;max-width:460px;width:100%">
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:18px;max-width:460px;width:100%">
     ${mdlHead("wn-modal","🆕",esc(ELTERN_WHATSNEW.titel),"Die wichtigsten Neuigkeiten auf einen Blick","#0284c7")}
-    ${ELTERN_WHATSNEW.punkte.map(p=>`<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid #f1f5f9;font-size:var(--s-text);color:#334155;line-height:1.5">${p}</div>`).join("")}
+    ${ELTERN_WHATSNEW.punkte.map(p=>`<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:var(--border);font-size:var(--s-text);color:var(--text);line-height:1.5">${p}</div>`).join("")}
     <button onclick="document.getElementById('wn-modal').remove()" class="btn" style="width:100%;justify-content:center;margin-top:14px">Super, danke!</button>
   </div>`;
   document.body.appendChild(m);
@@ -922,11 +922,11 @@ function datenschutzInfoOpen(){
   const m=document.createElement("div");m.id="dsi-modal";
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10050;display:flex;align-items:flex-start;justify-content:center;padding:14px;overflow-y:auto";
   m.onclick=e=>{if(e.target===m)m.remove();};
-  const punkt=(emo,t,d)=>`<div style="display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-top:1px solid #f1f5f9">
+  const punkt=(emo,t,d)=>`<div style="display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-top:var(--border)">
     <span style="font-size:var(--s-teil);line-height:1.2;flex:none">${emo}</span>
-    <span><span style="display:block;font-size:var(--s-text);font-weight:800;color:#0f172a">${t}</span>
-    <span style="display:block;font-size:var(--s-text);color:#475569;line-height:1.55;margin-top:2px">${d}</span></span></div>`;
-  m.innerHTML=`<div style="background:#fff;color:#1a1a2e;border-radius:16px;padding:18px;max-width:520px;width:100%;margin:auto">
+    <span><span style="display:block;font-size:var(--s-text);font-weight:800;color:var(--text)">${t}</span>
+    <span style="display:block;font-size:var(--s-text);color:var(--text2);line-height:1.55;margin-top:2px">${d}</span></span></div>`;
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:18px;max-width:520px;width:100%;margin:auto">
     ${mdlHead("dsi-modal","🛡️","So schützen wir eure Fotos &amp; Daten","Kurz &amp; ehrlich erklärt – für alle, die bei WhatsApp ein mulmiges Gefühl haben","#0f766e")}
     ${punkt("🔐","Geschlossener Team-Bereich","Alles hier ist nur mit Login sichtbar – ausschließlich für die Familien und das Trainerteam unserer U9. Öffentlich (Liveticker, Turnierseite, Stadionheft) erscheinen nur gekürzte Namen, und Fotos nur mit der Freigabe „öffentlich“.")}
     ${punkt("📸","Ihr entscheidet über jedes Bild","Für jedes Kind gibt es drei getrennte Freigaben (App-intern / Trainingsvideos / öffentlich) – jederzeit widerrufbar. Ohne euer Häkchen zeigt die App nur Initialen statt Foto. Beim Aushängen und Verteilen werden Nachnamen automatisch gekürzt („Max M.“).")}
@@ -1495,9 +1495,9 @@ function rsvpGrundFragen(status,pflicht,cfg){
     const fertig=v=>{ov.remove();res(v||null);};
     const abbruch=()=>{ov.remove();res(pflicht?false:null);};
     ov.onclick=e=>{if(e.target===ov)abbruch();};
-    ov.innerHTML=`<div style="background:#fff;color:#1a1a2e;width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))">
+    ov.innerHTML=`<div style="background:var(--surface);color:var(--text);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))">
       <div style="font-size:var(--s-karte);font-weight:800">${cfg.titel||(status==="krank"?"🤒 Kurzer Hinweis":"📝 Grund der Absage")}</div>
-      <div style="font-size:var(--s-text);color:#64748b;margin:3px 0 12px">${pflicht?(cfg.hinweis||"Der Termin beginnt in weniger als 24 Stunden – bitte nenne kurz den Grund. Ohne Grund lässt sich nicht absagen."):"Freiwillig – hilft dem Trainerteam beim Planen."}</div>
+      <div style="font-size:var(--s-text);color:var(--text3);margin:3px 0 12px">${pflicht?(cfg.hinweis||"Der Termin beginnt in weniger als 24 Stunden – bitte nenne kurz den Grund. Ohne Grund lässt sich nicht absagen."):"Freiwillig – hilft dem Trainerteam beim Planen."}</div>
       <div id="rg-chips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
         ${chips.map(c=>`<button data-c="${esc(c)}" class="btn btn-sm">${esc(c)}</button>`).join("")}
       </div>
@@ -1943,9 +1943,9 @@ async function terminDetailOpen(id){
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10040;display:flex;flex-direction:column;padding:14px;overflow-y:auto";
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
   const c=document.createElement("div");
-  c.style.cssText="background:#fff;color:#1a1a2e;max-width:460px;width:100%;margin:auto;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
+  c.style.cssText="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   const faelltAus=_elAbgesagt(t);   // v741
-  const rsvpRows=faelltAus?`<div style="font-size:var(--s-text);color:#991b1b;font-weight:700;margin-top:4px">Der Termin fällt aus – eine Rückmeldung braucht es nicht.</div>`:kids.map(k=>{
+  const rsvpRows=faelltAus?`<div style="font-size:var(--s-text);color:var(--red);font-weight:700;margin-top:4px">Der Termin fällt aus – eine Rückmeldung braucht es nicht.</div>`:kids.map(k=>{
     const kd=k.kader||{}, st=rsvp[k.spieler_id]||null;
     const btns=Object.keys(EP_RSVP).map(s=>{const on=st===s,cc=EP_RSVP[s];
       const act=on?`tdRsvp(${t.id},${k.spieler_id},null)`:`tdRsvp(${t.id},${k.spieler_id},'${s}')`;
@@ -1953,7 +1953,7 @@ async function terminDetailOpen(id){
     }).join("");
     return `<div style="margin-top:8px"><div style="font-size:var(--s-text);font-weight:700;margin-bottom:4px">${esc(kd.name||"Kind")}</div><div style="display:flex;gap:6px">${btns}</div></div>`;
   }).join("");
-  const infoRow=(icon,label,val)=> val?`<div style="display:flex;gap:8px;font-size:var(--s-text);padding:4px 0"><span style="width:20px">${icon}</span><span style="color:#64748b;min-width:72px">${label}</span><span style="flex:1;font-weight:600;min-width:0">${val}</span></div>`:"";
+  const infoRow=(icon,label,val)=> val?`<div style="display:flex;gap:8px;font-size:var(--s-text);padding:4px 0"><span style="width:20px">${icon}</span><span style="color:var(--text3);min-width:72px">${label}</span><span style="flex:1;font-weight:600;min-width:0">${val}</span></div>`:"";
   // Rohwerte aus dem Termin ("funino"/"4+1"/"5+1") sagen Eltern nichts - deshalb ausschreiben.
   const SF_KLARTEXT={funino:"FUNiño (3 gegen 3 auf 4 Minitore, ohne Torwart)","3+1":"3+1 (drei Feldspieler + Torwart)","4+1":"4+1 (vier Feldspieler + Torwart)","5+1":"5+1 (fünf Feldspieler + Torwart)"};
   /* v708: mehrere Formen (auswärts bietet der Gastgeber oft zwei an) – je Form eine Zeile. */
@@ -1964,16 +1964,16 @@ async function terminDetailOpen(id){
       <div style="font-size:var(--s-teil);font-weight:800;min-width:0">${m.icon} ${esc(t.titel||t.gegner||m.label)}</div>
       <button class="btn btn-sm" aria-label="Schließen" onclick="document.getElementById('td-modal').remove()" style="flex:none;min-width:44px;justify-content:center;font-size:var(--s-karte)">×</button>
     </div>
-    <div style="font-size:var(--s-text);color:#64748b;margin-bottom:10px">${d.toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})}${zeit?" · "+zeit:""}</div>
+    <div style="font-size:var(--s-text);color:var(--text3);margin-bottom:10px">${d.toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})}${zeit?" · "+zeit:""}</div>
     <div id="td-wetter" style="margin-bottom:6px"></div>
-    ${istSpiel?infoRow(t.heim===true?"🏠":t.heim===false?"✈️":"❓","Spielort", t.heim===true?"Heimspiel":t.heim===false?"Auswärtsspiel":'<span style="color:#b45309">Heim/Auswärts trägt der Trainer noch nach</span>'):""}
+    ${istSpiel?infoRow(t.heim===true?"🏠":t.heim===false?"✈️":"❓","Spielort", t.heim===true?"Heimspiel":t.heim===false?"Auswärtsspiel":'<span style="color:var(--amber)">Heim/Auswärts trägt der Trainer noch nach</span>'):""}
     ${infoRow("📍","Adresse", tdAdresse(t))}
     ${(t.ort||t.heim===true)?routeBtn(t.ort||VEREIN_ADRESSE,{block:true}):""}
     ${infoRow("🏟️","Platz", t.platz?esc(t.platz):"")}
     ${infoRow("⚽","Spielform", spielformLbl)}
     ${faelltAus&&typeof elternPlatzHinweisHtml==="function"?elternPlatzHinweisHtml(t):""}
     <div id="td-anhang"></div>
-    <div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
+    <div style="border-top:var(--border);margin-top:12px;padding-top:10px">
       <div style="font-weight:700;font-size:var(--s-text);margin-bottom:2px">✅ Rückmeldung</div>
       ${rsvpRows||'<div style="font-size:var(--s-text);color:var(--text3)">Kein Kind zugeordnet.</div>'}
     </div>
@@ -2531,13 +2531,13 @@ async function notfallOpen(spielerId,name){
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10050;display:flex;padding:14px;overflow-y:auto";
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
   const c=document.createElement("div");
-  c.style.cssText="background:#fff;color:#1a1a2e;max-width:480px;width:100%;margin:auto;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
+  c.style.cssText="background:var(--surface);color:var(--text);max-width:480px;width:100%;margin:auto;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   const field=f=>`<label style="display:block;font-size:var(--s-text);font-weight:700;margin-top:10px">${f.l}</label>`+
     (f.area?`<textarea id="nf-${f.k}" rows="2" placeholder="${f.ph}" style="width:100%;margin-top:3px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);box-sizing:border-box;resize:vertical">${esc(cur[f.k]||"")}</textarea>`
       :`<input id="nf-${f.k}" type="${f.tel?"tel":"text"}" placeholder="${f.ph}" value="${esc(cur[f.k]||"")}" style="width:100%;margin-top:3px;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);box-sizing:border-box">`);
   c.innerHTML=`
     ${mdlHead("nf-modal","🚑",`Notfallkarte · ${esc(name)}`,"","#dc2626")}
-    <div style="font-size:var(--s-klein);color:#64748b;margin-bottom:6px">Diese Angaben sieht ausschließlich das <b>Trainerteam</b> – schreibgeschützt, damit im Notfall am Platz alles griffbereit ist. Du kannst sie jederzeit ändern oder leeren.</div>
+    <div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:6px">Diese Angaben sieht ausschließlich das <b>Trainerteam</b> – schreibgeschützt, damit im Notfall am Platz alles griffbereit ist. Du kannst sie jederzeit ändern oder leeren.</div>
     ${NF_FIELDS.map(field).join("")}
     <label style="display:flex;gap:8px;align-items:flex-start;margin-top:14px;font-size:var(--s-text);background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px">
       <input id="nf-consent" type="checkbox" ${cur.einwilligung?"checked":""} style="margin-top:2px;width:18px;height:18px;flex:none">
@@ -2584,9 +2584,9 @@ function tdWasMussMit(t){
     :"Fußballschuhe (passend zum Platz)";
   const liste=["Schienbeinschoner",schuhe,"Trinkflasche mit Wasser (mit Namen)","Wetterfeste Kleidung – bei Kälte lange Sachen drunter"];
   if(t.typ==="turnier")liste.push("Etwas Kleines zu essen für die Pausen");
-  return `<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
+  return `<div style="border-top:var(--border);margin-top:12px;padding-top:10px">
     <div style="font-weight:700;font-size:var(--s-text);margin-bottom:4px">🎒 Was muss mit?</div>
-    <ul style="margin:0;padding-left:20px;font-size:var(--s-text);color:#334155;line-height:1.6">${liste.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+    <ul style="margin:0;padding-left:20px;font-size:var(--s-text);color:var(--text);line-height:1.6">${liste.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
     <button onclick="document.getElementById('td-modal').remove();if(typeof elternGespraechOpen==='function')elternGespraechOpen()" class="btn btn-link" style="margin-top:8px">Frage zum Termin? Trainerteam kontaktieren</button>
   </div>`;
 }
@@ -2620,18 +2620,18 @@ async function elternFotoConsentOpen(spielerId,name){
      nur der Ton ist einladend statt abschreckend. */
   const riskCol={gering:"#0f766e",mittel:"#1d4ed8",hoch:"#b45309"};
   const riskTxt={gering:"nur im Team",mittel:"nur fürs Trainerteam",hoch:"auch außerhalb der App"};
-  const row=s=>`<label style="display:flex;gap:10px;align-items:flex-start;padding:11px;border:1px solid #e2e8f0;border-radius:10px;margin-top:8px;cursor:pointer">
+  const row=s=>`<label style="display:flex;gap:10px;align-items:flex-start;padding:11px;border:var(--border);border-radius:10px;margin-top:8px;cursor:pointer">
     <input id="fc-${s.k}" type="checkbox" ${cur[s.k]?"checked":""} style="margin-top:2px;width:20px;height:20px;flex:none;accent-color:#7c3aed">
     <span style="flex:1">
       <span style="font-weight:700;font-size:var(--s-text)">${s.emo} ${s.t} <span style="font-size:var(--s-klein);font-weight:700;color:${riskCol[s.risk]}">· ${riskTxt[s.risk]}</span></span>
-      <span style="display:block;font-size:var(--s-klein);color:#64748b;margin-top:2px;line-height:1.5">${s.d}</span>
+      <span style="display:block;font-size:var(--s-klein);color:var(--text3);margin-top:2px;line-height:1.5">${s.d}</span>
     </span></label>`;
   const upd=cur.updated_at?`<div style="font-size:var(--s-klein);color:var(--text3);margin-top:10px">Zuletzt aktualisiert: ${new Date(cur.updated_at).toLocaleDateString("de-DE")}${cur.updated_by?" · "+esc(cur.updated_by):""}</div>`:"";
   const c=document.createElement("div");
-  c.style.cssText="background:#fff;color:#1a1a2e;max-width:500px;width:100%;margin:auto;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
+  c.style.cssText="background:var(--surface);color:var(--text);max-width:500px;width:100%;margin:auto;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`
     ${mdlHead("fc-modal","📸",`Foto- &amp; Video-Freigabe · ${esc(name)}`,"","#0d9488")}
-    <div style="font-size:var(--s-klein);color:#475569;line-height:1.6;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:11px;margin:8px 0 4px">${esc(txt)}</div>
+    <div style="font-size:var(--s-klein);color:var(--text2);line-height:1.6;background:var(--surface2);border:var(--border);border-radius:10px;padding:11px;margin:8px 0 4px">${esc(txt)}</div>
     ${FOTO_STUFEN.map(row).join("")}
     <div style="font-size:var(--s-klein);color:var(--text3);margin-top:10px;line-height:1.5">ℹ️ Bei <b>Gruppenfotos</b> zeigen wir dein Kind öffentlich nur, wenn <u>alle</u> abgebildeten Familien der Stufe „Öffentlich“ zugestimmt haben. Freiwillig &amp; jederzeit widerrufbar.</div>
     ${upd}
@@ -2782,7 +2782,7 @@ async function elternTermineOpen(){
   modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10030;display:flex;flex-direction:column;padding:14px;overflow-y:auto";
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
   const c=document.createElement("div");
-  c.style.cssText="background:#fff;color:#1a1a2e;max-width:440px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
+  c.style.cssText="background:var(--surface);color:var(--text);max-width:440px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`${mdlHead("et-modal","📅","Alle Termine","Ganze Saison · zu- und absagen · Kalender-Abo","#1e3a8a")}
     <div id="et-liste" style="max-height:60vh;overflow-y:auto">${elternTermineListeHtml(ELTERN_TERMINE||[])}</div>
     <button id="et-ics" class="btn" onclick="elternTermineIcs()" style="width:100%;justify-content:center;margin-top:12px">📥 Alle in meinen Kalender (einmalig)</button>
@@ -3097,8 +3097,8 @@ async function elternAngabenOpen(){
   const kids=window._elternKids||[];
   let mail="";
   try{const s=(typeof sbSession==="function")?sbSession():null;const pl=s&&s.access_token?JSON.parse(atob(s.access_token.split(".")[1].replace(/-/g,"+").replace(/_/g,"/"))):null;mail=(pl&&pl.email)||"";}catch(e){}
-  const feld="width:100%;min-height:48px;padding:10px 12px;margin:4px 0 12px;border:1px solid #94a3b8;border-radius:10px;box-sizing:border-box;font-family:inherit;font-size:var(--s-karte);background:#fff;color:#0f172a";
-  const lbl="font-size:var(--s-text);color:#334155;font-weight:600";
+  const feld="width:100%;min-height:48px;padding:10px 12px;margin:4px 0 12px;border:1px solid var(--rand-bedien);border-radius:10px;box-sizing:border-box;font-family:inherit;font-size:var(--s-karte);background:var(--surface);color:var(--text)";
+  const lbl="font-size:var(--s-text);color:var(--text);font-weight:600";
   const m=document.createElement("div");m.id="angaben-modal";
   m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Meine Angaben");
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10001;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
@@ -3106,9 +3106,9 @@ async function elternAngabenOpen(){
   const kindFelder=kids.map(k=>{const kd=k.kader||{};
     return `<label for="ang-kgeb-${k.spieler_id}" style="${lbl}">Geburtstag von ${esc(kd.name||"deinem Kind")}</label>
       <input id="ang-kgeb-${k.spieler_id}" type="date" data-alt="${esc(kd.geb||"")}" value="${esc(kd.geb||"")}" style="${feld}">`;}).join("");
-  m.innerHTML=`<div style="background:#fff;color:#0f172a;border-radius:16px;padding:18px;max-width:420px;width:100%;margin:auto">
+  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:18px;max-width:420px;width:100%;margin:auto">
     ${mdlHead("angaben-modal","👤","Meine Angaben","Für Rückfragen des Trainerteams und zum Gratulieren","#1e3a8a")}
-    <div style="font-size:var(--s-text);color:#334155;line-height:1.5;margin-bottom:12px">Das sieht nur das Trainerteam – keine anderen Eltern, nicht die Kinder, nichts davon wird veröffentlicht. Jedes Elternteil trägt seine eigenen Angaben ein.</div>
+    <div style="font-size:var(--s-text);color:var(--text);line-height:1.5;margin-bottom:12px">Das sieht nur das Trainerteam – keine anderen Eltern, nicht die Kinder, nichts davon wird veröffentlicht. Jedes Elternteil trägt seine eigenen Angaben ein.</div>
     <div style="display:flex;gap:10px">
       <div style="flex:1;min-width:0"><label for="ang-vor" style="${lbl}">Vorname</label><input id="ang-vor" autocomplete="given-name" maxlength="60" value="${esc(a.vorname||"")}" style="${feld}"></div>
       <div style="flex:1;min-width:0"><label for="ang-nach" style="${lbl}">Nachname</label><input id="ang-nach" autocomplete="family-name" maxlength="60" value="${esc(a.nachname||"")}" style="${feld}"></div>
@@ -3116,11 +3116,11 @@ async function elternAngabenOpen(){
     <label for="ang-handy" style="${lbl}">Handynummer</label>
     <input id="ang-handy" type="tel" inputmode="tel" autocomplete="tel" maxlength="25" placeholder="z. B. 0171 1234567" value="${esc(a.handy||"")}" style="${feld}">
     <label for="ang-mail" style="${lbl}">E-Mail</label>
-    <input id="ang-mail" type="email" value="${esc(mail)}" readonly aria-readonly="true" style="${feld};background:#f1f5f9;color:#334155">
+    <input id="ang-mail" type="email" value="${esc(mail)}" readonly aria-readonly="true" style="${feld};background:var(--surface2);color:var(--text)">
     <label for="ang-geb" style="${lbl}">Dein Geburtstag</label>
     <input id="ang-geb" type="date" value="${esc(a.geburtstag||"")}" style="${feld}">
     ${kindFelder}
-    <div id="ang-fehler" role="alert" style="font-size:var(--s-text);color:#b91c1c;min-height:18px;margin-bottom:6px"></div>
+    <div id="ang-fehler" role="alert" style="font-size:var(--s-text);color:var(--red);min-height:18px;margin-bottom:6px"></div>
     <button id="ang-save" class="btn btn-p" onclick="elternAngabenSave(this)" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte)">Angaben speichern</button>
     <button class="btn btn-link" onclick="document.getElementById('angaben-modal').remove()" style="width:100%;justify-content:center;margin-top:8px">Abbrechen</button>
   </div>`;

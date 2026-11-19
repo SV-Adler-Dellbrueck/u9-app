@@ -113,7 +113,9 @@ module.exports = async function (h) {
   // e) zweites Hochladen scheitert
   s.versagen = 2;
   await s.page.evaluate(() => { document.getElementById("rufe-text").value = "Bitte ausfüllen"; });
-  await s.page.click("#rufe-senden"); await s.page.waitForTimeout(800);
+  const toastsVor = await s.page.evaluate(() => window._toasts.length);
+  await s.page.click("#rufe-senden");
+  await s.page.waitForFunction(n => window._toasts.length > n, toastsVor, { timeout: 5000 }).catch(() => {});   // v880: auf die Meldung warten statt fester 800 ms
   const re = await s.page.evaluate(() => ({ text: document.getElementById("rufe-text").value, chips: document.querySelectorAll("#rufe-chips .rf-chip").length, toast: window._toasts.slice(-1)[0] || "" }));
   const speicherE = s.speicher.slice(); const sendenE = s.gesendet.filter(x => /rpc\/rufe_senden/.test(x.pfad)).length;
   // d) Senden klappt
