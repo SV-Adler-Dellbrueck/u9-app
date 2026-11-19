@@ -39,7 +39,7 @@ die aus einem echten Fehler entstanden ist — die Versionsnummer im Namen sagt,
 
 | Aufruf | Zweck |
 |---|---|
-| `h.starten({start, supabase, breite, hoehe, scheme, warten, speicherBehalten})` | Seite laden; gibt `{page, gesendet, fehler(), schliessen()}` |
+| `h.starten({start, supabase, breite, hoehe, scheme, warten, speicherBehalten, jetzt})` | Seite laden; gibt `{page, gesendet, fehler(), schliessen()}`. `jetzt` stellt die Uhr fest (`page.clock.setFixedTime`, Zeitgeber laufen weiter) |
 | `h.supabaseAttrappe({tabelle: zeilen \| (url, request) => zeilen})` | Antworten je Tabelle; alles andere `[]` |
 | `h.supabaseAttrappe({rpc: {name: antwort \| (url, request) => antwort}})` | Antworten je RPC (`/rest/v1/rpc/<name>`); ohne Eintrag `[]` |
 | `h.supabaseAttrappe({auth: {signup: antwort}})` | Antworten der Anmeldung (`/auth/v1/<name>`); ohne Eintrag `{}` |
@@ -91,6 +91,25 @@ Zwei Prüfungen werden rot, wenn ein Handgriff vergessen wurde – die Abhilfe s
 Filterknöpfe, Kacheln, Spielfeld und Skizze, Live-Vollbild). Gerendert hell und dunkel: Trainingsplan (gefüllt), Übungen,
 Trainingsturnier, Kader, Kinderprofil, Kontakte, Tagebuch, neuer Eintrag, Trainer-Meeting, Nest-Redaktion. Knöpfe auf
 einem Farbverlauf sind nicht messbar und werden genannt statt gewertet.
+
+## Golden-Master (Bestandsaufnahme 4.8, Schritt 1)
+
+`v877-trainingsplan-golden.js` schreibt fest, was der Trainingsplan an die Tabelle `trainingsplan` schickt – für zehn
+Abläufe (G1 Vorlage laden … G10 Block löschen und Rückgängig), Zeichen für Zeichen. Zweck: Die Umbauschritte 2–8 aus
+`doku/bestandsaufnahme-2026-11/plan-zustand.md` lösen den Zustand aus dem DOM und müssen dabei **genau dasselbe**
+speichern; dieser Prüffall ist ihre Abnahme.
+
+- **Sollwerte** liegen in `tests/golden/trainingsplan/G*.json` (nicht unter `checks/`, dort wird jede Datei geparst). Je
+  Ablauf die Schritte mit allen Nicht-GET an `trainingsplan` (Methode, Abfrage, Körper), wo nötig dazu eine DOM-Aufnahme.
+  Verglichen wird als Zeichenkette – die Schlüsselreihenfolge zählt. Normalisiert sind nur `updated_at`, `gespeichert_von`
+  und die Werte von `kette` (k1, k2 …). Die Uhr steht fest (`jetzt`), Math.random ist in der Seite geseedet.
+- **Fehlt eine Sollwert-Datei, ist der Lauf rot.** Neu schreiben:
+  `GOLDEN_SCHREIBEN=1 node tests/run.js v877-trainingsplan` – danach den Unterschied mit `git diff tests/golden` lesen.
+- **Wann ein Sollwert sich ändern darf:** in den Schritten 2–8 nie (rot heißt: der Umbau speichert anders als vorher).
+  Erst ab Schritt 9, wenn ein Fehlerbild bewusst behoben wird – dann im selben PR mit Begründung, welches Fehlerbild und
+  welche Zeilen des Sollwerts sich deshalb ändern. Jedes Szenario nennt in `haelt_fest`, welches Fehlerbild es heute festhält.
+- Gewartet wird je Schritt auf die erwartete Zahl an Schreibvorgängen (beim verzögerten Speichern auf genau diesen POST),
+  danach auf 1,6 s Ruhe: nur so zeigt sich, dass kein weiterer Schreibvorgang folgt.
 
 ## Parallel (seit v782)
 

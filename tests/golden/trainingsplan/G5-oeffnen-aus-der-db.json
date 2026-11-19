@@ -1,0 +1,325 @@
+{
+ "szenario": "Öffnen aus der Datenbank: Altbestand, Speichern; Termin A mit Plan, dann Termin B ohne Plan",
+ "haelt_fest": "Fehlerbild 5 – gespeicherte Einträge, die nicht (mehr) passen, gehen beim Öffnen still verloren und fehlen beim nächsten Speichern: die Übung vom falschen Typ fällt weg, die Dublette rutscht ins nächste freie Feld desselben Blocks; alte `durchgaenge` binden Hauptteil 2 als Durchgang an und ersetzen dessen Übung (alleFelder) durch die des Kopfes (v621). Öffnen selbst schreibt nichts. Fehlerbild 6 – ein Termin ohne Plan übernimmt die Struktur des zuvor geöffneten und speichert sie bei der ersten Änderung (Charles 19.11.: künftig Grundgerüst – Behebung in Schritt 9).",
+ "schritte": [
+  {
+   "schritt": "Termin A öffnen (Altbestand)",
+   "gesendet": [],
+   "dom": [
+    {
+     "label": "Aufwärmen",
+     "felder": [
+      "Warm up Adler"
+     ]
+    },
+    {
+     "label": "Hauptteil 1",
+     "felder": [
+      "Passtor im Quadrat",
+      "Passtor im Quadrat",
+      null
+     ]
+    },
+    {
+     "label": "Hauptteil 2",
+     "felder": [
+      "Passtor im Quadrat",
+      "Passtor im Quadrat"
+     ]
+    },
+    {
+     "label": "Torwart",
+     "felder": [
+      "Adler TW – Einlaufen"
+     ]
+    },
+    {
+     "label": "Stationen",
+     "felder": [
+      "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+      "Endzone und Fähnchen",
+      "FUNiño 3 gegen 1 – der Mittlere hat den Ball"
+     ]
+    },
+    {
+     "label": "Einzel",
+     "felder": [
+      "Dribbling-Meister (1gg0)"
+     ]
+    },
+    {
+     "label": "Abschlussspiel",
+     "felder": []
+    }
+   ]
+  },
+  {
+   "schritt": "Plan speichern",
+   "gesendet": [
+    {
+     "methode": "POST",
+     "suche": "?on_conflict=datum",
+     "body": {
+      "datum": "2030-03-05",
+      "plan": [
+       {
+        "formIdx": 107,
+        "formName": "Warm up Adler",
+        "trainer": "Alle",
+        "slotLabel": "Aufwärmen",
+        "key": "107-Alle",
+        "block": 0,
+        "feld": 0
+       },
+       {
+        "formIdx": 115,
+        "formName": "Passtor im Quadrat",
+        "trainer": "Charles",
+        "slotLabel": "Hauptteil 1",
+        "key": "115-Charles",
+        "block": 1,
+        "feld": 0
+       },
+       {
+        "formIdx": 115,
+        "formName": "Passtor im Quadrat",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 1",
+        "key": "115-Finn",
+        "block": 1,
+        "feld": 1
+       },
+       {
+        "formIdx": 115,
+        "formName": "Passtor im Quadrat",
+        "trainer": "Charles",
+        "slotLabel": "Hauptteil 2",
+        "key": "115-Charles",
+        "block": 2,
+        "feld": 0
+       },
+       {
+        "formIdx": 115,
+        "formName": "Passtor im Quadrat",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 2",
+        "key": "115-Finn",
+        "block": 2,
+        "feld": 1
+       },
+       {
+        "formIdx": 112,
+        "formName": "Adler TW – Einlaufen",
+        "trainer": "Alle",
+        "slotLabel": "Torwart",
+        "key": "112-Alle",
+        "block": 3,
+        "feld": 0
+       },
+       {
+        "formIdx": 128,
+        "formName": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+        "trainer": "Charles",
+        "slotLabel": "Stationen",
+        "key": "128-Charles",
+        "block": 4,
+        "feld": 0,
+        "station": 0
+       },
+       {
+        "formIdx": 143,
+        "formName": "Endzone und Fähnchen",
+        "trainer": "Finn",
+        "slotLabel": "Stationen",
+        "key": "143-Finn",
+        "block": 4,
+        "feld": 1,
+        "station": 1
+       },
+       {
+        "formIdx": 128,
+        "formName": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+        "trainer": "Kenneth",
+        "slotLabel": "Stationen",
+        "key": "128-Kenneth",
+        "block": 4,
+        "feld": 2
+       },
+       {
+        "formIdx": 77,
+        "formName": "Dribbling-Meister (1gg0)",
+        "trainer": "Charles",
+        "slotLabel": "Einzel",
+        "key": "77-Charles",
+        "block": 5,
+        "feld": 0
+       }
+      ],
+      "slots": [
+       {
+        "label": "Aufwärmen",
+        "dauer": 10,
+        "typ": "warmup"
+       },
+       {
+        "label": "Hauptteil 1",
+        "dauer": 12,
+        "typ": "main",
+        "kette": "k1",
+        "coaches": [
+         "Charles",
+         "Finn",
+         "Kenneth"
+        ]
+       },
+       {
+        "label": "Hauptteil 2",
+        "dauer": 12,
+        "typ": "main",
+        "kette": "k1",
+        "coaches": [
+         "Charles",
+         "Finn"
+        ]
+       },
+       {
+        "label": "Torwart",
+        "dauer": 12,
+        "typ": "tw",
+        "parallelZu": 2,
+        "trainer": "Kenneth",
+        "tw": [
+         1
+        ]
+       },
+       {
+        "label": "Stationen",
+        "dauer": 15,
+        "typ": "spielform",
+        "stationen": 2,
+        "coaches": [
+         "Charles",
+         "Finn",
+         "Kenneth"
+        ]
+       },
+       {
+        "label": "Einzel",
+        "dauer": 15,
+        "typ": "individual",
+        "parallelZu": 4,
+        "kind": 5
+       },
+       {
+        "label": "Abschlussspiel",
+        "dauer": 15,
+        "typ": "abschluss"
+       }
+      ],
+      "gespeichert_von": "<gespeichert_von>",
+      "updated_at": "<updated_at>"
+     }
+    }
+   ]
+  },
+  {
+   "schritt": "Termin B ohne Plan öffnen",
+   "gesendet": [],
+   "dom": [
+    "Aufwärmen",
+    "Hauptteil 1",
+    "Hauptteil 2",
+    "Torwart",
+    "Stationen",
+    "Einzel",
+    "Abschlussspiel"
+   ]
+  },
+  {
+   "schritt": "Termin B: Aufwärm-Übung von Hand wählen",
+   "gesendet": [
+    {
+     "methode": "POST",
+     "suche": "?on_conflict=datum",
+     "body": {
+      "datum": "2030-03-07",
+      "plan": [
+       {
+        "formIdx": 52,
+        "formName": "Hai & Fische",
+        "trainer": "Alle",
+        "slotLabel": "Aufwärmen",
+        "key": "52-Alle",
+        "block": 0,
+        "feld": 0
+       }
+      ],
+      "slots": [
+       {
+        "label": "Aufwärmen",
+        "dauer": 10,
+        "typ": "warmup"
+       },
+       {
+        "label": "Hauptteil 1",
+        "dauer": 12,
+        "typ": "main",
+        "kette": "k1",
+        "coaches": [
+         "Charles",
+         "Finn",
+         "Kenneth"
+        ]
+       },
+       {
+        "label": "Hauptteil 2",
+        "dauer": 12,
+        "typ": "main",
+        "kette": "k1",
+        "coaches": [
+         "Charles",
+         "Finn"
+        ]
+       },
+       {
+        "label": "Torwart",
+        "dauer": 12,
+        "typ": "tw",
+        "parallelZu": 2,
+        "trainer": "Kenneth",
+        "tw": [
+         1
+        ]
+       },
+       {
+        "label": "Stationen",
+        "dauer": 15,
+        "typ": "spielform",
+        "stationen": 2,
+        "coaches": [
+         "Charles",
+         "Finn",
+         "Kenneth"
+        ]
+       },
+       {
+        "label": "Einzel",
+        "dauer": 15,
+        "typ": "individual",
+        "parallelZu": 4,
+        "kind": 5
+       },
+       {
+        "label": "Abschlussspiel",
+        "dauer": 15,
+        "typ": "abschluss"
+       }
+      ],
+      "gespeichert_von": "<gespeichert_von>",
+      "updated_at": "<updated_at>"
+     }
+    }
+   ]
+  }
+ ]
+}
