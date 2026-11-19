@@ -2632,7 +2632,7 @@ const TRAININGSFORMEN = [
   spass:5,diff:1,
   ablauf:'Feld in 3 gleich breite Längskorridore aufteilen. Jeder Spieler bekommt EINEN Korridor. 3gg3 auf 4 Minitore. Der Korridor darf zum Zweikampf kurz verlassen werden – Tor zählt aber nur, wenn beim Abschluss alle 3 Korridore besetzt sind.\n\nKommando: "Feld groß machen!" wenn Spieler ihren Korridor verlassen.',
   varianten:'- Bonuspunkt wenn alle 3 Korridore beim Torschuss besetzt\n- Trainer ruft Farbe = welcher Korridor zuerst angespielt werden muss',
-  coaching:'Schau wo dein Korridor ist!\nMach das Feld groß!\nBleib in deiner Seite – dein Mitspieler braucht den Raum!',
+  coaching:'Wo ist dein Korridor gerade?\nWie macht ihr das Feld groß?\nWo braucht dein Mitspieler Platz?',
    svg:'',   // v551: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["raute"]
 },
@@ -2644,7 +2644,7 @@ const TRAININGSFORMEN = [
   spass:5,diff:2,
   ablauf:'Zwei Teams à 5 (TW + 4 Feld). Jeder Feldspieler hat eine Farbe = Rautenposition (Aufpasser, Flitzer L, Flitzer R, Jäger). Gespielt wird normal. Tor zählt nur, wenn beim Abschluss alle 4 Feldspieler ihre Rautenposition besetzen (Aufpasser hinten, Flitzer außen, Jäger vorne).\n\nTrainer zählt laut "Position?" – Team antwortet "Ja!" wenn alle stehen.',
   varianten:'- Erst ohne Positionspflicht spielen – beobachten, dann Regel einführen\n- Bonuspunkt wenn Tor nach Steilpass von Aufpasser zu Jäger fällt\n- TW darf einwerfen und löst damit Angriff aus',
-  coaching:'Aufpasser – bleib hinten! Jäger – geh nach vorne!\nNach Ballverlust: sofort zurück in Position!\nGemeinsam feiern wenn Raute steht und Tor fällt – Erfolgserlebnis!',
+  coaching:'Aufpasser, Jäger – wo steht ihr, wenn wir den Ball haben?\nBall weg – wohin läufst du jetzt?\nGemeinsam feiern, wenn die Raute steht und ein Tor fällt.',
    svg:'',   // v551: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["raute"]
 },
@@ -2778,9 +2778,9 @@ const TRAININGSFORMEN = [
   kurz:'Tor gilt nur wenn jeder Spieler des Teams mindestens 1 Pass gespielt hat.',
   spieler:'6–8',feld:'20×18m',dauer:'10–12',
   spass:5,diff:1,
-  ablauf:'3gg3 auf 4 Minitore. Tor zählt NICHT wenn ein Spieler des Teams noch keinen Pass gespielt hat. Trainer zählt Pässe mit – Teams sehen wie viele noch fehlen.\n\nKlammerle-Variante: Wer noch keinen Pass hatte trägt Klammerle am Trikot. Tor nur wenn keine Klammerle mehr sichtbar.',
+  ablauf:'3gg3 auf 4 Minitore. Tor zählt NICHT wenn ein Spieler des Teams noch keinen Pass gespielt hat. Trainer zählt Pässe mit – Teams sehen wie viele noch fehlen.\n\nKlammerle-Variante: Wer noch keinen Pass hatte trägt Klammerle am Trikot. Tor nur wenn keine Klammerle mehr sichtbar.\n\nFür den Trainer: Die Kinder lösen die Aufgabe selbst über die Spielregel.',
   varianten:'- Alle 3 Spieler müssen Ball haben UND einer muss schießen\n- Tor mit schwachem Fuß zählt doppelt\n- Jeder Pass muss angesagt werden: Spieler ruft Namen des Empfängers',
-  coaching:'Zeig dich an! Dein Mitspieler kann dir nicht passen wenn er dich nicht sieht!\nRuf seinen Namen – sag wo du bist!\nKinder lösen die Aufgabe selbst durch die Spielregel',
+  coaching:'Kann dein Mitspieler dich sehen?\nWie zeigst du ihm, wo du bist?',
    svg:'',   // v551: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["passspiel"]
 },
@@ -2802,9 +2802,9 @@ const TRAININGSFORMEN = [
   kurz:'3 Spieler bilden Dreieck – immer 2 Anspielstationen vorhanden. Dreiecke sind die Basis.',
   spieler:'6–9',feld:'15×15m pro Gruppe',dauer:'8–10',
   spass:4,diff:1,
-  ablauf:'3 Spieler stehen im Dreieck (ca. 8–10m Abstand). Spieler A passt zu B, A läuft sofort zur Position von B. B passt zu C, B läuft zu C-Position. Dauerhaftes Rotieren – Ball und Spieler bewegen sich gleichzeitig.\n\nNach 3 Minuten: direkt in 3gg3 Spielform mit gleichem Prinzip.',
+  ablauf:'3 Spieler stehen im Dreieck (ca. 8–10m Abstand). Spieler A passt zu B, A läuft sofort zur Position von B. B passt zu C, B läuft zu C-Position. Dauerhaftes Rotieren – Ball und Spieler bewegen sich gleichzeitig.\n\nNach 3 Minuten: direkt in 3gg3 Spielform mit gleichem Prinzip.\n\nFür den Trainer: Dreieck heißt, jeder hat immer zwei Anspielstationen. Das ist die Grundlage für das Zusammenspiel in der Raute.',
   varianten:'- Max. 2 Berührungen pro Spieler\n- Spieler muss sich ansagen: "links!" oder "rechts!" bevor er läuft\n- 4 Spieler: Rauten-Form statt Dreieck',
-  coaching:'Pass spielen UND sofort loslaufen – nicht warten!\nDreieck bedeutet: immer 2 Anspielstationen für jeden Spieler\nDas ist die Grundlage für das Zusammenspiel in der Raute',
+  coaching:'Wohin läufst du nach dem Pass?\nWie viele können dich gerade anspielen?',
    svg:'',   // v551: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["passspiel"]
 },
@@ -2814,9 +2814,9 @@ const TRAININGSFORMEN = [
   kurz:'Überzahl hält Ballbesitz – Dreiecke bilden, Freilaufen erzwingen.',
   spieler:'6',feld:'12×12m',dauer:'6–8',
   spass:4,diff:2,
-  ablauf:'4 Außenspieler gegen 2 Innen. Außenspieler halten Ballbesitz, Innenspieler versuchen zu stehlen. Bei Ballgewinn: sofort Rollentausch. 10 Pässe ohne Verlust = 1 Punkt.\n\nMax. 2 Ballkontakte erlaubt (zwingt zu schnellerem Spiel).',
+  ablauf:'4 Außenspieler gegen 2 Innen. Außenspieler halten Ballbesitz, Innenspieler versuchen zu stehlen. Bei Ballgewinn: sofort Rollentausch. Fünf Pässe in Folge = ein Punkt, die Kinder zählen laut mit.\n\nFreiwillige Steigerung, wenn es schon gut läuft: mit höchstens zwei Kontakten spielen (macht das Spiel schneller).',
   varianten:'- Innenspieler dürfen nicht pressen – nur intercept\n- Spielfeld kleiner machen für höheren Schwierigkeitsgrad',
-  coaching:'Dreieck bilden – immer 2 Anspielstationen anbieten!\nWenn einer unter Druck ist: der andere muss sofort frei sein!\nAbstand: nicht zu nah (Klumpen!) nicht zu weit (kein Pass möglich)',
+  coaching:'Wo stellst du dich hin, damit der Ball zwei Wege hat?\nDein Mitspieler wird bedrängt – wo bist du für ihn frei?\nWie weit stehst du weg – zu nah, zu weit oder genau richtig?',
   svg:'',   // v549: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["passspiel"]
 },
@@ -2864,7 +2864,7 @@ const TRAININGSFORMEN = [
   spass:5,diff:2,
   ablauf:'Normales 3gg3 Funino. ABER: Tor zählt nur wenn der Torschuss nach einem Querpass in der letzten Zone (5m vor Tor) gespielt wird. Kein Direktschuss von weit außen erlaubt.\n\nZiel: Spieler lernen dass ein Querpass vor dem Tor oft gefährlicher ist als direkter Schuss.',
   varianten:'- Querpass muss von Flitzer zu Jäger sein (Rautenprinzip!)\n- Querpass-Zone größer/kleiner je nach Niveau\n- Tor zählt doppelt wenn Querpass UND beide Flitzer beteiligt',
-  coaching:'Warte auf den Querpass – er öffnet das Tor!\nFlitzer: laufe nicht direkt aufs Tor – bleib außen für den Querpass!\nJäger: sei bereit für die Hereingabe',
+  coaching:'Wann öffnet ein Querpass das Tor?\nFlitzer, wo stehst du, damit der Querpass zu dir kommt?\nJäger, bist du bereit, wenn die Hereingabe kommt?',
    svg:'',   // v551: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["passspiel"]
 },
@@ -2898,9 +2898,9 @@ const TRAININGSFORMEN = [
   kurz:'Vor JEDER Ballannahme: Spieler muss sich umschauen. Wahrnehmung Phase 1 direkt trainieren.',
   spieler:'6–8',feld:'20×18m',dauer:'10–12',
   spass:4,diff:2,
-  ablauf:'Normales 3gg3 Funino. Trainer ruft laut "Schau!" bevor er Ball ins Spiel gibt oder bei jedem Einwurf. Spieler muss sich ERST umschauen, dann Ball annehmen. Tut er das nicht: Ball geht zum Gegner.\n\nNach 4–5 Einheiten: Regel ohne Ansage – Spieler soll automatisch scannen.',
+  ablauf:'Normales 3gg3 Funino. Trainer ruft laut "Schau!" bevor er Ball ins Spiel gibt oder bei jedem Einwurf. Spieler muss sich ERST umschauen, dann Ball annehmen. Tut er das nicht: Ball geht zum Gegner.\n\nNach 4–5 Einheiten: Regel ohne Ansage – Spieler soll automatisch scannen.\n\nFür den Trainer: Ziel ist, dass das Umschauen vor jedem Ballkontakt automatisch und unbewusst kommt. Keine Korrekturen während des Spielzugs, nur bei einer Unterbrechung.',
   varianten:'- Trainer hält Finger hoch – Spieler muss Anzahl nennen bevor er Ball annimmt\n- Farbkarte hochhalten – Spieler ruft Farbe: zwingt zum Hochschauen\n- Geister-Scanning: Trainer steht hinter Spieler – er soll raten wo Trainer steht',
-  coaching:'Ziel: Scanning wird automatisch, unbewusst, vor jedem Ballkontakt\nKeine Korrekturen während des Spielzugs – nur bei Unterbrechung\nLoben wenn Spieler von selbst scannt ohne Aufforderung',
+  coaching:'Was hast du gesehen, bevor der Ball kam?\nLoben, wenn sich ein Kind von selbst umschaut, ohne Ansage.',
   svg:'',   // v549: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["wahrnehmung"]
 },
@@ -3006,9 +3006,9 @@ const TRAININGSFORMEN = [
   kurz:'Zwei Spieler, 1gg1 auf 2 Minitore – kein Abspiel. Abschlussmut direkt provozieren.',
   spieler:'2 (in Wellen)',feld:'10×8m',dauer:'6–10',
   spass:5,diff:1,
-  ablauf:'Immer 2 Spieler gegeneinander, 1gg1 auf 2 Minitore – jeder verteidigt eines. Kein Abspiel – jeder muss alleine abschließen. Tor direkt nach eigener Balleroberung zählt doppelt. Wechsel alle 2 Minuten.\n\nEigene Punkte zählen – kleiner Wettbewerb über die gesamte Einheit.',
+  ablauf:'Immer 2 Spieler gegeneinander, 1gg1 auf 2 Minitore – jeder verteidigt eines. Kein Abspiel – jeder muss alleine abschließen. Tor direkt nach eigener Balleroberung zählt doppelt. Wechsel alle 2 Minuten.\n\nEigene Punkte zählen – kleiner Wettbewerb über die gesamte Einheit.\n\nFür den Trainer: Ideal für Kinder mit wenig Abschlussmut.',
   varianten:'- Tor zählt nur nach Finte (Dribbling mit Richtungswechsel)\n- Schwacher Fuß: Tor = 3 Punkte\n- 2gg1: Angreifer hat Überzahl für Anfänger',
-  coaching:'Schieß! Lieber einmal zu früh als gar nicht!\nNach Torschuss sofort loben – egal ob Tor oder nicht\nIdeal für Spieler mit niedrigem Abschlussmut',
+  coaching:'Traust du dich, früh zu schießen?\nLob für jeden Schuss, egal ob Tor oder nicht.',
   svg:'',   // v549: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["technik"]
 },
@@ -3030,9 +3030,9 @@ const TRAININGSFORMEN = [
   kurz:'5 Schüsse von 3 Positionen – schwacher Fuß zählt doppelt. Motivierender Abschluss.',
   spieler:'4–8',feld:'Strafraum',dauer:'15–20',
   spass:5,diff:1,
-  ablauf:'3 Abschusspositionen markieren (links, zentral, rechts, je 8–12m). Jeder Spieler schießt 5 Mal von jeder Position = 15 Schüsse. Punkte: Tor zentral = 1, links/rechts = 2, schwacher Fuß = Bonus +1.\n\nSieger bekommt Mini-Pokal (Trainer klatscht ausgiebig).',
+  ablauf:'3 Abschusspositionen markieren (links, zentral, rechts, je 8–12m). Jeder Spieler schießt 5 Mal von jeder Position = 15 Schüsse. Punkte: Tor zentral = 1, links/rechts = 2, schwacher Fuß = Bonus +1.\n\nSieger bekommt Mini-Pokal (Trainer klatscht ausgiebig).\n\nFür den Trainer: Kein Schuss aus dem Stand. Schusshand und Standbein beobachten. Ideal als Abschluss einer Trainingseinheit.',
   varianten:'- TW im Tor: Parade = TW bekommt Punkt\n- Vor dem Schuss: Pflicht-Dribbling um ein Hütchen\n- Zwei Schüsse ohne Ball-Stop – direkt aus Zuspiel',
-  coaching:'Immer: Bewegung vor dem Schuss (kein stehender Schuss!)\nSchusshand/Standbein beobachten\nIdeal als Abschluss einer Trainingseinheit',
+  coaching:'Bist du in Bewegung, wenn du schießt?\nWo steht dein Standbein, wenn du schießt?',
   svg:'',   // v549: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["technik"]
 },
@@ -3042,9 +3042,9 @@ const TRAININGSFORMEN = [
   kurz:'Hindernisparcours mit Hütchen – Richtungswechsel, Tempo, Finten schulen.',
   spieler:'4–13',feld:'15×8m',dauer:'8–10',
   spass:4,diff:1,
-  ablauf:'Hütchengasse aufbauen: 6 Hütchen im Slalom, 2 Tore zum Durchdribbeln, 1 Abschluss am Ende. Jeder Spieler dribbelt durch den Parcours so schnell wie möglich. Zeitnahme optional.\n\nVariante: Spieler baut eigenen Parcours – Eigenverantwortung stärken.',
+  ablauf:'Hütchengasse aufbauen: 6 Hütchen im Slalom, 2 Tore zum Durchdribbeln, 1 Abschluss am Ende. Jeder Spieler dribbelt durch den Parcours so schnell wie möglich. Zeitnahme optional.\n\nVariante: Spieler baut eigenen Parcours – Eigenverantwortung stärken.\n\nFür den Trainer: Tempo erst steigern, wenn die Technik sitzt, nie vorher.',
   varianten:'- Nur schwacher Fuß durch den Parcours\n- Mit Geräusch oder Farb-Kommando während des Dribblings (kognitive Last)\n- Blindes Dribbling im letzten Abschnitt (Augen halbzu)',
-  coaching:'Enger Kontakt mit dem Ball – nicht zu weit wegstoßen!\nTempo steigern wenn Technik sitzt – nie vorher\nBeobachte: Wer bremst vor den Hütchen? Wer nimmt sie mit Fahrt?',
+  coaching:'Bleibt der Ball nah an deinem Fuß?\nKlappt es schon sauber – kannst du jetzt schneller?\nBremst du vor den Hütchen, oder nimmst du sie mit Fahrt?',
    svg:'',   // v551: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["technik"]
 },
@@ -3066,9 +3066,9 @@ const TRAININGSFORMEN = [
   kurz:'Spieler lernen 3 Grundfinten – dann Duell: wer kann Gegenspieler täuschen?',
   spieler:'4–8',feld:'10×10m',dauer:'8–10',
   spass:5,diff:2,
-  ablauf:'Trainer zeigt 3 Finten: 1) Übersteiger, 2) Innenseite-Außenseite, 3) Körpertäuschung. Spieler üben 3 Minuten frei. Dann: 1gg1 Duell – nur wer Finte einsetzt darf Punkt zählen. Direktes Durchlaufen ohne Finte = kein Punkt auch wenn Tor fällt.',
+  ablauf:'Trainer zeigt 3 Finten: 1) Übersteiger, 2) Innenseite-Außenseite, 3) Körpertäuschung. Spieler üben 3 Minuten frei. Dann: 1gg1 Duell – nur wer Finte einsetzt darf Punkt zählen. Direktes Durchlaufen ohne Finte = kein Punkt auch wenn Tor fällt.\n\nFür den Trainer: Finten funktionieren nur, wenn der Körper täuscht.',
   varianten:'- Spieler erfindet eigene Finte – wird dann zur Gruppenübung\n- Finte muss laut angesagt werden: "Übersteiger!" vor der Ausführung\n- Finte gegen Wand üben: kein Gegenspieler nötig',
-  coaching:'Finten funktionieren nur wenn der Körper täuscht – Kopf und Schulter mit!\nErst langsam lernen – dann mit Tempo\nKreativität loben auch wenn Finte nicht klappt',
+  coaching:'Täuschen Kopf und Schulter mit?\nKlappt die Finte langsam – kannst du sie jetzt schneller?\nLob für jede eigene Idee, auch wenn die Finte nicht klappt.',
    svg:'',   // v551: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["technik"]
 },
@@ -3078,9 +3078,9 @@ const TRAININGSFORMEN = [
   kurz:'Ball kommt von hinten – erste Mitnahme muss vorwärts und kontrolliert sein.',
   spieler:'4–6',feld:'15×10m',dauer:'6–8',
   spass:3,diff:2,
-  ablauf:'Spieler A steht mit Rücken zur Laufrichtung. Trainer spielt Ball von hinten zu A. A muss Ball mit ERSTER Berührung nach vorne mitnehmen – nicht seitlich, nicht stehen bleiben. Dann Dribbling zum Tor und Abschluss.\n\nHäufigster Fehler: Ball wird nach hinten oder seitwärts angenommen.',
+  ablauf:'Spieler A steht mit Rücken zur Laufrichtung. Trainer spielt Ball von hinten zu A. A muss Ball mit ERSTER Berührung nach vorne mitnehmen – nicht seitlich, nicht stehen bleiben. Dann Dribbling zum Tor und Abschluss.\n\nHäufigster Fehler: Ball wird nach hinten oder seitwärts angenommen.\n\nFür den Trainer: Die erste Mitnahme ist eine eigene Technik – so üben wie eine Finte.',
   varianten:'- Ball kommt flach, dann als Aufsetzer\n- Mit leichtem Gegnerdruck von hinten\n- Zuspiel von der Seite: Mitnahme in Laufrichtung',
-  coaching:'Erste Mitnahme ist eine eigene Technik – üben wie eine Finte!\nKörper muss sich BEVOR der Ball kommt zur Laufrichtung öffnen\nBlick: kurz auf Ball, sofort wieder in Laufrichtung',
+  coaching:'Ist dein Körper schon offen zur Laufrichtung, bevor der Ball kommt?\nWohin schaust du nach dem kurzen Blick auf den Ball?',
    svg:'',   // v551: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["technik"]
 },
@@ -3102,9 +3102,9 @@ const TRAININGSFORMEN = [
   kurz:'Nach Ballverlust: 5 Sekunden intensives Pressing. Zurückerobert = 2 Bonuspunkte.',
   spieler:'4–8',feld:'15×12m',dauer:'8–10',
   spass:5,diff:2,
-  ablauf:'2gg2 auf 2 Minitore. Nach Ballverlust startet Trainer eine 5-Sekunden-Uhr (laut zählen). Wenn das verlierende Team den Ball in 5 Sekunden zurückerobert: 2 Bonuspunkte.\n\nJoker-Pressing: einmal pro Halbzeit alle 4 gemeinsam pressen. Ab 8 Kindern zwei Felder parallel aufbauen.',
+  ablauf:'2gg2 auf 2 Minitore. Nach Ballverlust startet Trainer eine 5-Sekunden-Uhr (laut zählen). Wenn das verlierende Team den Ball in 5 Sekunden zurückerobert: 2 Bonuspunkte.\n\nJoker-Pressing: einmal pro Halbzeit alle 4 gemeinsam pressen. Ab 8 Kindern zwei Felder parallel aufbauen.\n\nFür den Trainer: Energie und Laufbereitschaft beobachten. Wer gibt nach Ballverlust auf? Ein wichtiger Hinweis.',
   varianten:'- 3gg3 mit 8 Sekunden Pressing-Phase\n- Bonuspunkt wenn Ballrückeroberung direkt zu Tor führt\n- Pressing-Pflicht: erste 5 Sekunden nach Ballverlust immer pressen',
-  coaching:'Sofort! Keine Pause nach Ballverlust!\nEnergie und Laufbereitschaft beobachten\nWer gibt nach Ballverlust auf? Wichtiger Indikator',
+  coaching:'Ball weg – was machst du sofort?\nLob für jeden, der nach dem Ballverlust gleich nachsetzt.',
   svg:'',   // v549: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["pressing"]
 },
@@ -3162,9 +3162,9 @@ const TRAININGSFORMEN = [
   kurz:'Aufsteiger-Absteiger auf mehreren Feldern. Faire Duelle, maximale Motivation.',
   spieler:'8–13',feld:'2–3 Felder parallel',dauer:'15–20',
   spass:5,diff:1,
-  ablauf:'2–3 Spielfelder aufbauen. Immer 1gg1 oder 2gg2. Wer gewinnt steigt auf – wer verliert steigt ab. Oberstes Feld = Königsfeld. Niveau pendelt sich automatisch ein für faire Duelle.\n\nJede Runde 3 Minuten, dann Wechsel.',
+  ablauf:'2–3 Spielfelder aufbauen. Immer 1gg1 oder 2gg2. Wer gewinnt steigt auf – wer verliert steigt ab. Oberstes Feld = Königsfeld. Niveau pendelt sich automatisch ein für faire Duelle.\n\nJede Runde 3 Minuten, dann Wechsel.\n\nFür den Trainer: Minimales Coaching, die Kinder regeln sich selbst. Spaß und Eigeninitiative beobachten. Wer bleibt freiwillig länger? Das zeigt Neugier und Spielfreude.',
   varianten:'- Tor nur durch Dribbling über Torlinie (kein Schuss)\n- Tor nur nach Pass von Mitspieler\n- Schwacher-Fuß-König: nur schwacher Fuß = automatisch aufsteigen',
-  coaching:'Minimales Coaching – Kinder regeln sich selbst\nSpaß und Eigeninitiative beobachten\nWer bleibt freiwillig länger? Zeigt Neugier und Spielfreude',
+  coaching:'Lob für jedes faire Duell, egal ob du auf- oder absteigst.',
    svg:'',   // v551: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:["spass"]
 },
@@ -3244,9 +3244,9 @@ const TRAININGSFORMEN = [
   name:'Igel-Pressing-Kreis',
   kurz:'Nach Ballverlust sofort Igel-Formation: eng zusammenziehen und gemeinsam pressen.',
   spieler:'6-8',feld:'20x18m',dauer:'8-10',spass:4,diff:2,
-  ablauf:'3gg3 oder 4gg4 Funino. Sobald ein Team den Ball verliert, ruft der Trainer IGEL!. Alle Feldspieler des Teams muessen sich sofort in einem engen Kreis um den Ball sammeln (max. 8m Durchmesser) und gemeinsam pressen.\n\nGelingt die Balleroberung innerhalb der Igel-Formation: 2 Bonuspunkte.\n\nNach Balleroberung: Trainer ruft ADLER! - Team macht sich sofort wieder breit fuer den Spielaufbau.',
+  ablauf:'3gg3 oder 4gg4 Funino. Sobald ein Team den Ball verliert, ruft der Trainer IGEL!. Alle Feldspieler des Teams muessen sich sofort in einem engen Kreis um den Ball sammeln (max. 8m Durchmesser) und gemeinsam pressen.\n\nGelingt die Balleroberung innerhalb der Igel-Formation: 2 Bonuspunkte.\n\nNach Balleroberung: Trainer ruft ADLER! - Team macht sich sofort wieder breit fuer den Spielaufbau.\n\nFür den Trainer: „Igel“ und „Adler“ sind unser Umschalt-Wortschatz, beide Richtungen sind gleich wichtig.',
   varianten:'- Ohne Zuruf: Spieler rufen sich gegenseitig IGEL! oder ADLER! zu\n- Mit Huetchen-Markierung der Igel-Zone\n- Zeitdruck: Igel-Formation muss in 3 Sekunden stehen',
-  coaching:'IGEL! - alle zusammen, eng, gemeinsam pressen!\nNach Ballgewinn sofort ADLER! - Feld wieder gross machen!\nDas ist unser Umschalt-Vokabular - beide Richtungen gleich wichtig.',
+  coaching:'Igel – wie eng steht ihr zusammen um den Ball?\nAdler – wie schnell macht ihr das Feld nach dem Ballgewinn wieder groß?',
    svg:'',   // v551: handgezeichnet, ersetzt durch die Spec in TF_SKIZZEN
   tags:['Igel','Pressing','Umschalten','Gegenpressing']
 },
@@ -3475,9 +3475,9 @@ coaching:'Konzentration ist ein Muskel – man kann sie trainieren!\nWenn du abg
   kurz:'Kinder wählen ihr Schwierigkeits-Level selbst (1–3). Erfolg = eine Stufe hoch. Selbstwirksamkeit erleben.',
   spieler:'4–10',feld:'3 Felder (Level 1+2: 12×10m, Level 3 enger: 10×8m)',dauer:'10–12',
   spass:5,diff:1,
-  ablauf:'Drei nebeneinanderliegende 1gg1-Felder mit Minitoren: Level 1 (Verteidiger geht nur halbes Tempo), Level 2 (normal), Level 3 (Verteidiger darf sofort attackieren, engeres Feld). Jedes Kind wählt VOR jedem Durchgang selbst sein Level.\n\nRegel: Wer auf seinem Level ein Tor macht, DARF (muss nicht) eine Stufe hochgehen. Wer verliert, darf bleiben oder runtergehen – ohne Kommentar.\n\nHintergrund: Gestufte Anforderung (Challenge Point) – Selbstvertrauen wächst durch selbstgewählte, knapp machbare Herausforderungen, nicht durch Überforderung.',
+  ablauf:'Drei nebeneinanderliegende 1gg1-Felder mit Minitoren: Level 1 (Verteidiger geht nur halbes Tempo), Level 2 (normal), Level 3 (Verteidiger darf sofort attackieren, engeres Feld). Jedes Kind wählt VOR jedem Durchgang selbst sein Level.\n\nRegel: Wer auf seinem Level ein Tor macht, DARF (muss nicht) eine Stufe hochgehen. Wer verliert, darf bleiben oder runtergehen – ohne Kommentar.\n\nHintergrund: Gestufte Anforderung (Challenge Point) – Selbstvertrauen wächst durch selbstgewählte, knapp machbare Herausforderungen, nicht durch Überforderung.\n\nFür den Trainer: Kein Kind auf ein Level schieben, die Wahl gehört dem Kind. Runtergehen neutral behandeln.',
   varianten:'- Level über Hütchenfarben markieren (grün/gelb/rot)\n- Level 4 als "Boss-Level": 1gg1 gegen den Trainer\n- Gleiche Logik mit Torschuss-Distanzen statt Gegnerdruck',
-  coaching:'Kein Kind auf ein Level schieben – die Wahl gehört dem Kind\n"Welches Level fühlt sich heute richtig an?"\nHochgehen feiern, Runtergehen neutral behandeln',
+  coaching:'Welches Level fühlt sich heute richtig an?\nFeiern, wenn ein Kind eine Stufe hochgeht.',
   svg:'',tags:['mindset']
 },
 {
@@ -3530,9 +3530,9 @@ coaching:'Konzentration ist ein Muskel – man kann sie trainieren!\nWenn du abg
   kurz:'Mutige VERSUCHE zählen doppelt so viel wie Tore: Finten und schwacher Fuß bringen 2 Punkte – egal ob sie klappen.',
   spieler:'6–12',feld:'20×15m',dauer:'10–12',
   spass:5,diff:1,
-  ablauf:'Normale Spielform 3gg3 auf Minitore – aber die Punktwertung wird umgedreht: 1 Punkt für jedes Tor, 2 Punkte für jeden VERSUCH einer Finte im 1gg1 (egal ob sie klappt), 2 Punkte für jeden Abschluss mit dem schwachen Fuß (egal ob Tor). Bei mehr als 6 Kindern ein zweites Feld aufbauen oder 4gg4 mit gleicher Wertung spielen.\n\nDer Trainer ruft die Bonus-Punkte laut aus ("Zwei Punkte – mutige Finte!").\n\nHintergrund: Fehlerkultur & implizites Lernen (Horst Wein) – kreative Lösungen entstehen nur, wenn Fehler nichts kosten. Die Wertung macht Mut messbar und sichtbar.',
+  ablauf:'Normale Spielform 3gg3 auf Minitore – aber die Punktwertung wird umgedreht: 1 Punkt für jedes Tor, 2 Punkte für jeden VERSUCH einer Finte im 1gg1 (egal ob sie klappt), 2 Punkte für jeden Abschluss mit dem schwachen Fuß (egal ob Tor). Bei mehr als 6 Kindern ein zweites Feld aufbauen oder 4gg4 mit gleicher Wertung spielen.\n\nDer Trainer ruft die Bonus-Punkte laut aus ("Zwei Punkte – mutige Finte!").\n\nHintergrund: Fehlerkultur & implizites Lernen (Horst Wein) – kreative Lösungen entstehen nur, wenn Fehler nichts kosten. Die Wertung macht Mut messbar und sichtbar.\n\nFür den Trainer: Eine misslungene Finte nie korrigieren, Technik getrennt üben. Verbindung zum Profil: zahlt direkt auf Dribbling und Selbstvertrauen ein.',
   varianten:'- Bonus-Aktion der Woche wechseln (Übersteiger, Ausguck vor Ballannahme, Steilpass)\n- Kinder schlagen selbst vor, was heute Bonuspunkte gibt\n- "Straßenkicker-Modus": nur Tore nach Finte zählen',
-  coaching:'Versuche wirklich lauter feiern als Tore\nNie eine misslungene Finte korrigieren – nur den Mut loben, Technik separat üben\nVerbindung zum Profil: zahlt direkt auf Dribbling & Selbstvertrauen ein',
+  coaching:'Feiern, wenn jemand etwas versucht – lauter als bei einem Tor.\nLob für den Mut, auch wenn die Finte misslingt.',
   svg:'',tags:['mindset']
 },
 {
@@ -3600,7 +3600,7 @@ coaching:'Konzentration ist ein Muskel – man kann sie trainieren!\nWenn du abg
   spass:4,diff:2,
   ablauf:'Vier Spieler bilden im Viereck die Raute (Zentrum/Aufpasser, Flitzer L, Flitzer R, Spitze/Jäger), 1–2 Balljäger in der Mitte versuchen den Ball zu erobern. Die vier halten ihre Positionen und lassen den Ball durch die Reihen laufen.\n\nKernregel: Wer den Ball spielt, muss sofort einen ANDEREN Rauten-Punkt besetzen (Rotation) – so lernen die Kinder, dass Positionen Aufgaben sind, keine festen Plätze.\n\nKommando: "Raute halten!" wenn die Form zusammenfällt.',
   varianten:'- Nur Direktpass erlaubt (höheres Tempo)\n- Bei Balleroberung tauschen Balljäger und Fehlpassgeber\n- 4gg2 für mehr Druck, sobald 4gg1 sitzt',
-  coaching:'Nach dem Pass NICHT stehen bleiben – sofort neuen Punkt besetzen!\nAbstände halten: die Raute soll immer erkennbar sein\nKopf hoch vor dem Pass – wo ist der freie Punkt?',
+  coaching:'Wohin läufst du nach dem Pass?\nKann man eure Raute noch erkennen?\nWo ist der freie Punkt, bevor du passt?',
   svg:'',tags:['raute','passspiel']
 },
 {
@@ -3611,7 +3611,7 @@ coaching:'Konzentration ist ein Muskel – man kann sie trainieren!\nWenn du abg
   spass:5,diff:2,
   ablauf:'4 gegen 4 auf Minitore (ohne Torwart; je Team die Rauten-Rollen: Aufpasser, Flitzer links/rechts, Jäger), aber statt eines zentralen Tores stehen auf jeder Grundlinie ZWEI kleine Minitore ganz weit außen an den Linien. Zentral durch die Mitte gibt es kein Tor – das Team muss das Spiel bewusst über die Flitzer auf die Außenbahnen verlagern.\n\nSo wird das "Feld groß machen" direkt belohnt: nur wer breit spielt, kommt zum Abschluss.',
   varianten:'- Tor zählt doppelt nach Seitenverlagerung (Ball war auf beiden Außen)\n- Ein Minitor je Seite sperren = Fokus auf eine starke Außenbahn\n- Aufpasser darf nicht über die Mittellinie = klare Absicherung\n- Bei 9–10 Kindern: Wechsler rotieren nach jedem Tor ein',
-  coaching:'Flitzer BREIT an die Linie – nicht in die Mitte ziehen!\nSchau nach dem Ballgewinn sofort zur schwächer besetzten Seite\nDer Aufpasser sichert zentral ab, während außen angegriffen wird',
+  coaching:'Flitzer, wie breit stehst du – an der Linie oder in der Mitte?\nBall gewonnen – welche Seite ist schwächer besetzt?\nAufpasser, wo sicherst du ab, wenn außen angegriffen wird?',
   svg:'',tags:['passspiel','raute']
 },
 {
@@ -3622,7 +3622,7 @@ coaching:'Konzentration ist ein Muskel – man kann sie trainieren!\nWenn du abg
   spass:5,diff:1,
   ablauf:'Alle Kinder dribbeln mit Ball frei durch das Feld (Chaos, aber Köpfe hoch, keine Zusammenstöße). Am Rand stehen mehrere farbige Hütchentore. Der Trainer ruft eine Farbe – alle müssen so schnell wie möglich mit Ball durch ein Tor dieser Farbe dribbeln und dann weiter im Chaos.\n\nSchult Orientierung, Reaktion und Ballkontrolle unter Zeitdruck – ideale Aktivierung für den kognitiven Aufpasser/Umschalt-Teil.',
   varianten:'- Zwei Farben gleichzeitig rufen (Priorisieren)\n- Nummern statt Farben\n- Letzter durchs Tor macht eine kleine Zusatzaufgabe (spielerisch)',
-  coaching:'Kopf hoch beim Dribbeln – wo ist das nächste freie Tor?\nErst orientieren, DANN losdribbeln\nBall eng am Fuß im Gewühl',
+  coaching:'Wo ist das nächste freie Tor?\nWeißt du, wohin du willst, bevor du losdribbelst?\nBleibt der Ball im Gewühl eng an deinem Fuß?',
   svg:'',tags:['aufwaermen','wahrnehmung']
 }
 ];
@@ -4308,7 +4308,7 @@ tf032:{z:[[30,30,220,120]],tor:[[20,72,'v',36],[252,72,'v',36]],
 tf016:{z:[[60,26,160,128]],
   s:[[140,26,'g','A'],[220,90,'g','B'],[140,154,'g','C'],[60,90,'g','D'],[116,74,'r','X'],[164,106,'r','Y']],
   b:[[148,34]],p:[[148,32,212,82,'p'],[216,98,148,146,'p']],
-  tx:[[140,16,'12 x 12 m – vier außen, zwei innen'],[140,172,'höchstens zwei Kontakte · 10 Pässe = 1 Punkt']]},
+  tx:[[140,16,'12 x 12 m – vier außen, zwei innen'],[140,172,'fünf Pässe in Folge = ein Punkt, laut zählen']]},
 tf040:{z:[[30,32,220,116]],tor:[[20,74,'v',32],[252,74,'v',32]],
   s:[[110,70,'g'],[126,116,'g'],[176,66,'r'],[190,112,'r']],b:[[184,74]],
   p:[[118,76,166,72,'l'],[132,110,180,84,'l']],

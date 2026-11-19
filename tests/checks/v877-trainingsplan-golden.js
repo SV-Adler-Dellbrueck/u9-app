@@ -117,7 +117,12 @@ const VOR = () => JSON.parse(fs.readFileSync(path.join(REPO, "uebungen/vorlagen.
 function testVorlagen() {
   const alle = VOR().vorlagen || [];
   const nach = k => alle.find(v => String(v.name || "").startsWith(k));
-  const l48 = nach("L4-8"), l11 = nach("L1-1");
+  /* v882: Der Golden-Master hält den Code fest, nicht den Inhalt. Seit dem Beschluss vom 19.11. hat L4-8 eine offene Stufe
+     statt des dritten Stationsdurchgangs – geprüft wird deshalb weiter die Fassung des Nachtrags (drei Durchgänge),
+     mit Kinderziel und Folge der Datei wie bisher. */
+  const l48ist = nach("L4-8"), l11 = nach("L1-1");
+  const l48nachtrag = JSON.parse(fs.readFileSync(path.join(REPO, "doku/auftrag-aufstellungen-3plus1-funino/vorlagen-nachtrag-kombi.json"), "utf8")).vorlagen.find(v => /^L4-8 /.test(v.name));
+  const l48 = l48ist && l48nachtrag ? { ...l48nachtrag, ziel_kinder: l48ist.ziel_kinder } : l48ist;
   /* Keine Vorlage im Bestand hat eine tw-Station (rolle "tw"). Die dritte ist deshalb L4-8 mit
      einer zusätzlichen Torwart-Station im ersten Hauptteil – der Weg in vuPlanAusVorlage. */
   const tw = JSON.parse(JSON.stringify(l48));
