@@ -429,3 +429,6 @@ module.exports = async function (h) {
   await Promise.all(Array.from({ length: Math.max(1, Number(process.env.GOLDEN_PARALLEL) || 3) }, arbeiter));
   return h.ergebnis(titel, ergebnisse.every(r => r && r.ok), ergebnisse.map(r => r ? r.zeile : "keine Meldung"));
 };
+/* v882: Abläufe und Seitenaufbau für den Prüffall v882-plan-wahl (Zustand = Seite nach jedem
+   Schritt) – nur zum Mitbenutzen, die Sollwerte bleiben hier. */
+module.exports.intern = { SZENARIEN, seite: (h, def) => { REPO = h.REPO; return seite(h, def); }, ruhe };

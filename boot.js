@@ -495,7 +495,7 @@ function tfInPlan(i){
   go("planung");
   setTimeout(()=>{
     const sels=[...document.querySelectorAll(".tp-form-sel")];
-    const ziel=sels.find(s=>!s.value&&[...s.options].some(o=>o.value===String(i)));
+    const ziel=sels.find(s=>tpWahlIdx(s.id)==null&&[...s.options].some(o=>o.value===String(i)));   // v882: frei laut Zustand
     if(!ziel){toast("Kein freier passender Slot – erst einen Block hinzufügen","err");return;}
     ziel.value=String(i);
     try{tpOnSelectChange(ziel);}catch(e){}
@@ -1673,6 +1673,113 @@ function tpShowExercise(formIdx,planMin){
 
 // Stationen-Board: Trainer-Zuweisung pro Übungs-Station (wer macht was)
 let tpCoaches={};
+/* ═══ v882 · 4.8 Schritt 4 – DIE ÜBUNGSWAHL LIEGT IM ZUSTAND ═════════════════════════════
+   Welche Übung in welchem Feld steht, steht in TP_ZUSTAND.wahl, nicht mehr nur im versteckten
+   Auswahlfeld. Schlüssel wie bei tpCoaches: die Kennung „tp-form-<Block>-<Feld>“; Wert
+   {i, station?, alle?, erbt?} – i ist der Index in tpAllForms() (null: Feld leer, nur Marken),
+   station/alle die Vorlagen-Marken (v608), erbt die geerbte Übung im Durchgang (v621).
+   Gelesen wird nur noch über tpWahlIdx, geändert über tpWahlSetzen. Das Zeichnen projiziert
+   den Zustand auf Auswahlfeld, Picker-Knopf und Marken (data-station, data-alle, data-erbt).
+   Übergangsbrücke bis Schritt 8: _tpDomNachziehen übernimmt Eingriffe, die noch direkt ins
+   Auswahlfeld schreiben (sel.value= ohne Ereignis, noch nicht umgestellte Schreibstellen). */
+const TP_ZUSTAND={wahl:{}};
+let _tpWahlOffen=new Set();   // per tpWahlSetzen geändert, aber noch nicht auf der Seite – die Brücke lässt sie stehen
+function tpWahlIdx(selId){ const w=TP_ZUSTAND.wahl[selId]; return (w&&w.i!=null&&!isNaN(w.i))?w.i:null; }
+/* Eintrag in einheitlicher Form – oder null, wenn er nichts trägt. */
+function _tpWahlNorm(i,o){
+  o=o||{};
+  const w={i:(i==null||i===""||isNaN(Number(i)))?null:Number(i)};
+  if(o.station!=null&&o.station!==""&&!isNaN(Number(o.station)))w.station=Number(o.station);
+  if(o.alle===true||o.alle==="1")w.alle=true;
+  if(o.erbt===true||o.erbt==="1")w.erbt=true;
+  return (w.i==null&&w.station==null&&!w.alle&&!w.erbt)?null:w;
+}
+/* opt.hand: der Trainer hat gewählt – Hand schlägt Vorlage (Regel aus v535/v608): die Marken
+   fallen überall weg, und die eigene Wahl im Durchgang ersetzt die geerbte (v621). */
+function tpWahlSetzen(selId,i,opt){
+  opt=opt||{};
+  const wahl=TP_ZUSTAND.wahl;
+  if(opt.hand)Object.keys(wahl).forEach(id=>{ const w=wahl[id]; if(w.station!=null||w.alle){ const n=_tpWahlNorm(w.i,{erbt:w.erbt}); if(n)wahl[id]=n; else delete wahl[id]; _tpWahlOffen.add(id); } });
+  const w=_tpWahlNorm(i,opt.hand?{}:opt);
+  if(w)wahl[selId]=w; else delete wahl[selId];
+  _tpWahlOffen.add(selId);
+  return w;
+}
+/* Bietet das Auswahlfeld eines Blocks diese Übung an? Genau die <option>-Liste, die das Zeichnen
+   aus tpFilteredOpts baut – was dort fehlt, fällt beim Zeichnen still weg (Fehlerbilder 4 und 5,
+   behoben erst ab Schritt 9). menge: Zwischenspeicher je Blocktyp für eine Runde. */
+function tpWahlZulaessig(si,i,menge){
+  const slot=tpSlots[si]; if(!slot||i==null||isNaN(i))return false;
+  const typ=slot.typ||"main";
+  let m=menge&&menge[typ];
+  if(!m){ m=new Set(tpFilteredOpts(typ).map(x=>x.i)); if(menge)menge[typ]=m; }
+  return m.has(Number(i));
+}
+/* Die Felder eines Blocks in ihrer Reihenfolge (Zahl aus dem Modell, v881). */
+function tpWahlFelder(si){ return Array.from({length:tpFelderZahl(si)},(_,p)=>`tp-form-${si}-${p}`); }
+function _tpWahlAusSel(s){ const d=s.dataset; return _tpWahlNorm(s.value,{station:d.station,alle:d.alle,erbt:d.erbt}); }
+function _tpWahlGleich(a,b){ return JSON.stringify(_tpWahlNorm(a&&a.i,a))===JSON.stringify(_tpWahlNorm(b&&b.i,b)); }
+/* Übergangsbrücke: was seit der letzten Projektion fremd ins Auswahlfeld geschrieben wurde, gilt.
+   Felder, die tpWahlSetzen gerade geändert hat, bleiben, wie der Zustand sie kennt; ein Eintrag
+   ohne Auswahlfeld auf der Seite fällt weg (wie früher der gemerkte Wert beim Neuzeichnen). */
+function _tpDomNachziehen(){
+  const wahl=TP_ZUSTAND.wahl, gesehen=new Set();
+  document.querySelectorAll(".tp-form-sel").forEach(s=>{
+    gesehen.add(s.id); if(_tpWahlOffen.has(s.id))return;
+    const d=_tpWahlAusSel(s);
+    if(!_tpWahlGleich(d,wahl[s.id])){ if(d)wahl[s.id]=d; else delete wahl[s.id]; }
+  });
+  Object.keys(wahl).forEach(id=>{ if(!gesehen.has(id)&&!_tpWahlOffen.has(id))delete wahl[id]; });
+}
+/* Nach dem Zeichnen, vor der Projektion: was die neuen Auswahlfelder nicht tragen, fällt weg –
+   Felder, die es nicht mehr gibt; Übungen, die der Block nicht anbietet (die Marken bleiben am
+   leeren Feld); geerbte Übungen, die _tpKetteNachziehen gleich neu vom Kopf holt. */
+function _tpWahlBereinigen(){
+  const wahl=TP_ZUSTAND.wahl, felder=new Set(), menge={};
+  tpSlots.forEach((s,si)=>tpWahlFelder(si).forEach(id=>felder.add(id)));
+  Object.keys(wahl).forEach(id=>{
+    const w=wahl[id], m=/^tp-form-(\d+)-\d+$/.exec(id);
+    if(!felder.has(id)||!m){ delete wahl[id]; return; }
+    let i=w.i;
+    if(w.erbt)i=null;
+    else if(i!=null&&!tpWahlZulaessig(+m[1],i,menge))i=null;
+    const n=_tpWahlNorm(i,{station:w.station,alle:w.alle});
+    if(n)wahl[id]=n; else delete wahl[id];
+  });
+}
+/* Projektion: Zustand → Auswahlfeld (Wert), Marken und Picker-Knopf; mitHist auch die
+   Einsatz-Historie unter dem Feld (beim Zeichnen, wie zuvor beim Wiedereinsetzen). Eine Übung,
+   die das Auswahlfeld nicht anbietet, fällt still weg – wie bisher beim Zeichnen. */
+function _tpWahlAufSeite(mitHist){
+  const wahl=TP_ZUSTAND.wahl;
+  document.querySelectorAll(".tp-form-sel").forEach(s=>{
+    let w=wahl[s.id];
+    let v=(w&&w.i!=null)?String(w.i):"";
+    if(v&&!s.querySelector(`option[value="${v}"]`)){ w=_tpWahlNorm(null,w); if(w)wahl[s.id]=w; else delete wahl[s.id]; v=""; }
+    const neu=s.value!==v; if(neu)s.value=v;
+    if(w&&w.station!=null)s.dataset.station=String(w.station); else delete s.dataset.station;
+    if(w&&w.alle)s.dataset.alle="1"; else delete s.dataset.alle;
+    if(w&&w.erbt)s.dataset.erbt="1"; else delete s.dataset.erbt;
+    if((neu||w)&&typeof tpPickSync==="function")tpPickSync(s.id);
+    if(mitHist&&w&&w.i!=null&&!w.erbt){ const hd=document.getElementById(s.id+"-hist"); if(hd&&typeof tpExerciseHistoryHtml==="function")hd.innerHTML=tpExerciseHistoryHtml(w.i); }
+    _tpWahlOffen.delete(s.id);
+  });
+}
+/* Prüfhilfe (Prüffall v882): wo weichen Auswahlfeld, Marken oder Picker-Knopf vom Zustand ab?
+   Leere Liste = Seite und Zustand stimmen überein. Liest nur, ändert nichts. */
+function tpZustandPruefen(){
+  const wahl=TP_ZUSTAND.wahl, ab=[], gesehen=new Set(), kurz=w=>w?JSON.stringify(w):"leer";
+  document.querySelectorAll(".tp-form-sel").forEach(s=>{
+    gesehen.add(s.id);
+    const d=_tpWahlAusSel(s), w=wahl[s.id];
+    if(!_tpWahlGleich(d,w))ab.push(`${s.id}: Seite ${kurz(d)} · Zustand ${kurz(_tpWahlNorm(w&&w.i,w))}`);
+    const b=document.getElementById(s.id+"-pick"), i=tpWahlIdx(s.id), o=i!=null?s.querySelector(`option[value="${i}"]`):null;
+    const soll=o?o.textContent:"— Übung wählen —";
+    if(b&&b.textContent!==soll)ab.push(`${s.id}-pick: Knopf „${b.textContent}“ · Zustand „${soll}“`);
+  });
+  Object.keys(wahl).forEach(id=>{ if(!gesehen.has(id))ab.push(`${id}: im Zustand ${kurz(wahl[id])}, aber kein Auswahlfeld`); });
+  return ab;
+}
 /* Ein Trainer, ein Platz: wer an einem parallelen Block (Torwart-/Einzeltraining) dieses
    Hauptteils haengt, steht fuer dessen Felder nicht zur Verfuegung. Vorher zaehlte die
    Feldzahl alle angehakten Trainer – vier Trainer, Finn beim Torwart-Training, und
@@ -1706,19 +1813,15 @@ function tpParallelTrainer(mainIdx){
    ändern – „meine Gruppe, mein Trainer" aus v514 gilt weiter. Geliehen wird immer vom Feld
    mit dem größten Überschuss, und ein Feld gibt nie unter seinen eigenen Bedarf ab.
    ═══════════════════════════════════════════════════════════════════════════ */
-function tpFeldBedarfe(si,n,merk){
+function tpFeldBedarfe(si,n){
   const slots=(typeof tpSlots!=="undefined")?tpSlots:[];
   const slot=slots[si]||{};
   const alle=(typeof tpAllForms==="function")?tpAllForms():[];
   const out=[];
   for(let p=0;p<n;p++){
-    const id=`tp-form-${si}-${p}`;
-    let idx=null;
-    const sel=document.getElementById(id);
-    if(sel&&sel.value)idx=parseInt(sel.value);
-    else if(merk&&merk[id])idx=parseInt(merk[id]);
-    /* Beim Neuzeichnen sind die Selects noch leer; dann sagt die Einheit selbst, welche
-       Übung an dieses Feld gehört (slot.felder, seit v571). */
+    let idx=tpWahlIdx(`tp-form-${si}-${p}`);   // v882: aus dem Zustand
+    /* Ohne Wahl sagt die Einheit selbst, welche Übung an dieses Feld gehört (slot.felder,
+       seit v571). */
     if((idx==null||isNaN(idx))&&Array.isArray(slot.felder)&&slot.felder.length){
       const nm=(slot.felder[p%slot.felder.length]||{}).u;
       const i=alle.findIndex(f=>f&&f.name===nm);
@@ -1858,7 +1961,7 @@ function tpDurchgaengeSetzen(si,wert){
   // weniger Durchgänge: hintere Glieder lösen; selbst angelegte ohne eigene Übung verschwinden
   while(_tpKetteIdx(id).length>n){
     const k=_tpKetteIdx(id), letzter=k[k.length-1], sl=tpSlots[letzter];
-    const eigene=[...document.querySelectorAll(`.tp-form-sel[id^="tp-form-${letzter}-"]`)].some(x=>x.value&&x.dataset.erbt!=="1");
+    const eigene=tpWahlFelder(letzter).some(id=>{ const w=TP_ZUSTAND.wahl[id]; return w&&w.i!=null&&!w.erbt; });   // v882: aus dem Zustand
     if(sl.auto&&!eigene){ tpSlotsNeuOrdnen(tpSlots.map((_,i)=>i).filter(i=>i!==letzter)); weg++; }
     else { delete sl.kette; delete sl.auto; }
   }
@@ -1871,19 +1974,18 @@ function tpDurchgaengeSetzen(si,wert){
 }
 /* Geerbte Übungen nachziehen: leere Station im Durchgang → Übung des Kopfes an derselben
    Station. Gleiche Übung wie der Kopf gilt ebenfalls als geerbt (so bleibt das nach dem
-   Neuladen erhalten, ohne ein eigenes Merkmal im Plan). */
+   Neuladen erhalten, ohne ein eigenes Merkmal im Plan).
+   v882: im Zustand – die Seite folgt über die Projektion (_tpWahlAufSeite). */
 function _tpKetteNachziehen(){
-  const koepfe={};
+  const koepfe={}, wahl=TP_ZUSTAND.wahl, menge={};
   tpSlots.forEach((s,i)=>{ if(s&&s.kette){ const k=_tpKetteIdx(s.kette); if(k.length>1&&k[0]!==i)koepfe[i]=k[0]; } });
   Object.keys(koepfe).forEach(fi=>{
     const hi=koepfe[fi];
-    document.querySelectorAll(`.tp-form-sel[id^="tp-form-${fi}-"]`).forEach(sel=>{
-      const p=sel.id.split("-").pop(), kopfSel=document.getElementById(`tp-form-${hi}-${p}`);
-      const kv=kopfSel?kopfSel.value:"";
-      if(!sel.value||sel.dataset.erbt==="1"||(kv&&sel.value===kv)){
-        if(kv&&[...sel.options].some(o=>o.value===kv)){ sel.value=kv; sel.dataset.erbt="1"; }
-        else if(sel.dataset.erbt==="1"){ sel.value=""; }
-        if(typeof tpPickSync==="function")tpPickSync(sel.id);
+    tpWahlFelder(+fi).forEach((id,p)=>{
+      const w=wahl[id], kv=tpWahlIdx(`tp-form-${hi}-${p}`);
+      if(!w||w.i==null||w.erbt||(kv!=null&&w.i===kv)){
+        if(kv!=null&&tpWahlZulaessig(+fi,kv,menge))wahl[id]=_tpWahlNorm(kv,{station:w&&w.station,alle:w&&w.alle,erbt:true});
+        else if(w&&w.erbt)wahl[id]=_tpWahlNorm(null,w);
       }
     });
   });
@@ -2323,23 +2425,25 @@ function tpSlotKopfText(lab){
    Reine Sichtebene: die Auswahlfelder bleiben im DOM (nur ausgeblendet) – Speichern, Zeiten und
    Trainingsstart lesen wie bisher. */
 let _tpOffen=new Set(), _tpAlleOffen=false;
+/* v882: Felder und Wahl aus dem Modell bzw. Zustand, nicht aus den Auswahlfeldern im Block */
 function tpSlotGefuellt(el){
-  const sels=[...el.querySelectorAll(".tp-form-sel")];
-  if(!sels.length)return true;                                   // freies Spiel, Fenster ohne Übung
+  const felder=tpWahlFelder(Number(el.dataset.si));
+  if(!felder.length)return true;                                 // freies Spiel, Fenster ohne Übung
   const typ=((typeof tpSlots!=="undefined"&&tpSlots[Number(el.dataset.si)])||{}).typ||"main";
   if(typ==="abschluss"||typ==="turnier")return true;             // Abschluss ist auch ohne Übung fertig
-  return sels.every(x=>x.value!=="");
+  return felder.every(id=>tpWahlIdx(id)!=null);
 }
 function tpSlotKurz(el){
   const alle=(typeof tpAllForms==="function")?tpAllForms():[];
-  const namen=[...el.querySelectorAll(".tp-form-sel")].map(x=>x.value===""?null:((alle[+x.value]||{}).name||null)).filter(Boolean);
+  const namen=tpWahlFelder(Number(el.dataset.si)).map(id=>{ const i=tpWahlIdx(id); return i==null?null:((alle[i]||{}).name||null); }).filter(Boolean);
   const regel=((typeof tpSlots!=="undefined"&&tpSlots[Number(el.dataset.si)])||{}).regel;   // die Zusatzregel steht sonst nur im offenen Block
   return (namen.length?[...new Set(namen)].join(" · "):"freies Spiel – keine Übung")+(regel?` · Regel: ${regel}`:"");
 }
 function tpKlappenAnwenden(){
   const tl=document.getElementById("tp-timeline"); if(!tl)return;
+  _tpDomNachziehen();   // v882: zweiter Teil des Zeichnens – auch hier gilt die Brücke (bis Schritt 8)
   const slots=[...tl.querySelectorAll(".tp-slot")];
-  const hat=slots.some(el=>[...el.querySelectorAll(".tp-form-sel")].some(x=>x.value!==""));
+  const hat=slots.some(el=>tpWahlFelder(Number(el.dataset.si)).some(id=>tpWahlIdx(id)!=null));
   let zu=0, klappbare=0;
   slots.forEach(el=>{
     const si=Number(el.dataset.si), head=el.querySelector(".tp-slot-head"); if(!head)return;
@@ -2560,9 +2664,8 @@ let _tpStationGruppe={};
 function tpGruppeHinweis(selId){
   const el=document.getElementById(selId+"-grp"); if(!el)return;
   el.innerHTML="";
-  const info=_tpStationGruppe[selId], sel=document.getElementById(selId);
-  if(!info||!sel||!sel.value)return;
-  const idx=parseInt(sel.value);
+  const info=_tpStationGruppe[selId], idx=tpWahlIdx(selId);   // v882: aus dem Zustand
+  if(!info||idx==null)return;
   const text=tpFeldTextFuer(info.si,info.p,idx);
   const grund=tpFeldGrundtext(text);
   const vari=tpFeldVariante(text,info.n);
@@ -2657,7 +2760,7 @@ function tpGruppeHinweisAll(){
 function tpGroesserVorschlaege(selId,idx,n){
   const info=_tpStationGruppe[selId]||{};
   const alle=tpAllForms(), f=alle[idx]||{};
-  const belegt=new Set([...document.querySelectorAll(`select.tp-form-sel[id^="tp-form-${info.si}-"]`)].map(x=>x.value));
+  const belegt=new Set(info.si!=null?tpWahlFelder(info.si).map(id=>String(tpWahlIdx(id)??"")):[]);   // v882: aus dem Zustand
   const passt=alle.map((x,i)=>({x,i})).filter(o=>{
     if(!o.x||!o.x.name||o.i===idx||belegt.has(String(o.i))||!tpStationTauglich(o.x))return false;   // v714
     const sp=tpUebungSpanne(o.i);
@@ -2711,13 +2814,13 @@ function tpUebungKiAnpassen(idx,n){
 function tpBetreuungHinweis(selId){
   const el=document.getElementById(selId+"-betr"); if(!el)return;
   el.innerHTML="";
-  const info=_tpStationGruppe[selId], sel=document.getElementById(selId);
-  if(!info||!sel||!sel.value)return;
+  const info=_tpStationGruppe[selId], idx=tpWahlIdx(selId);   // v882: Wahl aus dem Zustand
+  if(!info||idx==null)return;
   const felder=tpFelderZahl(info.si);   // v881: aus dem Modell
   if(felder<2||tpCoaches[selId])return;
-  const alle=tpAllForms(), idx=parseInt(sel.value), f=alle[idx];
+  const alle=tpAllForms(), f=alle[idx];
   const b=tpBetreuungWert(f); if(!b||b.wert==="allein")return;
-  const kat=f.kat, belegt=new Set([...document.querySelectorAll(`select.tp-form-sel[id^="tp-form-${info.si}-"]`)].map(x=>x.value));
+  const kat=f.kat, belegt=new Set(tpWahlFelder(info.si).map(id=>String(tpWahlIdx(id)??"")));
   const allein=alle.map((x,i)=>({x,i})).filter(o=>o.x&&o.x.name&&o.i!==idx&&!belegt.has(String(o.i))&&(tpBetreuungWert(o.x)||{}).wert==="allein"&&["raute","passspiel","pressing","wahrnehmung","spass","technik"].includes(o.x.kat));
   allein.sort((a,c)=>(a.x.kat===kat?0:1)-(c.x.kat===kat?0:1)||(_tpStern(c.x)===_tpStern(f)?1:0)-(_tpStern(a.x)===_tpStern(f)?1:0));
   const vor=allein.slice(0,3);
@@ -2821,11 +2924,12 @@ function _tpRenderTimelineIntern(){
   if(typeof tgAnwesenheitAbgleich==="function")tgAbgleichMelden(tgAnwesenheitAbgleich());
   const wrap=document.getElementById("tp-timeline");
   if(!wrap)return;
-  /* Die Leiste wird komplett neu gezeichnet – bei jeder Dauer, jedem Trainerwechsel.
-     Gewaehlte Uebungen, Torwart-Haken und das Einzeltrainings-Kind lebten nur im DOM
-     und waren danach weg. Hier merken, unten wieder einsetzen. */
-  const merk={sel:{},tw:{},ind:{},mark:{}};
-  wrap.querySelectorAll(".tp-form-sel").forEach(s=>{if(s.value&&s.dataset.erbt!=="1")merk.sel[s.id]=s.value; if(s.dataset.station!=null||s.dataset.alle)merk.mark[s.id]={station:s.dataset.station,alle:s.dataset.alle};});   // v608: Vorlagen-Marken überleben das Neuzeichnen
+  /* v882: Die Übungswahl steht im Zustand (TP_ZUSTAND.wahl) und wird nach dem Zeichnen auf die
+     Seite projiziert. Die Brücke übernimmt vorher, was noch direkt ins Auswahlfeld geschrieben
+     wurde. Torwart-Haken und das Einzeltrainings-Kind leben (bis Schritt 6) nur im DOM –
+     hier merken, unten wieder einsetzen. */
+  _tpDomNachziehen();
+  const merk={tw:{},ind:{}};
   wrap.querySelectorAll(".tp-tw-player").forEach(c=>{merk.tw[c.dataset.slot+"|"+c.value]=c.checked;});
   wrap.querySelectorAll('select[id^="tp-ind-player-"]').forEach(s=>{if(s.value)merk.ind[s.id]=s.value;});
   if(typeof renderTeamDiagnose==="function")renderTeamDiagnose(); // Phase 7-C: Team-Diagnose oben
@@ -2876,7 +2980,7 @@ function _tpRenderTimelineIntern(){
     const noSelect=art==="ohne"||frei;
     /* v881: Felder, Trainer und weggelassene Felder rechnet _tpFelderRechnung (eine Rechenstelle) */
     const {gebunden,trainersAlle,trainers,weg,warmFolge,parallelSlots}=_tpFelderRechnung(si);
-    const felderGruppen=(tpIstHauptteil(typ)&&typeof tgFor==="function"&&tgFor())?tpFelderGruppen(tgFor(),parallelSlots,weg,tpVersatz(si),tpFeldBedarfe(si,parallelSlots,merk.sel)):null;
+    const felderGruppen=(tpIstHauptteil(typ)&&typeof tgFor==="function"&&tgFor())?tpFelderGruppen(tgFor(),parallelSlots,weg,tpVersatz(si),tpFeldBedarfe(si,parallelSlots)):null;
     const filtered=tpFilteredOpts(typ);
     const formOpts=filtered.map(x=>`<option value="${x.i}">${esc(x.f.name)} (${esc(x.f.dauer)})</option>`).join("");
 
@@ -3026,7 +3130,7 @@ function _tpRenderTimelineIntern(){
         // Der Trainername stand doppelt: einmal als Etikett, einmal im (funktionslosen) Dropdown.
         /* v621: Stationen einer Kette zeigen die Reihenfolge der Gruppen über alle Durchgänge. */
         const _kSt=isMain?_tpKetteVon(si):[si], dgN=_kSt.length, _v0=tpVersatz(_kSt[0]);
-        const folgeGr=(dgN>1&&tgg)?Array.from({length:dgN},(_,d)=>{const fg=tpFelderGruppen(tgFor(),parallelSlots,weg,_v0+d,tpFeldBedarfe(si,parallelSlots,merk.sel))[p];return fg?`${fg.emo||"👥"} ${esc((fg.name||"").split(" + ")[0])}`:"";}).filter(Boolean).join(" → "):"";
+        const folgeGr=(dgN>1&&tgg)?Array.from({length:dgN},(_,d)=>{const fg=tpFelderGruppen(tgFor(),parallelSlots,weg,_v0+d,tpFeldBedarfe(si,parallelSlots))[p];return fg?`${fg.emo||"👥"} ${esc((fg.name||"").split(" + ")[0])}`:"";}).filter(Boolean).join(" → "):"";
         const warmTitel=p===0?"Alle Kinder":`Alle Kinder · danach (${p+1}.)`;
         html+=`<div class="tp-station">
           <div class="tp-station-head">
@@ -3085,10 +3189,10 @@ function _tpRenderTimelineIntern(){
     <select id="tp-dauer" onchange="tpRenderTimeline()" style="font-size:var(--s-text);min-height:44px;padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;background:var(--surface);color:var(--text)">${[...new Set([60,75,90].concat(TP_TERMIN_MIN?[TP_TERMIN_MIN]:[]))].sort((x,y)=>x-y).map(d=>`<option value="${d}"${zielDauer===d?" selected":""}>${d}</option>`).join("")}</select>
     Min.${passt?tpPufferText(frei):" – zu lang!"}</div>`;
   wrap.innerHTML=html;
-  // Gemerkte Auswahl wieder einsetzen (siehe oben)
-  Object.keys(merk.mark).forEach(id=>{const s=document.getElementById(id); const m=merk.mark[id]; if(s&&m){ if(m.station!=null)s.dataset.station=m.station; if(m.alle)s.dataset.alle=m.alle; }});
-  Object.keys(merk.sel).forEach(id=>{const s=document.getElementById(id); if(s&&[...s.options].some(o=>o.value===merk.sel[id])){s.value=merk.sel[id]; if(typeof tpPickSync==="function")tpPickSync(id); const hd=document.getElementById(id+"-hist"); if(hd&&typeof tpExerciseHistoryHtml==="function")hd.innerHTML=tpExerciseHistoryHtml(parseInt(s.value));}});
+  // v882: Übungswahl aus dem Zustand auf die neuen Auswahlfelder (Wert, Marken, Picker-Knopf, Historie)
+  _tpWahlBereinigen();
   _tpKetteNachziehen();   // v621: Durchgänge erben die Übungen ihres Kopfes
+  _tpWahlAufSeite(true);
   wrap.querySelectorAll(".tp-tw-player").forEach(c=>{const k=c.dataset.slot+"|"+c.value; if(k in merk.tw)c.checked=merk.tw[k];});
   Object.keys(merk.ind).forEach(id=>{const s=document.getElementById(id); if(s){s.value=merk.ind[id]; if(typeof tpIndPlayerChange==="function"&&s.value)tpIndPlayerChange(Number(id.replace("tp-ind-player-","")));}});
   tpPrognoseLoad(); // G3: erwartete Kinderzahl fürs gewählte Datum
@@ -3123,13 +3227,17 @@ function tpOnSelectChange(sel){
   /* v608: Hand schlägt Vorlage (Regel aus v535: sobald der Trainer ein Feld ändert, wird der
      Plan Feld für Feld gespeichert). Die Marken fallen deshalb überall weg; jedes Feld steht
      ab dann mit Block und Feld im Plan und braucht sie nicht mehr. */
-  if(!_tpRestoring&&sel){
-    document.querySelectorAll(".tp-form-sel").forEach(x=>{ delete x.dataset.station; delete x.dataset.alle; });
+  /* v882: Brücke – der Wert aus dem Auswahlfeld geht in den Zustand (tpWahlSetzen, beim Öffnen
+     eines Plans ohne „hand“: die Marken des Feldes bleiben), danach folgt die Seite dem Zustand. */
+  if(sel){
+    _tpDomNachziehen();
+    const d=sel.dataset;
+    tpWahlSetzen(sel.id,sel.value,{station:d.station,alle:d.alle,erbt:d.erbt,hand:!_tpRestoring});
   }
-  if(sel&&!_tpRestoring)delete sel.dataset.erbt;   // v621: eigene Wahl im Durchgang ersetzt die geerbte
   if(typeof _tpKetteNachziehen==="function")_tpKetteNachziehen();
-  const histDiv=document.getElementById(sel.id+"-hist");
-  if(histDiv&&sel.value) histDiv.innerHTML=tpExerciseHistoryHtml(parseInt(sel.value));
+  _tpWahlAufSeite(false);
+  const histDiv=document.getElementById(sel.id+"-hist"), idx=tpWahlIdx(sel.id);
+  if(histDiv&&idx!=null) histDiv.innerHTML=tpExerciseHistoryHtml(idx);
   else if(histDiv) histDiv.innerHTML="";
   if(typeof tpPickSync==="function")tpPickSync(sel.id); // sichtbaren Auswahl-Button nachziehen
   if(typeof tpKgHintAll==="function")tpKgHintAll();     // Kleingruppen-Bedarf der Aufwärm-Übung
@@ -3173,12 +3281,12 @@ function _istSpielform(f){
 
 function tpSpielformQuote(){
   let spiel=0,gesamt=0;
-  document.querySelectorAll(".tp-form-sel").forEach(sel=>{
-    if(!sel.value)return;
-    const f=tpAllForms()[Number(sel.value)];
-    const slotEl=sel.closest(".tp-slot");
+  /* v882: Wahl aus dem Zustand, Felder aus dem Modell (die Summe hängt nicht an der Reihenfolge) */
+  tpSlots.flatMap((s,si)=>tpWahlFelder(si)).forEach(id=>{
+    const i=tpWahlIdx(id); if(i==null)return;
+    const f=tpAllForms()[i];
     // Dauer des zugehörigen Slots grob über tpSlots ermitteln
-    const m=(sel.id||"").match(/^tp-form-(\d+)-/);
+    const m=id.match(/^tp-form-(\d+)-/);
     const d=m&&tpSlots[Number(m[1])]?(tpSlots[Number(m[1])].dauer||0):10;
     gesamt+=d;
     /* Paket 3: Wo der Trainer den Block ausdrücklich als Spielform oder Übungsform
@@ -3191,7 +3299,7 @@ function tpSpielformQuote(){
     if(erklaert?slotTyp==="spielform":_istSpielform(f))spiel+=d;
   });
   // Abschluss zählt immer als Spiel (freies Spiel), auch ohne gewählte Übung
-  tpSlots.forEach(sl=>{if((sl.typ||"main")==="abschluss"||sl.typ==="turnier"){const belegt=document.querySelector(`[id^="tp-form-${tpSlots.indexOf(sl)}-"]`)?.value;if(!belegt){gesamt+=sl.dauer||0;spiel+=sl.dauer||0;}}});
+  tpSlots.forEach(sl=>{if((sl.typ||"main")==="abschluss"||sl.typ==="turnier"){const belegt=tpWahlIdx(`tp-form-${tpSlots.indexOf(sl)}-0`)!=null;if(!belegt){gesamt+=sl.dauer||0;spiel+=sl.dauer||0;}}});
   if(!gesamt)return null;
   return Math.round(spiel/gesamt*100);
 }
@@ -3295,8 +3403,8 @@ async function tpRichtwertAendern(){
 function tpKgHintAll(){
   document.querySelectorAll("[id^='tp-kg-']").forEach(slotEl=>{
     const si=slotEl.id.split("-")[2];
-    const sel=document.getElementById(`tp-form-${si}-0`);
-    const f=(sel&&sel.value)?tpAllForms()[Number(sel.value)]:null;
+    const i0=tpWahlIdx(`tp-form-${si}-0`);   // v882: aus dem Zustand
+    const f=i0!=null?tpAllForms()[i0]:null;
     const gr=_kgBedarf(f), rolle=_kgRolle(f);
     let html="";
     if(gr)html+=`<button class="btn btn-sm" style="margin-top:6px" onclick="_kgGroesse=${gr};kleingruppenOpen()">👥 ${gr}er-Gruppen auslosen – „${esc(f.name)}“ braucht sie</button>`;
@@ -3345,12 +3453,13 @@ async function rolleLos(lbl,emo){
 }
 
 function tpShowExFromSel(selId){
-  const sel=document.getElementById(selId);
-  if(!sel||!sel.value)return;
+  _tpDomNachziehen();   // v882: Einstieg von außen (Knopf) – die Brücke gilt auch hier (bis Schritt 8)
+  const idx=tpWahlIdx(selId);   // v882: aus dem Zustand
+  if(idx==null)return;
   /* v623: Die Minuten im Übungstext sind Richtwerte – im Plan zählt die Länge des Blocks. */
   const m=/^tp-form-(\d+)-/.exec(String(selId)), slot=m&&typeof tpSlots!=="undefined"?tpSlots[+m[1]]:null;
   const quelle=slot&&typeof tpIstParallel==="function"&&tpIstParallel(slot)&&tpSlots[slot.parallelZu]?tpSlots[slot.parallelZu]:slot;
-  tpShowExercise(parseInt(sel.value),quelle?Number(quelle.dauer)||null:null);
+  tpShowExercise(idx,quelle?Number(quelle.dauer)||null:null);
 }
 
 function tpIndPlayerChange(slotIdx){
@@ -3991,9 +4100,9 @@ function tpAddRecoExercise(formIdx){
      coaches – tpCoaches (Trainer je Feld, Schlüssel Element-ID tp-form-<Block>-<Feld>)
      trainer – gewählte Trainer in Reihenfolge
      formen  – tpAllForms()
-     felder  – [{id, wert, station, alle}] je Auswahlfeld .tp-form-sel in Dokumentreihenfolge,
-               auch leere (ihre Zahl je Block ist die Felderzahl); station/alle sind die rohen
-               Marken data-station/data-alle
+     felder  – [{id, wert, station, alle}] je Feld in der Reihenfolge des Zeichnens, auch leere
+               (ihre Zahl je Block ist die Felderzahl); station/alle als Zeichenketten wie die
+               Marken data-station/data-alle (v882: aus TP_ZUSTAND.wahl)
      tw      – {Blockindex: [angehakte Werte]} nur für Blöcke mit Torwart-Angebot
      kind    – {Blockindex: Wert der Einzelkind-Auswahl}
      felderZahl – (v881, wahlweise) [Felderzahl je Block] aus tpFelderZahl; fehlt sie, zählen die
@@ -4043,9 +4152,16 @@ function tpSlotsAusZustand(z){
     return o;
   });
 }
-/* Übergangsbrücke (bis Schritt 8): liest genau das aus der Seite, was die Serialisierer brauchen. */
+/* Übergangsbrücke (bis Schritt 8): liest genau das aus der Seite, was die Serialisierer brauchen.
+   v882: die Übungswahl aus TP_ZUSTAND.wahl (nach _tpDomNachziehen), die Felder in der Reihenfolge
+   des Zeichnens (_tpRenderReihe, je Block tpWahlFelder) – wie zuvor die Dokumentreihenfolge. */
 function _tpZustandAusDom(){
-  const felder=[...document.querySelectorAll(".tp-form-sel")].map(s=>({id:s.id,wert:s.value,station:s.dataset.station,alle:s.dataset.alle}));
+  _tpDomNachziehen();
+  const wahl=TP_ZUSTAND.wahl, drin=new Set();
+  const feld=id=>{ drin.add(id); const w=wahl[id]||{}; return {id,wert:w.i!=null?String(w.i):"",station:w.station!=null?String(w.station):undefined,alle:w.alle?"1":undefined}; };
+  const felder=_tpRenderReihe().flatMap(si=>tpWahlFelder(si).map(feld));
+  /* Sicherheitsnetz der Übergangszeit: eine Wahl ohne Feld im Modell geht nicht verloren */
+  Object.keys(wahl).filter(id=>!drin.has(id)&&wahl[id].i!=null).forEach(id=>felder.push(feld(id)));
   const tw={}, kind={};
   tpSlots.forEach((s,si)=>{
     const an=[...document.querySelectorAll(`.tp-tw-player[data-slot="${si}"]`)];
@@ -4342,8 +4458,8 @@ function tpMaterialZaehlen(){
   const jeSlot=slots.map(()=>({tore:0,minitore:0,huetchen:0,stangen:0,teller:0,dummys:0,leitern:0}));
   const ohne=new Set(); let gezaehlt=0;
   slots.forEach((s,si)=>{
-    document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`).forEach(sel=>{
-      if(sel.value==="")return; const f=alle[+sel.value]; if(!f)return;
+    tpWahlFelder(si).forEach(id=>{   // v882: Wahl aus dem Zustand
+      const i=tpWahlIdx(id); if(i==null)return; const f=alle[i]; if(!f)return;
       const sp=_skzSpecSicher(f); if(!sp){ ohne.add(f.name); return; }
       gezaehlt++; const m=tpMaterialVonSpec(sp); Object.keys(m).forEach(k=>jeSlot[si][k]+=m[k]);
     });
@@ -4414,7 +4530,12 @@ async function tpPlanRestore(datum){
   clearTimeout(_tpPlanTimer);            // eine noch ausstehende Speicherung des VORIGEN Termins gehört nicht hierher
   _tpRestoring=true;
   try{ await _tpPlanRestoreIntern(datum,lauf); }
-  finally{ if(lauf===_tpRestoreLauf)_tpRestoring=false; }
+  finally{
+    if(lauf===_tpRestoreLauf)_tpRestoring=false;
+    /* v882: Das Öffnen schreibt noch direkt ins Auswahlfeld (Leeren, Marken nach dem Einsetzen) –
+       die Brücke übernimmt das in den Zustand (bis Schritt 5). */
+    try{ _tpDomNachziehen(); }catch(e){}
+  }
 }
 /* Gilt dieser Lauf noch? Wer schnell von A nach B tippt, startet zwei Läufe; der ältere
    darf nach seinem Warten nichts mehr zeichnen – sonst stünde die Struktur von A unter B. */
@@ -4624,15 +4745,22 @@ function tpVorplanJump(datum){
    Countdown + Pfiff durchlaufen. Reines Frontend, kein Server.
 ═══════════════════════════════════ */
 let _stT={ix:0,left:0,timer:null,stations:[],paused:false};
+/* v882: Name der gewählten Übung eines Feldes wie bisher aus dem Text der Option („Name (Dauer)“
+   ohne die Klammer am Ende) – jetzt aus dem Zustand; leer ohne Wahl. */
+function _tpWahlText(id){
+  const i=tpWahlIdx(id); if(i==null)return "";
+  const f=tpAllForms()[i]; if(!f)return "";
+  return `${f.name} (${f.dauer})`.replace(/\s*\([^)]*\)\s*$/,"").trim();
+}
 // Stationen aus dem aktuellen Zeitplan: Label + Dauer je Slot, plus die gewählten Übungen.
 function stTimerStations(){
+  _tpDomNachziehen();   // v882: Einstieg von außen (Knopf) – die Brücke gilt auch hier (bis Schritt 8)
   /* v605: Durchgänge werden zu eigenen Stationen – mit der weitergerückten Einteilung. */
   /* v609: Torwart- und Einzeltraining laufen PARALLEL zu ihrem Hauptteil. Als eigene Station
      hängte der Timer sie hinten an – die Uhr lief länger als der Plan. Jetzt stehen sie als
      Zusatzzeile bei ihrem Hauptteil, wie im Trainingsstart (_tlSnapshot). */
   const zusatz=si=>tpSlots.map((p,pi)=>({p,pi})).filter(x=>tpIstParallel(x.p)&&x.p.parallelZu===si).map(({p,pi})=>{
-    const sel=document.querySelector(`.tp-form-sel[id^="tp-form-${pi}-"]`);
-    const uebung=(sel&&sel.value&&sel.selectedOptions[0])?sel.selectedOptions[0].textContent.replace(/\s*\([^)]*\)\s*$/,"").trim():"Übung wählen";
+    const uebung=tpWahlFelder(pi).length?(_tpWahlText(`tp-form-${pi}-0`)||"Übung wählen"):"Übung wählen";   // v882: aus dem Zustand
     const tw=(p.typ||"")==="tw";
     const wer=tw?[...document.querySelectorAll(`.tp-tw-player[data-slot="${pi}"]:checked`)].map(c=>c.value).join(", "):(document.getElementById(`tp-ind-player-${pi}`)?.value||"");
     return `${tw?"🧤 Torwart":"🎯 Einzeltraining"}${wer?" ("+wer+")":""}: ${uebung}`;
@@ -4641,9 +4769,7 @@ function stTimerStations(){
     if(tpIstParallel(slot))return [];
     const nDg=tpDurchgaenge(slot), minuten=tpDurchgangMinuten(slot);
     return Array.from({length:nDg},(_,d)=>{
-    const forms=[...document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`)]
-      .map(s=>(s.value&&s.selectedOptions[0])?s.selectedOptions[0].textContent.replace(/\s*\([^)]*\)\s*$/,"").trim():"")
-      .filter(Boolean);
+    const forms=tpWahlFelder(si).map(_tpWahlText).filter(Boolean);   // v882: aus dem Zustand
     /* v514: Wer in diesem Block an welchem Feld steht – am Platz die eigentliche Frage,
        wenn die Gruppen von Block zu Block weiterrücken. Dieselbe Quelle wie die Zeitleiste
        (tpFelderGruppen mit tpVersatz), damit Timer und Plan nie auseinanderlaufen. */
@@ -4836,7 +4962,8 @@ async function tpGenerate(){
     if(bedarf>jetzt){ if(jetzt)tgErweitern(bedarf); else tgBilden(bedarf); }
   }catch(e){}
   const haupt=()=>tpSlots.map((s,i)=>({s,i})).filter(x=>x.s&&tpIstHauptteil(x.s.typ));
-  const wert=(si,p)=>{ const el=document.getElementById(`tp-form-${si}-${p}`); return el&&el.value!==""?Number(el.value):null; };
+  const wert=(si,p)=>tpWahlIdx(`tp-form-${si}-${p}`);   // v882: aus dem Zustand
+  _tpDomNachziehen();   // v882: Einstieg von außen (Knopf) – die Brücke gilt auch hier (bis Schritt 8)
   const hatPlan=haupt().some(x=>wert(x.i,0)!=null);
   let regelZiel=null;      // v834: der eine Hauptteil, der eine Zusatzregel bekommen darf
   if(!hatPlan){
@@ -4981,8 +5108,9 @@ async function tpAnpassen(){
 /* Rechnet nur, ändert nichts. Rückgabe: was sich an Kindern, Gruppen, Stationen und Übungen
    ändern würde – die Grundlage für Fenster und Übernehmen. */
 function tpAnpassenVorschlag(){
+  _tpDomNachziehen();   // v882: Einstieg von außen (Knopf) – die Brücke gilt auch hier (bis Schritt 8)
   const haupt=tpSlots.map((s,i)=>({s,i})).filter(x=>x.s&&tpIstHauptteil(x.s.typ));
-  const wert=(si,p)=>{ const el=document.getElementById(`tp-form-${si}-${p}`); return el&&el.value!==""?Number(el.value):null; };
+  const wert=(si,p)=>tpWahlIdx(`tp-form-${si}-${p}`);   // v882: aus dem Zustand
   if(!haupt.some(x=>wert(x.i,0)!=null))return {fehler:"Noch kein Plan – erst „Training füllen“ oder eine Vorlage übernehmen"};
   const trainer=tpGetCheckedTrainers();
   if(!trainer.length)return {fehler:"Mindestens 1 Trainer anhaken"};
@@ -5769,12 +5897,13 @@ function _tlHeute(){const d=new Date();return d.getFullYear()+"-"+String(d.getMo
    samt Kindernamen). Parallele Einzeltrainings werden an ihren Hauptteil angedockt;
    das Einzel-Kind wird in diesem Fenster aus seiner Gruppe herausgenommen. */
 function _tlSnapshot(){
+  _tpDomNachziehen();   // v882: Einstieg von außen (Knopf) – die Brücke gilt auch hier (bis Schritt 8)
   const forms=tpAllForms(), trainers=tpGetCheckedTrainers();
   const tg=(typeof tgFor==="function")?tgFor():null;
   const stationen=[];
   tpSlots.forEach((slot,si)=>{
     if(tpIstParallel(slot))return; // dockt unten an
-    const sels=document.querySelectorAll(`.tp-form-sel[id^="tp-form-${si}-"]`);
+    const sels=tpWahlFelder(si);   // v882: Felder aus dem Modell, Wahl aus dem Zustand
     /* v573: Der Trainingsstart nimmt DIESELBE Zuordnung wie der Plan – mit Versatz und mit
        dem Ausgleich der Feldstärken. Der Versatz fehlte hier seit v514; auf den Handys am
        Platz stand damit im zweiten Hauptteil eine andere Gruppe am Feld als in der Planung. */
@@ -5786,11 +5915,11 @@ function _tlSnapshot(){
     const gruppen=[];
     const nF=tpFelderZahl(si);   // v881: aus dem Modell
     const felder=(tg&&tg.gruppen&&tpIstHauptteil(slot.typ))?tpFelderGruppen(tg,nF,slot.weg,tpVersatz(si)+d,tpFeldBedarfe(si,nF)):null;
-    sels.forEach((s,p)=>{
-      const f=s.value?forms[Number(s.value)]:null;
+    sels.forEach((id,p)=>{
+      const i=tpWahlIdx(id), f=i!=null?forms[i]:null;
       const tgg=felder?felder[p]:null;
       gruppen.push({
-        trainer:tpCoaches[s.id]||(tgg&&tgg.trainer)||trainers[p]||"Alle",
+        trainer:tpCoaches[id]||(tgg&&tgg.trainer)||trainers[p]||"Alle",
         uebung:f?f.name:"(keine Übung gewählt)",
         gruppe:tgg?`${tgg.emo} ${tgg.name}`:null,
         kinder:tgg?tgg.kinder.slice():null
@@ -5807,8 +5936,8 @@ function _tlSnapshot(){
   tpSlots.forEach((slot,si)=>{
     if(!tpIstParallel(slot))return;
     const ziele=stationen.filter(st=>st.si===slot.parallelZu); if(!ziele.length)return;   // v605: bei Durchgängen an jeden
-    const sel=document.querySelector(`.tp-form-sel[id^="tp-form-${si}-"]`);
-    const f=(sel&&sel.value)?forms[Number(sel.value)]:null;
+    const selId=tpWahlFelder(si).length?`tp-form-${si}-0`:null, i0=selId?tpWahlIdx(selId):null;   // v882: aus dem Zustand
+    const f=i0!=null?forms[i0]:null;
     const twBlock=(slot.typ||"main")==="tw";
     const kinder=twBlock
       ? Array.from(document.querySelectorAll(`.tp-tw-player[data-slot="${si}"]:checked`)).map(c=>c.value)
@@ -5817,7 +5946,7 @@ function _tlSnapshot(){
     const titel=twBlock
       ? `🧤 Torwart-Training${kinder.length?" mit "+kinder.join(", "):""}: ${f?f.name:"(Übung wählen)"}`
       : `🎯 Einzeltraining${kinder.length?" mit "+kinder[0]:""}: ${f?f.name:"(Übung wählen)"}`;
-    ziele.forEach(ziel=>ziel.gruppen.push({trainer:(sel&&tpCoaches[sel.id])||"?",uebung:titel,gruppe:null,kinder:kinder.length?kinder:null,einzel:true}));
+    ziele.forEach(ziel=>ziel.gruppen.push({trainer:(selId&&tpCoaches[selId])||"?",uebung:titel,gruppe:null,kinder:kinder.length?kinder:null,einzel:true}));
   });
   return stationen.map(({si,...rest})=>rest);
 }

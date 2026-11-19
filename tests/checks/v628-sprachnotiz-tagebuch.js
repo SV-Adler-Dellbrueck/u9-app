@@ -54,7 +54,9 @@ module.exports = async function (h) {
     document.getElementById("nb-weiter")?.remove();
     /* b/c) v679: Der Vorschlag ist mit der Auswertung schon gespeichert; „Ins Tagebuch“ öffnet die
        Prüfkarte statt eines zweiten Eintrags. Geprüft wird, was gespeichert wurde. */
-    await tagebuchAusEinheit(gestern); await warte(120);
+    /* v882: feste 120 ms wurden unter Last rot – jetzt auf die Prüfkarte warten (höchstens 3 s) */
+    await tagebuchAusEinheit(gestern);
+    for (let i = 0; i < 60 && !document.getElementById("tb-pruefen"); i++) await warte(50);
     out.b = { pruefkarte: !!document.getElementById("tb-pruefen"), zweitesFenster: !!document.getElementById("tb-card") };
     if (typeof tbPruefenZu === "function") tbPruefenZu();
     // e) gespeicherte Notiz, kein Vorschlag im Speicher
