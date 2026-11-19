@@ -227,7 +227,7 @@ function fazitRender(){
     </details>
 
     <div style="display:flex;gap:8px;margin-top:14px">
-      <button class="btn btn-p" style="flex:1;min-height:48px;justify-content:center;font-size:var(--s-karte);font-weight:800" onclick="fazitSpeichern()"><i class="ti ti-check"></i>Speichern</button>
+      <button class="btn btn-p" style="flex:1;min-height:48px;justify-content:center;font-size:var(--s-karte)" onclick="fazitSpeichern()"><i class="ti ti-check"></i>Speichern</button>
       <button class="btn btn-sm" style="min-height:48px" onclick="fazitSchliessen()">Schließen</button>
     </div>
     <button type="button" class="btn" style="width:100%;min-height:48px;margin-top:8px;justify-content:center" onclick="nbVerzichtOpen('t${Number(t.id)}',{art:'${t.typ==="turnier"?"turnier":"spiel"}',datum:'${esc(String(t.datum||"").slice(0,10))}',titel:'${jsq(t.titel||t.gegner||"")}'})"><i class="ti ti-archive"></i>Nichts eintragen</button>
@@ -307,7 +307,7 @@ function fzWeiterInsTagebuch(terminId){
   box.innerHTML = `<div style="background:var(--surface);color:var(--text);max-width:380px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
     <div style="font-size:var(--s-karte);font-weight:800">Gespeichert ✓</div>
     <div style="font-size:var(--s-text);color:var(--text2);margin:6px 0 14px;line-height:1.5">Willst du daraus einen Tagebucheintrag machen? Auslöser und Beobachtung stehen schon da – es fehlen nur dein Aha und die Konsequenz.</div>
-    <button class="btn btn-p" onclick="document.getElementById('fz-weiter').remove();tagebuchAusEvent(${Number(terminId)})" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-book"></i>Ins Tagebuch</button>
+    <button class="btn btn-p" onclick="document.getElementById('fz-weiter').remove();tagebuchAusEvent(${Number(terminId)})" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte)"><i class="ti ti-book"></i>Ins Tagebuch</button>
     <button class="btn" onclick="document.getElementById('fz-weiter').remove()" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Später</button>
   </div>`;
   document.body.appendChild(box);
@@ -398,7 +398,7 @@ async function nbVerzichtOpen(schluessel, opt){
     <label for="nb-verzicht-notiz" style="display:block;font-size:var(--s-klein);color:var(--text2);margin:12px 0 4px">Anmerkung (freiwillig)</label>
     <textarea id="nb-verzicht-notiz" rows="2" maxlength="500" placeholder="z. B. Urlaub, Spätschicht …" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);line-height:1.5;background:var(--surface2);color:var(--text);resize:vertical">${esc(alt&&alt.notiz||"")}</textarea>
     <div id="nb-verzicht-status" role="status" aria-live="polite" style="font-size:var(--s-klein);color:var(--text2);min-height:1em;margin-top:6px"></div>
-    <button id="nb-verzicht-ok" class="btn btn-p" onclick="nbVerzichtSpeichern()" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800;margin-top:6px"><i class="ti ti-archive"></i>${alt?"Änderung ablegen":"Ablegen"}</button>
+    <button id="nb-verzicht-ok" class="btn btn-p" onclick="nbVerzichtSpeichern()" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);margin-top:6px"><i class="ti ti-archive"></i>${alt?"Änderung ablegen":"Ablegen"}</button>
     ${alt?`<button class="btn" onclick="nbVerzichtZurueck()" style="width:100%;min-height:48px;margin-top:8px;justify-content:center"><i class="ti ti-arrow-back-up"></i>Doch eintragen – wieder offen</button>`:""}
     <button class="btn" onclick="document.getElementById('nb-verzicht').remove()" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Abbrechen</button>
   </div>`;
@@ -600,7 +600,7 @@ function nbGrossFuss(){
     return;
   }
   f.innerHTML = `${kann?`<div style="display:flex;gap:8px">
-      <button id="nb-gross-mic" type="button" class="btn" style="flex:1 1 0;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800;background:#15803d;border-color:#15803d;color:#fff" onclick="nbGrossStart()" aria-pressed="false"><i class="ti ti-player-play-filled"></i><span>Jetzt aufnehmen</span></button>
+      <button id="nb-gross-mic" type="button" class="btn" style="flex:1 1 0;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800;background:var(--fam-training);border-color:var(--fam-training);color:#fff" onclick="nbGrossStart()" aria-pressed="false"><i class="ti ti-player-play-filled"></i><span>Jetzt aufnehmen</span></button>
       <button id="nb-gross-stopp" type="button" class="btn" style="flex:1 1 0;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800;background:#b91c1c;border-color:#b91c1c;color:#fff" onclick="nbGrossStopp()" aria-label="Aufnahme pausieren oder stoppen – der Text bleibt stehen"><i class="ti ti-player-pause-filled"></i><span>Stopp / Pause</span></button></div>`:""}
     <button id="nb-gross-los" class="btn btn-p" style="min-height:56px;justify-content:center" onclick="nbGrossAuswerten('${art}')"><i class="ti ti-sparkles"></i>KI-Auswertung</button>`;
   nbGrossTasten();
@@ -612,7 +612,7 @@ function nbGrossTasten(){
   g.setAttribute("aria-pressed", an ? "true" : "false");
   g.querySelector("span").textContent = an ? "Nimmt auf …" : (_nbText ? "Weiter aufnehmen" : "Jetzt aufnehmen");
   g.querySelector("i").className = "ti ti-" + (an ? "microphone" : "player-play-filled");
-  g.style.boxShadow = an ? "0 0 0 3px var(--surface), 0 0 0 6px #15803d" : "none";
+  g.style.boxShadow = an ? "0 0 0 3px var(--surface), 0 0 0 6px var(--green)" : "none";
 }
 function nbGrossSync(v){
   _nbText = v;
@@ -707,7 +707,7 @@ function nbWeiterZurPruefung(id, titel){
   box.innerHTML = `<div style="background:var(--surface);color:var(--text);max-width:380px;width:100%;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
     <div style="font-size:var(--s-karte);font-weight:800">${esc(titel)}</div>
     <div style="font-size:var(--s-text);color:var(--text2);margin:6px 0 14px;line-height:1.5">Aus deiner Sprachnotiz liegt ein Tagebuch-Vorschlag bereit – deine Worte, sortiert. Prüfen dauert einen Tipp; bis dahin wartet er als „Noch zu bestätigen“.</div>
-    <button class="btn btn-p" onclick="document.getElementById('nb-weiter').remove();tbPruefenOpen(${Number(id)},{bewertung:_nbBewertungZeilen})" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-book"></i>Vorschlag prüfen</button>
+    <button class="btn btn-p" onclick="document.getElementById('nb-weiter').remove();tbPruefenOpen(${Number(id)},{bewertung:_nbBewertungZeilen})" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte)"><i class="ti ti-book"></i>Vorschlag prüfen</button>
     <button class="btn" onclick="document.getElementById('nb-weiter').remove()" style="width:100%;min-height:48px;margin-top:8px;justify-content:center">Später</button>
   </div>`;
   document.body.appendChild(box);
@@ -1101,19 +1101,19 @@ function nbWegZeichnen(){
       ${i>0?`<button type="button" class="btn" style="min-height:48px" onclick="nbWegFelderMerken();nbWegGehe(-1)"><i class="ti ti-arrow-left"></i>Zurück</button>`:""}
       <button type="button" class="btn${weiter?" btn-p":""}" style="flex:1;min-height:48px;justify-content:center" onclick="nbWegFelderMerken();nbWegGehe(1)">${weiter||"überspringen"}</button>
     </div>
-    <button type="button" onclick="nbWegFelderMerken();nbWegAus()" style="display:block;margin:10px auto 0;min-height:44px;background:none;border:none;color:var(--text2);font-family:inherit;font-size:var(--s-text);text-decoration:underline;cursor:pointer">Alles auf einen Blick</button>`;
+    <button class="btn btn-link" type="button" onclick="nbWegFelderMerken();nbWegAus()" style="display:block;margin:10px auto 0;min-height:44px;font-size:var(--s-text)">Alles auf einen Blick</button>`;
   const kopf = `${fortschritt}<div style="font-size:var(--s-text);font-weight:800;color:var(--text)">${esc(st.titel)}</div>${st.frage?`<div style="font-size:var(--s-teil);font-weight:800;margin:4px 0 12px;line-height:1.3">${esc(st.frage)}</div>`:""}`;
   const fld = "width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:var(--surface);color:var(--text);resize:vertical";
   let html = "";
   if(st.typ==="start"){
     html = `${fortschritt}<div style="font-size:var(--s-teil);font-weight:800;margin:4px 0 6px">Wie möchtest du anfangen?</div>
       <div style="font-size:var(--s-text);color:var(--text2);margin-bottom:10px;line-height:1.45">Am schnellsten: einmal erzählen, die KI sortiert alles. Oder Frage für Frage mit Kacheln – ohne ein Wort zu sprechen.</div>
-      <button type="button" class="btn btn-p" onclick="nbGross('${_nbWeg.art}',true)" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800;margin-bottom:8px"><i class="ti ti-microphone"></i>Erzählen</button>
+      <button type="button" class="btn btn-p" onclick="nbGross('${_nbWeg.art}',true)" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);margin-bottom:8px"><i class="ti ti-microphone"></i>Erzählen</button>
       ${nbLeitfadenHtml(_nbWeg.art, false, "nb-leitfaden-start")}
       <div data-nb-start></div>
       ${kachel(false,"➡️ Los geht’s – Frage für Frage","nbWegGehe(1)")}
-      <button type="button" onclick="nbWegAus()" style="display:block;margin:6px auto 0;min-height:44px;background:none;border:none;color:var(--text2);font-family:inherit;font-size:var(--s-text);text-decoration:underline;cursor:pointer">Alles auf einen Blick</button>
-      <button type="button" class="nb-nichts" onclick="nbVerzichtImWeg()" style="display:block;margin:6px auto 0;min-height:44px;background:none;border:none;color:var(--text2);font-family:inherit;font-size:var(--s-text);text-decoration:underline;cursor:pointer">Nichts eintragen</button>`;
+      <button class="btn btn-link" type="button" onclick="nbWegAus()" style="display:block;margin:6px auto 0;min-height:44px;font-size:var(--s-text)">Alles auf einen Blick</button>
+      <button type="button" class="nb-nichts btn btn-link" onclick="nbVerzichtImWeg()" style="display:block;margin:6px auto 0;min-height:44px;font-size:var(--s-text)">Nichts eintragen</button>`;
   }else if(st.typ==="kacheln"){
     const akt = st.lesen();
     html = kopf + st.kacheln.map(k=>kachel(String(akt)===String(k.wert), esc(k.label), `nbWegWahl(${typeof k.wert==="number"?k.wert:"'"+k.wert+"'"})`)).join("")
@@ -1150,7 +1150,7 @@ function nbWegZeichnen(){
     }
     html = `${fortschritt}<div style="font-size:var(--s-teil);font-weight:800;margin:4px 0 8px">Fertig – so steht es</div>
       <div style="font-size:var(--s-text);color:var(--text2);line-height:1.6;margin-bottom:12px">${zusammen.map(esc).join("<br>")}<br>Offene Fragen bleiben leer – auch halb ausgefüllt ist besser als gar nicht.</div>
-      <button type="button" class="btn btn-p" onclick="nbWegSpeichern()" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ti-check"></i>Speichern</button>
+      <button type="button" class="btn btn-p" onclick="nbWegSpeichern()" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte)"><i class="ti ti-check"></i>Speichern</button>
       <div style="display:flex;gap:8px;margin-top:8px">
         <button type="button" class="btn" style="min-height:48px" onclick="nbWegGehe(-1)"><i class="ti ti-arrow-left"></i>Zurück</button>
         <button type="button" class="btn" style="flex:1;min-height:48px;justify-content:center" onclick="nbWegAus()">Alles auf einen Blick</button>

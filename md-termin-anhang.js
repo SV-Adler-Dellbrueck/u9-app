@@ -67,7 +67,7 @@ function taChip(terminId, klickbar) {
   const t = (window._taAnz || {})[terminId]; if (!t || !t.length) return "";
   const txt = `📎 ${esc(t[0])}${t.length > 1 ? ` · +${t.length - 1}` : ""}`;
   if (!klickbar) return `<span class="ta-chip" style="display:block;font-size:var(--s-klein);font-weight:700;color:#475569;margin-top:3px">${txt}</span>`;
-  return `<button type="button" class="ta-chip" onclick="terminDetailOpen(${Number(terminId)})" aria-label="Anhang ansehen: ${esc(t[0])}" style="display:flex;align-items:center;gap:6px;min-height:44px;margin-top:4px;padding:6px 12px;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${txt}<span aria-hidden="true">›</span></button>`;
+  return `<button type="button" class="ta-chip btn btn-sm" onclick="terminDetailOpen(${Number(terminId)})" aria-label="Anhang ansehen: ${esc(t[0])}" style="display:flex;align-items:center;gap:6px;min-height:44px;margin-top:4px;font-size:var(--s-text)">${txt}<span aria-hidden="true">›</span></button>`;
 }
 async function taBlob(pfad) {
   if (_taBlobs[pfad]) return _taBlobs[pfad];
@@ -103,7 +103,7 @@ async function taEltern(terminId) {
           <button type="button" onclick="taOeffnen('${esc(a.pfad)}','${esc(a.mime)}','${esc(a.titel).replace(/'/g, "")}')" aria-label="${esc(a.titel)} groß ansehen" style="display:block;width:100%;padding:0;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc;cursor:pointer;overflow:hidden">
             <img data-ta-pfad="${esc(a.pfad)}" alt="${esc(a.titel)}" style="display:block;width:100%;max-height:260px;min-height:120px;object-fit:contain"></button>
           <div style="font-size:var(--s-klein);color:#475569;margin-top:2px">Antippen zum Vergrößern</div></div>`
-      : `<button type="button" onclick="taOeffnen('${esc(a.pfad)}','${esc(a.mime)}','${esc(a.name).replace(/'/g, "")}')" aria-label="PDF öffnen: ${esc(a.titel)}" style="display:flex;align-items:center;gap:10px;width:100%;min-height:56px;margin-bottom:8px;padding:8px 12px;text-align:left;border:1px solid #cbd5e1;border-radius:12px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer">
+      : `<button class="btn btn-zeile" type="button" onclick="taOeffnen('${esc(a.pfad)}','${esc(a.mime)}','${esc(a.name).replace(/'/g, "")}')" aria-label="PDF öffnen: ${esc(a.titel)}" style="display:flex;align-items:center;gap:10px;width:100%;min-height:56px;margin-bottom:8px;text-align:left">
           <span aria-hidden="true" style="font-size:var(--s-teil)">📄</span>
           <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-text);font-weight:800">${esc(a.titel)}</span><span style="display:block;font-size:var(--s-klein);color:#475569">PDF · ${taGroesse(a.groesse)} · antippen zum Öffnen</span></span></button>`).join("")}
   </div>`;
@@ -123,7 +123,7 @@ async function taTrainer(terminId) {
     <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:6px;line-height:1.45">Zum Beispiel der Spielplan der Gastgeber als Bild oder PDF. Die Eltern sehen ihn im Termin. Bitte keine Namen von Kindern.</div>
     ${liste.map(a => `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span aria-hidden="true">${/^image\//.test(a.mime) ? "🖼️" : "📄"}</span>
         <span style="flex:1;min-width:0;font-size:var(--s-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.titel)} <span style="color:var(--text2);font-size:var(--s-klein)">· ${taGroesse(a.groesse)}</span></span>
-        <button type="button" onclick="taLoeschen(${Number(terminId)},${Number(a.id)})" aria-label="Anhang ${esc(a.titel)} entfernen" style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit">✕</button></div>`).join("")}
+        <button class="btn btn-sm btn-d" type="button" onclick="taLoeschen(${Number(terminId)},${Number(a.id)})" aria-label="Anhang ${esc(a.titel)} entfernen" style="min-width:44px;min-height:44px;justify-content:center">✕</button></div>`).join("")}
     <div id="ta-neu"></div>
     ${voll ? `<div style="font-size:var(--s-klein);color:var(--text2)">Höchstens ${TA_MAX} Anhänge je Termin. Zum Ersetzen erst einen entfernen.</div>`
       : `<label class="btn btn-sm" id="ta-knopf" style="min-height:48px;cursor:pointer;display:inline-flex;align-items:center;gap:6px"><i class="ti ti-paperclip"></i>Anhang hinzufügen

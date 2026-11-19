@@ -137,7 +137,7 @@ function mcRenderLive(){
      Eingriff ins laufende Spiel. */
   const einstellbar=(s!=="running");
   const hzBtn=n=>`<button onclick="mcSetHalbzeiten(${n})" aria-pressed="${mcHalbzeiten===n?"true":"false"}"
-      style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:var(--r);cursor:pointer;font-family:inherit;font-size:var(--s-text);font-weight:${mcHalbzeiten===n?"700":"500"};background:${mcHalbzeiten===n?"var(--blue)":"var(--surface)"};color:${mcHalbzeiten===n?"#fff":"var(--text2)"}">${n===1?"eine":"zwei"}</button>`;
+      style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:var(--r);cursor:pointer;font-family:inherit;font-size:var(--s-text);font-weight:${mcHalbzeiten===n?"700":"500"};background:${mcHalbzeiten===n?"var(--blue)":"var(--surface)"};color:${mcHalbzeiten===n?"#fff":"var(--text2)"}">${mcHalbzeiten===n?"✓ ":""}${n===1?"eine":"zwei"}</button>`;   // v878: ✓ – Farbe trägt nicht allein
   /* v702: Minute und Phase in einer Zeile, die Knöpfe darunter – am Handy standen sie versetzt. */
   box.innerHTML=`<div class="mc-kopf"><div class="mc-minute">${label}</div><div class="mc-phase">${phase}</div></div>
   <div class="mc-knoepfe">${controls}</div>`+((einstellbar&&mcFestival)?`

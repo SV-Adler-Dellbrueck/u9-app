@@ -13,13 +13,13 @@ function kiCoachOpen(){
   const m=document.createElement("div");m.id="ki-modal";
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{if(e.target===m){kiDiktatStop();m.remove();}};   // v596: nicht weiterlauschen
-  const chip=t=>`<button onclick="document.getElementById('ki-prompt').value='${t.replace(/'/g,"")}'" style="border:1px solid var(--rand-bedien);background:var(--surface);border-radius:14px;padding:5px 10px;font-size:var(--s-klein);cursor:pointer;font-family:inherit">${t}</button>`;
+  const chip=t=>`<button class="btn btn-sm" onclick="document.getElementById('ki-prompt').value='${t.replace(/'/g,"")}'" style="font-size:var(--s-klein);justify-content:center">${t}</button>`;
   const feld="width:100%;min-height:44px;padding:6px 8px;border:var(--border-s);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box";
   m.innerHTML=`<div style="background:var(--surface);border-radius:var(--rl);padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("ki-modal","🤖","Adler-Coach (KI)","Übungen vorschlagen oder fremden Text übernehmen","#7c3aed")}
     <div id="ki-modus" role="tablist" aria-label="Wie der Coach arbeiten soll" style="display:flex;gap:6px;margin-bottom:10px">
-      <button data-modus="idee" role="tab" aria-controls="ki-block-idee" onclick="kiSetModus('idee')" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">💡 Idee beschreiben</button>
-      <button data-modus="text" role="tab" aria-controls="ki-block-text" onclick="kiSetModus('text')" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📋 Text übernehmen</button>
+      <button class="btn" data-modus="idee" role="tab" aria-controls="ki-block-idee" onclick="kiSetModus('idee')" style="flex:1;min-height:44px;font-size:var(--s-text);justify-content:center">💡 Idee beschreiben</button>
+      <button class="btn" data-modus="text" role="tab" aria-controls="ki-block-text" onclick="kiSetModus('text')" style="flex:1;min-height:44px;font-size:var(--s-text);justify-content:center">📋 Text übernehmen</button>
     </div>
     <div id="ki-hinweis" style="font-size:var(--s-klein);color:var(--text2);margin-bottom:10px"></div>
     <div id="ki-kontext"></div>
@@ -31,7 +31,7 @@ function kiCoachOpen(){
         <label style="font-size:var(--s-klein);color:var(--text2)">Material<select id="ki-material" style="${feld}">${KI_MATERIAL.map(m=>`<option>${m}</option>`).join("")}</select></label>
       </div>
       <textarea id="ki-prompt" rows="2" placeholder="Optional: was dir wichtig ist – z. B. „viele Ballkontakte, die Schnellen sollen nicht dominieren“" style="width:100%;box-sizing:border-box;padding:9px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text)"></textarea>
-      ${kiDiktatMoeglich()?`<button type="button" id="ki-mic" onclick="kiDiktat()" style="width:100%;min-height:44px;margin-top:6px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text2);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">🎙️ Diktieren</button>`:""}
+      ${kiDiktatMoeglich()?`<button class="btn" type="button" id="ki-mic" onclick="kiDiktat()" style="width:100%;min-height:44px;margin-top:6px;font-size:var(--s-text);justify-content:center">🎙️ Diktieren</button>`:""}
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0">${chip("Dribbling & Ballführung")}${chip("Passspiel in der Raute")}${chip("Torschuss mit Spaß")}${chip("Zweikampf & Mut")}</div>
     </div>
     <div id="ki-block-text" role="tabpanel" aria-label="Text übernehmen" style="display:none">
@@ -148,9 +148,12 @@ function kiSetModus(m){
   const an=KI_MODUS;
   document.querySelectorAll("#ki-modus button").forEach(b=>{
     const aktiv=b.dataset.modus===an;
-    b.style.background=aktiv?"#7c3aed":"var(--surface)";
-    b.style.color=aktiv?"#fff":"var(--text2)";
-    b.style.borderColor=aktiv?"#7c3aed":"";
+    /* v878: gewählt = kräftiger blauer Rand + ✓ (Farbe trägt nicht allein; Lila ist keine Knopffarbe mehr) */
+    b.style.background=aktiv?"var(--blue-bg)":"";
+    b.style.border=aktiv?"2px solid var(--blue)":"";
+    b.style.fontWeight=aktiv?"800":"";
+    if(!b.dataset.t)b.dataset.t=b.textContent.replace(/^✓ /,"");
+    b.textContent=(aktiv?"✓ ":"")+b.dataset.t;
     /* v596: Die beiden sind ein Reiterpaar, keine zwei Aktionsknöpfe — „Idee
        beschreiben" ist beim Öffnen schon gewählt, ein Klick darauf ändert deshalb
        nichts, und genau das wirkte wie ein toter Knopf (PO am 22.09.). Mit

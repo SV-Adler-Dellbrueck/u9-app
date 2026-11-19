@@ -98,7 +98,7 @@ function atLiveRender(){
     <div style="flex:1;min-width:0;font-size:13px;font-weight:800">⚡ Live-Aktion${atLiveAction?"":" · Aktion wählen"}${(()=>{ const r=atRundeJetzt(); if(!r)return ""; const t=(typeof spieltagTeam!=="undefined")?spieltagTeam:1; const sp=((TEAM_PLAN.spiele||{})[t]||[]).find(p=>p.runde===r); return `<div style="font-size:11px;font-weight:600;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Runde ${r}${sp?` · gegen ${esc(sp.gegner)} · ${esc(sp.feldName)}`:""}</div>`; })()}</div>
     <div title="Ergebnis (Tore:Gegentore)" style="font-size:17px;font-weight:900;padding:3px 12px;background:rgba(255,255,255,.14);border-radius:10px">${atTore()}:${atGegentore}</div>
     <div style="font-size:11px;color:#94a3b8">🏆 ${done}/${teamQuests.length}</div>
-    <button onclick="atLiveClose()" aria-label="Schließen" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:22px;cursor:pointer">×</button></div>`;
+    <button class="btn btn-kopf" onclick="atLiveClose()" aria-label="Schließen" style="font-size:22px">×</button></div>`;
   // Fokus-Modus: Uhr (live) + Wechsel-Vorschlag direkt im Vollbild
   const minute=(typeof mcState!=="undefined"&&mcState)?mcMinuteLabel(mcState,typeof mcSpieldauer!=="undefined"?mcSpieldauer:10,typeof mcHalbzeiten!=="undefined"?mcHalbzeiten:1):"";
   let subHint="";
@@ -252,7 +252,7 @@ async function blitzLoadSaved(){
     if(!rows.length){box.innerHTML="";return;}
     const wCol={top:"#15803d",solide:"#64748b",blass:"#dc2626"};
     box.innerHTML=`<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:5px">Gespeicherte Bewertungen (${rows.length}) · ✕ zum Löschen/Korrigieren</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px">${rows.map(x=>`<span style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;padding:4px 9px;border-radius:14px;background:var(--surface2);border:var(--border-s)"><span style="width:8px;height:8px;border-radius:50%;background:${wCol[x.wertung]||"#64748b"}"></span>${esc(x.spieler)}<button onclick="blitzDelete(${Number(x.id)})" title="Bewertung löschen" aria-label="Löschen" style="border:none;background:transparent;cursor:pointer;color:#dc2626;font-size:13px;line-height:1;padding:0 2px">✕</button></span>`).join("")}</div>`;
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${rows.map(x=>`<span style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;padding:4px 9px;border-radius:14px;background:var(--surface2);border:var(--border-s)"><span style="width:8px;height:8px;border-radius:50%;background:${wCol[x.wertung]||"#64748b"}"></span>${esc(x.spieler)}<button class="btn btn-sm btn-d" onclick="blitzDelete(${Number(x.id)})" title="Bewertung löschen" aria-label="Löschen" style="font-size:13px;line-height:1;min-width:44px;justify-content:center">✕</button></span>`).join("")}</div>`;
   }catch(e){}
 }
 async function blitzDelete(id){
@@ -276,7 +276,8 @@ function blitzRenderCard(){
   const name=blitzPlayers[blitzIdx];const nr=getKader(name)?.nr;
   if(blitzCritPlayer!==name){blitzCrit={};BLITZ_CRIT.forEach(c=>blitzCrit[c.key]=2);blitzCritPlayer=name;} // Mitte vorbelegt
   const evidenz=(typeof atSummary==="function"&&atSummary(name))?`<div style="font-size:12px;color:var(--text2);margin-bottom:12px">Live-Aktionen: ${atSummary(name)}</div>`:"";
-  const lvlBtn=(cKey,val,txt,col)=>{const on=blitzCrit[cKey]===val;return `<button onclick="blitzSetCrit('${cKey}',${val})" style="flex:1;min-height:48px;font-size:13px;border:1px solid var(--rand-bedien);border-radius:var(--r);cursor:pointer;font-family:inherit;background:${on?col:"var(--surface2)"};color:${on?"#fff":"var(--text2)"}">${txt}</button>`;};
+  /* v878: gewählt = Farbe UND ✓ + aria-pressed (Farbe trägt nicht allein) */
+  const lvlBtn=(cKey,val,txt,col)=>{const on=blitzCrit[cKey]===val;return `<button onclick="blitzSetCrit('${cKey}',${val})" aria-pressed="${on}" style="flex:1;min-height:48px;font-size:13px;border:1px solid var(--rand-bedien);border-radius:var(--r);cursor:pointer;font-family:inherit;background:${on?col:"var(--surface2)"};color:${on?"#fff":"var(--text2)"};font-weight:${on?800:400}">${on?"✓ ":""}${txt}</button>`;};
   card.innerHTML=`<div class="card" style="padding:16px">
     <div style="text-align:center">
       <div style="font-size:11px;color:var(--text3)">Spieler ${blitzIdx+1}/${blitzPlayers.length}</div>

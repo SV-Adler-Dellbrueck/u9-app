@@ -142,7 +142,7 @@ async function blockPlanKarte(datum){
        ein leiser Link unter den beiden Hauptwegen. */
     el.innerHTML="";
     const neu=document.getElementById("tp-block-neu");
-    if(neu)neu.innerHTML=kommt?"":`<button type="button" id="tp-block-link" onclick="blockEditorOpen()" style="min-height:44px;padding:0;border:none;background:transparent;color:var(--blue-text);font-family:inherit;font-size:var(--s-text);font-weight:700;text-decoration:underline;cursor:pointer;text-align:left">🧱 Über mehrere Wochen planen: Trainingsblock anlegen</button>`;
+    if(neu)neu.innerHTML=kommt?"":`<button class="btn btn-link" type="button" id="tp-block-link" onclick="blockEditorOpen()" style="min-height:44px;font-size:var(--s-text);text-align:left">🧱 Über mehrere Wochen planen: Trainingsblock anlegen</button>`;
     return;
   }
   { const neu=document.getElementById("tp-block-neu"); if(neu)neu.innerHTML=""; }
@@ -441,7 +441,7 @@ async function blockEditorRender(){
   const box=document.getElementById("tb-inhalt"); if(!box||!_tbEdit)return;
   const fragen=_tbLeitfragen();
   if(!fragen.length){ box.innerHTML=`<div style="font-size:var(--s-text);color:var(--text2);line-height:1.6">Noch keine Vorlagen in der App. Sie kommen beim Öffnen aus <b>uebungen/vorlagen.json</b>.</div>`; return; }
-  const chip=(an,txt,onclick,label)=>`<button type="button" class="btn btn-sm" aria-pressed="${an}" onclick="${onclick}" ${label?`aria-label="${esc(label)}"`:""} style="${an?"background:var(--text);color:var(--surface);":""}text-align:left">${txt}</button>`;
+  const chip=(an,txt,onclick,label)=>`<button type="button" class="btn btn-sm" aria-pressed="${an}" onclick="${onclick}" ${label?`aria-label="${esc(label)}"`:""} style="${an?"background:var(--text);color:var(--surface);":""}text-align:left">${an&&!/^✓/.test(String(txt))?"✓ ":""}${txt}</button>`;   // v878: ✓ – Farbe trägt nicht allein
   const folge=_tbEdit.leitfrage?_tbFolge(_tbEdit.leitfrage):[];
   const geordnet=_tbWahlGeordnet();
   const bis=_tbBis();

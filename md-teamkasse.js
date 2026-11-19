@@ -34,7 +34,7 @@ async function mitbringTrainerRender(){
     const liste=items.length
       ? items.map(it=>`<div style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);padding:5px 0;border-top:1px solid var(--surface2)">
           <span style="flex:1">🍽️ <b>${esc(it.was)}</b>${it.wer?` <span style="color:var(--text3)">· ${esc(it.wer)}</span>`:""}</span>
-          <button onclick="mitbringDeleteTrainer(${it.id})" aria-label="Eintrag löschen" style="border:none;background:transparent;color:#dc2626;cursor:pointer;min-width:32px;min-height:32px"><i class="ti ti-trash"></i></button>
+          <button class="btn btn-sm btn-d" onclick="mitbringDeleteTrainer(${it.id})" aria-label="Eintrag löschen" style="min-width:44px;justify-content:center"><i class="ti ti-trash"></i></button>
         </div>`).join("")
       : `<div style="font-size:var(--s-text);color:var(--text3);padding:4px 0">Noch nichts eingetragen.</div>`;
     return `<div style="border:var(--border-s);border-radius:12px;padding:12px;margin-bottom:10px">
@@ -115,9 +115,9 @@ async function kasseRender(){
     <div style="font-size:var(--s-klein);font-weight:700;text-transform:uppercase;color:var(--text2);margin-bottom:6px">Umlagen (für Eltern sichtbar)</div>
     ${umlagen.length?umlagen.map(u=>`<div style="display:flex;align-items:center;gap:6px;font-size:var(--s-text);padding:5px 0;border-bottom:1px solid var(--surface2);${u.aktiv?'':'opacity:.5'}">
       <span style="flex:1">${esc(u.titel)} · <b>${kEur(u.betrag)}</b>${u.faellig?` · bis ${u.faellig}`:''}</span>
-      <button type="button" onclick="kasseUmlageBearbeiten(${u.id})" aria-label="Umlage ${esc(u.titel)} bearbeiten" title="Bearbeiten" style="min-height:44px;min-width:44px;border:none;background:transparent;cursor:pointer;color:var(--text2);font-size:var(--s-karte)">✏️</button>
-      <button onclick="kasseToggleUmlage(${u.id},${!u.aktiv})" title="${u.aktiv?'deaktivieren':'aktivieren'}" style="border:none;background:transparent;cursor:pointer;color:var(--text2)"><i class="ti ti-eye${u.aktiv?'':'-off'}"></i></button>
-      <button onclick="kasseDelUmlage(${u.id})" title="Löschen" style="border:none;background:transparent;color:#dc2626;cursor:pointer"><i class="ti ti-trash"></i></button>
+      <button class="btn btn-sm" type="button" onclick="kasseUmlageBearbeiten(${u.id})" aria-label="Umlage ${esc(u.titel)} bearbeiten" title="Bearbeiten" style="min-height:44px;min-width:44px;font-size:var(--s-karte);justify-content:center">✏️</button>
+      <button class="btn btn-sm" onclick="kasseToggleUmlage(${u.id},${!u.aktiv})" title="${u.aktiv?'deaktivieren':'aktivieren'}" style="min-width:44px;justify-content:center"><i class="ti ti-eye${u.aktiv?'':'-off'}"></i></button>
+      <button class="btn btn-sm btn-d" onclick="kasseDelUmlage(${u.id})" title="Löschen" style="min-width:44px;justify-content:center"><i class="ti ti-trash"></i></button>
     </div>`).join(""):'<div style="font-size:var(--s-text);color:var(--text3)">Keine Umlagen.</div>'}
     <div id="u-form-titel" style="font-weight:700;font-size:var(--s-text);margin-top:10px">Umlage erfassen</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
@@ -330,7 +330,8 @@ function kasseListeHtml(ledger,sammel,bearbeiten,filter){
     .filter(x=>!filter||filter==="alle"||(filter==="aus"?Number(x.betrag)<0:Number(x.betrag)>=0))
     .sort((a,b)=>String(b.datum||"").localeCompare(String(a.datum||""))||(String(b.id)>String(a.id)?1:-1));
   if(!zeilen.length)return `<div style="font-size:var(--s-text);color:var(--text2);padding:8px 0">${filter==="aus"?"Noch keine Ausgaben.":filter==="ein"?"Noch keine Einnahmen.":"Noch keine Bewegungen."}</div>`;
-  const knopf=(t,l,fn,farbe)=>`<button type="button" onclick="${fn}" aria-label="${l}" title="${l}" style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:${farbe||"var(--text)"};cursor:pointer;font-size:var(--s-text)">${t}</button>`;
+  /* v878: Bauarten statt Inline-Farbe – mit farbe (Löschen) die Gefahr-Bauart .btn-d */
+  const knopf=(t,l,fn,farbe)=>`<button type="button" class="btn btn-sm${farbe?" btn-d":""}" onclick="${fn}" aria-label="${l}" title="${l}" style="min-width:44px;justify-content:center;font-size:var(--s-text)">${t}</button>`;
   return zeilen.map(x=>{const k=kasseKat(x.kategorie), aus=Number(x.betrag)<0;
     return `<div class="kasse-zeile" data-art="${aus?"aus":"ein"}" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--surface2)">
       <span aria-hidden="true" style="font-size:var(--s-karte)">${k.e}</span>
@@ -419,7 +420,7 @@ async function mannschaftskasseOpen(){
   m.style.cssText="position:fixed;inset:0;background:var(--bg);z-index:10002;overflow-y:auto";
   m.innerHTML=`<div style="max-width:560px;margin:0 auto;padding:12px 16px 40px">
     <div style="display:flex;align-items:center;gap:10px;position:sticky;top:0;background:var(--bg);padding:8px 0 10px;z-index:1">
-      <button type="button" onclick="document.getElementById('mk-modal').remove()" aria-label="Zurück" style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:50%;background:var(--surface);color:var(--text);font-size:var(--s-teil);cursor:pointer">‹</button>
+      <button class="btn" type="button" onclick="document.getElementById('mk-modal').remove()" aria-label="Zurück" style="min-width:44px;min-height:44px;font-size:var(--s-teil);justify-content:center">‹</button>
       <h2 id="mk-titel" style="flex:1;margin:0;font-size:var(--s-teil)">💰 Mannschaftskasse</h2>
     </div>
     <div id="mk-body"><div style="text-align:center;padding:24px;color:var(--text2)">Lade …</div></div>
@@ -437,7 +438,8 @@ async function mannschaftskasseOpen(){
   const jeKat={}; ledger.filter(x=>Number(x.betrag)<0).forEach(x=>{jeKat[x.kategorie||"sonstiges"]=(jeKat[x.kategorie||"sonstiges"]||0)+Number(x.betrag);});
   window._mkDaten={ledger,sammel};
   const karte=(inner)=>`<div style="background:var(--surface);border:1px solid var(--rand-bedien);border-radius:14px;padding:14px;margin-bottom:12px">${inner}</div>`;
-  const chip=(f,t)=>`<button type="button" class="mk-filter" data-f="${f}" aria-pressed="${f==="alle"}" onclick="mannschaftskasseFilter('${f}')" style="min-height:44px;padding:0 14px;border-radius:22px;border:1.5px solid var(--rand-bedien);background:${f==="alle"?"var(--blue)":"var(--surface)"};color:${f==="alle"?"#fff":"var(--text)"};font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">${t}</button>`;
+  /* v878: gewählt = Blau UND ✓ (aria-pressed) – Farbe trägt nicht allein */
+  const chip=(f,t)=>`<button type="button" class="mk-filter" data-f="${f}" data-t="${t}" aria-pressed="${f==="alle"}" onclick="mannschaftskasseFilter('${f}')" style="min-height:44px;padding:0 14px;border-radius:22px;border:1.5px solid var(--rand-bedien);background:${f==="alle"?"var(--blue)":"var(--surface)"};color:${f==="alle"?"#fff":"var(--text)"};font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">${f==="alle"?"✓ ":""}${t}</button>`;
   body.innerHTML=
     karte(`<div style="text-align:center">
       <div style="font-size:var(--s-klein);color:var(--text2)">Kassenstand heute</div>
@@ -459,7 +461,7 @@ async function mannschaftskasseOpen(){
   if(typeof elternKasseStandLoad==="function"&&window._elternKids)elternKasseStandLoad(window._elternKids);
 }
 function mannschaftskasseFilter(f){
-  document.querySelectorAll("#mk-modal .mk-filter").forEach(b=>{const an=b.dataset.f===f;b.setAttribute("aria-pressed",String(an));b.style.background=an?"var(--blue)":"var(--surface)";b.style.color=an?"#fff":"var(--text)";});
+  document.querySelectorAll("#mk-modal .mk-filter").forEach(b=>{const an=b.dataset.f===f;b.setAttribute("aria-pressed",String(an));b.style.background=an?"var(--blue)":"var(--surface)";b.style.color=an?"#fff":"var(--text)";if(b.dataset.t)b.textContent=(an?"✓ ":"")+b.dataset.t;});
   const d=window._mkDaten||{}; const el=document.getElementById("mk-liste"); if(el)el.innerHTML=kasseListeHtml(d.ledger,d.sammel,false,f);
 }
 /* Nur Trainer: wer die Kasse führt. Auswahl aus den verknüpften Elternkonten. */
@@ -500,7 +502,7 @@ async function elternKasseRolleLoad(){
   let ist=false;
   try{const r=await fetch(`${SB_URL}/rest/v1/rpc/is_kasse`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:"{}"});if(r.ok)ist=(await r.json())===true;}catch(e){}
   // v699: eigene Kachel „Kasse führen“ direkt unter „Mannschaftskasse“ – nur für die Kasse
-  slot.innerHTML=ist?`<button type="button" id="kasse-fuehren-kachel" onclick="kasseOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:none;border-radius:14px;background:linear-gradient(135deg,#1e3a8a,#0f766e);color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.12)">
+  slot.innerHTML=ist?`<button class="btn btn-zeile" type="button" id="kasse-fuehren-kachel" onclick="kasseOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin-bottom:8px">
       <span aria-hidden="true" style="font-size:28px">🧾</span><span style="flex:1"><span style="display:block;font-weight:800;font-size:var(--s-karte)">Kasse führen</span><span style="display:block;font-size:var(--s-klein);opacity:.9">Bewegungen erfassen, Belege, Beiträge abhaken</span></span><span aria-hidden="true" style="font-size:var(--s-seite)">›</span></button>`:"";
 }
 async function elternKasseStandLoad(kids){

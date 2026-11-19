@@ -84,8 +84,8 @@ function bkrRender(){
   else box.innerHTML=bkrAbschlussHtml();
   const letzter=BKR.idx===schritte.length-1;
   fuss.innerHTML=`<button class="btn" onclick="bkrGeh(-1)" ${BKR.idx===0?"disabled":""} style="min-height:56px;flex:none;min-width:96px">Zurück</button>`+
-    (letzter?`<button id="bkr-speichern" onclick="bkrSpeichern(this)" style="flex:1;min-height:56px;border:none;border-radius:12px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">${bkrSpeicherText()}</button>`
-      :`<button id="bkr-weiter" onclick="bkrGeh(1)" style="flex:1;min-height:56px;border:none;border-radius:12px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">${bkrWeiterText(s)}</button>`);
+    (letzter?`<button class="btn btn-p" id="bkr-speichern" onclick="bkrSpeichern(this)" style="flex:1;min-height:56px;font-size:var(--s-karte);justify-content:center">${bkrSpeicherText()}</button>`
+      :`<button class="btn btn-p" id="bkr-weiter" onclick="bkrGeh(1)" style="flex:1;min-height:56px;font-size:var(--s-karte);justify-content:center">${bkrWeiterText(s)}</button>`);
 }
 function bkrWeiterText(s){
   if(s.art!=="kriterium")return "Weiter";
@@ -167,7 +167,7 @@ function bkrAbschlussHtml(){
     ${fehlt.length?`<button class="btn" id="bkr-ng" onclick="bkrOffeneNichtGesehen()" style="width:100%;min-height:48px;margin-bottom:8px">Alle offenen als „Nicht gesehen“ eintragen</button>
       <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:10px">Oder mit „Zurück“ zu den Kriterien: auf dem Weiter-Knopf steht, wo noch etwas offen ist. Unvollständige Kinder bleiben auf diesem Gerät gemerkt.</div>`:""}
     ${kinder.some(n=>bkrOffen(n)===0&&bkrZuWenig(n))?`<div id="bkr-zuwenig" style="font-size:var(--s-klein);color:var(--text2);margin-bottom:10px">Für ein Profil muss mindestens die Hälfte der Feld-Kriterien gesehen sein. Diese Kinder bleiben auf dem Gerät gemerkt – in der nächsten Runde oder nach ein paar Trainings nachtragen.</div>`:""}
-    <button class="btn" onclick="bkrNeu()" style="width:100%;min-height:44px;color:var(--red)">Runde verwerfen</button>
+    <button class="btn btn-d" onclick="bkrNeu()" style="width:100%;min-height:44px;justify-content:center">Runde verwerfen</button>
     <div id="bkr-status" role="status" aria-live="polite" style="font-size:var(--s-text);margin-top:10px"></div>`;
 }
 function bkrOffeneNichtGesehen(){

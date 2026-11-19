@@ -32,23 +32,23 @@
   </div>
   <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
     <div style="display:flex;gap:6px">
-      <button type="button" id="rufe-kopf" onclick="rufeEinstieg()" title="Adler-Rufe – der Team-Chat" aria-label="Adler-Rufe öffnen" style="position:relative;border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:16px;line-height:1;flex-shrink:0">💬<span class="rufe-badge" style="display:none;position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#dc2626;color:#fff;font-size:var(--s-klein);font-weight:800;align-items:center;justify-content:center;border:2px solid var(--surface);box-sizing:border-box"></span></button>
+      <button class="btn btn-kopf" type="button" id="rufe-kopf" onclick="rufeEinstieg()" title="Adler-Rufe – der Team-Chat" aria-label="Adler-Rufe öffnen" style="position:relative;font-size:16px">💬<span class="rufe-badge" style="display:none;position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#dc2626;color:#fff;font-size:var(--s-klein);font-weight:800;align-items:center;justify-content:center;border:2px solid var(--surface);box-sizing:border-box"></span></button>
       <!-- v819: Hilfe, Schrift und Hell/Dunkel liegen im Menü darunter – wie im Eltern-Bereich. Vier Knöpfe im Kopf ließen dem Namen am Handy keine Zeile. -->
-      <button type="button" id="kopf-menue-knopf" onclick="kopfMenueUmschalten()" aria-expanded="false" aria-controls="kopf-menue" aria-label="Mehr: Hilfe, Schriftgröße, Hell oder Dunkel" title="Mehr" style="border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text);border-radius:8px;width:44px;height:44px;cursor:pointer;line-height:1;flex-shrink:0;display:flex;align-items:center;justify-content:center"><i class="ti ti-dots" aria-hidden="true" style="font-size:22px"></i></button>
+      <button class="btn btn-kopf" type="button" id="kopf-menue-knopf" onclick="kopfMenueUmschalten()" aria-expanded="false" aria-controls="kopf-menue" aria-label="Mehr: Hilfe, Schriftgröße, Hell oder Dunkel" title="Mehr" style="display:flex;align-items:center;justify-content:center"><i class="ti ti-dots" aria-hidden="true" style="font-size:22px"></i></button>
     </div>
     <div class="cloud-row"><span class="cdot" id="cdot"></span><span id="clbl">Verbinde...</span></div>
   </div>
   <div id="kopf-menue" style="display:none">
     <div class="kopf-menue-punkt">
-      <button id="help-btn" onclick="hilfeOpen()" title="Hilfe & Funktionen" aria-label="Hilfe" style="border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:16px;line-height:1;flex-shrink:0">❓</button>
+      <button class="btn btn-kopf" id="help-btn" onclick="hilfeOpen()" title="Hilfe & Funktionen" aria-label="Hilfe" style="font-size:16px">❓</button>
       <span>Hilfe</span>
     </div>
     <div class="kopf-menue-punkt">
-      <button class="schrift-toggle" onclick="schriftWechseln()" aria-label="Schriftgröße umschalten">A</button>
+      <button class="schrift-toggle btn btn-kopf" onclick="schriftWechseln()" aria-label="Schriftgröße umschalten">A</button>
       <span>Schrift</span>
     </div>
     <div class="kopf-menue-punkt">
-      <button id="theme-toggle" onclick="toggleTheme()" title="Hell / Dunkel umschalten" aria-label="Theme umschalten" style="border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:16px;line-height:1;flex-shrink:0">🌙</button>
+      <button class="btn btn-kopf" id="theme-toggle" onclick="toggleTheme()" title="Hell / Dunkel umschalten" aria-label="Theme umschalten" style="font-size:16px">🌙</button>
       <span>Hell/Dunkel</span>
     </div>
   </div>
@@ -194,7 +194,7 @@
   </div>
 
   <div class="brow">
-    <button onclick="savePlayer()" style="flex:1;min-width:150px;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.28)"><i class="ti ti-device-floppy"></i>Bewertung speichern</button>
+    <button class="btn btn-p" onclick="savePlayer()" style="flex:1;min-width:150px;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;font-size:13.5px"><i class="ti ti-device-floppy"></i>Bewertung speichern</button>
     <button class="btn" onclick="clearForm()"><i class="ti ti-refresh"></i>Leeren</button>
   </div>
   <div id="save-status" class="status"></div>
@@ -213,14 +213,14 @@
 <!-- KADER -->
 <div id="view-kader" class="view">
   <div class="sl nt"><i class="ti ti-users"></i>Kader</div>
-  <button onclick="kaderEditOpen()" style="display:flex;width:100%;justify-content:center;align-items:center;gap:8px;min-height:48px;padding:0 18px;margin-bottom:10px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer"><i class="ti ti-users"></i>Spieler verwalten</button>
+  <button class="btn btn-p" onclick="kaderEditOpen()" style="display:flex;width:100%;justify-content:center;align-items:center;gap:8px;min-height:48px;margin-bottom:10px;font-size:var(--s-karte)"><i class="ti ti-users"></i>Spieler verwalten</button>
   <div class="frow">
-    <button class="ftag active" onclick="setF('all',this)">Alle</button>
-    <button class="ftag" onclick="setF('tw',this)">🥅 TW-Option</button>
-    <button class="ftag" onclick="setF('aufpasser',this)">Aufpasser</button>
-    <button class="ftag" onclick="setF('flitzer_l',this)">Flitzer L</button>
-    <button class="ftag" onclick="setF('flitzer_r',this)">Flitzer R</button>
-    <button class="ftag" onclick="setF('jaeger',this)">Jäger</button>
+    <button class="ftag active" aria-pressed="true" onclick="setF('all',this)">Alle</button>
+    <button class="ftag" aria-pressed="false" onclick="setF('tw',this)">🥅 TW-Option</button>
+    <button class="ftag" aria-pressed="false" onclick="setF('aufpasser',this)">Aufpasser</button>
+    <button class="ftag" aria-pressed="false" onclick="setF('flitzer_l',this)">Flitzer L</button>
+    <button class="ftag" aria-pressed="false" onclick="setF('flitzer_r',this)">Flitzer R</button>
+    <button class="ftag" aria-pressed="false" onclick="setF('jaeger',this)">Jäger</button>
   </div>
   <div id="kader-content"><div class="empty"><i class="ti ti-users"></i>Noch keine Spieler bewertet</div></div>
   <div class="sl kader-raute"><i class="ti ti-topology-star-3"></i>Rauten-Besetzung</div>
@@ -304,11 +304,11 @@
        einmal, die Suche und die Gruppen sind der tägliche Weg und gehören nach oben. -->
   <div style="font-size:var(--s-text);font-weight:800;margin:16px 0 8px">🧰 Werkzeuge</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-    <button onclick="if(typeof vorlagenAnsichtOpen===&quot;function&quot;)vorlagenAnsichtOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px"><span style="font-size:30px">📋</span><span style="font-size:var(--s-karte);font-weight:800">Vorlagen</span></button>
-    <button onclick="openAddTraining()" style="min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px"><span style="font-size:30px">➕</span><span style="font-size:14px;font-weight:800">Eigene Übung</span></button>
-    <button onclick="kiCoachOpen()" style="min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px"><span style="font-size:30px">🤖</span><span style="font-size:14px;font-weight:800">KI-Coach</span></button>
-    <button onclick="periodOpen()" style="min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px"><span style="font-size:30px">📅</span><span style="font-size:14px;font-weight:800">Themenplan</span></button>
-    <button onclick="var d=document.getElementById('dfb-regal');d.open=!d.open;if(d.open)d.scrollIntoView({behavior:'smooth'})" style="grid-column:1/-1;min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px"><span style="font-size:30px">📖</span><span style="font-size:14px;font-weight:800">DFB-Regal</span></button>
+    <button onclick="if(typeof vorlagenAnsichtOpen===&quot;function&quot;)vorlagenAnsichtOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid var(--fam-training);border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px"><span style="font-size:30px">📋</span><span style="font-size:var(--s-karte);font-weight:800">Vorlagen</span></button>
+    <button onclick="openAddTraining()" style="min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid var(--fam-training);border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px"><span style="font-size:30px">➕</span><span style="font-size:14px;font-weight:800">Eigene Übung</span></button>
+    <button onclick="kiCoachOpen()" style="min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid var(--fam-training);border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px"><span style="font-size:30px">🤖</span><span style="font-size:14px;font-weight:800">KI-Coach</span></button>
+    <button onclick="periodOpen()" style="min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid var(--fam-training);border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px"><span style="font-size:30px">📅</span><span style="font-size:14px;font-weight:800">Themenplan</span></button>
+    <button onclick="var d=document.getElementById('dfb-regal');d.open=!d.open;if(d.open)d.scrollIntoView({behavior:'smooth'})" style="grid-column:1/-1;min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid var(--fam-training);border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px"><span style="font-size:30px">📖</span><span style="font-size:14px;font-weight:800">DFB-Regal</span></button>
   </div>
   <!-- I-D: DFB-Übungs-Regal – kuratierte Links in die offizielle, kostenlose DFB-Datenbank (kein Scraping, nur Verweise) -->
   <!-- v690: Die Pflege-Aufgaben (einordnen, läuft sie ohne Trainer?) standen zwischen der Übungsliste
@@ -423,7 +423,7 @@
     <!-- v474: als Knopf erkennbar (gleiche Bauart wie „Trainerplan" darueber). Vorher sah
          die Zeile wie eine Abschnitts-Ueberschrift aus – ohne Rand, ohne Flaeche. -->
     <button class="btn btn-p" id="tm-neu-toggle" onclick="tmNeuToggle()" aria-expanded="false" aria-controls="tm-karte"
-            style="width:100%;min-height:56px;justify-content:center;margin-bottom:12px;font-size:var(--s-karte);font-weight:800">
+            style="width:100%;min-height:56px;justify-content:center;margin-bottom:12px;font-size:var(--s-karte)">
       <i class="ti ti-calendar-plus"></i><span>Neuer Termin</span><i class="ti ti-chevron-down" id="tm-neu-chev" style="transition:transform .15s"></i>
     </button>
     <!-- Die Karte traegt eine Akzentfarbe (--tm-akzent), die tmSetTyp auf den Termintyp
@@ -585,7 +585,7 @@
       <button onclick="trainerPlanOpen()" style="min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid var(--fam-orga);border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px"><span style="font-size:30px" aria-hidden="true">🧑‍🏫</span><span style="font-size:var(--s-karte);font-weight:800">Trainerplan</span></button>
       <button onclick="if(typeof grillTrainerOpen==='function')grillTrainerOpen()" style="min-height:88px;border:1px solid var(--rand-bedien);border-top:3px solid var(--fam-orga);border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 6px"><span style="font-size:30px" aria-hidden="true">🔥</span><span style="font-size:var(--s-karte);font-weight:800">Grillhütte</span></button>
     </div>
-    <button class="btn btn-sm" id="tm-archiv-btn" style="margin-top:16px;width:100%;color:var(--text2)" onclick="tmToggleArchiv()"><i class="ti ti-archive"></i>🗄️ Archiv: vergangene Termine anzeigen</button>
+    <button class="btn btn-sm" id="tm-archiv-btn" style="margin-top:16px;width:100%;justify-content:center" onclick="tmToggleArchiv()"><i class="ti ti-archive"></i>🗄️ Archiv: vergangene Termine anzeigen</button>
     <div id="tm-past" style="display:none;margin-top:8px"></div>
   </div><!-- /train-sub-termine -->
 
@@ -618,21 +618,21 @@
     <div id="tp-kopf"></div>
     <div id="tp-material"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 6px">
-      <button onclick="if(typeof vorlageUebernehmenOpen===&quot;function&quot;)vorlageUebernehmenOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="min-height:56px;border:1px solid var(--rand-bedien);border-top:3px solid var(--fam-training);border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:8px;padding:8px 6px"><span style="font-size:22px">📋</span><span style="font-size:var(--s-karte);font-weight:800">Vorlage übernehmen</span></button>
-      <button onclick="tpGenerate()" title="Felder aus den angehakten Trainern, Übungen passend zu Gruppengröße und Thema" style="min-height:56px;border:1px solid var(--rand-bedien);border-top:3px solid var(--fam-training);border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:8px;padding:8px 6px"><span style="font-size:22px">🪄</span><span style="font-size:var(--s-karte);font-weight:800">Training füllen</span></button>
+      <button class="btn" onclick="if(typeof vorlageUebernehmenOpen===&quot;function&quot;)vorlageUebernehmenOpen();else toast(&quot;Lädt noch – gleich nochmal&quot;,&quot;err&quot;)" style="min-height:56px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:8px"><span style="font-size:22px">📋</span><span style="font-size:var(--s-karte);font-weight:800">Vorlage übernehmen</span></button>
+      <button class="btn" onclick="tpGenerate()" title="Felder aus den angehakten Trainern, Übungen passend zu Gruppengröße und Thema" style="min-height:56px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:8px"><span style="font-size:22px">🪄</span><span style="font-size:var(--s-karte);font-weight:800">Training füllen</span></button>
     </div>
     <!-- v719: Plan steht schon, aber Zu- oder Absagen haben sich geändert -->
-    <button id="tp-anpassen-knopf" onclick="tpAnpassen()" title="Felder, Gruppen und Übungen an die aktuellen Zu- und Absagen anpassen – mit Vorschau" style="width:100%;min-height:48px;margin:0 0 6px;border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;font-size:var(--s-text);font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 12px"><span aria-hidden="true">🔄</span>Plan anpassen<span style="font-weight:600;color:var(--text2)">· an Zu- und Absagen</span></button>
+    <button class="btn" id="tp-anpassen-knopf" onclick="tpAnpassen()" title="Felder, Gruppen und Übungen an die aktuellen Zu- und Absagen anpassen – mit Vorschau" style="width:100%;min-height:48px;margin:0 0 6px;font-size:var(--s-text);display:flex;align-items:center;justify-content:center;gap:8px"><span aria-hidden="true">🔄</span>Plan anpassen<span style="font-weight:600;color:var(--text2)">· an Zu- und Absagen</span></button>
     <div style="font-size:var(--s-klein);color:var(--text2);margin:0 0 4px">Oder unten jeden Block selbst belegen.</div>
     <div id="tp-block-neu"></div><!-- v690: „Trainingsblock anlegen“ als leiser Weg unter den beiden Hauptwegen -->
     <div id="tp-diagnose"></div>
     <div id="tp-timeline"></div>
-      <button id="tp-add-slot" onclick="tpAddSlot()" style="width:100%;margin-top:10px;min-height:56px;border:1px solid var(--rand-bedien);border-top:3px solid var(--fam-training);border-radius:14px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:5px;padding:10px 6px"><span style="font-size:22px">➕</span><span style="font-size:var(--s-karte);font-weight:800">Block hinzufügen</span></button>
+      <button class="btn" id="tp-add-slot" onclick="tpAddSlot()" style="width:100%;margin-top:10px;min-height:56px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:5px"><span style="font-size:22px">➕</span><span style="font-size:var(--s-karte);font-weight:800">Block hinzufügen</span></button>
     <div class="sl tp-schritt"><span class="tp-nr" aria-hidden="true">3</span>Speichern und starten</div>
     <div id="tp-netto" style="margin:6px 0 8px"></div>
-      <button onclick="tpPlanSave(true)" style="width:100%;min-height:48px;margin-bottom:10px;border:none;border-radius:14px;background:var(--surface);border:1px solid var(--rand-bedien);border-top:3px solid #16a34a;color:var(--text);font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">💾 Plan speichern</button>
-      <button id="tp-start-echt" onclick="tlStart()" title="Synchroner Start auf allen Trainer-Handys: alle bereit → 10-Sekunden-Countdown → die Blöcke laufen überall parallel" style="width:100%;min-height:64px;margin-bottom:6px;border:none;border-radius:14px;background:linear-gradient(135deg,#166534,#15803d);color:#fff;font-family:inherit;font-size:17px;font-weight:900;cursor:pointer;box-shadow:0 2px 10px rgba(22,163,74,.3)">🟢 Trainingsstart</button>
-      <button onclick="stTimerStart()" title="Lokaler Timer für die Blöcke – Fallback ohne Netz" style="width:100%;min-height:44px;border:none;background:transparent;color:var(--text2);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer;text-decoration:underline">⏱️ Solo-Timer (ohne Netz)</button>
+      <button class="btn" onclick="tpPlanSave(true)" style="width:100%;justify-content:center;min-height:48px;margin-bottom:10px;font-size:var(--s-karte)">💾 Plan speichern</button>
+      <button class="btn btn-p" id="tp-start-echt" onclick="tlStart()" title="Synchroner Start auf allen Trainer-Handys: alle bereit → 10-Sekunden-Countdown → die Blöcke laufen überall parallel" style="width:100%;justify-content:center;min-height:64px;margin-bottom:6px;font-size:17px">🟢 Trainingsstart</button>
+      <button class="btn btn-link" onclick="stTimerStart()" title="Lokaler Timer für die Blöcke – Fallback ohne Netz" style="width:100%;justify-content:center;min-height:44px;font-size:var(--s-text)">⏱️ Solo-Timer (ohne Netz)</button>
     <!-- v797: Der Start stand nach rund 4400 px Scroll ganz unten. Diese Leiste klebt über der Navigation,
          solange der echte Knopf (Schritt 5) nicht im Bild ist, und blendet sich dann aus. -->
     <div id="tp-start-leiste" class="tp-start-leiste" hidden><button type="button" onclick="tlStart()" aria-label="Trainingsstart – für alle Trainer gleichzeitig">▶ Trainingsstart</button></div>
@@ -653,7 +653,7 @@
     <!-- v845: dauerhafter Stand statt nur einer Meldung, die verschwindet -->
     <div id="aw-stand" role="status" aria-live="polite" style="min-height:22px;margin-top:12px"></div>
     <div class="brow" style="margin-top:6px">
-      <button id="aw-save-btn" onclick="awSave()" style="flex:1;min-width:150px;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:56px;border:none;border-radius:12px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.28)"><i class="ti ti-device-floppy"></i> Anwesenheit speichern</button>
+      <button class="btn btn-p" id="aw-save-btn" onclick="awSave()" style="flex:1;min-width:150px;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:56px;font-size:13.5px"><i class="ti ti-device-floppy"></i> Anwesenheit speichern</button>
     </div>
     <!-- Die Saison-Auswertung ist ab v381 NICHT mehr hier (PO): Erfassen und Auswerten sind
          zwei verschiedene Anlaesse. Sie sitzt jetzt in der Team-Kachel unter „Überblick"
@@ -667,7 +667,7 @@
     <!-- „Quiz teilen" entfernt (PO): die Kinder erreichen die Quizze über ihre Kabine -->
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
       <button class="btn btn-sm" onclick="tqLoadProgressFromSupabase().then(()=>tqRenderTrainerView())"><i class="ti ti-refresh"></i>Aktualisieren</button>
-      <button class="btn btn-sm" style="background:var(--red-bg);color:var(--red);border-color:var(--red)" onclick="tqResetProgress()"><i class="ti ti-trash"></i>Ergebnisse zurücksetzen</button>
+      <button class="btn btn-sm btn-d" onclick="tqResetProgress()"><i class="ti ti-trash"></i>Ergebnisse zurücksetzen</button>
     </div>
     <div id="tq-trainer-view"></div>
   </div><!-- /train-sub-quizresults -->
@@ -719,7 +719,7 @@
     <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
       <button id="tb-monat-knopf" class="btn" onclick="if(typeof tbMonatOeffnen==='function')tbMonatOeffnen()" aria-expanded="false" aria-controls="tb-monat-box" style="min-height:44px"><i class="ti ti-file-export"></i>Monat ausgeben</button>
     </div>
-    <button class="btn btn-p" onclick="if(typeof tagebuchGedanke==='function')tagebuchGedanke()" style="width:100%;min-height:56px;justify-content:center;font-size:15px;font-weight:800;margin-bottom:12px"><i class="ti ti-plus"></i>Notieren</button>
+    <button class="btn btn-p" onclick="if(typeof tagebuchGedanke==='function')tagebuchGedanke()" style="width:100%;min-height:56px;justify-content:center;font-size:15px;margin-bottom:12px"><i class="ti ti-plus"></i>Notieren</button>
     <div id="tb-monat-box" hidden style="background:var(--surface);border:var(--border-s);border-radius:var(--rl);padding:12px;margin-bottom:12px">
       <div style="font-size:15px;font-weight:800;margin-bottom:8px">Monat ausgeben</div>
       <!-- v679: Ausgaben getrennt - Lehrgang (nur fertig und bestaetigt), Arbeitsfassung (alles), C-Lizenz folgt -->
@@ -904,7 +904,7 @@
          kontextuelle Turnier-Gruppe im Kachel-Menue (_kachelTurnierCheck).
          Steht seit v459 GANZ UNTEN (PO): ein Turnier ist die Ausnahme, oben gehoert der
          normale Ablauf hin – Teams festlegen, vor/waehrend/nach dem Spiel. -->
-    <button id="spieltag-turnier-banner" hidden onclick="turnierOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px 14px;margin-bottom:12px;border:none;border-radius:14px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 2px 10px rgba(217,119,6,.25)">
+    <button class="btn btn-zeile" id="spieltag-turnier-banner" hidden onclick="turnierOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin-bottom:12px">
       <span style="font-size:22px;line-height:1">🏆</span>
       <span style="flex:1;min-width:0"><span style="display:block;font-size:14px;font-weight:800">Turnier-Modus</span><span style="display:block;font-size:11.5px;opacity:.92;margin-top:1px">Mehrere Kurzspiele erfassen – Spielplan &amp; Ergebnisse</span></span>
       <span style="font-size:18px;opacity:.85">›</span>
