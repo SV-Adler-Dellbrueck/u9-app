@@ -496,7 +496,10 @@ function tfInPlan(i){
   /* v884: Das Feld kommt aus Modell und Zustand (_tpWahlFeldFuer), gewählt wird über tpWahlWaehlen.
      Die 900 ms bleiben: go("planung") startet tpPlanRestore, das nach dem Laden aus der Datenbank
      ALLE Felder leert und neu setzt – eine sofort gesetzte Wahl wäre danach still weg (und während
-     des Öffnens gälte sie nicht als Griff von Hand). Das Warten entfällt erst mit Schritt 7. */
+     des Öffnens gälte sie nicht als Griff von Hand).
+     v887 (Schritt 7): bleibt bewusst. go("planung") startet tpPlanRestore erst im onReady von
+     terminSelectFill (Netz) und gibt kein Versprechen zurück – auf „Öffnen fertig“ zu warten bräuchte
+     ein neues Signal; das ist kein unsichtbarer Umbau mehr. */
   setTimeout(()=>{
     const ziel=_tpWahlFeldFuer(i,true);
     if(!ziel){toast("Kein freier passender Slot – erst einen Block hinzufügen","err");return;}
@@ -2082,8 +2085,7 @@ function tpDurchgaengeSetzen(si,wert){
   if(!tpSlots[si])return;
   const vorher=_tpGesamtMin();
   const {neu,weg}=_tpDurchgaengeKern(si,wert,tpSlotsNeuOrdnen);
-  tpRenderTimeline();
-  if(typeof tpPlanSaveDebounced==="function")tpPlanSaveDebounced();
+  tpGeaendert({speichern:"verzoegert"});
   const nachher=_tpGesamtMin();
   if(neu&&typeof toast==="function")toast(`${neu===1?"Ein Hauptteil":neu+" Hauptteile"} als Durchgang angelegt – die Einheit dauert jetzt ${nachher} statt ${vorher} Min.`);
   else if(weg&&typeof toast==="function")toast(`Durchgang entfernt – die Einheit dauert jetzt ${nachher} Min.`);
@@ -2156,14 +2158,12 @@ function tpDurchgangMinuten(slot){
 function tpVersatzSetzen(si,delta){
   const slot=tpSlots[si]; if(!slot)return;
   slot.versatz=tpVersatz(si)+(Number(delta)||0);
-  tpRenderTimeline();
-  if(typeof tpPlanSave==="function")tpPlanSave();
+  tpGeaendert({speichern:"sofort"});
 }
 function tpVersatzZurueck(si){
   const slot=tpSlots[si]; if(!slot)return;
   delete slot.versatz;
-  tpRenderTimeline();
-  if(typeof tpPlanSave==="function")tpPlanSave();
+  tpGeaendert({speichern:"sofort"});
 }
 /* „✕ Feld weglassen" im Trainer-Dropdown eines Hauptteils: weniger Uebungen als Felder
    moeglich – die Gruppe dieses Feldes spielt bei den anderen mit. Position der Felder
@@ -2180,9 +2180,9 @@ function tpFeldWeglassen(si,p){
   slot.weg=weg;
   for(let q=p;q<anzahl-1;q++){const a=tpCoaches[`tp-form-${si}-${q+1}`]; if(a)tpCoaches[`tp-form-${si}-${q}`]=a; else delete tpCoaches[`tp-form-${si}-${q}`];}
   delete tpCoaches[`tp-form-${si}-${anzahl-1}`];
-  tpRenderTimeline(); tpPlanSaveDebounced();
+  tpGeaendert({speichern:"verzoegert"});
 }
-function tpFeldZurueck(si){ if(tpSlots[si]){delete tpSlots[si].weg; tpRenderTimeline(); tpPlanSaveDebounced();} }
+function tpFeldZurueck(si){ if(tpSlots[si]){delete tpSlots[si].weg; tpGeaendert({speichern:"verzoegert"});} }
 function tpSetCoach(stationId,name){
   if(name==="__weg"){const m=String(stationId).match(/^tp-form-(\d+)-(\d+)$/); if(m)tpFeldWeglassen(+m[1],+m[2]); return;}
   const _alt=tpCoaches[stationId]||"";
@@ -2191,11 +2191,10 @@ function tpSetCoach(stationId,name){
      mit, solange dort niemand oder noch der bisherige Trainer steht. */
   const mk=String(stationId).match(/^tp-form-(\d+)-(\d+)$/);
   if(mk&&typeof _tpKetteVon==="function"){ const k=_tpKetteVon(+mk[1]); if(k.length>1&&k[0]===+mk[1]){ k.slice(1).forEach(fi=>{ const id=`tp-form-${fi}-${mk[2]}`; if(!tpCoaches[id]||tpCoaches[id]===_alt){ tpCoaches[id]=name; const cs=document.querySelector(`.tp-coach-sel[data-station="${id}"]`); if(cs)cs.value=name; } }); } }
-  tpPlanSaveDebounced();                        // Zuordnung am Datum festhalten
   if(typeof tpBetreuungHinweis==="function")tpBetreuungHinweis(stationId);   // v631
-  // Trainer eines parallelen Blocks gewechselt → die Felder des Hauptteils rechnen neu
+  // Trainer eines parallelen Blocks gewechselt → die Felder des Hauptteils rechnen neu (sonst kein Neuzeichnen, wie bisher)
   const m=String(stationId).match(/^tp-form-(\d+)-0$/);
-  if(m&&tpIstParallel(tpSlots[+m[1]]))tpRenderTimeline();
+  tpGeaendert({zeichnen:!!(m&&tpIstParallel(tpSlots[+m[1]])),speichern:"verzoegert"});   // Zuordnung am Datum festhalten
 }
 function tpCoachSelect(stationId,ausschluss,wegOption){
   const avail=tpGetCheckedTrainers();
@@ -2668,6 +2667,28 @@ function tpRenderTimeline(){
   }catch(e){}
   return r;
 }
+/* ═══ v887 · 4.8 Schritt 7 – EIN ÄNDERUNGSWEG ═══════════════════════════════════════════════
+   Jede Änderung am Plan endet in tpGeaendert({speichern, zeichnen}):
+   – zeichnen (Vorgabe true): die Zeitleiste neu aus dem Zustand; false nur dort, wo bisher auch
+     nicht neu gezeichnet wurde (Übungswahl mit Projektion, Trainer am Feld, Haken, Einzelkind).
+   – die Materialzeile zieht sofort nach (bisher setTimeout(tpMaterialRender,0)); sie liest den Zustand.
+   – speichern nach der Regel, die die Stelle schon vorher hatte (TP_SPEICHERN):
+       "verzoegert" – tpPlanSaveDebounced (1,2 s, beim Öffnen gesperrt),
+       "sofort"     – tpPlanSave (nur „⇄ weiterrücken“ und „Versatz zurück“),
+       "nein"       – Dauer, neuer Block, „läuft parallel zu“, Torwart-Haken, Einzelkind, Ziel-Dauer
+                      speichern weiter nicht von selbst (Fehlerbild 7, behoben erst ab Schritt 9).
+   Seit die Seite nicht mehr die Wahrheit ist, entfallen die Wartezeiten, die nur auf die Seite
+   warteten: 60 ms in tpGenerate und tpAnpassenUebernehmen, Materialzeile 0 ms, der Durchgangs-Umbau
+   aus dem Zeichnen (alte `durchgaenge` macht seit v884 das Öffnen, tpZustandLaden). */
+const TP_SPEICHERN=["verzoegert","sofort","nein"];
+function tpGeaendert(opt){
+  const o=opt||{};
+  if(!TP_SPEICHERN.includes(o.speichern))throw new Error("tpGeaendert: speichern muss "+TP_SPEICHERN.join("|")+" sein");
+  if(o.zeichnen!==false)tpRenderTimeline();
+  try{ tpMaterialRender(); }catch(e){}   // v867: Materialzeile folgt dem Zustand
+  if(o.speichern==="sofort")return tpPlanSave();
+  if(o.speichern==="verzoegert")tpPlanSaveDebounced();
+}
 function tpSlotName(lab){
   const kopf=tpSlotKopfText(lab);
   const dg=kopf.match(/\s+–\s+Durchgang\s+(\d+)\s*$/);
@@ -3085,10 +3106,9 @@ function _tpParallelOrdnen(){
   tpSlots.forEach(s=>{if(tpIstParallel(s))s.dauer=tpSlots[s.parallelZu].dauer;});
 }
 function _tpRenderTimelineIntern(){
-  /* v621: Pläne mit Durchgängen alter Art (v605–v620: ein Block, Zeit geteilt) werden zur
-     Kette – der folgende Hauptteil wird Durchgang 2, sonst wird er angelegt. */
-  const _alt=tpSlots.findIndex(s=>s&&!s.kette&&Number(s.durchgaenge)>1);
-  if(_alt>=0){ const n=Number(tpSlots[_alt].durchgaenge); delete tpSlots[_alt].durchgaenge; setTimeout(()=>tpDurchgaengeSetzen(_alt,n),0); }
+  /* v621: Pläne mit Durchgängen alter Art (v605–v620: ein Block, Zeit geteilt) werden zur Kette.
+     v887: nicht mehr hier (vorher ein setTimeout nach dem Zeichnen) – das macht seit v884 das
+     Öffnen (tpZustandLaden), der einzige Weg, auf dem solche Blöcke in tpSlots gelangen. */
   tpSlots.forEach(s=>{ if(s&&s.label){ const l=tpOhneFreiEng(s.label); if(l!==s.label)s.label=l; } });   // v623
   _tpStationGruppe={};   // v571: Zuordnung Station → Gruppe wird beim Zeichnen neu gesetzt
   /* v574: Erst die Einteilung an die Anwesenheit angleichen, dann zeichnen – sonst stünde
@@ -3153,7 +3173,7 @@ function _tpRenderTimelineIntern(){
     if(parallel){
       const mains=tpSlots.map((s2,i2)=>({s2,i2})).filter(x=>tpIstHauptteil(x.s2.typ));
       html+=`<div class="tp-feld"><label>Läuft parallel zu</label>
-        <select onchange="tpSlots[${si}].parallelZu=Number(this.value);tpRenderTimeline()" style="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
+        <select onchange="tpSlots[${si}].parallelZu=Number(this.value);tpGeaendert({speichern:'nein'})" style="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)">
           ${mains.map(x=>`<option value="${x.i2}"${slot.parallelZu===x.i2?" selected":""}>${x.s2.label}</option>`).join("")}
         </select></div>`;
     }
@@ -3233,7 +3253,7 @@ function _tpRenderTimelineIntern(){
       html+=`<div style="margin-top:6px">
         <div style="font-size:var(--s-klein);color:var(--text2);font-weight:600;margin-bottom:4px">Torwart-Spieler</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-          ${twPlayers.map(k=>`<label class="tp-check"><input type="checkbox" value="${esc(k.name)}" class="tp-tw-player" data-slot="${si}" onchange="tpTwSetzen(Number(this.dataset.slot),this.value,this.checked)" checked><span>${k.name}${k.twPrio===1?" ⭐":""}<span style="color:var(--text2);font-size:var(--s-klein)">${esc(tpTwZusatz(k.name))}</span></span></label>`).join("")}
+          ${twPlayers.map(k=>`<label class="tp-check"><input type="checkbox" value="${esc(k.name)}" class="tp-tw-player" data-slot="${si}" onchange="tpTwSetzen(Number(this.dataset.slot),this.value,this.checked);tpGeaendert({zeichnen:false,speichern:'nein'})" checked><span>${k.name}${k.twPrio===1?" ⭐":""}<span style="color:var(--text2);font-size:var(--s-klein)">${esc(tpTwZusatz(k.name))}</span></span></label>`).join("")}
         </div>
         <div class="tp-feld"><label for="tp-form-${si}-0">Übung</label>
           <div class="tp-feld-zeile">
@@ -3250,7 +3270,7 @@ function _tpRenderTimelineIntern(){
     } else if(art==="einzel"){
       const playerOpts=KADER.filter(k=>k.aktiv!==false).map(k=>`<option value="${esc(k.name)}">${esc(k.name)}</option>`).join("");
       html+=`<div class="tp-feld"><label for="tp-ind-player-${si}">Spieler</label>
-        <select id="tp-ind-player-${si}" onchange="tpKindSetzen(${si},this.value);tpIndPlayerChange(${si})">
+        <select id="tp-ind-player-${si}" onchange="tpKindSetzen(${si},this.value);tpIndPlayerChange(${si});tpGeaendert({zeichnen:false,speichern:'nein'})">
           <option value="">— Spieler wählen —</option>${playerOpts}
         </select>
       </div>
@@ -3341,7 +3361,7 @@ function _tpRenderTimelineIntern(){
      „Spielform: 40 Minuten“ (aus der Art der Blöcke) – zwei Zahlen für dieselbe Frage, die sich
      widersprachen. Es gilt nur noch die Minutenzahl in Schritt 5, dort mit ihrem Anteil. */
   html+=`<div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;font-size:var(--s-text);font-weight:${passt?"600":"800"};color:${passt?"var(--text2)":"#dc2626"};margin-top:6px">Gesamt: ${time} von
-    <select id="tp-dauer" onchange="tpRenderTimeline()" style="font-size:var(--s-text);min-height:44px;padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;background:var(--surface);color:var(--text)">${[...new Set([60,75,90].concat(TP_TERMIN_MIN?[TP_TERMIN_MIN]:[]))].sort((x,y)=>x-y).map(d=>`<option value="${d}"${zielDauer===d?" selected":""}>${d}</option>`).join("")}</select>
+    <select id="tp-dauer" onchange="tpGeaendert({speichern:'nein'})" style="font-size:var(--s-text);min-height:44px;padding:4px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;background:var(--surface);color:var(--text)">${[...new Set([60,75,90].concat(TP_TERMIN_MIN?[TP_TERMIN_MIN]:[]))].sort((x,y)=>x-y).map(d=>`<option value="${d}"${zielDauer===d?" selected":""}>${d}</option>`).join("")}</select>
     Min.${passt?tpPufferText(frei):" – zu lang!"}</div>`;
   wrap.innerHTML=html;
   // v883: Übungswahl aus dem Zustand auf die neuen Auswahlfelder (Wert, Marken, Picker-Knopf, Historie)
@@ -3401,7 +3421,6 @@ function tpWahlWaehlen(selId,i){
 }
 /* Was einer Wahl folgt: Durchgänge erben, Seite projizieren, Hinweise, verzögert speichern. */
 function _tpWahlFolgen(selId){
-  setTimeout(()=>{ try{ tpMaterialRender(); }catch(e){} },0);   // v867: Materialzeile folgt der Auswahl
   if(typeof _tpKetteNachziehen==="function")_tpKetteNachziehen();
   _tpWahlAufSeite(false);
   const histDiv=document.getElementById(selId+"-hist"), idx=tpWahlIdx(selId);
@@ -3411,7 +3430,7 @@ function _tpWahlFolgen(selId){
   if(typeof tpKgHintAll==="function")tpKgHintAll();     // Kleingruppen-Bedarf der Aufwärm-Übung
   if(typeof tpGruppeHinweis==="function")tpGruppeHinweis(selId); // v571: Feldtext/Größe der neuen Übung
   if(typeof tpBetreuungHinweis==="function")tpBetreuungHinweis(selId); // v631: Feld ohne Trainer?
-  tpPlanSaveDebounced(); // Plan am Datum festhalten -> "Einheit bewerten" kennt ihn spaeter
+  tpGeaendert({zeichnen:false,speichern:"verzoegert"}); // v887: Materialzeile sofort; Plan am Datum festhalten -> "Einheit bewerten" kennt ihn spaeter
 }
 /* Braucht eine Übung Kleingruppen? Text-Analyse über Name/Kurz/Ablauf – erkennt auch
    künftige und KI-Übungen. „Gruppenbildung im Spiel" (Atomspiel) zählt bewusst nicht. */
@@ -3726,7 +3745,7 @@ function tpSetDauer(si,wert){
   if(!tpSlots[si])return;
   tpSlots[si].dauer=Math.max(1,Number(wert)||10);
   tpSlots.forEach(s=>{if(tpKannParallel(s.typ)&&s.parallelZu===si)s.dauer=tpSlots[si].dauer;}); // Torwart/Einzel laufen genauso lang
-  tpRenderTimeline();
+  tpGeaendert({speichern:"nein"});   // Fehlerbild 7: speichert nicht von selbst (Schritt 9)
 }
 /* Angesprochen wird der Blocktyp beim NAMEN, nicht über seine Position im Dialog.
    Die Position hat sich mit Paket 3 verschoben (Spielform und Übungsform kamen dazu) –
@@ -3743,7 +3762,7 @@ function tpDoAddSlot(idx){
     if(mi>=0){neu.parallelZu=mi;neu.dauer=tpSlots[mi].dauer;}   // gleiche Dauer wie der Hauptteil
   }
   tpSlots.push(neu);
-  tpRenderTimeline();
+  tpGeaendert({speichern:"nein"});   // Fehlerbild 7: speichert nicht von selbst (Schritt 9)
 }
 
 function tpRemoveSlot(idx){
@@ -3812,8 +3831,7 @@ function tpSlotsNeuOrdnen(reihe){
     _tpTwKindUmbenennen(neuVon);
   }
   _tpReihenfolgeAnwenden(reihe);
-  tpRenderTimeline();
-  if(typeof tpPlanSaveDebounced==="function")tpPlanSaveDebounced();
+  tpGeaendert({speichern:"verzoegert"});
 }
 /* v884: Die neue Reihenfolge im Zustand, ohne Seite: Blöcke, Trainer je Feld, parallelZu und die
    Übungswahl (tpWahlUmbenennen). Gibt neuVon (alter Index → neuer) zurück. */
@@ -3901,17 +3919,15 @@ function tpZiehStart(ev,si){
 function tpWarmPlus(si){
   const s=tpSlots[si]; if(!s)return;
   s.folge=Math.min(4,(Number(s.folge)||1)+1);
-  tpRenderTimeline();
+  tpGeaendert({speichern:"verzoegert"});
   const neu=document.getElementById(`tp-form-${si}-${s.folge-1}-pick`); if(neu)neu.focus();
-  if(typeof tpPlanSaveDebounced==="function")tpPlanSaveDebounced();
 }
 function tpWarmMinus(si){
   const s=tpSlots[si]; if(!s)return;
   const n=Number(s.folge)||1; if(n<=1)return;
   tpWahlSetzen(`tp-form-${si}-${n-1}`,null);   // v884: die letzte Aufwärm-Übung fällt im Zustand weg
   if(n-1>1)s.folge=n-1; else delete s.folge;
-  tpRenderTimeline();
-  if(typeof tpPlanSaveDebounced==="function")tpPlanSaveDebounced();
+  tpGeaendert({speichern:"verzoegert"});
 }
 
 /* ═══════════════════════════════════
@@ -4873,7 +4889,7 @@ function _tpWahlGeladenZeigen(r){
   const gesetzt=new Set(r.gesetzt);
   r.felder.forEach(id=>{ const h=document.getElementById(id+"-hist"); if(!h)return; const i=tpWahlIdx(id); h.innerHTML=(gesetzt.has(id)&&i!=null&&typeof tpExerciseHistoryHtml==="function")?tpExerciseHistoryHtml(i):""; });
   if(!r.gesetzt.length)return;
-  setTimeout(()=>{ try{ tpMaterialRender(); }catch(e){} },0);   // v867
+  try{ tpMaterialRender(); }catch(e){}   // v867 · v887: sofort (der Zustand ist schon gesetzt); Öffnen speichert nicht
   if(typeof tpKgHintAll==="function")tpKgHintAll();
   r.gesetzt.forEach(id=>{ if(typeof tpGruppeHinweis==="function")tpGruppeHinweis(id); if(typeof tpBetreuungHinweis==="function")tpBetreuungHinweis(id); });
 }
@@ -5172,8 +5188,9 @@ async function tpGenerate(){
     }
     tpSlots=TP_RAHMEN_KOPF.map(x=>({...x})).concat(hauptteile).concat([{...TP_RAHMEN_ENDE}]);
   }
-  tpRenderTimeline();
-  await new Promise(r=>setTimeout(r,60));
+  /* v887: kein Warten mehr (vorher 60 ms) – Felder und Wahl kommen aus Modell und Zustand. Das Zeichnen
+     selbst speichert nicht (wie bisher); gespeichert wird über die Wahl unten (verzögert). */
+  tpGeaendert({speichern:"nein"});
   const thema=await _tpThemaFuer(datum);
   const alle=tpAllForms();
   // Die Vorlage gibt das Thema vor: ihre Kategorien zuerst, Tagebuch/Monat danach.
@@ -5244,7 +5261,7 @@ async function tpGenerate(){
     regeln.forEach(r=>{ if(regelWeg.has(r.f.name))return; const ki=th.kats.indexOf(r.f.kat); const w=(ki===0?0:ki>0?1:3)+zufall(); if(!best||w<best.w)best={w,n:r.f.name}; });
     if(best){ x.s.regel=best.n; regelWeg.add(best.n); regelNeu++; }
   });
-  if(regelNeu){ tpRenderTimeline(); if(typeof tpPlanSaveDebounced==="function")tpPlanSaveDebounced(); }
+  if(regelNeu)tpGeaendert({speichern:"verzoegert"});
   tpRenderTeamFokus();
   tpRenderMindsetTip();
   const teile=[`${stationen} ${stationen===1?"Feld":"Felder"}`,`Gruppen bis ${g} Kinder`];
@@ -5269,8 +5286,7 @@ function tpRegelZeile(si,slot){
 function tpRegelWeg(si){
   if(!tpSlots[si])return;
   tpSlots[si].regel=null;
-  tpRenderTimeline();
-  if(typeof tpPlanSaveDebounced==="function")tpPlanSaveDebounced();
+  tpGeaendert({speichern:"verzoegert"});
 }
 /* v719 „Plan anpassen“ – PO 02.10.: „Ich habe einen Trainingsplan schon angelegt. Jetzt haben
    noch zwei Kinder abgesagt und ein Trainer ist dazugekommen oder weggefallen … wenn vorher drei
@@ -5418,12 +5434,11 @@ async function tpAnpassenUebernehmen(){
   // 4) Übungen tauschen, die nicht mehr passen (die Marken des Feldes bleiben, wie bisher)
   let getauscht=0;
   v.tausch.forEach(t=>{ if(t.neu==null)return; const id=`tp-form-${t.si}-${t.neuP}`; if(t.neuP<tpFelderZahl(t.si)&&tpWahlZulaessig(t.si,t.neu)){ const w=TP_ZUSTAND.wahl[id]||{}; tpWahlSetzen(id,t.neu,{station:w.station,alle:w.alle,erbt:w.erbt}); getauscht++; } });
-  tpRenderTimeline();
-  await new Promise(r=>setTimeout(r,60));
+  tpGeaendert({speichern:"nein"});   // v887: ohne 60 ms Warten; gespeichert wird unten, nach dem Füllen (wie bisher)
   // 5) Neue Stationen füllt „Training füllen“ – es nimmt nichts weg
   let gefuellt=null;
   if(v.dazu&&typeof tpGenerate==="function")gefuellt=await tpGenerate();
-  if(typeof tpPlanSaveDebounced==="function")tpPlanSaveDebounced();
+  tpGeaendert({zeichnen:false,speichern:"verzoegert"});
   const teile=[`${v.nachher} ${v.nachher===1?"Feld":"Felder"}`,`Gruppen bis ${v.g} Kinder`];
   if(getauscht)teile.push(`${getauscht===1?"eine Übung":getauscht+" Übungen"} getauscht`);
   if(!v.dazu)toast("🔄 Plan angepasst – "+teile.join(" · "));

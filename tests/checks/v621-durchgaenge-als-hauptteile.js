@@ -76,11 +76,11 @@ module.exports = async function (h) {
     // e) zurück auf 1
     tpDurchgaengeSetzen(0, 1); await warte(50);
     out.e = { slots: tpSlots.map(x => x.label + " " + x.dauer), g: gesamt() };
-    // f) alter Plan
-    tpSlots.length = 0; tpCoaches = {};
-    tpSlots.push({ label: "Hauptteil 1", dauer: 12, typ: "main", durchgaenge: 2 });
-    tpSlots.push({ label: "Hauptteil 2", dauer: 12, typ: "main" });
-    tpRenderTimeline(); await warte(80);
+    // f) alter Plan – geöffnet wie aus der Datenbank. v887: Der Umbau läuft nur noch beim Öffnen
+    //    (tpZustandLaden, seit v884), nicht mehr verzögert aus dem Zeichnen; anders gelangen solche
+    //    Blöcke nicht in tpSlots. Geprüft wird dasselbe Ergebnis, ohne Warten.
+    tpZustandLaden([{ label: "Hauptteil 1", dauer: 12, typ: "main", durchgaenge: 2 }, { label: "Hauptteil 2", dauer: 12, typ: "main" }]);
+    tpRenderTimeline();
     out.f = { slots: tpSlots.map(x => x.label + " " + x.dauer + (x.kette ? " K" : "")), halb: /je 6 Min/.test(document.querySelector("#tp-timeline").textContent) };
     window.toast = _t;
     return out;
