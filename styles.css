@@ -1419,7 +1419,9 @@ html[data-theme="dark"]:has(#main-app) body{background:var(--bg)}
 .tp-slot.tp-zu .tp-slot-head .tp-slot-time{margin-left:auto}
 .tp-slot-head .tp-slot-label{flex-basis:calc(100% - 156px)}
 /* v861 (3.14) hatte hier den Rand der Kopfknöpfe (Adler-Rufe, ⋯) im Dunkeln aufgehellt. Seit v876 sind es
-   runde .btn-kopf ohne Rand; ihre Fläche hebt sie ab, die Schrift kommt aus --kopf-t1. */
+   runde .btn-kopf ohne Rand – ohne Rand braucht es die Regel nicht mehr. Das Eltern-Kopfband bleibt auch
+   dunkel Vereinsblau (Charles 19.11.); die Kopfknöpfe sind Bedienelemente (3:1): gemessen hell 4,9:1,
+   dunkel 4,1:1 (--kopf-t1 auf Blau + 12 % Weiß), Fokusrand 6,2 bzw. 5,1:1 (Prüffall v876). */
 
 /* ── v876 · Knöpfe in sechs Bauarten (Charles 19.11., Bestandsaufnahme 4.6) ─────────────────────
    1 Hauptaktion  .btn.btn-p   – Vereinsblau, höchstens EINE je Bildschirm

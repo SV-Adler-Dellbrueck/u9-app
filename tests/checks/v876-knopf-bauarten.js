@@ -8,6 +8,8 @@
    b) Gerendert – Eltern-Startseite (Menü offen), „Mein Konto“, Termin-Detail (mit eigenem Helfer-Eintrag), Adler-Rufe (mit Rufen und Aktionsmenü), PWA-Banner,
       Ja/Nein-Frage (normal und rot), Anmeldung – jeweils HELL und DUNKEL: jeder sichtbare Knopf hat Text ≥ 4,5:1
       gegen seine tatsächliche Fläche (gesperrte ausgenommen, WCAG), ist ≥ 44 px hoch, runde ≥ 44 × 44;
+      runde Kopfknöpfe (.btn-kopf) sind Bedienelemente und brauchen 3:1. Das Eltern-Kopfband bleibt Vereinsblau
+      (Charles 19.11.): Titel und Untertitel 4,5:1, Kopfknöpfe 3:1, Fokusrand 3:1 gegen das Band;
       .btn-link ist unterstrichen.
    c) Je Ansicht höchstens eine sichtbare .btn-p. */
 "use strict";
@@ -82,7 +84,7 @@ const MESSUNG = `
       const rund = parseFloat(cs.borderTopLeftRadius) >= Math.min(q.width, q.height) / 2 - 1 && Math.abs(q.width - q.height) < 2;
       const gesperrt = b.disabled || b.getAttribute("aria-disabled") === "true";
       r.push({ name, k: gesperrt ? null : window.__kontrastVon(b), h: Math.round(q.height), w: Math.round(q.width), rund,
-        link: b.classList.contains("btn-link"), unter: /underline/.test(cs.textDecorationLine), p: b.classList.contains("btn-p") });
+        link: b.classList.contains("btn-link"), kopf: b.classList.contains("btn-kopf"), unter: /underline/.test(cs.textDecorationLine), p: b.classList.contains("btn-p") });
     }
     return r;
   };`;
@@ -130,12 +132,12 @@ module.exports = async function (h) {
     rufe_reaktion: [{ nachricht_id: 1, emoji: "👍", user_id: "u-x" }], rufe_umfrage: [], rufe_fixiert: [], rufe_gelesen: [], rufe_push_aus: [],
     rpc: { eltern_news: {}, training_rueckblick: [], kasse_summary: { saldo: 0, umlagen: [], sammel: [] }, is_kasse: false, is_rufe_mod: false, rufe_ungelesen: [], rufe_umfrage_stand: [] } });
 
-  const befunde = [], uebersicht = [];
+  const befunde = [], uebersicht = [], kopfband = [];
   const pruefen = (scheme, ansicht, liste) => {
     if (!liste) { befunde.push(`${scheme}/${ansicht}: nicht erreichbar`); return; }
     if (!liste.length) { befunde.push(`${scheme}/${ansicht}: kein Knopf sichtbar`); return; }
     for (const k of liste) {
-      if (k.k !== null && k.k < 4.5) befunde.push(`${scheme}/${ansicht}: „${k.name}“ Kontrast ${k.k}:1`);
+      if (k.k !== null && k.k < (k.kopf ? 3 : 4.5)) befunde.push(`${scheme}/${ansicht}: „${k.name}“ Kontrast ${k.k}:1${k.kopf ? " (Kopfknopf, Soll 3:1)" : ""}`);
       if (k.h < 44) befunde.push(`${scheme}/${ansicht}: „${k.name}“ ${k.h} px hoch`);
       if (k.rund && k.w < 44) befunde.push(`${scheme}/${ansicht}: „${k.name}“ rund ${k.w}×${k.h}`);
       if (k.link && !k.unter) befunde.push(`${scheme}/${ansicht}: „${k.name}“ Text-Link ohne Unterstrich`);
@@ -156,6 +158,28 @@ module.exports = async function (h) {
     await ev(h.kontrastHelfer); await ev(MESSUNG);
     await ev(() => { const k = document.getElementById("ep-menue-knopf"); if (k) k.click(); });
     await a.page.waitForTimeout(300);
+    // Kopfband: bleibt Vereinsblau (Charles 19.11.); Titel 4,5:1, Kopfknöpfe (Bedienelemente) 3:1, Fokusrand 3:1 gegen das Band
+    const band = await ev(() => {
+      const b = document.getElementById("ep-kopf"); if (!b) return null;
+      const titel = [...b.querySelectorAll("div")].find(d => d.textContent.trim() === "Eltern-Bereich");
+      const k = document.getElementById("ep-menue-knopf"); k.focus({ focusVisible: true });
+      const fr = getComputedStyle(k).outlineColor, bg = getComputedStyle(b).backgroundColor;
+      const p = x => (x.match(/[\d.]+/g) || []).map(Number);
+      const L = c => { const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; return .2126 * f(c[0]) + .7152 * f(c[1]) + .0722 * f(c[2]); };
+      const K = (a, c) => { const [x, y] = [L(a), L(c)].sort((m, n) => n - m); return +(((x + .05) / (y + .05)).toFixed(2)); };
+      const out = { bg, titel: titel ? window.__kontrastVon(titel) : 0, gruss: window.__kontrastVon(document.getElementById("ep-gruss")),
+        knoepfe: [...b.querySelectorAll("button.btn-kopf")].filter(x => x.getBoundingClientRect().height).map(x => window.__kontrastVon(x)),
+        fokus: K(p(fr), p(bg)), fokusStil: getComputedStyle(k).outlineStyle };
+      k.blur(); return out;
+    });
+    if (!band) befunde.push(scheme + ": Kopfband fehlt");
+    else {
+      if (!/26, 86, 219/.test(band.bg)) befunde.push(`${scheme}/Kopfband: nicht Vereinsblau (${band.bg})`);
+      if (band.titel < 4.5 || band.gruss < 4.5) befunde.push(`${scheme}/Kopfband: Titel ${band.titel}:1, Untertitel ${band.gruss}:1 (Soll 4,5:1)`);
+      if (!band.knoepfe.length || band.knoepfe.some(x => x < 3)) befunde.push(`${scheme}/Kopfband: Kopfknöpfe ${band.knoepfe.join("/")}:1 (Soll 3:1)`);
+      if (band.fokus < 3 || band.fokusStil === "none") befunde.push(`${scheme}/Kopfband: Fokusrand ${band.fokusStil} ${band.fokus}:1`);
+      kopfband.push(`${scheme}: Titel ${band.titel} · Untertitel ${band.gruss} · Knöpfe ${[...new Set(band.knoepfe)].join("/")} · Fokus ${band.fokus}`);
+    }
     pruefen(scheme, "Startseite", await ev(() => document.getElementById("ep-dash-body") ? window.__knopfMessung(document, "#el-cat-overlay,#pwa-nudge") : null));
     await ev(() => { if (typeof pwaBannerShow === "function") pwaBannerShow("android"); });
     pruefen(scheme, "PWA-Banner", await ev(() => document.getElementById("pwa-nudge") ? window.__knopfMessung(document.getElementById("pwa-nudge")) : null));
@@ -182,5 +206,6 @@ module.exports = async function (h) {
   }
   if (befunde.length) probleme.push(`b/c) ${befunde.length} Befunde: ` + befunde.slice(0, 12).join(" · ") + (befunde.length > 12 ? " …" : ""));
   else zeilen.push(`b/c) hell und dunkel: Text ≥ 4,5:1, ≥ 44 px, Links unterstrichen, je Ansicht ≤ 1 Hauptaktion · Knöpfe je Ansicht: ${uebersicht.slice(0, 8).join(" · ")}`);
+  zeilen.push("Kopfband (Kontrast :1): " + kopfband.join(" · "));
   return h.ergebnis(titel, !probleme.length, probleme.length ? probleme.concat(zeilen) : zeilen);
 };
