@@ -309,14 +309,14 @@ const SZENARIEN = [
         const ps = document.querySelector(`.tp-slot[data-si="${tw}"] select[onchange*="parallelZu"]`);
         ps.value = String(ziel); ps.dispatchEvent(new Event("change"));
         const haken = [...document.querySelectorAll(`.tp-tw-player[data-slot="${tw}"]`)];
-        const b = haken.find(c => c.value === "Kind B"); if (b) b.checked = false;
+        const b = haken.find(c => c.value === "Kind B"); if (b) { b.checked = false; b.dispatchEvent(new Event("change")); }   // v888: wie ein Trainer – mit Ereignis (die Brücke ist weg)
         return { tw, parallelZu: tpSlots[tw].parallelZu, haken: haken.map(c => c.value + ":" + c.checked) };
       })],
       ["Trainer an den Torwart-Block", p => p.evaluate(() => { const tw = tpSlots.findIndex(s => s.typ === "tw"); tpSetCoach(`tp-form-${tw}-0`, "Kenneth"); })],
       ["Torwart-Übung wählen", p => p.evaluate(() => { const tw = tpSlots.findIndex(s => s.typ === "tw"); const sel = document.getElementById(`tp-form-${tw}-0`); const v = [...sel.options].map(o => o.value).find(x => x !== ""); tpPickerOpen(sel.id); tpPickerSet(Number(v)); })],
       ["Einzeltraining mit Kind E", p => p.evaluate(() => {
         tpDoAddSlot("individual"); const ind = tpSlots.findIndex(s => s.typ === "individual");
-        const sel = document.getElementById(`tp-ind-player-${ind}`); sel.value = "Kind E"; tpIndPlayerChange(ind);
+        const sel = document.getElementById(`tp-ind-player-${ind}`); sel.value = "Kind E"; sel.dispatchEvent(new Event("change"));   // v888: onchange ruft tpKindSetzen und tpIndPlayerChange
         return { ind, parallelZu: tpSlots[ind].parallelZu };
       })],
       ["Plan speichern", p => p.evaluate(async () => { await tpPlanSave(true); })]
@@ -379,7 +379,7 @@ const SZENARIEN = [
       ["Training füllen, Torwart-Block mit Kind B abgewählt, speichern", p => p.evaluate(async () => {
         await tpGenerate();
         tpDoAddSlot("tw"); const tw = tpSlots.findIndex(s => s.typ === "tw");
-        const b = document.querySelector(`.tp-tw-player[data-slot="${tw}"][value="Kind B"]`); if (b) b.checked = false;
+        const b = document.querySelector(`.tp-tw-player[data-slot="${tw}"][value="Kind B"]`); if (b) { b.checked = false; b.dispatchEvent(new Event("change")); }   // v888: mit Ereignis
         tpSetCoach(`tp-form-${tw}-0`, "Kenneth");
         await tpPlanSave(true);
         return [...document.querySelectorAll(`.tp-tw-player[data-slot="${tw}"]`)].map(c => c.value + ":" + c.checked);

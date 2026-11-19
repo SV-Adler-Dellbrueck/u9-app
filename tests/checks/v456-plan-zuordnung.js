@@ -28,8 +28,8 @@ module.exports = async function (h) {
     tpDoAddSlot("tw"); const tw = tpSlots.findIndex(x => x.typ === "tw"); tpSlots[tw].parallelZu = 1; tpRenderTimeline();
     tpSetCoach(`tp-form-${tw}-0`, T[3]);                                   // Finn an den Torwart-Block
     tpDoAddSlot("individual"); const ind = tpSlots.findIndex(x => x.typ === "individual"); tpSlots[ind].parallelZu = 2; tpRenderTimeline();
-    document.querySelector(`.tp-tw-player[data-slot="${tw}"][value="${K[2]}"]`).checked = false;   // ein Torhueter bleibt im Feld
-    const sel = document.getElementById(`tp-ind-player-${ind}`); sel.value = K[5]; tpIndPlayerChange(ind);
+    { const c = document.querySelector(`.tp-tw-player[data-slot="${tw}"][value="${K[2]}"]`); c.checked = false; c.dispatchEvent(new Event("change")); }   // ein Torhueter bleibt im Feld (v888: mit Ereignis)
+    const sel = document.getElementById(`tp-ind-player-${ind}`); sel.value = K[5]; sel.dispatchEvent(new Event("change"));   // v888: onchange ruft tpKindSetzen und tpIndPlayerChange
     tpSetCoach("tp-form-1-1", T[2]);                                       // Feld 2 von Hand an Trainer 3
     let toastText = ""; const alt = window.toast; window.toast = (t, art) => { toastText = t + "|" + (art || ""); }; await tpPlanSave(true); window.toast = alt;
     return { felder1: document.querySelectorAll('.tp-form-sel[id^="tp-form-1-"]').length, toastText, twIdx: tw, indIdx: ind };

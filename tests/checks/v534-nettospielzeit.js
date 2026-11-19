@@ -49,7 +49,7 @@ module.exports = async function (h) {
     document.querySelectorAll("#tp-trainer-checks input").forEach((c, i) => { if (i < 2) c.checked = true; });
     tpRenderTimeline();
     const slots = [...document.querySelectorAll(".tp-slot")];
-    slots.forEach(sl => sl.querySelectorAll("select.tp-form-sel").forEach(sel => { tpCoaches[sel.id] = "Charles"; sel.value = "0"; }));
+    slots.forEach(sl => sl.querySelectorAll("select.tp-form-sel").forEach(sel => { tpCoaches[sel.id] = "Charles"; tpWahlSetzen(sel.id, 0); }));   // v888: über den Setter (die Brücke ist weg)
     out.zuordnung = tpSlotsMitZuordnung().map(x => ({ typ: x.typ, coaches: !!x.coaches }));
 
     // 2) Kennzeichnung im Plan, nicht allein über Farbe

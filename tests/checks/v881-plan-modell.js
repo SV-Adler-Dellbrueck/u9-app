@@ -139,7 +139,7 @@ module.exports = async function (h) {
       pruef(gebunden.reihe.indexOf(gebunden.tw) === gebunden.reihe.indexOf(tw.extra.h1) + 1, `Torwart-Block steht in der Reihenfolge direkt unter seinem Hauptteil (${JSON.stringify(gebunden.reihe)})`);
       await sit("Einzeltraining mit Kind E", () => {
         tpDoAddSlot("individual"); const ind = tpSlots.findIndex(s => s.typ === "individual");
-        const sel = document.getElementById(`tp-ind-player-${ind}`); sel.value = "Kind E"; tpIndPlayerChange(ind);
+        const sel = document.getElementById(`tp-ind-player-${ind}`); sel.value = "Kind E"; sel.dispatchEvent(new Event("change"));   // v888: mit Ereignis
       });
       await sit("Vier Gruppen bei drei Trainern", () => { tgBilden(4); tpRenderTimeline(); });
       const vier = await p.evaluate(() => tpSlots.map((s, si) => ({ si, h: tpIstHauptteil(s.typ), geb: tpIstHauptteil(s.typ) ? tpParallelTrainer(si).size : 0, weg: (s.weg || []).length, frei: tpFreiesFenster(s), n: tpFelderZahl(si) }))

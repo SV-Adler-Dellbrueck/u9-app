@@ -1685,8 +1685,10 @@ let tpCoaches={};
    station/alle die Vorlagen-Marken (v608), erbt die geerbte Übung im Durchgang (v621).
    Gelesen wird nur noch über tpWahlIdx, geändert über tpWahlSetzen. Das Zeichnen projiziert
    den Zustand auf Auswahlfeld, Picker-Knopf und Marken (data-station, data-alle, data-erbt).
-   Übergangsbrücke bis Schritt 8: _tpDomNachziehen übernimmt Eingriffe, die noch direkt ins
-   Auswahlfeld schreiben (sel.value= ohne Ereignis, noch nicht umgestellte Schreibstellen). */
+   v888 · 4.8 Schritt 8: Die Übergangsbrücke (_tpDomNachziehen) ist entfernt – der Zustand führt
+   allein. Ein sel.value= von außen ohne Ereignis ändert weder Zustand noch Speicherung; das
+   nächste Zeichnen setzt das Feld zurück. Übernommen wird nur, was über ein Ereignis
+   (tpOnSelectChange) oder einen Setter kommt. */
 const TP_ZUSTAND={wahl:{},tw:{},kind:{}};
 /* ═══ v886 · 4.8 Schritt 6 – TORWART-HAKEN UND EINZELKIND IM ZUSTAND ═══════════════════════
    TP_ZUSTAND.tw:   Blockindex → Liste der angehakten Torhüter-Namen; fehlt der Eintrag
@@ -1697,9 +1699,8 @@ const TP_ZUSTAND={wahl:{},tw:{},kind:{}};
    tpZustandLaden, beim Verschieben über _tpTwKindUmbenennen. Das Zeichnen projiziert beides auf
    .checked bzw. den Wert der Auswahl (_tpTwKindAufSeite). Einträge ohne Haken/Auswahl auf der
    Seite fallen bei der Projektion weg (wie früher der gemerkte Wert eines verschwundenen Blocks).
-   Die Brücke (_tpTwKindNachziehen, bis Schritt 8) übernimmt fremde Eingriffe (.checked= oder
-   .value= ohne Ereignis) und zählt sie in _tpBrueckeTwZahl – getrennt von der Übungswahl. */
-let _tpTwKindOffen=new Set();   // "tw|si" / "kind|si": gesetzt, aber noch nicht auf der Seite
+   v888: Die Brücke (_tpTwKindNachziehen) ist entfernt – ein .checked=/.value= ohne Ereignis
+   ändert den Zustand nicht; Haken und Auswahl rufen ihre Setter per onchange. */
 /* Angehakte Torhüter des Blocks si in der Reihenfolge des Angebots (wie die Haken auf der Seite). */
 function tpTwAn(si){ const l=TP_ZUSTAND.tw[si]; return tpTwAngebot(si).map(k=>k.name).filter(n=>l===undefined||l.includes(n)); }
 function tpKindVon(si){ return TP_ZUSTAND.kind[si]||""; }
@@ -1709,9 +1710,8 @@ function tpTwSetzen(si,name,an){
   const tw=TP_ZUSTAND.tw;
   if(name==null)delete tw[si];
   else{ const l=(tw[si]===undefined?tpTwAngebot(si).map(k=>k.name):tw[si]).filter(n=>n!==name); if(an)l.push(String(name)); tw[si]=l; }
-  _tpTwKindOffen.add("tw|"+si);
 }
-function tpKindSetzen(si,name){ TP_ZUSTAND.kind[si]=name?String(name):""; _tpTwKindOffen.add("kind|"+si); }
+function tpKindSetzen(si,name){ TP_ZUSTAND.kind[si]=name?String(name):""; }
 /* Neue Blockindizes (tpSlotsNeuOrdnen): neuVon alter → neuer Index; fehlt einer, ist der Block weg. */
 function _tpTwKindUmbenennen(neuVon){
   ["tw","kind"].forEach(art=>{
@@ -1719,9 +1719,6 @@ function _tpTwKindUmbenennen(neuVon){
     Object.keys(alt).forEach(si=>{ const ni=neuVon[si]; if(ni!=null)neu[ni]=alt[si]; });
     TP_ZUSTAND[art]=neu;
   });
-  const offen=new Set();
-  _tpTwKindOffen.forEach(k=>{ const [art,si]=k.split("|"), ni=neuVon[si]; if(ni!=null)offen.add(art+"|"+ni); });
-  _tpTwKindOffen=offen;
 }
 /* Haken und Auswahl auf der Seite, je Blockindex. */
 function _tpTwKindAufDom(){
@@ -1739,7 +1736,7 @@ function _tpTwKindLaden(slots,index){
   (slots||[]).forEach((s,si0)=>{
     const si=index?index[si0]:si0; if(si==null||!tpSlots[si])return;
     const art=_tpFeldArt(tpSlots[si]);
-    if(Array.isArray(s.tw)&&art==="tw"){ TP_ZUSTAND.tw[si]=((typeof kidListFromIds==="function")?kidListFromIds(s.tw):s.tw).map(String); _tpTwKindOffen.add("tw|"+si); }
+    if(Array.isArray(s.tw)&&art==="tw"){ TP_ZUSTAND.tw[si]=((typeof kidListFromIds==="function")?kidListFromIds(s.tw):s.tw).map(String); }
     if(s.kind!=null&&art==="einzel"){
       const n=(typeof kidName==="function"&&/^\d+$/.test(String(s.kind)))?kidName(s.kind):s.kind;
       if(n&&KADER.some(k=>k.aktiv!==false&&k.name===n))tpKindSetzen(si,n);
@@ -1760,7 +1757,6 @@ function _tpTwKindAufSeite(){
     if(s.value!==v)kind[si]="";
     if(s.value&&typeof tpIndPlayerChange==="function")tpIndPlayerChange(Number(si));
   });
-  _tpTwKindOffen.clear();
   /* Was die Projektion zuletzt gezeigt hat – daran erkennt tpZustandPruefen einen fremden Eingriff. */
   _tpTwKindProj={tw:{},kind:{}};
   Object.keys(d.tw).forEach(si=>{ const m=_tpTwKindProj.tw[si]={}; d.tw[si].forEach(c=>{ m[c.value]=c.checked; }); });
@@ -1769,26 +1765,6 @@ function _tpTwKindAufSeite(){
 let _tpTwKindProj={tw:{},kind:{}};
 /* Gespeicherte Haken und Kind setzen und gleich zeigen (für eine bereits gezeichnete Zeitleiste). */
 function _tpTwKindAnwenden(slots,index){ _tpTwKindLaden(slots,index); _tpTwKindAufSeite(); }
-let _tpBrueckeTwZahl=0, _tpBrueckeTwLog=[];
-/* Brücke bis Schritt 8: fremde Eingriffe an Haken und Auswahl gelten. Einträge, die ein Setter
-   gerade geändert hat (noch nicht projiziert), bleiben; Einträge ohne Haken/Auswahl fallen weg. */
-function _tpTwKindNachziehen(){
-  const d=_tpTwKindAufDom(), tw=TP_ZUSTAND.tw, kind=TP_ZUSTAND.kind;
-  const merken=k=>{ _tpBrueckeTwZahl++; _tpBrueckeTwLog.push(k); if(_tpBrueckeTwLog.length>40)_tpBrueckeTwLog.shift(); };
-  Object.keys(d.tw).forEach(si=>{
-    if(_tpTwKindOffen.has("tw|"+si))return;
-    const cs=d.tw[si];
-    if(cs.some(c=>c.checked!==_tpTwSoll(tw[si],c.value))){ merken("tw|"+si); tw[si]=cs.filter(c=>c.checked).map(c=>c.value); }
-  });
-  Object.keys(d.kind).forEach(si=>{
-    if(_tpTwKindOffen.has("kind|"+si))return;
-    const v=d.kind[si].value;
-    if((kind[si]||"")!==v){ merken("kind|"+si); kind[si]=v; }
-  });
-  Object.keys(tw).forEach(si=>{ if(!d.tw[si]&&!_tpTwKindOffen.has("tw|"+si))delete tw[si]; });
-  Object.keys(kind).forEach(si=>{ if(!d.kind[si]&&!_tpTwKindOffen.has("kind|"+si))delete kind[si]; });
-}
-let _tpWahlOffen=new Set();   // per tpWahlSetzen geändert, aber noch nicht auf der Seite – die Brücke lässt sie stehen
 function tpWahlIdx(selId){ const w=TP_ZUSTAND.wahl[selId]; return (w&&w.i!=null&&!isNaN(w.i))?w.i:null; }
 /* Eintrag in einheitlicher Form – oder null, wenn er nichts trägt. */
 function _tpWahlNorm(i,o){
@@ -1804,10 +1780,9 @@ function _tpWahlNorm(i,o){
 function tpWahlSetzen(selId,i,opt){
   opt=opt||{};
   const wahl=TP_ZUSTAND.wahl;
-  if(opt.hand)Object.keys(wahl).forEach(id=>{ const w=wahl[id]; if(w.station!=null||w.alle){ const n=_tpWahlNorm(w.i,{erbt:w.erbt}); if(n)wahl[id]=n; else delete wahl[id]; _tpWahlOffen.add(id); } });
+  if(opt.hand)Object.keys(wahl).forEach(id=>{ const w=wahl[id]; if(w.station!=null||w.alle){ const n=_tpWahlNorm(w.i,{erbt:w.erbt}); if(n)wahl[id]=n; else delete wahl[id]; } });
   const w=_tpWahlNorm(i,opt.hand?{}:opt);
   if(w)wahl[selId]=w; else delete wahl[selId];
-  _tpWahlOffen.add(selId);
   return w;
 }
 /* Bietet das Auswahlfeld eines Blocks diese Übung an? Genau die <option>-Liste, die das Zeichnen
@@ -1833,34 +1808,14 @@ function _tpWahlFeldFuer(i,nurFrei){
 }
 function _tpWahlAusSel(s){ const d=s.dataset; return _tpWahlNorm(s.value,{station:d.station,alle:d.alle,erbt:d.erbt}); }
 function _tpWahlGleich(a,b){ return JSON.stringify(_tpWahlNorm(a&&a.i,a))===JSON.stringify(_tpWahlNorm(b&&b.i,b)); }
-/* Übergangsbrücke: was seit der letzten Projektion fremd ins Auswahlfeld geschrieben wurde, gilt.
-   Felder, die tpWahlSetzen gerade geändert hat, bleiben, wie der Zustand sie kennt; ein Eintrag
-   ohne Auswahlfeld auf der Seite fällt weg (wie früher der gemerkte Wert beim Neuzeichnen). */
-/* v884: Seit Schritt 5 schreibt keine Stelle mehr direkt ins Auswahlfeld – die Brücke sollte
-   nichts mehr zu tun haben. Sie zählt mit, was sie trotzdem übernimmt (Prüffall v884: in den
-   Golden-Abläufen 0); die letzten Kennungen stehen in _tpBrueckeLog. */
-let _tpBrueckeZahl=0, _tpBrueckeLog=[];
-function _tpBrueckeMerken(id){ _tpBrueckeZahl++; _tpBrueckeLog.push(id); if(_tpBrueckeLog.length>40)_tpBrueckeLog.shift(); }
-function _tpDomNachziehen(){
-  const wahl=TP_ZUSTAND.wahl, gesehen=new Set();
-  document.querySelectorAll(".tp-form-sel").forEach(s=>{
-    gesehen.add(s.id); if(_tpWahlOffen.has(s.id))return;
-    const d=_tpWahlAusSel(s);
-    if(!_tpWahlGleich(d,wahl[s.id])){ _tpBrueckeMerken(s.id); if(d)wahl[s.id]=d; else delete wahl[s.id]; }
-  });
-  Object.keys(wahl).forEach(id=>{ if(!gesehen.has(id)&&!_tpWahlOffen.has(id)){ _tpBrueckeMerken(id); delete wahl[id]; } });
-  _tpTwKindNachziehen();   // v886: Torwart-Haken und Einzelkind (eigener Zähler)
-}
 /* v884 · Bündel-Setter: Blöcke bekommen neue Indizes (Verschieben, Löschen, Rückgängig,
    Durchgänge). neuVon: alter Index → neuer Index; fehlt einer, ist der Block weg und seine Wahl
-   mit ihm. Wie tpCoaches – vorher zog die Brücke das über die umbenannten Auswahlfelder nach. */
+   mit ihm. Wie tpCoaches. */
 function tpWahlUmbenennen(neuVon){
-  const wahl=TP_ZUSTAND.wahl, neu={}, offen=new Set();
+  const wahl=TP_ZUSTAND.wahl, neu={};
   const um=k=>{ const m=/^tp-form-(\d+)-(\d+)$/.exec(k); if(!m)return k; const ni=neuVon[m[1]]; return ni!=null?`tp-form-${ni}-${m[2]}`:null; };
-  Object.keys(wahl).forEach(k=>{ const nk=um(k); offen.add(k); if(nk){ neu[nk]=wahl[k]; offen.add(nk); } delete wahl[k]; });
-  _tpWahlOffen.forEach(k=>{ offen.add(k); const nk=um(k); if(nk)offen.add(nk); });
+  Object.keys(wahl).forEach(k=>{ const nk=um(k); if(nk)neu[nk]=wahl[k]; delete wahl[k]; });
   Object.assign(wahl,neu);
-  _tpWahlOffen=offen;
 }
 /* Nach dem Zeichnen, vor der Projektion: was die neuen Auswahlfelder nicht tragen, fällt weg –
    Felder, die es nicht mehr gibt; Übungen, die der Block nicht anbietet (die Marken bleiben am
@@ -1893,11 +1848,12 @@ function _tpWahlAufSeite(mitHist){
     if(w&&w.erbt)s.dataset.erbt="1"; else delete s.dataset.erbt;
     if((neu||w)&&typeof tpPickSync==="function")tpPickSync(s.id);
     if(mitHist&&w&&w.i!=null&&!w.erbt){ const hd=document.getElementById(s.id+"-hist"); if(hd&&typeof tpExerciseHistoryHtml==="function")hd.innerHTML=tpExerciseHistoryHtml(w.i); }
-    _tpWahlOffen.delete(s.id);
   });
 }
 /* Prüfhilfe (Prüffall v883): wo weichen Auswahlfeld, Marken oder Picker-Knopf vom Zustand ab?
-   Leere Liste = Seite und Zustand stimmen überein. Liest nur, ändert nichts. */
+   Leere Liste = Seite und Zustand stimmen überein. Liest nur, ändert nichts.
+   v888: Ein sel.value= ohne Ereignis wird gemeldet (die Seite weicht vom führenden Zustand ab,
+   bis das nächste Zeichnen sie zurücksetzt). */
 function tpZustandPruefen(opt){
   opt=opt||{};
   const wahl=TP_ZUSTAND.wahl, ab=[], gesehen=new Set(), kurz=w=>w?JSON.stringify(w):"leer";
@@ -1912,19 +1868,19 @@ function tpZustandPruefen(opt){
   Object.keys(wahl).forEach(id=>{ if(!gesehen.has(id))ab.push(`${id}: im Zustand ${kurz(wahl[id])}, aber kein Auswahlfeld`); });
   /* v886: Torwart-Haken und Einzelkind. Ein fremder Eingriff (Haken oder Auswahl weicht von der
      letzten Projektion ab, ohne dass ein Setter lief – .checked=/.value= ohne Ereignis) ist kein
-     Fehler von Zustand oder Projektion: ihn übernimmt die Brücke beim nächsten Zeichnen oder
-     Speichern und zählt ihn (_tpBrueckeTwZahl). Er wird nur mit opt.fremd gemeldet. */
+     Fehler von Zustand oder Projektion. v888: Er wird nicht übernommen – der Zustand führt, das
+     nächste Zeichnen setzt die Seite zurück. Gemeldet wird er nur mit opt.fremd. */
   const d=_tpTwKindAufDom(), tw=TP_ZUSTAND.tw, kind=TP_ZUSTAND.kind, pj=_tpTwKindProj;
   Object.keys(d.tw).forEach(si=>d.tw[si].forEach(c=>{
     const soll=_tpTwSoll(tw[si],c.value); if(c.checked===soll)return;
     const zuletzt=pj.tw[si]?pj.tw[si][c.value]:undefined, fremd=zuletzt!==undefined&&zuletzt!==c.checked;
-    if(!fremd||opt.fremd)ab.push(`Torwart-Haken ${si}/${c.value}: Seite ${c.checked?"an":"aus"} · Zustand ${soll?"an":"aus"}${fremd?" (fremder Eingriff, Brücke offen)":""}`);
+    if(!fremd||opt.fremd)ab.push(`Torwart-Haken ${si}/${c.value}: Seite ${c.checked?"an":"aus"} · Zustand ${soll?"an":"aus"}${fremd?" (fremder Eingriff, nicht übernommen)":""}`);
   }));
   Object.keys(tw).forEach(si=>{ if(!d.tw[si])ab.push(`Torwart-Haken ${si}: im Zustand ${JSON.stringify(tw[si])}, aber keine Haken`); });
   Object.keys(d.kind).forEach(si=>{
     const v=d.kind[si].value; if(v===(kind[si]||""))return;
     const fremd=si in pj.kind&&pj.kind[si]!==v;
-    if(!fremd||opt.fremd)ab.push(`Einzelkind ${si}: Seite „${v}“ · Zustand „${kind[si]||""}“${fremd?" (fremder Eingriff, Brücke offen)":""}`);
+    if(!fremd||opt.fremd)ab.push(`Einzelkind ${si}: Seite „${v}“ · Zustand „${kind[si]||""}“${fremd?" (fremder Eingriff, nicht übernommen)":""}`);
   });
   Object.keys(kind).forEach(si=>{ if(!d.kind[si])ab.push(`Einzelkind ${si}: im Zustand „${kind[si]}“, aber keine Auswahl`); });
   return ab;
@@ -2595,7 +2551,6 @@ function tpSlotKurz(el){
 }
 function tpKlappenAnwenden(){
   const tl=document.getElementById("tp-timeline"); if(!tl)return;
-  _tpDomNachziehen();   // v883: zweiter Teil des Zeichnens – auch hier gilt die Brücke (bis Schritt 8)
   const slots=[...tl.querySelectorAll(".tp-slot")];
   const hat=slots.some(el=>tpWahlFelder(Number(el.dataset.si)).some(id=>tpWahlIdx(id)!=null));
   let zu=0, klappbare=0;
@@ -3117,9 +3072,8 @@ function _tpRenderTimelineIntern(){
   const wrap=document.getElementById("tp-timeline");
   if(!wrap)return;
   /* v883: Die Übungswahl steht im Zustand (TP_ZUSTAND.wahl) und wird nach dem Zeichnen auf die
-     Seite projiziert. Die Brücke übernimmt vorher, was noch direkt ins Auswahlfeld geschrieben
-     wurde. v886: ebenso Torwart-Haken und Einzelkind (TP_ZUSTAND.tw/kind) – der Merk-Weg entfällt. */
-  _tpDomNachziehen();
+     Seite projiziert. v886: ebenso Torwart-Haken und Einzelkind (TP_ZUSTAND.tw/kind) – der
+     Merk-Weg entfällt. v888: Die Brücke davor ist weg – was nur auf der Seite steht, gilt nicht. */
   if(typeof renderTeamDiagnose==="function")renderTeamDiagnose(); // Phase 7-C: Team-Diagnose oben
   const allForms=tpAllForms();
   let time=0;
@@ -3399,22 +3353,19 @@ async function tpPrognoseLoad(){
 /* v608: Hand schlägt Vorlage (Regel aus v535: sobald der Trainer ein Feld ändert, wird der
    Plan Feld für Feld gespeichert). Die Marken fallen deshalb überall weg; jedes Feld steht
    ab dann mit Block und Feld im Plan und braucht sie nicht mehr.
-   v883: tpOnSelectChange ist die Brücke Auswahlfeld → Zustand (der Griff ins versteckte
-   Auswahlfeld selbst); beim Öffnen eines Plans ohne „hand“: die Marken des Feldes bleiben.
+   v883: tpOnSelectChange ist der Weg Auswahlfeld → Zustand (das change-Ereignis des versteckten
+   Auswahlfelds selbst; v888: der einzige, seit die Übergangsbrücke weg ist); beim Öffnen eines Plans ohne „hand“: die Marken des Feldes bleiben.
    v884 · 4.8 Schritt 5: Alle anderen Schreibstellen (Picker, Tausch, Empfehlung, „In den Plan“,
    Training füllen) wählen über tpWahlWaehlen – derselbe Weg, ohne das Auswahlfeld zu lesen oder
    zu beschreiben: der Zustand ändert sich, die Seite folgt über die Projektion. */
 function tpOnSelectChange(sel){
   if(sel){
-    _tpWahlOffen.add(sel.id);   // der eigene Wert ist kein fremder Eingriff – die Brücke übernimmt nur die übrigen Felder
-    _tpDomNachziehen();
     const d=sel.dataset;
     tpWahlSetzen(sel.id,sel.value,{station:d.station,alle:d.alle,erbt:d.erbt,hand:!_tpRestoring});
   }
   _tpWahlFolgen(sel.id);
 }
 function tpWahlWaehlen(selId,i){
-  _tpDomNachziehen();
   const w=TP_ZUSTAND.wahl[selId]||{};
   tpWahlSetzen(selId,i,{station:w.station,alle:w.alle,erbt:w.erbt,hand:!_tpRestoring});
   _tpWahlFolgen(selId);
@@ -3640,7 +3591,6 @@ async function rolleLos(lbl,emo){
 }
 
 function tpShowExFromSel(selId){
-  _tpDomNachziehen();   // v883: Einstieg von außen (Knopf) – die Brücke gilt auch hier (bis Schritt 8)
   const idx=tpWahlIdx(selId);   // v883: aus dem Zustand
   if(idx==null)return;
   /* v623: Die Minuten im Übungstext sind Richtwerte – im Plan zählt die Länge des Blocks. */
@@ -3782,7 +3732,6 @@ function tpRemoveSlot(idx){
      gab es beim Rückgängig nie, der Fehler blieb ohne Folge). Die Torwart-Haken werden nicht gemerkt:
      früher kamen sie über el.value (statt .checked) zurück, also gar nicht – Fehlerbild 2 bleibt,
      behoben erst ab Schritt 9. */
-  _tpDomNachziehen();   // v886: Einstieg per Knopf – die Brücke gilt auch hier (bis Schritt 8)
   const wahlAlt=tpWahlFelder(idx).map(id=>tpWahlIdx(id));
   const kindAlt=TP_ZUSTAND.kind[idx];
   const coaches={}; Object.keys(tpCoaches).forEach(k=>{ const m=k.match(/^tp-form-(\d+)-(\d+)$/); if(m&&+m[1]===idx)coaches[m[2]]=tpCoaches[k]; });
@@ -3816,7 +3765,7 @@ function tpSlotsNeuOrdnen(reihe){
     /* Zwei Schritte über einen Zwischennamen, damit kein Feld ein anderes überschreibt.
        v884: Die Übungswahl zieht der Zustand nach (tpWahlUmbenennen); umbenannt werden hier nur noch
        die Kennungen. v886: Torwart-Haken und Einzelkind zieht der Zustand nach (_tpTwKindUmbenennen);
-       Haken und Auswahl werden mit umbenannt, damit die Brücke (bis Schritt 8) sie wiederfindet. */
+       Haken und Auswahl werden mit umbenannt, damit die Seite bis zum Neuzeichnen zum Zustand passt. */
     const els=[...wrap.querySelectorAll(".tp-form-sel,select[id^='tp-ind-player-'],.tp-tw-player")];
     els.forEach(el=>{
       if(el.classList.contains("tp-tw-player")){const ni=neuVon[el.dataset.slot]; el.dataset.slot=ni==null?"weg":"~"+ni; return;}
@@ -4289,7 +4238,7 @@ function tpAddRecoExercise(formIdx){
 /* v879 (4.8 Schritt 2): Gespeichert wird aus einem Zustand, nicht mehr direkt aus der Seite.
    tpPlanAusZustand/tpSlotsAusZustand sind rein – kein DOM, keine Uhr; sie rechnen nur aus dem
    Zustandsobjekt (und den Kader-Hilfen kidListToIds/kidId). Den Zustand liest vorerst
-   _tpZustandAusDom einmalig aus der Seite (Übergangsbrücke bis Schritt 8). Das Ergebnis ist
+   _tpZustandJetzt (bis v887 _tpZustandAusDom, damals über die Übergangsbrücke) aus dem Zustand. Das Ergebnis ist
    Zeichen für Zeichen das alte (Golden-Master v877): dieselbe Schlüsselreihenfolge, dieselbe
    Reihenfolge der Einträge (Dokumentreihenfolge der Auswahlfelder).
    Zustand:
@@ -4349,11 +4298,12 @@ function tpSlotsAusZustand(z){
     return o;
   });
 }
-/* Übergangsbrücke (bis Schritt 8): liest genau das aus der Seite, was die Serialisierer brauchen.
-   v883: die Übungswahl aus TP_ZUSTAND.wahl (nach _tpDomNachziehen), die Felder in der Reihenfolge
-   des Zeichnens (_tpRenderReihe, je Block tpWahlFelder) – wie zuvor die Dokumentreihenfolge. */
-function _tpZustandAusDom(){
-  _tpDomNachziehen();
+/* Der Zustand, wie ihn die Serialisierer brauchen – zusammengestellt, nicht aus der Seite gelesen.
+   v883: die Übungswahl aus TP_ZUSTAND.wahl, die Felder in der Reihenfolge des Zeichnens
+   (_tpRenderReihe, je Block tpWahlFelder) – wie zuvor die Dokumentreihenfolge.
+   v888 (4.8 Schritt 8): hieß bis v887 _tpZustandAusDom und zog vorher die Brücke nach; seit die
+   Brücke weg ist, liest er nichts mehr aus der Seite – daher der neue Name. */
+function _tpZustandJetzt(){
   const wahl=TP_ZUSTAND.wahl, drin=new Set();
   const feld=id=>{ drin.add(id); const w=wahl[id]||{}; return {id,wert:w.i!=null?String(w.i):"",station:w.station!=null?String(w.station):undefined,alle:w.alle?"1":undefined}; };
   const felder=_tpRenderReihe().flatMap(si=>tpWahlFelder(si).map(feld));
@@ -4372,7 +4322,7 @@ function _tpZustandAusDom(){
    Wird auch von tpPlanSave() gebraucht, damit "Einheit bewerten" spaeter weiss,
    welche Uebungen an einem vergangenen Termin geplant waren. */
 function tpPlanEntries(){
-  return tpPlanAusZustand(_tpZustandAusDom());
+  return tpPlanAusZustand(_tpZustandJetzt());
 }
 /* Plan pro Datum sichern (debounced). Ohne Trainer-Token still ueberspringen –
    der Plan ist trainer-only und darf offline nicht die Queue verstopfen. */
@@ -4389,7 +4339,7 @@ function tpPlanSaveDebounced(){ if(_tpRestoring)return; clearTimeout(_tpPlanTime
    Bis v455 lebte das alles nur im DOM und in tpCoaches – nach dem Neuladen war Finn nicht
    mehr am Torwart-Block, und der Hauptteil hatte wieder vier Felder. Kinder als kader.id. */
 function tpSlotsMitZuordnung(){
-  return tpSlotsAusZustand(_tpZustandAusDom());
+  return tpSlotsAusZustand(_tpZustandJetzt());
 }
 /* ═══════════════════════════════════════════════════════════════════════════
    v542 – WER HAT ZULETZT GESPEICHERT, UND WIRD ER ÜBERSCHRIEBEN?
@@ -4730,9 +4680,6 @@ async function tpPlanRestore(datum){
   try{ await _tpPlanRestoreIntern(datum,lauf); }
   finally{
     if(lauf===_tpRestoreLauf)_tpRestoring=false;
-    /* v884: Das Öffnen schreibt über den Zustand (tpZustandLaden) – die Brücke bleibt bis Schritt 8
-       und sollte hier nichts mehr finden. */
-    try{ _tpDomNachziehen(); }catch(e){}
   }
 }
 /* Gilt dieser Lauf noch? Wer schnell von A nach B tippt, startet zwei Läufe; der ältere
@@ -4956,7 +4903,6 @@ function _tpWahlText(id){
 }
 // Stationen aus dem aktuellen Zeitplan: Label + Dauer je Slot, plus die gewählten Übungen.
 function stTimerStations(){
-  _tpDomNachziehen();   // v883: Einstieg von außen (Knopf) – die Brücke gilt auch hier (bis Schritt 8)
   /* v605: Durchgänge werden zu eigenen Stationen – mit der weitergerückten Einteilung. */
   /* v609: Torwart- und Einzeltraining laufen PARALLEL zu ihrem Hauptteil. Als eigene Station
      hängte der Timer sie hinten an – die Uhr lief länger als der Plan. Jetzt stehen sie als
@@ -5165,7 +5111,6 @@ async function tpGenerate(){
   }catch(e){}
   const haupt=()=>tpSlots.map((s,i)=>({s,i})).filter(x=>x.s&&tpIstHauptteil(x.s.typ));
   const wert=(si,p)=>tpWahlIdx(`tp-form-${si}-${p}`);   // v883: aus dem Zustand
-  _tpDomNachziehen();   // v883: Einstieg von außen (Knopf) – die Brücke gilt auch hier (bis Schritt 8)
   const hatPlan=haupt().some(x=>wert(x.i,0)!=null);
   let regelZiel=null;      // v834: der eine Hauptteil, der eine Zusatzregel bekommen darf
   if(!hatPlan){
@@ -5311,7 +5256,6 @@ async function tpAnpassen(){
 /* Rechnet nur, ändert nichts. Rückgabe: was sich an Kindern, Gruppen, Stationen und Übungen
    ändern würde – die Grundlage für Fenster und Übernehmen. */
 function tpAnpassenVorschlag(){
-  _tpDomNachziehen();   // v883: Einstieg von außen (Knopf) – die Brücke gilt auch hier (bis Schritt 8)
   const haupt=tpSlots.map((s,i)=>({s,i})).filter(x=>x.s&&tpIstHauptteil(x.s.typ));
   const wert=(si,p)=>tpWahlIdx(`tp-form-${si}-${p}`);   // v883: aus dem Zustand
   if(!haupt.some(x=>wert(x.i,0)!=null))return {fehler:"Noch kein Plan – erst „Training füllen“ oder eine Vorlage übernehmen"};
@@ -5419,7 +5363,6 @@ async function tpAnpassenUebernehmen(){
   // 3) Stationen: wegfallende herausnehmen, die dahinter rücken nach – mit Trainer und Marke
   /* v884: im Zustand (tpWahlSetzen) statt im Auswahlfeld; Felder aus dem Modell. Wie bisher ohne
      „hand“ (die Marken der bleibenden Stationen rücken mit) und ohne die geerbte Marke anzufassen. */
-  _tpDomNachziehen();
   const neuVon=new Map();
   v.hs.forEach(si=>{
     const felder=tpWahlFelder(si);
@@ -6100,7 +6043,6 @@ function _tlHeute(){const d=new Date();return d.getFullYear()+"-"+String(d.getMo
    samt Kindernamen). Parallele Einzeltrainings werden an ihren Hauptteil angedockt;
    das Einzel-Kind wird in diesem Fenster aus seiner Gruppe herausgenommen. */
 function _tlSnapshot(){
-  _tpDomNachziehen();   // v883: Einstieg von außen (Knopf) – die Brücke gilt auch hier (bis Schritt 8)
   const forms=tpAllForms(), trainers=tpGetCheckedTrainers();
   const tg=(typeof tgFor==="function")?tgFor():null;
   const stationen=[];

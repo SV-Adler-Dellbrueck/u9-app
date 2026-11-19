@@ -59,8 +59,7 @@ module.exports = async function (h) {
     const idx = alle.findIndex(f => f && f.dauer && !/^15\b/.test(String(f.dauer)));
     out.dbg = { sel: !!sel, idx, n: alle.length };
     if (sel && idx >= 0) {
-      if (![...sel.options].some(o => o.value === String(idx))) sel.add(new Option("x", String(idx)));
-      sel.value = String(idx);
+      tpWahlSetzen("tp-form-0-0", idx);   // v888: über den Setter (die Brücke ist weg)
       tpShowExFromSel("tp-form-0-0"); await warte(30);
       const m = document.getElementById("uebung-modal");
       out.info = m ? m.textContent.replace(/\s+/g, " ") : "";

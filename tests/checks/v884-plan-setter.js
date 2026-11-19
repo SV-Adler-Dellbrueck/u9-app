@@ -3,7 +3,7 @@
    A) Quelltext: In den umgestellten Funktionen steht kein direktes `.value=` auf ein
       Übungs-Auswahlfeld und kein direktes Setzen oder Löschen der Marken data-station/-alle/-erbt
       mehr; sie schreiben über tpWahlSetzen, tpWahlWaehlen, tpWahlUmbenennen (Bündel) bzw.
-      tpZustandLaden. Ausnahmen: die Projektion _tpWahlAufSeite und die Brücke. Erlaubt bleibt
+      tpZustandLaden. Ausnahmen: die Projektion _tpWahlAufSeite (und bis v887 die Brücke). Erlaubt bleibt
       `.value=` an Torwart-Haken und Einzelkind (bis Schritt 6 im DOM; Fehlerbild 2 bleibt).
    B) tpZustandLaden rechnet das Öffnen aus G5 (Altbestand: block/feld, Dublette, falscher Typ,
       station, alleFelder, alte `durchgaenge`) OHNE gezeichnete Zeitleiste und bei gesperrtem DOM;
@@ -11,7 +11,9 @@
       („Plan speichern“).
    C) Die zehn Golden-Abläufe aus v877 (dieselben Schritte, ohne Sollwerte): nach jedem Schritt ist
       tpZustandPruefen() leer, und die Brücke (_tpDomNachziehen) hat nichts übernehmen müssen –
-      sie zählt mit (_tpBrueckeZahl), erwartet 0. */
+      sie zählt mit (_tpBrueckeZahl), erwartet 0.
+      v888 (4.8 Schritt 8): Die Brücke samt Zähler ist entfernt; geprüft wird stattdessen, dass es
+      sie nicht mehr gibt (weder _tpDomNachziehen noch _tpBrueckeZahl). */
 "use strict";
 const fs = require("fs"), path = require("path");
 const golden = require("./v877-trainingsplan-golden.js").intern;
@@ -47,25 +49,21 @@ function rumpf(text, name) {
   return null;
 }
 
-/* ── C: ein Golden-Ablauf mit Zähler der Brücke ── */
+/* ── C: ein Golden-Ablauf; v888: statt des Zählers – die Brücke gibt es nicht mehr ── */
 async function ablauf(h, def) {
   const s = await golden.seite(h, def);
   const p = s.page, zeilen = [];
   try {
-    const start = await p.evaluate(() => ({ zahl: _tpBrueckeZahl, log: _tpBrueckeLog.slice(), pruefen: tpZustandPruefen() }));
-    if (start.zahl) zeilen.push(`Aufbau: Brücke ${start.zahl}× (${start.log.slice(-3).join(", ")})`);
+    const start = await p.evaluate(() => ({ da: typeof _tpDomNachziehen !== "undefined" || typeof _tpBrueckeZahl !== "undefined", pruefen: tpZustandPruefen() }));
+    if (start.da) zeilen.push("Aufbau: Brücke (_tpDomNachziehen/_tpBrueckeZahl) noch vorhanden");
     start.pruefen.forEach(x => zeilen.push(`Aufbau: ${x}`));
-    let summe = start.zahl;
     for (const [name, tun] of def.schritte) {
-      const vor = await p.evaluate(() => _tpBrueckeZahl);
       await tun(p, s);
       await golden.ruhe(s);
-      const r = await p.evaluate(() => ({ zahl: _tpBrueckeZahl, log: _tpBrueckeLog.slice(), pruefen: tpZustandPruefen() }));
-      const d = r.zahl - vor; summe += d;
-      if (d) zeilen.push(`nach „${name}“: Brücke ${d}× (${r.log.slice(-Math.min(d, 3)).join(", ")})`);
+      const r = await p.evaluate(() => ({ pruefen: tpZustandPruefen() }));
       r.pruefen.forEach(x => zeilen.push(`nach „${name}“: ${x}`));
     }
-    return { id: def.id, ok: !zeilen.length, schritte: def.schritte.length, bruecke: summe, zeilen, fehler: s.fehler() };
+    return { id: def.id, ok: !zeilen.length, schritte: def.schritte.length, bruecke: start.da ? 1 : 0, zeilen, fehler: s.fehler() };
   } catch (e) {
     return { id: def.id, ok: false, schritte: def.schritte.length, bruecke: null, zeilen: zeilen.concat([`Abbruch – ${String(e.message || e).split("\n")[0]}`]), fehler: s.fehler() };
   } finally { await s.schliessen(); }
@@ -86,7 +84,7 @@ function ketten(x, karte = {}) {
 }
 
 module.exports = async function (h) {
-  const titel = "4.8 Schritt 5 · Schreibstellen über die Setter: Quelltext, Öffnen ohne Seite (G5), Brücke in den Golden-Abläufen ungenutzt";
+  const titel = "4.8 Schritt 5 · Schreibstellen über die Setter: Quelltext, Öffnen ohne Seite (G5), Golden-Abläufe ohne Brücke (v888)";
   const zeilen = []; let ok = true;
   const pruef = (bed, text) => { zeilen.push((bed ? "✓ " : "✗ ") + text); if (!bed) ok = false; };
 
@@ -134,7 +132,7 @@ module.exports = async function (h) {
         window._tpRenderTimelineIntern = function () { zeichnungen++; return orig.apply(this, arguments); };
         /* keine gezeichnete Zeitleiste, kein Zustand vom Aufbau */
         document.getElementById("tp-timeline").innerHTML = "";
-        tpSlots.length = 0; tpCoaches = {}; Object.keys(TP_ZUSTAND.wahl).forEach(k => delete TP_ZUSTAND.wahl[k]); _tpWahlOffen.clear();
+        tpSlots.length = 0; tpCoaches = {}; Object.keys(TP_ZUSTAND.wahl).forEach(k => delete TP_ZUSTAND.wahl[k]); if (typeof _tpWahlOffen !== "undefined") _tpWahlOffen.clear();   // v888: die Merkmenge gab es nur für die Brücke
         const ziele = [[Document.prototype, ["querySelector", "querySelectorAll", "getElementById", "getElementsByClassName", "getElementsByTagName", "getElementsByName", "createElement"]],
           [Element.prototype, ["querySelector", "querySelectorAll", "getElementsByClassName", "getElementsByTagName", "closest", "matches", "insertAdjacentHTML", "appendChild"]]];
         const sicher = []; let zugriff = 0, fehler = null, info = null;
@@ -178,9 +176,9 @@ module.exports = async function (h) {
   let summe = 0;
   erg.forEach(r => {
     summe += r.bruecke || 0;
-    pruef(r.ok, `${r.id}: ${r.schritte} Schritte – Seite = Zustand, Brücke ${r.bruecke == null ? "?" : r.bruecke}×${r.zeilen.length ? " · " + r.zeilen.slice(0, 3).join(" | ") : ""}`);
+    pruef(r.ok, `${r.id}: ${r.schritte} Schritte – Seite = Zustand, Brücke ${r.bruecke == null ? "?" : r.bruecke ? "noch da" : "entfernt"}${r.zeilen.length ? " · " + r.zeilen.slice(0, 3).join(" | ") : ""}`);
     if (r.fehler && r.fehler.length) pruef(false, `${r.id}: Fehler in der Konsole · ${r.fehler[0]}`);
   });
-  pruef(summe === 0, `Brücke in allen zehn Abläufen: ${summe} Übernahmen (erwartet 0)`);
+  pruef(summe === 0, `Brücke existiert nicht (v888) – in allen zehn Abläufen geprüft${summe ? ` · in ${summe} Abläufen noch vorhanden` : ""}`);
   return h.ergebnis(titel, ok, zeilen);
 };
