@@ -11,7 +11,9 @@
       – die Lesestellen lesen den Zustand: vor dem Neuzeichnen kennen Kurzzeile, Stationstimer,
         Trainingsstart, Material und Feldbedarf schon die neue Wahl, das Auswahlfeld noch nicht
       – ein Eingriff sel.value= ohne Ereignis wird von der Brücke übernommen (beim Zeichnen und
-        beim Speichern)
+        beim Speichern) – v888 (4.8 Schritt 8, Brücke entfernt): umgekehrt – ohne Ereignis wird er
+        NICHT übernommen (Zustand und gespeicherter Plan bleiben, tpZustandPruefen meldet die
+        Abweichung, das nächste Zeichnen setzt das Feld zurück); mit change-Ereignis schon
       – eine Übung, die der Block nicht anbietet, fällt beim Zeichnen still weg (tpWahlZulaessig,
         Verhalten wie bisher – Fehlerbild 4, behoben erst ab Schritt 9) */
 "use strict";
@@ -61,7 +63,7 @@ async function ablauf(h, def) {
 }
 
 module.exports = async function (h) {
-  const titel = "4.8 Schritt 4 · Übungswahl im Zustand: Seite = Zustand nach jedem Schritt der zehn Golden-Abläufe, Projektion und Brücke";
+  const titel = "4.8 Schritt 4 · Übungswahl im Zustand: Seite = Zustand nach jedem Schritt der zehn Golden-Abläufe, Projektion, ohne Brücke (v888)";
   const zeilen = []; let ok = true;
   const pruef = (bed, text) => { zeilen.push((bed ? "✓ " : "✗ ") + text); if (!bed) ok = false; };
 
@@ -123,16 +125,17 @@ module.exports = async function (h) {
       tpRenderTimeline();
       out.hand = { marken: document.querySelectorAll("#tp-timeline .tp-form-sel[data-station],#tp-timeline .tp-form-sel[data-alle]").length,
         zustand: Object.values(TP_ZUSTAND.wahl).filter(w => w.station != null || w.alle).length, zweites: tpWahlIdx(id2) === marke, pruefen: tpZustandPruefen() };
-      /* 4) Brücke: sel.value= ohne Ereignis – beim Zeichnen übernommen */
+      /* 4) v888: sel.value= ohne Ereignis – der Zustand führt: nicht übernommen, weder beim Speichern
+         noch beim Zeichnen (das setzt das Feld zurück); mit change-Ereignis übernommen */
       const fremd = angebot(h1).find(i => i !== neu && i !== marke && name(i));
       sel().value = String(fremd);
-      const vorBruecke = tpWahlIdx(id);
+      const meldet = tpZustandPruefen().length > 0;
+      const planOhne = !tpPlanEntries().some(e => e.block === h1 && e.feld === 0 && e.formIdx === fremd) && tpPlanEntries().some(e => e.block === h1 && e.feld === 0 && e.formIdx === neu);
       tpRenderTimeline();
-      out.bruecke = { vorher: vorBruecke === neu, nachher: tpWahlIdx(id) === fremd, feld: sel().value === String(fremd), pruefen: tpZustandPruefen() };
-      /* … und beim Speichern (der Serialisierer zieht nach) */
+      out.bruecke = { meldet, planOhne, zustand: tpWahlIdx(id) === neu, feld: sel().value === String(neu), pruefen: tpZustandPruefen() };
       const fremd2 = angebot(h1).find(i => i !== neu && i !== marke && i !== fremd && name(i));
-      sel().value = String(fremd2);
-      out.brueckeSpeichern = tpPlanEntries().some(e => e.block === h1 && e.feld === 0 && e.formIdx === fremd2) && tpWahlIdx(id) === fremd2;
+      sel().value = String(fremd2); sel().dispatchEvent(new Event("change"));
+      out.brueckeSpeichern = tpPlanEntries().some(e => e.block === h1 && e.feld === 0 && e.formIdx === fremd2) && tpWahlIdx(id) === fremd2 && !tpZustandPruefen().length;
       /* 5) Nicht im Angebot des Blocks: fällt beim Zeichnen still weg (wie bisher) */
       const tw = alle.findIndex(f => f && f.kat === "torwart");
       out.zulaessig = { main: tpWahlZulaessig(h1, fremd2), tw: tpWahlZulaessig(h1, tw) };
@@ -148,8 +151,8 @@ module.exports = async function (h) {
     pruef(pr.wert && pr.station && pr.alle && pr.knopf && !pr.pruefen.length && JSON.stringify(pr.plan) === JSON.stringify(b.erwartet),
       `tpWahlSetzen + Neuzeichnen: Wert, data-station, data-alle, Picker-Knopf, gespeicherter Plan ${JSON.stringify(pr.plan)}${pr.pruefen.length ? " · " + pr.pruefen[0] : ""}`);
     pruef(b.hand.marken === 0 && b.hand.zustand === 0 && b.hand.zweites && !b.hand.pruefen.length, `hand: alle Vorlagen-Marken weg, Seite und Zustand (${JSON.stringify(b.hand)})`);
-    pruef(b.bruecke.vorher && b.bruecke.nachher && b.bruecke.feld && !b.bruecke.pruefen.length && b.brueckeSpeichern,
-      `Brücke: sel.value= ohne Ereignis beim Zeichnen und beim Speichern übernommen (${JSON.stringify(b.bruecke)}, Speichern ${b.brueckeSpeichern})`);
+    pruef(b.bruecke.meldet && b.bruecke.planOhne && b.bruecke.zustand && b.bruecke.feld && !b.bruecke.pruefen.length && b.brueckeSpeichern,
+      `v888 ohne Brücke: sel.value= ohne Ereignis gemeldet, nicht gespeichert, beim Zeichnen zurückgesetzt; mit change übernommen (${JSON.stringify(b.bruecke)}, mit Ereignis ${b.brueckeSpeichern})`);
     pruef(b.zulaessig.main && !b.zulaessig.tw && b.verworfen.idx === null && b.verworfen.feld === "" && !b.verworfen.pruefen.length,
       `Torwart-Übung im Hauptteil: nicht zulässig, beim Zeichnen still verworfen (${JSON.stringify(b.verworfen)})`);
     const fe = s.fehler();

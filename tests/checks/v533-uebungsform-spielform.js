@@ -37,7 +37,7 @@ module.exports = async function (h) {
     document.querySelectorAll("#tp-trainer-checks input").forEach((c, i) => { if (i < 2) c.checked = true; });
     tpRenderTimeline();
     const slots = [...document.querySelectorAll(".tp-slot")];
-    slots.forEach(sl => sl.querySelectorAll("select.tp-form-sel").forEach(sel => { tpCoaches[sel.id] = "Charles"; sel.value = "0"; }));
+    slots.forEach(sl => sl.querySelectorAll("select.tp-form-sel").forEach(sel => { tpCoaches[sel.id] = "Charles"; tpWahlSetzen(sel.id, 0); }));   // v888: über den Setter (die Brücke ist weg)
     const z = tpSlotsMitZuordnung();
     out.zuordnungUnbekannt = !!(z[0] && z[0].coaches);   // erwartet: false – geht verloren
     out.zuordnungMain      = !!(z[1] && z[1].coaches);   // erwartet: true

@@ -47,7 +47,7 @@ module.exports = async function (h) {
     document.getElementById("tp-klapp-alle").click(); await w(80); out.alleZu = stand();
     // c) eine Übung im Hauptteil leeren
     const hs = [...tl.querySelectorAll(".tp-slot")].find(el => (tpSlots[+el.dataset.si].typ || "main") !== "warmup" && (tpSlots[+el.dataset.si].typ || "main") !== "abschluss" && el.querySelector(".tp-form-sel"));
-    const sel = hs.querySelector(".tp-form-sel"); sel.value = ""; tpKlappenAnwenden(); await w(50);
+    const sel = hs.querySelector(".tp-form-sel"); tpWahlSetzen(sel.id, null); tpKlappenAnwenden();   /* v888: über den Setter */ await w(50);
     out.unvollstaendig = { zu: hs.classList.contains("tp-zu"), pfeil: !!hs.querySelector(".tp-klapp") };
     return out;
   }, { d2 }).catch(e => ({ fehler: String(e) }));

@@ -14,7 +14,10 @@
       Körper, die Reihenfolge (tpTwAngebot) zählt.
    D) Die zehn Golden-Abläufe (ohne Sollwerte): tpZustandPruefen() leer nach jedem Schritt, die
       Brücke der Übungswahl 0×, die Brücke für Haken/Kind genau an den fremden Eingriffen der
-      Abläufe selbst (G6: Haken und Auswahl ohne Ereignis, G10: Haken ohne Ereignis). */
+      Abläufe selbst (G6: Haken und Auswahl ohne Ereignis, G10: Haken ohne Ereignis).
+   v888 (4.8 Schritt 8): Die Brücken samt Zählern sind entfernt. Statt der Zähler wird geprüft, dass
+   es sie nicht mehr gibt; die Golden-Abläufe G6/G10 lösen seitdem selbst Ereignisse aus, darum ist
+   am Ende jedes Ablaufs auch die strenge Prüfung tpZustandPruefen({fremd:true}) leer. */
 "use strict";
 const fs = require("fs"), path = require("path");
 const golden = require("./v877-trainingsplan-golden.js").intern;
@@ -54,20 +57,19 @@ function sollKoerper(id, schritt) {
 const abweichung = (ist, soll) => { let i = 0; while (ist[i] === soll[i]) i++; return ` · ab Zeichen ${i}: soll „${soll.slice(Math.max(0, i - 40), i + 60)}“ · ist „${ist.slice(Math.max(0, i - 40), i + 60)}“`; };
 const tpPosts = s => s.gesendet.filter(g => /\/rest\/v1\/trainingsplan$/.test(g.pfad) && g.methode === "POST");
 
-/* Ein nachgespielter Ablauf: nach jedem Schritt Ruhe, strenge Prüfung, Brücken-Zähler. */
+/* Ein nachgespielter Ablauf: nach jedem Schritt Ruhe, strenge Prüfung (v888: ohne Brücken-Zähler). */
+const BRUECKE_DA = () => ["_tpDomNachziehen", "_tpTwKindNachziehen", "_tpBrueckeZahl", "_tpBrueckeTwZahl"].filter(n => { try { return typeof (0, eval)(n) !== "undefined"; } catch (e) { return false; } });
 async function nachspielen(h, schritte) {
   const s = await golden.seite(h, { id: "v886" });
   const p = s.page, zeilen = [];
   let bw = 0, btw = 0;
   try {
+    const da = await p.evaluate(`(${BRUECKE_DA.toString()})()`);
+    if (da.length) { bw = btw = da.length; zeilen.push(`Brücke noch vorhanden: ${da.join(", ")}`); }
     for (const [name, tun] of schritte) {
-      const vor = await p.evaluate(() => ({ w: _tpBrueckeZahl, t: _tpBrueckeTwZahl }));
       const r = await tun(p);
       await golden.ruhe(s);
-      const n = await p.evaluate(() => ({ w: _tpBrueckeZahl, t: _tpBrueckeTwZahl, log: _tpBrueckeTwLog.slice(-3), pruefen: tpZustandPruefen({ fremd: true }) }));
-      bw += n.w - vor.w; btw += n.t - vor.t;
-      if (n.w - vor.w) zeilen.push(`nach „${name}“: Brücke Übungswahl ${n.w - vor.w}×`);
-      if (n.t - vor.t) zeilen.push(`nach „${name}“: Brücke Haken/Kind ${n.t - vor.t}× (${n.log.join(", ")})`);
+      const n = await p.evaluate(() => ({ pruefen: tpZustandPruefen({ fremd: true }) }));
       n.pruefen.forEach(x => zeilen.push(`nach „${name}“: ${x}`));
       if (r && r.fehler) zeilen.push(`„${name}“: ${r.fehler}`);
     }
@@ -98,7 +100,7 @@ const twAnlegen = parallel => ["Torwart-Block anlegen" + (parallel ? ", parallel
 const twTrainer = ["Trainer an den Torwart-Block", p => p.evaluate(() => { const tw = tpSlots.findIndex(s => s.typ === "tw"); tpSetCoach(`tp-form-${tw}-0`, "Kenneth"); })];
 
 module.exports = async function (h) {
-  const titel = "4.8 Schritt 6 · Torwart-Haken und Einzelkind im Zustand: Quelltext, G6/G10 mit Ereignissen = Sollwert, Seite = Zustand, Brücke";
+  const titel = "4.8 Schritt 6 · Torwart-Haken und Einzelkind im Zustand: Quelltext, G6/G10 mit Ereignissen = Sollwert, Seite = Zustand, Brücke entfernt (v888)";
   const zeilen = []; let ok = true;
   const pruef = (bed, text) => { zeilen.push((bed ? "✓ " : "✗ ") + text); if (!bed) ok = false; };
 
@@ -106,7 +108,7 @@ module.exports = async function (h) {
   {
     const text = fs.readFileSync(path.join(h.REPO, "boot.js"), "utf8");
     const ohne = ohneKommentar(text);
-    const ERLAUBT = ["_tpTwKindAufSeite", "_tpTwKindNachziehen"];
+    const ERLAUBT = ["_tpTwKindAufSeite"];   // v888: die Brücke _tpTwKindNachziehen ist weg
     const namen = [...ohne.matchAll(/(?:^|\n)(?:async\s+)?function\s+([\w$]+)\s*\(/g)].map(m => m[1]);
     const anfassen = [], funde = [];
     namen.forEach(n => {
@@ -120,13 +122,13 @@ module.exports = async function (h) {
       });
     });
     const merk = /merk\.(tw|ind)\b/.test(ohne);
-    const muss = ["_tpZustandAusDom", "stTimerStations", "_tlSnapshot", "tpRemoveSlot", "_tpRenderTimelineIntern", "tpSlotsNeuOrdnen", "tpZustandLaden"].filter(n => !anfassen.includes(n));
+    const muss = ["_tpZustandJetzt", "stTimerStations", "_tlSnapshot", "tpRemoveSlot", "_tpRenderTimelineIntern", "tpSlotsNeuOrdnen", "tpZustandLaden"].filter(n => !anfassen.includes(n));
     pruef(anfassen.length >= 8 && !muss.length,
       `Quelltext: ${anfassen.length} Funktionen fassen Haken/Kind an, darunter Serialisierer, Stationstimer, Trainingsstart, Löschen, Zeichnen, Neuordnen, Öffnen${muss.length ? " · nicht gefunden: " + muss.join(", ") : ""}`);
-    pruef(!funde.length, `Quelltext: kein .checked=/.value= auf Haken oder Einzelkind außerhalb von Projektion und Brücke${funde.length ? " · " + funde.slice(0, 4).join(" | ") : ""}`);
+    pruef(!funde.length, `Quelltext: kein .checked=/.value= auf Haken oder Einzelkind außerhalb der Projektion${funde.length ? " · " + funde.slice(0, 4).join(" | ") : ""}`);
     pruef(!merk, `Quelltext: Merk-Weg merk.tw/merk.ind entfernt${merk ? " · noch vorhanden" : ""}`);
-    const ser = rumpf(ohne, "_tpZustandAusDom") || "";
-    pruef(/tpTwAn\(/.test(ser) && !/querySelector/.test(ser.replace(/_tpDomNachziehen\(\);/, "")),
+    const ser = rumpf(ohne, "_tpZustandJetzt") || "";
+    pruef(/tpTwAn\(/.test(ser) && !/querySelector|getElementById|_tpDomNachziehen/.test(ser),
       "Quelltext: der Serialisierer liest Haken (tpTwAn, Reihenfolge von tpTwAngebot) und Kind aus dem Zustand, nicht aus der Seite");
   }
 
@@ -147,7 +149,7 @@ module.exports = async function (h) {
     const soll = sollKoerper("G6-torwart-parallel", "Plan speichern"), letzt = r.posts[r.posts.length - 1];
     const ist = letzt ? koerper(letzt.body) : "";
     pruef(!!soll && ist === soll, `G6 mit Ereignissen: gespeicherter Körper = Sollwert G6 „Plan speichern“${soll && ist !== soll ? abweichung(ist, soll) : ""}`);
-    pruef(!r.zeilen.length && r.bw === 0 && r.btw === 0, `G6 mit Ereignissen: Seite = Zustand nach jedem Schritt, Brücke 0× (Übungswahl ${r.bw}, Haken/Kind ${r.btw})${r.zeilen.length ? " · " + r.zeilen.slice(0, 3).join(" | ") : ""}`);
+    pruef(!r.zeilen.length && r.bw === 0 && r.btw === 0, `G6 mit Ereignissen: Seite = Zustand nach jedem Schritt, Brücke entfernt${r.bw ? " · noch da" : ""}${r.zeilen.length ? " · " + r.zeilen.slice(0, 3).join(" | ") : ""}`);
     const z = r.zustand || { tw: {}, kind: {} };
     pruef(Object.values(z.tw).some(l => JSON.stringify(l) === '["Kind A"]') && Object.values(z.kind).includes("Kind E"), `G6: Zustand tw ${JSON.stringify(z.tw)}, kind ${JSON.stringify(z.kind)}`);
     /* Einzelblock löschen und Rückgängig: das Kind kommt zurück, wie bisher über die Auswahl */
@@ -189,13 +191,12 @@ module.exports = async function (h) {
     const ist1 = r.posts[0] ? koerper(r.posts[0].body) : "", ist = r.posts.length ? koerper(r.posts[r.posts.length - 1].body) : "";
     pruef(!!soll1 && r.posts.some(x => koerper(x.body) === soll1), `G10 mit Ereignissen: erster gespeicherter Körper (Kind B abgewählt) = Sollwert${soll1 && !r.posts.some(x => koerper(x.body) === soll1) ? abweichung(ist1, soll1) : ""}`);
     pruef(!!soll && ist === soll, `G10 mit Ereignissen: Körper nach Rückgängig = Sollwert (Fehlerbild 2 bleibt: beide Haken wieder an)${soll && ist !== soll ? abweichung(ist, soll) : ""}`);
-    pruef(!r.zeilen.length && r.bw === 0 && r.btw === 0, `G10 mit Ereignissen: Seite = Zustand nach jedem Schritt, Brücke 0× (Übungswahl ${r.bw}, Haken/Kind ${r.btw})${r.zeilen.length ? " · " + r.zeilen.slice(0, 3).join(" | ") : ""}`);
+    pruef(!r.zeilen.length && r.bw === 0 && r.btw === 0, `G10 mit Ereignissen: Seite = Zustand nach jedem Schritt, Brücke entfernt${r.bw ? " · noch da" : ""}${r.zeilen.length ? " · " + r.zeilen.slice(0, 3).join(" | ") : ""}`);
     const fe = r.s.fehler(); pruef(!fe.length, `C: keine Fehler in der Konsole${fe.length ? " · " + fe[0] : ""}`);
     await r.s.schliessen();
   }
 
   /* ── D: die zehn Golden-Abläufe ── */
-  const ERWARTET_TW = { "G6-torwart-parallel": 2, "G10-loeschen-rueckgaengig": 1 };
   const liste = golden.SZENARIEN, erg = new Array(liste.length);
   let naechstes = 0;
   const ablauf = async def => {
@@ -203,17 +204,17 @@ module.exports = async function (h) {
     const p = s.page, z = [];
     let bw = 0, btw = 0;
     try {
-      const st = await p.evaluate(() => ({ w: _tpBrueckeZahl, t: _tpBrueckeTwZahl, pruefen: tpZustandPruefen() }));
-      bw += st.w; btw += st.t; st.pruefen.forEach(x => z.push(`Aufbau: ${x}`));
+      const da = await p.evaluate(`(${BRUECKE_DA.toString()})()`);
+      bw = da.length; if (da.length) z.push(`Brücke noch vorhanden: ${da.join(", ")}`);
+      const st = await p.evaluate(() => ({ pruefen: tpZustandPruefen() }));
+      st.pruefen.forEach(x => z.push(`Aufbau: ${x}`));
       for (const [name, tun] of def.schritte) {
-        const vor = await p.evaluate(() => ({ w: _tpBrueckeZahl, t: _tpBrueckeTwZahl }));
         await tun(p, s); await golden.ruhe(s);
-        const n = await p.evaluate(() => ({ w: _tpBrueckeZahl, t: _tpBrueckeTwZahl, pruefen: tpZustandPruefen() }));
-        bw += n.w - vor.w; btw += n.t - vor.t;
+        const n = await p.evaluate(() => ({ pruefen: tpZustandPruefen() }));
         n.pruefen.forEach(x => z.push(`nach „${name}“: ${x}`));
       }
-      const strengEnde = await p.evaluate(() => { _tpDomNachziehen(); return tpZustandPruefen({ fremd: true }); });
-      strengEnde.forEach(x => z.push(`am Ende (nach der Brücke): ${x}`));
+      const strengEnde = await p.evaluate(() => tpZustandPruefen({ fremd: true }));
+      strengEnde.forEach(x => z.push(`am Ende (streng): ${x}`));
     } catch (e) { z.push("Abbruch – " + String(e.message || e).split("\n")[0]); }
     const fe = s.fehler(); await s.schliessen();
     return { id: def.id, z, bw, btw, fe };
@@ -223,10 +224,9 @@ module.exports = async function (h) {
   let summeW = 0;
   erg.forEach(r => {
     summeW += r.bw;
-    const sollTw = ERWARTET_TW[r.id] || 0;
-    pruef(!r.z.length && r.btw === sollTw, `${r.id}: Seite = Zustand nach jedem Schritt; Brücke Haken/Kind ${r.btw}× (erwartet ${sollTw}${sollTw ? ", fremde Eingriffe des Ablaufs" : ""})${r.z.length ? " · " + r.z.slice(0, 3).join(" | ") : ""}`);
+    pruef(!r.z.length && !r.bw, `${r.id}: Seite = Zustand nach jedem Schritt und am Ende streng; Brücke ${r.bw ? "noch da" : "entfernt"}${r.z.length ? " · " + r.z.slice(0, 3).join(" | ") : ""}`);
     if (r.fe.length) pruef(false, `${r.id}: Fehler in der Konsole · ${r.fe[0]}`);
   });
-  pruef(summeW === 0, `Brücke der Übungswahl in allen zehn Abläufen: ${summeW} Übernahmen (erwartet 0)`);
+  pruef(summeW === 0, `Brücke existiert nicht (v888) – in allen zehn Abläufen geprüft${summeW ? " · noch vorhanden" : ""}`);
   return h.ergebnis(titel, ok, zeilen);
 };

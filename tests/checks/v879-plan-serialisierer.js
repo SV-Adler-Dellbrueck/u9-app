@@ -1,7 +1,7 @@
 /* v879 · Bestandsaufnahme 4.8, Schritt 2: reiner Serialisierer des Trainingsplans.
 
    tpPlanAusZustand(z) und tpSlotsAusZustand(z) rechnen den gespeicherten Plan aus einem
-   Zustandsobjekt – ohne DOM. _tpZustandAusDom() liest den Zustand vorerst aus der Seite (Brücke).
+   Zustandsobjekt – ohne DOM. _tpZustandJetzt() (bis v887 _tpZustandAusDom) stellt den Zustand zusammen.
 
    A) Von Hand gebauter Zustand, keine gezeichnete Zeitleiste, DOM während des Aufrufs gesperrt
       (querySelector*, getElementById werfen): ein Torwart-Block (Slot 4) läuft parallel zu
@@ -136,8 +136,8 @@ module.exports = async function (h) {
   try {
     const p = s.page;
     await p.waitForFunction(() => typeof loadKader === "function" && typeof tpPlanRestore === "function", null, { timeout: 30000 });
-    const da = await p.evaluate(() => ({ plan: typeof tpPlanAusZustand, slots: typeof tpSlotsAusZustand, dom: typeof _tpZustandAusDom }));
-    pruef(da.plan === "function" && da.slots === "function" && da.dom === "function", `tpPlanAusZustand/tpSlotsAusZustand/_tpZustandAusDom vorhanden (${da.plan}/${da.slots}/${da.dom})`);
+    const da = await p.evaluate(() => ({ plan: typeof tpPlanAusZustand, slots: typeof tpSlotsAusZustand, dom: typeof _tpZustandJetzt }));
+    pruef(da.plan === "function" && da.slots === "function" && da.dom === "function", `tpPlanAusZustand/tpSlotsAusZustand/_tpZustandJetzt vorhanden (${da.plan}/${da.slots}/${da.dom})`);
     await p.evaluate(async () => { await loadKader(); });
 
     /* ── A ── */
@@ -178,7 +178,7 @@ module.exports = async function (h) {
     const vergleich = async name => {
       const r = await p.evaluate(({ ap, as }) => {
         const altP = (0, eval)("(" + ap + ")"), altS = (0, eval)("(" + as + ")");
-        const z = _tpZustandAusDom();
+        const z = _tpZustandJetzt();
         const neuP = JSON.stringify(tpPlanAusZustand(z)), neuS = JSON.stringify(tpSlotsAusZustand(z));
         return { gleichP: neuP === JSON.stringify(altP()), gleichS: neuS === JSON.stringify(altS()),
           gleichWrapper: JSON.stringify(tpPlanEntries()) === neuP && JSON.stringify(tpSlotsMitZuordnung()) === neuS,
@@ -198,14 +198,17 @@ module.exports = async function (h) {
         tpDoAddSlot("tw"); const tw = tpSlots.findIndex(s => s.typ === "tw");
         const ps = document.querySelector(`.tp-slot[data-si="${tw}"] select[onchange*="parallelZu"]`);
         if (ps) { ps.value = String(h1); ps.dispatchEvent(new Event("change")); }
-        const b = document.querySelector(`.tp-tw-player[data-slot="${tw}"][value="Kind B"]`); if (b) b.checked = false;
+        const b = document.querySelector(`.tp-tw-player[data-slot="${tw}"][value="Kind B"]`); if (b) { b.checked = false; b.dispatchEvent(new Event("change")); }   // v888: mit Ereignis
         tpSetCoach(`tp-form-${tw}-0`, "Kenneth");
         tpDoAddSlot("individual"); const ind = tpSlots.findIndex(s => s.typ === "individual");
-        const sel = document.getElementById(`tp-ind-player-${ind}`); sel.value = "Kind E"; tpIndPlayerChange(ind);
+        const sel = document.getElementById(`tp-ind-player-${ind}`); sel.value = "Kind E"; sel.dispatchEvent(new Event("change"));
         /* Vorlagen-Marken an zwei Feldern, wie sie das Öffnen eines Vorlagen-Plans setzt */
+        /* v888: über den Setter, die Seite folgt beim Zeichnen (vorher dataset= über die Brücke) */
         const felder = [...document.querySelectorAll(".tp-form-sel")].filter(x => x.value);
-        if (felder[1]) felder[1].dataset.station = "2";
-        if (felder[2]) felder[2].dataset.alle = "1";
+        const marke = (x, o) => { const w = TP_ZUSTAND.wahl[x.id] || {}; tpWahlSetzen(x.id, w.i, { station: w.station, alle: w.alle, erbt: w.erbt, ...o }); };
+        if (felder[1]) marke(felder[1], { station: 2 });
+        if (felder[2]) marke(felder[2], { alle: true });
+        tpRenderTimeline();
       });
       return vergleich("mit Torwart-Block (Haken ab), Einzelkind, Trainern, Marken");
     })();

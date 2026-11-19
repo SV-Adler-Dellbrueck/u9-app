@@ -64,7 +64,8 @@ module.exports = async function (h) {
     const klein = alle.findIndex((f, i) => tpStationTauglich(f) && f.typ !== "warmup" && (() => { const sp = tpUebungSpanne(i); return !sp.alle && sp.max && sp.max <= 3; })()
       && document.querySelector(`#tp-timeline .tp-form-sel option[value="${i}"]`));
     if (klein < 0) return { fehlt: ["keine kleine Übung in der Liste"] };
-    tpSlots.forEach((sl, si) => { if (!tpIstHauptteil(sl.typ)) return; const el = document.getElementById(`tp-form-${si}-1`); if (el) el.value = String(klein); });
+    tpSlots.forEach((sl, si) => { if (!tpIstHauptteil(sl.typ)) return; const id = `tp-form-${si}-1`; if (!document.getElementById(id)) return; const w = TP_ZUSTAND.wahl[id] || {}; tpWahlSetzen(id, klein, { station: w.station, alle: w.alle, erbt: w.erbt }); });
+    _tpWahlAufSeite(false);   // v888: über den Setter samt Projektion (vorher el.value= über die Brücke)
     return { klein: alle[klein].name, knopf: (() => { const k = document.getElementById("tp-anpassen-knopf"); return k ? Math.round(k.getBoundingClientRect().height) : 0; })() };
   }, { d3 });
   if (a0.fehlt) { const f = s.fehler(); await s.schliessen(); return h.ergebnis("v719 Plan anpassen", false, [a0.fehlt.join(", ") + " fehlt"].concat(f.slice(0, 1))); }
