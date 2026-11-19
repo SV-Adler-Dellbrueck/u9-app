@@ -41,7 +41,8 @@ module.exports = async function (h) {
     out.erst = { text: txt(), teams: BLZ.teams.map(t => [t.name, t.spieler.length]), quelle: BLZ.quelle, form: BLZ.spielform, gespeichert: localStorage.getItem("adler_blitz") };
     out.chips = [...el().querySelectorAll("button[aria-pressed]")].map(b => [b.textContent.trim(), b.getAttribute("aria-pressed"), Math.round(b.getBoundingClientRect().height)]);
     // c) 4+1
-    [...el().querySelectorAll("button[aria-pressed]")].find(b => /4\+1/.test(b.textContent)).click(); await w(120);
+    { const k = [...el().querySelectorAll("button[aria-pressed]")].find(b => /4\+1/.test(b.textContent)); k.click();
+      for (let i = 0; i < 100 && [...el().querySelectorAll("button[aria-pressed]")].find(b => /4\+1/.test(b.textContent))?.getAttribute("aria-pressed") !== "true"; i++) await w(50); }   // v890: auf den gedrückten Zustand warten
     out.vierPlusEins = { form: BLZ.spielform, text: txt(), gespeichert: !!localStorage.getItem("adler_blitz"), warn: /braucht 5 Kinder/.test(txt()) };
     // d) Kind antippen, dann zurück
     const kind = el().querySelector("button[title^='Tippen']"); const kn = kind.textContent.trim();

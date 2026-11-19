@@ -59,7 +59,9 @@ module.exports = async function (h) {
       }
       return out;
     }, { datum, trainerZahl });
-    await s.page.waitForTimeout(1500);          // debounce von tpPlanSave abwarten
+    await Promise.all([s.page.waitForTimeout(1500), s.supabaseRuhig()]);   // v890: mindestens wie bisher (debounce von tpPlanSave), dazu bis die Attrappe ruhig ist
+    // v890: wurde von Hand geändert, auf genau diesen gebündelten Schreibvorgang warten (Obergrenze 8 s; kommt er nie, bleibt es rot)
+    if (r && r.handWert) for (let i = 0; i < 160 && !s.gesendet.some(g => /trainingsplan/.test(g.pfad || "") && g.methode === "POST"); i++) await new Promise(x => setTimeout(x, 50));
     const gespeichert = s.gesendet.filter(g => /trainingsplan/.test(g.pfad || "") && g.methode === "POST");
     const fehler = s.fehler();
     await s.schliessen();

@@ -55,7 +55,8 @@ module.exports = async function (h) {
   let an = {}, aus = {};
   if (vorbereitet.da) {
     await s.page.click("#skz-gross-voll");
-    await s.page.waitForTimeout(350);
+    // Warten auf den Zustand statt fester 350 ms (Obergrenze 5 s – tritt er nie ein, wird b) rot)
+    await s.page.waitForFunction(() => !!document.fullscreenElement && document.getElementById("skz-gross-voll")?.getAttribute("aria-pressed") === "true", null, { timeout: 5000 }).catch(() => {});
     an = await s.page.evaluate(() => ({
       imVollbild: !!document.fullscreenElement,
       text: (document.getElementById("skz-gross-voll") || {}).textContent ? document.getElementById("skz-gross-voll").textContent.trim() : "",
@@ -63,7 +64,7 @@ module.exports = async function (h) {
       halter: Math.round((document.getElementById("skz-gross-halter") || { getBoundingClientRect: () => ({ height: 0 }) }).getBoundingClientRect().height)
     }));
     await s.page.click("#skz-gross-voll");
-    await s.page.waitForTimeout(350);
+    await s.page.waitForFunction(() => !document.fullscreenElement && !/beenden/i.test(document.getElementById("skz-gross-voll")?.textContent || ""), null, { timeout: 5000 }).catch(() => {});
     aus = await s.page.evaluate(() => ({
       imVollbild: !!document.fullscreenElement,
       text: document.getElementById("skz-gross-voll").textContent.trim()
@@ -75,7 +76,7 @@ module.exports = async function (h) {
      gemacht – dieselbe Rechnung, die am Tablet die Leisten freigeben. */
   const kleinerHalter = await s.page.evaluate(() => Math.round(document.getElementById("skz-gross-halter").getBoundingClientRect().height));
   await s.page.setViewportSize({ width: 900, height: 1000 });
-  await s.page.waitForTimeout(250);
+  await s.page.waitForFunction(k => Math.round(document.getElementById("skz-gross-halter").getBoundingClientRect().height) > k, kleinerHalter, { timeout: 5000 }).catch(() => {});
   const groesserHalter = await s.page.evaluate(() => Math.round(document.getElementById("skz-gross-halter").getBoundingClientRect().height));
 
   // d) Systemgeste: das Ereignis entscheidet, nicht der Knopf

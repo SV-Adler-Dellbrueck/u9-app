@@ -19,6 +19,8 @@
 const fs = require("fs"), path = require("path");
 const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
 module.exports = async function (h) {
+  /* Warten auf einen Zustand im Prüfprozess (z. B. s.gesendet) mit Obergrenze: n × 50 ms. Tritt er nie ein, bleibt die Prüfung danach rot. */
+  const bis = async (f, n) => { for (let i = 0; i < (n || 100) && !f(); i++) await new Promise(x => setTimeout(x, 50)); return f(); };
   const probleme = [], zeilen = [];
   const token = sub => "x." + Buffer.from(JSON.stringify({ sub })).toString("base64") + ".y";
   const iso = m => new Date(Date.now() - m * 60000).toISOString();
@@ -100,10 +102,12 @@ module.exports = async function (h) {
   // d) Dateien wählen
   await s.page.setInputFiles("#rufe-datei", [{ name: "Bildschirmfoto.png", mimeType: "image/png", buffer: PNG }, { name: "Aushang.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4\n") },
     { name: "Liste.docx", mimeType: "", buffer: Buffer.from("PK..") }]);
-  await s.page.waitForTimeout(600);
+  // Warten auf den Zustand statt fester Zeit: drei Chips, der erste mit Miniatur (Obergrenze 8 s – kommt er nie, wird d) rot)
+  await s.page.waitForFunction(() => { const c = document.querySelectorAll("#rufe-chips .rf-chip"); return c.length >= 3 && !!c[0].querySelector("img"); }, null, { timeout: 8000 }).catch(() => {});
   await s.page.setInputFiles("#rufe-datei", [{ name: "virus.exe", mimeType: "application/octet-stream", buffer: Buffer.from("MZ") }, { name: "riesig.pdf", mimeType: "application/pdf", buffer: Buffer.alloc(11 * 1048576) },
     { name: "Vier.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF") }, { name: "Fuenf.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF") }]);
-  await s.page.waitForTimeout(500);
+  await s.page.waitForFunction(() => document.querySelectorAll("#rufe-chips .rf-chip").length >= 4 && window._toasts.some(t => /virus\.exe/.test(t)) && window._toasts.some(t => /riesig\.pdf/.test(t))
+    && window._toasts.some(t => /Höchstens vier/.test(t)), null, { timeout: 8000 }).catch(() => {});
   const rd = await s.page.evaluate(() => {
     const chips = [...document.querySelectorAll("#rufe-chips .rf-chip")];
     const hin = document.getElementById("rufe-offen-hinweis");
@@ -120,12 +124,15 @@ module.exports = async function (h) {
   const speicherE = s.speicher.slice(); const sendenE = s.gesendet.filter(x => /rpc\/rufe_senden/.test(x.pfad)).length;
   // d) Senden klappt
   s.versagen = 0; s.speicher.length = 0;
-  await s.page.click("#rufe-senden"); await s.page.waitForTimeout(900);
+  await s.page.click("#rufe-senden");
+  await bis(() => s.gesendet.some(x => /rpc\/rufe_senden/.test(x.pfad)), 160);   // auf den Aufruf warten, danach auf das Leeren
+  await s.page.waitForFunction(() => document.getElementById("rufe-text").value === "" && !document.querySelector("#rufe-chips .rf-chip"), null, { timeout: 5000 }).catch(() => {});
   const senden = s.gesendet.filter(x => /rpc\/rufe_senden/.test(x.pfad)).map(x => x.body);
   const nach = await s.page.evaluate(() => ({ text: document.getElementById("rufe-text").value, chips: document.querySelectorAll("#rufe-chips .rf-chip").length }));
   // g) privater Raum
   await s.page.evaluate(async () => { await rufeRaumWechseln(11); await new Promise(x => setTimeout(x, 400)); });
-  await s.page.setInputFiles("#rufe-datei", [{ name: "Attest.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF") }]); await s.page.waitForTimeout(300);
+  await s.page.setInputFiles("#rufe-datei", [{ name: "Attest.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF") }]);
+  await s.page.waitForFunction(() => document.querySelectorAll("#rufe-chips .rf-chip").length >= 1, null, { timeout: 5000 }).catch(() => {});
   const rg = await s.page.evaluate(() => { const hin = document.getElementById("rufe-offen-hinweis"); return { chips: document.querySelectorAll("#rufe-chips .rf-chip").length, hinweis: hin && hin.style.display !== "none" }; });
   const f1 = s.fehler(); await s.schliessen();
 

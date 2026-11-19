@@ -25,11 +25,13 @@ module.exports = async function (h) {
     await pushRenderInto("push-test-slot", "trainer"); await w(50);
     const knopf = slot.querySelector(".push-test-knopf");
     const out = { da: !!knopf, h: knopf ? Math.round(knopf.getBoundingClientRect().height) : 0, text: knopf ? knopf.textContent.trim() : "" };
-    knopf.click(); await w(300);
+    // v890: statt fester 300 ms auf Anfrage und Meldung warten (Obergrenze 5 s)
+    const m0 = meldungen.length; knopf.click(); for (let i = 0; i < 100 && !(gesendet.length && meldungen.length > m0); i++) await w(50);
     out.b = gesendet[0] || null;
     out.ok = meldungen.slice(-1)[0] || null;
     antwort = { status: 404, body: { error: "Auf diesem Gerät sind keine Benachrichtigungen angemeldet." } };
-    slot.querySelector(".push-test-knopf").click(); await w(300);
+    const m1 = meldungen.length; slot.querySelector(".push-test-knopf").click();
+    for (let i = 0; i < 100 && !(meldungen.length > m1 && !slot.querySelector(".push-test-knopf").disabled); i++) await w(50);
     out.fehler = meldungen.slice(-1)[0] || null;
     out.wiederBereit = !slot.querySelector(".push-test-knopf").disabled;
     erlaubnis = "default"; abo = null;

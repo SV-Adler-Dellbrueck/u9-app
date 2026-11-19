@@ -158,7 +158,7 @@ module.exports = async function (h) {
     await new Promise(r => setTimeout(r, 200));
     return out;
   });
-  await t.page.waitForTimeout(200);
+  await Promise.all([t.page.waitForTimeout(200), t.supabaseRuhig()]);   // v890: mindestens wie bisher, dazu bis die Attrappe ruhig ist
   const gesendet = t.gesendet.filter(g => /kinder_codex/.test(g.pfad || ""));
   const fehlerT = t.fehler(); await t.schliessen();
 

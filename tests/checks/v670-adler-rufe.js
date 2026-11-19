@@ -69,14 +69,18 @@ module.exports = async function (h) {
     const mm = document.getElementById("rufe-menue");
     out.d = { text: mm ? mm.textContent.replace(/\s+/g, " ") : "", emo: mm ? mm.querySelectorAll(".rf-emo").length : 0 };
     const melden = mm && [...mm.querySelectorAll("button")].find(x => /Melden/.test(x.textContent));
-    if (melden) { melden.click(); await w(80); const f = document.getElementById("frage-modal"); const ja = f && [...f.querySelectorAll("button")].find(x => x.textContent.trim() === "Melden"); out.d.frage = !!ja; if (ja) ja.click(); await w(150); }
+    if (melden) { melden.click(); for (let i = 0; i < 100 && !document.getElementById("frage-modal"); i++) await w(50);
+      const f = document.getElementById("frage-modal"); const ja = f && [...f.querySelectorAll("button")].find(x => x.textContent.trim() === "Melden"); out.d.frage = !!ja; if (ja) ja.click(); }
     out.sys = window._sys;
     // f) Suche
-    rufeSucheUmschalten(); rufeSucheSetzen("Samstag"); await w(450);
+    /* v890: die Suche läuft gebündelt (250 ms) und fragt dann die Datenbank – auf das Ergebnis warten statt fester 450 ms (Obergrenze 8 s) */
+    rufeSucheUmschalten(); rufeSucheSetzen("Samstag");
+    for (let i = 0; i < 160 && !/Treffer/.test(document.getElementById("rufe-liste")?.textContent || ""); i++) await w(50);
     out.f = document.getElementById("rufe-liste").textContent.replace(/\s+/g, " ");
     rufeClose();
     return out;
   }, { tok: token("u-eigen") });
+  for (let i = 0; i < 100 && !s.gesendet.some(x => /rufe_meldung/.test(x.pfad)); i++) await new Promise(x => setTimeout(x, 50));   // auf die Meldung warten (Obergrenze 5 s)
   const post = s.gesendet.filter(x => /rufe_/.test(x.pfad)).map(x => x.methode + " " + x.pfad.split("/").pop() + " " + JSON.stringify(x.body));
   const f1 = s.fehler(); await s.schliessen();
   if (r.fehlt.length) return h.ergebnis("Adler-Rufe: Team-Chat Stufe 1", false, [r.fehlt.join(", ") + " fehlt"]);
@@ -120,11 +124,13 @@ module.exports = async function (h) {
     out.menue = (document.getElementById("rufe-menue") || {}).textContent || "";
     rufeFixMenue(3); await w(30);
     const d7 = [...document.querySelectorAll("#rufe-menue button")].find(b => /7 Tage/.test(b.textContent)); if (d7) d7.click(); await w(150);
-    rufeArchivieren(3, false); await w(80);
+    rufeArchivieren(3, false); for (let i = 0; i < 100 && !document.getElementById("frage-modal"); i++) await w(50);
     const ja = [...(document.getElementById("frage-modal") || document).querySelectorAll("button")].find(x => x.textContent.trim() === "Archivieren"); if (ja) ja.click(); await w(150);
     rufeClose();
     return out;
   }, { tok: token("u-trainer") });
+  // auf Fixieren und Archivieren warten statt sich auf die festen Pausen zu verlassen (Obergrenze 5 s)
+  for (let i = 0; i < 100 && !(t.gesendet.some(x => /rufe_fixiert/.test(x.pfad)) && t.gesendet.some(x => /rufe_archivieren/.test(x.pfad))); i++) await new Promise(x => setTimeout(x, 50));
   const tg = t.gesendet.filter(x => /rufe_/.test(x.pfad)).map(x => x.methode + " " + x.pfad.split("/").pop() + (x.suche || "") + " " + JSON.stringify(x.body));
   const f2 = t.fehler(); await t.schliessen();
   if (!rt.kacheln.rufe || !rt.kacheln.mod) probleme.push(`g) Kacheln: ${JSON.stringify(rt.kacheln)}`);

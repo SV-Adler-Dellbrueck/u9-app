@@ -26,7 +26,9 @@ module.exports = async function (h) {
     rpc: { eltern_news: {}, training_rueckblick: [], kasse_summary: { saldo: 0, umlagen: [], sammel: [] }, is_kasse: false } }) });
   await s.page.waitForLoadState("networkidle"); await s.page.waitForTimeout(1500);
   await s.page.evaluate(t => { localStorage.setItem("adler_sb_auth_eltern", JSON.stringify({ access_token: t, refresh_token: "r", expires_at: Math.floor(Date.now() / 1000) + 3600 })); }, TOKEN);
-  await s.page.reload({ waitUntil: "networkidle" }); await s.page.waitForTimeout(3500);
+  await s.page.reload({ waitUntil: "networkidle" });
+  // Warten auf den Zustand statt fester 3,5 s: Terminkarte mit Anhang-Knopf (Obergrenze 15 s – kommt er nie, wird a) rot)
+  await s.page.waitForFunction(() => !!document.querySelector("#termin-card button.ta-chip"), null, { timeout: 15000 }).catch(() => {});
   const a = await s.page.evaluate(async () => {
     const w = ms => new Promise(x => setTimeout(x, ms));
     const out = {};
@@ -34,15 +36,17 @@ module.exports = async function (h) {
     /* v798: der Hinweis auf der Karte ist ein Knopf und öffnet das Termin-Fenster mit dem Anhang */
     const ck = document.querySelector("#termin-card button.ta-chip");
     out.chipKnopf = ck ? Math.round(ck.getBoundingClientRect().height) : 0;
-    if (ck) { ck.click(); await w(1200); out.chipOeffnet = !!document.getElementById("td-anhang")?.querySelector("img[data-ta-pfad]"); }
-    await terminDetailOpen(100); await w(1200);
+    const bis = async (f, n) => { for (let i = 0; i < (n || 100) && !f(); i++) await w(50); return f(); };
+    if (ck) { ck.click(); await bis(() => document.getElementById("td-anhang")?.querySelector("img[data-ta-pfad]")); out.chipOeffnet = !!document.getElementById("td-anhang")?.querySelector("img[data-ta-pfad]"); }
+    await terminDetailOpen(100);
+    await bis(() => { const b = document.getElementById("td-anhang"); return b && b.querySelector("img[data-ta-pfad]") && /Anfahrt/.test(b.textContent); });
     const box = document.getElementById("td-anhang");
     out.titel = box ? box.textContent.replace(/\s+/g, " ").trim() : null;
     out.bild = !!(box && box.querySelector("img[data-ta-pfad]"));
     const pdf = box && [...box.querySelectorAll("button")].find(b => /PDF öffnen/.test(b.getAttribute("aria-label") || ""));
     out.pdfH = pdf ? Math.round(pdf.getBoundingClientRect().height) : 0;
     const bildKnopf = box && box.querySelector("button[aria-label$='groß ansehen']");
-    if (bildKnopf) { bildKnopf.click(); await w(800); }
+    if (bildKnopf) { bildKnopf.click(); await bis(() => document.getElementById("rufe-gross")); }
     out.gross = !!document.getElementById("rufe-gross");
     document.getElementById("rufe-gross")?.remove();
     out.quer = document.documentElement.scrollWidth <= innerWidth + 1;
@@ -59,12 +63,14 @@ module.exports = async function (h) {
   // b) + c) Trainer
   const t = await h.starten({ breite: 390, hoehe: 844, warten: 1500, angemeldet: true, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), termine, anwesenheit: [], termin_anhang: (u, req) => req.method() !== "GET" ? { status: 201, body: "[]" } : [] }) });
   await h.sichtbarMachen(t.page, "#main-app");
-  await t.page.evaluate(async () => { TM_TERMINE = [{ id: 100, typ: "spiel", datum: "2099-01-01", titel: "", gegner: "SpVg Wahn Grengel", heim: false, uhrzeit: "10:15", trainer_status: {} }]; tmEdit(100); await new Promise(x => setTimeout(x, 1200)); });
+  await t.page.evaluate(async () => { TM_TERMINE = [{ id: 100, typ: "spiel", datum: "2099-01-01", titel: "", gegner: "SpVg Wahn Grengel", heim: false, uhrzeit: "10:15", trainer_status: {} }]; tmEdit(100);
+    for (let i = 0; i < 100 && !/Anhänge für die Eltern/.test((document.getElementById("ta-slot") || {}).textContent || ""); i++) await new Promise(x => setTimeout(x, 50)); });
   const b0 = await t.page.evaluate(() => { const k = document.getElementById("ta-knopf"); return { text: (document.getElementById("ta-slot") || {}).textContent || "", h: k ? Math.round(k.getBoundingClientRect().height) : 0 }; });
   await t.page.setInputFiles("#ta-knopf input", { name: "Spielplan Wahn.png", mimeType: "image/png", buffer: PNG });
-  await t.page.waitForTimeout(500);
+  await t.page.waitForFunction(() => !!document.getElementById("ta-hoch") && !!(document.getElementById("ta-titel") || {}).value, null, { timeout: 5000 }).catch(() => {});
   const b1 = await t.page.evaluate(() => ({ titel: (document.getElementById("ta-titel") || {}).value, hoch: !!document.getElementById("ta-hoch") }));
-  await t.page.click("#ta-hoch"); await t.page.waitForTimeout(1500);
+  await t.page.click("#ta-hoch");
+  for (let i = 0; i < 100 && !t.gesendet.some(g => g.methode === "POST" && /\/rest\/v1\/termin_anhang$/.test(g.pfad)); i++) await new Promise(x => setTimeout(x, 50));   // auf die Zeile warten, Obergrenze 5 s
   const speicher = t.gesendet.find(g => g.methode === "POST" && /\/storage\/v1\/object\/termin-anhang\/100\/[0-9a-f-]{36}\.(png|jpg)$/.test(g.pfad));
   const zeile = t.gesendet.find(g => g.methode === "POST" && /\/rest\/v1\/termin_anhang$/.test(g.pfad));
   const c = await t.page.evaluate(() => ({
@@ -84,7 +90,8 @@ module.exports = async function (h) {
   const s2 = await h.starten({ breite: 390, hoehe: 844, warten: 1500, angemeldet: true, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(), termine, anwesenheit: [], termin_anhang: () => ({ status: 404, body: "{}" }) }) });
   await h.sichtbarMachen(s2.page, "#main-app");
   const d = await s2.page.evaluate(async () => {
-    TM_TERMINE = [{ id: 100, typ: "spiel", datum: "2099-01-01", titel: "", gegner: "X", heim: false, uhrzeit: "10:15", trainer_status: {} }]; tmEdit(100); await new Promise(x => setTimeout(x, 1000));
+    TM_TERMINE = [{ id: 100, typ: "spiel", datum: "2099-01-01", titel: "", gegner: "X", heim: false, uhrzeit: "10:15", trainer_status: {} }]; tmEdit(100);
+    for (let i = 0; i < 100 && !/noch nicht freigeschaltet/.test((document.getElementById("ta-slot") || {}).textContent || ""); i++) await new Promise(x => setTimeout(x, 50));
     const slot = (document.getElementById("ta-slot") || {}).textContent || "";
     const eltern = document.createElement("div"); eltern.id = "td-anhang"; document.body.appendChild(eltern);
     await taEltern(100);

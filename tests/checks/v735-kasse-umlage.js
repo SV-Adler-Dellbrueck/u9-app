@@ -64,15 +64,22 @@ module.exports = async function (h) {
   const toasts = [];
   await s.page.exposeFunction("_t735", m => toasts.push(m));
   await s.page.evaluate(() => { const t0 = window.toast; window.toast = (m, a) => { window._t735(String(m)); return t0 && t0(m, a); }; });
-  const neu = async (titel, betrag, link) => {
+  /* Warten auf den Zustand statt fester 700 ms: gültig → die Liste ist neu gezeichnet (kasseRender ersetzt #u-speichern), ungültig → eine
+     Meldung mehr. Obergrenze 8 s; kommt der Zustand nie, wird b) rot. */
+  const bis = async (f, n) => { for (let i = 0; i < (n || 100) && !f(); i++) await new Promise(x => setTimeout(x, 50)); return f(); };
+  const neuGezeichnet = () => s.page.waitForFunction(() => { const k = document.getElementById("u-speichern"); return !!k && !k._alt; }, null, { timeout: 8000 }).catch(() => {});
+  const markieren = () => s.page.evaluate(() => { const k = document.getElementById("u-speichern"); if (k) k._alt = true; });
+  const neu = async (titel, betrag, link, gilt) => {
     await s.page.fill("#u-titel", titel); await s.page.fill("#u-betrag", betrag); await s.page.fill("#u-paypal", link);
-    await s.page.click("#u-speichern"); await s.page.waitForTimeout(700);
+    const t0 = toasts.length; await markieren();
+    await s.page.click("#u-speichern");
+    if (gilt) await neuGezeichnet(); else await bis(() => toasts.length > t0, 160);
   };
   const posts = () => schreib.filter(x => x.m === "POST").map(x => JSON.parse(x.body || "{}"));
-  await neu("Test eins", "40", "paypal.me/Test");
-  await neu("Test zwei", "40", "https://example.com/x");
+  await neu("Test eins", "40", "paypal.me/Test", true);
+  await neu("Test zwei", "40", "https://example.com/x", false);
   const nachZwei = posts().length;
-  await neu("Test drei", "40", "");
+  await neu("Test drei", "40", "", true);
   const p = posts();
   if (!p[0] || p[0].paypal_link !== "https://paypal.me/Test") probleme.push(`b) paypal.me/Test → ${JSON.stringify(p[0])}`);
   if (nachZwei !== 1) probleme.push("b) example.com wurde gespeichert");
@@ -83,28 +90,29 @@ module.exports = async function (h) {
   // c) Bearbeiten
   const patches = () => schreib.filter(x => x.m === "PATCH").map(x => ({ url: x.url, b: JSON.parse(x.body || "{}") }));
   const fragen = async () => !!(await s.page.$("#frage-modal"));
-  await s.page.evaluate(() => kasseUmlageBearbeiten(7)); await s.page.waitForTimeout(200);
+  await s.page.evaluate(() => kasseUmlageBearbeiten(7)); await Promise.all([s.page.waitForTimeout(200), s.supabaseRuhig()]);   // v890: mindestens wie bisher, dazu bis die Attrappe ruhig ist
   const form = await s.page.evaluate(() => ({ titel: document.getElementById("u-titel").value, betrag: document.getElementById("u-betrag").value,
     kopf: document.getElementById("u-form-titel").textContent, knopf: document.getElementById("u-speichern").textContent,
     abbrH: Math.round(document.getElementById("u-abbrechen").getBoundingClientRect().height) }));
   await s.page.fill("#u-titel", "Mannschaftskasse 26/27"); await s.page.fill("#u-faellig", "2026-11-15"); await s.page.fill("#u-paypal", "paypal.me/Kasse");
-  await s.page.click("#u-speichern"); await s.page.waitForTimeout(500);
+  await markieren(); await s.page.click("#u-speichern"); await neuGezeichnet();
   const ohneFrage = !(await fragen()); const pa = patches();
   if (form.titel !== "Mannschaftskasse" || form.betrag !== "40.00" || form.kopf !== "Umlage ändern" || !/Änderung speichern/.test(form.knopf)) probleme.push(`c) Formular: ${JSON.stringify(form)}`);
   if (!ohneFrage || !pa[0] || !/kasse_umlagen\?id=eq\.7/.test(pa[0].url) || pa[0].b.titel !== "Mannschaftskasse 26/27" || pa[0].b.faellig !== "2026-11-15" || pa[0].b.paypal_link !== "https://paypal.me/Kasse") probleme.push(`c) Titel/fällig/Link: Rückfrage ${!ohneFrage}, ${JSON.stringify(pa[0])}`);
   // Betrag ohne Häkchen (Umlage 8)
-  await s.page.evaluate(() => kasseUmlageBearbeiten(8)); await s.page.waitForTimeout(150);
-  await s.page.fill("#u-betrag", "12"); await s.page.click("#u-speichern"); await s.page.waitForTimeout(500);
+  await s.page.evaluate(() => kasseUmlageBearbeiten(8)); await Promise.all([s.page.waitForTimeout(150), s.supabaseRuhig()]);   // v890: mindestens wie bisher, dazu bis die Attrappe ruhig ist
+  await s.page.fill("#u-betrag", "12"); await markieren(); await s.page.click("#u-speichern"); await neuGezeichnet();
   const p8 = patches()[1];
   if ((await fragen()) || !p8 || !/id=eq\.8/.test(p8.url) || p8.b.betrag !== 12) probleme.push(`c) Betrag ohne Häkchen: ${JSON.stringify(p8)}`);
   // Betrag mit 8 Häkchen: Abbrechen
-  await s.page.evaluate(() => kasseUmlageBearbeiten(7)); await s.page.waitForTimeout(150);
+  await s.page.evaluate(() => kasseUmlageBearbeiten(7)); await Promise.all([s.page.waitForTimeout(150), s.supabaseRuhig()]);   // v890: mindestens wie bisher, dazu bis die Attrappe ruhig ist
   await s.page.fill("#u-betrag", "45"); await s.page.click("#u-speichern"); await s.page.waitForSelector("#frage-modal", { timeout: 5000 }).catch(() => {});   // v880: auf die Rückfrage warten
   const frageText = await s.page.evaluate(() => document.getElementById("frage-modal")?.textContent.replace(/\s+/g, " ") || "");
-  await s.page.click("#frage-nein").catch(() => {}); await s.page.waitForTimeout(400);
+  await s.page.click("#frage-nein").catch(() => {}); await s.page.waitForSelector("#frage-modal", { state: "detached", timeout: 5000 }).catch(() => {});
+  await s.page.waitForTimeout(400);   // bewusst fest: hier wird geprüft, dass nach „Nein“ NICHTS gespeichert wird
   const nachAbbr = patches().length;
-  await s.page.click("#u-speichern"); await s.page.waitForTimeout(400);
-  await s.page.click("#frage-ja").catch(() => {}); await s.page.waitForTimeout(600);
+  await s.page.click("#u-speichern"); await s.page.waitForSelector("#frage-modal", { timeout: 5000 }).catch(() => {});
+  await s.page.click("#frage-ja").catch(() => {}); await bis(() => patches().length >= 3, 160);
   const pj = patches();
   if (!/Der Betrag ändert sich von 40,00 € auf 45,00 €\. Bei 8 abgehakten Familien ändert sich der Kassenstand um \+40,00 €\. Ändern\?/.test(frageText)) probleme.push(`c) Rückfrage: „${frageText.slice(0, 200)}“`);
   if (nachAbbr !== 2) probleme.push("c) Abbrechen hat trotzdem gespeichert");

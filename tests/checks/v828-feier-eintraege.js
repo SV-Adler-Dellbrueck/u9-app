@@ -51,6 +51,7 @@ module.exports = async function (h) {
       termine: [FEIER, ANDERES], rueckmeldungen: [], feier_eintraege: (u, req) => db.antwort(u, req) }) });
   await e.page.evaluate(t => { localStorage.setItem("adler_sb_auth_eltern", JSON.stringify({ access_token: t, refresh_token: "r", expires_at: Math.floor(Date.now() / 1000) + 3600 })); }, TOKEN);
   await e.page.reload({ waitUntil: "networkidle" }); await e.page.waitForTimeout(4000);
+  await e.page.waitForFunction(() => typeof feierLoad === "function" && typeof terminDetailOpen === "function" && typeof ELTERN_TERMINE !== "undefined", null, { timeout: 10000 }).catch(() => {});
 
   const r = await e.page.evaluate(async ([feier, anderes]) => {
     const w = ms => new Promise(x => setTimeout(x, ms));
@@ -61,9 +62,13 @@ module.exports = async function (h) {
     const text = () => (document.getElementById("toast") || document.querySelector(".toast") || { textContent: "" }).textContent;
     const zeilen = () => [...document.querySelectorAll("#td-feier .feier-zeile:not(.feier-zusatz)")];
     const warte = async f => { for (let i = 0; i < 40 && !f(); i++) await w(150); };
+    /* v890: statt fester 300–700 ms nach jedem Schritt auf genau den erwarteten Zustand warten (Dialog offen, Zeile neu
+       gezeichnet, Meldung da) – Obergrenze je 6 s; tritt er nie ein, wird die Prüfung danach rot. Fest bleiben nur die Pausen,
+       die prüfen, dass NICHTS passiert (leerer Name, leerer/zu langer Freitext, anderer Termin ohne Liste). */
+    const oeffne = async el => { el.click(); await warte(() => document.getElementById("feier-dialog")); };
 
     // h) anderer Termin: keine Liste
-    await terminDetailOpen(anderes.id); await w(600);
+    await terminDetailOpen(anderes.id); await w(600);   // bewusst fest: hier darf KEINE Liste erscheinen
     out.andereListe = !!document.getElementById("td-feier");
     document.getElementById("td-modal")?.remove();
 
@@ -82,7 +87,7 @@ module.exports = async function (h) {
     out.kleineKnoepfe = hoch;
 
     // b) Salat 2 eintragen
-    zeilen()[1].click(); await w(300);
+    await oeffne(zeilen()[1]);
     const dlg = () => document.getElementById("feier-dialog");
     out.dialog = !!dlg() && dlg().getAttribute("role") === "dialog" && dlg().getAttribute("aria-modal") === "true";
     out.sorten = dlg() ? [...dlg().querySelectorAll("#feier-sorte option")].map(o => o.value) : [];
@@ -92,47 +97,48 @@ module.exports = async function (h) {
     out.zuKlein = bd.filter(x => x.h < 48 && x.h !== 56).map(x => x.t + ":" + x.h);
     out.breite360 = document.documentElement.scrollWidth <= 360;
     // leerer Name wird nicht gesendet
-    dlg().querySelector("#feier-name").value = ""; dlg().querySelector("#feier-ok").click(); await w(300);
+    dlg().querySelector("#feier-name").value = ""; dlg().querySelector("#feier-ok").click(); await w(300);   // bewusst fest: leer darf nicht gesendet werden
     out.leerBlockiert = !!dlg();
     dlg().querySelector("#feier-name").value = "Familie M."; dlg().querySelector("#feier-sorte").value = "Kartoffelsalat"; dlg().querySelector("#feier-ok").click();
-    await warte(() => !dlg()); await w(500);
+    await warte(() => !dlg()); await warte(() => zeilen()[1] && /Kartoffelsalat/.test(zeilen()[1].innerText) && zeilen()[1].querySelector("button"));
     out.nachEintragen = zeilen()[1].innerText;
     out.eigeneKnoepfe = [...zeilen()[1].querySelectorAll("button")].map(b => b.textContent.trim());
 
     if (!zeilen()[1].querySelector("button")) { out.abbruch = "nach Eintragen: " + zeilen()[1].innerText.replace(/\s+/g, " ") + " | uid " + feierEigeneId(); return out; }
     // b2) Ändern
-    [...zeilen()[1].querySelectorAll("button")].find(b => /Ändern/.test(b.textContent)).click(); await w(400);
+    await oeffne([...zeilen()[1].querySelectorAll("button")].find(b => /Ändern/.test(b.textContent)));
     dlg().querySelector("#feier-sorte").value = "Überraschung"; dlg().querySelector("#feier-ok").click();
-    await warte(() => !dlg()); await w(500);
+    await warte(() => !dlg()); await warte(() => zeilen()[1] && /Überraschung/.test(zeilen()[1].innerText));
     out.nachAendern = zeilen()[1].innerText;
 
     // b3) Entfernen → Platz wieder frei und neu wählbar
-    [...zeilen()[1].querySelectorAll("button")].find(b => /Entfernen/.test(b.textContent)).click(); await w(300);
-    document.getElementById("frage-ja").click(); await w(700);
+    [...zeilen()[1].querySelectorAll("button")].find(b => /Entfernen/.test(b.textContent)).click(); await warte(() => document.getElementById("frage-ja"));
+    document.getElementById("frage-ja").click(); await warte(() => zeilen()[1] && zeilen()[1].classList.contains("feier-frei"));
     out.nachEntfernen = zeilen()[1].classList.contains("feier-frei");
-    zeilen()[1].click(); await w(300);
+    await oeffne(zeilen()[1]);
     dlg().querySelector("#feier-name").value = "Familie M."; dlg().querySelector("#feier-ok").click();
-    await warte(() => !dlg()); await w(500);
+    await warte(() => !dlg()); await warte(() => zeilen()[1] && zeilen()[1].classList.contains("feier-belegt"));
     out.wiederBelegt = zeilen()[1].classList.contains("feier-belegt");
 
     // d) Doppelbelegung
-    zeilen()[2].click(); await w(300);
+    await oeffne(zeilen()[2]);
     dlg().querySelector("#feier-name").value = "Familie M."; dlg().querySelector("#feier-ok").click();
-    await warte(() => !dlg()); await w(700);
+    await warte(() => !dlg()); await warte(() => /Dieser Platz ist gerade vergeben/.test(document.body.innerText) && zeilen()[2] && /Familie Y/.test(zeilen()[2].innerText));
     out.konfliktToast = (document.body.innerText.match(/Dieser Platz ist gerade vergeben/) || [""])[0];
     out.nachKonflikt = zeilen()[2].classList.contains("feier-belegt") && /Familie Y/.test(zeilen()[2].innerText);
 
     // e) Freitext
     const frei = () => box().querySelector(".feier-frei-neu");
-    frei().click(); await w(300);
-    dlg().querySelector("#feier-name").value = "Familie M."; dlg().querySelector("#feier-text").value = "   "; dlg().querySelector("#feier-ok").click(); await w(300);
+    await oeffne(frei());
+    dlg().querySelector("#feier-name").value = "Familie M."; dlg().querySelector("#feier-text").value = "   "; dlg().querySelector("#feier-ok").click(); await w(300);   // bewusst fest: darf nicht senden
     out.leerFreitext = !!dlg();
     out.maxlaenge = dlg().querySelector("#feier-text").maxLength;
-    dlg().querySelector("#feier-text").value = "x".repeat(81); dlg().querySelector("#feier-ok").click(); await w(300);
+    dlg().querySelector("#feier-text").value = "x".repeat(81); dlg().querySelector("#feier-ok").click(); await w(300);   // bewusst fest: darf nicht senden
     out.zuLang = !!dlg();
     for (const t of ["Pavillon", "Würstchen", "Servietten"]) {
-      if (!dlg()) { frei().click(); await w(300); dlg().querySelector("#feier-name").value = "Familie M."; }
-      dlg().querySelector("#feier-text").value = t; dlg().querySelector("#feier-ok").click(); await warte(() => !dlg()); await w(500);
+      if (!dlg()) { await oeffne(frei()); dlg().querySelector("#feier-name").value = "Familie M."; }
+      dlg().querySelector("#feier-text").value = t; dlg().querySelector("#feier-ok").click(); await warte(() => !dlg());
+      await warte(() => [...box().querySelectorAll(".feier-zusatz b")].some(b => b.textContent === t));
     }
     out.zusatz = [...box().querySelectorAll(".feier-zusatz b")].map(b => b.textContent);
     out.vierterZu = frei().disabled;
@@ -181,11 +187,12 @@ module.exports = async function (h) {
   const t = await s.page.evaluate(async t => {
     const w = ms => new Promise(x => setTimeout(x, ms));
     for (let i = 0; i < 60 && typeof feierTrainerOeffnen !== "function"; i++) await w(100);
-    feierTrainerOeffnen(t); await w(1200);
+    feierTrainerOeffnen(t); for (let i = 0; i < 160 && !document.querySelector("#feier-trainer-box .feier-belegt button"); i++) await w(50);
     const z = () => [...document.querySelectorAll("#feier-trainer-box .feier-belegt")];
     const out = { knopf: z().length && !!z()[0].querySelector("button") };
-    [...z()[0].querySelectorAll("button")].find(b => /Entfernen/.test(b.textContent)).click(); await w(300);
-    document.getElementById("frage-ja").click(); await w(800);
+    [...z()[0].querySelectorAll("button")].find(b => /Entfernen/.test(b.textContent)).click();
+    for (let i = 0; i < 100 && !document.getElementById("frage-ja"); i++) await w(50);
+    document.getElementById("frage-ja").click(); for (let i = 0; i < 160 && z().length; i++) await w(50);
     out.nachher = z().length;
     return out;
   }, FEIER);

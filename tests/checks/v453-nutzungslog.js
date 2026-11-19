@@ -11,7 +11,7 @@ module.exports = async function (h) {
     kachelRun("go", "planung");                       // aktion + bereich
     nutzungFlush();
   });
-  await s.page.waitForTimeout(300);
+  await Promise.all([s.page.waitForTimeout(300), s.supabaseRuhig()]);   // v890: mindestens wie bisher, dazu bis die Attrappe ruhig ist
   const fehler = s.fehler(); await s.schliessen();
   const posts = s.gesendet.filter(g => /\/nutzung_log$/.test(g.pfad) && g.methode === "POST");
   const rows = posts.flatMap(g => [].concat(g.body));
@@ -40,7 +40,7 @@ module.exports = async function (h) {
   // Eltern: Rolle eltern, Ereignis eltern-bereich
   const e = await h.starten({ start: "/eltern/index.html", warten: 1200 });
   await e.page.evaluate(() => { if (typeof elternCatOpen === "function") { let ov = document.getElementById("el-cat-overlay"); if (!ov) { ov = document.createElement("div"); ov.id = "el-cat-overlay"; document.body.appendChild(ov); } elternCatOpen("news"); } nutzungFlush(); });
-  await e.page.waitForTimeout(200);
+  await Promise.all([e.page.waitForTimeout(200), e.supabaseRuhig()]);   // v890: mindestens wie bisher, dazu bis die Attrappe ruhig ist
   const er = e.gesendet.filter(g => /\/nutzung_log$/.test(g.pfad)).flatMap(g => [].concat(g.body)); await e.schliessen();
   if (!er.length || er[0].rolle !== "eltern" || er[0].ereignis !== "eltern-bereich" || er[0].ziel !== "news") probleme.push("Eltern-Eintrag: " + JSON.stringify(er));
   zeilen.push(`ohne Anmeldung: ${ohne} · Eltern: ${JSON.stringify(er.map(r => r.rolle + "/" + r.ereignis + ":" + r.ziel))}`);

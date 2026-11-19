@@ -24,20 +24,21 @@ module.exports = async function (h) {
   // Abgelaufene Sitzung hinterlegen und neu laden – so sieht die App einen Trainer nach einer Nacht
   await s.page.evaluate(() => { localStorage.setItem("adler_sb_auth", JSON.stringify({ access_token: "token-alt", refresh_token: "r1", expires_at: Math.floor(Date.now() / 1000) - 10 })); });
   await s.page.reload({ waitUntil: "networkidle" });
-  await s.page.waitForTimeout(1500);
+  // v890: statt fester 1,5 s darauf warten, dass das Token erneuert und der Kader geladen ist (Obergrenze 10 s – sonst rot)
+  await s.page.waitForFunction(neu => { try { return JSON.parse(localStorage.getItem("adler_sb_auth") || "{}").access_token === neu && typeof KADER !== "undefined" && KADER.length > 0; } catch (e) { return false; } }, NEU, { timeout: 10000 }).catch(() => {});
   const r = await s.page.evaluate(async ({ K }) => {
     const warte = ms => new Promise(r => setTimeout(r, ms));
     const tok = (() => { try { return JSON.parse(localStorage.getItem("adler_sb_auth") || "{}").access_token; } catch (e) { return null; } })();
     document.getElementById("pin-gate")?.remove();
     const m = document.getElementById("main-app"); if (m) { m.style.display = ""; if (getComputedStyle(m).display === "none") m.style.display = "block"; }
     const kader = KADER.length;
-    go("anwesenheit"); await warte(1500);
+    go("anwesenheit"); for (let i = 0; i < 160 && !document.querySelector("#aw-list .aw-tile"); i++) await warte(50);   // v890: auf die Kacheln warten statt fester 1,5 s
     const tiles = document.querySelectorAll("#aw-list .aw-tile").length;
     const topbar = document.getElementById("topbar-sub")?.textContent || "";
     // Erneuerung mitten in der Arbeit: nichts neu zeichnen
     const list = document.getElementById("aw-list"); const marke = "MARKE-" + Date.now(); if (list) list.setAttribute("data-marke", marke);
     if (typeof nachSitzungErneuert === "function") await nachSitzungErneuert();
-    await warte(300);
+    await warte(300);   // bewusst fest: hier wird geprüft, dass NICHTS neu gezeichnet wird
     const unveraendert = document.getElementById("aw-list")?.getAttribute("data-marke") === marke;
     return { tok, kader, tiles, topbar, unveraendert, hatFn: typeof nachSitzungErneuert === "function" };
   }, { K });

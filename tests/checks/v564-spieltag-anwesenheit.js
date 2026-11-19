@@ -52,7 +52,9 @@ module.exports = async function (h) {
     const warte = ms => new Promise(x => setTimeout(x, ms));
     if (typeof spieltagAnwesenheitOpen !== "function") return { fehlt: "spieltagAnwesenheitOpen" };
     spieltagAnwesenheitOpen();
-    await warte(900);
+    /* v890: statt fester 900 ms auf den Zustand warten: Schritt „Wer kommt?“ und Liste offen, Knöpfe je Kind gezeichnet (Obergrenze 8 s) */
+    for (let i = 0; i < 160 && !((document.getElementById("mt-phase-wer") || {}).open && (document.getElementById("nom-dabei") || {}).open
+      && [...document.querySelectorAll("#nom-panel button")].some(b => /^(Dabei|Nicht|Verletzt)$/.test(b.textContent.trim()))); i++) await warte(50);
     const seite = document.getElementById("train-sub-spieltag");
     return {
       fehlt: null,

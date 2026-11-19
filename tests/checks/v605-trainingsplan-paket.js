@@ -138,12 +138,39 @@ module.exports = async function (h) {
   // d2) echtes Ziehen mit dem Zeiger: Abschlussspiel ganz nach oben
   {
     await s.page.evaluate(() => document.querySelector('.tp-slot[data-si="0"]').scrollIntoView({ block: "start" }));
-    const ziel = await s.page.evaluate(() => { const g = [...document.querySelectorAll('#tp-timeline .tp-slot[data-kette="1"]')]; const ab = g.find(x => /Abschluss/.test(x.textContent)); const gr = ab.querySelector(".tp-griff").getBoundingClientRect(); const erst = g[0].getBoundingClientRect(); return { gx: gr.x + gr.width / 2, gy: gr.y + gr.height / 2, zy: erst.y + 5 }; });
-    await s.page.mouse.move(ziel.gx, ziel.gy);
-    await s.page.mouse.down();
-    for (let i = 1; i <= 12; i++) await s.page.mouse.move(ziel.gx, ziel.gy + (ziel.zy - ziel.gy) * i / 12);
-    await s.page.mouse.up();
-    await s.page.waitForTimeout(150);
+    /* v890: erst messen, wenn die Ansicht stillsteht (zweimal im Abstand von 100 ms dieselben Werte, Obergrenze 5 s). Unter Last
+       zeichnete ein Nachzügler den Plan nach der Messung neu, der Zeiger traf den Griff nicht mehr, und nichts wurde verschoben. */
+    const messen = () => s.page.evaluate(async () => {
+      const mess = () => { document.querySelector('.tp-slot[data-si="0"]').scrollIntoView({ block: "start" }); const g = [...document.querySelectorAll('#tp-timeline .tp-slot[data-kette="1"]')]; const ab = g.find(x => /Abschluss/.test(x.textContent)); const griff = ab.querySelector(".tp-griff"), gr = griff.getBoundingClientRect(); const erst = g[0].getBoundingClientRect();
+        const gx = gr.x + gr.width / 2, gy = gr.y + gr.height / 2, oben = document.elementFromPoint(gx, gy);
+        return { gx, gy, zy: erst.y + 5, frei: gy > 0 && gy < innerHeight && !!oben && oben.closest(".tp-griff") === griff }; };
+      /* … und erst, wenn der Griff im Bild und an dieser Stelle auch wirklich oben liegt. Unter Last wuchs der Inhalt über dem
+         Plan noch nach dem Hinscrollen um rund 1000 px – der Griff lag dann unterhalb des Fensters. Deshalb wird je Messung neu
+         hingescrollt. */
+      let alt = mess();
+      for (let i = 0; i < 80; i++) { await new Promise(x => setTimeout(x, 100)); const neu = mess(); if (neu.frei && JSON.stringify(neu) === JSON.stringify(alt)) break; alt = neu; }
+      return alt; });
+    /* Unter Last scrollte die App zwischen Messung und Druck noch einmal nach oben – der Druck traf dann ein Auswahlfeld.
+       Deshalb unmittelbar vor dem Druck prüfen, ob unter dem Zeiger noch der Griff liegt; sonst neu messen (höchstens dreimal). */
+    let ziel = null;
+    for (let versuch = 0; versuch < 3; versuch++) {
+      ziel = await messen();
+      await s.page.mouse.move(ziel.gx, ziel.gy);
+      const trifft = await s.page.evaluate(({ gx, gy }) => { const o = document.elementFromPoint(gx, gy); const ab = [...document.querySelectorAll('#tp-timeline .tp-slot[data-kette="1"]')].find(x => /Abschluss/.test(x.textContent));
+        return !!o && !!ab && o.closest(".tp-griff") === ab.querySelector(".tp-griff"); }, ziel);
+      if (!trifft) continue;
+      await s.page.mouse.down();
+      /* Hat der Druck das Ziehen gestartet? Wenn nicht (Ziel inzwischen verschoben), loslassen und neu messen. */
+      if (!(await s.page.evaluate(() => typeof _tpZieh !== "undefined" && !!_tpZieh))) { await s.page.mouse.up(); continue; }
+      /* Das Ziel (oberer Rand des ersten Blocks) je Schritt neu lesen – scrollt die Seite während des Ziehens, stimmt es trotzdem. */
+      for (let i = 1; i <= 12; i++) {
+        const zy = await s.page.evaluate(() => document.querySelector('#tp-timeline .tp-slot[data-kette="1"]').getBoundingClientRect().y + 5);
+        await s.page.mouse.move(ziel.gx, ziel.gy + (zy - ziel.gy) * i / 12);
+      }
+      await s.page.mouse.up();
+      break;
+    }
+    await s.page.waitForFunction(() => tpSlots[0] && tpSlots[0].label === "Abschlussspiel", null, { timeout: 3000 }).catch(() => {});
     const reihe = await s.page.evaluate(() => tpSlots.map(x => x.label));
     if (reihe[0] !== "Abschlussspiel") probleme.push("d) Ziehen am Griff verschiebt nicht: " + reihe.join(" | "));
     zeilen.push(`d) Ziehen am Griff: ${reihe.join(" → ")}`);

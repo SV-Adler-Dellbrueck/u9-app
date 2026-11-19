@@ -94,15 +94,20 @@ async function starten(opt = {}) {
      Lesezugriffe sind GETs. Der v592-Pruefsatz stellte die Frage gegen `gesendet` und
      konnte sie deshalb nie mit Nein beantworten. `abgefragt` sieht jeden Aufruf. */
   const abgefragt = [];                                  // JEDER Aufruf, auch Lesezugriffe
+  /* v890: offene Anfragen an die Attrappe und Zeitpunkt der letzten – für s.supabaseRuhig() */
+  const netz = { offen: 0, zuletzt: Date.now() };
   await ctx.route("**/*", async r => {
     const req = r.request(), u = new URL(req.url());
     if (u.hostname.includes("supabase.co")) {
-      // suche = Abfragezeichenkette: dort steht z. B. on_conflict=… (Upsert statt Anfuegen)
-      const satz = { pfad: u.pathname, suche: u.search, methode: req.method(), body: (() => { try { return JSON.parse(req.postData() || "null"); } catch (e) { return req.postData(); } })() };
-      abgefragt.push(satz);
-      if (req.method() !== "GET") gesendet.push(satz);
-      const a = (await antwort(u, req)) || { status: 200, body: "[]" };
-      return r.fulfill({ status: a.status, contentType: "application/json", body: a.body });
+      netz.offen++; netz.zuletzt = Date.now();
+      try {
+        // suche = Abfragezeichenkette: dort steht z. B. on_conflict=… (Upsert statt Anfuegen)
+        const satz = { pfad: u.pathname, suche: u.search, methode: req.method(), body: (() => { try { return JSON.parse(req.postData() || "null"); } catch (e) { return req.postData(); } })() };
+        abgefragt.push(satz);
+        if (req.method() !== "GET") gesendet.push(satz);
+        const a = (await antwort(u, req)) || { status: 200, body: "[]" };
+        return await r.fulfill({ status: a.status, contentType: "application/json", body: a.body });
+      } finally { netz.offen--; netz.zuletzt = Date.now(); }
     }
     if (u.hostname !== "app.test") return r.fulfill({ status: 200, contentType: "text/plain", body: "" });
     /* v512/v513: Alles unter uebungen/ wird beim Oeffnen abgeglichen und legt an, was fehlt –
@@ -152,6 +157,13 @@ async function starten(opt = {}) {
   return {
     browser, ctx, page, gesendet, abgefragt,
     fehler: () => fehler.filter(t => !bekannt.test(t)),
+    /* v890: Warten auf Zustand statt fester Zeit – bis keine Anfrage an die Attrappe mehr offen ist und seit `ruhe` ms keine
+       neue kam (Obergrenze `max` ms). Für „Aktion ausgelöst, jetzt s.gesendet prüfen“. Sieht nur Anfragen, die schon
+       unterwegs sind: ein gebündeltes Speichern (Zeitgeber in der App) braucht ein Warten auf genau seinen Schreibvorgang. */
+    supabaseRuhig: async (ruhe = 250, max = 8000) => {
+      const ende = Date.now() + max;
+      while (Date.now() < ende && (netz.offen > 0 || Date.now() - netz.zuletzt < ruhe)) await new Promise(x => setTimeout(x, 25));
+    },
     schliessen: async () => { await ctx.close(); if (!opt.browser) await browser.close(); }
   };
 }

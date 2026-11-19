@@ -87,6 +87,8 @@ module.exports = async function (h) {
     [...document.querySelectorAll("#nb-weg button")].find(b => /Speichern/.test(b.textContent)).click(); await warte(400);
     return out;
   }, { gestern });
+  // v890: auf die Schreibvorgänge warten statt sich auf die festen Pausen zu verlassen (Obergrenze 8 s – fehlen sie, wird e/g rot)
+  for (let i = 0; i < 160 && !["einheit_bewertung", "trainings_eval", "event_bewertung"].every(t => posts.includes(t)); i++) await new Promise(x => setTimeout(x, 50));
   const fe = s.fehler();
   await s.schliessen();
   if (r.fehlt) return h.ergebnis("v627 Geführte Nachbereitung", false, ["nbWegStart fehlt"]);

@@ -54,7 +54,7 @@ module.exports = async function (h) {
     awBox.innerHTML = (TRAINER || []).map(t => `<label><input type="checkbox" value="${t}" onchange="awTrainerToggle(this)"><span>${t}</span></label>`).join("");
     mk("aw-list");
     if (typeof awLoad === "function") awLoad();
-    await warte(400);
+    for (let i = 0; i < 160 && !(((document.getElementById("aw-trainer-quelle") || {}).textContent || "").trim() && awBox.querySelector("input:checked")); i++) await warte(50);   // v890: Quelle und Chips gesetzt
     const awHaken = [...awBox.querySelectorAll("input")].filter(i => i.checked).map(i => i.value).sort();
     const awQuelle = document.getElementById("aw-trainer-quelle").textContent.replace(/\s+/g, " ").trim();
     // Kenneth in der Anwesenheit abhaken → schreibt die Rueckmeldung „nein"
@@ -62,8 +62,10 @@ module.exports = async function (h) {
     if (cbK) { cbK.checked = false; if (typeof awTrainerToggle === "function") await awTrainerToggle(cbK); }
     await warte(200);
     // 4) Vorausplanungs-Sprung auf uebermorgen: Chips und Quelle wechseln mit
+    /* v890: statt fester 500 ms warten, bis Datum und Chips gewechselt haben (Obergrenze 8 s; wechseln sie nie, bleibt es rot) */
+    const vorSprung = JSON.stringify(haken());
     if (typeof tpVorplanJump === "function") tpVorplanJump(uebermorgen);
-    await warte(500);
+    for (let i = 0; i < 160 && !(document.getElementById("tp-date").value === uebermorgen && JSON.stringify(haken()) !== vorSprung); i++) await warte(50);
     const sprungHaken = haken(), sprungDatum = document.getElementById("tp-date").value;
     return { planHaken, planQuelle, finnMarke, nachTipp, awHaken, awQuelle, sprungHaken, sprungDatum };
   }, { morgen, uebermorgen });

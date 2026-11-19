@@ -23,21 +23,27 @@ module.exports = async function (h) {
     const m = () => document.getElementById("rs-modal");
     const knoepfe = () => [...m().querySelectorAll("button.rs-kind")];
     const stand = () => { const tb = [...m().querySelectorAll("table")]; return { kopf: (m().querySelector("#rs-inhalt > div:nth-of-type(3) > div, #rs-inhalt > div:nth-of-type(3)") || {}).textContent, einzeln: tb[1] ? [...tb[1].querySelectorAll("tbody tr")].map(tr => [...tr.children].map(td => td.textContent.replace(/\s+/g, " ").trim())) : [], gedrueckt: knoepfe().map(b => b.getAttribute("aria-pressed")).join(","), alle: !![...m().querySelectorAll("button")].find(b => /Alle anzeigen/.test(b.textContent)), ueber: (m().textContent.match(/Absagen von [^·]+· \d+|Jede Absage/) || [""])[0].trim() }; };
-    await rueckmeldeStatistikOpen(); await w(150);
-    [...m().querySelectorAll("#rs-art button")].find(b => /Absagen/.test(b.textContent)).click(); await w(250);
+    /* v890: statt fester Zeiten auf den Zustand warten: nach „Absagen“ auf die geladene Liste (zweite Tabelle mit Zeilen),
+       nach jedem Tipp darauf, dass sich der Stand ändert. Obergrenze je 5–8 s; kommt er nie, bleibt die Prüfung rot. */
+    const absagenZeigen = async () => {
+      await rueckmeldeStatistikOpen(); for (let i = 0; i < 100 && !m()?.querySelector("#rs-art button"); i++) await w(50);
+      [...m().querySelectorAll("#rs-art button")].find(b => /Absagen/.test(b.textContent)).click();
+      for (let i = 0; i < 160 && !(stand().einzeln.length && knoepfe().length); i++) await w(50);
+    };
+    const klick = async b => { const vor = JSON.stringify(stand()); b.click(); for (let i = 0; i < 100 && JSON.stringify(stand()) === vor; i++) await w(50); };
+    await absagenZeigen();
     out.a = { knoepfe: knoepfe().map(b => [b.textContent.trim(), Math.round(b.getBoundingClientRect().height)]), ...stand() };
-    knoepfe()[0].click(); await w(60);
+    await klick(knoepfe()[0]);
     out.b = stand();
     out.b.knopfName = knoepfe()[0].textContent.trim();
-    [...m().querySelectorAll("button")].find(b => /Alle anzeigen/.test(b.textContent)).click(); await w(60);
+    await klick([...m().querySelectorAll("button")].find(b => /Alle anzeigen/.test(b.textContent)));
     out.c1 = stand();
-    knoepfe()[0].click(); await w(40); knoepfe()[0].click(); await w(40);
+    await klick(knoepfe()[0]); await klick(knoepfe()[0]);
     out.c2 = stand();
-    knoepfe()[0].click(); await w(40); knoepfe()[1].click(); await w(40);
+    await klick(knoepfe()[0]); await klick(knoepfe()[1]);
     out.c3 = stand();
     m().remove();
-    await rueckmeldeStatistikOpen(); await w(150);
-    [...m().querySelectorAll("#rs-art button")].find(b => /Absagen/.test(b.textContent)).click(); await w(250);
+    await absagenZeigen();
     out.d = stand();
     return out;
   });

@@ -55,6 +55,9 @@ module.exports = async function (h) {
     /* b/c) v679: Der Vorschlag ist mit der Auswertung schon gespeichert; „Ins Tagebuch“ öffnet die
        Prüfkarte statt eines zweiten Eintrags. Geprüft wird, was gespeichert wurde. */
     /* v882: feste 120 ms wurden unter Last rot – jetzt auf die Prüfkarte warten (höchstens 3 s) */
+    /* v890: der Vorschlag wird nach dem Speichern nachgelagert abgelegt (_TB_VORSCHLAG) – erst darauf warten (Obergrenze 8 s),
+       sonst öffnet „Ins Tagebuch“ unter Last einen zweiten Eintrag statt der Prüfkarte */
+    for (let i = 0; i < 160 && !tbVorschlagIdFuer("d" + gestern); i++) await warte(50);
     await tagebuchAusEinheit(gestern);
     for (let i = 0; i < 60 && !document.getElementById("tb-pruefen"); i++) await warte(50);
     out.b = { pruefkarte: !!document.getElementById("tb-pruefen"), zweitesFenster: !!document.getElementById("tb-card") };
