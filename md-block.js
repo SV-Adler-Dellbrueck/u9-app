@@ -279,7 +279,7 @@ function blockKiNutzlast(datum){
     const felder=(typeof tpFelderZahl==="function")
       ? Array.from({length:tpFelderZahl(si)},(_,p)=>document.getElementById(`tp-form-${si}-${p}`)).filter(x=>x&&x.matches("select.tp-form-sel"))
       : [...document.querySelectorAll(`select.tp-form-sel[id^="tp-form-${si}-"]`)];
-    /* v882: die Wahl aus dem Zustand (boot.js, Welle 1) – ohne ihn wie bisher aus dem Auswahlfeld */
+    /* v883: die Wahl aus dem Zustand (boot.js, Welle 1) – ohne ihn wie bisher aus dem Auswahlfeld */
     const st=felder.map(x=>{
       const f=alle[(typeof tpWahlIdx==="function")?tpWahlIdx(x.id):parseInt(x.value)]||{}; const p=Number(x.id.split("-").pop());
       return {station:p,uebung:f.name||"",spieler:String(f.spieler||"").slice(0,80),kinder:(_tpStationGruppe[x.id]||{}).n||0};
@@ -322,7 +322,7 @@ function _tbKiZeigen(d){
     const selId=`tp-form-${Number(t.block)}-${Number(t.station)}`;
     const sel=document.getElementById(selId);
     const i=alle.findIndex(f=>f&&f.name===t.zu);
-    const jetzt=(typeof tpWahlIdx==="function")?tpWahlIdx(selId):(sel&&sel.value!==""?Number(sel.value):null);   // v882: aus dem Zustand
+    const jetzt=(typeof tpWahlIdx==="function")?tpWahlIdx(selId):(sel&&sel.value!==""?Number(sel.value):null);   // v883: aus dem Zustand
     return (sel&&i>=0&&jetzt!==i)?{selId,i,zu:t.zu,grund:String(t.grund||"")}:null;
   }).filter(Boolean).slice(0,5);
   window._tbKiTausch=tausch;

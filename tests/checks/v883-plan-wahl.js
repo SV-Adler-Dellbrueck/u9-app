@@ -1,4 +1,4 @@
-/* v882 · Bestandsaufnahme 4.8, Schritt 4: Die Übungswahl liegt im Zustand (TP_ZUSTAND.wahl).
+/* v883 · Bestandsaufnahme 4.8, Schritt 4: Die Übungswahl liegt im Zustand (TP_ZUSTAND.wahl).
 
    A) Die zehn Golden-Abläufe aus v877 (dieselben Schritte, dieselbe Seite – ohne Sollwerte):
       tpZustandPruefen() muss nach JEDEM Zeichnen (Haken an _tpRenderTimelineIntern) und nach
@@ -19,11 +19,11 @@ const golden = require("./v877-trainingsplan-golden.js").intern;
 
 /* Läuft in der Seite: prüft nach jedem Zeichnen. */
 function haken() {
-  window.__v882 = { zeichnungen: 0, abweichungen: [], schritt: "Start", marken: { station: 0, alle: 0, erbt: 0, wahl: 0 } };
+  window.__v883 = { zeichnungen: 0, abweichungen: [], schritt: "Start", marken: { station: 0, alle: 0, erbt: 0, wahl: 0 } };
   const orig = window._tpRenderTimelineIntern;
   window._tpRenderTimelineIntern = function () {
     const r = orig.apply(this, arguments);
-    const w = window.__v882; w.zeichnungen++;
+    const w = window.__v883; w.zeichnungen++;
     try {
       const ab = tpZustandPruefen();
       ab.forEach(x => w.abweichungen.push(`${w.schritt}, Zeichnung ${w.zeichnungen}: ${x}`));
@@ -46,13 +46,13 @@ async function ablauf(h, def) {
     const start = await p.evaluate(() => tpZustandPruefen());
     start.forEach(x => zeilen.push(`Start: ${x}`));
     for (const [name, tun] of def.schritte) {
-      await p.evaluate(n => { window.__v882.schritt = n; }, name);
+      await p.evaluate(n => { window.__v883.schritt = n; }, name);
       await tun(p, s);
       await golden.ruhe(s);
       const ab = await p.evaluate(() => tpZustandPruefen());
       ab.forEach(x => zeilen.push(`nach „${name}“: ${x}`));
     }
-    const w = await p.evaluate(() => window.__v882);
+    const w = await p.evaluate(() => window.__v883);
     w.abweichungen.forEach(x => zeilen.push(x));
     return { id: def.id, ok: !zeilen.length, zeichnungen: w.zeichnungen, schritte: def.schritte.length, marken: w.marken, zeilen, fehler: s.fehler() };
   } catch (e) {
