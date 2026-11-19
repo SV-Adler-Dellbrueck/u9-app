@@ -107,15 +107,17 @@ function sitNeu(form){
   const label=(form&&typeof FORMATIONS!=="undefined"&&FORMATIONS[form])?FORMATIONS[form].label:"Freie Situation";
   skzEditorOpen(form?sitVorlage(form):sitFeld("4+1"), spec=>sitErfassen(spec,label), {titel:"Spielsituation"});
 }
-function _sitName(vorschlag){
-  const n=(typeof prompt==="function")?prompt("Name der Spielsituation:",vorschlag):vorschlag;
+/* v875: async – der Name kommt aus dem Eingabefenster der App. Abbrechen behält den Vorschlag
+   (wie vorher bei prompt): die Zeichnung ist schon fertig und soll nicht verloren gehen. */
+async function _sitName(vorschlag){
+  const n=await frageText({emoji:"🧩",titel:"Name der Spielsituation",wert:vorschlag,ja:"Übernehmen",einzeilig:true,markieren:true});
   if(n===null)return vorschlag;
   return String(n).trim().slice(0,80)||vorschlag;
 }
 async function sitErfassen(spec,label){
   if(!spec){ toast("Die Zeichnung ist leer – nichts erfasst","info"); return; }
   const heute=new Date().toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
-  const name=_sitName((label||"Situation")+" · "+heute);
+  const name=await _sitName((label||"Situation")+" · "+heute);
   try{
     const r=await fetch(`${SB_URL}/rest/v1/taktik_templates`,{method:"POST",
       headers:Object.assign({},sbAuthHeaders(),{Prefer:"return=representation"}),
@@ -184,15 +186,15 @@ function sitBearbeiten(id){
     _sitPatch(id,{data:Object.assign({},t.data,{typ:"skizze",spec})},"Spielsituation geändert ✓");
   }, {titel:"Spielsituation"});
 }
-function sitUmbenennen(id){
+async function sitUmbenennen(id){
   const t=_sitEintrag(id); if(!t)return;
-  const n=prompt("Neuer Name:",t.name); if(n===null)return;
+  const n=await frageText({emoji:"✏️",titel:"Spielsituation umbenennen",sub:"Neuer Name:",wert:t.name,ja:"Übernehmen",einzeilig:true,markieren:true}); if(n===null)return;
   const name=String(n).trim().slice(0,80); if(!name||name===t.name)return;
   _sitPatch(id,{name},"Umbenannt ✓");
 }
 async function sitLoeschen(id){
   const t=_sitEintrag(id); if(!t)return;
-  if(!confirm("„"+t.name+"“ löschen?"))return;
+  if(!await frageJaNein({emoji:"🗑️",titel:"Spielsituation löschen?",text:"„"+t.name+"“ löschen?",ja:"Löschen",ton:"rot"}))return;
   try{
     const r=await fetch(`${SB_URL}/rest/v1/taktik_templates?id=eq.${Number(id)}`,{method:"DELETE",headers:sbAuthHeaders()});
     if(typeof sbCheck401==="function"&&sbCheck401(r))return;

@@ -73,7 +73,7 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 | 4.2 | Dieselbe Sache, mehrere Namen (Spieltag/Match/Matchday, Block/Phase, Rückmeldung/Antwort, sechs „Adler“-Kanäle) – Wortliste | ✅ v842 + v873 (Block/Feld, Knöpfe, Zusatzregel) – v842: Spieltag, Spieluhr, Rückmeldung, Die Kabine, Nachbereitung; offen: Adler-Kanäle |
 | 4.3 | Die Hilfe ist ein Änderungsprotokoll (Einträge bis 7.900 Zeichen) | teils ✅ v843: Kurzfassung zuerst, ganzer Text hinter „Alles dazu“; eigene Kurzfassungen für 31 Einträge (v847: die 14 längsten, v848: 13 weitere); rund 25 kürzere zeigen den Anriss |
 | 4.4 | Fachsprache ohne Erklärung (Leitfrage, Nominierung, Provokationsregel) | ✅ v873 ⓘ für Leitfrage, Nominierung, Zusatzregel |
-| 4.5 | Rund 50 Systemdialoge, 180 von Hand gebaute Fenster | teils ✅ v874 Paket 1 (Trainingsalltag, 19 Stellen); Liste: systemdialoge.md |
+| 4.5 | Rund 50 Systemdialoge, 180 von Hand gebaute Fenster | teils ✅ Systemdialoge erledigt: v874 Paket 1 (Trainingsalltag, 19 Stellen), v875 Pakete 2+3 (übriger Trainerbereich, 36 Stellen; 7 Stellen im toten Eltern-Code gelöscht) – außer vier Rückfallzweigen kein Systemdialog mehr; Liste: systemdialoge.md. Offen: die von Hand gebauten Fenster auf einen Baustein bringen (zusammen mit 4.6) |
 | 4.6 | Knopf-Stile: Hauptaktion je Seite anders, rund 200 Knöpfe nur mit Inline-Style | ⬜ schrittweise |
 | 4.7 | Toter Code (Import-Fenster, `homeTool`, `statTile`, Taktik-Zweig) | ✅ v871 alte Aufstellung, homeTool/statTile, Taktik-Zweig, 16 ungenutzte Funktionen; v872 Import-Fenster (Charles 18.11.) |
 | 4.8 | Trainingsplan: Zustand lebt im DOM, Sprünge über Zeitgeber | ⬜ groß, hohes Risiko |

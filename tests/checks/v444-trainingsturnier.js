@@ -17,7 +17,7 @@ module.exports = async function (h) {
   // Geraet A plant vorab
   const a = await h.starten({ supabase });
   await h.terminSetzen(a.page, FR);
-  await a.page.evaluate(kinder => { window.KADER = kinder.map((n, i) => ({ id: i + 1, name: n, aktiv: true })); blitzOpen(); blzAnzahl(4); BLZ.felder = 2; BLZ.spielform = "funino"; BLZ.teams[0].name = "Die Blauen"; blzSave(); }, h.KINDER);
+  await a.page.evaluate(async kinder => { window.KADER = kinder.map((n, i) => ({ id: i + 1, name: n, aktiv: true })); blitzOpen(); await blzAnzahl(4); BLZ.felder = 2; BLZ.spielform = "funino"; BLZ.teams[0].name = "Die Blauen"; blzSave(); }, h.KINDER);
   await warte(a.page, 1500);
   const planA = await stand(a.page);
   await a.schliessen();

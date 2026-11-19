@@ -71,7 +71,9 @@ module.exports = async function (h) {
     await loeschantraegeTrainerLoad(); await warte(50);
     out.karte = box.textContent; const jetzt = [...box.querySelectorAll("button")].find(b => /Jetzt löschen/.test(b.textContent));
     window.confirm = () => true;
-    if (jetzt) jetzt.click(); await warte(120);
+    // v875: Die Rückfrage ist ein Fenster der App – mit „Endgültig löschen“ bestätigen
+    if (jetzt) { jetzt.click(); for (let i = 0; i < 40 && !document.getElementById("frage-modal"); i++) await warte(25); document.querySelector("#frage-modal #frage-ja")?.click(); }
+    await warte(120);
     out.kind = log.find(x => /^kind-loeschen/.test(x)) || "";
     window.fetch = echt;
     return out;

@@ -1081,11 +1081,14 @@ function _blzPlatzHtml(){
     📐 ${kopf}.<br>${wer} dabei (${esc(p.quelle)}) → ${rest}.${fuss("var(--text2)")}</div>`;   // v708: Grund folgt jetzt dem Thema
 }
 /* Struktur-Änderung (Modus, Team-Anzahl) macht einen gebauten Spielplan ungültig.
-   Ohne Ergebnisse wird er still verworfen; mit Ergebnissen erst nach Rückfrage. */
-function _blzPlanVerwerfen(){
+   Ohne Ergebnisse wird er still verworfen; mit Ergebnissen erst nach Rückfrage.
+   v875: async – die Rückfrage ist ein Fenster der App. Jeder Aufrufer wartet mit await auf
+   true/false, bevor er etwas ändert (blzAnzahl, blzModus, blzElternAnzahl, blzTeamPlus,
+   blzTeamWeg, abschlussGruppen, elternTurnierUebernehmen; über blzAnzahl auch _abschlussAnpassen). */
+async function _blzPlanVerwerfen(){
   if(!BLZ.plan||!BLZ.plan.length)return true;
   const hatErg=BLZ.plan.some(p=>p.ta!=null);
-  if(hatErg&&!confirm("Es gibt schon Ergebnisse – diese Änderung verwirft Spielplan UND Ergebnisse. Fortfahren?"))return false;
+  if(hatErg&&!await frageJaNein({emoji:"⚠️",titel:"Spielplan verwerfen?",text:"Es gibt schon Ergebnisse – diese Änderung verwirft Spielplan UND Ergebnisse.",ja:"Verwerfen",ton:"rot"}))return false;
   BLZ.plan=[];
   return true;
 }
@@ -1131,7 +1134,7 @@ function _blzDuellTeams(nKids){
   BLZ.quelle=a.quelle;
   _blzTrainerVerteilen();
 }
-function blzElternAnzahl(m){if(!_blzPlanVerwerfen())return;BLZ.elternAnzahl=m;_blzDuellTeams(BLZ.anzahl);blzSave();blzRender();}
+async function blzElternAnzahl(m){if(!await _blzPlanVerwerfen())return;BLZ.elternAnzahl=m;_blzDuellTeams(BLZ.anzahl);blzSave();blzRender();}
 const BLZ_SPIELFORM={f2:["2 gegen 2 · ohne Torwart",2],funino:["FUNiño (3 gegen 3)",3],f3:["3+1",4],f4:["4+1",5],f5:["5+1",6],frei:["frei",0]};
 function blzSpielform(sf){BLZ.spielform=sf;_blzEingestellt();blzSave();blzRender();}
 /* v687: einmal eingestellt → beim nächsten Öffnen zugeklappt; solange das Fenster offen ist,
@@ -1157,12 +1160,12 @@ function _blzTeamVorschlag(){
   const teams=Math.min(max-(max%2),Math.max(2,passen-(passen%2)));
   return {pool,teams,felder:teams/2};
 }
-function blzModus(m){
+async function blzModus(m){
   if(m===BLZ.spielmodus)return;
-  if(!_blzPlanVerwerfen())return;
+  if(!await _blzPlanVerwerfen())return;
   BLZ.spielmodus=m;
   if(m==="duell"){BLZ.anzahl=Math.min(3,Math.max(1,BLZ.anzahl===4?3:BLZ.anzahl));_blzDuellTeams(BLZ.anzahl);}
-  else{BLZ.teams=BLZ.teams.filter(t=>!t.eltern);if(BLZ.teams.filter(t=>!t.fest).length<2)blzAnzahl(Math.max(2,BLZ.anzahl));}
+  else{BLZ.teams=BLZ.teams.filter(t=>!t.eltern);if(BLZ.teams.filter(t=>!t.fest).length<2)await blzAnzahl(Math.max(2,BLZ.anzahl));}
   blzSave();blzRender();
 }
 // Berger-Rotation: jeder gegen jeden, fair verteilt (niemand spielt zweimal direkt hintereinander)
@@ -1386,15 +1389,15 @@ function _abschlussNameSetzen(art){
     const l=sl.label.replace(/^Abschluss(turnier|spiel)\b/,wort); if(l!==sl.label){ sl.label=l; neu=true; } } });
   return neu;
 }
-function _abschlussAnpassen(){
+async function _abschlussAnpassen(){   // v875: async – blzAnzahl kann nach dem Verwerfen fragen
   if(!BLZ||BLZ.phase!=="setup") return;
   const sf=BLZ.spielform==="frei"?"funino":BLZ.spielform;
   const a=abschlussArt(sf,_abschlussZahl().n,BLZ.abschlussWunsch);
-  if(a&&a.teams&&BLZ.anzahl!==a.teams&&typeof blzAnzahl==="function") blzAnzahl(a.teams);
+  if(a&&a.teams&&BLZ.anzahl!==a.teams&&typeof blzAnzahl==="function") await blzAnzahl(a.teams);
   if(a&&_abschlussNameSetzen(a.art)&&typeof tpRenderTimeline==="function") tpRenderTimeline();
 }
-function abschlussWunsch(w){ _blzBereit(0,true); if(BLZ.phase!=="setup")return; BLZ.abschlussWunsch=w; blzSave(); _abschlussAnpassen(); blzRender(); }
-function abschlussTrainer(name){ _blzBereit(0,true); if(BLZ.phase!=="setup"||typeof blzTrainerToggle!=="function")return; blzTrainerToggle(name); _abschlussAnpassen(); }
+async function abschlussWunsch(w){ _blzBereit(0,true); if(BLZ.phase!=="setup")return; BLZ.abschlussWunsch=w; blzSave(); await _abschlussAnpassen(); blzRender(); }
+async function abschlussTrainer(name){ _blzBereit(0,true); if(BLZ.phase!=="setup"||typeof blzTrainerToggle!=="function")return; blzTrainerToggle(name); await _abschlussAnpassen(); }
 /* v820: Die Teamlisten sind zugeklappt eine Zeile („Teams: Adler 1 (8) · Adler 2 (7)“) – offen waren sie am Handy
    gut ein halber Bildschirm. Fehlen in einem Team Kinder, steht die Klappe von selbst offen, damit die Warnung
    nicht verschwindet. _abschlussTeamsAuf hält sie offen, wenn ein Tipp auf ein Kind neu zeichnet. */
@@ -1455,13 +1458,13 @@ function abschlussFuellen(){
   // Wurde für diesen Termin schon etwas vorbereitet (anderes Gerät)? Einmal nachladen, ohne etwas zu überschreiben.
   if(!b.lokalPasst&&!_abschlussServer[b.datum]){_abschlussServer[b.datum]=1;_blzVomServer(b.datum,true);}
 }
-function abschlussSpielform(k){ _blzBereit(0,true); if(BLZ.phase!=="setup")return; BLZ.abschlussWunsch=null; blzSpielform(k); _abschlussAnpassen(); }
-function abschlussGruppen(){
+async function abschlussSpielform(k){ _blzBereit(0,true); if(BLZ.phase!=="setup")return; BLZ.abschlussWunsch=null; blzSpielform(k); await _abschlussAnpassen(); }
+async function abschlussGruppen(){
   _blzBereit(0,true); if(BLZ.phase!=="setup")return;
   const sf=BLZ.spielform==="frei"?"funino":BLZ.spielform;
   const g=_blzGruppenTeams((BLZ_SPIELFORM[sf]||[])[1]||3);
   if(!g){ if(typeof toast==="function")toast("Die Trainingsgruppen passen nicht zur Spielform","err"); return; }
-  if(typeof _blzPlanVerwerfen==="function"&&!_blzPlanVerwerfen())return;
+  if(typeof _blzPlanVerwerfen==="function"&&!await _blzPlanVerwerfen())return;
   BLZ.teams=g.teams.concat(BLZ.teams.filter(t=>t.fest&&!t.eltern)); BLZ.anzahl=g.teams.length; BLZ.quelle=g.quelle;
   if(typeof _blzTrainerVerteilen==="function")_blzTrainerVerteilen();
   blzSave(); blzRender();
@@ -1552,8 +1555,8 @@ function _blzSetupHtml(){
 }
 function blzBudget(b){BLZ.budget=b;_blzEingestellt();blzSave();blzRender();}
 function blzFelder(f){BLZ.felder=f;_blzEingestellt();blzSave();blzRender();}
-function blzAnzahl(n){
-  if(!_blzPlanVerwerfen())return;
+async function blzAnzahl(n){   // v875: async – aufrufen mit await
+  if(!await _blzPlanVerwerfen())return;
   BLZ.anzahl=n;
   if(BLZ.spielmodus==="duell"){_blzDuellTeams(n);}
   else{const a=_blzAuto(n);BLZ.teams=a.teams.concat(BLZ.teams.filter(t=>t.fest&&!t.eltern));BLZ.quelle=a.quelle;_blzTrainerVerteilen();}
@@ -1639,7 +1642,7 @@ async function elternTurnierUebernehmen(terminId,datum){
   const sel=document.getElementById("tp-date"); if(sel)sel.value=datum;   // das Turnier gehört zu diesem Termin (_blzBindeDatum)
   _blzBereit(0,false);
   if(BLZ.phase!=="setup"){ toast("Für diesen Termin läuft schon ein Turnier – die Liste wurde nicht übernommen","err"); }
-  else if(_blzPlanVerwerfen()){
+  else if(await _blzPlanVerwerfen()){
     const groesse=(BLZ_SPIELFORM[BLZ.spielform]||[])[1]||4;
     if(BLZ.spielmodus!=="duell"){ BLZ.spielmodus="duell"; BLZ.anzahl=Math.min(3,Math.max(1,BLZ.anzahl===4?3:BLZ.anzahl)); }
     BLZ.elternAnzahl=Math.min(4,Math.max(1,Math.round(liste.length/groesse)));
@@ -1651,23 +1654,24 @@ async function elternTurnierUebernehmen(terminId,datum){
   document.getElementById("et-modal")?.remove(); document.getElementById("tmd-modal")?.remove();
   blitzOpen();
 }
-function blzTeamPlus(){
-  const name=(prompt("Name des Teams (z. B. Eltern, Trainer):")||"").trim();if(!name)return;
-  if(!_blzPlanVerwerfen())return;
+async function blzTeamPlus(){
+  const name=(await frageText({emoji:"➕",titel:"Team von Hand",sub:"Name des Teams (z. B. Eltern, Trainer):",ja:"Hinzufügen",einzeilig:true})||"").trim();if(!name)return;
+  if(!await _blzPlanVerwerfen())return;
   BLZ.teams.push({name,spieler:[],fest:true});blzSave();blzRender();
 }
-function blzTeamWeg(i){if(!_blzPlanVerwerfen())return;BLZ.teams.splice(i,1);blzSave();blzRender();}
+async function blzTeamWeg(i){if(!await _blzPlanVerwerfen())return;BLZ.teams.splice(i,1);blzSave();blzRender();}
 // Aus dem laufenden Turnier zurück ins Setup: Trainer/Kinder umsetzen, Namen ändern –
 // Spielplan und Ergebnisse bleiben erhalten, solange die Team-Struktur gleich bleibt.
 function blzBearbeiten(){BLZ.phase="setup";blzSave();blzRender();}
 function blzWeiter(){BLZ.phase="live";blzSave();blzRender();}
-function blzRename(i){
-  const name=(prompt("Neuer Team-Name:",BLZ.teams[i].name)||"").trim();if(!name)return;
-  BLZ.teams[i].name=name;blzSave();blzRender();
+async function blzRename(i){
+  const t=BLZ.teams[i]; if(!t)return;
+  const name=(await frageText({emoji:"✏️",titel:"Team umbenennen",sub:"Neuer Team-Name:",wert:t.name,ja:"Übernehmen",einzeilig:true,markieren:true})||"").trim();if(!name)return;
+  t.name=name;blzSave();blzRender();
 }
-function blzStart(){
+async function blzStart(){
   if(BLZ.teams.length<2){toast("Mindestens 2 Teams","err");return;}
-  if(BLZ.plan&&BLZ.plan.some(p=>p.ta!=null)&&!confirm("Es gibt schon Ergebnisse – Spielplan wirklich neu erzeugen? Alle Ergebnisse gehen verloren."))return;
+  if(BLZ.plan&&BLZ.plan.some(p=>p.ta!=null)&&!await frageJaNein({emoji:"🔁",titel:"Spielplan neu erzeugen?",text:"Es gibt schon Ergebnisse – alle Ergebnisse gehen verloren.",ja:"Neu erzeugen",ton:"rot"}))return;
   const p=_blzPlanen(BLZ.teams.length,BLZ.budget||0,BLZ.felder||1,BLZ.spielmodus,BLZ.teams.filter(t=>t.eltern).length);
   if(BLZ.budget){BLZ.runde=p.z;}
   else{const r=Number(document.getElementById("blz-runde")?.value)||8;BLZ.runde=Math.min(30,Math.max(1,r));}
@@ -1793,9 +1797,10 @@ function blzTor(mi,seite,delta){
   const andere=seite==="ta"?"tb":"ta";if(p[andere]==null)p[andere]=0; // Ergebnis zählt erst, wenn beide Seiten stehen
   blzSave();blzRender();
 }
-function blzEnde(){
+async function blzEnde(){
   const offen=BLZ.plan.filter(p=>p.ta==null).length;
-  if(offen&&!confirm(offen+" Begegnung"+(offen===1?"":"en")+" ohne Ergebnis – trotzdem beenden?"))return;
+  if(offen&&!await frageJaNein({emoji:"🏆",titel:"Turnier beenden?",text:offen+" Begegnung"+(offen===1?"":"en")+" ohne Ergebnis – trotzdem beenden?",ja:"Beenden"}))return;
+  if(!BLZ)return;   // v875: während der Rückfrage schon anderweitig beendet
   // Sieger: Duell = Gesamttore Kinder vs Eltern; sonst gespieltes Finale vor Tabelle
   let kopf;
   if(BLZ.modus==="duell"){
@@ -1836,8 +1841,8 @@ function blzEnde(){
   try{localStorage.removeItem("adler_blitz");}catch(e){}
   BLZ=null;
 }
-function blzReset(){
-  if(BLZ&&BLZ.plan&&BLZ.plan.length&&!confirm("Alles verwerfen und komplett neu starten?"))return;
+async function blzReset(){
+  if(BLZ&&BLZ.plan&&BLZ.plan.length&&!await frageJaNein({emoji:"🗑️",titel:"Alles verwerfen?",text:"Alles verwerfen und komplett neu starten?",ja:"Verwerfen",ton:"rot"}))return;
   try{localStorage.removeItem("adler_blitz");}catch(e){}
   BLZ=null;blitzOpen();
 }
@@ -2359,10 +2364,10 @@ function _htCfgLesen(){
     infos:document.getElementById("ht-e-infos")?document.getElementById("ht-e-infos").value:(alt.infos||"")
   };
 }
-function htRegelnVorlage(){
+async function htRegelnVorlage(){
   const sf=document.getElementById("ht-e-spielform")?.value||"f4";
   const ta=document.getElementById("ht-e-regeln"); if(!ta)return;
-  if(ta.value.trim()&&!confirm("Regelwerk durch die Vorlage ersetzen?"))return;
+  if(ta.value.trim()&&!await frageJaNein({emoji:"↺",titel:"Regelwerk ersetzen?",text:"Regelwerk durch die Vorlage ersetzen?",ja:"Ersetzen",ton:"rot"}))return;
   ta.value=HT_REGELN[sf]||"";
 }
 async function htTexteSave(btn){
@@ -2386,7 +2391,7 @@ async function htTeamPlus(){
 }
 async function htTeamWeg(i){
   const teams=(_HT.teams||[]).slice();
-  if((_HT.plan||[]).length&&!confirm("Team entfernen? Der Spielplan muss danach neu erzeugt werden."))return;
+  if((_HT.plan||[]).length&&!await frageJaNein({emoji:"🗑️",titel:"Team entfernen?",text:"Der Spielplan muss danach neu erzeugt werden.",ja:"Entfernen",ton:"rot"}))return;
   teams.splice(i,1);
   if(await htPatch({teams,plan:[]}))htRender();
 }
@@ -2401,7 +2406,7 @@ async function htGenerieren(){
   const cfg=_htCfgLesen();
   if(cfg.format==="gruppen"&&teams.length<cfg.gruppen*2){toast("Zu wenige Teams für "+cfg.gruppen+" Gruppen","err");return;}
   const hatErg=(_HT.plan||[]).some(p=>p.ta!=null);
-  if(hatErg&&!confirm("Es gibt schon Ergebnisse – Spielplan wirklich neu erzeugen? Alle Ergebnisse gehen verloren."))return;
+  if(hatErg&&!await frageJaNein({emoji:"🔁",titel:"Spielplan neu erzeugen?",text:"Es gibt schon Ergebnisse – alle Ergebnisse gehen verloren.",ja:"Neu erzeugen",ton:"rot"}))return;
   const plan=_htGen(teams,cfg);
   if(await htPatch({config:cfg,plan,datum:document.getElementById("ht-e-datum")?.value||_HT.datum})){
     toast("📅 Spielplan steht – "+plan.length+" Spiele");
@@ -2422,7 +2427,7 @@ async function htTor(mi,seite,delta){
 async function htFinalsFill(){
   const plan=(_HT.plan||[]).slice(), teams=_HT.teams||[];
   const offenGruppe=plan.some(p=>typeof p.a==="number"&&/^Gruppe/.test(p.phase||"")&&p.ta==null);
-  if(offenGruppe&&!confirm("Noch nicht alle Gruppenspiele haben ein Ergebnis – Platzhalter trotzdem nach aktuellem Stand füllen?"))return;
+  if(offenGruppe&&!await frageJaNein({emoji:"🏁",titel:"Finalrunde jetzt füllen?",text:"Noch nicht alle Gruppenspiele haben ein Ergebnis – Platzhalter trotzdem nach aktuellem Stand füllen?",ja:"Füllen"}))return;
   const gruppen=_htGruppenN(_HT);
   const tabs=gruppen.map((idxs,g)=>_htTabelle(plan.filter(p=>p.phase==="Gruppe "+HT_GRLABEL[g]),idxs,teams));
   const cmp=(a,b)=>b.pkt-a.pkt||(b.tore-b.geg)-(a.tore-a.geg)||b.tore-a.tore;
@@ -2456,7 +2461,8 @@ async function htFinalsFill(){
 function htShare(){
   const url=_htUrl(_HT.slug);
   if(navigator.share){navigator.share({title:_HT.name,text:"🏆 "+_HT.name+" – Spielplan, Zeiten und Infos für alle",url}).catch(()=>{});return;}
-  try{navigator.clipboard.writeText(url);toast("Spielplan-Link kopiert ✓");}catch(e){prompt("Spielplan-Link kopieren:",url);}
+  const zeigen=()=>frageText({emoji:"🔗",titel:"Spielplan-Link",sub:"Link markieren und kopieren, dann weiterschicken.",wert:url,ja:"Fertig",markieren:true});
+  try{navigator.clipboard.writeText(url).then(()=>toast("Spielplan-Link kopiert ✓"),zeigen);}catch(e){zeigen();}
 }
 /* Ergebnis-Link = Spielplan-Link + Schreib-Code (nur Ergebnisse, via RPC heimturnier_ergebnis).
    v508: hiess bis dahin „Helfer-Link". Der Name stand auch dort, wo der Plan an Gast-Trainer
@@ -2466,7 +2472,8 @@ function htShareErgebnis(){
   if(!_HT.edit_code){toast("Kein Schreib-Code vorhanden","err");return;}
   const url=_htUrl(_HT.slug)+"&code="+encodeURIComponent(_HT.edit_code);
   if(navigator.share){navigator.share({title:_HT.name+" (Ergebnisse eintragen)",text:"✏️ Ergebnis-Link "+_HT.name+" – nur für den Anzeigetisch",url}).catch(()=>{});return;}
-  try{navigator.clipboard.writeText(url);toast("Ergebnis-Link kopiert ✓");}catch(e){prompt("Ergebnis-Link kopieren:",url);}
+  const zeigen=()=>frageText({emoji:"🔗",titel:"Ergebnis-Link",sub:"Nur für den Anzeigetisch. Link markieren und kopieren.",wert:url,ja:"Fertig",markieren:true});
+  try{navigator.clipboard.writeText(url).then(()=>toast("Ergebnis-Link kopiert ✓"),zeigen);}catch(e){zeigen();}
 }
 function htShareHelfer(){ htShareErgebnis(); }   // alter Name, falls ihn noch etwas ruft
 /* Turniertage schieben sich gern nach hinten: verschiebt alle noch offenen Begegnungen
@@ -2595,7 +2602,7 @@ function htFeldDruck(){
   toast("🖨️ "+felder.length+" Feld-Aushänge im Druckdialog");
 }
 async function htDelete(){
-  if(!confirm(`„${_HT.name}" samt Spielplan wirklich löschen?`))return;
+  if(!await frageJaNein({emoji:"🗑️",titel:"Turnier löschen?",text:`„${_HT.name}“ samt Spielplan wirklich löschen?`,ja:"Löschen",ton:"rot"}))return;
   try{
     const r=await fetch(`${SB_URL}/rest/v1/heimturnier?id=eq.${_HT.id}`,{method:"DELETE",headers:sbAuthHeaders()});
     if(!r.ok&&r.status!==204){toast("Konnte nicht löschen","err");return;}
@@ -3004,7 +3011,7 @@ async function fstPlanErstellen(){
   const cfg=_fstSpielzeitAnwenden(_fstCfgLesen());
   const teams=fstTeamsBauen(cfg.vereine);
   if(teams.length<2){toast("Mindestens zwei Teams – bitte Vereine eintragen","err");return;}
-  if((_HT.plan||[]).some(p=>p.ta!=null)&&!confirm("Es gibt schon Ergebnisse – Spielplan neu erzeugen? Die Tore gehen verloren."))return;
+  if((_HT.plan||[]).some(p=>p.ta!=null)&&!await frageJaNein({emoji:"🔁",titel:"Spielplan neu erzeugen?",text:"Es gibt schon Ergebnisse – die Tore gehen verloren.",ja:"Neu erzeugen",ton:"rot"}))return;
   const felderVorher=cfg.felder.length;
   cfg.felder=fstFelderKuerzen(cfg.felder,teams);   // v486: ueberzaehlige Felder fallen weg, zuerst „4+1 oben"
   _fstTauschWahl=null;

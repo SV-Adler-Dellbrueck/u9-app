@@ -92,7 +92,7 @@ async function fundbueroClaim(id){
   }catch(e){toast("Netzwerkfehler","err");}
 }
 async function fundbueroDelete(id){
-  if(!confirm("Fundstück wirklich löschen?"))return;
+  if(!await frageJaNein({emoji:"🗑️",titel:"Fundstück löschen?",text:"Fundstück wirklich löschen?",ja:"Löschen",ton:"rot"}))return;
   try{
     const r=await fetch(`${SB_URL}/rest/v1/fundbuero?id=eq.${id}`,{method:"DELETE",headers:sbAuthHeaders()});
     if(sbCheck401(r))return;

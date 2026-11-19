@@ -184,11 +184,7 @@ async function gegnerSave(){
 }
 async function gegnerDelete(id){
   const g=(GEGNER_CACHE||[]).find(x=>x.id===id);
-  if(!confirm(`Gegner wirklich löschen?
-
-${g?g.name:""}
-
-Kontaktdaten und Historie gehen verloren.`))return;
+  if(!await frageJaNein({emoji:"🗑️",titel:"Gegner löschen?",text:`${g?g.name+"\n\n":""}Kontaktdaten und Historie gehen verloren.`,ja:"Löschen",ton:"rot"}))return;
   try{
     const r=await fetch(`${SB_URL}/rest/v1/gegner?id=eq.${id}`,{method:"DELETE",headers:sbAuthHeaders()});
     if(sbCheck401(r))return;
