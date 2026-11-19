@@ -92,6 +92,11 @@ Filterknöpfe, Kacheln, Spielfeld und Skizze, Live-Vollbild). Gerendert hell und
 Trainingsturnier, Kader, Kinderprofil, Kontakte, Tagebuch, neuer Eintrag, Trainer-Meeting, Nest-Redaktion. Knöpfe auf
 einem Farbverlauf sind nicht messbar und werden genannt statt gewertet.
 
+`v878-knopf-bauarten-rest.js` schließt 4.6 ab: `shell.html` und die übrigen Module ohne Knopffarben (Ausnahmen mit Grund),
+gerendert hell und dunkel an Kopfzeile, Trainingsplan, Termine, Anwesenheit, KI-Coach, Mannschaftskasse, Feier, Galerie,
+Mitfahrt, Kabine-Start und Quiz. Anders als v877 wird auf Farbverläufen gegen jede Farbstufe gemessen (die schlechteste
+zählt). Dazu: Auswahl-Chips tragen `aria-pressed`, das beim Tippen wechselt, und ein ✓ – Quelltext und gerendert.
+
 ## Golden-Master (Bestandsaufnahme 4.8, Schritt 1)
 
 `v877-trainingsplan-golden.js` schreibt fest, was der Trainingsplan an die Tabelle `trainingsplan` schickt – für zehn

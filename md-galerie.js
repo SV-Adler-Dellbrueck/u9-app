@@ -31,7 +31,7 @@ function fotoConsentBannerHtml(){
     <div style="font-size:var(--s-klein);font-weight:800;color:#334155;margin-bottom:4px">📸 Foto-/Video-Freigaben</div>
     <div>${chip("🖼️","intern",nIn)}${chip("🎥","Video",nVid)}${chip("🌍","öffentlich",nPub)}</div>
     ${noPub?`<div style="font-size:var(--s-klein);color:#9a3412;margin-top:4px">🌍 <b>Nicht öffentlich</b> zeigen: ${noPub}</div>`:'<div style="font-size:var(--s-klein);color:#15803d;margin-top:4px">Alle Kinder öffentlich freigegeben. 👍</div>'}
-    <button onclick="fotoAmpelOpen()" style="margin-top:8px;width:100%;min-height:40px;padding:8px;border:1.5px solid #7c3aed;border-radius:8px;background:#faf5ff;color:#6d28d9;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">🚦 Ampel je Kind &amp; Einwilligungstext</button>
+    <button class="btn" onclick="fotoAmpelOpen()" style="margin-top:8px;width:100%;font-size:var(--s-text);justify-content:center">🚦 Ampel je Kind &amp; Einwilligungstext</button>
   </div>`;
 }
 /* Trainer-Ampel: Kind × 3 Stufen (read-only – Eltern setzen die Freigaben selbst) + editierbarer
@@ -115,7 +115,7 @@ async function galerieRender(terminId){
   body.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px">
     ${items.map((f,i)=>`<div style="position:relative">
       <img id="gal-img-${f.id}" alt="Foto ${i+1} von ${items.length} – groß ansehen" role="button" tabindex="0" draggable="false" oncontextmenu="return false" onclick="galerieGross(${terminId},${i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();galerieGross(${terminId},${i})}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;background:#f1f5f9;cursor:zoom-in;-webkit-touch-callout:none;user-select:none">
-      ${istTrainer?`<button onclick="galerieDelete(${f.id},'${esc(f.foto_path)}',${terminId})" title="Löschen" style="position:absolute;top:4px;right:4px;width:40px;height:40px;border:none;border-radius:8px;background:rgba(0,0,0,.55);color:#fff;cursor:pointer">🗑</button>`:""}
+      ${istTrainer?`<button class="btn btn-sm btn-d" onclick="galerieDelete(${f.id},'${esc(f.foto_path)}',${terminId})" title="Löschen" style="position:absolute;top:4px;right:4px;min-width:44px;justify-content:center">🗑</button>`:""}
     </div>`).join("")}
   </div>`;
   items.forEach(f=>galerieFoto(f.id,f.foto_path));

@@ -77,8 +77,8 @@ async function elternFanfactsOpen(spielerId,kindName){
       <input id="ff-gallery" type="checkbox" ${f.gallery_optin?"checked":""}> Foto in der Team-Galerie zeigen (Opt-in)
     </label>
     <div style="display:flex;gap:8px;justify-content:flex-end">
-      <button onclick="document.getElementById('fanfacts-modal').remove()" style="border:none;background:none;color:#64748b;font-size:var(--s-text);cursor:pointer">Abbrechen</button>
-      <button onclick="elternFanfactsSave(${spielerId})" style="border:none;border-radius:8px;background:#1e3a8a;color:#fff;padding:9px 16px;font-weight:700;font-size:var(--s-text);cursor:pointer">Speichern</button>
+      <button class="btn" onclick="document.getElementById('fanfacts-modal').remove()" style="font-size:var(--s-text);justify-content:center">Abbrechen</button>
+      <button class="btn btn-p" onclick="elternFanfactsSave(${spielerId})" style="font-size:var(--s-text);justify-content:center">Speichern</button>
     </div>
   </div>`;
   document.body.appendChild(m);
@@ -156,8 +156,8 @@ async function kindAlbumRender(sid,boxId,wer){
       <div style="padding:6px;display:flex;flex-direction:column;gap:6px">
         <select aria-label="Zweck des Fotos" onchange="kindAlbumZweck(${Number(sid)},${Number(f.id)},this.value)" style="${knopf};width:100%">${KIND_ALBUM_ZWECK.map(([v,l])=>`<option value="${v}"${f.zweck===v?" selected":""}>${l}</option>`).join("")}</select>
         <div style="display:flex;gap:6px">
-          <button type="button" class="ka-karte" aria-pressed="${!!f.karte}" onclick="kindAlbumKarte(${Number(sid)},${f.karte?"null":Number(f.id)})" style="${knopf};flex:1;${f.karte?"background:#1e3a8a;color:#fff;border-color:#1e3a8a;font-weight:800":""}">${f.karte?"⭐ Kartenfoto":"☆ Als Kartenfoto"}</button>
-          <button type="button" class="ka-weg" aria-label="Foto löschen" onclick="kindAlbumLoeschen(${Number(sid)},${Number(f.id)})" style="${knopf}">🗑️</button>
+          <button type="button" class="ka-karte btn btn-sm" aria-pressed="${!!f.karte}" onclick="kindAlbumKarte(${Number(sid)},${f.karte?"null":Number(f.id)})" style="min-height:44px;justify-content:center;font-size:var(--s-klein);flex:1${f.karte?";background:var(--blue-bg);border:2px solid var(--blue);font-weight:800":""}">${f.karte?"⭐ Kartenfoto":"☆ Als Kartenfoto"}</button>
+          <button type="button" class="ka-weg btn btn-sm btn-d" aria-label="Foto löschen" onclick="kindAlbumLoeschen(${Number(sid)},${Number(f.id)})" style="min-height:44px;min-width:44px;justify-content:center">🗑️</button>
         </div>
       </div></div>`).join("")}
     ${liste.length<KIND_ALBUM_MAX?`<label class="ka-neu" style="${knopf};aspect-ratio:4/5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-style:dashed;text-align:center"><span style="font-size:var(--s-seite)" aria-hidden="true">＋</span>Foto hinzufügen<span style="font-size:var(--s-klein);color:var(--text3,#64748b)">${liste.length} von ${KIND_ALBUM_MAX}</span><input type="file" accept="image/jpeg,image/png,image/webp" onchange="kindAlbumHochladen(${Number(sid)},this)" style="display:none"></label>`:""}

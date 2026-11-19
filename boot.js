@@ -455,8 +455,8 @@ function renderTraining(){
     }).join("")+(archivZahl?`<button class="btn" type="button" onclick="_tfDb.archiv=!_tfDb.archiv;_tfDb.gruppe=null;renderTraining()" aria-pressed="${!!_tfDb.archiv}" style="width:100%;margin-top:12px;min-height:48px;justify-content:center;font-size:var(--s-text)">📦 Archiv (${archivZahl})${_tfDb.archiv?" – zurück zur aktiven Liste":""}</button>`:"");
   }
   const fEl=document.getElementById("tf-filter");
-  if(fEl)fEl.innerHTML=[0,1,2,3].map(s=>`<button onclick="_tfDb.stern=${s};renderTraining()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);${_tfDb.stern===s?"background:#15803d;color:#fff;border-color:#15803d;":"background:var(--surface2);color:var(--text2);"}border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${s===0?"Alle":"⭐".repeat(s)}</button>`).join("")
-    +`<button onclick="_tfDb.lange=!_tfDb.lange;renderTraining()" title="Übungen, die 4+ Wochen nicht dran waren" style="flex:1.4;min-height:44px;border:1px solid var(--rand-bedien);${_tfDb.lange?"background:#15803d;color:#fff;border-color:#15803d;":"background:var(--surface2);color:var(--text2);"}border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">🕘 lange her</button>`;
+  if(fEl)fEl.innerHTML=[0,1,2,3].map(s=>`<button onclick="_tfDb.stern=${s};renderTraining()" aria-pressed="${_tfDb.stern===s}" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);${_tfDb.stern===s?"background:#15803d;color:#fff;border-color:#15803d;":"background:var(--surface2);color:var(--text2);"}border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${_tfDb.stern===s?"✓ ":""}${s===0?"Alle":"⭐".repeat(s)}</button>`).join("")
+    +`<button onclick="_tfDb.lange=!_tfDb.lange;renderTraining()" title="Übungen, die 4+ Wochen nicht dran waren" aria-pressed="${!!_tfDb.lange}" style="flex:1.4;min-height:44px;border:1px solid var(--rand-bedien);${_tfDb.lange?"background:#15803d;color:#fff;border-color:#15803d;":"background:var(--surface2);color:var(--text2);"}border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${_tfDb.lange?"✓ ":""}🕘 lange her</button>`;
   // Ohne Auswahl nur die Kacheln zeigen – keine 100-Übungen-Liste
   if(!search&&!_tfDb.gruppe&&!_tfDb.stern&&!_tfDb.lange&&!_tfDb.archiv){
     wrap.innerHTML='<div style="text-align:center;padding:1.6rem 1rem;color:var(--text2)"><div style="font-size:30px;margin-bottom:6px">📚</div><div style="font-size:var(--s-text);font-weight:700;color:var(--text)">Gruppe antippen oder suchen</div></div>';
@@ -1023,7 +1023,7 @@ function kleingruppenOpen(){
 }
 function _kgChipsRender(){
   const el=document.getElementById("kg-chips"); if(!el)return;
-  el.innerHTML=[2,3,4].map(n=>`<button onclick="kgGroesse(${n})" style="flex:1;min-height:48px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer;background:${_kgGroesse===n?"#16a34a":"var(--surface2)"};color:${_kgGroesse===n?"#fff":"var(--text2)"}">${n}er-Gruppen</button>`).join("");
+  el.innerHTML=[2,3,4].map(n=>`<button onclick="kgGroesse(${n})" aria-pressed="${_kgGroesse===n}" style="flex:1;min-height:48px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer;background:${_kgGroesse===n?"#16a34a":"var(--surface2)"};color:${_kgGroesse===n?"#fff":"var(--text2)"}">${_kgGroesse===n?"✓ ":""}${n}er-Gruppen</button>`).join("");
 }
 function kgGroesse(n){_kgGroesse=n;_kgChipsRender();}
 async function kgLos(modus){
@@ -3280,7 +3280,7 @@ function rolleLosOpen(lbl,emo){
 }
 function _rolleChips(lbl,emo){
   const el=document.getElementById("rolle-chips"); if(!el)return;
-  el.innerHTML=[1,2].map(n=>`<button onclick="_rolleAnzahl=${n};_rolleChips('${lbl}','${emo}')" style="flex:1;min-height:48px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer;background:${_rolleAnzahl===n?"#16a34a":"var(--surface2)"};color:${_rolleAnzahl===n?"#fff":"var(--text2)"}">${n} ${n===1?lbl.replace(/e$/,""):lbl}</button>`).join("");
+  el.innerHTML=[1,2].map(n=>`<button onclick="_rolleAnzahl=${n};_rolleChips('${lbl}','${emo}')" aria-pressed="${_rolleAnzahl===n}" style="flex:1;min-height:48px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer;background:${_rolleAnzahl===n?"#16a34a":"var(--surface2)"};color:${_rolleAnzahl===n?"#fff":"var(--text2)"}">${_rolleAnzahl===n?"✓ ":""}${n} ${n===1?lbl.replace(/e$/,""):lbl}</button>`).join("");
 }
 async function rolleLos(lbl,emo){
   if(typeof pauseLoad==="function")await pauseLoad();
@@ -5630,10 +5630,10 @@ function tpPickerRender(){
     const kacheln=KAT_GRUPPEN.filter(g=>gruppenIm.has(g.key));
     if(gruppenIm.has("eigene"))kacheln.push({key:"eigene",label:"🧪 Eigene & KI"});
     gr.style.display=kacheln.length>1?"grid":"none";
-    gr.innerHTML=kacheln.map(g=>`<button onclick="_tpPick.gruppe=_tpPick.gruppe==='${g.key}'?null:'${g.key}';tpPickerRender()" style="min-height:56px;border:1px solid var(--rand-bedien);${_tpPick.gruppe===g.key?"background:#15803d;color:#fff;border-color:#15803d;":"background:var(--surface2);color:var(--text2);"}border-radius:12px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer;padding:8px">${g.label}</button>`).join("");
+    gr.innerHTML=kacheln.map(g=>`<button onclick="_tpPick.gruppe=_tpPick.gruppe==='${g.key}'?null:'${g.key}';tpPickerRender()" aria-pressed="${_tpPick.gruppe===g.key}" style="min-height:56px;border:1px solid var(--rand-bedien);${_tpPick.gruppe===g.key?"background:#15803d;color:#fff;border-color:#15803d;":"background:var(--surface2);color:var(--text2);"}border-radius:12px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer;padding:8px">${_tpPick.gruppe===g.key?"✓ ":""}${g.label}</button>`).join("");
   }
   const st=document.getElementById("tp-pick-sterne");
-  if(st)st.innerHTML=[0,1,2,3].map(s=>`<button onclick="_tpPick.stern=${s};tpPickerRender()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);${_tpPick.stern===s?"background:#15803d;color:#fff;border-color:#15803d;":"background:var(--surface2);color:var(--text2);"}border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${s===0?"Alle":"⭐".repeat(s)}</button>`).join("");
+  if(st)st.innerHTML=[0,1,2,3].map(s=>`<button onclick="_tpPick.stern=${s};tpPickerRender()" aria-pressed="${_tpPick.stern===s}" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);${_tpPick.stern===s?"background:#15803d;color:#fff;border-color:#15803d;":"background:var(--surface2);color:var(--text2);"}border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${_tpPick.stern===s?"✓ ":""}${s===0?"Alle":"⭐".repeat(s)}</button>`).join("");
   const q=(_tpPick.suche||"").trim().toLowerCase();
   let items=alle;
   if(q)items=items.filter(x=>(x.f.name+" "+(x.f.kat||"")).toLowerCase().includes(q));

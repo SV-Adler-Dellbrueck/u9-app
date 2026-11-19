@@ -156,7 +156,7 @@ function gegnerFormRender(g){
     <label style="font-size:var(--s-klein);color:var(--text2)">Notiz<input id="gg-notiz" value="${esc(g.notiz||"")}" style="${fld}"></label>
     <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
       <button class="btn btn-p btn-sm" onclick="gegnerSave()"><i class="ti ti-device-floppy"></i>Speichern</button>
-      ${g.id?`<button class="btn btn-sm" onclick="gegnerFormRender(null)">Neu</button><button class="btn btn-sm" style="margin-left:auto;color:#dc2626" onclick="gegnerDelete(${g.id})"><i class="ti ti-trash"></i>Löschen</button>`:""}
+      ${g.id?`<button class="btn btn-sm" onclick="gegnerFormRender(null)">Neu</button><button class="btn btn-sm btn-d" style="margin-left:auto" onclick="gegnerDelete(${g.id})"><i class="ti ti-trash"></i>Löschen</button>`:""}
     </div>
     ${g.id?gegnerHistoryHtml(g.name):""}
   </div>`;
@@ -418,7 +418,7 @@ function _tmdKarte(t){
   else if(typeof feierFuerTermin==="function"&&feierFuerTermin(t))gross=[{i:"ti-gift",l:"Beitragsliste",c:`feierTrainerOeffnen(${Number(t.id)})`,p:true},
                                   t.mitbringen?{i:"ti-basket",l:"Mitbringliste",c:"mitbringTrainerOpen()",p:false}:null].filter(Boolean);
   else gross=[{i:"ti-basket",l:"Mitbringliste",c:"mitbringTrainerOpen()",p:true}];
-  const grossBtn=o=>`<button class="btn${o.p?" btn-p":""}" onclick="${o.c}" style="width:100%;min-height:52px;justify-content:center;font-size:var(--s-karte);font-weight:800"><i class="ti ${o.i}"></i>${o.l}</button>`;
+  const grossBtn=o=>`<button class="btn${o.p?" btn-p":""}" onclick="${o.c}" style="width:100%;min-height:52px;justify-content:center;font-size:var(--s-karte)"><i class="ti ${o.i}"></i>${o.l}</button>`;
 
   /* 2 · Für die Eltern und 3 · Mehr – getrennt, weil das eine der Verein braucht und das
      andere nur der Trainer. Beides zugeklappt; „Fällt aus" klappt von selbst auf. */
@@ -471,8 +471,8 @@ function _tmdKarte(t){
       ${sec("Wer ist dabei")}
       ${kommt?`<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
         <span style="font-size:var(--s-klein);color:var(--text3);font-weight:800;width:100%">Trainer</span>
-        ${trainerstabNamen(t.trainer_status).map(tn=>{const stt=(t.trainer_status||{})[tn];const bg=stt==="ja"?"#16a34a":stt==="unsicher"?"#ca8a04":stt==="nein"?"#dc2626":"var(--surface2)";const col=stt?"#fff":"var(--text2)";const mk=stt==="ja"?" ✓":stt==="unsicher"?" 🤔":stt==="nein"?" ✕":"";
-          return `<button onclick="tmTrainerToggle(${Number(t.id)},'${tn.replace(/'/g,"")}')" title="Tippen wechselt: dabei → unsicher → nicht dabei → offen" style="min-height:44px;border:1px solid var(--rand-bedien);border-radius:12px;padding:0 12px;font-size:var(--s-text);font-weight:700;background:${bg};color:${col};cursor:pointer;font-family:inherit">${esc(tn)}${mk}</button>`;}).join("")}
+        ${trainerstabNamen(t.trainer_status).map(tn=>{const stt=(t.trainer_status||{})[tn];const fz=stt==="ja"?"green":stt==="unsicher"?"amber":stt==="nein"?"red":"";const bg=fz?`var(--${fz}-bg)`:"var(--surface2)";const col=fz?`var(--${fz})`:"var(--text2)";const mk=stt==="ja"?" ✓":stt==="unsicher"?" 🤔":stt==="nein"?" ✕":"";
+          return `<button onclick="tmTrainerToggle(${Number(t.id)},'${tn.replace(/'/g,"")}')" title="Tippen wechselt: dabei → unsicher → nicht dabei → offen" style="min-height:44px;border:1px solid ${fz?col:"var(--rand-bedien)"};border-radius:12px;padding:0 12px;font-size:var(--s-text);font-weight:700;background:${bg};color:${col};cursor:pointer;font-family:inherit">${esc(tn)}${mk}</button>`;}).join("")}
       </div>`:""}
       ${(t.heim===true&&istSpiel&&kommt)?`<div id="bd-tm-${t.id}" style="font-size:var(--s-text);color:var(--text2);margin-top:4px">🔥 Grillhütte: lädt …</div>`:""}
       ${kommt?`<div id="helfer-tm-${t.id}" style="font-size:var(--s-text);color:var(--text2);margin-top:4px"></div>`:""}
@@ -500,7 +500,7 @@ function _tmdKarte(t){
   </div>`;
 }
 function _tmdInhalt(t){
-  return `<div style="display:flex;justify-content:flex-end;margin-bottom:6px"><button onclick="document.getElementById('tmd-modal').remove()" aria-label="Schließen" style="border:none;background:rgba(255,255,255,.92);width:40px;height:40px;border-radius:50%;font-size:var(--s-seite);color:#334155;cursor:pointer;line-height:1">×</button></div>${_tmdKarte(t)}`;
+  return `<div style="display:flex;justify-content:flex-end;margin-bottom:6px"><button class="btn" onclick="document.getElementById('tmd-modal').remove()" aria-label="Schließen" style="min-width:44px;font-size:var(--s-seite);line-height:1;justify-content:center">×</button></div>${_tmdKarte(t)}`;
 }
 // Nachlader wie in der Terminliste anstoßen (Wetter + Büdchen füllen ihre Slots per id).
 function _tmdNachlader(t){
@@ -560,7 +560,7 @@ async function pulsTrainerFill(t){
   const comments=(a.comments||[]);
   window._pulsCmt=window._pulsCmt||{}; window._pulsCmt[t.id]=comments;
   box.innerHTML=`🌡️ <b>Eltern-Puls</b> (${a.n}): 😀 ${a.up} · 😐 ${a.mid} · 😟 ${a.down} · Ø ${a.avg}`+
-    (comments.length?` <button onclick="pulsComments(${Number(t.id)})" style="border:none;background:none;color:var(--blue-text);cursor:pointer;font-size:var(--s-klein);font-family:inherit;padding:0">💬 ${comments.length}</button>`:"");
+    (comments.length?` <button class="btn btn-link" onclick="pulsComments(${Number(t.id)})" style="font-size:var(--s-klein)">💬 ${comments.length}</button>`:"");
 }
 function pulsComments(id){
   const arr=(window._pulsCmt||{})[id]||[]; if(!arr.length)return;
@@ -654,7 +654,9 @@ function platzAmpelTrainer(t,nackt){
   const cur=t.platz_status||null;
   const btns=Object.keys(PLATZ_AMPEL).filter(k=>!PLATZ_AMPEL[k].hidden).map(k=>{
     const a=PLATZ_AMPEL[k], on=cur===k;
-    return `<button onclick="platzAmpelSet(${Number(t.id)},'${k}')" style="flex:1;min-width:96px;min-height:46px;border:2px solid ${a.col};border-radius:10px;cursor:pointer;font-family:inherit;font-size:var(--s-text);font-weight:800;background:${on?a.col:"var(--surface)"};color:${on?"#fff":a.col}">${a.emo} ${a.lbl}</button>`;
+    /* v878: gewählt = ✓ + aria-pressed + Zustandsfläche (Farbe trägt nicht allein; hell und dunkel ≥ 4,5:1) */
+    const fz={normal:"green",ausweich:"amber",abgesagt:"red"}[k]||"blue";
+    return `<button class="btn" onclick="platzAmpelSet(${Number(t.id)},'${k}')" aria-pressed="${on}" style="flex:1;min-width:96px;min-height:46px;justify-content:center;font-size:var(--s-text)${on?`;background:var(--${fz}-bg);border:2px solid var(--${fz});color:var(--${fz});font-weight:800`:""}">${on?"✓ ":""}${a.emo} ${a.lbl}</button>`;
   }).join("");
   const zusatz=cur?`<input id="pa-note-${t.id}" value="${esc(t.platz_status_note||"")}" placeholder="${cur==="ausweich"?"Wohin? z. B. Halle 2":cur==="abgesagt"?(terminKurzfristig(t)?"Grund (Pflicht, Termin unter 24 Std.)":"Grund (optional)"):"Hinweis (optional)"}" onchange="platzAmpelNote(${Number(t.id)},this.value)" style="width:100%;min-height:44px;margin-top:6px;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text);box-sizing:border-box">`:"";
   /* v491: Im Termin-Fenster steht die Überschrift schon am Klappdeckel – dort nur die Knöpfe.
@@ -686,7 +688,7 @@ async function tmAbsagenOpen(){
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:var(--rl);padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("tm-absagen-modal","🏖️","Termine absagen","Ferien oder ein freier Zeitraum · die Eltern sehen „Fällt aus“ mit Grund","#b91c1c")}
     ${ferien.length?`<div style="font-size:var(--s-klein);font-weight:700;color:var(--text2);margin:4px 0">Ferien</div>
-      <div id="tm-ab-ferien" style="display:flex;gap:6px;flex-wrap:wrap">${ferien.map((f,i)=>`<button type="button" class="tm-ab-ferien" data-i="${i}" aria-pressed="${i===0}" onclick="tmAbsagenFerien(${i})" style="min-height:44px;padding:6px 12px;border-radius:22px;border:1.5px solid var(--rand-bedien);background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">🏖️ ${esc(f.name)} <span style="font-weight:600;color:var(--text2)">${_tmAbKurz(f.von)}–${_tmAbKurz(f.bis)}</span></button>`).join("")}</div>`:""}
+      <div id="tm-ab-ferien" style="display:flex;gap:6px;flex-wrap:wrap">${ferien.map((f,i)=>`<button type="button" class="tm-ab-ferien btn btn-sm" data-i="${i}" aria-pressed="${i===0}" onclick="tmAbsagenFerien(${i})" style="min-height:44px">🏖️ ${esc(f.name)} <span style="font-weight:600;color:var(--text2)">${_tmAbKurz(f.von)}–${_tmAbKurz(f.bis)}</span></button>`).join("")}</div>`:""}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
       <label><span style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2)">Von</span><input id="tm-ab-von" type="date" min="${heute}" value="${_tmAb.von}" onchange="tmAbsagenZeitraum()" style="width:100%;${inp}"></label>
       <label><span style="display:block;font-size:var(--s-klein);font-weight:700;color:var(--text2)">Bis</span><input id="tm-ab-bis" type="date" min="${heute}" value="${_tmAb.bis}" onchange="tmAbsagenZeitraum()" style="width:100%;${inp}"></label>
@@ -696,7 +698,7 @@ async function tmAbsagenOpen(){
     <label style="display:flex;align-items:center;gap:10px;min-height:44px;margin-top:6px;font-size:var(--s-text);cursor:pointer"><input id="tm-ab-nur" type="checkbox" checked onchange="_tmAb.nurTraining=this.checked;_tmAb.erst=true;tmAbsagenListe()" style="width:22px;height:22px">Nur Trainings</label>
     <div id="tm-ab-liste" style="margin-top:6px"></div>
     <div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px">Die Eltern sehen „🔴 Fällt aus“ mit dem Grund in Terminliste, Terminkarte und bei „Alle Termine“ – eine Mitteilung aufs Handy geht nicht raus.</div>
-    <button type="button" id="tm-ab-los" class="btn btn-p" onclick="tmAbsagenSpeichern(false)" style="width:100%;min-height:52px;justify-content:center;margin-top:10px;font-weight:800">Termine absagen</button>
+    <button type="button" id="tm-ab-los" class="btn btn-p" onclick="tmAbsagenSpeichern(false)" style="width:100%;min-height:52px;justify-content:center;margin-top:10px">Termine absagen</button>
     <button type="button" id="tm-ab-zurueck" class="btn btn-sm" onclick="tmAbsagenSpeichern(true)" style="width:100%;min-height:44px;justify-content:center;margin-top:6px;display:none">Absage zurücknehmen</button>
   </div>`;
   document.body.appendChild(m);
@@ -852,18 +854,18 @@ function tmCard(t){
      bleiben unter „Mehr" erreichbar, dort steht auch die Ampel zum Zurücknehmen. */
   const faelltAus=typeof terminFaelltAus==="function"&&terminFaelltAus(t);
   const mehr=[];                       // {i:icon, l:label, c:onclick} oder {href:…}
-  let haupt="";
+  let haupt="";   // v878: Neben-Aktion je Karte – die eine Hauptaktion der Seite ist „Neuer Termin“
   if(faelltAus){
     haupt="";
   }else if(t.typ==="training"){
-    haupt=`<button class="btn btn-p btn-sm" onclick="tmJump('planung','${t.datum}')"><i class="ti ti-clipboard-list"></i>Plan</button>`;
+    haupt=`<button class="btn btn-sm" onclick="tmJump('planung','${t.datum}')"><i class="ti ti-clipboard-list"></i>Plan</button>`;
   }else if(istSpiel){
     /* v486: „Aufstellung" sprang in die alte Aufstellungs-Seite („Bitte Datum waehlen",
        Fenster blieb offen). Seit v477 gehoert der Spieltag nach „Teams festlegen". */
-    haupt=`<button class="btn btn-p btn-sm" onclick="tmJump('spieltag','${t.datum}','${t.spielform||''}')"><i class="ti ti-users-group"></i>Teams festlegen</button>`;
+    haupt=`<button class="btn btn-sm" onclick="tmJump('spieltag','${t.datum}','${t.spielform||''}')"><i class="ti ti-users-group"></i>Teams festlegen</button>`;
     mehr.push({i:"ti-bolt",l:"Auswertung",c:`tmJump('blitz','${t.datum}','${t.spielform||''}')`});
   }else{ // Event (Grillfest & Co.) – keine Trainingsplanung/Aufstellung, sondern die Mitbringliste
-    haupt=`<button class="btn btn-p btn-sm" onclick="mitbringTrainerOpen()"><i class="ti ti-basket"></i>Mitbringliste</button>`;
+    haupt=`<button class="btn btn-sm" onclick="mitbringTrainerOpen()"><i class="ti ti-basket"></i>Mitbringliste</button>`;
   }
   mehr.push({i:"ti-edit",l:"Bearbeiten",c:`tmEdit(${Number(t.id)})`});
   mehr.push({i:"ti-users",l:"Eltern-Info",c:`mdOpen('${t.datum}','${t.typ}')`});
@@ -916,7 +918,7 @@ function tmCard(t){
     ${t.datum>=isoLokal()?`<div id="helfer-tm-${t.id}" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px"></div>`:""}
     ${t.datum>=isoLokal()?`<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-top:6px">
       <span style="font-size:var(--s-klein);color:var(--text3);font-weight:700">Trainer dabei?</span>
-      ${trainerstabNamen(t.trainer_status).map(tn=>{const stt=(t.trainer_status||{})[tn];const bg=stt==="ja"?"#16a34a":stt==="unsicher"?"#ca8a04":stt==="nein"?"#dc2626":"var(--surface2)";const col=stt?"#fff":"var(--text2)";const mk=stt==="ja"?" ✓":stt==="unsicher"?" 🤔":stt==="nein"?" ✕":"";return `<button onclick="tmTrainerToggle(${Number(t.id)},'${tn.replace(/'/g,"")}')" title="Tippen wechselt: dabei → unsicher → nicht dabei → offen" style="border:1px solid var(--rand-bedien);border-radius:12px;padding:2px 8px;font-size:var(--s-klein);font-weight:700;background:${bg};color:${col};cursor:pointer;font-family:inherit">${esc(tn)}${mk}</button>`;}).join("")}
+      ${trainerstabNamen(t.trainer_status).map(tn=>{const stt=(t.trainer_status||{})[tn];const fz=stt==="ja"?"green":stt==="unsicher"?"amber":stt==="nein"?"red":"";const bg=fz?`var(--${fz}-bg)`:"var(--surface2)";const col=fz?`var(--${fz})`:"var(--text2)";const mk=stt==="ja"?" ✓":stt==="unsicher"?" 🤔":stt==="nein"?" ✕":"";return `<button onclick="tmTrainerToggle(${Number(t.id)},'${tn.replace(/'/g,"")}')" title="Tippen wechselt: dabei → unsicher → nicht dabei → offen" style="min-height:44px;border:1px solid ${fz?col:"var(--rand-bedien)"};border-radius:12px;padding:2px 8px;font-size:var(--s-klein);font-weight:700;background:${bg};color:${col};cursor:pointer;font-family:inherit">${esc(tn)}${mk}</button>`;}).join("")}
     </div>`:""}
     ${notizClean?`<div style="font-size:var(--s-klein);color:var(--text3)">${esc(notizClean)}</div>`:""}
     ${(istSpiel&&t.datum<=isoLokal())?`<div style="display:flex;align-items:center;gap:6px;margin:6px 0"><span style="font-size:var(--s-klein);color:var(--text2)">Ergebnis:</span><input type="text" value="${esc(t.ergebnis||"")}" placeholder="z. B. 3:2" onchange="tmSetResult(${Number(t.id)},this.value)" style="width:90px;padding:5px 8px;border:1px solid var(--rand-bedien);border-radius:var(--r);font-size:var(--s-text);font-family:inherit"></div>`:""}
@@ -1350,7 +1352,7 @@ async function turnierRender(){
       <span style="font-size:var(--s-klein);color:var(--text3);width:18px">${i+1}.</span>
       <span style="flex:1;font-size:var(--s-text)">${x.gegner?esc(x.gegner):"Gegner "+(i+1)}</span>
       <span style="font-weight:800;color:${w}">${x.tore}:${x.gegentore}</span>
-      <button onclick="turnierDelete(${x.id})" title="löschen" style="border:none;background:transparent;color:#dc2626;cursor:pointer;font-size:var(--s-text);padding:2px 4px"><i class="ti ti-trash"></i></button>
+      <button class="btn btn-sm btn-d" onclick="turnierDelete(${x.id})" title="löschen" style="font-size:var(--s-text);min-width:44px;justify-content:center"><i class="ti ti-trash"></i></button>
     </div>`;}).join("");
 }
 

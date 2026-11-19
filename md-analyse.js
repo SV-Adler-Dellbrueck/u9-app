@@ -95,7 +95,7 @@ function showMilestoneHint(){
   const m=ms[0];
   const bar=document.createElement("div");
   bar.style.cssText="position:fixed;left:12px;right:12px;bottom:12px;z-index:8000;background:#065f46;color:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 6px 24px rgba(0,0,0,.25);font-size:var(--s-text);display:flex;align-items:center;gap:10px";
-  bar.innerHTML=`<span style="font-size:var(--s-teil)">💡</span><div style="flex:1">Tipp: <strong>${esc(m.name)}</strong> hat sich bei „${esc(m.label)}" stark verbessert – heute loben!</div><button onclick="this.parentElement.remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;padding:8px 10px;cursor:pointer;min-height:44px">OK</button>`;
+  bar.innerHTML=`<span style="font-size:var(--s-teil)">💡</span><div style="flex:1">Tipp: <strong>${esc(m.name)}</strong> hat sich bei „${esc(m.label)}" stark verbessert – heute loben!</div><button class="btn btn-sm" onclick="this.parentElement.remove()" style="min-height:44px;justify-content:center">OK</button>`;
   document.body.appendChild(bar);
   setTimeout(()=>{if(bar.parentElement)bar.remove();},14000);
 }

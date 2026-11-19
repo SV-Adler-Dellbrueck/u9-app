@@ -121,7 +121,7 @@ function tickerRenderControls(){
          zu bedienen." Den Helfer-Link gab es schon, aber als kleinen Knopf zwischen zwei
          anderen – er wurde nie gefunden. Jetzt gross und genau in dem Moment, in dem die
          Frage aufkommt: direkt nachdem der Ticker gestartet ist. -->
-    <button onclick="tickerShareDelegateLink()" style="width:100%;min-height:52px;margin-bottom:10px;border:1.5px dashed var(--rand-bedien);border-radius:12px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">🙋 Jemand anderen tickern lassen</button>
+    <button class="btn" onclick="tickerShareDelegateLink()" style="width:100%;min-height:52px;margin-bottom:10px;font-size:var(--s-karte);justify-content:center">🙋 Jemand anderen tickern lassen</button>
     <div style="font-size:var(--s-klein);color:var(--text3);margin:-6px 0 10px">Schickt einen Link per WhatsApp oder Mail. Wer ihn öffnet, sieht nur die Kinder von heute und die Aktionsknöpfe – keine Bewertungen, keine Kaderdaten. Er gilt nur, solange der Ticker läuft.</div>`:""}
     <!-- v728: Elternteil direkt in der App freischalten – Mitteilung und Zugang ohne WhatsApp -->
     <button onclick="tickerHelferOeffnen()" class="btn" style="width:100%;min-height:48px;margin-bottom:6px"><i class="ti ti-user-plus"></i>👤 Ticker-Helfer einteilen (je Team eine Person)</button>
@@ -149,7 +149,7 @@ async function tickerHelferListe(){
     if(!box)return;
     box.innerHTML=helfer.map(h=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--surface2);font-size:var(--s-text)">
         <span style="flex:1">✅ ${esc(_thName(h.email,ek))} tickert ${team>1?"Adler "+team:"heute"}</span>
-        <button onclick="tickerHelferWeg('${jsq(h.email)}')" aria-label="Freischaltung zurücknehmen" title="Freischaltung zurücknehmen" style="border:none;background:transparent;color:#b91c1c;font-size:var(--s-teil);cursor:pointer;min-width:44px;min-height:44px">✕</button></div>`).join("");
+        <button class="btn btn-sm btn-d" onclick="tickerHelferWeg('${jsq(h.email)}')" aria-label="Freischaltung zurücknehmen" title="Freischaltung zurücknehmen" style="font-size:var(--s-teil);min-width:44px;min-height:44px;justify-content:center">✕</button></div>`).join("");
   }catch(e){}
 }
 function _thName(email,ek){
@@ -191,7 +191,7 @@ async function tickerHelferOeffnen(){
   modal.style.cssText="position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.5);display:flex;align-items:flex-end;justify-content:center";
   modal.innerHTML=`<div style="background:var(--surface);width:100%;max-width:520px;max-height:85vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b style="font-size:var(--s-karte);flex:1">👤 Ticker-Helfer · ${team>1?"Adler "+team:"heute"}</b>
-      <button onclick="document.getElementById('th-modal').remove()" aria-label="Schließen" style="border:none;background:transparent;font-size:var(--s-teil);cursor:pointer;min-width:44px;min-height:44px">✕</button></div>
+      <button class="btn" onclick="document.getElementById('th-modal').remove()" aria-label="Schließen" style="font-size:var(--s-teil);min-width:44px;min-height:44px;justify-content:center">✕</button></div>
     <div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:8px">Je Team tickert genau eine Person – wer hier schon steht, wird ersetzt. Das Elternteil bekommt eine Mitteilung und sieht in der Eltern-App „Ticker bedienen“, nur für heute.</div>
     <div id="th-gemeldet" style="font-size:var(--s-text);font-weight:800;margin:4px 0 6px">🙋 Gemeldet für den Ticker</div>
     ${gemeldet.length?gemeldet.map(m=>knopf({m,n:_thName(m,ek)})).join("")
@@ -231,7 +231,7 @@ async function tickerRenderFeed(){
     const rows=await r.json();
     const zeile=e=>`<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--surface2)">
       <span style="flex:1">${e.minute?`<strong>${esc(e.minute)}</strong> `:""}${esc(e.text)}${e.source==="delegate"?' <span style="opacity:.6">(Eltern-Helfer)</span>':""}</span>
-      <button onclick="tickerDelete(${Number(e.id)},'${jsq(e.text||"")}')" title="Ticker-Eintrag löschen" aria-label="Löschen" style="border:none;background:transparent;cursor:pointer;color:#dc2626;font-size:var(--s-text);line-height:1;min-width:44px;min-height:44px;margin:-8px 0">✕</button>
+      <button class="btn btn-sm btn-d" onclick="tickerDelete(${Number(e.id)},'${jsq(e.text||"")}')" title="Ticker-Eintrag löschen" aria-label="Löschen" style="font-size:var(--s-text);line-height:1;min-width:44px;min-height:44px;margin:-8px 0;justify-content:center">✕</button>
     </div>`;
     /* v504: am Festivaltag ein Absatz je Spiel – Runde, Gegner, Feld und Stand als Kopfzeile. */
     const t=(typeof spieltagTeam!=="undefined")?spieltagTeam:1;

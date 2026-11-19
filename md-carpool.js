@@ -31,18 +31,18 @@ async function elternCarpoolRender(spielerId,terminId){
       <div style="font-size:var(--s-text);color:#475569">${frei} von ${total} Plätzen frei${mine.carpool_area?` · ${esc(mine.carpool_area)}`:""}</div>
       ${mine.carpool_note?`<div style="font-size:var(--s-text);color:#475569;margin-top:2px">📍 ${esc(mine.carpool_note)}</div>`:""}
       ${me&&me.mitfahrer&&me.mitfahrer.length?`<div style="font-size:var(--s-text);color:#475569;margin-top:4px">Mitfahrer: <b>${me.mitfahrer.map(esc).join(", ")}</b></div>`:'<div style="font-size:var(--s-text);color:var(--text3);margin-top:4px">Noch keine Mitfahrer.</div>'}
-      <button onclick="elternCarpoolReset(${spielerId},${terminId})" style="margin-top:8px;border:none;background:none;color:#dc2626;font-size:var(--s-text);cursor:pointer">Fahrangebot zurücknehmen</button>`);
+      <button class="btn btn-sm btn-d" onclick="elternCarpoolReset(${spielerId},${terminId})" style="margin-top:8px;font-size:var(--s-text);justify-content:center">Fahrangebot zurücknehmen</button>`);
   }else if(st==="passenger"){
     const drv=board.find(d=>d.driver_spieler_id===mine.carpool_driver_spieler_id);
     html+=card(`<div style="font-weight:700;margin-bottom:4px">🙋 Ihr fahrt mit</div>
       <div style="font-size:var(--s-text);color:#475569">bei <b>${drv?esc(drv.fahrer):"—"}</b>${drv&&drv.area?` · ${esc(drv.area)}`:""}</div>
       ${drv&&drv.note?`<div style="font-size:var(--s-text);color:#475569;margin-top:2px">📍 ${esc(drv.note)}</div>`:""}
-      <button onclick="elternCarpoolReset(${spielerId},${terminId})" style="margin-top:8px;border:none;background:none;color:#dc2626;font-size:var(--s-text);cursor:pointer">Abmelden</button>`);
+      <button class="btn btn-sm btn-d" onclick="elternCarpoolReset(${spielerId},${terminId})" style="margin-top:8px;font-size:var(--s-text);justify-content:center">Abmelden</button>`);
   }else{
     html+=card(`<div style="font-weight:700;margin-bottom:8px">Wie kommt ihr hin?</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button onclick="elternCarpoolDriverForm(${spielerId},${terminId})" style="flex:1;min-width:130px;padding:11px;border:none;border-radius:10px;background:#1e3a8a;color:#fff;font-weight:700;font-size:var(--s-text);cursor:pointer">🚗 Wir fahren selbst</button>
-        <button onclick="document.getElementById('carpool-search').style.display='block';this.parentNode.parentNode.style.display='none'" style="flex:1;min-width:130px;padding:11px;border:none;border-radius:10px;background:#047857;color:#fff;font-weight:700;font-size:var(--s-text);cursor:pointer">🙋 Mitfahrt suchen</button>
+        <button class="btn btn-p" onclick="elternCarpoolDriverForm(${spielerId},${terminId})" style="flex:1;min-width:130px;font-size:var(--s-text);justify-content:center">🚗 Wir fahren selbst</button>
+        <button class="btn" onclick="document.getElementById('carpool-search').style.display='block';this.parentNode.parentNode.style.display='none'" style="flex:1;min-width:130px;font-size:var(--s-text);justify-content:center">🙋 Mitfahrt suchen</button>
       </div>`);
   }
   const freeDrivers=board.filter(d=>d.driver_spieler_id!==spielerId && (d.seats-d.belegt)>0);
@@ -50,7 +50,7 @@ async function elternCarpoolRender(spielerId,terminId){
     <div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:6px 0">Freie Plätze im Team</div>
     ${freeDrivers.length?freeDrivers.map(d=>`<div style="display:flex;align-items:center;gap:8px;padding:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:6px">
       <div style="flex:1"><div style="font-weight:700;font-size:var(--s-text)">Bei ${esc(d.fahrer)}</div><div style="font-size:var(--s-klein);color:#64748b">${d.seats-d.belegt} frei${d.area?` · ${esc(d.area)}`:""}${d.note?` · 📍 ${esc(d.note)}`:""}</div></div>
-      <button onclick="elternCarpoolPassenger(${spielerId},${terminId},${d.driver_spieler_id})" style="border:none;border-radius:8px;background:#059669;color:#fff;padding:8px 12px;font-size:var(--s-text);font-weight:700;cursor:pointer">Mitfahren</button>
+      <button class="btn btn-sm" onclick="elternCarpoolPassenger(${spielerId},${terminId},${d.driver_spieler_id})" style="font-size:var(--s-text);justify-content:center">Mitfahren</button>
     </div>`).join(""):'<div style="font-size:var(--s-text);color:var(--text3)">Aktuell bietet niemand freie Plätze an.</div>'}
   </div>`;
   body.innerHTML=html;
@@ -66,8 +66,8 @@ function elternCarpoolDriverForm(spielerId,terminId){
     <label for="cp-note" style="font-size:var(--s-text);color:#475569">Notiz: Treffpunkt / Zeit (optional)</label>
     <input id="cp-note" placeholder="z. B. Treff Netto-Parkplatz 16:15" style="${inp}">
     <div style="display:flex;gap:8px;justify-content:flex-end">
-      <button onclick="elternCarpoolRender(${spielerId},${terminId})" style="border:none;background:none;color:#64748b;font-size:var(--s-text);cursor:pointer">Abbrechen</button>
-      <button onclick="elternCarpoolDriverSave(${spielerId},${terminId})" style="border:none;border-radius:8px;background:#1e3a8a;color:#fff;padding:9px 16px;font-weight:700;font-size:var(--s-text);cursor:pointer">Angebot einstellen</button>
+      <button class="btn" onclick="elternCarpoolRender(${spielerId},${terminId})" style="font-size:var(--s-text);justify-content:center">Abbrechen</button>
+      <button class="btn btn-p" onclick="elternCarpoolDriverSave(${spielerId},${terminId})" style="font-size:var(--s-text);justify-content:center">Angebot einstellen</button>
     </div>`;
 }
 async function elternCarpoolDriverSave(spielerId,terminId){

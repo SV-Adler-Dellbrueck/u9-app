@@ -131,8 +131,8 @@ function matchReportShow(text,opts){
   const bar=document.createElement("div");
   bar.style.cssText="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:12px";
   const radioBtn='speechSynthesis' in window
-    ?`<button id="adler-radio-btn" class="btn btn-sm" style="background:#7c3aed;color:#fff;border-color:#7c3aed" onclick="adlerRadioToggle(this)"><i class="ti ti-volume"></i>📻 Adler Radio</button>`:"";
-  const diaryBtn=`<button class="btn btn-sm" style="background:#0891b2;color:#fff;border-color:#0891b2" onclick="voiceDiaryOpen(typeof spieltagKey==='function'?spieltagKey():null)" title="Gedanken nach Abpfiff als Sprach-/Textnotiz festhalten"><i class="ti ti-microphone"></i>🎤 Notiz</button>`;
+    ?`<button id="adler-radio-btn" class="btn btn-sm" style="justify-content:center" onclick="adlerRadioToggle(this)"><i class="ti ti-volume"></i>📻 Adler Radio</button>`:"";
+  const diaryBtn=`<button class="btn btn-sm" style="justify-content:center" onclick="voiceDiaryOpen(typeof spieltagKey==='function'?spieltagKey():null)" title="Gedanken nach Abpfiff als Sprach-/Textnotiz festhalten"><i class="ti ti-microphone"></i>🎤 Notiz</button>`;
   bar.innerHTML=`${radioBtn}${diaryBtn}<button class="btn btn-sm" onclick="reportGenerate(true)"><i class="ti ti-refresh"></i>Neu würfeln</button>
     <button class="btn btn-p" onclick="matchReportCopy()"><i class="ti ti-copy"></i>Kopieren</button>
     <button class="btn btn-sm" onclick="adlerRadioStop();document.getElementById('report-modal').remove()">Schließen</button>`;
@@ -304,11 +304,12 @@ async function kindLoad(){
     const istTr=t.typ==="training";
     const titel=istTr?"Training":("Spiel"+(t.gegner?" gegen "+elternEsc(t.gegner):""));
     const st=t.status;
-    const btn=(status,emo,lbl,onCol)=>`<button onclick="kindRsvp(${t.id},'${status}')" style="flex:1;min-height:52px;border:2px solid ${st===status?onCol:'#cbd5e1'};border-radius:12px;background:${st===status?onCol:'#fff'};color:${st===status?'#fff':'#334155'};font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">${emo} ${lbl}</button>`;
+    /* v878: gewählt = ✓ + aria-pressed, Farbe trägt nicht allein */
+    const btn=(status,emo,lbl,onCol)=>`<button onclick="kindRsvp(${t.id},'${status}')" aria-pressed="${st===status}" style="flex:1;min-height:52px;border:2px solid ${st===status?onCol:'#cbd5e1'};border-radius:12px;background:${st===status?onCol:'#fff'};color:${st===status?'#fff':'#334155'};font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">${st===status?"✓ ":""}${emo} ${lbl}</button>`;
     return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
       <div style="font-size:var(--s-karte);font-weight:800;color:#1e293b">${istTr?"🏃 ":"⚽ "}${titel}</div>
       <div style="font-size:var(--s-text);color:#64748b;margin:2px 0 10px">${ds}${t.uhrzeit?" · "+t.uhrzeit+" Uhr":""}${t.ort?" · "+elternEsc(t.ort):""}</div>
-      <div style="display:flex;gap:8px">${btn('zugesagt','👍','Dabei','#16a34a')}${btn('abgesagt','👎','Kann nicht','#dc2626')}</div>
+      <div style="display:flex;gap:8px">${btn('zugesagt','👍','Dabei','var(--fam-training)')}${btn('abgesagt','👎','Kann nicht','#dc2626')}</div>
     </div>`;
   };
   kindRoot.innerHTML=`<div class="elt-fade">

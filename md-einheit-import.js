@@ -692,10 +692,10 @@ function vuThemenKacheln(wahl,aktiv,nurFolgen){
   return `<div class="vu-themen" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">${vuThemen().map((t,i)=>{
     if(nurFolgen&&!t.einheiten.some(v=>Number(v.folge_nr)>0))return "";
     const an=aktiv===t.frage;
-    return `<button type="button" class="vu-thema" onclick="${wahl}(${i})" aria-pressed="${an?"true":"false"}" style="display:block;width:100%;text-align:left;min-height:48px;padding:12px;border:1.5px solid ${an?"#7c3aed":"var(--rand-bedien)"};border-radius:12px;background:${an?"#7c3aed14":"var(--surface)"};color:var(--text);font-family:inherit;cursor:pointer">
+    return `<button type="button" class="vu-thema" onclick="${wahl}(${i})" aria-pressed="${an?"true":"false"}" style="display:block;width:100%;text-align:left;min-height:48px;padding:12px;border:${an?"2px solid var(--blue)":"1.5px solid var(--rand-bedien)"};border-radius:12px;background:${an?"var(--blue-bg)":"var(--surface)"};color:var(--text);font-family:inherit;cursor:pointer">
       <div style="display:flex;gap:8px;align-items:baseline">${t.kuerzel?`<span style="font-size:var(--s-klein);font-weight:900;color:#fff;background:#7c3aed;border-radius:6px;padding:2px 7px">${esc(t.kuerzel)}</span>`:""}
         <span style="font-size:var(--s-klein);color:var(--text2)">${t.einheiten.length} Einheit${t.einheiten.length===1?"":"en"}</span></div>
-      <div style="font-size:var(--s-text);font-weight:800;margin-top:6px;line-height:1.35">${esc(t.frage)}</div>
+      <div style="font-size:var(--s-text);font-weight:800;margin-top:6px;line-height:1.35">${an?"✓ ":""}${esc(t.frage)}</div>
       <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px;line-height:1.45">${t.einheiten.map(v=>esc(vuKurztitel(v.name))).join(" · ")}</div>
     </button>`; }).join("")}</div>`;
 }
@@ -719,7 +719,8 @@ function vorlageUebernehmenRender(opt){
   /* v550: Nur Ordnungen zeigen, die wirklich vorkommen – eine Reihe leerer Kacheln
      verspricht eine Auswahl, hinter der nichts steht. Reihenfolge wie EI_ORDNUNGEN. */
   const ordnungen=EI_ORDNUNGEN.filter(x=>VORLAGEN.some(v=>String(v.ordnung||"")===x));
-  const chip=(an,lbl,fn)=>`<button onclick="${fn}" aria-pressed="${an?"true":"false"}" style="min-height:48px;padding:6px 14px;border:1.5px solid ${an?"#7c3aed":"var(--rand-bedien)"};border-radius:24px;font-family:inherit;font-size:var(--s-text);font-weight:${an?"800":"600"};cursor:pointer;background:${an?"#7c3aed":"var(--surface)"};color:${an?"#fff":"var(--text2)"};text-align:left">${esc(lbl)}</button>`;
+  /* v878: gewählt = kräftiger blauer Rand + ✓ (aria-pressed) statt Lila-Fläche – Farbe trägt nicht allein */
+  const chip=(an,lbl,fn)=>`<button onclick="${fn}" aria-pressed="${an?"true":"false"}" style="min-height:48px;padding:6px 14px;border:${an?"2px solid var(--blue)":"1.5px solid var(--rand-bedien)"};border-radius:24px;font-family:inherit;font-size:var(--s-text);font-weight:${an?"800":"600"};cursor:pointer;background:${an?"var(--blue-bg)":"var(--surface)"};color:var(--text);text-align:left">${an?"✓ ":""}${esc(lbl)}</button>`;
   const treffer=VORLAGEN.filter(_vuPasst);
   const gewaehlt=VORLAGEN.find(v=>String(v.id)===String(_vuAuswahl))||null;
   /* v576: Die Leitfrage steht als Überschrift über ihrer Gruppe, nicht mehr in jeder Karte –
@@ -734,8 +735,8 @@ function vorlageUebernehmenRender(opt){
     const marken=[];
     if(v.ordnung)marken.push(esc(v.ordnung));
     (Array.isArray(v.tags)?v.tags:[]).forEach(t=>marken.push(esc(vuTagLabel(t))));
-    return `<button onclick="vuWaehlen('${esc(String(v.id))}')" aria-pressed="${an?"true":"false"}" style="display:block;width:100%;text-align:left;min-height:48px;padding:10px 12px;margin-bottom:6px;border:1.5px solid ${an?"#7c3aed":"var(--rand-bedien)"};border-radius:12px;background:${an?"#7c3aed14":"var(--surface)"};color:var(--text);font-family:inherit;cursor:pointer">
-      <div style="font-size:var(--s-text);font-weight:800">${esc(v.name)}</div>
+    return `<button onclick="vuWaehlen('${esc(String(v.id))}')" aria-pressed="${an?"true":"false"}" style="display:block;width:100%;text-align:left;min-height:48px;padding:10px 12px;margin-bottom:6px;border:${an?"2px solid var(--blue)":"1.5px solid var(--rand-bedien)"};border-radius:12px;background:${an?"var(--blue-bg)":"var(--surface)"};color:var(--text);font-family:inherit;cursor:pointer">
+      <div style="font-size:var(--s-text);font-weight:800">${an?"✓ ":""}${esc(v.name)}</div>
       ${v.ziel_kinder?`<div style="font-size:var(--s-klein);color:var(--text);margin-top:4px;line-height:1.45">⚽ ${esc(v.ziel_kinder)}</div>`:""}
       <div style="font-size:var(--s-klein);color:var(--text3);margin-top:3px">${meta.join(" · ")}</div>
       ${marken.length?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px">${marken.map(x=>`<span style="font-size:var(--s-klein);color:var(--text2);background:var(--surface2);border-radius:6px;padding:2px 7px">${x}</span>`).join("")}</div>`:""}
@@ -803,7 +804,7 @@ function vorlageUebernehmenRender(opt){
     <input id="vu-suche" type="text" value="${esc(_vuFilter.suche||"")}" placeholder="Suchen – Name oder Leitfrage" aria-label="Vorlagen durchsuchen"
       oninput="clearTimeout(window._vuDeb);window._vuDeb=setTimeout(()=>vuSucheSetzen(this.value),160)"
       style="width:100%;box-sizing:border-box;min-height:48px;padding:10px 12px;border:1px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-karte);background:var(--surface2);color:var(--text)">
-    <button onclick="vuFilterAuf()" aria-expanded="${_vuFilterOffen?"true":"false"}" style="width:100%;min-height:48px;margin-top:6px;display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid ${aktiv?"#7c3aed":"var(--rand-bedien)"};border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);cursor:pointer;text-align:left">
+    <button class="btn btn-zeile" onclick="vuFilterAuf()" aria-expanded="${_vuFilterOffen?"true":"false"}" style="margin-top:6px;gap:8px;font-size:var(--s-text)">
       <span>🔎</span>
       <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${aktiv?`<b>${esc(filterText)}</b>`:"Filtern nach Leitfrage, Ordnung, Rahmen"}</span>
       <span style="color:var(--text3)">${_vuFilterOffen?"▲":"▼"}</span>
@@ -1088,7 +1089,8 @@ function vorlagenAnsichtRender(){
   liste.slice().sort((a,b)=>String(a.leitfrage||"").localeCompare(String(b.leitfrage||""))||((a.folge_nr||0)-(b.folge_nr||0)))
     .forEach(v=>{ const f=String(v.leitfrage||"ohne Leitfrage");
       const g=gruppen.find(x=>x.f===f); if(g)g.rows.push(v); else gruppen.push({f,rows:[v]}); });
-  const chip=(an,txt,fn)=>`<button onclick="${fn}" aria-pressed="${an}" style="min-height:48px;text-align:left;border:1px solid ${an?"#7c3aed":"var(--rand-bedien)"};${an?"background:#7c3aed;color:#fff;":"background:var(--surface2);color:var(--text);"}border-radius:10px;padding:9px 11px;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">${esc(txt)}</button>`;
+  /* v878: gewählt = kräftiger blauer Rand + ✓ (aria-pressed) statt Lila-Fläche */
+  const chip=(an,txt,fn)=>`<button onclick="${fn}" aria-pressed="${an}" style="min-height:48px;text-align:left;border:${an?"2px solid var(--blue)":"1px solid var(--rand-bedien)"};${an?"background:var(--blue-bg);":"background:var(--surface2);"}color:var(--text);border-radius:10px;padding:9px 11px;font-family:inherit;font-size:var(--s-text);font-weight:${an?800:700};cursor:pointer">${an?"✓ ":""}${esc(txt)}</button>`;
   const karte=v=>{
     const bl=Array.isArray(v.bloecke)?v.bloecke:[];
     const summe=bl.reduce((a,b)=>a+(Number(b.dauer)||0),0);

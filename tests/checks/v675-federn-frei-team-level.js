@@ -34,7 +34,7 @@ module.exports = async function (h) {
     federnVergebenOpen(); await w(50);
     const m = document.getElementById("fv-modal");
     out.dialog = m.getAttribute("role");
-    out.team = [...m.querySelectorAll(".fv-art")].map(b => b.textContent.trim() + "/" + b.getAttribute("aria-pressed"));
+    out.team = [...m.querySelectorAll(".fv-art")].map(b => b.textContent.trim().replace(/^✓ /, "") + "/" + b.getAttribute("aria-pressed"));   // v878: der gewählte trägt ✓ (Zeichen außer Farbe)
     out.hoehe = Math.round(document.getElementById("fv-los").getBoundingClientRect().height);
     setz(20, "Super Einsatz beim Turnier");
     await federnVergebenLos(document.getElementById("fv-los")); await w(100);

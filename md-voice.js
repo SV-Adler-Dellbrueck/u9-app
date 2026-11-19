@@ -147,7 +147,7 @@ async function vdListLoad(){
   const fmt=d=>{const t=new Date(d);return t.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})+" "+t.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});};
   box.innerHTML=rows.map(n=>`<div style="display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--surface2)">
     <div style="flex:1"><div style="font-size:var(--s-text);line-height:1.45">${esc(n.text)}</div><div style="font-size:var(--s-klein);color:var(--text3);margin-top:2px">${fmt(n.created_at)}${n.datum?" · Spieltag "+esc(n.datum):""}</div></div>
-    <button onclick="vdDelete(${n.id})" aria-label="Notiz löschen" style="border:none;background:transparent;color:#dc2626;cursor:pointer;min-width:32px;min-height:32px"><i class="ti ti-trash"></i></button>
+    <button class="btn btn-sm btn-d" onclick="vdDelete(${n.id})" aria-label="Notiz löschen" style="min-width:44px;justify-content:center"><i class="ti ti-trash"></i></button>
   </div>`).join("");
 }
 async function vdSave(datum){
@@ -199,7 +199,7 @@ function atRender(){
   if(!box)return;
   box.innerHTML=`
     <div id="quest-strip" style="position:relative;overflow:hidden;background:var(--surface);border:var(--border-s);border-radius:12px;padding:10px 12px;margin-bottom:12px">${questStripHTML(questCountsAll())}</div>
-    <button onclick="atLiveOpen()" style="width:100%;min-height:64px;margin-bottom:10px;border:none;border-radius:14px;background:linear-gradient(135deg,#0369a1,#1d4ed8);color:#fff;font-size:var(--s-teil);font-weight:800;font-family:inherit;cursor:pointer">⚡ Live-Aktion starten (Vollbild)</button>
+    <button class="btn" onclick="atLiveOpen()" style="width:100%;min-height:64px;margin-bottom:10px;font-size:var(--s-teil);justify-content:center">⚡ Live-Aktion starten (Vollbild)</button>
     ${voiceSupported?`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
       <button id="voice-btn" class="btn btn-sm" onclick="voiceToggle()"><i class="ti ti-microphone"></i>Voice<span style="font-size:var(--s-klein);background:#b45309;color:#fff;padding:1px 5px;border-radius:8px;margin-left:5px">Beta</span></button>
       <span style="font-size:var(--s-klein);color:var(--text3);flex:1;min-width:140px">Sag z. B. „Pass“ und den Namen – du bestätigst vor dem Senden. Braucht Netz &amp; Ruhe.</span>

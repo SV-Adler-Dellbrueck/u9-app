@@ -137,7 +137,7 @@ function questStripHTML(counts){
   }).join("");
   return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
       <span style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text3);flex:1">🏆 Team-Quests heute${questTeams()>1?` · alle ${questTeams()} Teams zusammen`:""}</span>
-      <button type="button" onclick="questEditorOpen()" style="min-height:44px;padding:0 10px;border:none;background:transparent;color:var(--blue-text);font-size:var(--s-klein);cursor:pointer;font-family:inherit;text-decoration:underline">anpassen</button>
+      <button class="btn btn-link" type="button" onclick="questEditorOpen()" style="min-height:44px;font-size:var(--s-klein)">anpassen</button>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:10px">${items}</div>
     ${teamBelohnung?`<div style="margin-top:8px;font-size:var(--s-klein);color:var(--text2)">🎁 Belohnung: <strong>${esc(teamBelohnung)}</strong></div>`:""}`;
@@ -283,7 +283,7 @@ function qeRenderList(){
     <input data-i="${i}" data-f="label" value="${esc(q.label||"")}" placeholder="Name" style="flex:1 1 calc(100% - 44px);min-width:0;min-height:44px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text)">
     <select data-i="${i}" data-f="key" style="flex:1;min-width:0;min-height:44px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text)">${QUEST_KEYS.map(k=>`<option value="${k.key}"${k.key===q.key?" selected":""}>${k.label}</option>`).join("")}</select>
     <input data-i="${i}" data-f="target" type="number" min="1" value="${q.target||10}" title="Ziel" aria-label="Ziel" style="width:60px;min-height:44px;padding:7px;border:1px solid var(--rand-bedien);border-radius:6px;font-family:inherit;font-size:var(--s-text)">
-    <button onclick="qeDelQuest(${i})" title="Löschen" aria-label="Quest löschen" style="min-width:44px;min-height:44px;border:none;background:transparent;color:#dc2626;cursor:pointer;font-size:var(--s-karte)">🗑</button>
+    <button class="btn btn-sm btn-d" onclick="qeDelQuest(${i})" title="Löschen" aria-label="Quest löschen" style="min-width:44px;min-height:44px;font-size:var(--s-karte);justify-content:center">🗑</button>
   </div>`).join("")||'<div style="font-size:var(--s-text);color:var(--text3);padding:6px">Noch keine Quests – füge eine hinzu.</div>';
 }
 function qeAddQuest(){ qeSyncFromInputs(); qeDraft.push({key:"pass",icon:"🏆",label:"Neue Quest",target:10}); qeRenderList(); }
@@ -322,7 +322,8 @@ function federnVergebenOpen(){
   m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label",XP_LABEL+" vergeben");
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10002;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
   m.onclick=e=>{if(e.target===m)m.remove();};
-  const art=(an,txt,on)=>`<button type="button" class="fv-art" onclick="${on}" aria-pressed="${an}" style="flex:1;min-height:48px;border:1.5px solid ${an?"#7c3aed":"var(--rand-bedien)"};border-radius:12px;background:${an?"#7c3aed":"var(--surface)"};color:${an?"#fff":"var(--text)"};font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">${txt}</button>`;
+  /* v878: gewählt = kräftiger blauer Rand + ✓ (aria-pressed) statt Lila-Fläche */
+  const art=(an,txt,on)=>`<button type="button" class="fv-art" onclick="${on}" aria-pressed="${an}" style="flex:1;min-height:48px;border:${an?"2px solid var(--blue)":"1.5px solid var(--rand-bedien)"};border-radius:12px;background:${an?"var(--blue-bg)":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:${an?800:700};cursor:pointer">${an?"✓ ":""}${txt}</button>`;
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:460px;width:100%;margin:auto">
     ${mdlHead("fv-modal",XP_ICON,XP_LABEL+" vergeben","Ans ganze Team oder an einzelne Kinder","#7c3aed")}
     <label for="fv-anzahl" style="display:block;font-size:var(--s-klein);color:var(--text2)">${XP_LABEL} je Kind (1 bis 100)</label>

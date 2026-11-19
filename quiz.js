@@ -221,7 +221,7 @@ function tqResetProgress(){
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn btn-sm" onclick="this.closest('div[style*=fixed]').remove()">Abbrechen</button>
-      <button class="btn btn-sm" style="background:#dc2626;color:white;border-color:#dc2626" onclick="tqDoReset(this.closest('div[style*=fixed]'))"><i class="ti ti-trash"></i>Löschen</button>
+      <button class="btn btn-sm btn-d" onclick="tqDoReset(this.closest('div[style*=fixed]'))"><i class="ti ti-trash"></i>Löschen</button>
     </div>
   </div>`;
   document.body.appendChild(modal);
@@ -471,7 +471,7 @@ function tqStart(){
       <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px">Wähle ein Quiz!</div>`;
     // Nur bei Geschwistern: ein dezenter Weg zurück zur Namenswahl.
     if(TQ_EIGENE_KINDER&&TQ_EIGENE_KINDER.length>1)
-      html+=`<button onclick="tqVergissKind()" style="border:none;background:none;color:var(--text3);font-size:11px;text-decoration:underline;cursor:pointer;padding:0 0 8px">Nicht ${esc(tqPlayer)}? Name ändern</button>`;
+      html+=`<button onclick="tqVergissKind()" style="border:none;background:none;color:var(--text3);font-size:11px;text-decoration:underline;cursor:pointer;padding:0 0 8px;min-height:44px">Nicht ${esc(tqPlayer)}? Name ändern</button>`;
     else html+=`<div style="margin-bottom:8px"></div>`;
     html+=tqRenderTaktikLauncher(pp); // Taktik-Quiz hinter Button (aufgeräumt, wie das Wissensquiz)
     html+=wqRenderLauncher();         // Fußball-Wissensquiz
