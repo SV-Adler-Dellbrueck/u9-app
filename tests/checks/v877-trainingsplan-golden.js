@@ -278,7 +278,7 @@ const SZENARIEN = [
     ] },
 
   { id: "G5-oeffnen-aus-der-db", titel: "Öffnen aus der Datenbank: Altbestand, Speichern; Termin A mit Plan, dann Termin B ohne Plan",
-    haelt: "Fehlerbild 5 – gespeicherte Einträge, die nicht (mehr) passen, gehen beim Öffnen still verloren und fehlen beim nächsten Speichern: die Übung vom falschen Typ fällt weg, die Dublette rutscht ins nächste freie Feld desselben Blocks; alte `durchgaenge` binden Hauptteil 2 als Durchgang an und ersetzen dessen Übung (alleFelder) durch die des Kopfes (v621). Öffnen selbst schreibt nichts. Fehlerbild 6 – ein Termin ohne Plan übernimmt die Struktur des zuvor geöffneten und speichert sie bei der ersten Änderung (Charles 19.11.: künftig Grundgerüst – Behebung in Schritt 9).",
+    haelt: "Fehlerbild 5 – gespeicherte Einträge, die nicht (mehr) passen, gehen beim Öffnen still verloren und fehlen beim nächsten Speichern: die Übung vom falschen Typ fällt weg, die Dublette rutscht ins nächste freie Feld desselben Blocks; alte `durchgaenge` binden Hauptteil 2 als Durchgang an und ersetzen dessen Übung (alleFelder) durch die des Kopfes (v621). Öffnen selbst schreibt nichts. Fehlerbild 6 – behoben in v892: ein Termin ohne Plan startet mit dem Grundgerüst (vorher übernahm er die Struktur samt Trainern, Haken und Kind des zuvor geöffneten und speicherte sie bei der ersten Änderung).",
     db: null,         // wird unten aus dem Altbestand gesetzt
     schritte: [
       ["Termin A öffnen (Altbestand)", p => p.evaluate(async d => {

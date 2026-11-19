@@ -1730,8 +1730,8 @@ function _tpTwKindAufDom(){
 const _tpTwSoll=(l,name)=>l===undefined||l.includes(name);
 /* Gespeicherte Slots → tw/kind (index: gespeicherter Block → heutiger Index). Ohne Seite: ein Haken
    gilt nur am Torwart-Block, ein Kind nur am Einzelblock und nur, wenn es (aktiv) im Kader steht –
-   dieselben Bedingungen wie früher die vorhandenen Haken bzw. Optionen. Was nicht gespeichert ist,
-   bleibt, wie es war (Fehlerbild 6, behoben erst ab Schritt 9). */
+   dieselben Bedingungen wie früher die vorhandenen Haken bzw. Optionen. v892: tpZustandLaden leert
+   tw/kind vorher – was nicht gespeichert ist, gilt als Vorgabe (Fehlerbild 6 behoben). */
 function _tpTwKindLaden(slots,index){
   (slots||[]).forEach((s,si0)=>{
     const si=index?index[si0]:si0; if(si==null||!tpSlots[si])return;
@@ -4495,15 +4495,18 @@ async function tpPlanLoad(datum){
 }
 /* Eigene Funktion statt einer Erweiterung von tpPlanLoad: vier Stellen erwarten dort
    ein Uebungs-Array (Einheit bewerten, Eltern-Info, Sprachlob, Vorplanung). */
+/* v892: false = nicht lesbar (ohne Anmeldung, Fehler, kein Netz) – dann bleibt die Seite, wie sie
+   ist; null = gelesen, aber keine Struktur gespeichert (kein Plan oder Altbestand) – dann gilt das
+   Grundgerüst. */
 async function tpSlotsLoad(datum){
-  if(!sbToken())return null;
+  if(!sbToken())return false;
   try{
     const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?datum=eq.${encodeURIComponent(datum)}&select=slots`,{headers:sbAuthHeaders()});
-    if(sbCheck401(r)||!r.ok)return null;
+    if(sbCheck401(r)||!r.ok)return false;
     const rows=await r.json();
     const sl=rows[0]&&rows[0].slots;
     return (Array.isArray(sl)&&sl.length)?sl:null;   // Altbestand ohne Struktur: null
-  }catch(e){return null;}
+  }catch(e){return false;}
 }
 /* Weg B (Bucket-List, jetzt gebaut): den gespeicherten Plan beim Öffnen/Terminwechsel
    wieder in die Übungs-Dropdowns laden. Damit sind Übungen FEST pro Termin vorgemerkt
@@ -4697,6 +4700,7 @@ async function tpPlanRestore(datum){
 }
 /* Gilt dieser Lauf noch? Wer schnell von A nach B tippt, startet zwei Läufe; der ältere
    darf nach seinem Warten nichts mehr zeichnen – sonst stünde die Struktur von A unter B. */
+let _tpStrukturDatum=null;   // v892: Termin, dessen Struktur gerade auf der Seite steht
 function _tpRestoreGilt(datum,lauf){ return lauf===_tpRestoreLauf&&(document.getElementById("tp-date")?.value||datum)===datum; }
 async function _tpPlanRestoreIntern(datum,lauf){
   /* v542: Den Stand merken, der beim Öffnen galt. Nur dagegen kann tpPlanSave später
@@ -4722,8 +4726,19 @@ async function _tpPlanRestoreIntern(datum,lauf){
        Zeichnen liest tpCoaches und rechnet daraus die Felder. Alte `durchgaenge` werden dabei zur
        Kette (bisher ein setTimeout aus dem Zeichnen, der während des Ladens unten lief). */
     const info=tpZustandLaden(slots);   // v886: samt Torwart-Haken und Einzelkind
+    _tpStrukturDatum=datum;
     tpRenderTimeline();
     if(typeof toast==="function")info.meldungen.forEach(m=>toast(m));
+  }else if(slots===null&&_tpStrukturDatum!==datum){
+    /* v892 (Fehlerbild 6, Charles 19.11.): Ein Termin ohne gespeicherte Struktur startet mit dem
+       Grundgerüst – nicht mit Blöcken, Trainern, Torhütern, Kind und Übungen des zuvor geöffneten
+       Termins (die bei der ersten Änderung hier gespeichert worden wären). Altpläne ohne Struktur
+       hängen ohnehin an den Namen des Grundgerüsts. Nur beim Wechsel des Termins: öffnet derselbe
+       Termin neu (Gruppen fertig, Tab erneut), bleibt die Struktur, an der gerade geplant wird. */
+    _tpStrukturDatum=datum;
+    Object.keys(TP_ZUSTAND.wahl).forEach(k=>delete TP_ZUSTAND.wahl[k]);
+    tpZustandLaden(TP_PHASEN.map(s=>({...s})));
+    tpRenderTimeline();
   }
   const plan=await tpPlanLoad(datum);
   if(!_tpRestoreGilt(datum,lauf))return;
@@ -4732,7 +4747,8 @@ async function _tpPlanRestoreIntern(datum,lauf){
 }
 /* ═══ v884 · 4.8 Schritt 5 – ÖFFNEN ÜBER DEN ZUSTAND ═══════════════════════════════════════
    tpZustandLaden(slots, plan) – rein: kein DOM, kein Zeichnen, kein Speichern.
-   slots (gespeicherte Struktur oder null = Struktur bleibt, Fehlerbild 6): setzt tpSlots und
+   slots (gespeicherte Struktur oder null = Struktur bleibt; v892: ein Termin ohne Struktur ruft es mit
+     dem Grundgerüst TP_PHASEN): setzt tpSlots und
      tpCoaches (Feld-Trainer, Trainer am Torwart-/Einzelblock), ordnet parallele Blöcke und
      Namen wie das Zeichnen und macht alte `durchgaenge` zur Kette (v621).
    plan (gespeicherte Einträge; undefined = Wahl noch nicht laden): setzt TP_ZUSTAND.wahl.
@@ -4769,6 +4785,7 @@ function tpZustandLaden(slots,plan){
       if(r.neu)out.meldungen.push(`${r.neu===1?"Ein Hauptteil":r.neu+" Hauptteile"} als Durchgang angelegt – die Einheit dauert jetzt ${nachher} statt ${vorher} Min.`);
       else if(r.weg)out.meldungen.push(`Durchgang entfernt – die Einheit dauert jetzt ${nachher} Min.`);
     }
+    TP_ZUSTAND.tw={}; TP_ZUSTAND.kind={};   // v892: nichts vom zuvor geöffneten Termin (Fehlerbild 6)
     _tpTwKindLaden(slots,out.index);   // v886: Torwart-Haken und Einzelkind (vorher nach dem Zeichnen im DOM)
   }
   if(plan===undefined)return out;
