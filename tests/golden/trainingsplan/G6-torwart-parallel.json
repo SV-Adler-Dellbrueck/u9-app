@@ -1,0 +1,695 @@
+{
+ "szenario": "Torwart-Block parallel: anlegen, parallelZu, Haken ab, Trainer, Einzeltraining mit Kind",
+ "haelt_fest": "Fehlerbild 7 (Nebenbefund) – Block anlegen, „läuft parallel zu“, Torwart-Haken und Einzelkind speichern nicht von selbst; erst tpPlanSave(true) schreibt sie. Behebung in Schritt 9.",
+ "schritte": [
+  {
+   "schritt": "Training füllen",
+   "gesendet": [
+    {
+     "methode": "POST",
+     "suche": "?on_conflict=datum",
+     "body": {
+      "datum": "2030-03-05",
+      "plan": [
+       {
+        "formIdx": 107,
+        "formName": "Warm up Adler",
+        "trainer": "Alle",
+        "slotLabel": "Aufwärmen",
+        "key": "107-Alle",
+        "block": 1,
+        "feld": 0
+       },
+       {
+        "formIdx": 132,
+        "formName": "FUNiño 2 gegen 2 – einer drängt, einer schützt",
+        "trainer": "Charles",
+        "slotLabel": "Hauptteil 1",
+        "key": "132-Charles",
+        "block": 2,
+        "feld": 0
+       },
+       {
+        "formIdx": 39,
+        "formName": "Pressing-Welle 2gg2",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 1",
+        "key": "39-Finn",
+        "block": 2,
+        "feld": 1
+       },
+       {
+        "formIdx": 138,
+        "formName": "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor",
+        "trainer": "Kenneth",
+        "slotLabel": "Hauptteil 1",
+        "key": "138-Kenneth",
+        "block": 2,
+        "feld": 2
+       },
+       {
+        "formIdx": 132,
+        "formName": "FUNiño 2 gegen 2 – einer drängt, einer schützt",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 2",
+        "key": "132-Finn",
+        "block": 3,
+        "feld": 0
+       },
+       {
+        "formIdx": 39,
+        "formName": "Pressing-Welle 2gg2",
+        "trainer": "Kenneth",
+        "slotLabel": "Hauptteil 2",
+        "key": "39-Kenneth",
+        "block": 3,
+        "feld": 1
+       },
+       {
+        "formIdx": 138,
+        "formName": "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor",
+        "trainer": "Charles",
+        "slotLabel": "Hauptteil 2",
+        "key": "138-Charles",
+        "block": 3,
+        "feld": 2
+       },
+       {
+        "formIdx": 132,
+        "formName": "FUNiño 2 gegen 2 – einer drängt, einer schützt",
+        "trainer": "Kenneth",
+        "slotLabel": "Hauptteil 3",
+        "key": "132-Kenneth",
+        "block": 4,
+        "feld": 0
+       },
+       {
+        "formIdx": 39,
+        "formName": "Pressing-Welle 2gg2",
+        "trainer": "Charles",
+        "slotLabel": "Hauptteil 3",
+        "key": "39-Charles",
+        "block": 4,
+        "feld": 1
+       },
+       {
+        "formIdx": 138,
+        "formName": "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 3",
+        "key": "138-Finn",
+        "block": 4,
+        "feld": 2
+       }
+      ],
+      "slots": [
+       {
+        "label": "Straßenfußball-Fenster",
+        "dauer": 10,
+        "farbe": "#059669",
+        "typ": "warmup"
+       },
+       {
+        "label": "Aufwärmen",
+        "dauer": 8,
+        "farbe": "#059669",
+        "typ": "warmup"
+       },
+       {
+        "label": "Hauptteil 1",
+        "dauer": 12,
+        "farbe": "#1a56db",
+        "typ": "main",
+        "coaches": [
+         "Charles",
+         "Finn",
+         "Kenneth"
+        ]
+       },
+       {
+        "label": "Hauptteil 2",
+        "dauer": 11,
+        "farbe": "#7c3aed",
+        "typ": "main",
+        "regel": "Lobpflicht nach Tor",
+        "coaches": [
+         "Finn",
+         "Kenneth",
+         "Charles"
+        ]
+       },
+       {
+        "label": "Hauptteil 3",
+        "dauer": 11,
+        "farbe": "#0e7490",
+        "typ": "main",
+        "coaches": [
+         "Kenneth",
+         "Charles",
+         "Finn"
+        ]
+       },
+       {
+        "label": "Abschlussspiel",
+        "dauer": 18,
+        "farbe": "#c2410c",
+        "typ": "abschluss"
+       }
+      ],
+      "gespeichert_von": "<gespeichert_von>",
+      "updated_at": "<updated_at>"
+     }
+    }
+   ]
+  },
+  {
+   "schritt": "Torwart-Block anlegen, parallel zu Hauptteil 1, Kind B abwählen",
+   "gesendet": [],
+   "dom": {
+    "tw": 6,
+    "parallelZu": 2,
+    "haken": [
+     "Kind A:true",
+     "Kind B:false"
+    ]
+   }
+  },
+  {
+   "schritt": "Trainer an den Torwart-Block",
+   "gesendet": [
+    {
+     "methode": "POST",
+     "suche": "?on_conflict=datum",
+     "body": {
+      "datum": "2030-03-05",
+      "plan": [
+       {
+        "formIdx": 107,
+        "formName": "Warm up Adler",
+        "trainer": "Alle",
+        "slotLabel": "Aufwärmen",
+        "key": "107-Alle",
+        "block": 1,
+        "feld": 0
+       },
+       {
+        "formIdx": 132,
+        "formName": "FUNiño 2 gegen 2 – einer drängt, einer schützt",
+        "trainer": "Charles",
+        "slotLabel": "Hauptteil 1",
+        "key": "132-Charles",
+        "block": 2,
+        "feld": 0
+       },
+       {
+        "formIdx": 39,
+        "formName": "Pressing-Welle 2gg2",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 1",
+        "key": "39-Finn",
+        "block": 2,
+        "feld": 1
+       },
+       {
+        "formIdx": 132,
+        "formName": "FUNiño 2 gegen 2 – einer drängt, einer schützt",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 2",
+        "key": "132-Finn",
+        "block": 3,
+        "feld": 0
+       },
+       {
+        "formIdx": 39,
+        "formName": "Pressing-Welle 2gg2",
+        "trainer": "Kenneth",
+        "slotLabel": "Hauptteil 2",
+        "key": "39-Kenneth",
+        "block": 3,
+        "feld": 1
+       },
+       {
+        "formIdx": 138,
+        "formName": "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor",
+        "trainer": "Charles",
+        "slotLabel": "Hauptteil 2",
+        "key": "138-Charles",
+        "block": 3,
+        "feld": 2
+       },
+       {
+        "formIdx": 132,
+        "formName": "FUNiño 2 gegen 2 – einer drängt, einer schützt",
+        "trainer": "Kenneth",
+        "slotLabel": "Hauptteil 3",
+        "key": "132-Kenneth",
+        "block": 4,
+        "feld": 0
+       },
+       {
+        "formIdx": 39,
+        "formName": "Pressing-Welle 2gg2",
+        "trainer": "Charles",
+        "slotLabel": "Hauptteil 3",
+        "key": "39-Charles",
+        "block": 4,
+        "feld": 1
+       },
+       {
+        "formIdx": 138,
+        "formName": "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 3",
+        "key": "138-Finn",
+        "block": 4,
+        "feld": 2
+       }
+      ],
+      "slots": [
+       {
+        "label": "Straßenfußball-Fenster",
+        "dauer": 10,
+        "farbe": "#059669",
+        "typ": "warmup"
+       },
+       {
+        "label": "Aufwärmen",
+        "dauer": 8,
+        "farbe": "#059669",
+        "typ": "warmup"
+       },
+       {
+        "label": "Hauptteil 1",
+        "dauer": 12,
+        "farbe": "#1a56db",
+        "typ": "main",
+        "coaches": [
+         "Charles",
+         "Finn"
+        ]
+       },
+       {
+        "label": "Hauptteil 2",
+        "dauer": 11,
+        "farbe": "#7c3aed",
+        "typ": "main",
+        "regel": "Lobpflicht nach Tor",
+        "coaches": [
+         "Finn",
+         "Kenneth",
+         "Charles"
+        ]
+       },
+       {
+        "label": "Hauptteil 3",
+        "dauer": 11,
+        "farbe": "#0e7490",
+        "typ": "main",
+        "coaches": [
+         "Kenneth",
+         "Charles",
+         "Finn"
+        ]
+       },
+       {
+        "label": "Abschlussspiel",
+        "dauer": 18,
+        "farbe": "#c2410c",
+        "typ": "abschluss"
+       },
+       {
+        "label": "Torwart-Spielen (rotierend)",
+        "dauer": 12,
+        "farbe": "#854d0e",
+        "typ": "tw",
+        "parallelZu": 2,
+        "trainer": "Kenneth",
+        "tw": [
+         1
+        ]
+       }
+      ],
+      "gespeichert_von": "<gespeichert_von>",
+      "updated_at": "<updated_at>"
+     }
+    }
+   ]
+  },
+  {
+   "schritt": "Torwart-Übung wählen",
+   "gesendet": [
+    {
+     "methode": "POST",
+     "suche": "?on_conflict=datum",
+     "body": {
+      "datum": "2030-03-05",
+      "plan": [
+       {
+        "formIdx": 107,
+        "formName": "Warm up Adler",
+        "trainer": "Alle",
+        "slotLabel": "Aufwärmen",
+        "key": "107-Alle",
+        "block": 1,
+        "feld": 0
+       },
+       {
+        "formIdx": 132,
+        "formName": "FUNiño 2 gegen 2 – einer drängt, einer schützt",
+        "trainer": "Charles",
+        "slotLabel": "Hauptteil 1",
+        "key": "132-Charles",
+        "block": 2,
+        "feld": 0
+       },
+       {
+        "formIdx": 39,
+        "formName": "Pressing-Welle 2gg2",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 1",
+        "key": "39-Finn",
+        "block": 2,
+        "feld": 1
+       },
+       {
+        "formIdx": 62,
+        "formName": "Fang-Stern",
+        "trainer": "Alle",
+        "slotLabel": "Torwart-Spielen (rotierend)",
+        "key": "62-Alle",
+        "block": 6,
+        "feld": 0
+       },
+       {
+        "formIdx": 132,
+        "formName": "FUNiño 2 gegen 2 – einer drängt, einer schützt",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 2",
+        "key": "132-Finn",
+        "block": 3,
+        "feld": 0
+       },
+       {
+        "formIdx": 39,
+        "formName": "Pressing-Welle 2gg2",
+        "trainer": "Kenneth",
+        "slotLabel": "Hauptteil 2",
+        "key": "39-Kenneth",
+        "block": 3,
+        "feld": 1
+       },
+       {
+        "formIdx": 138,
+        "formName": "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor",
+        "trainer": "Charles",
+        "slotLabel": "Hauptteil 2",
+        "key": "138-Charles",
+        "block": 3,
+        "feld": 2
+       },
+       {
+        "formIdx": 132,
+        "formName": "FUNiño 2 gegen 2 – einer drängt, einer schützt",
+        "trainer": "Kenneth",
+        "slotLabel": "Hauptteil 3",
+        "key": "132-Kenneth",
+        "block": 4,
+        "feld": 0
+       },
+       {
+        "formIdx": 39,
+        "formName": "Pressing-Welle 2gg2",
+        "trainer": "Charles",
+        "slotLabel": "Hauptteil 3",
+        "key": "39-Charles",
+        "block": 4,
+        "feld": 1
+       },
+       {
+        "formIdx": 138,
+        "formName": "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 3",
+        "key": "138-Finn",
+        "block": 4,
+        "feld": 2
+       }
+      ],
+      "slots": [
+       {
+        "label": "Straßenfußball-Fenster",
+        "dauer": 10,
+        "farbe": "#059669",
+        "typ": "warmup"
+       },
+       {
+        "label": "Aufwärmen",
+        "dauer": 8,
+        "farbe": "#059669",
+        "typ": "warmup"
+       },
+       {
+        "label": "Hauptteil 1",
+        "dauer": 12,
+        "farbe": "#1a56db",
+        "typ": "main",
+        "coaches": [
+         "Charles",
+         "Finn"
+        ]
+       },
+       {
+        "label": "Hauptteil 2",
+        "dauer": 11,
+        "farbe": "#7c3aed",
+        "typ": "main",
+        "regel": "Lobpflicht nach Tor",
+        "coaches": [
+         "Finn",
+         "Kenneth",
+         "Charles"
+        ]
+       },
+       {
+        "label": "Hauptteil 3",
+        "dauer": 11,
+        "farbe": "#0e7490",
+        "typ": "main",
+        "coaches": [
+         "Kenneth",
+         "Charles",
+         "Finn"
+        ]
+       },
+       {
+        "label": "Abschlussspiel",
+        "dauer": 18,
+        "farbe": "#c2410c",
+        "typ": "abschluss"
+       },
+       {
+        "label": "Torwart-Spielen (rotierend)",
+        "dauer": 12,
+        "farbe": "#854d0e",
+        "typ": "tw",
+        "parallelZu": 2,
+        "trainer": "Kenneth",
+        "tw": [
+         1
+        ]
+       }
+      ],
+      "gespeichert_von": "<gespeichert_von>",
+      "updated_at": "<updated_at>"
+     }
+    }
+   ]
+  },
+  {
+   "schritt": "Einzeltraining mit Kind E",
+   "gesendet": [],
+   "dom": {
+    "ind": 7,
+    "parallelZu": 4
+   }
+  },
+  {
+   "schritt": "Plan speichern",
+   "gesendet": [
+    {
+     "methode": "POST",
+     "suche": "?on_conflict=datum",
+     "body": {
+      "datum": "2030-03-05",
+      "plan": [
+       {
+        "formIdx": 107,
+        "formName": "Warm up Adler",
+        "trainer": "Alle",
+        "slotLabel": "Aufwärmen",
+        "key": "107-Alle",
+        "block": 1,
+        "feld": 0
+       },
+       {
+        "formIdx": 132,
+        "formName": "FUNiño 2 gegen 2 – einer drängt, einer schützt",
+        "trainer": "Charles",
+        "slotLabel": "Hauptteil 1",
+        "key": "132-Charles",
+        "block": 2,
+        "feld": 0
+       },
+       {
+        "formIdx": 39,
+        "formName": "Pressing-Welle 2gg2",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 1",
+        "key": "39-Finn",
+        "block": 2,
+        "feld": 1
+       },
+       {
+        "formIdx": 62,
+        "formName": "Fang-Stern",
+        "trainer": "Alle",
+        "slotLabel": "Torwart-Spielen (rotierend)",
+        "key": "62-Alle",
+        "block": 6,
+        "feld": 0
+       },
+       {
+        "formIdx": 132,
+        "formName": "FUNiño 2 gegen 2 – einer drängt, einer schützt",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 2",
+        "key": "132-Finn",
+        "block": 3,
+        "feld": 0
+       },
+       {
+        "formIdx": 39,
+        "formName": "Pressing-Welle 2gg2",
+        "trainer": "Kenneth",
+        "slotLabel": "Hauptteil 2",
+        "key": "39-Kenneth",
+        "block": 3,
+        "feld": 1
+       },
+       {
+        "formIdx": 138,
+        "formName": "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor",
+        "trainer": "Charles",
+        "slotLabel": "Hauptteil 2",
+        "key": "138-Charles",
+        "block": 3,
+        "feld": 2
+       },
+       {
+        "formIdx": 132,
+        "formName": "FUNiño 2 gegen 2 – einer drängt, einer schützt",
+        "trainer": "Kenneth",
+        "slotLabel": "Hauptteil 3",
+        "key": "132-Kenneth",
+        "block": 4,
+        "feld": 0
+       },
+       {
+        "formIdx": 39,
+        "formName": "Pressing-Welle 2gg2",
+        "trainer": "Charles",
+        "slotLabel": "Hauptteil 3",
+        "key": "39-Charles",
+        "block": 4,
+        "feld": 1
+       },
+       {
+        "formIdx": 138,
+        "formName": "Flitzer-Duell – 1 gegen 1 an der Seite, dann aufs Jugendtor",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 3",
+        "key": "138-Finn",
+        "block": 4,
+        "feld": 2
+       }
+      ],
+      "slots": [
+       {
+        "label": "Straßenfußball-Fenster",
+        "dauer": 10,
+        "farbe": "#059669",
+        "typ": "warmup"
+       },
+       {
+        "label": "Aufwärmen",
+        "dauer": 8,
+        "farbe": "#059669",
+        "typ": "warmup"
+       },
+       {
+        "label": "Hauptteil 1",
+        "dauer": 12,
+        "farbe": "#1a56db",
+        "typ": "main",
+        "coaches": [
+         "Charles",
+         "Finn"
+        ]
+       },
+       {
+        "label": "Hauptteil 2",
+        "dauer": 11,
+        "farbe": "#7c3aed",
+        "typ": "main",
+        "regel": "Lobpflicht nach Tor",
+        "coaches": [
+         "Finn",
+         "Kenneth",
+         "Charles"
+        ]
+       },
+       {
+        "label": "Hauptteil 3",
+        "dauer": 11,
+        "farbe": "#0e7490",
+        "typ": "main",
+        "coaches": [
+         "Kenneth",
+         "Charles",
+         "Finn"
+        ]
+       },
+       {
+        "label": "Abschlussspiel",
+        "dauer": 18,
+        "farbe": "#c2410c",
+        "typ": "abschluss"
+       },
+       {
+        "label": "Torwart-Spielen (rotierend)",
+        "dauer": 12,
+        "farbe": "#854d0e",
+        "typ": "tw",
+        "parallelZu": 2,
+        "trainer": "Kenneth",
+        "tw": [
+         1
+        ]
+       },
+       {
+        "label": "Individual-Training",
+        "dauer": 11,
+        "farbe": "#0e7490",
+        "typ": "individual",
+        "parallelZu": 4,
+        "kind": 5
+       }
+      ],
+      "gespeichert_von": "<gespeichert_von>",
+      "updated_at": "<updated_at>"
+     }
+    }
+   ]
+  }
+ ]
+}

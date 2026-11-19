@@ -77,7 +77,8 @@ function supabaseAttrappe(tabellen = {}) {
 }
 
 /* opt: start, supabase, breite, hoehe, scheme ("light"|"dark"), warten (ms), browser,
-        angemeldet=false (kein Token), ohnePinGate=false, speicherBehalten (adler_blitz bleibt) */
+        angemeldet=false (kein Token), ohnePinGate=false, speicherBehalten (adler_blitz bleibt),
+        jetzt (feste Uhrzeit, z. B. "2030-03-01T09:00:00") */
 async function starten(opt = {}) {
   const { chromium } = playwright();
   const start = opt.start || "/trainer/index.html";
@@ -130,6 +131,9 @@ async function starten(opt = {}) {
     } catch (e) {}
   }, !!opt.speicherBehalten);
   const page = await ctx.newPage();
+  /* 4.8 Schritt 1: feste Uhr (Date/Date.now), die Zeitgeber laufen weiter – für Prüfungen,
+     deren Ergebnis vom Tag abhängt (Golden-Master des Trainingsplans). Ohne Option wie bisher. */
+  if (opt.jetzt) await page.clock.setFixedTime(new Date(opt.jetzt));
   const fehler = [];
   page.on("pageerror", e => fehler.push("PAGEERROR: " + e.message));
   page.on("console", m => { if (m.type() === "error") fehler.push("CONSOLE: " + m.text()); });

@@ -76,7 +76,7 @@ Status: ✅ erledigt · 🔶 braucht Charles' Wort (kehrt eine frühere Entschei
 | 4.5 | Rund 50 Systemdialoge, 180 von Hand gebaute Fenster | teils ✅ Systemdialoge erledigt: v874 Paket 1 (Trainingsalltag, 19 Stellen), v875 Pakete 2+3 (übriger Trainerbereich, 36 Stellen; 7 Stellen im toten Eltern-Code gelöscht) – außer vier Rückfallzweigen kein Systemdialog mehr; Liste: systemdialoge.md. Offen: die von Hand gebauten Fenster auf einen Baustein bringen (zusammen mit 4.6) |
 | 4.6 | Knopf-Stile: Hauptaktion je Seite anders, rund 200 Knöpfe nur mit Inline-Style | teils ✅ v876 Eltern: sechs Bauarten in styles.css (.btn-p, .btn, .btn-d, neu .btn-zeile, .btn-link, .btn-kopf); Eltern-Bereich, Adler-Rufe und core.js umgestellt (Ausnahmen: Zustands-/Filterknöpfe, siehe Prüffall v876). Offen: Trainerbereich und übrige Module |
 | 4.7 | Toter Code (Import-Fenster, `homeTool`, `statTile`, Taktik-Zweig) | ✅ v871 alte Aufstellung, homeTool/statTile, Taktik-Zweig, 16 ungenutzte Funktionen; v872 Import-Fenster (Charles 18.11.) |
-| 4.8 | Trainingsplan: Zustand lebt im DOM, Sprünge über Zeitgeber | ⬜ groß, hohes Risiko |
+| 4.8 | Trainingsplan: Zustand lebt im DOM, Sprünge über Zeitgeber | Plan freigegeben 19.11.; Schritt 1 (Golden-Master) ✅ – Plan und technischer Anhang: plan-zustand.md, Sollwerte: tests/golden/trainingsplan/ |
 
 ## Paket 5 · Inhalte (Vorlagen und Übungen)
 
