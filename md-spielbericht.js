@@ -131,7 +131,7 @@ function matchReportShow(text,opts){
   const bar=document.createElement("div");
   bar.style.cssText="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:12px";
   const radioBtn='speechSynthesis' in window
-    ?`<button id="adler-radio-btn" class="btn btn-sm" style="justify-content:center" onclick="adlerRadioToggle(this)"><i class="ti ti-volume"></i>📻 Adler Radio</button>`:"";
+    ?`<button id="adler-radio-btn" class="btn btn-sm" style="justify-content:center" onclick="adlerRadioToggle(this)">${adlerRadioLabel()}</button>`:"";
   const diaryBtn=`<button class="btn btn-sm" style="justify-content:center" onclick="voiceDiaryOpen(typeof spieltagKey==='function'?spieltagKey():null)" title="Gedanken nach Abpfiff als Sprach-/Textnotiz festhalten"><i class="ti ti-microphone"></i>🎤 Notiz</button>`;
   bar.innerHTML=`${radioBtn}${diaryBtn}<button class="btn btn-sm" onclick="reportGenerate(true)"><i class="ti ti-refresh"></i>Neu würfeln</button>
     <button class="btn btn-p" onclick="matchReportCopy()"><i class="ti ti-copy"></i>Kopieren</button>
@@ -144,7 +144,11 @@ function matchReportShow(text,opts){
    nicht flüssig lesen. Nutzt die Web Speech API mit einer deutschen Stimme, etwas
    flotter/heller für Kommentator-Energie. Toggle: nochmal tippen = Stopp. */
 function adlerRadioStop(){ try{ if("speechSynthesis" in window)speechSynthesis.cancel(); }catch(e){}
-  const b=document.getElementById("adler-radio-btn"); if(b)b.innerHTML='<i class="ti ti-volume"></i>📻 Adler Radio'; }
+  const b=document.getElementById("adler-radio-btn"); if(b)b.innerHTML=adlerRadioLabel(); }
+/* v896 (Beschluss 19.11.): Der Knopf sagt unter dem Namen, was er tut – derselbe Satz wie überall (kanalUnter). */
+function adlerRadioLabel(){
+  return `<i class="ti ti-volume"></i><span style="text-align:left">📻 Adler Radio${typeof kanalUnter==="function"?kanalUnter("radio"):""}</span>`;
+}
 function adlerRadioToggle(btn){
   if(!("speechSynthesis" in window))return;
   if(speechSynthesis.speaking||speechSynthesis.pending){ adlerRadioStop(); return; }
@@ -155,7 +159,7 @@ function adlerRadioToggle(btn){
   u.lang="de-DE"; u.rate=1.05; u.pitch=1.15;
   const de=speechSynthesis.getVoices().find(v=>/de[-_]/i.test(v.lang));
   if(de)u.voice=de;
-  u.onend=u.onerror=()=>{const b=document.getElementById("adler-radio-btn"); if(b)b.innerHTML='<i class="ti ti-volume"></i>📻 Adler Radio';};
+  u.onend=u.onerror=()=>{const b=document.getElementById("adler-radio-btn"); if(b)b.innerHTML=adlerRadioLabel();};
   speechSynthesis.speak(u);
   if(btn)btn.innerHTML='<i class="ti ti-player-stop"></i>⏹ Stopp';
 }

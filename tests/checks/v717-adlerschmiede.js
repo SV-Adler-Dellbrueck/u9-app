@@ -5,7 +5,8 @@
    „Aus der Adlerschmiede“, Sonntag 18:00, nur wenn es Neues gibt, je Konto abschaltbar.
    Den Push selbst schickt die Edge Function adlerschmiede-push (probe:true zeigt ihn ohne Versand);
    hier wird geprüft, was die Eltern in der App davon sehen.
-   a) Adler News: oberster Eintrag „Aus der Adlerschmiede: 3 Neuerungen …“ (drei seit dem letzten Blick)
+   a) Adler News: oben je neue Neuerung eine Zeile „🛠️ Neu in der App: <Kurztitel>“ (drei seit dem letzten Blick,
+      neueste zuerst), seit v896 statt eines eigenen Eintrags „Aus der Adlerschmiede: 3 Neuerungen …“
    b) Antippen öffnet ein Fenster (role=dialog) mit den Einträgen der letzten sieben Tage, ältere nicht;
       Schließen-Knopf ≥ 44 px
    c) Start mit ./eltern/#adlerschmiede (Ziel der Benachrichtigung) öffnet das Fenster von selbst und
@@ -64,8 +65,9 @@ module.exports = async function (h) {
     const warte = ms => new Promise(x => setTimeout(x, ms));
     const out = { fehlt: ["schmiedeOpen", "schmiedePushRender", "schmiedePushSetzen", "pushZielEmpfangen"].filter(n => typeof window[n] !== "function") };
     if (out.fehlt.length) return out;
-    const erster = document.querySelector("#cat-news button");
-    out.news = erster ? erster.textContent.replace(/\s+/g, " ").trim() : null;
+    const reihen = [...document.querySelectorAll("#cat-news button, #cat-news .news-mitteilung")];
+    const erster = reihen[0];
+    out.news = reihen.map(x => x.textContent.replace(/\s+/g, " ").replace(/\s*›\s*$/, "").trim());
     if (erster) erster.click(); await warte(200);
     out.b = modal();
     document.getElementById("wn-modal")?.remove();
@@ -92,13 +94,16 @@ module.exports = async function (h) {
   const c = await s2.page.evaluate((modalSrc) => ({ m: eval("(" + modalSrc + ")")(), hash: location.hash, href: location.href, n: (window._adlerschmiede || []).length }), modal.toString());
   const f2 = s2.fehler(); await s2.schliessen();
 
-  const titel = "v717 Aus der Adlerschmiede: News, Fenster, Push-Ziel, Schalter";
+  const titel = "v717 Aus der Adlerschmiede: News-Zeilen (v896), Fenster, Push-Ziel, Schalter";
   if (r.fehlt && r.fehlt.length) return h.ergebnis(titel, false, [r.fehlt.join(", ") + " fehlt"]);
   const f = [].concat(f1, f2);
   if (f.length) probleme.push("Konsole: " + f.slice(0, 2).join(" | "));
 
-  if (!r.news || !/^🛠️ ?Aus der Adlerschmiede: 3 Neuerungen/.test(r.news)) probleme.push(`a) oberster News-Eintrag: „${r.news}“`);
-  else zeilen.push(`a) „${r.news.replace(/ ›$/, "")}“`);
+  const oben = (r.news || []).slice(0, 3), sollOben = ["Neu A", "Neu B", "Neu C"].map(t => "Neu in der App: " + t);
+  if (!oben.length || !sollOben.every((t, i) => oben[i] && oben[i].replace(/^🛠️ ?/, "") === t)) probleme.push(`a) obere News-Zeilen: ${JSON.stringify(r.news)}`);
+  else if ((r.news || []).filter(z => /^🛠️/.test(z)).length !== 3) probleme.push(`a) Zahl der Schmiede-Zeilen: ${JSON.stringify(r.news)}`);
+  else if ((r.news || []).some(z => /Aus der Adlerschmiede|Neuerungen in eurer App/.test(z))) probleme.push(`a) eigener Sammel-Eintrag steht noch da: ${JSON.stringify(r.news)}`);
+  else zeilen.push(`a) oben: „${oben.join("“, „")}“`);
 
   const erw = ["Neu A", "Neu B", "Neu C"];
   if (!r.b) probleme.push("b) kein Fenster nach dem Antippen");
