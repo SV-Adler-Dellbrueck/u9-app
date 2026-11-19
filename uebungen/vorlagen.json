@@ -1,12 +1,12 @@
 {
   "schema": "adler-vorlagen/1",
-  "stand": "2026-11-18-1",
+  "stand": "2026-11-19-1",
   "vorlagen": [
     {
       "name": "L1-1 Ball behalten – Duell um zwei Tore",
       "leitfrage": "Wie behalte ich den Ball, wenn einer kommt?",
       "ziel_kinder": "Heute lernst du, den Ball mit deinem Körper zu beschützen.",
-      "folge_nr": 1,
+      "folge_nr": 2,
       "tags": [
         "wenig-platz"
       ],
@@ -14,7 +14,7 @@
       "netto_spielform_min": 38,
       "skalierung": {
         "6": "1 Feld 17 x 21 m, drei Paare: zwei Duelle nebeneinander, das dritte Paar wechselt nach jedem Tor ein",
-        "8": "1 Feld 20 x 25 m, zwei Gruppen à 4, ein Duell läuft, eins wartet am Rand",
+        "8": "2 Felder 17 x 21 m, je zwei Duelle nebeneinander",
         "10": "2 Felder 20 x 25 m, je zwei Duelle nebeneinander, ein Paar wechselt feldweise ein",
         "12": "2 Felder 20 x 25 m, vier Gruppen à 3",
         "14": "2 Felder 25 x 30 m, je drei Duelle nebeneinander, ein Paar wechselt ein",
@@ -63,7 +63,7 @@
       "name": "L1-2 Ball behalten – König auf dem Feld",
       "leitfrage": "Wie behalte ich den Ball, wenn einer kommt?",
       "ziel_kinder": "Heute bleibt der Ball bei dir – stell deinen Körper zwischen Ball und Gegner.",
-      "folge_nr": 2,
+      "folge_nr": 3,
       "tags": [
         "wenig-platz",
         "halle"
@@ -121,8 +121,10 @@
       "name": "L1-3 Ball behalten in Überzahl – der Diamant dreht",
       "leitfrage": "Wie behalte ich den Ball, wenn einer kommt?",
       "ziel_kinder": "Heute halten wir den Ball zu viert: Pass spielen und schnell einen neuen Platz suchen.",
-      "folge_nr": 3,
-      "tags": [],
+      "folge_nr": 1,
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -176,7 +178,7 @@
       "name": "L1-4 Ball behalten – die erste Berührung nach vorn",
       "leitfrage": "Wie behalte ich den Ball, wenn einer kommt?",
       "ziel_kinder": "Heute nimmst du den Ball mit der ersten Berührung nach vorne mit.",
-      "folge_nr": 4,
+      "folge_nr": 6,
       "tags": [
         "halle",
         "schlechtwetter"
@@ -246,7 +248,7 @@
         "8": "1 Feld 18 x 22 m, zwei Wartende je Seite – keine Reihe über drei Kinder",
         "10": "2 Felder 18 x 22 m: drei Paare an einem, zwei Paare am anderen",
         "12": "2 Felder 18 x 22 m",
-        "14": "2 Felder 22 x 28 m, je zwei Duelle nebeneinander, drei Paare wechseln ein",
+        "14": "2 Felder 18 x 22 m, je zwei Duelle nebeneinander, drei Paare wechseln ein",
         "16": "2 Felder 22 x 28 m, je zwei Duelle nebeneinander"
       },
       "beobachtung": "Wer hat seinen eigenen Trick im Spiel probiert – und wer ist nach dem Vorbeikommen wie ein Flitzer sofort in die Tiefe gegangen?",
@@ -350,7 +352,7 @@
       "name": "L2-3 Vorbeikommen – erst der Parcours, dann der Gegner",
       "leitfrage": "Wie komme ich an einem vorbei?",
       "ziel_kinder": "Heute dribbelst du mit Blick nach oben – erst durch den Parcours, dann am Gegner vorbei.",
-      "folge_nr": 3,
+      "folge_nr": 6,
       "tags": [
         "schlechtwetter",
         "halle"
@@ -408,7 +410,7 @@
       "name": "L2-4 Vorbeikommen – und dann in die Breite",
       "leitfrage": "Wie komme ich an einem vorbei?",
       "ziel_kinder": "Heute gehst du nach dem Trick nach außen, wo Platz ist.",
-      "folge_nr": 4,
+      "folge_nr": 3,
       "tags": [],
       "dauer_min": 75,
       "netto_spielform_min": 38,
@@ -463,7 +465,7 @@
       "name": "L3-1 Tore machen – kurz und mit beiden Füßen",
       "leitfrage": "Wie mache ich ein Tor?",
       "ziel_kinder": "Heute schießt du mit beiden Füßen aufs Tor.",
-      "folge_nr": 1,
+      "folge_nr": 5,
       "tags": [
         "vor-spieltag"
       ],
@@ -527,7 +529,9 @@
       "leitfrage": "Wie mache ich ein Tor?",
       "ziel_kinder": "Heute spielst du vor dem Tor noch einmal quer – dann trifft dein Mitspieler leichter.",
       "folge_nr": 2,
-      "tags": [],
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -581,9 +585,10 @@
       "name": "L3-3 Tore machen – Mut zählt doppelt",
       "leitfrage": "Wie mache ich ein Tor?",
       "ziel_kinder": "Heute zählt jeder Schuss – auch der, der danebengeht.",
-      "folge_nr": 3,
+      "folge_nr": 1,
       "tags": [
-        "vor-spieltag"
+        "vor-spieltag",
+        "halle"
       ],
       "dauer_min": 75,
       "netto_spielform_min": 36,
@@ -639,15 +644,17 @@
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
       "ziel_kinder": "Heute schaust du vor dem Pass, wer frei ist.",
       "folge_nr": 1,
-      "tags": [],
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
         "6": "1 Feld 17 x 17 m, 4 gegen 2",
-        "8": "1 Feld 20 x 20 m, 4 gegen 2, zwei Kinder wechseln nach jeder Eroberung",
-        "10": "2 Felder 20 x 20 m: 4 gegen 2 und 3 gegen 1",
+        "8": "2 Felder 17 x 17 m, je 3 gegen 1",
+        "10": "2 Felder: 20 x 20 m 4 gegen 2 und 17 x 17 m 3 gegen 1",
         "12": "2 Felder 20 x 20 m",
-        "14": "2 Felder 24 x 24 m: 5 gegen 3 und 4 gegen 2",
+        "14": "2 Felder: 24 x 24 m 5 gegen 3 und 20 x 20 m 4 gegen 2",
         "16": "2 Felder 24 x 24 m, 5 gegen 3"
       },
       "beobachtung": "Wer hat vor dem Pass hingeschaut – und wer hat sich wie ein Aufpasser so gestellt, dass er immer anspielbar war?",
@@ -693,8 +700,10 @@
       "name": "L4-2 Passen – Lehrgangsform 15:30:15:30",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
       "ziel_kinder": "Heute heben wir vor dem Pass den Kopf und suchen den freien Mitspieler.",
-      "folge_nr": 2,
-      "tags": [],
+      "folge_nr": 7,
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 90,
       "netto_spielform_min": 60,
       "skalierung": {
@@ -753,8 +762,10 @@
       "name": "L4-3 Passen – jeder muss einmal",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
       "ziel_kinder": "Heute bekommt jeder den Ball – wir suchen den, der ihn noch nicht hatte.",
-      "folge_nr": 3,
-      "tags": [],
+      "folge_nr": 2,
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -808,7 +819,7 @@
       "name": "L4-4 Passen – das Dreieck dreht sich",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
       "ziel_kinder": "Heute läufst du nach deinem Pass sofort weiter.",
-      "folge_nr": 4,
+      "folge_nr": 6,
       "tags": [
         "halle",
         "schlechtwetter"
@@ -866,9 +877,10 @@
       "name": "L5-1 Anbieten – wo kriege ich den Ball?",
       "leitfrage": "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?",
       "ziel_kinder": "Heute läufst du dich frei, bevor der Ball kommt.",
-      "folge_nr": 1,
+      "folge_nr": 2,
       "tags": [
-        "schlechtwetter"
+        "schlechtwetter",
+        "halle"
       ],
       "dauer_min": 75,
       "netto_spielform_min": 37,
@@ -923,9 +935,10 @@
       "name": "L5-2 Anbieten – die Raute lebt",
       "leitfrage": "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?",
       "ziel_kinder": "Heute bleibt jeder auf seinem Platz in der Raute – auch wenn der Ball weit weg ist.",
-      "folge_nr": 2,
+      "folge_nr": 3,
       "tags": [
-        "vor-spieltag"
+        "vor-spieltag",
+        "halle"
       ],
       "dauer_min": 75,
       "netto_spielform_min": 36,
@@ -979,8 +992,10 @@
       "name": "L5-3 Anbieten – jeder hält seinen Korridor",
       "leitfrage": "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?",
       "ziel_kinder": "Heute bleibst du in deiner Bahn und rennst nicht alle zum Ball.",
-      "folge_nr": 3,
-      "tags": [],
+      "folge_nr": 1,
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -1042,9 +1057,9 @@
       "netto_spielform_min": 37,
       "skalierung": {
         "6": "1 Feld 17 x 21 m, 2 gegen 2, ein Kind wartet je Seite",
-        "8": "1 Feld 20 x 25 m, 2 gegen 2 mit zwei Wartenden je Seite",
+        "8": "2 Felder 17 x 21 m, je 2 gegen 2",
         "10": "2 Felder 20 x 25 m: 3 gegen 3 und 2 gegen 2",
-        "12": "2 Felder 20 x 25 m, 2 gegen 2, ein Kind wartet je Feld",
+        "12": "3 Felder 17 x 21 m, je 2 gegen 2",
         "14": "2 Felder 25 x 30 m, je 3 gegen 3, ein Kind wartet je Feld",
         "16": "2 Felder 25 x 30 m, 3 gegen 3"
       },
@@ -1092,7 +1107,9 @@
       "leitfrage": "Wie hole ich mir den Ball zurück?",
       "ziel_kinder": "Heute machen wir uns klein wie ein Igel – und sind danach sofort wieder Adler.",
       "folge_nr": 2,
-      "tags": [],
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -1146,7 +1163,7 @@
       "name": "L4-5 Passen – Ball zum Freien, Tor nach Pass zählt doppelt",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
       "ziel_kinder": "Heute passen wir zum Freien – ein Tor nach einem Pass zählt doppelt.",
-      "folge_nr": 5,
+      "folge_nr": 8,
       "tags": [],
       "dauer_min": 90,
       "netto_spielform_min": 39,
@@ -1193,8 +1210,10 @@
       "name": "L4-6 3+1 – Adler: breit werden, der Torwart spielt mit",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
       "ziel_kinder": "Heute werden wir breit wie ein Adler, und der Torwart spielt mit.",
-      "folge_nr": 6,
-      "tags": [],
+      "folge_nr": 4,
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -1260,8 +1279,10 @@
       "name": "L5-4 3+1 – Raute ohne Aufpasser: wo stehe ich?",
       "leitfrage": "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?",
       "ziel_kinder": "Heute weißt du im 3+1, wo dein Platz ist: Flitzer außen, Jäger vorn.",
-      "folge_nr": 4,
-      "tags": [],
+      "folge_nr": 7,
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -1327,8 +1348,10 @@
       "name": "L6-3 3+1 – Igel: die Flitzer schließen die Lücke",
       "leitfrage": "Wie hole ich mir den Ball zurück?",
       "ziel_kinder": "Heute rücken die Flitzer eng vors Tor, wenn der Gegner den Ball hat.",
-      "folge_nr": 3,
-      "tags": [],
+      "folge_nr": 4,
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -1394,8 +1417,10 @@
       "name": "L4-7 FUNiño – der Aufpasser verteilt",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
       "ziel_kinder": "Heute verteilt der Aufpasser den Ball zur freien Seite.",
-      "folge_nr": 7,
-      "tags": [],
+      "folge_nr": 3,
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -1461,8 +1486,10 @@
       "name": "L5-5 FUNiño – links, Mitte, rechts",
       "leitfrage": "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?",
       "ziel_kinder": "Heute steht jeder auf seiner Seite: links, Mitte oder rechts.",
-      "folge_nr": 5,
-      "tags": [],
+      "folge_nr": 6,
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -1528,8 +1555,10 @@
       "name": "L6-4 FUNiño – einer drängt, zwei schützen",
       "leitfrage": "Wie hole ich mir den Ball zurück?",
       "ziel_kinder": "Heute drängt einer den Gegner ab, und zwei schützen die Tore.",
-      "folge_nr": 4,
-      "tags": [],
+      "folge_nr": 3,
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -1595,8 +1624,10 @@
       "name": "L5-6 3+1 gegen FUNiño – große und kleine Tore",
       "leitfrage": "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?",
       "ziel_kinder": "Heute spielen wir auf große und kleine Tore und wechseln schnell die Aufstellung.",
-      "folge_nr": 6,
-      "tags": [],
+      "folge_nr": 8,
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -1647,7 +1678,7 @@
         },
         {
           "typ": "spielform",
-          "label": "Hauptteil 3 – offen: 3+1 gegen FUNiño auf einem Feld, beide Gruppen, nach 5 Minuten Seitenwechsel",
+          "label": "Hauptteil 3 – offen: 3+1 gegen FUNiño auf einem Feld, beide Gruppen, nach 5 Minuten Seitenwechsel, keine Zusatzregel",
           "dauer": 10,
           "uebung_name": "3+1 gegen FUNiño – großes Tor gegen zwei kleine"
         },
@@ -1663,7 +1694,9 @@
       "leitfrage": "Wie hole ich mir den Ball zurück?",
       "ziel_kinder": "Heute lernst du zwei Arten, dir den Ball zurückzuholen.",
       "folge_nr": 5,
-      "tags": [],
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -1714,13 +1747,13 @@
         },
         {
           "typ": "spielform",
-          "label": "Hauptteil 3 – offen: 3+1 gegen FUNiño auf einem Feld, nach 5 Minuten Seitenwechsel; ein Tor nach Ballgewinn in der eigenen Hälfte zählt doppelt",
+          "label": "Hauptteil 3 – offen: 3+1 gegen FUNiño auf einem Feld, nach 5 Minuten Seitenwechsel, keine Zusatzregel",
           "dauer": 10,
           "uebung_name": "3+1 gegen FUNiño – großes Tor gegen zwei kleine"
         },
         {
           "typ": "abschluss",
-          "label": "Abschlussturnier: 3+1 gegen FUNiño, drei Durchgänge mit Seitenwechsel; Tor nach Ballgewinn in der eigenen Hälfte zählt doppelt",
+          "label": "Abschlussturnier: 3+1 gegen FUNiño, drei Durchgänge mit Seitenwechsel",
           "dauer": 18
         }
       ]
@@ -1729,15 +1762,17 @@
       "name": "L4-8 Drei Felder – 3+1 und FUNiño nebeneinander",
       "leitfrage": "Wie kriege ich den Ball zu einem, der frei ist?",
       "ziel_kinder": "Heute spielst du 3+1 und Funino nebeneinander und bleibst weit genug weg vom Ball, damit du angespielt werden kannst.",
-      "folge_nr": 8,
-      "tags": [],
+      "folge_nr": 5,
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
-        "8": "Zwei Felder statt drei: Feld 3 im Plan weglassen. Zwei Gruppen zu 4, Hauptteil 3 wiederholt die Station mit der schwereren Variante. Abschlussturnier: 3+1 gegen 3+1 auf dem Jugendtor-Feld.",
-        "10": "Zwei Felder: Feld 3 im Plan weglassen. Zwei Gruppen zu 5, an jeder Station wartet ein Kind und rotiert nach jedem Durchgang ein. Abschlussturnier: 3+1 gegen 3+1 mit je einem Wechsler.",
-        "12": "Drei Gruppen zu 4 auf drei Feldern, drei Durchgänge – jede Gruppe sieht jedes Feld. Abschlussturnier auf zwei Feldern: 3+1 gegen 3+1 am Jugendtor, FUNiño 3 gegen 3 an den Minitoren – im Plan Feld 3 weglassen.",
-        "14": "Drei Gruppen zu 5, 5 und 4 auf drei Feldern; an den Fünfergruppen rotiert je ein Kind ein. Abschlussturnier auf zwei Feldern: acht Kinder 3+1 gegen 3+1 am Jugendtor, sechs Kinder FUNiño 3 gegen 3 – im Plan Feld 3 weglassen, nach der Hälfte Felder tauschen."
+        "8": "Zwei Felder statt drei: Feld 3 im Plan weglassen. Zwei Gruppen zu 4, zwei Durchgänge. Hauptteil 3 offen: auf beiden Feldern 2 gegen 2 auf vier Minitore. Abschlussturnier: 3+1 gegen 3+1 auf dem Jugendtor-Feld.",
+        "10": "Zwei Felder: Feld 3 im Plan weglassen. Zwei Gruppen zu 5, an jeder Station wartet ein Kind und rotiert nach jedem Durchgang ein. Hauptteil 3 offen: 3 gegen 3 und 2 gegen 2 auf vier Minitore. Abschlussturnier: 3+1 gegen 3+1 mit je einem Wechsler.",
+        "12": "Drei Gruppen zu 4 auf drei Feldern, zwei Durchgänge. Hauptteil 3 offen: zwei Felder, je 3 gegen 3 auf vier Minitore – im Plan Feld 3 weglassen. Abschlussturnier auf zwei Feldern: 3+1 gegen 3+1 am Jugendtor, FUNiño 3 gegen 3 an den Minitoren – im Plan Feld 3 weglassen.",
+        "14": "Drei Gruppen zu 5, 5 und 4 auf drei Feldern, zwei Durchgänge; an den Fünfergruppen rotiert je ein Kind ein. Hauptteil 3 offen: zwei Felder, je 3 gegen 3 auf vier Minitore mit einem Wechsler – im Plan Feld 3 weglassen. Abschlussturnier auf zwei Feldern: acht Kinder 3+1 gegen 3+1 am Jugendtor, sechs Kinder FUNiño 3 gegen 3 – im Plan Feld 3 weglassen, nach der Hälfte Felder tauschen."
       },
       "beobachtung": "Wer hat als Flitzer oder Außenspieler den Abstand zum Ballführenden gehalten, statt ihm entgegenzulaufen – auf allen drei Feldern?",
       "ordnung": "3+1 und FUNiño",
@@ -1787,19 +1822,9 @@
         },
         {
           "typ": "spielform",
-          "label": "Hauptteil 3 – Gruppen rücken noch ein Feld weiter: jede Gruppe hat jetzt alle drei Felder gesehen, jeweils mit der schwereren Variante",
+          "label": "Hauptteil 3 – offen: 3 gegen 3 auf vier Minitore, keine Zusatzregel",
           "dauer": 12,
-          "stationen": [
-            {
-              "uebung_name": "2 gegen 1 plus Torwart – der Flitzer macht es breit"
-            },
-            {
-              "uebung_name": "FUNiño 3 gegen 1 – der Mittlere hat den Ball"
-            },
-            {
-              "uebung_name": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts"
-            }
-          ]
+          "uebung_name": "3 gegen 3 auf vier Minitore mit Schusszone"
         },
         {
           "typ": "abschluss",
@@ -1813,7 +1838,9 @@
       "leitfrage": "Wie behalte ich den Ball, wenn einer kommt?",
       "ziel_kinder": "Heute behalten wir den Ball, und wenn es eng wird, hilft der Torwart.",
       "folge_nr": 5,
-      "tags": [],
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -1879,8 +1906,10 @@
       "name": "L1-6 FUNiño – Ball behalten, einer bleibt hinter dem Ball",
       "leitfrage": "Wie behalte ich den Ball, wenn einer kommt?",
       "ziel_kinder": "Heute schützen wir den Ball und suchen das freie Tor.",
-      "folge_nr": 6,
-      "tags": [],
+      "folge_nr": 4,
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -1947,7 +1976,9 @@
       "leitfrage": "Wie komme ich an einem vorbei?",
       "ziel_kinder": "Heute traut sich der Flitzer ins Duell und geht vorbei.",
       "folge_nr": 5,
-      "tags": [],
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -2013,8 +2044,10 @@
       "name": "L2-6 FUNiño – vorbei und aufs freie Tor",
       "leitfrage": "Wie komme ich an einem vorbei?",
       "ziel_kinder": "Heute gehen wir am Gegner vorbei und schießen aufs freie Tor.",
-      "folge_nr": 6,
-      "tags": [],
+      "folge_nr": 4,
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -2081,7 +2114,9 @@
       "leitfrage": "Wie mache ich ein Tor?",
       "ziel_kinder": "Heute schießen wir schnell aufs Tor, bevor der Gegner zurück ist.",
       "folge_nr": 4,
-      "tags": [],
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -2147,8 +2182,10 @@
       "name": "L3-5 FUNiño – aus der Schusszone aufs Minitor",
       "leitfrage": "Wie mache ich ein Tor?",
       "ziel_kinder": "Heute kommen wir in die Schusszone und treffen das freie Tor.",
-      "folge_nr": 5,
-      "tags": [],
+      "folge_nr": 3,
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 38,
       "skalierung": {
@@ -2214,7 +2251,7 @@
       "name": "L5-7 Endzone und Fähnchen – Freilaufen und Zustellen",
       "leitfrage": "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?",
       "ziel_kinder": "Heute läufst du dich frei, damit dein Mitspieler dich sieht – und ohne Ball stellst du dich so, dass du das Bändchen erreichst.",
-      "folge_nr": 7,
+      "folge_nr": 4,
       "tags": [],
       "dauer_min": 75,
       "netto_spielform_min": 38,
@@ -2267,9 +2304,10 @@
       "name": "L5-8 Anbieten – Joker-Duell und Schau-Tore",
       "leitfrage": "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?",
       "ziel_kinder": "Heute schaust du, bevor der Ball kommt (Kopf hoch), und stellst dich so hin, dass dein Mitspieler dich anspielen kann.",
-      "folge_nr": 8,
+      "folge_nr": 5,
       "tags": [
-        "wenig-platz"
+        "wenig-platz",
+        "halle"
       ],
       "dauer_min": 75,
       "netto_spielform_min": 34,
@@ -2332,7 +2370,9 @@
       "leitfrage": "Ohne Leitfrage – Sondereinheit Technik",
       "ziel_kinder": "Heute suchst du dir deine Stationen selbst aus, schaffst mindestens fünf verschiedene und schreibst ehrlich auf, was du geschafft hast.",
       "folge_nr": null,
-      "tags": [],
+      "tags": [
+        "halle"
+      ],
       "dauer_min": 75,
       "netto_spielform_min": 14,
       "skalierung": {

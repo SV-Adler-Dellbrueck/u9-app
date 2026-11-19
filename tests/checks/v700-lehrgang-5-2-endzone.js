@@ -19,6 +19,8 @@ module.exports = async function (h) {
   const korbN = lies("doku/auftrag-lehrgang-5-2/nachtrag.json").uebungen[0];
   const endN = lies("doku/auftrag-endzone-faehnchen/nachtrag-uebung-endzone-faehnchen.json").uebungen[0];
   const l57N = lies("doku/auftrag-endzone-faehnchen/nachtrag-vorlage-l5-7.json").vorlagen[0];
+  /* v882 (Charles 19.11.): folge_nr als Progression – L5-7 ist Folge 4 statt 7 (Ein-Feld-Form vor den Stationen). */
+  l57N.folge_nr = 4;
   // a)
   for (const [n, liste] of [[korbN, bib.uebungen], [endN, bib.uebungen], [l57N, vor.vorlagen]]) {
     const t = liste.filter(x => x.name === n.name);

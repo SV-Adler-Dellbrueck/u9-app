@@ -96,7 +96,22 @@ module.exports = async function (h) {
   const ohneZiel = v => { if (!v) return v; const { ziel_kinder, ...rest } = v; return rest; };
   /* v700: Leitfrage 5 im Wortlaut vom 13.09. (Beschluss 30.09.) – der Nachtrag trägt noch den alten. */
   const lfNeu = v => (v && v.leitfrage === "Wo stelle ich mich hin, damit ich den Ball kriege?") ? { ...v, leitfrage: "Wo stehe ich, wenn wir den Ball haben – und wo, wenn nicht?" } : v;
-  const abwV = neueV.filter((v, i) => roh(ohneZiel(lfNeu(v))) !== roh(ohneZiel(anhangV[i]))).map(v => v.name);
+  /* v882 (Charles 19.11.): folge_nr als Progression, Tag „halle“ nach der Regel 27 x 45 m (alle neun passen), und die
+     offene Stufe ohne Zusatzregel: L6-5 Hauptteil 3 und Turnier ohne neue Regel, L5-6 Hauptteil 3 mit „keine Zusatzregel“,
+     L4-8 Hauptteil 3 offen statt dritter Stationsdurchgang (dazu seine vier Skalierungszeilen). Die geänderten Blöcke
+     prüft v882 a); hier wird der Rest weiter byte-genau gegen den Nachtrag gehalten. */
+  const FOLGE_V883 = { "L4-6": 4, "L5-4": 7, "L6-3": 4, "L4-7": 3, "L5-5": 6, "L6-4": 3, "L5-6": 8, "L6-5": 5, "L4-8": 5 };
+  const seitV883 = (v, ist) => {
+    if (!v || !ist) return v;
+    const k = String(v.name).split(" ")[0], n = JSON.parse(JSON.stringify(v));
+    if (FOLGE_V883[k]) n.folge_nr = FOLGE_V883[k];
+    n.tags = (n.tags || []).concat(["halle"]);
+    if (k === "L6-5") { n.bloecke[4] = ist.bloecke[4]; n.bloecke[5] = ist.bloecke[5]; }
+    if (k === "L5-6") n.bloecke[4] = ist.bloecke[4];
+    if (k === "L4-8") { n.bloecke[4] = ist.bloecke[4]; n.skalierung = ist.skalierung; }
+    return n;
+  };
+  const abwV = neueV.filter((v, i) => roh(ohneZiel(seitV883(lfNeu(v), anhangV[i]))) !== roh(ohneZiel(anhangV[i]))).map(v => v.name);
   if (abwU.length) probleme.push("Übung in bibliothek.json weicht vom Nachtrag ab: " + abwU.join(", "));
   if (abwV.length) probleme.push("Vorlage in vorlagen.json weicht vom Nachtrag ab: " + abwV.join(", "));
   if (!standMindestens(bib.stand, STAND_UEB)) probleme.push(`bibliothek.json: Stand „${bib.stand}“ liegt vor „${STAND_UEB}“ – ohne neuen Stand holt _bibHolen die Datei nicht`);
@@ -369,16 +384,19 @@ module.exports = async function (h) {
   if ((e8.trainer || []).length !== 3) probleme.push(`L4-8 bei drei: ${(e8.trainer || []).length} Feldtrainer angehakt statt 3`);
   else if (h8.length !== 3) probleme.push(`L4-8 bei drei: ${h8.length} Hauptteile statt 3`);
   else {
-    h8.forEach((hp, i) => { if (String(hp.felder) !== String([B, F1, FW])) probleme.push(`L4-8 Hauptteil ${i + 1}: [${hp.felder.join(" | ")}]`); });
-    if (String(h8.map(x => x.versatz)) !== "0,1,2") probleme.push(`L4-8: Versatz ${h8.map(x => x.versatz).join("/")} statt 0/1/2`);
-    const kreis = [/Blau \(\d+\) → Feld 1.*Grün \(\d+\) → Feld 2.*Rot \(\d+\) → Feld 3/, /Grün \(\d+\) → Feld 1.*Rot \(\d+\) → Feld 2.*Blau \(\d+\) → Feld 3/, /Rot \(\d+\) → Feld 1.*Blau \(\d+\) → Feld 2.*Grün \(\d+\) → Feld 3/];
+    /* v882 (Charles 19.11.): zwei Stationsdurchgänge, dann die offene Stufe – 3 gegen 3 auf vier Minitore auf jedem Feld. */
+    const W = "3 gegen 3 auf vier Minitore mit Schusszone";
+    h8.slice(0, 2).forEach((hp, i) => { if (String(hp.felder) !== String([B, F1, FW])) probleme.push(`L4-8 Hauptteil ${i + 1}: [${hp.felder.join(" | ")}]`); });
+    if (String(h8[2].felder) !== String([W, W, W])) probleme.push(`L4-8 Hauptteil 3 (offen): [${h8[2].felder.join(" | ")}]`);
+    if (String(h8.slice(0, 2).map(x => x.versatz)) !== "0,1") probleme.push(`L4-8: Versatz ${h8.map(x => x.versatz).join("/")} statt 0/1 in den Stationsdurchgängen`);
+    const kreis = [/Blau \(\d+\) → Feld 1.*Grün \(\d+\) → Feld 2.*Rot \(\d+\) → Feld 3/, /Grün \(\d+\) → Feld 1.*Rot \(\d+\) → Feld 2.*Blau \(\d+\) → Feld 3/];
     kreis.forEach((re, i) => { if (!re.test(h8[i].wer)) probleme.push(`L4-8 Hauptteil ${i + 1}: die Gruppen rücken nicht im Kreis – „${h8[i].wer}“`); });
   }
   if (!probleme.some(p => /L4-6|L5-6|L6-5|L4-8/.test(p))) {
     zeilen.push("L4-6 bei zwei Feldtrainern: Hauptteil 1 [Adler aus dem Tor | Flitzer macht es breit], Hauptteil 2 dieselben Übungen mit getauschten Gruppen (Versatz 1), Hauptteil 3 beide Felder Raute ohne Aufpasser");
     zeilen.push("L5-6 und L6-5 bei zwei: Stationen wie im Paket, Hauptteil 3 beide Felder „großes Tor gegen zwei kleine“");
     zeilen.push("L4-6 bei drei Feldtrainern: drei Felder, Feld 3 mit eigener Übung (seit v713), Hauptteil 3 offen wie in der Vorlage, kein Hinweis");
-    zeilen.push("L4-8 bei drei Feldtrainern: drei verschiedene Übungen, Versatz 0/1/2, die Gruppen rücken im Kreis · bei zwei sagt die Vorschau „3 Felder geplant, nur 2 verfügbar“");
+    zeilen.push("L4-8 bei drei Feldtrainern: drei verschiedene Übungen, Versatz 0/1, die Gruppen rücken im Kreis, Hauptteil 3 offen (v882) · bei zwei sagt die Vorschau „3 Felder geplant, nur 2 verfügbar“");
   }
 
   if (fehler.length) probleme.push("Konsole: " + fehler[0]);

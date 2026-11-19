@@ -15,6 +15,8 @@ module.exports = async function (h) {
   const md = fs.readFileSync(path.join(D, "README.md"), "utf8");
   const bl = [...md.matchAll(/```json\n([\s\S]*?)```/g)].map(m => JSON.parse(m[1]));
   const sollU = bl[0].uebungen[0], sollV = bl[1].vorlagen[0];
+  /* v882 (Charles 19.11.): Tag „halle“ nach der Regel 27 x 45 m – der Käfig 40 x 25 m passt hinein. */
+  sollV.tags = (sollV.tags || []).concat(["halle"]);
   const bib = JSON.parse(fs.readFileSync(path.join(h.REPO, "uebungen/bibliothek.json"), "utf8"));
   const vl = JSON.parse(fs.readFileSync(path.join(h.REPO, "uebungen/vorlagen.json"), "utf8"));
   const tu = bib.uebungen.filter(u => u.name === sollU.name), tv = vl.vorlagen.filter(v => v.name === sollV.name);
