@@ -1684,7 +1684,107 @@ let tpCoaches={};
    den Zustand auf Auswahlfeld, Picker-Knopf und Marken (data-station, data-alle, data-erbt).
    Übergangsbrücke bis Schritt 8: _tpDomNachziehen übernimmt Eingriffe, die noch direkt ins
    Auswahlfeld schreiben (sel.value= ohne Ereignis, noch nicht umgestellte Schreibstellen). */
-const TP_ZUSTAND={wahl:{}};
+const TP_ZUSTAND={wahl:{},tw:{},kind:{}};
+/* ═══ v886 · 4.8 Schritt 6 – TORWART-HAKEN UND EINZELKIND IM ZUSTAND ═══════════════════════
+   TP_ZUSTAND.tw:   Blockindex → Liste der angehakten Torhüter-Namen; fehlt der Eintrag
+                    (undefined), gilt die Vorgabe „alle angebotenen“ (tpTwAngebot) – wie früher
+                    der frisch gezeichnete Haken ohne gemerkten Wert.
+   TP_ZUSTAND.kind: Blockindex → Name des Kindes im Einzeltraining oder "".
+   Geändert wird über tpTwSetzen/tpKindSetzen (Haken und Auswahl rufen sie), beim Öffnen über
+   tpZustandLaden, beim Verschieben über _tpTwKindUmbenennen. Das Zeichnen projiziert beides auf
+   .checked bzw. den Wert der Auswahl (_tpTwKindAufSeite). Einträge ohne Haken/Auswahl auf der
+   Seite fallen bei der Projektion weg (wie früher der gemerkte Wert eines verschwundenen Blocks).
+   Die Brücke (_tpTwKindNachziehen, bis Schritt 8) übernimmt fremde Eingriffe (.checked= oder
+   .value= ohne Ereignis) und zählt sie in _tpBrueckeTwZahl – getrennt von der Übungswahl. */
+let _tpTwKindOffen=new Set();   // "tw|si" / "kind|si": gesetzt, aber noch nicht auf der Seite
+/* Angehakte Torhüter des Blocks si in der Reihenfolge des Angebots (wie die Haken auf der Seite). */
+function tpTwAn(si){ const l=TP_ZUSTAND.tw[si]; return tpTwAngebot(si).map(k=>k.name).filter(n=>l===undefined||l.includes(n)); }
+function tpKindVon(si){ return TP_ZUSTAND.kind[si]||""; }
+/* Haken name an/aus; name null: zurück zur Vorgabe (alle angebotenen). Speichert nicht von selbst
+   (wie bisher – Fehlerbild 7, behoben erst ab Schritt 9). */
+function tpTwSetzen(si,name,an){
+  const tw=TP_ZUSTAND.tw;
+  if(name==null)delete tw[si];
+  else{ const l=(tw[si]===undefined?tpTwAngebot(si).map(k=>k.name):tw[si]).filter(n=>n!==name); if(an)l.push(String(name)); tw[si]=l; }
+  _tpTwKindOffen.add("tw|"+si);
+}
+function tpKindSetzen(si,name){ TP_ZUSTAND.kind[si]=name?String(name):""; _tpTwKindOffen.add("kind|"+si); }
+/* Neue Blockindizes (tpSlotsNeuOrdnen): neuVon alter → neuer Index; fehlt einer, ist der Block weg. */
+function _tpTwKindUmbenennen(neuVon){
+  ["tw","kind"].forEach(art=>{
+    const alt=TP_ZUSTAND[art], neu={};
+    Object.keys(alt).forEach(si=>{ const ni=neuVon[si]; if(ni!=null)neu[ni]=alt[si]; });
+    TP_ZUSTAND[art]=neu;
+  });
+  const offen=new Set();
+  _tpTwKindOffen.forEach(k=>{ const [art,si]=k.split("|"), ni=neuVon[si]; if(ni!=null)offen.add(art+"|"+ni); });
+  _tpTwKindOffen=offen;
+}
+/* Haken und Auswahl auf der Seite, je Blockindex. */
+function _tpTwKindAufDom(){
+  const tw={}, kind={};
+  document.querySelectorAll(".tp-tw-player").forEach(c=>{ const si=c.dataset.slot; if(/^\d+$/.test(si))(tw[si]=tw[si]||[]).push(c); });
+  document.querySelectorAll('select[id^="tp-ind-player-"]').forEach(s=>{ const m=/^tp-ind-player-(\d+)$/.exec(s.id); if(m)kind[m[1]]=s; });
+  return {tw,kind};
+}
+const _tpTwSoll=(l,name)=>l===undefined||l.includes(name);
+/* Gespeicherte Slots → tw/kind (index: gespeicherter Block → heutiger Index). Ohne Seite: ein Haken
+   gilt nur am Torwart-Block, ein Kind nur am Einzelblock und nur, wenn es (aktiv) im Kader steht –
+   dieselben Bedingungen wie früher die vorhandenen Haken bzw. Optionen. Was nicht gespeichert ist,
+   bleibt, wie es war (Fehlerbild 6, behoben erst ab Schritt 9). */
+function _tpTwKindLaden(slots,index){
+  (slots||[]).forEach((s,si0)=>{
+    const si=index?index[si0]:si0; if(si==null||!tpSlots[si])return;
+    const art=_tpFeldArt(tpSlots[si]);
+    if(Array.isArray(s.tw)&&art==="tw"){ TP_ZUSTAND.tw[si]=((typeof kidListFromIds==="function")?kidListFromIds(s.tw):s.tw).map(String); _tpTwKindOffen.add("tw|"+si); }
+    if(s.kind!=null&&art==="einzel"){
+      const n=(typeof kidName==="function"&&/^\d+$/.test(String(s.kind)))?kidName(s.kind):s.kind;
+      if(n&&KADER.some(k=>k.aktiv!==false&&k.name===n))tpKindSetzen(si,n);
+    }
+  });
+}
+/* Projektion: Zustand → Haken (.checked) und Auswahl (Wert); danach die Empfehlungen im
+   Einzeltraining wie früher beim Wiedereinsetzen. Ein Kind, das die Auswahl nicht anbietet,
+   fällt still weg. */
+function _tpTwKindAufSeite(){
+  const d=_tpTwKindAufDom(), tw=TP_ZUSTAND.tw, kind=TP_ZUSTAND.kind;
+  Object.keys(d.tw).forEach(si=>d.tw[si].forEach(c=>{ const soll=_tpTwSoll(tw[si],c.value); if(c.checked!==soll)c.checked=soll; }));
+  Object.keys(tw).forEach(si=>{ if(!d.tw[si])delete tw[si]; });
+  Object.keys(kind).forEach(si=>{ if(!d.kind[si])delete kind[si]; });
+  Object.keys(d.kind).forEach(si=>{
+    const s=d.kind[si], v=kind[si]||"";
+    if(s.value!==v)s.value=v;
+    if(s.value!==v)kind[si]="";
+    if(s.value&&typeof tpIndPlayerChange==="function")tpIndPlayerChange(Number(si));
+  });
+  _tpTwKindOffen.clear();
+  /* Was die Projektion zuletzt gezeigt hat – daran erkennt tpZustandPruefen einen fremden Eingriff. */
+  _tpTwKindProj={tw:{},kind:{}};
+  Object.keys(d.tw).forEach(si=>{ const m=_tpTwKindProj.tw[si]={}; d.tw[si].forEach(c=>{ m[c.value]=c.checked; }); });
+  Object.keys(d.kind).forEach(si=>{ _tpTwKindProj.kind[si]=d.kind[si].value; });
+}
+let _tpTwKindProj={tw:{},kind:{}};
+/* Gespeicherte Haken und Kind setzen und gleich zeigen (für eine bereits gezeichnete Zeitleiste). */
+function _tpTwKindAnwenden(slots,index){ _tpTwKindLaden(slots,index); _tpTwKindAufSeite(); }
+let _tpBrueckeTwZahl=0, _tpBrueckeTwLog=[];
+/* Brücke bis Schritt 8: fremde Eingriffe an Haken und Auswahl gelten. Einträge, die ein Setter
+   gerade geändert hat (noch nicht projiziert), bleiben; Einträge ohne Haken/Auswahl fallen weg. */
+function _tpTwKindNachziehen(){
+  const d=_tpTwKindAufDom(), tw=TP_ZUSTAND.tw, kind=TP_ZUSTAND.kind;
+  const merken=k=>{ _tpBrueckeTwZahl++; _tpBrueckeTwLog.push(k); if(_tpBrueckeTwLog.length>40)_tpBrueckeTwLog.shift(); };
+  Object.keys(d.tw).forEach(si=>{
+    if(_tpTwKindOffen.has("tw|"+si))return;
+    const cs=d.tw[si];
+    if(cs.some(c=>c.checked!==_tpTwSoll(tw[si],c.value))){ merken("tw|"+si); tw[si]=cs.filter(c=>c.checked).map(c=>c.value); }
+  });
+  Object.keys(d.kind).forEach(si=>{
+    if(_tpTwKindOffen.has("kind|"+si))return;
+    const v=d.kind[si].value;
+    if((kind[si]||"")!==v){ merken("kind|"+si); kind[si]=v; }
+  });
+  Object.keys(tw).forEach(si=>{ if(!d.tw[si]&&!_tpTwKindOffen.has("tw|"+si))delete tw[si]; });
+  Object.keys(kind).forEach(si=>{ if(!d.kind[si]&&!_tpTwKindOffen.has("kind|"+si))delete kind[si]; });
+}
 let _tpWahlOffen=new Set();   // per tpWahlSetzen geändert, aber noch nicht auf der Seite – die Brücke lässt sie stehen
 function tpWahlIdx(selId){ const w=TP_ZUSTAND.wahl[selId]; return (w&&w.i!=null&&!isNaN(w.i))?w.i:null; }
 /* Eintrag in einheitlicher Form – oder null, wenn er nichts trägt. */
@@ -1746,6 +1846,7 @@ function _tpDomNachziehen(){
     if(!_tpWahlGleich(d,wahl[s.id])){ _tpBrueckeMerken(s.id); if(d)wahl[s.id]=d; else delete wahl[s.id]; }
   });
   Object.keys(wahl).forEach(id=>{ if(!gesehen.has(id)&&!_tpWahlOffen.has(id)){ _tpBrueckeMerken(id); delete wahl[id]; } });
+  _tpTwKindNachziehen();   // v886: Torwart-Haken und Einzelkind (eigener Zähler)
 }
 /* v884 · Bündel-Setter: Blöcke bekommen neue Indizes (Verschieben, Löschen, Rückgängig,
    Durchgänge). neuVon: alter Index → neuer Index; fehlt einer, ist der Block weg und seine Wahl
@@ -1794,7 +1895,8 @@ function _tpWahlAufSeite(mitHist){
 }
 /* Prüfhilfe (Prüffall v883): wo weichen Auswahlfeld, Marken oder Picker-Knopf vom Zustand ab?
    Leere Liste = Seite und Zustand stimmen überein. Liest nur, ändert nichts. */
-function tpZustandPruefen(){
+function tpZustandPruefen(opt){
+  opt=opt||{};
   const wahl=TP_ZUSTAND.wahl, ab=[], gesehen=new Set(), kurz=w=>w?JSON.stringify(w):"leer";
   document.querySelectorAll(".tp-form-sel").forEach(s=>{
     gesehen.add(s.id);
@@ -1805,6 +1907,23 @@ function tpZustandPruefen(){
     if(b&&b.textContent!==soll)ab.push(`${s.id}-pick: Knopf „${b.textContent}“ · Zustand „${soll}“`);
   });
   Object.keys(wahl).forEach(id=>{ if(!gesehen.has(id))ab.push(`${id}: im Zustand ${kurz(wahl[id])}, aber kein Auswahlfeld`); });
+  /* v886: Torwart-Haken und Einzelkind. Ein fremder Eingriff (Haken oder Auswahl weicht von der
+     letzten Projektion ab, ohne dass ein Setter lief – .checked=/.value= ohne Ereignis) ist kein
+     Fehler von Zustand oder Projektion: ihn übernimmt die Brücke beim nächsten Zeichnen oder
+     Speichern und zählt ihn (_tpBrueckeTwZahl). Er wird nur mit opt.fremd gemeldet. */
+  const d=_tpTwKindAufDom(), tw=TP_ZUSTAND.tw, kind=TP_ZUSTAND.kind, pj=_tpTwKindProj;
+  Object.keys(d.tw).forEach(si=>d.tw[si].forEach(c=>{
+    const soll=_tpTwSoll(tw[si],c.value); if(c.checked===soll)return;
+    const zuletzt=pj.tw[si]?pj.tw[si][c.value]:undefined, fremd=zuletzt!==undefined&&zuletzt!==c.checked;
+    if(!fremd||opt.fremd)ab.push(`Torwart-Haken ${si}/${c.value}: Seite ${c.checked?"an":"aus"} · Zustand ${soll?"an":"aus"}${fremd?" (fremder Eingriff, Brücke offen)":""}`);
+  }));
+  Object.keys(tw).forEach(si=>{ if(!d.tw[si])ab.push(`Torwart-Haken ${si}: im Zustand ${JSON.stringify(tw[si])}, aber keine Haken`); });
+  Object.keys(d.kind).forEach(si=>{
+    const v=d.kind[si].value; if(v===(kind[si]||""))return;
+    const fremd=si in pj.kind&&pj.kind[si]!==v;
+    if(!fremd||opt.fremd)ab.push(`Einzelkind ${si}: Seite „${v}“ · Zustand „${kind[si]||""}“${fremd?" (fremder Eingriff, Brücke offen)":""}`);
+  });
+  Object.keys(kind).forEach(si=>{ if(!d.kind[si])ab.push(`Einzelkind ${si}: im Zustand „${kind[si]}“, aber keine Auswahl`); });
   return ab;
 }
 /* Ein Trainer, ein Platz: wer an einem parallelen Block (Torwart-/Einzeltraining) dieses
@@ -2979,12 +3098,8 @@ function _tpRenderTimelineIntern(){
   if(!wrap)return;
   /* v883: Die Übungswahl steht im Zustand (TP_ZUSTAND.wahl) und wird nach dem Zeichnen auf die
      Seite projiziert. Die Brücke übernimmt vorher, was noch direkt ins Auswahlfeld geschrieben
-     wurde. Torwart-Haken und das Einzeltrainings-Kind leben (bis Schritt 6) nur im DOM –
-     hier merken, unten wieder einsetzen. */
+     wurde. v886: ebenso Torwart-Haken und Einzelkind (TP_ZUSTAND.tw/kind) – der Merk-Weg entfällt. */
   _tpDomNachziehen();
-  const merk={tw:{},ind:{}};
-  wrap.querySelectorAll(".tp-tw-player").forEach(c=>{merk.tw[c.dataset.slot+"|"+c.value]=c.checked;});
-  wrap.querySelectorAll('select[id^="tp-ind-player-"]').forEach(s=>{if(s.value)merk.ind[s.id]=s.value;});
   if(typeof renderTeamDiagnose==="function")renderTeamDiagnose(); // Phase 7-C: Team-Diagnose oben
   const allForms=tpAllForms();
   let time=0;
@@ -3118,7 +3233,7 @@ function _tpRenderTimelineIntern(){
       html+=`<div style="margin-top:6px">
         <div style="font-size:var(--s-klein);color:var(--text2);font-weight:600;margin-bottom:4px">Torwart-Spieler</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-          ${twPlayers.map(k=>`<label class="tp-check"><input type="checkbox" value="${esc(k.name)}" class="tp-tw-player" data-slot="${si}" checked><span>${k.name}${k.twPrio===1?" ⭐":""}<span style="color:var(--text2);font-size:var(--s-klein)">${esc(tpTwZusatz(k.name))}</span></span></label>`).join("")}
+          ${twPlayers.map(k=>`<label class="tp-check"><input type="checkbox" value="${esc(k.name)}" class="tp-tw-player" data-slot="${si}" onchange="tpTwSetzen(Number(this.dataset.slot),this.value,this.checked)" checked><span>${k.name}${k.twPrio===1?" ⭐":""}<span style="color:var(--text2);font-size:var(--s-klein)">${esc(tpTwZusatz(k.name))}</span></span></label>`).join("")}
         </div>
         <div class="tp-feld"><label for="tp-form-${si}-0">Übung</label>
           <div class="tp-feld-zeile">
@@ -3135,7 +3250,7 @@ function _tpRenderTimelineIntern(){
     } else if(art==="einzel"){
       const playerOpts=KADER.filter(k=>k.aktiv!==false).map(k=>`<option value="${esc(k.name)}">${esc(k.name)}</option>`).join("");
       html+=`<div class="tp-feld"><label for="tp-ind-player-${si}">Spieler</label>
-        <select id="tp-ind-player-${si}" onchange="tpIndPlayerChange(${si})">
+        <select id="tp-ind-player-${si}" onchange="tpKindSetzen(${si},this.value);tpIndPlayerChange(${si})">
           <option value="">— Spieler wählen —</option>${playerOpts}
         </select>
       </div>
@@ -3233,8 +3348,7 @@ function _tpRenderTimelineIntern(){
   _tpWahlBereinigen();
   _tpKetteNachziehen();   // v621: Durchgänge erben die Übungen ihres Kopfes
   _tpWahlAufSeite(true);
-  wrap.querySelectorAll(".tp-tw-player").forEach(c=>{const k=c.dataset.slot+"|"+c.value; if(k in merk.tw)c.checked=merk.tw[k];});
-  Object.keys(merk.ind).forEach(id=>{const s=document.getElementById(id); if(s){s.value=merk.ind[id]; if(typeof tpIndPlayerChange==="function"&&s.value)tpIndPlayerChange(Number(id.replace("tp-ind-player-","")));}});
+  _tpTwKindAufSeite();   // v886: Torwart-Haken und Einzelkind aus dem Zustand
   tpPrognoseLoad(); // G3: erwartete Kinderzahl fürs gewählte Datum
   if(typeof zielUebungenHint==="function")zielUebungenHint(); // B: Übungen zu offenen Entwicklungszielen
   if(typeof tlCheck==="function")tlCheck(); // laufender Trainingsstart? → Bereit-Fenster
@@ -3644,14 +3758,14 @@ function tpRemoveSlot(idx){
      Trainer an derselben Stelle wieder her (parallele Blöcke, die an ihm hingen, verlieren die Verbindung). */
   const slot=tpSlots[idx];
   if(!slot)return;
-  const wrap=document.getElementById("tp-timeline");
-  /* v884: Die Übungswahl des Blocks aus dem Zustand; das Einzelkind steht bis Schritt 6 im DOM. */
+  /* v884: Die Übungswahl des Blocks aus dem Zustand. v886: das Einzelkind ebenso (vorher über das
+     Präfix tp-ind-player-<idx> gesucht, das auch -<idx>X traf – die Gegenstücke tp-ind-player-<n>X
+     gab es beim Rückgängig nie, der Fehler blieb ohne Folge). Die Torwart-Haken werden nicht gemerkt:
+     früher kamen sie über el.value (statt .checked) zurück, also gar nicht – Fehlerbild 2 bleibt,
+     behoben erst ab Schritt 9. */
+  _tpDomNachziehen();   // v886: Einstieg per Knopf – die Brücke gilt auch hier (bis Schritt 8)
   const wahlAlt=tpWahlFelder(idx).map(id=>tpWahlIdx(id));
-  const indFelder=[];
-  if(wrap)wrap.querySelectorAll(`[id^="tp-ind-player-${idx}"]`).forEach(el=>{
-    const m=el.id.match(/^tp-ind-player-\d+(.*)$/); if(m)indFelder.push({rest:m[1],wert:el.value});
-  });
-  const tw=wrap?[...wrap.querySelectorAll(".tp-tw-player")].filter(el=>String(el.dataset.slot)===String(idx)).map(el=>el.value):[];
+  const kindAlt=TP_ZUSTAND.kind[idx];
   const coaches={}; Object.keys(tpCoaches).forEach(k=>{ const m=k.match(/^tp-form-(\d+)-(\d+)$/); if(m&&+m[1]===idx)coaches[m[2]]=tpCoaches[k]; });
   const kopie=JSON.parse(JSON.stringify(slot));
   if(kopie.parallelZu!=null&&kopie.parallelZu>idx)kopie.parallelZu--;
@@ -3661,15 +3775,12 @@ function tpRemoveSlot(idx){
     tpSlots.push(kopie);
     Object.keys(coaches).forEach(f=>{tpCoaches[`tp-form-${n}-${f}`]=coaches[f];});
     tpRenderTimeline();
-    const w2=document.getElementById("tp-timeline");
     /* Übungen über den Zustand: der alte Wert je Feld, die Marken des neuen Feldes bleiben (wie früher
        am Auswahlfeld) – tpSlotsNeuOrdnen unten zieht die Kennungen nach. */
     const felderNeu=tpWahlFelder(n);
     wahlAlt.forEach((i,p)=>{ const id=`tp-form-${n}-${p}`; if(!felderNeu.includes(id))return; const w=TP_ZUSTAND.wahl[id]||{}; tpWahlSetzen(id,i,{station:w.station,alle:w.alle,erbt:w.erbt}); });
-    if(w2){
-      indFelder.forEach(f=>{ const el=document.getElementById("tp-ind-player-"+n+f.rest); if(el)el.value=f.wert; });
-      [...w2.querySelectorAll(".tp-tw-player")].filter(el=>String(el.dataset.slot)===String(n)).forEach((el,i)=>{ if(tw[i]!=null)el.value=tw[i]; });
-    }
+    if(kindAlt!==undefined&&_tpFeldArt(tpSlots[n])==="einzel")tpKindSetzen(n,kindAlt);
+    tpTwSetzen(n,null);   // Fehlerbild 2: die Haken kommen als Vorgabe (alle angehakt) zurück, nicht wie vor dem Löschen
     const reihe=tpSlots.map((_,i)=>i); reihe.pop(); reihe.splice(Math.min(idx,reihe.length),0,n);
     tpSlotsNeuOrdnen(reihe);
   },8000);
@@ -3685,7 +3796,8 @@ function tpSlotsNeuOrdnen(reihe){
   if(wrap){
     /* Zwei Schritte über einen Zwischennamen, damit kein Feld ein anderes überschreibt.
        v884: Die Übungswahl zieht der Zustand nach (tpWahlUmbenennen); umbenannt werden hier nur noch
-       die Kennungen – und Torwart-Haken und Einzelkind, die bis Schritt 6 im DOM stehen. */
+       die Kennungen. v886: Torwart-Haken und Einzelkind zieht der Zustand nach (_tpTwKindUmbenennen);
+       Haken und Auswahl werden mit umbenannt, damit die Brücke (bis Schritt 8) sie wiederfindet. */
     const els=[...wrap.querySelectorAll(".tp-form-sel,select[id^='tp-ind-player-'],.tp-tw-player")];
     els.forEach(el=>{
       if(el.classList.contains("tp-tw-player")){const ni=neuVon[el.dataset.slot]; el.dataset.slot=ni==null?"weg":"~"+ni; return;}
@@ -3697,6 +3809,7 @@ function tpSlotsNeuOrdnen(reihe){
       if(el.classList.contains("tp-tw-player")){if(el.dataset.slot.charAt(0)==="~")el.dataset.slot=el.dataset.slot.slice(1);return;}
       if(el.id.charAt(0)==="~")el.id=el.id.slice(1);
     });
+    _tpTwKindUmbenennen(neuVon);
   }
   _tpReihenfolgeAnwenden(reihe);
   tpRenderTimeline();
@@ -4230,11 +4343,12 @@ function _tpZustandAusDom(){
   const felder=_tpRenderReihe().flatMap(si=>tpWahlFelder(si).map(feld));
   /* Sicherheitsnetz der Übergangszeit: eine Wahl ohne Feld im Modell geht nicht verloren */
   Object.keys(wahl).filter(id=>!drin.has(id)&&wahl[id].i!=null).forEach(id=>felder.push(feld(id)));
+  /* v886: Torwart-Haken und Einzelkind aus dem Zustand – die Haken in der Reihenfolge des Angebots
+     (tpTwAngebot, wie früher die Haken auf der Seite), nur an Blöcken mit Angebot bzw. Auswahl. */
   const tw={}, kind={};
   tpSlots.forEach((s,si)=>{
-    const an=[...document.querySelectorAll(`.tp-tw-player[data-slot="${si}"]`)];
-    if(an.length)tw[si]=an.filter(c=>c.checked).map(c=>c.value);
-    const k=document.getElementById(`tp-ind-player-${si}`)?.value; if(k!=null)kind[si]=k;
+    if(tpTwAngebot(si).length)tw[si]=tpTwAn(si);
+    if(_tpFeldArt(s)==="einzel")kind[si]=tpKindVon(si);
   });
   return {slots:tpSlots,coaches:tpCoaches,trainer:tpGetCheckedTrainers(),formen:tpAllForms(),felder,tw,kind,felderZahl:tpSlots.map((s,si)=>tpFelderZahl(si))};
 }
@@ -4631,24 +4745,14 @@ async function _tpPlanRestoreIntern(datum,lauf){
     /* v884: Struktur und Zuordnung über den Zustand (tpZustandLaden), VOR dem Zeichnen – denn das
        Zeichnen liest tpCoaches und rechnet daraus die Felder. Alte `durchgaenge` werden dabei zur
        Kette (bisher ein setTimeout aus dem Zeichnen, der während des Ladens unten lief). */
-    const info=tpZustandLaden(slots);
+    const info=tpZustandLaden(slots);   // v886: samt Torwart-Haken und Einzelkind
     tpRenderTimeline();
-    _tpTwKindAnwenden(slots,info.index);   // Torwart-Haken und Einzelkind: bis Schritt 6 im DOM
     if(typeof toast==="function")info.meldungen.forEach(m=>toast(m));
   }
   const plan=await tpPlanLoad(datum);
   if(!_tpRestoreGilt(datum,lauf))return;
   const r=tpZustandLaden(null,plan);
   if(r.felder)_tpWahlGeladenZeigen(r);
-}
-/* Nach dem Zeichnen: Torwart-Haken und das Kind im Einzeltraining (kader.id → Name). index: Index
-   des gespeicherten Blocks → heutiger Index (tpZustandLaden). Bis Schritt 6 im DOM. */
-function _tpTwKindAnwenden(slots,index){
-  slots.forEach((s,si0)=>{
-    const si=index?index[si0]:si0; if(si==null)return;
-    if(Array.isArray(s.tw)){const namen=new Set((typeof kidListFromIds==="function")?kidListFromIds(s.tw):s.tw); document.querySelectorAll(`.tp-tw-player[data-slot="${si}"]`).forEach(c=>{c.checked=namen.has(c.value);});}
-    if(s.kind!=null){const sel=document.getElementById(`tp-ind-player-${si}`); const n=(typeof kidName==="function"&&/^\d+$/.test(String(s.kind)))?kidName(s.kind):s.kind; if(sel&&n&&[...sel.options].some(o=>o.value===n)){sel.value=n; if(typeof tpIndPlayerChange==="function")tpIndPlayerChange(si);}}
-  });
 }
 /* ═══ v884 · 4.8 Schritt 5 – ÖFFNEN ÜBER DEN ZUSTAND ═══════════════════════════════════════
    tpZustandLaden(slots, plan) – rein: kein DOM, kein Zeichnen, kein Speichern.
@@ -4689,6 +4793,7 @@ function tpZustandLaden(slots,plan){
       if(r.neu)out.meldungen.push(`${r.neu===1?"Ein Hauptteil":r.neu+" Hauptteile"} als Durchgang angelegt – die Einheit dauert jetzt ${nachher} statt ${vorher} Min.`);
       else if(r.weg)out.meldungen.push(`Durchgang entfernt – die Einheit dauert jetzt ${nachher} Min.`);
     }
+    _tpTwKindLaden(slots,out.index);   // v886: Torwart-Haken und Einzelkind (vorher nach dem Zeichnen im DOM)
   }
   if(plan===undefined)return out;
   /* Neue Struktur in derselben Runde (ohne Zeichnen dazwischen): was das Zeichnen täte – Felder, die
@@ -4843,7 +4948,7 @@ function stTimerStations(){
   const zusatz=si=>tpSlots.map((p,pi)=>({p,pi})).filter(x=>tpIstParallel(x.p)&&x.p.parallelZu===si).map(({p,pi})=>{
     const uebung=tpWahlFelder(pi).length?(_tpWahlText(`tp-form-${pi}-0`)||"Übung wählen"):"Übung wählen";   // v883: aus dem Zustand
     const tw=(p.typ||"")==="tw";
-    const wer=tw?[...document.querySelectorAll(`.tp-tw-player[data-slot="${pi}"]:checked`)].map(c=>c.value).join(", "):(document.getElementById(`tp-ind-player-${pi}`)?.value||"");
+    const wer=tw?tpTwAn(pi).join(", "):tpKindVon(pi);   // v886: aus dem Zustand
     return `${tw?"🧤 Torwart":"🎯 Einzeltraining"}${wer?" ("+wer+")":""}: ${uebung}`;
   });
   return tpSlots.flatMap((slot,si)=>{
@@ -6023,8 +6128,8 @@ function _tlSnapshot(){
     const f=i0!=null?forms[i0]:null;
     const twBlock=(slot.typ||"main")==="tw";
     const kinder=twBlock
-      ? Array.from(document.querySelectorAll(`.tp-tw-player[data-slot="${si}"]:checked`)).map(c=>c.value)
-      : [document.getElementById(`tp-ind-player-${si}`)?.value||""].filter(Boolean);
+      ? tpTwAn(si)   // v886: aus dem Zustand
+      : [tpKindVon(si)].filter(Boolean);
     ziele.forEach(ziel=>ziel.gruppen.forEach(g=>{if(g.kinder&&kinder.length)g.kinder=g.kinder.filter(k=>!kinder.includes(k));}));
     const titel=twBlock
       ? `🧤 Torwart-Training${kinder.length?" mit "+kinder.join(", "):""}: ${f?f.name:"(Übung wählen)"}`
