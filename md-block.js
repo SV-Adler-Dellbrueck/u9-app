@@ -275,7 +275,11 @@ function blockKiNutzlast(datum){
   const bloecke=[];
   (tpSlots||[]).forEach((sl,si)=>{
     if(!(typeof tpIstHauptteil==="function"&&tpIstHauptteil(sl&&sl.typ)))return;
-    const st=[...document.querySelectorAll(`select.tp-form-sel[id^="tp-form-${si}-"]`)].map(x=>{
+    /* v881: Felderzahl aus dem Modell (boot.js, Welle 1) – ohne sie wie bisher aus der Seite */
+    const felder=(typeof tpFelderZahl==="function")
+      ? Array.from({length:tpFelderZahl(si)},(_,p)=>document.getElementById(`tp-form-${si}-${p}`)).filter(x=>x&&x.matches("select.tp-form-sel"))
+      : [...document.querySelectorAll(`select.tp-form-sel[id^="tp-form-${si}-"]`)];
+    const st=felder.map(x=>{
       const f=alle[parseInt(x.value)]||{}; const p=Number(x.id.split("-").pop());
       return {station:p,uebung:f.name||"",spieler:String(f.spieler||"").slice(0,80),kinder:(_tpStationGruppe[x.id]||{}).n||0};
     }).filter(x=>x.uebung);
