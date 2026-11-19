@@ -81,7 +81,9 @@ module.exports = async function (h) {
     // d–f) Terminfindung aus dem Termin heraus
     await tmMeetingOeffnen(90);
     for (let i = 0; i < 60 && !document.getElementById("tm-meet-card"); i++) await new Promise(r => setTimeout(r, 50));
-    await new Promise(r => setTimeout(r, 400));
+    /* v879: statt fester 400 ms warten, bis die Karte fertig geladen hat (bis 4 s) – im Parallel-Lauf
+       stand nach 400 ms noch „Lade …“ darin. Geprüft wird danach unverändert. */
+    for (let i = 0; i < 80 && /Lade …/.test((document.getElementById("tm-meet-card") || {}).textContent || "Lade …"); i++) await new Promise(r => setTimeout(r, 50));
     const card = document.getElementById("tm-meet-card");
     if (!card) { out.pollFehlt = true; return out; }
     out.pollText = card.textContent.replace(/\s+/g, " ").trim();
