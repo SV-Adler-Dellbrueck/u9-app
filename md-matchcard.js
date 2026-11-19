@@ -45,7 +45,7 @@ async function renderElternView(datum){
       </div>
       ${istTraining?``:`<div id="ev-ticker" style="margin-top:14px"></div><div id="ev-einsatz" style="margin-top:14px"></div>`}
       <div style="font-size:var(--s-klein);text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin:16px 0 8px;text-align:center">Für Eltern</div>
-      <button onclick="elternKalenderIcs()" style="width:100%;margin-bottom:10px;background:#1e3a8a;color:#fff;border:none;padding:14px;border-radius:12px;font-family:inherit;font-weight:700;font-size:var(--s-karte);cursor:pointer">🗓️ Termine in meinen Kalender</button>
+      <button class="btn btn-p" onclick="elternKalenderIcs()" style="width:100%;margin-bottom:10px;justify-content:center;font-size:var(--s-karte)">🗓️ Termine in meinen Kalender</button>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <a href="${appRoot()}?heft" style="text-align:center;background:#fff;border:1.5px solid #1e3a8a;color:#1e3a8a;padding:13px 8px;border-radius:12px;text-decoration:none;font-weight:700;font-size:var(--s-text)">📰 Adler Nest – in der Eltern-App</a>
         <a href="${appRoot()}?portal" style="text-align:center;background:#fff;border:1.5px solid #1e3a8a;color:#1e3a8a;padding:13px 8px;border-radius:12px;text-decoration:none;font-weight:700;font-size:var(--s-text)">👨‍👩‍👧 Mein Kind</a>
@@ -161,7 +161,7 @@ async function renderDelegateView(token){
           <button onclick="dgSend('aktion')" ${selected?"":"disabled"} style="min-height:52px;border:none;border-radius:12px;background:#1a56db;color:#fff;font-weight:700;font-size:var(--s-text);cursor:pointer">👏 Starke Aktion</button>
           ${(selected&&istTW(selected))?`<button onclick="dgSend('parade')" style="min-height:52px;border:none;border-radius:12px;background:#854d0e;color:#fff;font-weight:700;font-size:var(--s-text);cursor:pointer;grid-column:span 2">🧤 Parade</button>`:""}
         </div>
-        <button onclick="dgSend('gegentor')" style="width:100%;margin-top:8px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:12px;background:#f1f5f9;color:#334155;font-size:var(--s-text);cursor:pointer">Gegentor melden</button>
+        <button class="btn" onclick="dgSend('gegentor')" style="width:100%;margin-top:8px;min-height:44px;justify-content:center;font-size:var(--s-text)">Gegentor melden</button>
       </div>
       <div id="dg-status" style="text-align:center;font-size:var(--s-text);color:var(--text3);min-height:16px"></div>
       <div style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin-top:14px">Danke fürs Mithelfen! · SV Adler Dellbrück e.V.</div>`;
@@ -273,7 +273,7 @@ async function renderTickerView(key){
     // B1: Applaus-Zähler des Spieltags (aggregiert über alle Teams via baseDatum)
     let claps=0; try{const cr=await fetch(`${SB_URL}/rest/v1/ticker_claps?datum=eq.${encodeURIComponent(baseDatum)}&select=count`,{headers:anon});if(cr.ok){const cj=await cr.json();claps=(cj[0]&&cj[0].count)||0;}}catch(e){}
     const clapBar=`<div style="text-align:center;margin-top:16px">
-      <button onclick="tvClap()" style="border:none;background:linear-gradient(135deg,#c2410c,#be185d);color:#fff;border-radius:16px;padding:14px 22px;font-size:var(--s-karte);font-weight:800;font-family:inherit;cursor:pointer;box-shadow:0 4px 16px rgba(236,72,153,.35)">👏 Applaus fürs Team</button>
+      <button class="btn btn-p" onclick="tvClap()" style="font-size:var(--s-karte)">👏 Applaus fürs Team</button>
       <div style="font-size:var(--s-text);color:#5b6b81;margin-top:8px"><span id="tv-claps" style="font-weight:800;color:#db2777">${claps}</span> mal geklatscht</div>
     </div>`;
     const foot=`${clapBar}${adlerkasseHtml}<div style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin-top:14px">Nur-Ansehen · aktualisiert automatisch · SV Adler Dellbrück e.V.</div>`;
@@ -713,7 +713,7 @@ function aufRender(){
   let twRow="";
   if(rotForm.tw){
     if(rotTW){
-      twRow=`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--r);font-size:var(--s-text);color:var(--text);margin-bottom:10px">🥅 <strong>Torwart (Fest): ${esc(rotTW)}</strong><button onclick="rotClearTW()" style="margin-left:auto;min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:8px;background:var(--surface);font-size:var(--s-text);cursor:pointer;color:var(--text)">entfernen</button></div>`;
+      twRow=`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--r);font-size:var(--s-text);color:var(--text);margin-bottom:10px">🥅 <strong>Torwart (Fest): ${esc(rotTW)}</strong><button class="btn btn-sm" onclick="rotClearTW()" style="margin-left:auto;min-width:44px;min-height:44px;font-size:var(--s-text)">entfernen</button></div>`;
     }else{
       const opts=[...rotField,...rotBench].map(n=>`<option value="${esc(n)}">${getKader(n)?.nr?getKader(n).nr+" ":""}${esc(n)}</option>`).join("");
       twRow=`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--amber-bg);border:1px dashed var(--amber);border-radius:var(--r);font-size:var(--s-text);color:var(--text);margin-bottom:10px">🥅 <strong>Torwart (Fest):</strong><select onchange="rotSetTW(this.value)" style="flex:1;min-height:44px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)"><option value="">wählen…</option>${opts}</select></div>`;

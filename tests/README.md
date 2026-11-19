@@ -85,6 +85,13 @@ Zwei Prüfungen werden rot, wenn ein Handgriff vergessen wurde – die Abhilfe s
   Aktionsmenü und die Ja/Nein-Frage – jeder sichtbare Knopf Text ≥ 4,5:1 auf seiner Fläche (`h.kontrastHelfer`),
   ≥ 44 px hoch, runde ≥ 44 × 44, Text-Links unterstrichen, je Ansicht höchstens eine `.btn-p`.
 
+`v877-knopf-bauarten-trainer.js` hält dasselbe für den Trainer-Kernbereich fest (`boot.js`, `md-turnierplan.js`,
+`views.js`, `md-tagebuch.js`, `md-matchcard.js`, `md-skizze.js`, `md-nest.js`): Quelltext ohne Knopffarben (auch
+`border-radius`; Konstanten über mehrere Zeilen werden eingesetzt), Ausnahmen mit Grund in `AUSNAHMEN` (Zustands- und
+Filterknöpfe, Kacheln, Spielfeld und Skizze, Live-Vollbild). Gerendert hell und dunkel: Trainingsplan (gefüllt), Übungen,
+Trainingsturnier, Kader, Kinderprofil, Kontakte, Tagebuch, neuer Eintrag, Trainer-Meeting, Nest-Redaktion. Knöpfe auf
+einem Farbverlauf sind nicht messbar und werden genannt statt gewertet.
+
 ## Golden-Master (Bestandsaufnahme 4.8, Schritt 1)
 
 `v877-trainingsplan-golden.js` schreibt fest, was der Trainingsplan an die Tabelle `trainingsplan` schickt – für zehn
