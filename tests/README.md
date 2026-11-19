@@ -72,6 +72,19 @@ Zwei Prüfungen werden rot, wenn ein Handgriff vergessen wurde – die Abhilfe s
 - `v818-icons-zuschnitt.js`: ein Icon steht im Code, aber nicht in der zugeschnittenen Schrift → `node tools/icons-zuschneiden.js --schreiben`
 - `v818-fester-cache.js`: eine Datei unter `vendor/` oder ein PNG wurde geändert, der Name des festen Caches aber nicht → `node tools/fest-cache.js --schreiben`
 
+## Knopf-Bauarten (seit v876)
+
+`v876-knopf-bauarten.js` hält die sechs Bauarten aus styles.css (`.btn-p`, `.btn`/`.btn-sm`, `.btn-d`, `.btn-zeile`,
+`.btn-link`, `.btn-kopf`) in `md-eltern-portal.js`, `md-adler-rufe.js` und `core.js` fest:
+
+- **Quelltext:** kein `<button>` trägt im `style` eine eigene Fläche, Farbe, Rand, Polster oder Schriftstärke (Platz wie
+  `margin`, `width`, `flex` ist erlaubt). Konstanten wie `${EP_KNOPF}` werden eingesetzt. Ausnahmen stehen mit Grund in
+  `AUSNAHMEN` im Prüffall – Zustands- und Filterknöpfe (aria-pressed), Antwortknöpfe (v840), Wochenkacheln (v861),
+  Emoji-Reaktionen, Vorschaubilder. Eine neue Ausnahme gehört dort hinein, mit Begründung.
+- **Gerendert, hell und dunkel:** Anmeldung, Startseite, PWA-Banner, „Mein Konto“, Termin-Detail, Adler-Rufe samt
+  Aktionsmenü und die Ja/Nein-Frage – jeder sichtbare Knopf Text ≥ 4,5:1 auf seiner Fläche (`h.kontrastHelfer`),
+  ≥ 44 px hoch, runde ≥ 44 × 44, Text-Links unterstrichen, je Ansicht höchstens eine `.btn-p`.
+
 ## Parallel (seit v782)
 
 Der Lauf startet standardmäßig drei Prüfungen gleichzeitig (`PARALLEL=n` ändert es, `PARALLEL=1` ist der alte Ablauf) und braucht statt rund 35 Minuten etwa 11. Die Ausgabe bleibt in der

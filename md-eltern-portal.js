@@ -135,8 +135,9 @@ async function renderElternPortal(){
    Einmal-Code bleibt fuer aeltere Konten ohne Passwort und fuer „Passwort vergessen“. */
 /* v822: font-family:inherit – Felder und Knöpfe der Anmeldung standen in der Systemschrift statt in der Schrift der App. */
 const EP_FELD="font-family:inherit;width:100%;padding:11px;margin:6px 0 12px;border:1px solid var(--rand-bedien);border-radius:10px;font-size:var(--s-karte);box-sizing:border-box";
-const EP_KNOPF="font-family:inherit;width:100%;min-height:46px;padding:13px;border:none;border-radius:10px;color:#fff;font-size:var(--s-karte);font-weight:700;cursor:pointer";
-const EP_LINK="font-family:inherit;width:100%;min-height:44px;padding:9px;margin-top:6px;border:none;background:none;color:#475569;font-size:var(--s-text);cursor:pointer;text-decoration:underline";
+/* v876: Knöpfe der Anmeldung tragen die Bauarten aus styles.css (.btn-p, .btn-link) – hier steht nur noch Platz. */
+const EP_KNOPF="width:100%;justify-content:center;font-size:var(--s-karte)";
+const EP_LINK="width:100%;justify-content:center;margin-top:6px";
 function elternPortalKopf(){
   return `<div style="text-align:center"><img src="logo.png" alt="SV Adler Dellbrück" width="72" height="72" style="border-radius:50%;background:#fff"></div>
     <div style="text-align:center;font-size:var(--s-teil);font-weight:800;margin-top:6px">Eltern-Bereich</div>
@@ -150,22 +151,22 @@ function elternPortalLogin(root,vorEmail){
       <input id="ep-email" type="email" inputmode="email" autocomplete="username" placeholder="name@mail.de" style="${EP_FELD}">
       <label for="ep-pw" style="font-size:var(--s-text);color:#475569">Passwort</label>
       <input id="ep-pw" type="password" autocomplete="current-password" style="${EP_FELD}">
-      <button id="ep-login" type="submit" style="${EP_KNOPF};background:#1e3a8a">Anmelden</button>
-      <button type="button" onclick="elternPortalCodeWeg()" style="${EP_LINK}">Noch kein Passwort oder vergessen? Code per E-Mail</button>
+      <button id="ep-login" type="submit" class="btn btn-p" style="${EP_KNOPF}">Anmelden</button>
+      <button type="button" onclick="elternPortalCodeWeg()" class="btn btn-link" style="${EP_LINK}">Noch kein Passwort oder vergessen? Code per E-Mail</button>
     </form>
     <div id="ep-step-email" style="display:none">
       <div style="font-size:var(--s-text);color:#475569;margin-bottom:8px">Wir schicken dir einen Anmelde-Code. Im Eltern-Bereich kannst du danach ein Passwort festlegen.</div>
       <label for="ep-email2" style="font-size:var(--s-text);color:#475569">E-Mail-Adresse</label>
       <input id="ep-email2" type="email" inputmode="email" autocomplete="email" placeholder="name@mail.de" style="${EP_FELD}">
-      <button id="ep-send" onclick="elternPortalSend()" style="${EP_KNOPF};background:#1e3a8a">Code anfordern</button>
-      <button onclick="elternPortalHaveCode()" style="${EP_LINK}">Code schon erhalten? → eingeben</button>
-      <button onclick="elternPortalLogin(document.getElementById('eltern-portal'))" style="${EP_LINK}">← mit Passwort anmelden</button>
+      <button id="ep-send" onclick="elternPortalSend()" class="btn btn-p" style="${EP_KNOPF}">Code anfordern</button>
+      <button onclick="elternPortalHaveCode()" class="btn btn-link" style="${EP_LINK}">Code schon erhalten? → eingeben</button>
+      <button onclick="elternPortalLogin(document.getElementById('eltern-portal'))" class="btn btn-link" style="${EP_LINK}">← mit Passwort anmelden</button>
     </div>
     <div id="ep-step-code" style="display:none">
       <div style="font-size:var(--s-text);color:#475569;margin-bottom:6px">Code aus der E-Mail an <b id="ep-email-show"></b>:</div>
       <input id="ep-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="Code eingeben" aria-label="Code aus der E-Mail" style="width:100%;padding:11px;margin:6px 0 12px;border:1px solid var(--rand-bedien);border-radius:10px;font-size:var(--s-seite);letter-spacing:4px;text-align:center;box-sizing:border-box">
-      <button id="ep-verify" onclick="elternPortalVerify()" style="${EP_KNOPF};background:#047857">Anmelden</button>
-      <button onclick="elternPortalCodeWeg()" style="${EP_LINK}">← andere E-Mail</button>
+      <button id="ep-verify" onclick="elternPortalVerify()" class="btn btn-p" style="${EP_KNOPF}">Anmelden</button>
+      <button onclick="elternPortalCodeWeg()" class="btn btn-link" style="${EP_LINK}">← andere E-Mail</button>
     </div>
     <div id="ep-err" role="alert" style="font-size:var(--s-text);color:#b91c1c;min-height:16px;margin-top:10px;text-align:center"></div>
     <div style="font-size:var(--s-klein);color:#475569;text-align:center;margin-top:14px">Den Zugang gibt es mit der Einladungskarte vom Trainerteam – persönliche Angaben siehst du nur zu deinem eigenen Kind.</div>
@@ -264,7 +265,7 @@ async function elternEinladungView(root,code){
   if(!info||!info.ok){
     elternEinladungRahmen(root,`<div style="font-size:var(--s-karte);font-weight:800;text-align:center;margin-bottom:8px">Das hat nicht geklappt</div>
       <div style="font-size:var(--s-text);color:#334155;text-align:center">${esc((info&&info.fehler)||"Die Karte konnte nicht geprüft werden.")}</div>
-      <button onclick="elternEinladungVergessen();renderElternPortal()" style="${EP_KNOPF};background:#1e3a8a;margin-top:16px">Zur Anmeldung</button>`);
+      <button onclick="elternEinladungVergessen();renderElternPortal()" class="btn btn-p" style="${EP_KNOPF};margin-top:16px">Zur Anmeldung</button>`);
     return;
   }
   window._einlCode=code; window._einlVorname=info.vorname||"";
@@ -273,8 +274,8 @@ async function elternEinladungView(root,code){
   if(rolle==="parent"||rolle==="trainer"){
     elternEinladungRahmen(root,`<div style="font-size:var(--s-karte);font-weight:800;text-align:center">Willkommen bei der U9!</div>
       <div style="font-size:var(--s-text);color:#334155;text-align:center;margin:8px 0 14px">Einladung für ${fuer}.<br>Du bist schon angemeldet als <b>${esc(sbEmail()||"")}</b>.</div>
-      <button id="einl-ok" onclick="elternEinladungEinloesen()" style="${EP_KNOPF};background:#047857">Mit diesem Konto verbinden</button>
-      <button onclick="elternEinladungAbmelden()" style="${EP_LINK}">Anderes Konto verwenden</button>`);
+      <button id="einl-ok" onclick="elternEinladungEinloesen()" class="btn btn-p" style="${EP_KNOPF}">Mit diesem Konto verbinden</button>
+      <button onclick="elternEinladungAbmelden()" class="btn btn-link" style="${EP_LINK}">Anderes Konto verwenden</button>`);
     return;
   }
   elternEinladungRahmen(root,`<div style="font-size:var(--s-karte);font-weight:800;text-align:center">Willkommen bei der U9!</div>
@@ -286,9 +287,9 @@ async function elternEinladungView(root,code){
       <input id="einl-pw" type="password" autocomplete="new-password" minlength="10" style="${EP_FELD}">
       <label for="einl-pw2" style="font-size:var(--s-text);color:#475569">Passwort wiederholen</label>
       <input id="einl-pw2" type="password" autocomplete="new-password" minlength="10" style="${EP_FELD}">
-      <button id="einl-ok" type="submit" style="${EP_KNOPF};background:#047857">Zugang anlegen</button>
+      <button id="einl-ok" type="submit" class="btn btn-p" style="${EP_KNOPF}">Zugang anlegen</button>
     </form>
-    <button onclick="elternEinladungMitKonto()" style="${EP_LINK}">Ich habe schon ein Konto</button>
+    <button onclick="elternEinladungMitKonto()" class="btn btn-link" style="${EP_LINK}">Ich habe schon ein Konto</button>
     <div style="font-size:var(--s-klein);color:#475569;text-align:center;margin-top:8px">Mit dieser Karte können sich zwei Elternteile anmelden, jede Person mit eigener E-Mail.</div>`);
   document.getElementById("einl-email")?.focus();
 }
@@ -346,8 +347,8 @@ function elternPasswortOpen(){
     <label for="ep-neu2" style="font-size:var(--s-text);color:#475569">Wiederholen</label>
     <input id="ep-neu2" type="password" autocomplete="new-password" minlength="10" style="${EP_FELD}">
     <div id="ep-neu-err" role="alert" style="font-size:var(--s-text);color:#b91c1c;min-height:16px;margin-bottom:6px"></div>
-    <button id="ep-neu-ok" type="submit" style="${EP_KNOPF};background:#1e3a8a">Speichern</button>
-    <button type="button" onclick="document.getElementById('ep-pw-modal').remove()" style="${EP_LINK}">Abbrechen</button>
+    <button id="ep-neu-ok" type="submit" class="btn btn-p" style="${EP_KNOPF}">Speichern</button>
+    <button type="button" onclick="document.getElementById('ep-pw-modal').remove()" class="btn btn-link" style="${EP_LINK}">Abbrechen</button>
   </form>`;
   document.body.appendChild(m);
   document.getElementById("ep-neu1")?.focus();
@@ -383,7 +384,7 @@ function elternKontoOpen(){
   let mail="";
   try{const se=(typeof sbSession==="function")?sbSession():null;const pl=se&&se.access_token?JSON.parse(atob(se.access_token.split(".")[1].replace(/-/g,"+").replace(/_/g,"/"))):null;mail=(pl&&pl.email)||"";}catch(e){}
   const abschn=t=>`<div style="font-size:var(--s-klein);font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.04em;margin:14px 0 6px">${t}</div>`;
-  const zeile=(id,emo,t,d,onclick)=>`<button type="button" id="${id}" onclick="${onclick}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border:1px solid var(--rand-bedien);border-radius:12px;padding:12px;margin-bottom:8px;min-height:48px;font-family:inherit;cursor:pointer;color:#0f172a"><span aria-hidden="true" style="font-size:var(--s-teil);line-height:1">${emo}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-text);font-weight:700">${t}</span><span style="display:block;font-size:var(--s-klein);color:#64748b;margin-top:1px">${d}</span></span><span aria-hidden="true" style="font-size:var(--s-karte);color:#64748b">›</span></button>`;
+  const zeile=(id,emo,t,d,onclick)=>`<button type="button" id="${id}" onclick="${onclick}" class="btn btn-zeile" style="margin-bottom:8px"><span aria-hidden="true" style="font-size:var(--s-teil);line-height:1">${emo}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-text);font-weight:700">${t}</span><span style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:1px">${d}</span></span><span aria-hidden="true" style="font-size:var(--s-karte);color:#64748b">›</span></button>`;
   m.innerHTML=`<div style="background:#fff;color:#1a1a2e;border-radius:16px;padding:16px;max-width:440px;width:100%;margin:auto 0">
     ${mdlHead("ep-konto-modal","⚙️","Mein Konto",mail?esc(mail):"Angaben, Benachrichtigungen und deine Daten","#1e3a8a")}
     ${abschn("Über mich")}
@@ -395,7 +396,7 @@ function elternKontoOpen(){
     ${abschn("Meine Daten")}
     ${zeile("konto-export","💾","Meine Daten herunterladen","Alles zu deinem Konto und deinen Kindern als Datei (JSON) – ohne Einschätzungen des Trainerteams","elternDataExport(this)")}
     ${zeile("konto-loeschen","🗑️","Daten löschen","Eigenes Konto sofort löschen · Löschung der Daten deines Kindes beantragen","elternLoeschenOpen()")}
-    <button type="button" id="konto-abmelden" onclick="elternPortalLogout()" style="${EP_LINK};text-align:left;padding-left:2px">Abmelden</button>
+    <button type="button" id="konto-abmelden" onclick="elternPortalLogout()" class="btn btn-link" style="margin-top:6px">Abmelden</button>
   </div>`;
   document.body.appendChild(m);
   if(typeof pushRenderInto==="function")pushRenderInto("push-slot-eltern","parent");
@@ -447,14 +448,14 @@ function elternPortalDashboard(root){
     <div id="ep-kopf" style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;padding:12px 12px 12px;margin-bottom:12px;background:var(--blue);color:#fff;border-radius:18px;box-shadow:0 2px 8px rgba(26,86,219,.25)">
       <div style="display:flex;align-items:center;gap:10px;min-width:0"><img src="logo.png" alt="" width="40" height="40" style="flex:none;border-radius:50%;background:#fff"><div style="min-width:0"><div style="font-size:var(--s-teil);font-weight:800;line-height:1.15">Eltern-Bereich</div><div id="ep-gruss" style="font-size:var(--s-klein);opacity:.95">SV Adler Dellbrück · U9</div><div id="ep-gruss2" style="font-size:var(--s-klein);opacity:.95"></div></div></div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
-        <button type="button" id="rufe-kopf" onclick="rufeEinstieg()" title="Adler-Rufe – der Team-Chat" aria-label="Adler-Rufe öffnen" style="position:relative;border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:var(--s-karte);line-height:1">💬<span class="rufe-badge" style="display:none;position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#dc2626;color:#fff;font-size:var(--s-klein);font-weight:800;align-items:center;justify-content:center;border:2px solid #fff;box-sizing:border-box"></span></button>
-        <button type="button" id="ep-menue-knopf" onclick="elternMenueUmschalten()" aria-expanded="false" aria-controls="ep-menue" aria-label="Mehr: Schriftgröße, Dunkelmodus, Hilfe, Mein Konto" title="Mehr" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:var(--s-teil);line-height:1;font-weight:800">⋯</button>
+        <button type="button" id="rufe-kopf" onclick="rufeEinstieg()" title="Adler-Rufe – der Team-Chat" aria-label="Adler-Rufe öffnen" class="btn btn-kopf" style="position:relative">💬<span class="rufe-badge" style="display:none;position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#dc2626;color:#fff;font-size:var(--s-klein);font-weight:800;align-items:center;justify-content:center;border:2px solid #fff;box-sizing:border-box"></span></button>
+        <button type="button" id="ep-menue-knopf" onclick="elternMenueUmschalten()" aria-expanded="false" aria-controls="ep-menue" aria-label="Mehr: Schriftgröße, Dunkelmodus, Hilfe, Mein Konto" title="Mehr" class="btn btn-kopf" style="font-size:var(--s-teil)">⋯</button>
       </div>
       <div id="ep-menue" style="display:none;flex-basis:100%;flex-wrap:wrap;justify-content:space-around;gap:8px;padding-top:10px;margin-top:2px;border-top:1px solid rgba(255,255,255,.35)">
-        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:56px"><button class="schrift-toggle" onclick="schriftWechseln()" aria-label="Schriftgröße umschalten" style="min-width:44px;height:44px;background:#fff;color:#334155;border:1.5px solid var(--rand-bedien)">A</button><span style="font-size:var(--s-klein);color:#fff">Schrift</span></div>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:56px"><button id="theme-toggle" onclick="toggleTheme()" title="Hell / Dunkel umschalten" aria-label="Theme umschalten" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:var(--s-karte);line-height:1">🌙</button><span style="font-size:var(--s-klein);color:#fff">Hell/Dunkel</span></div>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:56px"><button onclick="elternTourStart()" title="Kurze Tour" aria-label="Hilfe/Tour" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:var(--s-karte);line-height:1">❓</button><span style="font-size:var(--s-klein);color:#fff">Hilfe</span></div>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:56px"><button id="ep-konto-knopf" onclick="elternKontoOpen()" title="Mein Konto" aria-label="Mein Konto: Angaben, Passwort, Benachrichtigungen, Daten, Abmelden" style="border:1.5px solid var(--rand-bedien);background:#fff;color:#334155;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:var(--s-karte);line-height:1">⚙️</button><span style="font-size:var(--s-klein);color:#fff">Mein Konto</span></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:56px"><button class="schrift-toggle btn btn-kopf" onclick="schriftWechseln()" aria-label="Schriftgröße umschalten">A</button><span style="font-size:var(--s-klein);color:#fff">Schrift</span></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:56px"><button id="theme-toggle" onclick="toggleTheme()" title="Hell / Dunkel umschalten" aria-label="Theme umschalten" class="btn btn-kopf">🌙</button><span style="font-size:var(--s-klein);color:#fff">Hell/Dunkel</span></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:56px"><button onclick="elternTourStart()" title="Kurze Tour" aria-label="Hilfe/Tour" class="btn btn-kopf">❓</button><span style="font-size:var(--s-klein);color:#fff">Hilfe</span></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:56px"><button id="ep-konto-knopf" onclick="elternKontoOpen()" title="Mein Konto" aria-label="Mein Konto: Angaben, Passwort, Benachrichtigungen, Daten, Abmelden" class="btn btn-kopf">⚙️</button><span style="font-size:var(--s-klein);color:#fff">Mein Konto</span></div>
       </div>
     </div>
     <div id="ep-dash-body"><div style="text-align:center;padding:40px;color:#64748b">Lade…</div></div>
@@ -517,15 +518,15 @@ function dsgvoRenderGate(onOk){
       <input type="checkbox" id="dsgvo-cb" style="margin-top:1px;width:22px;height:22px;flex:none" onchange="dsgvoKnopf(this.checked)">
       <span>Ich habe die Hinweise gelesen und willige in die beschriebene Verarbeitung ein. Die Einwilligung kann ich jederzeit für die Zukunft widerrufen.</span>
     </label>
-    <button id="dsgvo-ok" disabled onclick="dsgvoAccept()" style="width:100%;min-height:48px;border:1.5px dashed #94a3b8;border-radius:10px;background:#f1f5f9;color:#334155;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:not-allowed">Erst oben das Häkchen setzen</button>
-    <div style="text-align:center;margin-top:8px"><button onclick="elternPortalLogout()" style="min-height:44px;border:none;background:none;color:#475569;font-size:var(--s-text);cursor:pointer;text-decoration:underline">Ablehnen & abmelden</button></div>
+    <button id="dsgvo-ok" class="btn" disabled onclick="dsgvoAccept()" style="width:100%;justify-content:center;font-size:var(--s-karte)">Erst oben das Häkchen setzen</button>
+    <div style="text-align:center;margin-top:8px"><button class="btn btn-link" onclick="elternPortalLogout()">Ablehnen & abmelden</button></div>
   </div>`;
 }
 /* v859 (3.14): Der gesperrte Knopf war nur blasser – jetzt sagt er, was fehlt, und sieht anders aus. */
 function dsgvoKnopf(an){
   const b=document.getElementById("dsgvo-ok"); if(!b)return;
   b.disabled=!an; b.textContent=an?"Zustimmen & fortfahren":"Erst oben das Häkchen setzen";
-  b.style.background=an?"#1e3a8a":"#f1f5f9"; b.style.color=an?"#fff":"#334155"; b.style.border=an?"none":"1.5px dashed #94a3b8"; b.style.cursor=an?"pointer":"not-allowed";
+  b.classList.toggle("btn-p",an);   // v876: gesperrt = Neben-Aktion mit gestricheltem Rand (styles.css), frei = Hauptaktion
 }
 async function dsgvoAccept(){
   const btn=document.getElementById("dsgvo-ok"); if(btn)btn.disabled=true;
@@ -748,7 +749,7 @@ async function elternNewsLoad(kids){
   if(nbtn)nbtn.style.display=items.length?"flex":"none";
   panel.innerHTML = items.length
     ? items.map(i=>i.act
-        ?`<button onclick="${i.act}" style="display:flex;gap:10px;align-items:center;width:100%;min-height:48px;text-align:left;background:#fff;border:1px solid var(--rand-bedien);border-radius:12px;padding:12px;margin-bottom:8px;font-family:inherit;cursor:pointer"><span style="font-size:var(--s-teil);line-height:1">${i.emo}</span><span style="flex:1;font-size:var(--s-text);color:#334155;line-height:1.4">${i.txt}</span><span style="font-size:var(--s-karte);color:var(--text3)">›</span></button>`
+        ?`<button class="btn btn-zeile" onclick="${i.act}" style="margin-bottom:8px"><span style="font-size:var(--s-teil);line-height:1">${i.emo}</span><span style="flex:1;font-size:var(--s-text);color:#334155;line-height:1.4">${i.txt}</span><span style="font-size:var(--s-karte);color:var(--text3)">›</span></button>`
         :`<div class="news-mitteilung" style="display:flex;gap:10px;align-items:center;min-height:48px;background:#fff;border:1px solid var(--rand-bedien);border-radius:12px;padding:12px;margin-bottom:8px"><span style="font-size:var(--s-teil);line-height:1">${i.emo}</span><span style="flex:1;font-size:var(--s-text);color:#334155;line-height:1.4">${i.txt}</span></div>`).join("")
     : '<div style="background:#fff;border-radius:14px;padding:24px;text-align:center;color:var(--text3);font-size:var(--s-text)">Aktuell nichts Neues 🦅</div>';
 }
@@ -770,7 +771,7 @@ function rueckblickOpen(){
       <div style="font-size:var(--s-text);font-weight:800">${esc(dat(r.datum))}</div>
       <ul style="margin:6px 0 0;padding-left:20px;font-size:var(--s-text);line-height:1.6">${(r.themen||[]).map(t=>`<li>${esc(t)}</li>`).join("")}</ul>
     </div>`).join("")}
-    <button onclick="document.getElementById('rb-modal').remove()" style="width:100%;min-height:48px;margin-top:14px;padding:11px;border:none;border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Schließen</button>
+    <button onclick="document.getElementById('rb-modal').remove()" class="btn" style="width:100%;justify-content:center;margin-top:14px">Schließen</button>
   </div>`;
   document.body.appendChild(m);
 }
@@ -833,7 +834,7 @@ async function chronikOpen(){
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
           ${istSpiel?`<span style="font-size:var(--s-text);font-weight:900;color:${erg?"var(--text)":"var(--text3)"}">${erg?esc(erg):"– Ergebnis folgt –"}</span>`:'<span style="font-size:var(--s-klein);color:#64748b">Team-Event</span>'}
-          <button onclick="galerieOpen(${Number(t.id)},'${(t.titel||t.gegner||"").replace(/'/g,"")}')" style="margin-left:auto;border:1px solid #7c3aed;border-radius:9px;background:#faf5ff;color:#6d28d9;font-family:inherit;font-size:var(--s-text);font-weight:700;padding:8px 14px;cursor:pointer;min-height:44px">📸 Fotos</button>
+          <button onclick="galerieOpen(${Number(t.id)},'${(t.titel||t.gegner||"").replace(/'/g,"")}')" class="btn btn-sm" style="margin-left:auto">📸 Fotos</button>
         </div>
       </div>`;
     }
@@ -872,7 +873,7 @@ function schmiedeOpen(){
     ${mdlHead("wn-modal","🛠️","Aus der Adlerschmiede",woche?"Neu in eurer App in den letzten sieben Tagen":"Die letzten Neuerungen in eurer App","#0284c7")}
     ${liste.map(e=>`<div class="schmiede-eintrag" style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--rand-bedien);font-size:var(--s-text);line-height:1.5"><span aria-hidden="true" style="flex:none">${esc(e.emoji||"🛠️")}</span><span><span style="display:block;font-size:var(--s-klein);color:var(--text2)">${esc(dat(e.datum))}</span>${esc(e.text)}</span></div>`).join("")}
     <div style="font-size:var(--s-klein);color:var(--text2);margin-top:10px">Jeden Sonntag um 18 Uhr kommt eine Benachrichtigung, wenn es Neues gibt. Abschalten unter „Mein Konto“ (oben ⋯) → Benachrichtigungen.</div>
-    <button onclick="document.getElementById('wn-modal').remove()" style="width:100%;min-height:48px;margin-top:14px;padding:11px;border:none;border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Super, danke!</button>
+    <button onclick="document.getElementById('wn-modal').remove()" class="btn" style="width:100%;justify-content:center;margin-top:14px">Super, danke!</button>
   </div>`;
   document.body.appendChild(m);
 }
@@ -897,7 +898,7 @@ async function elternNachlesenOpen(){
     <div id="nachlesen-ansagen">${ansagen.length?ansagen.map(a=>zeile("📣 "+tag(a.created_at),esc(a.text))).join(""):'<div style="font-size:var(--s-text);color:var(--text2);padding:8px 0">In den letzten 60 Tagen gab es keine Ansage.</div>'}</div>
     <div style="font-size:var(--s-karte);font-weight:800;margin-top:14px">Neu in der App</div>
     <div id="nachlesen-schmiede">${schmiede.length?schmiede.slice(0,8).map(e=>zeile(`${esc(e.emoji||"🛠️")} ${tag(String(e.datum)+"T12:00:00")}`,esc(e.text))).join(""):'<div style="font-size:var(--s-text);color:var(--text2);padding:8px 0">Noch keine Einträge.</div>'}</div>
-    <button onclick="document.getElementById('nachlesen-modal').remove()" style="width:100%;min-height:48px;margin-top:14px;padding:11px;border:none;border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Schließen</button>
+    <button onclick="document.getElementById('nachlesen-modal').remove()" class="btn" style="width:100%;justify-content:center;margin-top:14px">Schließen</button>
   </div>`;
   document.body.appendChild(m);
 }
@@ -909,7 +910,7 @@ function whatsNewOpen(){
   m.innerHTML=`<div style="background:#fff;color:#1a1a2e;border-radius:16px;padding:18px;max-width:460px;width:100%">
     ${mdlHead("wn-modal","🆕",esc(ELTERN_WHATSNEW.titel),"Die wichtigsten Neuigkeiten auf einen Blick","#0284c7")}
     ${ELTERN_WHATSNEW.punkte.map(p=>`<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid #f1f5f9;font-size:var(--s-text);color:#334155;line-height:1.5">${p}</div>`).join("")}
-    <button onclick="document.getElementById('wn-modal').remove()" style="width:100%;margin-top:14px;padding:11px;border:none;border-radius:10px;background:#f1f5f9;color:#334155;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Super, danke!</button>
+    <button onclick="document.getElementById('wn-modal').remove()" class="btn" style="width:100%;justify-content:center;margin-top:14px">Super, danke!</button>
   </div>`;
   document.body.appendChild(m);
 }
@@ -937,7 +938,7 @@ function datenschutzInfoOpen(){
       <div style="font-size:var(--s-text);color:#166534;line-height:1.55">Bei WhatsApp wird jedes Foto sofort als Kopie auf alle Handys der Gruppe verteilt – und landet oft ungefragt in deren Cloud-Backups. Weiterleiten ist ein Fingertipp, Zurückholen unmöglich. Hier bleibt alles im geschützten Bereich, eure Freigaben gelten, und das Trainerteam kann eingreifen. <b>Deshalb: Team-Fotos bitte in die Event-Galerie statt in die Gruppe.</b></div>
     </div>
     <div style="font-size:var(--s-klein);color:var(--text3);margin-top:12px;line-height:1.5">Ganz ehrlich: 100 % Sicherheit gibt es nirgends im Internet. Der Unterschied ist Kontrolle – hier behaltet ihr sie, bei Messenger-Gruppen gebt ihr sie ab. Fragen dazu? Sprecht das Trainerteam einfach an.</div>
-    <button onclick="document.getElementById('dsi-modal').remove()" style="width:100%;margin-top:14px;padding:11px;border:none;border-radius:10px;background:#f1f5f9;color:#334155;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Alles klar 👍</button>
+    <button onclick="document.getElementById('dsi-modal').remove()" class="btn" style="width:100%;justify-content:center;margin-top:14px">Alles klar 👍</button>
   </div>`;
   document.body.appendChild(m);
 }
@@ -957,7 +958,7 @@ async function elternAnsagenLoad(){
     return `<div id="ansage-${a.id}" style="background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 2px 10px rgba(30,58,138,.25)">
       <div style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);font-weight:800;opacity:.9"><span style="font-size:var(--s-karte)">📣</span> Ansage vom Trainerteam · ${d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}</div>
       <div style="font-size:var(--s-karte);font-weight:600;line-height:1.5;margin-top:6px;white-space:pre-wrap">${esc(a.text)}</div>
-      <button onclick="elternAnsageAck(${a.id},this)" style="width:100%;min-height:44px;margin-top:10px;border:none;border-radius:10px;background:#fff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">✓ Gelesen &amp; verstanden</button>
+      <button class="btn" onclick="elternAnsageAck(${a.id},this)" style="width:100%;justify-content:center;margin-top:10px">✓ Gelesen &amp; verstanden</button>
     </div>`;}).join("");
 }
 /* I-A – Genesungsgrüße: pausierte Teamkinder mit Trainer-Freigabe (kind_pause.gruesse_ok,
@@ -983,7 +984,7 @@ async function elternGenesungLoad(kids){
     <div style="font-weight:800;font-size:var(--s-text);color:#0f172a">💌 ${esc(namen[id])} fällt gerade aus</div>
     <div style="font-size:var(--s-klein);color:#64748b;margin-top:1px">Schick einen Gruß vom Team – im Namen deines Kindes. ${esc(namen[id])} sieht ihn in der Kabine.</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-      ${G.map((t,i)=>`<button onclick="elternGenesungSend(${eigene[0]},${id},${i},this)" style="flex:1 1 45%;min-height:44px;padding:8px;border:1.5px solid #fda4af;border-radius:10px;background:#fff1f2;color:#9f1239;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">${esc(t)}</button>`).join("")}
+      ${G.map((t,i)=>`<button onclick="elternGenesungSend(${eigene[0]},${id},${i},this)" class="btn btn-sm" style="flex:1 1 45%;justify-content:center">${esc(t)}</button>`).join("")}
     </div>
   </div>`).join("");
 }
@@ -1128,7 +1129,7 @@ async function elternDashLoad(){
      wird (elternLiveKachelLoad), sonst bleibt der Slot leer und kostet keine Zeile. */
   if(offlineStand)html+=`<div id="eltern-offline" role="status" style="background:#fef3c7;border:1px solid #b45309;border-radius:14px;padding:12px 14px;margin-bottom:12px;color:#78350f;font-size:var(--s-text);line-height:1.5">
       <b>Keine Verbindung.</b> Du siehst den Stand vom ${esc(elternStandZeit(offlineStand.am))}. Antworten gehen erst wieder mit Netz.
-      <button type="button" onclick="elternDashLoad()" style="display:block;width:100%;min-height:48px;margin-top:8px;border:1px solid #78350f;border-radius:12px;background:#fff;color:#78350f;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">Nochmal versuchen</button></div>`;
+      <button type="button" class="btn" onclick="elternDashLoad()" style="width:100%;justify-content:center;margin-top:8px">Nochmal versuchen</button></div>`;
   /* v838 (Charles 17.11.): drei Zonen statt elf Blöcken in gewachsener Reihenfolge.
        JETZT  – was gerade gilt: Live, Ansage des Trainerteams, nächster Termin, Pause, Genesungsgruß
        OFFEN  – was eine Handlung braucht: fehlende Antworten, „Zu erledigen“, Benachrichtigungen, Porträt-Bogen
@@ -1149,11 +1150,11 @@ async function elternDashLoad(){
   //    ist alles leer, blendet elternTodoSync() die ganze Sektion aus. ──
   // 📌 To-Do's als Kategorie-Button (optisch wie die Kategorien unten); Inhalt öffnet sich im
   //    Overlay-Panel #cat-todo. Sichtbar nur, wenn offene Punkte da sind (elternTodoSync nach den Loadern).
-  html+=`<button id="eltern-todo-btn" onclick="elternCatOpen('todo')" style="display:none;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:10px;border:1px solid #b45309;border-radius:16px;background:#b45309;color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)">
-    <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1">📌</span>
-    <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Zu erledigen</span><span style="display:block;font-size:var(--s-klein);color:#fef3c7;margin-top:1px">Rückmeldungen, Mitbringen, Grillhütte, „Wie war's"</span></span>
-    <span id="eltern-todo-badge" style="background:#fff;color:#b45309;font-weight:800;font-size:var(--s-text);border-radius:12px;padding:2px 9px"></span>
-    <span style="font-size:var(--s-teil);color:#fef3c7">›</span>
+  html+=`<button id="eltern-todo-btn" class="btn btn-zeile" onclick="elternCatOpen('todo')" style="display:none;margin-bottom:10px">
+    <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:var(--amber-bg);display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1">📌</span>
+    <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Zu erledigen</span><span style="display:block;font-size:var(--s-klein);color:var(--text2);font-weight:400;margin-top:1px">Rückmeldungen, Mitbringen, Grillhütte, „Wie war's"</span></span>
+    <span id="eltern-todo-badge" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber);font-weight:800;font-size:var(--s-text);border-radius:12px;padding:2px 9px"></span>
+    <span style="font-size:var(--s-teil);color:var(--text3)">›</span>
   </button>`;
   html+='<div id="push-hinweis-slot"></div>';   // v698 – seit v838 in „Noch offen“: Benachrichtigungen, solange sie aus sind
   html+='<div id="nest-bogen-slot"></div>';       // v734: „Euer Kind ist im nächsten Adler Nest“ – nur während eines Porträts
@@ -1162,7 +1163,7 @@ async function elternDashLoad(){
   // 📣 Adler News: eigener Button (News ≠ To-Do); Panel #cat-news; roter Badge bei Ungelesenem.
   /* PO v407: „adlernews auch nur wenn etwas drin ist." – wie beim To-Do-Knopf: unsichtbar
      starten, elternNewsLoad blendet ihn nur bei ungelesenen Punkten ein. */
-  html+=`<button id="eltern-news-btn" onclick="elternCatOpen('news')" style="display:none;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:10px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)">
+  html+=`<button id="eltern-news-btn" class="btn btn-zeile" onclick="elternCatOpen('news')" style="display:none;margin-bottom:10px">
     <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("📣")}</span>
     <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Adler News</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Neues aus dem Team &amp; von deinem Kind</span></span>
     <span id="eltern-news-badge" style="display:none;background:#ef4444;color:#fff;font-weight:800;font-size:var(--s-text);border-radius:12px;padding:2px 9px">0</span>
@@ -1201,7 +1202,7 @@ async function elternDashLoad(){
         </div>
         <div style="display:flex;gap:6px">${btns}</div>
         ${cur&&cur.kommentar?`<div style="font-size:var(--s-klein);color:#64748b;margin-top:3px">„${esc(cur.kommentar)}"</div>`:""}
-        ${(st==="zugesagt"&&(termin.typ==="spiel"||termin.typ==="turnier")&&termin.heim===false)?`<button onclick="elternCarpoolOpen(${k.spieler_id},${termin.id})" style="width:100%;margin-top:8px;padding:9px;border:1.5px solid #1e3a8a;border-radius:10px;background:#fff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">🚗 Fahrgemeinschaft</button>`:""}
+        ${(st==="zugesagt"&&(termin.typ==="spiel"||termin.typ==="turnier")&&termin.heim===false)?`<button onclick="elternCarpoolOpen(${k.spieler_id},${termin.id})" class="btn" style="width:100%;justify-content:center;margin-top:8px">🚗 Fahrgemeinschaft</button>`:""}
       </div>`;
     }).join("");
     // J5: Rückmelde-Frist – ab dem Vortag wird eine offene Rückmeldung rot & dringlich
@@ -1234,7 +1235,7 @@ async function elternDashLoad(){
       ${(typeof elternAnfahrtHtml==="function")?elternAnfahrtHtml(termin):""}
       <div id="wetter-eltern"></div>
       ${trainerJa.length?`<div style="font-size:var(--s-klein);color:#64748b;margin-top:4px">👤 Trainer dabei: ${trainerJa.map(esc).join(", ")}</div>`:""}
-      ${(kids.length>=2&&!faelltAus)?`<button onclick="elternRsvpAllYes(${termin.id})" style="width:100%;min-height:44px;margin-top:10px;padding:9px;border:1.5px solid #059669;border-radius:10px;background:#f0fdf4;color:#15803d;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">👍 Alle ${kids.length} Kinder zusagen</button>`:""}
+      ${(kids.length>=2&&!faelltAus)?`<button onclick="elternRsvpAllYes(${termin.id})" class="btn" style="width:100%;justify-content:center;margin-top:10px">👍 Alle ${kids.length} Kinder zusagen</button>`:""}
       ${faelltAus?"":rsvpRows}
       <!-- PO: „Beim Training ist der Satz mit der endgültigen Aufstellung egal. nur bei spiel
            jemand turnier" – beim Training wird niemand aufgestellt, da wäre der Zusatz nur
@@ -1250,8 +1251,8 @@ async function elternDashLoad(){
         ${termin.datum>heute
           /* v859 (Bestandsaufnahme 3.11): Vor dem Termin gibt es noch keine Fotos – der Knopf öffnete ein leeres Album.
              Jetzt führt er zu den Fotos der letzten Spieltage; ab dem Tag selbst wie bisher zu diesem Termin. */
-          ?`<button onclick="if(typeof spieltagGalerieOpen==='function')spieltagGalerieOpen()" style="flex:1;min-width:130px;min-height:44px;padding:9px;border:1.5px solid #1e3a8a;border-radius:10px;background:#fff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📸 Fotos der letzten Spieltage</button>`
-          :`<button onclick="galerieOpen(${termin.id},'${(termin.titel||termin.gegner||m.label).replace(/'/g,'')}')" style="flex:1;min-width:130px;padding:9px;border:1.5px solid #1e3a8a;border-radius:10px;background:#fff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📸 ${fotoLabel(termin.typ)}</button>`}
+          ?`<button onclick="if(typeof spieltagGalerieOpen==='function')spieltagGalerieOpen()" class="btn" style="flex:1;min-width:130px;justify-content:center">📸 Fotos der letzten Spieltage</button>`
+          :`<button onclick="galerieOpen(${termin.id},'${(termin.titel||termin.gegner||m.label).replace(/'/g,'')}')" class="btn" style="flex:1;min-width:130px;justify-content:center">📸 ${fotoLabel(termin.typ)}</button>`}
         <!-- „Alle Termine" entfernt: die Kachel „Alle Termine & Kalender-Abo" darunter kann dasselbe + mehr (PO) -->
       </div>
       </div>
@@ -1286,34 +1287,34 @@ async function elternDashLoad(){
   //    Inhalte liegen (versteckt) im Overlay, damit die Async-Loader ihre Slots weiter füllen. ──
   // Einheitliche Aktions-Zeile für die Panel-Inhalte (Icon + Titel + Beschreibung + ›, farbiger
   // Akzent links in Tönen der Kategorie-Farbe). noClose=true lässt das Fenster offen (z. B. Export).
-  const elRow=(emo,label,d,onclick,col,noClose)=>`<button onclick="${noClose?"":"elternCatClose();"}${onclick}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border:1px solid var(--rand-bedien);border-left:4px solid ${col};border-radius:12px;padding:13px;margin-bottom:8px;font-family:inherit;cursor:pointer"><span style="font-size:var(--s-teil);line-height:1">${emo}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-text);font-weight:700;color:#0f172a">${label}</span><span style="display:block;font-size:var(--s-klein);color:#64748b;margin-top:1px">${d}</span></span><span style="font-size:var(--s-karte);color:var(--text3)">›</span></button>`;
-  const catBtn=(id,emoji,title,desc,grad)=>`<button onclick="elternCatOpen('${id}')" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)"><span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon(emoji)}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">${title}</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">${desc}</span></span><span style="font-size:var(--s-teil);color:#64748b">›</span></button>`;
+  const elRow=(emo,label,d,onclick,col,noClose)=>`<button onclick="${noClose?"":"elternCatClose();"}${onclick}" class="btn btn-zeile" style="margin-bottom:8px"><span style="font-size:var(--s-teil);line-height:1">${emo}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-text);font-weight:700">${label}</span><span style="display:block;font-size:var(--s-klein);color:var(--text2);font-weight:400;margin-top:1px">${d}</span></span><span style="font-size:var(--s-karte);color:var(--text3)">›</span></button>`;
+  const catBtn=(id,emoji,title,desc,grad)=>`<button onclick="elternCatOpen('${id}')" class="btn btn-zeile" style="margin-bottom:8px"><span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon(emoji)}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">${title}</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">${desc}</span></span><span style="font-size:var(--s-teil);color:#64748b">›</span></button>`;
   /* v862 (Charles 18.11., 3.15): oben „Fürs Team“ (Trainerteam, Termine, Kasse), dann „Für die Kinder“, dann „Mehr“.
      Vorher stand „Für die Kinder“ vor dem Weg zum Trainerteam. */
   html+=sec("Fürs Team");
   // v637: Der Weg zum Trainerteam steht zuerst und heißt so, wie Eltern danach suchen.
   html+=catBtn('kontakt','🗣️','Trainerteam kontaktieren','Frage oder Elterngespräch','linear-gradient(135deg,#475569,#334155)');
   // v718: vorher eine eigene Karte „Termine“ mit nur diesem Knopf
-  html+=`<button type="button" id="alle-termine-kachel" onclick="elternTermineOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)"><span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("📅")}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Alle Termine &amp; Kalender-Abo</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Ganze Saison, im eigenen Kalender abonnieren</span></span><span aria-hidden="true" style="font-size:var(--s-teil);opacity:.85">›</span></button>`;
+  html+=`<button type="button" id="alle-termine-kachel" onclick="elternTermineOpen()" class="btn btn-zeile" style="margin-bottom:8px"><span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("📅")}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Alle Termine &amp; Kalender-Abo</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Ganze Saison, im eigenen Kalender abonnieren</span></span><span aria-hidden="true" style="font-size:var(--s-teil);opacity:.85">›</span></button>`;
   /* v699: Mannschaftskasse als eigene Kachel – alle Eltern lesen Kassenstand und jede Bewegung;
      darunter „Kasse führen“, nur für die Kasse (elternKasseRolleLoad füllt den Slot). */
   const mkSaldo=kasse&&kasse.saldo!=null?`Kassenstand ${Number(kasse.saldo).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})} € · Ausgaben und Beiträge`:"Kassenstand, Ausgaben und Beiträge";
-  html+=`<button type="button" id="mannschaftskasse-kachel" onclick="if(typeof mannschaftskasseOpen==='function')mannschaftskasseOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)">
+  html+=`<button type="button" id="mannschaftskasse-kachel" onclick="if(typeof mannschaftskasseOpen==='function')mannschaftskasseOpen()" class="btn btn-zeile" style="margin-bottom:8px">
     <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("💰")}</span><span style="flex:1;min-width:0"><span style="display:block;font-weight:800;font-size:var(--s-karte)">Mannschaftskasse</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">${mkSaldo}</span><span id="mk-beitrag-stand" style="display:block;font-size:var(--s-klein);font-weight:700;margin-top:3px"></span></span><span aria-hidden="true" style="font-size:var(--s-teil);opacity:.85">›</span></button>`;   // v710: Maße wie catBtn – stand sichtbar aus der Flucht
   html+=`<div id="kasse-verwalten-slot"></div>`;   // v664/v699: „Kasse führen“ – nur für die Kasse
   html+=sec("🎮 Für die Kinder");
-  html+=`<button onclick="elternKabineStart()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)">
+  html+=`<button onclick="elternKabineStart()" class="btn btn-zeile" style="margin-bottom:8px">
     <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("🎮")}</span>
     <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Die Kabine</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Für dein Kind: Galerie, Missionen &amp; Quiz (${XP_ICON} Federn)</span></span>
     <span style="font-size:var(--s-teil);color:#64748b">›</span>
   </button>`;
-  html+=`<button onclick="kinderAppOpen()" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)">
+  html+=`<button onclick="kinderAppOpen()" class="btn btn-zeile" style="margin-bottom:8px">
     <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("\u{1F4F1}")}</span>
     <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">Kinder-App</span><span style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Eigenes Ger\u00e4t koppeln und die Appzeit einstellen</span></span>
     <span style="font-size:var(--s-teil);opacity:.85">\u203a</span>
   </button>`;
   html+=kids.map(k=>{const kd=k.kader||{};
-    return `<button onclick="elternCatOpen('kind-${k.spieler_id}')" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:16px;background:#fff;color:#0f172a;font-family:inherit;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)">
+    return `<button onclick="elternCatOpen('kind-${k.spieler_id}')" class="btn btn-zeile" style="margin-bottom:8px">
       <span aria-hidden="true" style="flex:none;width:40px;height:40px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:var(--s-teil);line-height:1;color:#1e40af">${epIcon("🃏")}</span>
       <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800">${esc(kd.name||"Kind")}${kd.nr!=null?` <span style="font-weight:600;opacity:.8">#${kd.nr}</span>`:""}</span><span id="xp-chip-${k.spieler_id}" style="display:block;font-size:var(--s-klein);color:#475569;margin-top:1px">Karte, Abzeichen, Sprachlob &amp; Statistik</span></span>
       <span style="font-size:var(--s-teil);color:#64748b">›</span>
@@ -1327,7 +1328,7 @@ async function elternDashLoad(){
   html+=`<div id="app-version-eltern" style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin:16px 0 4px"></div>`;
   html+=`<div id="el-cat-overlay" style="display:none;position:fixed;inset:0;z-index:10000;background:var(--bg,#f1f5f9);overflow-y:auto"><div style="max-width:560px;margin:0 auto;padding:12px 16px 40px">
     <div style="display:flex;align-items:center;gap:10px;position:sticky;top:0;background:var(--bg,#f1f5f9);padding:8px 0 10px;z-index:1">
-      <button onclick="elternCatClose()" aria-label="Zurück" style="border:none;background:#fff;width:40px;height:40px;border-radius:50%;font-size:var(--s-teil);color:#334155;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.15);flex:none">←</button>
+      <button class="btn" onclick="elternCatClose()" aria-label="Zurück" style="flex:none;min-width:48px;justify-content:center;font-size:var(--s-teil)">←</button>
       <div id="el-cat-title" style="font-size:var(--s-teil);font-weight:800"></div>
     </div>
     <div id="cat-todo" class="el-cat-panel" style="display:none">
@@ -1498,12 +1499,12 @@ function rsvpGrundFragen(status,pflicht,cfg){
       <div style="font-size:var(--s-karte);font-weight:800">${cfg.titel||(status==="krank"?"🤒 Kurzer Hinweis":"📝 Grund der Absage")}</div>
       <div style="font-size:var(--s-text);color:#64748b;margin:3px 0 12px">${pflicht?(cfg.hinweis||"Der Termin beginnt in weniger als 24 Stunden – bitte nenne kurz den Grund. Ohne Grund lässt sich nicht absagen."):"Freiwillig – hilft dem Trainerteam beim Planen."}</div>
       <div id="rg-chips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-        ${chips.map(c=>`<button data-c="${esc(c)}" style="min-height:44px;padding:8px 14px;border:1.5px solid var(--rand-bedien);border-radius:22px;background:#fff;color:#334155;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">${esc(c)}</button>`).join("")}
+        ${chips.map(c=>`<button data-c="${esc(c)}" class="btn btn-sm">${esc(c)}</button>`).join("")}
       </div>
       <input id="rg-txt" type="text" maxlength="120" placeholder="oder kurz selbst schreiben…" style="width:100%;box-sizing:border-box;min-height:46px;padding:10px 12px;border:1.5px solid var(--rand-bedien);border-radius:12px;font-family:inherit;font-size:var(--s-karte)">
       <div style="display:flex;gap:8px;margin-top:12px">
-        <button id="rg-skip" style="flex:1;min-height:48px;border:1.5px solid var(--rand-bedien);border-radius:12px;background:#fff;color:#64748b;font-family:inherit;font-size:var(--s-karte);font-weight:700;cursor:pointer">${pflicht?"Abbrechen":"Ohne Grund"}</button>
-        <button id="rg-ok" style="flex:1.4;min-height:48px;border:1.5px solid #64748b;border-radius:12px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">${cfg.knopf||"Speichern"}</button>
+        <button id="rg-skip" class="btn" style="flex:1;justify-content:center;font-size:var(--s-karte)">${pflicht?"Abbrechen":"Ohne Grund"}</button>
+        <button id="rg-ok" class="btn btn-p" style="flex:1.4;justify-content:center;font-size:var(--s-karte)">${cfg.knopf||"Speichern"}</button>
       </div>
     </div>`;
     document.body.appendChild(ov);
@@ -1514,7 +1515,7 @@ function rsvpGrundFragen(status,pflicht,cfg){
     if(pflicht){
       /* Aus-Zustand ohne Farbe als einziges Zeichen: Text sagt es, Knopf ist gesperrt (aria-disabled) und hell mit dunkler Schrift. */
       const paint=()=>{ const leer=!(txt.value||"").trim(); ok.setAttribute("aria-disabled",leer?"true":"false");
-        ok.style.background=leer?"#e2e8f0":"#1e3a8a"; ok.style.color=leer?"#334155":"#fff"; ok.textContent=leer?"Erst Grund nennen":(cfg.knopf||"Speichern"); };
+        ok.classList.toggle("btn-p",!leer); ok.textContent=leer?"Erst Grund nennen":(cfg.knopf||"Speichern"); };
       txt.addEventListener("input",paint); paint();
       ov.querySelectorAll("#rg-chips button").forEach(b=>b.onclick=()=>{ txt.value=b.dataset.c; paint(); txt.focus(); });
       setTimeout(()=>txt.focus(),50);
@@ -1750,8 +1751,8 @@ function elternTagWahl(datum){
   const d=new Date(datum+"T00:00:00");
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);width:100%;max-width:460px;border-radius:16px 16px 0 0;padding:16px 16px 24px;box-sizing:border-box">
     <div style="font-weight:800;font-size:var(--s-teil);margin-bottom:8px">${d.toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"})}</div>
-    ${liste.map(x=>`<button type="button" onclick="document.getElementById('tag-wahl')?.remove();terminDetailOpen(${Number(x.id)})" style="display:flex;align-items:center;gap:10px;width:100%;min-height:56px;margin-top:8px;padding:8px 12px;border:1.5px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);text-align:left;cursor:pointer"><span aria-hidden="true" style="font-size:var(--s-teil)">${x.ic}</span><span style="flex:1;min-width:0;overflow-wrap:anywhere"><b>${esc(x.titel)}</b>${x.uhr?" · "+esc(x.uhr)+" Uhr":""}<br><span style="color:var(--text2)">${x.zeichen} ${esc(x.wort)}</span></span></button>`).join("")}
-    <button type="button" onclick="document.getElementById('tag-wahl')?.remove()" style="width:100%;min-height:48px;margin-top:12px;border:1.5px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Schließen</button>
+    ${liste.map(x=>`<button type="button" onclick="document.getElementById('tag-wahl')?.remove();terminDetailOpen(${Number(x.id)})" class="btn btn-zeile" style="min-height:56px;margin-top:8px"><span aria-hidden="true" style="font-size:var(--s-teil)">${x.ic}</span><span style="flex:1;min-width:0;overflow-wrap:anywhere"><b>${esc(x.titel)}</b>${x.uhr?" · "+esc(x.uhr)+" Uhr":""}<br><span style="color:var(--text2)">${x.zeichen} ${esc(x.wort)}</span></span></button>`).join("")}
+    <button type="button" onclick="document.getElementById('tag-wahl')?.remove()" class="btn" style="width:100%;justify-content:center;margin-top:12px">Schließen</button>
   </div>`;
   document.body.appendChild(m);
 }
@@ -1793,7 +1794,7 @@ function elternWochenStreifenHtml(rows,kids,rsvpAll){
       <div style="display:flex;gap:4px">${tage.map(d=>_elWocheZelle(d,inWoche,kids,rsvpAll)).join("")}</div>
     </div>`);
   }
-  const pfeil=(r,z,l)=>`<button type="button" id="eltern-woche-${r<0?"zurueck":"weiter"}" onclick="elternWocheBlaettern(${r})" aria-label="${l}"${r<0?" disabled":""} style="${r<0?"opacity:.45;":""}width:44px;height:44px;border:1px solid #cbd5e1;border-radius:50%;background:#fff;color:#1e3a8a;font-family:inherit;font-size:var(--s-teil);font-weight:800;cursor:pointer">${z}</button>`;
+  const pfeil=(r,z,l)=>`<button type="button" id="eltern-woche-${r<0?"zurueck":"weiter"}" onclick="elternWocheBlaettern(${r})" aria-label="${l}"${r<0?" disabled":""} class="btn btn-sm" style="${r<0?"opacity:.45;":""}flex:none;min-width:44px;justify-content:center;font-size:var(--s-teil)">${z}</button>`;
   const nav=wochen>1?`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px">
       ${pfeil(-1,"‹","Woche zurück")}<span id="eltern-woche-pos" aria-live="polite" style="font-size:var(--s-klein);color:var(--text2)">Woche 1 von ${wochen} · wischen oder Pfeil</span>${pfeil(1,"›","Nächste Woche")}
     </div>`:"";
@@ -1832,7 +1833,7 @@ function elternTermineHtml(rows,kids,rsvpAll,ohneId){
       <div id="eltern-termine-ansicht" role="group" aria-label="Termine anzeigen als" style="display:flex;border:1.5px solid #1e3a8a;border-radius:10px;overflow:hidden">${knopf}</div>
     </div>
     ${streifen}${liste}
-    <button type="button" id="danach-alle" onclick="elternTermineOpen()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;margin:0 0 12px;border:1.5px solid #1e3a8a;border-radius:12px;background:#eef2ff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">Alle Termine der Saison ›</button>
+    <button type="button" id="danach-alle" onclick="elternTermineOpen()" class="btn" style="width:100%;justify-content:center;margin:0 0 12px">Alle Termine der Saison ›</button>
   </div>`;
 }
 function elternTermineCarouselHtml(rows,kids,rsvpAll,ohneId,ohneKnopf){
@@ -1856,7 +1857,7 @@ function elternTermineCarouselHtml(rows,kids,rsvpAll,ohneId,ohneKnopf){
       const txt=c?`${c.emo} ${c.lbl}`:ruhig?"✓ "+EL_GILT_TEXT:"❗ offen";
       return `<span style="display:inline-block;font-size:var(--s-klein);font-weight:800;color:${c||ruhig?"var(--text2)":"#b45309"};margin-right:8px">${(kids||[]).length>1?esc(kd.name||"Kind")+": ":""}${txt}</span>`;
     }).join("");
-    return `<button type="button" onclick="terminDetailOpen(${t.id})" style="display:flex;align-items:center;gap:12px;width:100%;min-height:56px;text-align:left;padding:10px 12px;margin-top:8px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc;color:inherit;font-family:inherit;cursor:pointer">
+    return `<button type="button" class="btn btn-zeile" onclick="terminDetailOpen(${t.id})" style="min-height:56px;margin-top:8px">
       <span style="font-size:var(--s-teil);line-height:1" aria-hidden="true">${m.icon}</span>
       <span style="flex:1;min-width:0">
         <span style="display:block;font-size:var(--s-text);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.titel||t.gegner||m.label)}</span>
@@ -1870,7 +1871,7 @@ function elternTermineCarouselHtml(rows,kids,rsvpAll,ohneId,ohneKnopf){
   return `<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)">
     <div style="font-weight:800;font-size:var(--s-karte)">📅 Danach</div>
     ${zeilen}
-    ${ohneKnopf?"":`<button type="button" id="danach-alle" onclick="elternTermineOpen()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;margin-top:10px;border:1.5px solid #1e3a8a;border-radius:12px;background:#eef2ff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">Alle Termine der Saison ›</button>`}
+    ${ohneKnopf?"":`<button type="button" id="danach-alle" onclick="elternTermineOpen()" class="btn" style="width:100%;justify-content:center;margin-top:10px">Alle Termine der Saison ›</button>`}
   </div>`;
 }
 
@@ -1961,7 +1962,7 @@ async function terminDetailOpen(id){
   c.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px">
       <div style="font-size:var(--s-teil);font-weight:800;min-width:0">${m.icon} ${esc(t.titel||t.gegner||m.label)}</div>
-      <button aria-label="Schließen" onclick="document.getElementById('td-modal').remove()" style="min-width:44px;min-height:44px;border:none;background:none;font-size:var(--s-seite);color:var(--text3);cursor:pointer;line-height:1;flex:none">×</button>
+      <button class="btn btn-sm" aria-label="Schließen" onclick="document.getElementById('td-modal').remove()" style="flex:none;min-width:44px;justify-content:center;font-size:var(--s-karte)">×</button>
     </div>
     <div style="font-size:var(--s-text);color:#64748b;margin-bottom:10px">${d.toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})}${zeit?" · "+zeit:""}</div>
     <div id="td-wetter" style="margin-bottom:6px"></div>
@@ -1985,8 +1986,8 @@ async function terminDetailOpen(id){
     ${(t.typ==="event"&&t.eltern_turnier)?'<div id="td-mitspieler"></div>':""}
     ${(t.typ==="event"&&typeof feierFuerTermin==="function"&&feierFuerTermin(t))?'<div id="td-feier"></div>':""}
     ${t.typ==="event"?'<div id="td-mitbring"></div>':""}
-    ${t.datum>isoLokal()?"":`<button onclick="galerieOpen(${Number(t.id)},'${(t.titel||t.gegner||"").replace(/'/g,"")}')" style="width:100%;margin-top:14px;padding:11px;border:1.5px solid #7c3aed;border-radius:10px;background:#faf5ff;color:#6d28d9;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📸 ${fotoLabel(t.typ)} ansehen &amp; hochladen</button>`}
-    <button onclick="document.getElementById('td-modal').remove()" style="width:100%;margin-top:8px;padding:11px;border:none;border-radius:10px;background:#f1f5f9;color:#334155;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Schließen</button>`;
+    ${t.datum>isoLokal()?"":`<button onclick="galerieOpen(${Number(t.id)},'${(t.titel||t.gegner||"").replace(/'/g,"")}')" class="btn" style="width:100%;justify-content:center;margin-top:14px">📸 ${fotoLabel(t.typ)} ansehen &amp; hochladen</button>`}
+    <button class="btn" onclick="document.getElementById('td-modal').remove()" style="width:100%;justify-content:center;margin-top:8px">Schließen</button>`;
   modal.appendChild(c);document.body.appendChild(modal);
   window._tdTermin=t; // fürs Nachladen der Mitbringliste nach dem Eintragen
   if(istSpiel&&(t.gegner||t.titel))tdVorberichtLoad(t);
@@ -2013,7 +2014,7 @@ async function tdMitbringLoad(t){
   const liste=items.length
     ? items.map(it=>`<div style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);padding:5px 0;border-top:1px solid #f1f5f9">
         <span style="flex:1">🍽️ <b>${esc(it.was)}</b>${it.wer?` <span style="color:var(--text3)">· ${esc(it.wer)}</span>`:""}</span>
-        ${(uid&&it.created_by===uid)?`<button onclick="mitbringDelete(${it.id})" aria-label="Eintrag löschen" style="border:none;background:transparent;color:#dc2626;cursor:pointer;min-width:32px;min-height:32px;font-size:var(--s-karte)">✕</button>`:""}
+        ${(uid&&it.created_by===uid)?`<button onclick="mitbringDelete(${it.id})" aria-label="Eintrag löschen" class="btn btn-sm btn-d" style="flex:none;min-width:44px;justify-content:center">✕</button>`:""}
       </div>`).join("")
     : '<div style="font-size:var(--s-text);color:var(--text3);padding:4px 0">Noch nichts eingetragen – mach den Anfang! 🎉</div>';
   box.innerHTML=`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
@@ -2023,7 +2024,7 @@ async function tdMitbringLoad(t){
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
       <input id="mb-was-${t.id}" placeholder="Was bringst du mit?" style="flex:1;min-width:140px;min-height:44px;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text)" onkeydown="if(event.key==='Enter')mitbringAdd(${t.id})">
       ${kids.length>1?`<select id="mb-kid-${t.id}" style="min-height:44px;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);background:#fff">${kidOpts}</select>`:""}
-      <button onclick="mitbringAdd(${t.id})" style="min-height:44px;padding:9px 16px;border:none;border-radius:10px;background:#15803d;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Eintragen</button>
+      <button onclick="mitbringAdd(${t.id})" class="btn btn-sm">Eintragen</button>
     </div>
   </div>`;
 }
@@ -2058,7 +2059,7 @@ async function mitspielerLoad(terminId,boxId){
   const ich=liste.find(x=>x.selbst&&x.created_by===uid);
   const zeilen=liste.map(x=>`<div class="ms-zeile" style="display:flex;align-items:center;gap:8px;min-height:44px;border-top:1px solid #f1f5f9;font-size:var(--s-text)">
       <span style="flex:1;min-width:0;overflow-wrap:anywhere">⚽ <b>${esc(x.name)}</b>${(x.selbst&&x.created_by===uid)?' <span style="color:#64748b;font-size:var(--s-klein)">· das bist du</span>':""}</span>
-      ${(!x.selbst&&x.created_by===uid)?`<button type="button" onclick="mitspielerWeg(${Number(x.id)},${Number(terminId)})" aria-label="${esc(x.name)} wieder austragen" style="min-width:44px;min-height:44px;border:none;background:transparent;color:#b91c1c;font-size:var(--s-karte);cursor:pointer">✕</button>`:""}
+      ${(!x.selbst&&x.created_by===uid)?`<button type="button" onclick="mitspielerWeg(${Number(x.id)},${Number(terminId)})" aria-label="${esc(x.name)} wieder austragen" class="btn btn-sm btn-d" style="flex:none;min-width:44px;justify-content:center">✕</button>`:""}
     </div>`).join("");
   box.innerHTML=`<div class="ms-block" data-termin="${Number(terminId)}" style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
     <div style="font-weight:800;font-size:var(--s-karte)">⚽ Kinder-Eltern-Turnier</div>
@@ -2069,7 +2070,7 @@ async function mitspielerLoad(terminId,boxId){
     <label for="ms-name-${boxId}" style="display:block;font-size:var(--s-klein);color:#475569;margin-top:10px">Noch jemand dabei? Namen eintragen</label>
     <div style="display:flex;gap:6px;margin-top:4px">
       <input id="ms-name-${boxId}" maxlength="40" placeholder="z. B. Opa Heinz" style="flex:1;min-width:0;min-height:44px;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text)" onkeydown="if(event.key==='Enter')mitspielerDazu(${Number(terminId)},'${boxId}')">
-      <button type="button" onclick="mitspielerDazu(${Number(terminId)},'${boxId}')" style="min-height:44px;padding:9px 16px;border:none;border-radius:10px;background:#15803d;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Eintragen</button>
+      <button type="button" onclick="mitspielerDazu(${Number(terminId)},'${boxId}')" class="btn btn-sm">Eintragen</button>
     </div>
   </div>`;
   if(typeof elternDarkActive==="function"&&elternDarkActive()&&typeof elternThemeSweep==="function")elternThemeSweep(box);
@@ -2116,7 +2117,7 @@ function tdPulsRender(terminId,mine,bare){
     </div>
     <input id="td-puls-txt" type="text" maxlength="200" value="${mine&&mine.kommentar?esc(mine.kommentar):""}" placeholder="${cur?"Magst du noch einen Satz dazu schreiben?":"Optional: ein Satz Feedback…"}" aria-label="Kommentar (freiwillig)" onblur="tdPulsSaveText(${terminId})" style="width:100%;padding:8px;border:1px solid var(--rand-bedien);border-radius:8px;font-family:inherit;font-size:var(--s-text);box-sizing:border-box">
     <div id="td-puls-done" style="font-size:var(--s-klein);color:#15803d;margin-top:4px">${cur?"Danke fürs Feedback ✓":""}</div>
-    ${cur?`<button type="button" id="td-puls-fertig" class="btn" onclick="tdPulsFertig(${terminId})" style="width:100%;min-height:44px;margin-top:6px;justify-content:center;font-weight:700">Fertig</button>`:""}
+    ${cur?`<button type="button" id="td-puls-fertig" class="btn" onclick="tdPulsFertig(${terminId})" style="width:100%;margin-top:6px;justify-content:center">Fertig</button>`:""}
   </div>`;
 }
 /* v809 PO 08.11.: „Sobald auf einen der drei Smileys geklickt wird, geht das Fenster direkt zu und man kann keinen
@@ -2195,13 +2196,13 @@ async function elternChecklistLoad(kids){
   const rows=items.map(i=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #f1f5f9">
       <span style="font-size:var(--s-teil);width:24px;text-align:center">${i.done?"✅":i.icon}</span>
       <span style="flex:1;font-size:var(--s-text);${i.done?"color:var(--text3);text-decoration:line-through":"font-weight:600"}">${i.label}</span>
-      ${i.done?'<span style="font-size:var(--s-klein);color:#16a34a;font-weight:700">erledigt</span>':`<button onclick="${i.act}" style="padding:6px 12px;border:1.5px solid #1e3a8a;border-radius:8px;background:#fff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">öffnen</button>`}
+      ${i.done?'<span style="font-size:var(--s-klein);color:#16a34a;font-weight:700">erledigt</span>':`<button class="btn btn-sm" onclick="${i.act}">öffnen</button>`}
     </div>`).join("");
   slot.innerHTML=`<div style="background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05);border:1.5px solid #bfdbfe">
     <div style="display:flex;align-items:center;gap:8px"><div style="font-weight:800;font-size:var(--s-karte)">🚀 Erste Schritte</div><span style="margin-left:auto;font-size:var(--s-klein);color:#64748b">${done}/${total} erledigt</span></div>
     <div style="height:6px;background:#e2e8f0;border-radius:4px;margin:8px 0;overflow:hidden"><div style="height:100%;width:${Math.round(done/total*100)}%;background:#16a34a;transition:width .3s"></div></div>
     ${rows}
-    <button onclick="elternChecklistDismiss()" style="width:100%;min-height:44px;margin-top:10px;padding:8px;border:none;background:none;color:var(--text3);font-family:inherit;font-size:var(--s-klein);cursor:pointer">Später · für heute ausblenden</button>
+    <button class="btn btn-link" onclick="elternChecklistDismiss()" style="width:100%;justify-content:center;margin-top:10px">Später · für heute ausblenden</button>
   </div>`;
 }
 function elternChecklistDismiss(){ try{localStorage.setItem("adler_setup_hide",isoLokal());}catch(e){} const s=document.getElementById("eltern-checklist-slot"); if(s)s.innerHTML=""; }
@@ -2246,11 +2247,11 @@ async function pulsNudgeLoad(){
   const m=(typeof TM_META!=="undefined"&&TM_META[first.typ])||{icon:"📅",label:first.typ};
   const d=new Date(first.datum+"T00:00:00"), ds=["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()]+", "+d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
   slot.innerHTML=`<div id="puls-nudge" style="position:relative;background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.05);border:1.5px solid #bfdbfe">
-    <button type="button" onclick="pulsNudgeWeg(${first.id})" aria-label="Frage ausblenden" title="Ausblenden" style="position:absolute;top:2px;right:2px;min-width:44px;min-height:44px;border:none;background:transparent;color:#64748b;font-family:inherit;font-size:var(--s-seite);line-height:1;cursor:pointer">×</button>
+    <button type="button" onclick="pulsNudgeWeg(${first.id})" aria-label="Frage ausblenden" title="Ausblenden" class="btn btn-sm" style="position:absolute;top:4px;right:4px;min-width:44px;justify-content:center">×</button>
     <div style="font-weight:700;font-size:var(--s-karte);margin-bottom:2px;padding-right:40px">🌡️ Wie war ${m.icon} ${esc(first.titel||first.gegner||m.label)}?</div>
     <div style="font-size:var(--s-klein);color:#64748b">${ds} · anonym, nur fürs Trainerteam – ein Tap genügt.</div>
     <div id="td-puls"></div>
-    <button onclick="elternCatClose();galerieOpen(${first.id},'${(first.titel||first.gegner||"").replace(/'/g,"")}')" style="width:100%;min-height:44px;margin-top:8px;padding:9px;border:1.5px solid #7c3aed;border-radius:10px;background:#faf5ff;color:#6d28d9;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📸 Fotos davon in die Team-Galerie laden</button>
+    <button onclick="elternCatClose();galerieOpen(${first.id},'${(first.titel||first.gegner||"").replace(/'/g,"")}')" class="btn" style="width:100%;justify-content:center;margin-top:8px">📸 Fotos davon in die Team-Galerie laden</button>
   </div>`;
   tdPulsRender(first.id,null,true);
   if(typeof elternTodoSync==="function")elternTodoSync();
@@ -2272,8 +2273,8 @@ async function elternHelferTodoLoad(){
     const t=heutige.find(tt=>tt.id===x.termin_id)||{};
     const titel=esc(t.titel||t.gegner||"heute");
     let aktion="";
-    if(x.aufgabe.includes("Ticker"))aktion=`<button onclick="location.href=location.pathname+'?ticker=${t.datum}'" style="width:100%;min-height:44px;margin-top:8px;border:none;border-radius:10px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📻 Zum Liveticker</button>`;
-    else if(x.aufgabe.includes("Foto"))aktion=`<button onclick="elternCatClose();galerieOpen(${t.id},'${(t.titel||t.gegner||"").replace(/'/g,"")}')" style="width:100%;min-height:44px;margin-top:8px;border:none;border-radius:10px;background:#7c3aed;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📸 Zur Event-Galerie</button>`;
+    if(x.aufgabe.includes("Ticker"))aktion=`<button onclick="location.href=location.pathname+'?ticker=${t.datum}'" class="btn btn-p" style="width:100%;justify-content:center;margin-top:8px">📻 Zum Liveticker</button>`;
+    else if(x.aufgabe.includes("Foto"))aktion=`<button onclick="elternCatClose();galerieOpen(${t.id},'${(t.titel||t.gegner||"").replace(/'/g,"")}')" class="btn" style="width:100%;justify-content:center;margin-top:8px">📸 Zur Event-Galerie</button>`;
     return `<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;border-left:4px solid #0ea5e9;box-shadow:0 2px 10px rgba(0,0,0,.05)">
       <div style="font-weight:800;font-size:var(--s-text);color:#0f172a">🙌 Heute bist du dran: ${esc(x.aufgabe)}</div>
       <div style="font-size:var(--s-klein);color:#64748b;margin-top:2px">Du hast dich bei „${titel}“ eingetragen – danke, dass du hilfst!</div>
@@ -2393,7 +2394,7 @@ async function tdHelferLoad(t){
   const mine=new Set(rows.filter(x=>x.user_id===uid).map(x=>x.aufgabe));
   const list=rows.length?rows.map(x=>`<div style="display:flex;align-items:center;gap:6px;font-size:var(--s-text);padding:3px 0">
       <span style="flex:1">${esc(x.aufgabe)} · <b>${esc(x.name)}</b></span>
-      ${x.user_id===uid?`<button onclick="tdHelferDel(${x.id},${t.id})" style="border:none;background:none;color:#dc2626;cursor:pointer;font-size:var(--s-karte)">✕</button>`:""}
+      ${x.user_id===uid?`<button class="btn btn-sm btn-d" onclick="tdHelferDel(${x.id},${t.id})" aria-label="Eintrag entfernen" style="flex:none;min-width:44px;justify-content:center">✕</button>`:""}
     </div>`).join(""):'<div style="font-size:var(--s-text);color:var(--text3)">Noch niemand eingetragen – mach den Anfang!</div>';
   /* Zeilen statt Chips: eine Beschreibung braucht Platz, und der Knopf muss sagen, worauf
      man sich einlaesst, BEVOR man tippt. Weisse Karte, deshalb feste helle Farbwerte. */
@@ -2425,7 +2426,7 @@ async function tdHelferLoad(t){
            man an seiner Beschriftung, ein LEERES Eingabefeld nur an seinem Rand – deshalb
            gilt hier die 3:1-Regel fuer Bedienelemente. #7d8b99 = 3,49:1 auf Weiss. -->
       <input id="helfer-eigen-td" maxlength="60" placeholder="Etwas anderes – was übernimmst du?" aria-label="Eigene Aufgabe eintragen" style="flex:1;min-width:0;min-height:44px;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);box-sizing:border-box" onkeydown="if(event.key==='Enter')tdHelferAddEigen(${Number(t.id)},this)">
-      <button onclick="tdHelferAddEigen(${Number(t.id)},this)" aria-label="Eigene Aufgabe eintragen" style="min-height:44px;min-width:52px;border:none;border-radius:10px;background:#15803d;color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">✓</button>
+      <button onclick="tdHelferAddEigen(${Number(t.id)},this)" aria-label="Eigene Aufgabe eintragen" class="btn" style="flex:none;min-width:52px;justify-content:center;font-size:var(--s-karte)">✓</button>
     </div>`:""}
   </div>`;
 }
@@ -2586,7 +2587,7 @@ function tdWasMussMit(t){
   return `<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
     <div style="font-weight:700;font-size:var(--s-text);margin-bottom:4px">🎒 Was muss mit?</div>
     <ul style="margin:0;padding-left:20px;font-size:var(--s-text);color:#334155;line-height:1.6">${liste.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
-    <button onclick="document.getElementById('td-modal').remove();if(typeof elternGespraechOpen==='function')elternGespraechOpen()" style="margin-top:8px;min-height:44px;padding:0 4px;border:none;background:none;color:#1d4ed8;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer;text-decoration:underline">Frage zum Termin? Trainerteam kontaktieren</button>
+    <button onclick="document.getElementById('td-modal').remove();if(typeof elternGespraechOpen==='function')elternGespraechOpen()" class="btn btn-link" style="margin-top:8px">Frage zum Termin? Trainerteam kontaktieren</button>
   </div>`;
 }
 /* ── Foto- & Video-Einwilligung (3 Stufen, DSGVO) ──
@@ -2784,10 +2785,10 @@ async function elternTermineOpen(){
   c.style.cssText="background:#fff;color:#1a1a2e;max-width:440px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)";
   c.innerHTML=`${mdlHead("et-modal","📅","Alle Termine","Ganze Saison · zu- und absagen · Kalender-Abo","#1e3a8a")}
     <div id="et-liste" style="max-height:60vh;overflow-y:auto">${elternTermineListeHtml(ELTERN_TERMINE||[])}</div>
-    <button id="et-ics" onclick="elternTermineIcs()" style="width:100%;margin-top:12px;padding:11px;min-height:44px;border:1.5px solid #1e3a8a;border-radius:10px;background:#fff;color:#1e3a8a;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">📥 Alle in meinen Kalender (einmalig)</button>
+    <button id="et-ics" class="btn" onclick="elternTermineIcs()" style="width:100%;justify-content:center;margin-top:12px">📥 Alle in meinen Kalender (einmalig)</button>
     <a href="${SEASON_ICS_WEBCAL}" style="display:block;text-align:center;width:100%;margin-top:8px;padding:11px;border:1.5px solid #16a34a;border-radius:10px;background:#f0fdf4;color:#15803d;font-family:inherit;font-size:var(--s-text);font-weight:700;text-decoration:none;box-sizing:border-box">🔔 Termine abonnieren (aktualisiert sich automatisch)</a>
-    <button onclick="saisonAboCopy()" style="width:100%;margin-top:6px;padding:9px;min-height:44px;border:none;border-radius:10px;background:#f1f5f9;color:#475569;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">🔗 Abo-Link kopieren (für Google/Apple Kalender)</button>
-    <button onclick="document.getElementById('et-modal').remove()" style="width:100%;margin-top:8px;padding:10px;min-height:44px;border:none;border-radius:10px;background:#f1f5f9;color:#334155;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Schließen</button>`;
+    <button class="btn" onclick="saisonAboCopy()" style="width:100%;justify-content:center;margin-top:6px">🔗 Abo-Link kopieren (für Google/Apple Kalender)</button>
+    <button class="btn" onclick="document.getElementById('et-modal').remove()" style="width:100%;justify-content:center;margin-top:8px">Schließen</button>`;
   modal.appendChild(c);document.body.appendChild(modal);
   await elternTermineNachladen();
 }
@@ -2824,7 +2825,7 @@ function elternTermineListeHtml(rows){
       return `<div style="margin-top:6px"><div style="font-size:var(--s-klein);font-weight:700;color:#475569;margin-bottom:3px">${kids.length>1?esc(kd.name||"Kind")+" · ":""}${stTxt}</div><div style="display:flex;gap:5px">${btns}</div></div>`;
     }).join("");
     return `<div class="et-termin" data-id="${Number(t.id)}" style="padding:9px 6px;border-bottom:1px solid #f1f5f9${i===0?";background:#eff6ff;border-radius:8px":""}">
-      <button type="button" onclick="document.getElementById('et-modal')?.remove();terminDetailOpen(${Number(t.id)})" style="display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:0;border:none;background:transparent;color:inherit;font-family:inherit;text-align:left;cursor:pointer">
+      <button type="button" onclick="document.getElementById('et-modal')?.remove();terminDetailOpen(${Number(t.id)})" class="btn btn-zeile">
         <span style="font-size:var(--s-teil);width:28px;text-align:center" aria-hidden="true">${tm.icon}</span>
         <span style="flex:1;min-width:0"><span style="display:block;font-weight:700;font-size:var(--s-text);${aus?"color:#64748b;":""}">${esc(t.titel||t.gegner||tm.label)}${i===0?' <span style="font-size:var(--s-klein);color:#2563eb;font-weight:800">· NÄCHSTER</span>':""}</span>
           <span style="display:block;font-size:var(--s-klein);color:#64748b">${twtag} ${td.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}${tzeit?" · "+tzeit:""}${heimLabel(t)?" · "+heimLabel(t):""}${t.ort?" · "+esc(t.ort):""}${t.platz?" · 🏟️ "+esc(t.platz):""}</span></span>
@@ -2917,7 +2918,7 @@ async function elternHelferKachelLoad(t){
   const frei=rows.filter(x=>!feste.has(x.aufgabe));
   const freiHtml=frei.map(x=>`<div style="display:flex;align-items:center;gap:6px;font-size:var(--s-klein);color:#475569;padding:3px 2px">
       <span style="flex:1;min-width:0">${esc(x.aufgabe)} · <b>${esc(x.name)}</b></span>
-      ${x.user_id===uid?`<button onclick="tdHelferDel(${x.id},${t.id})" aria-label="Eintrag entfernen" style="border:none;background:none;color:#b91c1c;cursor:pointer;font-size:var(--s-karte);min-width:32px;min-height:32px">✕</button>`:""}
+      ${x.user_id===uid?`<button class="btn btn-sm btn-d" onclick="tdHelferDel(${x.id},${t.id})" aria-label="Eintrag entfernen" style="flex:none;min-width:44px;justify-content:center">✕</button>`:""}
     </div>`).join("");
 
   box.innerHTML=`<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:10px">
@@ -2928,10 +2929,10 @@ async function elternHelferKachelLoad(t){
     ${freiHtml}
     <!-- Das Eingabefeld erscheint erst auf Tippen: sonst kostet es 44 px in einer Kachel,
          die schon lang ist – fuer etwas, das die wenigsten brauchen. -->
-    ${aufgaben.some(a=>!a.immer)?`<button id="helfer-eigen-btn" onclick="elternHelferEigenAuf(${Number(t.id)})" style="width:100%;min-height:36px;margin-top:6px;padding:6px;border:none;background:none;color:#334155;font-family:inherit;font-size:var(--s-klein);font-weight:700;cursor:pointer;text-align:left">✏️ Etwas anderes eintragen</button>
+    ${aufgaben.some(a=>!a.immer)?`<button id="helfer-eigen-btn" onclick="elternHelferEigenAuf(${Number(t.id)})" class="btn btn-link" style="margin-top:6px">✏️ Etwas anderes eintragen</button>
     <div id="helfer-eigen-box" style="display:none;gap:6px;margin-top:2px">
       <input id="helfer-eigen-k" maxlength="60" placeholder="Was übernimmst du?" aria-label="Eigene Aufgabe eintragen" style="flex:1;min-width:0;min-height:44px;padding:9px;border:1.5px solid var(--rand-bedien);border-radius:10px;font-family:inherit;font-size:var(--s-text);box-sizing:border-box" onkeydown="if(event.key==='Enter')tdHelferAddEigen(${Number(t.id)},this)">
-      <button onclick="tdHelferAddEigen(${Number(t.id)},this)" aria-label="Eigene Aufgabe eintragen" style="min-height:44px;min-width:52px;border:none;border-radius:10px;background:#15803d;color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">✓</button>
+      <button onclick="tdHelferAddEigen(${Number(t.id)},this)" aria-label="Eigene Aufgabe eintragen" class="btn" style="flex:none;min-width:52px;justify-content:center;font-size:var(--s-karte)">✓</button>
     </div>`:""}
   </div>`;
 }
@@ -3120,8 +3121,8 @@ async function elternAngabenOpen(){
     <input id="ang-geb" type="date" value="${esc(a.geburtstag||"")}" style="${feld}">
     ${kindFelder}
     <div id="ang-fehler" role="alert" style="font-size:var(--s-text);color:#b91c1c;min-height:18px;margin-bottom:6px"></div>
-    <button id="ang-save" onclick="elternAngabenSave(this)" style="width:100%;min-height:56px;border:none;border-radius:12px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">Angaben speichern</button>
-    <button onclick="document.getElementById('angaben-modal').remove()" style="width:100%;min-height:44px;margin-top:8px;border:none;background:none;color:#334155;font-family:inherit;font-size:var(--s-text);cursor:pointer">Abbrechen</button>
+    <button id="ang-save" class="btn btn-p" onclick="elternAngabenSave(this)" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte)">Angaben speichern</button>
+    <button class="btn btn-link" onclick="document.getElementById('angaben-modal').remove()" style="width:100%;justify-content:center;margin-top:8px">Abbrechen</button>
   </div>`;
   document.body.appendChild(m);
 }

@@ -64,10 +64,10 @@ async function _rufeOpen(raumId){
       <span style="font-size:var(--s-seite);line-height:1" aria-hidden="true">📣</span>
       <div style="flex:1;min-width:0"><div style="font-size:var(--s-karte);font-weight:800">Adler-Rufe</div>
         <div id="rufe-unter" style="font-size:var(--s-klein);opacity:.9">Eltern und Trainerteam</div></div>
-      <button type="button" id="rufe-glocke" onclick="rufeGlockeUmschalten()" aria-label="Benachrichtigungen zu Adler-Rufen" aria-pressed="true" style="width:44px;height:44px;border:none;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:var(--s-teil);cursor:pointer">🔔</button>
-      ${/\/trainer\//.test(location.pathname)?`<button type="button" id="rufe-mod-knopf" onclick="rufeModOpen()" aria-label="Moderieren" title="Moderieren: wer moderiert, gemeldete Rufe" style="width:44px;height:44px;border:none;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:var(--s-teil);cursor:pointer">🛡️</button>`:""}
-      <button type="button" id="rufe-suche-knopf" onclick="rufeSucheUmschalten()" aria-label="Suchen" style="width:44px;height:44px;border:none;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:var(--s-teil);cursor:pointer">🔍</button>
-      <button type="button" onclick="rufeClose()" aria-label="Schließen" style="width:44px;height:44px;border:none;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:var(--s-teil);cursor:pointer">✕</button>
+      <button type="button" id="rufe-glocke" onclick="rufeGlockeUmschalten()" aria-label="Benachrichtigungen zu Adler-Rufen" aria-pressed="true" class="btn btn-kopf" style="font-size:var(--s-teil)">🔔</button>
+      ${/\/trainer\//.test(location.pathname)?`<button type="button" id="rufe-mod-knopf" onclick="rufeModOpen()" aria-label="Moderieren" title="Moderieren: wer moderiert, gemeldete Rufe" class="btn btn-kopf" style="font-size:var(--s-teil)">🛡️</button>`:""}
+      <button type="button" id="rufe-suche-knopf" onclick="rufeSucheUmschalten()" aria-label="Suchen" class="btn btn-kopf" style="font-size:var(--s-teil)">🔍</button>
+      <button type="button" onclick="rufeClose()" aria-label="Schließen" class="btn btn-kopf" style="font-size:var(--s-teil)">✕</button>
     </div>
     <div id="rufe-ruhe" style="flex:none;padding:6px 12px;background:var(--surface);border-bottom:1px solid var(--surface2);color:var(--text2);font-size:var(--s-klein)">${rufeRuhezeitText(true,_rf.trainer)}</div>
     <div id="rufe-suche" style="display:none;padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--surface2)">
@@ -83,11 +83,11 @@ async function _rufeOpen(raumId){
       <div id="rufe-offen-hinweis" style="display:none;font-size:var(--s-klein);color:var(--text2);margin:0 0 6px">Offener Raum – alle Eltern lesen mit. Bitte keine Fotos anderer Kinder.</div>
       <input id="rufe-datei" type="file" multiple accept=".jpg,.jpeg,.png,.webp,.heic,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,image/*" onchange="rufeDateiWahl(this)" style="display:none">
       <div style="display:flex;gap:8px;align-items:flex-end">
-        <button type="button" id="rufe-anhang-knopf" onclick="document.getElementById('rufe-datei')?.click()" aria-label="Datei anhängen" title="Datei anhängen (Bild, PDF, Office)" style="flex:none;width:48px;min-height:48px;border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface2);color:var(--text);font-size:var(--s-teil);cursor:pointer">📎</button>
-        <button type="button" id="rufe-umfrage-knopf" onclick="rufeUmfrageNeu()" aria-label="Abstimmung starten" title="Abstimmung starten" style="flex:none;width:48px;min-height:48px;border:1px solid var(--rand-bedien);border-radius:14px;background:var(--surface2);color:var(--text);font-size:var(--s-teil);cursor:pointer">📊</button>
+        <button type="button" id="rufe-anhang-knopf" onclick="document.getElementById('rufe-datei')?.click()" aria-label="Datei anhängen" title="Datei anhängen (Bild, PDF, Office)" class="btn" style="flex:none;min-width:48px;justify-content:center;font-size:var(--s-teil)">📎</button>
+        <button type="button" id="rufe-umfrage-knopf" onclick="rufeUmfrageNeu()" aria-label="Abstimmung starten" title="Abstimmung starten" class="btn" style="flex:none;min-width:48px;justify-content:center;font-size:var(--s-teil)">📊</button>
         <label for="rufe-text" style="position:absolute;left:-9999px">Ruf schreiben</label>
         <textarea id="rufe-text" rows="1" maxlength="5000" placeholder="Ruf schreiben …" oninput="rufeTextWachsen(this)" style="flex:1;min-height:48px;max-height:140px;resize:none;box-sizing:border-box;padding:12px;border:1px solid var(--rand-bedien);border-radius:14px;font:inherit;font-size:var(--s-text);background:var(--surface2);color:var(--text)"></textarea>
-        <button type="button" id="rufe-senden" onclick="rufeSenden()" style="min-width:56px;min-height:48px;border:none;border-radius:14px;background:#1e3a8a;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">Senden</button>
+        <button type="button" id="rufe-senden" class="btn btn-p" onclick="rufeSenden()" style="min-width:56px;justify-content:center">Senden</button>
       </div>
       <div id="rufe-zaehler" aria-live="polite" style="display:none;font-size:var(--s-klein);color:var(--text2);margin-top:4px;text-align:right"></div>
     </div>`;
@@ -205,7 +205,7 @@ function rufeFamilienOpen(){
     .sort((a,b)=>(b.n-a.n)||((b.raum?1:0)-(a.raum?1:0))||a.name.localeCompare(b.name,"de"));
   _rfBlatt("rufe-menue","Privat an eine Familie",
     `<div style="font-size:var(--s-klein);color:var(--text2)">Lesen können nur diese Familie und das Trainerteam – der Elternbeirat nicht.</div>
-    <div style="max-height:55vh;overflow-y:auto">${liste.length?liste.map(f=>`<button type="button" class="rf-familie" style="${_RF_ZEILE}" onclick="rufePrivat(${f.k})"><span aria-hidden="true">🔒</span><span style="flex:1">${esc(f.name)}</span>${f.n?`<b>${f.n} neu</b>`:f.raum?`<span style="font-size:var(--s-klein);color:var(--text2)">Verlauf</span>`:""}</button>`).join("")
+    <div style="max-height:55vh;overflow-y:auto">${liste.length?liste.map(f=>`<button type="button" class="rf-familie btn btn-zeile" style="margin-top:6px" onclick="rufePrivat(${f.k})"><span aria-hidden="true">🔒</span><span style="flex:1">${esc(f.name)}</span>${f.n?`<b>${f.n} neu</b>`:f.raum?`<span style="font-size:var(--s-klein);color:var(--text2)">Verlauf</span>`:""}</button>`).join("")
       :`<div style="color:var(--text2);margin-top:8px">Noch keine Familie mit Zugang.</div>`}</div>`);
 }
 async function rufeRaumWechseln(id){
@@ -288,22 +288,22 @@ function rufeNachrichtHtml(n){
       </div>
       ${n.antwort_auf?`<div class="rf-zitat" style="margin:4px 0;padding:4px 8px;border-left:3px solid #1e3a8a;background:var(--surface2);border-radius:6px;font-size:var(--s-klein);color:var(--text2)">${zitat?`<b>${esc(zitat.autor_name||"")}</b>: ${esc(String(zitat.text||"").slice(0,120))}`:"Antwort auf einen früheren Ruf"}</div>`:""}
       <div class="rf-text" style="font-size:var(--s-text);line-height:1.45;margin-top:2px;word-wrap:break-word;${arch?"color:var(--text2);font-style:italic;":""}${lang?"display:-webkit-box;-webkit-line-clamp:8;line-clamp:8;-webkit-box-orient:vertical;overflow:hidden;":""}">${_rf.umf[n.id]?"<b>📊 </b>":""}${_rfText(n.text)}</div>
-      ${lang?`<button type="button" class="rf-weiter" onclick="rufeWeiterlesen(${Number(n.id)})" style="min-height:44px;padding:0 4px;border:none;background:transparent;color:var(--blue-text,#1d4ed8);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer;text-decoration:underline">Weiterlesen</button>`:""}
+      ${lang?`<button type="button" class="rf-weiter btn btn-link" onclick="rufeWeiterlesen(${Number(n.id)})" >Weiterlesen</button>`:""}
       ${rufeAnhaengeHtml(n)}
       ${_rf.umf[n.id]?rufeUmfrageHtml(_rf.umf[n.id],arch):""}
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px">
         ${Object.keys(r).map(e=>`<button type="button" class="rf-reakt" onclick="rufeReagieren(${Number(n.id)},'${e}')" aria-pressed="${r[e].ich}" aria-label="${e} ${r[e].n}, ${r[e].ich?"zurücknehmen":"dazu"}" style="min-height:44px;padding:2px 8px;border-radius:999px;border:1.5px solid ${r[e].ich?"#1e3a8a":"var(--rand-bedien)"};background:${r[e].ich?"#dbeafe":"var(--surface)"};color:var(--text);font-family:inherit;font-size:var(--s-klein);cursor:pointer">${e} ${r[e].n}</button>`).join("")}
         <span style="flex:1"></span>
-        ${_rf.trainer&&!arch&&_rf.gesehen&&_rf.gesehen[n.id]?(()=>{ const x=_rf.gesehen[n.id]; return `<button type="button" class="rf-gesehen" onclick="rufeGesehenOpen(${Number(n.id)})" aria-label="Gesehen von ${x.g} von ${x.e} – Namen zeigen" style="min-height:44px;padding:2px 8px;border:none;border-radius:999px;background:transparent;color:var(--text2);font-family:inherit;font-size:var(--s-klein);cursor:pointer"><span aria-hidden="true">👁</span> ${x.g}/${x.e}</button>`; })():""}
+        ${_rf.trainer&&!arch&&_rf.gesehen&&_rf.gesehen[n.id]?(()=>{ const x=_rf.gesehen[n.id]; return `<button type="button" class="rf-gesehen btn btn-link" onclick="rufeGesehenOpen(${Number(n.id)})" aria-label="Gesehen von ${x.g} von ${x.e} – Namen zeigen" style="font-size:var(--s-klein)"><span aria-hidden="true">👁</span> ${x.g}/${x.e}</button>`; })():""}
         <span style="font-size:var(--s-klein);color:var(--text2)">${arch?"archiviert · ":""}${n.bearbeitet_am?"bearbeitet · ":""}${_rfZeit(n.created_at)}</span>
-        ${arch?"":`<button type="button" class="rf-menue-knopf" onclick="rufeMenue(${Number(n.id)})" aria-label="Aktionen zu diesem Ruf" style="width:44px;height:44px;border:none;border-radius:50%;background:transparent;color:var(--text2);font-size:var(--s-teil);cursor:pointer">⋯</button>`}
+        ${arch?"":`<button type="button" class="rf-menue-knopf btn btn-sm" onclick="rufeMenue(${Number(n.id)})" aria-label="Aktionen zu diesem Ruf" style="flex:none;min-width:44px;justify-content:center">⋯</button>`}
       </div>
     </div></div>`;
 }
 function rufeFixRender(){
   const box=document.getElementById("rufe-fix"); if(!box||!_rf)return;
   const fix=_rf.fix.map(f=>_rf.liste.find(n=>n.id===f.nachricht_id)).filter(n=>n&&!n.archiviert_am);
-  box.innerHTML=fix.length?fix.map(n=>`<button type="button" onclick="rufeHinspringen(${Number(n.id)})" style="display:flex;gap:8px;align-items:center;width:100%;text-align:left;min-height:44px;padding:6px 12px;border:none;border-bottom:1px solid var(--surface2);background:#fef3c7;color:#78350f;font-family:inherit;font-size:var(--s-klein);cursor:pointer">📌 <b style="flex:none">${esc(n.autor_name||"")}:</b><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n.text)}</span></button>`).join(""):"";
+  box.innerHTML=fix.length?fix.map(n=>`<button type="button" class="btn btn-zeile" onclick="rufeHinspringen(${Number(n.id)})" style="min-height:44px;font-size:var(--s-klein)">📌 <b style="flex:none">${esc(n.autor_name||"")}:</b><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n.text)}</span></button>`).join(""):"";
 }
 function rufeHinspringen(id){
   const el=document.querySelector(`#rufe-liste .rf-msg[data-id="${Number(id)}"]`);
@@ -318,7 +318,7 @@ function rufeAntwortRender(){
   box.style.cssText+=";align-items:center;gap:8px;margin-bottom:6px;padding:6px 8px;border-left:3px solid #1e3a8a;background:var(--surface2);border-radius:8px";
   if(!n){ box.style.display="none"; box.innerHTML=""; return; }
   box.innerHTML=`<div style="flex:1;min-width:0;font-size:var(--s-klein);color:var(--text2)">Antwort an <b>${esc(n.autor_name||"")}</b>: ${esc(String(n.text).slice(0,80))}</div>
-    <button type="button" onclick="rufeAntwortWeg()" aria-label="Antwort verwerfen" style="width:36px;height:36px;border:none;border-radius:50%;background:transparent;color:var(--text2);cursor:pointer">✕</button>`;
+    <button type="button" onclick="rufeAntwortWeg()" aria-label="Antwort verwerfen" class="btn btn-sm" style="flex:none;min-width:44px;justify-content:center">✕</button>`;
 }
 function rufeAntwortWeg(){ if(_rf){ _rf.antwort=null; rufeAntwortRender(); } }
 /* v776 (PO 03.11.): Markus, als Trainer zugleich Vater, schrieb einen Wunsch seines Sohnes in den privaten Raum einer fremden Familie –
@@ -416,7 +416,7 @@ async function rufeGesehenOpen(id){
     +block("Ohne Elternzugang",ohne,x=>zeile(x,"keine App"))
     +(liste.length?"":`<div style="color:var(--text2)">Noch niemand außer dir kann diesen Raum lesen.</div>`)
     +`<div style="margin-top:12px;color:var(--text2);font-size:var(--s-klein)">Gesehen heißt: hat den Raum geöffnet, nachdem der Ruf kam – eine Benachrichtigung allein zählt nicht. Diese Anzeige sieht nur das Trainerteam.</div>`
-    +`<button type="button" onclick="document.getElementById('rufe-gesehen')?.remove()" style="${_RF_ZEILE};justify-content:center;background:var(--surface2)">Schließen</button>`);
+    +`<button type="button" onclick="document.getElementById('rufe-gesehen')?.remove()" class="btn" style="width:100%;justify-content:center;margin-top:6px">Schließen</button>`);
 }
 
 /* ── Aktionen zu einem Ruf ────────────────────────────────────────────────────── */
@@ -440,7 +440,7 @@ function rufeMenue(id){
   const raum=_rfAktRaum(), privat=!!(raum&&raum.familie_kind);
   const u=_rf.umf[id], uOffen=u&&!_rfUmfrageZu(u);
   const darfModerieren=_rf.mod&&(!privat||_rf.trainer);
-  const zeile=(emo,txt,on)=>`<button type="button" style="${_RF_ZEILE}" onclick="${on}"><span aria-hidden="true">${emo}</span>${txt}</button>`;
+  const zeile=(emo,txt,on)=>`<button type="button" class="btn btn-zeile" style="margin-top:6px" onclick="${on}"><span aria-hidden="true">${emo}</span>${txt}</button>`;
   _rfBlatt("rufe-menue","Ruf von "+esc(eigen?"dir":n.autor_name||""),
     `<div style="display:flex;gap:6px;justify-content:space-between">${RUFE_EMOJI.map(e=>`<button type="button" class="rf-emo" onclick="rufeReagieren(${id},'${e}')" aria-label="Mit ${e} reagieren" style="flex:1;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);font-size:var(--s-teil);cursor:pointer">${e}</button>`).join("")}</div>`
     +zeile("↩️","Antworten",`rufeAntworten(${id})`)
@@ -452,7 +452,7 @@ function rufeMenue(id){
     +(_rf.trainer&&(n.rufe_anhang||[]).length?zeile("🗑️","Anhänge endgültig löschen",`rufeAnhaengeLoeschen(${id})`):"")
     +(!eigen&&!privat?zeile("🚩","Melden",`rufeMelden(${id})`):"")
     +(darfModerieren&&!privat&&!eigen&&n.autor_rolle!=="trainer"?zeile("🔇","Stummschalten …",`rufeStummMenue('${esc(n.autor)}','${esc(n.autor_name||"")}')`):"")
-    +`<button type="button" onclick="document.getElementById('rufe-menue')?.remove()" style="${_RF_ZEILE};justify-content:center;background:var(--surface2)">Abbrechen</button>`);
+    +`<button type="button" onclick="document.getElementById('rufe-menue')?.remove()" class="btn" style="width:100%;justify-content:center;margin-top:6px">Abbrechen</button>`);
 }
 function rufeAntworten(id){
   document.getElementById("rufe-menue")?.remove();
@@ -460,7 +460,7 @@ function rufeAntworten(id){
   document.getElementById("rufe-text")?.focus();
 }
 function rufeFixMenue(id){
-  const z=(txt,h)=>`<button type="button" style="${_RF_ZEILE}" onclick="rufeFixieren(${id},${h===null?"null":h})">${txt}</button>`;
+  const z=(txt,h)=>`<button type="button" class="btn btn-zeile" style="margin-top:6px" onclick="rufeFixieren(${id},${h===null?"null":h})">${txt}</button>`;
   _rfBlatt("rufe-menue","Wie lange fixieren?",z("24 Stunden",24)+z("7 Tage",168)+z("30 Tage",720)+z("Immer",null)
     +`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:8px">Höchstens drei Rufe stehen gleichzeitig oben.</div>`);
 }
@@ -480,7 +480,7 @@ function rufeBearbeitenOpen(id){
   const n=_rf&&_rf.liste.find(x=>x.id===id); if(!n)return;
   _rfBlatt("rufe-menue","Ruf bearbeiten",`<label for="rufe-edit" style="position:absolute;left:-9999px">Text</label>
     <textarea id="rufe-edit" rows="4" maxlength="5000" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--rand-bedien);border-radius:12px;font:inherit;background:var(--surface2);color:var(--text)">${esc(n.text)}</textarea>
-    <button type="button" style="${_RF_ZEILE};justify-content:center;background:#1e3a8a;color:#fff;border:none;font-weight:800" onclick="rufeBearbeiten(${id})">Speichern</button>`);
+    <button type="button" class="btn btn-p" style="width:100%;justify-content:center;margin-top:6px" onclick="rufeBearbeiten(${id})">Speichern</button>`);
   setTimeout(()=>document.getElementById("rufe-edit")?.focus(),50);
 }
 async function rufeBearbeiten(id){
@@ -505,7 +505,7 @@ async function rufeMelden(id){
   toast("Gemeldet – danke");
 }
 function rufeStummMenue(uid,name){
-  const z=(txt,h)=>`<button type="button" style="${_RF_ZEILE}" onclick="rufeStumm('${uid}',${h})">${txt}</button>`;
+  const z=(txt,h)=>`<button type="button" class="btn btn-zeile" style="margin-top:6px" onclick="rufeStumm('${uid}',${h})">${txt}</button>`;
   _rfBlatt("rufe-menue",`${name} stummschalten?`,`<div style="font-size:var(--s-text);color:var(--text2)">Lesen geht weiter, schreiben nicht.</div>`+z("24 Stunden",24)+z("7 Tage",168));
 }
 async function rufeStumm(uid,stunden){
@@ -516,7 +516,7 @@ async function rufeStumm(uid,stunden){
 function rufeRaumNeu(){
   _rfBlatt("rufe-menue","Neuer Raum",`<label for="rufe-raum-name" style="display:block;font-size:var(--s-klein);color:var(--text2)">Name (z. B. Fahrgemeinschaft)</label>
     <input id="rufe-raum-name" type="text" maxlength="40" style="width:100%;box-sizing:border-box;min-height:48px;padding:8px 12px;border:1px solid var(--rand-bedien);border-radius:12px;font:inherit;background:var(--surface2);color:var(--text)">
-    <button type="button" style="${_RF_ZEILE};justify-content:center;background:#1e3a8a;color:#fff;border:none;font-weight:800" onclick="rufeRaumAnlegen()">Raum anlegen</button>`);
+    <button type="button" class="btn btn-p" style="width:100%;justify-content:center;margin-top:6px" onclick="rufeRaumAnlegen()">Raum anlegen</button>`);
   setTimeout(()=>document.getElementById("rufe-raum-name")?.focus(),50);
 }
 async function rufeRaumAnlegen(){
@@ -570,7 +570,7 @@ function rufeUmfrageNeu(){
   _rfBlatt("rufe-menue","📊 Abstimmung starten",`<label for="rf-frage" style="display:block;font-size:var(--s-klein);color:var(--text2)">Frage</label>
     <input id="rf-frage" type="text" maxlength="300" placeholder="z. B. Grillen nach dem Heimspiel?" style="width:100%;box-sizing:border-box;min-height:48px;padding:8px 12px;border:1px solid var(--rand-bedien);border-radius:12px;font:inherit;background:var(--surface2);color:var(--text)">
     <div id="rf-opts">${feld(0)}${feld(1)}</div>
-    <button type="button" id="rf-opt-mehr" onclick="rufeUmfrageOption()" style="${_RF_ZEILE};justify-content:center">＋ Antwort</button>
+    <button type="button" id="rf-opt-mehr" onclick="rufeUmfrageOption()" class="btn" style="width:100%;justify-content:center;margin-top:6px">＋ Antwort</button>
     <div style="font-size:var(--s-klein);color:var(--text2);margin-top:10px">Wer sieht, wer was gewählt hat?</div>
     <div id="rf-arten" style="display:flex;gap:8px;margin-top:4px">${wahl(true,"Namentlich","rufeUmfrageArt(false)")}${wahl(false,"Anonym","rufeUmfrageArt(true)")}</div>
     <div id="rf-art-hinweis" style="font-size:var(--s-klein);color:var(--text2);margin-top:4px">Namentlich: alle sehen, wer was gewählt hat.</div>
@@ -578,7 +578,7 @@ function rufeUmfrageNeu(){
     <label for="rf-schluss" style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:10px">Schluss</label>
     <select id="rf-schluss" style="width:100%;min-height:48px;border:1px solid var(--rand-bedien);border-radius:12px;font:inherit;background:var(--surface2);color:var(--text)">
       <option value="">Offen, bis jemand beendet</option><option value="24">In 24 Stunden</option><option value="72">In 3 Tagen</option><option value="168">In 7 Tagen</option></select>
-    <button type="button" id="rf-umfrage-los" style="${_RF_ZEILE};justify-content:center;background:#1e3a8a;color:#fff;border:none;font-weight:800" onclick="rufeUmfrageAnlegen()">Abstimmung starten</button>`);
+    <button type="button" id="rf-umfrage-los" class="btn btn-p" style="width:100%;justify-content:center;margin-top:6px" onclick="rufeUmfrageAnlegen()">Abstimmung starten</button>`);
   setTimeout(()=>document.getElementById("rf-frage")?.focus(),50);
 }
 function rufeUmfrageOption(){
@@ -636,7 +636,7 @@ async function rufeSucheRender(){
   if(!_rf||!_rf.suche)return;
   const raum=id=>_rfRaumName(_rf.raeume.find(r=>r.id===id));
   box.innerHTML=`<div style="font-size:var(--s-klein);color:var(--text2);margin:4px 0 8px">${treffer.length} Treffer für „${esc(_rf.suche)}“</div>`
-    +(treffer.length?treffer.map(n=>`<button type="button" onclick="rufeSucheSprung(${Number(n.raum_id)},${Number(n.id)})" style="${_RF_ZEILE};display:block">
+    +(treffer.length?treffer.map(n=>`<button type="button" onclick="rufeSucheSprung(${Number(n.raum_id)},${Number(n.id)})" class="btn btn-zeile" style="display:block;margin-top:6px">
       <div style="font-size:var(--s-klein);color:var(--text2)">${esc(n.autor_name||"")} · ${esc(_rfTag(n.created_at))} ${_rfZeit(n.created_at)}${_rf.raeume.length>1?" · "+esc(raum(n.raum_id)):""}</div>
       <div style="font-size:var(--s-text)">${_rfText(String(n.text).slice(0,200))}</div></button>`).join(""):`<div style="color:var(--text2);font-size:var(--s-text)">Nichts gefunden.</div>`);
 }
@@ -668,10 +668,10 @@ async function rufeBadgeLoad(){
   if(hinweis){
     let letzter=null;
     if(n){ const l=await _rfGet(`rufe_nachricht?archiviert_am=is.null${neuRaum!=null?"&raum_id=eq."+encodeURIComponent(neuRaum):""}&select=autor_name,text,autor&order=created_at.desc&limit=5`); letzter=l.find(x=>x.autor!==_rfUid())||null; }
-    hinweis.innerHTML=n?`<button type="button" onclick="rufeEinstieg()" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;min-height:48px;margin-bottom:10px;padding:8px 12px;border:1.5px solid ${alle?"#b45309":"#1e3a8a"};border-radius:12px;background:${alle?"#fef3c7":"#eff6ff"};color:#0f172a;font-family:inherit;cursor:pointer">
+    hinweis.innerHTML=n?`<button type="button" class="btn btn-zeile" onclick="rufeEinstieg()" style="margin-bottom:10px">
       <span aria-hidden="true" style="font-size:var(--s-teil)">💬</span>
       <span style="flex:1;min-width:0"><b style="display:block;font-size:var(--s-text)">${n===1?"1 neuer Adler-Ruf":n+" neue Adler-Rufe"}${alle?" · an alle":""}</b>
-        ${letzter?`<span style="display:block;font-size:var(--s-klein);color:#334155;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(letzter.autor_name||"")}: ${esc(letzter.text||"")}</span>`:""}</span>
+        ${letzter?`<span style="display:block;font-size:var(--s-klein);color:var(--text2);font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(letzter.autor_name||"")}: ${esc(letzter.text||"")}</span>`:""}</span>
       <span aria-hidden="true">›</span></button>`:"";
   }
   els.forEach(el=>{ el.textContent=n?(n>99?"99+":String(n)):""; el.style.display=n?"inline-flex":"none";
@@ -882,7 +882,7 @@ function rufeChipsRender(){
   box.innerHTML=_rf.dateien.map((d,i)=>`<div class="rf-chip" style="display:flex;align-items:center;gap:6px;max-width:100%;min-height:44px;padding:2px 2px 2px 6px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);color:var(--text)">
       ${d.vorschau?`<img src="${d.vorschau}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:8px;flex:none">`:`<span aria-hidden="true" style="font-size:var(--s-teil);flex:none">${_rfAnhangSymbol(d.mime)}</span>`}
       <span style="min-width:0;display:flex;flex-direction:column"><span style="font-size:var(--s-klein);font-weight:700;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(d.name)}</span><span style="font-size:var(--s-klein);color:var(--text2)">${rufeGroesseText(d.blob.size)}</span></span>
-      <button type="button" class="rf-chip-weg" onclick="rufeAnhangWeg(${i})" aria-label="Anhang ${esc(d.name)} entfernen" style="flex:none;width:44px;height:44px;border:none;border-radius:50%;background:transparent;color:var(--text2);font-size:var(--s-karte);cursor:pointer">✕</button></div>`).join("");
+      <button type="button" class="rf-chip-weg btn btn-sm" onclick="rufeAnhangWeg(${i})" aria-label="Anhang ${esc(d.name)} entfernen" style="flex:none;min-width:44px;justify-content:center">✕</button></div>`).join("");
 }
 async function _rfAufraeumen(liste){
   for(const a of liste||[]){ try{ await fetch(`${SB_URL}/storage/v1/object/rufe-anhang/${a.pfad}`,{method:"DELETE",headers:{'Authorization':'Bearer '+sbToken(),'apikey':SB_KEY}}); }catch(e){} }
@@ -908,7 +908,7 @@ function rufeAnhaengeHtml(n){
   return `<div class="rf-anhaenge" style="display:flex;flex-direction:column;gap:6px;margin-top:6px">${l.map(a=>/^image\//.test(a.mime)
     ?`<button type="button" class="rf-bild" onclick="rufeAnhangOeffnen(${Number(n.id)},${Number(a.id)})" aria-label="Bild ${esc(a.name)} groß ansehen" style="display:block;padding:0;border:none;background:transparent;cursor:pointer;min-height:44px;text-align:left">
         <img data-pfad="${esc(a.pfad)}" alt="Bild: ${esc(a.name)}" style="display:block;max-width:100%;max-height:220px;min-width:120px;min-height:80px;border-radius:10px;background:var(--surface2);object-fit:cover"></button>`
-    :`<button type="button" class="rf-datei" onclick="rufeAnhangOeffnen(${Number(n.id)},${Number(a.id)})" aria-label="${a.mime==="application/pdf"?"PDF öffnen":"Herunterladen"}: ${esc(a.name)}" style="display:flex;align-items:center;gap:8px;min-height:44px;width:100%;padding:6px 10px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-family:inherit;text-align:left;cursor:pointer">
+    :`<button type="button" class="rf-datei btn btn-zeile" onclick="rufeAnhangOeffnen(${Number(n.id)},${Number(a.id)})" aria-label="${a.mime==="application/pdf"?"PDF öffnen":"Herunterladen"}: ${esc(a.name)}" style="min-height:44px">
         <span aria-hidden="true" style="font-size:var(--s-teil)">${_rfAnhangSymbol(a.mime)}</span>
         <span style="flex:1;min-width:0;font-size:var(--s-klein);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.name)}</span>
         <span style="font-size:var(--s-klein);color:var(--text2);flex:none">${rufeGroesseText(a.groesse)}</span></button>`).join("")}</div>`;
@@ -954,10 +954,9 @@ function rufeBildGross(url,name){
   m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Bild groß: "+name);
   m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;flex-direction:column;padding:12px";
   m.style.zIndex=_rfZ(10060);
-  const knopf="min-width:48px;min-height:48px;border:none;border-radius:12px;background:rgba(255,255,255,.16);color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer";
   m.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="flex:1;min-width:0;color:#fff;font-size:var(--s-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(name)}</span>
-      <button type="button" id="rufe-gross-zoom" aria-pressed="false" style="${knopf};padding:0 12px">🔍 Zoom</button>
-      <button type="button" onclick="document.getElementById('rufe-gross')?.remove()" aria-label="Schließen" style="${knopf}">✕</button></div>
+      <button type="button" id="rufe-gross-zoom" class="btn btn-sm" aria-pressed="false">🔍 Zoom</button>
+      <button type="button" onclick="document.getElementById('rufe-gross')?.remove()" aria-label="Schließen" class="btn btn-kopf">✕</button></div>
     <div id="rufe-gross-box" style="flex:1;min-height:0;overflow:auto;display:flex;align-items:center;justify-content:center;touch-action:pinch-zoom pan-x pan-y">
       <img src="${url}" alt="${esc(name)}" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px"></div>`;
   document.body.appendChild(m);

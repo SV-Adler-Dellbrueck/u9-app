@@ -558,7 +558,7 @@ function toastUndo(msg,undoFn,ms){
   el.style.cssText="position:fixed;left:12px;right:12px;bottom:78px;z-index:10060;max-width:460px;margin:0 auto;background:#1e293b;color:#fff;border-radius:12px;padding:11px 12px;box-shadow:0 8px 28px rgba(0,0,0,.35);display:flex;align-items:center;gap:10px;font-size:var(--s-text);font-family:inherit";
   const span=document.createElement("span");span.style.flex="1";span.textContent=msg;
   const btn=document.createElement("button");btn.textContent="↶ Rückgängig";
-  btn.style.cssText="background:#fbbf24;color:#1e293b;border:none;border-radius:8px;padding:7px 12px;font-weight:800;font-family:inherit;cursor:pointer;flex:none";
+  btn.className="btn btn-sm"; btn.style.flex="none";   // v876: Bauart Neben-Aktion statt eigener Farbe
   let done=false; const close=()=>{clearTimeout(tid);el.remove();};
   btn.onclick=()=>{ if(done)return; done=true; try{undoFn&&undoFn();}catch(e){} close(); };
   el.appendChild(span);el.appendChild(btn);document.body.appendChild(el);
@@ -976,8 +976,8 @@ function pwaBannerShow(kind){
   if(document.getElementById("pwa-nudge")||_pwaStandalone())return;
   const el=document.createElement("div");
   el.id="pwa-nudge";
-  el.style.cssText="position:fixed;left:12px;right:12px;bottom:12px;z-index:10050;background:#1e3a8a;color:#fff;border-radius:14px;padding:14px 34px 14px 16px;box-shadow:0 8px 28px rgba(0,0,0,.35);font-family:inherit;max-width:460px;margin:0 auto";
-  const close=`<button onclick="pwaBannerDismiss()" aria-label="Schließen" style="min-width:44px;min-height:44px;position:absolute;top:8px;right:10px;background:none;border:none;color:rgba(255,255,255,.7);font-size:var(--s-seite);line-height:1;cursor:pointer">×</button>`;
+  el.style.cssText="position:fixed;left:12px;right:12px;bottom:12px;z-index:10050;background:#1e3a8a;color:#fff;border-radius:14px;padding:14px 56px 14px 16px;box-shadow:0 8px 28px rgba(0,0,0,.35);font-family:inherit;max-width:460px;margin:0 auto";
+  const close=`<button class="btn btn-kopf" onclick="pwaBannerDismiss()" aria-label="Schließen" style="position:absolute;top:6px;right:6px;font-size:var(--s-seite)">×</button>`;
   const app=pwaKontext().name;
   if(kind==="ios"){
     el.innerHTML=`${close}<div style="font-weight:800;font-size:var(--s-karte);margin-bottom:4px">📱 ${app} aufs Handy</div>
@@ -985,7 +985,7 @@ function pwaBannerShow(kind){
   }else{
     el.innerHTML=`${close}<div style="font-weight:800;font-size:var(--s-karte);margin-bottom:8px">📱 ${app} installieren</div>
       <div style="font-size:var(--s-text);opacity:.96;margin-bottom:10px">Als eigene App auf den Startbildschirm – schneller Zugriff, funktioniert auch offline.</div>
-      <button onclick="pwaBannerInstall()" style="background:#fff;color:#1e3a8a;border:none;border-radius:10px;padding:9px 16px;font-family:inherit;font-weight:800;font-size:var(--s-text);cursor:pointer">Installieren</button>`;
+      <button class="btn" onclick="pwaBannerInstall()">Installieren</button>`;
   }
   document.body.appendChild(el);
 }
@@ -1069,7 +1069,7 @@ function schriftHinweisZeigen(ziel){
     <div style="flex:1 1 140px;font-size:var(--s-text);line-height:1.45"><b>🔎 Schrift zu klein?</b></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn" style="min-height:44px" onclick="schriftHinweisAntwort(true)">Größer stellen</button>
-      <button class="btn" style="min-height:44px;border-color:transparent;background:transparent;color:var(--text2);text-decoration:underline" onclick="schriftHinweisAntwort(false)">Nein danke</button>
+      <button class="btn btn-link" onclick="schriftHinweisAntwort(false)">Nein danke</button>
     </div></div>`;
 }
 /* v819: Menü im Trainer-Kopf („⋯“) auf und zu. */
@@ -1203,12 +1203,12 @@ async function pushRenderInto(elId, rolle){
     el.innerHTML=`<div style="font-size:var(--s-text);color:var(--text2);line-height:1.5;margin-top:6px">${ios?"Auf dem iPhone kommen Benachrichtigungen nur, wenn die App auf dem Home-Bildschirm liegt: in Safari unten auf <b>Teilen</b> → <b>Zum Home-Bildschirm</b>, dann die App von dort öffnen und hier einschalten.":"Dieser Browser kann keine Benachrichtigungen empfangen. Öffne die App in Chrome (Android) oder Safari (iPhone) und lege sie auf den Home-Bildschirm."}</div>`; return; }
   const sub=await pushKontoAbo();   // v705: an = dieses Konto auf diesem Handy
   const on=!!sub && (typeof Notification!=="undefined"&&Notification.permission==="granted");
-  const base="width:100%;min-height:48px;padding:12px;border-radius:10px;font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer";
+  const base="width:100%;justify-content:center";   // v876: Bauarten aus styles.css, hier nur Platz
   el.innerHTML=on
-    ? `<button onclick="pushUnsubscribe().then(()=>pushRenderInto('${elId}','${rolle}'))" style="${base};border:1.5px solid #16a34a;background:var(--green-bg);color:var(--green)">🔔 Benachrichtigungen an ✓ · zum Ausschalten tippen</button>
-       <button type="button" class="push-test-knopf" onclick="pushTest(this)" style="${base};margin-top:8px;border:1px solid var(--rand-bedien);background:var(--surface);color:var(--text)">📨 Test-Benachrichtigung an mich</button>
+    ? `<button onclick="pushUnsubscribe().then(()=>pushRenderInto('${elId}','${rolle}'))" class="btn" style="${base}">🔔 Benachrichtigungen an ✓ · zum Ausschalten tippen</button>
+       <button type="button" class="push-test-knopf btn" onclick="pushTest(this)" style="${base};margin-top:8px">📨 Test-Benachrichtigung an mich</button>
        <div id="${elId}-ruhe" class="ruhezeit-box"></div>`
-    : `<button onclick="pushSubscribe('${rolle}').then(ok=>{if(ok)pushRenderInto('${elId}','${rolle}');})" style="${base};border:none;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff">🔔 Benachrichtigungen aktivieren</button>`;
+    : `<button onclick="pushSubscribe('${rolle}').then(ok=>{if(ok)pushRenderInto('${elId}','${rolle}');})" class="btn btn-p" style="${base}">🔔 Benachrichtigungen aktivieren</button>`;
   if(on)ruhezeitRender(elId+"-ruhe",rolle);
   if(on&&rolle!=="trainer"){ const box=document.getElementById(elId+"-ruhe"); if(box){ const d=document.createElement("div"); d.id=elId+"-schmiede"; box.insertAdjacentElement("afterend",d); schmiedePushRender(d.id); } }
 }
@@ -1219,7 +1219,7 @@ async function schmiedePushRender(slotId){
   const uid=typeof sbUid==="function"?sbUid():null; if(!uid){el.innerHTML="";return;}
   let aus=false;
   try{const r=await fetch(`${SB_URL}/rest/v1/adlerschmiede_push_aus?user_id=eq.${uid}&select=user_id`,{headers:sbAuthHeaders()});aus=r.ok&&((await r.json())||[]).length>0;}catch(e){}
-  el.innerHTML=`<button type="button" class="schmiede-schalter" role="switch" aria-checked="${!aus}" onclick="schmiedePushSetzen('${slotId}',${!aus})" style="width:100%;min-height:48px;margin-top:10px;padding:10px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);text-align:left;cursor:pointer">🛠️ Aus der Adlerschmiede – sonntags 18 Uhr: <b>${aus?"aus":"an"}</b><span style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:2px">Neue Funktionen der Woche, nur wenn es welche gibt</span></button>`;
+  el.innerHTML=`<button type="button" class="schmiede-schalter btn btn-zeile" role="switch" aria-checked="${!aus}" onclick="schmiedePushSetzen('${slotId}',${!aus})" style="display:block;margin-top:10px">🛠️ Aus der Adlerschmiede – sonntags 18 Uhr: <b>${aus?"aus":"an"}</b><span style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:2px">Neue Funktionen der Woche, nur wenn es welche gibt</span></button>`;
 }
 async function schmiedePushSetzen(slotId,aus){
   const uid=typeof sbUid==="function"?sbUid():null; if(!uid)return;
@@ -1398,9 +1398,9 @@ async function pushKarteRender(slotId,rolle){
   el.innerHTML=`<div id="push-hinweis" data-fall="${fall}" role="region" aria-labelledby="push-hinweis-titel" style="position:relative;background:var(--amber-bg);border:1px solid #fcd34d;border-radius:14px;padding:10px 48px 10px 14px;margin-bottom:10px">
     <div id="push-hinweis-titel" style="font-size:var(--s-text);font-weight:800;color:var(--text);margin-bottom:2px">🔔 Keine Nachricht vom Team verpassen</div>
     <div style="font-size:var(--s-klein);color:var(--text2);line-height:1.45;margin-bottom:8px">${T.text}</div>
-    <button type="button" id="push-hinweis-an" class="btn" onclick="${T.fn}" style="width:100%;min-height:48px;justify-content:center;font-weight:700">${T.knopf}</button>
-    ${fall==="aus"?`<button type="button" id="push-hinweis-anleitung" onclick="pushAnleitung('aus')" style="display:block;margin:6px auto 0;min-height:44px;padding:0 12px;border:none;background:transparent;color:var(--text2);font-family:inherit;font-size:var(--s-text);text-decoration:underline;cursor:pointer">So geht’s</button>`:""}
-    <button type="button" onclick="pushKarteWeg('${slotId}')" aria-label="Hinweis ausblenden" style="position:absolute;top:2px;right:2px;min-width:44px;min-height:44px;border:none;background:transparent;color:var(--text2);font-size:var(--s-seite);line-height:1;cursor:pointer">×</button>
+    <button type="button" id="push-hinweis-an" class="btn" onclick="${T.fn}" style="width:100%;justify-content:center">${T.knopf}</button>
+    ${fall==="aus"?`<button type="button" id="push-hinweis-anleitung" onclick="pushAnleitung('aus')" class="btn btn-link" style="display:flex;margin:6px auto 0">So geht’s</button>`:""}
+    <button type="button" onclick="pushKarteWeg('${slotId}')" aria-label="Hinweis ausblenden" class="btn btn-sm" style="position:absolute;top:4px;right:4px;min-width:44px;justify-content:center;font-size:var(--s-karte)">×</button>
   </div>`;
   document.querySelectorAll(".schrift-hinweis").forEach(k=>k.remove());   // v819: nur ein Hinweis gleichzeitig (nicht als beantwortet gemerkt)
 }
@@ -1438,7 +1438,7 @@ function pushAnleitung(fall){
   m.onclick=e=>{ if(e.target===m)m.remove(); };
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px 18px;max-width:440px;width:100%;margin:auto;font-size:var(--s-text)">
     <div style="display:flex;align-items:center;gap:8px"><h2 id="push-anleitung-titel" style="flex:1;font-size:var(--s-teil);margin:0">🔔 Benachrichtigungen einschalten</h2>
-      <button type="button" aria-label="Schließen" onclick="document.getElementById('push-anleitung').remove()" style="min-width:44px;min-height:44px;border:none;background:transparent;color:var(--text2);font-size:var(--s-seite);cursor:pointer">×</button></div>
+      <button type="button" aria-label="Schließen" onclick="document.getElementById('push-anleitung').remove()" class="btn btn-sm" style="flex:none;min-width:44px;justify-content:center;font-size:var(--s-karte)">×</button></div>
     <div style="color:var(--text2);line-height:1.5;margin-top:4px">Benachrichtigungen gelten je Handy. Wer mehrere Geräte nutzt, schaltet sie auf jedem ein.</div>
     ${g.ios?iphone+android:android+iphone}
     <button type="button" class="btn btn-p" onclick="document.getElementById('push-anleitung').remove()" style="width:100%;min-height:48px;margin-top:16px;justify-content:center">Verstanden</button>
@@ -1573,7 +1573,7 @@ function mdlHead(modalId,emoji,title,sub,col){
       <div class="mdl-titel" style="font-size:var(--s-karte);font-weight:800;line-height:1.2;color:var(--text)">${title}</div>
       ${sub?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:1px">${sub}</div>`:""}
     </div>
-    <button onclick="document.getElementById('${modalId}')?.remove()" aria-label="Schließen" style="border:none;background:transparent;font-size:var(--s-seite);color:var(--text2);cursor:pointer;line-height:1;min-width:44px;min-height:44px;margin:-8px -8px -8px 0;flex:none">×</button>
+    <button class="btn btn-sm" onclick="document.getElementById('${modalId}')?.remove()" aria-label="Schließen" style="flex:none;min-width:44px;justify-content:center;font-size:var(--s-karte)">×</button>
   </div>`;
 }
 
@@ -1611,8 +1611,8 @@ function frageJaNein(o){
     c.innerHTML=`${mdlHead("frage-modal",o.emoji||"❓",esc(o.titel||"Kurze Frage"),o.unter?esc(o.unter):"",akzent)}
       <div style="font-size:var(--s-text);line-height:1.55;color:var(--text);white-space:pre-line;margin:2px 2px 14px">${esc(o.text||"")}</div>
       <div style="display:flex;gap:8px">
-        <button type="button" id="frage-nein" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);color:var(--text2);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">${esc(o.nein||"Abbrechen")}</button>
-        <button type="button" id="frage-ja" style="flex:1;min-height:44px;border:none;border-radius:12px;background:${akzent};color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">${esc(o.ja||"Ja, weiter")}</button>
+        <button type="button" id="frage-nein" class="btn" style="flex:1;justify-content:center">${esc(o.nein||"Abbrechen")}</button>
+        <button type="button" id="frage-ja" class="btn ${o.ton==="rot"?"btn-d":"btn-p"}" style="flex:1;justify-content:center">${esc(o.ja||"Ja, weiter")}</button>
       </div>`;
     m.appendChild(c); document.body.appendChild(m);
     c.querySelector("#frage-nein").onclick=()=>antwort(false);
@@ -2090,7 +2090,7 @@ async function _fgZeigen(){
   const ov=document.createElement("div"); ov.id="fg-ov";
   ov.style.cssText="position:fixed;inset:0;z-index:10080";
   ov.addEventListener("click",e=>{ if(e.target===ov||e.target.classList.contains("fg-loch"))e.stopPropagation(); });
-  const knopf=kind?"min-height:56px;font-size:var(--s-karte);padding:10px 18px":"min-height:44px;font-size:var(--s-text);padding:9px 16px";
+  const knopf=kind?"min-height:56px;font-size:var(--s-karte)":"justify-content:center";   // v876: Bauarten aus styles.css; Kinder bekommen nur mehr Höhe und Schrift
   ov.innerHTML=`${ziel?'<div class="fg-loch" aria-hidden="true"></div>':'<div class="fg-dunkel" aria-hidden="true" style="position:absolute;inset:0;background:rgba(15,23,42,.72)"></div>'}
     <div class="fg-blase" role="dialog" aria-modal="true" aria-labelledby="fg-t" style="position:absolute;background:#fff;color:#0f172a;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.45);max-width:360px;width:calc(100% - 32px);box-sizing:border-box">
       <div style="display:flex;gap:10px;align-items:flex-start">
@@ -2100,11 +2100,11 @@ async function _fgZeigen(){
           <div style="font-size:${kind?"var(--s-karte)":"var(--s-text)"};color:#334155;line-height:1.5;margin-top:4px">${esc(s.d||"")}</div>
         </div>
       </div>
-      ${s.extra?`<button type="button" id="fg-extra" onclick="${s.extra.fn}" style="${knopf};width:100%;margin-top:12px;border:1.5px solid #1e3a8a;border-radius:12px;background:#eff6ff;color:#1e3a8a;font-family:inherit;font-weight:800;cursor:pointer">${esc(s.extra.text)}</button>`:""}
+      ${s.extra?`<button type="button" id="fg-extra" onclick="${s.extra.fn}" class="btn" style="${knopf};width:100%;justify-content:center;margin-top:12px">${esc(s.extra.text)}</button>`:""}
       <div style="font-size:var(--s-klein);color:#334155;margin-top:10px;text-align:right">${f.i+1} von ${n}</div>
       <div style="display:flex;gap:8px;margin-top:6px">
-        <button type="button" onclick="${f.i>0?"fuehrungZurueck()":"fuehrungEnde()"}" style="${knopf};border:1.5px solid #94a3b8;border-radius:12px;background:#fff;color:#0f172a;font-family:inherit;font-weight:700;cursor:pointer">${f.i>0?"Zurück":(kind?"Später":"Überspringen")}</button>
-        <button type="button" id="fg-weiter" onclick="fuehrungWeiter()" style="${knopf};margin-left:auto;border:none;border-radius:12px;background:#1e3a8a;color:#fff;font-family:inherit;font-weight:800;cursor:pointer">${letzte?(kind?"Los geht's! ⚽":"Fertig"):"Weiter"}</button>
+        <button type="button" onclick="${f.i>0?"fuehrungZurueck()":"fuehrungEnde()"}" class="btn" style="${knopf}">${f.i>0?"Zurück":(kind?"Später":"Überspringen")}</button>
+        <button type="button" id="fg-weiter" onclick="fuehrungWeiter()" class="btn btn-p" style="${knopf};margin-left:auto">${letzte?(kind?"Los geht's! ⚽":"Fertig"):"Weiter"}</button>
       </div>
     </div>`;
   document.body.appendChild(ov);
