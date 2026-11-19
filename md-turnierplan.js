@@ -91,7 +91,7 @@ function turnierPlanRender(ergebnisse){
         const w=e.tore>e.gegentore?"#15803d":e.tore===e.gegentore?"#a16207":"#dc2626";
         return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--surface2)">
           ${kopf}<span style="font-weight:800;color:${w};font-size:var(--s-karte)">${e.tore}:${e.gegentore}</span>
-          <button onclick="turnierPlanDelete(${p.id},'${jsq(p.gegner||"")}')" aria-label="Begegnung entfernen" style="min-width:40px;min-height:40px;border:none;background:transparent;color:#dc2626;cursor:pointer"><i class="ti ti-trash"></i></button>
+          <button class="btn btn-sm btn-d" onclick="turnierPlanDelete(${p.id},'${jsq(p.gegner||"")}')" aria-label="Begegnung entfernen" style="flex:none;min-width:44px;justify-content:center"><i class="ti ti-trash"></i></button>
         </div>`;
       }
       return `<div style="display:flex;align-items:center;gap:6px;padding:8px 0;border-top:1px solid var(--surface2);flex-wrap:wrap">
@@ -100,7 +100,7 @@ function turnierPlanRender(ergebnisse){
         <span style="font-weight:800">:</span>
         <input id="tp-geg-${p.id}" type="number" min="0" value="0" style="width:52px;text-align:center;${fld}">
         <button class="btn btn-sm btn-p" onclick="turnierPlanErgebnis(${p.id},'${jsq(p.gegner||"")}')">Ergebnis</button>
-        <button onclick="turnierPlanDelete(${p.id},'${jsq(p.gegner||"")}')" aria-label="Begegnung entfernen" style="min-width:40px;min-height:40px;border:none;background:transparent;color:#dc2626;cursor:pointer"><i class="ti ti-trash"></i></button>
+        <button class="btn btn-sm btn-d" onclick="turnierPlanDelete(${p.id},'${jsq(p.gegner||"")}')" aria-label="Begegnung entfernen" style="flex:none;min-width:44px;justify-content:center"><i class="ti ti-trash"></i></button>
       </div>`;
     }).join("");
   }
@@ -1412,7 +1412,7 @@ function _abschlussHtml(){
   const info=(ABSCHLUSS_FORMEN.find(f=>f[0]===sf)||[])[2]||"";
   const team=(t,i)=>`<div style="border:var(--border-s);border-left:4px solid ${BLZ_FARBEN[i%BLZ_FARBEN.length]};border-radius:12px;padding:8px 10px;margin-top:6px">
       <div style="font-size:var(--s-text);font-weight:800;color:var(--text)">${esc(t.name)} <span style="font-weight:400;color:var(--text2)">· ${t.spieler.length}</span></div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${t.spieler.map(n=>`<button type="button" onclick="blzCycle('${jsq(n)}')" title="Tippen = ins nächste Team" style="min-height:44px;padding:6px 12px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);cursor:pointer">${esc(n)}</button>`).join("")||`<span style="font-size:var(--s-klein);color:var(--text3)">noch keine Kinder</span>`}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${t.spieler.map(n=>`<button class="btn btn-sm" type="button" onclick="blzCycle('${jsq(n)}')" title="Tippen = ins nächste Team" style="min-height:44px;font-size:var(--s-text)">${esc(n)}</button>`).join("")||`<span style="font-size:var(--s-klein);color:var(--text3)">noch keine Kinder</span>`}</div>
     </div>`;
   const zuWenig=BLZ.teams.filter(t=>!t.eltern&&t.spieler.length<groesse);
   const warn=zuWenig.length?`<div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px;line-height:1.5">⚠️ ${esc((BLZ_SPIELFORM[sf]||[])[0]||"")} braucht ${groesse} Kinder je Team – es fehlen Kinder bei ${zuWenig.map(t=>esc(t.name)+" ("+t.spieler.length+")").join(", ")}. Tippe ein Kind an, um es ins nächste Team zu schieben.</div>`:"";
@@ -1498,11 +1498,11 @@ function _blzSetupHtml(){
   const nEltern=BLZ.teams.filter(t=>t.eltern).length;
   const teamKarte=(t,i)=>`<div style="border:var(--border-s);border-left:4px solid ${t.eltern?"#7c3aed":BLZ_FARBEN[i%BLZ_FARBEN.length]};border-radius:12px;padding:8px 10px;margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:6px">
-        <button onclick="blzRename(${i})" title="Team umbenennen" style="border:none;background:transparent;font-family:inherit;font-size:var(--s-text);font-weight:800;color:var(--text);cursor:pointer;min-height:44px;padding:0;margin:-8px 0">${t.eltern?"👨‍👩‍👧 ":""}${esc(t.name)} ✏️</button>
+        <button class="btn btn-link" onclick="blzRename(${i})" title="Team umbenennen" style="min-height:44px;margin:-8px 0;font-size:var(--s-text)">${t.eltern?"👨‍👩‍👧 ":""}${esc(t.name)} ✏️</button>
         <span style="margin-left:auto;font-size:var(--s-klein);color:var(--text3)">${t.eltern?(t.spieler.length?t.spieler.length+" dabei · ":"")+(nEltern>1?"Duell-Gegner im Wechsel":"tritt in jedem Duell an"):(t.spieler.length?t.spieler.length+" im Team":"ohne Kader-Kinder")}</span>
-        ${t.fest?`<button onclick="blzTeamWeg(${i})" aria-label="Team entfernen" style="border:none;background:transparent;color:#dc2626;cursor:pointer;min-width:44px;min-height:44px;margin:-8px -8px -8px 0"><i class="ti ti-trash"></i></button>`:""}
+        ${t.fest?`<button class="btn btn-sm btn-d" onclick="blzTeamWeg(${i})" aria-label="Team entfernen" style="min-width:44px;min-height:44px;margin:-8px -8px -8px 0;justify-content:center"><i class="ti ti-trash"></i></button>`:""}
       </div>
-      ${t.spieler.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${t.spieler.map(n=>`<button onclick="blzCycle('${jsq(n)}')" title="Tippen = ins nächste Team" style="min-height:44px;padding:6px 12px;border:1px solid var(--rand-bedien);border-radius:18px;font-family:inherit;font-size:var(--s-text);cursor:pointer;background:var(--surface2);color:var(--text)">${esc(n)}</button>`).join("")}</div>`:""}
+      ${t.spieler.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${t.spieler.map(n=>`<button class="btn btn-sm" onclick="blzCycle('${jsq(n)}')" title="Tippen = ins nächste Team" style="min-height:44px;font-size:var(--s-text)">${esc(n)}</button>`).join("")}</div>`:""}
     </div>`;
   // Im Duell sichtbar getrennt: erst die Eltern-Seite, dann die Kinder-Teams
   const gruppe=titel=>`<div style="font-size:var(--s-text);font-weight:800;color:var(--text);margin:8px 0 4px">${titel}</div>`;
@@ -1613,12 +1613,12 @@ async function elternTurnierRender(terminId,datum){
   const zeilen=liste.length
     ? liste.map(x=>`<div class="et-zeile" style="display:flex;align-items:center;gap:8px;min-height:44px;border-top:1px solid var(--rand-bedien);font-size:var(--s-text)">
         <span style="flex:1;min-width:0;overflow-wrap:anywhere"><b>${esc(x.name)}</b>${x.selbst?"":` <span style="color:var(--text2);font-size:var(--s-klein)">· von einer Familie eingetragen</span>`}</span>
-        <button type="button" onclick="elternTurnierEntfernen(${Number(x.id)},${Number(terminId)},'${datum}')" aria-label="${esc(x.name)} aus der Liste nehmen" style="min-width:44px;min-height:44px;border:none;background:transparent;color:var(--text2);cursor:pointer"><i class="ti ti-x" aria-hidden="true"></i></button>
+        <button class="btn btn-sm" type="button" onclick="elternTurnierEntfernen(${Number(x.id)},${Number(terminId)},'${datum}')" aria-label="${esc(x.name)} aus der Liste nehmen" style="flex:none;min-width:44px;justify-content:center"><i class="ti ti-x" aria-hidden="true"></i></button>
       </div>`).join("")
     : `<div style="font-size:var(--s-text);color:var(--text2);padding:8px 0">Noch niemand eingetragen. Die Eltern sehen den Termin mit dem Knopf „Ich spiele mit“.</div>`;
   box.innerHTML=`<div id="et-anzahl" style="font-size:var(--s-karte);font-weight:800;margin-bottom:4px">${liste.length} Erwachsene${liste.length===1?"r":""} ${liste.length===1?"spielt":"spielen"} mit</div>
     ${zeilen}
-    <button type="button" class="btn btn-p" ${liste.length?"":"disabled"} onclick="elternTurnierUebernehmen(${Number(terminId)},'${datum}')" style="width:100%;min-height:52px;justify-content:center;margin-top:12px;font-weight:800"><i class="ti ti-trophy"></i>Ins Trainingsturnier übernehmen</button>
+    <button type="button" class="btn btn-p" ${liste.length?"":"disabled"} onclick="elternTurnierUebernehmen(${Number(terminId)},'${datum}')" style="width:100%;min-height:52px;justify-content:center;margin-top:12px"><i class="ti ti-trophy"></i>Ins Trainingsturnier übernehmen</button>
     <div style="font-size:var(--s-klein);color:var(--text2);margin-top:6px;line-height:1.5">Öffnet das Trainingsturnier „Kinder gegen Eltern“ für diesen Termin und verteilt die Erwachsenen auf die Eltern-Teams. Die Kinder kommen wie immer aus Anwesenheit oder Kader.</div>
     <button type="button" class="btn" onclick="document.getElementById('et-modal').remove()" style="width:100%;min-height:48px;justify-content:center;margin-top:8px">Schließen</button>`;
 }
@@ -1724,9 +1724,9 @@ function _blzLiveHtml(){
   const naechsterSlot=offene.length?Math.min(...offene.map(p=>p.slot)):-1;
   const slots=[...new Set(BLZ.plan.map(p=>p.slot))].sort((a,b)=>a-b);
   const step=(mi,seite,wert)=>`<span style="display:inline-flex;align-items:center;gap:2px;flex:none">
-      <button onclick="blzTor(${mi},'${seite}',-1)" aria-label="Tor zurücknehmen" style="min-width:42px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-size:var(--s-karte);cursor:pointer;flex:none">−</button>
+      <button class="btn btn-sm" onclick="blzTor(${mi},'${seite}',-1)" aria-label="Tor zurücknehmen" style="flex:none;min-width:44px;min-height:44px;justify-content:center;font-size:var(--s-karte)">−</button>
       <b style="min-width:26px;text-align:center;font-size:var(--s-teil)">${wert==null?"–":wert}</b>
-      <button onclick="blzTor(${mi},'${seite}',1)" aria-label="Tor" style="min-width:42px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-size:var(--s-karte);cursor:pointer;flex:none">+</button>
+      <button class="btn btn-sm" onclick="blzTor(${mi},'${seite}',1)" aria-label="Tor" style="flex:none;min-width:44px;min-height:44px;justify-content:center;font-size:var(--s-karte)">+</button>
     </span>`;
   const karte=p=>{
     const mi=BLZ.plan.indexOf(p);
@@ -1787,7 +1787,7 @@ function _blzLiveHtml(){
     <button class="btn btn-p" style="width:100%;margin-top:12px" onclick="blzEnde()"><i class="ti ti-trophy"></i>Turnier beenden</button>
     <div style="display:flex;gap:8px;margin-top:8px">
       <button class="btn btn-sm" style="flex:1" onclick="blzBearbeiten()">✏️ Bearbeiten (Teams/Trainer)</button>
-      <button class="btn btn-sm" style="flex:1;color:#dc2626" onclick="blzReset()">🗑️ Neu starten</button>
+      <button class="btn btn-sm btn-d" style="flex:1" onclick="blzReset()">🗑️ Neu starten</button>
     </div>`;
 }
 function blzTor(mi,seite,delta){
@@ -2236,19 +2236,19 @@ function htRender(){
   const teamZeile=(name,i)=>`<div style="display:flex;align-items:center;gap:6px;padding:2px 0">
       ${istGruppen?`<span style="font-size:var(--s-klein);font-weight:800;color:#b45309;width:18px">${grVon(i)}</span>`:""}
       <span style="flex:1;font-size:var(--s-text)">${esc(name)}</span>
-      ${i>0?`<button onclick="htTeamHoch(${i})" aria-label="nach oben" style="min-width:44px;min-height:44px;margin:-8px 0;border:none;background:transparent;color:var(--text2);cursor:pointer"><i class="ti ti-arrow-up"></i></button>`:'<span style="min-width:44px"></span>'}
-      <button onclick="htTeamWeg(${i})" aria-label="Team entfernen" style="min-width:44px;min-height:44px;margin:-8px 0;border:none;background:transparent;color:#dc2626;cursor:pointer"><i class="ti ti-trash"></i></button>
+      ${i>0?`<button class="btn btn-sm" onclick="htTeamHoch(${i})" aria-label="nach oben" style="min-width:44px;min-height:44px;margin:-8px 0;justify-content:center"><i class="ti ti-arrow-up"></i></button>`:'<span style="min-width:44px"></span>'}
+      <button class="btn btn-sm btn-d" onclick="htTeamWeg(${i})" aria-label="Team entfernen" style="min-width:44px;min-height:44px;margin:-8px 0;justify-content:center"><i class="ti ti-trash"></i></button>
     </div>`;
   // Schnellwahl aus der Gegner-DB: Tippen fügt hinzu; nochmal tippen = zweite Mannschaft („… 2")
   const dbChips=(window._htGegner||[]).length?`<div style="font-size:var(--s-klein);color:var(--text2);margin:6px 0 4px">Aus der Gegner-Datenbank (nochmal tippen = 2. Mannschaft):</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${(window._htGegner||[]).map(g=>`<button onclick="htTeamAusDB('${jsq(g)}')" style="min-height:44px;padding:6px 12px;border:1px solid var(--rand-bedien);border-radius:18px;font-family:inherit;font-size:var(--s-text);cursor:pointer;background:var(--surface2);color:var(--text)">${esc(g)}</button>`).join("")}</div>`:"";
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${(window._htGegner||[]).map(g=>`<button class="btn btn-sm" onclick="htTeamAusDB('${jsq(g)}')" style="min-height:44px;font-size:var(--s-text)">${esc(g)}</button>`).join("")}</div>`:"";
   // Spielplan-Zeilen mit Ergebnis-Steppern (Platzhalter erst nach „Finalrunde füllen" spielbar)
   const spielZeile=(p,mi)=>{
     const echt=typeof p.a==="number"&&typeof p.b==="number";
     const step=(seite,wert)=>`<span style="display:inline-flex;align-items:center;gap:2px">
-      <button onclick="htTor(${mi},'${seite}',-1)" aria-label="Tor zurücknehmen" style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-size:var(--s-karte);cursor:pointer">−</button>
+      <button class="btn btn-sm" onclick="htTor(${mi},'${seite}',-1)" aria-label="Tor zurücknehmen" style="min-width:44px;min-height:44px;justify-content:center;font-size:var(--s-karte)">−</button>
       <b style="min-width:24px;text-align:center;font-size:var(--s-karte)">${wert==null?"–":wert}</b>
-      <button onclick="htTor(${mi},'${seite}',1)" aria-label="Tor" style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font-size:var(--s-karte);cursor:pointer">+</button>
+      <button class="btn btn-sm" onclick="htTor(${mi},'${seite}',1)" aria-label="Tor" style="min-width:44px;min-height:44px;justify-content:center;font-size:var(--s-karte)">+</button>
     </span>`;
     return `<div style="border:var(--border-s);border-radius:12px;padding:8px 10px;margin-bottom:8px;${p.ta!=null?"opacity:.78;":""}">
       <div style="font-size:var(--s-klein);color:var(--text2);display:flex;gap:8px"><b>${esc(p.zeit||"")}</b><span>Feld ${p.feld||1}</span><span style="margin-left:auto;color:#b45309;font-weight:700">${esc(p.phase||"")}</span></div>
@@ -2340,7 +2340,7 @@ function htRender(){
         <button class="btn btn-sm" onclick="htUrkundenDruck()">🏅 Team-Urkunden (alle Teams)</button>
       </div>
     `:""}
-    <button class="btn btn-sm" style="width:100%;margin-top:14px;color:#dc2626" onclick="htDelete()"><i class="ti ti-trash"></i>Turnier löschen</button>`;
+    <button class="btn btn-sm btn-d" style="width:100%;margin-top:14px" onclick="htDelete()"><i class="ti ti-trash"></i>Turnier löschen</button>`;
   /* v642: Der QR-Code entsteht im Browser (vendor/qrcode.js, wie seit v604 bei den Einladungskarten)
      statt bei api.qrserver.com – der Dienst hätte bei jedem Öffnen die Turnier-Adresse bekommen. */
   const qr=document.getElementById("ht-qr");
@@ -3137,10 +3137,10 @@ function fstRegelnOpen(){
   d.innerHTML=`<div style="max-width:560px;margin:0 auto;padding:14px 14px 40px">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
       <div style="font-size:var(--s-teil);font-weight:900;flex:1">📖 So spielen wir</div>
-      <button onclick="document.getElementById('fst-regeln').remove()" aria-label="Schließen" style="min-width:44px;min-height:44px;border:1px solid #cbd5e1;border-radius:12px;background:#fff;font-size:var(--s-teil);cursor:pointer">✕</button>
+      <button class="btn" onclick="document.getElementById('fst-regeln').remove()" aria-label="Schließen" style="min-width:44px;min-height:44px;justify-content:center;font-size:var(--s-teil)">✕</button>
     </div>
     ${fstRegelnHtml(true,((_htPub&&_htPub.row&&_htPub.row.config)||(_HT&&_HT.config)||{}))}
-    <button onclick="document.getElementById('fst-regeln').remove()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:#15803d;color:#fff;font-weight:800;font-size:var(--s-karte);cursor:pointer;font-family:inherit">Zurück zum Spielplan</button>
+    <button class="btn btn-p" onclick="document.getElementById('fst-regeln').remove()" style="width:100%;min-height:48px;justify-content:center;font-size:var(--s-karte)">Zurück zum Spielplan</button>
   </div>`;
   document.body.appendChild(d);
 }
@@ -3202,11 +3202,11 @@ function fstCodexOpen(){
   d.innerHTML=`<div style="max-width:560px;margin:0 auto;padding:14px 14px 40px">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
       <div style="font-size:var(--s-teil);font-weight:900;flex:1">🤝 So gehen wir miteinander um</div>
-      <button onclick="document.getElementById('fst-codex').remove()" aria-label="Schließen" style="min-width:44px;min-height:44px;border:1px solid #cbd5e1;border-radius:12px;background:#fff;font-size:var(--s-teil);cursor:pointer">✕</button>
+      <button class="btn" onclick="document.getElementById('fst-codex').remove()" aria-label="Schließen" style="min-width:44px;min-height:44px;justify-content:center;font-size:var(--s-teil)">✕</button>
     </div>
     <div style="font-size:var(--s-text);color:#475569;line-height:1.55;margin-bottom:12px">Diese Seite dürft ihr gern an alle Eltern eurer Mannschaft weiterleiten – je mehr sie kennen, desto entspannter wird der Tag für die Kinder.</div>
     ${fstCodexHtml(true,felder)}
-    <button onclick="document.getElementById('fst-codex').remove()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:#15803d;color:#fff;font-weight:800;font-size:var(--s-karte);cursor:pointer;font-family:inherit">Zurück zum Spielplan</button>
+    <button class="btn btn-p" onclick="document.getElementById('fst-codex').remove()" style="width:100%;min-height:48px;justify-content:center;font-size:var(--s-karte)">Zurück zum Spielplan</button>
   </div>`;
   document.body.appendChild(d);
 }
@@ -3250,7 +3250,7 @@ function fstErgebnis(i){
   const d=document.createElement("div"); d.id="fst-erg";
   d.setAttribute("role","dialog"); d.setAttribute("aria-modal","true"); d.setAttribute("aria-label","Ergebnis eintragen");
   d.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10050;display:flex;align-items:flex-end;justify-content:center";
-  const taste=(seite,delta,lbl)=>`<button onclick="fstErgTor(${i},'${seite}',${delta})" aria-label="${lbl}" style="min-width:52px;min-height:52px;border:1px solid var(--rand-bedien);border-radius:12px;background:var(--surface2);color:var(--text);font-size:var(--s-teil);cursor:pointer">${delta>0?"+":"−"}</button>`;
+  const taste=(seite,delta,lbl)=>`<button class="btn" onclick="fstErgTor(${i},'${seite}',${delta})" aria-label="${lbl}" style="min-width:52px;min-height:52px;justify-content:center;font-size:var(--s-teil)">${delta>0?"+":"−"}</button>`;
   d.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px 16px 0 0;padding:16px;width:100%;max-width:560px;box-shadow:0 -6px 30px rgba(0,0,0,.3)">
     <div style="font-weight:800;font-size:var(--s-karte);text-align:center">${nm(p.a)} <span style="color:var(--text3)">vs</span> ${nm(p.b)}</div>
     <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin:14px 0">
@@ -3259,7 +3259,7 @@ function fstErgebnis(i){
       <span style="display:inline-flex;align-items:center;gap:4px">${taste("tb",-1,"Tor zurücknehmen")}<b id="fst-erg-tb" style="min-width:36px;text-align:center;font-size:28px">${p.tb==null?0:p.tb}</b>${taste("tb",1,"Tor")}</span>
     </div>
     <div style="display:flex;gap:8px">
-      <button class="btn btn-sm" onclick="fstErgLoeschen(${i})" style="color:var(--red)">Ergebnis löschen</button>
+      <button class="btn btn-sm btn-d" onclick="fstErgLoeschen(${i})">Ergebnis löschen</button>
       <button class="btn btn-p" onclick="document.getElementById('fst-erg').remove();fstRender()" style="flex:1;min-height:48px">Fertig</button>
     </div></div>`;
   document.body.appendChild(d);
@@ -3602,7 +3602,7 @@ function fstRender(){
 
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-sm" onclick="htListe()"><i class="ti ti-arrow-left"></i>Übersicht</button>
-      <button class="btn btn-sm" style="margin-left:auto;color:var(--red)" onclick="htDelete()"><i class="ti ti-trash"></i>Löschen</button>
+      <button class="btn btn-sm btn-d" style="margin-left:auto" onclick="htDelete()"><i class="ti ti-trash"></i>Löschen</button>
     </div>`;
   wiederher();
   fstGegnerChips();
@@ -3642,7 +3642,7 @@ function fstPlanHtml(plan,teams,felder,tausch,cfg){
     return `<button class="fst-tausch" onclick="fstTausch(${pi},'${seite}')" aria-pressed="${akt?"true":"false"}" title="${nm(p[seite])}" style="min-width:0;min-height:44px;padding:0 6px;border:1px solid ${akt?"var(--blue)":"var(--rand-bedien)"};border-radius:8px;background:${akt?"var(--blue)":"var(--surface2)"};color:${akt?"#fff":"var(--text)"};font:inherit;font-size:var(--s-klein);line-height:1.15;font-weight:700;cursor:pointer;overflow:hidden;text-align:${seite==="a"?"right":"left"}">${nm(p[seite])}</button>`; };
   const erg=(p)=>{ const pi=plan.indexOf(p); const txt=p.ta!=null?`${p.ta}:${p.tb}`:"–:–";
     if(!tausch)return `<span style="font-size:var(--s-text);font-weight:900;color:${p.ta!=null?"var(--text)":"var(--text3)"};text-align:center">${txt}</span>`;
-    return `<button onclick="fstErgebnis(${pi})" aria-label="Ergebnis eintragen" style="min-height:44px;min-width:48px;padding:0 4px;border:1px solid var(--rand-bedien);border-radius:8px;background:${p.ta!=null?"var(--surface)":"transparent"};color:${p.ta!=null?"var(--text)":"var(--text3)"};font:inherit;font-size:var(--s-text);font-weight:900;cursor:pointer">${txt}</button>`; };
+    return `<button class="btn btn-sm" onclick="fstErgebnis(${pi})" aria-label="Ergebnis eintragen" style="min-height:44px;min-width:48px;justify-content:center;font-size:var(--s-text)">${txt}</button>`; };
   return runden.map(r=>{
     const spiele=plan.filter(p=>p.runde===r);
     const offen=r===aktiv;
@@ -3799,7 +3799,7 @@ function fstInfoOpen(){
   d.innerHTML=`<div style="max-width:560px;margin:0 auto;padding:14px 14px 40px">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
       <div style="font-size:var(--s-teil);font-weight:900;flex:1">ℹ️ Anfahrt, Parken &amp; Felder</div>
-      <button onclick="document.getElementById('fst-info').remove()" aria-label="Schließen" style="min-width:44px;min-height:44px;border:1px solid #cbd5e1;border-radius:12px;background:#fff;font-size:var(--s-teil);cursor:pointer">✕</button>
+      <button class="btn" onclick="document.getElementById('fst-info').remove()" aria-label="Schließen" style="min-width:44px;min-height:44px;justify-content:center;font-size:var(--s-teil)">✕</button>
     </div>
     ${karte("Adresse",`<div style="font-size:var(--s-karte);font-weight:800">${esc(adr)}</div>
       <a href="${mapsUrl(adr)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;margin-top:8px;border-radius:12px;background:#1e3a8a;color:#fff;font-weight:800;font-size:var(--s-karte);text-decoration:none">📍 Route in Karten öffnen</a>`)}
@@ -3807,7 +3807,7 @@ function fstInfoOpen(){
     ${karte("WC &amp; Kabinen",`<div style="font-size:var(--s-text);line-height:1.55">🚻 Ebenerdig unter dem Vereinsheim – gleich hinter dem großen Platz.</div>`)}
     ${karte("Wo welches Feld liegt",`<div style="font-size:var(--s-text);color:#475569;margin-bottom:8px">Wir spielen im Käfig und auf der linken Hälfte des großen Platzes.</div>${fstZonenSatz(felder)?`<div style="font-size:var(--s-text);line-height:1.55;color:#0f172a;background:#fef2f2;border-left:4px solid #b91c1c;border-radius:8px;padding:8px 10px;margin-bottom:8px">🙌 ${esc(fstZonenSatz(felder))}</div>`:""}${fstAufwaermZeile(row)?`<div style="font-size:var(--s-text);color:#0f172a;margin-bottom:8px">🔥 Aufwärmen: ${fstAufwaermZeile(row)}</div>`:""}<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${felder.map((f,i)=>{const F=_fstF(f.form);return `<span style="font-size:var(--s-klein);font-weight:700;color:#fff;background:${F.farbe};border-radius:20px;padding:5px 11px">${esc(fstFeldName(felder,i))} · ${F.label} · ${F.tore}</span>`;}).join("")}</div>${fstSkizzeFelder(felder)}`)}
     ${cfg.infos?karte("Gut zu wissen",`<div style="font-size:var(--s-text);white-space:pre-wrap;line-height:1.6">${esc(cfg.infos)}</div>`):""}
-    <button onclick="document.getElementById('fst-info').remove()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:#15803d;color:#fff;font-weight:800;font-size:var(--s-karte);cursor:pointer;font-family:inherit">Zurück zum Spielplan</button>
+    <button class="btn btn-p" onclick="document.getElementById('fst-info').remove()" style="width:100%;min-height:48px;justify-content:center;font-size:var(--s-karte)">Zurück zum Spielplan</button>
   </div>`;
   document.body.appendChild(d);
 }
@@ -3847,9 +3847,9 @@ function _fstPublicRender(wrap,row){
     </div>
 
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 12px">
-      <button onclick="fstInfoOpen()" style="flex:1;min-height:48px;border:1px solid #bfdbfe;border-radius:14px;background:#fff;color:#1e3a8a;font-weight:800;font-size:var(--s-text);cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,.08)">ℹ️ Anfahrt &amp; Felder</button>
-      <button onclick="fstRegelnOpen()" style="flex:1;min-height:48px;border:1px solid #bfdbfe;border-radius:14px;background:#fff;color:#1e3a8a;font-weight:800;font-size:var(--s-text);cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,.08)">📖 Regeln</button>
-      <button onclick="fstCodexOpen()" style="flex:1;min-height:48px;border:1px solid #bfdbfe;border-radius:14px;background:#fff;color:#1e3a8a;font-weight:800;font-size:var(--s-text);cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,.08)">🤝 Am Rand</button>
+      <button class="btn" onclick="fstInfoOpen()" style="flex:1;min-height:48px;justify-content:center;gap:6px;font-size:var(--s-text)">ℹ️ Anfahrt &amp; Felder</button>
+      <button class="btn" onclick="fstRegelnOpen()" style="flex:1;min-height:48px;justify-content:center;gap:6px;font-size:var(--s-text)">📖 Regeln</button>
+      <button class="btn" onclick="fstCodexOpen()" style="flex:1;min-height:48px;justify-content:center;gap:6px;font-size:var(--s-text)">🤝 Am Rand</button>
     </div>
     <div style="background:#fff;border-radius:14px;padding:12px 14px;margin:14px 0 10px;box-shadow:0 1px 3px rgba(0,0,0,.08);display:flex;gap:10px;align-items:flex-start">
       <span style="font-size:var(--s-teil);line-height:1.2">👋</span>
@@ -3859,7 +3859,7 @@ function _fstPublicRender(wrap,row){
       <div style="font-size:var(--s-text);font-weight:800;margin-bottom:4px">🙌 Am Spielfeldrand</div>
       <div style="font-size:var(--s-text);line-height:1.55;color:#334155">${esc(fstZonenSatz(felder))}</div>
       <div style="font-size:var(--s-text);line-height:1.55;color:#334155;margin-top:4px">${esc(FST_FAN_SATZ)}</div>
-      <button onclick="fstCodexOpen()" style="width:100%;min-height:44px;margin-top:8px;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc;color:#1e3a8a;font-weight:800;font-size:var(--s-text);cursor:pointer;font-family:inherit">Alles lesen – und gern an eure Eltern weiterleiten</button>
+      <button class="btn" onclick="fstCodexOpen()" style="width:100%;min-height:44px;margin-top:8px;justify-content:center;font-size:var(--s-text)">Alles lesen – und gern an eure Eltern weiterleiten</button>
     </div>`:""}
 
     <div id="fst-uhr"></div>
@@ -3890,7 +3890,7 @@ function _fstPublicRender(wrap,row){
           return `<div style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:6px 0">
           <span style="font-size:var(--s-klein);font-weight:800;color:#fff;background:${F.farbe};border-radius:7px;padding:3px 7px;min-width:52px;text-align:center;white-space:nowrap">${esc(fstFeldName(felder,(p.feld||1)-1))}</span>
           <span style="min-width:0;font-size:var(--s-karte);font-weight:700;line-height:1.3">${nm(p.a)} <span style="color:var(--text3);font-weight:400">gegen</span> ${nm(p.b)}</span>
-          ${helfer?`<button onclick="htPubEdit(${mi})" aria-label="Ergebnis eintragen" style="min-height:44px;min-width:64px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;font-family:inherit;font-weight:900;font-size:var(--s-text);cursor:pointer;color:${p.ta!=null?"#0f172a":"#94a3b8"}">${erg}</button>`
+          ${helfer?`<button class="btn btn-sm" onclick="htPubEdit(${mi})" aria-label="Ergebnis eintragen" style="min-height:44px;min-width:64px;justify-content:center;font-size:var(--s-text)">${erg}</button>`
                   :`<span style="font-size:var(--s-karte);font-weight:900;color:${p.ta!=null?"#0f172a":"#cbd5e1"};min-width:44px;text-align:center">${erg}</span>`}
         </div>`;}).join("");
       if(!aktiv)return `<details id="fst-runde-${r}" style="background:#fff;border-radius:14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
@@ -3956,18 +3956,18 @@ function htPubEdit(mi){
   sh.innerHTML=`<div style="font-weight:800;font-size:var(--s-karte);text-align:center">${esc(_htName(p.a,row.teams))} <span style="color:var(--text3)">vs</span> ${esc(_htName(p.b,row.teams))}</div>
     <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin:14px 0">
       <span style="display:inline-flex;align-items:center;gap:4px">
-        <button onclick="htPubTor(${mi},'ta',-1)" aria-label="Tor zurücknehmen" style="min-width:52px;min-height:52px;border:1px solid var(--rand-bedien);border-radius:12px;background:#f8fafc;font-size:var(--s-teil);cursor:pointer">−</button>
+        <button class="btn" onclick="htPubTor(${mi},'ta',-1)" aria-label="Tor zurücknehmen" style="min-width:52px;min-height:52px;justify-content:center;font-size:var(--s-teil)">−</button>
         <b id="htpub-ta" style="min-width:36px;text-align:center;font-size:28px">${p.ta==null?0:p.ta}</b>
-        <button onclick="htPubTor(${mi},'ta',1)" aria-label="Tor" style="min-width:52px;min-height:52px;border:1px solid var(--rand-bedien);border-radius:12px;background:#f8fafc;font-size:var(--s-teil);cursor:pointer">+</button>
+        <button class="btn" onclick="htPubTor(${mi},'ta',1)" aria-label="Tor" style="min-width:52px;min-height:52px;justify-content:center;font-size:var(--s-teil)">+</button>
       </span>
       <span style="font-weight:900;font-size:var(--s-seite)">:</span>
       <span style="display:inline-flex;align-items:center;gap:4px">
-        <button onclick="htPubTor(${mi},'tb',-1)" aria-label="Tor zurücknehmen" style="min-width:52px;min-height:52px;border:1px solid var(--rand-bedien);border-radius:12px;background:#f8fafc;font-size:var(--s-teil);cursor:pointer">−</button>
+        <button class="btn" onclick="htPubTor(${mi},'tb',-1)" aria-label="Tor zurücknehmen" style="min-width:52px;min-height:52px;justify-content:center;font-size:var(--s-teil)">−</button>
         <b id="htpub-tb" style="min-width:36px;text-align:center;font-size:28px">${p.tb==null?0:p.tb}</b>
-        <button onclick="htPubTor(${mi},'tb',1)" aria-label="Tor" style="min-width:52px;min-height:52px;border:1px solid var(--rand-bedien);border-radius:12px;background:#f8fafc;font-size:var(--s-teil);cursor:pointer">+</button>
+        <button class="btn" onclick="htPubTor(${mi},'tb',1)" aria-label="Tor" style="min-width:52px;min-height:52px;justify-content:center;font-size:var(--s-teil)">+</button>
       </span>
     </div>
-    <button onclick="document.getElementById('htpub-sheet').remove();_htPubLoad()" style="width:100%;min-height:48px;border:none;border-radius:12px;background:#15803d;color:#fff;font-weight:800;font-size:var(--s-karte);cursor:pointer;font-family:inherit">Fertig</button>`;
+    <button class="btn btn-p" onclick="document.getElementById('htpub-sheet').remove();_htPubLoad()" style="width:100%;min-height:48px;justify-content:center;font-size:var(--s-karte)">Fertig</button>`;
   document.body.appendChild(sh);
 }
 async function htPubTor(mi,seite,delta){
@@ -3996,7 +3996,7 @@ function _htPublicRender(wrap,row){
     const echt=typeof p.a==="number"&&typeof p.b==="number";
     const erg=p.ta!=null?p.ta+" : "+p.tb:"–";
     const ergZelle=(helfer&&echt)
-      ?`<button onclick="htPubEdit(${mi})" style="min-height:44px;min-width:70px;border:1px solid var(--rand-bedien);border-radius:10px;background:#fff;font-family:inherit;font-weight:900;font-size:13px;cursor:pointer">✏️ ${erg}</button>`
+      ?`<button class="btn btn-sm" onclick="htPubEdit(${mi})" style="min-height:44px;min-width:70px;justify-content:center;font-size:13px">✏️ ${erg}</button>`
       :erg;
     return `<tr style="border-top:1px solid #e2e8f0;${p.ta!=null?"background:#f8fafc;":""}">
       <td style="padding:7px 6px;font-weight:700;white-space:nowrap">${esc(p.zeit||"")}</td>
@@ -4048,9 +4048,9 @@ function _htPublicRender(wrap,row){
     </div>`:""}
     ${cfg.fairplay!=null&&teams[cfg.fairplay]!=null?`<div style="background:#ecfdf5;border:2px solid #34d399;border-radius:14px;padding:12px 14px;margin-top:12px;font-size:14px;color:#065f46"><b>🤝 Fair-Play-Pokal: ${esc(teams[cfg.fairplay])}</b><div style="font-size:12px;margin-top:2px">Das fairste Team des Turniers – Glückwunsch!</div></div>`:""}
     <div style="display:flex;gap:8px;margin-top:14px">
-      <button onclick="location.reload()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">🔄 Aktualisieren</button>
-      <button onclick="htPubMonitor()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">📺 Monitor</button>
-      <button onclick="window.print()" style="flex:1;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">🖨️ Drucken</button>
+      <button class="btn" onclick="location.reload()" style="flex:1;min-height:44px;justify-content:center;font-size:13px">🔄 Aktualisieren</button>
+      <button class="btn" onclick="htPubMonitor()" style="flex:1;min-height:44px;justify-content:center;font-size:13px">📺 Monitor</button>
+      <button class="btn" onclick="window.print()" style="flex:1;min-height:44px;justify-content:center;font-size:13px">🖨️ Drucken</button>
     </div>
     <div style="text-align:center;font-size:10.5px;color:var(--text3);margin-top:10px">Aktualisiert sich automatisch · Stand ${new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})} Uhr</div>`;
 }
@@ -4120,7 +4120,7 @@ function _htMonRender(){
       <span style="font-size:4vmin">🏆</span>
       <span style="font-size:3.4vmin;font-weight:900;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(row.name)}</span>
       <span style="font-size:4.4vmin;font-weight:900;font-variant-numeric:tabular-nums">${uhr}</span>
-      <button onclick="htPubMonitorStop()" aria-label="Monitor beenden" style="min-width:44px;min-height:44px;border:none;background:rgba(255,255,255,.14);color:#fff;border-radius:10px;font-size:var(--s-teil);cursor:pointer">✕</button>
+      <button class="btn btn-kopf" onclick="htPubMonitorStop()" aria-label="Monitor beenden" style="font-size:var(--s-teil)">✕</button>
     </div>
     ${cfg.durchsage?`<div style="background:#f59e0b;color:#0b1730;border-radius:1.5vmin;padding:1.5vmin 2vmin;font-size:3.2vmin;font-weight:900;margin-top:1.5vmin">📣 ${esc(cfg.durchsage)}</div>`:""}
     <div style="margin-top:2.5vmin">${inhalt}</div>`;

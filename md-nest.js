@@ -294,7 +294,7 @@ function nestHtml(d,medien,liste,aktivId,druck){
   /* v762 (Charles 05.10.: Nest-PDF auch für Eltern, wenn das Trainerteam es freigibt): Knopf nur für Eltern (nicht im Kinder-Bereich),
      nur bei veröffentlichter Ausgabe mit gesetzter Freigabe. Das PDF enthält für Eltern keinen Hör-Link (der bleibt dem Trainerteam). */
   const elternPdf=!(window._nestOpts&&window._nestOpts.kind)&&d.ausgabe&&d.ausgabe.pdf_fuer_eltern===true&&d.ausgabe.status==="veroeffentlicht"&&aktivId;
-  h+=`<div class="nest-ende">Auf geht's, Adler!${elternPdf?`<button type="button" class="nest-zurueck" id="nest-pdf-eltern" onclick="nestPdfLesen(${Number(aktivId)},this)" style="background:#fff">📄 Als PDF speichern</button>
+  h+=`<div class="nest-ende">Auf geht's, Adler!${elternPdf?`<button type="button" class="btn" id="nest-pdf-eltern" onclick="nestPdfLesen(${Number(aktivId)},this)" style="width:100%;min-height:52px;margin-top:14px;justify-content:center">📄 Als PDF speichern</button>
     <div role="note" style="font:600 14px/1.4 'Barlow',sans-serif;text-transform:none;margin-top:8px;opacity:.9">${NEST_PDF_HINWEIS}</div>`:""}<button type="button" class="nest-zurueck" onclick="nestClose()">Zurück zur App</button></div>`;
   if((liste||[]).length>1){
     h+=`<nav class="nest-archiv" aria-label="Frühere Ausgaben"><div class="nest-h3" style="margin-top:0">Alle Ausgaben</div>${liste.map(x=>{
@@ -350,14 +350,14 @@ async function nestGross(i){
     lb.setAttribute("role","dialog"); lb.setAttribute("aria-modal","true"); lb.setAttribute("aria-label","Foto groß");
     lb.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px";
     lb.style.zIndex=zOben(10050);
-    const k="min-width:48px;min-height:48px;border:none;border-radius:12px;background:rgba(255,255,255,.16);color:#fff;font-family:inherit;font-size:22px;font-weight:800;cursor:pointer";
+    const k="width:48px;height:48px;font-size:22px";   // v877: runde .btn-kopf (hell auf Schwarz), hier nur Größe
     lb.innerHTML=`<div style="display:flex;align-items:center;gap:8px;width:100%;max-width:900px;margin-bottom:8px">
         <span id="nest-gross-zahl" style="flex:1;color:#fff;font-size:16px;font-weight:700"></span>
-        <button type="button" onclick="document.getElementById('nest-gross')?.remove()" aria-label="Schließen" style="${k}">✕</button></div>
+        <button class="btn btn-kopf" type="button" onclick="document.getElementById('nest-gross')?.remove()" aria-label="Schließen" style="${k}">✕</button></div>
       <div style="position:relative;flex:1;width:100%;max-width:900px;display:flex;align-items:center;justify-content:center;min-height:0">
-        <button type="button" id="nest-gross-zurueck" aria-label="Vorheriges Foto" style="${k};position:absolute;left:0;z-index:1">‹</button>
+        <button class="btn btn-kopf" type="button" id="nest-gross-zurueck" aria-label="Vorheriges Foto" style="${k};position:absolute;left:0;z-index:1">‹</button>
         <img id="nest-gross-img" alt="" draggable="false" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;-webkit-touch-callout:none;user-select:none">
-        <button type="button" id="nest-gross-weiter" aria-label="Nächstes Foto" style="${k};position:absolute;right:0;z-index:1">›</button></div>`;
+        <button class="btn btn-kopf" type="button" id="nest-gross-weiter" aria-label="Nächstes Foto" style="${k};position:absolute;right:0;z-index:1">›</button></div>`;
     document.body.appendChild(lb);
     lb.addEventListener("contextmenu",e=>e.preventDefault()); lb.addEventListener("dragstart",e=>e.preventDefault());
     let x0=null;
@@ -395,8 +395,8 @@ async function nestEdListe(){
   let rows=null;
   try{const r=await fetch(`${SB_URL}/rest/v1/heft_ausgabe?select=id,nummer,status,schlagzeile,veroeffentlicht_am,termin_id,termine(datum,titel,gegner)&team=eq.adler1&order=nummer.desc`,{headers:sbAuthHeaders()});if(r.ok)rows=await r.json();}catch(e){}
   if(rows===null){ body.innerHTML=`<div style="font-size:var(--s-text);color:var(--text2);line-height:1.5">Die Ausgaben-Tabelle fehlt noch – die Migration <code>20261003_v733_adler_nest_ausgaben.sql</code> ist nicht eingespielt.</div>`; return; }
-  body.innerHTML=`<div id="nest-ablauf" style="margin-bottom:14px"></div><button type="button" class="btn btn-p" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800" onclick="nestEdNeu()">＋ Neue Ausgabe erfassen</button>
-    ${rows.length?rows.map(x=>`<button type="button" class="nest-ed-zeile" onclick="nestEdOeffnen(${Number(x.id)})" style="display:flex;align-items:center;gap:10px;width:100%;min-height:56px;margin-top:8px;padding:8px 12px;border:1px solid var(--rand-bedien);border-radius:var(--r);background:var(--surface2);color:var(--text);font-family:inherit;font-size:var(--s-text);text-align:left;cursor:pointer">
+  body.innerHTML=`<div id="nest-ablauf" style="margin-bottom:14px"></div><button type="button" class="btn btn-p" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte)" onclick="nestEdNeu()">＋ Neue Ausgabe erfassen</button>
+    ${rows.length?rows.map(x=>`<button type="button" class="btn btn-zeile nest-ed-zeile" onclick="nestEdOeffnen(${Number(x.id)})" style="min-height:56px;margin-top:8px;font-size:var(--s-text)">
         <span style="font-weight:800;min-width:44px">Nr. ${_nestNr(x.nummer)}</span>
         <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(x.schlagzeile||(x.termine&&(x.termine.titel||x.termine.gegner))||"ohne Schlagzeile")}${x.termine&&x.termine.datum?` · ${esc(_nestDatum(x.termine.datum))}`:""}</span>
         ${_nestStatus(x.status)}</button>`).join("")
@@ -488,7 +488,7 @@ function nestEdRender(){
     ${_nestFeld("kommentar","Ein Wort vom Trainerteam",{lang:3})}
     <div id="nest-ed-teilen"></div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:18px">
-      <button type="button" class="btn btn-p" id="nest-ed-veroeffentlichen" onclick="${a.status==="veroeffentlicht"?"nestEdSpeichern()":"nestEdVeroeffentlichen()"}" style="min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800">${a.status==="veroeffentlicht"?"Änderungen speichern":"Veröffentlichen"}</button>
+      <button type="button" class="btn btn-p" id="nest-ed-veroeffentlichen" onclick="${a.status==="veroeffentlicht"?"nestEdSpeichern()":"nestEdVeroeffentlichen()"}" style="min-height:56px;justify-content:center;font-size:var(--s-karte)">${a.status==="veroeffentlicht"?"Änderungen speichern":"Veröffentlichen"}</button>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <button type="button" class="btn" onclick="nestEdVorschau()" style="min-height:48px;justify-content:center">👁 Vorschau</button>
         ${a.status==="veroeffentlicht"?`<button type="button" class="btn" onclick="nestEdZurueckziehen()" style="min-height:48px;justify-content:center">Zurück zum Entwurf</button>`
@@ -747,11 +747,11 @@ async function nestBogenKarte(kids){
   window._nestEinreichungen=rows||[];
   const nameVon=sid=>{const k=(kids||[]).find(x=>Number(x.spieler_id)===Number(sid));return ((k&&k.kader&&k.kader.name)||"Euer Kind").split(" ")[0];};
   slot.innerHTML=(rows||[]).map(e=>{ const zu=new Date(e.frist_eltern)<new Date(), fertig=e.status==="eingereicht";
-    return `<button type="button" class="nest-bogen-karte" onclick="nestBogenOpen(${Number(e.id)})" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border:2px solid #0044AA;border-radius:14px;padding:12px 14px;margin-bottom:12px;font-family:inherit;cursor:pointer;min-height:56px">
+    return `<button type="button" class="btn btn-zeile nest-bogen-karte" onclick="nestBogenOpen(${Number(e.id)})" style="min-height:56px;margin-bottom:12px">
       <span style="font-size:var(--s-seite)" aria-hidden="true">🪺</span>
-      <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800;color:#0A1A3A">${esc(nameVon(e.spieler_id))} ist im nächsten Adler Nest</span>
-      <span style="display:block;font-size:var(--s-klein);color:#45506a">${fertig?"✓ Bogen eingereicht – ändern bis "+esc(_nestFrist(e.frist_eltern)):zu?"Der Bogen ist noch offen – ein paar Angaben reichen schon.":"Bitte den Porträt-Bogen ausfüllen bis "+esc(_nestFrist(e.frist_eltern))}</span></span>
-      <span style="font-size:var(--s-karte);color:#45506a" aria-hidden="true">›</span></button>`; }).join("");
+      <span style="flex:1;min-width:0"><span style="display:block;font-size:var(--s-karte);font-weight:800;color:var(--text)">${esc(nameVon(e.spieler_id))} ist im nächsten Adler Nest</span>
+      <span style="display:block;font-size:var(--s-klein);color:var(--text2)">${fertig?"✓ Bogen eingereicht – ändern bis "+esc(_nestFrist(e.frist_eltern)):zu?"Der Bogen ist noch offen – ein paar Angaben reichen schon.":"Bitte den Porträt-Bogen ausfüllen bis "+esc(_nestFrist(e.frist_eltern))}</span></span>
+      <span style="font-size:var(--s-karte);color:var(--text2)" aria-hidden="true">›</span></button>`; }).join("");
   if(rows.length&&new URLSearchParams(location.search).get("nest")==="bogen"&&!window._nestBogenAuto){ window._nestBogenAuto=true; nestBogenOpen(rows[0].id); }
 }
 async function nestBogenOpen(id){
@@ -785,8 +785,8 @@ function nestBogenRender(){
     <label style="display:flex;gap:10px;align-items:flex-start;margin:16px 0 8px;font-size:var(--s-text);line-height:1.4;min-height:44px">
       <input type="checkbox" id="nest-bogen-ok" ${b.ok?"checked":""} onchange="nestBogenOk(this)" style="width:22px;height:22px;flex:none;margin-top:2px">
       <span>Wir sind einverstanden, dass diese Angaben und Fotos im Adler Nest erscheinen.</span></label>
-    <button type="button" class="btn btn-p" id="nest-bogen-einreichen" ${b.ok?"":"disabled"} onclick="nestBogenEinreichen()" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte);font-weight:800">${b.e.status==="eingereicht"?"Änderungen einreichen":"Bogen einreichen"}</button>
-    <button type="button" onclick="nestBogenClose()" style="display:block;margin:10px auto 0;min-height:44px;border:none;background:none;color:#45506a;font-family:inherit;font-size:var(--s-text);cursor:pointer">Schließen</button>
+    <button type="button" class="btn btn-p" id="nest-bogen-einreichen" ${b.ok?"":"disabled"} onclick="nestBogenEinreichen()" style="width:100%;min-height:56px;justify-content:center;font-size:var(--s-karte)">${b.e.status==="eingereicht"?"Änderungen einreichen":"Bogen einreichen"}</button>
+    <button class="btn btn-link" type="button" onclick="nestBogenClose()" style="display:block;margin:10px auto 0;font-size:var(--s-text)">Schließen</button>
   </div>`;
   b.fotos.forEach(async(f,i)=>{ const u=await nestBlobUrl("heft_media",f.pfad); const el=document.getElementById("nest-bogen-img-"+i); if(u&&el)el.src=u; });
 }
