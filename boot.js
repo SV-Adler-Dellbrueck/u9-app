@@ -4373,6 +4373,20 @@ let _tpPlanTimer=null;
    dem falschen Datum). Wiederherstellen ist Lesen, kein Griff des Trainers. */
 let _tpRestoring=false, _tpRestoreLauf=0;
 function tpPlanSaveDebounced(){ if(_tpRestoring)return; clearTimeout(_tpPlanTimer); _tpPlanTimer=setTimeout(()=>tpPlanSave(false),1200); }
+/* v895 (Nachtrag): Stand des Plans auf dieser Seite. tpPlanSave nimmt Plan und Slots am Anfang auf und
+   wartet danach noch (Abgleich, Trainername). Wird in dieser Zeit eine Vorlage übernommen oder der Plan
+   neu geöffnet, ist das Aufgenommene veraltet – ohne diese Prüfung landete es NACH der Vorlage in der
+   Datenbank und überschrieb sie (gesehen in v568 unter Last: Struktur der Vorlage, Übungen des vorigen
+   Plans, „Training füllen“ baute dann neu). */
+let _tpPlanGen=0;
+/* Wer den Plan dieses Termins an tpPlanSave vorbei schreibt (Vorlage übernehmen, Block planen), ruft das
+   vorher: die ausstehende Speicherung entfällt, eine laufende schreibt nicht mehr. Andere Termine
+   berühren den offenen Plan nicht. */
+function tpPlanFremdGeschrieben(datum){
+  const offen=document.getElementById("tp-date")?.value;
+  if(datum&&offen&&datum!==offen)return;
+  clearTimeout(_tpPlanTimer); _tpPlanGen++;
+}
 /* Die Zuordnung gehoert zur Struktur: welcher Trainer welches Feld hat, wer am Torwart-
    oder Einzelblock steht, welche Torhueter angehakt sind, welches Kind einzeln trainiert.
    Bis v455 lebte das alles nur im DOM und in tpCoaches – nach dem Neuladen war Finn nicht
@@ -4452,6 +4466,7 @@ async function tpKonfliktHolen(datum){
 async function tpPlanSave(erzwungen){
   if(!sbToken()){if(erzwungen)toast("Bitte zuerst als Trainer anmelden","err");return;}
   const datum=document.getElementById("tp-date")?.value; if(!datum){if(erzwungen)toast("Bitte einen Termin wählen","err");return;}
+  const gen=_tpPlanGen;                 // v895: Stand, aus dem Plan und Slots stammen
   const plan=tpPlanEntries();
   const slots=tpSlotsMitZuordnung();
   /* v514: `versatz` gehört zur Zuordnung. Ohne ihn hielt die Schutzregel unten einen
@@ -4478,6 +4493,8 @@ async function tpPlanSave(erzwungen){
   }
   try{
     const von=(typeof trainerMe==="function")?(await trainerMe()||null):null;
+    /* v895: Inzwischen neu geöffnet oder eine Vorlage übernommen? Dann ist das Aufgenommene veraltet. */
+    if(gen!==_tpPlanGen){ if(erzwungen)toast("Der Plan wurde inzwischen neu geladen – bitte noch einmal speichern","err"); return; }
     const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?on_conflict=datum`,{method:"POST",
       headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates,return=representation'},
       /* `slots` traegt die STRUKTUR der Einheit (welche Phasen, wie lang, was parallel)
@@ -4718,6 +4735,7 @@ async function tpPlanRestore(datum){
   if(window._tpKlappDatum!==datum){ window._tpKlappDatum=datum; _tpOffen.clear(); _tpAlleOffen=false; }   // v857: neuer Termin, neue Übersicht
   const lauf=++_tpRestoreLauf;
   clearTimeout(_tpPlanTimer);            // eine noch ausstehende Speicherung des VORIGEN Termins gehört nicht hierher
+  _tpPlanGen++;                          // v895: eine schon laufende ebenso nicht
   _tpRestoring=true;
   try{ await _tpPlanRestoreIntern(datum,lauf); }
   finally{

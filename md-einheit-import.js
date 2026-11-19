@@ -945,9 +945,11 @@ function vuPlanAusVorlage(v){
 /* v657: Einen fertigen Plan an ein Datum schreiben – derselbe Weg und dieselbe Kopfzeile wie
    bisher. Gibt true/false zurück; Meldungen macht der Aufrufer. */
 async function vuPlanSchreiben(datum,slots,plan){
+  const von=(typeof trainerMe==="function")?(await trainerMe()||null):null;
+  if(typeof tpPlanFremdGeschrieben==="function")tpPlanFremdGeschrieben(datum);   // v895: keine veraltete Automatik danach
   const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?on_conflict=datum`,{method:"POST",
     headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates,return=minimal'},
-    body:JSON.stringify({datum,plan,slots,gespeichert_von:((typeof trainerMe==="function")?(await trainerMe()||null):null),updated_at:new Date().toISOString()})});
+    body:JSON.stringify({datum,plan,slots,gespeichert_von:von,updated_at:new Date().toISOString()})});
   if(typeof sbCheck401==="function"&&sbCheck401(r))return false;
   if(r.ok&&typeof TP_STAND!=="undefined")delete TP_STAND[datum];
   return r.ok;
@@ -966,6 +968,10 @@ async function vorlageUebernehmenSetzen(){
     if(haupt)haupt.disabled=false; return;
   }
   try{
+    const von=(typeof trainerMe==="function")?(await trainerMe()||null):null;
+    /* v895: eine ausstehende oder gerade laufende automatische Speicherung des alten Plans darf nicht
+       nach der Vorlage ankommen und sie überschreiben. */
+    if(typeof tpPlanFremdGeschrieben==="function")tpPlanFremdGeschrieben(datum);
     const r=await fetch(`${SB_URL}/rest/v1/trainingsplan?on_conflict=datum`,{method:"POST",
       headers:{...sbAuthHeaders(),'Prefer':'resolution=merge-duplicates,return=minimal'},
       /* v542: Auch dieser Weg schreibt den Plan – also trägt er ein, wer es war. Ohne das
@@ -973,7 +979,7 @@ async function vorlageUebernehmenSetzen(){
          der Stand-Abgleich in tpPlanSave hielte die eigene Übernahme für die Änderung
          eines anderen und blockierte beim nächsten Tippen. Den gemerkten Stand danach
          verwerfen: tpPlanRestore liest ihn gleich neu. */
-      body:JSON.stringify({datum,plan,slots,gespeichert_von:((typeof trainerMe==="function")?(await trainerMe()||null):null),updated_at:new Date().toISOString()})});
+      body:JSON.stringify({datum,plan,slots,gespeichert_von:von,updated_at:new Date().toISOString()})});
     if(sbCheck401(r)){ if(haupt)haupt.disabled=false; return; }
     if(!r.ok){ toast(`Nicht gespeichert – Server antwortet ${r.status}`,"err"); if(haupt)haupt.disabled=false; return; }
     if(typeof TP_STAND!=="undefined")delete TP_STAND[datum];
