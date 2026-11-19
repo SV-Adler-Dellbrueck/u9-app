@@ -65,12 +65,12 @@ async function feierLoad(boxId,t){
   const kann=x=>mein(x)||trainer;
   const esc_=s=>esc(String(s==null?"":s));
   const chip=(text,gut)=>`<span style="display:inline-block;padding:4px 10px;border-radius:999px;font-size:var(--s-klein);font-weight:700;border:1.5px solid ${gut?"var(--green)":"var(--rand-bedien)"};background:${gut?"var(--green-bg)":"var(--surface)"};color:${gut?"var(--green)":"var(--text2)"}">${text}</span>`;
-  const knopf=(label,js,rot)=>`<button type="button" onclick="${js}" style="min-height:48px;padding:8px 14px;border-radius:12px;border:1.5px solid ${rot?"var(--red)":"var(--rand-bedien)"};background:var(--surface);color:${rot?"var(--red)":"var(--text)"};font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">${label}</button>`;
+  const knopf=(label,js,rot)=>`<button type="button" class="btn${rot?" btn-d":""}" onclick="${js}" style="min-height:48px;justify-content:center;font-size:var(--s-text)">${label}</button>`;   // v878: Bauarten
   const zeilen=feierPlatzListe(f).map(({platz,nr})=>{
     const name=platz.anzahl>1?`${platz.label} ${nr}`:platz.label;
     const e=liste.find(x=>x.slot_key===platz.key&&Number(x.slot_nr)===nr);
     if(!e){
-      return `<button type="button" class="feier-zeile feier-frei" data-slot="${esc_(platz.key)}-${nr}" onclick="feierPlatzWaehlen('${f.key}','${platz.key}',${nr})" aria-label="${esc_(name)} – frei, antippen zum Eintragen" style="display:flex;align-items:center;gap:8px;width:100%;min-height:48px;padding:8px 12px;margin-top:8px;border-radius:12px;border:1.5px solid var(--rand-bedien);background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);text-align:left;cursor:pointer">
+      return `<button type="button" class="feier-zeile feier-frei btn btn-zeile" data-slot="${esc_(platz.key)}-${nr}" onclick="feierPlatzWaehlen('${f.key}','${platz.key}',${nr})" aria-label="${esc_(name)} – frei, antippen zum Eintragen" style="display:flex;align-items:center;gap:8px;width:100%;min-height:48px;margin-top:8px;font-size:var(--s-text);text-align:left">
         <span style="flex:1;min-width:0;overflow-wrap:anywhere"><span aria-hidden="true">${platz.emoji}</span> <b>${esc_(name)}</b></span>${chip("frei",true)}</button>`;
     }
     const sorte=e.auswahl?` · ${esc_(e.auswahl)}`:"";
@@ -97,7 +97,7 @@ async function feierLoad(boxId,t){
     ${zeilen}
     <div style="font-weight:800;font-size:var(--s-karte);margin-top:16px">Zusätzlich</div>
     ${zusatz||`<div style="font-size:var(--s-text);color:var(--text2);margin-top:4px">Noch nichts Eigenes eingetragen.</div>`}
-    <button type="button" class="feier-frei-neu" ${voll?"disabled":""} onclick="feierFreitextWaehlen('${f.key}')" style="width:100%;min-height:48px;margin-top:12px;padding:8px 12px;border-radius:12px;border:1.5px solid ${voll?"var(--border-s,#cbd5e1)":"var(--blue)"};background:var(--surface);color:${voll?"var(--text2)":"var(--blue)"};font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:${voll?"default":"pointer"}">${voll?`Du hast ${f.freitextJeFamilie} eigene Beiträge eingetragen`:"Etwas anderes mitbringen"}</button>
+    <button type="button" class="feier-frei-neu btn" ${voll?"disabled":""} onclick="feierFreitextWaehlen('${f.key}')" style="width:100%;min-height:48px;margin-top:12px;font-size:var(--s-text);justify-content:center">${voll?`Du hast ${f.freitextJeFamilie} eigene Beiträge eingetragen`:"Etwas anderes mitbringen"}</button>
   </div>`;
   if(typeof elternDarkActive==="function"&&elternDarkActive()&&typeof elternThemeSweep==="function")elternThemeSweep(box);
 }
@@ -123,8 +123,8 @@ function feierDialog(opt){
   m.innerHTML=`<div style="background:var(--surface);color:var(--text);width:100%;max-width:460px;border-radius:16px 16px 0 0;padding:16px 16px 24px;box-shadow:0 -8px 32px rgba(0,0,0,.35);max-height:92vh;overflow-y:auto;box-sizing:border-box">
     <div id="feier-dlg-titel" style="font-weight:800;font-size:var(--s-teil)">${opt.emoji||"🎄"} ${esc(opt.titel)}</div>
     ${sorten}${text}${nameFeld}
-    <button type="button" id="feier-ok" onclick="feierSenden()" style="width:100%;min-height:56px;margin-top:24px;border:none;border-radius:14px;background:var(--blue);color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">${opt.modus==="sorte"?"Speichern":"Eintragen"}</button>
-    <button type="button" onclick="document.getElementById('feier-dialog')?.remove()" style="width:100%;min-height:48px;margin-top:8px;border:1.5px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Abbrechen</button>
+    <button class="btn btn-p" type="button" id="feier-ok" onclick="feierSenden()" style="width:100%;min-height:56px;margin-top:24px;font-size:var(--s-karte);justify-content:center">${opt.modus==="sorte"?"Speichern":"Eintragen"}</button>
+    <button class="btn" type="button" onclick="document.getElementById('feier-dialog')?.remove()" style="width:100%;min-height:48px;margin-top:8px;font-size:var(--s-text);justify-content:center">Abbrechen</button>
   </div>`;
   document.body.appendChild(m);
   window._feierDlg=opt;
@@ -214,7 +214,7 @@ function feierTrainerOeffnen(t){
   modal.innerHTML=`<div style="background:var(--surface);color:var(--text);max-width:460px;width:100%;margin:auto;border-radius:16px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.4)">
     ${typeof mdlHead==="function"?mdlHead("feier-modal","🎄","Beitragsliste",esc(t.titel||"Feier"),"#15803d"):""}
     <div id="feier-trainer-box"></div>
-    <button type="button" onclick="document.getElementById('feier-modal')?.remove()" style="width:100%;min-height:48px;margin-top:12px;border:1.5px solid var(--rand-bedien);border-radius:12px;background:var(--surface);color:var(--text);font-family:inherit;font-size:var(--s-text);font-weight:700;cursor:pointer">Schließen</button>
+    <button class="btn" type="button" onclick="document.getElementById('feier-modal')?.remove()" style="width:100%;min-height:48px;margin-top:12px;font-size:var(--s-text);justify-content:center">Schließen</button>
   </div>`;
   document.body.appendChild(modal);
   feierLoad("feier-trainer-box",t);
@@ -263,7 +263,7 @@ async function feierObenLoad(kids){
     <div style="font-size:var(--s-teil);font-weight:800;margin-top:2px">🎄 ${esc(t.titel||f.titel)}</div>
     <div style="font-size:var(--s-text);color:var(--text2);margin-top:2px">${esc(wann)}${t.ort?" · "+esc(t.ort):""}</div>
     <div style="font-size:var(--s-text);margin-top:8px;line-height:1.5">${text}</div>
-    <button type="button" class="feier-karte-knopf" onclick="feierObenOeffnen(${Number(t.id)},'${modus}')" style="width:100%;min-height:56px;margin-top:12px;border:none;border-radius:14px;background:var(--blue);color:#fff;font-family:inherit;font-size:var(--s-karte);font-weight:800;cursor:pointer">${modus==="antwort"?"Jetzt antworten":"Beitragsliste öffnen"}</button>
+    <button type="button" class="feier-karte-knopf btn btn-p" onclick="feierObenOeffnen(${Number(t.id)},'${modus}')" style="width:100%;min-height:56px;margin-top:12px;font-size:var(--s-karte);justify-content:center">${modus==="antwort"?"Jetzt antworten":"Beitragsliste öffnen"}</button>
   </div>`;
 }
 function _feierUid(){ try{ return (typeof _sbUid==="function"?_sbUid():sbUserId())||""; }catch(e){ return ""; } }

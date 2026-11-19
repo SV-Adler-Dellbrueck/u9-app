@@ -40,9 +40,9 @@ async function fundbueroRender(){
       ${f.beschreibung?`<div style="font-size:var(--s-text);color:var(--text2);margin-top:2px">${esc(f.beschreibung)}</div>`:""}
       <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
         ${f.status==="offen"
-          ?`<button onclick="fundbueroClaim(${f.id})" style="flex:1;min-height:44px;border:none;border-radius:10px;background:#059669;color:#fff;font-family:inherit;font-size:var(--s-text);font-weight:800;cursor:pointer">🙋 Gehört uns!</button>`
+          ?`<button class="btn" onclick="fundbueroClaim(${f.id})" style="flex:1;min-height:44px;font-size:var(--s-text);justify-content:center">🙋 Gehört uns!</button>`
           :`<div style="flex:1;font-size:var(--s-text);font-weight:700;color:#059669">✅ Geklärt${f.claimed_label?` – ${esc(f.claimed_label)}`:""}</div>`}
-        ${istTrainer?`<button onclick="fundbueroDelete(${f.id})" title="Löschen" style="min-width:44px;min-height:44px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface);cursor:pointer">🗑</button>`:""}
+        ${istTrainer?`<button class="btn btn-sm btn-d" onclick="fundbueroDelete(${f.id})" title="Löschen" style="min-width:44px;min-height:44px;justify-content:center">🗑</button>`:""}
       </div>
     </div>`).join("");
   items.forEach(f=>{if(f.foto_path)fundbueroFoto(f.id,f.foto_path);});

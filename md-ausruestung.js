@@ -73,7 +73,7 @@ function ausstattungRender(){
   const body=document.getElementById("aus-body"); if(!body)return;
   if(!AUS_ARTIKEL.length){
     body.innerHTML=`<div class="empty" style="padding:24px 8px"><i class="ti ti-shirt"></i>Noch kein Gegenstand angelegt.</div>
-      <button class="btn btn-p" style="width:100%;min-height:56px;font-size:var(--s-karte);font-weight:800" onclick="ausArtikelNeuOpen()">Gegenstand erfassen</button>`;
+      <button class="btn btn-p" style="width:100%;min-height:56px;font-size:var(--s-karte);justify-content:center" onclick="ausArtikelNeuOpen()">Gegenstand erfassen</button>`;
     return;
   }
   const art=_ausArtikel();
@@ -232,7 +232,7 @@ function ausArtikelNeuOpen(){
     <label for="an-liste" style="font-size:var(--s-text);color:var(--text2)">Größen als Vorschlag, mit Komma</label>
     <input id="an-liste" value="128,140,152" style="${feld}">
     <label style="display:flex;align-items:center;gap:8px;font-size:var(--s-text);min-height:44px;margin-bottom:10px"><input id="an-nummer" type="checkbox"> Jeder Satz hat eine Nummer</label>
-    <button class="btn btn-p" style="width:100%;min-height:56px;font-size:var(--s-karte);font-weight:800" onclick="ausArtikelNeuSpeichern()">Gegenstand erfassen</button>
+    <button class="btn btn-p" style="width:100%;min-height:56px;font-size:var(--s-karte);justify-content:center" onclick="ausArtikelNeuSpeichern()">Gegenstand erfassen</button>
   </div>`;
   document.body.appendChild(m);
 }
@@ -372,7 +372,7 @@ function materialRender(){
   const body=document.getElementById("mat-body"); if(!body)return;
   if(!MAT_POSTEN.length){
     body.innerHTML=`<div class="empty" style="padding:24px 8px"><i class="ti ti-box"></i>Noch kein Posten erfasst.</div>
-      <button class="btn btn-p" style="width:100%;min-height:56px;font-size:var(--s-karte);font-weight:800" onclick="matPostenNeuOpen()">Posten erfassen</button>`;
+      <button class="btn btn-p" style="width:100%;min-height:56px;font-size:var(--s-karte);justify-content:center" onclick="matPostenNeuOpen()">Posten erfassen</button>`;
     return;
   }
   /* Stillgelegte Posten holt schon die Abfrage nicht – hier noch einmal, damit die Liste
@@ -486,7 +486,7 @@ function matPostenNeuOpen(){
     <input id="mn-soll" type="number" inputmode="numeric" min="0" placeholder="–" style="${feld}">
     <label for="mn-ort" style="font-size:var(--s-text);color:var(--text2)">Wo liegt es? (freiwillig)</label>
     <input id="mn-ort" placeholder="Materialschuppen Verein" style="${feld}">
-    <button class="btn btn-p" style="width:100%;min-height:56px;font-size:var(--s-karte);font-weight:800" onclick="matPostenNeuSpeichern()">Posten erfassen</button>
+    <button class="btn btn-p" style="width:100%;min-height:56px;font-size:var(--s-karte);justify-content:center" onclick="matPostenNeuSpeichern()">Posten erfassen</button>
   </div>`;
   document.body.appendChild(m);
 }

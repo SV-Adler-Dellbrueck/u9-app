@@ -519,7 +519,7 @@ async function kabineAlbumFor(sid,name){
     +(pool.some(g=>g.rar==="sonder")?albSec("🃏 Sonderkarten – Spieltag, Kapitän, Moment")+albTeil(g=>g.rar==="sonder"):"");
   b.innerHTML=`<div id="kab-album-view" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;position:relative">
     <div style="display:flex;align-items:center;gap:10px;padding:14px 16px">
-      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
+      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
       <div style="flex:1;font-size:18px;font-weight:800">📖 ${esc(name?name+"s":"Mein")} Album</div>
       <div style="font-size:13px;font-weight:800;opacity:.9">${got}/${pool.length}</div>
     </div>
@@ -617,7 +617,7 @@ async function kabineTausch(){
   const stLbl=k=>{const g=byKey[k];return g?`${g.img?"🦅":g.emo} ${esc(g.label)}`:esc(k);};
   b.innerHTML=`<div style="flex:1;overflow-y:auto">
     <div style="display:flex;align-items:center;gap:10px;padding:14px 16px">
-      <button onclick="kabineAlbumFor(_albKid,_albName)" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
+      <button onclick="kabineAlbumFor(_albKid,_albName)" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
       <div style="flex:1;font-size:18px;font-weight:800;color:#fff">🔁 Tauschbörse</div>
     </div>
     <div style="margin:0 16px 12px;background:rgba(255,255,255,.12);border-radius:16px;padding:12px 14px;color:#fff">
@@ -909,7 +909,7 @@ function botschaftZaehler(){ const el=document.getElementById("bot-text"), z=doc
 function botschaftKinderRender(){
   const box=document.getElementById("bot-kinder"); if(!box)return;
   box.innerHTML=_botKinder.map(k=>{ const id=_botKindId(k), an=_botSend.has(id);
-    return `<button type="button" class="btn btn-sm" aria-pressed="${an}" onclick="botschaftKindUm(${Number(id)})" style="min-height:44px;${an?"background:#fce7f3;border-color:#db2777;color:#831843;font-weight:800":"color:var(--text2)"}">${an?"✓ ":""}${esc((k.name||"").split(" ")[0])}</button>`; }).join("");
+    return `<button type="button" class="btn btn-sm" aria-pressed="${an}" onclick="botschaftKindUm(${Number(id)})" style="min-height:44px;${an?"background:var(--blue-bg);border:2px solid var(--blue);color:var(--text);font-weight:800":"color:var(--text2)"}">${an?"✓ ":""}${esc((k.name||"").split(" ")[0])}</button>`; }).join("");
   const n=document.getElementById("bot-anzahl"); if(n)n.textContent=`· ${_botSend.size} von ${_botKinder.length}`;
 }
 function botschaftKindUm(id){ if(_botSend.has(id))_botSend.delete(id); else _botSend.add(id); botschaftKinderRender(); }
@@ -1120,7 +1120,7 @@ function kabineHome(){
             gespielt. Vorn stehen acht, der Rest wartet hinter „Mehr entdecken". Ob das Kind
             aufgeklappt hat, merkt sich die Kabine, solange sie offen ist. */""}
       ${lbl("Spielen & Lernen")}
-      ${tile("kabineQuiz('taktik')","🎯","Taktik-Quiz","rgba(56,189,248,.50)","rgba(2,132,199,.30)")}
+      ${tile("kabineQuiz('taktik')","🎯","Taktik-Quiz","rgba(56,189,248,.44)","rgba(2,132,199,.30)")}
       ${tile("kabineQuiz('wissen')","🧠","Fußball-Wissen","rgba(14,165,233,.44)","rgba(3,105,161,.30)")}
       ${lbl("Meine Sachen")}
       ${tile("kabineMyCard()","🃏","Meine Karte","rgba(168,85,247,.50)","rgba(124,58,237,.32)")}
@@ -1348,7 +1348,7 @@ function kabinePackFor(sid,name){
   const alle=KAB_PACK_ITEMS.every((_,i)=>st[i]);
   b.innerHTML=`<div id="kab-pack-view" style="flex:1;overflow-y:auto;position:relative">
     <div style="display:flex;align-items:center;gap:10px;padding:14px 16px">
-      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
+      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
       <div style="flex:1;font-size:18px;font-weight:800">🎒 ${esc(name||"Meine")} Tasche</div>
     </div>
     <div style="font-size:12px;opacity:.85;padding:0 16px 10px;text-align:center;color:#fff">Pack deine Tasche fürs ${t.typ==="turnier"?"Turnier":"Spiel"} – Haken für alles, was drin ist!</div>
@@ -1511,7 +1511,7 @@ async function kabinePostOpen(){
   const neuIds=rows.filter(x=>!x.gesehen).map(x=>x.id);
   b.innerHTML=`<div id="kab-post-view" style="flex:1;overflow-y:auto;position:relative">
     <div style="display:flex;align-items:center;gap:10px;padding:14px 16px">
-      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
+      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
       <div style="flex:1;font-size:18px;font-weight:800;color:#fff">📬 Adler-Post</div>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;padding:0 16px 16px">
@@ -1549,7 +1549,7 @@ async function kabineKudosFor(vonSid,vonName){
   const andere=team.filter(k=>k.id!==vonSid);
   b.innerHTML=`<div style="flex:1;overflow-y:auto">
     <div style="display:flex;align-items:center;gap:10px;padding:14px 16px">
-      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
+      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
       <div style="flex:1;font-size:18px;font-weight:800;color:#fff">👏 Wem willst du eine Freude machen?</div>
     </div>
     <div style="font-size:12px;opacity:.85;padding:0 16px 10px;text-align:center;color:#fff">Such dir einen Mitspieler aus – ${esc(vonName)} schenkt ein Kompliment!</div>
@@ -1567,7 +1567,7 @@ function kabineKudosPick(vonSid,vonName,anSid,anName,pausiert){
   const texte=pausiert?GENESUNG_TEXTE:KUDOS_TEXTE;
   b.innerHTML=`<div style="flex:1;overflow-y:auto">
     <div style="display:flex;align-items:center;gap:10px;padding:14px 16px">
-      <button onclick="kabineKudosFor(${vonSid},'${jsq(vonName)}')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
+      <button onclick="kabineKudosFor(${vonSid},'${jsq(vonName)}')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
       <div style="flex:1;font-size:18px;font-weight:800;color:#fff">${pausiert?"💌 Gruß":"👏 Kompliment"} für ${esc(anName)}</div>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;padding:0 16px 16px">
@@ -1654,7 +1654,7 @@ async function kabineStaerkenFor(sid,name){
   try{const r=await fetch(`${SB_URL}/rest/v1/kind_selbstbild?spieler_id=eq.${sid}&select=datum,antworten&order=datum.desc&limit=1`,{headers:sbAuthHeaders()});
     if(r.ok)last=((await r.json())||[])[0]||null;}catch(e){}
   const head=`<div style="display:flex;align-items:center;gap:10px;padding:14px 16px">
-      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
+      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
       <div style="flex:1;font-size:18px;font-weight:800;color:#fff">💪 ${esc(name)}s Stärken</div></div>`;
   if(last){
     const tage=Math.round((Date.now()-new Date(last.datum+"T00:00:00"))/864e5);
@@ -1680,7 +1680,7 @@ function kabineStaerkenFrage(){
   if(_ksIdx>=KAB_SELBST_FRAGEN.length){kabineStaerkenSave();return;}
   const f=KAB_SELBST_FRAGEN[_ksIdx];
   b.innerHTML=`<div style="display:flex;align-items:center;padding:14px 16px 0">
-    <button onclick="kabineHome()" aria-label="Zurück" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
+    <button onclick="kabineHome()" aria-label="Zurück" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
   </div>
   <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:0 24px 24px;text-align:center;color:#fff">
     <div style="font-size:12px;opacity:.8">Frage ${_ksIdx+1} von ${KAB_SELBST_FRAGEN.length} · ${esc(_ksName)}</div>
@@ -1802,7 +1802,7 @@ function kabineReporterFrage(){
     return;
   }
   b.innerHTML=`<div style="display:flex;align-items:center;padding:14px 16px 0">
-    <button onclick="kabineHome()" aria-label="Zurück" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
+    <button onclick="kabineHome()" aria-label="Zurück" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
   </div>
   <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:0 24px 24px;text-align:center;color:#fff">
     <div style="font-size:12px;opacity:.8">🎙️ Kabinen-Reporter · ${esc(_krName)}</div>
@@ -1843,7 +1843,7 @@ async function kabineHype(){
   try{const r=await fetch(`${SB_URL}/rest/v1/team_config?id=eq.1&select=spotify_playlist`,{headers:sbAuthHeaders()});if(r.ok)url=(((await r.json())[0])||{}).spotify_playlist||"";}catch(e){}
   const embed=spotifyEmbed(url);
   const head=`<div style="display:flex;align-items:center;gap:10px;padding:12px 16px">
-      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
+      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
       <div style="flex:1;font-size:16px;font-weight:800;color:#fff">🎵 Kabinen-Hype</div></div>`;
   if(!embed){ b.innerHTML=head+'<div style="flex:1;display:flex;align-items:center;justify-content:center;color:#fff;opacity:.85;padding:20px;text-align:center">Noch keine Playlist hinterlegt.<br>Der Trainer kann sie in der Adler-Welt setzen. 🎧</div>'; return; }
   /* v752 (PO 04.10.: „Geht es, dass der Kabinen-Hype weiterläuft, wenn man ihn verlässt?“): Der Player
@@ -1901,7 +1901,7 @@ async function kabineSkillWoche(){
   let sk=null;
   try{const r=await fetch(`${SB_URL}/rest/v1/skill_woche?aktiv=eq.true&select=*&order=created_at.desc&limit=1`,{headers:sbAuthHeaders()});if(r.ok)sk=(await r.json())[0]||null;}catch(e){}
   const head=`<div style="display:flex;align-items:center;gap:10px;padding:12px 16px">
-      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
+      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
       <div style="flex:1;font-size:16px;font-weight:800;color:#fff">🎬 Skill der Woche</div></div>`;
   if(!sk){ b.innerHTML=head+'<div style="flex:1;display:flex;align-items:center;justify-content:center;color:#fff;opacity:.85;padding:20px;text-align:center">Diese Woche gibt es keine neue Challenge.<br>Schau bald wieder rein! 💪</div>'; return; }
   b.innerHTML=head+`<div style="flex:1;padding:16px;color:#fff;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px">
@@ -1921,7 +1921,7 @@ function kabinePickKid(title,fnName){
   const b=document.getElementById("kabine-body"); if(!b)return;
   const kids=window._elternKids||[];
   const head=`<div style="display:flex;align-items:center;gap:10px;padding:14px 16px">
-      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
+      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
       <div style="font-size:18px;font-weight:800">${title}</div></div>`;
   if(!kids.length){ b.innerHTML=head+'<div style="flex:1;display:flex;align-items:center;justify-content:center;opacity:.85;padding:20px;text-align:center">Kein Kind gefunden.</div>'; return; }
   b.innerHTML=head+`<div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px;align-content:start">`+
@@ -1953,7 +1953,7 @@ async function kabineMissionFor(id,name){
   let ziele=[];
   try{const r=await fetch(`${SB_URL}/rest/v1/rpc/meine_ziele`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_spieler_id:id})});if(r.ok)ziele=(await r.json())||[];}catch(e){}
   const head=`<div style="display:flex;align-items:center;gap:10px;padding:12px 16px">
-      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
+      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
       <div style="flex:1;font-size:16px;font-weight:800;color:#fff">🎯 ${esc(name||"Meine")} Mission</div></div>`;
   if(!ziele.length){ b.innerHTML=head+'<div style="flex:1;display:flex;align-items:center;justify-content:center;color:#fff;opacity:.85;padding:24px;text-align:center">Noch keine Mission gesetzt.<br>Frag deinen Trainer, woran du arbeiten kannst! 💪</div>'; return; }
   const cards=ziele.map(z=>{const ex=(typeof _zielUebungen==="function")?_zielUebungen((z.meta&&z.meta.tags)||[],3):[];
@@ -1979,7 +1979,7 @@ async function kabineRollenFor(id,name){
   let r={games:0};
   try{const res=await fetch(`${SB_URL}/rest/v1/rpc/meine_rollen`,{method:"POST",headers:{...sbAuthHeaders(),'Content-Type':'application/json'},body:JSON.stringify({p_spieler_id:id})});if(res.ok)r=(await res.json())||{games:0};}catch(e){}
   const head=`<div style="display:flex;align-items:center;gap:10px;padding:12px 16px">
-      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
+      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
       <div style="flex:1;font-size:16px;font-weight:800;color:#fff">🎽 Wo spielt ${esc(name||"du")}?</div></div>`;
   if(!r.games){ b.innerHTML=head+'<div style="flex:1;display:flex;align-items:center;justify-content:center;color:#fff;opacity:.85;padding:24px;text-align:center">Noch keine Aufstellung gespeichert.<br>Nach dem nächsten Spiel siehst du hier deine Rollen! ⚽</div>'; return; }
   // Torwart bewusst NICHT anzeigen – wir haben feste Torhüter (Feldrollen sind das Thema).
@@ -1995,7 +1995,7 @@ function kabineShowQuests(){
   const b=document.getElementById("kabine-body"); if(!b)return;
   b.innerHTML=`
     <div style="display:flex;align-items:center;gap:10px;padding:14px 16px">
-      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
+      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
       <div style="font-size:18px;font-weight:800">🏆 Unsere Missionen</div>
     </div>
     <div style="flex:1;overflow-y:auto;padding:0 16px 16px">
@@ -2011,7 +2011,7 @@ function kabineShowGallery(){ kabineIdx=0; kabineRenderGallery(); }
 function kabineRenderGallery(){
   const b=document.getElementById("kabine-body"); if(!b)return;
   const head=`<div style="display:flex;align-items:center;gap:10px;padding:12px 16px">
-      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
+      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer">←</button>
       <div style="flex:1;font-size:16px;font-weight:800">🖼️ Team-Galerie</div>
       <div style="font-size:12px;opacity:.8">${kabineGalleryData.length?kabineIdx+1:0} / ${kabineGalleryData.length}</div></div>`;
   if(!kabineGalleryData.length){ b.innerHTML=head+'<div style="flex:1;display:flex;align-items:center;justify-content:center;opacity:.8">Noch keine Karten.</div>'; return; }
@@ -2220,7 +2220,7 @@ async function kinderCodexLaden(){
 async function kabineCodex(){
   const b=document.getElementById("kabine-body"); if(!b)return;
   const head=`<div style="display:flex;align-items:center;gap:10px;padding:12px 16px">
-      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer" aria-label="Zurück">←</button>
+      <button onclick="kabineHome()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;cursor:pointer" aria-label="Zurück">←</button>
       <div style="flex:1;font-size:16px;font-weight:800;color:#fff">🤝 Unsere Regeln</div></div>`;
   b.innerHTML=head+`<div style="text-align:center;padding:60px 16px;opacity:.85;color:#fff">Lade …</div>`;
   const saetze=await kinderCodexLaden();
@@ -2549,7 +2549,7 @@ async function kinderAppOpen(){
   m.style.zIndex=(typeof zOben==="function")?zOben():10040;   // ueber allem, was gerade offen ist
   m.innerHTML=`<div style="max-width:560px;margin:0 auto;padding:12px 16px 40px">
     <div style="display:flex;align-items:center;gap:10px;position:sticky;top:0;background:var(--bg,#f1f5f9);padding:8px 0 10px;z-index:1">
-      <button onclick="kinderAppClose()" aria-label="Zurück" style="border:none;background:#fff;width:44px;height:44px;border-radius:50%;font-size:20px;color:#334155;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08)">←</button>
+      <button class="btn" onclick="kinderAppClose()" aria-label="Zurück" style="width:44px;height:44px;font-size:20px;min-width:44px;justify-content:center">←</button>
       <div style="font-size:17px;font-weight:800">📱 Kinder-App</div>
     </div>
     <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:13px;font-size:13px;line-height:1.6;color:#475569;margin-bottom:12px">
@@ -2597,7 +2597,7 @@ function kaKindBlock(k,geraete,sitzungen){
     <div style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:8px">${name}${kd.nr!=null?` <span style="font-weight:600;color:var(--text3)">#${kd.nr}</span>`:""}</div>
     ${liste}
     <div id="ka-code-${sid}"></div>
-    <button onclick="kinderAppCode(${sid})" style="width:100%;min-height:48px;margin-top:6px;border:none;border-radius:12px;background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">📱 Neues Gerät koppeln</button>`);
+    <button class="btn" onclick="kinderAppCode(${sid})" style="width:100%;min-height:48px;margin-top:6px;font-size:14px;justify-content:center">📱 Neues Gerät koppeln</button>`);
 }
 
 function kaGeraetZeile(g,heute){
@@ -2617,7 +2617,7 @@ function kaGeraetZeile(g,heute){
              onchange="kinderAppLimit('${g.uid}',this.value)"
              style="width:100%;min-height:44px;margin-top:4px;accent-color:#7c3aed"></label>
     <div style="font-size:11.5px;color:var(--text3);margin-bottom:10px">0 Minuten heißt: die Kabine bleibt auf diesem Gerät zu.</div>
-    <button onclick="kinderAppTrennenFragen('${g.uid}')" style="width:100%;min-height:44px;border:1.5px solid #dc2626;border-radius:10px;background:#fff;color:#dc2626;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">Gerät trennen</button>
+    <button class="btn btn-d" onclick="kinderAppTrennenFragen('${g.uid}')" style="width:100%;min-height:44px;font-size:13px;justify-content:center">Gerät trennen</button>
   </div>`;
 }
 function kaDatum(s){ if(!s)return "–"; const d=new Date(s); return isNaN(d)?"–":d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"}); }
@@ -2681,7 +2681,7 @@ function kaLinkBlock(sid){
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
       <a href="https://wa.me/?text=${encodeURIComponent(kaNachricht())}" target="_blank" rel="noopener noreferrer"
          style="display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:12px;background:#15803d;color:#fff;font-weight:800;font-size:14px;text-decoration:none">💬 WhatsApp</a>
-      <button onclick="kaLinkKopieren(${sid})" style="min-height:48px;border:1.5px solid #7c3aed;border-radius:12px;background:#fff;color:#6d28d9;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">🔗 Link kopieren</button>
+      <button class="btn" onclick="kaLinkKopieren(${sid})" style="min-height:48px;font-size:14px;justify-content:center">🔗 Link kopieren</button>
     </div>
   </div>`;
 }
@@ -2721,8 +2721,8 @@ function kinderAppTrennenFragen(uid){
   m.innerHTML=`<div style="background:#fff;border-radius:16px;padding:18px;max-width:340px;width:100%">
     <div style="font-size:15px;font-weight:800;color:#1e293b">Gerät trennen?</div>
     <div style="font-size:13px;color:#475569;line-height:1.6;margin:8px 0 14px">Die Kabine geht auf diesem Gerät sofort zu. Zum Wiederverbinden brauchst du einen neuen Code.</div>
-    <button onclick="kinderAppTrennen('${uid}')" style="width:100%;min-height:48px;border:none;border-radius:12px;background:#dc2626;color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">Trennen</button>
-    <button onclick="document.getElementById('ka-frage').remove()" style="width:100%;min-height:44px;margin-top:8px;border:1px solid #cbd5e1;border-radius:12px;background:#fff;color:#334155;font-family:inherit;font-size:13.5px;cursor:pointer">Abbrechen</button>
+    <button class="btn btn-d" onclick="kinderAppTrennen('${uid}')" style="width:100%;min-height:48px;font-size:14px;justify-content:center">Trennen</button>
+    <button class="btn" onclick="document.getElementById('ka-frage').remove()" style="width:100%;min-height:44px;margin-top:8px;font-size:13.5px;justify-content:center">Abbrechen</button>
   </div>`;
   m.onclick=e=>{ if(e.target===m)m.remove(); };
   document.body.appendChild(m);
