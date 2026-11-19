@@ -1,0 +1,1061 @@
+{
+ "szenario": "Vorlage laden: Stationen, alleFelder, tw-Station – Import, Folge-POSTs, Griff von Hand",
+ "haelt_fest": "Ist-Zustand ohne bekanntes Fehlerbild: der Import schreibt einmal (return=minimal, Plan mit station/alleFelder ohne block/feld); Öffnen und „Training füllen“ danach schreiben nichts, weil alle Felder schon belegt sind; erst der Griff von Hand speichert Feld für Feld (block/feld, Marken weg). Kein Schritt-9-Thema.",
+ "schritte": [
+  {
+   "schritt": "Vorlage 700 übernehmen",
+   "gesendet": [
+    {
+     "methode": "POST",
+     "suche": "?on_conflict=datum",
+     "body": {
+      "datum": "2030-03-05",
+      "plan": [
+       {
+        "formIdx": 107,
+        "formName": "Warm up Adler",
+        "trainer": "Alle",
+        "slotLabel": "Warm up Adler, kurz",
+        "alleFelder": true,
+        "key": "107-Alle"
+       },
+       {
+        "formIdx": 122,
+        "formName": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+        "trainer": "Alle",
+        "slotLabel": "Hauptteil 1 – drei Stationen: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
+        "station": 0,
+        "key": "122-0"
+       },
+       {
+        "formIdx": 128,
+        "formName": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+        "trainer": "Alle",
+        "slotLabel": "Hauptteil 1 – drei Stationen: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
+        "station": 1,
+        "key": "128-1"
+       },
+       {
+        "formIdx": 130,
+        "formName": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+        "trainer": "Alle",
+        "slotLabel": "Hauptteil 1 – drei Stationen: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
+        "station": 2,
+        "key": "130-2"
+       },
+       {
+        "formIdx": 122,
+        "formName": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+        "trainer": "Alle",
+        "slotLabel": "Hauptteil 2 – Gruppen rücken ein Feld weiter, Regeln wie in Hauptteil 1",
+        "station": 0,
+        "key": "122-0"
+       },
+       {
+        "formIdx": 128,
+        "formName": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+        "trainer": "Alle",
+        "slotLabel": "Hauptteil 2 – Gruppen rücken ein Feld weiter, Regeln wie in Hauptteil 1",
+        "station": 1,
+        "key": "128-1"
+       },
+       {
+        "formIdx": 130,
+        "formName": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+        "trainer": "Alle",
+        "slotLabel": "Hauptteil 2 – Gruppen rücken ein Feld weiter, Regeln wie in Hauptteil 1",
+        "station": 2,
+        "key": "130-2"
+       },
+       {
+        "formIdx": 122,
+        "formName": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+        "trainer": "Alle",
+        "slotLabel": "Hauptteil 3 – Gruppen rücken noch ein Feld weiter: jede Gruppe hat jetzt alle drei Felder gesehen, jeweils mit der schwereren Variante",
+        "station": 0,
+        "key": "122-0"
+       },
+       {
+        "formIdx": 128,
+        "formName": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+        "trainer": "Alle",
+        "slotLabel": "Hauptteil 3 – Gruppen rücken noch ein Feld weiter: jede Gruppe hat jetzt alle drei Felder gesehen, jeweils mit der schwereren Variante",
+        "station": 1,
+        "key": "128-1"
+       },
+       {
+        "formIdx": 130,
+        "formName": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+        "trainer": "Alle",
+        "slotLabel": "Hauptteil 3 – Gruppen rücken noch ein Feld weiter: jede Gruppe hat jetzt alle drei Felder gesehen, jeweils mit der schwereren Variante",
+        "station": 2,
+        "key": "130-2"
+       }
+      ],
+      "slots": [
+       {
+        "label": "Straßenfußball-Fenster",
+        "dauer": 10,
+        "farbe": "#059669",
+        "typ": "warmup"
+       },
+       {
+        "label": "Warm up Adler, kurz",
+        "dauer": 8,
+        "farbe": "#059669",
+        "typ": "warmup"
+       },
+       {
+        "label": "Hauptteil 1 – drei Stationen: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
+        "dauer": 12,
+        "farbe": "#1a56db",
+        "typ": "spielform",
+        "stationen": 3,
+        "felder": [
+         {
+          "u": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+          "t": "Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass)"
+         },
+         {
+          "u": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+          "t": "Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball"
+         },
+         {
+          "u": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+          "t": "Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)"
+         }
+        ]
+       },
+       {
+        "label": "Hauptteil 2 – Gruppen rücken ein Feld weiter, Regeln wie in Hauptteil 1",
+        "dauer": 12,
+        "farbe": "#7c3aed",
+        "typ": "spielform",
+        "stationen": 3,
+        "felder": [
+         {
+          "u": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+          "t": "Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass)"
+         },
+         {
+          "u": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+          "t": "Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball"
+         },
+         {
+          "u": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+          "t": "Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)"
+         }
+        ]
+       },
+       {
+        "label": "Hauptteil 3 – Gruppen rücken noch ein Feld weiter: jede Gruppe hat jetzt alle drei Felder gesehen, jeweils mit der schwereren Variante",
+        "dauer": 12,
+        "farbe": "#7c3aed",
+        "typ": "spielform",
+        "stationen": 3,
+        "felder": [
+         {
+          "u": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+          "t": "Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass)"
+         },
+         {
+          "u": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+          "t": "Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball"
+         },
+         {
+          "u": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+          "t": "Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)"
+         }
+        ]
+       },
+       {
+        "label": "Abschlussturnier auf zwei Feldern: 3+1 gegen 3+1 am Jugendtor, FUNiño 3 gegen 3 an den Minitoren, nach der Hälfte Felder tauschen",
+        "dauer": 16,
+        "farbe": "#c2410c",
+        "typ": "abschluss"
+       }
+      ],
+      "gespeichert_von": "<gespeichert_von>",
+      "updated_at": "<updated_at>"
+     }
+    }
+   ]
+  },
+  {
+   "schritt": "Vorlage 700: ein Feld von Hand ändern",
+   "gesendet": [
+    {
+     "methode": "POST",
+     "suche": "?on_conflict=datum",
+     "body": {
+      "datum": "2030-03-05",
+      "plan": [
+       {
+        "formIdx": 107,
+        "formName": "Warm up Adler",
+        "trainer": "Alle",
+        "slotLabel": "Warm up Adler, kurz",
+        "key": "107-Alle",
+        "block": 1,
+        "feld": 0
+       },
+       {
+        "formIdx": 122,
+        "formName": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+        "trainer": "Charles",
+        "slotLabel": "Hauptteil 1 – drei Stationen: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
+        "key": "122-Charles",
+        "block": 2,
+        "feld": 0
+       },
+       {
+        "formIdx": 0,
+        "formName": "Korridor-Funino",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 1 – drei Stationen: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
+        "key": "0-Finn",
+        "block": 2,
+        "feld": 1
+       },
+       {
+        "formIdx": 130,
+        "formName": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+        "trainer": "Kenneth",
+        "slotLabel": "Hauptteil 1 – drei Stationen: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
+        "key": "130-Kenneth",
+        "block": 2,
+        "feld": 2
+       },
+       {
+        "formIdx": 122,
+        "formName": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 2 – Gruppen rücken ein Feld weiter, Regeln wie in Hauptteil 1",
+        "key": "122-Finn",
+        "block": 3,
+        "feld": 0
+       },
+       {
+        "formIdx": 128,
+        "formName": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+        "trainer": "Kenneth",
+        "slotLabel": "Hauptteil 2 – Gruppen rücken ein Feld weiter, Regeln wie in Hauptteil 1",
+        "key": "128-Kenneth",
+        "block": 3,
+        "feld": 1
+       },
+       {
+        "formIdx": 130,
+        "formName": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+        "trainer": "Charles",
+        "slotLabel": "Hauptteil 2 – Gruppen rücken ein Feld weiter, Regeln wie in Hauptteil 1",
+        "key": "130-Charles",
+        "block": 3,
+        "feld": 2
+       },
+       {
+        "formIdx": 122,
+        "formName": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+        "trainer": "Kenneth",
+        "slotLabel": "Hauptteil 3 – Gruppen rücken noch ein Feld weiter: jede Gruppe hat jetzt alle drei Felder gesehen, jeweils mit der schwereren Variante",
+        "key": "122-Kenneth",
+        "block": 4,
+        "feld": 0
+       },
+       {
+        "formIdx": 128,
+        "formName": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+        "trainer": "Charles",
+        "slotLabel": "Hauptteil 3 – Gruppen rücken noch ein Feld weiter: jede Gruppe hat jetzt alle drei Felder gesehen, jeweils mit der schwereren Variante",
+        "key": "128-Charles",
+        "block": 4,
+        "feld": 1
+       },
+       {
+        "formIdx": 130,
+        "formName": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 3 – Gruppen rücken noch ein Feld weiter: jede Gruppe hat jetzt alle drei Felder gesehen, jeweils mit der schwereren Variante",
+        "key": "130-Finn",
+        "block": 4,
+        "feld": 2
+       }
+      ],
+      "slots": [
+       {
+        "label": "Straßenfußball-Fenster",
+        "dauer": 10,
+        "farbe": "#059669",
+        "typ": "warmup"
+       },
+       {
+        "label": "Warm up Adler, kurz",
+        "dauer": 8,
+        "farbe": "#059669",
+        "typ": "warmup"
+       },
+       {
+        "label": "Hauptteil 1 – drei Stationen: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
+        "dauer": 12,
+        "farbe": "#1a56db",
+        "typ": "spielform",
+        "stationen": 3,
+        "felder": [
+         {
+          "u": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+          "t": "Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass)"
+         },
+         {
+          "u": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+          "t": "Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball"
+         },
+         {
+          "u": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+          "t": "Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)"
+         }
+        ],
+        "coaches": [
+         "Charles",
+         "Finn",
+         "Kenneth"
+        ]
+       },
+       {
+        "label": "Hauptteil 2 – Gruppen rücken ein Feld weiter, Regeln wie in Hauptteil 1",
+        "dauer": 12,
+        "farbe": "#7c3aed",
+        "typ": "spielform",
+        "stationen": 3,
+        "felder": [
+         {
+          "u": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+          "t": "Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass)"
+         },
+         {
+          "u": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+          "t": "Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball"
+         },
+         {
+          "u": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+          "t": "Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)"
+         }
+        ],
+        "coaches": [
+         "Finn",
+         "Kenneth",
+         "Charles"
+        ]
+       },
+       {
+        "label": "Hauptteil 3 – Gruppen rücken noch ein Feld weiter: jede Gruppe hat jetzt alle drei Felder gesehen, jeweils mit der schwereren Variante",
+        "dauer": 12,
+        "farbe": "#7c3aed",
+        "typ": "spielform",
+        "stationen": 3,
+        "felder": [
+         {
+          "u": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+          "t": "Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass)"
+         },
+         {
+          "u": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+          "t": "Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball"
+         },
+         {
+          "u": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+          "t": "Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)"
+         }
+        ],
+        "coaches": [
+         "Kenneth",
+         "Charles",
+         "Finn"
+        ]
+       },
+       {
+        "label": "Abschlussturnier auf zwei Feldern: 3+1 gegen 3+1 am Jugendtor, FUNiño 3 gegen 3 an den Minitoren, nach der Hälfte Felder tauschen",
+        "dauer": 16,
+        "farbe": "#c2410c",
+        "typ": "abschluss"
+       }
+      ],
+      "gespeichert_von": "<gespeichert_von>",
+      "updated_at": "<updated_at>"
+     }
+    }
+   ],
+   "dom": {
+    "feld": "tp-form-2-1"
+   }
+  },
+  {
+   "schritt": "Vorlage 701 übernehmen",
+   "gesendet": [
+    {
+     "methode": "POST",
+     "suche": "?on_conflict=datum",
+     "body": {
+      "datum": "2030-03-05",
+      "plan": [
+       {
+        "formIdx": 107,
+        "formName": "Warm up Adler",
+        "trainer": "Alle",
+        "slotLabel": "Warm up Adler, kurz",
+        "alleFelder": true,
+        "key": "107-Alle"
+       },
+       {
+        "formIdx": 31,
+        "formName": "1gg1 Tore-Duell",
+        "trainer": "Alle",
+        "slotLabel": "Stufe 1 – frei",
+        "alleFelder": true,
+        "key": "31-Alle"
+       },
+       {
+        "formIdx": 31,
+        "formName": "1gg1 Tore-Duell",
+        "trainer": "Alle",
+        "slotLabel": "Stufe 2 – eng: erst drehen, dann zum Tor",
+        "alleFelder": true,
+        "key": "31-Alle"
+       },
+       {
+        "formIdx": 31,
+        "formName": "1gg1 Tore-Duell",
+        "trainer": "Alle",
+        "slotLabel": "Stufe 3 – offen: Feld größer, Regel weg",
+        "alleFelder": true,
+        "key": "31-Alle"
+       }
+      ],
+      "slots": [
+       {
+        "label": "Straßenfußball-Fenster",
+        "dauer": 10,
+        "farbe": "#059669",
+        "typ": "warmup"
+       },
+       {
+        "label": "Warm up Adler, kurz",
+        "dauer": 8,
+        "farbe": "#059669",
+        "typ": "warmup"
+       },
+       {
+        "label": "Stufe 1 – frei",
+        "dauer": 12,
+        "farbe": "#1a56db",
+        "typ": "main"
+       },
+       {
+        "label": "Stufe 2 – eng: erst drehen, dann zum Tor",
+        "dauer": 12,
+        "farbe": "#7c3aed",
+        "typ": "main"
+       },
+       {
+        "label": "Stufe 3 – offen: Feld größer, Regel weg",
+        "dauer": 10,
+        "farbe": "#7c3aed",
+        "typ": "main"
+       },
+       {
+        "label": "Abschlussturnier",
+        "dauer": 18,
+        "farbe": "#c2410c",
+        "typ": "abschluss"
+       }
+      ],
+      "gespeichert_von": "<gespeichert_von>",
+      "updated_at": "<updated_at>"
+     }
+    }
+   ]
+  },
+  {
+   "schritt": "Vorlage 701: ein Feld von Hand ändern",
+   "gesendet": [
+    {
+     "methode": "POST",
+     "suche": "?on_conflict=datum",
+     "body": {
+      "datum": "2030-03-05",
+      "plan": [
+       {
+        "formIdx": 107,
+        "formName": "Warm up Adler",
+        "trainer": "Alle",
+        "slotLabel": "Warm up Adler, kurz",
+        "key": "107-Alle",
+        "block": 1,
+        "feld": 0
+       },
+       {
+        "formIdx": 31,
+        "formName": "1gg1 Tore-Duell",
+        "trainer": "Charles",
+        "slotLabel": "Stufe 1 – frei",
+        "key": "31-Charles",
+        "block": 2,
+        "feld": 0
+       },
+       {
+        "formIdx": 0,
+        "formName": "Korridor-Funino",
+        "trainer": "Finn",
+        "slotLabel": "Stufe 1 – frei",
+        "key": "0-Finn",
+        "block": 2,
+        "feld": 1
+       },
+       {
+        "formIdx": 31,
+        "formName": "1gg1 Tore-Duell",
+        "trainer": "Kenneth",
+        "slotLabel": "Stufe 1 – frei",
+        "key": "31-Kenneth",
+        "block": 2,
+        "feld": 2
+       },
+       {
+        "formIdx": 31,
+        "formName": "1gg1 Tore-Duell",
+        "trainer": "Finn",
+        "slotLabel": "Stufe 2 – eng: erst drehen, dann zum Tor",
+        "key": "31-Finn",
+        "block": 3,
+        "feld": 0
+       },
+       {
+        "formIdx": 31,
+        "formName": "1gg1 Tore-Duell",
+        "trainer": "Kenneth",
+        "slotLabel": "Stufe 2 – eng: erst drehen, dann zum Tor",
+        "key": "31-Kenneth",
+        "block": 3,
+        "feld": 1
+       },
+       {
+        "formIdx": 31,
+        "formName": "1gg1 Tore-Duell",
+        "trainer": "Charles",
+        "slotLabel": "Stufe 2 – eng: erst drehen, dann zum Tor",
+        "key": "31-Charles",
+        "block": 3,
+        "feld": 2
+       },
+       {
+        "formIdx": 31,
+        "formName": "1gg1 Tore-Duell",
+        "trainer": "Kenneth",
+        "slotLabel": "Stufe 3 – offen: Feld größer, Regel weg",
+        "key": "31-Kenneth",
+        "block": 4,
+        "feld": 0
+       },
+       {
+        "formIdx": 31,
+        "formName": "1gg1 Tore-Duell",
+        "trainer": "Charles",
+        "slotLabel": "Stufe 3 – offen: Feld größer, Regel weg",
+        "key": "31-Charles",
+        "block": 4,
+        "feld": 1
+       },
+       {
+        "formIdx": 31,
+        "formName": "1gg1 Tore-Duell",
+        "trainer": "Finn",
+        "slotLabel": "Stufe 3 – offen: Feld größer, Regel weg",
+        "key": "31-Finn",
+        "block": 4,
+        "feld": 2
+       }
+      ],
+      "slots": [
+       {
+        "label": "Straßenfußball-Fenster",
+        "dauer": 10,
+        "farbe": "#059669",
+        "typ": "warmup"
+       },
+       {
+        "label": "Warm up Adler, kurz",
+        "dauer": 8,
+        "farbe": "#059669",
+        "typ": "warmup"
+       },
+       {
+        "label": "Stufe 1 – frei",
+        "dauer": 12,
+        "farbe": "#1a56db",
+        "typ": "main",
+        "coaches": [
+         "Charles",
+         "Finn",
+         "Kenneth"
+        ]
+       },
+       {
+        "label": "Stufe 2 – eng: erst drehen, dann zum Tor",
+        "dauer": 12,
+        "farbe": "#7c3aed",
+        "typ": "main",
+        "coaches": [
+         "Finn",
+         "Kenneth",
+         "Charles"
+        ]
+       },
+       {
+        "label": "Stufe 3 – offen: Feld größer, Regel weg",
+        "dauer": 10,
+        "farbe": "#7c3aed",
+        "typ": "main",
+        "coaches": [
+         "Kenneth",
+         "Charles",
+         "Finn"
+        ]
+       },
+       {
+        "label": "Abschlussturnier",
+        "dauer": 18,
+        "farbe": "#c2410c",
+        "typ": "abschluss"
+       }
+      ],
+      "gespeichert_von": "<gespeichert_von>",
+      "updated_at": "<updated_at>"
+     }
+    }
+   ],
+   "dom": {
+    "feld": "tp-form-2-1"
+   }
+  },
+  {
+   "schritt": "Vorlage 702 übernehmen",
+   "gesendet": [
+    {
+     "methode": "POST",
+     "suche": "?on_conflict=datum",
+     "body": {
+      "datum": "2030-03-05",
+      "plan": [
+       {
+        "formIdx": 107,
+        "formName": "Warm up Adler",
+        "trainer": "Alle",
+        "slotLabel": "Warm up Adler, kurz",
+        "alleFelder": true,
+        "key": "107-Alle"
+       },
+       {
+        "formIdx": 122,
+        "formName": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+        "trainer": "Alle",
+        "slotLabel": "Hauptteil 1 – drei Stationen: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
+        "station": 0,
+        "key": "122-0"
+       },
+       {
+        "formIdx": 128,
+        "formName": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+        "trainer": "Alle",
+        "slotLabel": "Hauptteil 1 – drei Stationen: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
+        "station": 1,
+        "key": "128-1"
+       },
+       {
+        "formIdx": 130,
+        "formName": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+        "trainer": "Alle",
+        "slotLabel": "Hauptteil 1 – drei Stationen: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
+        "station": 2,
+        "key": "130-2"
+       },
+       {
+        "formIdx": 112,
+        "formName": "Adler TW – Einlaufen",
+        "trainer": "Alle",
+        "slotLabel": "Torwart · Hauptteil 1 – drei Stationen: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
+        "station": 0,
+        "key": "112-tw"
+       },
+       {
+        "formIdx": 122,
+        "formName": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+        "trainer": "Alle",
+        "slotLabel": "Hauptteil 2 – Gruppen rücken ein Feld weiter, Regeln wie in Hauptteil 1",
+        "station": 0,
+        "key": "122-0"
+       },
+       {
+        "formIdx": 128,
+        "formName": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+        "trainer": "Alle",
+        "slotLabel": "Hauptteil 2 – Gruppen rücken ein Feld weiter, Regeln wie in Hauptteil 1",
+        "station": 1,
+        "key": "128-1"
+       },
+       {
+        "formIdx": 130,
+        "formName": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+        "trainer": "Alle",
+        "slotLabel": "Hauptteil 2 – Gruppen rücken ein Feld weiter, Regeln wie in Hauptteil 1",
+        "station": 2,
+        "key": "130-2"
+       },
+       {
+        "formIdx": 122,
+        "formName": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+        "trainer": "Alle",
+        "slotLabel": "Hauptteil 3 – Gruppen rücken noch ein Feld weiter: jede Gruppe hat jetzt alle drei Felder gesehen, jeweils mit der schwereren Variante",
+        "station": 0,
+        "key": "122-0"
+       },
+       {
+        "formIdx": 128,
+        "formName": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+        "trainer": "Alle",
+        "slotLabel": "Hauptteil 3 – Gruppen rücken noch ein Feld weiter: jede Gruppe hat jetzt alle drei Felder gesehen, jeweils mit der schwereren Variante",
+        "station": 1,
+        "key": "128-1"
+       },
+       {
+        "formIdx": 130,
+        "formName": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+        "trainer": "Alle",
+        "slotLabel": "Hauptteil 3 – Gruppen rücken noch ein Feld weiter: jede Gruppe hat jetzt alle drei Felder gesehen, jeweils mit der schwereren Variante",
+        "station": 2,
+        "key": "130-2"
+       }
+      ],
+      "slots": [
+       {
+        "label": "Straßenfußball-Fenster",
+        "dauer": 10,
+        "farbe": "#059669",
+        "typ": "warmup"
+       },
+       {
+        "label": "Warm up Adler, kurz",
+        "dauer": 8,
+        "farbe": "#059669",
+        "typ": "warmup"
+       },
+       {
+        "label": "Hauptteil 1 – drei Stationen: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
+        "dauer": 12,
+        "farbe": "#1a56db",
+        "typ": "spielform",
+        "stationen": 3,
+        "felder": [
+         {
+          "u": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+          "t": "Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass)"
+         },
+         {
+          "u": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+          "t": "Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball"
+         },
+         {
+          "u": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+          "t": "Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)"
+         }
+        ]
+       },
+       {
+        "label": "Torwart · Hauptteil 1 – drei Stationen: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
+        "dauer": 12,
+        "farbe": "#854d0e",
+        "typ": "tw",
+        "parallelZu": 2
+       },
+       {
+        "label": "Hauptteil 2 – Gruppen rücken ein Feld weiter, Regeln wie in Hauptteil 1",
+        "dauer": 12,
+        "farbe": "#7c3aed",
+        "typ": "spielform",
+        "stationen": 3,
+        "felder": [
+         {
+          "u": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+          "t": "Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass)"
+         },
+         {
+          "u": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+          "t": "Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball"
+         },
+         {
+          "u": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+          "t": "Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)"
+         }
+        ]
+       },
+       {
+        "label": "Hauptteil 3 – Gruppen rücken noch ein Feld weiter: jede Gruppe hat jetzt alle drei Felder gesehen, jeweils mit der schwereren Variante",
+        "dauer": 12,
+        "farbe": "#7c3aed",
+        "typ": "spielform",
+        "stationen": 3,
+        "felder": [
+         {
+          "u": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+          "t": "Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass)"
+         },
+         {
+          "u": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+          "t": "Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball"
+         },
+         {
+          "u": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+          "t": "Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)"
+         }
+        ]
+       },
+       {
+        "label": "Abschlussturnier auf zwei Feldern: 3+1 gegen 3+1 am Jugendtor, FUNiño 3 gegen 3 an den Minitoren, nach der Hälfte Felder tauschen",
+        "dauer": 16,
+        "farbe": "#c2410c",
+        "typ": "abschluss"
+       }
+      ],
+      "gespeichert_von": "<gespeichert_von>",
+      "updated_at": "<updated_at>"
+     }
+    }
+   ]
+  },
+  {
+   "schritt": "Vorlage 702: ein Feld von Hand ändern",
+   "gesendet": [
+    {
+     "methode": "POST",
+     "suche": "?on_conflict=datum",
+     "body": {
+      "datum": "2030-03-05",
+      "plan": [
+       {
+        "formIdx": 107,
+        "formName": "Warm up Adler",
+        "trainer": "Alle",
+        "slotLabel": "Warm up Adler, kurz",
+        "key": "107-Alle",
+        "block": 1,
+        "feld": 0
+       },
+       {
+        "formIdx": 122,
+        "formName": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+        "trainer": "Charles",
+        "slotLabel": "Hauptteil 1 – drei Stationen: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
+        "key": "122-Charles",
+        "block": 2,
+        "feld": 0
+       },
+       {
+        "formIdx": 0,
+        "formName": "Korridor-Funino",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 1 – drei Stationen: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
+        "key": "0-Finn",
+        "block": 2,
+        "feld": 1
+       },
+       {
+        "formIdx": 130,
+        "formName": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+        "trainer": "Kenneth",
+        "slotLabel": "Hauptteil 1 – drei Stationen: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
+        "key": "130-Kenneth",
+        "block": 2,
+        "feld": 2
+       },
+       {
+        "formIdx": 112,
+        "formName": "Adler TW – Einlaufen",
+        "trainer": "Alle",
+        "slotLabel": "Torwart · Hauptteil 1 – drei Stationen: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
+        "key": "112-Alle",
+        "block": 3,
+        "feld": 0
+       },
+       {
+        "formIdx": 122,
+        "formName": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 2 – Gruppen rücken ein Feld weiter, Regeln wie in Hauptteil 1",
+        "key": "122-Finn",
+        "block": 4,
+        "feld": 0
+       },
+       {
+        "formIdx": 128,
+        "formName": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+        "trainer": "Kenneth",
+        "slotLabel": "Hauptteil 2 – Gruppen rücken ein Feld weiter, Regeln wie in Hauptteil 1",
+        "key": "128-Kenneth",
+        "block": 4,
+        "feld": 1
+       },
+       {
+        "formIdx": 130,
+        "formName": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+        "trainer": "Charles",
+        "slotLabel": "Hauptteil 2 – Gruppen rücken ein Feld weiter, Regeln wie in Hauptteil 1",
+        "key": "130-Charles",
+        "block": 4,
+        "feld": 2
+       },
+       {
+        "formIdx": 122,
+        "formName": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+        "trainer": "Kenneth",
+        "slotLabel": "Hauptteil 3 – Gruppen rücken noch ein Feld weiter: jede Gruppe hat jetzt alle drei Felder gesehen, jeweils mit der schwereren Variante",
+        "key": "122-Kenneth",
+        "block": 5,
+        "feld": 0
+       },
+       {
+        "formIdx": 128,
+        "formName": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+        "trainer": "Charles",
+        "slotLabel": "Hauptteil 3 – Gruppen rücken noch ein Feld weiter: jede Gruppe hat jetzt alle drei Felder gesehen, jeweils mit der schwereren Variante",
+        "key": "128-Charles",
+        "block": 5,
+        "feld": 1
+       },
+       {
+        "formIdx": 130,
+        "formName": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+        "trainer": "Finn",
+        "slotLabel": "Hauptteil 3 – Gruppen rücken noch ein Feld weiter: jede Gruppe hat jetzt alle drei Felder gesehen, jeweils mit der schwereren Variante",
+        "key": "130-Finn",
+        "block": 5,
+        "feld": 2
+       }
+      ],
+      "slots": [
+       {
+        "label": "Straßenfußball-Fenster",
+        "dauer": 10,
+        "farbe": "#059669",
+        "typ": "warmup"
+       },
+       {
+        "label": "Warm up Adler, kurz",
+        "dauer": 8,
+        "farbe": "#059669",
+        "typ": "warmup"
+       },
+       {
+        "label": "Hauptteil 1 – drei Stationen: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
+        "dauer": 12,
+        "farbe": "#1a56db",
+        "typ": "spielform",
+        "stationen": 3,
+        "felder": [
+         {
+          "u": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+          "t": "Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass)"
+         },
+         {
+          "u": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+          "t": "Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball"
+         },
+         {
+          "u": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+          "t": "Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)"
+         }
+        ],
+        "coaches": [
+         "Charles",
+         "Finn",
+         "Kenneth"
+        ]
+       },
+       {
+        "label": "Torwart · Hauptteil 1 – drei Stationen: Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass) | Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball | Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)",
+        "dauer": 12,
+        "farbe": "#854d0e",
+        "typ": "tw",
+        "parallelZu": 2,
+        "tw": [
+         1,
+         2
+        ]
+       },
+       {
+        "label": "Hauptteil 2 – Gruppen rücken ein Feld weiter, Regeln wie in Hauptteil 1",
+        "dauer": 12,
+        "farbe": "#7c3aed",
+        "typ": "spielform",
+        "stationen": 3,
+        "felder": [
+         {
+          "u": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+          "t": "Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass)"
+         },
+         {
+          "u": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+          "t": "Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball"
+         },
+         {
+          "u": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+          "t": "Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)"
+         }
+        ],
+        "coaches": [
+         "Finn",
+         "Kenneth",
+         "Charles"
+        ]
+       },
+       {
+        "label": "Hauptteil 3 – Gruppen rücken noch ein Feld weiter: jede Gruppe hat jetzt alle drei Felder gesehen, jeweils mit der schwereren Variante",
+        "dauer": 12,
+        "farbe": "#7c3aed",
+        "typ": "spielform",
+        "stationen": 3,
+        "felder": [
+         {
+          "u": "2 gegen 1 plus Torwart – der Flitzer macht es breit",
+          "t": "Feld 1 am Jugendtor: 2 gegen 1 plus Torwart (bei 5 wartet eines, bei 4 startet der Verteidiger erst nach dem ersten Pass)"
+         },
+         {
+          "u": "FUNiño 3 gegen 1 – der Mittlere hat den Ball",
+          "t": "Feld 2 an den Minitoren: 3 gegen 1, der Mittlere hat den Ball"
+         },
+         {
+          "u": "FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts",
+          "t": "Feld 3 an vier Hütchentoren: 3 gegen 2 mit Wandspieler (bei 5 nur ein Verteidiger, bei 4 zwei Angreifer gegen einen Verteidiger plus Wandspieler)"
+         }
+        ],
+        "coaches": [
+         "Kenneth",
+         "Charles",
+         "Finn"
+        ]
+       },
+       {
+        "label": "Abschlussturnier auf zwei Feldern: 3+1 gegen 3+1 am Jugendtor, FUNiño 3 gegen 3 an den Minitoren, nach der Hälfte Felder tauschen",
+        "dauer": 16,
+        "farbe": "#c2410c",
+        "typ": "abschluss"
+       }
+      ],
+      "gespeichert_von": "<gespeichert_von>",
+      "updated_at": "<updated_at>"
+     }
+    }
+   ],
+   "dom": {
+    "feld": "tp-form-2-1"
+   }
+  }
+ ]
+}
