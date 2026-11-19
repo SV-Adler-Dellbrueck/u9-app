@@ -46,6 +46,14 @@ window.addEventListener("unhandledrejection",function(e){try{var m=String((e.rea
 window.pinNext=window.pinNext||function(el,n){if(el&&el.value.length===1){var x=document.getElementById("pin"+n);if(x)x.focus();}};
 window.pinBack=window.pinBack||function(){};window.pinCheck=window.pinCheck||function(){};
 (async function(){
+  /* v899: Die öffentliche Turnierseite (?turnier=…) braucht weder das Seitengerüst noch die Eltern-
+     oder Trainer-Module: Gastvereine öffnen den Link zum ersten Mal, oft im Mobilnetz am Platz.
+     Sie lädt nur core.js (Supabase, Meldungen), engine.js (esc) und md-turnierplan.js – rund 210 KB
+     gezippt statt 1,4 MB. boot.js läuft hier nicht; turnierStart() unten übernimmt, was dort im
+     Zweig ?turnier steht. Ohne boot.js wird kein Service Worker angemeldet: die Seite lebt ohnehin
+     vom Netz (Supabase ist vom Cache ausgenommen), und Gäste laden nicht die ganze App im Hintergrund. */
+  const nurTurnier=new URLSearchParams(location.search).has("turnier");
+  if(!nurTurnier){
   const shell=await (await fetch("shell.html")).text();
   document.body.insertAdjacentHTML("afterbegin",shell);
   // Haengt die Ladung (alter/kaputter Cache), bekommt der Nutzer nach 16 s einen
@@ -64,6 +72,7 @@ window.pinBack=window.pinBack||function(){};window.pinCheck=window.pinCheck||fun
       };
     }
   },16000);
+  }
 
   const ALLE=["data.js","core.js","engine.js","views.js","quiz.js",
     "md-eltern-portal.js","md-abzeichen.js","md-carpool.js","md-fanfakten.js","md-teamkasse.js","md-feier.js","md-kabine.js",
@@ -76,7 +85,7 @@ window.pinBack=window.pinBack||function(){};window.pinCheck=window.pinCheck||fun
      Taktikboard und KI-Coach, die Eltern nie sehen. Fuer den Dashboard-Fall laedt jetzt
      erst der Kern (Welle 1), der Rest kommt danach im Hintergrund.
      WICHTIG: Sonderrouten (Quiz, Ticker, Heft, Turnier, Handover ...) laden weiterhin
-     alles in EINER Welle - dort haengen Module am sofortigen Start und ein falscher
+     alles in EINER Welle (ausser ?turnier, seit v899 schlank, siehe oben) - dort haengen Module am sofortigen Start und ein falscher
      Schnitt wuerde sie zerstoeren. */
   const _p=new URLSearchParams(location.search);
   const SONDER=["quiz","ticker","heft","hoeren","turnier","handover","kind","delegate","match","eltern"];
@@ -112,7 +121,19 @@ window.pinBack=window.pinBack||function(){};window.pinCheck=window.pinCheck||fun
       document.body.appendChild(sc);
     });
   });
-  if(istDashboard){
+  const NUR_TURNIER=["core.js","engine.js","md-turnierplan.js"];
+  const turnierStart=()=>{
+    document.title="Turnierplan – SV Adler Dellbrück U9";
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content","#1e3a8a");
+    if(typeof nutzungLog==="function")nutzungLog("route","renderHeimturnierView");
+    if(typeof renderHeimturnierView==="function")renderHeimturnierView(_p.get("turnier")||"");
+    else throw new Error("md-turnierplan.js");
+  };
+  if(nurTurnier){
+    await lade(NUR_TURNIER);
+    modulWache(NUR_TURNIER);
+    turnierStart();
+  }else if(istDashboard){
     await lade(KERN);
     const welle2=ALLE.filter(f=>KERN.indexOf(f)<0);
     lade(welle2).then(()=>modulWache(welle2.concat(KERN))).catch(e=>console.error("Welle 2:",e));
