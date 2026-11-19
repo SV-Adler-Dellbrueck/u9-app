@@ -247,7 +247,7 @@ const SZENARIEN = [
     ] },
 
   { id: "G3-einklappen", titel: "Einklappen: tpKlapp, Alle einklappen, Block verschieben",
-    haelt: "Fehlerbild 3 – der Klappzustand hängt am Index und wandert beim Verschieben nicht mit: danach ist ein anderer Block offen. Der gespeicherte Körper hängt vom Klappen nicht ab. Behebung in Schritt 9.",
+    haelt: "Fehlerbild 3 – behoben in v891: der Klappzustand wandert beim Verschieben mit dem Block mit (vorher blieb er am Index, danach war ein anderer Block offen). Der gespeicherte Körper hängt vom Klappen nicht ab.",
     schritte: (() => {
       const bild = () => [...document.querySelectorAll("#tp-timeline .tp-slot")].map(el => ({ si: Number(el.dataset.si), label: tpSlotName((tpSlots[Number(el.dataset.si)] || {}).label || ""),
         zu: el.classList.contains("tp-zu"), kurz: (el.querySelector(":scope > .tp-kurz") || {}).textContent || null }));

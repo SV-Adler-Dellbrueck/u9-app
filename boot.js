@@ -3741,6 +3741,7 @@ function tpRemoveSlot(idx){
   const wahlAlt=tpWahlFelder(idx).map(id=>tpWahlIdx(id));
   const kindAlt=TP_ZUSTAND.kind[idx];
   const twAlt=Array.isArray(TP_ZUSTAND.tw[idx])?TP_ZUSTAND.tw[idx].slice():undefined;
+  const offenAlt=_tpOffen.has(idx);   // v891: Klappzustand kommt mit zurück
   const coaches={}; Object.keys(tpCoaches).forEach(k=>{ const m=k.match(/^tp-form-(\d+)-(\d+)$/); if(m&&+m[1]===idx)coaches[m[2]]=tpCoaches[k]; });
   const kopie=JSON.parse(JSON.stringify(slot));
   if(kopie.parallelZu!=null&&kopie.parallelZu>idx)kopie.parallelZu--;
@@ -3757,6 +3758,7 @@ function tpRemoveSlot(idx){
     if(kindAlt!==undefined&&_tpFeldArt(tpSlots[n])==="einzel")tpKindSetzen(n,kindAlt);
     if(twAlt!==undefined&&_tpFeldArt(tpSlots[n])==="tw")TP_ZUSTAND.tw[n]=twAlt.slice();   // v890: Haken wie vor dem Löschen
     else tpTwSetzen(n,null);                                                               // nie geändert: Vorgabe (alle)
+    if(offenAlt)_tpOffen.add(n); else _tpOffen.delete(n);   // v891: tpSlotsNeuOrdnen zieht ihn an die alte Stelle
     const reihe=tpSlots.map((_,i)=>i); reihe.pop(); reihe.splice(Math.min(idx,reihe.length),0,n);
     tpSlotsNeuOrdnen(reihe);
   },8000);
@@ -3787,6 +3789,9 @@ function tpSlotsNeuOrdnen(reihe){
     });
     _tpTwKindUmbenennen(neuVon);
   }
+  /* v891 (Fehlerbild 3): der Klappzustand hängt am Blockindex und wandert mit dem Block mit –
+     vorher blieb er an der Stelle, danach war ein anderer Block auf- bzw. zugeklappt. */
+  const offen=new Set(); _tpOffen.forEach(si=>{ const ni=neuVon[si]; if(ni!=null)offen.add(ni); }); _tpOffen=offen;
   _tpReihenfolgeAnwenden(reihe);
   tpGeaendert({speichern:"verzoegert"});
 }
