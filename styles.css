@@ -1448,3 +1448,184 @@ html[data-theme="dark"]:has(#main-app) body{background:var(--bg)}
 /* Gesperrte Hauptaktion (Einwilligung, Absagegrund): sieht als Neben-Aktion mit gestricheltem Rand anders aus,
    der Text sagt, was fehlt – Farbe ist nicht das einzige Zeichen. */
 #dsgvo-ok[disabled],#rg-ok[aria-disabled="true"]{border-style:dashed;cursor:not-allowed}
+
+/* ══ v897 Öffentliche Turnierseite (?turnier=…) ═══════════════════════════════════════════════
+   Eigene Klassen .htp-… statt Inline-Stilen. Die Seite bleibt hell (data-theme="light", v620).
+   Gold ist eine zusätzliche Farbe NUR hier: Pokal, Tor-Moment, Feier, Platzierungsspiele
+   (Beschluss 19.11.). Nachgerechnet: --gold-text auf --gold-bg 7,0:1 · --gold-ink auf --gold 7,2:1 ·
+   Weiß auf dem hellsten Kopfpunkt (--htp-blau-hell) 4,66:1 · auf --htp-navy 10,4:1.
+   Animationen nur über transform/opacity, jeweils einmal; prefers-reduced-motion schaltet alle ab. */
+:root{--gold:#f5b301;--gold-text:#7a4b00;--gold-bg:#fff8e1;--gold-ink:#3b2600;
+  --wappen-ini-0:#1e3a8a;--wappen-ini-1:#b91c1c;--wappen-ini-2:#15803d;--wappen-ini-3:#7c2d12;
+  --wappen-ini-4:#6d28d9;--wappen-ini-5:#0f766e;--wappen-ini-6:#9a3412;--wappen-ini-7:#334155}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--gold-text:#fcd34d;--gold-bg:#3a2a08}}
+:root[data-theme="dark"]{--gold-text:#fcd34d;--gold-bg:#3a2a08}
+#ht-public,#htpub-monitor{
+  --htp-navy:#1e3a8a;--htp-navy-2:#172554;--htp-blau-mitte:#1d47b5;--htp-blau-hell:#2b6cf0;--htp-blau-tief:#0b1730;
+  --htp-grund:#eef2f7;--htp-linie:#cbd5e1;--htp-rot-hell:#fde2e2;--htp-geist:#94a3b8;
+  --htp-durchsage-rand:#f59e0b;--htp-durchsage-text:#78350f;
+  --htp-s-mini:12px;--htp-s-klein:13px;--htp-s-name:14px;--htp-s-tore-klein:24px;--htp-s-text:15px;--htp-s-karte:17px;--htp-s-teil:20px;--htp-s-seite:26px;
+  --htp-r:12px;--htp-rl:18px;
+  --htp-schatten:0 1px 2px rgba(15,23,42,.06),0 4px 14px rgba(15,23,42,.07);
+  --htp-schatten-hoch:0 2px 4px rgba(15,23,42,.08),0 12px 32px rgba(30,58,138,.16);
+  --htp-wappen-schatten:drop-shadow(0 2px 2px rgba(15,23,42,.22)) drop-shadow(0 6px 10px rgba(15,23,42,.18));
+  --htp-font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+#ht-public.htp-liga{font:400 var(--htp-s-text)/1.45 var(--htp-font);font-variant-numeric:tabular-nums;color:var(--text)}
+#ht-public :focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.htp-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Wappen: Bild mit Schatten, sonst Initialen im Kreis (Farbe aus dem Namen, jede ≥ 4,5:1 zu Weiß) */
+.htp-wp{display:inline-grid;grid-template:100%/100%;place-items:center;flex:0 0 auto;width:var(--wp,36px);height:var(--wp,36px);filter:var(--htp-wappen-schatten);vertical-align:middle}
+.htp-wp img{width:100%;height:100%;min-width:0;min-height:0;object-fit:contain;display:block}
+.htp-wp.ini{border-radius:50%;background:var(--wappen-ini-7);color:#fff;font-weight:900;font-size:calc(var(--wp,36px)*.38);line-height:1;letter-spacing:.02em;filter:none;box-shadow:0 1px 2px rgba(15,23,42,.25),0 4px 8px rgba(15,23,42,.15);border:2px solid #fff}
+.htp-wp.ini[data-f="0"]{background:var(--wappen-ini-0)}.htp-wp.ini[data-f="1"]{background:var(--wappen-ini-1)}
+.htp-wp.ini[data-f="2"]{background:var(--wappen-ini-2)}.htp-wp.ini[data-f="3"]{background:var(--wappen-ini-3)}
+.htp-wp.ini[data-f="4"]{background:var(--wappen-ini-4)}.htp-wp.ini[data-f="5"]{background:var(--wappen-ini-5)}
+.htp-wp.ini[data-f="6"]{background:var(--wappen-ini-6)}.htp-wp.ini[data-f="7"]{background:var(--wappen-ini-7)}
+.htp-wp.klein{--wp:26px}.htp-wp.gross{--wp:56px}
+.htp-wp.ghost{border-radius:50%;border:2px dashed var(--htp-geist);background:var(--surface2);filter:none;color:var(--text2);font-weight:800;font-size:var(--htp-s-klein)}
+.htp-wp-zeile{margin-right:6px;border-width:1.5px}
+
+/* Kopf */
+.htp-kopf{position:relative;overflow:hidden;color:#fff;border-radius:0 0 28px 28px;padding:calc(24px + env(safe-area-inset-top)) 0 32px;
+  background:radial-gradient(120% 90% at 85% -10%,var(--htp-blau-hell) 0%,rgba(43,108,240,0) 55%),linear-gradient(160deg,var(--htp-navy) 0%,var(--htp-blau-mitte) 60%,var(--blue-dark) 100%)}
+.htp-kopf::before{content:"";position:absolute;inset:0;opacity:.10;pointer-events:none;
+  background:radial-gradient(circle at 50% 118%,transparent 0 92px,#fff 93px 95px,transparent 96px),linear-gradient(#fff,#fff) 50% 100%/100% 2px no-repeat,repeating-linear-gradient(90deg,rgba(255,255,255,0) 0 48px,rgba(255,255,255,.35) 48px 96px)}
+.htp-kopf-adler{position:absolute;right:-36px;top:-18px;width:180px;border-radius:50%;opacity:.10;pointer-events:none;filter:grayscale(1) brightness(3)}
+.htp-kopf-innen{position:relative;max-width:1180px;margin:0 auto;padding:0 16px}
+.htp-veranstalter{display:flex;align-items:center;gap:8px;font-size:var(--htp-s-klein);font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.htp-veranstalter img{width:28px;height:28px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+.htp-titel{font-size:30px;line-height:1.1;font-weight:900;margin:12px 0 8px;letter-spacing:-.01em;text-wrap:balance}
+.htp-eckdaten{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:var(--htp-s-text);font-weight:600}
+.htp-status{display:inline-flex;align-items:center;gap:8px;margin-top:16px;background:#fff;color:var(--htp-navy);border-radius:999px;padding:6px 14px 6px 10px;font-weight:800;font-size:var(--htp-s-klein);box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.htp-status.ende{color:var(--gold-text)}
+.htp-wappenreihe{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0 0;padding:0;list-style:none}
+.htp-medaille{position:relative;width:60px;height:60px;border-radius:50%;display:grid;place-items:center;overflow:hidden;cursor:pointer;padding:0;
+  background:radial-gradient(circle at 35% 30%,#fff 0%,#eef3ff 70%,#dfe8fb 100%);border:2px solid rgba(255,255,255,.85);box-shadow:0 2px 0 rgba(255,255,255,.6) inset,0 6px 16px rgba(4,16,60,.35)}
+.htp-medaille .htp-wp{--wp:42px}
+.htp-medaille::after{content:"";position:absolute;inset:-20%;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.95) 50%,transparent 65%);transform:translateX(-130%);pointer-events:none}
+
+/* Seite */
+.htp-seite{max-width:1180px;margin:0 auto;padding:0 16px 48px}
+.htp-raster{display:grid;gap:24px}
+@media (min-width:960px){.htp-raster{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);align-items:start}.htp-rechts{position:sticky;top:96px}}
+.htp-h2{font-size:var(--htp-s-teil);font-weight:800;margin:32px 0 12px;display:flex;align-items:center;gap:8px;line-height:1.25}
+.htp-h2 small{font-size:var(--htp-s-klein);color:var(--text2);font-weight:600;margin-left:auto}
+.htp-karte{background:var(--surface);border-radius:var(--htp-rl);box-shadow:var(--htp-schatten);padding:16px;margin-bottom:12px}
+.htp-helfer{background:var(--green-bg);border:1px solid #a7f3d0;border-radius:var(--htp-r);padding:10px 12px;margin-top:16px;font-size:var(--htp-s-text);color:#065f46;font-weight:700}
+.htp-leer{background:var(--surface);border-radius:var(--htp-rl);padding:20px;margin-top:16px;text-align:center;color:var(--text2)}
+
+/* Mein Verein */
+.htp-filter{position:sticky;top:0;z-index:20;background:rgba(238,242,247,.97);-webkit-backdrop-filter:saturate(1.4) blur(10px);backdrop-filter:saturate(1.4) blur(10px);margin:0 -16px;padding:12px 16px 8px}
+.htp-filter-titel{font-size:var(--htp-s-klein);font-weight:800;color:var(--text2);margin-bottom:6px}
+.htp-chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.htp-chips::-webkit-scrollbar{display:none}
+.htp-chip{flex:none;display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:6px 14px 6px 6px;border-radius:999px;border:1.5px solid var(--rand-bedien);background:var(--surface);color:var(--text);font:700 var(--htp-s-text)/1.2 var(--htp-font);cursor:pointer;white-space:nowrap}
+.htp-chip .htp-wp{--wp:32px}
+.htp-chip[aria-pressed="true"]{background:var(--htp-navy);border-color:var(--htp-navy);color:#fff}
+.htp-chip .htp-haken{font-weight:900;margin-left:6px}
+.htp-chip.alle{padding-left:14px}
+.htp-mein{margin-top:16px;background:linear-gradient(135deg,var(--htp-navy),var(--htp-blau-mitte));color:#fff;border-radius:var(--htp-rl);padding:16px;box-shadow:var(--htp-schatten-hoch);display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center}
+.htp-mein .z1{font-size:var(--htp-s-klein);font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.htp-mein .z2{font-size:var(--htp-s-teil);font-weight:900;line-height:1.2}
+.htp-mein .z3{font-size:var(--htp-s-text);font-weight:600}
+.htp-countdown{display:inline-block;background:#fff;color:var(--htp-navy);border-radius:999px;padding:2px 10px;font-weight:900;margin-left:4px}
+.htp-hinweis-platz{font-size:var(--htp-s-klein);font-weight:700;color:var(--gold-text);background:var(--gold-bg);border-radius:10px;padding:8px 12px;margin:8px 0 12px}
+.htp-durchsage{display:flex;gap:12px;align-items:flex-start;background:var(--amber-bg);border:2px solid var(--htp-durchsage-rand);border-radius:var(--htp-rl);padding:12px 16px;margin-top:16px;font-weight:700;color:var(--htp-durchsage-text)}
+.htp-durchsage small{display:block;font-weight:600;margin-top:2px;font-size:var(--htp-s-klein)}
+
+/* Spielkarten */
+.htp-spiel{position:relative;background:var(--surface);border-radius:var(--htp-rl);box-shadow:var(--htp-schatten);padding:12px 16px 16px;margin-bottom:12px;border:2px solid transparent}
+.htp-spiel-kopf{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:var(--htp-s-klein);font-weight:700;color:var(--text2);margin-bottom:12px}
+.htp-feld{display:inline-flex;align-items:center;gap:4px;background:var(--blue-bg);color:var(--htp-navy);border-radius:8px;padding:2px 8px;font-weight:800}
+.htp-phase{color:var(--amber);font-weight:800}
+.htp-phase.platz{color:var(--gold-text);background:var(--gold-bg);border-radius:8px;padding:2px 8px}
+.htp-paarung{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px}
+.htp-team{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;min-width:0}
+.htp-team .name{font-weight:700;font-size:var(--htp-s-text);line-height:1.2;overflow-wrap:anywhere;text-wrap:balance;max-width:100%}
+.htp-team.platzhalter .name{color:var(--text2);font-weight:600}
+.htp-ergebnis{min-width:92px;text-align:center}
+.htp-tore{font-size:32px;font-weight:900;letter-spacing:.02em;line-height:1;display:inline-block}
+.htp-tore.leer{color:var(--text2);font-size:var(--htp-s-karte);font-weight:800}
+.htp-wort{display:block;font-size:var(--htp-s-mini);font-weight:800;color:var(--text2);margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
+.htp-erg-knopf{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;min-height:56px;min-width:92px;padding:6px 10px;border-radius:var(--htp-r);border:1.5px solid var(--rand-bedien);background:var(--surface);color:var(--text);font-family:inherit;cursor:pointer}
+.htp-erg-knopf .htp-stift{font-size:var(--htp-s-mini);font-weight:800;color:var(--text2)}
+.htp-unser-marke{display:none;margin-left:auto;background:var(--htp-navy);color:#fff;border-radius:8px;padding:2px 8px;font-weight:800}
+.htp-spiel.unser{border-color:var(--blue)}
+.htp-spiel.unser .htp-unser-marke{display:inline-flex}
+.htp-spiel.live{border-color:var(--red);box-shadow:0 0 0 4px rgba(185,28,28,.10),var(--htp-schatten-hoch)}
+.htp-live{display:inline-flex;align-items:center;gap:6px;background:var(--red);color:#fff;border-radius:8px;padding:2px 9px 2px 8px;font-weight:900;letter-spacing:.08em}
+.htp-puls{position:relative;width:8px;height:8px;border-radius:50%;background:#fff}
+.htp-puls::after{content:"";position:absolute;inset:0;border-radius:50%;background:#fff;animation:htp-puls 1.8s ease-out infinite}
+.htp-lauf{height:6px;border-radius:3px;background:var(--htp-rot-hell);margin-top:12px;overflow:hidden}
+.htp-lauf i{display:block;height:100%;background:var(--red);transform-origin:left;transform:scaleX(var(--anteil,0));transition:transform 1s linear}
+.htp-lauf-text{display:flex;justify-content:space-between;font-size:var(--htp-s-mini);color:var(--text2);font-weight:700;margin-top:4px}
+.htp-zeitblock{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px}
+.htp-uhr{font-weight:900;font-size:var(--htp-s-karte);padding-top:12px;position:relative}
+.htp-uhr::after{content:"";position:absolute;left:24px;top:40px;bottom:-8px;width:2px;background:var(--htp-linie)}
+.htp-zeitblock:last-child .htp-uhr::after{display:none}
+.htp-zeitblock.vorbei .htp-uhr{color:var(--text2)}
+.htp-zwischentitel{font-size:var(--htp-s-klein);font-weight:800;color:var(--gold-text);background:var(--gold-bg);border-radius:10px;padding:6px 12px;margin:8px 0 12px;display:inline-flex;gap:6px}
+.htp-kompakt .htp-spiel{padding:12px}
+.htp-kompakt .htp-wp{--wp:30px}
+.htp-kompakt .htp-tore{font-size:var(--htp-s-tore-klein)}
+.htp-kompakt .htp-team .name{font-size:var(--htp-s-name)}
+.htp-mehr{width:100%;justify-content:center;font-weight:800;margin-bottom:12px}
+@media (max-width:599px){
+  .htp-zeitblock{grid-template-columns:1fr;gap:0}
+  .htp-uhr{padding:8px 0;display:flex;align-items:center;gap:8px}
+  .htp-uhr::before{content:"🕙";font-size:var(--htp-s-text)}
+  .htp-uhr::after{position:static;flex:1;height:2px;width:auto;background:var(--htp-linie)}
+  .htp-zeitblock:last-child .htp-uhr::after{display:block}
+  .htp-medaille{width:50px;height:50px}.htp-medaille .htp-wp{--wp:34px}.htp-wappenreihe{gap:8px}.htp-titel{font-size:28px}}
+
+/* Tabellen */
+.htp-tabelle{width:100%;border-collapse:collapse;font-size:var(--htp-s-text)}
+.htp-tabelle caption{text-align:left;font-weight:900;font-size:var(--htp-s-karte);padding-bottom:8px}
+.htp-tabelle th{font-size:var(--htp-s-mini);color:var(--text2);font-weight:800;text-align:right;padding:4px 6px;text-transform:uppercase;letter-spacing:.04em}
+.htp-tabelle th:nth-child(2){text-align:left}
+.htp-tabelle td{padding:8px 6px;border-top:var(--border);text-align:right}
+.htp-tabelle td.verein{text-align:left}
+.htp-tabelle td.verein div{display:flex;align-items:center;gap:8px;font-weight:700}
+.htp-tabelle td.pl{color:var(--text2);width:28px}
+.htp-tabelle td.pkt{font-weight:900}
+.htp-tabelle tr.unser td{background:var(--blue-bg)}
+.htp-hinweis{font-size:var(--htp-s-klein);color:var(--text2);margin-top:8px}
+.htp-fairplay-zeile{background:var(--green-bg);border:2px solid #34d399;border-radius:var(--htp-rl);padding:12px 14px;margin-top:12px;color:#065f46}
+
+/* Gut zu wissen */
+details.htp-info{background:var(--surface);border-radius:var(--htp-rl);box-shadow:var(--htp-schatten);margin-bottom:12px}
+details.htp-info summary{min-height:56px;display:flex;align-items:center;gap:12px;padding:0 16px;font-weight:800;font-size:var(--htp-s-karte);cursor:pointer;list-style:none}
+details.htp-info summary::-webkit-details-marker{display:none}
+details.htp-info summary::after{content:"";margin-left:auto;width:10px;height:10px;border-right:2.5px solid var(--text2);border-bottom:2.5px solid var(--text2);transform:rotate(45deg);transition:transform .2s}
+details.htp-info[open] summary::after{transform:rotate(-135deg)}
+details.htp-info .inhalt{padding:0 16px 16px;white-space:pre-wrap;line-height:1.6;color:var(--text)}
+.htp-aktionen{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:24px}
+.htp-aktionen .btn{justify-content:center;font-weight:800;font-size:var(--htp-s-text);padding:0 8px}
+.htp-fuss{text-align:center;color:var(--text2);font-size:var(--htp-s-klein);margin-top:16px;line-height:1.6}
+
+/* Animationen – einmal beim ersten Aufbau (.erstmals), beim Neuzeichnen startet nichts erneut */
+@keyframes htp-puls{0%{transform:scale(1);opacity:.7}100%{transform:scale(2.6);opacity:0}}
+@keyframes htp-glanz{to{transform:translateX(130%)}}
+@keyframes htp-auftauchen{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes htp-medaille-rein{0%{opacity:0;transform:scale(.6) rotate(-8deg)}70%{opacity:1;transform:scale(1.06)}100%{transform:none}}
+@keyframes htp-federn{0%{transform:scale(1)}35%{transform:scale(1.35)}100%{transform:scale(1)}}
+.erstmals .htp-medaille{animation:htp-medaille-rein .55s cubic-bezier(.2,.8,.2,1.2) both;animation-delay:calc(var(--i,0)*90ms + 150ms)}
+.erstmals .htp-medaille::after{animation:htp-glanz 1s ease-out forwards;animation-delay:calc(var(--i,0)*90ms + 700ms)}
+.htp-medaille.funkeln::after{animation:htp-glanz .8s ease-out forwards}
+.htp-medaille.funkeln{animation:htp-federn .45s ease-out}
+.erstmals .htp-auftauchen{animation:htp-auftauchen .45s ease-out both;animation-delay:calc(var(--i,0)*70ms + 250ms)}
+@media (prefers-reduced-motion:reduce){
+  #ht-public *,#ht-public *::before,#ht-public *::after,#htpub-monitor *,#htpub-monitor *::before,#htpub-monitor *::after{animation:none!important;transition:none!important}
+  .htp-konfetti{display:none!important}
+}
+@media print{
+  body{background:#fff!important}
+  .htp-kopf{background:none!important;color:#000;padding:0 0 8px;border-bottom:2px solid #000;border-radius:0}
+  .htp-kopf::before,.htp-kopf-adler,.htp-status,.htp-filter,.htp-aktionen,.htp-konfetti,.htp-lauf,.htp-lauf-text,.htp-mein,.htp-mehr,#htpub-monitor{display:none!important}
+  .htp-medaille{box-shadow:none;border:1px solid #999}
+  .htp-spiel,.htp-karte,details.htp-info{box-shadow:none;border:1px solid #bbb;break-inside:avoid}
+  .htp-raster{display:block}
+  #ht-public *{animation:none!important}
+}
+.htp-body{margin:0;background:#eef2f7;color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}

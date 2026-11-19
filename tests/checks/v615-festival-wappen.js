@@ -9,7 +9,8 @@
       „Roland West“ finden „DJK Roland Köln-West“; passen zwei Vereine gleich gut, wird nicht
       geraten.
    b) Öffentliche Festivalseite (?turnier=…): neben den Teamnamen der Spiele und in der
-      Aufwärmliste steht das Wappen – alt leer, aria-hidden, mit onerror.
+      Aufwärmliste steht das Wappen – alt leer, aria-hidden, mit onerror (seit v897 ersetzt
+      _htWpFehler das kaputte Bild durch die Initialen im Kreis, statt es nur zu entfernen).
    c) Die Seite bleibt im dunklen Modus des Handys hell (festes Layout): die leise Fußzeile
       hat dort mindestens 4,5:1. */
 "use strict";
@@ -67,7 +68,7 @@ module.exports = async function (h) {
       const gast = bilder.filter(i => /gast\.png/.test(i.src));
       const fuss = [...wrap.querySelectorAll("div")].reverse().find(d => /aktualisiert sich von selbst/.test(d.textContent) && d.children.length <= 1);
       return { theme: document.documentElement.getAttribute("data-theme"), bilder: bilder.length, gast: gast.length,
-        altLeer: bilder.every(i => i.getAttribute("alt") === ""), onerror: bilder.every(i => /remove/.test(i.getAttribute("onerror") || "")),
+        altLeer: bilder.every(i => i.getAttribute("alt") === ""), onerror: bilder.every(i => /remove|_htWpFehler/.test(i.getAttribute("onerror") || "")),
         fussK: fuss ? window.__kontrastVon(fuss) : null, text: wrap.textContent.slice(0, 80) };
     }, h.kontrastHelfer);
     const f = s.fehler().filter(x => !/example\.org|ERR_/.test(x));

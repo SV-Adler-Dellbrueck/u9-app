@@ -2038,11 +2038,14 @@ function _htGen(teams,cfg){
   }
   return done.map(m=>({...m,ta:null,tb:null}));
 }
-// Tabelle über eine Teilmenge des Plans (nur echte Team-Indizes, nur mit Ergebnis)
-function _htTabelle(plan,idxs,teams){
+// Tabelle über eine Teilmenge des Plans (nur echte Team-Indizes, nur mit Ergebnis).
+// v897: zaehlt (optional) wählt die Spiele – die öffentliche Seite und der Monitor zählen nur
+// abgeschlossene (_htpFertig); Trainer-Ansicht und htFinalsFill rufen ohne und bleiben, wie sie sind.
+function _htTabelle(plan,idxs,teams,zaehlt){
   const t={}; idxs.forEach(i=>t[i]={i,name:teams[i],pkt:0,tore:0,geg:0,sp:0});
   plan.forEach(p=>{
     if(typeof p.a!=="number"||typeof p.b!=="number"||p.ta==null||p.tb==null)return;
+    if(zaehlt&&!zaehlt(p))return;
     if(!t[p.a]||!t[p.b])return;
     const A=t[p.a],B=t[p.b];A.sp++;B.sp++;A.tore+=p.ta;A.geg+=p.tb;B.tore+=p.tb;B.geg+=p.ta;
     if(p.ta>p.tb)A.pkt+=3;else if(p.ta<p.tb)B.pkt+=3;else{A.pkt++;B.pkt++;}
@@ -3828,22 +3831,29 @@ function fstTaktZeile(row){
       <div style="font-size:var(--s-text);line-height:1.55"><b>${runden} Runde${runden===1?"":"n"} à ${spiel} Minuten</b>${von?`, von ${von} bis ${bis} Uhr`:""}.${runden>1&&pause?` Zwischen den Runden liegen jeweils <b>${pause} Minuten Trinkpause und Wechselfenster</b> – zum Trinken, Durchatmen und für den Weg zum nächsten Feld.`:""}</div>
     </div>`;
 }
+/* v897: Wappenreihe aller Vereine im Kopf der Festivalseite – dieselben Medaillen wie auf der Turnierseite. */
+function _fstWappenreihe(row){
+  const cfg=row.config||{}, vereine=[...new Set((cfg.vereine||[]).map(v=>v&&v.name).filter(Boolean))];
+  if(!vereine.length)return "";
+  return `<ul class="htp-wappenreihe" style="width:100%;margin-top:4px" aria-label="Teilnehmende Vereine">${vereine.map((n,i)=>`<li><button class="htp-medaille" style="--i:${i}" onclick="htpFunkeln(this)" aria-label="${esc(n)}" title="${esc(n)}">${_htWappen(cfg,n)}</button></li>`).join("")}</ul>`;
+}
 function _fstPublicRender(wrap,row){
   const teams=row.teams||[], plan=row.plan||[], cfg=row.config||{};
   const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
   const dat=row.datum?new Date(row.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}):"";
-  const nm=i=>_htWappenImg(cfg,teams[i],20)+esc(teams[i]||("Team "+(i+1)));
+  const nm=i=>_htWappenImg(cfg,teams[i],24)+esc(teams[i]||("Team "+(i+1)));
   const runden=[...new Set(plan.map(p=>p.runde))].sort((a,b)=>a-b);
   const helfer=!!(_htPub&&_htPub.code), jetzt=fstRundeJetzt(row), verzug=fstVerzug(cfg);
   const wiederher=_fstOffenMerken(wrap);
   wrap.innerHTML=`
-    <div style="background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border-radius:18px;padding:16px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 24px rgba(30,58,138,.25)">
+    <div style="background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border-radius:18px;padding:16px;display:flex;flex-wrap:wrap;align-items:center;gap:14px;box-shadow:0 6px 24px rgba(30,58,138,.25)">
       <img src="logo.png" alt="SV Adler Dellbrück" style="width:58px;height:58px;flex:0 0 auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))">
       <div style="min-width:0">
         <div style="font-size:var(--s-teil);font-weight:900;line-height:1.15">${esc(row.name||"Kinderfestival")}</div>
         <div style="font-size:var(--s-text);opacity:.92;margin-top:2px">${esc(dat)}</div>
         <div style="font-size:var(--s-text);opacity:.85">${esc(row.ort||"")}</div>
       </div>
+      ${_fstWappenreihe(row)}
     </div>
 
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 12px">
@@ -3869,7 +3879,7 @@ function _fstPublicRender(wrap,row){
     ${fstAufwaermen(row).length?`<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
       <div style="font-size:var(--s-text);font-weight:800;color:#475569;margin-bottom:6px">🔥 Aufwärmen</div>
       <div style="font-size:var(--s-text);color:#475569;margin-bottom:6px">Vor der ersten Runde hat jede Mannschaft ihr eigenes Feld:</div>
-      ${fstAufwaermen(row).map(x=>`<div style="display:flex;gap:8px;align-items:center;padding:3px 0;font-size:var(--s-text)"><span style="min-width:0;flex:1;font-weight:700;display:flex;align-items:center">${_htWappenImg(cfg,x.verein,22)}${esc(x.verein)}</span><span style="font-weight:800;color:#1e3a8a">${esc(x.feld)}</span></div>`).join("")}
+      ${fstAufwaermen(row).map(x=>`<div style="display:flex;gap:8px;align-items:center;padding:3px 0;font-size:var(--s-text)"><span style="min-width:0;flex:1;font-weight:700;display:flex;align-items:center">${_htWappenImg(cfg,x.verein,26)}${esc(x.verein)}</span><span style="font-weight:800;color:#1e3a8a">${esc(x.feld)}</span></div>`).join("")}
     </div>`:""}
 
     ${teams.length?`<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
@@ -3912,32 +3922,53 @@ function _fstPublicRender(wrap,row){
   wiederher();
   fstUhrTicken();
 }
-/* v615: Wappen neben dem Teamnamen. Leeres alt + aria-hidden: der Name steht daneben.
-   Lädt das Bild nicht, verschwindet es (onerror) – die Zeile bleibt lesbar. Nur https-Adressen
-   und unser eigenes logo.png. */
-function _htWappenImg(cfg,team,px){
-  const w=(cfg&&cfg.wappen)||{}; const s=px||20;
-  let verein=team;
-  if(fstIst({config:cfg})){ const t=fstTeamsBauen(cfg.vereine||[]).find(x=>x.name===team); if(t)verein=t.verein; }
-  else verein=_htVereinVonTeam(team);
-  const url=w[verein]||w[team];
-  if(!url||!(url==="logo.png"||/^https:\/\//.test(url)))return "";
-  return `<img src="${esc(url)}" alt="" aria-hidden="true" loading="lazy" onerror="this.remove()" style="width:${s}px;height:${s}px;object-fit:contain;vertical-align:middle;margin-right:5px;flex:0 0 auto">`;
+/* v615: Wappen neben dem Teamnamen. Leeres alt + aria-hidden: der Name steht daneben. Nur https-Adressen
+   und unser eigenes logo.png.
+   v897: Lädt das Bild nicht oder fehlt das Wappen, stehen die Initialen des Vereins im Kreis – nie eine
+   Lücke. Die Kreisfarbe kommt aus dem Namen (feste Palette in styles.css, jede ≥ 4,5:1 zu Weiß); die
+   Datenbank kennt keine Vereinsfarben. */
+function _htVereinFuer(cfg,team){
+  if(fstIst({config:cfg})){ const t=fstTeamsBauen((cfg&&cfg.vereine)||[]).find(x=>x.name===team); if(t)return t.verein; }
+  return _htVereinVonTeam(team);
 }
+function _htInitialen(n){
+  const t=String(n||"").replace(/^(SV|SC|FC|TuS|VfL|VfB|VfR|DJK|SG|TSV|TV|SpVgg|SpVg|SSV|BSV|FSV|JSG|SpG|SF)\s+/i,"").split(/[\s\-.]+/).filter(Boolean);
+  return (t.length>1?t[0][0]+t[1][0]:(t[0]||"?").slice(0,2)).toUpperCase();
+}
+function _htIniFarbe(n){ let h=0; for(const c of String(n||""))h=(h*31+c.charCodeAt(0))>>>0; return h%8; }
+function _htWappen(cfg,team,klasse,px){
+  const v=_htVereinFuer(cfg,team)||team, w=(cfg&&cfg.wappen)||{}, url=w[v]||w[team];
+  const ini=_htInitialen(v), f=_htIniFarbe(v), gr=px?` style="--wp:${Number(px)}px"`:"";
+  if(!url||!(url==="logo.png"||/^https:\/\//.test(url)))return `<span class="htp-wp ini ${klasse||""}" data-f="${f}"${gr} aria-hidden="true">${esc(ini)}</span>`;
+  return `<span class="htp-wp ${klasse||""}" data-f="${f}"${gr} aria-hidden="true"><img src="${esc(url)}" alt="" aria-hidden="true" loading="lazy" decoding="async" onerror="_htWpFehler(this)" data-ini="${esc(ini)}"></span>`;
+}
+function _htWpFehler(img){
+  const s=img&&img.parentNode; if(!s)return;
+  const t=img.getAttribute("data-ini")||"?"; img.remove();
+  s.classList.add("ini"); s.textContent=t;
+}
+/* Alter Name, weiter genutzt von der Festivalseite: Wappen in einer Textzeile. */
+function _htWappenImg(cfg,team,px){ return _htWappen(cfg,team,"htp-wp-zeile",px||24); }
 async function renderHeimturnierView(slug){
   /* v615: Die Seite hat ein festes helles Layout (weiße Karten). Im dunklen Modus des Handys
      hätten die Farb-Tokens auf Dunkel umgeschaltet – helles Grau auf Weiß. */
   document.documentElement.setAttribute("data-theme","light");
-  document.body.style.cssText="margin:0;background:#f1f5f9;font-family:Inter,system-ui,sans-serif;color:#0f172a";
+  document.body.style.cssText="margin:0";
+  document.body.classList.add("htp-body");   // v897: Grund und Schrift aus styles.css
   const wrap=document.createElement("div");
   wrap.id="ht-public";
   wrap.style.cssText="max-width:560px;margin:0 auto;padding:14px 14px 40px";
   document.body.appendChild(wrap);
-  _htPub={slug,code:new URLSearchParams(location.search).get("code")||"",wrap,row:null};
+  _htPub={slug,code:new URLSearchParams(location.search).get("code")||"",wrap,row:null,filter:_htPubFilterGemerkt(slug),erstmals:true};
   await _htPubLoad();
   /* v489: Der gemeinsame Anpfiff muss schnell bei den Gast-Trainern ankommen – der
      Countdown selbst laeuft lokal aus dem Anker, nur der Start braucht die Runde. */
   setInterval(()=>{if(!document.hidden&&!document.getElementById("htpub-sheet"))_htPubLoad();},10000);
+}
+/* v897: Die Wahl „Mein Verein“ merkt sich das Gerät – nur Bequemlichkeit, darf fehlen. */
+function _htPubFilterGemerkt(slug){
+  try{ const x=localStorage.getItem("adler_turnier_"+slug); if(x!=null&&/^\d+$/.test(x))return Number(x); }catch(e){}
+  return null;
 }
 async function _htPubLoad(){
   if(!_htPub)return;
@@ -3984,94 +4015,214 @@ async function htPubTor(mi,seite,delta){
   p.ta=ta;p.tb=tb;
   const el=document.getElementById("htpub-"+seite); if(el)el.textContent=String(seite==="ta"?ta:tb);
 }
-function _htPublicRender(wrap,row){
-  if(row&&fstIst(row)){ _fstPublicRender(wrap,row); return; }   // v484: Festival-Seite mit Wappen
-  if(!row){wrap.innerHTML=`<div style="text-align:center;padding:60px 20px"><div style="font-size:44px">🏆</div><div style="font-weight:800;margin-top:8px">Turnier nicht gefunden</div><div style="font-size:13px;color:#5b6b81;margin-top:4px">Der Link ist abgelaufen oder falsch – bitte beim Veranstalter nachfragen.</div></div>`;return;}
-  const teams=row.teams||[], plan=row.plan||[], cfg=row.config||{};
-  const dat=row.datum?new Date(row.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}):"";
-  const helfer=!!(_htPub&&_htPub.code);
-  const filter=(_htPub&&_htPub.filter!=null)?_htPub.filter:null;
-  const zeilen=plan.map((p,mi)=>{
-    if(filter!=null&&p.a!==filter&&p.b!==filter)return "";
-    const echt=typeof p.a==="number"&&typeof p.b==="number";
-    const erg=p.ta!=null?p.ta+" : "+p.tb:"–";
-    const ergZelle=(helfer&&echt)
-      ?`<button class="btn btn-sm" onclick="htPubEdit(${mi})" style="min-height:44px;min-width:70px;justify-content:center;font-size:13px">✏️ ${erg}</button>`
-      :erg;
-    return `<tr style="border-top:1px solid #e2e8f0;${p.ta!=null?"background:#f8fafc;":""}">
-      <td style="padding:7px 6px;font-weight:700;white-space:nowrap">${esc(p.zeit||"")}</td>
-      <td style="padding:7px 4px;color:#64748b;white-space:nowrap">F${p.feld||1}</td>
-      <td style="padding:7px 6px">${typeof p.a==="number"?_htWappenImg(cfg,teams[p.a],18):""}${esc(_htName(p.a,teams))} – ${typeof p.b==="number"?_htWappenImg(cfg,teams[p.b],18):""}${esc(_htName(p.b,teams))}<div style="font-size:10px;color:#b45309;font-weight:700">${esc(p.phase||"")}</div></td>
-      <td style="padding:7px 6px;text-align:right;font-weight:900;white-space:nowrap">${ergZelle}</td>
-    </tr>`;}).join("");
-  let tabellen="";
-  if(plan.length&&cfg.format!=="festival"){
-    const blocks=cfg.format==="gruppen"
-      ?_htGruppenN(row).map((idxs,g)=>["Gruppe "+HT_GRLABEL[g],idxs])
-      :[["Tabelle",teams.map((_,i)=>i)]];
-    tabellen=blocks.map(([titel,idxs])=>`<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-top:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
-      <div style="font-weight:800;font-size:14px;margin-bottom:6px">📊 ${titel}</div>
-      ${_htTabelle(plan,idxs,teams).map((z,pl)=>`<div style="display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0">
-        <span style="width:22px;color:#64748b">${pl+1}.</span><span style="flex:1;font-weight:600">${esc(z.name)}</span>
-        <span style="font-size:11px;color:var(--text3)">${z.sp} Sp. · ${z.tore}:${z.geg}</span><b style="min-width:24px;text-align:right">${z.pkt}</b>
-      </div>`).join("")}
-    </div>`).join("");
-  }else if(plan.length){
-    tabellen=`<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:14px;padding:12px 14px;margin-top:12px;font-size:13px;color:#065f46">🦅 Festival-Turnier: Alle spielen gleich viel – auf eine Tabelle verzichten wir bewusst (Kinderfußball!).</div>`;
+/* ══ v897: Öffentliche Turnierseite (Liga und Gruppen) – Entwurf vom 19.11. ══════════════════════
+   Reihenfolge nach dem, was Eltern und Gastvereine zuerst wissen wollen: Kopf mit Wappenreihe,
+   „Mein Verein“, Durchsage, Jetzt live, Als Nächstes, Spielplan nach Zeit, Tabellen, Gut zu wissen.
+   Ein Spiel zählt in der Tabelle erst nach Ablauf seiner geplanten Spielzeit; bis dahin ist das
+   eingetragene Ergebnis ein „Zwischenstand“ (Beschluss 19.11., kein neuer Knopf). Gerechnet wird mit
+   Datum UND Uhrzeit des Plans – am Tag danach sind alle Spiele vorbei, am Tag davor keines. */
+function _htpHeute(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function _htpZeit(row,zeit){
+  const m=/^(\d{1,2}):(\d{2})$/.exec(String(zeit||""));
+  const d=new Date(((row&&row.datum)||_htpHeute())+"T00:00:00");
+  if(m)d.setHours(Number(m[1]),Number(m[2]),0,0);
+  return d.getTime();
+}
+function _htpDauer(cfg){ return Math.max(1,Number((cfg||{}).spieldauer)||10); }
+function _htpLive(row,p){ const a=_htpZeit(row,p.zeit), n=Date.now(); return n>=a&&n<a+_htpDauer(row.config)*60000; }
+function _htpVorbei(row,p){ return Date.now()>=_htpZeit(row,p.zeit)+_htpDauer(row.config)*60000; }
+function _htpKommt(row,p){ return Date.now()<_htpZeit(row,p.zeit); }
+function _htpFertig(row,p){ return p.ta!=null&&p.tb!=null&&_htpVorbei(row,p); }
+function _htpUhr(){ return new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}); }
+/* Platzhalter-Spiel (Finalrunde, „1. Gruppe A“), das ein Team noch erreichen kann: beim Vereinsfilter
+   bleibt es sichtbar (v888 zeigte danach „Keine weiteren Spiele“, obwohl noch eines kam). */
+function _htpPlatzhalterFuer(row,p,f){
+  if(typeof p.a==="number"&&typeof p.b==="number")return false;
+  if(p.a===f||p.b===f)return true;
+  const g=_htGruppenN(row).findIndex(idxs=>idxs.includes(f)), L=HT_GRLABEL[g];
+  return [p.a,p.b].some(v=>{ if(typeof v==="number")return false; const m=/^([A-D])\d+$/.exec(String(v)); return m?m[1]===L:true; });
+}
+function _htpTeam(row,v){
+  const t=row.teams||[];
+  if(typeof v!=="number")return `<div class="htp-team platzhalter"><span class="htp-wp ghost" aria-hidden="true">?</span><span class="name">${esc(_htName(v,t))}</span></div>`;
+  return `<div class="htp-team">${_htWappen(row.config,t[v])}<span class="name">${esc(t[v]||"?")}</span></div>`;
+}
+/* Eine Spielkarte: Wappen – Ergebnis – Wappen, darunter immer ein Wort. mi ist der Index im GESAMTEN
+   Plan – auch in der gefilterten Liste schreibt der Eintragen-Knopf das richtige Spiel. */
+function _htpKarte(row,p,mi,i){
+  const t=row.teams||[], f=_htPub?_htPub.filter:null, helfer=!!(_htPub&&_htPub.code);
+  const echt=typeof p.a==="number"&&typeof p.b==="number", erg=p.ta!=null&&p.tb!=null;
+  const live=_htpLive(row,p), vorbei=_htpVorbei(row,p), fertig=erg&&vorbei;
+  const unser=f!=null&&(p.a===f||p.b===f), platz=/Finale|Platz|Halbfinale/.test(p.phase||"");
+  const wort=fertig?"Endstand":erg?"Zwischenstand":live?"läuft":vorbei?"ohne Ergebnis":"Anpfiff "+(p.zeit||"");
+  const tore=erg?`<span class="htp-tore">${p.ta}<span aria-hidden="true">:</span><span class="htp-sr"> zu </span>${p.tb}</span>`
+               :`<span class="htp-tore leer">${live?"0:0":"–:–"}</span>`;
+  const mitte=(helfer&&echt)
+    ?`<button class="htp-erg-knopf" onclick="htPubEdit(${mi})" aria-label="Ergebnis eintragen: ${esc(_htName(p.a,t))} gegen ${esc(_htName(p.b,t))}">${tore}<span class="htp-wort">${wort}</span><span class="htp-stift" aria-hidden="true">✏️ eintragen</span></button>`
+    :`${tore}<span class="htp-wort">${wort}</span>`;
+  let lauf="";
+  if(live){
+    const weg=(Date.now()-_htpZeit(row,p.zeit))/1000, dauer=_htpDauer(row.config), ant=Math.min(1,weg/(dauer*60));
+    lauf=`<div class="htp-lauf" aria-hidden="true"><i style="--anteil:${ant.toFixed(3)}"></i></div><div class="htp-lauf-text"><span>${Math.floor(weg/60)+1}. Minute</span><span>noch ${Math.max(0,Math.ceil(dauer-weg/60))} Min.</span></div>`;
   }
+  return `<article class="htp-spiel htp-auftauchen${live?" live":""}${fertig?" fertig":""}${unser?" unser":""}" style="--i:${i||0}" data-mi="${mi}" aria-label="${esc(_htName(p.a,t))} gegen ${esc(_htName(p.b,t))}, ${wort}${erg?", "+p.ta+" zu "+p.tb:""}">
+    <div class="htp-spiel-kopf">${live?`<span class="htp-live"><span class="htp-puls" aria-hidden="true"></span>LIVE</span>`:""}<span class="htp-feld">📍 Feld ${esc(p.feld||1)}</span>
+      <span class="htp-phase${platz?" platz":""}">${platz?"🏅 ":""}${esc(p.phase||"")}</span><span class="htp-unser-marke">Euer Spiel</span></div>
+    <div class="htp-paarung">${_htpTeam(row,p.a)}<div class="htp-ergebnis">${mitte}</div>${_htpTeam(row,p.b)}</div>${lauf}
+  </article>`;
+}
+function _htpTabellenBloecke(row){
+  const cfg=row.config||{}, teams=row.teams||[];
+  return cfg.format==="gruppen"?_htGruppenN(row).map((idxs,g)=>["Gruppe "+HT_GRLABEL[g],idxs]):[["Tabelle",teams.map((_,i)=>i)]];
+}
+function _htpTabellen(row){
+  const plan=row.plan||[], teams=row.teams||[], f=_htPub?_htPub.filter:null;
+  const zaehlt=p=>_htpFertig(row,p);
+  return _htpTabellenBloecke(row).map(([titel,idxs],g)=>`<div class="htp-karte htp-auftauchen" style="--i:${g}"><table class="htp-tabelle"><caption>${esc(titel)}</caption>
+    <thead><tr><th><span class="htp-sr">Platz</span></th><th>Verein</th><th>Sp.</th><th>Tore</th><th>Pkt.</th></tr></thead><tbody>
+    ${_htTabelle(plan,idxs,teams,zaehlt).map((z,pl)=>`<tr${z.i===f?' class="unser"':""}><td class="pl">${pl+1}.</td><td class="verein"><div>${_htWappen(row.config,teams[z.i],"klein")}<span>${esc(z.name)}${z.i===f?'<span class="htp-sr"> (euer Verein)</span>':""}</span></div></td><td>${z.sp}</td><td>${z.tore}:${z.geg}</td><td class="pkt">${z.pkt}</td></tr>`).join("")}
+    </tbody></table></div>`).join("");
+}
+function _htpSeite(wrap,row){
+  const teams=row.teams||[], plan=row.plan||[], cfg=row.config||{};
+  if(_htPub&&_htPub.filter!=null&&!(teams[_htPub.filter]!=null))_htPub.filter=null;
+  const f=_htPub?_htPub.filter:null, helfer=!!(_htPub&&_htPub.code), erst=!!(_htPub&&_htPub.erstmals);
+  const dat=row.datum?new Date(row.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long",year:"numeric"}):"";
   const sf=HT_SPIELFORM[cfg.spielform]||"";
+  const sicht=plan.map((p,mi)=>({p,mi})).filter(({p})=>f==null||p.a===f||p.b===f||_htpPlatzhalterFuer(row,p,f));
+  const live=sicht.filter(x=>_htpLive(row,x.p));
+  const kommend=sicht.filter(x=>_htpKommt(row,x.p)).sort((a,b)=>_htpZeit(row,a.p.zeit)-_htpZeit(row,b.p.zeit));
+  const nZeit=kommend.length?kommend[0].p.zeit:null, naechste=kommend.filter(x=>x.p.zeit===nZeit);
+  const laufend=plan.filter(p=>_htpLive(row,p)), kommtNoch=plan.some(p=>_htpKommt(row,p));
+  const ersterAnpfiff=plan.length?plan.map(p=>p.zeit).sort()[0]:"";
+  const statusText=laufend.length?`${laufend.length===1?"1 Spiel":laufend.length+" Spiele"} live`
+    :(plan.length&&!plan.some(p=>!_htpKommt(row,p))?`Anpfiff ${ersterAnpfiff} Uhr`
+    :(plan.length&&!kommtNoch?"🏁 Alle Spiele gespielt":(kommtNoch?"Gleich geht es weiter":"")));
+
+  /* Spielplan nach Zeit: frühere Runden eingeklappt (die letzte vorbeie bleibt stehen) */
+  const zeiten=[...new Set(sicht.map(x=>x.p.zeit))].sort();
+  const vorbeiZeiten=zeiten.filter(z=>sicht.filter(x=>x.p.zeit===z).every(x=>_htpVorbei(row,x.p)));
+  const alleVorbei=zeiten.length&&vorbeiZeiten.length===zeiten.length;
+  const verbergen=(!(_htPub&&_htPub.alleRunden)&&!alleVorbei&&vorbeiZeiten.length>1)?vorbeiZeiten.slice(0,-1):[];
+  let ersterPlatz=true;
+  const planHtml=zeiten.filter(z=>!verbergen.includes(z)).map(z=>{
+    const sp=sicht.filter(x=>x.p.zeit===z);
+    const platz=sp.some(x=>typeof x.p.a!=="number"||/Platz|Finale|Halbfinale/.test(x.p.phase||""));
+    const zw=platz&&ersterPlatz?(ersterPlatz=false,`<div class="htp-zwischentitel">🏅 Platzierungsspiele${Number(cfg.puffer)>0?` – nach ${Number(cfg.puffer)} Min. Verschnaufpause`:""}</div>`):"";
+    return `${zw}<div class="htp-zeitblock${vorbeiZeiten.includes(z)?" vorbei":""}"><div class="htp-uhr">${esc(z)}</div><div class="htp-kompakt">${sp.map((x,i)=>_htpKarte(row,x.p,x.mi,i)).join("")}</div></div>`;
+  }).join("");
+  const mehr=verbergen.length?`<button class="btn htp-mehr" data-k="mehr" onclick="htpAlleRunden()">${verbergen.length} frühere Runde${verbergen.length>1?"n":""} zeigen</button>`:"";
+  const platzHinweis=f!=null&&sicht.some(x=>typeof x.p.a!=="number"||typeof x.p.b!=="number")
+    ?`<div class="htp-hinweis-platz">🏅 Euer Gegner in den Platzierungsspielen steht nach der Gruppenphase fest – eines dieser Spiele ist eures.</div>`:"";
+
+  const jetzt=(live.length?`<h2 class="htp-h2">🔴 Jetzt live <small>${live.length} ${live.length===1?"Spiel":"Spiele"}</small></h2>${live.map((x,i)=>_htpKarte(row,x.p,x.mi,i)).join("")}`:"")
+    +(naechste.length?`<h2 class="htp-h2">⏭️ Als Nächstes <small>${esc(nZeit)} Uhr · in ${Math.max(1,Math.ceil((_htpZeit(row,nZeit)-Date.now())/60000))} Min.</small></h2>${naechste.map((x,i)=>_htpKarte(row,x.p,x.mi,i+live.length)).join("")}`:"");
+
+  const tabTitel=cfg.format==="gruppen"?"📊 Gruppen":"📊 Tabelle";
+  const tabs=plan.length?`<h2 class="htp-h2">${tabTitel} <small>${alleVorbei?"Endstand":"Zwischenstand"}</small></h2>${_htpTabellen(row)}
+    <p class="htp-hinweis">Gezählt werden abgeschlossene Spiele. Ein laufendes Spiel kommt mit dem Abpfiff dazu.</p>`:"";
+  const fp=cfg.fairplay!=null&&teams[cfg.fairplay]!=null?cfg.fairplay:null;
+
+  const offen=new Set([...wrap.querySelectorAll("details[id][open]")].map(d=>d.id));
+  const fokus=document.activeElement&&wrap.contains(document.activeElement)?document.activeElement.getAttribute("data-k"):null;
+  const y=window.scrollY;
+  wrap.className="htp-liga"+(erst?" erstmals":"");
+  wrap.style.cssText="";
   wrap.innerHTML=`
-    <div style="background:linear-gradient(135deg,#1e3a8a,#b45309);border-radius:16px;padding:18px 16px;color:#fff;text-align:center">
-      <div style="font-size:36px">🏆</div>
-      <div style="font-size:20px;font-weight:900;margin-top:4px">${esc(row.name)}</div>
-      <div style="font-size:12.5px;opacity:.9;margin-top:4px">${esc(dat)}${row.ort?" · "+esc(row.ort):""}</div>
-      ${sf?`<div style="display:inline-block;margin-top:8px;background:rgba(255,255,255,.18);border-radius:12px;padding:3px 12px;font-size:12px;font-weight:800">⚽ ${esc(sf)}</div>`:""}
-      <div style="font-size:11px;opacity:.75;margin-top:6px">Veranstalter: SV Adler Dellbrück U9 · Ergebnisse live</div>
+  <header class="htp-kopf">
+    <img class="htp-kopf-adler" src="logo.png" alt="" aria-hidden="true">
+    <div class="htp-kopf-innen">
+      <div class="htp-veranstalter"><img src="logo.png" alt="">SV Adler Dellbrück · U9 lädt ein</div>
+      <h1 class="htp-titel">${esc(row.name||"Turnier")}</h1>
+      <div class="htp-eckdaten">${dat?`<span>📅 ${esc(dat)}</span>`:""}${row.ort?`<span>📍 ${esc(row.ort)}</span>`:""}<span>⚽ ${sf?esc(sf)+" · ":""}${_htpDauer(cfg)} Min. je Spiel</span></div>
+      ${statusText?`<div class="htp-status">${laufend.length?`<span class="htp-live"><span class="htp-puls" aria-hidden="true"></span>LIVE</span>`:""}${esc(statusText)}</div>`:""}
+      ${teams.length?`<ul class="htp-wappenreihe" aria-label="Teilnehmende Vereine">${teams.map((n,i)=>`<li><button class="htp-medaille" style="--i:${i}" onclick="htpFunkeln(this)" aria-label="${esc(n)}" title="${esc(n)}">${_htWappen(cfg,n)}</button></li>`).join("")}</ul>`:""}
     </div>
-    ${helfer?'<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:12px;padding:10px 12px;margin-top:10px;font-size:13px;color:#065f46;font-weight:700">✏️ Ergebnisse eintragen: Ergebnis antippen und speichern – mehr geht mit diesem Link nicht.</div>':""}
-    ${cfg.durchsage?`<div style="background:#fffbeb;border:2px solid #f59e0b;border-radius:12px;padding:12px 14px;margin-top:10px;font-size:14.5px;color:#78350f;font-weight:800">📣 ${esc(cfg.durchsage)} <span style="font-weight:400;font-size:11px;color:#b45309">(Durchsage ${esc(cfg.durchsage_um||"")} Uhr)</span></div>`:""}
-    ${plan.length?`<div style="display:flex;gap:6px;overflow-x:auto;padding:12px 2px 2px;-webkit-overflow-scrolling:touch">
-      <button onclick="htPubFilter(null)" aria-pressed="${filter==null}" style="flex:none;min-height:44px;padding:6px 14px;border-radius:20px;border:1px solid ${filter==null?"#1e3a8a":"var(--rand-bedien)"};background:${filter==null?"#1e3a8a":"#fff"};color:${filter==null?"#fff":"#334155"};font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">${filter==null?"✓ ":""}Alle</button>
-      ${teams.map((t,i)=>`<button onclick="htPubFilter(${i})" aria-pressed="${filter===i}" style="flex:none;min-height:44px;padding:6px 14px;border-radius:20px;border:1px solid ${filter===i?"#1e3a8a":"var(--rand-bedien)"};background:${filter===i?"#1e3a8a":"#fff"};color:${filter===i?"#fff":"#334155"};font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">${filter===i?"✓ ":""}${esc(t)}</button>`).join("")}
-    </div>${filter!=null?_htPubCountdown(row,filter):""}`:""}
-    ${plan.length?`<div style="background:#fff;border-radius:14px;padding:8px 4px;margin-top:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse;font-size:13px">${zeilen}</table>
-    </div>`:'<div style="background:#fff;border-radius:14px;padding:20px;margin-top:12px;text-align:center;color:#64748b;font-size:13px">Der Spielplan wird gerade erstellt – gleich nochmal schauen.</div>'}
-    ${tabellen}
-    ${cfg.regeln?`<details style="background:#fff;border-radius:14px;padding:12px 14px;margin-top:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
-      <summary style="font-weight:800;font-size:14px;cursor:pointer;min-height:44px;display:flex;align-items:center">📖 Regelwerk (${esc(sf||"Spielform")})</summary>
-      <div style="font-size:13px;line-height:1.55;white-space:pre-wrap;margin-top:6px;color:#334155">${esc(cfg.regeln)}</div>
-    </details>`:""}
-    ${cfg.infos?`<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-top:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
-      <div style="font-weight:800;font-size:14px;margin-bottom:6px">ℹ️ Infos für die Gastvereine</div>
-      <div style="font-size:13px;line-height:1.55;white-space:pre-wrap;color:#334155">${esc(cfg.infos)}</div>
-    </div>`:""}
-    ${cfg.fairplay!=null&&teams[cfg.fairplay]!=null?`<div style="background:#ecfdf5;border:2px solid #34d399;border-radius:14px;padding:12px 14px;margin-top:12px;font-size:14px;color:#065f46"><b>🤝 Fair-Play-Pokal: ${esc(teams[cfg.fairplay])}</b><div style="font-size:12px;margin-top:2px">Das fairste Team des Turniers – Glückwunsch!</div></div>`:""}
-    <div style="display:flex;gap:8px;margin-top:14px">
-      <button class="btn" onclick="location.reload()" style="flex:1;min-height:44px;justify-content:center;font-size:13px">🔄 Aktualisieren</button>
-      <button class="btn" onclick="htPubMonitor()" style="flex:1;min-height:44px;justify-content:center;font-size:13px">📺 Monitor</button>
-      <button class="btn" onclick="window.print()" style="flex:1;min-height:44px;justify-content:center;font-size:13px">🖨️ Drucken</button>
+  </header>
+  <main class="htp-seite">
+    ${helfer?'<div class="htp-helfer">✏️ Ergebnisse eintragen: Ergebnis antippen und speichern – mehr geht mit diesem Link nicht.</div>':""}
+    ${plan.length&&teams.length?`<nav class="htp-filter" aria-label="Verein wählen">
+      <div class="htp-filter-titel">Mein Verein – wann und wo spielen wir?</div>
+      <div class="htp-chips">
+        <button class="htp-chip alle" data-k="f-alle" aria-pressed="${f==null}" onclick="htPubFilter(null)">${f==null?"✓ ":""}Alle Spiele</button>
+        ${teams.map((n,i)=>`<button class="htp-chip" data-k="f-${i}" aria-pressed="${f===i}" onclick="htPubFilter(${i})">${f===i?'<span class="htp-haken">✓</span>':""}${_htWappen(cfg,n)}${esc(n)}</button>`).join("")}
+      </div>
+    </nav>${f!=null?_htPubCountdown(row,f):""}`:""}
+    ${cfg.durchsage?`<div class="htp-durchsage"><span aria-hidden="true">📣</span><div>${esc(cfg.durchsage)}${cfg.durchsage_um?`<small>Durchsage ${esc(cfg.durchsage_um)} Uhr</small>`:""}</div></div>`:""}
+    <div class="htp-raster">
+      <div class="htp-links">
+        ${jetzt}
+        ${plan.length?`<h2 class="htp-h2">🗓️ Spielplan <small>${f!=null?"nur "+esc(teams[f]):"alle Spiele"}</small></h2>${platzHinweis}${mehr}${planHtml}`
+          :'<div class="htp-leer">Der Spielplan wird gerade erstellt – gleich nochmal schauen.</div>'}
+      </div>
+      <div class="htp-rechts">
+        ${tabs}
+        ${fp!=null?`<div class="htp-fairplay-zeile"><b>🤝 Fair-Play-Pokal: ${esc(teams[fp])}</b><div>Das fairste Team des Turniers – Glückwunsch!</div></div>`:""}
+        <h2 class="htp-h2">ℹ️ Gut zu wissen</h2>
+        ${cfg.infos?`<details class="htp-info" id="htp-info-ablauf"><summary>🚗 Anfahrt &amp; Ablauf</summary><div class="inhalt">${esc(cfg.infos)}</div></details>`:""}
+        ${cfg.regeln?`<details class="htp-info" id="htp-info-regeln"><summary>📖 Regelwerk${sf?" ("+esc(sf)+")":""}</summary><div class="inhalt">${esc(cfg.regeln)}</div></details>`:""}
+        <details class="htp-info" id="htp-info-rand"><summary>🤝 Am Spielfeldrand</summary><div class="inhalt">Anfeuern ja, coachen nein – die Kinder entscheiden selbst, die Trainer begleiten.\n${esc(FST_FAN_SATZ)}</div></details>
+        <div class="htp-aktionen">
+          <button class="btn" data-k="teilen" onclick="htpTeilen()">🔗 Teilen</button>
+          <button class="btn" data-k="monitor" onclick="htPubMonitor()">📺 Monitor</button>
+          <button class="btn" data-k="drucken" onclick="window.print()">🖨️ Drucken</button>
+        </div>
+        <p class="htp-fuss">Stand ${_htpUhr()} Uhr · aktualisiert sich von selbst<br>Bei uns zählt die Freude am Spiel. SV Adler Dellbrück · U9</p>
+      </div>
     </div>
-    <div style="text-align:center;font-size:10.5px;color:var(--text3);margin-top:10px">Aktualisiert sich automatisch · Stand ${new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})} Uhr</div>`;
+  </main>`;
+  /* v897: Aufgeklapptes bleibt offen, die Seite springt nicht (v888 klappte das Regelwerk bei jeder
+     10-s-Aktualisierung zu und warf die Scrollposition zurück). */
+  offen.forEach(id=>{ const d=document.getElementById(id); if(d)d.open=true; });
+  if(!erst)window.scrollTo(0,y);
+  if(fokus){ const el=wrap.querySelector(`[data-k="${fokus}"]`); if(el)try{el.focus({preventScroll:true});}catch(e){} }
+  if(erst){ _htPub.erstmals=false; setTimeout(()=>wrap.classList.remove("erstmals"),2200); }
+}
+function htpAlleRunden(){ if(!_htPub)return; _htPub.alleRunden=true; _htPublicRender(_htPub.wrap,_htPub.row); }
+function htpFunkeln(b){ b.classList.remove("funkeln"); void b.offsetWidth; b.classList.add("funkeln"); }
+/* Teilen ohne Schreib-Code: der Link für Gäste, nie der Anzeigetisch-Link. */
+function htpTeilen(){
+  const row=_htPub&&_htPub.row, url=_htUrl(_htPub?_htPub.slug:"");
+  if(navigator.share){ navigator.share({title:(row&&row.name)||"Turnier",text:"🏆 "+((row&&row.name)||"Turnier")+" – Spielplan und Ergebnisse",url}).catch(()=>{}); return; }
+  try{ navigator.clipboard.writeText(url).then(()=>{ if(typeof toast==="function")toast("Link kopiert ✓"); }).catch(()=>{}); }catch(e){}
+}
+function _htPublicRender(wrap,row){
+  if(row&&fstIst(row)){   // v484: Festival-Seite mit Wappen
+    const erst=!!(_htPub&&_htPub.erstmals);
+    wrap.className=erst?"erstmals":""; wrap.style.cssText="max-width:560px;margin:0 auto;padding:14px 14px 40px";
+    _fstPublicRender(wrap,row);
+    if(erst&&_htPub&&_htPub.wrap===wrap){ _htPub.erstmals=false; setTimeout(()=>wrap.classList.remove("erstmals"),2200); }
+    return;
+  }
+  if(!row){wrap.className="";wrap.innerHTML=`<div style="text-align:center;padding:60px 20px"><div style="font-size:44px">🏆</div><div style="font-weight:800;margin-top:8px">Turnier nicht gefunden</div><div style="font-size:var(--s-text);color:var(--text3);margin-top:4px">Der Link ist abgelaufen oder falsch – bitte beim Veranstalter nachfragen.</div></div>`;return;}
+  _htpSeite(wrap,row);
 }
 
 /* Team-Filter auf der öffentlichen Seite: Gast-Trainer tippt sein Team an und sieht nur
-   die eigenen Spiele plus einen Countdown zum nächsten Anpfiff. Rein clientseitig. */
+   die eigenen Spiele plus „Euer nächstes Spiel“. Rein clientseitig; seit v897 merkt sich das Gerät die Wahl. */
 function htPubFilter(i){
   if(!_htPub)return;
   _htPub.filter=(i==null||_htPub.filter===i)?null:i;
+  try{ const k="adler_turnier_"+_htPub.slug; if(_htPub.filter==null)localStorage.removeItem(k); else localStorage.setItem(k,String(_htPub.filter)); }catch(e){}
   _htPublicRender(_htPub.wrap,_htPub.row);
 }
+/* Karte „Euer nächstes Spiel“ (Name aus v4xx: früher der Countdown-Balken). Kommt nach den festen Spielen
+   noch ein Platzierungsspiel, sagt sie das – statt „Keine weiteren Spiele“. */
 function _htPubCountdown(row,teamIdx){
-  const plan=row.plan||[], teams=row.teams||[];
-  const d=new Date(), jetzt=d.getHours()*60+d.getMinutes();
-  const startMin=z=>{const[a,b]=(z||"0:0").split(":").map(Number);return a*60+b;};
-  const naechste=plan.filter(p=>(p.a===teamIdx||p.b===teamIdx)&&p.ta==null&&startMin(p.zeit)>=jetzt)
-    .sort((a,b)=>startMin(a.zeit)-startMin(b.zeit))[0];
-  if(!naechste)return `<div style="background:#fff;border-radius:12px;padding:10px 14px;margin-top:8px;font-size:var(--s-text);color:#64748b;box-shadow:0 1px 3px rgba(0,0,0,.08)">🏁 Keine weiteren Spiele für ${esc(teams[teamIdx]||"?")} – danke fürs Mitspielen!</div>`;
-  const inMin=startMin(naechste.zeit)-jetzt;
-  const gegner=naechste.a===teamIdx?naechste.b:naechste.a;
-  return `<div style="background:#1e3a8a;color:#fff;border-radius:12px;padding:10px 14px;margin-top:8px;font-size:var(--s-text);font-weight:700">⏱️ Nächstes Spiel: ${esc(naechste.zeit)} auf Feld ${naechste.feld||1} gegen ${esc(_htName(gegner,teams))}${inMin>0?` – <b>in ${inMin} Min.</b>`:" – <b>jetzt!</b>"}</div>`;
+  const plan=row.plan||[], teams=row.teams||[], cfg=row.config||{};
+  const nach=(a,b)=>_htpZeit(row,a.zeit)-_htpZeit(row,b.zeit);
+  const n=plan.filter(p=>(p.a===teamIdx||p.b===teamIdx)&&!_htpVorbei(row,p)).sort(nach)[0];
+  const wp=_htWappen(cfg,teams[teamIdx],"gross");
+  if(n){
+    const l=_htpLive(row,n), g=n.a===teamIdx?n.b:n.a, inMin=Math.ceil((_htpZeit(row,n.zeit)-Date.now())/60000);
+    return `<div class="htp-mein">${wp}<div><div class="z1">${l?"Jetzt am Ball":"Euer nächstes Spiel"}</div>
+      <div class="z2">gegen ${esc(_htName(g,teams))}</div>
+      <div class="z3">📍 Feld ${esc(n.feld||1)} · ${esc(n.zeit||"")} Uhr${l?' <span class="htp-countdown">LIVE</span>':inMin>0?` <span class="htp-countdown">in ${inMin} Min.</span>`:""}</div></div></div>`;
+  }
+  const pl=plan.filter(p=>_htpPlatzhalterFuer(row,p,teamIdx)&&!_htpVorbei(row,p)).sort(nach)[0];
+  if(pl)return `<div class="htp-mein">${wp}<div><div class="z1">Danach</div><div class="z2">Platzierungsspiel ab ${esc(pl.zeit||"")} Uhr</div>
+      <div class="z3">Euer Gegner steht nach der Gruppenphase fest.</div></div></div>`;
+  return `<div class="htp-mein">${wp}<div><div class="z1">Alle Spiele gespielt</div><div class="z2">Danke fürs Mitspielen, ${esc(teams[teamIdx]||"")}!</div></div></div>`;
 }
 /* Monitor-Modus: Vollbild-Anzeigetafel fürs Vereinsheim/Tablet – wechselt alle 10 s
    zwischen „Jetzt läuft / Gleich dran" und den Tabellen; Uhr tickt sekündlich,
@@ -4109,7 +4260,7 @@ function _htMonRender(){
   let inhalt="";
   if(cfg.format!=="festival"&&_htMon.screen===1&&plan.length){
     const blocks=cfg.format==="gruppen"?_htGruppenN(row).map((idxs,g)=>["Gruppe "+HT_GRLABEL[g],idxs]):[["Tabelle",teams.map((_,i)=>i)]];
-    inhalt=`<div style="display:flex;gap:4vmin;flex-wrap:wrap">${blocks.map(([t,idxs])=>`<div style="flex:1;min-width:34vmin"><div style="font-size:3.2vmin;font-weight:900;opacity:.75;margin-bottom:1vmin">📊 ${t}</div>${_htTabelle(plan,idxs,teams).map((z,pl)=>`<div style="display:flex;gap:1.5vmin;font-size:3.2vmin;padding:.5vmin 0"><span style="opacity:.55;min-width:4vmin">${pl+1}.</span><span style="flex:1;min-width:0">${esc(z.name)}</span><span style="opacity:.55;font-size:2.6vmin">${z.tore}:${z.geg}</span><b style="min-width:5vmin;text-align:right">${z.pkt}</b></div>`).join("")}</div>`).join("")}</div>`;
+    inhalt=`<div style="display:flex;gap:4vmin;flex-wrap:wrap">${blocks.map(([t,idxs])=>`<div style="flex:1;min-width:34vmin"><div style="font-size:3.2vmin;font-weight:900;opacity:.75;margin-bottom:1vmin">📊 ${t}</div>${_htTabelle(plan,idxs,teams,p=>_htpFertig(row,p)).map((z,pl)=>`<div style="display:flex;gap:1.5vmin;font-size:3.2vmin;padding:.5vmin 0"><span style="opacity:.55;min-width:4vmin">${pl+1}.</span><span style="flex:1;min-width:0">${esc(z.name)}</span><span style="opacity:.55;font-size:2.6vmin">${z.tore}:${z.geg}</span><b style="min-width:5vmin;text-align:right">${z.pkt}</b></div>`).join("")}</div>`).join("")}</div>`;
   }else{
     const fertig=!live.length&&!next.length&&plan.length&&plan.every(p=>typeof p.a!=="number"||p.ta!=null||startMin(p.zeit)<jetzt);
     inhalt=(live.length?`<div style="font-size:2.8vmin;font-weight:900;color:#4ade80;letter-spacing:.4vmin">● JETZT LÄUFT</div>${live.map(spiel).join("")}`:"")

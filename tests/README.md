@@ -125,3 +125,10 @@ hängende Prüfung wird als rot gemeldet, statt den Lauf aufzuhalten.
 Was dabei gefunden wurde: (1) v589 ersetzt `console.log`, während es exportiert, und schluckte so die Zeile einer gleichzeitig fertigen Prüfung – der Lauf schreibt deshalb über die beim Start
 gesicherte Funktion. (2) v553 wartete mit festen 120 ms auf die Überblendung der Ansicht und wurde unter Last rot – es wartet jetzt, bis die Ansicht 150 ms stillsteht. Wird eine Prüfung nur im
 Parallel-Lauf rot, hat sie vermutlich eine feste Wartezeit: erst mit `PARALLEL=1 node tests/run.js <Name>` gegenprüfen, dann die Wartezeit durch Warten auf den Zustand ersetzen – nicht die Prüfung lockern.
+
+## Öffentliche Turnierseite (seit v897)
+
+`tests/turnier-attrappe.js` liefert eine Turnierzeile („Adler-Herbstcup U9“, zwei Gruppen, Finalrunde, fiktive Vereine) und
+die feste Uhr `JETZT` (10:28, ein Spiel läuft mit Zwischenstand). Die Prüffälle `v897-…` bis `v899-…` messen damit die echte
+Seite `?turnier=…`: Zwischenstand zählt nicht, Regelwerk bleibt offen, Filter zeigt Platzierungsspiele, Wappen mit
+Initialen-Ausweichdarstellung, Ergebnis-Modus schreibt den Plan-Index, reduzierte Bewegung, Kontrast bei 390/1280 px.
