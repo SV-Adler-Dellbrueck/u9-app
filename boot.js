@@ -4781,8 +4781,8 @@ async function _tpPlanRestoreIntern(datum,lauf){
      erst leeren (die Übung, nicht die Marken – wie früher am Auswahlfeld), dann je Eintrag über
      block/feld, sonst station, sonst alleFelder, sonst das erste freie Feld mit gleichem
      slotLabel; nach jedem Setzen erben die Durchgänge (wie tpOnSelectChange); danach die
-     Stationen-Wiederholung (v568). Was das Feld nicht anbietet, belegt es, bleibt aber leer
-     (Fehlerbild 5 – still verworfen wie bisher, behoben erst ab Schritt 9).
+     Stationen-Wiederholung (v568). v894: Was das Feld nicht anbietet, bleibt mit Hinweis (Fehlerbild 5
+     behoben); eine Dublette bleibt an Block/Feld; eigene Einträge im Durchgang erben nicht.
    Felder und Trainerauswahl gelten so, wie das Zeichnen sie zuletzt vorgefunden hat (_tpFelderStand).
    Rückgabe: {index, meldungen} für slots; {felder, gesetzt} für plan (felder null: kein Feld, nichts geleert). */
 function tpZustandLaden(slots,plan){
@@ -4827,13 +4827,20 @@ function tpZustandLaden(slots,plan){
   if(!plan||!plan.length)return out;
   const belegt=new Set(), gesetzt=[];
   const frei=f=>!belegt.has(f.id)&&tpWahlIdx(f.id)==null;
+  /* v894: Ein Feld im Durchgang, das nur die Übung des Kopfes erbt, ist für einen eigenen Eintrag frei –
+     sonst ersetzte die geerbte Übung die eigene still (alte `durchgaenge`, Fehlerbild 5). */
+  const freiFuerEintrag=f=>!belegt.has(f.id)&&(tpWahlIdx(f.id)==null||!!(wahl[f.id]&&wahl[f.id].erbt));
   /* Setzen wie früher „el.value=…; tpOnSelectChange(el)“ samt Marken des Eintrags: eine Übung, die das
      Feld nicht anbietet, belegt es und bleibt leer; die Marken des Feldes bleiben, die des Eintrags
      kommen dazu (v608); danach erben die Durchgänge. */
+  /* v894 (Fehlerbild 5): Eine Übung, die das Feld nicht (mehr) anbietet, bleibt – mit Hinweis am Feld
+     (Projektion, v893); nur eine Übung, die es gar nicht mehr gibt, bleibt leer. Ein eigener Eintrag
+     erbt nicht vom Kopf des Durchgangs (gleicher Wert wie der Kopf gilt weiter als geerbt). */
   const setzen=(f,fi,e)=>{
     const w=wahl[f.id]||{};
     belegt.add(f.id);
-    tpWahlSetzen(f.id,tpWahlZulaessig(f.si,fi,menge)?fi:null,{station:(e&&e.station!=null)?e.station:w.station,alle:(e&&e.alleFelder)||w.alle,erbt:w.erbt});
+    const ok=tpWahlZulaessig(f.si,fi,menge)||tpWahlMoeglich(fi);
+    tpWahlSetzen(f.id,ok?fi:null,{station:(e&&e.station!=null)?e.station:w.station,alle:(e&&e.alleFelder)||w.alle,erbt:(e&&ok)?false:w.erbt});
     _tpKetteNachziehen();
     out.gesetzt.push(f.id);
   };
@@ -4841,11 +4848,13 @@ function tpZustandLaden(slots,plan){
     /* v586: Der Name entscheidet, welche Übung gemeint ist; der gespeicherte Index ist nur ein Hinweis. */
     const fi=tfIndexVon(e0); if(fi<0)return;
     const e=Object.assign({},e0,{formIdx:fi});
-    const passend=felder.filter(f=>frei(f)&&((tpSlots[f.si]||{}).label||"")===(e.slotLabel||""));
-    /* v608: Block und Feld genau dorthin – sofern der Block dort noch denselben Namen trägt. */
+    const passend=felder.filter(f=>freiFuerEintrag(f)&&((tpSlots[f.si]||{}).label||"")===(e.slotLabel||""));
+    /* v608: Block und Feld genau dorthin – sofern der Block dort noch denselben Namen trägt.
+       v894 (Fehlerbild 5): auch, wenn das Feld schon belegt ist – eine Dublette bleibt an ihrem Platz,
+       statt ins nächste freie Feld des Blocks zu rutschen. */
     if(e.block!=null&&e.feld!=null){
       const id=`tp-form-${e.block}-${e.feld}`, f=felder.find(x=>x.id===id), slotHier=tpSlots[e.block];
-      if(f&&frei(f)&&slotHier&&(slotHier.label||"")===(e.slotLabel||"")){
+      if(f&&slotHier&&(slotHier.label||"")===(e.slotLabel||"")){
         setzen(f,fi,e);
         if(e.station!=null)gesetzt.push({si:+e.block,station:Number(e.station),formIdx:fi});
         return;
