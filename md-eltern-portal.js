@@ -1981,6 +1981,7 @@ async function terminDetailOpen(id){
     ${infoRow("⚽","Spielform", spielformLbl)}
     ${faelltAus&&typeof elternPlatzHinweisHtml==="function"?elternPlatzHinweisHtml(t):""}
     <div id="td-anhang"></div>
+    <div id="td-spielplan"></div>
     <div style="border-top:var(--border);margin-top:12px;padding-top:10px">
       <div style="font-weight:700;font-size:var(--s-text);margin-bottom:2px">✅ Rückmeldung</div>
       ${rsvpRows||'<div style="font-size:var(--s-text);color:var(--text3)">Kein Kind zugeordnet.</div>'}
@@ -2004,12 +2005,25 @@ async function terminDetailOpen(id){
   tdNomLoad(t,kids);
   if(t.typ==="training")tdBetreuungLoad(t,kids);
   if(istSpiel&&t.heim===true)tdBuedchenLoad(t);
+  if(istSpiel&&t.heim===true)tdSpielplanLoad(t);   // v901: Spielplan des Heimturniers, wenn der Trainer ihn freigibt
   tdHelferLoad(t); // G4: Elternhelfer-Board (nur kommende Termine)
   // „Wie war's" (Puls) lebt jetzt NUR im Zu-erledigen-Fenster (PO: der Termin wandert
   // nach der Endzeit ins Archiv, dort würde die Smiley-Frage niemand mehr finden).
   if(t.typ==="event"&&t.mitbringen)tdMitbringLoad(t); // Mitbringliste nur, wenn der Trainer sie eingeschaltet hat (v566)
   if(t.typ==="event"&&t.eltern_turnier)mitspielerLoad(t.id,"td-mitspieler"); // v825: Kinder-Eltern-Turnier
   if(document.getElementById("td-feier")&&typeof feierLoad==="function")feierLoad("td-feier",t); // v828: Beitragsliste (Welle 2, deshalb geprüft)
+}
+/* v901: Spielplan im Termin. Der Block selbst kommt aus md-turnierplan.js (htTerminBlockHtml, Welle 2 – geprüft).
+   heimturnier ist öffentlich lesbar; gezeigt wird nur, wenn der Trainer „Spielplan im Termin“ eingeschaltet hat. */
+async function tdSpielplanLoad(t){
+  const box=document.getElementById("td-spielplan"); if(!box||!t||!t.datum)return;
+  let row=null;
+  try{ const r=await fetch(`${SB_URL}/rest/v1/heimturnier?datum=eq.${encodeURIComponent(t.datum)}&select=slug,name,datum,config,teams,plan&limit=1`,{headers:sbAuthHeaders()});
+    if(r.ok)row=((await r.json())||[])[0]||null; }catch(e){}
+  if(!row||!(row.config||{}).imTermin)return;
+  for(let i=0;i<30&&typeof htTerminBlockHtml!=="function";i++)await new Promise(x=>setTimeout(x,100));   // Welle 2 kommt evtl. später
+  if(!document.getElementById("td-spielplan"))return;
+  box.innerHTML=(typeof htTerminBlockHtml==="function")?htTerminBlockHtml(row):"";
 }
 /* Mitbringliste im Termin-Detail: gleiche Liste wie im Zu-erledigen-Fenster, aber IMMER
    einsehbar und änderbar – auch nachdem die Familie schon etwas eingetragen hat. */
