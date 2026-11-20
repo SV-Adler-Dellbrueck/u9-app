@@ -22,7 +22,7 @@ export const WHITELIST = {
   trainingsplan: ["datum", "plan", "slots", "kopf"],
   trainings_eval: ["datum", "data"],
   anwesenheit: ["datum", "termin_id", "data"],
-  trainingsformen: ["id", "name", "kat", "kurz", "ablauf", "varianten", "coaching", "spieler", "feld", "dauer", "spass", "diff", "custom", "focus", "dims", "tags", "spieler_min", "spieler_max", "mit_torwart"],
+  trainingsformen: ["id", "name", "kat", "kurz", "ablauf", "varianten", "coaching", "spieler", "feld", "dauer", "spass", "diff", "custom", "focus", "dims", "tags", "spieler_min", "spieler_max", "mit_torwart", "ablauf_lang"],   // v919: ganze Beschreibung (v917)
   trainingsvorlagen: ["id", "name", "leitfrage", "folge_nr", "tags", "dauer_min", "netto_spielform_min", "skalierung", "beobachtung", "bloecke", "stand", "ordnung", "ziel_kinder"],
   trainingsblock: ["id", "leitfrage", "ziel", "von", "bis", "vorlagen"],
 };
@@ -94,7 +94,7 @@ export function renderUebungen(d, stand) {
   let o = kopf("Übungen, Vorlagen und Trainingsblöcke", stand, "App-Datenbank (Export-Rolle); die Standard-Bibliothek steht im Repo u9-app unter uebungen/bibliothek.json");
   const eigene = d.trainingsformen.filter((f) => f.custom);
   o += `## Eigene Übungen (${eigene.length})\n\n`;
-  for (const f of eigene) o += `### ${text(f.name)} (${f.kat || "–"})\n\n- **Kurz:** ${text(f.kurz)}\n- **Ablauf:** ${text(f.ablauf)}\n- **Varianten:** ${text(f.varianten)}\n- **Coaching:** ${text(f.coaching)}\n- **Spieler:** ${text(f.spieler)} · **Feld:** ${text(f.feld)} · **Dauer:** ${text(f.dauer)}\n\n`;
+  for (const f of eigene) o += `### ${text(f.name)} (${f.kat || "–"})\n\n- **Kurz:** ${text(f.kurz)}\n- **Ablauf:** ${text(f.ablauf)}\n${f.ablauf_lang ? `- **Ganze Beschreibung:** ${text(f.ablauf_lang)}\n` : ""}- **Varianten:** ${text(f.varianten)}\n- **Coaching:** ${text(f.coaching)}\n- **Spieler:** ${text(f.spieler)} · **Feld:** ${text(f.feld)} · **Dauer:** ${text(f.dauer)}\n\n`;
   o += `## Vorlagen (${d.trainingsvorlagen.length})\n\n`;
   for (const v of d.trainingsvorlagen) o += `### ${text(v.name)}\n\n- **Leitfrage:** ${text(v.leitfrage)} · **Dauer:** ${v.dauer_min ?? "–"} Min. · **Stand:** ${text(v.stand)}\n- **Beobachtung:** ${text(v.beobachtung)}\n- **Blöcke:** ${json(v.bloecke)}\n\n`;
   o += `## Trainingsblöcke (${d.trainingsblock.length})\n\n`;
