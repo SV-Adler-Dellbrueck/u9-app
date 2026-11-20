@@ -68,6 +68,7 @@ async function teamPlanLaden(){
              :{feldIdx:-1,feldName:"",gegner:"",zeit:""};
   });
   TEAM_PLAN={id:row.id,runde,letzte:runden[runden.length-1],status:(jetzt&&jetzt.status)||"",von,spiele,
+    erg:(typeof htErgebnisseAn==="function")?htErgebnisseAn(row):true,   // v900
     uhr:cfg.uhr||null,spieldauer:Math.max(1,cfg.spieldauer||8),
     datum:row.datum,name:row.name||"",felder:felder.map(f=>FST_ZU_FORM[f.form]||"funino"),feldNamen:namen};
   TEAM_FELDER=TEAM_PLAN.felder.slice(0,4);
@@ -103,6 +104,7 @@ function teamRundeJetzt(){ return (TEAM_PLAN&&TEAM_PLAN.runde)?TEAM_PLAN.runde:n
    Geräts; der Plan wird frisch gelesen und nur dieses eine Spiel geändert. */
 async function teamErgebnisNachziehen(runde){
   if(!TEAM_PLAN||!TEAM_PLAN.id)return false;
+  if(TEAM_PLAN.erg===false)return false;   // v900: Turnier ohne Ergebnisse – nichts in den Plan schreiben
   const t=(typeof spieltagTeam!=="undefined")?spieltagTeam:1;
   runde=runde||TEAM_PLAN.runde;
   const sp=((TEAM_PLAN.spiele||{})[t]||[]).find(p=>p.runde===runde); if(!sp)return false;

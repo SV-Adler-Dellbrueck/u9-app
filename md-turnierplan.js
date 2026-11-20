@@ -2117,7 +2117,7 @@ async function htNeu(btn){
     if(termin&&termin.gegner)vereine.push({name:termin.gegner,kinder:0,teams:adler.teams});
     const body={slug:await _htSlugFrei(_htSlug(name,datum)),name,datum,ort:(typeof VEREIN_ADRESSE!=="undefined"?VEREIN_ADRESSE:"Thurner Kamp 97, 51069 Köln"),
       edit_code:Math.random().toString(36).slice(2,8),   // v488: Gast-Trainer tragen Ergebnisse ueber den Link ein
-      config:{art:"festival",format:"festival",anlass,start,dauer:60,spieldauer:8,wechsel:FST_PAUSE,
+      config:{art:"festival",format:"festival",ergebnisse:false,anlass,start,dauer:60,spieldauer:8,wechsel:FST_PAUSE,
         felder:FST_STANDARD_FELDER.slice(),
         vereine,
         infos:HT_INFOS_VORLAGE},
@@ -2642,6 +2642,24 @@ const FST_GRUSS="Herzlich willkommen bei den Adlern! Schön, dass ihr dabei seid
 const FST_STANDARD_FELDER=[{form:"f4"},{form:"funino"},{form:"funino"},{form:"f4"}];   // v486 PO: „Standard alle 4 Felder anlegen" – Käfig, Funino 1, Funino 2, 4+1 oben
 const FST_START="10:15", FST_PAUSE=5;   // PO: „Beginn ist immer 10:15" · „5 Minuten Trinkpause zwischen den Spielen"
 function fstIst(row){ return ((row||_HT||{}).config||{}).art==="festival"; }
+/* v900 PO: „Beim Anlegen des Turniers sollte immer eingestellt sein, dass wir keine Ergebnisse zählen.
+   Durch einen Klick … soll man das verändern können, so dass auch Ergebnisse eingetragen werden können."
+   config.ergebnisse: neu angelegte Festivals tragen false. Turniere ohne den Schlüssel (vor v900 angelegt)
+   behalten ihr bisheriges Verhalten – Ergebnisse an; Liga und Gruppen brauchen sie ohnehin für die Tabelle.
+   Aus heißt: kein Eingabefeld, kein Stand – weder im Planer noch auf der Seite, dem Monitor oder im Ticker.
+   Eingetragene Tore bleiben gespeichert und erscheinen wieder, wenn der Schalter an geht. */
+function htErgebnisseAn(row){
+  const cfg=(row&&row.config)||{};
+  return !(cfg.ergebnisse===false&&cfg.art==="festival");
+}
+function fstErgSchalterHtml(){
+  const an=htErgebnisseAn(_HT);
+  return `<button type="button" id="fst-erg-schalter" class="btn btn-zeile" role="switch" aria-checked="${an}" onclick="fstErgebnisseSetzen(${!an})" style="display:block;width:100%;margin:0 0 10px">⚽ Ergebnisse eintragen: <b>${an?"an":"aus"}</b><span style="display:block;font-size:var(--s-klein);color:var(--text2);margin-top:2px">${an?"Tore werden eingetragen und auf dem Spielplan-Link gezeigt – weiter ohne Tabelle.":"Wir zählen keine Ergebnisse – wie im DFB-Kinderfußball. Antippen, um Tore einzutragen."}</span></button>`;
+}
+async function fstErgebnisseSetzen(an){
+  const cfg={...(_HT&&_HT.config||{}),ergebnisse:!!an};
+  if(await htPatch({config:cfg})){ toast(an?"⚽ Ergebnisse an":"🦅 Ohne Ergebnisse"); fstRender(); }
+}
 /* v490 PO: „Das gleiche Vorgehen brauchen wir für jedes Heimspiel, auch wenn es kein Festival
    ist. Bei einem Heimspiel kommt nur ein Gegner, der stellt aber evtl. mehrere Teams, so wie
    wir auch." Das ist derselbe Fall mit zwei Vereinen statt vier – also dieselbe Maschine
@@ -3247,6 +3265,7 @@ function fstRundeJetzt(row){
    ueber den Link, die Adler-Trainer in der App korrigieren und ergaenzen." Im Link laeuft das
    ueber den Helfer-Code (RPC heimturnier_ergebnis, wie beim alten Turnier); in der App direkt. */
 function fstErgebnis(i){
+  if(!htErgebnisseAn(_HT))return;   // v900: Ergebnisse aus – kein Eingabeblatt
   const plan=(_HT&&_HT.plan)||[]; const p=plan[i]; if(!p)return;
   const teams=_HT.teams||[]; const nm=k=>esc(teams[k]||("Team "+(k+1)));
   document.getElementById("fst-erg")?.remove();
@@ -3295,13 +3314,13 @@ function fstAdlerSpiele(row){
   const plan=(row&&row.plan)||[], teams=(row&&row.teams)||[], cfg=(row&&row.config)||{};
   const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
   const namen=felder.map((f,i)=>fstFeldName(felder,i));
-  const spiele={};
+  const spiele={}, mitErg=htErgebnisseAn(row);   // v900: Ergebnisse aus – kein Stand im Ticker
   const unsere=[]; teams.forEach((n,i)=>{ if(/adler/i.test(String(n||"")))unsere.push(i); });
   unsere.forEach((idx,k)=>{
     spiele[k+1]=plan.map((x,i)=>({x,i})).filter(({x})=>x.a===idx||x.b===idx).map(({x,i})=>({
       idx:i,runde:x.runde,zeit:x.zeit||"",feld:x.feld||1,feldName:namen[(x.feld||1)-1]||("Feld "+(x.feld||1)),
       seite:x.a===idx?"a":"b",gegner:teams[x.a===idx?x.b:x.a]||"",
-      tore:x.ta==null?null:(x.a===idx?x.ta:x.tb),gegentore:x.ta==null?null:(x.a===idx?x.tb:x.ta)}));
+      tore:(!mitErg||x.ta==null)?null:(x.a===idx?x.ta:x.tb),gegentore:(!mitErg||x.ta==null)?null:(x.a===idx?x.tb:x.ta)}));
   });
   return spiele;
 }
@@ -3579,11 +3598,13 @@ function fstRender(){
         return `<div style="font-size:var(--s-klein);color:var(--text2);margin-bottom:10px;line-height:1.5">⏱️ Empfohlen: <b>${o.min} Min. je Spiel</b> · ${o.runden} Runden · jedes Team ${lo===hi?lo:lo+"–"+hi} Spiele · ${o.rest?`${o.rest} Min. bleiben frei`:`füllt die ${cfg.dauer||60} Min. genau`}. Keine Spiele zwischen Teams desselben Vereins.
           ${cfg.spieldauerManuell&&Number(cfg.spieldauer)!==o.min?`<button class="btn btn-sm" onclick="fstSpielzeitAuto()" style="margin-top:6px;width:100%">Empfehlung übernehmen (${o.min} Min.)</button>`:""}</div>`; })():""}
 
+    ${plan.length?"":fstErgSchalterHtml()}
     <button class="btn${plan.length?" btn-sm":" btn-p"}" onclick="fstPlanErstellen()" style="width:100%;min-height:${plan.length?"44":"52"}px"${teams.length<2?" disabled":""}><i class="ti ti-calendar-event"></i>${plan.length?"Spielplan neu erstellen":"Spielplan erstellen"}</button>
     ${plan.length?`</div></details>`:""}
 
     ${plan.length?`<div style="font-size:var(--s-text);font-weight:800;margin:16px 0 6px">Der Plan <span style="font-weight:400;color:var(--text3)">· ${plan.length} Spiele</span></div>
       <div id="fst-uhr" data-rolle="trainer"></div>
+      ${fstErgSchalterHtml()}
       ${cfg.startIst
         ? `<div style="display:flex;align-items:center;gap:8px;background:var(--green-bg,#dcfce7);border-radius:12px;padding:8px 10px;margin-bottom:8px">
             <span style="font-size:var(--s-text);font-weight:800;flex:1">🕘 Zeitplan ${fstVerzug(cfg)?`${fstVerzug(cfg)>0?"+":""}${fstVerzug(cfg)} Min. verschoben`:"pünktlich"} · Beginn ${esc(cfg.startIst)}</span>
@@ -3593,11 +3614,11 @@ function fstRender(){
         : ""}
       ${fstAufwaermZeile(_HT)?`<div style="font-size:var(--s-klein);color:var(--text2);background:var(--surface2);border-radius:10px;padding:8px 10px;margin-bottom:8px">🔥 <b>Aufwärmen vor der ersten Runde:</b> ${fstAufwaermZeile(_HT)}</div>`:""}
       ${fstZuKleinHtml(plan,fstTeamsBauen(cfg.vereine||[]),felder)}
-      <div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:6px">${_fstTauschWahl?"Tauschen: jetzt das zweite Team antippen":"Teams antippen zum Tauschen · Ergebnis rechts antippen"}</div>
+      <div style="font-size:var(--s-klein);color:var(--text3);margin-bottom:6px">${_fstTauschWahl?"Tauschen: jetzt das zweite Team antippen":"Teams antippen zum Tauschen"+(htErgebnisseAn(_HT)?" · Ergebnis rechts antippen":"")}</div>
       ${fstPlanHtml(plan,_HT.teams||[],felder,true,cfg)}
       <button class="btn" onclick="htShare()" style="width:100%;min-height:48px;margin-top:8px"><i class="ti ti-share"></i>Spielplan-Link teilen</button>
       <div style="font-size:var(--s-klein);color:var(--text3);margin:4px 0 6px">Zum Weitergeben an alle: Gast-Trainer, Gast-Eltern und unsere Eltern. Nur zum Ansehen.</div>
-      ${_HT.edit_code?`<button class="btn btn-sm" onclick="htShareErgebnis()" style="width:100%;margin-top:2px"><i class="ti ti-pencil"></i>Ergebnis-Link (Anzeigetisch)</button>
+      ${_HT.edit_code&&htErgebnisseAn(_HT)?`<button class="btn btn-sm" onclick="htShareErgebnis()" style="width:100%;margin-top:2px"><i class="ti ti-pencil"></i>Ergebnis-Link (Anzeigetisch)</button>
       <div style="font-size:var(--s-klein);color:var(--text3);margin:4px 0 6px">Trägt den Schreib-Code: wer ihn hat, darf Ergebnisse eintragen – sonst nichts. Nur an den Anzeigetisch und die Gast-Trainer, nicht in die Eltern-Gruppe.</div>`:""}`:""}
 
     <div style="font-size:var(--s-text);font-weight:800;margin:16px 0 6px">Infos für die Gäste</div>
@@ -3643,7 +3664,8 @@ function fstPlanHtml(plan,teams,felder,tausch,cfg){
   const tn=(p,seite)=>{ if(!tausch)return `<span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nm(p[seite])}</span>`;
     const pi=plan.indexOf(p); const akt=_fstTauschWahl&&_fstTauschWahl.i===pi&&_fstTauschWahl.seite===seite;
     return `<button class="fst-tausch" onclick="fstTausch(${pi},'${seite}')" aria-pressed="${akt?"true":"false"}" title="${nm(p[seite])}" style="min-width:0;min-height:44px;padding:0 6px;border:1px solid ${akt?"var(--blue)":"var(--rand-bedien)"};border-radius:8px;background:${akt?"var(--blue)":"var(--surface2)"};color:${akt?"#fff":"var(--text)"};font:inherit;font-size:var(--s-klein);line-height:1.15;font-weight:700;cursor:pointer;overflow:hidden;text-align:${seite==="a"?"right":"left"}">${nm(p[seite])}</button>`; };
-  const erg=(p)=>{ const pi=plan.indexOf(p); const txt=p.ta!=null?`${p.ta}:${p.tb}`:"–:–";
+  const mitErg=htErgebnisseAn({config:{...(cfg||{}),art:"festival"},plan});
+  const erg=(p)=>{ if(!mitErg)return "<span></span>"; const pi=plan.indexOf(p); const txt=p.ta!=null?`${p.ta}:${p.tb}`:"–:–";
     if(!tausch)return `<span style="font-size:var(--s-text);font-weight:900;color:${p.ta!=null?"var(--text)":"var(--text3)"};text-align:center">${txt}</span>`;
     return `<button class="btn btn-sm" onclick="fstErgebnis(${pi})" aria-label="Ergebnis eintragen" style="min-height:44px;min-width:48px;justify-content:center;font-size:var(--s-text)">${txt}</button>`; };
   return runden.map(r=>{
@@ -3651,7 +3673,7 @@ function fstPlanHtml(plan,teams,felder,tausch,cfg){
     const offen=r===aktiv;
     const kopf=`<span style="font-size:var(--s-text);font-weight:900">Runde ${r}</span>
         <span style="font-size:var(--s-klein);color:var(--text2)">${esc(fstZeitIst(spiele[0]?spiele[0].zeit:"",cfg))} Uhr</span>
-        ${offen?"":`<span style="margin-left:auto;font-size:var(--s-klein);color:var(--text3)">${spiele.length} Spiel${spiele.length===1?"":"e"}${spiele.every(p=>p.ta!=null)?" · fertig":""}</span>`}`;
+        ${offen?"":`<span style="margin-left:auto;font-size:var(--s-klein);color:var(--text3)">${spiele.length} Spiel${spiele.length===1?"":"e"}${mitErg&&spiele.every(p=>p.ta!=null)?" · fertig":""}</span>`}`;
     const zeilen=spiele.map(p=>{const F=_fstF(p.form);return `<div style="display:grid;grid-template-columns:auto minmax(0,1fr) 10px minmax(0,1fr) auto;gap:6px;align-items:center;padding:3px 0;font-size:var(--s-text);font-weight:700">
         <span style="font-size:var(--s-klein);font-weight:800;color:#fff;background:${F.farbe};border-radius:6px;padding:3px 6px;white-space:nowrap">${esc(fstFeldName(felder,(p.feld||1)-1))}</span>
         ${tn(p,"a")}<span style="color:var(--text3);font-weight:400;text-align:center">–</span>${tn(p,"b")}
@@ -3843,7 +3865,7 @@ function _fstPublicRender(wrap,row){
   const dat=row.datum?new Date(row.datum+"T00:00:00").toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"}):"";
   const nm=i=>_htWappenImg(cfg,teams[i],24)+esc(teams[i]||("Team "+(i+1)));
   const runden=[...new Set(plan.map(p=>p.runde))].sort((a,b)=>a-b);
-  const helfer=!!(_htPub&&_htPub.code), jetzt=fstRundeJetzt(row), verzug=fstVerzug(cfg);
+  const mitErg=htErgebnisseAn(row), helfer=mitErg&&!!(_htPub&&_htPub.code), jetzt=fstRundeJetzt(row), verzug=fstVerzug(cfg);
   const wiederher=_fstOffenMerken(wrap);
   wrap.innerHTML=`
     <div style="background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border-radius:18px;padding:16px;display:flex;flex-wrap:wrap;align-items:center;gap:14px;box-shadow:0 6px 24px rgba(30,58,138,.25)">
@@ -3896,12 +3918,12 @@ function _fstPublicRender(wrap,row){
       const kopf=`<span style="font-size:var(--s-karte);font-weight:900">Runde ${r}</span>
           <span style="font-size:var(--s-text);color:#475569;font-weight:700">${esc(fstZeitIst(spiele[0]?spiele[0].zeit:"",cfg))} Uhr</span>
           ${aktiv&&jetzt?`<span style="margin-left:auto;font-size:var(--s-klein);font-weight:800;color:#166534;background:#dcfce7;border-radius:10px;padding:2px 8px">${jetzt.status==="laeuft"?"▶ läuft":"als Nächstes"}</span>`
-            :(aktiv?"":`<span style="margin-left:auto;font-size:var(--s-klein);color:var(--text3)">${spiele.length} Spiel${spiele.length===1?"":"e"}${spiele.every(p=>p.ta!=null)?" · fertig":""}</span>`)}`;
+            :(aktiv?"":`<span style="margin-left:auto;font-size:var(--s-klein);color:var(--text3)">${spiele.length} Spiel${spiele.length===1?"":"e"}${mitErg&&spiele.every(p=>p.ta!=null)?" · fertig":""}</span>`)}`;
       const zeilen=spiele.map(p=>{const F=_fstF(p.form); const mi=plan.indexOf(p); const erg=p.ta!=null?`${p.ta} : ${p.tb}`:"– : –";
           return `<div style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:6px 0">
           <span style="font-size:var(--s-klein);font-weight:800;color:#fff;background:${F.farbe};border-radius:7px;padding:3px 7px;min-width:52px;text-align:center;white-space:nowrap">${esc(fstFeldName(felder,(p.feld||1)-1))}</span>
           <span style="min-width:0;font-size:var(--s-karte);font-weight:700;line-height:1.3">${nm(p.a)} <span style="color:var(--text3);font-weight:400">gegen</span> ${nm(p.b)}</span>
-          ${helfer?`<button class="btn btn-sm" onclick="htPubEdit(${mi})" aria-label="Ergebnis eintragen" style="min-height:44px;min-width:64px;justify-content:center;font-size:var(--s-text)">${erg}</button>`
+          ${!mitErg?"<span></span>":helfer?`<button class="btn btn-sm" onclick="htPubEdit(${mi})" aria-label="Ergebnis eintragen" style="min-height:44px;min-width:64px;justify-content:center;font-size:var(--s-text)">${erg}</button>`
                   :`<span style="font-size:var(--s-karte);font-weight:900;color:${p.ta!=null?"#0f172a":"#cbd5e1"};min-width:44px;text-align:center">${erg}</span>`}
         </div>`;}).join("");
       if(!aktiv)return `<details id="fst-runde-${r}" style="background:#fff;border-radius:14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
@@ -3918,7 +3940,7 @@ function _fstPublicRender(wrap,row){
       <div style="font-size:var(--s-text);white-space:pre-wrap;line-height:1.6">${esc(cfg.infos)}</div></div>`:""}
 
     <div style="text-align:center;font-size:var(--s-klein);color:var(--text3);margin-top:16px;line-height:1.6">
-      Wir spielen ohne Tabelle – bei uns gewinnt die Freude am Spiel.<br>SV Adler Dellbrück · U9 · Die Seite aktualisiert sich von selbst
+      ${mitErg?"Wir spielen ohne Tabelle":"Wir zählen keine Ergebnisse"} – bei uns gewinnt die Freude am Spiel.<br>SV Adler Dellbrück · U9 · Die Seite aktualisiert sich von selbst
     </div>`;
   wiederher();
   fstUhrTicken();
@@ -3990,6 +4012,7 @@ async function _htPubLoad(){
 }
 // Ergebnis-Modus (Anzeigetisch): großes Eingabe-Blatt für EIN Spiel, 52px-Tasten
 function htPubEdit(mi){
+  if(_htPub&&_htPub.row&&!htErgebnisseAn(_htPub.row))return;   // v900
   const row=_htPub&&_htPub.row; if(!row)return;
   const p=row.plan[mi]; if(!p||typeof p.a!=="number"||typeof p.b!=="number")return;
   document.getElementById("htpub-sheet")?.remove();
@@ -4334,7 +4357,7 @@ function _htMonRender(){
   const ov=document.getElementById("htpub-monitor"); if(!ov||!_htMon)return;
   const row=_htPub&&_htPub.row;
   if(!row){ov.innerHTML='<div class="htp-mon-leer">Lade…</div>';return;}
-  const teams=row.teams||[], plan=row.plan||[], cfg=row.config||{}, fest=fstIst(row);
+  const teams=row.teams||[], plan=row.plan||[], cfg=row.config||{}, fest=fstIst(row), mitErg=htErgebnisseAn(row);
   const felder=fest?((cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER):null;
   const zt=p=>fest?fstZeitIst(p.zeit,cfg):p.zeit, dauer=fest?Math.max(3,Number(cfg.spieldauer)||8):_htpDauer(cfg);
   const start=p=>_htpZeit(row,zt(p)), n=Date.now();
@@ -4346,9 +4369,9 @@ function _htMonRender(){
   const feld=p=>fest?fstFeldName(felder,(p.feld||1)-1):"Feld "+(p.feld||1);
   const spiel=(p,klein)=>{ const l=istLive(p), erg=p.ta!=null&&p.tb!=null;
     return `<div class="htp-mon-spiel${l?" live":""}${klein?" klein":""}"><div class="kopf2">${l?"🔴 LIVE · ":""}${esc(feld(p))} · ${esc(zt(p)||"")} Uhr${p.phase&&!fest?" · "+esc(p.phase):""}</div>
-      <div class="htp-mon-paar">${team(p.a)}<span class="htp-mon-tore">${erg?p.ta+":"+p.tb:l?"0:0":"–:–"}${l&&erg?'<small>Zwischenstand</small>':""}</span>${team(p.b,1)}</div></div>`; };
+      <div class="htp-mon-paar">${team(p.a)}<span class="htp-mon-tore">${!mitErg?'<small>gegen</small>':erg?p.ta+":"+p.tb:l?"0:0":"–:–"}${mitErg&&l&&erg?'<small>Zwischenstand</small>':""}</span>${team(p.b,1)}</div></div>`; };
   const tabs=(!fest&&plan.length)?_htpTabellenBloecke(row).map(([titel,idxs])=>`<table class="htp-mon-tab"><caption>${esc(titel)}</caption>${_htTabelle(plan,idxs,teams,p=>_htpFertig(row,p)).map((z,pl)=>`<tr><td>${pl+1}.</td><td>${_htWappen(cfg,teams[z.i])}${esc(z.name)}</td><td>${z.tore}:${z.geg}</td><td>${z.pkt}</td></tr>`).join("")}</table>`).join("")
-    :(fest?'<div class="htp-mon-hinweis">🦅 Wir spielen ohne Tabelle – bei uns gewinnt die Freude am Spiel.</div>':"");
+    :(fest?`<div class="htp-mon-hinweis">🦅 ${mitErg?"Wir spielen ohne Tabelle":"Wir zählen keine Ergebnisse"} – bei uns gewinnt die Freude am Spiel.</div>`:"");
   const vorbei=plan.length&&!live.length&&!komm.length;
   const fp=cfg.fairplay!=null&&teams[cfg.fairplay]!=null?teams[cfg.fairplay]:null;
   ov.innerHTML=`<div class="htp-mon-kopf"><img src="logo.png" alt=""><span class="t">${esc(row.name||"Turnier")}</span><span class="htp-mon-uhr">${uhr}</span>${_htMon.fest?"":'<button class="htp-mon-zu" onclick="htPubMonitorStop()" aria-label="Monitor beenden">✕</button>'}</div>
