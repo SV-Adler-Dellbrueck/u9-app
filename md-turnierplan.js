@@ -3902,6 +3902,45 @@ function _fstWappenreihe(row){
   if(!vereine.length)return "";
   return `<ul class="htp-wappenreihe" style="width:100%;margin-top:4px" aria-label="Teilnehmende Vereine">${vereine.map((n,i)=>`<li><button class="htp-medaille" style="--i:${i}" onclick="htpFunkeln(this)" aria-label="${esc(n)}" title="${esc(n)}">${_htWappen(cfg,n)}</button></li>`).join("")}</ul>`;
 }
+/* v908 PO 20.11.: „gerne noch ein paar optische Highlights mehr“ – die Festivalseite bekommt, was die Turnierseite
+   seit v897 hat: Kopf mit Spielfeld-Linien und Wasserzeichen, „Wer ist dein Verein?“ (Wappen antippen, das Handy merkt
+   sich die Wahl) samt Karte „Euer nächstes Spiel“, die Spiele des eigenen Vereins golden markiert (mit ★ und Text, nie nur
+   Farbe), die laufende Runde mit pulsierendem LIVE-Punkt und Laufbalken, die Mannschaften mit Wappen. */
+function _fstMeinVerein(row){
+  const vereine=((row&&row.config&&row.config.vereine)||[]).map(v=>v&&v.name).filter(Boolean);
+  let v=_htPub&&_htPub.verein;
+  if(v===undefined){ try{ v=localStorage.getItem("adler_festival_"+((_htPub&&_htPub.slug)||""))||null; }catch(e){ v=null; } if(_htPub)_htPub.verein=v; }
+  return vereine.includes(v)?v:null;
+}
+function fstPubVerein(nr){
+  if(!_htPub)return;
+  /* Nummer statt Name im onclick: die schlanke Turnierseite (v899) lädt kein views.js und damit kein jsq. */
+  const row=_htPub.row, name=typeof nr==="number"?[...new Set(((row&&row.config&&row.config.vereine)||[]).map(v=>v&&v.name).filter(Boolean))][nr]:nr;
+  if(!name)return;
+  _htPub.verein=(_htPub.verein===name)?null:name;
+  try{ const k="adler_festival_"+(_htPub.slug||""); if(_htPub.verein)localStorage.setItem(k,_htPub.verein); else localStorage.removeItem(k); }catch(e){}
+  if(_htPub.row&&_htPub.wrap)_fstPublicRender(_htPub.wrap,_htPub.row);
+}
+/* Anteil der laufenden Runde (0–1) und Restminuten – aus der Anpfiffzeit der Runde und der Spielzeit. */
+function _fstLauf(row,r){
+  const cfg=(row&&row.config)||{}, p=((row&&row.plan)||[]).find(x=>x.runde===r); if(!p)return null;
+  const st=fstUhrStand(row), dauer=Math.max(3,Number(cfg.spieldauer)||8);
+  if(st&&st.phase==="laeuft"&&st.runde===r&&st.rest!=null)return {anteil:Math.min(1,Math.max(0,1-st.rest/(dauer*60))),rest:Math.ceil(st.rest/60)};
+  const t=_fstMin(fstZeitIst(p.zeit,cfg)), j=_fstMin(_fstJetztHhmm()); if(t==null||j==null)return null;
+  const vorbei=j-t; return {anteil:Math.min(1,Math.max(0,vorbei/dauer)),rest:Math.max(0,dauer-vorbei)};
+}
+/* Nächstes (oder laufendes) Spiel eines Vereins: {p, team, gegner, zeit, feld}. */
+function _fstNaechstesSpiel(row,verein){
+  const cfg=row.config||{}, teams=row.teams||[], plan=row.plan||[], dauer=Math.max(3,Number(cfg.spieldauer)||8);
+  const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
+  const heute=row.datum===isoLokal(), j=_fstMin(_fstJetztHhmm());
+  const vom=i=>_htVereinFuer(cfg,teams[i])===verein;
+  const eigene=plan.filter(p=>vom(p.a)||vom(p.b)).map(p=>({p,t:_fstMin(fstZeitIst(p.zeit,cfg))})).sort((a,b)=>(a.t||0)-(b.t||0));
+  const x=eigene.find(e=>!heute||e.t==null||e.t+dauer>j);
+  if(!x)return {fertig:eigene.length>0};
+  const mein=vom(x.p.a)?x.p.a:x.p.b, geg=mein===x.p.a?x.p.b:x.p.a;
+  return {p:x.p,team:teams[mein],gegner:teams[geg],zeit:fstZeitIst(x.p.zeit,cfg),feld:fstFeldName(felder,(x.p.feld||1)-1),laeuft:heute&&x.t!=null&&j>=x.t};
+}
 function _fstPublicRender(wrap,row){
   const teams=row.teams||[], plan=row.plan||[], cfg=row.config||{};
   const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
@@ -3910,8 +3949,21 @@ function _fstPublicRender(wrap,row){
   const runden=[...new Set(plan.map(p=>p.runde))].sort((a,b)=>a-b);
   const mitErg=htErgebnisseAn(row), helfer=mitErg&&!!(_htPub&&_htPub.code), jetzt=fstRundeJetzt(row), verzug=fstVerzug(cfg);
   const wiederher=_fstOffenMerken(wrap);
+  /* v908: Verein des Handys, seine Spiele, nächstes Spiel */
+  const vereine=[...new Set((cfg.vereine||[]).map(v=>v&&v.name).filter(Boolean))];
+  const mein=_fstMeinVerein(row), istMein=i=>!!mein&&_htVereinFuer(cfg,teams[i])===mein;
+  const naechstes=mein?_fstNaechstesSpiel(row,mein):null;
+  const meinHtml=!mein?"":naechstes&&naechstes.p
+    ?`<div class="htp-mein fst-mein">${_htWappen(cfg,mein,"gross")}<div><div class="z1">${naechstes.laeuft?"Läuft gerade":"Euer nächstes Spiel"}</div>
+        <div class="z2">${esc(naechstes.zeit)} Uhr · ${esc(naechstes.feld)}</div>
+        <div class="z3">${esc(naechstes.team)} gegen ${esc(naechstes.gegner)}</div></div></div>`
+    :`<div class="htp-mein fst-mein">${_htWappen(cfg,mein,"gross")}<div><div class="z1">${naechstes&&naechstes.fertig?"Alle Spiele gespielt":"Noch kein Spielplan"}</div>
+        <div class="z2">${naechstes&&naechstes.fertig?"Danke fürs Mitspielen!":"Gleich geht es los"}</div></div></div>`;
+  const filterHtml=vereine.length>1?`<div class="htp-filter fst-filter"><div class="htp-filter-titel">Wer ist dein Verein? Antippen – deine Spiele leuchten.</div>
+      <div class="htp-chips">${vereine.map(v=>`<button type="button" class="htp-chip" aria-pressed="${v===mein}" onclick="fstPubVerein(${vereine.indexOf(v)})">${_htWappen(cfg,v)}${esc(v)}${v===mein?'<span class="htp-haken" aria-hidden="true">✓</span>':""}</button>`).join("")}</div></div>`:"";
   wrap.innerHTML=`
-    <div style="background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border-radius:18px;padding:16px;display:flex;flex-wrap:wrap;align-items:center;gap:14px;box-shadow:0 6px 24px rgba(30,58,138,.25)">
+    <div class="fst-kopf">
+      <img class="htp-kopf-adler" src="logo.png" alt="" aria-hidden="true">
       <img src="logo.png" alt="SV Adler Dellbrück" style="width:58px;height:58px;flex:0 0 auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))">
       <div style="min-width:0">
         <div style="font-size:var(--s-teil);font-weight:900;line-height:1.15">${esc(row.name||"Kinderfestival")}</div>
@@ -3921,6 +3973,8 @@ function _fstPublicRender(wrap,row){
       ${_fstWappenreihe(row)}
     </div>
     ${_fstEnde(row)?_htpAbschlussHtml(row,true):""}
+    ${filterHtml}
+    ${meinHtml}
 
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 12px">
       <button class="btn" onclick="fstInfoOpen()" style="flex:1;min-height:48px;justify-content:center;gap:6px;font-size:var(--s-text)">ℹ️ Anfahrt &amp; Felder</button>
@@ -3950,7 +4004,7 @@ function _fstPublicRender(wrap,row){
 
     ${teams.length?`<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
       <div style="font-size:var(--s-text);font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Mannschaften</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">${teams.map(t=>`<span style="font-size:var(--s-text);font-weight:700;background:#f1f5f9;border-radius:16px;padding:5px 12px">${esc(t)}</span>`).join("")}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${teams.map((t,i)=>`<span class="fst-team${istMein(i)?" mein":""}">${_htWappenImg(cfg,t,22)}${esc(t)}</span>`).join("")}</div>
     </div>`:""}
 
     ${fstTaktZeile(row)}
@@ -3960,21 +4014,25 @@ function _fstPublicRender(wrap,row){
       const aktiv=jetzt?jetzt.runde===r:r===runden[0];
       const kopf=`<span style="font-size:var(--s-karte);font-weight:900">Runde ${r}</span>
           <span style="font-size:var(--s-text);color:#475569;font-weight:700">${esc(fstZeitIst(spiele[0]?spiele[0].zeit:"",cfg))} Uhr</span>
-          ${aktiv&&jetzt?`<span style="margin-left:auto;font-size:var(--s-klein);font-weight:800;color:#166534;background:#dcfce7;border-radius:10px;padding:2px 8px">${jetzt.status==="laeuft"?"▶ läuft":"als Nächstes"}</span>`
+          ${aktiv&&jetzt?(jetzt.status==="laeuft"?`<span class="fst-live"><span class="fst-live-punkt" aria-hidden="true"></span>LIVE</span>`:`<span style="margin-left:auto;font-size:var(--s-klein);font-weight:800;color:#166534;background:#dcfce7;border-radius:10px;padding:2px 8px">als Nächstes</span>`)
             :(aktiv?"":`<span style="margin-left:auto;font-size:var(--s-klein);color:var(--text3)">${spiele.length} Spiel${spiele.length===1?"":"e"}${mitErg&&spiele.every(p=>p.ta!=null)?" · fertig":""}</span>`)}`;
       const zeilen=spiele.map(p=>{const F=_fstF(p.form); const mi=plan.indexOf(p); const erg=p.ta!=null?`${p.ta} : ${p.tb}`:"– : –";
-          return `<div style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:6px 0">
+          const meins=istMein(p.a)||istMein(p.b);
+          return `<div class="fst-zeile${meins?" mein":""}" style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:6px 0">
           <span style="font-size:var(--s-klein);font-weight:800;color:#fff;background:${F.farbe};border-radius:7px;padding:3px 7px;min-width:52px;text-align:center;white-space:nowrap">${esc(fstFeldName(felder,(p.feld||1)-1))}</span>
-          <span style="min-width:0;font-size:var(--s-karte);font-weight:700;line-height:1.3">${nm(p.a)} <span style="color:var(--text3);font-weight:400">gegen</span> ${nm(p.b)}</span>
+          <span style="min-width:0;font-size:var(--s-karte);font-weight:700;line-height:1.3">${meins?'<span class="fst-stern">★ euer Spiel</span>':""}${nm(p.a)} <span style="color:var(--text3);font-weight:400">gegen</span> ${nm(p.b)}</span>
           ${!mitErg?"<span></span>":helfer?`<button class="btn btn-sm" onclick="htPubEdit(${mi})" aria-label="Ergebnis eintragen" style="min-height:44px;min-width:64px;justify-content:center;font-size:var(--s-text)">${erg}</button>`
                   :`<span style="font-size:var(--s-karte);font-weight:900;color:${p.ta!=null?"#0f172a":"#cbd5e1"};min-width:44px;text-align:center">${erg}</span>`}
         </div>`;}).join("");
       if(!aktiv)return `<details id="fst-runde-${r}" style="background:#fff;border-radius:14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
         <summary style="cursor:pointer;min-height:48px;display:flex;align-items:center;gap:8px;padding:12px 14px">${kopf}</summary>
         <div style="padding:0 14px 12px">${zeilen}</div></details>`;
-      return `<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)${jetzt?";border:2px solid #16a34a":""}">
+      const live=jetzt&&jetzt.status==="laeuft", lauf=live?_fstLauf(row,r):null;
+      return `<div class="fst-runde${live?" live":""}" style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.08)${jetzt&&!live?";border:2px solid #16a34a":""}">
         <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;border-bottom:1px solid #e2e8f0;padding-bottom:6px">${kopf}</div>
         ${zeilen}
+        ${lauf?`<div class="htp-lauf" role="progressbar" aria-label="Spielzeit der Runde" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(lauf.anteil*100)}"><i style="--anteil:${lauf.anteil.toFixed(3)}"></i></div>
+          <div class="htp-lauf-text"><span>läuft</span><span>noch ${lauf.rest} Min.</span></div>`:""}
       </div>`;}).join("")
       :'<div style="background:#fff;border-radius:14px;padding:20px;text-align:center;color:#64748b;font-size:var(--s-text)">Der Spielplan wird gerade erstellt.</div>'}
 
