@@ -22,7 +22,7 @@
 const fs = require("fs"), path = require("path");
 
 const REGEL = /zählt doppelt|zählt dreifach|zählt nur|zählt erst|Punkt nur|nur, wenn|nur mit|nur nach|Bonus|gibt einen Punkt|zwei Punkte/i;
-const AUSNAHME_OFFEN = ["L5-8", "L5-9"];   // v901: L5-9 folgt dem Aufbau von L5-8 (Auftrag 20.11.)
+const AUSNAHME_OFFEN = ["L5-8", "L5-9"];   // v902: L5-9 folgt dem Aufbau von L5-8 (Auftrag 20.11.)
 const LOB = [/^Lob für /, /^Loben, wenn /, /^Feiern, wenn /, /^Gemeinsam feiern, wenn /];
 const ORDNUNG_A = { "Überzahl": 1, "1 gegen 1": 2, "2 gegen 2": 2, "Dreieck (3 gegen 3)": 3, "Raute (4 gegen 4)": 4, "Endzone (4 gegen 4)": 4 };
 const ORDNUNG_B = { "1 gegen 1": 1, "FUNiño": 2, "3+1": 3 };

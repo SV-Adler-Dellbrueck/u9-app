@@ -1,4 +1,4 @@
-/* v901 · Auftrag L5-9 (doku/auftrag-l5-9, 20.11.2026): Vorlage „L5-9 Anbieten und Verlagern“ und die
+/* v902 · Auftrag L5-9 (doku/auftrag-l5-9, 20.11.2026): Vorlage „L5-9 Anbieten und Verlagern“ und die
    U9-Übung „Zwei-Seiten-Spiel – Platz suchen, Seite wechseln“.
 
    a) Bibliothek: die Übung steht genau einmal da, ohne „Lehrgang“ im Namen, Kategorie passspiel, 6-8 Kinder;
@@ -19,7 +19,7 @@ const UE = "Zwei-Seiten-Spiel – Platz suchen, Seite wechseln", JOKER = "Joker-
 const LEHRGANG = "Lehrgang – Zwei-Seiten-Spiel";
 
 module.exports = async function (h) {
-  const titel = "v901 L5-9 und Zwei-Seiten-Spiel";
+  const titel = "v902 L5-9 und Zwei-Seiten-Spiel";
   const probleme = [], zeilen = [];
   const lies = f => fs.readFileSync(path.join(h.REPO, f), "utf8");
   const bibTxt = lies("uebungen/bibliothek.json"), vorTxt = lies("uebungen/vorlagen.json");
