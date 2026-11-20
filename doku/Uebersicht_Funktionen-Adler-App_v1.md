@@ -1,6 +1,6 @@
 # Adler-App – Übersicht der Funktionen und Features
 
-**Stand:** App-Version v912 (November 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
+**Stand:** App-Version v913 (November 2026) · **Zielgruppe:** Trainerteam, Vereinsführung, interessierte Eltern
 
 Die Adler-App ist die Team-App der U9 des SV Adler Dellbrück. Sie läuft als Progressive Web App im Browser und lässt sich auf jedem Handy wie eine App installieren. Ein Codebestand bedient drei Zugänge: das **Trainerteam**, die **Eltern** und – über einen abgesicherten Kinder-Modus – die **Kinder** selbst. Dazu kommen öffentliche Seiten, die ohne Anmeldung funktionieren (Liveticker, Turnierseite). Das Adler Nest ist seit v733 nur noch nach der Anmeldung lesbar.
 
@@ -29,6 +29,7 @@ Zugang über den Trainer-Einstieg: erst ein PIN-Gate, dann die persönliche Anme
 | Funktion | Was sie tut | Nutzen |
 |---|---|---|
 | **Anwesenheit erfassen** | Seit v687 in drei Schritten (Termin, Trainer, Kinder) mit laufender Zählung „✓ 14 da · 1 fehlt“; der Knopf nennt dieselbe Zahl, „Alle da“ nur, wenn jemand fehlt. Haken je Kind pro Training. Trainer-Haken kommen bis zum Tag aus den Rückmeldungen, am Tag selbst aus der Erfassung. | Saubere Grundlage für Anwesenheitsquoten, Serien und faire Einsatzverteilung. |
+| **Fenster liegen oben und scrollen (v913)** | Jedes Fenster, das aus einem anderen heraus aufgeht, liegt jetzt darüber, und ein Fenster mit langem Inhalt lässt sich auf dem Handy bis zum Ende scrollen, ohne dass der obere Teil abgeschnitten ist. Neue Fenster entstehen aus einem gemeinsamen Baustein (`fensterAuf`); die Grillhütte nutzt ihn als erstes. |
 | **Antwortknöpfe überall gleich (v840)** | Terminkarte, „Rückmeldung fehlt“, Termin-Fenster und „Alle Termine“ zeigen dieselbe Reihe: Zusage · Unsicher · Absage · Krank, nur das Wort, mindestens 44 px, mit Haken an der gewählten Antwort, `aria-pressed` und Namen für Vorleseprogramme. „Krank“ fehlte vorher in zwei Listen. |
 | **Eltern-Startseite in drei Zonen (v838)** | Oben, was jetzt gilt: Live, Ansage des Trainerteams (über der Terminkarte), nächster Termin. Dann „Noch offen“ (fehlende Antworten, „Zu erledigen“, Benachrichtigungen, Porträt-Bogen) und „Neu“ (Adler-Rufe, Adler News); eine Überschrift zeigt sich nur mit Inhalt. Trainings gelten als zugesagt und werden nicht gemahnt („Gilt als zugesagt – nur absagen, wenn euer Kind fehlt“); „Rückmeldung fehlt“ und „überfällig“ gibt es nur bei Spiel, Turnier und Event. |
 | **Eltern-Bereich ohne Sackgassen (v837)** | Ohne Netz zeigt das Dashboard den zuletzt geladenen Stand (eigene Kinder, nächste Termine) mit Zeitangabe statt „keinem Kind zugeordnet“; der Stand liegt nur auf dem Gerät und verschwindet beim Abmelden. Die Kabine fragt beim ersten Start nach dem Kabinen-Code. „Neue Adler-Rufe“ öffnet den Raum mit dem Ungelesenen. Nach dem Code-Login („Passwort vergessen“) öffnet sich das Passwort-Fenster. Kein Auftakt bei `?rsvp` und `?rufe`. |

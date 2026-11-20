@@ -1800,6 +1800,54 @@ function _dialogKennzeichnen(n){
     _dialogBenennen(n,0);
   }catch(e){}
 }
+/* v913 (Bestandsaufnahme 4.5): Rund 175 Fenster sind von Hand gebaut – jedes mit eigener Ebene
+   (z-index zwischen 1000 und 11000) und eigenem Scrollverhalten. Zwei Folgen, die Nutzer sehen:
+   (1) Ein Fenster, das aus einem anderen heraus aufgeht, landet darunter, wenn seine feste Ebene
+   niedriger ist (so am 20.11. die Grillhütte unter dem Termin-Fenster). (2) Ist der Inhalt höher
+   als der Bildschirm, lässt er sich ohne overflow nicht erreichen; bei mittiger Ausrichtung
+   verschwindet zusätzlich der obere Teil. Das Netz hier richtet jedes neue Fenster beim Öffnen:
+   über das oberste schon offene, scrollbar, und „mittig nur, solange es passt“ (safe center).
+   Neue Fenster nehmen den Baustein fensterAuf() weiter unten, der das von Anfang an mitbringt. */
+function _fensterRichten(n){
+  try{
+    if(n.parentElement!==document.body||n.id==="pin-gate"||n.id==="kabine"||n._fensterGerichtet)return;
+    if(n.getAttribute("role")!=="dialog"||n.getAttribute("aria-modal")!=="true")return;
+    const s=getComputedStyle(n);
+    if(s.position!=="fixed"||s.display==="none")return;
+    n._fensterGerichtet=true;
+    const z=parseInt(s.zIndex,10);
+    if(!isNaN(z)&&z>=Z_DIALOG_MIN&&z<=Z_DIALOG_MAX){
+      let hoechst=0;
+      document.querySelectorAll('body > [role="dialog"][aria-modal="true"]').forEach(el=>{
+        if(el===n)return; const t=getComputedStyle(el); if(t.display==="none"||t.visibility==="hidden")return;
+        const zz=parseInt(t.zIndex,10); if(!isNaN(zz)&&zz>=Z_DIALOG_MIN&&zz<=Z_DIALOG_MAX&&zz>hoechst)hoechst=zz;
+      });
+      if(hoechst>=z)n.style.zIndex=String(Math.min(hoechst+1,Z_DIALOG_MAX));
+    }
+    if(s.overflowY==="visible")n.style.overflowY="auto";
+    if(s.display==="flex"){
+      const spalte=s.flexDirection.indexOf("column")===0;
+      if(spalte?s.justifyContent==="center":s.alignItems==="center"){ if(spalte)n.style.justifyContent="safe center"; else n.style.alignItems="safe center"; }
+    }
+  }catch(e){}
+}
+/* Baustein für neue Fenster: ein Grund (abgedunkelt, scrollbar, über allem Offenen) mit einer Karte.
+   o.breite (px, Standard 560), o.mitte (senkrecht mittig statt oben), o.aussen (Tippen auf den Grund
+   schließt), o.dunkel (Vollbild ohne Karte, z. B. Großansicht). Gibt {grund, karte} zurück; ein
+   offenes Fenster mit derselben id wird ersetzt. Kopf mit mdlHead(id,…) in die Karte setzen. */
+function fensterAuf(id,o){
+  o=o||{};
+  document.getElementById(id)?.remove();
+  const g=document.createElement("div"); g.id=id; g.className="fenster"+(o.mitte?" fenster-mitte":"")+(o.dunkel?" fenster-dunkel":"");
+  g.setAttribute("role","dialog"); g.setAttribute("aria-modal","true");
+  g.style.zIndex=String(zOben(o.z||10002));
+  const k=document.createElement("div"); k.className="fenster-karte";
+  if(o.breite)k.style.maxWidth=Number(o.breite)+"px";
+  g.appendChild(k);
+  if(o.aussen)g.addEventListener("click",e=>{ if(e.target===g)g.remove(); });
+  document.body.appendChild(g);
+  return {grund:g,karte:k};
+}
 /* Viele Fenster gehen leer auf und füllen sich erst nach dem Laden – dann kommt der Name
    eben ein paar Augenblicke später. */
 function _dialogBenennen(n,versuch){
@@ -1816,6 +1864,7 @@ _adlerOnReady(()=>{
     for(const m of muts)for(const n of m.addedNodes){
       if(n.nodeType!==1)continue;
       _dialogKennzeichnen(n);
+      _fensterRichten(n);
       const dlg=n.matches&&n.matches('[role="dialog"][aria-modal="true"]')?n:(n.querySelector&&n.querySelector('[role="dialog"][aria-modal="true"]'));
       if(dlg&&!dlg._fokusGesetzt){dlg._fokusGesetzt=true;if(!dlg.hasAttribute("tabindex"))dlg.setAttribute("tabindex","-1");try{dlg.focus({preventScroll:true});}catch(err){}}
     }
