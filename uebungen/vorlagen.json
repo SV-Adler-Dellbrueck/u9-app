@@ -1,6 +1,6 @@
 {
   "schema": "adler-vorlagen/1",
-  "stand": "2026-11-20-1",
+  "stand": "2026-11-20-2",
   "vorlagen": [
     {
       "name": "L1-1 Ball behalten – Duell um zwei Tore",
@@ -1771,7 +1771,7 @@
       "skalierung": {
         "8": "Zwei Felder statt drei: Feld 3 im Plan weglassen. Zwei Gruppen zu 4, zwei Durchgänge. Hauptteil 3 offen: auf beiden Feldern 2 gegen 2 auf vier Minitore. Abschlussturnier: 3+1 gegen 3+1 auf dem Jugendtor-Feld.",
         "10": "Zwei Felder: Feld 3 im Plan weglassen. Zwei Gruppen zu 5, an jeder Station wartet ein Kind und rotiert nach jedem Durchgang ein. Hauptteil 3 offen: 3 gegen 3 und 2 gegen 2 auf vier Minitore. Abschlussturnier: 3+1 gegen 3+1 mit je einem Wechsler.",
-        "12": "Drei Gruppen zu 4 auf drei Feldern, zwei Durchgänge. Hauptteil 3 offen: zwei Felder, je 3 gegen 3 auf vier Minitore – im Plan Feld 3 weglassen. Abschlussturnier auf zwei Feldern: 3+1 gegen 3+1 am Jugendtor, FUNiño 3 gegen 3 an den Minitoren – im Plan Feld 3 weglassen.",
+        "12": "Drei Gruppen zu 4 auf drei Feldern, zwei Durchgänge. Hauptteil 3 offen: zwei Felder, je 3 gegen 3 auf vier Minitore – im Plan Feld 3 weglassen. Abschlussturnier auf zwei Feldern: acht Kinder 3+1 gegen 3+1 am Jugendtor, vier Kinder FUNiño 2 gegen 2 an den Minitoren – im Plan Feld 3 weglassen, nach der Hälfte Felder tauschen.",
         "14": "Drei Gruppen zu 5, 5 und 4 auf drei Feldern, zwei Durchgänge; an den Fünfergruppen rotiert je ein Kind ein. Hauptteil 3 offen: zwei Felder, je 3 gegen 3 auf vier Minitore mit einem Wechsler – im Plan Feld 3 weglassen. Abschlussturnier auf zwei Feldern: acht Kinder 3+1 gegen 3+1 am Jugendtor, sechs Kinder FUNiño 3 gegen 3 – im Plan Feld 3 weglassen, nach der Hälfte Felder tauschen."
       },
       "beobachtung": "Wer hat als Flitzer oder Außenspieler den Abstand zum Ballführenden gehalten, statt ihm entgegenzulaufen – auf allen drei Feldern?",

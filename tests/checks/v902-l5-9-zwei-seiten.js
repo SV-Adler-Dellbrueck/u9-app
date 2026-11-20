@@ -58,7 +58,7 @@ module.exports = async function (h) {
   if (st.length !== 2 || st.some(x => x !== JOKER + " | " + UE)) probleme.push(`b) Stationen: ${JSON.stringify(st)}`);
   if (v.bloecke[4].typ !== "abschluss" || v.bloecke[4].uebung_name || v.bloecke[4].stationen) probleme.push("b) Abschluss trägt eine Übung");
   if (!bib.uebungen.some(x => x.name === JOKER)) probleme.push("b) Joker-Duell fehlt in der Bibliothek");
-  if (vor.stand !== bib.stand) probleme.push(`b) Stand Vorlagen ${vor.stand} ≠ Bibliothek ${bib.stand}`);
+  /* Die Stände von Vorlagen und Bibliothek sind unabhängig (eigene Merker im Abgleich) – v905 zählt nur den der Vorlagen hoch. */
 
   // ── c) + a)/b) im Browser: Abgleich, Prüfungen, Ansicht ───────────────────────
   const formen = [], vorlagen = [], geschrieben = [];
