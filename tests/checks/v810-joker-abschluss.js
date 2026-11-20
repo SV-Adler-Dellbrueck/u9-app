@@ -13,7 +13,7 @@ module.exports = async function (h) {
   const bib = JSON.parse(fs.readFileSync(path.join(h.REPO, "uebungen/bibliothek.json"), "utf8"));
   const jd = bib.uebungen.find(u => u.name === "Joker-Duell – anbieten und freilaufen");
   const st = bib.uebungen.find(u => /^Schau-Tore/.test(u.name));
-  const ab = jd ? jd.ablauf : "";
+  const ab = jd ? (jd.ablauf_lang || jd.ablauf) : "";   // v917: ganze Beschreibung
   const pa = {
     absatz: /BALLVERSORGUNG:[^\n]*\n\nVERTEIDIGER IN STUFE 1 UND 2: Der Verteidiger hält die Hände hinter dem Rücken und erobert den Ball nicht\./.test(ab),
     vorStufe1: ab.indexOf("VERTEIDIGER IN STUFE 1 UND 2") < ab.indexOf("STUFE 1 – FREI"),

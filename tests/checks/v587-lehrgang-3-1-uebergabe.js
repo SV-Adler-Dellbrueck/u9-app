@@ -35,25 +35,25 @@ module.exports = async function (h) {
   // a) Texte
   const alles = ["kurz", "spieler", "feld", "dauer", "ablauf", "varianten", "coaching"].map(k => String(u[k] || "")).join("\n");
   if (!/^Leitfrage 4:/.test(u.kurz)) probleme.push(`kurz beginnt nicht mit „Leitfrage 4:“ – „${String(u.kurz).slice(0, 40)}…“`);
-  if (!/^HAUPTZIEL \(Leitfrage 4\)/.test(u.ablauf)) probleme.push("ablauf beginnt nicht mit „HAUPTZIEL (Leitfrage 4)“ – der Fokus darf nicht zum Abschluss kippen");
+  if (!/^HAUPTZIEL \(Leitfrage 4\)/.test(u.ablauf_lang || u.ablauf)) probleme.push("ablauf beginnt nicht mit „HAUPTZIEL (Leitfrage 4)“ – der Fokus darf nicht zum Abschluss kippen");
   if (/Steigerung/i.test(alles)) probleme.push("„Steigerung“ steht noch im Text – beschlossen ist „Provokation“");
-  if (!/PROVOKATIONEN: 1 –/.test(u.ablauf)) probleme.push("Die drei festen Provokationen fehlen im Ablauf");
+  if (!/PROVOKATIONEN: 1 –/.test(u.ablauf_lang || u.ablauf)) probleme.push("Die drei festen Provokationen fehlen im Ablauf");
   if (/Flanke/i.test(alles)) probleme.push("„Flanke“ steht noch im Text – der Ball kommt flach");
   if (!/abgehängt/.test(u.varianten) || /gesichert/.test(alles)) probleme.push("Torwart-Variante: „abgehängt“ fehlt oder „gesichert“ steht noch da");
   if (!/1,65 m/.test(u.varianten)) probleme.push("Die Torhöhe 1,65 m (Verbandsvorgabe) fehlt in den Varianten");
-  if (!/L – Sturzflug/.test(u.ablauf) || !/Sturzflug/.test(u.coaching)) probleme.push("Option L „Sturzflug“ fehlt im Ablauf oder im Coaching");
-  if (!/ROTATION: .*auch Torwart/.test(u.ablauf)) probleme.push("Die Rotation nennt den Torwart nicht");
+  if (!/L – Sturzflug/.test(u.ablauf_lang || u.ablauf) || !/Sturzflug/.test(u.coaching)) probleme.push("Option L „Sturzflug“ fehlt im Ablauf oder im Coaching");
+  if (!/ROTATION: .*auch Torwart/.test(u.ablauf_lang || u.ablauf)) probleme.push("Die Rotation nennt den Torwart nicht");
   if (!/bis 8 m vor dem Zieltor/.test(u.feld)) probleme.push("feld nennt das Korridorende 8 m vor dem Zieltor nicht");
   /* dauer: 27 seit dem Nachtrag vom 24.09. – die Form füllt einen der beiden
      Spielblöcke der Zeitstruktur 10/27/11/27 und muss hineinpassen. */
   if (u.kat !== "raute" || u.diff !== 2 || u.dauer !== "27") probleme.push(`kat/diff/dauer verändert: ${u.kat}/${u.diff}/${u.dauer}`);
-  if (!/ENTSCHEIDUNGEN: /.test(u.ablauf)) probleme.push("Der Abschnitt ENTSCHEIDUNGEN fehlt im Ablauf – die Kinder sollen entscheiden, nicht abspulen");
+  if (!/ENTSCHEIDUNGEN: /.test(u.ablauf_lang || u.ablauf)) probleme.push("Der Abschnitt ENTSCHEIDUNGEN fehlt im Ablauf – die Kinder sollen entscheiden, nicht abspulen");
   /* v623 PO: „Durch die Anpassungen der Zeiten in den Hauptteilen stimmen die Zeitangaben in
      den Beschreibungen nicht mehr.“ – Die Einteilung bleibt drei gleiche Abschnitte, aber als
      Anteil der geplanten Zeit statt „Minute 1–9“. Die 27 bleibt als Richtwert in `dauer`. */
-  if (!/ZEIT: die geplante Zeit in drei gleich langen Abschnitten/.test(u.ablauf)) probleme.push("Der ZEIT-Abschnitt teilt die geplante Zeit nicht in drei gleich lange Abschnitte");
-  if (/Minute \d+–\d+/.test(u.ablauf)) probleme.push("Im ZEIT-Abschnitt stehen noch feste Minuten");
-  if (/Minute 21–30|Minute 11–20/.test(u.ablauf)) probleme.push("Im ZEIT-Abschnitt steht noch die alte 30-Minuten-Einteilung");
+  if (!/ZEIT: die geplante Zeit in drei gleich langen Abschnitten/.test(u.ablauf_lang || u.ablauf)) probleme.push("Der ZEIT-Abschnitt teilt die geplante Zeit nicht in drei gleich lange Abschnitte");
+  if (/Minute \d+–\d+/.test(u.ablauf_lang || u.ablauf)) probleme.push("Im ZEIT-Abschnitt stehen noch feste Minuten");
+  if (/Minute 21–30|Minute 11–20/.test(u.ablauf_lang || u.ablauf)) probleme.push("Im ZEIT-Abschnitt steht noch die alte 30-Minuten-Einteilung");
 
   const s = await h.starten({ supabase: h.supabaseAttrappe({ kader: h.kaderZeilen() }) });
   const r = await s.page.evaluate(({ spec }) => {

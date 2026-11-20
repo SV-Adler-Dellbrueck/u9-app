@@ -9,6 +9,7 @@
    g) exportAnimation kennt standMs und gleitFaktor; ohne Angabe gelten SKZ_STAND und Faktor 1
    h) Kein Kindername im Eintrag */
 "use strict";
+const { bn } = require("../bibliothek-norm.js");
 const fs = require("fs"), path = require("path");
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
@@ -18,7 +19,7 @@ module.exports = async function (h) {
   const soll = JSON.parse(roh).uebungen[0];
   const treffer = bib.uebungen.filter(u => u.name === NAME);
   if (treffer.length !== 1) probleme.push(`a) ${treffer.length}× in der Bibliothek`);
-  else if (JSON.stringify(treffer[0]) !== JSON.stringify(soll)) probleme.push("a) Bibliothek und nachtrag.json tragen verschiedene Fassungen");
+  else if (JSON.stringify(bn(treffer[0])) !== JSON.stringify(bn(soll))) probleme.push("a) Bibliothek und nachtrag.json tragen verschiedene Fassungen");
   const u = treffer[0] || soll;
   for (const k of ["name", "kurz", "spieler", "ablauf"]) if (!/Erwachsene|Ü32/.test(u[k] || "")) probleme.push(`d) „${k}“ nennt die Zielgruppe nicht`);
   const text = JSON.stringify(u);

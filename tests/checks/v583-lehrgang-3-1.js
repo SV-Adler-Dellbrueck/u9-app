@@ -30,6 +30,7 @@
       vier Bilder war nur die Bibliothek nachgezogen, und dieser Prüffall bescheinigte
       brav zwei Bilder, während die App vier zeigte. Zwei Wahrheiten zu derselben Übung
       sind schlimmer als eine veraltete. */
+const { bn } = require("../bibliothek-norm.js");
 const fs = require("fs"), path = require("path");
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
@@ -129,7 +130,7 @@ module.exports = async function (h) {
   const ausNachtrag = (JSON.parse(roh).uebungen || [])[0];
   if (!ausNachtrag) probleme.push("nachtrag.json enthält keine Übung");
   else if (!u) probleme.push("Die Übung steht nicht in der Bibliothek");
-  else if (JSON.stringify(u) !== JSON.stringify(ausNachtrag))
+  else if (JSON.stringify(bn(u)) !== JSON.stringify(bn(ausNachtrag)))
     probleme.push("bibliothek.json und nachtrag.json tragen verschiedene Fassungen der Übung – "
       + "gerendert wird aus dem Nachtrag, eingesetzt aus der Bibliothek");
   // a)

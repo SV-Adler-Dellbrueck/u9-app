@@ -9,6 +9,7 @@
    d) Art und Betreuung haben einen Vorschlag; Bilder und GIF liegen in den Auftragsordnern
    e) Kein Kindername in den Einträgen */
 "use strict";
+const { bn } = require("../bibliothek-norm.js");
 const fs = require("fs"), path = require("path");
 const SOLL = [
   { ordner: "auftrag-uebung-doppelpass-stangen", slug: "doppelpass-durch-die-stangen", gif: true,
@@ -31,7 +32,7 @@ module.exports = async function (h) {
     if (s.spieler) soll.spieler = s.spieler;
     const treffer = bib.uebungen.filter(u => u.name === s.name);
     if (treffer.length !== 1) probleme.push(`a) „${s.name}“ ${treffer.length}× in der Bibliothek`);
-    else if (JSON.stringify(treffer[0]) !== JSON.stringify(soll)) probleme.push(`a) „${s.name}“ weicht vom Auftrag ab`);
+    else if (JSON.stringify(bn(treffer[0])) !== JSON.stringify(bn(soll))) probleme.push(`a) „${s.name}“ weicht vom Auftrag ab`);
     const text = JSON.stringify(treffer[0] || {});
     for (const n of h.KINDER) if (text.includes(n)) probleme.push(`e) Kindername ${n} in „${s.name}“`);
     for (const f of [s.slug + ".png", s.slug + ".svg"].concat(s.gif ? [s.slug + "-animation.gif"] : []))

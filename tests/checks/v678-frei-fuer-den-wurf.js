@@ -8,6 +8,7 @@
    d) Kategorie wahrnehmung liegt unter der Überschrift „Hauptteil“; Art „spiel“
    e) Kein Kindername im Eintrag */
 "use strict";
+const { bn } = require("../bibliothek-norm.js");
 const fs = require("fs"), path = require("path");
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
@@ -16,7 +17,7 @@ module.exports = async function (h) {
   const soll = JSON.parse((auftrag.match(/```json\n([\s\S]*?)```/) || [])[1] || "{}").uebungen[0];
   const treffer = bib.uebungen.filter(u => u.name === "Frei für den Wurf");
   if (treffer.length !== 1) probleme.push(`a) ${treffer.length}× in der Bibliothek`);
-  else if (JSON.stringify(treffer[0]) !== JSON.stringify(soll)) probleme.push("a) Eintrag weicht vom Auftrag ab");
+  else if (JSON.stringify(bn(treffer[0])) !== JSON.stringify(bn(soll))) probleme.push("a) Eintrag weicht vom Auftrag ab");
   const text = JSON.stringify(treffer[0] || {});
   for (const n of h.KINDER) if (text.includes(n)) probleme.push(`e) Kindername ${n}`);
   const t = await h.starten({ warten: 1500, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen() }) });

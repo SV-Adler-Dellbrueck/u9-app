@@ -47,6 +47,7 @@
    vorlagen.json unverändert auf 2026-09-18-1. Die Stände stehen hier als Sperrklinke: Wer
    eine Datei anfasst, ohne den Stand hochzusetzen, bekommt es hier gesagt — denn ohne neuen
    Stand holt der Abgleich die Datei gar nicht erst. */
+const { bn } = require("../bibliothek-norm.js");
 const ORDNER = "doku/auftrag-aufstellungen-3plus1-funino";
 const NEUE_ORDNUNGEN = ["3+1", "FUNiño", "3+1 gegen FUNiño", "3+1 und FUNiño", "Endzone (4 gegen 4)", "1 gegen 1", "ohne Gegner"];   // v833: „Sonder – Technik-Parcours“ trägt „ohne Gegner“   // v700: L5-7 wird im selben Abgleich angelegt · v790: L5-8 trägt „1 gegen 1“
 const EINHEITEN = ["L4-6", "L5-4", "L6-3", "L4-7", "L5-5", "L6-4", "L5-6", "L6-5", "L4-8"];
@@ -91,7 +92,7 @@ module.exports = async function (h) {
   if (abV < 0) probleme.push("Die erste Vorlage des Nachtrags steht nicht in vorlagen.json");
   const anhangU = (bib.uebungen || []).slice(Math.max(0, abU), Math.max(0, abU) + neueU.length);
   const anhangV = (vor.vorlagen || []).slice(Math.max(0, abV), Math.max(0, abV) + neueV.length);
-  const abwU = neueU.filter((u, i) => roh(u) !== roh(anhangU[i])).map(u => u.name);
+  const abwU = neueU.filter((u, i) => roh(bn(u)) !== roh(bn(anhangU[i]))).map(u => u.name);
   /* v656: ziel_kinder kam später dazu (PO-Abnahme 28.09.) – der Nachtrag selbst bleibt der Maßstab. */
   const ohneZiel = v => { if (!v) return v; const { ziel_kinder, ...rest } = v; return rest; };
   /* v700: Leitfrage 5 im Wortlaut vom 13.09. (Beschluss 30.09.) – der Nachtrag trägt noch den alten. */

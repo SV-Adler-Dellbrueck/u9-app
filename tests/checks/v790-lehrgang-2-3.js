@@ -10,6 +10,7 @@
    c) _evPruefung beanstandet die Vorlage nicht; jedes uebung_name zeigt auf eine Bibliotheksübung
    d) Kein Kindername in den Einträgen */
 "use strict";
+const { bn } = require("../bibliothek-norm.js");
 const fs = require("fs"), path = require("path");
 const SOLL = [
   { name: "Joker-Duell – anbieten und freilaufen", kat: "wahrnehmung", mat: "2 Minitore · 7 Hütchen · 3 Markierungsteller · 1 Ball", abst: [54.0, 36.1, 27.7, 40.2, 43.9, 30.5] },
@@ -31,7 +32,7 @@ module.exports = async function (h) {
     /* v882 (Charles 19.11.): beide Abläufe auf das Nötige gekürzt – kürzer als im Nachtrag, alle drei Stufen bleiben;
        Vororientierung und Ballversorgung prüft e), den Verteidiger-Absatz v810. Alles andere bleibt wie im Nachtrag. */
     if (t.length === 1) {
-      const ab = String(t[0].ablauf || "");
+      const ab = String(t[0].ablauf_lang || t[0].ablauf || "");   // v917: die gekürzte Fassung aus v882 steht jetzt in ablauf_lang
       if (!(ab.length < soll.ablauf.length) || !["STUFE 1 – FREI", "STUFE 2 – ENG", "STUFE 3 – OFFEN"].every(x => ab.includes(x))) probleme.push(`a) „${s.name}“: Ablauf nicht gekürzt oder ohne die drei Stufen`);
       soll.ablauf = ab;
     }
@@ -39,7 +40,7 @@ module.exports = async function (h) {
     const SPIELER_V902 = { "Joker-Duell – anbieten und freilaufen": "5-7", "Schau-Tore – vor dem Ball schauen, dann ins gezeigte Tor": "5-6" };
     if (SPIELER_V902[s.name]) soll.spieler = SPIELER_V902[s.name];
     if (t.length !== 1) probleme.push(`a) „${s.name}“ ${t.length}× in der Bibliothek`);
-    else if (!gleich(t[0], soll)) probleme.push(`a) „${s.name}“ weicht von der Nachtragsdatei ab (erlaubt: kat, der gekürzte Ablauf und die Spielerzahl seit v902)`);
+    else if (!gleich(bn(t[0]), bn(soll))) probleme.push(`a) „${s.name}“ weicht von der Nachtragsdatei ab (erlaubt: kat, der gekürzte Ablauf und die Spielerzahl seit v902)`);
     return t[0] || soll;
   });
   const sollV = JSON.parse(JSON.stringify(nachV.vorlagen[0])); sollV.ordnung = "1 gegen 1";
@@ -67,12 +68,12 @@ module.exports = async function (h) {
   // e) Texte
   const [jt, st] = eintraege;
   for (const [n, u] of [["Joker-Duell", jt], ["Schau-Tore", st]]) {
-    if (!/VORORIENTIERUNG/.test(u.ablauf) || !/Kopf hoch, bevor der Ball kommt/.test(u.ablauf)) probleme.push(`e) ${n}: Vororientierung fehlt im Ablauf`);
-    if (!/BALLVERSORGUNG/.test(u.ablauf)) probleme.push(`e) ${n}: Ballversorgung fehlt im Ablauf`);
+    if (!/VORORIENTIERUNG/.test(u.ablauf_lang || u.ablauf) || !/Kopf hoch, bevor der Ball kommt/.test(u.ablauf_lang || u.ablauf)) probleme.push(`e) ${n}: Vororientierung fehlt im Ablauf`);
+    if (!/BALLVERSORGUNG/.test(u.ablauf_lang || u.ablauf)) probleme.push(`e) ${n}: Ballversorgung fehlt im Ablauf`);
     if (!/Vororientierung/.test(u.kurz)) probleme.push(`e) ${n}: „Vororientierung“ fehlt in „kurz“`);
     if (/Stufe 1 \(nur loben\):.*\?/.test(u.coaching)) probleme.push(`e) ${n}: Stufe 1 (nur loben) enthält eine Frage`);
   }
-  if (!/Markierungsplatten/.test(jt.ablauf) || !/Markierungsplatten/.test(jt.feld)) probleme.push("e) Joker-Duell: Markierungsplatten fehlen in Ablauf oder Feld");
+  if (!/Markierungsplatten/.test(jt.ablauf_lang || jt.ablauf) || !/Markierungsplatten/.test(jt.feld)) probleme.push("e) Joker-Duell: Markierungsplatten fehlen in Ablauf oder Feld");
   if (!/Kopf hoch/.test(sollV.ziel_kinder) || !bibNamen0(sollV).includes("bietet sich an, bevor der Ball kommt")) probleme.push("e) Vorlage: Ziel oder Abschluss-Label ohne Vororientierung");
   // b) + c) in der App
   const custom = bib.uebungen.map((u, i) => ({ ...u, id: 6000 + i, custom: true }));

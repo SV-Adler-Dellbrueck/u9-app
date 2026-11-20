@@ -10,6 +10,7 @@
    d) Kinder je Station: 4 (seit v749 4–8, zwei Parcours) · 2–6 · 8–12 mit Torwart; Art und Betreuung haben einen Vorschlag
    e) Kein Kindername in den Einträgen */
 "use strict";
+const { bn } = require("../bibliothek-norm.js");
 const fs = require("fs"), path = require("path");
 const SOLL = [
   { ordner: "auftrag-uebung-doppelpass-stangen", name: "Doppelpass durch die Stangen",
@@ -29,7 +30,7 @@ module.exports = async function (h) {
     if (s.spieler) soll.spieler = s.spieler;
     const treffer = bib.uebungen.filter(u => u.name === s.name);
     if (treffer.length !== 1) probleme.push(`a) „${s.name}“ ${treffer.length}× in der Bibliothek`);
-    else if (JSON.stringify(treffer[0]) !== JSON.stringify(soll)) probleme.push(`a) „${s.name}“ weicht vom Auftrag ab`);
+    else if (JSON.stringify(bn(treffer[0])) !== JSON.stringify(bn(soll))) probleme.push(`a) „${s.name}“ weicht vom Auftrag ab`);
     const text = JSON.stringify(treffer[0] || {});
     for (const n of h.KINDER) if (text.includes(n)) probleme.push(`e) Kindername ${n} in „${s.name}“`);
     return treffer[0] || soll;

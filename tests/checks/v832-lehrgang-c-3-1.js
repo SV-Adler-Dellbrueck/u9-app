@@ -14,6 +14,7 @@
    f) Material: 4 Minitore, 6 Hütchen, 1 Ball – der Trainer zählt nicht.
    g) Übungsart „spiel“ (= Spielform, wie beim Basis-Coach-Paket beschlossen); keine Kindernamen. */
 "use strict";
+const { bn } = require("../bibliothek-norm.js");
 const fs = require("fs"), path = require("path");
 module.exports = async function (h) {
   const titel = "v832 Lehrgang C-3.1: Zwei-Seiten-Spiel – Abgleich, Skizze, Abstände, Tore, Material";
@@ -24,7 +25,7 @@ module.exports = async function (h) {
   const u = bib.uebungen.find(x => x.name === NAME);
   if (!u) return h.ergebnis(titel, false, ["Die Übung steht nicht in der Bibliothek (Stand vor v832)"]);
   const soll = JSON.parse(roh).uebungen[0];
-  if (JSON.stringify(u) !== JSON.stringify(soll)) probleme.push("b) bibliothek.json und nachtrag.json tragen verschiedene Fassungen");
+  if (JSON.stringify(bn(u)) !== JSON.stringify(bn(soll))) probleme.push("b) bibliothek.json und nachtrag.json tragen verschiedene Fassungen");
   if (bib.uebungen.filter(x => x.name === NAME).length !== 1) probleme.push("b) die Übung steht mehrfach in der Bibliothek");
   const rang = x => String(x || "").split("-").map(t => parseInt(t, 10) || 0);
   const mind = (a, b) => { a = rang(a); b = rang(b); for (let i = 0; i < Math.max(a.length, b.length); i++) { if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) > (b[i] || 0); } return true; };

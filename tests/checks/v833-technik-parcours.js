@@ -7,6 +7,7 @@
    e) Bild technik-parcours.png und .svg liegen im Paketordner.
    f) Kein Kindername in Übung und Vorlage; keine Funktion zum Eintragen durch Kinder (nicht beauftragt). */
 "use strict";
+const { bn } = require("../bibliothek-norm.js");
 const fs = require("fs"), path = require("path");
 module.exports = async function (h) {
   const titel = "v833 Technik-Parcours: Übung und Vorlage für den 16.11., Prüfungen der App, Skizze, Übungsform";
@@ -22,7 +23,7 @@ module.exports = async function (h) {
   const tu = bib.uebungen.filter(u => u.name === sollU.name), tv = vl.vorlagen.filter(v => v.name === sollV.name);
   if (!tu.length) return h.ergebnis(titel, false, ["Übung nicht in der Bibliothek (Stand vor v833)"]);
   if (tu.length !== 1) probleme.push(`a) Übung ${tu.length}× in der Bibliothek`);
-  else if (JSON.stringify(tu[0]) !== JSON.stringify(sollU)) probleme.push("a) Übung weicht vom Paket ab");
+  else if (JSON.stringify(bn(tu[0])) !== JSON.stringify(bn(sollU))) probleme.push("a) Übung weicht vom Paket ab");
   if (tv.length !== 1) probleme.push(`a) Vorlage ${tv.length}× in vorlagen.json`);
   else if (JSON.stringify(tv[0]) !== JSON.stringify(sollV)) probleme.push("a) Vorlage weicht vom Paket ab");
   const rang = x => String(x || "").split("-").map(t => parseInt(t, 10) || 0);
