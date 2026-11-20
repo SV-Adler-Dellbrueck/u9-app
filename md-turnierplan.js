@@ -2697,25 +2697,17 @@ async function fstImTerminSetzen(an){
 /* Der Block im Termin-Fenster der Eltern. row = heimturnier-Zeile (öffentlich lesbar). Leer, solange der Schalter aus ist
    oder es noch keinen Plan gibt. */
 function htTerminBlockHtml(row){
+  /* v918 (Charles 20.11., Bild): „Wenn ich in der Eltern-App den Heimspieltag öffne, werden dort direkt die
+     Begegnungen angezeigt. Das können wir wieder rausnehmen. Es reicht der Hinweis, auf den Spieltagslink zu
+     klicken.“ – Die Begegnungen aus v901 stehen nur noch auf der Turnierseite; dort wählt man Verein und Team.
+     „&von=app“ zeigt dort die Leiste „Zurück zur Adler-App“. */
   const cfg=(row&&row.config)||{}, plan=(row&&row.plan)||[];
   if(!row||!cfg.imTermin||!plan.length||!row.slug)return "";
-  const url=(typeof _htUrl==="function")?_htUrl(row.slug):("?turnier="+encodeURIComponent(row.slug));
-  let spiele="";
-  if(fstIst(row)){
-    const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
-    const je=fstAdlerSpiele(row), teams=Object.keys(je);
-    spiele=teams.map(k=>{
-      const liste=je[k]||[]; if(!liste.length)return "";
-      return `<div class="td-sp-team" style="margin-top:8px"><div style="font-size:var(--s-text);font-weight:800">${teams.length>1?"Adler "+esc(k):"Unser Team"}</div>
-        ${liste.map(x=>`<div class="td-sp-zeile" style="display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:8px;align-items:center;font-size:var(--s-text);padding:3px 0">
-          <b>${esc(fstZeitIst(x.zeit,cfg))}</b><span style="font-size:var(--s-klein);font-weight:800;color:#fff;background:${_fstF((plan[x.idx]||{}).form).farbe};border-radius:6px;padding:2px 6px;white-space:nowrap">${esc(fstFeldName(felder,(x.feld||1)-1))}</span>
-          <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">gegen ${esc(x.gegner||"")}</span></div>`).join("")}</div>`;
-    }).join("");
-  }
+  const url=((typeof _htUrl==="function")?_htUrl(row.slug):("?turnier="+encodeURIComponent(row.slug)))+"&von=app";
   return `<div class="td-spielplan" style="border-top:var(--border);margin-top:12px;padding-top:10px">
     <div style="font-weight:700;font-size:var(--s-text)">🏆 Spielplan${row.name?" · "+esc(row.name):""}</div>
-    ${spiele||'<div style="font-size:var(--s-text);color:var(--text2);margin-top:4px">Alle Spiele, Felder und Zeiten stehen auf der Turnierseite.</div>'}
-    <a class="btn" href="${esc(url)}" style="width:100%;justify-content:center;margin-top:10px;min-height:48px;text-decoration:none">📅 Ganzen Spielplan ansehen</a>
+    <div style="font-size:var(--s-text);color:var(--text2);margin-top:4px">Alle Spiele, Felder und Zeiten – auf der Turnierseite wählst du euer Team.</div>
+    <a class="btn" href="${esc(url)}" style="width:100%;justify-content:center;margin-top:10px;min-height:48px;text-decoration:none">📅 Spielplan ansehen</a>
   </div>`;
 }
 async function fstErgebnisseSetzen(an){
@@ -3939,6 +3931,23 @@ function fstPubVerein(nr){
   if(!name)return;
   _htPub.verein=(_htPub.verein===name)?null:name;
   try{ const k="adler_festival_"+(_htPub.slug||""); if(_htPub.verein)localStorage.setItem(k,_htPub.verein); else localStorage.removeItem(k); }catch(e){}
+  _htPub.team=null;   // v918: neuer Verein, neue Teamwahl
+  try{ localStorage.removeItem("adler_festival_team_"+(_htPub.slug||"")); }catch(e){}
+  if(_htPub.row&&_htPub.wrap)_fstPublicRender(_htPub.wrap,_htPub.row);
+}
+/* v918 (Charles 20.11.): „wir stellen 2 oder 3 Teams … es muss eine Auswahlmöglichkeit geben, welches Team ich
+   genau verfolge.“ – Team-Index (in row.teams) oder null für alle Teams des Vereins; das Handy merkt es sich. */
+function _fstMeinTeam(row,verein){
+  if(!verein||!_htPub)return null;
+  const teams=(row&&row.teams)||[], cfg=(row&&row.config)||{};
+  let t=_htPub.team;
+  if(t===undefined){ try{ const x=localStorage.getItem("adler_festival_team_"+(_htPub.slug||"")); t=x!=null&&/^\d+$/.test(x)?Number(x):null; }catch(e){ t=null; } _htPub.team=t; }
+  return t!=null&&teams[t]!=null&&_htVereinFuer(cfg,teams[t])===verein?t:null;
+}
+function fstPubTeam(i){
+  if(!_htPub)return;
+  _htPub.team=(i==null||i<0||_htPub.team===i)?null:Number(i);
+  try{ const k="adler_festival_team_"+(_htPub.slug||""); if(_htPub.team!=null)localStorage.setItem(k,String(_htPub.team)); else localStorage.removeItem(k); }catch(e){}
   if(_htPub.row&&_htPub.wrap)_fstPublicRender(_htPub.wrap,_htPub.row);
 }
 /* Anteil der laufenden Runde (0–1) und Restminuten – aus der Anpfiffzeit der Runde und der Spielzeit. */
@@ -3950,11 +3959,11 @@ function _fstLauf(row,r){
   const vorbei=j-t; return {anteil:Math.min(1,Math.max(0,vorbei/dauer)),rest:Math.max(0,dauer-vorbei)};
 }
 /* Nächstes (oder laufendes) Spiel eines Vereins: {p, team, gegner, zeit, feld}. */
-function _fstNaechstesSpiel(row,verein){
+function _fstNaechstesSpiel(row,verein,team){
   const cfg=row.config||{}, teams=row.teams||[], plan=row.plan||[], dauer=Math.max(3,Number(cfg.spieldauer)||8);
   const felder=(cfg.felder&&cfg.felder.length)?cfg.felder:FST_STANDARD_FELDER;
   const heute=row.datum===isoLokal(), j=_fstMin(_fstJetztHhmm());
-  const vom=i=>_htVereinFuer(cfg,teams[i])===verein;
+  const vom=i=>team!=null?i===team:_htVereinFuer(cfg,teams[i])===verein;
   const eigene=plan.filter(p=>vom(p.a)||vom(p.b)).map(p=>({p,t:_fstMin(fstZeitIst(p.zeit,cfg))})).sort((a,b)=>(a.t||0)-(b.t||0));
   const x=eigene.find(e=>!heute||e.t==null||e.t+dauer>j);
   if(!x)return {fertig:eigene.length>0};
@@ -3971,8 +3980,15 @@ function _fstPublicRender(wrap,row){
   const wiederher=_fstOffenMerken(wrap);
   /* v908: Verein des Handys, seine Spiele, nächstes Spiel */
   const vereine=[...new Set((cfg.vereine||[]).map(v=>v&&v.name).filter(Boolean))];
-  const mein=_fstMeinVerein(row), istMein=i=>!!mein&&_htVereinFuer(cfg,teams[i])===mein;
-  const naechstes=mein?_fstNaechstesSpiel(row,mein):null;
+  const mein=_fstMeinVerein(row), meinTeam=_fstMeinTeam(row,mein);
+  const istMein=i=>!!mein&&(meinTeam!=null?i===meinTeam:_htVereinFuer(cfg,teams[i])===mein);
+  const naechstes=mein?_fstNaechstesSpiel(row,mein,meinTeam):null;
+  const vereinsTeams=mein?teams.map((t,i)=>i).filter(i=>_htVereinFuer(cfg,teams[i])===mein):[];
+  /* Kurz: „Adler Dellbrück 2“ → „Team 2“, wenn sich die Teams nur in der Endung unterscheiden – sonst der ganze Name. */
+  const teamName=i=>{ const n=String(teams[i]||""), m=n.match(/\s(\d{1,2}|I{1,3}|IV)$/); const rumpf=m?n.slice(0,-m[0].length):null;
+    return m&&vereinsTeams.every(j=>String(teams[j]||"").startsWith(rumpf+" "))?"Team "+m[1]:n; };
+  const teamHtml=vereinsTeams.length>1?`<div class="htp-filter fst-filter fst-teamwahl"><div class="htp-filter-titel">Welches Team verfolgst du?</div>
+      <div class="htp-chips"><button type="button" class="htp-chip" aria-pressed="${meinTeam==null}" onclick="fstPubTeam(-1)">Alle Teams${meinTeam==null?'<span class="htp-haken" aria-hidden="true">✓</span>':""}</button>${vereinsTeams.map(i=>`<button type="button" class="htp-chip" aria-pressed="${meinTeam===i}" onclick="fstPubTeam(${i})" aria-label="${esc(teams[i])}">${esc(teamName(i))}${meinTeam===i?'<span class="htp-haken" aria-hidden="true">✓</span>':""}</button>`).join("")}</div></div>`:"";
   const meinHtml=!mein?"":naechstes&&naechstes.p
     ?`<div class="htp-mein fst-mein">${_htWappen(cfg,mein,"gross")}<div><div class="z1">${naechstes.laeuft?"Läuft gerade":"Euer nächstes Spiel"}</div>
         <div class="z2">${esc(naechstes.zeit)} Uhr · ${esc(naechstes.feld)}</div>
@@ -3994,6 +4010,7 @@ function _fstPublicRender(wrap,row){
     </div>
     ${_fstEnde(row)?_htpAbschlussHtml(row,true):""}
     ${filterHtml}
+    ${teamHtml}
     ${meinHtml}
 
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 12px">
@@ -4111,6 +4128,14 @@ async function renderHeimturnierView(slug){
   wrap.id="ht-public";
   wrap.style.cssText="max-width:560px;margin:0 auto;padding:14px 14px 40px";
   document.body.appendChild(wrap);
+  /* v918: Wer aus der Eltern-App kommt (&von=app), hat in der App kein Zurück (iPhone ohne Taste, App ohne
+     Adresszeile) – eine feste Leiste oben führt zurück. Gäste mit dem geteilten Link sehen sie nicht. */
+  const _q=new URLSearchParams(location.search);
+  if(_q.get("von")==="app"&&!_q.has("monitor")){
+    const z=document.createElement("div"); z.id="htp-zurueck"; z.className="htp-zurueck";
+    z.innerHTML='<button type="button" onclick="htZurueckZurApp()">← Zurück zur Adler-App</button>';
+    document.body.insertBefore(z,wrap);
+  }
   _htPub={slug,code:new URLSearchParams(location.search).get("code")||"",wrap,row:null,filter:_htPubFilterGemerkt(slug),erstmals:true};
   await _htPubLoad();
   /* v898: ?monitor=1 startet direkt als Tafel (Fernseher am Vereinsheim), ohne Schließen-Knopf. */
@@ -4118,6 +4143,10 @@ async function renderHeimturnierView(slug){
   /* v489: Der gemeinsame Anpfiff muss schnell bei den Gast-Trainern ankommen – der
      Countdown selbst laeuft lokal aus dem Anker, nur der Start braucht die Runde. */
   setInterval(()=>{if(!document.hidden&&!document.getElementById("htpub-sheet"))_htPubLoad();},10000);
+}
+function htZurueckZurApp(){
+  if(history.length>1){ history.back(); return; }
+  location.href=(typeof appRoot==="function"?appRoot():"./")+"eltern/";
 }
 /* v897: Die Wahl „Mein Verein“ merkt sich das Gerät – nur Bequemlichkeit, darf fehlen. */
 function _htPubFilterGemerkt(slug){
