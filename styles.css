@@ -1274,6 +1274,8 @@ details.blz-einst[open]{padding-bottom:6px}
 /* v878: Ferien-Wahl beim Absagen – gewählt mit Rand und ✓, nicht nur Farbe */
 .tm-ab-ferien[aria-pressed="true"]{border:2px solid var(--blue);background:var(--blue-bg)}
 .tm-ab-ferien[aria-pressed="true"]::before{content:"✓ "}
+.gh-anzahl button[aria-pressed="true"]{border:2px solid var(--blue);background:var(--blue-bg);font-weight:800}
+.gh-anzahl button[aria-pressed="true"]::before{content:"✓ "}
 .ruhe-eigen{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
 .ruhe-eigen label{display:flex;align-items:center;gap:6px;font-size:var(--s-text);color:var(--text)}
 .ruhe-eigen input[type=time]{min-height:48px;padding:6px 8px;border:1px solid var(--rand-bedien);border-radius:10px;background:var(--surface2);color:var(--text);font:inherit}
