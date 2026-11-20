@@ -1725,3 +1725,11 @@ details.htp-info .inhalt{padding:0 16px 16px;white-space:pre-wrap;line-height:1.
 /* v910: Grillhütte – aus dem Termin geöffnet, der Termin ist kurz markiert (Rahmen, nicht nur Farbe: die Liste springt dorthin) */
 .gh-termin.gh-ziel{outline:3px solid var(--amber);outline-offset:4px;border-radius:10px}
 
+
+/* v913 Baustein fensterAuf() (core.js) – ein Grund, eine Karte */
+.fenster{position:fixed;inset:0;background:rgba(15,23,42,.6);display:flex;align-items:flex-start;justify-content:center;padding:16px;padding-top:max(16px,env(safe-area-inset-top));padding-bottom:max(16px,env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain}
+.fenster.fenster-mitte{align-items:safe center}
+.fenster-karte{background:var(--surface);color:var(--text);border-radius:var(--rl);width:100%;max-width:560px;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.3);margin:auto 0}
+.fenster:not(.fenster-mitte) .fenster-karte{margin:0}
+.fenster.fenster-dunkel{background:rgba(0,0,0,.92);padding:0}
+.fenster.fenster-dunkel .fenster-karte{background:transparent;box-shadow:none;max-width:none;border-radius:0;padding:0;color:#fff}

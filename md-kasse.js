@@ -554,16 +554,11 @@ async function buedchenTrainerFill(t){
     <span style="color:var(--blue);font-weight:700;white-space:nowrap;margin-left:auto">${ds.length>=P?"Ändern ›":"Einteilen ›"}</span></button>`;
 }
 async function grillTrainerOpen(terminId){
-  document.getElementById("gh-tr-modal")?.remove();
-  const m=document.createElement("div"); m.id="gh-tr-modal";
-  m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-label","Grillhütte");
-  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto";
-  m.style.zIndex=(typeof zOben==="function")?zOben(10002):10002;   // v912: aus dem Termin geöffnet lag es sonst darunter
-  m.onclick=e=>{ if(e.target===m)m.remove(); };
-  m.innerHTML=`<div style="background:var(--surface);color:var(--text);border-radius:16px;padding:16px;max-width:560px;width:100%;margin:auto">
-    ${mdlHead("gh-tr-modal","🔥","Grillhütte","Einteilen reihum · umbuchen, wenn Familien außerhalb der App tauschen","#b45309")}
-    <div id="gh-tr-inhalt" style="font-size:var(--s-text);color:var(--text2)">Lädt …</div></div>`;
-  document.body.appendChild(m);
+  /* v913: Baustein fensterAuf – liegt von selbst über dem Termin-Fenster, scrollt, Tippen daneben schließt */
+  const {grund:m,karte}=fensterAuf("gh-tr-modal",{mitte:true,aussen:true});
+  m.setAttribute("aria-label","Grillhütte");
+  karte.innerHTML=`${mdlHead("gh-tr-modal","🔥","Grillhütte","Einteilen reihum · umbuchen, wenn Familien außerhalb der App tauschen","#b45309")}
+    <div id="gh-tr-inhalt" style="font-size:var(--s-text);color:var(--text2)">Lädt …</div>`;
   if(typeof loadKader==="function"&&(typeof KADER==="undefined"||!KADER.length))await loadKader();
   await ghTrainerDaten();
   grillTrainerRender();
