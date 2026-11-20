@@ -106,8 +106,9 @@ Wird ein Icon-Name zusammengesetzt (`"ti-" + …`), müssen alle möglichen Name
    und wird sonst rot. Bei einer reinen Fehlerbehebung genügt ein Halbsatz; bei einer neuen
    Funktion gehört eine Zeile in die passende Tabelle. Sie stand einmal acht Versionen zurück,
    ohne dass es jemand merkte, und ein Dokument, dem man nicht glauben kann, ist schlechter als
-   keines. Die Fassung im Google Drive ist ein **Auszug** dieser Datei und wird nur ersetzt,
-   nie dort bearbeitet.
+   keines. Das Dokument im Google Drive ist seit dem 20.11.2026 **kein Auszug mehr**, sondern ein
+   Hinweis auf diese Datei und auf die nächtliche Kopie `export/app-stand.md` im privaten Repo
+   (der frühere Auszug war unbemerkt auf v655 stehen geblieben). Es wird nicht nachgezogen.
 7. **Zweitschrift im privaten Repo nachziehen.** Nach jedem PR `Projektgedaechtnis/stand.md`
    in `adler-u9-wissen` aktualisieren; `entscheidungen.md` wird **nur angehängt**, nie
    umgeschrieben. Ohne das weiß die Projektseite auf claude.ai nicht, was hier entschieden
