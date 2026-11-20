@@ -3963,7 +3963,7 @@ function _fstPublicRender(wrap,row){
       <div class="htp-chips">${vereine.map(v=>`<button type="button" class="htp-chip" aria-pressed="${v===mein}" onclick="fstPubVerein(${vereine.indexOf(v)})">${_htWappen(cfg,v)}${esc(v)}${v===mein?'<span class="htp-haken" aria-hidden="true">✓</span>':""}</button>`).join("")}</div></div>`:"";
   wrap.innerHTML=`
     <div class="fst-kopf">
-      <img class="htp-kopf-adler" src="logo.png" alt="" aria-hidden="true">
+      <img class="htp-kopf-adler" src="logo.png" alt="" aria-hidden="true" onerror="this.remove()">
       <img src="logo.png" alt="SV Adler Dellbrück" style="width:58px;height:58px;flex:0 0 auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))">
       <div style="min-width:0">
         <div style="font-size:var(--s-teil);font-weight:900;line-height:1.15">${esc(row.name||"Kinderfestival")}</div>
@@ -4268,7 +4268,7 @@ function _htpSeite(wrap,row){
   wrap.style.cssText="";
   wrap.innerHTML=`
   <header class="htp-kopf">
-    <img class="htp-kopf-adler" src="logo.png" alt="" aria-hidden="true">
+    <img class="htp-kopf-adler" src="logo.png" alt="" aria-hidden="true" onerror="this.remove()">
     <div class="htp-kopf-innen">
       <div class="htp-veranstalter"><img src="logo.png" alt="">SV Adler Dellbrück · U9 lädt ein</div>
       <h1 class="htp-titel">${esc(row.name||"Turnier")}</h1>
