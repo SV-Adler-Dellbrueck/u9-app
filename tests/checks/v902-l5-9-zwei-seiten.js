@@ -125,7 +125,7 @@ module.exports = async function (h) {
   zeilen.push(`b) Folge ${folge}`);
   if (!r.karte) probleme.push("d) L5-9 fehlt in der Vorlagen-Ansicht");
   else {
-    if (!/^6\. /.test(r.karte)) probleme.push(`d) Karte „${r.karte.slice(0, 50)}“ ohne Nummer 6`);
+    if (!/^L5-9 /.test(r.karte)) probleme.push(`d) Karte „${r.karte.slice(0, 50)}“ beginnt nicht mit dem Kürzel (v904: ohne Folgenummer)`);
     if (r.nachbarn.join(",") !== "L5-3,L5-1,L5-2,L5-7,L5-8,L5-9,L5-5,L5-4,L5-6") probleme.push(`d) Reihenfolge ${r.nachbarn.join(",")}`);
     const fehlt = Object.entries(v.skalierung).filter(([, t]) => !r.steckbrief.includes(t.replace(/\s+/g, " "))).map(([n]) => n);
     if (fehlt.length) probleme.push(`d) Skalierungszeile fehlt im Steckbrief für ${fehlt.join(", ")}`);
