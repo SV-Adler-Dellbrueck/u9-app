@@ -22,7 +22,7 @@
 const fs = require("fs"), path = require("path");
 
 const REGEL = /zählt doppelt|zählt dreifach|zählt nur|zählt erst|Punkt nur|nur, wenn|nur mit|nur nach|Bonus|gibt einen Punkt|zwei Punkte/i;
-const AUSNAHME_OFFEN = ["L5-8"];
+const AUSNAHME_OFFEN = ["L5-8", "L5-9"];   // v901: L5-9 folgt dem Aufbau von L5-8 (Auftrag 20.11.)
 const LOB = [/^Lob für /, /^Loben, wenn /, /^Feiern, wenn /, /^Gemeinsam feiern, wenn /];
 const ORDNUNG_A = { "Überzahl": 1, "1 gegen 1": 2, "2 gegen 2": 2, "Dreieck (3 gegen 3)": 3, "Raute (4 gegen 4)": 4, "Endzone (4 gegen 4)": 4 };
 const ORDNUNG_B = { "1 gegen 1": 1, "FUNiño": 2, "3+1": 3 };
@@ -82,6 +82,7 @@ const HALLE = {
   "L4-8": H(["12 x 20@2 gegen 1 plus Torwart – der Flitzer macht es breit", "12 x 20@FUNiño 3 gegen 1 – der Mittlere hat den Ball", "25 x 20@FUNiño 3 gegen 2 mit Wandspieler – links, Mitte, rechts"],
     ["25 x 20@3 gegen 3 auf vier Minitore mit Schusszone", "25 x 20@3 gegen 3 auf vier Minitore mit Schusszone"]),
   "L5-8": H(["20 x 24@Joker-Duell – anbieten und freilaufen", "20 x 24@Joker-Duell – anbieten und freilaufen"]),
+  "L5-9": H(["20 x 24@Joker-Duell – anbieten und freilaufen", "20 x 24@Zwei-Seiten-Spiel – Platz suchen, Seite wechseln"]),
   "Sonder": H(["40 x 25@Technik-Parcours – acht Stationen, freie Wahl, Laufzettel"])
 };
 const HALLE_MASS = [27, 45], KADER = 14;

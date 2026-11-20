@@ -1,6 +1,6 @@
 {
   "schema": "adler-uebungen/1",
-  "stand": "2026-11-19-1",
+  "stand": "2026-11-20-1",
   "uebungen": [
     {
       "name": "Warm up Adler",
@@ -7604,7 +7604,7 @@
       "name": "Joker-Duell – anbieten und freilaufen",
       "kat": "wahrnehmung",
       "kurz": "Ein Joker spielt an, wer sich freigelaufen und vorher geschaut hat (Vororientierung) – dann 1 gegen 1 aufs Minitor, erst frei, dann frontal und im Rücken des Verteidigers.",
-      "spieler": "4-6",
+      "spieler": "5-7",
       "feld": "20 x 24 m je Station, zwei Bahnen à 12 x 20 m, getrennt durch Markierungsplatten; Stufe 3: eine Fläche 20 x 24 m",
       "dauer": "17",
       "ablauf": "AUFBAU: Station 20 x 24 m, längs durch drei Markierungsplatten in zwei Bahnen à 12 x 20 m geteilt. Der Joker steht mit sechs Bällen mittig an einer Stirnseite, gegenüber steht je Bahn ein Minitor. Je Bahn ein Angreifer und ein Verteidiger, der Verteidiger startet an seinem roten Hütchen. Der Aufbau bleibt stehen.\n\nVORORIENTIERUNG: Der Angreifer schaut zum Joker und ins Feld (Kopf hoch, bevor der Ball kommt).\n\nBALLVERSORGUNG: Wer abgeschlossen hat, holt den Ball hinter dem Tor und bringt ihn zum Joker zurück.\n\nVERTEIDIGER IN STUFE 1 UND 2: Der Verteidiger hält die Hände hinter dem Rücken und erobert den Ball nicht. Er stellt nur den Weg zu, so kommt der Angreifer jedes Mal zum Abschluss. In Stufe 3 spielt der Verteidiger normal.\n\nSTUFE 1 – FREI (5 Min): Die Angreifer bieten sich in ihrer Bahn an, der Joker spielt den an, der sich besser anbietet: annehmen, 1 gegen 1, Abschluss aufs Minitor. Die Verteidiger bleiben an ihrem roten Hütchen stehen, bis der Ball gespielt ist, und stellen sich dann dem Angreifer in den Weg, ohne den Ball zu erobern. Alle zwei Minuten rücken alle eine Position weiter. Der Trainer lobt.\n\nSTUFE 2 – ENG (8 Min): Der Verteidiger hält die Hände hinter dem Rücken, stellt sich vor oder hinter den Angreifer (Runde A frontal, Runde B im Rücken, je 4 Min) und behält diese Seite. Der Joker spielt nur an, wer sich gelöst hat, und nie zweimal denselben. Der Trainer friert ein und fragt.\n\nSTUFE 3 – OFFEN (4 Min, einschließlich Wechsel): Platten weg, eine Fläche 20 x 24 m, 2 gegen 2, die Verteidiger dürfen den Ball erobern. Hat ein Verteidiger den Ball geklärt, gehen beide Verteidiger zurück auf ihre roten Hütchen und der Joker spielt neu an. Nach mehreren Durchläufen wechseln die Positionen, es wird rotiert wie in Stufe 1. Der Joker spielt nur an und schießt nicht. Keine Zusatzregel.\n\nTypische Fehlerbilder: Der Angreifer wartet, statt sich anzubieten, oder schaut nicht zum Joker. Der Verteidiger läuft los, bevor der Ball gespielt ist, oder nimmt in Stufe 1 und 2 die Hände nach vorn.",
@@ -8035,7 +8035,7 @@
       "name": "Schau-Tore – vor dem Ball schauen, dann ins gezeigte Tor",
       "kat": "wahrnehmung",
       "kurz": "Der Trainer zeigt beim Anspiel ein Tor: Wer vorher schaut (Vororientierung), weiß, wohin – erst mit passivem Verteidiger, dann im Duell, dann ohne Zeichen.",
-      "spieler": "4-6",
+      "spieler": "5-6",
       "feld": "15 x 15 m, vier Minitore mittig an den vier Seiten",
       "dauer": "17",
       "ablauf": "AUFBAU: Feld 15 x 15 m, mittig an jeder Seite ein Minitor. Zwei Passgeber mit je drei Bällen in gegenüberliegenden Ecken, zwei Angreifer, ein Verteidiger. Der Trainer steht seitlich hinter einem Tor.\n\nVORORIENTIERUNG: Der Angreifer schaut ins Feld und zum Trainer (Kopf hoch, bevor der Ball kommt).\n\nBALLVERSORGUNG: Wer abgeschlossen hat, holt den Ball hinter dem Tor und bringt ihn zu einem Passgeber zurück.\n\nSTUFE 1 – FREI (5 Min): Der Verteidiger steht passiv, die Arme hinter dem Rücken. Beim Anspiel zeigt der Trainer auf ein Tor, der Angreifer nimmt an und schießt dorthin. Die beiden Angreifer wechseln sich ohne Pause ab. Alle zwei Minuten rücken alle eine Position weiter. Der Trainer lobt.\n\nSTUFE 2 – ENG (8 Min): Der Verteidiger wird aktiv. Er steht vor dem Angreifer (Runde A, 4 Min) oder in seinem Rücken (Runde B, 4 Min) und greift erst ein, wenn der Ball gespielt ist. Der Trainer zeigt weiter ein Tor, friert ein und fragt.\n\nSTUFE 3 – OFFEN (4 Min, einschließlich Wechsel): Der Trainer zeigt nichts mehr. Der Angreifer wählt das Tor, das der Verteidiger gerade nicht verstellt. Keine Zusatzregel.",
@@ -8898,6 +8898,163 @@
             204,
             171,
             "7 Kopf hoch · 8 Duell"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "Zwei-Seiten-Spiel – Platz suchen, Seite wechseln",
+      "kat": "passspiel",
+      "kurz": "3 gegen 3 oder 4 gegen 4 auf vier Minitore: In Stufe 2 zählt ein Tor erst nach einem Pass auf die andere Seite des Feldes.",
+      "spieler": "6-8",
+      "feld": "3 gegen 3: 20 x 24 m, 4 gegen 4: 30 x 22 m, vier Minitore, Längslinie nur in Stufe 2",
+      "dauer": "17",
+      "ablauf": "AUFBAU: Feld mit vier Eckhütchen. An jeder Grundlinie zwei Minitore im Abstand von ca. 12 m, also je eins pro Seite. Zwei Teams zu 3 oder zu 4 Kindern in Leibchen, kein Torwart. Jedes Team verteidigt die zwei Tore an der eigenen Grundlinie und greift die zwei gegenüber an. Die Längslinie aus sechs Hütchen legen die Kinder zu Beginn von Stufe 2 in die Feldmitte und sammeln sie vor Stufe 3 wieder ein. Die Bälle liegen beim Trainer am Rand.\n\nBALLVERSORGUNG: Geht der Ball ins Aus, bringt der Trainer sofort einen neuen. Nach einem Tor startet das andere Team mit Anspiel von der eigenen Grundlinie.\n\nSTUFE 1 – FREI (5 Min): Keine Linie, keine Zusatzregel. Jedes Tor zählt einen Punkt, alle dürfen sich im ganzen Feld bewegen. Der Trainer lobt und ermutigt, er fragt nichts.\n\nSTUFE 2 – ENG (8 Min): Zwei Runden. Die Längslinie liegt in der Mitte und teilt das Feld in zwei Seiten, sie ist nur Markierung, alle dürfen überall hin. Ein Tor zählt nur, wenn der Ball in diesem Ballbesitz mindestens einmal auf die andere Seite gekommen ist. Tor nach Seitenwechsel = ein Punkt. Tor ohne Seitenwechsel zählt nicht, das andere Team bekommt Anspiel. Runde A (4 Min): Der Seitenwechsel gilt per Pass oder per Dribbling über die Linie. Runde B (4 Min): Der Seitenwechsel gilt nur per Pass. Der Trainer steht an der Längslinie außen, sieht beide Seiten und beurteilt, ob der Seitenwechsel gültig war. Er friert ein und fragt.\n\nSTUFE 3 – OFFEN (4 Min, einschließlich Wechsel): Die Hütchen der Längslinie werden eingesammelt (die Kinder erledigen das). Keine Zusatzregel, jedes Tor zählt einen Punkt. Der Trainer beobachtet und lobt.\n\nSKALIERUNG: 6 Kinder = 3 gegen 3 auf 20 x 24 m; 7 Kinder = 3 gegen 3, ein Kind wechselt nach jedem Tor ein; 8 Kinder = 4 gegen 4 auf 30 x 22 m, wenn der ganze Käfig frei ist, sonst auf 20 x 24 m.\n\nTypische Fehlerbilder: Alle laufen zum Ball. Der ballferne Spieler rückt zum Ball, statt breit zu bleiben. Der Ball wird mit dem Rücken zur freien Seite angenommen. Der Seitenwechsel ist zu langsam, der Gegner verschiebt rechtzeitig. Ein Tor wird gefeiert, obwohl der Ball die Seite nicht gewechselt hat.",
+      "varianten": "Leichter (Regeln): Der Seitenwechsel gilt auch per Dribbling über die Linie, auch in Runde B. Schwerer (Wettbewerb): Ein Tor nach zwei Seitenwechseln zählt doppelt. Schwerer (Regeln): Der Seitenwechsel gilt nur per Direktpass.",
+      "coaching": "Ziel ist die Verbesserung der Spielverlagerung.\nStufe 1 (nur loben): Gut, du hast dich zur freien Seite angeboten.\nStufe 2 (als Frage): Wo ist gerade viel Platz?\nStufe 2 (als Frage): Wer kann sich jetzt anbieten, bevor der Ball kommt?",
+      "diff": 2,
+      "skizze": {
+        "z": [
+          [
+            30,
+            20,
+            220,
+            140
+          ]
+        ],
+        "tor": [
+          [
+            75,
+            13,
+            "h",
+            20
+          ],
+          [
+            185,
+            13,
+            "h",
+            20
+          ],
+          [
+            75,
+            160,
+            "h",
+            20
+          ],
+          [
+            185,
+            160,
+            "h",
+            20
+          ]
+        ],
+        "h": [
+          [
+            140,
+            34,
+            "y"
+          ],
+          [
+            140,
+            58,
+            "y"
+          ],
+          [
+            140,
+            82,
+            "y"
+          ],
+          [
+            140,
+            106,
+            "y"
+          ],
+          [
+            140,
+            130,
+            "y"
+          ],
+          [
+            140,
+            150,
+            "y"
+          ]
+        ],
+        "ger": [
+          [
+            262,
+            90,
+            "trainer",
+            "w"
+          ]
+        ],
+        "s": [
+          [
+            80,
+            125,
+            "g",
+            "A"
+          ],
+          [
+            110,
+            80,
+            "g",
+            "B"
+          ],
+          [
+            205,
+            105,
+            "g",
+            "C"
+          ],
+          [
+            95,
+            100,
+            "r",
+            "X"
+          ],
+          [
+            60,
+            70,
+            "r",
+            "Y"
+          ],
+          [
+            170,
+            60,
+            "r",
+            "Z"
+          ]
+        ],
+        "b": [
+          [
+            88,
+            133
+          ]
+        ],
+        "p": [
+          [
+            102,
+            126,
+            188,
+            110,
+            "p",
+            1
+          ],
+          [
+            205,
+            80,
+            197,
+            34,
+            "s",
+            2
+          ]
+        ],
+        "tx": [
+          [
+            140,
+            176,
+            "Tor erst nach Seitenwechsel über die Linie"
           ]
         ]
       }
