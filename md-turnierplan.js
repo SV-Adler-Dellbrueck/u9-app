@@ -2476,7 +2476,8 @@ function htTeilenText(row,url){
   const z=["🏆 "+((row&&row.name)||"Turnier")];
   if(tag)z.push("📅 "+tag+(uhr?" · ab "+uhr+" Uhr":""));
   if(row&&row.ort)z.push("📍 "+row.ort);
-  z.push(fest?"👉 Spielplan, Felder und laufende Runde – mit eurem Wappen:":"👉 Spielplan, Live-Stand und Tabellen – mit eurem Wappen:");
+  /* v911 (Charles 20.11.): „mit eurem Wappen“ raus – lieber, was Gäste wirklich brauchen: Regeln und Verhalten am Rand. */
+  z.push(fest?"👉 Spielplan, Felder, Regeln und unsere Bitte an den Spielfeldrand:":"👉 Spielplan, Live-Stand, Regeln und Infos für Gäste:");
   if(url)z.push(url);
   return z.join("\n");
 }
