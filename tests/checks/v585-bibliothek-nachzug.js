@@ -38,7 +38,7 @@ module.exports = async function (h) {
 
   // Zeilen so, wie der Abgleich sie geschrieben hätte – dieselbe Formung wie _euForm.
   const zeile = (u, id) => ({
-    id, name: u.name, kat: u.kat || "technik", ablauf: u.ablauf || "", varianten: u.varianten || "",
+    id, name: u.name, kat: u.kat || "technik", ablauf: u.ablauf || "", ablauf_lang: u.ablauf_lang || null, varianten: u.varianten || "",
     coaching: u.coaching || "", spieler: u.spieler || "", feld: u.feld || "", dauer: u.dauer != null ? String(u.dauer) : "",
     spass: 5, diff: [1, 2, 3].includes(u.diff) ? u.diff : 2, custom: true, focus: false, tags: "Import",
     kurz: String(u.kurz || u.ablauf || "").slice(0, 80), skizze: u.skizze || null, created_at: "2026-09-15T12:00:00Z"

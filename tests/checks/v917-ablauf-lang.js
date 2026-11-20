@@ -21,7 +21,7 @@ module.exports = async function (h) {
   if (String(bib.stand) <= "2026-11-20-2") probleme.push(`a) Stand „${bib.stand}“ nicht hochgesetzt`);
   zeilen.push(`a) ${mitLang.map(u => u.ablauf.length + "/" + u.ablauf_lang.length).join(" · ")} Zeichen (kurz/lang)`);
   const ei = fs.readFileSync(path.join(h.REPO, "md-einheit-import.js"), "utf8");
-  if (!/ablauf_lang:u\.ablauf_lang\|\|""/.test(ei) || !/EU_VERGLEICH=\[[^\]]*"ablauf_lang"/.test(ei)) probleme.push("b) Abgleich schreibt oder vergleicht ablauf_lang nicht");
+  if (!/ablauf_lang:u\.ablauf_lang\|\|null/.test(ei) || !/EU_VERGLEICH=\[[^\]]*"ablauf_lang"/.test(ei)) probleme.push("b) Abgleich schreibt oder vergleicht ablauf_lang nicht");
   const mig = fs.readdirSync(path.join(h.REPO, "supabase/migrations")).filter(f => /ablauf_lang/.test(f)).map(f => fs.readFileSync(path.join(h.REPO, "supabase/migrations", f), "utf8")).join("");
   if (!/add column if not exists ablauf_lang text/.test(mig)) probleme.push("b) Migration fehlt");
   const t = await h.starten({ warten: 900, supabase: h.supabaseAttrappe({ kader: h.kaderZeilen(),

@@ -11,6 +11,7 @@
    f) Abgleich: Zeile mit Vermerk „Import“ wird auf den Nachtrag gezogen, „Eigene Übung“ nie
    g) Übungsart „spiel“ für beide, Betreuung: Korb „Trainer am Feld“, Endzone „läuft allein“ */
 "use strict";
+const { bn } = require("../bibliothek-norm.js");
 const fs = require("fs"), path = require("path");
 module.exports = async function (h) {
   const probleme = [], zeilen = [];
@@ -25,7 +26,7 @@ module.exports = async function (h) {
   for (const [n, liste] of [[korbN, bib.uebungen], [endN, bib.uebungen], [l57N, vor.vorlagen]]) {
     const t = liste.filter(x => x.name === n.name);
     if (t.length !== 1) probleme.push(`a) „${n.name}“ ${t.length}× statt einmal`);
-    else if (JSON.stringify(t[0]) !== JSON.stringify(n)) probleme.push(`a) „${n.name}“ weicht vom Nachtrag ab`);
+    else if (JSON.stringify(bn(t[0])) !== JSON.stringify(bn(n))) probleme.push(`a) „${n.name}“ weicht vom Nachtrag ab`);
   }
   if (korbN.skizze.wurf !== true) probleme.push("a) Nachtrag 5.2 ohne Merkmal „wurf“");
   const s = await h.starten({ breite: 1200, hoehe: 900, warten: 2500 });

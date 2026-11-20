@@ -28,9 +28,9 @@ module.exports = async function (h) {
   for (const n of NAMEN) {
     const u = bib.uebungen.find(x => x.name === n);
     if (!u) { probleme.push(`b) „${n}“ fehlt`); continue; }
-    const fest = String(u.ablauf).match(/(Teil [AB], \d+ Minuten|\d+ Minuten (frei|mit Regel|offen)|Minute \d+–\d+|\d+ Minuten in drei Abschnitten)/);
+    const fest = String(u.ablauf_lang || u.ablauf).match(/(Teil [AB], \d+ Minuten|\d+ Minuten (frei|mit Regel|offen)|Minute \d+–\d+|\d+ Minuten in drei Abschnitten)/);
     if (fest) probleme.push(`b) „${n}“: feste Zeit „${fest[0]}“`);
-    if (!/geplanten? Zeit/.test(u.ablauf)) probleme.push(`b) „${n}“: kein Anteil der geplanten Zeit`);
+    if (!/geplanten? Zeit/.test(u.ablauf_lang || u.ablauf)) probleme.push(`b) „${n}“: kein Anteil der geplanten Zeit`);
   }
   if (String(bib.stand) <= "2026-09-25-1") probleme.push(`b) Bibliotheks-Stand „${bib.stand}“ nicht hochgesetzt`);
 

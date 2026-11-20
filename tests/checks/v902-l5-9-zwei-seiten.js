@@ -30,7 +30,7 @@ module.exports = async function (h) {
   if (ue.length !== 1) return h.ergebnis(titel, false, [`a) „${UE}“ steht ${ue.length}× in der Bibliothek`]);
   const u = ue[0], sk = u.skizze || {};
   if (/Lehrgang/.test(u.name)) probleme.push("a) Name enthält „Lehrgang“");
-  if (u.kat !== "passspiel" || u.spieler !== "6-8") probleme.push(`a) Kategorie ${u.kat}, Spieler ${u.spieler}`);
+  if (u.kat !== "passspiel" || u.spieler !== "6–8")   /* v916: Halbgeviertstrich */ probleme.push(`a) Kategorie ${u.kat}, Spieler ${u.spieler}`);
   const lg = bib.uebungen.filter(x => x.name === LEHRGANG);
   if (lg.length !== 1 || lg[0].kat !== "passspiel" || lg[0].spieler !== "8") probleme.push(`a) Lehrgangsfassung verändert oder fehlt (${lg.length}×)`);
   const spieler = sk.s || [];
