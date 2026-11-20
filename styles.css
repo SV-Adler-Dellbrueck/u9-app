@@ -1697,3 +1697,26 @@ details.htp-info .inhalt{padding:0 16px 16px;white-space:pre-wrap;line-height:1.
 .htp-mon-ende small{display:block;font-size:3.2vmin;margin-top:2vmin}
 .htp-mon-hinweis{font-size:3vmin;font-weight:700;margin-top:4vmin}
 @media (orientation:portrait){.htp-mon-raster{grid-template-columns:1fr;overflow:auto}}
+
+/* ══ v908 Festivalseite: Kopf, Verein, eigene Spiele, LIVE ══════════════════════════════════════════
+   Gleiche Farben wie die Turnierseite (#ht-public-Variablen, Gold nur hier). Eigene Spiele tragen zusätzlich
+   „★ euer Spiel“ – Farbe nie allein. Animationen: nur Puls des LIVE-Punkts und das einmalige Funkeln, beides aus
+   bei prefers-reduced-motion (Regel oben). */
+.fst-kopf{position:relative;overflow:hidden;color:#fff;border-radius:18px;padding:16px;display:flex;flex-wrap:wrap;align-items:center;gap:14px;box-shadow:var(--htp-schatten-hoch);
+  background:radial-gradient(120% 90% at 85% -10%,var(--htp-blau-hell) 0%,rgba(43,108,240,0) 55%),linear-gradient(160deg,var(--htp-navy) 0%,var(--htp-blau-mitte) 60%,var(--blue-dark) 100%)}
+.fst-kopf::before{content:"";position:absolute;inset:0;opacity:.10;pointer-events:none;
+  background:radial-gradient(circle at 50% 118%,transparent 0 62px,#fff 63px 65px,transparent 66px),linear-gradient(#fff,#fff) 50% 100%/100% 2px no-repeat,repeating-linear-gradient(90deg,rgba(255,255,255,.0) 0 38px,rgba(255,255,255,.55) 38px 40px)}
+.fst-kopf>*{position:relative}
+.fst-kopf .htp-kopf-adler{position:absolute;right:-30px;top:-24px;width:150px}
+.fst-filter{margin:12px -14px 0;padding:10px 14px;border-radius:0}
+.fst-mein{margin-top:12px}
+.fst-mein .htp-wp{--wp:52px}
+.fst-team{display:inline-flex;align-items:center;font-size:var(--s-text);font-weight:700;background:#f1f5f9;border-radius:16px;padding:5px 12px 5px 8px;border:1.5px solid transparent}
+.fst-team.mein{background:var(--gold-bg);border-color:var(--gold);color:var(--gold-text)}
+.fst-zeile.mein{background:var(--gold-bg);border-radius:10px;margin:2px -8px;padding:6px 8px!important;box-shadow:inset 3px 0 0 var(--gold)}
+.fst-stern{display:block;font-size:var(--htp-s-mini);font-weight:900;color:var(--gold-text);letter-spacing:.04em;text-transform:uppercase;margin-bottom:2px}
+.fst-runde.live{border:2px solid var(--red);box-shadow:0 0 0 4px rgba(220,38,38,.12),0 6px 18px rgba(15,23,42,.10)!important}
+.fst-live{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:var(--s-klein);font-weight:900;color:#fff;background:var(--red);border-radius:999px;padding:3px 10px;letter-spacing:.06em}
+.fst-live-punkt{position:relative;width:8px;height:8px;border-radius:50%;background:#fff}
+.fst-live-punkt::after{content:"";position:absolute;inset:0;border-radius:50%;background:#fff;animation:htp-puls 1.4s ease-out infinite}
+

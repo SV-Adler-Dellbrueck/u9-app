@@ -62,7 +62,7 @@ module.exports = async function (h) {
     // 5) laufende Runde: Start = jetzt → Runde 1 laeuft
     const jetzt = _fstJetztHhmm(); _HT.config.startIst = jetzt;   // geplant 10:15, gestartet jetzt → Runde 1 läuft jetzt
     _fstPublicRender(wrap, _HT);
-    const laeuft = /Runde 1[\s\S]{0,120}▶ läuft/.test(wrap.textContent);   // v489: die Marke sitzt an der Runden-Karte
+    const laeuft = /Runde 1[\s\S]{0,120}(▶ läuft|LIVE)/.test(wrap.textContent);   // v908: Plakette „LIVE“ statt „▶ läuft“   // v489: die Marke sitzt an der Runden-Karte
     return { eineZeile, zeileHoch, tops, zeitVorher, zeitNachher, runde2, startText, dlg: !!dlg, erg, ergTaste, gastOhneCode, ergMitCode, regelnKnopf: !!regelnKnopf, ergTasten, ergTastenOhne, ergLesbar,
       regelnInhalt: /eigenen Hälfte/.test(rHtml) && /3 Toren Vorsprung/.test(rHtml) && !/Wechsel/.test(rHtml) && /Schusszone/.test(rHtml) && /Rückpass zum Torwart: ohne Hände/.test(rHtml) && /hinter die Mittellinie/.test(rHtml) && /Abklatschen/.test(rHtml) && /Eltern feuern an/.test(rHtml) && /abgehängte Tor/.test(rHtml) && /Kinder zuerst selbst/.test(rHtml),
       gastStart: /um 3 Min\. nach hinten/.test(gHtml), laeuft, spiele: plan.length };

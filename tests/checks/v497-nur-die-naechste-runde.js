@@ -32,7 +32,7 @@ module.exports = async function (h) {
     _fstPublicRender(wrap, { ...row, config: cfg3 }); await warte(60);
     const gDet = wrap.querySelectorAll("details");
     const gastRunden = [...gDet].map(x => (x.querySelector("summary").textContent.match(/Runde (\d+)/) || [])[1]);
-    const gastOffen = [...wrap.querySelectorAll("div")].filter(x => /▶ läuft|als Nächstes/.test(x.textContent) && /Runde/.test(x.textContent));
+    const gastOffen = [...wrap.querySelectorAll("div")].filter(x => /▶ läuft|LIVE|als Nächstes/.test(x.textContent) && /Runde/.test(x.textContent));
     _htPub = null;
     // e) Planer: Vorbereitung klappt zu, sobald der Plan steht
     let box = document.getElementById("ht-body"); if (!box) { box = document.createElement("div"); box.id = "ht-body"; document.body.appendChild(box); }
