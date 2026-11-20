@@ -82,7 +82,7 @@ module.exports = async function (h) {
     if (an.teams !== 2 || an.zeilen !== 4) probleme.push(`c) ${an.teams} Teams, ${an.zeilen} Spielzeilen statt 2 und 4`);
     if (!/10:20/.test(an.text) || !/10:33/.test(an.text) || /10:15/.test(an.text)) probleme.push(`c) Zeiten nicht nach verschobenem Beginn: „${an.text.slice(0, 160)}“`);
     if (!/Käfig/.test(an.text) || !/gegen SC Wahn Grengel 1/.test(an.text)) probleme.push(`c) Feld oder Gegner fehlt: „${an.text.slice(0, 160)}“`);
-    if (!/\?turnier=kinderfestival-x$/.test(an.href)) probleme.push(`c) Knopf führt auf „${an.href}“`);
+    if (!/\?turnier=kinderfestival-x(&v=\d+)?$/.test(an.href)) probleme.push(`c) Knopf führt auf „${an.href}“`);
     if (an.hoch < 44) probleme.push(`c) Knopf nur ${an.hoch} px hoch`);
     if (/Kind A/.test(an.text)) probleme.push("c) Kindername im Block");
     zeilen.push(`c) an: ${an.teams} Teams, ${an.zeilen} Spiele, Knopf ${an.href} (${an.hoch} px)`);
