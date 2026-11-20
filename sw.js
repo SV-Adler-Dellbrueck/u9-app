@@ -1,4 +1,4 @@
-const CACHE="u9i-adler-v906";
+const CACHE="u9i-adler-v907";
 const PRECACHE=[
   "./",
   "./index.html",
@@ -95,7 +95,7 @@ const PRECACHE=[
    neu gefüllt. Nicht von Hand setzen – node tools/fest-cache.js --schreiben; der Prüflauf wird
    rot, wenn Name und Inhalt nicht zusammenpassen. Der Name darf nicht mit dem des Versionscaches
    beginnen: die Versionsanzeige liest die Cache-Namen. */
-const FEST_CACHE="adler-fest-bc5075c0";
+const FEST_CACHE="adler-fest-3b730738";
 const istFest=u=>/^\.\/vendor\/|\.png$/.test(u);
 // Adressen der festen Dateien – erst beim ersten Abruf gebildet, nicht beim Laden der Datei
 let _festAdressen=null;

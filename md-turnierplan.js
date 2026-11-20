@@ -2194,9 +2194,14 @@ function _htVereinVonTeam(name){ return String(name||"").replace(/\s+\d+$/,"").t
    müssen im längeren stecken. Passen zwei Vereine gleich gut („Chorweiler"), gibt es lieber
    kein Wappen als ein falsches. */
 const HT_KUERZEL=/^(sv|sc|fc|tus|vfl|vfb|djk|sg|tsv|spvg|spvgg|rsv|ssv|bsv|fsv|cfr|1)$/;
+/* v907: „SC SW Köln U9 I“ fand „SC Schwarz-Weiß Köln“ nicht – die Farbkürzel (SW, RW, BW, GW …) werden zu den
+   ausgeschriebenen Farben, und Mannschaftszusätze (U9, U10, I, II, III, IV, 1., 2.) zählen nicht zum Vereinsnamen. */
+const HT_FARBKUERZEL={sw:"schwarz weiss",rw:"rot weiss",bw:"blau weiss",gw:"gruen weiss",ws:"weiss schwarz",rs:"rot schwarz",gb:"gelb blau"};
+const HT_MANNSCHAFT=/^(u\d{1,2}|i|ii|iii|iv|\d)$/;
 function _htNamensteile(n){
   return String(n||"").toLowerCase().replace(/ä/g,"ae").replace(/ö/g,"oe").replace(/ü/g,"ue").replace(/ß/g,"ss")
-    .replace(/[^a-z0-9]+/g," ").trim().split(" ").filter(t=>t&&!HT_KUERZEL.test(t)&&t!=="koeln"&&t!=="e"&&t!=="v");
+    .replace(/[^a-z0-9]+/g," ").trim().split(" ").flatMap(t=>(HT_FARBKUERZEL[t]||t).split(" "))
+    .filter(t=>t&&!HT_KUERZEL.test(t)&&!HT_MANNSCHAFT.test(t)&&t!=="koeln"&&t!=="e"&&t!=="v");
 }
 function _htWappenFinden(liste,name){
   const n=_htNamensteile(name); if(!n.length)return null;
